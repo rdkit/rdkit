@@ -19,7 +19,7 @@
 #include <boost/algorithm/string.hpp>
 #include <boost/lexical_cast.hpp>
 #include <boost/tokenizer.hpp>
-typedef boost::tokenizer<boost::char_separator<char> > tokenizer;
+typedef boost::tokenizer<boost::char_separator<char>> tokenizer;
 
 #include <fstream>
 #include <sstream>
@@ -27,24 +27,30 @@ typedef boost::tokenizer<boost::char_separator<char> > tokenizer;
 
 namespace RDKit {
 namespace Local {
-typedef boost::tokenizer<boost::escaped_list_separator<char> > CommaTokenizer;
+typedef boost::tokenizer<boost::escaped_list_separator<char>> CommaTokenizer;
 
 void getNextLine(std::istream &inStream, std::string &line,
                  unsigned int &lineNo) {
-  if (inStream.eof()) return;
+  if (inStream.eof() || inStream.fail()) {
+    return;
+  }
   line = "";
   bool continuationLine = false;
-  while (!inStream.eof()) {
+  while (!inStream.eof() && !inStream.fail()) {
     std::string tmpLine;
     std::getline(inStream, tmpLine);
     lineNo++;
     // std::cerr << ">> " << lineNo << " " << tmpLine << std::endl;
-    if (tmpLine == "") continue;
+    if (tmpLine == "") {
+      continue;
+    }
     if (tmpLine[0] != '#') {
       // strip space at the end to check for a continuation line:
       std::string stripLine =
           boost::trim_right_copy_if(tmpLine, boost::is_any_of(" \t\r\n"));
-      if (stripLine == "") continue;
+      if (stripLine == "") {
+        continue;
+      }
       if (stripLine[stripLine.size() - 1] != '\\') {
         if (continuationLine) {
           // if it's a continuation line, strip any whitespace:
@@ -90,8 +96,8 @@ void parseAtomType(const std::string &inLine,
                    std::map<std::string, std::string> &atomTypeDefs,
                    const unsigned int &lineNo) {
   boost::char_separator<char> sep(" \t");
-  boost::tokenizer<boost::char_separator<char> > tok(inLine, sep);
-  boost::tokenizer<boost::char_separator<char> >::iterator tokIt = tok.begin();
+  boost::tokenizer<boost::char_separator<char>> tok(inLine, sep);
+  boost::tokenizer<boost::char_separator<char>>::iterator tokIt = tok.begin();
   if (tokIt == tok.end()) {
     throw FeatureFileParseException(lineNo, inLine,
                                     "empty input line for AtomType");
@@ -167,12 +173,12 @@ MolChemicalFeatureDef *parseFeatureDef(
   }
 
   boost::char_separator<char> sep(" \t");
-  boost::tokenizer<boost::char_separator<char> > tok(nextLine, sep);
+  boost::tokenizer<boost::char_separator<char>> tok(nextLine, sep);
   if (tok.begin() == tok.end()) {
     throw FeatureFileParseException(lineNo, inLine,
                                     "bad DefineFeature line, no tokens found");
   }
-  boost::tokenizer<boost::char_separator<char> >::iterator tokIt = tok.begin();
+  boost::tokenizer<boost::char_separator<char>>::iterator tokIt = tok.begin();
   tokIt++;
   if (tokIt == tok.end()) {
     throw FeatureFileParseException(lineNo, inLine,
@@ -281,7 +287,7 @@ int parseFeatureData(std::istream &inStream,
   std::string inLine;
   Local::getNextLine(inStream, inLine, lineNo);
   std::map<std::string, std::string> atomTypeDefs;
-  while (!inStream.eof()) {
+  while (!inStream.eof() && !inStream.fail()) {
     // clean any whitespace off the line:
     boost::trim_if(inLine, boost::is_any_of(" \t\r\n"));
     if (!inLine.empty() && inLine[0] != '#' && inLine[0] != '\n') {
@@ -293,7 +299,9 @@ int parseFeatureData(std::istream &inStream,
       } else if (token == "DEFINEFEATURE") {
         MolChemicalFeatureDef *fDef =
             Local::parseFeatureDef(inStream, inLine, lineNo, atomTypeDefs);
-        if (fDef) res.push_back(boost::shared_ptr<MolChemicalFeatureDef>(fDef));
+        if (fDef) {
+          res.push_back(boost::shared_ptr<MolChemicalFeatureDef>(fDef));
+        }
       } else {
         throw FeatureFileParseException(lineNo, inLine,
                                         "bad or missing keyword");
@@ -314,4 +322,4 @@ int parseFeatureFile(const std::string &fileName,
   }
   return parseFeatureData(inStream, res);
 }
-}
+}  // namespace RDKit

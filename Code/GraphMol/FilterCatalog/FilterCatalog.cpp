@@ -47,7 +47,7 @@ bool FilterCatalogParams::addCatalog(FilterCatalogs catalog) {
   // meh, not the best here... perhaps make num_catalogs?
   for (unsigned int i = 0; i < sizeof(catalog) * CHAR_BIT; ++i) {
     if ((catalog & (1u << i)) & FilterCatalogParams::ALL) {
-      FilterCatalogs cat = static_cast<FilterCatalogs>(catalog & (1u << i));
+      auto cat = static_cast<FilterCatalogs>(catalog & (1u << i));
       if (GetNumEntries(cat)) {
         d_catalogs.push_back(cat);
         addedCatalog = true;
@@ -155,13 +155,16 @@ unsigned int FilterCatalog::addEntry(SENTRY entry, bool updateFPLength) {
 
 const FilterCatalog::entryType_t *FilterCatalog::getEntryWithIdx(
     unsigned int idx) const {
-  if (idx < d_entries.size()) return d_entries[idx].get();
+  if (idx < d_entries.size()) {
+    return d_entries[idx].get();
+  }
   return nullptr;
 }
 
 FilterCatalog::CONST_SENTRY FilterCatalog::getEntry(unsigned int idx) const {
-  if(idx >= d_entries.size())
+  if (idx >= d_entries.size()) {
     throw IndexErrorException(idx);
+  }
 
   return d_entries[idx];
 }
@@ -185,14 +188,18 @@ bool FilterCatalog::removeEntry(FilterCatalog::CONST_SENTRY entry) {
 
 unsigned int FilterCatalog::getIdxForEntry(const entryType_t *entry) const {
   for (size_t i = 0; i < d_entries.size(); ++i) {
-    if (d_entries[i].get() == entry) return i;
+    if (d_entries[i].get() == entry) {
+      return i;
+    }
   }
   return UINT_MAX;
 }
 
 unsigned int FilterCatalog::getIdxForEntry(CONST_SENTRY entry) const {
   for (size_t i = 0; i < d_entries.size(); ++i) {
-    if (d_entries[i] == entry) return i;
+    if (d_entries[i] == entry) {
+      return i;
+    }
   }
   return UINT_MAX;
 }
@@ -210,7 +217,9 @@ bool FilterCatalog::hasMatch(const ROMol &mol) const {
 FilterCatalog::CONST_SENTRY FilterCatalog::getFirstMatch(
     const ROMol &mol) const {
   for (const auto &d_entry : d_entries) {
-    if (d_entry->hasFilterMatch(mol)) return d_entry;
+    if (d_entry->hasFilterMatch(mol)) {
+      return d_entry;
+    }
   }
   return CONST_SENTRY();
 }
@@ -219,7 +228,9 @@ const std::vector<FilterCatalog::CONST_SENTRY> FilterCatalog::getMatches(
     const ROMol &mol) const {
   std::vector<CONST_SENTRY> result;
   for (const auto &d_entry : d_entries) {
-    if (d_entry->hasFilterMatch(mol)) result.push_back(d_entry);
+    if (d_entry->hasFilterMatch(mol)) {
+      result.push_back(d_entry);
+    }
   }
   return result;
 }

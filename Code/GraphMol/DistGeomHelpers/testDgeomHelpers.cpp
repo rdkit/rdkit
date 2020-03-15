@@ -572,9 +572,9 @@ void testMultipleConfs() {
 void testMultipleConfsExpTors() {
   std::string smi = "CC(C)(C)c(cc1)ccc1c(cc23)n[n]3C(=O)/C(=C\\N2)C(=O)OCC";
   ROMol *m = SmilesToMol(smi, 0, 1);
-  INT_VECT cids = DGeomHelpers::EmbedMultipleConfs(*m, 10, 30, 100, true, false,
-                                                   -1, true, 1, -1.0, 0, 1e-3,
-                                                   false, true, true, true);
+  INT_VECT cids = DGeomHelpers::EmbedMultipleConfs(
+      *m, 10, 30, 100, true, false, -1, true, 1, -1.0, nullptr, 1e-3, false,
+      true, true, true);
   INT_VECT_CI ci;
   // SDWriter writer("junk.sdf");
   double energy;
@@ -891,7 +891,7 @@ void testRandomCoords() {
     std::string smi = *token;
     // std::cerr << "SMI: " << smi << std::endl;
     ROMol *m = SmilesToMol(smi, 0, 1);
-    RWMol *m2 = (RWMol *)MolOps::addHs(*m);
+    auto *m2 = (RWMol *)MolOps::addHs(*m);
     delete m;
     m = m2;
     int cid = DGeomHelpers::EmbedMolecule(*m, 10, 1, true, true, 2, true, 1,
@@ -941,7 +941,7 @@ void testIssue1989539() {
   {
     std::string smi = "c1ccccc1.Cl";
     ROMol *m = SmilesToMol(smi, 0, 1);
-    RWMol *m2 = (RWMol *)MolOps::addHs(*m);
+    auto *m2 = (RWMol *)MolOps::addHs(*m);
     delete m;
     m = m2;
     int cid = DGeomHelpers::EmbedMolecule(*m);
@@ -1233,7 +1233,9 @@ void runblock(const std::vector<ROMol *> &mols,
               unsigned int idx) {
   for (unsigned int j = 0; j < 100; j++) {
     for (unsigned int i = 0; i < mols.size(); ++i) {
-      if (i % count != idx) continue;
+      if (i % count != idx) {
+        continue;
+      }
       ROMol mol(*mols[i]);
       std::vector<int> cids =
           DGeomHelpers::EmbedMultipleConfs(mol, 10, 30, 0xFEED);
@@ -1324,7 +1326,9 @@ void testMultiThread() {
     fut.get();
   }
 
-  for (auto &mol : mols) delete mol;
+  for (auto &mol : mols) {
+    delete mol;
+  }
 
   BOOST_LOG(rdErrorLog) << "  done" << std::endl;
 }
@@ -1433,10 +1437,8 @@ void testMultiThreadMultiConf() {
     TEST_ASSERT(pVect.size() == p2Vect.size());
     double msd = 0.0;
     for (unsigned int i = 0; i < pVect.size(); ++i) {
-      const RDGeom::Point3D *p =
-          dynamic_cast<const RDGeom::Point3D *>(pVect[i]);
-      const RDGeom::Point3D *p2 =
-          dynamic_cast<const RDGeom::Point3D *>(p2Vect[i]);
+      const auto *p = dynamic_cast<const RDGeom::Point3D *>(pVect[i]);
+      const auto *p2 = dynamic_cast<const RDGeom::Point3D *>(p2Vect[i]);
       TEST_ASSERT(p && p2);
       msd += (*p - *p2).lengthSq();
     }

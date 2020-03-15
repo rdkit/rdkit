@@ -615,7 +615,9 @@ void test2Layers() {
 
     atomCounts.clear();
     atomCounts.resize(m1->getNumAtoms());
-    for (unsigned int i = 0; i < m1->getNumAtoms(); ++i) atomCounts[i] = 0;
+    for (unsigned int i = 0; i < m1->getNumAtoms(); ++i) {
+      atomCounts[i] = 0;
+    }
 
     delete fp2;
     fp2 = LayeredFingerprintMol(*m1, 0xFFFFFFFF, 1, 7, 2048, &atomCounts);
@@ -649,7 +651,9 @@ void test2Layers() {
 
     atomCounts.clear();
     atomCounts.resize(m1->getNumAtoms());
-    for (unsigned int i = 0; i < m1->getNumAtoms(); ++i) atomCounts[i] = 0;
+    for (unsigned int i = 0; i < m1->getNumAtoms(); ++i) {
+      atomCounts[i] = 0;
+    }
 
     ExplicitBitVect *fp3 =
         LayeredFingerprintMol(*m1, 0xFFFFFFFF, 1, 7, 2048, &atomCounts, fp2);
@@ -1949,6 +1953,43 @@ void testMorganAtomInfo() {
   BOOST_LOG(rdErrorLog) << "  done" << std::endl;
 }
 
+void testMorganAtomInfoRedundantEnv() {
+  BOOST_LOG(rdErrorLog) << "-------------------------------------" << std::endl;
+  BOOST_LOG(rdErrorLog) << "    Test atom info from morgan fingerprints including Info Redundant Environments."
+                        << std::endl;
+
+  {
+    ROMol *mol;
+    SparseIntVect<std::uint32_t> *fp;
+    MorganFingerprints::BitInfoMap bitInfo;
+    SparseIntVect<std::uint32_t>::StorageType nze;
+
+    mol = SmilesToMol("CCCC(N)(O)");
+
+
+
+    fp = MorganFingerprints::getFingerprint(*mol, 2, nullptr, nullptr, false,
+                                            true, true, false, &bitInfo, false);
+    
+    TEST_ASSERT(bitInfo.size() == 14);
+    
+
+    delete fp;
+
+    bitInfo.clear();
+    fp = MorganFingerprints::getFingerprint(*mol, 2, nullptr, nullptr, false,
+                                            true, true, false, &bitInfo, true);
+    TEST_ASSERT(bitInfo.size() == 17);
+    
+    delete fp;
+
+    delete mol;
+  }
+
+
+  BOOST_LOG(rdErrorLog) << "  done" << std::endl;
+}
+
 void testRDKitFPOptions() {
   BOOST_LOG(rdErrorLog) << "-------------------------------------" << std::endl;
   BOOST_LOG(rdInfoLog) << "testing RDKit fingerprint options" << std::endl;
@@ -2318,6 +2359,39 @@ void testMACCS() {
     TEST_ASSERT(m1);
     ExplicitBitVect *fp1 = MACCSFingerprints::getFingerprintAsBitVect(*m1);
     TEST_ASSERT((*fp1)[44]);
+    delete m1;
+    delete fp1;
+  }
+  {
+    // check bits 124 and 130 part 1
+    std::string smi = "CNNCOOC";
+    RWMol *m1 = SmilesToMol(smi);
+    TEST_ASSERT(m1);
+    ExplicitBitVect *fp1 = MACCSFingerprints::getFingerprintAsBitVect(*m1);
+    TEST_ASSERT((*fp1)[124]);
+    TEST_ASSERT((*fp1)[130]);
+    delete m1;
+    delete fp1;
+  }
+  {
+    // check bits 124 and 130 part 2
+    std::string smi = "CNNCC";
+    RWMol *m1 = SmilesToMol(smi);
+    TEST_ASSERT(m1);
+    ExplicitBitVect *fp1 = MACCSFingerprints::getFingerprintAsBitVect(*m1);
+    TEST_ASSERT((*fp1)[124]);
+    TEST_ASSERT(!(*fp1)[130]);
+    delete m1;
+    delete fp1;
+  }
+  {
+    // check bits 124 and 130 part 3
+    std::string smi = "CNCCC";
+    RWMol *m1 = SmilesToMol(smi);
+    TEST_ASSERT(m1);
+    ExplicitBitVect *fp1 = MACCSFingerprints::getFingerprintAsBitVect(*m1);
+    TEST_ASSERT(!(*fp1)[124]);
+    TEST_ASSERT(!(*fp1)[130]);
     delete m1;
     delete fp1;
   }
@@ -2908,11 +2982,14 @@ void runblock(const std::vector<ROMol *> &mols, unsigned int count,
               unsigned int nReps) {
   for (unsigned int j = 0; j < nReps; j++) {
     for (unsigned int i = 0; i < mols.size(); ++i) {
-      if (i % count != idx) continue;
+      if (i % count != idx) {
+        continue;
+      }
       ROMol *mol = mols[i];
       ExplicitBitVect *lbv = PatternFingerprintMol(*mol, 2048);
-      if (referenceData.size() && referenceData[i])
+      if (referenceData.size() && referenceData[i]) {
         TEST_ASSERT((*lbv) == (*referenceData[i]));
+      }
       delete lbv;
     }
   }
@@ -2938,7 +3015,9 @@ void testMultithreadedPatternFP() {
     } catch (...) {
       continue;
     }
-    if (!mol) continue;
+    if (!mol) {
+      continue;
+    }
     mols.push_back(mol);
   }
   std::vector<std::future<void>> tg;
@@ -3833,6 +3912,7 @@ int main(int argc, char *argv[]) {
   testRootedTorsions();
   testIgnoreTorsions();
   testMorganAtomInfo();
+  testMorganAtomInfoRedundantEnv();
   testRDKitFPOptions();
   testPairsAndTorsionsOptions();
   testMACCS();

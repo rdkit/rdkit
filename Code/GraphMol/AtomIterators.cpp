@@ -43,13 +43,17 @@ AtomIterator_<Atom_, Mol_> &AtomIterator_<Atom_, Mol_>::operator=(
 template <class Atom_, class Mol_>
 AtomIterator_<Atom_, Mol_> &AtomIterator_<Atom_, Mol_>::operator+=(int val) {
   _pos += val;
-  if (_pos < 0 || _pos > _max) _pos = _max;
+  if (_pos < 0 || _pos > _max) {
+    _pos = _max;
+  }
   return *this;
 }
 template <class Atom_, class Mol_>
 AtomIterator_<Atom_, Mol_> &AtomIterator_<Atom_, Mol_>::operator-=(int val) {
   _pos -= val;
-  if (_pos < 0 || _pos > _max) _pos = _max;
+  if (_pos < 0 || _pos > _max) {
+    _pos = _max;
+  }
   return *this;
 }
 template <class Atom_, class Mol_>
@@ -144,10 +148,11 @@ AtomIterator_<Atom_, Mol_> &AtomIterator_<Atom_, Mol_>::operator--() {
 template <class Atom_, class Mol_>
 AtomIterator_<Atom_, Mol_> AtomIterator_<Atom_, Mol_>::operator--(int) {
   AtomIterator_<Atom_, Mol_> res(*this);
-  if (_pos - 1 < 0)
+  if (_pos - 1 < 0) {
     _pos = _max;
-  else
+  } else {
     _pos--;
+  }
   return res;
 }
 
@@ -241,10 +246,11 @@ HeteroatomIterator_<Atom_, Mol_> HeteroatomIterator_<Atom_, Mol_>::operator--(
 template <class Atom_, class Mol_>
 int HeteroatomIterator_<Atom_, Mol_>::_findNext(int from) {
   while (from < _end) {
-    if (_qA->Match((*_mol)[from]))
+    if (_qA->Match((*_mol)[from])) {
       break;
-    else
+    } else {
       from++;
+    }
   }
   return from;
 }
@@ -252,12 +258,15 @@ int HeteroatomIterator_<Atom_, Mol_>::_findNext(int from) {
 template <class Atom_, class Mol_>
 int HeteroatomIterator_<Atom_, Mol_>::_findPrev(int from) {
   while (from > 0) {
-    if (_qA->Match((*_mol)[from]))
+    if (_qA->Match((*_mol)[from])) {
       break;
-    else
+    } else {
       from--;
+    }
   }
-  if (from < 0) from = _end;
+  if (from < 0) {
+    from = _end;
+  }
   return from;
 }
 
@@ -346,10 +355,11 @@ operator--(int) {
 template <class Atom_, class Mol_>
 int AromaticAtomIterator_<Atom_, Mol_>::_findNext(int from) {
   while (from < _end) {
-    if ((*_mol)[from]->getIsAromatic())
+    if ((*_mol)[from]->getIsAromatic()) {
       break;
-    else
+    } else {
       from++;
+    }
   }
   return from;
 }
@@ -357,12 +367,15 @@ int AromaticAtomIterator_<Atom_, Mol_>::_findNext(int from) {
 template <class Atom_, class Mol_>
 int AromaticAtomIterator_<Atom_, Mol_>::_findPrev(int from) {
   while (from > 0) {
-    if ((*_mol)[from]->getIsAromatic())
+    if ((*_mol)[from]->getIsAromatic()) {
       break;
-    else
+    } else {
       from--;
+    }
   }
-  if (from < 0) from = _end;
+  if (from < 0) {
+    from = _end;
+  }
   return from;
 }
 
@@ -398,10 +411,11 @@ QueryAtomIterator_<Atom_, Mol_>::QueryAtomIterator_(
   _mol = other._mol;
   _pos = other._pos;
   _end = other._end;
-  if (other._qA)
+  if (other._qA) {
     _qA = static_cast<QueryAtom *>(other._qA->copy());
-  else
+  } else {
     _qA = nullptr;
+  }
 }
 
 template <class Atom_, class Mol_>
@@ -412,10 +426,11 @@ QueryAtomIterator_<Atom_, Mol_> &QueryAtomIterator_<Atom_, Mol_>::operator=(
     _pos = other._pos;
     _end = other._end;
     delete _qA;
-    if (other._qA)
+    if (other._qA) {
       _qA = static_cast<QueryAtom *>(other._qA->copy());
-    else
+    } else {
       _qA = nullptr;
+    }
   }
   return *this;
 }
@@ -466,10 +481,11 @@ int QueryAtomIterator_<Atom_, Mol_>::_findNext(int from) {
   PRECONDITION(_mol != nullptr, "no molecule");
   PRECONDITION(_qA != nullptr, "no query set");
   while (from < _end) {
-    if (_qA->Match((*_mol)[from]))
+    if (_qA->Match((*_mol)[from])) {
       break;
-    else
+    } else {
       from++;
+    }
   }
   return from;
 }
@@ -479,12 +495,15 @@ int QueryAtomIterator_<Atom_, Mol_>::_findPrev(int from) {
   PRECONDITION(_mol != nullptr, "no molecule");
   PRECONDITION(_qA != nullptr, "no query set");
   while (from > 0) {
-    if (_qA->Match((*_mol)[from]))
+    if (_qA->Match((*_mol)[from])) {
       break;
-    else
+    } else {
       from--;
+    }
   }
-  if (from < 0) from = _end;
+  if (from < 0) {
+    from = _end;
+  }
   return from;
 }
 
@@ -582,10 +601,11 @@ int MatchingAtomIterator_<Atom_, Mol_>::_findNext(int from) {
   PRECONDITION(_mol != nullptr, "no molecule");
   PRECONDITION(_qF != nullptr, "no query set");
   while (from < _end) {
-    if (_qF((*_mol)[from]))
+    if (_qF((*_mol)[from])) {
       break;
-    else
+    } else {
       ++from;
+    }
   }
   return from;
 }
@@ -595,12 +615,15 @@ int MatchingAtomIterator_<Atom_, Mol_>::_findPrev(int from) {
   PRECONDITION(_mol != nullptr, "no molecule");
   PRECONDITION(_qF != nullptr, "no query set");
   while (from > 0) {
-    if (_qF((*_mol)[from]))
+    if (_qF((*_mol)[from])) {
       break;
-    else
+    } else {
       --from;
+    }
   }
-  if (from < 0) from = _end;
+  if (from < 0) {
+    from = _end;
+  }
   return from;
 }
 

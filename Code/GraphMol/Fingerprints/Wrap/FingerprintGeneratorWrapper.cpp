@@ -201,8 +201,8 @@ python::list getSparseCountFPBulkPy(python::list &py_molVect, FPType fPType) {
   auto tempResult = getSparseCountFPBulk(molVect, fPType);
   python::list result;
 
-  for (auto it = tempResult->begin(); it != tempResult->end(); ++it) {
-    result.append((boost::shared_ptr<SparseIntVect<std::uint64_t>>)*it);
+  for (auto &it : *tempResult) {
+    result.append((boost::shared_ptr<SparseIntVect<std::uint64_t>>)it);
   }
   delete tempResult;
   return result;
@@ -214,10 +214,10 @@ python::list getSparseFPBulkPy(python::list &py_molVect, FPType fpType) {
   auto tempResult = getSparseFPBulk(molVect, fpType);
   python::list result;
 
-  for (auto it = tempResult->begin(); it != tempResult->end(); ++it) {
+  for (auto &it : *tempResult) {
     // todo every other bulk method casts results to boost::shared_ptr, except
     // this one. It should also be boost::shared_ptr
-    result.append(*it);
+    result.append(it);
   }
   delete tempResult;
   return result;
@@ -229,8 +229,8 @@ python::list getCountFPBulkPy(python::list &py_molVect, FPType fPType) {
   auto tempResult = getCountFPBulk(molVect, fPType);
   python::list result;
 
-  for (auto it = tempResult->begin(); it != tempResult->end(); ++it) {
-    result.append((boost::shared_ptr<SparseIntVect<std::uint32_t>>)*it);
+  for (auto &it : *tempResult) {
+    result.append((boost::shared_ptr<SparseIntVect<std::uint32_t>>)it);
   }
   delete tempResult;
   return result;
@@ -242,8 +242,8 @@ python::list getFPBulkPy(python::list &py_molVect, FPType fPType) {
   auto tempResult = getFPBulk(molVect, fPType);
   python::list result;
 
-  for (auto it = tempResult->begin(); it != tempResult->end(); ++it) {
-    result.append((boost::shared_ptr<ExplicitBitVect>)*it);
+  for (auto &it : *tempResult) {
+    result.append((boost::shared_ptr<ExplicitBitVect>)it);
   }
   delete tempResult;
   return result;

@@ -41,11 +41,13 @@ sfpcmp(Sfp *a, Sfp *b) {
   int res;
 
   res = memcmp(VARDATA(a), VARDATA(b), Min(VARSIZE(a), VARSIZE(b)) - VARHDRSZ);
-  if ( res )
+  if (res) {
     return res;
+  }
 
-  if (VARSIZE(a) == VARSIZE(b))
+  if (VARSIZE(a) == VARSIZE(b)) {
     return 0;
+  }
   return (VARSIZE(a) > VARSIZE(b)) ? 1 : -1; 
 }
 

@@ -47,10 +47,15 @@
 namespace RDKit {
 
 std::string GetClass(const EnumerationStrategyBase *en) {
-  if (dynamic_cast<const CartesianProductStrategy *>(en)) return "-->cartesian";
-  if (dynamic_cast<const RandomSampleStrategy *>(en)) return "-->random";
-  if (dynamic_cast<const RandomSampleAllBBsStrategy *>(en))
+  if (dynamic_cast<const CartesianProductStrategy *>(en)) {
+    return "-->cartesian";
+  }
+  if (dynamic_cast<const RandomSampleStrategy *>(en)) {
+    return "-->random";
+  }
+  if (dynamic_cast<const RandomSampleAllBBsStrategy *>(en)) {
     return "-->randombbs";
+  }
   return "Unknown!";
 }
 

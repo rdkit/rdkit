@@ -16,7 +16,7 @@ class ROMol;
 //! This class is used to store ROMol objects in a MolCatalog
 class RDKIT_MOLCATALOG_EXPORT MolCatalogEntry : public RDCatalog::CatalogEntry {
  public:
-  MolCatalogEntry() : dp_mol(0), d_descrip("") {
+  MolCatalogEntry() : dp_mol(0), d_order(0), d_descrip("") {
     dp_props = new Dict();
     setBitId(-1);
   }

@@ -1,5 +1,5 @@
 //
-//  Copyright (c) 2015-2017 Greg Landrum
+//  Copyright (c) 2015-2020 Greg Landrum
 //
 //   @@ All Rights Reserved @@
 //  This file is part of the RDKit.
@@ -15,6 +15,13 @@
 #include <GraphMol/AtomIterators.h>
 #include <GraphMol/BondIterators.h>
 
+#include <RDGeneral/BoostStartInclude.h>
+#include <boost/property_tree/ptree.hpp>
+#include <boost/property_tree/json_parser.hpp>
+#include <boost/algorithm/string.hpp>
+#include <boost/tokenizer.hpp>
+#include <RDGeneral/BoostEndInclude.h>
+
 #include <vector>
 #include <algorithm>
 
@@ -26,6 +33,84 @@ bool isMapped(const Atom *atom) {
 }  // namespace
 
 namespace MolOps {
+
+namespace {
+typedef boost::tokenizer<boost::char_separator<char>> tokenizer;
+
+unsigned int parseWhichString(const std::string &txt) {
+  unsigned int res = MolOps::ADJUST_IGNORENONE;
+  boost::char_separator<char> sep("|");
+  tokenizer tokens(txt, sep);
+  for (const auto &token : tokens) {
+    if (token == "IGNORENONE") {
+      res |= MolOps::ADJUST_IGNORENONE;
+    } else if (token == "IGNORERINGS") {
+      res |= MolOps::ADJUST_IGNORERINGS;
+    } else if (token == "IGNORECHAINS") {
+      res |= MolOps::ADJUST_IGNORECHAINS;
+    } else if (token == "IGNOREDUMMIES") {
+      res |= MolOps::ADJUST_IGNOREDUMMIES;
+    } else if (token == "IGNORENONDUMMIES") {
+      res |= MolOps::ADJUST_IGNORENONDUMMIES;
+    } else if (token == "IGNOREALL") {
+      res |= MolOps::ADJUST_IGNOREALL;
+    } else {
+      std::string msg = "Unknown flag value: '" + token + "'. Flags ignored.";
+      throw ValueErrorException(msg);
+    }
+  }
+  return res;
+}
+}  // namespace
+void parseAdjustQueryParametersFromJSON(MolOps::AdjustQueryParameters &p,
+                                        const std::string &json) {
+  PRECONDITION(!json.empty(), "empty JSON provided");
+  std::istringstream ss;
+  ss.str(json);
+
+  boost::property_tree::ptree pt;
+  boost::property_tree::read_json(ss, pt);
+  p.adjustDegree = pt.get("adjustDegree", p.adjustDegree);
+  p.adjustRingCount = pt.get("adjustRingCount", p.adjustRingCount);
+  p.makeDummiesQueries = pt.get("makeDummiesQueries", p.makeDummiesQueries);
+  p.aromatizeIfPossible = pt.get("aromatizeIfPossible", p.aromatizeIfPossible);
+  p.makeBondsGeneric = pt.get("makeBondsGeneric", p.makeBondsGeneric);
+  p.makeAtomsGeneric = pt.get("makeAtomsGeneric", p.makeAtomsGeneric);
+  p.adjustHeavyDegree = pt.get("adjustHeavyDegree", p.adjustHeavyDegree);
+  p.adjustRingChain = pt.get("adjustRingChain", p.adjustRingChain);
+  p.useStereoCareForBonds =
+      pt.get("useStereoCareForBonds", p.useStereoCareForBonds);
+
+  std::string which;
+  which = boost::to_upper_copy<std::string>(pt.get("adjustDegreeFlags", ""));
+  if (!which.empty()) {
+    p.adjustDegreeFlags = parseWhichString(which);
+  }
+  which =
+      boost::to_upper_copy<std::string>(pt.get("adjustHeavyDegreeFlags", ""));
+  if (!which.empty()) {
+    p.adjustHeavyDegreeFlags = parseWhichString(which);
+  }
+  which = boost::to_upper_copy<std::string>(pt.get("adjustRingCountFlags", ""));
+  if (!which.empty()) {
+    p.adjustRingCountFlags = parseWhichString(which);
+  }
+  which =
+      boost::to_upper_copy<std::string>(pt.get("makeBondsGenericFlags", ""));
+  if (!which.empty()) {
+    p.makeBondsGenericFlags = parseWhichString(which);
+  }
+  which =
+      boost::to_upper_copy<std::string>(pt.get("makeAtomsGenericFlags", ""));
+  if (!which.empty()) {
+    p.makeAtomsGenericFlags = parseWhichString(which);
+  }
+  which = boost::to_upper_copy<std::string>(pt.get("adjustRingChainFlags", ""));
+  if (!which.empty()) {
+    p.adjustRingCountFlags = parseWhichString(which);
+  }
+}  // namespace MolOps
+
 ROMol *adjustQueryProperties(const ROMol &mol,
                              const AdjustQueryParameters *params) {
   auto *res = new RWMol(mol);
@@ -187,16 +272,28 @@ void adjustQueryProperties(RWMol &mol, const AdjustQueryParameters *inParams) {
         qa = static_cast<QueryAtom *>(at);
       }
       ATOM_EQUALS_QUERY *nq = makeAtomInRingQuery();
-      if (!nRings) nq->setNegation(true);
+      if (!nRings) {
+        nq->setNegation(true);
+      }
       qa->expandQuery(nq);
     }  // end of adjust ring chain
   }    // end of loop over atoms
-  if (params.makeBondsGeneric) {
-    ROMol::EDGE_ITER firstB, lastB;
-    boost::tie(firstB, lastB) = mol.getEdges();
-    while (firstB != lastB) {
-      // Bond *bond = mol[*firstB];
-      ++firstB;
+  if (params.useStereoCareForBonds) {
+    for (auto bnd : mol.bonds()) {
+      if (bnd->getBondType() == Bond::BondType::DOUBLE) {
+        if (bnd->getStereo() > Bond::BondStereo::STEREOANY) {
+          bool preserve = false;
+          int val = 0;
+          // is stereoCare set on the bond or both atoms?
+          if (bnd->getPropIfPresent(common_properties::molStereoCare, val) &&
+              val) {
+            preserve = true;
+          }
+          if (!preserve) {
+            bnd->setStereo(Bond::BondStereo::STEREONONE);
+          }
+        }
+      }
     }
   }
 }

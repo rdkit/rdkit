@@ -481,7 +481,9 @@ void test7() {
     n = SubstructMatch(*m, *q1, matches, true, true);
     CHECK_INVARIANT(n == 1, "");
     CHECK_INVARIANT(matches[0].size() == 3, "");
-    if (!(i % 500)) std::cout << i << std::endl;
+    if (!(i % 500)) {
+      std::cout << i << std::endl;
+    }
   }
   delete m;
   delete a6;
@@ -676,7 +678,9 @@ void runblock(const std::vector<ROMol *> &mols, const ROMol *query,
               unsigned int idx) {
   for (unsigned int j = 0; j < 100; j++) {
     for (unsigned int i = 0; i < mols.size(); ++i) {
-      if (i % count != idx) continue;
+      if (i % count != idx) {
+        continue;
+      }
       ROMol *mol = mols[i];
 
       MatchVectType matchV;
@@ -703,7 +707,9 @@ void testMultiThread() {
     } catch (...) {
       continue;
     }
-    if (!mol) continue;
+    if (!mol) {
+      continue;
+    }
     mols.push_back(mol);
   }
   std::vector<std::future<void>> tg;
@@ -771,7 +777,9 @@ void testMultiThread() {
   std::cerr << " done" << std::endl;
   delete query;
 
-  for (auto &mol : mols) delete mol;
+  for (auto &mol : mols) {
+    delete mol;
+  }
 
   BOOST_LOG(rdErrorLog) << "  done" << std::endl;
 }
@@ -1852,7 +1860,9 @@ int main(int argc, char *argv[]) {
   test5();
   test5QueryRoot();
   test6();
-  if (argc > 1 && !strcmp(argv[1], "-l")) test7();
+  if (argc > 1 && !strcmp(argv[1], "-l")) {
+    test7();
+  }
   // test9();
   testRecursiveSerialNumbers();
   testMultiThread();

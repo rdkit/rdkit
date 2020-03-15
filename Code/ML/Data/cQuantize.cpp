@@ -1,4 +1,3 @@
-// $Id$
 //
 // Copyright 2003-2008 Rational Discovery LLC and Greg Landrum
 //   @@ All Rights Reserved @@
@@ -124,6 +123,8 @@ long int *GenVarTable(double *vals, int nVals, long int *cuts, int nCuts,
 double RecurseHelper(double *vals, int nVals, long int *cuts, int nCuts,
                      int which, long int *starts, int nStarts,
                      long int *results, int nPossibleRes) {
+  PRECONDITION(vals, "bad vals pointer");
+
   double maxGain = -1e6, gainHere;
   long int *bestCuts, *tCuts;
   long int *varTable = nullptr;
@@ -133,6 +134,9 @@ double RecurseHelper(double *vals, int nVals, long int *cuts, int nCuts,
   varTable = (long int *)calloc((nCuts + 1) * nPossibleRes, sizeof(long int));
   bestCuts = (long int *)calloc(nCuts, sizeof(long int));
   tCuts = (long int *)calloc(nCuts, sizeof(long int));
+  CHECK_INVARIANT(varTable, "failed to allocate memory");
+  CHECK_INVARIANT(bestCuts, "failed to allocate memory");
+  CHECK_INVARIANT(tCuts, "failed to allocate memory");
   GenVarTable(vals, nVals, cuts, nCuts, starts, results, nPossibleRes,
               varTable);
   while (cuts[which] <= highestCutHere) {
@@ -158,17 +162,20 @@ double RecurseHelper(double *vals, int nVals, long int *cuts, int nCuts,
     cuts[which] += 1;
     int top, bot;
     bot = starts[oldCut];
-    if (oldCut + 1 < nStarts)
+    if (oldCut + 1 < nStarts) {
       top = starts[oldCut + 1];
-    else
+    } else {
       top = starts[nStarts - 1];
+    }
     for (i = bot; i < top; i++) {
       int v = results[i];
       varTable[which * nPossibleRes + v] += 1;
       varTable[(which + 1) * nPossibleRes + v] -= 1;
     }
     for (i = which + 1; i < nBounds; i++) {
-      if (cuts[i] == cuts[i - 1]) cuts[i] += 1;
+      if (cuts[i] == cuts[i - 1]) {
+        cuts[i] += 1;
+      }
     }
   }
   memcpy(cuts, bestCuts, nCuts * sizeof(long int));
@@ -244,6 +251,7 @@ static python::tuple cQuantize_RecurseOnBounds(python::object vals,
 
   python::ssize_t nCuts = python::len(pyCuts);
   cuts = (long int *)calloc(nCuts, sizeof(long int));
+  CHECK_INVARIANT(cuts, "failed to allocate memory");
   for (python::ssize_t i = 0; i < nCuts; i++) {
     python::object elem = pyCuts[i];
     cuts[i] = python::extract<long int>(elem);
@@ -251,6 +259,7 @@ static python::tuple cQuantize_RecurseOnBounds(python::object vals,
 
   python::ssize_t nStarts = python::len(pyStarts);
   starts = (long int *)calloc(nStarts, sizeof(long int));
+  CHECK_INVARIANT(starts, "failed to allocate memory");
   for (python::ssize_t i = 0; i < nStarts; i++) {
     python::object elem = pyStarts[i];
     starts[i] = python::extract<long int>(elem);
@@ -287,15 +296,15 @@ static python::list cQuantize_FindStartPoints(python::object values,
     return startPts;
   }
 
-  PyArrayObject *contigVals = reinterpret_cast<PyArrayObject *>(
+  auto *contigVals = reinterpret_cast<PyArrayObject *>(
       PyArray_ContiguousFromObject(values.ptr(), NPY_DOUBLE, 1, 1));
   if (!contigVals) {
     throw_value_error("could not convert value argument");
   }
 
-  double *vals = (double *)PyArray_DATA(contigVals);
+  auto *vals = (double *)PyArray_DATA(contigVals);
 
-  PyArrayObject *contigResults = reinterpret_cast<PyArrayObject *>(
+  auto *contigResults = reinterpret_cast<PyArrayObject *>(
       PyArray_ContiguousFromObject(results.ptr(), NPY_LONG, 1, 1));
   if (!contigResults) {
     throw_value_error("could not convert results argument");
@@ -329,7 +338,9 @@ static python::list cQuantize_FindStartPoints(python::object values,
         lastDiv = i;
       }
     }
-    if (i < nData) blockAct = res[i];
+    if (i < nData) {
+      blockAct = res[i];
+    }
     ++i;
   }
 

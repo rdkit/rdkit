@@ -61,7 +61,9 @@ TDTWriter::TDTWriter(std::ostream *outStream, bool takeOwnership) {
 
 TDTWriter::~TDTWriter() {
   // close the writer if it's still open:
-  if (dp_ostream != nullptr) close();
+  if (dp_ostream != nullptr) {
+    close();
+  }
 }
 
 void TDTWriter::setProps(const STR_VECT &propNames) {
@@ -111,7 +113,9 @@ void TDTWriter::write(const ROMol &mol, int confId) {
         (*dp_ostream) << "," << std::setprecision(d_numDigits)
                       << coords[atomOrdering[i]].z;
       }
-      if (i != nAts - 1) (*dp_ostream) << ",";
+      if (i != nAts - 1) {
+        (*dp_ostream) << ",";
+      }
     }
     (*dp_ostream) << ";>\n";
   }

@@ -275,66 +275,66 @@ SELECT mol_murckoscaffold('CSC(C)=O'::mol) is NULL;
 (1 row)
 
 SELECT mol_to_svg('CCO'::mol) svg;
-                                                                                                 svg                                                                                                 
------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
- <?xml version='1.0' encoding='iso-8859-1'?>                                                                                                                                                        +
- <svg version='1.1' baseProfile='full'                                                                                                                                                              +
-               xmlns='http://www.w3.org/2000/svg'                                                                                                                                                   +
-                       xmlns:rdkit='http://www.rdkit.org/xml'                                                                                                                                       +
-                       xmlns:xlink='http://www.w3.org/1999/xlink'                                                                                                                                   +
-                   xml:space='preserve'                                                                                                                                                             +
- width='250px' height='200px' viewBox='0 0 250 200'>                                                                                                                                                +
- <!-- END OF HEADER -->                                                                                                                                                                             +
- <rect style='opacity:1.0;fill:#FFFFFF;stroke:none' width='250' height='200' x='0' y='0'> </rect>                                                                                                   +
- <path class='bond-0' d='M 11.3636,124.362 L 95.7545,75.6385' style='fill:none;fill-rule:evenodd;stroke:#000000;stroke-width:2px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1' />     +
- <path class='bond-1' d='M 95.7545,75.6385 L 131.455,96.25' style='fill:none;fill-rule:evenodd;stroke:#000000;stroke-width:2px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1' />       +
- <path class='bond-1' d='M 131.455,96.25 L 167.155,116.862' style='fill:none;fill-rule:evenodd;stroke:#FF0000;stroke-width:2px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1' />       +
- <text x='166.64' y='131.862' style='font-size:15px;font-style:normal;font-weight:normal;fill-opacity:1;stroke:none;font-family:sans-serif;text-anchor:start;fill:#FF0000' ><tspan>OH</tspan></text>+
- </svg>                                                                                                                                                                                             +
+                                                                                                                svg                                                                                                                 
+------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+ <?xml version='1.0' encoding='iso-8859-1'?>                                                                                                                                                                                       +
+ <svg version='1.1' baseProfile='full'                                                                                                                                                                                             +
+               xmlns='http://www.w3.org/2000/svg'                                                                                                                                                                                  +
+                       xmlns:rdkit='http://www.rdkit.org/xml'                                                                                                                                                                      +
+                       xmlns:xlink='http://www.w3.org/1999/xlink'                                                                                                                                                                  +
+                   xml:space='preserve'                                                                                                                                                                                            +
+ width='250px' height='200px' viewBox='0 0 250 200'>                                                                                                                                                                               +
+ <!-- END OF HEADER -->                                                                                                                                                                                                            +
+ <rect style='opacity:1.0;fill:#FFFFFF;stroke:none' width='250' height='200' x='0' y='0'> </rect>                                                                                                                                  +
+ <path class='bond-0' d='M 11.3636,118.409 L 99.5827,67.4758' style='fill:none;fill-rule:evenodd;stroke:#000000;stroke-width:2px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1' />                                    +
+ <path class='bond-1' d='M 99.5827,67.4758 L 135.764,88.365' style='fill:none;fill-rule:evenodd;stroke:#000000;stroke-width:2px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1' />                                     +
+ <path class='bond-1' d='M 135.764,88.365 L 171.945,109.254' style='fill:none;fill-rule:evenodd;stroke:#FF0000;stroke-width:2px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1' />                                     +
+ <text dominant-baseline="central" text-anchor="start" x='175.341' y='123.502' style='font-size:33px;font-style:normal;font-weight:normal;fill-opacity:1;stroke:none;font-family:sans-serif;fill:#FF0000' ><tspan>OH</tspan></text>+
+ </svg>                                                                                                                                                                                                                            +
  
 (1 row)
 
 SELECT mol_to_svg('CCO'::mol,'legend') svg;
-                                                                                                 svg                                                                                                  
-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
- <?xml version='1.0' encoding='iso-8859-1'?>                                                                                                                                                         +
- <svg version='1.1' baseProfile='full'                                                                                                                                                               +
-               xmlns='http://www.w3.org/2000/svg'                                                                                                                                                    +
-                       xmlns:rdkit='http://www.rdkit.org/xml'                                                                                                                                        +
-                       xmlns:xlink='http://www.w3.org/1999/xlink'                                                                                                                                    +
-                   xml:space='preserve'                                                                                                                                                              +
- width='250px' height='200px' viewBox='0 0 250 200'>                                                                                                                                                 +
- <!-- END OF HEADER -->                                                                                                                                                                              +
- <rect style='opacity:1.0;fill:#FFFFFF;stroke:none' width='250' height='200' x='0' y='0'> </rect>                                                                                                    +
- <path class='bond-0' d='M 11.3636,124.362 L 95.7545,75.6385' style='fill:none;fill-rule:evenodd;stroke:#000000;stroke-width:2px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1' />      +
- <path class='bond-1' d='M 95.7545,75.6385 L 131.455,96.25' style='fill:none;fill-rule:evenodd;stroke:#000000;stroke-width:2px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1' />        +
- <path class='bond-1' d='M 131.455,96.25 L 167.155,116.862' style='fill:none;fill-rule:evenodd;stroke:#FF0000;stroke-width:2px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1' />        +
- <text x='166.64' y='131.862' style='font-size:15px;font-style:normal;font-weight:normal;fill-opacity:1;stroke:none;font-family:sans-serif;text-anchor:start;fill:#FF0000' ><tspan>OH</tspan></text> +
- <text x='103.377' y='194' style='font-size:12px;font-style:normal;font-weight:normal;fill-opacity:1;stroke:none;font-family:sans-serif;text-anchor:start;fill:#000000' ><tspan>legend</tspan></text>+
- </svg>                                                                                                                                                                                              +
+                                                                                                                svg                                                                                                                 
+------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+ <?xml version='1.0' encoding='iso-8859-1'?>                                                                                                                                                                                       +
+ <svg version='1.1' baseProfile='full'                                                                                                                                                                                             +
+               xmlns='http://www.w3.org/2000/svg'                                                                                                                                                                                  +
+                       xmlns:rdkit='http://www.rdkit.org/xml'                                                                                                                                                                      +
+                       xmlns:xlink='http://www.w3.org/1999/xlink'                                                                                                                                                                  +
+                   xml:space='preserve'                                                                                                                                                                                            +
+ width='250px' height='200px' viewBox='0 0 250 200'>                                                                                                                                                                               +
+ <!-- END OF HEADER -->                                                                                                                                                                                                            +
+ <rect style='opacity:1.0;fill:#FFFFFF;stroke:none' width='250' height='200' x='0' y='0'> </rect>                                                                                                                                  +
+ <path class='bond-0' d='M 11.3636,118.409 L 99.5827,67.4758' style='fill:none;fill-rule:evenodd;stroke:#000000;stroke-width:2px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1' />                                    +
+ <path class='bond-1' d='M 99.5827,67.4758 L 135.764,88.365' style='fill:none;fill-rule:evenodd;stroke:#000000;stroke-width:2px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1' />                                     +
+ <path class='bond-1' d='M 135.764,88.365 L 171.945,109.254' style='fill:none;fill-rule:evenodd;stroke:#FF0000;stroke-width:2px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1' />                                     +
+ <text dominant-baseline="central" text-anchor="start" x='175.341' y='123.502' style='font-size:33px;font-style:normal;font-weight:normal;fill-opacity:1;stroke:none;font-family:sans-serif;fill:#FF0000' ><tspan>OH</tspan></text>+
+ <text dominant-baseline="central" text-anchor="middle" x='125' y='189.8' style='font-size:11px;font-style:normal;font-weight:normal;fill-opacity:1;stroke:none;font-family:sans-serif;fill:#000000' ><tspan>legend</tspan></text> +
+ </svg>                                                                                                                                                                                                                            +
  
 (1 row)
 
 SELECT mol_to_svg('CCO'::mol,'legend',250,200,
   '{"atomLabels":{"1":"foo"},"legendColour":[0.5,0.5,0.5]}') svg;
-                                                                                                  svg                                                                                                  
--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
- <?xml version='1.0' encoding='iso-8859-1'?>                                                                                                                                                          +
- <svg version='1.1' baseProfile='full'                                                                                                                                                                +
-               xmlns='http://www.w3.org/2000/svg'                                                                                                                                                     +
-                       xmlns:rdkit='http://www.rdkit.org/xml'                                                                                                                                         +
-                       xmlns:xlink='http://www.w3.org/1999/xlink'                                                                                                                                     +
-                   xml:space='preserve'                                                                                                                                                               +
- width='250px' height='200px' viewBox='0 0 250 200'>                                                                                                                                                  +
- <!-- END OF HEADER -->                                                                                                                                                                               +
- <rect style='opacity:1.0;fill:#FFFFFF;stroke:none' width='250' height='200' x='0' y='0'> </rect>                                                                                                     +
- <path class='bond-0' d='M 11.3636,124.362 L 83.2395,82.864' style='fill:none;fill-rule:evenodd;stroke:#000000;stroke-width:2px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1' />        +
- <path class='bond-1' d='M 108.269,82.864 L 137.712,99.8628' style='fill:none;fill-rule:evenodd;stroke:#000000;stroke-width:2px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1' />        +
- <path class='bond-1' d='M 137.712,99.8628 L 167.155,116.862' style='fill:none;fill-rule:evenodd;stroke:#FF0000;stroke-width:2px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1' />       +
- <text x='83.2395' y='83.1385' style='font-size:15px;font-style:normal;font-weight:normal;fill-opacity:1;stroke:none;font-family:sans-serif;text-anchor:start;fill:#000000' ><tspan>foo</tspan></text>+
- <text x='166.64' y='131.862' style='font-size:15px;font-style:normal;font-weight:normal;fill-opacity:1;stroke:none;font-family:sans-serif;text-anchor:start;fill:#FF0000' ><tspan>OH</tspan></text>  +
- <text x='103.377' y='194' style='font-size:12px;font-style:normal;font-weight:normal;fill-opacity:1;stroke:none;font-family:sans-serif;text-anchor:start;fill:#7F7F7F' ><tspan>legend</tspan></text> +
- </svg>                                                                                                                                                                                               +
+                                                                                                                 svg                                                                                                                  
+--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+ <?xml version='1.0' encoding='iso-8859-1'?>                                                                                                                                                                                         +
+ <svg version='1.1' baseProfile='full'                                                                                                                                                                                               +
+               xmlns='http://www.w3.org/2000/svg'                                                                                                                                                                                    +
+                       xmlns:rdkit='http://www.rdkit.org/xml'                                                                                                                                                                        +
+                       xmlns:xlink='http://www.w3.org/1999/xlink'                                                                                                                                                                    +
+                   xml:space='preserve'                                                                                                                                                                                              +
+ width='250px' height='200px' viewBox='0 0 250 200'>                                                                                                                                                                                 +
+ <!-- END OF HEADER -->                                                                                                                                                                                                              +
+ <rect style='opacity:1.0;fill:#FFFFFF;stroke:none' width='250' height='200' x='0' y='0'> </rect>                                                                                                                                    +
+ <path class='bond-0' d='M 11.3636,125.467 L 71.2525,90.8898' style='fill:none;fill-rule:evenodd;stroke:#000000;stroke-width:2px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1' />                                      +
+ <path class='bond-1' d='M 127.913,90.8898 L 149.929,103.601' style='fill:none;fill-rule:evenodd;stroke:#000000;stroke-width:2px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1' />                                      +
+ <path class='bond-1' d='M 149.929,103.601 L 171.945,116.312' style='fill:none;fill-rule:evenodd;stroke:#FF0000;stroke-width:2px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1' />                                      +
+ <text dominant-baseline="central" text-anchor="middle" x='99.5827' y='79.6267' style='font-size:33px;font-style:normal;font-weight:normal;fill-opacity:1;stroke:none;font-family:sans-serif;fill:#000000' ><tspan>foo</tspan></text>+
+ <text dominant-baseline="central" text-anchor="start" x='175.341' y='130.56' style='font-size:33px;font-style:normal;font-weight:normal;fill-opacity:1;stroke:none;font-family:sans-serif;fill:#FF0000' ><tspan>OH</tspan></text>   +
+ <text dominant-baseline="central" text-anchor="middle" x='125' y='189.8' style='font-size:11px;font-style:normal;font-weight:normal;fill-opacity:1;stroke:none;font-family:sans-serif;fill:#7F7F7F' ><tspan>legend</tspan></text>   +
+ </svg>                                                                                                                                                                                                                              +
  
 (1 row)
 

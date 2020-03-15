@@ -75,7 +75,9 @@ typedef boost::flyweight<
 GasteigerParams::GasteigerParams(std::string paramData) {
   boost::char_separator<char> eolSep("\n");
   boost::char_separator<char> spaceSep(" \t");
-  if (paramData == "") paramData = defaultParamData + additionalParamData;
+  if (paramData == "") {
+    paramData = defaultParamData + additionalParamData;
+  }
   tokenizer lines(paramData, eolSep);
   d_paramMap.clear();
   std::istringstream istr;

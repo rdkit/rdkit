@@ -106,8 +106,9 @@ double getBestRMS(ROMol &probeMol, ROMol &refMol, int probeId, int refId,
   }
 
   // Perform a final alignment to the best alignment...
-  if (&bestMatch != &matches.back())
+  if (&bestMatch != &matches.back()) {
     alignMol(probeMol, refMol, probeId, refId, &bestMatch);
+  }
   return bestRMS;
 }
 

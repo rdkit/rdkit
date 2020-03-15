@@ -1,4 +1,3 @@
-// $Id$
 //
 // Copyright (C) 2003-2006 Rational Discovery LLC
 //
@@ -82,10 +81,10 @@ void FragFPGenerator::computeFP(const ROMol &mol, const FragCatalog &fcat,
           fp->setBit(bitId);
         }
         mapkm1[invar] = (*eti);
-        delete nent;
         break;
       }
     }
+    delete nent;
   }
 
   // now deal with the higher order stuff.
@@ -170,10 +169,10 @@ void FragFPGenerator::computeFP(const ROMol &mol, const FragCatalog &fcat,
           if (bitId >= 0) {
             fp->setBit(bitId);
           }
-          delete nent;
           break;
         }
       }
+      delete nent;
     }
 
     // overwrite mapkm1 with mapk before we move on to order k+1
@@ -235,4 +234,4 @@ void FragFPGenerator::computeFP(const ROMol &mol, const FragCatalog &fcat,
     **************************/
 #endif
 }
-}
+}  // namespace RDKit

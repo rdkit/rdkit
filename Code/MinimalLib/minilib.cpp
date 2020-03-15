@@ -72,10 +72,10 @@ ROMol *qmol_from_input(const std::string &input) {
   return res;
 }
 
-std::string svg_(const ROMol &m,
+std::string svg_(const ROMol &m, unsigned int w, unsigned int h,
                  const std::vector<unsigned int> *atomIds = nullptr,
                  const std::vector<unsigned int> *bondIds = nullptr) {
-  MolDraw2DSVG drawer(250, 200);
+  MolDraw2DSVG drawer(w, h);
   std::vector<int> *highlight_atoms = nullptr;
   if (atomIds && atomIds->size()) {
     highlight_atoms = new std::vector<int>;
@@ -108,9 +108,9 @@ std::string JSMol::get_smiles() const {
   if (!d_mol) return "";
   return MolToSmiles(*d_mol);
 }
-std::string JSMol::get_svg() const {
+std::string JSMol::get_svg(unsigned int w, unsigned int h) const {
   if (!d_mol) return "";
-  return svg_(*d_mol);
+  return svg_(*d_mol, w, h);
 }
 std::string JSMol::get_svg_with_highlights(const std::string &details) const {
   if (!d_mol) return "";
@@ -128,15 +128,33 @@ std::string JSMol::get_svg_with_highlights(const std::string &details) const {
     atomIds.push_back(static_cast<unsigned int>(molval.GetInt()));
   }
   std::vector<unsigned int> bondIds;
-  if (doc.HasMember("bonds") && !doc["bonds"].IsArray()) {
-    return "JSON doesn't contain 'bonds' field, but it is not an array";
-  }
-  for (const auto &molval : doc["bonds"].GetArray()) {
-    if (!molval.IsInt()) return ("Bond IDs should be integers");
-    bondIds.push_back(static_cast<unsigned int>(molval.GetInt()));
+  if (doc.HasMember("bonds")) {
+    if (!doc["bonds"].IsArray()) {
+      return "JSON contain 'bonds' field, but it is not an array";
+    }
+    for (const auto &molval : doc["bonds"].GetArray()) {
+      if (!molval.IsInt()) return ("Bond IDs should be integers");
+      bondIds.push_back(static_cast<unsigned int>(molval.GetInt()));
+    }
   }
 
-  return svg_(*d_mol, &atomIds, &bondIds);
+  unsigned int w = d_defaultWidth;
+  if (doc.HasMember("width")) {
+    if (!doc["width"].IsUint()) {
+      return "JSON contains 'width' field, but it is not an unsigned int";
+    }
+    w = doc["width"].GetUint();
+  }
+
+  unsigned int h = d_defaultHeight;
+  if (doc.HasMember("height")) {
+    if (!doc["height"].IsUint()) {
+      return "JSON contains 'height' field, but it is not an unsigned int";
+    }
+    h = doc["height"].GetUint();
+  }
+
+  return svg_(*d_mol, w, h, &atomIds, &bondIds);
 }
 std::string JSMol::get_inchi() const {
   if (!d_mol) return "";
@@ -255,12 +273,19 @@ std::string JSMol::get_stereo_tags() const {
 
   bool cleanIt = true;
   bool force = true;
-  MolOps::assignStereochemistry(*d_mol, cleanIt, force);
+  bool flagPossibleStereocenters = true;
+  MolOps::assignStereochemistry(*d_mol, cleanIt, force,
+                                flagPossibleStereocenters);
 
   rj::Value rjAtoms(rj::kArrayType);
   for (const auto atom : d_mol->atoms()) {
     std::string cip;
-    if (atom->getPropIfPresent(common_properties::_CIPCode, cip)) {
+    if (!atom->getPropIfPresent(common_properties::_CIPCode, cip)) {
+      if (atom->hasProp(common_properties::_ChiralityPossible)) {
+        cip = "?";
+      }
+    }
+    if (!cip.empty()) {
       cip = "(" + cip + ")";
       rj::Value entry(rj::kArrayType);
       entry.PushBack(atom->getIdx(), doc.GetAllocator());
@@ -336,6 +361,32 @@ std::string JSMol::get_new_coords(bool useCoordGen) const {
 #endif
 
   return MolToMolBlock(molCopy);
+}
+
+std::string JSMol::remove_hs() const {
+  if (!d_mol) return "";
+
+  RWMol molCopy(*d_mol);
+  MolOps::removeAllHs(molCopy);
+
+  bool includeStereo = true;
+  int confId = -1;
+  bool kekulize = true;
+  return MolToMolBlock(molCopy, includeStereo, confId, kekulize);
+}
+
+std::string JSMol::add_hs() const {
+  if (!d_mol) return "";
+
+  RWMol molCopy(*d_mol);
+  MolOps::addHs(molCopy);
+
+  // RDDepict::generateDepictionMatching2DStructure(molCopy, *d_mol);
+
+  bool includeStereo = true;
+  int confId = -1;
+  bool kekulize = true;
+  return MolToMolBlock(molCopy, includeStereo, confId, kekulize);
 }
 
 std::string get_inchikey_for_inchi(const std::string &input) {

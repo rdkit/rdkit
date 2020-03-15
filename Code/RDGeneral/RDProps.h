@@ -1,9 +1,13 @@
+//  This file is part of the RDKit.
+//  The contents are covered by the terms of the BSD license
+//  which is included in the file license.txt, found at the root
+//  of the RDKit source tree.
+//
 #include <RDGeneral/export.h>
 #ifndef RDKIT_RDPROPS_H
 #define RDKIT_RDPROPS_H
 #include "Dict.h"
 #include "types.h"
-#include <boost/foreach.hpp>
 
 namespace RDKit {
 
@@ -42,7 +46,7 @@ class RDProps {
       computed.push_back(RDKit::detail::computedPropName);
     }
 
-    STR_VECT::const_iterator pos = tmp.begin();
+    auto pos = tmp.begin();
     while (pos != tmp.end()) {
       if ((includePrivate || (*pos)[0] != '_') &&
           std::find(computed.begin(), computed.end(), *pos) == computed.end()) {
@@ -74,7 +78,6 @@ class RDProps {
         d_props.setVal(RDKit::detail::computedPropName, compLst);
       }
     }
-    // setProp(key.c_str(),val);
     d_props.setVal(key, val);
   }
 
@@ -129,7 +132,7 @@ class RDProps {
   void clearProp(const std::string &key) const {
     STR_VECT compLst;
     if (getPropIfPresent(RDKit::detail::computedPropName, compLst)) {
-      STR_VECT_I svi = std::find(compLst.begin(), compLst.end(), key);
+      auto svi = std::find(compLst.begin(), compLst.end(), key);
       if (svi != compLst.end()) {
         compLst.erase(svi);
         d_props.setVal(RDKit::detail::computedPropName, compLst);
@@ -142,7 +145,9 @@ class RDProps {
   void clearComputedProps() const {
     STR_VECT compLst;
     if (getPropIfPresent(RDKit::detail::computedPropName, compLst)) {
-      BOOST_FOREACH (const std::string &sv, compLst) { d_props.clearVal(sv); }
+      for (const auto &sv : compLst) {
+        d_props.clearVal(sv);
+      }
       compLst.clear();
       d_props.setVal(RDKit::detail::computedPropName, compLst);
     }

@@ -41,7 +41,9 @@ void ActivatePartitions(unsigned int nAtoms, int *order, int *count,
   PRECONDITION(changed, "bad pointer");
   unsigned int i, j;
   activeset = -1;
-  for (i = 0; i < nAtoms; i++) next[i] = -2;
+  for (i = 0; i < nAtoms; i++) {
+    next[i] = -2;
+  }
 
   i = 0;
   do {
@@ -50,8 +52,9 @@ void ActivatePartitions(unsigned int nAtoms, int *order, int *count,
       next[j] = activeset;
       activeset = j;
       i += count[j];
-    } else
+    } else {
       i++;
+    }
   } while (i < nAtoms);
 
   for (i = 0; i < nAtoms; i++) {
@@ -490,8 +493,9 @@ void initFragmentCanonAtoms(const ROMol &mol,
        ++bI) {
     if (!bondsInPlay[(*bI)->getIdx()] ||
         !atomsInPlay[(*bI)->getBeginAtomIdx()] ||
-        !atomsInPlay[(*bI)->getEndAtomIdx()])
+        !atomsInPlay[(*bI)->getEndAtomIdx()]) {
       continue;
+    }
     Canon::canon_atom &begAt = atoms[(*bI)->getBeginAtomIdx()];
     Canon::canon_atom &endAt = atoms[(*bI)->getEndAtomIdx()];
     begAt.nbrIds[begAt.degree] = (*bI)->getEndAtomIdx();
@@ -506,7 +510,9 @@ void initFragmentCanonAtoms(const ROMol &mol,
 
   // and now we can do the last bit for each atom
   for (size_t i = 0; i < mol.getNumAtoms(); ++i) {
-    if (!atomsInPlay[i]) continue;
+    if (!atomsInPlay[i]) {
+      continue;
+    }
     // this is the fix for github #1567: we let the atom's degree
     // in the original molecule influence its degree in the fragment
     atoms[i].totalNumHs +=
@@ -590,7 +596,9 @@ void rankMolAtoms(const ROMol &mol, std::vector<unsigned int> &res,
                   bool breakTies, bool includeChirality, bool includeIsotopes) {
   res.resize(mol.getNumAtoms());
 
-  if (!mol.getNumAtoms()) return;
+  if (!mol.getNumAtoms()) {
+    return;
+  }
 
   std::vector<Canon::canon_atom> atoms(mol.getNumAtoms());
   initCanonAtoms(mol, atoms, includeChirality);
@@ -623,7 +631,9 @@ void rankFragmentAtoms(const ROMol &mol, std::vector<unsigned int> &res,
 
   res.resize(mol.getNumAtoms());
 
-  if (!mol.getNumAtoms()) return;
+  if (!mol.getNumAtoms()) {
+    return;
+  }
 
   std::vector<Canon::canon_atom> atoms(mol.getNumAtoms());
   initFragmentCanonAtoms(mol, atoms, includeChirality, atomSymbols, atomsInPlay,
@@ -648,7 +658,9 @@ void rankFragmentAtoms(const ROMol &mol, std::vector<unsigned int> &res,
 void chiralRankMolAtoms(const ROMol &mol, std::vector<unsigned int> &res) {
   res.resize(mol.getNumAtoms());
 
-  if (!mol.getNumAtoms()) return;
+  if (!mol.getNumAtoms()) {
+    return;
+  }
 
   std::vector<Canon::canon_atom> atoms(mol.getNumAtoms());
   initChiralCanonAtoms(mol, atoms);

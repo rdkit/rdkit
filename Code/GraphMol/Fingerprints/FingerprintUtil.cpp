@@ -49,7 +49,7 @@ unsigned int numPiElectrons(const Atom *atom) {
   if (atom->getIsAromatic()) {
     res = 1;
   } else if (atom->getHybridization() != Atom::SP3) {
-    unsigned int val = static_cast<unsigned int>(atom->getExplicitValence());
+    auto val = static_cast<unsigned int>(atom->getExplicitValence());
     val -= atom->getNumExplicitHs();
     CHECK_INVARIANT(val >= atom->getDegree(),
                     "explicit valence exceeds atom degree");
@@ -85,7 +85,9 @@ std::uint32_t getAtomCode(const Atom *atom, unsigned int branchSubtract,
     }
     ++typeIdx;
   }
-  if (typeIdx == nTypes) --typeIdx;
+  if (typeIdx == nTypes) {
+    --typeIdx;
+  }
   code |= typeIdx << (numBranchBits + numPiBits);
   if (includeChirality) {
     std::string cipCode;
@@ -371,7 +373,9 @@ std::vector<unsigned int> generateBondHashes(
     atomDegrees[bi->getEndAtomIdx()]++;
     atomsInPath.set(bi->getBeginAtomIdx());
     atomsInPath.set(bi->getEndAtomIdx());
-    if (isQueryBond[path[i]]) queryInPath = true;
+    if (isQueryBond[path[i]]) {
+      queryInPath = true;
+    }
   }
   if (queryInPath) {
     return bondHashes;

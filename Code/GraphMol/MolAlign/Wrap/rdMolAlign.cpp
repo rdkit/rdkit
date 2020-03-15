@@ -111,7 +111,7 @@ void alignMolConfs(ROMol &mol, python::object atomIds, python::object confIds,
     delete cIds;
   }
   if (RMSvector) {
-    python::list &pyl = static_cast<python::list &>(RMSlist);
+    auto &pyl = static_cast<python::list &>(RMSlist);
     for (double &i : (*RMSvector)) {
       pyl.append(i);
     }
@@ -123,8 +123,8 @@ PyObject *generateRmsdTransPyTuple(double rmsd, RDGeom::Transform3D &trans) {
   npy_intp dims[2];
   dims[0] = 4;
   dims[1] = 4;
-  PyArrayObject *res = (PyArrayObject *)PyArray_SimpleNew(2, dims, NPY_DOUBLE);
-  double *resData = reinterpret_cast<double *>(PyArray_DATA(res));
+  auto *res = (PyArrayObject *)PyArray_SimpleNew(2, dims, NPY_DOUBLE);
+  auto *resData = reinterpret_cast<double *>(PyArray_DATA(res));
   unsigned int i, j, itab;
   const double *tdata = trans.getData();
   for (i = 0; i < trans.numRows(); ++i) {
@@ -212,7 +212,9 @@ double AlignMolecule(ROMol &prbMol, const ROMol &refMol, int prbCid = -1,
 double GetBestRMS(ROMol &prbMol, ROMol &refMol, int prbId, int refId,
                   python::object map, int maxMatches) {
   std::vector<MatchVectType> aMapVec;
-  if (map != python::object()) aMapVec = _translateAtomMapVector(map);
+  if (map != python::object()) {
+    aMapVec = _translateAtomMapVector(map);
+  }
 
   double rmsd;
   {
@@ -323,8 +325,12 @@ PyO3A *getMMFFO3A(ROMol &prbMol, ROMol &refMol, python::object prbProps,
   }
   auto *pyO3A = new PyO3A(o3a);
 
-  if (!prbPyMMFFMolProperties) delete prbMolProps;
-  if (!refPyMMFFMolProperties) delete refMolProps;
+  if (!prbPyMMFFMolProperties) {
+    delete prbMolProps;
+  }
+  if (!refPyMMFFMolProperties) {
+    delete refMolProps;
+  }
   if (cMap) {
     delete cMap;
   }
@@ -401,8 +407,12 @@ python::tuple getMMFFO3AForConfs(
     pyres.append(new PyO3A(i));
   }
 
-  if (!prbPyMMFFMolProperties) delete prbMolProps;
-  if (!refPyMMFFMolProperties) delete refMolProps;
+  if (!prbPyMMFFMolProperties) {
+    delete prbMolProps;
+  }
+  if (!refPyMMFFMolProperties) {
+    delete refMolProps;
+  }
   if (cMap) {
     delete cMap;
   }

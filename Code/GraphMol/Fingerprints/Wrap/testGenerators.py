@@ -61,11 +61,38 @@ class TestCase(unittest.TestCase):
     self.assertNotEqual(nz.keys(), nzChirality.keys())
 
   def testMorganGenerator(self):
-    m = Chem.MolFromSmiles('CCCCC')
+    m = Chem.MolFromSmiles('CCCC(=O)O')
     g = rdFingerprintGenerator.GetMorganGenerator(3)
     fp = g.GetSparseCountFingerprint(m)
     nz = fp.GetNonzeroElements()
-    self.assertEqual(len(nz), 7)
+    self.assertEqual(len(nz), 14)
+
+    invgen = rdFingerprintGenerator.GetMorganAtomInvGen()
+    g = rdFingerprintGenerator.GetMorganGenerator(radius=3, atomInvariantsGenerator=invgen)
+    fp = g.GetSparseCountFingerprint(m)
+    nz = fp.GetNonzeroElements()
+    self.assertEqual(len(nz), 14)
+
+    invgen = rdFingerprintGenerator.GetMorganFeatureAtomInvGen()
+    g = rdFingerprintGenerator.GetMorganGenerator(radius=3, atomInvariantsGenerator=invgen)
+    fp = g.GetSparseCountFingerprint(m)
+    nz = fp.GetNonzeroElements()
+    self.assertEqual(len(nz), 13)
+
+    ms = [Chem.MolFromSmiles(x, sanitize=False) for x in ('C1=CC=CN=N1', 'C1C=CC=NN=1')]
+    for m in ms:
+      m.UpdatePropertyCache()
+      Chem.GetSymmSSSR(m)
+
+    g = rdFingerprintGenerator.GetMorganGenerator(radius=2, useBondTypes=True)
+    self.assertNotEqual(g.GetSparseCountFingerprint(ms[0]), g.GetSparseCountFingerprint(ms[1]))
+    g = rdFingerprintGenerator.GetMorganGenerator(radius=2, useBondTypes=False)
+    self.assertEqual(g.GetSparseCountFingerprint(ms[0]), g.GetSparseCountFingerprint(ms[1]))
+
+    binvgen = rdFingerprintGenerator.GetMorganBondInvGen(useBondTypes=False)
+    g2 = rdFingerprintGenerator.GetMorganGenerator(radius=2, bondInvariantsGenerator=binvgen)
+    self.assertEqual(g.GetSparseCountFingerprint(ms[0]), g2.GetSparseCountFingerprint(ms[0]))
+    self.assertEqual(g.GetSparseCountFingerprint(ms[1]), g2.GetSparseCountFingerprint(ms[1]))
 
   def testRDKitFPGenerator(self):
     m = Chem.MolFromSmiles('CCCCC')

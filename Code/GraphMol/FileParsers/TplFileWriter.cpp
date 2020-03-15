@@ -137,7 +137,9 @@ std::string MolToTPLText(const ROMol &mol, const std::string &partialChargeProp,
 
   // write the additional conformations:
   res << "CONFS " << mol.getNumConformers() - 1 << std::endl;
-  if (!writeFirstConfTwice) ++confIt;
+  if (!writeFirstConfTwice) {
+    ++confIt;
+  }
   while (confIt != mol.endConformers()) {
     std::stringstream tmpStrm;
     std::string confName;

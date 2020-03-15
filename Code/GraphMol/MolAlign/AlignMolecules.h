@@ -28,7 +28,8 @@ class RDKIT_MOLALIGN_EXPORT MolAlignException : public std::exception {
   //! construct with an error message
   MolAlignException(const std::string msg) : _msg(msg){};
   //! get the error message
-  const char *message() const { return _msg.c_str(); };
+  const char *what() const noexcept override { return _msg.c_str(); };
+  const char *message() const noexcept { return what(); };
   ~MolAlignException() noexcept {};
 
  private:

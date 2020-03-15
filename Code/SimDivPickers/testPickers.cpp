@@ -47,7 +47,9 @@ void testGithub2245() {
          --maxAllowedFailures) {
       auto picks2 =
           pkr.lazyPick(dist_on_line, poolSz, 10, RDKit::INT_VECT(), -1);
-      if (picks1 != picks2) break;
+      if (picks1 != picks2) {
+        break;
+      }
     }
     TEST_ASSERT(maxAllowedFailures);
   }
@@ -58,7 +60,9 @@ void testGithub2245() {
     for (maxAllowedFailures = MAX_ALLOWED_FAILURES; maxAllowedFailures;
          --maxAllowedFailures) {
       auto picks2 = pkr.lazyPick(dist_on_line, poolSz, 10);
-      if (picks1 != picks2) break;
+      if (picks1 != picks2) {
+        break;
+      }
     }
     TEST_ASSERT(maxAllowedFailures);
   }

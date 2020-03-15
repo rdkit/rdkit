@@ -50,31 +50,27 @@ class RDKIT_MOLDRAW2D_EXPORT MolDraw2DCairo : public MolDraw2D {
     }
   }
 
-  // set font size in molecule coordinate units. That's probably Angstrom for
-  // RDKit. It will turned into drawing units using scale_, which might be
-  // changed as a result, to make sure things still appear in the window.
-  void setFontSize(double new_size);
-  void setColour(const DrawColour &col);
+  void setColour(const DrawColour &col) override;
 
   // not sure if this goes here or if we should do a dtor since initDrawing() is
   // called in the ctor,
   // but we'll start here
   void finishDrawing();
 
-  void drawLine(const Point2D &cds1, const Point2D &cds2);
-  void drawChar(char c, const Point2D &cds);
+  void drawLine(const Point2D &cds1, const Point2D &cds2) override;
+  void drawChar(char c, const Point2D &cds) override;
   // void drawString( const std::string &str, const Point2D &cds );
-  void drawPolygon(const std::vector<Point2D> &cds);
-  void clearDrawing();
+  void drawPolygon(const std::vector<Point2D> &cds) override;
+  void clearDrawing() override;
 
   void drawWavyLine(const Point2D &cds1, const Point2D &cds2,
                     const DrawColour &col1, const DrawColour &col2,
-                    unsigned int nSegments = 16, double vertOffset = 0.05);
+                    unsigned int nSegments = 16, double vertOffset = 0.05) override;
 
   // using the current scale, work out the size of the label in molecule
   // coordinates
   void getStringSize(const std::string &label, double &label_width,
-                     double &label_height) const;
+                     double &label_height) const override;
 
   // returns the PNG data in a string
   std::string getDrawingText() const;

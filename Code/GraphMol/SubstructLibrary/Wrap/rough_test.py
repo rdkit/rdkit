@@ -42,6 +42,7 @@ from rdkit import Chem
 from rdkit.Chem import rdSubstructLibrary
 import time
 import pickle
+import tempfile
 
 def load_tests(loader, tests, ignore):
   tests.addTests(doctest.DocTestSuite(rdSubstructLibrary))
@@ -334,6 +335,135 @@ class TestCase(unittest.TestCase):
     self.assertEqual(lib.CountMatches(pat2), 1)
     print("done")
 
+  def test_init_from_and_to_stream(self):
+    mols = makeStereoExamples() * 10
+    holder = rdSubstructLibrary.CachedSmilesMolHolder()
+
+    # one day I'll fix this, but we need to write text but read binary
+    #  grrr....  something about the python_streambuf handler.
+    slib = rdSubstructLibrary.SubstructLibrary(holder, None)
+
+    for mol in mols:
+      holder.AddSmiles(Chem.MolToSmiles(mol, isomericSmiles=True))
+
+    if rdSubstructLibrary.SubstructLibraryCanSerialize():
+      fd, path = tempfile.mkstemp()
+      with open(path, 'w') as file:
+        slib.ToStream(file)
+
+      with open(path, 'rb') as file:
+        slib2 = rdSubstructLibrary.SubstructLibrary()
+        slib2.InitFromStream(file)
+        self.assertEqual(len(slib), len(slib2))
+
+    from io import StringIO, BytesIO
+    s = StringIO()
+    slib.ToStream(s)
+
+    sb = BytesIO(s.getvalue().encode("ascii"))
+    self.assertTrue(len(sb.getvalue()) > 0)
+    slib3 = rdSubstructLibrary.SubstructLibrary()
+    slib3.InitFromStream(sb)
+    self.assertEqual(len(slib), len(slib2))
+
+
+  def test_addpatterns(self):
+    pdb_ligands = [
+      "CCS(=O)(=O)c1ccc(OC)c(Nc2ncc(-c3cccc(-c4ccccn4)c3)o2)c1",
+      "COc1ccc(S(=O)(=O)NCC2CC2)cc1Nc1ncc(-c2cccc(-c3cccnc3)c2)o1",
+      "COc1ccc(-c2oc3ncnc(N)c3c2-c2ccc(NC(=O)Nc3cc(C(F)(F)F)ccc3F)cc2)cc1",
+      "COC(=O)Nc1nc2ccc(Oc3ccc(NC(=O)Nc4cc(C(F)(F)F)ccc4F)cc3)cc2[nH]1",
+      "COc1cc(Nc2ncnc(-c3cccnc3Nc3ccccc3)n2)cc(OC)c1OC",
+      "O=C(Nc1ccc(Oc2ccccc2)cc1)c1cccnc1NCc1ccncc1",
+      "O=C(Nc1ccc(Oc2ccccc2)cc1)c1cccnc1NCc1ccncc1",
+      "CNC(=O)c1cc(Oc2ccc3[nH]c(Nc4ccc(Cl)c(C(F)(F)F)c4)nc3c2)ccn1",
+      "CNC(=O)c1cc(Oc2ccc3oc(Nc4ccc(Cl)c(OCC5CCC[NH+]5C)c4)nc3c2)ccn1",
+      "CNC(=O)c1cc(Oc2ccc3oc(Nc4ccc(Cl)c(OCC5CCC[NH+]5C)c4)nc3c2)ccn1",
+      "COc1cc2nccc(Oc3ccc4c(c3)OCCN4C(=O)Nc3ccc(Cl)cc3)c2cc1OC",
+      "CNC(=O)c1c(C)oc2cc(Oc3cc[nH+]c4cc(OCCN5CCOCC5)ccc34)ccc12",
+      "COc1cc2[nH+]ccc(Oc3ccc4c(C(=O)Nc5ccc(Cl)cc5)cccc4c3)c2cc1OC",
+      "COc1cc2[nH+]ccc(Oc3ccc4c(C(=O)Nc5ccc(Cl)cc5)cccc4c3)c2cc1OC",
+      "COc1cc2[nH+]ccc(Oc3ccc4c(C(=O)NC5CC5)cccc4c3)c2cc1OC",
+      "COc1cc2[nH+]ccc(Oc3ccc4c(C(=O)NC5CC5)cccc4c3)c2cc1OC",
+      "Cc1ccc(C(=O)Nc2cc(CCC[NH+](C)C)cc(C(F)(F)F)c2)cc1Nc1ncccc1-c1ccncn1",
+      "COc1cc(Nc2nccc(Nc3ccc4c(C)n[nH]c4c3)n2)cc(OC)c1OC",
+      "COc1cc(Nc2nccc(N(C)c3ccc4c(C)n[nH]c4c3)n2)cc(OC)c1OC",
+      "Cc1ccn(-c2ccc3c(c2)NCC3(C)C)c(=O)c1-c1ccc2nc(N)ncc2c1",
+      "Cc1ccn(-c2ccc3c(c2)NCC3(C)C)c(=O)c1-c1ccc2nc(N)ncc2c1",
+      "Cc1ccc(C(=O)NCCC2CCCC2)cc1C(=O)Nc1ccc(N)nc1",
+      "Cc1ccc(C(=O)NCCC2CCCC2)cc1C(=O)Nc1ccc(N)nc1",
+      "Cc1ccn(-c2cccc(C(F)(F)F)c2)c(=O)c1-c1ccc2nc(N)ncc2c1",
+      "Cc1ccn(-c2cccc(C(F)(F)F)c2)c(=O)c1-c1ccc2nc(N)ncc2c1",
+      "O=C(Nc1cncnc1)c1c(Cl)ccc2c(Nc3cccc(C(F)(F)F)c3)noc12",
+      "O=C(Nc1cncnc1)c1c(Cl)ccc2c(Nc3cccc(C(F)(F)F)c3)noc12",
+      "CC1(C)CNc2cc(NC(=O)c3cccnc3NCc3ccncc3)ccc21",
+      "CC1(C)CNc2cc(NC(=O)c3cccnc3NCc3ccncc3)ccc21"
+    ]
     
+    mols = [Chem.MolFromSmiles(smi) for smi in pdb_ligands]
+    holder = rdSubstructLibrary.CachedMolHolder()
+    patterns = rdSubstructLibrary.PatternHolder()
+    
+    slib_with_patterns = rdSubstructLibrary.SubstructLibrary(holder, patterns)
+    
+
+    for mol in mols:
+      slib_with_patterns.AddMol(mol)
+
+    for nthreads in [1, 2, 0]:
+      slib_without_patterns = rdSubstructLibrary.SubstructLibrary(holder, None)
+      rdSubstructLibrary.AddPatterns(slib_without_patterns, nthreads)
+      for mol in mols:
+        l1 = slib_with_patterns.CountMatches(mol)
+        l2 = slib_without_patterns.CountMatches(mol)
+        self.assertTrue(l1)
+        self.assertEqual(l1,l2)
+                         
+
+  def test_basic_addpatterns(self):
+    # add mols
+    pdb_ligands = [
+      "CCS(=O)(=O)c1ccc(OC)c(Nc2ncc(-c3cccc(-c4ccccn4)c3)o2)c1",
+      "COc1ccc(S(=O)(=O)NCC2CC2)cc1Nc1ncc(-c2cccc(-c3cccnc3)c2)o1",
+      "COc1ccc(-c2oc3ncnc(N)c3c2-c2ccc(NC(=O)Nc3cc(C(F)(F)F)ccc3F)cc2)cc1",
+      "COC(=O)Nc1nc2ccc(Oc3ccc(NC(=O)Nc4cc(C(F)(F)F)ccc4F)cc3)cc2[nH]1",
+      "COc1cc(Nc2ncnc(-c3cccnc3Nc3ccccc3)n2)cc(OC)c1OC",
+      "O=C(Nc1ccc(Oc2ccccc2)cc1)c1cccnc1NCc1ccncc1",
+      "O=C(Nc1ccc(Oc2ccccc2)cc1)c1cccnc1NCc1ccncc1",
+      "CNC(=O)c1cc(Oc2ccc3[nH]c(Nc4ccc(Cl)c(C(F)(F)F)c4)nc3c2)ccn1",
+      "CNC(=O)c1cc(Oc2ccc3oc(Nc4ccc(Cl)c(OCC5CCC[NH+]5C)c4)nc3c2)ccn1",
+      "CNC(=O)c1cc(Oc2ccc3oc(Nc4ccc(Cl)c(OCC5CCC[NH+]5C)c4)nc3c2)ccn1",
+      "COc1cc2nccc(Oc3ccc4c(c3)OCCN4C(=O)Nc3ccc(Cl)cc3)c2cc1OC",
+      "CNC(=O)c1c(C)oc2cc(Oc3cc[nH+]c4cc(OCCN5CCOCC5)ccc34)ccc12",
+      "COc1cc2[nH+]ccc(Oc3ccc4c(C(=O)Nc5ccc(Cl)cc5)cccc4c3)c2cc1OC",
+      "COc1cc2[nH+]ccc(Oc3ccc4c(C(=O)Nc5ccc(Cl)cc5)cccc4c3)c2cc1OC",
+      "COc1cc2[nH+]ccc(Oc3ccc4c(C(=O)NC5CC5)cccc4c3)c2cc1OC",
+      "COc1cc2[nH+]ccc(Oc3ccc4c(C(=O)NC5CC5)cccc4c3)c2cc1OC",
+      "Cc1ccc(C(=O)Nc2cc(CCC[NH+](C)C)cc(C(F)(F)F)c2)cc1Nc1ncccc1-c1ccncn1",
+      "COc1cc(Nc2nccc(Nc3ccc4c(C)n[nH]c4c3)n2)cc(OC)c1OC",
+      "COc1cc(Nc2nccc(N(C)c3ccc4c(C)n[nH]c4c3)n2)cc(OC)c1OC",
+      "Cc1ccn(-c2ccc3c(c2)NCC3(C)C)c(=O)c1-c1ccc2nc(N)ncc2c1",
+      "Cc1ccn(-c2ccc3c(c2)NCC3(C)C)c(=O)c1-c1ccc2nc(N)ncc2c1",
+      "Cc1ccc(C(=O)NCCC2CCCC2)cc1C(=O)Nc1ccc(N)nc1",
+      "Cc1ccc(C(=O)NCCC2CCCC2)cc1C(=O)Nc1ccc(N)nc1",
+      "Cc1ccn(-c2cccc(C(F)(F)F)c2)c(=O)c1-c1ccc2nc(N)ncc2c1",
+      "Cc1ccn(-c2cccc(C(F)(F)F)c2)c(=O)c1-c1ccc2nc(N)ncc2c1",
+      "O=C(Nc1cncnc1)c1c(Cl)ccc2c(Nc3cccc(C(F)(F)F)c3)noc12",
+      "O=C(Nc1cncnc1)c1c(Cl)ccc2c(Nc3cccc(C(F)(F)F)c3)noc12",
+      "CC1(C)CNc2cc(NC(=O)c3cccnc3NCc3ccncc3)ccc21",
+      "CC1(C)CNc2cc(NC(=O)c3cccnc3NCc3ccncc3)ccc21"
+    ]
+
+    for holder in [rdSubstructLibrary.CachedSmilesMolHolder(),
+                   rdSubstructLibrary.CachedTrustedSmilesMolHolder()]:
+      for smi in pdb_ligands:
+        holder.AddSmiles(smi)
+
+      lib = rdSubstructLibrary.SubstructLibrary(holder)
+      rdSubstructLibrary.AddPatterns(lib, numThreads=-1)
+      self.assertEqual(len(lib.GetMolHolder()), len(lib.GetFpHolder()))
+      for smi in pdb_ligands:
+        self.assertTrue( lib.CountMatches(Chem.MolFromSmiles(smi)) )
+
 if __name__ == '__main__':
   unittest.main()

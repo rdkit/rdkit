@@ -78,7 +78,9 @@ unsigned int calcLipinskiHBA(const ROMol &mol) {
   unsigned int res = 0;
   for (ROMol::ConstAtomIterator iter = mol.beginAtoms(); iter != mol.endAtoms();
        ++iter) {
-    if ((*iter)->getAtomicNum() == 7 || (*iter)->getAtomicNum() == 8) ++res;
+    if ((*iter)->getAtomicNum() == 7 || (*iter)->getAtomicNum() == 8) {
+      ++res;
+    }
   }
   return res;
 }
@@ -105,9 +107,10 @@ const NumRotatableBondsOptions DefaultStrictDefinition = NonStrict;
 
 const std::string NumRotatableBondsVersion = "3.0.0";
 unsigned int calcNumRotatableBonds(const ROMol &mol, NumRotatableBondsOptions strict) {
-  if (strict == Default)
+  if (strict == Default) {
     strict = DefaultStrictDefinition;
-  
+  }
+
   if (strict == NonStrict) {
     std::string pattern = "[!$(*#*)&!D1]-&!@[!$(*#*)&!D1]";
     pattern_flyweight m(pattern);
@@ -149,11 +152,15 @@ unsigned int calcNumRotatableBonds(const ROMol &mol, NumRotatableBondsOptions st
 
     // remove symmetrical rings:
     res -= symRings_matcher.get().countMatches(mol);
-    if (res < 0) res = 0;
+    if (res < 0) {
+      res = 0;
+    }
 
     // remove triple bonds
     res -= terminalTripleBonds_matcher.get().countMatches(mol);
-    if (res < 0) res = 0;
+    if (res < 0) {
+      res = 0;
+    }
 
     // removing amides is more complex
     boost::dynamic_bitset<> atomsSeen(mol.getNumAtoms());
@@ -166,10 +173,14 @@ unsigned int calcNumRotatableBonds(const ROMol &mol, NumRotatableBondsOptions st
         }
         atomsSeen.set(mIt.second);
       }
-      if (distinct && res > 0) --res;
+      if (distinct && res > 0) {
+        --res;
+      }
     }
 
-    if (res < 0) res = 0;
+    if (res < 0) {
+      res = 0;
+    }
     return static_cast<unsigned int>(res);
   }
 }
@@ -212,7 +223,9 @@ double calcFractionCSP3(const ROMol &mol) {
     }
     ++atBegin;
   }
-  if (!nC) return 0;
+  if (!nC) {
+    return 0;
+  }
   return static_cast<double>(nCSP3) / nC;
 }
 
@@ -289,7 +302,9 @@ unsigned int calcNumAromaticHeterocycles(const ROMol &mol) {
         countIt = true;
       }
     }
-    if (countIt) ++res;
+    if (countIt) {
+      ++res;
+    }
   }
   return res;
 }
@@ -311,7 +326,9 @@ unsigned int calcNumAromaticCarbocycles(const ROMol &mol) {
         break;
       }
     }
-    if (countIt) ++res;
+    if (countIt) {
+      ++res;
+    }
   }
   return res;
 }
@@ -333,7 +350,9 @@ unsigned int calcNumAliphaticHeterocycles(const ROMol &mol) {
         hasHetero = true;
       }
     }
-    if (hasHetero && hasAliph) ++res;
+    if (hasHetero && hasAliph) {
+      ++res;
+    }
   }
   return res;
 }
@@ -355,7 +374,9 @@ unsigned int calcNumAliphaticCarbocycles(const ROMol &mol) {
         break;
       }
     }
-    if (hasAliph && !hasHetero) ++res;
+    if (hasAliph && !hasHetero) {
+      ++res;
+    }
   }
   return res;
 }
@@ -378,7 +399,9 @@ unsigned int calcNumSaturatedHeterocycles(const ROMol &mol) {
         countIt = true;
       }
     }
-    if (countIt) ++res;
+    if (countIt) {
+      ++res;
+    }
   }
   return res;
 }
@@ -401,7 +424,9 @@ unsigned int calcNumSaturatedCarbocycles(const ROMol &mol) {
         break;
       }
     }
-    if (countIt) ++res;
+    if (countIt) {
+      ++res;
+    }
   }
   return res;
 }
@@ -414,7 +439,9 @@ unsigned int calcNumSpiroAtoms(const ROMol &mol,
   }
   const RingInfo *rInfo = mol.getRingInfo();
   std::vector<unsigned int> lAtoms;
-  if (!atoms) atoms = &lAtoms;
+  if (!atoms) {
+    atoms = &lAtoms;
+  }
 
   for (unsigned int i = 0; i < rInfo->atomRings().size(); ++i) {
     const INT_VECT &ri = rInfo->atomRings()[i];
@@ -442,7 +469,9 @@ unsigned int calcNumBridgeheadAtoms(const ROMol &mol,
   }
   const RingInfo *rInfo = mol.getRingInfo();
   std::vector<unsigned int> lAtoms;
-  if (!atoms) atoms = &lAtoms;
+  if (!atoms) {
+    atoms = &lAtoms;
+  }
 
   for (unsigned int i = 0; i < rInfo->bondRings().size(); ++i) {
     const INT_VECT &ri = rInfo->bondRings()[i];
@@ -478,9 +507,10 @@ bool hasStereoAssigned(const ROMol &mol) {
 }
 const std::string NumAtomStereoCentersVersion = "1.0.0";
 unsigned int numAtomStereoCenters(const ROMol &mol) {
-  if(!hasStereoAssigned(mol))
+  if (!hasStereoAssigned(mol)) {
     throw ValueErrorException("numStereoCenters called without stereo being assigned");
-  
+  }
+
   unsigned int res=0;
   for (ROMol::ConstAtomIterator atom = mol.beginAtoms(); atom != mol.endAtoms();
        ++atom) {
@@ -493,8 +523,9 @@ unsigned int numAtomStereoCenters(const ROMol &mol) {
 
 const std::string NumUnspecifiedAtomStereoCentersVersion = "1.0.0";
 unsigned int numUnspecifiedAtomStereoCenters(const ROMol &mol) {
-  if(!hasStereoAssigned(mol))
+  if (!hasStereoAssigned(mol)) {
     throw ValueErrorException("numUnspecifiedStereoCenters called without stereo being assigned");
+  }
 
   unsigned int res=0;
   for (ROMol::ConstAtomIterator atom = mol.beginAtoms(); atom != mol.endAtoms();

@@ -145,7 +145,7 @@ void TorsionAngleContrib::getGrad(double *pos, double *grad) const {
   double d[2];
   double cosPhi;
   RDKit::ForceFieldsHelper::computeDihedral(
-    pos, d_at1Idx, d_at2Idx, d_at3Idx, d_at4Idx, NULL, &cosPhi, r, t, d);
+      pos, d_at1Idx, d_at2Idx, d_at3Idx, d_at4Idx, nullptr, &cosPhi, r, t, d);
   double sinPhiSq = 1.0 - cosPhi * cosPhi;
   double sinPhi = ((sinPhiSq > 0.0) ? sqrt(sinPhiSq) : 0.0);
   double sin2Phi = 2.0 * sinPhi * cosPhi;

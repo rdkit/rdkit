@@ -79,7 +79,10 @@ add_subdirectory(MolDraw2D)
 add_subdirectory(FMCS)
 add_subdirectory(MolHash)
 add_subdirectory(MMPA)
+
+if(RDK_BUILD_STRUCTCHECKER_SUPPORT)
 add_subdirectory(StructChecker)
+endif()
 
 add_subdirectory(ReducedGraphs)
 add_subdirectory(Trajectory)
@@ -104,6 +107,8 @@ add_subdirectory(Wrap)
 endif()
 
 add_subdirectory(MolStandardize)
+add_subdirectory(ScaffoldNetwork)
+
 
 rdkit_test(graphmolTest1 test1.cpp LINK_LIBRARIES FileParsers SmilesParse GraphMol
 RDGeometryLib RDGeneral SubstructMatch ForceFieldHelpers ForceField)
@@ -144,8 +149,8 @@ rdkit_test(testSGroup testSGroup.cpp LINK_LIBRARIES FileParsers GraphMol)
 
 rdkit_test(test-valgrind test-valgrind.cpp LINK_LIBRARIES SmilesParse GraphMol RDGeneral)
 
-rdkit_catch_test(graphmolTestsCatch catch_tests.cpp
+rdkit_catch_test(graphmolTestsCatch catch_graphmol.cpp catch_main.cpp
            LINK_LIBRARIES SubstructMatch FileParsers SmilesParse GraphMol RDGeometryLib RDGeneral)
 
-rdkit_catch_test(graphmolSGroupCatch catch_sgroups.cpp
+rdkit_catch_test(graphmolSGroupCatch catch_sgroups.cpp  catch_main.cpp
            LINK_LIBRARIES SmilesParse GraphMol RDGeometryLib RDGeneral)

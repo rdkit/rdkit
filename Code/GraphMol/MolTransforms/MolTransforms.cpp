@@ -166,7 +166,9 @@ bool computePrincipalAxesAndMoments(const RDKit::Conformer &conf,
   RDGeom::Point3D origin(0, 0, 0);
   double wSum = 0.0;
   for (unsigned int i = 0; i < conf.getNumAtoms(); ++i) {
-    if (ignoreHs && mol.getAtomWithIdx(i)->getAtomicNum() == 1) continue;
+    if (ignoreHs && mol.getAtomWithIdx(i)->getAtomicNum() == 1) {
+      continue;
+    }
     double w = 1.0;
     if (weights) {
       w = (*weights)[i];
@@ -219,7 +221,9 @@ bool computePrincipalAxesAndMomentsFromGyrationMatrix(
   RDGeom::Point3D origin(0, 0, 0);
   double wSum = 0.0;
   for (unsigned int i = 0; i < conf.getNumAtoms(); ++i) {
-    if (ignoreHs && mol.getAtomWithIdx(i)->getAtomicNum() == 1) continue;
+    if (ignoreHs && mol.getAtomWithIdx(i)->getAtomicNum() == 1) {
+      continue;
+    }
     double w = 1.0;
     if (weights) {
       w = (*weights)[i];
@@ -416,13 +420,17 @@ void setBondLength(Conformer &conf, unsigned int iAtomId, unsigned int jAtomId,
   URANGE_CHECK(jAtomId, pos.size());
   ROMol &mol = conf.getOwningMol();
   Bond *bond = mol.getBondBetweenAtoms(iAtomId, jAtomId);
-  if (!bond) throw ValueErrorException("atoms i and j must be bonded");
-  if (queryIsBondInRing(bond))
+  if (!bond) {
+    throw ValueErrorException("atoms i and j must be bonded");
+  }
+  if (queryIsBondInRing(bond)) {
     throw ValueErrorException("bond (i,j) must not belong to a ring");
+  }
   RDGeom::Point3D v = pos[iAtomId] - pos[jAtomId];
   double origValue = v.length();
-  if (origValue <= 1.e-8)
+  if (origValue <= 1.e-8) {
     throw ValueErrorException("atoms i and j have identical 3D coordinates");
+  }
 
   // get all atoms bonded to j
   std::list<unsigned int> alist;
@@ -441,12 +449,14 @@ double getAngleRad(const Conformer &conf, unsigned int iAtomId,
   URANGE_CHECK(kAtomId, pos.size());
   RDGeom::Point3D rJI = pos[iAtomId] - pos[jAtomId];
   double rJISqLength = rJI.lengthSq();
-  if (rJISqLength <= 1.e-16)
+  if (rJISqLength <= 1.e-16) {
     throw ValueErrorException("atoms i and j have identical 3D coordinates");
+  }
   RDGeom::Point3D rJK = pos[kAtomId] - pos[jAtomId];
   double rJKSqLength = rJK.lengthSq();
-  if (rJKSqLength <= 1.e-16)
+  if (rJKSqLength <= 1.e-16) {
     throw ValueErrorException("atoms j and k have identical 3D coordinates");
+  }
   return rJI.angleTo(rJK);
 }
 
@@ -458,21 +468,28 @@ void setAngleRad(Conformer &conf, unsigned int iAtomId, unsigned int jAtomId,
   URANGE_CHECK(kAtomId, pos.size());
   ROMol &mol = conf.getOwningMol();
   Bond *bondJI = mol.getBondBetweenAtoms(jAtomId, iAtomId);
-  if (!bondJI) throw ValueErrorException("atoms i and j must be bonded");
+  if (!bondJI) {
+    throw ValueErrorException("atoms i and j must be bonded");
+  }
   Bond *bondJK = mol.getBondBetweenAtoms(jAtomId, kAtomId);
-  if (!bondJK) throw ValueErrorException("atoms j and k must be bonded");
-  if (queryIsBondInRing(bondJI) && queryIsBondInRing(bondJK))
+  if (!bondJK) {
+    throw ValueErrorException("atoms j and k must be bonded");
+  }
+  if (queryIsBondInRing(bondJI) && queryIsBondInRing(bondJK)) {
     throw ValueErrorException(
         "bonds (i,j) and (j,k) must not both belong to a ring");
+  }
 
   RDGeom::Point3D rJI = pos[iAtomId] - pos[jAtomId];
   double rJISqLength = rJI.lengthSq();
-  if (rJISqLength <= 1.e-16)
+  if (rJISqLength <= 1.e-16) {
     throw ValueErrorException("atoms i and j have identical 3D coordinates");
+  }
   RDGeom::Point3D rJK = pos[kAtomId] - pos[jAtomId];
   double rJKSqLength = rJK.lengthSq();
-  if (rJKSqLength <= 1.e-16)
+  if (rJKSqLength <= 1.e-16) {
     throw ValueErrorException("atoms j and k have identical 3D coordinates");
+  }
 
   // we only need to rotate by delta with respect to the current angle value
   value -= rJI.angleTo(rJK);
@@ -506,16 +523,19 @@ double getDihedralRad(const Conformer &conf, unsigned int iAtomId,
   URANGE_CHECK(lAtomId, pos.size());
   RDGeom::Point3D rIJ = pos[jAtomId] - pos[iAtomId];
   double rIJSqLength = rIJ.lengthSq();
-  if (rIJSqLength <= 1.e-16)
+  if (rIJSqLength <= 1.e-16) {
     throw ValueErrorException("atoms i and j have identical 3D coordinates");
+  }
   RDGeom::Point3D rJK = pos[kAtomId] - pos[jAtomId];
   double rJKSqLength = rJK.lengthSq();
-  if (rJKSqLength <= 1.e-16)
+  if (rJKSqLength <= 1.e-16) {
     throw ValueErrorException("atoms j and k have identical 3D coordinates");
+  }
   RDGeom::Point3D rKL = pos[lAtomId] - pos[kAtomId];
   double rKLSqLength = rKL.lengthSq();
-  if (rKLSqLength <= 1.e-16)
+  if (rKLSqLength <= 1.e-16) {
     throw ValueErrorException("atoms k and l have identical 3D coordinates");
+  }
 
   RDGeom::Point3D nIJK = rIJ.crossProduct(rJK);
   double nIJKSqLength = nIJK.lengthSq();
@@ -536,22 +556,28 @@ void setDihedralRad(Conformer &conf, unsigned int iAtomId, unsigned int jAtomId,
   URANGE_CHECK(lAtomId, pos.size());
   ROMol &mol = conf.getOwningMol();
   Bond *bondJK = mol.getBondBetweenAtoms(jAtomId, kAtomId);
-  if (!bondJK) throw ValueErrorException("atoms j and k must be bonded");
+  if (!bondJK) {
+    throw ValueErrorException("atoms j and k must be bonded");
+  }
 
-  if (queryIsBondInRing(bondJK))
+  if (queryIsBondInRing(bondJK)) {
     throw ValueErrorException("bond (j,k) must not belong to a ring");
+  }
   RDGeom::Point3D rIJ = pos[jAtomId] - pos[iAtomId];
   double rIJSqLength = rIJ.lengthSq();
-  if (rIJSqLength <= 1.e-16)
+  if (rIJSqLength <= 1.e-16) {
     throw ValueErrorException("atoms i and j have identical 3D coordinates");
+  }
   RDGeom::Point3D rJK = pos[kAtomId] - pos[jAtomId];
   double rJKSqLength = rJK.lengthSq();
-  if (rJKSqLength <= 1.e-16)
+  if (rJKSqLength <= 1.e-16) {
     throw ValueErrorException("atoms j and k have identical 3D coordinates");
+  }
   RDGeom::Point3D rKL = pos[lAtomId] - pos[kAtomId];
   double rKLSqLength = rKL.lengthSq();
-  if (rKLSqLength <= 1.e-16)
+  if (rKLSqLength <= 1.e-16) {
     throw ValueErrorException("atoms k and l have identical 3D coordinates");
+  }
 
   RDGeom::Point3D nIJK = rIJ.crossProduct(rJK);
   double nIJKSqLength = nIJK.lengthSq();

@@ -616,7 +616,9 @@ void runblock_o3a_mmff(ROMol *refMol, const std::vector<ROMol *> &mols,
   for (unsigned int rep = 0; rep < 10; ++rep) {
     MMFF::MMFFMolProperties refMP(*refMol);
     for (unsigned int i = 0; i < mols.size(); ++i) {
-      if (i % count != idx) continue;
+      if (i % count != idx) {
+        continue;
+      }
       if (!(rep % 10)) {
         BOOST_LOG(rdErrorLog) << "Rep: " << rep << " Mol:" << i << std::endl;
       }
@@ -645,7 +647,9 @@ void runblock_o3a_crippen(ROMol *refMol, const std::vector<ROMol *> &mols,
                                         refMRContribs, true, &refAtomTypes,
                                         &refAtomTypeLabels);
     for (unsigned int i = 0; i < mols.size(); ++i) {
-      if (i % count != idx) continue;
+      if (i % count != idx) {
+        continue;
+      }
       if (!(rep % 10)) {
         BOOST_LOG(rdErrorLog) << "Rep: " << rep << " Mol:" << i << std::endl;
       }
@@ -684,7 +688,9 @@ void testMMFFO3AMultiThread() {
     } catch (...) {
       continue;
     }
-    if (!mol) continue;
+    if (!mol) {
+      continue;
+    }
     mols.push_back(mol);
   }
 
@@ -735,7 +741,9 @@ void testCrippenO3AMultiThread() {
     } catch (...) {
       continue;
     }
-    if (!mol) continue;
+    if (!mol) {
+      continue;
+    }
     mols.push_back(mol);
   }
 
@@ -801,7 +809,9 @@ void testGetO3AForProbeConfs() {
   TEST_ASSERT(prbMol);
   while (!psuppl.atEnd()) {
     ROMol *mol = psuppl.next();
-    if (!mol) continue;
+    if (!mol) {
+      continue;
+    }
     auto *conf = new Conformer(mol->getConformer());
     prbMol->addConformer(conf, true);
     delete mol;
@@ -866,7 +876,9 @@ void testO3AMultiThreadBug() {
   std::vector<ROMol *> mols;
   while (!suppl.atEnd()) {
     ROMol *mol = suppl.next();
-    if (!mol) continue;
+    if (!mol) {
+      continue;
+    }
 
     while (mol->getNumConformers() < 20) {
       auto *conf = new Conformer(mol->getConformer(0));

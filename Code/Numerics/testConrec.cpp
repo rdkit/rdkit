@@ -24,7 +24,7 @@ TEST_CASE("Conrec basics", "[conrec]") {
   SECTION("basics") {
     std::vector<RDGeom::Point2D> pts = {{0., 0.}, {1., 0.}, {1., 1.}, {0., 1.}};
     const size_t gridSz = 100;
-    double *grid = new double[gridSz * gridSz];
+    auto *grid = new double[gridSz * gridSz];
     double xps[gridSz];
     double yps[gridSz];
     double x1 = -4, y1 = -4, x2 = 6, y2 = 6;
@@ -35,13 +35,17 @@ TEST_CASE("Conrec basics", "[conrec]") {
       xps[ix] = px;
       for (size_t iy = 0; iy < gridSz; ++iy) {
         auto py = y1 + iy * dy;
-        if (ix == 0) yps[iy] = py;
+        if (ix == 0) {
+          yps[iy] = py;
+        }
         RDGeom::Point2D loc(px, py);
         double val = 0.0;
         for (const auto &pt : pts) {
           auto dv = loc - pt;
           auto r = dv.length();
-          if (r > 0) val += 1 / r;
+          if (r > 0) {
+            val += 1 / r;
+          }
         }
         maxV = std::max(val, maxV);
         grid[ix * gridSz + iy] = val;

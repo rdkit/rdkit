@@ -1,3 +1,22 @@
+# Release_2020.03.1
+(Changes relative to Release_2019.09.1)
+
+## Deprecations
+- To improve API consistency of the exceptions in RDKit with the default ones in
+  the STL, the several `message()` methods and `Invariant::getMessage()` in RDKit's
+  exceptions are from now on deprecated in favor of `what()`. Both `message()` and
+  `Invariant::getMessage()` will be removed in the next release.
+
+## Backwards incompatible changes
+- Searches for equal molecules (i.e. `mol1 @= mol2`) in the PostgreSQL cartridge
+  now use the `do_chiral_sss` option. So if `do_chiral_sss` is false (the
+  default), the molecules `CC(F)Cl` and `C[C@H](F)Cl` will be considered to be equal.
+  Previously these molecules were always considered to be different.
+- Attempting to create a MolSupplier from a filename pointing to an empty file,
+  a file that does not exist or sometihing that is not a standard file (i.e.
+  something like a directory) now generates an exception.
+
+
 # Release_2019.09.1
 (Changes relative to Release_2019.03.1)
 

@@ -47,8 +47,9 @@ SubstanceGroup *createMolSubstanceGroup(ROMol &mol, std::string type) {
 
 void addBracketHelper(SubstanceGroup &self, python::object pts) {
   unsigned int sz = python::extract<unsigned int>(pts.attr("__len__")());
-  if (sz != 2 && sz != 3)
+  if (sz != 2 && sz != 3) {
     throw_value_error("pts object have a length of 2 or 3");
+  }
 
   SubstanceGroup::Bracket bkt;
   python::stl_input_iterator<RDGeom::Point3D> beg(pts);
@@ -74,7 +75,7 @@ struct sgroup_wrap {
         boost::python::type_id<std::vector<RDKit::SubstanceGroup>>();
     const boost::python::converter::registration *reg =
         boost::python::converter::registry::query(info);
-    if (reg == NULL || (*reg).m_to_python == NULL) {
+    if (reg == nullptr || (*reg).m_to_python == nullptr) {
       python::class_<std::vector<RDKit::SubstanceGroup>>("SubstanceGroup_VECT")
           .def(python::vector_indexing_suite<
                std::vector<RDKit::SubstanceGroup>>());

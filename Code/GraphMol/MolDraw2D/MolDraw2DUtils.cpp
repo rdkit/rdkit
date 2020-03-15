@@ -58,7 +58,9 @@ void prepareMolForDrawing(RWMol &mol, bool kekulize, bool addChiralHs,
     }
     if (chiralAts.size()) {
       bool addCoords = false;
-      if (!forceCoords && mol.getNumConformers()) addCoords = true;
+      if (!forceCoords && mol.getNumConformers()) {
+        addCoords = true;
+      }
       MolOps::addHs(mol, false, addCoords, &chiralAts);
     }
   }
@@ -82,9 +84,14 @@ void prepareAndDrawMolecule(MolDraw2D &drawer, const ROMol &mol,
                             int confId) {
   RWMol cpy(mol);
   prepareMolForDrawing(cpy);
+  // having done the prepare, we don't want to do it again in drawMolecule.
+  bool old_prep_mol = drawer.drawOptions().prepareMolsBeforeDrawing;
+  drawer.drawOptions().prepareMolsBeforeDrawing = false;
   drawer.drawMolecule(cpy, legend, highlight_atoms, highlight_bonds,
                       highlight_atom_map, highlight_bond_map, highlight_radii,
                       confId);
+  drawer.drawOptions().prepareMolsBeforeDrawing = old_prep_mol;
+
 }
 
 void updateDrawerParamsFromJSON(MolDraw2D &drawer, const char *json) {
@@ -96,7 +103,9 @@ void updateDrawerParamsFromJSON(MolDraw2D &drawer, const char *json) {
 void get_colour_option(boost::property_tree::ptree *pt, const char *pnm,
                        DrawColour &colour) {
   PRECONDITION(pnm && strlen(pnm), "bad property name");
-  if (pt->find(pnm) == pt->not_found()) return;
+  if (pt->find(pnm) == pt->not_found()) {
+    return;
+  }
 
   boost::property_tree::ptree::const_iterator itm = pt->get_child(pnm).begin();
   colour.r = itm->second.get_value<float>();
@@ -108,7 +117,9 @@ void get_colour_option(boost::property_tree::ptree *pt, const char *pnm,
 }
 
 void updateDrawerParamsFromJSON(MolDraw2D &drawer, const std::string &json) {
-  if (json == "") return;
+  if (json == "") {
+    return;
+  }
   std::istringstream ss;
   ss.str(json);
   MolDrawOptions &opts = drawer.drawOptions();
@@ -118,6 +129,7 @@ void updateDrawerParamsFromJSON(MolDraw2D &drawer, const std::string &json) {
   PT_OPT_GET(dummiesAreAttachments);
   PT_OPT_GET(circleAtoms);
   PT_OPT_GET(continuousHighlight);
+  PT_OPT_GET(fillHighlights);
   PT_OPT_GET(flagCloseContactsDist);
   PT_OPT_GET(includeAtomTags);
   PT_OPT_GET(clearBackground);
@@ -125,6 +137,11 @@ void updateDrawerParamsFromJSON(MolDraw2D &drawer, const std::string &json) {
   PT_OPT_GET(multipleBondOffset);
   PT_OPT_GET(padding);
   PT_OPT_GET(additionalAtomLabelPadding);
+  PT_OPT_GET(bondLineWidth);
+  PT_OPT_GET(prepareMolsBeforeDrawing);
+  PT_OPT_GET(fixedScale);
+  PT_OPT_GET(fixedBondLength);
+  PT_OPT_GET(rotate);
   get_colour_option(&pt, "highlightColour", opts.highlightColour);
   get_colour_option(&pt, "backgroundColour", opts.backgroundColour);
   get_colour_option(&pt, "legendColour", opts.legendColour);
@@ -170,7 +187,9 @@ void contourAndDrawGrid(MolDraw2D &drawer, const double *grid,
       }
     }
   }
-  if (maxV <= minV) return;
+  if (maxV <= minV) {
+    return;
+  }
 
   const auto olw = drawer.lineWidth();
   const auto odash = drawer.dash();
@@ -183,10 +202,11 @@ void contourAndDrawGrid(MolDraw2D &drawer, const double *grid,
     auto delta = (maxV - minV);
     if (params.colourMap.size() > 2) {
       // need to find how fractionally far we are from zero, not the min
-      if (-minV > maxV)
+      if (-minV > maxV) {
         delta = -minV;
-      else
+      } else {
         delta = maxV;
+      }
     }
     for (size_t i = 0; i < nX - 1; ++i) {
       for (size_t j = 0; j < nY - 1; ++j) {
@@ -195,9 +215,10 @@ void contourAndDrawGrid(MolDraw2D &drawer, const double *grid,
         if (params.colourMap.size() > 2) {
           // need to find how fractionally far we are from zero, not the min
           fracV = gridV / delta;
-          if (fracV < 0) fracV *= -1;
+          if (fracV < 0) {
+            fracV *= -1;
+          }
         }
-        DrawColour fillColour;
         auto c1 = (gridV < 0 || params.colourMap.size() == 2)
                       ? params.colourMap[1]
                       : params.colourMap[1];

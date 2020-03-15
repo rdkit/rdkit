@@ -83,7 +83,9 @@ void markDbondCands(RWMol &mol, const INT_VECT &allAtms,
   // if there's not at least one atom in the ring that's
   // marked as being aromatic or a dummy,
   // there's no point in continuing:
-  if (!hasAromaticOrDummyAtom) return;
+  if (!hasAromaticOrDummyAtom) {
+    return;
+  }
 
   std::vector<Bond *> makeSingle;
 
@@ -130,7 +132,9 @@ void markDbondCands(RWMol &mol, const INT_VECT &allAtms,
       } else {
         int bondContrib = std::lround(bond->getValenceContrib(at));
         sbo += bondContrib;
-        if (!bondContrib) ++nToIgnore;
+        if (!bondContrib) {
+          ++nToIgnore;
+        }
       }
       ++beg;
     }
@@ -147,9 +151,13 @@ void markDbondCands(RWMol &mol, const INT_VECT &allAtms,
       sbo += at->getTotalNumHs();
       int dv = PeriodicTable::getTable()->getDefaultValence(at->getAtomicNum());
       int chrg = at->getFormalCharge();
-      if (isEarlyAtom(at->getAtomicNum())) chrg *= -1;  // fix for GitHub #65
+      if (isEarlyAtom(at->getAtomicNum())) {
+        chrg *= -1;  // fix for GitHub #65
+      }
       // special case for carbon - see GitHub #539
-      if (at->getAtomicNum() == 6 && chrg > 0) chrg = -chrg;
+      if (at->getAtomicNum() == 6 && chrg > 0) {
+        chrg = -chrg;
+      }
       dv += chrg;
       int tbo = at->getTotalValence();
       int nRadicals = at->getNumRadicalElectrons();
@@ -411,7 +419,9 @@ bool permuteDummiesAndKekulize(RWMol &mol, const INT_VECT &allAtms,
 #endif
     // pick a new permutation of the questionable atoms:
     const INT_VECT &switchOff = qEnum.next();
-    if (!switchOff.size()) break;
+    if (!switchOff.size()) {
+      break;
+    }
     boost::dynamic_bitset<> tCands = dBndCands;
     for (int it : switchOff) {
       tCands[it] = 0;
@@ -490,7 +500,9 @@ void Kekulize(RWMol &mol, bool markAtomsBonds, unsigned int maxBackTracks) {
   bool foundAromatic = false;
   for (ROMol::BondIterator bi = mol.beginBonds();
        bi != mol.endBonds() && !foundAromatic; ++bi) {
-    if ((*bi)->getIsAromatic()) foundAromatic = true;
+    if ((*bi)->getIsAromatic()) {
+      foundAromatic = true;
+    }
   }
 
   // before everything do implicit valence calculation and store them
@@ -502,9 +514,13 @@ void Kekulize(RWMol &mol, bool markAtomsBonds, unsigned int maxBackTracks) {
   for (ROMol::AtomIterator ai = mol.beginAtoms(); ai != mol.endAtoms(); ++ai) {
     (*ai)->calcImplicitValence(false);
     valences.push_back((*ai)->getTotalValence());
-    if (!foundAromatic && (*ai)->getIsAromatic()) foundAromatic = true;
+    if (!foundAromatic && (*ai)->getIsAromatic()) {
+      foundAromatic = true;
+    }
   }
-  if (!foundAromatic) return;
+  if (!foundAromatic) {
+    return;
+  }
 
   // A bit on the state of the molecule at this point
   // - aromatic and non aromatic atoms and bonds may be mixed up
@@ -521,7 +537,9 @@ void Kekulize(RWMol &mol, bool markAtomsBonds, unsigned int maxBackTracks) {
   boost::dynamic_bitset<> dummyAts(mol.getNumAtoms());
   for (ROMol::AtomIterator atit = mol.beginAtoms(); atit != mol.endAtoms();
        ++atit) {
-    if (!(*atit)->getAtomicNum()) dummyAts[(*atit)->getIdx()] = 1;
+    if (!(*atit)->getAtomicNum()) {
+      dummyAts[(*atit)->getIdx()] = 1;
+    }
   }
   if (dummyAts.any()) {
     VECT_INT_VECT allrings;

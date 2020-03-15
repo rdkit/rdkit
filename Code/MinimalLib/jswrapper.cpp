@@ -18,7 +18,12 @@ EMSCRIPTEN_BINDINGS(RDKit_minimal) {
       .function("get_smiles", &JSMol::get_smiles)
       .function("get_molblock", &JSMol::get_molblock)
       .function("get_inchi", &JSMol::get_inchi)
-      .function("get_svg", &JSMol::get_svg)
+      .function("get_svg",
+                select_overload<std::string() const>(&JSMol::get_svg))
+      .function("get_svg",
+                select_overload<std::string(unsigned int, unsigned int) const>(
+                    &JSMol::get_svg))
+
       .function("get_svg_with_highlights", &JSMol::get_svg_with_highlights)
       .function("get_substruct_match", &JSMol::get_substruct_match)
       .function("get_substruct_matches", &JSMol::get_substruct_matches)
@@ -36,7 +41,9 @@ EMSCRIPTEN_BINDINGS(RDKit_minimal) {
       .function("get_new_coords",
                 select_overload<std::string() const>(&JSMol::get_new_coords))
       .function("get_new_coords", select_overload<std::string(bool) const>(
-                                      &JSMol::get_new_coords));
+                                      &JSMol::get_new_coords))
+      .function("add_hs", &JSMol::add_hs)
+      .function("remove_hs", &JSMol::remove_hs);
 
   function("version", &version);
   function("get_inchikey_for_inchi", &get_inchikey_for_inchi);

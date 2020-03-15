@@ -69,6 +69,9 @@ void testPass() {
     "[C;!$(C-[OH])]=O",
     "[#6]-!:[#6]",
     "[C^3]",
+    "[*^0]",
+    "[*^1]",
+    "[*^2]",
     "[*^4]",
     "[*^5]",
     "[se]",
@@ -105,7 +108,11 @@ void testPass() {
 #endif
     "[-{0-3}]",
     "[-{0-3},C]",
-    "[-{0-3},D{1-3}]",  // github #2709
+    "[-{0-3},D{1-3}]",       // github #2709
+    "C%(1000)CCC%(1000)",    // github #2909
+    "C%(1000)CC(C%(1000))",  // github #2909
+    "C%(1000)CC.C%(1000)",   // github #2909
+
     "EOS"
   };
   while (smis[i] != "EOS") {
@@ -125,7 +132,6 @@ void testPass() {
     {
       // finally make sure that we can create parsable SMARTS from it:
       auto outSmarts = MolToSmarts(*mol);
-      std::cerr << smi << " " << outSmarts << std::endl;
       auto mol2 = SmartsToMol(outSmarts);
       TEST_ASSERT(mol2);
       delete mol2;
@@ -2656,7 +2662,7 @@ void testGithub2142() {
     std::string sma2 = "[C]";
     std::unique_ptr<ROMol> m2(SmartsToMol(sma2));
     TEST_ASSERT(m2);
-    QueryAtom *qa = static_cast<QueryAtom *>(m2->getAtomWithIdx(0));
+    auto *qa = static_cast<QueryAtom *>(m2->getAtomWithIdx(0));
     const auto q1 = static_cast<QueryAtom *>(m1->getAtomWithIdx(0))->getQuery();
     qa->expandQuery(q1->copy(), Queries::COMPOSITE_OR);
     bool ok = true;
@@ -2798,16 +2804,16 @@ void testSmartsStereoBonds() {
 }
 
 void testRingBondCrash() {
-    BOOST_LOG(rdInfoLog) << "-------------------------------------" << std::endl;
-    BOOST_LOG(rdInfoLog)
-        << "Testing a crash arising from negated ring bond queries" << std::endl;
-    {
-        auto m2 = "CC"_smiles;
-        auto q = "[C]@[Cl]"_smarts;
-        auto matches0 = SubstructMatch(*m2, *q);
-    }
+  BOOST_LOG(rdInfoLog) << "-------------------------------------" << std::endl;
+  BOOST_LOG(rdInfoLog)
+      << "Testing a crash arising from negated ring bond queries" << std::endl;
+  {
+    auto m2 = "CC"_smiles;
+    auto q = "[C]@[Cl]"_smarts;
+    auto matches0 = SubstructMatch(*m2, *q);
+  }
 
-    BOOST_LOG(rdInfoLog) << "done" << std::endl;
+  BOOST_LOG(rdInfoLog) << "done" << std::endl;
 }
 
 int main(int argc, char *argv[]) {

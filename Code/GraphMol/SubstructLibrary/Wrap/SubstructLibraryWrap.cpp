@@ -31,10 +31,13 @@
 #include <RDBoost/python.h>
 #include <RDBoost/Wrap.h>
 #include <GraphMol/RDKitBase.h>
+#include <RDBoost/python_streambuf.h>
 
 #include <GraphMol/SubstructLibrary/SubstructLibrary.h>
+#include <GraphMol/SubstructLibrary/PatternFactory.h>
 
 namespace python = boost::python;
+using boost_adaptbx::python::streambuf;
 
 namespace RDKit {
 
@@ -196,15 +199,40 @@ struct substructlibrary_pickle_suite : python::pickle_suite {
   };
 };
 
+void toStream(const SubstructLibrary &cat, python::object &fileobj) {
+  streambuf ss(fileobj, 't');
+  streambuf::ostream ost(ss);
+  cat.toStream(ost);
+}
+
+  void initFromStream(SubstructLibrary &cat, python::object &fileobj) {
+  streambuf ss(fileobj, 'b'); // python StringIO can't seek, so need binary data
+  streambuf::istream is(ss);
+  cat.initFromStream(is);
+}
+
+boost::shared_ptr<MolHolderBase> GetMolHolder(SubstructLibrary &sslib)
+{
+  // need to convert from a ref to a real shared_ptr
+  return sslib.getMolHolder();
+}
+
+boost::shared_ptr<FPHolderBase> GetFpHolder(SubstructLibrary &sslib)
+{
+  // need to convert from a ref to a real shared_ptr
+  return sslib.getFpHolder();
+}
+
 struct substructlibrary_wrapper {
   static void wrap() {
     // n.b. there can only be one of these in all wrappings
     // python::class_<std::vector<unsigned int> >("UIntVect").def(
     //  python::vector_indexing_suite<std::vector<unsigned int>, true>());
 
-    python::class_<MolHolderBase, boost::noncopyable>("MolHolderBase", "",
-                                                      python::no_init)
-
+    python::class_<MolHolderBase, boost::shared_ptr<MolHolderBase>,
+		   boost::noncopyable>("MolHolderBase", "",
+				       python::no_init)
+        .def("__len__", &MolHolderBase::size)
         .def("AddMol", &MolHolderBase::addMol,
              "Adds molecle to the molecule holder")
         .def("GetMol", &MolHolderBase::getMol,
@@ -247,6 +275,8 @@ struct substructlibrary_wrapper {
 
     python::class_<FPHolderBase, boost::shared_ptr<FPHolderBase>,
                    boost::noncopyable>("FPHolderBase", "", python::no_init)
+        .def("__len__", &FPHolderBase::size)
+      
         .def("AddMol", &FPHolderBase::addMol,
              "Adds a molecule to the fingerprint database, returns the index "
              "of the new pattern")
@@ -276,11 +306,15 @@ struct substructlibrary_wrapper {
         .def(python::init<boost::shared_ptr<MolHolderBase>,
                           boost::shared_ptr<FPHolderBase>>())
         .def(python::init<std::string>())
+      
+        .def("GetMolHolder", &GetMolHolder)
+        .def("GetFpHolder", &GetFpHolder)      
+      
         .def("AddMol", &SubstructLibrary::addMol, (python::arg("mol")),
              "Adds a molecule to the substruct library")
 
         .def("GetMatches", (std::vector<unsigned int>(SubstructLibrary::*)(
-                               const ROMol &, bool, bool, bool, int, int)) &
+			       const ROMol &, bool, bool, bool, int, int)) &
                                SubstructLibrary::getMatches,
              (python::arg("query"), python::arg("recursionPossible") = true,
               python::arg("useChirality") = true,
@@ -373,6 +407,40 @@ struct substructlibrary_wrapper {
 
         .def("__len__", &SubstructLibrary::size)
 
+        .def("ToStream", &toStream,
+	     python::arg("stream"),
+	     "Serialize a substructure library to a python text stream.\n"
+	     "The stream can be a file in text mode or an io.StringIO type object\n\n"
+             "  ARGUMENTS:\n"
+	     "    - stream: a text or text stream like object\n\n"
+	     "  >>> from rdkit.Chem import rdSubstructLibrary\n"
+	     "  >>> import io\n"
+	     "  >>> lib = rdSubstructLibrary.SubstructLibrary()\n"
+	     "  >>> stream = io.StringIO()\n"
+	     "  >>> lib.ToStream(stream)\n\n"
+	     "   or\n"
+	     "  >>> with open('rdkit.sslib', 'w') as stream:\n"
+	     "  ...  lib.ToStream(stream)\n"
+	     )
+
+        .def("InitFromStream", &initFromStream,
+	   python::arg("stream"),
+	   "Deserialize a substructure library from a python bytes stream.\n"
+	   "Python doesn't allow seeking operations inside a unicode or string stream anymore\n"
+	   "so this requires opening a file in binary mode or using an io.ByteIO type object\n\n"
+	   "  ARGUMENTS:\n"
+	   "    - stream: a binary stream like object\n\n"
+	   "  SubstructLibrary.Serialize already writes a binary stream\n\n"
+	   "  >>> from rdkit.Chem import rdSubstructLibrary\n"
+	   "  >>> import io\n"
+	   "  >>> lib = rdSubstructLibrary.SubstructLibrary()\n"
+	   "  >>> stream = io.BytesIO( lib.Serialize() )\n"
+	   "  >>> lib.InitFromStream(stream)\n\n"
+           "   remember to write to text and read from a binary stream\n"
+	   "  >>> with open('rdkit.sslib', 'w') as f: lib.ToStream(f)\n"
+	   "  >>> with open('rdkit.sslib', 'rb') as f: lib.InitFromStream(f)\n"
+	)
+      
         .def("Serialize", &SubstructLibrary_Serialize)
         // enable pickle support
         .def_pickle(substructlibrary_pickle_suite())
@@ -381,6 +449,10 @@ struct substructlibrary_wrapper {
     python::def("SubstructLibraryCanSerialize", SubstructLibraryCanSerialize,
                 "Returns True if the SubstructLibrary is serializable "
                 "(requires boost serialization");
+
+    python::def("AddPatterns", addPatterns,
+		"Add pattern fingerprints to the given library, use numThreads=-1 to use all available cores",
+		(python::arg("sslib"), python::arg("numThreads")=1));
 
   }
 };

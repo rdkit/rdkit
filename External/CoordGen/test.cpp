@@ -122,7 +122,9 @@ bool compareConfs(const ROMol* m, ROMol* templ, const MatchVectType& mv,
   if (alignFirst) {
     double rmsd =
         MolAlign::alignMol(*templ, *m, molConfId, templateConfId, &mv);
-    if (rmsd > rmstol) return false;
+    if (rmsd > rmstol) {
+      return false;
+    }
   }
 
   const Conformer& conf1 = m->getConformer(molConfId);
@@ -133,7 +135,9 @@ bool compareConfs(const ROMol* m, ROMol* templ, const MatchVectType& mv,
 
     RDGeom::Point3D pt1i = conf1.getAtomPos(mv[i].second);
     RDGeom::Point3D pt2i = conf2.getAtomPos(mv[i].first);
-    if ((pt1i - pt2i).length() >= postol) return false;
+    if ((pt1i - pt2i).length() >= postol) {
+      return false;
+    }
   }
   return true;
 }
@@ -169,10 +173,9 @@ void test2() {
     {
       auto coreConf = core->getConformer();
       RDGeom::INT_POINT2D_MAP coordMap;
-      for (unsigned int i = 0; i < mv.size(); ++i) {
-        coordMap[mv[i].second] =
-            RDGeom::Point2D(coreConf.getAtomPos(mv[i].first).x,
-                            coreConf.getAtomPos(mv[i].first).y);
+      for (auto& i : mv) {
+        coordMap[i.second] = RDGeom::Point2D(coreConf.getAtomPos(i.first).x,
+                                             coreConf.getAtomPos(i.first).y);
       }
       CoordGen::CoordGenParams params;
       params.coordMap = coordMap;
@@ -225,10 +228,9 @@ void test2() {
     {
       auto coreConf = core->getConformer();
       RDGeom::INT_POINT2D_MAP coordMap;
-      for (unsigned int i = 0; i < mv.size(); ++i) {
-        coordMap[mv[i].second] =
-            RDGeom::Point2D(coreConf.getAtomPos(mv[i].first).x,
-                            coreConf.getAtomPos(mv[i].first).y);
+      for (auto& i : mv) {
+        coordMap[i.second] = RDGeom::Point2D(coreConf.getAtomPos(i.first).x,
+                                             coreConf.getAtomPos(i.first).y);
       }
       CoordGen::CoordGenParams params;
       params.coordMap = coordMap;
@@ -282,10 +284,9 @@ void test2() {
     {
       auto coreConf = core->getConformer();
       RDGeom::INT_POINT2D_MAP coordMap;
-      for (unsigned int i = 0; i < mv.size(); ++i) {
-        coordMap[mv[i].second] =
-            RDGeom::Point2D(coreConf.getAtomPos(mv[i].first).x,
-                            coreConf.getAtomPos(mv[i].first).y);
+      for (auto& i : mv) {
+        coordMap[i.second] = RDGeom::Point2D(coreConf.getAtomPos(i.first).x,
+                                             coreConf.getAtomPos(i.first).y);
       }
 
       CoordGen::CoordGenParams params;

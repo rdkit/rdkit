@@ -73,34 +73,43 @@ bool HillCompare(const std::pair<unsigned int, std::string> &v1,
 
   // special cases: Cs, Hs, Ds, and Ts go at the beginning
   if (v1.second == "C") {
-    if (v2.second != "C") return true;
+    if (v2.second != "C") {
+      return true;
+    }
     return nCompare;
-  } else if (v2.second == "C")
+  } else if (v2.second == "C") {
     return false;
+  }
 
   if (v1.second == "H") {
-    if (v2.second != "H") return true;
+    if (v2.second != "H") {
+      return true;
+    }
     return nCompare;
-  } else if (v2.second == "H")
+  } else if (v2.second == "H") {
     return false;
+  }
 
-  if (v1.second == "D")
+  if (v1.second == "D") {
     return true;
-  else if (v2.second == "D")
+  } else if (v2.second == "D") {
     return false;
+  }
 
-  if (v1.second == "T")
+  if (v1.second == "T") {
     return true;
-  else if (v2.second == "T")
+  } else if (v2.second == "T") {
     return false;
+  }
 
   // finally, just compare the symbols and the isotopes:
-  if (v1 != v2)
+  if (v1 != v2) {
     return v1 < v2;
-  else
+  } else {
     return nCompare;
+  }
 }
-}
+}  // namespace
 
 static std::string _molFormulaVersion = "1.3.0";
 std::string calcMolFormula(const ROMol &mol, bool separateIsotopes,
@@ -118,10 +127,11 @@ std::string calcMolFormula(const ROMol &mol, bool separateIsotopes,
     if (separateIsotopes) {
       unsigned int isotope = (*atomIt)->getIsotope();
       if (abbreviateHIsotopes && atNum == 1 && (isotope == 2 || isotope == 3)) {
-        if (isotope == 2)
+        if (isotope == 2) {
           key.second = "D";
-        else
+        } else {
           key.second = "T";
+        }
       } else {
         key.first = isotope;
       }
@@ -160,14 +170,20 @@ std::string calcMolFormula(const ROMol &mol, bool separateIsotopes,
     } else {
       res << key.second;
     }
-    if (counts[key] > 1) res << counts[key];
+    if (counts[key] > 1) {
+      res << counts[key];
+    }
   }
   if (charge > 0) {
     res << "+";
-    if (charge > 1) res << charge;
+    if (charge > 1) {
+      res << charge;
+    }
   } else if (charge < 0) {
     res << "-";
-    if (charge < -1) res << -1 * charge;
+    if (charge < -1) {
+      res << -1 * charge;
+    }
   }
   return res.str();
 }

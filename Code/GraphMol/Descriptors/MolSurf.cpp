@@ -74,7 +74,7 @@ double getLabuteAtomContribs(const ROMol &mol, std::vector<double> &Vi,
     Vi[i] = M_PI * Ri * (4. * Ri - Vi[i]);
     res += Vi[i];
   }
-  if (includeHs) {
+  if (includeHs && fabs(hContrib) > 1e-4) {
     double Rj = PeriodicTable::getTable()->getRb0(1);
     hContrib = M_PI * Rj * (4. * Rj - hContrib);
     res += hContrib;
@@ -161,113 +161,136 @@ double getTPSAAtomContribs(const ROMol &mol, std::vector<double> &Vi,
     if (atNum == 7) {
       switch (nNbrs[i]) {
         case 1:
-          if (nHs[i] == 0 && chg == 0 && nTrip[i] == 1)
+          if (nHs[i] == 0 && chg == 0 && nTrip[i] == 1) {
             tmp = 23.79;
-          else if (nHs[i] == 1 && chg == 0 && nDoub[i] == 1)
+          } else if (nHs[i] == 1 && chg == 0 && nDoub[i] == 1) {
             tmp = 23.85;
-          else if (nHs[i] == 2 && chg == 0 && nSing[i] == 1)
+          } else if (nHs[i] == 2 && chg == 0 && nSing[i] == 1) {
             tmp = 26.02;
-          else if (nHs[i] == 2 && chg == 1 && nDoub[i] == 1)
+          } else if (nHs[i] == 2 && chg == 1 && nDoub[i] == 1) {
             tmp = 25.59;
-          else if (nHs[i] == 3 && chg == 1 && nSing[i] == 1)
+          } else if (nHs[i] == 3 && chg == 1 && nSing[i] == 1) {
             tmp = 27.64;
+          }
           break;
         case 2:
-          if (nHs[i] == 0 && chg == 0 && nSing[i] == 1 && nDoub[i] == 1)
+          if (nHs[i] == 0 && chg == 0 && nSing[i] == 1 && nDoub[i] == 1) {
             tmp = 12.36;
-          else if (nHs[i] == 0 && chg == 0 && nTrip[i] == 1 && nDoub[i] == 1)
+          } else if (nHs[i] == 0 && chg == 0 && nTrip[i] == 1 &&
+                     nDoub[i] == 1) {
             tmp = 13.60;
-          else if (nHs[i] == 1 && chg == 0 && nSing[i] == 2 && in3Ring)
+          } else if (nHs[i] == 1 && chg == 0 && nSing[i] == 2 && in3Ring) {
             tmp = 21.94;
-          else if (nHs[i] == 1 && chg == 0 && nSing[i] == 2 && !in3Ring)
+          } else if (nHs[i] == 1 && chg == 0 && nSing[i] == 2 && !in3Ring) {
             tmp = 12.03;
-          else if (nHs[i] == 0 && chg == 1 && nTrip[i] == 1 && nSing[i] == 1)
+          } else if (nHs[i] == 0 && chg == 1 && nTrip[i] == 1 &&
+                     nSing[i] == 1) {
             tmp = 4.36;
-          else if (nHs[i] == 1 && chg == 1 && nDoub[i] == 1 && nSing[i] == 1)
+          } else if (nHs[i] == 1 && chg == 1 && nDoub[i] == 1 &&
+                     nSing[i] == 1) {
             tmp = 13.97;
-          else if (nHs[i] == 2 && chg == 1 && nSing[i] == 2)
+          } else if (nHs[i] == 2 && chg == 1 && nSing[i] == 2) {
             tmp = 16.61;
-          else if (nHs[i] == 0 && chg == 0 && nArom[i] == 2)
+          } else if (nHs[i] == 0 && chg == 0 && nArom[i] == 2) {
             tmp = 12.89;
-          else if (nHs[i] == 1 && chg == 0 && nArom[i] == 2)
+          } else if (nHs[i] == 1 && chg == 0 && nArom[i] == 2) {
             tmp = 15.79;
-          else if (nHs[i] == 1 && chg == 1 && nArom[i] == 2)
+          } else if (nHs[i] == 1 && chg == 1 && nArom[i] == 2) {
             tmp = 14.14;
+          }
           break;
         case 3:
-          if (nHs[i] == 0 && chg == 0 && nSing[i] == 3 && in3Ring)
+          if (nHs[i] == 0 && chg == 0 && nSing[i] == 3 && in3Ring) {
             tmp = 3.01;
-          else if (nHs[i] == 0 && chg == 0 && nSing[i] == 3 && !in3Ring)
+          } else if (nHs[i] == 0 && chg == 0 && nSing[i] == 3 && !in3Ring) {
             tmp = 3.24;
 
-          else if (nHs[i] == 0 && chg == 0 && nSing[i] == 1 && nDoub[i] == 2)
+          } else if (nHs[i] == 0 && chg == 0 && nSing[i] == 1 &&
+                     nDoub[i] == 2) {
             tmp = 11.68;
-          else if (nHs[i] == 0 && chg == 1 && nSing[i] == 2 && nDoub[i] == 1)
+          } else if (nHs[i] == 0 && chg == 1 && nSing[i] == 2 &&
+                     nDoub[i] == 1) {
             tmp = 3.01;
-          else if (nHs[i] == 1 && chg == 1 && nSing[i] == 3)
+          } else if (nHs[i] == 1 && chg == 1 && nSing[i] == 3) {
             tmp = 4.44;
-          else if (nHs[i] == 0 && chg == 0 && nArom[i] == 3)
+          } else if (nHs[i] == 0 && chg == 0 && nArom[i] == 3) {
             tmp = 4.41;
-          else if (nHs[i] == 0 && chg == 0 && nSing[i] == 1 && nArom[i] == 2)
+          } else if (nHs[i] == 0 && chg == 0 && nSing[i] == 1 &&
+                     nArom[i] == 2) {
             tmp = 4.93;
-          else if (nHs[i] == 0 && chg == 0 && nDoub[i] == 1 && nArom[i] == 2)
+          } else if (nHs[i] == 0 && chg == 0 && nDoub[i] == 1 &&
+                     nArom[i] == 2) {
             tmp = 8.39;
-          else if (nHs[i] == 0 && chg == 1 && nArom[i] == 3)
+          } else if (nHs[i] == 0 && chg == 1 && nArom[i] == 3) {
             tmp = 4.10;
-          else if (nHs[i] == 0 && chg == 1 && nSing[i] == 1 && nArom[i] == 2)
+          } else if (nHs[i] == 0 && chg == 1 && nSing[i] == 1 &&
+                     nArom[i] == 2) {
             tmp = 3.88;
+          }
           break;
         case 4:
-          if (nHs[i] == 0 && nSing[i] == 4 && chg == 1) tmp = 0.0;
+          if (nHs[i] == 0 && nSing[i] == 4 && chg == 1) {
+            tmp = 0.0;
+          }
           break;
         default:
           break;
       }
       if (tmp < 0.0) {
         tmp = 30.5 - nNbrs[i] * 8.2 + nHs[i] * 1.5;
-        if (tmp < 0) tmp = 0.0;
+        if (tmp < 0) {
+          tmp = 0.0;
+        }
       }
     } else if (atNum == 8) {
       switch (nNbrs[i]) {
         case 1:
-          if (nHs[i] == 0 && chg == 0 && nDoub[i] == 1)
+          if (nHs[i] == 0 && chg == 0 && nDoub[i] == 1) {
             tmp = 17.07;
-          else if (nHs[i] == 1 && chg == 0 && nSing[i] == 1)
+          } else if (nHs[i] == 1 && chg == 0 && nSing[i] == 1) {
             tmp = 20.23;
-          else if (nHs[i] == 0 && chg == -1 && nSing[i] == 1)
+          } else if (nHs[i] == 0 && chg == -1 && nSing[i] == 1) {
             tmp = 23.06;
+          }
           break;
         case 2:
-          if (nHs[i] == 0 && chg == 0 && nSing[i] == 2 && in3Ring)
+          if (nHs[i] == 0 && chg == 0 && nSing[i] == 2 && in3Ring) {
             tmp = 12.53;
-          else if (nHs[i] == 0 && chg == 0 && nSing[i] == 2 && !in3Ring)
+          } else if (nHs[i] == 0 && chg == 0 && nSing[i] == 2 && !in3Ring) {
             tmp = 9.23;
-          else if (nHs[i] == 0 && chg == 0 && nArom[i] == 2)
+          } else if (nHs[i] == 0 && chg == 0 && nArom[i] == 2) {
             tmp = 13.14;
+          }
           break;
         default:
           break;
       }
       if (tmp < 0.0) {
         tmp = 28.5 - nNbrs[i] * 8.6 + nHs[i] * 1.5;
-        if (tmp < 0) tmp = 0.0;
+        if (tmp < 0) {
+          tmp = 0.0;
+        }
       }
     } else if (includeSandP && atNum == 15) {
       tmp = 0.0;
       switch (nNbrs[i]) {
         case 2:
-          if (nHs[i] == 0 && chg == 0 && nSing[i] == 1 && nDoub[i] == 1)
+          if (nHs[i] == 0 && chg == 0 && nSing[i] == 1 && nDoub[i] == 1) {
             tmp = 34.14;
+          }
           break;
         case 3:
-          if (nHs[i] == 0 && chg == 0 && nSing[i] == 3)
+          if (nHs[i] == 0 && chg == 0 && nSing[i] == 3) {
             tmp = 13.59;
-          else if (nHs[i] == 1 && chg == 0 && nSing[i] == 2 && nDoub[i] == 1)
+          } else if (nHs[i] == 1 && chg == 0 && nSing[i] == 2 &&
+                     nDoub[i] == 1) {
             tmp = 23.47;
+          }
           break;
         case 4:
-          if (nHs[i] == 0 && chg == 0 && nSing[i] == 3 && nDoub[i] == 1)
+          if (nHs[i] == 0 && chg == 0 && nSing[i] == 3 && nDoub[i] == 1) {
             tmp = 9.81;
+          }
           break;
         default:
           break;
@@ -276,26 +299,31 @@ double getTPSAAtomContribs(const ROMol &mol, std::vector<double> &Vi,
       tmp = 0.0;
       switch (nNbrs[i]) {
         case 1:
-          if (nHs[i] == 0 && chg == 0 && nDoub[i] == 1)
+          if (nHs[i] == 0 && chg == 0 && nDoub[i] == 1) {
             tmp = 32.09;
-          else if (nHs[i] == 1 && chg == 0 && nSing[i] == 1)
+          } else if (nHs[i] == 1 && chg == 0 && nSing[i] == 1) {
             tmp = 38.80;
+          }
           break;
         case 2:
-          if (nHs[i] == 0 && chg == 0 && nSing[i] == 2)
+          if (nHs[i] == 0 && chg == 0 && nSing[i] == 2) {
             tmp = 25.30;
-          else if (nHs[i] == 0 && chg == 0 && nArom[i] == 2)
+          } else if (nHs[i] == 0 && chg == 0 && nArom[i] == 2) {
             tmp = 28.24;
+          }
           break;
         case 3:
-          if (nHs[i] == 0 && chg == 0 && nArom[i] == 2 && nDoub[i] == 1)
+          if (nHs[i] == 0 && chg == 0 && nArom[i] == 2 && nDoub[i] == 1) {
             tmp = 21.70;
-          else if (nHs[i] == 0 && chg == 0 && nSing[i] == 2 && nDoub[i] == 1)
+          } else if (nHs[i] == 0 && chg == 0 && nSing[i] == 2 &&
+                     nDoub[i] == 1) {
             tmp = 19.21;
+          }
           break;
         case 4:
-          if (nHs[i] == 0 && chg == 0 && nSing[i] == 2 && nDoub[i] == 2)
+          if (nHs[i] == 0 && chg == 0 && nSing[i] == 2 && nDoub[i] == 2) {
             tmp = 8.38;
+          }
           break;
         default:
           break;

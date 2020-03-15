@@ -58,7 +58,8 @@ class RDKIT_CHEMREACTIONS_EXPORT EnumerationStrategyException
  public:
   EnumerationStrategyException(const char *msg) : _msg(msg){};
   EnumerationStrategyException(const std::string &msg) : _msg(msg){};
-  const char *message() const { return _msg.c_str(); };
+  const char *what() const noexcept override { return _msg.c_str(); };
+  const char *message() const noexcept { return what(); };
   ~EnumerationStrategyException() noexcept {};
 
  private:
@@ -138,6 +139,7 @@ class RDKIT_CHEMREACTIONS_EXPORT EnumerationStrategyBase {
   //! Initialize the enumerator based on the reaction and the
   //! supplied building blocks
   //!  This is the standard API point.
+  //!  This calls the derived class's initializeStrategy method which must be implemented
   void initialize(const ChemicalReaction &reaction,
                   const EnumerationTypes::BBS &building_blocks) {
     // default initialization, may be overridden (sets the # reactants
@@ -151,8 +153,11 @@ class RDKIT_CHEMREACTIONS_EXPORT EnumerationStrategyBase {
     initializeStrategy(reaction, building_blocks);
   }
 
-  // ! Initialize derived class
-  // ! must exist, EnumerationStrategyBase structures are already initialized
+  // ! Initialize derived class. Must exist.
+  // ! EnumerationStrategyBase structures are already initialized:
+  // !  m_permutationSizes - [ length of building blocks for each reactant set ]
+  // !  m_numPermutations - number of possible permutations ( -1 if not computable )
+  // !  m_permutation - the first permutation, always the first supplied reactants
   virtual void initializeStrategy(
       const ChemicalReaction &reaction,
       const EnumerationTypes::BBS &building_blocks) = 0;

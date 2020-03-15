@@ -136,14 +136,18 @@ bool ChemicalReaction::validate(unsigned int &numWarnings,
     // misleading warnings
     for (ROMol::AtomIterator atomIt = (*molIter)->beginAtoms();
          atomIt != (*molIter)->endAtoms(); ++atomIt) {
-      if ((*atomIt)->hasProp(common_properties::_QueryFormalCharge))
+      if ((*atomIt)->hasProp(common_properties::_QueryFormalCharge)) {
         (*atomIt)->clearProp(common_properties::_QueryFormalCharge);
-      if ((*atomIt)->hasProp(common_properties::_QueryHCount))
+      }
+      if ((*atomIt)->hasProp(common_properties::_QueryHCount)) {
         (*atomIt)->clearProp(common_properties::_QueryHCount);
-      if ((*atomIt)->hasProp(common_properties::_QueryMass))
+      }
+      if ((*atomIt)->hasProp(common_properties::_QueryMass)) {
         (*atomIt)->clearProp(common_properties::_QueryMass);
-      if ((*atomIt)->hasProp(common_properties::_QueryIsotope))
+      }
+      if ((*atomIt)->hasProp(common_properties::_QueryIsotope)) {
         (*atomIt)->clearProp(common_properties::_QueryIsotope);
+      }
     }
     bool thisMolMapped = false;
     for (ROMol::AtomIterator atomIt = (*molIter)->beginAtoms();

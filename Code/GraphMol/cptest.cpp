@@ -58,7 +58,7 @@ void testQueryCopying() {
     std::string smi =
         "[$([O,S;H1;v2]-[!$(*=[O,N,P,S])]),$([O,S;H0;v2]),$([O,S;-]),$([N;v3;!$"
         "(N-*=!@[O,N,P,S])]),$([nH0,o,s;+0])]";
-    ROMol *m = static_cast<ROMol *>(SmartsToMol(smi));
+    auto *m = static_cast<ROMol *>(SmartsToMol(smi));
     TEST_ASSERT(m);
     std::cerr << "\n\n\nCOPY" << std::endl;
     auto *m2 = new ROMol(*m, true);
@@ -76,7 +76,7 @@ void testConformerCopying() {
 
   {
     std::string smi = "CCC";
-    ROMol *m = static_cast<ROMol *>(SmilesToMol(smi));
+    auto *m = static_cast<ROMol *>(SmilesToMol(smi));
     TEST_ASSERT(m);
 
     auto *conf = new Conformer(m->getNumAtoms());

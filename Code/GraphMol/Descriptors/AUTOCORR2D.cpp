@@ -126,10 +126,10 @@ void get2DautocorrelationDesc(const double* dist, unsigned int numAtoms, const R
   // update the Output vector!
   for (unsigned int t = 0; t < 6; ++t) {
     for (unsigned int k = 0; k < 8; ++k) {
-      res[t * 8 + k] = round(1000 * TDBmat[k + t * 8]) / 1000;
-      res[t * 8 + k + 48] = round(1000 * TDBmatC[k + t * 8]) / 1000;
-      res[t * 8 + k + 96] = round(1000 * TDBmatM[k + t * 8]) / 1000;
-      res[t * 8 + k + 144] = round(1000 * TDBmatG[k + t * 8]) / 1000;
+      res[t * 8 + k] = std::round(1000 * TDBmat[k + t * 8]) / 1000;
+      res[t * 8 + k + 48] = std::round(1000 * TDBmatC[k + t * 8]) / 1000;
+      res[t * 8 + k + 96] = std::round(1000 * TDBmatM[k + t * 8]) / 1000;
+      res[t * 8 + k + 144] = std::round(1000 * TDBmatG[k + t * 8]) / 1000;
     }
   }
 
@@ -202,10 +202,10 @@ void get2DautocorrelationDesc(const double* dist, unsigned int numAtoms, const R
 
       // update the Output vector!
         for (unsigned int k = 0; k < 8; ++k) {
-          res[k] = round(1000 * TDBmat[k]) / 1000;
-          res[k + 8 ] = round(1000 * TDBmatC[k]) / 1000;
-          res[k + 16] = round(1000 * TDBmatM[k]) / 1000;
-          res[k + 24] = round(1000 * TDBmatG[k]) / 1000;
+          res[k] = std::round(1000 * TDBmat[k]) / 1000;
+          res[k + 8] = std::round(1000 * TDBmatC[k]) / 1000;
+          res[k + 16] = std::round(1000 * TDBmatM[k]) / 1000;
+          res[k + 24] = std::round(1000 * TDBmatG[k]) / 1000;
       }
 
       TDBmat.clear();

@@ -47,7 +47,9 @@ T getMaxProp(ChemicalReaction &rxn, const std::string &prop) {
     for (auto atom : (*it)->atoms()) {
       T map;
       if (atom->getPropIfPresent<T>(prop, map)) {
-        if (map > max_atom) max_atom = map;
+        if (map > max_atom) {
+          max_atom = map;
+        }
       }
     }
   }
@@ -57,7 +59,9 @@ T getMaxProp(ChemicalReaction &rxn, const std::string &prop) {
     for (auto atom : (*it)->atoms()) {
       T map;
       if (atom->getPropIfPresent<T>(prop, map)) {
-        if (map > max_atom) max_atom = map;
+        if (map > max_atom) {
+          max_atom = map;
+        }
       }
     }
   }
@@ -67,7 +71,9 @@ T getMaxProp(ChemicalReaction &rxn, const std::string &prop) {
     for (auto atom : (*it)->atoms()) {
       T map;
       if (atom->getPropIfPresent<T>(prop, map)) {
-        if (map > max_atom) max_atom = map;
+        if (map > max_atom) {
+          max_atom = map;
+        }
       }
     }
   }
@@ -102,9 +108,15 @@ struct AtomInfo {
   bool NeedsRLabel() { return atom->getAtomicNum() == 0 && rlabel == 0; }
 
   unsigned int bestGuessRLabel() {
-    if (rlabel) return rlabel;
-    if (isotope) return isotope;
-    if (atomMap) return atomMap;
+    if (rlabel) {
+      return rlabel;
+    }
+    if (isotope) {
+      return isotope;
+    }
+    if (atomMap) {
+      return atomMap;
+    }
     if (dummyLabel.size()) {
       try {
         return boost::lexical_cast<unsigned int>(
@@ -118,7 +130,7 @@ struct AtomInfo {
 
   void setRLabel(unsigned int rlabel) {
     PRECONDITION(atom, "Internal error in SanitizeRxn - null atom");
-    RWMol &mol = dynamic_cast<RWMol &>(atom->getOwningMol());
+    auto &mol = dynamic_cast<RWMol &>(atom->getOwningMol());
 
     QueryAtom qatom(*atom);
     qatom.setProp(common_properties::_MolFileRLabel, rlabel);
@@ -167,7 +179,9 @@ void fixRGroups(ChemicalReaction &rxn) {
        ++it, ++templateIdx) {
     for (auto atom : (*it)->atoms()) {
       AtomInfo at(atom, templateIdx);
-      if (at.NeedsRLabel()) reactantAtomsToFix.push_back(at);
+      if (at.NeedsRLabel()) {
+        reactantAtomsToFix.push_back(at);
+      }
     }
   }
 
@@ -176,11 +190,15 @@ void fixRGroups(ChemicalReaction &rxn) {
        ++it, ++templateIdx) {
     for (auto atom : (*it)->atoms()) {
       AtomInfo at(atom, templateIdx);
-      if (at.NeedsRLabel()) productAtomsToFix.push_back(at);
+      if (at.NeedsRLabel()) {
+        productAtomsToFix.push_back(at);
+      }
     }
   }
 
-  if (!reactantAtomsToFix.size() && !productAtomsToFix.size()) return;
+  if (!reactantAtomsToFix.size() && !productAtomsToFix.size()) {
+    return;
+  }
 
   if (reactantAtomsToFix.size() > productAtomsToFix.size()) {
     std::ostringstream str;
@@ -190,7 +208,7 @@ void fixRGroups(ChemicalReaction &rxn) {
     BOOST_LOG(rdWarningLog) << str.str() << std::endl;
   }
 
-  unsigned int max_rlabel =
+  auto max_rlabel =
       getMaxProp<unsigned int>(rxn, common_properties::_MolFileRLabel);
   int max_atom_map = getMaxProp<int>(rxn, common_properties::molAtomMapNumber);
 
@@ -202,7 +220,9 @@ void fixRGroups(ChemicalReaction &rxn) {
     }
 
     BOOST_FOREACH (AtomInfo &pat, productAtomsToFix) {
-      if (!pat.atom) continue;
+      if (!pat.atom) {
+        continue;
+      }
 
       if (rat.bestGuessRLabel() == pat.bestGuessRLabel()) {
         // if the atomMaps don't match, this is bad, no atomMap is ok(==0)
@@ -252,7 +272,9 @@ void fixAtomMaps(ChemicalReaction &rxn) {
     }
   }
 
-  if (!potential_mappings.size()) return;  // everything is ok!
+  if (!potential_mappings.size()) {
+    return;  // everything is ok!
+  }
 
   templateIdx = 0;
   for (auto it = rxn.beginProductTemplates(); it != rxn.endProductTemplates();
@@ -278,10 +300,10 @@ void fixReactantTemplateAromaticity(ChemicalReaction &rxn) {
   unsigned int ops;
   for (auto it = rxn.beginReactantTemplates(); it != rxn.endReactantTemplates();
        ++it) {
-    RWMol *rw = dynamic_cast<RWMol *>(it->get());
-    if (rw)
+    auto *rw = dynamic_cast<RWMol *>(it->get());
+    if (rw) {
       sanitizeMol(*rw, ops, MolOps::SANITIZE_SETAROMATICITY);
-    else
+    } else
       PRECONDITION(rw, "Oops, not really a RWMol?");
   }
 }
@@ -336,7 +358,7 @@ void fixHs(ChemicalReaction &rxn) {
   const bool mergeUnmappedOnly = true;
   for (auto it = rxn.beginReactantTemplates(); it != rxn.endReactantTemplates();
        ++it) {
-    RWMol *rw = dynamic_cast<RWMol *>(it->get());
+    auto *rw = dynamic_cast<RWMol *>(it->get());
     if (rw) {
       MolOps::mergeQueryHs(*rw, mergeUnmappedOnly);
     } else
@@ -348,10 +370,10 @@ void adjustTemplates(ChemicalReaction &rxn,
                      const MolOps::AdjustQueryParameters &params) {
   for (auto it = rxn.beginReactantTemplates(); it != rxn.endReactantTemplates();
        ++it) {
-    RWMol *rw = dynamic_cast<RWMol *>(it->get());
-    if (rw)
+    auto *rw = dynamic_cast<RWMol *>(it->get());
+    if (rw) {
       adjustQueryProperties(*rw, &params);
-    else
+    } else
       PRECONDITION(rw, "Oops, not really a RWMol?");
   }
 }

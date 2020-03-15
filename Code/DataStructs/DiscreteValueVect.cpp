@@ -92,8 +92,8 @@ unsigned int computeL1Norm(const DiscreteValueVect &v1,
   if (valType <= DiscreteValueVect::EIGHTBITVALUE) {
     DiscreteDistMat *dmat = getDiscreteDistMat();
 
-    unsigned char *cd1 = (unsigned char *)(data1);
-    unsigned char *cd2 = (unsigned char *)(data2);
+    auto *cd1 = (unsigned char *)(data1);
+    auto *cd2 = (unsigned char *)(data2);
     const unsigned char *cend = cd1 + (v1.getNumInts() * 4);
     while (cd1 != cend) {
       if (*cd1 == *cd2) {

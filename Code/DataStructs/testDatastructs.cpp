@@ -185,7 +185,9 @@ void ProbeTest(T &arg) {
   T t1(sz), t2(sz);
   for (int i = 0; i < sz; i += 2) {
     t1.setBit(i);
-    if (i < 3 * sz / 4) t2.setBit(i);
+    if (i < 3 * sz / 4) {
+      t2.setBit(i);
+    }
   }
   std::string pkl = t1.toString();
   TEST_ASSERT(AllProbeBitsMatch(t1, pkl));

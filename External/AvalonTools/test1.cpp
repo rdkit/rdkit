@@ -201,7 +201,7 @@ void testRDK151() {
 
   {
     std::string tSmi = "C[C@H](F)Cl";
-    ROMol *m = static_cast<ROMol *>(SmilesToMol(tSmi));
+    auto *m = static_cast<ROMol *>(SmilesToMol(tSmi));
     TEST_ASSERT(m);
     std::string smi = AvalonTools::getCanonSmiles(tSmi, true);
     CHECK_INVARIANT(smi == tSmi, smi + "!=" + tSmi);

@@ -35,7 +35,9 @@ RDGeom::Point3D MolChemicalFeature::getPos() const {
 RDGeom::Point3D MolChemicalFeature::getPos(int confId) const {
   PRECONDITION(dp_mol, "bad molecule");
   PRECONDITION(dp_mol->getNumConformers(), "molecule has no conformers");
-  if (confId == -1) confId = (*dp_mol->beginConformers())->getId();
+  if (confId == -1) {
+    confId = (*dp_mol->beginConformers())->getId();
+  }
 
   // -------------
   // Check to see if we've got the value cached:

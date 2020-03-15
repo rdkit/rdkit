@@ -54,8 +54,12 @@ python::object bondRingFamilies(const RingInfo *self) {
 void addRing(RingInfo *self,python::object atomRing, python::object bondRing){
   unsigned int nAts = python::extract<unsigned int>(atomRing.attr("__len__")());
   unsigned int nBnds = python::extract<unsigned int>(bondRing.attr("__len__")());
-  if(nAts != nBnds) throw_value_error("list sizes must match");
-  if(!self->isInitialized()) self->initialize();
+  if (nAts != nBnds) {
+    throw_value_error("list sizes must match");
+  }
+  if (!self->isInitialized()) {
+    self->initialize();
+  }
   INT_VECT aring(nAts);
   INT_VECT bring(nAts);
   for (unsigned int i = 0; i < nAts; ++i) {
