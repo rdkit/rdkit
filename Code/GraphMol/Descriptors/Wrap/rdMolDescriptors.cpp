@@ -118,7 +118,7 @@ python::tuple calcCrippenDescriptors(const RDKit::ROMol &mol,
 
 #ifdef RDK_BUILD_DESCRIPTORS3D
 
-python::tuple calcCoulombMat(RDKit::ROMol &mol, int confId) {
+python::tuple calcCoulombMat(const RDKit::ROMol &mol, int confId) {
   std::vector<std::vector<double>> results;
   RDKit::Descriptors::CoulombMat(mol, results, confId);
   python::list result;
@@ -1558,7 +1558,7 @@ BOOST_PYTHON_MODULE(rdMolDescriptors) {
 #ifdef RDK_BUILD_DESCRIPTORS3D
   python::scope().attr("_CalcCoulombMat_version") =
       RDKit::Descriptors::CoulombMatVersion;
-  docString = "Returns severals Coulomb randomized Matrixes";
+  docString = "Returns severals Coulomb randomized matrixes";
   python::def("CalcCoulombMat", calcCoulombMat,
               (python::arg("mol"), python::arg("confId") = -1),
               docString.c_str());
@@ -1728,7 +1728,7 @@ BOOST_PYTHON_MODULE(rdMolDescriptors) {
   docString =
       "Returns a 2D BCUT (eigen value hi, eigenvalue low) given the molecule "
       "and the specified atom props\n"
-      " there length ot atom_props must a list or tuple of floats equal in "
+      " atom_props must be a list or tuple of floats equal in "
       "size to the number of atoms in mol";
 
   python::def("BCUT2D", BCUT2D_list,
@@ -1741,7 +1741,7 @@ BOOST_PYTHON_MODULE(rdMolDescriptors) {
   docString =
       "Returns a 2D BCUT (eigen value high, eigen value low) given the "
       "molecule and the specified atom prop name\n"
-      "atom_propname must exist on each aton and be convertable to a float";
+      "atom_propname must exist on each aton and be convertible to a float";
   python::def("BCUT2D", BCUT_atomprops,
               (python::arg("mol"), python::arg("atom_propname")),
               docString.c_str());
