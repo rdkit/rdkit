@@ -88,15 +88,13 @@ if(RDK_BUILD_COORDGEN_SUPPORT)
     rdkit_library(coordgen ${CGSOURCES} SHARED LINK_LIBRARIES ${maeparser_LIBRARIES})
     install(TARGETS coordgen DESTINATION ${RDKit_LibDir})
     set(coordgen_LIBRARIES coordgen)
-    set(coordgen_TEMPLATE_FILE ${COORDGEN_DIR}/templates.mae )
 
   endif(COORDGEN_FORCE_BUILD OR (NOT coordgen_FOUND))
 
   include_directories(${maeparser_INCLUDE_DIRS})
   include_directories(${coordgen_INCLUDE_DIRS})
 
-  install(FILES ${coordgen_TEMPLATE_FILE}
-          DESTINATION ${RDKit_ShareDir}/Data
+  install(FILES DESTINATION ${RDKit_ShareDir}/Data
           COMPONENT data)
 
   set(RDK_COORDGEN_LIBS MolAlign ${coordgen_LIBRARIES} ${maeparser_LIBRARIES} ${Boost_LIBRARIES}
