@@ -1,5 +1,14 @@
-#define CATCH_CONFIG_MAIN  // This tells Catch to provide a main() - only do
-                           // this in one cpp file
+//
+//
+//  Copyright (C) 2018-2020 Greg Landrum and T5 Informatics GmbH
+//
+//   @@ All Rights Reserved @@
+//  This file is part of the RDKit.
+//  The contents are covered by the terms of the BSD license
+//  which is included in the file license.txt, found at the root
+//  of the RDKit source tree.
+//
+
 #include "catch.hpp"
 
 #include <GraphMol/RDKitBase.h>
@@ -256,7 +265,6 @@ TEST_CASE("github #908: AddHs() using 3D coordinates with 2D conformations",
   }
 }
 
-#endif
 TEST_CASE(
     "github #2437: Canon::rankMolAtoms results in crossed double bonds in "
     "rings",
@@ -294,10 +302,10 @@ M  END
   Mrv1824 05081910082D          
 
   4  4  0  0  0  0            999 V2000
-    6.9312   -8.6277    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
     6.9312   -9.4527    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
     7.7562   -8.6277    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
     7.7562   -9.4527    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    6.9312   -8.6277    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
   1  2  1  0  0  0  0
   1  3  1  0  0  0  0
   3  4  1  0  0  0  0
@@ -858,5 +866,547 @@ M  END
     REQUIRE(m);
     CHECK(m->getAtomWithIdx(13)->getSymbol() == "Bi");
     CHECK(m->getAtomWithIdx(13)->getNumImplicitHs() == 0);
+  }
+}
+
+TEST_CASE("RemoveHsParameters", "[molops]") {
+  SmilesParserParams smilesPs;
+  smilesPs.removeHs = false;
+
+  SECTION("H-H") {
+    std::unique_ptr<RWMol> m{SmilesToMol("[H][H].[H]O[H]", smilesPs)};
+    REQUIRE(m);
+    CHECK(m->getNumAtoms() == 5);
+    {
+      RWMol cp(*m);
+      MolOps::removeHs(cp);
+      CHECK(cp.getNumAtoms() == 3);
+    }
+    {
+      MolOps::RemoveHsParameters ps;
+      RWMol cp(*m);
+      MolOps::removeHs(cp, ps);
+      CHECK(cp.getNumAtoms() == 3);
+    }
+    {
+      MolOps::RemoveHsParameters ps;
+      ps.removeOnlyHNeighbors = true;
+      RWMol cp(*m);
+      MolOps::removeHs(cp, ps);
+      CHECK(cp.getNumAtoms() == 1);
+    }
+  }
+
+  SECTION("dummies") {
+    std::unique_ptr<RWMol> m{SmilesToMol("[H][*]O[H]", smilesPs)};
+    REQUIRE(m);
+    CHECK(m->getNumAtoms() == 4);
+    {
+      RWMol cp(*m);
+      MolOps::removeHs(cp);
+      CHECK(cp.getNumAtoms() == 3);
+    }
+    {
+      MolOps::RemoveHsParameters ps;
+      RWMol cp(*m);
+      MolOps::removeHs(cp, ps);
+      CHECK(cp.getNumAtoms() == 3);
+    }
+    {
+      MolOps::RemoveHsParameters ps;
+      ps.removeDummyNeighbors = true;
+      RWMol cp(*m);
+      MolOps::removeHs(cp, ps);
+      CHECK(cp.getNumAtoms() == 2);
+    }
+  }
+
+  SECTION("chiralHs") {
+    std::unique_ptr<RWMol> m{SmilesToMol("[C@]12([H])CCC1CO2", smilesPs)};
+    REQUIRE(m);
+    CHECK(m->getNumAtoms() == 7);
+    // artificial wedging since we don't have a conformer
+    m->getBondBetweenAtoms(0, 1)->setBondDir(Bond::BEGINWEDGE);
+
+    {
+      RWMol cp(*m);
+      MolOps::removeHs(cp);
+      CHECK(cp.getNumAtoms() == 6);
+    }
+    {
+      MolOps::RemoveHsParameters ps;
+      RWMol cp(*m);
+      MolOps::removeHs(cp, ps);
+      CHECK(cp.getNumAtoms() == 6);
+    }
+    {
+      MolOps::RemoveHsParameters ps;
+      ps.removeWithWedgedBond = false;
+      RWMol cp(*m);
+      MolOps::removeHs(cp, ps);
+      CHECK(cp.getNumAtoms() == 7);
+    }
+  }
+
+  SECTION("degree zero") {
+    std::unique_ptr<RWMol> m{SmilesToMol("[F-].[H+]", smilesPs)};
+    REQUIRE(m);
+    CHECK(m->getNumAtoms() == 2);
+    {
+      RWMol cp(*m);
+      MolOps::removeHs(cp);
+      CHECK(cp.getNumAtoms() == 2);
+    }
+    {
+      MolOps::RemoveHsParameters ps;
+      RWMol cp(*m);
+      MolOps::removeHs(cp, ps);
+      CHECK(cp.getNumAtoms() == 2);
+    }
+    {
+      MolOps::RemoveHsParameters ps;
+      ps.removeDegreeZero = true;
+      RWMol cp(*m);
+      MolOps::removeHs(cp, ps);
+      CHECK(cp.getNumAtoms() == 1);
+    }
+  }
+
+  SECTION("isotopes") {
+    std::unique_ptr<RWMol> m{SmilesToMol("F[2H]", smilesPs)};
+    REQUIRE(m);
+    CHECK(m->getNumAtoms() == 2);
+    {
+      RWMol cp(*m);
+      MolOps::removeHs(cp);
+      CHECK(cp.getNumAtoms() == 2);
+    }
+    {
+      MolOps::RemoveHsParameters ps;
+      RWMol cp(*m);
+      MolOps::removeHs(cp, ps);
+      CHECK(cp.getNumAtoms() == 2);
+    }
+    {
+      MolOps::RemoveHsParameters ps;
+      ps.removeIsotopes = true;
+      RWMol cp(*m);
+      MolOps::removeHs(cp, ps);
+      CHECK(cp.getNumAtoms() == 1);
+    }
+  }
+
+  SECTION("defining bond stereo") {
+    std::unique_ptr<RWMol> m{SmilesToMol("F/C=N/[H]", smilesPs)};
+    REQUIRE(m);
+    CHECK(m->getNumAtoms() == 4);
+    {
+      RWMol cp(*m);
+      MolOps::removeHs(cp);
+      CHECK(cp.getNumAtoms() == 4);
+    }
+    {
+      MolOps::RemoveHsParameters ps;
+      RWMol cp(*m);
+      MolOps::removeHs(cp, ps);
+      CHECK(cp.getNumAtoms() == 4);
+    }
+    {
+      MolOps::RemoveHsParameters ps;
+      ps.removeDefiningBondStereo = true;
+      RWMol cp(*m);
+      MolOps::removeHs(cp, ps);
+      CHECK(cp.getNumAtoms() == 3);
+    }
+  }
+  SECTION("Query atoms") {
+    std::unique_ptr<RWMol> m{SmartsToMol("O[#1]")};
+    REQUIRE(m);
+    CHECK(m->getNumAtoms() == 2);
+    {
+      RWMol cp(*m);
+      MolOps::removeHs(cp);
+      CHECK(cp.getNumAtoms() == 2);
+    }
+    {
+      MolOps::RemoveHsParameters ps;
+      RWMol cp(*m);
+      MolOps::removeHs(cp, ps);
+      CHECK(cp.getNumAtoms() == 2);
+    }
+    {
+      MolOps::RemoveHsParameters ps;
+      ps.removeWithQuery = true;
+      RWMol cp(*m);
+      MolOps::removeHs(cp, ps);
+      CHECK(cp.getNumAtoms() == 1);
+    }
+  }
+  SECTION("higher degree") {
+    // this is a silly example
+    std::unique_ptr<RWMol> m{SmilesToMol("F[H-]F", smilesPs)};
+    REQUIRE(m);
+    CHECK(m->getNumAtoms() == 3);
+    {
+      RWMol cp(*m);
+      MolOps::removeHs(cp);
+      CHECK(cp.getNumAtoms() == 3);
+    }
+    {
+      MolOps::RemoveHsParameters ps;
+      RWMol cp(*m);
+      MolOps::removeHs(cp, ps);
+      CHECK(cp.getNumAtoms() == 3);
+    }
+    {
+      MolOps::RemoveHsParameters ps;
+      ps.removeHigherDegrees = true;
+      RWMol cp(*m);
+      MolOps::removeHs(cp, ps);
+      CHECK(cp.getNumAtoms() == 2);
+    }
+  }
+  SECTION("mapped Hs") {
+    std::unique_ptr<RWMol> m{SmilesToMol("[H:1]O[H]", smilesPs)};
+    REQUIRE(m);
+    CHECK(m->getNumAtoms() == 3);
+    {
+      RWMol cp(*m);
+      MolOps::removeHs(cp);
+      CHECK(cp.getNumAtoms() == 1);
+    }
+    {
+      MolOps::RemoveHsParameters ps;
+      ps.removeMapped = false;
+      RWMol cp(*m);
+      MolOps::removeHs(cp, ps);
+      CHECK(cp.getNumAtoms() == 2);
+    }
+  }
+  SECTION("allHs") {
+    std::unique_ptr<RWMol> m{SmilesToMol(
+        "[C@]12([H])CCC1CO2.[H+].F[H-]F.[H][H].[H]*.F/C=C/[H]", smilesPs)};
+    REQUIRE(m);
+    // artificial wedging since we don't have a conformer
+    m->getBondBetweenAtoms(0, 1)->setBondDir(Bond::BEGINWEDGE);
+    RWMol cp(*m);
+    MolOps::removeAllHs(cp);
+    for (auto atom : cp.atoms()) {
+      CHECK(atom->getAtomicNum() != 1);
+    }
+  }
+  SECTION("allHs2") {
+    std::unique_ptr<ROMol> m{SmilesToMol(
+        "[C@]12([H])CCC1CO2.[H+].F[H-]F.[H][H].[H]*.F/C=C/[H]", smilesPs)};
+    REQUIRE(m);
+    // artificial wedging since we don't have a conformer
+    m->getBondBetweenAtoms(0, 1)->setBondDir(Bond::BEGINWEDGE);
+    std::unique_ptr<ROMol> cp{MolOps::removeAllHs(*m)};
+    for (auto atom : cp->atoms()) {
+      CHECK(atom->getAtomicNum() != 1);
+    }
+  }
+}
+#endif
+TEST_CASE("github #2895: acepentalene aromaticity perception ",
+          "[molops,bug,aromaticity]") {
+  SECTION("acepentalene") {
+    std::unique_ptr<RWMol> m{SmilesToMol("C1=CC2=CC=C3C2=C1C=C3")};
+    REQUIRE(m);
+    auto smi = MolToSmiles(*m);
+    CHECK(smi == "C1=CC2=C3C1=CC=C3C=C2");
+  }
+}
+
+TEST_CASE("handling of bondStereoCare in updateQueryProperties") {
+  SECTION("fully specified") {
+    auto mol = R"CTAB(basic test
+  Mrv1810 01292006422D          
+
+  0  0  0     0  0            999 V3000
+M  V30 BEGIN CTAB
+M  V30 COUNTS 4 3 0 0 0
+M  V30 BEGIN ATOM
+M  V30 1 C -7.0316 2.0632 0 0 STBOX=1
+M  V30 2 C -5.6979 2.8332 0 0 STBOX=1
+M  V30 3 O -4.3642 2.0632 0 0
+M  V30 4 F -8.3653 2.8332 0 0
+M  V30 END ATOM
+M  V30 BEGIN BOND
+M  V30 1 1 2 3
+M  V30 2 1 1 4
+M  V30 3 2 1 2 STBOX=1
+M  V30 END BOND
+M  V30 END CTAB
+M  END
+)CTAB"_ctab;
+    REQUIRE(mol);
+    REQUIRE(mol->getBondBetweenAtoms(0, 1));
+    CHECK(mol->getBondBetweenAtoms(0, 1)->getStereo() ==
+          Bond::BondStereo::STEREOE);
+    MolOps::AdjustQueryParameters ps;
+    ps.useStereoCareForBonds = true;
+    MolOps::adjustQueryProperties(*mol, &ps);
+    CHECK(mol->getBondBetweenAtoms(0, 1)->getStereo() ==
+          Bond::BondStereo::STEREOE);
+  }
+  SECTION("fully unspecified") {
+    auto mol = R"CTAB(basic test
+  Mrv1810 01292006422D          
+
+  0  0  0     0  0            999 V3000
+M  V30 BEGIN CTAB
+M  V30 COUNTS 4 3 0 0 0
+M  V30 BEGIN ATOM
+M  V30 1 C -7.0316 2.0632 0 0
+M  V30 2 C -5.6979 2.8332 0 0
+M  V30 3 O -4.3642 2.0632 0 0
+M  V30 4 F -8.3653 2.8332 0 0
+M  V30 END ATOM
+M  V30 BEGIN BOND
+M  V30 1 1 2 3
+M  V30 2 1 1 4
+M  V30 3 2 1 2
+M  V30 END BOND
+M  V30 END CTAB
+M  END
+)CTAB"_ctab;
+    REQUIRE(mol);
+    REQUIRE(mol->getBondBetweenAtoms(0, 1));
+    CHECK(mol->getBondBetweenAtoms(0, 1)->getStereo() ==
+          Bond::BondStereo::STEREOE);
+    MolOps::AdjustQueryParameters ps;
+    ps.useStereoCareForBonds = true;
+    MolOps::adjustQueryProperties(*mol, &ps);
+    CHECK(mol->getBondBetweenAtoms(0, 1)->getStereo() ==
+          Bond::BondStereo::STEREONONE);
+  }
+  SECTION("partially unspecified") {
+    std::vector<std::string> mbs = {R"CTAB(keep
+  Mrv1810 01292006422D          
+
+  0  0  0     0  0            999 V3000
+M  V30 BEGIN CTAB
+M  V30 COUNTS 4 3 0 0 0
+M  V30 BEGIN ATOM
+M  V30 1 C -7.0316 2.0632 0 0 STBOX=1
+M  V30 2 C -5.6979 2.8332 0 0 STBOX=1
+M  V30 3 O -4.3642 2.0632 0 0
+M  V30 4 F -8.3653 2.8332 0 0
+M  V30 END ATOM
+M  V30 BEGIN BOND
+M  V30 1 1 2 3
+M  V30 2 1 1 4
+M  V30 3 2 1 2
+M  V30 END BOND
+M  V30 END CTAB
+M  END
+)CTAB",
+                                    R"CTAB(keep
+  Mrv1810 01292006422D          
+
+  0  0  0     0  0            999 V3000
+M  V30 BEGIN CTAB
+M  V30 COUNTS 4 3 0 0 0
+M  V30 BEGIN ATOM
+M  V30 1 C -7.0316 2.0632 0 0
+M  V30 2 C -5.6979 2.8332 0 0
+M  V30 3 O -4.3642 2.0632 0 0
+M  V30 4 F -8.3653 2.8332 0 0
+M  V30 END ATOM
+M  V30 BEGIN BOND
+M  V30 1 1 2 3
+M  V30 2 1 1 4
+M  V30 3 2 1 2 STBOX=1
+M  V30 END BOND
+M  V30 END CTAB
+M  END
+)CTAB",
+                                    R"CTAB(remove
+  Mrv1810 01292006422D          
+
+  0  0  0     0  0            999 V3000
+M  V30 BEGIN CTAB
+M  V30 COUNTS 4 3 0 0 0
+M  V30 BEGIN ATOM
+M  V30 1 C -7.0316 2.0632 0 0
+M  V30 2 C -5.6979 2.8332 0 0
+M  V30 3 O -4.3642 2.0632 0 0
+M  V30 4 F -8.3653 2.8332 0 0
+M  V30 END ATOM
+M  V30 BEGIN BOND
+M  V30 1 1 2 3
+M  V30 2 1 1 4
+M  V30 3 2 1 2 STBOX=0
+M  V30 END BOND
+M  V30 END CTAB
+M  END
+)CTAB",
+                                    R"CTAB(remove
+  Mrv1810 01292006422D          
+
+  0  0  0     0  0            999 V3000
+M  V30 BEGIN CTAB
+M  V30 COUNTS 4 3 0 0 0
+M  V30 BEGIN ATOM
+M  V30 1 C -7.0316 2.0632 0 0 
+M  V30 2 C -5.6979 2.8332 0 0 STBOX=1
+M  V30 3 O -4.3642 2.0632 0 0
+M  V30 4 F -8.3653 2.8332 0 0
+M  V30 END ATOM
+M  V30 BEGIN BOND
+M  V30 1 1 2 3
+M  V30 2 1 1 4
+M  V30 3 2 1 2
+M  V30 END BOND
+M  V30 END CTAB
+M  END
+)CTAB",
+                                    R"CTAB(remove
+  Mrv1810 01292006422D          
+
+  0  0  0     0  0            999 V3000
+M  V30 BEGIN CTAB
+M  V30 COUNTS 4 3 0 0 0
+M  V30 BEGIN ATOM
+M  V30 1 C -7.0316 2.0632 0 0 STBOX=1
+M  V30 2 C -5.6979 2.8332 0 0
+M  V30 3 O -4.3642 2.0632 0 0
+M  V30 4 F -8.3653 2.8332 0 0
+M  V30 END ATOM
+M  V30 BEGIN BOND
+M  V30 1 1 2 3
+M  V30 2 1 1 4
+M  V30 3 2 1 2
+M  V30 END BOND
+M  V30 END CTAB
+M  END
+)CTAB"};
+    for (const auto &mb : mbs) {
+      std::unique_ptr<RWMol> mol{MolBlockToMol(mb)};
+      REQUIRE(mol);
+      REQUIRE(mol->getBondBetweenAtoms(0, 1));
+      CHECK(mol->getBondBetweenAtoms(0, 1)->getStereo() ==
+            Bond::BondStereo::STEREOE);
+      MolOps::AdjustQueryParameters ps;
+      ps.useStereoCareForBonds = true;
+      MolOps::adjustQueryProperties(*mol, &ps);
+      if (mol->getProp<std::string>(common_properties::_Name) == "keep") {
+        CHECK(mol->getBondBetweenAtoms(0, 1)->getStereo() ==
+              Bond::BondStereo::STEREOE);
+      } else {
+        CHECK(mol->getBondBetweenAtoms(0, 1)->getStereo() ==
+              Bond::BondStereo::STEREONONE);
+      }
+    }
+  }
+  SECTION("V2000") {
+    auto mol = R"CTAB(basic test
+  Mrv1810 01292015042D          
+
+  4  3  0  0  0  0            999 V2000
+   -3.7669    1.1053    0.0000 C   0  0  0  0  1  0  0  0  0  0  0  0
+   -3.0524    1.5178    0.0000 C   0  0  0  0  1  0  0  0  0  0  0  0
+   -2.3380    1.1053    0.0000 O   0  0  0  0  0  0  0  0  0  0  0  0
+   -4.4814    1.5178    0.0000 F   0  0  0  0  0  0  0  0  0  0  0  0
+  2  3  1  0  0  0  0
+  1  4  1  0  0  0  0
+  1  2  2  0  0  0  0
+M  END
+)CTAB"_ctab;
+    REQUIRE(mol);
+    CHECK(mol->getAtomWithIdx(0)->hasProp(common_properties::molStereoCare));
+    CHECK(mol->getAtomWithIdx(1)->hasProp(common_properties::molStereoCare));
+    REQUIRE(mol->getBondBetweenAtoms(0, 1));
+    CHECK(mol->getBondBetweenAtoms(0, 1)->getStereo() ==
+          Bond::BondStereo::STEREOE);
+    // property added by the CTAB parser:
+    CHECK(mol->getBondBetweenAtoms(0, 1)->hasProp(
+        common_properties::molStereoCare));
+    MolOps::AdjustQueryParameters ps;
+    ps.useStereoCareForBonds = true;
+    MolOps::adjustQueryProperties(*mol, &ps);
+    CHECK(mol->getBondBetweenAtoms(0, 1)->getStereo() ==
+          Bond::BondStereo::STEREOE);
+  }
+  SECTION("molecule from SMILES") {
+    auto mol = "C/C=C/C"_smiles;
+    REQUIRE(mol);
+    REQUIRE(mol->getBondBetweenAtoms(2, 1));
+    CHECK(mol->getBondBetweenAtoms(2, 1)->getStereo() ==
+          Bond::BondStereo::STEREOE);
+    MolOps::AdjustQueryParameters ps;
+    ps.useStereoCareForBonds = true;
+    // since stereoCare is not set on the bond from SMILES,
+    // stereochem will be removed:
+    {
+      RWMol molcp(*mol);
+      MolOps::adjustQueryProperties(molcp, &ps);
+      CHECK(molcp.getBondBetweenAtoms(2, 1)->getStereo() ==
+            Bond::BondStereo::STEREONONE);
+    }
+    // but we can preserve it by setting the property:
+    {
+      RWMol molcp(*mol);
+      molcp.getBondBetweenAtoms(2, 1)->setProp(common_properties::molStereoCare,
+                                               1);
+      MolOps::adjustQueryProperties(molcp, &ps);
+      CHECK(molcp.getBondBetweenAtoms(2, 1)->getStereo() ==
+            Bond::BondStereo::STEREOE);
+    }
+  }
+}
+
+TEST_CASE("updateQueryParameters from JSON") {
+  SECTION("basics") {
+    MolOps::AdjustQueryParameters ps;
+    CHECK(ps.makeAtomsGeneric == false);
+    CHECK(ps.makeBondsGeneric == false);
+    CHECK(ps.makeBondsGenericFlags == MolOps::ADJUST_IGNORENONE);
+
+    std::string json = R"JSON({"makeAtomsGeneric":true})JSON";
+    MolOps::parseAdjustQueryParametersFromJSON(ps, json);
+
+    CHECK(ps.makeAtomsGeneric == true);
+    CHECK(ps.makeBondsGeneric == false);
+    // the parsing updates the parameters, it doesn't replace them:
+
+    json = R"JSON({"makeBondsGeneric":true,
+      "makeBondsGenericFlags":"IGNOREDUMMIES|IGNORECHAINS"})JSON";
+    MolOps::parseAdjustQueryParametersFromJSON(ps, json);
+
+    CHECK(ps.makeAtomsGeneric == true);
+    CHECK(ps.makeBondsGeneric == true);
+    CHECK(ps.makeBondsGenericFlags ==
+          (MolOps::ADJUST_IGNOREDUMMIES | MolOps::ADJUST_IGNORECHAINS));
+  }
+  SECTION("useStereoCare") {
+    MolOps::AdjustQueryParameters ps;
+    CHECK(ps.useStereoCareForBonds == false);
+
+    std::string json = R"JSON({"useStereoCareForBonds":true})JSON";
+    MolOps::parseAdjustQueryParametersFromJSON(ps, json);
+    CHECK(ps.useStereoCareForBonds == true);
+    json = R"JSON({"useStereoCareForBonds":false})JSON";
+    MolOps::parseAdjustQueryParametersFromJSON(ps, json);
+    CHECK(ps.useStereoCareForBonds == false);
+  }
+  SECTION("bogus contents") {
+    MolOps::AdjustQueryParameters ps;
+    CHECK(ps.adjustDegree == true);
+    CHECK(ps.adjustDegreeFlags ==
+          (MolOps::ADJUST_IGNOREDUMMIES | MolOps::ADJUST_IGNORECHAINS));
+
+    std::string json = R"JSON({"bogosity":true})JSON";
+    MolOps::parseAdjustQueryParametersFromJSON(ps, json);
+    CHECK(ps.adjustDegree == true);
+
+    json = R"JSON({"adjustDegree":"foo"})JSON";
+    MolOps::parseAdjustQueryParametersFromJSON(ps, json);
+    CHECK(ps.adjustDegree == true);
+
+    json = R"JSON({"adjustDegreeFlags":"IGNORENONE|bogus"})JSON";
+    // clang-format off
+    CHECK_THROWS_AS(MolOps::parseAdjustQueryParametersFromJSON(ps, json),ValueErrorException);
   }
 }

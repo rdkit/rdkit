@@ -44,7 +44,9 @@ void ptreeToMol(RWMol *mol, const pt::ptree &molE) {
                          atE.second.get<double>("<xmlattr>.y", 0.0),
                          atE.second.get<double>("<xmlattr>.z", 0.0));
       pts.push_back(pt);
-      if (atE.second.get<std::string>("<xmlattr>.z", "0") != "0") is3D = true;
+      if (atE.second.get<std::string>("<xmlattr>.z", "0") != "0") {
+        is3D = true;
+      }
     }
   }
   for (const auto &atE : molE) {
@@ -63,7 +65,7 @@ void ptreeToMol(RWMol *mol, const pt::ptree &molE) {
       mol->addBond(bond, takeOwnership);
     }
   }
-  Conformer *conf = new Conformer(mol->getNumAtoms());
+  auto *conf = new Conformer(mol->getNumAtoms());
   for (unsigned int i = 0; i < mol->getNumAtoms(); ++i) {
     conf->setAtomPos(i, pts[i]);
   }

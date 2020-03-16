@@ -93,7 +93,6 @@ class RDKIT_CHEMREACTIONS_EXPORT RandomSampleAllBBsStrategy
                           const EnumerationTypes::BBS &) {
     m_distributions.clear();
     m_permutation.resize(m_permutationSizes.size());
-    m_permutationSizes = m_permutationSizes;
     m_offset = 0;
     m_maxoffset =
         *std::max_element(m_permutationSizes.begin(), m_permutationSizes.end());

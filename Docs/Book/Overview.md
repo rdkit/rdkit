@@ -44,7 +44,7 @@
 - [KNIME](https://www.knime.com/rdkit): Workflow and analytics tool
 - [PostgreSQL](https://github.com/rdkit/rdkit/blob/master/Docs/Book/Cartridge.rst): Extensible relational database
 - [Django](http://django-rdkit.readthedocs.org/en/latest/): "The web framework for perfectionists with deadlines"
-- [SQLite](https://github.com/rvianello/chemicalite) - "The most used database engine in the world"
+- [SQLite](https://github.com/rvianello/chemicalite): "The most used database engine in the world"
 - [Lucene](https://github.com/rdkit/org.rdkit.lucene): Text-search engine [1](#footnote1)
 
 ## Usage by other open-source projects

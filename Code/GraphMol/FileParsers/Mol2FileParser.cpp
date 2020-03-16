@@ -213,7 +213,7 @@ void guessFormalCharges(RWMol *res) {
       // sometimes things like benzimidazoles can have only one bond of the
       // imidazole ring as aromatic and the other one as a single bond ...
       // catch that this way - see also the trick from GL
-      int expVal = static_cast<int>(round(accum + 0.1));
+      int expVal = static_cast<int>(std::round(accum + 0.1));
       const INT_VECT &valens =
           PeriodicTable::getTable()->getValenceList(at->getAtomicNum());
       INT_VECT_CI vi;
@@ -227,10 +227,11 @@ void guessFormalCharges(RWMol *res) {
       int nElectrons =
           PeriodicTable::getTable()->getNouterElecs(at->getAtomicNum());
       int assignChg;
-      if (nElectrons >= 4)
+      if (nElectrons >= 4) {
         assignChg = expVal - (*valens.begin());
-      else
+      } else {
         assignChg = (*valens.begin()) - expVal;
+      }
       if (assignChg > 0 && nElectrons >= 4) {
         for (vi = valens.begin(); vi != valens.end(); ++vi) {
           // Since we do this only for nocharged atoms we can get away without

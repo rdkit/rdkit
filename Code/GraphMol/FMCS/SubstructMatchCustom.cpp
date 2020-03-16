@@ -39,8 +39,9 @@ class MolMatchFinalCheckFunctor {
 
   bool operator()(const boost::detail::node_id c1[],
                   const boost::detail::node_id c2[]) const {
-    if ((unsigned)c1[0] >= boost::num_vertices(QueryTopology))
+    if ((unsigned)c1[0] >= boost::num_vertices(QueryTopology)) {
       return false;  // invalid index - match failed, see v2f implementation
+    }
     MCSFinalMatchCheckFunction compare =
         Parameters ? Parameters->FinalMatchChecker : nullptr;
     return compare ? compare(c1, c2, d_query, QueryTopology, d_mol,
@@ -87,8 +88,9 @@ bool SubstructMatchCustomTable(const FMCS::Graph& target, const ROMol& mol,
                                const MatchTable& bondMatchTable,
                                const MCSParameters* p, match_V_t* match) {
   if (query.m_vertices.size() > target.m_vertices.size()  // query > target
-      || query.m_edges.size() > target.m_edges.size())
+      || query.m_edges.size() > target.m_edges.size()) {
     return false;
+  }
 
   MolMatchFinalCheckFunctor mc(query, target, querySrc, mol, p);
 
@@ -96,7 +98,9 @@ bool SubstructMatchCustomTable(const FMCS::Graph& target, const ROMol& mol,
   BondTableCompareFunctor bc(query, target, bondMatchTable);
 
   match_V_t dummy_match;
-  if (!match) match = &dummy_match;
+  if (!match) {
+    match = &dummy_match;
+  }
   return boost::vf2(query, target, ac, bc, mc, *match);
 }
 
@@ -179,7 +183,9 @@ bool SubstructMatchCustom(
                                ud);
 
   match_V_t dummy_match;
-  if (!match) match = &dummy_match;
+  if (!match) {
+    match = &dummy_match;
+  }
   return boost::vf2(query, target, atomLabeler, bondLabeler, matchChecker,
                     *match);
 }

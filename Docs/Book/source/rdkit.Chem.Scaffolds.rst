@@ -7,7 +7,7 @@ Submodules
 .. toctree::
 
    rdkit.Chem.Scaffolds.MurckoScaffold
-   rdkit.Chem.Scaffolds.ScaffoldTree
+   rdkit.Chem.Scaffolds.rdScaffoldNetwork
 
 Module contents
 ---------------

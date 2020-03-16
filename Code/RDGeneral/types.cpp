@@ -103,6 +103,7 @@ const std::string molFileAlias = "molFileAlias";
 const std::string molFileValue = "molFileValue";
 const std::string molInversionFlag = "molInversionFlag";
 const std::string molParity = "molParity";
+const std::string molStereoCare = "molStereoCare";
 const std::string molRxnComponent = "molRxnComponent";
 const std::string molRxnRole = "molRxnRole";
 const std::string molTotValence = "molTotValence";
@@ -112,6 +113,14 @@ const std::string ringMembership = "ringMembership";
 const std::string smilesSymbol = "smilesSymbol";
 const std::string atomLabel = "atomLabel";
 const std::string internalRgroupSmiles = "internalRgroupSmiles";
+
+const std::string molSubstCount = "molSubstCount";
+const std::string molAttachPoint = "molAttchpt";
+const std::string molAttachOrder = "molAttchord";
+const std::string molAtomClass = "molClass";
+const std::string molAtomSeqId = "molSeqid";
+const std::string molRxnExactChange = "molRxnExachg";
+const std::string molReactStatus = "molReactStatus";
 
 }  // namespace common_properties
 
@@ -124,12 +133,6 @@ const double MAX_LONGINT =
 
 //  template <typename T>
 //  T larger_of(T arg1,T arg2) { return arg1>arg2 ? arg1 : arg2; };
-
-double round(double num) {
-  double floorVal = floor(num);
-  double ceilVal = ceil(num);
-  return num - floorVal > ceilVal - num ? ceilVal : floorVal;
-};
 
 void Union(const INT_VECT &r1, const INT_VECT &r2, INT_VECT &res) {
   res.resize(0);
@@ -156,7 +159,7 @@ void Union(const VECT_INT_VECT &rings, INT_VECT &res, const INT_VECT *exclude) {
   res.resize(0);
   INT_VECT ring;
   unsigned int id;
-  unsigned int nrings = static_cast<unsigned int>(rings.size());
+  auto nrings = static_cast<unsigned int>(rings.size());
   INT_VECT_CI ri;
 
   for (id = 0; id < nrings; id++) {

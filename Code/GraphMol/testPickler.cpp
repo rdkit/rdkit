@@ -61,7 +61,9 @@ void test1(bool doLong = 0) {
     TEST_ASSERT(smi1 == smi2);
     delete m;
     count++;
-    if (!doLong && count >= 100) break;
+    if (!doLong && count >= 100) {
+      break;
+    }
   }
   BOOST_LOG(rdErrorLog) << "\tdone" << std::endl;
 }
@@ -122,7 +124,9 @@ void test2(bool doLong = 0) {
     TEST_ASSERT(smi1 == smi2);
     delete m1;
     count++;
-    if (!doLong && count >= 100) break;
+    if (!doLong && count >= 100) {
+      break;
+    }
   }
   BOOST_LOG(rdErrorLog) << "\tdone" << std::endl;
 }
@@ -156,7 +160,9 @@ void test3(bool doLong = 0) {
     TEST_ASSERT(smi1 == smi2);
     delete m1;
     count++;
-    if (!doLong && count >= 100) break;
+    if (!doLong && count >= 100) {
+      break;
+    }
   }
   BOOST_LOG(rdErrorLog) << "\tdone" << std::endl;
 }
@@ -179,7 +185,9 @@ void timeTest(bool doLong = 0) {
     ROMol *m1 = suppl.next();
     TEST_ASSERT(m1);
     count++;
-    if (!doLong && count >= 100) break;
+    if (!doLong && count >= 100) {
+      break;
+    }
     delete m1;
   }
   t2 = std::time(nullptr);
@@ -193,7 +201,9 @@ void timeTest(bool doLong = 0) {
     ROMol m2;
     MolPickler::molFromPickle(inStream, m2);
     count--;
-    if (!doLong && count >= 100) break;
+    if (!doLong && count >= 100) {
+      break;
+    }
   }
   t2 = std::time(nullptr);
   BOOST_LOG(rdInfoLog) << " Pickle time: " << std::difftime(t2, t1)
@@ -260,7 +270,7 @@ void testIssue164() {
 
   // the issue had to do with number of atoms, so let's make an enormous
   // molecule and try again:
-  RWMol *m3 = static_cast<RWMol *>(SmilesToMol(smi));
+  auto *m3 = static_cast<RWMol *>(SmilesToMol(smi));
   m3->insertMol(*m1);
   m3->insertMol(*m1);
   MolOps::sanitizeMol(*m3);
@@ -855,7 +865,9 @@ void testIssue3496759() {
     while (!inf.eof()) {
       std::string inl;
       std::getline(inf, inl);
-      if (inl[0] == '#' || inl.size() < 2) continue;
+      if (inl[0] == '#' || inl.size() < 2) {
+        continue;
+      }
       std::vector<std::string> tokens;
       boost::split(tokens, inl, boost::is_any_of(" \t"));
       // std::cerr << "smarts: " << tokens[0] << std::endl;
@@ -1461,6 +1473,44 @@ void testNegativeMaps() {
   BOOST_LOG(rdErrorLog) << "\tdone" << std::endl;
 }
 
+void testGithubIssue2510() {
+  BOOST_LOG(rdErrorLog) << "-------------------------------------" << std::endl;
+  BOOST_LOG(rdErrorLog)
+      << "Testing Issue2510: Pickle Confs as double." << std::endl;
+
+  std::string smi = "CC";
+  ROMol *m1 = SmilesToMol(smi);
+  TEST_ASSERT(m1);
+  std::string pickle;
+  ROMol *m2, *m3;
+  MolPickler::pickleMol(*m1, pickle);
+  m2 = new ROMol();
+  MolPickler::molFromPickle(pickle, *m2);
+  TEST_ASSERT(m1->getNumAtoms() == m2->getNumAtoms());
+
+  auto *conf = new Conformer(2);
+  double test_num = 3.1111124589;
+  TEST_ASSERT(static_cast<float>(test_num) != test_num);
+  
+  RDGeom::Point3D point(3.1111124589,0.0,0.0);
+  
+  conf->setAtomPos(0, point);
+  m1->addConformer(conf);
+  
+  MolPickler::pickleMol(*m1, pickle, PicklerOps::CoordsAsDouble);
+  m3 = new ROMol();
+  MolPickler::molFromPickle(pickle, *m3);
+  TEST_ASSERT(m1->getNumAtoms() == m3->getNumAtoms());
+  TEST_ASSERT(m3->getConformer().getAtomPos(0).x == test_num);
+
+  
+  delete m1;
+  delete m2;
+  delete m3;
+
+  BOOST_LOG(rdErrorLog) << "\tdone" << std::endl;
+}
+
 int main(int argc, char *argv[]) {
   RDLog::InitLogs();
   bool doLong = false;
@@ -1498,6 +1548,7 @@ int main(int argc, char *argv[]) {
   testEnhancedStereoChemistry();
   testCustomPickler();
   testGithub2441();
+  testGithubIssue2510();
 #endif
   testNegativeMaps();
 }

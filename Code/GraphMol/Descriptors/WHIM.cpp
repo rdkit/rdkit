@@ -49,7 +49,7 @@ namespace {
 MolData3Ddescriptors moldata3D;
 
 double roundn(double in, int factor) {
-  return round(in * pow(10., factor)) / pow(10., factor);
+  return std::round(in * pow(10., factor)) / pow(10., factor);
 }
 
 MatrixXd GetCenterMatrix(MatrixXd &Mat) {
@@ -63,8 +63,7 @@ MatrixXd GetCovMatrix(MatrixXd &X, MatrixXd &Weight, double weight) {
 }
 
 JacobiSVD<MatrixXd> *getSVD(MatrixXd &Mat) {
-  JacobiSVD<MatrixXd> *svd =
-      new JacobiSVD<MatrixXd>(Mat, ComputeThinU | ComputeThinV);
+  auto *svd = new JacobiSVD<MatrixXd>(Mat, ComputeThinU | ComputeThinV);
   return svd;
 }
 
@@ -149,7 +148,7 @@ std::vector<double> getWhimD(std::vector<double> weightvector,
   // Index and/or Sphericity !
 
   double gamma[3];  // Gamma values
-  double nAT = (double)numAtoms;
+  auto nAT = (double)numAtoms;
 
   // check if two atoms are symmetric versus the new axis ie newx,newy,newz a
   for (int i = 0; i < 3; i++) {
@@ -171,10 +170,11 @@ std::vector<double> getWhimD(std::vector<double> weightvector,
         if (j == k) {
           continue;
         }
+        // those that are close opposite & not close to the axis!
         if (std::fabs(Scores(j, i) + Scores(k, i)) <= th) {
-          // those that are close opposite & not close to the axis!
-          ns += 1;  // check only once the symmetric none null we need to add +2!
+          // check only once the symmetric none null we need to add +2!
           // (reduce the loop duration)
+          ns += 1;
           amatch = true;
           Symmetric[j] = 1.0;
           Symmetric[j + numAtoms] = 2.0;
@@ -304,7 +304,7 @@ void getWHIM(const ROMol &mol, std::vector<double> &res, int confId,
              double th) {
   int numAtoms = mol.getNumAtoms();
   const Conformer &conf = mol.getConformer(confId);
-  double *Vpoints = new double[3 * numAtoms];
+  auto *Vpoints = new double[3 * numAtoms];
 
   for (int i = 0; i < numAtoms; ++i) {
     Vpoints[3 * i] = conf.getAtomPos(i).x;
@@ -353,7 +353,7 @@ void getWHIMone(const ROMol &mol, std::vector<double> &res, int confId,
                 double th, const std::string &customAtomPropName) {
   int numAtoms = mol.getNumAtoms();
   const Conformer &conf = mol.getConformer(confId);
-  double *Vpoints = new double[3 * numAtoms];
+  auto *Vpoints = new double[3 * numAtoms];
 
   for (int i = 0; i < numAtoms; ++i) {
     Vpoints[3 * i] = conf.getAtomPos(i).x;

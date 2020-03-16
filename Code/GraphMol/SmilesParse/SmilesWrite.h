@@ -1,5 +1,5 @@
 //
-//  Copyright (C) 2002-2017 Greg Landrum and Rational Discovery LLC
+//  Copyright (C) 2002-2020 Greg Landrum and Rational Discovery LLC
 //
 //   @@ All Rights Reserved @@
 //  This file is part of the RDKit.
@@ -8,8 +8,8 @@
 //  of the RDKit source tree.
 //
 #include <RDGeneral/export.h>
-#ifndef _RD_SMILESWRITE_H
-#define _RD_SMILESWRITE_H
+#ifndef RD_SMILESWRITE_H_012020
+#define RD_SMILESWRITE_H_012020
 
 #include <string>
 #include <vector>
@@ -32,8 +32,7 @@ RDKIT_SMILESPARSE_EXPORT bool inOrganicSubset(int atomicNumber);
   \param atom : the atom to work with
   \param doKekule : we're doing kekulized smiles (e.g. don't use
     lower case for the atom label)
-  \param bondIn : the bond we came into the atom on (used for
-    chirality calculation
+  \param bondIn : the bond we came into the atom on (unused)
   \param allHsExplicit : if true, hydrogen counts will be provided for every
   atom.
   \param isomericSmiles : if true, isomeric SMILES will be generated
@@ -76,6 +75,24 @@ RDKIT_SMILESPARSE_EXPORT std::string MolToSmiles(
     const ROMol &mol, bool doIsomericSmiles = true, bool doKekule = false,
     int rootedAtAtom = -1, bool canonical = true, bool allBondsExplicit = false,
     bool allHsExplicit = false, bool doRandom = false);
+
+//! \brief returns a vector of random SMILES for a molecule (may contain
+//! duplicates)
+/*!
+  \param mol : the molecule in question.
+  \param numSmiles : the number of SMILES to return
+  \param randomSeed : if >0, will be used to seed the random number generator
+  \param doIsomericSmiles : include stereochemistry and isotope information
+      in the SMILES
+  \param doKekule : do Kekule smiles (i.e. don't use aromatic bonds)
+  \param allBondsExplicit : if true, symbols will be included for all bonds.
+  \param allHsExplicit : if true, hydrogen counts will be provided for every
+  atom.
+ */
+RDKIT_SMILESPARSE_EXPORT std::vector<std::string> MolToRandomSmilesVect(
+    const ROMol &mol, unsigned int numSmiles, unsigned int randomSeed = 0,
+    bool doIsomericSmiles = true, bool doKekule = false,
+    bool allBondsExplicit = false, bool allHsExplicit = false);
 
 //! \brief returns canonical SMILES for part of a molecule
 /*!

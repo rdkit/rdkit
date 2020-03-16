@@ -613,3 +613,69 @@ TEST_CASE(
     REQUIRE(q2);
   }
 }
+
+TEST_CASE("large rings", "[smarts]") {
+  auto query = "[r24]"_smarts;
+  auto m_r24 = "C1CCCCCCCCCCCCCCCCCCCCCCC1"_smiles;
+  auto m_r23 = "C1CCCCCCCCCCCCCCCCCCCCCC1"_smiles;
+
+  CHECK(SubstructMatch(*m_r23, *query).empty());
+  CHECK(SubstructMatch(*m_r24, *query).size() == 24);
+}
+
+TEST_CASE("random smiles vectors", "[smiles]") {
+  auto m = "C1OCC1N(CO)(Cc1ccccc1NCCl)"_smiles;
+  REQUIRE(m);
+  SECTION("basics") {
+    std::vector<std::string> tgt = {
+        "c1cc(CN(C2COC2)CO)c(cc1)NCCl", "N(CCl)c1c(CN(C2COC2)CO)cccc1",
+        "N(CCl)c1ccccc1CN(C1COC1)CO", "OCN(Cc1ccccc1NCCl)C1COC1",
+        "C(N(C1COC1)Cc1c(cccc1)NCCl)O"};
+    unsigned int randomSeed = 0xf00d;
+    auto smiV = MolToRandomSmilesVect(*m, 5, randomSeed);
+    CHECK(smiV == tgt);
+  }
+  SECTION("options1") {
+    std::vector<std::string> tgt = {
+        "C1-C=C(-C-N(-C2-C-O-C-2)-C-O)-C(=C-C=1)-N-C-Cl",
+        "N(-C-Cl)-C1-C(-C-N(-C2-C-O-C-2)-C-O)=C-C=C-C=1",
+        "N(-C-Cl)-C1=C-C=C-C=C-1-C-N(-C1-C-O-C-1)-C-O",
+        "O-C-N(-C-C1=C-C=C-C=C-1-N-C-Cl)-C1-C-O-C-1",
+        "C(-N(-C1-C-O-C-1)-C-C1-C(=C-C=C-C=1)-N-C-Cl)-O"};
+    RWMol nm(*m);
+    MolOps::Kekulize(nm, true);
+    unsigned int randomSeed = 0xf00d;
+    bool isomericSmiles = true;
+    bool kekuleSmiles = true;
+    bool allBondsExplicit = true;
+    bool allHsExplicit = false;
+    auto smiV =
+        MolToRandomSmilesVect(nm, 5, randomSeed, isomericSmiles, kekuleSmiles,
+                              allBondsExplicit, allHsExplicit);
+    CHECK(smiV == tgt);
+  }
+  SECTION("options2") {
+    std::vector<std::string> tgt = {
+        "[cH]1[cH][c]([CH2][N]([CH]2[CH2][O][CH2]2)[CH2][OH])[c]([cH][cH]1)[NH]"
+        "[CH2][Cl]",
+        "[NH]([CH2][Cl])[c]1[c]([CH2][N]([CH]2[CH2][O][CH2]2)[CH2][OH])[cH][cH]"
+        "[cH][cH]1",
+        "[NH]([CH2][Cl])[c]1[cH][cH][cH][cH][c]1[CH2][N]([CH]1[CH2][O][CH2]1)["
+        "CH2][OH]",
+        "[OH][CH2][N]([CH2][c]1[cH][cH][cH][cH][c]1[NH][CH2][Cl])[CH]1[CH2][O]["
+        "CH2]1",
+        "[CH2]([N]([CH]1[CH2][O][CH2]1)[CH2][c]1[c]([cH][cH][cH][cH]1)[NH][CH2]"
+        "[Cl])[OH]"};
+    RWMol nm(*m);
+    MolOps::Kekulize(nm, false);
+    unsigned int randomSeed = 0xf00d;
+    bool isomericSmiles = true;
+    bool kekuleSmiles = false;
+    bool allBondsExplicit = false;
+    bool allHsExplicit = true;
+    auto smiV =
+        MolToRandomSmilesVect(nm, 5, randomSeed, isomericSmiles, kekuleSmiles,
+                              allBondsExplicit, allHsExplicit);
+    CHECK(smiV == tgt);
+  }
+}

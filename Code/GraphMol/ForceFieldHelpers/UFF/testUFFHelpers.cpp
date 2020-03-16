@@ -27,7 +27,6 @@
 #include <GraphMol/ForceFieldHelpers/UFF/UFF.h>
 #include <ForceField/ForceField.h>
 #include <GraphMol/DistGeomHelpers/Embedder.h>
-#include <boost/math/special_functions/round.hpp>
 
 using namespace RDKit;
 #if 1
@@ -733,10 +732,12 @@ void testCalcEnergyPassedCoords() {
   field = UFF::constructForceField(*mol);
   TEST_ASSERT(field);
   field->initialize();
-  double *savedPos = new double[3 * field->numPoints()];
+  auto *savedPos = new double[3 * field->numPoints()];
   size_t i = 0;
   for (const auto pptr : field->positions()) {
-    for (size_t j = 0; j < 3; ++j) savedPos[i++] = (*pptr)[j];
+    for (size_t j = 0; j < 3; ++j) {
+      savedPos[i++] = (*pptr)[j];
+    }
   }
   e1 = field->calcEnergy();
   field->minimize(10000, 1.0e-6, 1.0e-3);
@@ -769,28 +770,36 @@ void testCalcGrad() {
   TEST_ASSERT(field);
   field->initialize();
   size_t l = 3 * field->numPoints();
-  double *savedPos = new double[l];
-  double *grad1 = new double[l];
-  double *grad2 = new double[l];
+  auto *savedPos = new double[l];
+  auto *grad1 = new double[l];
+  auto *grad2 = new double[l];
   size_t i = 0;
   for (const auto pptr : field->positions()) {
-    for (size_t j = 0; j < 3; ++j) savedPos[i++] = (*pptr)[j];
+    for (size_t j = 0; j < 3; ++j) {
+      savedPos[i++] = (*pptr)[j];
+    }
   }
   TEST_ASSERT(i == l);
 
   std::memset(grad1, 0, l * sizeof(double));
   field->calcGrad(grad1);
-  for (i = 0; i < l; ++i) TEST_ASSERT(!feq(grad1[i], 0.0, 0.001));
+  for (i = 0; i < l; ++i) {
+    TEST_ASSERT(!feq(grad1[i], 0.0, 0.001));
+  }
 
   field->minimize(10000, 1.0e-6, 1.0e-3);
   std::memset(grad2, 0, l * sizeof(double));
   field->calcGrad(grad2);
-  for (i = 0; i < l; ++i) TEST_ASSERT(feq(grad2[i], 0.0, 0.001));
+  for (i = 0; i < l; ++i) {
+    TEST_ASSERT(feq(grad2[i], 0.0, 0.001));
+  }
 
   field->initialize();
   std::memset(grad2, 0, l * sizeof(double));
   field->calcGrad(savedPos, grad2);
-  for (i = 0; i < l; ++i) TEST_ASSERT(feq(grad1[i], grad2[i], 0.001));
+  for (i = 0; i < l; ++i) {
+    TEST_ASSERT(feq(grad1[i], grad2[i], 0.001));
+  }
 
   delete[] savedPos;
   delete[] grad1;
@@ -1109,8 +1118,8 @@ void testGitHubIssue62() {
   pathName += "/Code/GraphMol/ForceFieldHelpers/UFF/test_data";
   {
     double energyValues[] = {
-        38.687, 174.698, 337.986, 115.248, 2.482,   1.918,  10.165,  98.469,
-        39.078, 267.236, 15.747,  202.121, 205.539, 20.044, 218.986, 79.627};
+        38.687, 174.698, 337.986, 115.248, 2.482,   1.918,  10.165,  99.492,
+        41.016, 267.236, 15.747,  203.398, 206.852, 20.044, 218.879, 79.614};
     SmilesMolSupplier smiSupplier(pathName + "/Issue62.smi");
     SDWriter *sdfWriter = new SDWriter(pathName + "/Issue62.sdf");
     for (unsigned int i = 0; i < smiSupplier.length(); ++i) {
@@ -1153,32 +1162,30 @@ void testUFFParamGetters() {
     ForceFields::UFF::UFFBond uffBondStretchParams;
     TEST_ASSERT(
         UFF::getUFFBondStretchParams(*molH, 6, 7, uffBondStretchParams));
-    TEST_ASSERT(
-        ((int)boost::math::round(uffBondStretchParams.kb * 1000) == 699592) &&
-        ((int)boost::math::round(uffBondStretchParams.r0 * 1000) == 1514));
+    TEST_ASSERT(((int)std::round(uffBondStretchParams.kb * 1000) == 699592) &&
+                ((int)std::round(uffBondStretchParams.r0 * 1000) == 1514));
     TEST_ASSERT(
         !UFF::getUFFBondStretchParams(*molH, 0, 7, uffBondStretchParams));
     ForceFields::UFF::UFFAngle uffAngleBendParams;
     TEST_ASSERT(UFF::getUFFAngleBendParams(*molH, 6, 7, 8, uffAngleBendParams));
-    TEST_ASSERT(
-        ((int)boost::math::round(uffAngleBendParams.ka * 1000) == 303297) &&
-        ((int)boost::math::round(uffAngleBendParams.theta0 * 1000) == 109470));
+    TEST_ASSERT(((int)std::round(uffAngleBendParams.ka * 1000) == 303297) &&
+                ((int)std::round(uffAngleBendParams.theta0 * 1000) == 109470));
     TEST_ASSERT(
         !UFF::getUFFAngleBendParams(*molH, 0, 7, 8, uffAngleBendParams));
     ForceFields::UFF::UFFTor uffTorsionParams;
     TEST_ASSERT(UFF::getUFFTorsionParams(*molH, 6, 7, 8, 9, uffTorsionParams));
-    TEST_ASSERT(((int)boost::math::round(uffTorsionParams.V * 1000) == 976));
+    TEST_ASSERT(((int)std::round(uffTorsionParams.V * 1000) == 976));
     TEST_ASSERT(!UFF::getUFFTorsionParams(*molH, 0, 7, 8, 9, uffTorsionParams));
     ForceFields::UFF::UFFInv uffInversionParams;
     TEST_ASSERT(
         UFF::getUFFInversionParams(*molH, 6, 5, 4, 0, uffInversionParams));
-    TEST_ASSERT(((int)boost::math::round(uffInversionParams.K * 1000) == 2000));
+    TEST_ASSERT(((int)std::round(uffInversionParams.K * 1000) == 2000));
     TEST_ASSERT(
         !UFF::getUFFInversionParams(*molH, 6, 5, 4, 1, uffInversionParams));
     ForceFields::UFF::UFFVdW uffVdWParams;
     TEST_ASSERT(UFF::getUFFVdWParams(*molH, 0, 9, uffVdWParams));
-    TEST_ASSERT(((int)boost::math::round(uffVdWParams.x_ij * 1000) == 3754) &&
-                ((int)boost::math::round(uffVdWParams.D_ij * 1000) == 85));
+    TEST_ASSERT(((int)std::round(uffVdWParams.x_ij * 1000) == 3754) &&
+                ((int)std::round(uffVdWParams.D_ij * 1000) == 85));
     delete molH;
   }
 }
@@ -1190,7 +1197,9 @@ void runblock_uff(const std::vector<ROMol *> &mols,
                   unsigned int idx) {
   for (unsigned int rep = 0; rep < 200; ++rep) {
     for (unsigned int i = 0; i < mols.size(); ++i) {
-      if (i % count != idx) continue;
+      if (i % count != idx) {
+        continue;
+      }
       ROMol *mol = mols[i];
       ForceFields::ForceField *field = nullptr;
       if (!(rep % 100)) {
@@ -1231,7 +1240,9 @@ void testUFFMultiThread() {
     } catch (...) {
       continue;
     }
-    if (!mol) continue;
+    if (!mol) {
+      continue;
+    }
     mols.push_back(mol);
   }
 

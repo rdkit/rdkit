@@ -508,12 +508,12 @@ void testIssue2892580() {
 
   int massVal;
   massVal = queryAtomMass(a);
-  TEST_ASSERT(massVal == static_cast<int>(RDKit::round(
+  TEST_ASSERT(massVal == static_cast<int>(std::round(
                              12.011 * massIntegerConversionFactor)));
 
   a->setIsotope(13);
   massVal = queryAtomMass(a);
-  TEST_ASSERT(massVal == static_cast<int>(RDKit::round(
+  TEST_ASSERT(massVal == static_cast<int>(std::round(
                              13.003 * massIntegerConversionFactor)));
 
   delete a;

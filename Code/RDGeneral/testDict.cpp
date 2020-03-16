@@ -152,7 +152,9 @@ void testRDAny() {
 
   {
     std::vector<int> v;
-    for (int i = 0; i < 4; ++i) v.push_back(i);
+    for (int i = 0; i < 4; ++i) {
+      v.push_back(i);
+    }
 
     RDAny foo(v);
     RDAny bar = foo;
@@ -167,7 +169,9 @@ void testRDAny() {
 
   {
     std::vector<double> v;
-    for (double i = 0; i < 4; ++i) v.push_back(i);
+    for (double i = 0; i < 4; ++i) {
+      v.push_back(i);
+    }
 
     RDAny foo(v);
 
@@ -288,7 +292,7 @@ void testRDAny() {
     boost::any_cast<const std::vector<std::pair<int, int>> &>(any1);
 
     RDAny vv(pvect);
-    boost::any &any = rdany_cast<boost::any &>(vv);
+    auto &any = rdany_cast<boost::any &>(vv);
     boost::any_cast<std::vector<std::pair<int, int>>>(any);
     boost::any_cast<std::vector<std::pair<int, int>> &>(any);
     boost::any_cast<const std::vector<std::pair<int, int>> &>(any);
@@ -323,7 +327,7 @@ void testRDAny() {
     (*m)[0] = 1;
     RDAny mv(m);
     // leaks
-    std::map<int, int> *anym = rdany_cast<std::map<int, int> *>(mv);
+    auto *anym = rdany_cast<std::map<int, int> *>(mv);
     TEST_ASSERT(anym->find(0) != anym->end());
     delete anym;
   }
@@ -347,7 +351,7 @@ void testRDAny() {
     mptr anym = rdany_cast<mptr>(mv);
     TEST_ASSERT(anym->find(0) != anym->end());
 
-    RDAny any3(boost::shared_ptr<Foo>(new Foo(1,2.f)));
+    RDAny any3(boost::shared_ptr<Foo>(new Foo(1, 2.f)));
     TEST_ASSERT(any3.m_value.getTag() == RDTypeTag::AnyTag);
   }
 }
@@ -653,12 +657,12 @@ void testUpdate() {
 }
 
 class FooHandler : public CustomPropHandler {
-public:
-  virtual const char *getPropName() const { return "Foo"; }
-  virtual bool canSerialize(const RDValue &value) const {
+ public:
+  const char *getPropName() const override { return "Foo"; }
+  bool canSerialize(const RDValue &value) const override {
     return rdvalue_is<Foo>(value);
   }
-  virtual bool read(std::istream &ss, RDValue &value) const {
+  bool read(std::istream &ss, RDValue &value) const override {
     int version = 0;
     streamRead(ss, version);
     Foo f;
@@ -667,35 +671,32 @@ public:
     value = f;
     return true;
   }
-  
-  virtual bool write(std::ostream &ss, const RDValue &value) const {
-    try{
-      const Foo &f = rdvalue_cast<const Foo&>(value);
+
+  bool write(std::ostream &ss, const RDValue &value) const override {
+    try {
+      const Foo &f = rdvalue_cast<const Foo &>(value);
       const int version = 0;
       streamWrite(ss, version);
       streamWrite(ss, f.bar);
       streamWrite(ss, f.baz);
-    } catch ( boost::bad_any_cast & ) {
+    } catch (boost::bad_any_cast &) {
       return false;
     }
     return true;
   }
-  
-  virtual CustomPropHandler* clone() const {
-    return new FooHandler;
-  }
+
+  CustomPropHandler *clone() const override { return new FooHandler; }
 };
 
 void testCustomProps() {
-  Foo f(1,2.f);
+  Foo f(1, 2.f);
   Dict d;
   d.setVal<Foo>("foo", f);
   RDValue &value = d.getData()[0].val;
   FooHandler foo_handler;
-  std::vector<CustomPropHandler*> handlers = {&foo_handler,
-                                              foo_handler.clone()};
-  for(auto handler: handlers)
-  {
+  std::vector<CustomPropHandler *> handlers = {&foo_handler,
+                                               foo_handler.clone()};
+  for (auto handler : handlers) {
     TEST_ASSERT(handler->canSerialize(value));
     RDValue bad_value = 1;
     TEST_ASSERT(!handler->canSerialize(bad_value));
@@ -703,10 +704,18 @@ void testCustomProps() {
     TEST_ASSERT(handler->write(ss, value));
     RDValue newValue;
     TEST_ASSERT(handler->read(ss, newValue));
-    TEST_ASSERT(from_rdvalue<const Foo&>(newValue).bar == f.bar);
-    TEST_ASSERT(from_rdvalue<const Foo&>(newValue).baz == f.baz);
+    TEST_ASSERT(from_rdvalue<const Foo &>(newValue).bar == f.bar);
+    TEST_ASSERT(from_rdvalue<const Foo &>(newValue).baz == f.baz);
   }
   delete handlers[1];
+}
+
+void testGithub2910() {
+  Dict d;
+  d.setVal("foo", 1.0);
+  d.clearVal("foo");
+  d.clearVal("bar");
+  d.clearVal("foo");
 }
 
 int main() {
@@ -803,5 +812,6 @@ int main() {
   testConstReturns();
   testUpdate();
   testCustomProps();
+  testGithub2910();
   return 0;
 }

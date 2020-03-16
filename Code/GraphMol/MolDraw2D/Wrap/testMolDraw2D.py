@@ -2,7 +2,7 @@ from rdkit import RDConfig
 import unittest
 import random
 from rdkit import Chem
-from rdkit.Chem import Draw, AllChem
+from rdkit.Chem import Draw, AllChem, rdDepictor
 from rdkit.Chem.Draw import rdMolDraw2D
 from rdkit import Geometry
 import numpy as np
@@ -315,15 +315,16 @@ M  END""")
     d.DrawMolecule(dm)
     d.FinishDrawing()
     txt = d.GetDrawingText()
-    self.assertTrue(txt.find("stroke-width:2px") >= 0)
-    self.assertTrue(txt.find("stroke-width:4px") == -1)
+    self.assertTrue(txt.find("stroke-width:7px") >= 0)
+    self.assertTrue(txt.find("stroke-width:21px") == -1)
     d = Draw.MolDraw2DSVG(300, 300)
     d.SetLineWidth(4)
     d.DrawMolecule(dm)
     d.FinishDrawing()
     txt = d.GetDrawingText()
-    self.assertTrue(txt.find("stroke-width:2px") == -1)
-    self.assertTrue(txt.find("stroke-width:4px") >= 0)
+    # the line width is scaled, so 4 is drawn as 21 pixels wide.
+    self.assertTrue(txt.find("stroke-width:7px") == -1)
+    self.assertTrue(txt.find("stroke-width:14px") >= 0)
 
   def testPrepareAndDrawMolecule(self):
     m = Chem.MolFromSmiles("C1N[C@@H]2OCC12")
@@ -462,8 +463,8 @@ M  END
     rdMolDraw2D.PrepareAndDrawMolecule(d, m)
     d.FinishDrawing()
     txt = d.GetDrawingText()
-    self.assertNotEqual(txt.find("fill:#0000FF' ><tspan>NH"), -1)
-    self.assertEqual(txt.find("fill:#000000' ><tspan>NH"), -1)
+    self.assertNotEqual(txt.find("fill:#0000FF' ><tspan>N"), -1)
+    self.assertEqual(txt.find("fill:#000000' ><tspan>N"), -1)
 
     d = rdMolDraw2D.MolDraw2DSVG(250, 200)
     do = rdMolDraw2D.MolDrawOptions()
@@ -472,8 +473,74 @@ M  END
     rdMolDraw2D.PrepareAndDrawMolecule(d, m)
     d.FinishDrawing()
     txt = d.GetDrawingText()
-    self.assertEqual(txt.find("fill:#0000FF' ><tspan>NH"), -1)
-    self.assertNotEqual(txt.find("fill:#000000' ><tspan>NH"), -1)
+    self.assertEqual(txt.find("fill:#0000FF' ><tspan>N"), -1)
+    self.assertNotEqual(txt.find("fill:#000000' ><tspan>N"), -1)
+
+  def testDrawMoleculeWithHighlights(self):
+    COLS = [(1.0, 0.0, 0.0), (0.0, 1.0, 0.0), (0.0, 0.0, 1.0), (1.0, 0.55, 0.0)]
+
+    def get_hit_atoms_and_bonds(mol, smt):
+      alist = []
+      blist = []
+      q = Chem.MolFromSmarts(smt)
+      for match in mol.GetSubstructMatches(q):
+        alist.extend(match)
+
+      for ha1 in alist:
+        for ha2 in alist:
+          if ha1 > ha2:
+            b = mol.GetBondBetweenAtoms(ha1, ha2)
+            if b:
+              blist.append(b.GetIdx())
+
+      return alist, blist
+
+    def add_colours_to_map(els, cols, col_num):
+      for el in els:
+        if not el in cols:
+          cols[el] = []
+        if COLS[col_num] not in cols[el]:
+          cols[el].append(COLS[col_num])
+
+    def do_a_picture(smi, smarts, label):
+
+      rdDepictor.SetPreferCoordGen(False)
+      mol = Chem.MolFromSmiles(smi)
+      mol = Draw.PrepareMolForDrawing(mol)
+
+      acols = {}
+      bcols = {}
+      h_rads = {}
+      h_lw_mult = {}
+
+      for i, smt in enumerate(smarts):
+        alist, blist = get_hit_atoms_and_bonds(mol, smt)
+        h_rads[alist[0]] = 0.4
+        h_lw_mult[blist[0]] = 2
+        col = i % 4
+        add_colours_to_map(alist, acols, col)
+        add_colours_to_map(blist, bcols, col)
+
+      d = rdMolDraw2D.MolDraw2DSVG(500, 500)
+      d.drawOptions().fillHighlights = False
+      d.DrawMoleculeWithHighlights(mol, label, acols, bcols, h_rads, h_lw_mult, -1)
+
+      d.FinishDrawing()
+      return d.GetDrawingText()
+
+    smi = 'CO[C@@H](O)C1=C(O[C@H](F)Cl)C(C#N)=C1ONNC[NH3+]'
+    smarts = ['CONN', 'N#CC~CO', 'C=CON', 'CONNCN']
+    txt = do_a_picture(smi, smarts, 'pyTest2')
+    self.assertGreater(txt.find('stroke:#FF8C00;stroke-width:5px'), -1)
+    self.assertEqual(
+      txt.find("ellipse cx='244.253' cy='386.518'"
+               " rx='11.9872' ry='12.8346'"
+               " style='fill:none;stroke:#00FF00'"), -1)
+
+    # test for no-longer-mysterious OSX crash.
+    smi = 'c1ccccc1Cl'
+    smarts = []
+    do_a_picture(smi, smarts, 'pyTest3')
 
 
 if __name__ == "__main__":

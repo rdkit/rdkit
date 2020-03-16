@@ -176,14 +176,14 @@ class TestCase(unittest.TestCase):
         cids = rdDistGeom.EmbedMultipleConfs(mol, 10, maxAttempts=30, randomSeed=100,
                                  useExpTorsionAnglePrefs=False,
                                  useBasicKnowledge=False)
-        energies = [115.460, 105.891, 109.868, 104.415,
-            92.944, 140.917, 139.468, 95.081, 123.528, 107.885]
+        energies = [116.330, 106.246, 109.816, 104.890,
+            93.060, 140.803, 139.253, 95.820, 123.591, 108.655]
         nenergies = []
         for cid in cids:
             ff = ChemicalForceFields.UFFGetMoleculeForceField(mol, 10.0, cid)
             ee = ff.CalcEnergy()
             nenergies.append(ee)
-        #print(['%.2f' % x for x in nenergies])
+        # print(['%.3f' % x for x in nenergies])
         # print(nenergies)
         self.assertTrue(lstEq(energies, nenergies, tol=1e-2))
 

@@ -2,12 +2,12 @@ project (GraphMolCSharp)
 
 include_directories( ${RDKit_ExternalDir} )
 
-# find the gmcs executables on non-windows systems:
+# find the mcs executables on non-windows systems:
 if(NOT WIN32)
-  find_program(GMCS_EXE gmcs)
+  find_program(GMCS_EXE mcs)
   if (NOT GMCS_EXE)
-	MESSAGE ("gmcs (executable) is not found. Please add it to PATH and rerun cmake.")
-	MESSAGE(FATAL_ERROR "Cannot find required executable gmcs")
+	MESSAGE ("mcs (executable) is not found. Please add it to PATH and rerun cmake.")
+	MESSAGE(FATAL_ERROR "Cannot find required executable mcs")
   endif (NOT GMCS_EXE)
 endif(NOT WIN32)
 

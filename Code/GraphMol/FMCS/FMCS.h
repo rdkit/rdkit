@@ -34,7 +34,7 @@ struct RDKIT_FMCS_EXPORT MCSBondCompareParameters {
 };
 
 typedef bool (*MCSFinalMatchCheckFunction)(
-    const short unsigned c1[], const short unsigned c2[], const ROMol& mol1,
+    const std::uint32_t c1[], const std::uint32_t c2[], const ROMol& mol1,
     const FMCS::Graph& query, const ROMol& mol2, const FMCS::Graph& target,
     const MCSParameters* p);
 typedef bool (*MCSAtomCompareFunction)(const MCSAtomCompareParameters& p,
@@ -51,10 +51,9 @@ RDKIT_FMCS_EXPORT bool MCSAtomCompareAny(const MCSAtomCompareParameters& p,
                                          const ROMol& mol1, unsigned int atom1,
                                          const ROMol& mol2, unsigned int atom2,
                                          void* userData);
-RDKIT_FMCS_EXPORT bool MCSAtomCompareAnyHeavyAtom(const MCSAtomCompareParameters& p,
-                                         const ROMol& mol1, unsigned int atom1,
-                                         const ROMol& mol2, unsigned int atom2,
-                                         void* userData);
+RDKIT_FMCS_EXPORT bool MCSAtomCompareAnyHeavyAtom(
+    const MCSAtomCompareParameters& p, const ROMol& mol1, unsigned int atom1,
+    const ROMol& mol2, unsigned int atom2, void* userData);
 
 RDKIT_FMCS_EXPORT bool MCSAtomCompareElements(
     const MCSAtomCompareParameters& p, const ROMol& mol1, unsigned int atom1,
@@ -116,6 +115,7 @@ struct RDKIT_FMCS_EXPORT MCSResult {
   bool Canceled;  // interrupted by timeout or user defined progress callback.
                   // Contains valid current MCS !
   RWMOL_SPTR QueryMol;
+
  public:
   MCSResult() : NumAtoms(0), NumBonds(0), Canceled(false) {}
   bool isCompleted() const { return !Canceled; }
@@ -145,14 +145,11 @@ typedef enum {
   PermissiveRingFusion,
   StrictRingFusion
 } RingComparator;
-RDKIT_FMCS_EXPORT MCSResult
-findMCS(const std::vector<ROMOL_SPTR>& mols, bool maximizeBonds,
-        double threshold, unsigned timeout, bool verbose,
-        bool matchValences, bool ringMatchesRingOnly,
-        bool completeRingsOnly, bool matchChiralTag,
-        AtomComparator atomComp,
-        BondComparator bondComp,
-        RingComparator ringComp);
+RDKIT_FMCS_EXPORT MCSResult findMCS(
+    const std::vector<ROMOL_SPTR>& mols, bool maximizeBonds, double threshold,
+    unsigned timeout, bool verbose, bool matchValences,
+    bool ringMatchesRingOnly, bool completeRingsOnly, bool matchChiralTag,
+    AtomComparator atomComp, BondComparator bondComp, RingComparator ringComp);
 RDKIT_FMCS_EXPORT MCSResult
 findMCS(const std::vector<ROMOL_SPTR>& mols, bool maximizeBonds,
         double threshold = 1.0, unsigned timeout = 3600, bool verbose = false,

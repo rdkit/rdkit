@@ -93,7 +93,9 @@ bool SmartsMatcher::getMatches(const ROMol &mol,
   if (d_min_count == 1 && d_max_count == UINT_MAX) {
     RDKit::MatchVectType match;
     onPatExists = RDKit::SubstructMatch(mol, *d_pattern.get(), match);
-    if (onPatExists) matchVect.push_back(FilterMatch(copy(), match));
+    if (onPatExists) {
+      matchVect.push_back(FilterMatch(copy(), match));
+    }
   } else {  // need to count
     const bool uniquify = true;
     unsigned int count =

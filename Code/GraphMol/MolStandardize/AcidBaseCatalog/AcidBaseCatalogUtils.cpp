@@ -87,7 +87,7 @@ std::vector<std::pair<ROMOL_SPTR, ROMOL_SPTR>> readPairs(std::istream& inStream,
   char inLine[MAX_LINE_LEN];
   std::string tmpstr;
   int nRead = 0;
-  while (!inStream.eof() && (nToRead < 0 || nRead < nToRead)) {
+  while (!inStream.eof() && !inStream.fail() && (nToRead < 0 || nRead < nToRead)) {
     inStream.getline(inLine, MAX_LINE_LEN, '\n');
     tmpstr = inLine;
     // parse the molpair on this line (if there is one)

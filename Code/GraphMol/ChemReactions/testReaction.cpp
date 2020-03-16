@@ -317,8 +317,9 @@ void test3RingFormation() {
   for (unsigned int i = 0; i < prods.size(); i++) {
     unsigned int nDifferent = 0;
     for (unsigned int j = 0; j < prods.size(); j++) {
-      if (MolToSmiles(*prods[i][0]) != MolToSmiles(*prods[j][0]))
+      if (MolToSmiles(*prods[i][0]) != MolToSmiles(*prods[j][0])) {
         nDifferent += 1;
+      }
     }
     TEST_ASSERT(nDifferent == 2);
   }
@@ -701,8 +702,9 @@ void test7MDLParser() {
   for (unsigned int i = 0; i < prods.size(); i++) {
     unsigned int nDifferent = 0;
     for (unsigned int j = 0; j < prods.size(); j++) {
-      if (MolToSmiles(*prods[i][0]) != MolToSmiles(*prods[j][0]))
+      if (MolToSmiles(*prods[i][0]) != MolToSmiles(*prods[j][0])) {
         nDifferent += 1;
+      }
     }
     TEST_ASSERT(nDifferent == 2);
   }
@@ -2804,8 +2806,9 @@ void test26V3000MDLParser() {
   for (unsigned int i = 0; i < prods.size(); i++) {
     unsigned int nDifferent = 0;
     for (unsigned int j = 0; j < prods.size(); j++) {
-      if (MolToSmiles(*prods[i][0]) != MolToSmiles(*prods[j][0]))
+      if (MolToSmiles(*prods[i][0]) != MolToSmiles(*prods[j][0])) {
         nDifferent += 1;
+      }
     }
     TEST_ASSERT(nDifferent == 2);
   }
@@ -4191,13 +4194,17 @@ void test45SmilesWriter() {
     std::string res = "";
     for (MOL_SPTR_VECT::const_iterator iter = rxn->beginReactantTemplates();
          iter != rxn->endReactantTemplates(); ++iter) {
-      if (iter != rxn->beginReactantTemplates()) res += ".";
+      if (iter != rxn->beginReactantTemplates()) {
+        res += ".";
+      }
       res += MolToSmiles(**iter, true);
     }
     res += ">>";
     for (MOL_SPTR_VECT::const_iterator iter = rxn->beginProductTemplates();
          iter != rxn->endProductTemplates(); ++iter) {
-      if (iter != rxn->beginProductTemplates()) res += ".";
+      if (iter != rxn->beginProductTemplates()) {
+        res += ".";
+      }
       res += MolToSmiles(**iter, true);
     }
 
@@ -4227,13 +4234,17 @@ void test45SmilesWriter() {
     std::string res = "";
     for (MOL_SPTR_VECT::const_iterator iter = rxn->beginReactantTemplates();
          iter != rxn->endReactantTemplates(); ++iter) {
-      if (iter != rxn->beginReactantTemplates()) res += ".";
+      if (iter != rxn->beginReactantTemplates()) {
+        res += ".";
+      }
       res += MolToSmiles(**iter, true);
     }
     res += ">>";
     for (MOL_SPTR_VECT::const_iterator iter = rxn->beginProductTemplates();
          iter != rxn->endProductTemplates(); ++iter) {
-      if (iter != rxn->beginProductTemplates()) res += ".";
+      if (iter != rxn->beginProductTemplates()) {
+        res += ".";
+      }
       res += MolToSmiles(**iter, true);
     }
 
@@ -4259,13 +4270,17 @@ void test45SmilesWriter() {
     std::string res = "";
     for (MOL_SPTR_VECT::const_iterator iter = rxn->beginReactantTemplates();
          iter != rxn->endReactantTemplates(); ++iter) {
-      if (iter != rxn->beginReactantTemplates()) res += ".";
+      if (iter != rxn->beginReactantTemplates()) {
+        res += ".";
+      }
       res += MolToSmiles(**iter, true);
     }
     res += ">>";
     for (MOL_SPTR_VECT::const_iterator iter = rxn->beginProductTemplates();
          iter != rxn->endProductTemplates(); ++iter) {
-      if (iter != rxn->beginProductTemplates()) res += ".";
+      if (iter != rxn->beginProductTemplates()) {
+        res += ".";
+      }
       res += MolToSmiles(**iter, true);
     }
 
@@ -4777,7 +4792,7 @@ void test49ParensInProducts2() {
     TEST_ASSERT(prods[0][0]->getNumBonds() == 11);
 
     smi = "CCCOc1ccn(NC)c1";
-    RWMol *p00 = static_cast<RWMol *>(prods[0][0].get());
+    auto *p00 = static_cast<RWMol *>(prods[0][0].get());
     MolOps::sanitizeMol(*p00);
     TEST_ASSERT(MolToSmiles(*p00) == smi);
 
@@ -6677,7 +6692,7 @@ void testReactionProperties() {
     {
       std::string pkl;
       ReactionPickler::pickleReaction(rxn, pkl);
-      ChemicalReaction *lrxn = new ChemicalReaction();
+      auto *lrxn = new ChemicalReaction();
       ReactionPickler::reactionFromPickle(pkl, lrxn);
       TEST_ASSERT(!lrxn->hasProp("fooprop"));
       delete lrxn;
@@ -6686,7 +6701,7 @@ void testReactionProperties() {
     {
       std::string pkl;
       ReactionPickler::pickleReaction(rxn, pkl, PicklerOps::AllProps);
-      ChemicalReaction *lrxn = new ChemicalReaction();
+      auto *lrxn = new ChemicalReaction();
       ReactionPickler::reactionFromPickle(pkl, lrxn);
       TEST_ASSERT(lrxn->hasProp("fooprop"));
       TEST_ASSERT(lrxn->getProp<int>("fooprop") == 3);

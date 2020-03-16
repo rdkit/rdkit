@@ -130,8 +130,12 @@ void TorsionAngleContrib::calcTorsionParams(double bondOrder23, int atNum2,
     if (bondOrder23 == 1.0 && Utils::isInGroup6(atNum2) &&
         Utils::isInGroup6(atNum3)) {
       double V2 = 6.8, V3 = 6.8;
-      if (atNum2 == 8) V2 = 2.0;
-      if (atNum3 == 8) V3 = 2.0;
+      if (atNum2 == 8) {
+        V2 = 2.0;
+      }
+      if (atNum3 == 8) {
+        V3 = 2.0;
+      }
       d_forceConstant = sqrt(V2 * V3);
       d_order = 2;
       d_cosTerm = -1;  // phi0=90
@@ -223,7 +227,7 @@ void TorsionAngleContrib::getGrad(double *pos, double *grad) const {
   double d[2];
   double cosPhi;
   RDKit::ForceFieldsHelper::computeDihedral(
-    pos, d_at1Idx, d_at2Idx, d_at3Idx, d_at4Idx, NULL, &cosPhi, r, t, d);
+      pos, d_at1Idx, d_at2Idx, d_at3Idx, d_at4Idx, nullptr, &cosPhi, r, t, d);
   double sinPhiSq = 1.0 - cosPhi * cosPhi;
   double sinPhi = ((sinPhiSq > 0.0) ? sqrt(sinPhiSq) : 0.0);
 

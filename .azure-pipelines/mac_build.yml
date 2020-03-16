@@ -1,6 +1,6 @@
 steps:
 - bash: |
-    wget https://github.com/phracker/MacOSX-SDKs/releases/download/10.13/MacOSX$(target_platform).sdk.tar.xz
+    wget https://github.com/phracker/MacOSX-SDKs/releases/download/10.15/MacOSX$(target_platform).sdk.tar.xz
     tar Jxvf MacOSX$(target_platform).sdk.tar.xz
   displayName: Install MacOSX $(target_platform) SDK
 - script: |
@@ -20,7 +20,8 @@ steps:
     conda create --name rdkit_build $(compiler) cmake \
         boost-cpp=$(boost_version) boost=$(boost_version) \
         py-boost=$(boost_version) libboost=$(boost_version) \
-        numpy matplotlib cairo pillow eigen pandas
+        numpy matplotlib cairo pillow eigen pandas  \
+        sphinx recommonmark jupyter
   displayName: Setup build environment
 - bash: |
     source ${CONDA}/etc/profile.d/conda.sh

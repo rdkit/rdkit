@@ -25,8 +25,6 @@ class RDKIT_MOLSTANDARDIZE_EXPORT AcidBaseCatalogEntry
     : public RDCatalog::CatalogEntry {
  public:
   AcidBaseCatalogEntry() {
-    dp_pair->first = nullptr;
-    dp_pair->second = nullptr;
     d_descrip = "";
     dp_props = new Dict();
     setBitId(-1);

@@ -115,7 +115,9 @@ double NPR1(const ROMol& mol, int confId, bool useAtomicMasses, bool force) {
     // the eigenvector calculation failed
     return 0.0;  // FIX: throw an exception here?
   }
-  if (pm3 < 1e-8) return 0.0;
+  if (pm3 < 1e-8) {
+    return 0.0;
+  }
   return pm1 / pm3;
 }
 double NPR2(const ROMol& mol, int confId, bool useAtomicMasses, bool force) {
@@ -125,7 +127,9 @@ double NPR2(const ROMol& mol, int confId, bool useAtomicMasses, bool force) {
     // the eigenvector calculation failed
     return 0.0;  // FIX: throw an exception here?
   }
-  if (pm3 < 1e-8) return 0.0;
+  if (pm3 < 1e-8) {
+    return 0.0;
+  }
   return pm2 / pm3;
 }
 double PMI1(const ROMol& mol, int confId, bool useAtomicMasses, bool force) {

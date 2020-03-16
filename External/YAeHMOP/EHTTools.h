@@ -1,5 +1,5 @@
 //
-// Copyright (C) 2018 by Greg Landrum
+// Copyright (C) 2018-2020 by Greg Landrum
 //
 #ifndef EHTTOOLS_H_20181226
 #define EHTTOOLS_H_20181226
@@ -24,11 +24,14 @@ struct RDKIT_EHTLIB_EXPORT EHTResults {
   unsigned int numAtoms;
   unsigned int numOrbitals;
   unsigned int numElectrons;
+  std::unique_ptr<double[]> overlapMatrix;
+  std::unique_ptr<double[]> hamiltonianMatrix;
   std::unique_ptr<double[]> overlapPopulationMatrix;
   std::unique_ptr<double[]> reducedOverlapPopulationMatrix;
   std::unique_ptr<double[]> chargeMatrix;
   std::unique_ptr<double[]> reducedChargeMatrix;
   std::unique_ptr<double[]> atomicCharges;
+  std::unique_ptr<double[]> orbitalEnergies;
   double fermiEnergy;
   double totalEnergy;
   EHTResults() = default;
@@ -38,7 +41,9 @@ struct RDKIT_EHTLIB_EXPORT EHTResults {
 
 //! Runs an extended Hueckel calculation for a molecule
 //!   The results are returned in the EHTResults structure
-RDKIT_EHTLIB_EXPORT bool runMol(const ROMol &mol, EHTResults &results, int confId = -1);
+RDKIT_EHTLIB_EXPORT bool runMol(
+    const ROMol &mol, EHTResults &results, int confId = -1,
+    bool preserveHamiltonianAndOverlapMatrices = false);
 
 }  // namespace EHTTools
 }  // namespace RDKit

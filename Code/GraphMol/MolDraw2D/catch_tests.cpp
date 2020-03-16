@@ -67,7 +67,7 @@ TEST_CASE("contour data", "[drawing, conrec]") {
     MolDraw2DUtils::prepareMolForDrawing(*m1);
 
     const size_t gridSz = 100;
-    double *grid = new double[gridSz * gridSz];
+    auto *grid = new double[gridSz * gridSz];
     std::vector<double> xps(gridSz);
     std::vector<double> yps(gridSz);
 
@@ -87,14 +87,18 @@ TEST_CASE("contour data", "[drawing, conrec]") {
       xps[ix] = px;
       for (size_t iy = 0; iy < gridSz; ++iy) {
         auto py = y1 + iy * dy;
-        if (ix == 0) yps[iy] = py;
+        if (ix == 0) {
+          yps[iy] = py;
+        }
         RDGeom::Point2D loc(px, py);
         double val = 0.0;
         for (size_t ia = 0; ia < conf.getNumAtoms(); ++ia) {
           auto dv = loc - RDGeom::Point2D(conf.getAtomPos(ia).x,
                                           conf.getAtomPos(ia).y);
           auto r = dv.length();
-          if (r > 0.1) val += 1 / r;
+          if (r > 0.1) {
+            val += 1 / r;
+          }
         }
         maxV = std::max(val, maxV);
         grid[ix * gridSz + iy] = val;
@@ -224,8 +228,8 @@ TEST_CASE("dative bonds", "[drawing, organometallics]") {
     outs << text;
     outs.flush();
 
-    CHECK(text.find("<path class='bond-0' d='M 56.766,102.447 L 50.8587,100 "
-                    "L 56.766,97.5531") != std::string::npos);
+    CHECK(text.find("<path class='bond-0' d='M 62.0224,102.827"
+                    " L 55.1975,100 L 62.0224,97.173") != std::string::npos);
   }
   SECTION("more complex") {
     auto m1 = "N->1[C@@H]2CCCC[C@H]2N->[Pt]11OC(=O)C(=O)O1"_smiles;
@@ -239,8 +243,8 @@ TEST_CASE("dative bonds", "[drawing, organometallics]") {
     outs << text;
     outs.flush();
 
-    CHECK(text.find("<path class='bond-7' d='M 95.8183,93.981 "
-                    "L 94.3351,94.8899 L 94.7412,93.1984") !=
+    CHECK(text.find("<path class='bond-7' d='M 95.8722,93.948"
+                    " L 94.3351,94.8899 L 94.7559,93.137") !=
           std::string::npos);
   }
 }
@@ -272,7 +276,7 @@ TEST_CASE("copying drawing options", "[drawing]") {
       MolDraw2DUtils::prepareAndDrawMolecule(drawer, *m1);
       drawer.finishDrawing();
       std::string text = drawer.getDrawingText();
-      CHECK(text.find("fill:#0000FF' ><tspan>NH") != std::string::npos);
+      CHECK(text.find("fill:#0000FF' ><tspan>HN") != std::string::npos);
     }
     {
       MolDraw2DSVG drawer(200, 200);
@@ -280,8 +284,8 @@ TEST_CASE("copying drawing options", "[drawing]") {
       MolDraw2DUtils::prepareAndDrawMolecule(drawer, *m1);
       drawer.finishDrawing();
       std::string text = drawer.getDrawingText();
-      CHECK(text.find("fill:#0000FF' ><tspan>NH") == std::string::npos);
-      CHECK(text.find("fill:#000000' ><tspan>NH") != std::string::npos);
+      CHECK(text.find("fill:#0000FF' ><tspan>HN") == std::string::npos);
+      CHECK(text.find("fill:#000000' ><tspan>HN") != std::string::npos);
     }
   }
   SECTION("test") {
@@ -293,8 +297,8 @@ TEST_CASE("copying drawing options", "[drawing]") {
       MolDraw2DUtils::prepareAndDrawMolecule(drawer, *m1);
       drawer.finishDrawing();
       std::string text = drawer.getDrawingText();
-      CHECK(text.find("fill:#0000FF' ><tspan>NH") == std::string::npos);
-      CHECK(text.find("fill:#000000' ><tspan>NH") != std::string::npos);
+      CHECK(text.find("fill:#0000FF' ><tspan>HN") == std::string::npos);
+      CHECK(text.find("fill:#000000' ><tspan>HN") != std::string::npos);
     }
   }
 }

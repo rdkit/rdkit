@@ -18,11 +18,10 @@
 #include <GraphMol/MolOps.h>
 #include <GraphMol/MolStandardize/TransformCatalog/TransformCatalogParams.h>
 #include "Charge.h"
-
 #include <GraphMol/SmilesParse/SmilesWrite.h>
 #include <GraphMol/SmilesParse/SmilesParse.h>
-using namespace std;
 
+using namespace std;
 namespace RDKit {
 namespace MolStandardize {
 const CleanupParameters defaultCleanupParameters;
@@ -36,6 +35,9 @@ RWMol *cleanup(const RWMol &mol, const CleanupParameters &params) {
   RWMOL_SPTR normalized(MolStandardize::normalize(&m, params));
   RWMol *reionized = MolStandardize::reionize(normalized.get(), params);
   MolOps::assignStereochemistry(*reionized);
+  
+  // update properties of reionized using m.
+  reionized->updateProps(m);
 
   return reionized;
 }
@@ -145,11 +147,9 @@ std::vector<std::string> enumerateTautomerSmiles(
 
   auto *tautparams = new TautomerCatalogParams(params.tautomerTransforms);
   //	unsigned int ntautomers = tautparams->getNumTautomers();
-  TautomerCatalog tautcat(tautparams);
-  TautomerEnumerator te;
+  TautomerEnumerator te(new TautomerCatalog(tautparams));
 
-  std::vector<ROMOL_SPTR> res =
-      te.enumerate(static_cast<ROMol>(*mol), &tautcat);
+  std::vector<ROMOL_SPTR> res = te.enumerate(*mol);
 
   std::vector<std::string> tsmiles;
   for (const auto &r : res) {

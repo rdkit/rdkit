@@ -21,7 +21,7 @@ MolChemicalFeatureDef::MolChemicalFeatureDef(const std::string &smarts,
                                              std::string family,
                                              std::string type)
     : d_family(std::move(family)), d_type(std::move(type)), d_smarts(smarts) {
-  ROMol *mol = static_cast<ROMol *>(SmartsToMol(smarts));
+  auto *mol = static_cast<ROMol *>(SmartsToMol(smarts));
   dp_pattern.reset(mol);
 }
 void MolChemicalFeatureDef::normalizeWeights() {

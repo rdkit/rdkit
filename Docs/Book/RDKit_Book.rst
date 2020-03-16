@@ -359,7 +359,7 @@ A          "aliphatic atom"
 D          "explicit degree"                          1                Y
 h          "number of implicit hs"                    >0               Y
 H          "total number of Hs"                       1
-r          "in SSSR ring of size"                     >0               Y
+r          "size of smallest SSSR ring"               >0               Y
 R          "number of SSSR rings"                     >0               Y
 v          "total valence"                            1                Y
 x          "number of ring bonds"                     >0               Y
@@ -367,7 +367,7 @@ X          "total degree"                             1                Y
 z          "number of heteroatom neighbors"           >0               Y       extension
 Z          "number of aliphatic heteroatom neighbors" >0               Y       extension
 \*         "any atom"
-\+         "positive charge"                          1                Y 
+\+         "positive charge"                          1                Y
 ++         "+2 charge"
 \-         "negative charge"                          1                Y
 \--        "-2 charge"

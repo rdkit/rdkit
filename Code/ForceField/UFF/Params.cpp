@@ -38,7 +38,9 @@ ParamCollection *ParamCollection::getParams(const std::string &paramData) {
 }
 
 ParamCollection::ParamCollection(std::string paramData) {
-  if (paramData.empty()) paramData = defaultParamData;
+  if (paramData.empty()) {
+    paramData = defaultParamData;
+  }
   std::istringstream inStream(paramData);
 
   std::string inLine = RDKit::getLine(inStream);

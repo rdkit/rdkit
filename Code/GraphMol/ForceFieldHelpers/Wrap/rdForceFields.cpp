@@ -71,11 +71,13 @@ int FFHelper(ForceFields::ForceField &ff, int maxIters) {
   return ForceFieldsHelper::OptimizeMolecule(ff, maxIters).first;
 }
 
-python::object FFConfsHelper(ROMol &mol, ForceFields::ForceField &ff, int numThreads, int maxIters) {
+python::object FFConfsHelper(ROMol &mol, ForceFields::ForceField &ff,
+                             int numThreads, int maxIters) {
   std::vector<std::pair<int, double>> res;
   {
     NOGIL gil;
-    ForceFieldsHelper::OptimizeMoleculeConfs(mol, ff, res, numThreads, maxIters);
+    ForceFieldsHelper::OptimizeMoleculeConfs(mol, ff, res, numThreads,
+                                             maxIters);
   }
   python::list pyres;
   for (auto &itm : res) {
@@ -132,8 +134,10 @@ ForceFields::PyMMFFMolProperties *GetMMFFMolProperties(
       new MMFF::MMFFMolProperties(mol, mmffVariant, mmffVerbosity);
   ForceFields::PyMMFFMolProperties *pyMP = nullptr;
 
-  if (mmffMolProperties && mmffMolProperties->isValid()) {
+  if (mmffMolProperties->isValid()) {
     pyMP = new ForceFields::PyMMFFMolProperties(mmffMolProperties);
+  } else {
+    delete mmffMolProperties;
   }
 
   return pyMP;
@@ -153,9 +157,7 @@ ForceFields::PyForceField *MMFFGetMoleculeForceField(
         MMFF::constructForceField(mol, mmffMolProperties, nonBondedThresh,
                                   confId, ignoreInterfragInteractions);
     pyFF = new ForceFields::PyForceField(ff);
-    if (pyFF) {
-      pyFF->initialize();
-    }
+    pyFF->initialize();
   }
 
   return pyFF;
@@ -167,7 +169,7 @@ bool MMFFHasAllMoleculeParams(const ROMol &mol) {
 
   return mmffMolProperties.isValid();
 }
-};
+};  // namespace RDKit
 
 namespace ForceFields {
 PyObject *getUFFBondStretchParams(const RDKit::ROMol &mol,
@@ -236,7 +238,7 @@ PyObject *getUFFVdWParams(const RDKit::ROMol &mol, const unsigned int idx1,
   }
   return res;
 };
-}
+}  // namespace ForceFields
 
 BOOST_PYTHON_MODULE(rdForceFieldHelpers) {
   python::scope().attr("__doc__") =
@@ -477,6 +479,6 @@ RETURNS: a list of (not_converged, energy) 2-tuples. \n\
 \n";
   python::def("OptimizeMoleculeConfs", RDKit::FFConfsHelper,
               (python::arg("mol"), python::arg("ff"),
-              python::arg("numThreads") = 1, python::arg("maxIters") = 200),
+               python::arg("numThreads") = 1, python::arg("maxIters") = 200),
               docString.c_str());
 }

@@ -172,7 +172,7 @@ MorganEnvGenerator<OutputType>::getEnvironments(
   unsigned int nAtoms = mol.getNumAtoms();
   std::vector<AtomEnvironment<OutputType> *> result =
       std::vector<AtomEnvironment<OutputType> *>();
-  MorganArguments<OutputType> *morganArguments =
+  auto *morganArguments =
       dynamic_cast<MorganArguments<OutputType> *>(arguments);
 
   std::vector<OutputType> currentInvariants(atomInvariants->size());
@@ -203,10 +203,11 @@ MorganEnvGenerator<OutputType>::getEnvironments(
   if (morganArguments->df_onlyNonzeroInvariants) {
     std::vector<std::pair<int32_t, uint32_t>> ordering;
     for (unsigned int i = 0; i < nAtoms; ++i) {
-      if (!currentInvariants[i])
+      if (!currentInvariants[i]) {
         ordering.push_back(std::make_pair(1, i));
-      else
+      } else {
         ordering.push_back(std::make_pair(0, i));
+      }
     }
     std::sort(ordering.begin(), ordering.end());
     for (unsigned int i = 0; i < nAtoms; ++i) {
@@ -265,7 +266,7 @@ MorganEnvGenerator<OutputType>::getEnvironments(
           unsigned int oIdx = bond->getOtherAtomIdx(atomIdx);
           roundAtomNeighborhoods[atomIdx] |= atomNeighborhoods[oIdx];
 
-          int32_t bt = static_cast<int32_t>((*bondInvariants)[bond->getIdx()]);
+          auto bt = static_cast<int32_t>((*bondInvariants)[bond->getIdx()]);
           neighborhoodInvariants.push_back(
               std::make_pair(bt, currentInvariants[oIdx]));
 

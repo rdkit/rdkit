@@ -25,7 +25,9 @@ void WedgeBond(Bond *bond, unsigned int fromAtomIdx, const Conformer *conf) {
   PRECONDITION(conf, "no conformer");
   PRECONDITION(&conf->getOwningMol() == &bond->getOwningMol(),
                "bond and conformer do not belong to same molecule");
-  if (bond->getBondType() != Bond::SINGLE) return;
+  if (bond->getBondType() != Bond::SINGLE) {
+    return;
+  }
   Bond::BondDir dir = DetermineBondWedgeState(bond, fromAtomIdx, conf);
   if (dir == Bond::BEGINWEDGE || dir == Bond::BEGINDASH) {
     bond->setBondDir(dir);
@@ -77,11 +79,14 @@ INT_MAP_INT pickBondsToWedge(const ROMol &mol) {
         bond->getBondDir() == Bond::BEGINDASH ||
         bond->getBondDir() == Bond::UNKNOWN) {
       if (bond->getBeginAtom()->getChiralTag() == Atom::CHI_TETRAHEDRAL_CW ||
-          bond->getBeginAtom()->getChiralTag() == Atom::CHI_TETRAHEDRAL_CCW)
+          bond->getBeginAtom()->getChiralTag() == Atom::CHI_TETRAHEDRAL_CCW) {
         nChiralNbrs[bond->getBeginAtomIdx()] = noNbrs + 1;
-      else if (bond->getEndAtom()->getChiralTag() == Atom::CHI_TETRAHEDRAL_CW ||
-               bond->getEndAtom()->getChiralTag() == Atom::CHI_TETRAHEDRAL_CCW)
+      } else if (bond->getEndAtom()->getChiralTag() ==
+                     Atom::CHI_TETRAHEDRAL_CW ||
+                 bond->getEndAtom()->getChiralTag() ==
+                     Atom::CHI_TETRAHEDRAL_CCW) {
         nChiralNbrs[bond->getEndAtomIdx()] = noNbrs + 1;
+      }
     }
   }
 
@@ -95,8 +100,9 @@ INT_MAP_INT pickBondsToWedge(const ROMol &mol) {
       continue;
     }
     Atom::ChiralType type = at->getChiralTag();
-    if (type != Atom::CHI_TETRAHEDRAL_CW && type != Atom::CHI_TETRAHEDRAL_CCW)
+    if (type != Atom::CHI_TETRAHEDRAL_CW && type != Atom::CHI_TETRAHEDRAL_CCW) {
       continue;
+    }
     nChiralNbrs[at->getIdx()] = 0;
     chiNbrs = true;
     ROMol::ADJ_ITER nbrIdx, endNbrs;
@@ -110,13 +116,17 @@ INT_MAP_INT pickBondsToWedge(const ROMol &mol) {
         continue;
       }
       type = nat->getChiralTag();
-      if (type != Atom::CHI_TETRAHEDRAL_CW && type != Atom::CHI_TETRAHEDRAL_CCW)
+      if (type != Atom::CHI_TETRAHEDRAL_CW &&
+          type != Atom::CHI_TETRAHEDRAL_CCW) {
         continue;
+      }
       nChiralNbrs[at->getIdx()] -= 1;
     }
   }
   std::vector<unsigned int> indices(mol.getNumAtoms());
-  for (unsigned int i = 0; i < mol.getNumAtoms(); ++i) indices[i] = i;
+  for (unsigned int i = 0; i < mol.getNumAtoms(); ++i) {
+    indices[i] = i;
+  }
   if (chiNbrs) {
     std::sort(indices.begin(), indices.end(),
               Rankers::argless<INT_VECT>(nChiralNbrs));
@@ -150,8 +160,9 @@ INT_MAP_INT pickBondsToWedge(const ROMol &mol) {
     Atom::ChiralType type = atom->getChiralTag();
     // the indices are ordered such that all chiral atoms come first. If
     // this has no chiral flag, we can stop the whole loop:
-    if (type != Atom::CHI_TETRAHEDRAL_CW && type != Atom::CHI_TETRAHEDRAL_CCW)
+    if (type != Atom::CHI_TETRAHEDRAL_CW && type != Atom::CHI_TETRAHEDRAL_CCW) {
       break;
+    }
     RDKit::ROMol::OBOND_ITER_PAIR atomBonds = mol.getAtomBonds(atom);
     std::vector<std::pair<int, int>> nbrScores;
     while (atomBonds.first != atomBonds.second) {
@@ -159,7 +170,9 @@ INT_MAP_INT pickBondsToWedge(const ROMol &mol) {
       ++atomBonds.first;
 
       // can only wedge single bonds:
-      if (bond->getBondType() != Bond::SINGLE) continue;
+      if (bond->getBondType() != Bond::SINGLE) {
+        continue;
+      }
 
       int bid = bond->getIdx();
       if (res.find(bid) == res.end()) {
@@ -261,7 +274,9 @@ Bond::BondDir DetermineBondWedgeState(const Bond *bond,
       tmpPt.z = 0.0;
       RDGeom::Point3D tmpVect = centerLoc.directionVector(tmpPt);
       double angle = refVect.signedAngleTo(tmpVect);
-      if (angle < 0.0) angle += 2. * M_PI;
+      if (angle < 0.0) {
+        angle += 2. * M_PI;
+      }
       auto nbrIt = neighborBondIndices.begin();
       auto angleIt = neighborBondAngles.begin();
       // find the location of this neighbor in our angle-sorted list
@@ -357,8 +372,9 @@ void ClearSingleBondDirFlags(ROMol &mol) {
   for (RWMol::BondIterator bondIt = mol.beginBonds(); bondIt != mol.endBonds();
        ++bondIt) {
     if ((*bondIt)->getBondType() == Bond::SINGLE) {
-      if ((*bondIt)->getBondDir() == Bond::UNKNOWN)
+      if ((*bondIt)->getBondDir() == Bond::UNKNOWN) {
         (*bondIt)->setProp(common_properties::_UnknownStereo, 1);
+      }
       (*bondIt)->setBondDir(Bond::NONE);
     }
   }

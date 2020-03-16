@@ -96,7 +96,11 @@ template <typename T1, typename T2>
 PyObject *helpGetSubstructMatches(T1 &mol, T2 &query,
                                   const SubstructMatchParameters &params) {
   std::vector<MatchVectType> matches;
-  {
+  if (params.extraFinalCheck) {
+    // NOTE: Because we are going into/out of python here, we can't
+    // run with NOGIL
+    matches = SubstructMatch(mol, query, params);
+  } else {
     NOGIL gil;
     matches = SubstructMatch(mol, query, params);
   }

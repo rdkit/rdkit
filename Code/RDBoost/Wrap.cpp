@@ -29,12 +29,22 @@ void throw_value_error(const std::string err) {
   python::throw_error_already_set();
 }
 
+// A helper function for dealing with errors. Throw a Python KeyError
+void throw_key_error(const std::string key) {
+  PyErr_SetString(PyExc_KeyError, key.c_str());
+  python::throw_error_already_set();
+}
+
 void translate_index_error(IndexErrorException const& e) {
   throw_index_error(e.index());
 }
 
 void translate_value_error(ValueErrorException const& e) {
   throw_value_error(e.message());
+}
+
+void translate_key_error(KeyErrorException const& e) {
+  throw_key_error(e.key());
 }
 
 #ifdef INVARIANT_EXCEPTION_METHOD
@@ -44,9 +54,7 @@ void throw_runtime_error(const std::string err) {
   python::throw_error_already_set();
 }
 
-
-void translate_invariant_error(Invar::Invariant const &e) {
+void translate_invariant_error(Invar::Invariant const& e) {
   throw_runtime_error(e.toUserString());
 }
-#endif                                               
-
+#endif

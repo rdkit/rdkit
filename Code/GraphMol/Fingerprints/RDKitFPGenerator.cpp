@@ -38,7 +38,7 @@ namespace RDKitFP {
 
 std::vector<std::uint32_t> *RDKitFPAtomInvGenerator::getAtomInvariants(
     const ROMol &mol) const {
-  std::vector<std::uint32_t> *result = new std::vector<std::uint32_t>();
+  auto *result = new std::vector<std::uint32_t>();
   result->reserve(mol.getNumAtoms());
   for (ROMol::ConstAtomIterator atomIt = mol.beginAtoms();
        atomIt != mol.endAtoms(); ++atomIt) {
@@ -101,9 +101,9 @@ OutputType RDKitFPAtomEnv<OutputType>::getBitId(
 }
 
 template <typename OutputType>
-RDKitFPAtomEnv<OutputType>::RDKitFPAtomEnv(
-    const OutputType bitId, const boost::dynamic_bitset<> &atomsInPath)
-    : d_bitId(bitId), d_atomsInPath(atomsInPath) {}
+RDKitFPAtomEnv<OutputType>::RDKitFPAtomEnv(const OutputType bitId,
+                                           boost::dynamic_bitset<> atomsInPath)
+    : d_bitId(bitId), d_atomsInPath(std::move(atomsInPath)) {}
 
 template <typename OutputType>
 std::string RDKitFPEnvGenerator<OutputType>::infoString() const {
@@ -125,7 +125,7 @@ RDKitFPEnvGenerator<OutputType>::getEnvironments(
   PRECONDITION(!atomInvariants || atomInvariants->size() >= mol.getNumAtoms(),
                "bad atomInvariants size");
 
-  RDKitFPArguments<OutputType> *rDKitFPArguments =
+  auto *rDKitFPArguments =
       dynamic_cast<RDKitFPArguments<OutputType> *>(arguments);
 
   std::vector<AtomEnvironment<OutputType> *> result;

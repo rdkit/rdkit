@@ -1161,7 +1161,9 @@ void EmbeddedFrag::computeBox() {
 void EmbeddedFrag::canonicalizeOrientation() {
   // fix for issue 198
   // no need to canonicalize if we are dealing with a single atm
-  if (d_eatoms.size() <= 1) return;
+  if (d_eatoms.size() <= 1) {
+    return;
+  }
 
   RDGeom::Point2D cent(0.0, 0.0);
   for (const auto &elem : d_eatoms) {
@@ -1192,7 +1194,9 @@ void EmbeddedFrag::canonicalizeOrientation() {
   RDGeom::Transform2D trans;
   eig1.x = 2 * xy;
   eig1.y = (yy - xx) + d;
-  if (eig1.length() <= 1e-4) return;
+  if (eig1.length() <= 1e-4) {
+    return;
+  }
   double eVal1 = (xx + yy + d) / 2;
   eig1.normalize();
 
@@ -1489,8 +1493,8 @@ std::vector<PAIR_I_I> EmbeddedFrag::findCollisions(const double *dmat,
                                                    bool includeBonds) {
   // find a pair of atoms that are too close to each other
   std::vector<PAIR_I_I> res;
-  for (auto efi = d_eatoms.begin(); efi != d_eatoms.end(); ++efi) {
-    efi->second.d_density = 0.0;
+  for (auto &d_eatom : d_eatoms) {
+    d_eatom.second.d_density = 0.0;
   }
 
   auto tempi = d_eatoms.begin();
@@ -1665,12 +1669,16 @@ void EmbeddedFrag::flipAboutBond(unsigned int bondId, bool flipEnd) {
   unsigned int nEndAtomsFixed = 0;
   unsigned int nAtomsFixed = 0;
   for (auto &d_eatom : d_eatoms) {
-    if (d_eatom.second.df_fixed) ++nAtomsFixed;
+    if (d_eatom.second.df_fixed) {
+      ++nAtomsFixed;
+    }
   }
   // if there are fixed atoms, look at the atoms on the "end side"
   if (nAtomsFixed) {
     BOOST_FOREACH (int endAtomId, endSideAids) {
-      if (d_eatoms[endAtomId].df_fixed) ++nEndAtomsFixed;
+      if (d_eatoms[endAtomId].df_fixed) {
+        ++nEndAtomsFixed;
+      }
     }
   }
   // std::cerr << "  FLIP: " << nAtomsFixed << " " << nEndAtomsFixed <<
@@ -2006,7 +2014,9 @@ void EmbeddedFrag::removeCollisionsShortenBonds() {
         RDKit::INT_VECT_CI rpi;
         RDGeom::INT_POINT2D_MAP moveMap;
         for (rpi = rPath.begin(); rpi != rPath.end(); rpi++) {
-          if (d_eatoms[*rpi].df_fixed) continue;
+          if (d_eatoms[*rpi].df_fixed) {
+            continue;
+          }
           RDGeom::Point2D move;
           move = d_eatoms[nbrMap[*rpi][0]].loc;
           move += d_eatoms[nbrMap[*rpi][1]].loc;

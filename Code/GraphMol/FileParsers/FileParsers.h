@@ -33,7 +33,8 @@ class MolFileUnhandledFeatureException : public std::exception {
   explicit MolFileUnhandledFeatureException(const std::string msg)
       : _msg(msg){};
   //! get the error message
-  const char *message() const { return _msg.c_str(); };
+  const char *what() const noexcept override { return _msg.c_str(); };
+  const char *message() const noexcept { return what(); };
   ~MolFileUnhandledFeatureException() noexcept override{};
 
  private:
@@ -114,6 +115,20 @@ RDKIT_FILEPARSERS_EXPORT std::string MolToMolBlock(const ROMol &mol,
                                                    int confId = -1,
                                                    bool kekulize = true,
                                                    bool forceV3000 = false);
+
+// \brief generates an MDL v3000 mol block for a molecule
+/*!
+ *   \param mol           - the molecule in question
+ *   \param includeStereo - toggles inclusion of stereochemistry information
+ *   \param confId        - selects the conformer to be used
+ *   \param kekulize      - triggers kekulization of the molecule before it is
+ * written
+ */
+inline std::string MolToV3KMolBlock(const ROMol &mol, bool includeStereo = true,
+                                    int confId = -1, bool kekulize = true) {
+  return MolToMolBlock(mol, includeStereo, confId, kekulize, true);
+}
+
 // \brief Writes a molecule to an MDL mol file
 /*!
  *   \param mol           - the molecule in question
@@ -130,10 +145,27 @@ RDKIT_FILEPARSERS_EXPORT void MolToMolFile(
     const ROMol &mol, const std::string &fName, bool includeStereo = true,
     int confId = -1, bool kekulize = true, bool forceV3000 = false);
 
-RDKIT_FILEPARSERS_EXPORT std::string MolToXYZBlock(const ROMol &mol, int confId = -1);
+// \brief Writes a molecule to an MDL V3000 mol file
+/*!
+ *   \param mol           - the molecule in question
+ *   \param fName         - the name of the file to use
+ *   \param includeStereo - toggles inclusion of stereochemistry information
+ *   \param confId        - selects the conformer to be used
+ *   \param kekulize      - triggers kekulization of the molecule before it is
+ * written
+ */
+inline void MolToV3KMolFile(const ROMol &mol, const std::string &fName,
+                            bool includeStereo = true, int confId = -1,
+                            bool kekulize = true) {
+  MolToMolFile(mol, fName, includeStereo, confId, kekulize, true);
+}
 
-RDKIT_FILEPARSERS_EXPORT void MolToXYZFile(
-    const ROMol &mol, const std::string &fName, int confId = -1);
+RDKIT_FILEPARSERS_EXPORT std::string MolToXYZBlock(const ROMol &mol,
+                                                   int confId = -1);
+
+RDKIT_FILEPARSERS_EXPORT void MolToXYZFile(const ROMol &mol,
+                                           const std::string &fName,
+                                           int confId = -1);
 
 //-----
 //  TPL handling:
@@ -317,6 +349,41 @@ RDKIT_FILEPARSERS_EXPORT RWMol *RDKitSVGToMol(const std::string &svg,
 RDKIT_FILEPARSERS_EXPORT RWMol *RDKitSVGToMol(std::istream *instream,
                                               bool sanitize = true,
                                               bool removeHs = true);
+
+inline std::unique_ptr<RDKit::RWMol> operator"" _ctab(const char *text,
+                                                      size_t len) {
+  std::string data(text, len);
+  RWMol *ptr = nullptr;
+  try {
+    ptr = MolBlockToMol(data);
+  } catch (const RDKit::MolSanitizeException &) {
+    ptr = nullptr;
+  }
+  return std::unique_ptr<RWMol>(ptr);
+}
+inline std::unique_ptr<RDKit::RWMol> operator"" _mol2(const char *text,
+                                                      size_t len) {
+  std::string data(text, len);
+  RWMol *ptr = nullptr;
+  try {
+    ptr = Mol2BlockToMol(data);
+  } catch (const RDKit::MolSanitizeException &) {
+    ptr = nullptr;
+  }
+  return std::unique_ptr<RWMol>(ptr);
+}
+
+inline std::unique_ptr<RDKit::RWMol> operator"" _pdb(const char *text,
+                                                     size_t len) {
+  std::string data(text, len);
+  RWMol *ptr = nullptr;
+  try {
+    ptr = PDBBlockToMol(data);
+  } catch (const RDKit::MolSanitizeException &) {
+    ptr = nullptr;
+  }
+  return std::unique_ptr<RWMol>(ptr);
+}
 
 }  // namespace RDKit
 

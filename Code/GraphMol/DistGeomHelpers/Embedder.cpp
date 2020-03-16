@@ -56,98 +56,98 @@ namespace RDKit {
 namespace DGeomHelpers {
 
 //! Parameters corresponding to Sereina Riniker's KDG approach
-const EmbedParameters KDG(0,      // maxIterations
-                          1,      // numThreads
-                          -1,     // randomSeed
-                          true,   // clearConfs
-                          false,  // useRandomCoords
-                          2.0,    // boxSizeMult
-                          true,   // randNegEig
-                          1,      // numZeroFail
-                          nullptr,// coordMap
-                          1e-3,   // optimizerForceTol
-                          false,  // ignoreSmoothingFailures
-                          true,   // enforceChirality
-                          false,  // useExpTorsionAnglePrefs
-                          false,  // useSmallRingTorsions
-                          false,  // useMacrocycleTorsions
-                          true,   // useBasicKnowledge
-                          false,  // verbose
-                          5.0,    // basinThresh
-                          -1.0,   // pruneRmsThresh
-                          true,   // onlyHeavyAtomsForRMS
-                          1       // ETversion
+const EmbedParameters KDG(0,        // maxIterations
+                          1,        // numThreads
+                          -1,       // randomSeed
+                          true,     // clearConfs
+                          false,    // useRandomCoords
+                          2.0,      // boxSizeMult
+                          true,     // randNegEig
+                          1,        // numZeroFail
+                          nullptr,  // coordMap
+                          1e-3,     // optimizerForceTol
+                          false,    // ignoreSmoothingFailures
+                          true,     // enforceChirality
+                          false,    // useExpTorsionAnglePrefs
+                          false,    // useSmallRingTorsions
+                          false,    // useMacrocycleTorsions
+                          true,     // useBasicKnowledge
+                          false,    // verbose
+                          5.0,      // basinThresh
+                          -1.0,     // pruneRmsThresh
+                          true,     // onlyHeavyAtomsForRMS
+                          1         // ETversion
 );
 
 //! Parameters corresponding to Sereina Riniker's ETDG approach
-const EmbedParameters ETDG(0,      // maxIterations
-                           1,      // numThreads
-                           -1,     // randomSeed
-                           true,   // clearConfs
-                           false,  // useRandomCoords
-                           2.0,    // boxSizeMult
-                           true,   // randNegEig
-                           1,      // numZeroFail
-                           nullptr,// coordMap
-                           1e-3,   // optimizerForceTol
-                           false,  // ignoreSmoothingFailures
-                           false,  // enforceChirality
-                           true,   // useExpTorsionAnglePrefs
-                           false,  // useSmallRingTorsions
-                           false,  // useMacrocycleTorsions                        
-                           false,  // useBasicKnowledge
-                           false,  // verbose
-                           5.0,    // basinThresh
-                           -1.0,   // pruneRmsThresh
-                           true,   // onlyHeavyAtomsForRMS
-                           1       // ETversion
+const EmbedParameters ETDG(0,         // maxIterations
+                           1,         // numThreads
+                           -1,        // randomSeed
+                           true,      // clearConfs
+                           false,     // useRandomCoords
+                           2.0,       // boxSizeMult
+                           true,      // randNegEig
+                           1,         // numZeroFail
+                           nullptr,   // coordMap
+                           1e-3,      // optimizerForceTol
+                           false,     // ignoreSmoothingFailures
+                           false,     // enforceChirality
+                           true,      // useExpTorsionAnglePrefs
+                           false,     // useSmallRingTorsions
+                           false,     // useMacrocycleTorsions                        
+                           false,     // useBasicKnowledge
+                           false,     // verbose
+                           5.0,       // basinThresh
+                           -1.0,      // pruneRmsThresh
+                           true,      // onlyHeavyAtomsForRMS
+                           1          // ETversion
 );
 //! Parameters corresponding to Sereina Riniker's ETKDG approach
-const EmbedParameters ETKDG(0,      // maxIterations
-                            1,      // numThreads
-                            -1,     // randomSeed
-                            true,   // clearConfs
-                            false,  // useRandomCoords
-                            2.0,    // boxSizeMult
-                            true,   // randNegEig
-                            1,      // numZeroFail
-                            nullptr,// coordMap
-                            1e-3,   // optimizerForceTol
-                            false,  // ignoreSmoothingFailures
-                            true,   // enforceChirality
-                            true,   // useExpTorsionAnglePrefs
-                            false,  // useSmallRingTorsions
-                            false,  // useMacrocycleTorsions                            
-                            true,   // useBasicKnowledge
-                            false,  // verbose
-                            5.0,    // basinThresh
-                            -1.0,   // pruneRmsThresh
-                            true,   // onlyHeavyAtomsForRMS
-                            1       // ETversion
+const EmbedParameters ETKDG(0,        // maxIterations
+                            1,        // numThreads
+                            -1,       // randomSeed
+                            true,     // clearConfs
+                            false,    // useRandomCoords
+                            2.0,      // boxSizeMult
+                            true,     // randNegEig
+                            1,        // numZeroFail
+                            nullptr,  // coordMap
+                            1e-3,     // optimizerForceTol
+                            false,    // ignoreSmoothingFailures
+                            true,     // enforceChirality
+                            true,     // useExpTorsionAnglePrefs
+                            false,    // useSmallRingTorsions
+                            false,    // useMacrocycleTorsions                            
+                            true,     // useBasicKnowledge
+                            false,    // verbose
+                            5.0,      // basinThresh
+                            -1.0,     // pruneRmsThresh
+                            true,     // onlyHeavyAtomsForRMS
+                            1         // ETversion
 );
 
 //! Parameters corresponding to Sereina Riniker's ETKDG approach - version 2
-const EmbedParameters ETKDGv2(0,      // maxIterations
-                              1,      // numThreads
-                              -1,     // randomSeed
-                              true,   // clearConfs
-                              false,  // useRandomCoords
-                              2.0,    // boxSizeMult
-                              true,   // randNegEig
-                              1,      // numZeroFail
-                              nullptr,// coordMap
-                              1e-3,   // optimizerForceTol
-                              false,  // ignoreSmoothingFailures
-                              true,   // enforceChirality
-                              true,   // useExpTorsionAnglePrefs
-                              false,  // useSmallRingTorsions
-                              false,  // useMacrocycleTorsions                              
-                              true,   // useBasicKnowledge
-                              false,  // verbose
-                              5.0,    // basinThresh
-                              -1.0,   // pruneRmsThresh
-                              true,   // onlyHeavyAtomsForRMS
-                              2       // ETversion
+const EmbedParameters ETKDGv2(0,        // maxIterations
+                              1,        // numThreads
+                              -1,       // randomSeed
+                              true,     // clearConfs
+                              false,    // useRandomCoords
+                              2.0,      // boxSizeMult
+                              true,     // randNegEig
+                              1,        // numZeroFail
+                              nullptr,  // coordMap
+                              1e-3,     // optimizerForceTol
+                              false,    // ignoreSmoothingFailures
+                              true,     // enforceChirality
+                              true,     // useExpTorsionAnglePrefs
+                              false,    // useSmallRingTorsions
+                              false,    // useMacrocycleTorsions                              
+                              true,     // useBasicKnowledge
+                              false,    // verbose
+                              5.0,      // basinThresh
+                              -1.0,     // pruneRmsThresh
+                              true,     // onlyHeavyAtomsForRMS
+                              2         // ETversion
 );
 
 namespace detail {
@@ -195,20 +195,36 @@ bool _volumeTest(const DistGeom::ChiralSetPtr &chiralSet,
 
   RDGeom::Point3D crossp = v1.crossProduct(v2);
   double vol = crossp.dotProduct(v3);
-  if (verbose) std::cerr << "   " << fabs(vol) << std::endl;
-  if (fabs(vol) < MIN_TETRAHEDRAL_CHIRAL_VOL) return false;
+  if (verbose) {
+    std::cerr << "   " << fabs(vol) << std::endl;
+  }
+  if (fabs(vol) < MIN_TETRAHEDRAL_CHIRAL_VOL) {
+    return false;
+  }
   crossp = v1.crossProduct(v2);
   vol = crossp.dotProduct(v4);
-  if (verbose) std::cerr << "   " << fabs(vol) << std::endl;
-  if (fabs(vol) < MIN_TETRAHEDRAL_CHIRAL_VOL) return false;
+  if (verbose) {
+    std::cerr << "   " << fabs(vol) << std::endl;
+  }
+  if (fabs(vol) < MIN_TETRAHEDRAL_CHIRAL_VOL) {
+    return false;
+  }
   crossp = v1.crossProduct(v3);
   vol = crossp.dotProduct(v4);
-  if (verbose) std::cerr << "   " << fabs(vol) << std::endl;
-  if (fabs(vol) < MIN_TETRAHEDRAL_CHIRAL_VOL) return false;
+  if (verbose) {
+    std::cerr << "   " << fabs(vol) << std::endl;
+  }
+  if (fabs(vol) < MIN_TETRAHEDRAL_CHIRAL_VOL) {
+    return false;
+  }
   crossp = v2.crossProduct(v3);
   vol = crossp.dotProduct(v4);
-  if (verbose) std::cerr << "   " << fabs(vol) << std::endl;
-  if (fabs(vol) < MIN_TETRAHEDRAL_CHIRAL_VOL) return false;
+  if (verbose) {
+    std::cerr << "   " << fabs(vol) << std::endl;
+  }
+  if (fabs(vol) < MIN_TETRAHEDRAL_CHIRAL_VOL) {
+    return false;
+  }
 
   return true;
 }
@@ -220,7 +236,9 @@ bool _sameSide(const RDGeom::Point3D &v1, const RDGeom::Point3D &v2,
   double d1 = normal.dotProduct(v4 - v1);
   double d2 = normal.dotProduct(p0 - v1);
   // std::cerr << "     " << d1 << " - " << d2 << std::endl;
-  if (fabs(d1) < tol || fabs(d2) < tol) return false;
+  if (fabs(d1) < tol || fabs(d2) < tol) {
+    return false;
+  }
   return !((d1 < 0.) ^ (d2 < 0.));
 }
 bool _centerInVolume(unsigned int idx0, unsigned int idx1, unsigned int idx2,
@@ -598,7 +616,9 @@ bool embedPoints(RDGeom::PointPtrVect *positions, detail::EmbedArgs eargs,
   // random coordinates since it ends up ignoring 1-4 (and higher)
   // interactions. This causes us to get folded-up (and self-penetrating)
   // conformations for large flexible molecules
-  if (embedParams.useRandomCoords) embedParams.basinThresh = 1e8;
+  if (embedParams.useRandomCoords) {
+    embedParams.basinThresh = 1e8;
+  }
 
   RDKit::double_source_type *rng = nullptr;
   RDKit::rng_type *generator;
@@ -661,7 +681,7 @@ bool embedPoints(RDGeom::PointPtrVect *positions, detail::EmbedArgs eargs,
       }
     }  // if(gotCoords)
   }    // while
-  if (seed > -1 && rng) {
+  if (seed > -1) {
     delete rng;
     delete generator;
     delete distrib;
@@ -844,8 +864,8 @@ bool _isConfFarFromRest(const ROMol &mol, const Conformer &conf,
   _fillAtomPositions(refPoints, conf, mol, onlyHeavyAtomsForRMS);
 
   double ssrThres = conf.getNumAtoms() * threshold * threshold;
-  for (ROMol::ConstConformerIterator confi = mol.beginConformers();
-       confi != mol.endConformers(); ++confi) {
+  for (auto confi = mol.beginConformers(); confi != mol.endConformers();
+       ++confi) {
     _fillAtomPositions(prbPoints, *(*confi), mol, onlyHeavyAtomsForRMS);
     RDGeom::Transform3D trans;
     auto ssr = RDNumeric::Alignments::AlignPoints(refPoints, prbPoints, trans);
@@ -861,8 +881,12 @@ namespace detail {
 template <class T>
 bool multiplication_overflows_(T a, T b) {
   // a * b > c if and only if a > c / b
-  if (a == 0 || b == 0) return false;
-  if (a > std::numeric_limits<T>::max() / b) return true;
+  if (a == 0 || b == 0) {
+    return false;
+  }
+  if (a > std::numeric_limits<T>::max() / b) {
+    return true;
+  }
   return false;
 }
 
@@ -880,7 +904,9 @@ void embedHelper_(int threadId, int numThreads, EmbedArgs *eargs,
     }
   }
   for (size_t ci = 0; ci < eargs->confs->size(); ci++) {
-    if (rdcast<int>(ci % numThreads) != threadId) continue;
+    if (rdcast<int>(ci % numThreads) != threadId) {
+      continue;
+    }
     if (!(*eargs->confsOk)[ci]) {
       // we call this function for each fragment in a molecule,
       // if one of the fragments has already failed, there's no
@@ -903,7 +929,7 @@ void embedHelper_(int threadId, int numThreads, EmbedArgs *eargs,
         // maximum possible value of the pair of numbers. The
         // following will generate unique integers:
         // hash(a, b) = a + b * N
-        size_t big_seed = rdcast<size_t>(params->randomSeed);
+        auto big_seed = rdcast<size_t>(params->randomSeed);
         size_t max_val = std::max(ci + 1, big_seed);
         size_t big_num = big_seed + max_val * (ci + 1);
         // only grab the first 31 bits xor'd with the next 31 bits to
@@ -1024,7 +1050,8 @@ void EmbedMultipleConfs(ROMol &mol, INT_VECT &res, unsigned int numConfs,
             "size of boundsMat provided does not match the number of atoms in "
             "the molecule.");
       }
-      collectBondsAndAngles((*piece.get()),etkdgDetails.bonds, etkdgDetails.angles);
+      collectBondsAndAngles((*piece.get()), etkdgDetails.bonds,
+                            etkdgDetails.angles);
       mmat.reset(new DistGeom::BoundsMatrix(*params.boundsMat));
     }
 

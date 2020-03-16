@@ -237,7 +237,28 @@ public class Chemv2Tests extends GraphMolTest {
           // default line color:
           assertTrue(svg.indexOf("stroke:#FF7F7F;") > -1);
         }
-
+        @Test
+        public void testMolDraw2DContours() {
+		  // really just a test to make sure this can be called
+          RWMol m = RWMol.MolFromSmiles("CCCCCOC");
+		  RDKFuncs.prepareMolForDrawing(m);
+		  Point2D_Vect cents = new Point2D_Vect();
+		  Double_Vect weights = new Double_Vect();
+		  Double_Vect widths = new Double_Vect();
+		  for(int i=0;i<m.getNumAtoms();++i){
+			  cents.add(new Point2D(m.getConformer().getAtomPos(i)));
+			  weights.add(1.0);
+			  widths.add(0.4);
+		  }
+		  MolDraw2DSVG drawer = new MolDraw2DSVG(300, 300);
+		  drawer.clearDrawing();
+		  RDKFuncs.ContourAndDrawGaussians(drawer,cents,weights,widths,10);
+		  drawer.drawOptions().setClearBackground(false); 
+		  drawer.drawMolecule(m);
+		  drawer.finishDrawing();
+		  String svg = drawer.getDrawingText();
+		  System.out.print(svg);
+		}
         public static void main(String args[]) {
 		org.junit.runner.JUnitCore.main("org.RDKit.Chemv2Tests");
 	}

@@ -180,9 +180,8 @@ void testAtomPairOld() {
       fpu = atomPairGenerator->getSparseCountFingerprint(*mol);
       fp2 = new SparseIntVect<std::int32_t>(fpu->size());
       std::map<std::uint32_t, int> nz = fpu->getNonzeroElements();
-      for (std::map<std::uint32_t, int>::iterator it = nz.begin();
-           it != nz.end(); it++) {
-        fp2->setVal(static_cast<std::int32_t>(it->first), it->second);
+      for (auto &it : nz) {
+        fp2->setVal(static_cast<std::int32_t>(it.first), it.second);
       }
 
       TEST_ASSERT(DiceSimilarity(*fp1, *fp2) == 1.0);
@@ -960,8 +959,7 @@ void testMorganFPFeatureInvs() {
     ROMol *mol;
     mol = SmilesToMol("Cc1ccccc1");
     TEST_ASSERT(mol);
-    MorganFingerprint::MorganFeatureAtomInvGenerator *invGen =
-        new MorganFingerprint::MorganFeatureAtomInvGenerator();
+    auto *invGen = new MorganFingerprint::MorganFeatureAtomInvGenerator();
     std::vector<std::uint32_t> *invars = invGen->getAtomInvariants(*mol);
     TEST_ASSERT((*invars)[0] == 0);
     TEST_ASSERT((*invars)[1] != 0);
@@ -978,8 +976,7 @@ void testMorganFPFeatureInvs() {
     ROMol *mol;
     mol = SmilesToMol("FCCCl");
     TEST_ASSERT(mol);
-    MorganFingerprint::MorganFeatureAtomInvGenerator *invGen =
-        new MorganFingerprint::MorganFeatureAtomInvGenerator();
+    auto *invGen = new MorganFingerprint::MorganFeatureAtomInvGenerator();
     std::vector<std::uint32_t> *invars = invGen->getAtomInvariants(*mol);
     TEST_ASSERT((*invars)[1] == (*invars)[2]);
     TEST_ASSERT((*invars)[1] == 0);
@@ -1001,7 +998,7 @@ void testMorganFPFeatureInvs() {
     patterns[0] = static_cast<const ROMol *>(p);
     p = SmartsToMol("[a]");
     patterns[1] = static_cast<const ROMol *>(p);
-    MorganFingerprint::MorganFeatureAtomInvGenerator *invGen =
+    auto *invGen =
         new MorganFingerprint::MorganFeatureAtomInvGenerator(&patterns);
 
     std::vector<std::uint32_t> *invars = invGen->getAtomInvariants(*mol);
@@ -1463,8 +1460,8 @@ void testRDKitFP() {
     // the same
     std::map<std::uint64_t, int> nz = fpTemp->getNonzeroElements();
     fpOld = new SparseIntVect<std::uint64_t>(fp->getLength());
-    for (auto it = nz.begin(); it != nz.end(); it++) {
-      fpOld->setVal(it->first, it->second);
+    for (auto &it : nz) {
+      fpOld->setVal(it.first, it.second);
     }
 
     TEST_ASSERT(DiceSimilarity(*fp, *fpOld) == 1.0);
@@ -1595,9 +1592,8 @@ void testTopologicalTorsionFPOld() {
 
     fpOld = new SparseIntVect<std::uint64_t>(fp->getLength());
     std::map<std::int64_t, int> nz = fpSigned->getNonzeroElements();
-    for (std::map<std::int64_t, int>::iterator it = nz.begin(); it != nz.end();
-         it++) {
-      fpOld->setVal(static_cast<std::uint64_t>(it->first), it->second);
+    for (auto &it : nz) {
+      fpOld->setVal(static_cast<std::uint64_t>(it.first), it.second);
     }
 
     TEST_ASSERT(DiceSimilarity(*fp, *fpOld) == 1.0);

@@ -66,7 +66,7 @@ class RDKIT_MOLSTANDARDIZE_EXPORT LargestFragmentChooser {
   ROMol *choose(const ROMol &mol);
   struct Largest {
     Largest();
-    Largest(std::string &smiles, const boost::shared_ptr<ROMol> &fragment,
+    Largest(std::string &smiles, boost::shared_ptr<ROMol> fragment,
             unsigned int &numatoms, double &weight, bool &organic);
     std::string Smiles;
     boost::shared_ptr<ROMol> Fragment;

@@ -39,10 +39,10 @@ PyObject* GetPos(const Conformer *conf) {
     dims[1] = 3;
 
     // initialize the array
-    PyArrayObject *res = (PyArrayObject *)PyArray_SimpleNew(2, dims, NPY_DOUBLE);
+    auto *res = (PyArrayObject *)PyArray_SimpleNew(2, dims, NPY_DOUBLE);
 
     // represent the array as a 1D/flat array of doubles
-    double *resData = reinterpret_cast<double *>(PyArray_DATA(res));
+    auto *resData = reinterpret_cast<double *>(PyArray_DATA(res));
 
     // manually insert the data, 3 corresponds to the x, y and z dimensions
     for (unsigned int i = 0; i < pos.size(); ++i) {

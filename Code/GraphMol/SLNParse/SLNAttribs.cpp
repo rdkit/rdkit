@@ -224,27 +224,39 @@ void parseAtomAttribs(Atom *atom, AttribListType attribs, bool doingQuery) {
         val = -666;
       }
       if (attribName == "rbc") {
-        if (fTag == "") val = parseIntAttribVal(attribName, attribVal);
+        if (fTag == "") {
+          val = parseIntAttribVal(attribName, attribVal);
+        }
         query = makeQueryFromOp(attribPtr->op, val, queryAtomRingBondCount,
                                 fTag + "AtomRingBondCount");
       } else if (attribName == "tbo") {
-        if (fTag == "") val = parseIntAttribVal(attribName, attribVal);
+        if (fTag == "") {
+          val = parseIntAttribVal(attribName, attribVal);
+        }
         query = makeQueryFromOp(attribPtr->op, val, queryAtomTotalValence,
                                 fTag + "AtomTotalValence");
       } else if (attribName == "tac") {
-        if (fTag == "") val = parseIntAttribVal(attribName, attribVal);
+        if (fTag == "") {
+          val = parseIntAttribVal(attribName, attribVal);
+        }
         query = makeQueryFromOp(attribPtr->op, val, queryAtomTotalDegree,
                                 fTag + "AtomTotalDegree");
       } else if (attribName == "hc") {
-        if (fTag == "") val = parseIntAttribVal(attribName, attribVal);
+        if (fTag == "") {
+          val = parseIntAttribVal(attribName, attribVal);
+        }
         query = makeQueryFromOp(attribPtr->op, val, queryAtomHCount,
                                 fTag + "AtomHCount");
       } else if (attribName == "hac") {
-        if (fTag == "") val = parseIntAttribVal(attribName, attribVal);
+        if (fTag == "") {
+          val = parseIntAttribVal(attribName, attribVal);
+        }
         query = makeQueryFromOp(attribPtr->op, val, queryAtomNonHydrogenDegree,
                                 fTag + "AtomHeavyAtomDegree");
       } else if (attribName == "f") {
-        if (fTag == "") val = parseIntAttribVal(attribName, attribVal);
+        if (fTag == "") {
+          val = parseIntAttribVal(attribName, attribVal);
+        }
         query = makeQueryFromOp(
             "=", val, (int (*)(const RDKit::Atom *))(queryAtomAllBondProduct),
             fTag + "AtomBondEnvironment");
@@ -262,7 +274,9 @@ void parseAtomAttribs(Atom *atom, AttribListType attribs, bool doingQuery) {
                                 << "' ignored on non-query atom\n";
         delete query;
       } else {
-        if (attribPtr->negated) query->setNegation(!query->getNegation());
+        if (attribPtr->negated) {
+          query->setNegation(!query->getNegation());
+        }
         if (!atomQuery) {
           // first one is easy:
           atomQuery = query;
@@ -338,8 +352,9 @@ void parseFinalAtomAttribs(Atom *atom, bool doingQuery) {
   // attributes that had "f" in the original SLN. We will recognize
   // these by the fact that their names start with "_SLN_"
   if (!doingQuery || !atom->hasQuery() ||
-      !atom->hasProp(common_properties::_Unfinished_SLN_))
+      !atom->hasProp(common_properties::_Unfinished_SLN_)) {
     return;
+  }
   atom->clearProp(common_properties::_Unfinished_SLN_);
   std::list<QueryAtom::QUERYATOM_QUERY *> q;
   q.push_back(atom->getQuery());
@@ -405,7 +420,9 @@ void parseBondAttribs(Bond *bond, AttribListType attribs, bool doingQuery) {
         bond->setBondType(bondType);
       } else {
         QueryBond::QUERYBOND_QUERY *query = makeBondOrderEqualsQuery(bondType);
-        if (attribPtr->negated) query->setNegation(!query->getNegation());
+        if (attribPtr->negated) {
+          query->setNegation(!query->getNegation());
+        }
         if (seenTypeQuery) {
           static_cast<RDKit::QueryBond *>(bond)->expandQuery(query, how, true);
         } else {
@@ -426,7 +443,9 @@ void parseBondAttribs(Bond *bond, AttribListType attribs, bool doingQuery) {
                                 << "' ignored on non-query bond\n";
       } else {
         QueryBond::QUERYBOND_QUERY *query = makeBondIsInRingQuery();
-        if (attribPtr->negated) query->setNegation(true);
+        if (attribPtr->negated) {
+          query->setNegation(true);
+        }
         static_cast<QueryBond *>(bond)->expandQuery(query, how);
       }
     } else {

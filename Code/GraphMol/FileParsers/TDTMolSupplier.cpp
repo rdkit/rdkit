@@ -1,6 +1,5 @@
-// $Id$
 //
-//  Copyright (C) 2005-2008 Greg Landrum and Rational Discovery LLC
+//  Copyright (C) 2005-2020 Greg Landrum and Rational Discovery LLC
 //
 //   @@ All Rights Reserved @@
 //  This file is part of the RDKit.
@@ -79,21 +78,9 @@ TDTMolSupplier::TDTMolSupplier(const std::string &fileName,
   d_confId2D = confId2D;
   d_confId3D = confId3D;
   d_nameProp = nameRecord;
-  // FIX: this binary moe of opening file is here because of a bug in VC++ 6.0
-  // the function "tellg" does not work correctly if we do not open it this way
-  // Need to check if this has been fixed in VC++ 7.0
-  std::istream *tmpStream = nullptr;
-  tmpStream = static_cast<std::istream *>(
-      new std::ifstream(fileName.c_str(), std::ios_base::binary));
-  if (!(*tmpStream) || tmpStream->bad()) {
-    std::ostringstream errout;
-    errout << "Bad input file " << fileName;
-    delete tmpStream;
-    throw BadFileException(errout.str());
-  }
-
-  dp_inStream = tmpStream;
+  dp_inStream = openAndCheckStream(fileName);
   df_owner = true;
+
   this->advanceToNextRecord();
   d_molpos.push_back(dp_inStream->tellg());
   df_sanitize = sanitize;
@@ -134,7 +121,9 @@ TDTMolSupplier::~TDTMolSupplier() {
 void TDTMolSupplier::setData(const std::string &text,
                              const std::string &nameRecord, int confId2D,
                              int confId3D, bool sanitize) {
-  if (dp_inStream && df_owner) delete dp_inStream;
+  if (dp_inStream && df_owner) {
+    delete dp_inStream;
+  }
   init();
   d_confId2D = confId2D;
   d_confId3D = confId3D;
@@ -156,7 +145,9 @@ bool TDTMolSupplier::advanceToNextRecord() {
   std::streampos pos;
   bool res = false;
   while (1) {
-    if (dp_inStream->eof()) return false;
+    if (dp_inStream->eof() || dp_inStream->bad()) {
+      return false;
+    }
     pos = dp_inStream->tellg();
     std::string inL;
     std::getline(*dp_inStream, inL);
@@ -172,7 +163,7 @@ bool TDTMolSupplier::advanceToNextRecord() {
 
 void TDTMolSupplier::checkForEnd() {
   PRECONDITION(dp_inStream, "no stream");
-  if (dp_inStream->eof()) {
+  if (dp_inStream->eof() || dp_inStream->bad()) {
     df_end = true;
     // the -1 here is because by the time we get here we've already pushed on
     // the
@@ -272,8 +263,9 @@ ROMol *TDTMolSupplier::parseMol(std::string inLine) {
         } else {
           std::string propVal = inLine.substr(startP, endP - startP);
           res->setProp(propName, propVal);
-          if (propName == d_nameProp)
+          if (propName == d_nameProp) {
             res->setProp(common_properties::_Name, propVal);
+          }
         }
       }
       std::getline(*dp_inStream, inLine);

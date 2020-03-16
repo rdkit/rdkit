@@ -33,7 +33,9 @@ void runblock(const std::vector<ROMol *> &mols, unsigned int count,
               const std::vector<std::string> &keys) {
   for (unsigned int j = 0; j < 200; j++) {
     for (unsigned int i = 0; i < mols.size(); ++i) {
-      if (i % count != idx) continue;
+      if (i % count != idx) {
+        continue;
+      }
       ROMol *mol = mols[i];
       ExtraInchiReturnValues tmp;
       std::string inchi = MolToInchi(*mol, tmp);
@@ -65,13 +67,15 @@ void testMultiThread() {
   std::cerr << "reading molecules" << std::endl;
   std::vector<ROMol *> mols;
   while (!suppl.atEnd() && mols.size() < 100) {
-    ROMol *mol = 0;
+    ROMol *mol = nullptr;
     try {
       mol = suppl.next();
     } catch (...) {
       continue;
     }
-    if (!mol) continue;
+    if (!mol) {
+      continue;
+    }
     mols.push_back(mol);
   }
   std::cerr << "generating reference data" << std::endl;
@@ -98,7 +102,9 @@ void testMultiThread() {
     fut.get();
   }
 
-  for (unsigned int i = 0; i < mols.size(); ++i) delete mols[i];
+  for (auto &mol : mols) {
+    delete mol;
+  }
 
   BOOST_LOG(rdErrorLog) << "  done" << std::endl;
 }
@@ -116,7 +122,7 @@ void testGithubIssue3() {
   {
     std::string fName = getenv("RDBASE");
     fName += "/External/INCHI-API/test_data/github3.mol";
-    ROMol *m = static_cast<ROMol *>(MolFileToMol(fName));
+    auto *m = static_cast<ROMol *>(MolFileToMol(fName));
     TEST_ASSERT(m);
     std::string smi = MolToSmiles(*m, true);
     TEST_ASSERT(smi == "CNC[C@H](O)[C@@H](O)[C@H](O)[C@H](O)CO");
@@ -128,7 +134,7 @@ void testGithubIssue3() {
                 "h4-13H,2-3H2,1H3/t4-,5+,6+,7+/m0/s1");
 
     // blow out the stereo information with a copy:
-    RWMol *m2 = new RWMol(*m);
+    auto *m2 = new RWMol(*m);
     m2->clearComputedProps();
     MolOps::sanitizeMol(*m2);
 
@@ -151,7 +157,7 @@ void testGithubIssue8() {
   {
     std::string fName = getenv("RDBASE");
     fName += "/External/INCHI-API/test_data/github8_extra.mol";
-    ROMol *m = static_cast<ROMol *>(MolFileToMol(fName, true, false));
+    auto *m = static_cast<ROMol *>(MolFileToMol(fName, true, false));
     TEST_ASSERT(m);
 
     ExtraInchiReturnValues tmp;
@@ -270,7 +276,7 @@ void testGithubIssue296() {
   {
     std::string fName = getenv("RDBASE");
     fName += "/External/INCHI-API/test_data/github296.mol";
-    ROMol *m = static_cast<ROMol *>(MolFileToMol(fName));
+    auto *m = static_cast<ROMol *>(MolFileToMol(fName));
     TEST_ASSERT(m);
     ExtraInchiReturnValues tmp;
     std::string inchi = MolToInchi(*m, tmp);

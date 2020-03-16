@@ -127,7 +127,9 @@ mol_from_ctab(PG_FUNCTION_ARGS) {
   Mol     *res;
 
   mol = parseMolCTAB(data,keepConformer,true,false);
-  if(!mol) PG_RETURN_NULL();
+  if (!mol) {
+    PG_RETURN_NULL();
+  }
   res = deconstructROMol(mol);
   freeCROMol(mol);
 
@@ -144,7 +146,9 @@ qmol_from_ctab(PG_FUNCTION_ARGS) {
   Mol     *res;
 
   mol = parseMolCTAB(data,keepConformer,true,true);
-  if(!mol) PG_RETURN_NULL();
+  if (!mol) {
+    PG_RETURN_NULL();
+  }
   res = deconstructROMol(mol);
   freeCROMol(mol);
 
@@ -160,7 +164,9 @@ mol_from_smarts(PG_FUNCTION_ARGS) {
   Mol     *res;
 
   mol = parseMolText(data,true,true,false);
-  if(!mol) PG_RETURN_NULL();
+  if (!mol) {
+    PG_RETURN_NULL();
+  }
   res = deconstructROMol(mol);
   freeCROMol(mol);
 
@@ -176,7 +182,9 @@ mol_from_smiles(PG_FUNCTION_ARGS) {
   Mol     *res;
 
   mol = parseMolText(data,false,true,false);
-  if(!mol) PG_RETURN_NULL();
+  if (!mol) {
+    PG_RETURN_NULL();
+  }
   res = deconstructROMol(mol);
   freeCROMol(mol);
 
@@ -192,7 +200,9 @@ qmol_from_smiles(PG_FUNCTION_ARGS) {
   Mol     *res;
 
   mol = parseMolText(data,false,true,true);
-  if(!mol) PG_RETURN_NULL();
+  if (!mol) {
+    PG_RETURN_NULL();
+  }
   res = deconstructROMol(mol);
   freeCROMol(mol);
 
@@ -531,7 +541,9 @@ reaction_from_ctab(PG_FUNCTION_ARGS) {
   Reaction *rxn;
 
   crxn = parseChemReactCTAB(data,true);
-  if(!crxn) PG_RETURN_NULL();
+  if (!crxn) {
+    PG_RETURN_NULL();
+  }
   rxn = deconstructChemReact(crxn);
   freeChemReaction(crxn);
 
@@ -547,7 +559,9 @@ reaction_from_smarts(PG_FUNCTION_ARGS) {
   Reaction *rxn;
 
   crxn = parseChemReactText(data,true,true);
-  if(!crxn) PG_RETURN_NULL();
+  if (!crxn) {
+    PG_RETURN_NULL();
+  }
   rxn = deconstructChemReact(crxn);
   freeChemReaction(crxn);
 
@@ -563,7 +577,9 @@ reaction_from_smiles(PG_FUNCTION_ARGS) {
   Reaction *rxn;
 
   crxn = parseChemReactText(data,false,true);
-  if(!crxn) PG_RETURN_NULL();
+  if (!crxn) {
+    PG_RETURN_NULL();
+  }
   rxn = deconstructChemReact(crxn);
   freeChemReaction(crxn);
 

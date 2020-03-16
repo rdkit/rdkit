@@ -40,9 +40,10 @@ using namespace EnumerationTypes;
 void EvenSamplePairsStrategy::initializeStrategy(const ChemicalReaction &,
                                                  const BBS &bbs) {
   // If we fail here, someone has a ridiculous amount of memory
-  PRECONDITION(m_numPermutations != EnumerationStrategyBase::EnumerationOverflow,
-               "Cannot represent all permutations for the even sampler");
-  
+  PRECONDITION(
+      m_numPermutations != EnumerationStrategyBase::EnumerationOverflow,
+      "Cannot represent all permutations for the even sampler");
+
   boost::uint64_t npos = bbs.size();
   used_count.resize(npos);
   std::fill(used_count.begin(), used_count.end(), 0);
@@ -72,8 +73,9 @@ void EvenSamplePairsStrategy::initializeStrategy(const ChemicalReaction &,
 
   /* Initialize random number generator */
   /* Find modulus */
-  for (M = 1; M < rdcast<boost::uint64_t>(m_numPermutations); M = 2 * M)
+  for (M = 1; M < rdcast<boost::uint64_t>(m_numPermutations); M = 2 * M) {
     ;
+  }
   /* Set factor */
   a = 5;
   b = 7;
@@ -97,14 +99,16 @@ void EvenSamplePairsStrategy::initializeStrategy(const ChemicalReaction &,
 //  This is fairly suboptimal for large collections
 //  of building blocks and may take a while to
 //  terminate...
-bool EvenSamplePairsStrategy::try_add(boost::uint64_t seed) {
-  const RGROUPS &digits = decode(seed);
+bool EvenSamplePairsStrategy::try_add(boost::uint64_t iseed) {
+  const RGROUPS &digits = decode(iseed);
   const RGROUPS &rgroups = m_permutationSizes;
   boost::uint64_t islack = 0;
   boost::uint64_t num_rgroups = m_permutationSizes.size();
 
   for (boost::uint64_t i = 0; i < num_rgroups; ++i) {
-    if (var_used[i][digits[i]]) islack += var_used[i][digits[i]];
+    if (var_used[i][digits[i]]) {
+      islack += var_used[i][digits[i]];
+    }
     if (islack > nslack) {
       // add better heuristic here??
       rejected_slack_condition += 1;
@@ -118,11 +122,13 @@ bool EvenSamplePairsStrategy::try_add(boost::uint64_t seed) {
   for (boost::uint64_t i = 0; i < num_rgroups; ++i) {
     boost::uint64_t joffset = 0;
     for (boost::uint64_t j = 0; j < num_rgroups; ++j) {
-      if (j == i) continue;
+      if (j == i) {
+        continue;
+      }
       boost::uint64_t ii = digits[i] + ioffset;
       boost::uint64_t jj = digits[j] + joffset;
       if (pair_used[ii][jj] > 0) {
-        double numer = (double)pair_used[ii][jj];
+        auto numer = (double)pair_used[ii][jj];
         double denom = sqrt((double)(rgroups[i]) * (double)(rgroups[j]));
         islack = (int)(numer / denom);
       }
@@ -144,13 +150,16 @@ bool EvenSamplePairsStrategy::try_add(boost::uint64_t seed) {
     var_used[i][digits[i]] += 1;
     if (used_count[i] == rdcast<boost::int64_t>(rgroups[i])) {
       // complete variable scan => initialize
-      if (nslack > min_nslack && rgroups[i] > 1)  // cleared slack on i
-        nslack = min_nslack;  
+      if (nslack > min_nslack && rgroups[i] > 1) {  // cleared slack on i
+        nslack = min_nslack;
+      }
 
       used_count[i] = 0;
       for (boost::uint64_t j = 0; j < rgroups[i]; ++j) {
         var_used[i][j]--;
-        if (var_used[i][j] > 0) used_count[i]++;
+        if (var_used[i][j] > 0) {
+          used_count[i]++;
+        }
       }
     }  // end scan
   }
@@ -186,14 +195,14 @@ bool EvenSamplePairsStrategy::try_add(boost::uint64_t seed) {
     }
   }
 
-  selected.insert(seed);
+  selected.insert(iseed);
   return true;
 }
 
 const RGROUPS &EvenSamplePairsStrategy::next() {
   nslack = 0;
-  while (m_numPermutationsProcessed < rdcast<boost::uint64_t>(m_numPermutations)) {
-    bool added = false;
+  while (m_numPermutationsProcessed <
+         rdcast<boost::uint64_t>(m_numPermutations)) {
     for (boost::uint64_t l = 0; l < M; ++l) {
       seed = ((seed * a + b) % M);
       if (seed > rdcast<boost::uint64_t>(m_numPermutations)) {
@@ -204,16 +213,13 @@ const RGROUPS &EvenSamplePairsStrategy::next() {
         continue;
       } else if (try_add(seed)) {
         m_numPermutationsProcessed++;
-        added = true;
         return decode(seed);
       }
     }
 
-    if (!added) {
-      // loosen heuristic
-      nslack += 1;
-      min_nslack += 1;
-    }
+    // loosen heuristic
+    nslack += 1;
+    min_nslack += 1;
   }
 
   throw EnumerationStrategyException("Ran out of molecules");
@@ -228,43 +234,67 @@ std::string EvenSamplePairsStrategy::stats() const {
   ss << "#BEGIN# BBSTAT\n";
   for (i = 0; i < npos; i++) {
     boost::uint64_t maxcount = 0;
-    if (nvars[i] == 1) continue;
-    for (j = 0; j < nvars[i]; j++)
-      if (maxcount < var_used[i][j]) maxcount = var_used[i][j];
-
+    if (nvars[i] == 1) {
+      continue;
+    }
+    for (j = 0; j < nvars[i]; j++) {
+      if (maxcount < var_used[i][j]) {
+        maxcount = var_used[i][j];
+      }
+    }
     ss << boost::format("%lu\t%lu\t%6.2f") % (i + 1) % nvars[i] %
               ((double)m_numPermutationsProcessed / nvars[i]);
 
     for (l = 0; l <= maxcount; l++) {
       boost::uint64_t n = 0;
-      for (j = 0; j < nvars[i]; j++)
-        if (var_used[i][j] == l) n++;
-      if (n > 0) ss << boost::format("\t%lu|%lu") % l % n;
+      for (j = 0; j < nvars[i]; j++) {
+        if (var_used[i][j] == l) {
+          n++;
+        }
+        if (n > 0) {
+          ss << boost::format("\t%lu|%lu") % l % n;
+        }
+      }
+      ss << std::endl;
     }
-    ss << std::endl;
   }
   ss << "#END# BBSTAT\n";
 
   ss << "#BEGIN# PAIRSTAT\n";
   for (i = 0, ioffset = 0; i < npos; ioffset += nvars[i], i++) {
-    if (nvars[i] == 1) continue;
+    if (nvars[i] == 1) {
+      continue;
+    }
     for (j = 0, joffset = 0; j < npos; joffset += nvars[j], j++) {
       boost::uint64_t maxcount = 0;
-      if (nvars[j] == 1) continue;
-      if (j <= i) continue;
-      for (ii = 0; ii < nvars[i]; ii++)
-        for (jj = 0; jj < nvars[j]; jj++)
-          if (maxcount < pair_used[ii + ioffset][jj + joffset])
+      if (nvars[j] == 1) {
+        continue;
+      }
+      if (j <= i) {
+        continue;
+      }
+      for (ii = 0; ii < nvars[i]; ii++) {
+        for (jj = 0; jj < nvars[j]; jj++) {
+          if (maxcount < pair_used[ii + ioffset][jj + joffset]) {
             maxcount = pair_used[ii + ioffset][jj + joffset];
+          }
+        }
+      }
       ss << boost::format("%lu\t%lu\t%lu\t%lu\t%6.2f") % (i + 1) % (j + 1) %
                 nvars[i] % nvars[j] %
                 ((double)m_numPermutationsProcessed / (nvars[i] * nvars[j]));
       for (l = 0; l <= maxcount; l++) {
         int n = 0;
-        for (ii = 0; ii < nvars[i]; ii++)
-          for (jj = 0; jj < nvars[j]; jj++)
-            if (l == pair_used[ii + ioffset][jj + joffset]) n++;
-        if (n > 0) ss << boost::format("\t%ld|%d") % l % n;
+        for (ii = 0; ii < nvars[i]; ii++) {
+          for (jj = 0; jj < nvars[j]; jj++) {
+            if (l == pair_used[ii + ioffset][jj + joffset]) {
+              n++;
+            }
+          }
+        }
+        if (n > 0) {
+          ss << boost::format("\t%ld|%d") % l % n;
+        }
       }
       ss << boost::format("\n");
     }

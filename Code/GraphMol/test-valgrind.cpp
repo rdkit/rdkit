@@ -27,8 +27,12 @@ using namespace RDKit;
 // memory tests for valgrind
 void testRemoveAtomBond(RWMol &m, int atomidx, int bondidx) {
   const Bond *b = m.getBondWithIdx(bondidx);
-  if (bondidx >= 0) m.removeBond(b->getBeginAtomIdx(), b->getEndAtomIdx());
-  if (atomidx >= 0) m.removeAtom(atomidx);
+  if (bondidx >= 0) {
+    m.removeBond(b->getBeginAtomIdx(), b->getEndAtomIdx());
+  }
+  if (atomidx >= 0) {
+    m.removeAtom(atomidx);
+  }
 }
 
 void testRemovals(RWMol m) {

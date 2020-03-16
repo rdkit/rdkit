@@ -158,6 +158,7 @@ void parseChiralityLabel(RWMol &mol, const std::string &stereo_prop) {
   for (++tItr; tItr != tokenizer.end(); ++tItr) {
     const int nbr_idx = FileParserUtils::toInt(*tItr) - 1;
     const Bond *bnd = mol.getBondBetweenAtoms(chiral_idx, nbr_idx);
+    CHECK_INVARIANT(bnd, "bad chiral bond");
     bond_indexes.push_back(bnd->getIdx());
   }
   CHECK_INVARIANT(bond_indexes.size() == chiral_atom->getDegree(),
@@ -389,13 +390,7 @@ MaeMolSupplier::MaeMolSupplier(std::istream *inStream, bool takeOwnership,
 MaeMolSupplier::MaeMolSupplier(const std::string &fileName, bool sanitize,
                                bool removeHs) {
   df_owner = true;
-  auto *ifs = new std::ifstream(fileName.c_str(), std::ios_base::binary);
-  if (!ifs || !(*ifs) || ifs->bad()) {
-    std::ostringstream errout;
-    errout << "Bad input file " << fileName;
-    throw BadFileException(errout.str());
-  }
-  dp_inStream = static_cast<std::istream *>(ifs);
+  dp_inStream = openAndCheckStream(fileName);
   dp_sInStream.reset(dp_inStream);
   df_sanitize = sanitize;
   df_removeHs = removeHs;
