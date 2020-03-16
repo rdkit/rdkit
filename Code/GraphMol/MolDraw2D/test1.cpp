@@ -2633,7 +2633,6 @@ void test20Annotate() {
         atom->setProp("atomNote", atom->getIdx());
       }
   };
-  // add serial numbers to the atoms in the molecule
   auto addBondSerialNumbers = [](ROMol &mol) {
     for(auto bond: mol.bonds()) {
       bond->setProp("bondNote", bond->getIdx());
@@ -2645,7 +2644,7 @@ void test20Annotate() {
     addBondSerialNumbers(*m1);
 #ifdef RDK_BUILD_CAIRO_SUPPORT
     {
-      MolDraw2DCairo drawer(300, 300);
+      MolDraw2DCairo drawer(500, 500);
       drawer.drawMolecule(*m1);
       drawer.finishDrawing();
 
@@ -2696,6 +2695,40 @@ void test20Annotate() {
                           "font-style:normal;font-weight:normal;"
                           "fill-opacity:1;stroke:none;font-family:sans-serif;"
                           "fill:#000000") != std::string::npos);
+  }
+  {
+    auto m1 = "S=C1N=C(NC(CC#N)(C)C=C=C)NC2=NNN=C21"_smiles;
+    auto atom = m1->getAtomWithIdx(3);
+    atom->setProp("atomNote", "foolish annotation");
+    auto bond = m1->getBondWithIdx(5);
+    bond->setProp("bondNote", "way too long to be useful");
+#ifdef RDK_BUILD_CAIRO_SUPPORT
+    {
+      MolDraw2DCairo drawer(300, 300);
+      drawer.drawOptions().addStereoAnnotation = true;
+      drawer.drawMolecule(*m1);
+      drawer.finishDrawing();
+
+      std::string drawing = drawer.getDrawingText();
+      TEST_ASSERT(drawing.size() > 0);
+      std::ofstream ofs("test20_3.png");
+      ofs.write(drawing.c_str(), drawing.size());
+    }
+#endif
+    MolDraw2DSVG drawer(500, 500);
+    drawer.drawOptions().addStereoAnnotation = true;
+    drawer.drawMolecule(*m1);
+    drawer.finishDrawing();
+    std::string text = drawer.getDrawingText();
+    std::ofstream outs("test20_3.svg");
+    outs << text;
+    outs.flush();
+    TEST_ASSERT(text.find("x='209.32' y='180.482' style='font-size:15px;"
+                          "font-style:normal;font-weight:normal;"
+                          "fill-opacity:1;stroke:none;"
+                          "font-family:sans-serif;fill:#000000'"
+                          " ><tspan>foolish annotation</tspan>")
+                != std::string::npos);
   }
   std::cerr << " Done" << std::endl;
 }
@@ -2749,5 +2782,5 @@ int main() {
   testGithub2151();
   testGithub2762();
   testGithub2931();
-  test20Annotate();  
+  test20Annotate();
 }

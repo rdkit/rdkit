@@ -234,9 +234,6 @@ void MolDraw2D::drawMoleculeWithHighlights(const ROMol &mol, const string &legen
                                            const map<int, int> &highlight_linewidth_multipliers,
                                            int confId) {
 
-  cout << "drawMoleculeHighlights : " << endl;
-  cout << "num atoms to colour : " << highlight_atom_map.size() << endl;
-  cout << "num bonds to colour : " << highlight_bond_map.size() << endl;
   int origWidth = curr_width_;
   vector<int> highlight_atoms;
   for(auto ha: highlight_atom_map) {
@@ -1653,6 +1650,8 @@ StringRect MolDraw2D::calcAnnotationPosition(const ROMol &mol, const Bond *bond)
   double bond_len = (at1_cds - at2_cds).length();
   vector<double> mid_offsets{0.5, 0.33, 0.66, 0.25, 0.75};
   double offset_step = drawOptions().multipleBondOffset;
+  StringRect least_worst_rect = StringRect();
+  least_worst_rect.clash_score_ = 100;
   for(auto mo: mid_offsets) {
     Point2D mid = at1_cds + bond_vec * bond_len * mo;
     for(int j=1; j<6; ++j) {
@@ -1661,14 +1660,19 @@ StringRect MolDraw2D::calcAnnotationPosition(const ROMol &mol, const Bond *bond)
       if (!doesBondNoteClash(note_rect, mol, bond)) {
         return note_rect;
       }
+      if(note_rect.clash_score_ < least_worst_rect.clash_score_) {
+        least_worst_rect = note_rect;
+      }
       note_rect.centre_ = mid - perp * offset;
       if (!doesBondNoteClash(note_rect, mol, bond)) {
         return note_rect;
       }
+      if(note_rect.clash_score_ < least_worst_rect.clash_score_) {
+        least_worst_rect = note_rect;
+      }
     }
   }
-  note_rect.width_ = -1.0; // so we know it's not valid
-  return note_rect;
+  return least_worst_rect;
 
 }
 
@@ -1677,13 +1681,16 @@ void MolDraw2D::calcAtomAnnotationPosition(const ROMol &mol, const Atom *atom,
                                            double start_ang, StringRect &rect) {
 
   Point2D const &at_cds = at_cds_[activeMolIdx_][atom->getIdx()];
-
+  auto const &atsym = atom_syms_[activeMolIdx_][atom->getIdx()];
+  StringRect at_rect = calcLabelRect(atsym.first, atsym.second, at_cds);
   double rad_step = 0.25;
+  StringRect least_worst_rect = StringRect();
+  least_worst_rect.clash_score_ = 100;
   for(int j = 1; j < 4; ++j) {
     double note_rad = j * rad_step;
     // experience suggests if there's an atom symbol, the close in
     // radius won't work.
-    if(!j && !atom_syms_[activeMolIdx_][atom->getIdx()].first.empty()) {
+    if(j == 1 && !atsym.first.empty()) {
       continue;
     }
     // scan at 30 degree intervals around the atom looking for somewhere
@@ -1692,13 +1699,16 @@ void MolDraw2D::calcAtomAnnotationPosition(const ROMol &mol, const Atom *atom,
       double ang = start_ang + i * 30.0 * M_PI / 180.0;
       rect.centre_.x = at_cds.x + cos(ang) * note_rad;
       rect.centre_.y = at_cds.y + sin(ang) * note_rad;
-      if (!doesAtomNoteClash(rect, rect, mol, atom->getIdx())) {
+      if (!doesAtomNoteClash(rect, at_rect, mol, atom->getIdx())) {
         return;
+      } else {
+        if(rect.clash_score_ < least_worst_rect.clash_score_) {
+          least_worst_rect = rect;
+        }
       }
     }
   }
-
-  rect.width_ = -1.0; // so we know it's not valid
+  rect = least_worst_rect;
 
 }
 
@@ -2408,33 +2418,38 @@ double MolDraw2D::getNoteStartAngle(const ROMol &mol, const Atom *atom) const {
 }
 
 // ****************************************************************************
-bool MolDraw2D::doesAtomNoteClash(const StringRect &note_rect,
+bool MolDraw2D::doesAtomNoteClash(StringRect &note_rect,
                                   const StringRect &atsym_rect,
                                   const ROMol &mol, unsigned int atom_idx) {
 
   // check bond vectors. note_vec is expected to be unit length.
   auto atom = mol.getAtomWithIdx(atom_idx);
+  note_rect.clash_score_ = 0;
   if(doesNoteClashNbourBonds(note_rect, mol, atom)) {
-
     return true;
   }
+  note_rect.clash_score_ = 1;
   if(doesNoteClashAtomLabels(note_rect, atsym_rect, mol, atom_idx)) {
     return true;
   }
+  note_rect.clash_score_ = 2;
   if(doesNoteClashOtherNotes(note_rect)) {
     return true;
   }
+  note_rect.clash_score_ = 3;
   return false;
 
 }
 
 // ****************************************************************************
-bool MolDraw2D::doesBondNoteClash(const StringRect &note_rect, const ROMol &mol,
+bool MolDraw2D::doesBondNoteClash(StringRect &note_rect, const ROMol &mol,
                                   const Bond *bond) {
 
+  note_rect.clash_score_ = 0;
   if(doesNoteClashNbourBonds(note_rect, mol, bond->getBeginAtom())) {
     return true;
   }
+  note_rect.clash_score_ = 1;
   unsigned int atom_idx = bond->getBeginAtomIdx();
   StringRect atsym_rect = calcLabelRect(atom_syms_[activeMolIdx_][atom_idx].first,
                                         atom_syms_[activeMolIdx_][atom_idx].second,
@@ -2442,9 +2457,11 @@ bool MolDraw2D::doesBondNoteClash(const StringRect &note_rect, const ROMol &mol,
   if(doesNoteClashAtomLabels(note_rect, atsym_rect, mol, atom_idx)) {
     return true;
   }
+  note_rect.clash_score_ = 2;
   if(doesNoteClashOtherNotes(note_rect)) {
     return true;
   }
+  note_rect.clash_score_ = 3;
   return false;
 
 }

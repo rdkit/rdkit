@@ -67,8 +67,11 @@ struct DrawColour {
 struct StringRect {
   Point2D centre_;
   double width_, height_;
-  StringRect() : centre_(0.0, 0.0), width_(0.0), height_(0.0) {}
-  StringRect(const Point2D &in_cds) : centre_(in_cds), width_(0.0), height_(0.0) {}
+  int clash_score_; // rough measure of how badly it clashed with other things
+                    // lower is better, 0 is no clash.
+  StringRect() : centre_(0.0, 0.0), width_(0.0), height_(0.0), clash_score_(0) {}
+  StringRect(const Point2D &in_cds) : centre_(in_cds), width_(0.0),
+                                      height_(0.0), clash_score_(0) {}
   bool doesItIntersect(const StringRect &other) const {
     if(fabs(centre_.x - other.centre_.x) < (width_ + other.width_) / 2.0
        && fabs(centre_.y - other.centre_.y) < (height_ + other.height_) / 2.0) {
@@ -696,10 +699,10 @@ class RDKIT_MOLDRAW2D_EXPORT MolDraw2D {
   // see if the note will clash with anything else drawn on the molecule.
   // note_vec should have unit length.  note_rad is the radius along
   // note_vec that the note will be drawn.
-  bool doesAtomNoteClash(const StringRect &note_rect,
+  bool doesAtomNoteClash(StringRect &note_rect,
                          const StringRect &atsym_rect,
                          const ROMol &mol, unsigned int atom_idx);
-  bool doesBondNoteClash(const StringRect &note_rect,
+  bool doesBondNoteClash(StringRect &note_rect,
                          const ROMol &mol, const Bond *bond);
   // does the note_vec form an unacceptably acute angle with one of the
   // bonds from atom to its neighbours.
