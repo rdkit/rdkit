@@ -283,9 +283,6 @@ void MolDraw2DSVG::getStringSize(const std::string &label, double &label_width,
   for (int i = 0, is = label.length(); i < is; ++i) {
     // setStringDrawMode moves i along to the end of any <sub> or <sup>
     // markup
-    // The drawString function turns <sup>.</sup> into &#x2219; (unicode
-    // bullet char) but we'll just hope for now that it's roughly the same
-    // size.
     if ('<' == label[i] && setStringDrawMode(label, draw_mode, i)) {
       continue;
     }
@@ -408,14 +405,6 @@ void MolDraw2DSVG::drawString(const std::string &str, const Point2D &cds,
   };
 
   for (int i = 0, is = str.length(); i < is; ++i) {
-    // if the next bit is <sup>.</sup> assume it's a radical and do a bullet
-    // instead.
-    if(str.substr(i, 12) == "<sup>.</sup>") {
-      write_span();
-      d_os << "<tspan>&#x2219;";
-      i += 11;  // end of loop will add the extra 1.
-      continue;
-    }
     // setStringDrawMode moves i along to the end of any <sub> or <sup>
     // markup
     if ('<' == str[i] && setStringDrawMode(str, draw_mode, i)) {

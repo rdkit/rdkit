@@ -2749,5 +2749,5 @@ int main() {
   testGithub2151();
   testGithub2762();
   testGithub2931();
-  test20Annotate();
+  test20Annotate();  
 }

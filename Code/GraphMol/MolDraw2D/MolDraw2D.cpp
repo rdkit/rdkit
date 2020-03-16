@@ -2622,8 +2622,7 @@ vector<string> MolDraw2D::atomLabelToPieces(const string &label,
   string charge_piece;
   for(size_t j = 0; j < label_pieces.size(); ++j) {
     if(label_pieces[j].substr(0, 6) == "<sup>+"
-       || label_pieces[j].substr(0, 6) == "<sup>-"
-       || label_pieces[j].substr(0, 6) == "<sup>.") {
+       || label_pieces[j].substr(0, 6) == "<sup>-") {
       charge_piece += label_pieces[j];
       label_pieces[j].clear();
     }
