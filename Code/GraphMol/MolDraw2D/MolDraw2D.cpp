@@ -1164,12 +1164,10 @@ void MolDraw2D::drawStrings(const std::vector<std::string> &labels,
     alignString(new_lab, labels.front(), 0, cds, new_cds);
     drawString(new_lab, new_cds, START);
   } else {
-    double x_scale = 0.0, y_scale = 0.0;
+    double y_scale = 0.0;
     if(orient == N) {
-      x_scale = 0.0;
       y_scale = -1.0;
     } else if(orient == S) {
-      x_scale = 0.0;
       y_scale = 1.0;
     }
 
