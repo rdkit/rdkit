@@ -573,7 +573,7 @@ void testMultipleConfsExpTors() {
   std::string smi = "CC(C)(C)c(cc1)ccc1c(cc23)n[n]3C(=O)/C(=C\\N2)C(=O)OCC";
   ROMol *m = SmilesToMol(smi, 0, 1);
   INT_VECT cids = DGeomHelpers::EmbedMultipleConfs(*m, 10, 30, 100, true, false,
-                                                   -1, true, 1, -1.0, 0, 1e-3,
+                                                   -1, true, 1, -1.0, nullptr, 1e-3,
                                                    false, true, true, false, false, true);
   INT_VECT_CI ci;
   // SDWriter writer("junk.sdf");

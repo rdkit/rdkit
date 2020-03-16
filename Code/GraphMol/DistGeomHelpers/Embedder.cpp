@@ -64,7 +64,7 @@ const EmbedParameters KDG(0,      // maxIterations
                           2.0,    // boxSizeMult
                           true,   // randNegEig
                           1,      // numZeroFail
-                          NULL,   // coordMap
+                          nullptr,// coordMap
                           1e-3,   // optimizerForceTol
                           false,  // ignoreSmoothingFailures
                           true,   // enforceChirality
@@ -88,7 +88,7 @@ const EmbedParameters ETDG(0,      // maxIterations
                            2.0,    // boxSizeMult
                            true,   // randNegEig
                            1,      // numZeroFail
-                           NULL,   // coordMap
+                           nullptr,// coordMap
                            1e-3,   // optimizerForceTol
                            false,  // ignoreSmoothingFailures
                            false,  // enforceChirality
@@ -111,7 +111,7 @@ const EmbedParameters ETKDG(0,      // maxIterations
                             2.0,    // boxSizeMult
                             true,   // randNegEig
                             1,      // numZeroFail
-                            NULL,   // coordMap
+                            nullptr,// coordMap
                             1e-3,   // optimizerForceTol
                             false,  // ignoreSmoothingFailures
                             true,   // enforceChirality
@@ -135,7 +135,7 @@ const EmbedParameters ETKDGv2(0,      // maxIterations
                               2.0,    // boxSizeMult
                               true,   // randNegEig
                               1,      // numZeroFail
-                              NULL,   // coordMap
+                              nullptr,// coordMap
                               1e-3,   // optimizerForceTol
                               false,  // ignoreSmoothingFailures
                               true,   // enforceChirality
