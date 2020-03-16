@@ -18,18 +18,7 @@ void MolDraw2DCairo::initDrawing() {
   PRECONDITION(dp_cr, "no draw context");
   cairo_select_font_face(dp_cr, "sans", CAIRO_FONT_SLANT_NORMAL,
                          CAIRO_FONT_WEIGHT_NORMAL);
-  std::cout << "setting font size to " << fontSize() << std::endl;
   cairo_set_font_size(dp_cr, fontSize());
-
-  cairo_font_face_t  *ff  = cairo_get_font_face(dp_cr);
-  std::cout << ff << " : " << cairo_font_face_get_type(ff)
-	    << " : " << CAIRO_FONT_TYPE_TOY << std::endl;
-  cairo_text_extents_t extents;
-  char txt[2]; txt[0] = 'O'; txt[1] = '\0';
-  cairo_text_extents(dp_cr, txt, &extents);
-  double twidth = extents.x_advance, theight = extents.height;
-  std::cout << "A extents of "<< txt << " : " << twidth << " and "  << theight << std::endl;
-
   cairo_set_line_cap(dp_cr, CAIRO_LINE_CAP_BUTT);
 }
 
@@ -114,17 +103,7 @@ void MolDraw2DCairo::drawChar(char c, const Point2D &cds) {
   char txt[2];
   txt[0] = c;
   txt[1] = 0;
-  {
-    cairo_text_extents_t extents;
-    cairo_text_extents(dp_cr, txt, &extents);
-    double twidth = extents.x_advance, theight = extents.height;
-    std::cout << "AB extents of "<< txt << " : " << twidth << " and "  << theight << std::endl;
-  }
   cairo_set_font_size(dp_cr, drawFontSize());
-  cairo_text_extents_t extents;
-  cairo_text_extents(dp_cr, txt, &extents);
-  double twidth = extents.x_advance, theight = extents.height;
-  std::cout << "B extents of "<< txt << " : " << twidth << " and "  << theight << std::endl;
   Point2D c1 = cds;
   cairo_move_to(dp_cr, c1.x, c1.y);
   cairo_show_text(dp_cr, txt);
@@ -186,8 +165,8 @@ void MolDraw2DCairo::getStringSize(const std::string &label,
   label_height = 0.0;
 
   TextDrawType draw_mode = TextDrawNormal;
-  std::cout << "getStrngSize : " << scale() << " : " << drawFontSize() << " : " << fontSize()
-	    << " : " << drawOptions().maxFontSize << std::endl;
+  // we have seen different behaviour on different OSes if the font is sized to
+  // drawFontSize() / scale() which is what we really want.  Adjust at the end.
   cairo_set_font_size(dp_cr, drawFontSize());
 
   bool had_a_super = false;
@@ -204,9 +183,7 @@ void MolDraw2DCairo::getStringSize(const std::string &label,
     txt[0] = label[i];
     cairo_text_extents_t extents;
     cairo_text_extents(dp_cr, txt, &extents);
-    double twidth = extents.width, theight = extents.height;
-    std::cout << "Zextents : of  " << txt << " : " << twidth << " and "
-	      << theight << std::endl;
+    double twidth = extents.x_advance, theight = extents.height;
     label_height = std::max(label_height, theight);
     double char_width = twidth;
     if (TextDrawSubscript == draw_mode) {
@@ -218,6 +195,7 @@ void MolDraw2DCairo::getStringSize(const std::string &label,
     label_width += char_width;
   }
 
+  // convert back to molecule coords.
   label_width /= scale();
   label_height /= scale();
   
@@ -228,9 +206,8 @@ void MolDraw2DCairo::getStringSize(const std::string &label,
   }
   label_height *= 1.2;  // empirical
 
-  std::cout << "label : " << label << " at " << label_width << " by "  << label_height << std::endl;
-  
 }
+  
 // ****************************************************************************
 namespace {
 cairo_status_t grab_str(void *closure, const unsigned char *data,
