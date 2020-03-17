@@ -598,8 +598,20 @@ void MolDraw2D::drawReaction(
     }
   }
 
+  // the arrow and + positions were worked out on the input coords and
+  // spreads the components of the reaction along the x axis.
+  // drawMolecule by default centres the molecule on the origin.  We
+  // need to adjust the arrow etc positions to take account of this,
+  // so take a note of the 1st atom's position before drawing.
+  int confId = confIds ? (*confIds)[0] : -1;
+  const RDGeom::POINT3D_VECT &locs = tmol->getConformer(confId).getPositions();
   drawMolecule(*tmol, "", atom_highlights, bond_highlights,
                atom_highlight_colors, bond_highlight_colors);
+  // now how far it moved on centring.  Everything else will have moved
+  // the same distance.
+  double x_move = at_cds_[activeMolIdx_][0].x - locs[0].x;
+  double y_move = at_cds_[activeMolIdx_][0].y - locs[0].y;
+  Point2D sys_move(x_move, y_move);
 
   delete tmol;
   delete atom_highlights;
@@ -615,10 +627,13 @@ void MolDraw2D::drawReaction(
   // now add the symbols
   for(auto plusLoc: plusLocs) {
     Point2D loc(plusLoc, arrowBegin.y);
+    loc += sys_move;
     drawString("+", loc);
   }
 
   // The arrow:
+  arrowBegin += sys_move;
+  arrowEnd += sys_move;
   drawArrow(arrowBegin, arrowEnd);
 
   setColour(odc);
@@ -1914,7 +1929,8 @@ void MolDraw2D::extractAtomCoords(const ROMol &mol, int confId,
   Point2D centroid(0.0, 0.0);
   if(drawOptions().centreMoleculesB4Drawing) {
     for (auto atom : mol.atoms()) {
-      centroid += locs[atom->getIdx()];
+      centroid.x += locs[atom->getIdx()].x;
+      centroid.y += locs[atom->getIdx()].y;
     }
     centroid /= double(mol.getNumAtoms());
   }
