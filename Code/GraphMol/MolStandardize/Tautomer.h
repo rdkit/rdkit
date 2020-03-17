@@ -16,6 +16,7 @@
 #include <Catalogs/Catalog.h>
 #include <GraphMol/MolStandardize/TautomerCatalog/TautomerCatalogEntry.h>
 #include <GraphMol/MolStandardize/TautomerCatalog/TautomerCatalogParams.h>
+#include <boost/dynamic_bitset.hpp>
 
 namespace RDKit {
 class ROMol;
@@ -56,8 +57,24 @@ class RDKIT_MOLSTANDARDIZE_EXPORT TautomerEnumerator {
     The enumeration rules are inspired by the publication:
     M. Sitzmann et al., “Tautomerism in Large Databases.”, JCAMD 24:521 (2010)
     https://doi.org/10.1007/s10822-010-9346-4
+
+    \param mol: the molecule to be enumerated
+    \param modifiedAtoms: if provided this is used to return which atoms are
+    modified during the tautomerization
+    \param modifiedBonds: if provided this is used to return which bonds are
+    modified during the tautomerization
+
+    Note: the definitions used here are that the atoms modified during
+    tautomerization are the atoms at the beginning and end of each tautomer
+    transform (the H "donor" and H "acceptor" in the transform) and the bonds
+    modified during transformation are any bonds whose order is changed during
+    the tautomer transform (these are the bonds between the "donor" and the
+    "acceptor")
+
   */
-  std::vector<ROMOL_SPTR> enumerate(const ROMol &mol) const;
+  std::vector<ROMOL_SPTR> enumerate(
+      const ROMol &mol, boost::dynamic_bitset<> *modifiedAtoms = nullptr,
+      boost::dynamic_bitset<> *modifiedBonds = nullptr) const;
 
   //! returns the canonical tautomer from a set of possible tautomers
   /*!

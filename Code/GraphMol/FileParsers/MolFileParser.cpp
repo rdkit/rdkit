@@ -1998,6 +1998,38 @@ void ParseV3000AtomProps(RWMol *mol, Atom *&atom, typename T::iterator &token,
         auto ival = FileParserUtils::toInt(val);
         atom->setProp(common_properties::molStereoCare, ival);
       }
+    } else if (prop == "SUBST") {
+      if (val != "0") {
+        auto ival = FileParserUtils::toInt(val);
+        atom->setProp(common_properties::molSubstCount, ival);
+      }
+    } else if (prop == "EXACHG") {
+      if (val != "0") {
+        auto ival = FileParserUtils::toInt(val);
+        atom->setProp(common_properties::molRxnExactChange, ival);
+      }
+    } else if (prop == "INVRET") {
+      if (val != "0") {
+        auto ival = FileParserUtils::toInt(val);
+        atom->setProp(common_properties::molInversionFlag, ival);
+      }
+    } else if (prop == "ATTCHPT") {
+      if (val != "0") {
+        auto ival = FileParserUtils::toInt(val);
+        atom->setProp(common_properties::molAttachPoint, ival);
+      }
+    } else if (prop == "ATTCHORD") {
+      if (val != "0") {
+        auto ival = FileParserUtils::toInt(val);
+        atom->setProp(common_properties::molAttachOrder, ival);
+      }
+    } else if (prop == "CLASS") {
+      atom->setProp(common_properties::molAtomClass, val);
+    } else if (prop == "SEQID") {
+      if (val != "0") {
+        auto ival = FileParserUtils::toInt(val);
+        atom->setProp(common_properties::molAtomSeqId, ival);
+      }
     }
     ++token;
   }
@@ -2312,7 +2344,7 @@ void ParseV3000BondBlock(std::istream *inStream, unsigned int &line,
         }
       } else if (prop == "RXCTR") {
         int reactStatus = FileParserUtils::toInt(val);
-        bond->setProp("molReactStatus", reactStatus);
+        bond->setProp(common_properties::molReactStatus, reactStatus);
       } else if (prop == "STBOX") {
         bond->setProp(common_properties::molStereoCare, val);
       } else if (prop == "ENDPTS") {
@@ -2420,27 +2452,54 @@ void processSGroups(RWMol *mol) {
 
 void ProcessMolProps(RWMol *mol) {
   PRECONDITION(mol, "no molecule");
-  for (auto atom : mol->atoms()) {
-    int totV;
-    if (atom->getPropIfPresent(common_properties::molTotValence, totV) &&
-        !atom->hasProp("_ZBO_H")) {
-      if (totV == 0) {
-        continue;
+  // we have to loop the ugly way because we may need to actually replace an
+  // atom
+  for (unsigned int aidx = 0; aidx < mol->getNumAtoms(); ++aidx) {
+    auto atom = mol->getAtomWithIdx(aidx);
+    int ival = 0;
+    if (atom->getPropIfPresent(common_properties::molSubstCount, ival) &&
+        ival != 0) {
+      if (!atom->hasQuery()) {
+        atom = FileParserUtils::replaceAtomWithQueryAtom(mol, atom);
       }
+      bool gtQuery = false;
+      if (ival == -1) {
+        ival = 0;
+      } else if (ival == -2) {
+        // as drawn
+        ival = atom->getDegree();
+      } else if (ival >= 6) {
+        // 6 or more
+        gtQuery = true;
+      }
+      if (!gtQuery) {
+        atom->expandQuery(makeAtomExplicitDegreeQuery(ival));
+      } else {
+        // create a temp query the normal way so that we can be sure to get
+        // the description right
+        std::unique_ptr<ATOM_EQUALS_QUERY> tmp{
+            makeAtomExplicitDegreeQuery(ival)};
+        atom->expandQuery(makeAtomSimpleQuery<ATOM_LESSEQUAL_QUERY>(
+            ival, tmp->getDataFunc(),
+            std::string("less_") + tmp->getDescription()));
+      }
+    }
+    if (atom->getPropIfPresent(common_properties::molTotValence, ival) &&
+        ival != 0 && !atom->hasProp("_ZBO_H")) {
       atom->setNoImplicit(true);
-      if (totV == 15     // V2000
-          || totV == -1  // v3000
+      if (ival == 15     // V2000
+          || ival == -1  // v3000
       ) {
         atom->setNumExplicitHs(0);
       } else {
-        if (atom->getExplicitValence() > totV) {
+        if (atom->getExplicitValence() > ival) {
           BOOST_LOG(rdWarningLog)
-              << "atom " << atom->getIdx() << " has specified valence (" << totV
+              << "atom " << atom->getIdx() << " has specified valence (" << ival
               << ") smaller than the drawn valence "
               << atom->getExplicitValence() << "." << std::endl;
           atom->setNumExplicitHs(0);
         } else {
-          atom->setNumExplicitHs(totV - atom->getExplicitValence());
+          atom->setNumExplicitHs(ival - atom->getExplicitValence());
         }
       }
     }

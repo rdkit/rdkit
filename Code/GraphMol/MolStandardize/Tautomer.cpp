@@ -188,13 +188,20 @@ ROMol *TautomerEnumerator::pickCanonical(
   return new ROMol(*bestMol);
 }
 
-std::vector<ROMOL_SPTR> TautomerEnumerator::enumerate(const ROMol &mol) const {
+std::vector<ROMOL_SPTR> TautomerEnumerator::enumerate(
+    const ROMol &mol, boost::dynamic_bitset<> *modifiedAtoms,
+    boost::dynamic_bitset<> *modifiedBonds) const {
   // std::cout << "**********************************" << std::endl;
 
   PRECONDITION(dp_catalog, "no catalog!");
   const TautomerCatalogParams *tautparams = dp_catalog->getCatalogParams();
-
   PRECONDITION(tautparams, "");
+
+  PRECONDITION(!modifiedAtoms || modifiedAtoms->size() >= mol.getNumAtoms(),
+               "bitset too small");
+  PRECONDITION(!modifiedBonds || modifiedBonds->size() >= mol.getNumBonds(),
+               "bitset too small");
+
   const std::vector<TautomerTransform> &transforms =
       tautparams->getTransforms();
 
@@ -263,6 +270,10 @@ std::vector<ROMOL_SPTR> TautomerEnumerator::enumerate(const ROMol &mol) const {
             // last
             Atom *first = product->getAtomWithIdx(idx_matches[0]);
             Atom *last = product->getAtomWithIdx(idx_matches.back());
+            if (modifiedAtoms) {
+              modifiedAtoms->set(idx_matches[0]);
+              modifiedAtoms->set(idx_matches.back());
+            }
             first->setNumExplicitHs(
                 std::max((unsigned int)0, first->getTotalNumHs() - 1));
             last->setNumExplicitHs(last->getTotalNumHs() + 1);
@@ -277,6 +288,7 @@ std::vector<ROMOL_SPTR> TautomerEnumerator::enumerate(const ROMol &mol) const {
             for (const auto &pair : pvect) {
               Bond *bond =
                   product->getBondBetweenAtoms(pair.first, pair.second);
+              ASSERT_INVARIANT(bond, "required bond not found");
               // check if bonds is specified in tatuomer.in file
               if (!transform.BondTypes.empty()) {
                 bond->setBondType(transform.BondTypes[bi]);
@@ -297,6 +309,9 @@ std::vector<ROMOL_SPTR> TautomerEnumerator::enumerate(const ROMol &mol) const {
                   bond->setBondType(Bond::SINGLE);
                   //									std::cout
                   //<< "Set bond to single" << std::endl;
+                }
+                if (modifiedBonds) {
+                  modifiedBonds->set(bond->getIdx());
                 }
               }
             }

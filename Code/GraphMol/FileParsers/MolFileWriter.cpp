@@ -971,6 +971,44 @@ const std::string GetV3000MolFileAtomLine(
     atom->getPropIfPresent(common_properties::_MolFileRLabel, rLabel);
     ss << " RGROUPS=(1 " << rLabel << ")";
   }
+
+  {
+    int iprop;
+    if (atom->getPropIfPresent(common_properties::molAttachOrder, iprop) &&
+        iprop) {
+      ss << " ATTCHORD=" << iprop;
+    }
+    if (atom->getPropIfPresent(common_properties::molAttachPoint, iprop) &&
+        iprop) {
+      ss << " ATTCHPT=" << iprop;
+    }
+    if (atom->getPropIfPresent(common_properties::molAtomSeqId, iprop) &&
+        iprop) {
+      ss << " SEQID=" << iprop;
+    }
+    if (atom->getPropIfPresent(common_properties::molRxnExactChange, iprop) &&
+        iprop) {
+      ss << " EXACHG=" << iprop;
+    }
+    if (atom->getPropIfPresent(common_properties::molInversionFlag, iprop) &&
+        iprop) {
+      if (iprop == 1 || iprop == 2) ss << " INVRET=" << iprop;
+    }
+    if (atom->getPropIfPresent(common_properties::molStereoCare, iprop) &&
+        iprop) {
+      ss << " STBOX=" << iprop;
+    }
+    if (atom->getPropIfPresent(common_properties::molSubstCount, iprop) &&
+        iprop) {
+      ss << " SUBST=" << iprop;
+    }
+  }
+  {
+    std::string sprop;
+    if (atom->getPropIfPresent(common_properties::molAtomClass, sprop)) {
+      ss << " CLASS=" << sprop;
+    }
+  }
   // HCOUNT - *query* hydrogen count. Not written by this writer.
 
   return ss.str();
@@ -1065,6 +1103,31 @@ const std::string GetV3000MolFileBondLine(const Bond *bond,
       ss << " TOPO=" << topol;
     }
   }
+
+  {
+    int iprop;
+    if (bond->getPropIfPresent(common_properties::molReactStatus, iprop) &&
+        iprop) {
+      ss << " RXCTR=" << iprop;
+    }
+  }
+
+  {
+    std::string sprop;
+    if (bond->getPropIfPresent(common_properties::molStereoCare, sprop) &&
+        sprop != "0") {
+      ss << " STBOX=" << sprop;
+    }
+    if (bond->getPropIfPresent(common_properties::_MolFileBondEndPts, sprop) &&
+        sprop != "0") {
+      ss << " ENDPTS=" << sprop;
+    }
+    if (bond->getPropIfPresent(common_properties::_MolFileBondAttach, sprop) &&
+        sprop != "0") {
+      ss << " ATTACH=" << sprop;
+    }
+  }
+
   return ss.str();
 }
 

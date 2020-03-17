@@ -114,6 +114,14 @@ const std::string smilesSymbol = "smilesSymbol";
 const std::string atomLabel = "atomLabel";
 const std::string internalRgroupSmiles = "internalRgroupSmiles";
 
+const std::string molSubstCount = "molSubstCount";
+const std::string molAttachPoint = "molAttchpt";
+const std::string molAttachOrder = "molAttchord";
+const std::string molAtomClass = "molClass";
+const std::string molAtomSeqId = "molSeqid";
+const std::string molRxnExactChange = "molRxnExachg";
+const std::string molReactStatus = "molReactStatus";
+
 }  // namespace common_properties
 
 const double MAX_DOUBLE = std::numeric_limits<double>::max();

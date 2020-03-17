@@ -153,15 +153,23 @@ RDKIT_RDGENERAL_EXPORT extern const std::string
     atomLabel;  // atom string from CXSMILES
 
 // MDL Style Properties (MolFileParser)
-RDKIT_RDGENERAL_EXPORT extern const std::string molAtomMapNumber;  // int
-RDKIT_RDGENERAL_EXPORT extern const std::string molFileAlias;      // string
-RDKIT_RDGENERAL_EXPORT extern const std::string molFileValue;      // string
-RDKIT_RDGENERAL_EXPORT extern const std::string molInversionFlag;  // int
-RDKIT_RDGENERAL_EXPORT extern const std::string molParity;         // int
-RDKIT_RDGENERAL_EXPORT extern const std::string molStereoCare;     // int
-RDKIT_RDGENERAL_EXPORT extern const std::string molRxnComponent;   // int
-RDKIT_RDGENERAL_EXPORT extern const std::string molRxnRole;        // int
-RDKIT_RDGENERAL_EXPORT extern const std::string molTotValence;     // int
+RDKIT_RDGENERAL_EXPORT extern const std::string molAtomMapNumber;   // int
+RDKIT_RDGENERAL_EXPORT extern const std::string molFileAlias;       // string
+RDKIT_RDGENERAL_EXPORT extern const std::string molFileValue;       // string
+RDKIT_RDGENERAL_EXPORT extern const std::string molInversionFlag;   // int
+RDKIT_RDGENERAL_EXPORT extern const std::string molParity;          // int
+RDKIT_RDGENERAL_EXPORT extern const std::string molStereoCare;      // int
+RDKIT_RDGENERAL_EXPORT extern const std::string molRxnComponent;    // int
+RDKIT_RDGENERAL_EXPORT extern const std::string molRxnRole;         // int
+RDKIT_RDGENERAL_EXPORT extern const std::string molTotValence;      // int
+RDKIT_RDGENERAL_EXPORT extern const std::string molSubstCount;      // int
+RDKIT_RDGENERAL_EXPORT extern const std::string molAttachPoint;     // int
+RDKIT_RDGENERAL_EXPORT extern const std::string molAttachOrder;     // int
+RDKIT_RDGENERAL_EXPORT extern const std::string molAtomClass;       // string
+RDKIT_RDGENERAL_EXPORT extern const std::string molAtomSeqId;       // int
+RDKIT_RDGENERAL_EXPORT extern const std::string molRxnExactChange;  // int
+RDKIT_RDGENERAL_EXPORT extern const std::string molReactStatus;     // int
+
 RDKIT_RDGENERAL_EXPORT extern const std::string _MolFileRLabel;  // unsigned int
 RDKIT_RDGENERAL_EXPORT extern const std::string _MolFileChiralFlag;  // int
 RDKIT_RDGENERAL_EXPORT extern const std::string _MolFileAtomQuery;   // int

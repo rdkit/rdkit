@@ -377,6 +377,21 @@ ROMol *MolFromSmilesHelper(python::object ismiles,
 
   return SmilesToMol(smiles, params);
 }
+
+python::list MolToRandomSmilesHelper(const ROMol &mol, unsigned int numSmiles,
+                                     unsigned int randomSeed,
+                                     bool doIsomericSmiles, bool doKekule,
+                                     bool allBondsExplicit,
+                                     bool allHsExplicit) {
+  auto res = MolToRandomSmilesVect(mol, numSmiles, randomSeed, doIsomericSmiles,
+                                   doKekule, allBondsExplicit, allHsExplicit);
+  python::list pyres;
+  for (auto smi : res) {
+    pyres.append(smi);
+  }
+  return pyres;
+}
+
 }  // namespace RDKit
 
 // MolSupplier stuff
@@ -681,6 +696,25 @@ BOOST_PYTHON_MODULE(rdmolfiles) {
                python::arg("confId") = -1, python::arg("kekulize") = true,
                python::arg("forceV3000") = false),
               docString.c_str());
+  docString =
+      "Returns a V3000 Mol block for a molecule\n\
+  ARGUMENTS:\n\
+\n\
+    - mol: the molecule\n\
+    - includeStereo: (optional) toggles inclusion of stereochemical\n\
+      information in the output\n\
+    - confId: (optional) selects which conformation to output (-1 = default)\n\
+    - kekulize: (optional) triggers kekulization of the molecule before it's written,\n\
+      as suggested by the MDL spec.\n\
+\n\
+  RETURNS:\n\
+\n\
+    a string\n\
+\n";
+  python::def("MolToV3KMolBlock", RDKit::MolToV3KMolBlock,
+              (python::arg("mol"), python::arg("includeStereo") = true,
+               python::arg("confId") = -1, python::arg("kekulize") = true),
+              docString.c_str());
 
   docString =
       "Writes a Mol file for a molecule\n\
@@ -706,6 +740,28 @@ BOOST_PYTHON_MODULE(rdmolfiles) {
        python::arg("includeStereo") = true, python::arg("confId") = -1,
        python::arg("kekulize") = true, python::arg("forceV3000") = false),
       docString.c_str());
+
+  docString =
+      "Writes a V3000 Mol file for a molecule\n\
+  ARGUMENTS:\n\
+\n\
+    - mol: the molecule\n\
+    - filename: the file to write to\n\
+    - includeStereo: (optional) toggles inclusion of stereochemical\n\
+      information in the output\n\
+    - confId: (optional) selects which conformation to output (-1 = default)\n\
+    - kekulize: (optional) triggers kekulization of the molecule before it's written,\n\
+      as suggested by the MDL spec.\n\
+\n\
+  RETURNS:\n\
+\n\
+    a string\n\
+\n";
+  python::def("MolToV3KMolFile", RDKit::MolToV3KMolFile,
+              (python::arg("mol"), python::arg("filename"),
+               python::arg("includeStereo") = true, python::arg("confId") = -1,
+               python::arg("kekulize") = true),
+              docString.c_str());
 
   //
 
@@ -1380,6 +1436,15 @@ BOOST_PYTHON_MODULE(rdmolfiles) {
        python::arg("missingValueMarker") = "", python::arg("lineSize") = 190),
       "creates a list property on the molecule from individual atom property "
       "values");
+
+  python::def(
+      "MolToRandomSmilesVect", RDKit::MolToRandomSmilesHelper,
+      (python::arg("mol"), python::arg("numSmiles"),
+       python::arg("randomSeed") = 0, python::arg("isomericSmiles") = true,
+       python::arg("kekuleSmiles") = false,
+       python::arg("allBondsExplicit") = false,
+       python::arg("allHsExplicit") = false),
+      "returns a list of SMILES generated using the randomSmiles algorithm");
 
 /********************************************************
  * MolSupplier stuff

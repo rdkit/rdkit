@@ -260,5 +260,32 @@ chlorine	[Cl]
     self.assertEqual(enumerator.ScoreTautomer(Chem.MolFromSmiles('N=c1[nH]cccc1')), 99)
     self.assertEqual(enumerator.ScoreTautomer(Chem.MolFromSmiles('Nc1ncccc1')), 100)
 
+  def test14TautomerDetails(self):
+    enumerator = rdMolStandardize.TautomerEnumerator()
+    m = Chem.MolFromSmiles("c1ccccc1CN=c1[nH]cccc1")
+    modatoms = []
+    modbonds = []
+    tauts = enumerator.Enumerate(m,modifiedAtoms=modatoms,modifiedBonds=modbonds)
+    self.assertEqual(len(tauts),2)
+    self.assertEqual(modatoms,[7,9])
+    self.assertEqual(len(modbonds),7)
+    self.assertEqual(modbonds,[7,8,9,10,11,12,14])
+    
+    modatoms = []
+    tauts = enumerator.Enumerate(m,modifiedAtoms=modatoms)
+    self.assertEqual(len(tauts),2)
+    self.assertEqual(modatoms,[7,9])
+    
+    modbonds = []
+    tauts = enumerator.Enumerate(m,modifiedBonds=modbonds)
+    self.assertEqual(len(tauts),2)
+    self.assertEqual(len(modbonds),7)
+    self.assertEqual(modbonds,[7,8,9,10,11,12,14])
+    
+    
+    
+
+
+
 if __name__ == "__main__":
   unittest.main()
