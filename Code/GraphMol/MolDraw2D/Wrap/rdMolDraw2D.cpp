@@ -634,8 +634,8 @@ BOOST_PYTHON_MODULE(rdMolDraw2D) {
       .def_readwrite("addStereoAnnotation",
                      &RDKit::MolDrawOptions::addStereoAnnotation,
                      "adds R/S and E/Z to drawings. Default False.")
-      .def_readwrite("atomHighlightCircles",
-                     &RDKit::MolDrawOptions::atomHighlightCircles,
+      .def_readwrite("atomHighlightsAreCircles",
+                     &RDKit::MolDrawOptions::atomHighlightsAreCircles,
                      "forces atom highlights always to be circles."
                      "Default (false) is to put ellipses round"
                      "longer labels.")

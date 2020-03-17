@@ -166,9 +166,9 @@ struct RDKIT_MOLDRAW2D_EXPORT MolDrawOptions {
   double rotate; // angle in degrees to rotate coords by about centre before
                  // drawing. default=0.0.
   bool addStereoAnnotation; // adds E/Z and R/S to drawings.  Default false.
-  bool atomHighlightCircles; // forces atom highlights always to be circles.
-                             // Default (false) is to put ellipses round
-                             // longer labels.
+  bool atomHighlightsAreCircles; // forces atom highlights always to be circles.
+                                 // Default (false) is to put ellipses round
+                                 // longer labels.
   bool centreMoleculesB4Drawing; // moves the centre of the drawn molecule to
                                  // (0,0).  Default=true.
 
@@ -199,7 +199,7 @@ struct RDKIT_MOLDRAW2D_EXPORT MolDrawOptions {
         fixedBondLength(-1.0),
         rotate(0.0),
         addStereoAnnotation(false),
-        atomHighlightCircles(false),
+        atomHighlightsAreCircles(false),
         centreMoleculesB4Drawing(true) {
     highlightColourPalette.emplace_back(DrawColour(1., 1., .67));  // popcorn yellow
     highlightColourPalette.emplace_back(DrawColour(1., .8, .6));  // sand
@@ -599,8 +599,8 @@ class RDKIT_MOLDRAW2D_EXPORT MolDraw2D {
   std::vector<std::vector<Point2D>> at_cds_;  // from mol
   std::vector<std::vector<int>> atomic_nums_;
   std::vector<std::vector<std::pair<std::string, OrientType>>> atom_syms_;
-  std::vector<std::vector<std::unique_ptr<StringRect>>> atom_notes_;
-  std::vector<std::vector<std::unique_ptr<StringRect>>> bond_notes_;
+  std::vector<std::vector<std::shared_ptr<StringRect>>> atom_notes_;
+  std::vector<std::vector<std::shared_ptr<StringRect>>> bond_notes_;
 
   Point2D bbox_[2];
 
@@ -697,7 +697,7 @@ class RDKIT_MOLDRAW2D_EXPORT MolDraw2D {
                      const std::map<int, DrawColour> *highlight_map = nullptr);
   void drawAtomLabel(int atom_num, const DrawColour &draw_colour);
   void drawAnnotation(const std::string &note,
-                      const std::unique_ptr<StringRect> &note_rect);
+                      const std::shared_ptr<StringRect> &note_rect);
   void drawRadicals(const ROMol &mol);
   // find a good starting point for scanning round the annotation
   // atom.  If we choose well, the first angle should be the one.
@@ -754,7 +754,7 @@ class RDKIT_MOLDRAW2D_EXPORT MolDraw2D {
   // things used by calculateScale.
   void adjustScaleForAtomLabels(const std::vector<int> *highlight_atoms,
                                 const std::map<int, double> *highlight_radii);
-  void adjustScaleForAnnotation(const std::vector<std::unique_ptr<StringRect>> &notes);
+  void adjustScaleForAnnotation(const std::vector<std::shared_ptr<StringRect>> &notes);
 
  protected:
   virtual void doContinuousHighlighting(

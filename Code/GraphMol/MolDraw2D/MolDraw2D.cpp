@@ -1323,8 +1323,8 @@ void MolDraw2D::pushDrawDetails() {
   at_cds_.push_back(std::vector<Point2D>());
   atomic_nums_.push_back(std::vector<int>());
   atom_syms_.push_back(std::vector<std::pair<std::string, OrientType>>());
-  atom_notes_.push_back(std::vector<std::unique_ptr<StringRect>>());
-  bond_notes_.push_back(std::vector<std::unique_ptr<StringRect>>());
+  atom_notes_.push_back(std::vector<std::shared_ptr<StringRect>>());
+  bond_notes_.push_back(std::vector<std::shared_ptr<StringRect>>());
   activeMolIdx_++;
 
 }
@@ -1581,7 +1581,7 @@ void MolDraw2D::calcLabelEllipse(int atom_idx,
     yradius = xradius;
   }
 
-  if (drawOptions().atomHighlightCircles
+  if (drawOptions().atomHighlightsAreCircles
       || atom_syms_[activeMolIdx_][atom_idx].first.empty()) {
     return;
   }
@@ -1994,7 +1994,7 @@ void MolDraw2D::extractAtomNotes(const ROMol &mol) {
         }
       }
     }
-    atom_notes_[activeMolIdx_].push_back(unique_ptr<StringRect>(note_rect));
+    atom_notes_[activeMolIdx_].push_back(std::shared_ptr<StringRect>(note_rect));
   }
 
 }
@@ -2023,7 +2023,7 @@ void MolDraw2D::extractBondNotes(const ROMol &mol) {
         }
       }
     }
-    bond_notes_[activeMolIdx_].push_back(unique_ptr<StringRect>(note_rect));
+    bond_notes_[activeMolIdx_].push_back(std::shared_ptr<StringRect>(note_rect));
   }
 
 }
@@ -2259,7 +2259,7 @@ void MolDraw2D::drawAtomLabel(int atom_num, const DrawColour &draw_colour) {
 
 // ****************************************************************************
 void MolDraw2D::drawAnnotation(const string &note,
-                               const unique_ptr<StringRect> &note_rect) {
+                               const std::shared_ptr<StringRect> &note_rect) {
 
   double full_font_size = fontSize();
   setFontSize(drawOptions().annotationFontScale * full_font_size);
@@ -3199,7 +3199,7 @@ void MolDraw2D::adjustScaleForAtomLabels(const std::vector<int> *highlight_atoms
 }
 
 // ****************************************************************************
-void MolDraw2D::adjustScaleForAnnotation(const vector<unique_ptr<StringRect>> &notes) {
+void MolDraw2D::adjustScaleForAnnotation(const vector<std::shared_ptr<StringRect>> &notes) {
 
   double x_max(x_min_ + x_range_), y_max(y_min_ + y_range_);
 

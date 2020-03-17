@@ -2625,7 +2625,7 @@ void testGithub2931() {
       MolDraw2DSVG drawer(500, 500);
       drawer.drawOptions().fillHighlights = false;
       drawer.drawOptions().continuousHighlight = true;
-      drawer.drawOptions().atomHighlightCircles = true;
+      drawer.drawOptions().atomHighlightsAreCircles = true;
       drawer.drawMoleculeWithHighlights(*m, "Test 2", ha_map, hb_map, h_rads,
                                         h_lw_mult);
       drawer.finishDrawing();
