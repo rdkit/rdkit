@@ -33,6 +33,8 @@
 
 #include "vf2.hpp"
 
+using boost::make_iterator_range;
+
 namespace RDKit {
 namespace detail {
 
@@ -134,16 +136,13 @@ class MolMatchFinalCheckFunctor {
       mOrder.insert(mOrder.end(), unmatchedNeighbors, -1);
 
       INT_LIST moOrder;
-      ROMol::OEDGE_ITER dbeg, dend;
-      boost::tie(dbeg, dend) = d_mol.getAtomBonds(mAt);
-      while (dbeg != dend) {
-        int dbidx = d_mol[*dbeg]->getIdx();
+      for (const auto &bond : make_iterator_range(d_mol.getAtomBonds(mAt))) {
+        int dbidx = d_mol[bond]->getIdx();
         if (std::find(mOrder.begin(), mOrder.end(), dbidx) != mOrder.end()) {
           moOrder.push_back(dbidx);
         } else {
           moOrder.push_back(-1);
         }
-        ++dbeg;
       }
 
       int mPermCount =
@@ -155,6 +154,11 @@ class MolMatchFinalCheckFunctor {
       if (requireMatch != labelsMatch) {
         return false;
       }
+    }
+
+    std::unordered_map<unsigned int, unsigned int> q_to_mol;
+    for (unsigned int j = 0; j < d_query.getNumAtoms(); ++j) {
+      q_to_mol[q_c[j]] = m_c[j];
     }
 
     // now check double bonds
@@ -169,12 +173,8 @@ class MolMatchFinalCheckFunctor {
         continue;
       }
 
-      std::map<unsigned int, unsigned int> qMap;
-      for (unsigned int j = 0; j < d_query.getNumAtoms(); ++j) {
-        qMap[q_c[j]] = j;
-      }
       const Bond *mBnd = d_mol.getBondBetweenAtoms(
-          m_c[qMap[qBnd->getBeginAtomIdx()]], m_c[qMap[qBnd->getEndAtomIdx()]]);
+          q_to_mol[qBnd->getBeginAtomIdx()], q_to_mol[qBnd->getEndAtomIdx()]);
       CHECK_INVARIANT(mBnd, "Matching bond not found");
       if (mBnd->getBondType() != Bond::DOUBLE ||
           qBnd->getStereo() <= Bond::STEREOANY) {
@@ -187,20 +187,20 @@ class MolMatchFinalCheckFunctor {
 
       unsigned int end1Matches = 0;
       unsigned int end2Matches = 0;
-      if (m_c[qMap[qBnd->getBeginAtomIdx()]] == mBnd->getBeginAtomIdx()) {
+      if (q_to_mol[qBnd->getBeginAtomIdx()] == mBnd->getBeginAtomIdx()) {
         // query Begin == mol Begin
-        if (m_c[qMap[qBnd->getStereoAtoms()[0]]] == mBnd->getStereoAtoms()[0]) {
+        if (q_to_mol[qBnd->getStereoAtoms()[0]] == mBnd->getStereoAtoms()[0]) {
           end1Matches = 1;
         }
-        if (m_c[qMap[qBnd->getStereoAtoms()[1]]] == mBnd->getStereoAtoms()[1]) {
+        if (q_to_mol[qBnd->getStereoAtoms()[1]] == mBnd->getStereoAtoms()[1]) {
           end2Matches = 1;
         }
       } else {
         // query End == mol Begin
-        if (m_c[qMap[qBnd->getStereoAtoms()[0]]] == mBnd->getStereoAtoms()[1]) {
+        if (q_to_mol[qBnd->getStereoAtoms()[0]] == mBnd->getStereoAtoms()[1]) {
           end1Matches = 1;
         }
-        if (m_c[qMap[qBnd->getStereoAtoms()[1]]] == mBnd->getStereoAtoms()[0]) {
+        if (q_to_mol[qBnd->getStereoAtoms()[1]] == mBnd->getStereoAtoms()[0]) {
           end2Matches = 1;
         }
       }
