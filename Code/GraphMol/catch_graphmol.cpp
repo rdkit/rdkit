@@ -1473,3 +1473,16 @@ TEST_CASE("phosphine and arsine chirality", "[Chirality]") {
     CHECK(MolToSmiles(*mol1) != MolToSmiles(*mol2));
   }
 }
+
+TEST_CASE("github #2890", "[bug, molops, stereo]") {
+    auto mol = "CC=CC"_smiles;
+    REQUIRE(mol);
+
+    auto bond = mol->getBondWithIdx(1);
+    bond->setStereo(Bond::STEREOANY);
+    REQUIRE(bond->getStereoAtoms().empty());
+
+    MolOps::findPotentialStereoBonds(*mol);
+    CHECK(bond->getStereo() == Bond::STEREOANY);
+    CHECK(bond->getStereoAtoms().size() == 2);
+}
