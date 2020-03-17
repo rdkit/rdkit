@@ -960,11 +960,16 @@ void MolDraw2D::calculateScale(int width, int height, const vector<ROMol *> &mol
                                                 width, height);
     double x_max = x_min_ + x_range_;
     double y_max = y_min_ + y_range_;
-    global_scale = scale() < global_scale ? scale() : global_scale;
     global_x_min = x_min_ < global_x_min ? x_min_ : global_x_min;
     global_x_max = x_max > global_x_max ? x_max : global_x_max;
     global_y_min = y_min_ < global_y_min ? y_min_ : global_y_min;
     global_y_max = y_max > global_y_max ? y_max : global_y_max;
+
+    double curr_x_range = global_x_max - global_x_min;
+    double curr_y_range = global_y_max - global_y_min;
+    double curr_scale = std::min(double(width) / curr_x_range,
+                                 double(height) / curr_y_range);
+    global_scale = curr_scale < global_scale ? curr_scale : global_scale;
 
     tmols.emplace_back(std::move(rwmol));
     popDrawDetails();
@@ -1911,6 +1916,15 @@ void MolDraw2D::extractAtomCoords(const ROMol &mol, int confId,
   }
   const RDGeom::POINT3D_VECT &locs = mol.getConformer(confId).getPositions();
 
+  // centre the molecule unless told not to
+  Point2D centroid(0.0, 0.0);
+  if(drawOptions().centreMoleculesB4Drawing) {
+    for (auto atom : mol.atoms()) {
+      centroid += locs[atom->getIdx()];
+    }
+    centroid /= double(mol.getNumAtoms());
+  }
+
   // the transformation rotates anti-clockwise, as is conventional, but
   // probably not what our user expects.
   double rot = - drawOptions().rotate * M_PI / 180.0;
@@ -1931,6 +1945,9 @@ void MolDraw2D::extractAtomCoords(const ROMol &mol, int confId,
   for(auto this_at: mol.atoms()) {
     int this_idx = this_at->getIdx();
     Point2D pt(locs[this_idx].x, locs[this_idx].y);
+    if(drawOptions().centreMoleculesB4Drawing) {
+      pt -= centroid;
+    }
     if(rot != 0.0) {
       trans.TransformPoint(pt);
     }

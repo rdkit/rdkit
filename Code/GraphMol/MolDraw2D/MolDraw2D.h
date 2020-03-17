@@ -169,6 +169,8 @@ struct RDKIT_MOLDRAW2D_EXPORT MolDrawOptions {
   bool atomHighlightCircles; // forces atom highlights always to be circles.
                              // Default (false) is to put ellipses round
                              // longer labels.
+  bool centreMoleculesB4Drawing; // moves the centre of the drawn molecule to
+                                 // (0,0).  Default=true.
 
   MolDrawOptions()
       : atomLabelDeuteriumTritium(false),
@@ -197,7 +199,8 @@ struct RDKIT_MOLDRAW2D_EXPORT MolDrawOptions {
         fixedBondLength(-1.0),
         rotate(0.0),
         addStereoAnnotation(false),
-        atomHighlightCircles(false) {
+        atomHighlightCircles(false),
+        centreMoleculesB4Drawing(true) {
     highlightColourPalette.emplace_back(DrawColour(1., 1., .67));  // popcorn yellow
     highlightColourPalette.emplace_back(DrawColour(1., .8, .6));  // sand
     highlightColourPalette.emplace_back(DrawColour(1., .71, .76));  // light pink

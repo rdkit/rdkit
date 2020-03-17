@@ -639,6 +639,10 @@ BOOST_PYTHON_MODULE(rdMolDraw2D) {
                      "forces atom highlights always to be circles."
                      "Default (false) is to put ellipses round"
                      "longer labels.")
+      .def_readwrite("centreMoleculesB4Drawing",
+                     &RDKit::MolDrawOptions::centreMoleculesB4Drawing,
+                     "Moves the centre of the drawn molecule to (0,0)."
+                     "Default True.")
       .def_readwrite("additionalAtomLabelPadding",
                      &RDKit::MolDrawOptions::additionalAtomLabelPadding,
                      "additional padding to leave around atom labels. "
