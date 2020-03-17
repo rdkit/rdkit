@@ -1025,6 +1025,41 @@ void testPickCanonical2() {
   BOOST_LOG(rdInfoLog) << "Finished" << std::endl;
 }
 
+void testEnumerateDetails() {
+  BOOST_LOG(rdInfoLog)
+      << "-----------------------\n Testing getting details back "
+         "from tautomer enumeration"
+      << std::endl;
+
+  std::string rdbase = getenv("RDBASE");
+  std::string tautomerFile =
+      rdbase + "/Data/MolStandardize/tautomerTransforms.in";
+  auto tautparams = std::unique_ptr<TautomerCatalogParams>(
+      new TautomerCatalogParams(tautomerFile));
+  unsigned int ntautomers = tautparams->getNumTautomers();
+  TEST_ASSERT(ntautomers == 34);
+
+  TautomerEnumerator te(new TautomerCatalog(tautparams.get()));
+  {
+    auto mol = "c1ccccc1CN=c1[nH]cccc1"_smiles;
+    TEST_ASSERT(mol);
+    boost::dynamic_bitset<> atomsModified(mol->getNumAtoms());
+    boost::dynamic_bitset<> bondsModified(mol->getNumBonds());
+
+    auto tauts = te.enumerate(*mol, &atomsModified, &bondsModified);
+    TEST_ASSERT(tauts.size() == 2);
+    TEST_ASSERT(atomsModified.count() == 2);
+    TEST_ASSERT(bondsModified.count() == 7);
+    TEST_ASSERT(atomsModified[7]);
+    TEST_ASSERT(atomsModified[9]);
+    TEST_ASSERT(!bondsModified[0]);
+    TEST_ASSERT(bondsModified[7]);
+    TEST_ASSERT(bondsModified[8]);
+    TEST_ASSERT(bondsModified[14]);
+  }
+  BOOST_LOG(rdInfoLog) << "Finished" << std::endl;
+}
+
 int main() {
   RDLog::InitLogs();
 #if 1
@@ -1035,5 +1070,6 @@ int main() {
   testEnumerationProblems();
 #endif
   testPickCanonical2();
+  testEnumerateDetails();
   return 0;
 }
