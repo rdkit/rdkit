@@ -166,6 +166,9 @@ struct RDKIT_MOLDRAW2D_EXPORT MolDrawOptions {
   double rotate; // angle in degrees to rotate coords by about centre before
                  // drawing. default=0.0.
   bool addStereoAnnotation; // adds E/Z and R/S to drawings.  Default false.
+  bool atomHighlightCircles; // forces atom highlights always to be circles.
+                             // Default (false) is to put ellipses round
+                             // longer labels.
 
   MolDrawOptions()
       : atomLabelDeuteriumTritium(false),
@@ -193,7 +196,8 @@ struct RDKIT_MOLDRAW2D_EXPORT MolDrawOptions {
         fixedScale(-1.0),
         fixedBondLength(-1.0),
         rotate(0.0),
-        addStereoAnnotation(false) {
+        addStereoAnnotation(false),
+        atomHighlightCircles(false) {
     highlightColourPalette.emplace_back(DrawColour(1., 1., .67));  // popcorn yellow
     highlightColourPalette.emplace_back(DrawColour(1., .8, .6));  // sand
     highlightColourPalette.emplace_back(DrawColour(1., .71, .76));  // light pink

@@ -1584,7 +1584,8 @@ void MolDraw2D::calcLabelEllipse(int atom_idx,
     yradius = xradius;
   }
 
-  if (atom_syms_[activeMolIdx_][atom_idx].first.empty()) {
+  if (drawOptions().atomHighlightCircles
+      || atom_syms_[activeMolIdx_][atom_idx].first.empty()) {
     return;
   }
 

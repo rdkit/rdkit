@@ -600,6 +600,9 @@ BOOST_PYTHON_MODULE(rdMolDraw2D) {
       .def_readwrite("maxFontSize", &RDKit::MolDrawOptions::maxFontSize,
                      "maximum font size in pixels. default=40, -1 means no"
                      " maximum.")
+      .def_readwrite("annotationFontScale", &RDKit::MolDrawOptions::annotationFontScale,
+                    "Scale of font for atom and bond annotation relative to atom"
+                    "label font.  Default=0.75.")
       .def_readwrite(
           "multipleBondOffset", &RDKit::MolDrawOptions::multipleBondOffset,
           "offset (in Angstroms) for the extra lines in a multiple bond")
@@ -628,6 +631,14 @@ BOOST_PYTHON_MODULE(rdMolDraw2D) {
                      "draw window.  Default -1.0 means adjust scale to fit.")
       .def_readwrite("rotate", &RDKit::MolDrawOptions::rotate,
                      "Rotates molecule about centre by this number of degrees,")
+      .def_readwrite("addStereoAnnotation",
+                     &RDKit::MolDrawOptions::addStereoAnnotation,
+                     "adds R/S and E/Z to drawings. Default False.")
+      .def_readwrite("atomHighlightCircles",
+                     &RDKit::MolDrawOptions::atomHighlightCircles,
+                     "forces atom highlights always to be circles."
+                     "Default (false) is to put ellipses round"
+                     "longer labels.")
       .def_readwrite("additionalAtomLabelPadding",
                      &RDKit::MolDrawOptions::additionalAtomLabelPadding,
                      "additional padding to leave around atom labels. "

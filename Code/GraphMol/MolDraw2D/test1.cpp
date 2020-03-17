@@ -2590,13 +2590,12 @@ void testGithub2931() {
     WedgeMolBonds(*m, &(m->getConformer()));
 
     std::vector<std::string> smarts = {"CONN", "N#CC~CO", "C=CON", "CONNCN"};
-    std::vector<DrawColour> colours = {DrawColour(1.0, 0.0, 0.0),
-                                       DrawColour(0.0, 1.0, 0.0),
-                                       DrawColour(0.0, 0.0, 1.0),
-                                       DrawColour(1.0, 0.55, 0.0)};
-    std::map<int, std::vector<DrawColour> > ha_map;
-    std::map<int, std::vector<DrawColour> > hb_map;
-    for(size_t i = 0; i < smarts.size(); ++i) {
+    std::vector<DrawColour> colours = {
+        DrawColour(1.0, 0.0, 0.0), DrawColour(0.0, 1.0, 0.0),
+        DrawColour(0.0, 0.0, 1.0), DrawColour(1.0, 0.55, 0.0)};
+    std::map<int, std::vector<DrawColour>> ha_map;
+    std::map<int, std::vector<DrawColour>> hb_map;
+    for (size_t i = 0; i < smarts.size(); ++i) {
       std::vector<int> hit_atoms = get_all_hit_atoms(*m, smarts[i]);
       std::vector<int> hit_bonds = get_all_hit_bonds(*m, hit_atoms);
       update_colour_map(hit_atoms, colours[i], ha_map);
@@ -2604,27 +2603,49 @@ void testGithub2931() {
     }
     std::map<int, double> h_rads;
     std::map<int, int> h_lw_mult;
-
-    MolDraw2DSVG drawer(500, 500);
-    drawer.drawOptions().fillHighlights = false;
-    drawer.drawOptions().continuousHighlight = true;
-    drawer.drawMoleculeWithHighlights(*m, "Test 1", ha_map,
-                                      hb_map, h_rads, h_lw_mult);
-    drawer.finishDrawing();
-    std::string text = drawer.getDrawingText();
-    std::ofstream outs("testGithub2931.svg");
-    outs << text;
-    outs.flush();
-    TEST_ASSERT(text.find("stroke:#FF8C00;stroke-width:5px") != std::string::npos);
-    TEST_ASSERT(text.find("<ellipse cx='241.942' cy='386.438'"
-                          " rx='11.9978' ry='12.846'"
-                          " style='fill:none;stroke:#00FF00;") != std::string::npos);
+    {
+      MolDraw2DSVG drawer(500, 500);
+      drawer.drawOptions().fillHighlights = false;
+      drawer.drawOptions().continuousHighlight = true;
+      drawer.drawMoleculeWithHighlights(*m, "Test 1", ha_map, hb_map, h_rads,
+                                        h_lw_mult);
+      drawer.finishDrawing();
+      std::string text = drawer.getDrawingText();
+      std::ofstream outs("testGithub2931_1.svg");
+      outs << text;
+      outs.flush();
+      TEST_ASSERT(text.find("stroke:#FF8C00;stroke-width:5px") !=
+                  std::string::npos);
+      TEST_ASSERT(text.find("<ellipse cx='241.942' cy='386.438'"
+                            " rx='11.9978' ry='12.846'"
+                            " style='fill:none;stroke:#00FF00;") !=
+                  std::string::npos);
+    }
+    {
+      MolDraw2DSVG drawer(500, 500);
+      drawer.drawOptions().fillHighlights = false;
+      drawer.drawOptions().continuousHighlight = true;
+      drawer.drawOptions().atomHighlightCircles = true;
+      drawer.drawMoleculeWithHighlights(*m, "Test 2", ha_map, hb_map, h_rads,
+                                        h_lw_mult);
+      drawer.finishDrawing();
+      std::string text = drawer.getDrawingText();
+      std::ofstream outs("testGithub2931_2.svg");
+      outs << text;
+      outs.flush();
+      TEST_ASSERT(text.find("stroke:#FF8C00;stroke-width:5px") !=
+                  std::string::npos);
+      TEST_ASSERT(text.find("<ellipse cx='241.766' cy='385.788'"
+                            " rx='10.9782' ry='10.9782'"
+                            " style='fill:none;stroke:#00FF00;") !=
+                  std::string::npos);
+    }
   }
   std::cerr << " Done" << std::endl;
 }
 
 void test20Annotate() {
-  std::cout << " ----------------- Testing annotation of 2D Drawing."
+    std::cout << " ----------------- Testing annotation of 2D Drawing."
             << std::endl;
 
   // add serial numbers to the atoms in the molecule
