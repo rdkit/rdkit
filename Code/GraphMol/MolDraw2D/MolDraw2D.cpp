@@ -965,21 +965,15 @@ void MolDraw2D::calculateScale(int width, int height, const vector<ROMol *> &mol
     global_y_min = y_min_ < global_y_min ? y_min_ : global_y_min;
     global_y_max = y_max > global_y_max ? y_max : global_y_max;
 
-    double curr_x_range = global_x_max - global_x_min;
-    double curr_y_range = global_y_max - global_y_min;
-    double curr_scale = std::min(double(width) / curr_x_range,
-                                 double(height) / curr_y_range);
-    global_scale = curr_scale < global_scale ? curr_scale : global_scale;
-
     tmols.emplace_back(std::move(rwmol));
     popDrawDetails();
   }
 
-  scale_ = global_scale;
   x_min_ = global_x_min;
   y_min_ = global_y_min;
   x_range_ = global_x_max - global_x_min;
   y_range_ = global_y_max - global_y_min;
+  scale_ = std::min(double(width) / x_range_, double(height) /y_range_);
   centrePicture(width, height);
 
 }
