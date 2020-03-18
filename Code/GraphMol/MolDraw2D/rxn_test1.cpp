@@ -66,7 +66,6 @@ void drawit(ChemicalReaction *rxn, std::string nameBase,
 
 void test1() {
   std::cout << " ----------------- Test 1" << std::endl;
-#if 0
   {
     std::string smiles =
         "[CH3:1][C:2](=[O:3])[OH:4].[CH3:5][NH2:6]>CC(O)C.[Pt]>[CH3:1][C:2](=["
@@ -79,7 +78,7 @@ void test1() {
     drawit(rxn, nameBase);
     delete rxn;
   }
-#endif
+
   {
     std::string smiles =
         "[N:1][C:2][C:3](=[O:4])[O:5].[N:6][C:7][C:8](=[O:9])[O:10]>>[N:1]1[C:"
@@ -92,7 +91,7 @@ void test1() {
     drawit(rxn, nameBase);
     delete rxn;
   }
-#if 0
+
   {
     std::string smiles =
         ">>[N:1]1[C:"
@@ -105,7 +104,6 @@ void test1() {
     drawit(rxn, nameBase);
     delete rxn;
   }
-#endif
   {
     std::string smiles =
         "[N:1][C:2][C:3](=[O:4])[O:5].[N:6][C:7][C:8](=[O:9])[O:10]>>";
@@ -117,7 +115,7 @@ void test1() {
     drawit(rxn, nameBase);
     delete rxn;
   }
-#if 0
+
   {
     std::string smiles =
         "[N:1][C:2][C:3](=[O:4])[O:5].[N:6][C:7][C:8](=[O:9])[O:10]>O.ClCl>";
@@ -155,7 +153,6 @@ void test1() {
     drawit(rxn, nameBase, true);
     delete rxn;
   }
-#endif
   std::cout << " Done" << std::endl;
 }
 
@@ -275,8 +272,8 @@ void test4() {
 
 int main() {
   RDLog::InitLogs();
+#if 1
   test1();
-#if 0
   test2();
   test3();
   test4();
