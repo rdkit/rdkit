@@ -54,8 +54,8 @@ static _IsSubstructOf IsSubstructOf(const ROMol &m) {
 }
 
 namespace Catch {
-template <>
-struct StringMaker<RDKit::RWMol> {
+// ""_smiles returns an RWMol.
+template <> struct StringMaker<RDKit::RWMol> {
   static std::string convert(RDKit::RWMol const &m) { return MolToCXSmiles(m); }
 };
 }
@@ -182,6 +182,7 @@ TEST_CASE("Enhanced stereochemistry", "[substruct,StereoGroup]") {
   auto mol_and = "C[C@H](O)[C@H](CC)F |&1:1,3|"_smiles;
   auto mol_or = "C[C@H](O)[C@H](CC)F |o1:1,3|"_smiles;
   auto mol_absolute = "C[C@H](O)[C@H](CC)F |a:1,3|"_smiles;
+  auto diastereomer = "C[C@H](O)[C@@H](CC)F"_smiles;
 
   SubstructMatchParameters ps;
   ps.useChirality = true;
@@ -192,47 +193,68 @@ TEST_CASE("Enhanced stereochemistry", "[substruct,StereoGroup]") {
     CHECK_THAT(*mol_achiral, IsSubstructOf(*mol_and, ps));
     CHECK_THAT(*mol_achiral, IsSubstructOf(*mol_or, ps));
     CHECK_THAT(*mol_achiral, IsSubstructOf(*mol_absolute, ps));
+    CHECK_THAT(*mol_achiral, IsSubstructOf(*diastereomer, ps));
   }
-  SECTION("chiral molecule (absolute configuration) only matches itself") {
+  SECTION("chiral molecule is a substructure of AND or OR") {
     CHECK_THAT(*mol_chiral, !IsSubstructOf(*mol_achiral, ps));
-    CHECK_THAT(*mol_chiral, !IsSubstructOf(*mol_and, ps));
-    CHECK_THAT(*mol_chiral, !IsSubstructOf(*mol_or, ps));
+    CHECK_THAT(*mol_chiral, IsSubstructOf(*mol_and, ps));
+    CHECK_THAT(*mol_chiral, IsSubstructOf(*mol_or, ps));
     CHECK_THAT(*mol_absolute, !IsSubstructOf(*mol_achiral, ps));
-    CHECK_THAT(*mol_absolute, !IsSubstructOf(*mol_and, ps));
-    CHECK_THAT(*mol_absolute, !IsSubstructOf(*mol_or, ps));
+    CHECK_THAT(*mol_absolute, IsSubstructOf(*mol_and, ps));
+    CHECK_THAT(*mol_absolute, IsSubstructOf(*mol_or, ps));
+    CHECK_THAT(*mol_absolute, !IsSubstructOf(*diastereomer, ps));
   }
-  SECTION("AND query may match absolute or OR, but not achiral") {
-    CHECK_THAT(*mol_and, IsSubstructOf(*mol_or, ps));
+  SECTION("AND query only matches AND") {
+    // because it means BOTH, and only AND includes both.
+    CHECK_THAT(*mol_and, !IsSubstructOf(*mol_or, ps));
     CHECK_THAT(*mol_and, IsSubstructOf(*mol_and, ps));
-    CHECK_THAT(*mol_and, IsSubstructOf(*mol_absolute, ps));
-    CHECK_THAT(*mol_and, IsSubstructOf(*mol_chiral, ps));
+    CHECK_THAT(*mol_and, !IsSubstructOf(*mol_absolute, ps));
+    CHECK_THAT(*mol_and, !IsSubstructOf(*mol_chiral, ps));
     CHECK_THAT(*mol_and, !IsSubstructOf(*mol_achiral, ps));
   }
-  SECTION("An OR query may match absolute, but not AND") {
-    CHECK_THAT(*mol_or, IsSubstructOf(*mol_chiral, ps));
-    CHECK_THAT(*mol_or, IsSubstructOf(*mol_absolute, ps));
+  SECTION("An OR query matches AND and OR") {
+    // because AND is both, so it's a superset of the molecules described in
+    // the OR
+    CHECK_THAT(*mol_or, !IsSubstructOf(*mol_chiral, ps));
+    CHECK_THAT(*mol_or, !IsSubstructOf(*mol_absolute, ps));
     CHECK_THAT(*mol_or, IsSubstructOf(*mol_or, ps));
-    CHECK_THAT(*mol_or, !IsSubstructOf(*mol_and, ps));
+    CHECK_THAT(*mol_or, IsSubstructOf(*mol_and, ps));
   }
   SECTION("AND and OR match their enantiomer") {
+    // This is, like, the point of And/Or
     auto opposite_mol = "C[C@@H](O)[C@@H](CC)F"_smiles;
     CHECK_THAT(*opposite_mol, IsSubstructOf(*mol_and, ps));
     CHECK_THAT(*opposite_mol, IsSubstructOf(*mol_or, ps));
   }
   SECTION("But not some arbitrary diastereomer") {
-    auto diastereomer = "C[C@H](O)[C@@H](CC)F"_smiles;
     CHECK_THAT(*diastereomer, !IsSubstructOf(*mol_and, ps));
     CHECK_THAT(*diastereomer, !IsSubstructOf(*mol_or, ps));
   }
-  SECTION("And not mixed stereo groups") {
-    // I'm not sure about this?
+  SECTION("Mixed stereo groups include single stereo groups") {
     auto mol_mixed_or = "C[C@H](O)[C@H](CC)F |o1:1,o2:3|"_smiles;
-    CHECK_THAT(*mol_mixed_or, !IsSubstructOf(*mol_and, ps));
+    std::cerr << "CHECK_THAT(*mol_mixed_or, !IsSubstructOf(*mol_or, ps));" << std::endl;
     CHECK_THAT(*mol_mixed_or, !IsSubstructOf(*mol_or, ps));
+    // OR refers to two of the 4 molecules that mol_mixed_or
+    CHECK_THAT(*mol_or, IsSubstructOf(*mol_mixed_or, ps));
+
+    auto mol_mixed_or2 = "C[C@H](O)[C@@H](CC)F |o1:1,o2:3|"_smiles;
+    std::cerr << "CHECK_THAT(*mol_mixed_or2, !IsSubstructOf(*mol_or, ps));" << std::endl;
+    CHECK_THAT(*mol_mixed_or2, !IsSubstructOf(*mol_or, ps));
+    std::cerr << "CHECK_THAT(*mol_or, IsSubstructOf(*mol_mixed_or2, ps));" << std::endl;
+    CHECK_THAT(*mol_or, IsSubstructOf(*mol_mixed_or2, ps));
+
+    // I'm not sure about these ones, but they should be symmetric:
+    auto mol_mixed_or_and_abs = "C[C@H](O)[C@H](CC)F |o1:1|"_smiles;
+    CHECK_THAT(*mol_mixed_or_and_abs, !IsSubstructOf(*mol_or, ps));
+    CHECK_THAT(*mol_or, !IsSubstructOf(*mol_mixed_or_and_abs, ps));
+
+    auto mol_mixed_or_and_abs2 = "C[C@@H](O)[C@H](CC)F |o1:1|"_smiles;
+    CHECK_THAT(*mol_mixed_or_and_abs2, !IsSubstructOf(*mol_or, ps));
+    CHECK_THAT(*mol_or, !IsSubstructOf(*mol_mixed_or_and_abs, ps));
   }
   SECTION("It's OK to match part of a stereo group, though") {
-    auto mol_and_long = "C[C@@H](O)C[C@@H](CC)F |&1:1,3|"_smiles;
-    auto mol_and_partial = "C[C@@H](O)C |&1:1|"_smiles;
-    CHECK_THAT(*mol_and_partial, !IsSubstructOf(*mol_and_long, ps));
+    auto mol_and_long = "F[C@@H](O)C[C@@H](CC)F |&1:1,3|"_smiles;
+    auto mol_and_partial = "F[C@@H](O)C |&1:1|"_smiles;
+    CHECK_THAT(*mol_and_partial, IsSubstructOf(*mol_and_long, ps));
   }
 }
