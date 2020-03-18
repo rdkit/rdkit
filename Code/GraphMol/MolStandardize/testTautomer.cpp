@@ -1072,13 +1072,59 @@ void testGithub2990() {
   TEST_ASSERT(ntautomers == 34);
   TautomerEnumerator te(new TautomerCatalog(tautparams.get()));
   {
+    // atom stereo
     auto mol = "COC(=O)[C@@H](N)CO"_smiles;
     TEST_ASSERT(mol);
     auto tauts = te.enumerate(*mol);
     for (const auto taut : tauts) {
       auto smi = MolToSmiles(*taut);
-      std::cerr << smi << std::endl;
-      TEST_ASSERT(smi.find("@") == std::string::npos);
+      // std::cerr << smi << std::endl;
+      TEST_ASSERT(smi.find("@H") == std::string::npos);
+    }
+  }
+  {
+    // atom stereo, atoms not in the tautomer zone are still ok
+    auto mol = "C[C@](Cl)(F)COC(=O)[C@@H](N)CO"_smiles;
+    TEST_ASSERT(mol);
+    auto tauts = te.enumerate(*mol);
+    for (const auto taut : tauts) {
+      auto smi = MolToSmiles(*taut);
+      // std::cerr << smi << std::endl;
+      TEST_ASSERT(smi.find("@H") == std::string::npos);
+      TEST_ASSERT(smi.find("@]") != std::string::npos);
+    }
+  }
+  {
+    // bond stereo
+    auto mol = "C/C=C/C/N=c1/[nH]cccc1"_smiles;
+    TEST_ASSERT(mol);
+    TEST_ASSERT(mol->getBondBetweenAtoms(0, 1)->getBondDir() !=
+                Bond::BondDir::NONE);
+    TEST_ASSERT(mol->getBondBetweenAtoms(2, 3)->getBondDir() !=
+                Bond::BondDir::NONE);
+    TEST_ASSERT(mol->getBondBetweenAtoms(3, 4)->getBondDir() !=
+                Bond::BondDir::NONE);
+    TEST_ASSERT(mol->getBondBetweenAtoms(5, 6)->getBondDir() !=
+                Bond::BondDir::NONE);
+    TEST_ASSERT(mol->getBondBetweenAtoms(1, 2)->getStereo() >
+                Bond::BondStereo::STEREOANY);
+    TEST_ASSERT(mol->getBondBetweenAtoms(4, 5)->getStereo() >
+                Bond::BondStereo::STEREOANY);
+
+    auto tauts = te.enumerate(*mol);
+    for (const auto taut : tauts) {
+      TEST_ASSERT(taut->getBondBetweenAtoms(0, 1)->getBondDir() !=
+                  Bond::BondDir::NONE);
+      TEST_ASSERT(taut->getBondBetweenAtoms(2, 3)->getBondDir() !=
+                  Bond::BondDir::NONE);
+      TEST_ASSERT(taut->getBondBetweenAtoms(3, 4)->getBondDir() ==
+                  Bond::BondDir::NONE);
+      TEST_ASSERT(taut->getBondBetweenAtoms(5, 6)->getBondDir() ==
+                  Bond::BondDir::NONE);
+      TEST_ASSERT(taut->getBondBetweenAtoms(1, 2)->getStereo() >
+                  Bond::BondStereo::STEREOANY);
+      TEST_ASSERT(taut->getBondBetweenAtoms(4, 5)->getStereo() ==
+                  Bond::BondStereo::STEREONONE);
     }
   }
 
