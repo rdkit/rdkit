@@ -44,6 +44,74 @@ bool hasChiralLabel(const Atom *at) {
   return at->getChiralTag() == Atom::CHI_TETRAHEDRAL_CW ||
          at->getChiralTag() == Atom::CHI_TETRAHEDRAL_CCW;
 }
+
+bool enhancedStereoIsOK(const ROMol& mol, const ROMol& query,
+    std::unordered_map<unsigned int, unsigned int>& q_to_mol,
+    const std::unordered_map<unsigned int, StereoGroup const*>& molStereoGroups,
+    const std::unordered_map<unsigned int, bool>& matches)
+{
+  std::unordered_map<unsigned int, StereoGroup const*> molAtomsToQueryGroups;
+
+  // If the query has stereo groups:
+  // * OR only matches AND or OR (not absolute)
+  // * AND only matches OR
+  for (auto&& sg: query.getStereoGroups()) {
+    if (sg.getGroupType() == StereoGroupType::STEREO_ABSOLUTE) {
+      continue;
+    }
+    // StereoGroup const* matched_mol_group = nullptr;
+    const bool is_and = sg.getGroupType() == StereoGroupType::STEREO_AND;
+    for (auto&& a: sg.getAtoms()) {
+      auto mol_group = molStereoGroups.find(q_to_mol[a->getIdx()]);
+      if (mol_group == molStereoGroups.end()) {
+        // group matching absolute. not ok.
+        return false;
+      } else if (is_and && mol_group->second->getGroupType() != StereoGroupType::STEREO_AND) {
+        // AND matching OR. not ok.
+        return false;
+      }
+
+      molAtomsToQueryGroups[q_to_mol[a->getIdx()]] = &sg;
+    }
+  }
+
+  // If the mol has stereo groups:
+  // * All atoms must either be the same or opposite, you can't mix
+  // * Only one stereogroup must cover all matched atoms in the mol stereo group
+  for (auto&& sg: mol.getStereoGroups()) {
+    if (sg.getGroupType() == StereoGroupType::STEREO_ABSOLUTE) {
+      continue;
+    }
+    bool doesMatch;
+    bool seen = false;
+    StereoGroup const* QGroup = nullptr;
+
+    for (auto&& a: sg.getAtoms()) {
+      auto thisDoesMatch = matches.find(a->getIdx());
+      if (thisDoesMatch == matches.end()) {
+        // not matched
+        continue;
+      }
+
+      auto pos = molAtomsToQueryGroups.find(a->getIdx());
+      auto thisQGroup = pos == molAtomsToQueryGroups.end() ? nullptr : pos->second;
+      if (!seen) {
+        doesMatch = thisDoesMatch->second;
+        QGroup = thisQGroup;
+        seen = true;
+      } else if (doesMatch != thisDoesMatch->second) {
+        // diastereomer. not ok.
+        return false;
+      } else if (thisQGroup != QGroup) {
+        // mix of groups in query. not ok.
+        return false;
+      }
+    }
+  }
+
+  return true;
+}
+
 }  // namespace
 
 typedef std::map<unsigned int, QueryAtom::QUERYATOM_QUERY *> SUBQUERY_MAP;
@@ -78,7 +146,18 @@ class MolMatchFinalCheckFunctor {
  public:
   MolMatchFinalCheckFunctor(const ROMol &query, const ROMol &mol,
                             const SubstructMatchParameters &ps)
-      : d_query(query), d_mol(mol), d_params(ps) {}
+      : d_query(query), d_mol(mol), d_params(ps) {
+    if (d_params.useEnhancedStereo) {
+      for (const auto& sg: d_mol.getStereoGroups()) {
+        if (sg.getGroupType() == StereoGroupType::STEREO_ABSOLUTE) {
+          continue;
+        }
+        for (const auto a: sg.getAtoms()) {
+          d_molStereoGroups[a->getIdx()] = &sg;
+        }
+      }
+    }
+  }
 
   bool operator()(const boost::detail::node_id q_c[],
                   const boost::detail::node_id m_c[]) const {
@@ -96,6 +175,7 @@ class MolMatchFinalCheckFunctor {
       return true;
     }
 
+    std::unordered_map<unsigned int, bool> matches;
 
     // check chiral atoms:
     for (unsigned int i = 0; i < d_query.getNumAtoms(); ++i) {
@@ -148,17 +228,30 @@ class MolMatchFinalCheckFunctor {
       int mPermCount =
           static_cast<int>(countSwapsToInterconvert(moOrder, mOrder));
 
-      bool requireMatch = qPermCount % 2 == mPermCount % 2;
-      bool labelsMatch = qAt->getChiralTag() == mAt->getChiralTag();
+      const bool requireMatch = qPermCount % 2 == mPermCount % 2;
+      const bool labelsMatch = qAt->getChiralTag() == mAt->getChiralTag();
+      const bool matchOK = requireMatch == labelsMatch;
 
-      if (requireMatch != labelsMatch) {
-        return false;
+      // if this is not part of a stereogroup and doesn't match, return false
+      auto msg = d_molStereoGroups.find(m_c[i]);
+      if (msg == d_molStereoGroups.end()) {
+        if (!matchOK) {
+          return false;
+        }
+      } else {
+        matches[m_c[i]] = matchOK;
       }
     }
 
     std::unordered_map<unsigned int, unsigned int> q_to_mol;
     for (unsigned int j = 0; j < d_query.getNumAtoms(); ++j) {
       q_to_mol[q_c[j]] = m_c[j];
+    }
+
+    if (d_params.useEnhancedStereo) {
+      if (!enhancedStereoIsOK(d_mol, d_query, q_to_mol, d_molStereoGroups, matches)) {
+        return false;
+      }
     }
 
     // now check double bonds
@@ -226,6 +319,7 @@ class MolMatchFinalCheckFunctor {
   const ROMol &d_query;
   const ROMol &d_mol;
   const SubstructMatchParameters &d_params;
+  std::unordered_map<unsigned int, StereoGroup const*> d_molStereoGroups;
 };
 
 class AtomLabelFunctor {
@@ -417,7 +511,7 @@ std::vector<MatchVectType> SubstructMatch(
   if (nt == 1) {
     detail::ResSubstructMatchHelper_(args, &matches, 0,
                                      resMolSupplier.length());
-  } 
+  }
 #ifdef RDK_THREADSAFE_SSS
   else {
     std::vector<std::future<void>> tg;
