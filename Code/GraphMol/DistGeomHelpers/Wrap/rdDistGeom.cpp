@@ -20,8 +20,6 @@
 #include <GraphMol/DistGeomHelpers/BoundsMatrixBuilder.h>
 #include <GraphMol/DistGeomHelpers/Embedder.h>
 
-// #include <GraphMol/ForceFieldHelpers/CrystalFF/TorsionPreferences.h>
-
 namespace python = boost::python;
 
 namespace RDKit {
@@ -154,30 +152,6 @@ DGeomHelpers::EmbedParameters *getETDG() {
   return new DGeomHelpers::EmbedParameters(DGeomHelpers::ETDG);
 }
 
-// void setCPCI(ForceFields::CrystalFF::CrystalFFDetails *self,
-//                      python::dict &CPCIdict) {
-//   //CPCI has the atom pair tuple as key and charge product as value
-// //   std::map<std::pair<unsigned int, unsigned int>, double> *CPCI;
-// //   CPCI = new std::map<std::pair<unsigned int, unsigned int>, double>;
-
-//   python::list ks = CPCIdict.keys();
-//   unsigned int nKeys = python::extract<unsigned int>(ks.attr("__len__")());
-
-//   for (unsigned int i = 0; i < nKeys; ++i) {
-//     python::tuple id = python::extract<python::tuple>(ks[i]);
-//     unsigned int a = python::extract<unsigned int>(id[0]);
-//     unsigned int b = python::extract<unsigned int>(id[1]);
-//     self->CPCI[std::make_pair(a, b)] = python::extract<double>(CPCIdict[id]);
-//   }
-//   //std::map<std::pair<unsigned int, unsigned int>,double> *CPCI_Ptr = nullptr;
-//   //if (nKeys){
-//   //  CPCI_Ptr =  &CPCI;
-//   //}
-//   //self->CPCI =  CPCI_Ptr;
-// //   self->CPCI = CPCI;
-
-// }
-    
 void setCPCI(DGeomHelpers::EmbedParameters *self,
                      python::dict &CPCIdict) {
   //CPCI has the atom pair tuple as key and charge product as value

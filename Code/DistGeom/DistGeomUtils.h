@@ -138,13 +138,15 @@ RDKIT_DISTGEOMETRY_EXPORT ForceFields::ForceField *construct3DForceField(
     const BoundsMatrix &mmat, RDGeom::Point3DPtrVect &positions,
     const ForceFields::CrystalFF::CrystalFFDetails &etkdgDetails);
 //! Force field with experimental torsion angle preferences and 1-2/1-3 distance
-// constraints
+// constraints, as well as atom pairwise Columbic interactions
 /*!
 
   \param mmat            Distance bounds matrix
   \param positions       A vector of pointers to 3D Points to write out the
   resulting coordinates
   \param etkdgDetails    Contains information about the ETKDG force field
+  \param CPCI            Contains which atom pair(s) have what strength of 
+  attractive/repulsive electrostatic interaction(s)
 
   <b>NOTE:</b> the caller is responsible for deleting this force field.
 
@@ -152,7 +154,7 @@ RDKIT_DISTGEOMETRY_EXPORT ForceFields::ForceField *construct3DForceField(
 RDKIT_DISTGEOMETRY_EXPORT ForceFields::ForceField *construct3DForceField(
     const BoundsMatrix &mmat, RDGeom::Point3DPtrVect &positions,
     const ForceFields::CrystalFF::CrystalFFDetails &etkdgDetails,
-  const std::map<std::pair<unsigned int, unsigned int>, double> &TO_BE_NAMED_Ptr);
+    const std::map<std::pair<unsigned int, unsigned int>, double> &CPCI);
 //! Force field with experimental torsion angle preferences and 1-2/1-3 distance
 // constraints
 /*!

@@ -31,6 +31,7 @@ const double GEN_DIST_TOL = 0.06;  //  a general distance tolerance
 const double DIST15_TOL = 0.08;
 const double VDW_SCALE_15 = 0.7;
 const double MAX_UPPER = 1000.0;
+static const double minMacrocycleRingSize = 9;
 #include <map>
 
 namespace RDKit {
@@ -1398,12 +1399,12 @@ void set14Bounds(const ROMol &mol, DistGeom::BoundsMatPtr mmat,
       donePaths[id1] = 1;
       donePaths[id2] = 1;
 
-      if (rSize > 5 && rSize < 9) {
+      if (rSize > 5 && rSize < minMacrocycleRingSize) {
         _setInRing14Bounds(mol, mol.getBondWithIdx(bid1),
                            mol.getBondWithIdx(bid2), mol.getBondWithIdx(bid3),
                            accumData, mmat, distMatrix, rSize);
       }
-      else if(rSize >= 9) {
+      else if(rSize >= minMacrocycleRingSize) {
                 _setMacrocycle14Bounds(mol,mol.getBondWithIdx(bid1),
                            mol.getBondWithIdx(bid2), mol.getBondWithIdx(bid3), accumData, mmat, distMatrix);
       }else {
