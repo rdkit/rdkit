@@ -963,7 +963,7 @@ Contiguous Rotable Bonds
 
 .. testcode::
 
-   mol = Chem.MolFromSmiles('NCC1CCC1C(=O)O')
+   mol = Chem.MolFromSmiles('CCC(CC(C)CC1CCC1)C(CC(=O)O)N')
    mol
 
 .. image:: images/RDKitCB_22_im0.png
@@ -1006,7 +1006,7 @@ Contiguous Rotable Bonds
 
 .. testoutput::
 
-   1
+   8
 
 .. testcode::
 
@@ -1014,7 +1014,14 @@ Contiguous Rotable Bonds
 
 .. testoutput::
 
-   ((1,), (5,))
+   ((1, 2, 3, 5, 6, 10, 11, 12),)
+
+.. testcode::
+
+   mol
+
+.. image:: images/RDKitCB_22_im1.png
+
 
 Writing Molecules
 *******************
@@ -1408,44 +1415,56 @@ Organometallics with Dative Bonds
 Enumerate SMILES
 ==================
 
-| **Author:** Greg Landrum
-| **Source:** `<https://sourceforge.net/p/rdkit/mailman/message/36385578/>`_
+| **Author:** Guillaume Godin/Greg Landrum
+| **Source:** `<https://sourceforge.net/p/rdkit/mailman/message/36591616/>`_
 | **Index ID#:** RDKitCB_24
 | **Summary:** Enumerate variations of SMILES strings for the same molecule.
 
 .. testcode::
 
    from rdkit import Chem
-   import random
 
 .. testcode::
 
-   def allsmiles(smil):
-       m = Chem.MolFromSmiles(smil) # Construct a molecule from a SMILES string.
-       if m is None:
-           return smil
-       N = m.GetNumAtoms()
-       if N==0:
-           return smil
-       aids = list(range(N))
-       random.shuffle(aids)
-       m = Chem.RenumberAtoms(m,aids)
-       try:
-           n= random.randint(0,N-1)
-           t= Chem.MolToSmiles(m, rootedAtAtom=n, canonical=False)
-       except :
-           return smil
-       return t
+   # create a mol object
+   mol = Chem.MolFromSmiles('CC(N)C1CC1')
 
 .. testcode::
-   
-   smis = set(allsmiles('C1CC1CC') for i in range(50))
-   print(smis) # note that output order will be random; doctest output skipped here.
+
+   # Generate 100 random SMILES
+   smis = []
+   for i in range(100):
+       smis.append(Chem.MolToSmiles(mol,doRandom=True,canonical=False))
+
+.. testcode::
+
+   # remove duplicates
+   smis_set = list(set(smis))
+   print(smis_set) # output order will be random; doctest skipped
 
 .. testoutput::
    :options: +SKIP
    
-   {'C1CC1CC', 'C(C)C1CC1', 'CCC1CC1', 'C(C1CC1)C', 'C1C(CC)C1', 'C1(CC)CC1'}
+   ['NC(C)C1CC1',
+    'C1(C(N)C)CC1',
+    'C(N)(C)C1CC1',
+    'CC(C1CC1)N',
+    'C1C(C(N)C)C1',
+    'C1C(C1)C(N)C',
+    'C(C1CC1)(C)N',
+    'C1(CC1)C(C)N',
+    'C1C(C(C)N)C1',
+    'C1CC1C(C)N',
+    'C(C1CC1)(N)C',
+    'C1(C(C)N)CC1',
+    'C1C(C1)C(C)N',
+    'C(C)(C1CC1)N',
+    'C1CC1C(N)C',
+    'C1(CC1)C(N)C',
+    'C(N)(C1CC1)C',
+    'NC(C1CC1)C',
+    'CC(N)C1CC1',
+    'C(C)(N)C1CC1']
 
 .. rubric:: References
 
