@@ -599,9 +599,9 @@ void MolDraw2D::drawReaction(
   }
 
   // the arrow and + positions were worked out on the input coords and
-  // spreads the components of the reaction along the x axis.
+  // the components of the reaction spread along the x axis.
   // drawMolecule by default centres the molecule on the origin.  We
-  // need to adjust the arrow etc positions to take account of this,
+  // need to adjust the arrow and + positions to take account of this,
   // so take a note of the 1st atom's position before drawing.
   int confId = confIds ? (*confIds)[0] : -1;
   const RDGeom::POINT3D_VECT &locs = tmol->getConformer(confId).getPositions();
@@ -1928,11 +1928,9 @@ void MolDraw2D::extractAtomCoords(const ROMol &mol, int confId,
   // centre the molecule unless told not to
   Point2D centroid(0.0, 0.0);
   if(drawOptions().centreMoleculesB4Drawing) {
-    for (auto atom : mol.atoms()) {
-      centroid.x += locs[atom->getIdx()].x;
-      centroid.y += locs[atom->getIdx()].y;
-    }
-    centroid /= double(mol.getNumAtoms());
+    RDGeom::Point3D cent = calcMolCentroid(mol, confId);
+    centroid.x = cent.x;
+    centroid.y = cent.y;
   }
 
   // the transformation rotates anti-clockwise, as is conventional, but
@@ -3428,6 +3426,19 @@ bool doesLineIntersectLabel(const Point2D &ls, const Point2D &lf,
     return true;
   }
   return false;
+
+}
+
+// ****************************************************************************
+RDGeom::Point3D calcMolCentroid(const ROMol &mol, int confId) {
+
+  const RDGeom::POINT3D_VECT &locs = mol.getConformer(confId).getPositions();
+  RDGeom::Point3D centroid(0.0, 0.0, 0.0);
+  for (auto atom : mol.atoms()) {
+    centroid += locs[atom->getIdx()];
+  }
+  centroid /= double(mol.getNumAtoms());
+  return centroid;
 
 }
 

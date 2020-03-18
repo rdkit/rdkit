@@ -820,6 +820,8 @@ bool doLinesIntersect(const Point2D &l1s, const Point2D &l1f,
 bool doesLineIntersectLabel(const Point2D &ls, const Point2D &lf,
                             const StringRect &lab_rect);
 
+RDGeom::Point3D calcMolCentroid(const ROMol &mol, int confId);
+
 }  // namespace RDKit
 
 #endif  // RDKITMOLDRAW2D_H
