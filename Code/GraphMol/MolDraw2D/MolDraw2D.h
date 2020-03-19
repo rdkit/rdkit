@@ -578,6 +578,10 @@ class RDKIT_MOLDRAW2D_EXPORT MolDraw2D {
   // add R/S and E/Z annotation to atoms and bonds respectively.
   void addStereoAnnotation(const ROMol &mol);
 
+  virtual bool supportsAnnotations() {
+    return true;
+  }
+
  private:
   bool needs_scale_;
   int width_, height_, panel_width_, panel_height_;
@@ -696,7 +700,7 @@ class RDKIT_MOLDRAW2D_EXPORT MolDraw2D {
                      const std::vector<int> *highlight_atoms = nullptr,
                      const std::map<int, DrawColour> *highlight_map = nullptr);
   void drawAtomLabel(int atom_num, const DrawColour &draw_colour);
-  void drawAnnotation(const std::string &note,
+  virtual void drawAnnotation(const std::string &note,
                       const std::shared_ptr<StringRect> &note_rect);
   void drawRadicals(const ROMol &mol);
   // find a good starting point for scanning round the annotation

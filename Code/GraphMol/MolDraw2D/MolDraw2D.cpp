@@ -890,9 +890,10 @@ void MolDraw2D::calculateScale(int width, int height,
   // as well.
   while (scale_ > 1e-4) {
     adjustScaleForAtomLabels(highlight_atoms, highlight_radii);
-    adjustScaleForAnnotation(atom_notes_[activeMolIdx_]);
-    adjustScaleForAnnotation(bond_notes_[activeMolIdx_]);
-
+    if((!atom_notes_.empty() || !bond_notes_.empty()) && supportsAnnotations()){
+      adjustScaleForAnnotation(atom_notes_[activeMolIdx_]);
+      adjustScaleForAnnotation(bond_notes_[activeMolIdx_]);
+    }
     double old_scale = scale_;
     scale_ = std::min(double(width) / x_range_, double(height) / y_range_);
     if (fabs(scale_ - old_scale) < 0.1) {
@@ -1434,15 +1435,18 @@ void MolDraw2D::finishMoleculeDraw(const RDKit::ROMol &draw_mol,
     }
   }
   setColour(DrawColour(0.0, 0.0, 0.0));
+  if(!supportsAnnotations() && (!atom_notes_.empty() || !bond_notes_.empty())){
+    BOOST_LOG(rdWarningLog)<<"annotations not currently supported for this MolDraw2D class, they will be ignored."<<std::endl;
+  }
   for(auto atom: draw_mol.atoms()) {
-    if (atom_notes_[activeMolIdx_][atom->getIdx()]) {
+    if (supportsAnnotations() && atom_notes_[activeMolIdx_][atom->getIdx()]) {
       drawAnnotation(atom->getProp<string>("atomNote"),
                      atom_notes_[activeMolIdx_][atom->getIdx()]);
     }
   }
 
   for(auto bond: draw_mol.bonds()) {
-    if (bond_notes_[activeMolIdx_][bond->getIdx()]) {
+    if (supportsAnnotations() && bond_notes_[activeMolIdx_][bond->getIdx()]) {
       drawAnnotation(bond->getProp<string>("bondNote"),
                      bond_notes_[activeMolIdx_][bond->getIdx()]);
     }
