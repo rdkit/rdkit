@@ -160,6 +160,33 @@ void getExperimentalTorsions(const RDKit::ROMol &mol, CrystalFFDetails &details,
 
   unsigned int aid1, aid2, aid3, aid4;
   unsigned int bid2;
+
+  // exclude bonds in bridged ring systems
+  boost::dynamic_bitset<> excludedBonds(nb);
+  const RingInfo *rinfo = mol.getRingInfo();
+  const VECT_INT_VECT &bondRings = rinfo->bondRings();
+  VECT_INT_VECT_CI rii, rjj;
+  for (rii = bondRings.begin(); rii != bondRings.end()-1; rii++) {
+    boost::dynamic_bitset<> rs1(nb); // bitset for ring 1
+    for (unsigned int i = 0; i < rii->size(); i++) {
+      rs1[(*rii)[i]] = 1;
+    }
+    for (rjj = rii+1; rjj != bondRings.end(); rjj++) {
+      boost::dynamic_bitset<> rs2(nb); // bitset for ring 2
+      for (unsigned int i = 0; i < rjj->size(); i++) {
+        rs2[(*rjj)[i]] = 1;
+      }
+      if ((rs1 & rs2).count() > 1) { // more than one bond in common
+        for (unsigned int i = 0; i < rii->size(); i++) {
+          excludedBonds[(*rii)[i]] = 1; // exclude all bonds of ring 1
+        }
+        for (unsigned int i = 0; i < rjj->size(); i++) {
+          excludedBonds[(*rjj)[i]] = 1; // exclude all bonds of ring 2
+        }
+      }
+    }
+  }
+
   boost::dynamic_bitset<> doneBonds(nb);
 
   if (useExpTorsions) {
@@ -182,6 +209,10 @@ void getExperimentalTorsions(const RDKit::ROMol &mol, CrystalFFDetails &details,
         aid4 = (*matchIt)[param.idx[3]].second;
         // FIX: check if bond is NULL
         bid2 = mol.getBondBetweenAtoms(aid2, aid3)->getIdx();
+	// check that a bond is part of maximum one ring
+	if (mol.getRingInfo()->numBondRings(bid2) > 1 || excludedBonds[bid2] == 1) {
+	  doneBonds[bid2] = 1;
+	}
         if (!doneBonds[bid2]) {
           doneBonds[bid2] = 1;
           std::vector<int> atoms(4);
