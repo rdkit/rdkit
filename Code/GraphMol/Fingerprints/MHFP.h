@@ -114,20 +114,20 @@ public:
    */
   std::vector<std::string>
   CreateShingling(const ROMol& mol,
-          const unsigned char& radius = 3,
-          const bool& rings = true,
-          const bool& isomeric = false,
-          const bool& kekulize = true,
-          const unsigned char& min_radius = 1);
+          unsigned char radius = 3,
+          bool rings = true,
+          bool isomeric = false,
+          bool kekulize = true,
+          unsigned char min_radius = 1);
 
   //! \overload
   std::vector<std::string>
   CreateShingling(std::string& smiles,
-          const unsigned char& radius = 3,
-          const bool& rings = true,
-          const bool& isomeric = false,
-          const bool& kekulize = true,
-          const unsigned char& min_radius = 1);
+          unsigned char radius = 3,
+          bool rings = true,
+          bool isomeric = false,
+          bool kekulize = true,
+          unsigned char min_radius = 1);
 
   /*!
     \brief Creates a MinHash vector from a molecule.
@@ -154,38 +154,38 @@ public:
    */
   std::vector<uint32_t>
   Encode(ROMol& mol,
-       const unsigned char& radius = 3,
-       const bool& rings = true,
-       const bool& isomeric = false,
-       const bool& kekulize = true,
-       const unsigned char& min_radius = 1);
+       unsigned char radius = 3,
+       bool rings = true,
+       bool isomeric = false,
+       bool kekulize = true,
+       unsigned char min_radius = 1);
 
   //! \overload
   std::vector<std::vector<uint32_t>>
   Encode(std::vector<ROMol>& mols,
-       const unsigned char& radius = 3,
-       const bool& rings = true,
-       const bool& isomeric = false,
-       const bool& kekulize = true,
-       const unsigned char& min_radius = 1);
+       unsigned char radius = 3,
+       bool rings = true,
+       bool isomeric = false,
+       bool kekulize = true,
+       unsigned char min_radius = 1);
 
   //! \overload
   std::vector<uint32_t>
   Encode(std::string& smiles,
-       const unsigned char& radius = 3,
-       const bool& rings = true,
-       const bool& isomeric = false,
-       const bool& kekulize = true,
-       const unsigned char& min_radius = 1);
+       unsigned char radius = 3,
+       bool rings = true,
+       bool isomeric = false,
+       bool kekulize = true,
+       unsigned char min_radius = 1);
 
   //! \overload
   std::vector<std::vector<uint32_t>>
   Encode(std::vector<std::string>& smiles,
-       const unsigned char& radius = 3,
-       const bool& rings = true,
-       const bool& isomeric = false,
-       const bool& kekulize = true,
-       const unsigned char& min_radius = 1);
+       unsigned char radius = 3,
+       bool rings = true,
+       bool isomeric = false,
+       bool kekulize = true,
+       unsigned char min_radius = 1);
 
 
   /*!
@@ -214,42 +214,42 @@ public:
    */
   ExplicitBitVect
   EncodeSECFP(ROMol& mol,
-       const unsigned char& radius = 3,
-       const bool& rings = true,
-       const bool& isomeric = false,
-       const bool& kekulize = true,
-       const unsigned char& min_radius = 1,
-       const size_t& length = 2048);
+       unsigned char radius = 3,
+       bool rings = true,
+       bool isomeric = false,
+       bool kekulize = true,
+       unsigned char min_radius = 1,
+       size_t length = 2048);
 
   //! \overload
   std::vector<ExplicitBitVect>
   EncodeSECFP(std::vector<ROMol>& mols,
-       const unsigned char& radius = 3,
-       const bool& rings = true,
-       const bool& isomeric = false,
-       const bool& kekulize = true,
-       const unsigned char& min_radius = 1,
-       const size_t& length = 2048);
+       unsigned char radius = 3,
+       bool rings = true,
+       bool isomeric = false,
+       bool kekulize = true,
+       unsigned char min_radius = 1,
+       size_t length = 2048);
 
   //! \overload
   ExplicitBitVect
   EncodeSECFP(std::string& smiles,
-       const unsigned char& radius = 3,
-       const bool& rings = true,
-       const bool& isomeric = false,
-       const bool& kekulize = true,
-       const unsigned char& min_radius = 1,
-       const size_t& length = 2048);
+       unsigned char radius = 3,
+       bool rings = true,
+       bool isomeric = false,
+       bool kekulize = true,
+       unsigned char min_radius = 1,
+       size_t length = 2048);
 
   //! \overload
   std::vector<ExplicitBitVect>
   EncodeSECFP(std::vector<std::string>& smiles,
-       const unsigned char& radius = 3,
-       const bool& rings = true,
-       const bool& isomeric = false,
-       const bool& kekulize = true,
-       const unsigned char& min_radius = 1,
-       const size_t& length = 2048);
+       unsigned char radius = 3,
+       bool rings = true,
+       bool isomeric = false,
+       bool kekulize = true,
+       unsigned char min_radius = 1,
+       size_t length = 2048);
 
   /*!
     \brief Calculates the Jaccard / Tanimoto distance between two MHFP fingerprints.
