@@ -2668,11 +2668,7 @@ void test20Annotate() {
       MolDraw2DCairo drawer(500, 500);
       drawer.drawMolecule(*m1);
       drawer.finishDrawing();
-
-      std::string drawing = drawer.getDrawingText();
-      TEST_ASSERT(drawing.size() > 0);
-      std::ofstream ofs("test20_1.png");
-      ofs.write(drawing.c_str(), drawing.size());
+      drawer.writeDrawingText("test20_1.png");
     }
 #endif
 
@@ -2698,10 +2694,7 @@ void test20Annotate() {
       drawer.drawMolecule(*m1);
       drawer.finishDrawing();
 
-      std::string drawing = drawer.getDrawingText();
-      TEST_ASSERT(drawing.size() > 0);
-      std::ofstream ofs("test20_2.png");
-      ofs.write(drawing.c_str(), drawing.size());
+      drawer.writeDrawingText("test20_2.png");
     }
 #endif
     MolDraw2DSVG drawer(500, 500);
@@ -2729,11 +2722,7 @@ void test20Annotate() {
       drawer.drawOptions().addStereoAnnotation = true;
       drawer.drawMolecule(*m1);
       drawer.finishDrawing();
-
-      std::string drawing = drawer.getDrawingText();
-      TEST_ASSERT(drawing.size() > 0);
-      std::ofstream ofs("test20_3.png");
-      ofs.write(drawing.c_str(), drawing.size());
+      drawer.writeDrawingText("test20_3.png");
     }
 #endif
     MolDraw2DSVG drawer(500, 500);
