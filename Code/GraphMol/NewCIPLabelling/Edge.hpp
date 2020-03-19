@@ -12,56 +12,54 @@
 
 #include "Descriptor.hpp"
 
-namespace RDKit
-{
-namespace NewCIPLabelling
-{
+namespace RDKit {
+namespace NewCIPLabelling {
 
-template <typename A, typename B> class Node;
+template <typename A, typename B>
+class Node;
 
-template <typename A, typename B> class Edge
-{
-  private:
-    Node<A, B>* beg;
-    Node<A, B>* end;
-    B bond;
-    Descriptor aux = Descriptor::NONE;
+template <typename A, typename B>
+class Edge {
+ private:
+  Node<A, B>* beg;
+  Node<A, B>* end;
+  B bond;
+  Descriptor aux = Descriptor::NONE;
 
-  public:
-    Edge() = delete;
+ public:
+  Edge() = delete;
+  Edge(const Edge&) = delete;
+  Edge& operator=(const Edge&) = delete;
 
-    Edge(Node<A, B>* beg, Node<A, B>* end, B bond)
-        : beg{beg}, end{end}, bond{bond}
-    {
+  Edge(Node<A, B>* beg, Node<A, B>* end, B bond)
+      : beg{beg}, end{end}, bond{bond} {}
+
+  Node<A, B>* getOther(Node<A, B>* node) const {
+    if (isBeg(node)) {
+      return getEnd();
+    } else if (isEnd(node)) {
+      return getBeg();
+    } else {
+      throw std::runtime_error("Not an end-point of this edge!");
     }
+  }
 
-    Node<A, B>* getOther(Node<A, B>* node) const
-    {
-        if (isBeg(node)) {
-            return getEnd();
-        } else if (isEnd(node)) {
-            return getBeg();
-        } else {
-            throw std::runtime_error("Not an end-point of this edge!");
-        }
-    }
+  Node<A, B>* getBeg() const { return beg; }
 
-    Node<A, B>* getBeg() const { return beg; }
+  Node<A, B>* getEnd() const { return end; }
 
-    Node<A, B>* getEnd() const { return end; }
+  B getBond() const { return bond; }
 
-    B getBond() const { return bond; }
+  Descriptor getAux() const { return aux; }
 
-    Descriptor getAux() const { return aux; }
+  bool isBeg(const Node<A, B>* node) const { return node == beg; }
 
-    bool isBeg(const Node<A, B>* node) const { return node == beg; }
+  bool isEnd(const Node<A, B>* node) const { return node == end; }
 
-    bool isEnd(const Node<A, B>* node) const { return node == end; }
+  void setAux(Descriptor aux) { this->aux = aux; }
 
-    void setAux(Descriptor aux) { this->aux = aux; }
-
-    void flip() { std::swap(beg, end); }
+  void flip() { std::swap(beg, end); }
 };
 
-} // namespace NewCIPLabelling
-} // namespace RDKit
+}  // namespace NewCIPLabelling
+}  // namespace RDKit

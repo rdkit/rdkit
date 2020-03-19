@@ -29,118 +29,114 @@
 #include "rules/Rule6.hpp"
 #include "rules/Rules.hpp"
 
-namespace RDKit
-{
-namespace NewCIPLabelling
-{
+namespace RDKit {
+namespace NewCIPLabelling {
 
-template <typename A, typename B> class BaseMol;
+template <typename A, typename B>
+class BaseMol;
 
-template <typename A, typename B> class Configuration;
+template <typename A, typename B>
+class Configuration;
 
-namespace Labeller
-{
-namespace
-{
+namespace Labeller {
+namespace {
 
 template <typename A, typename B>
 bool labelAux(const std::vector<Configuration<A, B>*>& configs,
-              const Rules<A, B>* rules, const Configuration<A, B>* center)
-{
-    using Node_Cfg_Pair = std::pair<Node<A, B>*, Configuration<A, B>*>;
-    auto aux = std::vector<Node_Cfg_Pair>{};
+              const Rules<A, B>* rules, const Configuration<A, B>* center) {
+  using Node_Cfg_Pair = std::pair<Node<A, B>*, Configuration<A, B>*>;
+  auto aux = std::vector<Node_Cfg_Pair>{};
 
-    auto digraph = center->getDigraph();
-    for (const auto& config : configs) {
-        if (config == center) {
-            continue;
-        }
-        // FIXME: specific to each descriptor
-        const auto& foci = config->getFoci();
-        for (const auto& node : digraph->getNodes(foci[0])) {
-            if (node->isDuplicate()) {
-                continue;
-            }
-            auto low = node;
-            if (foci.size() == 2) {
-                for (const auto& edge : node->getEdges(foci[1])) {
-                    if (edge->getOther(node)->getDistance() <
-                        node->getDistance())
-                        low = edge->getOther(node);
-                }
-            }
-            if (!low->isDuplicate()) {
-                aux.emplace_back(low, config);
-            }
-        }
+  auto digraph = center->getDigraph();
+  for (const auto& config : configs) {
+    if (config == center) {
+      continue;
     }
-
-    auto pair_cmp = [](const Node_Cfg_Pair& a, const Node_Cfg_Pair& b) {
-        return a.first->getDistance() > b.first->getDistance();
-    };
-    std::sort(aux.begin(), aux.end(), pair_cmp);
-
-    auto queue = boost::unordered_map<Node<A, B>*, Descriptor>{};
-    int prev = std::numeric_limits<int>::max();
-    for (const auto& e : aux) {
-        const auto& node = e.first;
-
-        if (node->getDistance() < prev) {
-            for (const auto& e2 : queue) {
-                e2.first->setAux(e2.second);
-            }
-            queue.clear();
-            prev = node->getDistance();
+    // FIXME: specific to each descriptor
+    const auto& foci = config->getFoci();
+    for (const auto& node : digraph->getNodes(foci[0])) {
+      if (node->isDuplicate()) {
+        continue;
+      }
+      auto low = node;
+      if (foci.size() == 2) {
+        for (const auto& edge : node->getEdges(foci[1])) {
+          if (edge->getOther(node)->getDistance() < node->getDistance())
+            low = edge->getOther(node);
         }
-        const auto& config = e.second;
-        auto label = config->label(node, digraph.get(), rules);
-        queue.emplace(node, label);
+      }
+      if (!low->isDuplicate()) {
+        aux.emplace_back(low, config);
+      }
     }
+  }
 
-    for (const auto& e : queue) {
-        e.first->setAux(e.second);
+  auto pair_cmp = [](const Node_Cfg_Pair& a, const Node_Cfg_Pair& b) {
+    return a.first->getDistance() > b.first->getDistance();
+  };
+  std::sort(aux.begin(), aux.end(), pair_cmp);
+
+  auto queue = boost::unordered_map<Node<A, B>*, Descriptor>{};
+  int prev = std::numeric_limits<int>::max();
+  for (const auto& e : aux) {
+    const auto& node = e.first;
+
+    if (node->getDistance() < prev) {
+      for (const auto& e2 : queue) {
+        e2.first->setAux(e2.second);
+      }
+      queue.clear();
+      prev = node->getDistance();
     }
+    const auto& config = e.second;
+    auto label = config->label(node, digraph.get(), rules);
+    queue.emplace(node, label);
+  }
 
-    return true;
+  for (const auto& e : queue) {
+    e.first->setAux(e.second);
+  }
+
+  return true;
 }
 
-} // namespace
+}  // namespace
 
 template <typename A, typename B>
-void label(BaseMol<A, B>* mol, const std::vector<Configuration<A, B>*> configs)
-{
-    // constitutional rules
-    const Rules<A, B> begRules(
-        {new Rule1a<A, B>(mol), new Rule1b<A, B>(mol), new Rule2<A, B>(mol)});
+void label(BaseMol<A, B>* mol,
+           const std::vector<Configuration<A, B>*> configs) {
+  // constitutional rules
+  const Rules<A, B> begRules(
+      {new Rule1a<A, B>(mol), new Rule1b<A, B>(mol), new Rule2<A, B>(mol)});
 
-    // all rules (require aux calc)
-    const Rules<A, B> allRules(
-        {new Rule1a<A, B>(mol), new Rule1b<A, B>(mol), new Rule2<A, B>(mol),
-         new Rule3<A, B>(mol), new Rule4a<A, B>(mol), new Rule4b<A, B>(mol),
-         new Rule4c<A, B>(mol), new Rule5New<A, B>(mol), new Rule6<A, B>(mol)});
+  // all rules (require aux calc)
+  const Rules<A, B> allRules(
+      {new Rule1a<A, B>(mol), new Rule1b<A, B>(mol), new Rule2<A, B>(mol),
+       new Rule3<A, B>(mol), new Rule4a<A, B>(mol), new Rule4b<A, B>(mol),
+       new Rule4c<A, B>(mol), new Rule5New<A, B>(mol), new Rule6<A, B>(mol)});
 
-    auto finalLabels = boost::unordered_map<Configuration<A, B>*, Descriptor>{};
-    for (const auto& conf : configs) {
-        conf->setDigraph(new Digraph<A, B>(mol));
-        try {
-            auto desc = conf->label(&begRules);
-            if (desc != Descriptor::UNKNOWN) {
-                conf->setPrimaryLabel(mol, desc);
-            } else {
-                if (labelAux(configs, &allRules, conf)) {
-                    desc = conf->label(&allRules);
+  auto finalLabels = boost::unordered_map<Configuration<A, B>*, Descriptor>{};
+  for (const auto& conf : configs) {
+    conf->setDigraph(new Digraph<A, B>(mol));
+    try {
+      auto desc = conf->label(&begRules);
+      if (desc != Descriptor::UNKNOWN) {
+        conf->setPrimaryLabel(mol, desc);
+      } else {
+        if (labelAux(configs, &allRules, conf)) {
+          desc = conf->label(&allRules);
 
-                    if (desc != Descriptor::UNKNOWN) {
-                        conf->setPrimaryLabel(mol, desc);
-                    }
-                }
-            }
-        } catch (const std::runtime_error& e) {
-            throw;
+          if (desc != Descriptor::UNKNOWN) {
+            conf->setPrimaryLabel(mol, desc);
+          }
         }
+      }
+    } catch (const std::runtime_error& e) {
+      throw;
     }
+  }
 }
-}; // namespace Labeller
+};  // namespace Labeller
 
-} // namespace NewCIPLabelling
-} // namespace RDKit
+}  // namespace NewCIPLabelling
+}  // namespace RDKit

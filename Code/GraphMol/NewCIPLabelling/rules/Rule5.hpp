@@ -12,10 +12,8 @@
 
 #include "SequenceRule.hpp"
 
-namespace RDKit
-{
-namespace NewCIPLabelling
-{
+namespace RDKit {
+namespace NewCIPLabelling {
 
 /**
  * <b>Sequence Rule 5</b>
@@ -24,28 +22,27 @@ namespace NewCIPLabelling
  * </i>
  * @param <A> generic atom class
  */
-template <typename A, typename B> class Rule5 : public SequenceRule<A, B>
-{
-  public:
-    Rule5() = delete;
+template <typename A, typename B>
+class Rule5 : public SequenceRule<A, B> {
+ public:
+  Rule5() = delete;
 
-    Rule5(BaseMol<A, B>* mol) : SequenceRule<A, B>(mol) {}
+  Rule5(BaseMol<A, B>* mol) : SequenceRule<A, B>(mol) {}
 
-    bool isPseudoAsymmetric() const override { return true; }
+  bool isPseudoAsymmetric() const override { return true; }
 
-    int compare(const Edge<A, B>* a, const Edge<A, B>* b) const override
-    {
-        int aOrdinal = ord(this->getBondLabel(a));
-        int bOrdinal = ord(this->getBondLabel(b));
-        int cmp = integer_compare(aOrdinal, bOrdinal);
-        if (cmp != 0) {
-            return cmp;
-        }
-        aOrdinal = ord(a->getEnd()->getAux());
-        bOrdinal = ord(b->getEnd()->getAux());
-        return 2 * integer_compare(aOrdinal, bOrdinal);
+  int compare(const Edge<A, B>* a, const Edge<A, B>* b) const override {
+    int aOrdinal = ord(this->getBondLabel(a));
+    int bOrdinal = ord(this->getBondLabel(b));
+    int cmp = integer_compare(aOrdinal, bOrdinal);
+    if (cmp != 0) {
+      return cmp;
     }
+    aOrdinal = ord(a->getEnd()->getAux());
+    bOrdinal = ord(b->getEnd()->getAux());
+    return 2 * integer_compare(aOrdinal, bOrdinal);
+  }
 };
 
-} // namespace NewCIPLabelling
-} // namespace RDKit
+}  // namespace NewCIPLabelling
+}  // namespace RDKit

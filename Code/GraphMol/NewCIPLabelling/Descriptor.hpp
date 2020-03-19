@@ -10,12 +10,8 @@
 //
 #pragma once
 
-#include <ostream>
-
-namespace RDKit
-{
-namespace NewCIPLabelling
-{
+namespace RDKit {
+namespace NewCIPLabelling {
 
 static const std::string CIP_LABEL_KEY = "cip.label";
 static const std::string CONF_INDEX = "conf.index";
@@ -27,94 +23,75 @@ static const std::string CONF_INDEX = "conf.index";
  *
  */
 enum class Descriptor {
-    NONE, // Unspecified
-    UNKNOWN,
-    ns, // Other
-    /**
-     * Tetrahedral
-     */
-    R,
-    S,
-    r,
-    s,
-    /**
-     * Cis/Trans
-     */
-    seqTrans,
-    seqCis,
-    E,
-    Z,
-    /* Axial */
-    M,
-    P,
-    m,
-    p,
+  NONE,  // Unspecified
+  UNKNOWN,
+  ns,  // Other
+  /**
+   * Tetrahedral
+   */
+  R,
+  S,
+  r,
+  s,
+  /**
+   * Cis/Trans
+   */
+  seqTrans,
+  seqCis,
+  E,
+  Z,
+  /* Axial */
+  M,
+  P,
+  m,
+  p,
 
-    SP_4,
-    TBPY_5,
-    OC_6
+  SP_4,
+  TBPY_5,
+  OC_6
 };
 
-static std::ostream& operator<<(std::ostream& os, const Descriptor& desc)
-{
-    switch (desc) {
+static std::string to_string(const Descriptor& desc) {
+  switch (desc) {
     case Descriptor::NONE:
-        os << "NONE";
-        break;
+      return "NONE";
     case Descriptor::UNKNOWN:
-        os << "UNKNOWN";
-        break;
+      return "UNKNOWN";
     case Descriptor::ns:
-        os << "ns";
-        break;
+      return "ns";
     case Descriptor::R:
-        os << 'R';
-        break;
+      return "R";
     case Descriptor::S:
-        os << 'S';
-        break;
+      return "S";
     case Descriptor::r:
-        os << 'r';
-        break;
+      return "r";
     case Descriptor::s:
-        os << 's';
-        break;
+      return "s";
     case Descriptor::seqTrans:
-        os << "seqTrans";
-        break;
+      return "seqTrans";
     case Descriptor::seqCis:
-        os << "seqCis";
-        break;
+      return "seqCis";
     case Descriptor::E:
-        os << 'E';
-        break;
+      return "E";
     case Descriptor::Z:
-        os << 'Z';
-        break;
+      return "Z";
     case Descriptor::M:
-        os << 'M';
-        break;
+      return "M";
     case Descriptor::P:
-        os << 'P';
-        break;
+      return "P";
     case Descriptor::m:
-        os << 'm';
-        break;
+      return "m";
     case Descriptor::p:
-        os << 'p';
-        break;
+      return "p";
     case Descriptor::SP_4:
-        os << "SP_4";
-        break;
+      return "SP_4";
     case Descriptor::TBPY_5:
-        os << "TBPY_5";
-        break;
+      return "TBPY_5";
     case Descriptor::OC_6:
-        os << "OC_6";
-        break;
-    }
-    return os;
+      return "OC_6";
+  }
+  throw std::runtime_error("Unknown descriptor");
 }
 
-} // namespace NewCIPLabelling
-} // namespace RDKit
+}  // namespace NewCIPLabelling
+}  // namespace RDKit

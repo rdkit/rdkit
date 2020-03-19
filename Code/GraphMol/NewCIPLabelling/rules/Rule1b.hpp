@@ -13,10 +13,8 @@
 #include "../Node.hpp"
 #include "SequenceRule.hpp"
 
-namespace RDKit
-{
-namespace NewCIPLabelling
-{
+namespace RDKit {
+namespace NewCIPLabelling {
 
 /**
  * <b>Sequence Rule 1b</b>
@@ -27,44 +25,43 @@ namespace NewCIPLabelling
  *
  * @param <A> generic atom class
  */
-template <typename A, typename B> class Rule1b : public SequenceRule<A, B>
-{
-    /**
-     * Flag indicates whether to match the problematic
-     * IUPAC 2013 recommendations for Rule 1B.
-     */
-  private:
-    static const bool IUPAC_2013 = false;
+template <typename A, typename B>
+class Rule1b : public SequenceRule<A, B> {
+  /**
+   * Flag indicates whether to match the problematic
+   * IUPAC 2013 recommendations for Rule 1B.
+   */
+ private:
+  static const bool IUPAC_2013 = false;
 
-  public:
-    Rule1b() = delete;
+ public:
+  Rule1b() = delete;
 
-    Rule1b(const BaseMol<A, B>* mol) : SequenceRule<A, B>(mol) {}
+  Rule1b(const BaseMol<A, B>* mol) : SequenceRule<A, B>(mol) {}
 
-    int compare(const Edge<A, B>* a, const Edge<A, B>* b) const override
-    {
-        if (IUPAC_2013) {
-            return -integer_compare(a->getEnd()->getDistance(),
-                                    b->getEnd()->getDistance());
-        } else {
-            if (a->getEnd()->isSet(Node<A, B>::RING_DUPLICATE) &&
-                b->getEnd()->isSet(Node<A, B>::RING_DUPLICATE)) {
-                return -integer_compare(a->getEnd()->getDistance(),
-                                        b->getEnd()->getDistance());
-            } else {
-                if (a->getEnd()->isSet(Node<A, B>::RING_DUPLICATE) &&
-                    !b->getEnd()->isSet(Node<A, B>::RING_DUPLICATE)) {
-                    return +1;
-                }
-                if (!a->getEnd()->isSet(Node<A, B>::RING_DUPLICATE) &&
-                    b->getEnd()->isSet(Node<A, B>::RING_DUPLICATE)) {
-                    return -1;
-                }
-                return 0;
-            }
+  int compare(const Edge<A, B>* a, const Edge<A, B>* b) const override {
+    if (IUPAC_2013) {
+      return -integer_compare(a->getEnd()->getDistance(),
+                              b->getEnd()->getDistance());
+    } else {
+      if (a->getEnd()->isSet(Node<A, B>::RING_DUPLICATE) &&
+          b->getEnd()->isSet(Node<A, B>::RING_DUPLICATE)) {
+        return -integer_compare(a->getEnd()->getDistance(),
+                                b->getEnd()->getDistance());
+      } else {
+        if (a->getEnd()->isSet(Node<A, B>::RING_DUPLICATE) &&
+            !b->getEnd()->isSet(Node<A, B>::RING_DUPLICATE)) {
+          return +1;
         }
+        if (!a->getEnd()->isSet(Node<A, B>::RING_DUPLICATE) &&
+            b->getEnd()->isSet(Node<A, B>::RING_DUPLICATE)) {
+          return -1;
+        }
+        return 0;
+      }
     }
+  }
 };
 
-} // namespace NewCIPLabelling
-} // namespace RDKit
+}  // namespace NewCIPLabelling
+}  // namespace RDKit

@@ -12,48 +12,43 @@
 
 #include <set>
 
-namespace RDKit
-{
-namespace NewCIPLabelling
-{
+namespace RDKit {
+namespace NewCIPLabelling {
 
 /**
  * Holds some properties that are determined when sorting/prioritising ligands.
  *
  */
-class Priority
-{
-  private:
-    bool unique;
-    bool pseudoAsym;
-    int ruleIdx;
+class Priority {
+ private:
+  bool unique;
+  bool pseudoAsym;
+  int ruleIdx;
 
-  public:
-    Priority() = delete;
+ public:
+  Priority() = delete;
 
-    Priority(bool unique, int ruleIdx, bool pseudoAsym)
-        : unique{unique}, pseudoAsym{pseudoAsym}, ruleIdx{ruleIdx}
-    {
-    }
+  Priority(bool unique, int ruleIdx, bool pseudoAsym)
+      : unique{unique}, pseudoAsym{pseudoAsym}, ruleIdx{ruleIdx} {}
 
-    /**
-     * Indicates whether the ligands were unique (i.e. could be ordered)
-     *
-     * @return whether the ligands were unique
-     */
-    bool isUnique() const { return unique; }
+  /**
+   * Indicates whether the ligands were unique (i.e. could be ordered)
+   *
+   * @return whether the ligands were unique
+   */
+  bool isUnique() const { return unique; }
 
-    int getRuleIdx() const { return ruleIdx; }
+  int getRuleIdx() const { return ruleIdx; }
 
-    /**
-     * Indicates the descriptor type used to. This allows methods that represent
-     * pseudo-asymmetric molecules to indicate that the centre is
-     * pseudo-asymmetric.
-     *
-     * @return The type of the descriptor that should be assigned
-     */
-    bool isPseduoAsymettric() const { return pseudoAsym; }
+  /**
+   * Indicates the descriptor type used to. This allows methods that represent
+   * pseudo-asymmetric molecules to indicate that the centre is
+   * pseudo-asymmetric.
+   *
+   * @return The type of the descriptor that should be assigned
+   */
+  bool isPseduoAsymettric() const { return pseudoAsym; }
 };
 
-} // namespace NewCIPLabelling
-} // namespace RDKit
+}  // namespace NewCIPLabelling
+}  // namespace RDKit
