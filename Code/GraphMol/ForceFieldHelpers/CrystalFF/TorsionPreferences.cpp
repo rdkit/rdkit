@@ -94,8 +94,10 @@ const ExpTorsionAngleCollection *ExpTorsionAngleCollection::getParams(
   }
   if (useSmallRingTorsions)
 	  params += torsionPreferencesSmallRings;
+
   if (useMacrocycleTorsions)
 	  params += torsionPreferencesMacrocycles;
+
   const ExpTorsionAngleCollection *res = &(param_flyweight(params).get());
   return res;
 }
@@ -158,7 +160,6 @@ void getExperimentalTorsions(const RDKit::ROMol &mol, CrystalFFDetails &details,
 
   unsigned int aid1, aid2, aid3, aid4;
   unsigned int bid2;
-
   boost::dynamic_bitset<> doneBonds(nb);
 
   if (useExpTorsions) {

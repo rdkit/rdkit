@@ -112,8 +112,6 @@ struct RDKIT_DISTGEOMHELPERS_EXPORT EmbedParameters {
   bool ignoreSmoothingFailures;
   bool enforceChirality;
   bool useExpTorsionAnglePrefs;
-  bool useSmallRingTorsions;
-  bool useMacrocycleTorsions;
   bool useBasicKnowledge;
   bool verbose;
   double basinThresh;
@@ -121,8 +119,10 @@ struct RDKIT_DISTGEOMHELPERS_EXPORT EmbedParameters {
   bool onlyHeavyAtomsForRMS;
   unsigned int ETversion;
   boost::shared_ptr<const DistGeom::BoundsMatrix> boundsMat;
-  const std::map<std::pair<unsigned int, unsigned int>, double> *CPCI;
   bool embedFragmentsSeparately;
+  bool useSmallRingTorsions;
+  bool useMacrocycleTorsions;
+  const std::map<std::pair<unsigned int, unsigned int>, double> *CPCI;
   EmbedParameters()
       : maxIterations(0),
         numThreads(1),
@@ -137,8 +137,6 @@ struct RDKIT_DISTGEOMHELPERS_EXPORT EmbedParameters {
         ignoreSmoothingFailures(false),
         enforceChirality(true),
         useExpTorsionAnglePrefs(false),
-        useSmallRingTorsions(false),
-        useMacrocycleTorsions(false),
         useBasicKnowledge(false),
         verbose(false),
         basinThresh(5.0),
@@ -146,21 +144,23 @@ struct RDKIT_DISTGEOMHELPERS_EXPORT EmbedParameters {
         onlyHeavyAtomsForRMS(false),
         ETversion(1),
         boundsMat(nullptr),
-        CPCI(nullptr),
-        embedFragmentsSeparately(true){};
+        embedFragmentsSeparately(true),
+        useSmallRingTorsions(false),
+        useMacrocycleTorsions(false),
+        CPCI(nullptr){};
   EmbedParameters(unsigned int maxIterations, int numThreads, int randomSeed,
                   bool clearConfs, bool useRandomCoords, double boxSizeMult,
                   bool randNegEig, unsigned int numZeroFail,
                   const std::map<int, RDGeom::Point3D> *coordMap,
                   double optimizerForceTol, bool ignoreSmoothingFailures,
                   bool enforceChirality, bool useExpTorsionAnglePrefs,
-                  bool useSmallRingTorsions, bool useMacrocycleTorsions,
                   bool useBasicKnowledge, bool verbose, double basinThresh,
                   double pruneRmsThresh, bool onlyHeavyAtomsForRMS,
                   unsigned int ETversion = 1,
                   const DistGeom::BoundsMatrix *boundsMat = nullptr,
-                  const std::map<std::pair<unsigned int, unsigned int>, double> *CPCI = nullptr,
-                  bool embedFragmentsSeparately = true)
+                  bool embedFragmentsSeparately = true,
+                  bool useSmallRingTorsions = false, bool useMacrocycleTorsions = false,
+                  const std::map<std::pair<unsigned int, unsigned int>, double> *CPCI = nullptr)
       : maxIterations(maxIterations),
         numThreads(numThreads),
         randomSeed(randomSeed),
@@ -174,8 +174,6 @@ struct RDKIT_DISTGEOMHELPERS_EXPORT EmbedParameters {
         ignoreSmoothingFailures(ignoreSmoothingFailures),
         enforceChirality(enforceChirality),
         useExpTorsionAnglePrefs(useExpTorsionAnglePrefs),
-        useSmallRingTorsions(useSmallRingTorsions),
-        useMacrocycleTorsions(useMacrocycleTorsions),
         useBasicKnowledge(useBasicKnowledge),
         verbose(verbose),
         basinThresh(basinThresh),
@@ -183,8 +181,10 @@ struct RDKIT_DISTGEOMHELPERS_EXPORT EmbedParameters {
         onlyHeavyAtomsForRMS(onlyHeavyAtomsForRMS),
         ETversion(ETversion),
         boundsMat(boundsMat),
-        CPCI(CPCI),
-        embedFragmentsSeparately(embedFragmentsSeparately){};
+        embedFragmentsSeparately(embedFragmentsSeparately),
+        useSmallRingTorsions(useSmallRingTorsions),
+        useMacrocycleTorsions(useMacrocycleTorsions),
+        CPCI(CPCI){};
 };
 
 //*! Embed multiple conformations for a molecule
@@ -290,17 +290,19 @@ inline int EmbedMolecule(ROMol &mol, unsigned int maxIterations = 0,
                          bool ignoreSmoothingFailures = false,
                          bool enforceChirality = true,
                          bool useExpTorsionAnglePrefs = false,
-                         bool useSmallRingTorsions = false, 
-                         bool useMacrocycleTorsions = false,
                          bool useBasicKnowledge = false, bool verbose = false,
                          double basinThresh = 5.0,
-                         bool onlyHeavyAtomsForRMS = false) {
+                         bool onlyHeavyAtomsForRMS = false,
+                         unsigned int ETversion = 1,
+                         bool useSmallRingTorsions = false, 
+                         bool useMacrocycleTorsions = false) {
   EmbedParameters params(
       maxIterations, 1, seed, clearConfs, useRandomCoords, boxSizeMult,
       randNegEig, numZeroFail, coordMap, optimizerForceTol,
       ignoreSmoothingFailures, enforceChirality, useExpTorsionAnglePrefs,
-      useSmallRingTorsions, useMacrocycleTorsions,
-      useBasicKnowledge, verbose, basinThresh, -1.0, onlyHeavyAtomsForRMS);
+      useBasicKnowledge, verbose, basinThresh, -1.0, onlyHeavyAtomsForRMS, 
+      ETversion, nullptr, true, 
+      useSmallRingTorsions, useMacrocycleTorsions);
   return EmbedMolecule(mol, params);
 };
 
@@ -385,16 +387,18 @@ inline void EmbedMultipleConfs(
     const std::map<int, RDGeom::Point3D> *coordMap = 0,
     double optimizerForceTol = 1e-3, bool ignoreSmoothingFailures = false,
     bool enforceChirality = true, bool useExpTorsionAnglePrefs = false,
-    bool useSmallRingTorsions = false, bool useMacrocycleTorsions = false,
     bool useBasicKnowledge = false, bool verbose = false,
-    double basinThresh = 5.0, bool onlyHeavyAtomsForRMS = false) {
+    double basinThresh = 5.0, bool onlyHeavyAtomsForRMS = false, 
+    unsigned int ETversion = 1,
+    bool useSmallRingTorsions = false, bool useMacrocycleTorsions = false) {
   EmbedParameters params(maxIterations, numThreads, seed, clearConfs,
                          useRandomCoords, boxSizeMult, randNegEig, numZeroFail,
                          coordMap, optimizerForceTol, ignoreSmoothingFailures,
                          enforceChirality, useExpTorsionAnglePrefs,
-                         useSmallRingTorsions, useMacrocycleTorsions,
                          useBasicKnowledge, verbose, basinThresh,
-                         pruneRmsThresh, onlyHeavyAtomsForRMS);
+                         pruneRmsThresh, onlyHeavyAtomsForRMS,
+                         ETversion, nullptr, true,
+                         useSmallRingTorsions, useMacrocycleTorsions);
   EmbedMultipleConfs(mol, res, numConfs, params);
 };
 //! \overload
@@ -406,16 +410,18 @@ inline INT_VECT EmbedMultipleConfs(
     const std::map<int, RDGeom::Point3D> *coordMap = 0,
     double optimizerForceTol = 1e-3, bool ignoreSmoothingFailures = false,
     bool enforceChirality = true, bool useExpTorsionAnglePrefs = false,
-    bool useSmallRingTorsions = false, bool useMacrocycleTorsions = false,
     bool useBasicKnowledge = false, bool verbose = false,
-    double basinThresh = 5.0, bool onlyHeavyAtomsForRMS = false) {
+    double basinThresh = 5.0, bool onlyHeavyAtomsForRMS = false,
+    unsigned int ETversion = 1,
+    bool useSmallRingTorsions = false, bool useMacrocycleTorsions = false) {
   EmbedParameters params(maxIterations, 1, seed, clearConfs, useRandomCoords,
                          boxSizeMult, randNegEig, numZeroFail, coordMap,
                          optimizerForceTol, ignoreSmoothingFailures,
                          enforceChirality, useExpTorsionAnglePrefs,
-                         useSmallRingTorsions, useMacrocycleTorsions,
                          useBasicKnowledge, verbose, basinThresh,
-                         pruneRmsThresh, onlyHeavyAtomsForRMS);
+                         pruneRmsThresh, onlyHeavyAtomsForRMS,
+                         ETversion, nullptr, true,
+                         useSmallRingTorsions, useMacrocycleTorsions);
   INT_VECT res;
   EmbedMultipleConfs(mol, res, numConfs, params);
   return res;
