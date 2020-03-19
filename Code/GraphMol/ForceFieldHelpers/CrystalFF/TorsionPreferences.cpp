@@ -166,7 +166,7 @@ void getExperimentalTorsions(const RDKit::ROMol &mol, CrystalFFDetails &details,
   const RingInfo *rinfo = mol.getRingInfo();
   const VECT_INT_VECT &bondRings = rinfo->bondRings();
   VECT_INT_VECT_CI rii, rjj;
-  for (rii = bondRings.begin(); rii != bondRings.end()-1; rii++) {
+  for (rii = bondRings.begin(); rii != bondRings.end(); rii++) {
     boost::dynamic_bitset<> rs1(nb); // bitset for ring 1
     for (unsigned int i = 0; i < rii->size(); i++) {
       rs1[(*rii)[i]] = 1;
