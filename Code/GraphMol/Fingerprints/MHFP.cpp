@@ -19,8 +19,6 @@
 #include <math.h> 
 #include <set>
 
-#include <boost/foreach.hpp>
-
 #include <RDGeneral/types.h>
 #include <GraphMol/MolOps.h>
 #include <GraphMol/Subgraphs/Subgraphs.h>
@@ -104,7 +102,7 @@ MHFPEncoder::CreateShingling(const ROMol& mol,
   std::vector<std::string> shingling;
 
   if (rings) {
-    VECT_INT_VECT bonds_vect = mol.getRingInfo()->bondRings();
+    const VECT_INT_VECT bonds_vect = mol.getRingInfo()->bondRings();
 
     for (size_t i = 0; i < bonds_vect.size(); i++) {
       std::unique_ptr<ROMol> m(Subgraphs::pathToSubmol(mol, bonds_vect[i]));
@@ -114,9 +112,14 @@ MHFPEncoder::CreateShingling(const ROMol& mol,
 
   unsigned char min_radius_internal = min_radius;
 
-  if (min_radius == 0) {
+  if (!min_radius) {
     for (auto atom : mol.atoms()) {
-      shingling.emplace_back(SmilesWrite::GetAtomSmiles(atom, false, nullptr, false, true));
+      bool do_kekule = false;
+      const RDKit::Bond* bond_in = nullptr;
+      bool all_hs_explicit = false;
+      bool isomeric_smiles = true;
+
+      shingling.emplace_back(SmilesWrite::GetAtomSmiles(atom, do_kekule, bond_in, all_hs_explicit, isomeric_smiles));
     }
 
     min_radius_internal++;
@@ -125,16 +128,17 @@ MHFPEncoder::CreateShingling(const ROMol& mol,
   uint32_t index = 0;
   for (auto atom : mol.atoms()) {
     for (unsigned char r = min_radius_internal; r < radius + 1; r++) {
-      PATH_TYPE path = findAtomEnvironmentOfRadiusN(mol, r, index);
+      const PATH_TYPE path = findAtomEnvironmentOfRadiusN(mol, r, index);
       INT_MAP_INT amap;
-      std::unique_ptr<ROMol> submol(Subgraphs::pathToSubmol(mol, path, false, amap));
+      bool use_query = false;
+      std::unique_ptr<ROMol> submol(Subgraphs::pathToSubmol(mol, path, use_query, amap));
 
       if (amap.find(index) == amap.end())
         continue;
 
       std::string smiles = MolToSmiles(*submol, isomeric, kekulize, amap[index]);
       
-      if (smiles != "")
+      if (!smiles.empty())
         shingling.emplace_back(smiles);
     }
 
@@ -145,13 +149,14 @@ MHFPEncoder::CreateShingling(const ROMol& mol,
 }
 
 std::vector<std::string>
-MHFPEncoder::CreateShingling(std::string& smiles, 
+MHFPEncoder::CreateShingling(const std::string& smiles, 
                unsigned char radius,
                bool rings,
                bool isomeric,
                bool kekulize,
                unsigned char min_radius) {
   std::unique_ptr<ROMol> m(SmilesToMol(smiles));
+  PRECONDITION(m, "could not parse smiles");
   return CreateShingling(*m, radius, rings, isomeric, kekulize, min_radius);
 }
 
@@ -270,18 +275,6 @@ MHFPEncoder::EncodeSECFP(std::vector<std::string>& smileses,
   }
 
   return results;
-}
-
-float
-MHFPEncoder::Distance(const std::vector<uint32_t>& a, 
-            const std::vector<uint32_t>& b) {
-  size_t matches = 0;
-
-  for (size_t i = 0; i < a.size(); i++)
-    if (a[i] == b[i])
-      matches++;
-
-  return matches / (float)a.size();
 }
 
 }  // namespace MHFPFingerprints

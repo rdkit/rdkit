@@ -12,8 +12,8 @@
 
 */
 #include <RDGeneral/export.h>
-#ifndef __RD_MHFPFPS_H__
-#define __RD_MHFPFPS_H__
+#ifndef RD_MHFPFPS_H
+#define RD_MHFPFPS_H
 #include <string>
 #include <vector>
 #include <GraphMol/ROMol.h>
@@ -122,7 +122,7 @@ public:
 
   //! \overload
   std::vector<std::string>
-  CreateShingling(std::string& smiles,
+  CreateShingling(const std::string& smiles,
           unsigned char radius = 3,
           bool rings = true,
           bool isomeric = false,
@@ -259,9 +259,17 @@ public:
 
     \returns the Jaccard / Tanimoto distance between the two fingerprints.
    */
-  static float
+  static double
   Distance(const std::vector<uint32_t>& a, 
-       const std::vector<uint32_t>& b);
+       const std::vector<uint32_t>& b) {
+    size_t matches = 0;
+
+    for (size_t i = 0; i < a.size(); i++)
+      if (a[i] == b[i])
+        matches++;
+
+    return matches / (double)a.size();
+  }
 
 private:
   //! The fastest mod implementation. 
@@ -291,9 +299,6 @@ private:
   uint32_t max_hash_ = 4294967295;
   std::vector<uint32_t> perms_a_;
   std::vector<uint32_t> perms_b_;
-  std::vector<std::vector<float>> rs_;
-  std::vector<std::vector<float>> ln_cs;
-  std::vector<std::vector<float>> cs_;
 };
 
 }  // namespace MHFPFingerprints

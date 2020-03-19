@@ -11,20 +11,15 @@
 #include <RDGeneral/RDLog.h>
 #include <GraphMol/RDKitBase.h>
 #include <RDGeneral/test.h>
-#include <GraphMol/Fingerprints/AtomPairs.h>
-#include <GraphMol/Fingerprints/MorganFingerprints.h>
-#include <GraphMol/Fingerprints/Fingerprints.h>
+#include <RDGeneral/utils.h>
 #include <GraphMol/SmilesParse/SmilesParse.h>
-#include <GraphMol/Fingerprints/AtomPairGenerator.h>
-#include <GraphMol/Fingerprints/MorganGenerator.h>
-#include <GraphMol/Fingerprints/RDKitFPGenerator.h>
-#include <GraphMol/Fingerprints/TopologicalTorsionGenerator.h>
-#include <GraphMol/Fingerprints/FingerprintGenerator.h>
 
 #include <GraphMol/Fingerprints/MHFP.h>
 
 #include <GraphMol/FileParsers/MolSupplier.h>
 #include <GraphMol/FileParsers/FileParsers.h>
+
+#include <GraphMol/Fingerprints/MHFP.h>
 
 using namespace RDKit;
 
@@ -149,7 +144,7 @@ void testMHFPDistance() {
   auto fp_s = enc.Encode(s);
   auto fp_t = enc.Encode(t);
 
-  TEST_ASSERT(MHFPFingerprints::MHFPEncoder::Distance(fp_s, fp_t) == 0.2890625);
+  TEST_ASSERT(feq(MHFPFingerprints::MHFPEncoder::Distance(fp_s, fp_t), 0.2890625));
 
   BOOST_LOG(rdErrorLog) << "  done" << std::endl;
 }
