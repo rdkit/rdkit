@@ -97,6 +97,16 @@ namespace DGeomHelpers {
                  (this shouldn't normally be altered in client code).
 
   onlyHeavyAtomsForRMS  only use the heavy atoms when doing RMS filtering
+
+  boundsMat	custom bound matrix to specify upper and lower bounds of atom pairs
+
+  embedFragmentsSeparately	embed each fragment of molecule in turn
+
+  useSmallRingTorsions	optional torsions to improve small ring conformer sampling
+  
+  useMacrocycleTorsions	optional torsions to improve macrocycle conformer sampling
+
+  CPCI	custom columbic interactions between atom pairs
 */
 struct RDKIT_DISTGEOMHELPERS_EXPORT EmbedParameters {
   unsigned int maxIterations;
@@ -278,6 +288,12 @@ inline int EmbedMolecule(ROMol &mol, const EmbedParameters &params) {
 
   \param onlyHeavyAtomsForRMS  only use the heavy atoms when doing RMS filtering
 
+  \param ETversion	version of torsion preferences to use
+
+  \param useSmallRingTorsions	optional torsions to improve small ring conformer sampling
+  
+  \param useMacrocycleTorsions	optional torsions to improve macrocycle conformer sampling
+
   \return ID of the conformations added to the molecule, -1 if the emdedding
   failed
 */
@@ -377,6 +393,11 @@ inline int EmbedMolecule(ROMol &mol, unsigned int maxIterations = 0,
                         (this shouldn't normally be altered in client code).
   \param onlyHeavyAtomsForRMS  only use the heavy atoms when doing RMS filtering
 
+  \param ETversion	version of torsion preferences to use
+
+  \param useSmallRingTorsions	optional torsions to improve small ring conformer sampling
+  
+  \param useMacrocycleTorsions	optional torsions to improve macrocycle conformer sampling
 */
 inline void EmbedMultipleConfs(
     ROMol &mol, INT_VECT &res, unsigned int numConfs = 10, int numThreads = 1,
