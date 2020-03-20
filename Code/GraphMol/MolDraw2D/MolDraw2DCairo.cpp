@@ -103,13 +103,7 @@ void MolDraw2DCairo::drawChar(char c, const Point2D &cds) {
   char txt[2];
   txt[0] = c;
   txt[1] = 0;
-
   cairo_set_font_size(dp_cr, drawFontSize());
-  if(c == '.') {
-    cairo_set_font_size(dp_cr, 1.5 * drawFontSize());
-  }
-  cairo_text_extents_t extents;
-  cairo_text_extents(dp_cr, txt, &extents);
   Point2D c1 = cds;
   cairo_move_to(dp_cr, c1.x, c1.y);
   cairo_show_text(dp_cr, txt);
@@ -171,7 +165,9 @@ void MolDraw2DCairo::getStringSize(const std::string &label,
   label_height = 0.0;
 
   TextDrawType draw_mode = TextDrawNormal;
-  cairo_set_font_size(dp_cr, fontSize());
+  // we have seen different behaviour on different OSes if the font is sized to
+  // drawFontSize() / scale() which is what we really want.  Adjust at the end.
+  cairo_set_font_size(dp_cr, drawFontSize());
 
   bool had_a_super = false;
 
@@ -188,7 +184,6 @@ void MolDraw2DCairo::getStringSize(const std::string &label,
     cairo_text_extents_t extents;
     cairo_text_extents(dp_cr, txt, &extents);
     double twidth = extents.x_advance, theight = extents.height;
-
     label_height = std::max(label_height, theight);
     double char_width = twidth;
     if (TextDrawSubscript == draw_mode) {
@@ -200,6 +195,10 @@ void MolDraw2DCairo::getStringSize(const std::string &label,
     label_width += char_width;
   }
 
+  // convert back to molecule coords.
+  label_width /= scale();
+  label_height /= scale();
+  
   // subscript keeps its bottom in line with the bottom of the bit chars,
   // superscript goes above the original char top by a quarter
   if (had_a_super) {
@@ -208,6 +207,7 @@ void MolDraw2DCairo::getStringSize(const std::string &label,
   label_height *= 1.2;  // empirical
 
 }
+  
 // ****************************************************************************
 namespace {
 cairo_status_t grab_str(void *closure, const unsigned char *data,
