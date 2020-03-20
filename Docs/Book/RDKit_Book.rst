@@ -1333,6 +1333,76 @@ Reactions also preserve ``StereoGroup``s. Product atoms are included in the ``St
   >>> Chem.MolToCXSmiles(ps[0][0])
   'C[C@H](Br)C[C@H](O)Cl |&1:1|'
 
+.. |EnhancedSSS_A|  image:: ./images/EnhancedStereoSSS_molA.png
+   :scale: 75%
+   :align: middle
+.. |EnhancedSSS_B|  image:: ./images/EnhancedStereoSSS_molB.png
+   :scale: 75%
+   :align: middle
+.. |EnhancedSSS_C|  image:: ./images/EnhancedStereoSSS_molC.png
+   :scale: 75%
+   :align: middle
+.. |EnhancedSSS_D|  image:: ./images/EnhancedStereoSSS_molD.png
+   :scale: 75%
+   :align: middle
+.. |EnhancedSSS_E|  image:: ./images/EnhancedStereoSSS_molE.png
+   :scale: 75%
+   :align: middle
+.. |EnhancedSSS_F|  image:: ./images/EnhancedStereoSSS_molF.png
+   :scale: 75%
+   :align: middle
+.. |EnhancedSSS_G|  image:: ./images/EnhancedStereoSSS_molG.png
+   :scale: 75%
+   :align: middle
+
+
+Enhanced Stereochemistry and substructure search
+================================================
+
+
+The following table captures whether or not a substructure query (in the rows) matches a particular molecule (in the columns).
+
++-----------------+-----------------+-----------------+-----------------+-----------------+-----------------+-----------------+-----------------+
+|                 | |EnhancedSSS_A| | |EnhancedSSS_B| | |EnhancedSSS_C| | |EnhancedSSS_D| | |EnhancedSSS_E| | |EnhancedSSS_F| | |EnhancedSSS_G| |
+|                 |                 |                 |                 |                 |                 |       OR        |      AND        |
++=================+=================+=================+=================+=================+=================+=================+=================+
+| |EnhancedSSS_A| |       Y         |       Y         |       Y         |       Y         |       Y         |       Y         |       Y         |
++-----------------+-----------------+-----------------+-----------------+-----------------+-----------------+-----------------+-----------------+
+| |EnhancedSSS_B| |       N         |       Y         |       N         |       N         |       Y         |       Y         |       Y         |
++-----------------+-----------------+-----------------+-----------------+-----------------+-----------------+-----------------+-----------------+
+| |EnhancedSSS_C| |       N         |       N         |       Y         |       N         |       N         |       Y         |       Y         |
++-----------------+-----------------+-----------------+-----------------+-----------------+-----------------+-----------------+-----------------+
+| |EnhancedSSS_D| |       N         |       N         |       N         |       Y         |       N         |       N         |       N         |
++-----------------+-----------------+-----------------+-----------------+-----------------+-----------------+-----------------+-----------------+
+| |EnhancedSSS_E| |       N         |       Y         |       N         |       N         |       N         |       Y         |       Y         |
++-----------------+-----------------+-----------------+-----------------+-----------------+-----------------+-----------------+-----------------+
+| |EnhancedSSS_F| |       N         |       N         |       N         |       N         |       N         |       Y         |       Y         |
+|       OR        |                 |                 |                 |                 |                 |                 |                 |
++-----------------+-----------------+-----------------+-----------------+-----------------+-----------------+-----------------+-----------------+
+| |EnhancedSSS_G| |       N         |       N         |       N         |       N         |       N         |       N         |       Y         |
+|      AND        |                 |                 |                 |                 |                 |                 |                 |
++-----------------+-----------------+-----------------+-----------------+-----------------+-----------------+-----------------+-----------------+
+
+
+Some concrete examples of this:
+
+.. doctest ::
+  >>> ps = Chem.SubstructMatchParameters()
+  >>> ps.useChirality = True
+  >>> ps.useEnhancedStereo = True
+  >>> m_ABS = Chem.MolFromSmiles('CC[C@H](F)[C@H](C)O')
+  >>> m_AND = Chem.MolFromSmiles('CC[C@H](F)[C@H](C)O |&1:2,4|')
+  >>> m_OR = Chem.MolFromSmiles('CC[C@H](F)[C@H](C)O |o1:2,4|')
+  >>> m_AND.HasSubstructMatch(m_ABS,ps)
+  True
+  >>> m_OR.HasSubstructMatch(m_ABS,ps)
+  True
+  >>> m_AND.HasSubstructMatch(m_OR,ps)
+  True
+  >>> m_OR.HasSubstructMatch(m_AND,ps)
+  False
+
+
 
 Additional Information About the Fingerprints
 *********************************************

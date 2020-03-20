@@ -291,6 +291,11 @@ struct mol_wrapper {
             "useChirality", &RDKit::SubstructMatchParameters::useChirality,
             "Use chirality in determining whether or not atoms/bonds match")
         .def_readwrite(
+            "useEnhancedStereo",
+            &RDKit::SubstructMatchParameters::useEnhancedStereo,
+            "take enhanced stereochemistry into account while doing the match. "
+            "This only has an effect if useChirality is also True.")
+        .def_readwrite(
             "aromaticMatchesConjugated",
             &RDKit::SubstructMatchParameters::aromaticMatchesConjugated,
             "aromatic and conjugated bonds match each other")
