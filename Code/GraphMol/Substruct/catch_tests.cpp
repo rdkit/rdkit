@@ -199,6 +199,7 @@ TEST_CASE("Enhanced stereochemistry", "[substruct,StereoGroup]") {
     CHECK_THAT(*mol_chiral, !IsSubstructOf(*mol_achiral, ps));
     CHECK_THAT(*mol_chiral, IsSubstructOf(*mol_and, ps));
     CHECK_THAT(*mol_chiral, IsSubstructOf(*mol_or, ps));
+    CHECK_THAT(*mol_chiral, !IsSubstructOf(*diastereomer, ps));
     CHECK_THAT(*mol_absolute, !IsSubstructOf(*mol_achiral, ps));
     CHECK_THAT(*mol_absolute, IsSubstructOf(*mol_and, ps));
     CHECK_THAT(*mol_absolute, IsSubstructOf(*mol_or, ps));
@@ -217,14 +218,15 @@ TEST_CASE("Enhanced stereochemistry", "[substruct,StereoGroup]") {
     // the OR
     CHECK_THAT(*mol_or, !IsSubstructOf(*mol_chiral, ps));
     CHECK_THAT(*mol_or, !IsSubstructOf(*mol_absolute, ps));
+    CHECK_THAT(*mol_or, !IsSubstructOf(*diastereomer, ps));
     CHECK_THAT(*mol_or, IsSubstructOf(*mol_or, ps));
     CHECK_THAT(*mol_or, IsSubstructOf(*mol_and, ps));
   }
   SECTION("AND and OR match their enantiomer") {
     // This is, like, the point of And/Or
-    auto opposite_mol = "C[C@@H](O)[C@@H](CC)F"_smiles;
-    CHECK_THAT(*opposite_mol, IsSubstructOf(*mol_and, ps));
-    CHECK_THAT(*opposite_mol, IsSubstructOf(*mol_or, ps));
+    auto enantiomer = "C[C@@H](O)[C@@H](CC)F"_smiles;
+    CHECK_THAT(*enantiomer, IsSubstructOf(*mol_and, ps));
+    CHECK_THAT(*enantiomer, IsSubstructOf(*mol_or, ps));
   }
   SECTION("But not some arbitrary diastereomer") {
     CHECK_THAT(*diastereomer, !IsSubstructOf(*mol_and, ps));
@@ -232,15 +234,12 @@ TEST_CASE("Enhanced stereochemistry", "[substruct,StereoGroup]") {
   }
   SECTION("Mixed stereo groups include single stereo groups") {
     auto mol_mixed_or = "C[C@H](O)[C@H](CC)F |o1:1,o2:3|"_smiles;
-    std::cerr << "CHECK_THAT(*mol_mixed_or, !IsSubstructOf(*mol_or, ps));" << std::endl;
     CHECK_THAT(*mol_mixed_or, !IsSubstructOf(*mol_or, ps));
     // OR refers to two of the 4 molecules that mol_mixed_or
     CHECK_THAT(*mol_or, IsSubstructOf(*mol_mixed_or, ps));
 
     auto mol_mixed_or2 = "C[C@H](O)[C@@H](CC)F |o1:1,o2:3|"_smiles;
-    std::cerr << "CHECK_THAT(*mol_mixed_or2, !IsSubstructOf(*mol_or, ps));" << std::endl;
     CHECK_THAT(*mol_mixed_or2, !IsSubstructOf(*mol_or, ps));
-    std::cerr << "CHECK_THAT(*mol_or, IsSubstructOf(*mol_mixed_or2, ps));" << std::endl;
     CHECK_THAT(*mol_or, IsSubstructOf(*mol_mixed_or2, ps));
 
     // I'm not sure about these ones, but they should be symmetric:
@@ -255,6 +254,12 @@ TEST_CASE("Enhanced stereochemistry", "[substruct,StereoGroup]") {
   SECTION("It's OK to match part of a stereo group, though") {
     auto mol_and_long = "F[C@@H](O)C[C@@H](CC)F |&1:1,3|"_smiles;
     auto mol_and_partial = "F[C@@H](O)C |&1:1|"_smiles;
+    auto mol_or_long = "F[C@@H](O)C[C@@H](CC)F |o1:1,3|"_smiles;
+    auto mol_or_partial = "F[C@@H](O)C |o1:1|"_smiles;
+
     CHECK_THAT(*mol_and_partial, IsSubstructOf(*mol_and_long, ps));
+    CHECK_THAT(*mol_or_partial, IsSubstructOf(*mol_or_long, ps));
+    CHECK_THAT(*mol_or_partial, IsSubstructOf(*mol_and_long, ps));
+    CHECK_THAT(*mol_and_partial, !IsSubstructOf(*mol_or_long, ps));
   }
 }

@@ -163,7 +163,7 @@ class MolMatchFinalCheckFunctor {
                   const boost::detail::node_id m_c[]) const {
     if (d_params.extraFinalCheck) {
       // EFF: we can no-doubt do better than this
-      std::vector<unsigned int> aids(d_query.getNumAtoms());
+      std::vector<unsigned int> aids(m_c, m_c + d_query.getNumAtoms());
       for (unsigned int i = 0; i < d_query.getNumAtoms(); ++i) {
         aids[i] = m_c[i];
       }
