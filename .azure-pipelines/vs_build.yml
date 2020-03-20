@@ -2,14 +2,12 @@ steps:
 - powershell: Write-Host "##vso[task.prependpath]$env:CONDA\Scripts"
   displayName: Setup build environment
 - script: |
-    sudo apt-get update
-    sudo apt-get install -y libcairo2-dev libcairo2
     conda config --set always_yes yes --set changeps1 no
     conda info -a
     conda create --name rdkit_build $(compiler) cmake ^
         boost-cpp=$(boost_version) boost=$(boost_version) ^
         py-boost=$(boost_version) libboost=$(boost_version) ^
-        numpy matplotlib pillow eigen pandas  ^
+        numpy matplotlib cairo pillow eigen pandas  ^
         sphinx recommonmark jupyter
   displayName: Install dependencies
 - script: |

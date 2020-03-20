@@ -1,5 +1,7 @@
 steps:
 - bash: |
+    sudo apt-get update
+    sudo apt-get install -y libcairo2-dev libcairo2
     source ${CONDA}/etc/profile.d/conda.sh
     sudo chown -R ${USER} ${CONDA}
     conda config --set always_yes yes --set changeps1 no
@@ -8,7 +10,7 @@ steps:
     conda create --name rdkit_build $(compiler) cmake \
         boost-cpp=$(boost_version) boost=$(boost_version) \
         py-boost=$(boost_version) libboost=$(boost_version) \
-        numpy matplotlib cairo pillow eigen pandas \
+        numpy matplotlib pillow eigen pandas \
         sphinx recommonmark jupyter
   displayName: Setup build environment
 - bash: |
