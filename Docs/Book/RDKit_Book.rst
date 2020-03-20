@@ -367,7 +367,7 @@ X          "total degree"                             1                Y
 z          "number of heteroatom neighbors"           >0               Y       extension
 Z          "number of aliphatic heteroatom neighbors" >0               Y       extension
 \*         "any atom"
-\+         "positive charge"                          1                Y 
+\+         "positive charge"                          1                Y
 ++         "+2 charge"
 \-         "negative charge"                          1                Y
 \--        "-2 charge"
@@ -1220,9 +1220,10 @@ Support for Enhanced Stereochemistry
 Overview
 ========
 
-We are going to follow, at least for the initial implementation, the enhanced stereo representation
-used in V3k mol files: groups of atoms with specified stereochemistry with an ``ABS``, ``AND``, or ``OR``
-marker indicating what is known. The general idea is that ``AND`` indicates mixtures and ``OR`` indicates unknown single substances.
+Enhanced stereochemistry is used to indicate that a molecule represents more than one possible diastereomer.
+``AND`` indicates that a molecule is a mixture of molecules. ``OR`` indicates unknown single substances,
+and ``ABS`` indicates a single substance. This follows, the convention used in V3k mol files: groups of
+atoms with specified stereochemistry with an ``ABS``, ``AND``, or ``OR`` marker indicating what is known.
 
 Here are some illustrations of what the various combinations mean:
 
@@ -1301,7 +1302,7 @@ and the set of atoms that make it up.
 Use cases
 =========
 
-The initial target is to not lose data on an ``V3k mol -> RDKit -> V3k mol`` round trip. Manipulation, depiction, and searching are future goals.
+The initial target is to not lose data on an ``V3k mol -> RDKit -> V3k mol`` round trip. Manipulation and depiction are future goals.
 
 It is possible to enumerate the elements of a ``StereoGroup`` using the function :py:func:`rdkit.Chem.EnumerateStereoisomers.EumerateStereoisomers`, which also
 preserves membership in the original ``StereoGroup``.
@@ -1359,8 +1360,8 @@ Reactions also preserve ``StereoGroup``s. Product atoms are included in the ``St
 Enhanced Stereochemistry and substructure search
 ================================================
 
-
-The following table captures whether or not a substructure query (in the rows) matches a particular molecule (in the columns).
+Enhanced Stereochemistry may optionally be honored in substructure searches. The following table captures whether or not a substructure query
+(in the rows) matches a particular molecule (in the columns).
 
 +-----------------+-----------------+-----------------+-----------------+-----------------+-----------------+-----------------+-----------------+
 |                 | |EnhancedSSS_A| | |EnhancedSSS_B| | |EnhancedSSS_C| | |EnhancedSSS_D| | |EnhancedSSS_E| | |EnhancedSSS_F| | |EnhancedSSS_G| |
@@ -1383,6 +1384,14 @@ The following table captures whether or not a substructure query (in the rows) m
 |      AND        |                 |                 |                 |                 |                 |                 |                 |
 +-----------------+-----------------+-----------------+-----------------+-----------------+-----------------+-----------------+-----------------+
 
+Substructure search using molecules with enhanced stereochemistry follows these rules (where substructure < superstructure):
+
+* achiral < everything, because an achiral query means ignore chirality in the match
+* chiral < AND, because AND includes both the chiral molecule and another one
+* chiral < OR, because OR includes either the chiral molecule or another one
+* OR < AND, because AND includes both molecules that OR could actually mean.
+* one group of two atoms < two groups of one atom, because the latter is 4 different
+diastereomers, and the former only two of the four.
 
 Some concrete examples of this:
 
