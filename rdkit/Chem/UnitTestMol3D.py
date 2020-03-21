@@ -352,6 +352,11 @@ class TestCase(unittest.TestCase):
     self.assertEqual(len(smiles), len(set(smiles)))
     self.assertEqual(len(smiles), 2**3)
 
+  def testIssue2890(self):
+    mol = Chem.MolFromSmiles('CC=CC')
+    mol.GetBondWithIdx(1).SetStereo(Chem.rdchem.BondStereo.STEREOANY)
+
+    assert len(list(AllChem.EnumerateStereoisomers(mol))) == 2
 
 if __name__ == '__main__':
   unittest.main()
