@@ -1220,9 +1220,10 @@ Support for Enhanced Stereochemistry
 Overview
 ========
 
-We are going to follow, at least for the initial implementation, the enhanced stereo representation
-used in V3k mol files: groups of atoms with specified stereochemistry with an ``ABS``, ``AND``, or ``OR``
-marker indicating what is known. The general idea is that ``AND`` indicates mixtures and ``OR`` indicates unknown single substances.
+Enhanced stereochemistry is used to indicate that a molecule represents more than one possible diastereomer.
+``AND`` indicates that a molecule is a mixture of molecules. ``OR`` indicates unknown single substances,
+and ``ABS`` indicates a single substance. This follows, the convention used in V3k mol files: groups of
+atoms with specified stereochemistry with an ``ABS``, ``AND``, or ``OR`` marker indicating what is known.
 
 Here are some illustrations of what the various combinations mean:
 
@@ -1301,7 +1302,7 @@ and the set of atoms that make it up.
 Use cases
 =========
 
-The initial target is to not lose data on an ``V3k mol -> RDKit -> V3k mol`` round trip. Manipulation, depiction, and searching are future goals.
+The initial target is to not lose data on an ``V3k mol -> RDKit -> V3k mol`` round trip. Manipulation and depiction are future goals.
 
 It is possible to enumerate the elements of a ``StereoGroup`` using the function :py:func:`rdkit.Chem.EnumerateStereoisomers.EumerateStereoisomers`, which also
 preserves membership in the original ``StereoGroup``.
@@ -1332,6 +1333,84 @@ Reactions also preserve ``StereoGroup``s. Product atoms are included in the ``St
   >>> clearAllAtomProps(ps[0][0])
   >>> Chem.MolToCXSmiles(ps[0][0])
   'C[C@H](Br)C[C@H](O)Cl |&1:1|'
+
+.. |EnhancedSSS_A|  image:: ./images/EnhancedStereoSSS_molA.png
+   :scale: 75%
+   :align: middle
+.. |EnhancedSSS_B|  image:: ./images/EnhancedStereoSSS_molB.png
+   :scale: 75%
+   :align: middle
+.. |EnhancedSSS_C|  image:: ./images/EnhancedStereoSSS_molC.png
+   :scale: 75%
+   :align: middle
+.. |EnhancedSSS_D|  image:: ./images/EnhancedStereoSSS_molD.png
+   :scale: 75%
+   :align: middle
+.. |EnhancedSSS_E|  image:: ./images/EnhancedStereoSSS_molE.png
+   :scale: 75%
+   :align: middle
+.. |EnhancedSSS_F|  image:: ./images/EnhancedStereoSSS_molF.png
+   :scale: 75%
+   :align: middle
+.. |EnhancedSSS_G|  image:: ./images/EnhancedStereoSSS_molG.png
+   :scale: 75%
+   :align: middle
+
+
+Enhanced Stereochemistry and substructure search
+================================================
+
+Enhanced Stereochemistry may optionally be honored in substructure searches. The following table captures whether or not a substructure query
+(in the rows) matches a particular molecule (in the columns).
+
++-----------------+-----------------+-----------------+-----------------+-----------------+-----------------+-----------------+-----------------+
+|                 | |EnhancedSSS_A| | |EnhancedSSS_B| | |EnhancedSSS_C| | |EnhancedSSS_D| | |EnhancedSSS_E| | |EnhancedSSS_F| | |EnhancedSSS_G| |
+|                 |                 |                 |                 |                 |                 |       OR        |      AND        |
++=================+=================+=================+=================+=================+=================+=================+=================+
+| |EnhancedSSS_A| |       Y         |       Y         |       Y         |       Y         |       Y         |       Y         |       Y         |
++-----------------+-----------------+-----------------+-----------------+-----------------+-----------------+-----------------+-----------------+
+| |EnhancedSSS_B| |       N         |       Y         |       N         |       N         |       Y         |       Y         |       Y         |
++-----------------+-----------------+-----------------+-----------------+-----------------+-----------------+-----------------+-----------------+
+| |EnhancedSSS_C| |       N         |       N         |       Y         |       N         |       N         |       Y         |       Y         |
++-----------------+-----------------+-----------------+-----------------+-----------------+-----------------+-----------------+-----------------+
+| |EnhancedSSS_D| |       N         |       N         |       N         |       Y         |       N         |       N         |       N         |
++-----------------+-----------------+-----------------+-----------------+-----------------+-----------------+-----------------+-----------------+
+| |EnhancedSSS_E| |       N         |       Y         |       N         |       N         |       N         |       Y         |       Y         |
++-----------------+-----------------+-----------------+-----------------+-----------------+-----------------+-----------------+-----------------+
+| |EnhancedSSS_F| |       N         |       N         |       N         |       N         |       N         |       Y         |       Y         |
+|       OR        |                 |                 |                 |                 |                 |                 |                 |
++-----------------+-----------------+-----------------+-----------------+-----------------+-----------------+-----------------+-----------------+
+| |EnhancedSSS_G| |       N         |       N         |       N         |       N         |       N         |       N         |       Y         |
+|      AND        |                 |                 |                 |                 |                 |                 |                 |
++-----------------+-----------------+-----------------+-----------------+-----------------+-----------------+-----------------+-----------------+
+
+Substructure search using molecules with enhanced stereochemistry follows these rules (where substructure < superstructure):
+
+* achiral < everything, because an achiral query means ignore chirality in the match
+* chiral < AND, because AND includes both the chiral molecule and another one
+* chiral < OR, because OR includes either the chiral molecule or another one
+* OR < AND, because AND includes both molecules that OR could actually mean.
+* one group of two atoms < two groups of one atom, because the latter is 4 different
+diastereomers, and the former only two of the four.
+
+Some concrete examples of this:
+
+.. doctest ::
+  >>> ps = Chem.SubstructMatchParameters()
+  >>> ps.useChirality = True
+  >>> ps.useEnhancedStereo = True
+  >>> m_ABS = Chem.MolFromSmiles('CC[C@H](F)[C@H](C)O')
+  >>> m_AND = Chem.MolFromSmiles('CC[C@H](F)[C@H](C)O |&1:2,4|')
+  >>> m_OR = Chem.MolFromSmiles('CC[C@H](F)[C@H](C)O |o1:2,4|')
+  >>> m_AND.HasSubstructMatch(m_ABS,ps)
+  True
+  >>> m_OR.HasSubstructMatch(m_ABS,ps)
+  True
+  >>> m_AND.HasSubstructMatch(m_OR,ps)
+  True
+  >>> m_OR.HasSubstructMatch(m_AND,ps)
+  False
+
 
 
 Additional Information About the Fingerprints
