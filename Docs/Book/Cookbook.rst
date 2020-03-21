@@ -39,7 +39,7 @@ Alternatively, you can also send Cookbook revisions and addition requests to the
 
    The Index ID# (e.g., **RDKitCB_##**) is simply a way to track Cookbook entries and image file names. 
    New Cookbook additions are sequentially index numbered, regardless of where they are placed 
-   within the document. As such, for reference, the next Cookbook entry is **RDKitCB_20**.
+   within the document. As such, for reference, the next Cookbook entry is **RDKitCB_25**.
 
 Drawing Molecules (in a Jupyter Environment)
 **********************************************
@@ -81,6 +81,37 @@ Include an Atom Index
    mol_with_atom_index(mol)
    
 .. image:: images/RDKitCB_0_im1.png
+
+Include a Calculation
+======================
+
+| **Author:** Greg Landrum
+| **Source:** `https://sourceforge.net/p/rdkit/mailman/message/36457619/`_
+| **Index ID#:** RDKitCB_23
+| **Summary:** Draw a molecule with a calculation value displayed (e.g., Gasteiger Charge)
+
+.. testcode::
+
+   from rdkit import Chem
+   from rdkit.Chem import AllChem
+
+.. testcode::
+
+   m = Chem.MolFromSmiles('c1ncncc1C(=O)[O-]')
+   AllChem.ComputeGasteigerCharges(m)
+   m
+
+.. image:: images/RDKitCB_23_im0.png
+
+.. testcode::
+
+   m2 = Chem.Mol(m)
+   for at in m2.GetAtoms():
+       lbl = '%s:%.2f'%(at.GetSymbol(),at.GetDoubleProp("_GasteigerCharge"))
+       at.SetProp('atomLabel',lbl)
+   m2
+
+.. image:: images/RDKitCB_23_im1.png
 
 Black and White Molecules
 ==========================
@@ -622,6 +653,376 @@ Returning Substructure Matches as SMILES
 
    CCCC
 
+
+Within the Same Fragment
+=========================
+
+| **Author:** Greg Landrum
+| **Source:** `<https://sourceforge.net/p/rdkit/mailman/message/36942946/>`_
+| **Index ID#:** RDKitCB_20
+| **Summary:** Match a pattern only within the same fragment.
+
+.. testcode::
+
+   from rdkit import Chem
+
+.. testcode::
+
+   p = Chem.MolFromSmarts('O.N')
+
+.. testcode::
+   
+   # define a function where matches are contained in a single fragment
+   def fragsearch(m,p):
+       matches = [set(x) for x in m.GetSubstructMatches(p)]
+       frags = [set(y) for y in Chem.GetMolFrags(m)] # had to add this line for code to work
+       for frag in frags:
+           for match in matches:
+               if match.issubset(frag):
+                   return match
+       return False
+
+.. testcode::
+
+   m1 = Chem.MolFromSmiles('OCCCN.CCC')
+   m1
+
+.. image:: images/RDKitCB_20_im0.png
+
+.. testcode::
+
+   m2 = Chem.MolFromSmiles('OCCC.CCCN')
+   m2
+
+.. testcode::
+
+   print(m1.HasSubstructMatch(p))
+
+.. testoutput::
+
+   True
+
+.. testcode::
+
+   print(m2.HasSubstructMatch(p))
+
+.. testoutput::
+
+   True
+
+.. testcode::
+
+   print(fragsearch(m1,p))
+
+.. testoutput::
+
+   {0, 4}
+
+.. testcode::
+
+   print(fragsearch(m2,p))
+
+.. testoutput::
+
+   False
+
+
+Descriptor Calculations
+************************
+
+Molecule Hash Strings
+======================
+
+| **Author:** Vincent Scalfani / Takayuki Serizawa
+| **Source:** `<https://gist.github.com/vfscalfani/f77d90f9f27e0f820b966882cdadccd0>`_ and `<https://iwatobipen.wordpress.com/2019/10/27/a-new-function-of-rdkit201909-rdkit-chemoinformatics/>`_
+| **Index ID#:** RDKitCB_21
+| **Summary:** Calculate hash strings for molecules with the NextMove MolHash functionality within RDKit.
+| **Reference Note:** Examples from O'Boyle and Sayle [#OBoyle]_
+
+.. testcode::
+
+   from rdkit import Chem
+   from rdkit.Chem import rdMolHash
+   import rdkit
+
+.. testcode::
+
+   s = Chem.MolFromSmiles('CC(C(C1=CC(=C(C=C1)O)O)O)N(C)C(=O)OCC2=CC=CC=C2')
+   s
+
+.. image:: images/RDKitCB_21_im0.png
+
+.. testcode::
+
+   #  View all of the MolHash hashing functions types with the names method.
+   molhashf = rdMolHash.HashFunction.names
+   print(molhashf)
+
+.. testoutput::
+   :options: -ELLIPSIS, +NORMALIZE_WHITESPACE
+
+   {'AnonymousGraph': rdkit.Chem.rdMolHash.HashFunction.AnonymousGraph,
+    'ElementGraph': rdkit.Chem.rdMolHash.HashFunction.ElementGraph,
+    'CanonicalSmiles': rdkit.Chem.rdMolHash.HashFunction.CanonicalSmiles,
+    'MurckoScaffold': rdkit.Chem.rdMolHash.HashFunction.MurckoScaffold,
+    'ExtendedMurcko': rdkit.Chem.rdMolHash.HashFunction.ExtendedMurcko,
+    'MolFormula': rdkit.Chem.rdMolHash.HashFunction.MolFormula,
+    'AtomBondCounts': rdkit.Chem.rdMolHash.HashFunction.AtomBondCounts,
+    'DegreeVector': rdkit.Chem.rdMolHash.HashFunction.DegreeVector,
+    'Mesomer': rdkit.Chem.rdMolHash.HashFunction.Mesomer,
+    'HetAtomTautomer': rdkit.Chem.rdMolHash.HashFunction.HetAtomTautomer,
+    'HetAtomProtomer': rdkit.Chem.rdMolHash.HashFunction.HetAtomProtomer,
+    'RedoxPair': rdkit.Chem.rdMolHash.HashFunction.RedoxPair,
+    'Regioisomer': rdkit.Chem.rdMolHash.HashFunction.Regioisomer,
+    'NetCharge': rdkit.Chem.rdMolHash.HashFunction.NetCharge,
+    'SmallWorldIndexBR': rdkit.Chem.rdMolHash.HashFunction.SmallWorldIndexBR,
+    'SmallWorldIndexBRL': rdkit.Chem.rdMolHash.HashFunction.SmallWorldIndexBRL,
+    'ArthorSubstructureOrder': rdkit.Chem.rdMolHash.HashFunction.ArthorSubstructureOrder}
+
+.. testcode::
+
+   # Generate MolHashes for molecule 's' with all defined hash functions.
+   for i, j in molhashf.items(): 
+       print(i, rdMolHash.MolHash(s, j))
+
+.. testoutput::
+   :options: -ELLIPSIS, +NORMALIZE_WHITESPACE
+
+   AnonymousGraph **(***1*****1)*(*)*(*)*(*)*1***(*)*(*)*1
+   ElementGraph CC(C(O)C1CCC(O)C(O)C1)N(C)C(O)OCC1CCCCC1
+   CanonicalSmiles CC(C(O)c1ccc(O)c(O)c1)N(C)C(=O)OCc1ccccc1
+   MurckoScaffold c1ccc(CCNCOCc2ccccc2)cc1
+   ExtendedMurcko *c1ccc(C(*)C(*)N(*)C(=*)OCc2ccccc2)cc1*
+   MolFormula C18H21NO5
+   AtomBondCounts 24,25
+   DegreeVector 0,8,10,6
+   Mesomer CC(C(O)[C]1[CH][CH][C](O)[C](O)[CH]1)N(C)[C]([O])OC[C]1[CH][CH][CH][CH][CH]1_0
+   HetAtomTautomer CC(C([O])[C]1[CH][CH][C]([O])[C]([O])[CH]1)N(C)[C]([O])OC[C]1[CH][CH][CH][CH][CH]1_3_0
+   HetAtomProtomer CC(C([O])[C]1[CH][CH][C]([O])[C]([O])[CH]1)N(C)[C]([O])OC[C]1[CH][CH][CH][CH][CH]1_3
+   RedoxPair CC(C(O)[C]1[CH][CH][C](O)[C](O)[CH]1)N(C)[C]([O])OC[C]1[CH][CH][CH][CH][CH]1
+   Regioisomer *C.*CCC.*O.*O.*O.*OC(=O)N(*)*.C.c1ccccc1.c1ccccc1
+   NetCharge 0
+   SmallWorldIndexBR B25R2
+   SmallWorldIndexBRL B25R2L10
+   ArthorSubstructureOrder 00180019010012000600009b000000
+
+.. testcode::
+  
+   # Murcko Scaffold Hashes (from slide 16 in [ref2])
+   # Create a list of SMILES
+   mList = ['CCC1CC(CCC1=O)C(=O)C1=CC=CC(C)=C1','CCC1CC(CCC1=O)C(=O)C1=CC=CC=C1',\
+            'CC(=C)C(C1=CC=CC=C1)S(=O)CC(N)=O','CC1=CC(=CC=C1)C(C1CCC(N)CC1)C(F)(F)F',\
+            'CNC1CCC(C2=CC(Cl)=C(Cl)C=C2)C2=CC=CC=C12','CCCOC(C1CCCCC1)C1=CC=C(Cl)C=C1']
+
+.. testcode::
+
+   # Loop through the SMILES mList and create RDKit molecular objects
+   mMols = [Chem.MolFromSmiles(m) for m in mList]
+   # Calculate Murcko Scaffold Hashes
+   murckoHashList = [rdMolHash.MolHash(mMol, rdkit.Chem.rdMolHash.HashFunction.MurckoScaffold) for mMol in mMols]
+   print(murckoHashList)
+
+.. testoutput::
+   :options: -ELLIPSIS, +NORMALIZE_WHITESPACE
+
+   ['c1ccc(CC2CCCCC2)cc1',
+    'c1ccc(CC2CCCCC2)cc1',
+    'c1ccccc1',
+    'c1ccc(CC2CCCCC2)cc1',
+    'c1ccc(C2CCCc3ccccc32)cc1',
+    'c1ccc(CC2CCCCC2)cc1']
+
+.. testcode::
+
+   # Get the most frequent Murcko Scaffold Hash
+   def mostFreq(list):
+       return max(set(list), key=list.count)
+   mostFreq_murckoHash = mostFreq(murckoHashList)
+   print(mostFreq_murckoHash)
+
+.. testoutput::
+
+   c1ccc(CC2CCCCC2)cc1
+
+.. testcode::
+
+   mostFreq_murckoHash_mol = Chem.MolFromSmiles('c1ccc(CC2CCCCC2)cc1')
+   mostFreq_murckoHash_mol
+
+.. image:: images/RDKitCB_21_im1.png
+
+.. testcode::
+
+   # Display molecules with MurkoHash as legends and highlight the mostFreq_murckoHash
+   highlight_mostFreq_murckoHash = [mMol.GetSubstructMatch(mostFreq_murckoHash_mol) for mMol in mMols]
+   Draw.MolsToGridImage(mMols,legends=[murckoHash for murckoHash in murckoHashList],
+                        highlightAtomLists = highlight_mostFreq_murckoHash,
+                        subImgSize=(250,250), useSVG=False)
+
+
+.. image:: images/RDKitCB_21_im2.png
+
+.. testcode::
+
+   # Regioisomer Hashes (from slide 17 in [ref2])
+   # Find Regioisomer matches for this molecule
+   r0 = Chem.MolFromSmiles('CC1=CC2=C(C=C1)C(=CN2CCN1CCOCC1)C(=O)C1=CC=CC2=C1C=CC=C2')
+   r0
+
+.. image:: images/RDKitCB_21_im3.png
+
+.. testcode::
+
+   # Calculate the regioisomer hash for r0
+   r0_regioHash = rdMolHash.MolHash(r0,rdkit.Chem.rdMolHash.HashFunction.Regioisomer)
+   print(r0_regioHash)
+
+.. testoutput::
+
+   *C.*C(*)=O.*CC*.C1COCCN1.c1ccc2[nH]ccc2c1.c1ccc2ccccc2c1
+
+.. testcode::
+
+   r0_regioHash_mol = Chem.MolFromSmiles('*C.*C(*)=O.*CC*.C1COCCN1.c1ccc2[nH]ccc2c1.c1ccc2ccccc2c1')
+   r0_regioHash_mol
+
+.. image:: images/RDKitCB_21_im4.png
+
+.. testcode::
+
+   # Create a list of SMILES
+   rList = ['CC1=CC2=C(C=C1)C(=CN2CCN1CCOCC1)C(=O)C1=CC=CC2=C1C=CC=C2',\
+           'CCCCCN1C=C(C2=CC=CC=C21)C(=O)C3=CC=CC4=CC=CC=C43',\
+           'CC1COCCN1CCN1C=C(C(=O)C2=CC=CC3=C2C=CC=C3)C2=C1C=CC=C2',\
+            'CC1=CC=C(C(=O)C2=CN(CCN3CCOCC3)C3=C2C=CC=C3)C2=C1C=CC=C2',\
+           'CC1=C(CCN2CCOCC2)C2=C(C=CC=C2)N1C(=O)C1=CC=CC2=CC=CC=C12',\
+           'CN1CCN(C(C1)CN2C=C(C3=CC=CC=C32)C(=O)C4=CC=CC5=CC=CC=C54)C']
+   # Loop through the SMILES rList and create RDKit molecular objects
+   rMols = [Chem.MolFromSmiles(r) for r in rList]
+
+.. testcode::
+
+   # Calculate Regioisomer Hashes
+   regioHashList = [rdMolHash.MolHash(rMol, rdkit.Chem.rdMolHash.HashFunction.Regioisomer) for rMol in rMols]
+   print(regioHashList)
+
+.. testoutput::
+   :options: -ELLIPSIS, +NORMALIZE_WHITESPACE
+
+   ['*C.*C(*)=O.*CC*.C1COCCN1.c1ccc2[nH]ccc2c1.c1ccc2ccccc2c1',
+    '*C(*)=O.*CCCCC.c1ccc2[nH]ccc2c1.c1ccc2ccccc2c1',
+    '*C.*C(*)=O.*CC*.C1COCCN1.c1ccc2[nH]ccc2c1.c1ccc2ccccc2c1',
+    '*C.*C(*)=O.*CC*.C1COCCN1.c1ccc2[nH]ccc2c1.c1ccc2ccccc2c1',
+    '*C.*C(*)=O.*CC*.C1COCCN1.c1ccc2[nH]ccc2c1.c1ccc2ccccc2c1',
+    '*C.*C.*C(*)=O.*C*.C1CNCCN1.c1ccc2[nH]ccc2c1.c1ccc2ccccc2c1']
+
+.. testcode::
+
+   rmatches =[]
+   for regioHash in regioHashList:
+       if regioHash == r0_regioHash:
+           print('Regioisomer: True')
+           rmatches.append('Regioisomer: True')
+       else:
+           print('Regioisomer: False')
+           rmatches.append('Regioisomer: False')
+
+.. testoutput::
+
+   Regioisomer: True
+   Regioisomer: False
+   Regioisomer: True
+   Regioisomer: True
+   Regioisomer: True
+   Regioisomer: False
+
+.. testcode::
+
+   # Create some labels
+   index = ['r0: ','r1: ','r2: ','r3: ','r4: ','r5: ']
+   labelList = [rmatches + index for rmatches,index in zip(index,rmatches)]
+   # Display molecules with labels
+   Draw.MolsToGridImage(rMols,legends=[label for label in labelList],
+                       subImgSize=(250,250), useSVG=False)
+   # note, that r0 is the initial molecule we were interested in.
+
+.. image:: images/RDKitCB_21_im5.png
+
+Contiguous Rotable Bonds
+=========================
+
+| **Author:** Paulo Tosco
+| **Source:** `<https://sourceforge.net/p/rdkit/mailman/message/36405144/>`_
+| **Index ID#:** RDKitCB_22
+| **Summary:** Calculate the largest number of contiguous rotable bonds.
+
+.. testcode::
+
+   from rdkit import Chem
+   from rdkit.Chem.Lipinski import RotatableBondSmarts
+
+.. testcode::
+
+   mol = Chem.MolFromSmiles('CCC(CC(C)CC1CCC1)C(CC(=O)O)N')
+   mol
+
+.. image:: images/RDKitCB_22_im0.png
+
+.. testcode::
+
+   def find_bond_groups(mol):
+       """Find groups of contiguous rotatable bonds and return them sorted by decreasing size"""
+       rot_atom_pairs = mol.GetSubstructMatches(RotatableBondSmarts)
+       rot_bond_set = set([mol.GetBondBetweenAtoms(*ap).GetIdx() for ap in rot_atom_pairs])
+       rot_bond_groups = []
+       while (rot_bond_set):
+           i = rot_bond_set.pop()
+           connected_bond_set = set([i])
+           stack = [i]
+           while (stack):
+               i = stack.pop()
+               b = mol.GetBondWithIdx(i)
+               bonds = []
+               for a in (b.GetBeginAtom(), b.GetEndAtom()):
+                   bonds.extend([b.GetIdx() for b in a.GetBonds() if (
+                       (b.GetIdx() in rot_bond_set) and (not (b.GetIdx() in connected_bond_set)))])
+               connected_bond_set.update(bonds)
+               stack.extend(bonds)
+           rot_bond_set.difference_update(connected_bond_set)
+           rot_bond_groups.append(tuple(connected_bond_set))
+       return tuple(sorted(rot_bond_groups, reverse = True, key = lambda x: len(x)))
+
+.. testcode::
+
+   # Find groups of contiguous rotatable bonds in mol
+   bond_groups = find_bond_groups(mol)
+   # As bond groups are sorted by decreasing size, the size of the first group (if any) 
+   # is the largest number of contiguous rotatable bonds in mol
+   largest_n_cont_rot_bonds = len(bond_groups[0]) if bond_groups else 0
+
+.. testcode::
+
+   print(largest_n_cont_rot_bonds)
+
+.. testoutput::
+
+   8
+
+.. testcode::
+
+   print(bond_groups)
+
+.. testoutput::
+
+   ((1, 2, 3, 5, 6, 10, 11, 12),)
+
+.. testcode::
+
+   mol
+
+.. image:: images/RDKitCB_22_im1.png
+
+
 Writing Molecules
 *******************
 
@@ -1011,10 +1412,65 @@ Organometallics with Dative Bonds
    CN(C)(C)->[Pt]
 
 
+Enumerate SMILES
+==================
+
+| **Author:** Guillaume Godin/Greg Landrum
+| **Source:** `<https://sourceforge.net/p/rdkit/mailman/message/36591616/>`_
+| **Index ID#:** RDKitCB_24
+| **Summary:** Enumerate variations of SMILES strings for the same molecule.
+
+.. testcode::
+
+   from rdkit import Chem
+
+.. testcode::
+
+   # create a mol object
+   mol = Chem.MolFromSmiles('CC(N)C1CC1')
+
+.. testcode::
+
+   # Generate 100 random SMILES
+   smis = []
+   for i in range(100):
+       smis.append(Chem.MolToSmiles(mol,doRandom=True,canonical=False))
+
+.. testcode::
+
+   # remove duplicates
+   smis_set = list(set(smis))
+   print(smis_set) # output order will be random; doctest skipped
+
+.. testoutput::
+   :options: +SKIP
+   
+   ['NC(C)C1CC1',
+    'C1(C(N)C)CC1',
+    'C(N)(C)C1CC1',
+    'CC(C1CC1)N',
+    'C1C(C(N)C)C1',
+    'C1C(C1)C(N)C',
+    'C(C1CC1)(C)N',
+    'C1(CC1)C(C)N',
+    'C1C(C(C)N)C1',
+    'C1CC1C(C)N',
+    'C(C1CC1)(N)C',
+    'C1(C(C)N)CC1',
+    'C1C(C1)C(C)N',
+    'C(C)(C1CC1)N',
+    'C1CC1C(N)C',
+    'C1(CC1)C(N)C',
+    'C(N)(C1CC1)C',
+    'NC(C1CC1)C',
+    'CC(N)C1CC1',
+    'C(C)(N)C1CC1']
+
 .. rubric:: References
 
 .. [#Hartenfeller2011] Markus Hartenfeller, Martin Eberle, Peter Meier, Cristina Nieto-Oberhuber, Karl-Heinz Altmann, Gisbert Schneider, Edgar Jacoby, and Steffen Renner Journal of Chemical Information and Modeling 2011 51 (12), 3093-3098. DOI: 10.1021/ci200379p
 
+.. [#OBoyle] Noel O'Boyle and Roger Sayle. Making a hash of it: the advantage of selectively leaving out structural information. 259th ACS National Meeting Presentation, 2019, San Diego, CA. `<https://www.nextmovesoftware.com/talks/OBoyle_MolHash_ACS_201908.pdf>`_
 
 .. testcleanup::
 
