@@ -1014,9 +1014,17 @@ std::pair<bool, bool> isAtomPotentialChiralCenter(
 
     // figure out if this is a legal chiral center or not:
     if (!hasDupes) {
-      if (nbrs.size() < 3) {
+      if (nbrs.size() < 3 
+       && (atom->getAtomicNum() != 15 && atom->getAtomicNum() != 33)) {
         // less than three neighbors is never stereogenic
+        // unless it is a phosphine/arsine with implicit H
         legalCenter = false;
+      } else if (atom->getAtomicNum() == 15 || atom->getAtomicNum() == 33) {
+        // from logical flow: nbrs.size is 3 or 4, or 2 (implicit H)
+        // Since InChI Software v. 1.02-standard (2009), phosphines and arsines
+        // are always treated as stereogenic even with H atom neighbors.
+        // Accept automatically.
+        legalCenter = true;
       } else if (nbrs.size() == 3) {
         // three-coordinate with a single H we'll accept automatically:
         if (atom->getTotalNumHs() != 1) {
