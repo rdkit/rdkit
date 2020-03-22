@@ -1934,7 +1934,7 @@ void testEmbedParameters() {
         "/Code/GraphMol/DistGeomHelpers/test_data/simple_torsion.macrocycle.etkdgv3.mol";
     RWMol *ref = MolFileToMol(fname, true, false);
     TEST_ASSERT(ref);
-    RWMol *mol = SmilesToMol("O=C1NCCCCCCCCC1");
+    RWMol *mol = SmilesToMol("C1NCCCCCCCCC1");
     TEST_ASSERT(mol);
     MolOps::addHs(*mol);
     TEST_ASSERT(ref->getNumAtoms() == mol->getNumAtoms());

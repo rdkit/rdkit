@@ -465,6 +465,14 @@ BOOST_PYTHON_MODULE(rdDistGeom) {
       "ETKDGv2", RDKit::getETKDGv2,
       "Returns an EmbedParameters object for the ETKDG method - version 2.",
       python::return_value_policy<python::manage_new_object>());
+  python::def(
+      "srETKDGv3", RDKit::getsrETKDGv3,
+      "Returns an EmbedParameters object for the ETKDG method - version 3 (small rings).",
+      python::return_value_policy<python::manage_new_object>());
+  python::def(
+      "ETKDGv3", RDKit::getETKDGv3,
+      "Returns an EmbedParameters object for the ETKDG method - version 3 (macrocycles).",
+      python::return_value_policy<python::manage_new_object>());
   python::def("ETDG", RDKit::getETDG,
               "Returns an EmbedParameters object for the ETDG method.",
               python::return_value_policy<python::manage_new_object>());
