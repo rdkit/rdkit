@@ -79,6 +79,7 @@ const EmbedParameters KDG(0,        // maxIterations
                           true,     // embedFragmentsSeparately
                           false,    // useSmallRingTorsions
                           false,    // useMacrocycleTorsions
+                          false,    // useMacrocycle14config
                           nullptr   // CPCI
 );
 
@@ -106,6 +107,7 @@ const EmbedParameters ETDG(0,         // maxIterations
                            true,     // embedFragmentsSeparately
                            false,    // useSmallRingTorsions
                            false,    // useMacrocycleTorsions
+                           false,    // useMacrocycle14config
                            nullptr   // CPCI
 );
 //! Parameters corresponding to Sereina Riniker's ETKDG approach
@@ -132,6 +134,7 @@ const EmbedParameters ETKDG(0,        // maxIterations
                             true,     // embedFragmentsSeparately
                             false,    // useSmallRingTorsions
                             false,    // useMacrocycleTorsions
+                            false,    // useMacrocycle14config
                             nullptr   // CPCI
 );
 
@@ -159,6 +162,63 @@ const EmbedParameters ETKDGv2(0,        // maxIterations
                               true,     // embedFragmentsSeparately
                               false,    // useSmallRingTorsions
                               false,    // useMacrocycleTorsions
+                              false,    // useMacrocycle14config
+                              nullptr   // CPCI
+);
+
+//! Parameters corresponding improved ETKDG by Wang, Witek, Landrum and Riniker (10.1021/acs.jcim.0c00025) - the macrocycle part
+const EmbedParameters ETKDGv3(0,        // maxIterations
+                              1,        // numThreads
+                              -1,       // randomSeed
+                              true,     // clearConfs
+                              false,    // useRandomCoords
+                              2.0,      // boxSizeMult
+                              true,     // randNegEig
+                              1,        // numZeroFail
+                              nullptr,  // coordMap
+                              1e-3,     // optimizerForceTol
+                              false,    // ignoreSmoothingFailures
+                              true,     // enforceChirality
+                              true,     // useExpTorsionAnglePrefs
+                              true,     // useBasicKnowledge
+                              false,    // verbose
+                              5.0,      // basinThresh
+                              -1.0,     // pruneRmsThresh
+                              true,     // onlyHeavyAtomsForRMS
+                              2,        // ETversion
+                              nullptr,  // boundsMat
+                              true,     // embedFragmentsSeparately
+                              false,    // useSmallRingTorsions
+                              true,     // useMacrocycleTorsions
+                              true,     // useMacrocycle14config
+                              nullptr   // CPCI
+);
+
+//! Parameters corresponding improved ETKDG by Wang, Witek, Landrum and Riniker (10.1021/acs.jcim.0c00025) - the small ring part
+const EmbedParameters srETKDGv3(0,        // maxIterations
+                              1,        // numThreads
+                              -1,       // randomSeed
+                              true,     // clearConfs
+                              false,    // useRandomCoords
+                              2.0,      // boxSizeMult
+                              true,     // randNegEig
+                              1,        // numZeroFail
+                              nullptr,  // coordMap
+                              1e-3,     // optimizerForceTol
+                              false,    // ignoreSmoothingFailures
+                              true,     // enforceChirality
+                              true,     // useExpTorsionAnglePrefs
+                              true,     // useBasicKnowledge
+                              false,    // verbose
+                              5.0,      // basinThresh
+                              -1.0,     // pruneRmsThresh
+                              true,     // onlyHeavyAtomsForRMS
+                              2,        // ETversion
+                              nullptr,  // boundsMat
+                              true,     // embedFragmentsSeparately
+                              true,     // useSmallRingTorsions
+                              false,    // useMacrocycleTorsions
+                              false,    // useMacrocycle14config
                               nullptr   // CPCI
 );
 
@@ -810,9 +870,9 @@ bool setupInitialBoundsMatrix(
   unsigned int nAtoms = mol->getNumAtoms();
   if (params.useExpTorsionAnglePrefs || params.useBasicKnowledge) {
     setTopolBounds(*mol, mmat, etkdgDetails.bonds, etkdgDetails.angles, true,
-                   false);
+                   false, params.useMacrocycle14config);
   } else {
-    setTopolBounds(*mol, mmat, true, false);
+    setTopolBounds(*mol, mmat, true, false, params.useMacrocycle14config);
   }
   double tol = 0.0;
   if (coordMap) {
@@ -823,7 +883,7 @@ bool setupInitialBoundsMatrix(
     // ok this bound matrix failed to triangle smooth - re-compute the
     // bounds matrix without 15 bounds and with VDW scaling
     initBoundsMat(mmat);
-    setTopolBounds(*mol, mmat, false, true);
+    setTopolBounds(*mol, mmat, false, true, params.useMacrocycle14config);
 
     if (coordMap) {
       adjustBoundsMatFromCoordMap(mmat, nAtoms, coordMap);
@@ -835,7 +895,7 @@ bool setupInitialBoundsMatrix(
       if (params.ignoreSmoothingFailures) {
         // proceed anyway with the more relaxed bounds matrix
         initBoundsMat(mmat);
-        setTopolBounds(*mol, mmat, false, true);
+        setTopolBounds(*mol, mmat, false, true, params.useMacrocycle14config);
 
         if (coordMap) {
           adjustBoundsMatFromCoordMap(mmat, nAtoms, coordMap);

@@ -153,6 +153,12 @@ DGeomHelpers::EmbedParameters *getETKDG() {  // ET version 1
 DGeomHelpers::EmbedParameters *getETKDGv2() {  // ET version 2
   return new DGeomHelpers::EmbedParameters(DGeomHelpers::ETKDGv2);
 }
+DGeomHelpers::EmbedParameters *getETKDGv3() {  //! Parameters corresponding improved ETKDG by Wang, Witek, Landrum and Riniker (10.1021/acs.jcim.0c00025) - the macrocycle part
+  return new DGeomHelpers::EmbedParameters(DGeomHelpers::ETKDGv3);
+}
+DGeomHelpers::EmbedParameters *getsrETKDGv3() {  //! Parameters corresponding improved ETKDG by Wang, Witek, Landrum and Riniker (10.1021/acs.jcim.0c00025) - the macrocycle part
+  return new DGeomHelpers::EmbedParameters(DGeomHelpers::srETKDGv3);
+}
 DGeomHelpers::EmbedParameters *getKDG() {
   return new DGeomHelpers::EmbedParameters(DGeomHelpers::KDG);
 }

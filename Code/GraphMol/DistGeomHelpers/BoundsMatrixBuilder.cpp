@@ -92,12 +92,10 @@ class ComputedData {
 /*!
   These are mostly bond lengths obtained from UFF parameters and then
   adjusted by a small tolerance to set the upper and lower limits
-
   \param mol          The molecule of interest
   \param mmat         Bounds matrix to which the bounds are written
   \param accumData    Used to store the data that have been calculated so far
                       about the molecule
-
 */
 void set12Bounds(const ROMol &mol, DistGeom::BoundsMatPtr mmat,
                  ComputedData &accumData);
@@ -108,12 +106,10 @@ void set12Bounds(const ROMol &mol, DistGeom::BoundsMatPtr mmat,
   cases here, in particular for 3, 4, and 5 membered rings. Special attention
   is also paid to fused ring ring systems, when setting bounds on atoms that
   have an atom between that is shared by multiple rings.
-
   \param mol          Molecule of interest
   \param mmat         Bounds matrix to which the bounds are written
   \param accumData    Used to store the data that have been calculated so far
                       about the molecule
-
   <b>Procedure</b>
   All 1-3 distances within all simple rings are first dealt with, while keeping
   track of
@@ -134,12 +130,10 @@ void set13Bounds(const ROMol &mol, DistGeom::BoundsMatPtr mmat,
   and max. torsion angles. The special cases deal with ring systems, double
   bonds
   with cis-trans specifications, and a few special sub-structures
-
   \param mol          Molecule of interest
   \param mmat         Bounds matrix to which the bounds are written
   \param accumData    Used to store the data that have been calculated so far
                       about the molecule
-
   <b>Procedure</b>
   As in the case of 1-3 distances 1-4 distance that are part of simple rings are
   first dealt with. The remaining 1-4 cases are dealt with while paying
@@ -147,12 +141,11 @@ void set13Bounds(const ROMol &mol, DistGeom::BoundsMatPtr mmat,
   to the special cases.
  */
 void set14Bounds(const ROMol &mol, DistGeom::BoundsMatPtr mmat,
-                 ComputedData &accumData);
+                 ComputedData &accumData, bool useMacrocycle14config = false);
 
 //! Set 1-5 distance bounds for atoms in a molecule
 /*!
   This is an optional call that recognizes a variety of special cases.
-
   \param mol          Molecule of interest
   \param mmat         Bounds matrix to which the bounds are written
   \param accumData    Used to store the data that have been calculated so far
@@ -165,7 +158,6 @@ void set15Bounds(const ROMol &mol, DistGeom::BoundsMatPtr mmat,
 // by
 //! other bounds (1-2, 1-3, 1-4, or 1-5)
 /*!
-
   \param mol             Molecule of interest
   \param mmat            Bounds matrix to which the bounds are written
   \param useTopolScaling If true scale the sum of the vdW radii while setting
@@ -1359,7 +1351,7 @@ void _setMacrocycle14Bounds(const ROMol &mol, const Bond *bnd1, const Bond *bnd2
 }
 
 void set14Bounds(const ROMol &mol, DistGeom::BoundsMatPtr mmat,
-                 ComputedData &accumData, double *distMatrix) {
+                 ComputedData &accumData, double *distMatrix, bool useMacrocycle14config) {
   unsigned int npt = mmat->numRows();
   CHECK_INVARIANT(npt == mol.getNumAtoms(), "Wrong size metric matrix");
 
@@ -1399,15 +1391,18 @@ void set14Bounds(const ROMol &mol, DistGeom::BoundsMatPtr mmat,
       donePaths[id1] = 1;
       donePaths[id2] = 1;
 
-      if (rSize > 5 && rSize < minMacrocycleRingSize) {
-        _setInRing14Bounds(mol, mol.getBondWithIdx(bid1),
-                           mol.getBondWithIdx(bid2), mol.getBondWithIdx(bid3),
-                           accumData, mmat, distMatrix, rSize);
-      }
-      else if(rSize >= minMacrocycleRingSize) {
-                _setMacrocycle14Bounds(mol,mol.getBondWithIdx(bid1),
+      if (rSize > 5) {
+        if (useMacrocycle14config && rSize >= minMacrocycleRingSize) {
+          _setMacrocycle14Bounds(mol,mol.getBondWithIdx(bid1),
                            mol.getBondWithIdx(bid2), mol.getBondWithIdx(bid3), accumData, mmat, distMatrix);
-      }else {
+        }
+        else {
+            _setInRing14Bounds(mol, mol.getBondWithIdx(bid1),
+                               mol.getBondWithIdx(bid2), mol.getBondWithIdx(bid3),
+                               accumData, mmat, distMatrix, rSize);
+        }
+      }
+      else {
         _record14Path(mol, bid1, bid2, bid3, accumData);
       }
 
@@ -1498,7 +1493,7 @@ void initBoundsMat(DistGeom::BoundsMatPtr mmat, double defaultMin,
 };
 
 void setTopolBounds(const ROMol &mol, DistGeom::BoundsMatPtr mmat,
-                    bool set15bounds, bool scaleVDW) {
+                    bool set15bounds, bool scaleVDW, bool useMacrocycle14config) {
   PRECONDITION(mmat.get(), "bad pointer");
   unsigned int nb = mol.getNumBonds();
   unsigned int na = mol.getNumAtoms();
@@ -1512,7 +1507,7 @@ void setTopolBounds(const ROMol &mol, DistGeom::BoundsMatPtr mmat,
   set12Bounds(mol, mmat, accumData);
   set13Bounds(mol, mmat, accumData);
 
-  set14Bounds(mol, mmat, accumData, distMatrix);
+  set14Bounds(mol, mmat, accumData, distMatrix, useMacrocycle14config);
 
   if (set15bounds) {
     set15Bounds(mol, mmat, accumData, distMatrix);
@@ -1571,7 +1566,7 @@ void collectBondsAndAngles(const ROMol &mol,
 void setTopolBounds(const ROMol &mol, DistGeom::BoundsMatPtr mmat,
                     std::vector<std::pair<int, int> > &bonds,
                     std::vector<std::vector<int> > &angles, bool set15bounds,
-                    bool scaleVDW) {
+                    bool scaleVDW, bool useMacrocycle14config) {
   PRECONDITION(mmat.get(), "bad pointer");
   bonds.clear();
   angles.clear();
@@ -1586,7 +1581,7 @@ void setTopolBounds(const ROMol &mol, DistGeom::BoundsMatPtr mmat,
 
   set12Bounds(mol, mmat, accumData);
   set13Bounds(mol, mmat, accumData);
-  set14Bounds(mol, mmat, accumData, distMatrix);
+  set14Bounds(mol, mmat, accumData, distMatrix, useMacrocycle14config);
 
   if (set15bounds) {
     set15Bounds(mol, mmat, accumData, distMatrix);
@@ -1647,12 +1642,9 @@ double _compute15DistsCisCis(double d1, double d2, double d3, double d4,
  four atoms are in cis configuration. The 15 limits are computed assuming the
  following
  configuration
-
-
   1     4-5
    \   /
     2-3
-
  ARGUMENTS:
    d1 - distance between 1 and 2
    d2 - distance between 2 and 3
@@ -1689,14 +1681,11 @@ double _compute15DistsCisTrans(double d1, double d2, double d3, double d4,
  the
  following
  configuration
-
   1
    \
     2-3
        \
         4-5
-
-
  ARGUMENTS:
    d1 - distance between 1 and 2
    d2 - distance between 2 and 3
@@ -1733,7 +1722,6 @@ double _compute15DistsTransTrans(double d1, double d2, double d3, double d4,
  the
  following
  configuration
-
                     1
                      \
                       2-3
