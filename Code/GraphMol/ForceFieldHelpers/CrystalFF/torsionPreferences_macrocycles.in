@@ -1,5 +1,5 @@
 /* SMARTS patterns for experimental torsion angle preferences
- * taken from J. Chem. Inf. Model. 56, 1, (2016)
+ * taken from J. Chem. Inf. Model. (2020), doi: 10.1021/acs.jcim.0c00025
  *
  * torsion-angle potential form:
  * V = V1*(1 + s1*cos(1x)) + V2*(1 + s2*cos(2x)) + V3*(1 + s3*cos(1x))
