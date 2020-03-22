@@ -817,11 +817,11 @@ class RDKIT_MOLDRAW2D_EXPORT MolDraw2D {
 };
 
 // return true if the line l1s->l1f intersects line l2s->l2f
-bool doLinesIntersect(const Point2D &l1s, const Point2D &l1f,
+RDKIT_MOLDRAW2D_EXPORT bool doLinesIntersect(const Point2D &l1s, const Point2D &l1f,
                       const Point2D &l2s, const Point2D &l2f);
 // return true if line ls->lf intersects (or is fully inside) the
 // rectangle of the string.
-bool doesLineIntersectLabel(const Point2D &ls, const Point2D &lf,
+RDKIT_MOLDRAW2D_EXPORT bool doesLineIntersectLabel(const Point2D &ls, const Point2D &lf,
                             const StringRect &lab_rect);
 
 }  // namespace RDKit
