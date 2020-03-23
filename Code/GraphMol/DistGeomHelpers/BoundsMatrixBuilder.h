@@ -43,11 +43,11 @@ RDKIT_DISTGEOMHELPERS_EXPORT void initBoundsMat(DistGeom::BoundsMatPtr mmat,
   \param mmat         Bounds matrix to the bounds are written
   \param set15bounds  If true try to set 1-5 bounds also based on topology
   \param scaleVDW     If true scale the sum of the vdW radii while setting lower
-  \param useMacrocycle14config  If 1-4 distances bound heuristics for macrocycles is used
   bounds
                       so that a smaller value (0.7*(vdw1 + vdw2) ) is used for
   paths
                       that are less five bonds apart.
+  \param useMacrocycle14config  If 1-4 distances bound heuristics for macrocycles is used
   <b>Note</b>
   For some strained systems the bounds matrix resulting from setting 1-5 bounds
   may
