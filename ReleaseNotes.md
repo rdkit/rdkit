@@ -134,6 +134,9 @@ Wawrzyniak, Hsiao Yi, 'luancarvalhomartins'
  (github pull #2982 from greglandrum)
   - Tautomer enumeration should remove stereo in all tautomers 
  (github issue #2990 from greglandrum)
+  - Removed dllexport from a function that lives in the anonymous namespace
+ (github pull #3027 from ptosco)
+
 
 ## New Features and Enhancements:
   - Morse atom fingerprint
