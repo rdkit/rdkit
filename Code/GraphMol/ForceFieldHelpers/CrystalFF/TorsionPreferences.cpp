@@ -166,17 +166,22 @@ void getExperimentalTorsions(const RDKit::ROMol &mol, CrystalFFDetails &details,
   const RingInfo *rinfo = mol.getRingInfo();
   const VECT_INT_VECT &bondRings = rinfo->bondRings();
   VECT_INT_VECT_CI rii, rjj;
-  for (rii = bondRings.begin(); rii != bondRings.end(); rii++) {
+  for (rii = bondRings.begin(); rii != bondRings.end(); ++rii) {
     boost::dynamic_bitset<> rs1(nb); // bitset for ring 1
     for (unsigned int i = 0; i < rii->size(); i++) {
       rs1[(*rii)[i]] = 1;
     }
-    for (rjj = rii+1; rjj != bondRings.end(); rjj++) {
-      boost::dynamic_bitset<> rs2(nb); // bitset for ring 2
-      for (unsigned int i = 0; i < rjj->size(); i++) {
-        rs2[(*rjj)[i]] = 1;
+    for (rjj = rii+1; rjj != bondRings.end(); ++rjj) {
+      unsigned int nInCommon = 0;
+      for (auto rjj_i : *rjj) {
+        if (rs1[rjj_i]) {
+          ++nInCommon;
+          if (nInCommon > 1) {
+            break;
+          }
+        }
       }
-      if ((rs1 & rs2).count() > 1) { // more than one bond in common
+      if (nInCommon > 1) {  // more than one bond in common
         for (unsigned int i = 0; i < rii->size(); i++) {
           excludedBonds[(*rii)[i]] = 1; // exclude all bonds of ring 1
         }
