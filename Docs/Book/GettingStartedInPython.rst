@@ -279,17 +279,17 @@ method, which is described in more detail below):
 
 .. doctest::
 
-  >>> AllChem.EmbedMolecule(m2)
+  >>> AllChem.EmbedMolecule(m2,randomSeed=0xf00d)   # optional random seed for reproducibility)
   0
   >>> print(Chem.MolToMolBlock(m2))    # doctest: +NORMALIZE_WHITESPACE
   cyclobutane
        RDKit          3D
   <BLANKLINE>
     4  4  0  0  0  0  0  0  0  0999 V2000
-     -0.8321    0.5405   -0.1981 C   0  0  0  0  0  0  0  0  0  0  0  0
-     -0.3467   -0.8825   -0.2651 C   0  0  0  0  0  0  0  0  0  0  0  0
-      0.7190   -0.5613    0.7314 C   0  0  0  0  0  0  0  0  0  0  0  0
-      0.4599    0.9032    0.5020 C   0  0  0  0  0  0  0  0  0  0  0  0
+     -0.7372   -0.6322   -0.4324 C   0  0  0  0  0  0  0  0  0  0  0  0
+     -0.4468    0.8555   -0.5229 C   0  0  0  0  0  0  0  0  0  0  0  0
+      0.8515    0.5725    0.2205 C   0  0  0  0  0  0  0  0  0  0  0  0
+      0.3326   -0.7959    0.6107 C   0  0  0  0  0  0  0  0  0  0  0  0
     1  2  1  0
     2  3  1  0
     3  4  1  0
@@ -303,7 +303,7 @@ hydrogens to the molecule first:
 .. doctest::
 
   >>> m3 = Chem.AddHs(m2)
-  >>> AllChem.EmbedMolecule(m3)
+  >>> AllChem.EmbedMolecule(m3,randomSeed=0xf00d)   # optional random seed for reproducibility)
   0
 
 These can then be removed:
@@ -316,10 +316,10 @@ These can then be removed:
        RDKit          3D
   <BLANKLINE>
     4  4  0  0  0  0  0  0  0  0999 V2000
-      0.3497    0.9755   -0.2202 C   0  0  0  0  0  0  0  0  0  0  0  0
-      0.9814   -0.3380    0.2534 C   0  0  0  0  0  0  0  0  0  0  0  0
-     -0.3384   -1.0009   -0.1474 C   0  0  0  0  0  0  0  0  0  0  0  0
-     -0.9992    0.3532    0.1458 C   0  0  0  0  0  0  0  0  0  0  0  0
+      1.0256    0.2491   -0.0964 C   0  0  0  0  0  0  0  0  0  0  0  0
+     -0.2041    0.9236    0.4320 C   0  0  0  0  0  0  0  0  0  0  0  0
+     -1.0435   -0.2466   -0.0266 C   0  0  0  0  0  0  0  0  0  0  0  0
+      0.2104   -0.9922   -0.3417 C   0  0  0  0  0  0  0  0  0  0  0  0
     1  2  1  0
     2  3  1  0
     3  4  1  0
