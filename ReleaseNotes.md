@@ -224,10 +224,12 @@ Wawrzyniak, Hsiao Yi, 'luancarvalhomartins'
  (github pull #2986 from greglandrum)
   - Add Atom Feature Vectors 
  (github pull #2988 from thegodone)
+  - Improve Conformational Sampling of Small and Large Ring Molecules
+ (github pull #2731 from ptosco)
   - Add CoulombMat calculator
  (github pull #2993 from thegodone)
   - Update azure-pipelines.yml
- (github pull #2997 from greglandrum)
+ (github pull #2999 from hjuinj)
   - Fix atom highlighting in notebook PNGs
  (github pull #3000 from greglandrum)
   - adds a one-liner for getting a vector of random smiles for a molecule
