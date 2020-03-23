@@ -67,10 +67,10 @@ struct PySysErrWrite : std::ostream, std::streambuf {
     buffer += c;
     if (c == '\n') {
       // Python IO is not thread safe, so grab the GIL
-      PyGILState_STATE gstate;
-      gstate = PyGILState_Ensure();
-      PySys_WriteStderr("%s", (prefix + buffer).c_str());
-      PyGILState_Release(gstate);
+      {
+        PyGILStateHolder h;
+        PySys_WriteStderr("%s", (prefix + buffer).c_str());
+      }
       buffer.clear();
     }
   }

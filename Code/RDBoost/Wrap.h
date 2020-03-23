@@ -142,6 +142,17 @@ void pythonObjectToVect(const python::object &obj, std::vector<T> &res) {
 #define RDUNUSED
 #endif
 
+class PyGILStateHolder {
+public:
+  PyGILStateHolder() :
+    d_gstate(PyGILState_Ensure()) {}
+  ~PyGILStateHolder() {
+    PyGILState_Release(d_gstate);
+  }
+private:
+  PyGILState_STATE d_gstate;
+};
+
 #ifdef RDK_THREADSAFE_SSS
 // Release the Global Interpreter lock at certain places
 //  on construction - release the lock
