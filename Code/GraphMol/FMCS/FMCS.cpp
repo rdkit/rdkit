@@ -39,11 +39,12 @@ void MCSParameters::setMCSAtomTyperFromEnum(AtomComparator atomComp) {
       AtomTyper = MCSAtomCompareAnyHeavyAtom;
       break;
     default:
-      throw std::runtime_error("Unknown AtomComparator");
+      throw ValueErrorException("Unknown AtomComparator");
   }
 }
 
 void MCSParameters::setMCSAtomTyperFromConstChar(const char *atomComp) {
+  PRECONDITION(atomComp, "atomComp must not be NULL");
   static const std::map<const char *, AtomComparator> atomCompStringToEnum = {
     { "Any", AtomCompareAny },
     { "Elements", AtomCompareElements },
@@ -70,11 +71,12 @@ void MCSParameters::setMCSBondTyperFromEnum(BondComparator bondComp) {
       BondTyper = MCSBondCompareOrderExact;
       break;
     default:
-      throw std::runtime_error("Unknown BondComparator");
+      throw ValueErrorException("Unknown BondComparator");
   }
 }
 
 void MCSParameters::setMCSBondTyperFromConstChar(const char *bondComp) {
+  PRECONDITION(bondComp, "bondComp must not be NULL");
   static const std::map<const char *, BondComparator> bondCompStringToEnum = {
     { "Any", BondCompareAny },
     { "Order", BondCompareOrder },
@@ -181,6 +183,7 @@ MCSResult findMCS(const std::vector<ROMOL_SPTR>& mols, bool maximizeBonds,
 bool MCSProgressCallbackTimeout(const MCSProgressData& stat,
                                 const MCSParameters& params, void* userData) {
   RDUNUSED_PARAM(stat);
+  PRECONDITION(userData, "userData must not be NULL");
   auto* t0 = (unsigned long long*)userData;
   unsigned long long t = nanoClock();
   return t - *t0 <= params.Timeout * 1000000ULL;
@@ -431,6 +434,7 @@ inline bool ringFusionCheck(const std::uint32_t c1[],
                             const FMCS::Graph& query, const ROMol& mol2,
                             const FMCS::Graph& target,
                             const MCSParameters* p) {
+  PRECONDITION(p, "p must not be NULL");
   const RingInfo* ri2 = mol2.getRingInfo();
   const VECT_INT_VECT& br2 = ri2->bondRings();
   std::vector<size_t> nonFusedBonds(br2.size(), 0);
@@ -576,6 +580,7 @@ bool FinalMatchCheckFunction(const std::uint32_t c1[], const std::uint32_t c2[],
                              const ROMol& mol1, const FMCS::Graph& query,
                              const ROMol& mol2, const FMCS::Graph& target,
                              const MCSParameters* p) {
+  PRECONDITION(p, "p must not be NULL");
   if ((p->BondCompareParameters.MatchFusedRings ||
        p->BondCompareParameters.MatchFusedRingsStrict) &&
       !ringFusionCheck(c1, c2, mol1, query, mol2, target, p)) {

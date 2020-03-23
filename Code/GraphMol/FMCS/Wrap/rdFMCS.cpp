@@ -194,6 +194,7 @@ public:
     p->InitialSeed = value;
   }
   void setMCSAtomTyper(PyObject *atomComp) {
+    PRECONDITION(atomComp, "atomComp must not be NULL");
     python::object atomCompObject(python::handle<>(python::borrowed(atomComp)));
     python::extract<AtomComparator> extractAtomComparator(atomCompObject);
     if (extractAtomComparator.check()) {
@@ -253,6 +254,7 @@ public:
     return res;
   }
   void setMCSBondTyper(PyObject *bondComp) {
+    PRECONDITION(bondComp, "bondComp must not be NULL");
     python::object bondCompObject(python::handle<>(python::borrowed(bondComp)));
     python::extract<BondComparator> extractBondComparator(bondCompObject);
     if (extractBondComparator.check()) {
@@ -315,6 +317,7 @@ public:
     return res;
   }
   void setMCSProgressCallback(PyObject *progress) {
+    PRECONDITION(progress, "progress must not be NULL");
     python::object progressObject(python::handle<>(python::borrowed(progress)));
     python::extract<PyMCSProgress *> extractMCSProgress(progressObject);
     if (extractMCSProgress.check()) {
@@ -337,16 +340,19 @@ public:
     return python::object();
   }
   void clearRingTableCache() {
-    if (cfud->ringMatchTablesMols)
+    if (cfud->ringMatchTablesMols) {
       cfud->ringMatchTablesMols->clear();
-    if (cfud->ringMatchTables)
+    }
+    if (cfud->ringMatchTables) {
       cfud->ringMatchTables->clear();
+    }
   }
 private:
   static bool MCSAtomComparePyFunc(const MCSAtomCompareParameters& p,
                                    const ROMol& mol1, unsigned int atom1,
                                    const ROMol& mol2, unsigned int atom2,
                                    void* userData) {
+    PRECONDITION(userData, "userData must not be NULL");
     PyCompareFunctionUserData *cfud = static_cast<PyCompareFunctionUserData *>(userData);
     bool res = false;
     {
@@ -361,6 +367,7 @@ private:
                                    const ROMol& mol1, unsigned int bond1,
                                    const ROMol& mol2, unsigned int bond2,
                                    void* userData) {
+    PRECONDITION(userData, "userData must not be NULL");
     PyCompareFunctionUserData *cfud = static_cast<PyCompareFunctionUserData *>(userData);
     bool res = false;
     {
@@ -373,6 +380,7 @@ private:
   }
   static bool MCSProgressCallbackPyFunc(const MCSProgressData& stat,
                                         const MCSParameters& params, void* userData) {
+    PRECONDITION(userData, "userData must not be NULL");
     PyProgressCallbackUserData *pcud = static_cast<PyProgressCallbackUserData *>(userData);
     bool res = false;
     {

@@ -258,10 +258,11 @@ void testFileMCSB(
 #ifdef xxVERBOSE_STATISTICS_ON
   FILE* ft = fopen((outFile + ".stat.csv").c_str(), "wt");
   setvbuf(ft, 0, _IOFBF, 4 * 1024);  // small file
-  if (ft)
+  if (ft) {
     fprintf(ft,
             "N; Status; dAtoms; dBonds; t(sec); ref.t; Seed; MatchCall; "
             "AtomCmp; BondCmp\n");  // CSV Header
+  }
 #endif
   n = 0;
   p.Timeout = timeout;
