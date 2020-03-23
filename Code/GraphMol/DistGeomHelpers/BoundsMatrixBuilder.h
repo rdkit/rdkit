@@ -21,7 +21,6 @@ namespace DGeomHelpers {
   \param mmat        pointer to the bounds matrix to be altered
   \param defaultMin  default value for the lower distance bounds
   \param defaultMax  default value for the upper distance bounds
-
 */
 RDKIT_DISTGEOMHELPERS_EXPORT void initBoundsMat(DistGeom::BoundsMatrix *mmat,
                                                 double defaultMin = 0.0,
@@ -38,10 +37,8 @@ RDKIT_DISTGEOMHELPERS_EXPORT void initBoundsMat(DistGeom::BoundsMatPtr mmat,
   This consists of setting 1-2, 1-3 and 1-4 distance based on bond lengths,
   bond angles and torsion angle ranges. Optionally 1-5 bounds can also be set,
   in particular, for path that contain rigid 1-4 paths.
-
   The final step involves setting lower bound to the sum of the vdW radii for
   the remaining atom pairs.
-
   \param mol          The molecule of interest
   \param mmat         Bounds matrix to the bounds are written
   \param set15bounds  If true try to set 1-5 bounds also based on topology
@@ -50,17 +47,15 @@ RDKIT_DISTGEOMHELPERS_EXPORT void initBoundsMat(DistGeom::BoundsMatPtr mmat,
                       so that a smaller value (0.7*(vdw1 + vdw2) ) is used for
   paths
                       that are less five bonds apart.
-
-  <b>Note</b>
-  For some strained systems the bounds matrix resulting from setting 1-5 bounds
-  may
-  fail triangle smoothing. In these cases it is recommended to back out and
-  recompute the bounds matrix with no 1-5 bounds and with vdW scaling.
+  \param useMacrocycle14config  If 1-4 distances bound heuristics for
+  macrocycles is used <b>Note</b> For some strained systems the bounds matrix
+  resulting from setting 1-5 bounds may fail triangle smoothing. In these cases
+  it is recommended to back out and recompute the bounds matrix with no 1-5
+  bounds and with vdW scaling.
 */
-RDKIT_DISTGEOMHELPERS_EXPORT void setTopolBounds(const ROMol &mol,
-                                                 DistGeom::BoundsMatPtr mmat,
-                                                 bool set15bounds = true,
-                                                 bool scaleVDW = false);
+RDKIT_DISTGEOMHELPERS_EXPORT void setTopolBounds(
+    const ROMol &mol, DistGeom::BoundsMatPtr mmat, bool set15bounds = true,
+    bool scaleVDW = false, bool useMacrocycle14config = false);
 
 /*! \overload for experimental torsion angle preferences
  */
@@ -68,12 +63,11 @@ RDKIT_DISTGEOMHELPERS_EXPORT void setTopolBounds(
     const ROMol &mol, DistGeom::BoundsMatPtr mmat,
     std::vector<std::pair<int, int>> &bonds,
     std::vector<std::vector<int>> &angles, bool set15bounds = true,
-    bool scaleVDW = false);
+    bool scaleVDW = false, bool useMacrocycle14config = false);
 
 //! generate the vectors of bonds and angles used by (ET)KDG
 RDKIT_DISTGEOMHELPERS_EXPORT void collectBondsAndAngles(
-    const ROMol &mol, 
-    std::vector<std::pair<int, int>> &bonds,
+    const ROMol &mol, std::vector<std::pair<int, int>> &bonds,
     std::vector<std::vector<int>> &angles);
 
 }  // namespace DGeomHelpers

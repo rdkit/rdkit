@@ -555,6 +555,33 @@ class TestCase(unittest.TestCase):
         self.assertAlmostEqual((conf.GetAtomPosition(3)-conf.GetAtomPosition(2)).Length(),1.2,delta=0.05)
         self.assertAlmostEqual((conf.GetAtomPosition(3)-conf.GetAtomPosition(4)).Length(),1.2,delta=0.05)
 
+    def testProvidingCPCI(self):
+        """
+        test for a ring molecule, repeated generating a conformer with and without enforcing 
+        an additional +ve interaction between a pair of non-bonded atoms (termed CPCI, 
+        custom pairwise charge-like interaciton), in every iteration, applying CPCI should
+        yield a conformer where this pair of atoms are further apart.
+        """
+        for i in range(5):
+            ps = rdDistGeom.EmbedParameters()
+            ps.randomSeed = i
+            ps.useBasicKnowledge = True
+            ps.useRandomCoords = False
+            m1 = Chem.MolFromSmiles("C1CCCC1C")
+            self.assertEqual(rdDistGeom.EmbedMolecule(m1,ps),0)
+
+            m2 = Chem.MolFromSmiles("C1CCCC1C")
+            ps = rdDistGeom.EmbedParameters()
+            ps.randomSeed = i
+            ps.useRandomCoords = False
+            ps.useBasicKnowledge = True
+            ps.SetCPCI({ (0,3) : 0.9 } )
+            self.assertEqual(rdDistGeom.EmbedMolecule(m2,ps),0)
+
+            conf1 = m1.GetConformer()
+            conf2 = m2.GetConformer()
+            self.assertTrue((conf2.GetAtomPosition(3)-conf2.GetAtomPosition(0)).Length() > (conf1.GetAtomPosition(3)-conf1.GetAtomPosition(0)).Length())
+
         
 
 
