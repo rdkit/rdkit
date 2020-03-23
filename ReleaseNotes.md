@@ -256,7 +256,9 @@ Wawrzyniak, Hsiao Yi, 'luancarvalhomartins'
  (github pull #3023 from ptosco)
   - add random seed to docs to get reproducible conformations
  (github pull #3026 from greglandrum)
-   
+  - update docs for 2020.03
+ (github pull #3028 from greglandrum)
+
 
 
 ## Deprecated code (to be removed in a future release):
