@@ -64,7 +64,6 @@ RWMol *fragmentParent(const RWMol &mol, const CleanupParameters &params,
   LargestFragmentChooser lfragchooser(params.preferOrganic);
   ROMol nm(*cleaned);
   ROMOL_SPTR lfrag(lfragchooser.choose(nm));
-  delete cleaned;
   return new RWMol(*lfrag);
 }
 
@@ -85,13 +84,16 @@ RWMol *chargeParent(const RWMol &mol, const CleanupParameters &params,
   // Return the charge parent of a given molecule.
   // The charge parent is the uncharged version of the fragment parent.
 
-  RWMol *m = nullptr;
+  const RWMol *m = nullptr;
 
   if (!skip_standardize) {
     m = cleanup(mol, params);
+  } else {
+    m = &mol;
   }
 
-  RWMOL_SPTR fragparent(fragmentParent(*m, params, true));
+
+  RWMOL_SPTR fragparent(fragmentParent(*m, params, skip_standardize));
 
   // if fragment...
   ROMol nm(*fragparent);
