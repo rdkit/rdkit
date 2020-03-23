@@ -84,24 +84,24 @@ const EmbedParameters KDG(0,        // maxIterations
 );
 
 //! Parameters corresponding to Sereina Riniker's ETDG approach
-const EmbedParameters ETDG(0,         // maxIterations
-                           1,         // numThreads
-                           -1,        // randomSeed
-                           true,      // clearConfs
-                           false,     // useRandomCoords
-                           2.0,       // boxSizeMult
-                           true,      // randNegEig
-                           1,         // numZeroFail
-                           nullptr,   // coordMap
-                           1e-3,      // optimizerForceTol
-                           false,     // ignoreSmoothingFailures
-                           false,     // enforceChirality
-                           true,      // useExpTorsionAnglePrefs
-                           false,     // useBasicKnowledge
-                           false,     // verbose
-                           5.0,       // basinThresh
-                           -1.0,      // pruneRmsThresh
-                           true,      // onlyHeavyAtomsForRMS
+const EmbedParameters ETDG(0,        // maxIterations
+                           1,        // numThreads
+                           -1,       // randomSeed
+                           true,     // clearConfs
+                           false,    // useRandomCoords
+                           2.0,      // boxSizeMult
+                           true,     // randNegEig
+                           1,        // numZeroFail
+                           nullptr,  // coordMap
+                           1e-3,     // optimizerForceTol
+                           false,    // ignoreSmoothingFailures
+                           false,    // enforceChirality
+                           true,     // useExpTorsionAnglePrefs
+                           false,    // useBasicKnowledge
+                           false,    // verbose
+                           5.0,      // basinThresh
+                           -1.0,     // pruneRmsThresh
+                           true,     // onlyHeavyAtomsForRMS
                            1,        // ETversion
                            nullptr,  // boundsMat
                            true,     // embedFragmentsSeparately
@@ -166,7 +166,8 @@ const EmbedParameters ETKDGv2(0,        // maxIterations
                               nullptr   // CPCI
 );
 
-//! Parameters corresponding improved ETKDG by Wang, Witek, Landrum and Riniker (10.1021/acs.jcim.0c00025) - the macrocycle part
+//! Parameters corresponding improved ETKDG by Wang, Witek, Landrum and Riniker
+//! (10.1021/acs.jcim.0c00025) - the macrocycle part
 const EmbedParameters ETKDGv3(0,        // maxIterations
                               1,        // numThreads
                               -1,       // randomSeed
@@ -194,32 +195,33 @@ const EmbedParameters ETKDGv3(0,        // maxIterations
                               nullptr   // CPCI
 );
 
-//! Parameters corresponding improved ETKDG by Wang, Witek, Landrum and Riniker (10.1021/acs.jcim.0c00025) - the small ring part
+//! Parameters corresponding improved ETKDG by Wang, Witek, Landrum and Riniker
+//! (10.1021/acs.jcim.0c00025) - the small ring part
 const EmbedParameters srETKDGv3(0,        // maxIterations
-                              1,        // numThreads
-                              -1,       // randomSeed
-                              true,     // clearConfs
-                              false,    // useRandomCoords
-                              2.0,      // boxSizeMult
-                              true,     // randNegEig
-                              1,        // numZeroFail
-                              nullptr,  // coordMap
-                              1e-3,     // optimizerForceTol
-                              false,    // ignoreSmoothingFailures
-                              true,     // enforceChirality
-                              true,     // useExpTorsionAnglePrefs
-                              true,     // useBasicKnowledge
-                              false,    // verbose
-                              5.0,      // basinThresh
-                              -1.0,     // pruneRmsThresh
-                              true,     // onlyHeavyAtomsForRMS
-                              2,        // ETversion
-                              nullptr,  // boundsMat
-                              true,     // embedFragmentsSeparately
-                              true,     // useSmallRingTorsions
-                              false,    // useMacrocycleTorsions
-                              false,    // useMacrocycle14config
-                              nullptr   // CPCI
+                                1,        // numThreads
+                                -1,       // randomSeed
+                                true,     // clearConfs
+                                false,    // useRandomCoords
+                                2.0,      // boxSizeMult
+                                true,     // randNegEig
+                                1,        // numZeroFail
+                                nullptr,  // coordMap
+                                1e-3,     // optimizerForceTol
+                                false,    // ignoreSmoothingFailures
+                                true,     // enforceChirality
+                                true,     // useExpTorsionAnglePrefs
+                                true,     // useBasicKnowledge
+                                false,    // verbose
+                                5.0,      // basinThresh
+                                -1.0,     // pruneRmsThresh
+                                true,     // onlyHeavyAtomsForRMS
+                                2,        // ETversion
+                                nullptr,  // boundsMat
+                                true,     // embedFragmentsSeparately
+                                true,     // useSmallRingTorsions
+                                false,    // useMacrocycleTorsions
+                                false,    // useMacrocycle14config
+                                nullptr   // CPCI
 );
 
 namespace detail {
@@ -568,14 +570,13 @@ bool minimizeWithExpTorsions(RDGeom::PointPtrVect &positions,
   // create the force field
   std::unique_ptr<ForceFields::ForceField> field;
   if (embedParams.useBasicKnowledge) {  // ETKDG or KDG
-      if (embedParams.CPCI != nullptr) {
-        field.reset(DistGeom::construct3DForceField(*eargs.mmat, positions3D,
-                                                *eargs.etkdgDetails, *embedParams.CPCI));
-      }
-      else{
-        field.reset(DistGeom::construct3DForceField(*eargs.mmat, positions3D,
-                                                *eargs.etkdgDetails));
-      }
+    if (embedParams.CPCI != nullptr) {
+      field.reset(DistGeom::construct3DForceField(
+          *eargs.mmat, positions3D, *eargs.etkdgDetails, *embedParams.CPCI));
+    } else {
+      field.reset(DistGeom::construct3DForceField(*eargs.mmat, positions3D,
+                                                  *eargs.etkdgDetails));
+    }
   } else {  // plain ETDG
     field.reset(DistGeom::constructPlain3DForceField(*eargs.mmat, positions3D,
                                                      *eargs.etkdgDetails));
@@ -1090,7 +1091,8 @@ void EmbedMultipleConfs(ROMol &mol, INT_VECT &res, unsigned int numConfs,
            "does not work with molecules that have multiple fragments. The "
            "boundsMat will be ignored."
         << std::endl;
-    coordMap = nullptr; //FIXME not directly related to ETKDG, but here I think it should be params.boundsMat = nullptr
+    coordMap = nullptr;  // FIXME not directly related to ETKDG, but here I
+                         // think it should be params.boundsMat = nullptr
   }
 
   // we will generate conformations for each fragment in the molecule

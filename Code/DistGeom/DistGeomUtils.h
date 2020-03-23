@@ -145,7 +145,7 @@ RDKIT_DISTGEOMETRY_EXPORT ForceFields::ForceField *construct3DForceField(
   \param positions       A vector of pointers to 3D Points to write out the
   resulting coordinates
   \param etkdgDetails    Contains information about the ETKDG force field
-  \param CPCI            Contains which atom pair(s) have what strength of 
+  \param CPCI            Contains which atom pair(s) have what strength of
   attractive/repulsive electrostatic interaction(s)
 
   <b>NOTE:</b> the caller is responsible for deleting this force field.

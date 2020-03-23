@@ -367,21 +367,21 @@ ForceFields::ForceField *construct3DForceField(
 ForceFields::ForceField *construct3DForceField(
     const BoundsMatrix &mmat, RDGeom::Point3DPtrVect &positions,
     const ForceFields::CrystalFF::CrystalFFDetails &etkdgDetails,
-    const std::map<std::pair<unsigned int, unsigned int>, double> &CPCI){
+    const std::map<std::pair<unsigned int, unsigned int>, double> &CPCI) {
+  auto *field = construct3DForceField(mmat, positions, etkdgDetails);
 
-    auto *field =  construct3DForceField(mmat, positions, etkdgDetails);
+  bool is1_4 = false;
+  // double dielConst = 1.0;
+  boost::uint8_t dielModel = 1;
+  for (const auto &charge : CPCI) {
+    auto *contrib = new ForceFields::MMFF::EleContrib(
+        field, charge.first.first, charge.first.second, charge.second,
+        dielModel, is1_4);
+    field->contribs().push_back(ForceFields::ContribPtr(contrib));
+  }
 
-    bool is1_4 = false; 
-    // double dielConst = 1.0;
-    boost::uint8_t dielModel = 1;
-    for (const auto& charge : CPCI){
-          auto *contrib =    new ForceFields::MMFF::EleContrib(field, charge.first.first, charge.first.second, charge.second, dielModel, is1_4);
-          field->contribs().push_back(ForceFields::ContribPtr(contrib));
-    }
-
-      return field;
+  return field;
 }
-
 
 ForceFields::ForceField *constructPlain3DForceField(
     const BoundsMatrix &mmat, RDGeom::Point3DPtrVect &positions,

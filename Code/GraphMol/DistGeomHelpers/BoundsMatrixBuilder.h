@@ -47,18 +47,15 @@ RDKIT_DISTGEOMHELPERS_EXPORT void initBoundsMat(DistGeom::BoundsMatPtr mmat,
                       so that a smaller value (0.7*(vdw1 + vdw2) ) is used for
   paths
                       that are less five bonds apart.
-  \param useMacrocycle14config  If 1-4 distances bound heuristics for macrocycles is used
-  <b>Note</b>
-  For some strained systems the bounds matrix resulting from setting 1-5 bounds
-  may
-  fail triangle smoothing. In these cases it is recommended to back out and
-  recompute the bounds matrix with no 1-5 bounds and with vdW scaling.
+  \param useMacrocycle14config  If 1-4 distances bound heuristics for
+  macrocycles is used <b>Note</b> For some strained systems the bounds matrix
+  resulting from setting 1-5 bounds may fail triangle smoothing. In these cases
+  it is recommended to back out and recompute the bounds matrix with no 1-5
+  bounds and with vdW scaling.
 */
-RDKIT_DISTGEOMHELPERS_EXPORT void setTopolBounds(const ROMol &mol,
-                                                 DistGeom::BoundsMatPtr mmat,
-                                                 bool set15bounds = true,
-                                                 bool scaleVDW = false,
-                                                 bool useMacrocycle14config = false);
+RDKIT_DISTGEOMHELPERS_EXPORT void setTopolBounds(
+    const ROMol &mol, DistGeom::BoundsMatPtr mmat, bool set15bounds = true,
+    bool scaleVDW = false, bool useMacrocycle14config = false);
 
 /*! \overload for experimental torsion angle preferences
  */
@@ -70,8 +67,7 @@ RDKIT_DISTGEOMHELPERS_EXPORT void setTopolBounds(
 
 //! generate the vectors of bonds and angles used by (ET)KDG
 RDKIT_DISTGEOMHELPERS_EXPORT void collectBondsAndAngles(
-    const ROMol &mol, 
-    std::vector<std::pair<int, int>> &bonds,
+    const ROMol &mol, std::vector<std::pair<int, int>> &bonds,
     std::vector<std::vector<int>> &angles);
 
 }  // namespace DGeomHelpers
