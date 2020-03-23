@@ -28,11 +28,9 @@ int EmbedMolecule(ROMol &mol, unsigned int maxAttempts, int seed,
                   bool randNegEig, unsigned int numZeroFail,
                   python::dict &coordMap, double forceTol,
                   bool ignoreSmoothingFailures, bool enforceChirality,
-                  bool useExpTorsionAnglePrefs, 
-                  bool useBasicKnowledge,
-                  bool printExpTorsionAngles,
-                  bool useSmallRingTorsions, bool useMacrocycleTorsions,
-                  unsigned int ETversion) {
+                  bool useExpTorsionAnglePrefs, bool useBasicKnowledge,
+                  bool printExpTorsionAngles, bool useSmallRingTorsions,
+                  bool useMacrocycleTorsions, unsigned int ETversion) {
   std::map<int, RDGeom::Point3D> pMap;
   python::list ks = coordMap.keys();
   unsigned int nKeys = python::extract<unsigned int>(ks.attr("__len__")());
@@ -53,11 +51,9 @@ int EmbedMolecule(ROMol &mol, unsigned int maxAttempts, int seed,
   DGeomHelpers::EmbedParameters params(
       maxAttempts, numThreads, seed, clearConfs, useRandomCoords, boxSizeMult,
       randNegEig, numZeroFail, pMapPtr, forceTol, ignoreSmoothingFailures,
-      enforceChirality, useExpTorsionAnglePrefs, 
-      useBasicKnowledge, verbose,
-      basinThresh, pruneRmsThresh, onlyHeavyAtomsForRMS,
-      ETversion, nullptr, true,
-      useSmallRingTorsions, useMacrocycleTorsions);
+      enforceChirality, useExpTorsionAnglePrefs, useBasicKnowledge, verbose,
+      basinThresh, pruneRmsThresh, onlyHeavyAtomsForRMS, ETversion, nullptr,
+      true, useSmallRingTorsions, useMacrocycleTorsions);
 
   int res;
   {
@@ -81,11 +77,9 @@ INT_VECT EmbedMultipleConfs(
     bool clearConfs, bool useRandomCoords, double boxSizeMult, bool randNegEig,
     unsigned int numZeroFail, double pruneRmsThresh, python::dict &coordMap,
     double forceTol, bool ignoreSmoothingFailures, bool enforceChirality,
-    int numThreads, bool useExpTorsionAnglePrefs, 
-    bool useBasicKnowledge,
-    bool printExpTorsionAngles,
-    bool useSmallRingTorsions, bool useMacrocycleTorsions,
-    unsigned int ETversion) {
+    int numThreads, bool useExpTorsionAnglePrefs, bool useBasicKnowledge,
+    bool printExpTorsionAngles, bool useSmallRingTorsions,
+    bool useMacrocycleTorsions, unsigned int ETversion) {
   std::map<int, RDGeom::Point3D> pMap;
   python::list ks = coordMap.keys();
   unsigned int nKeys = python::extract<unsigned int>(ks.attr("__len__")());
@@ -103,11 +97,9 @@ INT_VECT EmbedMultipleConfs(
   DGeomHelpers::EmbedParameters params(
       maxAttempts, numThreads, seed, clearConfs, useRandomCoords, boxSizeMult,
       randNegEig, numZeroFail, pMapPtr, forceTol, ignoreSmoothingFailures,
-      enforceChirality, useExpTorsionAnglePrefs, 
-      useBasicKnowledge, verbose,
-      basinThresh, pruneRmsThresh, onlyHeavyAtomsForRMS, 
-      ETversion, nullptr, true,
-      useSmallRingTorsions, useMacrocycleTorsions);
+      enforceChirality, useExpTorsionAnglePrefs, useBasicKnowledge, verbose,
+      basinThresh, pruneRmsThresh, onlyHeavyAtomsForRMS, ETversion, nullptr,
+      true, useSmallRingTorsions, useMacrocycleTorsions);
 
   INT_VECT res;
   {
@@ -153,10 +145,16 @@ DGeomHelpers::EmbedParameters *getETKDG() {  // ET version 1
 DGeomHelpers::EmbedParameters *getETKDGv2() {  // ET version 2
   return new DGeomHelpers::EmbedParameters(DGeomHelpers::ETKDGv2);
 }
-DGeomHelpers::EmbedParameters *getETKDGv3() {  //! Parameters corresponding improved ETKDG by Wang, Witek, Landrum and Riniker (10.1021/acs.jcim.0c00025) - the macrocycle part
+DGeomHelpers::EmbedParameters *
+getETKDGv3() {  //! Parameters corresponding improved ETKDG by Wang, Witek,
+                //! Landrum and Riniker (10.1021/acs.jcim.0c00025) - the
+                //! macrocycle part
   return new DGeomHelpers::EmbedParameters(DGeomHelpers::ETKDGv3);
 }
-DGeomHelpers::EmbedParameters *getsrETKDGv3() {  //! Parameters corresponding improved ETKDG by Wang, Witek, Landrum and Riniker (10.1021/acs.jcim.0c00025) - the macrocycle part
+DGeomHelpers::EmbedParameters *
+getsrETKDGv3() {  //! Parameters corresponding improved ETKDG by Wang, Witek,
+                  //! Landrum and Riniker (10.1021/acs.jcim.0c00025) - the
+                  //! macrocycle part
   return new DGeomHelpers::EmbedParameters(DGeomHelpers::srETKDGv3);
 }
 DGeomHelpers::EmbedParameters *getKDG() {
@@ -166,10 +164,10 @@ DGeomHelpers::EmbedParameters *getETDG() {
   return new DGeomHelpers::EmbedParameters(DGeomHelpers::ETDG);
 }
 
-void setCPCI(DGeomHelpers::EmbedParameters *self,
-                     python::dict &CPCIdict) {
-  //CPCI has the atom pair tuple as key and charge product as value
-  std::shared_ptr<std::map<std::pair<unsigned int, unsigned int>, double>> CPCI (new std::map<std::pair<unsigned int, unsigned int>, double>);
+void setCPCI(DGeomHelpers::EmbedParameters *self, python::dict &CPCIdict) {
+  // CPCI has the atom pair tuple as key and charge product as value
+  std::shared_ptr<std::map<std::pair<unsigned int, unsigned int>, double>> CPCI(
+      new std::map<std::pair<unsigned int, unsigned int>, double>);
 
   python::list ks = CPCIdict.keys();
   unsigned int nKeys = python::extract<unsigned int>(ks.attr("__len__")());
@@ -417,10 +415,14 @@ BOOST_PYTHON_MODULE(rdDistGeom) {
           "embedFragmentsSeparately",
           &RDKit::DGeomHelpers::EmbedParameters::embedFragmentsSeparately,
           "split the molecule into fragments and embed them separately")
-      .def_readwrite("useSmallRingTorsions", &RDKit::DGeomHelpers::EmbedParameters::useSmallRingTorsions,
-                     "impose small ring torsion angle preferences")
-      .def_readwrite("useMacrocycleTorsions", &RDKit::DGeomHelpers::EmbedParameters::useMacrocycleTorsions,
-                     "impose macrocycle torsion angle preferences")
+      .def_readwrite(
+          "useSmallRingTorsions",
+          &RDKit::DGeomHelpers::EmbedParameters::useSmallRingTorsions,
+          "impose small ring torsion angle preferences")
+      .def_readwrite(
+          "useMacrocycleTorsions",
+          &RDKit::DGeomHelpers::EmbedParameters::useMacrocycleTorsions,
+          "impose macrocycle torsion angle preferences")
       .def("SetBoundsMat", &RDKit::setBoundsMatrix,
            "set the distance-bounds matrix to be used (no triangle smoothing "
            "will be done on this) from a Numpy array")
@@ -464,14 +466,14 @@ BOOST_PYTHON_MODULE(rdDistGeom) {
       "ETKDGv2", RDKit::getETKDGv2,
       "Returns an EmbedParameters object for the ETKDG method - version 2.",
       python::return_value_policy<python::manage_new_object>());
-  python::def(
-      "srETKDGv3", RDKit::getsrETKDGv3,
-      "Returns an EmbedParameters object for the ETKDG method - version 3 (small rings).",
-      python::return_value_policy<python::manage_new_object>());
-  python::def(
-      "ETKDGv3", RDKit::getETKDGv3,
-      "Returns an EmbedParameters object for the ETKDG method - version 3 (macrocycles).",
-      python::return_value_policy<python::manage_new_object>());
+  python::def("srETKDGv3", RDKit::getsrETKDGv3,
+              "Returns an EmbedParameters object for the ETKDG method - "
+              "version 3 (small rings).",
+              python::return_value_policy<python::manage_new_object>());
+  python::def("ETKDGv3", RDKit::getETKDGv3,
+              "Returns an EmbedParameters object for the ETKDG method - "
+              "version 3 (macrocycles).",
+              python::return_value_policy<python::manage_new_object>());
   python::def("ETDG", RDKit::getETDG,
               "Returns an EmbedParameters object for the ETDG method.",
               python::return_value_policy<python::manage_new_object>());
