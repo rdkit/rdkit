@@ -154,7 +154,7 @@ RDKIT_DISTGEOMETRY_EXPORT ForceFields::ForceField *construct3DForceField(
 RDKIT_DISTGEOMETRY_EXPORT ForceFields::ForceField *construct3DForceField(
     const BoundsMatrix &mmat, RDGeom::Point3DPtrVect &positions,
     const ForceFields::CrystalFF::CrystalFFDetails &etkdgDetails,
-    std::shared_ptr<std::map<std::pair<unsigned int, unsigned int>, double>> CPCI);
+    const std::map<std::pair<unsigned int, unsigned int>, double> &CPCI);
 //! Force field with experimental torsion angle preferences and 1-2/1-3 distance
 // constraints
 /*!

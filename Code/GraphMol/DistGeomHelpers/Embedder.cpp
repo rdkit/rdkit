@@ -570,7 +570,7 @@ bool minimizeWithExpTorsions(RDGeom::PointPtrVect &positions,
   if (embedParams.useBasicKnowledge) {  // ETKDG or KDG
       if (embedParams.CPCI != nullptr) {
         field.reset(DistGeom::construct3DForceField(*eargs.mmat, positions3D,
-                                                *eargs.etkdgDetails, embedParams.CPCI));
+                                                *eargs.etkdgDetails, *embedParams.CPCI));
       }
       else{
         field.reset(DistGeom::construct3DForceField(*eargs.mmat, positions3D,
