@@ -112,7 +112,7 @@ struct RDKIT_DISTGEOMHELPERS_EXPORT EmbedParameters {
   bool useSmallRingTorsions;
   bool useMacrocycleTorsions;
   bool useMacrocycle14config;
-  const std::map<std::pair<unsigned int, unsigned int>, double> *CPCI;
+  std::shared_ptr<std::map<std::pair<unsigned int, unsigned int>, double>> CPCI;
   EmbedParameters()
       : maxIterations(0),
         numThreads(1),
@@ -151,7 +151,7 @@ struct RDKIT_DISTGEOMHELPERS_EXPORT EmbedParameters {
                   const DistGeom::BoundsMatrix *boundsMat = nullptr,
                   bool embedFragmentsSeparately = true,
                   bool useSmallRingTorsions = false, bool useMacrocycleTorsions = false, bool useMacrocycle14config = false,
-                  const std::map<std::pair<unsigned int, unsigned int>, double> *CPCI = nullptr)
+                  std::shared_ptr<std::map<std::pair<unsigned int, unsigned int>, double>> CPCI = nullptr)
       : maxIterations(maxIterations),
         numThreads(numThreads),
         randomSeed(randomSeed),

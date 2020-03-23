@@ -169,8 +169,7 @@ DGeomHelpers::EmbedParameters *getETDG() {
 void setCPCI(DGeomHelpers::EmbedParameters *self,
                      python::dict &CPCIdict) {
   //CPCI has the atom pair tuple as key and charge product as value
-  std::map<std::pair<unsigned int, unsigned int>, double> *CPCI;
-  CPCI = new std::map<std::pair<unsigned int, unsigned int>, double>;
+  std::shared_ptr<std::map<std::pair<unsigned int, unsigned int>, double>> CPCI (new std::map<std::pair<unsigned int, unsigned int>, double>);
 
   python::list ks = CPCIdict.keys();
   unsigned int nKeys = python::extract<unsigned int>(ks.attr("__len__")());
