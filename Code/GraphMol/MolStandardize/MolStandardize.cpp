@@ -64,6 +64,11 @@ RWMol *fragmentParent(const RWMol &mol, const CleanupParameters &params,
   LargestFragmentChooser lfragchooser(params.preferOrganic);
   ROMol nm(*cleaned);
   ROMOL_SPTR lfrag(lfragchooser.choose(nm));
+
+  if (!skip_standardize) {
+    delete cleaned;
+  }
+
   return new RWMol(*lfrag);
 }
 
@@ -101,6 +106,9 @@ RWMol *chargeParent(const RWMol &mol, const CleanupParameters &params,
   Uncharger uncharger(params.doCanonical);
   ROMOL_SPTR uncharged(uncharger.uncharge(nm));
   RWMol *omol = cleanup(static_cast<RWMol>(*uncharged), params);
+  if (!skip_standardize) {
+    delete m;
+  }
   return omol;
 }
 

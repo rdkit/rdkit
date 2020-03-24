@@ -603,7 +603,7 @@ TEST_CASE("github #2965: molecules properties not retained after cleanup", "[cle
 } 
 
 TEST_CASE("github #2970: chargeParent() segmentation fault when standardization is skipped i.e. skip_standardize is set to true") {
-    std::unique_ptr<RWMol> m(SmilesToMol("COC=1C=CC(NC=2N=CN=C3NC=NC23)=CC1"));
+    auto m = "COC=1C=CC(NC=2N=CN=C3NC=NC23)=CC1"_smiles;
     REQUIRE(m);
     MolStandardize::CleanupParameters params;
     std::unique_ptr<RWMol> res(MolStandardize::cleanup(*m, params));
