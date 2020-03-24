@@ -18,6 +18,8 @@ from .standardize import Standardizer, standardize_smiles, enumerate_tautomers_s
 from .validate import Validator, validate_smiles
 from .errors import MolVSError, StandardizeError, ValidateError
 
+from rdkit import Chem
+from rdkit.Chem.MolStandardize import tautomer
 
 __title__ = 'MolVS'
 __version__ = '0.1.1'
@@ -29,3 +31,25 @@ __copyright__ = 'Copyright 2016 Matt Swain'
 
 log = logging.getLogger(__name__)
 log.addHandler(logging.NullHandler())
+
+
+
+"""
+This module contains tools for reordering the canonical tautomer so generated 
+at the first position i.e., among all the tautomers generated the first one 
+will be the canonical one after enumerating all the possible tautomers.
+
+"""
+def reorderTautomers(self,mol):
+    enumerator = self.TautomerEnumerator.enumerate(self,mol)
+    canon = enumerator.TautomerCanonicalizer.Canonicalize(self,mol)
+    csmi = Chem.MolToSmiles(canon)
+    res = [canon]
+    tauts = enumerator.enumerate(mol)
+    for x in tauts:
+        smis = [Chem.MolToSmiles(x)]
+    zipped = zip(smis,tauts)
+    stpl = sorted((x,y) for x,y in zipped if x!= csmi)
+    res += [y for x,y in stpl]
+    return res
+
