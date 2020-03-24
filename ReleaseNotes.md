@@ -22,13 +22,13 @@
 
 
 ## Acknowledgements:
-Marcel Baltruschat, Jason Biggs, Eliane Briand, Ben Cornett, David Cosgrove,
-Zhenting Gao, Guillaume Godin, Gareth Jones, Zachary Kaplan, Eisuke Kawashima,
-Steven Kearnes, Brian Kelley, Maxim Koltsov, Mieszko Manijak, Dan Nealschneider,
-Daniil Polykovskiy, Daniel Probst, Steve Roughley, Kevin Ryan, Vincent F.
-Scalfani, Ricardo Rodriguez Schmidt, Rim Shayakhmetov, Aryan Shrey, Matt Swain,
-Paolo Tosco, Wiep van der Toorn, Riccardo Vianello, Shuzhe Wang, Piotr
-Wawrzyniak, Hsiao Yi, 'luancarvalhomartins'
+Marcel Baltruschat, Jason Biggs, Eliane Briand, Ben Cornett, David Cosgrove, Tim
+Dudgeon, Zhenting Gao, Guillaume Godin, Manan Goel, Gareth Jones, Zachary
+Kaplan, Eisuke Kawashima, Steven Kearnes, Brian Kelley, Maxim Koltsov, Mieszko
+Manijak, Dan Nealschneider, Daniil Polykovskiy, Daniel Probst, Steve Roughley,
+Kevin Ryan, Vincent F. Scalfani, Ricardo Rodriguez Schmidt, Rim Shayakhmetov,
+Aryan Shrey, Matt Swain, Paolo Tosco, Wiep van der Toorn, Riccardo Vianello,
+Shuzhe Wang, Piotr Wawrzyniak, Hsiao Yi, 'luancarvalhomartins'
 
 
 ## Bug Fixes:
@@ -130,6 +130,8 @@ Wawrzyniak, Hsiao Yi, 'luancarvalhomartins'
  (github issue #2965 from ZacharyKaplan)
   - Fix build without boost serialization.
  (github pull #2972 from ricrogz)
+  - RDKFuncs.chargeParent() core dumps when standardization is skipped
+ (bithub issue #2970 from tdudgeon)
   - fix a typo in the scaffold network wrappers and add some tests
  (github pull #2982 from greglandrum)
   - Tautomer enumeration should remove stereo in all tautomers 
