@@ -22,13 +22,13 @@
 
 
 ## Acknowledgements:
-Marcel Baltruschat, Jason Biggs, Eliane Briand, Ben Cornett, David Cosgrove, Tim
-Dudgeon, Zhenting Gao, Guillaume Godin, Manan Goel, Gareth Jones, Zachary
-Kaplan, Eisuke Kawashima, Steven Kearnes, Brian Kelley, Maxim Koltsov, Mieszko
-Manijak, Dan Nealschneider, Daniil Polykovskiy, Daniel Probst, Steve Roughley,
-Kevin Ryan, Vincent F. Scalfani, Ricardo Rodriguez Schmidt, Rim Shayakhmetov,
-Aryan Shrey, Matt Swain, Paolo Tosco, Wiep van der Toorn, Riccardo Vianello,
-Shuzhe Wang, Piotr Wawrzyniak, Hsiao Yi, 'luancarvalhomartins'
+Marcel Baltruschat, Jason Biggs, Eliane Briand, Ben Cornett, David Cosgrove,
+Andrew Dalke, Tim Dudgeon, Zhenting Gao, Guillaume Godin, Manan Goel, Gareth
+Jones, Zachary Kaplan, Eisuke Kawashima, Steven Kearnes, Brian Kelley, Maxim
+Koltsov, Mieszko Manijak, Dan Nealschneider, Daniil Polykovskiy, Daniel Probst,
+Steve Roughley, Kevin Ryan, Vincent F. Scalfani, Ricardo Rodriguez Schmidt, Rim
+Shayakhmetov, Aryan Shrey, Matt Swain, Paolo Tosco, Wiep van der Toorn, Riccardo
+Vianello, Shuzhe Wang, Piotr Wawrzyniak, Hsiao Yi, 'luancarvalhomartins'
 
 
 ## Bug Fixes:
@@ -100,6 +100,8 @@ Shuzhe Wang, Piotr Wawrzyniak, Hsiao Yi, 'luancarvalhomartins'
  (github issue #2890 from ricrogz)
   - Update one of the cartridge tests that got missed
  (github pull #2894 from greglandrum)
+  - acepentalene aromaticity perception
+ (github issue #2895 from adalke)
   - New Similarity Maps drawing code Java Wrappers non-functional
  (github issue #2896 from sroughley)
   - Fix to allow multistructure images in Java/C# and use MCS for c# wrapper
