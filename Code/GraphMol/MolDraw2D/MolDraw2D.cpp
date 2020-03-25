@@ -1277,7 +1277,13 @@ unique_ptr<RWMol> MolDraw2D::setupDrawMolecule(
     curr_width_ = drawOptions().bondLineWidth;
   }
   if (drawOptions().addStereoAnnotation) {
-    addStereoAnnotation(draw_mol);
+    MolDraw2DUtils::addStereoAnnotation(draw_mol);
+  }
+  if (drawOptions().addAtomIndices) {
+    MolDraw2DUtils::addAtomIndices(draw_mol);
+  }
+  if (drawOptions().addBondIndices) {
+    MolDraw2DUtils::addBondIndices(draw_mol);
   }
   if (!activeMolIdx_) {  // on the first pass we need to do some work
     if (drawOptions().clearBackground) {
@@ -1418,14 +1424,14 @@ void MolDraw2D::finishMoleculeDraw(const RDKit::ROMol &draw_mol,
   }
   for (auto atom : draw_mol.atoms()) {
     if (supportsAnnotations() && atom_notes_[activeMolIdx_][atom->getIdx()]) {
-      drawAnnotation(atom->getProp<string>("atomNote"),
+      drawAnnotation(atom->getProp<string>(common_properties::atomNote),
                      atom_notes_[activeMolIdx_][atom->getIdx()]);
     }
   }
 
   for (auto bond : draw_mol.bonds()) {
     if (supportsAnnotations() && bond_notes_[activeMolIdx_][bond->getIdx()]) {
-      drawAnnotation(bond->getProp<string>("bondNote"),
+      drawAnnotation(bond->getProp<string>(common_properties::bondNote),
                      bond_notes_[activeMolIdx_][bond->getIdx()]);
     }
   }
@@ -1576,7 +1582,7 @@ void MolDraw2D::calcLabelEllipse(int atom_idx,
 StringRect MolDraw2D::calcAnnotationPosition(const ROMol &mol,
                                              const Atom *atom) {
   StringRect note_rect;
-  string note = atom->getProp<string>("atomNote");
+  string note = atom->getProp<string>(common_properties::atomNote);
   if (note.empty()) {
     note_rect.width_ = -1.0;  // so we know it's not valid.
     return note_rect;
@@ -1605,7 +1611,7 @@ StringRect MolDraw2D::calcAnnotationPosition(const ROMol &mol,
 StringRect MolDraw2D::calcAnnotationPosition(const ROMol &mol,
                                              const Bond *bond) {
   StringRect note_rect;
-  string note = bond->getProp<string>("bondNote");
+  string note = bond->getProp<string>(common_properties::bondNote);
   if (note.empty()) {
     note_rect.width_ = -1.0;  // so we know it's not valid.
     return note_rect;
@@ -1932,10 +1938,10 @@ void MolDraw2D::extractAtomNotes(const ROMol &mol) {
 
   StringRect *note_rect;
   for (auto atom : mol.atoms()) {
-    if (!atom->hasProp("atomNote")) {
+    if (!atom->hasProp(common_properties::atomNote)) {
       note_rect = nullptr;
     } else {
-      string note = atom->getProp<string>("atomNote");
+      string note = atom->getProp<string>(common_properties::atomNote);
       if (note.empty()) {
         note_rect = nullptr;
       } else {
@@ -1961,10 +1967,10 @@ void MolDraw2D::extractBondNotes(const ROMol &mol) {
 
   StringRect *note_rect;
   for (auto bond : mol.bonds()) {
-    if (!bond->hasProp("bondNote")) {
+    if (!bond->hasProp(common_properties::bondNote)) {
       note_rect = nullptr;
     } else {
-      string note = bond->getProp<string>("bondNote");
+      string note = bond->getProp<string>(common_properties::bondNote);
       if (note.empty()) {
         note_rect = nullptr;
       } else {
@@ -3191,23 +3197,6 @@ void MolDraw2D::tabulaRasa() {
   x_offset_ = y_offset_ = 0;
   font_size_ = 0.5;
   curr_width_ = 2;
-}
-
-// ****************************************************************************
-void MolDraw2D::addStereoAnnotation(const ROMol &mol) {
-  for (auto atom : mol.atoms()) {
-    if (atom->hasProp("_CIPCode")) {
-      std::string lab = "(" + atom->getProp<std::string>("_CIPCode") + ")";
-      atom->setProp("atomNote", lab);
-    }
-  }
-  for (auto bond : mol.bonds()) {
-    if (bond->getStereo() == Bond::STEREOE) {
-      bond->setProp("bondNote", "(E)");
-    } else if (bond->getStereo() == Bond::STEREOZ) {
-      bond->setProp("bondNote", "(Z)");
-    }
-  }
 }
 
 // ****************************************************************************

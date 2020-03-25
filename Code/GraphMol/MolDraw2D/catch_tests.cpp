@@ -333,3 +333,80 @@ TEST_CASE("bad DrawMolecules() when molecules are not kekulized",
               "stroke-dasharray:6,6' />") == std::string::npos);
   }
 }
+TEST_CASE("draw atom/bond indices", "[drawing]") {
+  auto m1 = "C[C@H](F)N"_smiles;
+  REQUIRE(m1);
+  SECTION("foundations") {
+    {
+      MolDraw2DSVG drawer(250, 200);
+      drawer.drawMolecule(*m1);
+      drawer.finishDrawing();
+      std::string text = drawer.getDrawingText();
+      std::ofstream outs("testAtomBondIndices_1.svg");
+      outs << text;
+      outs.flush();
+      CHECK(text.find("<tspan>1</tspan>") == std::string::npos);
+      CHECK(text.find("<tspan>1,(S)</tspan>") == std::string::npos);
+    }
+    {
+      MolDraw2DSVG drawer(250, 200);
+      drawer.drawOptions().addAtomIndices = true;
+      drawer.drawMolecule(*m1);
+      drawer.finishDrawing();
+      std::string text = drawer.getDrawingText();
+      std::ofstream outs("testAtomBondIndices_2.svg");
+      outs << text;
+      outs.flush();
+      CHECK(text.find("<tspan>1</tspan>") != std::string::npos);
+      // it only appears once though:
+      CHECK(text.find("<tspan>1</tspan>", text.find("<tspan>1</tspan>") + 1) ==
+            std::string::npos);
+      CHECK(text.find("1,(S)") == std::string::npos);
+    }
+    {
+      MolDraw2DSVG drawer(250, 200);
+      drawer.drawOptions().addBondIndices = true;
+      drawer.drawMolecule(*m1);
+      drawer.finishDrawing();
+      std::string text = drawer.getDrawingText();
+      std::ofstream outs("testAtomBondIndices_3.svg");
+      outs << text;
+      outs.flush();
+      CHECK(text.find("<tspan>1</tspan>") != std::string::npos);
+      // it only appears once though:
+      CHECK(text.find("<tspan>1</tspan>", text.find("<tspan>1</tspan>") + 1) ==
+            std::string::npos);
+    }
+    {
+      MolDraw2DSVG drawer(250, 200);
+      drawer.drawOptions().addAtomIndices = true;
+      drawer.drawOptions().addBondIndices = true;
+      drawer.drawMolecule(*m1);
+      drawer.finishDrawing();
+      std::string text = drawer.getDrawingText();
+      std::ofstream outs("testAtomBondIndices_4.svg");
+      outs << text;
+      outs.flush();
+      CHECK(text.find("<tspan>1</tspan>") != std::string::npos);
+      // it appears twice:
+      CHECK(text.find("<tspan>1</tspan>", text.find("<tspan>1</tspan>") + 1) !=
+            std::string::npos);
+    }
+    {
+      MolDraw2DSVG drawer(250, 200);
+      m1->getAtomWithIdx(2)->setProp(common_properties::atomNote, "foo");
+      drawer.drawOptions().addAtomIndices = true;
+      drawer.drawOptions().addStereoAnnotation = true;
+      drawer.drawMolecule(*m1);
+      m1->getAtomWithIdx(2)->clearProp(common_properties::atomNote);
+      drawer.finishDrawing();
+      std::string text = drawer.getDrawingText();
+      std::ofstream outs("testAtomBondIndices_5.svg");
+      outs << text;
+      outs.flush();
+      CHECK(text.find("<tspan>1,(S)</tspan>") != std::string::npos);
+      CHECK(text.find("<tspan>2,foo</tspan>") != std::string::npos);
+      CHECK(text.find("<tspan>1</tspan>") == std::string::npos);
+    }
+  }
+}

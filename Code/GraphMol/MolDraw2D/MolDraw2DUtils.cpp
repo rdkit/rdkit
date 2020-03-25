@@ -151,7 +151,7 @@ void updateDrawerParamsFromJSON(MolDraw2D &drawer, const std::string &json) {
   PT_OPT_GET(rotate);
   PT_OPT_GET(addStereoAnnotation);
   PT_OPT_GET(atomHighlightsAreCircles);
-  PT_OPT_GET(centreMoleculesB4Drawing);
+  PT_OPT_GET(centreMoleculesBeforeDrawing);
   get_colour_option(&pt, "highlightColour", opts.highlightColour);
   get_colour_option(&pt, "backgroundColour", opts.backgroundColour);
   get_colour_option(&pt, "legendColour", opts.legendColour);
