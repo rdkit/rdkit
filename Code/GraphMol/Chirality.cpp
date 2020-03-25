@@ -1014,9 +1014,17 @@ std::pair<bool, bool> isAtomPotentialChiralCenter(
 
     // figure out if this is a legal chiral center or not:
     if (!hasDupes) {
-      if (nbrs.size() < 3) {
+      if (nbrs.size() < 3 
+       && (atom->getAtomicNum() != 15 && atom->getAtomicNum() != 33)) {
         // less than three neighbors is never stereogenic
+        // unless it is a phosphine/arsine with implicit H
         legalCenter = false;
+      } else if (atom->getAtomicNum() == 15 || atom->getAtomicNum() == 33) {
+        // from logical flow: nbrs.size is 3 or 4, or 2 (implicit H)
+        // Since InChI Software v. 1.02-standard (2009), phosphines and arsines
+        // are always treated as stereogenic even with H atom neighbors.
+        // Accept automatically.
+        legalCenter = true;
       } else if (nbrs.size() == 3) {
         // three-coordinate with a single H we'll accept automatically:
         if (atom->getTotalNumHs() != 1) {
@@ -1637,14 +1645,18 @@ void findPotentialStereoBonds(ROMol &mol, bool cleanIt) {
           !(mol.getRingInfo()->numBondRings((*bondIt)->getIdx()))) {
         // we are ignoring ring bonds here - read the FIX above
         Bond *dblBond = *bondIt;
-        // if the bond is flagged as EITHERDOUBLE, we ignore it:
+        // We ignore bonds flagged as EITHERDOUBLE or STEREOANY which have
+        // stereo atoms set.
         if (dblBond->getBondDir() == Bond::EITHERDOUBLE ||
-            dblBond->getStereo() == Bond::STEREOANY) {
+            (dblBond->getStereo() == Bond::STEREOANY &&
+             dblBond->getStereoAtoms().size() == 2)) {
           continue;
         }
-        // proceed only if we either want to clean the stereocode on this bond
-        // or if none is set on it yet
-        if (cleanIt || dblBond->getStereo() == Bond::STEREONONE) {
+        // proceed only if we either want to clean the stereocode on this bond,
+        // if none is set on it yet, or it is STEREOANY and we need to find
+        // stereoatoms
+        if (cleanIt || dblBond->getStereo() == Bond::STEREONONE ||
+            dblBond->getStereo() == Bond::STEREOANY) {
           dblBond->setStereo(Bond::STEREONONE);
           const Atom *begAtom = dblBond->getBeginAtom(),
                      *endAtom = dblBond->getEndAtom();

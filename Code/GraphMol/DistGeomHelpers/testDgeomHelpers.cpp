@@ -572,9 +572,10 @@ void testMultipleConfs() {
 void testMultipleConfsExpTors() {
   std::string smi = "CC(C)(C)c(cc1)ccc1c(cc23)n[n]3C(=O)/C(=C\\N2)C(=O)OCC";
   ROMol *m = SmilesToMol(smi, 0, 1);
-  INT_VECT cids = DGeomHelpers::EmbedMultipleConfs(
-      *m, 10, 30, 100, true, false, -1, true, 1, -1.0, nullptr, 1e-3, false,
-      true, true, true);
+  INT_VECT cids = DGeomHelpers::EmbedMultipleConfs(*m, 10, 30, 100, true, false,
+                                                   -1, true, 1, -1.0, nullptr, 1e-3,
+                                                   false, true, false, false, false, 5.0, false, 1, false, false);
+
   INT_VECT_CI ci;
   // SDWriter writer("junk.sdf");
   double energy;
@@ -1872,6 +1873,72 @@ void testEmbedParameters() {
     MolOps::addHs(*mol);
     TEST_ASSERT(ref->getNumAtoms() == mol->getNumAtoms());
     DGeomHelpers::EmbedParameters params(DGeomHelpers::KDG);
+    params.randomSeed = 42;
+    TEST_ASSERT(DGeomHelpers::EmbedMolecule(*mol, params) == 0);
+    // std::cerr << MolToMolBlock(*ref) << std::endl;
+    // std::cerr << MolToMolBlock(*mol) << std::endl;
+    // std::cerr << fname << std::endl;
+    compareConfs(ref, mol);
+
+    delete ref;
+    delete mol;
+  }
+  //small ring torsions improvement test
+  {
+    std::string fname =
+        rdbase +
+        "/Code/GraphMol/DistGeomHelpers/test_data/simple_torsion.smallring.etkdgv3.mol";
+    RWMol *ref = MolFileToMol(fname, true, false);
+    TEST_ASSERT(ref);
+    RWMol *mol = SmilesToMol("C1CCCCC1");
+    TEST_ASSERT(mol);
+    MolOps::addHs(*mol);
+    TEST_ASSERT(ref->getNumAtoms() == mol->getNumAtoms());
+    DGeomHelpers::EmbedParameters params(DGeomHelpers::srETKDGv3);
+    params.randomSeed = 42;
+    TEST_ASSERT(DGeomHelpers::EmbedMolecule(*mol, params) == 0);
+    // std::cerr << MolToMolBlock(*ref) << std::endl;
+    // std::cerr << MolToMolBlock(*mol) << std::endl;
+    // std::cerr << fname << std::endl;
+    compareConfs(ref, mol);
+
+    delete ref;
+    delete mol;
+  }
+  //macrocycles torsions backward compatibility test
+  {
+    std::string fname =
+        rdbase +
+        "/Code/GraphMol/DistGeomHelpers/test_data/simple_torsion.macrocycle.etkdg.mol";
+    RWMol *ref = MolFileToMol(fname, true, false);
+    TEST_ASSERT(ref);
+    RWMol *mol = SmilesToMol("O=C1NCCCCCCCCC1");
+    TEST_ASSERT(mol);
+    MolOps::addHs(*mol);
+    TEST_ASSERT(ref->getNumAtoms() == mol->getNumAtoms());
+    DGeomHelpers::EmbedParameters params(DGeomHelpers::ETKDG);
+    params.randomSeed = 42;
+    TEST_ASSERT(DGeomHelpers::EmbedMolecule(*mol, params) == 0);
+    // std::cerr << MolToMolBlock(*ref) << std::endl;
+    // std::cerr << MolToMolBlock(*mol) << std::endl;
+    // std::cerr << fname << std::endl;
+    compareConfs(ref, mol);
+
+    delete ref;
+    delete mol;
+  }
+  //macrocycles torsions improvement test
+  {
+    std::string fname =
+        rdbase +
+        "/Code/GraphMol/DistGeomHelpers/test_data/simple_torsion.macrocycle.etkdgv3.mol";
+    RWMol *ref = MolFileToMol(fname, true, false);
+    TEST_ASSERT(ref);
+    RWMol *mol = SmilesToMol("C1NCCCCCCCCC1");
+    TEST_ASSERT(mol);
+    MolOps::addHs(*mol);
+    TEST_ASSERT(ref->getNumAtoms() == mol->getNumAtoms());
+    DGeomHelpers::EmbedParameters params(DGeomHelpers::ETKDGv3);
     params.randomSeed = 42;
     TEST_ASSERT(DGeomHelpers::EmbedMolecule(*mol, params) == 0);
     // std::cerr << MolToMolBlock(*ref) << std::endl;

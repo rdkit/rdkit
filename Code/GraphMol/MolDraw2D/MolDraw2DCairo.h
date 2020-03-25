@@ -77,6 +77,13 @@ class RDKIT_MOLDRAW2D_EXPORT MolDraw2DCairo : public MolDraw2D {
   // writes the PNG data to a file
   void writeDrawingText(const std::string &fName) const;
 
+#ifdef WIN32
+  bool supportsAnnotations() override {
+     return false;
+  }
+#endif
+
+
  private:
   cairo_t *dp_cr;
 

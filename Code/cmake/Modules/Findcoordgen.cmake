@@ -6,7 +6,6 @@
 #
 # coordgen_INCLUDE_DIRS   - CoordGen's includes directory
 # coordgen_LIBRARIES      - CoordGen's shared libraries
-# coordgen_TEMPLATE_FILE  - CoordGen templates file
 #
 #
 
@@ -28,19 +27,9 @@ find_library(coordgen_LIBRARIES
 )
 message("-- coordgen libraries set as '${coordgen_LIBRARIES}'")
 
-# Just in case, add parent directory above libraries to templates search hints
-get_filename_component(libs_parent_dir ${coordgen_LIBRARIES} PATH)
-find_file(coordgen_TEMPLATE_FILE
-    NAMES templates.mae
-    HINTS ${COORDGEN_DIR} ${coordgen_DIR} ${libs_parent_dir}
-    PATH_SUFFIXES "share" "share/coordgen"
-    DOC "templates file for coordgen"
-)
-message("-- coordgen templates file set as '${coordgen_TEMPLATE_FILE}'")
-
 find_package_handle_standard_args(coordgen FOUND_VAR coordgen_FOUND
                                   REQUIRED_VARS coordgen_INCLUDE_DIRS
-                                  coordgen_LIBRARIES coordgen_TEMPLATE_FILE)
+                                  coordgen_LIBRARIES)
 
 
 

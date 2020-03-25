@@ -1997,6 +1997,70 @@ void testQueryMolVsSmarts() {
   BOOST_LOG(rdInfoLog) << "\tdone" << std::endl;
 }
 
+void testCompareNonExistent() {
+  BOOST_LOG(rdInfoLog) << "-------------------------------------" << std::endl;
+  BOOST_LOG(rdInfoLog) << "testAtomCompareNonExistent"
+                       << std::endl;
+
+  std::vector<ROMOL_SPTR> mols;
+  const char* smi[] = {"C", "CC"};
+
+  for (auto& i : smi) {
+    auto m = SmilesToMol(getSmilesOnly(i));
+    TEST_ASSERT(m);
+
+    mols.push_back(ROMOL_SPTR(m));
+  }
+  {
+    MCSParameters p;
+    bool hasThrown = false;
+    try {
+      p.setMCSAtomTyperFromEnum(static_cast<AtomComparator>(99));
+    }
+    catch (const std::runtime_error &e) {
+      BOOST_LOG(rdInfoLog) << e.what() << std::endl;
+      hasThrown = true;
+    }
+    TEST_ASSERT(hasThrown);
+  }
+  {
+    MCSParameters p;
+    bool hasThrown = false;
+    try {
+      p.setMCSAtomTyperFromConstChar("hello");
+    }
+    catch (const std::runtime_error &e) {
+      BOOST_LOG(rdInfoLog) << e.what() << std::endl;
+      hasThrown = true;
+    }
+    TEST_ASSERT(!hasThrown);
+  }
+  {
+    MCSParameters p;
+    bool hasThrown = false;
+    try {
+      p.setMCSBondTyperFromEnum(static_cast<BondComparator>(99));
+    }
+    catch (const std::runtime_error &e) {
+      BOOST_LOG(rdInfoLog) << e.what() << std::endl;
+      hasThrown = true;
+    }
+    TEST_ASSERT(hasThrown);
+  }
+  {
+    MCSParameters p;
+    bool hasThrown = false;
+    try {
+      p.setMCSBondTyperFromConstChar("hello");
+    }
+    catch (const std::runtime_error &e) {
+      BOOST_LOG(rdInfoLog) << e.what() << std::endl;
+      hasThrown = true;
+    }
+    TEST_ASSERT(!hasThrown);
+  }
+}
+
 //====================================================================================================
 //====================================================================================================
 
@@ -2071,6 +2135,7 @@ int main(int argc, const char* argv[]) {
   testGithub2714();
   testGitHub2731_comment546175466();
   testQueryMolVsSmarts();
+  testCompareNonExistent();
 
   unsigned long long t1 = nanoClock();
   double sec = double(t1 - T0) / 1000000.;

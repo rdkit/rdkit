@@ -63,6 +63,24 @@ struct DrawColour {
   }
 };
 
+// for holding dimensions of the rectangle round a string.
+struct StringRect {
+  Point2D centre_;
+  double width_, height_;
+  int clash_score_; // rough measure of how badly it clashed with other things
+                    // lower is better, 0 is no clash.
+  StringRect() : centre_(0.0, 0.0), width_(0.0), height_(0.0), clash_score_(0) {}
+  StringRect(const Point2D &in_cds) : centre_(in_cds), width_(0.0),
+                                      height_(0.0), clash_score_(0) {}
+  bool doesItIntersect(const StringRect &other) const {
+    if(fabs(centre_.x - other.centre_.x) < (width_ + other.width_) / 2.0
+       && fabs(centre_.y - other.centre_.y) < (height_ + other.height_) / 2.0) {
+      return true;
+    }
+    return false;
+  }
+};
+
 typedef std::map<int, DrawColour> ColourPalette;
 typedef std::vector<unsigned int> DashPattern;
 
@@ -109,6 +127,8 @@ struct RDKIT_MOLDRAW2D_EXPORT MolDrawOptions {
                          // present)
   int maxFontSize;  // maximum size in pixels for font in drawn molecule.
                     // default=40. -1 means no max.
+  double annotationFontScale;  // scales font relative to atom labels for
+                               // atom and bond annotation. default=0.75.
   DrawColour legendColour;    // color to be used for the legend (if present)
   double multipleBondOffset;  // offset (in Angstrom) for the extra lines in a
                               // multiple bond
@@ -145,6 +165,12 @@ struct RDKIT_MOLDRAW2D_EXPORT MolDrawOptions {
                           // fixedScale wins.
   double rotate; // angle in degrees to rotate coords by about centre before
                  // drawing. default=0.0.
+  bool addStereoAnnotation; // adds E/Z and R/S to drawings.  Default false.
+  bool atomHighlightsAreCircles; // forces atom highlights always to be circles.
+                                 // Default (false) is to put ellipses round
+                                 // longer labels.
+  bool centreMoleculesB4Drawing; // moves the centre of the drawn molecule to
+                                 // (0,0).  Default=true.
 
   MolDrawOptions()
       : atomLabelDeuteriumTritium(false),
@@ -160,6 +186,7 @@ struct RDKIT_MOLDRAW2D_EXPORT MolDrawOptions {
         backgroundColour(1, 1, 1),
         legendFontSize(12),
         maxFontSize(40),
+        annotationFontScale(0.75),
         legendColour(0, 0, 0),
         multipleBondOffset(0.15),
         padding(0.05),
@@ -170,7 +197,10 @@ struct RDKIT_MOLDRAW2D_EXPORT MolDrawOptions {
         prepareMolsBeforeDrawing(true),
         fixedScale(-1.0),
         fixedBondLength(-1.0),
-        rotate(0.0) {
+        rotate(0.0),
+        addStereoAnnotation(false),
+        atomHighlightsAreCircles(false),
+        centreMoleculesB4Drawing(true) {
     highlightColourPalette.emplace_back(DrawColour(1., 1., .67));  // popcorn yellow
     highlightColourPalette.emplace_back(DrawColour(1., .8, .6));  // sand
     highlightColourPalette.emplace_back(DrawColour(1., .71, .76));  // light pink
@@ -391,8 +421,6 @@ class RDKIT_MOLDRAW2D_EXPORT MolDraw2D {
   void calculateScale(int width, int height,
                       const std::vector<int> *highlight_atoms = nullptr,
                       const std::map<int, double> *highlight_radii = nullptr);
-  //! \overload
-  void calculateScale() { calculateScale(panel_width_, panel_height_); };
   //! overload
   // calculate a single scale that will suit all molecules.  For use by
   // drawMolecules primarily.
@@ -547,6 +575,13 @@ class RDKIT_MOLDRAW2D_EXPORT MolDraw2D {
   // reset to default values all the things the c'tor sets
   void tabulaRasa();
 
+  // add R/S and E/Z annotation to atoms and bonds respectively.
+  void addStereoAnnotation(const ROMol &mol);
+
+  virtual bool supportsAnnotations() {
+    return true;
+  }
+
  private:
   bool needs_scale_;
   int width_, height_, panel_width_, panel_height_;
@@ -568,6 +603,9 @@ class RDKIT_MOLDRAW2D_EXPORT MolDraw2D {
   std::vector<std::vector<Point2D>> at_cds_;  // from mol
   std::vector<std::vector<int>> atomic_nums_;
   std::vector<std::vector<std::pair<std::string, OrientType>>> atom_syms_;
+  std::vector<std::vector<std::shared_ptr<StringRect>>> atom_notes_;
+  std::vector<std::vector<std::shared_ptr<StringRect>>> bond_notes_;
+
   Point2D bbox_[2];
 
   // draw the char, with the bottom left hand corner at cds
@@ -585,6 +623,11 @@ class RDKIT_MOLDRAW2D_EXPORT MolDraw2D {
       const ROMol &mol, const std::vector<int> *highlight_atoms,
       const std::map<int, double> *highlight_radii, int confId, int width,
       int height);
+  // copies of atom coords, atomic symbols etc. are stashed for convenience.
+  // these put empty collections onto the stack and pop the off when done.
+  void pushDrawDetails();
+  void popDrawDetails();
+
   // do the initial setup bits for drawing a molecule.
   std::unique_ptr<RWMol> setupMoleculeDraw(
       const ROMol &mol, const std::vector<int> *highlight_atoms,
@@ -606,12 +649,28 @@ class RDKIT_MOLDRAW2D_EXPORT MolDraw2D {
   // draw a circle in the requested colour(s) around the atom.
   void drawHighlightedAtom(int atom_idx, const std::vector<DrawColour> &colours,
                            const std::map<int, double> *highlight_radii);
+  // calculate the rectangle that goes round the string, taking its
+  // orientation into account.  Centre of StringRect
+  // won't be the same as label_coords, necessarily, as the string might
+  // be offset according to orient.
+  StringRect calcLabelRect(const std::string &label, OrientType orient,
+                           const Point2D &label_coords) const;
   // calculate parameters for an ellipse that roughly goes round the label
   // of the given atom.
   void calcLabelEllipse(int atom_idx,
                         const std::map<int, double> *highlight_radii,
                         Point2D &centre, double &xradius,
                         double &yradius) const;
+  // these both assume there is a note on the atom or bond.  That should
+  // have been checked by the calling function. StringRect will have a
+  // width of -1.0 if there's a problem.
+  StringRect calcAnnotationPosition(const ROMol &mol, const Atom *atom);
+  StringRect calcAnnotationPosition(const ROMol &mol, const Bond *bond);
+  // find where to put the given annotation around an atom.  Starting
+  // search at angle start_ang, in degrees.
+  void calcAtomAnnotationPosition(const ROMol &mol, const Atom *atom,
+                                  double start_ang, StringRect &rect);
+
   // draw 1 or more coloured line along bonds
   void drawHighlightedBonds(
       const ROMol &mol,
@@ -629,6 +688,8 @@ class RDKIT_MOLDRAW2D_EXPORT MolDraw2D {
 
   void extractAtomCoords(const ROMol &mol, int confId, bool updateBBox);
   void extractAtomSymbols(const ROMol &mol);
+  void extractAtomNotes(const ROMol &mol);
+  void extractBondNotes(const ROMol &mol);
 
   virtual void drawLine(const Point2D &cds1, const Point2D &cds2,
                         const DrawColour &col1, const DrawColour &col2);
@@ -639,7 +700,30 @@ class RDKIT_MOLDRAW2D_EXPORT MolDraw2D {
                      const std::vector<int> *highlight_atoms = nullptr,
                      const std::map<int, DrawColour> *highlight_map = nullptr);
   void drawAtomLabel(int atom_num, const DrawColour &draw_colour);
-
+  virtual void drawAnnotation(const std::string &note,
+                      const std::shared_ptr<StringRect> &note_rect);
+  void drawRadicals(const ROMol &mol);
+  // find a good starting point for scanning round the annotation
+  // atom.  If we choose well, the first angle should be the one.
+  // Returns angle in radians.
+  double getNoteStartAngle(const ROMol &mol, const Atom *atom) const;
+  // see if the note will clash with anything else drawn on the molecule.
+  // note_vec should have unit length.  note_rad is the radius along
+  // note_vec that the note will be drawn.
+  bool doesAtomNoteClash(StringRect &note_rect,
+                         const StringRect &atsym_rect,
+                         const ROMol &mol, unsigned int atom_idx);
+  bool doesBondNoteClash(StringRect &note_rect,
+                         const ROMol &mol, const Bond *bond);
+  // does the note_vec form an unacceptably acute angle with one of the
+  // bonds from atom to its neighbours.
+  bool doesNoteClashNbourBonds(const StringRect &note_rect,
+                               const ROMol &mol, const Atom *atom) const;
+  // does the note intersect with atsym, and if not, any other atom symbol.
+  bool doesNoteClashAtomLabels(const StringRect &note_rect,
+                               const StringRect &atsym_rect,
+                               const ROMol &mol, unsigned int atom_idx) const;
+  bool doesNoteClashOtherNotes(const StringRect &note_rect) const;
   // take the label for the given atom and return the individual pieces
   // that need to be drawn for it.  So NH<sub>2</sub> will return
   // "N", "H<sub>2</sub>".
@@ -647,19 +731,17 @@ class RDKIT_MOLDRAW2D_EXPORT MolDraw2D {
   std::vector<std::string> atomLabelToPieces(const std::string &label,
                                              OrientType orient) const;
   // cds1 and cds2 are 2 atoms in a ring.  Returns the perpendicular pointing
-  // into
-  // the ring.
+  // into the ring.
   Point2D bondInsideRing(const ROMol &mol, const Bond *bond,
-                         const Point2D &cds1, const Point2D &cds2);
+                         const Point2D &cds1, const Point2D &cds2) const;
   // cds1 and cds2 are 2 atoms in a chain double bond.  Returns the
-  // perpendicular
-  // pointing into the inside of the bond
-  Point2D bondInsideDoubleBond(const ROMol &mol, const Bond *bond);
+  // perpendicular pointing into the inside of the bond
+  Point2D bondInsideDoubleBond(const ROMol &mol, const Bond *bond) const;
   // calculate normalised perpendicular to vector between two coords, such
   // that
   // it's inside the angle made between (1 and 2) and (2 and 3).
   Point2D calcInnerPerpendicular(const Point2D &cds1, const Point2D &cds2,
-                                 const Point2D &cds3);
+                                 const Point2D &cds3) const;
 
   // take the coords for atnum, with neighbour nbr_cds, and move cds out to
   // accommodate
@@ -672,6 +754,11 @@ class RDKIT_MOLDRAW2D_EXPORT MolDraw2D {
       const Atom &atom, const ROMol &mol) const;
   std::string getAtomSymbol(const Atom &atom) const;
   OrientType getAtomOrientation(const Atom &atom, const Point2D &nbr_sum) const;
+
+  // things used by calculateScale.
+  void adjustScaleForAtomLabels(const std::vector<int> *highlight_atoms,
+                                const std::map<int, double> *highlight_radii);
+  void adjustScaleForAnnotation(const std::vector<std::shared_ptr<StringRect>> &notes);
 
  protected:
   virtual void doContinuousHighlighting(
@@ -695,7 +782,24 @@ class RDKIT_MOLDRAW2D_EXPORT MolDraw2D {
           nullptr);
 
   // calculate normalised perpendicular to vector between two coords
-  Point2D calcPerpendicular(const Point2D &cds1, const Point2D &cds2);
+  Point2D calcPerpendicular(const Point2D &cds1, const Point2D &cds2) const;
+  // assuming there's a double bond between atom1 and atom2, calculate
+  // the ends of the 2 lines that should be used to draw it, distance
+  // offset apart.  Includes bonds of type AROMATIC.
+  void calcDoubleBondLines(const ROMol &mol, double offset,
+                           const Bond *bond,
+                           const Point2D &at1_cds, const Point2D &at2_cds,
+                           Point2D &l1s, Point2D &l1f,
+                           Point2D &l2s, Point2D &l2f) const;
+  // returns true if atom has degree 2 and both bonds are close to
+  // linear.
+  bool isLinearAtom(const Atom &atom) const;
+  // and the same for triple bonds.  One line is from atom to atom,
+  // so it doesn't need a separate return.
+  void calcTripleBondLines(double offset, const Bond *bond,
+                           const Point2D &at1_cds, const Point2D &at2_cds,
+                           Point2D &l1s, Point2D &l1f,
+                           Point2D &l2s, Point2D &l2f) const;
 
   // calculate the width to draw a line in draw coords.
   virtual unsigned int getDrawLineWidth();
@@ -711,6 +815,15 @@ class RDKIT_MOLDRAW2D_EXPORT MolDraw2D {
                       bool shiftAgents, double coordScale);
 
 };
+
+// return true if the line l1s->l1f intersects line l2s->l2f
+RDKIT_MOLDRAW2D_EXPORT bool doLinesIntersect(const Point2D &l1s, const Point2D &l1f,
+                      const Point2D &l2s, const Point2D &l2f);
+// return true if line ls->lf intersects (or is fully inside) the
+// rectangle of the string.
+RDKIT_MOLDRAW2D_EXPORT bool doesLineIntersectLabel(const Point2D &ls, const Point2D &lf,
+                            const StringRect &lab_rect);
+
 }  // namespace RDKit
 
 #endif  // RDKITMOLDRAW2D_H

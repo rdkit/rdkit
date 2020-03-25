@@ -228,8 +228,8 @@ TEST_CASE("dative bonds", "[drawing, organometallics]") {
     outs << text;
     outs.flush();
 
-    CHECK(text.find("<path class='bond-0' d='M 62.0224,102.827"
-                    " L 55.1975,100 L 62.0224,97.173") != std::string::npos);
+    CHECK(text.find("<path class='bond-0' d='M 55.2063,102.675"
+                    " L 48.7489,100 L 55.2063,97.3253") != std::string::npos);
   }
   SECTION("more complex") {
     auto m1 = "N->1[C@@H]2CCCC[C@H]2N->[Pt]11OC(=O)C(=O)O1"_smiles;
@@ -243,8 +243,8 @@ TEST_CASE("dative bonds", "[drawing, organometallics]") {
     outs << text;
     outs.flush();
 
-    CHECK(text.find("<path class='bond-7' d='M 95.8722,93.948"
-                    " L 94.3351,94.8899 L 94.7559,93.137") !=
+    CHECK(text.find("<path class='bond-7' d='M 93.3102,93.7849"
+                    " L 91.7317,94.7522 L 92.1639,92.952") !=
           std::string::npos);
   }
 }
@@ -300,5 +300,36 @@ TEST_CASE("copying drawing options", "[drawing]") {
       CHECK(text.find("fill:#0000FF' ><tspan>HN") == std::string::npos);
       CHECK(text.find("fill:#000000' ><tspan>HN") != std::string::npos);
     }
+  }
+}
+
+TEST_CASE("bad DrawMolecules() when molecules are not kekulized",
+          "[drawing,bug]") {
+  auto m1 = "CCN(CC)CCn1nc2c3ccccc3sc3c(CNS(C)(=O)=O)ccc1c32"_smiles;
+  REQUIRE(m1);
+  SECTION("foundations") {
+    MolDraw2DSVG drawer(500, 200, 250, 200);
+    drawer.drawOptions().prepareMolsBeforeDrawing = false;
+    RWMol dm1(*m1);
+    RWMol dm2(*m1);
+    bool kekulize = false;
+    MolDraw2DUtils::prepareMolForDrawing(dm1, kekulize);
+    kekulize = true;
+    MolDraw2DUtils::prepareMolForDrawing(dm2, kekulize);
+    MOL_PTR_VECT ms{&dm1, &dm2};
+    drawer.drawMolecule(dm1);
+    drawer.finishDrawing();
+    std::string text = drawer.getDrawingText();
+    std::ofstream outs("testKekulizationProblems_1.svg");
+    outs << text;
+    outs.flush();
+
+    // this is a very crude test - really we just need to look at the SVG - but
+    // it's better than nothing.
+    CHECK(text.find(
+              "<path class='bond-18' d='M 169.076,79.056 L 191.285,69.2653' "
+              "style='fill:none;fill-rule:evenodd;stroke:#000000;stroke-width:"
+              "2px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1;"
+              "stroke-dasharray:6,6' />") == std::string::npos);
   }
 }

@@ -29,6 +29,8 @@ typedef std::vector<std::pair<int, int>> MatchVectType;
 struct RDKIT_SUBSTRUCTMATCH_EXPORT SubstructMatchParameters {
   bool useChirality = false;  //!< Use chirality in determining whether or not
                               //!< atoms/bonds match
+  bool useEnhancedStereo = false;  //!< Use enhanced stereochemistry in
+                                   //!< determining whether atoms/bonds match
   bool aromaticMatchesConjugated = false;  //!< Aromatic and conjugated bonds
                                            //!< match each other
   bool useQueryQueryMatches = false;  //!< Consider query-query matches, not
