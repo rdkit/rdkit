@@ -9,6 +9,7 @@
 //
 #include "SubstructLibrary.h"
 #include "PatternFactory.h"
+#include <RDGeneral/RDThreads.h>
 
 #ifdef RDK_THREADSAFE_SSS
 #include <thread>
@@ -31,6 +32,8 @@ void fillPatterns(const SubstructLibrary &slib,
   
 void addPatterns(SubstructLibrary &sslib, int numThreads) {
   PRECONDITION(sslib.getFpHolder().get() == nullptr, "Substruct library already has fingerprints");
+  numThreads = (int)getNumThreadsToUse(numThreads);
+  
   boost::shared_ptr<PatternHolder> ptr(new PatternHolder);
   std::vector<ExplicitBitVect *> & fps = ptr->getFingerprints();
   unsigned int startIdx = 0;
@@ -53,7 +56,11 @@ void addPatterns(SubstructLibrary &sslib, int numThreads) {
 #else
   fillPaterns(lib, fps, 0, sslib.size(), 1);
 #endif
+  if (ptr->size() != sslib.size()) {
+    throw ValueErrorException("Number of fingerprints generated not equal to current number of molecules");
+  }
   
   sslib.getFpHolder() = ptr;
+  sslib.resetHolders();
 }
 }

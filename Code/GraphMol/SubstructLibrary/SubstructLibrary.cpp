@@ -186,11 +186,7 @@ std::vector<unsigned int> internalGetMatches(
     int maxResults = 1000) {
   PRECONDITION(startIdx < mols.size(), "startIdx out of bounds");
   PRECONDITION(endIdx > startIdx, "endIdx > startIdx");
-  if (numThreads == -1) {
-    numThreads = (int)getNumThreadsToUse(numThreads);
-  } else {
-    numThreads = std::min(numThreads, (int)getNumThreadsToUse(numThreads));
-  }
+  numThreads = (int)getNumThreadsToUse(numThreads);
 
   endIdx = std::min(mols.size(), endIdx);
   if (endIdx < static_cast<unsigned int>(numThreads)) {
@@ -243,11 +239,7 @@ int internalMatchCounter(const ROMol &query, MolHolderBase &mols,
 
   endIdx = std::min(mols.size(), endIdx);
 
-  if (numThreads == -1) {
-    numThreads = (int)getNumThreadsToUse(numThreads);
-  } else {
-    numThreads = std::min(numThreads, (int)getNumThreadsToUse(numThreads));
-  }
+  numThreads = (int)getNumThreadsToUse(numThreads);
 
   if (endIdx < static_cast<unsigned int>(numThreads)) {
     numThreads = endIdx;
