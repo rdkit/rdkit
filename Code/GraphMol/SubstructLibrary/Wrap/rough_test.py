@@ -413,6 +413,9 @@ class TestCase(unittest.TestCase):
     for nthreads in [1, 2, 0]:
       slib_without_patterns = rdSubstructLibrary.SubstructLibrary(holder, None)
       rdSubstructLibrary.AddPatterns(slib_without_patterns, nthreads)
+      # check for seg fault
+      #  were the fingerprints really created
+      slib_without_patterns.GetFpHolder().GetFingerprint(0)
       for mol in mols:
         l1 = slib_with_patterns.CountMatches(mol)
         l2 = slib_without_patterns.CountMatches(mol)
