@@ -15,9 +15,9 @@
 #include <GraphMol/SmilesParse/SmilesParse.h>
 
 int main(int main, char **argv) {
-  RDKit::ROMOL_SPTR mol(RDKit::SmilesToMol("C1CCC1OC"));
-  RDKit::ROMOL_SPTR mol1(RDKit::MolOps::addHs(*mol));
-  RDKit::ROMOL_SPTR mol2(RDKit::MolOps::addHs(*mol));
+  std::shared_ptr<RDKit::ROMol> mol(RDKit::SmilesToMol("C1CCC1OC"));
+  std::shared_ptr<RDKit::ROMol> mol1(RDKit::MolOps::addHs(*mol));
+  std::shared_ptr<RDKit::ROMol> mol2(RDKit::MolOps::addHs(*mol));
   // Original distance geometry embedding
   RDKit::DGeomHelpers::EmbedMolecule(*mol1, 0, 1234);
   RDKit::UFF::UFFOptimizeMolecule(*mol1);
@@ -40,7 +40,6 @@ int main(int main, char **argv) {
 
   std::vector<double> rms_list;
   std::vector<unsigned int> m2cids(mol2_cids.begin(), mol2_cids.end());
-  RDKit::MolAlign::alignMolConformers(
-      *mol2, static_cast<const std::vector<unsigned int> *>(0), &m2cids,
-      static_cast<const RDNumeric::DoubleVector *>(0), false, 50, &rms_list);
+  RDKit::MolAlign::alignMolConformers( *mol2, nullptr, &m2cids, nullptr,
+				       false, 50, &rms_list);
 }
