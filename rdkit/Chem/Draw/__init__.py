@@ -441,7 +441,8 @@ def _moltoimg(mol, sz, highlights, legend, returnPNG=False, drawOptions=None, **
       d2d.SetDrawOptions(drawOptions)
     if 'highlightColor' in kwargs:
       d2d.drawOptions().setHighlightColor(kwargs['highlightColor'])
-
+    # we already prepared the molecule:
+    d2d.drawOptions().prepareMolsBeforeDrawing = False
     bondHighlights = kwargs.get('highlightBonds',None)
     if bondHighlights is not None:
       d2d.DrawMolecule(mc, legend=legend, highlightAtoms=highlights, 
