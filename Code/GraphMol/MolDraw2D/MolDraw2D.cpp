@@ -1277,13 +1277,13 @@ unique_ptr<RWMol> MolDraw2D::setupDrawMolecule(
     curr_width_ = drawOptions().bondLineWidth;
   }
   if (drawOptions().addStereoAnnotation) {
-    MolDraw2DUtils::addStereoAnnotation(draw_mol);
+    MolDraw2D_detail::addStereoAnnotation(draw_mol);
   }
   if (drawOptions().addAtomIndices) {
-    MolDraw2DUtils::addAtomIndices(draw_mol);
+    MolDraw2D_detail::addAtomIndices(draw_mol);
   }
   if (drawOptions().addBondIndices) {
-    MolDraw2DUtils::addBondIndices(draw_mol);
+    MolDraw2D_detail::addBondIndices(draw_mol);
   }
   if (!activeMolIdx_) {  // on the first pass we need to do some work
     if (drawOptions().clearBackground) {
