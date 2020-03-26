@@ -51,6 +51,45 @@ const int char_widths[] = {
 RDKIT_MOLDRAW2D_EXPORT void arcPoints(const Point2D &cds1, const Point2D &cds2,
                                       std::vector<Point2D> &res,
                                       float startAng = 0, float extent = 360);
+
+//! add R/S and E/Z annotation to atoms and bonds respectively.
+RDKIT_MOLDRAW2D_EXPORT inline void addStereoAnnotation(const ROMol &mol) {
+  for (auto atom : mol.atoms()) {
+    if (atom->hasProp("_CIPCode")) {
+      std::string lab = "(" + atom->getProp<std::string>("_CIPCode") + ")";
+      atom->setProp(common_properties::atomNote, lab);
+    }
+  }
+  for (auto bond : mol.bonds()) {
+    if (bond->getStereo() == Bond::STEREOE) {
+      bond->setProp(common_properties::bondNote, "(E)");
+    } else if (bond->getStereo() == Bond::STEREOZ) {
+      bond->setProp(common_properties::bondNote, "(Z)");
+    }
+  }
+};
+
+//! add annotations with atom indices.
+RDKIT_MOLDRAW2D_EXPORT inline void addAtomIndices(const ROMol &mol) {
+  for (auto atom : mol.atoms()) {
+    auto lab = std::to_string(atom->getIdx());
+    if (atom->hasProp(common_properties::atomNote)) {
+      lab += "," + atom->getProp<std::string>(common_properties::atomNote);
+    }
+    atom->setProp(common_properties::atomNote, lab);
+  }
+};
+
+//! add annotations with bond indices.
+RDKIT_MOLDRAW2D_EXPORT inline void addBondIndices(const ROMol &mol) {
+  for (auto bond : mol.bonds()) {
+    auto lab = std::to_string(bond->getIdx());
+    if (bond->hasProp(common_properties::bondNote)) {
+      lab += "," + bond->getProp<std::string>(common_properties::bondNote);
+    }
+    bond->setProp(common_properties::bondNote, lab);
+  }
+};
 }  // namespace MolDraw2D_detail
 }  // namespace RDKit
 
