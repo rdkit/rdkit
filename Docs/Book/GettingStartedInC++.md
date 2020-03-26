@@ -1187,7 +1187,7 @@ cairo_drawer.drawMolecule(*mol1);
 cairo_drawer.finishDrawing();
 cairo_drawer.writeDrawingText("cdk_mol1.png");
 ```
-As in Python, you can draw a set of moleculese to a grid
+As in Python, you can draw a set of molecules to a grid
 [(example13.cpp)](./C++Examples/example13.cpp):
  ```c++
   std::string base_smi("c1ccccc1");
@@ -1205,7 +1205,38 @@ As in Python, you can draw a set of moleculese to a grid
   grids.close();
 ```
 
-As of version 2020.03, it is possible to add arbitraray small strings
+Atoms in a molecule can be highlighted by drawing a coloured solid or
+open circle around them, and bonds likewise can have a coloured
+outline applied.  An obvious use is to show atoms and bonds that have
+matched a substructure query
+[(example17.cpp)](./C++Examples/example17.cpp):
+```c++
+drawer.drawMolecule(*mol, &hit1_atoms, &hit1_bonds);
+```
+In the example above, `hit1_atoms` and `hit1_bonds` are vectors of
+ints giving the atoms and bonds to be highlighted.  They will all be
+coloured the same default colour.  It is possible to specify the
+colours for individual atoms and bonds:
+```c++
+std::map<int, DrawColour> atom_cols;
+atom_cols.insert(std::make_pair(13, DrawColour(1.0, 0.0, 0.0)));
+atom_cols.insert(std::make_pair(14, DrawColour(0.0, 1.0, 0.0)));
+atom_cols.insert(std::make_pair(15, DrawColour(0.0, 0.0, 1.0)));
+atom_cols.insert(std::make_pair(16, DrawColour(1.0, 0.55, 0.0)));
+std::map<int, DrawColour> bond_cols;
+bond_cols.insert(std::make_pair(13, DrawColour(0.8, 0.8, 0.0)));
+bond_cols.insert(std::make_pair(14, DrawColour(0.0, 1.0, 1.0)));
+bond_cols.insert(std::make_pair(15, DrawColour(1.0, 0.0, 1.0)));
+drawer.drawMolecule(*mol, &hit1_atoms, &hit1_bonds, &atom_cols, &bond_cols);
+```
+
+Atoms and bonds can also be highlighted with multiple colours if they
+fall into multiple sets, for example if they are matched by more
+than 1 substructure pattern.  This is too complicated to show in this
+simple introduction, but there is an example at the bottom of
+[example17.cpp](./C++Examples/example17.cpp).
+
+As of version 2020.03, it is possible to add arbitrary small strings
 to annotate atoms and bonds in the drawing.  The strings are added as
 properties `common_properties::atomNote` and
 `common_properties::bondNote` and they will be placed automatically
@@ -1215,9 +1246,10 @@ their clash with the rest of the drawing.  There are 3 flags in
 to bonds) and atom and bond sequence numbers
 [(example13.cpp)](./C++Examples/example13.cpp):
  ```c++
-    auto m1 = "Cl[C@H](F)N"_smiles;
+    auto m1 = "Cl[C@H](F)NC\\C=C\\C"_smiles;
     MolDraw2DSVG drawer(250, 200);
     m1->getAtomWithIdx(2)->setProp(common_properties::atomNote, "foo");
+    m1->getBondWithIdx(0)->setProp(common_properties::bondNote, "bar");	
     drawer.drawOptions().addAtomIndices = true;
     drawer.drawOptions().addStereoAnnotation = true;
     drawer.drawMolecule(*m1);

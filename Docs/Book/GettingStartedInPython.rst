@@ -834,8 +834,86 @@ The result looks like this:
 
 .. image:: images/cdk2_molgrid_aligned.png
 
+As of version 2020.03, it is possible to add arbitrary small strings
+to annotate atoms and bonds in the drawing.  The strings are added as
+properties `common_properties::atomNote` and
+`common_properties::bondNote` and they will be placed automatically
+close to the atom or bond in question in a manner intended to minimise
+their clash with the rest of the drawing.  There are 3 flags in
+`MolDraw2DOptions` that will add stereo information (R/S to atoms, E/Z
+to bonds) and atom and bond sequence numbers.
 
+.. doctest::
+   >>> mol = Chem.MolFromSmiles('Cl[C@H](F)NC\C=C\C')
+   >>> d = rdMolDraw2D.MolDraw2DSVG(250, 200)
+   >>> mol.GetAtomWithIdx(2).SetProp('atomNote', 'foo')
+   >>> mol.GetBondWithIdx(0).SetProp('bondNote', 'bar')
+   >>> d.drawOptions().addStereoAnnotation = True;
+   >>> d.DrawMolecule(mol)
+   >>> d.FinishDrawing()
+   >>> with open('test17_1.svg', 'w') as f:
+   >>>    f.write(d.GetDrawingText())
 
+Should give the result:
+
+.. image:: images/stereo_annotation.png
+
+Atoms in a molecule can be highlighted by drawing a coloured solid or
+open circle around them, and bonds likewise can have a coloured
+outline applied.  An obvious use is to show atoms and bonds that have
+matched a substructure query
+
+.. doctest::
+   >>> smi = 'c1cc(F)ccc1Cl'
+   >>> mol = Chem.MolFromSmiles(smi)
+   >>> patt = Chem.MolFromSmarts('ClccccF')
+   >>> hit_ats = list(mol.GetSubstructMatch(patt))
+   >>> hit_bonds = []
+   >>> for at1 in hit_ats:
+   >>>     for at2 in hit_ats:
+   >>>         if at1 > at2:
+   >>>             bond = mol.GetBondBetweenAtoms(at1, at2)
+   >>>             if bond:
+   >>>                 hit_bonds.append(bond.GetIdx())
+   >>> d = rdMolDraw2D.MolDraw2DCairo(500, 500)
+   >>> rdMolDraw2D.PrepareAndDrawMolecule(d, mol, highlightAtoms=hit_ats,
+   >>>                                    highlightBonds=hit_bonds)
+
+will produce:
+
+.. image:: images/atom_highlights_1.png
+
+It is possible to specify the colours for individual atoms and bonds:
+
+.. doctest::
+   >>> colours = [(0.8,0.0,0.8),(0.8,0.8,0),(0,0.8,0.8),(0,0,0.8)]
+   >>> atom_cols = {}
+   >>> for i, at in enumerate(hit_ats):
+   >>>     atom_cols[at] = colours[i%4]
+   >>>     print(at, colours[i%4])
+   >>> bond_cols = {}
+   >>> for i, bd in enumerate(hit_bonds):
+   >>>     bond_cols[bd] = colours[3 - i%4]
+   >>>     print(bd, colours[3 - i%4])
+   >>> 
+   >>> d = rdMolDraw2D.MolDraw2DCairo(500, 500)
+   >>> rdMolDraw2D.PrepareAndDrawMolecule(d, mol, highlightAtoms=hit_ats,
+   >>>                                    highlightAtomColors=atom_cols,
+   >>>                                    highlightBonds=hit_bonds,
+   >>>                                    highlightBondColors=bond_cols)
+
+to give:
+
+.. image:: images/atom_highlights_2.png
+
+Atoms and bonds can also be highlighted with multiple colours if they
+fall into multiple sets, for example if they are matched by more
+than 1 substructure pattern.  This is too complicated to show in this
+simple introduction, but there is an example in
+data/test_multi_colours.py, which produces the somewhat garish
+
+.. image:: images/atom_highlights_3.png
+	   
 
 Substructure Searching
 **********************

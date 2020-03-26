@@ -34,7 +34,7 @@ set( LIBS ${RDKIT_LIBRARIES} Boost::iostreams ${RDKit_THREAD_LIBS}
      ${CAIRO_LIBRARIES} z  )
 
 include_directories(${RDKIT_INCLUDE_DIR})
-foreach( exnum RANGE 1 16 )
+foreach( exnum RANGE 1 17 )
   message( "Example : ${exnum}" )
   set( exe "example${exnum}" )
   set( src "${exe}.cpp" )
