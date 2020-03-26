@@ -834,31 +834,6 @@ The result looks like this:
 
 .. image:: images/cdk2_molgrid_aligned.png
 
-As of version 2020.03, it is possible to add arbitrary small strings
-to annotate atoms and bonds in the drawing.  The strings are added as
-properties `common_properties::atomNote` and
-`common_properties::bondNote` and they will be placed automatically
-close to the atom or bond in question in a manner intended to minimise
-their clash with the rest of the drawing.  There are 3 flags in
-`MolDraw2DOptions` that will add stereo information (R/S to atoms, E/Z
-to bonds) and atom and bond sequence numbers.
-
-.. doctest::
-   
-   >>> mol = Chem.MolFromSmiles('Cl[C@H](F)NC\C=C\C')
-   >>> d = rdMolDraw2D.MolDraw2DSVG(250, 200)
-   >>> mol.GetAtomWithIdx(2).SetProp('atomNote', 'foo')
-   >>> mol.GetBondWithIdx(0).SetProp('bondNote', 'bar')
-   >>> d.drawOptions().addStereoAnnotation = True;
-   >>> d.DrawMolecule(mol)
-   >>> d.FinishDrawing()
-   >>> with open('test17_1.svg', 'w') as f:
-   >>>    f.write(d.GetDrawingText())
-
-Should give the result:
-
-.. image:: images/stereo_annotation.png
-
 Atoms in a molecule can be highlighted by drawing a coloured solid or
 open circle around them, and bonds likewise can have a coloured
 outline applied.  An obvious use is to show atoms and bonds that have
