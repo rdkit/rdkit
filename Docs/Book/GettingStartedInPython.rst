@@ -844,6 +844,7 @@ their clash with the rest of the drawing.  There are 3 flags in
 to bonds) and atom and bond sequence numbers.
 
 .. doctest::
+   
    >>> mol = Chem.MolFromSmiles('Cl[C@H](F)NC\C=C\C')
    >>> d = rdMolDraw2D.MolDraw2DSVG(250, 200)
    >>> mol.GetAtomWithIdx(2).SetProp('atomNote', 'foo')
@@ -864,6 +865,7 @@ outline applied.  An obvious use is to show atoms and bonds that have
 matched a substructure query
 
 .. doctest::
+   
    >>> smi = 'c1cc(F)ccc1Cl'
    >>> mol = Chem.MolFromSmiles(smi)
    >>> patt = Chem.MolFromSmarts('ClccccF')
@@ -886,6 +888,7 @@ will produce:
 It is possible to specify the colours for individual atoms and bonds:
 
 .. doctest::
+   
    >>> colours = [(0.8,0.0,0.8),(0.8,0.8,0),(0,0.8,0.8),(0,0,0.8)]
    >>> atom_cols = {}
    >>> for i, at in enumerate(hit_ats):
