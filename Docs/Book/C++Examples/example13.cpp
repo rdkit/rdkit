@@ -61,14 +61,14 @@ int main( int argc , char **argv ) {
   {
     auto m1 = "Cl[C@H](F)NC\\C=C\\C"_smiles;
     MolDraw2DSVG drawer(250, 200);
-    // m1->getAtomWithIdx(2)->setProp(common_properties::atomNote, "foo");
-    // m1->getBondWithIdx(0)->setProp(common_properties::bondNote, "bar");
-    // drawer.drawOptions().addAtomIndices = true;
+    m1->getAtomWithIdx(2)->setProp(common_properties::atomNote, "foo");
+    m1->getBondWithIdx(0)->setProp(common_properties::bondNote, "bar");
+    drawer.drawOptions().addAtomIndices = true;
     drawer.drawOptions().addStereoAnnotation = true;
     drawer.drawMolecule(*m1);
     drawer.finishDrawing();
     std::string text = drawer.getDrawingText();
-    std::ofstream outs(file_root + "/data/example_13_note.svg");
+    std::ofstream outs(file_root + "/images/example_13_note.svg");
     outs << text;
     outs.flush();
   }

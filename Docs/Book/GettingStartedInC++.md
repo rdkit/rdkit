@@ -503,7 +503,7 @@ std::shared_ptr<RDKit::RWMol> mol4( new RDKit::RWMol( *mol3 ) );
 RDKit::MolOps::addHs( *mol4 );
 ```
 
-<a name="twoAddHs"></a>Note that there are 2 overloaded versions of
+Note that there are 2 overloaded versions of
 addHs. The first takes an
 ROMol and, because that can't be edited, returns a pointer to a new
 ROMol with the result.  If you use this version be careful not to leak

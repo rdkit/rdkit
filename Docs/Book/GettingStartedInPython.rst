@@ -913,7 +913,33 @@ simple introduction, but there is an example in
 data/test_multi_colours.py, which produces the somewhat garish
 
 .. image:: images/atom_highlights_3.png
-	   
+
+As of version 2020.03, it is possible to add arbitrary small strings
+to annotate atoms and bonds in the drawing.  The strings are added as
+properties 'atomNote' and
+'bondNote' and they will be placed automatically
+close to the atom or bond in question in a manner intended to minimise
+their clash with the rest of the drawing.  For convenience, here are 3
+flags in 
+`MolDraw2DOptions` that will add stereo information (R/S to atoms, E/Z
+to bonds) and atom and bond sequence numbers.
+
+.. doctest::
+   >>> mol = Chem.MolFromSmiles('Cl[C@H](F)NC\C=C\C')
+   >>> d = rdMolDraw2D.MolDraw2DCairo(250, 200)
+   >>> mol.GetAtomWithIdx(2).SetProp('atomNote', 'foo')
+   >>> mol.GetBondWithIdx(0).SetProp('bondNote', 'bar')
+   >>> d.drawOptions().addStereoAnnotation = True
+   >>> d.drawOptions().addAtomIndices = True
+   >>> d.DrawMolecule(mol)
+   >>> d.FinishDrawing()
+   >>> with open('atom_annotation_1.png', 'wb') as f:
+   >>>     f.write(d.GetDrawingText())
+
+will produce
+
+.. image:: images/atom_annotation_1.png
+
 
 Substructure Searching
 **********************
