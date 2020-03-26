@@ -903,6 +903,7 @@ flags in
 to bonds) and atom and bond sequence numbers.
 
 .. doctest::
+   
    >>> mol = Chem.MolFromSmiles('Cl[C@H](F)NC\C=C\C')
    >>> d = rdMolDraw2D.MolDraw2DCairo(250, 200)
    >>> mol.GetAtomWithIdx(2).SetProp('atomNote', 'foo')
