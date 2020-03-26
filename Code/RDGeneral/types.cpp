@@ -122,6 +122,9 @@ const std::string molAtomSeqId = "molSeqid";
 const std::string molRxnExactChange = "molRxnExachg";
 const std::string molReactStatus = "molReactStatus";
 
+const std::string atomNote = "atomNote";
+const std::string bondNote = "bondNote";
+
 }  // namespace common_properties
 
 const double MAX_DOUBLE = std::numeric_limits<double>::max();

@@ -1249,10 +1249,9 @@ M  END";
     std::ofstream outs("test983_1.svg");
     outs << text;
     outs.flush();
-    TEST_ASSERT(
-        text.find("<path class='bond-1' d='M 125.352,114.634"
-                  " L 179.234,90.896 L 172.848,79.8357 Z'"
-                  " style='fill:#000000") != std::string::npos);
+    TEST_ASSERT(text.find("<path class='bond-1' d='M 125.352,114.634"
+                          " L 179.234,90.896 L 172.848,79.8357 Z'"
+                          " style='fill:#000000") != std::string::npos);
     delete m;
   }
   {
@@ -1301,10 +1300,9 @@ M  END";
     std::ofstream outs("test983_2.svg");
     outs << text;
     outs.flush();
-    TEST_ASSERT(
-        text.find("<path class='bond-3' d='M 102.962,116.968 L"
-                  " 77.0085,93.6784 L 72.5976,99.8217 Z'"
-                  " style='fill:#000000;") != std::string::npos);
+    TEST_ASSERT(text.find("<path class='bond-3' d='M 102.962,116.968 L"
+                          " 77.0085,93.6784 L 72.5976,99.8217 Z'"
+                          " style='fill:#000000;") != std::string::npos);
 
     MolDraw2DUtils::prepareMolForDrawing(*m);
     TEST_ASSERT(m->getBondBetweenAtoms(2, 1)->getBondType() == Bond::SINGLE);
@@ -1689,17 +1687,18 @@ void test12DrawMols() {
     legends.push_back(leg);
   };
   std::vector<ROMol *> mols;
-  std::unique_ptr<std::vector<std::string>> legends(new std::vector<std::string>());
+  std::unique_ptr<std::vector<std::string>> legends(
+      new std::vector<std::string>());
   // made up SMILES, each with sequence F, Cl, Br so we can see which
   // ones are drawn, which ones are missing.
-  setup_mol("COc1cccc(NC(=O)[C@H](F)Sc2nc(ns2)c3ccccc3F)c1", "m1",
-            mols, *legends);
+  setup_mol("COc1cccc(NC(=O)[C@H](F)Sc2nc(ns2)c3ccccc3F)c1", "m1", mols,
+            *legends);
   setup_mol("NC(=O)[C@H](F)Sc1ncns1", "m2", mols, *legends);
-  setup_mol("COc1cccc(NC(=O)[C@H](Cl)Sc2nc(ns2)c3ccccc3F)c1", "m3",
-            mols, *legends);
+  setup_mol("COc1cccc(NC(=O)[C@H](Cl)Sc2nc(ns2)c3ccccc3F)c1", "m3", mols,
+            *legends);
   setup_mol("NC(=O)[C@H](Cl)Sc1ncns1", "m4", mols, *legends);
-  setup_mol("COc1cccc(NC(=O)[C@H](Br)Sc2nc(ns2)c3ccccc3F)c1", "m5",
-            mols, *legends);
+  setup_mol("COc1cccc(NC(=O)[C@H](Br)Sc2nc(ns2)c3ccccc3F)c1", "m5", mols,
+            *legends);
   setup_mol("NC(=O)[C@H](Br)Sc1ncns1", "m6", mols, *legends);
 
   {
@@ -1742,7 +1741,7 @@ void test12DrawMols() {
     outs << text;
     outs.flush();
   }
-  for(auto m: mols) {
+  for (auto m : mols) {
     delete m;
   }
   std::cerr << " Done" << std::endl;
@@ -1756,8 +1755,9 @@ void test13JSONConfig() {
     TEST_ASSERT(m);
     MolDraw2DUtils::prepareMolForDrawing(*m);
     MolDraw2DSVG drawer(250, 200);
-    const char *json = "{\"legendColour\":[1.0,0.5,1.0], \"rotate\": 90, "
-                       "\"bondLineWidth\": 5}";
+    const char *json =
+        "{\"legendColour\":[1.0,0.5,1.0], \"rotate\": 90, "
+        "\"bondLineWidth\": 5}";
     MolDraw2DUtils::updateDrawerParamsFromJSON(drawer, json);
     drawer.drawMolecule(*m, "foo");
     drawer.finishDrawing();
@@ -1765,14 +1765,12 @@ void test13JSONConfig() {
     std::ofstream outs("test13_1.svg");
     outs << text;
     outs.close();
-    TEST_ASSERT(text.find("sans-serif;fill:#FF7FFF") !=
+    TEST_ASSERT(text.find("sans-serif;fill:#FF7FFF") != std::string::npos);
+    TEST_ASSERT(text.find("'bond-0' d='M 122.883,9.09091 L 170.762,92.0201'") !=
                 std::string::npos);
-    TEST_ASSERT(text.find("'bond-0' d='M 122.883,9.09091 L 170.762,92.0201'")
-                != std::string::npos);
     // these days the bond line width scales with the rest of the
     // drawing, and at this size this comes out as 6px.
-    TEST_ASSERT(text.find("stroke-width:6px") !=
-                std::string::npos);
+    TEST_ASSERT(text.find("stroke-width:6px") != std::string::npos);
     delete m;
   }
   std::cerr << " Done" << std::endl;
@@ -2314,8 +2312,9 @@ void test18FixedScales() {
     }
   }
   {
-    std::string smi = "C[C@@H](N[C@@H]1CC[C@@H](C(=O)N2CCC(C(=O)N3CCCC3)"
-                      "(c3ccccc3)CC2)C(C)(C)C1)c1ccc(Cl)cc1";
+    std::string smi =
+        "C[C@@H](N[C@@H]1CC[C@@H](C(=O)N2CCC(C(=O)N3CCCC3)"
+        "(c3ccccc3)CC2)C(C)(C)C1)c1ccc(Cl)cc1";
     std::unique_ptr<ROMol> m(SmilesToMol(smi));
     TEST_ASSERT(m);
 
@@ -2374,8 +2373,8 @@ void test19RotateDrawing() {
       std::ofstream outs((nameBase + "1.svg").c_str());
       outs << text;
       outs.flush();
-      TEST_ASSERT(text.find("text-anchor=\"start\" x='256.907' y='154.276'")
-                  != std::string::npos);
+      TEST_ASSERT(text.find("text-anchor=\"start\" x='256.907' y='154.276'") !=
+                  std::string::npos);
     }
     {
       MolDraw2DSVG drawer(300, 300);
@@ -2386,8 +2385,8 @@ void test19RotateDrawing() {
       std::ofstream outs((nameBase + "2.svg").c_str());
       outs << text;
       outs.flush();
-      TEST_ASSERT(text.find("text-anchor=\"start\" x='136.604' y='276.316'")
-                  != std::string::npos);
+      TEST_ASSERT(text.find("text-anchor=\"start\" x='136.604' y='276.316'") !=
+                  std::string::npos);
     }
   }
   std::cerr << " Done" << std::endl;
@@ -2539,7 +2538,8 @@ void testGithub2931() {
                " molecule highlights."
             << std::endl;
 
-  auto get_all_hit_atoms = [](ROMol &mol, const std::string &smt) -> std::vector<int> {
+  auto get_all_hit_atoms = [](ROMol &mol,
+                              const std::string &smt) -> std::vector<int> {
     std::vector<int> hit_atoms;
     RWMol *query = SmartsToMol(smt);
     std::vector<MatchVectType> hits_vect;
@@ -2553,10 +2553,11 @@ void testGithub2931() {
     return hit_atoms;
   };
 
-  auto get_all_hit_bonds = [](ROMol &mol, const std::vector<int> &hit_atoms) -> std::vector<int> {
+  auto get_all_hit_bonds =
+      [](ROMol &mol, const std::vector<int> &hit_atoms) -> std::vector<int> {
     std::vector<int> hit_bonds;
-    for (int i: hit_atoms) {
-      for (int j: hit_atoms) {
+    for (int i : hit_atoms) {
+      for (int j : hit_atoms) {
         if (i > j) {
           Bond *bnd = mol.getBondBetweenAtoms(i, j);
           if (bnd) {
@@ -2569,14 +2570,15 @@ void testGithub2931() {
   };
 
   auto update_colour_map = [](const std::vector<int> &ats, DrawColour col,
-                              std::map<int, std::vector<DrawColour> > &ha_map) {
-    for (auto h: ats) {
+                              std::map<int, std::vector<DrawColour>> &ha_map) {
+    for (auto h : ats) {
       auto ex = ha_map.find(h);
       if (ex == ha_map.end()) {
         std::vector<DrawColour> cvec(1, col);
         ha_map.insert(make_pair(h, cvec));
       } else {
-        if (ex->second.end() == find(ex->second.begin(), ex->second.end(), col)) {
+        if (ex->second.end() ==
+            find(ex->second.begin(), ex->second.end(), col)) {
           ex->second.emplace_back(col);
         }
       }
@@ -2645,18 +2647,18 @@ void testGithub2931() {
 }
 
 void test20Annotate() {
-    std::cout << " ----------------- Testing annotation of 2D Drawing."
+  std::cout << " ----------------- Testing annotation of 2D Drawing."
             << std::endl;
 
   // add serial numbers to the atoms in the molecule
   auto addAtomSerialNumbers = [](ROMol &mol) {
-      for(auto atom: mol.atoms()) {
-        atom->setProp("atomNote", atom->getIdx());
-      }
+    for (auto atom : mol.atoms()) {
+      atom->setProp(common_properties::atomNote, atom->getIdx());
+    }
   };
   auto addBondSerialNumbers = [](ROMol &mol) {
-    for(auto bond: mol.bonds()) {
-      bond->setProp("bondNote", bond->getIdx());
+    for (auto bond : mol.bonds()) {
+      bond->setProp(common_properties::bondNote, bond->getIdx());
     }
   };
   {
@@ -2737,8 +2739,8 @@ void test20Annotate() {
                           "font-style:normal;font-weight:normal;"
                           "fill-opacity:1;stroke:none;"
                           "font-family:sans-serif;fill:#000000'"
-                          " ><tspan>foolish annotation</tspan>")
-                != std::string::npos);
+                          " ><tspan>foolish annotation</tspan>") !=
+                std::string::npos);
   }
   std::cerr << " Done" << std::endl;
 }
