@@ -16,8 +16,8 @@ The RDKit Documentation
   Cookbook
   Cartridge
   BackwardsIncompatibleChanges
-  GettingStartedInC++
   api-docs
+  GettingStartedInC++
 
 Additional Information
 ======================
