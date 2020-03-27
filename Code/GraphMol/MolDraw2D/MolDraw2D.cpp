@@ -2342,7 +2342,16 @@ double MolDraw2D::getNoteStartAngle(const ROMol &mol, const Atom *atom) const {
 
   Point2D ret_vec;
   if (bond_vecs.size() == 1) {
-    ret_vec = -bond_vecs[0];
+    if(atom_syms_[activeMolIdx_][atom->getIdx()].first.empty()) {
+      // go with perpendicular to bond.  This is mostly to avoid getting
+      // a zero at the end of a bond to carbon, which looks like a black
+      // oxygen atom in the default font in SVG and PNG.
+      ret_vec.x = bond_vecs[0].y;
+      ret_vec.y = -bond_vecs[0].x;
+    } else {
+      // go opposite end
+      ret_vec = -bond_vecs[0];
+    }
   } else if (bond_vecs.size() == 2) {
     ret_vec = bond_vecs[0] + bond_vecs[1];
     if (ret_vec.lengthSq() > 1.0e-6) {
