@@ -572,9 +572,9 @@ void testMultipleConfs() {
 void testMultipleConfsExpTors() {
   std::string smi = "CC(C)(C)c(cc1)ccc1c(cc23)n[n]3C(=O)/C(=C\\N2)C(=O)OCC";
   ROMol *m = SmilesToMol(smi, 0, 1);
-  INT_VECT cids = DGeomHelpers::EmbedMultipleConfs(*m, 10, 30, 100, true, false,
-                                                   -1, true, 1, -1.0, nullptr, 1e-3,
-                                                   false, true, false, false, false, 5.0, false, 1, false, false);
+  INT_VECT cids = DGeomHelpers::EmbedMultipleConfs(
+      *m, 10, 30, 100, true, false, -1, true, 1, -1.0, nullptr, 1e-3, false,
+      true, false, false, false, 5.0, false, 1, false, false);
 
   INT_VECT_CI ci;
   // SDWriter writer("junk.sdf");
@@ -1883,11 +1883,11 @@ void testEmbedParameters() {
     delete ref;
     delete mol;
   }
-  //small ring torsions improvement test
+  // small ring torsions improvement test
   {
-    std::string fname =
-        rdbase +
-        "/Code/GraphMol/DistGeomHelpers/test_data/simple_torsion.smallring.etkdgv3.mol";
+    std::string fname = rdbase +
+                        "/Code/GraphMol/DistGeomHelpers/test_data/"
+                        "simple_torsion.smallring.etkdgv3.mol";
     RWMol *ref = MolFileToMol(fname, true, false);
     TEST_ASSERT(ref);
     RWMol *mol = SmilesToMol("C1CCCCC1");
@@ -1905,11 +1905,11 @@ void testEmbedParameters() {
     delete ref;
     delete mol;
   }
-  //macrocycles torsions backward compatibility test
+  // macrocycles torsions backward compatibility test
   {
-    std::string fname =
-        rdbase +
-        "/Code/GraphMol/DistGeomHelpers/test_data/simple_torsion.macrocycle.etkdg.mol";
+    std::string fname = rdbase +
+                        "/Code/GraphMol/DistGeomHelpers/test_data/"
+                        "simple_torsion.macrocycle.etkdg.mol";
     RWMol *ref = MolFileToMol(fname, true, false);
     TEST_ASSERT(ref);
     RWMol *mol = SmilesToMol("O=C1NCCCCCCCCC1");
@@ -1927,11 +1927,11 @@ void testEmbedParameters() {
     delete ref;
     delete mol;
   }
-  //macrocycles torsions improvement test
+  // macrocycles torsions improvement test
   {
-    std::string fname =
-        rdbase +
-        "/Code/GraphMol/DistGeomHelpers/test_data/simple_torsion.macrocycle.etkdgv3.mol";
+    std::string fname = rdbase +
+                        "/Code/GraphMol/DistGeomHelpers/test_data/"
+                        "simple_torsion.macrocycle.etkdgv3.mol";
     RWMol *ref = MolFileToMol(fname, true, false);
     TEST_ASSERT(ref);
     RWMol *mol = SmilesToMol("C1NCCCCCCCCC1");
@@ -2266,6 +2266,18 @@ void testDisableFragmentation() {
   }
 }
 
+void testGithub3019() {
+  {  // make sure the mechanics work
+    std::unique_ptr<RWMol> m(SmilesToMol(std::string(2000, 'C')));
+    TEST_ASSERT(m);
+    TEST_ASSERT(m->getNumAtoms() == 2000);
+    DGeomHelpers::EmbedParameters params;
+    params.randomSeed = 0xf00d;
+    int cid = DGeomHelpers::EmbedMolecule(*m, params);
+    TEST_ASSERT(cid >= 0);
+  }
+}
+
 int main() {
   RDLog::InitLogs();
   BOOST_LOG(rdInfoLog)
@@ -2451,7 +2463,6 @@ int main() {
   BOOST_LOG(rdInfoLog) << "\t Github #2246: Use coordMap when starting "
                           "embedding from random coords\n";
   testGithub2246();
-#endif
 
   BOOST_LOG(rdInfoLog) << "\t---------------------------------\n";
   BOOST_LOG(rdInfoLog) << "\t Providing a distance bounds matrix.\n";
@@ -2460,6 +2471,14 @@ int main() {
   BOOST_LOG(rdInfoLog) << "\t---------------------------------\n";
   BOOST_LOG(rdInfoLog) << "\t Disabling fragmentation.\n";
   testDisableFragmentation();
+#endif
+
+#ifdef EXECUTE_LONG_TESTS
+  BOOST_LOG(rdInfoLog) << "\t---------------------------------\n";
+  BOOST_LOG(rdInfoLog)
+      << "\t Github #3019: Seg fault for very large molecules.\n";
+  testGithub3019();
+#endif
 
   BOOST_LOG(rdInfoLog)
       << "*******************************************************\n";
