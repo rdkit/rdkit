@@ -841,20 +841,19 @@ matched a substructure query
 
 .. doctest::
    
+   >>> from rdkit.Chem.Draw import rdMolDraw2D
    >>> smi = 'c1cc(F)ccc1Cl'
    >>> mol = Chem.MolFromSmiles(smi)
    >>> patt = Chem.MolFromSmarts('ClccccF')
    >>> hit_ats = list(mol.GetSubstructMatch(patt))
    >>> hit_bonds = []
-   >>> for at1 in hit_ats:
-   >>>     for at2 in hit_ats:
-   >>>         if at1 > at2:
-   >>>             bond = mol.GetBondBetweenAtoms(at1, at2)
-   >>>             if bond:
-   >>>                 hit_bonds.append(bond.GetIdx())
-   >>> d = rdMolDraw2D.MolDraw2DCairo(500, 500)
+   >>> for bond in patt.GetBonds():
+   ...    aid1 = hit_ats[bond.GetBeginAtomIdx()]
+   ...    aid2 = hit_ats[bond.GetEndAtomIdx()]
+   ...    hit_bonds.append(mol.GetBondBetweenAtoms(aid1,aid2).GetIdx())
+   >>> d = rdMolDraw2D.MolDraw2DSVG(500, 500) # or MolDraw2DCairo to get PNGs
    >>> rdMolDraw2D.PrepareAndDrawMolecule(d, mol, highlightAtoms=hit_ats,
-   >>>                                    highlightBonds=hit_bonds)
+   ...                                    highlightBonds=hit_bonds)
 
 will produce:
 
@@ -867,18 +866,16 @@ It is possible to specify the colours for individual atoms and bonds:
    >>> colours = [(0.8,0.0,0.8),(0.8,0.8,0),(0,0.8,0.8),(0,0,0.8)]
    >>> atom_cols = {}
    >>> for i, at in enumerate(hit_ats):
-   >>>     atom_cols[at] = colours[i%4]
-   >>>     print(at, colours[i%4])
+   ...     atom_cols[at] = colours[i%4]
    >>> bond_cols = {}
    >>> for i, bd in enumerate(hit_bonds):
-   >>>     bond_cols[bd] = colours[3 - i%4]
-   >>>     print(bd, colours[3 - i%4])
+   ...     bond_cols[bd] = colours[3 - i%4]
    >>> 
    >>> d = rdMolDraw2D.MolDraw2DCairo(500, 500)
    >>> rdMolDraw2D.PrepareAndDrawMolecule(d, mol, highlightAtoms=hit_ats,
-   >>>                                    highlightAtomColors=atom_cols,
-   >>>                                    highlightBonds=hit_bonds,
-   >>>                                    highlightBondColors=bond_cols)
+   ...                                    highlightAtomColors=atom_cols,
+   ...                                    highlightBonds=hit_bonds,
+   ...                                    highlightBondColors=bond_cols)
 
 to give:
 
@@ -905,15 +902,15 @@ to bonds) and atom and bond sequence numbers.
 .. doctest::
    
    >>> mol = Chem.MolFromSmiles('Cl[C@H](F)NC\C=C\C')
-   >>> d = rdMolDraw2D.MolDraw2DCairo(250, 200)
+   >>> d = rdMolDraw2D.MolDraw2DCairo(250, 200) # or MolDraw2DSVG to get SVGs
    >>> mol.GetAtomWithIdx(2).SetProp('atomNote', 'foo')
    >>> mol.GetBondWithIdx(0).SetProp('bondNote', 'bar')
    >>> d.drawOptions().addStereoAnnotation = True
    >>> d.drawOptions().addAtomIndices = True
    >>> d.DrawMolecule(mol)
    >>> d.FinishDrawing()
-   >>> with open('atom_annotation_1.png', 'wb') as f:
-   >>>     f.write(d.GetDrawingText())
+   >>> with open('atom_annotation_1.png', 'wb') as f:   # doctest: +SKIP
+   ...     f.write(d.GetDrawingText())
 
 will produce
 
