@@ -17,6 +17,7 @@ The RDKit Documentation
   Cartridge
   BackwardsIncompatibleChanges
   api-docs
+  GettingStartedInC++
 
 Additional Information
 ======================
