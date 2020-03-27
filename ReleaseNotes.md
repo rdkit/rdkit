@@ -19,6 +19,9 @@
 - A few new descriptor/fingerprint types are available - BCUTs (#2957), Morse
   atom fingerprints (#1773), Coulomb matrices (#2993), and MHFP and SECFP
   fingerprints (#2643)
+- There is a new, and greatly improved, version of the RDKit Cookbook (#2884)
+- There is a new version (v3) of the ETKDG conformer generator along with
+  optional new terms for handling small rings and macrocyles (http://doi.org/dqnh) (#2999)
 
 
 ## Acknowledgements:
@@ -26,9 +29,10 @@ Marcel Baltruschat, Jason Biggs, Eliane Briand, Ben Cornett, David Cosgrove,
 Andrew Dalke, Tim Dudgeon, Zhenting Gao, Guillaume Godin, Manan Goel, Gareth
 Jones, Zachary Kaplan, Eisuke Kawashima, Steven Kearnes, Brian Kelley, Maxim
 Koltsov, Mieszko Manijak, Dan Nealschneider, Daniil Polykovskiy, Daniel Probst,
-Steve Roughley, Kevin Ryan, Vincent F. Scalfani, Ricardo Rodriguez Schmidt, Rim
-Shayakhmetov, Aryan Shrey, Matt Swain, Paolo Tosco, Wiep van der Toorn, Riccardo
-Vianello, Shuzhe Wang, Piotr Wawrzyniak, Hsiao Yi, 'luancarvalhomartins'
+Sereina Riniker, Steve Roughley, Kevin Ryan, Vincent F. Scalfani, Ricardo
+Rodriguez Schmidt, Rim Shayakhmetov, Aryan Shrey, Matt Swain, Paolo Tosco, Wiep
+van der Toorn, Riccardo Vianello, Shuzhe Wang, Piotr Wawrzyniak, Hsiao Yi,
+'luancarvalhomartins'
 
 
 ## Bug Fixes:
@@ -138,6 +142,8 @@ Vianello, Shuzhe Wang, Piotr Wawrzyniak, Hsiao Yi, 'luancarvalhomartins'
  (github pull #2982 from greglandrum)
   - Tautomer enumeration should remove stereo in all tautomers 
  (github issue #2990 from greglandrum)
+  - Segmentation fault on EmbedMolecule
+ (github issue #3019 from shayakhmetov)
   - Removed dllexport from a function that lives in the anonymous namespace
  (github pull #3027 from ptosco)
 
@@ -231,11 +237,11 @@ Vianello, Shuzhe Wang, Piotr Wawrzyniak, Hsiao Yi, 'luancarvalhomartins'
  (github pull #2986 from greglandrum)
   - Add Atom Feature Vectors 
  (github pull #2988 from thegodone)
-  - Improve Conformational Sampling of Small and Large Ring Molecules
- (github pull #2731 from ptosco)
   - Add CoulombMat calculator
  (github pull #2993 from thegodone)
   - Update azure-pipelines.yml
+ (github pull #2997 from greglandrum)
+  - Improve Conformational Sampling of Small and Large Ring Molecules
  (github pull #2999 from hjuinj)
   - Fix atom highlighting in notebook PNGs
  (github pull #3000 from greglandrum)
@@ -265,6 +271,8 @@ Vianello, Shuzhe Wang, Piotr Wawrzyniak, Hsiao Yi, 'luancarvalhomartins'
  (github pull #3026 from greglandrum)
   - update docs for 2020.03
  (github pull #3028 from greglandrum)
+  - update Getting Started in C++ document
+ (github pull #3039 from DavidACosgrove)
 
 
 
