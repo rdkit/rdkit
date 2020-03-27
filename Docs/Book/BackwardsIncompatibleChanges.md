@@ -8,6 +8,24 @@ generally include changes in results that arise due to bug fixes; we try to call
 those out in the release notes. The release notes, in general, contain a more
 comprehensive version of this list.
 
+## Release 2020.03
+
+### Use of chirality with `@=` in PostgreSQL cartridge
+Searches for equal molecules (i.e. `mol1 @= mol2`) in the PostgreSQL cartridge
+now use the `do_chiral_sss` option. So if `do_chiral_sss` is false (the
+default), the molecules `CC(F)Cl` and `C[C@H](F)Cl` will be considered to be
+equal. Previously these molecules were always considered to be different.
+
+### Handling of empty/invalid files in MolSuppliers
+Attempting to create a MolSupplier from a filename pointing to an empty file, a
+file that does not exist or sometihing that is not a standard file (i.e.
+something like a directory) now generates an exception.
+
+### Renaming a cmake option
+The cmake option `RDK_OPTIMIZE_NATIVE` has been renamed to `RDK_OPTIMIZE_POPCNT`
+
+
+
 ## Release 2019.09
 
 ### Updated van der Waals radii
