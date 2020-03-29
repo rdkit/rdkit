@@ -4,30 +4,25 @@ tests include:
 reorder_tautomers
 """
 
-
 import unittest
 
-
 from rdkit import Chem
+from rdkit.Chem import MolStandardize
 from rdkit.Chem.MolStandardize import rdMolStandardize
-from rdkit.Chem import Draw
-
-
-from Chem.MolStandardize import reorder_tautomers
-
 
 class TestCase(unittest.TestCase):
 
     def testBasic(self):
-        enumerator = rdMolStandardize.TautomerEnumerator()
+        print(MolStandardize.__file__)
+        print(Chem.__file__)
+        print(rdMolStandardize.__file__)
         m = Chem.MolFromSmiles('Oc1c(cccc3)c3nc2ccncc12')
+        enumerator = rdMolStandardize.TautomerEnumerator()
         canon = enumerator.Canonicalize(m)
-        reord = reorder_tautomers(m)[0]
+        reord = MolStandardize.ReorderTautomers(m)[0]
         canonSmile = Chem.MolToSmiles(canon)
         reordSmile = Chem.MolToSmiles(reord)
         self.assertEquals(canonSmile, reordSmile)
-
-    
 
 
 

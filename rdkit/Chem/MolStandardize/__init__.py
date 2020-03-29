@@ -30,7 +30,8 @@ __copyright__ = 'Copyright 2016 Matt Swain'
 log = logging.getLogger(__name__)
 log.addHandler(logging.NullHandler())
 
-def reorder_tautomers(molecule):
+
+def ReorderTautomers(molecule):
     """Returns the list of the molecule's tautomers
     so that the canonical one as determined by the canonical
     scoring system in TautomerCanonicalizer appears first.
