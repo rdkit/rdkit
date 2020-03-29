@@ -28,11 +28,11 @@
 Marcel Baltruschat, Jason Biggs, Eliane Briand, Ben Cornett, David Cosgrove,
 Andrew Dalke, Tim Dudgeon, Zhenting Gao, Guillaume Godin, Manan Goel, Gareth
 Jones, Zachary Kaplan, Eisuke Kawashima, Steven Kearnes, Brian Kelley, Maxim
-Koltsov, Mieszko Manijak, Dan Nealschneider, Daniil Polykovskiy, Daniel Probst,
-Sereina Riniker, Steve Roughley, Kevin Ryan, Vincent F. Scalfani, Ricardo
-Rodriguez Schmidt, Rim Shayakhmetov, Aryan Shrey, Matt Swain, Paolo Tosco, Wiep
-van der Toorn, Riccardo Vianello, Shuzhe Wang, Piotr Wawrzyniak, Hsiao Yi,
-'luancarvalhomartins'
+Koltsov, Franziska Kruger, Mieszko Manijak, Dan Nealschneider, Daniil
+Polykovskiy, Daniel Probst, Sereina Riniker, Matthew Robinson, Steve Roughley,
+Kevin Ryan, Vincent F. Scalfani, Ricardo Rodriguez Schmidt, Rim Shayakhmetov,
+Aryan Shrey, Nik Stiefl, Matt Swain, Paolo Tosco, Wiep van der Toorn, Riccardo
+Vianello, Shuzhe Wang, Piotr Wawrzyniak, Hsiao Yi, 'jasad1', 'luancarvalhomartins'
 
 
 ## Bug Fixes:
@@ -378,6 +378,8 @@ Marc Wittke, '7FeiW', 'c56pony', 'sirbiscuit'
  (github pull #2460 from greglandrum)
   - Cart fixes
  (github pull #2462 from jones-gareth)
+  - Typo in UFF torsion terms for SP2-SP2
+ (github issue #2463 from jasad1)
   - Negative atom map values cause depickling to fail
  (github issue #2465 from greglandrum)
   - Deserialization failures crash Java wrapper
