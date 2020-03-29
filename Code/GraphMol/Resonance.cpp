@@ -21,7 +21,7 @@ namespace RDKit {
 // class definitions that do not need being exposed in Resonance.h
 class CEVect2 {
  public:
-  CEVect2(CEMap &ceMap);
+  CEVect2(const CEMap &ceMap);
   ConjElectrons *getCE(unsigned int depth, unsigned int width);
   unsigned int ceCount() { return rdcast<unsigned int>(d_ceVect.size()); }
   unsigned int depth() { return rdcast<unsigned int>(d_degVect.size()); }
@@ -967,7 +967,7 @@ bool CEVect2::resonanceStructureCompare(const ConjElectrons *a,
                                            b->sumMultipleBondIdxs()));
 }
 
-CEVect2::CEVect2(CEMap &ceMap) {
+CEVect2::CEVect2(const CEMap &ceMap) {
   d_ceVect.reserve(ceMap.size());
   for (CEMap::const_iterator it = ceMap.begin(); it != ceMap.end(); ++it) {
     d_ceVect.push_back(it->second);
@@ -1126,8 +1126,10 @@ void ResonanceMolSupplier::idxToCEPerm(unsigned int idx,
     for (unsigned int j = 0; j < g; ++j) {
       d *= d_ceVect3[j]->ceCount();
     }
-    d_ceVect3[g]->idxToDepthWidth(idx / d, c[gt2], c[gt2 + 1]);
-    idx %= d;
+    if (d_ceVect3[g]->ceCount()) {
+      d_ceVect3[g]->idxToDepthWidth(idx / d, c[gt2], c[gt2 + 1]);
+      idx %= d;
+    }
   }
 }
 
@@ -1612,7 +1614,7 @@ inline void ResonanceMolSupplier::resizeCeVect() {
 
 // stores the ConjElectrons pointers currently stored in ceMap
 // in the d_ceVect3 vector
-inline void ResonanceMolSupplier::storeCEMap(CEMap &ceMap,
+inline void ResonanceMolSupplier::storeCEMap(const CEMap &ceMap,
                                              unsigned int conjGrpIdx) {
   d_ceVect3[conjGrpIdx] = new CEVect2(ceMap);
 }
