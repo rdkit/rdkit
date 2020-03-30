@@ -44,7 +44,7 @@ namespace python = boost::python;
 
 void rdSLNParseExceptionTranslator(RDKit::SLNParseException const &x) {
   std::ostringstream ss;
-  ss << "SLNParseException: " << x.message();
+  ss << "SLNParseException: " << x.what();
   PyErr_SetString(PyExc_ValueError, ss.str().c_str());
 }
 
@@ -59,7 +59,7 @@ ROMol *MolFromQuerySLN(std::string sln, bool mergeHs = 1,
   RWMol *newM = SLNQueryToMol(sln, mergeHs, debugParser);
   return static_cast<ROMol *>(newM);
 }
-}
+}  // namespace RDKit
 
 BOOST_PYTHON_MODULE(rdSLNParse) {
   python::scope().attr("__doc__") =

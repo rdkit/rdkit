@@ -179,7 +179,7 @@ RWMol *toMol(std::string inp, bool doQueries, int debugParse) {
     }
 
   } catch (SLNParseException &e) {
-    BOOST_LOG(rdErrorLog) << e.message() << std::endl;
+    BOOST_LOG(rdErrorLog) << e.what() << std::endl;
     res = nullptr;
   }
   if (res) {

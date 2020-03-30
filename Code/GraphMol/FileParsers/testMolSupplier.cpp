@@ -255,7 +255,7 @@ int testMolSup() {
       try {
         mol.reset(maesup.next());
       } catch (const FileParseException &e) {
-        const std::string err_msg(e.message());
+        const std::string err_msg(e.what());
         TEST_ASSERT(i == 1);
         TEST_ASSERT(err_msg.find(err_msg_substr) != std::string::npos);
         ok = true;

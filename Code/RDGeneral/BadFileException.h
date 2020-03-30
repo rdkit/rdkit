@@ -28,7 +28,6 @@ class BadFileException : public std::runtime_error {
       : std::runtime_error("BadFileException"), _msg(msg){};
   //! get the error message
   const char *what() const noexcept override { return _msg.c_str(); };
-  const char *message() const noexcept { return what(); };
   ~BadFileException() noexcept {};
 
  private:

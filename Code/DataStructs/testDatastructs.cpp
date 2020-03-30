@@ -220,7 +220,7 @@ void test1DiscreteVect() {
   try {
     vect1.setVal(28, 2);
   } catch (ValueErrorException &dexp) {
-    BOOST_LOG(rdInfoLog) << "Expected failure: " << dexp.message() << "\n";
+    BOOST_LOG(rdInfoLog) << "Expected failure: " << dexp.what() << "\n";
   }
 
   // all these tests should fail if unsigned int changes from being
@@ -237,7 +237,7 @@ void test1DiscreteVect() {
   try {
     vect2.setVal(28, 10);
   } catch (ValueErrorException &dexp) {
-    BOOST_LOG(rdInfoLog) << "Expected failure: " << dexp.message() << "\n";
+    BOOST_LOG(rdInfoLog) << "Expected failure: " << dexp.what() << "\n";
   }
 
   DiscreteValueVect vect4(DiscreteValueVect::FOURBITVALUE, 30);
@@ -252,7 +252,7 @@ void test1DiscreteVect() {
   try {
     vect4.setVal(28, 16);
   } catch (ValueErrorException &dexp) {
-    BOOST_LOG(rdInfoLog) << "Expected failure: " << dexp.message() << "\n";
+    BOOST_LOG(rdInfoLog) << "Expected failure: " << dexp.what() << "\n";
   }
 
   DiscreteValueVect vect8(DiscreteValueVect::EIGHTBITVALUE, 32);
@@ -267,7 +267,7 @@ void test1DiscreteVect() {
   try {
     vect8.setVal(28, 257);
   } catch (ValueErrorException &dexp) {
-    BOOST_LOG(rdInfoLog) << "Expected failure: " << dexp.message() << "\n";
+    BOOST_LOG(rdInfoLog) << "Expected failure: " << dexp.what() << "\n";
   }
 
   DiscreteValueVect vect16(DiscreteValueVect::SIXTEENBITVALUE, 300);
@@ -284,7 +284,7 @@ void test1DiscreteVect() {
   try {
     vect16.setVal(28, 65536);
   } catch (ValueErrorException &dexp) {
-    BOOST_LOG(rdInfoLog) << "Expected failure: " << dexp.message() << "\n";
+    BOOST_LOG(rdInfoLog) << "Expected failure: " << dexp.what() << "\n";
   }
 }
 
@@ -1403,22 +1403,20 @@ void test15BitmapOps() {
 
 void test16BitVectProps() {
   ExplicitBitVect bv(32);
-  for(int i=0;i<32;i+=2){
+  for (int i = 0; i < 32; i += 2) {
     bv.setBit(i);
   }
 
   ExplicitBitVect bv2(bv.toString());
   TEST_ASSERT(bv == bv2);
-  
+
   Dict d;
   d.setVal<ExplicitBitVect>("exp", bv);
   RDValue &value = d.getData()[0].val;
-  
+
   DataStructsExplicitBitVecPropHandler bv_handler;
-  std::vector<CustomPropHandler*> handlers = {&bv_handler,
-                                              bv_handler.clone()};
-  for(auto handler: handlers)
-  {
+  std::vector<CustomPropHandler *> handlers = {&bv_handler, bv_handler.clone()};
+  for (auto handler : handlers) {
     TEST_ASSERT(handler->canSerialize(value));
     RDValue bad_value = 1;
     TEST_ASSERT(!handler->canSerialize(bad_value));
@@ -1430,7 +1428,6 @@ void test16BitVectProps() {
   }
   delete handlers[1];
 }
-
 
 int main() {
   RDLog::InitLogs();

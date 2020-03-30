@@ -53,7 +53,7 @@ std::vector<ValidationErrorInfo> RDKitValidation::validate(
       atom->calcExplicitValence();
     } catch (const MolSanitizeException &e) {
       errors.push_back(ValidationErrorInfo("INFO: [ValenceValidation] " +
-                                           std::string(e.message())));
+                                           std::string(e.what())));
     }
   }
   return errors;

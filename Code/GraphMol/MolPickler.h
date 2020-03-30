@@ -38,7 +38,6 @@ class RDKIT_GRAPHMOL_EXPORT MolPicklerException : public std::exception {
   MolPicklerException(const char *msg) : _msg(msg){};
   MolPicklerException(const std::string msg) : _msg(msg){};
   const char *what() const noexcept override { return _msg.c_str(); };
-  const char *message() const noexcept { return what(); };
   ~MolPicklerException() noexcept {};
 
  private:
@@ -47,7 +46,7 @@ class RDKIT_GRAPHMOL_EXPORT MolPicklerException : public std::exception {
 
 namespace PicklerOps {
 typedef enum {
-  NoProps = 0,                 // no data pickled (default pickling, single-precision coords)
+  NoProps = 0,  // no data pickled (default pickling, single-precision coords)
   MolProps = BOOST_BINARY(1),  // only public non computed properties
   AtomProps = BOOST_BINARY(10),
   BondProps = BOOST_BINARY(100),
@@ -55,9 +54,8 @@ typedef enum {
       10),  // n.b. DEPRECATED and set to AtomProps (does the same work)
   PrivateProps = BOOST_BINARY(10000),
   ComputedProps = BOOST_BINARY(100000),
-  AllProps =
-      0x0000FFFF,  // all data pickled
-  CoordsAsDouble = 0x0001FFFF // save coordinates in double precision
+  AllProps = 0x0000FFFF,       // all data pickled
+  CoordsAsDouble = 0x0001FFFF  // save coordinates in double precision
 } PropertyPickleOptions;
 }
 
