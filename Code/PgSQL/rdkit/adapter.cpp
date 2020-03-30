@@ -1925,24 +1925,6 @@ extern "C" CBfp makeReactionBFP(CChemicalReaction data, int size, int fpType) {
   }
 }
 
-extern "C" char *computeMolHash(CROMol data, int *len) {
-  ROMol &mol = *(ROMol *)data;
-  static string text;
-  text.clear();
-  try {
-    // FIX: once R/S values are stored on the atoms, this will no longer be
-    // needed
-    MolOps::assignStereochemistry(mol);
-    text = RDKit::MolHash::generateMoleculeHashSet(mol);
-  } catch (...) {
-    ereport(WARNING,
-            (errcode(ERRCODE_WARNING), errmsg("computeMolHash: failed")));
-    text.clear();
-  }
-  *len = text.length();
-  return strdup(text.c_str());
-}
-
 extern "C" char *computeNMMolHash(CROMol data, const char *which) {
   RWMol mol(*(ROMol *)data);
 
