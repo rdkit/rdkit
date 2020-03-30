@@ -223,3 +223,17 @@ TEST_CASE("negative charge queries. Part of testing changes for github #2604",
     CHECK(nErrors == 0);
   }
 }
+
+TEST_CASE("GithHub #2954: Reaction Smarts with Dative Bonds not parsed",
+          "[Reaction, Bug]") {
+  
+  SECTION("Rxn Smart Processing with Dative Bond") {
+    unique_ptr<ChemicalReaction> rxn(
+      RxnSmartsToChemicalReaction("[O:1].[H+]>>[O:1]->[H+]")
+    );
+    REQUIRE(rxn);
+    auto k = rxn->getProducts()[0]->getNumAtoms();
+    CHECK(k == 2);
+  }
+
+}

@@ -105,12 +105,33 @@ ROMol *constructMolFromString(const std::string &txt,
 ChemicalReaction *RxnSmartsToChemicalReaction(
     const std::string &text, std::map<std::string, std::string> *replacements,
     bool useSmiles) {
-  std::size_t pos1 = text.find('>');
-  std::size_t pos2 = text.rfind('>');
-  if (pos1 == std::string::npos) {
+
+  std::size_t pos1;
+  std::size_t pos2;
+
+  std::vector<std::size_t> pos;
+  std::vector<std::size_t> rxnDelimiterPos;
+
+  for (std::size_t i = 0; i < text.length(); i++) {
+    if (text[i] == '>') {
+      pos.push_back(i);
+    }
+  }
+
+  if (pos.size() == 0) {
     throw ChemicalReactionParserException(
         "a reaction requires at least one reactant and one product");
   }
+
+  for (std::size_t i = 0; i < pos.size(); i++) {
+    if (text[pos[i] - 1] != '-') {
+      rxnDelimiterPos.push_back(pos[i]);
+    }
+  }
+
+  pos1 = rxnDelimiterPos[0];
+  pos2 = rxnDelimiterPos[1];
+
   if (text.find('>', pos1 + 1) != pos2) {
     throw ChemicalReactionParserException("multi-step reactions not supported");
   }
