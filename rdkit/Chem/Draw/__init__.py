@@ -251,7 +251,7 @@ def MolToFile(mol, filename, size=(300, 300), kekulize=True, wedgeBonds=True, im
     drawfn = _moltoimg
     mode = 'b'
   elif imageType=='svg':
-    data = _moltoSVG
+    drawfn = _moltoSVG
     mode = 't'
   else:
     raise ValueError("unsupported output format")
