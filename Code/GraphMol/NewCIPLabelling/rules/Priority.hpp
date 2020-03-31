@@ -1,6 +1,6 @@
 //
 //
-//  Copyright (C) 2020 Greg Landrum and T5 Informatics GmbH
+//  Copyright (C) 2020 Schrödinger, LLC
 //
 //   @@ All Rights Reserved @@
 //  This file is part of the RDKit.
@@ -45,7 +45,7 @@ public:
    *
    * @return The type of the descriptor that should be assigned
    */
-  bool isPseudoAsymettric() const { return pseudoAsym; }
+  bool isPseudoAsymetric() const { return pseudoAsym; }
 };
 
 } // namespace NewCIPLabelling

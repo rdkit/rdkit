@@ -1,6 +1,6 @@
 //
 //
-//  Copyright (C) 2020 Greg Landrum and T5 Informatics GmbH
+//  Copyright (C) 2020 Schrödinger, LLC
 //
 //   @@ All Rights Reserved @@
 //  This file is part of the RDKit.
@@ -19,7 +19,6 @@
 
 #pragma once
 
-#include <queue>
 #include <vector>
 
 namespace RDKit {
@@ -39,12 +38,10 @@ private:
 
 public:
   static int compare(int anum, int aden, int bnum, int bden) {
-    if (anum * bden == aden * bnum) {
-      return 0;
-    } else {
-      return static_cast<double>(anum) / aden -
-             static_cast<double>(bnum) / bden;
-    }
+    unsigned long x = anum * bden;
+    unsigned long y = bnum * aden;
+
+    return x < y ? -1 : (x == y ? 0 : 1);
   }
 
   Fraction() = default;
@@ -107,9 +104,9 @@ bool SeedTypes(std::vector<Type> &types, const BaseMol<A, B> *mol) {
       case 6:  // C
       case 14: // Si
       case 32: // Ge
-        if (q == 0 && btypes == 0x0102)
+        if (q == 0 && btypes == 0x0102) {
           types[aidx] = Type::Cv4D4;
-        else if (q == -1 && btypes == 0x0003) {
+        } else if (q == -1 && btypes == 0x0003) {
           types[aidx] = Type::Cv3D3Minus;
           result = true;
         }
@@ -143,36 +140,35 @@ bool SeedTypes(std::vector<Type> &types, const BaseMol<A, B> *mol) {
 template <typename A, typename B>
 void RelaxTypes(std::vector<Type> &types, const BaseMol<A, B> *mol) {
   auto counts = std::vector<int>(mol->getNumAtoms());
-  auto queue = std::queue<A>();
+  auto queue = std::vector<A>();
 
-  for (A atom : mol->atoms()) {
-    int aidx = mol->getAtomIdx(atom);
+  for (auto atom : mol->atoms()) {
+    const auto aidx = mol->getAtomIdx(atom);
     for (B bond : mol->getBonds(atom)) {
-      A nbr = mol->getOther(bond, atom);
+      const auto nbr = mol->getOther(bond, atom);
       if (types[mol->getAtomIdx(nbr)] != Type::Other) {
         ++counts[aidx];
       }
     }
 
     if (counts[aidx] == 1) {
-      queue.push(atom);
+      queue.push_back(atom);
     }
   }
 
-  while (!queue.empty()) {
-    A atom = queue.front();
-    queue.pop();
+  for (auto pos = 0u; pos < queue.size(); ++pos) {
+    auto atom = queue[0];
 
-    int aidx = mol->getAtomIdx(atom);
+    auto aidx = mol->getAtomIdx(atom);
     if (types[aidx] != Type::Other) {
       types[aidx] = Type::Other;
 
-      for (B bond : mol->getBonds(atom)) {
-        A nbr = mol->getOther(bond, atom);
-        int nbridx = nbr->getIdx();
+      for (auto bond : mol->getBonds(atom)) {
+        const auto nbr = mol->getOther(bond, atom);
+        auto nbridx = nbr->getIdx();
         --counts[nbridx];
         if (counts[nbridx] == 1) {
-          queue.push(nbr);
+          queue.push_back(nbr);
         }
       }
     }

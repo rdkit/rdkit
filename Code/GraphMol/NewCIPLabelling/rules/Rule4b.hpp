@@ -1,6 +1,6 @@
 //
 //
-//  Copyright (C) 2020 Greg Landrum and T5 Informatics GmbH
+//  Copyright (C) 2020 Schrödinger, LLC
 //
 //   @@ All Rights Reserved @@
 //  This file is part of the RDKit.
@@ -11,7 +11,6 @@
 #pragma once
 
 #include <cassert>
-#include <queue>
 #include <vector>
 
 #include "../Edge.hpp"
@@ -111,11 +110,10 @@ public:
 
 private:
   bool hasDescriptors(const Node<A, B> *node) const {
-    auto queue = std::queue<const Node<A, B> *>();
-    queue.push(node);
-    while (!queue.empty()) {
-      const auto &n = queue.front();
-      queue.pop();
+    auto queue = std::vector<const Node<A, B> *>({node});
+
+    for (auto pos = 0u; pos < queue.size(); ++pos) {
+      const auto n = queue[pos];
 
       if (n->getAux() != nullptr) {
         return true;
@@ -127,7 +125,7 @@ private:
         if (this->getBondLabel(e) != Descriptor::NONE) {
           return true;
         }
-        queue.push(e->getEnd());
+        queue.push_back(e->getEnd());
       }
     }
     return false;
@@ -226,11 +224,10 @@ private:
   }
 
   void visit(std::vector<PairList> &plists, const Node<A, B> *beg) const {
-    auto queue = std::queue<Node<A, B> *>();
-    queue.push(beg);
-    while (!queue.isEmpty()) {
-      auto node = queue.front();
-      queue.pop();
+    auto queue = std::vector<Node<A, B> *>({beg});
+
+    for (auto pos = 0u; pos < queue.sizd(); ++pos) {
+      const auto node = queue[pos];
 
       // append any descriptors to the std::vector
       for (const auto &plist : plists) {
@@ -239,7 +236,7 @@ private:
 
       for (const auto &e : node->getEdges()) {
         if (e->isBeg(node)) {
-          queue.push(e->getEnd());
+          queue.push_back(e->getEnd());
         }
       }
     }
@@ -282,18 +279,17 @@ private:
     const Rule4b<A, B> replacement_rule(this->getMol(),
                                         plist.getRefDescriptor());
     const auto &sorter = getRefSorter(&replacement_rule);
-    auto queue = std::queue<const Node<A, B> *>();
-    queue.push(beg);
-    while (!queue.empty()) {
-      auto node = queue.front();
-      queue.pop();
+    auto queue = std::vector<const Node<A, B> *>({beg});
+
+    for (auto pos = 0u; pos < queue.size(); ++pos) {
+      const auto node = queue[pos];
 
       plist.add(node->getAux());
       auto edges = node->getEdges();
       sorter.prioritise(node, edges);
       for (const auto &edge : edges) {
         if (edge->isBeg(node) && !edge->getEnd()->isTerminal()) {
-          queue.push(edge->getEnd());
+          queue.push_back(edge->getEnd());
         }
       }
     }
@@ -305,15 +301,12 @@ private:
     const Rule4b<A, B> replacementB(this->getMol(), refB);
     const auto &aSorter = getRefSorter(&replacementA);
     const auto &bSorter = getRefSorter(&replacementB);
-    auto aQueue = std::queue<const Node<A, B> *>();
-    auto bQueue = std::queue<const Node<A, B> *>();
-    aQueue.push(a);
-    bQueue.push(b);
-    while (!aQueue.empty() && !bQueue.empty()) {
-      const auto &aNode = aQueue.front();
-      aQueue.pop();
-      const auto &bNode = bQueue.front();
-      bQueue.pop();
+    auto aQueue = std::vector<const Node<A, B> *>({a});
+    auto bQueue = std::vector<const Node<A, B> *>({b});
+
+    for (auto pos = 0u; pos < aQueue.size() && pos < bQueue.size(); ++pos) {
+      const auto aNode = aQueue[pos];
+      const auto bNode = bQueue[pos];
 
       const auto &desA = PairList::ref(aNode->getAux());
       const auto &desB = PairList::ref(bNode->getAux());
@@ -328,7 +321,7 @@ private:
       aSorter.prioritise(aNode, edges);
       for (const auto &edge : edges) {
         if (edge->isBeg(aNode) && !edge->getEnd()->isTerminal()) {
-          aQueue.push(edge->getEnd());
+          aQueue.push_back(edge->getEnd());
         }
       }
 
@@ -336,7 +329,7 @@ private:
       bSorter.prioritise(bNode, edges);
       for (const auto &edge : edges) {
         if (edge->isBeg(bNode) && !edge->getEnd()->isTerminal()) {
-          bQueue.push(edge->getEnd());
+          bQueue.push_back(edge->getEnd());
         }
       }
     }

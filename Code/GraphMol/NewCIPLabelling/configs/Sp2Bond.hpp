@@ -1,6 +1,6 @@
 //
 //
-//  Copyright (C) 2020 Greg Landrum and T5 Informatics GmbH
+//  Copyright (C) 2020 Schrödinger, LLC
 //
 //   @@ All Rights Reserved @@
 //  This file is part of the RDKit.
@@ -90,13 +90,13 @@ public:
 #endif
 
     if (config == TOGETHER) {
-      if (priority1.isPseudoAsymettric() != priority2.isPseudoAsymettric()) {
+      if (priority1.isPseudoAsymetric() != priority2.isPseudoAsymetric()) {
         return Descriptor::seqCis;
       } else {
         return Descriptor::Z;
       }
     } else if (config == OPPOSITE) {
-      if (priority1.isPseudoAsymettric() != priority2.isPseudoAsymettric()) {
+      if (priority1.isPseudoAsymetric() != priority2.isPseudoAsymetric()) {
         return Descriptor::seqTrans;
       } else {
         return Descriptor::E;
@@ -150,13 +150,13 @@ public:
     }
 
     if (config == TOGETHER) {
-      if (priority1.isPseudoAsymettric() != priority2.isPseudoAsymettric()) {
+      if (priority1.isPseudoAsymetric() != priority2.isPseudoAsymetric()) {
         return Descriptor::seqCis;
       } else {
         return Descriptor::Z;
       }
     } else if (config == OPPOSITE) {
-      if (priority1.isPseudoAsymettric() != priority2.isPseudoAsymettric()) {
+      if (priority1.isPseudoAsymetric() != priority2.isPseudoAsymetric()) {
         return Descriptor::seqTrans;
       } else {
         return Descriptor::E;

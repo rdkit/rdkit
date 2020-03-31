@@ -1,6 +1,6 @@
 //
 //
-//  Copyright (C) 2020 Greg Landrum and T5 Informatics GmbH
+//  Copyright (C) 2020 Schrödinger, LLC
 //
 //   @@ All Rights Reserved @@
 //  This file is part of the RDKit.
@@ -94,8 +94,33 @@ int RDKitCipMol::getMassNum(RdkA atom) const {
 int RDKitCipMol::getCharge(RdkA atom) const { return atom->getFormalCharge(); };
 
 int RDKitCipMol::getBondOrder(RdkB bond) const {
-  auto order = bond->getBondTypeAsDouble();
-  return static_cast<int>(std::ceil(order));
+  if (kekulized_mol == nullptr) {
+    auto tmp = new RWMol(*mol);
+    MolOps::Kekulize(*tmp);
+    const_cast<RDKitCipMol *>(this)->kekulized_mol.reset(tmp);
+  }
+
+  const auto kekulized_bond = kekulized_mol->getBondWithIdx(bond->getIdx());
+  switch (kekulized_bond->getBondType()) {
+  case Bond::ZERO:
+  case Bond::HYDROGEN:
+  case Bond::DATIVE:
+    return 0;
+  case Bond::SINGLE:
+    return 1;
+  case Bond::DOUBLE:
+    return 2;
+  case Bond::TRIPLE:
+    return 3;
+  case Bond::QUADRUPLE:
+    return 4;
+  case Bond::QUINTUPLE:
+    return 5;
+  case Bond::HEXTUPLE:
+    return 6;
+  default:
+    throw std::runtime_error("Non integer-order bonds are not allowed.");
+  }
 };
 
 void RDKitCipMol::setAtomDescriptor(RdkA atom, const std::string &key,

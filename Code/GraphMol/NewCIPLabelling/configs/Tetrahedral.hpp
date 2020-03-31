@@ -1,6 +1,6 @@
 //
 //
-//  Copyright (C) 2020 Greg Landrum and T5 Informatics GmbH
+//  Copyright (C) 2020 Schrödinger, LLC
 //
 //   @@ All Rights Reserved @@
 //  This file is part of the RDKit.
@@ -127,13 +127,13 @@ private:
     }
 
     if (config == 0x1) {
-      if (priority.isPseudoAsymettric()) {
+      if (priority.isPseudoAsymetric()) {
         return Descriptor::s;
       } else {
         return Descriptor::S;
       }
     } else if (config == 0x2) {
-      if (priority.isPseudoAsymettric()) {
+      if (priority.isPseudoAsymetric()) {
         return Descriptor::r;
       } else {
         return Descriptor::R;

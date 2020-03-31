@@ -1,6 +1,6 @@
 //
 //
-//  Copyright (C) 2020 Greg Landrum and T5 Informatics GmbH
+//  Copyright (C) 2020 Schrödinger, LLC
 //
 //   @@ All Rights Reserved @@
 //  This file is part of the RDKit.
@@ -11,7 +11,6 @@
 #pragma once
 
 #include <memory>
-#include <queue>
 
 #include "../BaseMol.hpp"
 #include "../Edge.hpp"
@@ -85,17 +84,12 @@ public:
       return cmp;
     }
 
-    auto aQueue = std::queue<const Edge<A, B> *>();
-    auto bQueue = std::queue<const Edge<A, B> *>();
+    auto aQueue = std::vector<const Edge<A, B> *>({a});
+    auto bQueue = std::vector<const Edge<A, B> *>({b});
 
-    aQueue.push(a);
-    bQueue.push(b);
-
-    while (!aQueue.empty() && !bQueue.empty()) {
-      a = aQueue.front();
-      aQueue.pop();
-      b = bQueue.front();
-      bQueue.pop();
+    for (auto pos = 0u; pos < aQueue.size() && pos < bQueue.size(); ++pos) {
+      a = aQueue[pos];
+      b = bQueue[pos];
       auto as = a->getEnd()->getEdges();
       auto bs = b->getEnd()->getEdges();
 
@@ -163,8 +157,8 @@ public:
             return cmp;
           }
 
-          aQueue.push(aEdge);
-          bQueue.push(bEdge);
+          aQueue.push_back(aEdge);
+          bQueue.push_back(bEdge);
         }
       }
     }

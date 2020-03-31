@@ -1,6 +1,6 @@
 //
 //
-//  Copyright (C) 2020 Greg Landrum and T5 Informatics GmbH
+//  Copyright (C) 2020 Schrödinger, LLC
 //
 //   @@ All Rights Reserved @@
 //  This file is part of the RDKit.
@@ -68,9 +68,9 @@ static std::string to_string(const Descriptor &desc) {
   case Descriptor::s:
     return "s";
   case Descriptor::seqTrans:
-    return "seqTrans";
+    return "e";
   case Descriptor::seqCis:
-    return "seqCis";
+    return "z";
   case Descriptor::E:
     return "E";
   case Descriptor::Z:

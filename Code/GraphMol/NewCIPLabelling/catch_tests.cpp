@@ -1,5 +1,5 @@
 //
-//  Copyright (C) 2020 Greg Landrum
+//  Copyright (C) 2020 Schrödinger, LLC
 //
 //   @@ All Rights Reserved @@
 //  This file is part of the RDKit.
@@ -12,7 +12,6 @@
                           // this in one cpp file
 
 #include <bitset>
-#include <queue>
 #include <string>
 #include <vector>
 
@@ -166,12 +165,10 @@ TEST_CASE("Descriptor lists", "[accurateCip]") {
 }
 
 void check_incoming_edge_count(Node<RdkA, RdkB> *root) {
-  auto queue = std::queue<Node<RdkA, RdkB> *>{};
-  queue.push(root);
+  auto queue = std::vector<Node<RdkA, RdkB> *>({root});
 
-  while (!queue.empty()) {
-    auto node = queue.front();
-    queue.pop();
+  for (auto pos = 0u; pos < queue.size(); ++pos) {
+    const auto node = queue[pos];
 
     int incoming_edges = 0;
     for (const auto &e : node->getEdges()) {
@@ -179,7 +176,7 @@ void check_incoming_edge_count(Node<RdkA, RdkB> *root) {
         REQUIRE(e->isEnd(node));
         ++incoming_edges;
       } else if (!e->getEnd()->isTerminal()) {
-        queue.push(e->getEnd());
+        queue.push_back(e->getEnd());
       }
     }
 
@@ -392,7 +389,7 @@ TEST_CASE("RDKit Issues", "[accurateCip]") {
     std::string chirality;
     CHECK(bond->getPropIfPresent(common_properties::_CIPCode, chirality) ==
           true);
-    CHECK(chirality == "seqCis");
+    CHECK(chirality == "z");
 
     CHECK(atom->getPropIfPresent(common_properties::_CIPCode, chirality) ==
           true);

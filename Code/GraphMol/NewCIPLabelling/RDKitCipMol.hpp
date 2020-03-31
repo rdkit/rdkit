@@ -1,6 +1,6 @@
 //
 //
-//  Copyright (C) 2020 Greg Landrum and T5 Informatics GmbH
+//  Copyright (C) 2020 Schrödinger, LLC
 //
 //   @@ All Rights Reserved @@
 //  This file is part of the RDKit.
@@ -10,11 +10,13 @@
 //
 #pragma once
 
+#include <memory>
 #include "BaseMol.hpp"
 
 namespace RDKit {
 
 class ROMol;
+class RWMol;
 class Bond;
 class Atom;
 
@@ -26,6 +28,7 @@ using RdkB = Bond *;
 class RDKitCipMol : public BaseMol<RdkA, RdkB> {
 private:
   ROMol *mol;
+  std::unique_ptr<RWMol> kekulized_mol = nullptr;
 
 public:
   explicit RDKitCipMol(ROMol *mol);

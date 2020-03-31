@@ -1,6 +1,6 @@
 //
 //
-//  Copyright (C) 2020 Greg Landrum and T5 Informatics GmbH
+//  Copyright (C) 2020 Schrödinger, LLC
 //
 //   @@ All Rights Reserved @@
 //  This file is part of the RDKit.
@@ -10,7 +10,6 @@
 //
 #pragma once
 
-#include <queue>
 #include <sstream>
 #include <vector>
 
@@ -80,12 +79,10 @@ public:
 
   std::vector<Node<A, B> *> getNodes(A atom) const {
     auto result = std::vector<Node<A, B> *>{};
-    auto queue = std::queue<Node<A, B> *>{};
-    queue.push(getCurrRoot());
+    auto queue = std::vector<Node<A, B> *>({getCurrRoot()});
 
-    while (!queue.empty()) {
-      auto node = queue.front();
-      queue.pop();
+    for (auto pos = 0u; pos < queue.size(); ++pos) {
+      const auto node = queue[pos];
 
       if (atom == node->getAtom()) {
         result.push_back(node);
@@ -94,7 +91,7 @@ public:
         if (!e->isBeg(node)) {
           continue;
         }
-        queue.push(e->getEnd());
+        queue.push_back(e->getEnd());
       }
     }
     return result;
@@ -135,18 +132,16 @@ public:
    * @param newroot the new root
    */
   void changeRoot(Node<A, B> *newroot) {
-    auto queue = std::queue<Node<A, B> *>();
-    queue.push(newroot);
+    auto queue = std::vector<Node<A, B> *>({newroot});
 
     auto toflip = std::vector<Edge<A, B> *>();
-    while (!queue.empty()) {
-      auto node = queue.front();
-      queue.pop();
+    for (auto pos = 0u; pos < queue.size(); ++pos) {
+      const auto node = queue[pos];
 
       for (const auto &e : node->getEdges()) {
         if (e->isEnd(node)) {
           toflip.push_back(e);
-          queue.push(e->getBeg());
+          queue.push_back(e->getBeg());
         }
       }
     }
@@ -239,17 +234,17 @@ public:
   }
 
   void expandAll() {
-    auto queue = std::queue<Node<A, B> *>{};
-    queue.push(root);
-    while (!queue.empty()) {
-      auto node = queue.front();
-      queue.pop();
+    auto queue = std::vector<Node<A, B> *>({root});
+
+    for (auto pos = 0u; pos < queue.size(); ++pos) {
+      const auto node = queue[pos];
+
       for (const auto &e : node->getEdges()) {
         if (!e->isBeg(node)) {
           continue;
         }
         if (!e->getEnd()->isTerminal()) {
-          queue.push(e->getEnd());
+          queue.push_back(e->getEnd());
         }
       }
     }
