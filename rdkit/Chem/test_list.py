@@ -38,6 +38,7 @@ tests = [
   ("python", "test_list.py", {'dir': 'Fraggle'}),
   ("python", "test_list.py", {'dir': 'SimpleEnum'}),
   ("python", "test_list.py", {'dir': 'Features'}),
+  ("python", "test_list.py", {'dir': 'MolStandardize'})
 ]
 
 # only attempt the MolKey tests if we have the pre-reqs:
