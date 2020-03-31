@@ -227,13 +227,35 @@ TEST_CASE("negative charge queries. Part of testing changes for github #2604",
 TEST_CASE("GithHub #2954: Reaction Smarts with Dative Bonds not parsed",
           "[Reaction, Bug]") {
   
-  SECTION("Rxn Smart Processing with Dative Bond") {
-    unique_ptr<ChemicalReaction> rxn(
+  SECTION("Rxn Smart Processing with Dative Bond in Product") {
+    unique_ptr<ChemicalReaction> rxn1(
       RxnSmartsToChemicalReaction("[O:1].[H+]>>[O:1]->[H+]")
     );
-    REQUIRE(rxn);
-    auto k = rxn->getProducts()[0]->getNumAtoms();
+
+    REQUIRE(rxn1);
+    auto k = rxn1->getProducts()[0]->getNumAtoms();
     CHECK(k == 2);
   }
 
+  SECTION("Rxn Smart Processing with Dative Bond in Reactant") {
+    unique_ptr<ChemicalReaction> rxn2(
+      RxnSmartsToChemicalReaction("[O:1]->[H+]>>[O:1].[H+]")
+    );
+
+    REQUIRE(rxn2);
+
+    auto k = rxn2->getReactants()[0]->getNumAtoms();
+    CHECK(k == 2);
+  }
+
+  SECTION("Rxm Smart Processing with Dative Bond in Agent") {
+    unique_ptr<ChemicalReaction> rxn(
+      RxnSmartsToChemicalReaction("[O:1][H]>N->[Cu]>[O:1].[H]")
+    );
+    REQUIRE(rxn);
+
+    auto k = rxn->getAgents()[0]->getNumAtoms();
+    CHECK(k == 2);
+  }
+ 
 }
