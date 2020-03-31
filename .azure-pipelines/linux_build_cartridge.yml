@@ -35,7 +35,7 @@ steps:
     sh ./Code/PgSQL/rdkit/pgsql_regress.sh
     if [ -e ./Code/PgSQL/rdkit/regression.diffs ]
     then
-      cat /Code/PgSQL/rdkit/regression.diffs
+      cat ./Code/PgSQL/rdkit/regression.diffs
     fi
   displayName: Run tests
 
