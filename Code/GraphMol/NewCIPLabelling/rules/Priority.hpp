@@ -10,8 +10,6 @@
 //
 #pragma once
 
-#include <set>
-
 namespace RDKit {
 namespace NewCIPLabelling {
 
@@ -20,12 +18,12 @@ namespace NewCIPLabelling {
  *
  */
 class Priority {
- private:
+private:
   bool unique;
   bool pseudoAsym;
   int ruleIdx;
 
- public:
+public:
   Priority() = delete;
 
   Priority(bool unique, int ruleIdx, bool pseudoAsym)
@@ -47,8 +45,8 @@ class Priority {
    *
    * @return The type of the descriptor that should be assigned
    */
-  bool isPseduoAsymettric() const { return pseudoAsym; }
+  bool isPseudoAsymettric() const { return pseudoAsym; }
 };
 
-}  // namespace NewCIPLabelling
-}  // namespace RDKit
+} // namespace NewCIPLabelling
+} // namespace RDKit

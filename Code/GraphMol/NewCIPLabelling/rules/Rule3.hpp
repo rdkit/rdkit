@@ -22,30 +22,29 @@ namespace NewCIPLabelling {
  *
  * @param <A> generic atom class
  */
-template <typename A, typename B>
-class Rule3 : public SequenceRule<A, B> {
- private:
+template <typename A, typename B> class Rule3 : public SequenceRule<A, B> {
+private:
   static int ord(Descriptor lab) {
     switch (lab) {
-      case Descriptor::E:
-        return 1;
-      case Descriptor::Z:
-        return 2;
-      default:
-        return 0;
+    case Descriptor::E:
+      return 1;
+    case Descriptor::Z:
+      return 2;
+    default:
+      return 0;
     }
   }
 
- public:
+public:
   Rule3() = delete;
 
-  Rule3(const BaseMol<A, B>* mol) : SequenceRule<A, B>(mol) {}
+  Rule3(const BaseMol<A, B> *mol) : SequenceRule<A, B>(mol) {}
 
-  int compare(const Edge<A, B>* a, const Edge<A, B>* b) const override {
+  int compare(const Edge<A, B> *a, const Edge<A, B> *b) const override {
     return integer_compare(ord(a->getEnd()->getAux()),
                            ord(b->getEnd()->getAux()));
   }
 };
 
-}  // namespace NewCIPLabelling
-}  // namespace RDKit
+} // namespace NewCIPLabelling
+} // namespace RDKit

@@ -8,6 +8,15 @@
 //  which is included in the file license.txt, found at the root
 //  of the RDKit source tree.
 //
+
+///
+/// Utilities to handle atomic numbers in Mancude (maximum number
+/// of noncumulative double bonds) rings
+///
+/// This guarantees that aromatic rings containing heteroatoms
+/// are always resolved in the same way
+///
+
 #pragma once
 
 #include <queue>
@@ -17,19 +26,18 @@ namespace RDKit {
 
 namespace NewCIPLabelling {
 
-template <typename A, typename B>
-class BaseMol;
+template <typename A, typename B> class BaseMol;
 
 namespace Mancude {
 
 class Fraction {
- private:
+private:
   template <typename A, typename B>
-  friend std::vector<Fraction> calcFracAtomNums(const BaseMol<A, B>* mol);
-  int num = 0;
-  int den = 1;
+  friend std::vector<Fraction> calcFracAtomNums(const BaseMol<A, B> *mol);
+  int d_numerator = 0;
+  int d_denominator = 1;
 
- public:
+public:
   static int compare(int anum, int aden, int bnum, int bden) {
     if (anum * bden == aden * bnum) {
       return 0;
@@ -40,31 +48,32 @@ class Fraction {
   }
 
   Fraction() = default;
-  Fraction(int num, int den) : num{num}, den{den} {}
+  Fraction(int num, int den) : d_numerator{num}, d_denominator{den} {}
 
-  int getNum() const { return num; }
+  int numerator() const { return d_numerator; }
 
-  int getDen() const { return den; }
+  int denominator() const { return d_denominator; }
 
-  int compareTo(const Fraction& o) {
-    return compare(this->num, this->den, o.num, o.den);
+  int compareTo(const Fraction &o) {
+    return compare(this->d_numerator, this->d_denominator, o.d_numerator,
+                   o.d_denominator);
   }
 };
 
 enum class Type {
-  Cv4D4,       // =CH-
-  Nv3D2,       // =N-
-  Nv4D3Plus,   // =[N+]<
-  Nv2D2Minus,  // -[N-]-
-  Cv3D3Minus,  // -[CH-]-
-  Ov3D2Plus,   // -[O+]=
+  Cv4D4,      // =CH-
+  Nv3D2,      // =N-
+  Nv4D3Plus,  // =[N+]<
+  Nv2D2Minus, // -[N-]-
+  Cv3D3Minus, // -[CH-]-
+  Ov3D2Plus,  // -[O+]=
   Other
 };
 
 namespace {
 
 template <typename A, typename B>
-bool SeedTypes(std::vector<Type>& types, const BaseMol<A, B>* mol) {
+bool SeedTypes(std::vector<Type> &types, const BaseMol<A, B> *mol) {
   bool result = false;
   for (A atom : mol->atoms()) {
     const int aidx = mol->getAtomIdx(atom);
@@ -75,18 +84,18 @@ bool SeedTypes(std::vector<Type>& types, const BaseMol<A, B>* mol) {
     bool ring = false;
     for (B bond : mol->getBonds(atom)) {
       switch (mol->getBondOrder(bond)) {
-        case 1:
-          btypes += 0x00000001;
-          break;
-        case 2:
-          btypes += 0x00000100;
-          break;
-        case 3:
-          btypes += 0x00010000;
-          break;
-        default:
-          btypes += 0x01000000;
-          break;
+      case 1:
+        btypes += 0x00000001;
+        break;
+      case 2:
+        btypes += 0x00000100;
+        break;
+      case 3:
+        btypes += 0x00010000;
+        break;
+      default:
+        btypes += 0x01000000;
+        break;
       }
       if (mol->isInRing(bond)) {
         ring = true;
@@ -95,36 +104,36 @@ bool SeedTypes(std::vector<Type>& types, const BaseMol<A, B>* mol) {
     if (ring) {
       int q = mol->getCharge(atom);
       switch (mol->getAtomicNum(atom)) {
-        case 6:   // C
-        case 14:  // Si
-        case 32:  // Ge
-          if (q == 0 && btypes == 0x0102)
-            types[aidx] = Type::Cv4D4;
-          else if (q == -1 && btypes == 0x0003) {
-            types[aidx] = Type::Cv3D3Minus;
-            result = true;
-          }
-          break;
-        case 7:   // N
-        case 15:  // P
-        case 33:  // As
-          if (q == 0 && btypes == 0x0101) {
-            types[aidx] = Type::Nv3D2;
-            result = true;
-          } else if (q == -1 && btypes == 0x0002) {
-            types[aidx] = Type::Nv2D2Minus;
-            result = true;
-          } else if (q == +1 && btypes == 0x0102) {
-            types[aidx] = Type::Nv4D3Plus;
-            result = true;
-          }
-          break;
-        case 8:  // O
-          if (q == 1 && btypes == 0x0101) {
-            types[aidx] = Type::Ov3D2Plus;
-            result = true;
-          }
-          break;
+      case 6:  // C
+      case 14: // Si
+      case 32: // Ge
+        if (q == 0 && btypes == 0x0102)
+          types[aidx] = Type::Cv4D4;
+        else if (q == -1 && btypes == 0x0003) {
+          types[aidx] = Type::Cv3D3Minus;
+          result = true;
+        }
+        break;
+      case 7:  // N
+      case 15: // P
+      case 33: // As
+        if (q == 0 && btypes == 0x0101) {
+          types[aidx] = Type::Nv3D2;
+          result = true;
+        } else if (q == -1 && btypes == 0x0002) {
+          types[aidx] = Type::Nv2D2Minus;
+          result = true;
+        } else if (q == +1 && btypes == 0x0102) {
+          types[aidx] = Type::Nv4D3Plus;
+          result = true;
+        }
+        break;
+      case 8: // O
+        if (q == 1 && btypes == 0x0101) {
+          types[aidx] = Type::Ov3D2Plus;
+          result = true;
+        }
+        break;
       }
     }
   }
@@ -132,7 +141,7 @@ bool SeedTypes(std::vector<Type>& types, const BaseMol<A, B>* mol) {
 }
 
 template <typename A, typename B>
-void RelaxTypes(std::vector<Type>& types, const BaseMol<A, B>* mol) {
+void RelaxTypes(std::vector<Type> &types, const BaseMol<A, B> *mol) {
   auto counts = std::vector<int>(mol->getNumAtoms());
   auto queue = std::queue<A>();
 
@@ -171,8 +180,8 @@ void RelaxTypes(std::vector<Type>& types, const BaseMol<A, B>* mol) {
 }
 
 template <typename A, typename B>
-void VisitPart(std::vector<int>& parts, const std::vector<Type>& types,
-               int part, A atom, const BaseMol<A, B>* mol) {
+void VisitPart(std::vector<int> &parts, const std::vector<Type> &types,
+               int part, A atom, const BaseMol<A, B> *mol) {
   A next;
   do {
     next = nullptr;
@@ -198,8 +207,8 @@ void VisitPart(std::vector<int>& parts, const std::vector<Type>& types,
 }
 
 template <typename A, typename B>
-int VisitParts(std::vector<int>& parts, const std::vector<Type>& types,
-               const BaseMol<A, B>* mol) {
+int VisitParts(std::vector<int> &parts, const std::vector<Type> &types,
+               const BaseMol<A, B> *mol) {
   int numparts = 0;
   for (A atom : mol->atoms()) {
     int aidx = mol->getAtomIdx(atom);
@@ -211,10 +220,10 @@ int VisitParts(std::vector<int>& parts, const std::vector<Type>& types,
   return numparts;
 }
 
-}  // namespace
+} // namespace
 
 template <typename A, typename B>
-std::vector<Fraction> calcFracAtomNums(const BaseMol<A, B>* mol) {
+std::vector<Fraction> calcFracAtomNums(const BaseMol<A, B> *mol) {
   auto num_atoms = mol->getNumAtoms();
   auto fractions = std::vector<Fraction>(num_atoms);
 
@@ -230,7 +239,7 @@ std::vector<Fraction> calcFracAtomNums(const BaseMol<A, B>* mol) {
     int numparts = VisitParts(parts, types, mol);
 
     auto resparts = std::vector<int>(numparts);
-    int numres = 1;
+    int numres = 0;
 
     if (numparts > 0) {
       for (int i = 0; i < num_atoms; ++i) {
@@ -251,14 +260,14 @@ std::vector<Fraction> calcFracAtomNums(const BaseMol<A, B>* mol) {
           }
         }
 
-        fractions[i].num = 0;
-        fractions[i].den = 0;
+        fractions[i].d_numerator = 0;
+        fractions[i].d_denominator = 0;
 
         for (B bond : mol->getBonds(atom)) {
           A nbr = mol->getOther(bond, atom);
           if (parts[mol->getAtomIdx(nbr)] == parts[i]) {
-            fractions[i].num += mol->getAtomicNum(nbr);
-            ++fractions[i].den;
+            fractions[i].d_numerator += mol->getAtomicNum(nbr);
+            ++fractions[i].d_denominator;
           }
         }
       }
@@ -271,14 +280,14 @@ std::vector<Fraction> calcFracAtomNums(const BaseMol<A, B>* mol) {
         for (int i = 0; i < num_atoms; ++i) {
           if (parts[i] == part) {
             fractions[i] = frac;
-            ++frac.den;
+            ++frac.d_denominator;
             A atom = mol->getAtom(i);
 
             for (B bond : mol->getBonds(atom)) {
               A nbr = mol->getOther(bond, atom);
               int bord = mol->getBondOrder(bond);
               if (bord > 1 && parts[mol->getAtomIdx(nbr)] == part) {
-                frac.num += (bord - 1) * mol->getAtomicNum(nbr);
+                frac.d_numerator += (bord - 1) * mol->getAtomicNum(nbr);
               }
             }
           }
@@ -289,7 +298,7 @@ std::vector<Fraction> calcFracAtomNums(const BaseMol<A, B>* mol) {
   return fractions;
 }
 
-}  // namespace Mancude
+} // namespace Mancude
 
-}  // namespace NewCIPLabelling
-}  // namespace RDKit
+} // namespace NewCIPLabelling
+} // namespace RDKit

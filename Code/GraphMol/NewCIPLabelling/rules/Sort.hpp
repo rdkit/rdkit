@@ -16,37 +16,35 @@
 namespace RDKit {
 namespace NewCIPLabelling {
 
-template <typename A, typename B>
-class SequenceRule;
+template <typename A, typename B> class SequenceRule;
 
 /**
  * A simple insertion sort for ligands. The number of ligands is not likely to
  * be very larger as such doing a merge sort would have little benefit.
  *
  */
-template <typename A, typename B>
-class Sort {
- private:
+template <typename A, typename B> class Sort {
+private:
   unsigned ruleMax = 0;
 
-  const std::vector<const SequenceRule<A, B>*> rules;
+  const std::vector<const SequenceRule<A, B> *> rules;
 
- public:
-  Sort(const SequenceRule<A, B>* comparator) : rules{{comparator}} {}
+public:
+  Sort(const SequenceRule<A, B> *comparator) : rules{{comparator}} {}
 
-  Sort(const std::vector<const SequenceRule<A, B>*>& comparators)
+  Sort(const std::vector<const SequenceRule<A, B> *> &comparators)
       : rules{comparators} {}
 
-  const std::vector<const SequenceRule<A, B>*>& getRules() const {
+  const std::vector<const SequenceRule<A, B> *> &getRules() const {
     return rules;
   }
 
-  Priority prioritise(const Node<A, B>* node,
-                      std::vector<Edge<A, B>*>& edges) const {
+  Priority prioritise(const Node<A, B> *node,
+                      std::vector<Edge<A, B> *> &edges) const {
     return prioritise(node, edges, true);
   }
 
-  Priority prioritise(const Node<A, B>* node, std::vector<Edge<A, B>*>& edges,
+  Priority prioritise(const Node<A, B> *node, std::vector<Edge<A, B> *> &edges,
                       bool deep) const {
     bool unique = true;
     int numPseudoAsym = 0;
@@ -72,8 +70,8 @@ class Sort {
     return Priority(unique, ruleMax, numPseudoAsym == 1);
   }
 
-  int compareLigands(const Node<A, B>* node, const Edge<A, B>* a,
-                     const Edge<A, B>* b, bool deep) const {
+  int compareLigands(const Node<A, B> *node, const Edge<A, B> *a,
+                     const Edge<A, B> *b, bool deep) const {
     // ensure 'up' edges are moved to the front
     if (!a->isBeg(node) && b->isBeg(node)) {
       return +1;
@@ -82,31 +80,31 @@ class Sort {
     }
 
     for (auto i = 0u; i < rules.size(); ++i) {
-      const auto& rule = rules[i];
+      const auto &rule = rules[i];
       int cmp = rule->getComparision(a, b, deep);
 
       if (cmp != 0) {
         // Is this just statistics ?
-        const_cast<Sort<A, B>*>(this)->ruleMax = std::max(ruleMax, i);
+        const_cast<Sort<A, B> *>(this)->ruleMax = std::max(ruleMax, i);
         return cmp;
       }
     }
     return 0;
   }
 
-  void swap(std::vector<Edge<A, B>*>& list, int i, int j) const {
+  void swap(std::vector<Edge<A, B> *> &list, int i, int j) const {
     std::swap(list[i], list[j]);
   }
 
-  std::vector<std::vector<Edge<A, B>*>> getGroups(
-      const std::vector<Edge<A, B>*>& sorted) const {
+  std::vector<std::vector<Edge<A, B> *>>
+  getGroups(const std::vector<Edge<A, B> *> &sorted) const {
     // would be nice to have this integrated whilst sorting - may provide a
     // small speed increase but as most of our lists are small we take use
     // ugly sort then group approach
-    auto groups = std::vector<std::vector<Edge<A, B>*>>{};
+    auto groups = std::vector<std::vector<Edge<A, B> *>>{};
 
-    Edge<A, B>* prev = nullptr;
-    for (auto* edge : sorted) {
+    Edge<A, B> *prev = nullptr;
+    for (auto *edge : sorted) {
       if (prev == nullptr ||
           compareLigands(prev->getBeg(), prev, edge, true) != 0) {
         groups.emplace_back();
@@ -117,7 +115,7 @@ class Sort {
 
     return groups;
   }
-};  // namespace NewCIPLabelling
+}; // namespace NewCIPLabelling
 
-}  // namespace NewCIPLabelling
-}  // namespace RDKit
+} // namespace NewCIPLabelling
+} // namespace RDKit

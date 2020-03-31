@@ -16,14 +16,13 @@
 namespace RDKit {
 namespace NewCIPLabelling {
 
-template <typename A, typename B>
-class Rule1a : public SequenceRule<A, B> {
- public:
+template <typename A, typename B> class Rule1a : public SequenceRule<A, B> {
+public:
   Rule1a() = delete;
 
-  Rule1a(const BaseMol<A, B>* mol) : SequenceRule<A, B>(mol) {}
+  Rule1a(const BaseMol<A, B> *mol) : SequenceRule<A, B>(mol) {}
 
-  int compare(const Edge<A, B>* a, const Edge<A, B>* b) const override {
+  int compare(const Edge<A, B> *a, const Edge<A, B> *b) const override {
     const int anum = a->getEnd()->getAtomicNumNumerator();
     const int aden = a->getEnd()->getAtomicNumDenominator();
     const int bnum = b->getEnd()->getAtomicNumNumerator();
@@ -38,5 +37,5 @@ class Rule1a : public SequenceRule<A, B> {
   }
 };
 
-}  // namespace NewCIPLabelling
-}  // namespace RDKit
+} // namespace NewCIPLabelling
+} // namespace RDKit

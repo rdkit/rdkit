@@ -24,10 +24,10 @@ using RDKitCfg = Configuration<RdkA, RdkB>;
 using RDKitSeqRule = SequenceRule<RdkA, RdkB>;
 
 namespace {
-std::vector<RDKitCfg*> findConfigs(RDKitCipMol& mol) {
-  std::vector<RDKitCfg*> configs;
+std::vector<RDKitCfg *> findConfigs(RDKitCipMol &mol) {
+  std::vector<RDKitCfg *> configs;
 
-  for (auto& atom : mol.atoms()) {
+  for (auto &atom : mol.atoms()) {
     auto chiraltag = static_cast<int>(atom->getChiralTag());
     if (chiraltag > 0) {
       auto carriers = std::vector<RdkA>();
@@ -57,14 +57,25 @@ std::vector<RDKitCfg*> findConfigs(RDKitCipMol& mol) {
       std::vector<RdkA> atoms{{bond->getBeginAtom(), bond->getEndAtom()}};
       std::vector<RdkA> anchors;
       auto previous_bond_dir = Bond::BondDir::NONE;
-      auto bond_cfg = 0;
-      for (const auto& atom : atoms) {
-        for (auto& nbr_bnd : mol.getBonds(atom)) {
+      auto bond_cfg = 1;
+      for (const auto &atom : atoms) {
+        for (auto &nbr_bnd : mol.getBonds(atom)) {
           auto nbr_bond_dir = nbr_bnd->getBondDir();
           if (nbr_bond_dir == Bond::BondDir::ENDDOWNRIGHT ||
               nbr_bond_dir == Bond::BondDir::ENDUPRIGHT) {
             anchors.push_back(nbr_bnd->getOtherAtom(atom));
-            bond_cfg += nbr_bond_dir != previous_bond_dir;
+
+            // Correct the BondDir to have the same reference
+            // for the direction
+            if (atom == nbr_bnd->getEndAtom()) {
+              if (nbr_bond_dir == Bond::BondDir::ENDDOWNRIGHT) {
+                nbr_bond_dir = Bond::BondDir::ENDUPRIGHT;
+              } else {
+                nbr_bond_dir = Bond::BondDir::ENDDOWNRIGHT;
+              }
+            }
+
+            bond_cfg += nbr_bond_dir == previous_bond_dir;
             std::swap(previous_bond_dir, nbr_bond_dir);
             break;
           }
@@ -81,20 +92,20 @@ std::vector<RDKitCfg*> findConfigs(RDKitCipMol& mol) {
 
   return configs;
 }
-}  // namespace
-}  // namespace NewCIPLabelling
+} // namespace
+} // namespace NewCIPLabelling
 
 namespace MolOps {
-void assignRealCIPStereo(ROMol& mol) {
+void assignRealCIPStereo(ROMol &mol) {
   auto cipmol = NewCIPLabelling::RDKitCipMol(&mol);
 
   auto configs = NewCIPLabelling::findConfigs(cipmol);
-  NewCIPLabelling::Labeller::label(&cipmol, configs);
+  NewCIPLabelling::label(&cipmol, configs);
 
   // Cleanup
-  for (auto& c : configs) {
+  for (auto &c : configs) {
     delete c;
   }
 }
-}  // namespace MolOps
-}  // end of namespace RDKit
+} // namespace MolOps
+} // end of namespace RDKit

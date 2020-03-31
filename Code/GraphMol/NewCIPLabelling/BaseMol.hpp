@@ -25,19 +25,18 @@ namespace NewCIPLabelling {
  * @param <A> atom type
  * @param <B> bond type
  */
-template <typename A, typename B>
-class BaseMol {
- protected:
+template <typename A, typename B> class BaseMol {
+protected:
   std::vector<Mancude::Fraction> atomnums;
 
- public:
+public:
   BaseMol() = default;
 
   virtual ~BaseMol() = default;
 
   Mancude::Fraction getFractionalAtomicNum(A atom) const {
     if (atomnums.empty())
-      const_cast<BaseMol<A, B>*>(this)->atomnums =
+      const_cast<BaseMol<A, B> *>(this)->atomnums =
           std::move(Mancude::calcFracAtomNums(this));
     return atomnums[getAtomIdx(atom)];
   }
@@ -85,12 +84,12 @@ class BaseMol {
 
   virtual int getBondOrder(B bond) const = 0;
 
-  virtual void setAtomDescriptor(A atom, const std::string& key,
+  virtual void setAtomDescriptor(A atom, const std::string &key,
                                  Descriptor desc) = 0;
 
-  virtual void setBondDescriptor(B bond, const std::string& key,
+  virtual void setBondDescriptor(B bond, const std::string &key,
                                  Descriptor desc) = 0;
 };
 
-}  // namespace NewCIPLabelling
-}  // namespace RDKit
+} // namespace NewCIPLabelling
+} // namespace RDKit

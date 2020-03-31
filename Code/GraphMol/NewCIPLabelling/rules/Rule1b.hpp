@@ -25,21 +25,20 @@ namespace NewCIPLabelling {
  *
  * @param <A> generic atom class
  */
-template <typename A, typename B>
-class Rule1b : public SequenceRule<A, B> {
+template <typename A, typename B> class Rule1b : public SequenceRule<A, B> {
   /**
    * Flag indicates whether to match the problematic
    * IUPAC 2013 recommendations for Rule 1B.
    */
- private:
+private:
   static const bool IUPAC_2013 = false;
 
- public:
+public:
   Rule1b() = delete;
 
-  Rule1b(const BaseMol<A, B>* mol) : SequenceRule<A, B>(mol) {}
+  Rule1b(const BaseMol<A, B> *mol) : SequenceRule<A, B>(mol) {}
 
-  int compare(const Edge<A, B>* a, const Edge<A, B>* b) const override {
+  int compare(const Edge<A, B> *a, const Edge<A, B> *b) const override {
     if (IUPAC_2013) {
       return -integer_compare(a->getEnd()->getDistance(),
                               b->getEnd()->getDistance());
@@ -63,5 +62,5 @@ class Rule1b : public SequenceRule<A, B> {
   }
 };
 
-}  // namespace NewCIPLabelling
-}  // namespace RDKit
+} // namespace NewCIPLabelling
+} // namespace RDKit

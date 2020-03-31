@@ -21,8 +21,7 @@
 namespace RDKit {
 namespace NewCIPLabelling {
 
-template <typename A, typename B>
-class Node;
+template <typename A, typename B> class Node;
 
 namespace {
 
@@ -36,45 +35,52 @@ const int MAX_NODE_COUNT = 100000;
  * Used for debugging only, 0=Infinite
  */
 const int MAX_NODE_DIST = 0;
-}  // namespace
+} // namespace
 
-template <typename A, typename B>
-class Digraph {
- private:
-  BaseMol<A, B>* mol = nullptr;
-  Node<A, B>* root = nullptr;
-  Node<A, B>* tmproot = nullptr;
+/**
+ * A class to hold directed acyclic graphs representing the molecule.
+ *
+ * The root of the DAG is one of the foci of the configuration for
+ * which the label is being calculated. The tmproot may be set to
+ * other nodes that may become relevant in the calculation.
+ *
+ */
+template <typename A, typename B> class Digraph {
+private:
+  BaseMol<A, B> *mol = nullptr;
+  Node<A, B> *root = nullptr;
+  Node<A, B> *tmproot = nullptr;
   int numNodes = 0;
   A rule6Ref = nullptr;
 
-  void addEdge(Node<A, B>* beg, B bond, Node<A, B>* end) {
+  void addEdge(Node<A, B> *beg, B bond, Node<A, B> *end) {
     auto e = new Edge<A, B>(beg, end, bond);
     beg->add(e);
     end->add(e);
   }
 
- public:
+public:
   Digraph() = default;
 
-  Digraph(BaseMol<A, B>* mol) : mol{mol} {}
+  Digraph(BaseMol<A, B> *mol) : mol{mol} {}
 
-  Digraph(BaseMol<A, B>* mol, A atom) : mol{mol} { init(atom); }
+  Digraph(BaseMol<A, B> *mol, A atom) : mol{mol} { init(atom); }
 
   ~Digraph() { delete getCurrRoot(); }
 
-  BaseMol<A, B>* getMol() const { return mol; };
+  BaseMol<A, B> *getMol() const { return mol; };
 
-  Node<A, B>* getRoot() const { return root; };
+  Node<A, B> *getRoot() const { return root; };
 
-  Node<A, B>* getCurrRoot() const {
+  Node<A, B> *getCurrRoot() const {
     return tmproot == nullptr ? root : tmproot;
   }
 
   int getNumNodes() const { return numNodes; }
 
-  std::vector<Node<A, B>*> getNodes(A atom) const {
-    auto result = std::vector<Node<A, B>*>{};
-    auto queue = std::queue<Node<A, B>*>{};
+  std::vector<Node<A, B> *> getNodes(A atom) const {
+    auto result = std::vector<Node<A, B> *>{};
+    auto queue = std::queue<Node<A, B> *>{};
     queue.push(getCurrRoot());
 
     while (!queue.empty()) {
@@ -84,7 +90,7 @@ class Digraph {
       if (atom == node->getAtom()) {
         result.push_back(node);
       }
-      for (const auto& e : node->getEdges()) {
+      for (const auto &e : node->getEdges()) {
         if (!e->isBeg(node)) {
           continue;
         }
@@ -105,7 +111,7 @@ class Digraph {
    */
   void setRule6Ref(A ref) { rule6Ref = ref; }
 
-  Node<A, B>* init(A atom) {
+  Node<A, B> *init(A atom) {
     auto visit = std::vector<char>(mol->getNumAtoms());
     visit[mol->getAtomIdx(atom)] = 1;
 
@@ -123,36 +129,36 @@ class Digraph {
   }
 
   /**
-   * Sets the root node of this digraph by flipping all the
-   * 'up' edges to be 'down'.
+   * Sets the root node of this digraph by flipping the directions
+   * of edges as required.
    *
    * @param newroot the new root
    */
-  void changeRoot(Node<A, B>* newroot) {
-    auto queue = std::queue<Node<A, B>*>();
+  void changeRoot(Node<A, B> *newroot) {
+    auto queue = std::queue<Node<A, B> *>();
     queue.push(newroot);
 
-    auto toflip = std::vector<Edge<A, B>*>();
+    auto toflip = std::vector<Edge<A, B> *>();
     while (!queue.empty()) {
       auto node = queue.front();
       queue.pop();
 
-      for (const auto& e : node->getEdges()) {
+      for (const auto &e : node->getEdges()) {
         if (e->isEnd(node)) {
           toflip.push_back(e);
           queue.push(e->getBeg());
         }
       }
     }
-    for (auto& e : toflip) {
+    for (auto &e : toflip) {
       e->flip();
     }
     tmproot = newroot;
   }
 
-  void expand(Node<A, B>* beg) {
+  void expand(Node<A, B> *beg) {
     const A atom = beg->getAtom();
-    const auto& edges = beg->getEdges();
+    const auto &edges = beg->getEdges();
     const B prev = edges.size() > 0 && !edges[0]->isBeg(beg)
                        ? edges[0]->getBond()
                        : nullptr;
@@ -168,10 +174,11 @@ class Digraph {
     }
 
     // create 'explicit' nodes
-    for (const B bond : mol->getBonds(atom)) {
+    for (const auto &bond : mol->getBonds(atom)) {
       const A nbr = mol->getOther(bond, atom);
       const int nbrIdx = mol->getAtomIdx(nbr);
       const int bord = mol->getBondOrder(bond);
+      const int virtual_nodes = bord - 1;
 
       if (beg->visit[nbrIdx] == 0) {
         auto end = beg->newChild(nbrIdx, nbr);
@@ -182,44 +189,39 @@ class Digraph {
         // for example >S=O
         if (root != beg) {
           if (mol->getCharge(atom) < 0 &&
-              mol->getFractionalAtomicNum(atom).getDen() > 1) {
-            end =
-                beg->newTerminalChild(nbrIdx, nbr, Node<A, B>::BOND_DUPLICATE);
+              mol->getFractionalAtomicNum(atom).denominator() > 1) {
+            end = beg->newBondDuplicateChild(nbrIdx, nbr);
             ++numNodes;
             addEdge(beg, bond, end);
           } else {
-            for (int i = 1; i < bord; ++i) {
-              end = beg->newTerminalChild(nbrIdx, nbr,
-                                          Node<A, B>::BOND_DUPLICATE);
+            for (int i = 0; i < virtual_nodes; ++i) {
+              end = beg->newBondDuplicateChild(nbrIdx, nbr);
               ++numNodes;
               addEdge(beg, bond, end);
             }
           }
         }
-      } else if (bond == prev) {  // bond order expansion (backwards)
+      } else if (bond == prev) { // bond order expansion (backwards)
         if (root->getAtom() != nbr) {
-          for (int i = 1; i < bord; ++i) {
-            auto end =
-                beg->newTerminalChild(nbrIdx, nbr, Node<A, B>::BOND_DUPLICATE);
+          for (int i = 0; i < virtual_nodes; ++i) {
+            auto end = beg->newBondDuplicateChild(nbrIdx, nbr);
             ++numNodes;
             addEdge(beg, bond, end);
           }
         }
-      } else {  // ring closures
-        auto end =
-            beg->newTerminalChild(nbrIdx, nbr, Node<A, B>::RING_DUPLICATE);
+      } else { // ring closures
+        auto end = beg->newRingDuplicateChild(nbrIdx, nbr);
         ++numNodes;
         addEdge(beg, bond, end);
 
         if (mol->getCharge(atom) < 0 &&
-            mol->getFractionalAtomicNum(atom).getDen() > 1) {
-          end = beg->newTerminalChild(nbrIdx, nbr, Node<A, B>::BOND_DUPLICATE);
+            mol->getFractionalAtomicNum(atom).denominator() > 1) {
+          end = beg->newBondDuplicateChild(nbrIdx, nbr);
           ++numNodes;
           addEdge(beg, bond, end);
         } else {
-          for (int i = 1; i < bord; ++i) {
-            end =
-                beg->newTerminalChild(nbrIdx, nbr, Node<A, B>::BOND_DUPLICATE);
+          for (int i = 0; i < virtual_nodes; ++i) {
+            end = beg->newBondDuplicateChild(nbrIdx, nbr);
             ++numNodes;
             addEdge(beg, bond, end);
           }
@@ -230,19 +232,19 @@ class Digraph {
     // Create implicit hydrogen nodes
     const int hcnt = mol->getNumHydrogens(atom);
     for (int i = 0; i < hcnt; ++i) {
-      auto end = beg->newTerminalChild(-1, nullptr, Node<A, B>::IMPL_HYDROGEN);
+      auto end = beg->newImplicitHydrogenChild();
       ++numNodes;
       addEdge(beg, nullptr, end);
     }
   }
 
   void expandAll() {
-    auto queue = std::queue<Node<A, B>*>{};
+    auto queue = std::queue<Node<A, B> *>{};
     queue.push(root);
     while (!queue.empty()) {
       auto node = queue.front();
       queue.pop();
-      for (const auto& e : node->getEdges()) {
+      for (const auto &e : node->getEdges()) {
         if (!e->isBeg(node)) {
           continue;
         }
@@ -254,5 +256,5 @@ class Digraph {
   }
 };
 
-}  // namespace NewCIPLabelling
-}  // namespace RDKit
+} // namespace NewCIPLabelling
+} // namespace RDKit

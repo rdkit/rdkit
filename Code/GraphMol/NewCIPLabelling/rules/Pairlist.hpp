@@ -30,27 +30,27 @@ namespace NewCIPLabelling {
  * @see Descriptor
  */
 class PairList {
- public:
+public:
   static Descriptor ref(Descriptor descriptor) {
     switch (descriptor) {
-      case Descriptor::R:
-      case Descriptor::M:
-      case Descriptor::seqCis:
-        return Descriptor::R;
-      case Descriptor::S:
-      case Descriptor::P:
-      case Descriptor::seqTrans:
-        return Descriptor::S;
-      default:
-        return Descriptor::NONE;
+    case Descriptor::R:
+    case Descriptor::M:
+    case Descriptor::seqCis:
+      return Descriptor::R;
+    case Descriptor::S:
+    case Descriptor::P:
+    case Descriptor::seqTrans:
+      return Descriptor::S;
+    default:
+      return Descriptor::NONE;
     }
   }
 
- private:
+private:
   std::vector<Descriptor> descriptors;
   std::uint32_t pairing = 0;
 
- public:
+public:
   PairList() = default;
 
   PairList(Descriptor ref) { add(ref); }
@@ -64,7 +64,7 @@ class PairList {
    * @param head the head of the list (prefix)
    * @param tail the tail of the list (suffix)
    */
-  PairList(const PairList& head, const PairList& tail) {
+  PairList(const PairList &head, const PairList &tail) {
     // add descriptors to the new instance (ignored descriptors not added)
     addAll(head.descriptors);
     addAll(tail.descriptors);
@@ -82,16 +82,16 @@ class PairList {
 
   bool add(Descriptor descriptor) {
     switch (descriptor) {
-      case Descriptor::R:
-      case Descriptor::S:
-      case Descriptor::M:
-      case Descriptor::P:
-      case Descriptor::seqTrans:
-      case Descriptor::seqCis:
-        addAndPair(descriptor);
-        return true;
-      default:
-        return false;
+    case Descriptor::R:
+    case Descriptor::S:
+    case Descriptor::M:
+    case Descriptor::P:
+    case Descriptor::seqTrans:
+    case Descriptor::seqCis:
+      addAndPair(descriptor);
+      return true;
+    default:
+      return false;
     }
   }
 
@@ -101,9 +101,8 @@ class PairList {
    *
    * @param descriptors a collection of descriptors to be added
    */
-  template <typename T>
-  void addAll(const T& descriptors) {
-    for (const auto& descriptor : descriptors) {
+  template <typename T> void addAll(const T &descriptors) {
+    for (const auto &descriptor : descriptors) {
       add(descriptor);
     }
   }
@@ -131,12 +130,11 @@ class PairList {
    * @param lists multiple descriptor lists to be appended to this list.
    * @return modified list of descriptors based on the provided input lists
    */
-  template <typename T>
-  std::vector<PairList> append(const T& lists) const {
+  template <typename T> std::vector<PairList> append(const T &lists) const {
     auto created = std::vector<PairList>();
     created.reserve(lists.size());
 
-    for (const auto& list : lists) {
+    for (const auto &list : lists) {
       // tail isn't empty  - create a new list with this list as the head
       if (!list.descriptors.empty()) {
         created.emplace_back(*this, list);
@@ -151,7 +149,7 @@ class PairList {
     return created;
   }
 
-  int compareTo(const PairList& that) const {
+  int compareTo(const PairList &that) const {
     if (descriptors.size() != that.descriptors.size()) {
       throw std::runtime_error("Descriptor lists should be the same length!");
     }
@@ -168,7 +166,7 @@ class PairList {
     return 0;
   }
 
-  bool operator<(const PairList& that) const {
+  bool operator<(const PairList &that) const {
     return this->compareTo(that) == -1;
   }
 
@@ -201,7 +199,7 @@ class PairList {
     return ss.str();
   }
 
- private:
+private:
   /**
    * Adds the descriptor to the descriptor list and stores the pair in an set
    * bit (32-bit integer).
@@ -219,5 +217,5 @@ class PairList {
   }
 };
 
-}  // namespace NewCIPLabelling
-}  // namespace RDKit
+} // namespace NewCIPLabelling
+} // namespace RDKit

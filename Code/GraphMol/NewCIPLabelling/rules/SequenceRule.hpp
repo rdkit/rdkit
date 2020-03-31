@@ -23,26 +23,25 @@ namespace NewCIPLabelling {
 
 namespace {
 int integer_compare(int x, int y) { return x < y ? -1 : (x == y ? 0 : 1); }
-}  // namespace
+} // namespace
 
-template <typename A, typename B>
-class SequenceRule {
- private:
-  const BaseMol<A, B>* mol;
+template <typename A, typename B> class SequenceRule {
+private:
+  const BaseMol<A, B> *mol;
 
- protected:
+protected:
   std::unique_ptr<const Sort<A, B>> sorter = nullptr;
 
- public:
+public:
   SequenceRule() = delete;
 
-  SequenceRule(const BaseMol<A, B>* mol) : mol{mol} {}
+  SequenceRule(const BaseMol<A, B> *mol) : mol{mol} {}
 
   virtual ~SequenceRule() = default;
 
-  virtual const BaseMol<A, B>* getMol() const { return mol; }
+  virtual const BaseMol<A, B> *getMol() const { return mol; }
 
-  Descriptor getBondLabel(const Edge<A, B>* edge) const {
+  Descriptor getBondLabel(const Edge<A, B> *edge) const {
     B bond = edge->getBond();
     if (bond == nullptr) {
       return Descriptor::NONE;
@@ -58,23 +57,23 @@ class SequenceRule {
 
   virtual bool isPseudoAsymmetric() const { return false; }
 
-  int getComparision(const Edge<A, B>* a, const Edge<A, B>* b) const {
+  int getComparision(const Edge<A, B> *a, const Edge<A, B> *b) const {
     return getComparision(a, b, true);
   }
 
-  virtual int getComparision(const Edge<A, B>* a, const Edge<A, B>* b,
+  virtual int getComparision(const Edge<A, B> *a, const Edge<A, B> *b,
                              bool deep) const {
     return deep ? recursiveCompare(a, b) : compare(a, b);
   }
 
-  virtual const Sort<A, B>* getSorter() const {
+  virtual const Sort<A, B> *getSorter() const {
     if (sorter == nullptr) {
-      const_cast<SequenceRule<A, B>*>(this)->setSorter(new Sort<A, B>(this));
+      const_cast<SequenceRule<A, B> *>(this)->setSorter(new Sort<A, B>(this));
     }
     return sorter.get();
   }
 
-  int recursiveCompare(const Edge<A, B>* a, const Edge<A, B>* b) const {
+  int recursiveCompare(const Edge<A, B> *a, const Edge<A, B> *b) const {
     // pseudo atoms (atomic no. 0) match all
     if (mol->getAtomicNum(a->getEnd()->getAtom()) == 0 ||
         mol->getAtomicNum(b->getEnd()->getAtom()) == 0) {
@@ -86,8 +85,8 @@ class SequenceRule {
       return cmp;
     }
 
-    auto aQueue = std::queue<const Edge<A, B>*>();
-    auto bQueue = std::queue<const Edge<A, B>*>();
+    auto aQueue = std::queue<const Edge<A, B> *>();
+    auto bQueue = std::queue<const Edge<A, B> *>();
 
     aQueue.push(a);
     bQueue.push(b);
@@ -111,10 +110,10 @@ class SequenceRule {
         auto aIt = as.begin();
         auto bIt = bs.begin();
         for (; aIt != as.end() && bIt != bs.end(); ++aIt, ++bIt) {
-          Node<A, B>* aNode = a->getEnd();
-          Node<A, B>* bNode = b->getEnd();
-          Edge<A, B>* aEdge = *aIt;
-          Edge<A, B>* bEdge = *bIt;
+          Node<A, B> *aNode = a->getEnd();
+          Node<A, B> *bNode = b->getEnd();
+          Edge<A, B> *aEdge = *aIt;
+          Edge<A, B> *bEdge = *bIt;
 
           if (areUpEdges(aNode, bNode, aEdge, bEdge)) {
             continue;
@@ -144,10 +143,10 @@ class SequenceRule {
         auto aIt = as.begin();
         auto bIt = bs.begin();
         for (; aIt != as.end() && bIt != bs.end(); ++aIt, ++bIt) {
-          Node<A, B>* aNode = a->getEnd();
-          Node<A, B>* bNode = b->getEnd();
-          Edge<A, B>* aEdge = *aIt;
-          Edge<A, B>* bEdge = *bIt;
+          Node<A, B> *aNode = a->getEnd();
+          Node<A, B> *bNode = b->getEnd();
+          Edge<A, B> *aEdge = *aIt;
+          Edge<A, B> *bEdge = *bIt;
 
           if (areUpEdges(aNode, bNode, aEdge, bEdge)) {
             continue;
@@ -172,22 +171,23 @@ class SequenceRule {
     return 0;
   }
 
-  void setSorter(const Sort<A, B>* sorter) { this->sorter.reset(sorter); }
+  void setSorter(const Sort<A, B> *sorter) { this->sorter.reset(sorter); }
 
-  Priority sort(const Node<A, B>* node, std::vector<Edge<A, B>*>& edges,
+  Priority sort(const Node<A, B> *node, std::vector<Edge<A, B> *> &edges,
                 bool deep) const {
     return getSorter()->prioritise(node, edges, deep);
   }
 
-  Priority sort(const Node<A, B>* node, std::vector<Edge<A, B>*>& edges) const {
+  Priority sort(const Node<A, B> *node,
+                std::vector<Edge<A, B> *> &edges) const {
     return sort(node, edges, true);
   }
 
-  virtual int compare(const Edge<A, B>* a, const Edge<A, B>* b) const = 0;
+  virtual int compare(const Edge<A, B> *a, const Edge<A, B> *b) const = 0;
 
- private:
-  bool areUpEdges(Node<A, B>* aNode, Node<A, B>* bNode, Edge<A, B>* aEdge,
-                  Edge<A, B>* bEdge) const {
+private:
+  bool areUpEdges(Node<A, B> *aNode, Node<A, B> *bNode, Edge<A, B> *aEdge,
+                  Edge<A, B> *bEdge) const {
     // step over 'up' edges
     if (aEdge->isEnd(aNode)) {
       // if b is 'down' something's not right!
@@ -200,5 +200,5 @@ class SequenceRule {
   }
 };
 
-}  // namespace NewCIPLabelling
-}  // namespace RDKit
+} // namespace NewCIPLabelling
+} // namespace RDKit

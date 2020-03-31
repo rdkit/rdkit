@@ -1,11 +1,15 @@
 # New CIP labelling
 
 This is a C++ port of https://github.com/SiMolecule/centres, which was
-originally written by John Mayfied in Java. The port is originally written
-ontop of RDKit, but maintains the abstraction layer present in the orignal
-version, so that it should be possible to write adapt it to other frameworks
-by writing appropriate Molecule and Labeller classes, and some tests (the ones
-included are RDKit-specific).
+originally written by John Mayfied in Java, and licensed under the GNU Lesser
+General Public License. A copy of this license can be found in the same
+directory where the ported code is located (under
+rdkit/Code/Graphmol/NewCIPLabelling)
+
+The port is originally written on top of RDKit, but maintains the abstraction
+layer present in the orignal version, so that it should be possible to adapt
+it to other frameworks by writing appropriate Molecule and Labeller classes,
+and some tests (the ones included are RDKit-specific).
 
 Currently, this is in a quite un-optimized state, as I wanted to start with
 code as close as possible to the original until some testing is available.

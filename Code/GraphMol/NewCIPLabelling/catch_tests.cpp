@@ -8,8 +8,8 @@
 //  of the RDKit source tree.
 //
 
-#define CATCH_CONFIG_MAIN  // This tells Catch to provide a main() - only do
-                           // this in one cpp file
+#define CATCH_CONFIG_MAIN // This tells Catch to provide a main() - only do
+                          // this in one cpp file
 
 #include <bitset>
 #include <queue>
@@ -165,8 +165,8 @@ TEST_CASE("Descriptor lists", "[accurateCip]") {
   }
 }
 
-void check_incoming_edge_count(Node<RdkA, RdkB>* root) {
-  auto queue = std::queue<Node<RdkA, RdkB>*>{};
+void check_incoming_edge_count(Node<RdkA, RdkB> *root) {
+  auto queue = std::queue<Node<RdkA, RdkB> *>{};
   queue.push(root);
 
   while (!queue.empty()) {
@@ -174,7 +174,7 @@ void check_incoming_edge_count(Node<RdkA, RdkB>* root) {
     queue.pop();
 
     int incoming_edges = 0;
-    for (const auto& e : node->getEdges()) {
+    for (const auto &e : node->getEdges()) {
       if (!e->isBeg(node)) {
         REQUIRE(e->isEnd(node));
         ++incoming_edges;
@@ -194,7 +194,7 @@ void check_incoming_edge_count(Node<RdkA, RdkB>* root) {
 }
 
 TEST_CASE("Digraph", "[accurateCip]") {
-  auto mol = R"(CC\C(\C(\C)=N\O)=N\O)"_smiles;  // VS013
+  auto mol = R"(CC\C(\C(\C)=N\O)=N\O)"_smiles; // VS013
   auto cipmol = NewCIPLabelling::RDKitCipMol(mol.get());
 
   auto first_root_idx = 2;
@@ -346,7 +346,7 @@ TEST_CASE("Tetrahedral assignment", "[accurateCip]") {
 }
 
 TEST_CASE("Double bond stereo assignment", "[accurateCip]") {
-  auto mol = R"(CC\C(\C(\C)=N\O)=N\O)"_smiles;  // VS013
+  auto mol = R"(CC\C(\C(\C)=N\O)=N\O)"_smiles; // VS013
   REQUIRE(mol->getNumAtoms() == 9);
 
   auto bond_1 = mol->getBondWithIdx(4);

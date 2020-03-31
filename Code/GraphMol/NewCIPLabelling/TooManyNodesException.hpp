@@ -17,9 +17,9 @@ namespace RDKit {
 namespace NewCIPLabelling {
 
 class TooManyNodesException : public std::runtime_error {
- public:
-  TooManyNodesException(const std::string& msg) : std::runtime_error(msg){};
+public:
+  TooManyNodesException(const std::string &msg) : std::runtime_error(msg){};
 };
 
-}  // namespace NewCIPLabelling
-}  // namespace RDKit
+} // namespace NewCIPLabelling
+} // namespace RDKit

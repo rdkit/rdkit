@@ -25,17 +25,16 @@ namespace NewCIPLabelling {
  *
  * @param <A> generic atom class
  */
-template <typename A, typename B>
-class Rule2 : public SequenceRule<A, B> {
- private:
-  const BaseMol<A, B>* mol;
+template <typename A, typename B> class Rule2 : public SequenceRule<A, B> {
+private:
+  const BaseMol<A, B> *mol;
 
- public:
+public:
   Rule2() = delete;
 
-  Rule2(const BaseMol<A, B>* mol) : SequenceRule<A, B>(mol), mol{mol} {}
+  Rule2(const BaseMol<A, B> *mol) : SequenceRule<A, B>(mol), mol{mol} {}
 
-  int compare(const Edge<A, B>* a, const Edge<A, B>* b) const override {
+  int compare(const Edge<A, B> *a, const Edge<A, B> *b) const override {
     int aAtomNum = mol->getAtomicNum(a->getEnd()->getAtom());
     int bAtomNum = mol->getAtomicNum(b->getEnd()->getAtom());
     if (aAtomNum == 0 || bAtomNum == 0) {
@@ -63,5 +62,5 @@ class Rule2 : public SequenceRule<A, B> {
   }
 };
 
-}  // namespace NewCIPLabelling
-}  // namespace RDKit
+} // namespace NewCIPLabelling
+} // namespace RDKit

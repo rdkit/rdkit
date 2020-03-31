@@ -22,16 +22,15 @@ namespace NewCIPLabelling {
  * </i>
  * @param <A> generic atom class
  */
-template <typename A, typename B>
-class Rule5 : public SequenceRule<A, B> {
- public:
+template <typename A, typename B> class Rule5 : public SequenceRule<A, B> {
+public:
   Rule5() = delete;
 
-  Rule5(BaseMol<A, B>* mol) : SequenceRule<A, B>(mol) {}
+  Rule5(BaseMol<A, B> *mol) : SequenceRule<A, B>(mol) {}
 
   bool isPseudoAsymmetric() const override { return true; }
 
-  int compare(const Edge<A, B>* a, const Edge<A, B>* b) const override {
+  int compare(const Edge<A, B> *a, const Edge<A, B> *b) const override {
     int aOrdinal = ord(this->getBondLabel(a));
     int bOrdinal = ord(this->getBondLabel(b));
     int cmp = integer_compare(aOrdinal, bOrdinal);
@@ -44,5 +43,5 @@ class Rule5 : public SequenceRule<A, B> {
   }
 };
 
-}  // namespace NewCIPLabelling
-}  // namespace RDKit
+} // namespace NewCIPLabelling
+} // namespace RDKit

@@ -20,15 +20,15 @@ class Atom;
 
 namespace NewCIPLabelling {
 
-using RdkA = Atom*;
-using RdkB = Bond*;
+using RdkA = Atom *;
+using RdkB = Bond *;
 
 class RDKitCipMol : public BaseMol<RdkA, RdkB> {
- private:
-  ROMol* mol;
+private:
+  ROMol *mol;
 
- public:
-  explicit RDKitCipMol(ROMol* mol);
+public:
+  explicit RDKitCipMol(ROMol *mol);
 
   int getNumAtoms() const override;
 
@@ -73,12 +73,12 @@ class RDKitCipMol : public BaseMol<RdkA, RdkB> {
 
   int getBondOrder(RdkB bond) const override;
 
-  void setAtomDescriptor(RdkA atom, const std::string& key,
+  void setAtomDescriptor(RdkA atom, const std::string &key,
                          Descriptor desc) override;
 
-  void setBondDescriptor(RdkB bond, const std::string& key,
+  void setBondDescriptor(RdkB bond, const std::string &key,
                          Descriptor desc) override;
 };
 
-}  // namespace NewCIPLabelling
-}  // namespace RDKit
+} // namespace NewCIPLabelling
+} // namespace RDKit

@@ -27,26 +27,25 @@ namespace NewCIPLabelling {
  * priority over unlike descriptor pairs.
  *
  */
-template <typename A, typename B>
-class Rule4b : public SequenceRule<A, B> {
- private:
+template <typename A, typename B> class Rule4b : public SequenceRule<A, B> {
+private:
   const Descriptor ref;
 
- public:
+public:
   Rule4b() = delete;
 
-  Rule4b(const BaseMol<A, B>* mol)
+  Rule4b(const BaseMol<A, B> *mol)
       : SequenceRule<A, B>(mol), ref{Descriptor::NONE} {}
 
-  Rule4b(const BaseMol<A, B>* mol, Descriptor ref)
+  Rule4b(const BaseMol<A, B> *mol, Descriptor ref)
       : SequenceRule<A, B>(mol), ref{ref} {}
 
-  std::vector<Descriptor> getReferenceDescriptors(
-      const Node<A, B>* node) const {
+  std::vector<Descriptor>
+  getReferenceDescriptors(const Node<A, B> *node) const {
     auto result = std::vector<Descriptor>();
     auto prev = initialLevel(node);
     while (!prev.empty()) {
-      for (const auto& nodes : prev) {
+      for (const auto &nodes : prev) {
         if (getReference(nodes, result)) {
           return result;
         }
@@ -56,7 +55,7 @@ class Rule4b : public SequenceRule<A, B> {
     return {};
   }
 
-  int compare(const Edge<A, B>* a, const Edge<A, B>* b) const override {
+  int compare(const Edge<A, B> *a, const Edge<A, B> *b) const override {
     if (a->getBeg()->getDigraph()->getCurrRoot() != a->getBeg() ||
         b->getBeg()->getDigraph()->getCurrRoot() != b->getBeg()) {
       if (ref == Descriptor::NONE) {
@@ -89,10 +88,10 @@ class Rule4b : public SequenceRule<A, B> {
                             list1[0].getRefDescriptor(),
                             list2[0].getRefDescriptor());
       } else if (list1.size() > 1) {
-        for (auto& plist : list1) {
+        for (auto &plist : list1) {
           fillPairs(a->getEnd(), plist);
         }
-        for (auto& plist : list2) {
+        for (auto &plist : list2) {
           fillPairs(b->getEnd(), plist);
         }
 
@@ -110,18 +109,18 @@ class Rule4b : public SequenceRule<A, B> {
     }
   }
 
- private:
-  bool hasDescriptors(const Node<A, B>* node) const {
-    auto queue = std::queue<const Node<A, B>*>();
+private:
+  bool hasDescriptors(const Node<A, B> *node) const {
+    auto queue = std::queue<const Node<A, B> *>();
     queue.push(node);
     while (!queue.empty()) {
-      const auto& n = queue.front();
+      const auto &n = queue.front();
       queue.pop();
 
       if (n->getAux() != nullptr) {
         return true;
       }
-      for (const auto& e : n->getEdges()) {
+      for (const auto &e : n->getEdges()) {
         if (e->getEnd() == n) {
           continue;
         }
@@ -134,30 +133,27 @@ class Rule4b : public SequenceRule<A, B> {
     return false;
   }
 
-  bool getReference(const std::vector<const Node<A, B>*>& nodes,
-                    std::vector<Descriptor>& result) const {
+  bool getReference(const std::vector<const Node<A, B> *> &nodes,
+                    std::vector<Descriptor> &result) const {
     int right = 0;
     int left = 0;
-    for (const auto& node : nodes) {
+    for (const auto &node : nodes) {
       auto desc = node->getAux();
       switch (desc) {
-        case Descriptor::NONE:
-          continue;
-        case Descriptor::R:
-        case Descriptor::M:
-        case Descriptor::seqCis:
-          ++right;
-          break;
-        case Descriptor::S:
-        case Descriptor::P:
-        case Descriptor::seqTrans:
-          ++left;
-          break;
-        default:
-          std::stringstream ss;
-          ss << '\'' << to_string(desc)
-             << "' is an invalid descriptor for Rule4b";
-          throw std::runtime_error(ss.str());
+      case Descriptor::NONE:
+        continue;
+      case Descriptor::R:
+      case Descriptor::M:
+      case Descriptor::seqCis:
+        ++right;
+        break;
+      case Descriptor::S:
+      case Descriptor::P:
+      case Descriptor::seqTrans:
+        ++left;
+        break;
+      default:
+        break;
       }
     }
     if (right + left == 0) {
@@ -175,19 +171,19 @@ class Rule4b : public SequenceRule<A, B> {
     }
   }
 
-  std::vector<std::vector<const Node<A, B>*>> initialLevel(
-      const Node<A, B>* node) const {
+  std::vector<std::vector<const Node<A, B> *>>
+  initialLevel(const Node<A, B> *node) const {
     return {{{node}}};
   }
 
-  std::vector<std::vector<const Node<A, B>*>> getNextLevel(
-      const std::vector<std::vector<const Node<A, B>*>>& prevLevel) const {
-    auto nextLevel = std::vector<std::vector<const Node<A, B>*>>();
+  std::vector<std::vector<const Node<A, B> *>> getNextLevel(
+      const std::vector<std::vector<const Node<A, B> *>> &prevLevel) const {
+    auto nextLevel = std::vector<std::vector<const Node<A, B> *>>();
     nextLevel.reserve(4 * prevLevel.size());
 
-    for (const auto& prev : prevLevel) {
-      auto tmp = std::vector<std::vector<std::vector<Edge<A, B>*>>>();
-      for (const auto& node : prev) {
+    for (const auto &prev : prevLevel) {
+      auto tmp = std::vector<std::vector<std::vector<Edge<A, B> *>>>();
+      for (const auto &node : prev) {
         auto edges = node->getNonTerminalOutEdges();
         this->sort(node, edges);
         tmp.push_back(this->getSorter()->getGroups(edges));
@@ -205,8 +201,8 @@ class Rule4b : public SequenceRule<A, B> {
       }
 
       for (int i = 0; i < size; ++i) {
-        auto eq = std::vector<const Node<A, B>*>();
-        for (const auto& aTmp : tmp) {
+        auto eq = std::vector<const Node<A, B> *>();
+        for (const auto &aTmp : tmp) {
           auto tmpNodes = toNodeList(aTmp[i]);
           eq.insert(eq.end(), tmpNodes.begin(), tmpNodes.end());
         }
@@ -218,30 +214,30 @@ class Rule4b : public SequenceRule<A, B> {
     return nextLevel;
   }
 
-  std::vector<const Node<A, B>*> toNodeList(
-      const std::vector<Edge<A, B>*>& eqEdges) const {
-    auto eqNodes = std::vector<const Node<A, B>*>();
+  std::vector<const Node<A, B> *>
+  toNodeList(const std::vector<Edge<A, B> *> &eqEdges) const {
+    auto eqNodes = std::vector<const Node<A, B> *>();
     eqNodes.reserve(eqEdges.size());
 
-    for (const auto& edge : eqEdges) {
+    for (const auto &edge : eqEdges) {
       eqNodes.push_back(edge->getEnd());
     }
     return eqNodes;
   }
 
-  void visit(std::vector<PairList>& plists, const Node<A, B>* beg) const {
-    auto queue = std::queue<Node<A, B>*>();
+  void visit(std::vector<PairList> &plists, const Node<A, B> *beg) const {
+    auto queue = std::queue<Node<A, B> *>();
     queue.push(beg);
     while (!queue.isEmpty()) {
       auto node = queue.front();
       queue.pop();
 
       // append any descriptors to the std::vector
-      for (const auto& plist : plists) {
+      for (const auto &plist : plists) {
         plist.add(node->getAux());
       }
 
-      for (const auto& e : node->getEdges()) {
+      for (const auto &e : node->getEdges()) {
         if (e->isBeg(node)) {
           queue.push(e->getEnd());
         }
@@ -257,10 +253,11 @@ class Rule4b : public SequenceRule<A, B> {
    * @param edges a std::vector of edges
    * @return a std::vector of non-terminal ligands
    */
-  std::vector<const Edge<A, B>*> getLigandsToSort(
-      const Node<A, B>* node, const std::vector<Edge<A, B>*> edges) const {
-    auto filtered = std::vector<const Edge<A, B>*>();
-    for (const auto& edge : edges) {
+  std::vector<const Edge<A, B> *>
+  getLigandsToSort(const Node<A, B> *node,
+                   const std::vector<Edge<A, B> *> edges) const {
+    auto filtered = std::vector<const Edge<A, B> *>();
+    for (const auto &edge : edges) {
       if (edge->isEnd(node) || edge->getEnd()->isTerminal()) {
         continue;
       }
@@ -272,8 +269,8 @@ class Rule4b : public SequenceRule<A, B> {
     return filtered;
   }
 
-  std::vector<PairList> newPairLists(
-      const std::vector<Descriptor>& descriptors) const {
+  std::vector<PairList>
+  newPairLists(const std::vector<Descriptor> &descriptors) const {
     auto pairs = std::vector<PairList>();
     for (Descriptor descriptor : descriptors) {
       pairs.emplace_back(descriptor);
@@ -281,11 +278,11 @@ class Rule4b : public SequenceRule<A, B> {
     return pairs;
   }
 
-  void fillPairs(const Node<A, B>* beg, PairList& plist) const {
+  void fillPairs(const Node<A, B> *beg, PairList &plist) const {
     const Rule4b<A, B> replacement_rule(this->getMol(),
                                         plist.getRefDescriptor());
-    const auto& sorter = getRefSorter(&replacement_rule);
-    auto queue = std::queue<const Node<A, B>*>();
+    const auto &sorter = getRefSorter(&replacement_rule);
+    auto queue = std::queue<const Node<A, B> *>();
     queue.push(beg);
     while (!queue.empty()) {
       auto node = queue.front();
@@ -294,7 +291,7 @@ class Rule4b : public SequenceRule<A, B> {
       plist.add(node->getAux());
       auto edges = node->getEdges();
       sorter.prioritise(node, edges);
-      for (const auto& edge : edges) {
+      for (const auto &edge : edges) {
         if (edge->isBeg(node) && !edge->getEnd()->isTerminal()) {
           queue.push(edge->getEnd());
         }
@@ -302,24 +299,24 @@ class Rule4b : public SequenceRule<A, B> {
     }
   }
 
-  int comparePairs(const Node<A, B>* a, const Node<A, B>* b, Descriptor refA,
+  int comparePairs(const Node<A, B> *a, const Node<A, B> *b, Descriptor refA,
                    Descriptor refB) const {
     const Rule4b<A, B> replacementA(this->getMol(), refA);
     const Rule4b<A, B> replacementB(this->getMol(), refB);
-    const auto& aSorter = getRefSorter(&replacementA);
-    const auto& bSorter = getRefSorter(&replacementB);
-    auto aQueue = std::queue<const Node<A, B>*>();
-    auto bQueue = std::queue<const Node<A, B>*>();
+    const auto &aSorter = getRefSorter(&replacementA);
+    const auto &bSorter = getRefSorter(&replacementB);
+    auto aQueue = std::queue<const Node<A, B> *>();
+    auto bQueue = std::queue<const Node<A, B> *>();
     aQueue.push(a);
     bQueue.push(b);
     while (!aQueue.empty() && !bQueue.empty()) {
-      const auto& aNode = aQueue.front();
+      const auto &aNode = aQueue.front();
       aQueue.pop();
-      const auto& bNode = bQueue.front();
+      const auto &bNode = bQueue.front();
       bQueue.pop();
 
-      const auto& desA = PairList::ref(aNode->getAux());
-      const auto& desB = PairList::ref(bNode->getAux());
+      const auto &desA = PairList::ref(aNode->getAux());
+      const auto &desB = PairList::ref(bNode->getAux());
 
       if (desA == refA && desB != refB) {
         return +1;
@@ -329,7 +326,7 @@ class Rule4b : public SequenceRule<A, B> {
 
       auto edges = aNode->getEdges();
       aSorter.prioritise(aNode, edges);
-      for (const auto& edge : edges) {
+      for (const auto &edge : edges) {
         if (edge->isBeg(aNode) && !edge->getEnd()->isTerminal()) {
           aQueue.push(edge->getEnd());
         }
@@ -337,7 +334,7 @@ class Rule4b : public SequenceRule<A, B> {
 
       edges = bNode->getEdges();
       bSorter.prioritise(bNode, edges);
-      for (const auto& edge : edges) {
+      for (const auto &edge : edges) {
         if (edge->isBeg(bNode) && !edge->getEnd()->isTerminal()) {
           bQueue.push(edge->getEnd());
         }
@@ -346,14 +343,14 @@ class Rule4b : public SequenceRule<A, B> {
     return 0;
   }
 
-  Sort<A, B> getRefSorter(const SequenceRule<A, B>* replacement_rule) const {
-    const auto& rules = this->getSorter()->getRules();
+  Sort<A, B> getRefSorter(const SequenceRule<A, B> *replacement_rule) const {
+    const auto &rules = this->getSorter()->getRules();
 
     assert(std::find(rules.begin(), rules.end(), this) != rules.end());
 
-    std::vector<const SequenceRule<A, B>*> new_rules;
+    std::vector<const SequenceRule<A, B> *> new_rules;
     new_rules.reserve(rules.size());
-    for (const auto& rule : rules) {
+    for (const auto &rule : rules) {
       if (this != rule) {
         new_rules.push_back(rule);
       }
@@ -363,5 +360,5 @@ class Rule4b : public SequenceRule<A, B> {
   }
 };
 
-}  // namespace NewCIPLabelling
-}  // namespace RDKit
+} // namespace NewCIPLabelling
+} // namespace RDKit

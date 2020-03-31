@@ -19,20 +19,20 @@ namespace NewCIPLabelling {
 
 template <typename A, typename B>
 class Tetrahedral : public Configuration<A, B> {
- public:
+public:
   static const int LEFT = 0x1;
   static const int RIGHT = 0x2;
 
   Tetrahedral() = default;
 
-  Tetrahedral(A focus, std::vector<A>&& carriers, int cfg)
+  Tetrahedral(A focus, std::vector<A> &&carriers, int cfg)
       : Configuration<A, B>(focus, std::move(carriers), cfg){};
 
-  void setPrimaryLabel(BaseMol<A, B>* mol, Descriptor desc) override {
+  void setPrimaryLabel(BaseMol<A, B> *mol, Descriptor desc) override {
     mol->setAtomDescriptor(this->getFocus(), CIP_LABEL_KEY, desc);
   }
 
-  Descriptor label(const SequenceRule<A, B>* comp) override {
+  Descriptor label(const SequenceRule<A, B> *comp) override {
     auto digraph = this->getDigraph();
     auto root = digraph->getRoot();
 
@@ -45,14 +45,14 @@ class Tetrahedral : public Configuration<A, B> {
     return label(root, comp);
   }
 
-  Descriptor label(Node<A, B>* node, Digraph<A, B>* digraph,
-                   const SequenceRule<A, B>* comp) override {
+  Descriptor label(Node<A, B> *node, Digraph<A, B> *digraph,
+                   const SequenceRule<A, B> *comp) override {
     digraph->changeRoot(node);
     return label(node, comp);
   }
 
- private:
-  Descriptor label(Node<A, B>* node, const SequenceRule<A, B>* comp) const {
+private:
+  Descriptor label(Node<A, B> *node, const SequenceRule<A, B> *comp) const {
     A focus = this->getFocus();
     auto edges = node->getEdges();
 
@@ -78,10 +78,10 @@ class Tetrahedral : public Configuration<A, B> {
         // S4 symmetric case
         node->getDigraph()->setRule6Ref(edges[0]->getEnd()->getAtom());
         comp->sort(node, edges);
-        auto nbrs1 = std::vector<Edge<A, B>*>(edges.begin(), edges.end());
+        auto nbrs1 = std::vector<Edge<A, B> *>(edges.begin(), edges.end());
         node->getDigraph()->setRule6Ref(edges[1]->getEnd()->getAtom());
         priority = comp->sort(node, edges);
-        auto nbrs2 = std::vector<Edge<A, B>*>(edges.begin(), edges.end());
+        auto nbrs2 = std::vector<Edge<A, B> *>(edges.begin(), edges.end());
         if (this->parity4(nbrs1, nbrs2) == 1) {
           return Descriptor::UNKNOWN;
         }
@@ -96,7 +96,7 @@ class Tetrahedral : public Configuration<A, B> {
 
     auto ordered = std::vector<A>(4);
     int idx = 0;
-    for (const auto& edge : edges) {
+    for (const auto &edge : edges) {
       if (edge->getEnd()->isSet(Node<A, B>::BOND_DUPLICATE) ||
           edge->getEnd()->isSet(Node<A, B>::IMPL_HYDROGEN)) {
         continue;
@@ -127,13 +127,13 @@ class Tetrahedral : public Configuration<A, B> {
     }
 
     if (config == 0x1) {
-      if (priority.isPseduoAsymettric()) {
+      if (priority.isPseudoAsymettric()) {
         return Descriptor::s;
       } else {
         return Descriptor::S;
       }
     } else if (config == 0x2) {
-      if (priority.isPseduoAsymettric()) {
+      if (priority.isPseudoAsymettric()) {
         return Descriptor::r;
       } else {
         return Descriptor::R;
@@ -144,5 +144,5 @@ class Tetrahedral : public Configuration<A, B> {
   }
 };
 
-}  // namespace NewCIPLabelling
-}  // namespace RDKit
+} // namespace NewCIPLabelling
+} // namespace RDKit

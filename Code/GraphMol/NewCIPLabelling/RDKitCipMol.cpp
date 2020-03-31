@@ -19,7 +19,7 @@
 namespace RDKit {
 namespace NewCIPLabelling {
 
-RDKitCipMol::RDKitCipMol(ROMol* mol) : mol{mol} {}
+RDKitCipMol::RDKitCipMol(ROMol *mol) : mol{mol} {}
 
 int RDKitCipMol::getNumAtoms() const { return mol->getNumAtoms(); }
 
@@ -32,7 +32,7 @@ int RDKitCipMol::getAtomIdx(RdkA atom) const { return atom->getIdx(); };
 std::vector<RdkA> RDKitCipMol::atoms() const {
   std::vector<RdkA> atoms;
   atoms.reserve(mol->getNumAtoms());
-  for (auto& atom : mol->atoms()) {
+  for (auto &atom : mol->atoms()) {
     atoms.push_back(atom);
   }
   return atoms;
@@ -45,7 +45,7 @@ int RDKitCipMol::getBondIdx(RdkB bond) const { return bond->getIdx(); };
 std::vector<RdkB> RDKitCipMol::getBonds(RdkA atom) const {
   std::vector<RdkB> bonds;
   bonds.reserve(atom->getDegree());
-  for (const auto& ibnd : boost::make_iterator_range(mol->getAtomBonds(atom))) {
+  for (const auto &ibnd : boost::make_iterator_range(mol->getAtomBonds(atom))) {
     bonds.push_back((*mol)[ibnd]);
   }
   return bonds;
@@ -98,27 +98,27 @@ int RDKitCipMol::getBondOrder(RdkB bond) const {
   return static_cast<int>(std::ceil(order));
 };
 
-void RDKitCipMol::setAtomDescriptor(RdkA atom, const std::string& key,
+void RDKitCipMol::setAtomDescriptor(RdkA atom, const std::string &key,
                                     Descriptor desc) {
   if (key == CIP_LABEL_KEY) {
     switch (desc) {
-      case Descriptor::NONE:
-        throw std::runtime_error("Received an invalid as Atom Descriptor");
-      case Descriptor::seqTrans:
-      case Descriptor::seqCis:
-      case Descriptor::E:
-      case Descriptor::Z:
-      case Descriptor::M:
-      case Descriptor::P:
-      case Descriptor::m:
-      case Descriptor::p:
-      case Descriptor::SP_4:
-      case Descriptor::TBPY_5:
-      case Descriptor::OC_6:
-        throw std::runtime_error(
-            "Received a Descriptor that is not supported for atoms");
-      default:
-        atom->setProp(common_properties::_CIPCode, to_string(desc));
+    case Descriptor::NONE:
+      throw std::runtime_error("Received an invalid as Atom Descriptor");
+    case Descriptor::seqTrans:
+    case Descriptor::seqCis:
+    case Descriptor::E:
+    case Descriptor::Z:
+    case Descriptor::M:
+    case Descriptor::P:
+    case Descriptor::m:
+    case Descriptor::p:
+    case Descriptor::SP_4:
+    case Descriptor::TBPY_5:
+    case Descriptor::OC_6:
+      throw std::runtime_error(
+          "Received a Descriptor that is not supported for atoms");
+    default:
+      atom->setProp(common_properties::_CIPCode, to_string(desc));
     }
   } else {
     std::stringstream ss;
@@ -127,26 +127,26 @@ void RDKitCipMol::setAtomDescriptor(RdkA atom, const std::string& key,
   }
 }
 
-void RDKitCipMol::setBondDescriptor(RdkB bond, const std::string& key,
+void RDKitCipMol::setBondDescriptor(RdkB bond, const std::string &key,
                                     Descriptor desc) {
   // This is incorrect, but right now, we need don't know the anchors to set
   // seqCis/TRANSlabels
 
   if (key == CIP_LABEL_KEY) {
     switch (desc) {
-      case Descriptor::NONE:
-        throw std::runtime_error("Received an invalid as Bond Descriptor");
-      case Descriptor::R:
-      case Descriptor::S:
-      case Descriptor::r:
-      case Descriptor::s:
-      case Descriptor::SP_4:
-      case Descriptor::TBPY_5:
-      case Descriptor::OC_6:
-        throw std::runtime_error(
-            "Received a Descriptor that is not supported for bonds");
-      default:
-        bond->setProp(common_properties::_CIPCode, to_string(desc));
+    case Descriptor::NONE:
+      throw std::runtime_error("Received an invalid as Bond Descriptor");
+    case Descriptor::R:
+    case Descriptor::S:
+    case Descriptor::r:
+    case Descriptor::s:
+    case Descriptor::SP_4:
+    case Descriptor::TBPY_5:
+    case Descriptor::OC_6:
+      throw std::runtime_error(
+          "Received a Descriptor that is not supported for bonds");
+    default:
+      bond->setProp(common_properties::_CIPCode, to_string(desc));
     }
   } else {
     std::stringstream ss;
@@ -155,5 +155,5 @@ void RDKitCipMol::setBondDescriptor(RdkB bond, const std::string& key,
   }
 }
 
-}  // namespace NewCIPLabelling
-}  // namespace RDKit
+} // namespace NewCIPLabelling
+} // namespace RDKit

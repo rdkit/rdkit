@@ -15,27 +15,26 @@
 namespace RDKit {
 namespace NewCIPLabelling {
 
-template <typename A, typename B>
-class Sp2Bond : public Configuration<A, B> {
- private:
+template <typename A, typename B> class Sp2Bond : public Configuration<A, B> {
+private:
   B bond;
 
- public:
+public:
   static const int OPPOSITE = 0x1;
   static const int TOGETHER = 0x2;
 
   Sp2Bond() = default;
 
-  Sp2Bond(B bond, std::vector<A>&& foci, std::vector<A>&& carriers, int cfg)
+  Sp2Bond(B bond, std::vector<A> &&foci, std::vector<A> &&carriers, int cfg)
       : Configuration<A, B>(std::move(foci), std::move(carriers), cfg),
         bond{bond} {}
 
-  void setPrimaryLabel(BaseMol<A, B>* mol, Descriptor desc) override {
+  void setPrimaryLabel(BaseMol<A, B> *mol, Descriptor desc) override {
     mol->setBondDescriptor(bond, CIP_LABEL_KEY, desc);
   }
 
-  Descriptor label(const SequenceRule<A, B>* comp) override {
-    const auto& digraph = this->getDigraph();
+  Descriptor label(const SequenceRule<A, B> *comp) override {
+    const auto &digraph = this->getDigraph();
 
     const A focus1 = this->getFoci()[0];
     const A focus2 = this->getFoci()[1];
@@ -47,33 +46,33 @@ class Sp2Bond : public Configuration<A, B> {
       digraph->changeRoot(root1);
     }
 
-    const auto& root1_edges = root1->getEdges();
-    const auto& internal = this->findInternalEdge(root1_edges, focus1, focus2);
-    auto filter = [&internal](const Edge<A, B>* e) { return e != internal; };
+    const auto &root1_edges = root1->getEdges();
+    const auto &internal = this->findInternalEdge(root1_edges, focus1, focus2);
+    auto filter = [&internal](const Edge<A, B> *e) { return e != internal; };
 
-    std::vector<Edge<A, B>*> edges1;
+    std::vector<Edge<A, B> *> edges1;
     std::copy_if(root1_edges.begin(), root1_edges.end(),
                  std::back_inserter(edges1), filter);
 
-    const auto& priority1 = comp->sort(root1, edges1);
+    const auto &priority1 = comp->sort(root1, edges1);
     if (!priority1.isUnique()) {
       return Descriptor::UNKNOWN;
     }
 
-    const auto& root2 = internal->getOther(root1);
+    const auto &root2 = internal->getOther(root1);
     digraph->changeRoot(root2);
 
-    std::vector<Edge<A, B>*> edges2;
-    const auto& root2_edges = root2->getEdges();
+    std::vector<Edge<A, B> *> edges2;
+    const auto &root2_edges = root2->getEdges();
     std::copy_if(root2_edges.begin(), root2_edges.end(),
                  std::back_inserter(edges2), filter);
 
-    const auto& priority2 = comp->sort(root2, edges2);
+    const auto &priority2 = comp->sort(root2, edges2);
     if (!priority2.isUnique()) {
       return Descriptor::UNKNOWN;
     }
 
-    const auto& carriers = this->getCarriers();
+    const auto &carriers = this->getCarriers();
     int config = this->getConfig();
 
     // swap
@@ -91,13 +90,13 @@ class Sp2Bond : public Configuration<A, B> {
 #endif
 
     if (config == TOGETHER) {
-      if (priority1.isPseduoAsymettric() != priority2.isPseduoAsymettric()) {
+      if (priority1.isPseudoAsymettric() != priority2.isPseudoAsymettric()) {
         return Descriptor::seqCis;
       } else {
         return Descriptor::Z;
       }
     } else if (config == OPPOSITE) {
-      if (priority1.isPseduoAsymettric() != priority2.isPseduoAsymettric()) {
+      if (priority1.isPseudoAsymettric() != priority2.isPseudoAsymettric()) {
         return Descriptor::seqTrans;
       } else {
         return Descriptor::E;
@@ -107,17 +106,17 @@ class Sp2Bond : public Configuration<A, B> {
     return Descriptor::UNKNOWN;
   }
 
-  Descriptor label(Node<A, B>* root1, Digraph<A, B>* digraph,
-                   const SequenceRule<A, B>* rules) override {
+  Descriptor label(Node<A, B> *root1, Digraph<A, B> *digraph,
+                   const SequenceRule<A, B> *rules) override {
     const A focus1 = this->getFoci()[0];
     const A focus2 = this->getFoci()[1];
 
-    const auto& internal =
+    const auto &internal =
         this->findInternalEdge(root1->getEdges(), focus1, focus2);
     if (internal == nullptr) {
       return Descriptor::UNKNOWN;
     }
-    const auto& root2 = internal->getOther(root1);
+    const auto &root2 = internal->getOther(root1);
 
     auto edges1 = root1->getEdges();
     auto edges2 = root2->getEdges();
@@ -132,7 +131,7 @@ class Sp2Bond : public Configuration<A, B> {
     }
 
     digraph->changeRoot(root1);
-    const auto& priority1 = rules->sort(root1, edges1);
+    const auto &priority1 = rules->sort(root1, edges1);
     if (!priority1.isUnique()) {
       return Descriptor::UNKNOWN;
     }
@@ -141,7 +140,7 @@ class Sp2Bond : public Configuration<A, B> {
       config ^= 0x3;
     }
     digraph->changeRoot(root2);
-    const auto& priority2 = rules->sort(root2, edges2);
+    const auto &priority2 = rules->sort(root2, edges2);
     if (!priority2.isUnique()) {
       return Descriptor::UNKNOWN;
     }
@@ -151,13 +150,13 @@ class Sp2Bond : public Configuration<A, B> {
     }
 
     if (config == TOGETHER) {
-      if (priority1.isPseduoAsymettric() != priority2.isPseduoAsymettric()) {
+      if (priority1.isPseudoAsymettric() != priority2.isPseudoAsymettric()) {
         return Descriptor::seqCis;
       } else {
         return Descriptor::Z;
       }
     } else if (config == OPPOSITE) {
-      if (priority1.isPseduoAsymettric() != priority2.isPseduoAsymettric()) {
+      if (priority1.isPseudoAsymettric() != priority2.isPseudoAsymettric()) {
         return Descriptor::seqTrans;
       } else {
         return Descriptor::E;
@@ -165,7 +164,7 @@ class Sp2Bond : public Configuration<A, B> {
     }
     return Descriptor::UNKNOWN;
   }
-};  // namespace NewCIPLabelling
+}; // namespace NewCIPLabelling
 
-}  // namespace NewCIPLabelling
-}  // namespace RDKit
+} // namespace NewCIPLabelling
+} // namespace RDKit
