@@ -37,7 +37,7 @@ def ReorderTautomers(molecule):
     scoring system in TautomerCanonicalizer appears first.
 
     :param molecule: An RDKit Molecule object.
-    :return: An array of Molecule objects.
+    :return: A list of Molecule objects.
     """
     enumerator = rdMolStandardize.TautomerEnumerator()
     canon = enumerator.Canonicalize(molecule)

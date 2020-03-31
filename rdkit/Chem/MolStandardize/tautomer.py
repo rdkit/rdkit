@@ -13,7 +13,6 @@ import copy
 import logging
 
 from rdkit import Chem
-from rdkit.Chem.MolStandardize import rdMolStandardize
 from rdkit.Chem.rdchem import BondDir, BondStereo, BondType
 
 from .utils import memoized_property, pairwise
@@ -31,7 +30,7 @@ class TautomerTransform(object):
     """
 
     BONDMAP = {'-': BondType.SINGLE, '=': BondType.DOUBLE,
-               '#': BondType.TRIPLE, ':': BondType.AROMATIC}
+            '#': BondType.TRIPLE, ':': BondType.AROMATIC}
     CHARGEMAP = {'+': 1, '0': 0, '-': -1}
 
     def __init__(self, name, smarts, bonds=(), charges=(), radicals=()):
@@ -59,8 +58,7 @@ class TautomerTransform(object):
         return Chem.MolFromSmarts(self.tautomer_str)
 
     def __repr__(self):
-        return 'TautomerTransform({!r}, {!r}, {!r}, {!r})'.format(self.name, self.tautomer_str, self.bonds,
-                                                                  self.charges)
+        return 'TautomerTransform({!r}, {!r}, {!r}, {!r})'.format(self.name, self.tautomer_str, self.bonds, self.charges)
 
     def __str__(self):
         return self.name
@@ -292,8 +290,7 @@ class TautomerEnumerator(object):
                                 # If no manually specified bond types, just swap single and double bonds
                                 current_bond_type = product.GetBondBetweenAtoms(*pair).GetBondType()
                                 product.GetBondBetweenAtoms(
-                                    *pair).SetBondType(
-                                    BondType.DOUBLE if current_bond_type == BondType.SINGLE else BondType.SINGLE)
+                                    *pair).SetBondType(BondType.DOUBLE if current_bond_type == BondType.SINGLE else BondType.SINGLE)
                                 # log.debug('%s-%s: %s -> %s' % (product.GetAtomWithIdx(pair[0]).GetSymbol(), product.GetAtomWithIdx(pair[1]).GetSymbol(), current_bond_type, product.GetBondBetweenAtoms(*pair).GetBondType()))
                         # Adjust charges
                         if transform.charges:
