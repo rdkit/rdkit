@@ -323,7 +323,6 @@ unsigned int compute2DCoords(RDKit::ROMol &mol,
           MolTransforms::computeCentroid(mol.getConformer(cid));
       RDGeom::Transform3D trans;
       trans.SetTranslation(-centroid);
-      RDGeom::POINT3D_VECT &locs = mol.getConformer(cid).getPositions();
       auto &conf = mol.getConformer(cid);
       MolTransforms::transformConformer(conf,trans);
     }
