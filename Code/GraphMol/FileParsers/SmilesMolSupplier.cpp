@@ -217,14 +217,14 @@ ROMol *SmilesMolSupplier::processLine(std::string inLine) {
     // Simply print out a message
     BOOST_LOG(rdErrorLog) << "ERROR: Smiles parse error on line " << d_line
                           << "\n";
-    BOOST_LOG(rdErrorLog) << "ERROR: " << pe.message() << "\n";
+    BOOST_LOG(rdErrorLog) << "ERROR: " << pe.what() << "\n";
     res = nullptr;
   } catch (const MolSanitizeException &se) {
     // We couldn't sanitize the molecule
     //  write out an error message
     BOOST_LOG(rdErrorLog) << "ERROR: Could not sanitize molecule on line "
                           << d_line << std::endl;
-    BOOST_LOG(rdErrorLog) << "ERROR: " << se.message() << "\n";
+    BOOST_LOG(rdErrorLog) << "ERROR: " << se.what() << "\n";
     res = nullptr;
   } catch (...) {
     //  write out an error message

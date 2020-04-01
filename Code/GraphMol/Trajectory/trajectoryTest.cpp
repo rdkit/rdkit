@@ -218,7 +218,7 @@ void testReadAmber() {
     try {
       readAmberTrajectory(fName, traj);
     } catch (ValueErrorException &e) {
-      BOOST_LOG(rdErrorLog) << e.message() << std::endl;
+      BOOST_LOG(rdErrorLog) << e.what() << std::endl;
       ok = true;
     }
     TEST_ASSERT(ok);
@@ -230,7 +230,7 @@ void testReadAmber() {
       Trajectory traj(3, 3);
       readAmberTrajectory(fName, traj);
     } catch (ValueErrorException &e) {
-      BOOST_LOG(rdErrorLog) << e.message() << std::endl;
+      BOOST_LOG(rdErrorLog) << e.what() << std::endl;
       ok = true;
     }
     TEST_ASSERT(ok);
@@ -273,7 +273,7 @@ void testReadGromos() {
     try {
       readGromosTrajectory(fName, traj);
     } catch (ValueErrorException &e) {
-      BOOST_LOG(rdErrorLog) << e.message() << std::endl;
+      BOOST_LOG(rdErrorLog) << e.what() << std::endl;
       ok = true;
     }
     TEST_ASSERT(ok);
@@ -285,7 +285,7 @@ void testReadGromos() {
       Trajectory traj(3, 3);
       readGromosTrajectory(fName, traj);
     } catch (ValueErrorException &e) {
-      BOOST_LOG(rdErrorLog) << e.message() << std::endl;
+      BOOST_LOG(rdErrorLog) << e.what() << std::endl;
       ok = true;
     }
     TEST_ASSERT(ok);
@@ -496,7 +496,7 @@ void testAddConformersFromTrajectory() {
   try {
     traj.getSnapshot(0);
   } catch (Invar::Invariant &e) {
-    BOOST_LOG(rdErrorLog) << e.getMessage() << std::endl;
+    BOOST_LOG(rdErrorLog) << e.what() << std::endl;
     ok = true;
   }
   TEST_ASSERT(ok);

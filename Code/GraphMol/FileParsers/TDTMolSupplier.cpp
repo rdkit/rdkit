@@ -309,7 +309,7 @@ ROMol *TDTMolSupplier::next() {
       BOOST_LOG(rdErrorLog)
           << "ERROR: Could not sanitize molecule ending on line " << d_line
           << std::endl;
-      BOOST_LOG(rdErrorLog) << "ERROR: " << se.message() << "\n";
+      BOOST_LOG(rdErrorLog) << "ERROR: " << se.what() << "\n";
       while (!dp_inStream->eof() && !dp_inStream->fail() &&
              tempStr.find("|") != 0) {
         d_line++;

@@ -31,10 +31,10 @@ std::ostream &operator<<(std::ostream &s, const Invariant &inv) {
 std::string Invariant::toString() const {
   std::string line = std::to_string(this->getLine());
 
-  std::string stringRep = this->prefix_d + "\n" + this->getMessage() +
-                          "\nViolation occurred on line " + line + " in file " +
-                          this->getFile() + "\nFailed Expression: " +
-                          this->getExpression() + "\n";
+  std::string stringRep =
+      this->prefix_d + "\n" + this->what() + "\nViolation occurred on line " +
+      line + " in file " + this->getFile() +
+      "\nFailed Expression: " + this->getExpression() + "\n";
 
 #ifdef SHOW_BACKTRACES_WITH_INVARIANT_ERRORS
   void *arr[10];
@@ -52,19 +52,18 @@ std::string Invariant::toUserString() const {
   std::string line = std::to_string(this->getLine());
 
   std::string filename = this->getFile();
-  
-  std::size_t pos = filename.find("Code"); // strip out build directory info
+
+  std::size_t pos = filename.find("Code");  // strip out build directory info
   if (pos != std::string::npos) {
     filename = filename.substr(pos);
   }
-  
-  std::string stringRep = this->prefix_d + "\n\t" + this->getMessage() +
-      "\n\tViolation occurred on line " + line + " in file " +
-      filename + "\n\tFailed Expression: " +
-      this->getExpression() + "\n\t" +
-      "RDKIT: " + RDKit::rdkitVersion + "\n\t" +
-      "BOOST: " + RDKit::boostVersion + "\n";
 
+  std::string stringRep = this->prefix_d + "\n\t" + this->what() +
+                          "\n\tViolation occurred on line " + line +
+                          " in file " + filename +
+                          "\n\tFailed Expression: " + this->getExpression() +
+                          "\n\t" + "RDKIT: " + RDKit::rdkitVersion + "\n\t" +
+                          "BOOST: " + RDKit::boostVersion + "\n";
 
 #ifdef SHOW_BACKTRACES_WITH_INVARIANT_ERRORS
   void *arr[10];
@@ -78,4 +77,4 @@ std::string Invariant::toUserString() const {
   return stringRep;
 }
 
-};
+};  // namespace Invar

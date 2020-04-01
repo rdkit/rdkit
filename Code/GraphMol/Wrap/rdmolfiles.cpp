@@ -38,12 +38,12 @@ using namespace RDKit;
 
 void rdBadFileExceptionTranslator(RDKit::BadFileException const &x) {
   std::ostringstream ss;
-  ss << "File error: " << x.message();
+  ss << "File error: " << x.what();
   PyErr_SetString(PyExc_IOError, ss.str().c_str());
 }
 void rdFileParseExceptionTranslator(RDKit::FileParseException const &x) {
   std::ostringstream ss;
-  ss << "File parsing error: " << x.message();
+  ss << "File parsing error: " << x.what();
   PyErr_SetString(PyExc_RuntimeError, ss.str().c_str());
 }
 
@@ -101,7 +101,7 @@ ROMol *MolFromTPLFile(const char *filename, bool sanitize = true,
   try {
     newM = TPLFileToMol(filename, sanitize, skipFirstConf);
   } catch (RDKit::BadFileException &e) {
-    PyErr_SetString(PyExc_IOError, e.message());
+    PyErr_SetString(PyExc_IOError, e.what());
     throw python::error_already_set();
   } catch (...) {
     newM = nullptr;
@@ -128,10 +128,10 @@ ROMol *MolFromMolFile(const char *molFilename, bool sanitize, bool removeHs,
   try {
     newM = MolFileToMol(molFilename, sanitize, removeHs, strictParsing);
   } catch (RDKit::BadFileException &e) {
-    PyErr_SetString(PyExc_IOError, e.message());
+    PyErr_SetString(PyExc_IOError, e.what());
     throw python::error_already_set();
   } catch (RDKit::FileParseException &e) {
-    BOOST_LOG(rdWarningLog) << e.message() << std::endl;
+    BOOST_LOG(rdWarningLog) << e.what() << std::endl;
   } catch (...) {
   }
   return static_cast<ROMol *>(newM);
@@ -146,7 +146,7 @@ ROMol *MolFromMolBlock(python::object imolBlock, bool sanitize, bool removeHs,
     newM =
         MolDataStreamToMol(inStream, line, sanitize, removeHs, strictParsing);
   } catch (RDKit::FileParseException &e) {
-    BOOST_LOG(rdWarningLog) << e.message() << std::endl;
+    BOOST_LOG(rdWarningLog) << e.what() << std::endl;
   } catch (...) {
   }
   return static_cast<ROMol *>(newM);
@@ -165,7 +165,7 @@ ROMol *MolFromMol2File(const char *molFilename, bool sanitize = true,
     newM = Mol2FileToMol(molFilename, sanitize, removeHs, CORINA,
                          cleanupSubstructures);
   } catch (RDKit::BadFileException &e) {
-    PyErr_SetString(PyExc_IOError, e.message());
+    PyErr_SetString(PyExc_IOError, e.what());
     throw python::error_already_set();
   } catch (...) {
     newM = nullptr;
@@ -193,10 +193,10 @@ ROMol *MolFromPDBFile(const char *filename, bool sanitize, bool removeHs,
   try {
     newM = PDBFileToMol(filename, sanitize, removeHs, flavor, proximityBonding);
   } catch (RDKit::BadFileException &e) {
-    PyErr_SetString(PyExc_IOError, e.message());
+    PyErr_SetString(PyExc_IOError, e.what());
     throw python::error_already_set();
   } catch (RDKit::FileParseException &e) {
-    BOOST_LOG(rdWarningLog) << e.message() << std::endl;
+    BOOST_LOG(rdWarningLog) << e.what() << std::endl;
   } catch (...) {
   }
   return static_cast<ROMol *>(newM);
@@ -210,7 +210,7 @@ ROMol *MolFromPDBBlock(python::object molBlock, bool sanitize, bool removeHs,
     newM = PDBDataStreamToMol(inStream, sanitize, removeHs, flavor,
                               proximityBonding);
   } catch (RDKit::FileParseException &e) {
-    BOOST_LOG(rdWarningLog) << e.message() << std::endl;
+    BOOST_LOG(rdWarningLog) << e.what() << std::endl;
   } catch (...) {
   }
   return static_cast<ROMol *>(newM);
@@ -221,7 +221,7 @@ ROMol *MolFromSequence(python::object seq, bool sanitize, int flavor) {
   try {
     newM = SequenceToMol(pyObjectToString(seq), sanitize, flavor);
   } catch (RDKit::FileParseException &e) {
-    BOOST_LOG(rdWarningLog) << e.message() << std::endl;
+    BOOST_LOG(rdWarningLog) << e.what() << std::endl;
   } catch (...) {
   }
   return static_cast<ROMol *>(newM);
@@ -231,7 +231,7 @@ ROMol *MolFromFASTA(python::object seq, bool sanitize, int flavor) {
   try {
     newM = FASTAToMol(pyObjectToString(seq), sanitize, flavor);
   } catch (RDKit::FileParseException &e) {
-    BOOST_LOG(rdWarningLog) << e.message() << std::endl;
+    BOOST_LOG(rdWarningLog) << e.what() << std::endl;
   } catch (...) {
   }
   return static_cast<ROMol *>(newM);
@@ -241,7 +241,7 @@ ROMol *MolFromHELM(python::object seq, bool sanitize) {
   try {
     newM = HELMToMol(pyObjectToString(seq), sanitize);
   } catch (RDKit::FileParseException &e) {
-    BOOST_LOG(rdWarningLog) << e.message() << std::endl;
+    BOOST_LOG(rdWarningLog) << e.what() << std::endl;
   } catch (...) {
   }
   return static_cast<ROMol *>(newM);

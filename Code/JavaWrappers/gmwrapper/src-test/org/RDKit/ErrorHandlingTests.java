@@ -58,8 +58,8 @@ public class ErrorHandlingTests extends GraphMolTest {
 					e.getClass().toString());
 			String what = ((KeyErrorException) e).key();
 			assertEquals("monkey", what);
-			what = ((KeyErrorException) e).message();
-			assertEquals("Unknown key: monkey", what);
+			// what = ((KeyErrorException) e).what();
+			// assertEquals("Unknown key: monkey", what);
 		}
 	}
 
@@ -81,7 +81,7 @@ public class ErrorHandlingTests extends GraphMolTest {
 		}
 		catch (GenericRDKitException e)
 		{
-			String what = e.message();
+			String what = e.what();
 			assertEquals("Unknown exception", what);
 			String where = e.getStackTrace()[0].getMethodName();
 			assertEquals("ROMol_getAtomWithIdx", where);
@@ -111,7 +111,7 @@ public class ErrorHandlingTests extends GraphMolTest {
 		{
 			assertEquals("class org.RDKit.GenericRDKitException",
 					e.getClass().toString());
-			String msg = e.message();
+			String msg = e.what();
 			assertEquals("Unknown exception", msg);
 			StackTraceElement[] st = e.getStackTrace();
 			assertEquals("ErrorGenerator_badAlloc_1", 

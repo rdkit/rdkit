@@ -3,6 +3,14 @@
 
 ## Backwards incompatible changes
 
+## Code removed in this release:
+- To improve API consistency of the exceptions in RDKit with the default ones in
+  the STL, the several `message()` methods and `Invariant::getMessage()` in RDKit's
+  exceptions have been removed in favor of `what()`. 
+- The old MolHash code has been removed from the C++ code, all wrappers, and the
+  PostgreSQL cartridge.
+
+
 
 # Release_2020.03.1
 (Changes relative to Release_2019.09.1)
