@@ -148,7 +148,7 @@ class RDKIT_GRAPHMOL_EXPORT ResonanceMolSupplier {
   void prepEnumIdxVect();
   void idxToCEPerm(unsigned int idx, std::vector<unsigned int> &c) const;
   void setResonanceMolSupplierLength();
-  void storeCEMap(CEMap &ceMap, unsigned int conjGrpIdx);
+  void storeCEMap(const CEMap &ceMap, unsigned int conjGrpIdx);
   void enumerateNbArrangements(CEMap &ceMap, CEMap &ceMapTmp);
   void pruneStructures(CEMap &ceMap);
   void assignBondsFormalChargesHelper(ROMol &mol,
