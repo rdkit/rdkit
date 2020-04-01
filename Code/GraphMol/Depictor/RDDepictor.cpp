@@ -318,12 +318,14 @@ unsigned int compute2DCoords(RDKit::ROMol &mol,
       params.coordMap = *coordMap;
     }
     unsigned int cid = RDKit::CoordGen::addCoords(mol, &params);
-    RDGeom::Point3D centroid = MolTransforms::computeCentroid(mol.getConformer(cid));
-    RDGeom::Transform3D trans;
-    trans.SetTranslation(-centroid);
-    RDGeom::POINT3D_VECT &locs = mol.getConformer(cid).getPositions();
-    for(auto atom: mol.atoms()) {
-      trans.TransformPoint(locs[atom->getIdx()]);
+    if(!coordMap) {
+      RDGeom::Point3D centroid =
+          MolTransforms::computeCentroid(mol.getConformer(cid));
+      RDGeom::Transform3D trans;
+      trans.SetTranslation(-centroid);
+      RDGeom::POINT3D_VECT &locs = mol.getConformer(cid).getPositions();
+      auto &conf = mol.getConformer(cid);
+      MolTransforms::transformConformer(conf,trans);
     }
     return cid;
   };
