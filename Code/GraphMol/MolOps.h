@@ -992,11 +992,6 @@ RDKIT_GRAPHMOL_EXPORT void findPotentialStereoBonds(ROMol &mol,
                                                     bool cleanIt = false);
 //@}
 
-/*!
-  Recalculate Stereochemistry based on the new CIP implementation.
-*/
-RDKIT_GRAPHMOL_EXPORT void assignRealCIPStereo(ROMol &mol);
-
 //! \brief Uses the molParity atom property to assign ChiralType to a molecule's
 //! atoms
 /*!

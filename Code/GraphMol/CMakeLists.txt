@@ -10,11 +10,6 @@ rdkit_library(GraphMol
               Matrices.cpp Chirality.cpp RingInfo.cpp Conformer.cpp
               Renumber.cpp AdjustQuery.cpp Resonance.cpp StereoGroup.cpp
               new_canon.cpp SubstanceGroup.cpp
-
-              NewCIPLabelling/RDKitCipMol.cpp
-              NewCIPLabelling/RDKitCipLabeller.cpp
-
-
               SHARED
               LINK_LIBRARIES RDGeometryLib RDGeneral  )
 if(RDK_USE_URF)
@@ -81,6 +76,8 @@ add_subdirectory(MolDraw2D)
 add_subdirectory(FMCS)
 add_subdirectory(MolHash)
 add_subdirectory(MMPA)
+
+add_subdirectory(CIPLabelling)
 
 if(RDK_BUILD_STRUCTCHECKER_SUPPORT)
 add_subdirectory(StructChecker)
@@ -156,7 +153,3 @@ rdkit_catch_test(graphmolTestsCatch catch_graphmol.cpp catch_main.cpp
 
 rdkit_catch_test(graphmolSGroupCatch catch_sgroups.cpp  catch_main.cpp
            LINK_LIBRARIES SmilesParse GraphMol )
-
-rdkit_catch_test(accurateCipTestCatch NewCIPLabelling/catch_tests.cpp NewCIPLabelling/RDKitCipMol.cpp
-        NewCIPLabelling/RDKitCipLabeller.cpp LINK_LIBRARIES SmilesParse GraphMol)
-

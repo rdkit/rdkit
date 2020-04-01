@@ -2390,12 +2390,6 @@ A note on the flags controlling which atoms/bonds are modified: \n\
         "DetectChemistryProblems", detectChemistryProblemsHelper,
         (python::arg("mol"), python::arg("sanitizeOps") = MolOps::SANITIZE_ALL),
         docString.c_str());
-
-    docString =
-        "New implementation of Stereo assignment using a true CIP ranking";
-
-    python::def("AssignRealCIPStereo", MolOps::assignRealCIPStereo,
-                python::arg("mol"), docString.c_str());
   };
 };
 }  // namespace RDKit

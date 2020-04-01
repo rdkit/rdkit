@@ -22,6 +22,7 @@ _HasSubstructMatchStr = rdchem._HasSubstructMatchStr
 from rdkit.Chem.rdchem import *
 from rdkit.Chem.rdmolfiles import *
 from rdkit.Chem.rdmolops import *
+from rdkit.Chem.rdCIPLabelling import *
 from rdkit.Chem.inchi import *
 try:
     # This is an optional component of the build
