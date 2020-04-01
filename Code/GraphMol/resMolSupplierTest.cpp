@@ -150,6 +150,15 @@ void testBaseFunctionality() {
   TEST_ASSERT(resMolSuppl->length() == 0);
   delete resMolSuppl;
   delete mol;
+
+  mol = SmilesToMol("CC(C)C(C(=O)OC(C#N)c1cccc(Oc2ccccc2)c1)c3ccc(OC(F)F)cc3");
+  resMolSuppl = new ResonanceMolSupplier((ROMol &)*mol,
+      ResonanceMolSupplier::KEKULE_ALL, 3);
+  TEST_ASSERT(!resMolSuppl->getIsEnumerated());
+  TEST_ASSERT(resMolSuppl->length() == 3);
+  TEST_ASSERT(resMolSuppl->getIsEnumerated());
+  delete resMolSuppl;
+  delete mol;
 }
 
 void testBenzylCation() {
