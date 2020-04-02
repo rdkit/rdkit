@@ -23,6 +23,8 @@
 #include <GraphMol/Rings.h>
 #include <Geometry/point.h>
 #include <Geometry/Transform2D.h>
+#include <Geometry/Transform3D.h>
+#include <GraphMol/MolTransforms/MolTransforms.h>
 #include <GraphMol/Substruct/SubstructMatch.h>
 #include "EmbeddedFrag.h"
 #include "DepictUtils.h"
@@ -315,7 +317,16 @@ unsigned int compute2DCoords(RDKit::ROMol &mol,
     if (coordMap) {
       params.coordMap = *coordMap;
     }
-    return RDKit::CoordGen::addCoords(mol, &params);
+    unsigned int cid = RDKit::CoordGen::addCoords(mol, &params);
+    if(!coordMap) {
+      RDGeom::Point3D centroid =
+          MolTransforms::computeCentroid(mol.getConformer(cid));
+      RDGeom::Transform3D trans;
+      trans.SetTranslation(-centroid);
+      auto &conf = mol.getConformer(cid);
+      MolTransforms::transformConformer(conf,trans);
+    }
+    return cid;
   };
 #endif
   // storage for pieces of a molecule/s that are embedded in 2D
