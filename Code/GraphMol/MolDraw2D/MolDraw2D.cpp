@@ -2110,19 +2110,11 @@ void MolDraw2D::drawBond(
       drawWavyLine(at1_cds, at2_cds, col1, col2);
     } else if (Bond::DATIVE == bt || Bond::DATIVEL == bt ||
                Bond::DATIVER == bt) {
-      setColour(DrawColour(0.0, 0.0, 0.0));
-      bool fps = fillPolys();
-      setFillPolys(true);
-      // draw an arrow for dative bonds
-      bool asPolygon = true;
-      double frac = 0.1;
-      double angle = M_PI / 8;
       if (static_cast<unsigned int>(at1_idx) == bond->getBeginAtomIdx()) {
-        drawArrow(at1_cds, at2_cds, asPolygon, frac, angle);
+        drawDativeBond(at1_cds, at2_cds, col1, col2);
       } else {
-        drawArrow(at2_cds, at1_cds, asPolygon, frac, angle);
+        drawDativeBond(at2_cds, at1_cds, col2, col1);
       }
-      setFillPolys(fps);
     } else if (Bond::ZERO == bt) {
       setDash(shortDashes);
       drawLine(at1_cds, at2_cds, col1, col2);
@@ -2200,6 +2192,25 @@ void MolDraw2D::drawWedgedBond(const Point2D &cds1, const Point2D &cds2,
       drawTriangle(mid1, mid2, end2);
     }
   }
+}
+
+// ****************************************************************************
+void MolDraw2D::drawDativeBond(const Point2D &cds1, const Point2D &cds2,
+                               const DrawColour &col1, const DrawColour &col2) {
+
+  Point2D mid = (cds1 + cds2) * 0.5;
+  drawLine(cds1, mid, col1, col1);
+
+  setColour(col2);
+  bool asPolygon = true;
+  double frac = 0.1;
+  double angle = M_PI / 8;
+  // the polygon triangle at the end extends past cds2, so step back a bit
+  // so as not to trample on anything else.
+  Point2D delta = mid - cds2;
+  Point2D end = cds2 + delta * frac;
+  drawArrow(mid, end, asPolygon, frac, angle);
+
 }
 
 // ****************************************************************************
@@ -2877,51 +2888,29 @@ void MolDraw2D::adjustBondEndForLabel(int atnum, const Point2D &nbr_cds,
     return;
   }
 
-  double label_width, label_height;
-  // These days, labels only have the first character in the way.
-  vector<string> label_bits = atomLabelToPieces(atnum);
-  getStringSize(label_bits.front(), label_width, label_height);
+  StringRect sr = calcLabelRect(atom_syms_[activeMolIdx_][atnum].first,
+                                atom_syms_[activeMolIdx_][atnum].second,
+                                at_cds_[activeMolIdx_][atnum]);
+  Point2D tl, tr, bl, br;
+  sr.calcCorners(tl, tr, br, bl);
+  unique_ptr<Point2D> ip(new Point2D);
 
-  double additional_width = 0.0;
-  double additional_height = 0.0;
-  if (drawOptions().additionalAtomLabelPadding > 0.0) {
-    double M_width, M_height;
-    getStringSize("M", M_width, M_height);
-    additional_width = M_width * drawOptions().additionalAtomLabelPadding;
-    additional_height = M_height * drawOptions().additionalAtomLabelPadding;
+  if(doLinesIntersect(cds, nbr_cds, tl, tr, ip.get())) {
+    cds = *ip;
+  } else if(doLinesIntersect(cds, nbr_cds, tr, br, ip.get())) {
+    cds = *ip;
+  } else if(doLinesIntersect(cds, nbr_cds, br, bl, ip.get())) {
+    cds = *ip;
+  } else if(doLinesIntersect(cds, nbr_cds, bl, tl, ip.get())) {
+    cds = *ip;
   }
-  double lw2 = label_width / 2.0 + additional_width;
-  double lh2 = label_height / 2.0 + additional_height;
-
-  double x_offset = 0.0, y_offset = 0.0;
-  if (fabs(nbr_cds.y - cds.y) < 1.0e-5) {
-    // if the bond is horizontal
-    x_offset = lw2;
-  } else {
-    x_offset = fabs(lh2 * (nbr_cds.x - cds.x) / (nbr_cds.y - cds.y));
-    if (x_offset >= lw2) {
-      x_offset = lw2;
-    }
-  }
-  if (nbr_cds.x < cds.x) {
-    x_offset *= -1.0;
+  if(drawOptions().additionalAtomLabelPadding > 0.0) {
+    // directionVector is normalised.
+    Point2D bond = cds.directionVector(nbr_cds)
+                   * drawOptions().additionalAtomLabelPadding;
+    cds += bond;
   }
 
-  if (fabs(nbr_cds.x - cds.x) < 1.0e-5) {
-    // if the bond is vertical
-    y_offset = lh2;
-  } else {
-    y_offset = fabs(lw2 * (cds.y - nbr_cds.y) / (nbr_cds.x - cds.x));
-    if (y_offset >= lh2) {
-      y_offset = lh2;
-    }
-  }
-  if (nbr_cds.y < cds.y) {
-    y_offset *= -1.0;
-  }
-
-  cds.x += x_offset;
-  cds.y += y_offset;
 }
 
 // ****************************************************************************
@@ -3195,7 +3184,10 @@ void MolDraw2D::drawArrow(const Point2D &arrowBegin, const Point2D &arrowEnd,
     drawLine(arrowEnd, p2);
   } else {
     std::vector<Point2D> pts = {p1, arrowEnd, p2};
+    bool fps = fillPolys();
+    setFillPolys(true);
     drawPolygon(pts);
+    setFillPolys(fps);
   }
 }
 
@@ -3281,7 +3273,8 @@ void MolDraw2D::drawAttachmentLine(const Point2D &cds1, const Point2D &cds2,
 
 // ****************************************************************************
 bool doLinesIntersect(const Point2D &l1s, const Point2D &l1f,
-                      const Point2D &l2s, const Point2D &l2f) {
+                      const Point2D &l2s, const Point2D &l2f,
+                      Point2D *ip) {
   // using spell from answer 2 of
   // https://stackoverflow.com/questions/563198/how-do-you-detect-where-two-line-segments-intersect
   double s1_x = l1f.x - l1s.x;
@@ -3299,6 +3292,10 @@ bool doLinesIntersect(const Point2D &l1s, const Point2D &l1f,
   t = (s2_x * (l1s.y - l2s.y) - s2_y * (l1s.x - l2s.x)) / d;
 
   if (s >= 0 && s <= 1 && t >= 0 && t <= 1) {
+    if(ip) {
+      ip->x = l1s.x + t * s1_x;
+      ip->y = l1s.y + t * s1_y;
+    }
     return true;
   }
 
@@ -3308,13 +3305,9 @@ bool doLinesIntersect(const Point2D &l1s, const Point2D &l1f,
 // ****************************************************************************
 bool doesLineIntersectLabel(const Point2D &ls, const Point2D &lf,
                             const StringRect &lab_rect) {
-  double wb2 = lab_rect.width_ / 2.0;
-  double hb2 = lab_rect.height_ / 2.0;
-  Point2D p1(lab_rect.centre_.x - wb2, lab_rect.centre_.y + hb2);
-  Point2D p2(lab_rect.centre_.x + wb2, lab_rect.centre_.y + hb2);
-  Point2D p3(lab_rect.centre_.x + wb2, lab_rect.centre_.y - hb2);
-  Point2D p4(lab_rect.centre_.x - wb2, lab_rect.centre_.y - hb2);
 
+  Point2D p1, p2, p3, p4;
+  lab_rect.calcCorners(p1, p2, p3, p4);
   // first check if line is completely inside label.  Unlikely, but who
   // knows?
   if (ls.x >= p1.x && ls.x <= p3.x && lf.x >= p1.x && lf.x <= p3.x &&
