@@ -40,7 +40,7 @@ void translate_index_error(IndexErrorException const& e) {
 }
 
 void translate_value_error(ValueErrorException const& e) {
-  throw_value_error(e.message());
+  throw_value_error(e.what());
 }
 
 void translate_key_error(KeyErrorException const& e) {

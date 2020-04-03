@@ -1223,7 +1223,7 @@ Atom *ParseMolFileAtomLine(const std::string text, RDGeom::Point3D &pos,
       res->setAtomicNum(PeriodicTable::getTable()->getAtomicNumber(symb));
     } catch (const Invar::Invariant &e) {
       delete res;
-      throw FileParseException(e.getMessage());
+      throw FileParseException(e.what());
     }
   }
 
@@ -2928,7 +2928,7 @@ RWMol *MolDataStreamToMol(std::istream *inStream, unsigned int &line,
     delete conf;
     res = nullptr;
     conf = nullptr;
-    BOOST_LOG(rdErrorLog) << " Unhandled CTAB feature: '" << e.message()
+    BOOST_LOG(rdErrorLog) << " Unhandled CTAB feature: '" << e.what()
                           << "'. Molecule skipped." << std::endl;
 
     if (!inStream->eof()) {

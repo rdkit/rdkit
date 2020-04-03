@@ -93,32 +93,32 @@
     }
     catch (RDKit::ChemicalReactionException &e) {
       std::string err="ChemicalReactionException: ";
-      err+=e.message();
+      err+=e.what();
       SWIG_CSharpSetPendingException(SWIG_CSharpApplicationException, err.c_str());
     }
     catch (RDKit::ChemicalReactionParserException &e) {
       std::string err="ChemicalReactionParserException: ";
-      err+=e.message();
+      err+=e.what();
       SWIG_CSharpSetPendingException(SWIG_CSharpApplicationException, err.c_str());
     }
     catch (RDKit::ConformerException &e) {
       std::string err="ConformerException: ";
-      err+=e.message();
+      err+=e.what();
       SWIG_CSharpSetPendingException(SWIG_CSharpApplicationException, err.c_str());
     }
     catch (RDKit::MolPicklerException &e) {
       std::string err="MolPicklerException: ";
-      err+=e.message();
+      err+=e.what();
       SWIG_CSharpSetPendingException(SWIG_CSharpApplicationException, err.c_str());
     }
     catch (RDKit::MolSanitizeException &e) {
       std::string err="MolSanitizeException: ";
-      err+=e.message();
+      err+=e.what();
       SWIG_CSharpSetPendingException(SWIG_CSharpApplicationException, err.c_str());
     }
     catch (RDKit::SmilesParseException e) {
       std::string err="SmilesParseException: ";
-      err+=e.message();
+      err+=e.what();
       SWIG_CSharpSetPendingException(SWIG_CSharpApplicationException, err.c_str());
     }
     catch (KeyErrorException e) {

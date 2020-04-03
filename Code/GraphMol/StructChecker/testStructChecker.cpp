@@ -833,8 +833,7 @@ void testCarboxylicAcids() {
     TEST_ASSERT(0 == (flags & StructChecker::ATOM_CHECK_FAILED));
     BOOST_LOG(rdInfoLog) << "\tdone" << std::endl;
   } catch (RDKit::BadFileException& e) {
-    BOOST_LOG(rdInfoLog) << "caught RDKit::BadFileException" << e.message()
-                         << "\n"
+    BOOST_LOG(rdInfoLog) << "caught RDKit::BadFileException" << e.what() << "\n"
                          << sdf << "\n";
   }
 }

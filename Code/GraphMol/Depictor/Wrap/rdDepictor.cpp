@@ -24,7 +24,7 @@ namespace python = boost::python;
 
 void rdDepictExceptionTranslator(DepictException const &e) {
   std::ostringstream oss;
-  oss << "Depict error: " << e.message();
+  oss << "Depict error: " << e.what();
   PyErr_SetString(PyExc_ValueError, oss.str().c_str());
 }
 
@@ -133,7 +133,7 @@ void setPreferCoordGen(bool value) {
   RDDepict::preferCoordGen = value;
 #endif
 }
-}
+}  // namespace RDDepict
 
 BOOST_PYTHON_MODULE(rdDepictor) {
   python::scope().attr("__doc__") =
@@ -151,7 +151,7 @@ BOOST_PYTHON_MODULE(rdDepictor) {
 #else
               "Has no effect (CoordGen support not enabled)"
 #endif
-              );
+  );
   std::string docString;
   docString =
       "Compute 2D coordinates for a molecule. \n\

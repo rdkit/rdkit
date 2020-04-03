@@ -44,7 +44,6 @@ class ValueErrorException : public std::runtime_error {
   ValueErrorException(const char* msg)
       : std::runtime_error("ValueErrorException"), _value(msg){};
   const char* what() const noexcept override { return _value.c_str(); };
-  const char* message() const noexcept { return what(); };
   ~ValueErrorException() noexcept {};
 
  private:

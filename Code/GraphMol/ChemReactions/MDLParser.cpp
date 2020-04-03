@@ -109,7 +109,7 @@ void ParseV2000RxnBlock(std::istream &inStream, unsigned int &line,
     } catch (FileParseException &e) {
       std::ostringstream errout;
       errout << "Cannot parse reactant " << i << ". The error was:\n\t"
-             << e.message();
+             << e.what();
       throw ChemicalReactionParserException(errout.str());
     }
     if (!react) {
@@ -132,7 +132,7 @@ void ParseV2000RxnBlock(std::istream &inStream, unsigned int &line,
     } catch (FileParseException &e) {
       std::ostringstream errout;
       errout << "Cannot parse product " << i << ". The error was:\n\t"
-             << e.message();
+             << e.what();
       throw ChemicalReactionParserException(errout.str());
     }
     if (!prod) {
@@ -156,7 +156,7 @@ void ParseV2000RxnBlock(std::istream &inStream, unsigned int &line,
     } catch (FileParseException &e) {
       std::ostringstream errout;
       errout << "Cannot parse agent " << i << ". The error was:\n\t"
-             << e.message();
+             << e.what();
       throw ChemicalReactionParserException(errout.str());
     }
     rxn->addAgentTemplate(ROMOL_SPTR(agent));
@@ -215,7 +215,7 @@ void ParseV3000RxnBlock(std::istream &inStream, unsigned int &line,
     } catch (FileParseException &e) {
       std::ostringstream errout;
       errout << "Cannot parse reactant " << i << ". The error was:\n\t"
-             << e.message();
+             << e.what();
       delete react;
       throw ChemicalReactionParserException(errout.str());
     }
@@ -253,7 +253,7 @@ void ParseV3000RxnBlock(std::istream &inStream, unsigned int &line,
     } catch (FileParseException &e) {
       std::ostringstream errout;
       errout << "Cannot parse product " << i << ". The error was:\n\t"
-             << e.message();
+             << e.what();
       delete prod;
       throw ChemicalReactionParserException(errout.str());
     }
@@ -290,7 +290,7 @@ void ParseV3000RxnBlock(std::istream &inStream, unsigned int &line,
     } catch (FileParseException &e) {
       std::ostringstream errout;
       errout << "Cannot parse agent " << i << ". The error was:\n\t"
-             << e.message();
+             << e.what();
       delete agent;
       throw ChemicalReactionParserException(errout.str());
     }
