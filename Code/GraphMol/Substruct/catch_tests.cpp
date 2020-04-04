@@ -169,7 +169,7 @@ TEST_CASE("providing a final match function", "[substruct]") {
   }
 }
 
-TEST_CASE("Enhanced stereochemistry", "[substruct,StereoGroup]") {
+TEST_CASE("Enhanced stereochemistry", "[substruct][StereoGroup]") {
   // Chirality specifications.
   // 1. An achiral molecule: CC(O)C(CC)F means unknown/all stereoisomers
   // 2. A chiral molecule: C[C@H](O)[C@H](CC)F means 1 stereoisomer

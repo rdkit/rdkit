@@ -35,7 +35,7 @@ TEST_CASE("prepareAndDrawMolecule", "[drawing]") {
   }
 }
 
-TEST_CASE("tag atoms in SVG", "[drawing, SVG]") {
+TEST_CASE("tag atoms in SVG", "[drawing][SVG]") {
   SECTION("basics") {
     auto m1 = "C1N[C@@H]2OCC12"_smiles;
     REQUIRE(m1);
@@ -59,7 +59,7 @@ TEST_CASE("tag atoms in SVG", "[drawing, SVG]") {
     CHECK(text.find("bond-selector") != std::string::npos);
   }
 }
-TEST_CASE("contour data", "[drawing, conrec]") {
+TEST_CASE("contour data", "[drawing][conrec]") {
   auto m1 = "C1N[C@@H]2OCC12"_smiles;
   REQUIRE(m1);
   SECTION("grid basics") {
@@ -215,7 +215,7 @@ TEST_CASE("contour data", "[drawing, conrec]") {
   }
 }
 
-TEST_CASE("dative bonds", "[drawing, organometallics]") {
+TEST_CASE("dative bonds", "[drawing][organometallics]") {
   SECTION("basics") {
     auto m1 = "N->[Pt]"_smiles;
     REQUIRE(m1);
@@ -249,7 +249,7 @@ TEST_CASE("dative bonds", "[drawing, organometallics]") {
   }
 }
 
-TEST_CASE("zero-order bonds", "[drawing, organometallics]") {
+TEST_CASE("zero-order bonds", "[drawing][organometallics]") {
   SECTION("basics") {
     auto m1 = "N-[Pt]"_smiles;
     REQUIRE(m1);
@@ -304,7 +304,7 @@ TEST_CASE("copying drawing options", "[drawing]") {
 }
 
 TEST_CASE("bad DrawMolecules() when molecules are not kekulized",
-          "[drawing,bug]") {
+          "[drawing][bug]") {
   auto m1 = "CCN(CC)CCn1nc2c3ccccc3sc3c(CNS(C)(=O)=O)ccc1c32"_smiles;
   REQUIRE(m1);
   SECTION("foundations") {
