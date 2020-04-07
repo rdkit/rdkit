@@ -9,8 +9,7 @@ else()
     rdkit_library(RDBoost Wrap.cpp
                 LINK_LIBRARIES RDGeneral rdkit_base)
     if("${PYTHON_LDSHARED}" STREQUAL "")
-    else()
-       # fixes an apple issue
+    else()       # fixes an apple issue
        STRING(REGEX REPLACE "-bundle" "" LDSHARED ${PYTHON_LDSHARED})
        set_target_properties(RDBoost PROPERTIES LINK_FLAGS ${LDSHARED})
     endif()
@@ -24,6 +23,7 @@ rdkit_headers(Wrap.h PySequenceHolder.h
               DEST RDBoost)
 
 if(RDK_BUILD_PYTHON_WRAPPERS)
+target_link_libraries(rdkit_py_base INTERFACE RDBoost )
 add_subdirectory(Wrap)
 endif()
 

@@ -14,10 +14,10 @@ rdkit_headers(Grid3D.h
               UniformGrid3D.h
               Utils.h DEST Geometry)
 
-rdkit_test(testTransforms testTransforms.cpp LINK_LIBRARIES RDGeometryLib DataStructs RDGeneral )
-rdkit_test(testGrid testGrid.cpp LINK_LIBRARIES RDGeometryLib DataStructs RDGeneral )
+rdkit_test(testTransforms testTransforms.cpp LINK_LIBRARIES RDGeometryLib )
+rdkit_test(testGrid testGrid.cpp LINK_LIBRARIES RDGeometryLib)
 rdkit_catch_test(geometryTestsCatch catch_tests.cpp
-           LINK_LIBRARIES RDGeometryLib RDGeneral)
+           LINK_LIBRARIES RDGeometryLib)
 
 if(RDK_BUILD_PYTHON_WRAPPERS)
 add_subdirectory(Wrap)
