@@ -239,7 +239,7 @@ if(RDK_BUILD_PYTHON_WRAPPERS)
 
   find_package(PythonLibs)
   target_include_directories(rdkit_base INTERFACE ${PYTHON_INCLUDE_DIR})
-  add_dependencies(rdkit_py_base ${PYTHON_LIBRARIES} )
+  target_link_libraries(rdkit_py_base INTERFACE ${PYTHON_LIBRARIES} )
   find_package(NumPy REQUIRED)
   target_include_directories(rdkit_base INTERFACE ${PYTHON_NUMPY_INCLUDE_PATH})
 
@@ -253,19 +253,20 @@ if(RDK_BUILD_PYTHON_WRAPPERS)
   list(APPEND Boost_Python_Names "python${PYTHON_VERSION_MAJOR}${PYTHON_VERSION_MINOR}")
 
   # Try each potential boost-python name until one works
-  foreach(Boost_Python_Lib ${Boost_Python_Names})
-    find_package(Boost 1.56.0 COMPONENTS "${Boost_Python_Lib}" QUIET)
+  foreach(Boost_Python_LibN ${Boost_Python_Names})
+    find_package(Boost 1.56.0 COMPONENTS "${Boost_Python_LibN}" QUIET)
     if(Boost_FOUND)
+      set(Boost_Python_Lib ${Boost_Python_LibN})
       break()
     endif()
   endforeach()
-
   # Finally just try "python" and hope it is a compatible version
   if(NOT Boost_FOUND)
     find_package(Boost 1.56.0 COMPONENTS python REQUIRED)
+    set(Boost_Python_Lib "python")
   endif()
 
-  add_dependencies(rdkit_py_base Boost::${Boost_Python_Lib})
+  target_link_libraries(rdkit_py_base INTERFACE Boost::${Boost_Python_Lib})
 
 
 
