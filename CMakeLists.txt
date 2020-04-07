@@ -216,7 +216,6 @@ endif(MSVC)
 # extra boost versions
 if(MSVC)
   # FIX: do we still need this?
-  SET(Boost_ADDITIONAL_VERSIONS "1.48" "1.48.0" "1.45" "1.45.0" "1.44" "1.44.0" "1.43" "1.43.0" "1.42" "1.42.0" "1.41" "1.41.0" "1.40" "1.40.0")
   target_compile_definitions(rdkit_base INTERFACE "-DBOOST_ALL_NO_LIB")
 endif(MSVC)
 
@@ -225,6 +224,8 @@ if(RDK_BUILD_INCHI_SUPPORT)
 endif(RDK_BUILD_INCHI_SUPPORT)
 
 if(RDK_BUILD_PYTHON_WRAPPERS)
+  add_library(rdkit_py_base INTERFACE)
+
   #-------
   # pull in python:
   find_package(PythonInterp)
@@ -238,6 +239,7 @@ if(RDK_BUILD_PYTHON_WRAPPERS)
 
   find_package(PythonLibs)
   target_include_directories(rdkit_base INTERFACE ${PYTHON_INCLUDE_DIR})
+  add_dependencies(rdkit_py_base ${PYTHON_LIBRARIES} )
   find_package(NumPy REQUIRED)
   target_include_directories(rdkit_base INTERFACE ${PYTHON_NUMPY_INCLUDE_PATH})
 
@@ -262,6 +264,9 @@ if(RDK_BUILD_PYTHON_WRAPPERS)
   if(NOT Boost_FOUND)
     find_package(Boost 1.56.0 COMPONENTS python REQUIRED)
   endif()
+
+  add_dependencies(rdkit_py_base Boost::${Boost_Python_Lib})
+
 
 
   if(RDK_INSTALL_INTREE)
@@ -351,6 +356,7 @@ if(RDK_BUILD_THREADSAFE_SSS)
   if(RDK_TEST_MULTITHREADED)
     target_compile_definitions(rdkit_base INTERFACE "-DRDK_TEST_MULTITHREADED")
   endif()
+  target_link_libraries(rdkit_base INTERFACE Threads::Threads)
 else()
   if(RDK_TEST_MULTITHREADED)
     message("RDK_TEST_MULTITHREADED does not make sense without RD_BUILD_THREADSAFE_SSS, disabling it.")

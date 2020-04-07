@@ -1,8 +1,7 @@
 if(RDK_USE_BOOST_IOSTREAMS)
 ADD_DEFINITIONS("-DRDK_USE_BOOST_IOSTREAMS")
 
-find_package(Boost 1.56.0 COMPONENTS system iostreams REQUIRED)
-set (link_iostreams ${Boost_LIBRARIES})
+find_package(Boost 1.56.0 COMPONENTS iostreams REQUIRED)
 if (NOT Boost_USE_STATIC_LIBS)
    add_definitions("-DBOOST_IOSTREAMS_DYN_LINK")
 endif()
@@ -24,5 +23,5 @@ endif()
 add_definitions(-DRDKIT_RDSTREAMS_BUILD)
 endif(RDK_USE_BOOST_IOSTREAMS)
 rdkit_library(RDStreams streams.cpp
-              LINK_LIBRARIES ${Boost_LIBRARIES} ${link_iostreams} ${zlib_lib})
+              LINK_LIBRARIES Boost::iostreams ${zlib_lib})
 rdkit_headers(streams.h DEST RDStreams)
