@@ -1,5 +1,3 @@
-cmake_minimum_required(VERSION 3.1)
-
 if(APPLE)
   set (EXTENSION_PREFIX "")
   set (EXTENSION_SUFFIX ".so")
