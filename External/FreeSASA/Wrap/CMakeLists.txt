@@ -3,6 +3,6 @@ rdkit_python_extension(rdFreeSASA
                        rdFreeSASA.cpp 
                        DEST Chem
                        LINK_LIBRARIES 
-                       FreeSASALib freesasa_clib GraphMol DataStructs RDGeometryLib RDGeneral RDBoost)
+                       FreeSASALib )
 add_pytest(pyFreeSASA
          ${CMAKE_CURRENT_SOURCE_DIR}/testFreeSASA.py)

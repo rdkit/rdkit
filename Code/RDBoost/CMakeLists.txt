@@ -23,6 +23,7 @@ rdkit_headers(Wrap.h PySequenceHolder.h
               DEST RDBoost)
 
 if(RDK_BUILD_PYTHON_WRAPPERS)
+cmake_policy(SET CMP0079 NEW)
 target_link_libraries(rdkit_py_base INTERFACE RDBoost )
 add_subdirectory(Wrap)
 endif()
