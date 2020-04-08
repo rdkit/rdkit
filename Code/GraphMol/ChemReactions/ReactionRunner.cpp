@@ -707,6 +707,16 @@ void updateStereoBonds(RWMOL_SPTR product, const ROMol &reactant,
 
       if (pStart->getTotalDegree() < 3 || pEnd->getTotalDegree() < 3) {
         pBond->setStereo(Bond::BondStereo::STEREONONE);
+      } else {
+        // Ring bonds shouldn't be marked as STEREOANY
+
+        if (!product->getRingInfo()->isInitialized()) {
+          MolOps::findSSSR(*product);
+        }
+
+        if (product->getRingInfo()->numBondRings(pBond->getIdx()) > 0) {
+          pBond->setStereo(Bond::BondStereo::STEREONONE);
+        }
       }
 
       continue;
