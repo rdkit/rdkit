@@ -71,6 +71,16 @@ struct StringRect {
       : centre_(0.0, 0.0), width_(0.0), height_(0.0), clash_score_(0) {}
   StringRect(const Point2D &in_cds)
       : centre_(in_cds), width_(0.0), height_(0.0), clash_score_(0) {}
+  // tl is top, left; br is bottom, right
+  void calcCorners(Point2D &tl, Point2D &tr, Point2D &br, Point2D &bl) const {
+    double wb2 = width_ / 2.0;
+    double hb2 = height_ / 2.0;
+    tl = Point2D(centre_.x - wb2, centre_.y + hb2);
+    tr = Point2D(centre_.x + wb2, centre_.y + hb2);
+    br = Point2D(centre_.x + wb2, centre_.y - hb2);
+    bl = Point2D(centre_.x - wb2, centre_.y - hb2);
+
+  }
   bool doesItIntersect(const StringRect &other) const {
     if (fabs(centre_.x - other.centre_.x) < (width_ + other.width_) / 2.0 &&
         fabs(centre_.y - other.centre_.y) < (height_ + other.height_) / 2.0) {
@@ -677,6 +687,9 @@ class RDKIT_MOLDRAW2D_EXPORT MolDraw2D {
   void drawWedgedBond(const Point2D &cds1, const Point2D &cds2,
                       bool draw_dashed, const DrawColour &col1,
                       const DrawColour &col2);
+  // draw an arrow for a dative bond, with the arrowhead at cds2.
+  void drawDativeBond(const Point2D &cds1, const Point2D &cds2,
+                      const DrawColour &col1, const DrawColour &col2);
   void drawAtomLabel(int atom_num,
                      const std::vector<int> *highlight_atoms = nullptr,
                      const std::map<int, DrawColour> *highlight_map = nullptr);
@@ -794,11 +807,13 @@ class RDKIT_MOLDRAW2D_EXPORT MolDraw2D {
                       double coordScale);
 };
 
-// return true if the line l1s->l1f intersects line l2s->l2f
+// return true if the line l1s->l1f intersects line l2s->l2f.  If ip is not
+// nullptr, the intersection point is stored in it.
 RDKIT_MOLDRAW2D_EXPORT bool doLinesIntersect(const Point2D &l1s,
                                              const Point2D &l1f,
                                              const Point2D &l2s,
-                                             const Point2D &l2f);
+                                             const Point2D &l2f,
+                                             Point2D *ip = nullptr);
 // return true if line ls->lf intersects (or is fully inside) the
 // rectangle of the string.
 RDKIT_MOLDRAW2D_EXPORT bool doesLineIntersectLabel(const Point2D &ls,
