@@ -7385,6 +7385,26 @@ void testDblBondCrash() {
   }
 }
 
+void testringstereoany() {
+  BOOST_LOG(rdInfoLog) << "--------------------------------------" << std::endl;
+  BOOST_LOG(rdInfoLog)
+      << "Double bonds in rings should not be marked STEREOANY" << std::endl;
+
+    const std::string reaction(R"([C:1][C:2]1[C:3][N:4]1>>[C:1][C:2]1=[C:3][N:4]1)");
+    std::unique_ptr<ChemicalReaction> rxn(RxnSmartsToChemicalReaction(reaction));
+    TEST_ASSERT(rxn);
+    rxn->initReactantMatchers();
+    std::vector<ROMOL_SPTR> reactant{"CC1CN1"_smiles};
+
+    auto prods = rxn->runReactants(reactant);
+    TEST_ASSERT(prods.size() == 1);
+    TEST_ASSERT(prods[0].size() == 1);
+
+    const auto bond = prods[0][0]->getBondWithIdx(1);
+    TEST_ASSERT(bond->getBondType() == Bond::DOUBLE);
+    TEST_ASSERT(bond->getStereo() == Bond::STEREONONE);
+}
+
 int main() {
   RDLog::InitLogs();
 
@@ -7477,6 +7497,7 @@ int main() {
   testGithub2547();
 #endif
   testDblBondCrash();
+  testringstereoany();
 
   BOOST_LOG(rdInfoLog)
       << "*******************************************************\n";
