@@ -19,7 +19,7 @@
 
 using namespace RDKit;
 
-TEST_CASE("Basic SVG Parsing", "[SVG,parser]") {
+TEST_CASE("Basic SVG Parsing", "[SVG][reader]") {
   SECTION("basics") {
     std::string svg = R"SVG(<?xml version='1.0' encoding='iso-8859-1'?>
 <svg version='1.1' baseProfile='full'
@@ -79,7 +79,7 @@ width='200px' height='200px' >
 TEST_CASE(
     "Github #2040: Failure to parse V3K mol file with bonds to multi-center "
     "linkage points",
-    "[bug,parser]") {
+    "[bug][reader]") {
   std::string rdbase = getenv("RDBASE");
   SECTION("basics") {
     std::string fName =
@@ -101,7 +101,7 @@ TEST_CASE(
 }
 
 TEST_CASE("Github #2225: failure round-tripping mol block with Q atoms",
-          "[bug,writer]") {
+          "[bug][writer]") {
   std::string rdbase = getenv("RDBASE");
   SECTION("basics") {
     std::string fName =
@@ -182,7 +182,7 @@ TEST_CASE("Github #2225: failure round-tripping mol block with Q atoms",
 }
 TEST_CASE(
     "Github #2229: problem round-tripping mol files with bond topology info",
-    "[bug,writer]") {
+    "[bug][writer]") {
   std::string rdbase = getenv("RDBASE");
   std::string fName =
       rdbase + "/Code/GraphMol/FileParsers/test_data/github2229_1.mol";
@@ -215,7 +215,7 @@ TEST_CASE(
     REQUIRE(mol2->getBondWithIdx(7)->hasQuery());
   }
 }
-TEST_CASE("preserve mol file properties on bonds", "[parser,ctab]") {
+TEST_CASE("preserve mol file properties on bonds", "[reader][ctab]") {
   SECTION("basics") {
     std::string molblock = R"CTAB(
   Mrv1810 02111915042D          
@@ -272,7 +272,7 @@ M  END
 }
 
 TEST_CASE("github #2277 : Failure when parsing mol block with M PXA",
-          "[parser,ctab]") {
+          "[reader][ctab]") {
   std::string molblock = R"CTAB(
   Mrv1810 02151911552D          
 
@@ -425,7 +425,7 @@ M  END)CTAB";
   }
 }
 
-TEST_CASE("parsing of SCN lines", "[bug, sgroups]") {
+TEST_CASE("parsing of SCN lines", "[bug][sgroups]") {
   SECTION("basics") {
     std::string molblock = R"CTAB(
   MJ171200
@@ -613,7 +613,7 @@ M  END
   }
 }
 
-TEST_CASE("A couple more S group problems", "[bug, sgroups]") {
+TEST_CASE("A couple more S group problems", "[bug][sgroups]") {
   std::string molblock = R"CTAB(CHEMBL3666739
       SciTegic05171617282D
 
@@ -738,7 +738,7 @@ M  END
   }
 }
 
-TEST_CASE("XYZ", "[XYZ,writer]") {
+TEST_CASE("XYZ", "[XYZ][writer]") {
   SECTION("basics") {
     std::unique_ptr<RWMol> mol{new RWMol{}};
     mol->setProp(common_properties::_Name,
@@ -771,7 +771,7 @@ H      0.635000    0.635000    0.635000
   }
 }
 
-TEST_CASE("valence writing 1", "[bug,writer]") {
+TEST_CASE("valence writing 1", "[bug][writer]") {
   SECTION("carbon") {
     std::string molblock = R"CTAB(carbon atom
 
@@ -815,7 +815,7 @@ M  END)CTAB";
 }
 
 TEST_CASE("Github #2695: Error when a squiggle bond is in an aromatic ring",
-          "[bug,reader]") {
+          "[bug][reader]") {
   SECTION("reported") {
     auto ctab = R"CTAB(
   -ISIS-  -- StrEd -- 
@@ -868,7 +868,7 @@ M  END)CTAB";
   }
 }
 
-TEST_CASE("Github #2917: _ctab _mol2 and _pdb support", "[feature,reader]") {
+TEST_CASE("Github #2917: _ctab _mol2 and _pdb support", "[feature][reader]") {
   SECTION("_ctab") {
     auto mol = R"CTAB(
   Mrv1810 01292008292D          
@@ -1000,7 +1000,7 @@ GASTEIGER
   }
 }
 
-TEST_CASE("handling STBOX properties from v3k ctabs", "[feature,v3k]") {
+TEST_CASE("handling STBOX properties from v3k ctabs", "[feature][v3k]") {
   SECTION("atoms and bonds") {
     auto mol = R"CTAB(basic test
   Mrv1810 01292006422D          
@@ -1144,7 +1144,7 @@ M  END
   }
 }
 
-TEST_CASE("github #2829: support MRV_IMPLICIT_H", "[feature,sgroups]") {
+TEST_CASE("github #2829: support MRV_IMPLICIT_H", "[feature][sgroups]") {
   SECTION("basics v2k") {
     auto mol = R"CTAB(
   Mrv1810 01302015262D          
@@ -1291,7 +1291,7 @@ M  END
   }
 }
 
-TEST_CASE("extra v3k mol file properties", "[ctab,v3k]") {
+TEST_CASE("extra v3k mol file properties", "[ctab][v3k]") {
   SECTION("ATTCHPT") {
     auto mol = R"CTAB(
   Mrv2007 03132014352D          

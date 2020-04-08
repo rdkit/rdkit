@@ -26,7 +26,7 @@
 using namespace RDKit;
 using std::unique_ptr;
 
-TEST_CASE("Github #1632", "[Reaction,PDB,bug]") {
+TEST_CASE("Github #1632", "[Reaction][PDB][bug]") {
   SECTION("basics") {
     bool sanitize = true;
     int flavor = 0;
@@ -61,7 +61,7 @@ static void clearAtomMappingProps(ROMol& mol) {
   }
 }
 
-TEST_CASE("Github #2366 Enhanced Stereo", "[Reaction,StereoGroup,bug]") {
+TEST_CASE("Github #2366 Enhanced Stereo", "[Reaction][StereoGroup][bug]") {
   SECTION("Reaction Preserves Stereo") {
     ROMOL_SPTR mol("F[C@H](Cl)Br |o1:1|"_smiles);
     REQUIRE(mol);
@@ -142,7 +142,7 @@ TEST_CASE("Github #2366 Enhanced Stereo", "[Reaction,StereoGroup,bug]") {
 }
 
 TEST_CASE("Github #2427 cannot set maxProducts>1000 in runReactants",
-          "[Reaction,bug]") {
+          "[Reaction][bug]") {
   SECTION("Basics") {
     std::string smi = "[C]";
     for (unsigned int i = 0; i < 49; ++i) {
@@ -225,7 +225,7 @@ TEST_CASE("negative charge queries. Part of testing changes for github #2604",
 }
 
 TEST_CASE("GithHub #2954: Reaction Smarts with Dative Bonds not parsed",
-          "[Reaction, Bug]") {
+          "[Reaction][Bug]") {
   
   SECTION("Rxn Smart Processing with Dative Bond in Product") {
     unique_ptr<ChemicalReaction> rxn1(

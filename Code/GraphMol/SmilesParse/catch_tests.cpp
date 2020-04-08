@@ -23,7 +23,7 @@
 
 using namespace RDKit;
 
-TEST_CASE("Github #1972", "[SMILES,bug]") {
+TEST_CASE("Github #1972", "[SMILES][bug]") {
   SECTION("basics") {
     std::vector<std::vector<std::string>> smiles = {
         {"[C@@]1(Cl)(F)(I).Br1", "[C@@](Br)(Cl)(F)(I)"},
@@ -62,7 +62,7 @@ TEST_CASE("Github #1972", "[SMILES,bug]") {
   }
 }
 
-TEST_CASE("Github #2029", "[SMILES,bug]") {
+TEST_CASE("Github #2029", "[SMILES][bug]") {
   SECTION("wedging") {
     std::unique_ptr<ROMol> m1(SmilesToMol("CN[C@H](Cl)C(=O)O"));
     REQUIRE(m1);
@@ -156,7 +156,7 @@ TEST_CASE(
   }
 }
 
-TEST_CASE("github #2257: writing cxsmiles", "[smiles,cxsmiles]") {
+TEST_CASE("github #2257: writing cxsmiles", "[smiles][cxsmiles]") {
   SECTION("basics") {
     auto mol = "OCC"_smiles;
     REQUIRE(mol);
@@ -328,7 +328,7 @@ TEST_CASE("github #2257: writing cxsmiles", "[smiles,cxsmiles]") {
   }
 }
 
-TEST_CASE("Github #2148", "[bug, Smiles, Smarts]") {
+TEST_CASE("Github #2148", "[bug][Smiles][Smarts]") {
   SECTION("SMILES") {
     auto mol = "C(=C\\F)\\4.O=C1C=4CCc2ccccc21"_smiles;
     REQUIRE(mol);
@@ -366,7 +366,7 @@ TEST_CASE("Github #2148", "[bug, Smiles, Smarts]") {
   }
 }
 
-TEST_CASE("Github #2298", "[bug, Smarts, substructure]") {
+TEST_CASE("Github #2298", "[bug][Smarts][substructure]") {
   SubstructMatchParameters ps;
   ps.useQueryQueryMatches = true;
   SECTION("basics") {
@@ -387,7 +387,7 @@ TEST_CASE("Github #2298", "[bug, Smarts, substructure]") {
   }
 }
 
-TEST_CASE("dative ring closures", "[bug, smiles]") {
+TEST_CASE("dative ring closures", "[bug][smiles]") {
   SECTION("first closure1") {
     auto m1 = "N->1CCN->[Pt]1"_smiles;
     REQUIRE(m1);
@@ -492,7 +492,7 @@ TEST_CASE("MolFragmentToSmarts", "[Smarts]") {
 }
 
 TEST_CASE("github #2667: MolToCXSmiles generates error for empty molecule",
-          "[bug,cxsmiles]") {
+          "[bug][cxsmiles]") {
   SECTION("basics") {
     auto mol = ""_smiles;
     REQUIRE(mol);
@@ -502,7 +502,7 @@ TEST_CASE("github #2667: MolToCXSmiles generates error for empty molecule",
 }
 
 TEST_CASE("github #2604: support range-based charge queries from SMARTS",
-          "[ranges,smarts]") {
+          "[ranges][smarts]") {
   SECTION("positive") {
     auto query = "[N+{0-1}]"_smarts;
     REQUIRE(query);
@@ -566,7 +566,7 @@ TEST_CASE("_smarts fails gracefully", "[smarts]") {
 
 TEST_CASE(
     "github #2801: MolToSmarts may generate invalid SMARTS for bond queries",
-    "[bug,smarts]") {
+    "[bug][smarts]") {
   SECTION("original_report") {
     auto q1 = "*~CCC"_smarts;
     REQUIRE(q1);
