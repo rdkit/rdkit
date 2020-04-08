@@ -2793,37 +2793,76 @@ unsigned int MolDraw2D::getDrawLineWidth() {
 Point2D MolDraw2D::bondInsideRing(const ROMol &mol, const Bond *bond,
                                   const Point2D &cds1,
                                   const Point2D &cds2) const {
-  Atom *bgn_atom = bond->getBeginAtom();
-  for (const auto &nbri2 : make_iterator_range(mol.getAtomBonds(bgn_atom))) {
-    const Bond *bond2 = mol[nbri2];
-    // morphine (CN1CC[C@]23c4c5ccc(O)c4O[C@H]2[C@@H](O)C=C[C@H]3[C@H]1C5)
-    // showed a problem where one of the dashed bonds of the aromatic ring
-    // was not in the aromatic ring with the rest, because the first bond2
-    // we come to is in the aliphatic ring fused to the aromatic.  So check
-    // the types are not 1 aromatic, the other not.
-    if (bond2->getIdx() == bond->getIdx() ||
-        !mol.getRingInfo()->numBondRings(bond2->getIdx()) ||
-        (bond->getIsAromatic() && !bond2->getIsAromatic()) ||
-        (!bond->getIsAromatic() && bond2->getIsAromatic())) {
-      continue;
-    }
-    bool same_ring = false;
-    for (const INT_VECT &ring : mol.getRingInfo()->bondRings()) {
-      if (find(ring.begin(), ring.end(), bond->getIdx()) != ring.end() &&
-          find(ring.begin(), ring.end(), bond2->getIdx()) != ring.end()) {
-        same_ring = true;
-        break;
-      }
-    }
-    if (same_ring) {
-      // bond and bond2 are in the same ring, so use their vectors to define
-      // the sign of the perpendicular.
-      int atom3 = bond2->getOtherAtomIdx(bond->getBeginAtomIdx());
-      return calcInnerPerpendicular(cds1, cds2, at_cds_[activeMolIdx_][atom3]);
+
+  vector<size_t> bond_in_rings;
+  auto bond_rings = mol.getRingInfo()->bondRings();
+  for(size_t i = 0; i < bond_rings.size(); ++i) {
+    if (find(bond_rings[i].begin(), bond_rings[i].end(), bond->getIdx())
+            != bond_rings[i].end()) {
+      bond_in_rings.push_back(i);
     }
   }
 
+  // find another bond in the ring connected to bond, use the
+  // other end of it as the 3rd atom.
+  auto calc_perp = [&](const Bond *bond, const INT_VECT &ring) -> Point2D * {
+    Atom *bgn_atom = bond->getBeginAtom();
+    for (const auto &nbri2 : make_iterator_range(mol.getAtomBonds(bgn_atom))) {
+      const Bond *bond2 = mol[nbri2];
+      if(bond2 == bond) {
+        continue;
+      }
+      if(find(ring.begin(), ring.end(), bond2->getIdx()) != ring.end()) {
+        int atom3 = bond2->getOtherAtomIdx(bond->getBeginAtomIdx());
+        Point2D *ret = new Point2D;
+        *ret = calcInnerPerpendicular(cds1, cds2, at_cds_[activeMolIdx_][atom3]);
+        return ret;
+      }
+    }
+    return nullptr;
+  };
+
+  if(bond_in_rings.size() > 1) {
+    // bond is in more than 1 ring.  Choose one that is the same aromaticity
+    // as the bond, so that if bond is aromatic, the double bond is inside
+    // the aromatic ring.  This is important for morphine, for example,
+    // where there are fused aromatic and aliphatic rings.
+    // morphine: CN1CC[C@]23c4c5ccc(O)c4O[C@H]2[C@@H](O)C=C[C@H]3[C@H]1C5
+    for(size_t i = 0; i < bond_in_rings.size(); ++i) {
+      auto ring = bond_rings[bond_in_rings[i]];
+      bool ring_ok = true;
+      for(auto bond_idx: ring) {
+        const Bond *bond2 = mol.getBondWithIdx(bond_idx);
+        if(bond->getIsAromatic() != bond2->getIsAromatic()) {
+          ring_ok = false;
+          break;
+        }
+      }
+      if(!ring_ok) {
+        continue;
+      }
+      Point2D *ret = calc_perp(bond, ring);
+      if(ret) {
+        Point2D real_ret(*ret);
+        delete ret;
+        return real_ret;
+      }
+    }
+  }
+
+  // either bond is in 1 ring, or we couldn't decide above, so just use the
+  // first one
+  auto ring = bond_rings[bond_in_rings.front()];
+  Point2D *ret = calc_perp(bond, ring);
+  if(ret) {
+    Point2D real_ret(*ret);
+    delete ret;
+    return real_ret;
+  }
+
+  // failsafe that it will hopefully never see.
   return calcPerpendicular(cds1, cds2);
+
 }
 
 // ****************************************************************************

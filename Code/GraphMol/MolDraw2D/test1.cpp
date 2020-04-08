@@ -90,7 +90,6 @@ void test1() {
     outs.flush();
     delete m;
   }
-
   {
     std::string smiles = "CO[C@@H](O)C1=C(O[C@H](F)Cl)C(C#N)=C1ONNC[NH3+]";
     ROMol *m = SmilesToMol(smiles);
@@ -100,6 +99,22 @@ void test1() {
     std::ofstream outs("test1_4.svg");
     MolDraw2DSVG drawer(300, 300, outs);
     drawer.drawOptions().additionalAtomLabelPadding = 0.25;
+    drawer.drawMolecule(*m);
+    drawer.finishDrawing();
+    outs.flush();
+    delete m;
+  }
+  {
+    // in this one, all three double bonds in the phenyl ring need to be inside
+    // the aromatic ring.  There was a time when one of them strayed into the
+    // aliphatic ring.
+    std::string smiles = "CN1CC[C@]23c4c5ccc(O)c4O[C@H]2[C@@H](O)C=C[C@H]3[C@H]1C5";
+    ROMol *m = SmilesToMol(smiles);
+    TEST_ASSERT(m);
+    RDDepict::compute2DCoords(*m);
+    WedgeMolBonds(*m, &(m->getConformer()));
+    std::ofstream outs("test1_5.svg");
+    MolDraw2DSVG drawer(300, 300, outs);
     drawer.drawMolecule(*m);
     drawer.finishDrawing();
     outs.flush();
