@@ -131,10 +131,10 @@ macro(rdkit_python_extension)
 
     if(WIN32 OR "${Py_ENABLE_SHARED}" STREQUAL "1")
       target_link_libraries(${RDKPY_NAME} ${RDKPY_LINK_LIBRARIES}
-                            rdkit_py_base rdkit_base )
+                            RDBoost rdkit_py_base rdkit_base )
     else()
       target_link_libraries(${RDKPY_NAME} ${RDKPY_LINK_LIBRARIES}
-                            rdkit_py_base rdkit_base )
+                            RDBoost rdkit_py_base rdkit_base )
       if("${PYTHON_LDSHARED}" STREQUAL "")
       else()
         set_target_properties(${RDKPY_NAME} PROPERTIES LINK_FLAGS ${PYTHON_LDSHARED})

@@ -268,8 +268,6 @@ if(RDK_BUILD_PYTHON_WRAPPERS)
 
   target_link_libraries(rdkit_py_base INTERFACE Boost::${Boost_Python_Lib})
 
-
-
   if(RDK_INSTALL_INTREE)
     set(RDKit_PythonDir "${CMAKE_SOURCE_DIR}/rdkit")
   else(RDK_INSTALL_INTREE)
@@ -329,6 +327,10 @@ if(RDK_BUILD_PYTHON_WRAPPERS)
      message("PYTHON Py_ENABLE_SHARED: ${Py_ENABLE_SHARED}")
      message("PYTHON USING LINK LINE: ${PYTHON_LDSHARED}")
   endif()
+
+  install(TARGETS rdkit_py_base EXPORT ${RDKit_EXPORTED_TARGETS}
+          COMPONENT dev )
+
 else(RDK_BUILD_PYTHON_WRAPPERS)
   find_package(Boost 1.56.0 REQUIRED)
 endif(RDK_BUILD_PYTHON_WRAPPERS)

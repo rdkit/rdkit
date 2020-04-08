@@ -2,12 +2,12 @@ if(WIN32 OR "${Py_ENABLE_SHARED}" STREQUAL "1")
 
   add_definitions(-DRDKIT_RDBOOST_BUILD)
   rdkit_library(RDBoost Wrap.cpp
-                LINK_LIBRARIES RDGeneral rdkit_base)
+                LINK_LIBRARIES RDGeneral rdkit_py_base rdkit_base)
 else()
 
     add_definitions(-DRDKIT_RDBOOST_BUILD)
     rdkit_library(RDBoost Wrap.cpp
-                LINK_LIBRARIES RDGeneral rdkit_base)
+                LINK_LIBRARIES RDGeneral rdkit_py_base rdkit_base)
     if("${PYTHON_LDSHARED}" STREQUAL "")
     else()       # fixes an apple issue
        STRING(REGEX REPLACE "-bundle" "" LDSHARED ${PYTHON_LDSHARED})
@@ -24,7 +24,6 @@ rdkit_headers(Wrap.h PySequenceHolder.h
 
 if(RDK_BUILD_PYTHON_WRAPPERS)
 cmake_policy(SET CMP0079 NEW)
-target_link_libraries(rdkit_py_base INTERFACE RDBoost )
 add_subdirectory(Wrap)
 endif()
 
