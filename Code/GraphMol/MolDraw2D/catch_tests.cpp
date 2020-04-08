@@ -228,8 +228,8 @@ TEST_CASE("dative bonds", "[drawing, organometallics]") {
     outs << text;
     outs.flush();
 
-    CHECK(text.find("<path class='bond-0' d='M 55.2063,102.675"
-                    " L 48.7489,100 L 55.2063,97.3253") != std::string::npos);
+    CHECK(text.find("<path class='bond-0' d='M 55.1495,101.204"
+                    " L 52.2436,100 L 55.1495,98.7964") != std::string::npos);
   }
   SECTION("more complex") {
     auto m1 = "N->1[C@@H]2CCCC[C@H]2N->[Pt]11OC(=O)C(=O)O1"_smiles;
@@ -243,8 +243,27 @@ TEST_CASE("dative bonds", "[drawing, organometallics]") {
     outs << text;
     outs.flush();
 
-    CHECK(text.find("<path class='bond-7' d='M 93.3102,93.7849"
-                    " L 91.7317,94.7522 L 92.1639,92.952") !=
+    CHECK(text.find("<path class='bond-7' d='M 92.9861,93.568"
+                    " L 92.2758,94.0033 L 92.4703,93.1932") !=
+          std::string::npos);
+  }
+  SECTION("test colours") {
+    // the dative bonds point the wrong way, but the point is to test
+    // if the tip of the arrow is blue.
+    auto m1 = "[Cu++]->1->2.N1CCN2"_smiles;
+    REQUIRE(m1);
+    MolDraw2DSVG drawer(200, 200);
+    MolDraw2DUtils::prepareMolForDrawing(*m1);
+    drawer.drawMolecule(*m1);
+    drawer.finishDrawing();
+    std::string text = drawer.getDrawingText();
+    std::ofstream outs("testDativeBonds_3.svg");
+    outs << text;
+    outs.flush();
+
+    CHECK(text.find("<path class='bond-2' d='M 57.7741,143.825"
+                    " L 85.7826,152.925' style='fill:none;"
+                    "fill-rule:evenodd;stroke:#0000FF") !=
           std::string::npos);
   }
 }
