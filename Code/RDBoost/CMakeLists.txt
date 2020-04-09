@@ -7,7 +7,7 @@ else()
 
     add_definitions(-DRDKIT_RDBOOST_BUILD)
     rdkit_library(RDBoost Wrap.cpp
-                LINK_LIBRARIES RDGeneral rdkit_py_base rdkit_base)
+                LINK_LIBRARIES RDGeneral rdkit_base)
     if("${PYTHON_LDSHARED}" STREQUAL "")
     else()       # fixes an apple issue
        STRING(REGEX REPLACE "-bundle" "" LDSHARED ${PYTHON_LDSHARED})
