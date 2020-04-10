@@ -77,7 +77,7 @@ add_subdirectory(FMCS)
 add_subdirectory(MolHash)
 add_subdirectory(MMPA)
 
-add_subdirectory(CIPLabelling)
+add_subdirectory(CIPLabeler)
 
 if(RDK_BUILD_STRUCTCHECKER_SUPPORT)
 add_subdirectory(StructChecker)
