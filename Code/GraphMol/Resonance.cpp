@@ -1057,28 +1057,14 @@ void CEVect2::idxToDepthWidth(unsigned int idx, unsigned int &d,
 
 // get the pointer to the BondElectrons object for bond having index bi
 BondElectrons *ConjElectrons::getBondElectronsWithIdx(unsigned int bi) {
-  BondElectrons *be;
-  try {
-    be = d_conjBondMap.at(bi);
-  }
-  catch (const std::out_of_range& e) {
-    be = nullptr;
-  }
-
-  return be;
+  auto it = d_conjBondMap.find(bi);
+  return (it != d_conjBondMap.end() ? it->second : nullptr);
 }
 
 // get the pointer to the AtomElectrons object for atom having index ai
 AtomElectrons *ConjElectrons::getAtomElectronsWithIdx(unsigned int ai) {
-  AtomElectrons *ae;
-  try {
-    ae = d_conjAtomMap.at(ai);
-  }
-  catch (const std::out_of_range& e) {
-    ae = nullptr;
-  }
-
-  return ae;
+  auto it = d_conjAtomMap.find(ai);
+  return (it != d_conjAtomMap.end() ? it->second : nullptr);
 }
 
 // count number of total electrons
