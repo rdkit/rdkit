@@ -324,9 +324,15 @@ bool AtomElectrons::isNbrCharged(unsigned int bo, unsigned int oeConstraint) {
       continue;
     }
     BondElectrons *beNbr = d_parent->getBondElectronsWithIdx(biNbr);
+    if (!beNbr) {
+      continue;
+    }
     const Atom *atomNbr = bondNbr->getOtherAtom(d_atom);
     unsigned int aiNbr = atomNbr->getIdx();
     AtomElectrons *aeNbr = d_parent->getAtomElectronsWithIdx(aiNbr);
+    if (!aeNbr) {
+      continue;
+    }
     res = (((beNbr->isDefinitive() && !aeNbr->hasOctet()) ||
             (!beNbr->isDefinitive() && aeNbr->isDefinitive() &&
              (aeNbr->oe() < (5 - bo)))) &&
@@ -1051,12 +1057,28 @@ void CEVect2::idxToDepthWidth(unsigned int idx, unsigned int &d,
 
 // get the pointer to the BondElectrons object for bond having index bi
 BondElectrons *ConjElectrons::getBondElectronsWithIdx(unsigned int bi) {
-  return d_conjBondMap[bi];
+  BondElectrons *be;
+  try {
+    be = d_conjBondMap.at(bi);
+  }
+  catch (const std::out_of_range& e) {
+    be = nullptr;
+  }
+
+  return be;
 }
 
 // get the pointer to the AtomElectrons object for atom having index ai
 AtomElectrons *ConjElectrons::getAtomElectronsWithIdx(unsigned int ai) {
-  return d_conjAtomMap[ai];
+  AtomElectrons *ae;
+  try {
+    ae = d_conjAtomMap.at(ai);
+  }
+  catch (const std::out_of_range& e) {
+    ae = nullptr;
+  }
+
+  return ae;
 }
 
 // count number of total electrons
@@ -1473,7 +1495,7 @@ void ResonanceMolSupplier::buildCEMap(CEMap &ceMap, unsigned int conjGrpIdx) {
         }
         AtomElectrons *aeNbr = ce->getAtomElectronsWithIdx(aiNbr);
         // if we've already dealt with this neighbor before, ignore it
-        if (aeNbr->isDefinitive()) {
+        if (!aeNbr || aeNbr->isDefinitive()) {
           continue;
         }
         unsigned int biNbr =
@@ -1481,7 +1503,7 @@ void ResonanceMolSupplier::buildCEMap(CEMap &ceMap, unsigned int conjGrpIdx) {
         BondElectrons *beNbr = ce->getBondElectronsWithIdx(biNbr);
         // if we have already assigned the bond order to this bond,
         // ignore it
-        if (beNbr->isDefinitive()) {
+        if (!beNbr || beNbr->isDefinitive()) {
           continue;
         }
         // if this is the first neighbor we find, process it
