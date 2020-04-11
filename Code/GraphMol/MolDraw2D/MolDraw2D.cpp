@@ -936,8 +936,8 @@ void MolDraw2D::calculateScale(int width, int height,
                                const vector<map<int, double>> *highlight_radii,
                                const vector<int> *confIds,
                                vector<unique_ptr<RWMol>> &tmols) {
-  double global_scale, global_x_min, global_x_max, global_y_min, global_y_max;
-  global_scale = global_x_min = global_y_min = numeric_limits<double>::max();
+  double global_x_min, global_x_max, global_y_min, global_y_max;
+  global_x_min = global_y_min = numeric_limits<double>::max();
   global_x_max = global_y_max = -numeric_limits<double>::max();
 
   for (size_t i = 0; i < mols.size(); ++i) {
@@ -2197,7 +2197,6 @@ void MolDraw2D::drawWedgedBond(const Point2D &cds1, const Point2D &cds2,
 // ****************************************************************************
 void MolDraw2D::drawDativeBond(const Point2D &cds1, const Point2D &cds2,
                                const DrawColour &col1, const DrawColour &col2) {
-
   Point2D mid = (cds1 + cds2) * 0.5;
   drawLine(cds1, mid, col1, col1);
 
@@ -2210,7 +2209,6 @@ void MolDraw2D::drawDativeBond(const Point2D &cds1, const Point2D &cds2,
   Point2D delta = mid - cds2;
   Point2D end = cds2 + delta * frac;
   drawArrow(mid, end, asPolygon, frac, angle);
-
 }
 
 // ****************************************************************************
@@ -2353,7 +2351,7 @@ double MolDraw2D::getNoteStartAngle(const ROMol &mol, const Atom *atom) const {
 
   Point2D ret_vec;
   if (bond_vecs.size() == 1) {
-    if(atom_syms_[activeMolIdx_][atom->getIdx()].first.empty()) {
+    if (atom_syms_[activeMolIdx_][atom->getIdx()].first.empty()) {
       // go with perpendicular to bond.  This is mostly to avoid getting
       // a zero at the end of a bond to carbon, which looks like a black
       // oxygen atom in the default font in SVG and PNG.
@@ -2793,12 +2791,11 @@ unsigned int MolDraw2D::getDrawLineWidth() {
 Point2D MolDraw2D::bondInsideRing(const ROMol &mol, const Bond *bond,
                                   const Point2D &cds1,
                                   const Point2D &cds2) const {
-
   vector<size_t> bond_in_rings;
   auto bond_rings = mol.getRingInfo()->bondRings();
-  for(size_t i = 0; i < bond_rings.size(); ++i) {
-    if (find(bond_rings[i].begin(), bond_rings[i].end(), bond->getIdx())
-            != bond_rings[i].end()) {
+  for (size_t i = 0; i < bond_rings.size(); ++i) {
+    if (find(bond_rings[i].begin(), bond_rings[i].end(), bond->getIdx()) !=
+        bond_rings[i].end()) {
       bond_in_rings.push_back(i);
     }
   }
@@ -2809,40 +2806,41 @@ Point2D MolDraw2D::bondInsideRing(const ROMol &mol, const Bond *bond,
     Atom *bgn_atom = bond->getBeginAtom();
     for (const auto &nbri2 : make_iterator_range(mol.getAtomBonds(bgn_atom))) {
       const Bond *bond2 = mol[nbri2];
-      if(bond2 == bond) {
+      if (bond2 == bond) {
         continue;
       }
-      if(find(ring.begin(), ring.end(), bond2->getIdx()) != ring.end()) {
+      if (find(ring.begin(), ring.end(), bond2->getIdx()) != ring.end()) {
         int atom3 = bond2->getOtherAtomIdx(bond->getBeginAtomIdx());
         Point2D *ret = new Point2D;
-        *ret = calcInnerPerpendicular(cds1, cds2, at_cds_[activeMolIdx_][atom3]);
+        *ret =
+            calcInnerPerpendicular(cds1, cds2, at_cds_[activeMolIdx_][atom3]);
         return ret;
       }
     }
     return nullptr;
   };
 
-  if(bond_in_rings.size() > 1) {
+  if (bond_in_rings.size() > 1) {
     // bond is in more than 1 ring.  Choose one that is the same aromaticity
     // as the bond, so that if bond is aromatic, the double bond is inside
     // the aromatic ring.  This is important for morphine, for example,
     // where there are fused aromatic and aliphatic rings.
     // morphine: CN1CC[C@]23c4c5ccc(O)c4O[C@H]2[C@@H](O)C=C[C@H]3[C@H]1C5
-    for(size_t i = 0; i < bond_in_rings.size(); ++i) {
+    for (size_t i = 0; i < bond_in_rings.size(); ++i) {
       auto ring = bond_rings[bond_in_rings[i]];
       bool ring_ok = true;
-      for(auto bond_idx: ring) {
+      for (auto bond_idx : ring) {
         const Bond *bond2 = mol.getBondWithIdx(bond_idx);
-        if(bond->getIsAromatic() != bond2->getIsAromatic()) {
+        if (bond->getIsAromatic() != bond2->getIsAromatic()) {
           ring_ok = false;
           break;
         }
       }
-      if(!ring_ok) {
+      if (!ring_ok) {
         continue;
       }
       Point2D *ret = calc_perp(bond, ring);
-      if(ret) {
+      if (ret) {
         Point2D real_ret(*ret);
         delete ret;
         return real_ret;
@@ -2854,7 +2852,7 @@ Point2D MolDraw2D::bondInsideRing(const ROMol &mol, const Bond *bond,
   // first one
   auto ring = bond_rings[bond_in_rings.front()];
   Point2D *ret = calc_perp(bond, ring);
-  if(ret) {
+  if (ret) {
     Point2D real_ret(*ret);
     delete ret;
     return real_ret;
@@ -2862,7 +2860,6 @@ Point2D MolDraw2D::bondInsideRing(const ROMol &mol, const Bond *bond,
 
   // failsafe that it will hopefully never see.
   return calcPerpendicular(cds1, cds2);
-
 }
 
 // ****************************************************************************
@@ -2934,22 +2931,21 @@ void MolDraw2D::adjustBondEndForLabel(int atnum, const Point2D &nbr_cds,
   sr.calcCorners(tl, tr, br, bl);
   unique_ptr<Point2D> ip(new Point2D);
 
-  if(doLinesIntersect(cds, nbr_cds, tl, tr, ip.get())) {
+  if (doLinesIntersect(cds, nbr_cds, tl, tr, ip.get())) {
     cds = *ip;
-  } else if(doLinesIntersect(cds, nbr_cds, tr, br, ip.get())) {
+  } else if (doLinesIntersect(cds, nbr_cds, tr, br, ip.get())) {
     cds = *ip;
-  } else if(doLinesIntersect(cds, nbr_cds, br, bl, ip.get())) {
+  } else if (doLinesIntersect(cds, nbr_cds, br, bl, ip.get())) {
     cds = *ip;
-  } else if(doLinesIntersect(cds, nbr_cds, bl, tl, ip.get())) {
+  } else if (doLinesIntersect(cds, nbr_cds, bl, tl, ip.get())) {
     cds = *ip;
   }
-  if(drawOptions().additionalAtomLabelPadding > 0.0) {
+  if (drawOptions().additionalAtomLabelPadding > 0.0) {
     // directionVector is normalised.
-    Point2D bond = cds.directionVector(nbr_cds)
-                   * drawOptions().additionalAtomLabelPadding;
+    Point2D bond =
+        cds.directionVector(nbr_cds) * drawOptions().additionalAtomLabelPadding;
     cds += bond;
   }
-
 }
 
 // ****************************************************************************
@@ -3312,8 +3308,7 @@ void MolDraw2D::drawAttachmentLine(const Point2D &cds1, const Point2D &cds2,
 
 // ****************************************************************************
 bool doLinesIntersect(const Point2D &l1s, const Point2D &l1f,
-                      const Point2D &l2s, const Point2D &l2f,
-                      Point2D *ip) {
+                      const Point2D &l2s, const Point2D &l2f, Point2D *ip) {
   // using spell from answer 2 of
   // https://stackoverflow.com/questions/563198/how-do-you-detect-where-two-line-segments-intersect
   double s1_x = l1f.x - l1s.x;
@@ -3331,7 +3326,7 @@ bool doLinesIntersect(const Point2D &l1s, const Point2D &l1f,
   t = (s2_x * (l1s.y - l2s.y) - s2_y * (l1s.x - l2s.x)) / d;
 
   if (s >= 0 && s <= 1 && t >= 0 && t <= 1) {
-    if(ip) {
+    if (ip) {
       ip->x = l1s.x + t * s1_x;
       ip->y = l1s.y + t * s1_y;
     }
@@ -3344,7 +3339,6 @@ bool doLinesIntersect(const Point2D &l1s, const Point2D &l1f,
 // ****************************************************************************
 bool doesLineIntersectLabel(const Point2D &ls, const Point2D &lf,
                             const StringRect &lab_rect) {
-
   Point2D p1, p2, p3, p4;
   lab_rect.calcCorners(p1, p2, p3, p4);
   // first check if line is completely inside label.  Unlikely, but who
