@@ -2258,8 +2258,8 @@ void MolDraw2D::drawRadicals(const ROMol &mol) {
         draw_spot(ncds);
         adj = src + offset;
         draw_spot(ncds);
+        /* fallthrough */
       case 1:
-        // deliberate drop through
         draw_spot(cds);
         break;
       case 2:
