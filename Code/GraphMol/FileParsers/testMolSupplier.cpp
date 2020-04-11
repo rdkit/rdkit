@@ -144,8 +144,8 @@ int testMolSup() {
       // The real property is only defined for i >= 10
       if (i >= 10) {
         TEST_ASSERT(atom->hasProp("r_f3d_dummy"));
-        TEST_ASSERT(
-            abs(atom->getProp<double>("r_f3d_dummy") - (19.1 - i) < 0.0001));
+        TEST_ASSERT(abs(atom->getProp<double>("r_f3d_dummy") - (19.1 - i)) <
+                    0.0001);
       } else {
         TEST_ASSERT(!atom->hasProp("r_f3d_dummy"));
       }
