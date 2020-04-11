@@ -42,7 +42,7 @@ python::object GetAtomMatch(python::object featMatch, int maxAts = 1024) {
     }
     res.append(local);
   }
-  return res;
+  return std::move(res);
 }
 
 #if 0
