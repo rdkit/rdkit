@@ -2786,7 +2786,7 @@ void testGitHub2881() {
     ROMol *mol = nullptr;
     try {
       mol = suppl.next();
-    } catch (Invar::Invariant) {
+    } catch (const Invar::Invariant &) {
     }
     TEST_ASSERT(!mol);
   }
