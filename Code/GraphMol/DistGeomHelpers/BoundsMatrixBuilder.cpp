@@ -842,37 +842,32 @@ bool _checkMacrocycleAmideEster14(const ROMol &mol, const Bond *bnd1,
   ROMol::ADJ_ITER nbrIdx, endNbrs;
   if (a2Num == 7 || a2Num == 8) {
     if (mol.getAtomDegree(atm2) == 3 && mol.getAtomDegree(atm3) == 3) {
-      {
-        const Atom *res;
-        const Bond *resbnd;
-        boost::tie(nbrIdx, endNbrs) = mol.getAtomNeighbors(atm2);
-        while (nbrIdx != endNbrs) {
-          if (*nbrIdx != atm1->getIdx() && *nbrIdx != atm3->getIdx()) {
-            res = mol.getAtomWithIdx(*nbrIdx);
-            resbnd = mol.getBondBetweenAtoms(atm2->getIdx(), *nbrIdx);
-            break;
+      boost::tie(nbrIdx, endNbrs) = mol.getAtomNeighbors(atm2);
+      while (nbrIdx != endNbrs) {
+        if (*nbrIdx != atm1->getIdx() && *nbrIdx != atm3->getIdx()) {
+          const auto &res = mol.getAtomWithIdx(*nbrIdx);
+          const auto &resbnd = mol.getBondBetweenAtoms(atm2->getIdx(), *nbrIdx);
+          if ((res->getAtomicNum() != 6 && res->getAtomicNum() != 1) ||
+              resbnd->getBondType() != Bond::SINGLE) {
+            return false;
           }
-          ++nbrIdx;
+          break;
         }
-        if ((res->getAtomicNum() != 6 && res->getAtomicNum() != 1) ||
-            resbnd->getBondType() != Bond::SINGLE)
-          return false;
+        ++nbrIdx;
       }
 
-      {
-        const Atom *res;
-        const Bond *resbnd;
-        boost::tie(nbrIdx, endNbrs) = mol.getAtomNeighbors(atm3);
-        while (nbrIdx != endNbrs) {
-          if (*nbrIdx != atm2->getIdx() && *nbrIdx != atm4->getIdx()) {
-            res = mol.getAtomWithIdx(*nbrIdx);
-            resbnd = mol.getBondBetweenAtoms(atm3->getIdx(), *nbrIdx);
-            break;
+      boost::tie(nbrIdx, endNbrs) = mol.getAtomNeighbors(atm3);
+      while (nbrIdx != endNbrs) {
+        if (*nbrIdx != atm2->getIdx() && *nbrIdx != atm4->getIdx()) {
+          const auto &res = mol.getAtomWithIdx(*nbrIdx);
+          const auto &resbnd = mol.getBondBetweenAtoms(atm3->getIdx(), *nbrIdx);
+          if (res->getAtomicNum() != 8 ||
+              resbnd->getBondType() != Bond::DOUBLE) {
+            return false;
           }
-          ++nbrIdx;
+          break;
         }
-        if (res->getAtomicNum() != 8 || resbnd->getBondType() != Bond::DOUBLE)
-          return false;
+        ++nbrIdx;
       }
 
       return true;
