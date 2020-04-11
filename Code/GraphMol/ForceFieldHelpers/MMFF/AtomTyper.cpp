@@ -3243,7 +3243,6 @@ void MMFFMolProperties::computeMMFFCharges(const ROMol &mol) {
   unsigned int nbrAtomType;
   unsigned int nConj = 0;
   unsigned int old_nConj = 0;
-  std::pair<int, double> bci;
   double pChg = 0.0;
   double fChg = 0.0;
   boost::dynamic_bitset<> conjNBitVect(mol.getNumAtoms());
