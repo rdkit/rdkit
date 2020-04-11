@@ -828,13 +828,14 @@ bool _checkMacrocycleAmideEster14(const ROMol &mol, const Bond *bnd1,
                                   const Bond *bnd3, const Atom *atm1,
                                   const Atom *atm2, const Atom *atm3,
                                   const Atom *atm4) {
+  RDUNUSED_PARAM(bnd1);
+  RDUNUSED_PARAM(bnd3);
+
   //   This is a re-write of `_checkAmideEster14` with more explicit logic on
   //   the checks It is interesting that we find with this function we get
   //   better macrocycle sampling than `_checkAmideEster14`
-  unsigned int a1Num = atm1->getAtomicNum();
   unsigned int a2Num = atm2->getAtomicNum();
   unsigned int a3Num = atm3->getAtomicNum();
-  unsigned int a4Num = atm4->getAtomicNum();
 
   if (a3Num != 6) return false;
 
