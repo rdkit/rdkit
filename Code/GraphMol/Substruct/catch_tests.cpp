@@ -55,10 +55,11 @@ static _IsSubstructOf IsSubstructOf(const ROMol &m) {
 
 namespace Catch {
 // ""_smiles returns an RWMol.
-template <> struct StringMaker<RDKit::RWMol> {
+template <>
+struct StringMaker<RDKit::RWMol> {
   static std::string convert(RDKit::RWMol const &m) { return MolToCXSmiles(m); }
 };
-}
+}  // namespace Catch
 
 TEST_CASE("substructure parameters", "[substruct]") {
   SECTION("chirality") {
@@ -135,12 +136,17 @@ TEST_CASE("substructure parameters", "[substruct]") {
 
 namespace {
 bool no_match(const ROMol &mol, const std::vector<unsigned int> &ids) {
+  RDUNUSED_PARAM(mol);
+  RDUNUSED_PARAM(ids);
   return false;
 }
 bool always_match(const ROMol &mol, const std::vector<unsigned int> &ids) {
+  RDUNUSED_PARAM(mol);
+  RDUNUSED_PARAM(ids);
   return true;
 }
 bool bigger(const ROMol &mol, const std::vector<unsigned int> &ids) {
+  RDUNUSED_PARAM(mol);
   return std::accumulate(ids.begin(), ids.end(), 0) > 5;
 }
 }  // namespace
