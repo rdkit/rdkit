@@ -50,6 +50,9 @@ class RDKIT_MOLSTANDARDIZE_EXPORT ValidationErrorInfo : public std::exception {
 // four different ValidationMethods inherit from.
 class RDKIT_MOLSTANDARDIZE_EXPORT ValidationMethod {
  public:
+  ValidationMethod() = default;
+  virtual ~ValidationMethod() = default;
+
   virtual std::vector<ValidationErrorInfo> validate(
       const ROMol &mol, bool reportAllFailures) const = 0;
 };
