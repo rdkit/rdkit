@@ -878,7 +878,7 @@ void MolPickler::_pickle(const ROMol *mol, std::ostream &ss,
   tmpInt = static_cast<int32_t>(mol->getNumBonds());
   streamWrite(ss, tmpInt);
 
-  char flag = 0x1 << 7;
+  unsigned char flag = 0x1 << 7;
   streamWrite(ss, flag);
 
   // -------------------
@@ -1013,7 +1013,7 @@ void MolPickler::_depickle(std::istream &ss, ROMol *mol, int version,
   // did we include coordinates
   bool includeCoords = false;
   if (version >= 3000) {
-    char flag;
+    unsigned char flag;
     streamRead(ss, flag, version);
     if (flag & 0x1 << 7) {
       includeCoords = true;
@@ -1107,9 +1107,9 @@ void MolPickler::_depickle(std::istream &ss, ROMol *mol, int version,
     for (auto i = 0; i < tmpInt; i++) {
       Conformer *conf;
       if (tag == BEGINCONFS) {
-	conf = _conformerFromPickle<T, float>(ss, version);
+        conf = _conformerFromPickle<T, float>(ss, version);
       } else {
-	conf = _conformerFromPickle<T, double>(ss, version);	
+        conf = _conformerFromPickle<T, double>(ss, version);
       }
       mol->addConformer(conf);
       cids[i] = conf->getId();
