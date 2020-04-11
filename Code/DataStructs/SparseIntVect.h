@@ -49,6 +49,15 @@ class SparseIntVect {
     initFromText(pkl, len);
   };
 
+  SparseIntVect &operator=(const SparseIntVect<IndexType> &other) {
+    if (this == &other) {
+      return *this;
+    }
+    d_length = other.d_length;
+    d_data.insert(other.d_data.begin(), other.d_data.end());
+    return *this;
+  }
+
   //! destructor (doesn't need to do anything)
   ~SparseIntVect() {}
 
