@@ -476,13 +476,13 @@ void contourAndDrawGridHelper(RDKit::MolDraw2D &drawer, python::object &data,
     levels = std::unique_ptr<std::vector<double>>(new std::vector<double>);
   }
 
-  if (PyArray_DIM(dataArr, 0) != xcoords->size()) {
+  if (PyArray_DIM(dataArr, 0) != static_cast<int>(xcoords->size())) {
     throw_value_error(
         "data array and xcoords sizes do not match.\n"
         "Did you forget to call np.transpose() on the array?");
   }
 
-  if (PyArray_DIM(dataArr, 1) != ycoords->size()) {
+  if (PyArray_DIM(dataArr, 1) != static_cast<int>(ycoords->size())) {
     throw_value_error("data array and ycoords sizes do not match");
   }
 
