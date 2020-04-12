@@ -30,7 +30,12 @@
 // flavor & 2 : Read each MODEL into a separate molecule.
 namespace RDKit {
 
-static Atom *PDBAtomFromSymbol(const char *symb) {
+namespace {
+
+// This is a macro to allow its use for C++ constants
+#define BCNAM(A, B, C) (((A) << 16) | ((B) << 8) | (C))
+
+Atom *PDBAtomFromSymbol(const char *symb) {
   PRECONDITION(symb, "bad char ptr");
   if (symb[0] == 'D' && !symb[1]) {
     auto *result = new Atom(1);
@@ -45,8 +50,8 @@ static Atom *PDBAtomFromSymbol(const char *symb) {
   return elemno > 0 ? new Atom(elemno) : (Atom *)nullptr;
 }
 
-static void PDBAtomLine(RWMol *mol, const char *ptr, unsigned int len,
-                        unsigned int flavor, std::map<int, Atom *> &amap) {
+void PDBAtomLine(RWMol *mol, const char *ptr, unsigned int len,
+                 unsigned int flavor, std::map<int, Atom *> &amap) {
   PRECONDITION(mol, "bad mol");
   PRECONDITION(ptr, "bad char ptr");
   std::string tmp;
@@ -304,9 +309,8 @@ static void PDBAtomLine(RWMol *mol, const char *ptr, unsigned int len,
   info->setTempFactor(bfactor);
 }
 
-static void PDBBondLine(RWMol *mol, const char *ptr, unsigned int len,
-                        std::map<int, Atom *> &amap,
-                        std::map<Bond *, int> &bmap) {
+void PDBBondLine(RWMol *mol, const char *ptr, unsigned int len,
+                 std::map<int, Atom *> &amap, std::map<Bond *, int> &bmap) {
   PRECONDITION(mol, "bad mol");
   PRECONDITION(ptr, "bad char ptr");
 
@@ -415,7 +419,7 @@ static void PDBBondLine(RWMol *mol, const char *ptr, unsigned int len,
   }
 }
 
-static void PDBTitleLine(RWMol *mol, const char *ptr, unsigned int len) {
+void PDBTitleLine(RWMol *mol, const char *ptr, unsigned int len) {
   PRECONDITION(mol, "bad mol");
   PRECONDITION(ptr, "bad char ptr");
   std::string title;
@@ -435,8 +439,8 @@ static void PDBTitleLine(RWMol *mol, const char *ptr, unsigned int len) {
   }
 }
 
-static void PDBConformerLine(RWMol *mol, const char *ptr, unsigned int len,
-                             Conformer *&conf, int &conformer_atmidx) {
+void PDBConformerLine(RWMol *mol, const char *ptr, unsigned int len,
+                      Conformer *&conf, int &conformer_atmidx) {
   PRECONDITION(mol, "bad mol");
   PRECONDITION(ptr, "bad char ptr");
 
@@ -472,13 +476,10 @@ static void PDBConformerLine(RWMol *mol, const char *ptr, unsigned int len,
   }
 }
 
-// This is a macro to allow its use for C++ constants
-#define BCNAM(A, B, C) (((A) << 16) | ((B) << 8) | (C))
-
 // This function determines whether a standard atom name in
 // in a recognized PDB amino acid should be chiral or not.
 // This is used to avoid chirality on VAL.CG and LEU.CG.
-static bool StandardPDBChiralAtom(const char *resnam, const char *atmnam) {
+bool StandardPDBChiralAtom(const char *resnam, const char *atmnam) {
   switch (BCNAM(resnam[0], resnam[1], resnam[2])) {
     case BCNAM('G', 'L', 'Y'):
       return false;
@@ -510,7 +511,7 @@ static bool StandardPDBChiralAtom(const char *resnam, const char *atmnam) {
   return false;
 }
 
-static void StandardPDBResidueChirality(RWMol *mol) {
+void StandardPDBResidueChirality(RWMol *mol) {
   for (ROMol::AtomIterator atomIt = mol->beginAtoms();
        atomIt != mol->endAtoms(); ++atomIt) {
     Atom *atom = *atomIt;
@@ -546,12 +547,11 @@ void BasicPDBCleanup(RWMol &mol) {
   }
 }
 
-RWMol *PDBBlockToMol(const char *str, bool sanitize, bool removeHs,
-                     unsigned int flavor, bool proximityBonding) {
+void parsePdbBlock(RWMol *&mol, const char *str, bool sanitize, bool removeHs,
+                   unsigned int flavor, bool proximityBonding) {
   PRECONDITION(str, "bad char ptr");
   std::map<int, Atom *> amap;
   std::map<Bond *, int> bmap;
-  RWMol *mol = nullptr;
   Utils::LocaleSwitcher ls;
   bool multi_conformer = false;
   int conformer_atmidx = 0;
@@ -639,14 +639,14 @@ RWMol *PDBBlockToMol(const char *str, bool sanitize, bool removeHs,
   }
 
   if (!mol) {
-    return (RWMol *)nullptr;
+    return;
   }
 
   if (proximityBonding) {
     ConnectTheDots(mol, ctdIGNORE_H_H_CONTACTS);
   }
   // flavor & 8 doesn't encode double bonds
-  if (proximityBonding || ((flavor & 8) != 0)) {
+  if (proximityBonding || flavor & 8) {
     StandardPDBResidueBondOrders(mol);
   }
 
@@ -666,6 +666,18 @@ RWMol *PDBBlockToMol(const char *str, bool sanitize, bool removeHs,
   /* Set tetrahedral chirality from 3D co-ordinates */
   MolOps::assignChiralTypesFrom3D(*mol);
   StandardPDBResidueChirality(mol);
+}
+}  // namespace
+
+RWMol *PDBBlockToMol(const char *str, bool sanitize, bool removeHs,
+                     unsigned int flavor, bool proximityBonding) {
+  RWMol *mol = nullptr;
+  try {
+    parsePdbBlock(mol, str, sanitize, removeHs, flavor, proximityBonding);
+  } catch (...) {
+    delete mol;
+    throw;
+  }
 
   return mol;
 }
