@@ -574,7 +574,7 @@ void ParseSGroupV2000SAPLine(IDX_TO_SGROUP_MAP &sGroupMap, RWMol *mol,
   unsigned int nent = ParseSGroupIntField(text, line, pos, true);
 
   for (unsigned int ie = 0; ie < nent; ++ie) {
-    if (text.size() < pos + 8) {
+    if (text.size() < pos + 11) {
       std::ostringstream errout;
       errout << "SGroup SAP line too short: '" << text << "' on line " << line;
       throw FileParseException(errout.str());
@@ -590,7 +590,8 @@ void ParseSGroupV2000SAPLine(IDX_TO_SGROUP_MAP &sGroupMap, RWMol *mol,
       lvIdx = mol->getAtomWithBookmark(lvIdxMark)->getIdx();
     }
 
-    sGroupMap.at(sgIdx).addAttachPoint(aIdx, lvIdx, text.substr(++pos, 2));
+    sGroupMap.at(sgIdx).addAttachPoint(aIdx, lvIdx, text.substr(pos+1, 2));
+    pos += 3;
   }
 }
 

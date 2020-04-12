@@ -1429,3 +1429,27 @@ M  END)CTAB"_ctab;
     CHECK(molb.find("RXCTR=1") != std::string::npos);
   }
 }
+
+TEST_CASE(
+    "Problems parsing SGroup abbreviations with multiple attachment points",
+    "[bug][parser]") {
+  std::string rdbase = getenv("RDBASE");
+  SECTION("basics") {
+    std::string fName =
+        rdbase + "/Code/GraphMol/FileParsers/test_data/sgroup_ap_bug.mol";
+    std::unique_ptr<RWMol> mol(MolFileToMol(fName));
+    REQUIRE(mol);
+
+    const auto &sgroups = getSubstanceGroups(*mol);
+    CHECK(sgroups.size() == 3);
+    CHECK(sgroups[0].hasProp("TYPE"));
+    CHECK(sgroups[0].getProp<std::string>("TYPE") == "SUP");
+    CHECK(sgroups[0].getAttachPoints().size() == 1);
+    CHECK(sgroups[1].hasProp("TYPE"));
+    CHECK(sgroups[1].getProp<std::string>("TYPE") == "SUP");
+    CHECK(sgroups[1].getAttachPoints().size() == 1);
+    CHECK(sgroups[2].hasProp("TYPE"));
+    CHECK(sgroups[2].getProp<std::string>("TYPE") == "SUP");
+    CHECK(sgroups[2].getAttachPoints().size() == 2);
+  }
+}
