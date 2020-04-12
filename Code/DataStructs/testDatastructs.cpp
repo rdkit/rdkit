@@ -1425,6 +1425,7 @@ void test16BitVectProps() {
     RDValue newValue;
     TEST_ASSERT(handler->read(ss, newValue));
     TEST_ASSERT(from_rdvalue<ExplicitBitVect>(newValue) == bv);
+    newValue.destroy();
   }
   delete handlers[1];
 }
