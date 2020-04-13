@@ -239,7 +239,19 @@ if(RDK_BUILD_PYTHON_WRAPPERS)
 
   find_package(PythonLibs)
   target_include_directories(rdkit_base INTERFACE ${PYTHON_INCLUDE_DIR})
-  target_link_libraries(rdkit_py_base INTERFACE ${PYTHON_LIBRARIES} )
+
+  # determine linkage of python
+  execute_process(
+      COMMAND
+      ${PYTHON_EXECUTABLE} -c "from distutils import sysconfig; print(sysconfig.get_config_var('Py_ENABLE_SHARED'))"
+      OUTPUT_VARIABLE Py_ENABLE_SHARED
+      OUTPUT_STRIP_TRAILING_WHITESPACE
+  )
+
+  if(WIN32 OR "${Py_ENABLE_SHARED}" STREQUAL "1")
+    target_link_libraries(rdkit_py_base INTERFACE ${PYTHON_LIBRARIES} )
+  endif()
+  
   find_package(NumPy REQUIRED)
   target_include_directories(rdkit_base INTERFACE ${PYTHON_NUMPY_INCLUDE_PATH})
 
@@ -305,13 +317,6 @@ if(RDK_BUILD_PYTHON_WRAPPERS)
 
   endif(RDK_INSTALL_INTREE)
 
-  # determine linkage of python
-  execute_process(
-      COMMAND
-      ${PYTHON_EXECUTABLE} -c "from distutils import sysconfig; print(sysconfig.get_config_var('Py_ENABLE_SHARED'))"
-      OUTPUT_VARIABLE Py_ENABLE_SHARED
-      OUTPUT_STRIP_TRAILING_WHITESPACE
-  )
   if(NOT WIN32)
     # See https://bugs.python.org/msg277944
     # The "command to create shared modules". Used as variable in the "Makefile (and similar) templates to build python modules"
