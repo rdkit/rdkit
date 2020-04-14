@@ -129,16 +129,11 @@ macro(rdkit_python_extension)
                               ${RDK_PYTHON_OUTPUT_DIRECTORY}/${RDKPY_DEST})
     endif(WIN32)
 
-    if(WIN32 OR "${Py_ENABLE_SHARED}" STREQUAL "1")
-      target_link_libraries(${RDKPY_NAME} ${RDKPY_LINK_LIBRARIES}
-                            RDBoost rdkit_py_base rdkit_base )
+    target_link_libraries(${RDKPY_NAME} ${RDKPY_LINK_LIBRARIES}
+                          RDBoost rdkit_py_base rdkit_base )
+    if("${PYTHON_LDSHARED}" STREQUAL "")
     else()
-      target_link_libraries(${RDKPY_NAME} ${RDKPY_LINK_LIBRARIES}
-                            RDBoost rdkit_py_base rdkit_base )
-      if("${PYTHON_LDSHARED}" STREQUAL "")
-      else()
-        set_target_properties(${RDKPY_NAME} PROPERTIES LINK_FLAGS ${PYTHON_LDSHARED})
-      endif()
+      set_target_properties(${RDKPY_NAME} PROPERTIES LINK_FLAGS ${PYTHON_LDSHARED})
     endif()
 
     INSTALL(TARGETS ${RDKPY_NAME}
