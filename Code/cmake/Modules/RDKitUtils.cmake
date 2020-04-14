@@ -115,10 +115,6 @@ macro(rdkit_python_extension)
     PYTHON_ADD_MODULE(${RDKPY_NAME} ${RDKPY_SOURCES})
     set_target_properties(${RDKPY_NAME} PROPERTIES PREFIX "")
 
-    if (CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
-      # Stop a giant spew of warnings with gcc and boost up to at least 1.71
-      target_compile_options(${RDKPY_NAME} PRIVATE -Wno-maybe-uninitialized)
-    endif()
     if(WIN32)
       set_target_properties(${RDKPY_NAME} PROPERTIES SUFFIX ".pyd"
                            LIBRARY_OUTPUT_DIRECTORY

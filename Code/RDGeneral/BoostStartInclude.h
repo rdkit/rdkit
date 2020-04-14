@@ -63,6 +63,7 @@
 #pragma GCC diagnostic ignored "-Wmissing-field-initializers"
 #pragma GCC diagnostic ignored "-Wsign-compare"
 #pragma GCC diagnostic ignored "-Wconversion"
+#pragma GCC diagnostic ignored "-Wmaybe-uninitialized"
 #if (__GNUC__ > 4 || __GNUC_MINOR__ > 7)
 #pragma GCC diagnostic ignored "-Wunused-local-typedefs"
 #endif
