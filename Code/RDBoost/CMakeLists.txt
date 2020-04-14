@@ -23,7 +23,9 @@ rdkit_headers(Wrap.h PySequenceHolder.h
               DEST RDBoost)
 
 if(RDK_BUILD_PYTHON_WRAPPERS)
-cmake_policy(SET CMP0079 NEW)
+if(${CMAKE_VERSION} VERSION_GREATER_EQUAL "3.13.0")
+   cmake_policy(SET CMP0079 NEW)
+endif()
 add_subdirectory(Wrap)
 endif()
 
