@@ -197,7 +197,6 @@ class streambuf : public std::basic_streambuf<char> {
     bp::object io_mod = bp::import("io");
     CHECK_INVARIANT(io_mod, "module not found");
     bp::object iobase = io_mod.attr("TextIOBase");
-    ;
     CHECK_INVARIANT(iobase, "base class not found");
 #else
     // using statics to save an undetermined amount of time results in
