@@ -35,138 +35,126 @@
 #include <cmath>
 #include <vector>
 
-
 namespace RDKit {
 
 namespace Descriptors {
 
 namespace {
 
+std::vector<Atom::ChiralType> RS{Atom::CHI_TETRAHEDRAL_CW,
+                                 Atom::CHI_TETRAHEDRAL_CCW, Atom::CHI_OTHER};
+std::vector<std::string> Symbols{"B", "C",  "N",  "O", "S", "F", "Si",
+                                 "P", "Cl", "Br", "I", "H", "*"};
+std::vector<Atom::HybridizationType> HS{Atom::SP, Atom::SP2, Atom::SP3,
+                                        Atom::SP3D, Atom::SP3D2};
 
-std::vector < Atom::ChiralType> RS {   Atom::CHI_TETRAHEDRAL_CW,  Atom::CHI_TETRAHEDRAL_CCW, Atom::CHI_OTHER };
-std::vector < std::string> Symbols {"B", "C", "N", "O", "S", "F", "Si", "P", "Cl", "Br", "I", "H", "*"};
-std::vector < Atom::HybridizationType> HS {  Atom::SP,  Atom::SP2,  Atom::SP3,  Atom::SP3D,  Atom::SP3D2};
+void AtomFeatVector(const RDKit::Atom* atom, const ROMol* mol,
+                    std::vector<double>& feats, bool addchiral) {
+  PRECONDITION(atom, "bad atom");
+  PRECONDITION(mol, "bad mol");
 
+  if (addchiral) {
+    feats.reserve(52);
+  } else {
+    feats.reserve(49);
+  }
 
+  // initiate ring info if not already done
+  if (!mol->getRingInfo()->isInitialized()) {
+    RDKit::MolOps::findSSSR(*mol);
+  }
 
-void AtomFeatVector(const RDKit::Atom* atom, const ROMol* mol, std::vector <double> &feats,  bool addchiral) {
-
-    PRECONDITION(atom,"bad atom");
-    PRECONDITION(mol,"bad mol");
-
-    if (addchiral) {
-      feats.reserve(52);
+  // one hot atom symbols
+  std::string s = atom->getSymbol();
+  bool inlist = false;
+  int indx = 0;
+  for (auto ind : Symbols) {
+    if (ind == s) {
+      feats[indx] = 1;
+      inlist = true;
+    } else {
+      feats[indx] = 0;
     }
-    else {
-      feats.reserve(49);
+    ++indx;
+  }
 
-    } 
+  // write UNK type if not found in the symbol list
+  feats[indx] = (inlist ? 0 : 1);
+  ++indx;
 
-    // initiate ring info if not already done
-    if( !mol->getRingInfo()->isInitialized() ) {
-      RDKit::MolOps::findSSSR( *mol );
+  // one hot degree
+  int d = atom->getDegree();
+  for (int i = 0; i < 7; i++) {
+    feats[indx] = d == i;
+    ++indx;
+  }
+
+  Atom::HybridizationType hs = atom->getHybridization();
+  // one hot hybridization type
+  for (auto hsquery : HS) {
+    feats[indx] = hs == hsquery;
+    ++indx;
+  }
+
+  // one hot  Implicit Valence
+  int IV = atom->getImplicitValence();
+  for (int i = 0; i < 7; ++i) {
+    feats[indx] = IV == i;
+    ++indx;
+  }
+
+  // one hot  getFormalCharge
+  int fc = atom->getFormalCharge();
+  for (int i = -1; i < 2; i++) {
+    feats[indx] = fc == i;
+    ++indx;
+  }
+
+  // one hot ring size
+  int atomid = atom->getIdx();
+  for (unsigned int i = 3; i < 9; i++) {
+    feats[indx] = mol->getRingInfo()->isAtomInRingOfSize(atomid, i);
+    ++indx;
+  }
+
+  // Is aromatic
+  feats[indx] = (atom->getIsAromatic());
+  ++indx;
+
+  // one hot  Total NumH
+  unsigned int toth = atom->getTotalNumHs(false);
+  for (unsigned int i = 0; i < 5; ++i) {
+    feats[indx] = toth == i;
+    ++indx;
+  }
+
+  // add numatoms
+  feats[indx] = 1. / mol->getNumAtoms();
+  ++indx;
+
+  // put if here
+  if (addchiral) {
+    Atom::ChiralType rs = atom->getChiralTag();
+    // one hot getChiralTag type
+    for (auto rsquery : RS) {
+      feats[indx] = rs == rsquery;
+      ++indx;
     }
-
-    // one hot atom symbols
-    std::string s = atom->getSymbol();
-    bool inlist = false;
-    int indx = 0;
-    for (auto ind : Symbols) {
-        if (ind == s) {
-            feats[indx] = 1;
-            inlist = true;
-        } 
-        else 
-        {
-            feats[indx] = 0;
-        }
-        indx+=1;
-    }
-
-
-    // write UNK type if not found in the symbol list
-    feats[indx] = (inlist ? 0 : 1);
-    indx+=1;
-
-
-    // one hot degree
-    int d = atom->getDegree();
-    for ( int i=0;  i<7; i++) {
-          feats[indx] = (d == i ? 1 : 0);
-          indx+=1;
-    }
-
-
-    Atom::HybridizationType hs = atom->getHybridization();
-    // one hot hybridization type
-    for (auto hsquery:  HS) {
-          feats[indx] = (hs == hsquery ? 1 : 0);
-          indx+=1;
-    }
-
-    // one hot  Implicit Valence
-    int IV = atom->getImplicitValence();
-    for (unsigned int i=0;  i<7; i++) {
-          feats[indx] = (IV == i ? 1 : 0);
-          indx+=1;
-    }
-
-    // one hot  getFormalCharge
-    int fc = atom->getFormalCharge();
-    for (int i=-1;  i<2; i++) {
-          feats[indx] = (fc == i ? 1 : 0);
-          indx+=1;
-    }
-
-    // one hot ring size
-    int atomid = atom->getIdx();
-    for (unsigned int i=3;  i<9; i++) {
-          feats[indx] = (mol->getRingInfo()->isAtomInRingOfSize( atomid , i ) ? 1 : 0);
-          indx+=1;
-    }
-
-    // Is aromatic
-    feats[indx] = (atom->getIsAromatic());
-    indx+=1;
-
-    // one hot  Total NumH
-    int toth = atom->getTotalNumHs(false);
-    for (unsigned int i=0;  i<5; i++) {
-          feats[indx] = (toth == i ? 1 : 0);
-          indx+=1;
-    }
-
-    // add numatoms
-    feats[indx] = 1./mol->getNumAtoms();
-    indx+=1;
-
-
-    // put if here
-    if (addchiral) {
-      Atom::ChiralType rs = atom->getChiralTag();
-      // one hot getChiralTag type
-      for (auto rsquery:  RS) {
-          feats[indx] = (rs == rsquery ? 1 : 0);
-          indx+=1;
-      }
-    }
-
-
+  }
 }
 }  // end of anonymous namespace
 
 // entry point
-void AtomFeatVect(const ROMol& mol, std::vector<double>& res, int atomid,  bool addchiral) {
-
+void AtomFeatVect(const ROMol& mol, std::vector<double>& res, int atomid,
+                  bool addchiral) {
   res.clear();
   if (addchiral) {
     res.resize(52);
-  }
-  else {
+  } else {
     res.resize(49);
   }
 
-  AtomFeatVector( mol.getAtomWithIdx(atomid),  &mol, res, addchiral);
+  AtomFeatVector(mol.getAtomWithIdx(atomid), &mol, res, addchiral);
 }
 
 }  // namespace Descriptors

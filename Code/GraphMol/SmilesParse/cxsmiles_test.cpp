@@ -507,7 +507,7 @@ void testErrorsInCXSmiles() {
     ROMol *m = nullptr;
     try {
       m = SmilesToMol(smiles, params);
-    } catch (const SmilesParseException &e) {
+    } catch (const SmilesParseException &) {
     }
     TEST_ASSERT(!m);
 

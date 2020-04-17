@@ -786,7 +786,7 @@ ROMol *removeHs(const ROMol &mol, const RemoveHsParameters &ps, bool sanitize) {
   auto *res = new RWMol(mol);
   try {
     removeHs(*res, ps, sanitize);
-  } catch (MolSanitizeException &se) {
+  } catch (const MolSanitizeException &) {
     delete res;
     throw;
   }
@@ -804,7 +804,7 @@ ROMol *removeHs(const ROMol &mol, bool implicitOnly, bool updateExplicitCount,
   auto *res = new RWMol(mol);
   try {
     removeHs(*res, implicitOnly, updateExplicitCount, sanitize);
-  } catch (MolSanitizeException &se) {
+  } catch (const MolSanitizeException &) {
     delete res;
     throw;
   }
@@ -829,7 +829,7 @@ ROMol *removeAllHs(const ROMol &mol, bool sanitize) {
   auto *res = new RWMol(mol);
   try {
     removeAllHs(*res, sanitize);
-  } catch (MolSanitizeException &se) {
+  } catch (const MolSanitizeException &) {
     delete res;
     throw;
   }

@@ -1242,8 +1242,6 @@ O3A::O3A(int (*costFunc)(const unsigned int, const unsigned int, double,
   const Conformer &refConf = refMol.getConformer(refCid);
   unsigned int accuracy = options & O3_ACCURACY_MASK;
   bool local = options & O3_LOCAL_ONLY;
-  unsigned int refNAtoms = refMol.getNumAtoms();
-  unsigned int prbNAtoms = prbMol.getNumAtoms();
   unsigned int refNHeavyAtoms = refMol.getNumHeavyAtoms();
   unsigned int prbNHeavyAtoms = prbMol.getNumHeavyAtoms();
   unsigned int largestNHeavyAtoms = std::max(refNHeavyAtoms, prbNHeavyAtoms);

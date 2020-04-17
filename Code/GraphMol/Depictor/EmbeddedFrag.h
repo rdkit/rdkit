@@ -43,6 +43,8 @@ class RDKIT_DEPICTOR_EXPORT EmbeddedAtom {
     neighs.clear();
   }
 
+  EmbeddedAtom(const EmbeddedAtom &other) = default;
+
   EmbeddedAtom(unsigned int aid, const RDGeom::Point2D &pos)
       : aid(aid),
         angle(-1.0),
@@ -57,6 +59,10 @@ class RDKIT_DEPICTOR_EXPORT EmbeddedAtom {
   }
 
   EmbeddedAtom &operator=(const EmbeddedAtom &other) {
+    if (this == &other) {
+      return *this;
+    }
+
     loc = other.loc;
     angle = other.angle;
     nbr1 = other.nbr1;
@@ -540,8 +546,8 @@ class RDKIT_DEPICTOR_EXPORT EmbeddedFrag {
   // const RDKit::ROMol *mol);
 
   //! are we embedded with the final (molecule) coordinates
-  bool d_done=false;
-  double d_px=0.0, d_nx=0.0, d_py=0.0, d_ny=0.0;
+  bool d_done = false;
+  double d_px = 0.0, d_nx = 0.0, d_py = 0.0, d_ny = 0.0;
 
   //! a map that takes one from the atom id to the embeddedatom object for that
   // atom.
@@ -551,7 +557,7 @@ class RDKIT_DEPICTOR_EXPORT EmbeddedFrag {
   RDKit::INT_LIST d_attachPts;
 
   // pointer to the owning molecule
-  const RDKit::ROMol *dp_mol=nullptr;
+  const RDKit::ROMol *dp_mol = nullptr;
 };
 }  // namespace RDDepict
 

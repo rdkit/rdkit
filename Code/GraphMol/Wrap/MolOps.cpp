@@ -365,7 +365,7 @@ MolOps::SanitizeFlags sanitizeMol(ROMol &mol, boost::uint64_t sanitizeOps,
   if (catchErrors) {
     try {
       MolOps::sanitizeMol(wmol, operationThatFailed, sanitizeOps);
-    } catch (const MolSanitizeException &e) {
+    } catch (const MolSanitizeException &) {
       // this really should not be necessary, but at some point it
       // started to be required with VC++17. Doesn't seem like it does
       // any harm.

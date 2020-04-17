@@ -53,7 +53,6 @@ void addBracketHelper(SubstanceGroup &self, python::object pts) {
 
   SubstanceGroup::Bracket bkt;
   python::stl_input_iterator<RDGeom::Point3D> beg(pts);
-  unsigned int i = 0;
   for (unsigned int i = 0; i < sz; ++i) {
     bkt[i] = *beg;
     ++beg;
