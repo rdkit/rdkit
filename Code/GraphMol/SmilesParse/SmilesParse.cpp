@@ -368,6 +368,7 @@ RWMol *SmilesToMol(const std::string &smiles,
       SmilesParseOps::parseCXExtensions(*res, cxPart, pos);
     } catch (const SmilesParseException &) {
       if (params.strictCXSMILES) {
+        delete res;
         throw;
       }
     }

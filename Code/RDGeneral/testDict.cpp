@@ -706,6 +706,7 @@ void testCustomProps() {
     TEST_ASSERT(handler->read(ss, newValue));
     TEST_ASSERT(from_rdvalue<const Foo &>(newValue).bar == f.bar);
     TEST_ASSERT(from_rdvalue<const Foo &>(newValue).baz == f.baz);
+    newValue.destroy();
   }
   delete handlers[1];
 }

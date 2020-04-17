@@ -108,8 +108,8 @@ ChemicalReaction *RxnSmartsToChemicalReaction(
 
   std::vector<std::size_t> pos;
 
-  for (std::size_t i = 0; i < text.length(); i++) {
-    if (text[i] == '>' && text[i-1] != '-') {
+  for (std::size_t i = 0; i < text.length(); ++i) {
+    if (text[i] == '>' && (i == 0 || text[i - 1] != '-')) {
       pos.push_back(i);
     }
   }

@@ -1688,6 +1688,7 @@ void test11DrawMolGrid() {
   }
   delete m1;
   delete m2;
+  delete m3;
   std::cerr << " Done" << std::endl;
 }
 
@@ -1746,6 +1747,8 @@ void test12DrawMols() {
     outs.flush();
   }
   {
+    delete mols[2];
+    delete mols[4];
     mols[2] = nullptr;
     mols[4] = nullptr;
     MolDraw2DSVG drawer(750, 400, 250, 200);
