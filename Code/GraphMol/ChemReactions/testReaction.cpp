@@ -7390,6 +7390,24 @@ void testDblBondCrash() {
   }
 }
 
+void testGithub3097() {
+  BOOST_LOG(rdInfoLog) << "-------------------------------------" << std::endl;
+  BOOST_LOG(rdInfoLog) << "Testing Github issue # 3097" << std::endl;
+
+  std::string smi =
+      "[c:6][n:7][c:8].[N:14]#[N:15]>>[C:6].[C:8][N:7]=[N+:14]=[N-:15]";
+  ChemicalReaction *rxn = RxnSmartsToChemicalReaction(smi);
+  TEST_ASSERT(rxn);
+  rxn->initReactantMatchers();
+
+  auto mol1 = RWMOL_SPTR(SmilesToMol("c1cc[nH]c1"));
+  auto mol2 = RWMOL_SPTR(SmilesToMol("N#N"));
+  std::vector<ROMOL_SPTR> v{mol1, mol2};
+  auto prods = rxn->runReactants(v);
+  // if products are not empty this is already a success
+  TEST_ASSERT(prods.size() > 0);
+}
+
 int main() {
   RDLog::InitLogs();
 
@@ -7480,6 +7498,7 @@ int main() {
   testStereoBondIsomerization();
   testOtherBondStereo();
   testGithub2547();
+  testGithub3097();
 #endif
   testDblBondCrash();
 
