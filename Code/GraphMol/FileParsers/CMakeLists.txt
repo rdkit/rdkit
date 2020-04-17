@@ -56,26 +56,26 @@ rdkit_headers(FileParsers.h
               DEST GraphMol/FileParsers)
 
 rdkit_test(fileParsersTest1 test1.cpp
-           LINK_LIBRARIES FileParsers SmilesParse
-	   SubstructMatch GraphMol RDGeneral RDGeometryLib ${maeparser_var})
+           LINK_LIBRARIES FileParsers SubstructMatch )
 
 
 
 rdkit_test(testMolSupplier testMolSupplier.cpp
-           LINK_LIBRARIES  FileParsers SmilesParse SubstructMatch
-           GraphMol RDGeneral RDGeometryLib RDStreams)
+           LINK_LIBRARIES  FileParsers RDStreams)
 
-rdkit_test(testMolWriter testMolWriter.cpp LINK_LIBRARIES FileParsers SmilesParse GraphMol RDGeneral RDGeometryLib )
+rdkit_test(testMolWriter testMolWriter.cpp LINK_LIBRARIES FileParsers )
 
-rdkit_test(testTplParser testTpls.cpp LINK_LIBRARIES FileParsers SmilesParse GraphMol RDGeneral RDGeometryLib )
+rdkit_test(testTplParser testTpls.cpp LINK_LIBRARIES FileParsers )
 
-rdkit_test(testMol2ToMol testMol2ToMol.cpp LINK_LIBRARIES FileParsers SmilesParse GraphMol RDGeneral RDGeometryLib )
+rdkit_test(testMol2ToMol testMol2ToMol.cpp LINK_LIBRARIES FileParsers )
 
-rdkit_test(testSequence testSequence.cpp LINK_LIBRARIES FileParsers SmilesParse GraphMol RDGeneral RDGeometryLib )
+rdkit_test(testSequence testSequence.cpp LINK_LIBRARIES FileParsers )
 
 rdkit_test(testExtendedStereoParsing testExtendedStereoParsing.cpp
-           LINK_LIBRARIES FileParsers Depictor GraphMol RDGeneral RDGeometryLib )
+           LINK_LIBRARIES FileParsers )
 
-rdkit_catch_test(fileParsersCatchTest file_parsers_catch.cpp catch_main.cpp LINK_LIBRARIES FileParsers SmilesParse GraphMol RDGeneral RDGeometryLib )
+rdkit_catch_test(fileParsersCatchTest file_parsers_catch.cpp catch_main.cpp 
+           LINK_LIBRARIES FileParsers )
 
-rdkit_catch_test(testPropertyLists testPropertyLists.cpp catch_main.cpp LINK_LIBRARIES FileParsers SmilesParse GraphMol RDGeneral RDGeometryLib )
+rdkit_catch_test(testPropertyLists testPropertyLists.cpp catch_main.cpp 
+           LINK_LIBRARIES FileParsers )

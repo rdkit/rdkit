@@ -74,8 +74,8 @@ if(RDK_BUILD_INCHI_SUPPORT)
      endif()
   add_definitions(-DRDKIT_RDINCHILIB_BUILD)
   rdkit_library(RDInchiLib inchi.cpp SHARED LINK_LIBRARIES ${INCHI_LIBRARIES}
-                GraphMol RDGeneral Depictor SubstructMatch SmilesParse
-                ${RDKit_THREAD_LIBS})
+                GraphMol RDGeneral Depictor SubstructMatch SmilesParse )
+
   rdkit_headers(inchi.h DEST GraphMol)
   if(RDK_BUILD_PYTHON_WRAPPERS)
     add_subdirectory(Wrap)
@@ -85,11 +85,8 @@ if(RDK_BUILD_INCHI_SUPPORT)
 
   rdkit_test(testInchi test.cpp
     LINK_LIBRARIES
-    ${INCHI_LIBRARIES}
-    RDInchiLib ${INCHI_LIBRARIES}
-    FileParsers SmilesParse Descriptors Depictor SubstructMatch GraphMol
-    RDGeneral DataStructs RDGeneral RDGeometryLib
-    ${RDKit_THREAD_LIBS})
+    RDInchiLib 
+    FileParsers SmilesParse Descriptors )
 endif(RDK_BUILD_INCHI_SUPPORT)
 
 if(RDK_BUILD_PYTHON_WRAPPERS)

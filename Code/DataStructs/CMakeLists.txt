@@ -27,13 +27,13 @@ rdkit_headers(base64.h
               DEST DataStructs)
 
 rdkit_test(testDataStructs testDatastructs.cpp
-           LINK_LIBRARIES DataStructs RDGeneral)
+           LINK_LIBRARIES DataStructs )
 
 rdkit_test(testFPB testFPB.cpp
-           LINK_LIBRARIES DataStructs RDGeneral)
+           LINK_LIBRARIES DataStructs )
 
 rdkit_test(testMultiFPB testMultiFPB.cpp
-           LINK_LIBRARIES DataStructs RDGeneral)
+           LINK_LIBRARIES DataStructs )
 
 if(RDK_BUILD_PYTHON_WRAPPERS)
 add_subdirectory(Wrap)

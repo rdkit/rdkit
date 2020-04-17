@@ -5,7 +5,7 @@ rdkit_python_extension(rdchem
                        ResonanceMolSupplier.cpp MolBundle.cpp StereoGroup.cpp SubstanceGroup.cpp
                        DEST Chem
                        LINK_LIBRARIES
-                       SmilesParse ChemTransforms SubstructMatch GraphMol RDGeometryLib RDGeneral RDBoost)
+                       SmilesParse ChemTransforms SubstructMatch GraphMol)
 
 rdkit_python_extension(rdmolops
                        rdmolops.cpp MolOps.cpp
@@ -13,14 +13,13 @@ rdkit_python_extension(rdmolops
                        LINK_LIBRARIES
                        ChemReactions MolDraw2D Depictor
                        FileParsers SubstructMatch Fingerprints ChemTransforms
-                       Catalogs Subgraphs SmilesParse MolTransforms GraphMol EigenSolvers
-RDGeometryLib DataStructs RDGeneral RDBoost  )
+                       Subgraphs SmilesParse MolTransforms GraphMol )
 
 rdkit_python_extension(rdqueries
                        rdqueries.cpp Queries.cpp
                        DEST Chem
                        LINK_LIBRARIES
-                       GraphMol RDGeometryLib DataStructs RDGeneral RDBoost  )
+                       GraphMol  )
 
 if(RDK_BUILD_COORDGEN_SUPPORT)
     set (maesupplier MaeMolSupplier.cpp)

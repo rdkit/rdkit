@@ -6,6 +6,6 @@ rdkit_headers(PowerEigenSolver.h DEST Numerics/EigenSolvers)
 
 IF (LAPACK_FOUND)
 rdkit_test(tesEigensolvers testEigenSolvers.cpp
-           LINK_LIBRARIES EigenSolvers  RDGeneral )
+           LINK_LIBRARIES EigenSolvers )
 target_include_directories(tesEigenSolvers PUBLIC ${CMAKE_SOURCE_DIR}/External/boost-numeric-bindings)
 ENDIF (LAPACK_FOUND)

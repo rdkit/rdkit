@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 3.1)
+cmake_minimum_required(VERSION 3.5)
 
 project (RDKit)
 
@@ -216,7 +216,6 @@ endif(MSVC)
 # extra boost versions
 if(MSVC)
   # FIX: do we still need this?
-  SET(Boost_ADDITIONAL_VERSIONS "1.48" "1.48.0" "1.45" "1.45.0" "1.44" "1.44.0" "1.43" "1.43.0" "1.42" "1.42.0" "1.41" "1.41.0" "1.40" "1.40.0")
   target_compile_definitions(rdkit_base INTERFACE "-DBOOST_ALL_NO_LIB")
 endif(MSVC)
 
@@ -225,6 +224,8 @@ if(RDK_BUILD_INCHI_SUPPORT)
 endif(RDK_BUILD_INCHI_SUPPORT)
 
 if(RDK_BUILD_PYTHON_WRAPPERS)
+  add_library(rdkit_py_base INTERFACE)
+
   #-------
   # pull in python:
   find_package(PythonInterp)
@@ -238,6 +239,19 @@ if(RDK_BUILD_PYTHON_WRAPPERS)
 
   find_package(PythonLibs)
   target_include_directories(rdkit_base INTERFACE ${PYTHON_INCLUDE_DIR})
+
+  # determine linkage of python
+  execute_process(
+      COMMAND
+      ${PYTHON_EXECUTABLE} -c "from distutils import sysconfig; print(sysconfig.get_config_var('Py_ENABLE_SHARED'))"
+      OUTPUT_VARIABLE Py_ENABLE_SHARED
+      OUTPUT_STRIP_TRAILING_WHITESPACE
+  )
+
+  if(WIN32 OR "${Py_ENABLE_SHARED}" STREQUAL "1")
+    target_link_libraries(rdkit_py_base INTERFACE ${PYTHON_LIBRARIES} )
+  endif()
+  
   find_package(NumPy REQUIRED)
   target_include_directories(rdkit_base INTERFACE ${PYTHON_NUMPY_INCLUDE_PATH})
 
@@ -251,18 +265,20 @@ if(RDK_BUILD_PYTHON_WRAPPERS)
   list(APPEND Boost_Python_Names "python${PYTHON_VERSION_MAJOR}${PYTHON_VERSION_MINOR}")
 
   # Try each potential boost-python name until one works
-  foreach(Boost_Python_Lib ${Boost_Python_Names})
-    find_package(Boost 1.56.0 COMPONENTS "${Boost_Python_Lib}" QUIET)
+  foreach(Boost_Python_LibN ${Boost_Python_Names})
+    find_package(Boost 1.56.0 COMPONENTS "${Boost_Python_LibN}" QUIET)
     if(Boost_FOUND)
+      set(Boost_Python_Lib ${Boost_Python_LibN})
       break()
     endif()
   endforeach()
-
   # Finally just try "python" and hope it is a compatible version
   if(NOT Boost_FOUND)
     find_package(Boost 1.56.0 COMPONENTS python REQUIRED)
+    set(Boost_Python_Lib "python")
   endif()
 
+  target_link_libraries(rdkit_py_base INTERFACE Boost::${Boost_Python_Lib})
 
   if(RDK_INSTALL_INTREE)
     set(RDKit_PythonDir "${CMAKE_SOURCE_DIR}/rdkit")
@@ -301,13 +317,6 @@ if(RDK_BUILD_PYTHON_WRAPPERS)
 
   endif(RDK_INSTALL_INTREE)
 
-  # determine linkage of python
-  execute_process(
-      COMMAND
-      ${PYTHON_EXECUTABLE} -c "from distutils import sysconfig; print(sysconfig.get_config_var('Py_ENABLE_SHARED'))"
-      OUTPUT_VARIABLE Py_ENABLE_SHARED
-      OUTPUT_STRIP_TRAILING_WHITESPACE
-  )
   if(NOT WIN32)
     # See https://bugs.python.org/msg277944
     # The "command to create shared modules". Used as variable in the "Makefile (and similar) templates to build python modules"
@@ -323,6 +332,10 @@ if(RDK_BUILD_PYTHON_WRAPPERS)
      message("PYTHON Py_ENABLE_SHARED: ${Py_ENABLE_SHARED}")
      message("PYTHON USING LINK LINE: ${PYTHON_LDSHARED}")
   endif()
+
+  install(TARGETS rdkit_py_base EXPORT ${RDKit_EXPORTED_TARGETS}
+          COMPONENT dev )
+
 else(RDK_BUILD_PYTHON_WRAPPERS)
   find_package(Boost 1.56.0 REQUIRED)
 endif(RDK_BUILD_PYTHON_WRAPPERS)
@@ -351,6 +364,7 @@ if(RDK_BUILD_THREADSAFE_SSS)
   if(RDK_TEST_MULTITHREADED)
     target_compile_definitions(rdkit_base INTERFACE "-DRDK_TEST_MULTITHREADED")
   endif()
+  target_link_libraries(rdkit_base INTERFACE Threads::Threads)
 else()
   if(RDK_TEST_MULTITHREADED)
     message("RDK_TEST_MULTITHREADED does not make sense without RD_BUILD_THREADSAFE_SSS, disabling it.")
