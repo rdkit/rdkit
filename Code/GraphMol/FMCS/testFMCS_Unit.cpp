@@ -1095,8 +1095,9 @@ void testGithubIssue481() {
       bool sub_res =
           SubstructMatch(*mols[1].get(), *mols[0].get(), vect, true, true);
       if (sub_res == false) {
-        TEST_ASSERT(mcs_res.NumAtoms == 0);
+        TEST_ASSERT(mcs_res.NumAtoms == 1);
         TEST_ASSERT(mcs_res.NumBonds == 0);
+        TEST_ASSERT(mcs_res.SmartsString == "[#17]");
       }
     }
   }
@@ -2061,6 +2062,100 @@ void testCompareNonExistent() {
   }
 }
 
+void testGitHub3095() {
+  BOOST_LOG(rdInfoLog) << "-------------------------------------" << std::endl;
+  BOOST_LOG(rdInfoLog) << "testGitHub3095"
+                       << std::endl;
+
+  {
+    std::vector<ROMOL_SPTR> mols;
+    const char* smi[] = {"C", "OC"};
+
+    for (auto& i : smi) {
+      auto m = SmilesToMol(getSmilesOnly(i));
+      TEST_ASSERT(m);
+
+      mols.push_back(ROMOL_SPTR(m));
+    }
+    MCSParameters p;
+    MCSResult res = findMCS(mols, &p);
+    TEST_ASSERT(res.NumAtoms == 1);
+    TEST_ASSERT(res.NumBonds == 0);
+    TEST_ASSERT(res.SmartsString == "[#6]");
+  }
+  {
+    std::vector<ROMOL_SPTR> mols;
+    const char* smi[] = {"C1CC1", "OC"};
+
+    for (auto& i : smi) {
+      auto m = SmilesToMol(getSmilesOnly(i));
+      TEST_ASSERT(m);
+
+      mols.push_back(ROMOL_SPTR(m));
+    }
+    {
+      MCSParameters p;
+      p.AtomCompareParameters.RingMatchesRingOnly = true;
+      MCSResult res = findMCS(mols, &p);
+      TEST_ASSERT(res.NumAtoms == 0);
+      TEST_ASSERT(res.NumBonds == 0);
+      TEST_ASSERT(res.SmartsString.empty());
+    }
+    {
+      MCSParameters p;
+      p.BondCompareParameters.RingMatchesRingOnly = true;
+      MCSResult res = findMCS(mols, &p);
+      TEST_ASSERT(res.NumAtoms == 1);
+      TEST_ASSERT(res.NumBonds == 0);
+      TEST_ASSERT(res.SmartsString == "[#6]");
+    }
+  }
+  {
+    std::vector<ROMOL_SPTR> mols;
+    const char* smi[] = {"C1CC1", "C1CCC1"};
+
+    for (auto& i : smi) {
+      auto m = SmilesToMol(getSmilesOnly(i));
+      TEST_ASSERT(m);
+
+      mols.push_back(ROMOL_SPTR(m));
+    }
+    {
+      MCSParameters p;
+      p.BondCompareParameters.CompleteRingsOnly = true;
+      MCSResult res = findMCS(mols, &p);
+      TEST_ASSERT(res.NumAtoms == 0);
+      TEST_ASSERT(res.NumBonds == 0);
+      TEST_ASSERT(res.SmartsString.empty());
+    }
+  }
+  {
+    std::vector<ROMOL_SPTR> mols;
+    const char* smi[] = {"CC1CC1", "CN1CCC1"};
+
+    for (auto& i : smi) {
+      auto m = SmilesToMol(getSmilesOnly(i));
+      TEST_ASSERT(m);
+
+      mols.push_back(ROMOL_SPTR(m));
+    }
+    {
+      MCSParameters p;
+      p.AtomCompareParameters.RingMatchesRingOnly = true;
+      p.BondCompareParameters.RingMatchesRingOnly = true;
+      p.BondCompareParameters.CompleteRingsOnly = true;
+      MCSResult res = findMCS(mols, &p);
+      TEST_ASSERT(res.NumAtoms == 1);
+      TEST_ASSERT(res.NumBonds == 0);
+      TEST_ASSERT(res.SmartsString == "[#6&!R]");
+    }
+  }
+
+  BOOST_LOG(rdInfoLog) << "============================================"
+                       << std::endl;
+  BOOST_LOG(rdInfoLog) << "\tdone" << std::endl;
+}
+
 //====================================================================================================
 //====================================================================================================
 
@@ -2136,6 +2231,7 @@ int main(int argc, const char* argv[]) {
   testGitHub2731_comment546175466();
   testQueryMolVsSmarts();
   testCompareNonExistent();
+  testGitHub3095();
 
   unsigned long long t1 = nanoClock();
   double sec = double(t1 - T0) / 1000000.;
