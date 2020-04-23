@@ -150,3 +150,7 @@ rdkit_catch_test(graphmolTestsCatch catch_graphmol.cpp catch_main.cpp
 
 rdkit_catch_test(graphmolSGroupCatch catch_sgroups.cpp  catch_main.cpp
            LINK_LIBRARIES SmilesParse GraphMol )
+
+rdkit_catch_test(chiralityTestsCatch catch_chirality.cpp catch_main.cpp
+           LINK_LIBRARIES FileParsers SmilesParse GraphMol )
+
