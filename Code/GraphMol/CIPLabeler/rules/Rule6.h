@@ -20,10 +20,7 @@ namespace CIPLabeler {
  */
 class Rule6 : public SequenceRule {
 public:
-  Rule6() = delete;
-  Rule6(const CIPMol *mol);
-
-  bool isPseudoAsymmetric() const override;
+  Rule6();
 
   int compare(const Edge *a, const Edge *b) const override;
 };

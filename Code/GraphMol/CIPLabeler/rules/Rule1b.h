@@ -24,19 +24,18 @@ namespace CIPLabeler {
  *
  */
 class Rule1b : public SequenceRule {
+
+public:
+  Rule1b();
+
+  int compare(const Edge *a, const Edge *b) const override;
+
   /**
    * Flag indicates whether to match the problematic
    * IUPAC 2013 recommendations for Rule 1B.
    */
 private:
   static const bool IUPAC_2013 = false;
-
-public:
-  Rule1b() = delete;
-
-  Rule1b(const CIPMol *mol);
-
-  int compare(const Edge *a, const Edge *b) const override;
 };
 
 } // namespace CIPLabeler

@@ -15,7 +15,7 @@
 namespace RDKit {
 namespace CIPLabeler {
 
-Rule1a::Rule1a(const CIPMol *mol) : SequenceRule(mol) {}
+Rule1a::Rule1a() = default;
 
 int Rule1a::compare(const Edge *a, const Edge *b) const {
   const auto afrac = a->getEnd()->getAtomicNumFraction();
@@ -23,7 +23,8 @@ int Rule1a::compare(const Edge *a, const Edge *b) const {
   if (afrac.numerator() == 0 || bfrac.numerator() == 0) {
     return 0;
   }
-  return afrac.compareTo(bfrac);
+
+  return three_way_comparison(afrac, bfrac);
 }
 
 } // namespace CIPLabeler

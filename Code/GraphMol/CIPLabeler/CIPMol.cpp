@@ -16,55 +16,62 @@
 namespace RDKit {
 namespace CIPLabeler {
 
-CIPMol::CIPMol(ROMol *mol) : mol{mol} {}
+CIPMol::CIPMol(ROMol *mol) : dp_mol{mol} {}
 
-Fraction CIPMol::getFractionalAtomicNum(Atom *atom) const {
+boost::rational<int> CIPMol::getFractionalAtomicNum(Atom *atom) const {
   PRECONDITION(atom, "bad atom")
-  if (atomnums.empty())
-    const_cast<CIPMol *>(this)->atomnums = calcFracAtomNums(this);
-  return atomnums[atom->getIdx()];
+  if (d_atomnums.empty())
+    const_cast<CIPMol *>(this)->d_atomnums = calcFracAtomNums(*this);
+  return d_atomnums[atom->getIdx()];
 }
 
-unsigned CIPMol::getNumAtoms() const { return mol->getNumAtoms(); }
+unsigned CIPMol::getNumAtoms() const { return dp_mol->getNumAtoms(); }
 
-unsigned CIPMol::getNumBonds() const { return mol->getNumBonds(); };
+unsigned CIPMol::getNumBonds() const { return dp_mol->getNumBonds(); };
 
-Atom *CIPMol::getAtom(int idx) const { return mol->getAtomWithIdx(idx); };
+Atom *CIPMol::getAtom(int idx) const { return dp_mol->getAtomWithIdx(idx); };
 
-CXXAtomIterator<MolGraph, Atom *> CIPMol::atoms() const { return mol->atoms(); }
+CXXAtomIterator<MolGraph, Atom *> CIPMol::atoms() const {
+  return dp_mol->atoms();
+}
 
-Bond *CIPMol::getBond(int idx) const { return mol->getBondWithIdx(idx); };
+Bond *CIPMol::getBond(int idx) const { return dp_mol->getBondWithIdx(idx); };
 
 CIPMolIterator<Bond *, ROMol::OEDGE_ITER> CIPMol::getBonds(Atom *atom) const {
-  return {mol, mol->getAtomBonds(atom)};
+  return {dp_mol, dp_mol->getAtomBonds(atom)};
 }
 
 CIPMolIterator<Atom *, ROMol::ADJ_ITER> CIPMol::getNeighbors(Atom *atom) const {
-  return {mol, mol->getAtomNeighbors(atom)};
+  return {dp_mol, dp_mol->getAtomNeighbors(atom)};
 }
 
 bool CIPMol::isInRing(Bond *bond) const {
-  const auto rings = mol->getRingInfo();
+  const auto rings = dp_mol->getRingInfo();
 
   if (!rings->isInitialized()) {
-    MolOps::findSSSR(*mol);
+    MolOps::fastFindRings(*dp_mol);
   }
 
   return rings->numBondRings(bond->getIdx()) != 0u;
 };
 
 int CIPMol::getBondOrder(Bond *bond) const {
-  if (kekulized_mol == nullptr) {
-    auto tmp = new RWMol(*mol);
+  if (dp_kekulized_mol == nullptr) {
+    auto tmp = new RWMol(*dp_mol);
     MolOps::Kekulize(*tmp);
-    const_cast<CIPMol *>(this)->kekulized_mol.reset(tmp);
+    const_cast<CIPMol *>(this)->dp_kekulized_mol.reset(tmp);
   }
 
-  const auto kekulized_bond = kekulized_mol->getBondWithIdx(bond->getIdx());
+  const auto kekulized_bond = dp_kekulized_mol->getBondWithIdx(bond->getIdx());
+
+  // Dative bonds might need to be considered with a different bond order
+  // for the end atom at the end of the bond.
   switch (kekulized_bond->getBondType()) {
   case Bond::ZERO:
   case Bond::HYDROGEN:
   case Bond::DATIVE:
+  case Bond::DATIVEL:
+  case Bond::DATIVER:
     return 0;
   case Bond::SINGLE:
     return 1;

@@ -1,40 +1,32 @@
 # New CIP labelling
 
 This is a C++ port of https://github.com/SiMolecule/centres, which was
-originally written by John Mayfied in Java. The port is originally written
-ontop of RDKit, but maintains the abstraction layer present in the orignal
-version, so that it should be possible to write adapt it to other frameworks
-by writing appropriate Molecule and Labeller classes, and some tests (the ones
-included are RDKit-specific).
+originally written by John Mayfied in Java. The orignal algorithm was
+described in:
 
-Currently, this is in a quite un-optimized state, as I wanted to start with
-code as close as possible to the original until some testing is available.
+Hanson, R. M., Musacchio, S., Mayfield, J. W., Vainio, M. J., Yerin, A., Redkin, D. Algorithmic Analysis of Cahn−Ingold−Prelog Rules of Stereochemistry: Proposals for Revised Rules and a Guide for Machine Implementation. J. Chem. Inf. Model. 2018, 58, 1755-1765.
+
 
 ### A couple of remarks:
 - This does not perceive potential stereochemical configurations in the
 molecule: the input already needs to have information on which atoms/bonds
 should be labeled. Also, for resolution of tetrahedral chirality, the parity
 of the atoms is required, and for double bond stereochemistry, the bond must
-already be labeled as cis or trans, and both "anchors" must be known.
+have the appropriate bond directions set on the neighboring bonds.
 
 - This does not provide CIP rank information on, e.g., neighbors around a
 chiral center.
 
 - The input molecule does not require all Hydrogens to be explicit, the code
-will take them into account appropriately, although the queries for atomic
-and mass numbers of those will be handed down to the molecule class by passing
-a nullptr atom to the appropriate methods.
+will take them into account appropriately.
+
+- Stereochemical labels will be applied by setting the "_CIPCode" property
+on the relevant atoms and bonds.
 
 ### Some potential points of improvement might be:
 - Implement the stereo configuration modes that haven't been ported yet
 (atropoisomery, Square planar, extended tetrahedral & cis/trans...). These
-haven't been ported yed because RDKit cannot perceive these (or does it?).
-
-- Handle atomic and mass numbers of implicit Hydrogens in the BaseMol class
-instead of handing them down to the framework molecule class.
-
-- Improve/remove the templates system, so that it isn't necessary to implement
-everything in headers.
+haven't been ported yed because RDKit cannot perceive these.
 
 - Digraph generation/handling. It might be useful to improve the way nodes,
 edges and the digraph itself are handled, so that they don't need to be passed

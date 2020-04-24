@@ -10,7 +10,10 @@
 //
 #pragma once
 
+#include <list>
 #include <vector>
+
+#include "boost/rational.hpp"
 
 #include "TooManyNodesException.hpp"
 
@@ -34,27 +37,19 @@ class CIPMol;
  *
  */
 class Digraph {
-private:
-  CIPMol *mol = nullptr;
-  Node *root = nullptr;
-  Node *tmproot = nullptr;
-  int numNodes = 0;
-  Atom *rule6Ref = nullptr;
-
-  void addEdge(Node *beg, Bond *bond, Node *end);
 
 public:
-  Digraph();
-  Digraph(CIPMol *mol);
-  Digraph(CIPMol *mol, Atom *atom);
+  Digraph() = delete;
+  Digraph(const Digraph &) = delete;
+  Digraph &operator=(const Digraph &) = delete;
 
-  ~Digraph();
+  Digraph(const CIPMol &mol, Atom *atom);
 
-  CIPMol *getMol() const;
+  const CIPMol &getMol() const;
 
-  Node *getRoot() const;
+  Node *getOriginRoot() const;
 
-  Node *getCurrRoot() const;
+  Node *getCurrentRoot() const;
 
   int getNumNodes() const;
 
@@ -71,8 +66,6 @@ public:
    */
   void setRule6Ref(Atom *ref);
 
-  Node *init(Atom *atom);
-
   /**
    * Sets the root node of this digraph by flipping the directions
    * of edges as required.
@@ -83,7 +76,27 @@ public:
 
   void expand(Node *beg);
 
-  void expandAll();
+  Node &addNode(std::vector<char> &&visit, Atom *atom,
+                boost::rational<int> &&frac, int dist, int flags);
+
+private:
+  const CIPMol &d_mol;
+
+  // The node from which the Digraph is first initialized.
+  // It matches the atom that is being labeled.
+  Node *dp_origin = nullptr;
+
+  // The current root of the Digraph
+  Node *dp_root = nullptr;
+
+  Atom *dp_rule6Ref = nullptr;
+
+  // We can't store these in a vector, as adding new items will
+  // cause it to reallocate and invalidate the references
+  std::list<Node> d_nodes;
+  std::list<Edge> d_edges;
+
+  void addEdge(Node *beg, Bond *bond, Node *end);
 };
 
 } // namespace CIPLabeler

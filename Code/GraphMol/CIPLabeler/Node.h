@@ -54,29 +54,12 @@ public:
    */
   static const int IMPL_HYDROGEN = 0x8;
 
-private:
-  Digraph *g;
-  Atom *atom;
-  int dist;
-  Fraction d_atomic_num;
-  Descriptor aux = Descriptor::NONE;
-  int flags = 0x0;
-
-  std::vector<Edge *> edges;
-
-  Node *newTerminalChild(int idx, Atom *atom, int flags) const;
-
-public:
-  std::vector<char> visit;
-
   Node() = delete;
   Node(const Node &) = delete;
   Node &operator=(const Node &) = delete;
 
-  Node(Digraph *g, std::vector<char> &&visit, Atom *atom, Fraction &&frac,
-       int dist, int flags);
-
-  ~Node();
+  Node(Digraph *g, std::vector<char> &&visit, Atom *atom,
+       boost::rational<int> &&frac, int dist, int flags);
 
   Digraph *getDigraph() const;
 
@@ -84,7 +67,7 @@ public:
 
   int getDistance() const;
 
-  Fraction getAtomicNumFraction() const;
+  boost::rational<int> getAtomicNumFraction() const;
 
   int getAtomicNum() const;
 
@@ -99,6 +82,8 @@ public:
   bool isTerminal() const;
 
   bool isExpanded() const;
+
+  bool isVisited(int idx) const;
 
   Node *newChild(int idx, Atom *atom) const;
 
@@ -116,9 +101,21 @@ public:
 
   std::vector<Edge *> getEdges(Atom *end) const;
 
-  std::vector<Edge *> getOutEdges() const;
-
   std::vector<Edge *> getNonTerminalOutEdges() const;
+
+private:
+  Digraph *dp_g;
+  Atom *dp_atom;
+  int d_dist;
+  boost::rational<int> d_atomic_num;
+  Descriptor d_aux = Descriptor::NONE;
+  int d_flags = 0x0;
+
+  std::vector<Edge *> d_edges;
+
+  std::vector<char> d_visit;
+
+  Node *newTerminalChild(int idx, Atom *atom, int flags) const;
 };
 
 } // namespace CIPLabeler

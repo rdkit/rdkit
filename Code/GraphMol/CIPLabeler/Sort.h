@@ -21,13 +21,12 @@ class Edge;
 class Node;
 
 /**
- * A simple insertion sort for ligands. The number of ligands is not likely to
+ * A simple insertion sort for substituents. The number of substituents is not
+ * likely to
  * be very larger as such doing a merge sort would have little benefit.
  *
  */
 class Sort {
-private:
-  const std::vector<const SequenceRule *> rules;
 
 public:
   Sort(const SequenceRule *comparator);
@@ -41,13 +40,14 @@ public:
   Priority prioritise(const Node *node, std::vector<Edge *> &edges,
                       bool deep) const;
 
-  int compareLigands(const Node *node, const Edge *a, const Edge *b,
-                     bool deep) const;
-
-  void swap(std::vector<Edge *> &list, int i, int j) const;
-
   std::vector<std::vector<Edge *>>
   getGroups(const std::vector<Edge *> &sorted) const;
+
+private:
+  const std::vector<const SequenceRule *> d_rules;
+
+  int compareSubstituents(const Node *node, const Edge *a, const Edge *b,
+                          bool deep) const;
 }; // namespace CIPLabeler
 
 } // namespace CIPLabeler

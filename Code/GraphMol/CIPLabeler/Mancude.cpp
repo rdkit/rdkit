@@ -17,7 +17,9 @@
 /// are always resolved in the same way
 ///
 
+#include <list>
 #include <vector>
+
 #include "Mancude.h"
 #include "CIPMol.h"
 
@@ -25,52 +27,34 @@ namespace RDKit {
 
 namespace CIPLabeler {
 
-int Fraction::compare(int anum, int aden, int bnum, int bden) {
-  unsigned long x = anum * bden;
-  unsigned long y = bnum * aden;
-
-  return x < y ? -1 : (x == y ? 0 : 1);
-}
-
-Fraction::Fraction(int num) : d_numerator{num} {}
-
-Fraction::Fraction(int num, int den) : d_numerator{num}, d_denominator{den} {}
-
-int Fraction::numerator() const { return d_numerator; }
-
-int Fraction::denominator() const { return d_denominator; }
-
-int Fraction::compareTo(const Fraction &o) const {
-  return compare(this->d_numerator, this->d_denominator, o.d_numerator,
-                 o.d_denominator);
-}
-
 namespace {
 
-bool SeedTypes(std::vector<Type> &types, const CIPMol *mol) {
+// Initialize atom types for ring atoms, looking at connectivity,
+// bond orders, atomic number and charge.
+bool SeedTypes(std::vector<Type> &types, const CIPMol &mol) {
   bool result = false;
-  for (const auto &atom : mol->atoms()) {
+  for (const auto &atom : mol.atoms()) {
     const int aidx = atom->getIdx();
 
     // check ring
     int btypes = atom->getTotalNumHs();
     bool ring = false;
-    for (const auto &bond : mol->getBonds(atom)) {
-      switch (mol->getBondOrder(bond)) {
+    for (const auto &bond : mol.getBonds(atom)) {
+
+      // Given the possible types we have, we only care
+      // for single and double bonds which are in rings.
+      switch (mol.getBondOrder(bond)) {
       case 1:
         btypes += 0x00000001;
         break;
       case 2:
         btypes += 0x00000100;
         break;
-      case 3:
-        btypes += 0x00010000;
-        break;
       default:
         btypes += 0x01000000;
         break;
       }
-      if (mol->isInRing(bond)) {
+      if (mol.isInRing(bond)) {
         ring = true;
       }
     }
@@ -81,7 +65,7 @@ bool SeedTypes(std::vector<Type> &types, const CIPMol *mol) {
       case 14: // Si
       case 32: // Ge
         if (q == 0 && btypes == 0x0102) {
-          types[aidx] = Type::Cv4D4;
+          types[aidx] = Type::Cv4D3;
         } else if (q == -1 && btypes == 0x0003) {
           types[aidx] = Type::Cv3D3Minus;
           result = true;
@@ -113,13 +97,15 @@ bool SeedTypes(std::vector<Type> &types, const CIPMol *mol) {
   return result;
 }
 
-void RelaxTypes(std::vector<Type> &types, const CIPMol *mol) {
-  auto counts = std::vector<int>(mol->getNumAtoms());
-  auto queue = std::vector<Atom *>();
-
-  for (auto atom : mol->atoms()) {
+// Reset atom types for atoms that have been given a type,
+// but cannot be part of a mancude system (more than one
+// typed neighbor is required for tautomerization to be possible)
+void RelaxTypes(std::vector<Type> &types, const CIPMol &mol) {
+  std::list<Atom *> queue;
+  auto counts = std::vector<int>(mol.getNumAtoms());
+  for (auto atom : mol.atoms()) {
     const auto aidx = atom->getIdx();
-    for (const auto &nbr : mol->getNeighbors(atom)) {
+    for (const auto &nbr : mol.getNeighbors(atom)) {
       if (types[nbr->getIdx()] != Type::Other) {
         ++counts[aidx];
       }
@@ -130,14 +116,13 @@ void RelaxTypes(std::vector<Type> &types, const CIPMol *mol) {
     }
   }
 
-  for (auto pos = 0u; pos < queue.size(); ++pos) {
-    auto atom = queue[0];
-
-    auto aidx = atom->getIdx();
+  for (auto itr = queue.begin(); itr != queue.end(); ++itr) {
+    const auto &atom = *itr;
+    const auto aidx = atom->getIdx();
     if (types[aidx] != Type::Other) {
       types[aidx] = Type::Other;
 
-      for (auto &nbr : mol->getNeighbors(atom)) {
+      for (auto &nbr : mol.getNeighbors(atom)) {
         auto nbridx = nbr->getIdx();
         --counts[nbridx];
         if (counts[nbridx] == 1) {
@@ -148,13 +133,14 @@ void RelaxTypes(std::vector<Type> &types, const CIPMol *mol) {
   }
 }
 
+// Mark mol atoms in the same tautomerizable part of the mol.
 void VisitPart(std::vector<int> &parts, const std::vector<Type> &types,
-               int part, Atom *atom, const CIPMol *mol) {
+               int part, Atom *atom, const CIPMol &mol) {
   Atom *next;
   do {
     next = nullptr;
-    for (auto &bond : mol->getBonds(atom)) {
-      if (!mol->isInRing(bond)) {
+    for (auto &bond : mol.getBonds(atom)) {
+      if (!mol.isInRing(bond)) {
         continue;
       }
 
@@ -174,10 +160,11 @@ void VisitPart(std::vector<int> &parts, const std::vector<Type> &types,
   } while (atom != nullptr);
 }
 
+// Classify mol atoms into different tautomerizable parts of the mol.
 int VisitParts(std::vector<int> &parts, const std::vector<Type> &types,
-               const CIPMol *mol) {
+               const CIPMol &mol) {
   int numparts = 0;
-  for (auto &atom : mol->atoms()) {
+  for (auto &atom : mol.atoms()) {
     int aidx = atom->getIdx();
     if (parts[aidx] == 0 && types[aidx] != Type::Other) {
       parts[aidx] = ++numparts;
@@ -189,12 +176,11 @@ int VisitParts(std::vector<int> &parts, const std::vector<Type> &types,
 
 } // namespace
 
-std::vector<Fraction> calcFracAtomNums(const CIPMol *mol) {
-  const auto num_atoms = mol->getNumAtoms();
-  auto fractions = std::vector<Fraction>();
+std::vector<boost::rational<int>> calcFracAtomNums(const CIPMol &mol) {
+  const auto num_atoms = mol.getNumAtoms();
+  std::vector<boost::rational<int>> fractions;
   fractions.reserve(num_atoms);
-
-  for (const auto &atom : mol->atoms()) {
+  for (const auto &atom : mol.atoms()) {
     fractions.emplace_back(atom->getAtomicNum(), 1);
   }
 
@@ -213,7 +199,7 @@ std::vector<Fraction> calcFracAtomNums(const CIPMol *mol) {
         if (parts[i] == 0) {
           continue;
         }
-        auto atom = mol->getAtom(i);
+        auto atom = mol.getAtom(i);
 
         if (types[i] == Type::Cv3D3Minus || types[i] == Type::Nv2D2Minus) {
           int j = 0;
@@ -227,33 +213,46 @@ std::vector<Fraction> calcFracAtomNums(const CIPMol *mol) {
           }
         }
 
-        fractions[i].d_numerator = 0;
-        fractions[i].d_denominator = 0;
-
-        for (const auto &nbr : mol->getNeighbors(atom)) {
+        int numerator = 0;
+        int denominator = 0;
+        for (const auto &nbr : mol.getNeighbors(atom)) {
           if (parts[nbr->getIdx()] == parts[i]) {
-            fractions[i].d_numerator += nbr->getAtomicNum();
-            ++fractions[i].d_denominator;
+            numerator += nbr->getAtomicNum();
+            ++denominator;
           }
+        }
+
+        // boost::rational does not accept 0 as denominator.
+        if (denominator == 0) {
+          fractions[i].assign(0, 1);
+        } else {
+          fractions[i].assign(numerator, denominator);
         }
       }
     }
 
     if (numres > 0) {
       for (int j = 0; j < numres; ++j) {
-        auto frac = Fraction(0, 0);
+        int numerator = 0;
+        int denominator = 0;
         int part = resparts[j];
         for (auto i = 0u; i < num_atoms; ++i) {
           if (parts[i] == part) {
-            fractions[i] = frac;
-            ++frac.d_denominator;
-            auto atom = mol->getAtom(i);
 
-            for (auto &bond : mol->getBonds(atom)) {
+            // boost::rational does not accept 0 as denominator
+            if (denominator == 0) {
+              fractions[i].assign(0, 1);
+            } else {
+              fractions[i].assign(numerator, denominator);
+            }
+
+            ++denominator;
+            auto atom = mol.getAtom(i);
+            for (auto &bond : mol.getBonds(atom)) {
               auto nbr = bond->getOtherAtom(atom);
-              int bord = mol->getBondOrder(bond);
+              int bord = mol.getBondOrder(bond);
               if (bord > 1 && parts[nbr->getIdx()] == part) {
-                frac.d_numerator += (bord - 1) * nbr->getAtomicNum();
+                numerator += (bord - 1) * nbr->getAtomicNum();
               }
             }
           }

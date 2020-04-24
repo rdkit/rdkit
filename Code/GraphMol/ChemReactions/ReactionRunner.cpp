@@ -146,72 +146,6 @@ class StereoBondEndCap {
     return {{}, swapStereo};
   }
 };
-
-const Atom *findHighestCIPNeighbor(const Atom *atom, const Atom *skipAtom) {
-  PRECONDITION(atom, "bad atom");
-
-  unsigned bestCipRank = 0;
-  const Atom *bestCipRankedAtom = nullptr;
-  const auto &mol = atom->getOwningMol();
-
-  for (const auto &index :
-       boost::make_iterator_range(mol.getAtomNeighbors(atom))) {
-    const auto neighbor = mol[index];
-    if (neighbor == skipAtom) {
-      continue;
-    }
-    unsigned cip = 0;
-    if (!neighbor->getPropIfPresent(common_properties::_CIPRank, cip)) {
-      // If at least one of the atoms doesn't have a CIP rank, the highest rank
-      // does not make sense, so return a nullptr.
-      return nullptr;
-    } else if (cip > bestCipRank || bestCipRankedAtom == nullptr) {
-      bestCipRank = cip;
-      bestCipRankedAtom = neighbor;
-    } else if (cip == bestCipRank) {
-      // This also doesn't make sense if there is a tie (if that's possible).
-      // We still keep the best CIP rank in case something better comes around
-      // (also not sure if that's possible).
-      BOOST_LOG(rdWarningLog)
-          << "Warning: duplicate CIP ranks found in findHighestCIPNeighbor()"
-          << std::endl;
-      bestCipRankedAtom = nullptr;
-    }
-  }
-  return bestCipRankedAtom;
-}
-
-INT_VECT findStereoAtoms(const Bond *bond) {
-  PRECONDITION(bond, "bad bond");
-  PRECONDITION(bond->hasOwningMol(), "no mol");
-  PRECONDITION(bond->getBondType() == Bond::DOUBLE, "not double bond");
-  PRECONDITION(bond->getStereo() > Bond::BondStereo::STEREOANY,
-               "no defined stereo");
-
-  if (!bond->getStereoAtoms().empty()) {
-    return bond->getStereoAtoms();
-  }
-  if (bond->getStereo() == Bond::BondStereo::STEREOE ||
-      bond->getStereo() == Bond::BondStereo::STEREOZ) {
-    const Atom *startStereoAtom =
-        findHighestCIPNeighbor(bond->getBeginAtom(), bond->getEndAtom());
-    const Atom *endStereoAtom =
-        findHighestCIPNeighbor(bond->getEndAtom(), bond->getBeginAtom());
-
-    if (startStereoAtom == nullptr || endStereoAtom == nullptr) {
-      return {};
-    }
-
-    int startStereoAtomIdx = static_cast<int>(startStereoAtom->getIdx());
-    int endStereoAtomIdx = static_cast<int>(endStereoAtom->getIdx());
-
-    return {startStereoAtomIdx, endStereoAtomIdx};
-  } else {
-    BOOST_LOG(rdWarningLog) << "Unable to assign stereo atoms for bond "
-                            << bond->getIdx() << std::endl;
-    return {};
-  }
-}
 }  // namespace
 
 bool getReactantMatches(const MOL_SPTR_VECT &reactants,
@@ -552,7 +486,7 @@ void forwardReactantBondStereo(ReactantProductAtomMapping *mapping, Bond *pBond,
 
   const Atom *rStart = rBond->getBeginAtom();
   const Atom *rEnd = rBond->getEndAtom();
-  const auto rStereoAtoms = findStereoAtoms(rBond);
+  const auto rStereoAtoms = MolOps::findStereoAtoms(rBond);
   if (rStereoAtoms.size() != 2) {
     BOOST_LOG(rdWarningLog)
         << "WARNING: neither stereo atoms nor CIP codes found for double bond. "

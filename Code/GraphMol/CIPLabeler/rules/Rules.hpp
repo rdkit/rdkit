@@ -20,21 +20,18 @@ namespace RDKit {
 namespace CIPLabeler {
 
 class Rules : public SequenceRule {
-private:
-  static const bool SORT_BRANCHES_WITH_RULE5 = false;
-  std::vector<const SequenceRule *> rules;
 
 public:
   Rules() = delete;
 
-  Rules(std::initializer_list<SequenceRule *> rules) : SequenceRule(nullptr) {
+  Rules(std::initializer_list<SequenceRule *> rules) {
     for (auto &rule : rules) {
       add(rule);
     }
   }
 
   ~Rules() {
-    for (auto &rule : rules) {
+    for (auto &rule : d_rules) {
       delete rule;
     }
   }
@@ -43,34 +40,23 @@ public:
     if (rule == nullptr) {
       throw std::runtime_error("No sequence rule provided");
     }
-    rules.push_back(rule);
-    rule->setSorter(new Sort(rules));
+    d_rules.push_back(rule);
+    rule->setSorter(new Sort(d_rules));
   }
 
-  int getNumSubRules() const override { return rules.size(); }
+  int getNumSubRules() const { return d_rules.size(); }
 
   const Sort *getSorter() const override {
-    if (this->sorter == nullptr) {
+    if (dp_sorter == nullptr) {
       const_cast<Rules *>(this)->setSorter(new Sort(this));
     }
-    return this->sorter.get();
-  }
-
-  const CIPMol *getMol() const override {
-    const CIPMol *res = nullptr;
-    for (const auto &rule : rules) {
-      res = rule->getMol();
-      if (res != nullptr) {
-        break;
-      }
-    }
-    return res;
+    return dp_sorter.get();
   }
 
   int compare(const Edge *o1, const Edge *o2) const override {
     // Try using each rules. The rules will expand the search exhaustively
-    // to all child ligands
-    for (const auto &rule : rules) {
+    // to all child substituents
+    for (const auto &rule : d_rules) {
       // compare expands exhaustively across the whole graph
       int value = rule->recursiveCompare(o1, o2);
       if (value != 0) {
@@ -84,8 +70,8 @@ public:
     (void)deep;
 
     // Try using each rules. The rules will expand the search exhaustively
-    // to all child ligands
-    for (const auto &rule : rules) {
+    // to all child substituents
+    for (const auto &rule : d_rules) {
       // compare expands exhaustively across the whole graph
       int value = rule->recursiveCompare(a, b);
 
@@ -96,6 +82,9 @@ public:
 
     return 0;
   }
+
+private:
+  std::vector<const SequenceRule *> d_rules;
 };
 
 } // namespace CIPLabeler

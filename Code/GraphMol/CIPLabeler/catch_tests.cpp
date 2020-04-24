@@ -12,6 +12,7 @@
                           // this in one cpp file
 
 #include <bitset>
+#include <list>
 #include <string>
 #include <vector>
 
@@ -100,43 +101,7 @@ TEST_CASE("Descriptor lists", "[accurateCIP]") {
     CHECK("01101110100000000000000000000000" ==
           toBinaryString(descriptors.getPairing()));
   }
-  SECTION("Append Empty") {
-    descriptors.add(Descriptor::R);
-    descriptors.add(Descriptor::R);
-    descriptors.add(Descriptor::S);
-    descriptors.add(Descriptor::R);
 
-    const auto tmp = std::vector<PairList>(1);
-    const auto lists = descriptors.append(tmp);
-    REQUIRE(1u == lists.size());
-    CHECK(descriptors.getPairing() == lists[0].getPairing());
-  }
-  SECTION("Append") {
-    descriptors.add(Descriptor::R);
-    descriptors.add(Descriptor::R);
-    descriptors.add(Descriptor::S);
-    descriptors.add(Descriptor::R);
-
-    PairList tail1 = PairList();
-    tail1.add(Descriptor::R);
-    tail1.add(Descriptor::S);
-    tail1.add(Descriptor::R);
-
-    PairList tail2 = PairList();
-    tail2.add(Descriptor::S);
-    tail2.add(Descriptor::S);
-    tail2.add(Descriptor::R);
-
-    const auto tmp = std::vector<PairList>({tail1, tail2});
-    const auto created = descriptors.append(tmp);
-
-    REQUIRE(2 == created.size());
-
-    CHECK("01011010000000000000000000000000" ==
-          toBinaryString(created[0].getPairing()));
-    CHECK("01010010000000000000000000000000" ==
-          toBinaryString(created[1].getPairing()));
-  }
   SECTION("pairRM") {
     PairList list1 = PairList();
     PairList list2 = PairList();
@@ -151,25 +116,13 @@ TEST_CASE("Descriptor lists", "[accurateCIP]") {
     CHECK(list1.toString() == "R:llu");
     CHECK(list2.toString() == "R:uul");
   }
-  SECTION("Clear") {
-    PairList descriptors = PairList();
-    descriptors.add(Descriptor::R);
-    descriptors.add(Descriptor::R);
-    descriptors.add(Descriptor::S);
-    descriptors.add(Descriptor::R);
-    descriptors.add(Descriptor::S);
-
-    CHECK(descriptors.getPairing() > 0);
-    descriptors.clear();
-    CHECK(descriptors.getPairing() == 0);
-  }
 }
 
 void check_incoming_edge_count(Node *root) {
-  auto queue = std::vector<Node *>({root});
+  auto queue = std::list<Node *>({root});
 
-  for (auto pos = 0u; pos < queue.size(); ++pos) {
-    const auto node = queue[pos];
+  for (auto itr = queue.begin(); itr != queue.end(); ++itr) {
+    const auto &node = *itr;
 
     int incoming_edges = 0;
     for (const auto &e : node->getEdges()) {
@@ -191,32 +144,59 @@ void check_incoming_edge_count(Node *root) {
   }
 }
 
+void expandAll(Digraph &g) {
+  auto queue = std::list<Node *>({g.getOriginRoot()});
+
+  for (auto itr = queue.begin(); itr != queue.end(); ++itr) {
+    const auto &node = *itr;
+
+    for (const auto &e : node->getEdges()) {
+      if (!e->isBeg(node)) {
+        continue;
+      }
+      if (!e->getEnd()->isTerminal()) {
+        queue.push_back(e->getEnd());
+      }
+    }
+  }
+}
+
 TEST_CASE("Digraph", "[accurateCIP]") {
-  auto mol = R"(CC\C(\C(\C)=N\O)=N\O)"_smiles; // VS013
+  auto mol =
+      R"(CC1(OC2=C(C=3NC[C@@]4(C3C=C2)C([C@@H]5C[C@@]67C(N([C@]5(C4)CN6CC[C@@]7(C)O)C)=O)(C)C)OC=C1)C)"_smiles; // VS040
   auto cipmol = CIPLabeler::CIPMol(mol.get());
 
-  auto first_root_idx = 2;
-  auto first_root_atom = cipmol.getAtom(first_root_idx);
+  auto initial_root_idx = 1;
+  auto initial_root_atom = cipmol.getAtom(initial_root_idx);
 
-  auto g = Digraph(&cipmol, first_root_atom);
-  g.expandAll();
-  REQUIRE(g.getNumNodes() == 21);
+  Digraph g(cipmol, initial_root_atom);
+  expandAll(g);
+  REQUIRE(g.getNumNodes() == 3819);
 
-  auto current_root = g.getCurrRoot();
-  REQUIRE(current_root->getAtom()->getIdx() == first_root_idx);
+  auto current_root = g.getCurrentRoot();
+  REQUIRE(current_root->getAtom()->getIdx() == initial_root_idx);
 
   check_incoming_edge_count(current_root);
 
-  auto second_root_idx = 3;
-  auto second_root_atom = cipmol.getAtom(second_root_idx);
-  auto second_root_nodes = g.getNodes(second_root_atom);
-  CHECK(second_root_nodes.size() == 2);
+  auto new_root_idx = 24;
+  auto new_root_atom = cipmol.getAtom(new_root_idx);
+  auto new_root_nodes = g.getNodes(new_root_atom);
+  CHECK(new_root_nodes.size() == 104);
 
-  g.changeRoot(second_root_nodes[0]);
-  REQUIRE(g.getNumNodes() == 21);
+  Node *new_root_node = *new_root_nodes.begin();
+  for (const auto &node : new_root_nodes) {
+    if (!node->isDuplicate() &&
+        node->getDistance() > new_root_node->getDistance()) {
+      new_root_node = node;
+    }
+  }
+  REQUIRE(new_root_node->getDistance() == 25);
 
-  current_root = g.getCurrRoot();
-  REQUIRE(current_root->getAtom()->getIdx() == second_root_idx);
+  g.changeRoot(new_root_node);
+  REQUIRE(g.getNumNodes() == 3819);
+
+  current_root = g.getCurrentRoot();
+  REQUIRE(current_root->getAtom()->getIdx() == new_root_idx);
 
   check_incoming_edge_count(current_root);
 }
@@ -225,14 +205,14 @@ TEST_CASE("Rule1a", "[accurateCIP]") {
   SECTION("Compare equal") {
     auto mol = "COC"_smiles;
     auto cipmol = CIPLabeler::CIPMol(mol.get());
-    auto g = Digraph(&cipmol, cipmol.getAtom(1));
-    auto origin = g.getRoot();
+    Digraph g(cipmol, cipmol.getAtom(1));
+    auto origin = g.getOriginRoot();
 
     auto frac = origin->getAtomicNumFraction();
     REQUIRE(frac.numerator() == 8);
     REQUIRE(frac.denominator() == 1);
 
-    Rule1a rule(&cipmol);
+    Rule1a rule;
 
     auto edges = origin->getEdges();
     REQUIRE(edges.size() == 2);
@@ -246,14 +226,14 @@ TEST_CASE("Rule1a", "[accurateCIP]") {
   SECTION("Compare different") {
     auto mol = "CON"_smiles;
     auto cipmol = CIPLabeler::CIPMol(mol.get());
-    auto g = Digraph(&cipmol, cipmol.getAtom(1));
-    auto origin = g.getRoot();
+    Digraph g(cipmol, cipmol.getAtom(1));
+    auto origin = g.getOriginRoot();
 
     auto frac = origin->getAtomicNumFraction();
     REQUIRE(frac.numerator() == 8);
     REQUIRE(frac.denominator() == 1);
 
-    Rule1a rule(&cipmol);
+    Rule1a rule;
 
     auto edges = origin->getEdges();
     REQUIRE(edges.size() == 2);
@@ -278,14 +258,14 @@ TEST_CASE("Rule2", "[accurateCIP]") {
   SECTION("Compare equal") {
     auto mol = "COC"_smiles;
     auto cipmol = CIPLabeler::CIPMol(mol.get());
-    auto g = Digraph(&cipmol, cipmol.getAtom(1));
-    auto origin = g.getRoot();
+    Digraph g(cipmol, cipmol.getAtom(1));
+    auto origin = g.getOriginRoot();
 
     auto frac = origin->getAtomicNumFraction();
     REQUIRE(frac.numerator() == 8);
     REQUIRE(frac.denominator() == 1);
 
-    Rule2 rule(&cipmol);
+    Rule2 rule;
 
     auto edges = origin->getEdges();
     REQUIRE(edges.size() == 2);
@@ -299,14 +279,14 @@ TEST_CASE("Rule2", "[accurateCIP]") {
   SECTION("Compare different: Zero Mass Num") {
     auto mol = "CO[13C]"_smiles;
     auto cipmol = CIPLabeler::CIPMol(mol.get());
-    auto g = Digraph(&cipmol, cipmol.getAtom(1));
-    auto origin = g.getRoot();
+    Digraph g(cipmol, cipmol.getAtom(1));
+    auto origin = g.getOriginRoot();
 
     auto frac = origin->getAtomicNumFraction();
     REQUIRE(frac.numerator() == 8);
     REQUIRE(frac.denominator() == 1);
 
-    Rule2 rule(&cipmol);
+    Rule2 rule;
 
     auto edges = origin->getEdges();
     REQUIRE(edges.size() == 2);
@@ -324,14 +304,14 @@ TEST_CASE("Rule2", "[accurateCIP]") {
   SECTION("Compare different: Non-Zero Mass Num") {
     auto mol = "[13C]O[14C]"_smiles;
     auto cipmol = CIPLabeler::CIPMol(mol.get());
-    auto g = Digraph(&cipmol, cipmol.getAtom(1));
-    auto origin = g.getRoot();
+    Digraph g(cipmol, cipmol.getAtom(1));
+    auto origin = g.getOriginRoot();
 
     auto frac = origin->getAtomicNumFraction();
     REQUIRE(frac.numerator() == 8);
     REQUIRE(frac.denominator() == 1);
 
-    Rule2 rule(&cipmol);
+    Rule2 rule;
 
     auto edges = origin->getEdges();
     REQUIRE(edges.size() == 2);
@@ -384,36 +364,4 @@ TEST_CASE("Double bond stereo assignment", "[accurateCIP]") {
   CHECK(bond_2->getPropIfPresent(common_properties::_CIPCode, chirality) ==
         true);
   CHECK(chirality == "Z");
-}
-
-TEST_CASE("RDKit Issues", "[accurateCIP]") {
-  SECTION("Issue #2984") {
-    // RDKit doesn't see this stereo labels, so calculating stereo
-    // will wipe this chirality and bond directions
-    auto debugParse = false;
-    auto sanitize = false;
-    auto mol = SmilesToMol(R"(CC/C=C1\C[C@H](O)C1)", debugParse, sanitize);
-    REQUIRE(mol->getNumAtoms() == 8);
-    MolOps::sanitizeMol(*mol);
-
-    auto bond = mol->getBondWithIdx(2);
-    REQUIRE(bond->getBondType() == Bond::DOUBLE);
-    REQUIRE(bond->getStereo() == Bond::STEREONONE);
-    REQUIRE(mol->getBondWithIdx(1)->getBondDir() == Bond::ENDUPRIGHT);
-    REQUIRE(mol->getBondWithIdx(3)->getBondDir() == Bond::ENDDOWNRIGHT);
-
-    auto atom = mol->getAtomWithIdx(5);
-    REQUIRE(atom->getChiralTag() == Atom::CHI_TETRAHEDRAL_CCW);
-
-    CIPLabeler::assignCIPLabels(*mol);
-
-    std::string chirality;
-    CHECK(bond->getPropIfPresent(common_properties::_CIPCode, chirality) ==
-          true);
-    CHECK(chirality == "z");
-
-    CHECK(atom->getPropIfPresent(common_properties::_CIPCode, chirality) ==
-          true);
-    CHECK(chirality == "R");
-  }
 }

@@ -14,26 +14,24 @@ namespace RDKit {
 namespace CIPLabeler {
 
 /**
- * Holds some properties that are determined when sorting/prioritising ligands.
+ * Holds some properties that are determined when sorting/prioritising
+ * substituents.
  *
  */
 class Priority {
-private:
-  bool unique;
-  bool pseudoAsym;
 
 public:
   Priority() = delete;
 
   Priority(bool unique, bool pseudoAsym)
-      : unique{unique}, pseudoAsym{pseudoAsym} {}
+      : d_unique{unique}, d_pseudoAsym{pseudoAsym} {}
 
   /**
-   * Indicates whether the ligands were unique (i.e. could be ordered)
+   * Indicates whether the substituents were unique (i.e. could be ordered)
    *
-   * @return whether the ligands were unique
+   * @return whether the substituents were unique
    */
-  bool isUnique() const { return unique; }
+  bool isUnique() const { return d_unique; }
 
   /**
    * Indicates the descriptor type used to. This allows methods that represent
@@ -42,7 +40,11 @@ public:
    *
    * @return The type of the descriptor that should be assigned
    */
-  bool isPseudoAsymetric() const { return pseudoAsym; }
+  bool isPseudoAsymetric() const { return d_pseudoAsym; }
+
+private:
+  bool d_unique;
+  bool d_pseudoAsym;
 };
 
 } // namespace CIPLabeler

@@ -14,17 +14,17 @@
 namespace RDKit {
 namespace CIPLabeler {
 
-Rule1b::Rule1b(const CIPMol *mol) : SequenceRule(mol) {}
+Rule1b::Rule1b() = default;
 
 int Rule1b::compare(const Edge *a, const Edge *b) const {
   if (IUPAC_2013) {
-    return -integer_compare(a->getEnd()->getDistance(),
-                            b->getEnd()->getDistance());
+    return -three_way_comparison(a->getEnd()->getDistance(),
+                                 b->getEnd()->getDistance());
   } else {
     if (a->getEnd()->isSet(Node::RING_DUPLICATE) &&
         b->getEnd()->isSet(Node::RING_DUPLICATE)) {
-      return -integer_compare(a->getEnd()->getDistance(),
-                              b->getEnd()->getDistance());
+      return -three_way_comparison(a->getEnd()->getDistance(),
+                                   b->getEnd()->getDistance());
     } else {
       if (a->getEnd()->isSet(Node::RING_DUPLICATE) &&
           !b->getEnd()->isSet(Node::RING_DUPLICATE)) {

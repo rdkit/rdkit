@@ -27,9 +27,7 @@ namespace CIPLabeler {
 class Rule2 : public SequenceRule {
 
 public:
-  Rule2() = delete;
-
-  Rule2(const CIPMol *mol);
+  Rule2();
 
   int compare(const Edge *a, const Edge *b) const override;
 };

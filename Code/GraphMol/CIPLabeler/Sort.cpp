@@ -15,13 +15,13 @@
 namespace RDKit {
 namespace CIPLabeler {
 
-Sort::Sort(const SequenceRule *comparator) : rules{comparator} {}
+Sort::Sort(const SequenceRule *comparator) : d_rules{comparator} {}
 
 Sort::Sort(std::vector<const SequenceRule *> comparators)
-    : rules{std::move(comparators)} {}
+    : d_rules{std::move(comparators)} {}
 
 const std::vector<const SequenceRule *> &Sort::getRules() const {
-  return rules;
+  return d_rules;
 }
 
 Priority Sort::prioritise(const Node *node, std::vector<Edge *> &edges) const {
@@ -35,14 +35,14 @@ Priority Sort::prioritise(const Node *node, std::vector<Edge *> &edges,
 
   for (auto i = 0u; i < edges.size(); ++i)
     for (auto j = i; j > 0; --j) {
-      int cmp = compareLigands(node, edges[j - 1], edges[j], deep);
+      int cmp = compareSubstituents(node, edges[j - 1], edges[j], deep);
 
       if (cmp < -1 || cmp > +1) {
         ++numPseudoAsym;
       }
 
       if (cmp < 0) {
-        swap(edges, j, j - 1);
+        std::swap(edges[j], edges[j - 1]);
       } else {
         if (cmp == 0) {
           unique = false;
@@ -54,8 +54,8 @@ Priority Sort::prioritise(const Node *node, std::vector<Edge *> &edges,
   return Priority(unique, numPseudoAsym == 1);
 }
 
-int Sort::compareLigands(const Node *node, const Edge *a, const Edge *b,
-                         bool deep) const {
+int Sort::compareSubstituents(const Node *node, const Edge *a, const Edge *b,
+                              bool deep) const {
   // ensure 'up' edges are moved to the front
   if (!a->isBeg(node) && b->isBeg(node)) {
     return +1;
@@ -63,7 +63,7 @@ int Sort::compareLigands(const Node *node, const Edge *a, const Edge *b,
     return -1;
   }
 
-  for (const auto &rule : rules) {
+  for (const auto &rule : d_rules) {
     int cmp = rule->getComparision(a, b, deep);
 
     if (cmp != 0) {
@@ -73,21 +73,17 @@ int Sort::compareLigands(const Node *node, const Edge *a, const Edge *b,
   return 0;
 }
 
-void Sort::swap(std::vector<Edge *> &list, int i, int j) const {
-  std::swap(list[i], list[j]);
-}
-
 std::vector<std::vector<Edge *>>
 Sort::getGroups(const std::vector<Edge *> &sorted) const {
   // would be nice to have this integrated whilst sorting - may provide a
   // small speed increase but as most of our lists are small we take use
   // ugly sort then group approach
-  auto groups = std::vector<std::vector<Edge *>>{};
+  std::vector<std::vector<Edge *>> groups;
 
   Edge *prev = nullptr;
   for (auto *edge : sorted) {
     if (prev == nullptr ||
-        compareLigands(prev->getBeg(), prev, edge, true) != 0) {
+        compareSubstituents(prev->getBeg(), prev, edge, true) != 0) {
       groups.emplace_back();
     }
     prev = edge;

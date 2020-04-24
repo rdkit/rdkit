@@ -10,6 +10,7 @@
 //
 
 #include <algorithm>
+#include <list>
 
 #include <RDGeneral/Invariant.h>
 
@@ -21,14 +22,13 @@
 namespace RDKit {
 namespace CIPLabeler {
 
-Rule4b::Rule4b(const CIPMol *mol) : SequenceRule(mol), ref{Descriptor::NONE} {}
+Rule4b::Rule4b() = default;
 
-Rule4b::Rule4b(const CIPMol *mol, Descriptor ref)
-    : SequenceRule(mol), ref{ref} {}
+Rule4b::Rule4b(Descriptor ref) : d_ref{ref} {}
 
 std::vector<Descriptor>
 Rule4b::getReferenceDescriptors(const Node *node) const {
-  auto result = std::vector<Descriptor>();
+  std::vector<Descriptor> result;
   auto prev = initialLevel(node);
   while (!prev.empty()) {
     for (const auto &nodes : prev) {
@@ -42,17 +42,21 @@ Rule4b::getReferenceDescriptors(const Node *node) const {
 }
 
 int Rule4b::compare(const Edge *a, const Edge *b) const {
-  if (a->getBeg()->getDigraph()->getCurrRoot() != a->getBeg() ||
-      b->getBeg()->getDigraph()->getCurrRoot() != b->getBeg()) {
-    if (ref == Descriptor::NONE) {
+  const auto &aBeg = a->getBeg();
+  const auto &aEnd = a->getEnd();
+  const auto &bBeg = b->getBeg();
+  const auto &bEnd = b->getEnd();
+  if (aBeg->getDigraph()->getCurrentRoot() != aBeg ||
+      bBeg->getDigraph()->getCurrentRoot() != bBeg) {
+    if (d_ref == Descriptor::NONE) {
       return 0;
     }
-    Descriptor aDesc = a->getEnd()->getAux();
-    Descriptor bDesc = b->getEnd()->getAux();
+    Descriptor aDesc = aEnd->getAux();
+    Descriptor bDesc = bEnd->getAux();
     if (aDesc != Descriptor::NONE && bDesc != Descriptor::NONE &&
         aDesc != Descriptor::ns && bDesc != Descriptor::ns) {
-      bool alike = PairList::ref(ref) == PairList::ref(aDesc);
-      bool blike = PairList::ref(ref) == PairList::ref(bDesc);
+      bool alike = PairList::ref(d_ref) == PairList::ref(aDesc);
+      bool blike = PairList::ref(d_ref) == PairList::ref(bDesc);
       if (alike && !blike) {
         return +1;
       }
@@ -62,22 +66,23 @@ int Rule4b::compare(const Edge *a, const Edge *b) const {
     }
     return 0;
   } else {
-    auto list1 = newPairLists(getReferenceDescriptors(a->getEnd()));
+    auto list1 = newPairLists(getReferenceDescriptors(aEnd));
 
-    auto list2 = newPairLists(getReferenceDescriptors(b->getEnd()));
+    auto list2 = newPairLists(getReferenceDescriptors(bEnd));
 
     if (list1.empty() != list2.empty()) {
-      throw std::runtime_error("Ligands should be topologically equivalent!");
+      throw std::runtime_error(
+          "Substituents should be topologically equivalent!");
     }
     if (list1.size() == 1) {
-      return comparePairs(a->getEnd(), b->getEnd(), list1[0].getRefDescriptor(),
+      return comparePairs(aEnd, bEnd, list1[0].getRefDescriptor(),
                           list2[0].getRefDescriptor());
     } else if (list1.size() > 1) {
       for (auto &plist : list1) {
-        fillPairs(a->getEnd(), plist);
+        fillPairs(aEnd, plist);
       }
       for (auto &plist : list2) {
-        fillPairs(b->getEnd(), plist);
+        fillPairs(bEnd, plist);
       }
 
       std::sort(list1.rbegin(), list1.rend());
@@ -95,19 +100,19 @@ int Rule4b::compare(const Edge *a, const Edge *b) const {
 }
 
 bool Rule4b::hasDescriptors(const Node *node) const {
-  auto queue = std::vector<const Node *>({node});
+  auto queue = std::list<const Node *>({node});
 
-  for (auto pos = 0u; pos < queue.size(); ++pos) {
-    const auto n = queue[pos];
+  for (auto itr = queue.begin(); itr != queue.end(); ++itr) {
+    const auto &node = *itr;
 
-    if (n->getAux() != Descriptor::NONE) {
+    if (node->getAux() != Descriptor::NONE) {
       return true;
     }
-    for (const auto &e : n->getEdges()) {
-      if (e->getEnd() == n) {
+    for (const auto &e : node->getEdges()) {
+      if (e->getEnd() == node) {
         continue;
       }
-      if (this->getBondLabel(e) != Descriptor::NONE) {
+      if (getBondLabel(e) != Descriptor::NONE) {
         return true;
       }
       queue.push_back(e->getEnd());
@@ -161,15 +166,15 @@ Rule4b::initialLevel(const Node *node) const {
 
 std::vector<std::vector<const Node *>> Rule4b::getNextLevel(
     const std::vector<std::vector<const Node *>> &prevLevel) const {
-  auto nextLevel = std::vector<std::vector<const Node *>>();
+  std::vector<std::vector<const Node *>> nextLevel;
   nextLevel.reserve(4 * prevLevel.size());
 
   for (const auto &prev : prevLevel) {
-    auto tmp = std::vector<std::vector<std::vector<Edge *>>>();
+    std::vector<std::vector<std::vector<Edge *>>> tmp;
     for (const auto &node : prev) {
       auto edges = node->getNonTerminalOutEdges();
-      this->sort(node, edges);
-      tmp.push_back(this->getSorter()->getGroups(edges));
+      sort(node, edges);
+      tmp.push_back(getSorter()->getGroups(edges));
     }
 
     // check sizes
@@ -184,7 +189,7 @@ std::vector<std::vector<const Node *>> Rule4b::getNextLevel(
     }
 
     for (int i = 0; i < size; ++i) {
-      auto eq = std::vector<const Node *>();
+      std::vector<const Node *> eq;
       for (const auto &aTmp : tmp) {
         auto tmpNodes = toNodeList(aTmp[i]);
         eq.insert(eq.end(), tmpNodes.begin(), tmpNodes.end());
@@ -199,42 +204,18 @@ std::vector<std::vector<const Node *>> Rule4b::getNextLevel(
 
 std::vector<const Node *>
 Rule4b::toNodeList(const std::vector<Edge *> &eqEdges) const {
-  auto eqNodes = std::vector<const Node *>();
+  std::vector<const Node *> eqNodes;
   eqNodes.reserve(eqEdges.size());
-
   for (const auto &edge : eqEdges) {
     eqNodes.push_back(edge->getEnd());
   }
   return eqNodes;
 }
 
-/**
- * Reduce the number of combinations by not including terminal ligands in
- * the permuting. They can't be stereocentres and so won't contribute the
- * the like / unlike std::vector.
- *
- * @param edges a std::vector of edges
- * @return a std::vector of non-terminal ligands
- */
-std::vector<const Edge *>
-Rule4b::getLigandsToSort(const Node *node,
-                         const std::vector<Edge *> edges) const {
-  auto filtered = std::vector<const Edge *>();
-  for (const auto &edge : edges) {
-    if (edge->isEnd(node) || edge->getEnd()->isTerminal()) {
-      continue;
-    }
-    if (!hasDescriptors(node)) {
-      continue;
-    }
-    filtered.push_back(edge);
-  }
-  return filtered;
-}
-
 std::vector<PairList>
 Rule4b::newPairLists(const std::vector<Descriptor> &descriptors) const {
-  auto pairs = std::vector<PairList>();
+  std::vector<PairList> pairs;
+  pairs.reserve(descriptors.size());
   for (Descriptor descriptor : descriptors) {
     pairs.emplace_back(descriptor);
   }
@@ -242,12 +223,12 @@ Rule4b::newPairLists(const std::vector<Descriptor> &descriptors) const {
 }
 
 void Rule4b::fillPairs(const Node *beg, PairList &plist) const {
-  const Rule4b replacement_rule(this->getMol(), plist.getRefDescriptor());
+  const Rule4b replacement_rule(plist.getRefDescriptor());
   const auto &sorter = getRefSorter(&replacement_rule);
-  auto queue = std::vector<const Node *>({beg});
+  auto queue = std::list<const Node *>({beg});
 
-  for (auto pos = 0u; pos < queue.size(); ++pos) {
-    const auto node = queue[pos];
+  for (auto itr = queue.begin(); itr != queue.end(); ++itr) {
+    const auto &node = *itr;
 
     plist.add(node->getAux());
     auto edges = node->getEdges();
@@ -262,8 +243,8 @@ void Rule4b::fillPairs(const Node *beg, PairList &plist) const {
 
 int Rule4b::comparePairs(const Node *a, const Node *b, Descriptor refA,
                          Descriptor refB) const {
-  const Rule4b replacementA(this->getMol(), refA);
-  const Rule4b replacementB(this->getMol(), refB);
+  const Rule4b replacementA(refA);
+  const Rule4b replacementB(refB);
   const auto &aSorter = getRefSorter(&replacementA);
   const auto &bSorter = getRefSorter(&replacementB);
   auto aQueue = std::vector<const Node *>({a});
@@ -302,7 +283,7 @@ int Rule4b::comparePairs(const Node *a, const Node *b, Descriptor refA,
 }
 
 Sort Rule4b::getRefSorter(const SequenceRule *replacement_rule) const {
-  const auto &rules = this->getSorter()->getRules();
+  const auto &rules = getSorter()->getRules();
 
   CHECK_INVARIANT(std::find(rules.begin(), rules.end(), this) != rules.end(),
                   "Rule4b instance not in rule set");

@@ -16,11 +16,7 @@
 namespace RDKit {
 namespace CIPLabeler {
 
-Rule6::Rule6(const CIPMol *mol) : SequenceRule(mol) {}
-
-bool Rule6::isPseudoAsymmetric() const {
-  return true; // comes after Rule 5 so must be true
-}
+Rule6::Rule6() = default;
 
 int Rule6::compare(const Edge *a, const Edge *b) const {
   const auto &digraph = a->getBeg()->getDigraph();

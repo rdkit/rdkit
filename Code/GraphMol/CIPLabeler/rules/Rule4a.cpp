@@ -14,7 +14,8 @@
 namespace RDKit {
 namespace CIPLabeler {
 
-int Rule4a::ord(Descriptor lab) {
+namespace {
+int ord(Descriptor lab) {
   switch (lab) {
   case Descriptor::UNKNOWN:
   case Descriptor::ns:
@@ -38,19 +39,20 @@ int Rule4a::ord(Descriptor lab) {
     throw std::logic_error("Invalid stereo descriptor");
   }
 }
+}
 
-Rule4a::Rule4a(const CIPMol *mol) : SequenceRule(mol) {}
+Rule4a::Rule4a() = default;
 
 int Rule4a::compare(const Edge *a, const Edge *b) const {
-  int aOrdinal = ord(this->getBondLabel(a));
-  int bOrdinal = ord(this->getBondLabel(b));
-  int cmp = integer_compare(aOrdinal, bOrdinal);
+  int aOrdinal = ord(getBondLabel(a));
+  int bOrdinal = ord(getBondLabel(b));
+  int cmp = three_way_comparison(aOrdinal, bOrdinal);
   if (cmp != 0) {
     return cmp;
   }
   aOrdinal = ord(a->getEnd()->getAux());
   bOrdinal = ord(b->getEnd()->getAux());
-  return integer_compare(aOrdinal, bOrdinal);
+  return three_way_comparison(aOrdinal, bOrdinal);
 }
 
 } // namespace CIPLabeler

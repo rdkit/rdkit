@@ -19,82 +19,75 @@ namespace RDKit {
 namespace CIPLabeler {
 
 Node *Node::newTerminalChild(int idx, Atom *atom, int flags) const {
-  int new_dist = flags & DUPLICATE ? visit[idx] : dist + 1;
-  auto new_visit = std::vector<char>{};
+  int new_dist = flags & DUPLICATE ? d_visit[idx] : d_dist + 1;
+  std::vector<char> new_visit;
 
   if (flags & BOND_DUPLICATE) {
-    auto frac = g->getMol()->getFractionalAtomicNum(this->atom);
+    auto frac = dp_g->getMol().getFractionalAtomicNum(dp_atom);
     if (frac.denominator() > 1) {
-      return new Node(g, std::move(new_visit), atom, std::move(frac), new_dist,
-                      flags);
+      return &dp_g->addNode(std::move(new_visit), atom, std::move(frac),
+                            new_dist, flags);
     }
   }
 
-  auto frac = Fraction(atom ? atom->getAtomicNum() : 1);
-  return new Node(g, std::move(new_visit), atom, std::move(frac), new_dist,
-                  flags);
+  auto atomic_num = atom ? atom->getAtomicNum() : 1;
+  return &dp_g->addNode(std::move(new_visit), atom, atomic_num, new_dist,
+                        flags);
 }
 
-Node::Node(Digraph *g, std::vector<char> &&visit, Atom *atom, Fraction &&frac,
-           int dist, int flags)
-    : g{g}, atom{atom}, dist{dist}, d_atomic_num{std::move(frac)}, flags{flags},
-      visit{std::move(visit)} {
-  if (flags & DUPLICATE) {
-    this->edges.reserve(4);
+Node::Node(Digraph *g, std::vector<char> &&visit, Atom *atom,
+           boost::rational<int> &&frac, int dist, int flags)
+    : dp_g{g}, dp_atom{atom}, d_dist{dist}, d_atomic_num{std::move(frac)},
+      d_flags{flags}, d_visit{std::move(visit)} {
+  if (d_flags & DUPLICATE) {
+    d_edges.reserve(4);
   };
-  if (this->visit.empty() || flags & DUPLICATE) {
-    this->flags |= EXPANDED;
+  if (d_visit.empty() || d_flags & DUPLICATE) {
+    d_flags |= EXPANDED;
   }
 }
 
-Node::~Node() {
-  for (auto &edge : edges) {
-    if (edge->isBeg(this)) {
-      delete edge->getEnd();
-      delete edge;
-    }
-  }
-}
+Digraph *Node::getDigraph() const { return dp_g; }
 
-Digraph *Node::getDigraph() const { return g; }
+Atom *Node::getAtom() const { return dp_atom; }
 
-Atom *Node::getAtom() const { return atom; }
+int Node::getDistance() const { return d_dist; }
 
-int Node::getDistance() const { return dist; }
-
-Fraction Node::getAtomicNumFraction() const { return d_atomic_num; }
+boost::rational<int> Node::getAtomicNumFraction() const { return d_atomic_num; }
 
 int Node::getAtomicNum() const {
-  if (atom == nullptr) {
+  if (dp_atom == nullptr) {
     return 1;
   }
-  return atom->getAtomicNum();
+  return dp_atom->getAtomicNum();
 };
 
 double Node::getMassNum() const {
-  if (atom == nullptr) {
+  if (dp_atom == nullptr) {
     return 0;
   }
-  return atom->getIsotope();
+  return dp_atom->getIsotope();
 }
 
-Descriptor Node::getAux() const { return aux; }
+Descriptor Node::getAux() const { return d_aux; }
 
-bool Node::isSet(int mask) const { return mask & flags; }
+bool Node::isSet(int mask) const { return mask & d_flags; }
 
-bool Node::isDuplicate() const { return flags & DUPLICATE; }
+bool Node::isDuplicate() const { return d_flags & DUPLICATE; }
 
 bool Node::isTerminal() const {
-  return visit.empty() || (isExpanded() && edges.size() == 1);
+  return d_visit.empty() || (isExpanded() && d_edges.size() == 1);
 }
 
-bool Node::isExpanded() const { return flags & EXPANDED; }
+bool Node::isExpanded() const { return d_flags & EXPANDED; }
+
+bool Node::isVisited(int idx) const { return d_visit[idx] != 0; }
 
 Node *Node::newChild(int idx, Atom *atom) const {
-  auto new_visit = visit;
-  new_visit[idx] = static_cast<char>(dist + 1);
-  auto frac = Fraction(atom ? atom->getAtomicNum() : 1);
-  return new Node(g, std::move(new_visit), atom, std::move(frac), dist + 1, 0);
+  auto new_visit = d_visit;
+  new_visit[idx] = static_cast<char>(d_dist + 1);
+  auto atomic_num = atom ? atom->getAtomicNum() : 1;
+  return &dp_g->addNode(std::move(new_visit), atom, atomic_num, d_dist + 1, 0);
 }
 
 Node *Node::newBondDuplicateChild(int idx, Atom *atom) const {
@@ -109,21 +102,21 @@ Node *Node::newImplicitHydrogenChild() const {
   return newTerminalChild(-1, nullptr, IMPL_HYDROGEN);
 }
 
-void Node::add(Edge *e) { edges.push_back(e); }
+void Node::add(Edge *e) { d_edges.push_back(e); }
 
-void Node::setAux(Descriptor desc) { aux = desc; }
+void Node::setAux(Descriptor desc) { d_aux = desc; }
 
 std::vector<Edge *> Node::getEdges() const {
   if (!isExpanded()) {
     auto non_const_this = const_cast<Node *>(this);
-    non_const_this->flags |= EXPANDED;
-    g->expand(non_const_this);
+    non_const_this->d_flags |= EXPANDED;
+    dp_g->expand(non_const_this);
   }
-  return edges;
+  return d_edges;
 }
 
 std::vector<Edge *> Node::getEdges(Atom *end) const {
-  auto res = std::vector<Edge *>();
+  std::vector<Edge *> res;
   for (auto &edge : getEdges()) {
     if (edge->getEnd()->isDuplicate()) {
       continue;
@@ -135,21 +128,12 @@ std::vector<Edge *> Node::getEdges(Atom *end) const {
   return res;
 }
 
-std::vector<Edge *> Node::getOutEdges() const {
-  auto edges = std::vector<Edge *>();
+std::vector<Edge *> Node::getNonTerminalOutEdges() const {
+  std::vector<Edge *> edges;
   for (auto &edge : getEdges()) {
-    if (edge->isBeg(this)) {
+    if (edge->isBeg(this) && !edge->getEnd()->isTerminal()) {
       edges.push_back(edge);
     }
-  }
-  return edges;
-}
-
-std::vector<Edge *> Node::getNonTerminalOutEdges() const {
-  auto edges = std::vector<Edge *>();
-  for (auto &edge : getEdges()) {
-    if (edge->isBeg(this) && !edge->getEnd()->isTerminal())
-      edges.push_back(edge);
   }
   return edges;
 }

@@ -26,32 +26,19 @@ namespace CIPLabeler {
 class CIPMol;
 
 namespace {
-inline int integer_compare(int x, int y) {
+template <typename T> inline int three_way_comparison(const T &x, const T &y) {
   return x < y ? -1 : (x == y ? 0 : 1);
 }
 } // namespace
 
 class SequenceRule {
-private:
-  const CIPMol *mol;
-
-protected:
-  std::unique_ptr<const Sort> sorter = nullptr;
 
 public:
-  SequenceRule() = delete;
-
-  SequenceRule(const CIPMol *mol);
+  SequenceRule();
 
   virtual ~SequenceRule();
 
-  virtual const CIPMol *getMol() const;
-
   Descriptor getBondLabel(const Edge *edge) const;
-
-  virtual int getNumSubRules() const;
-
-  virtual bool isPseudoAsymmetric() const;
 
   int getComparision(const Edge *a, const Edge *b) const;
 
@@ -68,6 +55,9 @@ public:
   Priority sort(const Node *node, std::vector<Edge *> &edges) const;
 
   virtual int compare(const Edge *a, const Edge *b) const = 0;
+
+protected:
+  std::unique_ptr<const Sort> dp_sorter = nullptr;
 
 private:
   bool areUpEdges(Node *aNode, Node *bNode, Edge *aEdge, Edge *bEdge) const;

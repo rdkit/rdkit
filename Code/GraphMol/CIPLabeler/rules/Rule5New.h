@@ -21,54 +21,18 @@ namespace CIPLabeler {
  *
  */
 class Rule5New : public SequenceRule {
-private:
-  const Descriptor ref;
 
 public:
-  Rule5New() = delete;
+  Rule5New();
 
-  Rule5New(const CIPMol *mol);
-
-  Rule5New(const CIPMol *mol, Descriptor ref);
-
-  std::vector<Descriptor> getReferenceDescriptors(const Node *node);
+  Rule5New(Descriptor ref);
 
   int compare(const Edge *a, const Edge *b) const override;
 
 private:
-  bool hasDescriptors(const Node *node) const;
-
-  bool getReference(const std::vector<const Node *> &nodes,
-                    std::vector<Descriptor> &result) const;
-
-  bool isPseudoAsymmetric() const override;
-
-  std::vector<std::vector<const Node *>> initialLevel(const Node *node) const;
-
-  std::vector<std::vector<const Node *>>
-  getNextLevel(const std::vector<std::vector<const Node *>> &prevLevel) const;
-
-  std::vector<const Node *>
-  toNodeList(const std::vector<Edge *> &eqEdges) const;
-
-  /**
-   * Reduce the number of combinations by not including terminal ligands in
-   * the permuting. They can't be stereocentres and so won't contribute the
-   * the like / unlike std::vector.
-   *
-   * @param edges a std::vector of edges
-   * @return a std::vector of non-terminal ligands
-   */
-  std::vector<const Edge *>
-  getLigandsToSort(const Node *node, const std::vector<Edge *> edges) const;
-
-  std::vector<PairList>
-  newPairLists(const std::vector<Descriptor> &descriptors) const;
+  const Descriptor d_ref = Descriptor::NONE;
 
   void fillPairs(const Node *beg, PairList &plist) const;
-
-  int comparePairs(const Node *a, const Node *b, Descriptor refA,
-                   Descriptor refB) const;
 
   Sort getRefSorter(const SequenceRule *replacement_rule) const;
 };

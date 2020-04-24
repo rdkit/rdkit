@@ -10,40 +10,37 @@
 //
 
 #include "Tetrahedral.h"
+#include "../rules/Rules.hpp"
 
 namespace RDKit {
 namespace CIPLabeler {
 
-Tetrahedral::Tetrahedral() = default;
+Tetrahedral::Tetrahedral(const CIPMol &mol, Atom *focus,
+                         std::vector<Atom *> &&carriers, int cfg)
+    : Configuration(mol, focus, std::move(carriers), cfg){};
 
-Tetrahedral::Tetrahedral(Atom *focus, std::vector<Atom *> &&carriers, int cfg)
-    : Configuration(focus, std::move(carriers), cfg){};
-
-void Tetrahedral::setPrimaryLabel(CIPMol *mol, Descriptor desc) {
-  mol->setAtomDescriptor(this->getFocus(), CIP_LABEL_KEY, desc);
+void Tetrahedral::setPrimaryLabel(CIPMol &mol, Descriptor desc) {
+  mol.setAtomDescriptor(getFocus(), CIP_LABEL_KEY, desc);
 }
 
-Descriptor Tetrahedral::label(const SequenceRule *comp) {
-  auto digraph = this->getDigraph();
-  auto root = digraph->getRoot();
+Descriptor Tetrahedral::label(const Rules &comp) {
+  auto &digraph = getDigraph();
 
-  if (root == nullptr) {
-    root = digraph->init(this->getFocus());
-  } else {
-    digraph->changeRoot(root);
+  auto root = digraph.getOriginRoot();
+  if (digraph.getCurrentRoot() != root) {
+    digraph.changeRoot(root);
   }
 
   return label(root, comp);
 }
 
-Descriptor Tetrahedral::label(Node *node, Digraph *digraph,
-                              const SequenceRule *comp) {
-  digraph->changeRoot(node);
+Descriptor Tetrahedral::label(Node *node, Digraph &digraph, const Rules &comp) {
+  digraph.changeRoot(node);
   return label(node, comp);
 }
 
-Descriptor Tetrahedral::label(Node *node, const SequenceRule *comp) const {
-  auto focus = this->getFocus();
+Descriptor Tetrahedral::label(Node *node, const Rules &comp) const {
+  auto focus = getFocus();
   auto edges = node->getEdges();
 
   // something not right!?! bad creation
@@ -51,31 +48,32 @@ Descriptor Tetrahedral::label(Node *node, const SequenceRule *comp) const {
     return Descriptor::ns;
   }
 
-  auto priority = comp->sort(node, edges);
+  auto priority = comp.sort(node, edges);
 
   bool isUnique = priority.isUnique();
   if (!isUnique && edges.size() == 4) {
-    if (comp->getNumSubRules() == 3) {
+    if (comp.getNumSubRules() == 3) {
       return Descriptor::UNKNOWN;
     }
-    auto partition = comp->getSorter()->getGroups(edges);
+    auto partition = comp.getSorter()->getGroups(edges);
     if (partition.size() == 2) {
-      // a a' b b' and a a' a'' b
       node->getDigraph()->setRule6Ref(edges[1]->getEnd()->getAtom());
-      priority = comp->sort(node, edges);
+      priority = comp.sort(node, edges);
       node->getDigraph()->setRule6Ref(nullptr);
     } else if (partition.size() == 1) {
       // S4 symmetric case
       node->getDigraph()->setRule6Ref(edges[0]->getEnd()->getAtom());
-      comp->sort(node, edges);
+      comp.sort(node, edges);
       auto nbrs1 = std::vector<Edge *>(edges.begin(), edges.end());
+
       node->getDigraph()->setRule6Ref(edges[1]->getEnd()->getAtom());
-      priority = comp->sort(node, edges);
-      auto nbrs2 = std::vector<Edge *>(edges.begin(), edges.end());
-      if (this->parity4(nbrs1, nbrs2) == 1) {
+      priority = comp.sort(node, edges);
+
+      node->getDigraph()->setRule6Ref(nullptr);
+
+      if (parity4(nbrs1, edges) == 1) {
         return Descriptor::UNKNOWN;
       }
-      node->getDigraph()->setRule6Ref(nullptr);
     }
     if (!priority.isUnique()) {
       return Descriptor::UNKNOWN;
@@ -98,13 +96,13 @@ Descriptor Tetrahedral::label(Node *node, const SequenceRule *comp) const {
     ordered[idx] = focus;
   }
 
-  int parity = this->parity4(ordered, this->getCarriers());
+  int parity = parity4(ordered, getCarriers());
 
   if (parity == 0) {
     throw std::runtime_error("Could not calculate parity! Carrier mismatch");
   }
 
-  int config = this->getConfig();
+  int config = getConfig();
   if (parity == 1) {
     config ^= 0x3;
   }

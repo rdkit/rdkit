@@ -21,8 +21,12 @@ using RDKit::CIPLabeler::assignCIPLabels;
 
 BOOST_PYTHON_MODULE(rdCIPLabeler) {
   python::scope().attr("__doc__") =
-      "Module containing a function to assign seterochemical "
-      "labels based on an accurate CIP rules implementation.\n";
+      "Module containing a function to assign stereochemical labels based "
+      "on an accurate CIP rules implementation:\n\nHanson, R. M., Musacchio, "
+      "S., Mayfield, J. W., Vainio, M. J., Yerin, A., Redkin, D.\nAlgorithmic "
+      "Analysis of Cahn−Ingold−Prelog Rules of Stereochemistry:\nProposals "
+      "for Revised Rules and a Guide for Machine Implementation.\nJ. Chem. "
+      "Inf. Model. 2018, 58, 1755-1765.\n";
 
   std::string docString =
       "New implementation of Stereo assignment using a true CIP ranking";

@@ -23,21 +23,19 @@ namespace CIPLabeler {
  *
  */
 class Rule4b : public SequenceRule {
-private:
-  const Descriptor ref;
 
 public:
-  Rule4b() = delete;
+  Rule4b();
 
-  Rule4b(const CIPMol *mol);
-
-  Rule4b(const CIPMol *mol, Descriptor ref);
-
-  std::vector<Descriptor> getReferenceDescriptors(const Node *node) const;
+  Rule4b(Descriptor ref);
 
   int compare(const Edge *a, const Edge *b) const override;
 
 private:
+  const Descriptor d_ref = Descriptor::NONE;
+
+  std::vector<Descriptor> getReferenceDescriptors(const Node *node) const;
+
   bool hasDescriptors(const Node *node) const;
 
   bool getReference(const std::vector<const Node *> &nodes,
@@ -50,17 +48,6 @@ private:
 
   std::vector<const Node *>
   toNodeList(const std::vector<Edge *> &eqEdges) const;
-
-  /**
-   * Reduce the number of combinations by not including terminal ligands in
-   * the permuting. They can't be stereocentres and so won't contribute the
-   * the like / unlike std::vector.
-   *
-   * @param edges a std::vector of edges
-   * @return a std::vector of non-terminal ligands
-   */
-  std::vector<const Edge *>
-  getLigandsToSort(const Node *node, const std::vector<Edge *> edges) const;
 
   std::vector<PairList>
   newPairLists(const std::vector<Descriptor> &descriptors) const;

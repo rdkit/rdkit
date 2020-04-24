@@ -19,7 +19,7 @@ namespace RDKit {
 
 namespace CIPLabeler {
 
-Rule2::Rule2(const CIPMol *mol) : SequenceRule(mol) {}
+Rule2::Rule2() = default;
 
 int Rule2::compare(const Edge *a, const Edge *b) const {
   auto aAtomNum = a->getEnd()->getAtomicNum();
@@ -41,13 +41,7 @@ int Rule2::compare(const Edge *a, const Edge *b) const {
   auto bweight = bMassNum ? table->getMassForIsotope(bAtomNum, bMassNum)
                           : table->getAtomicWeight(bAtomNum);
 
-  if (aweight == bweight) {
-    return 0;
-  } else if (aweight < bweight) {
-    return -1;
-  } else {
-    return 1;
-  }
+  return three_way_comparison(aweight, bweight);
 }
 
 } // namespace CIPLabeler

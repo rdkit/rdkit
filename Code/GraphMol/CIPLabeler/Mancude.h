@@ -21,43 +21,32 @@
 
 #include <vector>
 
+#include "boost/rational.hpp"
+
 namespace RDKit {
 
 namespace CIPLabeler {
 
 class CIPMol;
 
-class Fraction {
-private:
-  friend std::vector<Fraction> calcFracAtomNums(const CIPMol *mol);
-  int d_numerator;
-  int d_denominator = 1;
-
-public:
-  static int compare(int anum, int aden, int bnum, int bden);
-
-  Fraction() = delete;
-  explicit Fraction(int num);
-  Fraction(int num, int den);
-
-  int numerator() const;
-
-  int denominator() const;
-
-  int compareTo(const Fraction &o) const;
-};
-
 enum class Type {
-  Cv4D4,      // =CH-
+  Cv4D3,      // =C(X)-
   Nv3D2,      // =N-
   Nv4D3Plus,  // =[N+]<
   Nv2D2Minus, // -[N-]-
-  Cv3D3Minus, // -[CH-]-
+  Cv3D3Minus, // -[C(X)-]-
   Ov3D2Plus,  // -[O+]=
   Other
 };
 
-std::vector<Fraction> calcFracAtomNums(const CIPMol *mol);
+/**
+ * Calculate fractional atomic numbers for all atoms in the mol.
+ * Using fractional atomic numbers makes sure that atoms in rings
+ * that can be tautomerized are always considered with the same
+ * priority.
+ *
+ */
+std::vector<boost::rational<int>> calcFracAtomNums(const CIPMol &mol);
 
 } // namespace CIPLabeler
 } // namespace RDKit

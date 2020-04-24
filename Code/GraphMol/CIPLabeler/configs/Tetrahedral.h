@@ -20,19 +20,19 @@ public:
   static const int LEFT = 0x1;
   static const int RIGHT = 0x2;
 
-  Tetrahedral();
+  Tetrahedral() = delete;
 
-  Tetrahedral(Atom *focus, std::vector<Atom *> &&carriers, int cfg);
+  Tetrahedral(const CIPMol &mol, Atom *focus, std::vector<Atom *> &&carriers,
+              int cfg);
 
-  void setPrimaryLabel(CIPMol *mol, Descriptor desc) override;
+  void setPrimaryLabel(CIPMol &mol, Descriptor desc) override;
 
-  Descriptor label(const SequenceRule *comp) override;
+  Descriptor label(const Rules &comp) override;
 
-  Descriptor label(Node *node, Digraph *digraph,
-                   const SequenceRule *comp) override;
+  Descriptor label(Node *node, Digraph &digraph, const Rules &comp) override;
 
 private:
-  Descriptor label(Node *node, const SequenceRule *comp) const;
+  Descriptor label(Node *node, const Rules &comp) const;
 };
 
 } // namespace CIPLabeler

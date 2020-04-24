@@ -16,11 +16,9 @@
 namespace RDKit {
 namespace CIPLabeler {
 
-SequenceRule::SequenceRule(const CIPMol *mol) : mol{mol} {}
+SequenceRule::SequenceRule() = default;
 
 SequenceRule::~SequenceRule() = default;
-
-const CIPMol *SequenceRule::getMol() const { return mol; }
 
 Descriptor SequenceRule::getBondLabel(const Edge *edge) const {
   Bond *bond = edge->getBond();
@@ -34,10 +32,6 @@ Descriptor SequenceRule::getBondLabel(const Edge *edge) const {
   return label;
 }
 
-int SequenceRule::getNumSubRules() const { return 1; }
-
-bool SequenceRule::isPseudoAsymmetric() const { return false; }
-
 int SequenceRule::getComparision(const Edge *a, const Edge *b) const {
   return getComparision(a, b, true);
 }
@@ -48,10 +42,10 @@ int SequenceRule::getComparision(const Edge *a, const Edge *b,
 }
 
 const Sort *SequenceRule::getSorter() const {
-  if (sorter == nullptr) {
+  if (dp_sorter == nullptr) {
     const_cast<SequenceRule *>(this)->setSorter(new Sort(this));
   }
-  return sorter.get();
+  return dp_sorter.get();
 }
 
 int SequenceRule::recursiveCompare(const Edge *a, const Edge *b) const {
@@ -78,8 +72,8 @@ int SequenceRule::recursiveCompare(const Edge *a, const Edge *b) const {
     sort(a->getEnd(), as, false);
     sort(b->getEnd(), bs, false);
 
-    int sizediff = integer_compare(static_cast<int>(as.size()),
-                                   static_cast<int>(bs.size()));
+    int sizediff = three_way_comparison(static_cast<int>(as.size()),
+                                        static_cast<int>(bs.size()));
 
     {
       auto aIt = as.begin();
@@ -146,7 +140,7 @@ int SequenceRule::recursiveCompare(const Edge *a, const Edge *b) const {
   return 0;
 }
 
-void SequenceRule::setSorter(const Sort *sorter) { this->sorter.reset(sorter); }
+void SequenceRule::setSorter(const Sort *sorter) { dp_sorter.reset(sorter); }
 
 Priority SequenceRule::sort(const Node *node, std::vector<Edge *> &edges,
                             bool deep) const {

@@ -14,7 +14,8 @@
 namespace RDKit {
 namespace CIPLabeler {
 
-int Rule3::ord(Descriptor lab) {
+namespace {
+int ord(Descriptor lab) {
   switch (lab) {
   case Descriptor::E:
     return 1;
@@ -24,12 +25,13 @@ int Rule3::ord(Descriptor lab) {
     return 0;
   }
 }
+}
 
-Rule3::Rule3(const CIPMol *mol) : SequenceRule(mol) {}
+Rule3::Rule3() = default;
 
 int Rule3::compare(const Edge *a, const Edge *b) const {
-  return integer_compare(ord(a->getEnd()->getAux()),
-                         ord(b->getEnd()->getAux()));
+  return three_way_comparison(ord(a->getEnd()->getAux()),
+                              ord(b->getEnd()->getAux()));
 }
 
 } // namespace CIPLabeler

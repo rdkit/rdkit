@@ -14,7 +14,8 @@
 namespace RDKit {
 namespace CIPLabeler {
 
-int Rule4c::ord(Descriptor lab) {
+namespace {
+int ord(Descriptor lab) {
   switch (lab) {
   case Descriptor::m:
   case Descriptor::r:
@@ -26,21 +27,22 @@ int Rule4c::ord(Descriptor lab) {
     return 0;
   }
 }
+}
 
-Rule4c::Rule4c(const CIPMol *mol) : SequenceRule(mol) {}
+Rule4c::Rule4c() = default;
 
 int Rule4c::compare(const Edge *a, const Edge *b) const {
   // m vs p
-  int aOrdinal = ord(this->getBondLabel(a));
-  int bOrdinal = ord(this->getBondLabel(b));
-  int cmp = integer_compare(aOrdinal, bOrdinal);
+  int aOrdinal = ord(getBondLabel(a));
+  int bOrdinal = ord(getBondLabel(b));
+  int cmp = three_way_comparison(aOrdinal, bOrdinal);
   if (cmp != 0) {
     return cmp;
   }
   // r vs s
   aOrdinal = ord(a->getEnd()->getAux());
   bOrdinal = ord(b->getEnd()->getAux());
-  return integer_compare(aOrdinal, bOrdinal);
+  return three_way_comparison(aOrdinal, bOrdinal);
 }
 
 } // namespace CIPLabeler

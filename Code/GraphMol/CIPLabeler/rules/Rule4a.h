@@ -22,13 +22,9 @@ namespace CIPLabeler {
  *
  */
 class Rule4a : public SequenceRule {
-private:
-  static int ord(Descriptor lab);
 
 public:
-  Rule4a() = delete;
-
-  Rule4a(const CIPMol *mol);
+  Rule4a();
 
   int compare(const Edge *a, const Edge *b) const override;
 };

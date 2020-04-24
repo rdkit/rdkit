@@ -21,11 +21,6 @@ namespace CIPLabeler {
 class Node;
 
 class Edge {
-private:
-  Node *beg;
-  Node *end;
-  Bond *bond;
-  Descriptor aux = Descriptor::NONE;
 
 public:
   Edge() = delete;
@@ -51,6 +46,12 @@ public:
   void setAux(Descriptor aux);
 
   void flip();
+
+private:
+  Node *dp_beg;
+  Node *dp_end;
+  Bond *dp_bond;
+  Descriptor d_aux = Descriptor::NONE;
 };
 
 } // namespace CIPLabeler
