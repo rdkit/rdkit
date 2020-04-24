@@ -15,8 +15,11 @@ rdkit_library(CIPLabeler
 rdkit_headers(CIPLabeler.h
               DEST GraphMol/CIPLabeler)
 
-rdkit_catch_test(testCIPLabeler catch_tests.cpp CIPMol.cpp Digraph.cpp
-                 LINK_LIBRARIES CIPLabeler SmilesParse GraphMol)
+rdkit_catch_test(testCIPLabeler catch_tests.cpp
+                 CIPMol.cpp CIPLabeler.cpp
+                 Mancude.cpp Digraph.cpp Node.cpp Edge.cpp Sort.cpp
+                 ${configs_src} ${rules_src}
+                 LINK_LIBRARIES SmilesParse GraphMol)
 
 if(RDK_BUILD_PYTHON_WRAPPERS)
 add_subdirectory(Wrap)
