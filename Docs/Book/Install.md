@@ -433,28 +433,15 @@ Now it's safe to build boost and the RDKit.
 
 ### Prerequisites
 
--   3.6+ (from http://www.python.org/)
+-   python 3.6+ (from http://www.python.org/)
 -   numpy (from http://numpy.scipy.org/ or use `pip install numpy`). Binaries for win64 are available here: http://www.lfd.uci.edu/~gohlke/pythonlibs/#numpy
 -   Pillow: (from https://python-pillow.github.io/> or use `pip install Pillow`)
 
 #### Recommended extras
 
--   aggdraw: a library for high-quality drawing in Python. Instructions for downloading are here: <http://effbot.org/zone/aggdraw-index.htm> The new (as of May 2008) drawing code has been tested with v1.2a3 of aggdraw. Despite the alpha label, the code is stable and functional.
 -   matplotlib: a library for scientific plotting from Python. <http://matplotlib.sourceforge.net/>
 -   ipython : a very useful interactive shell (and much more) for Python. <http://ipython.scipy.org/dist/>
--   win32all: Windows extensions for Python. <http://sourceforge.net/projects/pywin32/>
 
-### Installation of RDKit binaries
-
--   Get the appropriate windows binary build from: https://github.com/rdkit/rdkit/releases
--   Extract the zip file somewhere without a space in the name, i.e. `C:\`
--   The rest of this will assume that the installation is in `C:\RDKit_2015_09_2`
--   Set the following environment variables:
-    -   `RDBASE`: `C:\RDKit_2015_09_2`
-    -   `PYTHONPATH`: `%RDBASE%` if there is already a `PYTHONPATH`, put `;%RDBASE%` at the end.
-    -   `PATH`: add `;%RDBASE%\lib` to the end
-
-In Win7 systems, you may run into trouble due to missing DLLs, see one thread from the mailing list: http://www.mail-archive.com/rdkit-discuss@lists.sourceforge.net/msg01632.html You can download the missing DLLs from here: http://www.microsoft.com/en-us/download/details.aspx?id=5555
 
 ### Installation from source
 
@@ -467,14 +454,14 @@ In Win7 systems, you may run into trouble due to missing DLLs, see one thread fr
 
 #### Setup and Preparation
 
-This section assumes that python is installed in `C:\Python27`, that the boost libraries have been installed to `C:\boost`, and that you will build the RDKit from a directory named `C:\RDKit`. If any of these conditions is not true, just change the corresponding paths.
+This section assumes that python is installed in `C:\Python36 that the boost libraries have been installed to `C:\boost`, and that you will build the RDKit from a directory named `C:\RDKit`. If any of these conditions is not true, just change the corresponding paths.
 
 -   If you install things in paths that have spaces in their names, be sure to use quotes properly in your environment variable definitions.
 -   If you are planning on using a development version of the RDKit: get a copy of the current RDKit source using git. If you're using the command-line client the command is: `git clone  https://github.com/rdkit/rdkit.git C:\RDKit`
 -   If you are planning on using a released version of the RDKit: get a copy of the most recent release and extract it into the directory `C:\RDKit`
 -   Set the required environment variables:
     -   `RDBASE = C:\RDKit`
-    -   Make sure `C:\Python27` is in your PATH
+    -   Make sure `C:\Python36 is in your PATH
     -   Make sure `C:\RDKit\lib` is in your PATH
     -   Make sure `C:\boost\lib` is in your PATH.
     -   Make sure `C:\RDKit is` in your PYTHONPATH
@@ -501,7 +488,7 @@ This section assumes that python is installed in `C:\Python27`, that the boost l
 
 ## License
 
-This document is copyright (C) 2012-2018 by Greg Landrum
+This document is copyright (C) 2012-2020 by Greg Landrum
 
 This work is licensed under the Creative Commons Attribution-ShareAlike 4.0 License. To view a copy of this license, visit <http://creativecommons.org/licenses/by-sa/4.0/> or send a letter to Creative Commons, 543 Howard Street, 5th Floor, San Francisco, California, 94105, USA.
 
