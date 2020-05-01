@@ -79,7 +79,6 @@ struct StringRect {
     tr = Point2D(centre_.x + wb2, centre_.y + hb2);
     br = Point2D(centre_.x + wb2, centre_.y - hb2);
     bl = Point2D(centre_.x - wb2, centre_.y - hb2);
-
   }
   bool doesItIntersect(const StringRect &other) const {
     if (fabs(centre_.x - other.centre_.x) < (width_ + other.width_) / 2.0 &&
@@ -187,8 +186,8 @@ struct RDKIT_MOLDRAW2D_EXPORT MolDrawOptions {
   bool atomHighlightsAreCircles = false;  // forces atom highlights always to be
                                           // circles. Default (false) is to put
                                           // ellipses round longer labels.
-  bool centreMoleculesBeforeDrawing = true;  // moves the centre of the drawn
-                                             // molecule to (0,0)
+  bool centreMoleculesBeforeDrawing = false;  // moves the centre of the drawn
+                                              // molecule to (0,0)
 
   MolDrawOptions() {
     highlightColourPalette.emplace_back(
