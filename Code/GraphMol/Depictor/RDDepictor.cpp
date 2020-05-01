@@ -178,7 +178,7 @@ void _shiftCoords(std::list<EmbeddedFrag> &efrags) {
     ++eri;
   }
 }
-}
+}  // namespace DepictorLocal
 
 void computeInitialCoords(RDKit::ROMol &mol,
                           const RDGeom::INT_POINT2D_MAP *coordMap,
@@ -318,14 +318,6 @@ unsigned int compute2DCoords(RDKit::ROMol &mol,
       params.coordMap = *coordMap;
     }
     unsigned int cid = RDKit::CoordGen::addCoords(mol, &params);
-    if(!coordMap) {
-      RDGeom::Point3D centroid =
-          MolTransforms::computeCentroid(mol.getConformer(cid));
-      RDGeom::Transform3D trans;
-      trans.SetTranslation(-centroid);
-      auto &conf = mol.getConformer(cid);
-      MolTransforms::transformConformer(conf,trans);
-    }
     return cid;
   };
 #endif
@@ -577,4 +569,4 @@ void generateDepictionMatching3DStructure(RDKit::ROMol &mol,
   RDDepict::compute2DCoordsMimicDistMat(mol, &dmat, false, true, 0.5, 3, 100,
                                         25, true, forceRDKit);
 }
-}
+}  // namespace RDDepict
