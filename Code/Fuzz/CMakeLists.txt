@@ -18,7 +18,7 @@ set(RDKit_LIBS
 
 macro(fuzzer name)
   add_executable(${name} ${name}.cc)
-  target_link_libraries(${name} rdkit_base ${RDKit_LIBS} ${LIB_FUZZING_ENGINE} "/usr/local/lib/libboost_serialization.a")
+  target_link_libraries(${name} rdkit_base ${RDKit_LIBS} ${LIB_FUZZING_ENGINE})
 endmacro()
 
 fuzzer(smiles_string_to_mol_fuzzer)
