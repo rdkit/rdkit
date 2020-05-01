@@ -1,5 +1,5 @@
 //
-//  Copyright (C) 2008 Greg Landrum
+//  Copyright (C) 2008-2020 Greg Landrum
 //
 //   @@ All Rights Reserved @@
 //  This file is part of the RDKit.
@@ -9,22 +9,21 @@
 //
 /*! \file Chirality.h
 
-  \brief Not intended for client-code use.
-
 */
 #include <RDGeneral/export.h>
-#ifndef _RD_CHIRALITY_20AUG2008_H_
-#define _RD_CHIRALITY_20AUG2008_H_
+#ifndef RD_CHIRALITY_20AUG2008_H
+#define RD_CHIRALITY_20AUG2008_H
 #include <RDGeneral/types.h>
 #include <GraphMol/Bond.h>
+#include <boost/dynamic_bitset.hpp>
 
-/// @cond
 namespace RDKit {
 class Atom;
 class Bond;
 class ROMol;
 
 namespace Chirality {
+/// @cond
 /*!
   \param mol the molecule to be altered
   \param ranks  used to return the set of ranks.
@@ -55,11 +54,31 @@ RDKIT_GRAPHMOL_EXPORT const Bond *getNeighboringDirectedBond(const ROMol &mol,
  */
 RDKIT_GRAPHMOL_EXPORT Bond::BondStereo translateEZLabelToCisTrans(
     Bond::BondStereo label);
+/// @endcond
+
+enum class StereoType { Atom, Bond };
+struct RDKIT_GRAPHMOL_EXPORT StereoInfo {
+  StereoType type;
+  unsigned centeredOn;
+  unsigned descriptor;  // unused
+  std::vector<unsigned> controllingAtoms;
+};
+/*!
+  \param mol the molecule to be search
+*/
+RDKIT_GRAPHMOL_EXPORT std::vector<StereoInfo> findPotentialStereo(
+    const ROMol &mol);
+
+/// @cond
+namespace detail {
+bool isAtomPotentialTetrahedralCenter(const Atom *atom);
+
+}
+/// @endcond
 
 
 RDKIT_GRAPHMOL_EXPORT INT_VECT findStereoAtoms(const Bond *bond);
 
 }  // namespace Chirality
 }  // namespace RDKit
-/// @endcond
 #endif
