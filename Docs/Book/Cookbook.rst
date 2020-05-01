@@ -1466,11 +1466,94 @@ Enumerate SMILES
     'CC(N)C1CC1',
     'C(C)(N)C1CC1']
 
+
+Conformer Generation with ETKDG
+==================
+| **Author:** Shuzhe Wang
+| **Source:** 
+| **Index ID#:** RDKitCB_25
+| **Summary:**  Showcase various tricks for conformer generation with ETKDG
+
+.. testcode::
+
+   from rdkit import Chem
+   from rdkit.Chem import AllChem 
+
+To yield more chemically meaningful conformers, Riniker and Landrum implemented the experimental torsion knowledge distance geometry (ETKDG) method [#riniker] which uses torsion angle preferences from the Cambridge Structural Database (CSD) to correct the conformers after distance geometry has been used to generate them. The configs of various conformer generation options are stored in a EmbedParameter object. To explicitly call the ETKDG EmbedParameter object:
+
+.. testcode::
+
+   params = AllChem.ETKDG()
+
+At the moment this is the default conformer generation routine in RDKit. A newer set of torsion angle potentials were published in 2016 [#guba], to use these instead:
+
+.. testcode::
+
+   params = AllChem.ETKDGv2()
+
+In 2020, we devised some improvements to the ETKDG method for sampling small rings and macrocycles [#wang].
+
+.. testcode::
+
+   # this includes addtional small ring torsion potentials
+   params = AllChem.srETKDGv3()
+
+   # this includes additional macrocycle ring torsion potentials and macrocycle-specific handles
+   params = AllChem.ETKDGv3()
+
+   # to use the two in conjunction, do:
+   params = AllChem.ETKDGv3()
+   params.useSmallRingTorsions = True
+   
+   # a macrocycle attached to a small ring
+   mol = Chem.MolFromSmiles("C(OC(CCCCCCC(OCCSC(CCCCCC1)=O)=O)OCCSC1=O)N1CCOCC1")
+   AllChem.EmbedMultipleConfs(mol, numConfs = 3 , params = params)
+   
+One additional tool we used in the paper is changing the bounds matrix of a molecule during distance geometry. The following code modifies the default molecular bounds matrix, with the idea of confining the conformational space of the molecule:
+
+.. testcode::
+
+   from rdkit.Chem import rdDistGeom
+   import rdkit.DistanceGeometry as DG
+   
+   mol = Chem.MolFromSmiles("C1CCC1C")
+   bm = rdDistGeom.GetMoleculeBoundsMatrix(mol)
+   bm[0,3] = 1.21
+   bm[3,0] = 1.20
+   bm[2,3] = 1.21
+   bm[3,2] = 1.20
+   bm[4,3] = 1.21
+   bm[3,4] = 1.20
+   DG.DoTriangleSmoothing(bm)
+
+   params.SetBoundsMat(bm)
+
+Another tool we introduced is setting custom pairwise Coulombic interactions (CPCIs), which mimics additional electrostatic interactions between atom pairs to refine the embedded conformers. The setter takes in a dictionary of integer tuples as keys and reals as values.
+The following one-liner sets a repulsive (+ve) interaction of strength 0.9 e^2 between the atom indexed 0 and indexed 3, with the idea of keeping these two atoms further apart.
+
+.. testcode::
+
+   params.SetCPCI({ (0,3) : 0.9 } )
+
+To use the EmbedParameter for conformer generation:
+
+.. testcode::
+
+   AllChem.EmbedMultipleConfs(mol, numConfs = 3 , params = params)
+
+Both of these setters can be used to help sampling all kinds of molecules as the users see fit. Nevertheless, to facilitate using them in conformer generation of macrocycles, we devised the python package github.com/rinikerlab/cpeptools to provide chemcially intuitive bound matrices and CPCIs for macrocycles. Example usage cases are shown in the README.
+
 .. rubric:: References
 
 .. [#Hartenfeller2011] Markus Hartenfeller, Martin Eberle, Peter Meier, Cristina Nieto-Oberhuber, Karl-Heinz Altmann, Gisbert Schneider, Edgar Jacoby, and Steffen Renner Journal of Chemical Information and Modeling 2011 51 (12), 3093-3098. DOI: 10.1021/ci200379p
 
 .. [#OBoyle] Noel O'Boyle and Roger Sayle. Making a hash of it: the advantage of selectively leaving out structural information. 259th ACS National Meeting Presentation, 2019, San Diego, CA. `<https://www.nextmovesoftware.com/talks/OBoyle_MolHash_ACS_201908.pdf>`_
+
+.. [#riniker] Riniker, S.; Landrum, G. A. "Better Informed Distance Geometry: Using What We Know To Improve Conformation Generation" *J. Chem. Inf. Comp. Sci.* **55**:2562-74 (2015) 
+
+.. [#guba] Guba, M.; Meyder, A.; Rarrey, M.; Hert, J. "Torsion Library Reloaded: A New Version of Expert-Derived SMARTS Rules for Assessing Conformations of Small Molecules" *J. Chem. Inf. Comp. Sci.* **56**:1-5 (2016)
+
+.. [#wang] Wang, S.; Witek, J.; Landrum, G. A.; Riniker, S. "Improving Conformer Generation for Small Rings and Macrocycles Based on Distance Geometry and Experimental Torsional-Angle Preferences" *J. Chem. Inf. Comp. Sci.* **60**:2044-2058 (2020)
 
 .. testcleanup::
 
@@ -1493,4 +1576,3 @@ or send a letter to Creative Commons, 543 Howard Street, 5th Floor, San Francisc
 
 The intent of this license is similar to that of the RDKit itself. 
 In simple words: “Do whatever you want with it, but please give us some credit.”
-
