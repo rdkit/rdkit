@@ -19,6 +19,8 @@
 #include <GraphMol/Depictor/RDDepictor.h>
 #include <Geometry/point.h>
 #include <Geometry/Transform2D.h>
+#include <GraphMol/MolTransforms/MolTransforms.h>
+#include <Geometry/Transform3D.h>
 
 #include <algorithm>
 #include <cstdlib>
@@ -1268,11 +1270,23 @@ unique_ptr<RWMol> MolDraw2D::setupDrawMolecule(
     rwmol.reset(new RWMol(mol));
     MolDraw2DUtils::prepareMolForDrawing(*rwmol);
   }
+  if (drawOptions().centreMoleculesBeforeDrawing) {
+    if (!rwmol) rwmol.reset(new RWMol(mol));
+    if (rwmol->getNumConformers()) {
+      auto &conf = rwmol->getConformer(confId);
+      RDGeom::Transform3D tf;
+      auto centroid = MolTransforms::computeCentroid(conf);
+      centroid *= -1;
+      tf.SetTranslation(centroid);
+      MolTransforms::transformConformer(conf, tf);
+    }
+  }
   ROMol const &draw_mol = rwmol ? *(rwmol) : mol;
   if (!draw_mol.getNumConformers()) {
     // clearly, the molecule is in a sorry state.
     return rwmol;
   }
+
   if (drawOptions().bondLineWidth >= 0) {
     curr_width_ = drawOptions().bondLineWidth;
   }
