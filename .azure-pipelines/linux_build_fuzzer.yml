@@ -1,23 +1,12 @@
 steps:
 - bash: |
-    wget https://github.com/phracker/MacOSX-SDKs/releases/download/10.15/MacOSX$(target_platform).sdk.tar.xz
-    tar Jxvf MacOSX$(target_platform).sdk.tar.xz
-  displayName: Install MacOSX $(target_platform) SDK
-- script: |
-    echo "Removing homebrew from Azure to avoid conflicts."
-    curl -fsSL https://raw.githubusercontent.com/Homebrew/install/master/uninstall > ~/uninstall_homebrew
-    chmod +x ~/uninstall_homebrew
-    ~/uninstall_homebrew -fq
-    rm ~/uninstall_homebrew
-  displayName: Remove homebrew
-- bash: |
     source ${CONDA}/etc/profile.d/conda.sh
+    sudo apt-get install -y clang-9
     sudo chown -R ${USER} ${CONDA}
-    mkdir -p $HOME/.matplotlib
-    echo -e "backend: TkAgg\n" > $HOME/.matplotlib/matplotlibrc
     conda config --set always_yes yes --set changeps1 no
     conda update -q conda
-    conda create --name rdkit_build $(compiler) cmake \
+    conda info -a
+    conda create --name rdkit_build cmake \
         boost-cpp=$(boost_version) boost=$(boost_version) \
         py-boost=$(boost_version) libboost=$(boost_version) \
         cairo eigen
@@ -25,13 +14,13 @@ steps:
 - bash: |
     source ${CONDA}/etc/profile.d/conda.sh
     conda activate rdkit_build
-    export CONDA_BUILD_SYSROOT=${SDKROOT}
 
+    export CC="clang-8"
+    export CXX="clang++-8"
     export SANITIZER_FLAGS_address="-fsanitize=address -fsanitize-address-use-after-scope"
     export COVERAGE_FLAGS="-fsanitize=fuzzer-no-link"
     export CFLAGS="-O1 -fno-omit-frame-pointer -gline-tables-only -DFUZZING_BUILD_MODE_UNSAFE_FOR_PRODUCTION $COVERAGE_FLAGS $SANITIZER_FLAGS_address"
-    export CXXFLAGS_EXTRA="-stdlib=libc++"
-    export CXXFLAGS="$CFLAGS $CXXFLAGS_EXTRA"
+    export CXXFLAGS="$CFLAGS"
     export LIB_FUZZING_ENGINE="-fsanitize=fuzzer"
 
     mkdir build && cd build && \
@@ -52,16 +41,16 @@ steps:
 - bash: |
     source ${CONDA}/etc/profile.d/conda.sh
     conda activate rdkit_build
-    export CONDA_BUILD_SYSROOT=${SDKROOT}
     cd build
     make -j $( $(number_of_cores) ) install
   displayName: Build
-- script: |
-    cd build
-    shopt -s globstar
-    corpora=**/*_fuzzer/
+- bash: |
+    source ${CONDA}/etc/profile.d/conda.sh
+    conda activate rdkit_build
+    corpora=$(find . -type d -name "*_fuzzer")
     for corpus in $corpora; do
       corpus_basename=$(basename $corpus)
-      ${corpus_basename} ${corpus}/*
+      fuzzer_target=$(find . -type f -name "${corpus_basename}" -print -quit)
+      ${fuzzer_target} ${corpus}/*
     done
   displayName: Run fuzzer on existing corpora
