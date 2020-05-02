@@ -20,6 +20,121 @@
 
 using namespace RDKit;
 
+TEST_CASE("bond StereoInfo", "[unittest]") {
+  SECTION("basics") {
+    {
+      auto mol = "CC=C(C#C)C=C"_smiles;
+      REQUIRE(mol);
+      auto sinfo = Chirality::detail::getStereoInfo(mol->getBondWithIdx(1));
+      CHECK(sinfo.type == Chirality::StereoType::Bond);
+      CHECK(sinfo.centeredOn == 1);
+      REQUIRE(sinfo.controllingAtoms.size() == 2);
+      CHECK(sinfo.controllingAtoms[0] == 0);
+      CHECK(sinfo.controllingAtoms[1] == 3);
+    }
+    {
+      auto mol = "CC=NC=N"_smiles;
+      REQUIRE(mol);
+      auto sinfo = Chirality::detail::getStereoInfo(mol->getBondWithIdx(1));
+      CHECK(sinfo.type == Chirality::StereoType::Bond);
+      CHECK(sinfo.centeredOn == 1);
+      REQUIRE(sinfo.controllingAtoms.size() == 2);
+      CHECK(sinfo.controllingAtoms[0] == 0);
+      CHECK(sinfo.controllingAtoms[1] == 3);
+    }
+  }
+}
+TEST_CASE("isBondPotentialStereoBond", "[unittest]") {
+  SECTION("basics") {
+    {
+      auto mol = "CC=C(C#C)C=C"_smiles;
+      REQUIRE(mol);
+      CHECK(
+          Chirality::detail::isBondPotentialStereoBond(mol->getBondWithIdx(1)));
+      CHECK(!Chirality::detail::isBondPotentialStereoBond(
+          mol->getBondWithIdx(5)));
+      CHECK(!Chirality::detail::isBondPotentialStereoBond(
+          mol->getBondWithIdx(3)));
+      CHECK(!Chirality::detail::isBondPotentialStereoBond(
+          mol->getBondWithIdx(4)));
+    }
+    {
+      auto mol = "CC=NC=N"_smiles;
+      REQUIRE(mol);
+      CHECK(
+          Chirality::detail::isBondPotentialStereoBond(mol->getBondWithIdx(1)));
+      CHECK(!Chirality::detail::isBondPotentialStereoBond(
+          mol->getBondWithIdx(3)));
+    }
+    {
+      SmilesParserParams ps;
+      ps.removeHs = false;
+      std::unique_ptr<ROMol> mol{SmilesToMol("[H]C=CC=C([H])[H]", ps)};
+      REQUIRE(mol);
+      CHECK(!Chirality::detail::isBondPotentialStereoBond(
+          mol->getBondWithIdx(1)));
+      CHECK(!Chirality::detail::isBondPotentialStereoBond(
+          mol->getBondWithIdx(3)));
+    }
+  }
+}
+
+TEST_CASE("atom StereoInfo", "[unittest]") {
+  SECTION("basics") {
+    {
+      auto mol = "CC(F)(Cl)CNC(C)C"_smiles;
+      REQUIRE(mol);
+      auto sinfo = Chirality::detail::getStereoInfo(mol->getAtomWithIdx(1));
+      CHECK(sinfo.type == Chirality::StereoType::Atom);
+      CHECK(sinfo.centeredOn == 1);
+      REQUIRE(sinfo.controllingAtoms.size() == 4);
+      CHECK(sinfo.controllingAtoms[0] == 0);
+      CHECK(sinfo.controllingAtoms[1] == 2);
+      CHECK(sinfo.controllingAtoms[2] == 3);
+      CHECK(sinfo.controllingAtoms[3] == 4);
+
+      sinfo = Chirality::detail::getStereoInfo(mol->getAtomWithIdx(6));
+      CHECK(sinfo.type == Chirality::StereoType::Atom);
+      CHECK(sinfo.centeredOn == 6);
+      REQUIRE(sinfo.controllingAtoms.size() == 3);
+      CHECK(sinfo.controllingAtoms[0] == 5);
+      CHECK(sinfo.controllingAtoms[1] == 7);
+      CHECK(sinfo.controllingAtoms[2] == 8);
+    }
+
+    {
+      auto mol = "CN1CC1N(F)C"_smiles;
+      REQUIRE(mol);
+      auto sinfo = Chirality::detail::getStereoInfo(mol->getAtomWithIdx(1));
+      CHECK(sinfo.type == Chirality::StereoType::Atom);
+      CHECK(sinfo.centeredOn == 1);
+      REQUIRE(sinfo.controllingAtoms.size() == 3);
+      CHECK(sinfo.controllingAtoms[0] == 0);
+      CHECK(sinfo.controllingAtoms[1] == 2);
+      CHECK(sinfo.controllingAtoms[2] == 3);
+    }
+
+    {
+      auto mol = "O[As](F)C[As]C[As]"_smiles;
+      REQUIRE(mol);
+
+      auto sinfo = Chirality::detail::getStereoInfo(mol->getAtomWithIdx(1));
+      CHECK(sinfo.type == Chirality::StereoType::Atom);
+      CHECK(sinfo.centeredOn == 1);
+      REQUIRE(sinfo.controllingAtoms.size() == 3);
+      CHECK(sinfo.controllingAtoms[0] == 0);
+      CHECK(sinfo.controllingAtoms[1] == 2);
+      CHECK(sinfo.controllingAtoms[2] == 3);
+
+      sinfo = Chirality::detail::getStereoInfo(mol->getAtomWithIdx(4));
+      CHECK(sinfo.type == Chirality::StereoType::Atom);
+      CHECK(sinfo.centeredOn == 4);
+      REQUIRE(sinfo.controllingAtoms.size() == 2);
+      CHECK(sinfo.controllingAtoms[0] == 3);
+      CHECK(sinfo.controllingAtoms[1] == 5);
+    }
+  }
+}
 TEST_CASE("isAtomPotentialTetrahedralCenter", "[unittest]") {
   SECTION("basics") {
     {
