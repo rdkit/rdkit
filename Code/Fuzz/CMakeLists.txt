@@ -4,6 +4,11 @@ if(NOT LIB_FUZZING_ENGINE)
   set(LIB_FUZZING_ENGINE standalone_fuzz_runner)
 endif()
 
+if(NOT RDK_INSTALL_STATIC_LIBS OR NOT Boost_USE_STATIC_LIBS)
+  message(SEND_ERROR "Fuzzing requires static linking!")
+  message(FATAL_ERROR "Compile with -DRDK_INSTALL_STATIC_LIBS=ON and -DBoost_USE_STATIC_LIBS=ON")
+endif()
+
 include_directories ( "include" )
 
 set(RDKit_LIBS
