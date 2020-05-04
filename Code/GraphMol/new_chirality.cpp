@@ -170,6 +170,16 @@ std::vector<StereoInfo> findPotentialStereo(const ROMol &mol) {
       }
     }
   }
+  for (const auto bond : mol.bonds()) {
+    if (detail::isBondPotentialStereoBond(bond)) {
+      active.push_back(detail::getStereoInfo(bond));
+      if (bond->getStereo() == Bond::BondStereo::STEREONONE) {
+        ++nUndefined;
+      }
+    }
+  }
+
+  
 
   std::vector<StereoInfo> res;
   return res;
