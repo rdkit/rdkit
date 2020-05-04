@@ -7396,7 +7396,7 @@ void testGithub3097() {
 
   std::string smi =
       "[c:6][n:7][c:8].[N:14]#[N:15]>>[C:6].[C:8][N:7]=[N+:14]=[N-:15]";
-  ChemicalReaction *rxn = RxnSmartsToChemicalReaction(smi);
+  std::unique_ptr<ChemicalReaction> rxn{RxnSmartsToChemicalReaction(smi)};
   TEST_ASSERT(rxn);
   rxn->initReactantMatchers();
 
