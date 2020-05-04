@@ -72,6 +72,7 @@ RDKIT_GRAPHMOL_EXPORT std::vector<StereoInfo> findPotentialStereo(
 /// @cond
 namespace detail {
 RDKIT_GRAPHMOL_EXPORT bool isAtomPotentialTetrahedralCenter(const Atom *atom);
+RDKIT_GRAPHMOL_EXPORT bool isAtomPotentialStereoAtom(const Atom *atom);
 RDKIT_GRAPHMOL_EXPORT bool isBondPotentialStereoBond(const Bond *bond);
 RDKIT_GRAPHMOL_EXPORT StereoInfo getStereoInfo(const Bond *bond);
 RDKIT_GRAPHMOL_EXPORT StereoInfo getStereoInfo(const Atom *atom);
