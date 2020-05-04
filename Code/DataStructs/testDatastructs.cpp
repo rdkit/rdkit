@@ -25,7 +25,7 @@
 #include <RDGeneral/Exceptions.h>
 #include <DataStructs/SparseIntVect.h>
 #include <DataStructs/DatastructsStreamOps.h>
-#include <stdlib.h>
+#include <cstdlib>
 
 using namespace std;
 using namespace RDKit;

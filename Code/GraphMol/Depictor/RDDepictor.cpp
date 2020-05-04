@@ -18,7 +18,7 @@
 #include <RDGeneral/types.h>
 #include <GraphMol/ROMol.h>
 #include <GraphMol/Conformer.h>
-#include <math.h>
+#include <cmath>
 #include <GraphMol/MolOps.h>
 #include <GraphMol/Rings.h>
 #include <Geometry/point.h>

@@ -45,7 +45,7 @@ using std::smatch;
 #endif
 #include <sstream>
 #include <locale>
-#include <stdlib.h>
+#include <cstdlib>
 #include <cstdio>
 
 using namespace RDKit::SGroupParsing;

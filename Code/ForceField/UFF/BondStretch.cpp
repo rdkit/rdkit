@@ -11,7 +11,7 @@
 
 #include "BondStretch.h"
 #include "Params.h"
-#include <math.h>
+#include <cmath>
 #include <ForceField/ForceField.h>
 #include <RDGeneral/Invariant.h>
 #include <RDGeneral/utils.h>

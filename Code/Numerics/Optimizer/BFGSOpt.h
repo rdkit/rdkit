@@ -8,7 +8,7 @@
 //  of the RDKit source tree.
 //
 #include <RDGeneral/export.h>
-#include <math.h>
+#include <cmath>
 #include <RDGeneral/Invariant.h>
 #include <GraphMol/Trajectory/Snapshot.h>
 #include <cstring>

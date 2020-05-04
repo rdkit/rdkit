@@ -9,10 +9,10 @@
 //
 #include <RDGeneral/export.h>
 #pragma once
-#include <stdio.h>
-#include <string.h>
-#include <stddef.h>
-#include <time.h>
+#include <cstdio>
+#include <cstring>
+#include <cstddef>
+#include <ctime>
 #include <iostream>
 #ifdef _MSC_VER
 #define _CRT_SECURE_NO_WARNINGS

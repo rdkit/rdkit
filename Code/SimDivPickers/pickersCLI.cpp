@@ -1,6 +1,6 @@
 /* MaxMinPicker.cpp */
-#include <string.h>
-#include <stdio.h>
+#include <cstring>
+#include <cstdio>
 #include <sys/time.h>
 
 #include <vector>

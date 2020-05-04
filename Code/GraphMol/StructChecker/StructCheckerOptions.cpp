@@ -7,9 +7,9 @@
 //  which is included in the file license.txt, found at the root
 //  of the RDKit source tree.
 //
-#include <ctype.h>
+#include <cctype>
 #include <memory.h>
-#include <errno.h>
+#include <cerrno>
 #include <iostream>
 #include <sstream>
 #include <fstream>

@@ -10,7 +10,7 @@
 #include <RDGeneral/export.h>
 #include <list>
 #include <algorithm>
-#include <math.h>
+#include <cmath>
 #include "SubstructMatchCustom.h"
 
 namespace RDKit {

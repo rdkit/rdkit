@@ -10,7 +10,7 @@
 #include <map>
 #include <vector>
 #include <algorithm>
-#include <math.h>
+#include <cmath>
 
 #include "../MolOps.h"
 #include "../SmilesParse/SmilesParse.h"

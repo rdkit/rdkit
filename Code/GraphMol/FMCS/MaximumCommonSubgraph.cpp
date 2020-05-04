@@ -9,7 +9,7 @@
 //
 #include <list>
 #include <algorithm>
-#include <math.h>
+#include <cmath>
 #include "../QueryAtom.h"
 #include "../QueryBond.h"
 #include "../SmilesParse/SmilesWrite.h"

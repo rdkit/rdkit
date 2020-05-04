@@ -17,7 +17,7 @@
 #include "Transform3D.h"
 #include "point.h"
 #include <cstdlib>
-#include <time.h>
+#include <ctime>
 
 using namespace RDGeom;
 using namespace std;
