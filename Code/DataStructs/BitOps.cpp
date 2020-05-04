@@ -10,7 +10,7 @@
 //
 #include "BitVects.h"
 #include "BitOps.h"
-#include <math.h>
+#include <cmath>
 #include <string>
 #include <iostream>
 #include <RDGeneral/StreamOps.h>

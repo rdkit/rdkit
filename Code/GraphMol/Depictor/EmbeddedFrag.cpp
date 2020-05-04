@@ -10,7 +10,7 @@
 #include <RDGeneral/types.h>
 #include <RDGeneral/utils.h>
 #include <GraphMol/RWMol.h>
-#include <math.h>
+#include <cmath>
 #include <GraphMol/MolOps.h>
 #include <Geometry/point.h>
 #include <Geometry/Transform2D.h>

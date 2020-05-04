@@ -9,7 +9,7 @@
 using namespace RDKit;
 using namespace TemplateEnum;
 
-#include <math.h>
+#include <cmath>
 
 bool feq(double v1, double v2, double tol = 1e-4) {
   return fabs(v1 - v2) <= tol;

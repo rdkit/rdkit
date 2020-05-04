@@ -13,7 +13,7 @@
 #include <Numerics/Matrix.h>
 #include <Numerics/SymmMatrix.h>
 #include <RDGeneral/Invariant.h>
-#include <time.h>
+#include <ctime>
 
 #define MAX_ITERATIONS 1000
 #define TOLERANCE 0.001

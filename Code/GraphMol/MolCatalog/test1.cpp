@@ -13,7 +13,7 @@
 #include "MolCatalogEntry.h"
 #include "MolCatalogParams.h"
 
-#include <stdlib.h>
+#include <cstdlib>
 #include <iostream>
 #include <fstream>
 

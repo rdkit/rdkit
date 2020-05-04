@@ -39,9 +39,9 @@
 #include <sys/resource.h>
 #endif
 
-#include <stdio.h>
-#include <string.h>
-#include <time.h>
+#include <cstdio>
+#include <cstring>
+#include <ctime>
 #include <string>
 #include <iostream>
 #include <RDGeneral/RDLog.h>

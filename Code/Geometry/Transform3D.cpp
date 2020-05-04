@@ -13,7 +13,7 @@
 #include <cstring>
 #include "Transform.h"
 #include "Transform3D.h"
-#include <math.h>
+#include <cmath>
 #include "point.h"
 
 namespace RDGeom {

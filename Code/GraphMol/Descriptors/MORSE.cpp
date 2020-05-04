@@ -36,7 +36,7 @@
 #include "MORSE.h"
 #include "MolData3Ddescriptors.h"
 
-#include <math.h>
+#include <cmath>
 
 // data checked using book Todeschini R., Consonni V. - Molecular Descriptors
 // for Chemoinformatics 2009 atomic properties page 21/22

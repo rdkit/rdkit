@@ -11,7 +11,7 @@
 #include <RDGeneral/test.h>
 #include <iostream>
 #include <iomanip>
-#include <math.h>
+#include <cmath>
 #include <RDGeneral/Invariant.h>
 #include <RDGeneral/utils.h>
 #include <Geometry/point.h>

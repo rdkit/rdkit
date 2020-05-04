@@ -9,7 +9,7 @@
 //  of the RDKit source tree.
 //
 #include "utils.h"
-#include <math.h>
+#include <cmath>
 #include <string>
 #include <boost/random.hpp>
 
