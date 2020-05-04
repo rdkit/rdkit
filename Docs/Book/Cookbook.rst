@@ -1507,6 +1507,7 @@ In 2020, we devised some improvements to the ETKDG method for sampling small rin
    
    # a macrocycle attached to a small ring
    mol = Chem.MolFromSmiles("C(OC(CCCCCCC(OCCSC(CCCCCC1)=O)=O)OCCSC1=O)N1CCOCC1")
+   mol = Chem.AddHs(mol)
    AllChem.EmbedMultipleConfs(mol, numConfs = 3 , params = params)
    
 One additional tool we used in the paper is changing the bounds matrix of a molecule during distance geometry. The following code modifies the default molecular bounds matrix, with the idea of confining the conformational space of the molecule:
@@ -1528,6 +1529,7 @@ One additional tool we used in the paper is changing the bounds matrix of a mole
 
    params.SetBoundsMat(bm)
 
+
 Another tool we introduced is setting custom pairwise Coulombic interactions (CPCIs), which mimics additional electrostatic interactions between atom pairs to refine the embedded conformers. The setter takes in a dictionary of integer tuples as keys and reals as values.
 The following one-liner sets a repulsive (+ve) interaction of strength 0.9 e^2 between the atom indexed 0 and indexed 3, with the idea of keeping these two atoms further apart.
 
@@ -1539,6 +1541,8 @@ To use the EmbedParameter for conformer generation:
 
 .. testcode::
 
+   params.useRandomCoords = True
+   # Note this is only an illustrative example, hydrogens are not added before conformer generation to keep the indices apparant 
    AllChem.EmbedMultipleConfs(mol, numConfs = 3 , params = params)
 
 Both of these setters can be used to help sampling all kinds of molecules as the users see fit. Nevertheless, to facilitate using them in conformer generation of macrocycles, we devised the python package github.com/rinikerlab/cpeptools to provide chemcially intuitive bound matrices and CPCIs for macrocycles. Example usage cases are shown in the README.
