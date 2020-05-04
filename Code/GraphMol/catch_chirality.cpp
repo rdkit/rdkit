@@ -199,6 +199,34 @@ TEST_CASE("isAtomPotentialTetrahedralCenter", "[unittest]") {
     }
   }
 }
+TEST_CASE("isAtomPotentialStereoAtom", "[unittest]") {
+  SECTION("basics") {
+    {
+      auto mol = "CC(F)(Cl)CNC(C)(C)C"_smiles;
+      REQUIRE(mol);
+      for (const auto atom : mol->atoms()) {
+        CHECK(Chirality::detail::isAtomPotentialTetrahedralCenter(atom) ==
+              Chirality::detail::isAtomPotentialStereoAtom(atom));
+      }
+    }
+    {
+      auto mol = "CN1CC1N(F)C"_smiles;
+      REQUIRE(mol);
+      for (const auto atom : mol->atoms()) {
+        CHECK(Chirality::detail::isAtomPotentialTetrahedralCenter(atom) ==
+              Chirality::detail::isAtomPotentialStereoAtom(atom));
+      }
+    }
+    {
+      auto mol = "O=S(F)CC[S+]([O-])CS=O"_smiles;
+      REQUIRE(mol);
+      for (const auto atom : mol->atoms()) {
+        CHECK(Chirality::detail::isAtomPotentialTetrahedralCenter(atom) ==
+              Chirality::detail::isAtomPotentialStereoAtom(atom));
+      }
+    }
+  }
+}
 
 TEST_CASE("possible stereochemistry on bonds", "[chirality]") {
   SECTION("simplest") {
