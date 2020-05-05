@@ -160,11 +160,11 @@ for (int j=0; j<count; j++) {
 }
 */
 
-#define HASHSIZE 1024
-#define HASHMASK 1023
-#define HASHX 571
-#define HASHY 127
-#define HASHZ 3
+constexpr int HASHSIZE = 1024;
+constexpr int HASHMASK = 1023;
+constexpr int HASHX = 571;
+constexpr int HASHY = 127;
+constexpr int HASHZ = 3;
 
 static void ConnectTheDots_Large(RWMol *mol, unsigned int flags) {
   int HashTable[HASHSIZE];
@@ -263,8 +263,10 @@ void ConnectTheDots(RWMol *mol, unsigned int flags) {
 }
 
 // These are macros to allow their use in C++ constants
-#define BCNAM(A, B, C) (((A) << 16) | ((B) << 8) | (C))
-#define BCATM(A, B, C, D) (((A) << 24) | ((B) << 16) | ((C) << 8) | (D))
+constexpr int BCNAM(char A, char B, char C) { return (A << 16) | (B << 8) | C; }
+constexpr int BCATM(char A, char B, char C, char D) {
+  return (A << 24) | (B << 16) | (C << 8) | D;
+}
 
 static bool StandardPDBDoubleBond(unsigned int rescode, unsigned int atm1,
                                   unsigned int atm2) {

@@ -1,13 +1,13 @@
 if(RDK_USE_BOOST_IOSTREAMS)
 ADD_DEFINITIONS("-DRDK_USE_BOOST_IOSTREAMS")
 
-find_package(Boost 1.56.0 COMPONENTS iostreams REQUIRED)
+find_package(Boost ${RDK_BOOST_VERSION} COMPONENTS iostreams REQUIRED)
 if (NOT Boost_USE_STATIC_LIBS)
    add_definitions("-DBOOST_IOSTREAMS_DYN_LINK")
 endif()
 
 if (WIN32)
-  find_package(Boost 1.58.0 COMPONENTS zlib)
+  find_package(Boost ${RDK_BOOST_VERSION} COMPONENTS zlib)
   if(Boost_zlib_FOUND)
     set(zlib_lib Boost::zlib)
   endif()

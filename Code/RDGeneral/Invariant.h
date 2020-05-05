@@ -13,7 +13,7 @@
 #ifndef __RD_INVARIANT_H__
 #define __RD_INVARIANT_H__
 
-#include <assert.h>
+#include <cassert>
 #include <string>
 #include <iostream>
 #include <stdexcept>

@@ -14,7 +14,7 @@
 #include <numpy/arrayobject.h>
 
 #include <string>
-#include <math.h>
+#include <cmath>
 
 #include <DataStructs/ExplicitBitVect.h>
 #include <GraphMol/RDKitBase.h>

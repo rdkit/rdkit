@@ -17,10 +17,10 @@
 /* First, we deal with  platform-specific or compiler-specific issues. */
 
 /* begin standard C headers. */
-#include <stdio.h>
-#include <string.h>
-#include <errno.h>
-#include <stdlib.h>
+#include <cstdio>
+#include <cstring>
+#include <cerrno>
+#include <cstdlib>
 
 /* end standard C headers. */
 
@@ -40,7 +40,7 @@
 #define __STDC_LIMIT_MACROS 1
 #endif
 
-#include <inttypes.h>
+#include <cinttypes>
 typedef int8_t flex_int8_t;
 typedef uint8_t flex_uint8_t;
 typedef int16_t flex_int16_t;
