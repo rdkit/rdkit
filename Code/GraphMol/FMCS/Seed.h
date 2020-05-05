@@ -47,7 +47,7 @@ struct RDKIT_FMCS_EXPORT NewBond {
       : SourceAtomIdx(-1),
         BondIdx(-1),
         NewAtomIdx(-1),
-        NewAtom(0),
+        NewAtom(nullptr),
         EndAtomIdx(-1) {}
 
   NewBond(unsigned from_atom, unsigned bond_idx, unsigned new_atom,

@@ -28,7 +28,7 @@ class RDKIT_GRAPHMOL_EXPORT QueryAtom : public Atom {
  public:
   typedef Queries::Query<int, Atom const *, true> QUERYATOM_QUERY;
 
-  QueryAtom() : Atom(), dp_query(NULL){};
+  QueryAtom() : Atom(), dp_query(nullptr){};
   explicit QueryAtom(int num) : Atom(num), dp_query(makeAtomNumQuery(num)){};
   explicit QueryAtom(const Atom &other)
       : Atom(other), dp_query(makeAtomNumQuery(other.getAtomicNum())){};
@@ -48,7 +48,7 @@ class RDKIT_GRAPHMOL_EXPORT QueryAtom : public Atom {
   Atom *copy() const;
 
   // This method can be used to distinguish query atoms from standard atoms:
-  bool hasQuery() const { return dp_query != 0; };
+  bool hasQuery() const { return dp_query != nullptr; };
 
   //! replaces our current query with the value passed in
   void setQuery(QUERYATOM_QUERY *what) {

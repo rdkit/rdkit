@@ -54,7 +54,7 @@ typedef enum {
 class RDKIT_SLNPARSE_EXPORT AttribType {
  public:
   AttribType()
-      : first(""), second(""), op(""), negated(false), structQuery(0){};
+      : first(""), second(""), op(""), negated(false), structQuery(nullptr){};
   std::string first;
   std::string second;
   std::string op;

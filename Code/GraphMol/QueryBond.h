@@ -29,7 +29,7 @@ class RDKIT_GRAPHMOL_EXPORT QueryBond : public Bond {
  public:
   typedef Queries::Query<int, Bond const *, true> QUERYBOND_QUERY;
 
-  QueryBond() : Bond(), dp_query(NULL){};
+  QueryBond() : Bond(), dp_query(nullptr){};
   //! initialize with a particular bond order
   explicit QueryBond(BondType bT);
   //! initialize from a bond
@@ -57,7 +57,7 @@ class RDKIT_GRAPHMOL_EXPORT QueryBond : public Bond {
   bool QueryMatch(QueryBond const *what) const;
 
   // This method can be used to distinguish query bonds from standard bonds
-  bool hasQuery() const { return dp_query != 0; };
+  bool hasQuery() const { return dp_query != nullptr; };
 
   //! returns our current query
   QUERYBOND_QUERY *getQuery() const { return dp_query; };

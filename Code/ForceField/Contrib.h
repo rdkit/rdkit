@@ -19,7 +19,7 @@ class RDKIT_FORCEFIELD_EXPORT ForceFieldContrib {
  public:
   friend class ForceField;
 
-  ForceFieldContrib() : dp_forceField(0){};
+  ForceFieldContrib() : dp_forceField(nullptr){};
   ForceFieldContrib(ForceFields::ForceField *owner) : dp_forceField(owner){};
   virtual ~ForceFieldContrib(){};
 

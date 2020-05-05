@@ -546,12 +546,12 @@ class RDKIT_FILTERCATALOG_EXPORT FilterHierarchyMatcher
 // Register all known filter matcher types for serialization
 template <class Archive>
 void registerFilterMatcherTypes(Archive &ar) {
-  ar.register_type(static_cast<FilterMatchOps::And *>(NULL));
-  ar.register_type(static_cast<FilterMatchOps::Or *>(NULL));
-  ar.register_type(static_cast<FilterMatchOps::Not *>(NULL));
-  ar.register_type(static_cast<SmartsMatcher *>(NULL));
-  ar.register_type(static_cast<ExclusionList *>(NULL));
-  ar.register_type(static_cast<FilterHierarchyMatcher *>(NULL));
+  ar.register_type(static_cast<FilterMatchOps::And *>(nullptr));
+  ar.register_type(static_cast<FilterMatchOps::Or *>(nullptr));
+  ar.register_type(static_cast<FilterMatchOps::Not *>(nullptr));
+  ar.register_type(static_cast<SmartsMatcher *>(nullptr));
+  ar.register_type(static_cast<ExclusionList *>(nullptr));
+  ar.register_type(static_cast<FilterHierarchyMatcher *>(nullptr));
 }
 #endif
 }  // namespace RDKit

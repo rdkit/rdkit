@@ -198,7 +198,7 @@ class RDKIT_GRAPHMOL_EXPORT RingInfo {
   const VECT_INT_VECT &bondRingFamilies() const { return d_bondRingFamilies; };
 
   //! check if the ring families have been initialized
-  bool areRingFamiliesInitialized() const { return dp_urfData != NULL; }
+  bool areRingFamiliesInitialized() const { return dp_urfData != nullptr; }
 #endif
 
   //@}

@@ -19,24 +19,25 @@
 
 namespace RDKit {
 namespace ForceFieldsHelper {
-  void RDKIT_FORCEFIELD_EXPORT normalizeAngleDeg(double &angleDeg);
-  void RDKIT_FORCEFIELD_EXPORT computeDihedral(const RDGeom::PointPtrVect &pos, unsigned int idx1,
-    unsigned int idx2, unsigned int idx3, unsigned int idx4,
-    double *dihedral = NULL, double *cosPhi = NULL,
-    RDGeom::Point3D r[4] = NULL, RDGeom::Point3D t[2] = NULL,
-    double d[2] = NULL);
-  void RDKIT_FORCEFIELD_EXPORT computeDihedral(const double *pos, unsigned int idx1,
-    unsigned int idx2, unsigned int idx3, unsigned int idx4,
-    double *dihedral = NULL, double *cosPhi = NULL,
-    RDGeom::Point3D r[4] = NULL, RDGeom::Point3D t[2] = NULL,
-    double d[2] = NULL);
-  void RDKIT_FORCEFIELD_EXPORT computeDihedral(const RDGeom::Point3D *p1, const RDGeom::Point3D *p2,
-    const RDGeom::Point3D *p3, const RDGeom::Point3D *p4,
-    double *dihedral = NULL, double *cosPhi = NULL,
-    RDGeom::Point3D r[4] = NULL, RDGeom::Point3D t[2] = NULL,
-    double d[2] = NULL);
-}
-}
+void RDKIT_FORCEFIELD_EXPORT normalizeAngleDeg(double &angleDeg);
+void RDKIT_FORCEFIELD_EXPORT computeDihedral(
+    const RDGeom::PointPtrVect &pos, unsigned int idx1, unsigned int idx2,
+    unsigned int idx3, unsigned int idx4, double *dihedral = nullptr,
+    double *cosPhi = nullptr, RDGeom::Point3D r[4] = nullptr,
+    RDGeom::Point3D t[2] = nullptr, double d[2] = nullptr);
+void RDKIT_FORCEFIELD_EXPORT computeDihedral(
+    const double *pos, unsigned int idx1, unsigned int idx2, unsigned int idx3,
+    unsigned int idx4, double *dihedral = nullptr, double *cosPhi = nullptr,
+    RDGeom::Point3D r[4] = nullptr, RDGeom::Point3D t[2] = nullptr,
+    double d[2] = nullptr);
+void RDKIT_FORCEFIELD_EXPORT
+computeDihedral(const RDGeom::Point3D *p1, const RDGeom::Point3D *p2,
+                const RDGeom::Point3D *p3, const RDGeom::Point3D *p4,
+                double *dihedral = nullptr, double *cosPhi = nullptr,
+                RDGeom::Point3D r[4] = nullptr, RDGeom::Point3D t[2] = nullptr,
+                double d[2] = nullptr);
+}  // namespace ForceFieldsHelper
+}  // namespace RDKit
 
 namespace ForceFields {
 class ForceFieldContrib;
@@ -80,7 +81,10 @@ class RDKIT_FORCEFIELD_EXPORT ForceField {
  public:
   //! construct with a dimension
   ForceField(unsigned int dimension = 3)
-      : d_dimension(dimension), df_init(false), d_numPoints(0), dp_distMat(0){};
+      : d_dimension(dimension),
+        df_init(false),
+        d_numPoints(0),
+        dp_distMat(nullptr){};
 
   ~ForceField();
 
@@ -101,7 +105,7 @@ class RDKIT_FORCEFIELD_EXPORT ForceField {
   double *
       the positions need to be converted to double * here
   */
-  double calcEnergy(std::vector<double> *contribs = NULL) const;
+  double calcEnergy(std::vector<double> *contribs = nullptr) const;
 
   // these next two aren't const because they may update our
   // distance matrix
@@ -200,7 +204,7 @@ class RDKIT_FORCEFIELD_EXPORT ForceField {
       - if the distance between i and j has not previously been calculated,
         our internal distance matrix will be updated.
   */
-  double distance(unsigned int i, unsigned int j, double *pos = 0);
+  double distance(unsigned int i, unsigned int j, double *pos = nullptr);
 
   //! returns the distance between two points
   /*!
@@ -215,7 +219,7 @@ class RDKIT_FORCEFIELD_EXPORT ForceField {
     <b>Note:</b>
       The internal distance matrix is not updated in this case
   */
-  double distance(unsigned int i, unsigned int j, double *pos = 0) const;
+  double distance(unsigned int i, unsigned int j, double *pos = nullptr) const;
 
   //! returns the dimension of the forcefield
   unsigned int dimension() const { return d_dimension; }

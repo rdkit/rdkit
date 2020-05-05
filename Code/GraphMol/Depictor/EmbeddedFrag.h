@@ -350,7 +350,7 @@ class RDKIT_DEPICTOR_EXPORT EmbeddedFrag {
   void randomSampleFlipsAndPermutations(unsigned int nBondsPerSample = 3,
                                         unsigned int nSamples = 100,
                                         int seed = 100,
-                                        const DOUBLE_SMART_PTR *dmat = 0,
+                                        const DOUBLE_SMART_PTR *dmat = nullptr,
                                         double mimicDmatWt = 0.0,
                                         bool permuteDeg4Nodes = false);
 

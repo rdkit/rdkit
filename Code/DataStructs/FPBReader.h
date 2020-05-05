@@ -58,8 +58,8 @@ struct FPBReader_impl;
 class RDKIT_DATASTRUCTS_EXPORT FPBReader {
  public:
   FPBReader()
-      : dp_istrm(NULL),
-        dp_impl(NULL),
+      : dp_istrm(nullptr),
+        dp_impl(nullptr),
         df_owner(false),
         df_init(false),
         df_lazyRead(false){};
@@ -91,14 +91,14 @@ class RDKIT_DATASTRUCTS_EXPORT FPBReader {
   FPBReader(std::istream *inStream, bool takeOwnership = true,
             bool lazyRead = false)
       : dp_istrm(inStream),
-        dp_impl(NULL),
+        dp_impl(nullptr),
         df_owner(takeOwnership),
         df_init(false),
         df_lazyRead(lazyRead){};
   ~FPBReader() {
     destroy();
     if (df_owner) delete dp_istrm;
-    dp_istrm = NULL;
+    dp_istrm = nullptr;
     df_init = false;
   };
 
@@ -271,7 +271,7 @@ class RDKIT_DATASTRUCTS_EXPORT FPBReader {
       throw BadFileException(errout.str());
     }
     dp_istrm = tmpStream;
-    dp_impl = NULL;
+    dp_impl = nullptr;
     df_owner = true;
     df_init = false;
     df_lazyRead = lazyRead;

@@ -378,7 +378,7 @@ class RDKIT_SUBSTRUCTLIBRARY_EXPORT SubstructLibrary {
         fps(nullptr) {}
 
   SubstructLibrary(boost::shared_ptr<MolHolderBase> molecules)
-      : molholder(molecules), fpholder(), mols(molholder.get()), fps(0) {}
+      : molholder(molecules), fpholder(), mols(molholder.get()), fps(nullptr) {}
 
   SubstructLibrary(boost::shared_ptr<MolHolderBase> molecules,
                    boost::shared_ptr<FPHolderBase> fingerprints)

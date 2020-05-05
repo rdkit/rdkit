@@ -125,7 +125,7 @@ class RDKIT_FMCS_EXPORT SubstructureCache {
     std::map<KeyNumericMetrics::TValue, size_t>::const_iterator entryit =
         NumericIndex.find(key.NumericMetrics.Value);
     if (NumericIndex.end() != entryit) return &ValueStorage[entryit->second];
-    return NULL;  // not found
+    return nullptr;  // not found
   }
 
   // if find() did not found any entry for this key of seed a new entry will be
