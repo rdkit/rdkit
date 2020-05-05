@@ -28,9 +28,11 @@ TEST_CASE("bond StereoInfo", "[unittest]") {
       auto sinfo = Chirality::detail::getStereoInfo(mol->getBondWithIdx(1));
       CHECK(sinfo.type == Chirality::StereoType::Bond);
       CHECK(sinfo.centeredOn == 1);
-      REQUIRE(sinfo.controllingAtoms.size() == 2);
+      REQUIRE(sinfo.controllingAtoms.size() == 4);
       CHECK(sinfo.controllingAtoms[0] == 0);
-      CHECK(sinfo.controllingAtoms[1] == 3);
+      CHECK(sinfo.controllingAtoms[1] == Chirality::StereoInfo::NOATOM);
+      CHECK(sinfo.controllingAtoms[2] == 3);
+      CHECK(sinfo.controllingAtoms[3] == 5);
     }
     {
       auto mol = "CC=NC=N"_smiles;
@@ -38,9 +40,11 @@ TEST_CASE("bond StereoInfo", "[unittest]") {
       auto sinfo = Chirality::detail::getStereoInfo(mol->getBondWithIdx(1));
       CHECK(sinfo.type == Chirality::StereoType::Bond);
       CHECK(sinfo.centeredOn == 1);
-      REQUIRE(sinfo.controllingAtoms.size() == 2);
+      REQUIRE(sinfo.controllingAtoms.size() == 4);
       CHECK(sinfo.controllingAtoms[0] == 0);
-      CHECK(sinfo.controllingAtoms[1] == 3);
+      CHECK(sinfo.controllingAtoms[1] == Chirality::StereoInfo::NOATOM);
+      CHECK(sinfo.controllingAtoms[2] == 3);
+      CHECK(sinfo.controllingAtoms[3] == Chirality::StereoInfo::NOATOM);
     }
   }
 }
@@ -237,9 +241,11 @@ TEST_CASE("possible stereochemistry on bonds", "[chirality]") {
       REQUIRE(stereoInfo.size() == 1);
       CHECK(stereoInfo[0].type == Chirality::StereoType::Bond);
       CHECK(stereoInfo[0].centeredOn == 1);
-      REQUIRE(stereoInfo[0].controllingAtoms.size() == 2);
+      REQUIRE(stereoInfo[0].controllingAtoms.size() == 4);
       CHECK(stereoInfo[0].controllingAtoms[0] == 0);
-      CHECK(stereoInfo[0].controllingAtoms[1] == 3);
+      CHECK(stereoInfo[0].controllingAtoms[1] == Chirality::StereoInfo::NOATOM);
+      CHECK(stereoInfo[0].controllingAtoms[2] == 3);
+      CHECK(stereoInfo[0].controllingAtoms[3] == Chirality::StereoInfo::NOATOM);
     }
     {
       auto mol = "CC=C(C)C"_smiles;
@@ -252,6 +258,32 @@ TEST_CASE("possible stereochemistry on bonds", "[chirality]") {
       REQUIRE(mol);
       auto stereoInfo = Chirality::findPotentialStereo(*mol);
       CHECK(stereoInfo.size() == 0);
+    }
+    {
+      auto mol = "CC(F)=C(Cl)C"_smiles;
+      REQUIRE(mol);
+      auto stereoInfo = Chirality::findPotentialStereo(*mol);
+      REQUIRE(stereoInfo.size() == 1);
+      CHECK(stereoInfo[0].type == Chirality::StereoType::Bond);
+      CHECK(stereoInfo[0].centeredOn == 1);
+      REQUIRE(stereoInfo[0].controllingAtoms.size() == 4);
+      CHECK(stereoInfo[0].controllingAtoms[0] == 0);
+      CHECK(stereoInfo[0].controllingAtoms[1] == 2);
+      CHECK(stereoInfo[0].controllingAtoms[2] == 4);
+      CHECK(stereoInfo[0].controllingAtoms[3] == 5);
+    }
+    {
+      auto mol = "CC=C(Cl)C"_smiles;
+      REQUIRE(mol);
+      auto stereoInfo = Chirality::findPotentialStereo(*mol);
+      REQUIRE(stereoInfo.size() == 1);
+      CHECK(stereoInfo[0].type == Chirality::StereoType::Bond);
+      CHECK(stereoInfo[0].centeredOn == 1);
+      REQUIRE(stereoInfo[0].controllingAtoms.size() == 4);
+      CHECK(stereoInfo[0].controllingAtoms[0] == 0);
+      CHECK(stereoInfo[0].controllingAtoms[1] == 3);
+      CHECK(stereoInfo[0].controllingAtoms[2] == 4);
+      CHECK(stereoInfo[0].controllingAtoms[3] == Chirality::StereoInfo::NOATOM);
     }
   }
 }
