@@ -1,5 +1,5 @@
 //
-//  Copyright (C) 2017 Greg Landrum
+//  Copyright (C) 2017-2020 Greg Landrum
 //
 //   @@ All Rights Reserved @@
 //  This file is part of the RDKit.
@@ -11,6 +11,8 @@
 #include <RDGeneral/RDLog.h>
 #include <GraphMol/RDKitBase.h>
 #include <GraphMol/Substruct/SubstructMatch.h>
+#include <GraphMol/MolTransforms/MolTransforms.h>
+#include <Geometry/Transform3D.h>
 #include <cstdlib>
 
 #include "coordgen/sketcherMinimizer.h"
@@ -163,8 +165,18 @@ unsigned int addCoords(T& mol, const CoordGenParams* params = nullptr) {
     // std::cerr << atom->coordinates << std::endl;
   }
   conf->set3D(false);
+
   mol.clearConformers();
-  return (mol.addConformer(conf, true));
+  auto res = mol.addConformer(conf, true);
+  if (params->coordMap.empty() && !params->templateMol) {
+    // center the coordinates
+    RDGeom::Transform3D tf;
+    auto centroid = MolTransforms::computeCentroid(*conf);
+    centroid *= -1;
+    tf.SetTranslation(centroid);
+    MolTransforms::transformConformer(*conf, tf);
+  }
+  return res;
 }
 }  // end of namespace CoordGen
 }  // end of namespace RDKit
