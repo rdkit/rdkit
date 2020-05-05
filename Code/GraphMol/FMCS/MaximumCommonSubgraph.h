@@ -67,6 +67,7 @@ class RDKIT_FMCS_EXPORT MaximumCommonSubgraph {
   const ROMol* QueryMolecule;
   unsigned QueryMoleculeMatchedBonds;
   unsigned QueryMoleculeMatchedAtoms;
+  const Atom* QueryMoleculeSingleMatchedAtom;
   std::vector<Target> Targets;
   SeedSet Seeds;
   MCS McsIdx;

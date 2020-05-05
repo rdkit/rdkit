@@ -565,7 +565,29 @@ class Common:
             r = rdFMCS.FindMCS(ms, params)
         else:
             r = rdFMCS.FindMCS(ms, seedSmarts='C1OC1')
+        self.assertEqual(r.smartsString, "[#6]")
+        self.assertEqual(r.numAtoms, 1)
+        self.assertEqual(r.numBonds, 0)
+        if kwargs:
+            params = Common.getParams(**kwargs)
+            params.InitialSeed = 'C1OC1'
+            params.AtomCompareParameters.RingMatchesRingOnly = True
+            r = rdFMCS.FindMCS(ms, params)
+        else:
+            r = rdFMCS.FindMCS(ms, seedSmarts='C1OC1', ringMatchesRingOnly=True)
+        self.assertEqual(r.smartsString, "[#6&R]")
+        self.assertEqual(r.numAtoms, 1)
+        self.assertEqual(r.numBonds, 0)
+        if kwargs:
+            params = Common.getParams(**kwargs)
+            params.InitialSeed = 'C1OC1'
+            params.BondCompareParameters.CompleteRingsOnly = True
+            r = rdFMCS.FindMCS(ms, params)
+        else:
+            r = rdFMCS.FindMCS(ms, seedSmarts='C1OC1', completeRingsOnly=True)
         self.assertEqual(r.smartsString, "")
+        self.assertEqual(r.numAtoms, 0)
+        self.assertEqual(r.numBonds, 0)
 
     def test8MatchParams(self, **kwargs):
         smis = ("CCC1NC1", "CCC1N(C)C1", "CCC1OC1")
