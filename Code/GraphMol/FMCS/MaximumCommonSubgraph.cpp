@@ -464,7 +464,7 @@ void MaximumCommonSubgraph::makeInitialSeeds() {
               QueryMoleculeSingleMatchedAtom = queryMolAtom;
             }
             else {
-              QueryMoleculeSingleMatchedAtom = std::max(queryMolAtom,
+              QueryMoleculeSingleMatchedAtom = (std::max)(queryMolAtom,
               QueryMoleculeSingleMatchedAtom, [](const Atom *a, const Atom *b) {
                 if (a->getDegree() != b->getDegree()) {
                   return (a->getDegree() < b->getDegree());
