@@ -15,16 +15,16 @@
 #include <RDGeneral/Invariant.h>
 #include <ctime>
 
-#define MAX_ITERATIONS 1000
-#define TOLERANCE 0.001
-#define HUGE_EIGVAL 1.0e10
-#define TINY_EIGVAL 1.0e-10
-
 namespace RDNumeric {
 namespace EigenSolvers {
 bool powerEigenSolver(unsigned int numEig, DoubleSymmMatrix &mat,
                       DoubleVector &eigenValues, DoubleMatrix *eigenVectors,
                       int seed) {
+  const unsigned int MAX_ITERATIONS = 1000;
+  const double TOLERANCE = 0.001;
+  const double HUGE_EIGVAL = 1.0e10;
+  const double TINY_EIGVAL = 1.0e-10;
+
   // first check all the sizes
   unsigned int N = mat.numRows();
   CHECK_INVARIANT(eigenValues.size() >= numEig, "");
