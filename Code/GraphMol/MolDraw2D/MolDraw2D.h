@@ -34,6 +34,8 @@ using RDGeom::Point2D;
 
 namespace RDKit {
 
+class DrawText;
+
 struct DrawColour {
   double r = 0.0, g = 0.0, b = 0.0, a = 1.0;
   DrawColour() = default;
@@ -234,23 +236,8 @@ class RDKIT_MOLDRAW2D_EXPORT MolDraw2D {
     sizes of the panels individual molecules are drawn in when
     \c drawMolecules() is called.
   */
-  MolDraw2D(int width, int height, int panelWidth, int panelHeight)
-      : needs_scale_(true),
-        width_(width),
-        height_(height),
-        panel_width_(panelWidth > 0 ? panelWidth : width),
-        panel_height_(panelHeight > 0 ? panelHeight : height),
-        scale_(1.0),
-        x_trans_(0.0),
-        y_trans_(0.0),
-        x_offset_(0),
-        y_offset_(0),
-        font_size_(0.5),
-        curr_width_(2),
-        fill_polys_(true),
-        activeMolIdx_(-1) {}
-
-  virtual ~MolDraw2D() {}
+  MolDraw2D(int width, int height, int panelWidth, int panelHeight);
+  virtual ~MolDraw2D();
 
   //! draw a single molecule
   /*!
@@ -466,12 +453,6 @@ class RDKIT_MOLDRAW2D_EXPORT MolDraw2D {
   //! returns the current line width
   virtual int lineWidth() const { return curr_width_; }
 
-  //! establishes whether to put string draw mode into super- or sub-script
-  //! mode based on contents of instring from i onwards. Increments i
-  //! appropriately
-  //! \returns true or false depending on whether it did something or not
-  bool setStringDrawMode(const std::string &instring, TextDrawType &draw_mode,
-                         int &i) const;
   //! clears the contents of the drawing
   virtual void clearDrawing() = 0;
   //! draws a line from \c cds1 to \c cds2 using the current drawing style
@@ -485,7 +466,7 @@ class RDKIT_MOLDRAW2D_EXPORT MolDraw2D {
      accounted for in the width and height.
    */
   virtual void getStringSize(const std::string &label, double &label_width,
-                             double &label_height) const = 0;
+                             double &label_height) const;
   // get the overall size of the label, allowing for it being split
   // into pieces according to orientation.
   void getLabelSize(const std::string &label, OrientType orient,
@@ -573,6 +554,10 @@ class RDKIT_MOLDRAW2D_EXPORT MolDraw2D {
 
   virtual bool supportsAnnotations() { return true; }
 
+ protected:
+
+  std::unique_ptr<DrawText> text_drawer_;
+
  private:
   bool needs_scale_;
   int width_, height_, panel_width_, panel_height_;
@@ -600,7 +585,7 @@ class RDKIT_MOLDRAW2D_EXPORT MolDraw2D {
   Point2D bbox_[2];
 
   // draw the char, with the bottom left hand corner at cds
-  virtual void drawChar(char c, const Point2D &cds) = 0;
+  void drawChar(char c, const Point2D &cds);
 
   // return a DrawColour based on the contents of highlight_atoms or
   // highlight_map, falling back to atomic number by default

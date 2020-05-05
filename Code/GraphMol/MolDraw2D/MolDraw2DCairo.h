@@ -16,6 +16,7 @@
 #ifndef MOLDRAW2DCAIRO_H
 #define MOLDRAW2DCAIRO_H
 
+#include <GraphMol/MolDraw2D/DrawTextCairo.h>
 #include <GraphMol/MolDraw2D/MolDraw2D.h>
 #include <cairo.h>
 
@@ -31,6 +32,7 @@ class RDKIT_MOLDRAW2D_EXPORT MolDraw2DCairo : public MolDraw2D {
       : MolDraw2D(width, height, panelWidth, panelHeight), dp_cr(cr) {
     cairo_reference(dp_cr);
     initDrawing();
+    text_drawer_.reset(new DrawTextCairo(dp_cr));
   };
   MolDraw2DCairo(int width, int height, int panelWidth = -1,
                  int panelHeight = -1)
@@ -40,6 +42,7 @@ class RDKIT_MOLDRAW2D_EXPORT MolDraw2DCairo : public MolDraw2D {
     dp_cr = cairo_create(surf);
     cairo_surface_destroy(surf);  // dp_cr has a reference to this now;
     initDrawing();
+    text_drawer_.reset(new DrawTextCairo(dp_cr));
   };
   ~MolDraw2DCairo() {
     if (dp_cr) {
@@ -58,7 +61,6 @@ class RDKIT_MOLDRAW2D_EXPORT MolDraw2DCairo : public MolDraw2D {
   void finishDrawing();
 
   void drawLine(const Point2D &cds1, const Point2D &cds2) override;
-  void drawChar(char c, const Point2D &cds) override;
   // void drawString( const std::string &str, const Point2D &cds );
   void drawPolygon(const std::vector<Point2D> &cds) override;
   void clearDrawing() override;
@@ -66,11 +68,6 @@ class RDKIT_MOLDRAW2D_EXPORT MolDraw2DCairo : public MolDraw2D {
   void drawWavyLine(const Point2D &cds1, const Point2D &cds2,
                     const DrawColour &col1, const DrawColour &col2,
                     unsigned int nSegments = 16, double vertOffset = 0.05) override;
-
-  // using the current scale, work out the size of the label in molecule
-  // coordinates
-  void getStringSize(const std::string &label, double &label_width,
-                     double &label_height) const override;
 
   // returns the PNG data in a string
   std::string getDrawingText() const;

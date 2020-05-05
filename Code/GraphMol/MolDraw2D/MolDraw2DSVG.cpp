@@ -11,16 +11,13 @@
 //
 
 #include "MolDraw2DSVG.h"
-#include <GraphMol/MolDraw2D/MolDraw2DDetails.h>
 #include <GraphMol/SmilesParse/SmilesWrite.h>
 #include <Geometry/point.h>
 
-#include <boost/algorithm/string.hpp>
 #include <boost/format.hpp>
 #include <sstream>
 
 namespace RDKit {
-namespace {
 std::string DrawColourToSVG(const DrawColour &col) {
   const char *convert = "0123456789ABCDEF";
   std::string res(7, ' ');
@@ -50,7 +47,6 @@ std::string DrawColourToSVG(const DrawColour &col) {
   res[i++] = convert[v % 16];
   return res;
 }
-}  // namespace
 
 void MolDraw2DSVG::initDrawing() {
   d_os << "<?xml version='1.0' encoding='iso-8859-1'?>\n";
@@ -170,24 +166,6 @@ void MolDraw2DSVG::drawLine(const Point2D &cds1, const Point2D &cds2) {
 }
 
 // ****************************************************************************
-// draw the char, with the bottom left hand corner at cds
-void MolDraw2DSVG::drawChar(char c, const Point2D &cds) {
-  unsigned int fontSz = drawFontSize();
-  std::string col = DrawColourToSVG(colour());
-
-  d_os << "<text";
-  d_os << " x='" << cds.x;
-  d_os << "' y='" << cds.y << "'";
-  d_os << " style='font-size:" << fontSz
-       << "px;font-style:normal;font-weight:normal;fill-opacity:1;stroke:none;"
-          "font-family:sans-serif;text-anchor:start;"
-       << "fill:" << col << "'";
-  d_os << " >";
-  d_os << c;
-  d_os << "</text>";
-}
-
-// ****************************************************************************
 void MolDraw2DSVG::drawPolygon(const std::vector<Point2D> &cds) {
   PRECONDITION(cds.size() >= 3, "must have at least three points");
 
@@ -264,181 +242,6 @@ void MolDraw2DSVG::clearDrawing() {
   d_os << " width='" << width() << "' height='" << height() << "'";
   d_os << " x='0' y='0'";
   d_os << "> </rect>\n";
-}
-
-// ****************************************************************************
-// using the current scale, work out the size of the label in molecule
-// coordinates
-void MolDraw2DSVG::getStringSize(const std::string &label, double &label_width,
-                                 double &label_height) const {
-  label_width = 0.0;
-  label_height = 0.0;
-
-  TextDrawType draw_mode = TextDrawNormal;
-
-  bool had_a_super = false;
-  bool had_a_sub = false;
-
-  double act_font_size = drawFontSize() / scale();
-  for (int i = 0, is = label.length(); i < is; ++i) {
-    // setStringDrawMode moves i along to the end of any <sub> or <sup>
-    // markup
-    if ('<' == label[i] && setStringDrawMode(label, draw_mode, i)) {
-      continue;
-    }
-
-    label_height = act_font_size;
-    double char_width =
-        act_font_size *
-        static_cast<double>(MolDraw2D_detail::char_widths[(int)label[i]]) /
-        MolDraw2D_detail::char_widths[(int)'M'];
-    if (TextDrawSubscript == draw_mode) {
-      char_width *= 0.5;
-      had_a_sub = true;
-    } else if (TextDrawSuperscript == draw_mode) {
-      char_width *= 0.5;
-      had_a_super = true;
-    }
-    label_width += char_width;
-  }
-
-  // subscript keeps its bottom in line with the bottom of the bit chars,
-  // superscript goes above the original char top by a bit (empirical)
-  if (had_a_super) {
-    label_height *= 1.1;
-  }
-  if (had_a_sub) {
-    label_height *= 1.1;
-  }
-
-}
-
-namespace {
-void escape_xhtml(std::string &data) {
-  boost::algorithm::replace_all(data, "&", "&amp;");
-  boost::algorithm::replace_all(data, "\"", "&quot;");
-  boost::algorithm::replace_all(data, "\'", "&apos;");
-  boost::algorithm::replace_all(data, "<", "&lt;");
-  boost::algorithm::replace_all(data, ">", "&gt;");
-}
-}  // namespace
-
-// ****************************************************************************
-void MolDraw2DSVG::drawString(const std::string &str, const Point2D &cds) {
-
-  drawString(str, cds, MIDDLE);
-
-}
-
-// ****************************************************************************
-// draws the string aligned as requested.
-void MolDraw2DSVG::drawString(const std::string &str, const Point2D &cds,
-                              AlignType align) {
-  unsigned int fontSz = drawFontSize();
-  double string_width, string_height;
-  getStringSize(str, string_width, string_height);
-
-  double draw_x = cds.x;
-  double draw_y = cds.y;
-
-  // for debugging text output
-#if 0
-  draw_x = cds.x - string_width / 2.0;
-  draw_y = cds.y - string_height / 2.0;
-  DrawColour tcolour =colour();
-  setColour(DrawColour(.8,.8,.8));
-  std::vector<Point2D> poly;
-  poly.push_back(Point2D(draw_x,draw_y));
-  poly.push_back(Point2D(draw_x+string_width,draw_y));
-  poly.push_back(Point2D(draw_x+string_width,draw_y+string_height));
-  poly.push_back(Point2D(draw_x,draw_y+string_height));
-  drawPolygon(poly);
-  setColour(tcolour);
-  draw_x = cds.x;
-  draw_y = cds.y;
-#endif
-  std::string col = DrawColourToSVG(colour());
-
-  std::string text_anchor = "middle";
-  double tmult = 0.0;
-  if(align == END) {
-    text_anchor = "end";
-    tmult = -1.0;
-  } else if(align == START) {
-    text_anchor = "start";
-    tmult = 1.0;
-  }
-  Point2D draw_coords = getDrawCoords(Point2D(draw_x, draw_y));
-  // fonts are laid out with room for wider letters like W and hanging bits like g.
-  // Very few atomic symbols need to care about this, and common ones look a bit
-  // out of line.  For example O sits to the left of a double bond.  This is an
-  // empirical tweak to push it back a bit.  Use the string_height in x and y
-  // as it's just a correction factor based on the scaled font size.
-  draw_coords.x += string_height * tmult * 0.1 * scale();
-  draw_coords.y += string_height * 0.15  *scale();
-
-  d_os << "<text dominant-baseline=\"central\" text-anchor=\""
-       << text_anchor << "\"";
-  d_os << " x='" << draw_coords.x;
-  d_os << "' y='" << draw_coords.y << "'";
-
-  if (!d_activeClass.empty()) {
-    d_os << " class='" << d_activeClass << "'";
-  }
-  d_os << " style='font-size:" << fontSz
-       << "px;font-style:normal;font-weight:normal;fill-opacity:1;stroke:none;"
-          "font-family:sans-serif;"
-       << "fill:" << col << "'";
-  d_os << " >";
-
-  TextDrawType draw_mode =
-      TextDrawNormal;  // 0 for normal, 1 for superscript, 2 for subscript
-  std::string span;
-  bool first_span = true;
-  auto write_span = [&]() {
-    if (!first_span) {
-      escape_xhtml(span);
-      d_os << span << "</tspan>";
-      span = "";
-    }
-    first_span = false;
-  };
-
-  for (int i = 0, is = str.length(); i < is; ++i) {
-    // setStringDrawMode moves i along to the end of any <sub> or <sup>
-    // markup
-    if ('<' == str[i] && setStringDrawMode(str, draw_mode, i)) {
-      write_span();
-      d_os << "<tspan";
-      switch (draw_mode) {
-        // To save people time later - on macOS Catalina, at least, Firefox
-        // renders the superscript as a subscript.  It's fine on Safari.
-        case TextDrawSuperscript:
-          d_os << " style='baseline-shift:super;font-size:" << fontSz * 0.75
-               << "px;"
-               << "'";
-          break;
-        case TextDrawSubscript:
-          d_os << " style='baseline-shift:sub;font-size:" << fontSz * 0.75
-               << "px;"
-               << "'";
-          break;
-        default:
-          break;
-      }
-      d_os << ">";
-      continue;
-    }
-    if (first_span) {
-      first_span = false;
-      d_os << "<tspan>";
-      span = "";
-    }
-    span += str[i];
-  }
-  escape_xhtml(span);
-  d_os << span << "</tspan>";
-  d_os << "</text>\n";
 }
 
 // ****************************************************************************

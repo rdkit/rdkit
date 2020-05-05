@@ -27,11 +27,41 @@
 #include <iostream>
 #include <fstream>
 #include <sstream>
+#include <cairo.h>
+#include "MolDraw2DCairo.h"
 
 using namespace RDKit;
 
 void test1() {
   std::cout << " ----------------- Test 1" << std::endl;
+  {
+    std::string smiles = "CN(C)CN";
+    ROMol *m = SmilesToMol(smiles);
+    TEST_ASSERT(m);
+    RDDepict::compute2DCoords(*m);
+    WedgeMolBonds(*m, &(m->getConformer()));
+
+    MolDraw2DCairo drawer(300, 300);
+    drawer.drawMolecule(*m);
+    drawer.finishDrawing();
+
+    drawer.writeDrawingText("test2_X.png");
+    delete m;
+  }
+  {
+    std::string smiles = "CN(C)CN";
+    ROMol *m = SmilesToMol(smiles);
+    TEST_ASSERT(m);
+    RDDepict::compute2DCoords(*m);
+    WedgeMolBonds(*m, &(m->getConformer()));
+    std::ofstream outs("test2_X.svg");
+    MolDraw2DSVG drawer(300, 300, outs);
+    drawer.drawMolecule(*m);
+    drawer.finishDrawing();
+    outs.flush();
+    delete m;
+  }
+  exit(1);
   {
     std::string smiles = "CO[C@@H](O)C1=C(O[C@H](F)Cl)C(C#N)=C1ONNC[NH3+]";
     ROMol *m = SmilesToMol(smiles);

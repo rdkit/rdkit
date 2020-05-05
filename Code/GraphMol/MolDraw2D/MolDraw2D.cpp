@@ -12,6 +12,7 @@
 //
 
 #include <GraphMol/QueryOps.h>
+#include <GraphMol/MolDraw2D/DrawText.h>
 #include <GraphMol/MolDraw2D/MolDraw2D.h>
 #include <GraphMol/MolDraw2D/MolDraw2DDetails.h>
 #include <GraphMol/MolDraw2D/MolDraw2DUtils.h>
@@ -51,6 +52,30 @@ void getBondHighlightsForAtoms(const ROMol &mol,
   }
 }
 }  // namespace
+
+// ****************************************************************************
+MolDraw2D::MolDraw2D(int width, int height, int panelWidth, int panelHeight)
+    : needs_scale_(true),
+      width_(width),
+      height_(height),
+      panel_width_(panelWidth > 0 ? panelWidth : width),
+      panel_height_(panelHeight > 0 ? panelHeight : height),
+      scale_(1.0),
+      x_trans_(0.0),
+      y_trans_(0.0),
+      x_offset_(0),
+      y_offset_(0),
+      font_size_(0.5),
+      curr_width_(2),
+      fill_polys_(true),
+      activeMolIdx_(-1) {
+
+}
+
+// ****************************************************************************
+MolDraw2D::~MolDraw2D() {
+
+}
 
 // ****************************************************************************
 void MolDraw2D::drawMolecule(const ROMol &mol,
@@ -851,8 +876,8 @@ void MolDraw2D::calculateScale(int width, int height,
   PRECONDITION(height > 0, "bad height");
   PRECONDITION(activeMolIdx_ >= 0, "bad active mol");
 
-  // cout << "calculateScale  width = " << width << "  height = " << height <<
-  // endl;
+   cout << "calculateScale  width = " << width << "  height = " << height
+       << endl;
   x_min_ = y_min_ = numeric_limits<double>::max();
   double x_max(-x_min_), y_max(-y_min_);
 
@@ -925,8 +950,8 @@ void MolDraw2D::calculateScale(int width, int height,
     y_trans_ = 0.;
   }
 
-  // cout << "leaving calculateScale" << endl;
-  // cout << "final scale : " << scale_ << endl;
+   cout << "leaving calculateScale" << endl;
+   cout << "final scale : " << scale_ << endl;
 }
 
 // ****************************************************************************
@@ -998,38 +1023,6 @@ void MolDraw2D::centrePicture(int width, int height) {
 };
 
 // ****************************************************************************
-// establishes whether to put string draw mode into super- or sub-script
-// mode based on contents of instring from i onwards. Increments i
-// appropriately and returns true or false depending on whether it did
-// something or not.
-bool MolDraw2D::setStringDrawMode(const string &instring,
-                                  TextDrawType &draw_mode, int &i) const {
-  string bit1 = instring.substr(i, 5);
-  string bit2 = instring.substr(i, 6);
-
-  // could be markup for super- or sub-script
-  if (string("<sub>") == bit1) {
-    draw_mode = TextDrawSubscript;
-    i += 4;
-    return true;
-  } else if (string("<sup>") == bit1) {
-    draw_mode = TextDrawSuperscript;
-    i += 4;
-    return true;
-  } else if (string("</sub>") == bit2) {
-    draw_mode = TextDrawNormal;
-    i += 5;
-    return true;
-  } else if (string("</sup>") == bit2) {
-    draw_mode = TextDrawNormal;
-    i += 5;
-    return true;
-  }
-
-  return false;
-}
-
-// ****************************************************************************
 void MolDraw2D::drawLine(const Point2D &cds1, const Point2D &cds2,
                          const DrawColour &col1, const DrawColour &col2) {
   if (col1 == col2) {
@@ -1044,6 +1037,16 @@ void MolDraw2D::drawLine(const Point2D &cds1, const Point2D &cds2,
     setColour(col2);
     drawLine(mid, cds2);
   }
+}
+
+// ****************************************************************************
+void MolDraw2D::getStringSize(const std::string &label, double &label_width,
+                              double &label_height) const {
+
+  text_drawer_->getStringSize(label, label_width, label_height);
+  label_width /= scale();
+  label_height /= scale();
+
 }
 
 // ****************************************************************************
@@ -1069,64 +1072,20 @@ void MolDraw2D::getLabelSize(const string &label, OrientType orient,
 // ****************************************************************************
 // draws the string centred on cds
 void MolDraw2D::drawString(const string &str, const Point2D &cds) {
-  double string_width, string_height;
-  getStringSize(str, string_width, string_height);
 
-  // FIX: this shouldn't stay
-  double M_width, M_height;
-  getStringSize(std::string("M"), M_width, M_height);
+  cout << "MolDraw2D :: " << str << " at " << cds.x << ", " << cds.y << endl;
+  Point2D draw_cds = getDrawCoords(cds);
+  text_drawer_->drawString(str, draw_cds, MIDDLE);
 
-  double draw_x = cds.x - string_width / 2.0;
-  double draw_y = cds.y - string_height / 2.0;
-
-  double full_font_size = fontSize();
-  TextDrawType draw_mode = TextDrawNormal;
-  string next_char(" ");
-
-  for (int i = 0, is = str.length(); i < is; ++i) {
-    // setStringDrawMode moves i along to the end of any <sub> or <sup>
-    // markup
-    if ('<' == str[i] && setStringDrawMode(str, draw_mode, i)) {
-      continue;
-    }
-
-    char next_c = str[i];
-    next_char[0] = next_c;
-    double char_width, char_height;
-    getStringSize(next_char, char_width, char_height);
-
-    // these font sizes and positions work best for Qt, IMO. They may want
-    // tweaking for a more general solution.
-    if (TextDrawSubscript == draw_mode) {
-      // y goes from top to bottom, so add for a subscript!
-      setFontSize(0.75 * full_font_size);
-      char_width *= 0.5;
-      drawChar(next_c,
-               //               getDrawCoords(Point2D(draw_x, draw_y + 0.5 *
-               //               char_height)));
-               getDrawCoords(Point2D(draw_x, draw_y - 0.5 * char_height)));
-      setFontSize(full_font_size);
-    } else if (TextDrawSuperscript == draw_mode) {
-      setFontSize(0.75 * full_font_size);
-      char_width *= 0.5;
-      drawChar(next_c,
-               //               getDrawCoords(Point2D(draw_x, draw_y - 0.25 *
-               //               char_height)));
-               getDrawCoords(Point2D(draw_x, draw_y + .5 * M_height)));
-      setFontSize(full_font_size);
-    } else {
-      setFontSize(full_font_size);
-      drawChar(next_c, getDrawCoords(Point2D(draw_x, draw_y)));
-    }
-    draw_x += char_width;
-  }
 }
 
 // ****************************************************************************
 void MolDraw2D::drawString(const std::string &str, const Point2D &cds,
                            AlignType align) {
-  RDUNUSED_PARAM(align);
-  drawString(str, cds);
+
+  Point2D draw_cds = getDrawCoords(cds);
+  text_drawer_->drawString(str, draw_cds, align);
+
 }
 
 // ****************************************************************************
@@ -1208,6 +1167,11 @@ void MolDraw2D::alignString(const string &str, const string &align_char,
   out_cds.x = in_cds.x + dir * 0.5 * (str_width - ac_width);
   // assuming we centre the string on the draw coords.
   out_cds.y = in_cds.y;
+}
+
+// ****************************************************************************
+void MolDraw2D::drawChar(char c, const Point2D &cds) {
+  text_drawer_->drawChar(c, cds);
 }
 
 // ****************************************************************************
