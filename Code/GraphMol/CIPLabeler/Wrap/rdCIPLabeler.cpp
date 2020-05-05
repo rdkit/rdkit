@@ -19,6 +19,22 @@
 namespace python = boost::python;
 using RDKit::CIPLabeler::assignCIPLabels;
 
+void assignCIPLabelsWrapHelper(RDKit::ROMol &mol,
+                               const python::object &atomsToLabel,
+                               const python::object &bondsToLabel) {
+
+  auto atoms = pythonObjectToDynBitset(atomsToLabel, mol.getNumAtoms());
+  auto bonds = pythonObjectToDynBitset(bondsToLabel, mol.getNumBonds());
+
+  // If both atoms and bonds are None, assign all the mol.
+  if (!atomsToLabel && !bondsToLabel) {
+    atoms.set();
+    bonds.set();
+  }
+
+  assignCIPLabels(mol, atoms, bonds);
+}
+
 BOOST_PYTHON_MODULE(rdCIPLabeler) {
   python::scope().attr("__doc__") =
       "Module containing a function to assign stereochemical labels based "
@@ -31,6 +47,9 @@ BOOST_PYTHON_MODULE(rdCIPLabeler) {
   std::string docString =
       "New implementation of Stereo assignment using a true CIP ranking";
 
-  python::def("AssignCIPLabels", assignCIPLabels, python::arg("mol"),
+  python::def("AssignCIPLabels", assignCIPLabelsWrapHelper,
+              (python::arg("mol"),
+               python::arg("atomsToLabel") = python::object(),
+               python::arg("bondsToLabel") = python::object()),
               docString.c_str());
 }

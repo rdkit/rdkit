@@ -102,8 +102,7 @@ int Rule4b::compare(const Edge *a, const Edge *b) const {
 bool Rule4b::hasDescriptors(const Node *node) const {
   auto queue = std::list<const Node *>({node});
 
-  for (auto itr = queue.begin(); itr != queue.end(); ++itr) {
-    const auto &node = *itr;
+  for (const auto &node : queue) {
 
     if (node->getAux() != Descriptor::NONE) {
       return true;
@@ -227,8 +226,7 @@ void Rule4b::fillPairs(const Node *beg, PairList &plist) const {
   const auto &sorter = getRefSorter(&replacement_rule);
   auto queue = std::list<const Node *>({beg});
 
-  for (auto itr = queue.begin(); itr != queue.end(); ++itr) {
-    const auto &node = *itr;
+  for (const auto &node : queue) {
 
     plist.add(node->getAux());
     auto edges = node->getEdges();

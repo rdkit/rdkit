@@ -136,19 +136,15 @@ public:
 
   Configuration() = delete;
 
-  Configuration(const CIPMol &mol, Atom *focus, std::vector<Atom *> &&carriers,
-                int cfg);
+  Configuration(const CIPMol &mol, Atom *focus);
 
-  Configuration(const CIPMol &mol, std::vector<Atom *> &&foci,
-                std::vector<Atom *> &&carriers, int cfg);
+  Configuration(const CIPMol &mol, std::vector<Atom *> &&foci);
 
   virtual ~Configuration();
 
   Atom *getFocus() const;
 
   const std::vector<Atom *> &getFoci() const;
-
-  int getConfig() const;
 
   const std::vector<Atom *> &getCarriers() const;
 
@@ -158,7 +154,7 @@ public:
 
   virtual Descriptor label(const Rules &comp) = 0;
 
-  virtual void setPrimaryLabel(CIPMol &mol, Descriptor desc) = 0;
+  virtual void setPrimaryLabel(Descriptor desc) = 0;
 
 protected:
   Edge *findInternalEdge(const std::vector<Edge *> &edges, Atom *f1, Atom *f2);
@@ -167,13 +163,15 @@ protected:
 
   void removeInternalEdges(std::vector<Edge *> &edges, Atom *f1, Atom *f2);
 
+  void setCarriers(std::vector<Atom *> &&carriers);
+
 private:
   /**
    * Foci are the atoms on which the configuration is based,
    * and which will carry the label. E.g., the chiral atom in
    * a tetrahedral chirality, or the bond ends in a double bond.
    */
-  const std::vector<Atom *> d_foci;
+  std::vector<Atom *> d_foci;
 
   /**
    * Carriers are the atoms neighboring the foci that define the
@@ -181,9 +179,7 @@ private:
    * define a parity; for a double bond, one neighbor on each
    * side of the bond defines it as Cis or Trans.
    */
-  const std::vector<Atom *> d_carriers;
-
-  int d_cfg;
+  std::vector<Atom *> d_carriers;
 
   Digraph d_digraph;
 

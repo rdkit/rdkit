@@ -121,8 +121,7 @@ TEST_CASE("Descriptor lists", "[accurateCIP]") {
 void check_incoming_edge_count(Node *root) {
   auto queue = std::list<Node *>({root});
 
-  for (auto itr = queue.begin(); itr != queue.end(); ++itr) {
-    const auto &node = *itr;
+  for (const auto &node : queue) {
 
     int incoming_edges = 0;
     for (const auto &e : node->getEdges()) {
@@ -147,8 +146,7 @@ void check_incoming_edge_count(Node *root) {
 void expandAll(Digraph &g) {
   auto queue = std::list<Node *>({g.getOriginRoot()});
 
-  for (auto itr = queue.begin(); itr != queue.end(); ++itr) {
-    const auto &node = *itr;
+  for (const auto &node : queue) {
 
     for (const auto &e : node->getEdges()) {
       if (!e->isBeg(node)) {
@@ -164,7 +162,7 @@ void expandAll(Digraph &g) {
 TEST_CASE("Digraph", "[accurateCIP]") {
   auto mol =
       R"(CC1(OC2=C(C=3NC[C@@]4(C3C=C2)C([C@@H]5C[C@@]67C(N([C@]5(C4)CN6CC[C@@]7(C)O)C)=O)(C)C)OC=C1)C)"_smiles; // VS040
-  auto cipmol = CIPLabeler::CIPMol(mol.get());
+  CIPLabeler::CIPMol cipmol(*mol);
 
   auto initial_root_idx = 1;
   auto initial_root_atom = cipmol.getAtom(initial_root_idx);
@@ -204,7 +202,7 @@ TEST_CASE("Digraph", "[accurateCIP]") {
 TEST_CASE("Rule1a", "[accurateCIP]") {
   SECTION("Compare equal") {
     auto mol = "COC"_smiles;
-    auto cipmol = CIPLabeler::CIPMol(mol.get());
+    CIPLabeler::CIPMol cipmol(*mol);
     Digraph g(cipmol, cipmol.getAtom(1));
     auto origin = g.getOriginRoot();
 
@@ -225,7 +223,7 @@ TEST_CASE("Rule1a", "[accurateCIP]") {
 
   SECTION("Compare different") {
     auto mol = "CON"_smiles;
-    auto cipmol = CIPLabeler::CIPMol(mol.get());
+    CIPLabeler::CIPMol cipmol(*mol);
     Digraph g(cipmol, cipmol.getAtom(1));
     auto origin = g.getOriginRoot();
 
@@ -257,7 +255,7 @@ TEST_CASE("Rule1a", "[accurateCIP]") {
 TEST_CASE("Rule2", "[accurateCIP]") {
   SECTION("Compare equal") {
     auto mol = "COC"_smiles;
-    auto cipmol = CIPLabeler::CIPMol(mol.get());
+    CIPLabeler::CIPMol cipmol(*mol);
     Digraph g(cipmol, cipmol.getAtom(1));
     auto origin = g.getOriginRoot();
 
@@ -278,7 +276,7 @@ TEST_CASE("Rule2", "[accurateCIP]") {
 
   SECTION("Compare different: Zero Mass Num") {
     auto mol = "CO[13C]"_smiles;
-    auto cipmol = CIPLabeler::CIPMol(mol.get());
+    CIPLabeler::CIPMol cipmol(*mol);
     Digraph g(cipmol, cipmol.getAtom(1));
     auto origin = g.getOriginRoot();
 
@@ -303,7 +301,7 @@ TEST_CASE("Rule2", "[accurateCIP]") {
 
   SECTION("Compare different: Non-Zero Mass Num") {
     auto mol = "[13C]O[14C]"_smiles;
-    auto cipmol = CIPLabeler::CIPMol(mol.get());
+    CIPLabeler::CIPMol cipmol(*mol);
     Digraph g(cipmol, cipmol.getAtom(1));
     auto origin = g.getOriginRoot();
 
@@ -364,4 +362,74 @@ TEST_CASE("Double bond stereo assignment", "[accurateCIP]") {
   CHECK(bond_2->getPropIfPresent(common_properties::_CIPCode, chirality) ==
         true);
   CHECK(chirality == "Z");
+}
+
+TEST_CASE("phosphine and arsine chirality", "[accurateCIP]") {
+
+  const std::vector<std::pair<std::string, std::string>> mols{
+      {"C[P@](C1CCCC1)C1=CC=CC=C1", "R"},
+      {"C[As@@](C1CCCC1)C1=CC=CC=C1", "S"},
+      {"C[P@H]C1CCCCC1", "R"},
+      {"C[P@@H]C1CCCCC1", "S"}};
+
+  for (const auto &ref : mols) {
+    std::unique_ptr<RWMol> mol{SmilesToMol(ref.first)};
+    REQUIRE(mol);
+    CIPLabeler::assignCIPLabels(*mol);
+
+    std::string chirality;
+    CHECK(mol->getAtomWithIdx(1)->getPropIfPresent(common_properties::_CIPCode,
+                                                   chirality) == true);
+    CHECK(chirality == ref.second);
+  }
+}
+
+TEST_CASE("assign specific atoms and bonds", "[accurateCIP]") {
+  SECTION("Assign atoms") {
+    auto mol = "C[C@H](Cl)CC[C@H](Cl)C"_smiles;
+    REQUIRE(mol);
+
+    auto atom1 = mol->getAtomWithIdx(1);
+    auto atom5 = mol->getAtomWithIdx(5);
+
+    REQUIRE(atom1->hasProp(common_properties::_CIPCode) == true);
+    REQUIRE(atom5->hasProp(common_properties::_CIPCode) == true);
+
+    atom1->clearProp(common_properties::_CIPCode);
+    atom5->clearProp(common_properties::_CIPCode);
+
+    boost::dynamic_bitset<> atoms(mol->getNumAtoms());
+    boost::dynamic_bitset<> bonds;
+    atoms.set(1);
+    CIPLabeler::assignCIPLabels(*mol, atoms, bonds);
+
+    std::string chirality;
+    CHECK(atom1->getPropIfPresent(common_properties::_CIPCode, chirality) ==
+          true);
+    CHECK(chirality == "S");
+    CHECK(atom5->hasProp(common_properties::_CIPCode) == false);
+  }
+  SECTION("Assign bonds") {
+    auto mol = R"(C\C=C\C=C/C)"_smiles;
+    REQUIRE(mol);
+
+    auto bond1 = mol->getBondWithIdx(1);
+    auto bond3 = mol->getBondWithIdx(3);
+
+    REQUIRE(bond1->getBondType() == Bond::DOUBLE);
+    REQUIRE(bond3->getBondType() == Bond::DOUBLE);
+
+    REQUIRE(bond1->hasProp(common_properties::_CIPCode) == false);
+    REQUIRE(bond3->hasProp(common_properties::_CIPCode) == false);
+
+    boost::dynamic_bitset<> atoms;
+    boost::dynamic_bitset<> bonds(mol->getNumBonds());
+    bonds.set(3);
+    CIPLabeler::assignCIPLabels(*mol, atoms, bonds);
+
+    std::string stereo;
+    CHECK(bond1->hasProp(common_properties::_CIPCode) == false);
+    CHECK(bond3->getPropIfPresent(common_properties::_CIPCode, stereo) == true);
+    CHECK(stereo == "Z");
+  }
 }

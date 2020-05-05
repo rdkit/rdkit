@@ -10,6 +10,8 @@
 //
 #include <stdexcept>
 
+#include "RDGeneral/Invariant.h"
+
 #include "Edge.h"
 #include "Node.h"
 
@@ -19,7 +21,9 @@ namespace CIPLabeler {
 Edge::Edge(Node *beg, Node *end, Bond *bond)
     : dp_beg{beg}, dp_end{end}, dp_bond{bond} {}
 
-Node *Edge::getOther(Node *node) const {
+Node *Edge::getOther(const Node *node) const {
+  PRECONDITION(node, "bad node")
+
   if (isBeg(node)) {
     return getEnd();
   } else if (isEnd(node)) {

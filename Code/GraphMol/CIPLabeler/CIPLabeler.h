@@ -9,6 +9,9 @@
 //  of the RDKit source tree.
 //
 #pragma once
+
+#include "boost/dynamic_bitset.hpp"
+
 #include <RDGeneral/export.h>
 
 namespace RDKit {
@@ -34,5 +37,19 @@ namespace CIPLabeler {
  *          property of the relevant atoms/bonds.
  */
 RDKIT_CIPLABELER_EXPORT void assignCIPLabels(ROMol &mol);
+
+/**
+ * Overload that allows selecting which atoms and/or bonds will be labeled.
+ *
+ *   \param mol - the molecule to be labelled.
+ *
+ *   \param atoms - bitset with the atom indexes to be labeled.
+ *
+ *   \param bonds - bitset with the bond indexes to be labeled.
+ *
+ */
+RDKIT_CIPLABELER_EXPORT void
+assignCIPLabels(ROMol &mol, const boost::dynamic_bitset<> &atoms,
+                const boost::dynamic_bitset<> &bonds);
 }
 }

@@ -41,68 +41,49 @@ const Rules constitutional_rules({new Rule1a, new Rule1b, new Rule2});
 const Rules all_rules({new Rule1a, new Rule1b, new Rule2, new Rule3, new Rule4a,
                        new Rule4b, new Rule4c, new Rule5New, new Rule6});
 
-std::vector<std::unique_ptr<Configuration>> findConfigs(const CIPMol &mol) {
+std::vector<std::unique_ptr<Configuration>>
+findConfigs(CIPMol &mol, const boost::dynamic_bitset<> &atoms,
+            const boost::dynamic_bitset<> &bonds) {
   std::vector<std::unique_ptr<Configuration>> configs;
 
-  for (auto &atom : mol.atoms()) {
+  for (auto index = atoms.find_first(); index != boost::dynamic_bitset<>::npos;
+       index = atoms.find_next(index)) {
+    auto atom = mol.getAtom(index);
     auto chiraltag = atom->getChiralTag();
     if (chiraltag == Atom::CHI_TETRAHEDRAL_CW ||
         chiraltag == Atom::CHI_TETRAHEDRAL_CCW) {
-      std::vector<Atom *> carriers;
-      carriers.reserve(4);
-      for (auto &bond : mol.getBonds(atom)) {
-        auto nbr = bond->getOtherAtom(atom);
-        carriers.push_back(nbr);
-      }
-      if (carriers.size() < 4) {
-        // Implicit H -- use the central atom instead of a dummy H
-        carriers.push_back(atom);
-      }
 
-      auto atom_cfg = -1;
-      if (chiraltag == Atom::CHI_TETRAHEDRAL_CW) {
-        atom_cfg = Tetrahedral::RIGHT;
-      } else {
-        atom_cfg = Tetrahedral::LEFT;
-      }
-
-      std::unique_ptr<Tetrahedral> cfg{
-          new Tetrahedral(mol, atom, std::move(carriers), atom_cfg)};
+      std::unique_ptr<Tetrahedral> cfg{new Tetrahedral(mol, atom)};
       configs.push_back(std::move(cfg));
     }
   }
 
-  for (auto i = 0u; i < mol.getNumBonds(); ++i) {
-    auto bond = mol.getBond(i);
+  for (auto index = bonds.find_first(); index != boost::dynamic_bitset<>::npos;
+       index = bonds.find_next(index)) {
+    auto bond = mol.getBond(index);
 
-    int bond_cfg = -1;
+    auto bond_cfg = Bond::STEREONONE;
     switch (bond->getStereo()) {
     case Bond::STEREOE:
     case Bond::STEREOTRANS:
-      bond_cfg = Sp2Bond::OPPOSITE;
+      bond_cfg = Bond::STEREOTRANS;
       break;
     case Bond::STEREOZ:
     case Bond::STEREOCIS:
-      bond_cfg = Sp2Bond::TOGETHER;
+      bond_cfg = Bond::STEREOCIS;
       break;
     default:
       continue;
     }
 
-    auto stereo_atoms = MolOps::findStereoAtoms(bond);
-    std::vector<Atom *> anchors{
-        {mol.getAtom(stereo_atoms[0]), mol.getAtom(stereo_atoms[1])}};
-    std::vector<Atom *> atoms{{bond->getBeginAtom(), bond->getEndAtom()}};
-
-    std::unique_ptr<Sp2Bond> cfg(
-        new Sp2Bond(mol, bond, std::move(atoms), std::move(anchors), bond_cfg));
+    std::unique_ptr<Sp2Bond> cfg(new Sp2Bond(mol, bond, bond_cfg));
     configs.push_back(std::move(cfg));
   }
 
   return configs;
 }
 
-bool labelAux(const std::vector<std::unique_ptr<Configuration>> &configs,
+bool labelAux(std::vector<std::unique_ptr<Configuration>> &configs,
               const Rules &rules,
               const std::unique_ptr<Configuration> &center) {
   using Node_Cfg_Pair = std::pair<Node *, Configuration *>;
@@ -162,19 +143,18 @@ bool labelAux(const std::vector<std::unique_ptr<Configuration>> &configs,
   return true;
 }
 
-void label(CIPMol &mol,
-           const std::vector<std::unique_ptr<Configuration>> &configs) {
+void label(std::vector<std::unique_ptr<Configuration>> &configs) {
 
   for (const auto &conf : configs) {
     auto desc = conf->label(constitutional_rules);
     if (desc != Descriptor::UNKNOWN) {
-      conf->setPrimaryLabel(mol, desc);
+      conf->setPrimaryLabel(desc);
     } else {
       if (labelAux(configs, all_rules, conf)) {
         desc = conf->label(all_rules);
 
         if (desc != Descriptor::UNKNOWN) {
-          conf->setPrimaryLabel(mol, desc);
+          conf->setPrimaryLabel(desc);
         }
       }
     }
@@ -183,11 +163,20 @@ void label(CIPMol &mol,
 
 } // namespace
 
-void assignCIPLabels(ROMol &mol) {
-  auto cipmol = CIPMol(&mol);
-
-  auto configs = findConfigs(cipmol);
-  label(cipmol, configs);
+void assignCIPLabels(ROMol &mol, const boost::dynamic_bitset<> &atoms,
+                     const boost::dynamic_bitset<> &bonds) {
+  CIPMol cipmol{mol};
+  auto configs = findConfigs(cipmol, atoms, bonds);
+  label(configs);
 }
+
+void assignCIPLabels(ROMol &mol) {
+  boost::dynamic_bitset<> atoms(mol.getNumAtoms());
+  boost::dynamic_bitset<> bonds(mol.getNumBonds());
+  atoms.set();
+  bonds.set();
+  assignCIPLabels(mol, atoms, bonds);
+}
+
 } // namespace CIPLabeler
 } // end of namespace RDKit

@@ -116,8 +116,7 @@ void RelaxTypes(std::vector<Type> &types, const CIPMol &mol) {
     }
   }
 
-  for (auto itr = queue.begin(); itr != queue.end(); ++itr) {
-    const auto &atom = *itr;
+  for (const auto &atom : queue) {
     const auto aidx = atom->getIdx();
     if (types[aidx] != Type::Other) {
       types[aidx] = Type::Other;

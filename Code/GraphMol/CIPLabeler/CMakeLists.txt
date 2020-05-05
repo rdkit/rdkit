@@ -2,9 +2,23 @@
 remove_definitions(-DRDKIT_GRAPHMOL_BUILD)
 add_definitions(-DRDKIT_CIPLABELER_BUILD)
 
-file(GLOB configs_src "configs/*.cpp")
+set(configs_src
+    configs/Configuration.cpp
+    configs/Sp2Bond.cpp
+    configs/Tetrahedral.cpp)
 
-file(GLOB rules_src "rules/*.cpp")
+set(rules_src
+    rules/Rule1a.cpp
+    rules/Rule1b.cpp
+    rules/Rule2.cpp
+    rules/Rule3.cpp
+    rules/Rule4a.cpp
+    rules/Rule4b.cpp
+    rules/Rule4c.cpp
+    rules/Rule5.cpp
+    rules/Rule5New.cpp
+    rules/Rule6.cpp
+    rules/SequenceRule.cpp)
 
 rdkit_library(CIPLabeler
               CIPMol.cpp CIPLabeler.cpp

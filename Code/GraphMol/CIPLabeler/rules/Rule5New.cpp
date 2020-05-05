@@ -75,8 +75,7 @@ void Rule5New::fillPairs(const Node *beg, PairList &plist) const {
   const auto &sorter = getRefSorter(&replacement_rule);
   auto queue = std::list<const Node *>({beg});
 
-  for (auto itr = queue.begin(); itr != queue.end(); ++itr) {
-    const auto &node = *itr;
+  for (const auto &node : queue) {
 
     plist.add(node->getAux());
     auto edges = node->getEdges();

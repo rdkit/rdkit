@@ -75,8 +75,7 @@ std::vector<Node *> Digraph::getNodes(Atom *atom) const {
   std::vector<Node *> result;
   auto queue = std::list<Node *>({getCurrentRoot()});
 
-  for (auto itr = queue.begin(); itr != queue.end(); ++itr) {
-    const auto &node = *itr;
+  for (const auto &node : queue) {
 
     if (atom == node->getAtom()) {
       result.push_back(node);
@@ -112,8 +111,7 @@ void Digraph::changeRoot(Node *newroot) {
 
   std::vector<Edge *> toflip;
   auto queue = std::list<Node *>({newroot});
-  for (auto itr = queue.begin(); itr != queue.end(); ++itr) {
-    const auto &node = *itr;
+  for (const auto &node : queue) {
 
     for (const auto &e : node->getEdges()) {
       if (e->isEnd(node)) {

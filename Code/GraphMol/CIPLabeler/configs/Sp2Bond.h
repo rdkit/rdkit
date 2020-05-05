@@ -17,15 +17,11 @@ namespace CIPLabeler {
 
 class Sp2Bond : public Configuration {
 public:
-  static const int OPPOSITE = 0x1;
-  static const int TOGETHER = 0x2;
-
   Sp2Bond() = delete;
 
-  Sp2Bond(const CIPMol &mol, Bond *bond, std::vector<Atom *> &&foci,
-          std::vector<Atom *> &&carriers, int cfg);
+  Sp2Bond(const CIPMol &mol, Bond *bond, Bond::BondStereo cfg);
 
-  void setPrimaryLabel(CIPMol &mol, Descriptor desc) override;
+  void setPrimaryLabel(Descriptor desc) override;
 
   Descriptor label(const Rules &comp) override;
 
@@ -33,6 +29,10 @@ public:
 
 private:
   Bond *dp_bond;
+
+  // bond->getStereo() can return both E/Z or CIS/TRANS,
+  // so we cache CIS/TRANS we found.
+  Bond::BondStereo d_cfg;
 
 }; // namespace CIPLabeler
 

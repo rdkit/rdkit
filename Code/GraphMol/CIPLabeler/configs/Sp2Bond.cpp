@@ -16,13 +16,46 @@
 namespace RDKit {
 namespace CIPLabeler {
 
-Sp2Bond::Sp2Bond(const CIPMol &mol, Bond *bond, std::vector<Atom *> &&foci,
-                 std::vector<Atom *> &&carriers, int cfg)
-    : Configuration(mol, std::move(foci), std::move(carriers), cfg),
-      dp_bond{bond} {}
+Sp2Bond::Sp2Bond(const CIPMol &mol, Bond *bond, Bond::BondStereo cfg)
+    : Configuration(mol, {bond->getBeginAtom(), bond->getEndAtom()}),
+      dp_bond{bond}, d_cfg{cfg} {
+  CHECK_INVARIANT(bond->getBeginAtom() && bond->getEndAtom(), "bad foci")
+  CHECK_INVARIANT(d_cfg == Bond::STEREOTRANS || d_cfg == Bond::STEREOCIS,
+                  "bad config")
 
-void Sp2Bond::setPrimaryLabel(CIPMol &mol, Descriptor desc) {
-  mol.setBondDescriptor(dp_bond, CIP_LABEL_KEY, desc);
+  auto stereo_atoms = MolOps::findStereoAtoms(bond);
+  CHECK_INVARIANT(stereo_atoms.size() == 2, "incorrect number of stereo atoms")
+
+  std::vector<Atom *> anchors{
+      {mol.getAtom(stereo_atoms[0]), mol.getAtom(stereo_atoms[1])}};
+
+  setCarriers(std::move(anchors));
+}
+
+void Sp2Bond::setPrimaryLabel(Descriptor desc) {
+  switch (desc) {
+  case Descriptor::seqTrans:
+  case Descriptor::E:
+  case Descriptor::seqCis:
+  case Descriptor::Z: {
+    auto carriers = getCarriers();
+    dp_bond->setStereoAtoms(carriers[0]->getIdx(), carriers[1]->getIdx());
+    dp_bond->setStereo(d_cfg);
+    dp_bond->setProp(common_properties::_CIPCode, to_string(desc));
+    return;
+  }
+  case Descriptor::NONE:
+    throw std::runtime_error("Received an invalid as Bond Descriptor");
+  case Descriptor::R:
+  case Descriptor::S:
+  case Descriptor::r:
+  case Descriptor::s:
+  case Descriptor::SP_4:
+  case Descriptor::TBPY_5:
+  case Descriptor::OC_6:
+    throw std::runtime_error(
+        "Received a Descriptor that is not supported for bonds");
+  }
 }
 
 Descriptor Sp2Bond::label(const Rules &comp) {
@@ -63,24 +96,32 @@ Descriptor Sp2Bond::label(const Rules &comp) {
   }
 
   const auto &carriers = getCarriers();
-  int config = getConfig();
+  auto config = d_cfg;
 
   // swap
   if (edges1.size() > 1u && carriers[0] == edges1[1]->getEnd()->getAtom()) {
-    config ^= 0x3;
+    if (config == Bond::STEREOCIS) {
+      config = Bond::STEREOTRANS;
+    } else {
+      config = Bond::STEREOCIS;
+    }
   }
   // swap
   if (edges2.size() > 1u && carriers[1] == edges2[1]->getEnd()->getAtom()) {
-    config ^= 0x3;
+    if (config == Bond::STEREOCIS) {
+      config = Bond::STEREOTRANS;
+    } else {
+      config = Bond::STEREOCIS;
+    }
   }
 
-  if (config == TOGETHER) {
+  if (config == Bond::STEREOCIS) {
     if (priority1.isPseudoAsymetric() != priority2.isPseudoAsymetric()) {
       return Descriptor::seqCis;
     } else {
       return Descriptor::Z;
     }
-  } else if (config == OPPOSITE) {
+  } else if (config == Bond::STEREOTRANS) {
     if (priority1.isPseudoAsymetric() != priority2.isPseudoAsymetric()) {
       return Descriptor::seqTrans;
     } else {
@@ -107,7 +148,7 @@ Descriptor Sp2Bond::label(Node *root1, Digraph &digraph, const Rules &comp) {
   removeInternalEdges(edges2, focus1, focus2);
 
   auto carriers = std::vector<Atom *>(getCarriers());
-  int config = getConfig();
+  auto config = d_cfg;
 
   if (root1->getAtom() == focus2) {
     std::swap(carriers[0], carriers[1]);
@@ -120,7 +161,11 @@ Descriptor Sp2Bond::label(Node *root1, Digraph &digraph, const Rules &comp) {
   }
   // swap
   if (edges1.size() > 1 && carriers[0] == edges1[1]->getEnd()->getAtom()) {
-    config ^= 0x3;
+    if (config == Bond::STEREOCIS) {
+      config = Bond::STEREOTRANS;
+    } else {
+      config = Bond::STEREOCIS;
+    }
   }
   digraph.changeRoot(root2);
   const auto &priority2 = comp.sort(root2, edges2);
@@ -129,16 +174,20 @@ Descriptor Sp2Bond::label(Node *root1, Digraph &digraph, const Rules &comp) {
   }
   // swap
   if (edges2.size() > 1 && carriers[1] == edges2[1]->getEnd()->getAtom()) {
-    config ^= 0x3;
+    if (config == Bond::STEREOCIS) {
+      config = Bond::STEREOTRANS;
+    } else {
+      config = Bond::STEREOCIS;
+    }
   }
 
-  if (config == TOGETHER) {
+  if (config == Bond::STEREOCIS) {
     if (priority1.isPseudoAsymetric() != priority2.isPseudoAsymetric()) {
       return Descriptor::seqCis;
     } else {
       return Descriptor::Z;
     }
-  } else if (config == OPPOSITE) {
+  } else if (config == Bond::STEREOTRANS) {
     if (priority1.isPseudoAsymetric() != priority2.isPseudoAsymetric()) {
       return Descriptor::seqTrans;
     } else {

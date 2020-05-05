@@ -16,9 +16,6 @@
 namespace RDKit {
 namespace CIPLabeler {
 
-static const std::string CIP_LABEL_KEY = "cip.label";
-static const std::string CONF_INDEX = "conf.index";
-
 /**
  * Defines a descriptor which can be assigned to an atom to indicate the type of
  * chirality (if there is any). Each descriptor defines its general @{link

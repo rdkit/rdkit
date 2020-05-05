@@ -29,7 +29,7 @@ public:
 
   Edge(Node *beg, Node *end, Bond *bond);
 
-  Node *getOther(Node *node) const;
+  Node *getOther(const Node *node) const;
 
   Node *getBeg() const;
 

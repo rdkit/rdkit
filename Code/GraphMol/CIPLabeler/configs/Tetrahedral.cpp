@@ -15,12 +15,57 @@
 namespace RDKit {
 namespace CIPLabeler {
 
-Tetrahedral::Tetrahedral(const CIPMol &mol, Atom *focus,
-                         std::vector<Atom *> &&carriers, int cfg)
-    : Configuration(mol, focus, std::move(carriers), cfg){};
+Tetrahedral::Tetrahedral(const CIPMol &mol, Atom *focus)
+    : Configuration(mol, focus) {
+  CHECK_INVARIANT(focus, "bad atom")
+  CHECK_INVARIANT(focus->getChiralTag() == Atom::CHI_TETRAHEDRAL_CCW ||
+                      focus->getChiralTag() == Atom::CHI_TETRAHEDRAL_CW,
+                  "bad config")
 
-void Tetrahedral::setPrimaryLabel(CIPMol &mol, Descriptor desc) {
-  mol.setAtomDescriptor(getFocus(), CIP_LABEL_KEY, desc);
+  std::vector<Atom *> carriers;
+  carriers.reserve(4);
+  for (auto &bond : mol.getBonds(focus)) {
+    auto nbr = bond->getOtherAtom(focus);
+    carriers.push_back(nbr);
+  }
+  if (carriers.size() < 4) {
+    // Implicit H -- use the central atom instead of a dummy H
+    carriers.push_back(focus);
+  }
+  if (carriers.size() < 4) {
+    // Trigonal pyramid centers with an implicit H need a phantom
+    // atom as fourth carrier. This one must be represented differently
+    // than the implicit H.
+    carriers.push_back(nullptr);
+  }
+
+  setCarriers(std::move(carriers));
+};
+
+void Tetrahedral::setPrimaryLabel(Descriptor desc) {
+  switch (desc) {
+  case Descriptor::R:
+  case Descriptor::S:
+  case Descriptor::r:
+  case Descriptor::s:
+    getFocus()->setProp(common_properties::_CIPCode, to_string(desc));
+    return;
+  case Descriptor::NONE:
+    throw std::runtime_error("Received an invalid as Atom Descriptor");
+  case Descriptor::seqTrans:
+  case Descriptor::seqCis:
+  case Descriptor::E:
+  case Descriptor::Z:
+  case Descriptor::M:
+  case Descriptor::P:
+  case Descriptor::m:
+  case Descriptor::p:
+  case Descriptor::SP_4:
+  case Descriptor::TBPY_5:
+  case Descriptor::OC_6:
+    throw std::runtime_error(
+        "Received a Descriptor that is not supported for atoms");
+  }
 }
 
 Descriptor Tetrahedral::label(const Rules &comp) {
@@ -82,7 +127,11 @@ Descriptor Tetrahedral::label(Node *node, const Rules &comp) const {
     return Descriptor::UNKNOWN;
   }
 
-  auto ordered = std::vector<Atom *>(4);
+  // if we are resolving a trigonal pyramid with an implicit H,
+  // the 4th carrier will be a nullptr: we need to add a phantom
+  // atom, which will always have the lowest priority, so that
+  // it must be different than the representation of the implicit H.
+  auto ordered = std::vector<Atom *>(4, nullptr);
   int idx = 0;
   for (const auto &edge : edges) {
     if (edge->getEnd()->isSet(Node::BOND_DUPLICATE) ||
@@ -102,18 +151,22 @@ Descriptor Tetrahedral::label(Node *node, const Rules &comp) const {
     throw std::runtime_error("Could not calculate parity! Carrier mismatch");
   }
 
-  int config = getConfig();
+  auto config = focus->getChiralTag();
   if (parity == 1) {
-    config ^= 0x3;
+    if (config == Atom::CHI_TETRAHEDRAL_CCW) {
+      config = Atom::CHI_TETRAHEDRAL_CW;
+    } else {
+      config = Atom::CHI_TETRAHEDRAL_CCW;
+    }
   }
 
-  if (config == 0x1) {
+  if (config == Atom::CHI_TETRAHEDRAL_CCW) {
     if (priority.isPseudoAsymetric()) {
       return Descriptor::s;
     } else {
       return Descriptor::S;
     }
-  } else if (config == 0x2) {
+  } else if (config == Atom::CHI_TETRAHEDRAL_CW) {
     if (priority.isPseudoAsymetric()) {
       return Descriptor::r;
     } else {

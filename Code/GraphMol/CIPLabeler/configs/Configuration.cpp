@@ -52,23 +52,21 @@ void Configuration::removeInternalEdges(std::vector<Edge *> &edges, Atom *f1,
   std::swap(edges, new_edges);
 }
 
-Configuration::Configuration(const CIPMol &mol, Atom *focus,
-                             std::vector<Atom *> &&carriers, int cfg)
-    : d_foci{focus}, d_carriers{std::move(carriers)}, d_cfg{cfg},
-      d_digraph{mol, focus} {};
+void Configuration::setCarriers(std::vector<Atom *> &&carriers) {
+  d_carriers = std::move(carriers);
+}
 
-Configuration::Configuration(const CIPMol &mol, std::vector<Atom *> &&foci,
-                             std::vector<Atom *> &&carriers, int cfg)
-    : d_foci{std::move(foci)}, d_carriers{std::move(carriers)}, d_cfg{cfg},
-      d_digraph{mol, d_foci[0]} {}
+Configuration::Configuration(const CIPMol &mol, Atom *focus)
+    : d_foci{focus}, d_digraph{mol, focus} {};
+
+Configuration::Configuration(const CIPMol &mol, std::vector<Atom *> &&foci)
+    : d_foci{std::move(foci)}, d_digraph{mol, d_foci[0]} {}
 
 Configuration::~Configuration() = default;
 
 Atom *Configuration::getFocus() const { return d_foci[0]; }
 
 const std::vector<Atom *> &Configuration::getFoci() const { return d_foci; }
-
-int Configuration::getConfig() const { return d_cfg; }
 
 const std::vector<Atom *> &Configuration::getCarriers() const {
   return d_carriers;

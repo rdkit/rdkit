@@ -17,15 +17,11 @@ namespace CIPLabeler {
 
 class Tetrahedral : public Configuration {
 public:
-  static const int LEFT = 0x1;
-  static const int RIGHT = 0x2;
-
   Tetrahedral() = delete;
 
-  Tetrahedral(const CIPMol &mol, Atom *focus, std::vector<Atom *> &&carriers,
-              int cfg);
+  Tetrahedral(const CIPMol &mol, Atom *focus);
 
-  void setPrimaryLabel(CIPMol &mol, Descriptor desc) override;
+  void setPrimaryLabel(Descriptor desc) override;
 
   Descriptor label(const Rules &comp) override;
 
