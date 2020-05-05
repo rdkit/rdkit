@@ -176,7 +176,7 @@ void _shiftCoords(std::list<EmbeddedFrag> &efrags) {
     ++eri;
   }
 }
-}
+}  // namespace DepictorLocal
 
 void computeInitialCoords(RDKit::ROMol &mol,
                           const RDGeom::INT_POINT2D_MAP *coordMap,
@@ -566,4 +566,4 @@ void generateDepictionMatching3DStructure(RDKit::ROMol &mol,
   RDDepict::compute2DCoordsMimicDistMat(mol, &dmat, false, true, 0.5, 3, 100,
                                         25, true, forceRDKit);
 }
-}
+}  // namespace RDDepict
