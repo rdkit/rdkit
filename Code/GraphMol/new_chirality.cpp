@@ -23,6 +23,7 @@
 
 namespace RDKit {
 namespace Chirality {
+const unsigned StereoInfo::NOATOM = std::numeric_limits<unsigned>::max();
 
 namespace detail {
 
@@ -38,24 +39,29 @@ StereoInfo getStereoInfo(const Bond *bond) {
 
     sinfo.type = StereoType::Bond;
     sinfo.centeredOn = bond->getIdx();
-    sinfo.controllingAtoms.resize(2);
 
     const auto mol = bond->getOwningMol();
     for (const auto &nbri :
          boost::make_iterator_range(mol.getAtomBonds(beginAtom))) {
       const auto &nbr = mol[nbri];
       if (nbr->getIdx() != bond->getIdx()) {
-        sinfo.controllingAtoms[0] = nbr->getOtherAtomIdx(beginAtom->getIdx());
-        break;
+        sinfo.controllingAtoms.push_back(
+            nbr->getOtherAtomIdx(beginAtom->getIdx()));
       }
+    }
+    if (beginAtom->getDegree() == 2) {
+      sinfo.controllingAtoms.push_back(StereoInfo::NOATOM);
     }
     for (const auto &nbri :
          boost::make_iterator_range(mol.getAtomBonds(endAtom))) {
       const auto &nbr = mol[nbri];
       if (nbr->getIdx() != bond->getIdx()) {
-        sinfo.controllingAtoms[1] = nbr->getOtherAtomIdx(endAtom->getIdx());
-        break;
+        sinfo.controllingAtoms.push_back(
+            nbr->getOtherAtomIdx(endAtom->getIdx()));
       }
+    }
+    if (endAtom->getDegree() == 2) {
+      sinfo.controllingAtoms.push_back(StereoInfo::NOATOM);
     }
   } else {
     UNDER_CONSTRUCTION("unsupported bond type in getStereoInfo()");
@@ -178,8 +184,6 @@ std::vector<StereoInfo> findPotentialStereo(const ROMol &mol) {
       }
     }
   }
-
-  
 
   std::vector<StereoInfo> res;
   return res;

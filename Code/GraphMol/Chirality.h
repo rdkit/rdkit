@@ -16,6 +16,7 @@
 #include <RDGeneral/types.h>
 #include <GraphMol/Bond.h>
 #include <boost/dynamic_bitset.hpp>
+#include <limits>
 
 namespace RDKit {
 class Atom;
@@ -58,11 +59,14 @@ RDKIT_GRAPHMOL_EXPORT Bond::BondStereo translateEZLabelToCisTrans(
 
 enum class StereoType { Atom, Bond };
 struct RDKIT_GRAPHMOL_EXPORT StereoInfo {
+  static const unsigned NOATOM;  // used to mark missing atoms
   StereoType type;
   unsigned centeredOn;
-  unsigned descriptor;  // unused
-  std::vector<unsigned> controllingAtoms;
+  unsigned descriptor;                     // unused
+  std::vector<unsigned> controllingAtoms;  // all atoms around the atom or bond.
+                                           // Order is important
 };
+
 /*!
   \param mol the molecule to be search
 */
