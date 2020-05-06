@@ -4298,6 +4298,20 @@ void testGithub1028() {
   BOOST_LOG(rdInfoLog) << "done" << std::endl;
 }
 
+void testGithub3139() {
+  BOOST_LOG(rdInfoLog) << "-------------------------------------" << std::endl;
+  BOOST_LOG(rdInfoLog) << "Testing github issue #3139: Partial bond mem leak"
+                       << std::endl;
+
+{
+  const std::string smi = "COc(c1)cccc1C#";
+  for (int i = 0; i < 3; ++i) {
+    const auto mol = std::unique_ptr<ROMol>(SmilesToMol(smi));
+  }
+ }
+ 
+  BOOST_LOG(rdInfoLog) << "done" << std::endl;
+}
 int main(int argc, char *argv[]) {
   (void)argc;
   (void)argv;
@@ -4376,4 +4390,5 @@ int main(int argc, char *argv[]) {
 #endif
   testdoRandomSmileGeneration();
   testGithub1028();
+  testGithub3139();
 }

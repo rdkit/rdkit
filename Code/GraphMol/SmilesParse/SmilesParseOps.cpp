@@ -431,10 +431,6 @@ void CloseMolRings(RWMol *mol, bool toleratePartials) {
           ++bondIt;
           Bond *bond2 = *bondIt;
 
-          // remove those bonds from the bookmarks:
-          mol->clearBondBookmark(bookmark.first, bond1);
-          mol->clearBondBookmark(bookmark.first, bond2);
-
           // Make sure the bonds have the correct starting atoms:
           CHECK_INVARIANT(bond1->getBeginAtomIdx() == atom1->getIdx(),
                           "bad begin atom");
@@ -489,6 +485,12 @@ void CloseMolRings(RWMol *mol, bool toleratePartials) {
             swapBondDirIfNeeded(bond2, bond1);
             delete bond1;
           }
+
+	  // remove those bonds from the bookmarks:
+	  mol->clearBondBookmark(bookmark.first, bond1);
+	  mol->clearBondBookmark(bookmark.first, bond2);
+
+	  
           if (matchedBond->getBondType() == Bond::UNSPECIFIED &&
               !matchedBond->hasQuery()) {
             Bond::BondType bondT = GetUnspecifiedBondType(mol, atom1, atom2);
