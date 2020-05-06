@@ -28,6 +28,8 @@ class DrawText {
 
  public:
 
+  static constexpr double FONT_SIZE = 0.4; // based on a bond length of 1
+
   DrawText();
   virtual ~DrawText() {}
 
@@ -35,7 +37,8 @@ class DrawText {
   void setColour(const DrawColour &col);
 
   double fontSize() const;
-  void setFontSize(double new_size);
+  double fontScale() const;
+  void setFontScale(double new_scale);
 
   //! using the current scale, work out the size of the label
   /*!
@@ -55,7 +58,7 @@ class DrawText {
  private:
 
   DrawColour colour_;
-  double font_size_;
+  double font_scale_;
 
 };
 

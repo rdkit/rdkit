@@ -61,7 +61,7 @@ void test1() {
     outs.flush();
     delete m;
   }
-  exit(1);
+//  exit(1);
   {
     std::string smiles = "CO[C@@H](O)C1=C(O[C@H](F)Cl)C(C#N)=C1ONNC[NH3+]";
     ROMol *m = SmilesToMol(smiles);

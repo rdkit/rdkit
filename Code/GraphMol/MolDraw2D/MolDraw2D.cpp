@@ -909,6 +909,7 @@ void MolDraw2D::calculateScale(int width, int height,
   // And now we need to take account of strings with N/S orientation
   // as well.
   while (scale_ > 1e-4) {
+    text_drawer_->setFontScale(scale_);
     adjustScaleForAtomLabels(highlight_atoms, highlight_radii);
     if ((!atom_notes_.empty() || !bond_notes_.empty()) &&
         supportsAnnotations()) {
@@ -917,6 +918,7 @@ void MolDraw2D::calculateScale(int width, int height,
     }
     double old_scale = scale_;
     scale_ = std::min(double(width) / x_range_, double(height) / y_range_);
+    cout << "nexdt scale = " << scale_ << " font scale = " << text_drawer_->fontScale() << endl;
     if (fabs(scale_ - old_scale) < 0.1) {
       break;
     }
@@ -952,6 +954,7 @@ void MolDraw2D::calculateScale(int width, int height,
 
    cout << "leaving calculateScale" << endl;
    cout << "final scale : " << scale_ << endl;
+
 }
 
 // ****************************************************************************
@@ -1047,6 +1050,9 @@ void MolDraw2D::getStringSize(const std::string &label, double &label_width,
   label_width /= scale();
   label_height /= scale();
 
+  cout << label << " : " << label_width << " by " << label_height
+       << " : " << scale() << endl;
+
 }
 
 // ****************************************************************************
@@ -1073,7 +1079,6 @@ void MolDraw2D::getLabelSize(const string &label, OrientType orient,
 // draws the string centred on cds
 void MolDraw2D::drawString(const string &str, const Point2D &cds) {
 
-  cout << "MolDraw2D :: " << str << " at " << cds.x << ", " << cds.y << endl;
   Point2D draw_cds = getDrawCoords(cds);
   text_drawer_->drawString(str, draw_cds, MIDDLE);
 

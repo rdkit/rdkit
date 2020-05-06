@@ -16,7 +16,7 @@ using namespace std;
 namespace RDKit {
 
 // ****************************************************************************
-DrawText::DrawText() : font_size_(16) {}
+DrawText::DrawText() : font_scale_(1.0) {}
 
 // ****************************************************************************
 DrawColour DrawText::colour() const {
@@ -30,18 +30,23 @@ void DrawText::setColour(const DrawColour &col) {
 
 // ****************************************************************************
 double DrawText::fontSize() const {
-  return font_size_;
+  return font_scale_ * FONT_SIZE;
 }
 
 // ****************************************************************************
-void DrawText::setFontSize(double new_size) { font_size_ = new_size; }
+double DrawText::fontScale() const {
+  return font_scale_;
+}
+
+// ****************************************************************************
+void DrawText::setFontScale(double new_scale) { font_scale_ = new_scale; }
 
 // ****************************************************************************
 void DrawText::drawString(const string &str, const Point2D &cds,
                           MolDraw2D::AlignType align) {
   RDUNUSED_PARAM(align);
   cout << "Drawing string : " << str << " at " << cds.x << ", " << cds.y << endl;
-  cout << "font size  " << fontSize() << endl;
+  cout << "font size  " << fontSize() << " font scale : " << fontScale() << endl;
 
   double string_width, string_height;
   getStringSize(str, string_width, string_height);
@@ -53,7 +58,6 @@ void DrawText::drawString(const string &str, const Point2D &cds,
   double draw_x = cds.x - string_width / 2.0;
   double draw_y = cds.y + string_height / 2.0;
 
-  double full_font_size = fontSize();
   MolDraw2D::TextDrawType draw_mode = MolDraw2D::TextDrawNormal;
   string next_char(" ");
 
@@ -73,19 +77,20 @@ void DrawText::drawString(const string &str, const Point2D &cds,
     // tweaking for a more general solution.
     if (MolDraw2D::TextDrawSubscript == draw_mode) {
       // y goes from top to bottom, so add for a subscript!
-      setFontSize(0.75 * full_font_size);
+      double oscale = fontScale();
+      setFontScale(0.75 * oscale);
       char_width *= 0.5;
       drawChar(next_c,
                Point2D(draw_x, draw_y + 0.5 * char_height));
-      setFontSize(full_font_size);
+      setFontScale(oscale);
     } else if (MolDraw2D::TextDrawSuperscript == draw_mode) {
-      setFontSize(0.75 * full_font_size);
+      double oscale = fontScale();
+      setFontScale(0.75 * oscale);
       char_width *= 0.5;
       drawChar(next_c,
                Point2D(draw_x, draw_y - .5 * M_height));
-      setFontSize(full_font_size);
+      setFontScale(oscale);
     } else {
-      setFontSize(full_font_size);
       drawChar(next_c, Point2D(draw_x, draw_y));
     }
     draw_x += char_width;
