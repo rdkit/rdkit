@@ -2189,7 +2189,8 @@ void MolDraw2D::drawAtomLabel(int atom_num,
 
 // ****************************************************************************
 void MolDraw2D::drawAtomLabel(int atom_num, const DrawColour &draw_colour) {
-  setColour(draw_colour);
+
+  text_drawer_->setColour(draw_colour);
   vector<string> label_pieces = atomLabelToPieces(atom_num);
   OrientType orient = atom_syms_[activeMolIdx_][atom_num].second;
   drawStrings(label_pieces, at_cds_[activeMolIdx_][atom_num], orient);
