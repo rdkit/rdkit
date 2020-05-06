@@ -33,12 +33,13 @@ StereoInfo getStereoInfo(const Bond *bond) {
   const auto beginAtom = bond->getBeginAtom();
   const auto endAtom = bond->getEndAtom();
   if (bond->getBondType() == Bond::BondType::DOUBLE) {
-    if (beginAtom->getDegree() < 2 || endAtom->getDegree() < 2) {
-      throw ValueErrorException("atom degree too low in getStereoInfo(bond)");
+    if (beginAtom->getDegree() < 2 || endAtom->getDegree() < 2 || beginAtom->getDegree() > 3 || endAtom->getDegree() > 3) {
+        throw ValueErrorException("invalid atom degree in getStereoInfo(bond)");
     }
 
-    sinfo.type = StereoType::Bond;
+    sinfo.type = StereoType::Bond_Double;
     sinfo.centeredOn = bond->getIdx();
+    sinfo.controllingAtoms.reserve(4);
 
     const auto mol = bond->getOwningMol();
     for (const auto &nbri :
@@ -63,6 +64,51 @@ StereoInfo getStereoInfo(const Bond *bond) {
     if (endAtom->getDegree() == 2) {
       sinfo.controllingAtoms.push_back(StereoInfo::NOATOM);
     }
+    Bond::BondStereo stereo = bond->getStereo();
+    if(stereo == Bond::BondStereo::STEREONONE){
+      // don't need to do anything
+    } else if (stereo == Bond::BondStereo::STEREOANY){
+      sinfo.specified = Chirality::StereoSpecified::Unknown;
+    } else {
+      if(stereo == Bond::BondStereo::STEREOE || stereo == Bond::BondStereo::STEREOZ){
+        stereo = Chirality::translateEZLabelToCisTrans(stereo);
+      }
+      sinfo.specified = Chirality::StereoSpecified::Specified;
+      const auto satoms = bond->getStereoAtoms();
+      if(satoms.size()!=2){
+        throw ValueErrorException("only can support 2 stereo neighbors");
+      }
+      bool firstAtBegin;
+      if(satoms[0] == sinfo.controllingAtoms[0]){
+        firstAtBegin = true;
+      } else if (satoms[0] == sinfo.controllingAtoms[1]) {
+        firstAtBegin = false;
+      } else {
+        throw ValueErrorException("controlling atom mismatch at begin");
+      }
+      bool firstAtEnd;
+      if(satoms[1] == sinfo.controllingAtoms[2]){
+        firstAtEnd = true;
+      } else if (satoms[1] == sinfo.controllingAtoms[3]) {
+        firstAtEnd = false;
+      } else {
+        throw ValueErrorException("controlling atom mismatch at end");
+      }
+      auto mismatch = firstAtBegin ^ firstAtEnd;
+      if(mismatch) {
+        stereo = (stereo == Bond::BondStereo::STEREOCIS ? Bond::BondStereo::STEREOTRANS : Bond::BondStereo::STEREOCIS);
+      }
+      switch(stereo){
+      case Bond::BondStereo::STEREOCIS:
+        sinfo.descriptor = Chirality::StereoDescriptor::Bond_Cis;
+      break;
+        case Bond::BondStereo::STEREOTRANS:
+      sinfo.descriptor = Chirality::StereoDescriptor::Bond_Trans;
+        break;
+      default:
+        UNDER_CONSTRUCTION("unrecognized bond stereo type");      
+      }
+    }
   } else {
     UNDER_CONSTRUCTION("unsupported bond type in getStereoInfo()");
   }
@@ -74,17 +120,38 @@ StereoInfo getStereoInfo(const Atom *atom) {
   PRECONDITION(atom, "atom is null");
   StereoInfo sinfo;
 
-  sinfo.type = StereoType::Atom;
+  sinfo.type = StereoType::Atom_Tetrahedral;
   sinfo.centeredOn = atom->getIdx();
   sinfo.controllingAtoms.reserve(atom->getDegree());
 
   const auto mol = atom->getOwningMol();
   for (const auto &nbri :
-       boost::make_iterator_range(mol.getAtomNeighbors(atom))) {
-    const auto &nbr = mol[nbri];
-    sinfo.controllingAtoms.push_back(nbr->getIdx());
+        boost::make_iterator_range(mol.getAtomBonds(atom))) {
+    const auto &bnd = mol[nbri];
+    sinfo.controllingAtoms.push_back(bnd->getOtherAtomIdx(atom->getIdx()));
   }
+  std::vector<unsigned> origNbrOrder = sinfo.controllingAtoms;
   std::sort(sinfo.controllingAtoms.begin(), sinfo.controllingAtoms.end());
+
+  Atom::ChiralType stereo=atom->getChiralTag();
+  if(stereo == Atom::ChiralType::CHI_TETRAHEDRAL_CCW || stereo == Atom::ChiralType::CHI_TETRAHEDRAL_CW){
+    sinfo.specified = StereoSpecified::Specified;
+    unsigned nSwaps = countSwapsToInterconvert(origNbrOrder,sinfo.controllingAtoms);
+    if(nSwaps %2){
+      stereo = (stereo==Atom::ChiralType::CHI_TETRAHEDRAL_CCW?Atom::ChiralType::CHI_TETRAHEDRAL_CW:Atom::ChiralType::CHI_TETRAHEDRAL_CCW);
+    }
+    switch(stereo){
+    case Atom::ChiralType::CHI_TETRAHEDRAL_CCW:
+      sinfo.descriptor = StereoDescriptor::Tet_CCW;
+      break;
+    case Atom::ChiralType::CHI_TETRAHEDRAL_CW:
+      sinfo.descriptor = StereoDescriptor::Tet_CW;
+      break;
+    default:
+      UNDER_CONSTRUCTION("unrecognized chiral flag");      
+    }
+  }
+
   return sinfo;
 }
 
@@ -94,10 +161,16 @@ bool isBondPotentialStereoBond(const Bond *bond) {
     return false;
   }
 
+  // at the moment the condition for being a potential stereo bond is that
+  // each of the beginning and end neighbors must have at least 2 heavy atom neighbors
+  // i.e. C/C=N/[H] is not a possible stereo bond
+  // but no more than 3 total neighbors.
   const auto beginAtom = bond->getBeginAtom();
+  auto begHeavyDegree = beginAtom->getTotalDegree() - beginAtom->getTotalNumHs(true);
   const auto endAtom = bond->getEndAtom();
-  if ((beginAtom->getTotalDegree() - beginAtom->getTotalNumHs(true)) > 1 &&
-      (endAtom->getTotalDegree() - endAtom->getTotalNumHs(true)) > 1) {
+  auto endHeavyDegree = endAtom->getTotalDegree() - endAtom->getTotalNumHs(true);
+  if (begHeavyDegree > 1 && beginAtom->getDegree() < 4 &&
+      endHeavyDegree > 1 && endAtom->getDegree() < 4) {
     return true;
   } else {
     return false;
@@ -164,6 +237,7 @@ bool isAtomPotentialStereoAtom(const Atom *atom) {
 
 std::vector<StereoInfo> findPotentialStereo(const ROMol &mol) {
   std::vector<unsigned int> atomRanks;
+  // FIX: need to remove the R/S dependency from this
   Canon::chiralRankMolAtoms(mol, atomRanks);
 
   std::list<StereoInfo> active;
@@ -171,15 +245,17 @@ std::vector<StereoInfo> findPotentialStereo(const ROMol &mol) {
   for (const auto atom : mol.atoms()) {
     if (detail::isAtomPotentialStereoAtom(atom)) {
       active.push_back(detail::getStereoInfo(atom));
-      if (atom->getChiralTag() == Atom::ChiralType::CHI_UNSPECIFIED) {
+      if(active.back().specified == Chirality::StereoSpecified::Unknown)
         ++nUndefined;
+      } else if(active.back().specified == Chirality::StereoSpecified::Specified){
+
       }
     }
   }
   for (const auto bond : mol.bonds()) {
     if (detail::isBondPotentialStereoBond(bond)) {
       active.push_back(detail::getStereoInfo(bond));
-      if (bond->getStereo() == Bond::BondStereo::STEREONONE) {
+      if(active.back().specified == Chirality::StereoSpecified::Unknown)
         ++nUndefined;
       }
     }
