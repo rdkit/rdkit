@@ -25,7 +25,6 @@ extern int yysmiles_lex(YYSTYPE *,void *,int &);
 using namespace RDKit;
 namespace {
  void yyErrorCleanup(std::vector<RDKit::RWMol *> *molList){
- std::cerr << "yy error cleanup" << std::endl;
   for(std::vector<RDKit::RWMol *>::iterator iter=molList->begin();
       iter != molList->end(); ++iter){
       SmilesParseOps::CleanupAfterParseError(*iter);
