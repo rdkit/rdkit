@@ -4307,6 +4307,7 @@ void testGithub3139() {
   const std::string smi = "COc(c1)cccc1C#";
   for (int i = 0; i < 3; ++i) {
     const auto mol = std::unique_ptr<ROMol>(SmilesToMol(smi));
+    const auto sma = std::unique_ptr<ROMol>(SmartsToMol(smi));
   }
  }
  
