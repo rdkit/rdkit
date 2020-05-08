@@ -14,6 +14,7 @@
 #include <GraphMol/RDKitBase.h>
 
 #include <GraphMol/SmilesParse/SmilesParse.h>
+#include <GraphMol/FileParsers/FileParsers.h>
 #include <GraphMol/MolDraw2D/MolDraw2D.h>
 #include <GraphMol/MolDraw2D/MolDraw2DSVG.h>
 #include <GraphMol/MolDraw2D/MolDraw2DUtils.h>
@@ -263,8 +264,7 @@ TEST_CASE("dative bonds", "[drawing, organometallics]") {
 
     CHECK(text.find("<path class='bond-2' d='M 57.7741,143.825"
                     " L 85.7826,152.925' style='fill:none;"
-                    "fill-rule:evenodd;stroke:#0000FF") !=
-          std::string::npos);
+                    "fill-rule:evenodd;stroke:#0000FF") != std::string::npos);
   }
 }
 
@@ -426,6 +426,206 @@ TEST_CASE("draw atom/bond indices", "[drawing]") {
       CHECK(text.find("<tspan>1,(S)</tspan>") != std::string::npos);
       CHECK(text.find("<tspan>2,foo</tspan>") != std::string::npos);
       CHECK(text.find("<tspan>1</tspan>") == std::string::npos);
+    }
+  }
+}
+
+TEST_CASE("Github #3126: DrawMolecules does not center molecules",
+          "[drawing][bug]") {
+  SECTION("basics") {
+    auto m1 = R"CTAB(
+  Mrv2007 05012010452D          
+
+  0  0  0     0  0            999 V3000
+M  V30 BEGIN CTAB
+M  V30 COUNTS 5 5 0 0 0
+M  V30 BEGIN ATOM
+M  V30 1 O -4.2917 5.3517 0 0
+M  V30 2 C -5.5375 4.4464 0 0
+M  V30 3 C -5.0617 2.9819 0 0
+M  V30 4 C -3.5217 2.9819 0 0
+M  V30 5 C -3.0458 4.4464 0 0
+M  V30 END ATOM
+M  V30 BEGIN BOND
+M  V30 1 1 1 2
+M  V30 2 1 2 3
+M  V30 3 1 3 4
+M  V30 4 1 4 5
+M  V30 5 1 1 5
+M  V30 END BOND
+M  V30 END CTAB
+M  END
+      )CTAB"_ctab;
+    REQUIRE(m1);
+    auto m2 = R"CTAB(
+  Mrv2007 05012010452D          
+
+  0  0  0     0  0            999 V3000
+M  V30 BEGIN CTAB
+M  V30 COUNTS 5 5 0 0 0
+M  V30 BEGIN ATOM
+M  V30 1 S -3.2917 6.3517 0 0
+M  V30 2 C -4.5375 5.4464 0 0
+M  V30 3 C -4.0617 3.9819 0 0
+M  V30 4 C -2.5217 3.9819 0 0
+M  V30 5 C -2.0458 5.4464 0 0
+M  V30 END ATOM
+M  V30 BEGIN BOND
+M  V30 1 1 1 2
+M  V30 2 1 2 3
+M  V30 3 1 3 4
+M  V30 4 1 4 5
+M  V30 5 1 1 5
+M  V30 END BOND
+M  V30 END CTAB
+M  END
+      )CTAB"_ctab;
+    REQUIRE(m2);
+    {
+      MolDraw2DSVG drawer(500, 200, 250, 200);
+      drawer.drawOptions().prepareMolsBeforeDrawing = false;
+      drawer.drawOptions().centreMoleculesBeforeDrawing = true;
+      MOL_PTR_VECT ms{m1.get(), m2.get()};
+      drawer.drawMolecules(ms);
+      drawer.finishDrawing();
+      std::string text = drawer.getDrawingText();
+      std::ofstream outs("testGithub3126_1.svg");
+      outs << text;
+      outs.flush();
+
+      // should have two atom labels drawn at the same height:
+      std::string tgt = "y='31.6464' style='font-size";
+      auto idx1 = text.find(tgt);
+      CHECK(idx1 != std::string::npos);
+      auto idx2 = text.find(tgt, idx1 + 1);
+      CHECK(idx2 != std::string::npos);
+    }
+    {
+      // if we don't center we get different results:
+      MolDraw2DSVG drawer(500, 200, 250, 200);
+      drawer.drawOptions().prepareMolsBeforeDrawing = false;
+      drawer.drawOptions().centreMoleculesBeforeDrawing = false;
+      MOL_PTR_VECT ms{m1.get(), m2.get()};
+      drawer.drawMolecules(ms);
+      drawer.finishDrawing();
+      std::string text = drawer.getDrawingText();
+      std::ofstream outs("testGithub3126_2.svg");
+      outs << text;
+      outs.flush();
+
+      // should NOT have two atom labels drawn at the same height:
+      std::string tgt = "y='75.0166' style='font-size";
+      auto idx1 = text.find(tgt);
+      CHECK(idx1 != std::string::npos);
+      auto idx2 = text.find(tgt, idx1 + 1);
+      CHECK(idx2 == std::string::npos);
+    }
+  }
+
+  SECTION("more complex") {
+    auto m1 = R"CTAB(
+  Mrv2007 05012010452D          
+
+  0  0  0     0  0            999 V3000
+M  V30 BEGIN CTAB
+M  V30 COUNTS 5 5 0 0 0
+M  V30 BEGIN ATOM
+M  V30 1 O -4.2917 5.3517 0 0
+M  V30 2 C -5.5375 4.4464 0 0
+M  V30 3 C -5.0617 2.9819 0 0
+M  V30 4 C -3.5217 2.9819 0 0
+M  V30 5 C -3.0458 4.4464 0 0
+M  V30 END ATOM
+M  V30 BEGIN BOND
+M  V30 1 1 1 2
+M  V30 2 1 2 3
+M  V30 3 1 3 4
+M  V30 4 1 4 5
+M  V30 5 1 1 5
+M  V30 END BOND
+M  V30 END CTAB
+M  END
+      )CTAB"_ctab;
+    REQUIRE(m1);
+    auto m2 = R"CTAB(
+  Mrv2007 05012011202D          
+
+  0  0  0     0  0            999 V3000
+M  V30 BEGIN CTAB
+M  V30 COUNTS 16 16 0 0 0
+M  V30 BEGIN ATOM
+M  V30 1 O 0.875 5.3517 0 0
+M  V30 2 C -0.3709 4.4464 0 0
+M  V30 3 C 0.105 2.9819 0 0
+M  V30 4 C 1.645 2.9819 0 0
+M  V30 5 C 2.1209 4.4464 0 0
+M  V30 6 C -0.8002 1.736 0 0
+M  V30 7 C -0.1738 0.3291 0 0
+M  V30 8 C -1.079 -0.9167 0 0
+M  V30 9 C -0.4526 -2.3236 0 0
+M  V30 10 C -1.3578 -3.5695 0 0
+M  V30 11 C -0.7314 -4.9763 0 0
+M  V30 12 C -1.6366 -6.2222 0 0
+M  V30 13 C -1.0103 -7.6291 0 0
+M  V30 14 C -1.9154 -8.875 0 0
+M  V30 15 C -1.2891 -10.2818 0 0
+M  V30 16 C -2.1943 -11.5277 0 0
+M  V30 END ATOM
+M  V30 BEGIN BOND
+M  V30 1 1 1 2
+M  V30 2 1 2 3
+M  V30 3 1 3 4
+M  V30 4 1 4 5
+M  V30 5 1 1 5
+M  V30 6 1 3 6
+M  V30 7 1 6 7
+M  V30 8 1 7 8
+M  V30 9 1 8 9
+M  V30 10 1 9 10
+M  V30 11 1 10 11
+M  V30 12 1 11 12
+M  V30 13 1 12 13
+M  V30 14 1 13 14
+M  V30 15 1 14 15
+M  V30 16 1 15 16
+M  V30 END BOND
+M  V30 END CTAB
+M  END
+)CTAB"_ctab;
+    REQUIRE(m2);
+    {
+      MolDraw2DSVG drawer(500, 200, 250, 200);
+      drawer.drawOptions().prepareMolsBeforeDrawing = false;
+      drawer.drawOptions().centreMoleculesBeforeDrawing = true;
+      MOL_PTR_VECT ms{m1.get(), m2.get()};
+      drawer.drawMolecules(ms);
+      drawer.finishDrawing();
+      std::string text = drawer.getDrawingText();
+      std::ofstream outs("testGithub3126_3.svg");
+      outs << text;
+      outs.flush();
+
+      auto idx1 = text.find("y='78.0281' style='font-size");
+      CHECK(idx1 != std::string::npos);
+      auto idx2 = text.find("y='12.5406' style='font-size", idx1 + 1);
+      CHECK(idx2 != std::string::npos);
+    }
+    {
+      MolDraw2DSVG drawer(500, 200, 250, 200);
+      drawer.drawOptions().prepareMolsBeforeDrawing = false;
+      drawer.drawOptions().centreMoleculesBeforeDrawing = false;
+      MOL_PTR_VECT ms{m1.get(), m2.get()};
+      drawer.drawMolecules(ms);
+      drawer.finishDrawing();
+      std::string text = drawer.getDrawingText();
+      std::ofstream outs("testGithub3126_4.svg");
+      outs << text;
+      outs.flush();
+
+      auto idx1 = text.find("y='12.5406' style='font-size");
+      CHECK(idx1 != std::string::npos);
+      auto idx2 = text.find("y='12.5406' style='font-size", idx1 + 1);
+      CHECK(idx2 != std::string::npos);
     }
   }
 }
