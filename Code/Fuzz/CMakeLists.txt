@@ -28,3 +28,4 @@ endmacro()
 
 fuzzer(smiles_string_to_mol_fuzzer)
 fuzzer(mol_data_stream_to_mol_fuzzer)
+fuzzer(mol_deserialization_fuzzer)
