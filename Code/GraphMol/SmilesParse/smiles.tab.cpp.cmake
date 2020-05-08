@@ -98,7 +98,8 @@ namespace {
  void yyErrorCleanup(std::vector<RDKit::RWMol *> *molList){
   for(std::vector<RDKit::RWMol *>::iterator iter=molList->begin();
       iter != molList->end(); ++iter){
-     delete *iter;
+      SmilesParseOps::CleanupAfterParseError(*iter);      
+      delete *iter;
   }
   molList->clear();
   molList->resize(0);
