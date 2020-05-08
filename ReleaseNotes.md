@@ -3,7 +3,7 @@
 
 ## Acknowledgements:
 Ivan Chernyshov, David Cosgrove, Guillaume Godin, Eisuke Kawashima, Brian
-Kelley, Joshua Meyers, Maciej Wójcikowski, intrigus-lgtm
+Kelley, Joshua Meyers, Paolo Tosco, Maciej Wójcikowski, intrigus-lgtm
 
 ## Bug Fixes:
   - cannot parse reaction SMILES/SMARTS with dative bonds
