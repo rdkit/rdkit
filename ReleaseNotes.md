@@ -1,3 +1,41 @@
+# Release_2020.03.2
+(Changes relative to Release_2020.03.1)
+
+## Acknowledgements:
+Ivan Chernyshov, David Cosgrove, Guillaume Godin, Eisuke Kawashima, Brian
+Kelley, Joshua Meyers, Maciej Wójcikowski, intrigus-lgtm
+
+## Bug Fixes:
+  - cannot parse reaction SMILES/SMARTS with dative bonds
+ (github #2954 from greglandrum)
+  - ResonanceMolSupplier can fail with small maxStructs values
+ (github #3041 from greglandrum)
+  - seg fault in ResonanceMolSupplier()
+ (github #3048 from greglandrum)
+  - Bug in image rendering of dative bonds
+ (github #3056 from IvanChernyshov)
+  - Coordinates from coordgen are not centered around the origin
+ (github #3058 from DavidACosgrove)
+  - fix a typo in ScaffoldNetwork/CMakeLists.txt
+ (github #3060 from greglandrum)
+  - Bad double bond placement in polycyclic aromatics
+ (github #3061 from DavidACosgrove)
+  - Remove unnecessary files
+ (github #3065 from e-kwsm)
+  - SGroups with more than one attachment point are now properly parsed
+ (github #3072 from greglandrum)
+  - Reactions should not use strict implicit valence calculations
+ (github #3097 from mwojcikowski)
+  - partial reacting atom detection
+ (github #3119 from thegodone)
+  - DrawMolecules does not center molecules
+ (github #3126 from JoshuaMeyers)
+  - results from coordgen are sometimes not centered
+ (github #3131 from greglandrum)
+  - Memory leak when parsing bad SMILES
+ (github #3139 from intrigus-lgtm)
+
+
 # Release_2020.03.1
 (Changes relative to Release_2019.09.1)
 
