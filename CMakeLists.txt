@@ -58,6 +58,7 @@ option(RDK_INSTALL_DEV_COMPONENT "install libraries and headers" ON)
 option(RDK_USE_BOOST_REGEX "use boost::regex instead of std::regex (needed for systems with g++-4.8)" OFF)
 option(RDK_USE_BOOST_IOSTREAMS "use boost::iostreams" ON)
 option(RDK_BUILD_MINIMAL_LIB "build the minimal RDKit wrapper (for the JS bindings)" OFF)
+option(RDK_BUILD_FUZZ_TARGETS "build the fuzz targets" OFF)
 
 set(RDK_BOOST_VERSION "1.58.0")
 
