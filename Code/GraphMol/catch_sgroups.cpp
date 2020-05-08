@@ -204,10 +204,10 @@ TEST_CASE("Build and test sample molecule", "[Sgroups]") {
     CHECK(sg.getProp<unsigned int>("COMPNO") == 7u);
     CHECK(sg.getProp<std::string>("ESTATE") == "E");
 
-    std::vector<std::array<std::array<double, 3>, 3>> brackets_reference = {{
+    std::vector<std::array<std::array<double, 3>, 3>> brackets_reference = {
         {{{{1., 3., 0.}}, {{5., 7., 0.}}, {{0., 0., 0.}}}},
         {{{{2., 4., 0.}}, {{6., 8., 0.}}, {{0., 0., 0.}}}},
-    }};
+    };
     testBrackets(sg.getBrackets(), brackets_reference);
 
     auto cstates = sg.getCStates();
