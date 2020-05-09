@@ -177,7 +177,8 @@ bool isPatternComplexQuery(const Bond *b) {
 // caller owns the result, it must be deleted
 ExplicitBitVect *PatternFingerprintMol(const ROMol &mol, unsigned int fpSize,
                                        std::vector<unsigned int> *atomCounts,
-                                       ExplicitBitVect *setOnlyBits) {
+                                       ExplicitBitVect *setOnlyBits,
+                                       bool tautomerFingerprints) {
   PRECONDITION(fpSize != 0, "fpSize==0");
   PRECONDITION(!atomCounts || atomCounts->size() >= mol.getNumAtoms(),
                "bad atomCounts size");
@@ -269,6 +270,7 @@ ExplicitBitVect *PatternFingerprintMol(const ROMol &mol, unsigned int fpSize,
       if (isQuery) {
         continue;
       }
+      auto tautomerBitId = bitId;
       ROMol::EDGE_ITER firstB, lastB;
       boost::tie(firstB, lastB) = patt->getEdges();
 #ifdef VERBOSE_FINGERPRINTING
@@ -287,6 +289,18 @@ ExplicitBitVect *PatternFingerprintMol(const ROMol &mol, unsigned int fpSize,
 #endif
           break;
         }
+
+        if (tautomerFingerprints) {
+          if (mbond->getIsAromatic() || mbond->getBondType() == Bond::SINGLE ||
+              mbond->getBondType() == Bond::DOUBLE ||
+              mbond->getBondType() == Bond::AROMATIC) {
+            gboost::hash_combine(tautomerBitId, -1);
+#ifdef VERBOSE_FINGERPRINTING
+            std::cerr << "T ";
+#endif
+          }
+        }
+
         // makes sure aromatic bonds and single bonds from SMARTS always hash
         // the same:
         // if(!mbond->getIsAromatic() && mbond->getBondType()!=Bond::SINGLE &&
@@ -311,6 +325,13 @@ ExplicitBitVect *PatternFingerprintMol(const ROMol &mol, unsigned int fpSize,
         std::cerr << " set: " << bitId << " " << bitId % fpSize;
 #endif
         res->setBit(bitId % fpSize);
+        if (tautomerFingerprints) {
+#ifdef VERBOSE_FINGERPRINTING
+          std::cerr << " tset: " << tautomerBitId << " "
+                    << tautomerBitId % fpSize;
+#endif
+          res->setBit(tautomerBitId % fpSize);
+        }
       }
     }
   }
