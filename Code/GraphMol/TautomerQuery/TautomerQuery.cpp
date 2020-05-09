@@ -39,8 +39,6 @@ TautomerQuery::TautomerQuery(const ROMol &query,
       modifiedAtoms(modifiedAtoms),
       modifiedBonds(modifiedBonds) {}
 
-TautomerQuery::~TautomerQuery() {}
-
 boost::shared_ptr<TautomerQuery> TautomerQuery::fromMol(
     const ROMol &query, const std::string &tautomerTransformFile) {
   auto tautomerFile = !tautomerTransformFile.empty()

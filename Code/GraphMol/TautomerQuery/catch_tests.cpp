@@ -19,6 +19,9 @@ TEST_CASE("TEST_ENOL") {
 
   REQUIRE(mol);
   auto tautomerQuery = TautomerQuery::fromMol(*mol);
+  auto tautomers = tautomerQuery->getTautomers();
+  CHECK(tautomers.size() == 2);
+
   auto target1 = "OC1=CCCC(CC)C1"_smiles;
   REQUIRE(target1);
   SubstructMatchParameters params;
@@ -44,7 +47,7 @@ TEST_CASE("TEST_ENOL") {
   auto nMatches = SubstructMatch(*target1, *tautomerQuery, matchVect);
   CHECK(nMatches == 1);
 
-  // I know the fingerprinter is setting bits using the tautomer query 
+  // I know the fingerprinter is setting bits using the tautomer query
   // bonds (from verbose output), but need a test to prove
   auto templateFingerpint = tautomerQuery->patternFingerprintTemplate();
   REQUIRE(templateFingerpint);
