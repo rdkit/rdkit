@@ -23,7 +23,7 @@
 #include <boost/flyweight/no_tracking.hpp>
 #include <utility>
 
-#define VERBOSE_ENUMERATION 1
+// #define VERBOSE_ENUMERATION 1
 
 using namespace RDKit;
 

@@ -156,6 +156,7 @@ void getAtomNumbers(const Atom *a, std::vector<int> &atomNums) {
 }  // namespace detail
 
 namespace {
+
 bool isPatternComplexQuery(const Bond *b) {
   if (!b->hasQuery()) {
     return false;
@@ -172,6 +173,38 @@ bool isPatternComplexQuery(const Bond *b) {
   }
   return true;
 }
+
+bool isTautomerBondQuery(const Bond *b) {
+  // assumes we have already tested true for isPatternComplexQuery
+
+  // will match the query bond used by tautomer templates and will also match
+  // complex bond OR queries that match double or single/aromatic bonds so they
+  // can benefit from tautomer fingerprints
+
+  auto query = b->getQuery();
+  auto description = query->getDescription();
+  if (description != "BondOr") {
+    return false;
+  }
+  for (auto queryIterator = query->beginChildren();
+       queryIterator != query->endChildren(); ++queryIterator) {
+    auto childQuery = *queryIterator;
+    description = childQuery->getDescription();
+    if (description == "SingleOrAromaticBond") {
+      return true;
+    }
+    if (description == "BondOrder") {
+      // also check for single/aromatic?
+      Bond bond = Bond(Bond::DOUBLE);
+      if (childQuery->Match(&bond)) {
+        return true;
+      }
+    }
+    std::cout << description << std::endl;
+  }
+  return false;
+}
+
 }  // namespace
 
 // caller owns the result, it must be deleted
@@ -204,7 +237,7 @@ ExplicitBitVect *PatternFingerprintMol(const ROMol &mol, unsigned int fpSize,
   }
 
   boost::dynamic_bitset<> isQueryAtom(mol.getNumAtoms()),
-      isQueryBond(mol.getNumBonds());
+      isQueryBond(mol.getNumBonds()), isTautomerBond(mol.getNumBonds());
   for (const auto at : mol.atoms()) {
     // isComplexQuery() no longer considers "AtomNull" to be complex, but for
     // the purposes of the pattern FP, it definitely needs to be treated as a
@@ -218,6 +251,9 @@ ExplicitBitVect *PatternFingerprintMol(const ROMol &mol, unsigned int fpSize,
   for (const auto bond : mol.bonds()) {
     if (isPatternComplexQuery(bond)) {
       isQueryBond.set(bond->getIdx());
+      if (tautomerFingerprints && isTautomerBondQuery(bond)) {
+        isTautomerBond.set(bond->getIdx());
+      }
     }
   }
 
@@ -271,6 +307,7 @@ ExplicitBitVect *PatternFingerprintMol(const ROMol &mol, unsigned int fpSize,
         continue;
       }
       auto tautomerBitId = bitId;
+      auto tautomerQuery = false;
       ROMol::EDGE_ITER firstB, lastB;
       boost::tie(firstB, lastB) = patt->getEdges();
 #ifdef VERBOSE_FINGERPRINTING
@@ -281,17 +318,28 @@ ExplicitBitVect *PatternFingerprintMol(const ROMol &mol, unsigned int fpSize,
         ++firstB;
         const Bond *mbond = mol.getBondBetweenAtoms(
             amap[pbond->getBeginAtomIdx()], amap[pbond->getEndAtomIdx()]);
+        const auto bondIdx = mbond->getIdx();
 
-        if (isQueryBond[mbond->getIdx()]) {
+        if (isQueryBond[bondIdx]) {
           isQuery = true;
+          if (isTautomerBond[bondIdx]) {
+            isQuery = false;
+            tautomerQuery = true;
+#ifdef VERBOSE_FINGERPRINTING
+            std::cerr << "tautomer query: " << mbond->getIdx();
+#endif
+          }
+          if (isQuery) {
 #ifdef VERBOSE_FINGERPRINTING
           std::cerr << "bond query: " << mbond->getIdx();
 #endif
-          break;
+            break;
+          }
         }
 
         if (tautomerFingerprints) {
-          if (mbond->getIsAromatic() || mbond->getBondType() == Bond::SINGLE ||
+          if (isTautomerBond[bondIdx] || mbond->getIsAromatic() ||
+              mbond->getBondType() == Bond::SINGLE ||
               mbond->getBondType() == Bond::DOUBLE ||
               mbond->getBondType() == Bond::AROMATIC) {
             gboost::hash_combine(tautomerBitId, -1);
@@ -301,30 +349,35 @@ ExplicitBitVect *PatternFingerprintMol(const ROMol &mol, unsigned int fpSize,
           }
         }
 
-        // makes sure aromatic bonds and single bonds from SMARTS always hash
-        // the same:
-        // if(!mbond->getIsAromatic() && mbond->getBondType()!=Bond::SINGLE &&
-        //   mbond->getBondType()!=Bond::AROMATIC){
-        if (!mbond->getIsAromatic()) {
-          gboost::hash_combine(bitId, (std::uint32_t)mbond->getBondType());
+        if (!tautomerQuery) {
+          // makes sure aromatic bonds and single bonds from SMARTS always hash
+          // the same:
+          // if(!mbond->getIsAromatic() && mbond->getBondType()!=Bond::SINGLE &&
+          //   mbond->getBondType()!=Bond::AROMATIC){
+          if (!mbond->getIsAromatic()) {
+            gboost::hash_combine(bitId, (std::uint32_t)mbond->getBondType());
 #ifdef VERBOSE_FINGERPRINTING
-          std::cerr << mbond->getBondType() << " ";
+            std::cerr << mbond->getBondType() << " ";
 #endif
-        } else {
-          gboost::hash_combine(bitId, (std::uint32_t)Bond::AROMATIC);
+          } else {
+            gboost::hash_combine(bitId, (std::uint32_t)Bond::AROMATIC);
 #ifdef VERBOSE_FINGERPRINTING
-          std::cerr << Bond::AROMATIC << " ";
+            std::cerr << Bond::AROMATIC << " ";
 #endif
+          }
+          //} else {
+          //  gboost::hash_combine(bitId,(std::uint32_t)Bond::SINGLE);
+          //          }
         }
-        //} else {
-        //  gboost::hash_combine(bitId,(std::uint32_t)Bond::SINGLE);
-        //          }
       }
+
       if (!isQuery) {
+        if (!tautomerQuery) {
 #ifdef VERBOSE_FINGERPRINTING
-        std::cerr << " set: " << bitId << " " << bitId % fpSize;
+          std::cerr << " set: " << bitId << " " << bitId % fpSize;
 #endif
-        res->setBit(bitId % fpSize);
+          res->setBit(bitId % fpSize);
+        }
         if (tautomerFingerprints) {
 #ifdef VERBOSE_FINGERPRINTING
           std::cerr << " tset: " << tautomerBitId << " "

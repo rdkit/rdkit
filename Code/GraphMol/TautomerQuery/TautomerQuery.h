@@ -12,6 +12,7 @@
 #include <GraphMol/ROMol.h>
 #include <vector>
 #include <GraphMol/Substruct/SubstructMatch.h>
+#include <DataStructs/ExplicitBitVect.h>
 
 namespace RDKit {
 
@@ -40,18 +41,15 @@ class TautomerQuery {
       const std::string &tautomerTransformFile = std::string());
 
   std::vector<MatchVectType> SubstructMatch(
-      const ROMol &mol,
-      const SubstructMatchParameters &params,
-      std::vector<ROMOL_SPTR> & matchingTautomers) const;
- 
- std::vector<MatchVectType> SubstructMatch(
-      const ROMol &mol,
-      const SubstructMatchParameters &params) const;
+      const ROMol &mol, const SubstructMatchParameters &params,
+      std::vector<ROMOL_SPTR> *matchingTautomers = nullptr) const;
 
+  ExplicitBitVect *patternFingerprintTemplate(uint fpSize = 2048U);
 
   ~TautomerQuery();
 };
 
+// so we can use the templates in Code/GraphMol/Substruct/SubstructMatch.h
 std::vector<MatchVectType> SubstructMatch(
     const ROMol &mol, const TautomerQuery &query,
     const SubstructMatchParameters &params);

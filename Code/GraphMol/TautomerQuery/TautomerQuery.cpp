@@ -13,6 +13,18 @@
 #include <GraphMol/QueryAtom.h>
 #include <GraphMol/QueryBond.h>
 #include <GraphMol/Substruct/SubstructUtils.h>
+#include <GraphMol/Fingerprints/Fingerprints.h>
+
+namespace {
+
+int getTargetIdx(int queryIdx, const RDKit::MatchVectType &match) {
+  const auto pair = match[queryIdx];
+  // is this always true ?
+  assert(pair.first == static_cast<int>(queryIdx));
+  return pair.second;
+}
+
+}  // namespace
 
 namespace RDKit {
 
@@ -89,13 +101,6 @@ boost::shared_ptr<TautomerQuery> TautomerQuery::fromMol(
   return tautomerQuery;
 }
 
-int getTargetIdx(int queryIdx, const MatchVectType &match) {
-  const auto pair = match[queryIdx];
-  // is this always true ?
-  assert(pair.first == static_cast<int>(queryIdx));
-  return pair.second;
-}
-
 bool TautomerQuery::matchTautomer(
     const ROMol &mol, const ROMol &tautomer, const MatchVectType &match,
     const SubstructMatchParameters &params) const {
@@ -122,15 +127,11 @@ bool TautomerQuery::matchTautomer(
 }
 
 std::vector<MatchVectType> TautomerQuery::SubstructMatch(
-    const ROMol &mol, const SubstructMatchParameters &params) const {
-  std::vector<ROMOL_SPTR> matchingTautomers;
-  return SubstructMatch(mol, params, matchingTautomers);
-}
-
-std::vector<MatchVectType> TautomerQuery::SubstructMatch(
     const ROMol &mol, const SubstructMatchParameters &params,
-    std::vector<ROMOL_SPTR> &matchingTautomers) const {
-  matchingTautomers.clear();
+    std::vector<ROMOL_SPTR> *matchingTautomers) const {
+  if (matchingTautomers) {
+    matchingTautomers->clear();
+  }
   std::vector<MatchVectType> matches;
 
   const auto templateMatches =
@@ -140,13 +141,20 @@ std::vector<MatchVectType> TautomerQuery::SubstructMatch(
     for (auto tautomer : tautomers) {
       if (matchTautomer(mol, *tautomer, templateMatch, params)) {
         matches.push_back(templateMatch);
-        matchingTautomers.push_back(tautomer);
+        if (matchingTautomers) {
+          matchingTautomers->push_back(tautomer);
+        }
         break;
       }
     }
   }
 
   return matches;
+}
+
+ExplicitBitVect *TautomerQuery::patternFingerprintTemplate(uint fpSize) {
+  return PatternFingerprintMol(*templateMolecule, fpSize, nullptr, nullptr,
+                               true);
 }
 
 std::vector<MatchVectType> SubstructMatch(
