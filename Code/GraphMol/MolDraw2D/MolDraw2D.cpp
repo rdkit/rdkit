@@ -876,8 +876,8 @@ void MolDraw2D::calculateScale(int width, int height,
   PRECONDITION(height > 0, "bad height");
   PRECONDITION(activeMolIdx_ >= 0, "bad active mol");
 
-   cout << "calculateScale  width = " << width << "  height = " << height
-       << endl;
+  // cout << "calculateScale  width = " << width << "  height = " << height
+  //     << endl;
   x_min_ = y_min_ = numeric_limits<double>::max();
   double x_max(-x_min_), y_max(-y_min_);
 
@@ -918,7 +918,6 @@ void MolDraw2D::calculateScale(int width, int height,
     }
     double old_scale = scale_;
     scale_ = std::min(double(width) / x_range_, double(height) / y_range_);
-    cout << "nexdt scale = " << scale_ << " font scale = " << text_drawer_->fontScale() << endl;
     if (fabs(scale_ - old_scale) < 0.1) {
       break;
     }
@@ -952,8 +951,8 @@ void MolDraw2D::calculateScale(int width, int height,
     y_trans_ = 0.;
   }
 
-   cout << "leaving calculateScale" << endl;
-   cout << "final scale : " << scale_ << endl;
+  // cout << "leaving calculateScale" << endl;
+  // cout << "final scale : " << scale_ << endl;
 
 }
 
@@ -1050,8 +1049,8 @@ void MolDraw2D::getStringSize(const std::string &label, double &label_width,
   label_width /= scale();
   label_height /= scale();
 
-  cout << label << " : " << label_width << " by " << label_height
-       << " : " << scale() << endl;
+  // cout << label << " : " << label_width << " by " << label_height
+  //     << " : " << scale() << endl;
 
 }
 
@@ -1088,6 +1087,8 @@ void MolDraw2D::drawString(const string &str, const Point2D &cds) {
 void MolDraw2D::drawString(const std::string &str, const Point2D &cds,
                            AlignType align) {
 
+  cout << "MolDraw2D::drawString() : " << str << " : "
+       << cds.x << ", " << cds.y << endl;
   Point2D draw_cds = getDrawCoords(cds);
   text_drawer_->drawString(str, draw_cds, align);
 
@@ -1097,25 +1098,24 @@ void MolDraw2D::drawString(const std::string &str, const Point2D &cds,
 void MolDraw2D::drawStrings(const std::vector<std::string> &labels,
                             const Point2D &cds, OrientType orient) {
   if (orient == W) {
+    cout << "orient W" << endl;
     // stick the pieces together again backwards and draw as one so there
     // aren't ugly splits in the string.
     string new_lab;
     for (auto i = labels.rbegin(); i != labels.rend(); ++i) {
       new_lab += *i;
     }
-    Point2D new_cds;
-    alignString(new_lab, labels.front(), 1, cds, new_cds);
-    drawString(new_lab, new_cds, END);
+    drawString(new_lab, cds, END);
   } else if (orient == E) {
+    cout << "orient E" << endl;
     // likewise, but forwards
     string new_lab;
     for (auto lab : labels) {
       new_lab += lab;
     }
-    Point2D new_cds;
-    alignString(new_lab, labels.front(), 0, cds, new_cds);
-    drawString(new_lab, new_cds, START);
+    drawString(new_lab, cds, START);
   } else {
+    cout << "orient N or S" << endl;
     double y_scale = 0.0;
     if (orient == N) {
       y_scale = -1.0;
@@ -1145,7 +1145,7 @@ void MolDraw2D::drawStrings(const std::vector<std::string> &labels,
           alignString(lab, lab.substr(n, 1), 0, next_cds, new_cds);
         }
       }
-      drawString(lab, new_cds, align);
+      drawString(lab, next_cds, align);
       double width, height;
       getStringSize(lab, width, height);
       next_cds.y += y_scale * height;
@@ -1170,6 +1170,7 @@ void MolDraw2D::alignString(const string &str, const string &align_char,
   // align == 0 is left align - first char to go at in_cds.
   double dir = align == 0 ? 1.0 : -1.0;
   out_cds.x = in_cds.x + dir * 0.5 * (str_width - ac_width);
+  out_cds.x = in_cds.x;
   // assuming we centre the string on the draw coords.
   out_cds.y = in_cds.y;
 }

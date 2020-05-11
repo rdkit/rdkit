@@ -35,33 +35,35 @@ using namespace RDKit;
 void test1() {
   std::cout << " ----------------- Test 1" << std::endl;
   {
-    std::string smiles = "CN(C)CN";
+//    std::string smiles = "[NH-]C([NH3+])C(CBr)CCC[NH3+]";
+//    std::string smiles = "CC[13CH2][CH2:7][CH-]C[15NH2+]C";
+    std::string smiles = "CC[3CH2]CCCCC";
     ROMol *m = SmilesToMol(smiles);
     TEST_ASSERT(m);
     RDDepict::compute2DCoords(*m);
     WedgeMolBonds(*m, &(m->getConformer()));
 
-    MolDraw2DCairo drawer(300, 300);
+    MolDraw2DCairo drawer(600, 600);
     drawer.drawMolecule(*m);
     drawer.finishDrawing();
 
     drawer.writeDrawingText("test2_X.png");
     delete m;
   }
+  exit(1);
   {
-    std::string smiles = "CN(C)CN";
+    std::string smiles = "[NH-]C([NH3+])C(CBr)CCC[NH3+]";
     ROMol *m = SmilesToMol(smiles);
     TEST_ASSERT(m);
     RDDepict::compute2DCoords(*m);
     WedgeMolBonds(*m, &(m->getConformer()));
     std::ofstream outs("test2_X.svg");
-    MolDraw2DSVG drawer(300, 300, outs);
+    MolDraw2DSVG drawer(600, 600, outs);
     drawer.drawMolecule(*m);
     drawer.finishDrawing();
     outs.flush();
     delete m;
   }
-//  exit(1);
   {
     std::string smiles = "CO[C@@H](O)C1=C(O[C@H](F)Cl)C(C#N)=C1ONNC[NH3+]";
     ROMol *m = SmilesToMol(smiles);

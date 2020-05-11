@@ -25,7 +25,7 @@ string DrawColourToSVG(const RDKit::DrawColour &col);
 
 // ****************************************************************************
 DrawTextSVG::DrawTextSVG(ostream &oss, string &d_act_class) :
-    oss_(oss), d_active_class_(d_act_class) {
+    DrawText(), oss_(oss), d_active_class_(d_act_class) {
 
 }
 
@@ -42,7 +42,7 @@ void DrawTextSVG::getStringSize(const string &label, double &label_width,
   bool had_a_sub = false;
 
   double act_font_size = fontSize();
-  for (int i = 0, is = label.length(); i < is; ++i) {
+  for (size_t i = 0, is = label.length(); i < is; ++i) {
     // setStringDrawMode moves i along to the end of any <sub> or <sup>
     // markup
     if ('<' == label[i] && setStringDrawMode(label, draw_mode, i)) {
@@ -142,7 +142,7 @@ void DrawTextSVG::drawString(const std::string &str, const Point2D &cds,
     first_span = false;
   };
 
-  for (int i = 0, is = str.length(); i < is; ++i) {
+  for (size_t i = 0, is = str.length(); i < is; ++i) {
     // setStringDrawMode moves i along to the end of any <sub> or <sup>
     // markup
     if ('<' == str[i] && setStringDrawMode(str, draw_mode, i)) {
@@ -196,6 +196,19 @@ void DrawTextSVG::drawChar(char c, const Point2D &cds) {
   oss_ << " >";
   oss_ << c;
   oss_ << "</text>";
+
+}
+
+// ****************************************************************************
+void DrawTextSVG::alignString(const std::string &str, const Point2D &in_cds,
+                              MolDraw2D::AlignType align, Point2D &out_cds) {
+
+  RDUNUSED_PARAM(str);
+  RDUNUSED_PARAM(align);
+  // this works with SVG, so long as we use the correct text anchor -
+  // W => end, E => start, N, S => middle
+  out_cds = in_cds;
+  return;
 
 }
 

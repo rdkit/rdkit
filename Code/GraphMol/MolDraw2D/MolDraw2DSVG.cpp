@@ -13,6 +13,9 @@
 #include "MolDraw2DSVG.h"
 #include <GraphMol/SmilesParse/SmilesWrite.h>
 #include <Geometry/point.h>
+#ifdef RDK_BUILD_FREETYPE_SUPPORT
+#include <GraphMol/MolDraw2D/DrawTextFTSVG.h>
+#endif
 
 #include <boost/format.hpp>
 #include <sstream>
@@ -48,6 +51,7 @@ std::string DrawColourToSVG(const DrawColour &col) {
   return res;
 }
 
+// ****************************************************************************
 void MolDraw2DSVG::initDrawing() {
   d_os << "<?xml version='1.0' encoding='iso-8859-1'?>\n";
   d_os << "<svg version='1.1' baseProfile='full'\n      \
@@ -61,6 +65,21 @@ void MolDraw2DSVG::initDrawing() {
 
   // d_os<<"<g transform='translate("<<width()*.05<<","<<height()*.05<<")
   // scale(.85,.85)'>";
+}
+
+// ****************************************************************************
+void MolDraw2DSVG::initTextDrawer() {
+
+#ifdef RDK_BUILD_FREETYPE_SUPPORT
+  try {
+    text_drawer_.reset(new DrawTextFTSVG(d_os));
+  } catch(std::runtime_error &e) {
+    text_drawer_.reset(new DrawTextSVG(d_os, d_activeClass));
+  }
+#else
+  text_drawer_.reset(new DrawTextSVG(d_os, d_activeClass));
+#endif
+
 }
 
 // ****************************************************************************
@@ -249,6 +268,10 @@ void MolDraw2DSVG::alignString(const std::string &str, const std::string &align_
                                int align, const Point2D &in_cds,
                                Point2D &out_cds) const {
 
+  MolDraw2D::alignString(str, align_char, align, in_cds, out_cds);
+  return;
+#if 0
+  std::cout << "moldraw2dsvg::alignstring" << std::endl;
   RDUNUSED_PARAM(str);
 
   if(align != 0 && align != 1) {
@@ -265,7 +288,7 @@ void MolDraw2DSVG::alignString(const std::string &str, const std::string &align_
   out_cds.x = in_cds.x - dir * 0.5 * ac_width;
   // and this assumes dominant-baseline="central"
   out_cds.y = in_cds.y;
-
+#endif
 }
 
 // ****************************************************************************

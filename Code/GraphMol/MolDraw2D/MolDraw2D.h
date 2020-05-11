@@ -584,6 +584,9 @@ class RDKIT_MOLDRAW2D_EXPORT MolDraw2D {
 
   Point2D bbox_[2];
 
+  virtual void initDrawing() = 0;
+  virtual void initTextDrawer() = 0;
+
   // draw the char, with the bottom left hand corner at cds
   void drawChar(char c, const Point2D &cds);
 

@@ -14,7 +14,7 @@
 namespace RDKit {
 
 // ****************************************************************************
-DrawTextCairo::DrawTextCairo(cairo_t *dp_cr) : dp_cr_(dp_cr) {
+DrawTextCairo::DrawTextCairo(cairo_t *dp_cr) : DrawText(), dp_cr_(dp_cr) {
   cairo_select_font_face(dp_cr, "sans", CAIRO_FONT_SLANT_NORMAL,
                          CAIRO_FONT_WEIGHT_NORMAL);
   cairo_set_font_size(dp_cr, fontSize());
@@ -42,7 +42,7 @@ void DrawTextCairo::getStringSize(const std::string &label, double &label_width,
 
   char txt[2];
   txt[1] = 0;
-  for (int i = 0, is = label.length(); i < is; ++i) {
+  for (size_t i = 0, is = label.length(); i < is; ++i) {
     // setStringDrawMode moves i along to the end of any <sub> or <sup>
     // markup
     if ('<' == label[i] && setStringDrawMode(label, draw_mode, i)) {

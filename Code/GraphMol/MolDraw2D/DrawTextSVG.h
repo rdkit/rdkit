@@ -33,6 +33,10 @@ class DrawTextSVG : public DrawText {
                    MolDraw2D::AlignType align) override;
    void drawChar(char c, const Point2D &cds) override;
 
+  protected:
+   void alignString(const std::string &str, const Point2D &in_cds,
+                    MolDraw2D::AlignType align, Point2D &out_cds) override;
+
  private:
    std::ostream &oss_;
    std::string &d_active_class_;

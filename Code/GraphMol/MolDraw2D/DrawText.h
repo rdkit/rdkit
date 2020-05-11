@@ -33,10 +33,10 @@ class DrawText {
   DrawText();
   virtual ~DrawText() {}
 
-  DrawColour colour() const;
+  DrawColour const &colour() const;
   void setColour(const DrawColour &col);
 
-  double fontSize() const;
+  virtual double fontSize() const;
   double fontScale() const;
   void setFontScale(double new_scale);
 
@@ -55,6 +55,10 @@ class DrawText {
   // draw the char, with the bottom left hand corner at cds
   virtual void drawChar(char c, const Point2D &cds) = 0;
 
+ protected:
+  virtual void alignString(const std::string &str, const Point2D &in_cds,
+                           MolDraw2D::AlignType align, Point2D &out_cds);
+
  private:
 
   DrawColour colour_;
@@ -68,7 +72,7 @@ class DrawText {
 //! \returns true or false depending on whether it did something or not
 bool setStringDrawMode(const std::string &instring,
                        MolDraw2D::TextDrawType &draw_mode,
-                       int &i);
+                       size_t &i);
 
 }  // namespace RDKit
 

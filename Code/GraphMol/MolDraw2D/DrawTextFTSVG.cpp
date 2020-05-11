@@ -1,0 +1,95 @@
+//
+//   @@ All Rights Reserved @@
+//  This file is part of the RDKit.
+//  The contents are covered by the terms of the BSD license
+//  which is included in the file license.txt, found at the root
+//  of the RDKit source tree.
+//
+// Original author: David Cosgrove (CozChemIx) on 08/05/2020.
+//
+
+#include <GraphMol/MolDraw2D/DrawTextFTSVG.h>
+
+using namespace std;
+
+namespace RDKit {
+
+string DrawColourToSVG(const RDKit::DrawColour &col);
+
+// ****************************************************************************
+DrawTextFTSVG::DrawTextFTSVG(std::ostream &oss) : oss_(oss) {
+  cout << "DrawTextFTSVG" << endl;
+}
+
+// ****************************************************************************
+double DrawTextFTSVG::ExtractOutline() {
+
+  std::string col = DrawColourToSVG(colour());
+
+  oss_ << "<path d='";
+  double adv = DrawTextFT::ExtractOutline();
+  oss_ << "' fill='" << col << "'/>" << endl;
+
+  return adv;
+
+}
+
+// ****************************************************************************
+int DrawTextFTSVG::MoveToFunctionImpl(const FT_Vector *to) {
+
+  double dx, dy;
+  FontPosToDrawPos(to->x, to->y, dx, dy);
+  oss_ << "M " << dx << ' ' << dy << endl;
+
+  return 0;
+}
+
+// ****************************************************************************
+int DrawTextFTSVG::LineToFunctionImpl(const FT_Vector *to) {
+
+  double dx, dy;
+  FontPosToDrawPos(to->x, to->y, dx, dy);
+  oss_ << "L " << dx << ' ' << dy << endl;
+
+  return 0;
+}
+
+// ****************************************************************************
+int DrawTextFTSVG::ConicToFunctionImpl(const FT_Vector *control,
+                                       const FT_Vector *to) {
+
+  double controlX, controlY;
+  FontPosToDrawPos(control->x, control->y, controlX, controlY);
+
+  double dx, dy;
+  FontPosToDrawPos(to->x, to->y, dx, dy);
+
+  oss_ << "Q " << controlX << ' ' << controlY << ", "
+       << dx << ' ' << dy << endl;
+
+  return 0;
+}
+
+// ****************************************************************************
+int DrawTextFTSVG::CubicToFunctionImpl(const FT_Vector *controlOne,
+                                       const FT_Vector *controlTwo,
+                                       const FT_Vector *to) {
+
+  double controlOneX, controlOneY;
+  FontPosToDrawPos(controlOne->x, controlOne->y,
+                   controlOneX, controlOneY);
+  double controlTwoX, controlTwoY;
+  FontPosToDrawPos(controlTwo->x, controlTwo->y,
+                   controlTwoX, controlTwoY);
+
+  double dx, dy;
+  FontPosToDrawPos(to->x, to->y, dx, dy);
+
+  oss_ << "C " << controlOneX << ' ' << controlOneY << ", "
+       << controlTwoX << ' ' << controlTwoY << ", "
+       << dx << ' ' << dy << endl;
+
+  return 0;
+}
+
+} // namespace RDKit

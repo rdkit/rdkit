@@ -16,9 +16,10 @@
 #ifndef MOLDRAW2DCAIRO_H
 #define MOLDRAW2DCAIRO_H
 
+#include <cairo.h>
+
 #include <GraphMol/MolDraw2D/DrawTextCairo.h>
 #include <GraphMol/MolDraw2D/MolDraw2D.h>
-#include <cairo.h>
 
 // ****************************************************************************
 
@@ -32,7 +33,7 @@ class RDKIT_MOLDRAW2D_EXPORT MolDraw2DCairo : public MolDraw2D {
       : MolDraw2D(width, height, panelWidth, panelHeight), dp_cr(cr) {
     cairo_reference(dp_cr);
     initDrawing();
-    text_drawer_.reset(new DrawTextCairo(dp_cr));
+    initTextDrawer();
   };
   MolDraw2DCairo(int width, int height, int panelWidth = -1,
                  int panelHeight = -1)
@@ -42,7 +43,7 @@ class RDKIT_MOLDRAW2D_EXPORT MolDraw2DCairo : public MolDraw2D {
     dp_cr = cairo_create(surf);
     cairo_surface_destroy(surf);  // dp_cr has a reference to this now;
     initDrawing();
-    text_drawer_.reset(new DrawTextCairo(dp_cr));
+    initTextDrawer();
   };
   ~MolDraw2DCairo() {
     if (dp_cr) {
@@ -84,7 +85,9 @@ class RDKIT_MOLDRAW2D_EXPORT MolDraw2DCairo : public MolDraw2D {
  private:
   cairo_t *dp_cr;
 
-  void initDrawing();
+  void initDrawing() override;
+  void initTextDrawer() override;
+
 };
 }  // namespace RDKit
 #endif  // MOLDRAW2DCAIRO_H

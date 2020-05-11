@@ -10,13 +10,29 @@
 // derived from Dave Cosgrove's MolDraw2D
 //
 
-#include "MolDraw2DCairo.h"
 #include <cairo.h>
+#include "MolDraw2DCairo.h"
+#ifdef RDK_BUILD_FREETYPE_SUPPORT
+#include <GraphMol/MolDraw2D/DrawTextFTCairo.h>
+#endif
 
 namespace RDKit {
 void MolDraw2DCairo::initDrawing() {
   PRECONDITION(dp_cr, "no draw context");
   cairo_set_line_cap(dp_cr, CAIRO_LINE_CAP_BUTT);
+}
+void MolDraw2DCairo::initTextDrawer() {
+
+#ifdef RDK_BUILD_FREETYPE_SUPPORT
+  try {
+    text_drawer_.reset(new DrawTextFTCairo(dp_cr));
+  } catch(std::runtime_error &e) {
+    text_drawer_.reset(new DrawTextCairo(dp_cr));
+  }
+#else
+  text_drawer_.reset(new DrawTextSVG(d_os, d_activeClass));
+#endif
+
 }
 
 // ****************************************************************************

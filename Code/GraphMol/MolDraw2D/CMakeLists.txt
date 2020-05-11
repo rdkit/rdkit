@@ -4,13 +4,12 @@ option(RDK_BUILD_QT_DEMO "build the QT drawing demo" OFF )
 option(RDK_BUILD_CAIRO_SUPPORT "build support for Cairo drawing" OFF )
 option(RDK_BUILD_FREETYPE_SUPPORT "build support for FreeType font handling" ON)
 
-find_package(PkgConfig REQUIRED)
-
 rdkit_headers(MolDraw2D.h
   MolDraw2DSVG.h
   MolDraw2Dwx.h
   MolDraw2DUtils.h
   DrawText.h
+  DrawTextFT.h
   DrawTextCairo.h
   DrawTextSVG.h
   DEST GraphMol/MolDraw2D
@@ -36,17 +35,22 @@ if(RDK_BUILD_CAIRO_SUPPORT)
   find_package(Cairo REQUIRED)
   target_compile_definitions(MolDraw2D PUBLIC "-DRDK_BUILD_CAIRO_SUPPORT")
   target_link_libraries(MolDraw2D PUBLIC Cairo::Cairo)
-  target_sources(MolDraw2D PRIVATE MolDraw2DCairo.cpp)
-  rdkit_headers(MolDraw2DCairo.h DEST GraphMol/MolDraw2D)
+  target_sources(MolDraw2D PRIVATE MolDraw2DCairo.cpp DrawTextCairo.cpp)
+  rdkit_headers(MolDraw2DCairo.h DrawTextCairo.h DEST GraphMol/MolDraw2D)
 endif(RDK_BUILD_CAIRO_SUPPORT)
 
 if(RDK_BUILD_FREETYPE_SUPPORT)
+  find_package(Cairo REQUIRED)
+  target_compile_definitions(MolDraw2D PUBLIC "-DRDK_BUILD_CAIRO_SUPPORT")
+  target_link_libraries(MolDraw2D PUBLIC Cairo::Cairo)
   find_package(Freetype REQUIRED)
   target_compile_definitions(MolDraw2D PUBLIC "-DRDK_BUILD_FREETYPE_SUPPORT")
-  target_link_libraries(MolDraw2D PUBLIC ${FF2_LINK_LIBRARIES})
+  target_link_libraries(MolDraw2D PUBLIC Freetype::Freetype)
   target_sources(MolDraw2D PRIVATE MolDraw2DSVG.cpp MolDraw2DCairo.cpp DrawText.cpp
-          DrawTextCairo.cpp DrawTextSVG.cpp)
-  rdkit_headers(MolDraw2DCairo.h MolDraw2DSVG.h DrawText.h DEST GraphMol/MolDraw2D)
+          DrawTextFT.cpp DrawTextCairo.cpp DrawTextSVG.cpp DrawTextFTCairo.cpp
+          DrawTextFTSVG.cpp)
+  rdkit_headers(MolDraw2DCairo.h MolDraw2DSVG.h DrawText.h DrawTextFT.h
+          DrawTextCairo.h DrawTextSVG.h DrawTextFTCairo.h DrawTextFTSVG.h DEST GraphMol/MolDraw2D)
 endif(RDK_BUILD_FREETYPE_SUPPORT)
 
 rdkit_test(moldraw2DTest1 test1.cpp LINK_LIBRARIES

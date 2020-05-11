@@ -32,14 +32,14 @@ class RDKIT_MOLDRAW2D_EXPORT MolDraw2DSVG : public MolDraw2D {
                int panelHeight = -1)
       : MolDraw2D(width, height, panelWidth, panelHeight), d_os(os) {
     initDrawing();
-    text_drawer_.reset(new DrawTextSVG(d_os, d_activeClass));
-
+    initTextDrawer();
   };
+
   // initialize to use the internal stringstream
   MolDraw2DSVG(int width, int height, int panelWidth = -1, int panelHeight = -1)
       : MolDraw2D(width, height, panelWidth, panelHeight), d_os(d_ss) {
     initDrawing();
-    text_drawer_.reset(new DrawTextSVG(d_os, d_activeClass));
+    initTextDrawer();
   };
 
   void setColour(const DrawColour &col) override;
@@ -84,7 +84,8 @@ class RDKIT_MOLDRAW2D_EXPORT MolDraw2DSVG : public MolDraw2D {
   std::stringstream d_ss;
   std::string d_activeClass;
 
-  void initDrawing();
+  void initDrawing() override;
+  void initTextDrawer() override;
 
  protected:
   void drawBond(

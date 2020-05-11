@@ -19,7 +19,7 @@ namespace RDKit {
 DrawText::DrawText() : font_scale_(1.0) {}
 
 // ****************************************************************************
-DrawColour DrawText::colour() const {
+DrawColour const &DrawText::colour() const {
   return colour_;
 }
 
@@ -61,7 +61,7 @@ void DrawText::drawString(const string &str, const Point2D &cds,
   MolDraw2D::TextDrawType draw_mode = MolDraw2D::TextDrawNormal;
   string next_char(" ");
 
-  for (int i = 0, is = str.length(); i < is; ++i) {
+  for (size_t i = 0, is = str.length(); i < is; ++i) {
     // setStringDrawMode moves i along to the end of any <sub> or <sup>
     // markup
     if ('<' == str[i] && setStringDrawMode(str, draw_mode, i)) {
@@ -98,9 +98,40 @@ void DrawText::drawString(const string &str, const Point2D &cds,
 }
 
 // ****************************************************************************
+void DrawText::alignString(const std::string &str, const Point2D &in_cds,
+                           MolDraw2D::AlignType align, Point2D &out_cds) {
+
+  double width, height;
+  getStringSize(str, width, height);
+
+  // freetype has the origin at bottom left, we want it in the top left.
+  // centring at the same time.
+  out_cds.y = in_cds.y - height / 2;
+
+  double c_width, c_height;
+  getStringSize(str.substr(0, 1), c_width, c_height);
+
+  switch(align) {
+    case MolDraw2D::START:
+      cout << "align = start" << endl;
+      out_cds.x = in_cds.x - c_width / 2;
+      break;
+    case MolDraw2D::MIDDLE:
+      cout << "align = middle" << endl;
+      out_cds.x = in_cds.x - width / 2;
+      break;
+    case MolDraw2D::END:
+      cout << "align = end" << endl;
+      out_cds.x = in_cds.x - width + c_width / 2;
+      break;
+  }
+
+}
+
+// ****************************************************************************
 bool setStringDrawMode(const string &instring,
                        MolDraw2D::TextDrawType &draw_mode,
-                       int &i) {
+                       size_t &i) {
 
   string bit1 = instring.substr(i, 5);
   string bit2 = instring.substr(i, 6);
