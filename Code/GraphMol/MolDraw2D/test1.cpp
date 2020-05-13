@@ -33,6 +33,23 @@ using namespace RDKit;
 void test1() {
   std::cout << " ----------------- Test 1" << std::endl;
   {
+    std::string smiles = "C[NH+](C)CC[NH3+]";
+    std::string nameBase = "test5_1";
+    ROMol *m = SmilesToMol(smiles);
+    TEST_ASSERT(m);
+    RDDepict::compute2DCoords(*m);
+    WedgeMolBonds(*m, &(m->getConformer()));
+    MolDraw2DSVG drawer(300, 300);
+    drawer.drawMolecule(*m);
+    drawer.finishDrawing();
+    std::string txt = drawer.getDrawingText();
+    std::ofstream outs("test1_X.svg");
+    outs << txt;
+    // TEST_ASSERT(txt.find("<svg")!=std::string::npos);
+    delete m;
+  }
+//exit(1);
+  {
     std::string smiles = "CO[C@@H](O)C1=C(O[C@H](F)Cl)C(C#N)=C1ONNC[NH3+]";
     ROMol *m = SmilesToMol(smiles);
     TEST_ASSERT(m);
@@ -2636,9 +2653,10 @@ void testGithub2931() {
       outs.flush();
       TEST_ASSERT(text.find("stroke:#FF8C00;stroke-width:5px") !=
                   std::string::npos);
-      TEST_ASSERT(text.find("<ellipse cx='241.942' cy='386.438'"
-                            " rx='11.9978' ry='12.846'"
-                            " style='fill:none;stroke:#00FF00;") !=
+      // this is the 2nd ellipse in the file (line 34)
+      TEST_ASSERT(text.find("<ellipse cx='241.967' cy='386.719'"
+                            " rx='11.9606' ry='12.8062'"
+                            " style='fill:none;stroke:#00FF00") !=
                   std::string::npos);
     }
     {
@@ -2655,9 +2673,10 @@ void testGithub2931() {
       outs.flush();
       TEST_ASSERT(text.find("stroke:#FF8C00;stroke-width:5px") !=
                   std::string::npos);
-      TEST_ASSERT(text.find("<ellipse cx='241.766' cy='385.788'"
-                            " rx='10.9782' ry='10.9782'"
-                            " style='fill:none;stroke:#00FF00;") !=
+      // this is the 2nd ellipse in the file (line 34)
+      TEST_ASSERT(text.find("<ellipse cx='241.768' cy='385.806'"
+                            " rx='10.976' ry='10.976'"
+                            " style='fill:none;stroke:#00FF00") !=
                   std::string::npos);
     }
   }
