@@ -15,8 +15,8 @@
 #include <numeric>
 #include <random>
 #include <stdexcept>
-#include <stdint.h>
-#include <math.h>
+#include <cstdint>
+#include <cmath>
 #include <set>
 
 #include <RDGeneral/types.h>

@@ -36,7 +36,7 @@
 #include <boost/python/suite/indexing/map_indexing_suite.hpp>
 #include <boost/python/suite/indexing/vector_indexing_suite.hpp>
 #include <string>
-#include <math.h>
+#include <cmath>
 
 #include <RDGeneral/Exceptions.h>
 #include <GraphMol/SmilesParse/SmilesWrite.h>

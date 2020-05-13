@@ -10,7 +10,7 @@
 //
 #include <RDGeneral/test.h>
 #include <iostream>
-#include <math.h>
+#include <cmath>
 #include <RDGeneral/Invariant.h>
 
 #include "BFGSOpt.h"

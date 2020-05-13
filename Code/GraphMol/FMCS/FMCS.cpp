@@ -9,7 +9,7 @@
 //
 #include <list>
 #include <algorithm>
-#include <math.h>
+#include <cmath>
 
 #include <RDGeneral/BoostStartInclude.h>
 #include <boost/property_tree/ptree.hpp>

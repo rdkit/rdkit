@@ -35,7 +35,7 @@
 
 #include "AUTOCORR2D.h"
 #include "MolData3Ddescriptors.h"
-#include <math.h>
+#include <cmath>
 #include <iostream>
 
 namespace RDKit {

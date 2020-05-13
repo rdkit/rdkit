@@ -2,7 +2,7 @@
 set(Boost_USE_STATIC_LIBS ON)
 set(Boost_USE_MULTITHREADED OFF)
 set(Boost_USE_STATIC_RUNTIME ON)
-find_package( Boost 1.46.0 COMPONENTS program_options iostreams filesystem )
+find_package(Boost ${RDK_BOOST_VERSION} COMPONENTS program_options iostreams filesystem)
 
 # Instruct CMake to run moc automatically when needed.
 set(CMAKE_AUTOMOC ON)

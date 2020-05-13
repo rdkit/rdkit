@@ -702,8 +702,8 @@ void updateStereoBonds(RWMOL_SPTR product, const ROMol &reactant,
       Atom *pStart = pBond->getBeginAtom();
       Atom *pEnd = pBond->getEndAtom();
 
-      pStart->calcImplicitValence(true);
-      pEnd->calcImplicitValence(true);
+      pStart->calcImplicitValence(false);
+      pEnd->calcImplicitValence(false);
 
       if (pStart->getTotalDegree() < 3 || pEnd->getTotalDegree() < 3) {
         pBond->setStereo(Bond::BondStereo::STEREONONE);

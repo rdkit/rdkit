@@ -9,7 +9,7 @@
 //
 #include <list>
 #include <algorithm>
-#include <math.h>
+#include <cmath>
 #include "../QueryAtom.h"
 #include "../QueryBond.h"
 #include "../SmilesParse/SmilesWrite.h"
@@ -333,6 +333,7 @@ void MaximumCommonSubgraph::makeInitialSeeds() {
   Seeds.clear();
   QueryMoleculeMatchedBonds = 0;
   QueryMoleculeMatchedAtoms = 0;
+  QueryMoleculeSingleMatchedAtom = nullptr;
   if (!Parameters.InitialSeed.empty()) {  // make user defined seed
     std::auto_ptr<const ROMol> initialSeedMolecule(
         (const ROMol*)SmartsToMol(Parameters.InitialSeed));
@@ -446,13 +447,38 @@ void MaximumCommonSubgraph::makeInitialSeeds() {
   }
   size_t nq = QueryMolecule->getNumAtoms();
   for (size_t i = 0; i < nq; i++) {  // all query's atoms
+    const Atom *queryMolAtom = QueryMolecule->getAtomWithIdx(i);
+    bool isQueryMolAtomInRing = queryIsAtomInRing(queryMolAtom);
     unsigned matched = 0;
     for (std::vector<Target>::const_iterator tag = Targets.begin();
          tag != Targets.end(); tag++) {
       size_t nt = tag->Molecule->getNumAtoms();
       for (size_t aj = 0; aj < nt; aj++) {
         if (tag->AtomMatchTable.at(i, aj)) {
+          const Atom *targetMolAtom = tag->Molecule->getAtomWithIdx(aj);
+          bool isTargetMolAtomInRing = queryIsAtomInRing(targetMolAtom);
           ++matched;
+          if (!(Parameters.BondCompareParameters.CompleteRingsOnly &&
+            (isQueryMolAtomInRing || isTargetMolAtomInRing))) {
+            if (!QueryMoleculeSingleMatchedAtom) {
+              QueryMoleculeSingleMatchedAtom = queryMolAtom;
+            }
+            else {
+              QueryMoleculeSingleMatchedAtom = (std::max)(queryMolAtom,
+              QueryMoleculeSingleMatchedAtom, [](const Atom *a, const Atom *b) {
+                if (a->getDegree() != b->getDegree()) {
+                  return (a->getDegree() < b->getDegree());
+                }
+                else if (a->getFormalCharge() != b->getFormalCharge()) {
+                  return (a->getFormalCharge() < b->getFormalCharge());
+                }
+                else if (a->getAtomicNum() != b->getAtomicNum()) {
+                  return (a->getAtomicNum() < b->getAtomicNum());
+                }
+                return (a->getIdx() < b->getIdx());
+              });
+            }
+          }
           break;
         }
       }
@@ -660,40 +686,42 @@ MaximumCommonSubgraph::generateResultSMARTSAndQueryMol(
     seed.addBond(bond);
   }
 
-  unsigned itarget = 0;
-  for (auto tag = mcsIdx.Targets.begin(); tag != mcsIdx.Targets.end();
-       tag++, itarget++) {
-    match_V_t match;  // THERE IS NO Bonds match INFO !!!!
-    bool target_matched = SubstructMatchCustomTable(
-        tag->Topology, *tag->Molecule, seed.Topology, *QueryMolecule,
-        tag->AtomMatchTable, tag->BondMatchTable, &Parameters, &match);
-    if (!target_matched) {
-      continue;
-    }
-    atomMatchResult[itarget].resize(seed.getNumAtoms());
-    for (match_V_t::const_iterator mit = match.begin(); mit != match.end();
-         mit++) {
-      unsigned ai = mit->first;  // SeedAtomIdx
-      atomMatchResult[itarget][ai].QueryAtomIdx = seed.Topology[mit->first];
-      atomMatchResult[itarget][ai].TargetAtomIdx = tag->Topology[mit->second];
-      const Atom* ta =
-          tag->Molecule->getAtomWithIdx(tag->Topology[mit->second]);
-      if (ta && ta->getAtomicNum() !=
-                    seed.MoleculeFragment.Atoms[ai]->getAtomicNum()) {
-        atomMatchSet[ai][ta->getAtomicNum()] = ta;  // add
+  if (!mcsIdx.Bonds.empty()) {
+    unsigned itarget = 0;
+    for (auto tag = mcsIdx.Targets.begin(); tag != mcsIdx.Targets.end();
+         tag++, itarget++) {
+      match_V_t match;  // THERE IS NO Bonds match INFO !!!!
+      bool target_matched = SubstructMatchCustomTable(
+          tag->Topology, *tag->Molecule, seed.Topology, *QueryMolecule,
+          tag->AtomMatchTable, tag->BondMatchTable, &Parameters, &match);
+      if (!target_matched) {
+        continue;
       }
-    }
-    // AND BUILD BOND MATCH INFO
-    unsigned bi = 0;
-    for (auto bond = mcsIdx.Bonds.begin(); bond != mcsIdx.Bonds.end();
-         bond++, bi++) {
-      unsigned i = atomIdxMap[(*bond)->getBeginAtomIdx()];
-      unsigned j = atomIdxMap[(*bond)->getEndAtomIdx()];
-      unsigned ti = atomMatchResult[itarget][i].TargetAtomIdx;
-      unsigned tj = atomMatchResult[itarget][j].TargetAtomIdx;
-      const Bond* tb = tag->Molecule->getBondBetweenAtoms(ti, tj);
-      if (tb && (*bond)->getBondType() != tb->getBondType()) {
-        bondMatchSet[bi][tb->getBondType()] = tb;  // add
+      atomMatchResult[itarget].resize(seed.getNumAtoms());
+      for (match_V_t::const_iterator mit = match.begin(); mit != match.end();
+           mit++) {
+        unsigned ai = mit->first;  // SeedAtomIdx
+        atomMatchResult[itarget][ai].QueryAtomIdx = seed.Topology[mit->first];
+        atomMatchResult[itarget][ai].TargetAtomIdx = tag->Topology[mit->second];
+        const Atom* ta =
+            tag->Molecule->getAtomWithIdx(tag->Topology[mit->second]);
+        if (ta && ta->getAtomicNum() !=
+                      seed.MoleculeFragment.Atoms[ai]->getAtomicNum()) {
+          atomMatchSet[ai][ta->getAtomicNum()] = ta;  // add
+        }
+      }
+      // AND BUILD BOND MATCH INFO
+      unsigned bi = 0;
+      for (auto bond = mcsIdx.Bonds.begin(); bond != mcsIdx.Bonds.end();
+           bond++, bi++) {
+        unsigned i = atomIdxMap[(*bond)->getBeginAtomIdx()];
+        unsigned j = atomIdxMap[(*bond)->getEndAtomIdx()];
+        unsigned ti = atomMatchResult[itarget][i].TargetAtomIdx;
+        unsigned tj = atomMatchResult[itarget][j].TargetAtomIdx;
+        const Bond* tb = tag->Molecule->getBondBetweenAtoms(ti, tj);
+        if (tb && (*bond)->getBondType() != tb->getBondType()) {
+          bondMatchSet[bi][tb->getBondType()] = tb;  // add
+        }
       }
     }
   }
@@ -900,8 +928,9 @@ MCSResult MaximumCommonSubgraph::find(const std::vector<ROMOL_SPTR>& src_mols) {
   // molecule as a query
   std::stable_sort(Molecules.begin(), Molecules.end(), molPtr_NumBondLess);
 
-  for (size_t i = 0; i < Molecules.size() - ThresholdCount && !res.Canceled;
-       i++) {
+  bool areSeedsEmpty = false;
+  for (size_t i = 0; i < Molecules.size() - ThresholdCount &&
+       !areSeedsEmpty && !res.Canceled; ++i) {
     init();
     if (Targets.empty()) {
       break;
@@ -923,17 +952,15 @@ MCSResult MaximumCommonSubgraph::find(const std::vector<ROMOL_SPTR>& src_mols) {
                 << QueryMoleculeMatchedBonds << ") bonds\n";
     }
 
-    if (Seeds.empty()) {
-      break;
-    }
-    res.Canceled = growSeeds() ? false : true;
+    areSeedsEmpty = Seeds.empty();
+    res.Canceled = areSeedsEmpty || growSeeds() ? false : true;
     // verify what MCS is equal to one of initial seed for chirality match
     if ((FinalMatchCheckFunction == Parameters.FinalMatchChecker &&
          1 == getMaxNumberBonds()) ||
         0 == getMaxNumberBonds()) {
       McsIdx = MCS();      // clear
       makeInitialSeeds();  // check all possible initial seeds
-      if (!Seeds.empty()) {
+      if (!areSeedsEmpty) {
         const Seed& fs = Seeds.front();
         if (1 == getMaxNumberBonds() ||
             !(Parameters.BondCompareParameters.CompleteRingsOnly &&
@@ -945,6 +972,13 @@ MCSResult MaximumCommonSubgraph::find(const std::vector<ROMOL_SPTR>& src_mols) {
           McsIdx.AtomsIdx = fs.MoleculeFragment.AtomsIdx;
           McsIdx.BondsIdx = fs.MoleculeFragment.BondsIdx;
         }
+      }
+      if (!McsIdx.QueryMolecule && QueryMoleculeSingleMatchedAtom) {
+        McsIdx.QueryMolecule = QueryMolecule;
+        McsIdx.Atoms = std::vector<const Atom*>{QueryMoleculeSingleMatchedAtom};
+        McsIdx.Bonds = std::vector<const Bond*>();
+        McsIdx.AtomsIdx = std::vector<unsigned>{0};
+        McsIdx.BondsIdx = std::vector<unsigned>();
       }
 
     } else if (i + 1 < Molecules.size() - ThresholdCount) {
@@ -958,9 +992,12 @@ MCSResult MaximumCommonSubgraph::find(const std::vector<ROMOL_SPTR>& src_mols) {
   }
 
   res.NumAtoms = getMaxNumberAtoms();
+  if (!res.NumAtoms && QueryMoleculeSingleMatchedAtom) {
+    res.NumAtoms = 1;
+  }
   res.NumBonds = getMaxNumberBonds();
-  ;
-  if (res.NumBonds > 0) {
+
+  if (res.NumBonds > 0 || QueryMoleculeSingleMatchedAtom) {
     std::pair<std::string, RWMol*> smartsQueryMolPair =
         generateResultSMARTSAndQueryMol(McsIdx);
     res.SmartsString = smartsQueryMolPair.first;
