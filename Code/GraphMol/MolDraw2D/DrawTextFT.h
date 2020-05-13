@@ -25,6 +25,8 @@
 
 namespace RDKit {
 
+struct StringRect;
+
 // ****************************************************************************
 class DrawTextFT : public DrawText {
 
@@ -38,7 +40,7 @@ class DrawTextFT : public DrawText {
                      double &label_height) const override;
   //! drawString centres the string on cds.
   void drawString(const std::string &str, const Point2D &cds,
-                  MolDraw2D::AlignType align) override;
+                  TextAlignType align) override;
 
   void drawChar(char c, const Point2D &cds) override;
 
@@ -52,10 +54,12 @@ class DrawTextFT : public DrawText {
 
  protected:
 
-  double FontCoordToPixelCoord(FT_Pos fx) const;
-  void FontPosToDrawPos(FT_Pos fx, FT_Pos fy, double &dx, double &dy) const;
+  void alignString(const std::string &str, const Point2D &in_cds,
+                   TextAlignType align, Point2D &out_cds) override;
+  double fontCoordToPixelCoord(FT_Pos fc) const;
+  void fontPosToDrawPos(FT_Pos fx, FT_Pos fy, double &dx, double &dy) const;
   // adds x_trans_ and y_trans_ to coords returns x advance distance
-  virtual double ExtractOutline();
+  virtual double extractOutline();
 
  private:
 
@@ -73,30 +77,37 @@ class DrawTextFT : public DrawText {
   constexpr static int POINT_SIZE = 16;
   // amount to scale subscripts and superscripts by
   constexpr static double SUBS_SCALE = 0.75;
+  constexpr static double SUPER_SCALE = 0.5;
 
   // look for a hard-coded font file under RDBase.  We may want to
   // improve on this to give the user scope for having a different
   // one.
   std::string getFontFile() const;
 
-  void GetStringBBox(const std::string &text,
+  void getStringBBox(const std::string &text,
                      double &x_min, double &y_min ,
                      double &x_max, double &y_max) const;
+  // return a vector of StringRects, one for each char in text, with
+  // super- and subscripts taken into account.  Sizes in pixel coords,
+  // i.e. scaled by fontScale().
+  void getStringRects(const std::string &text,
+                      std::vector<std::shared_ptr<StringRect>> &rects,
+                      std::vector<TextDrawType> &draw_modes) const;
 
     // calculate the bounding box of the currently loaded glyph in
   // font units (0 -> face_->units_per_EM (2048 for roboto font).
-  void CalcGlyphBBox(char c, FT_Pos &x_min, FT_Pos &y_min,
+  void calcGlyphBBox(char c, FT_Pos &x_min, FT_Pos &y_min,
                      FT_Pos &x_max, FT_Pos &y_max, FT_Pos &advance) const;
 
 };
 
 // Callbacks for FT_Outline_Decompose.  user should be a pointer to
 // an instance of RDFreeType.
-int MoveToFunction(const FT_Vector *to, void *user);
-int LineToFunction(const FT_Vector *to, void *user);
-int ConicToFunction(const FT_Vector *control, const FT_Vector *to,
+int moveToFunction(const FT_Vector *to, void *user);
+int lineToFunction(const FT_Vector *to, void *user);
+int conicToFunction(const FT_Vector *control, const FT_Vector *to,
                     void *user);
-int CubicToFunction(const FT_Vector *controlOne,
+int cubicToFunction(const FT_Vector *controlOne,
                     const FT_Vector *controlTwo,
                     const FT_Vector *to, void *user);
 

@@ -23,6 +23,16 @@ using RDGeom::Point2D;
 
 namespace RDKit {
 
+// for aligning the drawing of text to the passed in coords.
+enum class TextAlignType:char { START, MIDDLE, END };
+enum class TextDrawType:char  {
+  TextDrawNormal = 0,
+  TextDrawSuperscript,
+  TextDrawSubscript
+};
+std::ostream& operator<<(std::ostream &oss, TextAlignType tat);
+std::ostream& operator<<(std::ostream &oss, TextDrawType tdt);
+
 // ****************************************************************************
 class DrawText {
 
@@ -51,13 +61,13 @@ class DrawText {
 
   //! drawString centres the string on cds.
   virtual void drawString(const std::string &str, const Point2D &cds,
-                          MolDraw2D::AlignType align);
+                          TextAlignType align);
   // draw the char, with the bottom left hand corner at cds
   virtual void drawChar(char c, const Point2D &cds) = 0;
 
  protected:
   virtual void alignString(const std::string &str, const Point2D &in_cds,
-                           MolDraw2D::AlignType align, Point2D &out_cds);
+                           TextAlignType align, Point2D &out_cds);
 
  private:
 
@@ -71,8 +81,7 @@ class DrawText {
 //! appropriately
 //! \returns true or false depending on whether it did something or not
 bool setStringDrawMode(const std::string &instring,
-                       MolDraw2D::TextDrawType &draw_mode,
-                       size_t &i);
+                       TextDrawType &draw_mode, size_t &i);
 
 }  // namespace RDKit
 

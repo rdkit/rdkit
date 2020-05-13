@@ -19,10 +19,10 @@ DrawTextFTCairo::DrawTextFTCairo(cairo_t *dp_cr)
 }
 
 // ****************************************************************************
-double DrawTextFTCairo::ExtractOutline() {
+double DrawTextFTCairo::extractOutline() {
 
   cairo_set_source_rgb(dp_cr_, colour().r, colour().g, colour().b);
-  double adv = DrawTextFT::ExtractOutline();
+  double adv = DrawTextFT::extractOutline();
   cairo_fill(dp_cr_);
 
   return adv;
@@ -33,7 +33,7 @@ double DrawTextFTCairo::ExtractOutline() {
 int DrawTextFTCairo::MoveToFunctionImpl(const FT_Vector *to) {
 
   double dx, dy;
-  FontPosToDrawPos(to->x, to->y, dx, dy);
+  fontPosToDrawPos(to->x, to->y, dx, dy);
   cairo_move_to(dp_cr_, dx, dy);
 
   return 0;
@@ -43,7 +43,7 @@ int DrawTextFTCairo::MoveToFunctionImpl(const FT_Vector *to) {
 int DrawTextFTCairo::LineToFunctionImpl(const FT_Vector *to) {
 
   double dx, dy;
-  FontPosToDrawPos(to->x, to->y, dx, dy);
+  fontPosToDrawPos(to->x, to->y, dx, dy);
   cairo_line_to(dp_cr_, dx, dy);
 
   return 0;
@@ -62,10 +62,10 @@ int DrawTextFTCairo::ConicToFunctionImpl(const FT_Vector *control,
   cairo_get_current_point (dp_cr_, &x0, &y0);
 
   double x1, y1;
-  FontPosToDrawPos(control->x, control->y, x1, y1);
+  fontPosToDrawPos(control->x, control->y, x1, y1);
 
   double x2, y2;
-  FontPosToDrawPos(to->x, to->y, x2, y2);
+  fontPosToDrawPos(to->x, to->y, x2, y2);
 
   cairo_curve_to (dp_cr_,
                   (2.0 / 3.0) * x1 + (1.0 / 3.0) * x0,
@@ -84,14 +84,12 @@ int DrawTextFTCairo::CubicToFunctionImpl(const FT_Vector *controlOne,
                                          const FT_Vector *to) {
 
   double controlOneX, controlOneY;
-  FontPosToDrawPos(controlOne->x, controlOne->y,
-                   controlOneX, controlOneY);
+  fontPosToDrawPos(controlOne->x, controlOne->y, controlOneX, controlOneY);
   double controlTwoX, controlTwoY;
-  FontPosToDrawPos(controlTwo->x, controlTwo->y,
-                   controlTwoX, controlTwoY);
+  fontPosToDrawPos(controlTwo->x, controlTwo->y, controlTwoX, controlTwoY);
 
   double dx, dy;
-  FontPosToDrawPos(to->x, to->y, dx, dy);
+  fontPosToDrawPos(to->x, to->y, dx, dy);
 
   cairo_curve_to(dp_cr_, controlOneX, controlOneY, controlTwoX,
                  controlTwoY, dx, dy);

@@ -36,7 +36,7 @@ void DrawTextSVG::getStringSize(const string &label, double &label_width,
   label_width = 0.0;
   label_height = 0.0;
 
-  MolDraw2D::TextDrawType draw_mode = MolDraw2D::TextDrawNormal;
+  TextDrawType draw_mode = TextDrawType::TextDrawNormal;
 
   bool had_a_super = false;
   bool had_a_sub = false;
@@ -54,10 +54,10 @@ void DrawTextSVG::getStringSize(const string &label, double &label_width,
         act_font_size *
         static_cast<double>(MolDraw2D_detail::char_widths[(int)label[i]]) /
         MolDraw2D_detail::char_widths[(int)'M'];
-    if (MolDraw2D::TextDrawSubscript == draw_mode) {
+    if (TextDrawType::TextDrawSubscript == draw_mode) {
       char_width *= 0.5;
       had_a_sub = true;
-    } else if (MolDraw2D::TextDrawSuperscript == draw_mode) {
+    } else if (TextDrawType::TextDrawSuperscript == draw_mode) {
       char_width *= 0.5;
       had_a_super = true;
     }
@@ -87,7 +87,7 @@ void escape_xhtml(std::string &data) {
 
 // ****************************************************************************
 void DrawTextSVG::drawString(const std::string &str, const Point2D &cds,
-                             MolDraw2D::AlignType align) {
+                             TextAlignType align) {
 
   std::cout << "DrawTextSVG::drawString " << str << " at "
       << cds.x << ", " << cds.y << std::endl;
@@ -100,10 +100,10 @@ void DrawTextSVG::drawString(const std::string &str, const Point2D &cds,
 
   std::string text_anchor = "middle";
   double tmult = 0.0;
-  if(align == MolDraw2D::END) {
+  if(align == TextAlignType::END) {
     text_anchor = "end";
     tmult = -1.0;
-  } else if(align == MolDraw2D::START) {
+  } else if(align == TextAlignType::START) {
     text_anchor = "start";
     tmult = 1.0;
   }
@@ -130,7 +130,7 @@ void DrawTextSVG::drawString(const std::string &str, const Point2D &cds,
        << "fill:" << col << "'";
   oss_ << " >";
 
-  MolDraw2D::TextDrawType draw_mode = MolDraw2D::TextDrawNormal;
+  TextDrawType draw_mode = TextDrawType::TextDrawNormal;
   std::string span;
   bool first_span = true;
   auto write_span = [&]() {
@@ -151,12 +151,12 @@ void DrawTextSVG::drawString(const std::string &str, const Point2D &cds,
       switch (draw_mode) {
         // To save people time later - on macOS Catalina, at least, Firefox
         // renders the superscript as a subscript.  It's fine on Safari.
-        case MolDraw2D::TextDrawSuperscript:
+        case TextDrawType::TextDrawSuperscript:
           oss_ << " style='baseline-shift:super;font-size:" << fontSz * 0.75
                << "px;"
                << "'";
           break;
-        case MolDraw2D::TextDrawSubscript:
+        case TextDrawType::TextDrawSubscript:
           oss_ << " style='baseline-shift:sub;font-size:" << fontSz * 0.75
                << "px;"
                << "'";
@@ -201,7 +201,7 @@ void DrawTextSVG::drawChar(char c, const Point2D &cds) {
 
 // ****************************************************************************
 void DrawTextSVG::alignString(const std::string &str, const Point2D &in_cds,
-                              MolDraw2D::AlignType align, Point2D &out_cds) {
+                              TextAlignType align, Point2D &out_cds) {
 
   RDUNUSED_PARAM(str);
   RDUNUSED_PARAM(align);

@@ -1079,13 +1079,13 @@ void MolDraw2D::getLabelSize(const string &label, OrientType orient,
 void MolDraw2D::drawString(const string &str, const Point2D &cds) {
 
   Point2D draw_cds = getDrawCoords(cds);
-  text_drawer_->drawString(str, draw_cds, MIDDLE);
+  text_drawer_->drawString(str, draw_cds, TextAlignType::MIDDLE);
 
 }
 
 // ****************************************************************************
 void MolDraw2D::drawString(const std::string &str, const Point2D &cds,
-                           AlignType align) {
+                           TextAlignType align) {
 
   cout << "MolDraw2D::drawString() : " << str << " : "
        << cds.x << ", " << cds.y << endl;
@@ -1105,7 +1105,7 @@ void MolDraw2D::drawStrings(const std::vector<std::string> &labels,
     for (auto i = labels.rbegin(); i != labels.rend(); ++i) {
       new_lab += *i;
     }
-    drawString(new_lab, cds, END);
+    drawString(new_lab, cds, TextAlignType::END);
   } else if (orient == E) {
     cout << "orient E" << endl;
     // likewise, but forwards
@@ -1113,7 +1113,7 @@ void MolDraw2D::drawStrings(const std::vector<std::string> &labels,
     for (auto lab : labels) {
       new_lab += lab;
     }
-    drawString(new_lab, cds, START);
+    drawString(new_lab, cds, TextAlignType::START);
   } else {
     cout << "orient N or S" << endl;
     double y_scale = 0.0;
@@ -1126,13 +1126,13 @@ void MolDraw2D::drawStrings(const std::vector<std::string> &labels,
     Point2D next_cds(cds);
     // put the first piece central, but the rest centred on the first
     // char that isn't a super- or sub-script.
-    AlignType align = MIDDLE;
+    TextAlignType align = TextAlignType::MIDDLE;
     for (auto lab : labels) {
       Point2D new_cds = next_cds;
       // if on 2nd or subsequent bits of label, offset so that when
       // drawn with MIDDLE alignment the first character is centred
       // on next_cds.
-      if (align == START) {
+      if (align == TextAlignType::START) {
         size_t n = 0;
         if (lab[0] == '<') {
           // shoot through to second >, end of markup
@@ -1149,7 +1149,7 @@ void MolDraw2D::drawStrings(const std::vector<std::string> &labels,
       double width, height;
       getStringSize(lab, width, height);
       next_cds.y += y_scale * height;
-      align = START;
+      align = TextAlignType::START;
     }
   }
 }

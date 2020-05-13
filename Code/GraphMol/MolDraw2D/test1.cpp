@@ -37,7 +37,7 @@ void test1() {
   {
 //    std::string smiles = "[NH-]C([NH3+])C(CBr)CCC[NH3+]";
 //    std::string smiles = "CC[13CH2][CH2:7][CH-]C[15NH2+]C";
-    std::string smiles = "CC[3CH2]CCCCC";
+    std::string smiles = "CC[NH+](C)C[13CH2]CC[NH-]";
     ROMol *m = SmilesToMol(smiles);
     TEST_ASSERT(m);
     RDDepict::compute2DCoords(*m);
@@ -64,6 +64,7 @@ void test1() {
     outs.flush();
     delete m;
   }
+  exit(1);
   {
     std::string smiles = "CO[C@@H](O)C1=C(O[C@H](F)Cl)C(C#N)=C1ONNC[NH3+]";
     ROMol *m = SmilesToMol(smiles);

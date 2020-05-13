@@ -35,6 +35,7 @@ using RDGeom::Point2D;
 namespace RDKit {
 
 class DrawText;
+enum class TextAlignType: char;
 
 struct DrawColour {
   double r = 0.0, g = 0.0, b = 0.0, a = 1.0;
@@ -73,6 +74,8 @@ struct StringRect {
       : centre_(0.0, 0.0), width_(0.0), height_(0.0), clash_score_(0) {}
   StringRect(const Point2D &in_cds)
       : centre_(in_cds), width_(0.0), height_(0.0), clash_score_(0) {}
+  StringRect(const Point2D &in_cds, double w, double h)
+      : centre_(in_cds), width_(w), height_(h), clash_score_(0) {}
   // tl is top, left; br is bottom, right
   void calcCorners(Point2D &tl, Point2D &tr, Point2D &br, Point2D &bl) const {
     double wb2 = width_ / 2.0;
@@ -81,7 +84,6 @@ struct StringRect {
     tr = Point2D(centre_.x + wb2, centre_.y + hb2);
     br = Point2D(centre_.x + wb2, centre_.y - hb2);
     bl = Point2D(centre_.x - wb2, centre_.y - hb2);
-
   }
   bool doesItIntersect(const StringRect &other) const {
     if (fabs(centre_.x - other.centre_.x) < (width_ + other.width_) / 2.0 &&
@@ -217,13 +219,6 @@ struct RDKIT_MOLDRAW2D_EXPORT MolDrawOptions {
 class RDKIT_MOLDRAW2D_EXPORT MolDraw2D {
  public:
   typedef enum { C = 0, N, E, S, W } OrientType;
-  // for aligning the drawing of text to the passed in coords.
-  typedef enum { START, MIDDLE, END } AlignType;
-  typedef enum {
-    TextDrawNormal = 0,
-    TextDrawSuperscript,
-    TextDrawSubscript
-  } TextDrawType;
 
   //! constructor for a particular size
   /*!
@@ -476,7 +471,7 @@ class RDKIT_MOLDRAW2D_EXPORT MolDraw2D {
   // unless the specific drawer over-rides this overload, it will just call
   // the first one.  SVG for one needs the alignment flag.
   virtual void drawString(const std::string &str, const Point2D &cds,
-                          AlignType align);
+                          TextAlignType align);
   // draw the vector of strings from cds putting the nth+1 at the end of
   // the nth.  Aligns them according to OrientType.
   virtual void drawStrings(const std::vector<std::string> &labels,

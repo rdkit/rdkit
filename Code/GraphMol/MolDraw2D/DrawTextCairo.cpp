@@ -33,7 +33,7 @@ void DrawTextCairo::getStringSize(const std::string &label, double &label_width,
   DrawColour col = colour();
   cairo_set_source_rgb(dp_cr_, col.r, col.g, col.b);
 
-  MolDraw2D::TextDrawType draw_mode = MolDraw2D::TextDrawNormal;
+  TextDrawType draw_mode = TextDrawType::TextDrawNormal;
   // we have seen different behaviour on different OSes if the font is sized to
   // drawFontSize() / scale() which is what we really want.  Adjust at the end.
   cairo_set_font_size(dp_cr_, fontSize());
@@ -55,9 +55,9 @@ void DrawTextCairo::getStringSize(const std::string &label, double &label_width,
     double twidth = extents.x_advance, theight = extents.height;
     label_height = std::max(label_height, theight);
     double char_width = twidth;
-    if (MolDraw2D::TextDrawSubscript == draw_mode) {
+    if (TextDrawType::TextDrawSubscript == draw_mode) {
       char_width *= 0.75;
-    } else if (MolDraw2D::TextDrawSuperscript == draw_mode) {
+    } else if (TextDrawType::TextDrawSuperscript == draw_mode) {
       char_width *= 0.75;
       had_a_super = true;
     }

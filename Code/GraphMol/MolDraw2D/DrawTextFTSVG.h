@@ -33,7 +33,7 @@ class DrawTextFTSVG : public DrawTextFT {
 
  protected:
   // adds x_trans_ and y_trans_ to coords returns x advance distance
-  virtual double ExtractOutline() override;
+  virtual double extractOutline() override;
 
  private:
   std::ostream &oss_;

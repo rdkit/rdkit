@@ -30,12 +30,12 @@ class DrawTextSVG : public DrawText {
                       double &label_height) const override;
    //! drawString centres the string on cds.
    void drawString(const std::string &str, const Point2D &cds,
-                   MolDraw2D::AlignType align) override;
+                   TextAlignType align) override;
    void drawChar(char c, const Point2D &cds) override;
 
   protected:
    void alignString(const std::string &str, const Point2D &in_cds,
-                    MolDraw2D::AlignType align, Point2D &out_cds) override;
+                    TextAlignType align, Point2D &out_cds) override;
 
  private:
    std::ostream &oss_;

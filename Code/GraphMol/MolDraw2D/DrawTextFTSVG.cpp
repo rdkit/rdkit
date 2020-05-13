@@ -22,12 +22,12 @@ DrawTextFTSVG::DrawTextFTSVG(std::ostream &oss) : oss_(oss) {
 }
 
 // ****************************************************************************
-double DrawTextFTSVG::ExtractOutline() {
+double DrawTextFTSVG::extractOutline() {
 
   std::string col = DrawColourToSVG(colour());
 
   oss_ << "<path d='";
-  double adv = DrawTextFT::ExtractOutline();
+  double adv = DrawTextFT::extractOutline();
   oss_ << "' fill='" << col << "'/>" << endl;
 
   return adv;
@@ -38,7 +38,7 @@ double DrawTextFTSVG::ExtractOutline() {
 int DrawTextFTSVG::MoveToFunctionImpl(const FT_Vector *to) {
 
   double dx, dy;
-  FontPosToDrawPos(to->x, to->y, dx, dy);
+  fontPosToDrawPos(to->x, to->y, dx, dy);
   oss_ << "M " << dx << ' ' << dy << endl;
 
   return 0;
@@ -48,7 +48,7 @@ int DrawTextFTSVG::MoveToFunctionImpl(const FT_Vector *to) {
 int DrawTextFTSVG::LineToFunctionImpl(const FT_Vector *to) {
 
   double dx, dy;
-  FontPosToDrawPos(to->x, to->y, dx, dy);
+  fontPosToDrawPos(to->x, to->y, dx, dy);
   oss_ << "L " << dx << ' ' << dy << endl;
 
   return 0;
@@ -59,10 +59,10 @@ int DrawTextFTSVG::ConicToFunctionImpl(const FT_Vector *control,
                                        const FT_Vector *to) {
 
   double controlX, controlY;
-  FontPosToDrawPos(control->x, control->y, controlX, controlY);
+  fontPosToDrawPos(control->x, control->y, controlX, controlY);
 
   double dx, dy;
-  FontPosToDrawPos(to->x, to->y, dx, dy);
+  fontPosToDrawPos(to->x, to->y, dx, dy);
 
   oss_ << "Q " << controlX << ' ' << controlY << ", "
        << dx << ' ' << dy << endl;
@@ -76,14 +76,12 @@ int DrawTextFTSVG::CubicToFunctionImpl(const FT_Vector *controlOne,
                                        const FT_Vector *to) {
 
   double controlOneX, controlOneY;
-  FontPosToDrawPos(controlOne->x, controlOne->y,
-                   controlOneX, controlOneY);
+  fontPosToDrawPos(controlOne->x, controlOne->y, controlOneX, controlOneY);
   double controlTwoX, controlTwoY;
-  FontPosToDrawPos(controlTwo->x, controlTwo->y,
-                   controlTwoX, controlTwoY);
+  fontPosToDrawPos(controlTwo->x, controlTwo->y, controlTwoX, controlTwoY);
 
   double dx, dy;
-  FontPosToDrawPos(to->x, to->y, dx, dy);
+  fontPosToDrawPos(to->x, to->y, dx, dy);
 
   oss_ << "C " << controlOneX << ' ' << controlOneY << ", "
        << controlTwoX << ' ' << controlTwoY << ", "
