@@ -33,23 +33,6 @@ using namespace RDKit;
 void test1() {
   std::cout << " ----------------- Test 1" << std::endl;
   {
-    std::string smiles = "C[NH+](C)CC[NH3+]";
-    std::string nameBase = "test5_1";
-    ROMol *m = SmilesToMol(smiles);
-    TEST_ASSERT(m);
-    RDDepict::compute2DCoords(*m);
-    WedgeMolBonds(*m, &(m->getConformer()));
-    MolDraw2DSVG drawer(300, 300);
-    drawer.drawMolecule(*m);
-    drawer.finishDrawing();
-    std::string txt = drawer.getDrawingText();
-    std::ofstream outs("test1_X.svg");
-    outs << txt;
-    // TEST_ASSERT(txt.find("<svg")!=std::string::npos);
-    delete m;
-  }
-//exit(1);
-  {
     std::string smiles = "CO[C@@H](O)C1=C(O[C@H](F)Cl)C(C#N)=C1ONNC[NH3+]";
     ROMol *m = SmilesToMol(smiles);
     TEST_ASSERT(m);
@@ -135,6 +118,23 @@ void test1() {
     drawer.drawMolecule(*m);
     drawer.finishDrawing();
     outs.flush();
+    delete m;
+  }
+  {
+    // Here, the H should be between the two bonds off the N, not
+    // on top of the vertical one.
+    std::string smiles = "C[NH+](C)CCC";
+    std::string nameBase = "test1_6";
+    ROMol *m = SmilesToMol(smiles);
+    TEST_ASSERT(m);
+    RDDepict::compute2DCoords(*m);
+    WedgeMolBonds(*m, &(m->getConformer()));
+    MolDraw2DSVG drawer(300, 300);
+    drawer.drawMolecule(*m);
+    drawer.finishDrawing();
+    std::string txt = drawer.getDrawingText();
+    std::ofstream outs("test1_6.svg");
+    outs << txt;
     delete m;
   }
 

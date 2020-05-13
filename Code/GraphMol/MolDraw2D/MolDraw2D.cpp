@@ -3030,8 +3030,6 @@ MolDraw2D::OrientType MolDraw2D::getAtomOrientation(
     if (fabs(nbr_sum.x) > 1.0e-4) {
       islope = nbr_sum.y / nbr_sum.x;
     }
-    // cout << "islope : " << islope << " : " << atan(islope) * 180.0 / M_PI <<
-    // endl;
     if (fabs(islope) <= VERT_SLOPE) {
       if (nbr_sum.x > 0.0) {
         orient = OrientType::W;
@@ -3045,19 +3043,38 @@ MolDraw2D::OrientType MolDraw2D::getAtomOrientation(
         orient = OrientType::S;
       }
     }
-    // cout << "interim orient : " << orient << endl;
     // atoms of single degree should always be either W or E, never N or S.  If
     // either of the latter, make it E if the slope is close to vertical,
     // otherwise have it either as required.
-    if (atom.getDegree() == 1
-        && (orient == OrientType::N || orient == OrientType::S)) {
-      if (fabs(islope) > VERT_SLOPE) {
-        orient = OrientType::E;
-      } else {
-        if (nbr_sum.x > 0.0) {
-          orient = OrientType::W;
-        } else {
+    if(orient == OrientType::N || orient == OrientType::S) {
+      if (atom.getDegree() == 1) {
+        if (fabs(islope) > VERT_SLOPE) {
           orient = OrientType::E;
+        } else {
+          if (nbr_sum.x > 0.0) {
+            orient = OrientType::W;
+          } else {
+            orient = OrientType::E;
+          }
+        }
+      } else if(atom.getDegree() == 3) {
+        // Atoms of degree 3 can sometimes have a bond pointing down with S
+        // orientation or up with N orientation, which puts the H on the bond.
+        auto mol = atom.getOwningMol();
+        const Point2D &at1_cds = at_cds_[activeMolIdx_][atom.getIdx()];
+        for (const auto &nbri : make_iterator_range(mol.getAtomBonds(&atom))) {
+          const Bond *bond = mol[nbri];
+          const Point2D &at2_cds =
+              at_cds_[activeMolIdx_][bond->getOtherAtomIdx(atom.getIdx())];
+          Point2D bond_vec = at2_cds - at1_cds;
+          double ang = atan(bond_vec.y / bond_vec.x) * 180.0 / M_PI;
+          if (ang > 80.0 && ang < 100.0 && orient == OrientType::S) {
+            orient = OrientType::N;
+            break;
+          } else if (ang < -80.0 && ang > -100.0 && orient == OrientType::N) {
+            orient = OrientType::S;
+            break;
+          }
         }
       }
     }
@@ -3076,7 +3093,6 @@ MolDraw2D::OrientType MolDraw2D::getAtomOrientation(
     }
   }
 
-  // cout << "orient : " << orient << endl;
   return orient;
 }
 
