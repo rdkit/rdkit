@@ -456,6 +456,17 @@ void testModifyMol() {
       << std::endl;
 
   auto mol = buildSampleMolecule();
+
+  // make sure that calling clear() on the molecule actually clears out
+  // SubstanceGroups
+  //  This was GitHub #3167
+  {
+    auto tmol = mol;
+    TEST_ASSERT(getSubstanceGroups(tmol).size() == 3);
+    tmol.clear();
+    TEST_ASSERT(getSubstanceGroups(tmol).size() == 0);
+  }
+
   auto mol_copy = mol;
 
   const auto &sgroups = getSubstanceGroups(mol);
