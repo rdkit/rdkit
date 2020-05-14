@@ -1087,6 +1087,9 @@ struct molops_wrapper {
         .def_readwrite("removeMapped",
                        &MolOps::RemoveHsParameters::removeMapped,
                        "mapped hydrogens")
+        .def_readwrite("removeInSGroups",
+                       &MolOps::RemoveHsParameters::removeInSGroups,
+                       "hydrogens involved in SubstanceGroups")
         .def_readwrite("removeNonimplicit",
                        &MolOps::RemoveHsParameters::removeNonimplicit,
                        "DEPRECATED")

@@ -707,6 +707,18 @@ void removeHs(RWMol &mol, const RemoveHsParameters &ps, bool sanitize) {
     if (!ps.removeMapped && atom->getAtomMapNum()) {
       continue;
     }
+    if (!ps.removeInSGroups) {
+      bool skipIt = false;
+      for (const auto &sg : getSubstanceGroups(mol)) {
+        if (sg.includesAtom(atom->getIdx())) {
+          skipIt = true;
+          break;
+        }
+      }
+      if (skipIt) {
+        continue;
+      }
+    }
     bool removeIt = true;
     if (atom->getDegree() &&
         (!ps.removeDummyNeighbors || !ps.removeDefiningBondStereo ||
@@ -822,6 +834,7 @@ void removeAllHs(RWMol &mol, bool sanitize) {
   ps.removeWithWedgedBond = true;
   ps.removeWithQuery = true;
   ps.removeNonimplicit = true;
+  ps.removeInSGroups = true;
   ps.showWarnings = false;
   removeHs(mol, ps, sanitize);
 };
