@@ -1499,6 +1499,7 @@ TEST_CASE("github #3150 MolOps::removeHs removes hydrides", "[bug][molops]") {
     ps.removeHydrides = false;
     RWMol cp(*m);
     MolOps::removeHs(cp, ps);
+    // H atom not removed in this case because by default H atoms with degree 0 are not removed
     CHECK(cp.getNumAtoms() == 1);
     CHECK(MolOps::getFormalCharge(cp) == -1);
   }
@@ -1510,6 +1511,7 @@ TEST_CASE("github #3150 MolOps::removeHs removes hydrides", "[bug][molops]") {
     ps.removeHydrides = true;
     RWMol cp(*m);
     MolOps::removeHs(cp, ps);
+    // H atom not removed in this case because by default H atoms with degree 0 are not removed
     CHECK(cp.getNumAtoms() == 1);
     CHECK(MolOps::getFormalCharge(cp) == -1);
   }

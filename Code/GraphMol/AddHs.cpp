@@ -826,6 +826,7 @@ void removeAllHs(RWMol &mol, bool sanitize) {
   ps.removeWithQuery = true;
   ps.removeNonimplicit = true;
   ps.showWarnings = false;
+  ps.removeHydrides = true;
   removeHs(mol, ps, sanitize);
 };
 ROMol *removeAllHs(const ROMol &mol, bool sanitize) {
