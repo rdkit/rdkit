@@ -1090,6 +1090,9 @@ struct molops_wrapper {
         .def_readwrite("removeNonimplicit",
                        &MolOps::RemoveHsParameters::removeNonimplicit,
                        "DEPRECATED")
+        .def_readwrite("removeHydrids",
+                       &MolOps::RemoveHsParameters::removeHydrides,
+                       "hydrogens with formal charge -1")
         .def_readwrite(
             "showWarnings", &MolOps::RemoveHsParameters::showWarnings,
             "display warning messages for some classes of removed Hs")

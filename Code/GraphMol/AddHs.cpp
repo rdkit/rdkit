@@ -707,7 +707,7 @@ void removeHs(RWMol &mol, const RemoveHsParameters &ps, bool sanitize) {
     if (!ps.removeMapped && atom->getAtomMapNum()) {
       continue;
     }
-    if (!ps.removeHydrides && atom->getAtomicNum() == 1 && atom->getFormalCharge() == -1) {
+    if (!ps.removeHydrides && atom->getFormalCharge() == -1) {
       continue;
     }
     bool removeIt = true;
