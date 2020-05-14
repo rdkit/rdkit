@@ -1,6 +1,6 @@
 //
 //
-//  Copyright (C) 2002-2018 Greg Landrum and T5 Informatics GmbH
+//  Copyright (C) 2018-2020 Greg Landrum and T5 Informatics GmbH
 //
 //   @@ All Rights Reserved @@
 //  This file is part of the RDKit.
@@ -461,16 +461,16 @@ void testModifyMol() {
   const auto &sgroups = getSubstanceGroups(mol);
   TEST_ASSERT(sgroups.size() == 3);
 
-  {  // insertion will drop SubstanceGroups
+  {  // insertion does not affect SubstanceGroups
     const auto &sgroups = getSubstanceGroups(mol_copy);
     TEST_ASSERT(sgroups.size() == 3);
 
     mol_copy.insertMol(mol);
 
-    TEST_ASSERT(sgroups.size() == 0);
+    TEST_ASSERT(sgroups.size() == 3);
   }
   {
-    // adding an atom will drop SubstanceGroups
+    // adding an atom does not affect SubstanceGroups
     mol_copy = mol;
 
     const auto &sgroups = getSubstanceGroups(mol_copy);
@@ -478,10 +478,10 @@ void testModifyMol() {
 
     mol_copy.addAtom();
 
-    TEST_ASSERT(sgroups.size() == 0);
+    TEST_ASSERT(sgroups.size() == 3);
   }
   {
-    // replacing an atom will drop SubstanceGroups
+    // replacing an atom will drop SubstanceGroups that include that atom
     mol_copy = mol;
 
     const auto &sgroups = getSubstanceGroups(mol_copy);
@@ -490,10 +490,10 @@ void testModifyMol() {
     auto new_atom = Atom();
     mol_copy.replaceAtom(1, &new_atom);
 
-    TEST_ASSERT(sgroups.size() == 0);
+    TEST_ASSERT(sgroups.size() == 2);
   }
   {
-    // replacing a new bond will drop SubstanceGroups
+    // replacing a bond will drop SubstanceGroups that include that bond
     mol_copy = mol;
 
     const auto &sgroups = getSubstanceGroups(mol_copy);
@@ -502,10 +502,10 @@ void testModifyMol() {
     auto new_bond = Bond(Bond::SINGLE);
     mol_copy.replaceBond(1, &new_bond);
 
-    TEST_ASSERT(sgroups.size() == 0);
+    TEST_ASSERT(sgroups.size() == 2);
   }
   {
-    // removing an atom will drop SubstanceGroups
+    // removing an atom will drop SubstanceGroups that include that atom
     mol_copy = mol;
 
     const auto &sgroups = getSubstanceGroups(mol_copy);
@@ -513,10 +513,11 @@ void testModifyMol() {
 
     mol_copy.removeAtom(1);
 
-    TEST_ASSERT(sgroups.size() == 0);
+    TEST_ASSERT(sgroups.size() == 2);
   }
   {
-    // creating a new bond between existing atoms will drop SubstanceGroups
+    // creating a new bond between existing atoms does not affect
+    // SubstanceGroups
     mol_copy = mol;
 
     const auto &sgroups = getSubstanceGroups(mol_copy);
@@ -524,10 +525,10 @@ void testModifyMol() {
 
     mol_copy.addBond(1, 3, Bond::SINGLE);
 
-    TEST_ASSERT(sgroups.size() == 0);
+    TEST_ASSERT(sgroups.size() == 3);
   }
   {
-    // removing a bond will drop SubstanceGroups
+    // removing a bond will drop SubstanceGroups that involve that bond
     mol_copy = mol;
 
     const auto &sgroups = getSubstanceGroups(mol_copy);
@@ -535,10 +536,10 @@ void testModifyMol() {
 
     mol_copy.removeBond(1, 2);
 
-    TEST_ASSERT(sgroups.size() == 0);
+    TEST_ASSERT(sgroups.size() == 2);
   }
   {
-    // creating a partial bond will drop SubstanceGroups
+    // creating a partial bond does not effect SubstanceGroups
     mol_copy = mol;
 
     const auto &sgroups = getSubstanceGroups(mol_copy);
@@ -546,7 +547,7 @@ void testModifyMol() {
 
     auto *b = mol_copy.createPartialBond(1, Bond::SINGLE);
 
-    TEST_ASSERT(sgroups.size() == 0);
+    TEST_ASSERT(sgroups.size() == 3);
     delete b;
   }
 }
@@ -573,6 +574,92 @@ void testSubstanceGroupChanges(const std::string &rdbase) {
   TEST_ASSERT(sgroups2[0].getProp<std::string>("FIELDNAME") == "pKa");
 }
 
+void testSubstanceGroupsAndRemoveAtoms(const std::string &rdbase) {
+  BOOST_LOG(rdInfoLog)
+      << " ----------> Test impact of removeAtom on SubstanceGroups"
+      << std::endl;
+  {
+    std::string fName =
+        rdbase + "/Code/GraphMol/test_data/sgroups_and_remove_atoms_1.mol";
+    std::unique_ptr<RWMol> mol(MolFileToMol(fName));
+    TEST_ASSERT(mol);
+    TEST_ASSERT(mol->getNumAtoms() == 13);
+    {
+      auto &sgroups = getSubstanceGroups(*mol);
+      TEST_ASSERT(sgroups.size() == 1);
+      TEST_ASSERT(sgroups[0].getAtoms().size() == 3);
+      std::vector<unsigned int> tgt{10, 11, 12};
+      TEST_ASSERT(sgroups[0].getAtoms() == tgt);
+      TEST_ASSERT(sgroups[0].getBonds().size() == 1);
+      tgt = {9};
+      TEST_ASSERT(sgroups[0].getBonds() == tgt);
+      auto aps = sgroups[0].getAttachPoints();
+      TEST_ASSERT(aps.size() == 1);
+      TEST_ASSERT(aps[0].aIdx == 11);
+      TEST_ASSERT(aps[0].lvIdx == 3);
+    }
+    // remove an atom that's not in an S-group
+    mol->removeAtom(9);
+    TEST_ASSERT(mol->getNumAtoms() == 12);
+    {
+      auto &sgroups = getSubstanceGroups(*mol);
+      TEST_ASSERT(sgroups.size() == 1);
+      TEST_ASSERT(sgroups[0].getAtoms().size() == 3);
+      std::vector<unsigned int> tgt{9, 10, 11};
+      TEST_ASSERT(sgroups[0].getAtoms() == tgt);
+      TEST_ASSERT(sgroups[0].getBonds().size() == 1);
+      tgt = {8};
+      TEST_ASSERT(sgroups[0].getBonds() == tgt);
+      auto aps = sgroups[0].getAttachPoints();
+      TEST_ASSERT(aps.size() == 1);
+      TEST_ASSERT(aps[0].aIdx == 10);
+      TEST_ASSERT(aps[0].lvIdx == 3);
+    }
+    // remove an atom that is in an S-group
+    mol->removeAtom(10);
+    TEST_ASSERT(mol->getNumAtoms() == 11);
+    {
+      auto &sgroups = getSubstanceGroups(*mol);
+      TEST_ASSERT(sgroups.empty());
+    }
+  }
+  {
+    // example with hs to be removed
+    std::string fName =
+        rdbase + "/Code/GraphMol/test_data/sgroups_and_remove_atoms_2.mol";
+    std::unique_ptr<RWMol> mol(MolFileToMol(fName));
+    TEST_ASSERT(mol);
+    TEST_ASSERT(mol->getNumAtoms() == 14);
+    {
+      auto &sgroups = getSubstanceGroups(*mol);
+      TEST_ASSERT(sgroups.size() == 2);
+      TEST_ASSERT(sgroups[0].getAtoms().size() == 3);
+      std::vector<unsigned int> tgt{9, 11, 12};
+      TEST_ASSERT(sgroups[0].getAtoms() == tgt);
+      TEST_ASSERT(sgroups[0].getBonds().size() == 1);
+      TEST_ASSERT(sgroups[0].getBonds()[0] == 9);
+
+      TEST_ASSERT(sgroups[1].getAtoms().size() == 2);
+      tgt = {10, 13};
+      TEST_ASSERT(sgroups[1].getAtoms() == tgt);
+      TEST_ASSERT(sgroups[1].getBonds().size() == 1);
+      TEST_ASSERT(sgroups[1].getBonds()[0] == 10);
+    }
+    // remove an atom in the first S group, make sure the second one survives
+    mol->removeAtom(11);
+    TEST_ASSERT(mol->getNumAtoms() == 13);
+    {
+      auto &sgroups = getSubstanceGroups(*mol);
+      TEST_ASSERT(sgroups.size() == 1);
+      TEST_ASSERT(sgroups[0].getAtoms().size() == 2);
+      std::vector<unsigned int> tgt{10, 12};
+      TEST_ASSERT(sgroups[0].getAtoms() == tgt);
+      TEST_ASSERT(sgroups[0].getBonds().size() == 1);
+      TEST_ASSERT(sgroups[0].getBonds()[0] == 9);
+    }
+  }
+}
+
 int main() {
   std::string rdbase = std::string(getenv("RDBASE"));
   if (rdbase.empty()) {
@@ -581,7 +668,7 @@ int main() {
   }
 
   RDLog::InitLogs();
-
+#if 1
   testCreateSubstanceGroups();
   testParseSubstanceGroups(rdbase);
   testSubstanceGroupsRoundTrip(rdbase, false);  // test V2000
@@ -589,5 +676,8 @@ int main() {
   testPickleSubstanceGroups();
   testModifyMol();
   testSubstanceGroupChanges(rdbase);
+#endif
+  testSubstanceGroupsAndRemoveAtoms(rdbase);
+
   return 0;
 }

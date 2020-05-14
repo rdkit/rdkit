@@ -1,6 +1,6 @@
 //
 //
-//  Copyright (C) 2002-2018 Greg Landrum and T5 Informatics GmbH
+//  Copyright (C) 2018-2020 Greg Landrum and T5 Informatics GmbH
 //
 //   @@ All Rights Reserved @@
 //  This file is part of the RDKit.
@@ -147,6 +147,99 @@ SubstanceGroup::BondType SubstanceGroup::getBondType(
            << " is in this SubstanceGroup.";
     throw SubstanceGroupException(errout.str());
   }
+}
+
+bool SubstanceGroup::adjustToRemovedAtom(unsigned int atomIdx) {
+  bool res = false;
+  for (auto &aid : d_atoms) {
+    if (aid == atomIdx) {
+      throw SubstanceGroupException(
+          "adjustToRemovedAtom() called on SubstanceGroup which contains the "
+          "atom");
+    }
+    if (aid > atomIdx) {
+      res = true;
+      --aid;
+    }
+  }
+  for (auto &aid : d_patoms) {
+    if (aid == atomIdx) {
+      throw SubstanceGroupException(
+          "adjustToRemovedAtom() called on SubstanceGroup which contains the "
+          "atom");
+    }
+    if (aid > atomIdx) {
+      res = true;
+      --aid;
+    }
+  }
+  for (auto &ap : d_saps) {
+    if (ap.aIdx == atomIdx || ap.lvIdx == atomIdx) {
+      throw SubstanceGroupException(
+          "adjustToRemovedAtom() called on SubstanceGroup which contains the "
+          "atom");
+    }
+    if (ap.aIdx > atomIdx) {
+      res = true;
+      --ap.aIdx;
+    }
+    if (ap.lvIdx > atomIdx) {
+      res = true;
+      --ap.lvIdx;
+    }
+  }
+
+  return res;
+}
+
+bool SubstanceGroup::adjustToRemovedBond(unsigned int bondIdx) {
+  bool res = false;
+  for (auto &bid : d_bonds) {
+    if (bid == bondIdx) {
+      throw SubstanceGroupException(
+          "adjustToRemovedBond() called on SubstanceGroup which contains the "
+          "bond");
+    }
+    if (bid > bondIdx) {
+      res = true;
+      --bid;
+    }
+  }
+  for (auto &cs : d_cstates) {
+    if (cs.bondIdx == bondIdx) {
+      res = true;
+      --cs.bondIdx;
+    }
+  }
+  return res;
+}
+
+bool SubstanceGroup::includesAtom(unsigned int atomIdx) const {
+  if (std::find(d_atoms.begin(), d_atoms.end(), atomIdx) != d_atoms.end()) {
+    return true;
+  }
+  if (std::find(d_patoms.begin(), d_patoms.end(), atomIdx) != d_patoms.end()) {
+    return true;
+  }
+  for (const auto &ap : d_saps) {
+    if (ap.aIdx == atomIdx || ap.lvIdx == atomIdx) {
+      return true;
+    }
+  }
+  return false;
+}
+
+bool SubstanceGroup::includesBond(unsigned int bondIdx) const {
+  if (std::find(d_bonds.begin(), d_bonds.end(), bondIdx) != d_bonds.end()) {
+    return true;
+  }
+  for (const auto &cs : d_cstates) {
+    if (cs.bondIdx == bondIdx) {
+      return true;
+    }
+  }
+
+  return false;
 }
 
 bool SubstanceGroupChecks::isValidType(const std::string &type) {

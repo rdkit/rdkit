@@ -1,6 +1,6 @@
 //
 //
-//  Copyright (C) 2002-2018 Greg Landrum and T5 Informatics GmbH
+//  Copyright (C) 2018-2020 Greg Landrum and T5 Informatics GmbH
 //
 //   @@ All Rights Reserved @@
 //  This file is part of the RDKit.
@@ -108,7 +108,7 @@ class RDKIT_GRAPHMOL_EXPORT SubstanceGroup : public RDProps {
   }
 
   //! get the index of this sgroup in dp_mol's sgroups vector
-  //! (do not mistake this by the ID!)
+  //! (do not mistake this by the ID!)00
   unsigned int getIndexInMol() const;
 
   /* Atom and Bond methods */
@@ -133,9 +133,34 @@ class RDKIT_GRAPHMOL_EXPORT SubstanceGroup : public RDProps {
   const std::vector<CState> &getCStates() const { return d_cstates; }
   const std::vector<AttachPoint> &getAttachPoints() const { return d_saps; }
 
+  //! adjusts our atom IDs to reflect that an atom has been removed from the
+  //! parent molecule
+  //!   decrements all atom IDs that are higher than \c atomIdx
+  //!   raises a \c SubstanceGroupException if \c atomIdx is actually part of
+  //!   this substance group
+  //! \returns whether or not anything was changed
+  bool adjustToRemovedAtom(unsigned int atomIdx);
+
+  //! \returns whether or not anything the specified atom is part of the
+  //! definition of this substance group
+  bool includesAtom(unsigned int atomIdx) const;
+
+  //! adjusts our bond IDs to reflect that a bond has been removed from the
+  //! parent molecule
+  //!   decrements all bond IDs that are higher than \c bondIdx
+  //!   raises a \c SubstanceGroupException if \c bondIdx is actually part of
+  //!   this substance group
+  //! \returns whether or not anything was changed
+  bool adjustToRemovedBond(unsigned int bondIdx);
+
+  //! \returns whether or not anything the specified bond is part of the
+  //! definition of this substance group
+  bool includesBond(unsigned int bondIdx) const;
+
   //! Set owning molecule
   //! This only updates atoms and bonds; parent sgroup has to be updated
-  //! independently, since parent might not exist at the time this is called.
+  //! independently, since parent might not exist at the time this is
+  //! called.
   void setOwningMol(ROMol *mol);
 
   bool operator==(const SubstanceGroup &other) const {
