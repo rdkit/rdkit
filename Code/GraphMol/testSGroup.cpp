@@ -669,6 +669,49 @@ void testSubstanceGroupsAndRemoveAtoms(const std::string &rdbase) {
       TEST_ASSERT(sgroups[0].getBonds()[0] == 9);
     }
   }
+  {  // example with CSTATE
+    std::string fName =
+        rdbase + "/Code/GraphMol/test_data/sgroups_and_remove_atoms_3.mol";
+    std::unique_ptr<RWMol> mol(MolFileToMol(fName));
+    TEST_ASSERT(mol);
+    TEST_ASSERT(mol->getNumAtoms() == 14);
+    {
+      auto &sgroups = getSubstanceGroups(*mol);
+      TEST_ASSERT(sgroups.size() == 1);
+      TEST_ASSERT(sgroups[0].getAtoms().size() == 7);
+      std::vector<unsigned int> tgt{7, 8, 9, 10, 11, 12, 13};
+      TEST_ASSERT(sgroups[0].getAtoms() == tgt);
+      TEST_ASSERT(sgroups[0].getBonds().size() == 1);
+      tgt = {8};
+      TEST_ASSERT(sgroups[0].getBonds() == tgt);
+      auto cstates = sgroups[0].getCStates();
+      TEST_ASSERT(cstates.size() == 1);
+      TEST_ASSERT(cstates[0].bondIdx == 8);
+    }
+    // remove an atom that's not in an S-group
+    mol->removeAtom(1);
+    TEST_ASSERT(mol->getNumAtoms() == 13);
+    {
+      auto &sgroups = getSubstanceGroups(*mol);
+      TEST_ASSERT(sgroups.size() == 1);
+      TEST_ASSERT(sgroups[0].getAtoms().size() == 7);
+      std::vector<unsigned int> tgt{6, 7, 8, 9, 10, 11, 12};
+      TEST_ASSERT(sgroups[0].getAtoms() == tgt);
+      TEST_ASSERT(sgroups[0].getBonds().size() == 1);
+      tgt = {6};
+      TEST_ASSERT(sgroups[0].getBonds() == tgt);
+      auto cstates = sgroups[0].getCStates();
+      TEST_ASSERT(cstates.size() == 1);
+      TEST_ASSERT(cstates[0].bondIdx == 6);
+    }
+    // remove an atom that is in an S-group
+    mol->removeAtom(10);
+    TEST_ASSERT(mol->getNumAtoms() == 12);
+    {
+      auto &sgroups = getSubstanceGroups(*mol);
+      TEST_ASSERT(sgroups.empty());
+    }
+  }
 }
 
 void testSubstanceGroupsAndRemoveHs(const std::string &rdbase) {

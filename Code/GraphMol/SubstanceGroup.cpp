@@ -207,6 +207,11 @@ bool SubstanceGroup::adjustToRemovedBond(unsigned int bondIdx) {
   }
   for (auto &cs : d_cstates) {
     if (cs.bondIdx == bondIdx) {
+      throw SubstanceGroupException(
+          "adjustToRemovedBond() called on SubstanceGroup which contains the "
+          "bond");
+    }
+    if (cs.bondIdx > bondIdx) {
       res = true;
       --cs.bondIdx;
     }
