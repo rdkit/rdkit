@@ -243,7 +243,6 @@ bool SubstanceGroup::includesBond(unsigned int bondIdx) const {
       return true;
     }
   }
-
   return false;
 }
 
