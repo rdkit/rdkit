@@ -249,7 +249,7 @@ struct RDKIT_GRAPHMOL_EXPORT RemoveHsParameters {
   bool removeNonimplicit = true; /**< DEPRECATED equivalent of implicitOnly */
   bool updateExplicitCount =
       false; /**< DEPRECATED equivalent of updateExplicitCount */
-  bool removeHydrides = true; /**<Removing Hydrides */
+  bool removeHydrides = true; /**< Removing Hydrides */
 };
 //! \overload
 // modifies the molecule in place
