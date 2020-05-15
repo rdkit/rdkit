@@ -21,7 +21,7 @@ namespace RDKit {
 class DrawTextFTSVG : public DrawTextFT {
 
  public:
-  DrawTextFTSVG(std::ostream &oss);
+  DrawTextFTSVG(std::ostream &oss, std::string &d_act_class);
 
   int MoveToFunctionImpl(const FT_Vector *to) override;
   int LineToFunctionImpl(const FT_Vector *to) override;
@@ -37,6 +37,7 @@ class DrawTextFTSVG : public DrawTextFT {
 
  private:
   std::ostream &oss_;
+  std::string &d_active_class_;
 
 };
 

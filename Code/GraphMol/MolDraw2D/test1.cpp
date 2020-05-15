@@ -50,7 +50,7 @@ void test1() {
     drawer.writeDrawingText("test2_X.png");
     delete m;
   }
-  exit(1);
+//  exit(1);
   {
     std::string smiles = "[NH-]C([NH3+])C(CBr)CCC[NH3+]";
     ROMol *m = SmilesToMol(smiles);

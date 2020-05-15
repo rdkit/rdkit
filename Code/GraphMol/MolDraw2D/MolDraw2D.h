@@ -676,9 +676,6 @@ class RDKIT_MOLDRAW2D_EXPORT MolDraw2D {
   void drawAtomLabel(int atom_num,
                      const std::vector<int> *highlight_atoms = nullptr,
                      const std::map<int, DrawColour> *highlight_map = nullptr);
-  void drawAtomLabel(int atom_num, const DrawColour &draw_colour);
-  virtual void drawAnnotation(const std::string &note,
-                              const std::shared_ptr<StringRect> &note_rect);
   void drawRadicals(const ROMol &mol);
   // find a good starting point for scanning round the annotation
   // atom.  If we choose well, the first angle should be the one.
@@ -757,6 +754,9 @@ class RDKIT_MOLDRAW2D_EXPORT MolDraw2D {
       const std::map<int, DrawColour> *highlight_bond_map = nullptr,
       const std::vector<std::pair<DrawColour, DrawColour>> *bond_colours =
           nullptr);
+  virtual void drawAtomLabel(int atom_num, const DrawColour &draw_colour);
+  virtual void drawAnnotation(const std::string &note,
+                              const std::shared_ptr<StringRect> &note_rect);
 
   // calculate normalised perpendicular to vector between two coords
   Point2D calcPerpendicular(const Point2D &cds1, const Point2D &cds2) const;

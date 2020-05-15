@@ -17,16 +17,24 @@ namespace RDKit {
 string DrawColourToSVG(const RDKit::DrawColour &col);
 
 // ****************************************************************************
-DrawTextFTSVG::DrawTextFTSVG(std::ostream &oss) : oss_(oss) {
+DrawTextFTSVG::DrawTextFTSVG(std::ostream &oss, std::string &d_act_class)
+    : oss_(oss), d_active_class_(d_act_class) {
   cout << "DrawTextFTSVG" << endl;
 }
 
 // ****************************************************************************
 double DrawTextFTSVG::extractOutline() {
 
+  cout << "DrawTextFTSVG : " << d_active_class_ << "XX" << endl;
   std::string col = DrawColourToSVG(colour());
 
-  oss_ << "<path d='";
+  oss_ << "<path ";
+  if (!d_active_class_.empty()) {
+    oss_ << " class='" << d_active_class_ << "'" << " d='";
+  } else {
+    oss_ << " d='";
+  }
+
   double adv = DrawTextFT::extractOutline();
   oss_ << "' fill='" << col << "'/>" << endl;
 

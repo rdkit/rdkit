@@ -72,7 +72,7 @@ void MolDraw2DSVG::initTextDrawer() {
 
 #ifdef RDK_BUILD_FREETYPE_SUPPORT
   try {
-    text_drawer_.reset(new DrawTextFTSVG(d_os));
+    text_drawer_.reset(new DrawTextFTSVG(d_os, d_activeClass));
   } catch(std::runtime_error &e) {
     text_drawer_.reset(new DrawTextSVG(d_os, d_activeClass));
   }
@@ -136,6 +136,7 @@ void MolDraw2DSVG::drawWavyLine(const Point2D &cds1, const Point2D &cds2,
   d_os << " />\n";
 }
 
+// ****************************************************************************
 void MolDraw2DSVG::drawBond(
     const ROMol &mol, const Bond *bond, int at1_idx, int at2_idx,
     const std::vector<int> *highlight_atoms,
@@ -154,6 +155,33 @@ void MolDraw2DSVG::drawBond(
                       bond_colours);
   d_activeClass = o_class;
 };
+
+// ****************************************************************************
+void MolDraw2DSVG::drawAtomLabel(int atom_num, const DrawColour &draw_colour) {
+
+  std::string o_class = d_activeClass;
+  if (!d_activeClass.empty()) {
+    d_activeClass += " ";
+  }
+  d_activeClass += boost::str(boost::format("atom-%d") % atom_num);
+  MolDraw2D::drawAtomLabel(atom_num, draw_colour);
+  d_activeClass = o_class;
+
+}
+
+// ****************************************************************************
+void MolDraw2DSVG::drawAnnotation(const std::string &note,
+                                  const std::shared_ptr<StringRect> &note_rect) {
+
+  std::string o_class = d_activeClass;
+  if (!d_activeClass.empty()) {
+    d_activeClass += " ";
+  }
+  d_activeClass += "note";
+  MolDraw2D::drawAnnotation(note, note_rect);
+  d_activeClass = o_class;
+
+}
 
 // ****************************************************************************
 void MolDraw2DSVG::drawLine(const Point2D &cds1, const Point2D &cds2) {
