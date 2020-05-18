@@ -67,7 +67,7 @@ RDKIT_MOLALIGN_EXPORT double getAlignmentTransform(
     const ROMol &prbMol, const ROMol &refMol, RDGeom::Transform3D &trans,
     int prbCid = -1, int refCid = -1, const MatchVectType *atomMap = 0,
     const RDNumeric::DoubleVector *weights = 0, bool reflect = false,
-    unsigned int maxIters = 50);
+    unsigned int maxIters = 50, bool doAlignment=true);
 
 //! Optimally (minimum RMSD) align a molecule to another molecule
 /*!
@@ -100,7 +100,7 @@ RDKIT_MOLALIGN_EXPORT double alignMol(
     ROMol &prbMol, const ROMol &refMol, int prbCid = -1, int refCid = -1,
     const MatchVectType *atomMap = 0,
     const RDNumeric::DoubleVector *weights = 0, bool reflect = false,
-    unsigned int maxIters = 50);
+    unsigned int maxIters = 50, bool doAlignment=true);
 
 //! Returns the optimal RMS for aligning two molecules, taking
 //  symmetry into account. As a side-effect, the probe molecule is
@@ -129,7 +129,7 @@ RDKIT_MOLALIGN_EXPORT double alignMol(
 RDKIT_MOLALIGN_EXPORT double getBestRMS(
     ROMol &probeMol, ROMol &refMol, int probeId = -1, int refId = -1,
     const std::vector<MatchVectType> &map = std::vector<MatchVectType>(),
-    int maxMatches = 1e6);
+    int maxMatches = 1e6, bool doAlignment=true);
 
 //! Align the conformations of a molecule using a common set of atoms. If
 // the molecules contains queries, then the queries must also match exactly.
