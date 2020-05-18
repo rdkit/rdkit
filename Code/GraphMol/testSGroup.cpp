@@ -757,7 +757,59 @@ void testSubstanceGroupsAndRemoveAtoms(const std::string &rdbase) {
       TEST_ASSERT(sgroups.empty());
     }
   }
+
+  {  // example with parent
+    std::string fName =
+        rdbase + "/Code/GraphMol/test_data/sgroups_and_remove_atoms_5.mol";
+    std::unique_ptr<RWMol> mol(MolFileToMol(fName));
+    TEST_ASSERT(mol);
+    TEST_ASSERT(mol->getNumAtoms() == 18);
+    {
+      auto &sgroups = getSubstanceGroups(*mol);
+      TEST_ASSERT(sgroups.size() == 3);
+      TEST_ASSERT(sgroups[0].hasProp("index"))
+      TEST_ASSERT(sgroups[0].getProp<unsigned int>("index") == 1);
+      TEST_ASSERT(sgroups[0].getAtoms().size() == 3);
+      std::vector<unsigned int> tgt{3, 2, 7};
+      TEST_ASSERT(sgroups[0].getAtoms() == tgt);
+      TEST_ASSERT(sgroups[0].getBonds().size() == 2);
+      tgt = {1, 8};
+      TEST_ASSERT(sgroups[0].getBonds() == tgt);
+
+      TEST_ASSERT(sgroups[1].hasProp("index"))
+      TEST_ASSERT(sgroups[1].getProp<unsigned int>("index") == 2);
+      TEST_ASSERT(sgroups[1].getAtoms().size() == 6);
+      tgt = {5, 4, 10, 15, 16, 17};
+      TEST_ASSERT(sgroups[1].getAtoms() == tgt);
+      TEST_ASSERT(sgroups[1].getBonds().size() == 2);
+      tgt = {8, 16};
+      TEST_ASSERT(sgroups[1].getBonds() == tgt);
+      TEST_ASSERT(sgroups[1].hasProp("PARENT"))
+      TEST_ASSERT(sgroups[1].getProp<unsigned int>("PARENT") == 1);
+    }
+    // remove an atom that's not in an S-group
+    mol->removeAtom(0u);
+    TEST_ASSERT(mol->getNumAtoms() == 17);
+    {
+      auto &sgroups = getSubstanceGroups(*mol);
+      TEST_ASSERT(sgroups.size() == 3);
+      TEST_ASSERT(sgroups[0].getAtoms().size() == 3);
+      std::vector<unsigned int> tgt{2, 1, 7};
+    }
+    // remove an atom that is in a parent S-group
+    mol->removeAtom(1);
+    TEST_ASSERT(mol->getNumAtoms() == 16);
+    {
+      auto &sgroups = getSubstanceGroups(*mol);
+      TEST_ASSERT(sgroups.size() == 1);
+      TEST_ASSERT(sgroups[0].getAtoms().size() == 4);
+      TEST_ASSERT(sgroups[0].hasProp("index"))
+      TEST_ASSERT(sgroups[0].getProp<unsigned int>("index") == 3);
+    }
+  }
+
   {  // example with things in odd order and large id values
+     // NOTE that biovia draw doesn't parse this file properly
     std::string fName =
         rdbase + "/Code/GraphMol/test_data/sgroups_and_remove_atoms_7.mol";
     std::unique_ptr<RWMol> mol(MolFileToMol(fName));
@@ -779,8 +831,6 @@ void testSubstanceGroupsAndRemoveAtoms(const std::string &rdbase) {
       TEST_ASSERT(sgroups[2].getParentAtoms() == tgt);
       TEST_ASSERT(sgroups[2].hasProp("PARENT"))
       TEST_ASSERT(sgroups[2].getProp<unsigned int>("PARENT") == 10);
-      TEST_ASSERT(sgroups[2].hasProp("index"))
-      TEST_ASSERT(sgroups[2].getProp<unsigned int>("index") == 20);
 
       TEST_ASSERT(sgroups[1].hasProp("index"))
       TEST_ASSERT(sgroups[1].getProp<unsigned int>("index") == 10);
