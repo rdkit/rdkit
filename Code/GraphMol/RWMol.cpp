@@ -145,23 +145,11 @@ void RWMol::replaceAtom(unsigned int idx, Atom *atom_pin, bool updateLabel,
     const bool replaceExistingData = false;
     atom_p->updateProps(*d_graph[vd], replaceExistingData);
   }
+  removeSubstanceGroupsReferencingAtom(*this, idx);
   delete d_graph[vd];
   d_graph[vd] = atom_p;
-  // FIX: do something about bookmarks
 
-  // Delete substance groups containing this atom. It could be that it's ok to
-  // keep it, but we just don't know
-  auto &sgs = getSubstanceGroups(*this);
-  if (!sgs.empty()) {
-    std::vector<SubstanceGroup> newsgs;
-    newsgs.reserve(sgs.size());
-    for (auto &sg : sgs) {
-      if (!sg.includesAtom(idx)) {
-        newsgs.emplace_back(sg);
-      }
-    }
-    sgs = std::move(newsgs);
-  }
+  // FIX: do something about bookmarks
 };
 
 void RWMol::replaceBond(unsigned int idx, Bond *bond_pin, bool preserveProps) {
@@ -186,19 +174,7 @@ void RWMol::replaceBond(unsigned int idx, Bond *bond_pin, bool preserveProps) {
   d_graph[*(bIter.first)] = bond_p;
   // FIX: do something about bookmarks
 
-  // Delete substance groups containing this bond. It could be that it's ok to
-  // keep it, but we just don't know
-  auto &sgs = getSubstanceGroups(*this);
-  if (!sgs.empty()) {
-    std::vector<SubstanceGroup> newsgs;
-    newsgs.reserve(sgs.size());
-    for (auto &sg : sgs) {
-      if (!sg.includesBond(idx)) {
-        newsgs.emplace_back(sg);
-      }
-    }
-    sgs = std::move(newsgs);
-  }
+  removeSubstanceGroupsReferencingBond(*this, idx);
 };
 
 Atom *RWMol::getActiveAtom() {
@@ -298,20 +274,7 @@ void RWMol::removeAtom(Atom *atom) {
     }
   }
 
-  // Delete substance groups containing this atom and update atom ids
-  // in those that have higher numbered atoms
-  auto &sgs = getSubstanceGroups(*this);
-  if (!sgs.empty()) {
-    std::vector<SubstanceGroup> newsgs;
-    newsgs.reserve(sgs.size());
-    for (auto &sg : sgs) {
-      if (!sg.includesAtom(idx)) {
-        sg.adjustToRemovedAtom(idx);
-        newsgs.emplace_back(sg);
-      }
-    }
-    sgs = std::move(newsgs);
-  }
+  removeSubstanceGroupsReferencingAtom(*this, idx);
 
   // Remove any stereo group which includes the atom being deleted
   removeGroupsWithAtom(atom, d_stereo_groups);
@@ -441,20 +404,7 @@ void RWMol::removeBond(unsigned int aid1, unsigned int aid2) {
   // to be wrong now:
   dp_ringInfo->reset();
 
-  // Delete substance groups containing this bond and update bond ids
-  // in those that have higher numbered bonds
-  auto &sgs = getSubstanceGroups(*this);
-  if (!sgs.empty()) {
-    std::vector<SubstanceGroup> newsgs;
-    newsgs.reserve(sgs.size());
-    for (auto &sg : sgs) {
-      if (!sg.includesBond(idx)) {
-        sg.adjustToRemovedBond(idx);
-        newsgs.emplace_back(sg);
-      }
-    }
-    sgs = std::move(newsgs);
-  }
+  removeSubstanceGroupsReferencingBond(*this, idx);
 
   // loop over all bonds with higher indices and update their indices
   ROMol::EDGE_ITER firstB, lastB;

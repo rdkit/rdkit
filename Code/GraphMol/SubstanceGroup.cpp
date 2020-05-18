@@ -10,6 +10,7 @@
 //
 #include "SubstanceGroup.h"
 #include "ROMol.h"
+#include "RWMol.h"
 
 namespace RDKit {
 
@@ -292,6 +293,74 @@ unsigned int addSubstanceGroup(ROMol &mol, SubstanceGroup sgroup) {
   sgroups.push_back(std::move(sgroup));
 
   return id;
+}
+
+namespace {
+bool includesBond(SubstanceGroup &sg, unsigned int idx) {
+  return sg.includesBond(idx);
+}
+bool includesAtom(SubstanceGroup &sg, unsigned int idx) {
+  return sg.includesAtom(idx);
+}
+void removedBond(SubstanceGroup &sg, unsigned int idx) {
+  sg.adjustToRemovedBond(idx);
+}
+void removedAtom(SubstanceGroup &sg, unsigned int idx) {
+  sg.adjustToRemovedAtom(idx);
+}
+
+template <bool INCLUDES_METHOD(SubstanceGroup &, unsigned int),
+          void ADJUST_METHOD(SubstanceGroup &, unsigned int)>
+void removeSubstanceGroupsReferencing(RWMol &mol, unsigned int idx) {
+  auto &sgs = getSubstanceGroups(mol);
+  if (!sgs.empty()) {
+    // first collect a vector the ones that should be removed
+    std::vector<unsigned> toRemove;
+    for (auto &&sg : sgs) {
+      if (INCLUDES_METHOD(sg, idx)) {
+        unsigned int index;
+        if (sg.getPropIfPresent("index", index)) {
+          toRemove.push_back(index);
+        }
+      }
+    }
+    // now go through and keep everything that shouldn't be removed
+    // and who doesn't have a PARENT equal to one that should be removed.
+    std::vector<SubstanceGroup> newsgs;
+    newsgs.reserve(sgs.size());
+    for (auto &&sg : sgs) {
+      unsigned int index;
+      if (sg.getPropIfPresent("index", index)) {
+        unsigned int parent = 0xf00d;
+        if (std::find(toRemove.begin(), toRemove.end(), index) ==
+                toRemove.end() &&
+            (!sg.getPropIfPresent("PARENT", parent) ||
+             std::find(toRemove.begin(), toRemove.end(), parent) ==
+                 toRemove.end())) {
+          ADJUST_METHOD(sg, idx);
+          newsgs.push_back(std::move(sg));
+        }
+      } else if (!INCLUDES_METHOD(sg, idx)) {
+        // for cases that don't have an index we need to recheck whether or
+        // not we keep them
+        ADJUST_METHOD(sg, idx);
+        newsgs.push_back(std::move(sg));
+      }
+    }
+    sgs = std::move(newsgs);
+  }
+}
+}  // namespace
+void removeSubstanceGroupsReferencingAtom(RWMol &mol, unsigned int idx) {
+  // Delete substance groups containing this atom. It could be that it's ok to
+  // keep it, but we just don't know
+  removeSubstanceGroupsReferencing<includesAtom, removedAtom>(mol, idx);
+}
+
+void removeSubstanceGroupsReferencingBond(RWMol &mol, unsigned int idx) {
+  // Delete substance groups containing this bond. It could be that it's ok to
+  // keep it, but we just don't know
+  removeSubstanceGroupsReferencing<includesBond, removedBond>(mol, idx);
 }
 
 }  // namespace RDKit

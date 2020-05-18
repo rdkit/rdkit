@@ -503,7 +503,7 @@ void testModifyMol() {
     auto new_atom = Atom();
     mol_copy.replaceAtom(1, &new_atom);
 
-    TEST_ASSERT(sgroups.size() == 2);
+    TEST_ASSERT(sgroups.size() == 1);
   }
   {
     // replacing a bond will drop SubstanceGroups that include that bond
@@ -515,7 +515,7 @@ void testModifyMol() {
     auto new_bond = Bond(Bond::SINGLE);
     mol_copy.replaceBond(1, &new_bond);
 
-    TEST_ASSERT(sgroups.size() == 2);
+    TEST_ASSERT(sgroups.size() == 1);
   }
   {
     // removing an atom will drop SubstanceGroups that include that atom
@@ -526,7 +526,7 @@ void testModifyMol() {
 
     mol_copy.removeAtom(1);
 
-    TEST_ASSERT(sgroups.size() == 2);
+    TEST_ASSERT(sgroups.size() == 1);
   }
   {
     // creating a new bond between existing atoms does not affect
@@ -549,7 +549,7 @@ void testModifyMol() {
 
     mol_copy.removeBond(1, 2);
 
-    TEST_ASSERT(sgroups.size() == 2);
+    TEST_ASSERT(sgroups.size() == 1);
   }
   {
     // creating a partial bond does not effect SubstanceGroups
@@ -796,6 +796,72 @@ void testSubstanceGroupsAndRemoveAtoms(const std::string &rdbase) {
   {  // copolymer example with PARENT
     std::string fName =
         rdbase + "/Code/GraphMol/test_data/sgroups_copolymer.mol";
+    std::unique_ptr<RWMol> mol(MolFileToMol(fName));
+    TEST_ASSERT(mol);
+    TEST_ASSERT(mol->getNumAtoms() == 9);
+    {
+      auto &sgroups = getSubstanceGroups(*mol);
+      TEST_ASSERT(sgroups.size() == 3);
+      TEST_ASSERT(sgroups[2].hasProp("index"))
+      TEST_ASSERT(sgroups[2].getProp<unsigned int>("index") == 10);
+      TEST_ASSERT(sgroups[2].getAtoms().size() == 5);
+      std::vector<unsigned int> tgt{3, 2, 4, 5, 7};
+      TEST_ASSERT(sgroups[2].getAtoms() == tgt);
+      TEST_ASSERT(sgroups[2].getBonds().size() == 2);
+      tgt = {1, 5};
+      TEST_ASSERT(sgroups[2].getBonds() == tgt);
+      TEST_ASSERT(!sgroups[2].hasProp("PARENT"))
+
+      TEST_ASSERT(sgroups[0].hasProp("index"))
+      TEST_ASSERT(sgroups[0].getProp<unsigned int>("index") == 2);
+      TEST_ASSERT(sgroups[0].getAtoms().size() == 2);
+      tgt = {3, 2};
+      TEST_ASSERT(sgroups[0].getAtoms() == tgt);
+      TEST_ASSERT(sgroups[0].getBonds().size() == 2);
+      tgt = {1, 3};
+      TEST_ASSERT(sgroups[0].getBonds() == tgt);
+      TEST_ASSERT(sgroups[0].hasProp("PARENT"))
+      TEST_ASSERT(sgroups[0].getProp<unsigned int>("PARENT") == 10);
+    }
+    // remove an atom that's not in an S-group
+    mol->removeAtom(0u);
+    TEST_ASSERT(mol->getNumAtoms() == 8);
+    {
+      auto &sgroups = getSubstanceGroups(*mol);
+      TEST_ASSERT(sgroups.size() == 3);
+      TEST_ASSERT(sgroups[2].hasProp("index"))
+      TEST_ASSERT(sgroups[2].getProp<unsigned int>("index") == 10);
+      TEST_ASSERT(sgroups[2].getAtoms().size() == 5);
+      std::vector<unsigned int> tgt{2, 1, 3, 4, 6};
+      TEST_ASSERT(sgroups[2].getAtoms() == tgt);
+      TEST_ASSERT(sgroups[2].getBonds().size() == 2);
+      tgt = {0, 4};
+      TEST_ASSERT(sgroups[2].getBonds() == tgt);
+      TEST_ASSERT(!sgroups[2].hasProp("PARENT"))
+
+      TEST_ASSERT(sgroups[0].hasProp("index"))
+      TEST_ASSERT(sgroups[0].getProp<unsigned int>("index") == 2);
+      TEST_ASSERT(sgroups[0].getAtoms().size() == 2);
+      tgt = {2, 1};
+      TEST_ASSERT(sgroups[0].getAtoms() == tgt);
+      TEST_ASSERT(sgroups[0].getBonds().size() == 2);
+      tgt = {0, 2};
+      TEST_ASSERT(sgroups[0].getBonds() == tgt);
+      TEST_ASSERT(sgroups[0].hasProp("PARENT"))
+      TEST_ASSERT(sgroups[0].getProp<unsigned int>("PARENT") == 10);
+    }
+    // remove an atom from parent, make sure children also get deleted
+    mol->removeAtom(1u);
+    TEST_ASSERT(mol->getNumAtoms() == 7);
+    {
+      auto &sgroups = getSubstanceGroups(*mol);
+      TEST_ASSERT(sgroups.size() == 0);
+    }
+  }
+  {  // copolymer example 2 with PARENT, same as the previous but with a
+     // different ordering in the input file
+    std::string fName =
+        rdbase + "/Code/GraphMol/test_data/sgroups_copolymer2.mol";
     std::unique_ptr<RWMol> mol(MolFileToMol(fName));
     TEST_ASSERT(mol);
     TEST_ASSERT(mol->getNumAtoms() == 9);

@@ -26,6 +26,7 @@
 
 namespace RDKit {
 class ROMol;
+class RWMol;
 class Bond;
 class Atom;
 
@@ -221,6 +222,21 @@ RDKIT_GRAPHMOL_EXPORT const std::vector<SubstanceGroup> &getSubstanceGroups(
 */
 RDKIT_GRAPHMOL_EXPORT unsigned int addSubstanceGroup(ROMol &mol,
                                                      SubstanceGroup sgroup);
+
+//! Removes SubstanceGroups which reference a particular atom index
+/*!
+  \param mol - molecule to be edited.
+  \param idx - atom index
+*/
+RDKIT_GRAPHMOL_EXPORT void removeSubstanceGroupsReferencingAtom(
+    RWMol &mol, unsigned int idx);
+//! Removes SubstanceGroups which reference a particular bond index
+/*!
+  \param mol - molecule to be edited.
+  \param idx - bond index
+*/
+RDKIT_GRAPHMOL_EXPORT void removeSubstanceGroupsReferencingBond(
+    RWMol &mol, unsigned int idx);
 //@}
 
 }  // namespace RDKit
