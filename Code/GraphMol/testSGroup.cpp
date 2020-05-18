@@ -71,6 +71,7 @@ RWMol buildSampleMolecule() {
   //// First SubstanceGroup ////
   {
     SubstanceGroup sg(&mol, "MUL");
+    sg.setProp("index", 1u);
 
     sg.setProp("SUBTYPE", "BLO");
     sg.setProp("MULT", "n");
@@ -110,6 +111,7 @@ RWMol buildSampleMolecule() {
   //// Second SubstanceGroup ////
   {
     SubstanceGroup sg(&mol, "SUP");
+    sg.setProp("index", 2u);
 
     // Add some atoms and bonds
     for (unsigned i = 3; i < 6; ++i) {
@@ -131,6 +133,7 @@ RWMol buildSampleMolecule() {
   //// Third SubstanceGroup ////
   {
     SubstanceGroup sg(&mol, "DAT");
+    sg.setProp("index", 3u);
 
     sg.setProp("FIELDNAME", "SAMPLE FIELD NAME");  // 30 char max
     // Field Type is ignored in V3000
@@ -148,9 +151,9 @@ RWMol buildSampleMolecule() {
     addSubstanceGroup(mol, sg);
   }
 
-  // Set a parent with higher index
+  // We have to set a parent with a lower index in V2000 mol blocks:
   const auto &sgroups = getSubstanceGroups(mol);
-  sgroups.at(0).setProp<unsigned int>("PARENT", 2);
+  sgroups.at(1).setProp<unsigned int>("PARENT", 1u);
 
   return mol;
 }
@@ -214,8 +217,6 @@ void checkSampleMolecule(const RWMol &mol) {
     TEST_ASSERT(ap[0].id == "XX");
 
     TEST_ASSERT(sg.getProp<std::string>("BRKTYP") == "PAREN");
-
-    TEST_ASSERT(sg.getProp<unsigned int>("PARENT") == 2u);
   }
 
   {
@@ -255,6 +256,7 @@ void checkSampleMolecule(const RWMol &mol) {
     TEST_ASSERT(ap[0].aIdx == atoms[0]);
     TEST_ASSERT(ap[0].lvIdx == -1);
     TEST_ASSERT(ap[0].id == "YY");
+    TEST_ASSERT(sg.getProp<unsigned int>("PARENT") == 1u);
   }
 
   {
@@ -753,6 +755,73 @@ void testSubstanceGroupsAndRemoveAtoms(const std::string &rdbase) {
     {
       auto &sgroups = getSubstanceGroups(*mol);
       TEST_ASSERT(sgroups.empty());
+    }
+  }
+  {  // example with things in odd order and large id values
+    std::string fName =
+        rdbase + "/Code/GraphMol/test_data/sgroups_and_remove_atoms_7.mol";
+    std::unique_ptr<RWMol> mol(MolFileToMol(fName));
+    TEST_ASSERT(mol);
+    TEST_ASSERT(mol->getNumAtoms() == 18);
+    {
+      auto &sgroups = getSubstanceGroups(*mol);
+      TEST_ASSERT(sgroups.size() == 3);
+      TEST_ASSERT(sgroups[2].hasProp("index"))
+      TEST_ASSERT(sgroups[2].getProp<unsigned int>("index") == 20);
+      TEST_ASSERT(sgroups[2].getAtoms().size() == 6);
+      std::vector<unsigned int> tgt{5, 4, 10, 15, 16, 17};
+      TEST_ASSERT(sgroups[2].getAtoms() == tgt);
+      TEST_ASSERT(sgroups[2].getBonds().size() == 2);
+      tgt = {8, 16};
+      TEST_ASSERT(sgroups[2].getBonds() == tgt);
+      TEST_ASSERT(sgroups[2].getParentAtoms().size() == 3);
+      tgt = {5, 4, 10};
+      TEST_ASSERT(sgroups[2].getParentAtoms() == tgt);
+      TEST_ASSERT(sgroups[2].hasProp("PARENT"))
+      TEST_ASSERT(sgroups[2].getProp<unsigned int>("PARENT") == 10);
+      TEST_ASSERT(sgroups[2].hasProp("index"))
+      TEST_ASSERT(sgroups[2].getProp<unsigned int>("index") == 20);
+
+      TEST_ASSERT(sgroups[1].hasProp("index"))
+      TEST_ASSERT(sgroups[1].getProp<unsigned int>("index") == 10);
+      TEST_ASSERT(sgroups[1].getAtoms().size() == 3);
+      tgt = {3, 2, 7};
+      TEST_ASSERT(sgroups[1].getAtoms() == tgt);
+      TEST_ASSERT(sgroups[1].getBonds().size() == 2);
+      tgt = {1, 8};
+      TEST_ASSERT(sgroups[1].getBonds() == tgt);
+      TEST_ASSERT(sgroups[1].getParentAtoms().size() == 0);
+    }
+  }
+  {  // copolymer example with PARENT
+    std::string fName =
+        rdbase + "/Code/GraphMol/test_data/sgroups_copolymer.mol";
+    std::unique_ptr<RWMol> mol(MolFileToMol(fName));
+    TEST_ASSERT(mol);
+    TEST_ASSERT(mol->getNumAtoms() == 9);
+    {
+      auto &sgroups = getSubstanceGroups(*mol);
+      TEST_ASSERT(sgroups.size() == 3);
+      TEST_ASSERT(sgroups[2].hasProp("index"))
+      TEST_ASSERT(sgroups[2].getProp<unsigned int>("index") == 10);
+      TEST_ASSERT(sgroups[2].getAtoms().size() == 5);
+      std::vector<unsigned int> tgt{3, 2, 4, 5, 7};
+      TEST_ASSERT(sgroups[2].getAtoms() == tgt);
+      TEST_ASSERT(sgroups[2].getBonds().size() == 2);
+      tgt = {1, 5};
+      TEST_ASSERT(sgroups[2].getBonds() == tgt);
+      TEST_ASSERT(!sgroups[2].hasProp("PARENT"))
+
+      TEST_ASSERT(sgroups[0].hasProp("index"))
+      TEST_ASSERT(sgroups[0].getProp<unsigned int>("index") == 2);
+      TEST_ASSERT(sgroups[0].getAtoms().size() == 2);
+      tgt = {3, 2};
+      TEST_ASSERT(sgroups[0].getAtoms() == tgt);
+      TEST_ASSERT(sgroups[0].getBonds().size() == 2);
+      tgt = {1, 3};
+      TEST_ASSERT(sgroups[0].getBonds() == tgt);
+      TEST_ASSERT(sgroups[0].hasProp("PARENT"))
+      TEST_ASSERT(sgroups[0].getProp<unsigned int>("PARENT") == 10);
     }
   }
 }
