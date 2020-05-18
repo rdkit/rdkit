@@ -37,8 +37,9 @@ void test1() {
   {
 //    std::string smiles = "[NH-]C([NH3+])C(CBr)CCC[NH3+]";
 //    std::string smiles = "CC[13CH2][CH2:7][CH-]C[15NH2+]C";
-    std::string smiles = "CC[NH+](C)C[13CH2]CC[NH-]";
-    ROMol *m = SmilesToMol(smiles);
+//    std::string smiles = "CC[NH+](C)C[13CH2]CC[NH-]";
+    auto m = "O"_smiles;
+//    auto m = "CCN(CC)CC"_smiles;
     TEST_ASSERT(m);
     RDDepict::compute2DCoords(*m);
     WedgeMolBonds(*m, &(m->getConformer()));
@@ -48,12 +49,12 @@ void test1() {
     drawer.finishDrawing();
 
     drawer.writeDrawingText("test2_X.png");
-    delete m;
   }
 //  exit(1);
   {
-    std::string smiles = "[NH-]C([NH3+])C(CBr)CCC[NH3+]";
-    ROMol *m = SmilesToMol(smiles);
+//    auto m = "[NH-]C([NH3+])C(CBr)CCC[NH3+]"_smiles;
+    auto m = "O"_smiles;
+//    auto m = "CCN(CC)CC"_smiles;
     TEST_ASSERT(m);
     RDDepict::compute2DCoords(*m);
     WedgeMolBonds(*m, &(m->getConformer()));
@@ -62,7 +63,6 @@ void test1() {
     drawer.drawMolecule(*m);
     drawer.finishDrawing();
     outs.flush();
-    delete m;
   }
   exit(1);
   {
@@ -885,8 +885,7 @@ void testGithub781() {
             << std::endl;
 
   {
-    std::string smiles = "C";
-    ROMol *m = SmilesToMol(smiles);
+    auto m = "C"_smiles;
     TEST_ASSERT(m);
     RDDepict::compute2DCoords(*m);
     MolDraw2DSVG drawer(300, 300);
@@ -894,12 +893,26 @@ void testGithub781() {
     drawer.finishDrawing();
     std::string txt = drawer.getDrawingText();
     TEST_ASSERT(txt.find("<svg") != std::string::npos);
+#ifdef RDK_BUILD_FREETYPE_SUPPORT
+#if 0
+    // write the file so we can update the coords below more easily
+    // if the font changes, for example.
+    std::ofstream outs("testGithub781_1.svg");
+    outs << txt;
+    outs.close();
+#endif
+    // the start of the C
+    TEST_ASSERT(txt.find("<path  class='atom-0' d='M 88.4634 150.11")
+                != std::string::npos)
+    // the start of the H
+    TEST_ASSERT(txt.find("<path  class='atom-0' d='M 163.988 104.478")
+                != std::string::npos)
+#else
     TEST_ASSERT(txt.find("<tspan>CH</tspan>") != std::string::npos);
-    delete m;
+#endif
   }
   {
-    std::string smiles = "O";
-    ROMol *m = SmilesToMol(smiles);
+    auto m = "O"_smiles;
     TEST_ASSERT(m);
     RDDepict::compute2DCoords(*m);
     MolDraw2DSVG drawer(300, 300);
@@ -907,12 +920,22 @@ void testGithub781() {
     drawer.finishDrawing();
     std::string txt = drawer.getDrawingText();
     TEST_ASSERT(txt.find("<svg") != std::string::npos);
+#ifdef RDK_BUILD_FREETYPE_SUPPORT
+    std::ofstream outs("testGithub781_2.svg");
+    outs << txt;
+    outs.close();
+    // start of the H
+    TEST_ASSERT(txt.find("<path  class='atom-0' d='M -9.91254 100.319")
+                != std::string::npos);
+    // start of the O
+    TEST_ASSERT(txt.find("<path  class='atom-0' d='M -9.91254 100.319")
+                != std::string::npos);
+#else
     TEST_ASSERT(txt.find("<tspan>OH</tspan>") == std::string::npos);
-    delete m;
+#endif
   }
   {
-    std::string smiles = "[C]";
-    ROMol *m = SmilesToMol(smiles);
+    auto m = "[C]"_smiles;
     TEST_ASSERT(m);
     RDDepict::compute2DCoords(*m);
     MolDraw2DSVG drawer(300, 300);
@@ -920,12 +943,22 @@ void testGithub781() {
     drawer.finishDrawing();
     std::string txt = drawer.getDrawingText();
     TEST_ASSERT(txt.find("<svg") != std::string::npos);
+#ifdef RDK_BUILD_FREETYPE_SUPPORT
+    std::ofstream outs("testGithub781_3.svg");
+    outs << txt;
+    outs.close();
+    // The C
+    TEST_ASSERT(txt.find("<path  class='atom-0' d='M 106 151.2")
+                != std::string::npos);
+    // the first radical marker
+    TEST_ASSERT(txt.find("<path d='M 32.7273,75.6364 L 32.697,74.933")
+                != std::string::npos);
+#else
     TEST_ASSERT(txt.find("<tspan>C</tspan>") != std::string::npos);
-    delete m;
+#endif
   }
   {
-    std::string smiles = "C.CC.[Cl-]";
-    ROMol *m = SmilesToMol(smiles);
+    auto m = "C.CC.[Cl-]"_smiles;
     TEST_ASSERT(m);
     RDDepict::compute2DCoords(*m);
     MolDraw2DSVG drawer(300, 300);
@@ -933,9 +966,20 @@ void testGithub781() {
     drawer.finishDrawing();
     std::string txt = drawer.getDrawingText();
     TEST_ASSERT(txt.find("<svg") != std::string::npos);
+#ifdef RDK_BUILD_FREETYPE_SUPPORT
+    std::ofstream outs("testGithub781_4.svg");
+    outs << txt;
+    outs.close();
+    // start of C
+    TEST_ASSERT(txt.find("<path  class='atom-0' d='M 26.1014 205.98")
+                != std::string::npos);
+    // start of l
+    TEST_ASSERT(txt.find("<path  class='atom-3' d='M 25.3344 76.9212")
+                != std::string::npos);
+#else
     TEST_ASSERT(txt.find("<tspan>CH</tspan>") != std::string::npos);
     TEST_ASSERT(txt.find("<tspan>Cl</tspan>") != std::string::npos);
-    delete m;
+#endif
   }
   {  // empty molecule
     auto *m = new ROMol();
@@ -946,7 +990,14 @@ void testGithub781() {
     drawer.finishDrawing();
     std::string txt = drawer.getDrawingText();
     TEST_ASSERT(txt.find("<svg") != std::string::npos);
+#ifdef RDK_BUILD_FREETYPE_SUPPORT
+    // the Freetype version just draws the white canvas.
+    std::ofstream outs("testGithub781_5.svg");
+    outs << txt;
+    outs.close();
+#else
     TEST_ASSERT(txt.find("<tspan>") == std::string::npos);
+#endif
     delete m;
   }
   std::cerr << " Done" << std::endl;
@@ -1297,9 +1348,15 @@ M  END";
     std::ofstream outs("test983_1.svg");
     outs << text;
     outs.flush();
-    TEST_ASSERT(text.find("<path class='bond-1' d='M 125.352,114.634"
-                          " L 179.234,90.896 L 172.848,79.8357 Z'"
-                          " style='fill:#000000") != std::string::npos);
+#ifdef RDK_BUILD_FREETYPE_SUPPORT
+    TEST_ASSERT(text.find("<path class='bond-1' d='M 126.476,115.787"
+                          " L 182.747,90.9962 L 176.078,79.4455 Z'"
+                          " style='fill:#000000;") != std::string::npos);
+#else
+    TEST_ASSERT(text.find("<path class='bond-1' d='M 126.476,115.787"
+                          " L 182.747,90.9962 L 176.078,79.4455 Z'"
+                          " style='fill:#000000;") != std::string::npos);
+#endif
     delete m;
   }
   {
@@ -1348,9 +1405,15 @@ M  END";
     std::ofstream outs("test983_2.svg");
     outs << text;
     outs.flush();
+#ifdef RDK_BUILD_FREETYPE_SUPPORT
+    TEST_ASSERT(text.find("<path class='bond-3' d='M 106.003,118.094"
+                          " L 78.3276,93.259 L 73.6241,99.8099 Z'"
+                          " style='fill:#000000;") != std::string::npos);
+#else
     TEST_ASSERT(text.find("<path class='bond-3' d='M 102.962,116.968 L"
                           " 77.0085,93.6784 L 72.5976,99.8217 Z'"
                           " style='fill:#000000;") != std::string::npos);
+#endif
 
     MolDraw2DUtils::prepareMolForDrawing(*m);
     TEST_ASSERT(m->getBondBetweenAtoms(2, 1)->getBondType() == Bond::SINGLE);
@@ -1374,8 +1437,7 @@ M  END";
 void testDeuteriumTritium() {
   std::cout << " ----------------- Test Deuterium, Tritium" << std::endl;
   {
-    std::string deuterium = "C([2H])([2H])([2H])[2H]";
-    ROMol *m = SmilesToMol(deuterium);
+    auto m = "C([2H])([2H])([2H])[2H]"_smiles;
     RDDepict::compute2DCoords(*m);
     std::string nameBase = "testNoDeuterium";
     std::ofstream outs((nameBase + ".svg").c_str());
@@ -1394,18 +1456,28 @@ void testDeuteriumTritium() {
       if (!ok) {
         continue;
       }
+#ifdef RDK_BUILD_FREETYPE_SUPPORT
+      // there are no characters to look for, but each atom should
+      // be made of 2 glyphs, the superscript 2 and the H.
+      if ((line.find("atom-") != std::string::npos)) {
+        ++count;
+      }
+#else
       if ((line.find("baseline-shift:super") != std::string::npos) &&
           (line.find(">2<") != std::string::npos) &&
           (line.find(">H<") != std::string::npos)) {
         ++count;
       }
+#endif
     }
+#ifdef RDK_BUILD_FREETYPE_SUPPORT
+    TEST_ASSERT(count == 8);
+#else
     TEST_ASSERT(count == 4);
-    delete m;
+#endif
   }
   {
-    std::string tritium = "C([3H])([3H])([3H])[3H]";
-    ROMol *m = SmilesToMol(tritium);
+    auto m = "C([3H])([3H])([3H])[3H]"_smiles;
     RDDepict::compute2DCoords(*m);
     std::string nameBase = "testNoTritium";
     std::ofstream outs((nameBase + ".svg").c_str());
@@ -1424,18 +1496,28 @@ void testDeuteriumTritium() {
       if (!ok) {
         continue;
       }
+#ifdef RDK_BUILD_FREETYPE_SUPPORT
+      // there are no characters to look for, but each atom should
+      // be made of 2 glyphs, the superscript 2 and the H.
+      if ((line.find("atom-") != std::string::npos)) {
+        ++count;
+      }
+#else
       if ((line.find("baseline-shift:super") != std::string::npos) &&
           (line.find(">3<") != std::string::npos) &&
           (line.find(">H<") != std::string::npos)) {
         ++count;
       }
+#endif
     }
+#ifdef RDK_BUILD_FREETYPE_SUPPORT
+    TEST_ASSERT(count == 8);
+#else
     TEST_ASSERT(count == 4);
-    delete m;
+#endif
   }
   {
-    std::string deuterium = "C([2H])([2H])([2H])[2H]";
-    ROMol *m = SmilesToMol(deuterium);
+    auto m = "C([2H])([2H])([2H])[2H]"_smiles;
     RDDepict::compute2DCoords(*m);
     std::string nameBase = "testDeuterium";
     std::ofstream outs((nameBase + ".svg").c_str());
@@ -1454,18 +1536,23 @@ void testDeuteriumTritium() {
       if (!ok) {
         continue;
       }
+#ifdef RDK_BUILD_FREETYPE_SUPPORT
+      // there should be just 1 glyph per atom - a D
+      if ((line.find("atom-") != std::string::npos)) {
+        ++count;
+      }
+#else
       if ((line.find("baseline-shift:super") == std::string::npos) &&
           (line.find(">2<") == std::string::npos) &&
           (line.find(">D<") != std::string::npos)) {
         ++count;
       }
+#endif
     }
     TEST_ASSERT(count == 4);
-    delete m;
   }
   {
-    std::string tritium = "C([3H])([3H])([3H])[3H]";
-    ROMol *m = SmilesToMol(tritium);
+    auto m = "C([3H])([3H])([3H])[3H]"_smiles;
     RDDepict::compute2DCoords(*m);
     std::string nameBase = "testTritium";
     std::ofstream outs((nameBase + ".svg").c_str());
@@ -1484,14 +1571,20 @@ void testDeuteriumTritium() {
       if (!ok) {
         continue;
       }
+#ifdef RDK_BUILD_FREETYPE_SUPPORT
+      // there should be just 1 glyph per atom - a T
+      if ((line.find("atom-") != std::string::npos)) {
+        ++count;
+      }
+#else
       if ((line.find("baseline-shift:super") == std::string::npos) &&
           (line.find(">3<") == std::string::npos) &&
           (line.find(">T<") != std::string::npos)) {
         ++count;
       }
+#endif
     }
     TEST_ASSERT(count == 4);
-    delete m;
   }
   std::cerr << " Done" << std::endl;
 }
@@ -1801,8 +1894,7 @@ void test12DrawMols() {
 void test13JSONConfig() {
   std::cerr << " ----------------- Test JSON Configuration" << std::endl;
   {
-    std::string smiles = "CCO";
-    RWMol *m = SmilesToMol(smiles);
+    auto m = "CCO"_smiles;
     TEST_ASSERT(m);
     MolDraw2DUtils::prepareMolForDrawing(*m);
     MolDraw2DSVG drawer(250, 200);
@@ -1816,13 +1908,19 @@ void test13JSONConfig() {
     std::ofstream outs("test13_1.svg");
     outs << text;
     outs.close();
+#ifdef RDK_BUILD_FREETYPE_SUPPORT
+    // we'll just have to assume that this pink is for the legend
+    TEST_ASSERT(text.find("' fill='#FF7FFF") != std::string::npos);
+    TEST_ASSERT(text.find("'bond-0' d='M 116.677,9.09091 L 165.519,93.6875'") !=
+                std::string::npos);
+#else
     TEST_ASSERT(text.find("sans-serif;fill:#FF7FFF") != std::string::npos);
     TEST_ASSERT(text.find("'bond-0' d='M 122.883,9.09091 L 170.762,92.0201'") !=
                 std::string::npos);
+#endif
     // these days the bond line width scales with the rest of the
     // drawing, and at this size this comes out as 6px.
     TEST_ASSERT(text.find("stroke-width:6px") != std::string::npos);
-    delete m;
   }
   std::cerr << " Done" << std::endl;
 }
@@ -2034,8 +2132,7 @@ void testGithub1322() {
   std::cout << " ----------------- Testing github 1322: add custom atom labels"
             << std::endl;
   {
-    std::string smiles = "CCC[Se]";  // made up
-    RWMol *m1 = SmilesToMol(smiles);
+    auto m1 = "CCC[Se]"_smiles;  // made up
     TEST_ASSERT(m1);
     MolDraw2DUtils::prepareMolForDrawing(*m1);
 
@@ -2044,7 +2141,26 @@ void testGithub1322() {
       drawer.drawMolecule(*m1, "m1");
       drawer.finishDrawing();
       std::string text = drawer.getDrawingText();
+      std::ofstream outs("test1322_1.svg");
+      outs << text;
+      outs.flush();
+#ifdef RDK_BUILD_FREETYPE_SUPPORT
+      // there should be 2 paths of class atom-3, one for the S,
+      // the other for the e.
+      size_t start_pos = 0;
+      int count = 0;
+      while(true) {
+        start_pos = text.find("atom-3", start_pos);
+        if(start_pos == std::string::npos) {
+          break;
+        }
+        ++count;
+        ++start_pos;
+      }
+      TEST_ASSERT(count == 2);
+#else
       TEST_ASSERT(text.find("Se") != std::string::npos);
+#endif
     }
     {
       m1->getAtomWithIdx(3)->setProp(common_properties::atomLabel,
@@ -2053,13 +2169,28 @@ void testGithub1322() {
       drawer.drawMolecule(*m1, "m1");
       drawer.finishDrawing();
       std::string text = drawer.getDrawingText();
-      std::ofstream outs("test1322_1.svg");
+      std::ofstream outs("test1322_2.svg");
       outs << text;
       outs.flush();
+#ifdef RDK_BUILD_FREETYPE_SUPPORT
+      // there should be 11 paths of class atom-3, one for each letter
+      // of customlabel
+      size_t start_pos = 0;
+      int count = 0;
+      while(true) {
+        start_pos = text.find("atom-3", start_pos);
+        if(start_pos == std::string::npos) {
+          break;
+        }
+        ++count;
+        ++start_pos;
+      }
+      TEST_ASSERT(count == 11);
+#else
       TEST_ASSERT(text.find("Se") == std::string::npos);
       TEST_ASSERT(text.find("customlabel") != std::string::npos);
+#endif
     }
-    delete m1;
   }
   std::cerr << " Done" << std::endl;
 }
@@ -2250,8 +2381,13 @@ void test16MoleculeMetadata() {
       std::ofstream outs("test16_1.svg");
       outs << text;
       outs.flush();
+#ifdef RDK_BUILD_FREETYPE_SUPPORT
+      TEST_ASSERT(text.find("idx=\"2\" atom-smiles=\"[NH]\" drawing-x=\"56.") !=
+                  std::string::npos);
+#else
       TEST_ASSERT(text.find("idx=\"2\" atom-smiles=\"[NH]\" drawing-x=\"54.") !=
                   std::string::npos);
+#endif
       TEST_ASSERT(text.find("idx=\"2\" begin-atom-idx=\"3\" end-atom-idx=\"2\" "
                             "bond-smiles=\"-\"") != std::string::npos);
     }
@@ -2269,10 +2405,17 @@ void test16MoleculeMetadata() {
       outs << text;
       outs.flush();
 
+#ifdef RDK_BUILD_FREETYPE_SUPPORT
+      TEST_ASSERT(text.find("idx=\"2\" atom-smiles=\"[NH]\" drawing-x=\"56.") !=
+                  std::string::npos);
+      TEST_ASSERT(text.find("idx=\"2\" atom-smiles=\"[NH]\" drawing-x=\"256.") !=
+                  std::string::npos);
+#else
       TEST_ASSERT(text.find("atom-smiles=\"[NH]\" drawing-x=\"54.") !=
                   std::string::npos);
       TEST_ASSERT(text.find("atom-smiles=\"[NH]\" drawing-x=\"254.") !=
                   std::string::npos);
+#endif
 
       for (auto ptr : ms) {
         delete ptr;
@@ -2284,14 +2427,14 @@ void test16MoleculeMetadata() {
 }
 
 void test17MaxFontSize() {
-  std::cout << " ----------------- Test 16 - Testing maximum font size"
+  std::cout << " ----------------- Test 17 - Testing maximum font size"
             << std::endl;
   {
     std::string fName = getenv("RDBASE");
     fName += "/Code/GraphMol/MolDraw2D/test_dir";
     fName += "/clash.mol";
     std::unique_ptr<ROMol> m(MolFileToMol(fName));
-    std::string nameBase = "test16_";
+    std::string nameBase = "test17_";
     TEST_ASSERT(m);
 
     {
@@ -2302,7 +2445,14 @@ void test17MaxFontSize() {
       std::string text = drawer.getDrawingText();
       outs << text;
       outs.flush();
+#ifdef RDK_BUILD_FREETYPE_SUPPORT
+      // where it starts drawing the N is a poor surrogate for checking
+      // the font size, but all we have.
+      TEST_ASSERT(text.find("<path  class='atom-4' d='M 139.84 169.642")
+                  != std::string::npos);
+#else
       TEST_ASSERT(text.find("font-size:40px") != std::string::npos);
+#endif
     }
     {
       std::ofstream outs((nameBase + "2.svg").c_str());
@@ -2313,7 +2463,10 @@ void test17MaxFontSize() {
       std::string text = drawer.getDrawingText();
       outs << text;
       outs.flush();
+#ifdef RDK_BUILD_FREETYPE_SUPPORT
+#else
       TEST_ASSERT(text.find("font-size:47px") != std::string::npos);
+#endif
     }
     {
       std::ofstream outs((nameBase + "3.svg").c_str());
@@ -2324,7 +2477,10 @@ void test17MaxFontSize() {
       std::string text = drawer.getDrawingText();
       outs << text;
       outs.flush();
+#ifdef RDK_BUILD_FREETYPE_SUPPORT
+#else
       TEST_ASSERT(text.find("font-size:20px") != std::string::npos);
+#endif
     }
   }
 
@@ -2336,8 +2492,7 @@ void test18FixedScales() {
             << std::endl;
   std::string nameBase = "test18_";
   {
-    std::string smi = "Clc1ccccc1";
-    std::unique_ptr<ROMol> m(SmilesToMol(smi));
+    auto m = "Clc1ccccc1"_smiles;
     TEST_ASSERT(m);
     {
       MolDraw2DSVG drawer(300, 300);
@@ -2347,7 +2502,10 @@ void test18FixedScales() {
       std::ofstream outs((nameBase + "1.svg").c_str());
       outs << text;
       outs.flush();
+#ifdef RDK_BUILD_FREETYPE_SUPPORT
+#else
       TEST_ASSERT(text.find("font-size:28px") != std::string::npos);
+#endif
     }
     {
       MolDraw2DSVG drawer(300, 300);
@@ -2359,7 +2517,10 @@ void test18FixedScales() {
       std::ofstream outs((nameBase + "2.svg").c_str());
       outs << text;
       outs.flush();
+#ifdef RDK_BUILD_FREETYPE_SUPPORT
+#else
       TEST_ASSERT(text.find("font-size:7px") != std::string::npos);
+#endif
     }
   }
   {
@@ -2377,7 +2538,10 @@ void test18FixedScales() {
       std::ofstream outs((nameBase + "3.svg").c_str());
       outs << text;
       outs.flush();
+#ifdef RDK_BUILD_FREETYPE_SUPPORT
+#else
       TEST_ASSERT(text.find("font-size:8px") != std::string::npos);
+#endif
     }
     {
       // fix bond length to 10 pixels.
@@ -2389,7 +2553,10 @@ void test18FixedScales() {
       std::ofstream outs((nameBase + "4.svg").c_str());
       outs << text;
       outs.flush();
+#ifdef RDK_BUILD_FREETYPE_SUPPORT
+#else
       TEST_ASSERT(text.find("font-size:5px") != std::string::npos);
+#endif
     }
     {
       // this one should be the same size as the first, as it won't scale
@@ -2402,7 +2569,10 @@ void test18FixedScales() {
       std::ofstream outs((nameBase + "5.svg").c_str());
       outs << text;
       outs.flush();
+#ifdef RDK_BUILD_FREETYPE_SUPPORT
+#else
       TEST_ASSERT(text.find("font-size:8px") != std::string::npos);
+#endif
     }
   }
   std::cerr << " Done" << std::endl;
@@ -2424,8 +2594,13 @@ void test19RotateDrawing() {
       std::ofstream outs((nameBase + "1.svg").c_str());
       outs << text;
       outs.flush();
+#ifdef RDK_BUILD_FREETYPE_SUPPORT
+      TEST_ASSERT(text.find("<path  class='atom-0' d='M 266.713 149.84") !=
+                  std::string::npos);
+#else
       TEST_ASSERT(text.find("text-anchor=\"start\" x='256.907' y='154.276'") !=
                   std::string::npos);
+#endif
     }
     {
       MolDraw2DSVG drawer(300, 300);
@@ -2436,8 +2611,13 @@ void test19RotateDrawing() {
       std::ofstream outs((nameBase + "2.svg").c_str());
       outs << text;
       outs.flush();
+#ifdef RDK_BUILD_FREETYPE_SUPPORT
+      TEST_ASSERT(text.find("<path  class='atom-0' d='M 140.701 273.921") !=
+                  std::string::npos);
+#else
       TEST_ASSERT(text.find("text-anchor=\"start\" x='136.604' y='276.316'") !=
                   std::string::npos);
+#endif
     }
   }
   std::cerr << " Done" << std::endl;
@@ -2669,10 +2849,17 @@ void testGithub2931() {
       outs.flush();
       TEST_ASSERT(text.find("stroke:#FF8C00;stroke-width:5px") !=
                   std::string::npos);
+#ifdef RDK_BUILD_FREETYPE_SUPPORT
+      TEST_ASSERT(text.find("<ellipse cx='241.752' cy='387.866'"
+                            " rx='10.998' ry='11.0561'"
+                            " style='fill:none;stroke:#00FF00;") !=
+                  std::string::npos);
+#else
       TEST_ASSERT(text.find("<ellipse cx='241.942' cy='386.438'"
                             " rx='11.9978' ry='12.846'"
                             " style='fill:none;stroke:#00FF00;") !=
                   std::string::npos);
+#endif
     }
     {
       MolDraw2DSVG drawer(500, 500);
@@ -2688,10 +2875,17 @@ void testGithub2931() {
       outs.flush();
       TEST_ASSERT(text.find("stroke:#FF8C00;stroke-width:5px") !=
                   std::string::npos);
+#ifdef RDK_BUILD_FREETYPE_SUPPORT
+      TEST_ASSERT(text.find("<ellipse cx='241.726' cy='387.585'"
+                            " rx='11.0325' ry='11.0325'"
+                            " style='fill:none;stroke:#00FF00") !=
+                      std::string::npos);
+#else
       TEST_ASSERT(text.find("<ellipse cx='241.766' cy='385.788'"
                             " rx='10.9782' ry='10.9782'"
                             " style='fill:none;stroke:#00FF00;") !=
                   std::string::npos);
+#endif
     }
   }
   std::cerr << " Done" << std::endl;
@@ -2733,11 +2927,16 @@ void test20Annotate() {
     outs << text;
     outs.flush();
     // annotation for atom 11
+#ifdef RDK_BUILD_FREETYPE_SUPPORT
+    TEST_ASSERT(text.find("<path  class='atom-11' d='M 410.159 228.768")
+                != std::string::npos);
+#else
     TEST_ASSERT(text.find("x='423.22' y='249.655' style='font-size:14px;"
                           "font-style:normal;font-weight:normal;"
                           "fill-opacity:1;stroke:none;"
                           "font-family:sans-serif;fill:#000000' ><tspan>11")
                 != std::string::npos);
+#endif
   }
 
   {
@@ -2760,10 +2959,16 @@ void test20Annotate() {
     std::ofstream outs("test20_2.svg");
     outs << text;
     outs.flush();
+#ifdef RDK_BUILD_FREETYPE_SUPPORT
+    TEST_ASSERT(text.find("<path  class='note' d='M 292.476 234.814")
+                != std::string::npos);
+#else
+    // this is the (E)
     TEST_ASSERT(text.find("x='278.629' y='221.042' style='font-size:27px;"
                           "font-style:normal;font-weight:normal;"
                           "fill-opacity:1;stroke:none;font-family:sans-serif;"
                           "fill:#000000") != std::string::npos);
+#endif
   }
   {
     auto m1 = "S=C1N=C(NC(CC#N)(C)C=C=C)NC2=NNN=C21"_smiles;
@@ -2788,12 +2993,17 @@ void test20Annotate() {
     std::ofstream outs("test20_3.svg");
     outs << text;
     outs.flush();
+#ifdef RDK_BUILD_FREETYPE_SUPPORT
+    TEST_ASSERT(text.find("<path  class='note' d='M 126.642 177.078") !=
+                std::string::npos);
+#else
     TEST_ASSERT(text.find("x='209.32' y='180.482' style='font-size:15px;"
                           "font-style:normal;font-weight:normal;"
                           "fill-opacity:1;stroke:none;"
                           "font-family:sans-serif;fill:#000000'"
                           " ><tspan>foolish annotation</tspan>") !=
                 std::string::npos);
+#endif
   }
   std::cerr << " Done" << std::endl;
 }

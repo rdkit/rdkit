@@ -25,12 +25,21 @@ class DrawTextCairo : public DrawText {
  public:
   DrawTextCairo(cairo_t *dp_cr);
 
+#if 0
   void getStringSize(const std::string &label, double &label_width,
                      double &label_height) const override;
+#endif
   void drawChar(char c, const Point2D &cds) override;
 
  private:
   cairo_t *dp_cr_;
+
+  // return a vector of StringRects, one for each char in text, with
+  // super- and subscripts taken into account.  Sizes in pixel coords,
+  // i.e. scaled by fontScale().
+  void getStringRects(const std::string &text,
+                      std::vector<std::shared_ptr<StringRect>> &rects,
+                      std::vector<TextDrawType> &draw_modes) const override;
 
 };
 

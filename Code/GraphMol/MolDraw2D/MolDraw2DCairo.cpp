@@ -11,9 +11,11 @@
 //
 
 #include <cairo.h>
-#include "MolDraw2DCairo.h"
+#include <GraphMol/MolDraw2D/MolDraw2DCairo.h>
 #ifdef RDK_BUILD_FREETYPE_SUPPORT
 #include <GraphMol/MolDraw2D/DrawTextFTCairo.h>
+#else
+#include <GraphMol/MolDraw2D/DrawTextCairo.h>
 #endif
 
 namespace RDKit {
@@ -30,7 +32,7 @@ void MolDraw2DCairo::initTextDrawer() {
     text_drawer_.reset(new DrawTextCairo(dp_cr));
   }
 #else
-  text_drawer_.reset(new DrawTextSVG(d_os, d_activeClass));
+  text_drawer_.reset(new DrawTextCairo(dp_cr));
 #endif
 
 }

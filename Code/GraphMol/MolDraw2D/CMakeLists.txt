@@ -10,6 +10,8 @@ rdkit_headers(MolDraw2D.h
   MolDraw2DUtils.h
   DrawText.h
   DrawTextFT.h
+  DrawTextFTCairo.h
+  DrawTextFTSVG.h
   DrawTextCairo.h
   DrawTextSVG.h
   DEST GraphMol/MolDraw2D
@@ -18,7 +20,8 @@ rdkit_headers(MolDraw2D.h
 remove_definitions(-DRDKIT_GRAPHMOL_BUILD)
 add_definitions(-DRDKIT_MOLDRAW2D_BUILD)
 rdkit_library(MolDraw2D MolDraw2D.cpp MolDraw2DSVG.cpp
-  MolDraw2DDetails.cpp MolDraw2DUtils.cpp
+  MolDraw2DDetails.cpp MolDraw2DUtils.cpp DrawText.cpp
+  DrawTextCairo.cpp DrawTextSVG.cpp
   LINK_LIBRARIES
   ChemReactions FileParsers SmilesParse Depictor MolTransforms 
   SubstructMatch Subgraphs GraphMol EigenSolvers )

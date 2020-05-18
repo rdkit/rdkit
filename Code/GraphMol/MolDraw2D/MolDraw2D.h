@@ -35,7 +35,8 @@ using RDGeom::Point2D;
 namespace RDKit {
 
 class DrawText;
-enum class TextAlignType: char;
+enum class TextAlignType:unsigned char;
+enum class OrientType:unsigned char;
 
 struct DrawColour {
   double r = 0.0, g = 0.0, b = 0.0, a = 1.0;
@@ -218,7 +219,6 @@ struct RDKIT_MOLDRAW2D_EXPORT MolDrawOptions {
 //! MolDraw2D is the base class for doing 2D renderings of molecules
 class RDKIT_MOLDRAW2D_EXPORT MolDraw2D {
  public:
-  typedef enum { C = 0, N, E, S, W } OrientType;
 
   //! constructor for a particular size
   /*!
@@ -697,12 +697,7 @@ class RDKIT_MOLDRAW2D_EXPORT MolDraw2D {
                                const StringRect &atsym_rect, const ROMol &mol,
                                unsigned int atom_idx) const;
   bool doesNoteClashOtherNotes(const StringRect &note_rect) const;
-  // take the label for the given atom and return the individual pieces
-  // that need to be drawn for it.  So NH<sub>2</sub> will return
-  // "N", "H<sub>2</sub>".
-  std::vector<std::string> atomLabelToPieces(int atom_num) const;
-  std::vector<std::string> atomLabelToPieces(const std::string &label,
-                                             OrientType orient) const;
+
   // cds1 and cds2 are 2 atoms in a ring.  Returns the perpendicular pointing
   // into the ring.
   Point2D bondInsideRing(const ROMol &mol, const Bond *bond,

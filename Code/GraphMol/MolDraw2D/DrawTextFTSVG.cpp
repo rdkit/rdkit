@@ -25,7 +25,7 @@ DrawTextFTSVG::DrawTextFTSVG(std::ostream &oss, std::string &d_act_class)
 // ****************************************************************************
 double DrawTextFTSVG::extractOutline() {
 
-  cout << "DrawTextFTSVG : " << d_active_class_ << "XX" << endl;
+//  cout << "DrawTextFTSVG : " << d_active_class_ << "XX" << endl;
   std::string col = DrawColourToSVG(colour());
 
   oss_ << "<path ";

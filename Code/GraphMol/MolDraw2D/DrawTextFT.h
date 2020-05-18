@@ -32,15 +32,12 @@ class DrawTextFT : public DrawText {
 
  public:
 
+  static constexpr double FONT_SIZE = 0.3; // based on a bond length of 1
+
   DrawTextFT();
   ~DrawTextFT();
 
   double fontSize() const override;
-  void getStringSize(const std::string &label, double &label_width,
-                     double &label_height) const override;
-  //! drawString centres the string on cds.
-  void drawString(const std::string &str, const Point2D &cds,
-                  TextAlignType align) override;
 
   void drawChar(char c, const Point2D &cds) override;
 
@@ -53,9 +50,6 @@ class DrawTextFT : public DrawText {
                                   const FT_Vector *to) = 0;
 
  protected:
-
-  void alignString(const std::string &str, const Point2D &in_cds,
-                   TextAlignType align, Point2D &out_cds) override;
   double fontCoordToPixelCoord(FT_Pos fc) const;
   void fontPosToDrawPos(FT_Pos fx, FT_Pos fy, double &dx, double &dy) const;
   // adds x_trans_ and y_trans_ to coords returns x advance distance
@@ -75,26 +69,20 @@ class DrawTextFT : public DrawText {
   // A point is 1/72 of an inch, so it will only appear at exactly that
   // size on a display of RESOLUTION dpi.
   constexpr static int POINT_SIZE = 16;
-  // amount to scale subscripts and superscripts by
-  constexpr static double SUBS_SCALE = 0.75;
-  constexpr static double SUPER_SCALE = 0.5;
 
   // look for a hard-coded font file under RDBase.  We may want to
   // improve on this to give the user scope for having a different
   // one.
   std::string getFontFile() const;
 
-  void getStringBBox(const std::string &text,
-                     double &x_min, double &y_min ,
-                     double &x_max, double &y_max) const;
   // return a vector of StringRects, one for each char in text, with
   // super- and subscripts taken into account.  Sizes in pixel coords,
   // i.e. scaled by fontScale().
   void getStringRects(const std::string &text,
                       std::vector<std::shared_ptr<StringRect>> &rects,
-                      std::vector<TextDrawType> &draw_modes) const;
+                      std::vector<TextDrawType> &draw_modes) const override;
 
-    // calculate the bounding box of the currently loaded glyph in
+  // calculate the bounding box of the glyph for c in
   // font units (0 -> face_->units_per_EM (2048 for roboto font).
   void calcGlyphBBox(char c, FT_Pos &x_min, FT_Pos &y_min,
                      FT_Pos &x_max, FT_Pos &y_max, FT_Pos &advance) const;

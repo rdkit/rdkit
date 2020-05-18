@@ -10,11 +10,14 @@
 // derived from Dave Cosgrove's MolDraw2D
 //
 
-#include "MolDraw2DSVG.h"
+#include <GraphMol/MolDraw2D/MolDraw2DSVG.h>
+
 #include <GraphMol/SmilesParse/SmilesWrite.h>
 #include <Geometry/point.h>
 #ifdef RDK_BUILD_FREETYPE_SUPPORT
 #include <GraphMol/MolDraw2D/DrawTextFTSVG.h>
+#else
+#include <GraphMol/MolDraw2D/DrawTextSVG.h>
 #endif
 
 #include <boost/format.hpp>

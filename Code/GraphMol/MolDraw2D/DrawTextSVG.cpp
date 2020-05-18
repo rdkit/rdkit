@@ -26,9 +26,10 @@ string DrawColourToSVG(const RDKit::DrawColour &col);
 // ****************************************************************************
 DrawTextSVG::DrawTextSVG(ostream &oss, string &d_act_class) :
     DrawText(), oss_(oss), d_active_class_(d_act_class) {
-
+  cout << "DrawTextSVG" << endl;
 }
 
+#if 0
 // ****************************************************************************
 void DrawTextSVG::getStringSize(const string &label, double &label_width,
                                 double &label_height) const {
@@ -74,6 +75,7 @@ void DrawTextSVG::getStringSize(const string &label, double &label_width,
   }
 
 }
+#endif
 
 namespace {
 void escape_xhtml(std::string &data) {
@@ -200,15 +202,58 @@ void DrawTextSVG::drawChar(char c, const Point2D &cds) {
 }
 
 // ****************************************************************************
-void DrawTextSVG::alignString(const std::string &str, const Point2D &in_cds,
-                              TextAlignType align, Point2D &out_cds) {
+void DrawTextSVG::alignString(const Point2D &in_cds, TextAlignType align,
+                              const std::vector<std::shared_ptr<StringRect> > &rects,
+                              const std::vector<TextDrawType> &draw_modes,
+                              Point2D &out_cds) const {
 
-  RDUNUSED_PARAM(str);
   RDUNUSED_PARAM(align);
+  RDUNUSED_PARAM(rects);
+  RDUNUSED_PARAM(draw_modes);
   // this works with SVG, so long as we use the correct text anchor -
   // W => end, E => start, N, S => middle
   out_cds = in_cds;
   return;
+
+}
+
+// ****************************************************************************
+void DrawTextSVG::getStringRects(const string &text,
+                                 vector<shared_ptr<StringRect> > &rects,
+                                 vector<TextDrawType> &draw_modes) const {
+
+  TextDrawType draw_mode = TextDrawType::TextDrawNormal;
+  double running_x = 0.0;
+  std::vector<char> to_draw;
+  double act_font_size = fontSize();
+  double char_height = act_font_size;
+
+  for (size_t i = 0; i < text.length(); ++i) {
+    // setStringDrawMode moves i along to the end of any <sub> or <sup>
+    // markup
+    if ('<' == text[i] && setStringDrawMode(text, draw_mode, i)) {
+      continue;
+    }
+    to_draw.push_back(text[i]);
+
+    double char_width =
+        act_font_size *
+        static_cast<double>(MolDraw2D_detail::char_widths[(int)text[i]]) /
+        MolDraw2D_detail::char_widths[(int)'M'];
+    if (TextDrawType::TextDrawSubscript == draw_mode) {
+      char_width *= 0.5;
+    } else if (TextDrawType::TextDrawSuperscript == draw_mode) {
+      char_width *= 0.5;
+    }
+    Point2D centre(running_x + char_width / 2, char_height / 2);
+    rects.push_back(shared_ptr<StringRect>(new StringRect(centre, char_width, char_height)));
+    draw_modes.push_back(draw_mode);
+
+    running_x += char_width;
+
+  }
+
+  adjustStringRectsForSuperSubScript(draw_modes, to_draw, rects);
 
 }
 

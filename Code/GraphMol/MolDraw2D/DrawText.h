@@ -15,6 +15,7 @@
 #define RDKIT_DRAWTEXT_H
 
 #include <string>
+#include <vector>
 
 #include <Geometry/point.h>
 #include <GraphMol/MolDraw2D/MolDraw2D.h>
@@ -24,8 +25,9 @@ using RDGeom::Point2D;
 namespace RDKit {
 
 // for aligning the drawing of text to the passed in coords.
-enum class TextAlignType:char { START, MIDDLE, END };
-enum class TextDrawType:char  {
+enum class OrientType:unsigned char { C = 0, N, E, S, W };
+enum class TextAlignType:unsigned char { START, MIDDLE, END };
+enum class TextDrawType:unsigned char  {
   TextDrawNormal = 0,
   TextDrawSuperscript,
   TextDrawSubscript
@@ -57,7 +59,10 @@ class DrawText {
      accounted for in the width and height.
    */
   virtual void getStringSize(const std::string &label, double &label_width,
-                             double &label_height) const = 0;
+                             double &label_height) const;
+  // returns a rectangle that goes round the label, in pixel coords.  Centred
+  // on origin.
+  StringRect getStringRect(const std::string &label, OrientType orient) const;
 
   //! drawString centres the string on cds.
   virtual void drawString(const std::string &str, const Point2D &cds,
@@ -66,14 +71,30 @@ class DrawText {
   virtual void drawChar(char c, const Point2D &cds) = 0;
 
  protected:
-  virtual void alignString(const std::string &str, const Point2D &in_cds,
-                           TextAlignType align, Point2D &out_cds);
+  // amount to scale subscripts and superscripts by
+  constexpr static double SUBS_SCALE = 0.75;
+  constexpr static double SUPER_SCALE = 0.5;
+
+  virtual void alignString(const Point2D &in_cds, TextAlignType align,
+                           const std::vector<std::shared_ptr<StringRect> > &rects,
+                           const std::vector<TextDrawType> &draw_modes,
+                           Point2D &out_cds) const;
+  // adjust the string rectangles up and down for super- and subscripts
+  void adjustStringRectsForSuperSubScript(const std::vector<TextDrawType> &draw_modes,
+                                          const std::vector<char> &to_draw,
+                                          std::vector<std::shared_ptr<StringRect>> &rects) const;
 
  private:
 
   DrawColour colour_;
   double font_scale_;
 
+  // return a vector of StringRects, one for each char in text, with
+  // super- and subscripts taken into account.  Sizes in pixel coords,
+  // i.e. scaled by fontScale().
+  virtual void getStringRects(const std::string &text,
+                              std::vector<std::shared_ptr<StringRect>> &rects,
+                              std::vector<TextDrawType> &draw_modes) const = 0;
 };
 
 //! establishes whether to put string draw mode into super- or sub-script
@@ -82,6 +103,12 @@ class DrawText {
 //! \returns true or false depending on whether it did something or not
 bool setStringDrawMode(const std::string &instring,
                        TextDrawType &draw_mode, size_t &i);
+
+// take the label for the given atom and return the individual pieces
+// that need to be drawn for it.  So NH<sub>2</sub> will return
+// "N", "H<sub>2</sub>".
+std::vector<std::string> atomLabelToPieces(const std::string &label,
+                                           OrientType orient);
 
 }  // namespace RDKit
 
