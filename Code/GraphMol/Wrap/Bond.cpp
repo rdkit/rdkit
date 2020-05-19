@@ -30,6 +30,12 @@ void expandQuery(QueryBond *self, const QueryBond *other,
   }
 }
 
+void setQuery(QueryBond *self, const QueryBond *other) {
+  if (other->hasQuery()) {
+    self->setQuery(other->getQuery()->copy());
+  }
+}
+
 int BondHasProp(const Bond *bond, const char *key) {
   int res = bond->hasProp(key);
   return res;
@@ -324,7 +330,14 @@ struct bond_wrapper {
         "The class to store QueryBonds.\n\
 These cannot currently be constructed directly from Python\n";
     python::class_<QueryBond, python::bases<Bond>>(
-        "QueryBond", bondClassDoc.c_str(), python::no_init);
+        "QueryBond", bondClassDoc.c_str(), python::no_init)
+        .def("ExpandQuery", expandQuery,
+             (python::arg("self"), python::arg("other"),
+              python::arg("how") = Queries::COMPOSITE_AND,
+              python::arg("maintainOrder") = true),
+             "combines the query from other with ours")
+        .def("SetQuery", setQuery, (python::arg("self"), python::arg("other")),
+             "Replace our query with a copy of the other query");
   };
 };
 }  // namespace RDKit
