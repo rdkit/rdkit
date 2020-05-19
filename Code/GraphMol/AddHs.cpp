@@ -707,6 +707,9 @@ void removeHs(RWMol &mol, const RemoveHsParameters &ps, bool sanitize) {
     if (!ps.removeMapped && atom->getAtomMapNum()) {
       continue;
     }
+    if (!ps.removeHydrides && atom->getFormalCharge() == -1) {
+      continue;
+    }
     bool removeIt = true;
     if (atom->getDegree() &&
         (!ps.removeDummyNeighbors || !ps.removeDefiningBondStereo ||
@@ -823,6 +826,7 @@ void removeAllHs(RWMol &mol, bool sanitize) {
   ps.removeWithQuery = true;
   ps.removeNonimplicit = true;
   ps.showWarnings = false;
+  ps.removeHydrides = true;
   removeHs(mol, ps, sanitize);
 };
 ROMol *removeAllHs(const ROMol &mol, bool sanitize) {
