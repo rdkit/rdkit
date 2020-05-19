@@ -32,8 +32,9 @@ enum class TextDrawType:unsigned char  {
   TextDrawSuperscript,
   TextDrawSubscript
 };
-std::ostream& operator<<(std::ostream &oss, TextAlignType tat);
-std::ostream& operator<<(std::ostream &oss, TextDrawType tdt);
+std::ostream& operator<<(std::ostream &oss, const TextAlignType &tat);
+std::ostream& operator<<(std::ostream &oss, const TextDrawType &tdt);
+std::ostream& operator<<(std::ostream &oss, const OrientType &o);
 
 // ****************************************************************************
 class DrawText {
@@ -69,7 +70,12 @@ class DrawText {
   //! drawString centres the string on cds.
   virtual void drawString(const std::string &str, const Point2D &cds,
                           TextAlignType align);
-  // draw the char, with the bottom left hand corner at cds
+  // draw the vector of strings from cds putting the nth+1 at the end of
+  // the nth.  Aligns them according to OrientType.
+  void drawStrings(const std::vector<std::string> &labels,
+                   const Point2D &cds, OrientType orient);
+
+    // draw the char, with the bottom left hand corner at cds
   virtual void drawChar(char c, const Point2D &cds) = 0;
 
  protected:

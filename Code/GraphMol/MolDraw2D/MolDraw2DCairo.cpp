@@ -23,6 +23,7 @@ void MolDraw2DCairo::initDrawing() {
   PRECONDITION(dp_cr, "no draw context");
   cairo_set_line_cap(dp_cr, CAIRO_LINE_CAP_BUTT);
 }
+
 void MolDraw2DCairo::initTextDrawer() {
 
   double max_fnt_sz = drawOptions().maxFontSize;

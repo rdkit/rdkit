@@ -27,19 +27,7 @@ class DrawTextSVG : public DrawText {
    DrawTextSVG(double max_fnt_sz, std::ostream &oss,
               std::string &d_act_class);
 
-#if 0
-   void getStringSize(const std::string &label, double &label_width,
-                      double &label_height) const override;
-#endif
-   //! drawString centres the string on cds.
-   void drawString(const std::string &str, const Point2D &cds,
-                   TextAlignType align) override;
    void drawChar(char c, const Point2D &cds) override;
-
- protected:
-  void alignString(const Point2D &in_cds, TextAlignType align,
-                   const std::vector<std::shared_ptr<StringRect> > &rects,
-                   const std::vector<TextDrawType> &draw_modes, Point2D &out_cds) const override;
 
  private:
   std::ostream &oss_;

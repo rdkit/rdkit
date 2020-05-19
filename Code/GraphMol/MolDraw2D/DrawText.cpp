@@ -119,6 +119,66 @@ void DrawText::drawString(const string &str, const Point2D &cds,
 }
 
 // ****************************************************************************
+void DrawText::drawStrings(const std::vector<std::string> &labels,
+                            const Point2D &cds, OrientType orient) {
+  if (orient == OrientType::W) {
+    cout << "orient W" << endl;
+    // stick the pieces together again backwards and draw as one so there
+    // aren't ugly splits in the string.
+    string new_lab;
+    for (auto i = labels.rbegin(); i != labels.rend(); ++i) {
+      new_lab += *i;
+    }
+    drawString(new_lab, cds, TextAlignType::END);
+  } else if (orient == OrientType::E) {
+    cout << "orient E" << endl;
+    // likewise, but forwards
+    string new_lab;
+    for (auto lab : labels) {
+      new_lab += lab;
+    }
+    drawString(new_lab, cds, TextAlignType::START);
+  } else {
+    cout << "orient N or S : " << orient << endl;
+    double y_scale = 0.0;
+    if (orient == OrientType::N) {
+      y_scale = -1.0;
+    } else if (orient == OrientType::S) {
+      y_scale = 1.0;
+    }
+
+    Point2D next_cds(cds);
+    // put the first piece central, but the rest centred on the first
+    // char that isn't a super- or sub-script.
+    TextAlignType align = TextAlignType::MIDDLE;
+    for (auto lab : labels) {
+      Point2D new_cds = next_cds;
+      // if on 2nd or subsequent bits of label, offset so that when
+      // drawn with MIDDLE alignment the first character is centred
+      // on next_cds.
+      if (align == TextAlignType::START) {
+        size_t n = 0;
+        if (lab[0] == '<') {
+          // shoot through to second >, end of markup
+          n = lab.find('>', 1);
+          if (n != string::npos) {
+            n = lab.find('>', n + 1) + 1;
+          }
+        }
+//        if (n < lab.length()) {
+//          alignString(next_cds, lab, lab.substr(n, 1), 0, next_cds, new_cds);
+//        }
+      }
+      drawString(lab, next_cds, align);
+      double width, height;
+      getStringSize(lab, width, height);
+      next_cds.y += y_scale * height;
+      align = TextAlignType::START;
+    }
+  }
+}
+
+// ****************************************************************************
 StringRect DrawText::getStringRect(const std::string &label,
                                    OrientType orient) const {
 
@@ -185,7 +245,11 @@ void DrawText::alignString(const Point2D &in_cds, TextAlignType align,
                            const vector<TextDrawType> &draw_modes,
                            Point2D &out_cds) const {
 
-  cout << "DrawText::alignString" << endl;
+  cout << "DrawText::alignString : " << align << endl;
+  cout << "Rects : " << endl;
+  for(auto r: rects) {
+    cout << r->centre_ << " dims " << r->width_ << " by " << r->height_ << endl;
+  }
 
   double full_width = 0.0;
   for(const auto r: rects) {
@@ -204,7 +268,7 @@ void DrawText::alignString(const Point2D &in_cds, TextAlignType align,
         }
       }
     }
-//    cout << "Align char : " << align_char << endl;
+    cout << "Align char : " << align_char << endl;
     align_h = rects[align_char]->height_;
     align_w = rects[align_char]->width_;
   } else {
@@ -217,7 +281,7 @@ void DrawText::alignString(const Point2D &in_cds, TextAlignType align,
     align_h = y_max - y_min;
     align_w = full_width;
   }
-//  cout << "Align height : " << align_h << endl;
+  cout << "Align height : " << align_h << endl;
   out_cds.y = in_cds.y + align_h / 2;
 
   switch(align) {
@@ -286,7 +350,7 @@ void DrawText::getStringSize(const std::string &label, double &label_width,
                              double &label_height) const {
 
   cout << "DrawText::getStringSize" << endl;
-  StringRect rect = getStringRect(label, OrientType::W);
+  StringRect rect = getStringRect(label, OrientType::E);
   label_width = rect.width_;
   label_height = rect.height_;
 
@@ -325,7 +389,7 @@ bool setStringDrawMode(const string &instring,
 // ****************************************************************************
 vector<string> atomLabelToPieces(const string &label, OrientType orient) {
 
-  // cout << "ZZZZZZZZZZ\nsplitting " << label << " : " << orient << endl;
+  cout << "ZZZZZZZZZZ\nsplitting " << label << " : " << orient << endl;
   vector<string> label_pieces;
   if (label.empty()) {
     return label_pieces;
@@ -452,17 +516,17 @@ vector<string> atomLabelToPieces(const string &label, OrientType orient) {
   label_pieces.erase(remove(label_pieces.begin(), label_pieces.end(), ""),
                      label_pieces.end());
 
-  // cout << "Final pieces : ";
-  // for(auto l: label_pieces) {
-  //   cout << l << endl;
-  // }
-  // cout << endl;
+  cout << "Final pieces : ";
+  for(auto l: label_pieces) {
+    cout << l << endl;
+  }
+  cout << endl;
 
   return label_pieces;
 }
 
 
-std::ostream& operator<<(std::ostream &oss, TextAlignType tat) {
+std::ostream& operator<<(std::ostream &oss, const TextAlignType &tat) {
   switch(tat) {
     case TextAlignType::START: oss << "START"; break;
     case TextAlignType::MIDDLE: oss << "MIDDLE"; break;
@@ -470,7 +534,7 @@ std::ostream& operator<<(std::ostream &oss, TextAlignType tat) {
   }
   return oss;
 }
-std::ostream& operator<<(std::ostream &oss, TextDrawType tdt) {
+std::ostream& operator<<(std::ostream &oss, const TextDrawType &tdt) {
   switch(tdt) {
     case TextDrawType::TextDrawNormal: oss << "TextDrawNormal"; break;
     case TextDrawType::TextDrawSuperscript: oss << "TextDrawSuperscript"; break;

@@ -909,12 +909,7 @@ void MolDraw2D::calculateScale(int width, int height,
   // And now we need to take account of strings with N/S orientation
   // as well.
   while (scale_ > 1e-4) {
-    cout << "Current font size : " << text_drawer_->fontSize() << endl;
-    cout << "Current font scale : " << text_drawer_->fontScale() << endl;
     text_drawer_->setFontScale(scale_);
-    cout << "Drawing font size : " << text_drawer_->fontSize() << endl;
-    cout << "Drawing font scale : " << text_drawer_->fontScale() << endl;
-    cout << "Maximum font size : " << options_.maxFontSize << endl;
 
     adjustScaleForAtomLabels(highlight_atoms, highlight_radii);
     if ((!atom_notes_.empty() || !bond_notes_.empty()) &&
@@ -1102,63 +1097,12 @@ void MolDraw2D::drawString(const std::string &str, const Point2D &cds,
 }
 
 // ****************************************************************************
-void MolDraw2D::drawStrings(const std::vector<std::string> &labels,
+void MolDraw2D::drawStrings(const vector<std::string> &labels,
                             const Point2D &cds, OrientType orient) {
-  if (orient == OrientType::W) {
-    cout << "orient W" << endl;
-    // stick the pieces together again backwards and draw as one so there
-    // aren't ugly splits in the string.
-    string new_lab;
-    for (auto i = labels.rbegin(); i != labels.rend(); ++i) {
-      new_lab += *i;
-    }
-    drawString(new_lab, cds, TextAlignType::END);
-  } else if (orient == OrientType::E) {
-    cout << "orient E" << endl;
-    // likewise, but forwards
-    string new_lab;
-    for (auto lab : labels) {
-      new_lab += lab;
-    }
-    drawString(new_lab, cds, TextAlignType::START);
-  } else {
-    cout << "orient N or S" << endl;
-    double y_scale = 0.0;
-    if (orient == OrientType::N) {
-      y_scale = -1.0;
-    } else if (orient == OrientType::S) {
-      y_scale = 1.0;
-    }
 
-    Point2D next_cds(cds);
-    // put the first piece central, but the rest centred on the first
-    // char that isn't a super- or sub-script.
-    TextAlignType align = TextAlignType::MIDDLE;
-    for (auto lab : labels) {
-      Point2D new_cds = next_cds;
-      // if on 2nd or subsequent bits of label, offset so that when
-      // drawn with MIDDLE alignment the first character is centred
-      // on next_cds.
-      if (align == TextAlignType::START) {
-        size_t n = 0;
-        if (lab[0] == '<') {
-          // shoot through to second >, end of markup
-          n = lab.find('>', 1);
-          if (n != string::npos) {
-            n = lab.find('>', n + 1) + 1;
-          }
-        }
-        if (n < lab.length()) {
-          alignString(lab, lab.substr(n, 1), 0, next_cds, new_cds);
-        }
-      }
-      drawString(lab, next_cds, align);
-      double width, height;
-      getStringSize(lab, width, height);
-      next_cds.y += y_scale * height;
-      align = TextAlignType::START;
-    }
-  }
+  Point2D draw_cds = getDrawCoords(cds);
+  text_drawer_->drawStrings(labels, draw_cds, orient);
+
 }
 
 // ****************************************************************************
