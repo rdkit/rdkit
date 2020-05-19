@@ -462,7 +462,7 @@ void setPreferCoordGen(bool);
                   int prbCid=-1, int refCid=-1,
                   const std::vector<std::pair<int,int> > *atomMap=0,
                   const RDNumeric::DoubleVector *weights=0,
-                  bool reflect=false, unsigned int maxIters=50, bool doAlignment=true)) {
+                  bool reflect=false, unsigned int maxIters=50, bool doAlignment=true) {
     return RDKit::MolAlign::alignMol(*($self), refMol, prbCid, refCid, atomMap, weights, reflect, maxIters, doAlignment);
   }
 
