@@ -11,6 +11,7 @@
 #include "SubstanceGroup.h"
 #include "ROMol.h"
 #include "RWMol.h"
+#include <boost/dynamic_bitset.hpp>
 
 namespace RDKit {
 
@@ -309,43 +310,92 @@ void removedAtom(SubstanceGroup &sg, unsigned int idx) {
   sg.adjustToRemovedAtom(idx);
 }
 
+bool removedParentInHierarchy(
+    unsigned int idx, const std::vector<SubstanceGroup> &sgs,
+    const boost::dynamic_bitset<> &toRemove,
+    const std::map<unsigned int, unsigned int> &indexLookup) {
+  PRECONDITION(idx < sgs.size(), "cannot find SubstanceGroup");
+  if (toRemove[idx]) return true;
+
+  unsigned int parent;
+  if (sgs[idx].getPropIfPresent("PARENT", parent)) {
+    auto piter = indexLookup.find(parent);
+    if (piter != indexLookup.end()) {
+      return removedParentInHierarchy(piter->second, sgs, toRemove,
+                                      indexLookup);
+    }
+  }
+  return false;
+}
+
 template <bool INCLUDES_METHOD(SubstanceGroup &, unsigned int),
           void ADJUST_METHOD(SubstanceGroup &, unsigned int)>
 void removeSubstanceGroupsReferencing(RWMol &mol, unsigned int idx) {
   auto &sgs = getSubstanceGroups(mol);
   if (!sgs.empty()) {
-    // first collect a vector the ones that should be removed
-    std::vector<unsigned> toRemove;
-    for (auto &&sg : sgs) {
-      if (INCLUDES_METHOD(sg, idx)) {
+    // first collect the ones that should be removed
+    boost::dynamic_bitset<> toRemove(sgs.size());
+    unsigned int nRemoved = 0;
+    bool parentsPresent = false;
+    for (unsigned int i = 0; i < sgs.size(); ++i) {
+      if (!parentsPresent && sgs[i].hasProp("PARENT")) {
+        parentsPresent = true;
+      }
+      if (INCLUDES_METHOD(sgs[i], idx)) {
+        toRemove.set(i);
+        ++nRemoved;
+      }
+    }
+
+    // if we're going to be removing anything and there are PARENTS present,
+    // we need to build a lookup map between index->position in original array
+    std::map<unsigned int, unsigned int> indexLookup;
+    if (parentsPresent && nRemoved) {
+      for (unsigned int i = 0; i < sgs.size(); ++i) {
         unsigned int index;
-        if (sg.getPropIfPresent("index", index)) {
-          toRemove.push_back(index);
+        if (sgs[i].getPropIfPresent("index", index)) {
+          indexLookup[index] = i;
         }
       }
     }
     // now go through and keep everything that shouldn't be removed
-    // and who doesn't have a PARENT equal to one that should be removed.
+    // and who doesn't have a PARENT that should be removed in their hierarchy
     std::vector<SubstanceGroup> newsgs;
-    newsgs.reserve(sgs.size());
+    newsgs.reserve(sgs.size() - nRemoved);
+    unsigned int i = 0;
     for (auto &&sg : sgs) {
-      unsigned int index;
-      if (sg.getPropIfPresent("index", index)) {
-        unsigned int parent = 0xf00d;
-        if (std::find(toRemove.begin(), toRemove.end(), index) ==
-                toRemove.end() &&
-            (!sg.getPropIfPresent("PARENT", parent) ||
-             std::find(toRemove.begin(), toRemove.end(), parent) ==
-                 toRemove.end())) {
+      if (!toRemove[i]) {
+        // we might be keeping it. Check the parent
+        if (!parentsPresent || !sg.hasProp("PARENT")) {
           ADJUST_METHOD(sg, idx);
           newsgs.push_back(std::move(sg));
+        } else if (parentsPresent) {
+          unsigned int parent;
+          // has our parent been removed?
+          if (sg.getPropIfPresent("PARENT", parent)) {
+            auto piter = indexLookup.find(parent);
+            bool keepIt = false;
+            if (piter == indexLookup.end()) {
+              // our parent isn't around, so it isn't being removed
+              // note: this is an odd case and probably shouldn't happen, but
+              // this isn't the place to enforce that
+              keepIt = true;
+            } else if (!toRemove[piter->second]) {
+              // our parent isn't being removed, recursively check up through
+              // parents to see if we find any that are being removed:
+              if (!removedParentInHierarchy(piter->second, sgs, toRemove,
+                                            indexLookup)) {
+                keepIt = true;
+              }
+            }
+            if (keepIt) {
+              ADJUST_METHOD(sg, idx);
+              newsgs.push_back(std::move(sg));
+            }
+          }
         }
-      } else if (!INCLUDES_METHOD(sg, idx)) {
-        // for cases that don't have an index we need to recheck whether or
-        // not we keep them
-        ADJUST_METHOD(sg, idx);
-        newsgs.push_back(std::move(sg));
       }
+      ++i;
     }
     sgs = std::move(newsgs);
   }

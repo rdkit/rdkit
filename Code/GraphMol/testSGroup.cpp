@@ -808,6 +808,64 @@ void testSubstanceGroupsAndRemoveAtoms(const std::string &rdbase) {
     }
   }
 
+  {  // example with sgroup hierarchy
+    std::string fName =
+        rdbase + "/Code/GraphMol/test_data/sgroups_and_remove_atoms_6.mol";
+    std::unique_ptr<RWMol> mol(MolFileToMol(fName));
+    TEST_ASSERT(mol);
+    TEST_ASSERT(mol->getNumAtoms() == 13);
+    {
+      auto &sgroups = getSubstanceGroups(*mol);
+      TEST_ASSERT(sgroups.size() == 3);
+      TEST_ASSERT(sgroups[0].hasProp("index"))
+      TEST_ASSERT(sgroups[0].getProp<unsigned int>("index") == 1);
+      TEST_ASSERT(sgroups[0].getAtoms().size() == 3);
+      std::vector<unsigned int> tgt{3, 2, 7};
+      TEST_ASSERT(sgroups[0].getAtoms() == tgt);
+      TEST_ASSERT(sgroups[0].getBonds().size() == 2);
+      tgt = {1, 8};
+      TEST_ASSERT(sgroups[0].getBonds() == tgt);
+
+      TEST_ASSERT(sgroups[1].hasProp("index"))
+      TEST_ASSERT(sgroups[1].getProp<unsigned int>("index") == 2);
+      TEST_ASSERT(sgroups[1].getAtoms().size() == 3);
+      tgt = {5, 4, 10};
+      TEST_ASSERT(sgroups[1].getAtoms() == tgt);
+      TEST_ASSERT(sgroups[1].getBonds().size() == 2);
+      tgt = {8, 11};
+      TEST_ASSERT(sgroups[1].getBonds() == tgt);
+      TEST_ASSERT(sgroups[1].hasProp("PARENT"))
+      TEST_ASSERT(sgroups[1].getProp<unsigned int>("PARENT") == 1);
+
+      TEST_ASSERT(sgroups[2].hasProp("index"))
+      TEST_ASSERT(sgroups[2].getProp<unsigned int>("index") == 3);
+      TEST_ASSERT(sgroups[2].getAtoms().size() == 2);
+      tgt = {9, 8};
+      TEST_ASSERT(sgroups[2].getAtoms() == tgt);
+      TEST_ASSERT(sgroups[2].getBonds().size() == 2);
+      tgt = {5, 10};
+      TEST_ASSERT(sgroups[2].getBonds() == tgt);
+      TEST_ASSERT(sgroups[2].hasProp("PARENT"))
+      TEST_ASSERT(sgroups[2].getProp<unsigned int>("PARENT") == 2);
+    }
+    // remove an atom that's not in an S-group
+    mol->removeAtom(0u);
+    TEST_ASSERT(mol->getNumAtoms() == 12);
+    {
+      auto &sgroups = getSubstanceGroups(*mol);
+      TEST_ASSERT(sgroups.size() == 3);
+      TEST_ASSERT(sgroups[0].getAtoms().size() == 3);
+      std::vector<unsigned int> tgt{2, 1, 6};
+    }
+    // remove an atom that is in an S-group at the top of the hierarchy
+    mol->removeAtom(1);
+    TEST_ASSERT(mol->getNumAtoms() == 11);
+    {
+      auto &sgroups = getSubstanceGroups(*mol);
+      TEST_ASSERT(sgroups.size() == 0);
+    }
+  }
+
   {  // example with things in odd order and large id values
      // NOTE that biovia draw doesn't parse this file properly
     std::string fName =
