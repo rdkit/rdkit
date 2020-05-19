@@ -51,6 +51,9 @@ void ROMol::destroy() {
     delete dp_ringInfo;
     dp_ringInfo = nullptr;
   }
+
+  getSubstanceGroups(*this).clear();
+  d_stereo_groups.clear();
 };
 
 ROMol::ROMol(const std::string &pickle) : RDProps() {

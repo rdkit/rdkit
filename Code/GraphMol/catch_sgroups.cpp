@@ -144,7 +144,7 @@ RWMol buildSampleMolecule() {
 
   // Set a parent with higher index
   const auto &sgroups = getSubstanceGroups(mol);
-  sgroups.at(0).setProp<unsigned int>("PARENT", 2);
+  sgroups.at(0).setProp<unsigned int>("PARENT", 3);
 
   return mol;
 }
@@ -227,7 +227,7 @@ TEST_CASE("Build and test sample molecule", "[Sgroups]") {
 
     CHECK(sg.getProp<std::string>("BRKTYP") == "PAREN");
 
-    CHECK(sg.getProp<unsigned int>("PARENT") == 2u);
+    CHECK(sg.getProp<unsigned int>("PARENT") == 3u);
   }
 
   SECTION("second sgroup") {
