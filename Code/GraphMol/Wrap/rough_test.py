@@ -5106,6 +5106,25 @@ M  END
 
     self.assertTrue(Chem.MolFromSmiles("c1ccccc1").HasSubstructMatch(pat))
 
+  def testBondSetQuery(self):
+    pat = Chem.MolFromSmarts('[#6]=[#6]')
+    mol = Chem.MolFromSmiles("c1ccccc1")
+    self.assertFalse(mol.HasSubstructMatch(pat))
+    pat2 = Chem.MolFromSmarts('C:C')
+    for bond in pat.GetBonds():
+        bond.SetQuery(pat2.GetBondWithIdx(0))
+    self.assertTrue(mol.HasSubstructMatch(pat))
+
+  def testBondExpandQuery(self):
+    pat = Chem.MolFromSmarts('C-C')
+    mol = Chem.MolFromSmiles("C=C-C")
+    self.assertEqual(len(mol.GetSubstructMatches(pat)), 1)
+    pat2 = Chem.MolFromSmarts('C=C')
+    for bond in pat.GetBonds():
+        bond.ExpandQuery(pat2.GetBondWithIdx(0),
+                         Chem.CompositeQueryType.COMPOSITE_OR)
+    self.assertEqual(len(mol.GetSubstructMatches(pat)), 2)
+
   def testGitHub1985(self):
     # simple check, this used to throw an exception
     try:
