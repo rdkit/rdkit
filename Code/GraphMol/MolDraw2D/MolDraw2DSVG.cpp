@@ -73,14 +73,16 @@ void MolDraw2DSVG::initDrawing() {
 // ****************************************************************************
 void MolDraw2DSVG::initTextDrawer() {
 
+  double max_fnt_sz = drawOptions().maxFontSize;
+
 #ifdef RDK_BUILD_FREETYPE_SUPPORT
   try {
-    text_drawer_.reset(new DrawTextFTSVG(d_os, d_activeClass));
+    text_drawer_.reset(new DrawTextFTSVG(max_fnt_sz, d_os, d_activeClass));
   } catch(std::runtime_error &e) {
-    text_drawer_.reset(new DrawTextSVG(d_os, d_activeClass));
+    text_drawer_.reset(new DrawTextSVG(max_fnt_sz, d_os, d_activeClass));
   }
 #else
-  text_drawer_.reset(new DrawTextSVG(d_os, d_activeClass));
+  text_drawer_.reset(new DrawTextSVG(max_fnt_sz, d_os, d_activeClass));
 #endif
 
 }

@@ -32,12 +32,8 @@ class DrawTextFT : public DrawText {
 
  public:
 
-  static constexpr double FONT_SIZE = 0.3; // based on a bond length of 1
-
-  DrawTextFT();
+  DrawTextFT(double max_fnt_sz);
   ~DrawTextFT();
-
-  double fontSize() const override;
 
   void drawChar(char c, const Point2D &cds) override;
 
@@ -50,7 +46,7 @@ class DrawTextFT : public DrawText {
                                   const FT_Vector *to) = 0;
 
  protected:
-  double fontCoordToPixelCoord(FT_Pos fc) const;
+  double fontCoordToDrawCoord(FT_Pos fc) const;
   void fontPosToDrawPos(FT_Pos fx, FT_Pos fy, double &dx, double &dy) const;
   // adds x_trans_ and y_trans_ to coords returns x advance distance
   virtual double extractOutline();
@@ -61,14 +57,7 @@ class DrawTextFT : public DrawText {
   FT_Face face_;
   FT_Pos x_trans_, y_trans_;
   mutable FT_Pos string_y_max_; // maximum y value of string drawn, for inverting y
-
-  // resolution of the target display in dpi.  96 is normal for a computer
-  // display, apparently, although I have roughly 160 and 224 on mine.
-  constexpr static int RESOLUTION = 96;
-  // define a 16 point font.  It will be scaled up and down as required.
-  // A point is 1/72 of an inch, so it will only appear at exactly that
-  // size on a display of RESOLUTION dpi.
-  constexpr static int POINT_SIZE = 16;
+  double em_scale_;
 
   // look for a hard-coded font file under RDBase.  We may want to
   // improve on this to give the user scope for having a different

@@ -16,7 +16,9 @@ using namespace std;
 namespace RDKit {
 
 // ****************************************************************************
-DrawText::DrawText() : font_scale_(1.0) {
+DrawText::DrawText(double max_fnt_sz)
+    : colour_(DrawColour(0.0, 0.0, 0.0)), font_scale_(1.0),
+      max_font_size_(max_fnt_sz) {
 
   cout << "DrawText : " << FONT_SIZE << endl;
 
@@ -38,12 +40,31 @@ double DrawText::fontSize() const {
 }
 
 // ****************************************************************************
+double DrawText::maxFontSize() const {
+  return max_font_size_;
+}
+
+// ****************************************************************************
+void DrawText::setMaxFontSize(double new_max) {
+  max_font_size_ = new_max;
+}
+
+// ****************************************************************************
 double DrawText::fontScale() const {
   return font_scale_;
 }
 
 // ****************************************************************************
-void DrawText::setFontScale(double new_scale) { font_scale_ = new_scale; }
+void DrawText::setFontScale(double new_scale) {
+
+  font_scale_ = new_scale;
+  double nfs = fontSize();
+  if(nfs > max_font_size_) {
+    font_scale_ = max_font_size_ / FONT_SIZE;
+  }
+  cout << "New font size : " << fontSize() << endl;
+
+}
 
 // ****************************************************************************
 void DrawText::drawString(const string &str, const Point2D &cds,

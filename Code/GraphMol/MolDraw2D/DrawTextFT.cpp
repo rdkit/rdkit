@@ -20,8 +20,8 @@ using namespace std;
 namespace RDKit {
 
 // ****************************************************************************
-DrawTextFT::DrawTextFT() :
-    x_trans_(0), y_trans_(0), string_y_max_(0) {
+DrawTextFT::DrawTextFT(double max_fnt_sz) :
+    DrawText(max_fnt_sz), x_trans_(0), y_trans_(0), string_y_max_(0) {
 
   cout << "DrawTextFT : " << FONT_SIZE << endl;
 
@@ -36,6 +36,9 @@ DrawTextFT::DrawTextFT() :
   if(err_code != FT_Err_Ok) {
     throw runtime_error(string("Font file ") + fontfile + string(" not found."));
   }
+  cout << "max pixel thing : " << fontCoordToDrawCoord(face_->units_per_EM) << endl;
+  cout << "units per EM = " << face_->units_per_EM << endl;
+  em_scale_ = 1.0 / face_->units_per_EM;
 
 }
 
@@ -44,13 +47,6 @@ DrawTextFT::~DrawTextFT() {
 
   FT_Done_Face(face_);
   FT_Done_FreeType(library_);
-
-}
-
-// ****************************************************************************
-double DrawTextFT::fontSize() const {
-
-  return fontScale() * FONT_SIZE / POINT_SIZE;
 
 }
 
@@ -67,10 +63,9 @@ void DrawTextFT::drawChar(char c, const Point2D &cds) {
 }
 
 // ****************************************************************************
-double DrawTextFT::fontCoordToPixelCoord(FT_Pos fc) const {
+double DrawTextFT::fontCoordToDrawCoord(FT_Pos fc) const {
 
-  static const double pixel_size = POINT_SIZE * RESOLUTION / 72.0;
-  double pc = fontSize() * fc * pixel_size / (face_->units_per_EM);
+  double pc = fontSize() * fc * em_scale_;
 
   return pc;
 
@@ -80,10 +75,10 @@ double DrawTextFT::fontCoordToPixelCoord(FT_Pos fc) const {
 void DrawTextFT::fontPosToDrawPos(FT_Pos fx, FT_Pos fy,
                                   double &dx, double &dy) const {
 
-  dx = x_trans_ + fontCoordToPixelCoord(fx);
+  dx = x_trans_ + fontCoordToDrawCoord(fx);
   // freetype has the origin at bottom left, we want it in the top left.
   FT_Pos rev_y = string_y_max_ - fy;
-  dy = y_trans_ + fontCoordToPixelCoord(rev_y);
+  dy = y_trans_ + fontCoordToDrawCoord(rev_y);
 
 }
 
@@ -107,7 +102,7 @@ double DrawTextFT::extractOutline() {
   if(error != FT_Err_Ok) {
     /* not sure what to do in this case */ ;
   }
-  return fontCoordToPixelCoord(slot->advance.x);
+  return fontCoordToDrawCoord(slot->advance.x);
 
 }
 
@@ -157,15 +152,15 @@ void DrawTextFT::getStringRects(const string &text,
         oscale = SUPER_SCALE;
       }
     }
-    double p_x_min = oscale * fontCoordToPixelCoord(this_x_min);
-    double p_y_min = oscale * fontCoordToPixelCoord(this_y_min);
-    double width = oscale * fontCoordToPixelCoord(this_x_max) - p_x_min;
-    double height = oscale * fontCoordToPixelCoord(this_y_max) - p_y_min;
+    double p_x_min = oscale * fontCoordToDrawCoord(this_x_min);
+    double p_y_min = oscale * fontCoordToDrawCoord(this_y_min);
+    double width = oscale * fontCoordToDrawCoord(this_x_max) - p_x_min;
+    double height = oscale * fontCoordToDrawCoord(this_y_max) - p_y_min;
     Point2D centre(running_x - p_x_min + 0.5 * width, 0.5 * height);
     rects.push_back(shared_ptr<StringRect>(new StringRect(centre, width, height)));
     draw_modes.push_back(draw_mode);
     // TODO: include kerning
-    running_x += oscale * (fontCoordToPixelCoord(advance) - p_x_min);
+    running_x += oscale * (fontCoordToDrawCoord(advance) - p_x_min);
   }
 
   adjustStringRectsForSuperSubScript(draw_modes, to_draw, rects);

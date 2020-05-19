@@ -25,14 +25,15 @@ void MolDraw2DCairo::initDrawing() {
 }
 void MolDraw2DCairo::initTextDrawer() {
 
+  double max_fnt_sz = drawOptions().maxFontSize;
 #ifdef RDK_BUILD_FREETYPE_SUPPORT
   try {
-    text_drawer_.reset(new DrawTextFTCairo(dp_cr));
+    text_drawer_.reset(new DrawTextFTCairo(max_fnt_sz, dp_cr));
   } catch(std::runtime_error &e) {
-    text_drawer_.reset(new DrawTextCairo(dp_cr));
+    text_drawer_.reset(new DrawTextCairo(max_fnt_sz, dp_cr));
   }
 #else
-  text_drawer_.reset(new DrawTextCairo(dp_cr));
+  text_drawer_.reset(new DrawTextCairo(max_fnt_sz, dp_cr));
 #endif
 
 }

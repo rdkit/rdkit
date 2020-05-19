@@ -24,7 +24,8 @@ namespace RDKit {
 class DrawTextSVG : public DrawText {
 
  public:
-   DrawTextSVG(std::ostream &oss, std::string &d_act_class);
+   DrawTextSVG(double max_fnt_sz, std::ostream &oss,
+              std::string &d_act_class);
 
 #if 0
    void getStringSize(const std::string &label, double &label_width,

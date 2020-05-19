@@ -24,58 +24,10 @@ namespace RDKit {
 string DrawColourToSVG(const RDKit::DrawColour &col);
 
 // ****************************************************************************
-DrawTextSVG::DrawTextSVG(ostream &oss, string &d_act_class) :
-    DrawText(), oss_(oss), d_active_class_(d_act_class) {
+DrawTextSVG::DrawTextSVG(double max_fnt_sz, ostream &oss, string &d_act_class) :
+    DrawText(max_fnt_sz), oss_(oss), d_active_class_(d_act_class) {
   cout << "DrawTextSVG" << endl;
 }
-
-#if 0
-// ****************************************************************************
-void DrawTextSVG::getStringSize(const string &label, double &label_width,
-                                double &label_height) const {
-
-  label_width = 0.0;
-  label_height = 0.0;
-
-  TextDrawType draw_mode = TextDrawType::TextDrawNormal;
-
-  bool had_a_super = false;
-  bool had_a_sub = false;
-
-  double act_font_size = fontSize();
-  for (size_t i = 0, is = label.length(); i < is; ++i) {
-    // setStringDrawMode moves i along to the end of any <sub> or <sup>
-    // markup
-    if ('<' == label[i] && setStringDrawMode(label, draw_mode, i)) {
-      continue;
-    }
-
-    label_height = act_font_size;
-    double char_width =
-        act_font_size *
-        static_cast<double>(MolDraw2D_detail::char_widths[(int)label[i]]) /
-        MolDraw2D_detail::char_widths[(int)'M'];
-    if (TextDrawType::TextDrawSubscript == draw_mode) {
-      char_width *= 0.5;
-      had_a_sub = true;
-    } else if (TextDrawType::TextDrawSuperscript == draw_mode) {
-      char_width *= 0.5;
-      had_a_super = true;
-    }
-    label_width += char_width;
-  }
-
-  // subscript keeps its bottom in line with the bottom of the bit chars,
-  // superscript goes above the original char top by a bit (empirical)
-  if (had_a_super) {
-    label_height *= 1.1;
-  }
-  if (had_a_sub) {
-    label_height *= 1.1;
-  }
-
-}
-#endif
 
 namespace {
 void escape_xhtml(std::string &data) {

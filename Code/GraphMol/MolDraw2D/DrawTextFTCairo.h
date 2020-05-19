@@ -22,7 +22,7 @@ namespace RDKit {
 class DrawTextFTCairo : public DrawTextFT {
 
  public:
-  DrawTextFTCairo(cairo_t *dp_cr);
+  DrawTextFTCairo(double max_fnt_sz, cairo_t *dp_cr);
 
   int MoveToFunctionImpl(const FT_Vector *to) override;
   int LineToFunctionImpl(const FT_Vector *to) override;

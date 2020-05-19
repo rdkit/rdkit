@@ -42,13 +42,15 @@ class DrawText {
 
   static constexpr double FONT_SIZE = 0.4; // based on a bond length of 1
 
-  DrawText();
+  DrawText(double max_fnt_sz);
   virtual ~DrawText() {}
 
   DrawColour const &colour() const;
   void setColour(const DrawColour &col);
 
   virtual double fontSize() const;
+  double maxFontSize() const;
+  void setMaxFontSize(double new_max);
   double fontScale() const;
   void setFontScale(double new_scale);
 
@@ -88,6 +90,7 @@ class DrawText {
 
   DrawColour colour_;
   double font_scale_;
+  double max_font_size_;
 
   // return a vector of StringRects, one for each char in text, with
   // super- and subscripts taken into account.  Sizes in pixel coords,

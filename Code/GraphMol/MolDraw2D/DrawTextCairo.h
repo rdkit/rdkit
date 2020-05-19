@@ -23,7 +23,7 @@ namespace RDKit {
 class DrawTextCairo : public DrawText {
 
  public:
-  DrawTextCairo(cairo_t *dp_cr);
+  DrawTextCairo(double max_fnt_sz, cairo_t *dp_cr);
 
 #if 0
   void getStringSize(const std::string &label, double &label_width,

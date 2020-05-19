@@ -909,7 +909,13 @@ void MolDraw2D::calculateScale(int width, int height,
   // And now we need to take account of strings with N/S orientation
   // as well.
   while (scale_ > 1e-4) {
+    cout << "Current font size : " << text_drawer_->fontSize() << endl;
+    cout << "Current font scale : " << text_drawer_->fontScale() << endl;
     text_drawer_->setFontScale(scale_);
+    cout << "Drawing font size : " << text_drawer_->fontSize() << endl;
+    cout << "Drawing font scale : " << text_drawer_->fontScale() << endl;
+    cout << "Maximum font size : " << options_.maxFontSize << endl;
+
     adjustScaleForAtomLabels(highlight_atoms, highlight_radii);
     if ((!atom_notes_.empty() || !bond_notes_.empty()) &&
         supportsAnnotations()) {
@@ -2932,8 +2938,6 @@ void MolDraw2D::adjustScaleForAtomLabels(
     const std::vector<int> *highlight_atoms,
     const map<int, double> *highlight_radii) {
 
-  cout << "start of adjust... mins = " << x_min_ << " and " << y_min_
-       << " ranges : " << x_range_ << " and " << y_range_ << endl;
   double x_max(x_min_ + x_range_), y_max(y_min_ + y_range_);
   for (size_t i = 0; i < atom_syms_[activeMolIdx_].size(); ++i) {
     if (!atom_syms_[activeMolIdx_][i].first.empty()) {
@@ -2950,10 +2954,6 @@ void MolDraw2D::adjustScaleForAtomLabels(
       x_min_ = std::min(x_min_, this_x_min);
       y_max = std::max(y_max, this_y_max);
       y_min_ = std::min(y_min_, this_y_min);
-      cout << "adjust... x range = " << x_min_ << " to " << x_max
-           << "  y range = " << y_min_ << " to " << y_max << endl;
-      cout << "adjusted dims : " << sym_rect.width_ / (2.0 * scale())
-           << " by " << sym_rect.height_ / (2.0 * scale()) << endl;
     }
     if (highlight_atoms &&
         highlight_atoms->end() !=
