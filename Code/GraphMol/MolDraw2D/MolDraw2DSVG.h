@@ -50,10 +50,6 @@ class RDKIT_MOLDRAW2D_EXPORT MolDraw2DSVG : public MolDraw2D {
   void finishDrawing();
 
   void drawLine(const Point2D &cds1, const Point2D &cds2) override;
-  void alignString(const std::string &str,
-                   const std::string &align_char, int align,
-                   const Point2D &in_cds, Point2D &out_cds) const override;
-
   void drawPolygon(const std::vector<Point2D> &cds) override;
   void drawEllipse(const Point2D &cds1, const Point2D &cds2) override;
   void clearDrawing() override;

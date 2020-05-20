@@ -36,13 +36,12 @@ void test1() {
   std::cout << " ----------------- Test 1" << std::endl;
   {
 //    std::string smiles = ;
-//    std::string smiles = "CC[NH+](C)C[13CH2]CC[NH-]";
 //    auto m = "[NH-]C([NH3+])C(CBr)CCC[NH3+]"_smiles;
 //    auto m = "C"_smiles;
 //    auto m = "CCN(CC)CC[NH3+]"_smiles;
-//    auto m = "[NH-]C([NH3+])C(CBr)CCC[NH3+]"_smiles;
+    auto m = "[NH-]C([NH3+])C(CBr)CCC[NH3+]"_smiles;
 //    auto m = "CC[13CH2][CH2:7][CH-]C[15NH2+]C"_smiles;
-    auto m = "CCN(CC)CC"_smiles;
+//    auto m = "CCN(CC)CC"_smiles;
     TEST_ASSERT(m);
     RDDepict::compute2DCoords(*m);
     WedgeMolBonds(*m, &(m->getConformer()));
@@ -55,9 +54,9 @@ void test1() {
   }
 //  exit(1);
   {
-//    auto m = "[NH-]C([NH3+])C(CBr)CCC[NH3+]"_smiles;
+    auto m = "[NH-]C([NH3+])C(CBr)CCC[NH3+]"_smiles;
 //    auto m = "O"_smiles;
-    auto m = "CCN(CC)CC"_smiles;
+//    auto m = "CCN(CC)CC"_smiles;
 //    auto m = "CCN(CC)CC[NH3+]"_smiles;
 //    auto m = "CC[13CH2][CH2:7][CH-]C[15NH2+]C"_smiles;
     TEST_ASSERT(m);

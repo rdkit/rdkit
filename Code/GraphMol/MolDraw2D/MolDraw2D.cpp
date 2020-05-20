@@ -1097,27 +1097,6 @@ void MolDraw2D::drawString(const std::string &str, const Point2D &cds,
 }
 
 // ****************************************************************************
-void MolDraw2D::alignString(const string &str, const string &align_char,
-                            int talign, const Point2D &in_cds,
-                            Point2D &out_cds) const {
-  if (talign != 0 && talign != 1) {
-    out_cds = in_cds;
-    return;
-  }
-
-  double str_width, str_height;
-  getStringSize(str, str_width, str_height);
-  double ac_width, ac_height;
-  getStringSize(align_char, ac_width, ac_height);
-  // talign == 0 is left talign - first char to go at in_cds.
-  double dir = talign == 0 ? 1.0 : -1.0;
-  out_cds.x = in_cds.x + dir * 0.5 * (str_width - ac_width);
-  out_cds.x = in_cds.x;
-  // assuming we centre the string on the draw coords.
-  out_cds.y = in_cds.y;
-}
-
-// ****************************************************************************
 void MolDraw2D::drawChar(char c, const Point2D &cds) {
   text_drawer_->drawChar(c, cds);
 }
@@ -1362,8 +1341,7 @@ void MolDraw2D::drawLegend(const string &legend) {
     Point2D loc =
         getAtomCoords(std::make_pair(panel_width_ / 2., 0.94 * panel_height_));
     double o_font_size = fontSize();
-    setFontSize(options_.legendFontSize /
-                scale_);  // set the font size to about 12 pixels high
+    setFontSize(options_.legendFontSize / scale_);
 
     DrawColour odc = colour();
     text_drawer_->setColour(options_.legendColour);

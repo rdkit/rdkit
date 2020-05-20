@@ -472,15 +472,6 @@ class RDKIT_MOLDRAW2D_EXPORT MolDraw2D {
   // the first one.  SVG for one needs the alignment flag.
   virtual void drawString(const std::string &str, const Point2D &cds,
                           TextAlignType align);
-  // calculate where to put the centre of the str so that the first/last
-  // character, which might have <sub> or <sup> labels, is at in_cds.
-  // Normally, the whole string would be centred on in_cds.
-  // If align is 0, it's left aligned, 1 it's right aligned, anything
-  // else and it's not done at all.
-  virtual void alignString(const std::string &str,
-                           const std::string &align_char, int align,
-                           const Point2D &in_cds, Point2D &out_cds) const;
-
   //! draw a polygon.  Note that if fillPolys() returns false, it
   //! doesn't close the path.  If you want it to in that case, you
   //! do it explicitly yourself.

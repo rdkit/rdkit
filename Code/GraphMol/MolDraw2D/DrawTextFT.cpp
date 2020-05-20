@@ -145,8 +145,10 @@ void DrawTextFT::getStringRects(const string &text,
     double oscale = selectScaleFactor(text[i], draw_mode);
     double p_x_min = oscale * fontCoordToDrawCoord(this_x_min);
     double p_y_min = oscale * fontCoordToDrawCoord(this_y_min);
-    double width = oscale * fontCoordToDrawCoord(this_x_max) - p_x_min;
-    double height = oscale * fontCoordToDrawCoord(this_y_max) - p_y_min;
+    double width = rect_scale_ * (oscale * fontCoordToDrawCoord(this_x_max)
+                                  - p_x_min);
+    double height = rect_scale_ * (oscale * fontCoordToDrawCoord(this_y_max)
+                                   - p_y_min);
     Point2D centre(running_x - p_x_min + 0.5 * width, 0.5 * height);
     rects.push_back(shared_ptr<StringRect>(new StringRect(centre, width, height)));
     draw_modes.push_back(draw_mode);
