@@ -151,6 +151,21 @@ class TestCase(unittest.TestCase):
     self.assertLess(fpd1, fpd2)
     self.assertLess(fpd2, fpd3)
 
+  def testVectorDescriptors(self):
+    m = Chem.MolFromSmiles('CCCc1ccccc1')
+    results = Descriptors.BCUT2D(m)
+    names = ["BCUT2D_%s"%str(i+1) for i in range(8)]
+    for i,n in  enumerate(names):
+      f = getattr(Descriptors, n)
+      self.assertEqual(results[i], f(m))
+
+    results = Descriptors.CalcAUTOCORR2D(m)
+    names = ["AUTOCORR2D_%s"%str(i+1) for i in range(192)]
+    for i,n in enumerate(names):
+      f = getattr(Descriptors, n)
+      self.assertEqual(results[i], f(m))
+      
+
 
 if __name__ == '__main__':
   unittest.main()

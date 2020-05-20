@@ -214,6 +214,14 @@ _du.setDescriptorVersion('1.0.0')(FpDensityMorgan1)
 _du.setDescriptorVersion('1.0.0')(FpDensityMorgan2)
 _du.setDescriptorVersion('1.0.0')(FpDensityMorgan3)
 
+
+names = ["BCUT2D_%s"%str(i+1) for i in range(8)]
+_du.VectorDescriptorWrapper(_rdMolDescriptors.BCUT2D, names=names, version="1.0.0")
+
+names = ["AUTOCORR2D_%s"%str(i+1) for i in range(192)]
+_du.VectorDescriptorWrapper(_rdMolDescriptors.CalcAUTOCORR2D, names=names, version="1.0.0")
+
+
 _setupDescriptors(locals())
 
 
