@@ -126,32 +126,23 @@ string DrawTextFT::getFontFile() const {
 // ****************************************************************************
 void DrawTextFT::getStringRects(const string &text,
                                 vector<shared_ptr<StringRect>> &rects,
-                                vector<TextDrawType> &draw_modes) const {
+                                vector<TextDrawType> &draw_modes,
+                                vector<char> &draw_chars) const {
 
   TextDrawType draw_mode = TextDrawType::TextDrawNormal;
   double running_x = 0.0;
-  vector<char> to_draw;
   for(size_t i = 0; i < text.length(); ++i) {
     // setStringDrawMode moves i along to the end of any <sub> or <sup>
     // markup
     if ('<' == text[i] && setStringDrawMode(text, draw_mode, i)) {
       continue;
     }
-    to_draw.push_back(text[i]);
+    draw_chars.push_back(text[i]);
 //    cout << "Rects : " << text[i] << " : " << running_x << endl;
     FT_Pos this_x_min, this_y_min, this_x_max, this_y_max, advance;
     calcGlyphBBox(text[i], this_x_min, this_y_min, this_x_max, this_y_max,
                   advance);
-    double oscale = 1.0;
-    if(draw_mode == TextDrawType::TextDrawSubscript) {
-      oscale = SUBS_SCALE;
-    } else if(draw_mode == TextDrawType::TextDrawSuperscript) {
-      if(text[i] == '-' || text[i] == '+') {
-        oscale = SUBS_SCALE;
-      } else {
-        oscale = SUPER_SCALE;
-      }
-    }
+    double oscale = selectScaleFactor(text[i], draw_mode);
     double p_x_min = oscale * fontCoordToDrawCoord(this_x_min);
     double p_y_min = oscale * fontCoordToDrawCoord(this_y_min);
     double width = oscale * fontCoordToDrawCoord(this_x_max) - p_x_min;
@@ -163,12 +154,13 @@ void DrawTextFT::getStringRects(const string &text,
     running_x += oscale * (fontCoordToDrawCoord(advance) - p_x_min);
   }
 
-  adjustStringRectsForSuperSubScript(draw_modes, to_draw, rects);
+  adjustStringRectsForSuperSubScript(draw_modes, draw_chars, rects);
 
-//  for(size_t i = 0; i < rects.size(); ++i) {
-//    cout << i << " : " << rects[i]->centre_ << " and " << rects[i]->width_
-//         << " by " << rects[i]->height_ << " type " << draw_modes[i] << endl;
-//  }
+  cout << "DrawTextFT::getStringRects : " << endl;
+  for(size_t i = 0; i < rects.size(); ++i) {
+    cout << i << " : " << rects[i]->centre_ << " and " << rects[i]->width_
+         << " by " << rects[i]->height_ << " type " << draw_modes[i] << endl;
+  }
 }
 
 // ****************************************************************************

@@ -472,10 +472,6 @@ class RDKIT_MOLDRAW2D_EXPORT MolDraw2D {
   // the first one.  SVG for one needs the alignment flag.
   virtual void drawString(const std::string &str, const Point2D &cds,
                           TextAlignType align);
-  // draw the vector of strings from cds putting the nth+1 at the end of
-  // the nth.  Aligns them according to OrientType.
-  virtual void drawStrings(const std::vector<std::string> &labels,
-                           const Point2D &cds, OrientType orient);
   // calculate where to put the centre of the str so that the first/last
   // character, which might have <sub> or <sup> labels, is at in_cds.
   // Normally, the whole string would be centred on in_cds.

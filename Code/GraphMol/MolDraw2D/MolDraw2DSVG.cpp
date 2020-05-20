@@ -298,24 +298,24 @@ void MolDraw2DSVG::clearDrawing() {
 
 // ****************************************************************************
 void MolDraw2DSVG::alignString(const std::string &str, const std::string &align_char,
-                               int align, const Point2D &in_cds,
+                               int talign, const Point2D &in_cds,
                                Point2D &out_cds) const {
 
-  MolDraw2D::alignString(str, align_char, align, in_cds, out_cds);
+  MolDraw2D::alignString(str, align_char, talign, in_cds, out_cds);
   return;
 #if 0
   std::cout << "moldraw2dsvg::alignstring" << std::endl;
   RDUNUSED_PARAM(str);
 
-  if(align != 0 && align != 1) {
+  if(talign != 0 && talign != 1) {
     out_cds = in_cds;
     return;
   }
 
   double ac_width, ac_height;
   getStringSize(align_char, ac_width, ac_height);
-  // align == 0 is left align - first char to go at in_cds.
-  double dir = align == 0 ? 1.0 : -1.0;
+  // talign == 0 is left talign - first char to go at in_cds.
+  double dir = talign == 0 ? 1.0 : -1.0;
   // this works with SVG, so long as we use the correct text anchor -
   // W => end, E => start, N, S => middle
   out_cds.x = in_cds.x - dir * 0.5 * ac_width;

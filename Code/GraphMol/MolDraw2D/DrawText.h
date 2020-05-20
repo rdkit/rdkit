@@ -70,12 +70,11 @@ class DrawText {
   //! drawString centres the string on cds.
   virtual void drawString(const std::string &str, const Point2D &cds,
                           TextAlignType align);
-  // draw the vector of strings from cds putting the nth+1 at the end of
-  // the nth.  Aligns them according to OrientType.
-  void drawStrings(const std::vector<std::string> &labels,
-                   const Point2D &cds, OrientType orient);
+  // Aligns them according to OrientType.
+  void drawString(const std::string &label, const Point2D &cds,
+                  OrientType orient);
 
-    // draw the char, with the bottom left hand corner at cds
+  // draw the char, with the bottom left hand corner at cds
   virtual void drawChar(char c, const Point2D &cds) = 0;
 
  protected:
@@ -83,14 +82,16 @@ class DrawText {
   constexpr static double SUBS_SCALE = 0.75;
   constexpr static double SUPER_SCALE = 0.5;
 
-  virtual void alignString(const Point2D &in_cds, TextAlignType align,
-                           const std::vector<std::shared_ptr<StringRect> > &rects,
+  virtual void alignString(TextAlignType align,
                            const std::vector<TextDrawType> &draw_modes,
-                           Point2D &out_cds) const;
+                           std::vector<std::shared_ptr<StringRect> > &rects) const;
   // adjust the string rectangles up and down for super- and subscripts
   void adjustStringRectsForSuperSubScript(const std::vector<TextDrawType> &draw_modes,
                                           const std::vector<char> &to_draw,
                                           std::vector<std::shared_ptr<StringRect>> &rects) const;
+  // return a scale factor appropriate for the character and draw type
+  // (normal or super- or subscript)
+  double selectScaleFactor(char c, TextDrawType draw_type) const;
 
  private:
 
@@ -103,7 +104,16 @@ class DrawText {
   // i.e. scaled by fontScale().
   virtual void getStringRects(const std::string &text,
                               std::vector<std::shared_ptr<StringRect>> &rects,
-                              std::vector<TextDrawType> &draw_modes) const = 0;
+                              std::vector<TextDrawType> &draw_modes,
+                              std::vector<char> &draw_chars) const = 0;
+  void getStringRects(const std::string &text, OrientType orient,
+                      std::vector<std::shared_ptr<StringRect>> &rects,
+                      std::vector<TextDrawType> &draw_modes,
+                      std::vector<char> &draw_chars);
+  void drawRects(const Point2D &a_cds,
+                 const std::vector<std::shared_ptr<StringRect>> &rects,
+                 const std::vector<TextDrawType> &draw_modes,
+                 const std::vector<char> &draw_chars);
 };
 
 //! establishes whether to put string draw mode into super- or sub-script

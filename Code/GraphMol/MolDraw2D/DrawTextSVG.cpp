@@ -65,13 +65,13 @@ void DrawTextSVG::drawChar(char c, const Point2D &cds) {
 // ****************************************************************************
 void DrawTextSVG::getStringRects(const string &text,
                                  vector<shared_ptr<StringRect> > &rects,
-                                 vector<TextDrawType> &draw_modes) const {
+                                 vector<TextDrawType> &draw_modes,
+                                 vector<char> &draw_chars) const {
 
   cout << "DrawTextSVG::getStringRects" << endl;
 
   TextDrawType draw_mode = TextDrawType::TextDrawNormal;
   double running_x = 0.0;
-  std::vector<char> to_draw;
   double act_font_size = fontSize();
   double char_height = 0.8 * act_font_size;
 
@@ -81,7 +81,7 @@ void DrawTextSVG::getStringRects(const string &text,
     if ('<' == text[i] && setStringDrawMode(text, draw_mode, i)) {
       continue;
     }
-    to_draw.push_back(text[i]);
+    draw_chars.push_back(text[i]);
 
     double char_width =
         act_font_size *
@@ -92,7 +92,7 @@ void DrawTextSVG::getStringRects(const string &text,
     } else if (TextDrawType::TextDrawSuperscript == draw_mode) {
       char_width *= 0.5;
     }
-    cout << to_draw.back() << " : " << char_width << " : " << char_height
+    cout << draw_chars.back() << " : " << char_width << " : " << char_height
          << " and " << running_x << endl;
     Point2D centre(running_x + char_width / 2, char_height / 2);
     rects.push_back(shared_ptr<StringRect>(new StringRect(centre, char_width, char_height)));
@@ -101,7 +101,7 @@ void DrawTextSVG::getStringRects(const string &text,
     running_x += char_width;
   }
 
-  adjustStringRectsForSuperSubScript(draw_modes, to_draw, rects);
+  adjustStringRectsForSuperSubScript(draw_modes, draw_chars, rects);
 
 }
 

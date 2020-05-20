@@ -39,7 +39,8 @@ class DrawTextCairo : public DrawText {
   // i.e. scaled by fontScale().
   void getStringRects(const std::string &text,
                       std::vector<std::shared_ptr<StringRect>> &rects,
-                      std::vector<TextDrawType> &draw_modes) const override;
+                      std::vector<TextDrawType> &draw_modes,
+                      std::vector<char> &draw_chars) const override;
 
 };
 

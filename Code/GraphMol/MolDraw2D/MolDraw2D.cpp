@@ -1087,29 +1087,20 @@ void MolDraw2D::drawString(const string &str, const Point2D &cds) {
 
 // ****************************************************************************
 void MolDraw2D::drawString(const std::string &str, const Point2D &cds,
-                           TextAlignType align) {
+                           TextAlignType talign) {
 
   cout << "MolDraw2D::drawString() : " << str << " : "
-       << cds.x << ", " << cds.y << " align = " << align << endl;
+       << cds.x << ", " << cds.y << " talign = " << talign << endl;
   Point2D draw_cds = getDrawCoords(cds);
-  text_drawer_->drawString(str, draw_cds, align);
-
-}
-
-// ****************************************************************************
-void MolDraw2D::drawStrings(const vector<std::string> &labels,
-                            const Point2D &cds, OrientType orient) {
-
-  Point2D draw_cds = getDrawCoords(cds);
-  text_drawer_->drawStrings(labels, draw_cds, orient);
+  text_drawer_->drawString(str, draw_cds, talign);
 
 }
 
 // ****************************************************************************
 void MolDraw2D::alignString(const string &str, const string &align_char,
-                            int align, const Point2D &in_cds,
+                            int talign, const Point2D &in_cds,
                             Point2D &out_cds) const {
-  if (align != 0 && align != 1) {
+  if (talign != 0 && talign != 1) {
     out_cds = in_cds;
     return;
   }
@@ -1118,8 +1109,8 @@ void MolDraw2D::alignString(const string &str, const string &align_char,
   getStringSize(str, str_width, str_height);
   double ac_width, ac_height;
   getStringSize(align_char, ac_width, ac_height);
-  // align == 0 is left align - first char to go at in_cds.
-  double dir = align == 0 ? 1.0 : -1.0;
+  // talign == 0 is left talign - first char to go at in_cds.
+  double dir = talign == 0 ? 1.0 : -1.0;
   out_cds.x = in_cds.x + dir * 0.5 * (str_width - ac_width);
   out_cds.x = in_cds.x;
   // assuming we centre the string on the draw coords.
@@ -2102,10 +2093,10 @@ void MolDraw2D::drawAtomLabel(int atom_num, const DrawColour &draw_colour) {
        << " at " << at_cds_[activeMolIdx_][atom_num] << endl;
 
   text_drawer_->setColour(draw_colour);
-  const string &label = atom_syms_[activeMolIdx_][atom_num].first;
-  OrientType orient = atom_syms_[activeMolIdx_][atom_num].second;
-  vector<string> label_pieces = atomLabelToPieces(label, orient);
-  drawStrings(label_pieces, at_cds_[activeMolIdx_][atom_num], orient);
+  Point2D draw_cds = getDrawCoords(atom_num);
+  text_drawer_->drawString(atom_syms_[activeMolIdx_][atom_num].first,
+                           draw_cds,
+                           atom_syms_[activeMolIdx_][atom_num].second);
 
 }
 

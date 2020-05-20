@@ -45,12 +45,12 @@ void DrawTextCairo::drawChar(char c, const Point2D &cds) {
 // ****************************************************************************
 void DrawTextCairo::getStringRects(const string &text,
                                    vector<shared_ptr<StringRect>> &rects,
-                                   vector<TextDrawType> &draw_modes) const {
+                                   vector<TextDrawType> &draw_modes,
+                                   vector<char> &draw_chars) const {
 
   cout << "DrawTextCairo::getStringRects" << endl;
   TextDrawType draw_mode = TextDrawType::TextDrawNormal;
   double running_x = 0.0;
-  std::vector<char> to_draw;
   char char_str[2];
   char_str[1] = 0;
 
@@ -61,7 +61,7 @@ void DrawTextCairo::getStringRects(const string &text,
     if ('<' == text[i] && setStringDrawMode(text, draw_mode, i)) {
       continue;
     }
-    to_draw.push_back(text[i]);
+    draw_chars.push_back(text[i]);
     char_str[0] = text[i];
     cairo_text_extents_t extents;
     cairo_text_extents(dp_cr_, char_str, &extents);
@@ -80,7 +80,7 @@ void DrawTextCairo::getStringRects(const string &text,
     running_x += w_mult * extents.x_advance;
   }
 
-  adjustStringRectsForSuperSubScript(draw_modes, to_draw, rects);
+  adjustStringRectsForSuperSubScript(draw_modes, draw_chars, rects);
 
 }
 
