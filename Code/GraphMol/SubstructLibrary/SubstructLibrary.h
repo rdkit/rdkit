@@ -109,7 +109,7 @@ class RDKIT_SUBSTRUCTLIBRARY_EXPORT CachedMolHolder : public MolHolderBase {
   CachedMolHolder() : MolHolderBase(), mols() {}
 
   virtual unsigned int addMol(const ROMol &m) {
-    mols.push_back(std::string());
+    mols.emplace_back();
     MolPickler::pickleMol(m, mols.back());
     return size() - 1;
   }

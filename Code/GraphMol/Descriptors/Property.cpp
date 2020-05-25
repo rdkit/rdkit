@@ -98,7 +98,7 @@ int Properties::registerProperty(PropertyFunctor *prop) {
     }
   }
   // XXX Add mutex?
-  Properties::registry.push_back(boost::shared_ptr<PropertyFunctor>(prop));
+  Properties::registry.emplace_back(prop);
   return Properties::registry.size();
 }
 

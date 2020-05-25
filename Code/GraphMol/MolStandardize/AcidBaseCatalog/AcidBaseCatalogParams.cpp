@@ -33,8 +33,7 @@ AcidBaseCatalogParams::AcidBaseCatalogParams(
   const std::vector<std::pair<ROMOL_SPTR, ROMOL_SPTR>> &abpairs =
       other.getPairs();
   for (auto &pairi : abpairs) {
-    d_pairs.push_back(
-        std::pair<ROMOL_SPTR, ROMOL_SPTR>(pairi.first, pairi.second));
+    d_pairs.emplace_back(pairi.first, pairi.second);
   }
 }
 

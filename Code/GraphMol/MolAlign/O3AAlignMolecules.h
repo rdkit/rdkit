@@ -76,8 +76,7 @@ class RDKIT_MOLALIGN_EXPORT O3AConstraintVect {
     o3aConstraint->d_prbIdx = prbIdx;
     o3aConstraint->d_refIdx = refIdx;
     o3aConstraint->d_weight = weight;
-    d_o3aConstraintVect.push_back(
-        boost::shared_ptr<O3AConstraint>(o3aConstraint));
+    d_o3aConstraintVect.emplace_back(o3aConstraint);
     std::sort(d_o3aConstraintVect.begin(), d_o3aConstraintVect.end(),
               d_compareO3AConstraint);
     ++d_count;

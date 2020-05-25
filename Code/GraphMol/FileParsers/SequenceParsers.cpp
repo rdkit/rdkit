@@ -1505,7 +1505,7 @@ static const char *ParseHELMPeptide(RWMol *mol, const char *ptr,
         Atom *n = CreateAAAtom(mol, " N  ", info);
         CreateAABond(mol, vseq[len - 1].r2, n, 1);
         vseq[len - 1].r2 = (Atom *)nullptr;
-        vseq.push_back(HELMMonomer());
+        vseq.emplace_back();
         len++;
         return ptr + 5;
       }

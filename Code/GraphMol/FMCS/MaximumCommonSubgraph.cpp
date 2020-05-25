@@ -147,7 +147,7 @@ void MaximumCommonSubgraph::init() {
         }
         if (NotSet == QueryAtomLabels[ai]) {  // not found -> create new label
           QueryAtomLabels[ai] = ++currentLabelValue;
-          labels.push_back(LabelDefinition(ai, currentLabelValue));
+          labels.emplace_back(ai, currentLabelValue);
         }
       }
     }
@@ -202,7 +202,7 @@ void MaximumCommonSubgraph::init() {
       }
       if (NotSet == QueryAtomLabels[aj]) {  // not found -> create new label
         QueryBondLabels[aj] = ++currentLabelValue;
-        labels.push_back(LabelDefinition(aj, currentLabelValue));
+        labels.emplace_back(aj, currentLabelValue);
       }
     }
   }
@@ -401,7 +401,7 @@ void MaximumCommonSubgraph::makeInitialSeeds() {
     wb.reserve(QueryMolecule->getNumBonds());
     for (RWMol::ConstBondIterator bi = QueryMolecule->beginBonds();
          bi != QueryMolecule->endBonds(); bi++) {
-      wb.push_back(WeightedBond(*bi, r));
+      wb.emplace_back(*bi, r);
     }
 
     for (std::vector<WeightedBond>::const_iterator bi = wb.begin();

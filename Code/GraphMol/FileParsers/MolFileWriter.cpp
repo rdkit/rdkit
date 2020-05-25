@@ -530,7 +530,7 @@ unsigned int getAtomParityFlag(const Atom *atom, const Conformer *conf) {
     if (at->getAtomicNum() == 1) {
       idx += mol.getNumAtoms();
     }
-    vs.push_back(std::make_pair(idx, v));
+    vs.emplace_back(idx, v);
     ++nbrIdx;
   }
   std::sort(vs.begin(), vs.end(),

@@ -283,9 +283,9 @@ void testMultiCore() {
       << "********************************************************\n";
   BOOST_LOG(rdInfoLog) << "test multi core" << std::endl;
   std::vector<ROMOL_SPTR> cores;
-  cores.push_back(ROMOL_SPTR(SmartsToMol("C1CCNCCC1")));
-  cores.push_back(ROMOL_SPTR(SmilesToMol("C1CCOCCC1")));
-  cores.push_back(ROMOL_SPTR(SmilesToMol("C1CCSCCC1")));
+  cores.emplace_back(SmartsToMol("C1CCNCCC1"));
+  cores.emplace_back(SmilesToMol("C1CCOCCC1"));
+  cores.emplace_back(SmilesToMol("C1CCSCCC1"));
 
   RGroupDecomposition decomp(cores);
   for (unsigned int i = 0; i < sizeof(coreSmi) / sizeof(const char *); ++i) {
@@ -801,7 +801,7 @@ $$$$)CTAB";
       SDMolSupplier sdsup;
       sdsup.setData(sdcores);
       while (!sdsup.atEnd()) {
-        cores.push_back(ROMOL_SPTR(sdsup.next()));
+        cores.emplace_back(sdsup.next());
       }
     }
 
@@ -832,7 +832,7 @@ $$$$)CTAB";
       SDMolSupplier sdsup;
       sdsup.setData(sdcores);
       while (!sdsup.atEnd()) {
-        cores.push_back(ROMOL_SPTR(sdsup.next()));
+        cores.emplace_back(sdsup.next());
       }
     }
 
@@ -884,7 +884,7 @@ void testRowColumnAlignmentProblem() {
   std::vector<std::string> csmiles = {"c1c([*:1])cncn1", "c1c([*:1])cccn1"};
   std::vector<ROMOL_SPTR> cores;
   for (auto smi : csmiles) {
-    cores.push_back(ROMOL_SPTR(SmilesToMol(smi)));
+    cores.emplace_back(SmilesToMol(smi));
   }
 
   std::vector<std::string> msmiles = {"c1c(F)cccn1", "c1c(F)cncn1",

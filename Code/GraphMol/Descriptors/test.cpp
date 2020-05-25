@@ -1897,8 +1897,8 @@ void testProperties() {
   }
   {
     std::vector<std::string> names;
-    names.push_back("NumSpiroAtoms");
-    names.push_back("NumBridgeheadAtoms");
+    names.emplace_back("NumSpiroAtoms");
+    names.emplace_back("NumBridgeheadAtoms");
     Properties sink(names);
     std::vector<std::string> sink_names = sink.getPropertyNames();
     TEST_ASSERT(names == sink_names);
@@ -1929,7 +1929,7 @@ void testProperties() {
   {
     try {
       std::vector<std::string> names;
-      names.push_back("FakeName");
+      names.emplace_back("FakeName");
       Properties sink(names);
       TEST_ASSERT(0);  // should throw
     } catch (KeyErrorException &) {
@@ -1977,8 +1977,8 @@ void testStereoCounting() {
   TEST_ASSERT(!m->hasProp(common_properties::_StereochemDone));
 
   std::vector<std::string> names;
-  names.push_back("NumAtomStereoCenters");
-  names.push_back("NumUnspecifiedAtomStereoCenters");
+  names.emplace_back("NumAtomStereoCenters");
+  names.emplace_back("NumUnspecifiedAtomStereoCenters");
   Properties prop(names);
 
   try {

@@ -108,14 +108,10 @@ void testSamplers() {
   EvenSamplePairsStrategy even;
   even.initialize(rxn, bbs);
   std::vector<boost::shared_ptr<EnumerationStrategyBase>> enumerators;
-  enumerators.push_back(
-      boost::shared_ptr<EnumerationStrategyBase>(cart.copy()));
-  enumerators.push_back(
-      boost::shared_ptr<EnumerationStrategyBase>(rand.copy()));
-  enumerators.push_back(
-      boost::shared_ptr<EnumerationStrategyBase>(randBBs.copy()));
-  enumerators.push_back(
-      boost::shared_ptr<EnumerationStrategyBase>(even.copy()));
+  enumerators.emplace_back(cart.copy());
+  enumerators.emplace_back(rand.copy());
+  enumerators.emplace_back(randBBs.copy());
+  enumerators.emplace_back(even.copy());
 #ifdef RDK_USE_BOOST_SERIALIZATION
   for (auto &enumerator : enumerators) {
     TEST_ASSERT(enumerator->getNumPermutations() == 10 * 5 * 6);

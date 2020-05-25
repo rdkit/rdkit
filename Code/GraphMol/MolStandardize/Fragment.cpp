@@ -79,7 +79,7 @@ ROMol *FragmentRemover::remove(const ROMol &mol) {
   std::vector<std::pair<boost::shared_ptr<ROMol>, unsigned int>> frags;
   for (const auto frag :
        MolOps::getMolFrags(mol, sanitizeFrags, nullptr, &atomFragMapping)) {
-    frags.push_back(std::make_pair(frag, frags.size()));
+    frags.emplace_back(frag, frags.size());
   }
 
   for (auto &fgci : fgrps) {
