@@ -350,7 +350,7 @@ void MolDraw2D::get2DCoordsMol(RWMol &mol, double &offset, double spacing,
     if (!at_lab.first.empty()) {
       getLabelSize(at_lab.first, at_lab.second, width, height);
     }
-    if (at_lab.second == W) {
+    if (at_lab.second == OrientType::W) {
       p.x -= width;
     } else {
       p.x -= width / 2;
@@ -371,7 +371,7 @@ void MolDraw2D::get2DCoordsMol(RWMol &mol, double &offset, double spacing,
       getLabelSize(at_lab.first, at_lab.second, width, height);
     }
     height /= 2.0;
-    if (at_lab.second != E) {
+    if (at_lab.second != OrientType::E) {
       width /= 2.0;
     }
     if (!shiftAgents) {
@@ -1051,7 +1051,7 @@ void MolDraw2D::drawLine(const Point2D &cds1, const Point2D &cds2,
 // ****************************************************************************
 void MolDraw2D::getLabelSize(const string &label, OrientType orient,
                              double &label_width, double &label_height) const {
-  if (orient == N || orient == S) {
+  if (orient == OrientType::N || orient == OrientType::S) {
     label_height = 0.0;
     label_width = 0.0;
     vector<string> sym_bits = atomLabelToPieces(label, orient);
@@ -1134,7 +1134,7 @@ void MolDraw2D::drawString(const std::string &str, const Point2D &cds,
 // ****************************************************************************
 void MolDraw2D::drawStrings(const std::vector<std::string> &labels,
                             const Point2D &cds, OrientType orient) {
-  if (orient == W) {
+  if (orient == OrientType::W) {
     // stick the pieces together again backwards and draw as one so there
     // aren't ugly splits in the string.
     string new_lab;
@@ -1144,7 +1144,7 @@ void MolDraw2D::drawStrings(const std::vector<std::string> &labels,
     Point2D new_cds;
     alignString(new_lab, labels.front(), 1, cds, new_cds);
     drawString(new_lab, new_cds, END);
-  } else if (orient == E) {
+  } else if (orient == OrientType::E) {
     // likewise, but forwards
     string new_lab;
     for (auto lab : labels) {
@@ -1155,9 +1155,9 @@ void MolDraw2D::drawStrings(const std::vector<std::string> &labels,
     drawString(new_lab, new_cds, START);
   } else {
     double y_scale = 0.0;
-    if (orient == N) {
+    if (orient == OrientType::N) {
       y_scale = -1.0;
-    } else if (orient == S) {
+    } else if (orient == OrientType::S) {
       y_scale = 1.0;
     }
 
@@ -1528,7 +1528,7 @@ StringRect MolDraw2D::calcLabelRect(const string &label, OrientType orient,
   for (auto lab : label_pieces) {
     double pwidth, pheight;
     getStringSize(lab, pwidth, pheight);
-    if (orient == N || orient == S) {
+    if (orient == OrientType::N || orient == OrientType::S) {
       string_rect.height_ += pheight;
       string_rect.width_ = max(string_rect.width_, pwidth);
     } else {
@@ -1540,19 +1540,19 @@ StringRect MolDraw2D::calcLabelRect(const string &label, OrientType orient,
   // need to move the centre
   double cheight, cwidth;
   switch (orient) {
-    case N:
+    case OrientType::N:
       getStringSize(label_pieces.front(), cwidth, cheight);
       string_rect.centre_.y -= 0.5 * (string_rect.height_ - cheight);
       break;
-    case S:
+    case OrientType::S:
       getStringSize(label_pieces.front(), cwidth, cheight);
       string_rect.centre_.y += 0.5 * (string_rect.height_ - cheight);
       break;
-    case E:
+    case OrientType::E:
       getStringSize(label_pieces.front(), cwidth, cheight);
       string_rect.centre_.x += 0.5 * (string_rect.width_ - cwidth);
       break;
-    case W:
+    case OrientType::W:
       getStringSize(label_pieces.back(), cwidth, cheight);
       string_rect.centre_.x -= 0.5 * (string_rect.width_ - cwidth);
       break;
@@ -1608,7 +1608,7 @@ StringRect MolDraw2D::calcAnnotationPosition(const ROMol &mol,
                     atom_syms_[activeMolIdx_][atom->getIdx()].second, at_cds);
   double full_font_size = fontSize();
   setFontSize(drawOptions().annotationFontScale * full_font_size);
-  note_rect = calcLabelRect(note, C, at_cds);
+  note_rect = calcLabelRect(note, OrientType::C, at_cds);
   setFontSize(full_font_size);
   // make it a bit bigger for padding - mostly so it cant tuck in underneath
   // the end of a double bond.
@@ -1630,7 +1630,7 @@ StringRect MolDraw2D::calcAnnotationPosition(const ROMol &mol,
     note_rect.width_ = -1.0;  // so we know it's not valid.
     return note_rect;
   }
-  note_rect = calcLabelRect(note, W, Point2D(0, 0));
+  note_rect = calcLabelRect(note, OrientType::W, Point2D(0, 0));
   // make it a bit bigger for padding
   note_rect.width_ *= 1 + 0.5 * drawOptions().multipleBondOffset;
   note_rect.height_ *= 1 + 0.5 * drawOptions().multipleBondOffset;
@@ -2594,100 +2594,51 @@ vector<string> MolDraw2D::atomLabelToPieces(const string &label,
     return label_pieces;
   }
 
-  // now some re-arrangement to make things look nicer
-  // if there's an atom map (:nn) it needs to go after the
-  // first atomic symbol which, because of <sup> might not be the first
-  // piece.
-  for (size_t j = 0; j < label_pieces.size(); ++j) {
-    if (label_pieces[j][0] == ':') {
-      if (label_pieces[0].substr(0, 5) == "<sup>") {
-        label_pieces[1] += label_pieces[j];
-      } else {
-        label_pieces[0] += label_pieces[j];
-      }
-      label_pieces[j].clear();
-      break;
-    }
-  }
-
-  // if there's isotope info, and orient is W we want it after the first
-  // symbol.  It will be the first piece as getAtomSymbol puts it
-  // together.
-  if (orient == W && label_pieces[0].substr(0, 5) == "<sup>" &&
-      isdigit(label_pieces[0][6])) {
-    label_pieces[1] = label_pieces[0] + label_pieces[1];
-    label_pieces[0].clear();
-    label_pieces.erase(remove(label_pieces.begin(), label_pieces.end(), ""),
-                       label_pieces.end());
-  }
-
-  // if there's a charge, it always needs to be at the end.
-  string charge_piece;
-  for (size_t j = 0; j < label_pieces.size(); ++j) {
-    if (label_pieces[j].substr(0, 6) == "<sup>+" ||
-        label_pieces[j].substr(0, 6) == "<sup>-") {
-      charge_piece += label_pieces[j];
-      label_pieces[j].clear();
-    }
-  }
-
-  label_pieces.erase(remove(label_pieces.begin(), label_pieces.end(), ""),
-                     label_pieces.end());
-  // if orient is W charge goes to front, otherwise to end.
-  if (!charge_piece.empty()) {
-    if (orient == W) {
-      label_pieces.insert(label_pieces.begin(), charge_piece);
-    } else {
-      label_pieces.emplace_back(charge_piece);
-    }
-  }
-
-  // if there's a <sub> piece, attach it to the one before.
-  for (size_t j = 1; j < label_pieces.size(); ++j) {
-    if (label_pieces[j].substr(0, 5) == "<sub>") {
-      label_pieces[j - 1] += label_pieces[j];
-      label_pieces[j].clear();
-      break;
-    }
-  }
-  label_pieces.erase(remove(label_pieces.begin(), label_pieces.end(), ""),
-                     label_pieces.end());
-
-  // if there's a <sup>[+-.] piece, attach it to the one after.
-  if (label_pieces.size() > 1) {
-    for (size_t j = 0; j < label_pieces.size() - 1; ++j) {
-      if (label_pieces[j].substr(0, 5) == "<sup>") {
-        if (orient == W &&
-            (label_pieces[j][5] == '+' || label_pieces[j][5] == '-' ||
-             label_pieces[j][5] == '.')) {
-          label_pieces[j + 1] = label_pieces[j + 1] + label_pieces[j];
-        } else {
-          label_pieces[j + 1] = label_pieces[j] + label_pieces[j + 1];
-        }
-        label_pieces[j].clear();
+  // if the orientation is E, any charge flag needs to be at the end.
+  if(orient == OrientType::E) {
+    for (size_t i = 0; i < label_pieces.size(); ++i) {
+      if(label_pieces[i] == "<sup>+</sup>" || label_pieces[i] == "<sup>-</sup>") {
+        label_pieces.push_back(label_pieces[i]);
+        label_pieces[i].clear();
         break;
       }
     }
   }
-  // and if orient is N or S and the last piece is a charge, attach it to the
-  // one before
-  if (orient == N || orient == S) {
-    if (label_pieces.back().substr(0, 6) == "<sup>+" ||
-        label_pieces.back().substr(0, 6) == "<sup>-") {
-      label_pieces[label_pieces.size() - 2] += label_pieces.back();
-      label_pieces.back().clear();
+
+  // Now group some together.  This relies on the order that
+  // getAtomLabel built them in the first place.  Each atom symbol
+  // needs to be flanked by any <sub> and <super> pieces.
+  vector<string> final_pieces;
+  string curr_piece;
+  bool had_symbol = false;
+  for(const auto p: label_pieces) {
+    if(p.empty()) {
+      continue;
+    }
+    if(!isupper(p[0])) {
+      curr_piece += p;
+    } else {
+      if(had_symbol) {
+        final_pieces.push_back(curr_piece);
+        curr_piece = p;
+        had_symbol = true;
+      } else {
+        curr_piece += p;
+        had_symbol = true;
+      }
     }
   }
-  label_pieces.erase(remove(label_pieces.begin(), label_pieces.end(), ""),
-                     label_pieces.end());
+  if(!curr_piece.empty()) {
+    final_pieces.push_back(curr_piece);
+  }
 
-  // cout << "Final pieces : ";
-  // for(auto l: label_pieces) {
+  // cout << "Final pieces : " << endl;
+  // for(auto l: final_pieces) {
   //   cout << l << endl;
   // }
   // cout << endl;
 
-  return label_pieces;
+  return final_pieces;
 }
 
 // ****************************************************************************
@@ -3013,9 +2964,29 @@ string MolDraw2D::getAtomSymbol(const RDKit::Atom &atom) const {
   } else {
     literal_symbol = false;
     std::vector<std::string> preText, postText;
+
+    // first thing after the symbol is the atom map
+    if (atom.hasProp("molAtomMapNumber")) {
+      string map_num = "";
+      atom.getProp("molAtomMapNumber", map_num);
+      postText.push_back(std::string(":") + map_num);
+    }
+
+    if (0 != atom.getFormalCharge()) {
+      // charge always comes post the symbol
+      int ichg = atom.getFormalCharge();
+      string sgn = ichg > 0 ? string("+") : string("-");
+      ichg = abs(ichg);
+      if (ichg > 1) {
+        sgn = std::to_string(ichg) + sgn;
+      }
+      // put the charge as a superscript
+      postText.push_back(string("<sup>") + sgn + string("</sup>"));
+    }
+
     int num_h = (atom.getAtomicNum() == 6 && atom.getDegree() > 0)
-                    ? 0
-                    : atom.getTotalNumHs();  // FIX: still not quite right
+                ? 0
+                : atom.getTotalNumHs();  // FIX: still not quite right
     if (num_h > 0 && !atom.hasQuery()) {
       // the H text comes after the atomic symbol
       std::string h = "H";
@@ -3030,25 +3001,6 @@ string MolDraw2D::getAtomSymbol(const RDKit::Atom &atom) const {
       // isotope always comes before the symbol
       preText.push_back(std::string("<sup>") + std::to_string(iso) +
                         std::string("</sup>"));
-    }
-
-    if (0 != atom.getFormalCharge()) {
-      // charge always comes post the symbol
-      int ichg = atom.getFormalCharge();
-      string sgn = ichg > 0 ? string("+") : string("-");
-      ichg = abs(ichg);
-      if (ichg > 1) {
-        sgn += std::to_string(ichg);
-      }
-      // put the charge as a superscript
-      postText.push_back(string("<sup>") + sgn + string("</sup>"));
-    }
-
-    if (atom.hasProp("molAtomMapNumber")) {
-      // atom map always comes at the end
-      string map_num = "";
-      atom.getProp("molAtomMapNumber", map_num);
-      postText.push_back(std::string(":") + map_num);
     }
 
     symbol = "";
@@ -3086,39 +3038,57 @@ MolDraw2D::OrientType MolDraw2D::getAtomOrientation(
   // when they are drawn at the bottom of the molecule.
   static const double VERT_SLOPE = tan(70.0 * M_PI / 180.0);
 
-  OrientType orient = C;
+  OrientType orient = OrientType::C;
   if (atom.getDegree()) {
     double islope = 1000.0;
     if (fabs(nbr_sum.x) > 1.0e-4) {
       islope = nbr_sum.y / nbr_sum.x;
     }
-    // cout << "islope : " << islope << " : " << atan(islope) * 180.0 / M_PI <<
-    // endl;
     if (fabs(islope) <= VERT_SLOPE) {
       if (nbr_sum.x > 0.0) {
-        orient = W;
+        orient = OrientType::W;
       } else {
-        orient = E;
+        orient = OrientType::E;
       }
     } else {
       if (nbr_sum.y > 0.0) {
-        orient = N;
+        orient = OrientType::N;
       } else {
-        orient = S;
+        orient = OrientType::S;
       }
     }
-    // cout << "interim orient : " << orient << endl;
     // atoms of single degree should always be either W or E, never N or S.  If
     // either of the latter, make it E if the slope is close to vertical,
     // otherwise have it either as required.
-    if (atom.getDegree() == 1 && (orient == N || orient == S)) {
-      if (fabs(islope) > VERT_SLOPE) {
-        orient = E;
-      } else {
-        if (nbr_sum.x > 0.0) {
-          orient = W;
+    if(orient == OrientType::N || orient == OrientType::S) {
+      if (atom.getDegree() == 1) {
+        if (fabs(islope) > VERT_SLOPE) {
+          orient = OrientType::E;
         } else {
-          orient = E;
+          if (nbr_sum.x > 0.0) {
+            orient = OrientType::W;
+          } else {
+            orient = OrientType::E;
+          }
+        }
+      } else if(atom.getDegree() == 3) {
+        // Atoms of degree 3 can sometimes have a bond pointing down with S
+        // orientation or up with N orientation, which puts the H on the bond.
+        auto mol = atom.getOwningMol();
+        const Point2D &at1_cds = at_cds_[activeMolIdx_][atom.getIdx()];
+        for (const auto &nbri : make_iterator_range(mol.getAtomBonds(&atom))) {
+          const Bond *bond = mol[nbri];
+          const Point2D &at2_cds =
+              at_cds_[activeMolIdx_][bond->getOtherAtomIdx(atom.getIdx())];
+          Point2D bond_vec = at2_cds - at1_cds;
+          double ang = atan(bond_vec.y / bond_vec.x) * 180.0 / M_PI;
+          if (ang > 80.0 && ang < 100.0 && orient == OrientType::S) {
+            orient = OrientType::N;
+            break;
+          } else if (ang < -80.0 && ang > -100.0 && orient == OrientType::N) {
+            orient = OrientType::S;
+            break;
+          }
         }
       }
     }
@@ -3131,13 +3101,12 @@ MolDraw2D::OrientType MolDraw2D::getAtomOrientation(
         HsListedFirstSrc + sizeof(HsListedFirstSrc) / sizeof(int));
     if (std::find(HsListedFirst.begin(), HsListedFirst.end(),
                   atom.getAtomicNum()) != HsListedFirst.end()) {
-      orient = W;
+      orient = OrientType::W;
     } else {
-      orient = E;
+      orient = OrientType::E;
     }
   }
 
-  // cout << "orient : " << orient << endl;
   return orient;
 }
 
@@ -3368,4 +3337,19 @@ bool doesLineIntersectLabel(const Point2D &ls, const Point2D &lf,
   return false;
 }
 
+std::ostream& operator<<(std::ostream &oss, const MolDraw2D::OrientType &o) {
+  switch(o) {
+    case MolDraw2D::OrientType::C:
+      oss << "C"; break;
+    case MolDraw2D::OrientType::N:
+      oss << "N"; break;
+    case MolDraw2D::OrientType::S:
+      oss << "S"; break;
+    case MolDraw2D::OrientType::E:
+      oss << "E"; break;
+    case MolDraw2D::OrientType::W:
+      oss << "W"; break;
+  }
+  return oss;
+}
 }  // namespace RDKit

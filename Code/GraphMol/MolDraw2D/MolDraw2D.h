@@ -213,7 +213,7 @@ struct RDKIT_MOLDRAW2D_EXPORT MolDrawOptions {
 //! MolDraw2D is the base class for doing 2D renderings of molecules
 class RDKIT_MOLDRAW2D_EXPORT MolDraw2D {
  public:
-  typedef enum { C = 0, N, E, S, W } OrientType;
+  enum class OrientType: unsigned char { C = 0, N, E, S, W };
   // for aligning the drawing of text to the passed in coords.
   typedef enum { START, MIDDLE, END } AlignType;
   typedef enum {
@@ -818,6 +818,8 @@ RDKIT_MOLDRAW2D_EXPORT bool doLinesIntersect(const Point2D &l1s,
 RDKIT_MOLDRAW2D_EXPORT bool doesLineIntersectLabel(const Point2D &ls,
                                                    const Point2D &lf,
                                                    const StringRect &lab_rect);
+
+std::ostream& operator<<(std::ostream &oss, const MolDraw2D::OrientType &o);
 
 }  // namespace RDKit
 
