@@ -89,8 +89,8 @@ static inline void convertMatchingToBondVect(
 
 static void addResult(std::vector<std::pair<ROMOL_SPTR, ROMOL_SPTR>>&
                           res,  // const SignatureVector& resSignature,
-                      const ROMol& mol,
-                      const BondVector_t& bonds_selected, size_t maxCuts) {
+                      const ROMol& mol, const BondVector_t& bonds_selected,
+                      size_t maxCuts) {
 #ifdef MMPA_DEBUG
   std::cout << res.size() + 1 << ": ";
 #endif
@@ -169,7 +169,7 @@ static void addResult(std::vector<std::pair<ROMOL_SPTR, ROMOL_SPTR>>&
         for (int ai : frags[i]) {
           if (isotope_track.end() !=
               isotope_track.find(ai)) {  // new added atom
-            ++nLabels;  // found connection point
+            ++nLabels;                   // found connection point
           }
         }
         if (nLabels >=
@@ -465,7 +465,7 @@ bool fragmentMol(const ROMol& mol,
 #endif
 
   res.clear();
-  std::auto_ptr<const ROMol> smarts((const ROMol*)SmartsToMol(pattern));
+  std::unique_ptr<const ROMol> smarts((const ROMol*)SmartsToMol(pattern));
   std::vector<MatchVectType>
       matching_atoms;  // one bond per match ! with default pattern
   unsigned int total = SubstructMatch(mol, *smarts, matching_atoms);
@@ -538,5 +538,5 @@ bool fragmentMol(const ROMol& mol,
   processCuts(0, minCuts, maxCuts, bonds_selected, matching_bonds, mol, res);
   return true;
 }
-}
+}  // namespace MMPA
 }  // namespace RDKit
