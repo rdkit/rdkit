@@ -63,7 +63,7 @@ class RDKIT_FMCS_EXPORT RingMatchTableSet {
   std::map<const INT_VECT*, unsigned> QueryRingIndex;
 
  public:
-  RingMatchTableSet() : QueryBondRingsIndeces(0) {}
+  RingMatchTableSet() : QueryBondRingsIndeces(nullptr) {}
 
   inline void clear() {
     if (QueryBondRingsIndeces) QueryBondRingsIndeces->clear();
@@ -170,7 +170,7 @@ class RDKIT_FMCS_EXPORT RingMatchTableSet {
 #else  // noticeable slowly:
             FMCS::SubstructMatchCustom(
                 graph2, *targetMolecule, graph1, *query, parameters.AtomTyper,
-                parameters.BondTyper, NULL, parameters.AtomCompareParameters,
+                parameters.BondTyper, nullptr, parameters.AtomCompareParameters,
                 bp, parameters.CompareFunctionsUserData);
 #endif
         if (match) m.setMatch(i, &*r2);

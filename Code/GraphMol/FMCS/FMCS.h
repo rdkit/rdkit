@@ -167,7 +167,7 @@ RDKIT_FMCS_EXPORT void parseMCSParametersJSON(const char* json,
                                               MCSParameters* params);
 
 RDKIT_FMCS_EXPORT MCSResult findMCS(const std::vector<ROMOL_SPTR>& mols,
-                                    const MCSParameters* params = 0);
+                                    const MCSParameters* params = nullptr);
 RDKIT_FMCS_EXPORT MCSResult findMCS_P(const std::vector<ROMOL_SPTR>& mols,
                                       const char* params_json);
 

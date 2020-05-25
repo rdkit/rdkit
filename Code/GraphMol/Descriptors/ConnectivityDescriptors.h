@@ -144,7 +144,7 @@ const std::string chiNnVersion = "1.2.0";
                        Note: this can be a time-consuming calculation.
 */
 RDKIT_DESCRIPTORS_EXPORT double calcHallKierAlpha(
-    const ROMol &mol, std::vector<double> *atomContribs = 0);
+    const ROMol &mol, std::vector<double> *atomContribs = nullptr);
 const std::string hallKierAlphaVersion = "1.2.0";
 
 //! calculate the Hall-Kier kappa1 value for a molecule

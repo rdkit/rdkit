@@ -27,9 +27,9 @@ RDKIT_FMCS_EXPORT bool SubstructMatchCustomTable(
     const ROMol& querySrc  // seed and full source query molecules
     ,
     const MatchTable& atomMatchTable, const MatchTable& bondMatchTable,
-    const MCSParameters* parameters = 0  // for final checker (CHIRALITY)
+    const MCSParameters* parameters = nullptr  // for final checker (CHIRALITY)
     ,
-    match_V_t* match = 0);
+    match_V_t* match = nullptr);
 
 RDKIT_FMCS_EXPORT bool SubstructMatchCustom(
     const FMCS::Graph& target, const ROMol& mol, const FMCS::Graph& query,
@@ -38,6 +38,6 @@ RDKIT_FMCS_EXPORT bool SubstructMatchCustom(
     MCSAtomCompareFunction atomCompare, MCSBondCompareFunction bondCompare,
     MCSFinalMatchCheckFunction finalCompare,
     const MCSAtomCompareParameters& acp, const MCSBondCompareParameters& bcp,
-    void* user_data, match_V_t* match = 0);
+    void* user_data, match_V_t* match = nullptr);
 }  // namespace FMCS
 }  // namespace RDKit

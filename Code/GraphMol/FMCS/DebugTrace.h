@@ -67,7 +67,7 @@ static inline int gettimeofday(struct timeval *tv, struct timezone *tz) {
   unsigned __int64 tmpres = 0;
   static int tzflag;
 
-  if (NULL != tv) {
+  if (nullptr != tv) {
     GetSystemTimeAsFileTime(&ft);
 
     tmpres |= ft.dwHighDateTime;
@@ -81,7 +81,7 @@ static inline int gettimeofday(struct timeval *tv, struct timezone *tz) {
     tv->tv_usec = (long)(tmpres % 1000000UL);
   }
 
-  if (NULL != tz) {
+  if (nullptr != tz) {
     if (!tzflag) {
       _tzset();
       tzflag++;
@@ -96,7 +96,7 @@ static inline int gettimeofday(struct timeval *tv, struct timezone *tz) {
 static inline unsigned long long nanoClock(
     void) {  // actually returns microseconds
   struct timeval t;
-  gettimeofday(&t, (struct timezone *)0);
+  gettimeofday(&t, (struct timezone *)nullptr);
   return t.tv_usec + t.tv_sec * 1000000ULL;
 }
 

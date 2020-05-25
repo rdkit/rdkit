@@ -45,10 +45,12 @@ class RDKIT_GRAPHMOL_EXPORT Conformer : public RDProps {
   friend class ROMol;
 
   //! Constructor
-  Conformer() : df_is3D(true), d_id(0), dp_mol(NULL) { d_positions.clear(); };
+  Conformer() : df_is3D(true), d_id(0), dp_mol(nullptr) {
+    d_positions.clear();
+  };
 
   //! Constructor with number of atoms specified ID specification
-  Conformer(unsigned int numAtoms) : df_is3D(true), d_id(0), dp_mol(NULL) {
+  Conformer(unsigned int numAtoms) : df_is3D(true), d_id(0), dp_mol(nullptr) {
     if (numAtoms) {
       d_positions.resize(numAtoms, RDGeom::Point3D(0.0, 0.0, 0.0));
     } else {

@@ -27,7 +27,7 @@ namespace RDKit {
 class RDKIT_FRAGCATALOG_EXPORT FragCatalogEntry
     : public RDCatalog::CatalogEntry {
  public:
-  FragCatalogEntry() : dp_mol(0), d_descrip(""), d_order(0) {
+  FragCatalogEntry() : dp_mol(nullptr), d_descrip(""), d_order(0) {
     dp_props = new Dict();
     setBitId(-1);
   }
@@ -38,10 +38,10 @@ class RDKIT_FRAGCATALOG_EXPORT FragCatalogEntry
 
   ~FragCatalogEntry() {
     delete dp_mol;
-    dp_mol = 0;
+    dp_mol = nullptr;
     if (dp_props) {
       delete dp_props;
-      dp_props = 0;
+      dp_props = nullptr;
     }
   }
 

@@ -38,8 +38,8 @@ class RDKIT_RDGEOMETRYLIB_EXPORT UniformGrid3D : public Grid3D {
   UniformGrid3D(double dimX, double dimY, double dimZ, double spacing = 0.5,
                 RDKit::DiscreteValueVect::DiscreteValueType valType =
                     RDKit::DiscreteValueVect::TWOBITVALUE,
-                const RDGeom::Point3D *offset = 0) {
-    if (offset == 0) {
+                const RDGeom::Point3D *offset = nullptr) {
+    if (offset == nullptr) {
       initGrid(dimX, dimY, dimZ, spacing, valType,
                Point3D(-0.5 * dimX, -0.5 * dimY, -0.5 * dimZ));
     } else {
@@ -187,7 +187,7 @@ class RDKIT_RDGEOMETRYLIB_EXPORT UniformGrid3D : public Grid3D {
   void initGrid(double dimX, double dimY, double dimZ, double spacing,
                 RDKit::DiscreteValueVect::DiscreteValueType valType,
                 const RDGeom::Point3D &offSet,
-                RDKit::DiscreteValueVect *data = 0);
+                RDKit::DiscreteValueVect *data = nullptr);
   unsigned int d_numX, d_numY,
       d_numZ;        //! number of grid points along x, y, z axes
   double d_spacing;  //! grid spacing

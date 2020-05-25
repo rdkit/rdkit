@@ -55,8 +55,8 @@ class Query {
   Query()
       : d_description(""),
         df_negate(false),
-        d_matchFunc(NULL),
-        d_dataFunc(NULL){};
+        d_matchFunc(nullptr),
+        d_dataFunc(nullptr){};
   virtual ~Query() { this->d_children.clear(); };
 
   //! sets whether or not we are negated
@@ -163,7 +163,7 @@ class Query {
   MatchFuncArgType TypeConvert(MatchFuncArgType what,
                                Int2Type<false> /*d*/) const {
     MatchFuncArgType mfArg;
-    if (this->d_dataFuncSameType != NULL &&
+    if (this->d_dataFuncSameType != nullptr &&
         std::is_same<MatchFuncArgType, DataFuncArgType>::value) {
       mfArg = this->d_dataFuncSameType(what);
     } else {

@@ -775,7 +775,7 @@ class HasPropQuery : public Queries::EqualityQuery<int, TargetPtr, true> {
       : Queries::EqualityQuery<int, TargetPtr, true>(), propname(v) {
     // default is to just do a number of rings query:
     this->setDescription("AtomHasProp");
-    this->setDataFunc(0);
+    this->setDataFunc(nullptr);
   };
 
   virtual bool Match(const TargetPtr what) const {
@@ -828,7 +828,7 @@ class HasPropWithValueQuery
         tolerance(tol) {
     // default is to just do a number of rings query:
     this->setDescription("HasPropWithValue");
-    this->setDataFunc(0);
+    this->setDataFunc(nullptr);
   };
 
   virtual bool Match(const TargetPtr what) const {
@@ -892,7 +892,7 @@ class HasPropWithValueQuery<TargetPtr, std::string>
     RDUNUSED_PARAM(tol);
     // default is to just do a number of rings query:
     this->setDescription("HasPropWithValue");
-    this->setDataFunc(0);
+    this->setDataFunc(nullptr);
   };
 
   virtual bool Match(const TargetPtr what) const {
@@ -962,7 +962,7 @@ class HasPropWithValueQuery<TargetPtr, ExplicitBitVect>
         val(v),
         tol(tol) {
     this->setDescription("HasPropWithValue");
-    this->setDataFunc(0);
+    this->setDataFunc(nullptr);
   };
 
   virtual bool Match(const TargetPtr what) const {

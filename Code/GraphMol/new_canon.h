@@ -89,14 +89,14 @@ class RDKIT_GRAPHMOL_EXPORT canon_atom {
   std::vector<bondholder> bonds;
 
   canon_atom()
-      : atom(NULL),
+      : atom(nullptr),
         index(-1),
         degree(0),
         totalNumHs(0),
         hasRingNbr(false),
         isRingStereoAtom(false),
-        nbrIds(NULL),
-        p_symbol(NULL){};
+        nbrIds(nullptr),
+        p_symbol(nullptr){};
 
   ~canon_atom() { free(nbrIds); }
 };
@@ -126,14 +126,14 @@ class RDKIT_GRAPHMOL_EXPORT SpecialChiralityAtomCompareFunctor {
   const boost::dynamic_bitset<> *dp_atomsInPlay, *dp_bondsInPlay;
 
   SpecialChiralityAtomCompareFunctor()
-      : dp_atoms(NULL),
-        dp_mol(NULL),
-        dp_atomsInPlay(NULL),
-        dp_bondsInPlay(NULL){};
+      : dp_atoms(nullptr),
+        dp_mol(nullptr),
+        dp_atomsInPlay(nullptr),
+        dp_bondsInPlay(nullptr){};
   SpecialChiralityAtomCompareFunctor(
       Canon::canon_atom *atoms, const ROMol &m,
-      const boost::dynamic_bitset<> *atomsInPlay = NULL,
-      const boost::dynamic_bitset<> *bondsInPlay = NULL)
+      const boost::dynamic_bitset<> *atomsInPlay = nullptr,
+      const boost::dynamic_bitset<> *bondsInPlay = nullptr)
       : dp_atoms(atoms),
         dp_mol(&m),
         dp_atomsInPlay(atomsInPlay),
@@ -182,14 +182,14 @@ class RDKIT_GRAPHMOL_EXPORT SpecialSymmetryAtomCompareFunctor {
   const boost::dynamic_bitset<> *dp_atomsInPlay, *dp_bondsInPlay;
 
   SpecialSymmetryAtomCompareFunctor()
-      : dp_atoms(NULL),
-        dp_mol(NULL),
-        dp_atomsInPlay(NULL),
-        dp_bondsInPlay(NULL){};
+      : dp_atoms(nullptr),
+        dp_mol(nullptr),
+        dp_atomsInPlay(nullptr),
+        dp_bondsInPlay(nullptr){};
   SpecialSymmetryAtomCompareFunctor(
       Canon::canon_atom *atoms, const ROMol &m,
-      const boost::dynamic_bitset<> *atomsInPlay = NULL,
-      const boost::dynamic_bitset<> *bondsInPlay = NULL)
+      const boost::dynamic_bitset<> *atomsInPlay = nullptr,
+      const boost::dynamic_bitset<> *bondsInPlay = nullptr)
       : dp_atoms(atoms),
         dp_mol(&m),
         dp_atomsInPlay(atomsInPlay),
@@ -380,17 +380,17 @@ class RDKIT_GRAPHMOL_EXPORT AtomCompareFunctor {
   bool df_useChiralityRings;
 
   AtomCompareFunctor()
-      : dp_atoms(NULL),
-        dp_mol(NULL),
-        dp_atomsInPlay(NULL),
-        dp_bondsInPlay(NULL),
+      : dp_atoms(nullptr),
+        dp_mol(nullptr),
+        dp_atomsInPlay(nullptr),
+        dp_bondsInPlay(nullptr),
         df_useNbrs(false),
         df_useIsotopes(true),
         df_useChirality(true),
         df_useChiralityRings(true){};
   AtomCompareFunctor(Canon::canon_atom *atoms, const ROMol &m,
-                     const boost::dynamic_bitset<> *atomsInPlay = NULL,
-                     const boost::dynamic_bitset<> *bondsInPlay = NULL)
+                     const boost::dynamic_bitset<> *atomsInPlay = nullptr,
+                     const boost::dynamic_bitset<> *bondsInPlay = nullptr)
       : dp_atoms(atoms),
         dp_mol(&m),
         dp_atomsInPlay(atomsInPlay),
@@ -514,7 +514,7 @@ class RDKIT_GRAPHMOL_EXPORT ChiralAtomCompareFunctor {
   const ROMol *dp_mol;
   bool df_useNbrs;
   ChiralAtomCompareFunctor()
-      : dp_atoms(NULL), dp_mol(NULL), df_useNbrs(false){};
+      : dp_atoms(nullptr), dp_mol(nullptr), df_useNbrs(false){};
   ChiralAtomCompareFunctor(Canon::canon_atom *atoms, const ROMol &m)
       : dp_atoms(atoms), dp_mol(&m), df_useNbrs(false){};
   int operator()(int i, int j) const {
@@ -725,8 +725,9 @@ RDKIT_GRAPHMOL_EXPORT void rankFragmentAtoms(
     const ROMol &mol, std::vector<unsigned int> &res,
     const boost::dynamic_bitset<> &atomsInPlay,
     const boost::dynamic_bitset<> &bondsInPlay,
-    const std::vector<std::string> *atomSymbols = NULL, bool breakTies = true,
-    bool includeChirality = true, bool includeIsotopes = true);
+    const std::vector<std::string> *atomSymbols = nullptr,
+    bool breakTies = true, bool includeChirality = true,
+    bool includeIsotopes = true);
 
 RDKIT_GRAPHMOL_EXPORT void chiralRankMolAtoms(const ROMol &mol,
                                               std::vector<unsigned int> &res);
