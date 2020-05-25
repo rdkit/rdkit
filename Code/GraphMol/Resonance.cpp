@@ -46,13 +46,13 @@ class CEMetrics {
   bool operator!=(const CEMetrics &other) { return !(*this == other); }
 
  private:
-  unsigned int d_absFormalCharges;
-  unsigned int d_fcSameSignDist;
-  unsigned int d_fcOppSignDist;
-  unsigned int d_nbMissing;
-  int d_wtdFormalCharges;
-  unsigned int d_sumFormalChargeIdxs;
-  unsigned int d_sumMultipleBondIdxs;
+  unsigned int d_absFormalCharges{0};
+  unsigned int d_fcSameSignDist{0};
+  unsigned int d_fcOppSignDist{0};
+  unsigned int d_nbMissing{0};
+  int d_wtdFormalCharges{0};
+  unsigned int d_sumFormalChargeIdxs{0};
+  unsigned int d_sumMultipleBondIdxs{0};
 };
 
 class ConjElectrons {
@@ -468,13 +468,8 @@ void BondElectrons::setOrder(unsigned int bo) {
 }
 
 CEMetrics::CEMetrics()
-    : d_absFormalCharges(0),
-      d_fcSameSignDist(0),
-      d_fcOppSignDist(0),
-      d_nbMissing(0),
-      d_wtdFormalCharges(0),
-      d_sumFormalChargeIdxs(0),
-      d_sumMultipleBondIdxs(0){};
+    
+      {};
 
 bool CEMetrics::operator==(const CEMetrics &other) {
   return ((d_absFormalCharges == other.d_absFormalCharges) &&

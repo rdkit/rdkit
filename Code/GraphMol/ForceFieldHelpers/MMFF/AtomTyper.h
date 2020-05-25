@@ -47,11 +47,11 @@ using namespace ForceFields::MMFF;
 class RDKIT_FORCEFIELDHELPERS_EXPORT MMFFAtomProperties {
  public:
   MMFFAtomProperties()
-      : mmffAtomType(0), mmffFormalCharge(0.0), mmffPartialCharge(0.0){};
+       {};
   ~MMFFAtomProperties(){};
-  std::uint8_t mmffAtomType;
-  double mmffFormalCharge;
-  double mmffPartialCharge;
+  std::uint8_t mmffAtomType{0};
+  double mmffFormalCharge{0.0};
+  double mmffPartialCharge{0.0};
 };
 
 typedef boost::shared_ptr<MMFFAtomProperties> MMFFAtomPropertiesPtr;

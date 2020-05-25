@@ -229,10 +229,10 @@ class Matrix {
   }
 
  protected:
-  Matrix() : d_nRows(0), d_nCols(0), d_dataSize(0), d_data(){};
-  unsigned int d_nRows;
-  unsigned int d_nCols;
-  unsigned int d_dataSize;
+  Matrix() :  d_data(){};
+  unsigned int d_nRows{0};
+  unsigned int d_nCols{0};
+  unsigned int d_dataSize{0};
   DATA_SPTR d_data;
 
  private:

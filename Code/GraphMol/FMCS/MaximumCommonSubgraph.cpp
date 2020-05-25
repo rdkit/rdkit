@@ -304,9 +304,9 @@ struct QueryRings {
 };  // namespace RDKit
 
 struct WeightedBond {
-  const Bond* BondPtr;
-  unsigned Weight;
-  WeightedBond() : BondPtr(nullptr), Weight(0) {}
+  const Bond* BondPtr{nullptr};
+  unsigned Weight{0};
+  WeightedBond()  {}
   WeightedBond(const Bond* bond, const QueryRings& r)
       : BondPtr(bond), Weight(0) {
     // score ((bond.is_in_ring + atom1.is_in_ring + atom2.is_in_ring)

@@ -27,7 +27,7 @@ namespace RDKit {
 class RDKIT_FRAGCATALOG_EXPORT FragCatalogEntry
     : public RDCatalog::CatalogEntry {
  public:
-  FragCatalogEntry() : dp_mol(nullptr), d_descrip(""), d_order(0) {
+  FragCatalogEntry() :  d_descrip("") {
     dp_props = new Dict();
     setBitId(-1);
   }
@@ -117,12 +117,12 @@ class RDKIT_FRAGCATALOG_EXPORT FragCatalogEntry
   void initFromString(const std::string &text);
 
  private:
-  ROMol *dp_mol;
+  ROMol *dp_mol{nullptr};
   Dict *dp_props;
 
   std::string d_descrip;
 
-  unsigned int d_order;
+  unsigned int d_order{0};
 
   // a map between the atom ids in mol that connect to
   // a functional group and the corresponding functional

@@ -1133,12 +1133,12 @@ RWMol *FASTAToMol(const std::string &seq, bool sanitize, bool lowerD) {
 }
 
 struct HELMMonomer {
-  Atom *r1;
-  Atom *r2;
-  Atom *r3;
-  Atom *oxt;
+  Atom *r1{nullptr};
+  Atom *r2{nullptr};
+  Atom *r3{nullptr};
+  Atom *oxt{nullptr};
 
-  HELMMonomer() : r1(nullptr), r2(nullptr), r3(nullptr), oxt(nullptr) {}
+  HELMMonomer()  {}
   HELMMonomer(Atom *x, Atom *y, Atom *z) : r1(x), r2(y), r3(z), oxt(nullptr) {}
 };
 

@@ -213,7 +213,7 @@ ROMol *LargestFragmentChooser::choose(const ROMol &mol) {
 }
 
 LargestFragmentChooser::Largest::Largest()
-    : Smiles(""), Fragment(nullptr), NumAtoms(0), Weight(0), Organic(false) {}
+    : Smiles(""), Fragment(nullptr) {}
 
 LargestFragmentChooser::Largest::Largest(std::string &smiles,
                                          boost::shared_ptr<ROMol> fragment,

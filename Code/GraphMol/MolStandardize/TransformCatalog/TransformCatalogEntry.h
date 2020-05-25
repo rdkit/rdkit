@@ -24,7 +24,7 @@ namespace MolStandardize {
 class RDKIT_MOLSTANDARDIZE_EXPORT TransformCatalogEntry
     : public RDCatalog::CatalogEntry {
  public:
-  TransformCatalogEntry() : dp_transform(nullptr), d_descrip("") {
+  TransformCatalogEntry() :  d_descrip("") {
     dp_props = new Dict();
     setBitId(-1);
   }
@@ -45,7 +45,7 @@ class RDKIT_MOLSTANDARDIZE_EXPORT TransformCatalogEntry
   void initFromString(const std::string &text) override;
 
  private:
-  ChemicalReaction *dp_transform;
+  ChemicalReaction *dp_transform{nullptr};
   Dict *dp_props;
   std::string d_descrip;
 

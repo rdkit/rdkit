@@ -33,10 +33,10 @@ struct NodeInfo {
 template <class Graph>
 struct Pair {
   node_id n1, n2;
-  bool hasiter;
+  bool hasiter{false};
   RDK_ADJ_ITER nbrbeg, nbrend;
 
-  Pair() : n1(NULL_NODE), n2(NULL_NODE), hasiter(false) {}
+  Pair() : n1(NULL_NODE), n2(NULL_NODE) {}
 };
 
 /**

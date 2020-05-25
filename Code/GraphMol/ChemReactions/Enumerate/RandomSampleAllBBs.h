@@ -67,9 +67,9 @@ namespace RDKit {
 
 class RDKIT_CHEMREACTIONS_EXPORT RandomSampleAllBBsStrategy
     : public EnumerationStrategyBase {
-  boost::uint64_t m_numPermutationsProcessed;
-  size_t m_offset;
-  size_t m_maxoffset;
+  boost::uint64_t m_numPermutationsProcessed{0};
+  size_t m_offset{0};
+  size_t m_maxoffset{0};
 
   boost::minstd_rand m_rng;
   std::vector<boost::random::uniform_int_distribution<>> m_distributions;
@@ -77,9 +77,7 @@ class RDKIT_CHEMREACTIONS_EXPORT RandomSampleAllBBsStrategy
  public:
   RandomSampleAllBBsStrategy()
       : EnumerationStrategyBase(),
-        m_numPermutationsProcessed(0),
-        m_offset(0),
-        m_maxoffset(0),
+        
         m_rng(),
         m_distributions() {
     for (size_t i = 0; i < m_permutation.size(); ++i) {

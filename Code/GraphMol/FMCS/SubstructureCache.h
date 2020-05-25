@@ -26,10 +26,10 @@ class RDKIT_FMCS_EXPORT SubstructureCache {
 #pragma pack(push, 1)
   struct KeyNumericMetrics {
     typedef unsigned long long TValue;
-    TValue Value;
+    TValue Value{0};
 
    public:
-    KeyNumericMetrics() : Value(0) {}
+    KeyNumericMetrics()  {}
   };
 #pragma pack(pop)
 

@@ -120,8 +120,7 @@ class RDKIT_CHEMREACTIONS_EXPORT ChemicalReaction : public RDProps {
   friend class ReactionPickler;
 
  public:
-  ChemicalReaction()
-      : RDProps(), df_needsInit(true), df_implicitProperties(false){};
+  ChemicalReaction() : RDProps(){};
   ChemicalReaction(const ChemicalReaction &other) : RDProps() {
     df_needsInit = other.df_needsInit;
     df_implicitProperties = other.df_implicitProperties;
@@ -343,8 +342,8 @@ class RDKIT_CHEMREACTIONS_EXPORT ChemicalReaction : public RDProps {
   void setImplicitPropertiesFlag(bool val) { df_implicitProperties = val; };
 
  private:
-  bool df_needsInit;
-  bool df_implicitProperties;
+  bool df_needsInit{true};
+  bool df_implicitProperties{false};
   MOL_SPTR_VECT m_reactantTemplates, m_productTemplates, m_agentTemplates;
   ChemicalReaction &operator=(const ChemicalReaction &);  // disable assignment
 };

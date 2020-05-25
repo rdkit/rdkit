@@ -693,8 +693,7 @@ class RDKIT_GRAPHMOL_EXPORT AtomRingQuery
 class RDKIT_GRAPHMOL_EXPORT RecursiveStructureQuery
     : public Queries::SetQuery<int, Atom const *, true> {
  public:
-  RecursiveStructureQuery()
-      : Queries::SetQuery<int, Atom const *, true>(), d_serialNumber(0) {
+  RecursiveStructureQuery() : Queries::SetQuery<int, Atom const *, true>() {
     setDataFunc(getAtIdx);
     setDescription("RecursiveStructure");
   };
@@ -746,7 +745,7 @@ class RDKIT_GRAPHMOL_EXPORT RecursiveStructureQuery
 #endif
  private:
   boost::shared_ptr<const ROMol> dp_queryMol;
-  unsigned int d_serialNumber;
+  unsigned int d_serialNumber{0};
 };
 
 template <typename T>
@@ -943,14 +942,11 @@ class HasPropWithValueQuery<TargetPtr, ExplicitBitVect>
     : public Queries::EqualityQuery<int, TargetPtr, true> {
   std::string propname;
   ExplicitBitVect val;
-  float tol;
+  float tol{0.0};
 
  public:
   HasPropWithValueQuery()
-      : Queries::EqualityQuery<int, TargetPtr, true>(),
-        propname(),
-        val(),
-        tol(0.0) {
+      : Queries::EqualityQuery<int, TargetPtr, true>(), propname(), val() {
     this->setDescription("HasPropWithValue");
     this->setDataFunc(0);
   };

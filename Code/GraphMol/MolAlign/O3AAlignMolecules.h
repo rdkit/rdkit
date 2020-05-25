@@ -68,7 +68,7 @@ class RDKIT_MOLALIGN_EXPORT O3AConstraint {
 //! they were appended.
 class RDKIT_MOLALIGN_EXPORT O3AConstraintVect {
  public:
-  O3AConstraintVect() : d_count(0){};
+  O3AConstraintVect()  {};
   ~O3AConstraintVect(){};
   void append(unsigned int prbIdx, unsigned int refIdx, double weight) {
     O3AConstraint *o3aConstraint = new O3AConstraint();
@@ -90,7 +90,7 @@ class RDKIT_MOLALIGN_EXPORT O3AConstraintVect {
   }
 
  private:
-  unsigned int d_count;
+  unsigned int d_count{0};
   std::vector<boost::shared_ptr<O3AConstraint>> d_o3aConstraintVect;
   static bool d_compareO3AConstraint(boost::shared_ptr<O3AConstraint> a,
                                      boost::shared_ptr<O3AConstraint> b) {

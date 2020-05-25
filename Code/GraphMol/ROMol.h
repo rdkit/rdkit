@@ -267,7 +267,7 @@ class RDKIT_GRAPHMOL_EXPORT ROMol : public RDProps {
     return {&d_graph};
   }
 
-  ROMol() : RDProps(), numBonds(0) { initMol(); }
+  ROMol() : RDProps() { initMol(); }
 
   //! copy constructor with a twist
   /*!
@@ -681,7 +681,7 @@ class RDKIT_GRAPHMOL_EXPORT ROMol : public RDProps {
       const ROMol &);  // disable assignment, RWMol's support assignment
 
  protected:
-  unsigned int numBonds;
+  unsigned int numBonds{0};
 #ifndef WIN32
  private:
 #endif

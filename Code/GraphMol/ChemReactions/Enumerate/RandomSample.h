@@ -64,14 +64,14 @@ namespace RDKit {
 */
 class RDKIT_CHEMREACTIONS_EXPORT RandomSampleStrategy
     : public EnumerationStrategyBase {
-  boost::uint64_t m_numPermutationsProcessed;
+  boost::uint64_t m_numPermutationsProcessed{};
   boost::minstd_rand m_rng;
   std::vector<boost::random::uniform_int_distribution<>> m_distributions;
 
  public:
   RandomSampleStrategy()
       : EnumerationStrategyBase(),
-        m_numPermutationsProcessed(),
+        
         m_rng(),
         m_distributions() {
     for (size_t i = 0; i < m_permutation.size(); ++i) {
