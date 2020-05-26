@@ -45,7 +45,9 @@ class RDKIT_RDGEOMETRYLIB_EXPORT Point {
 // typedef class Point3D Point;
 class RDKIT_RDGEOMETRYLIB_EXPORT Point3D : public Point {
  public:
-  double x{0.0}, y{0.0}, z{0.0};
+  double x{ 0.0 };
+  double y{ 0.0 }; 
+  double z{ 0.0 };
 
   Point3D()  {};
   Point3D(double xv, double yv, double zv) : x(xv), y(yv), z(zv){};
@@ -257,7 +259,8 @@ RDKIT_RDGEOMETRYLIB_EXPORT double computeSignedDihedralAngle(
 
 class RDKIT_RDGEOMETRYLIB_EXPORT Point2D : public Point {
  public:
-  double x{0.0}, y{0.0};
+  double x{ 0.0 };
+  double y{ 0.0 };
 
   Point2D()  {};
   Point2D(double xv, double yv) : x(xv), y(yv){};
