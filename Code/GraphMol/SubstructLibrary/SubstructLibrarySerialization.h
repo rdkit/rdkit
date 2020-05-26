@@ -150,11 +150,11 @@ void serialize(Archive &ar, RDKit::PatternHolder &pattern_holder,
 
 template <class Archive>
 void registerSubstructLibraryTypes(Archive &ar) {
-  ar.register_type(static_cast<RDKit::MolHolder *>(NULL));
-  ar.register_type(static_cast<RDKit::CachedMolHolder *>(NULL));
-  ar.register_type(static_cast<RDKit::CachedSmilesMolHolder *>(NULL));
-  ar.register_type(static_cast<RDKit::CachedTrustedSmilesMolHolder *>(NULL));
-  ar.register_type(static_cast<RDKit::PatternHolder *>(NULL));
+  ar.register_type(static_cast<RDKit::MolHolder *>(nullptr));
+  ar.register_type(static_cast<RDKit::CachedMolHolder *>(nullptr));
+  ar.register_type(static_cast<RDKit::CachedSmilesMolHolder *>(nullptr));
+  ar.register_type(static_cast<RDKit::CachedTrustedSmilesMolHolder *>(nullptr));
+  ar.register_type(static_cast<RDKit::PatternHolder *>(nullptr));
 }
 
 template <class Archive>

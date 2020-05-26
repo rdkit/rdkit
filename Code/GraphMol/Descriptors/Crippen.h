@@ -50,8 +50,8 @@ const std::string crippenVersion = "1.2.0";
 RDKIT_DESCRIPTORS_EXPORT void getCrippenAtomContribs(
     const ROMol &mol, std::vector<double> &logpContribs,
     std::vector<double> &mrContribs, bool force = false,
-    std::vector<unsigned int> *atomTypes = 0,
-    std::vector<std::string> *atomTypeLabels = 0);
+    std::vector<unsigned int> *atomTypes = nullptr,
+    std::vector<std::string> *atomTypeLabels = nullptr);
 
 //! generate Wildman-Crippen LogP and MR estimates for a molecule
 /*!

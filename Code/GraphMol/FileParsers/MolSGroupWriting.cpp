@@ -142,7 +142,7 @@ std::string BuildV2000SPLLines(const ROMol &mol) {
     unsigned int parentIdx = -1;
     if (sg->getPropIfPresent("PARENT", parentIdx)) {
       temp << FormatV2000IntField(1 + (sg - sgroups.begin()))
-           << FormatV2000IntField(1 + parentIdx);
+           << FormatV2000IntField(parentIdx);
       if (++count == 8) {
         ret << "M  SPL" << FormatV2000NumEntriesField(8) << temp.str()
             << std::endl;
@@ -523,7 +523,7 @@ std::string FormatV3000ParentBlock(const SubstanceGroup &sgroup) {
 
   unsigned int parentIdx = -1;
   if (sgroup.getPropIfPresent("PARENT", parentIdx)) {
-    ret << " PARENT=" << (1 + parentIdx);
+    ret << " PARENT=" << parentIdx;
   }
 
   return ret.str();

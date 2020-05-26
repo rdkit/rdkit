@@ -51,7 +51,7 @@ struct RDKIT_DESCRIPTORS_EXPORT PropertyFunctor {
   double (*d_dataFunc)(const ROMol &);
 
   PropertyFunctor(const std::string &name, const std::string &version,
-                  double (*func)(const ROMol &) = NULL)
+                  double (*func)(const ROMol &) = nullptr)
       : propName(name), propVersion(version), d_dataFunc(func) {}
   virtual ~PropertyFunctor(){};
 

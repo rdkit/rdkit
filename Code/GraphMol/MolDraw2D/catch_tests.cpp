@@ -14,6 +14,7 @@
 #include <GraphMol/RDKitBase.h>
 
 #include <GraphMol/SmilesParse/SmilesParse.h>
+#include <GraphMol/FileParsers/FileParsers.h>
 #include <GraphMol/MolDraw2D/MolDraw2D.h>
 #include <GraphMol/MolDraw2D/MolDraw2DSVG.h>
 #include <GraphMol/MolDraw2D/MolDraw2DUtils.h>
@@ -261,8 +262,8 @@ TEST_CASE("dative bonds", "[drawing][organometallics]") {
     outs << text;
     outs.flush();
 
-    CHECK(text.find("<path class='bond-2' d='M 57.7741,143.825"
-                    " L 85.7826,152.925' style='fill:none;"
+    CHECK(text.find("<path class='bond-2' d='M 61.7343,143.825"
+                    " L 89.7427,152.925' style='fill:none;"
                     "fill-rule:evenodd;stroke:#0000FF") !=
           std::string::npos);
   }

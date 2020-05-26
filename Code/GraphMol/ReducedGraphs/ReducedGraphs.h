@@ -32,7 +32,8 @@ namespace ReducedGraphs {
 
 */
 RDKIT_REDUCEDGRAPHS_EXPORT ROMol *generateMolExtendedReducedGraph(
-    const ROMol &mol, std::vector<boost::dynamic_bitset<>> *atomTypes = 0);
+    const ROMol &mol,
+    std::vector<boost::dynamic_bitset<>> *atomTypes = nullptr);
 //! \brief Generates a ErG fingerprint vector for a molecule that's already a
 // reduced graph
 /*!
@@ -53,7 +54,7 @@ RDKIT_REDUCEDGRAPHS_EXPORT ROMol *generateMolExtendedReducedGraph(
 */
 RDKIT_REDUCEDGRAPHS_EXPORT RDNumeric::DoubleVector *
 generateErGFingerprintForReducedGraph(
-    const ROMol &mol, std::vector<boost::dynamic_bitset<>> *atomTypes = 0,
+    const ROMol &mol, std::vector<boost::dynamic_bitset<>> *atomTypes = nullptr,
     double fuzzIncrement = 0.3, unsigned int minPath = 1,
     unsigned int maxPath = 15);
 
@@ -75,7 +76,7 @@ generateErGFingerprintForReducedGraph(
 
 */
 RDKIT_REDUCEDGRAPHS_EXPORT RDNumeric::DoubleVector *getErGFingerprint(
-    const ROMol &mol, std::vector<boost::dynamic_bitset<>> *atomTypes = 0,
+    const ROMol &mol, std::vector<boost::dynamic_bitset<>> *atomTypes = nullptr,
     double fuzzIncrement = 0.3, unsigned int minPath = 1,
     unsigned int maxPath = 15);
 }  // namespace ReducedGraphs

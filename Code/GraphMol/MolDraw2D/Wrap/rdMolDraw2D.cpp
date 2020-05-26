@@ -646,7 +646,7 @@ BOOST_PYTHON_MODULE(rdMolDraw2D) {
       .def_readwrite("centreMoleculesBeforeDrawing",
                      &RDKit::MolDrawOptions::centreMoleculesBeforeDrawing,
                      "Moves the centre of the drawn molecule to (0,0)."
-                     "Default True.")
+                     "Default False.")
       .def_readwrite("additionalAtomLabelPadding",
                      &RDKit::MolDrawOptions::additionalAtomLabelPadding,
                      "additional padding to leave around atom labels. "

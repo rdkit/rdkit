@@ -79,7 +79,6 @@ struct StringRect {
     tr = Point2D(centre_.x + wb2, centre_.y + hb2);
     br = Point2D(centre_.x + wb2, centre_.y - hb2);
     bl = Point2D(centre_.x - wb2, centre_.y - hb2);
-
   }
   bool doesItIntersect(const StringRect &other) const {
     if (fabs(centre_.x - other.centre_.x) < (width_ + other.width_) / 2.0 &&
@@ -187,8 +186,8 @@ struct RDKIT_MOLDRAW2D_EXPORT MolDrawOptions {
   bool atomHighlightsAreCircles = false;  // forces atom highlights always to be
                                           // circles. Default (false) is to put
                                           // ellipses round longer labels.
-  bool centreMoleculesBeforeDrawing = true;  // moves the centre of the drawn
-                                             // molecule to (0,0)
+  bool centreMoleculesBeforeDrawing = false;  // moves the centre of the drawn
+                                              // molecule to (0,0)
 
   MolDrawOptions() {
     highlightColourPalette.emplace_back(
@@ -214,7 +213,7 @@ struct RDKIT_MOLDRAW2D_EXPORT MolDrawOptions {
 //! MolDraw2D is the base class for doing 2D renderings of molecules
 class RDKIT_MOLDRAW2D_EXPORT MolDraw2D {
  public:
-  typedef enum { C = 0, N, E, S, W } OrientType;
+  enum class OrientType: unsigned char { C = 0, N, E, S, W };
   // for aligning the drawing of text to the passed in coords.
   typedef enum { START, MIDDLE, END } AlignType;
   typedef enum {
@@ -819,6 +818,8 @@ RDKIT_MOLDRAW2D_EXPORT bool doLinesIntersect(const Point2D &l1s,
 RDKIT_MOLDRAW2D_EXPORT bool doesLineIntersectLabel(const Point2D &ls,
                                                    const Point2D &lf,
                                                    const StringRect &lab_rect);
+
+std::ostream& operator<<(std::ostream &oss, const MolDraw2D::OrientType &o);
 
 }  // namespace RDKit
 

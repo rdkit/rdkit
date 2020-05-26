@@ -165,7 +165,7 @@ class RDKIT_RDBOOST_EXPORT RDUNUSED NOGIL {
 
   inline ~NOGIL() {
     PyEval_RestoreThread(m_thread_state);
-    m_thread_state = NULL;
+    m_thread_state = nullptr;
   }
 
  private:

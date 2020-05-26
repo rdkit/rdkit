@@ -367,7 +367,7 @@ RDKIT_RDGENERAL_EXPORT void Intersect(const INT_VECT &r1, const INT_VECT &r2,
            from the union.
 */
 RDKIT_RDGENERAL_EXPORT void Union(const VECT_INT_VECT &rings, INT_VECT &res,
-                                  const INT_VECT *exclude = NULL);
+                                  const INT_VECT *exclude = nullptr);
 
 //! given a current combination of numbers change it to the next possible
 // combination

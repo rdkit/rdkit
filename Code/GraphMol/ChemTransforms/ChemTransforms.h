@@ -230,7 +230,8 @@ RDKIT_CHEMTRANSFORMS_EXPORT ROMol *combineMols(
 RDKIT_CHEMTRANSFORMS_EXPORT void addRecursiveQueries(
     ROMol &mol, const std::map<std::string, ROMOL_SPTR> &queries,
     const std::string &propName,
-    std::vector<std::pair<unsigned int, std::string>> *reactantLabels = NULL);
+    std::vector<std::pair<unsigned int, std::string>> *reactantLabels =
+        nullptr);
 
 //! \brief parses a query definition file and sets up a set of definitions
 //!  suitable for use by addRecursiveQueries()

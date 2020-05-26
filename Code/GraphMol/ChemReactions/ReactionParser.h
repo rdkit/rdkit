@@ -82,7 +82,7 @@ RDKIT_CHEMREACTIONS_EXPORT ChemicalReaction *RxnDataStreamToChemicalReaction(
  */
 RDKIT_CHEMREACTIONS_EXPORT ChemicalReaction *RxnSmartsToChemicalReaction(
     const std::string &text,
-    std::map<std::string, std::string> *replacements = 0,
+    std::map<std::string, std::string> *replacements = nullptr,
     bool useSmiles = false);
 
 //! Parse a ROMol into a ChemicalReaction, RXN role must be set before

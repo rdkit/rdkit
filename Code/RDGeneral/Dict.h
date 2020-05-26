@@ -71,7 +71,7 @@ class RDKIT_RDGENERAL_EXPORT Dict {
       if (other._hasNonPodData) _hasNonPodData = true;
       for (size_t i = 0; i < other._data.size(); ++i) {
         const Pair &pair = other._data[i];
-        Pair *target = 0;
+        Pair *target = nullptr;
         for (size_t i = 0; i < _data.size(); ++i) {
           if (_data[i].key == pair.key) {
             target = &_data[i];

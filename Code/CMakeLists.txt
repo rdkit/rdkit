@@ -37,3 +37,8 @@ endif(RDK_BUILD_PGSQL)
 if(RDK_BUILD_MINIMAL_LIB)
   add_subdirectory(MinimalLib)
 endif(RDK_BUILD_MINIMAL_LIB)
+
+
+if(RDK_BUILD_FUZZ_TARGETS)
+  add_subdirectory(Fuzz)
+endif(RDK_BUILD_FUZZ_TARGETS)

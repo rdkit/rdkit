@@ -188,8 +188,8 @@ class RDKIT_MOLALIGN_EXPORT LAP {
 class RDKIT_MOLALIGN_EXPORT SDM {
  public:
   // constructor
-  SDM(const Conformer *prbConf = NULL, const Conformer *refConf = NULL,
-      O3AConstraintVect *o3aConstraintVect = NULL)
+  SDM(const Conformer *prbConf = nullptr, const Conformer *refConf = nullptr,
+      O3AConstraintVect *o3aConstraintVect = nullptr)
       : d_prbConf(prbConf),
         d_refConf(refConf),
         d_o3aConstraintVect(o3aConstraintVect){};
@@ -278,10 +278,10 @@ class RDKIT_MOLALIGN_EXPORT O3A {
       AtomTypeScheme atomTypes = MMFF94, const int prbCid = -1,
       const int refCid = -1, const bool reflect = false,
       const unsigned int maxIters = 50, unsigned int options = 0,
-      const MatchVectType *constraintMap = NULL,
-      const RDNumeric::DoubleVector *constraintWeights = NULL,
-      LAP *extLAP = NULL, MolHistogram *extPrbHist = NULL,
-      MolHistogram *extRefHist = NULL);
+      const MatchVectType *constraintMap = nullptr,
+      const RDNumeric::DoubleVector *constraintWeights = nullptr,
+      LAP *extLAP = nullptr, MolHistogram *extPrbHist = nullptr,
+      MolHistogram *extRefHist = nullptr);
   O3A(int (*costFunc)(const unsigned int, const unsigned int, double, void *),
       double (*weightFunc)(const unsigned int, const unsigned int, void *),
       double (*scoringFunc)(const unsigned int, const unsigned int, void *),
@@ -289,9 +289,9 @@ class RDKIT_MOLALIGN_EXPORT O3A {
       const int refCid, const boost::dynamic_bitset<> &prbHvyAtoms,
       const boost::dynamic_bitset<> &refHvyAtoms, const bool reflect = false,
       const unsigned int maxIters = 50, unsigned int options = 0,
-      O3AConstraintVect *o3aConstraintVect = NULL, ROMol *extWorkPrbMol = NULL,
-      LAP *extLAP = NULL, MolHistogram *extPrbHist = NULL,
-      MolHistogram *extRefHist = NULL);
+      O3AConstraintVect *o3aConstraintVect = nullptr,
+      ROMol *extWorkPrbMol = nullptr, LAP *extLAP = nullptr,
+      MolHistogram *extPrbHist = nullptr, MolHistogram *extRefHist = nullptr);
   ~O3A() {
     if (d_o3aMatchVect) {
       delete d_o3aMatchVect;
@@ -346,8 +346,8 @@ RDKIT_MOLALIGN_EXPORT void getO3AForProbeConfs(
     std::vector<boost::shared_ptr<O3A>> &res, int numThreads = 1,
     O3A::AtomTypeScheme atomTypes = O3A::MMFF94, const int refCid = -1,
     const bool reflect = false, const unsigned int maxIters = 50,
-    unsigned int options = 0, const MatchVectType *constraintMap = NULL,
-    const RDNumeric::DoubleVector *constraintWeights = NULL);
+    unsigned int options = 0, const MatchVectType *constraintMap = nullptr,
+    const RDNumeric::DoubleVector *constraintWeights = nullptr);
 }  // namespace MolAlign
 }  // namespace RDKit
 #endif
