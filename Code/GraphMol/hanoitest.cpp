@@ -20,7 +20,7 @@
 
 #include <iostream>
 #include <vector>
-#include <boost/random.hpp>
+#include <random>
 #include <cstdlib>
 
 using namespace RDKit;
@@ -901,11 +901,10 @@ void _renumberTest(const ROMol *m, std::string inSmiles,
     idxV[i] = i;
   }
 
-  std::srand(0xF00D);
   for (unsigned int i = 0; i < numRenumbers; ++i) {
     //      std::cerr<<"---------------------------------------------------"<<std::endl;
     std::vector<unsigned int> nVect(idxV);
-    std::random_shuffle(nVect.begin(), nVect.end());
+    std::shuffle(nVect.begin(), nVect.end(), std::mt19937(0xf00d));
     //      for(unsigned int j=0;j<m->getNumAtoms();++j){
     //        std::cerr<<"Renumber: "<<nVect[j]<<"->"<<j<<std::endl;
     //      }
@@ -940,10 +939,9 @@ void _renumberTest2(const ROMol *m, std::string inSmiles,
     idxV[i] = i;
   }
 
-  std::srand(0xF00D);
   for (unsigned int i = 0; i < numRenumbers; ++i) {
     std::vector<unsigned int> nVect(idxV);
-    std::random_shuffle(nVect.begin(), nVect.end());
+    std::shuffle(nVect.begin(), nVect.end(), std::mt19937(0xf00d));
 
     ROMol *nm = _renumber(m, nVect, inSmiles);
 
