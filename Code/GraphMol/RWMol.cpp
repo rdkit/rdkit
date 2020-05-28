@@ -221,7 +221,7 @@ void RWMol::removeAtom(Atom *atom) {
   ADJ_ITER b1, b2;
   boost::tie(b1, b2) = getAtomNeighbors(atom);
   while (b1 != b2) {
-    nbrs.push_back(std::make_pair(atom->getIdx(), rdcast<unsigned int>(*b1)));
+    nbrs.emplace_back(atom->getIdx(), rdcast<unsigned int>(*b1));
     ++b1;
   }
   for (auto &nbr : nbrs) {

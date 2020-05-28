@@ -225,7 +225,7 @@ RDKit::INT_VECT MaxMinPicker::lazyPick(T &func, unsigned int poolSize,
   double maxOFmin = -1.0;
   double tmpThreshold = -1.0;
   while (picked < pickSize) {
-    unsigned int *pick_prev = 0;
+    unsigned int *pick_prev = nullptr;
     maxOFmin = -1.0;
     prev = &pool_list;
     do {

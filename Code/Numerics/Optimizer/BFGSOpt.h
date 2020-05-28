@@ -251,7 +251,7 @@ int minimize(unsigned int dim, double *pos, double gradTol,
       if (snapshotVect && snapshotFreq) {
         RDKit::Snapshot s(boost::shared_array<double>(newPos), fp);
         snapshotVect->push_back(s);
-        newPos = NULL;
+        newPos = nullptr;
       }
       CLEANUP();
       return 0;
@@ -275,7 +275,7 @@ int minimize(unsigned int dim, double *pos, double gradTol,
       if (snapshotVect && snapshotFreq) {
         RDKit::Snapshot s(boost::shared_array<double>(newPos), fp);
         snapshotVect->push_back(s);
-        newPos = NULL;
+        newPos = nullptr;
       }
       CLEANUP();
       return 0;
@@ -382,8 +382,8 @@ int minimize(unsigned int dim, double *pos, double gradTol,
              unsigned int &numIters, double &funcVal, EnergyFunctor func,
              GradientFunctor gradFunc, double funcTol = TOLX,
              unsigned int maxIts = MAXITS) {
-  return minimize(dim, pos, gradTol, numIters, funcVal, func, gradFunc, 0, NULL,
-                  funcTol, maxIts);
+  return minimize(dim, pos, gradTol, numIters, funcVal, func, gradFunc, 0,
+                  nullptr, funcTol, maxIts);
 }
 
 }  // namespace BFGSOpt

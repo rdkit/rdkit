@@ -26,6 +26,7 @@
 #include <map>
 #include <algorithm>
 #include <boost/foreach.hpp>
+#include <random>
 
 #ifndef M_PI
 #define M_PI 3.14159265358979323846
@@ -265,7 +266,6 @@ void test3() {
   TEST_ASSERT(bfs == 2);
   delete m;
 
-
   // Counterexamples in ring perception figure 4:
   //  * The native Figueras algorithm cannot work on this molecule, it will
   //    fail after finding one ring. Naive modified Figueras finds a 6 membered
@@ -281,7 +281,6 @@ void test3() {
     TEST_ASSERT(bring.size() < 6);
   }
   delete m;
-
 
   smi = "C1CC2C1CCC2";
   m = SmilesToMol(smi);
@@ -4681,7 +4680,7 @@ void _renumberTest(const ROMol *m) {
   std::string refSmi = MolToSmiles(*m, true);
   for (unsigned int i = 0; i < m->getNumAtoms(); ++i) {
     std::vector<unsigned int> nVect(idxV);
-    std::random_shuffle(nVect.begin(), nVect.end());
+    std::shuffle(nVect.begin(), nVect.end(), std::mt19937(0xf00d));
     // std::copy(nVect.begin(),nVect.end(),std::ostream_iterator<int>(std::cerr,",
     // "));
     // std::cerr<<std::endl;
@@ -5302,10 +5301,10 @@ void testGithubIssue539() {
   }
   {
     std::vector<std::string> smilesVec;
-    smilesVec.push_back("C1=C[CH+]1");
-    smilesVec.push_back("C1=CC=C[CH+]C=C1");
-    smilesVec.push_back("c1c[cH+]1");
-    smilesVec.push_back("c1ccc[cH+]cc1");
+    smilesVec.emplace_back("C1=C[CH+]1");
+    smilesVec.emplace_back("C1=CC=C[CH+]C=C1");
+    smilesVec.emplace_back("c1c[cH+]1");
+    smilesVec.emplace_back("c1ccc[cH+]cc1");
     for (std::vector<std::string>::const_iterator smiles = smilesVec.begin();
          smiles != smilesVec.end(); ++smiles) {
       RWMol *m = SmilesToMol(*smiles);
@@ -7610,7 +7609,6 @@ void testRingFamilies() {
     TEST_ASSERT(numRings == 6);
     numRings = m->getRingInfo()->numRings();
     TEST_ASSERT(numRings == 6);
-
 
     delete m;
   }

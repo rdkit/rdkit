@@ -627,7 +627,7 @@ void dfsFindCycles(ROMol &mol, int atomIdx, int inBondIdx,
       // std::cerr<<"aIdx: "<< atomIdx <<"   p: "<<otherIdx<<" Rank:
       // "<<ranks[otherIdx] <<" "<<colors[otherIdx]<<"
       // "<<theBond->getBondType()<<" "<<rank<<std::endl;
-      possibles.push_back(PossibleType(rank, otherIdx, theBond));
+      possibles.emplace_back(rank, otherIdx, theBond);
     }
   }
 
@@ -798,7 +798,7 @@ void dfsBuildStack(ROMol &mol, int atomIdx, int inBondIdx,
         rank = getRandomGenerator()();
       }
 
-      possibles.push_back(PossibleType(rank, otherIdx, theBond));
+      possibles.emplace_back(rank, otherIdx, theBond);
     }
   }
 

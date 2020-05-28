@@ -745,7 +745,25 @@ TEST_CASE("BRICS performance problems", "[bug]") {
   }
 }
 
-TEST_CASE("GitHub #3153", "[bug]") {
+TEST_CASE("Github #3177: seg fault with null molecules", "[bug]") {
+  SECTION("basics") {
+    std::vector<ROMOL_SPTR> mols;
+    mols.emplace_back(nullptr);
+    ScaffoldNetwork::ScaffoldNetworkParams ps =
+        ScaffoldNetwork::getBRICSNetworkParams();
+    REQUIRE_THROWS_AS(ScaffoldNetwork::createScaffoldNetwork(mols,ps),ValueErrorException);
+  }
+  SECTION("including one valid molecule") {
+    std::vector<ROMOL_SPTR> mols;
+    mols.emplace_back(SmilesToMol("Cc1ccccc1"));
+    mols.emplace_back(nullptr);
+    ScaffoldNetwork::ScaffoldNetworkParams ps =
+    ScaffoldNetwork::getBRICSNetworkParams();
+    REQUIRE_THROWS_AS(ScaffoldNetwork::createScaffoldNetwork(mols,ps),ValueErrorException);
+  }
+}
+
+TEST_CASE("GitHub #3153: Kekulization error in molecules with aromatic C+", "[bug]") {
   SECTION("Standard Representation") {
     auto smis = {"O=C1C=CC(CC2=CC=CC2)=CC=C1"};
     std::vector<ROMOL_SPTR> ms;

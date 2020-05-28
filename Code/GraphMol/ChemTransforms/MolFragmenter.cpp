@@ -355,7 +355,7 @@ void fragmentOnSomeBonds(
     }
     ROMol *nm = fragmentOnBonds(mol, fragmentHere, addDummies, dummyLabelsHere,
                                 bondTypesHere, lCutsPerAtom);
-    resMols.push_back(ROMOL_SPTR(nm));
+    resMols.emplace_back(nm);
 
     state = nextBitCombo(state);
   }
@@ -562,9 +562,9 @@ ROMol *fragmentOnBonds(const ROMol &mol,
       bondsUsed.set(bond->getIdx());
       bondIndices.push_back(bond->getIdx());
       if (bond->getBeginAtomIdx() == static_cast<unsigned int>(mv[0].second)) {
-        dummyLabels.push_back(std::make_pair(fbt.atom1Label, fbt.atom2Label));
+        dummyLabels.emplace_back(fbt.atom1Label, fbt.atom2Label);
       } else {
-        dummyLabels.push_back(std::make_pair(fbt.atom2Label, fbt.atom1Label));
+        dummyLabels.emplace_back(fbt.atom2Label, fbt.atom1Label);
       }
       bondTypes.push_back(fbt.bondType);
     }

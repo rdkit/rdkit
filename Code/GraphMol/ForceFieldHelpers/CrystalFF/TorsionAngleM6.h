@@ -34,7 +34,7 @@ class RDKIT_FORCEFIELDHELPERS_EXPORT TorsionAngleContribM6
     : public ForceFields::ForceFieldContrib {
  public:
   TorsionAngleContribM6()
-      : d_at1Idx(-1), d_at2Idx(-1), d_at3Idx(-1), d_at4Idx(-1){};
+       {};
   //! Constructor
   /*!
    The torsion is between atom1 - atom2 - atom3 - atom4
@@ -59,7 +59,7 @@ class RDKIT_FORCEFIELDHELPERS_EXPORT TorsionAngleContribM6
   };
 
  private:
-  int d_at1Idx, d_at2Idx, d_at3Idx, d_at4Idx;
+  int d_at1Idx{-1}, d_at2Idx{-1}, d_at3Idx{-1}, d_at4Idx{-1};
   std::vector<double> d_V;
   std::vector<int> d_sign;
 };

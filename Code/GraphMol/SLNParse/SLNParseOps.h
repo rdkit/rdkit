@@ -275,7 +275,7 @@ int addBranchToMol(std::vector<RWMol *> &molList, unsigned int molIdx,
   } else {
     delete bond;
   }
-  bond = 0;
+  bond = nullptr;
 
   delete branch;
   unsigned int sz = molList.size();

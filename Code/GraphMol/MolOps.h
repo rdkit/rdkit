@@ -102,8 +102,9 @@ RDKIT_GRAPHMOL_EXPORT unsigned int getMolFrags(
 
 */
 RDKIT_GRAPHMOL_EXPORT std::vector<boost::shared_ptr<ROMol>> getMolFrags(
-    const ROMol &mol, bool sanitizeFrags = true, std::vector<int> *frags = 0,
-    std::vector<std::vector<int>> *fragsMolAtomMapping = 0,
+    const ROMol &mol, bool sanitizeFrags = true,
+    std::vector<int> *frags = nullptr,
+    std::vector<std::vector<int>> *fragsMolAtomMapping = nullptr,
     bool copyConformers = true);
 
 //! splits a molecule into pieces based on labels assigned using a query
@@ -124,7 +125,7 @@ template <typename T>
 RDKIT_GRAPHMOL_EXPORT std::map<T, boost::shared_ptr<ROMol>>
 getMolFragsWithQuery(const ROMol &mol, T (*query)(const ROMol &, const Atom *),
                      bool sanitizeFrags = true,
-                     const std::vector<T> *whiteList = 0,
+                     const std::vector<T> *whiteList = nullptr,
                      bool negateList = false);
 
 #if 0
@@ -151,7 +152,7 @@ getMolFragsWithQuery(const ROMol &mol, T (*query)(const ROMol &, const Atom *),
 */
 RDKIT_GRAPHMOL_EXPORT double computeBalabanJ(
     const ROMol &mol, bool useBO = true, bool force = false,
-    const std::vector<int> *bondPath = 0, bool cacheIt = true);
+    const std::vector<int> *bondPath = nullptr, bool cacheIt = true);
 //! \overload
 RDKIT_GRAPHMOL_EXPORT double computeBalabanJ(double *distMat, int nb, int nAts);
 
@@ -182,13 +183,13 @@ RDKIT_GRAPHMOL_EXPORT double computeBalabanJ(double *distMat, int nb, int nAts);
  */
 RDKIT_GRAPHMOL_EXPORT ROMol *addHs(const ROMol &mol, bool explicitOnly = false,
                                    bool addCoords = false,
-                                   const UINT_VECT *onlyOnAtoms = NULL,
+                                   const UINT_VECT *onlyOnAtoms = nullptr,
                                    bool addResidueInfo = false);
 //! \overload
 // modifies the molecule in place
 RDKIT_GRAPHMOL_EXPORT void addHs(RWMol &mol, bool explicitOnly = false,
                                  bool addCoords = false,
-                                 const UINT_VECT *onlyOnAtoms = NULL,
+                                 const UINT_VECT *onlyOnAtoms = nullptr,
                                  bool addResidueInfo = false);
 
 //! returns a copy of a molecule with hydrogens removed
@@ -359,11 +360,11 @@ RDKIT_GRAPHMOL_EXPORT void parseAdjustQueryParametersFromJSON(
   \return the new molecule
 */
 RDKIT_GRAPHMOL_EXPORT ROMol *adjustQueryProperties(
-    const ROMol &mol, const AdjustQueryParameters *params = NULL);
+    const ROMol &mol, const AdjustQueryParameters *params = nullptr);
 //! \overload
 // modifies the molecule in place
 RDKIT_GRAPHMOL_EXPORT void adjustQueryProperties(
-    RWMol &mol, const AdjustQueryParameters *params = NULL);
+    RWMol &mol, const AdjustQueryParameters *params = nullptr);
 
 //! returns a copy of a molecule with the atoms renumbered
 /*!
@@ -518,7 +519,7 @@ typedef enum {
 */
 RDKIT_GRAPHMOL_EXPORT int setAromaticity(
     RWMol &mol, AromaticityModel model = AROMATICITY_DEFAULT,
-    int (*func)(RWMol &) = NULL);
+    int (*func)(RWMol &) = nullptr);
 
 //! Designed to be called by the sanitizer to handle special cases before
 // anything is done.
@@ -643,8 +644,8 @@ RDKIT_GRAPHMOL_EXPORT void setHybridization(ROMol &mol);
 RDKIT_GRAPHMOL_EXPORT int findSSSR(const ROMol &mol,
                                    std::vector<std::vector<int>> &res);
 //! \overload
-RDKIT_GRAPHMOL_EXPORT int findSSSR(const ROMol &mol,
-                                   std::vector<std::vector<int>> *res = 0);
+RDKIT_GRAPHMOL_EXPORT int findSSSR(
+    const ROMol &mol, std::vector<std::vector<int>> *res = nullptr);
 
 //! use a DFS algorithm to identify ring bonds and atoms in a molecule
 /*!
@@ -710,8 +711,8 @@ RDKIT_GRAPHMOL_EXPORT int symmetrizeSSSR(ROMol &mol);
 */
 RDKIT_GRAPHMOL_EXPORT double *getAdjacencyMatrix(
     const ROMol &mol, bool useBO = false, int emptyVal = 0, bool force = false,
-    const char *propNamePrefix = 0,
-    const boost::dynamic_bitset<> *bondsToUse = 0);
+    const char *propNamePrefix = nullptr,
+    const boost::dynamic_bitset<> *bondsToUse = nullptr);
 
 //! Computes the molecule's topological distance matrix
 /*!
@@ -735,11 +736,9 @@ RDKIT_GRAPHMOL_EXPORT double *getAdjacencyMatrix(
 
 
 */
-RDKIT_GRAPHMOL_EXPORT double *getDistanceMat(const ROMol &mol,
-                                             bool useBO = false,
-                                             bool useAtomWts = false,
-                                             bool force = false,
-                                             const char *propNamePrefix = 0);
+RDKIT_GRAPHMOL_EXPORT double *getDistanceMat(
+    const ROMol &mol, bool useBO = false, bool useAtomWts = false,
+    bool force = false, const char *propNamePrefix = nullptr);
 
 //! Computes the molecule's topological distance matrix
 /*!
@@ -790,11 +789,9 @@ RDKIT_GRAPHMOL_EXPORT double *getDistanceMat(
       In other cases the caller is responsible for freeing the memory.
 
 */
-RDKIT_GRAPHMOL_EXPORT double *get3DDistanceMat(const ROMol &mol,
-                                               int confId = -1,
-                                               bool useAtomWts = false,
-                                               bool force = false,
-                                               const char *propNamePrefix = 0);
+RDKIT_GRAPHMOL_EXPORT double *get3DDistanceMat(
+    const ROMol &mol, int confId = -1, bool useAtomWts = false,
+    bool force = false, const char *propNamePrefix = nullptr);
 //! Find the shortest path between two atoms
 /*!
   Uses the Bellman-Ford algorithm

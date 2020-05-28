@@ -138,6 +138,14 @@ class TestScaffoldNetwork(unittest.TestCase):
     self.assertEqual(len(net.nodes), 11)
     self.assertEqual(len(net.edges), 10)
 
+  def test7Github3177(self):
+    smis = ["C1OC1Cc1ccccc1"]
+    ms = [Chem.MolFromSmiles(x) for x in smis]
+    ms.append(None)
+    params = rdScaffoldNetwork.ScaffoldNetworkParams()
+    with self.assertRaises(ValueError):
+      net = rdScaffoldNetwork.CreateScaffoldNetwork(ms, params)
+
 
 if __name__ == '__main__':
   unittest.main()

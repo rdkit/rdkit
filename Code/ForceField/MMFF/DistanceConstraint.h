@@ -22,7 +22,7 @@ namespace MMFF {
 class RDKIT_FORCEFIELD_EXPORT DistanceConstraintContrib
     : public ForceFieldContrib {
  public:
-  DistanceConstraintContrib() : d_end1Idx(-1), d_end2Idx(-1){};
+  DistanceConstraintContrib()  {};
   //! Constructor
   /*!
     \param owner       pointer to the owning ForceField
@@ -52,7 +52,7 @@ class RDKIT_FORCEFIELD_EXPORT DistanceConstraintContrib
   };
 
  private:
-  int d_end1Idx, d_end2Idx;   //!< indices of end points
+  int d_end1Idx{-1}, d_end2Idx{-1};   //!< indices of end points
   double d_minLen, d_maxLen;  //!< rest length of the bond
   double d_forceConstant;     //!< force constant of the bond
 };

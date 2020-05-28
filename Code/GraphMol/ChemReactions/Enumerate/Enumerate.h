@@ -58,10 +58,10 @@ namespace RDKit {
      does not pass sanitization, then none of the products will.
 */
 struct RDKIT_CHEMREACTIONS_EXPORT EnumerationParams {
-  int reagentMaxMatchCount;
-  bool sanePartialProducts;
+  int reagentMaxMatchCount{INT_MAX};
+  bool sanePartialProducts{false};
   EnumerationParams()
-      : reagentMaxMatchCount(INT_MAX), sanePartialProducts(false) {}
+       {}
 
   EnumerationParams(const EnumerationParams &rhs)
       : reagentMaxMatchCount(rhs.reagentMaxMatchCount),

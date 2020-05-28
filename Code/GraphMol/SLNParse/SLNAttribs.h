@@ -54,12 +54,12 @@ typedef enum {
 class RDKIT_SLNPARSE_EXPORT AttribType {
  public:
   AttribType()
-      : first(""), second(""), op(""), negated(false), structQuery(0){};
+      : first(""), second(""), op("") {};
   std::string first;
   std::string second;
   std::string op;
-  bool negated;
-  void *structQuery;
+  bool negated{false};
+  void *structQuery{nullptr};
 };
 
 typedef std::vector<std::pair<AttribCombineOp, boost::shared_ptr<AttribType>>>

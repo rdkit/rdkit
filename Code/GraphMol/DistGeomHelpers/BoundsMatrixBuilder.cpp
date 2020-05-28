@@ -1561,8 +1561,7 @@ void collectBondsAndAngles(const ROMol &mol,
   angles.resize(0);
   bonds.reserve(mol.getNumBonds());
   for (const auto bondi : mol.bonds()) {
-    bonds.push_back(
-        std::make_pair(bondi->getBeginAtomIdx(), bondi->getEndAtomIdx()));
+    bonds.emplace_back(bondi->getBeginAtomIdx(), bondi->getEndAtomIdx());
 
     for (unsigned int j = bondi->getIdx() + 1; j < mol.getNumBonds(); ++j) {
       const Bond *bondj = mol.getBondWithIdx(j);

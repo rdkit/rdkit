@@ -2381,7 +2381,7 @@ void setDoubleBondNeighborDirections(ROMol &mol, const Conformer *conf) {
     if (!(mol.getRingInfo()->numBondRings(dblBond->getIdx()))) {
       countHere *= 10;
     }
-    orderedBondsInPlay.push_back(std::make_pair(countHere, dblBond));
+    orderedBondsInPlay.emplace_back(countHere, dblBond);
   }
   std::sort(orderedBondsInPlay.begin(), orderedBondsInPlay.end());
 
