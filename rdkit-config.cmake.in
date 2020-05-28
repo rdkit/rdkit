@@ -1,6 +1,6 @@
 # Compute installation prefix relative to this file
 get_filename_component (_dir "${CMAKE_CURRENT_LIST_FILE}" DIRECTORY)
-get_filename_component (_prefix "${_dir}/.." ABSOLUTE)
+get_filename_component (_prefix "${_dir}/../../.." ABSOLUTE)
 
 # Import the targets
 include ("${_dir}/@RDKit_EXPORTED_TARGETS@.cmake")
