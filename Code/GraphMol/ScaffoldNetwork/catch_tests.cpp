@@ -745,6 +745,24 @@ TEST_CASE("BRICS performance problems", "[bug]") {
   }
 }
 
+TEST_CASE("Github #3177: seg fault with null molecules", "[bug]") {
+  SECTION("basics") {
+    std::vector<ROMOL_SPTR> mols;
+    mols.emplace_back(nullptr);
+    ScaffoldNetwork::ScaffoldNetworkParams ps =
+        ScaffoldNetwork::getBRICSNetworkParams();
+    REQUIRE_THROWS_AS(ScaffoldNetwork::createScaffoldNetwork(mols,ps),ValueErrorException);
+  }
+  SECTION("including one valid molecule") {
+    std::vector<ROMOL_SPTR> mols;
+    mols.emplace_back(SmilesToMol("Cc1ccccc1"));
+    mols.emplace_back(nullptr);
+    ScaffoldNetwork::ScaffoldNetworkParams ps =
+    ScaffoldNetwork::getBRICSNetworkParams();
+    REQUIRE_THROWS_AS(ScaffoldNetwork::createScaffoldNetwork(mols,ps),ValueErrorException);
+  }
+}
+
 #ifdef RDK_USE_BOOST_SERIALIZATION
 
 TEST_CASE("Serialization", "[serialization]") {
