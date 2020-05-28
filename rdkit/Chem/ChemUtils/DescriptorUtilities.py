@@ -11,7 +11,7 @@
 Collection of utilities to be used with descriptors
 
 '''
-
+import math
 
 def setDescriptorVersion(version='1.0.0'):
   """ Set the version on the descriptor function.
@@ -30,7 +30,7 @@ class VectorDescriptorWrapper:
     """Wrap a function that returns a vector and make it seem like there
     is one function for each entry.  These functions are added to the global
     namespace with the names provided"""
-    def __init__(self, func, names, version):
+    def __init__(self, func, names, version, namespace):
         self.func = func
         self.names = names
         self.func_key = "__%s"%(func.__name__)
@@ -41,9 +41,9 @@ class VectorDescriptorWrapper:
             f.__name__ = n
             f.__qualname__ = n
             f.version = version
-            globals()[n] = f
             function_namespace[n] = f
-          self.namespace = VectorDescriptorNamespace(**function_namespace)
+        self.namespace = VectorDescriptorNamespace(**function_namespace)            
+        namespace.update(function_namespace)
 
     def _get_key(self, index):
         return "%s%s"%(self.func_key, index)
@@ -51,8 +51,11 @@ class VectorDescriptorWrapper:
     def call_desc(self, mol, key):
         if mol.HasProp(key):
             return mol.GetDoubleProp(key)
-        
-        results = self.func(mol)
+
+        try:
+          results = self.func(mol)
+        except:
+          return math.nan
         _get_key = self._get_key
         for i,v in enumerate(results):
             mol.SetDoubleProp(_get_key(i), v)
