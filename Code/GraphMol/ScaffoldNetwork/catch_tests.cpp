@@ -745,6 +745,55 @@ TEST_CASE("BRICS performance problems", "[bug]") {
   }
 }
 
+TEST_CASE("GitHub #3153", "[bug]") {
+  SECTION("Standard Representation") {
+    auto smis = {"O=C1C=CC(CC2=CC=CC2)=CC=C1"};
+    std::vector<ROMOL_SPTR> ms;
+    for (const auto smi : smis) {
+      auto m = SmilesToMol(smi);
+      REQUIRE(m);
+      ms.push_back(ROMOL_SPTR(m));
+    }
+    ScaffoldNetwork::ScaffoldNetworkParams ps;
+    ScaffoldNetwork::ScaffoldNetwork net = 
+        ScaffoldNetwork::createScaffoldNetwork(ms, ps);
+    CHECK(net.nodes.size() == 9);
+    CHECK(net.counts.size() == net.nodes.size());
+    CHECK(net.edges.size() == 8);
+  }
+  SECTION("Heteroatom inside ring") {
+    auto smis = {"c1cccn1CC"};
+    std::vector<ROMOL_SPTR> ms;
+    for (const auto smi : smis) {
+      auto m = SmilesToMol(smi);
+      REQUIRE(m);
+      ms.push_back(ROMOL_SPTR(m));
+    }
+    ScaffoldNetwork::ScaffoldNetworkParams ps;
+    ScaffoldNetwork::ScaffoldNetwork net = 
+        ScaffoldNetwork::createScaffoldNetwork(ms, ps);
+
+    CHECK(net.nodes.size() == 3);
+    CHECK(net.counts.size() == net.nodes.size());
+    CHECK(net.edges.size() == 2);
+  }
+  SECTION("Aromatic Carbocation") {
+    auto smis = {"[O-][C+]1C=CC(CC2=CC=CC2)=CC=C1"};
+    std::vector<ROMOL_SPTR> ms;
+    for (const auto smi : smis) {
+      auto m = SmilesToMol(smi);
+      REQUIRE(m);
+      ms.push_back(ROMOL_SPTR(m));
+    }
+    ScaffoldNetwork::ScaffoldNetworkParams ps;
+    ScaffoldNetwork::ScaffoldNetwork net = 
+        ScaffoldNetwork::createScaffoldNetwork(ms, ps);
+    CHECK(net.nodes.size() == 11);
+    CHECK(net.counts.size() == net.nodes.size());
+    CHECK(net.edges.size() == 10);
+  }
+}
+
 #ifdef RDK_USE_BOOST_SERIALIZATION
 
 TEST_CASE("Serialization", "[serialization]") {

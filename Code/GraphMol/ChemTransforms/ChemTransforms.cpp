@@ -587,6 +587,10 @@ ROMol *MurckoDecompose(const ROMol &mol) {
           } else if (nbr->getIsAromatic() && nbr->getAtomicNum() != 6) {
             // fix aromatic heteroatoms:
             nbr->setNumExplicitHs(1);
+          } else if (nbr->getIsAromatic() && nbr->getAtomicNum() == 6 && 
+                     nbr->getFormalCharge() == 1) {
+            // fix aromatic carbocations
+            nbr->setNumExplicitHs(1);
           } else if (nbr->getNoImplicit() ||
                      nbr->getChiralTag() != Atom::CHI_UNSPECIFIED) {
             nbr->setNoImplicit(false);
