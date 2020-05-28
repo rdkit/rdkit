@@ -500,7 +500,7 @@ void adjustAtomChiralities(RWMol *mol) {
       boost::tie(nbrIdx, endNbrs) = mol->getAtomNeighbors(*atomIt);
       while (nbrIdx != endNbrs) {
         Bond *nbrBond = mol->getBondBetweenAtoms((*atomIt)->getIdx(), *nbrIdx);
-        neighbors.push_back(std::make_pair(*nbrIdx, nbrBond->getIdx()));
+        neighbors.emplace_back(*nbrIdx, nbrBond->getIdx());
         ++nbrIdx;
       }
 

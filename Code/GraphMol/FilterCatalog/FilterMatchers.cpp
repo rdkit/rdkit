@@ -94,7 +94,7 @@ bool SmartsMatcher::getMatches(const ROMol &mol,
     RDKit::MatchVectType match;
     onPatExists = RDKit::SubstructMatch(mol, *d_pattern.get(), match);
     if (onPatExists) {
-      matchVect.push_back(FilterMatch(copy(), match));
+      matchVect.emplace_back(copy(), match);
     }
   } else {  // need to count
     const bool uniquify = true;
@@ -105,7 +105,7 @@ bool SmartsMatcher::getMatches(const ROMol &mol,
     if (onPatExists) {
       boost::shared_ptr<FilterMatcherBase> clone = copy();
       for (auto &match : matches) {
-        matchVect.push_back(FilterMatch(clone, match));
+        matchVect.emplace_back(clone, match);
       }
     }
   }

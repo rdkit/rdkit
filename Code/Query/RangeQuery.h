@@ -28,7 +28,7 @@ class RangeQuery
     : public Query<MatchFuncArgType, DataFuncArgType, needsConversion> {
  public:
   RangeQuery()
-      : d_upper(0), d_lower(0), df_upperOpen(true), df_lowerOpen(true) {
+      : d_upper(0), d_lower(0) {
     this->df_negate = false;
   };
   //! construct and set the lower and upper bounds
@@ -106,7 +106,7 @@ class RangeQuery
 
  protected:
   MatchFuncArgType d_upper, d_lower;
-  bool df_upperOpen, df_lowerOpen;
+  bool df_upperOpen{true}, df_lowerOpen{true};
 };
 }  // namespace Queries
 #endif

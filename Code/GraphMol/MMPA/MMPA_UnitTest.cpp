@@ -78,7 +78,7 @@ static inline int gettimeofday(struct timeval* tv, struct timezone* tz) {
   unsigned __int64 tmpres = 0;
   static int tzflag;
 
-  if (NULL != tv) {
+  if (nullptr != tv) {
     GetSystemTimeAsFileTime(&ft);
 
     tmpres |= ft.dwHighDateTime;
@@ -92,7 +92,7 @@ static inline int gettimeofday(struct timeval* tv, struct timezone* tz) {
     tv->tv_usec = (long)(tmpres % 1000000UL);
   }
 
-  if (NULL != tz) {
+  if (nullptr != tz) {
     if (!tzflag) {
       _tzset();
       tzflag++;
@@ -130,7 +130,7 @@ std::string getSmilesOnly(
 }
 
 void debugTest1(const char* init_mol) {
-  std::auto_ptr<RWMol> m(SmilesToMol(init_mol));
+  std::unique_ptr<RWMol> m(SmilesToMol(init_mol));
   std::cout << "INIT MOL: " << init_mol << "\n";
   std::cout << "CONV MOL: " << MolToSmiles(*m, true) << "\n";
 }
@@ -138,7 +138,7 @@ void debugTest1(const char* init_mol) {
  * Work-around functions for RDKit canonical
  */
 std::string createCanonicalFromSmiles(const char* smiles) {
-  std::auto_ptr<RWMol> m(SmilesToMol(smiles));
+  std::unique_ptr<RWMol> m(SmilesToMol(smiles));
   std::string res = MolToSmiles(*m, true);
   //    replaceAllMap(res);
   return res;
@@ -169,25 +169,40 @@ void test1() {
 
   const char* fs_sm[] = {
       // 15 reference result's SMILES.
-      "", "C[*:1].O=C(NCCO)c1c(n([O-])c2ccccc2[n+]1=O)[*:1]",
+      "",
+      "C[*:1].O=C(NCCO)c1c(n([O-])c2ccccc2[n+]1=O)[*:1]",
       // ORIGINAL:        "","[*:1]C.[*:1]c1c(C(=O)NCCO)[n+](=O)c2ccccc2n1[O-]",
 
-      "[*:1]c1c([*:2])[n+](=O)c2ccccc2n1[O-]", "[*:1]C.[*:2]C(=O)NCCO",
-      "[*:2]CNC([*:1])=O", "[*:2]CO.[*:1]c1c(C)n([O-])c2ccccc2[n+]1=O",
-      "[*:2]C[*:1]", "[*:2]CO.[*:1]NC(=O)c1c(C)n([O-])c2ccccc2[n+]1=O",
-      "[*:2]NC([*:1])=O", "[*:2]CCO.[*:1]c1c(C)n([O-])c2ccccc2[n+]1=O",
-      "[*:2]NC(=O)c1c([*:1])n([O-])c2ccccc2[n+]1=O", "[*:1]C.[*:2]CCO",
-      "[*:2]CNC(=O)c1c([*:1])n([O-])c2ccccc2[n+]1=O", "[*:1]C.[*:2]CO",
-      "[*:2]CCNC(=O)c1c([*:1])n([O-])c2ccccc2[n+]1=O", "[*:1]C.[*:2]O",
+      "[*:1]c1c([*:2])[n+](=O)c2ccccc2n1[O-]",
+      "[*:1]C.[*:2]C(=O)NCCO",
+      "[*:2]CNC([*:1])=O",
+      "[*:2]CO.[*:1]c1c(C)n([O-])c2ccccc2[n+]1=O",
+      "[*:2]C[*:1]",
+      "[*:2]CO.[*:1]NC(=O)c1c(C)n([O-])c2ccccc2[n+]1=O",
+      "[*:2]NC([*:1])=O",
+      "[*:2]CCO.[*:1]c1c(C)n([O-])c2ccccc2[n+]1=O",
+      "[*:2]NC(=O)c1c([*:1])n([O-])c2ccccc2[n+]1=O",
+      "[*:1]C.[*:2]CCO",
+      "[*:2]CNC(=O)c1c([*:1])n([O-])c2ccccc2[n+]1=O",
+      "[*:1]C.[*:2]CO",
+      "[*:2]CCNC(=O)c1c([*:1])n([O-])c2ccccc2[n+]1=O",
+      "[*:1]C.[*:2]O",
 
-      "", "Cc1c([n+](=O)c2ccccc2n1[O-])[*:1].O=C(NCCO)[*:1]",
+      "",
+      "Cc1c([n+](=O)c2ccccc2n1[O-])[*:1].O=C(NCCO)[*:1]",
       // ORIGINAL:        "","[*:1]C(=O)NCCO.[*:1]c1c(C)n([O-])c2ccccc2[n+]1=O",
 
-      "", "[*:1]CCO.[*:1]NC(=O)c1c(C)n([O-])c2ccccc2[n+]1=O", "",
-      "[*:1]CO.[*:1]CNC(=O)c1c(C)n([O-])c2ccccc2[n+]1=O", "",
-      "[*:1]O.[*:1]CCNC(=O)c1c(C)n([O-])c2ccccc2[n+]1=O", "[*:2]CC[*:1]",
-      "[*:2]O.[*:1]NC(=O)c1c(C)n([O-])c2ccccc2[n+]1=O", "[*:2]CCNC([*:1])=O",
-      "[*:2]O.[*:1]c1c(C)n([O-])c2ccccc2[n+]1=O", "[*:2]C[*:1]",
+      "",
+      "[*:1]CCO.[*:1]NC(=O)c1c(C)n([O-])c2ccccc2[n+]1=O",
+      "",
+      "[*:1]CO.[*:1]CNC(=O)c1c(C)n([O-])c2ccccc2[n+]1=O",
+      "",
+      "[*:1]O.[*:1]CCNC(=O)c1c(C)n([O-])c2ccccc2[n+]1=O",
+      "[*:2]CC[*:1]",
+      "[*:2]O.[*:1]NC(=O)c1c(C)n([O-])c2ccccc2[n+]1=O",
+      "[*:2]CCNC([*:1])=O",
+      "[*:2]O.[*:1]c1c(C)n([O-])c2ccccc2[n+]1=O",
+      "[*:2]C[*:1]",
       "[*:2]O.[*:1]CNC(=O)c1c(C)n([O-])c2ccccc2[n+]1=O",
   };
   char fs[15][256];  // 15 reference results with updated RDKit's SMARTS Writer
@@ -281,7 +296,7 @@ void test1() {
     std::string id;
     std::string smiles = getSmilesOnly(smi[i], &id);
     ROMol* mol = SmilesToMol(smiles);
-    std::vector<std::pair<ROMOL_SPTR, ROMOL_SPTR> > res;
+    std::vector<std::pair<ROMOL_SPTR, ROMOL_SPTR>> res;
     t0 = nanoClock();
     RDKit::MMPA::fragmentMol(*mol, res, 3);
     printTime();
@@ -390,9 +405,9 @@ void test2() {
     static const std::string es("NULL");
     std::string id;
     std::string smiles = getSmilesOnly(smi[i], &id);
-    std::auto_ptr<ROMol> mol(SmilesToMol(smiles));
+    std::unique_ptr<ROMol> mol(SmilesToMol(smiles));
 
-    std::vector<std::pair<ROMOL_SPTR, ROMOL_SPTR> > res;
+    std::vector<std::pair<ROMOL_SPTR, ROMOL_SPTR>> res;
 
     t0 = nanoClock();
     /*
@@ -488,8 +503,8 @@ void doTest(const char* smi, const char* fs[], unsigned fs_size) {
   static const std::string es("NULL");
   std::string id;
   std::string smiles = getSmilesOnly(smi, &id);
-  std::auto_ptr<ROMol> mol(SmilesToMol(smiles));
-  std::vector<std::pair<ROMOL_SPTR, ROMOL_SPTR> > res;
+  std::unique_ptr<ROMol> mol(SmilesToMol(smiles));
+  std::vector<std::pair<ROMOL_SPTR, ROMOL_SPTR>> res;
 
   std::cout << "\nTEST mol: " << id << " " << smi << "\n";
   t0 = nanoClock();
@@ -525,10 +540,10 @@ void doTest(const char* smi, const char* fs[], unsigned fs_size) {
     }
     std::cout << res_idx + 1 << ": res= ";
     /*
-        * Somehow canonical smiles does not return the same result after just
+     * Somehow canonical smiles does not return the same result after just
      * saving.
-        * Workaround is: save -> load -> save
-        */
+     * Workaround is: save -> load -> save
+     */
     std::string first_res =
         (res[res_idx].first.get()
              ? createCanonicalFromSmiles(MolToSmiles(*res[res_idx].first, true))

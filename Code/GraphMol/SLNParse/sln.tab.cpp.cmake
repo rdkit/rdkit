@@ -1953,7 +1953,7 @@ yyreduce:
 #line 404 "sln.yy" /* yacc.c:1651  */
     {
 	if(!doQueries){
-        yysln_error(input,molList,doQueries,0,"sequential bonds not allowed in non-queries");
+        yysln_error(input,molList,doQueries,nullptr,"sequential bonds not allowed in non-queries");
     YYABORT;
 	} else {
 	  RDKit::QueryBond *b1=static_cast<RDKit::QueryBond *>((yyvsp[-1].bond_T));

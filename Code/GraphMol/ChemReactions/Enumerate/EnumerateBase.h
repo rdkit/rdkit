@@ -72,7 +72,7 @@ class RDKIT_CHEMREACTIONS_EXPORT EnumerateLibraryBase {
 
   //! construct with a chemical reaction and an enumeration strategy
   EnumerateLibraryBase(const ChemicalReaction &rxn,
-                       EnumerationStrategyBase *enumerator = 0)
+                       EnumerationStrategyBase *enumerator = nullptr)
       : m_rxn(rxn),
         m_enumerator(enumerator ? enumerator : new CartesianProductStrategy),
         m_initialEnumerator(m_enumerator->copy()) {
@@ -82,7 +82,7 @@ class RDKIT_CHEMREACTIONS_EXPORT EnumerateLibraryBase {
   //! Copy constructor
   EnumerateLibraryBase(const EnumerateLibraryBase &rhs)
       : m_rxn(rhs.m_rxn),
-        m_enumerator(rhs.m_enumerator ? rhs.m_enumerator->copy() : 0),
+        m_enumerator(rhs.m_enumerator ? rhs.m_enumerator->copy() : nullptr),
         m_initialEnumerator(m_enumerator->copy()) {}
 
   virtual ~EnumerateLibraryBase() {}

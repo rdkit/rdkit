@@ -71,7 +71,7 @@ class RDKIT_DEPICTOR_EXPORT DepictException : public std::exception {
 
 */
 RDKIT_DEPICTOR_EXPORT unsigned int compute2DCoords(
-    RDKit::ROMol &mol, const RDGeom::INT_POINT2D_MAP *coordMap = 0,
+    RDKit::ROMol &mol, const RDGeom::INT_POINT2D_MAP *coordMap = nullptr,
     bool canonOrient = false, bool clearConfs = true,
     unsigned int nFlipsPerSample = 0, unsigned int nSamples = 0,
     int sampleSeed = 0, bool permuteDeg4Nodes = false, bool forceRDKit = false);
@@ -126,7 +126,7 @@ RDKIT_DEPICTOR_EXPORT unsigned int compute2DCoords(
 
 */
 RDKIT_DEPICTOR_EXPORT unsigned int compute2DCoordsMimicDistMat(
-    RDKit::ROMol &mol, const DOUBLE_SMART_PTR *dmat = 0,
+    RDKit::ROMol &mol, const DOUBLE_SMART_PTR *dmat = nullptr,
     bool canonOrient = true, bool clearConfs = true, double weightDistMat = 0.5,
     unsigned int nFlipsPerSample = 3, unsigned int nSamples = 100,
     int sampleSeed = 25, bool permuteDeg4Nodes = true, bool forceRDKit = false);
@@ -159,7 +159,7 @@ RDKIT_DEPICTOR_EXPORT unsigned int compute2DCoordsMimicDistMat(
 */
 RDKIT_DEPICTOR_EXPORT void generateDepictionMatching2DStructure(
     RDKit::ROMol &mol, const RDKit::ROMol &reference, int confId = -1,
-    RDKit::ROMol *referencePattern = static_cast<RDKit::ROMol *>(0),
+    RDKit::ROMol *referencePattern = static_cast<RDKit::ROMol *>(nullptr),
     bool acceptFailure = false, bool forceRDKit = false);
 
 //! \brief Generate a 2D depiction for a molecule where all or part of
@@ -186,7 +186,7 @@ RDKIT_DEPICTOR_EXPORT void generateDepictionMatching2DStructure(
 */
 RDKIT_DEPICTOR_EXPORT void generateDepictionMatching3DStructure(
     RDKit::ROMol &mol, const RDKit::ROMol &reference, int confId = -1,
-    RDKit::ROMol *referencePattern = 0, bool acceptFailure = false,
+    RDKit::ROMol *referencePattern = nullptr, bool acceptFailure = false,
     bool forceRDKit = false);
 };  // namespace RDDepict
 

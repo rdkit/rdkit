@@ -73,9 +73,8 @@ void Seed::fillNewBonds(const ROMol& qmol) {
             break;
           }
         }
-        NewBonds.push_back(
-            NewBond(srcAtomIdx, bond->getIdx(), ai, end_atom_idx,
-                    NotSet == end_atom_idx ? end_atom : nullptr));
+        NewBonds.emplace_back(srcAtomIdx, bond->getIdx(), ai, end_atom_idx,
+                    NotSet == end_atom_idx ? end_atom : nullptr);
       }
     }
   }

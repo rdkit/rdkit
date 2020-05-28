@@ -1578,15 +1578,15 @@ ROMol *reduceProductToSideChains(const ROMOL_SPTR &product,
         if (!nbr->hasProp(common_properties::reactionMapNum) &&
             nbr->hasProp(common_properties::reactantAtomIdx)) {
           if (nbr->hasProp(WAS_DUMMY)) {
-            bonds_to_product.push_back(RGroup(
+            bonds_to_product.emplace_back(
                 nbr,
                 mol->getBondBetweenAtoms(scaffold_atom->getIdx(), *nbrIdx)
                     ->getBondType(),
-                nbr->getProp<int>(common_properties::reactionMapNum)));
+                nbr->getProp<int>(common_properties::reactionMapNum));
           } else {
-            bonds_to_product.push_back(RGroup(
+            bonds_to_product.emplace_back(
                 nbr, mol->getBondBetweenAtoms(scaffold_atom->getIdx(), *nbrIdx)
-                         ->getBondType()));
+                         ->getBondType());
           }
         }
 

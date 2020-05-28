@@ -43,7 +43,7 @@ class Catalog {
   typedef paramType paramType_t;
 
   //------------------------------------
-  Catalog() : d_fpLength(0), dp_cParams(0){};
+  Catalog() :  dp_cParams(nullptr){};
 
   //------------------------------------
   virtual ~Catalog() { delete dp_cParams; }
@@ -106,7 +106,7 @@ class Catalog {
   // in the catalog and does not correspond with the
   // id of the entry in the catalog.
   // this is more along the lines of bitId
-  unsigned int d_fpLength;  //!< the length of our fingerprint
+  unsigned int d_fpLength{0};  //!< the length of our fingerprint
   paramType *dp_cParams;    //!< our params object
 };
 
@@ -371,7 +371,7 @@ class HierarchCatalog : public Catalog<entryType, paramType> {
     URANGE_CHECK(idx, this->getFPLength());
     typename boost::property_map<CatalogGraph, vertex_entry_t>::const_type
         pMap = boost::get(vertex_entry_t(), d_graph);
-    const entryType *res = NULL;
+    const entryType *res = nullptr;
     for (unsigned int i = idx; i < this->getNumEntries(); i++) {
       const entryType *e = pMap[i];
       if (e->getBitId() == static_cast<int>(idx)) {

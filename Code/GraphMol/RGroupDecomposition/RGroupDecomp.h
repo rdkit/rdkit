@@ -78,8 +78,8 @@ struct RDKIT_RGROUPDECOMPOSITION_EXPORT RGroupDecompositionParameters {
         chunkSize(chunkSize),
         onlyMatchAtRGroups(matchOnlyAtRGroups),
         removeAllHydrogenRGroups(removeHydrogenOnlyGroups),
-        removeHydrogensPostMatch(removeHydrogensPostMatch),
-        indexOffset(-1) {}
+        removeHydrogensPostMatch(removeHydrogensPostMatch)
+        {}
 
   // Determine how to assign the rgroup labels from the given core
   unsigned int autoGetLabels(const RWMol &);
@@ -88,7 +88,7 @@ struct RDKIT_RGROUPDECOMPOSITION_EXPORT RGroupDecompositionParameters {
   bool prepareCore(RWMol &, const RWMol *alignCore);
 
  private:
-  int indexOffset;
+  int indexOffset{-1};
 };
 
 typedef std::map<std::string, boost::shared_ptr<ROMol>> RGroupRow;
