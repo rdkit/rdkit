@@ -631,23 +631,28 @@ void forwardReactantBondStereo(ReactantProductAtomMapping *mapping, Bond *pBond,
   unsigned pEndAnchorIdx =
       reactProdMapAnchorIdx(pBond->getEndAtom(), pEndAnchorCandidates.first);
 
-  pBond->setStereoAtoms(pStartAnchorIdx, pEndAnchorIdx);
+  if (pBond->getOwningMol().getBondBetweenAtoms(pStartAnchorIdx, pEndAnchorIdx) == nullptr) {
+    BOOST_LOG(rdWarningLog)
+      << "stereo atoms in input cannot be mapped to output (atoms are no longer bonded)\n";
+  } else {
+    pBond->setStereoAtoms(pStartAnchorIdx, pEndAnchorIdx);
 
-  bool flipStereo =
+    bool flipStereo =
       (pStartAnchorCandidates.second + pEndAnchorCandidates.second) % 2;
 
-  if (rBond->getStereo() == Bond::BondStereo::STEREOCIS ||
-      rBond->getStereo() == Bond::BondStereo::STEREOZ) {
-    if (flipStereo) {
-      pBond->setStereo(Bond::BondStereo::STEREOTRANS);
+    if (rBond->getStereo() == Bond::BondStereo::STEREOCIS ||
+	rBond->getStereo() == Bond::BondStereo::STEREOZ) {
+      if (flipStereo) {
+	pBond->setStereo(Bond::BondStereo::STEREOTRANS);
+      } else {
+	pBond->setStereo(Bond::BondStereo::STEREOCIS);
+      }
     } else {
-      pBond->setStereo(Bond::BondStereo::STEREOCIS);
-    }
-  } else {
-    if (flipStereo) {
-      pBond->setStereo(Bond::BondStereo::STEREOCIS);
-    } else {
-      pBond->setStereo(Bond::BondStereo::STEREOTRANS);
+      if (flipStereo) {
+	pBond->setStereo(Bond::BondStereo::STEREOCIS);
+      } else {
+	pBond->setStereo(Bond::BondStereo::STEREOTRANS);
+      }
     }
   }
 }
