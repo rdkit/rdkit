@@ -30,13 +30,13 @@ namespace RDPickers {
  */
 class LeaderPicker : public DistPicker {
  public:
-  double default_threshold;
-  int default_nthreads;
+  double default_threshold{0.0};
+  int default_nthreads{1};
 
   /*! \brief Default Constructor
    *
    */
-  LeaderPicker() : default_threshold(0.0), default_nthreads(1) {}
+  LeaderPicker()  {}
   LeaderPicker(double threshold)
       : default_threshold(threshold), default_nthreads(1) {}
   LeaderPicker(double threshold, int nthreads)

@@ -59,7 +59,7 @@ void testRDKitValidation() {
       "INFO: [ValenceValidation] Explicit valence for atom # 5 N, 5, is "
       "greater than permitted"};
   for (auto &query : errout3) {
-    msgs1.push_back(query.what());
+    msgs1.emplace_back(query.what());
   }
   TEST_ASSERT(msgs1 == ans1);
 
@@ -73,7 +73,7 @@ void testRDKitValidation() {
       "INFO: [ValenceValidation] Explicit valence for atom # 1 O, 3, is "
       "greater than permitted"};
   for (auto &query : errout4) {
-    msgs2.push_back(query.what());
+    msgs2.emplace_back(query.what());
   }
   TEST_ASSERT(msgs2 == ans2);
   BOOST_LOG(rdInfoLog) << "Finished" << std::endl;

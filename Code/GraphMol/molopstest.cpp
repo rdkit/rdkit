@@ -5301,10 +5301,10 @@ void testGithubIssue539() {
   }
   {
     std::vector<std::string> smilesVec;
-    smilesVec.push_back("C1=C[CH+]1");
-    smilesVec.push_back("C1=CC=C[CH+]C=C1");
-    smilesVec.push_back("c1c[cH+]1");
-    smilesVec.push_back("c1ccc[cH+]cc1");
+    smilesVec.emplace_back("C1=C[CH+]1");
+    smilesVec.emplace_back("C1=CC=C[CH+]C=C1");
+    smilesVec.emplace_back("c1c[cH+]1");
+    smilesVec.emplace_back("c1ccc[cH+]cc1");
     for (std::vector<std::string>::const_iterator smiles = smilesVec.begin();
          smiles != smilesVec.end(); ++smiles) {
       RWMol *m = SmilesToMol(*smiles);

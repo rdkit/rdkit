@@ -81,10 +81,8 @@ class RDKIT_FORCEFIELD_EXPORT ForceField {
  public:
   //! construct with a dimension
   ForceField(unsigned int dimension = 3)
-      : d_dimension(dimension),
-        df_init(false),
-        d_numPoints(0),
-        dp_distMat(nullptr){};
+      : d_dimension(dimension)
+        {};
 
   ~ForceField();
 
@@ -232,9 +230,9 @@ class RDKIT_FORCEFIELD_EXPORT ForceField {
 
  protected:
   unsigned int d_dimension;
-  bool df_init;                      //!< whether or not we've been initialized
-  unsigned int d_numPoints;          //!< the number of active points
-  double *dp_distMat;                //!< our internal distance matrix
+  bool df_init{false};                      //!< whether or not we've been initialized
+  unsigned int d_numPoints{0};          //!< the number of active points
+  double *dp_distMat{nullptr};                //!< our internal distance matrix
   RDGeom::PointPtrVect d_positions;  //!< pointers to the points we're using
   ContribPtrVect d_contribs;         //!< contributions to the energy
   INT_VECT d_fixedPoints;

@@ -23,7 +23,7 @@ class MMFFVdW;
 //! the van der Waals term for MMFF
 class RDKIT_FORCEFIELD_EXPORT VdWContrib : public ForceFieldContrib {
  public:
-  VdWContrib() : d_at1Idx(-1), d_at2Idx(-1){};
+  VdWContrib()  {};
 
   //! Constructor
   /*!
@@ -39,7 +39,7 @@ class RDKIT_FORCEFIELD_EXPORT VdWContrib : public ForceFieldContrib {
   virtual VdWContrib *copy() const { return new VdWContrib(*this); };
 
  private:
-  int d_at1Idx, d_at2Idx;
+  int d_at1Idx{-1}, d_at2Idx{-1};
   double d_R_ij_star;  //!< the preferred length of the contact
   double d_wellDepth;  //!< the vdW well depth (strength of the interaction)
 };
@@ -47,7 +47,7 @@ class RDKIT_FORCEFIELD_EXPORT VdWContrib : public ForceFieldContrib {
 //! the electrostatic term for MMFF
 class RDKIT_FORCEFIELD_EXPORT EleContrib : public ForceFieldContrib {
  public:
-  EleContrib() : d_at1Idx(-1), d_at2Idx(-1){};
+  EleContrib()  {};
 
   //! Constructor
   /*!
@@ -64,7 +64,7 @@ class RDKIT_FORCEFIELD_EXPORT EleContrib : public ForceFieldContrib {
   virtual EleContrib *copy() const { return new EleContrib(*this); };
 
  private:
-  int d_at1Idx, d_at2Idx;
+  int d_at1Idx{-1}, d_at2Idx{-1};
   double d_chargeTerm;  //!< q1 * q2 / D
   std::uint8_t
       d_dielModel;  //!< dielectric model (1: constant; 2: distance-dependent)

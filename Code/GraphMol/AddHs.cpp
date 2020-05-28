@@ -245,7 +245,7 @@ void setHydrogenCoords(ROMol *mol, unsigned int hydIdx, unsigned int heavyIdx) {
             unsigned int cip = 0;
             tAtom->getPropIfPresent<unsigned int>(common_properties::_CIPRank,
                                                   cip);
-            nbrs.push_back(std::make_pair(cip, rdcast<int>(*nbrIdx)));
+            nbrs.emplace_back(cip, rdcast<int>(*nbrIdx));
           }
           ++nbrIdx;
         }

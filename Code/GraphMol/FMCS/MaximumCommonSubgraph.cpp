@@ -147,7 +147,7 @@ void MaximumCommonSubgraph::init() {
         }
         if (NotSet == QueryAtomLabels[ai]) {  // not found -> create new label
           QueryAtomLabels[ai] = ++currentLabelValue;
-          labels.push_back(LabelDefinition(ai, currentLabelValue));
+          labels.emplace_back(ai, currentLabelValue);
         }
       }
     }
@@ -201,7 +201,7 @@ void MaximumCommonSubgraph::init() {
       }
       if (NotSet == QueryAtomLabels[aj]) {  // not found -> create new label
         QueryBondLabels[aj] = ++currentLabelValue;
-        labels.push_back(LabelDefinition(aj, currentLabelValue));
+        labels.emplace_back(aj, currentLabelValue);
       }
     }
   }
@@ -303,9 +303,9 @@ struct QueryRings {
 };  // namespace RDKit
 
 struct WeightedBond {
-  const Bond* BondPtr;
-  unsigned Weight;
-  WeightedBond() : BondPtr(nullptr), Weight(0) {}
+  const Bond* BondPtr{nullptr};
+  unsigned Weight{0};
+  WeightedBond()  {}
   WeightedBond(const Bond* bond, const QueryRings& r)
       : BondPtr(bond), Weight(0) {
     // score ((bond.is_in_ring + atom1.is_in_ring + atom2.is_in_ring)
@@ -400,7 +400,7 @@ void MaximumCommonSubgraph::makeInitialSeeds() {
     wb.reserve(QueryMolecule->getNumBonds());
     for (RWMol::ConstBondIterator bi = QueryMolecule->beginBonds();
          bi != QueryMolecule->endBonds(); bi++) {
-      wb.push_back(WeightedBond(*bi, r));
+      wb.emplace_back(*bi, r);
     }
 
     for (std::vector<WeightedBond>::const_iterator bi = wb.begin();

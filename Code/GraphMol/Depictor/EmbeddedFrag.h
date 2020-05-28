@@ -31,15 +31,8 @@ class RDKIT_DEPICTOR_EXPORT EmbeddedAtom {
   typedef enum { UNSPECIFIED = 0, CISTRANS, RING } EAtomType;
 
   EmbeddedAtom()
-      : aid(0),
-        angle(-1.0),
-        nbr1(-1),
-        nbr2(-1),
-        CisTransNbr(-1),
-        ccw(true),
-        rotDir(0),
-        d_density(-1.0),
-        df_fixed(false) {
+      
+        {
     neighs.clear();
   }
 
@@ -92,35 +85,35 @@ class RDKIT_DEPICTOR_EXPORT EmbeddedAtom {
     ccw = (!ccw);
   }
 
-  unsigned int aid;  // the id of the atom
+  unsigned int aid{0};  // the id of the atom
 
   //! the angle that is already takes at this atom, so any new atom attaching to
   // this
   //! atom with have to fall in the available part
-  double angle;
+  double angle{-1.0};
 
   //! the first neighbor of this atom that form the 'angle'
-  int nbr1;
+  int nbr1{-1};
 
   //! the second neighbor of atom that from the 'angle'
-  int nbr2;
+  int nbr2{-1};
 
   //! is this is a cis/trans atom the neighbor of this atom that is involved in
   // the
   //! cis/trans system - defaults to -1
-  int CisTransNbr;
+  int CisTransNbr{-1};
 
   //! which direction do we rotate this normal to add the next bond
   //! if ccw is true we rotate counter clockwise, otherwise rotate clock wise,
   // by an angle that is
   //! <= PI/2
-  bool ccw;
+  bool ccw{true};
 
   //! rotation direction around this atom when adding new atoms,
   //! we determine this for the first neighbor and stick to this direction after
   // that
   //! useful only on atoms that are degree >= 4
-  int rotDir;
+  int rotDir{0};
 
   RDGeom::Point2D loc;  // the current location of this atom
   //! this is a normal vector to one of the bonds that added this atom
@@ -137,11 +130,11 @@ class RDKIT_DEPICTOR_EXPORT EmbeddedAtom {
   // - this is sum of inverse of the square of distances to other atoms from
   // this atom
   // Used in the collision removal code - initialized to -1.0
-  double d_density;
+  double d_density{-1.0};
 
   //! if set this atom is fixed: further operations on the fragment may not
   //! move it.
-  bool df_fixed;
+  bool df_fixed{false};
 };
 
 typedef std::map<unsigned int, EmbeddedAtom> INT_EATOM_MAP;

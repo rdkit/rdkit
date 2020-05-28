@@ -94,10 +94,10 @@ void testPODVectors() {
 void testStringVect() {
   BOOST_LOG(rdErrorLog) << "Test String Vect" << std::endl;
   std::vector<std::string> vecs;
-  vecs.push_back("my");
-  vecs.push_back("dog");
-  vecs.push_back("has");
-  vecs.push_back("fleas");
+  vecs.emplace_back("my");
+  vecs.emplace_back("dog");
+  vecs.emplace_back("has");
+  vecs.emplace_back("fleas");
   RDValue v(vecs);
   CHECK_INVARIANT(rdvalue_cast<std::vector<std::string>>(v) == vecs,
                   "bad vect");
@@ -133,8 +133,8 @@ void testMapsAndLists() {
   }
   {
     std::list<std::string> m;
-    m.push_back("foo");
-    m.push_back("bar");
+    m.emplace_back("foo");
+    m.emplace_back("bar");
     RDValue v(m);
     CHECK_INVARIANT(rdvalue_cast<std::list<std::string>>(v) == m,
                     "bad map cast");

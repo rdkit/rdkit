@@ -318,7 +318,7 @@ typedef INT_SET::const_iterator INT_SET_CI;
 //! functor to compare two doubles with a tolerance
 struct RDKIT_RDGENERAL_EXPORT ltDouble {
  public:
-  ltDouble() : _tol(1.0e-8){};
+  ltDouble()  {};
   bool operator()(double d1, double d2) const {
     if (fabs(d1 - d2) < _tol) {
       return false;
@@ -328,7 +328,7 @@ struct RDKIT_RDGENERAL_EXPORT ltDouble {
   }
 
  private:
-  double _tol;
+  double _tol{1.0e-8};
 };
 
 //! std::map from double to integer.

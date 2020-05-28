@@ -78,7 +78,7 @@ static inline void convertMatchingToBondVect(
     const std::vector<MatchVectType>& matching_atoms, const ROMol& mol) {
   RDUNUSED_PARAM(mol);
   for (const auto& matching_atom : matching_atoms) {
-    matching_bonds.push_back(BondVector_t());
+    matching_bonds.emplace_back();
     BondVector_t& mb = matching_bonds.back();  // current match
     // assume pattern is only one bond pattern
     auto a1 = (unsigned)matching_atom[0].second;  // mol atom 1 index
@@ -346,7 +346,7 @@ static void addResult(std::vector<std::pair<ROMOL_SPTR, ROMOL_SPTR>>&
           // std::cerr << "atom_idx: " << atom_idx << " rank: " <<
           // ranks[atom_idx] <<
           //    " molAtomMapNumber: " << label << std::endl;
-          rankedAtoms.push_back(std::make_pair(idx, label));
+          rankedAtoms.emplace_back(idx, label);
         }
       }
       std::sort(rankedAtoms.begin(), rankedAtoms.end());
@@ -390,7 +390,7 @@ static void addResult(std::vector<std::pair<ROMOL_SPTR, ROMOL_SPTR>>&
       }
     }
 
-    res.push_back(std::pair<ROMOL_SPTR, ROMOL_SPTR>(core, side_chains));  //
+    res.emplace_back(core, side_chains);  //
   }
 #ifdef MMPA_DEBUG
   else

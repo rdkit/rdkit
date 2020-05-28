@@ -54,10 +54,10 @@ class ss_matcher {
   ~ss_matcher() { delete m_matcher; };
 
  private:
-  ss_matcher() : m_pattern(""), m_needCopies(false), m_matcher(nullptr){};
+  ss_matcher() : m_pattern("") {};
   std::string m_pattern;
-  bool m_needCopies;
-  const RDKit::ROMol *m_matcher;
+  bool m_needCopies{false};
+  const RDKit::ROMol *m_matcher{nullptr};
 };
 }
 

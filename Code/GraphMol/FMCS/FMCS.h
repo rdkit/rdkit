@@ -69,13 +69,15 @@ typedef bool (*MCSBondCompareFunction)(const MCSBondCompareParameters& p,
 // Some predefined functors:
 RDKIT_FMCS_EXPORT bool checkAtomRingMatch(const MCSAtomCompareParameters& p,
                                           const ROMol& mol1, unsigned int atom1,
-                                          const ROMol& mol2, unsigned int atom2);
+                                          const ROMol& mol2,
+                                          unsigned int atom2);
 RDKIT_FMCS_EXPORT bool checkAtomCharge(const MCSAtomCompareParameters& p,
                                        const ROMol& mol1, unsigned int atom1,
                                        const ROMol& mol2, unsigned int atom2);
 RDKIT_FMCS_EXPORT bool checkAtomChirality(const MCSAtomCompareParameters& p,
                                           const ROMol& mol1, unsigned int atom1,
-                                          const ROMol& mol2, unsigned int atom2);
+                                          const ROMol& mol2,
+                                          unsigned int atom2);
 
 RDKIT_FMCS_EXPORT bool MCSAtomCompareAny(const MCSAtomCompareParameters& p,
                                          const ROMol& mol1, unsigned int atom1,
@@ -95,7 +97,7 @@ RDKIT_FMCS_EXPORT bool MCSAtomCompareIsotopes(
 RDKIT_FMCS_EXPORT bool checkBondStereo(const MCSBondCompareParameters& p,
                                        const ROMol& mol1, unsigned int bond1,
                                        const ROMol& mol2, unsigned int bond2);
-RDKIT_FMCS_EXPORT bool checkBondRingMatch(const MCSBondCompareParameters &p,
+RDKIT_FMCS_EXPORT bool checkBondRingMatch(const MCSBondCompareParameters& p,
                                           const ROMol& mol1, unsigned int bond1,
                                           const ROMol& mol2, unsigned int bond2,
                                           void* v_ringMatchMatrixSet);
@@ -113,12 +115,12 @@ RDKIT_FMCS_EXPORT bool MCSBondCompareOrderExact(
     const ROMol& mol2, unsigned int bond2, void* userData);
 
 struct RDKIT_FMCS_EXPORT MCSProgressData {
-  unsigned NumAtoms;
-  unsigned NumBonds;
-  unsigned SeedProcessed;
+  unsigned NumAtoms{0};
+  unsigned NumBonds{0};
+  unsigned SeedProcessed{0};
 
  public:
-  MCSProgressData() : NumAtoms(0), NumBonds(0), SeedProcessed(0) {}
+  MCSProgressData() {}
 };
 
 typedef bool (*MCSProgressCallback)(const MCSProgressData& stat,
@@ -145,21 +147,21 @@ struct RDKIT_FMCS_EXPORT MCSParameters {
       nullptr;  // FinalMatchCheckFunction() to check chirality and ring fusion
   std::string InitialSeed = "";  // user defined or empty string (default)
   void setMCSAtomTyperFromEnum(AtomComparator atomComp);
-  void setMCSAtomTyperFromConstChar(const char *atomComp);
+  void setMCSAtomTyperFromConstChar(const char* atomComp);
   void setMCSBondTyperFromEnum(BondComparator bondComp);
-  void setMCSBondTyperFromConstChar(const char *bondComp);
+  void setMCSBondTyperFromConstChar(const char* bondComp);
 };
 
 struct RDKIT_FMCS_EXPORT MCSResult {
-  unsigned NumAtoms;
-  unsigned NumBonds;
+  unsigned NumAtoms{0};
+  unsigned NumBonds{0};
   std::string SmartsString;
-  bool Canceled;  // interrupted by timeout or user defined progress callback.
-                  // Contains valid current MCS !
+  bool Canceled{false};  // interrupted by timeout or user defined progress
+                         // callback. Contains valid current MCS !
   ROMOL_SPTR QueryMol;
 
  public:
-  MCSResult() : NumAtoms(0), NumBonds(0), Canceled(false) {}
+  MCSResult() {}
   bool isCompleted() const { return !Canceled; }
 };
 

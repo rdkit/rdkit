@@ -30,15 +30,14 @@ namespace RDKit {
 namespace Canon {
 
 struct RDKIT_GRAPHMOL_EXPORT bondholder {
-  Bond::BondType bondType;
+  Bond::BondType bondType{Bond::UNSPECIFIED};
   unsigned int bondStereo;
-  unsigned int nbrSymClass;
-  unsigned int nbrIdx;
+  unsigned int nbrSymClass{0};
+  unsigned int nbrIdx{0};
   bondholder()
-      : bondType(Bond::UNSPECIFIED),
-        bondStereo(static_cast<unsigned int>(Bond::STEREONONE)),
-        nbrSymClass(0),
-        nbrIdx(0){};
+      : 
+        bondStereo(static_cast<unsigned int>(Bond::STEREONONE))
+        {};
   bondholder(Bond::BondType bt, Bond::BondStereo bs, unsigned int ni,
              unsigned int nsc)
       : bondType(bt),
@@ -76,27 +75,21 @@ struct RDKIT_GRAPHMOL_EXPORT bondholder {
 
 class RDKIT_GRAPHMOL_EXPORT canon_atom {
  public:
-  const Atom *atom;
-  int index;
-  unsigned int degree;
-  unsigned int totalNumHs;
-  bool hasRingNbr;
-  bool isRingStereoAtom;
-  int *nbrIds;
-  const std::string *p_symbol;  // if provided, this is used to order atoms
+  const Atom *atom{nullptr};
+  int index{-1};
+  unsigned int degree{0};
+  unsigned int totalNumHs{0};
+  bool hasRingNbr{false};
+  bool isRingStereoAtom{false};
+  int *nbrIds{nullptr};
+  const std::string *p_symbol{nullptr};  // if provided, this is used to order atoms
   std::vector<int> neighborNum;
   std::vector<int> revistedNeighbors;
   std::vector<bondholder> bonds;
 
   canon_atom()
-      : atom(nullptr),
-        index(-1),
-        degree(0),
-        totalNumHs(0),
-        hasRingNbr(false),
-        isRingStereoAtom(false),
-        nbrIds(nullptr),
-        p_symbol(nullptr){};
+      
+        {};
 
   ~canon_atom() { free(nbrIds); }
 };
@@ -121,15 +114,13 @@ RDKIT_GRAPHMOL_EXPORT void updateAtomNeighborNumSwaps(
 
 class RDKIT_GRAPHMOL_EXPORT SpecialChiralityAtomCompareFunctor {
  public:
-  Canon::canon_atom *dp_atoms;
-  const ROMol *dp_mol;
-  const boost::dynamic_bitset<> *dp_atomsInPlay, *dp_bondsInPlay;
+  Canon::canon_atom *dp_atoms{nullptr};
+  const ROMol *dp_mol{nullptr};
+  const boost::dynamic_bitset<> *dp_atomsInPlay{nullptr}, *dp_bondsInPlay{nullptr};
 
   SpecialChiralityAtomCompareFunctor()
-      : dp_atoms(nullptr),
-        dp_mol(nullptr),
-        dp_atomsInPlay(nullptr),
-        dp_bondsInPlay(nullptr){};
+      
+        {};
   SpecialChiralityAtomCompareFunctor(
       Canon::canon_atom *atoms, const ROMol &m,
       const boost::dynamic_bitset<> *atomsInPlay = nullptr,
@@ -177,15 +168,13 @@ class RDKIT_GRAPHMOL_EXPORT SpecialChiralityAtomCompareFunctor {
 
 class RDKIT_GRAPHMOL_EXPORT SpecialSymmetryAtomCompareFunctor {
  public:
-  Canon::canon_atom *dp_atoms;
-  const ROMol *dp_mol;
-  const boost::dynamic_bitset<> *dp_atomsInPlay, *dp_bondsInPlay;
+  Canon::canon_atom *dp_atoms{nullptr};
+  const ROMol *dp_mol{nullptr};
+  const boost::dynamic_bitset<> *dp_atomsInPlay{nullptr}, *dp_bondsInPlay{nullptr};
 
   SpecialSymmetryAtomCompareFunctor()
-      : dp_atoms(nullptr),
-        dp_mol(nullptr),
-        dp_atomsInPlay(nullptr),
-        dp_bondsInPlay(nullptr){};
+      
+        {};
   SpecialSymmetryAtomCompareFunctor(
       Canon::canon_atom *atoms, const ROMol &m,
       const boost::dynamic_bitset<> *atomsInPlay = nullptr,
@@ -371,23 +360,17 @@ class RDKIT_GRAPHMOL_EXPORT AtomCompareFunctor {
   }
 
  public:
-  Canon::canon_atom *dp_atoms;
-  const ROMol *dp_mol;
-  const boost::dynamic_bitset<> *dp_atomsInPlay, *dp_bondsInPlay;
-  bool df_useNbrs;
-  bool df_useIsotopes;
-  bool df_useChirality;
-  bool df_useChiralityRings;
+  Canon::canon_atom *dp_atoms{nullptr};
+  const ROMol *dp_mol{nullptr};
+  const boost::dynamic_bitset<> *dp_atomsInPlay{nullptr}, *dp_bondsInPlay{nullptr};
+  bool df_useNbrs{false};
+  bool df_useIsotopes{true};
+  bool df_useChirality{true};
+  bool df_useChiralityRings{true};
 
   AtomCompareFunctor()
-      : dp_atoms(nullptr),
-        dp_mol(nullptr),
-        dp_atomsInPlay(nullptr),
-        dp_bondsInPlay(nullptr),
-        df_useNbrs(false),
-        df_useIsotopes(true),
-        df_useChirality(true),
-        df_useChiralityRings(true){};
+      
+        {};
   AtomCompareFunctor(Canon::canon_atom *atoms, const ROMol &m,
                      const boost::dynamic_bitset<> *atomsInPlay = nullptr,
                      const boost::dynamic_bitset<> *bondsInPlay = nullptr)
@@ -510,11 +493,11 @@ class RDKIT_GRAPHMOL_EXPORT ChiralAtomCompareFunctor {
   }
 
  public:
-  Canon::canon_atom *dp_atoms;
-  const ROMol *dp_mol;
-  bool df_useNbrs;
+  Canon::canon_atom *dp_atoms{nullptr};
+  const ROMol *dp_mol{nullptr};
+  bool df_useNbrs{false};
   ChiralAtomCompareFunctor()
-      : dp_atoms(nullptr), dp_mol(nullptr), df_useNbrs(false){};
+       {};
   ChiralAtomCompareFunctor(Canon::canon_atom *atoms, const ROMol &m)
       : dp_atoms(atoms), dp_mol(&m), df_useNbrs(false){};
   int operator()(int i, int j) const {

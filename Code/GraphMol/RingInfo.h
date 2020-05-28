@@ -34,7 +34,7 @@ class RDKIT_GRAPHMOL_EXPORT RingInfo {
   typedef std::vector<int> INT_VECT;
   typedef std::vector<INT_VECT> VECT_INT_VECT;
 
-  RingInfo() : df_init(false){};
+  RingInfo()  {};
   RingInfo(const RingInfo &other)
       : df_init(other.df_init),
         d_atomMembers(other.d_atomMembers),
@@ -207,7 +207,7 @@ class RDKIT_GRAPHMOL_EXPORT RingInfo {
   //! pre-allocates some memory to save time later
   void preallocate(unsigned int numAtoms, unsigned int numBonds);
 
-  bool df_init;
+  bool df_init{false};
   DataType d_atomMembers, d_bondMembers;
   VECT_INT_VECT d_atomRings, d_bondRings;
   VECT_INT_VECT d_atomRingFamilies, d_bondRingFamilies;

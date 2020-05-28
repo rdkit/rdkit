@@ -229,7 +229,7 @@ class RDKIT_FILTERCATALOG_EXPORT Not : public FilterMatcherBase {
 RDKIT_FILTERCATALOG_EXPORT extern const char *SMARTS_MATCH_NAME_DEFAULT;
 class RDKIT_FILTERCATALOG_EXPORT SmartsMatcher : public FilterMatcherBase {
   ROMOL_SPTR d_pattern;
-  unsigned int d_min_count;
+  unsigned int d_min_count{0};
   unsigned int d_max_count;
 
  public:
@@ -237,7 +237,7 @@ class RDKIT_FILTERCATALOG_EXPORT SmartsMatcher : public FilterMatcherBase {
   SmartsMatcher(const std::string &name = SMARTS_MATCH_NAME_DEFAULT)
       : FilterMatcherBase(name),
         d_pattern(),
-        d_min_count(0),
+        
         d_max_count(UINT_MAX) {}
 
   //! Construct a SmartsMatcher from a query molecule

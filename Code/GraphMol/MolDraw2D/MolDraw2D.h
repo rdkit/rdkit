@@ -64,11 +64,11 @@ struct DrawColour {
 // for holding dimensions of the rectangle round a string.
 struct StringRect {
   Point2D centre_;
-  double width_, height_;
-  int clash_score_;  // rough measure of how badly it clashed with other things
-                     // lower is better, 0 is no clash.
-  StringRect()
-      : centre_(0.0, 0.0), width_(0.0), height_(0.0), clash_score_(0) {}
+  double width_{0.0};
+  double height_{0.0};
+  int clash_score_{0};  // rough measure of how badly it clashed with other
+                        // things lower is better, 0 is no clash.
+  StringRect() : centre_(0.0, 0.0) {}
   StringRect(const Point2D &in_cds)
       : centre_(in_cds), width_(0.0), height_(0.0), clash_score_(0) {}
   // tl is top, left; br is bottom, right
@@ -213,7 +213,7 @@ struct RDKIT_MOLDRAW2D_EXPORT MolDrawOptions {
 //! MolDraw2D is the base class for doing 2D renderings of molecules
 class RDKIT_MOLDRAW2D_EXPORT MolDraw2D {
  public:
-  enum class OrientType: unsigned char { C = 0, N, E, S, W };
+  enum class OrientType : unsigned char { C = 0, N, E, S, W };
   // for aligning the drawing of text to the passed in coords.
   typedef enum { START, MIDDLE, END } AlignType;
   typedef enum {
@@ -819,7 +819,7 @@ RDKIT_MOLDRAW2D_EXPORT bool doesLineIntersectLabel(const Point2D &ls,
                                                    const Point2D &lf,
                                                    const StringRect &lab_rect);
 
-std::ostream& operator<<(std::ostream &oss, const MolDraw2D::OrientType &o);
+std::ostream &operator<<(std::ostream &oss, const MolDraw2D::OrientType &o);
 
 }  // namespace RDKit
 

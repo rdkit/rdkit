@@ -162,7 +162,7 @@ void EmbeddedFrag::computeNbrsAndAng(unsigned int aid,
       ang = computeAngle(d_eatoms[aid].loc, d_eatoms[*nbi1].loc,
                          d_eatoms[*nbi2].loc);
       INT_PAIR nbrPair = std::make_pair((*nbi1), (*nbi2));
-      anglePairs.push_back(std::make_pair(ang, nbrPair));
+      anglePairs.emplace_back(ang, nbrPair);
     }
   }
   anglePairs.sort(_anglComp);

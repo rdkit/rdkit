@@ -55,7 +55,7 @@ class RDKIT_FMCS_EXPORT RingMatchTableSet {
   };
 
  private:
-  std::vector<std::vector<size_t>>* QueryBondRingsIndeces;
+  std::vector<std::vector<size_t>>* QueryBondRingsIndeces{nullptr};
   std::map<const ROMol*, std::vector<std::vector<size_t>>>
       TargetBondRingsIndecesSet;  // by target molecules
 
@@ -63,7 +63,7 @@ class RDKIT_FMCS_EXPORT RingMatchTableSet {
   std::map<const INT_VECT*, unsigned> QueryRingIndex;
 
  public:
-  RingMatchTableSet() : QueryBondRingsIndeces(nullptr) {}
+  RingMatchTableSet()  {}
 
   inline void clear() {
     if (QueryBondRingsIndeces) QueryBondRingsIndeces->clear();

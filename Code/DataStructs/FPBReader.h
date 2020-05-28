@@ -58,11 +58,8 @@ struct FPBReader_impl;
 class RDKIT_DATASTRUCTS_EXPORT FPBReader {
  public:
   FPBReader()
-      : dp_istrm(nullptr),
-        dp_impl(nullptr),
-        df_owner(false),
-        df_init(false),
-        df_lazyRead(false){};
+      
+        {};
   //! ctor for reading from a named file
   /*!
   \param fname the name of the file to reads
@@ -248,11 +245,11 @@ class RDKIT_DATASTRUCTS_EXPORT FPBReader {
       const ExplicitBitVect &ebv) const;
 
  private:
-  std::istream *dp_istrm;
-  detail::FPBReader_impl *dp_impl;  // implementation details
-  bool df_owner;
-  bool df_init;
-  bool df_lazyRead;
+  std::istream *dp_istrm{nullptr};
+  detail::FPBReader_impl *dp_impl{nullptr};  // implementation details
+  bool df_owner{false};
+  bool df_init{false};
+  bool df_lazyRead{false};
 
   // disable automatic copy constructors and assignment operators
   // for this class and its subclasses.  They will likely be

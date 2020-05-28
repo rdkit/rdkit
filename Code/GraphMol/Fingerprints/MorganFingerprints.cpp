@@ -146,9 +146,9 @@ void calcFingerprint(const ROMol &mol, unsigned int radius,
     std::vector<std::pair<int32_t, uint32_t>> ordering;
     for (unsigned int i = 0; i < nAtoms; ++i) {
       if (!(*invariants)[i]) {
-        ordering.push_back(std::make_pair(1, i));
+        ordering.emplace_back(1, i);
       } else {
-        ordering.push_back(std::make_pair(0, i));
+        ordering.emplace_back(0, i);
       }
     }
     std::sort(ordering.begin(), ordering.end());
@@ -197,7 +197,7 @@ void calcFingerprint(const ROMol &mol, unsigned int radius,
                    static_cast<int32_t>(bond->getStereo());
             }
           }
-          nbrs.push_back(std::make_pair(bt, (*invariants)[oIdx]));
+          nbrs.emplace_back(bt, (*invariants)[oIdx]);
 
           ++beg;
         }

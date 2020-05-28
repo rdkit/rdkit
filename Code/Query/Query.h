@@ -54,7 +54,7 @@ class Query {
 
   Query()
       : d_description(""),
-        df_negate(false),
+        
         d_matchFunc(nullptr),
         d_dataFunc(nullptr){};
   virtual ~Query() { this->d_children.clear(); };
@@ -146,7 +146,7 @@ class Query {
   MatchFuncArgType d_tol = 0;
   std::string d_description;
   CHILD_VECT d_children;
-  bool df_negate;
+  bool df_negate{false};
   bool (*d_matchFunc)(MatchFuncArgType);
 
   // MSVC complains at compile time when TypeConvert(MatchFuncArgType what,
