@@ -88,7 +88,7 @@ void DrawText::drawString(const string &label, const Point2D &cds,
                           OrientType orient) {
 
   cout << "XXXXXXXXXXXXXXXXX" << endl;
-  cout << "DrawText::drawString 1 : " << label << " at " << cds.x << ", " << cds.y
+  cout << "DrawText::drawString 2 : " << label << " at " << cds.x << ", " << cds.y
        << " orient = " << orient << " fontScale = " << fontScale() << endl;
 
   vector<shared_ptr<StringRect>> rects;
@@ -100,61 +100,127 @@ void DrawText::drawString(const string &label, const Point2D &cds,
 }
 
 // ****************************************************************************
-StringRect DrawText::getStringRect(const string &label,
-                                   OrientType orient) const {
+void DrawText::adjustLineForString(const string &label, OrientType orient,
+                                   const Point2D &end1, Point2D &end2) const {
 
-  StringRect string_rect;
-  if (label.empty()) {
-    return string_rect;
+  cout << "Intersection between " << label << " : " << orient
+       << " and " << end1 << " and " << end2 << endl;
+
+  vector<shared_ptr<StringRect>> rects;
+  vector<TextDrawType> draw_modes;
+  vector<char> draw_chars;
+  Point2D lab_pos = end2;
+
+  getStringRects(label, orient, rects, draw_modes, draw_chars);
+
+  for(auto r: rects) {
+    r->trans_.x += lab_pos.x;
+    r->trans_.y += lab_pos.y;
+
+    Point2D tl, tr, bl, br;
+    r->calcCorners(tl, tr, br, bl);
+    unique_ptr<Point2D> ip(new Point2D);
+
+    // if it's a wide label, such as C:7, the bond can intersect
+    // more than 1 side of the rectangle, so check them all.
+    if (doLinesIntersect(end2, end1, tl, tr, ip.get())) {
+      end2 = *ip;
+    }
+    if (doLinesIntersect(end2, end1, tr, br, ip.get())) {
+      end2 = *ip;
+    }
+    if (doLinesIntersect(end2, end1, br, bl, ip.get())) {
+      end2 = *ip;
+    }
+    if (doLinesIntersect(end2, end1, bl, tl, ip.get())) {
+      end2 = *ip;
+    }
   }
-  double x_min, y_min, x_max, y_max;
+  cout << "End of Intersection between" << endl;
+
+}
+
+// ****************************************************************************
+void DrawText::drawStringRects(const string &label, OrientType orient,
+                               const Point2D &cds, MolDraw2D &mol_draw) const {
+
+  cout << "CCCCCCCCCCCCCCCCCCCCC" << endl;
+  cout << "drawStringRects" << endl;
+  vector<shared_ptr<StringRect>> rects;
+  vector<TextDrawType> draw_modes;
+  vector<char> draw_chars;
+
+  size_t i = 0;
+  getStringRects(label, orient, rects, draw_modes, draw_chars);
+  for(auto r: rects) {
+    r->trans_.x += cds.x;
+    r->trans_.y += cds.y;
+//    if(draw_chars[i] == '+') {
+//      r->trans_.y -= 28.86;
+//    } else if(draw_chars[i] == '-') {
+//      r->trans_.y -= 22.58;
+//    }
+    Point2D tl, tr, br, bl;
+    r->calcCorners(tl, tr, br, bl);
+    cout << draw_chars[i] << endl;
+    cout << "coords : " << cds << endl;
+    cout << "trans : " << r->trans_ << endl;
+    cout << "g_centre : " << r->g_centre_ << endl;
+    cout << "offset : " << r->offset_ << endl;
+    cout << "top left : " << tl << " : " << tl - cds << endl;
+    cout << "bottom right : " << br << " : " << br - cds << endl;
+
+    tl = mol_draw.getAtomCoords(make_pair(tl.x, tl.y));
+    tr = mol_draw.getAtomCoords(make_pair(tr.x, tr.y));
+    br = mol_draw.getAtomCoords(make_pair(br.x, br.y));
+    bl = mol_draw.getAtomCoords(make_pair(bl.x, bl.y));
+
+    mol_draw.setColour(DrawColour(1.0, 0.0, 0.0));
+    mol_draw.drawLine(tl, tr);
+    mol_draw.setColour(DrawColour(0.0, 1.0, 0.0));
+    mol_draw.drawLine(tr, br);
+    mol_draw.setColour(DrawColour(0.0, 0.0, 1.0));
+    mol_draw.drawLine(br, bl);
+    mol_draw.setColour(DrawColour(0.0, 1.0, 1.0));
+    mol_draw.drawLine(bl, tl);
+    ++i;
+  }
+
+}
+
+// ****************************************************************************
+void DrawText::getStringExtremes(const string &label, OrientType orient,
+                                 double &x_min, double &y_min,
+                                 double &x_max, double &y_max) const {
+
+  if (label.empty()) {
+    x_min = x_max = 0.0;
+    y_min = y_max = 0.0;
+    return;
+  }
+
   x_min = y_min = numeric_limits<double>::max();
   x_max = y_max = -numeric_limits<double>::max();
-  double running_y = 0;
-  vector<string> label_pieces = atomLabelToPieces(label, orient);
-  for (auto lab : label_pieces) {
-    double t_x_min, t_y_min, t_x_max, t_y_max;
-    vector<shared_ptr<StringRect>> rects;
-    vector<TextDrawType> draw_modes; // not needed for bounding box
-    vector<char> draw_chars;
-    getStringRects(lab, rects, draw_modes, draw_chars);
 
-    TextAlignType talign = TextAlignType::MIDDLE;
-    if(orient == OrientType::E) {
-      talign = TextAlignType::START;
-    } else if(orient == OrientType::W) {
-      talign = TextAlignType::END;
-    }
-    alignString(talign, draw_modes, rects);
-
-    t_x_min = t_y_min = numeric_limits<double>::max();
-    t_x_max = t_y_max = -numeric_limits<double>::max();
-    for(auto rect: rects) {
-      cout << "rect : " << rect->centre_.x << ", " << rect->centre_.y
-           << " dims " << rect->width_ << " by " << rect->height_ << endl;
-      x_min = min(x_min, rect->centre_.x - rect->width_ / 2.0);
-      y_min = min(y_min, rect->centre_.y - rect->height_ / 2.0);
-      x_max = max(x_max, rect->centre_.x + rect->width_ / 2.0);
-      y_max = max(y_max, rect->centre_.y + rect->height_ / 2.0);
-    }
-
-    t_y_max += running_y;
-    x_min = min(x_min, t_x_min);
-    y_min = min(y_min, t_y_min);
-    x_max = max(x_max, t_x_max);
-    y_max = max(y_max, t_y_max);
+  vector<shared_ptr<StringRect>> rects;
+  vector<TextDrawType> draw_modes;
+  vector<char> to_draw;
+  getStringRects(label, orient, rects, draw_modes, to_draw);
+  cout << "label : " << label << " mins : " << x_min << ", " << y_min
+       << "  maxes : " << x_max << ", " << y_max << " fontscale = " << fontScale() << endl;
+  for(auto r: rects) {
+    Point2D tl, tr, br, bl;
+    r->calcCorners(tl, tr, br, bl);
+    x_min = min(bl.x, x_min);
+    y_min = min(bl.y, y_min);
+    x_max = max(tr.x, x_max);
+    y_max = max(tr.y, y_max);
+    cout << "label : " << label << " mins : " << x_min << ", " << y_min
+         << "  maxes : " << x_max << ", " << y_max << " fontscale = " << fontScale() << endl;
   }
 
-  string_rect.width_ = x_max - x_min;
-  string_rect.height_ = y_max - y_min;
-  string_rect.centre_.x = string_rect.width_ / 2.0;
-  string_rect.centre_.y = string_rect.height_ / 2.0;
-
-  cout << "label : " << label << " at " << string_rect.centre_
-       << " dims = " << string_rect.width_ << " by "
-       << string_rect.height_ << endl;
-
-  return string_rect;
+  cout << "label : " << label << " mins : " << x_min << ", " << y_min
+       << "  maxes : " << x_max << ", " << y_max << " fontscale = " << fontScale() << endl;
 
 }
 
@@ -163,19 +229,26 @@ void DrawText::alignString(TextAlignType talign,
                            const vector<TextDrawType> &draw_modes,
                            vector<shared_ptr<StringRect> > &rects) const {
 
+  // string comes in with rects aligned with first char with its
+  // left hand and bottom edges at 0 on y and x respectively.
+  // Adjust relative to that so that the relative alignment point is at
+  // (0,0).
   cout << "DrawText::alignString : " << talign << endl;
   cout << "Rects : " << endl;
   for(auto r: rects) {
-    cout << r->centre_ << " dims " << r->width_ << " by " << r->height_ << endl;
+    cout << r->trans_ << " dims " << r->width_ << " by " << r->height_ << endl;
   }
 
-  double full_width = 0.0;
-  for(const auto r: rects) {
-    full_width += r->width_;
+  if(talign == TextAlignType::MIDDLE) {
+    size_t num_norm = count(draw_modes.begin(), draw_modes.end(),
+                            TextDrawType::TextDrawNormal);
+    if (num_norm == 1) {
+      talign = TextAlignType::START;
+    }
   }
+  cout << "DrawText::alignString amended align : " << talign << endl;
 
-  double align_h = 0.0;
-  double align_w = 0.0;
+  Point2D align_trans, align_offset;
   if(talign == TextAlignType::START || talign == TextAlignType::END) {
     size_t align_char = 0;
     for (size_t i = 0; i < rects.size(); ++i) {
@@ -186,31 +259,39 @@ void DrawText::alignString(TextAlignType talign,
         }
       }
     }
-    cout << "Align char : " << align_char << endl;
-    align_h = rects[align_char]->height_;
-    align_w = rects[align_char]->width_;
+    cout << "Align char : " << align_char << "  offset = " << rects[align_char]->offset_ << endl;
+    align_trans = rects[align_char]->trans_;
+    align_offset = rects[align_char]->offset_;
   } else {
+    // centre on the middle of the Normal text.  The super- or subscripts
+    // should be at the ends.
+    double full_width = 0.0;
     double y_min = numeric_limits<double>::max();
     double y_max = -y_min;
-    for(const auto r: rects) {
-      y_max = max(y_max, r->centre_.y + r->height_ / 2);
-      y_min = min(y_min, r->centre_.y - r->height_ / 2);
+    align_offset.x = align_offset.y = 0.0;
+    int num_norm = 0;
+    for (size_t i = 0; i < rects.size(); ++i) {
+      if (draw_modes[i] == TextDrawType::TextDrawNormal) {
+        full_width += rects[i]->width_;
+        y_max = max(y_max, rects[i]->trans_.y + rects[i]->height_ / 2);
+        y_min = min(y_min, rects[i]->trans_.y - rects[i]->height_ / 2);
+        align_offset += rects[i]->offset_;
+        ++num_norm;
+      }
     }
-    align_h = y_max - y_min;
-    align_w = full_width;
+    align_trans.x = full_width / 2.0;
+    align_trans.y = (y_max + y_min) / 2.0;
+    align_offset /= num_norm;
   }
-  cout << "Align width : " << align_w << endl;
-  cout << "Align height : " << align_h << endl;
+
   for(auto r: rects) {
-    r->centre_.y += align_h / 2;
-    switch(talign) {
-      case TextAlignType::START: case TextAlignType::MIDDLE:
-        r->centre_.x -= align_w / 2;
-        break;
-      case TextAlignType::END:
-        r->centre_.x -= full_width + align_w / 2;
-        break;
-    }
+    r->trans_ -= align_trans;
+    r->offset_ = align_offset;
+  }
+
+  for(auto r: rects) {
+    cout << "Aligned : " << r->trans_ << " dims " << r->width_
+         << " by " << r->height_ << endl;
   }
 
 }
@@ -220,42 +301,66 @@ void DrawText::adjustStringRectsForSuperSubScript(const vector<TextDrawType> &dr
                                                   const vector<char> &to_draw,
                                                   vector<shared_ptr<StringRect> > &rects) const {
 
-  double last_height = -1.0;
+  double last_char = -1;
   for(size_t i = 0; i < draw_modes.size(); ++i) {
     switch(draw_modes[i]) {
       case TextDrawType::TextDrawSuperscript:
+        cout << "Adjusting superscript " << to_draw[i] << " : "
+             << rects[i]->trans_ << " :: " << rects[i]->width_
+             << " by " << rects[i]->height_ << endl;
         // superscripts may come before or after a letter.  If before,
         // spin through to first non-superscript for last_height
-        if(last_height < 0.0) {
+        if(last_char < 0) {
           for (size_t j = i + 1; j < draw_modes.size(); ++j) {
             if (draw_modes[j] == TextDrawType::TextDrawNormal) {
-              last_height = rects[j]->height_;
+              last_char = j;
               break;
             }
           }
         }
-        // adjust y up by last_height / 2, unless it's a + which tends
-        // to stick above.
-        if(to_draw[i] == '+') {
-          rects[i]->centre_.y -= 0.33 * last_height;
-        } else {
-          rects[i]->centre_.y -= 0.5 * last_height;
-        }
+        cout << "last_char " << last_char << " : " << to_draw[last_char]
+             << " : " << rects[last_char]->trans_
+             << " :: "
+             << rects[last_char]->width_ << " by " << rects[last_char]->height_ << endl;
+        // adjust up by last height / 2.
+        rects[i]->rect_corr_ = rects[last_char]->height_;
+        rects[i]->trans_.y -= rects[i]->rect_corr_ / 2.0;
+        cout << "Corrector : " << rects[i]->rect_corr_ << endl;
+        cout << "After adjusting superscript " << to_draw[i] << " : "
+             << rects[i]->trans_ << " :: " << rects[i]->width_
+             << " by " << rects[i]->height_ << endl;
         // if the last char was a subscript, remove the advance
         if (i && draw_modes[i - 1] == TextDrawType::TextDrawSubscript) {
-          rects[i]->centre_.x = rects[i - 1]->centre_.x;
+          double move_by = rects[i]->trans_.x - rects[i-1]->trans_.x;
+          if(move_by > 0.0) {
+            for (size_t j = 0; j < i; ++j) {
+              rects[j]->trans_.x += move_by;
+            }
+          } else {
+            for (size_t j = i; j < draw_modes.size(); ++j) {
+              rects[j]->trans_.x += move_by;
+            }
+          }
+          cout << "correct advance for " << to_draw[i] << " : "
+               << i << " of " << draw_modes.size() - 1 << endl;
+          rects[i]->trans_.x = rects[i-1]->trans_.x;
         }
         break;
       case TextDrawType::TextDrawSubscript:
-        // adjust y down by last_height / 2
-        rects[i]->centre_.y += 0.5 * last_height;
+        cout << "Adjusting superscript " << to_draw[i] << " : "
+             << rects[i]->trans_ << " :: " << rects[i]->width_
+             << " by " << rects[i]->height_ << endl;
+        // adjust y down by last height / 2
+        rects[i]->rect_corr_ = -rects[last_char]->height_;
+        rects[i]->trans_.y -= rects[i]->rect_corr_ / 2.0;
         // if the last char was a superscript, remove the advance
         if (i && draw_modes[i - 1] == TextDrawType::TextDrawSuperscript) {
-          rects[i]->centre_.x = rects[i - 1]->centre_.x;
+          cout << "Correct advance" << endl;
+          rects[i]->trans_.x = rects[i-1]->trans_.x;
         }
         break;
       case TextDrawType::TextDrawNormal:
-        last_height = rects[i]->height_;
+        last_char = i;
         break;
     }
   }
@@ -285,9 +390,10 @@ void DrawText::getStringSize(const std::string &label, double &label_width,
                              double &label_height) const {
 
   cout << "DrawText::getStringSize" << endl;
-  StringRect rect = getStringRect(label, OrientType::E);
-  label_width = rect.width_;
-  label_height = rect.height_;
+  double x_min, y_min, x_max, y_max;
+  getStringExtremes(label, OrientType::E, x_min, y_min, x_max, y_max);
+  label_width = x_max - x_min;
+  label_height = y_max - y_min;
 
 }
 
@@ -325,7 +431,7 @@ bool setStringDrawMode(const string &instring,
 void DrawText::getStringRects(const string &text, OrientType orient,
                               vector<shared_ptr<StringRect> > &rects,
                               vector<TextDrawType> &draw_modes,
-                              vector<char> &draw_chars) {
+                              vector<char> &draw_chars) const {
 
   vector<string> text_bits = atomLabelToPieces(text, orient);
   if(orient == OrientType::W) {
@@ -352,11 +458,11 @@ void DrawText::getStringRects(const string &text, OrientType orient,
       vector<TextDrawType> t_draw_modes;
       vector<char> t_draw_chars;
       getStringRects(text_bits[i], t_rects, t_draw_modes, t_draw_chars);
-      alignString(TextAlignType::START, t_draw_modes, t_rects);
+      alignString(TextAlignType::MIDDLE, t_draw_modes, t_rects);
       double max_height = -numeric_limits<double>::max();
       for(auto r: t_rects) {
         max_height = max(r->height_, max_height);
-        r->centre_.y += running_y;
+        r->trans_.y += running_y;
       }
       rects.insert(rects.end(), t_rects.begin(), t_rects.end());
       draw_modes.insert(draw_modes.end(), t_draw_modes.begin(),
@@ -377,11 +483,18 @@ void DrawText::drawRects(const Point2D &a_cds,
 
   double full_scale = fontScale();
   for(size_t i = 0; i < rects.size(); ++i) {
-    cout << "rect " << i << " :: " << rects[i]->centre_ << " : "
+    cout << "raw draw rect " << i << " :: " << rects[i]->trans_ << " : "
         << rects[i]->width_ << " by " << rects[i]->height_ << endl;
     Point2D draw_cds;
-    draw_cds.x = a_cds.x + rects[i]->centre_.x - rects[i]->width_ / 2.0;
-    draw_cds.y = a_cds.y + rects[i]->centre_.y - rects[i]->height_ / 2.0;
+    draw_cds.x = a_cds.x + rects[i]->trans_.x - rects[i]->offset_.x;
+    draw_cds.y = a_cds.y - rects[i]->trans_.y + rects[i]->offset_.y; // opposite sign convention
+    draw_cds.y -= rects[i]->rect_corr_;
+//    if(draw_chars[i] == '+') {
+//      draw_cds.y -= 30;
+//    } else if(draw_chars[i] == '-') {
+//      draw_cds.y -= 30;
+//    }
+    cout << "Drawing char at : " << draw_cds.x << ", " << draw_cds.y << endl;
     setFontScale(full_scale * selectScaleFactor(draw_chars[i], draw_modes[i]));
     drawChar(draw_chars[i], draw_cds);
     setFontScale(full_scale);
@@ -392,6 +505,93 @@ void DrawText::drawRects(const Point2D &a_cds,
 // ****************************************************************************
 vector<string> atomLabelToPieces(const string &label, OrientType orient) {
 
+   cout << "ZZZZZZZZZZ\nsplitting " << label << " : " << orient << endl;
+  vector<string> label_pieces;
+  if (label.empty()) {
+    return label_pieces;
+  }
+
+  // if we have the mark-up <lit>XX</lit> the symbol is to be used
+  // without modification
+  if (label.substr(0, 5) == "<lit>") {
+    string lit_sym = label.substr(5);
+    size_t idx = lit_sym.find("</lit>");
+    if (idx != string::npos) {
+      lit_sym = lit_sym.substr(0, idx);
+    }
+    label_pieces.emplace_back(lit_sym);
+    return label_pieces;
+  }
+
+  string next_piece;
+  size_t i = 0;
+  while (true) {
+    if (i == label.length()) {
+      if (!next_piece.empty()) {
+        label_pieces.emplace_back(next_piece);
+        break;
+      }
+    }
+    if (label.substr(i, 2) == "<s" || label[i] == ':' || isupper(label[i])) {
+      // save the old piece, start a new one
+      if (!next_piece.empty()) {
+        label_pieces.emplace_back(next_piece);
+        next_piece.clear();
+      }
+    }
+    next_piece += label[i++];
+  }
+  if (label_pieces.size() < 2) {
+    return label_pieces;
+  }
+
+  // if the orientation is E, any charge flag needs to be at the end.
+  if(orient == OrientType::E) {
+    for (size_t i = 0; i < label_pieces.size(); ++i) {
+      if(label_pieces[i] == "<sup>+</sup>" || label_pieces[i] == "<sup>-</sup>") {
+        label_pieces.push_back(label_pieces[i]);
+        label_pieces[i].clear();
+        break;
+      }
+    }
+  }
+
+  // Now group some together.  This relies on the order that
+  // getAtomLabel built them in the first place.  Each atom symbol
+  // needs to be flanked by any <sub> and <super> pieces.
+  vector<string> final_pieces;
+  string curr_piece;
+  bool had_symbol = false;
+  for(const auto p: label_pieces) {
+    if(p.empty()) {
+      continue;
+    }
+    if(!isupper(p[0])) {
+      curr_piece += p;
+    } else {
+      if(had_symbol) {
+        final_pieces.push_back(curr_piece);
+        curr_piece = p;
+        had_symbol = true;
+      } else {
+        curr_piece += p;
+        had_symbol = true;
+      }
+    }
+  }
+  if(!curr_piece.empty()) {
+    final_pieces.push_back(curr_piece);
+  }
+
+   cout << "Final pieces : " << endl;
+   for(auto l: final_pieces) {
+     cout << l << endl;
+   }
+   cout << endl;
+
+  return final_pieces;
+
+#if 0
   cout << "ZZZZZZZZZZ\nsplitting " << label << " : " << orient << endl;
   vector<string> label_pieces;
   if (label.empty()) {
@@ -525,6 +725,9 @@ vector<string> atomLabelToPieces(const string &label, OrientType orient) {
   cout << endl;
 
   return label_pieces;
+#endif
+
+
 }
 
 

@@ -882,6 +882,7 @@ void MolDraw2D::calculateScale(int width, int height,
   double x_max(-x_min_), y_max(-y_min_);
 
   for (auto &pt : at_cds_[activeMolIdx_]) {
+    cout << pt << endl;
     x_min_ = std::min(pt.x, x_min_);
     y_min_ = std::min(pt.y, y_min_);
     x_max = std::max(pt.x, x_max);
@@ -1077,6 +1078,21 @@ void MolDraw2D::getLabelSize(const string &label, OrientType orient,
 }
 
 // ****************************************************************************
+void MolDraw2D::getStringExtremes(const string &label, OrientType orient,
+                                  const Point2D &cds,
+                                  double &x_min, double &y_min,
+                                  double &x_max, double &y_max) const {
+
+  cout << "MolDraw2D::getStringExtremes for " << label << " at " << cds << endl;
+  text_drawer_->getStringExtremes(label, orient, x_min, y_min, x_max, y_max);
+  x_min = cds.x + x_min / scale_;
+  y_min = cds.y + y_min / scale_;
+  x_max = cds.x + x_max / scale_;
+  y_max = cds.y + y_max / scale_;
+
+}
+
+// ****************************************************************************
 // draws the string centred on cds
 void MolDraw2D::drawString(const string &str, const Point2D &cds) {
 
@@ -1089,16 +1105,12 @@ void MolDraw2D::drawString(const string &str, const Point2D &cds) {
 void MolDraw2D::drawString(const std::string &str, const Point2D &cds,
                            TextAlignType talign) {
 
+  cout << "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA" << endl;
   cout << "MolDraw2D::drawString() : " << str << " : "
        << cds.x << ", " << cds.y << " talign = " << talign << endl;
   Point2D draw_cds = getDrawCoords(cds);
   text_drawer_->drawString(str, draw_cds, talign);
 
-}
-
-// ****************************************************************************
-void MolDraw2D::drawChar(char c, const Point2D &cds) {
-  text_drawer_->drawChar(c, cds);
 }
 
 // ****************************************************************************
@@ -1414,11 +1426,13 @@ void MolDraw2D::calcLabelEllipse(int atom_idx,
 
   string atsym = atom_syms_[activeMolIdx_][atom_idx].first;
   OrientType orient = atom_syms_[activeMolIdx_][atom_idx].second;
-  StringRect lab_rect = text_drawer_->getStringRect(atsym, orient);
+  double x_min, y_min, x_max, y_max;
+  getStringExtremes(atsym, orient, centre,
+                    x_min, y_min, x_max, y_max);
 
   static const double root2 = sqrt(2.0);
-  xradius = max(xradius, root2 * lab_rect.width_ / (2.0 * scale()));
-  yradius = max(yradius, root2 * lab_rect.height_ / (2.0 * scale()));
+  xradius = max(xradius, root2 * (x_max - x_min) / 2.0);
+  yradius = max(yradius, root2 * (y_max - y_min) / 2.0);
 }
 
 // ****************************************************************************
@@ -1434,14 +1448,16 @@ StringRect MolDraw2D::calcAnnotationPosition(const ROMol &mol,
   Point2D const &at_cds = at_cds_[activeMolIdx_][atom->getIdx()];
   double full_font_size = fontSize();
   setFontSize(drawOptions().annotationFontScale * full_font_size);
-  note_rect = text_drawer_->getStringRect(note, OrientType::C);
+  double x_min, y_min, x_max, y_max;
+  getStringExtremes(note, OrientType::C, at_cds,
+                    x_min, y_min, x_max, y_max);
   setFontSize(full_font_size);
   // make it a bit bigger for padding - mostly so it cant tuck in underneath
   // the end of a double bond.
-  note_rect.centre_.x = at_cds.x;
-  note_rect.centre_.y = at_cds.y;
-  note_rect.width_ *= 1 + 0.5 * drawOptions().multipleBondOffset;
-  note_rect.height_ *= 1 + 0.5 * drawOptions().multipleBondOffset;
+  note_rect.trans_.x = at_cds.x;
+  note_rect.trans_.y = at_cds.y;
+  note_rect.width_ = (x_max - x_min) * (1 + 0.5 * drawOptions().multipleBondOffset);
+  note_rect.height_ = (y_max - y_min) * (1 + 0.5 * drawOptions().multipleBondOffset);
 
   double start_ang = getNoteStartAngle(mol, atom);
   calcAtomAnnotationPosition(mol, atom, start_ang, note_rect);
@@ -1458,10 +1474,13 @@ StringRect MolDraw2D::calcAnnotationPosition(const ROMol &mol,
     note_rect.width_ = -1.0;  // so we know it's not valid.
     return note_rect;
   }
-  note_rect = text_drawer_->getStringRect(note, OrientType::W);
+  double x_min, y_min, x_max, y_max;
+  Point2D centre;
+  getStringExtremes(note, OrientType::W, centre,
+                    x_min, y_min, x_max, y_max);
   // make it a bit bigger for padding
-  note_rect.width_ *= 1 + 0.5 * drawOptions().multipleBondOffset;
-  note_rect.height_ *= 1 + 0.5 * drawOptions().multipleBondOffset;
+  note_rect.width_ = (x_max - x_min) * (1 + 0.5 * drawOptions().multipleBondOffset);
+  note_rect.height_ = (y_max - y_min) * (1 + 0.5 * drawOptions().multipleBondOffset);
 
   Point2D const &at1_cds = at_cds_[activeMolIdx_][bond->getBeginAtomIdx()];
   Point2D const &at2_cds = at_cds_[activeMolIdx_][bond->getEndAtomIdx()];
@@ -1476,14 +1495,14 @@ StringRect MolDraw2D::calcAnnotationPosition(const ROMol &mol,
     Point2D mid = at1_cds + bond_vec * bond_len * mo;
     for (int j = 1; j < 6; ++j) {
       double offset = j * offset_step;
-      note_rect.centre_ = mid + perp * offset;
+      note_rect.trans_ = mid + perp * offset;
       if (!doesBondNoteClash(note_rect, mol, bond)) {
         return note_rect;
       }
       if (note_rect.clash_score_ < least_worst_rect.clash_score_) {
         least_worst_rect = note_rect;
       }
-      note_rect.centre_ = mid - perp * offset;
+      note_rect.trans_ = mid - perp * offset;
       if (!doesBondNoteClash(note_rect, mol, bond)) {
         return note_rect;
       }
@@ -1500,10 +1519,15 @@ void MolDraw2D::calcAtomAnnotationPosition(const ROMol &mol, const Atom *atom,
                                            double start_ang, StringRect &rect) {
   Point2D const &at_cds = at_cds_[activeMolIdx_][atom->getIdx()];
   auto const &atsym = atom_syms_[activeMolIdx_][atom->getIdx()];
-  StringRect at_rect = text_drawer_->getStringRect(atsym.first, atsym.second);
-  at_rect.centre_ = at_cds;
-  at_rect.width_ /= scale();
-  at_rect.height_ /= scale();
+
+  double x_min, y_min, x_max, y_max;
+  Point2D centre;
+  getStringExtremes(atsym.first, atsym.second, centre,
+                    x_min, y_min, x_max, y_max);
+  StringRect at_rect;
+  at_rect.trans_ = at_cds;
+  at_rect.width_ = (x_max - x_min);
+  at_rect.height_ = (y_max - y_min);
 
   double rad_step = 0.25;
   StringRect least_worst_rect = StringRect();
@@ -1519,8 +1543,8 @@ void MolDraw2D::calcAtomAnnotationPosition(const ROMol &mol, const Atom *atom,
     // clear for the annotation.
     for (int i = 0; i < 12; ++i) {
       double ang = start_ang + i * 30.0 * M_PI / 180.0;
-      rect.centre_.x = at_cds.x + cos(ang) * note_rad;
-      rect.centre_.y = at_cds.y + sin(ang) * note_rad;
+      rect.trans_.x = at_cds.x + cos(ang) * note_rad;
+      rect.trans_.y = at_cds.y + sin(ang) * note_rad;
       if (!doesAtomNoteClash(rect, at_rect, mol, atom->getIdx())) {
         return;
       } else {
@@ -2067,6 +2091,7 @@ void MolDraw2D::drawAtomLabel(int atom_num,
 // ****************************************************************************
 void MolDraw2D::drawAtomLabel(int atom_num, const DrawColour &draw_colour) {
 
+  cout << "BBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBB" << endl;
   cout << "draw label " << atom_syms_[activeMolIdx_][atom_num].first
        << " at " << at_cds_[activeMolIdx_][atom_num] << endl;
 
@@ -2075,6 +2100,9 @@ void MolDraw2D::drawAtomLabel(int atom_num, const DrawColour &draw_colour) {
   text_drawer_->drawString(atom_syms_[activeMolIdx_][atom_num].first,
                            draw_cds,
                            atom_syms_[activeMolIdx_][atom_num].second);
+  text_drawer_->drawStringRects(atom_syms_[activeMolIdx_][atom_num].first,
+                                atom_syms_[activeMolIdx_][atom_num].second,
+                                draw_cds, *this);
 
 }
 
@@ -2083,7 +2111,7 @@ void MolDraw2D::drawAnnotation(const string &note,
                                const std::shared_ptr<StringRect> &note_rect) {
   double full_font_size = fontSize();
   setFontSize(drawOptions().annotationFontScale * full_font_size);
-  drawString(note, note_rect->centre_);
+  drawString(note, note_rect->trans_);
   setFontSize(full_font_size);
 }
 
@@ -2141,53 +2169,55 @@ void MolDraw2D::drawRadicals(const ROMol &mol) {
     double rad_size = 0.5 + (num_rade - 1) * drawOptions().multipleBondOffset;
     double rad_offset = 2.0 * spot_size;
     if (!atom_syms_[activeMolIdx_][atom->getIdx()].first.empty()) {
-      atom_rect = text_drawer_->getStringRect(
-          atom_syms_[activeMolIdx_][atom->getIdx()].first,
-          atom_syms_[activeMolIdx_][atom->getIdx()].second);
-      atom_rect.centre_ = at_cds;
-      atom_rect.width_ /= scale();
-      atom_rect.height_ /= scale();
+      double x_min, y_min, x_max, y_max;
+      // here we want string extremes in draw coords.
+      text_drawer_->getStringExtremes(atom_syms_[activeMolIdx_][atom->getIdx()].first,
+                                      atom_syms_[activeMolIdx_][atom->getIdx()].second,
+                                      x_min, y_min, x_max, y_max);
+      atom_rect.trans_ = at_cds;
+      atom_rect.width_ = x_max - x_min;
+      atom_rect.height_ = y_max - y_min;
     } else {
-      atom_rect.centre_ = at_cds;
+      atom_rect.trans_ = at_cds;
       atom_rect.width_ = rad_size;
       atom_rect.height_ = spot_size * 5;
       rad_offset = 5.0 * spot_size;
     }
     StringRect rad_rect;
     // try N, S, E and W of the atom.
-    rad_rect.centre_.x = at_cds.x;
-    rad_rect.centre_.y = at_cds.y + 0.5 * atom_rect.height_ + rad_offset;
+    rad_rect.trans_.x = at_cds.x;
+    rad_rect.trans_.y = at_cds.y + 0.5 * atom_rect.height_ + rad_offset;
     rad_rect.width_ = rad_size + 3.0 * spot_size;
     rad_rect.height_ = spot_size * 1.5;
     if (!doesAtomNoteClash(rad_rect, atom_rect, mol, atom->getIdx())) {
-      draw_spots(rad_rect.centre_, num_rade, rad_size);
+      draw_spots(rad_rect.trans_, num_rade, rad_size);
       continue;
     }
-    rad_rect.centre_.y = at_cds.y - 0.5 * atom_rect.height_ - rad_offset;
+    rad_rect.trans_.y = at_cds.y - 0.5 * atom_rect.height_ - rad_offset;
     if (!doesAtomNoteClash(rad_rect, atom_rect, mol, atom->getIdx())) {
-      draw_spots(rad_rect.centre_, num_rade, rad_size);
+      draw_spots(rad_rect.trans_, num_rade, rad_size);
       continue;
     }
-    rad_rect.centre_.x = at_cds.x + 0.5 * atom_rect.width_ + spot_size;
-    rad_rect.centre_.y = at_cds.y;
+    rad_rect.trans_.x = at_cds.x + 0.5 * atom_rect.width_ + spot_size;
+    rad_rect.trans_.y = at_cds.y;
     rad_rect.width_ = spot_size * 1.5;
     rad_rect.height_ = rad_size;
     if (!doesAtomNoteClash(rad_rect, atom_rect, mol, atom->getIdx())) {
-      draw_spots(rad_rect.centre_, num_rade, rad_size, 1);
+      draw_spots(rad_rect.trans_, num_rade, rad_size, 1);
       continue;
     }
-    rad_rect.centre_.x = at_cds.x - 0.5 * atom_rect.width_ - spot_size;
+    rad_rect.trans_.x = at_cds.x - 0.5 * atom_rect.width_ - spot_size;
     if (!doesAtomNoteClash(rad_rect, atom_rect, mol, atom->getIdx())) {
-      draw_spots(rad_rect.centre_, num_rade, rad_size, 1);
+      draw_spots(rad_rect.trans_, num_rade, rad_size, 1);
       continue;
     }
     // stick them N irrespective of a clash whilst muttering "sod it"
     // under our breath.
-    rad_rect.centre_.x = at_cds.x;
-    rad_rect.centre_.y = at_cds.y + 0.5 * atom_rect.height_ + rad_offset;
+    rad_rect.trans_.x = at_cds.x;
+    rad_rect.trans_.y = at_cds.y + 0.5 * atom_rect.height_ + rad_offset;
     rad_rect.width_ = rad_size;
     rad_rect.height_ = spot_size * 1.5;
-    draw_spots(rad_rect.centre_, num_rade, rad_size);
+    draw_spots(rad_rect.trans_, num_rade, rad_size);
   }
 }
 
@@ -2286,12 +2316,15 @@ bool MolDraw2D::doesBondNoteClash(StringRect &note_rect, const ROMol &mol,
   }
   note_rect.clash_score_ = 1;
   unsigned int atom_idx = bond->getBeginAtomIdx();
-  StringRect atsym_rect =
-      text_drawer_->getStringRect(atom_syms_[activeMolIdx_][atom_idx].first,
-                                  atom_syms_[activeMolIdx_][atom_idx].second);
-  atsym_rect.centre_ = at_cds_[activeMolIdx_][atom_idx];
-  atsym_rect.width_ /= scale();
-  atsym_rect.height_ /= scale();
+  double x_min, y_min, x_max, y_max;
+  Point2D centre;
+  getStringExtremes(atom_syms_[activeMolIdx_][atom_idx].first,
+                    atom_syms_[activeMolIdx_][atom_idx].second,
+                    centre, x_min, y_min, x_max, y_max);
+  StringRect atsym_rect;
+  atsym_rect.trans_ = at_cds_[activeMolIdx_][atom_idx];
+  atsym_rect.width_ = x_max - x_min;
+  atsym_rect.height_ = y_max - y_min;
   if (doesNoteClashAtomLabels(note_rect, atsym_rect, mol, atom_idx)) {
     return true;
   }
@@ -2363,11 +2396,14 @@ bool MolDraw2D::doesNoteClashAtomLabels(const StringRect &note_rect,
     }
     if ((at_cds[atom_idx] - at_cds[atom->getIdx()]).lengthSq() < 4.0) {
       const auto &atsym = atom_syms_[activeMolIdx_][atom->getIdx()];
-      StringRect near_at_rect =
-          text_drawer_->getStringRect(atsym.first, atsym.second);
-      near_at_rect.centre_ = at_cds[atom->getIdx()];
-      near_at_rect.width_ /= scale();
-      near_at_rect.height_ /= scale();
+      double x_min, y_min, x_max, y_max;
+      getStringExtremes(atsym.first, atsym.second,
+                        at_cds[atom->getIdx()],
+                        x_min, y_min, x_max, y_max);
+      StringRect near_at_rect;
+      near_at_rect.trans_ = at_cds[atom->getIdx()];
+      near_at_rect.width_ = x_max - x_min;
+      near_at_rect.height_ = y_max - y_min;
       if (note_rect.doesItIntersect(near_at_rect)) {
         return true;
       }
@@ -2639,25 +2675,14 @@ void MolDraw2D::adjustBondEndForLabel(int atnum, const Point2D &nbr_cds,
     return;
   }
 
-  StringRect sr = text_drawer_->getStringRect(atom_syms_[activeMolIdx_][atnum].first,
-                                atom_syms_[activeMolIdx_][atnum].second);
-  sr.centre_ = at_cds_[activeMolIdx_][atnum];
-  sr.width_ /= scale();
-  sr.height_ /= scale();
+  Point2D draw_cds = getDrawCoords(cds);
+  Point2D nbr_draw_cds = getDrawCoords(nbr_cds);
 
-  Point2D tl, tr, bl, br;
-  sr.calcCorners(tl, tr, br, bl);
-  unique_ptr<Point2D> ip(new Point2D);
+  text_drawer_->adjustLineForString(atom_syms_[activeMolIdx_][atnum].first,
+                                    atom_syms_[activeMolIdx_][atnum].second,
+                                    nbr_draw_cds, draw_cds);
+  cds = getAtomCoords(make_pair(draw_cds.x, draw_cds.y));
 
-  if (doLinesIntersect(cds, nbr_cds, tl, tr, ip.get())) {
-    cds = *ip;
-  } else if (doLinesIntersect(cds, nbr_cds, tr, br, ip.get())) {
-    cds = *ip;
-  } else if (doLinesIntersect(cds, nbr_cds, br, bl, ip.get())) {
-    cds = *ip;
-  } else if (doLinesIntersect(cds, nbr_cds, bl, tl, ip.get())) {
-    cds = *ip;
-  }
   if (drawOptions().additionalAtomLabelPadding > 0.0) {
     // directionVector is normalised.
     Point2D bond =
@@ -2717,9 +2742,29 @@ string MolDraw2D::getAtomSymbol(const RDKit::Atom &atom) const {
   } else {
     literal_symbol = false;
     std::vector<std::string> preText, postText;
+
+    // first thing after the symbol is the atom map
+    if (atom.hasProp("molAtomMapNumber")) {
+      string map_num = "";
+      atom.getProp("molAtomMapNumber", map_num);
+      postText.push_back(std::string(":") + map_num);
+    }
+
+    if (0 != atom.getFormalCharge()) {
+      // charge always comes post the symbol
+      int ichg = atom.getFormalCharge();
+      string sgn = ichg > 0 ? string("+") : string("-");
+      ichg = abs(ichg);
+      if (ichg > 1) {
+        sgn = std::to_string(ichg) + sgn;
+      }
+      // put the charge as a superscript
+      postText.push_back(string("<sup>") + sgn + string("</sup>"));
+    }
+
     int num_h = (atom.getAtomicNum() == 6 && atom.getDegree() > 0)
-                    ? 0
-                    : atom.getTotalNumHs();  // FIX: still not quite right
+                ? 0
+                : atom.getTotalNumHs();  // FIX: still not quite right
     if (num_h > 0 && !atom.hasQuery()) {
       // the H text comes after the atomic symbol
       std::string h = "H";
@@ -2734,25 +2779,6 @@ string MolDraw2D::getAtomSymbol(const RDKit::Atom &atom) const {
       // isotope always comes before the symbol
       preText.push_back(std::string("<sup>") + std::to_string(iso) +
                         std::string("</sup>"));
-    }
-
-    if (0 != atom.getFormalCharge()) {
-      // charge always comes post the symbol
-      int ichg = atom.getFormalCharge();
-      string sgn = ichg > 0 ? string("+") : string("-");
-      ichg = abs(ichg);
-      if (ichg > 1) {
-        sgn += std::to_string(ichg);
-      }
-      // put the charge as a superscript
-      postText.push_back(string("<sup>") + sgn + string("</sup>"));
-    }
-
-    if (atom.hasProp("molAtomMapNumber")) {
-      // atom map always comes at the end
-      string map_num = "";
-      atom.getProp("molAtomMapNumber", map_num);
-      postText.push_back(std::string(":") + map_num);
     }
 
     symbol = "";
@@ -2852,17 +2878,18 @@ void MolDraw2D::adjustScaleForAtomLabels(
     const map<int, double> *highlight_radii) {
 
   double x_max(x_min_ + x_range_), y_max(y_min_ + y_range_);
+  cout << "top of adjustScaleForAtomLabels mins = " << x_min_ << " and "
+       << y_min_ << " maxes = " << x_max << ", " << y_max << endl;
+
   for (size_t i = 0; i < atom_syms_[activeMolIdx_].size(); ++i) {
     if (!atom_syms_[activeMolIdx_][i].first.empty()) {
-      Point2D centre = at_cds_[activeMolIdx_][i];
-      // sym_rect returned in pixels
-      StringRect sym_rect =
-          text_drawer_->getStringRect(atom_syms_[activeMolIdx_][i].first,
-                                      atom_syms_[activeMolIdx_][i].second);
-      double this_x_max = centre.x + sym_rect.width_ / (2.0 * scale());
-      double this_y_max = centre.y + sym_rect.height_ / (2.0 * scale());
-      double this_x_min = centre.x - sym_rect.width_ / (2.0 * scale());
-      double this_y_min = centre.y - sym_rect.height_ / (2.0 * scale());
+      double this_x_min, this_y_min, this_x_max, this_y_max;
+      getStringExtremes(atom_syms_[activeMolIdx_][i].first,
+                        atom_syms_[activeMolIdx_][i].second,
+                        at_cds_[activeMolIdx_][i],
+                        this_x_min, this_y_min,
+                        this_x_max, this_y_max);
+
       x_max = std::max(x_max, this_x_max);
       x_min_ = std::min(x_min_, this_x_min);
       y_max = std::max(y_max, this_y_max);
@@ -2885,6 +2912,10 @@ void MolDraw2D::adjustScaleForAtomLabels(
       y_min_ = std::min(y_min_, this_y_min);
     }
   }
+
+  cout << "bottom of adjustScaleForAtomLabels mins = " << x_min_ << " and "
+       << y_min_ << " maxes = " << x_max << ", " << y_max << endl;
+
   x_range_ = max(x_max - x_min_, x_range_);
   y_range_ = max(y_max - y_min_, y_range_);
 }
@@ -2896,10 +2927,10 @@ void MolDraw2D::adjustScaleForAnnotation(
 
   for (auto const &note_rect : notes) {
     if (note_rect) {
-      double this_x_max = note_rect->centre_.x + note_rect->width_ / 2.0;
-      double this_x_min = note_rect->centre_.x - note_rect->width_ / 2.0;
-      double this_y_max = note_rect->centre_.y + note_rect->height_ / 2.0;
-      double this_y_min = note_rect->centre_.y - note_rect->height_ / 2.0;
+      double this_x_max = note_rect->trans_.x + note_rect->width_ / 2.0;
+      double this_x_min = note_rect->trans_.x - note_rect->width_ / 2.0;
+      double this_y_max = note_rect->trans_.y + note_rect->height_ / 2.0;
+      double this_y_min = note_rect->trans_.y - note_rect->height_ / 2.0;
       x_max = std::max(x_max, this_x_max);
       x_min_ = std::min(x_min_, this_x_min);
       y_max = std::max(y_max, this_y_max);
@@ -3051,6 +3082,7 @@ bool doLinesIntersect(const Point2D &l1s, const Point2D &l1f,
       ip->x = l1s.x + t * s1_x;
       ip->y = l1s.y + t * s1_y;
     }
+    cout << "intersection" << endl;
     return true;
   }
 

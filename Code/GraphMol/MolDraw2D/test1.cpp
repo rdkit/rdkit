@@ -35,13 +35,17 @@ using namespace RDKit;
 void test1() {
   std::cout << " ----------------- Test 1" << std::endl;
   {
-//    std::string smiles = ;
-//    auto m = "[NH-]C([NH3+])C(CBr)CCC[NH3+]"_smiles;
+//    auto m = "[NH-]C([NH3+])C(CN)CCC[NH3+]"_smiles;
+    auto m = "[NH3+]C1=C([NH3+])C([NH3+])=C([NH-])C([NH3+])=C1[NH-]"_smiles;
 //    auto m = "C"_smiles;
 //    auto m = "CCN(CC)CC[NH3+]"_smiles;
-    auto m = "[NH-]C([NH3+])C(CBr)CCC[NH3+]"_smiles;
-//    auto m = "CC[13CH2][CH2:7][CH-]C[15NH2+]C"_smiles;
+//    auto m = "[NH-]C([NH3+])C(CBr)CCC[NH3+]"_smiles;
+//    auto m = "CCC[CH2:7]CCCC"_smiles;
+//    auto m = "[CH4+]C[13CH2][CH2:7][CH-]C[15NH2+]C"_smiles;
 //    auto m = "CCN(CC)CC"_smiles;
+//    auto m = "[NH-]C(N)C(CBr)CCC[NH3+]"_smiles;
+//    auto m = "C1[CH-][CH3+]CCC1"_smiles;
+//    auto m = "BrC(Br)(Br)Br"_smiles;
     TEST_ASSERT(m);
     RDDepict::compute2DCoords(*m);
     WedgeMolBonds(*m, &(m->getConformer()));
@@ -52,13 +56,15 @@ void test1() {
 
     drawer.writeDrawingText("test2_X.png");
   }
-//  exit(1);
+  exit(1);
   {
-    auto m = "[NH-]C([NH3+])C(CBr)CCC[NH3+]"_smiles;
+//    auto m = "[NH-]C(N)C(CBr)CCC[NH3+]"_smiles;
 //    auto m = "O"_smiles;
 //    auto m = "CCN(CC)CC"_smiles;
 //    auto m = "CCN(CC)CC[NH3+]"_smiles;
 //    auto m = "CC[13CH2][CH2:7][CH-]C[15NH2+]C"_smiles;
+//    auto m = "NCCN"_smiles;
+    auto m = "C1C[CH-]CCC1"_smiles;
     TEST_ASSERT(m);
     RDDepict::compute2DCoords(*m);
     WedgeMolBonds(*m, &(m->getConformer()));

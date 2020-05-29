@@ -194,6 +194,7 @@ void MolDraw2DSVG::drawLine(const Point2D &cds1, const Point2D &cds2) {
   Point2D c2 = getDrawCoords(cds2);
   std::string col = DrawColourToSVG(colour());
   unsigned int width = getDrawLineWidth();
+  width = 1;
   std::string dashString = "";
   const DashPattern &dashes = dash();
   if (dashes.size()) {

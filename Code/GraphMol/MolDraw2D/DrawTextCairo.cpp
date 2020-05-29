@@ -36,8 +36,7 @@ void DrawTextCairo::drawChar(char c, const Point2D &cds) {
   char txt[2];
   txt[0] = c;
   txt[1] = 0;
-  Point2D c1 = cds;
-  cairo_move_to(dp_cr_, c1.x, c1.y);
+  cairo_move_to(dp_cr_, cds.x, cds.y);
   cairo_show_text(dp_cr_, txt);
   cairo_stroke(dp_cr_);
 }
@@ -53,8 +52,8 @@ void DrawTextCairo::getStringRects(const string &text,
   double running_x = 0.0;
   char char_str[2];
   char_str[1] = 0;
-
-  cairo_set_font_size(dp_cr_, fontSize());
+  double max_y = 0.0;
+  double full_fs = fontSize();
   for(size_t i = 0; i < text.length(); ++i) {
     // setStringDrawMode moves i along to the end of any <sub> or <sup>
     // markup
@@ -62,25 +61,36 @@ void DrawTextCairo::getStringRects(const string &text,
       continue;
     }
     draw_chars.push_back(text[i]);
+
     char_str[0] = text[i];
     cairo_text_extents_t extents;
+    cairo_set_font_size(dp_cr_, selectScaleFactor(text[i], draw_mode) * full_fs);
     cairo_text_extents(dp_cr_, char_str, &extents);
-    cout << extents.width << " by " << extents.height << " and "
-         << extents.x_advance << endl;
-    double w_mult = 1.0;
-    if(draw_mode == TextDrawType::TextDrawSuperscript
-       || draw_mode == TextDrawType::TextDrawSubscript) {
-      w_mult  = 0.75;
-    }
-    double twidth = w_mult * extents.x_advance;
+    cairo_set_font_size(dp_cr_, full_fs);
+    cout << text[i] << " : " << extents.width << " by " << extents.height << " adv "
+         << extents.x_advance << "  bearings : " << extents.x_bearing << ", "
+         << extents.y_bearing << endl;
+    double twidth = extents.width;
     double theight = extents.height;
-    Point2D centre(running_x + twidth / 2, theight / 2);
-    rects.push_back(shared_ptr<StringRect>(new StringRect(centre, twidth, theight)));
+    Point2D offset(extents.x_bearing + twidth / 2.0,
+                   -extents.y_bearing / 2.0);
+    Point2D g_centre(offset.x, -extents.y_bearing - theight / 2.0);
+    rects.push_back(shared_ptr<StringRect>(new StringRect(offset, g_centre, twidth, theight)));
+    rects.back()->trans_.x = running_x;
     draw_modes.push_back(draw_mode);
-    running_x += w_mult * extents.x_advance;
+    running_x += extents.x_advance;
+    max_y = max(max_y, -extents.y_bearing);
+    cout << "Cairo rect : " << text[i] << " : " << rects.back()->trans_
+         << " :: " << rects.back()->width_ << " by " << rects.back()->height_
+         << "  offset = " << rects.back()->offset_ << endl;
+  }
+  cout << "max_y = " << max_y << endl;
+  for(auto r: rects) {
+    r->g_centre_.y = max_y - r->g_centre_.y;
+    r->offset_.y = max_y / 2.0;
   }
 
-  adjustStringRectsForSuperSubScript(draw_modes, draw_chars, rects);
+   adjustStringRectsForSuperSubScript(draw_modes, draw_chars, rects);
 
 }
 

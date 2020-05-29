@@ -67,28 +67,33 @@ struct DrawColour {
 
 // for holding dimensions of the rectangle round a string.
 struct StringRect {
-  Point2D centre_;
-  double width_, height_;
+  Point2D trans_; // Where to draw char relative to other chars in string
+  Point2D offset_; // offset for draw coords so char is centred correctly
+  Point2D g_centre_; // glyph centre relative to the origin of the char.
+  double width_, height_; // of the glyph itself, not the character cell
+  double rect_corr_; // because if we move a char one way, we need to move the rectangle the other.
   int clash_score_;  // rough measure of how badly it clashed with other things
                      // lower is better, 0 is no clash.
   StringRect()
-      : centre_(0.0, 0.0), width_(0.0), height_(0.0), clash_score_(0) {}
-  StringRect(const Point2D &in_cds)
-      : centre_(in_cds), width_(0.0), height_(0.0), clash_score_(0) {}
-  StringRect(const Point2D &in_cds, double w, double h)
-      : centre_(in_cds), width_(w), height_(h), clash_score_(0) {}
-  // tl is top, left; br is bottom, right
+      : trans_(0.0, 0.0), offset_(0.0, 0.0), g_centre_(offset_), width_(0.0),
+        height_(0.0), rect_corr_(0.0), clash_score_(0) {}
+  StringRect(const Point2D &offset, const Point2D &g_centre, double w, double h)
+      : trans_(0.0, 0.0), offset_(offset), g_centre_(g_centre), width_(w),
+        height_(h), rect_corr_(0.0), clash_score_(0) {}
+  // tl is top, left; br is bottom, right of the glyph, relative to the
+  // centre.
   void calcCorners(Point2D &tl, Point2D &tr, Point2D &br, Point2D &bl) const {
     double wb2 = width_ / 2.0;
     double hb2 = height_ / 2.0;
-    tl = Point2D(centre_.x - wb2, centre_.y + hb2);
-    tr = Point2D(centre_.x + wb2, centre_.y + hb2);
-    br = Point2D(centre_.x + wb2, centre_.y - hb2);
-    bl = Point2D(centre_.x - wb2, centre_.y - hb2);
+    Point2D c = trans_ + g_centre_ - offset_;
+    tl = Point2D(c.x - wb2, c.y - hb2);
+    tr = Point2D(c.x + wb2, c.y - hb2);
+    br = Point2D(c.x + wb2, c.y + hb2);
+    bl = Point2D(c.x - wb2, c.y + hb2);
   }
   bool doesItIntersect(const StringRect &other) const {
-    if (fabs(centre_.x - other.centre_.x) < (width_ + other.width_) / 2.0 &&
-        fabs(centre_.y - other.centre_.y) < (height_ + other.height_) / 2.0) {
+    if (fabs(trans_.x - other.trans_.x) < (width_ + other.width_) / 2.0 &&
+        fabs(trans_.y - other.trans_.y) < (height_ + other.height_) / 2.0) {
       return true;
     }
     return false;
@@ -451,6 +456,7 @@ class RDKIT_MOLDRAW2D_EXPORT MolDraw2D {
   //! clears the contents of the drawing
   virtual void clearDrawing() = 0;
   //! draws a line from \c cds1 to \c cds2 using the current drawing style
+  // in atom coords.
   virtual void drawLine(const Point2D &cds1, const Point2D &cds2) = 0;
 
   //! using the current scale, work out the size of the label in molecule
@@ -466,6 +472,11 @@ class RDKIT_MOLDRAW2D_EXPORT MolDraw2D {
   // into pieces according to orientation.
   void getLabelSize(const std::string &label, OrientType orient,
                     double &label_width, double &label_height) const;
+  // return extremes for string in molecule coords.
+  void getStringExtremes(const std::string &label, OrientType orient,
+                         const Point2D &cds, double &x_min, double &y_min,
+                         double &x_max, double &y_max) const;
+
   //! drawString centres the string on cds.
   virtual void drawString(const std::string &str, const Point2D &cds);
   // unless the specific drawer over-rides this overload, it will just call
@@ -569,9 +580,6 @@ class RDKIT_MOLDRAW2D_EXPORT MolDraw2D {
   virtual void initDrawing() = 0;
   virtual void initTextDrawer() = 0;
 
-  // draw the char, with the bottom left hand corner at cds
-  void drawChar(char c, const Point2D &cds);
-
   // return a DrawColour based on the contents of highlight_atoms or
   // highlight_map, falling back to atomic number by default
   DrawColour getColour(
@@ -652,6 +660,7 @@ class RDKIT_MOLDRAW2D_EXPORT MolDraw2D {
   void extractAtomNotes(const ROMol &mol);
   void extractBondNotes(const ROMol &mol);
 
+  // coords in atom coords
   virtual void drawLine(const Point2D &cds1, const Point2D &cds2,
                         const DrawColour &col1, const DrawColour &col2);
   void drawWedgedBond(const Point2D &cds1, const Point2D &cds2,

@@ -95,8 +95,11 @@ void DrawTextSVG::getStringRects(const string &text,
     cout << draw_chars.back() << " : " << char_width << " : " << char_height
          << " and " << running_x << endl;
     Point2D centre(running_x + char_width / 2, char_height / 2);
-    rects.push_back(shared_ptr<StringRect>(new StringRect(centre, char_width, char_height)));
+    rects.push_back(shared_ptr<StringRect>(new StringRect(centre, centre, char_width, char_height)));
     draw_modes.push_back(draw_mode);
+    cout << "SVG rect : " << text[i] << " : " << rects.back()->trans_
+         << " :: "
+         << rects.back()->width_ << " by " << rects.back()->height_ << endl;
 
     running_x += char_width;
   }

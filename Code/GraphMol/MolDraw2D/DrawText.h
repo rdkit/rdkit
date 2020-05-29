@@ -63,9 +63,10 @@ class DrawText {
    */
   virtual void getStringSize(const std::string &label, double &label_width,
                              double &label_height) const;
-  // returns a rectangle that goes round the label, in pixel coords.  Centred
-  // on origin.
-  StringRect getStringRect(const std::string &label, OrientType orient) const;
+  // returns the extremes of the label, in draw (pixel) coords,
+  void getStringExtremes(const std::string &label, OrientType orient,
+                         double &x_min, double &y_min,
+                         double &x_max, double &y_max) const;
 
   //! drawString centres the string on cds.
   virtual void drawString(const std::string &str, const Point2D &cds,
@@ -74,8 +75,18 @@ class DrawText {
   void drawString(const std::string &label, const Point2D &cds,
                   OrientType orient);
 
+  // put the label on end2, and then move end2 so that it is at
+  // the intersection of a string rectangle and the line from end1 to
+  // end2, if there is an intersection.  Mostly for trimming bonds
+  // back from atom labels.
+  void adjustLineForString(const std::string &label, OrientType orient,
+                           const Point2D &end1, Point2D &end2) const;
+
   // draw the char, with the bottom left hand corner at cds
   virtual void drawChar(char c, const Point2D &cds) = 0;
+
+  void drawStringRects(const std::string &label, OrientType orient,
+                       const Point2D &cds, MolDraw2D &mol_draw) const;
 
  protected:
   // amount to scale subscripts and superscripts by
@@ -109,7 +120,7 @@ class DrawText {
   void getStringRects(const std::string &text, OrientType orient,
                       std::vector<std::shared_ptr<StringRect>> &rects,
                       std::vector<TextDrawType> &draw_modes,
-                      std::vector<char> &draw_chars);
+                      std::vector<char> &draw_chars) const;
   void drawRects(const Point2D &a_cds,
                  const std::vector<std::shared_ptr<StringRect>> &rects,
                  const std::vector<TextDrawType> &draw_modes,

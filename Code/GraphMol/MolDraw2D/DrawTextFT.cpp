@@ -53,10 +53,16 @@ DrawTextFT::~DrawTextFT() {
 // ****************************************************************************
 void DrawTextFT::drawChar(char c, const Point2D &cds) {
 
-//  cout << "draw " << c << " at " << cds.x << ", " << cds.y << endl;
+  cout << "draw " << c << " at " << cds.x << ", " << cds.y << endl;
   FT_Load_Char(face_, c, FT_LOAD_NO_SCALE | FT_LOAD_NO_BITMAP);
-  x_trans_ = cds.x;
-  y_trans_ = cds.y;
+  auto min_it = char_mins_.find(c);
+  FT_Pos x_min = 0, y_min = 0;
+  if(min_it != char_mins_.end()) {
+    x_min = min_it->second.first;
+    y_min = min_it->second.second;
+  }
+  x_trans_ = cds.x - fontCoordToDrawCoord(x_min);
+  y_trans_ = cds.y + fontCoordToDrawCoord(y_min);
   double advance = extractOutline();
   x_trans_ += advance;
 
@@ -145,22 +151,28 @@ void DrawTextFT::getStringRects(const string &text,
     double oscale = selectScaleFactor(text[i], draw_mode);
     double p_x_min = oscale * fontCoordToDrawCoord(this_x_min);
     double p_y_min = oscale * fontCoordToDrawCoord(this_y_min);
-    double width = rect_scale_ * (oscale * fontCoordToDrawCoord(this_x_max)
-                                  - p_x_min);
-    double height = rect_scale_ * (oscale * fontCoordToDrawCoord(this_y_max)
-                                   - p_y_min);
-    Point2D centre(running_x - p_x_min + 0.5 * width, 0.5 * height);
+    double p_x_max = oscale * fontCoordToDrawCoord(this_x_max);
+    double p_y_max = oscale * fontCoordToDrawCoord(this_y_max);
+    cout << "p_y_min to p_y_max : " << p_y_min << " -> " << p_y_max << endl;
+    double width = rect_scale_ * (p_x_max - p_x_min);
+    double height = rect_scale_ * (p_y_max - p_y_min);
+    cout << "height = " << height << endl;
+    if(!i) {
+      running_x = -p_x_min;
+    }
+    Point2D centre(running_x + 0.5 * (p_x_max + p_x_min),
+                   0.5 * p_y_max);
     rects.push_back(shared_ptr<StringRect>(new StringRect(centre, width, height)));
     draw_modes.push_back(draw_mode);
-    // TODO: include kerning
-    running_x += oscale * (fontCoordToDrawCoord(advance) - p_x_min);
+    running_x += oscale * fontCoordToDrawCoord(advance);
+    char_mins_[text[i]] = make_pair(this_x_min, this_y_min);
   }
 
   adjustStringRectsForSuperSubScript(draw_modes, draw_chars, rects);
 
   cout << "DrawTextFT::getStringRects : " << endl;
   for(size_t i = 0; i < rects.size(); ++i) {
-    cout << i << " : " << rects[i]->centre_ << " and " << rects[i]->width_
+    cout << i << " : " << rects[i]->trans_ << " and " << rects[i]->width_
          << " by " << rects[i]->height_ << " type " << draw_modes[i] << endl;
   }
 }
@@ -183,9 +195,9 @@ void DrawTextFT::calcGlyphBBox(char c, FT_Pos &x_min, FT_Pos &y_min,
   y_max = bbox.yMax;
   advance = slot->advance.x;
 
-//  cout << "bbox for " << c << " : " << x_min << ", " << y_min
-//       << " and " << x_max << ", " << y_max
-//       << " advance = " << advance << endl;
+  cout << "bbox for " << c << " : " << x_min << ", " << y_min
+       << " and " << x_max << ", " << y_max
+       << " advance = " << advance << endl;
 
 }
 
