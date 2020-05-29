@@ -188,22 +188,32 @@ endif(MINGW)
 
 # defines macros: rdkit_python_extension, rdkit_test
 include(RDKitUtils)
-install(EXPORT ${RDKit_EXPORTED_TARGETS} DESTINATION ${RDKit_LibDir}/cmake/rdkit)
+
+# export the project targets (to be included in the cmake package configuration)
+install(
+  EXPORT ${RDKit_EXPORTED_TARGETS}
+  FILE ${RDKit_EXPORTED_TARGETS}.cmake
+  NAMESPACE RDKit::
+  DESTINATION ${RDKit_LibDir}/cmake/rdkit
+)
 install(TARGETS rdkit_base EXPORT ${RDKit_EXPORTED_TARGETS}
         COMPONENT dev )
 
 # create and install package configuration and version files
+include(CMakePackageConfigHelpers)
+write_basic_package_version_file(
+  "${RDKit_BINARY_DIR}/rdkit-config-version.cmake"
+  VERSION ${RDKit_RELEASENAME}
+  COMPATIBILITY AnyNewerVersion
+)
+
 configure_file (
     ${RDKit_SOURCE_DIR}/rdkit-config.cmake.in
     ${RDKit_BINARY_DIR}/rdkit-config.cmake @ONLY)
 
-configure_file (
-    ${RDKit_SOURCE_DIR}/rdkit-config-version.cmake.in
-    ${RDKit_BINARY_DIR}/rdkit-config-version.cmake @ONLY)
-
 install(FILES
     ${RDKit_BINARY_DIR}/rdkit-config.cmake
-    ${RDKit_BINARY_DIR}/rdkit-config-version.cmake
+    #${RDKit_BINARY_DIR}/rdkit-config-version.cmake
     DESTINATION ${RDKit_LibDir}/cmake/rdkit)
 
 # disable some warnings that we don't care about
