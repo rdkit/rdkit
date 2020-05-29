@@ -82,9 +82,10 @@ struct StringRect {
         height_(h), rect_corr_(0.0), clash_score_(0) {}
   // tl is top, left; br is bottom, right of the glyph, relative to the
   // centre.
-  void calcCorners(Point2D &tl, Point2D &tr, Point2D &br, Point2D &bl) const {
-    double wb2 = width_ / 2.0;
-    double hb2 = height_ / 2.0;
+  void calcCorners(Point2D &tl, Point2D &tr, Point2D &br, Point2D &bl,
+                   double padding=1.25) const {
+    double wb2 = padding * width_ / 2.0;
+    double hb2 = padding * height_ / 2.0;
     Point2D c = trans_ + g_centre_ - offset_;
     tl = Point2D(c.x - wb2, c.y - hb2);
     tr = Point2D(c.x + wb2, c.y - hb2);

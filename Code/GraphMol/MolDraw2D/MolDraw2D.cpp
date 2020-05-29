@@ -2100,9 +2100,9 @@ void MolDraw2D::drawAtomLabel(int atom_num, const DrawColour &draw_colour) {
   text_drawer_->drawString(atom_syms_[activeMolIdx_][atom_num].first,
                            draw_cds,
                            atom_syms_[activeMolIdx_][atom_num].second);
-  text_drawer_->drawStringRects(atom_syms_[activeMolIdx_][atom_num].first,
-                                atom_syms_[activeMolIdx_][atom_num].second,
-                                draw_cds, *this);
+//  text_drawer_->drawStringRects(atom_syms_[activeMolIdx_][atom_num].first,
+//                                atom_syms_[activeMolIdx_][atom_num].second,
+//                                draw_cds, *this);
 
 }
 
