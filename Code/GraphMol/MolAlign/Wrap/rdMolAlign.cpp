@@ -145,8 +145,7 @@ PyObject *getMolAlignTransform(const ROMol &prbMol, const ROMol &refMol,
                                python::object atomMap = python::list(),
                                python::object weights = python::list(),
                                bool reflect = false,
-                               unsigned int maxIters = 50,
-                               bool doAlignment = true) {
+                               unsigned int maxIters = 50) {
   MatchVectType *aMap = _translateAtomMap(atomMap);
   unsigned int nAtms;
   if (aMap) {
@@ -165,7 +164,7 @@ PyObject *getMolAlignTransform(const ROMol &prbMol, const ROMol &refMol,
   {
     NOGIL gil;
     rmsd = MolAlign::getAlignmentTransform(
-        prbMol, refMol, trans, prbCid, refCid, aMap, wtsVec, reflect, maxIters, doAlignment);
+        prbMol, refMol, trans, prbCid, refCid, aMap, wtsVec, reflect, maxIters);
   }
   if (aMap) {
     delete aMap;
@@ -180,8 +179,7 @@ PyObject *getMolAlignTransform(const ROMol &prbMol, const ROMol &refMol,
 double AlignMolecule(ROMol &prbMol, const ROMol &refMol, int prbCid = -1,
                      int refCid = -1, python::object atomMap = python::list(),
                      python::object weights = python::list(),
-                     bool reflect = false, unsigned int maxIters = 50,
-                     bool doAlignment = true) {
+                     bool reflect = false, unsigned int maxIters = 50) {
   MatchVectType *aMap = _translateAtomMap(atomMap);
   unsigned int nAtms;
   if (aMap) {
@@ -200,7 +198,7 @@ double AlignMolecule(ROMol &prbMol, const ROMol &refMol, int prbCid = -1,
   {
     NOGIL gil;
     rmsd = MolAlign::alignMol(prbMol, refMol, prbCid, refCid, aMap, wtsVec,
-                              reflect, maxIters, doAlignment);
+                              reflect, maxIters);
   }
   if (aMap) {
     delete aMap;
@@ -212,7 +210,7 @@ double AlignMolecule(ROMol &prbMol, const ROMol &refMol, int prbCid = -1,
 }
 
 double GetBestRMS(ROMol &prbMol, ROMol &refMol, int prbId, int refId,
-                  python::object map, int maxMatches, bool doAlignment) {
+                  python::object map, int maxMatches) {
   std::vector<MatchVectType> aMapVec;
   if (map != python::object()) {
     aMapVec = _translateAtomMapVector(map);
@@ -222,7 +220,7 @@ double GetBestRMS(ROMol &prbMol, ROMol &refMol, int prbId, int refId,
   {
     NOGIL gil;
     rmsd =
-        MolAlign::getBestRMS(prbMol, refMol, prbId, refId, aMapVec, maxMatches, doAlignment);
+        MolAlign::getBestRMS(prbMol, refMol, prbId, refId, aMapVec, maxMatches);
   }
   return rmsd;
 }
@@ -646,7 +644,7 @@ BOOST_PYTHON_MODULE(rdMolAlign) {
       (python::arg("prbMol"), python::arg("refMol"), python::arg("prbCid") = -1,
        python::arg("refCid") = -1, python::arg("atomMap") = python::list(),
        python::arg("weights") = python::list(), python::arg("reflect") = false,
-       python::arg("maxIters") = 50, python::arg("doAlignment") = true),
+       python::arg("maxIters") = 50),
       docString.c_str());
 
   docString =
@@ -680,7 +678,7 @@ BOOST_PYTHON_MODULE(rdMolAlign) {
       (python::arg("prbMol"), python::arg("refMol"), python::arg("prbCid") = -1,
        python::arg("refCid") = -1, python::arg("atomMap") = python::list(),
        python::arg("weights") = python::list(), python::arg("reflect") = false,
-       python::arg("maxIters") = 50, python::arg("doAlignment") = true),
+       python::arg("maxIters") = 50),
       docString.c_str());
 
   docString =
@@ -714,7 +712,7 @@ BOOST_PYTHON_MODULE(rdMolAlign) {
       "GetBestRMS", RDKit::GetBestRMS,
       (python::arg("prbMol"), python::arg("refMol"), python::arg("prbId") = -1,
        python::arg("refId") = -1, python::arg("map") = python::object(),
-       python::arg("maxMatches") = 1000000, python::arg("doAlignment") = true),
+       python::arg("maxMatches") = 1000000),
       docString.c_str());
   
   docString =
@@ -764,7 +762,6 @@ BOOST_PYTHON_MODULE(rdMolAlign) {
       - maxIters     maximum number of iterations used in mimizing the RMSD\n\
       - RMSlist      if provided, fills in the RMS values between the reference\n\
 		     conformation and the other aligned conformations\n\
-      - doAlignment  (optional) compute rmsd with or without alignment\n\
        \n\
     \n";
   python::def(

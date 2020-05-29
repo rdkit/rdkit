@@ -462,14 +462,14 @@ void setPreferCoordGen(bool);
                   int prbCid=-1, int refCid=-1,
                   const std::vector<std::pair<int,int> > *atomMap=0,
                   const RDNumeric::DoubleVector *weights=0,
-                  bool reflect=false, unsigned int maxIters=50, bool doAlignment=true) {
-    return RDKit::MolAlign::alignMol(*($self), refMol, prbCid, refCid, atomMap, weights, reflect, maxIters, doAlignment);
+                  bool reflect=false, unsigned int maxIters=50) {
+    return RDKit::MolAlign::alignMol(*($self), refMol, prbCid, refCid, atomMap, weights, reflect, maxIters);
   }
 
   void alignMolConformers(ROMol &mol, const std::vector<unsigned int> *atomIds=0,
                           const std::vector<unsigned int> *confIds=0,
                           const RDNumeric::DoubleVector  *weights=0,
-                          bool reflect=false, unsigned int maxIters=50)) {
+                          bool reflect=false, unsigned int maxIters=50) {
     RDKit::MolAlign::alignMolConformers(*($self), atomIds, confIds, weights, reflect, maxIters);
   }
 
@@ -478,8 +478,8 @@ void setPreferCoordGen(bool);
                              RDGeom::Transform3D &trans, int prbCid = -1,
                              int refCid = -1, const std::vector<std::pair<int,int> > *atomMap = 0,
                              const RDNumeric::DoubleVector *weights = 0,
-                             bool reflect = false, unsigned int maxIters = 50, bool doAlignment=true){
-     return RDKit::MolAlign::getAlignmentTransform(*($self), refMol, trans, prbCid, refCid, atomMap, weights, reflect, maxIters, doAlignment);
+                             bool reflect = false, unsigned int maxIters = 50){
+     return RDKit::MolAlign::getAlignmentTransform(*($self), refMol, trans, prbCid, refCid, atomMap, weights, reflect, maxIters);
   }
 
   /* From GraphMol/MolAlign/AlignMolecules */

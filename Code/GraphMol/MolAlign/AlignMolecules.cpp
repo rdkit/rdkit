@@ -23,7 +23,7 @@ double getAlignmentTransform(const ROMol &prbMol, const ROMol &refMol,
                              RDGeom::Transform3D &trans, int prbCid, int refCid,
                              const MatchVectType *atomMap,
                              const RDNumeric::DoubleVector *weights,
-                             bool reflect, unsigned int maxIterations, bool doAlignment) {
+                             bool reflect, unsigned int maxIterations) {
   RDGeom::Point3DConstPtrVect refPoints, prbPoints;
   const Conformer &prbCnf = prbMol.getConformer(prbCid);
   const Conformer &refCnf = refMol.getConformer(refCid);
@@ -50,25 +50,8 @@ double getAlignmentTransform(const ROMol &prbMol, const ROMol &refMol,
       refPoints.push_back(&refCnf.getAtomPos(mi->second));
     }
   }
-  double ssr = 0.;
-  if (!doAlignment) {
-    unsigned int npt = refPoints.size();
-    PRECONDITION(npt == prbPoints.size(), "Mismatch in number of points");
-    ssr = 0.; 
-    const RDGeom::Point3D *rpt, *ppt;
-    for (unsigned int i = 0; i < npt; i++) {
-      rpt = refPoints[i];
-      ppt = prbPoints[i];
- 
-      ssr += ((ppt->x) - (rpt->x))*((ppt->x) - (rpt->x));
-      ssr += ((ppt->y) - (rpt->y))*((ppt->y) - (rpt->y));
-      ssr += ((ppt->z) - (rpt->z))*((ppt->z) - (rpt->z));
-    }
-  }
-  else { 
-    ssr = RDNumeric::Alignments::AlignPoints(
-    refPoints, prbPoints, trans, weights, reflect, maxIterations);
-  }
+  double ssr = RDNumeric::Alignments::AlignPoints(
+      refPoints, prbPoints, trans, weights, reflect, maxIterations);
   ssr /= (prbPoints.size());
   return sqrt(ssr);
 }
@@ -76,22 +59,18 @@ double getAlignmentTransform(const ROMol &prbMol, const ROMol &refMol,
 double alignMol(ROMol &prbMol, const ROMol &refMol, int prbCid, int refCid,
                 const MatchVectType *atomMap,
                 const RDNumeric::DoubleVector *weights, bool reflect,
-                unsigned int maxIterations, bool doAlignment) {
+                unsigned int maxIterations) {
   RDGeom::Transform3D trans;
   double res = getAlignmentTransform(prbMol, refMol, trans, prbCid, refCid,
-                                     atomMap, weights, reflect, maxIterations, 
-                                     doAlignment);
-  if (doAlignment) { 
-    // now transform the relevant conformation on prbMol
-    Conformer &conf = prbMol.getConformer(prbCid);
-    MolTransforms::transformConformer(conf, trans);
-  }
+                                     atomMap, weights, reflect, maxIterations);
+  // now transform the relevant conformation on prbMol
+  Conformer &conf = prbMol.getConformer(prbCid);
+  MolTransforms::transformConformer(conf, trans);
   return res;
 }
 
 double getBestRMS(ROMol &probeMol, ROMol &refMol, int probeId, int refId,
-                  const std::vector<MatchVectType> &map, int maxMatches,
-                  bool doAlignment) {
+                  const std::vector<MatchVectType> &map, int maxMatches) {
   std::vector<MatchVectType> matches = map;
   if (matches.empty()) {
     bool uniquify = false;
@@ -119,7 +98,7 @@ double getBestRMS(ROMol &probeMol, ROMol &refMol, int probeId, int refId,
   double bestRMS = 1.e300;
   MatchVectType &bestMatch = matches[0];
   for (auto &matche : matches) {
-    double rms = alignMol(probeMol, refMol, probeId, refId, &matche, 0, false, 50, doAlignment);
+    double rms = alignMol(probeMol, refMol, probeId, refId, &matche);
     if (rms < bestRMS) {
       bestRMS = rms;
       bestMatch = matche;
@@ -127,8 +106,9 @@ double getBestRMS(ROMol &probeMol, ROMol &refMol, int probeId, int refId,
   }
 
   // Perform a final alignment to the best alignment...
-  if (&bestMatch != &matches.back())
-    alignMol(probeMol, refMol, probeId, refId, &bestMatch, 0, false, 50, doAlignment);
+  if (&bestMatch != &matches.back()) {
+    alignMol(probeMol, refMol, probeId, refId, &bestMatch);
+  }
   return bestRMS;
 }
 
