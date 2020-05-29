@@ -36,7 +36,7 @@ void test1() {
   std::cout << " ----------------- Test 1" << std::endl;
   {
 //    auto m = "[NH-]C([NH3+])C(CN)CCC[NH3+]"_smiles;
-    auto m = "[NH3+]C1=C([NH3+])C([NH3+])=C([NH-])C([NH3+])=C1[NH-]"_smiles;
+    auto m = "[NH3+]C1=C([NH3+])C([NH3+])=C([NH3+])C([NH3+])=C1[NH3+]"_smiles;
 //    auto m = "C"_smiles;
 //    auto m = "CCN(CC)CC[NH3+]"_smiles;
 //    auto m = "[NH-]C([NH3+])C(CBr)CCC[NH3+]"_smiles;
