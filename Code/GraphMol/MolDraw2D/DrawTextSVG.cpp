@@ -73,8 +73,7 @@ void DrawTextSVG::getStringRects(const string &text,
   TextDrawType draw_mode = TextDrawType::TextDrawNormal;
   double running_x = 0.0;
   double act_font_size = fontSize();
-  double char_height = 0.8 * act_font_size;
-
+  double char_height;
   for (size_t i = 0; i < text.length(); ++i) {
     // setStringDrawMode moves i along to the end of any <sub> or <sup>
     // markup
@@ -87,21 +86,37 @@ void DrawTextSVG::getStringRects(const string &text,
         act_font_size *
         static_cast<double>(MolDraw2D_detail::char_widths[(int)text[i]]) /
         MolDraw2D_detail::char_widths[(int)'W'];
-    if (TextDrawType::TextDrawSubscript == draw_mode) {
-      char_width *= 0.5;
-    } else if (TextDrawType::TextDrawSuperscript == draw_mode) {
-      char_width *= 0.5;
+    // Absent a proper set of font metrics (we don't know what font we'll be
+    // using, for starters) this is something of an empirical bodge.
+    if(text[i] == '+') {
+      char_height = 0.6 * act_font_size;
+    } else if(text[i] == '-') {
+      char_height = 0.4 * act_font_size;
+    } else {
+      char_height = 0.8 * act_font_size;
     }
+    double cscale = selectScaleFactor(text[i], draw_mode);
+    char_height *= cscale;
+    char_width *= cscale;
     cout << draw_chars.back() << " : " << char_width << " : " << char_height
-         << " and " << running_x << endl;
-    Point2D centre(running_x + char_width / 2, char_height / 2);
-    rects.push_back(shared_ptr<StringRect>(new StringRect(centre, centre, char_width, char_height)));
+         << " and " << running_x << "  cscale = " << cscale << endl;
+    Point2D offset(char_width / 2, char_height / 2);
+    if(text[i] == '+' || text[i] == '-') {
+      offset.y /= 2.0;
+    }
+    Point2D g_centre(char_width / 2, char_height / 2);
+    rects.push_back(shared_ptr<StringRect>(new StringRect(offset, g_centre, char_width, char_height)));
+    rects.back()->trans_.x += running_x;
     draw_modes.push_back(draw_mode);
     cout << "SVG rect : " << text[i] << " : " << rects.back()->trans_
-         << " :: "
-         << rects.back()->width_ << " by " << rects.back()->height_ << endl;
+         << " :: " << rects.back()->width_ << " by " << rects.back()->height_
+         << "  offset = " << rects.back()->offset_ << endl;
 
     running_x += char_width;
+  }
+  for(auto r: rects) {
+    r->g_centre_.y = act_font_size - r->g_centre_.y;
+    r->offset_.y = act_font_size / 2.0;
   }
 
   adjustStringRectsForSuperSubScript(draw_modes, draw_chars, rects);

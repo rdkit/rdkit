@@ -121,7 +121,7 @@ class DrawText {
                       std::vector<std::shared_ptr<StringRect>> &rects,
                       std::vector<TextDrawType> &draw_modes,
                       std::vector<char> &draw_chars) const;
-  void drawRects(const Point2D &a_cds,
+  void drawChars(const Point2D &a_cds,
                  const std::vector<std::shared_ptr<StringRect>> &rects,
                  const std::vector<TextDrawType> &draw_modes,
                  const std::vector<char> &draw_chars);

@@ -14,7 +14,6 @@
 #ifndef RDKIT_DRAWTEXTFT_H
 #define RDKIT_DRAWTEXTFT_H
 
-#include <map>
 #include <string>
 
 #include <ft2build.h>
@@ -59,11 +58,6 @@ class DrawTextFT : public DrawText {
   FT_Pos x_trans_, y_trans_;
   mutable FT_Pos string_y_max_; // maximum y value of string drawn, for inverting y
   double em_scale_;
-  mutable std::map<char, std::pair<FT_Pos, FT_Pos>> char_mins_;
-
-  // padding round the character, so, for example, bonds don't run right
-  // up to the atom labels.
-  static constexpr double rect_scale_ = 1.0;
 
   // look for a hard-coded font file under RDBase.  We may want to
   // improve on this to give the user scope for having a different

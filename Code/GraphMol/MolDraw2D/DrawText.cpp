@@ -79,7 +79,7 @@ void DrawText::drawString(const string &str, const Point2D &cds,
   vector<char> draw_chars;
   getStringRects(str, rects, draw_modes, draw_chars);
   alignString(talign, draw_modes, rects);
-  drawRects(cds, rects, draw_modes, draw_chars);
+  drawChars(cds, rects, draw_modes, draw_chars);
 
 }
 
@@ -95,7 +95,7 @@ void DrawText::drawString(const string &label, const Point2D &cds,
   vector<TextDrawType> draw_modes;
   vector<char> draw_chars;
   getStringRects(label, orient, rects, draw_modes, draw_chars);
-  drawRects(cds, rects, draw_modes, draw_chars);
+  drawChars(cds, rects, draw_modes, draw_chars);
 
 }
 
@@ -161,7 +161,7 @@ void DrawText::drawStringRects(const string &label, OrientType orient,
 //      r->trans_.y -= 22.58;
 //    }
     Point2D tl, tr, br, bl;
-    r->calcCorners(tl, tr, br, bl);
+    r->calcCorners(tl, tr, br, bl, 0.0);
     cout << draw_chars[i] << endl;
     cout << "coords : " << cds << endl;
     cout << "trans : " << r->trans_ << endl;
@@ -476,7 +476,7 @@ void DrawText::getStringRects(const string &text, OrientType orient,
 }
 
 // ****************************************************************************
-void DrawText::drawRects(const Point2D &a_cds,
+void DrawText::drawChars(const Point2D &a_cds,
                          const std::vector<std::shared_ptr<StringRect> > &rects,
                          const std::vector<TextDrawType> &draw_modes,
                          const std::vector<char> &draw_chars) {
@@ -489,11 +489,6 @@ void DrawText::drawRects(const Point2D &a_cds,
     draw_cds.x = a_cds.x + rects[i]->trans_.x - rects[i]->offset_.x;
     draw_cds.y = a_cds.y - rects[i]->trans_.y + rects[i]->offset_.y; // opposite sign convention
     draw_cds.y -= rects[i]->rect_corr_;
-//    if(draw_chars[i] == '+') {
-//      draw_cds.y -= 30;
-//    } else if(draw_chars[i] == '-') {
-//      draw_cds.y -= 30;
-//    }
     cout << "Drawing char at : " << draw_cds.x << ", " << draw_cds.y << endl;
     setFontScale(full_scale * selectScaleFactor(draw_chars[i], draw_modes[i]));
     drawChar(draw_chars[i], draw_cds);

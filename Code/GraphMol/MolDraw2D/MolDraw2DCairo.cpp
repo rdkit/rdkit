@@ -22,7 +22,7 @@ namespace RDKit {
 void MolDraw2DCairo::initDrawing() {
   PRECONDITION(dp_cr, "no draw context");
   cairo_set_line_cap(dp_cr, CAIRO_LINE_CAP_BUTT);
-  drawOptions().backgroundColour = DrawColour(0.9, 0.9, 0.0);
+//  drawOptions().backgroundColour = DrawColour(0.9, 0.9, 0.0);
 }
 
 void MolDraw2DCairo::initTextDrawer() {

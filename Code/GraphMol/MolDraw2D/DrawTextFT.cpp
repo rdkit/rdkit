@@ -55,16 +55,9 @@ void DrawTextFT::drawChar(char c, const Point2D &cds) {
 
   cout << "draw " << c << " at " << cds.x << ", " << cds.y << endl;
   FT_Load_Char(face_, c, FT_LOAD_NO_SCALE | FT_LOAD_NO_BITMAP);
-  auto min_it = char_mins_.find(c);
-  FT_Pos x_min = 0, y_min = 0;
-  if(min_it != char_mins_.end()) {
-    x_min = min_it->second.first;
-    y_min = min_it->second.second;
-  }
-  x_trans_ = cds.x - fontCoordToDrawCoord(x_min);
-  y_trans_ = cds.y + fontCoordToDrawCoord(y_min);
-  double advance = extractOutline();
-  x_trans_ += advance;
+  x_trans_ = cds.x;
+  y_trans_ = cds.y;
+  extractOutline();
 
 }
 
@@ -136,7 +129,7 @@ void DrawTextFT::getStringRects(const string &text,
                                 vector<char> &draw_chars) const {
 
   TextDrawType draw_mode = TextDrawType::TextDrawNormal;
-  double running_x = 0.0;
+  double running_x = 0.0, max_y = 0.0;
   for(size_t i = 0; i < text.length(); ++i) {
     // setStringDrawMode moves i along to the end of any <sub> or <sup>
     // markup
@@ -154,18 +147,22 @@ void DrawTextFT::getStringRects(const string &text,
     double p_x_max = oscale * fontCoordToDrawCoord(this_x_max);
     double p_y_max = oscale * fontCoordToDrawCoord(this_y_max);
     cout << "p_y_min to p_y_max : " << p_y_min << " -> " << p_y_max << endl;
-    double width = rect_scale_ * (p_x_max - p_x_min);
-    double height = rect_scale_ * (p_y_max - p_y_min);
+    double width = p_x_max - p_x_min;
+    double height = p_y_max - p_y_min;
     cout << "height = " << height << endl;
-    if(!i) {
-      running_x = -p_x_min;
-    }
-    Point2D centre(running_x + 0.5 * (p_x_max + p_x_min),
-                   0.5 * p_y_max);
-    rects.push_back(shared_ptr<StringRect>(new StringRect(centre, width, height)));
+    Point2D offset(p_x_min + width / 2.0, p_y_max / 2.0);
+    Point2D g_centre(offset.x, p_y_max - height / 2.0);
+    rects.push_back(shared_ptr<StringRect>(new StringRect(offset, g_centre, width, height)));
+    rects.back()->trans_.x = running_x;
     draw_modes.push_back(draw_mode);
-    running_x += oscale * fontCoordToDrawCoord(advance);
-    char_mins_[text[i]] = make_pair(this_x_min, this_y_min);
+//    running_x += oscale * fontCoordToDrawCoord(advance);
+    running_x += p_x_max;
+    max_y = max(max_y, p_y_max);
+  }
+  cout << "max_y = " << max_y << endl;
+  for(auto r: rects) {
+    r->g_centre_.y = max_y - r->g_centre_.y;
+    r->offset_.y = max_y / 2.0;
   }
 
   adjustStringRectsForSuperSubScript(draw_modes, draw_chars, rects);
