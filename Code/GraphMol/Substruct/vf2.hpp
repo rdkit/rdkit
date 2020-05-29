@@ -33,10 +33,10 @@ struct NodeInfo {
 template <class Graph>
 struct Pair {
   node_id n1, n2;
-  bool hasiter;
+  bool hasiter{false};
   RDK_ADJ_ITER nbrbeg, nbrend;
 
-  Pair() : n1(NULL_NODE), n2(NULL_NODE), hasiter(false) {}
+  Pair() : n1(NULL_NODE), n2(NULL_NODE) {}
 };
 
 /**
@@ -163,7 +163,7 @@ class VF2SubState {
     if (sortNodes) {
       order = SortNodesByFrequency(ag1);
     } else {
-      order = NULL;
+      order = nullptr;
     }
 
     core_len = 0;
@@ -184,7 +184,7 @@ class VF2SubState {
       core_2[i] = NULL_NODE;
       term_2[i] = 0;
     }
-    vs_compared = 0;
+    vs_compared = nullptr;
     // vs_compared = new int[n1*n2];
     // memset((void *)vs_compared,0,n1*n2*sizeof(int));
 
@@ -287,7 +287,7 @@ class VF2SubState {
             boost::adjacent_vertices(core_1[*n1iter_beg], *g2);
         pair.hasiter = true;
       }
-    } else if (pair.n1 == 0 && order != NULL) {
+    } else if (pair.n1 == 0 && order != nullptr) {
       // Optimisation: if the order vector is laid out in a DFS/BFS then this
       // loop can be replaced with:
       //   pair.n1=order[core_len];

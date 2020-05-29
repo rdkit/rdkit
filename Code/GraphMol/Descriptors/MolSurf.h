@@ -105,11 +105,11 @@ RDKIT_DESCRIPTORS_EXPORT double calcTPSA(const ROMol &mol, bool force = false,
                                          bool includeSandP = false);
 
 RDKIT_DESCRIPTORS_EXPORT std::vector<double> calcSlogP_VSA(
-    const ROMol &mol, std::vector<double> *bins = 0, bool force = false);
+    const ROMol &mol, std::vector<double> *bins = nullptr, bool force = false);
 RDKIT_DESCRIPTORS_EXPORT std::vector<double> calcSMR_VSA(
-    const ROMol &mol, std::vector<double> *bins = 0, bool force = false);
+    const ROMol &mol, std::vector<double> *bins = nullptr, bool force = false);
 RDKIT_DESCRIPTORS_EXPORT std::vector<double> calcPEOE_VSA(
-    const ROMol &mol, std::vector<double> *bins = 0, bool force = false);
+    const ROMol &mol, std::vector<double> *bins = nullptr, bool force = false);
 RDKIT_DESCRIPTORS_EXPORT std::vector<double> calcCustomProp_VSA(
     const ROMol &mol, const std::string &customPropName,
     const std::vector<double> &bins, bool force = false);

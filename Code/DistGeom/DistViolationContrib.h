@@ -20,7 +20,7 @@ class RDKIT_DISTGEOMETRY_EXPORT DistViolationContrib
     : public ForceFields::ForceFieldContrib {
  public:
   DistViolationContrib()
-      : d_end1Idx(0), d_end2Idx(0), d_ub(1000.0), d_lb(0.0), d_weight(1.0){};
+       {};
 
   //! Constructor
   /*!
@@ -43,10 +43,10 @@ class RDKIT_DISTGEOMETRY_EXPORT DistViolationContrib
   };
 
  private:
-  unsigned int d_end1Idx, d_end2Idx;  //!< indices of end points
-  double d_ub;      //!< upper bound on the distance between d_end1Idx,d_end2Idx
-  double d_lb;      //!< lower bound on the distance between d_end1Idx,d_end2Idx
-  double d_weight;  //!< used to adjust relative contribution weights
+  unsigned int d_end1Idx{0}, d_end2Idx{0};  //!< indices of end points
+  double d_ub{1000.0};      //!< upper bound on the distance between d_end1Idx,d_end2Idx
+  double d_lb{0.0};      //!< lower bound on the distance between d_end1Idx,d_end2Idx
+  double d_weight{1.0};  //!< used to adjust relative contribution weights
 };
 }  // namespace DistGeom
 

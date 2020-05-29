@@ -69,11 +69,11 @@ See EnumerationStrategyBase for more details and usage.
 
 class RDKIT_CHEMREACTIONS_EXPORT CartesianProductStrategy
     : public EnumerationStrategyBase {
-  size_t m_numPermutationsProcessed;
+  size_t m_numPermutationsProcessed{};
 
  public:
   CartesianProductStrategy()
-      : EnumerationStrategyBase(), m_numPermutationsProcessed() {}
+      : EnumerationStrategyBase() {}
 
   using EnumerationStrategyBase::initialize;
 

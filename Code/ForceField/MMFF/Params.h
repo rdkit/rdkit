@@ -168,7 +168,7 @@ class RDKIT_FORCEFIELD_EXPORT MMFFAromCollection {
                 : false);
   }
 
-  MMFFAromCollection(const std::uint8_t mmffArom[]=nullptr);
+  MMFFAromCollection(const std::uint8_t mmffArom[] = nullptr);
   std::vector<std::uint8_t> d_params;  //!< the aromatic type vector
 };
 
@@ -187,7 +187,7 @@ class RDKIT_FORCEFIELD_EXPORT MMFFDefCollection {
 #else
     return ((atomType && (atomType <= d_params.size()))
                 ? &d_params[atomType - 1]
-                : NULL);
+                : nullptr);
 #endif
   }
 
@@ -220,7 +220,7 @@ class RDKIT_FORCEFIELD_EXPORT MMFFPropCollection {
 
     return ((bounds.first != bounds.second)
                 ? &d_params[bounds.first - d_iAtomType.begin()]
-                : NULL);
+                : nullptr);
 #endif
   }
 
@@ -248,7 +248,7 @@ class RDKIT_FORCEFIELD_EXPORT MMFFPBCICollection {
 #else
     return ((atomType && (atomType <= d_params.size()))
                 ? &d_params[atomType - 1]
-                : NULL);
+                : nullptr);
 #endif
   }
 
@@ -271,7 +271,7 @@ class RDKIT_FORCEFIELD_EXPORT MMFFChgCollection {
       const unsigned int bondType, const unsigned int iAtomType,
       const unsigned int jAtomType) const {
     int sign = -1;
-    const MMFFChg *mmffChgParams = NULL;
+    const MMFFChg *mmffChgParams = nullptr;
     unsigned int canIAtomType = iAtomType;
     unsigned int canJAtomType = jAtomType;
     if (iAtomType > jAtomType) {
@@ -341,7 +341,7 @@ class RDKIT_FORCEFIELD_EXPORT MMFFBondCollection {
   const MMFFBond *operator()(const unsigned int bondType,
                              const unsigned int atomType,
                              const unsigned int nbrAtomType) const {
-    const MMFFBond *mmffBondParams = NULL;
+    const MMFFBond *mmffBondParams = nullptr;
     unsigned int canAtomType = atomType;
     unsigned int canNbrAtomType = nbrAtomType;
     if (atomType > nbrAtomType) {
@@ -412,7 +412,7 @@ class RDKIT_FORCEFIELD_EXPORT MMFFBndkCollection {
     \return a pointer to the MMFFBndk object, NULL on failure.
   */
   const MMFFBond *operator()(const int atomicNum, const int nbrAtomicNum) const {
-    const MMFFBond *mmffBndkParams = NULL;
+    const MMFFBond *mmffBndkParams = nullptr;
     unsigned int canAtomicNum = atomicNum;
     unsigned int canNbrAtomicNum = nbrAtomicNum;
     if (atomicNum > nbrAtomicNum) {
@@ -468,7 +468,7 @@ class RDKIT_FORCEFIELD_EXPORT MMFFHerschbachLaurieCollection {
     \return a pointer to the MMFFHerschbachLaurie object, NULL on failure.
   */
   const MMFFHerschbachLaurie *operator()(const int iRow, const int jRow) const {
-    const MMFFHerschbachLaurie *mmffHerschbachLaurieParams = NULL;
+    const MMFFHerschbachLaurie *mmffHerschbachLaurieParams = nullptr;
     unsigned int canIRow = iRow;
     unsigned int canJRow = jRow;
     if (iRow > jRow) {
@@ -538,7 +538,7 @@ class RDKIT_FORCEFIELD_EXPORT MMFFCovRadPauEleCollection {
 
     return ((bounds.first != bounds.second)
                 ? &d_params[bounds.first - d_atomicNum.begin()]
-                : NULL);
+                : nullptr);
 #endif
   }
 
@@ -563,7 +563,7 @@ class RDKIT_FORCEFIELD_EXPORT MMFFAngleCollection {
                               const unsigned int iAtomType,
                               const unsigned int jAtomType,
                               const unsigned int kAtomType) const {
-    const MMFFAngle *mmffAngleParams = NULL;
+    const MMFFAngle *mmffAngleParams = nullptr;
     unsigned int iter = 0;
  
 // For bending of the i-j-k angle, a five-stage process based
@@ -676,7 +676,7 @@ class RDKIT_FORCEFIELD_EXPORT MMFFStbnCollection {
       const unsigned int stretchBendType, const unsigned int bondType1,
       const unsigned int bondType2, const unsigned int iAtomType,
       const unsigned int jAtomType, const unsigned int kAtomType) const {
-    const MMFFStbn *mmffStbnParams = NULL;
+    const MMFFStbn *mmffStbnParams = nullptr;
     bool swap = false;
     unsigned int canIAtomType = iAtomType;
     unsigned int canKAtomType = kAtomType;
@@ -783,7 +783,7 @@ class RDKIT_FORCEFIELD_EXPORT MMFFDfsbCollection {
     std::map<const unsigned int,
              std::map<const unsigned int, MMFFStbn>>::const_iterator res2;
     std::map<const unsigned int, MMFFStbn>::const_iterator res3;
-    const MMFFStbn *mmffDfsbParams = NULL;
+    const MMFFStbn *mmffDfsbParams = nullptr;
     bool swap = false;
     unsigned int canPeriodicTableRow1 = periodicTableRow1;
     unsigned int canPeriodicTableRow3 = periodicTableRow3;
@@ -823,7 +823,7 @@ class RDKIT_FORCEFIELD_EXPORT MMFFOopCollection {
                             const unsigned int jAtomType,
                             const unsigned int kAtomType,
                             const unsigned int lAtomType) const {
-    const MMFFOop *mmffOopParams = NULL;
+    const MMFFOop *mmffOopParams = nullptr;
     unsigned int iter = 0;
     std::vector<unsigned int> canIKLAtomType(3);
 // For out-of-plane bending ijk; I , where j is the central
@@ -933,7 +933,7 @@ class RDKIT_FORCEFIELD_EXPORT MMFFTorCollection {
       const std::pair<unsigned int, unsigned int> torType,
       const unsigned int iAtomType, const unsigned int jAtomType,
       const unsigned int kAtomType, const unsigned int lAtomType) const {
-    const MMFFTor *mmffTorParams = NULL;
+    const MMFFTor *mmffTorParams = nullptr;
     unsigned int iter = 0;
     unsigned int iWildCard = 0;
     unsigned int lWildCard = 0;
@@ -1117,7 +1117,7 @@ class RDKIT_FORCEFIELD_EXPORT MMFFVdWCollection {
 
     return ((bounds.first != bounds.second)
                 ? &d_params[bounds.first - d_atomType.begin()]
-                : NULL);
+                : nullptr);
 #endif
   }
 

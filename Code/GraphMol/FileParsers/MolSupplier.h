@@ -126,7 +126,7 @@ class RDKIT_FILEPARSERS_EXPORT ForwardSDMolSupplier : public MolSupplier {
     if (df_owner && dp_inStream) {
       delete dp_inStream;
       df_owner = false;
-      dp_inStream = NULL;
+      dp_inStream = nullptr;
     }
   };
 

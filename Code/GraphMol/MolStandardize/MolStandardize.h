@@ -50,13 +50,13 @@ struct RDKIT_MOLSTANDARDIZE_EXPORT CleanupParameters {
   // std::vector<std::string> chargeCorrections;
   std::string tautomerTransforms;
   // std::vector<std::string> TautomerScores;
-  int maxRestarts;     // The maximum number of times to attempt to apply the
+  int maxRestarts{200};     // The maximum number of times to attempt to apply the
                        // series of normalizations (default 200).
-  int maxTautomers;    // The maximum number of tautomers to enumerate (default
+  int maxTautomers{1000};    // The maximum number of tautomers to enumerate (default
                        // 1000).
-  bool preferOrganic;  // Whether to prioritize organic fragments when choosing
+  bool preferOrganic{false};  // Whether to prioritize organic fragments when choosing
                        // fragment parent (default False).
-  bool doCanonical;    // whether or not to apply normalizations in a canonical
+  bool doCanonical{true};    // whether or not to apply normalizations in a canonical
                        // order
 
   CleanupParameters()
@@ -67,12 +67,8 @@ struct RDKIT_MOLSTANDARDIZE_EXPORT CleanupParameters {
         fragmentFile(rdbase + "/Data/MolStandardize/fragmentPatterns.txt"),
         // chargeCorrections()
         tautomerTransforms(rdbase +
-                           "/Data/MolStandardize/tautomerTransforms.in"),
-        // TautomerScores()
-        maxRestarts(200),
-        maxTautomers(1000),
-        preferOrganic(false),
-        doCanonical(true) {}
+                           "/Data/MolStandardize/tautomerTransforms.in")
+        {}
 };
 
 RDKIT_MOLSTANDARDIZE_EXPORT extern const CleanupParameters

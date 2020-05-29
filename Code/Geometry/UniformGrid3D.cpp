@@ -16,8 +16,9 @@
 #include <fstream>
 #include <cstdint>
 
-#define OFFSET_TOL 1.e-8
-#define SPACING_TOL 1.e-8
+constexpr double OFFSET_TOL = 1.e-8;
+constexpr double SPACING_TOL = 1.e-8;
+
 using namespace RDKit;
 
 namespace RDGeom {

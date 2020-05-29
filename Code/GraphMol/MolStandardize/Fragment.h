@@ -70,9 +70,9 @@ class RDKIT_MOLSTANDARDIZE_EXPORT LargestFragmentChooser {
             unsigned int &numatoms, double &weight, bool &organic);
     std::string Smiles;
     boost::shared_ptr<ROMol> Fragment;
-    unsigned int NumAtoms;
-    double Weight;
-    bool Organic;
+    unsigned int NumAtoms{0};
+    double Weight{0};
+    bool Organic{false};
   };
 
  private:

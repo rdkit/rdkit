@@ -7,7 +7,7 @@
 //  which is included in the file license.txt, found at the root
 //  of the RDKit source tree.
 //
-#include <string.h>
+#include <cstring>
 
 #include <string>
 #include <vector>
@@ -1133,12 +1133,12 @@ RWMol *FASTAToMol(const std::string &seq, bool sanitize, bool lowerD) {
 }
 
 struct HELMMonomer {
-  Atom *r1;
-  Atom *r2;
-  Atom *r3;
-  Atom *oxt;
+  Atom *r1{nullptr};
+  Atom *r2{nullptr};
+  Atom *r3{nullptr};
+  Atom *oxt{nullptr};
 
-  HELMMonomer() : r1(nullptr), r2(nullptr), r3(nullptr), oxt(nullptr) {}
+  HELMMonomer()  {}
   HELMMonomer(Atom *x, Atom *y, Atom *z) : r1(x), r2(y), r3(z), oxt(nullptr) {}
 };
 
@@ -1505,7 +1505,7 @@ static const char *ParseHELMPeptide(RWMol *mol, const char *ptr,
         Atom *n = CreateAAAtom(mol, " N  ", info);
         CreateAABond(mol, vseq[len - 1].r2, n, 1);
         vseq[len - 1].r2 = (Atom *)nullptr;
-        vseq.push_back(HELMMonomer());
+        vseq.emplace_back();
         len++;
         return ptr + 5;
       }

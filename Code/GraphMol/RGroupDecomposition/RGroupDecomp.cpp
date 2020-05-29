@@ -347,7 +347,7 @@ struct RGroupData {
   std::string
       smiles;  // smiles for all the mols in the rgroup (with attachments)
   std::set<int> attachments;  // attachment points
-  bool labelled;
+  bool labelled{false};
 
  private:
   RGroupData(const RGroupData &rhs);
@@ -358,8 +358,8 @@ struct RGroupData {
         mols(),
         smilesSet(),
         smiles(),
-        attachments(),
-        labelled(false) {}
+        attachments()
+        {}
 
   void add(boost::shared_ptr<ROMol> newMol,
            const std::vector<int> &rlabel_attachments) {
@@ -821,7 +821,7 @@ struct RGroupDecompData {
       } else {  // adds new rlabel
         auto *newAt = new Atom(0);
         setRlabel(newAt, userLabel);
-        atomsToAdd.push_back(std::make_pair(atom, newAt));
+        atomsToAdd.emplace_back(atom, newAt);
       }
     }
 
@@ -848,7 +848,7 @@ struct RGroupDecompData {
       } else {
         auto *newAt = new Atom(0);
         setRlabel(newAt, rlabel);
-        atomsToAdd.push_back(std::make_pair(atom, newAt));
+        atomsToAdd.emplace_back(atom, newAt);
       }
     }
 
@@ -869,7 +869,7 @@ struct RGroupDecompData {
             "Multiple attachments to a dummy (or hydrogen) is weird.");
         auto *newAt = new Atom(0);
         setRlabel(newAt, rlabel);
-        atomsToAdd.push_back(std::make_pair(atom, newAt));
+        atomsToAdd.emplace_back(atom, newAt);
       }
     }
 
@@ -910,7 +910,7 @@ struct RGroupDecompData {
           } else {
             auto *newAt = new Atom(0);
             setRlabel(newAt, label->second);
-            atomsToAdd.push_back(std::make_pair(atom, newAt));
+            atomsToAdd.emplace_back(atom, newAt);
           }
         }
       }
@@ -1308,7 +1308,7 @@ int RGroupDecomposition::add(const ROMol &inmol) {
       }
 
       if (match.size()) {
-        potentialMatches.push_back(RGroupMatch(core_idx, match));
+        potentialMatches.emplace_back(core_idx, match);
       }
     }
   }

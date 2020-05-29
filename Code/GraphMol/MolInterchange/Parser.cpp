@@ -484,7 +484,7 @@ std::vector<boost::shared_ptr<ROMol>> DocToMols(
       processMol(mol, molval, atomDefaults, bondDefaults, params);
       mol->updatePropertyCache(params.strictValenceCheck);
       mol->setProp(common_properties::_StereochemDone, 1);
-      res.push_back(boost::shared_ptr<ROMol>(static_cast<ROMol *>(mol)));
+      res.emplace_back(static_cast<ROMol *>(mol));
     }
   }
 

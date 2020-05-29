@@ -28,7 +28,7 @@ class RDKIT_GRAPHMOL_EXPORT BondIterator_ {
   // FIX: I'm not pleased with the lack of internal testing code
   //  (PREs and the like) in here
  public:
-  BondIterator_() : _mol(NULL){};
+  BondIterator_()  {};
   BondIterator_(ROMol *mol);
   BondIterator_(ROMol *mol, ROMol::EDGE_ITER pos);
   BondIterator_(const BondIterator_ &other);
@@ -45,13 +45,13 @@ class RDKIT_GRAPHMOL_EXPORT BondIterator_ {
 
  private:
   ROMol::EDGE_ITER _beg, _end, _pos;
-  ROMol *_mol;
+  ROMol *_mol{nullptr};
 };
 //! \brief const iterator for a molecule's bonds, currently BiDirectional,
 //! but it theoretically ought to be RandomAccess.
 class RDKIT_GRAPHMOL_EXPORT ConstBondIterator_ {
  public:
-  ConstBondIterator_() : _mol(NULL){};
+  ConstBondIterator_()  {};
   ConstBondIterator_(ROMol const *mol);
   ConstBondIterator_(ROMol const *mol, ROMol::EDGE_ITER pos);
   ConstBondIterator_(const ConstBondIterator_ &other);
@@ -68,7 +68,7 @@ class RDKIT_GRAPHMOL_EXPORT ConstBondIterator_ {
 
  private:
   ROMol::EDGE_ITER _beg, _end, _pos;
-  ROMol const *_mol;
+  ROMol const *_mol{nullptr};
 };
 }  // namespace RDKit
 

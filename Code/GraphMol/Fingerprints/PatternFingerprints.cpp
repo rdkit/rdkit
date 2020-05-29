@@ -19,7 +19,7 @@
 #include <GraphMol/SmilesParse/SmilesParse.h>
 #include <RDGeneral/Invariant.h>
 #include <boost/random.hpp>
-#include <limits.h>
+#include <climits>
 #include <cstdint>
 #include <RDGeneral/hash/hash.hpp>
 #include <RDGeneral/types.h>

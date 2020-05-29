@@ -325,6 +325,10 @@ void updateScaffoldNetwork(const T &mols, ScaffoldNetwork &network,
         "without attachments");
   }
   for (const auto &mol : mols) {
+    if(!mol){
+      throw ValueErrorException(
+        "updateScaffoldNetwork called with null molecule");
+    }
     detail::addMolToNetwork(*mol, network, params);
   }
 }

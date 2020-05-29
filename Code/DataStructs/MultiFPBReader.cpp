@@ -199,7 +199,7 @@ void get_containing_nbrs(
   for (unsigned int i = 0; i < d_readers.size(); ++i) {
     std::vector<unsigned int> &r_res = accum[i];
     BOOST_FOREACH (unsigned int ri, r_res) {
-      res.push_back(std::make_pair(ri, i));
+      res.emplace_back(ri, i);
     }
   }
 

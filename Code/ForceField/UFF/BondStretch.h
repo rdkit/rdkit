@@ -19,7 +19,7 @@ class AtomicParams;
 //! The bond-stretch term for the Universal Force Field
 class RDKIT_FORCEFIELD_EXPORT BondStretchContrib : public ForceFieldContrib {
  public:
-  BondStretchContrib() : d_end1Idx(-1), d_end2Idx(-1){};
+  BondStretchContrib(){};
   //! Constructor
   /*!
     \param owner       pointer to the owning ForceField
@@ -43,9 +43,10 @@ class RDKIT_FORCEFIELD_EXPORT BondStretchContrib : public ForceFieldContrib {
   };
 
  private:
-  int d_end1Idx, d_end2Idx;  //!< indices of end points
-  double d_restLen;          //!< rest length of the bond
-  double d_forceConstant;    //!< force constant of the bond
+  int d_end1Idx{-1};       //!< indices of end points
+  int d_end2Idx{-1};       //!< indices of end points
+  double d_restLen;        //!< rest length of the bond
+  double d_forceConstant;  //!< force constant of the bond
 };
 
 namespace Utils {
