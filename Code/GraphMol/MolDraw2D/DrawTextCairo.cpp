@@ -18,7 +18,6 @@ namespace RDKit {
 // ****************************************************************************
 DrawTextCairo::DrawTextCairo(double max_fnt_sz, cairo_t *dp_cr)
     : DrawText(max_fnt_sz), dp_cr_(dp_cr) {
-  cout << "DrawTextCairo  fontSize = " << fontSize() << endl;
   cairo_select_font_face(dp_cr, "sans", CAIRO_FONT_SLANT_NORMAL,
                          CAIRO_FONT_WEIGHT_NORMAL);
   cairo_set_font_size(dp_cr, fontSize());
@@ -47,7 +46,6 @@ void DrawTextCairo::getStringRects(const string &text,
                                    vector<TextDrawType> &draw_modes,
                                    vector<char> &draw_chars) const {
 
-  cout << "DrawTextCairo::getStringRects" << endl;
   TextDrawType draw_mode = TextDrawType::TextDrawNormal;
   double running_x = 0.0;
   char char_str[2];
@@ -67,9 +65,6 @@ void DrawTextCairo::getStringRects(const string &text,
     cairo_set_font_size(dp_cr_, selectScaleFactor(text[i], draw_mode) * full_fs);
     cairo_text_extents(dp_cr_, char_str, &extents);
     cairo_set_font_size(dp_cr_, full_fs);
-    cout << text[i] << " : " << extents.width << " by " << extents.height << " adv "
-         << extents.x_advance << "  bearings : " << extents.x_bearing << ", "
-         << extents.y_bearing << endl;
     double twidth = extents.width;
     double theight = extents.height;
     Point2D offset(extents.x_bearing + twidth / 2.0,
@@ -80,17 +75,13 @@ void DrawTextCairo::getStringRects(const string &text,
     draw_modes.push_back(draw_mode);
     running_x += extents.x_advance;
     max_y = max(max_y, -extents.y_bearing);
-    cout << "Cairo rect : " << text[i] << " : " << rects.back()->trans_
-         << " :: " << rects.back()->width_ << " by " << rects.back()->height_
-         << "  offset = " << rects.back()->offset_ << endl;
   }
-  cout << "max_y = " << max_y << endl;
   for(auto r: rects) {
     r->g_centre_.y = max_y - r->g_centre_.y;
     r->offset_.y = max_y / 2.0;
   }
 
-   adjustStringRectsForSuperSubScript(draw_modes, draw_chars, rects);
+   adjustStringRectsForSuperSubScript(draw_modes, rects);
 
 }
 

@@ -84,11 +84,11 @@ struct StringRect {
         y_shift_(0.0), width_(w),
         height_(h), rect_corr_(0.0), clash_score_(0) {}
   // tl is top, left; br is bottom, right of the glyph, relative to the
-  // centre. Padding is fraction of char width to add to width and height.
+  // centre. Padding in draw coords.
   void calcCorners(Point2D &tl, Point2D &tr, Point2D &br, Point2D &bl,
-                   double padding=0.25) const {
-    double wb2 = (1.0 + padding) * width_ / 2.0;
-    double hb2 = (1.0 + padding) * height_ / 2.0;
+                   double padding=5) const {
+    double wb2 = padding + width_ / 2.0;
+    double hb2 = padding + height_ / 2.0;
     Point2D c = trans_ + g_centre_ - offset_;
     c.y -= y_shift_;
     tl = Point2D(c.x - wb2, c.y - hb2);

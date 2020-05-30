@@ -876,13 +876,12 @@ void MolDraw2D::calculateScale(int width, int height,
   PRECONDITION(height > 0, "bad height");
   PRECONDITION(activeMolIdx_ >= 0, "bad active mol");
 
-   cout << "calculateScale  width = " << width << "  height = " << height
-       << endl;
+  // cout << "calculateScale  width = " << width << "  height = " << height
+  //      << endl;
   x_min_ = y_min_ = numeric_limits<double>::max();
   double x_max(-x_min_), y_max(-y_min_);
 
   for (auto &pt : at_cds_[activeMolIdx_]) {
-    cout << pt << endl;
     x_min_ = std::min(pt.x, x_min_);
     y_min_ = std::min(pt.y, y_min_);
     x_max = std::max(pt.x, x_max);
@@ -920,7 +919,6 @@ void MolDraw2D::calculateScale(int width, int height,
     }
     double old_scale = scale_;
     scale_ = std::min(double(width) / x_range_, double(height) / y_range_);
-    cout << "pixels x_min_ : " << x_min_ * scale() << endl;
     if (fabs(scale_ - old_scale) < 0.1) {
       break;
     }
@@ -954,8 +952,8 @@ void MolDraw2D::calculateScale(int width, int height,
     y_trans_ = 0.;
   }
 
-   cout << "leaving calculateScale" << endl;
-   cout << "final scale : " << scale_ << endl;
+  // cout << "leaving calculateScale" << endl;
+  // cout << "final scale : " << scale_ << endl;
 
 }
 
@@ -1083,7 +1081,6 @@ void MolDraw2D::getStringExtremes(const string &label, OrientType orient,
                                   double &x_min, double &y_min,
                                   double &x_max, double &y_max) const {
 
-  cout << "MolDraw2D::getStringExtremes for " << label << " at " << cds << endl;
   text_drawer_->getStringExtremes(label, orient, x_min, y_min, x_max, y_max);
   x_min = cds.x + x_min / scale_;
   y_min = cds.y + y_min / scale_;
@@ -1105,9 +1102,6 @@ void MolDraw2D::drawString(const string &str, const Point2D &cds) {
 void MolDraw2D::drawString(const std::string &str, const Point2D &cds,
                            TextAlignType talign) {
 
-  cout << "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA" << endl;
-  cout << "MolDraw2D::drawString() : " << str << " : "
-       << cds.x << ", " << cds.y << " talign = " << talign << endl;
   Point2D draw_cds = getDrawCoords(cds);
   text_drawer_->drawString(str, draw_cds, talign);
 
@@ -2091,15 +2085,12 @@ void MolDraw2D::drawAtomLabel(int atom_num,
 // ****************************************************************************
 void MolDraw2D::drawAtomLabel(int atom_num, const DrawColour &draw_colour) {
 
-  cout << "BBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBB" << endl;
-  cout << "draw label " << atom_syms_[activeMolIdx_][atom_num].first
-       << " at " << at_cds_[activeMolIdx_][atom_num] << endl;
-
   text_drawer_->setColour(draw_colour);
   Point2D draw_cds = getDrawCoords(atom_num);
   text_drawer_->drawString(atom_syms_[activeMolIdx_][atom_num].first,
                            draw_cds,
                            atom_syms_[activeMolIdx_][atom_num].second);
+  // this is useful for debugging the drawings.
 //  text_drawer_->drawStringRects(atom_syms_[activeMolIdx_][atom_num].first,
 //                                atom_syms_[activeMolIdx_][atom_num].second,
 //                                draw_cds, *this);
@@ -2878,8 +2869,6 @@ void MolDraw2D::adjustScaleForAtomLabels(
     const map<int, double> *highlight_radii) {
 
   double x_max(x_min_ + x_range_), y_max(y_min_ + y_range_);
-  cout << "top of adjustScaleForAtomLabels mins = " << x_min_ << " and "
-       << y_min_ << " maxes = " << x_max << ", " << y_max << endl;
 
   for (size_t i = 0; i < atom_syms_[activeMolIdx_].size(); ++i) {
     if (!atom_syms_[activeMolIdx_][i].first.empty()) {
@@ -2912,9 +2901,6 @@ void MolDraw2D::adjustScaleForAtomLabels(
       y_min_ = std::min(y_min_, this_y_min);
     }
   }
-
-  cout << "bottom of adjustScaleForAtomLabels mins = " << x_min_ << " and "
-       << y_min_ << " maxes = " << x_max << ", " << y_max << endl;
 
   x_range_ = max(x_max - x_min_, x_range_);
   y_range_ = max(y_max - y_min_, y_range_);
@@ -3082,7 +3068,6 @@ bool doLinesIntersect(const Point2D &l1s, const Point2D &l1f,
       ip->x = l1s.x + t * s1_x;
       ip->y = l1s.y + t * s1_y;
     }
-    cout << "intersection" << endl;
     return true;
   }
 

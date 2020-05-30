@@ -36,12 +36,12 @@ void test1() {
   std::cout << " ----------------- Test 1" << std::endl;
   {
 //    auto m = "[NH-]C([NH3+])C(CN)CCC[NH3+]"_smiles;
-//    auto m = "[NH3+]C1=C([NH3+])C([NH3+])=C([NH3+])C([NH3+])=C1[NH3+]"_smiles;
+    auto m = "[NH3+]C1=C([NH3+])C([NH3+])=C([NH3+])C([NH3+])=C1[NH3+]"_smiles;
 //    auto m = "C"_smiles;
 //    auto m = "CCN(CC)CC[NH3+]"_smiles;
 //    auto m = "[NH-]C([NH3+])C(CBr)CCC[NH3+]"_smiles;
 //    auto m = "CCC[CH2:7]CCCC"_smiles;
-    auto m = "CC[13CH2][CH2:7][CH-]C[15NH2+]C"_smiles;
+//    auto m = "CC[13CH2][CH2:7][CH-]C[15NH2+]C"_smiles;
 //    auto m = "CCN(CC)CC"_smiles;
 //    auto m = "[NH-]C(N)C(CBr)CCC[NH3+]"_smiles;
 //    auto m = "C1[CH-][CH3+]CCC1"_smiles;
@@ -64,10 +64,10 @@ void test1() {
 //    auto m = "O"_smiles;
 //    auto m = "CCN(CC)CC"_smiles;
 //    auto m = "CCN(CC)CC[NH3+]"_smiles;
-    auto m = "CC[13CH2][CH2:7][CH-]C[15NH2+]C"_smiles;
+//    auto m = "CC[13CH2][CH2:7][CH-]C[15NH2+]C"_smiles;
 //    auto m = "NCCN"_smiles;
 //    auto m = "C1C[CH-]CCC1"_smiles;
-//    auto m = "[NH3+]C1=C([NH3+])C([NH3+])=C([NH3+])C([NH3+])=C1[NH3+]"_smiles;
+    auto m = "[NH3+]C1=C([NH3+])C([NH3+])=C([NH3+])C([NH3+])=C1[NH3+]"_smiles;
 //    auto m = "[NH3+]C[NH-]"_smiles;
 //    auto m = "[NH3+][NH2+][NH2+][NH3+]"_smiles;
     TEST_ASSERT(m);

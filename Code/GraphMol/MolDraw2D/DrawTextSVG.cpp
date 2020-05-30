@@ -26,7 +26,6 @@ string DrawColourToSVG(const RDKit::DrawColour &col);
 // ****************************************************************************
 DrawTextSVG::DrawTextSVG(double max_fnt_sz, ostream &oss, string &d_act_class) :
     DrawText(max_fnt_sz), oss_(oss), d_active_class_(d_act_class) {
-  cout << "DrawTextSVG" << endl;
 }
 
 namespace {
@@ -68,8 +67,6 @@ void DrawTextSVG::getStringRects(const string &text,
                                  vector<TextDrawType> &draw_modes,
                                  vector<char> &draw_chars) const {
 
-  cout << "DrawTextSVG::getStringRects" << endl;
-
   double running_x = 0.0;
   double act_font_size = fontSize();
   double char_height;
@@ -81,15 +78,12 @@ void DrawTextSVG::getStringRects(const string &text,
     if ('<' == text[i] && setStringDrawMode(text, draw_mode, i)) {
       continue;
     }
-    cout << "XXX : " << i << " : " << draw_mode << endl;
     draw_modes.push_back(draw_mode);
     draw_chars.push_back(text[i]);
 
     max_width = max(max_width,
                     static_cast<double>(MolDraw2D_detail::char_widths[(int)text[i]]));
   }
-  cout << "max_width : " << max_width << " W width : "
-       << static_cast<double>(MolDraw2D_detail::char_widths[int('W')]) << endl;
 
   for (size_t i = 0; i < draw_chars.size(); ++i) {
     double char_width =
@@ -107,9 +101,6 @@ void DrawTextSVG::getStringRects(const string &text,
     double cscale = selectScaleFactor(draw_chars[i], draw_modes[i]);
     char_height *= cscale;
     char_width *= cscale;
-    cout << draw_chars[i] << " : " << draw_modes[i] << " : "
-         << char_width << " : " << char_height
-         << " and " << running_x << "  cscale = " << cscale << endl;
     Point2D offset(char_width / 2, char_height / 2);
     if(draw_chars[i] == '+' || draw_chars[i] == '-') {
       offset.y /= 2.0;
@@ -117,18 +108,18 @@ void DrawTextSVG::getStringRects(const string &text,
     Point2D g_centre(char_width / 2, char_height / 2);
     rects.push_back(shared_ptr<StringRect>(new StringRect(offset, g_centre, char_width, char_height)));
     rects.back()->trans_.x += running_x;
-    cout << "SVG rect : " << draw_chars[i] << " : " << rects.back()->trans_
-         << " :: " << rects.back()->width_ << " by " << rects.back()->height_
-         << "  offset = " << rects.back()->offset_ << endl;
-
-    running_x += char_width;
+    if(draw_modes[i] != TextDrawType::TextDrawNormal) {
+      running_x += char_width * 1.05;
+    } else {
+      running_x += char_width;
+    }
   }
   for(auto r: rects) {
     r->g_centre_.y = act_font_size - r->g_centre_.y;
     r->offset_.y = act_font_size / 2.0;
   }
 
-  adjustStringRectsForSuperSubScript(draw_modes, draw_chars, rects);
+  adjustStringRectsForSuperSubScript(draw_modes, rects);
 
 }
 

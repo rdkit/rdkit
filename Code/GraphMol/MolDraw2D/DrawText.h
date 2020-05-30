@@ -78,13 +78,15 @@ class DrawText {
   // put the label on end2, and then move end2 so that it is at
   // the intersection of a string rectangle and the line from end1 to
   // end2, if there is an intersection.  Mostly for trimming bonds
-  // back from atom labels.
+  // back from atom labels.  end1 and end2 in draw coords.
   void adjustLineForString(const std::string &label, OrientType orient,
                            const Point2D &end1, Point2D &end2) const;
 
   // draw the char, with the bottom left hand corner at cds
   virtual void drawChar(char c, const Point2D &cds) = 0;
 
+  // puts a colourful rectangle around each character in the string.
+  // For debugging, mostly.
   void drawStringRects(const std::string &label, OrientType orient,
                        const Point2D &cds, MolDraw2D &mol_draw) const;
 
@@ -98,7 +100,6 @@ class DrawText {
                            std::vector<std::shared_ptr<StringRect> > &rects) const;
   // adjust the string rectangles up and down for super- and subscripts
   void adjustStringRectsForSuperSubScript(const std::vector<TextDrawType> &draw_modes,
-                                          const std::vector<char> &to_draw,
                                           std::vector<std::shared_ptr<StringRect>> &rects) const;
   // return a scale factor appropriate for the character and draw type
   // (normal or super- or subscript)
