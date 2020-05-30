@@ -169,7 +169,7 @@ double CalcRMS(ROMol &prbMol, const ROMol &refMol, int prbCid, int refCid,
     for (unsigned int i = 0; i < npt; i++) {
       rpt = refPoints[i];
       ppt = prbPoints[i];
-      double wt =  (*wts)[i];
+      double wt = (*wts)[i];
       ssr += wt * (*ppt - *rpt).lengthSq();
     }
     ssr /= (prbPoints.size());
