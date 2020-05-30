@@ -74,41 +74,49 @@ void DrawTextSVG::getStringRects(const string &text,
   double running_x = 0.0;
   double act_font_size = fontSize();
   double char_height;
+  double max_width = 0.0;
   for (size_t i = 0; i < text.length(); ++i) {
     // setStringDrawMode moves i along to the end of any <sub> or <sup>
     // markup
     if ('<' == text[i] && setStringDrawMode(text, draw_mode, i)) {
       continue;
     }
+    draw_modes.push_back(draw_mode);
     draw_chars.push_back(text[i]);
 
+    max_width = max(max_width,
+                    static_cast<double>(MolDraw2D_detail::char_widths[(int)text[i]]));
+  }
+  cout << "max_width : " << max_width << " W width : "
+       << static_cast<double>(MolDraw2D_detail::char_widths[int('W')]) << endl;
+
+  for (size_t i = 0; i < draw_chars.size(); ++i) {
     double char_width =
-        act_font_size *
-        static_cast<double>(MolDraw2D_detail::char_widths[(int)text[i]]) /
-        MolDraw2D_detail::char_widths[(int)'W'];
+        0.6 * act_font_size *
+        static_cast<double>(MolDraw2D_detail::char_widths[(int)draw_chars[i]]) / max_width;
     // Absent a proper set of font metrics (we don't know what font we'll be
     // using, for starters) this is something of an empirical bodge.
-    if(text[i] == '+') {
+    if(draw_chars[i] == '+') {
       char_height = 0.6 * act_font_size;
-    } else if(text[i] == '-') {
+    } else if(draw_chars[i] == '-') {
       char_height = 0.4 * act_font_size;
     } else {
       char_height = 0.8 * act_font_size;
     }
-    double cscale = selectScaleFactor(text[i], draw_mode);
+    double cscale = selectScaleFactor(draw_chars[i], draw_mode);
     char_height *= cscale;
     char_width *= cscale;
-    cout << draw_chars.back() << " : " << char_width << " : " << char_height
+    cout << draw_chars[i] << " : " << char_width << " : " << char_height
          << " and " << running_x << "  cscale = " << cscale << endl;
     Point2D offset(char_width / 2, char_height / 2);
-    if(text[i] == '+' || text[i] == '-') {
+    if(draw_chars[i] == '+' || draw_chars[i] == '-') {
       offset.y /= 2.0;
     }
     Point2D g_centre(char_width / 2, char_height / 2);
     rects.push_back(shared_ptr<StringRect>(new StringRect(offset, g_centre, char_width, char_height)));
     rects.back()->trans_.x += running_x;
     draw_modes.push_back(draw_mode);
-    cout << "SVG rect : " << text[i] << " : " << rects.back()->trans_
+    cout << "SVG rect : " << draw_chars[i] << " : " << rects.back()->trans_
          << " :: " << rects.back()->width_ << " by " << rects.back()->height_
          << "  offset = " << rects.back()->offset_ << endl;
 

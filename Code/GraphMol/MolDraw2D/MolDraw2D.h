@@ -70,15 +70,18 @@ struct StringRect {
   Point2D trans_; // Where to draw char relative to other chars in string
   Point2D offset_; // offset for draw coords so char is centred correctly
   Point2D g_centre_; // glyph centre relative to the origin of the char.
+  double y_shift_; // shift the whole thing in y by this. For multi-line text.
   double width_, height_; // of the glyph itself, not the character cell
   double rect_corr_; // because if we move a char one way, we need to move the rectangle the other.
   int clash_score_;  // rough measure of how badly it clashed with other things
                      // lower is better, 0 is no clash.
   StringRect()
-      : trans_(0.0, 0.0), offset_(0.0, 0.0), g_centre_(offset_), width_(0.0),
+      : trans_(0.0, 0.0), offset_(0.0, 0.0), g_centre_(offset_),
+        y_shift_(0.0), width_(0.0),
         height_(0.0), rect_corr_(0.0), clash_score_(0) {}
   StringRect(const Point2D &offset, const Point2D &g_centre, double w, double h)
-      : trans_(0.0, 0.0), offset_(offset), g_centre_(g_centre), width_(w),
+      : trans_(0.0, 0.0), offset_(offset), g_centre_(g_centre),
+        y_shift_(0.0), width_(w),
         height_(h), rect_corr_(0.0), clash_score_(0) {}
   // tl is top, left; br is bottom, right of the glyph, relative to the
   // centre. Padding is fraction of char width to add to width and height.
@@ -87,6 +90,7 @@ struct StringRect {
     double wb2 = (1.0 + padding) * width_ / 2.0;
     double hb2 = (1.0 + padding) * height_ / 2.0;
     Point2D c = trans_ + g_centre_ - offset_;
+    c.y -= y_shift_;
     tl = Point2D(c.x - wb2, c.y - hb2);
     tr = Point2D(c.x + wb2, c.y - hb2);
     br = Point2D(c.x + wb2, c.y + hb2);

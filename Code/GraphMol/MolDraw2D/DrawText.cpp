@@ -433,6 +433,7 @@ void DrawText::getStringRects(const string &text, OrientType orient,
                               vector<TextDrawType> &draw_modes,
                               vector<char> &draw_chars) const {
 
+  cout << "DrawText::getStringRects : " << text << " orient = " << orient << endl;
   vector<string> text_bits = atomLabelToPieces(text, orient);
   if(orient == OrientType::W) {
     // stick the pieces together again backwards and draw as one so there
@@ -454,6 +455,7 @@ void DrawText::getStringRects(const string &text, OrientType orient,
   } else {
     double running_y = 0;
     for(size_t i = 0; i < text_bits.size(); ++i) {
+      cout << i << " : " << text_bits[i] << endl;
       vector<shared_ptr<StringRect>> t_rects;
       vector<TextDrawType> t_draw_modes;
       vector<char> t_draw_chars;
@@ -462,14 +464,21 @@ void DrawText::getStringRects(const string &text, OrientType orient,
       double max_height = -numeric_limits<double>::max();
       for(auto r: t_rects) {
         max_height = max(r->height_, max_height);
-        r->trans_.y += running_y;
+//        r->trans_.y += running_y;
+        r->y_shift_ = running_y;
       }
       rects.insert(rects.end(), t_rects.begin(), t_rects.end());
       draw_modes.insert(draw_modes.end(), t_draw_modes.begin(),
                         t_draw_modes.end());
       draw_chars.insert(draw_chars.end(), t_draw_chars.begin(),
                         t_draw_chars.end());
-      running_y += max_height;
+      if(orient == OrientType::N) {
+        cout << "N : " << max_height << endl;
+        running_y -= 1.10 * max_height;
+      } else if(orient == OrientType::S) {
+        cout << "S : " << max_height << endl;
+        running_y += 1.05 * max_height;
+      }
     }
   }
 
@@ -481,14 +490,20 @@ void DrawText::drawChars(const Point2D &a_cds,
                          const std::vector<TextDrawType> &draw_modes,
                          const std::vector<char> &draw_chars) {
 
+  cout << "DDDDDDDDDDDDDD" << endl;
+  cout << "DrawText::drawChars" << endl;
   double full_scale = fontScale();
   for(size_t i = 0; i < rects.size(); ++i) {
-    cout << "raw draw rect " << i << " :: " << rects[i]->trans_ << " : "
-        << rects[i]->width_ << " by " << rects[i]->height_ << endl;
+    cout << "raw draw rect " << i << " : " << draw_chars[i]
+         << " :: " << rects[i]->trans_ << " : "
+         << rects[i]->width_ << " by " << rects[i]->height_ << endl;
+    cout << "trans : " << rects[i]->trans_ << endl
+         << "offset : " << rects[i]->offset_ << endl
+         << "rect_corr_ : " << rects[i]->rect_corr_ << endl;
     Point2D draw_cds;
     draw_cds.x = a_cds.x + rects[i]->trans_.x - rects[i]->offset_.x;
     draw_cds.y = a_cds.y - rects[i]->trans_.y + rects[i]->offset_.y; // opposite sign convention
-    draw_cds.y -= rects[i]->rect_corr_;
+    draw_cds.y -= rects[i]->rect_corr_ + rects[i]->y_shift_;
     cout << "Drawing char at : " << draw_cds.x << ", " << draw_cds.y << endl;
     setFontScale(full_scale * selectScaleFactor(draw_chars[i], draw_modes[i]));
     drawChar(draw_chars[i], draw_cds);
@@ -540,8 +555,8 @@ vector<string> atomLabelToPieces(const string &label, OrientType orient) {
     return label_pieces;
   }
 
-  // if the orientation is E, any charge flag needs to be at the end.
-  if(orient == OrientType::E) {
+  // if the orientation is S or E, any charge flag needs to be at the end.
+  if(orient == OrientType::E || orient == OrientType::S) {
     for (size_t i = 0; i < label_pieces.size(); ++i) {
       if(label_pieces[i] == "<sup>+</sup>" || label_pieces[i] == "<sup>-</sup>") {
         label_pieces.push_back(label_pieces[i]);
