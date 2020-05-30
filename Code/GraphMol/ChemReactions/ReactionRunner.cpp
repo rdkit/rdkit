@@ -631,15 +631,16 @@ void forwardReactantBondStereo(ReactantProductAtomMapping *mapping, Bond *pBond,
   unsigned pEndAnchorIdx =
       reactProdMapAnchorIdx(pBond->getEndAtom(), pEndAnchorCandidates.first);
 
-  if (pBond->getOwningMol().getBondBetweenAtoms(pStartAnchorIdx, pEndAnchorIdx) == nullptr) {
+  const ROMol &m=pBond->getOwningMol();
+  if (m.getBondBetweenAtoms(pBond->getBeginAtomIdx(), pStartAnchorIdx) == nullptr ||
+      m.getBondBetweenAtoms(pBond->getEndAtomIdx(), pEndAnchorIdx) == nullptr) {
     BOOST_LOG(rdWarningLog)
       << "stereo atoms in input cannot be mapped to output (atoms are no longer bonded)\n";
   } else {
     pBond->setStereoAtoms(pStartAnchorIdx, pEndAnchorIdx);
-
     bool flipStereo =
       (pStartAnchorCandidates.second + pEndAnchorCandidates.second) % 2;
-
+  
     if (rBond->getStereo() == Bond::BondStereo::STEREOCIS ||
 	rBond->getStereo() == Bond::BondStereo::STEREOZ) {
       if (flipStereo) {
