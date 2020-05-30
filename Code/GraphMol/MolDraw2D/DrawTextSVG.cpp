@@ -70,17 +70,18 @@ void DrawTextSVG::getStringRects(const string &text,
 
   cout << "DrawTextSVG::getStringRects" << endl;
 
-  TextDrawType draw_mode = TextDrawType::TextDrawNormal;
   double running_x = 0.0;
   double act_font_size = fontSize();
   double char_height;
   double max_width = 0.0;
+  TextDrawType draw_mode = TextDrawType::TextDrawNormal;
   for (size_t i = 0; i < text.length(); ++i) {
     // setStringDrawMode moves i along to the end of any <sub> or <sup>
     // markup
     if ('<' == text[i] && setStringDrawMode(text, draw_mode, i)) {
       continue;
     }
+    cout << "XXX : " << i << " : " << draw_mode << endl;
     draw_modes.push_back(draw_mode);
     draw_chars.push_back(text[i]);
 
@@ -103,10 +104,11 @@ void DrawTextSVG::getStringRects(const string &text,
     } else {
       char_height = 0.8 * act_font_size;
     }
-    double cscale = selectScaleFactor(draw_chars[i], draw_mode);
+    double cscale = selectScaleFactor(draw_chars[i], draw_modes[i]);
     char_height *= cscale;
     char_width *= cscale;
-    cout << draw_chars[i] << " : " << char_width << " : " << char_height
+    cout << draw_chars[i] << " : " << draw_modes[i] << " : "
+         << char_width << " : " << char_height
          << " and " << running_x << "  cscale = " << cscale << endl;
     Point2D offset(char_width / 2, char_height / 2);
     if(draw_chars[i] == '+' || draw_chars[i] == '-') {
@@ -115,7 +117,6 @@ void DrawTextSVG::getStringRects(const string &text,
     Point2D g_centre(char_width / 2, char_height / 2);
     rects.push_back(shared_ptr<StringRect>(new StringRect(offset, g_centre, char_width, char_height)));
     rects.back()->trans_.x += running_x;
-    draw_modes.push_back(draw_mode);
     cout << "SVG rect : " << draw_chars[i] << " : " << rects.back()->trans_
          << " :: " << rects.back()->width_ << " by " << rects.back()->height_
          << "  offset = " << rects.back()->offset_ << endl;

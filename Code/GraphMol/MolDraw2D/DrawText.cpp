@@ -404,7 +404,7 @@ bool setStringDrawMode(const string &instring,
 
   string bit1 = instring.substr(i, 5);
   string bit2 = instring.substr(i, 6);
-
+  cout << "bits : " << bit1 << " and " << bit2 << endl;
   // could be markup for super- or sub-script
   if (string("<sub>") == bit1) {
     draw_mode = TextDrawType::TextDrawSubscript;
@@ -464,7 +464,6 @@ void DrawText::getStringRects(const string &text, OrientType orient,
       double max_height = -numeric_limits<double>::max();
       for(auto r: t_rects) {
         max_height = max(r->height_, max_height);
-//        r->trans_.y += running_y;
         r->y_shift_ = running_y;
       }
       rects.insert(rects.end(), t_rects.begin(), t_rects.end());
@@ -474,10 +473,10 @@ void DrawText::getStringRects(const string &text, OrientType orient,
                         t_draw_chars.end());
       if(orient == OrientType::N) {
         cout << "N : " << max_height << endl;
-        running_y -= 1.10 * max_height;
+        running_y -= 1.1 * max_height;
       } else if(orient == OrientType::S) {
         cout << "S : " << max_height << endl;
-        running_y += 1.05 * max_height;
+        running_y += 1.1 * max_height;
       }
     }
   }
@@ -494,7 +493,7 @@ void DrawText::drawChars(const Point2D &a_cds,
   cout << "DrawText::drawChars" << endl;
   double full_scale = fontScale();
   for(size_t i = 0; i < rects.size(); ++i) {
-    cout << "raw draw rect " << i << " : " << draw_chars[i]
+    cout << "raw draw rect " << i << " : " << draw_chars[i] << " : " << draw_modes[i]
          << " :: " << rects[i]->trans_ << " : "
          << rects[i]->width_ << " by " << rects[i]->height_ << endl;
     cout << "trans : " << rects[i]->trans_ << endl
