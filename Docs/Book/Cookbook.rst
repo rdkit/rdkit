@@ -470,6 +470,7 @@ Create Fragments
    # Chem.FragmentOnSomeBonds() will fragment according to all permutations of numToBreak bonds at a time 
    # (numToBreak defaults to 1), and return tuple of molecules with numToBreak cuts applied. By default, 
    # addDummies=True, so empty valences are filled with dummy atoms:
+   mol2 = Chem.Mol(mol)
    mol2_f_tuple = Chem.FragmentOnSomeBonds(mol2, (0, 2, 4))
 
 .. testcode::
