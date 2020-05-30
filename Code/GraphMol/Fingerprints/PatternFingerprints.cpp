@@ -176,33 +176,8 @@ bool isPatternComplexQuery(const Bond *b) {
 
 bool isTautomerBondQuery(const Bond *b) {
   // assumes we have already tested true for isPatternComplexQuery
-
-  // will match the query bond used by tautomer templates and will also match
-  // complex bond OR queries that match double or single/aromatic bonds so they
-  // can benefit from tautomer fingerprints
-
-  auto query = b->getQuery();
-  auto description = query->getDescription();
-  if (description != "BondOr") {
-    return false;
-  }
-  for (auto queryIterator = query->beginChildren();
-       queryIterator != query->endChildren(); ++queryIterator) {
-    auto childQuery = *queryIterator;
-    description = childQuery->getDescription();
-    if (description == "SingleOrAromaticBond") {
-      return true;
-    }
-    if (description == "BondOrder") {
-      // also check for single/aromatic?
-      Bond bond = Bond(Bond::DOUBLE);
-      if (childQuery->Match(&bond)) {
-        return true;
-      }
-    }
-    std::cout << description << std::endl;
-  }
-  return false;
+  auto description = b->getQuery()->getDescription();
+  return description == "SingleOrDoubleOrAromaticBond";
 }
 
 }  // namespace

@@ -20,21 +20,18 @@ class RWMol;
 
 class TautomerQuery {
  private:
-  // Original query- not currently used, but will be useful if the query is not
-  // tautomeric
-  const ROMol &query;
   // Tautomers of the query
-  const std::vector<ROMOL_SPTR> tautomers;
+  const std::vector<ROMOL_SPTR> d_tautomers;
   // Template query for substructure search
-  const ROMOL_SPTR templateMolecule;
+  const ROMOL_SPTR d_templateMolecule;
   // Tautomeric bonds and atoms
-  const std::vector<size_t> modifiedAtoms;
-  const std::vector<size_t> modifiedBonds;
+  const std::vector<size_t> d_modifiedAtoms;
+  const std::vector<size_t> d_modifiedBonds;
 
-  TautomerQuery(const ROMol &query, const std::vector<ROMOL_SPTR> tautomers,
-                const ROMOL_SPTR queryMolecule,
-                const std::vector<size_t> modifiedAtoms,
-                const std::vector<size_t> modifiedBonds);
+  TautomerQuery(const std::vector<ROMOL_SPTR> &tautomers,
+                const ROMOL_SPTR templateMolecule,
+                const std::vector<size_t> &modifiedAtoms,
+                const std::vector<size_t> &modifiedBonds);
 
   // tests if a match to the template matches a specific conformer
   bool matchTautomer(const ROMol &mol, const ROMol &tautomer,
@@ -48,18 +45,31 @@ class TautomerQuery {
       const std::string &tautomerTransformFile = std::string());
 
   // Substructure search
-  std::vector<MatchVectType> SubstructMatch(
-      const ROMol &mol, const SubstructMatchParameters &params,
+  std::vector<MatchVectType> substructOf(
+      const ROMol &mol,
+      const SubstructMatchParameters &params = SubstructMatchParameters(),
       std::vector<ROMOL_SPTR> *matchingTautomers = nullptr) const;
 
+  // SubstructureMatch
+  bool isSubstructOf(const ROMol &mol, const SubstructMatchParameters &params =
+                                           SubstructMatchParameters());
+
   // Query fingerprint
-  ExplicitBitVect *patternFingerprintTemplate(uint fpSize = 2048U);
+  ExplicitBitVect *patternFingerprintTemplate(unsigned int fpSize = 2048U);
+
+  // Static method to Fingerpint a target
+  static ExplicitBitVect *patternFingerprintTarget(const ROMol &target,
+                                                   unsigned int fpSize = 2048U);
 
   // accessors
 
-  const ROMOL_SPTR getTemplateMolecule() const { return templateMolecule; }
+  const ROMOL_SPTR getTemplateMolecule() const { return d_templateMolecule; }
 
-  const std::vector<ROMOL_SPTR> getTautomers() const { return tautomers; }
+  const std::vector<ROMOL_SPTR> getTautomers() const { return d_tautomers; }
+
+  const std::vector<size_t> getModifiedAtoms() const { return d_modifiedAtoms; }
+
+  const std::vector<size_t> getModifiedBonds() const { return d_modifiedBonds; }
 
   ~TautomerQuery(){};
 };

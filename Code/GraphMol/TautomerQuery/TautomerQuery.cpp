@@ -19,8 +19,6 @@ namespace {
 
 int getTargetIdx(int queryIdx, const RDKit::MatchVectType &match) {
   const auto pair = match[queryIdx];
-  // is this always true ?
-  assert(pair.first == static_cast<int>(queryIdx));
   return pair.second;
 }
 
@@ -28,16 +26,14 @@ int getTargetIdx(int queryIdx, const RDKit::MatchVectType &match) {
 
 namespace RDKit {
 
-TautomerQuery::TautomerQuery(const ROMol &query,
-                             const std::vector<ROMOL_SPTR> tautomers,
+TautomerQuery::TautomerQuery(const std::vector<ROMOL_SPTR> &tautomers,
                              const ROMOL_SPTR templateMolecule,
-                             const std::vector<size_t> modifiedAtoms,
-                             const std::vector<size_t> modifiedBonds)
-    : query(query),
-      tautomers(tautomers),
-      templateMolecule(templateMolecule),
-      modifiedAtoms(modifiedAtoms),
-      modifiedBonds(modifiedBonds) {}
+                             const std::vector<size_t> &modifiedAtoms,
+                             const std::vector<size_t> &modifiedBonds)
+    : d_tautomers(tautomers),
+      d_templateMolecule(templateMolecule),
+      d_modifiedAtoms(modifiedAtoms),
+      d_modifiedBonds(modifiedBonds) {}
 
 boost::shared_ptr<TautomerQuery> TautomerQuery::fromMol(
     const ROMol &query, const std::string &tautomerTransformFile) {
@@ -73,42 +69,36 @@ boost::shared_ptr<TautomerQuery> TautomerQuery::fromMol(
   auto templateMolecule = boost::make_shared<RWMol>(query);
   for (auto idx : modifiedAtoms) {
     const auto atom = templateMolecule->getAtomWithIdx(idx);
-    // I think this should match on atom number only (no formal charge
-    // matching), and also fingerprint properly
-    const auto queryAtom = new QueryAtom(*atom);
-    // auto atomQuery = makeAtomNumQuery(atom->getAtomicNum());
-    // queryAtom->setQuery(atomQuery);
+    const auto queryAtom = new QueryAtom(atom->getAtomicNum());
     const bool updateLabel = false;
     const bool preserveProps = true;
     templateMolecule->replaceAtom(idx, queryAtom, updateLabel, preserveProps);
     delete queryAtom;
   }
   for (auto idx : modifiedBonds) {
-    auto bondQuery1 = makeSingleOrAromaticBondQuery();
-    auto bondQuery2 = makeBondOrderEqualsQuery(Bond::DOUBLE);
+    auto bondQuery = makeSingleOrDoubleOrAromaticBondQuery();
     auto queryBond = new QueryBond();
-    queryBond->setQuery(bondQuery1);
-    queryBond->expandQuery(bondQuery2, Queries::COMPOSITE_OR);
+    queryBond->setQuery(bondQuery);
     templateMolecule->replaceBond(idx, queryBond, true);
     delete queryBond;
   }
 
-  boost::shared_ptr<TautomerQuery> tautomerQuery(new TautomerQuery(
-      query, tautomers, boost::make_shared<ROMol>(*templateMolecule),
-      modifiedAtoms, modifiedBonds));
+  boost::shared_ptr<TautomerQuery> tautomerQuery(
+      new TautomerQuery(tautomers, boost::make_shared<ROMol>(*templateMolecule),
+                        modifiedAtoms, modifiedBonds));
   return tautomerQuery;
 }
 
 bool TautomerQuery::matchTautomer(
     const ROMol &mol, const ROMol &tautomer, const MatchVectType &match,
     const SubstructMatchParameters &params) const {
-  for (auto idx : modifiedAtoms) {
+  for (auto idx : d_modifiedAtoms) {
     const auto queryAtom = tautomer.getAtomWithIdx(idx);
     const auto targetAtom = mol.getAtomWithIdx(getTargetIdx(idx, match));
     if (!atomCompat(queryAtom, targetAtom, params)) return false;
   }
 
-  for (auto idx : modifiedBonds) {
+  for (auto idx : d_modifiedBonds) {
     const auto queryBond = tautomer.getBondWithIdx(idx);
     const auto beginIdx = queryBond->getBeginAtomIdx();
     const auto endIdx = queryBond->getEndAtomIdx();
@@ -124,7 +114,7 @@ bool TautomerQuery::matchTautomer(
   return true;
 }
 
-std::vector<MatchVectType> TautomerQuery::SubstructMatch(
+std::vector<MatchVectType> TautomerQuery::substructOf(
     const ROMol &mol, const SubstructMatchParameters &params,
     std::vector<ROMOL_SPTR> *matchingTautomers) const {
   if (matchingTautomers) {
@@ -133,10 +123,10 @@ std::vector<MatchVectType> TautomerQuery::SubstructMatch(
   std::vector<MatchVectType> matches;
 
   const auto templateMatches =
-      RDKit::SubstructMatch(mol, *templateMolecule, params);
+      RDKit::SubstructMatch(mol, *d_templateMolecule, params);
 
   for (auto templateMatch : templateMatches) {
-    for (auto tautomer : tautomers) {
+    for (auto tautomer : d_tautomers) {
       if (matchTautomer(mol, *tautomer, templateMatch, params)) {
         matches.push_back(templateMatch);
         if (matchingTautomers) {
@@ -150,15 +140,27 @@ std::vector<MatchVectType> TautomerQuery::SubstructMatch(
   return matches;
 }
 
-ExplicitBitVect *TautomerQuery::patternFingerprintTemplate(uint fpSize) {
-  return PatternFingerprintMol(*templateMolecule, fpSize, nullptr, nullptr,
+bool TautomerQuery::isSubstructOf(const ROMol &mol,
+                                  const SubstructMatchParameters &params) {
+  auto matches = substructOf(mol, params);
+  return matches.size() > 0;
+}
+
+ExplicitBitVect *TautomerQuery::patternFingerprintTemplate(
+    unsigned int fpSize) {
+  return PatternFingerprintMol(*d_templateMolecule, fpSize, nullptr, nullptr,
                                true);
+}
+
+ExplicitBitVect *TautomerQuery::patternFingerprintTarget(const ROMol &target,
+                                                         unsigned int fpSize) {
+  return PatternFingerprintMol(target, fpSize, nullptr, nullptr, true);
 }
 
 std::vector<MatchVectType> SubstructMatch(
     const ROMol &mol, const TautomerQuery &query,
     const SubstructMatchParameters &params) {
-  return query.SubstructMatch(mol, params);
+  return query.substructOf(mol, params);
 }
 
-}  // namespace RDKit
+} //namespace RDKit;
