@@ -776,6 +776,14 @@ TEST_CASE("GitHub #3153: Kekulization error in molecules with aromatic C+", "[bu
     ScaffoldNetwork::ScaffoldNetwork net = 
         ScaffoldNetwork::createScaffoldNetwork(ms, ps);
     CHECK(net.nodes.size() == 9);
+    bool present = false;
+    for (auto i : net.nodes) {
+      if (i == "O=c1cccccc1") {
+        present = true;
+        break;
+      }
+    }
+    CHECK(present == true);
     CHECK(net.counts.size() == net.nodes.size());
     CHECK(net.edges.size() == 8);
   }
@@ -792,6 +800,14 @@ TEST_CASE("GitHub #3153: Kekulization error in molecules with aromatic C+", "[bu
         ScaffoldNetwork::createScaffoldNetwork(ms, ps);
 
     CHECK(net.nodes.size() == 3);
+    bool present = false;
+    for (auto i : net.nodes) {
+      if (i == "c1cc[nH]c1") {
+        present = true;
+        break;
+      }
+    }
+    CHECK(present == true);
     CHECK(net.counts.size() == net.nodes.size());
     CHECK(net.edges.size() == 2);
   }
@@ -806,6 +822,14 @@ TEST_CASE("GitHub #3153: Kekulization error in molecules with aromatic C+", "[bu
     ScaffoldNetwork::ScaffoldNetworkParams ps;
     ScaffoldNetwork::ScaffoldNetwork net = 
         ScaffoldNetwork::createScaffoldNetwork(ms, ps);
+    bool present = false;
+    for (auto i : net.nodes) {
+      if (i == "C1=CCC(Cc2ccc[cH+]cc2)=C1") {
+        present = true;
+        break;
+      }
+    }
+    CHECK(present == true);
     CHECK(net.nodes.size() == 11);
     CHECK(net.counts.size() == net.nodes.size());
     CHECK(net.edges.size() == 10);
