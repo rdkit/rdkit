@@ -141,7 +141,7 @@ double CalcRMS(ROMol &prbMol, const ROMol &refMol, int prbCid, int refCid,
   
   unsigned int msize = matches[0].size();
   const RDNumeric::DoubleVector *wts;
-  if (weights) {
+  if (weights != nullptr) {
     PRECONDITION(msize == weights->size(), "Mismatch in number of points");
     wts = weights;
   } else {
@@ -156,9 +156,9 @@ double CalcRMS(ROMol &prbMol, const ROMol &refMol, int prbCid, int refCid,
     const Conformer &refCnf = refMol.getConformer(refCid);
     
     MatchVectType::const_iterator mi;
-    for (mi = matche.begin(); mi != matche.end(); mi++) {
-      prbPoints.push_back(&prbCnf.getAtomPos(mi->first));
-      refPoints.push_back(&refCnf.getAtomPos(mi->second));
+    for (const auto &mi : matche) {
+      prbPoints.push_back(&prbCnf.getAtomPos(mi.first));
+      refPoints.push_back(&refCnf.getAtomPos(mi.second));
     }
     
     unsigned int npt = refPoints.size();
@@ -170,10 +170,7 @@ double CalcRMS(ROMol &prbMol, const ROMol &refMol, int prbCid, int refCid,
       rpt = refPoints[i];
       ppt = prbPoints[i];
       double wt =  (*wts)[i];
- 
-      ssr += ((ppt->x) - (rpt->x)) * ((ppt->x) - (rpt->x)) * wt;
-      ssr += ((ppt->y) - (rpt->y)) * ((ppt->y) - (rpt->y)) * wt;
-      ssr += ((ppt->z) - (rpt->z)) * ((ppt->z) - (rpt->z)) * wt;
+      ssr += wt * (*ppt - *rpt).lengthSq();
     }
     ssr /= (prbPoints.size());
     
@@ -184,7 +181,7 @@ double CalcRMS(ROMol &prbMol, const ROMol &refMol, int prbCid, int refCid,
       bestMatch = matche;
     }
   }
-  if (!weights) {
+  if (weights == nullptr) {
     delete wts;
   }
 
