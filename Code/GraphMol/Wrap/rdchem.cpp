@@ -14,7 +14,6 @@
 #include <GraphMol/RDKitBase.h>
 #include <GraphMol/SanitException.h>
 #include <RDBoost/import_array.h>
-#include <RDBoost/iterator_next.h>
 
 #ifdef RDK_THREADSAFE_SSS
 // Thread local storage for output buffer for RDKit Logging
@@ -246,7 +245,7 @@ BOOST_PYTHON_MODULE(rdchem) {
       .def("__iter__", &AtomIterSeq::__iter__,
            python::return_internal_reference<
                1, python::with_custodian_and_ward_postcall<0, 1>>())
-      .def(NEXT_METHOD, &AtomIterSeq::next,
+      .def("__next__", &AtomIterSeq::next,
            python::return_value_policy<python::reference_existing_object>())
 
       .def("__len__", &AtomIterSeq::len)
@@ -259,7 +258,7 @@ BOOST_PYTHON_MODULE(rdchem) {
       .def("__iter__", &QueryAtomIterSeq::__iter__,
            python::return_internal_reference<
                1, python::with_custodian_and_ward_postcall<0, 1>>())
-      .def(NEXT_METHOD, &QueryAtomIterSeq::next,
+      .def("__next__", &QueryAtomIterSeq::next,
            python::return_value_policy<python::reference_existing_object>())
       .def("__len__", &QueryAtomIterSeq::len)
       .def("__getitem__", &QueryAtomIterSeq::get_item,

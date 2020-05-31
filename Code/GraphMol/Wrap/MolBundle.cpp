@@ -16,7 +16,6 @@
 #include <GraphMol/RDKitBase.h>
 #include <GraphMol/MolBundle.h>
 #include <RDBoost/PySequenceHolder.h>
-#include <RDBoost/iterator_next.h>
 
 #include "substructmethods.h"
 namespace python = boost::python;
