@@ -325,10 +325,6 @@ ExplicitBitVect *PatternFingerprintMol(const ROMol &mol, unsigned int fpSize,
         }
 
         if (!tautomerQuery) {
-          // makes sure aromatic bonds and single bonds from SMARTS always hash
-          // the same:
-          // if(!mbond->getIsAromatic() && mbond->getBondType()!=Bond::SINGLE &&
-          //   mbond->getBondType()!=Bond::AROMATIC){
           if (!mbond->getIsAromatic()) {
             gboost::hash_combine(bitId, (std::uint32_t)mbond->getBondType());
 #ifdef VERBOSE_FINGERPRINTING
@@ -340,9 +336,6 @@ ExplicitBitVect *PatternFingerprintMol(const ROMol &mol, unsigned int fpSize,
             std::cerr << Bond::AROMATIC << " ";
 #endif
           }
-          //} else {
-          //  gboost::hash_combine(bitId,(std::uint32_t)Bond::SINGLE);
-          //          }
         }
       }
 
