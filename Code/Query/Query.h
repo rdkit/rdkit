@@ -54,9 +54,9 @@ class Query {
 
   Query()
       : d_description(""),
-        df_negate(false),
-        d_matchFunc(NULL),
-        d_dataFunc(NULL){};
+        
+        d_matchFunc(nullptr),
+        d_dataFunc(nullptr){};
   virtual ~Query() { this->d_children.clear(); };
 
   //! sets whether or not we are negated
@@ -146,7 +146,7 @@ class Query {
   MatchFuncArgType d_tol = 0;
   std::string d_description;
   CHILD_VECT d_children;
-  bool df_negate;
+  bool df_negate{false};
   bool (*d_matchFunc)(MatchFuncArgType);
 
   // MSVC complains at compile time when TypeConvert(MatchFuncArgType what,
@@ -163,7 +163,7 @@ class Query {
   MatchFuncArgType TypeConvert(MatchFuncArgType what,
                                Int2Type<false> /*d*/) const {
     MatchFuncArgType mfArg;
-    if (this->d_dataFuncSameType != NULL &&
+    if (this->d_dataFuncSameType != nullptr &&
         std::is_same<MatchFuncArgType, DataFuncArgType>::value) {
       mfArg = this->d_dataFuncSameType(what);
     } else {

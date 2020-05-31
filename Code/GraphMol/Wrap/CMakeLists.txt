@@ -27,7 +27,7 @@ if(RDK_BUILD_COORDGEN_SUPPORT)
 endif()
 
 if(RDK_BUILD_COMPRESSED_SUPPLIERS)
-find_package(Boost 1.56.0 COMPONENTS iostreams REQUIRED)
+find_package(Boost ${RDK_BOOST_VERSION} COMPONENTS iostreams REQUIRED)
 if (NOT Boost_USE_STATIC_LIBS)
    add_definitions("-DBOOST_IOSTREAMS_DYN_LINK")
 endif()

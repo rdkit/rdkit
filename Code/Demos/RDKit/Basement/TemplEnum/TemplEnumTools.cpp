@@ -7,7 +7,6 @@
 #include <Geometry/Transform3D.h>
 #include <GraphMol/MolTransforms/MolTransforms.h>
 #include <GraphMol/FileParsers/FileParsers.h>
-#define FEQ(_a_, _b_) (fabs((_a_) - (_b_)) < 1e-4)
 
 namespace TemplateEnum {
 using namespace RDKit;

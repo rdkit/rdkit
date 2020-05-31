@@ -20,6 +20,8 @@
 #include <GraphMol/Depictor/RDDepictor.h>
 #include <Geometry/point.h>
 #include <Geometry/Transform2D.h>
+#include <GraphMol/MolTransforms/MolTransforms.h>
+#include <Geometry/Transform3D.h>
 
 #include <algorithm>
 #include <cstdlib>
@@ -910,7 +912,6 @@ void MolDraw2D::calculateScale(int width, int height,
   // as well.
   while (scale_ > 1e-4) {
     text_drawer_->setFontScale(scale_);
-
     adjustScaleForAtomLabels(highlight_atoms, highlight_radii);
     if ((!atom_notes_.empty() || !bond_notes_.empty()) &&
         supportsAnnotations()) {
@@ -954,7 +955,6 @@ void MolDraw2D::calculateScale(int width, int height,
 
   // cout << "leaving calculateScale" << endl;
   // cout << "final scale : " << scale_ << endl;
-
 }
 
 // ****************************************************************************
@@ -1165,11 +1165,23 @@ unique_ptr<RWMol> MolDraw2D::setupDrawMolecule(
     rwmol.reset(new RWMol(mol));
     MolDraw2DUtils::prepareMolForDrawing(*rwmol);
   }
+  if (drawOptions().centreMoleculesBeforeDrawing) {
+    if (!rwmol) rwmol.reset(new RWMol(mol));
+    if (rwmol->getNumConformers()) {
+      auto &conf = rwmol->getConformer(confId);
+      RDGeom::Transform3D tf;
+      auto centroid = MolTransforms::computeCentroid(conf);
+      centroid *= -1;
+      tf.SetTranslation(centroid);
+      MolTransforms::transformConformer(conf, tf);
+    }
+  }
   ROMol const &draw_mol = rwmol ? *(rwmol) : mol;
   if (!draw_mol.getNumConformers()) {
     // clearly, the molecule is in a sorry state.
     return rwmol;
   }
+
   if (drawOptions().bondLineWidth >= 0) {
     curr_width_ = drawOptions().bondLineWidth;
   }
@@ -2813,8 +2825,6 @@ OrientType MolDraw2D::getAtomOrientation(const RDKit::Atom &atom,
     if (fabs(nbr_sum.x) > 1.0e-4) {
       islope = nbr_sum.y / nbr_sum.x;
     }
-    // cout << "islope : " << islope << " : " << atan(islope) * 180.0 / M_PI <<
-    // endl;
     if (fabs(islope) <= VERT_SLOPE) {
       if (nbr_sum.x > 0.0) {
         orient = OrientType::W;
@@ -2828,19 +2838,38 @@ OrientType MolDraw2D::getAtomOrientation(const RDKit::Atom &atom,
         orient = OrientType::S;
       }
     }
-    // cout << "interim orient : " << orient << endl;
     // atoms of single degree should always be either W or E, never N or S.  If
     // either of the latter, make it E if the slope is close to vertical,
     // otherwise have it either as required.
-    if (atom.getDegree() == 1
-        && (orient == OrientType::N || orient == OrientType::S)) {
-      if (fabs(islope) > VERT_SLOPE) {
-        orient = OrientType::E;
-      } else {
-        if (nbr_sum.x > 0.0) {
-          orient = OrientType::W;
-        } else {
+    if(orient == OrientType::N || orient == OrientType::S) {
+      if (atom.getDegree() == 1) {
+        if (fabs(islope) > VERT_SLOPE) {
           orient = OrientType::E;
+        } else {
+          if (nbr_sum.x > 0.0) {
+            orient = OrientType::W;
+          } else {
+            orient = OrientType::E;
+          }
+        }
+      } else if(atom.getDegree() == 3) {
+        // Atoms of degree 3 can sometimes have a bond pointing down with S
+        // orientation or up with N orientation, which puts the H on the bond.
+        auto mol = atom.getOwningMol();
+        const Point2D &at1_cds = at_cds_[activeMolIdx_][atom.getIdx()];
+        for (const auto &nbri : make_iterator_range(mol.getAtomBonds(&atom))) {
+          const Bond *bond = mol[nbri];
+          const Point2D &at2_cds =
+              at_cds_[activeMolIdx_][bond->getOtherAtomIdx(atom.getIdx())];
+          Point2D bond_vec = at2_cds - at1_cds;
+          double ang = atan(bond_vec.y / bond_vec.x) * 180.0 / M_PI;
+          if (ang > 80.0 && ang < 100.0 && orient == OrientType::S) {
+            orient = OrientType::N;
+            break;
+          } else if (ang < -80.0 && ang > -100.0 && orient == OrientType::N) {
+            orient = OrientType::S;
+            break;
+          }
         }
       }
     }
@@ -2859,7 +2888,6 @@ OrientType MolDraw2D::getAtomOrientation(const RDKit::Atom &atom,
     }
   }
 
-  // cout << "orient : " << orient << endl;
   return orient;
 }
 
@@ -3092,4 +3120,19 @@ bool doesLineIntersectLabel(const Point2D &ls, const Point2D &lf,
   return false;
 }
 
+std::ostream& operator<<(std::ostream &oss, const MolDraw2D::OrientType &o) {
+  switch(o) {
+    case MolDraw2D::OrientType::C:
+      oss << "C"; break;
+    case MolDraw2D::OrientType::N:
+      oss << "N"; break;
+    case MolDraw2D::OrientType::S:
+      oss << "S"; break;
+    case MolDraw2D::OrientType::E:
+      oss << "E"; break;
+    case MolDraw2D::OrientType::W:
+      oss << "W"; break;
+  }
+  return oss;
+}
 }  // namespace RDKit

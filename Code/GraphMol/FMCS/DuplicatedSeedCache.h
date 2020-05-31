@@ -66,9 +66,9 @@ class DuplicatedSeedCache {
 
  private:
   std::map<TKey, TValue> Index;
-  size_t MaxAtoms;  // max key in the cache for fast failed find
+  size_t MaxAtoms{0};  // max key in the cache for fast failed find
  public:
-  DuplicatedSeedCache() : MaxAtoms(0) {}
+  DuplicatedSeedCache()  {}
   void clear() {
     Index.clear();
     MaxAtoms = 0;

@@ -178,8 +178,8 @@ INT_MAP_INT pickBondsToWedge(const ROMol &mol) {
       if (res.find(bid) == res.end()) {
         // very strong preference for Hs:
         if (bond->getOtherAtom(atom)->getAtomicNum() == 1) {
-          nbrScores.push_back(std::make_pair(
-              -1000000, bid));  // lower than anything else can be
+          nbrScores.emplace_back(
+              -1000000, bid);  // lower than anything else can be
           continue;
         }
         // prefer lower atomic numbers with lower degrees and no specified
@@ -201,7 +201,7 @@ INT_MAP_INT pickBondsToWedge(const ROMol &mol) {
         // std::cerr << "    nrbScore: " << idx << " - " << oIdx << " : "
         //           << nbrScore << " nChiralNbrs: " << nChiralNbrs[oIdx]
         //           << std::endl;
-        nbrScores.push_back(std::make_pair(nbrScore, bid));
+        nbrScores.emplace_back(nbrScore, bid);
       }
     }
     // There's still one situation where this whole thing can fail: an unlucky

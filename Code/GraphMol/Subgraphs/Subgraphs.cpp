@@ -555,7 +555,7 @@ PATH_TYPE findAtomEnvironmentOfRadiusN(const ROMol &mol, unsigned int radius,
     if (useHs ||
         mol.getAtomWithIdx(bond->getOtherAtomIdx(rootedAtAtom))
                 ->getAtomicNum() != 1) {
-      nbrStack.push_back(std::make_pair(rootedAtAtom, bond->getIdx()));
+      nbrStack.emplace_back(rootedAtAtom, bond->getIdx());
     }
     ++beg;
   }
@@ -584,7 +584,7 @@ PATH_TYPE findAtomEnvironmentOfRadiusN(const ROMol &mol, unsigned int radius,
             if (useHs ||
                 mol.getAtomWithIdx(bond->getOtherAtomIdx(oAtom))
                         ->getAtomicNum() != 1) {
-              nextLayer.push_back(std::make_pair(oAtom, bond->getIdx()));
+              nextLayer.emplace_back(oAtom, bond->getIdx());
             }
           }
           ++beg;

@@ -226,8 +226,7 @@ void getExperimentalTorsions(const RDKit::ROMol &mol, CrystalFFDetails &details,
           atoms[2] = aid3;
           atoms[3] = aid4;
           details.expTorsionAtoms.push_back(atoms);
-          details.expTorsionAngles.push_back(
-              std::make_pair(param.signs, param.V));
+          details.expTorsionAngles.emplace_back(param.signs, param.V);
           if (verbose) {
             std::cout << param.smarts << ": " << aid1 << " " << aid2 << " "
                       << aid3 << " " << aid4 << ", (";
@@ -334,7 +333,7 @@ void getExperimentalTorsions(const RDKit::ROMol &mol, CrystalFFDetails &details,
           signs[1] = -1;  // MMFF sign for m = 2
           std::vector<double> fconsts(6, 0.0);
           fconsts[1] = 100.0;  // 7.0 is MMFF force constants for aromatic rings
-          details.expTorsionAngles.push_back(std::make_pair(signs, fconsts));
+          details.expTorsionAngles.emplace_back(signs, fconsts);
           /*if (verbose) {
             std::cout << "SP2 ring: " << aid1 << " " << aid2 << " " << aid3 << "
           " << aid4 << std::endl;

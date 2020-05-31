@@ -1859,7 +1859,7 @@ std::string MolToInchi(const ROMol& mol, ExtraInchiReturnValues& rv,
         int cip = 0;
         // if (m->getAtomWithIdx(*nbrIter)->hasProp("_CIPRank"))
         //   m->getAtomWithIdx(*nbrIter)->getProp("_CIPRank", cip);
-        neighbors.push_back(std::make_pair(cip, *nbrIter));
+        neighbors.emplace_back(cip, *nbrIter);
         ++nbrIter;
       }
       // std::sort(neighbors.begin(), neighbors.end());

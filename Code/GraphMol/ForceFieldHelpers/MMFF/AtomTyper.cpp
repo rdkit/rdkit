@@ -106,7 +106,7 @@ const MMFFVdWCollection *getMMFFVdW() {
 }  // namespace DefaultParameters
 class RingMembership {
  public:
-  RingMembership() : d_isInAromaticRing(false){};
+  RingMembership()  {};
   bool getIsInAromaticRing() const { return d_isInAromaticRing; }
   void setIsInAromaticRing(bool isInAromaticRing) {
     d_isInAromaticRing = isInAromaticRing;
@@ -115,7 +115,7 @@ class RingMembership {
   std::set<std::uint32_t> &getRingIdxSet() { return d_ringIdxSet; }
 
  private:
-  bool d_isInAromaticRing;
+  bool d_isInAromaticRing{false};
   std::set<std::uint32_t> d_ringIdxSet;
 };
 

@@ -11,7 +11,7 @@
 #ifndef __RD_DIST_UTILS_H__
 #define __RD_DIST_UTILS_H__
 
-#include <math.h>
+#include <cmath>
 #include "point.h"
 #include "Transform3D.h"
 #include "Transform.h"

@@ -3,9 +3,9 @@
 #define RDKIT_ITERATOR_NEXT_INCLUDED
 
 #if PY_MAJOR_VERSION >= 3
-#define NEXT_METHOD "__next__"
+const char* const NEXT_METHOD = "__next__";
 #else
-#define NEXT_METHOD "next"
+const char* const NEXT_METHOD = "next";
 #endif
 
 #endif

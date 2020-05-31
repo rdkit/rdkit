@@ -25,7 +25,7 @@ typedef boost::tuples::tuple<std::uint32_t, std::uint32_t, std::uint32_t>
 
 RDKIT_SUBGRAPHS_EXPORT DiscrimTuple calcPathDiscriminators(
     const ROMol &mol, const PATH_TYPE &path, bool useBO = true,
-    std::vector<std::uint32_t> *extraInvars = 0);
+    std::vector<std::uint32_t> *extraInvars = nullptr);
 RDKIT_SUBGRAPHS_EXPORT PATH_LIST uniquifyPaths(const ROMol &mol,
                                                const PATH_LIST &allPathsb,
                                                bool useBO = true);

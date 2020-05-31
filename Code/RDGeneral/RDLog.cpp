@@ -13,7 +13,7 @@
 #if 1
 #include <iomanip>
 #include <string>
-#include <time.h>
+#include <ctime>
 
 std::shared_ptr<boost::logging::rdLogger> rdAppLog = nullptr;
 std::shared_ptr<boost::logging::rdLogger> rdDebugLog = nullptr;

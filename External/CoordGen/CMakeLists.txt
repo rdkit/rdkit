@@ -10,7 +10,7 @@ if(RDK_BUILD_COORDGEN_SUPPORT)
     add_definitions(-DIN_COORDGEN)
   endif(MSVC AND (NOT RDK_INSTALL_DLLS_MSVC))
 
-  find_package(Boost 1.56.0 COMPONENTS system iostreams REQUIRED)
+  find_package(Boost ${RDK_BOOST_VERSION} COMPONENTS system iostreams REQUIRED)
   set (link_iostreams ${Boost_LIBRARIES})
   if (NOT Boost_USE_STATIC_LIBS)
     add_definitions("-DBOOST_IOSTREAMS_DYN_LINK")
@@ -18,7 +18,7 @@ if(RDK_BUILD_COORDGEN_SUPPORT)
 
   if (WIN32)
     set( T_LIBS ${Boost_LIBRARIES})
-    find_package(Boost 1.58.0 COMPONENTS zlib)
+    find_package(Boost ${RDK_BOOST_VERSION} COMPONENTS zlib)
     set( Boost_LIBRARIES ${T_LIBS} ${Boost_LIBRARIES})
 
   else()

@@ -74,12 +74,8 @@ enum FingerprintType {
  */
 struct RDKIT_CHEMREACTIONS_EXPORT ReactionFingerprintParams {
   ReactionFingerprintParams()
-      : includeAgents(false),
-        bitRatioAgents(0.2),
-        nonAgentWeight(10),
-        agentWeight(1),
-        fpSize(2048),
-        fpType(AtomPairFP) {}
+      
+        {}
 
   ReactionFingerprintParams(bool includeAgents, double bitRatioAgents,
                             unsigned int nonAgentWeight, int agentWeight,
@@ -91,12 +87,12 @@ struct RDKIT_CHEMREACTIONS_EXPORT ReactionFingerprintParams {
         fpSize(fpSize),
         fpType(fpType) {}
 
-  bool includeAgents;
-  double bitRatioAgents;
-  unsigned int nonAgentWeight;
-  int agentWeight;
-  unsigned int fpSize;
-  FingerprintType fpType;
+  bool includeAgents{false};
+  double bitRatioAgents{0.2};
+  unsigned int nonAgentWeight{10};
+  int agentWeight{1};
+  unsigned int fpSize{2048};
+  FingerprintType fpType{AtomPairFP};
 };
 
 RDKIT_CHEMREACTIONS_EXPORT extern const ReactionFingerprintParams

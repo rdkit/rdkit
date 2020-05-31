@@ -58,6 +58,10 @@ option(RDK_INSTALL_DEV_COMPONENT "install libraries and headers" ON)
 option(RDK_USE_BOOST_REGEX "use boost::regex instead of std::regex (needed for systems with g++-4.8)" OFF)
 option(RDK_USE_BOOST_IOSTREAMS "use boost::iostreams" ON)
 option(RDK_BUILD_MINIMAL_LIB "build the minimal RDKit wrapper (for the JS bindings)" OFF)
+option(RDK_BUILD_FUZZ_TARGETS "build the fuzz targets" OFF)
+
+set(RDK_BOOST_VERSION "1.58.0")
+
 if(NOT MSVC)
   if(RDK_OPTIMIZE_POPCNT)
       set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -mpopcnt")
@@ -266,7 +270,7 @@ if(RDK_BUILD_PYTHON_WRAPPERS)
 
   # Try each potential boost-python name until one works
   foreach(Boost_Python_LibN ${Boost_Python_Names})
-    find_package(Boost 1.56.0 COMPONENTS "${Boost_Python_LibN}" QUIET)
+    find_package(Boost ${RDK_BOOST_VERSION} COMPONENTS "${Boost_Python_LibN}" QUIET)
     if(Boost_FOUND)
       set(Boost_Python_Lib ${Boost_Python_LibN})
       break()
@@ -274,7 +278,7 @@ if(RDK_BUILD_PYTHON_WRAPPERS)
   endforeach()
   # Finally just try "python" and hope it is a compatible version
   if(NOT Boost_FOUND)
-    find_package(Boost 1.56.0 COMPONENTS python REQUIRED)
+    find_package(Boost ${RDK_BOOST_VERSION} COMPONENTS python REQUIRED)
     set(Boost_Python_Lib "python")
   endif()
 
@@ -337,7 +341,7 @@ if(RDK_BUILD_PYTHON_WRAPPERS)
           COMPONENT dev )
 
 else(RDK_BUILD_PYTHON_WRAPPERS)
-  find_package(Boost 1.56.0 REQUIRED)
+  find_package(Boost ${RDK_BOOST_VERSION} REQUIRED)
 endif(RDK_BUILD_PYTHON_WRAPPERS)
 
 # Detect clang, which masquerades as gcc.  CMake 2.6 doesn't know how to
@@ -374,7 +378,7 @@ endif()
 
 if(RDK_USE_BOOST_SERIALIZATION)
     set(T_LIBS ${Boost_LIBRARIES})
-    find_package(Boost 1.56.0 COMPONENTS serialization)
+    find_package(Boost ${RDK_BOOST_VERSION} COMPONENTS serialization)
     if (Boost_SERIALIZATION_LIBRARY)
       set(Boost_LIBRARIES ${T_LIBS} ${Boost_LIBRARIES})
     else()

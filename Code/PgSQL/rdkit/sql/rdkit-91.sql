@@ -348,3 +348,6 @@ select 'C1C([2H])C1CCCC'::mol @> mol_adjust_query_properties('C1CC1CC'::mol,'{"a
 -- CXSmiles
 SELECT mol_to_smiles(mol_from_smiles('C[C@H](F)[C@H](C)[C@@H](C)Br |a:1,o1:4,5|'));
 SELECT mol_to_cxsmiles(mol_from_smiles('C[C@H](F)[C@H](C)[C@@H](C)Br |a:1,o1:4,5|'));
+
+-- CXSmiles from mol_out
+SELECT mol_out(mol_from_smiles('C[C@H](F)[C@H](C)[C@@H](C)Br |a:1,o1:4,5|'));

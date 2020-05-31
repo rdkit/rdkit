@@ -27,59 +27,11 @@
 #include <iostream>
 #include <fstream>
 #include <sstream>
-#include <cairo.h>
-#include "MolDraw2DCairo.h"
 
 using namespace RDKit;
 
 void test1() {
   std::cout << " ----------------- Test 1" << std::endl;
-  {
-//    auto m = "[NH-]C([NH3+])C(CN)CCC[NH3+]"_smiles;
-    auto m = "[NH3+]C1=C([NH3+])C([NH3+])=C([NH3+])C([NH3+])=C1[NH3+]"_smiles;
-//    auto m = "C"_smiles;
-//    auto m = "CCN(CC)CC[NH3+]"_smiles;
-//    auto m = "[NH-]C([NH3+])C(CBr)CCC[NH3+]"_smiles;
-//    auto m = "CCC[CH2:7]CCCC"_smiles;
-//    auto m = "CC[13CH2][CH2:7][CH-]C[15NH2+]C"_smiles;
-//    auto m = "CCN(CC)CC"_smiles;
-//    auto m = "[NH-]C(N)C(CBr)CCC[NH3+]"_smiles;
-//    auto m = "C1[CH-][CH3+]CCC1"_smiles;
-//    auto m = "BrC(Br)(Br)Br"_smiles;
-//    auto m = "[NH3+]C[NH-]"_smiles;
-//    auto m = "[NH3+][NH2+][NH2+][NH3+]"_smiles;
-    TEST_ASSERT(m);
-    RDDepict::compute2DCoords(*m);
-    WedgeMolBonds(*m, &(m->getConformer()));
-
-    MolDraw2DCairo drawer(600, 600);
-    drawer.drawMolecule(*m);
-    drawer.finishDrawing();
-
-    drawer.writeDrawingText("test2_X.png");
-  }
-//  exit(1);
-  {
-//    auto m = "[NH-]C(N)C(CBr)CCC[NH3+]"_smiles;
-//    auto m = "O"_smiles;
-//    auto m = "CCN(CC)CC"_smiles;
-//    auto m = "CCN(CC)CC[NH3+]"_smiles;
-//    auto m = "CC[13CH2][CH2:7][CH-]C[15NH2+]C"_smiles;
-//    auto m = "NCCN"_smiles;
-//    auto m = "C1C[CH-]CCC1"_smiles;
-    auto m = "[NH3+]C1=C([NH3+])C([NH3+])=C([NH3+])C([NH3+])=C1[NH3+]"_smiles;
-//    auto m = "[NH3+]C[NH-]"_smiles;
-//    auto m = "[NH3+][NH2+][NH2+][NH3+]"_smiles;
-    TEST_ASSERT(m);
-    RDDepict::compute2DCoords(*m);
-    WedgeMolBonds(*m, &(m->getConformer()));
-    std::ofstream outs("test2_X.svg");
-    MolDraw2DSVG drawer(600, 600, outs);
-    drawer.drawMolecule(*m);
-    drawer.finishDrawing();
-    outs.flush();
-  }
-  exit(1);
   {
     std::string smiles = "CO[C@@H](O)C1=C(O[C@H](F)Cl)C(C#N)=C1ONNC[NH3+]";
     ROMol *m = SmilesToMol(smiles);
@@ -166,6 +118,23 @@ void test1() {
     drawer.drawMolecule(*m);
     drawer.finishDrawing();
     outs.flush();
+    delete m;
+  }
+  {
+    // Here, the H should be between the two bonds off the N, not
+    // on top of the vertical one.
+    std::string smiles = "C[NH+](C)CCC";
+    std::string nameBase = "test1_6";
+    ROMol *m = SmilesToMol(smiles);
+    TEST_ASSERT(m);
+    RDDepict::compute2DCoords(*m);
+    WedgeMolBonds(*m, &(m->getConformer()));
+    MolDraw2DSVG drawer(300, 300);
+    drawer.drawMolecule(*m);
+    drawer.finishDrawing();
+    std::string txt = drawer.getDrawingText();
+    std::ofstream outs("test1_6.svg");
+    outs << txt;
     delete m;
   }
 

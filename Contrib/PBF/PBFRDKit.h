@@ -50,7 +50,7 @@
 #include <GraphMol/RDKitBase.h>
 #include <GraphMol/MolOps.h>
 #include <GraphMol/Conformer.h>
-#include <math.h>
+#include <cmath>
 
 using namespace RDKit;
 

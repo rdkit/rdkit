@@ -26,7 +26,7 @@
 #include <future>
 #endif
 
-#define square(x) ((x) * (x))
+double square(double x) { return x * x; }
 
 namespace RDKit {
 namespace MolAlign {
@@ -663,7 +663,7 @@ void LAP::computeCostMatrix(const ROMol &prbMol, const MolHistogram &prbHist,
           if ((!rhyk) && (!phxk)) {
             continue;
           }
-          hSum += (double)square(rhyk - phxk) / (double)(rhyk + phxk);
+          hSum += square(rhyk - phxk) / (rhyk + phxk);
         }
         d_cost[y][x] = (*costFunc)(j, i, hSum, data);
       }

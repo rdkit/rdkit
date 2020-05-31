@@ -422,10 +422,10 @@ void getChiralBonds(const ROMol &mol, const Atom *at,
 
   if (!at->needsUpdatePropertyCache()) {
     for (unsigned int ii = 0; ii < at->getTotalNumHs(); ++ii) {
-      nbrs.push_back(bondholder(Bond::SINGLE, Bond::STEREONONE,
-                                ATNUM_CLASS_OFFSET, ATNUM_CLASS_OFFSET));
-      nbrs.push_back(bondholder(Bond::SINGLE, Bond::STEREONONE,
-                                ATNUM_CLASS_OFFSET, ATNUM_CLASS_OFFSET));
+      nbrs.emplace_back(Bond::SINGLE, Bond::STEREONONE,
+                                ATNUM_CLASS_OFFSET, ATNUM_CLASS_OFFSET);
+      nbrs.emplace_back(Bond::SINGLE, Bond::STEREONONE,
+                                ATNUM_CLASS_OFFSET, ATNUM_CLASS_OFFSET);
     }
   }
 }
@@ -573,20 +573,20 @@ void updateAtomNeighborNumSwaps(
       int nSwaps = static_cast<int>(countSwapsToInterconvert(ref, probe));
       if (atoms[nbrIdx].atom->getChiralTag() == Atom::CHI_TETRAHEDRAL_CW) {
         if (nSwaps % 2) {
-          result.push_back(std::make_pair(nbr.nbrSymClass, 2));
+          result.emplace_back(nbr.nbrSymClass, 2);
         } else {
-          result.push_back(std::make_pair(nbr.nbrSymClass, 1));
+          result.emplace_back(nbr.nbrSymClass, 1);
         }
       } else if (atoms[nbrIdx].atom->getChiralTag() ==
                  Atom::CHI_TETRAHEDRAL_CCW) {
         if (nSwaps % 2) {
-          result.push_back(std::make_pair(nbr.nbrSymClass, 1));
+          result.emplace_back(nbr.nbrSymClass, 1);
         } else {
-          result.push_back(std::make_pair(nbr.nbrSymClass, 2));
+          result.emplace_back(nbr.nbrSymClass, 2);
         }
       }
     } else {
-      result.push_back(std::make_pair(nbr.nbrSymClass, 0));
+      result.emplace_back(nbr.nbrSymClass, 0);
     }
   }
   sort(result.begin(), result.end());

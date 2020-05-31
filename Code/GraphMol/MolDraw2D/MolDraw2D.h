@@ -202,8 +202,8 @@ struct RDKIT_MOLDRAW2D_EXPORT MolDrawOptions {
   bool atomHighlightsAreCircles = false;  // forces atom highlights always to be
                                           // circles. Default (false) is to put
                                           // ellipses round longer labels.
-  bool centreMoleculesBeforeDrawing = true;  // moves the centre of the drawn
-                                             // molecule to (0,0)
+  bool centreMoleculesBeforeDrawing = false;  // moves the centre of the drawn
+                                              // molecule to (0,0)
 
   MolDrawOptions() {
     highlightColourPalette.emplace_back(
@@ -798,6 +798,8 @@ RDKIT_MOLDRAW2D_EXPORT bool doLinesIntersect(const Point2D &l1s,
 RDKIT_MOLDRAW2D_EXPORT bool doesLineIntersectLabel(const Point2D &ls,
                                                    const Point2D &lf,
                                                    const StringRect &lab_rect);
+
+std::ostream &operator<<(std::ostream &oss, const MolDraw2D::OrientType &o);
 
 }  // namespace RDKit
 

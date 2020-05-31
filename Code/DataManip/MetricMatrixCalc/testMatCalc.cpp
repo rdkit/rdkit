@@ -13,7 +13,7 @@
 #include "MetricMatrixCalc.h"
 
 #include <cstdlib>
-#include <time.h>
+#include <ctime>
 
 using namespace RDDataManip;
 int main() {

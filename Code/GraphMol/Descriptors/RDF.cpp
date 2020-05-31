@@ -36,7 +36,7 @@
 #include "RDF.h"
 #include "MolData3Ddescriptors.h"
 
-#include <math.h>
+#include <cmath>
 
 namespace RDKit {
 namespace Descriptors {

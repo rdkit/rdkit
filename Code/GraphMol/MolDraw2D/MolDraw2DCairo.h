@@ -50,7 +50,7 @@ class RDKIT_MOLDRAW2D_EXPORT MolDraw2DCairo : public MolDraw2D {
       if (cairo_get_reference_count(dp_cr) > 0) {
         cairo_destroy(dp_cr);
       }
-      dp_cr = NULL;
+      dp_cr = nullptr;
     }
   }
 
