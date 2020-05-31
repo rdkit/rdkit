@@ -3120,19 +3120,4 @@ bool doesLineIntersectLabel(const Point2D &ls, const Point2D &lf,
   return false;
 }
 
-std::ostream& operator<<(std::ostream &oss, const MolDraw2D::OrientType &o) {
-  switch(o) {
-    case MolDraw2D::OrientType::C:
-      oss << "C"; break;
-    case MolDraw2D::OrientType::N:
-      oss << "N"; break;
-    case MolDraw2D::OrientType::S:
-      oss << "S"; break;
-    case MolDraw2D::OrientType::E:
-      oss << "E"; break;
-    case MolDraw2D::OrientType::W:
-      oss << "W"; break;
-  }
-  return oss;
-}
 }  // namespace RDKit

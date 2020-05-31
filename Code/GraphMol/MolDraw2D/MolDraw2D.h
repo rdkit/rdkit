@@ -799,8 +799,6 @@ RDKIT_MOLDRAW2D_EXPORT bool doesLineIntersectLabel(const Point2D &ls,
                                                    const Point2D &lf,
                                                    const StringRect &lab_rect);
 
-std::ostream &operator<<(std::ostream &oss, const MolDraw2D::OrientType &o);
-
 }  // namespace RDKit
 
 #endif  // RDKITMOLDRAW2D_H
