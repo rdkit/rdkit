@@ -361,7 +361,7 @@ ROMol *replaceCore(const ROMol &mol, const ROMol &core,
   std::vector<std::pair<int, int>> matchorder_atomidx;
   for (unsigned int i = 0; i < origNumAtoms; ++i) {
     int queryatom = allIndices[i];
-    matchorder_atomidx.push_back(std::make_pair(queryatom, i));
+    matchorder_atomidx.emplace_back(queryatom, i);
   }
 
   std::sort(matchorder_atomidx.begin(), matchorder_atomidx.end());
@@ -412,9 +412,9 @@ ROMol *replaceCore(const ROMol &mol, const ROMol &core,
           //  order
           //  right now so save and sort later.
           if (mapping != -1) {
-            dummies.push_back(std::make_pair(mapping, newAt));
+            dummies.emplace_back(mapping, newAt);
           } else {
-            dummies.push_back(std::make_pair(matchingIndices[nbrIdx], newAt));
+            dummies.emplace_back(matchingIndices[nbrIdx], newAt);
           }
 
           newMol->addAtom(newAt, false, true);
@@ -586,6 +586,10 @@ ROMol *MurckoDecompose(const ROMol &mol) {
             break;
           } else if (nbr->getIsAromatic() && nbr->getAtomicNum() != 6) {
             // fix aromatic heteroatoms:
+            nbr->setNumExplicitHs(1);
+          } else if (nbr->getIsAromatic() && nbr->getAtomicNum() == 6 && 
+                     nbr->getFormalCharge() == 1) {
+            // fix aromatic carbocations
             nbr->setNumExplicitHs(1);
           } else if (nbr->getNoImplicit() ||
                      nbr->getChiralTag() != Atom::CHI_UNSPECIFIED) {

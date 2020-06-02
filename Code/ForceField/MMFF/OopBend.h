@@ -23,7 +23,7 @@ class MMFFOop;
 //! the out-of-plane term for MMFF
 class RDKIT_FORCEFIELD_EXPORT OopBendContrib : public ForceFieldContrib {
  public:
-  OopBendContrib() : d_at1Idx(-1), d_at2Idx(-1), d_at3Idx(-1), d_at4Idx(-1){};
+  OopBendContrib()  {};
   //! Constructor
   /*!
     The Wilson angle is between the vector formed by atom2-atom4
@@ -43,7 +43,7 @@ and the angle formed by atom1-atom2-atom3
   virtual OopBendContrib *copy() const { return new OopBendContrib(*this); };
 
  private:
-  int d_at1Idx, d_at2Idx, d_at3Idx, d_at4Idx;
+  int d_at1Idx{-1}, d_at2Idx{-1}, d_at3Idx{-1}, d_at4Idx{-1};
   double d_koop;
 };
 

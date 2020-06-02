@@ -25,7 +25,7 @@ class MMFFProp;
 //! The angle-bend term for MMFF
 class RDKIT_FORCEFIELD_EXPORT AngleBendContrib : public ForceFieldContrib {
  public:
-  AngleBendContrib() : d_at1Idx(-1), d_at2Idx(-1), d_at3Idx(-1){};
+  AngleBendContrib()  {};
   //! Constructor
   /*!
     The angle is between atom1 - atom2 - atom3
@@ -48,7 +48,7 @@ class RDKIT_FORCEFIELD_EXPORT AngleBendContrib : public ForceFieldContrib {
 
  private:
   bool d_isLinear;
-  int d_at1Idx, d_at2Idx, d_at3Idx;
+  int d_at1Idx{-1}, d_at2Idx{-1}, d_at3Idx{-1};
   double d_ka, d_theta0;
 };
 namespace Utils {

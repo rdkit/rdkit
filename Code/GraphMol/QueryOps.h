@@ -693,8 +693,7 @@ class RDKIT_GRAPHMOL_EXPORT AtomRingQuery
 class RDKIT_GRAPHMOL_EXPORT RecursiveStructureQuery
     : public Queries::SetQuery<int, Atom const *, true> {
  public:
-  RecursiveStructureQuery()
-      : Queries::SetQuery<int, Atom const *, true>(), d_serialNumber(0) {
+  RecursiveStructureQuery() : Queries::SetQuery<int, Atom const *, true>() {
     setDataFunc(getAtIdx);
     setDescription("RecursiveStructure");
   };
@@ -746,7 +745,7 @@ class RDKIT_GRAPHMOL_EXPORT RecursiveStructureQuery
 #endif
  private:
   boost::shared_ptr<const ROMol> dp_queryMol;
-  unsigned int d_serialNumber;
+  unsigned int d_serialNumber{0};
 };
 
 template <typename T>
@@ -775,7 +774,7 @@ class HasPropQuery : public Queries::EqualityQuery<int, TargetPtr, true> {
       : Queries::EqualityQuery<int, TargetPtr, true>(), propname(v) {
     // default is to just do a number of rings query:
     this->setDescription("AtomHasProp");
-    this->setDataFunc(0);
+    this->setDataFunc(nullptr);
   };
 
   virtual bool Match(const TargetPtr what) const {
@@ -828,7 +827,7 @@ class HasPropWithValueQuery
         tolerance(tol) {
     // default is to just do a number of rings query:
     this->setDescription("HasPropWithValue");
-    this->setDataFunc(0);
+    this->setDataFunc(nullptr);
   };
 
   virtual bool Match(const TargetPtr what) const {
@@ -892,7 +891,7 @@ class HasPropWithValueQuery<TargetPtr, std::string>
     RDUNUSED_PARAM(tol);
     // default is to just do a number of rings query:
     this->setDescription("HasPropWithValue");
-    this->setDataFunc(0);
+    this->setDataFunc(nullptr);
   };
 
   virtual bool Match(const TargetPtr what) const {
@@ -943,14 +942,11 @@ class HasPropWithValueQuery<TargetPtr, ExplicitBitVect>
     : public Queries::EqualityQuery<int, TargetPtr, true> {
   std::string propname;
   ExplicitBitVect val;
-  float tol;
+  float tol{0.0};
 
  public:
   HasPropWithValueQuery()
-      : Queries::EqualityQuery<int, TargetPtr, true>(),
-        propname(),
-        val(),
-        tol(0.0) {
+      : Queries::EqualityQuery<int, TargetPtr, true>(), propname(), val() {
     this->setDescription("HasPropWithValue");
     this->setDataFunc(0);
   };
@@ -962,7 +958,7 @@ class HasPropWithValueQuery<TargetPtr, ExplicitBitVect>
         val(v),
         tol(tol) {
     this->setDescription("HasPropWithValue");
-    this->setDataFunc(0);
+    this->setDataFunc(nullptr);
   };
 
   virtual bool Match(const TargetPtr what) const {

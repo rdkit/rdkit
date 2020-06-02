@@ -143,13 +143,13 @@ RDKIT_DESCRIPTORS_EXPORT extern const std::string NumSpiroAtomsVersion;
 //! calculates the number of spiro atoms (atoms shared between rings that share
 // exactly one atom)
 RDKIT_DESCRIPTORS_EXPORT unsigned int calcNumSpiroAtoms(
-    const ROMol &mol, std::vector<unsigned int> *atoms = NULL);
+    const ROMol &mol, std::vector<unsigned int> *atoms = nullptr);
 
 RDKIT_DESCRIPTORS_EXPORT extern const std::string NumBridgeheadAtomsVersion;
 //! calculates the number of bridgehead atoms (atoms shared between rings that
 // share at least two bonds)
 RDKIT_DESCRIPTORS_EXPORT unsigned int calcNumBridgeheadAtoms(
-    const ROMol &mol, std::vector<unsigned int> *atoms = NULL);
+    const ROMol &mol, std::vector<unsigned int> *atoms = nullptr);
 
 RDKIT_DESCRIPTORS_EXPORT extern const std::string NumAtomStereoCentersVersion;
 //! calculates the total number of atom stereo centers

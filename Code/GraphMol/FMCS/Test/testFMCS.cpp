@@ -204,7 +204,7 @@ void testFileMCSB(
         char name[256];
         unsigned nn, len;
         n++;
-        testCase.push_back(std::vector<std::string>());
+        testCase.emplace_back();
         sscanf(str, "%u%n", &nn, &len);
         while ('\0' != *(str + len) &&
                1 == sscanf(str + len, "%s%n", name, &nn)) {
@@ -237,7 +237,7 @@ void testFileMCSB(
       }
       std::string sm = getSmilesOnly(str, &id);
       smilesList.push_back(sm);                     // without Id and LineFeed
-      mols.push_back(ROMOL_SPTR(SmilesToMol(sm)));  // SmartsToMol ???
+      mols.emplace_back(SmilesToMol(sm));  // SmartsToMol ???
       molIdMap[id] = mols.size() - 1;               // index in mols
     }
   }
@@ -493,10 +493,9 @@ void test504() {
     atom->setProp(common_properties::molAtomMapNumber, (int)ai);
   }
   std::cout << "Query +MAP " << MolToSmiles(*qm) << "\n";
-  mols.push_back(ROMOL_SPTR(qm));  // with RING INFO
+  mols.emplace_back(qm);  // with RING INFO
   for (size_t i = 1; i < sizeof(smi) / sizeof(smi[0]); i++) {
-    mols.push_back(
-        ROMOL_SPTR(SmilesToMol(getSmilesOnly(smi[i]))));  // with RING INFO
+    mols.emplace_back(SmilesToMol(getSmilesOnly(smi[i])));  // with RING INFO
   }
   t0 = nanoClock();
   MCSResult res = findMCS(mols, &p);
@@ -527,7 +526,7 @@ std::string testChEMBL_Txt(const char* test, double th = 1.0,
       std::string id;
       std::string smi = getSmilesOnlyTxt(smiles, &id);
       fprintf(fsmi, "%s\n", (smi + " " + id).c_str());
-      mols.push_back(ROMOL_SPTR(SmilesToMol(smi)));
+      mols.emplace_back(SmilesToMol(smi));
     }
   }
   fclose(f);
@@ -980,7 +979,7 @@ void testChEMBLdat(const char* test, double th = 1.0) {
     std::cout << "\rLine: " << ++n << " ";
     if ('#' != smiles[0] && ' ' != smiles[0] &&
         '/' != smiles[0]) {  // commented to skip
-      mols.push_back(ROMOL_SPTR(SmilesToMol(getSmilesOnlyChEMBL(smiles))));
+      mols.emplace_back(SmilesToMol(getSmilesOnlyChEMBL(smiles)));
       fputs(getSmilesOnlyChEMBL(smiles).c_str(), fs);
     }
   }
@@ -1103,7 +1102,7 @@ void testTarget_no_10188_30149() {
       "CN(C)CCNC(=O)c1cccc(-c2[nH]nc3cc(Nc4ccccc4Cl)ccc32)c1 CHEMBL198821",
   };
   for (auto& i : smi) {
-    mols.push_back(ROMOL_SPTR(SmilesToMol(getSmilesOnly(i))));
+    mols.emplace_back(SmilesToMol(getSmilesOnly(i)));
   }
   t0 = nanoClock();
 #ifdef _DEBUG  // check memory leaks
@@ -1147,7 +1146,7 @@ void testTarget_no_10188_49064() {
       "CN1CCN(C(=O)c2ccc(Nc3ncc4cc(-c5c(Cl)cccc5Cl)c(=O)n(C)c4n3)cc2)CC1",
   };
   for (auto& i : smi) {
-    mols.push_back(ROMOL_SPTR(SmilesToMol(getSmilesOnly(i))));
+    mols.emplace_back(SmilesToMol(getSmilesOnly(i)));
   }
   t0 = nanoClock();
   MCSResult res = findMCS(mols, &p);
@@ -1159,7 +1158,7 @@ void testTarget_no_10188_49064() {
 void testCmndLineSMILES(int argc, const char* argv[]) {
   std::vector<ROMOL_SPTR> mols;
   for (int i = 1; i < argc; i++) {
-    mols.push_back(ROMOL_SPTR(SmilesToMol(argv[i])));
+    mols.emplace_back(SmilesToMol(argv[i]));
   }
   MCSResult res = findMCS(mols);
   std::cout << "MCS: " << res.SmartsString << " " << res.NumAtoms << " atoms, "
@@ -1175,7 +1174,7 @@ double testFileSDF(const char* test) {
   while (!suppl.atEnd()) {
     ROMol* m = suppl.next();
     if (m) {
-      mols.push_back(ROMOL_SPTR(m));
+      mols.emplace_back(m);
     }
   }
   t0 = nanoClock();
@@ -1214,7 +1213,7 @@ void testFileSDF_RandomSet_SMI(
     }
     char smiles[4096];
     while (fgets(smiles, sizeof(smiles), fsmi)) {
-      mols.push_back(ROMOL_SPTR(SmilesToMol(getSmilesOnly(smiles))));
+      mols.emplace_back(SmilesToMol(getSmilesOnly(smiles)));
     }
     fclose(fsmi);
     if (mols.size() > 1) {
@@ -1315,7 +1314,7 @@ void testFileSDF_RandomSet(const char* test = "chembl13-10000-random-pairs.sdf",
     for (int i = 0; i < 2 && !suppl->atEnd(); i++) {  // load sequential pair
       m = suppl->next();
       if (m) {
-        mols.push_back(ROMOL_SPTR(m));
+        mols.emplace_back(m);
         all_mols.push_back(mols.back());
         fprintf(fsmi, "%s Mol%u\n", MolToSmiles(*m).c_str(), n + i);
       }
@@ -1537,7 +1536,7 @@ void testFileSMILES(const char* test) {
     if ('#' != smiles[0] && ' ' != smiles[0] &&
         '/' != smiles[0]) {  // commented to skip
       //            if(strlen(smiles) > 92) // minimal query size !!!
-      mols.push_back(ROMOL_SPTR(SmilesToMol(getSmilesOnly(smiles))));
+      mols.emplace_back(SmilesToMol(getSmilesOnly(smiles)));
     }
   }
   fclose(f);

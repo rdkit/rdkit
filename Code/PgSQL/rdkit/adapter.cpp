@@ -1757,11 +1757,11 @@ extern "C" int ReactionSubstructFP(CChemicalReaction rxn,
 namespace {
 
 struct MoleculeDescriptors {
-  MoleculeDescriptors() : nAtoms(0), nBonds(0), nRings(0), MW(0.0) {}
-  unsigned nAtoms;
-  unsigned nBonds;
-  unsigned nRings;
-  double MW;
+  MoleculeDescriptors()  {}
+  unsigned nAtoms{0};
+  unsigned nBonds{0};
+  unsigned nRings{0};
+  double MW{0.0};
 };
 
 MoleculeDescriptors *calcMolecularDescriptorsReaction(

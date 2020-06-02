@@ -900,6 +900,11 @@ class StereoGroupTests(unittest.TestCase):
         'CC(C)(OCC[C@@H](Br)C[C@@H](Cl)Br)OCC[C@@H](Br)C[C@@H](Cl)Br |&1:6,9,15,18|'
     )
 
+  def test_github(self):
+      rxn = rdChemReactions.ReactionFromSmarts('[C:2][C:3]>>[C:2][C][*:3]')
+      mol = Chem.MolFromSmiles("C/C=C/C")
+      #  this shouldn't raise
+      rxn.RunReactants([mol])
 
 if __name__ == '__main__':
     unittest.main(verbosity=True)
