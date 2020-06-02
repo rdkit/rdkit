@@ -36,6 +36,22 @@
 
 %ignore MCSParameters;
 %ignore findMCS(const std::vector<ROMOL_SPTR>& mols, const MCSParameters* params);
+%ignore checkAtomRingMatch(const MCSAtomCompareParameters& p,
+                           const ROMol& mol1, unsigned int atom1,
+                           const ROMol& mol2, unsigned int atom2);
+%ignore checkAtomCharge(const MCSAtomCompareParameters& p,
+                        const ROMol& mol1, unsigned int atom1,
+                        const ROMol& mol2, unsigned int atom2);
+%ignore checkAtomChirality(const MCSAtomCompareParameters& p,
+                           const ROMol& mol1, unsigned int atom1,
+                           const ROMol& mol2, unsigned int atom2);
+%ignore checkBondStereo(const MCSBondCompareParameters& p,
+                        const ROMol& mol1, unsigned int bond1,
+                        const ROMol& mol2, unsigned int bond2);
+%ignore checkBondRingMatch(const MCSBondCompareParameters &p,
+                           const ROMol& mol1, unsigned int bond1,
+                           const ROMol& mol2, unsigned int bond2,
+                           void* v_ringMatchMatrixSet);
 %include <GraphMol/FMCS/FMCS.h>
 
 %{

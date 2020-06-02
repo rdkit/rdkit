@@ -25,7 +25,7 @@
 #include <RDGeneral/BoostStartInclude.h>
 #include <boost/random.hpp>
 #include <RDGeneral/BoostEndInclude.h>
-#include <limits.h>
+#include <climits>
 #include <RDGeneral/hash/hash.hpp>
 #include <RDGeneral/types.h>
 #include <algorithm>

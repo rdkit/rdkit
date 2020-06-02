@@ -33,16 +33,16 @@ typedef IntSet::const_iterator IntSetConstIter;
  */
 class RDKIT_DATASTRUCTS_EXPORT SparseBitVect : public BitVect {
  public:
-  SparseBitVect() : dp_bits(0), d_size(0){};
+  SparseBitVect()  {};
   //! initialize with a particular size;
-  explicit SparseBitVect(unsigned int size) : dp_bits(0), d_size(0) {
+  explicit SparseBitVect(unsigned int size) : dp_bits(nullptr), d_size(0) {
     _initForSize(size);
   };
 
   //! copy constructor
   SparseBitVect(const SparseBitVect &other) : BitVect(other) {
     d_size = 0;
-    dp_bits = 0;
+    dp_bits = nullptr;
     _initForSize(other.getNumBits());
     IntSet *bv = other.dp_bits;
     std::copy(bv->begin(), bv->end(), std::inserter(*dp_bits, dp_bits->end()));
@@ -83,7 +83,7 @@ class RDKIT_DATASTRUCTS_EXPORT SparseBitVect : public BitVect {
 
   void getOnBits(IntVect &v) const;
   void clearBits() { dp_bits->clear(); };
-  IntSet *dp_bits;  //!< our raw data, exposed for the sake of efficiency
+  IntSet *dp_bits{nullptr};  //!< our raw data, exposed for the sake of efficiency
 
   bool operator==(const SparseBitVect &o) const {
     return *dp_bits == *o.dp_bits;
@@ -93,7 +93,7 @@ class RDKIT_DATASTRUCTS_EXPORT SparseBitVect : public BitVect {
   }
 
  private:
-  unsigned int d_size;
+  unsigned int d_size{0};
   void _initForSize(const unsigned int size);
 };
 

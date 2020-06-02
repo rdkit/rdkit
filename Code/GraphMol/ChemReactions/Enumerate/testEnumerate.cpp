@@ -108,14 +108,10 @@ void testSamplers() {
   EvenSamplePairsStrategy even;
   even.initialize(rxn, bbs);
   std::vector<boost::shared_ptr<EnumerationStrategyBase>> enumerators;
-  enumerators.push_back(
-      boost::shared_ptr<EnumerationStrategyBase>(cart.copy()));
-  enumerators.push_back(
-      boost::shared_ptr<EnumerationStrategyBase>(rand.copy()));
-  enumerators.push_back(
-      boost::shared_ptr<EnumerationStrategyBase>(randBBs.copy()));
-  enumerators.push_back(
-      boost::shared_ptr<EnumerationStrategyBase>(even.copy()));
+  enumerators.emplace_back(cart.copy());
+  enumerators.emplace_back(rand.copy());
+  enumerators.emplace_back(randBBs.copy());
+  enumerators.emplace_back(even.copy());
 #ifdef RDK_USE_BOOST_SERIALIZATION
   for (auto &enumerator : enumerators) {
     TEST_ASSERT(enumerator->getNumPermutations() == 10 * 5 * 6);
@@ -130,20 +126,24 @@ void testSamplers() {
 void testEvenSamplers() {
   EnumerationTypes::BBS bbs;
   bbs.resize(3);
-  boost::uint64_t R1 = 6000;
-  boost::uint64_t R2 = 500;
-  boost::uint64_t R3 = 10000;
+  boost::uint64_t R1 = 600;
+  boost::uint64_t R2 = 50;
+  boost::uint64_t R3 = 1000;
+
+  boost::shared_ptr<ROMol> m(SmilesToMol("C=CCN=C=S"));
+  boost::shared_ptr<ROMol> m2(SmilesToMol("NCc1ncc(Cl)cc1Br"));
+  boost::shared_ptr<ROMol> m3(SmilesToMol("NCCCc1ncc(Cl)cc1Br"));
+
   for (unsigned long i = 0; i < R1; ++i) {
-    bbs[0].push_back(boost::shared_ptr<ROMol>(SmilesToMol("C=CCN=C=S")));
+    bbs[0].push_back(m);
   }
 
   for (unsigned long i = 0; i < R2; ++i) {
-    bbs[1].push_back(boost::shared_ptr<ROMol>(SmilesToMol("NCc1ncc(Cl)cc1Br")));
+    bbs[1].push_back(m2);
   }
 
   for (unsigned long i = 0; i < R3; ++i) {
-    bbs[2].push_back(
-        boost::shared_ptr<ROMol>(SmilesToMol("NCCCc1ncc(Cl)cc1Br")));
+    bbs[2].push_back(m3);
   }
 
   ChemicalReaction rxn;

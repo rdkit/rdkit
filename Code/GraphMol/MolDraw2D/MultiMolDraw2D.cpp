@@ -61,7 +61,7 @@ void MolDraw2D::drawMolecule(const ROMol &mol, const std::string &legend,
     }
   }
   drawMolecule(mol, legend, highlight_atoms, &highlight_bonds,
-               highlight_atom_map, NULL, highlight_radii, confId);
+               highlight_atom_map, nullptr, highlight_radii, confId);
 }
 
 void MolDraw2D::doContinuousHighlighting(
@@ -143,13 +143,13 @@ void MolDraw2D::doContinuousHighlighting(
 
 void drawMolecules(
     const std::vector<ROMOL_SPTR> &mols,
-    const std::vector<std::string> *legends = NULL,
-    const std::vector<std::vector<int> > *highlight_atoms = NULL,
-    const std::vector<std::vector<int> > *highlight_bonds = NULL,
-    const std::vector<std::map<int, DrawColour> > *highlight_atom_maps = NULL,
-    const std::vector<std::map<int, DrawColour> > *highlight_bond_maps = NULL,
-    const std::vector<std::map<int, double> > *highlight_radii = NULL,
-    const std::vector<int> *confIds = NULL){};
+    const std::vector<std::string> *legends = nullptr,
+    const std::vector<std::vector<int>> *highlight_atoms = nullptr,
+    const std::vector<std::vector<int>> *highlight_bonds = nullptr,
+    const std::vector<std::map<int, DrawColour>> *highlight_atom_maps = nullptr,
+    const std::vector<std::map<int, DrawColour>> *highlight_bond_maps = nullptr,
+    const std::vector<std::map<int, double>> *highlight_radii = nullptr,
+    const std::vector<int> *confIds = nullptr){};
 
 void MolDraw2D::drawMolecule(const ROMol &mol,
                              const vector<int> *highlight_atoms,
@@ -206,8 +206,8 @@ void MolDraw2D::drawMolecule(const ROMol &mol,
                              highlight_radii);
     // at this point we shouldn't be doing any more highlighting, so blow out
     // those variables:
-    highlight_bonds = NULL;
-    highlight_atoms = NULL;
+    highlight_bonds = nullptr;
+    highlight_atoms = nullptr;
   } else if (drawOptions().circleAtoms && highlight_atoms) {
     ROMol::VERTEX_ITER this_at, end_at;
     boost::tie(this_at, end_at) = mol.getVertices();

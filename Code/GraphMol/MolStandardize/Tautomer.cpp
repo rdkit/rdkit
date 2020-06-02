@@ -188,13 +188,34 @@ ROMol *TautomerEnumerator::pickCanonical(
   return new ROMol(*bestMol);
 }
 
-std::vector<ROMOL_SPTR> TautomerEnumerator::enumerate(const ROMol &mol) const {
+std::vector<ROMOL_SPTR> TautomerEnumerator::enumerate(
+    const ROMol &mol, boost::dynamic_bitset<> *modifiedAtoms,
+    boost::dynamic_bitset<> *modifiedBonds) const {
   // std::cout << "**********************************" << std::endl;
-
   PRECONDITION(dp_catalog, "no catalog!");
   const TautomerCatalogParams *tautparams = dp_catalog->getCatalogParams();
-
   PRECONDITION(tautparams, "");
+
+  PRECONDITION(!modifiedAtoms || modifiedAtoms->size() >= mol.getNumAtoms(),
+               "bitset too small");
+  PRECONDITION(!modifiedBonds || modifiedBonds->size() >= mol.getNumBonds(),
+               "bitset too small");
+
+  std::unique_ptr<boost::dynamic_bitset<>> matp;
+  if (!modifiedAtoms) {
+    // we need the modified atom for internal purposes. If the user didn't give
+    // us one, we have to make our own:
+    matp.reset(new boost::dynamic_bitset<>(mol.getNumAtoms()));
+    modifiedAtoms = matp.get();
+  }
+  std::unique_ptr<boost::dynamic_bitset<>> mbp;
+  if (!modifiedBonds) {
+    // we need the modified bonds for internal purposes. If the user didn't give
+    // us one, we have to make our own:
+    mbp.reset(new boost::dynamic_bitset<>(mol.getNumBonds()));
+    modifiedBonds = mbp.get();
+  }
+
   const std::vector<TautomerTransform> &transforms =
       tautparams->getTransforms();
 
@@ -263,6 +284,8 @@ std::vector<ROMOL_SPTR> TautomerEnumerator::enumerate(const ROMol &mol) const {
             // last
             Atom *first = product->getAtomWithIdx(idx_matches[0]);
             Atom *last = product->getAtomWithIdx(idx_matches.back());
+            modifiedAtoms->set(idx_matches[0]);
+            modifiedAtoms->set(idx_matches.back());
             first->setNumExplicitHs(
                 std::max((unsigned int)0, first->getTotalNumHs() - 1));
             last->setNumExplicitHs(last->getTotalNumHs() + 1);
@@ -277,6 +300,7 @@ std::vector<ROMOL_SPTR> TautomerEnumerator::enumerate(const ROMol &mol) const {
             for (const auto &pair : pvect) {
               Bond *bond =
                   product->getBondBetweenAtoms(pair.first, pair.second);
+              ASSERT_INVARIANT(bond, "required bond not found");
               // check if bonds is specified in tatuomer.in file
               if (!transform.BondTypes.empty()) {
                 bond->setBondType(transform.BondTypes[bi]);
@@ -298,6 +322,7 @@ std::vector<ROMOL_SPTR> TautomerEnumerator::enumerate(const ROMol &mol) const {
                   //									std::cout
                   //<< "Set bond to single" << std::endl;
                 }
+                modifiedBonds->set(bond->getIdx());
               }
             }
             // TODO adjust charges
@@ -355,50 +380,65 @@ std::vector<ROMOL_SPTR> TautomerEnumerator::enumerate(const ROMol &mol) const {
                             << MAX_TAUTOMERS << std::endl;
   }
 
-  // Clean up stereochemistry
-  for (auto &tautomer : tautomers) {
-    auto &tmp = tautomer.second;
-    MolOps::assignStereochemistry(*tmp, true, true);
-    //		for (auto &bond : (tmp)->getBonds()) {
-    for (size_t i = 0; i < tmp->getNumBonds(); ++i) {
-      Bond *bond = (tmp)->getBondWithIdx(i);
-      if (bond->getBondType() == 2 &&
-          bond->getStereo() > Bond::BondStereo::STEREOANY) {
-        unsigned int begin = bond->getBeginAtomIdx();
-        unsigned int end = bond->getEndAtomIdx();
-        for (auto &other_tautomer : tautomers) {
-          auto &other_tmp = other_tautomer.second;
-          if (!(other_tmp->getBondBetweenAtoms(begin, end)->getBondType() ==
-                2)) {
-            Atom *begin_at = tmp->getAtomWithIdx(begin);
-            ROMol::OEDGE_ITER beg, end;
-            boost::tie(beg, end) = tmp->getAtomBonds(begin_at);
-            // std::cout << "BEG " << std::endl;
-            // std::cout << *beg << std::endl;
-            while (beg != end) {
-              Bond::BondDir bonddir = (*tmp)[*beg]->getBondDir();
-              if (bonddir == Bond::BondDir::ENDUPRIGHT ||
-                  bonddir == Bond::BondDir::ENDDOWNRIGHT) {
-                (*tmp)[*beg]->setBondDir(Bond::BondDir::NONE);
-              }
-
-              ++beg;
-            }
-            MolOps::assignStereochemistry(*tmp, true, true);
-            // std::cout << "Removed stereochemistry from unfixed double bond"
-            //           << std::endl;
-            break;
+  // remove chirality on atoms that were modified:
+  for (auto atom : mol.atoms()) {
+    auto atomIdx = atom->getIdx();
+    if ((*modifiedAtoms)[atomIdx]) {
+      for (auto &tautomer : tautomers) {
+        tautomer.second->getAtomWithIdx(atomIdx)->setChiralTag(
+            Atom::ChiralType::CHI_UNSPECIFIED);
+      }
+    }
+  }
+  // remove chirality on bonds that are part of a tautomeric path
+  for (auto bond : mol.bonds()) {
+    auto bondIdx = bond->getIdx();
+    if ((*modifiedBonds)[bondIdx] && bond->getBondType() == Bond::DOUBLE &&
+        bond->getStereo() > Bond::BondStereo::STEREOANY) {
+      // look around the beginning and end atoms and check for bonds with
+      // direction set
+      boost::dynamic_bitset<> bondsToClearDirs(mol.getNumBonds());
+      ROMol::OEDGE_ITER beg, end;
+      boost::tie(beg, end) = mol.getAtomBonds(bond->getBeginAtom());
+      while (beg != end) {
+        auto obnd = mol[*beg];
+        if (obnd->getBondDir() == Bond::BondDir::ENDDOWNRIGHT ||
+            obnd->getBondDir() == Bond::BondDir::ENDUPRIGHT) {
+          bondsToClearDirs.set(obnd->getIdx());
+        }
+        ++beg;
+      }
+      boost::tie(beg, end) = mol.getAtomBonds(bond->getEndAtom());
+      while (beg != end) {
+        auto obnd = mol[*beg];
+        if (obnd->getBondDir() == Bond::BondDir::ENDDOWNRIGHT ||
+            obnd->getBondDir() == Bond::BondDir::ENDUPRIGHT) {
+          bondsToClearDirs.set(obnd->getIdx());
+        }
+        ++beg;
+      }
+      for (auto &tautomer : tautomers) {
+        tautomer.second->getBondWithIdx(bondIdx)->setStereo(Bond::STEREONONE);
+        tautomer.second->getBondWithIdx(bondIdx)->getStereoAtoms().clear();
+        for (unsigned int bi = 0; bi < mol.getNumBonds(); ++bi) {
+          if (bondsToClearDirs[bi]) {
+            tautomer.second->getBondWithIdx(bi)->setBondDir(
+                Bond::BondDir::NONE);
           }
         }
       }
     }
   }
+  // Clean up stereochemistry
+  for (auto &tautomer : tautomers) {
+    bool cleanIt = true;
+    bool force = true;
+    MolOps::assignStereochemistry(*tautomer.second, cleanIt, force);
+  }
 
-  // get vector of enumerated smiles
   std::vector<ROMOL_SPTR> res;
   for (const auto &tautomer : tautomers) {
     res.push_back(tautomer.second);
-    // std::cout << MolToSmiles(*(tautomer.second)) << std::endl;
   }
   return res;
 }

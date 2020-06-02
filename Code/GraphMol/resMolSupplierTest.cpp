@@ -150,6 +150,15 @@ void testBaseFunctionality() {
   TEST_ASSERT(resMolSuppl->length() == 0);
   delete resMolSuppl;
   delete mol;
+
+  mol = SmilesToMol("CC(C)C(C(=O)OC(C#N)c1cccc(Oc2ccccc2)c1)c3ccc(OC(F)F)cc3");
+  resMolSuppl = new ResonanceMolSupplier((ROMol &)*mol,
+      ResonanceMolSupplier::KEKULE_ALL, 3);
+  TEST_ASSERT(!resMolSuppl->getIsEnumerated());
+  TEST_ASSERT(resMolSuppl->length() == 3);
+  TEST_ASSERT(resMolSuppl->getIsEnumerated());
+  delete resMolSuppl;
+  delete mol;
 }
 
 void testBenzylCation() {
@@ -863,6 +872,18 @@ void testGitHub1166() {
   delete mol;
 }
 
+void testGitHub3048() {
+  BOOST_LOG(rdInfoLog) << "-----------------------\n"
+                       << "testGitHub3048" << std::endl;
+  RWMol *mol = SmilesToMol("C1CN3N(C1)c2ccccc2N=C3N");
+  auto *resMolSuppl = new ResonanceMolSupplier(
+      static_cast<ROMol &>(*mol), ResonanceMolSupplier::KEKULE_ALL);
+  // This caused a segfault due to a null ptr being accessed (#3048)
+  TEST_ASSERT(resMolSuppl->length() == 2);
+  delete resMolSuppl;
+  delete mol;
+}
+
 int main() {
   RDLog::InitLogs();
 #if 1
@@ -884,6 +905,7 @@ int main() {
   testCrambin();
   testGitHub1166();
   testConjGrpPerception();
+  testGitHub3048();
 #endif
   return 0;
 }

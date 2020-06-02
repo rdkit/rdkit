@@ -24,9 +24,9 @@ int main( int argc , char **argv ) {
   std::string sdf_file = file_root + "/data/5ht3ligs.sdf";
   bool takeOwnership = true;
   RDKit::SDMolSupplier mol_supplier( sdf_file , takeOwnership );
-  std::vector<RDKit::ROMOL_SPTR> mols;
+  std::vector<std::shared_ptr<RDKit::ROMol>> mols;
   while( !mol_supplier.atEnd() ) {
-    RDKit::ROMOL_SPTR mol( mol_supplier.next() );
+    std::shared_ptr<RDKit::ROMol> mol( mol_supplier.next() );
     if( mol ) {
       mols.push_back( mol );
     }
@@ -43,8 +43,8 @@ int main( int argc , char **argv ) {
   // to delete the std::ostringstream.
   takeOwnership = false;
   boost::shared_ptr<RDKit::SDWriter> sdf_writer( new RDKit::SDWriter( &oss , takeOwnership ) );
-  for( std::vector<RDKit::ROMOL_SPTR>::iterator it = mols.begin() ; it != mols.end() ; ++it ) {
-    sdf_writer->write( *(*it) );
+  for( auto mol: mols ) {
+    sdf_writer->write( *mol );
   }
 
   std::cout << oss.str() << std::endl;

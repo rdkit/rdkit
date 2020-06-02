@@ -704,8 +704,8 @@ int smallestRingsBfs(const ROMol &mol, int root, VECT_INT_VECT &rings,
           // we have been here via a different path
           // there is a potential for ring closure here
           INT_VECT npath = atPaths[nbrIdx];
-          // make sure that the intersections of cpath and npath give exactly one
-          // element and that should be the root element for correct ring
+          // make sure that the intersections of cpath and npath give exactly
+          // one element and that should be the root element for correct ring
           // closure
           int id = -1;
           unsigned int com = 0;
@@ -1135,19 +1135,17 @@ int symmetrizeSSSR(ROMol &mol) {
 
 int symmetrizeSSSR(ROMol &mol, VECT_INT_VECT &res) {
   res.clear();
-  res.resize(0);
-  unsigned int nsssr;
   VECT_INT_VECT sssrs;
 
   // FIX: need to set flag here the symmetrization has been done in order to
   // avoid repeating this work
   if (!mol.getRingInfo()->isInitialized()) {
-    nsssr = findSSSR(mol, sssrs);
+    findSSSR(mol, sssrs);
   } else {
     sssrs = mol.getRingInfo()->atomRings();
-    nsssr = rdcast<unsigned int>(sssrs.size());
   }
 
+  res.reserve(sssrs.size());
   for (const auto &r : sssrs) {
     res.emplace_back(r);
   }
@@ -1360,7 +1358,8 @@ void findRingFamilies(const ROMol &mol) {
 }
 #else
 void findRingFamilies(const ROMol &mol) {
-  BOOST_LOG(rdErrorLog)<<"This version of the RDKit was built without URF support"<<std::endl;
+  BOOST_LOG(rdErrorLog)
+      << "This version of the RDKit was built without URF support" << std::endl;
 }
 #endif
 }  // namespace MolOps

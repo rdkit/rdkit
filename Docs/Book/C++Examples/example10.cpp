@@ -9,27 +9,34 @@
 #include <GraphMol/Depictor/RDDepictor.h>
 #include <GraphMol/Substruct/SubstructMatch.h>
 
+using namespace RDKit;
+
 int main( int argc , char **argv ) {
 
-  RDKit::RWMOL_SPTR mol( new RDKit::RWMol( *RDKit::SmilesToMol( "c1nccc2n1ccc2" ) ) );
+
+  auto mol = "c1nccc2n1ccc2"_smiles;
   RDDepict::compute2DCoords( *mol );
 
-  RDDepict::compute2DCoords( *mol , static_cast<RDGeom::INT_POINT2D_MAP *>( 0 ) ,
-			     true );
+ #ifdef RDK_BUILD_COORDGEN_SUPPORT 
+  RDDepict::preferCoordGen = true;
+#else
+  std::cout << "CoordGen support not available" << std::endl;
+#endif
   
-  RDKit::ROMOL_SPTR templ( RDKit::SmilesToMol( "c1nccc2n1ccc2" ) );
+  RDDepict::compute2DCoords( *mol , nullptr , true );
+  
+  std::shared_ptr<RDKit::ROMol> templ( RDKit::SmilesToMol( "c1nccc2n1ccc2" ) );
   RDDepict::compute2DCoords( *templ );
-  RDKit::ROMOL_SPTR mol1( RDKit::SmilesToMol( "c1cccc2ncn3cccc3c21" ) );
+  std::shared_ptr<RDKit::ROMol> mol1( RDKit::SmilesToMol( "c1cccc2ncn3cccc3c21" ) );
   
-  RDKit::MatchVectType matchVect;
-  if( RDKit::SubstructMatch( *mol1 , *templ , matchVect ) ) {
+  MatchVectType matchVect;
+  if(SubstructMatch( *mol1 , *templ , matchVect )) {
     RDKit::Conformer &conf = templ->getConformer();
     RDGeom::INT_POINT2D_MAP coordMap;
-    for( RDKit::MatchVectType::const_iterator mv = matchVect.begin() ;
-	 mv != matchVect.end() ; ++mv ) {
-      RDGeom::Point3D pt3 = conf.getAtomPos( mv->first );
+    for(auto mv: matchVect) {
+      RDGeom::Point3D pt3 = conf.getAtomPos( mv.first );
       RDGeom::Point2D pt2( pt3.x , pt3.y );
-      coordMap[mv->second] = pt2;
+      coordMap[mv.second] = pt2;
     }
     RDDepict::compute2DCoords( *mol1 , &coordMap );
   }  

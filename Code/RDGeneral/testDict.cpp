@@ -26,9 +26,9 @@ using namespace RDKit;
 using namespace std;
 
 struct Foo {
-  int bar;
-  float baz;
-  Foo() : bar(0), baz(0.f) {}
+  int bar{0};
+  float baz{0.f};
+  Foo()  {}
   Foo(int bar, float baz) : bar(bar), baz(baz) {}
   ~Foo() { std::cerr << "deleted!" << std::endl; }
 };
@@ -706,6 +706,7 @@ void testCustomProps() {
     TEST_ASSERT(handler->read(ss, newValue));
     TEST_ASSERT(from_rdvalue<const Foo &>(newValue).bar == f.bar);
     TEST_ASSERT(from_rdvalue<const Foo &>(newValue).baz == f.baz);
+    newValue.destroy();
   }
   delete handlers[1];
 }

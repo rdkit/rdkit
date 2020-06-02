@@ -15,7 +15,7 @@
 #include <Geometry/Transform3D.h>
 #include <Geometry/point.h>
 
-#include <math.h>
+#include <cmath>
 
 using namespace RDNumeric;
 using namespace RDNumeric::Alignments;

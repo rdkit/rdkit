@@ -9,7 +9,7 @@ rdkit_headers(MolCatalogEntry.h
               MolCatalogParams.h DEST GraphMol/MolCatalog)
 
 rdkit_test(testMolCatalog test1.cpp LINK_LIBRARIES 
-MolCatalog FileParsers Catalogs SmilesParse GraphMol DataStructs RDGeneral RDGeometryLib )
+MolCatalog FileParsers SmilesParse DataStructs )
 
 if(RDK_BUILD_PYTHON_WRAPPERS)
 add_subdirectory(Wrap)

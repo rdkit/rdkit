@@ -49,6 +49,8 @@ class RDKIT_DATASTRUCTS_EXPORT DiscreteValueVect {
   //! Copy constructor
   DiscreteValueVect(const DiscreteValueVect &other);
 
+  DiscreteValueVect &operator=(const DiscreteValueVect &other);
+
   //! constructor from a pickle
   DiscreteValueVect(const std::string &pkl) {
     initFromText(pkl.c_str(), static_cast<unsigned int>(pkl.size()));

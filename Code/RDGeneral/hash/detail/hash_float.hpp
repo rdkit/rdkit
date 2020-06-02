@@ -52,10 +52,10 @@
 #endif
 
 // On OpenBSD, numeric_limits is not reliable for long doubles, but
-// the macros defined in <float.h> are.
+// the macros defined in <cfloat> are.
 
 #if defined(__OpenBSD__)
-#include <float.h>
+#include <cfloat>
 #endif
 
 namespace gboost

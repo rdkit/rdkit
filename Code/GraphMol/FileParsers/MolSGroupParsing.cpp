@@ -512,15 +512,7 @@ void ParseSGroupV2000SPLLine(IDX_TO_SGROUP_MAP &sGroupMap, RWMol *mol,
     }
     unsigned int parentIdx = ParseSGroupIntField(text, line, pos);
 
-    // both parentIdx and size are offset by +1, so it's fine
-    if (parentIdx > sGroupMap.size()) {
-      std::ostringstream errout;
-      errout << "SGroup SPL line contains wrong parent SGroup (" << parentIdx
-             << ") for SGroup " << sgIdx << "on line " << line;
-      throw FileParseException(errout.str());
-    }
-
-    sGroupMap.at(sgIdx).setProp<unsigned int>("PARENT", parentIdx - 1);
+    sGroupMap.at(sgIdx).setProp<unsigned int>("PARENT", parentIdx);
   }
 }
 
@@ -574,7 +566,7 @@ void ParseSGroupV2000SAPLine(IDX_TO_SGROUP_MAP &sGroupMap, RWMol *mol,
   unsigned int nent = ParseSGroupIntField(text, line, pos, true);
 
   for (unsigned int ie = 0; ie < nent; ++ie) {
-    if (text.size() < pos + 8) {
+    if (text.size() < pos + 11) {
       std::ostringstream errout;
       errout << "SGroup SAP line too short: '" << text << "' on line " << line;
       throw FileParseException(errout.str());
@@ -590,7 +582,8 @@ void ParseSGroupV2000SAPLine(IDX_TO_SGROUP_MAP &sGroupMap, RWMol *mol,
       lvIdx = mol->getAtomWithBookmark(lvIdxMark)->getIdx();
     }
 
-    sGroupMap.at(sgIdx).addAttachPoint(aIdx, lvIdx, text.substr(++pos, 2));
+    sGroupMap.at(sgIdx).addAttachPoint(aIdx, lvIdx, text.substr(pos + 1, 2));
+    pos += 3;
   }
 }
 
@@ -795,15 +788,7 @@ void ParseV3000ParseLabel(const std::string &label,
     // Store relationship until all SGroups have been read
     unsigned int parentIdx;
     lineStream >> parentIdx;
-
-    // both parentIdx and nSGroups are offset by +1, so it's fine
-    if (parentIdx > nSgroups) {
-      std::ostringstream errout;
-      errout << "Wrong parent SGroup '" << parentIdx << "' on line " << line;
-      throw FileParseException(errout.str());
-    }
-
-    sgroup.setProp<unsigned int>("PARENT", parentIdx - 1);
+    sgroup.setProp<unsigned int>("PARENT", parentIdx);
   } else if (label == "COMPNO") {
     unsigned int compno;
     lineStream >> compno;
@@ -894,6 +879,7 @@ void ParseV3000SGroupsBlock(std::istream *inStream, unsigned int &line,
     SubstanceGroup sgroup(mol, type);
     STR_VECT dataFields;
 
+    sgroup.setProp<unsigned int>("index", sequenceId);
     if (externalId > 0) {
       if (!SubstanceGroupChecks::isSubstanceGroupIdFree(*mol, externalId)) {
         std::ostringstream errout;
@@ -981,7 +967,7 @@ void ParseV3000SGroupsBlock(std::istream *inStream, unsigned int &line,
     throw FileParseException(errout.str());
   }
 
-  // SGroups successfully parsed, now add them to the molecule sorted by index
+  // SGroups successfully parsed, now add them to the molecule
   for (const auto &sg : sGroupMap) {
     addSubstanceGroup(*mol, sg.second);
   }

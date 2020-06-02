@@ -115,7 +115,7 @@ void setTwoBitCell(boost::shared_array<std::uint8_t> &res, unsigned int pos,
 }
 
 std::uint8_t getTwoBitCell(boost::shared_array<std::uint8_t> &res,
-                             unsigned int pos) {
+                           unsigned int pos) {
   unsigned int twoBitPos = pos / 4;
   unsigned int shift = 2 * (pos % 4);
   std::uint8_t twoBitMask = 3 << shift;
@@ -137,16 +137,17 @@ std::uint8_t getTwoBitCell(boost::shared_array<std::uint8_t> &res,
 // ------------------------------------------------------------------------
 boost::shared_array<std::uint8_t> buildNeighborMatrix(const ROMol &mol) {
   const std::uint8_t RELATION_1_X_INIT = RELATION_1_X | (RELATION_1_X << 2) |
-                                           (RELATION_1_X << 4) |
-                                           (RELATION_1_X << 6);
+                                         (RELATION_1_X << 4) |
+                                         (RELATION_1_X << 6);
   unsigned int nAtoms = mol.getNumAtoms();
   unsigned nTwoBitCells = (nAtoms * (nAtoms + 1) - 1) / 8 + 1;
   boost::shared_array<std::uint8_t> res(new std::uint8_t[nTwoBitCells]);
   std::memset(res.get(), RELATION_1_X_INIT, nTwoBitCells);
   for (ROMol::ConstBondIterator bondi = mol.beginBonds();
        bondi != mol.endBonds(); ++bondi) {
-    setTwoBitCell(res, twoBitCellPos(nAtoms, (*bondi)->getBeginAtomIdx(),
-                                     (*bondi)->getEndAtomIdx()),
+    setTwoBitCell(res,
+                  twoBitCellPos(nAtoms, (*bondi)->getBeginAtomIdx(),
+                                (*bondi)->getEndAtomIdx()),
                   RELATION_1_2);
     unsigned int bondiBeginAtomIdx = (*bondi)->getBeginAtomIdx();
     unsigned int bondiEndAtomIdx = (*bondi)->getEndAtomIdx();
@@ -272,7 +273,7 @@ void addAngles(const ROMol &mol, MMFFMolProperties *mmffMolProperties,
           auto *contrib =
               new AngleBendContrib(field, idx[0], idx[1], idx[2],
                                    &mmffAngleParams, mmffPropParamsCentralAtom);
-	  auto sptr = ForceFields::ContribPtr(contrib);
+          auto sptr = ForceFields::ContribPtr(contrib);
           field->contribs().push_back(sptr);
           if (mmffMolProperties->getMMFFVerbosity()) {
             unsigned int iAtomType = mmffMolProperties->getMMFFAtomType(idx[0]);
@@ -339,7 +340,6 @@ void addStretchBend(const ROMol &mol, MMFFMolProperties *mmffMolProperties,
   std::ostream &oStream = mmffMolProperties->getMMFFOStream();
   unsigned int idx[3];
   const MMFFPropCollection *mmffProp = DefaultParameters::getMMFFProp();
-  std::pair<bool, const MMFFStbn *> mmffStbnParams;
   ROMol::ADJ_ITER nbr1Idx;
   ROMol::ADJ_ITER end1Nbrs;
   ROMol::ADJ_ITER nbr2Idx;
@@ -1015,5 +1015,5 @@ ForceFields::ForceField *constructForceField(
 
   return res;
 }
-}
-}
+}  // namespace MMFF
+}  // namespace RDKit

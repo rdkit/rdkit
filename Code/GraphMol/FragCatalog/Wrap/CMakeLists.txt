@@ -4,8 +4,6 @@ rdkit_python_extension(rdfragcatalog
                        FragCatGenerator.cpp FragFPGenerator.cpp
                        DEST Chem 
                        LINK_LIBRARIES 
-                       FragCatalog 
-Subgraphs SubstructMatch SmilesParse Catalogs FileParsers GraphMol DataStructs RDGeometryLib RDGeneral 
- RDBoost) 
+                       FragCatalog FileParsers) 
 
 add_pytest(pyFragCatalog ${CMAKE_CURRENT_SOURCE_DIR}/rough_test.py)

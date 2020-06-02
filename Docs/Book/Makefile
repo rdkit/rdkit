@@ -45,11 +45,14 @@ help:
 clean:
 	-rm -rf $(BUILDDIR)/*
 
+cppexamples:
+	cp -r C++Examples  $(BUILDDIR)/html/
+
 apidocs:
 	mkdir -p $(BUILDDIR)/html/cppapi
 	cp -r $(CPPAPIDOCSHOME)/*  $(BUILDDIR)/html/cppapi
 
-html: $(RSTS_FROM_MD) apidocs 
+html: $(RSTS_FROM_MD) apidocs cppexamples
 	$(SPHINXBUILD) -b html $(ALLSPHINXOPTS) $(BUILDDIR)/html
 	@echo
 	@echo "Build finished. The HTML pages are in $(BUILDDIR)/html."

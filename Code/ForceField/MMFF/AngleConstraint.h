@@ -22,7 +22,7 @@ namespace MMFF {
 class RDKIT_FORCEFIELD_EXPORT RDKIT_FORCEFIELD_EXPORT AngleConstraintContrib
     : public ForceFieldContrib {
  public:
-  AngleConstraintContrib() : d_at1Idx(-1), d_at2Idx(-1), d_at3Idx(-1){};
+  AngleConstraintContrib()  {};
   //! Constructor
   /*!
   \param owner       pointer to the owning ForceField
@@ -53,7 +53,7 @@ class RDKIT_FORCEFIELD_EXPORT RDKIT_FORCEFIELD_EXPORT AngleConstraintContrib
   };
 
  private:
-  int d_at1Idx, d_at2Idx, d_at3Idx;     //!< indices of atoms forming the angle
+  int d_at1Idx{-1}, d_at2Idx{-1}, d_at3Idx{-1};     //!< indices of atoms forming the angle
   double d_minAngleDeg, d_maxAngleDeg;  //!< rest amplitudes of the angle
   double d_forceConstant;  //!< force constant of the angle constraint
 };

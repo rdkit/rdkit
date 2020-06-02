@@ -30,7 +30,7 @@ class AtomicParams;
  */
 class RDKIT_FORCEFIELD_EXPORT vdWContrib : public ForceFieldContrib {
  public:
-  vdWContrib() : d_at1Idx(-1), d_at2Idx(-1){};
+  vdWContrib(){};
 
   //! Constructor
   /*!
@@ -51,7 +51,8 @@ class RDKIT_FORCEFIELD_EXPORT vdWContrib : public ForceFieldContrib {
   virtual vdWContrib *copy() const { return new vdWContrib(*this); };
 
  private:
-  int d_at1Idx, d_at2Idx;
+  int d_at1Idx{-1};
+  int d_at2Idx{-1};
   double d_xij;        //!< the preferred length of the contact
   double d_wellDepth;  //!< the vdW well depth (strength of the interaction)
   double d_thresh;     //!< the distance threshold

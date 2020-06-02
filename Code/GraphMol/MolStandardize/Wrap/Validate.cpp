@@ -23,7 +23,7 @@ python::list rdkitValidate(MolStandardize::RDKitValidation &self,
   std::vector<MolStandardize::ValidationErrorInfo> errout =
       self.validate(mol, reportAllFailures);
   for (auto &query : errout) {
-    std::string msg = query.message();
+    std::string msg = query.what();
     res.append(msg);
   }
   return res;
@@ -50,7 +50,7 @@ python::list molVSvalidateHelper(MolStandardize::MolVSValidation &self,
   std::vector<MolStandardize::ValidationErrorInfo> errout =
       self.validate(mol, reportAllFailures);
   for (auto &query : errout) {
-    s.append(query.message());
+    s.append(query.what());
   }
   return s;
 }
@@ -73,7 +73,7 @@ python::list allowedAtomsValidate(MolStandardize::AllowedAtomsValidation &self,
   std::vector<MolStandardize::ValidationErrorInfo> errout =
       self.validate(mol, reportAllFailures);
   for (auto &query : errout) {
-    std::string msg = query.message();
+    std::string msg = query.what();
     res.append(msg);
   }
   return res;
@@ -97,7 +97,7 @@ python::list disallowedAtomsValidate(
   std::vector<MolStandardize::ValidationErrorInfo> errout =
       self.validate(mol, reportAllFailures);
   for (auto &query : errout) {
-    std::string msg = query.message();
+    std::string msg = query.what();
     res.append(msg);
   }
   return res;
@@ -108,7 +108,7 @@ python::list standardizeSmilesHelper(const std::string &smiles) {
   std::vector<MolStandardize::ValidationErrorInfo> errout =
       MolStandardize::validateSmiles(smiles);
   for (auto &query : errout) {
-    std::string msg = query.message();
+    std::string msg = query.what();
     res.append(msg);
   }
   return res;

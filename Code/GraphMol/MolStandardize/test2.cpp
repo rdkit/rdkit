@@ -66,7 +66,7 @@ void testValidate() {
   std::unique_ptr<ROMol> m1(SmilesToMol(smi1, 0, false));
   std::vector<ValidationErrorInfo> errout1 = vm.validate(*m1, true);
   for (auto &query : errout1) {
-    std::string msg = query.message();
+    std::string msg = query.what();
     TEST_ASSERT(msg ==
                 "INFO: [ValenceValidation] Explicit valence for atom # 1 O, 3, "
                 "is greater than permitted");
@@ -77,7 +77,7 @@ void testValidate() {
   std::unique_ptr<ROMol> m2(SmilesToMol(smi2, 0, false));
   std::vector<ValidationErrorInfo> errout2 = vm2.validate(*m2, true);
   for (auto &query : errout2) {
-    std::string msg = query.message();
+    std::string msg = query.what();
     TEST_ASSERT(msg ==
                 "INFO: [NeutralValidation] Not an overall neutral system (-1)");
   }
@@ -96,7 +96,7 @@ void testValidate() {
   std::unique_ptr<ROMol> m3(SmilesToMol(smi3));
   std::vector<ValidationErrorInfo> errout3 = vm3.validate(*m3, true);
   for (auto &query : errout3) {
-    std::string msg = query.message();
+    std::string msg = query.what();
     TEST_ASSERT(
         msg ==
         "INFO: [AllowedAtomsValidation] Atom F is not in allowedAtoms list");
@@ -116,7 +116,7 @@ void testValidate() {
   std::unique_ptr<ROMol> m4(SmilesToMol(smi4));
   std::vector<ValidationErrorInfo> errout4 = vm4.validate(*m4, true);
   for (auto &query : errout4) {
-    std::string msg = query.message();
+    std::string msg = query.what();
     TEST_ASSERT(
         msg ==
         "INFO: [DisallowedAtomsValidation] Atom F is in disallowedAtoms list");
@@ -130,7 +130,7 @@ void testValidate() {
   std::unique_ptr<ROMol> m5(SmilesToMol(smi5, 0, false));
   std::vector<ValidationErrorInfo> errout5 = vm5.validate(*m5, true);
   for (auto &query : errout5) {
-    std::string msg = query.message();
+    std::string msg = query.what();
     TEST_ASSERT(msg ==
                 "INFO: [FragmentValidation] 1,2-dichloroethane is present");
   }

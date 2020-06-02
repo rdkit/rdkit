@@ -231,7 +231,7 @@ RWMol *toMol(const std::string &inp,
     if (func == smarts_parse) {
       nm = "SMARTS";
     }
-    BOOST_LOG(rdErrorLog) << nm << " Parse Error: " << e.message()
+    BOOST_LOG(rdErrorLog) << nm << " Parse Error: " << e.what()
                           << " for input: '" << origInp << "'" << std::endl;
     res = nullptr;
   }
@@ -259,7 +259,7 @@ Atom *toAtom(const std::string &inp, int func(const std::string &, Atom *&)) {
     if (func != smiles_atom_parse) {
       nm = "SMARTS";
     }
-    BOOST_LOG(rdErrorLog) << nm << " Parse Error: " << e.message()
+    BOOST_LOG(rdErrorLog) << nm << " Parse Error: " << e.what()
                           << " for input: '" << inp << "'" << std::endl;
     res = nullptr;
   }
@@ -279,7 +279,7 @@ Bond *toBond(const std::string &inp, int func(const std::string &, Bond *&)) {
     if (func != smiles_bond_parse) {
       nm = "SMARTS";
     }
-    BOOST_LOG(rdErrorLog) << nm << " Parse Error: " << e.message()
+    BOOST_LOG(rdErrorLog) << nm << " Parse Error: " << e.what()
                           << " for input: '" << inp << "'" << std::endl;
     res = nullptr;
   }
@@ -366,8 +366,9 @@ RWMol *SmilesToMol(const std::string &smiles,
     std::string::const_iterator pos = cxPart.cbegin();
     try {
       SmilesParseOps::parseCXExtensions(*res, cxPart, pos);
-    } catch (const SmilesParseException &e) {
+    } catch (const SmilesParseException &) {
       if (params.strictCXSMILES) {
+        delete res;
         throw;
       }
     }

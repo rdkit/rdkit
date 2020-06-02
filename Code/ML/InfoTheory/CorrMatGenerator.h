@@ -44,7 +44,7 @@ class BitCorrMatGenerator {
   ~BitCorrMatGenerator() { delete[] dp_corrMat; }
 
   void initGenerator() {
-    dp_corrMat = 0;
+    dp_corrMat = nullptr;
     d_descs.resize(0);
     d_nExamples = 0;
   };

@@ -20,7 +20,7 @@
 
 #include <iostream>
 #include <vector>
-#include <boost/random.hpp>
+#include <random>
 #include <cstdlib>
 
 using namespace RDKit;
@@ -43,10 +43,10 @@ int icmp(int a, int b) {
 }
 
 class int_compare_ftor {
-  const int *dp_ints;
+  const int *dp_ints{nullptr};
 
  public:
-  int_compare_ftor() : dp_ints(nullptr){};
+  int_compare_ftor()  {};
   int_compare_ftor(const int *ints) : dp_ints(ints){};
   int operator()(int i, int j) const {
     PRECONDITION(dp_ints, "no ints");
@@ -130,10 +130,10 @@ void test1() {
 };
 
 class atomcomparefunctor {
-  Canon::canon_atom *d_atoms;
+  Canon::canon_atom *d_atoms{nullptr};
 
  public:
-  atomcomparefunctor() : d_atoms(nullptr){};
+  atomcomparefunctor()  {};
   atomcomparefunctor(Canon::canon_atom *atoms) : d_atoms(atoms){};
   int operator()(int i, int j) const {
     PRECONDITION(d_atoms, "no atoms");
@@ -160,10 +160,10 @@ class atomcomparefunctor {
   }
 };
 class atomcomparefunctor2 {
-  Canon::canon_atom *d_atoms;
+  Canon::canon_atom *d_atoms{nullptr};
 
  public:
-  atomcomparefunctor2() : d_atoms(nullptr){};
+  atomcomparefunctor2()  {};
   atomcomparefunctor2(Canon::canon_atom *atoms) : d_atoms(atoms){};
   int operator()(int i, int j) const {
     PRECONDITION(d_atoms, "no atoms");
@@ -361,8 +361,8 @@ void test3() {
 };
 
 class atomcomparefunctor3 {
-  Canon::canon_atom *dp_atoms;
-  const ROMol *dp_mol;
+  Canon::canon_atom *dp_atoms{nullptr};
+  const ROMol *dp_mol{nullptr};
   unsigned int getAtomNeighborhood(unsigned int i) const {
     unsigned int res = 0;
     const Atom *at = dp_mol->getAtomWithIdx(i);
@@ -419,9 +419,9 @@ class atomcomparefunctor3 {
   }
 
  public:
-  bool df_useNbrs;
+  bool df_useNbrs{false};
   atomcomparefunctor3()
-      : dp_atoms(nullptr), dp_mol(nullptr), df_useNbrs(false){};
+       {};
   atomcomparefunctor3(Canon::canon_atom *atoms, const ROMol &m)
       : dp_atoms(atoms), dp_mol(&m), df_useNbrs(false){};
   int operator()(int i, int j) const {
@@ -901,11 +901,10 @@ void _renumberTest(const ROMol *m, std::string inSmiles,
     idxV[i] = i;
   }
 
-  std::srand(0xF00D);
   for (unsigned int i = 0; i < numRenumbers; ++i) {
     //      std::cerr<<"---------------------------------------------------"<<std::endl;
     std::vector<unsigned int> nVect(idxV);
-    std::random_shuffle(nVect.begin(), nVect.end());
+    std::shuffle(nVect.begin(), nVect.end(), std::mt19937(0xf00d));
     //      for(unsigned int j=0;j<m->getNumAtoms();++j){
     //        std::cerr<<"Renumber: "<<nVect[j]<<"->"<<j<<std::endl;
     //      }
@@ -940,10 +939,9 @@ void _renumberTest2(const ROMol *m, std::string inSmiles,
     idxV[i] = i;
   }
 
-  std::srand(0xF00D);
   for (unsigned int i = 0; i < numRenumbers; ++i) {
     std::vector<unsigned int> nVect(idxV);
-    std::random_shuffle(nVect.begin(), nVect.end());
+    std::shuffle(nVect.begin(), nVect.end(), std::mt19937(0xf00d));
 
     ROMol *nm = _renumber(m, nVect, inSmiles);
 

@@ -65,7 +65,7 @@ RDKIT_SMILESPARSE_EXPORT Bond *SmilesToBond(const std::string &smi);
  */
 inline RWMol *SmilesToMol(
     const std::string &smi, int debugParse = 0, bool sanitize = true,
-    std::map<std::string, std::string> *replacements = 0) {
+    std::map<std::string, std::string> *replacements = nullptr) {
   SmilesParserParams params;
   params.debugParse = debugParse;
   params.replacements = replacements;
@@ -93,7 +93,7 @@ inline RWMol *SmilesToMol(
  */
 RDKIT_SMILESPARSE_EXPORT RWMol *SmartsToMol(
     const std::string &sma, int debugParse = 0, bool mergeHs = false,
-    std::map<std::string, std::string> *replacements = 0);
+    std::map<std::string, std::string> *replacements = nullptr);
 
 RDKIT_SMILESPARSE_EXPORT Atom *SmartsToAtom(const std::string &sma);
 RDKIT_SMILESPARSE_EXPORT Bond *SmartsToBond(const std::string &sma);
@@ -103,7 +103,6 @@ class RDKIT_SMILESPARSE_EXPORT SmilesParseException : public std::exception {
   SmilesParseException(const char *msg) : _msg(msg){};
   SmilesParseException(const std::string msg) : _msg(msg){};
   const char *what() const noexcept override { return _msg.c_str(); };
-  const char *message() const noexcept { return what(); };
   ~SmilesParseException() noexcept {};
 
  private:

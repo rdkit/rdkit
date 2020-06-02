@@ -153,15 +153,23 @@ RDKIT_RDGENERAL_EXPORT extern const std::string
     atomLabel;  // atom string from CXSMILES
 
 // MDL Style Properties (MolFileParser)
-RDKIT_RDGENERAL_EXPORT extern const std::string molAtomMapNumber;  // int
-RDKIT_RDGENERAL_EXPORT extern const std::string molFileAlias;      // string
-RDKIT_RDGENERAL_EXPORT extern const std::string molFileValue;      // string
-RDKIT_RDGENERAL_EXPORT extern const std::string molInversionFlag;  // int
-RDKIT_RDGENERAL_EXPORT extern const std::string molParity;         // int
-RDKIT_RDGENERAL_EXPORT extern const std::string molStereoCare;     // int
-RDKIT_RDGENERAL_EXPORT extern const std::string molRxnComponent;   // int
-RDKIT_RDGENERAL_EXPORT extern const std::string molRxnRole;        // int
-RDKIT_RDGENERAL_EXPORT extern const std::string molTotValence;     // int
+RDKIT_RDGENERAL_EXPORT extern const std::string molAtomMapNumber;   // int
+RDKIT_RDGENERAL_EXPORT extern const std::string molFileAlias;       // string
+RDKIT_RDGENERAL_EXPORT extern const std::string molFileValue;       // string
+RDKIT_RDGENERAL_EXPORT extern const std::string molInversionFlag;   // int
+RDKIT_RDGENERAL_EXPORT extern const std::string molParity;          // int
+RDKIT_RDGENERAL_EXPORT extern const std::string molStereoCare;      // int
+RDKIT_RDGENERAL_EXPORT extern const std::string molRxnComponent;    // int
+RDKIT_RDGENERAL_EXPORT extern const std::string molRxnRole;         // int
+RDKIT_RDGENERAL_EXPORT extern const std::string molTotValence;      // int
+RDKIT_RDGENERAL_EXPORT extern const std::string molSubstCount;      // int
+RDKIT_RDGENERAL_EXPORT extern const std::string molAttachPoint;     // int
+RDKIT_RDGENERAL_EXPORT extern const std::string molAttachOrder;     // int
+RDKIT_RDGENERAL_EXPORT extern const std::string molAtomClass;       // string
+RDKIT_RDGENERAL_EXPORT extern const std::string molAtomSeqId;       // int
+RDKIT_RDGENERAL_EXPORT extern const std::string molRxnExactChange;  // int
+RDKIT_RDGENERAL_EXPORT extern const std::string molReactStatus;     // int
+
 RDKIT_RDGENERAL_EXPORT extern const std::string _MolFileRLabel;  // unsigned int
 RDKIT_RDGENERAL_EXPORT extern const std::string _MolFileChiralFlag;  // int
 RDKIT_RDGENERAL_EXPORT extern const std::string _MolFileAtomQuery;   // int
@@ -228,6 +236,8 @@ RDKIT_RDGENERAL_EXPORT extern const std::string
 //  - note, confusing creation of names in
 //  - getDistanceMat
 RDKIT_RDGENERAL_EXPORT extern const std::string internalRgroupSmiles;
+RDKIT_RDGENERAL_EXPORT extern const std::string atomNote;
+RDKIT_RDGENERAL_EXPORT extern const std::string bondNote;
 
 }  // namespace common_properties
 #ifndef WIN32
@@ -308,7 +318,7 @@ typedef INT_SET::const_iterator INT_SET_CI;
 //! functor to compare two doubles with a tolerance
 struct RDKIT_RDGENERAL_EXPORT ltDouble {
  public:
-  ltDouble() : _tol(1.0e-8){};
+  ltDouble()  {};
   bool operator()(double d1, double d2) const {
     if (fabs(d1 - d2) < _tol) {
       return false;
@@ -318,7 +328,7 @@ struct RDKIT_RDGENERAL_EXPORT ltDouble {
   }
 
  private:
-  double _tol;
+  double _tol{1.0e-8};
 };
 
 //! std::map from double to integer.
@@ -357,7 +367,7 @@ RDKIT_RDGENERAL_EXPORT void Intersect(const INT_VECT &r1, const INT_VECT &r2,
            from the union.
 */
 RDKIT_RDGENERAL_EXPORT void Union(const VECT_INT_VECT &rings, INT_VECT &res,
-                                  const INT_VECT *exclude = NULL);
+                                  const INT_VECT *exclude = nullptr);
 
 //! given a current combination of numbers change it to the next possible
 // combination

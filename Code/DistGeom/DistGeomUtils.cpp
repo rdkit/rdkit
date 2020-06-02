@@ -25,6 +25,7 @@
 #include <GraphMol/ForceFieldHelpers/CrystalFF/TorsionPreferences.h>
 #include <GraphMol/ForceFieldHelpers/CrystalFF/TorsionAngleM6.h>
 #include <boost/dynamic_bitset.hpp>
+#include <ForceField/MMFF/Nonbonded.h>
 
 namespace DistGeom {
 const double EIGVAL_TOL = 0.001;
@@ -362,6 +363,25 @@ ForceFields::ForceField *construct3DForceField(
 
   return field;
 }  // construct3DForceField
+
+ForceFields::ForceField *construct3DForceField(
+    const BoundsMatrix &mmat, RDGeom::Point3DPtrVect &positions,
+    const ForceFields::CrystalFF::CrystalFFDetails &etkdgDetails,
+    const std::map<std::pair<unsigned int, unsigned int>, double> &CPCI) {
+  auto *field = construct3DForceField(mmat, positions, etkdgDetails);
+
+  bool is1_4 = false;
+  // double dielConst = 1.0;
+  boost::uint8_t dielModel = 1;
+  for (const auto &charge : CPCI) {
+    auto *contrib = new ForceFields::MMFF::EleContrib(
+        field, charge.first.first, charge.first.second, charge.second,
+        dielModel, is1_4);
+    field->contribs().push_back(ForceFields::ContribPtr(contrib));
+  }
+
+  return field;
+}
 
 ForceFields::ForceField *constructPlain3DForceField(
     const BoundsMatrix &mmat, RDGeom::Point3DPtrVect &positions,

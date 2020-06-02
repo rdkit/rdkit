@@ -8,10 +8,10 @@ rdkit_headers(DistPicker.h LeaderPicker.h
               HierarchicalClusterPicker.h
               MaxMinPicker.h DEST SimDivPickers)
 
-rdkit_test(testSimDivPickers testPickers.cpp LINK_LIBRARIES SimDivPickers RDGeneral)
+rdkit_test(testSimDivPickers testPickers.cpp LINK_LIBRARIES SimDivPickers)
 
 rdkit_catch_test(pickersTestsCatch catch_tests.cpp
-           LINK_LIBRARIES SimDivPickers DataStructs RDGeneral)
+           LINK_LIBRARIES SimDivPickers DataStructs)
 
 
 if(RDK_BUILD_PYTHON_WRAPPERS)

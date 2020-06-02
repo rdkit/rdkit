@@ -134,7 +134,7 @@ void pyListToColourVec(python::object pyo, std::vector<DrawColour> &res) {
 }  // namespace
 
 void pyDictToMapColourVec(python::object pyo,
-                           std::map<int, std::vector<DrawColour> > &res) {
+                          std::map<int, std::vector<DrawColour>> &res) {
   python::dict tDict = python::extract<python::dict>(pyo);
   for (unsigned int i = 0;
        i < python::extract<unsigned int>(tDict.keys().attr("__len__")()); ++i) {
@@ -143,12 +143,12 @@ void pyDictToMapColourVec(python::object pyo,
     pyListToColourVec(pl, v);
     res[python::extract<int>(tDict.keys()[i])] = v;
   }
-
 }
-std::map<int, std::vector<DrawColour> > *pyDictToMapColourVec(python::object pyo) {
-  std::map<int, std::vector<DrawColour> > *res = nullptr;
-  if(pyo) {
-    res = new std::map<int, std::vector<DrawColour> >;
+std::map<int, std::vector<DrawColour>> *pyDictToMapColourVec(
+    python::object pyo) {
+  std::map<int, std::vector<DrawColour>> *res = nullptr;
+  if (pyo) {
+    res = new std::map<int, std::vector<DrawColour>>;
     pyDictToMapColourVec(pyo, *res);
   }
   return res;
@@ -193,34 +193,33 @@ void drawMoleculeHelper2(MolDraw2D &self, const ROMol &mol,
   delete har;
 }
 
-void drawMoleculeWithHighlightsHelper(MolDraw2D &self, const ROMol &mol,
-                                      std::string legend,
-                                      python::object highlight_atom_map,
-                                      python::object highlight_bond_map,
-                                      python::object highlight_atom_radii,
-                                      python::object highlight_linewidth_multipliers,
-                                      int confId) {
-
+void drawMoleculeWithHighlightsHelper(
+    MolDraw2D &self, const ROMol &mol, std::string legend,
+    python::object highlight_atom_map, python::object highlight_bond_map,
+    python::object highlight_atom_radii,
+    python::object highlight_linewidth_multipliers, int confId) {
   // highlight_atom_map and highlight_bond_map come in as a dict of
   // lists of tuples of floats (the R, G, B values for the colours),
   // and need to be changed to a map of vectors of DrawColour.
   // All of the dict to map converters return nullptr if the dict
   // was empty.  We need real objects in all cases for
   // drawMoleculeWithHighlights.
-  std::map<int, std::vector<DrawColour> > *ham = pyDictToMapColourVec(highlight_atom_map);
-  if(!ham) {
-    ham = new std::map<int, std::vector<DrawColour> >();
+  std::map<int, std::vector<DrawColour>> *ham =
+      pyDictToMapColourVec(highlight_atom_map);
+  if (!ham) {
+    ham = new std::map<int, std::vector<DrawColour>>();
   }
-  std::map<int, std::vector<DrawColour> > *hbm = pyDictToMapColourVec(highlight_bond_map);
-  if(!hbm) {
-    hbm = new std::map<int, std::vector<DrawColour> >();
+  std::map<int, std::vector<DrawColour>> *hbm =
+      pyDictToMapColourVec(highlight_bond_map);
+  if (!hbm) {
+    hbm = new std::map<int, std::vector<DrawColour>>();
   }
   std::map<int, double> *har = pyDictToDoubleMap(highlight_atom_radii);
-  if(!har) {
+  if (!har) {
     har = new std::map<int, double>();
   }
   std::map<int, int> *hlm = pyDictToIntMap(highlight_linewidth_multipliers);
-  if(!hlm) {
+  if (!hlm) {
     hlm = new std::map<int, int>();
   }
   self.drawMoleculeWithHighlights(mol, legend, *ham, *hbm, *har, *hlm, confId);
@@ -229,7 +228,6 @@ void drawMoleculeWithHighlightsHelper(MolDraw2D &self, const ROMol &mol,
   delete hbm;
   delete har;
   delete hlm;
-
 }
 
 void prepareAndDrawMoleculeHelper(
@@ -478,13 +476,13 @@ void contourAndDrawGridHelper(RDKit::MolDraw2D &drawer, python::object &data,
     levels = std::unique_ptr<std::vector<double>>(new std::vector<double>);
   }
 
-  if (PyArray_DIM(dataArr, 0) != xcoords->size()) {
+  if (PyArray_DIM(dataArr, 0) != static_cast<int>(xcoords->size())) {
     throw_value_error(
         "data array and xcoords sizes do not match.\n"
         "Did you forget to call np.transpose() on the array?");
   }
 
-  if (PyArray_DIM(dataArr, 1) != ycoords->size()) {
+  if (PyArray_DIM(dataArr, 1) != static_cast<int>(ycoords->size())) {
     throw_value_error("data array and ycoords sizes do not match");
   }
 
@@ -601,6 +599,10 @@ BOOST_PYTHON_MODULE(rdMolDraw2D) {
                      "maximum font size in pixels. default=40, -1 means no"
                      " maximum.")
       .def_readwrite(
+          "annotationFontScale", &RDKit::MolDrawOptions::annotationFontScale,
+          "Scale of font for atom and bond annotation relative to atom"
+          "label font.  Default=0.75.")
+      .def_readwrite(
           "multipleBondOffset", &RDKit::MolDrawOptions::multipleBondOffset,
           "offset (in Angstroms) for the extra lines in a multiple bond")
       .def_readwrite("padding", &RDKit::MolDrawOptions::padding,
@@ -608,9 +610,10 @@ BOOST_PYTHON_MODULE(rdMolDraw2D) {
       .def_readwrite(
           "bondLineWidth", &RDKit::MolDrawOptions::bondLineWidth,
           "if positive, this overrides the default line width for bonds")
-      .def_readwrite(
-          "highlightBondWidthMultiplier", &RDKit::MolDrawOptions::highlightBondWidthMultiplier,
-          "What to multiply default bond width by for highlighting bonds. Default-8.")
+      .def_readwrite("highlightBondWidthMultiplier",
+                     &RDKit::MolDrawOptions::highlightBondWidthMultiplier,
+                     "What to multiply default bond width by for highlighting "
+                     "bonds. Default-8.")
       .def_readwrite("prepareMolsBeforeDrawing",
                      &RDKit::MolDrawOptions::prepareMolsBeforeDrawing,
                      "call prepareMolForDrawing() on each molecule passed to "
@@ -628,6 +631,22 @@ BOOST_PYTHON_MODULE(rdMolDraw2D) {
                      "draw window.  Default -1.0 means adjust scale to fit.")
       .def_readwrite("rotate", &RDKit::MolDrawOptions::rotate,
                      "Rotates molecule about centre by this number of degrees,")
+      .def_readwrite("addStereoAnnotation",
+                     &RDKit::MolDrawOptions::addStereoAnnotation,
+                     "adds R/S and E/Z to drawings. Default False.")
+      .def_readwrite("addAtomIndices", &RDKit::MolDrawOptions::addAtomIndices,
+                     "adds atom indices drawings. Default False.")
+      .def_readwrite("addBondIndices", &RDKit::MolDrawOptions::addBondIndices,
+                     "adds bond indices drawings. Default False.")
+      .def_readwrite("atomHighlightsAreCircles",
+                     &RDKit::MolDrawOptions::atomHighlightsAreCircles,
+                     "forces atom highlights always to be circles."
+                     "Default (false) is to put ellipses round"
+                     "longer labels.")
+      .def_readwrite("centreMoleculesBeforeDrawing",
+                     &RDKit::MolDrawOptions::centreMoleculesBeforeDrawing,
+                     "Moves the centre of the drawn molecule to (0,0)."
+                     "Default False.")
       .def_readwrite("additionalAtomLabelPadding",
                      &RDKit::MolDrawOptions::additionalAtomLabelPadding,
                      "additional padding to leave around atom labels. "
@@ -655,16 +674,14 @@ BOOST_PYTHON_MODULE(rdMolDraw2D) {
            python::arg("highlightAtomRadii") = python::object(),
            python::arg("confId") = -1, python::arg("legend") = std::string("")),
           "renders a molecule\n")
-          .def("DrawMoleculeWithHighlights",
-               RDKit::drawMoleculeWithHighlightsHelper,
-               (python::arg("self"), python::arg("mol"),
-                   python::arg("legend"),
-                   python::arg("highlight_atom_map"),
-                   python::arg("highlight_bond_map"),
-                   python::arg("highlight_radii"),
-                   python::arg("highlight_linewidth_multipliers"),
-                   python::arg("confId") = -1),
-                   "renders a molecule with multiple highlight colours\n")
+      .def("DrawMoleculeWithHighlights",
+           RDKit::drawMoleculeWithHighlightsHelper,
+           (python::arg("self"), python::arg("mol"), python::arg("legend"),
+            python::arg("highlight_atom_map"),
+            python::arg("highlight_bond_map"), python::arg("highlight_radii"),
+            python::arg("highlight_linewidth_multipliers"),
+            python::arg("confId") = -1),
+           "renders a molecule with multiple highlight colours\n")
       .def("DrawMolecules", RDKit::drawMoleculesHelper2,
            (python::arg("self"), python::arg("mols"),
             python::arg("highlightAtoms") = python::object(),
@@ -743,15 +760,19 @@ BOOST_PYTHON_MODULE(rdMolDraw2D) {
             python::arg("nSegments") = 16, python::arg("vertOffset") = 0.05),
            "draw a line indicating the presence of an attachment point "
            "(normally a squiggle line perpendicular to a bond)")
-      .def("DrawString", (void(RDKit::MolDraw2D::*)(const std::string &, const RDGeom::Point2D &))&
+      .def("DrawString",
+           (void (RDKit::MolDraw2D::*)(const std::string &,
+                                       const RDGeom::Point2D &)) &
                RDKit::MolDraw2D::drawString,
            (python::arg("self"), python::arg("string"), python::arg("pos")),
            "add text to the canvas")
-      .def("DrawString", (void(RDKit::MolDraw2D::*)(const std::string &, const RDGeom::Point2D &,
-                                                    RDKit::MolDraw2D::AlignType))&
+      .def("DrawString",
+           (void (RDKit::MolDraw2D::*)(const std::string &,
+                                       const RDGeom::Point2D &,
+                                       RDKit::MolDraw2D::AlignType)) &
                RDKit::MolDraw2D::drawString,
            (python::arg("self"), python::arg("string"), python::arg("pos"),
-               python::arg("align")),
+            python::arg("align")),
            "add aligned text to the canvas")
       .def("GetDrawCoords",
            (RDGeom::Point2D(RDKit::MolDraw2D::*)(const RDGeom::Point2D &)

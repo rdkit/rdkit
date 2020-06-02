@@ -59,7 +59,6 @@ class RDKIT_CHEMREACTIONS_EXPORT EnumerationStrategyException
   EnumerationStrategyException(const char *msg) : _msg(msg){};
   EnumerationStrategyException(const std::string &msg) : _msg(msg){};
   const char *what() const noexcept override { return _msg.c_str(); };
-  const char *message() const noexcept { return what(); };
   ~EnumerationStrategyException() noexcept {};
 
  private:
@@ -124,13 +123,13 @@ class RDKIT_CHEMREACTIONS_EXPORT EnumerationStrategyBase {
   EnumerationTypes::RGROUPS
       m_permutationSizes;  // m_permutationSizes num bbs per group
   boost::uint64_t
-      m_numPermutations;  // total number of permutations for this group
+      m_numPermutations{};  // total number of permutations for this group
                           //  -1 if > ssize_t::max
  public:
   static const boost::uint64_t EnumerationOverflow =
       static_cast<boost::uint64_t>(-1);
   EnumerationStrategyBase()
-      : m_permutation(), m_permutationSizes(), m_numPermutations() {}
+      : m_permutation(), m_permutationSizes() {}
 
   virtual ~EnumerationStrategyBase() {}
 

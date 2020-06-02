@@ -23,7 +23,7 @@ class AtomicParams;
 //! The inversion term for the Universal Force Field
 class RDKIT_FORCEFIELD_EXPORT InversionContrib : public ForceFieldContrib {
  public:
-  InversionContrib() : d_at1Idx(-1), d_at2Idx(-1), d_at3Idx(-1), d_at4Idx(-1){};
+  InversionContrib(){};
   //! Constructor
   /*!
     \param owner          pointer to the owning ForceField
@@ -48,7 +48,10 @@ class RDKIT_FORCEFIELD_EXPORT InversionContrib : public ForceFieldContrib {
   };
 
  private:
-  int d_at1Idx, d_at2Idx, d_at3Idx, d_at4Idx;
+  int d_at1Idx{-1};
+  int d_at2Idx{-1};
+  int d_at3Idx{-1};
+  int d_at4Idx{-1};
   double d_forceConstant, d_C0, d_C1, d_C2;
 };
 

@@ -13,12 +13,12 @@
 
 #include <RDGeneral/Invariant.h>
 #include <RDGeneral/utils.h>
-#include <math.h>
+#include <cmath>
 #include <iostream>
 #include <iomanip>
 #include <cstdlib>
 #include <cstring>
-#include <time.h>
+#include <ctime>
 #include <boost/random.hpp>
 #include <boost/smart_ptr.hpp>
 

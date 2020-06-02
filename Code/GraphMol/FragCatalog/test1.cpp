@@ -21,7 +21,7 @@
 #include "FragCatParams.h"
 #include "FragCatalogUtils.h"
 #include "FragFPGenerator.h"
-#include <stdlib.h>
+#include <cstdlib>
 #include <iostream>
 #include <fstream>
 

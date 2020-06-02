@@ -21,7 +21,7 @@ namespace RDKit {
 // class definitions that do not need being exposed in Resonance.h
 class CEVect2 {
  public:
-  CEVect2(CEMap &ceMap);
+  CEVect2(const CEMap &ceMap);
   ConjElectrons *getCE(unsigned int depth, unsigned int width);
   unsigned int ceCount() { return rdcast<unsigned int>(d_ceVect.size()); }
   unsigned int depth() { return rdcast<unsigned int>(d_degVect.size()); }
@@ -46,13 +46,13 @@ class CEMetrics {
   bool operator!=(const CEMetrics &other) { return !(*this == other); }
 
  private:
-  unsigned int d_absFormalCharges;
-  unsigned int d_fcSameSignDist;
-  unsigned int d_fcOppSignDist;
-  unsigned int d_nbMissing;
-  int d_wtdFormalCharges;
-  unsigned int d_sumFormalChargeIdxs;
-  unsigned int d_sumMultipleBondIdxs;
+  unsigned int d_absFormalCharges{0};
+  unsigned int d_fcSameSignDist{0};
+  unsigned int d_fcOppSignDist{0};
+  unsigned int d_nbMissing{0};
+  int d_wtdFormalCharges{0};
+  unsigned int d_sumFormalChargeIdxs{0};
+  unsigned int d_sumMultipleBondIdxs{0};
 };
 
 class ConjElectrons {
@@ -324,9 +324,15 @@ bool AtomElectrons::isNbrCharged(unsigned int bo, unsigned int oeConstraint) {
       continue;
     }
     BondElectrons *beNbr = d_parent->getBondElectronsWithIdx(biNbr);
+    if (!beNbr) {
+      continue;
+    }
     const Atom *atomNbr = bondNbr->getOtherAtom(d_atom);
     unsigned int aiNbr = atomNbr->getIdx();
     AtomElectrons *aeNbr = d_parent->getAtomElectronsWithIdx(aiNbr);
+    if (!aeNbr) {
+      continue;
+    }
     res = (((beNbr->isDefinitive() && !aeNbr->hasOctet()) ||
             (!beNbr->isDefinitive() && aeNbr->isDefinitive() &&
              (aeNbr->oe() < (5 - bo)))) &&
@@ -462,13 +468,8 @@ void BondElectrons::setOrder(unsigned int bo) {
 }
 
 CEMetrics::CEMetrics()
-    : d_absFormalCharges(0),
-      d_fcSameSignDist(0),
-      d_fcOppSignDist(0),
-      d_nbMissing(0),
-      d_wtdFormalCharges(0),
-      d_sumFormalChargeIdxs(0),
-      d_sumMultipleBondIdxs(0){};
+    
+      {};
 
 bool CEMetrics::operator==(const CEMetrics &other) {
   return ((d_absFormalCharges == other.d_absFormalCharges) &&
@@ -967,7 +968,7 @@ bool CEVect2::resonanceStructureCompare(const ConjElectrons *a,
                                            b->sumMultipleBondIdxs()));
 }
 
-CEVect2::CEVect2(CEMap &ceMap) {
+CEVect2::CEVect2(const CEMap &ceMap) {
   d_ceVect.reserve(ceMap.size());
   for (CEMap::const_iterator it = ceMap.begin(); it != ceMap.end(); ++it) {
     d_ceVect.push_back(it->second);
@@ -1051,12 +1052,14 @@ void CEVect2::idxToDepthWidth(unsigned int idx, unsigned int &d,
 
 // get the pointer to the BondElectrons object for bond having index bi
 BondElectrons *ConjElectrons::getBondElectronsWithIdx(unsigned int bi) {
-  return d_conjBondMap[bi];
+  auto it = d_conjBondMap.find(bi);
+  return (it != d_conjBondMap.end() ? it->second : nullptr);
 }
 
 // get the pointer to the AtomElectrons object for atom having index ai
 AtomElectrons *ConjElectrons::getAtomElectronsWithIdx(unsigned int ai) {
-  return d_conjAtomMap[ai];
+  auto it = d_conjAtomMap.find(ai);
+  return (it != d_conjAtomMap.end() ? it->second : nullptr);
 }
 
 // count number of total electrons
@@ -1126,8 +1129,10 @@ void ResonanceMolSupplier::idxToCEPerm(unsigned int idx,
     for (unsigned int j = 0; j < g; ++j) {
       d *= d_ceVect3[j]->ceCount();
     }
-    d_ceVect3[g]->idxToDepthWidth(idx / d, c[gt2], c[gt2 + 1]);
-    idx %= d;
+    if (d_ceVect3[g]->ceCount()) {
+      d_ceVect3[g]->idxToDepthWidth(idx / d, c[gt2], c[gt2 + 1]);
+      idx %= d;
+    }
   }
 }
 
@@ -1471,7 +1476,7 @@ void ResonanceMolSupplier::buildCEMap(CEMap &ceMap, unsigned int conjGrpIdx) {
         }
         AtomElectrons *aeNbr = ce->getAtomElectronsWithIdx(aiNbr);
         // if we've already dealt with this neighbor before, ignore it
-        if (aeNbr->isDefinitive()) {
+        if (!aeNbr || aeNbr->isDefinitive()) {
           continue;
         }
         unsigned int biNbr =
@@ -1479,7 +1484,7 @@ void ResonanceMolSupplier::buildCEMap(CEMap &ceMap, unsigned int conjGrpIdx) {
         BondElectrons *beNbr = ce->getBondElectronsWithIdx(biNbr);
         // if we have already assigned the bond order to this bond,
         // ignore it
-        if (beNbr->isDefinitive()) {
+        if (!beNbr || beNbr->isDefinitive()) {
           continue;
         }
         // if this is the first neighbor we find, process it
@@ -1612,7 +1617,7 @@ inline void ResonanceMolSupplier::resizeCeVect() {
 
 // stores the ConjElectrons pointers currently stored in ceMap
 // in the d_ceVect3 vector
-inline void ResonanceMolSupplier::storeCEMap(CEMap &ceMap,
+inline void ResonanceMolSupplier::storeCEMap(const CEMap &ceMap,
                                              unsigned int conjGrpIdx) {
   d_ceVect3[conjGrpIdx] = new CEVect2(ceMap);
 }

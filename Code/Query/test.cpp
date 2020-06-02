@@ -12,7 +12,7 @@
 #include <RDGeneral/test.h>
 #include "QueryObjects.h"
 #include <iostream>
-#include <math.h>
+#include <cmath>
 #include <boost/lexical_cast.hpp>
 
 using namespace std;

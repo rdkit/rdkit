@@ -14,6 +14,7 @@
 #include <GraphMol/new_canon.h>
 #include <RDGeneral/BoostStartInclude.h>
 #include <boost/dynamic_bitset.hpp>
+#include <RDGeneral/utils.h>
 #include <RDGeneral/BoostEndInclude.h>
 
 #include <sstream>
@@ -454,7 +455,7 @@ std::string MolToSmiles(const ROMol &mol, bool doIsomericSmiles, bool doKekule,
     if (doRandom && rootedAtAtom == -1) {
       // need to find a random atom id between 0 and mol.getNumAtoms()
       // exclusively
-      rootedAtAtom = std::rand() % mol.getNumAtoms();
+      rootedAtAtom = getRandomGenerator()() % mol.getNumAtoms();
     }
 
     std::string res;
@@ -572,6 +573,25 @@ std::string MolToCXSmiles(const ROMol &mol, bool doIsomericSmiles,
   return res;
 }
 
+std::vector<std::string> MolToRandomSmilesVect(
+    const ROMol &mol, unsigned int numSmiles, unsigned int randomSeed,
+    bool doIsomericSmiles, bool doKekule, bool allBondsExplicit,
+    bool allHsExplicit) {
+  if (randomSeed > 0) {
+    getRandomGenerator(rdcast<int>(randomSeed));
+  }
+  std::vector<std::string> res;
+  res.reserve(numSmiles);
+  for (unsigned int i = 0; i < numSmiles; ++i) {
+    bool canonical = false;
+    int rootedAtAtom = -1;
+    bool doRandom = true;
+    res.push_back(MolToSmiles(mol, doIsomericSmiles, doKekule, rootedAtAtom,
+                              canonical, allBondsExplicit, allHsExplicit,
+                              doRandom));
+  }
+  return res;
+};
 std::string MolFragmentToSmiles(const ROMol &mol,
                                 const std::vector<int> &atomsToUse,
                                 const std::vector<int> *bondsToUse,

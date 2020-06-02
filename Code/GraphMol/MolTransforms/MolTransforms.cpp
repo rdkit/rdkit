@@ -18,7 +18,7 @@
 #include <boost/dynamic_bitset.hpp>
 #include <RDGeneral/Exceptions.h>
 
-#define EIGEN_TOLERANCE 5.0e-2
+constexpr double EIGEN_TOLERANCE = 5.0e-2;
 namespace MolTransforms {
 
 using namespace RDKit;

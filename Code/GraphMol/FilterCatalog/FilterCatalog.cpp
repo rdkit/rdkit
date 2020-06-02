@@ -229,7 +229,7 @@ const std::vector<FilterCatalog::CONST_SENTRY> FilterCatalog::getMatches(
   std::vector<CONST_SENTRY> result;
   for (const auto &d_entry : d_entries) {
     if (d_entry->hasFilterMatch(mol)) {
-      result.push_back(d_entry);
+      result.emplace_back(d_entry);
     }
   }
   return result;

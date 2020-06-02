@@ -631,23 +631,29 @@ void forwardReactantBondStereo(ReactantProductAtomMapping *mapping, Bond *pBond,
   unsigned pEndAnchorIdx =
       reactProdMapAnchorIdx(pBond->getEndAtom(), pEndAnchorCandidates.first);
 
-  pBond->setStereoAtoms(pStartAnchorIdx, pEndAnchorIdx);
-
-  bool flipStereo =
-      (pStartAnchorCandidates.second + pEndAnchorCandidates.second) % 2;
-
-  if (rBond->getStereo() == Bond::BondStereo::STEREOCIS ||
-      rBond->getStereo() == Bond::BondStereo::STEREOZ) {
-    if (flipStereo) {
-      pBond->setStereo(Bond::BondStereo::STEREOTRANS);
-    } else {
-      pBond->setStereo(Bond::BondStereo::STEREOCIS);
-    }
+  const ROMol &m=pBond->getOwningMol();
+  if (m.getBondBetweenAtoms(pBond->getBeginAtomIdx(), pStartAnchorIdx) == nullptr ||
+      m.getBondBetweenAtoms(pBond->getEndAtomIdx(), pEndAnchorIdx) == nullptr) {
+    BOOST_LOG(rdWarningLog)
+      << "stereo atoms in input cannot be mapped to output (atoms are no longer bonded)\n";
   } else {
-    if (flipStereo) {
-      pBond->setStereo(Bond::BondStereo::STEREOCIS);
+    pBond->setStereoAtoms(pStartAnchorIdx, pEndAnchorIdx);
+    bool flipStereo =
+      (pStartAnchorCandidates.second + pEndAnchorCandidates.second) % 2;
+  
+    if (rBond->getStereo() == Bond::BondStereo::STEREOCIS ||
+	rBond->getStereo() == Bond::BondStereo::STEREOZ) {
+      if (flipStereo) {
+	pBond->setStereo(Bond::BondStereo::STEREOTRANS);
+      } else {
+	pBond->setStereo(Bond::BondStereo::STEREOCIS);
+      }
     } else {
-      pBond->setStereo(Bond::BondStereo::STEREOTRANS);
+      if (flipStereo) {
+	pBond->setStereo(Bond::BondStereo::STEREOCIS);
+      } else {
+	pBond->setStereo(Bond::BondStereo::STEREOTRANS);
+      }
     }
   }
 }
@@ -702,8 +708,8 @@ void updateStereoBonds(RWMOL_SPTR product, const ROMol &reactant,
       Atom *pStart = pBond->getBeginAtom();
       Atom *pEnd = pBond->getEndAtom();
 
-      pStart->calcImplicitValence(true);
-      pEnd->calcImplicitValence(true);
+      pStart->calcImplicitValence(false);
+      pEnd->calcImplicitValence(false);
 
       if (pStart->getTotalDegree() < 3 || pEnd->getTotalDegree() < 3) {
         pBond->setStereo(Bond::BondStereo::STEREONONE);
@@ -1578,15 +1584,15 @@ ROMol *reduceProductToSideChains(const ROMOL_SPTR &product,
         if (!nbr->hasProp(common_properties::reactionMapNum) &&
             nbr->hasProp(common_properties::reactantAtomIdx)) {
           if (nbr->hasProp(WAS_DUMMY)) {
-            bonds_to_product.push_back(RGroup(
+            bonds_to_product.emplace_back(
                 nbr,
                 mol->getBondBetweenAtoms(scaffold_atom->getIdx(), *nbrIdx)
                     ->getBondType(),
-                nbr->getProp<int>(common_properties::reactionMapNum)));
+                nbr->getProp<int>(common_properties::reactionMapNum));
           } else {
-            bonds_to_product.push_back(RGroup(
+            bonds_to_product.emplace_back(
                 nbr, mol->getBondBetweenAtoms(scaffold_atom->getIdx(), *nbrIdx)
-                         ->getBondType()));
+                         ->getBondType());
           }
         }
 

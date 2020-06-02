@@ -38,12 +38,12 @@ using namespace RDKit;
 
 void rdBadFileExceptionTranslator(RDKit::BadFileException const &x) {
   std::ostringstream ss;
-  ss << "File error: " << x.message();
+  ss << "File error: " << x.what();
   PyErr_SetString(PyExc_IOError, ss.str().c_str());
 }
 void rdFileParseExceptionTranslator(RDKit::FileParseException const &x) {
   std::ostringstream ss;
-  ss << "File parsing error: " << x.message();
+  ss << "File parsing error: " << x.what();
   PyErr_SetString(PyExc_RuntimeError, ss.str().c_str());
 }
 
@@ -101,7 +101,7 @@ ROMol *MolFromTPLFile(const char *filename, bool sanitize = true,
   try {
     newM = TPLFileToMol(filename, sanitize, skipFirstConf);
   } catch (RDKit::BadFileException &e) {
-    PyErr_SetString(PyExc_IOError, e.message());
+    PyErr_SetString(PyExc_IOError, e.what());
     throw python::error_already_set();
   } catch (...) {
     newM = nullptr;
@@ -128,10 +128,10 @@ ROMol *MolFromMolFile(const char *molFilename, bool sanitize, bool removeHs,
   try {
     newM = MolFileToMol(molFilename, sanitize, removeHs, strictParsing);
   } catch (RDKit::BadFileException &e) {
-    PyErr_SetString(PyExc_IOError, e.message());
+    PyErr_SetString(PyExc_IOError, e.what());
     throw python::error_already_set();
   } catch (RDKit::FileParseException &e) {
-    BOOST_LOG(rdWarningLog) << e.message() << std::endl;
+    BOOST_LOG(rdWarningLog) << e.what() << std::endl;
   } catch (...) {
   }
   return static_cast<ROMol *>(newM);
@@ -146,7 +146,7 @@ ROMol *MolFromMolBlock(python::object imolBlock, bool sanitize, bool removeHs,
     newM =
         MolDataStreamToMol(inStream, line, sanitize, removeHs, strictParsing);
   } catch (RDKit::FileParseException &e) {
-    BOOST_LOG(rdWarningLog) << e.message() << std::endl;
+    BOOST_LOG(rdWarningLog) << e.what() << std::endl;
   } catch (...) {
   }
   return static_cast<ROMol *>(newM);
@@ -165,7 +165,7 @@ ROMol *MolFromMol2File(const char *molFilename, bool sanitize = true,
     newM = Mol2FileToMol(molFilename, sanitize, removeHs, CORINA,
                          cleanupSubstructures);
   } catch (RDKit::BadFileException &e) {
-    PyErr_SetString(PyExc_IOError, e.message());
+    PyErr_SetString(PyExc_IOError, e.what());
     throw python::error_already_set();
   } catch (...) {
     newM = nullptr;
@@ -193,10 +193,10 @@ ROMol *MolFromPDBFile(const char *filename, bool sanitize, bool removeHs,
   try {
     newM = PDBFileToMol(filename, sanitize, removeHs, flavor, proximityBonding);
   } catch (RDKit::BadFileException &e) {
-    PyErr_SetString(PyExc_IOError, e.message());
+    PyErr_SetString(PyExc_IOError, e.what());
     throw python::error_already_set();
   } catch (RDKit::FileParseException &e) {
-    BOOST_LOG(rdWarningLog) << e.message() << std::endl;
+    BOOST_LOG(rdWarningLog) << e.what() << std::endl;
   } catch (...) {
   }
   return static_cast<ROMol *>(newM);
@@ -210,7 +210,7 @@ ROMol *MolFromPDBBlock(python::object molBlock, bool sanitize, bool removeHs,
     newM = PDBDataStreamToMol(inStream, sanitize, removeHs, flavor,
                               proximityBonding);
   } catch (RDKit::FileParseException &e) {
-    BOOST_LOG(rdWarningLog) << e.message() << std::endl;
+    BOOST_LOG(rdWarningLog) << e.what() << std::endl;
   } catch (...) {
   }
   return static_cast<ROMol *>(newM);
@@ -221,7 +221,7 @@ ROMol *MolFromSequence(python::object seq, bool sanitize, int flavor) {
   try {
     newM = SequenceToMol(pyObjectToString(seq), sanitize, flavor);
   } catch (RDKit::FileParseException &e) {
-    BOOST_LOG(rdWarningLog) << e.message() << std::endl;
+    BOOST_LOG(rdWarningLog) << e.what() << std::endl;
   } catch (...) {
   }
   return static_cast<ROMol *>(newM);
@@ -231,7 +231,7 @@ ROMol *MolFromFASTA(python::object seq, bool sanitize, int flavor) {
   try {
     newM = FASTAToMol(pyObjectToString(seq), sanitize, flavor);
   } catch (RDKit::FileParseException &e) {
-    BOOST_LOG(rdWarningLog) << e.message() << std::endl;
+    BOOST_LOG(rdWarningLog) << e.what() << std::endl;
   } catch (...) {
   }
   return static_cast<ROMol *>(newM);
@@ -241,7 +241,7 @@ ROMol *MolFromHELM(python::object seq, bool sanitize) {
   try {
     newM = HELMToMol(pyObjectToString(seq), sanitize);
   } catch (RDKit::FileParseException &e) {
-    BOOST_LOG(rdWarningLog) << e.message() << std::endl;
+    BOOST_LOG(rdWarningLog) << e.what() << std::endl;
   } catch (...) {
   }
   return static_cast<ROMol *>(newM);
@@ -377,6 +377,21 @@ ROMol *MolFromSmilesHelper(python::object ismiles,
 
   return SmilesToMol(smiles, params);
 }
+
+python::list MolToRandomSmilesHelper(const ROMol &mol, unsigned int numSmiles,
+                                     unsigned int randomSeed,
+                                     bool doIsomericSmiles, bool doKekule,
+                                     bool allBondsExplicit,
+                                     bool allHsExplicit) {
+  auto res = MolToRandomSmilesVect(mol, numSmiles, randomSeed, doIsomericSmiles,
+                                   doKekule, allBondsExplicit, allHsExplicit);
+  python::list pyres;
+  for (auto smi : res) {
+    pyres.append(smi);
+  }
+  return pyres;
+}
+
 }  // namespace RDKit
 
 // MolSupplier stuff
@@ -681,6 +696,25 @@ BOOST_PYTHON_MODULE(rdmolfiles) {
                python::arg("confId") = -1, python::arg("kekulize") = true,
                python::arg("forceV3000") = false),
               docString.c_str());
+  docString =
+      "Returns a V3000 Mol block for a molecule\n\
+  ARGUMENTS:\n\
+\n\
+    - mol: the molecule\n\
+    - includeStereo: (optional) toggles inclusion of stereochemical\n\
+      information in the output\n\
+    - confId: (optional) selects which conformation to output (-1 = default)\n\
+    - kekulize: (optional) triggers kekulization of the molecule before it's written,\n\
+      as suggested by the MDL spec.\n\
+\n\
+  RETURNS:\n\
+\n\
+    a string\n\
+\n";
+  python::def("MolToV3KMolBlock", RDKit::MolToV3KMolBlock,
+              (python::arg("mol"), python::arg("includeStereo") = true,
+               python::arg("confId") = -1, python::arg("kekulize") = true),
+              docString.c_str());
 
   docString =
       "Writes a Mol file for a molecule\n\
@@ -706,6 +740,28 @@ BOOST_PYTHON_MODULE(rdmolfiles) {
        python::arg("includeStereo") = true, python::arg("confId") = -1,
        python::arg("kekulize") = true, python::arg("forceV3000") = false),
       docString.c_str());
+
+  docString =
+      "Writes a V3000 Mol file for a molecule\n\
+  ARGUMENTS:\n\
+\n\
+    - mol: the molecule\n\
+    - filename: the file to write to\n\
+    - includeStereo: (optional) toggles inclusion of stereochemical\n\
+      information in the output\n\
+    - confId: (optional) selects which conformation to output (-1 = default)\n\
+    - kekulize: (optional) triggers kekulization of the molecule before it's written,\n\
+      as suggested by the MDL spec.\n\
+\n\
+  RETURNS:\n\
+\n\
+    a string\n\
+\n";
+  python::def("MolToV3KMolFile", RDKit::MolToV3KMolFile,
+              (python::arg("mol"), python::arg("filename"),
+               python::arg("includeStereo") = true, python::arg("confId") = -1,
+               python::arg("kekulize") = true),
+              docString.c_str());
 
   //
 
@@ -1380,6 +1436,15 @@ BOOST_PYTHON_MODULE(rdmolfiles) {
        python::arg("missingValueMarker") = "", python::arg("lineSize") = 190),
       "creates a list property on the molecule from individual atom property "
       "values");
+
+  python::def(
+      "MolToRandomSmilesVect", RDKit::MolToRandomSmilesHelper,
+      (python::arg("mol"), python::arg("numSmiles"),
+       python::arg("randomSeed") = 0, python::arg("isomericSmiles") = true,
+       python::arg("kekuleSmiles") = false,
+       python::arg("allBondsExplicit") = false,
+       python::arg("allHsExplicit") = false),
+      "returns a list of SMILES generated using the randomSmiles algorithm");
 
 /********************************************************
  * MolSupplier stuff

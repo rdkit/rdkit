@@ -231,8 +231,9 @@ bool ChemicalReaction::validate(unsigned int &numWarnings,
               }
               numWarnings++;
             } else {
-              int neg =
-                  query->getDescription() == "AtomNegativeFormalCharge" ? -1 : 1;
+              int neg = query->getDescription() == "AtomNegativeFormalCharge"
+                            ? -1
+                            : 1;
               (*atomIt)->setProp(
                   common_properties::_QueryFormalCharge,
                   neg *
@@ -487,23 +488,22 @@ bool isChangedAtom(const Atom &rAtom, const Atom &pAtom, int mapNum,
 
   // now check bond layout:
   std::map<unsigned int, const Bond *> reactantBonds;
-  ROMol::ADJ_ITER nbrIdx, endNbrs;
-  boost::tie(nbrIdx, endNbrs) = rAtom.getOwningMol().getAtomNeighbors(&rAtom);
-  while (nbrIdx != endNbrs) {
-    const Atom *nbr = rAtom.getOwningMol()[*nbrIdx];
+  for (const auto &nbrIdx : boost::make_iterator_range(
+           rAtom.getOwningMol().getAtomNeighbors(&rAtom))) {
+    const Atom *nbr = rAtom.getOwningMol()[nbrIdx];
     int mapNum;
     if (nbr->getPropIfPresent(common_properties::molAtomMapNumber, mapNum)) {
       reactantBonds[mapNum] = rAtom.getOwningMol().getBondBetweenAtoms(
           rAtom.getIdx(), nbr->getIdx());
     } else {
-      // if we have an un-mapped neighbor, we are automatically a reacting atom:
+      // if we have an un-mapped neighbor, we are automatically a reacting
+      // atom:
       return true;
     }
-    ++nbrIdx;
   }
-  boost::tie(nbrIdx, endNbrs) = pAtom.getOwningMol().getAtomNeighbors(&pAtom);
-  while (nbrIdx != endNbrs) {
-    const Atom *nbr = pAtom.getOwningMol()[*nbrIdx];
+  for (const auto &nbrIdx : boost::make_iterator_range(
+           pAtom.getOwningMol().getAtomNeighbors(&pAtom))) {
+    const Atom *nbr = pAtom.getOwningMol()[nbrIdx];
     int mapNum;
     if (nbr->getPropIfPresent(common_properties::molAtomMapNumber, mapNum)) {
       // if we don't have a bond to a similarly mapped atom in the reactant,
@@ -531,9 +531,9 @@ bool isChangedAtom(const Atom &rAtom, const Atom &pAtom, int mapNum,
                            "SingleOrAromaticBond" &&
                        pBond->getQuery()->getDescription() ==
                            "SingleOrAromaticBond"))) {
-            // The SMARTS parser tags unspecified bonds as single, but then adds
-            // a query so that they match single or double.
-            // these cases match
+            // The SMARTS parser tags unspecified bonds as single, but then
+            // adds a query so that they match single or double. these cases
+            // match
           } else {
             if (rBond->getBondType() == pBond->getBondType() &&
                 rBond->getQuery()->getDescription() == "BondOrder" &&
@@ -563,7 +563,6 @@ bool isChangedAtom(const Atom &rAtom, const Atom &pAtom, int mapNum,
         }
       }
     }
-    ++nbrIdx;
   }
 
   // haven't found anything to say that we are changed, so we must
@@ -572,20 +571,14 @@ bool isChangedAtom(const Atom &rAtom, const Atom &pAtom, int mapNum,
 }
 
 template <class T>
-bool getMappedAtoms(T &rIt, std::map<int, const Atom *> &mappedAtoms) {
-  ROMol::ATOM_ITER_PAIR atItP = rIt->getVertices();
-  while (atItP.first != atItP.second) {
-    const Atom *oAtom = (*rIt)[*(atItP.first++)];
+void getMappedAtoms(T &rIt, std::map<int, const Atom *> &mappedAtoms) {
+  for (const auto atom : rIt->atoms()) {
     // we only worry about mapped atoms:
     int mapNum;
-    if (oAtom->getPropIfPresent(common_properties::molAtomMapNumber, mapNum)) {
-      mappedAtoms[mapNum] = oAtom;
-    } else {
-      // unmapped atom, return it
-      return false;
+    if (atom->getPropIfPresent(common_properties::molAtomMapNumber, mapNum)) {
+      mappedAtoms[mapNum] = atom;
     }
   }
-  return true;
 }
 }  // end of anonymous namespace
 
@@ -610,9 +603,7 @@ VECT_INT_VECT getReactingAtoms(const ChemicalReaction &rxn,
   auto resIt = res.begin();
   for (auto rIt = rxn.beginReactantTemplates();
        rIt != rxn.endReactantTemplates(); ++rIt, ++resIt) {
-    ROMol::ATOM_ITER_PAIR atItP = (*rIt)->getVertices();
-    while (atItP.first != atItP.second) {
-      const Atom *oAtom = (**rIt)[*(atItP.first++)];
+    for (const auto oAtom : (*rIt)->atoms()) {
       // unmapped atoms are definitely changing:
       int mapNum;
       if (!oAtom->getPropIfPresent(common_properties::molAtomMapNumber,

@@ -11,6 +11,7 @@
 // RDKit configuration options
 #cmakedefine RDK_USE_BOOST_SERIALIZATION
 #cmakedefine RDK_USE_BOOST_IOSTREAMS
+#cmakedefine RDK_USE_BOOST_STACKTRACE
 
 #cmakedefine RDK_OPTIMIZE_POPCNT
 #ifdef RDK_OPTIMIZE_POPCNT

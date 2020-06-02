@@ -31,7 +31,7 @@ MolStandardize::TautomerEnumerator *createDefaultEnumerator() {
   return EnumeratorFromParams(ps);
 }
 
-ROMol *canonicalizeHelper(MolStandardize::TautomerEnumerator &self,
+ROMol *canonicalizeHelper(const MolStandardize::TautomerEnumerator &self,
                           const ROMol &mol) {
   return self.canonicalize(mol);
 }
@@ -48,16 +48,47 @@ class pyobjFunctor {
   python::object dp_obj;
 };
 
-ROMol *canonicalizeHelper2(MolStandardize::TautomerEnumerator &self,
+ROMol *canonicalizeHelper2(const MolStandardize::TautomerEnumerator &self,
                            const ROMol &mol, python::object scoreFunc) {
   pyobjFunctor ftor(scoreFunc);
   return self.canonicalize(mol, ftor);
 }
 
-double scoreHelper(MolStandardize::TautomerEnumerator &self, const ROMol &mol) {
+double scoreHelper(const MolStandardize::TautomerEnumerator &self,
+                   const ROMol &mol) {
   RDUNUSED_PARAM(self);
   return MolStandardize::TautomerScoringFunctions::scoreTautomer(mol);
 }
+
+std::vector<ROMOL_SPTR> enumerateHelper(
+    const MolStandardize::TautomerEnumerator &self, const ROMol &mol,
+    python::object pyModAtoms, python::object pyModBonds) {
+  if (pyModAtoms != python::object() || pyModBonds != python::object()) {
+    boost::dynamic_bitset<> modifiedAtoms(mol.getNumAtoms());
+    boost::dynamic_bitset<> modifiedBonds(mol.getNumBonds());
+    auto res = self.enumerate(mol, &modifiedAtoms, &modifiedBonds);
+    if (pyModAtoms != python::object()) {
+      python::list atList = python::extract<python::list>(pyModAtoms);
+      for (unsigned int i = 0; i < mol.getNumAtoms(); ++i) {
+        if (modifiedAtoms[i]) {
+          atList.append(i);
+        }
+      }
+    }
+    if (pyModBonds != python::object()) {
+      python::list bndList = python::extract<python::list>(pyModBonds);
+      for (unsigned int i = 0; i < mol.getNumBonds(); ++i) {
+        if (modifiedBonds[i]) {
+          bndList.append(i);
+        }
+      }
+    }
+    return res;
+  } else {
+    return self.enumerate(mol);
+  }
+}
+
 }  // namespace
 
 struct tautomer_wrapper {
@@ -66,13 +97,22 @@ struct tautomer_wrapper {
         "TautomerEnumerator", python::no_init)
         .def("__init__", python::make_constructor(createDefaultEnumerator))
         .def("__init__", python::make_constructor(EnumeratorFromParams))
-        .def("Enumerate", &MolStandardize::TautomerEnumerator::enumerate,
-             (python::arg("self"), python::arg("mol")),
+        .def("Enumerate", &enumerateHelper,
+             (python::arg("self"), python::arg("mol"),
+              python::arg("modifiedAtoms") = python::object(),
+              python::arg("modifiedBonds") = python::object()),
              R"DOC(Generates the tautomers for a molecule.
              
   The enumeration rules are inspired by the publication:
   M. Sitzmann et al., “Tautomerism in Large Databases.”, JCAMD 24:521 (2010)
-  https://doi.org/10.1007/s10822-010-9346-4)DOC")
+  https://doi.org/10.1007/s10822-010-9346-4
+  
+  Note: the definitions used here are that the atoms modified during
+  tautomerization are the atoms at the beginning and end of each tautomer
+  transform (the H "donor" and H "acceptor" in the transform) and the bonds
+  modified during transformation are any bonds whose order is changed during
+  the tautomer transform (these are the bonds between the "donor" and the
+  "acceptor"))DOC")
         .def("Canonicalize", &canonicalizeHelper,
              (python::arg("self"), python::arg("mol")),
              R"DOC(Returns the canonical tautomer for a molecule.

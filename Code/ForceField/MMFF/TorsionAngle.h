@@ -29,7 +29,7 @@ class RDKIT_FORCEFIELD_EXPORT RDKIT_FORCEFIELD_EXPORT TorsionAngleContrib
     : public ForceFieldContrib {
  public:
   TorsionAngleContrib()
-      : d_at1Idx(-1), d_at2Idx(-1), d_at3Idx(-1), d_at4Idx(-1){};
+       {};
   //! Constructor
   /*!
     The torsion is between atom1 - atom2 - atom3 - atom4
@@ -53,7 +53,7 @@ class RDKIT_FORCEFIELD_EXPORT RDKIT_FORCEFIELD_EXPORT TorsionAngleContrib
   };
 
  private:
-  int d_at1Idx, d_at2Idx, d_at3Idx, d_at4Idx;
+  int d_at1Idx{-1}, d_at2Idx{-1}, d_at3Idx{-1}, d_at4Idx{-1};
   double d_V1, d_V2, d_V3;
 };
 

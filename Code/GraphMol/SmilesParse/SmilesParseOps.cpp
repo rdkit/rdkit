@@ -229,7 +229,7 @@ void AdjustAtomChiralityFlags(RWMol *mol) {
       std::list<SIZET_PAIR> neighbors;
       // push this atom onto the list of neighbors (we'll use this
       // to find our place later):
-      neighbors.push_back(std::make_pair(atom->getIdx(), -1));
+      neighbors.emplace_back(atom->getIdx(), -1);
       std::list<size_t> bondOrder;
       for (auto nbrIdx :
            boost::make_iterator_range(mol->getAtomNeighbors(atom))) {
@@ -237,7 +237,7 @@ void AdjustAtomChiralityFlags(RWMol *mol) {
         if (std::find(ringClosures.begin(), ringClosures.end(),
                       static_cast<int>(nbrBond->getIdx())) ==
             ringClosures.end()) {
-          neighbors.push_back(std::make_pair(nbrIdx, nbrBond->getIdx()));
+          neighbors.emplace_back(nbrIdx, nbrBond->getIdx());
         }
       }
       // sort the list of non-ring-closure bonds:

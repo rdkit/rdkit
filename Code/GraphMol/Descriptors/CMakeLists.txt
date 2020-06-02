@@ -1,7 +1,7 @@
 if(RDK_BUILD_DESCRIPTORS3D)
 
-  set(DESC3D_HDRS MolDescriptors3D.h EEM.h PBF.h PMI.h AUTOCORR3D.h RDF.h MORSE.h GETAWAY.h WHIM.h)
-  set(DESC3D_SOURCES EEM.cpp PBF.cpp PMI.cpp AUTOCORR3D.cpp RDF.cpp MORSE.cpp GETAWAY.cpp WHIM.cpp)
+  set(DESC3D_HDRS MolDescriptors3D.h EEM.h PBF.h PMI.h AUTOCORR3D.h RDF.h MORSE.h GETAWAY.h WHIM.h CoulombMat.h)
+  set(DESC3D_SOURCES EEM.cpp PBF.cpp PMI.cpp AUTOCORR3D.cpp RDF.cpp MORSE.cpp GETAWAY.cpp WHIM.cpp CoulombMat.cpp)
 
 endif(RDK_BUILD_DESCRIPTORS3D)
 
@@ -16,7 +16,7 @@ rdkit_library(Descriptors
               USRDescriptor.cpp AtomFeat.cpp
               ${DESC3D_SOURCES}
               LINK_LIBRARIES PartialCharges SmilesParse FileParsers Subgraphs SubstructMatch MolTransforms GraphMol
-                 EigenSolvers ${RDKit_THREAD_LIBS})
+                 EigenSolvers RDGeneral)
 
 rdkit_headers(Crippen.h BCUT.h Lipinski.h
               MolDescriptors.h
@@ -30,38 +30,40 @@ rdkit_headers(Crippen.h BCUT.h Lipinski.h
               DEST GraphMol/Descriptors)
 
 rdkit_test(testDescriptors test.cpp
-LINK_LIBRARIES PartialCharges Descriptors FileParsers SmilesParse Subgraphs SubstructMatch MolTransforms GraphMol EigenSolvers DataStructs RDGeneral RDGeometryLib ${RDKit_THREAD_LIBS} )
+LINK_LIBRARIES PartialCharges Descriptors )
 
 rdkit_test(testAUTOCORR2D testAUTOCORR2D.cpp
-LINK_LIBRARIES  Descriptors FileParsers SmilesParse MolTransforms PartialCharges GraphMol DataStructs EigenSolvers RDGeneral RDGeometryLib ${RDKit_THREAD_LIBS} )
+LINK_LIBRARIES  Descriptors )
 
 rdkit_test(testATF testATF.cpp
-LINK_LIBRARIES  Descriptors FileParsers SmilesParse MolTransforms PartialCharges GraphMol DataStructs EigenSolvers RDGeneral RDGeometryLib ${RDKit_THREAD_LIBS} )
+LINK_LIBRARIES  Descriptors )
 
 if(RDK_HAS_EIGEN)
   rdkit_test(testBCUT testBCUT.cpp
-  LINK_LIBRARIES  Descriptors FileParsers SmilesParse MolTransforms PartialCharges GraphMol DataStructs EigenSolvers RDGeneral RDGeometryLib ${RDKit_THREAD_LIBS} )
+  LINK_LIBRARIES  Descriptors )
 endif(RDK_HAS_EIGEN)
 
 if(RDK_BUILD_DESCRIPTORS3D)
   rdkit_test(testEEM testEEM.cpp
-LINK_LIBRARIES  Descriptors FileParsers SmilesParse MolTransforms PartialCharges GraphMol DataStructs EigenSolvers RDGeneral RDGeometryLib ${RDKit_THREAD_LIBS} )
+LINK_LIBRARIES  Descriptors )
   rdkit_test(testPBF testPBF.cpp
-LINK_LIBRARIES  Descriptors FileParsers SmilesParse MolTransforms PartialCharges GraphMol DataStructs EigenSolvers RDGeneral RDGeometryLib ${RDKit_THREAD_LIBS} )
+LINK_LIBRARIES  Descriptors )
  rdkit_test(testRDFcustom testRDFcustom.cpp
-LINK_LIBRARIES  Descriptors FileParsers SmilesParse MolTransforms PartialCharges GraphMol DataStructs EigenSolvers RDGeneral RDGeometryLib ${RDKit_THREAD_LIBS} )
+LINK_LIBRARIES  Descriptors )
  rdkit_test(testRDF testRDF.cpp
-LINK_LIBRARIES  Descriptors FileParsers SmilesParse MolTransforms PartialCharges GraphMol DataStructs EigenSolvers RDGeneral RDGeometryLib ${RDKit_THREAD_LIBS} )
+LINK_LIBRARIES  Descriptors )
  rdkit_test(testMORSE testMORSE.cpp
-LINK_LIBRARIES  Descriptors FileParsers SmilesParse MolTransforms PartialCharges GraphMol DataStructs EigenSolvers RDGeneral RDGeometryLib ${RDKit_THREAD_LIBS} )
+LINK_LIBRARIES  Descriptors )
 rdkit_test(test3D test3D.cpp
-LINK_LIBRARIES  Descriptors FileParsers SmilesParse MolTransforms PartialCharges GraphMol DataStructs EigenSolvers RDGeneral RDGeometryLib ${RDKit_THREAD_LIBS} )
+LINK_LIBRARIES  Descriptors )
   rdkit_test(testWHIM testWHIM.cpp
-LINK_LIBRARIES  Descriptors FileParsers SmilesParse MolTransforms PartialCharges GraphMol DataStructs EigenSolvers RDGeneral RDGeometryLib ${RDKit_THREAD_LIBS} )
+LINK_LIBRARIES  Descriptors )
   rdkit_test(testGETAWAY testGETAWAY.cpp
-LINK_LIBRARIES  Descriptors FileParsers SmilesParse MolTransforms PartialCharges GraphMol DataStructs EigenSolvers RDGeneral RDGeometryLib ${RDKit_THREAD_LIBS} )
+LINK_LIBRARIES  Descriptors )
   rdkit_test(testAUTOCORR3D testAUTOCORR3D.cpp
-LINK_LIBRARIES  Descriptors FileParsers SmilesParse MolTransforms PartialCharges GraphMol DataStructs EigenSolvers RDGeneral RDGeometryLib ${RDKit_THREAD_LIBS} )
+LINK_LIBRARIES  Descriptors )
+ rdkit_test(testCoulombMat testCoulombMat.cpp
+LINK_LIBRARIES  Descriptors ForceFieldHelpers DistGeomHelpers  )
 endif(RDK_BUILD_DESCRIPTORS3D)
 
 

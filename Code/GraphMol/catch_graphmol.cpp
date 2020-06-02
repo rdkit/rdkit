@@ -55,7 +55,7 @@ TEST_CASE("Sanitization tests", "[molops]") {
   }
 }
 
-TEST_CASE("Github #2062", "[bug, molops]") {
+TEST_CASE("Github #2062", "[bug][molops]") {
   SmilesParserParams ps;
   ps.removeHs = false;
   ps.sanitize = true;
@@ -72,7 +72,7 @@ TEST_CASE("Github #2062", "[bug, molops]") {
   }
 }
 
-TEST_CASE("Github #2086", "[bug, molops]") {
+TEST_CASE("Github #2086", "[bug][molops]") {
   SECTION("reported version") {
     auto mol = "C1CCCC1"_smiles;
     REQUIRE(mol);
@@ -84,7 +84,7 @@ TEST_CASE("Github #2086", "[bug, molops]") {
   }
 }
 
-TEST_CASE("github #299", "[bug, molops, SSSR]") {
+TEST_CASE("github #299", "[bug][molops][SSSR]") {
   SECTION("simplified") {
     auto mol =
         "C13%13%14.C124%18.C25%13%15.C368%17.C4679.C75%10%17.C8%11%14%16.C9%11%12%18.C%10%12%15%16"_smiles;
@@ -122,7 +122,7 @@ TEST_CASE("github #299", "[bug, molops, SSSR]") {
   }
 }
 
-TEST_CASE("github #2224", "[bug, molops, removeHs, query]") {
+TEST_CASE("github #2224", "[bug][molops][removeHs][query]") {
   SECTION("the original report") {
     std::string pathName = getenv("RDBASE");
     pathName += "/Code/GraphMol/test_data/";
@@ -155,7 +155,7 @@ TEST_CASE("github #2224", "[bug, molops, removeHs, query]") {
 
 TEST_CASE(
     "github #2268: Recognize N in three-membered rings as potentially chiral",
-    "[bug,stereo]") {
+    "[bug][stereo]") {
   SECTION("basics: N in a 3 ring") {
     const auto mol = "C[N@]1CC1C"_smiles;
     REQUIRE(mol);
@@ -217,7 +217,7 @@ M  END
   }
 }
 
-TEST_CASE("github #2244", "[bug, molops, stereo]") {
+TEST_CASE("github #2244", "[bug][molops][stereo]") {
   SECTION("the original report") {
     auto mol = "CC=CC=CC"_smiles;
     REQUIRE(mol);
@@ -233,7 +233,7 @@ TEST_CASE("github #2244", "[bug, molops, stereo]") {
 
 TEST_CASE(
     "github #2258: heterocycles with exocyclic bonds not failing valence check",
-    "[bug, molops]") {
+    "[bug][molops]") {
   SECTION("the original report") {
     std::vector<std::string> smiles = {"C=n1ccnc1", "C#n1ccnc1"};
     for (auto smi : smiles) {
@@ -243,7 +243,7 @@ TEST_CASE(
 }
 
 TEST_CASE("github #908: AddHs() using 3D coordinates with 2D conformations",
-          "[bug, molops]") {
+          "[bug][molops]") {
   SECTION("basics: single atom mols") {
     std::vector<std::string> smiles = {"Cl", "O", "N", "C"};
     for (auto smi : smiles) {
@@ -268,7 +268,7 @@ TEST_CASE("github #908: AddHs() using 3D coordinates with 2D conformations",
 TEST_CASE(
     "github #2437: Canon::rankMolAtoms results in crossed double bonds in "
     "rings",
-    "[bug, molops]") {
+    "[bug][molops]") {
   SECTION("underlying problem") {
     std::string molb = R"CTAB(testmol
   Mrv1824 05081910082D          
@@ -332,7 +332,7 @@ M  END
 TEST_CASE(
     "github #2423: Incorrect assignment of explicit Hs to Al+3 read from mol "
     "block",
-    "[bug, molops]") {
+    "[bug][molops]") {
   SECTION("basics: single atom mols") {
     std::string mb = R"CTAB(2300
   -OEChem-01301907122D
@@ -426,7 +426,7 @@ TEST_CASE("detectChemistryProblems", "[molops]") {
 
 TEST_CASE(
     "github #2606: Bad valence corrections on Pb, Sn"
-    "[bug, molops]") {
+    "[bug][molops]") {
   SECTION("basics-Pb") {
     std::string mb = R"CTAB(
   Mrv1810 08141905562D          
@@ -484,7 +484,7 @@ M  END
 }
 TEST_CASE(
     "github #2607: Pb, Sn should support valence 2"
-    "[bug, molops]") {
+    "[bug][molops]") {
   SECTION("basics-Pb") {
     std::string mb = R"CTAB(
   Mrv1810 08141905562D          
@@ -521,7 +521,7 @@ M  END
 
 TEST_CASE(
     "github #2649: Allenes read from mol blocks have crossed bonds assigned"
-    "[bug, stereochemistry]") {
+    "[bug][stereochemistry]") {
   SECTION("basics") {
     std::string mb = R"CTAB(mol
   Mrv1824 09191901002D          
@@ -645,7 +645,7 @@ M  END
   }
 }
 
-TEST_CASE("removeHs screwing up double bond stereo", "[bug,removeHs]") {
+TEST_CASE("removeHs screwing up double bond stereo", "[bug][removeHs]") {
   SECTION("example1") {
     std::string molblock = R"CTAB(molblock = """
   SciTegic12221702182D
@@ -775,7 +775,7 @@ M  END
   }
 }
 
-TEST_CASE("setDoubleBondNeighborDirections()", "[stereochemistry,bug]") {
+TEST_CASE("setDoubleBondNeighborDirections()", "[stereochemistry][bug]") {
   SECTION("basics") {
     auto m = "CC=CC"_smiles;
     REQUIRE(m);
@@ -808,7 +808,7 @@ TEST_CASE("github #2782: addHs() fails on atoms with 'bad' valences", "[bug]") {
 TEST_CASE(
     "Github #2784: Element symbol lookup for some transuranics returns "
     "incorrect results",
-    "[transuranics,bug]") {
+    "[transuranics][bug]") {
   auto pt = PeriodicTable::getTable();
   SECTION("number to symbol") {
     std::vector<std::pair<unsigned int, std::string>> data = {
@@ -827,7 +827,7 @@ TEST_CASE(
     }
   }
 }
-TEST_CASE("github #2775", "[valence,bug]") {
+TEST_CASE("github #2775", "[valence][bug]") {
   SECTION("basics") {
     std::string molblock = R"CTAB(bismuth citrate
   Mrv1810 11111908592D          
@@ -1109,7 +1109,7 @@ TEST_CASE("RemoveHsParameters", "[molops]") {
 }
 #endif
 TEST_CASE("github #2895: acepentalene aromaticity perception ",
-          "[molops,bug,aromaticity]") {
+          "[molops][bug][aromaticity]") {
   SECTION("acepentalene") {
     std::unique_ptr<RWMol> m{SmilesToMol("C1=CC2=CC=C3C2=C1C=C3")};
     REQUIRE(m);
@@ -1409,4 +1409,197 @@ TEST_CASE("updateQueryParameters from JSON") {
     // clang-format off
     CHECK_THROWS_AS(MolOps::parseAdjustQueryParametersFromJSON(ps, json),ValueErrorException);
   }
+}
+
+TEST_CASE("phosphine and arsine chirality", "[Chirality]") {
+  SECTION("chiral center recognized"){
+    auto mol1 = "C[P@](C1CCCC1)C1=CC=CC=C1"_smiles;
+    auto mol2 = "C[As@](C1CCCC1)C1=CC=CC=C1"_smiles;
+    REQUIRE(mol1);
+    REQUIRE(mol2);
+    CHECK(mol1->getAtomWithIdx(1)->getChiralTag() != Atom::CHI_UNSPECIFIED);
+    CHECK(mol2->getAtomWithIdx(1)->getChiralTag() != Atom::CHI_UNSPECIFIED);
+  }
+  SECTION("chiral center selective"){
+    auto mol1 = "C[P@](C)C1CCCCC1"_smiles;
+    auto mol2 = "C[As@](C)C1CCCCC1"_smiles;
+    REQUIRE(mol1);
+    REQUIRE(mol2);
+    CHECK(mol1->getAtomWithIdx(1)->getChiralTag() == Atom::CHI_UNSPECIFIED);
+    CHECK(mol2->getAtomWithIdx(1)->getChiralTag() == Atom::CHI_UNSPECIFIED);
+  }
+  SECTION("chiral center specific: P"){
+    auto mol1 = "C[P@](C1CCCC1)C1=CC=CC=C1"_smiles;
+    auto mol2 = "C[P@@](C1CCCC1)C1=CC=CC=C1"_smiles;
+    REQUIRE(mol1); 
+    REQUIRE(mol2);
+    CHECK(MolToSmiles(*mol1) != MolToSmiles(*mol2));
+  }
+  SECTION("chiral center specific: As"){
+    auto mol1 = "C[As@](C1CCCC1)C1=CC=CC=C1"_smiles;
+    auto mol2 = "C[As@@](C1CCCC1)C1=CC=CC=C1"_smiles;
+    REQUIRE(mol1); 
+    REQUIRE(mol2);
+    CHECK(MolToSmiles(*mol1) != MolToSmiles(*mol2));
+  }
+  SECTION("chiral center, implicit H: P"){
+    auto mol1 = "C[P@H]C1CCCCC1"_smiles;
+    auto mol2 = "C[P@@H]C1CCCCC1"_smiles;
+    REQUIRE(mol1);
+    REQUIRE(mol2);
+    CHECK(mol1->getAtomWithIdx(1)->getChiralTag() != Atom::CHI_UNSPECIFIED);
+    CHECK(mol1->getAtomWithIdx(1)->getChiralTag() != Atom::CHI_UNSPECIFIED);
+  }
+  SECTION("chiral center, implicit H: As"){
+    auto mol1 = "C[As@H]C1CCCCC1"_smiles;
+    auto mol2 = "C[As@@H]C1CCCCC1"_smiles;
+    REQUIRE(mol1);
+    REQUIRE(mol2);
+    CHECK(mol1->getAtomWithIdx(1)->getChiralTag() != Atom::CHI_UNSPECIFIED);
+    CHECK(mol1->getAtomWithIdx(1)->getChiralTag() != Atom::CHI_UNSPECIFIED);
+  }
+  SECTION("chiral center specific, implicit H: P"){
+    auto mol1 = "C[P@H]C1CCCCC1"_smiles;
+    auto mol2 = "C[P@@H]C1CCCCC1"_smiles;
+    REQUIRE(mol1);
+    REQUIRE(mol2);
+    CHECK(MolToSmiles(*mol1) != MolToSmiles(*mol2));
+  }
+  SECTION("chiral center specific, implicit H: As"){
+    auto mol1 = "C[As@H]C1CCCCC1"_smiles;
+    auto mol2 = "C[As@@H]C1CCCCC1"_smiles;
+    REQUIRE(mol1);
+    REQUIRE(mol2);
+    CHECK(MolToSmiles(*mol1) != MolToSmiles(*mol2));
+  }
+}
+
+TEST_CASE("github #2890", "[bug][molops][stereo]") {
+    auto mol = "CC=CC"_smiles;
+    REQUIRE(mol);
+
+    auto bond = mol->getBondWithIdx(1);
+    bond->setStereo(Bond::STEREOANY);
+    REQUIRE(bond->getStereoAtoms().empty());
+
+    MolOps::findPotentialStereoBonds(*mol);
+    CHECK(bond->getStereo() == Bond::STEREOANY);
+    CHECK(bond->getStereoAtoms().size() == 2);
+}
+
+
+TEST_CASE("github #3150 MolOps::removeHs removes hydrides", "[bug][molops]") {
+  SmilesParserParams smilesPs;
+  smilesPs.removeHs = false;
+  
+  SECTION("Hydride ion remove Hydrides false") {
+    std::unique_ptr<RWMol> m{SmilesToMol("[H-]", smilesPs)};
+    REQUIRE(m);
+    MolOps::RemoveHsParameters ps;
+    ps.removeHydrides = false;
+    RWMol cp(*m);
+    MolOps::removeHs(cp, ps);
+    // H atom not removed in this case because by default H atoms with degree 0 are not removed
+    CHECK(cp.getNumAtoms() == 1);
+    CHECK(MolOps::getFormalCharge(cp) == -1);
+  }
+
+  SECTION("Hydride ion remove Hydrides true") {
+    std::unique_ptr<RWMol> m{SmilesToMol("[H-]", smilesPs)};
+    REQUIRE(m);
+    MolOps::RemoveHsParameters ps;
+    ps.removeHydrides = true;
+    RWMol cp(*m);
+    MolOps::removeHs(cp, ps);
+    // H atom not removed in this case because by default H atoms with degree 0 are not removed
+    CHECK(cp.getNumAtoms() == 1);
+    CHECK(MolOps::getFormalCharge(cp) == -1);
+  }
+
+  SECTION("Water") {
+    std::unique_ptr<RWMol> m{SmilesToMol("[OH+][H-]", smilesPs)};
+    REQUIRE(m);
+    MolOps::RemoveHsParameters ps;
+    ps.removeHydrides = false;
+    RWMol cp(*m);
+    MolOps::removeHs(cp, ps);
+    CHECK(cp.getNumAtoms() == 2);
+    CHECK(MolOps::getFormalCharge(cp) == 0);
+  }
+
+  SECTION("Water remove Hydrides true") {
+    std::unique_ptr<RWMol> m{SmilesToMol("[OH+][H-]", smilesPs)};
+    REQUIRE(m);
+    MolOps::RemoveHsParameters ps;
+    ps.removeHydrides = true;
+    RWMol cp(*m);
+    MolOps::removeHs(cp, ps);
+    CHECK(cp.getNumAtoms() == 1);
+    CHECK(MolOps::getFormalCharge(cp) == 1);
+  }
+
+  SECTION("Iron Hydride") {
+    std::unique_ptr<RWMol> m{SmilesToMol("[Fe+2]<-[H-]", smilesPs)};
+    REQUIRE(m);
+    MolOps::RemoveHsParameters ps;
+    ps.removeHydrides = false;
+    RWMol cp(*m);
+    MolOps::removeHs(cp, ps);
+    CHECK(cp.getNumAtoms() == 2);
+    CHECK(MolOps::getFormalCharge(cp) == 1);
+  }
+
+  SECTION("Iron Hydride remove Hydrides") {
+    std::unique_ptr<RWMol> m{SmilesToMol("[Fe+2]<-[H-]", smilesPs)};
+    REQUIRE(m);
+    MolOps::RemoveHsParameters ps;
+    ps.removeHydrides = true;
+    RWMol cp(*m);
+    MolOps::removeHs(cp, ps);
+    CHECK(cp.getNumAtoms() == 1);
+    CHECK(MolOps::getFormalCharge(cp) == 2);
+  }
+
+  SECTION("Ferrous Hydroxide") {
+    std::unique_ptr<RWMol> m{SmilesToMol("[Fe+2]<-[OH-]", smilesPs)};
+    REQUIRE(m);
+    MolOps::RemoveHsParameters ps;
+    ps.removeHydrides = false;
+    RWMol cp(*m);
+    MolOps::removeHs(cp, ps);
+    CHECK(cp.getNumAtoms() == 2);
+    CHECK(MolOps::getFormalCharge(cp) == 1);
+  }
+
+  SECTION("Ferrous Hydroxide remove Hydrides") {
+    std::unique_ptr<RWMol> m{SmilesToMol("[Fe+2]<-[OH-]", smilesPs)};
+    REQUIRE(m);
+    MolOps::RemoveHsParameters ps;
+    ps.removeHydrides = true;
+    RWMol cp(*m);
+    MolOps::removeHs(cp, ps);
+    CHECK(cp.getNumAtoms() == 2);
+    CHECK(MolOps::getFormalCharge(cp) == 1);
+  }
+
+  SECTION("Remove All Hs in Hydrides Ferrous Hydride") {
+    std::unique_ptr<RWMol> m{SmilesToMol("[Fe+2]<-[H-]", smilesPs)};
+    REQUIRE(m);
+
+    RWMol cp(*m);
+    MolOps::removeAllHs(cp);
+    CHECK(cp.getNumAtoms() == 1);
+    CHECK(MolOps::getFormalCharge(cp) == 2);
+  }
+
+  SECTION("Remove All Hs in Hydrides Water") {
+    std::unique_ptr<RWMol> m{SmilesToMol("[OH+][H-]", smilesPs)};
+    REQUIRE(m);
+
+    RWMol cp(*m);
+    MolOps::removeAllHs(cp);
+    CHECK(cp.getNumAtoms() == 1);
+    CHECK(MolOps::getFormalCharge(cp) == 1);
+  }
+
 }

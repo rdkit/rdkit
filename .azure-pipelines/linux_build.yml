@@ -8,8 +8,10 @@ steps:
     conda create --name rdkit_build $(compiler) cmake \
         boost-cpp=$(boost_version) boost=$(boost_version) \
         py-boost=$(boost_version) libboost=$(boost_version) \
-        numpy matplotlib cairo pillow eigen pandas \
+        numpy matplotlib pillow eigen pandas \
         sphinx recommonmark jupyter
+    conda activate rdkit_build
+    conda install -c rdkit nox cairo
   displayName: Setup build environment
 - bash: |
     source ${CONDA}/etc/profile.d/conda.sh
@@ -28,6 +30,7 @@ steps:
     -DRDK_BUILD_FREESASA_SUPPORT=ON \
     -DRDK_BUILD_AVALON_SUPPORT=ON \
     -DRDK_BUILD_INCHI_SUPPORT=ON \
+    -DRDK_BUILD_CAIRO_SUPPORT=ON \
     -DRDK_BUILD_SWIG_WRAPPERS=OFF \
     -DRDK_SWIG_STATIC=OFF \
     -DRDK_BUILD_THREADSAFE_SSS=ON \

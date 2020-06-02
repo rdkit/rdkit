@@ -22,7 +22,7 @@
 using namespace RDKit;
 
 #if 1
-TEST_CASE("flattenMol", "[unittest, scaffolds]") {
+TEST_CASE("flattenMol", "[unittest][scaffolds]") {
   auto m = "Cl.[13CH3][C@H](F)/C=C/C"_smiles;
   REQUIRE(m);
   SECTION("defaults") {
@@ -77,7 +77,7 @@ TEST_CASE("flattenMol", "[unittest, scaffolds]") {
   }
 }
 
-TEST_CASE("pruneMol", "[unittest, scaffolds]") {
+TEST_CASE("pruneMol", "[unittest][scaffolds]") {
   auto m = "O=C(O)C1C(=O)CC1"_smiles;
   REQUIRE(m);
   SECTION("defaults") {
@@ -89,7 +89,7 @@ TEST_CASE("pruneMol", "[unittest, scaffolds]") {
   }
 }
 
-TEST_CASE("removeAttachmentPoints", "[unittest, scaffolds]") {
+TEST_CASE("removeAttachmentPoints", "[unittest][scaffolds]") {
   auto m = "*c1ccc(*)c*1"_smiles;
   REQUIRE(m);
   SECTION("defaults") {
@@ -102,7 +102,7 @@ TEST_CASE("removeAttachmentPoints", "[unittest, scaffolds]") {
   }
 }
 
-TEST_CASE("makeScaffoldGeneric", "[unittest, scaffolds]") {
+TEST_CASE("makeScaffoldGeneric", "[unittest][scaffolds]") {
   auto m = "c1[nH]ccc1"_smiles;
   REQUIRE(m);
   SECTION("atoms") {
@@ -128,7 +128,7 @@ TEST_CASE("makeScaffoldGeneric", "[unittest, scaffolds]") {
   }
 }
 
-TEST_CASE("getMolFragments", "[unittest, scaffolds]") {
+TEST_CASE("getMolFragments", "[unittest][scaffolds]") {
   auto m = "c1ccccc1CC1NC(=O)CCC1"_smiles;
   REQUIRE(m);
   SECTION("defaults") {
@@ -181,7 +181,7 @@ TEST_CASE("getMolFragments", "[unittest, scaffolds]") {
   }
 }
 
-TEST_CASE("addMolToNetwork", "[unittest, scaffolds]") {
+TEST_CASE("addMolToNetwork", "[unittest][scaffolds]") {
   SECTION("defaults") {
     auto m = "c1ccccc1CC1NC(=O)CCC1"_smiles;
     REQUIRE(m);
@@ -363,7 +363,7 @@ TEST_CASE("ostream integration", "[scaffolds]") {
   }
 }
 
-TEST_CASE("no attachment points", "[unittest, scaffolds]") {
+TEST_CASE("no attachment points", "[unittest][scaffolds]") {
   auto m = "c1ccccc1CC1NC(=O)CCC1"_smiles;
   REQUIRE(m);
   SECTION("others default") {
@@ -513,7 +513,7 @@ TEST_CASE("no attachment points", "[unittest, scaffolds]") {
   }
 }
 
-TEST_CASE("BRICS Fragmenter", "[unittest, scaffolds]") {
+TEST_CASE("BRICS Fragmenter", "[unittest][scaffolds]") {
   auto m = "c1ccccc1C(=O)NC1NC(=O)CCC1"_smiles;
   REQUIRE(m);
   SECTION("original behavior default") {
@@ -555,7 +555,7 @@ TEST_CASE("BRICS Fragmenter", "[unittest, scaffolds]") {
 }
 
 TEST_CASE("Implicit Hs on aromatic atoms with attachments",
-          "[bug, scaffolds]") {
+          "[bug][scaffolds]") {
   auto m = "c1cn(C3CCC3)nc1"_smiles;
   REQUIRE(m);
   SECTION("original behavior default") {
@@ -585,7 +585,7 @@ TEST_CASE("Implicit Hs on aromatic atoms with attachments",
 }
 
 TEST_CASE("scaffold with attachment when attachments are disabled",
-          "[bug, scaffolds]") {
+          "[bug][scaffolds]") {
   auto m = "C1CCC1C1CCCC1C1CCCCC1"_smiles;
   REQUIRE(m);
   SECTION("bug report") {
@@ -613,7 +613,7 @@ TEST_CASE("scaffold with attachment when attachments are disabled",
   }
 }
 
-TEST_CASE("larger multi-mol test", "[regression, scaffold]") {
+TEST_CASE("larger multi-mol test", "[regression][scaffold]") {
   std::vector<std::string> smiles{
       "Cc1onc(-c2c(F)cccc2Cl)c1C(=O)N[C@@H]1C(=O)N2[C@@H](C(=O)O)C(C)(C)S[C@H]"
       "12",
@@ -742,6 +742,85 @@ TEST_CASE("BRICS performance problems", "[bug]") {
     CHECK(net.nodes.size() == 148);
     CHECK(net.counts.size() == net.nodes.size());
     CHECK(net.edges.size() == 1969);
+  }
+}
+
+TEST_CASE("Github #3177: seg fault with null molecules", "[bug]") {
+  SECTION("basics") {
+    std::vector<ROMOL_SPTR> mols;
+    mols.emplace_back(nullptr);
+    ScaffoldNetwork::ScaffoldNetworkParams ps =
+        ScaffoldNetwork::getBRICSNetworkParams();
+    REQUIRE_THROWS_AS(ScaffoldNetwork::createScaffoldNetwork(mols,ps),ValueErrorException);
+  }
+  SECTION("including one valid molecule") {
+    std::vector<ROMOL_SPTR> mols;
+    mols.emplace_back(SmilesToMol("Cc1ccccc1"));
+    mols.emplace_back(nullptr);
+    ScaffoldNetwork::ScaffoldNetworkParams ps =
+    ScaffoldNetwork::getBRICSNetworkParams();
+    REQUIRE_THROWS_AS(ScaffoldNetwork::createScaffoldNetwork(mols,ps),ValueErrorException);
+  }
+}
+
+TEST_CASE("GitHub #3153: Kekulization error in molecules with aromatic C+", "[bug]") {
+  SECTION("Standard Representation") {
+    auto smis = {"O=C1C=CC(CC2=CC=CC2)=CC=C1"};
+    std::vector<ROMOL_SPTR> ms;
+    for (const auto smi : smis) {
+      auto m = SmilesToMol(smi);
+      REQUIRE(m);
+      ms.push_back(ROMOL_SPTR(m));
+    }
+    ScaffoldNetwork::ScaffoldNetworkParams ps;
+    ScaffoldNetwork::ScaffoldNetwork net = 
+        ScaffoldNetwork::createScaffoldNetwork(ms, ps);
+    CHECK(net.nodes.size() == 9);
+    CHECK(
+      std::find(net.nodes.begin(), net.nodes.end(), "O=c1cccccc1") !=
+      net.nodes.end()
+    );
+    CHECK(net.counts.size() == net.nodes.size());
+    CHECK(net.edges.size() == 8);
+  }
+  SECTION("Heteroatom inside ring") {
+    auto smis = {"c1cccn1CC"};
+    std::vector<ROMOL_SPTR> ms;
+    for (const auto smi : smis) {
+      auto m = SmilesToMol(smi);
+      REQUIRE(m);
+      ms.push_back(ROMOL_SPTR(m));
+    }
+    ScaffoldNetwork::ScaffoldNetworkParams ps;
+    ScaffoldNetwork::ScaffoldNetwork net = 
+        ScaffoldNetwork::createScaffoldNetwork(ms, ps);
+
+    CHECK(net.nodes.size() == 3);
+    CHECK(
+      std::find(net.nodes.begin(), net.nodes.end(), "c1cc[nH]c1") != 
+      net.nodes.end()
+    );
+    CHECK(net.counts.size() == net.nodes.size());
+    CHECK(net.edges.size() == 2);
+  }
+  SECTION("Aromatic Carbocation") {
+    auto smis = {"[O-][C+]1C=CC(CC2=CC=CC2)=CC=C1"};
+    std::vector<ROMOL_SPTR> ms;
+    for (const auto smi : smis) {
+      auto m = SmilesToMol(smi);
+      REQUIRE(m);
+      ms.push_back(ROMOL_SPTR(m));
+    }
+    ScaffoldNetwork::ScaffoldNetworkParams ps;
+    ScaffoldNetwork::ScaffoldNetwork net = 
+        ScaffoldNetwork::createScaffoldNetwork(ms, ps);
+    CHECK(
+      std::find(net.nodes.begin(), net.nodes.end(), "C1=CCC(Cc2ccc[cH+]cc2)=C1") !=
+      net.nodes.end()
+    );
+    CHECK(net.nodes.size() == 11);
+    CHECK(net.counts.size() == net.nodes.size());
+    CHECK(net.edges.size() == 10);
   }
 }
 

@@ -23,7 +23,7 @@
 
 using namespace RDKit;
 
-TEST_CASE("Github #1972", "[SMILES,bug]") {
+TEST_CASE("Github #1972", "[SMILES][bug]") {
   SECTION("basics") {
     std::vector<std::vector<std::string>> smiles = {
         {"[C@@]1(Cl)(F)(I).Br1", "[C@@](Br)(Cl)(F)(I)"},
@@ -62,7 +62,7 @@ TEST_CASE("Github #1972", "[SMILES,bug]") {
   }
 }
 
-TEST_CASE("Github #2029", "[SMILES,bug]") {
+TEST_CASE("Github #2029", "[SMILES][bug]") {
   SECTION("wedging") {
     std::unique_ptr<ROMol> m1(SmilesToMol("CN[C@H](Cl)C(=O)O"));
     REQUIRE(m1);
@@ -156,7 +156,7 @@ TEST_CASE(
   }
 }
 
-TEST_CASE("github #2257: writing cxsmiles", "[smiles,cxsmiles]") {
+TEST_CASE("github #2257: writing cxsmiles", "[smiles][cxsmiles]") {
   SECTION("basics") {
     auto mol = "OCC"_smiles;
     REQUIRE(mol);
@@ -328,7 +328,7 @@ TEST_CASE("github #2257: writing cxsmiles", "[smiles,cxsmiles]") {
   }
 }
 
-TEST_CASE("Github #2148", "[bug, Smiles, Smarts]") {
+TEST_CASE("Github #2148", "[bug][Smiles][Smarts]") {
   SECTION("SMILES") {
     auto mol = "C(=C\\F)\\4.O=C1C=4CCc2ccccc21"_smiles;
     REQUIRE(mol);
@@ -366,7 +366,7 @@ TEST_CASE("Github #2148", "[bug, Smiles, Smarts]") {
   }
 }
 
-TEST_CASE("Github #2298", "[bug, Smarts, substructure]") {
+TEST_CASE("Github #2298", "[bug][Smarts][substructure]") {
   SubstructMatchParameters ps;
   ps.useQueryQueryMatches = true;
   SECTION("basics") {
@@ -387,7 +387,7 @@ TEST_CASE("Github #2298", "[bug, Smarts, substructure]") {
   }
 }
 
-TEST_CASE("dative ring closures", "[bug, smiles]") {
+TEST_CASE("dative ring closures", "[bug][smiles]") {
   SECTION("first closure1") {
     auto m1 = "N->1CCN->[Pt]1"_smiles;
     REQUIRE(m1);
@@ -492,7 +492,7 @@ TEST_CASE("MolFragmentToSmarts", "[Smarts]") {
 }
 
 TEST_CASE("github #2667: MolToCXSmiles generates error for empty molecule",
-          "[bug,cxsmiles]") {
+          "[bug][cxsmiles]") {
   SECTION("basics") {
     auto mol = ""_smiles;
     REQUIRE(mol);
@@ -502,7 +502,7 @@ TEST_CASE("github #2667: MolToCXSmiles generates error for empty molecule",
 }
 
 TEST_CASE("github #2604: support range-based charge queries from SMARTS",
-          "[ranges,smarts]") {
+          "[ranges][smarts]") {
   SECTION("positive") {
     auto query = "[N+{0-1}]"_smarts;
     REQUIRE(query);
@@ -566,7 +566,7 @@ TEST_CASE("_smarts fails gracefully", "[smarts]") {
 
 TEST_CASE(
     "github #2801: MolToSmarts may generate invalid SMARTS for bond queries",
-    "[bug,smarts]") {
+    "[bug][smarts]") {
   SECTION("original_report") {
     auto q1 = "*~CCC"_smarts;
     REQUIRE(q1);
@@ -621,4 +621,61 @@ TEST_CASE("large rings", "[smarts]") {
 
   CHECK(SubstructMatch(*m_r23, *query).empty());
   CHECK(SubstructMatch(*m_r24, *query).size() == 24);
+}
+
+TEST_CASE("random smiles vectors", "[smiles]") {
+  auto m = "C1OCC1N(CO)(Cc1ccccc1NCCl)"_smiles;
+  REQUIRE(m);
+  SECTION("basics") {
+    std::vector<std::string> tgt = {
+        "c1cc(CN(C2COC2)CO)c(cc1)NCCl", "N(CCl)c1c(CN(C2COC2)CO)cccc1",
+        "N(CCl)c1ccccc1CN(C1COC1)CO", "OCN(Cc1ccccc1NCCl)C1COC1",
+        "C(N(C1COC1)Cc1c(cccc1)NCCl)O"};
+    unsigned int randomSeed = 0xf00d;
+    auto smiV = MolToRandomSmilesVect(*m, 5, randomSeed);
+    CHECK(smiV == tgt);
+  }
+  SECTION("options1") {
+    std::vector<std::string> tgt = {
+        "C1-C=C(-C-N(-C2-C-O-C-2)-C-O)-C(=C-C=1)-N-C-Cl",
+        "N(-C-Cl)-C1-C(-C-N(-C2-C-O-C-2)-C-O)=C-C=C-C=1",
+        "N(-C-Cl)-C1=C-C=C-C=C-1-C-N(-C1-C-O-C-1)-C-O",
+        "O-C-N(-C-C1=C-C=C-C=C-1-N-C-Cl)-C1-C-O-C-1",
+        "C(-N(-C1-C-O-C-1)-C-C1-C(=C-C=C-C=1)-N-C-Cl)-O"};
+    RWMol nm(*m);
+    MolOps::Kekulize(nm, true);
+    unsigned int randomSeed = 0xf00d;
+    bool isomericSmiles = true;
+    bool kekuleSmiles = true;
+    bool allBondsExplicit = true;
+    bool allHsExplicit = false;
+    auto smiV =
+        MolToRandomSmilesVect(nm, 5, randomSeed, isomericSmiles, kekuleSmiles,
+                              allBondsExplicit, allHsExplicit);
+    CHECK(smiV == tgt);
+  }
+  SECTION("options2") {
+    std::vector<std::string> tgt = {
+        "[cH]1[cH][c]([CH2][N]([CH]2[CH2][O][CH2]2)[CH2][OH])[c]([cH][cH]1)[NH]"
+        "[CH2][Cl]",
+        "[NH]([CH2][Cl])[c]1[c]([CH2][N]([CH]2[CH2][O][CH2]2)[CH2][OH])[cH][cH]"
+        "[cH][cH]1",
+        "[NH]([CH2][Cl])[c]1[cH][cH][cH][cH][c]1[CH2][N]([CH]1[CH2][O][CH2]1)["
+        "CH2][OH]",
+        "[OH][CH2][N]([CH2][c]1[cH][cH][cH][cH][c]1[NH][CH2][Cl])[CH]1[CH2][O]["
+        "CH2]1",
+        "[CH2]([N]([CH]1[CH2][O][CH2]1)[CH2][c]1[c]([cH][cH][cH][cH]1)[NH][CH2]"
+        "[Cl])[OH]"};
+    RWMol nm(*m);
+    MolOps::Kekulize(nm, false);
+    unsigned int randomSeed = 0xf00d;
+    bool isomericSmiles = true;
+    bool kekuleSmiles = false;
+    bool allBondsExplicit = false;
+    bool allHsExplicit = true;
+    auto smiV =
+        MolToRandomSmilesVect(nm, 5, randomSeed, isomericSmiles, kekuleSmiles,
+                              allBondsExplicit, allHsExplicit);
+    CHECK(smiV == tgt);
+  }
 }

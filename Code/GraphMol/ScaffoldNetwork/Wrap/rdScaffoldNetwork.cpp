@@ -73,7 +73,7 @@ BOOST_PYTHON_MODULE(rdScaffoldNetwork) {
       boost::python::type_id<std::vector<ScaffoldNetwork::NetworkEdge>>();
   const boost::python::converter::registration *reg =
       boost::python::converter::registry::query(info);
-  if (reg == NULL || (*reg).m_to_python == NULL) {
+  if (reg == nullptr || (*reg).m_to_python == nullptr) {
     python::class_<std::vector<ScaffoldNetwork::NetworkEdge>>(
         "NetworkEdge_VECT")
         .def(python::vector_indexing_suite<

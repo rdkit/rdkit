@@ -9,7 +9,7 @@
 //  of the RDKit source tree.
 //
 #include <RDGeneral/types.h>
-#include <math.h>
+#include <cmath>
 #include <Geometry/point.h>
 #include <Geometry/Transform2D.h>
 #include "DepictUtils.h"

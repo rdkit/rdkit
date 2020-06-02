@@ -26,7 +26,7 @@
 using namespace RDKit;
 using std::unique_ptr;
 
-TEST_CASE("Github #1632", "[Reaction,PDB,bug]") {
+TEST_CASE("Github #1632", "[Reaction][PDB][bug]") {
   SECTION("basics") {
     bool sanitize = true;
     int flavor = 0;
@@ -61,7 +61,7 @@ static void clearAtomMappingProps(ROMol& mol) {
   }
 }
 
-TEST_CASE("Github #2366 Enhanced Stereo", "[Reaction,StereoGroup,bug]") {
+TEST_CASE("Github #2366 Enhanced Stereo", "[Reaction][StereoGroup][bug]") {
   SECTION("Reaction Preserves Stereo") {
     ROMOL_SPTR mol("F[C@H](Cl)Br |o1:1|"_smiles);
     REQUIRE(mol);
@@ -142,7 +142,7 @@ TEST_CASE("Github #2366 Enhanced Stereo", "[Reaction,StereoGroup,bug]") {
 }
 
 TEST_CASE("Github #2427 cannot set maxProducts>1000 in runReactants",
-          "[Reaction,bug]") {
+          "[Reaction][bug]") {
   SECTION("Basics") {
     std::string smi = "[C]";
     for (unsigned int i = 0; i < 49; ++i) {
@@ -221,5 +221,55 @@ TEST_CASE("negative charge queries. Part of testing changes for github #2604",
     CHECK(rxn->validate(nWarnings, nErrors));
     CHECK(nWarnings == 1);
     CHECK(nErrors == 0);
+  }
+}
+
+TEST_CASE("GithHub #2954: Reaction Smarts with Dative Bonds not parsed",
+          "[Reaction][Bug]") {
+  SECTION("Rxn Smart Processing with Dative Bond in Product") {
+    unique_ptr<ChemicalReaction> rxn1(
+        RxnSmartsToChemicalReaction("[O:1].[H+]>>[O:1]->[H+]"));
+
+    REQUIRE(rxn1);
+    auto k = rxn1->getProducts()[0]->getNumAtoms();
+    CHECK(k == 2);
+  }
+
+  SECTION("Rxn Smart Processing with Dative Bond in Reactant") {
+    unique_ptr<ChemicalReaction> rxn2(
+        RxnSmartsToChemicalReaction("[O:1]->[H+]>>[O:1].[H+]"));
+
+    REQUIRE(rxn2);
+
+    auto k = rxn2->getReactants()[0]->getNumAtoms();
+    CHECK(k == 2);
+  }
+
+  SECTION("Rxm Smart Processing with Dative Bond in Agent") {
+    unique_ptr<ChemicalReaction> rxn(
+        RxnSmartsToChemicalReaction("[O:1][H]>N->[Cu]>[O:1].[H]"));
+    REQUIRE(rxn);
+
+    auto k = rxn->getAgents()[0]->getNumAtoms();
+    CHECK(k == 2);
+  }
+}
+
+TEST_CASE("GithHub #3119: partial reacting atom detection", "[Reaction][Bug]") {
+  SECTION("as reported") {
+    bool useSmiles = true;
+    std::unique_ptr<ChemicalReaction> rxn(RxnSmartsToChemicalReaction(
+        "[CH:1]1=[CH:2][CH:3]=[C:4]([C:5](=[CH:6]1)[CH2:7]Cl)[O:8][CH2:9]"
+        "[CH2:10]Cl>>[CH:1]1=[CH:2][CH:3]=[C:4]([C:5](=[CH:6]1)[CH2:7]I)["
+        "O:8][CH2:9][CH2:10]I",
+        nullptr, useSmiles));
+    REQUIRE(rxn);
+    rxn->initReactantMatchers();
+    bool mappedAtomsOnly = true;
+    auto rAtoms = getReactingAtoms(*rxn, mappedAtomsOnly);
+    REQUIRE(rAtoms.size() == 1);
+    CHECK(rAtoms[0].size() == 2);
+    CHECK(rAtoms[0][0] == 6);
+    CHECK(rAtoms[0][1] == 10);
   }
 }

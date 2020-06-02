@@ -144,8 +144,8 @@ int testMolSup() {
       // The real property is only defined for i >= 10
       if (i >= 10) {
         TEST_ASSERT(atom->hasProp("r_f3d_dummy"));
-        TEST_ASSERT(
-            abs(atom->getProp<double>("r_f3d_dummy") - (19.1 - i) < 0.0001));
+        TEST_ASSERT(abs(atom->getProp<double>("r_f3d_dummy") - (19.1 - i)) <
+                    0.0001);
       } else {
         TEST_ASSERT(!atom->hasProp("r_f3d_dummy"));
       }
@@ -255,7 +255,7 @@ int testMolSup() {
       try {
         mol.reset(maesup.next());
       } catch (const FileParseException &e) {
-        const std::string err_msg(e.message());
+        const std::string err_msg(e.what());
         TEST_ASSERT(i == 1);
         TEST_ASSERT(err_msg.find(err_msg_substr) != std::string::npos);
         ok = true;
@@ -2786,7 +2786,7 @@ void testGitHub2881() {
     ROMol *mol = nullptr;
     try {
       mol = suppl.next();
-    } catch (Invar::Invariant) {
+    } catch (const Invar::Invariant &) {
     }
     TEST_ASSERT(!mol);
   }

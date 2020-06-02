@@ -14,7 +14,7 @@
 #include "TriangleSmooth.h"
 #include <iostream>
 #include <boost/smart_ptr.hpp>
-#include <math.h>
+#include <cmath>
 #include <Numerics/SymmMatrix.h>
 #include "DistGeomUtils.h"
 #include <RDGeneral/utils.h>

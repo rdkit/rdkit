@@ -52,7 +52,6 @@ class RDKIT_CHEMREACTIONS_EXPORT ChemicalReactionException
   explicit ChemicalReactionException(const std::string msg) : _msg(msg){};
   //! get the error message
   const char *what() const noexcept override { return _msg.c_str(); };
-  const char *message() const noexcept { return what(); };
   ~ChemicalReactionException() noexcept {};
 
  private:
@@ -121,8 +120,7 @@ class RDKIT_CHEMREACTIONS_EXPORT ChemicalReaction : public RDProps {
   friend class ReactionPickler;
 
  public:
-  ChemicalReaction()
-      : RDProps(), df_needsInit(true), df_implicitProperties(false){};
+  ChemicalReaction() : RDProps(){};
   ChemicalReaction(const ChemicalReaction &other) : RDProps() {
     df_needsInit = other.df_needsInit;
     df_implicitProperties = other.df_implicitProperties;
@@ -186,7 +184,7 @@ class RDKIT_CHEMREACTIONS_EXPORT ChemicalReaction : public RDProps {
   */
   void removeUnmappedReactantTemplates(double thresholdUnmappedAtoms = 0.2,
                                        bool moveToAgentTemplates = true,
-                                       MOL_SPTR_VECT *targetVector = NULL);
+                                       MOL_SPTR_VECT *targetVector = nullptr);
 
   //! Removes the product templates from a reaction if its atom mapping ratio is
   // below a given threshold
@@ -197,11 +195,11 @@ class RDKIT_CHEMREACTIONS_EXPORT ChemicalReaction : public RDProps {
   */
   void removeUnmappedProductTemplates(double thresholdUnmappedAtoms = 0.2,
                                       bool moveToAgentTemplates = true,
-                                      MOL_SPTR_VECT *targetVector = NULL);
+                                      MOL_SPTR_VECT *targetVector = nullptr);
 
   /*! Removes the agent templates from a reaction if a pointer to a
       molecule vector is provided the agents are stored therein.*/
-  void removeAgentTemplates(MOL_SPTR_VECT *targetVector = NULL);
+  void removeAgentTemplates(MOL_SPTR_VECT *targetVector = nullptr);
 
   //! Runs the reaction on a set of reactants
   /*!
@@ -344,8 +342,8 @@ class RDKIT_CHEMREACTIONS_EXPORT ChemicalReaction : public RDProps {
   void setImplicitPropertiesFlag(bool val) { df_implicitProperties = val; };
 
  private:
-  bool df_needsInit;
-  bool df_implicitProperties;
+  bool df_needsInit{true};
+  bool df_implicitProperties{false};
   MOL_SPTR_VECT m_reactantTemplates, m_productTemplates, m_agentTemplates;
   ChemicalReaction &operator=(const ChemicalReaction &);  // disable assignment
 };
@@ -438,7 +436,7 @@ RDKIT_CHEMREACTIONS_EXPORT void addRecursiveQueriesToReaction(
     ChemicalReaction &rxn, const std::map<std::string, ROMOL_SPTR> &queries,
     const std::string &propName,
     std::vector<std::vector<std::pair<unsigned int, std::string>>>
-        *reactantLabels = NULL);
+        *reactantLabels = nullptr);
 
 }  // namespace RDKit
 

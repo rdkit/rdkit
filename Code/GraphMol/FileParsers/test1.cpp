@@ -3909,8 +3909,7 @@ void testPDBFile() {
                 Bond::AROMATIC);
     TEST_ASSERT(m->getBondBetweenAtoms(120, 114)->getBondType() ==
                 Bond::AROMATIC);
-    TEST_ASSERT(m->getBondBetweenAtoms(39, 38)->getBondType() ==
-                Bond::DOUBLE);
+    TEST_ASSERT(m->getBondBetweenAtoms(39, 38)->getBondType() == Bond::DOUBLE);
     TEST_ASSERT(m->getBondBetweenAtoms(138, 140)->getBondType() ==
                 Bond::AROMATIC);
     delete m;
@@ -3941,10 +3940,8 @@ void testPDBFile() {
                     ->getIsHeteroAtom());
     TEST_ASSERT(m->getBondBetweenAtoms(104, 103)->getBondType() ==
                 Bond::AROMATIC);
-    TEST_ASSERT(m->getBondBetweenAtoms(60, 61)->getBondType() ==
-                Bond::DOUBLE);
-    TEST_ASSERT(m->getBondBetweenAtoms(38, 37)->getBondType() ==
-                Bond::DOUBLE);
+    TEST_ASSERT(m->getBondBetweenAtoms(60, 61)->getBondType() == Bond::DOUBLE);
+    TEST_ASSERT(m->getBondBetweenAtoms(38, 37)->getBondType() == Bond::DOUBLE);
     TEST_ASSERT(m->getBondBetweenAtoms(148, 149)->getBondType() ==
                 Bond::DOUBLE);
 
@@ -4247,8 +4244,7 @@ void testGithub194() {
 
 void testGithub196() {
   BOOST_LOG(rdInfoLog)
-      << "testing github issue 196: left justified bond topology"
-      << std::endl;
+      << "testing github issue 196: left justified bond topology" << std::endl;
   std::string rdbase = getenv("RDBASE");
   rdbase += "/Code/GraphMol/FileParsers/test_data/";
   {
@@ -4358,7 +4354,7 @@ void testPDBResidues() {
     TEST_ASSERT(m->getAtomWithIdx(0)->getMonomerInfo()->getMonomerType() ==
                 AtomMonomerInfo::PDBRESIDUE);
     std::vector<std::string> keep;
-    keep.push_back("8NH");
+    keep.emplace_back("8NH");
     std::map<std::string, boost::shared_ptr<ROMol>> res =
         MolOps::getMolFragsWithQuery(*m, getResidue, false, &keep);
 
@@ -4384,7 +4380,7 @@ void testPDBResidues() {
     TEST_ASSERT(m->getAtomWithIdx(0)->getMonomerInfo()->getMonomerType() ==
                 AtomMonomerInfo::PDBRESIDUE);
     std::vector<std::string> keep;
-    keep.push_back("8NH");
+    keep.emplace_back("8NH");
     std::map<std::string, boost::shared_ptr<ROMol>> res =
         MolOps::getMolFragsWithQuery(*m, getResidue, false, &keep, true);
 
@@ -5127,7 +5123,7 @@ void testMarvinSMATag() {
       ok = true;
       TEST_ASSERT(
           std::string("Cannot parse smarts: 'MyDogHasFleas' on line 12") ==
-          e.message());
+          e.what());
     }
     TEST_ASSERT(ok);
   }

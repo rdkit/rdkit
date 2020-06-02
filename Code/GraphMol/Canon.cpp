@@ -13,6 +13,7 @@
 #include <GraphMol/RDKitQueries.h>
 #include <RDGeneral/Exceptions.h>
 #include <RDGeneral/hash/hash.hpp>
+#include <RDGeneral/utils.h>
 #include <algorithm>
 
 namespace RDKit {
@@ -618,7 +619,7 @@ void dfsFindCycles(ROMol &mol, int atomIdx, int inBondIdx,
         }
       } else {
         // randomize the rank
-        rank = std::rand();
+        rank = getRandomGenerator()();
       }
       // std::cerr << "            " << atomIdx << ": " << otherIdx << " " <<
       // rank
@@ -626,7 +627,7 @@ void dfsFindCycles(ROMol &mol, int atomIdx, int inBondIdx,
       // std::cerr<<"aIdx: "<< atomIdx <<"   p: "<<otherIdx<<" Rank:
       // "<<ranks[otherIdx] <<" "<<colors[otherIdx]<<"
       // "<<theBond->getBondType()<<" "<<rank<<std::endl;
-      possibles.push_back(PossibleType(rank, otherIdx, theBond));
+      possibles.emplace_back(rank, otherIdx, theBond);
     }
   }
 
@@ -794,10 +795,10 @@ void dfsBuildStack(ROMol &mol, int atomIdx, int inBondIdx,
         }
       } else {
         // randomize the rank
-        rank = std::rand();
+        rank = getRandomGenerator()();
       }
 
-      possibles.push_back(PossibleType(rank, otherIdx, theBond));
+      possibles.emplace_back(rank, otherIdx, theBond);
     }
   }
 

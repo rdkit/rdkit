@@ -66,6 +66,8 @@
 %ignore RDKit::DGeomHelpers::ETDG;
 %ignore RDKit::DGeomHelpers::ETKDG;
 %ignore RDKit::DGeomHelpers::ETKDGv2;
+%ignore RDKit::DGeomHelpers::ETKDGv3;
+%ignore RDKit::DGeomHelpers::srETKDGv3;
 
 %include <GraphMol/DistGeomHelpers/Embedder.h>
 
@@ -74,6 +76,8 @@
 %newobject RDKit::DGeomHelpers::getETDG;
 %newobject RDKit::DGeomHelpers::getETKDG;
 %newobject RDKit::DGeomHelpers::getETKDGv2;
+%newobject RDKit::DGeomHelpers::getETKDGv3;
+%newobject RDKit::DGeomHelpers::getsrETKDGv3;
 %inline {
   namespace RDKit{
     namespace DGeomHelpers {
@@ -88,6 +92,12 @@
       }
       EmbedParameters *getETKDGv2() {
         return new EmbedParameters(ETKDGv2);
+      }
+      EmbedParameters *getETKDGv3() {
+        return new EmbedParameters(ETKDGv3);
+      }
+      EmbedParameters *getsrETKDGv3() {
+        return new EmbedParameters(srETKDGv3);
       }
     }
   }
