@@ -589,11 +589,7 @@ TEST_CASE("github #2792: carbon in the uncharger", "[uncharger][bug]") {
   }
 }
 
-<<<<<<< HEAD
-TEST_CASE("github #2965: molecules properties not retained after cleanup", "[cleanup, bug]") {
-=======
 TEST_CASE("github #2965: molecules properties not retained after cleanup", "[cleanup][bug]") {
->>>>>>> 6a8db56bebe3df3bc59304a8da5cec446a54ac1f
   SECTION("example 1") {
 	MolStandardize::CleanupParameters params;
 	std::unique_ptr<RWMol> m(SmilesToMol("Cl.c1cnc(OCCCC2CCNCC2)cn1"));
@@ -605,8 +601,6 @@ TEST_CASE("github #2965: molecules properties not retained after cleanup", "[cle
 	CHECK(x.getVal<std::string>("testing_prop") == "1234");
   }
 } 
-<<<<<<< HEAD
-=======
 
 TEST_CASE("github #2970: chargeParent() segmentation fault when standardization is skipped i.e. skip_standardize is set to true") {
     auto m = "COC=1C=CC(NC=2N=CN=C3NC=NC23)=CC1"_smiles;
@@ -619,4 +613,4 @@ TEST_CASE("github #2970: chargeParent() segmentation fault when standardization 
     REQUIRE(outm);
     CHECK(MolToSmiles(*outm) == "COc1ccc(Nc2ncnc3[nH]cnc23)cc1");
 }
->>>>>>> 6a8db56bebe3df3bc59304a8da5cec446a54ac1f
+
