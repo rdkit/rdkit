@@ -114,7 +114,7 @@ double getBestRMS(ROMol &probeMol, ROMol &refMol, int probeId, int refId,
 
 double CalcRMS(ROMol &prbMol, const ROMol &refMol, int prbCid, int refCid,
                const std::vector<MatchVectType> &map, int maxMatches,
-               const RDNumeric::DoubleVector *weights) {    
+               const RDNumeric::DoubleVector *weights) {
   std::vector<MatchVectType> matches = map;
   if (matches.empty()) {
     bool uniquify = false;
@@ -138,7 +138,7 @@ double CalcRMS(ROMol &prbMol, const ROMol &refMol, int prbCid, int refCid,
                 << "lead to a performance slowdown.\n";
     }
   }
-  
+
   unsigned int msize = matches[0].size();
   const RDNumeric::DoubleVector *wts;
   if (weights != nullptr) {
@@ -154,17 +154,17 @@ double CalcRMS(ROMol &prbMol, const ROMol &refMol, int prbCid, int refCid,
     RDGeom::Point3DConstPtrVect refPoints, prbPoints;
     const Conformer &prbCnf = prbMol.getConformer(prbCid);
     const Conformer &refCnf = refMol.getConformer(refCid);
-    
+
     MatchVectType::const_iterator mi;
     for (const auto &mi : matche) {
       prbPoints.push_back(&prbCnf.getAtomPos(mi.first));
       refPoints.push_back(&refCnf.getAtomPos(mi.second));
     }
-    
+
     unsigned int npt = refPoints.size();
     PRECONDITION(npt == prbPoints.size(), "Mismatch in number of points");
-    double ssr = 0.; 
-    
+    double ssr = 0.;
+
     const RDGeom::Point3D *rpt, *ppt;
     for (unsigned int i = 0; i < npt; i++) {
       rpt = refPoints[i];
@@ -172,9 +172,9 @@ double CalcRMS(ROMol &prbMol, const ROMol &refMol, int prbCid, int refCid,
       ssr += (*wts)[i] * (*ppt - *rpt).lengthSq();
     }
     ssr /= (prbPoints.size());
-    
+
     double rms = sqrt(ssr);
-    
+
     if (rms < bestRMS) {
       bestRMS = rms;
       bestMatch = matche;
