@@ -33,7 +33,8 @@ double getAlignmentTransform(const ROMol &prbMol, const ROMol &refMol,
     const bool recursionPossible = true;
     const bool useChirality = false;
     const bool useQueryQueryMatches = true;
-    if (SubstructMatch(refMol, prbMol, match, recursionPossible, useChirality, useQueryQueryMatches)) {
+    if (SubstructMatch(refMol, prbMol, match, recursionPossible, useChirality,
+                       useQueryQueryMatches)) {
       MatchVectType::const_iterator mi;
       for (mi = match.begin(); mi != match.end(); mi++) {
         prbPoints.push_back(&prbCnf.getAtomPos(mi->first));
@@ -265,5 +266,5 @@ void alignMolConformers(ROMol &mol, const std::vector<unsigned int> *atomIds,
     }
   }
 }
-}
-}
+}  // namespace MolAlign
+}  // namespace RDKit
