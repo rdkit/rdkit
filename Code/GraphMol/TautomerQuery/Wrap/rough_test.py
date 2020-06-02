@@ -4,6 +4,11 @@
 # Copyright 2020 Schrodinger, Inc
 #
 
+""" A rough test of Tautomer Queries 
+
+Rough in that only basic functionality is evaluated.
+"""
+
 from rdkit import Chem, DataStructs
 from rdkit.Chem import rdTautomerQuery
 from unittest import TestCase, main
