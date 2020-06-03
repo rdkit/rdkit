@@ -27,7 +27,7 @@ int getTargetIdx(int queryIdx, const RDKit::MatchVectType &match) {
 namespace RDKit {
 
 TautomerQuery::TautomerQuery(const std::vector<ROMOL_SPTR> &tautomers,
-                             const ROMOL_SPTR templateMolecule,
+                             const ROMol *const templateMolecule,
                              const std::vector<size_t> &modifiedAtoms,
                              const std::vector<size_t> &modifiedBonds)
     : d_tautomers(tautomers),
@@ -35,7 +35,11 @@ TautomerQuery::TautomerQuery(const std::vector<ROMOL_SPTR> &tautomers,
       d_modifiedAtoms(modifiedAtoms),
       d_modifiedBonds(modifiedBonds) {}
 
-boost::shared_ptr<TautomerQuery> TautomerQuery::fromMol(
+TautomerQuery::~TautomerQuery() {
+   delete d_templateMolecule;
+}
+
+TautomerQuery *TautomerQuery::fromMol(
     const ROMol &query, const std::string &tautomerTransformFile) {
   auto tautomerFile = !tautomerTransformFile.empty()
                           ? tautomerTransformFile
@@ -66,7 +70,7 @@ boost::shared_ptr<TautomerQuery> TautomerQuery::fromMol(
     }
   }
 
-  auto templateMolecule = boost::make_shared<RWMol>(query);
+  auto templateMolecule = new RWMol(query);
   for (auto idx : modifiedAtoms) {
     const auto atom = templateMolecule->getAtomWithIdx(idx);
     const auto queryAtom = new QueryAtom(atom->getAtomicNum());
@@ -83,10 +87,8 @@ boost::shared_ptr<TautomerQuery> TautomerQuery::fromMol(
     delete queryBond;
   }
 
-  boost::shared_ptr<TautomerQuery> tautomerQuery(
-      new TautomerQuery(tautomers, boost::make_shared<ROMol>(*templateMolecule),
-                        modifiedAtoms, modifiedBonds));
-  return tautomerQuery;
+  return new TautomerQuery(tautomers, (ROMol *)templateMolecule, modifiedAtoms,
+                           modifiedBonds);
 }
 
 bool TautomerQuery::matchTautomer(
@@ -163,4 +165,4 @@ std::vector<MatchVectType> SubstructMatch(
   return query.substructOf(mol, params);
 }
 
-} //namespace RDKit;
+}  // namespace RDKit

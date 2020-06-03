@@ -15,6 +15,10 @@ public class TautomerQueryTests extends  GraphMolTest {
     public void basicOperations() {
         var mol = RWMol.MolFromSmiles("O=C1CCCCC1");
         var tautomerQuery = TautomerQuery.fromMol(mol);
+        assertEquals(2, tautomerQuery.getTautomers().size());
+        var modifiedAtoms = tautomerQuery.getModifiedAtoms();
+        assertEquals(3, modifiedAtoms.size());
+
 
         var target = RWMol.MolFromSmiles("OC1=CCCC(CC)C1");
         var match = tautomerQuery.isSubstructOf(target);
@@ -40,6 +44,10 @@ public class TautomerQueryTests extends  GraphMolTest {
 
         tautomerFingerprint.delete();
         targetFingerprint.delete();
+    }
+
+    public static void main(String args[]) {
+        org.junit.runner.JUnitCore.main("org.RDKit.TautomerQueryTests");
     }
 
 }

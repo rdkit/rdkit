@@ -22,9 +22,13 @@ TEST_CASE("TEST_ENOL") {
   auto mol = "O=C1CCCCC1"_smiles;
 
   REQUIRE(mol);
-  auto tautomerQuery = TautomerQuery::fromMol(*mol);
+  auto tautomerQuery = std::unique_ptr<TautomerQuery>(TautomerQuery::fromMol(*mol));
   auto tautomers = tautomerQuery->getTautomers();
   CHECK(tautomers.size() == 2);
+  auto modifiedAtoms = tautomerQuery->getModifiedAtoms();
+  CHECK(modifiedAtoms.size() == 3);
+  auto modifiedBonds = tautomerQuery->getModifiedBonds();
+  CHECK(modifiedBonds.size() == 3);
 
   auto target1 = "OC1=CCCC(CC)C1"_smiles;
   REQUIRE(target1);
@@ -71,7 +75,7 @@ TEST_CASE("TEST_ENOL") {
 TEST_CASE("TEST_COMPLEX") {
   auto mol = "Nc1nc(=O)c2nc[nH]c2[nH]1"_smiles;
   REQUIRE(mol);
-  auto tautomerQuery = TautomerQuery::fromMol(*mol);
+  auto tautomerQuery = std::unique_ptr<TautomerQuery>(TautomerQuery::fromMol(*mol));
   CHECK(15 == tautomerQuery->getTautomers().size());
 
   auto queryFingerprint = tautomerQuery->patternFingerprintTemplate();
@@ -94,11 +98,11 @@ TEST_CASE("TEST_COMPLEX") {
 TEST_CASE("TEST_PICKLE") {
   auto mol = "O=C1CCCCC1"_smiles;
   REQUIRE(mol);
-  auto tautomerQuery = TautomerQuery::fromMol(*mol);
+  auto tautomerQuery = std::unique_ptr<TautomerQuery>(TautomerQuery::fromMol(*mol));
   auto templateMol = tautomerQuery->getTemplateMolecule();
 
   std::string pickle;
-  MolPickler::pickleMol(*templateMol, pickle);
+  MolPickler::pickleMol(templateMol, pickle);
   ROMol pickleMol;
   MolPickler::molFromPickle(pickle, pickleMol);
 
@@ -113,7 +117,7 @@ TEST_CASE("TEST_PICKLE") {
 TEST_CASE("TEST_FINGERPRINT") {
   auto mol = "O=C1CCCCC1"_smiles;
   REQUIRE(mol);
-  auto tautomerQuery = TautomerQuery::fromMol(*mol);
+  auto tautomerQuery = std::unique_ptr<TautomerQuery>(TautomerQuery::fromMol(*mol));
   auto templateMol = tautomerQuery->getTemplateMolecule();
 
   // this test molecule has complex query bonds where the template has query
@@ -133,7 +137,7 @@ TEST_CASE("TEST_FINGERPRINT") {
 #ifdef VERBOSE
   std::cout << std::endl << "fingerprinting template" << std::endl;
 #endif
-  auto templateQueryFingerprint = PatternFingerprintMol(*templateMol);
+  auto templateQueryFingerprint = PatternFingerprintMol(templateMol);
 #ifdef VERBOSE
   std::cout << "fingerprinting mol without bonds" << std::endl;
 #endif
@@ -197,7 +201,7 @@ TEST_CASE("TEST_FINGERPRINT") {
 TEST_CASE("TEST_NOT_TAUTOMER") {
     auto mol = "c1ccccc1"_smiles;
     REQUIRE(mol);
-    auto tautomerQuery = TautomerQuery::fromMol(*mol);
+    auto tautomerQuery = std::unique_ptr<TautomerQuery>(TautomerQuery::fromMol(*mol));
     CHECK(1 == tautomerQuery->getTautomers().size());
     CHECK(0 == tautomerQuery->getModifiedAtoms().size());
     CHECK(0 == tautomerQuery->getModifiedBonds().size());

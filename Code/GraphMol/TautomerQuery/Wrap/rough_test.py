@@ -12,19 +12,28 @@ Rough in that only basic functionality is evaluated.
 from rdkit import Chem, DataStructs
 from rdkit.Chem import rdTautomerQuery
 from unittest import TestCase, main
+import os
 
 class TautomerQueryTestCase(TestCase):
     
     def test_basic(self):
         mol = Chem.MolFromSmiles("O=C1CCCCC1")
         tautomer_query = rdTautomerQuery.TautomerQuery(mol)
+        self.assertEqual(2, len(tautomer_query.GetTautomers()))
+        modified_bonds = tautomer_query.GetModifiedBonds()
+        self.assertEqual(3, len(modified_bonds));
+        modified_atoms = tautomer_query.GetModifiedAtoms()
+        self.assertEqual(3, len(modified_atoms));
 
         target = Chem.MolFromSmiles("OC1=CCCC(CC)C1")
+        self.assertTrue(target.HasSubstructMatch(tautomer_query.GetTemplateMolecule()))
+
         match = tautomer_query.IsSubstructOf(target)
         self.assertTrue(match)
+        self.assertTrue(target.HasSubstructMatch(tautomer_query.GetTemplateMolecule()))
         match = tautomer_query.GetSubstructMatch(target);
         self.assertEqual(7, len(match))
-
+        
         matches = tautomer_query.GetSubstructMatches(target);
         self.assertEqual(1, len(matches))
 
@@ -38,9 +47,10 @@ class TautomerQueryTestCase(TestCase):
         target_fingerprint = rdTautomerQuery.PatternFingerprintTautomerTarget(target)
         matching_fingerprints = DataStructs.AllProbeBitsMatch(tautomer_fingerprint, target_fingerprint)
         self.assertTrue(matching_fingerprints)
-        
-        del tautomer_fingerprint
-        del target_fingerprint
+
+        file = os.environ['RDBASE']+'/Data/MolStandardize/tautomerTransforms.in';
+        tautomer_query2 = rdTautomerQuery.TautomerQuery(mol, file)
+        self.assertEqual(2, len(tautomer_query.GetTautomers()))
 
 
 

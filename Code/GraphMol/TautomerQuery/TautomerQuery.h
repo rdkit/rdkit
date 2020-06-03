@@ -23,24 +23,25 @@ class TautomerQuery {
   // Tautomers of the query
   const std::vector<ROMOL_SPTR> d_tautomers;
   // Template query for substructure search
-  const ROMOL_SPTR d_templateMolecule;
+  const ROMol *const d_templateMolecule;
   // Tautomeric bonds and atoms
   const std::vector<size_t> d_modifiedAtoms;
   const std::vector<size_t> d_modifiedBonds;
 
   TautomerQuery(const std::vector<ROMOL_SPTR> &tautomers,
-                const ROMOL_SPTR templateMolecule,
+                const ROMol *const templateMolecule,
                 const std::vector<size_t> &modifiedAtoms,
                 const std::vector<size_t> &modifiedBonds);
 
-  // tests if a match to the template matches a specific conformer
+  // tests if a match to the template matches a specific tautomer
   bool matchTautomer(const ROMol &mol, const ROMol &tautomer,
                      const MatchVectType &match,
                      const SubstructMatchParameters &params) const;
 
  public:
   // Factory to build TautomerQuery
-  static boost::shared_ptr<TautomerQuery> fromMol(
+  // Caller owns the memory
+  static TautomerQuery *fromMol(
       const ROMol &molecule,
       const std::string &tautomerTransformFile = std::string());
 
@@ -57,13 +58,14 @@ class TautomerQuery {
   // Query fingerprint
   ExplicitBitVect *patternFingerprintTemplate(unsigned int fpSize = 2048U);
 
-  // Static method to Fingerpint a target
+  // Static method to Fingerprint a target
   static ExplicitBitVect *patternFingerprintTarget(const ROMol &target,
                                                    unsigned int fpSize = 2048U);
 
   // accessors
 
-  const ROMOL_SPTR getTemplateMolecule() const { return d_templateMolecule; }
+  // pointer is owned by TautomerQuery
+  const ROMol & getTemplateMolecule() const { return *d_templateMolecule; }
 
   const std::vector<ROMOL_SPTR> getTautomers() const { return d_tautomers; }
 
@@ -71,7 +73,7 @@ class TautomerQuery {
 
   const std::vector<size_t> getModifiedBonds() const { return d_modifiedBonds; }
 
-  ~TautomerQuery(){};
+  ~TautomerQuery();
 };
 
 // so we can use the templates in Code/GraphMol/Substruct/SubstructMatch.h

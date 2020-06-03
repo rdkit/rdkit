@@ -1,7 +1,6 @@
 remove_definitions(-DRDKIT_TAUTOMERQUERY_BUILD)
 rdkit_python_extension(rdTautomerQuery
                        rdTautomerQuery.cpp
-                       TautomerQueryWrap.cpp
                        DEST Chem
                        LINK_LIBRARIES
                        TautomerQuery )
