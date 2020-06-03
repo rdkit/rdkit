@@ -370,7 +370,59 @@ TEST_CASE("reaction data in PNGs 1", "[Reaction][PNG]") {
 }
 
 TEST_CASE("Github #2891", "[Reaction][chirality][bug]") {
-  SECTION("basics") {
+  SECTION("super simplified (alchemy)") {
+    auto r1_1 = ROMOL_SPTR(SmilesToMol("O[C@@H](Br)C"));
+    auto r1_2 = ROMOL_SPTR(SmilesToMol("O[C@H](Br)C"));
+    auto r1_3 = ROMOL_SPTR(SmilesToMol("O[C@@H](C)Br"));
+    auto r1_4 = ROMOL_SPTR(SmilesToMol("O[C@H](C)Br"));
+    auto r2 = ROMOL_SPTR(SmilesToMol("SCC"));
+
+    std::unique_ptr<ChemicalReaction> rxn(
+        RxnSmartsToChemicalReaction("[C@:1][Br:2].S[C:4]>>[C@@:1][S:2][*:4]"));
+    REQUIRE(rxn);
+    rxn->initReactantMatchers();
+    {
+      MOL_SPTR_VECT reacts{r1_1, r2};
+      auto ps = rxn->runReactants(reacts);
+      CHECK(ps.size() == 1);
+      CHECK(ps[0].size() == 1);
+      r1_1->debugMol(std::cerr);
+      ps[0][0]->updatePropertyCache();
+      ps[0][0]->debugMol(std::cerr);
+      auto tsmi = MolToSmiles(*("O[C@H](SCC)C"_smiles));
+      CHECK(MolToSmiles(*ps[0][0]) == tsmi);
+    }
+    {
+      MOL_SPTR_VECT reacts{r1_2, r2};
+      auto ps = rxn->runReactants(reacts);
+      CHECK(ps.size() == 1);
+      CHECK(ps[0].size() == 1);
+      auto tsmi = MolToSmiles(*("O[C@@H](SCC)C"_smiles));
+      CHECK(MolToSmiles(*ps[0][0]) == tsmi);
+    }
+    {
+      MOL_SPTR_VECT reacts{r1_3, r2};
+      auto ps = rxn->runReactants(reacts);
+      CHECK(ps.size() == 1);
+      CHECK(ps[0].size() == 1);
+      std::cerr << "------------" << std::endl;
+      r1_3->debugMol(std::cerr);
+      ps[0][0]->updatePropertyCache();
+      ps[0][0]->debugMol(std::cerr);
+      auto tsmi = MolToSmiles(*("O[C@H](C)SCC"_smiles));
+      CHECK(MolToSmiles(*ps[0][0]) == tsmi);
+    }
+    {
+      MOL_SPTR_VECT reacts{r1_4, r2};
+      auto ps = rxn->runReactants(reacts);
+      CHECK(ps.size() == 1);
+      CHECK(ps[0].size() == 1);
+      auto tsmi = MolToSmiles(*("O[C@@H](C)SCC"_smiles));
+      CHECK(MolToSmiles(*ps[0][0]) == tsmi);
+    }
+  }
+#if 0
+  SECTION("more specified atoms") {
     auto r1_1 = ROMOL_SPTR(SmilesToMol("O[C@@H](Br)c1ccccc1"));
     auto r1_2 = ROMOL_SPTR(SmilesToMol("O[C@H](Br)c1ccccc1"));
     auto r1_3 = ROMOL_SPTR(SmilesToMol("O[C@@H](c1ccccc1)Br"));
@@ -386,6 +438,9 @@ TEST_CASE("Github #2891", "[Reaction][chirality][bug]") {
       auto ps = rxn->runReactants(reacts);
       CHECK(ps.size() == 1);
       CHECK(ps[0].size() == 1);
+      r1_1->debugMol(std::cerr);
+      ps[0][0]->updatePropertyCache();
+      ps[0][0]->debugMol(std::cerr);
       auto tsmi = MolToSmiles(*("O[C@H](SCC)c1ccccc1"_smiles));
       CHECK(MolToSmiles(*ps[0][0]) == tsmi);
     }
@@ -402,6 +457,10 @@ TEST_CASE("Github #2891", "[Reaction][chirality][bug]") {
       auto ps = rxn->runReactants(reacts);
       CHECK(ps.size() == 1);
       CHECK(ps[0].size() == 1);
+      std::cerr << "------------" << std::endl;
+      r1_3->debugMol(std::cerr);
+      ps[0][0]->updatePropertyCache();
+      ps[0][0]->debugMol(std::cerr);
       auto tsmi = MolToSmiles(*("O[C@H](c1ccccc1)SCC"_smiles));
       CHECK(MolToSmiles(*ps[0][0]) == tsmi);
     }
@@ -414,4 +473,5 @@ TEST_CASE("Github #2891", "[Reaction][chirality][bug]") {
       CHECK(MolToSmiles(*ps[0][0]) == tsmi);
     }
   }
+#endif
 }
