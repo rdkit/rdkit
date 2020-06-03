@@ -213,7 +213,7 @@ configure_file (
 
 install(FILES
     ${RDKit_BINARY_DIR}/rdkit-config.cmake
-    #${RDKit_BINARY_DIR}/rdkit-config-version.cmake
+    ${RDKit_BINARY_DIR}/rdkit-config-version.cmake
     DESTINATION ${RDKit_LibDir}/cmake/rdkit)
 
 # disable some warnings that we don't care about
