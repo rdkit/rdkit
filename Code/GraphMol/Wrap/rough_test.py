@@ -5112,7 +5112,7 @@ M  END
     self.assertFalse(mol.HasSubstructMatch(pat))
     pat2 = Chem.MolFromSmarts('C:C')
     for bond in pat.GetBonds():
-        bond.SetQuery(pat2.GetBondWithIdx(0))
+      bond.SetQuery(pat2.GetBondWithIdx(0))
     self.assertTrue(mol.HasSubstructMatch(pat))
 
   def testBondExpandQuery(self):
@@ -5121,8 +5121,7 @@ M  END
     self.assertEqual(len(mol.GetSubstructMatches(pat)), 1)
     pat2 = Chem.MolFromSmarts('C=C')
     for bond in pat.GetBonds():
-        bond.ExpandQuery(pat2.GetBondWithIdx(0),
-                         Chem.CompositeQueryType.COMPOSITE_OR)
+      bond.ExpandQuery(pat2.GetBondWithIdx(0), Chem.CompositeQueryType.COMPOSITE_OR)
     self.assertEqual(len(mol.GetSubstructMatches(pat)), 2)
 
   def testGitHub1985(self):
@@ -5892,8 +5891,7 @@ M  END
     ps.setExtraFinalCheck(accept_all)
     self.assertEqual(len(m.GetSubstructMatches(p, ps)), 2)
     ps.setExtraFinalCheck(accept_large)
-    self.assertEqual(len(m.GetSubstructMatches(p,ps)),1)
-
+    self.assertEqual(len(m.GetSubstructMatches(p, ps)), 1)
 
   def testSuppliersReadingDirectories(self):
     # this is an odd one, basically we need to check that we don't hang
@@ -5916,17 +5914,51 @@ M  END
 
   def testRandomSmilesVect(self):
     m = Chem.MolFromSmiles("C1OCC1N(CO)(Cc1ccccc1NCCl)")
-    v = Chem.MolToRandomSmilesVect(m,5,randomSeed=0xf00d)
-    self.assertEqual(v,["c1cc(CN(C2COC2)CO)c(cc1)NCCl", "N(CCl)c1c(CN(C2COC2)CO)cccc1",
-        "N(CCl)c1ccccc1CN(C1COC1)CO", "OCN(Cc1ccccc1NCCl)C1COC1",
-        "C(N(C1COC1)Cc1c(cccc1)NCCl)O"])
-    
-    v = Chem.MolToRandomSmilesVect(m,5,randomSeed=0xf00d,allHsExplicit=True)
-    self.assertEqual(v,["[cH]1[cH][c]([CH2][N]([CH]2[CH2][O][CH2]2)[CH2][OH])[c]([cH][cH]1)[NH][CH2][Cl]", 
-        "[NH]([CH2][Cl])[c]1[c]([CH2][N]([CH]2[CH2][O][CH2]2)[CH2][OH])[cH][cH][cH][cH]1",
-        "[NH]([CH2][Cl])[c]1[cH][cH][cH][cH][c]1[CH2][N]([CH]1[CH2][O][CH2]1)[CH2][OH]", 
-        "[OH][CH2][N]([CH2][c]1[cH][cH][cH][cH][c]1[NH][CH2][Cl])[CH]1[CH2][O][CH2]1", 
-        "[CH2]([N]([CH]1[CH2][O][CH2]1)[CH2][c]1[c]([cH][cH][cH][cH]1)[NH][CH2][Cl])[OH]"])
+    v = Chem.MolToRandomSmilesVect(m, 5, randomSeed=0xf00d)
+    self.assertEqual(v, [
+      "c1cc(CN(C2COC2)CO)c(cc1)NCCl", "N(CCl)c1c(CN(C2COC2)CO)cccc1", "N(CCl)c1ccccc1CN(C1COC1)CO",
+      "OCN(Cc1ccccc1NCCl)C1COC1", "C(N(C1COC1)Cc1c(cccc1)NCCl)O"
+    ])
+
+    v = Chem.MolToRandomSmilesVect(m, 5, randomSeed=0xf00d, allHsExplicit=True)
+    self.assertEqual(v, [
+      "[cH]1[cH][c]([CH2][N]([CH]2[CH2][O][CH2]2)[CH2][OH])[c]([cH][cH]1)[NH][CH2][Cl]",
+      "[NH]([CH2][Cl])[c]1[c]([CH2][N]([CH]2[CH2][O][CH2]2)[CH2][OH])[cH][cH][cH][cH]1",
+      "[NH]([CH2][Cl])[c]1[cH][cH][cH][cH][c]1[CH2][N]([CH]1[CH2][O][CH2]1)[CH2][OH]",
+      "[OH][CH2][N]([CH2][c]1[cH][cH][cH][cH][c]1[NH][CH2][Cl])[CH]1[CH2][O][CH2]1",
+      "[CH2]([N]([CH]1[CH2][O][CH2]1)[CH2][c]1[c]([cH][cH][cH][cH]1)[NH][CH2][Cl])[OH]"
+    ])
+
+  def testGithub3198(self):
+
+    ps = Chem.SmilesParserParams()
+    ps.removeHs = False
+    m = Chem.MolFromSmiles('[H]OC(F).[Na]', ps)
+
+    qa = rdqueries.AAtomQueryAtom()
+    self.assertEqual(tuple(x.GetIdx() for x in m.GetAtomsMatchingQuery(qa)), (1, 2, 3, 4))
+
+    qa = rdqueries.AHAtomQueryAtom()
+    self.assertEqual(tuple(x.GetIdx() for x in m.GetAtomsMatchingQuery(qa)), (0, 1, 2, 3, 4))
+
+    qa = rdqueries.QAtomQueryAtom()
+    self.assertEqual(tuple(x.GetIdx() for x in m.GetAtomsMatchingQuery(qa)), (1, 3, 4))
+
+    qa = rdqueries.QHAtomQueryAtom()
+    self.assertEqual(tuple(x.GetIdx() for x in m.GetAtomsMatchingQuery(qa)), (0, 1, 3, 4))
+
+    qa = rdqueries.XAtomQueryAtom()
+    self.assertEqual(tuple(x.GetIdx() for x in m.GetAtomsMatchingQuery(qa)), (3, ))
+
+    qa = rdqueries.XHAtomQueryAtom()
+    self.assertEqual(tuple(x.GetIdx() for x in m.GetAtomsMatchingQuery(qa)), (0, 3))
+
+    qa = rdqueries.MAtomQueryAtom()
+    self.assertEqual(tuple(x.GetIdx() for x in m.GetAtomsMatchingQuery(qa)), (4, ))
+
+    qa = rdqueries.MHAtomQueryAtom()
+    self.assertEqual(tuple(x.GetIdx() for x in m.GetAtomsMatchingQuery(qa)), (0, 4))
+
 
 if __name__ == '__main__':
   if "RDTESTCASE" in os.environ:
