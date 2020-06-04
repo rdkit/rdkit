@@ -689,7 +689,11 @@ TEST_CASE(
   REQUIRE(m);
   SECTION("smarts writing") {
     auto smarts = MolToSmarts(*m);
-    CHECK(smarts == "foobar");
+    // this will change if/when the definition of the query changes, just have
+    // to update then
+    CHECK(smarts ==
+          "[#6]-[!#2&!#5&!#6&!#7&!#8&!#9&!#10&!#14&!#15&!#16&!#17&!#18&!#33&!#"
+          "34&!#35&!#36&!#52&!#53&!#54&!#85&!#86&!#1]");
   }
   SECTION("serialization") {
     std::string pkl;
