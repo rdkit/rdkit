@@ -14,6 +14,7 @@
 #include "catch.hpp"
 
 #include <GraphMol/RDKitBase.h>
+#include <GraphMol/MolPickler.h>
 #include <GraphMol/QueryAtom.h>
 #include <GraphMol/QueryBond.h>
 #include <GraphMol/SmilesParse/SmilesParse.h>
@@ -677,5 +678,38 @@ TEST_CASE("random smiles vectors", "[smiles]") {
         MolToRandomSmilesVect(nm, 5, randomSeed, isomericSmiles, kekuleSmiles,
                               allBondsExplicit, allHsExplicit);
     CHECK(smiV == tgt);
+  }
+}
+
+TEST_CASE(
+    "github #3197: Molecule constructed from CXSMILES cannot be translated to "
+    "SMARTS",
+    "[smarts][bug]") {
+  auto m = "C* |$;M_p$|"_smiles;
+  REQUIRE(m);
+  SECTION("smarts writing") {
+    auto smarts = MolToSmarts(*m);
+    CHECK(smarts == "foobar");
+  }
+  SECTION("serialization") {
+    std::string pkl;
+    MolPickler::pickleMol(*m, pkl, PicklerOps::PropertyPickleOptions::AllProps);
+    ROMol cpy(pkl);
+    auto osmi = MolToCXSmiles(*m);
+    CHECK(osmi == "*C |$M_p;$|");
+    auto smi = MolToCXSmiles(cpy);
+    CHECK(smi == osmi);
+    QueryAtom *oa1 = static_cast<QueryAtom *>(m->getAtomWithIdx(1));
+    QueryAtom *a1 = static_cast<QueryAtom *>(m->getAtomWithIdx(1));
+    REQUIRE(oa1->hasQuery());
+    REQUIRE(a1->hasQuery());
+    size_t osz =
+        oa1->getQuery()->endChildren() - oa1->getQuery()->beginChildren();
+    size_t sz = a1->getQuery()->endChildren() - a1->getQuery()->beginChildren();
+    // we don't need to test the exact size (since that may change), but let's
+    // at least be sure it's not unreasonable:
+    CHECK(osz > 0);
+    CHECK(osz < 200);
+    CHECK(osz == sz);
   }
 }
