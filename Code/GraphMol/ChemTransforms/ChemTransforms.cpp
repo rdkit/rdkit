@@ -1,5 +1,5 @@
 //
-//  Copyright (C) 2006-2018 Greg Landrum
+//  Copyright (C) 2006-2020 Greg Landrum
 //
 //   @@ All Rights Reserved @@
 //  This file is part of the RDKit.
@@ -587,7 +587,7 @@ ROMol *MurckoDecompose(const ROMol &mol) {
           } else if (nbr->getIsAromatic() && nbr->getAtomicNum() != 6) {
             // fix aromatic heteroatoms:
             nbr->setNumExplicitHs(1);
-          } else if (nbr->getIsAromatic() && nbr->getAtomicNum() == 6 && 
+          } else if (nbr->getIsAromatic() && nbr->getAtomicNum() == 6 &&
                      nbr->getFormalCharge() == 1) {
             // fix aromatic carbocations
             nbr->setNumExplicitHs(1);
@@ -683,6 +683,8 @@ void addRecursiveQueries(
       boost::tokenizer<boost::char_separator<char>> tokens(pval, sep);
       boost::tokenizer<boost::char_separator<char>>::iterator token;
       qToAdd = new ATOM_OR_QUERY();
+      qToAdd->setDescription("AtomOr");
+
       for (token = tokens.begin(); token != tokens.end(); ++token) {
         auto iter = queries.find(*token);
         if (iter == queries.end()) {
