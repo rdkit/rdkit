@@ -13,23 +13,23 @@ public class TautomerQueryTests extends  GraphMolTest {
 
     @Test
     public void basicOperations() {
-        var mol = RWMol.MolFromSmiles("O=C1CCCCC1");
-        var tautomerQuery = TautomerQuery.fromMol(mol);
+        RWMol mol = RWMol.MolFromSmiles("O=C1CCCCC1");
+        TautomerQuery tautomerQuery = TautomerQuery.fromMol(mol);
         assertEquals(2, tautomerQuery.getTautomers().size());
-        var modifiedAtoms = tautomerQuery.getModifiedAtoms();
+        Sizet_Vect modifiedAtoms = tautomerQuery.getModifiedAtoms();
         assertEquals(3, modifiedAtoms.size());
 
 
-        var target = RWMol.MolFromSmiles("OC1=CCCC(CC)C1");
-        var match = tautomerQuery.isSubstructOf(target);
+        RWMol target = RWMol.MolFromSmiles("OC1=CCCC(CC)C1");
+        boolean match = tautomerQuery.isSubstructOf(target);
         assertTrue(match);
-        var allMatches = tautomerQuery.substructOf(target);
+        Match_Vect_Vect allMatches = tautomerQuery.substructOf(target);
         assertEquals(1, allMatches.size());
-        var atomMatches = allMatches.get(0);
+        Match_Vect atomMatches = allMatches.get(0);
         assertEquals(7, atomMatches.size());
 
-        var params = new SubstructMatchParameters();
-        var matchingTautomers = new ROMol_Vect();
+        SubstructMatchParameters params = new SubstructMatchParameters();
+        ROMol_Vect matchingTautomers = new ROMol_Vect();
         allMatches = tautomerQuery.substructOf(target, params, matchingTautomers);
         assertEquals(1, allMatches.size());
         assertEquals(1, matchingTautomers.size());
@@ -37,9 +37,9 @@ public class TautomerQueryTests extends  GraphMolTest {
         match = target.hasSubstructMatch(matchingTautomers.get(0));
         assertTrue(match);
 
-        var tautomerFingerprint = tautomerQuery.patternFingerprintTemplate();
-        var targetFingerprint = TautomerQuery.patternFingerprintTarget(target);
-        var matchingFingerprints =  RDKFuncs.AllProbeBitsMatch(tautomerFingerprint, targetFingerprint);
+        ExplicitBitVect tautomerFingerprint = tautomerQuery.patternFingerprintTemplate();
+        ExplicitBitVect targetFingerprint = TautomerQuery.patternFingerprintTarget(target);
+        boolean matchingFingerprints =  RDKFuncs.AllProbeBitsMatch(tautomerFingerprint, targetFingerprint);
         assertTrue(matchingFingerprints);
 
         tautomerFingerprint.delete();
