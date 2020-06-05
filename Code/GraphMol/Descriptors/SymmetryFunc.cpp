@@ -1,7 +1,7 @@
 #include <GraphMol/RDKitBase.h>
 #include <cmath>
 #include "SymmetryFunc.h"
-#include <eigen3/Eigen/Dense>
+#include <Eigen/Dense>
 
 using namespace Eigen;
 
@@ -144,7 +144,232 @@ ArrayXXd radial_terms(double cutoff, ArrayXXd distances) {
   return ret;
 }
 
-ArrayXXd SymmetryFunc(const ROMol &mol, std::vector<std::vector<double>> &res, int confId) {
+ArrayXXd angular_terms(double cutoff, ArrayXXd vectors12) {
+
+
+  ArrayXd ShfZ(8);
+  ShfZ << 0.19634954, 0.58904862,
+          0.98174770, 1.3744468,
+          1.7671459 , 2.1598449,
+          2.5525440 , 2.9452431;
+  ArrayXd ShfA(4);
+  ShfA << 0.90, 1.55, 2.20, 2.85;
+  double zeta = 32;
+  double etaA = 8;
+
+  auto distances12 = vectors12.matrix().rowwise().norm().array();
+
+  ArrayXXd cosine_angles(vectors12.rows() / 2, 1);
+  for (int i = 0; i < vectors12.rows() / 2; i++) {
+    cosine_angles(i, 0) = vectors12.matrix().row(i).dot(vectors12.matrix().row(i + vectors12.rows() / 2));
+    cosine_angles(i, 0) = 0.95 * cosine_angles(i, 0) / (vectors12.matrix().row(i).norm() * vectors12.matrix().row(i + vectors12.rows() / 2).norm()); 
+  }
+  auto angles = cosine_angles.acos();
+  auto fcj12 = cosine_cutoff(distances12, cutoff);
+
+  ArrayXXd factor1(angles.rows(), 8);
+  for (int i = 0; i < angles.rows(); i++) {
+    factor1.row(i) =  (((-1 * (ShfZ.rowwise() - angles.row(i)).array()).cos().array() + 1).array() / 2).array().pow(zeta);
+  }
+
+  ArrayXXd distance12sum(distances12.rows() / 2, 1);
+
+
+  for (int i = 0; i < distances12.rows() / 2; i++) {
+    distance12sum(i, 0) = distances12(i, 0) + distances12(i + distances12.rows() / 2, 0);
+  }
+
+  ArrayXXd factor2(distance12sum.rows(), 4);
+  for (int i = 0; i < distance12sum.rows(); i++) {
+    factor2.row(i) = ((ShfA.rowwise() - (distance12sum.array() / 2).row(i)).pow(2).array() * -etaA).exp();
+  }
+
+  ArrayXXd fcj12prod(fcj12.rows() / 2, 1);
+  for (int i = 0; i < fcj12.rows() / 2; i++) {
+    fcj12prod(i, 0) = fcj12(i, 0) * fcj12(i + fcj12.rows() / 2, 0);
+  }
+
+  ArrayXXd ret(fcj12prod.rows(), 32);
+  for (int i = 0; i < ret.rows(); i++) {
+    int idx = 0;
+    for (int j = 0; j < 8; j++) {
+      for (int k = 0; k < 4; k++) {
+        ret(i, idx) = 2 * factor1(i, j) * factor2(i, k) * fcj12prod(i, 0);
+        idx++;
+      }
+    }
+  }
+  return ret;
+
+}
+
+std::vector <int> cumsum_from_zero(std::vector <int> count) {
+  std::vector <int> cumsum{0};
+  int index = 1;
+  for (int i = 0; i < count.size() - 1; i++)  {
+    cumsum.push_back(cumsum[index - 1] + count[i]);
+    index++;
+  }
+
+  return cumsum;
+}
+
+std::pair <std::vector<int>, ArrayXXd> triple_by_molecules(ArrayXXd atom_index12_angular) {
+  std::vector <std::pair<int, int>> atom_index12_angular_flattened;
+  auto index = 0;
+  for (int i = 0; i < atom_index12_angular.rows(); i++) {
+    for (int j = 0; j < atom_index12_angular.cols(); j++) {
+      atom_index12_angular_flattened.push_back(std::make_pair(atom_index12_angular(i, j), index));
+      index++;
+    }
+  }
+  std::sort(atom_index12_angular_flattened.begin(), atom_index12_angular_flattened.end());
+  std::vector <int> rev_indices, sorted_ai;
+  for (auto i : atom_index12_angular_flattened) {
+    rev_indices.push_back(i.second);
+    sorted_ai.push_back(i.first);
+  }
+
+  
+
+  std::vector<int> unique_results(sorted_ai.size());
+  
+  auto ip = std::unique_copy(sorted_ai.begin(), sorted_ai.end(), unique_results.begin());
+  unique_results.resize(std::distance(unique_results.begin(), ip));
+
+
+  std::vector<int> counts(unique_results.size()), pair_sizes(unique_results.size());
+  for (int i = 0; i < unique_results.size(); i++) {
+    counts[i] = std::count(sorted_ai.begin(), sorted_ai.end(), unique_results[i]);
+    pair_sizes[i] = counts[i] * (counts[i] - 1) / 2;
+  }
+
+  std::vector <int> pair_indices;
+
+  for (int i = 0; i < pair_sizes.size(); i++) {
+    int j = pair_sizes[i];
+    while (j--) {
+      pair_indices.push_back(i);
+    }
+  }
+
+  std::vector <int> central_atom_index;
+  for (int i = 0; i < pair_indices.size(); i++) {
+    central_atom_index.push_back(unique_results[pair_indices[i]]);
+  }
+
+  int m;
+  if (counts.size() > 0) {
+    m = *std::max_element(counts.begin(), counts.end());
+  }
+  else {
+    m = 0;
+  }
+
+  auto n = pair_sizes.size();
+  ArrayXXd lower_triang(2, m * (m - 1) / 2);
+  ArrayXXd intra_pair_indices(2 * n, m * (m - 1) / 2);
+  index = 0;
+
+  for (int i = 1; i < m; i++) {
+    for (int j = 0; j < i; j++) {
+      lower_triang.col(index) << i, j;
+      index++;
+    }
+  }
+  index = 0;
+  for (int i = 0; i < lower_triang.rows(); i++) {
+    int j = n;
+    while (j--) {
+      intra_pair_indices.row(index) << lower_triang.row(i);
+      index++;
+    }
+  }
+
+  ArrayXXd mask(1, pair_sizes.size() * lower_triang.cols());
+  index = 0;
+  for (int i = 0; i < pair_sizes.size(); i++) {
+    for (int j = 0; j < lower_triang.cols(); j++) {
+      mask(0, index) =  pair_sizes[i] > j;
+      index++;
+    }
+  }
+
+  ArrayXXd intra_pair_indices_flattened(2, n * m * (m - 1) / 2);
+  if (intra_pair_indices.rows() != 0 && intra_pair_indices.cols() != 0) {
+    index = 0;
+    for (int i = 0; i < intra_pair_indices.rows() / 2; i++) {
+      for (int j = 0; j < m * (m - 1) / 2; j++) {
+        intra_pair_indices_flattened(0, index + j) = intra_pair_indices(i, j);
+      }
+      index += (m * (m - 1) / 2);
+    }
+    index = 0;
+
+    for (int i = intra_pair_indices.rows() / 2; i < intra_pair_indices.rows(); i++) {
+      for (int j = 0; j < m * (m - 1) / 2; j++) {
+        intra_pair_indices_flattened(1, index + j) = intra_pair_indices(i, j);
+      }
+      index += (m * (m - 1) / 2);
+    }
+  }
+  ArrayXXd sorted_local_index12(2, (mask.array() == 1).count());
+  index = 0;
+  for (int i = 0; i < mask.size(); i++) {
+    if (mask(0, i) == 1) {
+      sorted_local_index12.col(index) << intra_pair_indices_flattened.col(i);
+      index++;
+    }
+  }
+
+  auto cumsum_count = cumsum_from_zero(counts);
+
+  VectorXd extra_local_index12 (pair_indices.size());
+  index = 0;
+  for (auto i : pair_indices) {
+    extra_local_index12(index) = cumsum_count[i];
+    index++;
+  }
+
+  sorted_local_index12 = (sorted_local_index12.matrix().rowwise() + extra_local_index12.transpose()).array();
+
+  ArrayXXd local_index12(2, sorted_local_index12.cols());
+  for (int j = 0; j < sorted_local_index12.cols(); j++) {
+    local_index12(0, j) = rev_indices[sorted_local_index12(0, j)];
+    local_index12(1, j) = rev_indices[sorted_local_index12(1, j)];
+  }
+
+  return std::make_pair(central_atom_index, local_index12);
+
+  // n = atom_index12_angular.cols();
+
+  // auto local_index = local_index12.cast <int>();
+  // return std::make_pair(central_atom_index, (local_index.array() - (local_index.array() / n).array() * n).array().cast <double>());
+}
+
+ArrayXXd triu_index(int num_species) {
+  std::vector <int> species1, species2, pair_index;
+
+  for (int i = 0; i < num_species; i++) {
+    for (int j = i; j < num_species; j++) {
+      species1.push_back(i);
+      species2.push_back(j);
+    }
+    pair_index.push_back(i);
+  }
+  ArrayXXd ret(num_species, num_species);
+  int index1 = 0, index2 = pair_index.size() - 1;
+  
+  for (int i = 0; i < species1.size(); i++) {
+    ret(species1[i], species2[i]) = index1;
+    ret(species2[i], species1[i]) = index1;
+    index1++;
+  }
+
+  return ret;
+}
+
+ArrayXXd SymmetryFunc(const ROMol &mol, int confId) {
   PRECONDITION(mol.getNumConformers() >= 1, "molecule has no conformers");
 
   int numAtoms = mol.getNumAtoms();
@@ -208,7 +433,148 @@ ArrayXXd SymmetryFunc(const ROMol &mol, std::vector<std::vector<double>> &res, i
     atom_idx++;
   }
 
-  return final_radial_aev;
+  std::vector <int> even_closer_indices;
+
+  for (int i = 0; i < distances.size(); i++) {
+    if (distances(i) <= 3.5) {
+      even_closer_indices.push_back(i);
+    }
+  }
+
+  // Angular Terms
+
+  ArrayXXd species12_anguler(2, even_closer_indices.size());
+  ArrayXXd atom_index12_angular(2, even_closer_indices.size());
+  
+  ArrayXXd vec_angular(even_closer_indices.size(), 3);
+
+  for (int i = 0; i < even_closer_indices.size(); i++) {
+    atom_index12_angular.col(i) = atom_index12_unflattened.col(even_closer_indices[i]);
+    species12_anguler.col(i) = species12.col(even_closer_indices[i]);
+    vec_angular.row(i) = vec.row(even_closer_indices[i]);
+  }
+
+  auto n = even_closer_indices.size();
+  auto ret = triple_by_molecules(atom_index12_angular);
+  auto pair_index12 = ret.second;
+  auto central_atom_index = ret.first;
+  ArrayXXd sign12(2, pair_index12.cols());
+
+  for (int i = 0; i < pair_index12.rows(); i++) {
+    for (int j = 0; j < pair_index12.cols(); j++) {
+      if (pair_index12(i, j) < n) {
+        sign12(i, j) = 1;
+      }
+      else {
+        sign12(i, j) = -1;
+      }
+    }
+  }
+
+  n = atom_index12_angular.cols();
+
+  auto local_index = pair_index12.cast <int>();
+  pair_index12 = (local_index.array() - (local_index.array() / n).array() * n).array().cast <double>();
+
+  ArrayXXd pair_index12_flattened(1, 2 * pair_index12.cols());
+  int idx = 0;
+  for (int i = 0; i < pair_index12.rows(); i++) {
+    for (int j = 0; j < pair_index12.cols(); j++) {
+      pair_index12_flattened(0, idx) = pair_index12(i, j);
+      idx++;
+    }
+  }
+
+  ArrayXXd vec_flattened(pair_index12_flattened.cols(), 3);
+  idx = 0;
+  for (int i = 0; i < pair_index12_flattened.cols(); i++) {
+    vec_flattened.row(idx) = vec_angular.row(pair_index12_flattened(0, i));
+    idx++;
+  }
+
+  ArrayXXd vec12(vec_flattened.rows(), 3);
+  for (int i = 0; i < vec_flattened.rows() / 2; i++) {
+    vec12.row(i) = vec_flattened.row(i) * sign12(0, i);
+  }
+
+  for (int i = vec_flattened.rows() / 2; i < vec_flattened.rows(); i++) {
+    vec12.row(i) = vec_flattened.row(i) * sign12(1, i - vec_flattened.rows() / 2);
+  }
+
+  auto angular_terms_ = angular_terms(3.5, vec12);
+
+  ArrayXXd central_atom_index_arr(central_atom_index.size(), 1);
+
+  for (int i = 0; i < central_atom_index.size(); i++) {
+    central_atom_index_arr.row(i) << central_atom_index[i];
+  }
+
+  ArrayXXd species12_small_1(2, pair_index12.cols());
+  ArrayXXd species12_small_2(2, pair_index12.cols());
+
+  for (int i = 0; i < pair_index12.rows(); i++) {
+    for (int j = 0; j < pair_index12.cols(); j++) {
+      species12_small_1(i, j) = species12_anguler(0, pair_index12(i, j));
+    }
+  }
+
+  for (int i = 0; i < pair_index12.rows(); i++) {
+    for (int j = 0; j < pair_index12.cols(); j++) {
+      species12_small_2(i, j) = species12_anguler(1, pair_index12(i, j));
+    }
+  }
+
+  ArrayXXd species12_(sign12.rows(), sign12.cols());
+
+  for (int i = 0; i < sign12.rows(); i++) {
+    for (int j = 0; j < sign12.cols(); j++) {
+      if (sign12(i, j) == 1) {
+        species12_(i, j) = species12_small_2(i, j);
+      }
+      else {
+        species12_(i, j) = species12_small_1(i, j);
+      }
+    }
+  }
+
+  ArrayXXd index(species12_.cols(), 1);
+  auto triu_indices = triu_index(4);
+
+
+  for (int i = 0; i < species12_.cols(); i++) {
+    index.row(i) = triu_indices(species12_(0, i), species12_(1, i));
+  }
+
+  index = index + (central_atom_index_arr.array() * 10).array();
+
+  ArrayXXd angular_aev = ArrayXXd::Zero(10 * numAtoms, 32);
+
+
+  for (int i = 0; i < index.rows(); i++) {
+    for (int j = 0; j < 10 * numAtoms; j++) {
+      if (index(i, 0) == j) {
+        angular_aev.row(j) += angular_terms_.row(i);
+      }
+    }
+  }
+
+
+  ArrayXXd final_angular_aev(numAtoms, 320);
+  atom_idx = 0;
+  for (int i = 0; i < angular_aev.rows(); i+=10) {
+    final_angular_aev.row(atom_idx) << angular_aev.row(i),     angular_aev.row(i + 1), 
+                                       angular_aev.row(i + 2), angular_aev.row(i + 3);
+                                       angular_aev.row(i + 4), angular_aev.row(i + 5);
+                                       angular_aev.row(i + 6), angular_aev.row(i + 7);
+                                       angular_aev.row(i + 8), angular_aev.row(i + 9);
+    atom_idx++;
+  }
+  
+  ArrayXXd final_aev(final_radial_aev.rows(), final_radial_aev.cols() + final_angular_aev.cols());
+  final_aev << final_radial_aev,
+               final_angular_aev;
+
+  return final_aev;
 
 }
 }

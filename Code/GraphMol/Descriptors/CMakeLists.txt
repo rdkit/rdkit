@@ -1,7 +1,7 @@
 if(RDK_BUILD_DESCRIPTORS3D)
 
-  set(DESC3D_HDRS MolDescriptors3D.h EEM.h PBF.h PMI.h AUTOCORR3D.h RDF.h MORSE.h GETAWAY.h WHIM.h CoulombMat.h)
-  set(DESC3D_SOURCES EEM.cpp PBF.cpp PMI.cpp AUTOCORR3D.cpp RDF.cpp MORSE.cpp GETAWAY.cpp WHIM.cpp CoulombMat.cpp)
+  set(DESC3D_HDRS MolDescriptors3D.h EEM.h PBF.h PMI.h AUTOCORR3D.h RDF.h MORSE.h GETAWAY.h WHIM.h CoulombMat.h SymmetryFunc.h)
+  set(DESC3D_SOURCES EEM.cpp PBF.cpp PMI.cpp AUTOCORR3D.cpp RDF.cpp MORSE.cpp GETAWAY.cpp WHIM.cpp CoulombMat.cpp SymmetryFunc.cpp)
 
 endif(RDK_BUILD_DESCRIPTORS3D)
 
