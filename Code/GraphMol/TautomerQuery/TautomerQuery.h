@@ -18,7 +18,7 @@ namespace RDKit {
 
 class RWMol;
 
-class TautomerQuery {
+class RDKIT_TAUTOMERQUERY_EXPORT TautomerQuery {
  private:
   // Tautomers of the query
   const std::vector<ROMOL_SPTR> d_tautomers;
@@ -77,7 +77,7 @@ class TautomerQuery {
 };
 
 // so we can use the templates in Code/GraphMol/Substruct/SubstructMatch.h
-std::vector<MatchVectType> SubstructMatch(
+RDKIT_TAUTOMERQUERY_EXPORT std::vector<MatchVectType> SubstructMatch(
     const ROMol &mol, const TautomerQuery &query,
     const SubstructMatchParameters &params);
 
