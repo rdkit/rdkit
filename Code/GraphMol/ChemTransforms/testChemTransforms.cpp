@@ -1,5 +1,5 @@
 //
-//  Copyright (C) 2006-2018 Greg Landrum
+//  Copyright (C) 2006-2020 Greg Landrum
 //
 //   @@ All Rights Reserved @@
 //  This file is part of the RDKit.
@@ -15,6 +15,7 @@
 #include <iostream>
 #include <GraphMol/SmilesParse/SmilesParse.h>
 #include <GraphMol/SmilesParse/SmilesWrite.h>
+#include <GraphMol/SmilesParse/SmartsWrite.h>
 #include <GraphMol/ChemTransforms/ChemTransforms.h>
 #include <GraphMol/FileParsers/FileParsers.h>
 #include <GraphMol/FileParsers/MolSupplier.h>
@@ -2042,6 +2043,36 @@ void testGithub1734() {
   BOOST_LOG(rdInfoLog) << "\tdone" << std::endl;
 }
 
+void testGithub3206() {
+  BOOST_LOG(rdInfoLog) << "-------------------------------------" << std::endl;
+  BOOST_LOG(rdInfoLog) << "Testing GitHub #3206: Queries generated from "
+                          "PreprocessReaction cannot be translated to SMARTS"
+                       << std::endl;
+
+  {
+    auto mol1 = "CC"_smiles;
+
+    std::map<std::string, ROMOL_SPTR> mp;
+    mp["foo"] = ROMOL_SPTR(SmilesToMol("CO"));
+    mp["bar"] = ROMOL_SPTR(SmilesToMol("CN"));
+    mp["baz"] = ROMOL_SPTR(SmilesToMol("CF"));
+
+    TEST_ASSERT(!mol1->getAtomWithIdx(0)->hasQuery());
+    addRecursiveQueries(*mol1, mp, "replaceme");
+    TEST_ASSERT(!mol1->getAtomWithIdx(0)->hasQuery());
+    mol1->getAtomWithIdx(0)->setProp("replaceme", "foo,bar,baz");
+    addRecursiveQueries(*mol1, mp, "replaceme");
+    TEST_ASSERT(mol1->getAtomWithIdx(0)->hasQuery());
+    TEST_ASSERT(mol1->getAtomWithIdx(0)->getQuery()->getDescription() ==
+                "AtomAnd");
+    TEST_ASSERT(!mol1->getAtomWithIdx(1)->hasQuery());
+
+    auto sma = MolToSmarts(*mol1);
+    TEST_ASSERT(sma == "[#6;$([#6]-[#8]),$([#6]-[#7]),$([#6]-[#9])]-[#6]");
+  }
+  BOOST_LOG(rdInfoLog) << "\tdone" << std::endl;
+}
+
 int main() {
   RDLog::InitLogs();
 
@@ -2081,6 +2112,7 @@ int main() {
   testReplaceCore2();
 #endif
   testGithub1734();
+  testGithub3206();
   BOOST_LOG(rdInfoLog)
       << "*******************************************************\n";
   return (0);
