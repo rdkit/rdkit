@@ -170,6 +170,7 @@ void DrawTextFT::calcGlyphBBox(char c, FT_Pos &x_min, FT_Pos &y_min,
   y_min = bbox.yMin;
   x_max = bbox.xMax;
   y_max = bbox.yMax;
+
   advance = slot->advance.x;
 
 }

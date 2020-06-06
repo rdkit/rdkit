@@ -49,7 +49,7 @@ class DrawText {
   DrawColour const &colour() const;
   void setColour(const DrawColour &col);
 
-  virtual double fontSize() const;
+  double fontSize() const;
   double maxFontSize() const;
   void setMaxFontSize(double new_max);
   double fontScale() const;
@@ -59,7 +59,7 @@ class DrawText {
   /*!
      Bear in mind when implementing this, that, for example, NH2 will appear as
      NH<sub>2</sub> to convey that the 2 is a subscript, and this needs to
-     accounted for in the width and height.
+     be accounted for in the width and height.
    */
   virtual void getStringSize(const std::string &label, double &label_width,
                              double &label_height) const;
@@ -89,6 +89,16 @@ class DrawText {
   // For debugging, mostly.
   void drawStringRects(const std::string &label, OrientType orient,
                        const Point2D &cds, MolDraw2D &mol_draw) const;
+
+  // cds in draw coords
+  bool doesRectIntersect(const std::string &label, OrientType orient,
+                         const Point2D &cds, const StringRect &rect) const;
+  bool doesLineIntersect(const std::string &label, OrientType orient,
+                         const Point2D &cds, const Point2D &end1,
+                         const Point2D &end2, double padding) const;
+  bool doesStringIntersect(const std::string &label1, OrientType orient1,
+                           const Point2D &cds1, const std::string &label2,
+                           OrientType orient2, const Point2D &cds2) const;
 
  protected:
   // amount to scale subscripts and superscripts by

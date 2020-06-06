@@ -100,8 +100,7 @@ void DrawText::adjustLineForString(const string &label, OrientType orient,
   double bond_len = (end1 - end2).length();
   for(size_t i = 0; i < rects.size(); ++i) {
     const auto &r = rects[i];
-    r->trans_.x += lab_pos.x;
-    r->trans_.y += lab_pos.y;
+    r->trans_ += lab_pos;
 
     Point2D tl, tr, bl, br;
     r->calcCorners(tl, tr, br, bl, 0.025 * bond_len);
@@ -152,10 +151,94 @@ void DrawText::drawStringRects(const string &label, OrientType orient,
     mol_draw.drawLine(tr, br);
     mol_draw.setColour(DrawColour(0.0, 0.0, 1.0));
     mol_draw.drawLine(br, bl);
-    mol_draw.setColour(DrawColour(0.0, 1.0, 1.0));
+    mol_draw.setColour(DrawColour(0.0, 0.95, 0.95));
     mol_draw.drawLine(bl, tl);
     ++i;
   }
+
+}
+
+// ****************************************************************************
+bool DrawText::doesRectIntersect(const std::string &label, OrientType orient,
+                                 const Point2D &cds, const StringRect &rect) const {
+
+  if(label.empty()) {
+    return false;
+  }
+  vector<shared_ptr<StringRect>> rects;
+  vector<TextDrawType> draw_modes;
+  vector<char> draw_chars;
+
+  getStringRects(label, orient, rects, draw_modes, draw_chars);
+  for(auto r: rects) {
+    r->trans_ += cds;
+    if(r->doesItIntersect(rect)) {
+      return true;
+    }
+  }
+
+  return false;
+}
+
+// ****************************************************************************
+bool DrawText::doesLineIntersect(const std::string &label, OrientType orient,
+                                 const Point2D &cds, const Point2D &end1,
+                                 const Point2D &end2, double padding) const {
+
+  vector<shared_ptr<StringRect>> rects;
+  vector<TextDrawType> draw_modes;
+  vector<char> draw_chars;
+
+  getStringRects(label, orient, rects, draw_modes, draw_chars);
+  for(size_t i = 0; i < rects.size(); ++i) {
+    const auto &r = rects[i];
+    r->trans_ += cds;
+
+    Point2D tl, tr, bl, br;
+    r->calcCorners(tl, tr, br, bl, padding);
+
+    if (doLinesIntersect(end2, end1, tl, tr, nullptr)) {
+      return true;
+    }
+    if (doLinesIntersect(end2, end1, tr, br, nullptr)) {
+      return true;
+    }
+    if (doLinesIntersect(end2, end1, br, bl, nullptr)) {
+      return true;
+    }
+    if (doLinesIntersect(end2, end1, bl, tl, nullptr)) {
+      return true;
+    }
+  }
+  return false;
+
+}
+
+// ****************************************************************************
+bool DrawText::doesStringIntersect(const string &label1, OrientType orient1,
+                                   const Point2D &cds1, const string &label2,
+                                   OrientType orient2, const Point2D &cds2) const {
+
+  if(label1.empty() || label2.empty()) {
+    return false;
+  }
+  vector<shared_ptr<StringRect>> rects1, rects2;
+  vector<TextDrawType> draw_modes1, draw_modes2;
+  vector<char> draw_chars1, draw_chars2;
+
+  getStringRects(label1, orient1, rects1, draw_modes1, draw_chars1);
+  getStringRects(label2, orient2, rects2, draw_modes2, draw_chars2);
+
+  for(auto r1: rects1) {
+    r1->trans_ += cds1;
+    for(auto r2: rects2) {
+      r2->trans_ += cds2;
+      if(r1->doesItIntersect(*r2)) {
+        return true;
+      }
+    }
+  }
+  return false;
 
 }
 
@@ -179,7 +262,13 @@ void DrawText::getStringExtremes(const string &label, OrientType orient,
   getStringRects(label, orient, rects, draw_modes, to_draw);
   for(auto r: rects) {
     Point2D tl, tr, br, bl;
-    r->calcCorners(tl, tr, br, bl);
+    r->calcCorners(tl, tr, br, bl, 0.0);
+    // sometimes the rect is in a coordinate frame where +ve y is down,
+    // sometimes it's up.  For these purposes, we don't care so long as
+    // the y_max is larger than the y_min.
+    if(bl.y < tr.y) {
+      swap(bl, tr);
+    }
     x_min = min(bl.x, x_min);
     y_min = min(bl.y, y_min);
     x_max = max(tr.x, x_max);

@@ -677,6 +677,27 @@ void test6() {
     // TEST_ASSERT(txt.find("<svg")!=std::string::npos);
     delete m;
   }
+  {
+    auto m = "[C]1[C][C][CH][CH][CH]1"_smiles;
+    TEST_ASSERT(m);
+    RDDepict::compute2DCoords(*m);
+    MolDraw2DSVG drawer(300, 300);
+    drawer.drawMolecule(*m);
+    drawer.finishDrawing();
+    std::string txt = drawer.getDrawingText();
+    TEST_ASSERT(txt.find("<svg") != std::string::npos);
+    std::ofstream outs("test6_2.svg");
+    outs << txt;
+    outs.close();
+    // start of bond-0
+    TEST_ASSERT(txt.find("<path class='bond-0' d='M 270.144,148.198"
+                         " L 210.072,252.246'")
+                != std::string::npos);
+    // start of first radical spot
+    TEST_ASSERT(txt.find("<path d='M 286.964,144.594 L 286.955,144.387")
+                != std::string::npos);
+  }
+
   std::cerr << " Done" << std::endl;
 }
 
@@ -877,22 +898,24 @@ void testGithub781() {
     drawer.finishDrawing();
     std::string txt = drawer.getDrawingText();
     TEST_ASSERT(txt.find("<svg") != std::string::npos);
-#ifdef RDK_BUILD_FREETYPE_SUPPORT
-#if 0
     // write the file so we can update the coords below more easily
     // if the font changes, for example.
     std::ofstream outs("testGithub781_1.svg");
     outs << txt;
     outs.close();
-#endif
+#ifdef RDK_BUILD_FREETYPE_SUPPORT
     // the start of the C
-    TEST_ASSERT(txt.find("<path  class='atom-0' d='M 88.4634 150.11")
+    TEST_ASSERT(txt.find("<path  class='atom-0' d='M 139 149.8")
                 != std::string::npos)
     // the start of the H
-    TEST_ASSERT(txt.find("<path  class='atom-0' d='M 163.988 104.478")
+    TEST_ASSERT(txt.find("<path  class='atom-0' d='M 163.4 135.68")
                 != std::string::npos)
 #else
-    TEST_ASSERT(txt.find("<tspan>CH</tspan>") != std::string::npos);
+    TEST_ASSERT(txt.find(">C</text>") != std::string::npos);
+    TEST_ASSERT(txt.find(">H</text>") != std::string::npos);
+    TEST_ASSERT(txt.find(">4</text>") != std::string::npos);
+    TEST_ASSERT(txt.find("font-size:40px") != std::string::npos);
+    TEST_ASSERT(txt.find("font-size:30px") != std::string::npos);
 #endif
   }
   {
@@ -904,15 +927,15 @@ void testGithub781() {
     drawer.finishDrawing();
     std::string txt = drawer.getDrawingText();
     TEST_ASSERT(txt.find("<svg") != std::string::npos);
-#ifdef RDK_BUILD_FREETYPE_SUPPORT
     std::ofstream outs("testGithub781_2.svg");
     outs << txt;
     outs.close();
+#ifdef RDK_BUILD_FREETYPE_SUPPORT
     // start of the H
-    TEST_ASSERT(txt.find("<path  class='atom-0' d='M -9.91254 100.319")
+    TEST_ASSERT(txt.find("<path  class='atom-0' d='M 96.4 135.68")
                 != std::string::npos);
     // start of the O
-    TEST_ASSERT(txt.find("<path  class='atom-0' d='M -9.91254 100.319")
+    TEST_ASSERT(txt.find("<path  class='atom-0' d='M 137 149.76")
                 != std::string::npos);
 #else
     TEST_ASSERT(txt.find("<tspan>OH</tspan>") == std::string::npos);
@@ -922,23 +945,26 @@ void testGithub781() {
     auto m = "[C]"_smiles;
     TEST_ASSERT(m);
     RDDepict::compute2DCoords(*m);
-    MolDraw2DSVG drawer(300, 300);
+    MolDraw2DSVG drawer(600, 600);
     drawer.drawMolecule(*m);
     drawer.finishDrawing();
     std::string txt = drawer.getDrawingText();
     TEST_ASSERT(txt.find("<svg") != std::string::npos);
-#ifdef RDK_BUILD_FREETYPE_SUPPORT
     std::ofstream outs("testGithub781_3.svg");
     outs << txt;
     outs.close();
+#ifdef RDK_BUILD_FREETYPE_SUPPORT
     // The C
-    TEST_ASSERT(txt.find("<path  class='atom-0' d='M 106 151.2")
+    TEST_ASSERT(txt.find("<path  class='atom-0' d='M 289 299.8")
                 != std::string::npos);
     // the first radical marker
-    TEST_ASSERT(txt.find("<path d='M 32.7273,75.6364 L 32.697,74.933")
+    TEST_ASSERT(txt.find("<path d='M 326.291,281.591 L 326.276,281.239")
                 != std::string::npos);
 #else
-    TEST_ASSERT(txt.find("<tspan>C</tspan>") != std::string::npos);
+    TEST_ASSERT(txt.find(">C</text>") != std::string::npos);
+    // the first radical marker
+    TEST_ASSERT(txt.find("<path d='M 327.273,281.591 L 327.258,281.239 L 327.212,280.89")
+                != std::string::npos);
 #endif
   }
   {
@@ -950,19 +976,20 @@ void testGithub781() {
     drawer.finishDrawing();
     std::string txt = drawer.getDrawingText();
     TEST_ASSERT(txt.find("<svg") != std::string::npos);
-#ifdef RDK_BUILD_FREETYPE_SUPPORT
     std::ofstream outs("testGithub781_4.svg");
     outs << txt;
     outs.close();
+#ifdef RDK_BUILD_FREETYPE_SUPPORT
     // start of C
-    TEST_ASSERT(txt.find("<path  class='atom-0' d='M 26.1014 205.98")
+    TEST_ASSERT(txt.find("<path  class='atom-0' d='M 27 201.8")
                 != std::string::npos);
     // start of l
-    TEST_ASSERT(txt.find("<path  class='atom-3' d='M 25.3344 76.9212")
+    TEST_ASSERT(txt.find("<path  class='atom-3' d='M 11 94.8")
                 != std::string::npos);
 #else
-    TEST_ASSERT(txt.find("<tspan>CH</tspan>") != std::string::npos);
-    TEST_ASSERT(txt.find("<tspan>Cl</tspan>") != std::string::npos);
+    TEST_ASSERT(txt.find(">C</text>") != std::string::npos);
+    TEST_ASSERT(txt.find(">H</text>") != std::string::npos);
+    TEST_ASSERT(txt.find(">l</text>") != std::string::npos);
 #endif
   }
   {  // empty molecule
@@ -974,11 +1001,11 @@ void testGithub781() {
     drawer.finishDrawing();
     std::string txt = drawer.getDrawingText();
     TEST_ASSERT(txt.find("<svg") != std::string::npos);
-#ifdef RDK_BUILD_FREETYPE_SUPPORT
     // the Freetype version just draws the white canvas.
     std::ofstream outs("testGithub781_5.svg");
     outs << txt;
     outs.close();
+#ifdef RDK_BUILD_FREETYPE_SUPPORT
 #else
     TEST_ASSERT(txt.find("<tspan>") == std::string::npos);
 #endif
@@ -1333,12 +1360,12 @@ M  END";
     outs << text;
     outs.flush();
 #ifdef RDK_BUILD_FREETYPE_SUPPORT
-    TEST_ASSERT(text.find("<path class='bond-1' d='M 126.476,115.787"
-                          " L 182.747,90.9962 L 176.078,79.4455 Z'"
-                          " style='fill:#000000;") != std::string::npos);
+    TEST_ASSERT(text.find("<path class='bond-1' d='M 127.778,115.762"
+                          " L 186.816,89.7527 L 179.819,77.634 Z'"
+                          " style='fill:#000000") != std::string::npos);
 #else
-    TEST_ASSERT(text.find("<path class='bond-1' d='M 126.476,115.787"
-                          " L 182.747,90.9962 L 176.078,79.4455 Z'"
+    TEST_ASSERT(text.find("<path class='bond-1' d='M 127.267,112.687"
+                          " L 185.22,87.1556 L 178.351,75.2597 Z'"
                           " style='fill:#000000;") != std::string::npos);
 #endif
     delete m;
@@ -1390,12 +1417,12 @@ M  END";
     outs << text;
     outs.flush();
 #ifdef RDK_BUILD_FREETYPE_SUPPORT
-    TEST_ASSERT(text.find("<path class='bond-3' d='M 106.003,118.094"
-                          " L 78.3276,93.259 L 73.6241,99.8099 Z'"
+    TEST_ASSERT(text.find("<path class='bond-3' d='M 107.442,118.604"
+                          " L 78.9865,93.069 L 74.1504,99.8046 Z'"
                           " style='fill:#000000;") != std::string::npos);
 #else
-    TEST_ASSERT(text.find("<path class='bond-3' d='M 102.962,116.968 L"
-                          " 77.0085,93.6784 L 72.5976,99.8217 Z'"
+    TEST_ASSERT(text.find("<path class='bond-3' d='M 109.271,116.791"
+                          " L 80.7642,91.2106 L 75.9194,97.9583 Z'"
                           " style='fill:#000000;") != std::string::npos);
 #endif
 
@@ -1440,24 +1467,28 @@ void testDeuteriumTritium() {
       if (!ok) {
         continue;
       }
-#ifdef RDK_BUILD_FREETYPE_SUPPORT
       // there are no characters to look for, but each atom should
       // be made of 2 glyphs, the superscript 2 and the H.
+#ifdef RDK_BUILD_FREETYPE_SUPPORT
       if ((line.find("atom-") != std::string::npos)) {
         ++count;
       }
 #else
-      if ((line.find("baseline-shift:super") != std::string::npos) &&
-          (line.find(">2<") != std::string::npos) &&
-          (line.find(">H<") != std::string::npos)) {
-        ++count;
-      }
+      // a bit kludgy, but...
+      if(line.find("<text x='257.045' y='156.865' class='atom-1'"
+                            " style='font-size:17px;font-style:normal;"
+                            "font-weight:normal;fill-opacity:1;stroke:none;"
+                            "font-family:sans-serif;text-anchor:start;"
+                            "fill:#000000' >2</text>") != std::string::npos) {
+          ++count;
+        }
 #endif
     }
 #ifdef RDK_BUILD_FREETYPE_SUPPORT
     TEST_ASSERT(count == 8);
 #else
-    TEST_ASSERT(count == 4);
+    // the first superscript 2
+    TEST_ASSERT(count == 1);
 #endif
   }
   {
@@ -1895,7 +1926,8 @@ void test13JSONConfig() {
 #ifdef RDK_BUILD_FREETYPE_SUPPORT
     // we'll just have to assume that this pink is for the legend
     TEST_ASSERT(text.find("' fill='#FF7FFF") != std::string::npos);
-    TEST_ASSERT(text.find("'bond-0' d='M 116.677,9.09091 L 165.519,93.6875'") !=
+    TEST_ASSERT(text.find("<path class='bond-0' d='M 112.451,9.09091"
+                          " L 162.196,95.2511'") !=
                 std::string::npos);
 #else
     TEST_ASSERT(text.find("sans-serif;fill:#FF7FFF") != std::string::npos);
@@ -2432,7 +2464,7 @@ void test17MaxFontSize() {
 #ifdef RDK_BUILD_FREETYPE_SUPPORT
       // where it starts drawing the N is a poor surrogate for checking
       // the font size, but all we have.
-      TEST_ASSERT(text.find("<path  class='atom-4' d='M 139.84 169.642")
+      TEST_ASSERT(text.find("<path  class='atom-4' d='M 141.8 175.68")
                   != std::string::npos);
 #else
       TEST_ASSERT(text.find("font-size:40px") != std::string::npos);
@@ -2579,7 +2611,7 @@ void test19RotateDrawing() {
       outs << text;
       outs.flush();
 #ifdef RDK_BUILD_FREETYPE_SUPPORT
-      TEST_ASSERT(text.find("<path  class='atom-0' d='M 266.713 149.84") !=
+      TEST_ASSERT(text.find("<path  class='atom-0' d='M 268.282 149.898") !=
                   std::string::npos);
 #else
       TEST_ASSERT(text.find("text-anchor=\"start\" x='256.907' y='154.276'") !=
@@ -2596,7 +2628,7 @@ void test19RotateDrawing() {
       outs << text;
       outs.flush();
 #ifdef RDK_BUILD_FREETYPE_SUPPORT
-      TEST_ASSERT(text.find("<path  class='atom-0' d='M 140.701 273.921") !=
+      TEST_ASSERT(text.find("<path  class='atom-0' d='M 142.29 277.842") !=
                   std::string::npos);
 #else
       TEST_ASSERT(text.find("text-anchor=\"start\" x='136.604' y='276.316'") !=
@@ -2834,10 +2866,9 @@ void testGithub2931() {
       TEST_ASSERT(text.find("stroke:#FF8C00;stroke-width:5px") !=
                   std::string::npos);
 #ifdef RDK_BUILD_FREETYPE_SUPPORT
-      TEST_ASSERT(text.find("<ellipse cx='241.752' cy='387.866'"
-                            " rx='10.998' ry='11.0561'"
-                            " style='fill:none;stroke:#00FF00;") !=
-                  std::string::npos);
+      TEST_ASSERT(text.find("<ellipse cx='241.678' cy='333.335' rx='11.0961'"
+                            " ry='11.0961' style='fill:none;stroke:#00FF00;")
+                  != std::string::npos);
 #else
       TEST_ASSERT(text.find("<ellipse cx='241.942' cy='386.438'"
                             " rx='11.9978' ry='12.846'"
@@ -2860,10 +2891,9 @@ void testGithub2931() {
       TEST_ASSERT(text.find("stroke:#FF8C00;stroke-width:5px") !=
                   std::string::npos);
 #ifdef RDK_BUILD_FREETYPE_SUPPORT
-      TEST_ASSERT(text.find("<ellipse cx='241.726' cy='387.585'"
-                            " rx='11.0325' ry='11.0325'"
-                            " style='fill:none;stroke:#00FF00") !=
-                      std::string::npos);
+      TEST_ASSERT(text.find("<ellipse cx='241.694' cy='333.61' rx='11.0748'"
+                            " ry='11.0748' style='fill:none;stroke:#00FF00;")
+                  != std::string::npos);
 #else
       TEST_ASSERT(text.find("<ellipse cx='241.766' cy='385.788'"
                             " rx='10.9782' ry='10.9782'"
@@ -2879,7 +2909,9 @@ void test20Annotate() {
   std::cout << " ----------------- Testing annotation of 2D Drawing."
             << std::endl;
 
-  // add serial numbers to the atoms in the molecule
+  // add serial numbers to the atoms in the molecule.
+  // There's an option for this, but for debugging it's sometimes
+  // useful to be able to put notes on just a few atoms.
   auto addAtomSerialNumbers = [](ROMol &mol) {
     for (auto atom : mol.atoms()) {
       atom->setProp(common_properties::atomNote, atom->getIdx());
@@ -2896,6 +2928,7 @@ void test20Annotate() {
     addBondSerialNumbers(*m1);
 #ifdef RDK_BUILD_CAIRO_SUPPORT
     {
+      std::cout << "AAAAAAAAAAAAAA Cairo" << std::endl;
       MolDraw2DCairo drawer(500, 500);
       drawer.drawMolecule(*m1);
       drawer.finishDrawing();
@@ -2903,6 +2936,7 @@ void test20Annotate() {
     }
 #endif
 
+    std::cout << "BBBBBBBBBBBBBBBBBB SVG" << std::endl;
     MolDraw2DSVG drawer(500, 500);
     drawer.drawMolecule(*m1);
     drawer.finishDrawing();
@@ -2912,13 +2946,15 @@ void test20Annotate() {
     outs.flush();
     // annotation for atom 11
 #ifdef RDK_BUILD_FREETYPE_SUPPORT
-    TEST_ASSERT(text.find("<path  class='atom-11' d='M 410.159 228.768")
+    TEST_ASSERT(text.find("<path  class='atom-11' d='M 412.881 227.744")
                 != std::string::npos);
 #else
-    TEST_ASSERT(text.find("x='423.22' y='249.655' style='font-size:14px;"
-                          "font-style:normal;font-weight:normal;"
-                          "fill-opacity:1;stroke:none;"
-                          "font-family:sans-serif;fill:#000000' ><tspan>11")
+    // first one of atom note 11
+    TEST_ASSERT(text.find("<text x='407.676' y='256.146' class='note'"
+                          " style='font-size:17px;font-style:normal;"
+                          "font-weight:normal;fill-opacity:1;stroke:none;"
+                          "font-family:sans-serif;text-anchor:start;"
+                          "fill:#000000' >1</text>")
                 != std::string::npos);
 #endif
   }
@@ -2944,14 +2980,16 @@ void test20Annotate() {
     outs << text;
     outs.flush();
 #ifdef RDK_BUILD_FREETYPE_SUPPORT
-    TEST_ASSERT(text.find("<path  class='note' d='M 292.476 234.814")
+    // last note
+    TEST_ASSERT(text.find("<path  class='note' d='M 283.857 227.86")
                 != std::string::npos);
 #else
     // this is the (E)
-    TEST_ASSERT(text.find("x='278.629' y='221.042' style='font-size:27px;"
-                          "font-style:normal;font-weight:normal;"
-                          "fill-opacity:1;stroke:none;font-family:sans-serif;"
-                          "fill:#000000") != std::string::npos);
+    TEST_ASSERT(text.find("<text x='255.442' y='238.326' class='note'"
+                          " style='font-size:32px;font-style:normal;"
+                          "font-weight:normal;fill-opacity:1;stroke:none;"
+                          "font-family:sans-serif;text-anchor:start;"
+                          "fill:#000000' >E</text>") != std::string::npos);
 #endif
   }
   {
@@ -2978,14 +3016,16 @@ void test20Annotate() {
     outs << text;
     outs.flush();
 #ifdef RDK_BUILD_FREETYPE_SUPPORT
-    TEST_ASSERT(text.find("<path  class='note' d='M 126.642 177.078") !=
+    // first note
+    TEST_ASSERT(text.find("<path  class='note' d='M 141.483 174.781") !=
                 std::string::npos);
 #else
-    TEST_ASSERT(text.find("x='209.32' y='180.482' style='font-size:15px;"
-                          "font-style:normal;font-weight:normal;"
-                          "fill-opacity:1;stroke:none;"
-                          "font-family:sans-serif;fill:#000000'"
-                          " ><tspan>foolish annotation</tspan>") !=
+    // f of foolish
+    TEST_ASSERT(text.find("<text x='121.4' y='184.406' class='note'"
+                          " style='font-size:18px;font-style:normal;"
+                          "font-weight:normal;fill-opacity:1;stroke:none;"
+                          "font-family:sans-serif;text-anchor:start;"
+                          "fill:#000000' >f</text>") !=
                 std::string::npos);
 #endif
   }
@@ -2998,6 +3038,8 @@ int main() {
 #endif
 
   RDLog::InitLogs();
+  test6();
+  test20Annotate();
 
 #if 1
   test1();
