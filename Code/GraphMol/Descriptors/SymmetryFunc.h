@@ -34,7 +34,7 @@
 namespace RDKit {
 class ROMol;
 namespace Descriptors {
-const std::string CoulombMatVersion = "1.0.0";
+const std::string SymmetryFuncVersion = "1.0.0";
 RDKIT_DESCRIPTORS_EXPORT Eigen::ArrayXXd cosine_cutoff(Eigen::ArrayXXd distances, double cutoff);
 RDKIT_DESCRIPTORS_EXPORT Eigen::VectorXd generateSpeciesVector(const ROMol &mol);
 RDKIT_DESCRIPTORS_EXPORT Eigen::ArrayXd neighbor_pairs(Eigen::ArrayXXd coordinates, Eigen::VectorXd species, double cutoff);

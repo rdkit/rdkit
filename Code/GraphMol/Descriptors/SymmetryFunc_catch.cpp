@@ -258,8 +258,6 @@ TEST_CASE("Basic", "[Symmetry Function]") {
         auto aev = RDKit::Descriptors::SymmetryFunc(*mol, confId);
         CHECK(aev.rows() == mol->getNumAtoms());
         CHECK(aev.cols() == 384);
-        std::cout << mol->getNumAtoms() << std::endl;
-        std::cout << aev << std::endl;
 
         for (auto i = 0; i < aev.rows(); i++) {
             std::vector <double> row;

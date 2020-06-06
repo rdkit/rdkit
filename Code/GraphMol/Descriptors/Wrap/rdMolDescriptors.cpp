@@ -118,6 +118,25 @@ python::tuple calcCrippenDescriptors(const RDKit::ROMol &mol,
 
 #ifdef RDK_BUILD_DESCRIPTORS3D
 
+#ifdef RDK_HAS_EIGEN3
+python::tuple calcSymmetryFunc(const RDKit::ROMol &mol, int confId) {
+  std::vector<std::vector<double>> results;
+  auto aev = RDKit::Descriptors::SymmetryFunc(mol, confId);
+  for (auto i = 0; i < aev.rows(); i++) {
+    std::vector <double> row;
+    for (auto j = 0; j < aev.cols(); j++) {
+      row.push_back(aev(i, j));
+    }
+    results.push_back(row);
+  }
+  python::list result;
+  for (auto &res : results) {
+    result.append(res);
+  }
+  return python::tuple(result);
+}
+#endif
+
 python::tuple calcCoulombMat(const RDKit::ROMol &mol, int confId) {
   std::vector<std::vector<double>> results;
   RDKit::Descriptors::CoulombMat(mol, results, confId);
@@ -1556,6 +1575,14 @@ BOOST_PYTHON_MODULE(rdMolDescriptors) {
               python::return_value_policy<python::manage_new_object>());
 
 #ifdef RDK_BUILD_DESCRIPTORS3D
+#ifdef RDK_HAS_EIGEN3
+  python::scope().attr("_CalcSymmetryFunc_version") = 
+      RDKit::Descriptors::SymmetryFuncVersion;
+  docString = "Returns torchANI style feature vectors for each atom in the molecule";
+  python::def("CalcSymmetryFunc", calcSymmetryFunc,
+              (python::arg("mol"), python::arg("confId") = -1),
+              docString.c_str());
+#endif
   python::scope().attr("_CalcCoulombMat_version") =
       RDKit::Descriptors::CoulombMatVersion;
   docString = "Returns severals Coulomb randomized matrices";
