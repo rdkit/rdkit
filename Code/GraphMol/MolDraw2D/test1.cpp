@@ -2928,7 +2928,6 @@ void test20Annotate() {
     addBondSerialNumbers(*m1);
 #ifdef RDK_BUILD_CAIRO_SUPPORT
     {
-      std::cout << "AAAAAAAAAAAAAA Cairo" << std::endl;
       MolDraw2DCairo drawer(500, 500);
       drawer.drawMolecule(*m1);
       drawer.finishDrawing();
@@ -2936,7 +2935,6 @@ void test20Annotate() {
     }
 #endif
 
-    std::cout << "BBBBBBBBBBBBBBBBBB SVG" << std::endl;
     MolDraw2DSVG drawer(500, 500);
     drawer.drawMolecule(*m1);
     drawer.finishDrawing();
@@ -3038,8 +3036,6 @@ int main() {
 #endif
 
   RDLog::InitLogs();
-  test6();
-  test20Annotate();
 
 #if 1
   test1();

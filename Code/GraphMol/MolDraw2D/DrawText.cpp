@@ -180,7 +180,8 @@ bool DrawText::doesRectIntersect(const vector<shared_ptr<StringRect>> &rects,
                                  const StringRect &rect) const {
 
   for(auto r: rects) {
-    r->trans_ += cds;
+    StringRect nr(*r);
+    nr.trans_ += cds;
     if(r->doesItIntersect(rect)) {
       return true;
     }
@@ -210,11 +211,11 @@ bool DrawText::doesLineIntersect(const vector<shared_ptr<StringRect>> &rects,
                                  const Point2D &end2, double padding) const {
 
   for(auto r: rects) {
-    r->trans_ += cds;
+    StringRect nr(*r);
+    nr.trans_ += cds;
 
     Point2D tl, tr, bl, br;
-    r->calcCorners(tl, tr, br, bl, padding);
-
+    nr.calcCorners(tl, tr, br, bl, padding);
     if (doLinesIntersect(end2, end1, tl, tr, nullptr)) {
       return true;
     }
@@ -264,7 +265,8 @@ bool DrawText::doesStringIntersect(const vector<shared_ptr<StringRect>> &rects,
   getStringRects(label2, orient2, rects2, draw_modes2, draw_chars2);
 
   for(auto r1: rects) {
-    r1->trans_ += cds1;
+    StringRect nr(*r1);
+    nr.trans_ += cds1;
     for(auto r2: rects2) {
       r2->trans_ += cds2;
       if(r1->doesItIntersect(*r2)) {
