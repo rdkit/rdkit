@@ -64,6 +64,10 @@ LINK_LIBRARIES  Descriptors )
 LINK_LIBRARIES  Descriptors )
  rdkit_test(testCoulombMat testCoulombMat.cpp
 LINK_LIBRARIES  Descriptors ForceFieldHelpers DistGeomHelpers  )
+if(RDK_HAS_EIGEN)
+ rdkit_catch_test(SymmetryFuncCatchTest SymmetryFunc_catch.cpp catch_main.cpp
+LINK_LIBRARIES Descriptors ForceFieldHelpers DistGeomHelpers)
+endif(RDK_HAS_EIGEN)
 endif(RDK_BUILD_DESCRIPTORS3D)
 
 

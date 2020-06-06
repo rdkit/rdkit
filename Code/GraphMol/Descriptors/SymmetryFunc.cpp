@@ -1,3 +1,32 @@
+//
+//  Copyright (c) 2020, Manan Goel
+//  All rights reserved.
+//
+// Redistribution and use in source and binary forms, with or without
+// modification, are permitted provided that the following conditions are
+// met:
+//
+//     * Redistributions of source code must retain the above copyright
+//       notice, this list of conditions and the following disclaimer.
+//     * Redistributions in binary form must reproduce the above
+//       copyright notice, this list of conditions and the following
+//       disclaimer in the documentation and/or other materials provided
+//       with the distribution.
+//
+// THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
+// "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
+// LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR
+// A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT
+// OWNER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,
+// SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT
+// LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
+// DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
+// THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+// (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
+// OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+//
+//
+
 #include <GraphMol/RDKitBase.h>
 #include <cmath>
 #include "SymmetryFunc.h"
@@ -45,6 +74,18 @@ VectorXd generateSpeciesVector(const ROMol &mol) {
   return species;
 }
 
+ArrayXXd index_select(ArrayXXd vector1, ArrayXXd vector2, ArrayXd index, int dim) {
+  for (auto i = 0; i < index.size(); i++) {
+    if (dim == 0) {
+      vector1.row(i) = vector2.row(index(i));
+    }
+    else if (dim == 1) {
+      vector1.col(i) = vector2.col(index(i));
+    }
+  }
+  return vector1;
+}
+
 ArrayXd neighbor_pairs(ArrayXXd coordinates, VectorXd species, double cutoff, int numAtoms) {
   auto padding_mask = species.array() == -1;
   int cols = 0;
@@ -69,9 +110,7 @@ ArrayXd neighbor_pairs(ArrayXXd coordinates, VectorXd species, double cutoff, in
   }
 
   ArrayXXd pair_coordinates(numAtoms * (numAtoms - 1), 3);
-  for (auto i = 0; i < upper_triag_flattened.size(); i++) {
-    pair_coordinates.row(i) = coordinates.row(upper_triag_flattened(i));
-  }
+  pair_coordinates = index_select(pair_coordinates, coordinates, upper_triag_flattened, 0);
 
   ArrayXXd distances(numAtoms * (numAtoms - 1) / 2, 3);
   int num_pairs = numAtoms * (numAtoms - 1) / 2;
@@ -341,10 +380,6 @@ std::pair <std::vector<int>, ArrayXXd> triple_by_molecules(ArrayXXd atom_index12
 
   return std::make_pair(central_atom_index, local_index12);
 
-  // n = atom_index12_angular.cols();
-
-  // auto local_index = local_index12.cast <int>();
-  // return std::make_pair(central_atom_index, (local_index.array() - (local_index.array() / n).array() * n).array().cast <double>());
 }
 
 ArrayXXd triu_index(int num_species) {
@@ -369,6 +404,19 @@ ArrayXXd triu_index(int num_species) {
   return ret;
 }
 
+ArrayXXd index_add(ArrayXXd vector1, ArrayXXd vector2, ArrayXXd index, int multi, int numAtoms) {
+  for (int idx_col = 0; idx_col < index.cols(); idx_col++) {
+    for (int i = 0; i < index.rows(); i++) {
+      for (int j = 0; j < multi * numAtoms; j++) {
+        if (index(i, idx_col) == j) {
+          vector1.row(j) += vector2.row(i);
+        }
+      }
+    }
+  }
+  return vector1;
+}
+
 ArrayXXd SymmetryFunc(const ROMol &mol, int confId) {
   PRECONDITION(mol.getNumConformers() >= 1, "molecule has no conformers");
 
@@ -385,9 +433,7 @@ ArrayXXd SymmetryFunc(const ROMol &mol, int confId) {
 
   auto atom_index12 = neighbor_pairs(coordinates, species, 5.2, numAtoms);
   ArrayXXd selected_coordinates(atom_index12.rows(), 3);
-  for (auto i = 0; i < atom_index12.rows(); i++) {
-    selected_coordinates.row(i) = coordinates.row(atom_index12(i));
-  }
+  selected_coordinates = index_select(selected_coordinates, coordinates, atom_index12, 0);
 
   int pairs = selected_coordinates.rows() / 2;
   ArrayXXd vec(pairs, 3);
@@ -412,20 +458,9 @@ ArrayXXd SymmetryFunc(const ROMol &mol, int confId) {
   auto radial_terms_ = radial_terms(5.2, distances);
 
   ArrayXXd radial_aev = ArrayXXd::Zero(4 * numAtoms, 16);
-  for (int i = 0; i < index12.cols(); i++) {
-    for (int j = 0; j < 4 * numAtoms; j++) {
-      if (index12(0, i) == j) {
-        radial_aev.row(j) += radial_terms_.row(i);
-      }
-    }
-  }
-  for (int i = 0; i < index12.cols(); i++) {
-    for (int j = 0; j < 4 * numAtoms; j++) {
-      if (index12(1, i) == j) {
-        radial_aev.row(j) += radial_terms_.row(i);
-      }
-    }
-  }
+
+  radial_aev = index_add(radial_aev, radial_terms_, index12.transpose(), 4, numAtoms);
+
   ArrayXXd final_radial_aev(numAtoms, 64);
   int atom_idx = 0;
   for (int i = 0; i < radial_aev.rows(); i+=4) {
@@ -433,26 +468,26 @@ ArrayXXd SymmetryFunc(const ROMol &mol, int confId) {
     atom_idx++;
   }
 
-  std::vector <int> even_closer_indices;
-
+  ArrayXd even_closer_indices((distances.array() <= 3.5).count());
+  int idx = 0;
   for (int i = 0; i < distances.size(); i++) {
     if (distances(i) <= 3.5) {
-      even_closer_indices.push_back(i);
+      even_closer_indices(idx) = i;
+      idx++;
     }
   }
 
   // Angular Terms
 
-  ArrayXXd species12_anguler(2, even_closer_indices.size());
+  ArrayXXd species12_angular(2, even_closer_indices.size());
   ArrayXXd atom_index12_angular(2, even_closer_indices.size());
   
   ArrayXXd vec_angular(even_closer_indices.size(), 3);
 
-  for (int i = 0; i < even_closer_indices.size(); i++) {
-    atom_index12_angular.col(i) = atom_index12_unflattened.col(even_closer_indices[i]);
-    species12_anguler.col(i) = species12.col(even_closer_indices[i]);
-    vec_angular.row(i) = vec.row(even_closer_indices[i]);
-  }
+  species12_angular = index_select(species12_angular, species12, even_closer_indices, 1);
+  atom_index12_angular = index_select(atom_index12_angular, atom_index12_unflattened, even_closer_indices, 1);
+  vec_angular = index_select(vec_angular, vec, even_closer_indices, 0);
+
 
   auto n = even_closer_indices.size();
   auto ret = triple_by_molecules(atom_index12_angular);
@@ -476,21 +511,17 @@ ArrayXXd SymmetryFunc(const ROMol &mol, int confId) {
   auto local_index = pair_index12.cast <int>();
   pair_index12 = (local_index.array() - (local_index.array() / n).array() * n).array().cast <double>();
 
-  ArrayXXd pair_index12_flattened(1, 2 * pair_index12.cols());
-  int idx = 0;
+  ArrayXd pair_index12_flattened(2 * pair_index12.cols());
+  idx = 0;
   for (int i = 0; i < pair_index12.rows(); i++) {
     for (int j = 0; j < pair_index12.cols(); j++) {
-      pair_index12_flattened(0, idx) = pair_index12(i, j);
+      pair_index12_flattened(idx) = pair_index12(i, j);
       idx++;
     }
   }
 
-  ArrayXXd vec_flattened(pair_index12_flattened.cols(), 3);
-  idx = 0;
-  for (int i = 0; i < pair_index12_flattened.cols(); i++) {
-    vec_flattened.row(idx) = vec_angular.row(pair_index12_flattened(0, i));
-    idx++;
-  }
+  ArrayXXd vec_flattened(pair_index12_flattened.size(), 3);
+  vec_flattened = index_select(vec_flattened, vec_angular, pair_index12_flattened, 0);
 
   ArrayXXd vec12(vec_flattened.rows(), 3);
   for (int i = 0; i < vec_flattened.rows() / 2; i++) {
@@ -514,13 +545,13 @@ ArrayXXd SymmetryFunc(const ROMol &mol, int confId) {
 
   for (int i = 0; i < pair_index12.rows(); i++) {
     for (int j = 0; j < pair_index12.cols(); j++) {
-      species12_small_1(i, j) = species12_anguler(0, pair_index12(i, j));
+      species12_small_1(i, j) = species12_angular(0, pair_index12(i, j));
     }
   }
 
   for (int i = 0; i < pair_index12.rows(); i++) {
     for (int j = 0; j < pair_index12.cols(); j++) {
-      species12_small_2(i, j) = species12_anguler(1, pair_index12(i, j));
+      species12_small_2(i, j) = species12_angular(1, pair_index12(i, j));
     }
   }
 
@@ -540,7 +571,6 @@ ArrayXXd SymmetryFunc(const ROMol &mol, int confId) {
   ArrayXXd index(species12_.cols(), 1);
   auto triu_indices = triu_index(4);
 
-
   for (int i = 0; i < species12_.cols(); i++) {
     index.row(i) = triu_indices(species12_(0, i), species12_(1, i));
   }
@@ -548,16 +578,7 @@ ArrayXXd SymmetryFunc(const ROMol &mol, int confId) {
   index = index + (central_atom_index_arr.array() * 10).array();
 
   ArrayXXd angular_aev = ArrayXXd::Zero(10 * numAtoms, 32);
-
-
-  for (int i = 0; i < index.rows(); i++) {
-    for (int j = 0; j < 10 * numAtoms; j++) {
-      if (index(i, 0) == j) {
-        angular_aev.row(j) += angular_terms_.row(i);
-      }
-    }
-  }
-
+  angular_aev = index_add(angular_aev, angular_terms_, index, 10, numAtoms);
 
   ArrayXXd final_angular_aev(numAtoms, 320);
   atom_idx = 0;
