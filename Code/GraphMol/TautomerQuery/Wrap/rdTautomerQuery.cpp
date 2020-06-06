@@ -4,6 +4,7 @@
 // Copyright 2020 Schrodinger, Inc
 //
 
+#include <RDBoost/Wrap.h>
 #include <RDBoost/python.h>
 #include <boost/python/suite/indexing/vector_indexing_suite.hpp>
 #include <GraphMol/TautomerQuery/TautomerQuery.h>
@@ -12,8 +13,9 @@
 #define PY_ARRAY_UNIQUE_SYMBOL rdtautomerquery_array_API
 
 namespace python = boost::python;
+using namespace RDKit;
 
-namespace RDKit {
+namespace {
 
 TautomerQuery *createDefaultTautomerQuery(const ROMol &mol) {
   return TautomerQuery::fromMol(mol);
@@ -74,6 +76,8 @@ PyObject *tautomerGetSubstructMatchesWithTautomers(
   return res;
 }
 
+} // namespace
+
 struct TautomerQuery_wrapper {
   static void wrap() {
     RegisterVectorConverter<size_t>("UnsignedLong_Vect");
@@ -126,8 +130,7 @@ struct TautomerQuery_wrapper {
   };
 };
 
-}  // namespace RDKit
 
-void wrap_TautomerQuery() { RDKit::TautomerQuery_wrapper::wrap(); }
+void wrap_TautomerQuery() { TautomerQuery_wrapper::wrap(); }
 
 BOOST_PYTHON_MODULE(rdTautomerQuery) { wrap_TautomerQuery(); }
