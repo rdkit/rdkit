@@ -105,8 +105,7 @@ void testBaseFunctionality() {
   delete resMolSuppl;
 
   resMolSuppl = new ResonanceMolSupplier(
-      (ROMol &)*mol, ResonanceMolSupplier::ALLOW_INCOMPLETE_OCTETS |
-                         ResonanceMolSupplier::UNCONSTRAINED_CATIONS |
+      (ROMol &)*mol, ResonanceMolSupplier::UNCONSTRAINED_CATIONS |
                          ResonanceMolSupplier::UNCONSTRAINED_ANIONS);
   TEST_ASSERT(resMolSuppl->length() == 32);
   for (unsigned int i = 0; i < resMolSuppl->length(); ++i) {
@@ -134,26 +133,28 @@ void testBaseFunctionality() {
   delete smol0;
   delete smol1;
 
-  resMolSuppl = new ResonanceMolSupplier(
-      (ROMol &)*mol, ResonanceMolSupplier::ALLOW_INCOMPLETE_OCTETS |
-                         ResonanceMolSupplier::UNCONSTRAINED_CATIONS |
-                         ResonanceMolSupplier::UNCONSTRAINED_ANIONS,
-      10);
+  resMolSuppl =
+      new ResonanceMolSupplier((ROMol &)*mol,
+                               ResonanceMolSupplier::ALLOW_INCOMPLETE_OCTETS |
+                                   ResonanceMolSupplier::UNCONSTRAINED_CATIONS |
+                                   ResonanceMolSupplier::UNCONSTRAINED_ANIONS,
+                               10);
   TEST_ASSERT(resMolSuppl->length() == 10);
   delete resMolSuppl;
 
-  resMolSuppl = new ResonanceMolSupplier(
-      (ROMol &)*mol, ResonanceMolSupplier::ALLOW_INCOMPLETE_OCTETS |
-                         ResonanceMolSupplier::UNCONSTRAINED_CATIONS |
-                         ResonanceMolSupplier::UNCONSTRAINED_ANIONS,
-      0);
+  resMolSuppl =
+      new ResonanceMolSupplier((ROMol &)*mol,
+                               ResonanceMolSupplier::ALLOW_INCOMPLETE_OCTETS |
+                                   ResonanceMolSupplier::UNCONSTRAINED_CATIONS |
+                                   ResonanceMolSupplier::UNCONSTRAINED_ANIONS,
+                               0);
   TEST_ASSERT(resMolSuppl->length() == 0);
   delete resMolSuppl;
   delete mol;
 
   mol = SmilesToMol("CC(C)C(C(=O)OC(C#N)c1cccc(Oc2ccccc2)c1)c3ccc(OC(F)F)cc3");
   resMolSuppl = new ResonanceMolSupplier((ROMol &)*mol,
-      ResonanceMolSupplier::KEKULE_ALL, 3);
+                                         ResonanceMolSupplier::KEKULE_ALL, 3);
   TEST_ASSERT(!resMolSuppl->getIsEnumerated());
   TEST_ASSERT(resMolSuppl->length() == 3);
   TEST_ASSERT(resMolSuppl->getIsEnumerated());
@@ -216,10 +217,8 @@ void testButadiene() {
   delete resMolSuppl;
 
   resMolSuppl = new ResonanceMolSupplier(
-      (ROMol &)*mol, ResonanceMolSupplier::ALLOW_INCOMPLETE_OCTETS |
-                         ResonanceMolSupplier::UNCONSTRAINED_CATIONS |
-                         ResonanceMolSupplier::UNCONSTRAINED_ANIONS |
-                         ResonanceMolSupplier::ALLOW_CHARGE_SEPARATION);
+      (ROMol &)*mol, ResonanceMolSupplier::UNCONSTRAINED_CATIONS |
+                         ResonanceMolSupplier::UNCONSTRAINED_ANIONS);
   TEST_ASSERT(resMolSuppl->length() == 3);
   std::map<unsigned int, int> fcMap;
   while (!resMolSuppl->atEnd()) {
@@ -251,6 +250,7 @@ void testZwitterion() {
   delete resMolSuppl;
   resMolSuppl = new ResonanceMolSupplier(
       (ROMol &)*mol, ResonanceMolSupplier::ALLOW_CHARGE_SEPARATION);
+  std::cerr << "resMolSuppl->length() " << resMolSuppl->length() << std::endl;
   TEST_ASSERT(resMolSuppl->length() == 2);
   mol0 = (*resMolSuppl)[0];
   ROMol *mol1 = (*resMolSuppl)[1];
@@ -329,10 +329,14 @@ void testChargeSeparation2() {
   delete resMolSuppl;
   resMolSuppl = new ResonanceMolSupplier(
       (ROMol &)*mol, ResonanceMolSupplier::ALLOW_CHARGE_SEPARATION);
-  TEST_ASSERT(resMolSuppl->length() == 8);
+  TEST_ASSERT(resMolSuppl->length() == 4);
   // less charge separation in the first 2,
   // more charge separation in the last 6
   // the last 4 feature carbanions
+  delete resMolSuppl;
+  resMolSuppl = new ResonanceMolSupplier(
+      (ROMol &)*mol, ResonanceMolSupplier::UNCONSTRAINED_ANIONS);
+  TEST_ASSERT(resMolSuppl->length() == 8);
   std::map<unsigned int, int> fcMap;
   for (unsigned int i = 0; i < 2; ++i) {
     ROMol *resMol = (*resMolSuppl)[i];
@@ -384,6 +388,11 @@ void testMultipleConjGroups1() {
 
   resMolSuppl = new ResonanceMolSupplier(
       (ROMol &)*mol, ResonanceMolSupplier::ALLOW_CHARGE_SEPARATION);
+  TEST_ASSERT(resMolSuppl->length() == 8);
+  delete resMolSuppl;
+
+  resMolSuppl = new ResonanceMolSupplier(
+      (ROMol &)*mol, ResonanceMolSupplier::UNCONSTRAINED_ANIONS);
   TEST_ASSERT(resMolSuppl->length() == 16);
   for (unsigned int i = 0; i < 8; ++i) {
     const ROMol *resMol = (*resMolSuppl)[i];
@@ -412,7 +421,7 @@ void testMultipleConjGroups1() {
   delete resMolSuppl;
 
   resMolSuppl = new ResonanceMolSupplier(
-      (ROMol &)*mol, ResonanceMolSupplier::ALLOW_CHARGE_SEPARATION, 8);
+      (ROMol &)*mol, ResonanceMolSupplier::UNCONSTRAINED_ANIONS, 8);
   TEST_ASSERT(resMolSuppl->length() == 8);
   for (unsigned int i = 0; i < 8; ++i) {
     const ROMol *resMol = (*resMolSuppl)[i];
@@ -438,7 +447,8 @@ void testMultipleConjGroups2() {
   RWMol *mol = SmilesToMol("[N-]=[N+]=NCN=[N+]=[N-]");
   ResonanceMolSupplier *resMolSuppl;
 
-  resMolSuppl = new ResonanceMolSupplier((ROMol &)*mol);
+  resMolSuppl = new ResonanceMolSupplier(
+      (ROMol &)*mol, ResonanceMolSupplier::ALLOW_CHARGE_SEPARATION);
   TEST_ASSERT(resMolSuppl->length() == 9);
   bool haveFirstDoubleNeg = false;
   for (unsigned int i = 0; i < resMolSuppl->length(); ++i) {
@@ -486,8 +496,7 @@ void testDimethylMalonate() {
 }
 
 void testMethylAcetate() {
-  // cation on oxygen should appear only when UNCONSTRAINED_CATIONS
-  // and ALLOW_CHARGE_SEPARATION are set
+  // cation on oxygen should appear only when UNCONSTRAINED_CATIONS is set
   BOOST_LOG(rdInfoLog) << "-----------------------\n"
                        << "testMethylAcetate" << std::endl;
   RWMol *mol = SmilesToMol("CC(=O)OC");
@@ -508,8 +517,7 @@ void testMethylAcetate() {
   delete resMolSuppl;
 
   resMolSuppl = new ResonanceMolSupplier(
-      (ROMol &)*mol, ResonanceMolSupplier::ALLOW_CHARGE_SEPARATION |
-                         ResonanceMolSupplier::UNCONSTRAINED_CATIONS);
+      (ROMol &)*mol, ResonanceMolSupplier::UNCONSTRAINED_CATIONS);
   TEST_ASSERT(resMolSuppl->length() == 2);
   for (unsigned int i = 0; i < 2; ++i) {
     const ROMol *resMol = (*resMolSuppl)[i];
@@ -838,7 +846,8 @@ void testGitHub1166() {
                        << "testGitHub1166" << std::endl;
   RWMol *mol = SmilesToMol("NC(=[NH2+])c1ccc(cc1)C(=O)[O-]");
   auto *resMolSuppl = new ResonanceMolSupplier(
-      static_cast<ROMol &>(*mol), ResonanceMolSupplier::KEKULE_ALL);
+      *mol, ResonanceMolSupplier::ALLOW_CHARGE_SEPARATION |
+                ResonanceMolSupplier::KEKULE_ALL);
   TEST_ASSERT(resMolSuppl->length() == 8);
   // check that formal charges on odd indices are in the same position
   // as on even indices
@@ -847,9 +856,8 @@ void testGitHub1166() {
     auto *smol1 = (*resMolSuppl)[i + 1];
     TEST_ASSERT(smol0->getNumAtoms() == smol1->getNumAtoms());
     for (unsigned int atomIdx = 0; atomIdx < smol0->getNumAtoms(); ++atomIdx) {
-      TEST_ASSERT(
-          smol0->getAtomWithIdx(atomIdx)->getFormalCharge() ==
-          smol1->getAtomWithIdx(atomIdx)->getFormalCharge());
+      TEST_ASSERT(smol0->getAtomWithIdx(atomIdx)->getFormalCharge() ==
+                  smol1->getAtomWithIdx(atomIdx)->getFormalCharge());
     }
     // check that bond orders are alternate on aromatic bonds between
     // structures on odd indices and structures on even indices
@@ -862,8 +870,9 @@ void testGitHub1166() {
             smol1->getBondWithIdx(bondIdx)->getBondType())) ||
           (smol0->getBondWithIdx(bondIdx)->getIsAromatic() &&
            smol1->getBondWithIdx(bondIdx)->getIsAromatic() &&
-           (static_cast<int>(smol0->getBondWithIdx(bondIdx)->getBondTypeAsDouble() +
-                             smol1->getBondWithIdx(bondIdx)->getBondTypeAsDouble()) == 3)));
+           (static_cast<int>(
+                smol0->getBondWithIdx(bondIdx)->getBondTypeAsDouble() +
+                smol1->getBondWithIdx(bondIdx)->getBondTypeAsDouble()) == 3)));
     }
     delete smol0;
     delete smol1;
@@ -876,12 +885,67 @@ void testGitHub3048() {
   BOOST_LOG(rdInfoLog) << "-----------------------\n"
                        << "testGitHub3048" << std::endl;
   RWMol *mol = SmilesToMol("C1CN3N(C1)c2ccccc2N=C3N");
-  auto *resMolSuppl = new ResonanceMolSupplier(
-      static_cast<ROMol &>(*mol), ResonanceMolSupplier::KEKULE_ALL);
+  auto *resMolSuppl =
+      new ResonanceMolSupplier(*mol, ResonanceMolSupplier::KEKULE_ALL);
   // This caused a segfault due to a null ptr being accessed (#3048)
   TEST_ASSERT(resMolSuppl->length() == 2);
   delete resMolSuppl;
   delete mol;
+}
+
+void testGitHub2597() {
+  BOOST_LOG(rdInfoLog) << "-----------------------\n"
+                       << "testGitHub2597" << std::endl;
+  {
+    class MyCallBack : public ResonanceMolSupplierCallback {
+      bool callback() const {
+        TEST_ASSERT(getNumConjGrps() == 1);
+        return (getNumStructures(0) < 12);
+      }
+    };
+    class MyCallBack2 : public ResonanceMolSupplierCallback {
+      bool callback() const {
+        TEST_ASSERT(getNumConjGrps() == 1);
+        return (getNumDiverseStructures(0) < 8);
+      }
+    };
+    RWMol *mol = SmilesToMol(
+        "ClC1=NC(NC2=CC=CC3=C2C(=O)C2=CC=CC=C2C3=O)=NC(NC2=CC=CC3=C2C(=O)C2=CC="
+        "CC=C2C3=O)=N1");
+    auto *resMolSuppl = new ResonanceMolSupplier(*mol);
+    TEST_ASSERT(resMolSuppl->length() == 1);
+    delete resMolSuppl;
+    resMolSuppl =
+        new ResonanceMolSupplier(*mol, ResonanceMolSupplier::KEKULE_ALL);
+    TEST_ASSERT(resMolSuppl->length() == 32);
+    delete resMolSuppl;
+    resMolSuppl = new ResonanceMolSupplier(
+        *mol, ResonanceMolSupplier::ALLOW_CHARGE_SEPARATION, 10);
+    TEST_ASSERT(!resMolSuppl->getProgressCallback());
+    TEST_ASSERT(resMolSuppl->length() == 10);
+    TEST_ASSERT(!resMolSuppl->wasCanceled());
+    delete resMolSuppl;
+    resMolSuppl = new ResonanceMolSupplier(
+        *mol, ResonanceMolSupplier::ALLOW_CHARGE_SEPARATION);
+    MyCallBack *callback = new MyCallBack();
+    resMolSuppl->setProgressCallback(callback);
+    TEST_ASSERT(resMolSuppl->getProgressCallback() == callback);
+    TEST_ASSERT(resMolSuppl->length() == 12);
+    TEST_ASSERT(resMolSuppl->wasCanceled());
+    delete resMolSuppl;
+    resMolSuppl = new ResonanceMolSupplier(
+        *mol, ResonanceMolSupplier::ALLOW_CHARGE_SEPARATION);
+    resMolSuppl->setProgressCallback(new MyCallBack2());
+    TEST_ASSERT(resMolSuppl->getProgressCallback());
+    resMolSuppl->setProgressCallback(nullptr);
+    TEST_ASSERT(!resMolSuppl->getProgressCallback());
+    resMolSuppl->setProgressCallback(new MyCallBack2());
+
+    TEST_ASSERT(resMolSuppl->length() == 9);
+    TEST_ASSERT(resMolSuppl->wasCanceled());
+    delete resMolSuppl;
+    delete mol;
+  }
 }
 
 int main() {
@@ -906,6 +970,7 @@ int main() {
   testGitHub1166();
   testConjGrpPerception();
   testGitHub3048();
+  testGitHub2597();
 #endif
   return 0;
 }

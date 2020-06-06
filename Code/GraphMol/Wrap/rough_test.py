@@ -10,6 +10,7 @@ it's intended to be shallow, but broad
 
 import os, sys, tempfile, gzip, gc
 import unittest, doctest
+from datetime import datetime, timedelta
 from rdkit import RDConfig, rdBase
 from rdkit import DataStructs
 from rdkit import Chem
@@ -4018,7 +4019,7 @@ CAS<~>
       self.assertEqual(len(matches), 2)
       self.assertEqual(matches, ((66, 67, 69, 68), (123, 124, 126, 125)))
 
-  def testGitHUb1166(self):
+  def testGitHub1166(self):
     mol = Chem.MolFromSmiles('NC(=[NH2+])c1ccc(cc1)C(=O)[O-]')
     resMolSuppl = Chem.ResonanceMolSupplier(mol, Chem.KEKULE_ALL)
     self.assertEqual(len(resMolSuppl), 8)
@@ -4122,6 +4123,81 @@ $$$$
     self.assertEqual(len(resMolSuppl1), 3)
     resMolSuppl2 = Chem.ResonanceMolSupplier(mol2, Chem.KEKULE_ALL)
     self.assertEqual(len(resMolSuppl2), 3)
+
+  def testGitHub2597(self):
+    class MyBrokenCallBack(Chem.ResonanceMolSupplier):
+      def callback(self):
+        return True
+
+    class MyBrokenCallBack2(Chem.ResonanceMolSupplierCallback):
+      pass
+
+    class ExceedNumStructures(Chem.ResonanceMolSupplierCallback):
+      def __init__(self, parent):
+        super().__init__()
+        self._parent = parent
+
+      def callback(self):
+        self._parent.assertEqual(self.GetNumConjGrps(), 1)
+        return (self.GetNumStructures(0) < 12)
+
+    class ExceedNumDiverseStructures(Chem.ResonanceMolSupplierCallback):
+      def __init__(self, parent):
+        super().__init__()
+        self._parent = parent
+
+      def callback(self):
+        self._parent.assertEqual(self.GetNumConjGrps(), 1)
+        return (self.GetNumDiverseStructures(0) < 8)
+
+    class ExceedTimeout(Chem.ResonanceMolSupplierCallback):
+      def __init__(self, parent):
+        super().__init__()
+        self.start_time = None
+        self.timeout = timedelta(seconds=3)
+        self._parent = parent
+
+      def callback(self):
+        if (self.start_time is None):
+          self.start_time = datetime.now()
+        return (datetime.now() - self.start_time < self.timeout)
+
+    mol = Chem.MolFromSmiles("ClC1=NC(NC2=CC=CC3=C2C(=O)C2=CC=CC=C2C3=O)=NC(NC2=CC=CC3=C2C(=O)C2=CC=CC=C2C3=O)=N1")
+    resMolSuppl = Chem.ResonanceMolSupplier(mol)
+    self.assertEqual(len(resMolSuppl), 1)
+    resMolSuppl = Chem.ResonanceMolSupplier(mol, Chem.KEKULE_ALL)
+
+    self.assertEqual(len(resMolSuppl), 32)
+    resMolSuppl = Chem.ResonanceMolSupplier(mol, Chem.ALLOW_CHARGE_SEPARATION, 10)
+    self.assertEqual(len(resMolSuppl), 10)
+    self.assertFalse(resMolSuppl.WasCanceled())
+    resMolSuppl = Chem.ResonanceMolSupplier(mol, Chem.ALLOW_CHARGE_SEPARATION)
+    callback = resMolSuppl.GetProgressCallback()
+    self.assertIsNone(callback)
+    resMolSuppl.SetProgressCallback(ExceedNumStructures(self))
+    callback = resMolSuppl.GetProgressCallback()
+    self.assertTrue(isinstance(callback, ExceedNumStructures))
+    resMolSuppl.SetProgressCallback(None)
+    callback = resMolSuppl.GetProgressCallback()
+    self.assertIsNone(callback)
+    resMolSuppl.SetProgressCallback(ExceedNumStructures(self))
+    self.assertEqual(len(resMolSuppl), 12)
+    self.assertTrue(resMolSuppl.WasCanceled())
+    resMolSuppl = Chem.ResonanceMolSupplier(mol, Chem.ALLOW_CHARGE_SEPARATION)
+    with self.assertRaises(TypeError):
+      resMolSuppl.SetProgressCallback(MyBrokenCallBack())
+    with self.assertRaises(AttributeError):
+      resMolSuppl.SetProgressCallback(MyBrokenCallBack2())
+    resMolSuppl.SetProgressCallback(ExceedNumDiverseStructures(self))
+    self.assertEqual(len(resMolSuppl), 9)
+    self.assertTrue(resMolSuppl.WasCanceled())
+    resMolSuppl = Chem.ResonanceMolSupplier(mol, Chem.UNCONSTRAINED_CATIONS |
+                                            Chem.UNCONSTRAINED_ANIONS |
+                                            Chem.KEKULE_ALL)
+    resMolSuppl.SetProgressCallback(ExceedTimeout(self))
+    resMolSuppl.Enumerate()
+    print(len(resMolSuppl))
+    self.assertTrue(resMolSuppl.WasCanceled())
 
   def testAtomBondProps(self):
     m = Chem.MolFromSmiles('c1ccccc1')
