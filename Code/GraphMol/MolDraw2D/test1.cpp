@@ -1761,6 +1761,7 @@ M  END";
   delete m1;
   delete m2;
   std::cerr << " Done" << std::endl;
+
 }
 
 void test11DrawMolGrid() {
@@ -3073,11 +3074,12 @@ int main() {
   testGithub1829();
   test18FixedScales();
   test19RotateDrawing();
-#endif
   test16MoleculeMetadata();
   testGithub2063();
   testGithub2151();
   testGithub2762();
   testGithub2931();
   test20Annotate();
+#endif
+
 }

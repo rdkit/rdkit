@@ -791,6 +791,11 @@ Point2D MolDraw2D::getDrawCoords(const Point2D &mol_cds) const {
   x += x_offset_;
   y -= y_offset_;
   y = panelHeight() - y;
+//  cout << "at cods : " << mol_cds << "  draw cds " << x << " " << y << endl;
+//  cout << "scale : " << scale_ << endl;
+//  cout << "mins : " << x_min_ << " and " << y_min_ << endl;
+//  cout << "trans : " << x_trans_ << " and " << y_trans_ << endl;
+
   return Point2D(x, y);
 }
 
@@ -802,16 +807,21 @@ Point2D MolDraw2D::getDrawCoords(int at_num) const {
 
 // ****************************************************************************
 Point2D MolDraw2D::getAtomCoords(const pair<int, int> &screen_cds) const {
-  int x = int(double(screen_cds.first) / scale_ + x_min_ - x_trans_);
+  int screen_x = screen_cds.first - x_offset_;
+  int screen_y = screen_cds.second - y_offset_;
+
+  int x = int(double(screen_x) / scale_ + x_min_ - x_trans_);
   int y = int(
-      double(y_min_ - y_trans_ - (screen_cds.second - panelHeight()) / scale_));
+      double(y_min_ - y_trans_ - (screen_y - panelHeight()) / scale_));
   return Point2D(x, y);
 }
 
 Point2D MolDraw2D::getAtomCoords(const pair<double, double> &screen_cds) const {
-  auto x = double(screen_cds.first / scale_ + x_min_ - x_trans_);
+  double screen_x = screen_cds.first - x_offset_;
+  double screen_y = screen_cds.second - y_offset_;
+  auto x = double(screen_x / scale_ + x_min_ - x_trans_);
   auto y =
-      double(y_min_ - y_trans_ - (screen_cds.second - panelHeight()) / scale_);
+      double(y_min_ - y_trans_ - (screen_y - panelHeight()) / scale_);
   return Point2D(x, y);
 }
 
@@ -1946,7 +1956,6 @@ void MolDraw2D::drawBond(
   const Atom *at2 = mol.getAtomWithIdx(at2_idx);
   Point2D at1_cds = at_cds_[activeMolIdx_][at1_idx];
   Point2D at2_cds = at_cds_[activeMolIdx_][at2_idx];
-
   double double_bond_offset = options_.multipleBondOffset;
   // mol files from, for example, Marvin use a bond length of 1 for just about
   // everything. When this is the case, the default multipleBondOffset is just
@@ -2859,6 +2868,7 @@ void MolDraw2D::adjustBondEndForLabel(int atnum, const Point2D &nbr_cds,
   text_drawer_->adjustLineForString(atom_syms_[activeMolIdx_][atnum].first,
                                     atom_syms_[activeMolIdx_][atnum].second,
                                     nbr_draw_cds, draw_cds);
+
   cds = getAtomCoords(make_pair(draw_cds.x, draw_cds.y));
 
   if (drawOptions().additionalAtomLabelPadding > 0.0) {
