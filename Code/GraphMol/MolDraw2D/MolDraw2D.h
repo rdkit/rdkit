@@ -699,22 +699,26 @@ class RDKIT_MOLDRAW2D_EXPORT MolDraw2D {
   // see if the note will clash with anything else drawn on the molecule.
   // note_vec should have unit length.  note_rad is the radius along
   // note_vec that the note will be drawn.
-  bool doesAtomNoteClash(StringRect &note_rect, const ROMol &mol,
+  bool doesAtomNoteClash(StringRect &note_rect,
+                         const std::vector<std::shared_ptr<StringRect>> &rects,
+                         const ROMol &mol,
                          unsigned int atom_idx);
-  bool doesBondNoteClash(StringRect &note_rect, const ROMol &mol,
+  bool doesBondNoteClash(StringRect &note_rect,
+                         const std::vector<std::shared_ptr<StringRect>> &rects,
+                         const ROMol &mol,
                          const Bond *bond);
   // does the note_vec form an unacceptably acute angle with one of the
   // bonds from atom to its neighbours.
   bool doesNoteClashNbourBonds(const StringRect &note_rect,
-                               const std::string &note,
+                               const std::vector<std::shared_ptr<StringRect>> &rects,
                                const ROMol &mol, const Atom *atom) const;
   // does the note intersect with atsym, and if not, any other atom symbol.
   bool doesNoteClashAtomLabels(const StringRect &note_rect,
-                               const std::string &note,
+                               const std::vector<std::shared_ptr<StringRect>> &rects,
                                const ROMol &mol,
                                unsigned int atom_idx) const;
   bool doesNoteClashOtherNotes(const StringRect &note_rect,
-                               const std::string &note) const;
+                               const std::vector<std::shared_ptr<StringRect>> &rects) const;
 
   // cds1 and cds2 are 2 atoms in a ring.  Returns the perpendicular pointing
   // into the ring.

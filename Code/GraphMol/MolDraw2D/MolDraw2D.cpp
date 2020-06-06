@@ -1518,6 +1518,12 @@ StringRect MolDraw2D::calcAnnotationPosition(const ROMol &mol,
     note_rect.width_ = -1.0;  // so we know it's not valid.
     return note_rect;
   }
+  vector<std::shared_ptr<StringRect>> rects;
+  vector<TextDrawType> draw_modes;
+  vector<char> draw_chars;
+  text_drawer_->getStringRects(note, OrientType::N,
+                               rects, draw_modes, draw_chars);
+
   double x_min, y_min, x_max, y_max;
   Point2D centre;
   getStringExtremes(note, OrientType::W, centre,
@@ -1550,7 +1556,7 @@ StringRect MolDraw2D::calcAnnotationPosition(const ROMol &mol,
       tr.width_ *= scale();
       tr.height_ *= scale();
 
-      if (!doesBondNoteClash(tr, mol, bond)) {
+      if (!doesBondNoteClash(tr,rects,  mol, bond)) {
         cout << "not clash, returning" << endl;
         return note_rect;
       }
@@ -1559,7 +1565,7 @@ StringRect MolDraw2D::calcAnnotationPosition(const ROMol &mol,
       }
       note_rect.trans_ = mid - perp * offset;
       tr.trans_ = getAtomCoords(make_pair(note_rect.trans_.x, note_rect.trans_.y));
-      if (!doesBondNoteClash(tr, mol, bond)) {
+      if (!doesBondNoteClash(tr, rects, mol, bond)) {
         return note_rect;
       }
       if (note_rect.clash_score_ < least_worst_rect.clash_score_) {
@@ -1577,6 +1583,11 @@ void MolDraw2D::calcAtomAnnotationPosition(const ROMol &mol, const Atom *atom,
   Point2D const &at_cds = at_cds_[activeMolIdx_][atom->getIdx()];
   auto const &atsym = atom_syms_[activeMolIdx_][atom->getIdx()];
   string note = atom->getProp<string>(common_properties::atomNote);
+  vector<std::shared_ptr<StringRect>> rects;
+  vector<TextDrawType> draw_modes;
+  vector<char> draw_chars;
+  text_drawer_->getStringRects(note, OrientType::N,
+                               rects, draw_modes, draw_chars);
 
   double rad_step = 0.25;
   StringRect least_worst_rect = StringRect();
@@ -1605,7 +1616,7 @@ void MolDraw2D::calcAtomAnnotationPosition(const ROMol &mol, const Atom *atom,
       tr.height_ *= scale();
       cout << "in draw coords : " << tr.trans_ << " and " << tr.width_
            << " by " << tr.height_ << "  scale = " << scale() << endl;
-      if (!doesAtomNoteClash(tr, mol, atom->getIdx())) {
+      if (!doesAtomNoteClash(tr, rects, mol, atom->getIdx())) {
         cout << "RETURNING : " << i << " : " << ang << " : "
              << start_ang << " : " << note_rad << endl;
         return;
@@ -2236,8 +2247,9 @@ OrientType MolDraw2D::calcRadicalRect(const ROMol &mol, const Atom *atom,
   };
 
   auto try_all = [&](OrientType ornt) -> bool {
+    vector<std::shared_ptr<StringRect>> rad_rects(1, std::shared_ptr<StringRect>(new StringRect(rad_rect)));
     if(!text_drawer_->doesRectIntersect(at_sym, ornt, at_cds, rad_rect) &&
-       !doesAtomNoteClash(rad_rect, mol, atom->getIdx())) {
+       !doesAtomNoteClash(rad_rect, rad_rects, mol, atom->getIdx())) {
       rect_to_atom_coords(rad_rect);
       return true;
     } else {
@@ -2462,20 +2474,20 @@ double MolDraw2D::getNoteStartAngle(const ROMol &mol, const Atom *atom) const {
 
 // ****************************************************************************
 bool MolDraw2D::doesAtomNoteClash(StringRect &note_rect,
+                                  const vector<std::shared_ptr<StringRect>> &rects,
                                   const ROMol &mol, unsigned int atom_idx) {
   auto atom = mol.getAtomWithIdx(atom_idx);
-  string note = atom->getProp<string>(common_properties::atomNote);
 
   note_rect.clash_score_ = 0;
-  if (doesNoteClashNbourBonds(note_rect, note, mol, atom)) {
+  if (doesNoteClashNbourBonds(note_rect, rects, mol, atom)) {
     return true;
   }
   note_rect.clash_score_ = 1;
-  if (doesNoteClashAtomLabels(note_rect, note, mol, atom_idx)) {
+  if (doesNoteClashAtomLabels(note_rect, rects, mol, atom_idx)) {
     return true;
   }
   note_rect.clash_score_ = 2;
-  if (doesNoteClashOtherNotes(note_rect, note)) {
+  if (doesNoteClashOtherNotes(note_rect, rects)) {
     return true;
   }
   note_rect.clash_score_ = 3;
@@ -2483,20 +2495,22 @@ bool MolDraw2D::doesAtomNoteClash(StringRect &note_rect,
 }
 
 // ****************************************************************************
-bool MolDraw2D::doesBondNoteClash(StringRect &note_rect, const ROMol &mol,
+bool MolDraw2D::doesBondNoteClash(StringRect &note_rect,
+                                  const vector<std::shared_ptr<StringRect>> &rects,
+                                  const ROMol &mol,
                                   const Bond *bond) {
   note_rect.clash_score_ = 0;
   string note = bond->getProp<string>(common_properties::bondNote);
-  if (doesNoteClashNbourBonds(note_rect, note, mol, bond->getBeginAtom())) {
+  if (doesNoteClashNbourBonds(note_rect, rects, mol, bond->getBeginAtom())) {
     return true;
   }
   note_rect.clash_score_ = 1;
   unsigned int atom_idx = bond->getBeginAtomIdx();
-  if (doesNoteClashAtomLabels(note_rect, note, mol, atom_idx)) {
+  if (doesNoteClashAtomLabels(note_rect, rects, mol, atom_idx)) {
     return true;
   }
   note_rect.clash_score_ = 2;
-  if (doesNoteClashOtherNotes(note_rect, note)) {
+  if (doesNoteClashOtherNotes(note_rect, rects)) {
     return true;
   }
   note_rect.clash_score_ = 3;
@@ -2505,7 +2519,7 @@ bool MolDraw2D::doesBondNoteClash(StringRect &note_rect, const ROMol &mol,
 
 // ****************************************************************************
 bool MolDraw2D::doesNoteClashNbourBonds(const StringRect &note_rect,
-                                        const string &note,
+                                        const vector<std::shared_ptr<StringRect>> &rects,
                                         const ROMol &mol,
                                         const Atom *atom) const {
 
@@ -2516,9 +2530,8 @@ bool MolDraw2D::doesNoteClashNbourBonds(const StringRect &note_rect,
   for (const auto &nbr : make_iterator_range(mol.getAtomNeighbors(atom))) {
     Point2D const &at1_dcds = getDrawCoords(at_cds_[activeMolIdx_][nbr]);
 
-    if (text_drawer_->doesLineIntersect(note, OrientType::N,
-                                        note_rect.trans_, at1_dcds, at2_dcds,
-                                        line_width)) {
+    if (text_drawer_->doesLineIntersect(rects, note_rect.trans_, at1_dcds,
+                                        at2_dcds, line_width)) {
       return true;
     }
     // now see about clashing with other lines if not single
@@ -2557,9 +2570,9 @@ bool MolDraw2D::doesNoteClashNbourBonds(const StringRect &note_rect,
       l2s = getDrawCoords(l2s);
       l2f = getDrawCoords(l2f);
 
-      if (text_drawer_->doesLineIntersect(note, OrientType::N, note_rect.trans_,
+      if (text_drawer_->doesLineIntersect(rects, note_rect.trans_,
                                           l1s, l1f, line_width) ||
-          text_drawer_->doesLineIntersect(note, OrientType::N, note_rect.trans_,
+          text_drawer_->doesLineIntersect(rects, note_rect.trans_,
                                           l2s, l2f, line_width)) {
         return true;
       }
@@ -2571,13 +2584,13 @@ bool MolDraw2D::doesNoteClashNbourBonds(const StringRect &note_rect,
 
 // ****************************************************************************
 bool MolDraw2D::doesNoteClashAtomLabels(const StringRect &note_rect,
-                                        const string &note,
+                                        const vector<std::shared_ptr<StringRect>> &rects,
                                         const ROMol &mol,
                                         unsigned int atom_idx) const {
 
   // try the atom_idx first as it's the most likely clash
   Point2D draw_cds = getDrawCoords(atom_idx);
-  if(text_drawer_->doesStringIntersect(note, OrientType::N, note_rect.trans_,
+  if(text_drawer_->doesStringIntersect(rects, note_rect.trans_,
                                        atom_syms_[activeMolIdx_][atom_idx].first,
                                        atom_syms_[activeMolIdx_][atom_idx].second,
                                        draw_cds)) {
@@ -2593,7 +2606,7 @@ bool MolDraw2D::doesNoteClashAtomLabels(const StringRect &note_rect,
       continue;
     }
     draw_cds = getDrawCoords(atom->getIdx());
-    if(text_drawer_->doesStringIntersect(note, OrientType::N, note_rect.trans_,
+    if(text_drawer_->doesStringIntersect(rects, note_rect.trans_,
                                          atsym.first, atsym.second, draw_cds)) {
       return true;
     }
@@ -2604,18 +2617,16 @@ bool MolDraw2D::doesNoteClashAtomLabels(const StringRect &note_rect,
 
 // ****************************************************************************
 bool MolDraw2D::doesNoteClashOtherNotes(const StringRect &note_rect,
-                                        const string &note) const {
+                                        const vector<std::shared_ptr<StringRect>> &rects) const {
   for (auto const &rect : atom_notes_[activeMolIdx_]) {
     if (rect && &note_rect != rect.get()
-        && text_drawer_->doesRectIntersect(note, OrientType::N,
-                                           note_rect.trans_, *rect)) {
+        && text_drawer_->doesRectIntersect(rects, note_rect.trans_, *rect)) {
       return true;
     }
   }
   for (auto const &rect : bond_notes_[activeMolIdx_]) {
     if (rect && &note_rect != rect.get()
-        && text_drawer_->doesRectIntersect(note, OrientType::N,
-                                           note_rect.trans_, *rect)) {
+        && text_drawer_->doesRectIntersect(rects, note_rect.trans_, *rect)) {
       return true;
     }
   }

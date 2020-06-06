@@ -170,6 +170,15 @@ bool DrawText::doesRectIntersect(const std::string &label, OrientType orient,
   vector<char> draw_chars;
 
   getStringRects(label, orient, rects, draw_modes, draw_chars);
+  return doesRectIntersect(rects, cds, rect);
+
+}
+
+// ****************************************************************************
+bool DrawText::doesRectIntersect(const vector<shared_ptr<StringRect>> &rects,
+                                 const Point2D &cds,
+                                 const StringRect &rect) const {
+
   for(auto r: rects) {
     r->trans_ += cds;
     if(r->doesItIntersect(rect)) {
@@ -178,6 +187,7 @@ bool DrawText::doesRectIntersect(const std::string &label, OrientType orient,
   }
 
   return false;
+
 }
 
 // ****************************************************************************
@@ -190,8 +200,16 @@ bool DrawText::doesLineIntersect(const std::string &label, OrientType orient,
   vector<char> draw_chars;
 
   getStringRects(label, orient, rects, draw_modes, draw_chars);
-  for(size_t i = 0; i < rects.size(); ++i) {
-    const auto &r = rects[i];
+  return doesLineIntersect(rects, cds, end1, end2, padding);
+
+}
+
+// ****************************************************************************
+bool DrawText::doesLineIntersect(const vector<shared_ptr<StringRect>> &rects,
+                                 const Point2D &cds, const Point2D &end1,
+                                 const Point2D &end2, double padding) const {
+
+  for(auto r: rects) {
     r->trans_ += cds;
 
     Point2D tl, tr, bl, br;
@@ -222,14 +240,30 @@ bool DrawText::doesStringIntersect(const string &label1, OrientType orient1,
   if(label1.empty() || label2.empty()) {
     return false;
   }
-  vector<shared_ptr<StringRect>> rects1, rects2;
-  vector<TextDrawType> draw_modes1, draw_modes2;
-  vector<char> draw_chars1, draw_chars2;
+  vector<shared_ptr<StringRect>> rects1;
+  vector<TextDrawType> draw_modes1;
+  vector<char> draw_chars1;
 
   getStringRects(label1, orient1, rects1, draw_modes1, draw_chars1);
+
+  return doesStringIntersect(rects1, cds1, label2, orient2, cds2);
+
+}
+
+// ****************************************************************************
+bool DrawText::doesStringIntersect(const vector<shared_ptr<StringRect>> &rects,
+                                   const Point2D &cds1, const std::string &label2,
+                                   OrientType orient2, const Point2D &cds2) const {
+
+  if(label2.empty()) {
+    return false;
+  }
+  vector<shared_ptr<StringRect>> rects2;
+  vector<TextDrawType> draw_modes2;
+  vector<char> draw_chars2;
   getStringRects(label2, orient2, rects2, draw_modes2, draw_chars2);
 
-  for(auto r1: rects1) {
+  for(auto r1: rects) {
     r1->trans_ += cds1;
     for(auto r2: rects2) {
       r2->trans_ += cds2;

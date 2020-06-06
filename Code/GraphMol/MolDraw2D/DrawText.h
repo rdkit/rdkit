@@ -67,6 +67,10 @@ class DrawText {
   void getStringExtremes(const std::string &label, OrientType orient,
                          double &x_min, double &y_min,
                          double &x_max, double &y_max) const;
+  void getStringRects(const std::string &text, OrientType orient,
+                      std::vector<std::shared_ptr<StringRect>> &rects,
+                      std::vector<TextDrawType> &draw_modes,
+                      std::vector<char> &draw_chars) const;
 
   //! drawString centres the string on cds.
   virtual void drawString(const std::string &str, const Point2D &cds,
@@ -91,11 +95,22 @@ class DrawText {
                        const Point2D &cds, MolDraw2D &mol_draw) const;
 
   // cds in draw coords
+  // does the label at cds intersect the given StringRect.
   bool doesRectIntersect(const std::string &label, OrientType orient,
+                         const Point2D &cds, const StringRect &rect) const;
+  // does the vector of StringRects, each translated by cds, intersect the
+  // given StringRect.
+  bool doesRectIntersect(const std::vector<std::shared_ptr<StringRect>> &rects,
                          const Point2D &cds, const StringRect &rect) const;
   bool doesLineIntersect(const std::string &label, OrientType orient,
                          const Point2D &cds, const Point2D &end1,
                          const Point2D &end2, double padding) const;
+  bool doesLineIntersect(const std::vector<std::shared_ptr<StringRect>> &rects,
+                         const Point2D &cds, const Point2D &end1,
+                         const Point2D &end2, double padding) const;
+  bool doesStringIntersect(const std::vector<std::shared_ptr<StringRect>> &rects,
+                          const Point2D &cds1, const std::string &label2,
+                           OrientType orient2, const Point2D &cds2) const;
   bool doesStringIntersect(const std::string &label1, OrientType orient1,
                            const Point2D &cds1, const std::string &label2,
                            OrientType orient2, const Point2D &cds2) const;
@@ -128,10 +143,6 @@ class DrawText {
                               std::vector<std::shared_ptr<StringRect>> &rects,
                               std::vector<TextDrawType> &draw_modes,
                               std::vector<char> &draw_chars) const = 0;
-  void getStringRects(const std::string &text, OrientType orient,
-                      std::vector<std::shared_ptr<StringRect>> &rects,
-                      std::vector<TextDrawType> &draw_modes,
-                      std::vector<char> &draw_chars) const;
   void drawChars(const Point2D &a_cds,
                  const std::vector<std::shared_ptr<StringRect>> &rects,
                  const std::vector<TextDrawType> &draw_modes,
