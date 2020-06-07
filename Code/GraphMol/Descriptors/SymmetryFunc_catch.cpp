@@ -38,7 +38,7 @@ std::vector<std::string> tokenize(const std::string &s) {
   return tokens;
 }
 
-TEST_CASE("Basic", "[Symmetry Function]") {
+TEST_CASE("Symmetry Function Accuracy", "[Symmetry Function]") {
     SECTION("CH4") {
         std::string pathName = getenv("RDBASE");
         
@@ -66,6 +66,11 @@ TEST_CASE("Basic", "[Symmetry Function]") {
             }
             expected_output.push_back(row);
         }
+
+        // Each row of the received vector is sorted because in angular terms
+        // order of triplets may change because of unstable sorting
+        // To check if the values of the terms are consistent each row of the output
+        // is sorted
         for (auto i = 0; i < expected_output.size(); i++) {
             std::sort (expected_output[i].begin(), expected_output[i].end());
         }
