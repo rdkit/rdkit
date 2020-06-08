@@ -80,6 +80,7 @@ RDKIT_RDGENERAL_EXPORT void enable_logs(const char *arg);
 RDKIT_RDGENERAL_EXPORT void enable_logs(const std::string &arg);
 RDKIT_RDGENERAL_EXPORT void disable_logs(const char *arg);
 RDKIT_RDGENERAL_EXPORT void disable_logs(const std::string &arg);
+RDKIT_RDGENERAL_EXPORT std::string log_status();
 }  // namespace logging
 }  // namespace boost
 namespace RDLog {
@@ -90,18 +91,14 @@ RDKIT_RDGENERAL_EXPORT std::ostream &toStream(std::ostream &);
   RDLog::toStream((__arg__->teestream) ? *(__arg__->teestream)  \
                                        : *(__arg__->dp_dest))
 
-RDKIT_RDGENERAL_EXPORT extern std::shared_ptr<boost::logging::rdLogger>
-    rdAppLog;
-RDKIT_RDGENERAL_EXPORT extern std::shared_ptr<boost::logging::rdLogger>
-    rdDebugLog;
-RDKIT_RDGENERAL_EXPORT extern std::shared_ptr<boost::logging::rdLogger>
-    rdInfoLog;
-RDKIT_RDGENERAL_EXPORT extern std::shared_ptr<boost::logging::rdLogger>
-    rdErrorLog;
-RDKIT_RDGENERAL_EXPORT extern std::shared_ptr<boost::logging::rdLogger>
-    rdWarningLog;
-RDKIT_RDGENERAL_EXPORT extern std::shared_ptr<boost::logging::rdLogger>
-    rdStatusLog;
+typedef std::shared_ptr<boost::logging::rdLogger> RDLogger;
+
+RDKIT_RDGENERAL_EXPORT extern RDLogger rdAppLog;
+RDKIT_RDGENERAL_EXPORT extern RDLogger rdDebugLog;
+RDKIT_RDGENERAL_EXPORT extern RDLogger rdInfoLog;
+RDKIT_RDGENERAL_EXPORT extern RDLogger rdErrorLog;
+RDKIT_RDGENERAL_EXPORT extern RDLogger rdWarningLog;
+RDKIT_RDGENERAL_EXPORT extern RDLogger rdStatusLog;
 
 #else
 #define BOOST_LOG_NO_LIB

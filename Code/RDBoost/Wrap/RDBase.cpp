@@ -31,6 +31,7 @@ std::string _version() { return "$Id$"; }
 
 void EnableLog(std::string spec) { logging::enable_logs(spec); }
 void DisableLog(std::string spec) { logging::disable_logs(spec); }
+std::string LogStatus() { return logging::log_status(); }
 void AttachFileToLog(std::string spec, std::string filename, int delay = 100) {
   (void)spec;
   (void)filename;
@@ -139,6 +140,8 @@ BOOST_PYTHON_MODULE(rdBase) {
 
   python::def("EnableLog", EnableLog);
   python::def("DisableLog", DisableLog);
+  python::def("LogStatus", LogStatus);
+
   python::def("AttachFileToLog", AttachFileToLog,
               "Causes the log to write to a file",
               (python::arg("spec"), python::arg("filename"),
