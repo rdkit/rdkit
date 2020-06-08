@@ -182,7 +182,7 @@ bool DrawText::doesRectIntersect(const vector<shared_ptr<StringRect>> &rects,
   for(auto r: rects) {
     StringRect nr(*r);
     nr.trans_ += cds;
-    if(r->doesItIntersect(rect)) {
+    if(nr.doesItIntersect(rect)) {
       return true;
     }
   }
@@ -269,7 +269,7 @@ bool DrawText::doesStringIntersect(const vector<shared_ptr<StringRect>> &rects,
     nr.trans_ += cds1;
     for(auto r2: rects2) {
       r2->trans_ += cds2;
-      if(r1->doesItIntersect(*r2)) {
+      if(nr.doesItIntersect(*r2)) {
         return true;
       }
     }
