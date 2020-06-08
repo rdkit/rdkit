@@ -116,77 +116,77 @@ ArrayXXd IndexSelect(ArrayXXd vector1, ArrayXXd vector2, ArrayXd index,
 */
 ArrayXd NeighborPairs(ArrayXXd coordinates, VectorXd species, double cutoff,
                       int numAtoms) {
-  auto padding_mask = species.array() == -1;
+  auto paddingMask = species.array() == -1;
   int cols = 0;
-  MatrixXd upper_triag(2, numAtoms * (numAtoms - 1) / 2);
+  MatrixXd upperTriag(2, numAtoms * (numAtoms - 1) / 2);
   for (auto i = 0; i < numAtoms; i++) {
     for (auto j = i + 1; j < numAtoms; j++) {
-      upper_triag.col(cols) << i, j;
+      upperTriag.col(cols) << i, j;
       cols++;
     }
   }
 
-  ArrayXd upper_triag_flattened(numAtoms * (numAtoms - 1));
+  ArrayXd upperTriagFlattened(numAtoms * (numAtoms - 1));
   int index = 0;
-  for (auto i = 0; i < upper_triag.rows(); i++) {
-    for (auto j = 0; j < upper_triag.cols(); j++) {
-      upper_triag_flattened(index) = upper_triag(i, j);
+  for (auto i = 0; i < upperTriag.rows(); i++) {
+    for (auto j = 0; j < upperTriag.cols(); j++) {
+      upperTriagFlattened(index) = upperTriag(i, j);
       index++;
     }
   }
 
-  ArrayXXd pair_coordinates(numAtoms * (numAtoms - 1), 3);
-  pair_coordinates =
-      IndexSelect(pair_coordinates, coordinates, upper_triag_flattened, 0);
+  ArrayXXd pairCoordinates(numAtoms * (numAtoms - 1), 3);
+  pairCoordinates =
+      IndexSelect(pairCoordinates, coordinates, upperTriagFlattened, 0);
 
   ArrayXXd distances(numAtoms * (numAtoms - 1) / 2, 3);
-  int num_pairs = numAtoms * (numAtoms - 1) / 2;
+  int numPairs = numAtoms * (numAtoms - 1) / 2;
   for (auto i = 0; i < numAtoms * (numAtoms - 1) / 2; i++) {
     distances.row(i) =
-        pair_coordinates.row(i) - pair_coordinates.row(i + num_pairs);
+        pairCoordinates.row(i) - pairCoordinates.row(i + numPairs);
   }
 
-  auto distance_norm = distances.matrix().rowwise().norm().array();
+  auto distanceNorm = distances.matrix().rowwise().norm().array();
 
-  ArrayXXd pair_padded_mask(numAtoms * (numAtoms - 1), 1);
-  for (auto i = 0; i < upper_triag_flattened.size(); i++) {
-    pair_padded_mask(i, 0) = padding_mask(upper_triag_flattened(i), 0);
+  ArrayXXd pairPaddedMask(numAtoms * (numAtoms - 1), 1);
+  for (auto i = 0; i < upperTriagFlattened.size(); i++) {
+    pairPaddedMask(i, 0) = paddingMask(upperTriagFlattened(i), 0);
   }
 
-  ArrayXd dist(distance_norm.size());
+  ArrayXd dist(distanceNorm.size());
 
-  for (auto i = 0; i < distance_norm.size(); i++) {
-    if (pair_padded_mask(i, 0) == 1) {
+  for (auto i = 0; i < distanceNorm.size(); i++) {
+    if (pairPaddedMask(i, 0) == 1) {
       dist(i) = INFINITY;
     } else {
-      dist(i) = distance_norm(i);
+      dist(i) = distanceNorm(i);
     }
   }
 
   auto x = dist.array() <= cutoff;
 
   std::vector<int> indices;
-  std::vector<std::pair<int, int>> atom_index12;
+  std::vector<std::pair<int, int>> atomIndex12;
 
   for (auto i = 0; i < x.size(); i++) {
     if (x(i) == 1) {
-      atom_index12.push_back(
-          std::make_pair(upper_triag(0, i), upper_triag(1, i)));
+      atomIndex12.push_back(
+          std::make_pair(upperTriag(0, i), upperTriag(1, i)));
     }
   }
 
-  ArrayXd atom_index12_array(atom_index12.size() * 2);
+  ArrayXd atomIndex12Array(atomIndex12.size() * 2);
   index = 0;
-  for (auto i : atom_index12) {
-    atom_index12_array(index) = i.first;
+  for (auto i : atomIndex12) {
+    atomIndex12Array(index) = i.first;
     index++;
   }
-  for (auto i : atom_index12) {
-    atom_index12_array(index) = i.second;
+  for (auto i : atomIndex12) {
+    atomIndex12Array(index) = i.second;
     index++;
   }
 
-  return atom_index12_array;
+  return atomIndex12Array;
 }
 
 ArrayXXd RadialTerms(double cutoff, ArrayXXd distances) {
@@ -196,7 +196,7 @@ ArrayXXd RadialTerms(double cutoff, ArrayXXd distances) {
       3.31875, 3.5875, 3.85625, 4.1250, 4.39375, 4.6625, 4.93125;
   double EtaR = 16;
   ArrayXXd ret(distances.rows(), 16);
-  for (int i = 0; i < distances.rows(); i++) {
+  for (auto i = 0; i < distances.rows(); i++) {
     auto intermediate =
         0.25 * ((ShfR - distances(i)).pow(2) * EtaR * -1).exp() * fc(i);
     ret.row(i) = intermediate;
@@ -215,20 +215,20 @@ ArrayXXd AngularTerms(double cutoff, ArrayXXd vectors12) {
 
   auto distances12 = vectors12.matrix().rowwise().norm().array();
 
-  ArrayXXd cosine_angles(vectors12.rows() / 2, 1);
-  for (int i = 0; i < vectors12.rows() / 2; i++) {
-    cosine_angles(i, 0) = vectors12.matrix().row(i).dot(
+  ArrayXXd cosineAngles(vectors12.rows() / 2, 1);
+  for (auto i = 0; i < vectors12.rows() / 2; i++) {
+    cosineAngles(i, 0) = vectors12.matrix().row(i).dot(
         vectors12.matrix().row(i + vectors12.rows() / 2));
-    cosine_angles(i, 0) =
-        0.95 * cosine_angles(i, 0) /
+    cosineAngles(i, 0) =
+        0.95 * cosineAngles(i, 0) /
         (vectors12.matrix().row(i).norm() *
          vectors12.matrix().row(i + vectors12.rows() / 2).norm());
   }
-  auto angles = cosine_angles.acos();
+  auto angles = cosineAngles.acos();
   auto fcj12 = CosineCutoff(distances12, cutoff);
 
   ArrayXXd factor1(angles.rows(), 8);
-  for (int i = 0; i < angles.rows(); i++) {
+  for (auto i = 0; i < angles.rows(); i++) {
     factor1.row(i) =
         (((-1 * (ShfZ.rowwise() - angles.row(i)).array()).cos().array() + 1)
              .array() /
@@ -239,13 +239,13 @@ ArrayXXd AngularTerms(double cutoff, ArrayXXd vectors12) {
 
   ArrayXXd distance12sum(distances12.rows() / 2, 1);
 
-  for (int i = 0; i < distances12.rows() / 2; i++) {
+  for (auto i = 0; i < distances12.rows() / 2; i++) {
     distance12sum(i, 0) =
         distances12(i, 0) + distances12(i + distances12.rows() / 2, 0);
   }
 
   ArrayXXd factor2(distance12sum.rows(), 4);
-  for (int i = 0; i < distance12sum.rows(); i++) {
+  for (auto i = 0; i < distance12sum.rows(); i++) {
     factor2.row(i) =
         ((ShfA.rowwise() - (distance12sum.array() / 2).row(i)).pow(2).array() *
          -etaA)
@@ -253,12 +253,12 @@ ArrayXXd AngularTerms(double cutoff, ArrayXXd vectors12) {
   }
 
   ArrayXXd fcj12prod(fcj12.rows() / 2, 1);
-  for (int i = 0; i < fcj12.rows() / 2; i++) {
+  for (auto i = 0; i < fcj12.rows() / 2; i++) {
     fcj12prod(i, 0) = fcj12(i, 0) * fcj12(i + fcj12.rows() / 2, 0);
   }
 
   ArrayXXd ret(fcj12prod.rows(), 32);
-  for (int i = 0; i < ret.rows(); i++) {
+  for (auto i = 0; i < ret.rows(); i++) {
     int idx = 0;
     for (int j = 0; j < 8; j++) {
       for (int k = 0; k < 4; k++) {
@@ -270,10 +270,10 @@ ArrayXXd AngularTerms(double cutoff, ArrayXXd vectors12) {
   return ret;
 }
 
-std::vector<int> cumsum_from_zero(std::vector<int> count) {
+std::vector<int> cumsumFromZero(std::vector<int> count) {
   std::vector<int> cumsum{0};
   int index = 1;
-  for (int i = 0; i < count.size() - 1; i++) {
+  for (size_t i = 0; i < count.size() - 1; i++) {
     cumsum.push_back(cumsum[index - 1] + count[i]);
     index++;
   }
@@ -283,7 +283,7 @@ std::vector<int> cumsum_from_zero(std::vector<int> count) {
 
 //! Calculates triplets of atoms according to pairs of atoms close to each other
 /*!
-  \param atom_index12_angular   Pairs of atoms close to each other according to
+  \param atomIndex12Angular   Pairs of atoms close to each other according to
   defined cutoff
 
   \return pair of a vector containing indices of centrals atoms and Matrix
@@ -302,50 +302,50 @@ std::vector<int> cumsum_from_zero(std::vector<int> count) {
   \endverbatim
 */
 std::pair<std::vector<int>, ArrayXXd> TripleByMolecules(
-    ArrayXXd atom_index12_angular) {
-  std::vector<std::pair<int, int>> atom_index12_angular_flattened;
+    ArrayXXd atomIndex12Angular) {
+  std::vector<std::pair<int, int>> atomIndex12AngularFlattened;
   auto index = 0;
-  for (int i = 0; i < atom_index12_angular.rows(); i++) {
-    for (int j = 0; j < atom_index12_angular.cols(); j++) {
-      atom_index12_angular_flattened.push_back(
-          std::make_pair(atom_index12_angular(i, j), index));
+  for (auto i = 0; i < atomIndex12Angular.rows(); i++) {
+    for (int j = 0; j < atomIndex12Angular.cols(); j++) {
+      atomIndex12AngularFlattened.push_back(
+          std::make_pair(atomIndex12Angular(i, j), index));
       index++;
     }
   }
-  std::sort(atom_index12_angular_flattened.begin(),
-            atom_index12_angular_flattened.end());
-  std::vector<int> rev_indices, sorted_ai;
-  for (auto i : atom_index12_angular_flattened) {
-    rev_indices.push_back(i.second);
-    sorted_ai.push_back(i.first);
+  std::sort(atomIndex12AngularFlattened.begin(),
+            atomIndex12AngularFlattened.end());
+  std::vector<int> revIndices, sortedAi;
+  for (auto i : atomIndex12AngularFlattened) {
+    revIndices.push_back(i.second);
+    sortedAi.push_back(i.first);
   }
 
-  std::vector<int> unique_results(sorted_ai.size());
+  std::vector<int> uniqueResults(sortedAi.size());
 
-  auto ip = std::unique_copy(sorted_ai.begin(), sorted_ai.end(),
-                             unique_results.begin());
-  unique_results.resize(std::distance(unique_results.begin(), ip));
+  auto ip = std::unique_copy(sortedAi.begin(), sortedAi.end(),
+                             uniqueResults.begin());
+  uniqueResults.resize(std::distance(uniqueResults.begin(), ip));
 
-  std::vector<int> counts(unique_results.size()),
-      pair_sizes(unique_results.size());
-  for (int i = 0; i < unique_results.size(); i++) {
+  std::vector<int> counts(uniqueResults.size()),
+      pairSizes(uniqueResults.size());
+  for (size_t i = 0; i < uniqueResults.size(); i++) {
     counts[i] =
-        std::count(sorted_ai.begin(), sorted_ai.end(), unique_results[i]);
-    pair_sizes[i] = counts[i] * (counts[i] - 1) / 2;
+        std::count(sortedAi.begin(), sortedAi.end(), uniqueResults[i]);
+    pairSizes[i] = counts[i] * (counts[i] - 1) / 2;
   }
 
-  std::vector<int> pair_indices;
+  std::vector<int> pairIndices;
 
-  for (int i = 0; i < pair_sizes.size(); i++) {
-    int j = pair_sizes[i];
+  for (size_t i = 0; i < pairSizes.size(); i++) {
+    int j = pairSizes[i];
     while (j--) {
-      pair_indices.push_back(i);
+      pairIndices.push_back(i);
     }
   }
 
-  std::vector<int> central_atom_index;
-  for (int i = 0; i < pair_indices.size(); i++) {
-    central_atom_index.push_back(unique_results[pair_indices[i]]);
+  std::vector<int> centralAtomIndex;
+  for (size_t i = 0; i < pairIndices.size(); i++) {
+    centralAtomIndex.push_back(uniqueResults[pairIndices[i]]);
   }
 
   int m;
@@ -355,99 +355,99 @@ std::pair<std::vector<int>, ArrayXXd> TripleByMolecules(
     m = 0;
   }
 
-  auto n = pair_sizes.size();
-  ArrayXXd lower_triang(2, m * (m - 1) / 2);
-  ArrayXXd intra_pair_indices(2 * n, m * (m - 1) / 2);
+  auto n = pairSizes.size();
+  ArrayXXd lowerTriang(2, m * (m - 1) / 2);
+  ArrayXXd intraPairIndices(2 * n, m * (m - 1) / 2);
   index = 0;
 
-  for (int i = 1; i < m; i++) {
+  for (auto i = 1; i < m; i++) {
     for (int j = 0; j < i; j++) {
-      lower_triang.col(index) << i, j;
+      lowerTriang.col(index) << i, j;
       index++;
     }
   }
   index = 0;
-  for (int i = 0; i < lower_triang.rows(); i++) {
+  for (auto i = 0; i < lowerTriang.rows(); i++) {
     int j = n;
     while (j--) {
-      intra_pair_indices.row(index) << lower_triang.row(i);
+      intraPairIndices.row(index) << lowerTriang.row(i);
       index++;
     }
   }
 
-  ArrayXXd mask(1, pair_sizes.size() * lower_triang.cols());
+  ArrayXXd mask(1, pairSizes.size() * lowerTriang.cols());
   index = 0;
-  for (int i = 0; i < pair_sizes.size(); i++) {
-    for (int j = 0; j < lower_triang.cols(); j++) {
-      mask(0, index) = pair_sizes[i] > j;
+  for (size_t i = 0; i < pairSizes.size(); i++) {
+    for (int j = 0; j < lowerTriang.cols(); j++) {
+      mask(0, index) = pairSizes[i] > j;
       index++;
     }
   }
 
-  ArrayXXd intra_pair_indices_flattened(2, n * m * (m - 1) / 2);
-  if (intra_pair_indices.rows() != 0 && intra_pair_indices.cols() != 0) {
+  ArrayXXd intraPairIndicesFlattened(2, n * m * (m - 1) / 2);
+  if (intraPairIndices.rows() != 0 && intraPairIndices.cols() != 0) {
     index = 0;
-    for (int i = 0; i < intra_pair_indices.rows() / 2; i++) {
+    for (auto i = 0; i < intraPairIndices.rows() / 2; i++) {
       for (int j = 0; j < m * (m - 1) / 2; j++) {
-        intra_pair_indices_flattened(0, index + j) = intra_pair_indices(i, j);
+        intraPairIndicesFlattened(0, index + j) = intraPairIndices(i, j);
       }
       index += (m * (m - 1) / 2);
     }
     index = 0;
 
-    for (int i = intra_pair_indices.rows() / 2; i < intra_pair_indices.rows();
+    for (auto i = intraPairIndices.rows() / 2; i < intraPairIndices.rows();
          i++) {
       for (int j = 0; j < m * (m - 1) / 2; j++) {
-        intra_pair_indices_flattened(1, index + j) = intra_pair_indices(i, j);
+        intraPairIndicesFlattened(1, index + j) = intraPairIndices(i, j);
       }
       index += (m * (m - 1) / 2);
     }
   }
-  ArrayXXd sorted_local_index12(2, (mask.array() == 1).count());
+  ArrayXXd sortedLocalIndex12(2, (mask.array() == 1).count());
   index = 0;
-  for (int i = 0; i < mask.size(); i++) {
+  for (auto i = 0; i < mask.size(); i++) {
     if (mask(0, i) == 1) {
-      sorted_local_index12.col(index) << intra_pair_indices_flattened.col(i);
+      sortedLocalIndex12.col(index) << intraPairIndicesFlattened.col(i);
       index++;
     }
   }
 
-  auto cumsum_count = cumsum_from_zero(counts);
+  auto cumsumCount = cumsumFromZero(counts);
 
-  VectorXd extra_local_index12(pair_indices.size());
+  VectorXd extraLocalIndex12(pairIndices.size());
   index = 0;
-  for (auto i : pair_indices) {
-    extra_local_index12(index) = cumsum_count[i];
+  for (auto i : pairIndices) {
+    extraLocalIndex12(index) = cumsumCount[i];
     index++;
   }
 
-  sorted_local_index12 = (sorted_local_index12.matrix().rowwise() +
-                          extra_local_index12.transpose())
+  sortedLocalIndex12 = (sortedLocalIndex12.matrix().rowwise() +
+                          extraLocalIndex12.transpose())
                              .array();
 
-  ArrayXXd local_index12(2, sorted_local_index12.cols());
-  for (int j = 0; j < sorted_local_index12.cols(); j++) {
-    local_index12(0, j) = rev_indices[sorted_local_index12(0, j)];
-    local_index12(1, j) = rev_indices[sorted_local_index12(1, j)];
+  ArrayXXd localIndex12(2, sortedLocalIndex12.cols());
+  for (int j = 0; j < sortedLocalIndex12.cols(); j++) {
+    localIndex12(0, j) = revIndices[sortedLocalIndex12(0, j)];
+    localIndex12(1, j) = revIndices[sortedLocalIndex12(1, j)];
   }
 
-  return std::make_pair(central_atom_index, local_index12);
+  return std::make_pair(centralAtomIndex, localIndex12);
 }
 
-ArrayXXd TriuIndex(int num_species) {
-  std::vector<int> species1, species2, pair_index;
+ArrayXXd TriuIndex(int numSpecies) {
+  std::vector<int> species1, species2, pairIndex;
 
-  for (int i = 0; i < num_species; i++) {
-    for (int j = i; j < num_species; j++) {
+  for (auto i = 0; i < numSpecies; i++) {
+    for (int j = i; j < numSpecies; j++) {
       species1.push_back(i);
       species2.push_back(j);
     }
-    pair_index.push_back(i);
+    pairIndex.push_back(i);
   }
-  ArrayXXd ret(num_species, num_species);
-  int index1 = 0, index2 = pair_index.size() - 1;
+  ArrayXXd ret(numSpecies, numSpecies);
+  int index1 = 0;
 
-  for (int i = 0; i < species1.size(); i++) {
+  for (size_t i = 0; i < species1.size(); i++) {
     ret(species1[i], species2[i]) = index1;
     ret(species2[i], species1[i]) = index1;
     index1++;
@@ -475,10 +475,10 @@ ArrayXXd TriuIndex(int num_species) {
 */
 ArrayXXd IndexAdd(ArrayXXd vector1, ArrayXXd vector2, ArrayXXd index, int multi,
                   int numAtoms) {
-  for (int idx_col = 0; idx_col < index.cols(); idx_col++) {
-    for (int i = 0; i < index.rows(); i++) {
+  for (int idxCol = 0; idxCol < index.cols(); idxCol++) {
+    for (auto i = 0; i < index.rows(); i++) {
       for (int j = 0; j < multi * numAtoms; j++) {
-        if (index(i, idx_col) == j) {
+        if (index(i, idxCol) == j) {
           vector1.row(j) += vector2.row(i);
         }
       }
@@ -501,78 +501,78 @@ ArrayXXd AtomicEnvironmentVector(const ROMol &mol, int confId) {
     coordinates.row(i) << pos.x, pos.y, pos.z;
   }
 
-  auto atom_index12 = NeighborPairs(coordinates, species, 5.2, numAtoms);
-  ArrayXXd selected_coordinates(atom_index12.rows(), 3);
-  selected_coordinates =
-      IndexSelect(selected_coordinates, coordinates, atom_index12, 0);
+  auto atomIndex12 = NeighborPairs(coordinates, species, 5.2, numAtoms);
+  ArrayXXd selectedCoordinates(atomIndex12.rows(), 3);
+  selectedCoordinates =
+      IndexSelect(selectedCoordinates, coordinates, atomIndex12, 0);
 
-  int pairs = selected_coordinates.rows() / 2;
+  int pairs = selectedCoordinates.rows() / 2;
   ArrayXXd vec(pairs, 3);
   for (auto i = 0; i < pairs; i++) {
     vec.row(i) =
-        selected_coordinates.row(i) - selected_coordinates.row(i + pairs);
+        selectedCoordinates.row(i) - selectedCoordinates.row(i + pairs);
   }
 
   auto distances = vec.matrix().rowwise().norm().array();
   ArrayXXd species12(2, pairs);
-  ArrayXXd species12_flipped(2, pairs);
-  ArrayXXd atom_index12_unflattened(2, pairs);
-  for (int i = 0; i < pairs; i++) {
-    species12(0, i) = species(atom_index12(i));
-    species12(1, i) = species(atom_index12(i + pairs));
-    species12_flipped(1, i) = species(atom_index12(i));
-    species12_flipped(0, i) = species(atom_index12(i + pairs));
-    atom_index12_unflattened(0, i) = atom_index12(i);
-    atom_index12_unflattened(1, i) = atom_index12(i + pairs);
+  ArrayXXd species12Flipped(2, pairs);
+  ArrayXXd atomIndex12Unflattened(2, pairs);
+  for (auto i = 0; i < pairs; i++) {
+    species12(0, i) = species(atomIndex12(i));
+    species12(1, i) = species(atomIndex12(i + pairs));
+    species12Flipped(1, i) = species(atomIndex12(i));
+    species12Flipped(0, i) = species(atomIndex12(i + pairs));
+    atomIndex12Unflattened(0, i) = atomIndex12(i);
+    atomIndex12Unflattened(1, i) = atomIndex12(i + pairs);
   }
-  auto index12 = atom_index12_unflattened * 4 + species12_flipped;
+  auto index12 = atomIndex12Unflattened * 4 + species12Flipped;
 
   auto RadialTerms_ = RadialTerms(5.2, distances);
 
-  ArrayXXd radial_aev = ArrayXXd::Zero(4 * numAtoms, 16);
+  ArrayXXd radialAEV = ArrayXXd::Zero(4 * numAtoms, 16);
 
-  radial_aev =
-      IndexAdd(radial_aev, RadialTerms_, index12.transpose(), 4, numAtoms);
+  radialAEV =
+      IndexAdd(radialAEV, RadialTerms_, index12.transpose(), 4, numAtoms);
 
-  ArrayXXd final_radial_aev(numAtoms, 64);
-  int atom_idx = 0;
-  for (int i = 0; i < radial_aev.rows(); i += 4) {
-    final_radial_aev.row(atom_idx) << radial_aev.row(i), radial_aev.row(i + 1),
-        radial_aev.row(i + 2), radial_aev.row(i + 3);
-    atom_idx++;
+  ArrayXXd finalRadialAEV(numAtoms, 64);
+  int atomIdx = 0;
+  for (auto i = 0; i < radialAEV.rows(); i += 4) {
+    finalRadialAEV.row(atomIdx) << radialAEV.row(i), radialAEV.row(i + 1),
+        radialAEV.row(i + 2), radialAEV.row(i + 3);
+    atomIdx++;
   }
 
-  ArrayXd even_closer_indices((distances.array() <= 3.5).count());
+  ArrayXd evenCloserIndices((distances.array() <= 3.5).count());
   int idx = 0;
-  for (int i = 0; i < distances.size(); i++) {
+  for (auto i = 0; i < distances.size(); i++) {
     if (distances(i) <= 3.5) {
-      even_closer_indices(idx) = i;
+      evenCloserIndices(idx) = i;
       idx++;
     }
   }
 
   // Angular Terms
 
-  ArrayXXd species12_angular(2, even_closer_indices.size());
-  ArrayXXd atom_index12_angular(2, even_closer_indices.size());
+  ArrayXXd species12Angular(2, evenCloserIndices.size());
+  ArrayXXd atomIndex12Angular(2, evenCloserIndices.size());
 
-  ArrayXXd vec_angular(even_closer_indices.size(), 3);
+  ArrayXXd vecAngular(evenCloserIndices.size(), 3);
 
-  species12_angular =
-      IndexSelect(species12_angular, species12, even_closer_indices, 1);
-  atom_index12_angular = IndexSelect(
-      atom_index12_angular, atom_index12_unflattened, even_closer_indices, 1);
-  vec_angular = IndexSelect(vec_angular, vec, even_closer_indices, 0);
+  species12Angular =
+      IndexSelect(species12Angular, species12, evenCloserIndices, 1);
+  atomIndex12Angular = IndexSelect(
+      atomIndex12Angular, atomIndex12Unflattened, evenCloserIndices, 1);
+  vecAngular = IndexSelect(vecAngular, vec, evenCloserIndices, 0);
 
-  auto n = even_closer_indices.size();
-  auto ret = TripleByMolecules(atom_index12_angular);
-  auto pair_index12 = ret.second;
-  auto central_atom_index = ret.first;
-  ArrayXXd sign12(2, pair_index12.cols());
+  auto n = evenCloserIndices.size();
+  auto ret = TripleByMolecules(atomIndex12Angular);
+  auto pairIndex12 = ret.second;
+  auto centralAtomIndex = ret.first;
+  ArrayXXd sign12(2, pairIndex12.cols());
 
-  for (int i = 0; i < pair_index12.rows(); i++) {
-    for (int j = 0; j < pair_index12.cols(); j++) {
-      if (pair_index12(i, j) < n) {
+  for (auto i = 0; i < pairIndex12.rows(); i++) {
+    for (int j = 0; j < pairIndex12.cols(); j++) {
+      if (pairIndex12(i, j) < n) {
         sign12(i, j) = 1;
       } else {
         sign12(i, j) = -1;
@@ -580,99 +580,99 @@ ArrayXXd AtomicEnvironmentVector(const ROMol &mol, int confId) {
     }
   }
 
-  n = atom_index12_angular.cols();
+  n = atomIndex12Angular.cols();
 
-  auto local_index = pair_index12.cast<int>();
-  pair_index12 = (local_index.array() - (local_index.array() / n).array() * n)
+  auto localIndex = pairIndex12.cast<int>();
+  pairIndex12 = (localIndex.array() - (localIndex.array() / n).array() * n)
                      .array()
                      .cast<double>();
 
-  ArrayXd pair_index12_flattened(2 * pair_index12.cols());
+  ArrayXd pairIndex12Flattened(2 * pairIndex12.cols());
   idx = 0;
-  for (int i = 0; i < pair_index12.rows(); i++) {
-    for (int j = 0; j < pair_index12.cols(); j++) {
-      pair_index12_flattened(idx) = pair_index12(i, j);
+  for (auto i = 0; i < pairIndex12.rows(); i++) {
+    for (int j = 0; j < pairIndex12.cols(); j++) {
+      pairIndex12Flattened(idx) = pairIndex12(i, j);
       idx++;
     }
   }
 
-  ArrayXXd vec_flattened(pair_index12_flattened.size(), 3);
-  vec_flattened =
-      IndexSelect(vec_flattened, vec_angular, pair_index12_flattened, 0);
+  ArrayXXd vecFlattened(pairIndex12Flattened.size(), 3);
+  vecFlattened =
+      IndexSelect(vecFlattened, vecAngular, pairIndex12Flattened, 0);
 
-  ArrayXXd vec12(vec_flattened.rows(), 3);
-  for (int i = 0; i < vec_flattened.rows() / 2; i++) {
-    vec12.row(i) = vec_flattened.row(i) * sign12(0, i);
+  ArrayXXd vec12(vecFlattened.rows(), 3);
+  for (auto i = 0; i < vecFlattened.rows() / 2; i++) {
+    vec12.row(i) = vecFlattened.row(i) * sign12(0, i);
   }
 
-  for (int i = vec_flattened.rows() / 2; i < vec_flattened.rows(); i++) {
+  for (auto i = vecFlattened.rows() / 2; i < vecFlattened.rows(); i++) {
     vec12.row(i) =
-        vec_flattened.row(i) * sign12(1, i - vec_flattened.rows() / 2);
+        vecFlattened.row(i) * sign12(1, i - vecFlattened.rows() / 2);
   }
 
   auto AngularTerms_ = AngularTerms(3.5, vec12);
 
-  ArrayXXd central_atom_index_arr(central_atom_index.size(), 1);
+  ArrayXXd centralAtomIndexArr(centralAtomIndex.size(), 1);
 
-  for (int i = 0; i < central_atom_index.size(); i++) {
-    central_atom_index_arr.row(i) << central_atom_index[i];
+  for (size_t i = 0; i < centralAtomIndex.size(); i++) {
+    centralAtomIndexArr.row(i) << centralAtomIndex[i];
   }
 
-  ArrayXXd species12_small_1(2, pair_index12.cols());
-  ArrayXXd species12_small_2(2, pair_index12.cols());
+  ArrayXXd species12Small1(2, pairIndex12.cols());
+  ArrayXXd species12Small2(2, pairIndex12.cols());
 
-  for (int i = 0; i < pair_index12.rows(); i++) {
-    for (int j = 0; j < pair_index12.cols(); j++) {
-      species12_small_1(i, j) = species12_angular(0, pair_index12(i, j));
+  for (auto i = 0; i < pairIndex12.rows(); i++) {
+    for (int j = 0; j < pairIndex12.cols(); j++) {
+      species12Small1(i, j) = species12Angular(0, pairIndex12(i, j));
     }
   }
 
-  for (int i = 0; i < pair_index12.rows(); i++) {
-    for (int j = 0; j < pair_index12.cols(); j++) {
-      species12_small_2(i, j) = species12_angular(1, pair_index12(i, j));
+  for (auto i = 0; i < pairIndex12.rows(); i++) {
+    for (int j = 0; j < pairIndex12.cols(); j++) {
+      species12Small2(i, j) = species12Angular(1, pairIndex12(i, j));
     }
   }
 
   ArrayXXd species12_(sign12.rows(), sign12.cols());
 
-  for (int i = 0; i < sign12.rows(); i++) {
+  for (auto i = 0; i < sign12.rows(); i++) {
     for (int j = 0; j < sign12.cols(); j++) {
       if (sign12(i, j) == 1) {
-        species12_(i, j) = species12_small_2(i, j);
+        species12_(i, j) = species12Small2(i, j);
       } else {
-        species12_(i, j) = species12_small_1(i, j);
+        species12_(i, j) = species12Small1(i, j);
       }
     }
   }
 
   ArrayXXd index(species12_.cols(), 1);
-  auto triu_indices = TriuIndex(4);
+  auto triuIndices = TriuIndex(4);
 
-  for (int i = 0; i < species12_.cols(); i++) {
-    index.row(i) = triu_indices(species12_(0, i), species12_(1, i));
+  for (auto i = 0; i < species12_.cols(); i++) {
+    index.row(i) = triuIndices(species12_(0, i), species12_(1, i));
   }
 
-  index = index + (central_atom_index_arr.array() * 10).array();
+  index = index + (centralAtomIndexArr.array() * 10).array();
 
-  ArrayXXd angular_aev = ArrayXXd::Zero(10 * numAtoms, 32);
-  angular_aev = IndexAdd(angular_aev, AngularTerms_, index, 10, numAtoms);
+  ArrayXXd angularAEV = ArrayXXd::Zero(10 * numAtoms, 32);
+  angularAEV = IndexAdd(angularAEV, AngularTerms_, index, 10, numAtoms);
 
-  ArrayXXd final_angular_aev(numAtoms, 320);
-  atom_idx = 0;
-  for (int i = 0; i < angular_aev.rows(); i += 10) {
-    final_angular_aev.row(atom_idx) << angular_aev.row(i),
-        angular_aev.row(i + 1), angular_aev.row(i + 2), angular_aev.row(i + 3);
-    angular_aev.row(i + 4), angular_aev.row(i + 5);
-    angular_aev.row(i + 6), angular_aev.row(i + 7);
-    angular_aev.row(i + 8), angular_aev.row(i + 9);
-    atom_idx++;
+  ArrayXXd finalAngularAEV(numAtoms, 320);
+  atomIdx = 0;
+  for (auto i = 0; i < angularAEV.rows(); i += 10) {
+    finalAngularAEV.row(atomIdx) << angularAEV.row(i),
+        angularAEV.row(i + 1), angularAEV.row(i + 2), angularAEV.row(i + 3);
+    angularAEV.row(i + 4), angularAEV.row(i + 5);
+    angularAEV.row(i + 6), angularAEV.row(i + 7);
+    angularAEV.row(i + 8), angularAEV.row(i + 9);
+    atomIdx++;
   }
 
-  ArrayXXd final_aev(final_radial_aev.rows(),
-                     final_radial_aev.cols() + final_angular_aev.cols());
-  final_aev << final_radial_aev, final_angular_aev;
+  ArrayXXd finalAEV(finalRadialAEV.rows(),
+                     finalRadialAEV.cols() + finalAngularAEV.cols());
+  finalAEV << finalRadialAEV, finalAngularAEV;
 
-  return final_aev;
+  return finalAEV;
 }
 }  // namespace ANI
 }  // namespace Descriptors

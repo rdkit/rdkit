@@ -43,7 +43,7 @@ TEST_CASE("Symmetry Function Accuracy", "[Symmetry Function]") {
   SECTION("CH4") {
     std::string pathName = getenv("RDBASE");
 
-    std::string mol_file =
+    std::string molFile =
         pathName + "/Code/GraphMol/Descriptors/test_data/CH4.mol";
 
     std::string fNameSF =
@@ -54,7 +54,7 @@ TEST_CASE("Symmetry Function Accuracy", "[Symmetry Function]") {
 
     std::string line;
     std::vector<std::string> tokens;
-    std::vector<std::vector<double>> expected_output;
+    std::vector<std::vector<double>> expectedOutput;
 
     while (!instrmSF.eof()) {
       std::getline(instrmSF, line);
@@ -66,18 +66,18 @@ TEST_CASE("Symmetry Function Accuracy", "[Symmetry Function]") {
         os >> d;
         row.push_back(d);
       }
-      expected_output.push_back(row);
+      expectedOutput.push_back(row);
     }
     // Each row of the received vector is sorted because in angular terms
     // order of triplets may change because of unstable sorting
     // To check if the values of the terms are consistent each row of the output
     // is sorted
-    for (auto i = 0; i < expected_output.size(); i++) {
-      std::sort(expected_output[i].begin(), expected_output[i].end());
+    for (auto i = 0; i < expectedOutput.size(); i++) {
+      std::sort(expectedOutput[i].begin(), expectedOutput[i].end());
     }
 
-    std::vector<std::vector<double>> aev_output;
-    RDKit::ROMOL_SPTR mol(RDKit::MolFileToMol(mol_file, true, false));
+    std::vector<std::vector<double>> aevOutput;
+    RDKit::ROMOL_SPTR mol(RDKit::MolFileToMol(molFile, true, false));
     int confId = -1;
 
     auto aev = RDKit::Descriptors::ANI::AtomicEnvironmentVector(*mol, confId);
@@ -90,16 +90,16 @@ TEST_CASE("Symmetry Function Accuracy", "[Symmetry Function]") {
       for (auto j = 0; j < aev.cols(); j++) {
         row.push_back(aev(i, j));
       }
-      aev_output.push_back(row);
+      aevOutput.push_back(row);
     }
 
-    for (auto i = 0; i < aev_output.size(); i++) {
-      std::sort(aev_output[i].begin(), aev_output[i].end());
+    for (auto i = 0; i < aevOutput.size(); i++) {
+      std::sort(aevOutput[i].begin(), aevOutput[i].end());
     }
 
-    for (auto i = 0; i < expected_output.size(); i++) {
-      for (auto j = 0; j < expected_output[i].size(); j++) {
-        auto diff = std::fabs(expected_output[i][j] - aev_output[i][j]);
+    for (auto i = 0; i < expectedOutput.size(); i++) {
+      for (auto j = 0; j < expectedOutput[i].size(); j++) {
+        auto diff = std::fabs(expectedOutput[i][j] - aevOutput[i][j]);
         CHECK(diff < 0.2);
       }
     }
@@ -108,7 +108,7 @@ TEST_CASE("Symmetry Function Accuracy", "[Symmetry Function]") {
   SECTION("NH3") {
     std::string pathName = getenv("RDBASE");
 
-    std::string mol_file =
+    std::string molFile =
         pathName + "/Code/GraphMol/Descriptors/test_data/NH3.mol";
 
     std::string fNameSF =
@@ -119,7 +119,7 @@ TEST_CASE("Symmetry Function Accuracy", "[Symmetry Function]") {
 
     std::string line;
     std::vector<std::string> tokens;
-    std::vector<std::vector<double>> expected_output;
+    std::vector<std::vector<double>> expectedOutput;
 
     while (!instrmSF.eof()) {
       std::getline(instrmSF, line);
@@ -131,15 +131,15 @@ TEST_CASE("Symmetry Function Accuracy", "[Symmetry Function]") {
         os >> d;
         row.push_back(d);
       }
-      expected_output.push_back(row);
+      expectedOutput.push_back(row);
     }
 
-    for (auto i = 0; i < expected_output.size(); i++) {
-      std::sort(expected_output[i].begin(), expected_output[i].end());
+    for (auto i = 0; i < expectedOutput.size(); i++) {
+      std::sort(expectedOutput[i].begin(), expectedOutput[i].end());
     }
 
-    std::vector<std::vector<double>> aev_output;
-    RDKit::ROMOL_SPTR mol(RDKit::MolFileToMol(mol_file, true, false));
+    std::vector<std::vector<double>> aevOutput;
+    RDKit::ROMOL_SPTR mol(RDKit::MolFileToMol(molFile, true, false));
     int confId = -1;
 
     auto aev = RDKit::Descriptors::ANI::AtomicEnvironmentVector(*mol, confId);
@@ -152,16 +152,16 @@ TEST_CASE("Symmetry Function Accuracy", "[Symmetry Function]") {
       for (auto j = 0; j < aev.cols(); j++) {
         row.push_back(aev(i, j));
       }
-      aev_output.push_back(row);
+      aevOutput.push_back(row);
     }
 
-    for (auto i = 0; i < aev_output.size(); i++) {
-      std::sort(aev_output[i].begin(), aev_output[i].end());
+    for (auto i = 0; i < aevOutput.size(); i++) {
+      std::sort(aevOutput[i].begin(), aevOutput[i].end());
     }
 
-    for (auto i = 0; i < expected_output.size(); i++) {
-      for (auto j = 0; j < expected_output[i].size(); j++) {
-        auto diff = std::fabs(expected_output[i][j] - aev_output[i][j]);
+    for (auto i = 0; i < expectedOutput.size(); i++) {
+      for (auto j = 0; j < expectedOutput[i].size(); j++) {
+        auto diff = std::fabs(expectedOutput[i][j] - aevOutput[i][j]);
         CHECK(diff < 0.2);
       }
     }
@@ -170,7 +170,7 @@ TEST_CASE("Symmetry Function Accuracy", "[Symmetry Function]") {
   SECTION("SO2") {
     std::string pathName = getenv("RDBASE");
 
-    std::string mol_file =
+    std::string molFile =
         pathName + "/Code/GraphMol/Descriptors/test_data/SO2.mol";
     std::string fNameSF =
         pathName + "/Code/GraphMol/Descriptors/test_data/SO2.out";
@@ -180,7 +180,7 @@ TEST_CASE("Symmetry Function Accuracy", "[Symmetry Function]") {
 
     std::string line;
     std::vector<std::string> tokens;
-    std::vector<std::vector<double>> expected_output;
+    std::vector<std::vector<double>> expectedOutput;
 
     while (!instrmSF.eof()) {
       std::getline(instrmSF, line);
@@ -192,15 +192,15 @@ TEST_CASE("Symmetry Function Accuracy", "[Symmetry Function]") {
         os >> d;
         row.push_back(d);
       }
-      expected_output.push_back(row);
+      expectedOutput.push_back(row);
     }
 
-    for (auto i = 0; i < expected_output.size(); i++) {
-      std::sort(expected_output[i].begin(), expected_output[i].end());
+    for (auto i = 0; i < expectedOutput.size(); i++) {
+      std::sort(expectedOutput[i].begin(), expectedOutput[i].end());
     }
 
-    std::vector<std::vector<double>> aev_output;
-    RDKit::ROMOL_SPTR mol(RDKit::MolFileToMol(mol_file, true, false));
+    std::vector<std::vector<double>> aevOutput;
+    RDKit::ROMOL_SPTR mol(RDKit::MolFileToMol(molFile, true, false));
     int confId = -1;
 
     auto aev = RDKit::Descriptors::ANI::AtomicEnvironmentVector(*mol, confId);
@@ -213,16 +213,16 @@ TEST_CASE("Symmetry Function Accuracy", "[Symmetry Function]") {
       for (auto j = 0; j < aev.cols(); j++) {
         row.push_back(aev(i, j));
       }
-      aev_output.push_back(row);
+      aevOutput.push_back(row);
     }
 
-    for (auto i = 0; i < aev_output.size(); i++) {
-      std::sort(aev_output[i].begin(), aev_output[i].end());
+    for (auto i = 0; i < aevOutput.size(); i++) {
+      std::sort(aevOutput[i].begin(), aevOutput[i].end());
     }
 
-    for (auto i = 0; i < expected_output.size(); i++) {
-      for (auto j = 0; j < expected_output[i].size(); j++) {
-        auto diff = std::fabs(expected_output[i][j] - aev_output[i][j]);
+    for (auto i = 0; i < expectedOutput.size(); i++) {
+      for (auto j = 0; j < expectedOutput[i].size(); j++) {
+        auto diff = std::fabs(expectedOutput[i][j] - aevOutput[i][j]);
         CHECK(diff < 0.2);
       }
     }
@@ -231,7 +231,7 @@ TEST_CASE("Symmetry Function Accuracy", "[Symmetry Function]") {
   SECTION("Ethanol") {
     std::string pathName = getenv("RDBASE");
 
-    std::string mol_file =
+    std::string molFile =
         pathName + "/Code/GraphMol/Descriptors/test_data/ethanol.sdf";
 
     std::string fNameSF =
@@ -242,7 +242,7 @@ TEST_CASE("Symmetry Function Accuracy", "[Symmetry Function]") {
 
     std::string line;
     std::vector<std::string> tokens;
-    std::vector<std::vector<double>> expected_output;
+    std::vector<std::vector<double>> expectedOutput;
 
     while (!instrmSF.eof()) {
       std::getline(instrmSF, line);
@@ -254,15 +254,15 @@ TEST_CASE("Symmetry Function Accuracy", "[Symmetry Function]") {
         os >> d;
         row.push_back(d);
       }
-      expected_output.push_back(row);
+      expectedOutput.push_back(row);
     }
 
-    for (auto i = 0; i < expected_output.size(); i++) {
-      std::sort(expected_output[i].begin(), expected_output[i].end());
+    for (auto i = 0; i < expectedOutput.size(); i++) {
+      std::sort(expectedOutput[i].begin(), expectedOutput[i].end());
     }
 
-    std::vector<std::vector<double>> aev_output;
-    RDKit::ROMOL_SPTR mol(RDKit::MolFileToMol(mol_file, false, false));
+    std::vector<std::vector<double>> aevOutput;
+    RDKit::ROMOL_SPTR mol(RDKit::MolFileToMol(molFile, false, false));
     int confId = -1;
 
     auto aev = RDKit::Descriptors::ANI::AtomicEnvironmentVector(*mol, confId);
@@ -275,16 +275,16 @@ TEST_CASE("Symmetry Function Accuracy", "[Symmetry Function]") {
       for (auto j = 0; j < aev.cols(); j++) {
         row.push_back(aev(i, j));
       }
-      aev_output.push_back(row);
+      aevOutput.push_back(row);
     }
 
-    for (auto i = 0; i < aev_output.size(); i++) {
-      std::sort(aev_output[i].begin(), aev_output[i].end());
+    for (auto i = 0; i < aevOutput.size(); i++) {
+      std::sort(aevOutput[i].begin(), aevOutput[i].end());
     }
 
-    for (auto i = 0; i < expected_output.size(); i++) {
-      for (auto j = 0; j < expected_output[i].size(); j++) {
-        auto diff = std::fabs(expected_output[i][j] - aev_output[i][j]);
+    for (auto i = 0; i < expectedOutput.size(); i++) {
+      for (auto j = 0; j < expectedOutput[i].size(); j++) {
+        auto diff = std::fabs(expectedOutput[i][j] - aevOutput[i][j]);
         CHECK(diff < 0.2);
       }
     }
