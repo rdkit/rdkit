@@ -1360,9 +1360,11 @@ M  END";
     outs << text;
     outs.flush();
 #ifdef RDK_BUILD_FREETYPE_SUPPORT
-    TEST_ASSERT(text.find("<path class='bond-1' d='M 127.778,115.762"
-                          " L 186.816,89.7527 L 179.819,77.634 Z'"
-                          " style='fill:#000000") != std::string::npos);
+    TEST_ASSERT(text.find("<path class='bond-1' d='M 127.149,115.353 L"
+                          " 184.851,89.9325 L 178.012,78.0882 Z'"
+                          " style='fill:#000000;fill-rule:evenodd;"
+                          "fill-opacity=1;stroke:#000000;")
+                != std::string::npos);
 #else
     TEST_ASSERT(text.find("<path class='bond-1' d='M 127.267,112.687"
                           " L 185.22,87.1556 L 178.351,75.2597 Z'"
@@ -1417,9 +1419,10 @@ M  END";
     outs << text;
     outs.flush();
 #ifdef RDK_BUILD_FREETYPE_SUPPORT
-    TEST_ASSERT(text.find("<path class='bond-3' d='M 107.442,118.604"
-                          " L 78.9865,93.069 L 74.1504,99.8046 Z'"
-                          " style='fill:#000000;") != std::string::npos);
+    TEST_ASSERT(text.find("<path class='bond-3' d='M 103.748,117.559"
+                          " L 76.8908,93.4583 L 72.3264,99.8155 Z'"
+                          " style='fill:#000000;")
+                != std::string::npos);
 #else
     TEST_ASSERT(text.find("<path class='bond-3' d='M 109.271,116.791"
                           " L 80.7642,91.2106 L 75.9194,97.9583 Z'"
@@ -1927,8 +1930,8 @@ void test13JSONConfig() {
 #ifdef RDK_BUILD_FREETYPE_SUPPORT
     // we'll just have to assume that this pink is for the legend
     TEST_ASSERT(text.find("' fill='#FF7FFF") != std::string::npos);
-    TEST_ASSERT(text.find("<path class='bond-0' d='M 112.451,9.09091"
-                          " L 162.196,95.2511'") !=
+    TEST_ASSERT(text.find("<path class='bond-0' d='M 117.52,9.09091"
+                          " L 166.25,93.4931'") !=
                 std::string::npos);
 #else
     TEST_ASSERT(text.find("sans-serif;fill:#FF7FFF") != std::string::npos);
@@ -2399,7 +2402,7 @@ void test16MoleculeMetadata() {
       outs << text;
       outs.flush();
 #ifdef RDK_BUILD_FREETYPE_SUPPORT
-      TEST_ASSERT(text.find("idx=\"2\" atom-smiles=\"[NH]\" drawing-x=\"56.") !=
+      TEST_ASSERT(text.find("idx=\"2\" atom-smiles=\"[NH]\" drawing-x=\"55.") !=
                   std::string::npos);
 #else
       TEST_ASSERT(text.find("idx=\"2\" atom-smiles=\"[NH]\" drawing-x=\"54.") !=
@@ -2423,9 +2426,9 @@ void test16MoleculeMetadata() {
       outs.flush();
 
 #ifdef RDK_BUILD_FREETYPE_SUPPORT
-      TEST_ASSERT(text.find("idx=\"2\" atom-smiles=\"[NH]\" drawing-x=\"56.") !=
+      TEST_ASSERT(text.find("idx=\"2\" atom-smiles=\"[NH]\" drawing-x=\"55.") !=
                   std::string::npos);
-      TEST_ASSERT(text.find("idx=\"2\" atom-smiles=\"[NH]\" drawing-x=\"256.") !=
+      TEST_ASSERT(text.find("idx=\"2\" atom-smiles=\"[NH]\" drawing-x=\"255.") !=
                   std::string::npos);
 #else
       TEST_ASSERT(text.find("atom-smiles=\"[NH]\" drawing-x=\"54.") !=
@@ -2612,7 +2615,7 @@ void test19RotateDrawing() {
       outs << text;
       outs.flush();
 #ifdef RDK_BUILD_FREETYPE_SUPPORT
-      TEST_ASSERT(text.find("<path  class='atom-0' d='M 268.282 149.898") !=
+      TEST_ASSERT(text.find("<path  class='atom-0' d='M 259.887 150.605") !=
                   std::string::npos);
 #else
       TEST_ASSERT(text.find("text-anchor=\"start\" x='256.907' y='154.276'") !=
@@ -2629,7 +2632,7 @@ void test19RotateDrawing() {
       outs << text;
       outs.flush();
 #ifdef RDK_BUILD_FREETYPE_SUPPORT
-      TEST_ASSERT(text.find("<path  class='atom-0' d='M 142.29 277.842") !=
+      TEST_ASSERT(text.find("<path  class='atom-0' d='M 138.904 273.484") !=
                   std::string::npos);
 #else
       TEST_ASSERT(text.find("text-anchor=\"start\" x='136.604' y='276.316'") !=
@@ -2867,8 +2870,9 @@ void testGithub2931() {
       TEST_ASSERT(text.find("stroke:#FF8C00;stroke-width:5px") !=
                   std::string::npos);
 #ifdef RDK_BUILD_FREETYPE_SUPPORT
-      TEST_ASSERT(text.find("<ellipse cx='241.678' cy='333.335' rx='11.0961'"
-                            " ry='11.0961' style='fill:none;stroke:#00FF00;")
+      TEST_ASSERT(text.find("<ellipse cx='242.126' cy='331.416'"
+                            " rx='11.043' ry='11.043'"
+                            " style='fill:none;stroke:#00FF00;")
                   != std::string::npos);
 #else
       TEST_ASSERT(text.find("<ellipse cx='241.942' cy='386.438'"
@@ -2892,8 +2896,9 @@ void testGithub2931() {
       TEST_ASSERT(text.find("stroke:#FF8C00;stroke-width:5px") !=
                   std::string::npos);
 #ifdef RDK_BUILD_FREETYPE_SUPPORT
-      TEST_ASSERT(text.find("<ellipse cx='241.694' cy='333.61' rx='11.0748'"
-                            " ry='11.0748' style='fill:none;stroke:#00FF00;")
+      TEST_ASSERT(text.find("<ellipse cx='241.741' cy='331.833'"
+                            " rx='11.0115' ry='11.0115'"
+                            " style='fill:none;stroke:#00FF00;")
                   != std::string::npos);
 #else
       TEST_ASSERT(text.find("<ellipse cx='241.766' cy='385.788'"
@@ -3038,7 +3043,7 @@ int main() {
 
   RDLog::InitLogs();
 
-#if 0
+#if 1
   test1();
   test2();
   test4();

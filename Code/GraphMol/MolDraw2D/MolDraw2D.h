@@ -99,16 +99,35 @@ struct StringRect {
   bool doesItIntersect(const StringRect &other) const {
     Point2D ttl, ttr, tbr, tbl;
     calcCorners(ttl, ttr, tbr, tbl, 0.0);
+    // is +ve y up or down?
+    if(ttl.y < tbl.y) {
+      std::swap(ttl, tbl);
+      std::swap(ttr, tbr);
+    }
     Point2D otl, otr, obr, obl;
     other.calcCorners(otl, otr, obr, obl, 0.0);
-    if((otl.x >= ttl.x && otl.x <= ttr.x
-        && otl.y >= ttl.y && otl.y <= tbl.y)
+    if(otl.y < obl.y) {
+      std::swap(otl, obl);
+      std::swap(otr, obr);
+    }
+     if((otl.x >= ttl.x && otl.x <= ttr.x
+        && otl.y >= tbl.y && otl.y <= ttl.y)
        || (otr.x >= ttl.x && otr.x <= ttr.x
-           && otr.y >= ttl.y && otr.y <= tbl.y)
+           && otr.y >= tbl.y && otr.y <= ttl.y)
        || (obr.x >= ttl.x && obr.x <= ttr.x
-           && obr.y >= ttl.y && obr.y <= tbl.y)
+           && obr.y >= tbl.y && obr.y <= ttl.y)
        || (obl.x >= ttl.x && obl.x <= ttr.x
-           && obl.y >= ttl.y && obl.y <= tbl.y)) {
+           && obl.y >= tbl.y && obl.y <= ttl.y)) {
+      return true;
+    }
+    if((ttl.x >= otl.x && ttl.x <= otr.x
+        && ttl.y >= obl.y && ttl.y <= otl.y)
+       || (ttr.x >= otl.x && ttr.x <= otr.x
+           && ttr.y >= obl.y && ttr.y <= otl.y)
+       || (tbr.x >= otl.x && tbr.x <= otr.x
+           && tbr.y >= obl.y && tbr.y <= otl.y)
+       || (tbl.x >= otl.x && tbl.x <= otr.x
+           && tbl.y >= obl.y && tbl.y <= otl.y)) {
       return true;
     }
     return false;
@@ -159,11 +178,11 @@ struct RDKIT_MOLDRAW2D_EXPORT MolDrawOptions {
                                 // drawing a molecule
   DrawColour backgroundColour{
       1, 1, 1};             // color to be used while clearing the background
-  int legendFontSize = 12;  // font size (in pixels) to be used for the legend
+  int legendFontSize = 16;  // font size (in pixels) to be used for the legend
                             // (if present)
   int maxFontSize = 40;  // maximum size in pixels for font in drawn molecule.
                          // -1 means no max.
-  double annotationFontScale = 0.75;  // scales font relative to atom labels for
+  double annotationFontScale = 0.5;  // scales font relative to atom labels for
                                       // atom and bond annotation.
   DrawColour legendColour{0, 0,
                           0};  // color to be used for the legend (if present)
@@ -446,14 +465,6 @@ class RDKIT_MOLDRAW2D_EXPORT MolDraw2D {
   //! returns the width and height of the grid (in molecular coords)
   Point2D range() const { return Point2D(x_range_, y_range_); }
 
-  //! returns the font size (in molecule units)
-  virtual double fontSize() const { return font_size_; }
-  double drawFontSize() const;
-
-  //! set font size in molecule coordinate units. That's probably Angstrom for
-  //! RDKit.
-  virtual void setFontSize(double new_size);
-
   //! sets the current draw color
   virtual void setColour(const DrawColour &col) { curr_colour_ = col; }
   //! returns the current draw color
@@ -573,9 +584,6 @@ class RDKIT_MOLDRAW2D_EXPORT MolDraw2D {
   double x_min_, y_min_, x_range_, y_range_;
   double x_trans_, y_trans_;
   int x_offset_, y_offset_;  // translation in screen coordinates
-  // font_size_ in molecule coordinate units. Default 0.5 (a bit bigger
-  // than the default width of a double bond)
-  double font_size_;
   int curr_width_;
   bool fill_polys_;
   int activeMolIdx_;

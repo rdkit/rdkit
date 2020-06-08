@@ -71,7 +71,6 @@ MolDraw2D::MolDraw2D(int width, int height, int panelWidth, int panelHeight)
       y_trans_(0.0),
       x_offset_(0),
       y_offset_(0),
-      font_size_(0.5),
       curr_width_(2),
       fill_polys_(true),
       activeMolIdx_(-1) {
@@ -637,8 +636,10 @@ void MolDraw2D::drawReaction(
   delete bond_highlights;
   delete bond_highlight_colors;
 
+#if 0
   double o_font_size = fontSize();
   setFontSize(2 * options_.legendFontSize / scale_);
+#endif
   DrawColour odc = colour();
   setColour(options_.symbolColour);
 
@@ -652,7 +653,9 @@ void MolDraw2D::drawReaction(
   drawArrow(arrowBegin, arrowEnd);
 
   setColour(odc);
+#if 0
   setFontSize(o_font_size);
+#endif
 }
 
 // ****************************************************************************
@@ -830,18 +833,6 @@ Point2D MolDraw2D::getAtomCoords(int at_num) const {
   PRECONDITION(activeMolIdx_ >= 0, "bad active mol");
   return at_cds_[activeMolIdx_][at_num];
 }
-
-// ****************************************************************************
-double MolDraw2D::drawFontSize() const {
-  double fontSz = scale() * fontSize();
-  if (drawOptions().maxFontSize > 0 && fontSz > drawOptions().maxFontSize) {
-    fontSz = drawOptions().maxFontSize;
-  }
-  return fontSz;
-}
-
-// ****************************************************************************
-void MolDraw2D::setFontSize(double new_size) { font_size_ = new_size; }
 
 // ****************************************************************************
 void MolDraw2D::setScale(int width, int height, const Point2D &minv,
@@ -1125,7 +1116,10 @@ void MolDraw2D::drawString(const string &str, const Point2D &cds) {
 
   Point2D draw_cds = getDrawCoords(cds);
   text_drawer_->drawString(str, draw_cds, OrientType::N);
+//  int olw = lineWidth();
+//  setLineWidth(0);
 //  text_drawer_->drawStringRects(str, OrientType::N, draw_cds, *this);
+//  setLineWidth(olw);
 
 }
 
@@ -1396,15 +1390,15 @@ void MolDraw2D::drawLegend(const string &legend) {
         getAtomCoords(std::make_pair(panel_width_ / 2., 0.94 * panel_height_));
     loc.x += x_offset_ / scale();
     loc.y -= y_offset_ / scale();
-
-    double o_font_size = fontSize();
-    setFontSize(options_.legendFontSize / scale_);
-
+    double o_font_scale = text_drawer_->fontScale();
+    double fsize = text_drawer_->fontSize();
+    double new_font_scale = o_font_scale * drawOptions().legendFontSize / fsize;
+    text_drawer_->setFontScale(new_font_scale);
     DrawColour odc = colour();
     text_drawer_->setColour(options_.legendColour);
     drawString(legend, loc);
     setColour(odc);
-    setFontSize(o_font_size);
+    text_drawer_->setFontScale(o_font_scale);
   }
 }
 
@@ -1491,18 +1485,8 @@ StringRect MolDraw2D::calcAnnotationPosition(const ROMol &mol,
   }
 
   Point2D const &at_cds = at_cds_[activeMolIdx_][atom->getIdx()];
-  double full_font_size = fontSize();
-  setFontSize(drawOptions().annotationFontScale * full_font_size);
-  double x_min, y_min, x_max, y_max;
-  getStringExtremes(note, OrientType::N, at_cds,
-                    x_min, y_min, x_max, y_max);
-  setFontSize(full_font_size);
-  // make it a bit bigger for padding - mostly so it can't tuck in underneath
-  // the end of a double bond.
   note_rect.trans_.x = at_cds.x;
   note_rect.trans_.y = at_cds.y;
-  note_rect.width_ = (x_max - x_min) * (1 + 0.5 * drawOptions().multipleBondOffset);
-  note_rect.height_ = (y_max - y_min) * (1 + 0.5 * drawOptions().multipleBondOffset);
   double start_ang = getNoteStartAngle(mol, atom);
   calcAtomAnnotationPosition(mol, atom, start_ang, note_rect);
 
@@ -1521,16 +1505,11 @@ StringRect MolDraw2D::calcAnnotationPosition(const ROMol &mol,
   vector<std::shared_ptr<StringRect>> rects;
   vector<TextDrawType> draw_modes;
   vector<char> draw_chars;
+  double full_font_scale = text_drawer_->fontScale();
+  text_drawer_->setFontScale(drawOptions().annotationFontScale * full_font_scale);
   text_drawer_->getStringRects(note, OrientType::N,
                                rects, draw_modes, draw_chars);
-
-  double x_min, y_min, x_max, y_max;
-  Point2D centre;
-  getStringExtremes(note, OrientType::W, centre,
-                    x_min, y_min, x_max, y_max);
-  // make it a bit bigger for padding
-  note_rect.width_ = (x_max - x_min) * (1 + 0.5 * drawOptions().multipleBondOffset);
-  note_rect.height_ = (y_max - y_min) * (1 + 0.5 * drawOptions().multipleBondOffset);
+  text_drawer_->setFontScale(full_font_scale);
 
   Point2D const &at1_cds = at_cds_[activeMolIdx_][bond->getBeginAtomIdx()];
   Point2D const &at2_cds = at_cds_[activeMolIdx_][bond->getEndAtomIdx()];
@@ -1583,8 +1562,11 @@ void MolDraw2D::calcAtomAnnotationPosition(const ROMol &mol, const Atom *atom,
   vector<std::shared_ptr<StringRect>> rects;
   vector<TextDrawType> draw_modes;
   vector<char> draw_chars;
+  double full_font_scale = text_drawer_->fontScale();
+  text_drawer_->setFontScale(drawOptions().annotationFontScale * full_font_scale);
   text_drawer_->getStringRects(note, OrientType::N,
                                rects, draw_modes, draw_chars);
+  text_drawer_->setFontScale(full_font_scale);
 
   double rad_step = 0.25;
   StringRect least_worst_rect = StringRect();
@@ -2188,9 +2170,10 @@ void MolDraw2D::drawAtomLabel(int atom_num, const DrawColour &draw_colour) {
 void MolDraw2D::drawAnnotation(const string &note,
                                const std::shared_ptr<StringRect> &note_rect) {
 
-  double full_font_size = fontSize();
-  setFontSize(drawOptions().annotationFontScale * full_font_size);
+  double full_font_scale = text_drawer_->fontScale();
+  text_drawer_->setFontScale(drawOptions().annotationFontScale * full_font_scale);
   drawString(note, note_rect->trans_);
+  text_drawer_->setFontScale(full_font_scale);
 
 }
 
@@ -3210,7 +3193,6 @@ void MolDraw2D::tabulaRasa() {
   scale_ = 1.0;
   x_trans_ = y_trans_ = 0.0;
   x_offset_ = y_offset_ = 0;
-  font_size_ = 0.5;
   curr_width_ = 2;
 }
 
