@@ -108,10 +108,11 @@ void DrawTextSVG::getStringRects(const string &text,
     Point2D g_centre(char_width / 2, char_height / 2);
     rects.push_back(shared_ptr<StringRect>(new StringRect(offset, g_centre, char_width, char_height)));
     rects.back()->trans_.x += running_x;
+    // empirical spacing.
     if(draw_modes[i] != TextDrawType::TextDrawNormal) {
       running_x += char_width * 1.05;
     } else {
-      running_x += char_width;
+      running_x += char_width * 1.15;
     }
   }
   for(auto r: rects) {

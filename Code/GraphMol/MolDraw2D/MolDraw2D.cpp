@@ -1394,6 +1394,9 @@ void MolDraw2D::drawLegend(const string &legend) {
     // the 0.94 is completely empirical and was brought over from Python
     Point2D loc =
         getAtomCoords(std::make_pair(panel_width_ / 2., 0.94 * panel_height_));
+    loc.x += x_offset_ / scale();
+    loc.y -= y_offset_ / scale();
+
     double o_font_size = fontSize();
     setFontSize(options_.legendFontSize / scale_);
 

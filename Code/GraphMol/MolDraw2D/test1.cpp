@@ -3038,7 +3038,7 @@ int main() {
 
   RDLog::InitLogs();
 
-#if 1
+#if 0
   test1();
   test2();
   test4();
