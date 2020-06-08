@@ -41,7 +41,7 @@ class DrawText {
 
  public:
 
-  static constexpr double FONT_SIZE = 0.4; // based on a bond length of 1
+  static constexpr double FONT_SIZE = 0.6; // seems to be a good number
 
   DrawText(double max_fnt_sz);
   virtual ~DrawText() {}
