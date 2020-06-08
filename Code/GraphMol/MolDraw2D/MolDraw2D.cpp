@@ -177,6 +177,7 @@ void MolDraw2D::drawMolecule(const ROMol &mol,
 
   int origWidth = curr_width_;
   pushDrawDetails();
+  text_drawer_->setMaxFontSize(drawOptions().maxFontSize);
   unique_ptr<RWMol> rwmol =
       setupMoleculeDraw(mol, highlight_atoms, highlight_radii, confId);
   ROMol const &draw_mol = rwmol ? *(rwmol) : mol;
@@ -184,7 +185,6 @@ void MolDraw2D::drawMolecule(const ROMol &mol,
     // clearly, the molecule is in a sorry state.
     return;
   }
-
   if (drawOptions().continuousHighlight) {
     // if we're doing continuous highlighting, start by drawing the highlights
     doContinuousHighlighting(draw_mol, highlight_atoms, highlight_bonds,
@@ -952,10 +952,12 @@ void MolDraw2D::calculateScale(int width, int height, const ROMol &mol,
     }
     if (scale_ > fix_scale) {
       scale_ = fix_scale;
+      text_drawer_->setFontScale(scale_);
     }
     centrePicture(width, height);
   } else {
     scale_ = 1;
+    text_drawer_->setFontScale(scale_);
     x_trans_ = 0.;
     y_trans_ = 0.;
   }

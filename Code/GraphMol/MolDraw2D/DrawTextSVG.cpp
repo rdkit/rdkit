@@ -51,12 +51,15 @@ void DrawTextSVG::drawChar(char c, const Point2D &cds) {
   if (!d_active_class_.empty()) {
     oss_ << " class='" << d_active_class_ << "'";
   }
+  string cs;
+  cs += c;
+  escape_xhtml(cs);
   oss_ << " style='font-size:" << fontSz
        << "px;font-style:normal;font-weight:normal;fill-opacity:1;stroke:none;"
           "font-family:sans-serif;text-anchor:start;"
        << "fill:" << col << "'";
   oss_ << " >";
-  oss_ << c;
+  oss_ << cs;
   oss_ << "</text>" << endl;
 
 }

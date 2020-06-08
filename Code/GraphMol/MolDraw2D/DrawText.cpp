@@ -56,7 +56,7 @@ void DrawText::setFontScale(double new_scale) {
 
   font_scale_ = new_scale;
   double nfs = fontSize();
-  if(nfs > max_font_size_) {
+  if(max_font_size_ != -1 && nfs > max_font_size_) {
     font_scale_ = max_font_size_ / FONT_SIZE;
   }
 
