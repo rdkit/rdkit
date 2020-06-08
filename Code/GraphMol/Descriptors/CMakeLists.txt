@@ -1,7 +1,7 @@
 if(RDK_BUILD_DESCRIPTORS3D)
 
-  set(DESC3D_HDRS MolDescriptors3D.h EEM.h PBF.h PMI.h AUTOCORR3D.h RDF.h MORSE.h GETAWAY.h WHIM.h CoulombMat.h SymmetryFunc.h)
-  set(DESC3D_SOURCES EEM.cpp PBF.cpp PMI.cpp AUTOCORR3D.cpp RDF.cpp MORSE.cpp GETAWAY.cpp WHIM.cpp CoulombMat.cpp SymmetryFunc.cpp)
+  set(DESC3D_HDRS MolDescriptors3D.h EEM.h PBF.h PMI.h AUTOCORR3D.h RDF.h MORSE.h GETAWAY.h WHIM.h CoulombMat.h AtomicEnvironmentVector.h)
+  set(DESC3D_SOURCES EEM.cpp PBF.cpp PMI.cpp AUTOCORR3D.cpp RDF.cpp MORSE.cpp GETAWAY.cpp WHIM.cpp CoulombMat.cpp AtomicEnvironmentVector.cpp)
 
 endif(RDK_BUILD_DESCRIPTORS3D)
 
@@ -65,7 +65,7 @@ LINK_LIBRARIES  Descriptors )
  rdkit_test(testCoulombMat testCoulombMat.cpp
 LINK_LIBRARIES  Descriptors ForceFieldHelpers DistGeomHelpers  )
 if(RDK_HAS_EIGEN)
- rdkit_catch_test(SymmetryFuncCatchTest SymmetryFunc_catch.cpp catch_main.cpp
+ rdkit_catch_test(AtomicEnvironmentVectorCatchTest AtomicEnvironmentVector_catch.cpp catch_main.cpp
 LINK_LIBRARIES Descriptors ForceFieldHelpers DistGeomHelpers)
 endif(RDK_HAS_EIGEN)
 endif(RDK_BUILD_DESCRIPTORS3D)

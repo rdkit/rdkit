@@ -119,11 +119,12 @@ python::tuple calcCrippenDescriptors(const RDKit::ROMol &mol,
 #ifdef RDK_BUILD_DESCRIPTORS3D
 
 #ifdef RDK_HAS_EIGEN3
-python::tuple calcSymmetryFunc(const RDKit::ROMol &mol, int confId) {
+python::tuple calcANIAtomicEnvironmentVector(const RDKit::ROMol &mol,
+                                             int confId) {
   std::vector<std::vector<double>> results;
-  auto aev = RDKit::Descriptors::SymmetryFunc(mol, confId);
+  auto aev = RDKit::Descriptors::ANI::AtomicEnvironmentVector(mol, confId);
   for (auto i = 0; i < aev.rows(); i++) {
-    std::vector <double> row;
+    std::vector<double> row;
     for (auto j = 0; j < aev.cols(); j++) {
       row.push_back(aev(i, j));
     }
@@ -1576,10 +1577,11 @@ BOOST_PYTHON_MODULE(rdMolDescriptors) {
 
 #ifdef RDK_BUILD_DESCRIPTORS3D
 #ifdef RDK_HAS_EIGEN3
-  python::scope().attr("_CalcSymmetryFunc_version") = 
-      RDKit::Descriptors::SymmetryFuncVersion;
-  docString = "Returns torchANI style feature vectors for each atom in the molecule";
-  python::def("CalcSymmetryFunc", calcSymmetryFunc,
+  python::scope().attr("_CalcANIAtomicEnvironmentVector_version") =
+      RDKit::Descriptors::ANI::AtomicEnvironmentVectorVersion;
+  docString =
+      "Returns torchANI style feature vectors for each atom in the molecule";
+  python::def("CalcANIAtomicEnvironmentVector", calcANIAtomicEnvironmentVector,
               (python::arg("mol"), python::arg("confId") = -1),
               docString.c_str());
 #endif
