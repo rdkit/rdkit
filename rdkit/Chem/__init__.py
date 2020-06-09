@@ -116,21 +116,6 @@ def FindMolChiralCenters(mol, force=True, includeUnassigned=False):
       centers.append((atom.GetIdx(), '?'))
   return centers
 
-class BlockLogs:
-    """Block any enabled logs and reenable when the instance goes out
-    of scope"""
-    def __init__(self):
-        logs = rdBase.LogStatus()
-        self.reenable = []
-        for line in logs.split("\n"):
-            log, status = line.split(":")
-            if status == "enabled":
-                rdBase.DisableLog(log)
-                self.reenable.append(log)
-    def __del__(self):
-        for log in self.reenable:
-            rdBase.EnableLog(log)
-                
 #------------------------------------
 #
 #  doctest boilerplate

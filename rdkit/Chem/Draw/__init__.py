@@ -15,7 +15,7 @@ from rdkit.Chem.Draw import rdMolDraw2D
 from rdkit.Chem.Draw.MolDrawing import MolDrawing, DrawingOptions
 from rdkit.Chem.Draw.rdMolDraw2D import *
 from rdkit.Chem import rdDepictor
-from rdkit import Chem
+from rdkit import Chem, rdBase
 
 
 def _getCanvas():
@@ -417,7 +417,7 @@ def _okToKekulizeMol(mol, kekulize):
 
 def _moltoimg(mol, sz, highlights, legend, returnPNG=False, drawOptions=None, **kwargs):
   try:
-    blocker = Chem.BlockLogs()
+    blocker = rdBase.BlockLogs()
     mol.GetAtomWithIdx(0).GetExplicitValence()
   except RuntimeError:
     mol.UpdatePropertyCache(False)
@@ -427,7 +427,7 @@ def _moltoimg(mol, sz, highlights, legend, returnPNG=False, drawOptions=None, **
 
 
   try:
-    blocker = Chem.BlockLogs()
+    blocker = rdBase.BlockLogs()
     mc = rdMolDraw2D.PrepareMolForDrawing(mol, kekulize=kekulize, wedgeBonds=wedge)
   except ValueError:  # <- can happen on a kekulization failure
     mc = rdMolDraw2D.PrepareMolForDrawing(mol, kekulize=False, wedgeBonds=wedge)
@@ -460,7 +460,7 @@ def _moltoimg(mol, sz, highlights, legend, returnPNG=False, drawOptions=None, **
 
 def _moltoSVG(mol, sz, highlights, legend, kekulize, drawOptions=None, **kwargs):
   try:
-    blocker = Chem.BlockLogs()
+    blocker = rdBase.BlockLogs()
     mol.GetAtomWithIdx(0).GetExplicitValence()
   except RuntimeError:
     mol.UpdatePropertyCache(False)
@@ -468,7 +468,7 @@ def _moltoSVG(mol, sz, highlights, legend, kekulize, drawOptions=None, **kwargs)
   kekulize = _okToKekulizeMol(mol, kekulize)
 
   try:
-    blocker = Chem.BlockLogs()
+    blocker = rdBase.BlockLogs()
     mc = rdMolDraw2D.PrepareMolForDrawing(mol, kekulize=kekulize)
   except ValueError:  # <- can happen on a kekulization failure
     mc = rdMolDraw2D.PrepareMolForDrawing(mol, kekulize=False)

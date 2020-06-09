@@ -18,6 +18,7 @@
 #include <boost/iostreams/stream.hpp>
 #include "BoostEndInclude.h"
 #include <iostream>
+#include <vector>
 namespace boost {
 namespace logging {
 
@@ -112,5 +113,12 @@ BOOST_DECLARE_LOG(rdStatusLog)
 #endif
 namespace RDLog {
 RDKIT_RDGENERAL_EXPORT void InitLogs();
+
+// ! Temporarily block logging until this object goes out of scope
+struct RDKIT_RDGENERAL_EXPORT BlockLogs {
+  std::vector<RDLogger> logs_to_reenable;
+   BlockLogs();
+  ~BlockLogs();
+};
 }
 #endif
