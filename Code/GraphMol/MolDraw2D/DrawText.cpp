@@ -297,18 +297,21 @@ void DrawText::getStringExtremes(const string &label, OrientType orient,
   vector<TextDrawType> draw_modes;
   vector<char> to_draw;
   getStringRects(label, orient, rects, draw_modes, to_draw);
+
   for(auto r: rects) {
     Point2D tl, tr, br, bl;
     r->calcCorners(tl, tr, br, bl, 0.0);
     // sometimes the rect is in a coordinate frame where +ve y is down,
     // sometimes it's up.  For these purposes, we don't care so long as
-    // the y_max is larger than the y_min.
-    if(bl.y < tr.y) {
-      swap(bl, tr);
-    }
+    // the y_max is larger than the y_min.  We probably don't need to do
+    // all the tests for x_min and x_max;
     x_min = min(bl.x, x_min);
+    x_min = min(tr.x, x_min);
     y_min = min(bl.y, y_min);
+    y_min = min(tr.y, y_min);
+    x_max = max(bl.x, x_max);
     x_max = max(tr.x, x_max);
+    y_max = max(bl.y, y_max);
     y_max = max(tr.y, y_max);
   }
 

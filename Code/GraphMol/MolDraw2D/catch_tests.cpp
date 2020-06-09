@@ -7,6 +7,11 @@
 //  which is included in the file license.txt, found at the root
 //  of the RDKit source tree.
 //
+
+// a lot of the tests check <text> flags in the SVG.  That doesn't
+// happen with the Freetype versions
+#undef RDK_BUILD_FREETYPE_SUPPORT
+
 #define CATCH_CONFIG_MAIN  // This tells Catch to provide a main() - only do
                            // this in one cpp file
 #include "catch.hpp"
@@ -32,7 +37,7 @@ TEST_CASE("prepareAndDrawMolecule", "[drawing]") {
     MolDraw2DUtils::prepareAndDrawMolecule(drawer, *m1);
     drawer.finishDrawing();
     std::string text = drawer.getDrawingText();
-    CHECK(text.find("<tspan>H</tspan>") != std::string::npos);
+    CHECK(text.find(">H</text>") != std::string::npos);
   }
 }
 
@@ -229,8 +234,10 @@ TEST_CASE("dative bonds", "[drawing][organometallics]") {
     outs << text;
     outs.flush();
 
-    CHECK(text.find("<path class='bond-0' d='M 55.1495,101.204"
-                    " L 52.2436,100 L 55.1495,98.7964") != std::string::npos);
+    CHECK(text.find("<path class='bond-0' d='M 124.586,100"
+                    " L 85.2144,100' style='fill:none;"
+                    "fill-rule:evenodd;stroke:#0000FF;")
+          != std::string::npos);
   }
   SECTION("more complex") {
     auto m1 = "N->1[C@@H]2CCCC[C@H]2N->[Pt]11OC(=O)C(=O)O1"_smiles;
@@ -244,9 +251,10 @@ TEST_CASE("dative bonds", "[drawing][organometallics]") {
     outs << text;
     outs.flush();
 
-    CHECK(text.find("<path class='bond-7' d='M 92.9861,93.568"
-                    " L 92.2758,94.0033 L 92.4703,93.1932") !=
-          std::string::npos);
+    CHECK(text.find("<path class='bond-7' d='M 101.307,79.424"
+                    " L 95.8911,86.8791' style='fill:none;"
+                    "fill-rule:evenodd;stroke:#0000FF;")
+          != std::string::npos);
   }
   SECTION("test colours") {
     // the dative bonds point the wrong way, but the point is to test
@@ -262,10 +270,10 @@ TEST_CASE("dative bonds", "[drawing][organometallics]") {
     outs << text;
     outs.flush();
 
-    CHECK(text.find("<path class='bond-2' d='M 61.7343,143.825"
-                    " L 89.7427,152.925' style='fill:none;"
-                    "fill-rule:evenodd;stroke:#0000FF") !=
-          std::string::npos);
+    CHECK(text.find("<path class='bond-2' d='M 53.7562,140.668"
+                    " L 81.4916,149.68' style='fill:none;"
+                    "fill-rule:evenodd;stroke:#0000FF;")
+          != std::string::npos);
   }
 }
 
@@ -296,7 +304,10 @@ TEST_CASE("copying drawing options", "[drawing]") {
       MolDraw2DUtils::prepareAndDrawMolecule(drawer, *m1);
       drawer.finishDrawing();
       std::string text = drawer.getDrawingText();
-      CHECK(text.find("fill:#0000FF' ><tspan>HN") != std::string::npos);
+      std::ofstream outs("testFoundations_1.svg");
+      outs << text;
+      outs.flush();
+      CHECK(text.find("fill:#0000FF' >N</text>") != std::string::npos);
     }
     {
       MolDraw2DSVG drawer(200, 200);
@@ -304,8 +315,11 @@ TEST_CASE("copying drawing options", "[drawing]") {
       MolDraw2DUtils::prepareAndDrawMolecule(drawer, *m1);
       drawer.finishDrawing();
       std::string text = drawer.getDrawingText();
-      CHECK(text.find("fill:#0000FF' ><tspan>HN") == std::string::npos);
-      CHECK(text.find("fill:#000000' ><tspan>HN") != std::string::npos);
+      std::ofstream outs("testFoundations_2.svg");
+      outs << text;
+      outs.flush();
+      CHECK(text.find("fill:#0000FF' >N</text>") == std::string::npos);
+      CHECK(text.find("fill:#000000' >N</text>") != std::string::npos);
     }
   }
   SECTION("test") {
@@ -317,8 +331,11 @@ TEST_CASE("copying drawing options", "[drawing]") {
       MolDraw2DUtils::prepareAndDrawMolecule(drawer, *m1);
       drawer.finishDrawing();
       std::string text = drawer.getDrawingText();
-      CHECK(text.find("fill:#0000FF' ><tspan>HN") == std::string::npos);
-      CHECK(text.find("fill:#000000' ><tspan>HN") != std::string::npos);
+      std::ofstream outs("testTest_1.svg");
+      outs << text;
+      outs.flush();
+      CHECK(text.find("fill:#0000FF' >N</text>") == std::string::npos);
+      CHECK(text.find("fill:#000000' >N</text>") != std::string::npos);
     }
   }
 }
@@ -365,8 +382,10 @@ TEST_CASE("draw atom/bond indices", "[drawing]") {
       std::ofstream outs("testAtomBondIndices_1.svg");
       outs << text;
       outs.flush();
-      CHECK(text.find("<tspan>1</tspan>") == std::string::npos);
-      CHECK(text.find("<tspan>1,(S)</tspan>") == std::string::npos);
+      CHECK(text.find(">1</text>") == std::string::npos);
+      CHECK(text.find(">(</text>") == std::string::npos);
+      CHECK(text.find(">S</text>") == std::string::npos);
+      CHECK(text.find(">)</text>") == std::string::npos);
     }
     {
       MolDraw2DSVG drawer(250, 200);
@@ -377,9 +396,9 @@ TEST_CASE("draw atom/bond indices", "[drawing]") {
       std::ofstream outs("testAtomBondIndices_2.svg");
       outs << text;
       outs.flush();
-      CHECK(text.find("<tspan>1</tspan>") != std::string::npos);
+      CHECK(text.find(">1</text>") != std::string::npos);
       // it only appears once though:
-      CHECK(text.find("<tspan>1</tspan>", text.find("<tspan>1</tspan>") + 1) ==
+      CHECK(text.find(">1</text>", text.find(">1</text>") + 1) ==
             std::string::npos);
       CHECK(text.find("1,(S)") == std::string::npos);
     }
@@ -392,9 +411,9 @@ TEST_CASE("draw atom/bond indices", "[drawing]") {
       std::ofstream outs("testAtomBondIndices_3.svg");
       outs << text;
       outs.flush();
-      CHECK(text.find("<tspan>1</tspan>") != std::string::npos);
+      CHECK(text.find(">1</text>") != std::string::npos);
       // it only appears once though:
-      CHECK(text.find("<tspan>1</tspan>", text.find("<tspan>1</tspan>") + 1) ==
+      CHECK(text.find(">1</text>", text.find(">1</text>") + 1) ==
             std::string::npos);
     }
     {
@@ -407,9 +426,9 @@ TEST_CASE("draw atom/bond indices", "[drawing]") {
       std::ofstream outs("testAtomBondIndices_4.svg");
       outs << text;
       outs.flush();
-      CHECK(text.find("<tspan>1</tspan>") != std::string::npos);
+      CHECK(text.find(">1</text>") != std::string::npos);
       // it appears twice:
-      CHECK(text.find("<tspan>1</tspan>", text.find("<tspan>1</tspan>") + 1) !=
+      CHECK(text.find(">1</text>", text.find(">1</text>") + 1) !=
             std::string::npos);
     }
     {
@@ -424,9 +443,14 @@ TEST_CASE("draw atom/bond indices", "[drawing]") {
       std::ofstream outs("testAtomBondIndices_5.svg");
       outs << text;
       outs.flush();
-      CHECK(text.find("<tspan>1,(S)</tspan>") != std::string::npos);
-      CHECK(text.find("<tspan>2,foo</tspan>") != std::string::npos);
-      CHECK(text.find("<tspan>1</tspan>") == std::string::npos);
+      CHECK(text.find(">1</text>") != std::string::npos);
+      CHECK(text.find(">,</text>") != std::string::npos);
+      CHECK(text.find(">(</text>") != std::string::npos);
+      CHECK(text.find(">S</text>") != std::string::npos);
+      CHECK(text.find(")</text>") != std::string::npos);
+      CHECK(text.find(">2</text>") != std::string::npos);
+      CHECK(text.find(">f</text>") != std::string::npos);
+      CHECK(text.find(">o</text>") != std::string::npos);
     }
   }
 }

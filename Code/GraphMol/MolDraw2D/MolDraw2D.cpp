@@ -952,16 +952,15 @@ void MolDraw2D::calculateScale(int width, int height, const ROMol &mol,
     }
     if (scale_ > fix_scale) {
       scale_ = fix_scale;
-      text_drawer_->setFontScale(scale_);
     }
     centrePicture(width, height);
   } else {
     scale_ = 1;
-    text_drawer_->setFontScale(scale_);
     x_trans_ = 0.;
     y_trans_ = 0.;
   }
 
+  text_drawer_->setFontScale(scale_);
   // cout << "leaving calculateScale" << endl;
   // cout << "final scale : " << scale_ << endl;
 }
@@ -3080,7 +3079,6 @@ void MolDraw2D::adjustScaleForAtomLabels(
                         at_cds_[activeMolIdx_][i],
                         this_x_min, this_y_min,
                         this_x_max, this_y_max);
-
       x_max = std::max(x_max, this_x_max);
       x_min_ = std::min(x_min_, this_x_min);
       y_max = std::max(y_max, this_y_max);
