@@ -13,6 +13,7 @@ import tempfile
 import unittest
 
 from rdkit import Chem
+from rdkit.Chem import AllChem
 from rdkit.Chem import rdDepictor
 from rdkit.Chem import Draw
 
@@ -41,7 +42,7 @@ except ImportError:
 class TestCase(unittest.TestCase):
   showAllImages = False
 
-  def test_interactive(self):
+  def atest_interactive(self):
     # We avoid checking in the code with development flag set
     self.assertFalse(self.showAllImages)
 
@@ -63,17 +64,17 @@ class TestCase(unittest.TestCase):
       os.remove(fn)
 
   @unittest.skipIf(cairoCanvas is None, 'Skipping cairo test')
-  def testCairoFile(self):
+  def atestCairoFile(self):
     os.environ['RDKIT_CANVAS'] = 'cairo'
     self._testMolToFile()
 
   @unittest.skipIf(aggCanvas is None, 'Skipping agg test')
-  def testAggFile(self):
+  def atestAggFile(self):
     os.environ['RDKIT_CANVAS'] = 'agg'
     self._testMolToFile()
 
   @unittest.skipIf(spingCanvas is None, 'Skipping sping test')
-  def testSpingFile(self):
+  def atestSpingFile(self):
     os.environ['RDKIT_CANVAS'] = 'sping'
     self._testMolToFile()
 
@@ -87,22 +88,22 @@ class TestCase(unittest.TestCase):
       img.show()
 
   @unittest.skipIf(cairoCanvas is None, 'Skipping cairo test')
-  def testCairoImage(self):
+  def atestCairoImage(self):
     os.environ['RDKIT_CANVAS'] = 'cairo'
     self._testMolToImage()
 
   @unittest.skipIf(aggCanvas is None, 'Skipping agg test')
-  def testAggImage(self):
+  def atestAggImage(self):
     os.environ['RDKIT_CANVAS'] = 'agg'
     self._testMolToImage()
 
   @unittest.skipIf(spingCanvas is None, 'Skipping sping test')
-  def testSpingImage(self):
+  def atestSpingImage(self):
     os.environ['RDKIT_CANVAS'] = 'sping'
     self._testMolToImage()
 
   @unittest.skipIf(qtCanvas is None, 'Skipping Qt test')
-  def testQtImage(self):
+  def atestQtImage(self):
     try:
       from PySide import QtGui
       _ = QtGui.QApplication(sys.argv)
@@ -116,22 +117,22 @@ class TestCase(unittest.TestCase):
     # img.save('/tmp/D_me.png')
 
   @unittest.skipIf(cairoCanvas is None, 'Skipping cairo test')
-  def testCairoImageDash(self):
+  def atestCairoImageDash(self):
     os.environ['RDKIT_CANVAS'] = 'cairo'
     self._testMolToImage(kekulize=False)
 
   @unittest.skipIf(aggCanvas is None, 'Skipping agg test')
-  def testAggImageDash(self):
+  def atestAggImageDash(self):
     os.environ['RDKIT_CANVAS'] = 'agg'
     self._testMolToImage(kekulize=False)
 
   @unittest.skipIf(spingCanvas is None, 'Skipping sping test')
-  def testSpingImageDash(self):
+  def atestSpingImageDash(self):
     os.environ['RDKIT_CANVAS'] = 'sping'
     self._testMolToImage(kekulize=False, showImage=False)
 
   @unittest.skipIf(spingCanvas is None, 'Skipping sping test')
-  def testGithubIssue54(self):
+  def atestGithubIssue54(self):
     # Assert that radicals depict with PIL
     os.environ['RDKIT_CANVAS'] = 'sping'
     mol = Chem.MolFromSmiles('c1([O])ccc(O)cc1')
@@ -139,7 +140,7 @@ class TestCase(unittest.TestCase):
     self.assertTrue(img)
     # img.show()
 
-  def testSpecialCases(self):
+  def atestSpecialCases(self):
     options = Draw.DrawingOptions()
     options.atomLabelDeuteriumTritium = True
     self._testMolToImage(mol=Chem.MolFromSmiles('[2H][C@]([3H])(C)F'), options=options)
@@ -156,7 +157,7 @@ class TestCase(unittest.TestCase):
                          highlightBonds=(0, 2, 4, 6, 8, 10))
     self._testMolToImage(mol=Chem.MolFromSmiles('c1ccccc1c1ccc(cc1)c1ccc(cc1)c1ccc(cc1)'))
 
-  def testGithubIssue86(self):
+  def atestGithubIssue86(self):
     # Assert that drawing code doesn't modify wedge bonds
     mol = Chem.MolFromSmiles('F[C@H](Cl)Br')
     for b in mol.GetBonds():
@@ -178,7 +179,7 @@ class TestCase(unittest.TestCase):
     nbds = [x.GetBondDir() for x in mol.GetBonds()]
     self.assertEqual(obds, nbds)
 
-  def testGridSVG(self):
+  def atestGridSVG(self):
     mols = [Chem.MolFromSmiles('NC(C)C(=O)' * x) for x in range(10)]
     legends = ['mol-%d' % x for x in range(len(mols))]
     svg = Draw.MolsToGridImage(mols, legends=legends, molsPerRow=3, subImgSize=(200, 200),
@@ -191,7 +192,7 @@ class TestCase(unittest.TestCase):
                                useSVG=True)
     self.assertTrue(svg.find("width='900px' height='1200px'") > -1)
 
-  def testDrawMorgan(self):
+  def atestDrawMorgan(self):
     from rdkit.Chem import rdMolDescriptors
     m = Chem.MolFromSmiles('c1ccccc1CC1CC1')
     bi = {}
@@ -216,7 +217,7 @@ class TestCase(unittest.TestCase):
     with self.assertRaises(KeyError):
         Draw.DrawMorganBit(m,32,bi)
 
-  def testDrawRDKit(self):
+  def atestDrawRDKit(self):
     m = Chem.MolFromSmiles('c1ccccc1CC1CC1')
     bi = {}
     rdkfp = Chem.RDKFingerprint(m,maxPath=5,bitInfo=bi)
@@ -232,6 +233,10 @@ class TestCase(unittest.TestCase):
         Draw.DrawRDKitBit(m,32,bi)
 
 
+  def testDrawReaction(self):
+    # this shouldn't throw an exception...
+    rxn = AllChem.ReactionFromSmarts("[c;H1:3]1:[c:4]:[c:5]:[c;H1:6]:[c:7]2:[nH:8]:[c:9]:[c;H1:1]:[c:2]:1:2.O=[C:10]1[#6;H2:11][#6;H2:12][N:13][#6;H2:14][#6;H2:15]1>>[#6;H2:12]3[#6;H1:11]=[C:10]([c:1]1:[c:9]:[n:8]:[c:7]2:[c:6]:[c:5]:[c:4]:[c:3]:[c:2]:1:2)[#6;H2:15][#6;H2:14][N:13]3")
+    img = Draw.ReactionToImage(rxn)
 
 
 if __name__ == '__main__':
