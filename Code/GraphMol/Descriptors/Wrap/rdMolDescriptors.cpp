@@ -121,18 +121,14 @@ python::tuple calcCrippenDescriptors(const RDKit::ROMol &mol,
 #ifdef RDK_HAS_EIGEN3
 python::tuple calcANIAtomicEnvironmentVector(const RDKit::ROMol &mol,
                                              int confId) {
-  std::vector<std::vector<double>> results;
   auto aev = RDKit::Descriptors::ANI::AtomicEnvironmentVector(mol, confId);
-  for (auto i = 0; i < aev.rows(); i++) {
-    std::vector<double> row;
-    for (auto j = 0; j < aev.cols(); j++) {
-      row.push_back(aev(i, j));
-    }
-    results.push_back(row);
-  }
   python::list result;
-  for (auto &res : results) {
-    result.append(res);
+  for (auto i = 0; i < aev.rows(); i++) {
+    python::list row;
+    for (auto j = 0; j < aev.cols(); j++) {
+      row.append(aev(i, j));
+    }
+    result.append(python::tuple(row));
   }
   return python::tuple(result);
 }

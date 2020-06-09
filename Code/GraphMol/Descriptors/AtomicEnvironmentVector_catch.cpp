@@ -39,6 +39,18 @@ std::vector<std::string> tokenize(const std::string &s) {
   return tokens;
 }
 
+std::vector<std::vector<double>> EigenMatToSTLVector(ArrayXXd aev) {
+  std::vector<std::vector<double>> aevOutput;
+  for (auto i = 0; i < aev.rows(); i++) {
+    std::vector<double> row;
+    for (auto j = 0; j < aev.cols(); j++) {
+      row.push_back(aev(i, j));
+    }
+    aevOutput.push_back(row);
+  }
+  return aevOutput;
+}
+
 TEST_CASE("Symmetry Function Accuracy", "[Symmetry Function]") {
   SECTION("CH4") {
     std::string pathName = getenv("RDBASE");
@@ -72,11 +84,10 @@ TEST_CASE("Symmetry Function Accuracy", "[Symmetry Function]") {
     // order of triplets may change because of unstable sorting
     // To check if the values of the terms are consistent each row of the output
     // is sorted
-    for (auto i = 0; i < expectedOutput.size(); i++) {
+    for (unsigned int i = 0; i < expectedOutput.size(); i++) {
       std::sort(expectedOutput[i].begin(), expectedOutput[i].end());
     }
 
-    std::vector<std::vector<double>> aevOutput;
     RDKit::ROMOL_SPTR mol(RDKit::MolFileToMol(molFile, true, false));
     int confId = -1;
 
@@ -85,20 +96,14 @@ TEST_CASE("Symmetry Function Accuracy", "[Symmetry Function]") {
     CHECK(aev.rows() == mol->getNumAtoms());
     CHECK(aev.cols() == 384);
 
-    for (auto i = 0; i < aev.rows(); i++) {
-      std::vector<double> row;
-      for (auto j = 0; j < aev.cols(); j++) {
-        row.push_back(aev(i, j));
-      }
-      aevOutput.push_back(row);
-    }
+    auto aevOutput = EigenMatToSTLVector(aev);
 
-    for (auto i = 0; i < aevOutput.size(); i++) {
+    for (unsigned int i = 0; i < aevOutput.size(); i++) {
       std::sort(aevOutput[i].begin(), aevOutput[i].end());
     }
 
-    for (auto i = 0; i < expectedOutput.size(); i++) {
-      for (auto j = 0; j < expectedOutput[i].size(); j++) {
+    for (unsigned int i = 0; i < expectedOutput.size(); i++) {
+      for (unsigned int j = 0; j < expectedOutput[i].size(); j++) {
         auto diff = std::fabs(expectedOutput[i][j] - aevOutput[i][j]);
         CHECK(diff < 0.2);
       }
@@ -134,11 +139,10 @@ TEST_CASE("Symmetry Function Accuracy", "[Symmetry Function]") {
       expectedOutput.push_back(row);
     }
 
-    for (auto i = 0; i < expectedOutput.size(); i++) {
+    for (unsigned int i = 0; i < expectedOutput.size(); i++) {
       std::sort(expectedOutput[i].begin(), expectedOutput[i].end());
     }
 
-    std::vector<std::vector<double>> aevOutput;
     RDKit::ROMOL_SPTR mol(RDKit::MolFileToMol(molFile, true, false));
     int confId = -1;
 
@@ -147,20 +151,14 @@ TEST_CASE("Symmetry Function Accuracy", "[Symmetry Function]") {
     CHECK(aev.rows() == mol->getNumAtoms());
     CHECK(aev.cols() == 384);
 
-    for (auto i = 0; i < aev.rows(); i++) {
-      std::vector<double> row;
-      for (auto j = 0; j < aev.cols(); j++) {
-        row.push_back(aev(i, j));
-      }
-      aevOutput.push_back(row);
-    }
+    auto aevOutput = EigenMatToSTLVector(aev);
 
-    for (auto i = 0; i < aevOutput.size(); i++) {
+    for (unsigned int i = 0; i < aevOutput.size(); i++) {
       std::sort(aevOutput[i].begin(), aevOutput[i].end());
     }
 
-    for (auto i = 0; i < expectedOutput.size(); i++) {
-      for (auto j = 0; j < expectedOutput[i].size(); j++) {
+    for (unsigned int i = 0; i < expectedOutput.size(); i++) {
+      for (unsigned int j = 0; j < expectedOutput[i].size(); j++) {
         auto diff = std::fabs(expectedOutput[i][j] - aevOutput[i][j]);
         CHECK(diff < 0.2);
       }
@@ -195,11 +193,10 @@ TEST_CASE("Symmetry Function Accuracy", "[Symmetry Function]") {
       expectedOutput.push_back(row);
     }
 
-    for (auto i = 0; i < expectedOutput.size(); i++) {
+    for (unsigned int i = 0; i < expectedOutput.size(); i++) {
       std::sort(expectedOutput[i].begin(), expectedOutput[i].end());
     }
 
-    std::vector<std::vector<double>> aevOutput;
     RDKit::ROMOL_SPTR mol(RDKit::MolFileToMol(molFile, true, false));
     int confId = -1;
 
@@ -208,20 +205,14 @@ TEST_CASE("Symmetry Function Accuracy", "[Symmetry Function]") {
     CHECK(aev.rows() == mol->getNumAtoms());
     CHECK(aev.cols() == 384);
 
-    for (auto i = 0; i < aev.rows(); i++) {
-      std::vector<double> row;
-      for (auto j = 0; j < aev.cols(); j++) {
-        row.push_back(aev(i, j));
-      }
-      aevOutput.push_back(row);
-    }
+    auto aevOutput = EigenMatToSTLVector(aev);
 
-    for (auto i = 0; i < aevOutput.size(); i++) {
+    for (unsigned int i = 0; i < aevOutput.size(); i++) {
       std::sort(aevOutput[i].begin(), aevOutput[i].end());
     }
 
-    for (auto i = 0; i < expectedOutput.size(); i++) {
-      for (auto j = 0; j < expectedOutput[i].size(); j++) {
+    for (unsigned int i = 0; i < expectedOutput.size(); i++) {
+      for (unsigned int j = 0; j < expectedOutput[i].size(); j++) {
         auto diff = std::fabs(expectedOutput[i][j] - aevOutput[i][j]);
         CHECK(diff < 0.2);
       }
@@ -257,11 +248,10 @@ TEST_CASE("Symmetry Function Accuracy", "[Symmetry Function]") {
       expectedOutput.push_back(row);
     }
 
-    for (auto i = 0; i < expectedOutput.size(); i++) {
+    for (unsigned int i = 0; i < expectedOutput.size(); i++) {
       std::sort(expectedOutput[i].begin(), expectedOutput[i].end());
     }
 
-    std::vector<std::vector<double>> aevOutput;
     RDKit::ROMOL_SPTR mol(RDKit::MolFileToMol(molFile, false, false));
     int confId = -1;
 
@@ -270,23 +260,72 @@ TEST_CASE("Symmetry Function Accuracy", "[Symmetry Function]") {
     CHECK(aev.rows() == mol->getNumAtoms());
     CHECK(aev.cols() == 384);
 
-    for (auto i = 0; i < aev.rows(); i++) {
-      std::vector<double> row;
-      for (auto j = 0; j < aev.cols(); j++) {
-        row.push_back(aev(i, j));
-      }
-      aevOutput.push_back(row);
-    }
+    auto aevOutput = EigenMatToSTLVector(aev);
 
-    for (auto i = 0; i < aevOutput.size(); i++) {
+    for (unsigned int i = 0; i < aevOutput.size(); i++) {
       std::sort(aevOutput[i].begin(), aevOutput[i].end());
     }
 
-    for (auto i = 0; i < expectedOutput.size(); i++) {
-      for (auto j = 0; j < expectedOutput[i].size(); j++) {
+    for (unsigned int i = 0; i < expectedOutput.size(); i++) {
+      for (unsigned int j = 0; j < expectedOutput[i].size(); j++) {
         auto diff = std::fabs(expectedOutput[i][j] - aevOutput[i][j]);
         CHECK(diff < 0.2);
       }
     }
+  }
+}
+
+TEST_CASE("Species Vector Generation", "[Atomic Species Encoding]") {
+  SECTION("CH4") {
+    std::string pathName = getenv("RDBASE");
+
+    std::string molFile =
+        pathName + "/Code/GraphMol/Descriptors/test_data/CH4.mol";
+    RDKit::ROMOL_SPTR mol(RDKit::MolFileToMol(molFile, true, false));
+    auto speciesVec = RDKit::Descriptors::ANI::GenerateSpeciesVector(*mol);
+    auto numAtoms = mol->getNumAtoms();
+    CHECK(speciesVec.size() == numAtoms);
+    VectorXi expected(5);
+    expected << 0, 0, 0, 1, 0;
+    CHECK(((expected - speciesVec).array() == 0).count() == numAtoms);
+  }
+  SECTION("SO2") {
+    std::string pathName = getenv("RDBASE");
+
+    std::string molFile =
+        pathName + "/Code/GraphMol/Descriptors/test_data/SO2.mol";
+    RDKit::ROMOL_SPTR mol(RDKit::MolFileToMol(molFile, true, false));
+    auto speciesVec = RDKit::Descriptors::ANI::GenerateSpeciesVector(*mol);
+    auto numAtoms = mol->getNumAtoms();
+    CHECK(speciesVec.size() == numAtoms);
+    VectorXi expected(3);
+    expected << -1, 3, 3;
+    CHECK(((expected - speciesVec).array() == 0).count() == numAtoms);
+  }
+  SECTION("NH3") {
+    std::string pathName = getenv("RDBASE");
+
+    std::string molFile =
+        pathName + "/Code/GraphMol/Descriptors/test_data/NH3.mol";
+    RDKit::ROMOL_SPTR mol(RDKit::MolFileToMol(molFile, true, false));
+    auto speciesVec = RDKit::Descriptors::ANI::GenerateSpeciesVector(*mol);
+    auto numAtoms = mol->getNumAtoms();
+    CHECK(speciesVec.size() == numAtoms);
+    VectorXi expected(4);
+    expected << 0, 0, 2, 0;
+    CHECK(((expected - speciesVec).array() == 0).count() == numAtoms);
+  }
+  SECTION("Ethanol") {
+    std::string pathName = getenv("RDBASE");
+
+    std::string molFile =
+        pathName + "/Code/GraphMol/Descriptors/test_data/ethanol.sdf";
+    RDKit::ROMOL_SPTR mol(RDKit::MolFileToMol(molFile, true, false));
+    auto speciesVec = RDKit::Descriptors::ANI::GenerateSpeciesVector(*mol);
+    auto numAtoms = mol->getNumAtoms();
+    CHECK(speciesVec.size() == numAtoms);
+    VectorXi expected(9);
+    expected << 3, 1, 1, 0, 0, 0, 0, 0, 0;
+    CHECK(((expected - speciesVec).array() == 0).count() == numAtoms);
   }
 }
