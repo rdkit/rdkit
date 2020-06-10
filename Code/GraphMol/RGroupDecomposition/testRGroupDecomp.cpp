@@ -1147,7 +1147,7 @@ int main() {
       << "********************************************************\n";
   BOOST_LOG(rdInfoLog) << "Testing R-Group Decomposition \n";
 
-#if 0
+#if 1
   testSymmetryMatching();
   testRGroupOnlyMatching();
   testRingMatching();
