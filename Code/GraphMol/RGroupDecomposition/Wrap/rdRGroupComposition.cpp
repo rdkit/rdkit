@@ -190,6 +190,7 @@ struct rgroupdecomp_wrapper {
         .value("Greedy", RDKit::Greedy)
         .value("GreedyChunks", RDKit::GreedyChunks)
         .value("Exhaustive", RDKit::Exhaustive)
+        .value("NoSymmetrization", RDKit::NoSymmetrization)
         .export_values();
 
     python::enum_<RDKit::RGroupLabelling>("RGroupLabelling")

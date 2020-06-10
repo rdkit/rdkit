@@ -1180,7 +1180,9 @@ int RGroupDecomposition::add(const ROMol &inmol) {
       continue;
     } else {
       if (tmatches.size() > 1) {
-        if (data->matches.size() == 0) {
+        if (data->params.matchingStrategy == NoSymmetrization) {
+          tmatches.resize(1);
+        } else if (data->matches.size() == 0) {
           // Greedy strategy just grabs the first match and
           //  takes the best matches from the rest
           if (data->params.matchingStrategy == Greedy) {

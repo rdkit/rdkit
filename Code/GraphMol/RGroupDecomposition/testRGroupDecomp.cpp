@@ -993,6 +993,8 @@ void testSymmetryPerformance() {
   BOOST_LOG(rdInfoLog)
       << "********************************************************\n";
   BOOST_LOG(rdInfoLog) << "Testing R-Group symmetry issues \n";
+  boost::logging::disable_logs("rdApp.warning");
+
   std::string smis =
       R"DATA(CN(C)Cc1cccc(Oc2cc(N3CCN(Cc4ccccc4-c4ccc(Cl)cc4)CC3)ccc2C(=O)NS(=O)(=O)c2ccc(NCC3CCOCC3)c([N+](=O)[O-])c2)c1
 CNc1cccc(Oc2cc(N3CCN(Cc4ccccc4-c4ccc(Cl)cc4)CC3)ccc2C(=O)NS(=O)(=O)c2ccc(NCC3CCOCC3)c([N+](=O)[O-])c2)c1
@@ -1138,6 +1140,23 @@ Cn1cnc2cc(Oc3cc(N4CCN(Cc5ccccc5-c5ccc(Cl)cc5)CC4)ccc3C(=O)NS(=O)(=O)c3ccc(NCCCN4
     }
     TEST_ASSERT(ok);
   }
+  {
+    RGroupDecompositionParameters ps = RGroupDecompositionParameters();
+    ps.timeout = 1.0;
+    ps.matchingStrategy = RDKit::NoSymmetrization;
+    std::cerr << "bulk, no symmetry" << std::endl;
+    std::vector<ROMOL_SPTR> cores;
+    cores.push_back(ROMOL_SPTR(new ROMol(*core)));
+    RGroupRows rows;
+    bool ok = true;
+    try {
+      auto res = RGroupDecompose(cores, ms, rows, nullptr, ps);
+    } catch (const std::runtime_error &) {
+      ok = false;
+    }
+    TEST_ASSERT(ok);
+  }
+  boost::logging::enable_logs("rdApp.warning");
 }
 
 int main() {
