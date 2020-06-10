@@ -154,13 +154,7 @@ python::object RGroupDecomp(python::object cores, python::object mols,
     }
     ++iter;
     ++idx;
-    if (options.timeout > 0) {
-      auto t1 = std::chrono::steady_clock::now();
-      std::chrono::duration<double> elapsed = t1 - t0;
-      if (elapsed.count() >= options.timeout) {
-        throw std::runtime_error("RGD timeout");
-      }
-    }
+    checkForTimeout(t0, options.timeout);
   }
 
   decomp.Process();
@@ -169,7 +163,7 @@ python::object RGroupDecomp(python::object cores, python::object mols,
   } else {
     return make_tuple(decomp.GetRGroupsAsColumn(asSmiles), unmatched);
   }
-}
+}  // namespace RDKit
 
 struct rgroupdecomp_wrapper {
   static void wrap() {

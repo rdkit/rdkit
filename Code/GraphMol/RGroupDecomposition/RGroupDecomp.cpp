@@ -1078,13 +1078,7 @@ struct RGroupDecompData {
           best_permutation = tied_permutation;
         }
       }
-      if (params.timeout > 0) {
-        auto t1 = std::chrono::steady_clock::now();
-        std::chrono::duration<double> elapsed = t1 - t0;
-        if (elapsed.count() >= params.timeout) {
-          throw std::runtime_error("RGD timeout");
-        }
-      }
+      checkForTimeout(t0, params.timeout);
     }
 
     permutation = best_permutation;
@@ -1452,13 +1446,7 @@ std::vector<unsigned int> Decomp(RGroupDecomposition &decomp,
     if (v == -1) {
       unmatched.push_back(i);
     }
-    if (decomp.params().timeout > 0) {
-      auto t1 = std::chrono::steady_clock::now();
-      std::chrono::duration<double> elapsed = t1 - t0;
-      if (elapsed.count() >= decomp.params().timeout) {
-        throw std::runtime_error("RGD timeout");
-      }
-    }
+    checkForTimeout(t0, decomp.params().timeout);
   }
   decomp.process();
   return unmatched;

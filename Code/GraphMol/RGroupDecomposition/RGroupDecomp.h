@@ -13,6 +13,7 @@
 
 #include "../RDKitBase.h"
 #include <GraphMol/Substruct/SubstructMatch.h>
+#include <chrono>
 
 namespace RDKit {
 
@@ -121,6 +122,21 @@ RDKIT_RGROUPDECOMPOSITION_EXPORT unsigned int RGroupDecompose(
     RGroupColumns &columns, std::vector<unsigned int> *unmatched = nullptr,
     const RGroupDecompositionParameters &options =
         RGroupDecompositionParameters());
+
+bool checkForTimeout(const std::chrono::steady_clock::time_point &t0,
+                     double timeout, bool throwOnTimeout = true) {
+  if (timeout <= 0) return false;
+  auto t1 = std::chrono::steady_clock::now();
+  std::chrono::duration<double> elapsed = t1 - t0;
+  if (elapsed.count() >= timeout) {
+    if (throwOnTimeout) {
+      throw std::runtime_error("operation timed out");
+    }
+    return true;
+  }
+  return false;
+}
+
 }  // namespace RDKit
 
 #endif
