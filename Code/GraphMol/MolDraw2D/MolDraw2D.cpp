@@ -547,8 +547,13 @@ void MolDraw2D::drawReaction(
         RDGeom::Point3D(arrowEnd.x, arrowEnd.y, 0);
 
     tmol2.insertMol(*tmol);
+
     pushDrawDetails();
     extractAtomCoords(tmol2, 0, true);
+    for(auto atom: tmol2.atoms()) {
+      atom->calcImplicitValence();
+    }
+    extractAtomSymbols(tmol2);
     calculateScale(panelWidth(), panelHeight(), tmol2);
     needs_scale_ = false;
     popDrawDetails();
@@ -640,6 +645,11 @@ void MolDraw2D::drawReaction(
   double o_font_size = fontSize();
   setFontSize(2 * options_.legendFontSize / scale_);
 #endif
+  double o_font_scale = text_drawer_->fontScale();
+  double fsize = text_drawer_->fontSize();
+  double new_font_scale = 2.0 * o_font_scale * drawOptions().legendFontSize / fsize;
+  text_drawer_->setFontScale(new_font_scale);
+
   DrawColour odc = colour();
   setColour(options_.symbolColour);
 
@@ -653,6 +663,8 @@ void MolDraw2D::drawReaction(
   drawArrow(arrowBegin, arrowEnd);
 
   setColour(odc);
+  text_drawer_->setFontScale(o_font_scale);
+
 #if 0
   setFontSize(o_font_size);
 #endif
@@ -886,6 +898,7 @@ void MolDraw2D::calculateScale(int width, int height, const ROMol &mol,
 
   // cout << "calculateScale  width = " << width << "  height = " << height
   //      << endl;
+
   x_min_ = y_min_ = numeric_limits<double>::max();
   double x_max(-x_min_), y_max(-y_min_);
 
@@ -1391,10 +1404,12 @@ void MolDraw2D::drawLegend(const string &legend) {
         getAtomCoords(std::make_pair(panel_width_ / 2., 0.94 * panel_height_));
     loc.x += x_offset_ / scale();
     loc.y -= y_offset_ / scale();
+
     double o_font_scale = text_drawer_->fontScale();
     double fsize = text_drawer_->fontSize();
     double new_font_scale = o_font_scale * drawOptions().legendFontSize / fsize;
     text_drawer_->setFontScale(new_font_scale);
+
     DrawColour odc = colour();
     text_drawer_->setColour(options_.legendColour);
     drawString(legend, loc);
@@ -1789,8 +1804,6 @@ void MolDraw2D::extractAtomCoords(const ROMol &mol, int confId,
                "no space");
   PRECONDITION(static_cast<int>(mol.getNumConformers()) > 0, "no coords");
 
-  at_cds_[activeMolIdx_].clear();
-  atomic_nums_[activeMolIdx_].clear();
   if (updateBBox) {
     bbox_[0].x = bbox_[0].y = numeric_limits<double>::max();
     bbox_[1].x = bbox_[1].y = -1 * numeric_limits<double>::max();
@@ -1814,6 +1827,7 @@ void MolDraw2D::extractAtomCoords(const ROMol &mol, int confId,
   // — unknown
   RDGeom::Transform2D trans;
   trans.SetTransform(Point2D(0.0, 0.0), rot);
+  at_cds_[activeMolIdx_].clear();
   for (auto this_at : mol.atoms()) {
     int this_idx = this_at->getIdx();
     Point2D pt(locs[this_idx].x, locs[this_idx].y);
@@ -1838,6 +1852,7 @@ void MolDraw2D::extractAtomSymbols(const ROMol &mol) {
   PRECONDITION(static_cast<int>(atomic_nums_.size()) > activeMolIdx_,
                "no space");
 
+  atomic_nums_[activeMolIdx_].clear();
   for (auto at1 : mol.atoms()) {
     atom_syms_[activeMolIdx_].emplace_back(
         getAtomSymbolAndOrientation(*at1));
@@ -1914,8 +1929,7 @@ void MolDraw2D::extractRadicals(const ROMol &mol) {
       continue;
     }
     std::shared_ptr<StringRect> rad_rect(new StringRect);
-    double spot_rad;
-    OrientType orient = calcRadicalRect(mol, atom, *rad_rect, spot_rad);
+    OrientType orient = calcRadicalRect(mol, atom, *rad_rect);
     radicals_[activeMolIdx_].push_back(make_pair(rad_rect, orient));
   }
 
@@ -2180,18 +2194,15 @@ void MolDraw2D::drawAnnotation(const string &note,
 
 // ****************************************************************************
 OrientType MolDraw2D::calcRadicalRect(const ROMol &mol, const Atom *atom,
-                                      StringRect &rad_rect, double &spot_rad) {
+                                      StringRect &rad_rect) {
 
   int num_rade = atom->getNumRadicalElectrons();
-  if(num_rade <= 2) {
-    spot_rad = 0.2 * drawOptions().multipleBondOffset;
-  } else {
-    spot_rad = 0.1 * drawOptions().multipleBondOffset;
-  }
+  double spot_rad = 0.2 * drawOptions().multipleBondOffset;
   Point2D const &at_cds = at_cds_[activeMolIdx_][atom->getIdx()];
   string const &at_sym = atom_syms_[activeMolIdx_][atom->getIdx()].first;
   OrientType orient = atom_syms_[activeMolIdx_][atom->getIdx()].second;
   double rad_size = (3 * num_rade - 1) * spot_rad;
+  rad_size = (4 * num_rade - 2) * spot_rad;
   double x_min, y_min, x_max, y_max;
   Point2D at_draw_cds = getDrawCoords(at_cds);
   if (!at_sym.empty()) {
@@ -2229,14 +2240,14 @@ OrientType MolDraw2D::calcRadicalRect(const ROMol &mol, const Atom *atom,
     rad_rect.width_ = rad_size * scale();
     rad_rect.height_ = spot_rad * 3.0 * scale();
     rad_rect.trans_.x = at_draw_cds.x;
-    rad_rect.trans_.y = y_min - 0.5 * rad_rect.height_;
+    rad_rect.trans_.y = y_max + 0.5 * rad_rect.height_;
     return try_all(OrientType::N);
   };
   auto try_south = [&]() -> bool {
     rad_rect.width_ = rad_size * scale();
     rad_rect.height_ = spot_rad * 3.0 * scale();
     rad_rect.trans_.x = at_draw_cds.x;
-    rad_rect.trans_.y = y_max + 0.5 * rad_rect.height_;
+    rad_rect.trans_.y = y_min - 0.5 * rad_rect.height_;
     return try_all(OrientType::S);
   };
   auto try_east = [&]() -> bool {
@@ -2300,6 +2311,7 @@ void MolDraw2D::drawRadicals(const ROMol &mol) {
     setFillPolys(ofp);
   };
   // cds in draw coords
+
   auto draw_spots = [&](const Point2D &cds, int num_spots, double width,
                         int dir = 0) {
     Point2D ncds = cds;
@@ -2324,29 +2336,29 @@ void MolDraw2D::drawRadicals(const ROMol &mol) {
         break;
       case 4:
         if(dir) {
-          ncds.y = cds.y + 0.5 * width - spot_rad;
+          ncds.y = cds.y + 6.0 * spot_rad;
         } else {
-          ncds.x = cds.x + 0.5 * width - spot_rad;
+          ncds.x = cds.x + 6.0 * spot_rad;
         }
         draw_spot(ncds);
         if(dir) {
-          ncds.y = cds.y - 0.5 * width + spot_rad;
+          ncds.y = cds.y - 6.0 * spot_rad;
         } else {
-          ncds.x = cds.x - 0.5 * width + spot_rad;
+          ncds.x = cds.x - 6.0 * spot_rad;
         }
         draw_spot(ncds);
         /* fallthrough */
       case 2:
         if(dir) {
-          ncds.y = cds.y + 1.5 * spot_rad;
+          ncds.y = cds.y + 2.0 * spot_rad;
         } else {
-          ncds.x = cds.x + 1.5 * spot_rad;
+          ncds.x = cds.x + 2.0 * spot_rad;
         }
         draw_spot(ncds);
         if(dir) {
-          ncds.y = cds.y - 1.5 * spot_rad;
+          ncds.y = cds.y - 3.0 * spot_rad;
         } else {
-          ncds.x = cds.x - 1.5 * spot_rad;
+          ncds.x = cds.x - 3.0 * spot_rad;
         }
         draw_spot(ncds);
         break;
@@ -2359,11 +2371,7 @@ void MolDraw2D::drawRadicals(const ROMol &mol) {
     if (!num_rade) {
       continue;
     }
-    if(num_rade <= 2) {
-      spot_rad = 0.2 * drawOptions().multipleBondOffset;
-    } else {
-      spot_rad = 0.1 * drawOptions().multipleBondOffset;
-    }
+    spot_rad = 0.2 * drawOptions().multipleBondOffset;
     auto rad_rect = radicals_[activeMolIdx_][rad_num].first;
     OrientType draw_or = radicals_[activeMolIdx_][rad_num].second;
     if(draw_or == OrientType::N || draw_or == OrientType::S
@@ -2872,9 +2880,6 @@ pair<string, OrientType> MolDraw2D::getAtomSymbolAndOrientation(
 
   OrientType orient = getAtomOrientation(atom);
   string symbol = getAtomSymbol(atom);
-
-  // std::cout << "   res: " << symbol << " orient: " << orient
-  //           << " nbr_sum:" << nbr_sum << std::endl << std::endl;
 
   return std::make_pair(symbol, orient);
 }
