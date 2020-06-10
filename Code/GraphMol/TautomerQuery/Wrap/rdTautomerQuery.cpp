@@ -45,6 +45,16 @@ PyObject *tautomerGetSubstructMatches(const TautomerQuery &self,
                              useQueryQueryMatches, maxMatches);
 }
 
+PyObject *getTautomers(const TautomerQuery &self) {
+  auto tauts = self.getTautomers();
+  auto nTauts = tauts.size();
+  auto tuple = PyTuple_New(nTauts);
+  for (size_t i=0; i< nTauts; i++) {
+    PyTuple_SetItem(tuple, i, python::converter::shared_ptr_to_python(tauts[i]));
+  }
+  return tuple;
+}
+
 PyObject *tautomerGetSubstructMatchesWithTautomers(
     const TautomerQuery &self, const ROMol &target, bool uniquify = true,
     bool useChirality = false, bool useQueryQueryMatches = false,
@@ -81,7 +91,6 @@ PyObject *tautomerGetSubstructMatchesWithTautomers(
 struct TautomerQuery_wrapper {
   static void wrap() {
     RegisterVectorConverter<size_t>("UnsignedLong_Vect");
-    RegisterVectorConverter<ROMOL_SPTR>("Mol_Vect");
     auto docString =
         "The Tautomer Query Class.\n\
   Creates a query that enables structure search accounting for matching of\n\
@@ -121,13 +130,13 @@ struct TautomerQuery_wrapper {
              python::return_internal_reference<>())
         .def("GetModifiedAtoms", &TautomerQuery::getModifiedAtoms)
         .def("GetModifiedBonds", &TautomerQuery::getModifiedBonds)
-        .def("GetTautomers", &TautomerQuery::getTautomers);
+        .def("GetTautomers", getTautomers);
 
     python::def("PatternFingerprintTautomerTarget",
                 &TautomerQuery::patternFingerprintTarget,
                 (python::arg("target"), python::arg("fingerprintSize") = 2048),
                 python::return_value_policy<python::manage_new_object>());
-  };
+  }
 };
 
 

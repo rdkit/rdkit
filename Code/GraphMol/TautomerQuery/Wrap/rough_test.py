@@ -31,6 +31,7 @@ class TautomerQueryTestCase(TestCase):
         match = tautomer_query.IsSubstructOf(target)
         self.assertTrue(match)
         self.assertTrue(target.HasSubstructMatch(tautomer_query.GetTemplateMolecule()))
+        #self.assertTrue(target.HasSubstructMatch(tautomer_query.GetTautomers()[1]))
         match = tautomer_query.GetSubstructMatch(target);
         self.assertEqual(7, len(match))
         
@@ -52,6 +53,22 @@ class TautomerQueryTestCase(TestCase):
         tautomer_query2 = rdTautomerQuery.TautomerQuery(mol, file)
         self.assertEqual(2, len(tautomer_query.GetTautomers()))
 
+    def test_types(self):
+        mol = Chem.MolFromSmiles("O=C1CCCCC1")
+        tautomer_query = rdTautomerQuery.TautomerQuery(mol)
+        target = Chem.MolFromSmiles("OC1=CCCC(CC)C1")
+        try:
+            self.assertTrue(target.HasSubstructMatch(tautomer_query.GetTautomers()[1]))
+        except Exception:
+            self.fail("Boost type error")
+            
+    def test_simple(self):
+        mol = Chem.MolFromSmiles("CC=O")
+        tautomer_query = rdTautomerQuery.TautomerQuery(mol)
+        target = Chem.MolFromSmiles("OC(C)=O")
+        tautomers = tautomer_query.GetTautomers()
+        self.assertTrue(target.HasSubstructMatch(mol))
+        self.assertTrue(tautomer_query.IsSubstructOf(target))
 
 
 

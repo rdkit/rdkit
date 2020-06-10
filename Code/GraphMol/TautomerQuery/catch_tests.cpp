@@ -18,11 +18,78 @@
 
 using namespace RDKit;
 
+TEST_CASE("TEST_UNIQUIFY") {
+  auto mol = "O=C1CCCCC1"_smiles;
+  REQUIRE(mol);
+  auto target = "O=C1CCCC(CC)C1"_smiles;
+  REQUIRE(target);
+
+  auto tautomerQuery =
+      std::unique_ptr<TautomerQuery>(TautomerQuery::fromMol(*mol));
+  auto tautomers = tautomerQuery->getTautomers();
+  SubstructMatchParameters params;
+  params.maxMatches = 1000;
+  std::vector<ROMOL_SPTR> matchingTautomers;
+
+  params.uniquify = true;
+  auto matches =
+      tautomerQuery->substructOf(*target, params, &matchingTautomers);
+  CHECK(matches.size() == 1);
+  REQUIRE(matchingTautomers.size() == 1);
+
+  params.uniquify = false;
+  matches =
+      tautomerQuery->substructOf(*target, params, &matchingTautomers);
+  CHECK(matches.size() == 2);
+  REQUIRE(matchingTautomers.size() == 2);
+  CHECK(matchingTautomers[0] == matchingTautomers[1]);
+}
+
+TEST_CASE("DIFFERENT_TO_ENUMERATED") {
+  // test shows we need to set uniquify = false when matching template
+  auto mol = "NC(N)=O"_smiles;
+  auto tautomerQuery =
+      std::unique_ptr<TautomerQuery>(TautomerQuery::fromMol(*mol));
+  auto tautomers = tautomerQuery->getTautomers();
+  // auto target =
+  // "NC1=NC2(CO1)c1cc(-c3cccnc3F)ccc1Oc1cnc(C3=CCCOC3)cc12"_smiles;
+  auto target = "NC1=NCCO1"_smiles;
+  auto enumMatch = false;
+  MatchVectType matchVect;
+  for (auto t : tautomers) {
+    if (SubstructMatch(*target, *t, matchVect)) {
+      enumMatch = true;
+      break;
+    }
+  }
+  CHECK(enumMatch);
+
+  auto match = tautomerQuery->isSubstructOf(*target);
+  CHECK(match);
+}
+
+TEST_CASE("SIMPLE_ERROR") {
+  // test shows we need to set maxMatches > 1 when matching template
+  auto mol = "CC=O"_smiles;
+  REQUIRE(mol);
+  auto tautomerQuery =
+      std::unique_ptr<TautomerQuery>(TautomerQuery::fromMol(*mol));
+  auto target = "OC(C)=O"_smiles;
+  auto matches = SubstructMatch(*target, *mol);
+  CHECK(matches.size() == 1);
+  auto match = tautomerQuery->isSubstructOf(*target);
+  CHECK(match);
+  target = "CCN(CC)C(=O)COP(=O)(O)COCCn1cnc2c(N)ncnc21"_smiles;
+  match = tautomerQuery->isSubstructOf(*target);
+  CHECK(match);
+}
+
 TEST_CASE("TEST_ENOL") {
   auto mol = "O=C1CCCCC1"_smiles;
 
   REQUIRE(mol);
-  auto tautomerQuery = std::unique_ptr<TautomerQuery>(TautomerQuery::fromMol(*mol));
+  auto tautomerQuery =
+      std::unique_ptr<TautomerQuery>(TautomerQuery::fromMol(*mol));
   auto tautomers = tautomerQuery->getTautomers();
   CHECK(tautomers.size() == 2);
   auto modifiedAtoms = tautomerQuery->getModifiedAtoms();
@@ -75,7 +142,8 @@ TEST_CASE("TEST_ENOL") {
 TEST_CASE("TEST_COMPLEX") {
   auto mol = "Nc1nc(=O)c2nc[nH]c2[nH]1"_smiles;
   REQUIRE(mol);
-  auto tautomerQuery = std::unique_ptr<TautomerQuery>(TautomerQuery::fromMol(*mol));
+  auto tautomerQuery =
+      std::unique_ptr<TautomerQuery>(TautomerQuery::fromMol(*mol));
   CHECK(15 == tautomerQuery->getTautomers().size());
 
   auto queryFingerprint = tautomerQuery->patternFingerprintTemplate();
@@ -98,7 +166,8 @@ TEST_CASE("TEST_COMPLEX") {
 TEST_CASE("TEST_PICKLE") {
   auto mol = "O=C1CCCCC1"_smiles;
   REQUIRE(mol);
-  auto tautomerQuery = std::unique_ptr<TautomerQuery>(TautomerQuery::fromMol(*mol));
+  auto tautomerQuery =
+      std::unique_ptr<TautomerQuery>(TautomerQuery::fromMol(*mol));
   auto templateMol = tautomerQuery->getTemplateMolecule();
 
   std::string pickle;
@@ -117,7 +186,8 @@ TEST_CASE("TEST_PICKLE") {
 TEST_CASE("TEST_FINGERPRINT") {
   auto mol = "O=C1CCCCC1"_smiles;
   REQUIRE(mol);
-  auto tautomerQuery = std::unique_ptr<TautomerQuery>(TautomerQuery::fromMol(*mol));
+  auto tautomerQuery =
+      std::unique_ptr<TautomerQuery>(TautomerQuery::fromMol(*mol));
   auto templateMol = tautomerQuery->getTemplateMolecule();
 
   // this test molecule has complex query bonds where the template has query
@@ -199,14 +269,14 @@ TEST_CASE("TEST_FINGERPRINT") {
 }
 
 TEST_CASE("TEST_NOT_TAUTOMER") {
-    auto mol = "c1ccccc1"_smiles;
-    REQUIRE(mol);
-    auto tautomerQuery = std::unique_ptr<TautomerQuery>(TautomerQuery::fromMol(*mol));
-    CHECK(1 == tautomerQuery->getTautomers().size());
-    CHECK(0 == tautomerQuery->getModifiedAtoms().size());
-    CHECK(0 == tautomerQuery->getModifiedBonds().size());
-    auto target = "CC1=NC2=CC=CC=C2O1"_smiles;
-    REQUIRE(target);
-    CHECK(tautomerQuery->isSubstructOf(*target));
+  auto mol = "c1ccccc1"_smiles;
+  REQUIRE(mol);
+  auto tautomerQuery =
+      std::unique_ptr<TautomerQuery>(TautomerQuery::fromMol(*mol));
+  CHECK(1 == tautomerQuery->getTautomers().size());
+  CHECK(0 == tautomerQuery->getModifiedAtoms().size());
+  CHECK(0 == tautomerQuery->getModifiedBonds().size());
+  auto target = "CC1=NC2=CC=CC=C2O1"_smiles;
+  REQUIRE(target);
+  CHECK(tautomerQuery->isSubstructOf(*target));
 }
-
