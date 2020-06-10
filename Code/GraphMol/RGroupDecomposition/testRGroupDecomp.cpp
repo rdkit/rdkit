@@ -950,28 +950,29 @@ void testSymmetryIssues() {
   auto m3 = "c1c(O)cccn1"_smiles;
   auto m4 = "c1cc(C)c(F)cn1"_smiles;
   auto core = "c1c([*:1])c([*:2])ccn1"_smiles;
-  RGroupDecomposition decomp(*core);
-  decomp.add(*m1);
-  decomp.add(*m2);
-  decomp.add(*m3);
-  decomp.add(*m4);
-  decomp.process();
-  std::stringstream ss;
-  auto groups = decomp.getRGroupsAsColumns();
-  std::set<std::string> r_labels;
-  for (auto &column : groups) {
-    r_labels.insert(column.first);
-    ss << "Rgroup===" << column.first << std::endl;
-    for (auto &rgroup : column.second) {
-      ss << MolToSmiles(*rgroup) << std::endl;
+  {
+    RGroupDecomposition decomp(*core);
+    decomp.add(*m1);
+    decomp.add(*m2);
+    decomp.add(*m3);
+    decomp.add(*m4);
+    decomp.process();
+    std::stringstream ss;
+    auto groups = decomp.getRGroupsAsColumns();
+    std::set<std::string> r_labels;
+    for (auto &column : groups) {
+      r_labels.insert(column.first);
+      ss << "Rgroup===" << column.first << std::endl;
+      for (auto &rgroup : column.second) {
+        ss << MolToSmiles(*rgroup) << std::endl;
+      }
     }
-  }
-  // We only want two groups added
+    // We only want two groups added
 
-  TEST_ASSERT(r_labels == std::set<std::string>({"Core", "R1", "R2"}));
-  TEST_ASSERT(groups.size() == 3);
+    TEST_ASSERT(r_labels == std::set<std::string>({"Core", "R1", "R2"}));
+    TEST_ASSERT(groups.size() == 3);
 
-  TEST_ASSERT(ss.str() == R"RES(Rgroup===Core
+    TEST_ASSERT(ss.str() == R"RES(Rgroup===Core
 c1cc([*:2])c([*:1])cn1
 c1cc([*:2])c([*:1])cn1
 c1cc([*:2])c([*:1])cn1
@@ -987,6 +988,51 @@ C[*:2]
 [H][*:2]
 C[*:2]
 )RES");
+  }
+  {  // repeat that without symmetrization (testing #3224)
+    RGroupDecompositionParameters ps;
+    ps.matchingStrategy = RDKit::NoSymmetrization;
+    RGroupDecomposition decomp(*core, ps);
+    decomp.add(*m1);
+    decomp.add(*m2);
+    decomp.add(*m3);
+    decomp.add(*m4);
+    decomp.process();
+    std::stringstream ss;
+    auto groups = decomp.getRGroupsAsColumns();
+    std::set<std::string> r_labels;
+    for (auto &column : groups) {
+      r_labels.insert(column.first);
+      ss << "Rgroup===" << column.first << std::endl;
+      for (auto &rgroup : column.second) {
+        ss << MolToSmiles(*rgroup) << std::endl;
+      }
+    }
+    TEST_ASSERT(r_labels == std::set<std::string>({"Core", "R1", "R2", "R3"}));
+    TEST_ASSERT(groups.size() == 4);
+
+    TEST_ASSERT(ss.str() == R"RES(Rgroup===Core
+c1ncc([*:3])c([*:2])c1[*:1]
+c1ncc([*:3])c([*:2])c1[*:1]
+c1ncc([*:3])c([*:2])c1[*:1]
+c1ncc([*:3])c([*:2])c1[*:1]
+Rgroup===R1
+F[*:1]
+Cl[*:1]
+O[*:1]
+[H][*:1]
+Rgroup===R2
+[H][*:2]
+C[*:2]
+[H][*:2]
+C[*:2]
+Rgroup===R3
+[H][*:3]
+[H][*:3]
+[H][*:3]
+F[*:3]
+)RES");
+  }
 }
 
 void testSymmetryPerformance() {
