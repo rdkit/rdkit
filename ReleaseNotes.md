@@ -1,3 +1,46 @@
+# Release_2020.03.3
+(Changes relative to Release_2020.03.2)
+
+## Acknowledgements:
+David Cosgrove, Manan Goel, Jan H. Jensen, Brian Kelley, Matthew Robinson,
+Roger Sayle, Ansgar Schuffenhauer, Ivan Tubert-Brohman, Riccardo Vianello, 
+
+## Bug Fixes:
+  - Python tests fail when RDK_BUILD_COMPRESSED_SUPPLIERS is enabled
+ (github #1888 from greglandrum)
+  - SGroups with more than one attachment point are now properly parsed
+ (github #3072 from greglandrum)
+  - GCC 10.0.1 compile error
+ (github #3135 from rvianello)
+  - Error breaking StereoBonds in reactions
+ (github #3147 from mc-robinson)
+  - MolOps::removeHs() removes hydrides
+ (github #3150 from jhjensen2)
+  - Kekulization error from CreateScaffoldNetwork
+ (github #3153 from greglandrum)
+  - Fix drawing of N plus
+ (github #3165 from DavidACosgrove)
+  - RWMol::clear() does not explicitly clean up SubstanceGroups or StereoGroups
+ (github #3167 from greglandrum)
+  - Modifying a molecule should not automatically clear SubstanceGroups
+ (github #3168 from greglandrum)
+  - removeHs() should not remove atoms in SubstanceGroups
+ (github #3169 from greglandrum)
+  - fix a memory problem detected in malformed SMILES
+ (github #3171 from greglandrum)
+  - Python wrapper: SetQuery and ExpandQuery for bonds
+ (github #3172 from i-tub)
+  - S-groups: PARENT field should reference index
+ (github #3175 from greglandrum)
+  - rdScaffoldNetwork causes segmenation fault upon None molecule
+ (github #3177 from AnsgarSchuffenhauer)
+  - fix a small inconsistency in the name of the inchi package
+ (github #3182 from rvianello)
+  - Molecule constructed from CXSMILES cannot be translated to SMARTS
+ (github #3197 from greglandrum)
+  - Queries generated from PreprocessReaction cannot be translated to SMARTS
+ (github #3206 from greglandrum)
+
 # Release_2020.03.2
 (Changes relative to Release_2020.03.1)
 
