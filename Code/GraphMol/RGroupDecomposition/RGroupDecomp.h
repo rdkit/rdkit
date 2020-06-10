@@ -53,33 +53,16 @@ typedef enum {
 } RGroupCoreAlignment;
 
 struct RDKIT_RGROUPDECOMPOSITION_EXPORT RGroupDecompositionParameters {
-  unsigned int labels;
-  unsigned int matchingStrategy;
-  unsigned int rgroupLabelling;
-  unsigned int alignment;
+  unsigned int labels = AutoDetect;
+  unsigned int matchingStrategy = GreedyChunks;
+  unsigned int rgroupLabelling = AtomMap | MDLRGroup;
+  unsigned int alignment = MCS;
 
-  unsigned int chunkSize;
-  bool onlyMatchAtRGroups;
-  bool removeAllHydrogenRGroups;
-  bool removeHydrogensPostMatch;
-
-  RGroupDecompositionParameters(unsigned int labels = AutoDetect,
-                                unsigned int strategy = GreedyChunks,
-                                unsigned int labelling = AtomMap | MDLRGroup,
-                                unsigned int alignment = MCS,
-                                unsigned int chunkSize = 5,
-                                bool matchOnlyAtRGroups = false,
-                                bool removeHydrogenOnlyGroups = true,
-                                bool removeHydrogensPostMatch = true)
-      : labels(labels),
-        matchingStrategy(strategy),
-        rgroupLabelling(labelling),
-        alignment(alignment),
-        chunkSize(chunkSize),
-        onlyMatchAtRGroups(matchOnlyAtRGroups),
-        removeAllHydrogenRGroups(removeHydrogenOnlyGroups),
-        removeHydrogensPostMatch(removeHydrogensPostMatch)
-        {}
+  unsigned int chunkSize = 5;
+  bool onlyMatchAtRGroups = false;
+  bool removeAllHydrogenRGroups = true;
+  bool removeHydrogensPostMatch = true;
+  double timeout = -1.0;  ///< timeout in seconds. <=0 indicates no timeout
 
   // Determine how to assign the rgroup labels from the given core
   unsigned int autoGetLabels(const RWMol &);
@@ -117,9 +100,10 @@ class RDKIT_RGROUPDECOMPOSITION_EXPORT RGroupDecomposition {
   int add(const ROMol &mol);
   bool process();
 
+  const RGroupDecompositionParameters &params() const;
   //! return the current group labels
   std::vector<std::string> getRGroupLabels() const;
-  
+
   //! return rgroups in row order group[row][attachment_point] = ROMol
   RGroupRows getRGroupsAsRows() const;
   //! return rgroups in column order group[attachment_point][row] = ROMol

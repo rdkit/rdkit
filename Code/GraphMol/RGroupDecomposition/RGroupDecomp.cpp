@@ -1437,6 +1437,10 @@ RGroupColumns RGroupDecomposition::getRGroupsAsColumns() const {
   return groups;
 }
 
+const RGroupDecompositionParameters &RGroupDecomposition::params() const {
+  return data->params;
+}
+
 namespace {
 std::vector<unsigned int> Decomp(RGroupDecomposition &decomp,
                                  const std::vector<ROMOL_SPTR> &mols) {
