@@ -92,7 +92,7 @@ RDKIT_RDGENERAL_EXPORT std::ostream &toStream(std::ostream &);
   RDLog::toStream((__arg__->teestream) ? *(__arg__->teestream)  \
                                        : *(__arg__->dp_dest))
 
-typedef std::shared_ptr<boost::logging::rdLogger> RDLogger;
+using RDLogger = std::shared_ptr<boost::logging::rdLogger>;
 
 RDKIT_RDGENERAL_EXPORT extern RDLogger rdAppLog;
 RDKIT_RDGENERAL_EXPORT extern RDLogger rdDebugLog;
