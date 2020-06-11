@@ -182,6 +182,7 @@ struct RDKIT_MOLDRAW2D_EXPORT MolDrawOptions {
                             // (if present)
   int maxFontSize = 40;  // maximum size in pixels for font in drawn molecule.
                          // -1 means no max.
+  int minFontSize = 12; // likewise for -1.
   double annotationFontScale = 0.5;  // scales font relative to atom labels for
                                       // atom and bond annotation.
   DrawColour legendColour{0, 0,

@@ -47,6 +47,16 @@ void DrawText::setMaxFontSize(double new_max) {
 }
 
 // ****************************************************************************
+double DrawText::minFontSize() const {
+  return min_font_size_;
+}
+
+// ****************************************************************************
+void DrawText::setMinFontSize(double new_min) {
+  min_font_size_ = new_min;
+}
+
+// ****************************************************************************
 double DrawText::fontScale() const {
   return font_scale_;
 }
@@ -58,6 +68,9 @@ void DrawText::setFontScale(double new_scale) {
   double nfs = fontSize();
   if(max_font_size_ != -1 && nfs > max_font_size_) {
     font_scale_ = max_font_size_ / FONT_SIZE;
+  }
+  if(min_font_size_ != -1 && nfs < min_font_size_) {
+    font_scale_ = min_font_size_ / FONT_SIZE;
   }
 
 }

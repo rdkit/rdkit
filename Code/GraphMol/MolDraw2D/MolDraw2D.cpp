@@ -178,6 +178,8 @@ void MolDraw2D::drawMolecule(const ROMol &mol,
   int origWidth = curr_width_;
   pushDrawDetails();
   text_drawer_->setMaxFontSize(drawOptions().maxFontSize);
+  text_drawer_->setMinFontSize(drawOptions().minFontSize);
+
   unique_ptr<RWMol> rwmol =
       setupMoleculeDraw(mol, highlight_atoms, highlight_radii, confId);
   ROMol const &draw_mol = rwmol ? *(rwmol) : mol;
@@ -3114,15 +3116,15 @@ void MolDraw2D::adjustScaleForAtomLabels(
 // ****************************************************************************
 void MolDraw2D::adjustScaleForRadicals(const ROMol &mol) {
 
-  if(scale() != text_drawer_->fontScale()) {
-    // we've hit max font size, so re-compute radical rectangles as
+  if (scale() != text_drawer_->fontScale()) {
+    // we've hit max or min font size, so re-compute radical rectangles as
     // they'll be too far from the character.
     radicals_[activeMolIdx_].clear();
     extractRadicals(mol);
   }
   double x_max(x_min_ + x_range_), y_max(y_min_ + y_range_);
 
-  for(auto rad_pair: radicals_[activeMolIdx_]) {
+  for (auto rad_pair: radicals_[activeMolIdx_]) {
     auto rad_rect = rad_pair.first;
     x_max = max(x_max, rad_rect->trans_.x + rad_rect->width_ / 2.0);
     y_max = max(y_max, rad_rect->trans_.y + rad_rect->height_ / 2.0);

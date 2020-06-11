@@ -52,6 +52,8 @@ class DrawText {
   double fontSize() const;
   double maxFontSize() const;
   void setMaxFontSize(double new_max);
+  double minFontSize() const;
+  void setMinFontSize(double new_max);
   double fontScale() const;
   void setFontScale(double new_scale);
 
@@ -135,6 +137,7 @@ class DrawText {
   DrawColour colour_;
   double font_scale_;
   double max_font_size_;
+  double min_font_size_;
 
   // return a vector of StringRects, one for each char in text, with
   // super- and subscripts taken into account.  Sizes in pixel coords,

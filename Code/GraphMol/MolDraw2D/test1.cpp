@@ -2445,7 +2445,7 @@ void test16MoleculeMetadata() {
   std::cerr << " Done" << std::endl;
 }
 
-void test17MaxFontSize() {
+void test17MaxMinFontSize() {
   std::cout << " ----------------- Test 17 - Testing maximum font size"
             << std::endl;
   {
@@ -2455,6 +2455,29 @@ void test17MaxFontSize() {
     std::unique_ptr<ROMol> m(MolFileToMol(fName));
     std::string nameBase = "test17_";
     TEST_ASSERT(m);
+
+    {
+      auto m1 = "C[C@H](C1=C(C=CC(=C1Cl)F)Cl)OC2=C(N=CC(=C2)C3"
+                "=CN(N=C3)C4CCNCC4)N"_smiles;
+      std::ofstream outs((nameBase + "4.svg").c_str());
+      MolDraw2DSVG drawer(200, 200);
+      // this is currently the default min font size.  Repeated for
+      // documentation of test.
+      drawer.drawOptions().minFontSize = 12;
+      drawer.drawMolecule(*m1);
+      drawer.finishDrawing();
+      std::string text = drawer.getDrawingText();
+      outs << text;
+      outs.flush();
+#ifdef RDK_BUILD_FREETYPE_SUPPORT
+      // where it starts drawing the N
+      TEST_ASSERT(text.find("<path  class='atom-8' d='M 163.6 92.74")
+                  != std::string::npos);
+
+#else
+      TEST_ASSERT(text.find("font-size:20px") != std::string::npos);
+#endif
+    }
 
     {
       std::ofstream outs((nameBase + "1.svg").c_str());
@@ -3065,8 +3088,9 @@ int main() {
 #endif
 
   RDLog::InitLogs();
+  test17MaxMinFontSize();
 
-#if 1
+#if 0
   test1();
   test2();
   test4();
@@ -3098,7 +3122,7 @@ int main() {
   testGithub565();
   test14BWPalette();
   test15ContinuousHighlightingWithGrid();
-  test17MaxFontSize();
+  test17MaxMinFontSize();
   testGithub1829();
   test18FixedScales();
   test19RotateDrawing();
