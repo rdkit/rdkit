@@ -33,7 +33,12 @@ if(MINGW)
   endif()
 endif(MINGW)
 
-target_link_libraries(RDGeneral PUBLIC ${RDKit_THREAD_LIBS} ${MSVC_RUNTIME_DLL})
+if(RDK_USE_BOOST_STACKTRACE AND UNIX AND NOT APPLE)
+set(EXTRA_STACKTRACE_LIBS dl)
+endif()
+
+target_link_libraries(RDGeneral PUBLIC ${RDKit_THREAD_LIBS} ${MSVC_RUNTIME_DLL} ${EXTRA_STACKTRACE_LIBS})
+
 
 rdkit_headers(Exceptions.h
               BadFileException.h

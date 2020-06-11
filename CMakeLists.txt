@@ -44,6 +44,7 @@ option(RDK_BUILD_CPP_TESTS "build the c++ tests (disabing can speed up builds" O
 option(RDK_USE_FLEXBISON "use flex/bison, if available, to build the SMILES/SMARTS/SLN parsers" OFF)
 option(RDK_TEST_COVERAGE "Use G(L)COV to compute test coverage" OFF)
 option(RDK_USE_BOOST_SERIALIZATION "Use the boost serialization library if available" ON)
+option(RDK_USE_BOOST_STACKTRACE "use boost::stacktrace to do more verbose invariant output (linux only)" ON)
 option(RDK_BUILD_TEST_GZIP "Build the gzip'd stream test" OFF)
 option(RDK_OPTIMIZE_POPCNT "Use SSE4.2 popcount instruction while compiling." ON)
 option(RDK_USE_STRICT_ROTOR_DEFINITION "Use the most strict rotatable bond definition" ON)
@@ -66,6 +67,13 @@ if(NOT MSVC)
   if(RDK_OPTIMIZE_POPCNT)
       set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -mpopcnt")
   endif()
+endif()
+
+if(NOT UNIX OR APPLE)
+  if(RDK_USE_BOOST_STACKTRACE)
+    MESSAGE("Disabling boost::stacktrace on non-linux platform")
+    set(RDK_USE_BOOST_STACKTRACE OFF)
+  endif(RDK_USE_BOOST_STACKTRACE)
 endif()
 
 if(RDK_BUILD_SWIG_WRAPPERS!=ON)
@@ -494,6 +502,7 @@ if (MSVC)
   #  - 4267: conversion from 'size_t' to 'unsigned int', possible loss of data
   add_definitions( "/wd4267" )
 endif(MSVC)
+
 
 
 add_subdirectory(External)

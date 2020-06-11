@@ -1,6 +1,5 @@
-// $Id$
 //
-// Copyright (C) 2001-2013 Greg Landrum, Randal M. Henne, and Rational Discovery
+// Copyright (C) 2001-2020 Greg Landrum, Randal M. Henne, and Rational Discovery
 // LLC
 //
 //  @@ All Rights Reserved @@
@@ -17,9 +16,9 @@
 #include <boost/lexical_cast.hpp>
 #include "versions.h"
 
-#ifdef SHOW_BACKTRACES_WITH_INVARIANT_ERRORS  // note: works only with
-                                              // gcc-derived compilers
-#include <execinfo.h>
+#ifdef RDK_USE_BOOST_STACKTRACE
+#include <boost/stacktrace.hpp>
+#include <sstream>
 #endif
 
 namespace Invar {
@@ -35,16 +34,13 @@ std::string Invariant::toString() const {
       this->prefix_d + "\n" + this->what() + "\nViolation occurred on line " +
       line + " in file " + this->getFile() +
       "\nFailed Expression: " + this->getExpression() + "\n";
-
-#ifdef SHOW_BACKTRACES_WITH_INVARIANT_ERRORS
-  void *arr[10];
-  size_t sz;
-  sz = backtrace(arr, 10);
-  std::cerr << " STACK TRACE\n--------------\n" << std::endl;
-  backtrace_symbols_fd(arr, sz, 2);
-  std::cerr << "\n--------------\n" << std::endl;
+#ifdef RDK_USE_BOOST_STACKTRACE
+  std::stringstream sstr;
+  sstr << "----------\n"
+       << "Stacktrace:\n"
+       << boost::stacktrace::stacktrace() << "----------\n";
+  stringRep += sstr.str();
 #endif
-
   return stringRep;
 }
 
