@@ -17,30 +17,48 @@ namespace RDKit {
 class ROMol;
 namespace Descriptors {
 namespace ANI {
-  const std::string AtomicEnvironmentVectorVersion = "1.0.0";
+const std::string AtomicEnvironmentVectorVersion = "1.0.0";
 
-  //-------------------------------------------------------
-  //! Generates a vector from the molecule containing encoding of each atom
-  // such that H -> 0, C -> 1, N -> 2, O -> 3 and all other atoms -> -1
-  /*!
-    \param mol A mol object
+//-------------------------------------------------------
+//! Generates a vector from the molecule containing encoding of each atom
+// such that H -> 0, C -> 1, N -> 2, O -> 3 and all other atoms -> -1
+/*!
+  \param mol A mol object
 
-    \return Vector containing encoding of atoms in the molecule
-  */
-  RDKIT_DESCRIPTORS_EXPORT Eigen::VectorXi GenerateSpeciesVector(const ROMol &mol);
+  \return Vector containing encoding of atoms in the molecule
+*/
+RDKIT_DESCRIPTORS_EXPORT Eigen::VectorXi GenerateSpeciesVector(
+    const ROMol &mol);
 
-  //! Calculates torchANI style symmetry functions combining both radial and angular terms
-  /*!
-    \param mol      Mol object for which symmetry functions are to be found
-    \param confId   Conformer ID for the conformer for which symmetry functions are to be found
+//! Calculates torchANI style symmetry functions combining both radial and
+//! angular terms
+/*!
+  \param mol      Mol object for which symmetry functions are to be found
+  \param confId   Conformer ID for the conformer for which symmetry functions
+  are to be found
 
-    \return numAtoms * 384 shaped matrix containing 384 features for every atom in the input mol consisting of both radial and angular terms
-  */
-  RDKIT_DESCRIPTORS_EXPORT Eigen::ArrayXXd AtomicEnvironmentVector(const ROMol &mol, int confId=-1);
+  \return numAtoms * 384 shaped matrix containing 384 features for every atom in
+  the input mol consisting of both radial and angular terms
+*/
+RDKIT_DESCRIPTORS_EXPORT Eigen::ArrayXXd AtomicEnvironmentVector(
+    const ROMol &mol, int confId = -1);
 
-} // namespace ANI
-} // namespace Descriptors
-} // namespace RDKit
+//! Calculates torchANI style symmetry functions combining both radial and
+//! angular terms
+/*!
+  \param pos      Array of positions of atoms
+  \param species  Encoding of atom types with index
+  \param numAtoms Number of Atoms
+
+  \return numAtoms * 384 shaped matrix containing 384 features for every atom in
+  the input mol consisting of both radial and angular terms
+*/
+RDKIT_DESCRIPTORS_EXPORT Eigen::ArrayXXd AtomicEnvironmentVector(
+    double *pos, Eigen::VectorXi species, unsigned int numAtoms);
+
+}  // namespace ANI
+}  // namespace Descriptors
+}  // namespace RDKit
 #endif
 #endif
 #endif

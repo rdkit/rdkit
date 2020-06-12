@@ -10,7 +10,7 @@
 #include <GraphMol/RDKitBase.h>
 #include <cmath>
 #include "AtomicEnvironmentVector.h"
-#include <Eigen/Dense>
+#include <eigen3/Eigen/Dense>
 
 using namespace Eigen;
 
@@ -546,18 +546,13 @@ ArrayXXd IndexAdd(ArrayXXd vector1, ArrayXXd vector2, ArrayXXi index,
   return vector1;
 }
 
-ArrayXXd AtomicEnvironmentVector(const ROMol &mol, int confId) {
-  PRECONDITION(mol.getNumConformers() >= 1, "molecule has no conformers");
-
-  auto numAtoms = mol.getNumAtoms();
-
-  const auto conf = mol.getConformer(confId);
-
+ArrayXXd AtomicEnvironmentVector(double *pos, VectorXi species,
+                                 unsigned int numAtoms) {
+  PRECONDITION(species.size() == numAtoms,
+               "Species encoding for each atom is required");
   ArrayXXd coordinates(numAtoms, 3);
-  auto species = GenerateSpeciesVector(mol);
   for (auto i = 0; i < numAtoms; i++) {
-    auto pos = conf.getAtomPos(i);
-    coordinates.row(i) << pos.x, pos.y, pos.z;
+    coordinates.row(i) << pos[3 * i], pos[3 * i + 1], pos[3 * i + 2];
   }
   // Fetch pairs of atoms which are neigbours which lie within the cutoff
   // distance 5.2 Angstroms. The constant was obtained by authors of torchANI
@@ -760,6 +755,27 @@ ArrayXXd AtomicEnvironmentVector(const ROMol &mol, int confId) {
   finalAEV << finalRadialAEV, finalAngularAEV;
 
   return finalAEV;
+}
+
+ArrayXXd AtomicEnvironmentVector(const ROMol &mol, int confId) {
+  PRECONDITION(mol.getNumConformers() >= 1, "molecule has no conformers");
+
+  auto numAtoms = mol.getNumAtoms();
+
+  const auto conf = mol.getConformer(confId);
+
+  ArrayXXd coordinates(numAtoms, 3);
+  auto species = GenerateSpeciesVector(mol);
+  double *pos;
+  pos = new double[3 * numAtoms];
+  for (unsigned int i = 0; i < numAtoms; i++) {
+    auto atom = conf.getAtomPos(i);
+    pos[3 * i] = atom.x;
+    pos[3 * i + 1] = atom.y;
+    pos[3 * i + 2] = atom.z;
+  }
+
+  return AtomicEnvironmentVector(pos, species, numAtoms);
 }
 }  // namespace ANI
 }  // namespace Descriptors
