@@ -2278,6 +2278,7 @@ OrientType MolDraw2D::calcRadicalRect(const ROMol &mol, const Atom *atom,
       case OrientType::W:
         return try_west();
     }
+    return false;
   };
   if (try_rads(orient)) {
     return orient;

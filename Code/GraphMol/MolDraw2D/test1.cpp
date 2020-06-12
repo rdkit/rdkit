@@ -690,11 +690,10 @@ void test6() {
     outs << txt;
     outs.close();
     // start of bond-0
-    TEST_ASSERT(txt.find("<path class='bond-0' d='M 270.144,147.597"
-                         " L 210.072,251.645'")
+    TEST_ASSERT(txt.find("<path class='bond-0' d='M 273.606,147.528")
                 != std::string::npos);
     // start of first radical spot
-    TEST_ASSERT(txt.find("<path d='M 286.964,142.791 L 286.955,142.585")
+    TEST_ASSERT(txt.find("<path d='M 286.51,143.528 L 286.502,143.356")
                 != std::string::npos);
   }
 
@@ -958,7 +957,7 @@ void testGithub781() {
     TEST_ASSERT(txt.find("<path  class='atom-0' d='M 289 299.8")
                 != std::string::npos);
     // the first radical marker
-    TEST_ASSERT(txt.find("<path d='M 326.291,281.591 L 326.276,281.239")
+    TEST_ASSERT(txt.find("<path d='M 317.382,288 L 317.374,287.828")
                 != std::string::npos);
 #else
     TEST_ASSERT(txt.find(">C</text>") != std::string::npos);
@@ -981,10 +980,10 @@ void testGithub781() {
     outs.close();
 #ifdef RDK_BUILD_FREETYPE_SUPPORT
     // start of C
-    TEST_ASSERT(txt.find("<path  class='atom-0' d='M 27 201.8")
+    TEST_ASSERT(txt.find("<path  class='atom-0' d='M 27 197.8")
                 != std::string::npos);
     // start of l
-    TEST_ASSERT(txt.find("<path  class='atom-3' d='M 11 94.8")
+    TEST_ASSERT(txt.find("<path  class='atom-3' d='M 35.44 74.64")
                 != std::string::npos);
 #else
     TEST_ASSERT(txt.find(">C</text>") != std::string::npos);
@@ -1360,10 +1359,9 @@ M  END";
     outs << text;
     outs.flush();
 #ifdef RDK_BUILD_FREETYPE_SUPPORT
-    TEST_ASSERT(text.find("<path class='bond-1' d='M 127.149,115.353 L"
-                          " 184.851,89.9325 L 178.012,78.0882 Z'"
-                          " style='fill:#000000;fill-rule:evenodd;"
-                          "fill-opacity=1;stroke:#000000;")
+    TEST_ASSERT(text.find("<path class='bond-1' d='M 126.878,115.979"
+                          " L 184.005,90.8113 L 177.234,79.085 Z'"
+                          " style='fill:#000000;")
                 != std::string::npos);
 #else
     TEST_ASSERT(text.find("<path class='bond-1' d='M 126.46,111.639"
@@ -1937,8 +1935,8 @@ void test13JSONConfig() {
 #ifdef RDK_BUILD_FREETYPE_SUPPORT
     // we'll just have to assume that this pink is for the legend
     TEST_ASSERT(text.find("' fill='#FF7FFF") != std::string::npos);
-    TEST_ASSERT(text.find("<path class='bond-0' d='M 117.52,9.09091"
-                          " L 166.25,93.4931'") !=
+    TEST_ASSERT(text.find("<path class='bond-0' d='M 117.577,9.09091"
+                          " L 166.192,93.2934'") !=
                 std::string::npos);
 #else
     TEST_ASSERT(text.find("sans-serif;text-anchor:start;fill:#FF7FFF")
@@ -2552,7 +2550,7 @@ void test18FixedScales() {
 #ifdef RDK_BUILD_FREETYPE_SUPPORT
       // where it starts drawing the l is a poor surrogate for checking
       // the font size, but all we have.
-      TEST_ASSERT(text.find("<path  class='atom-0' d='M 284.245 135.362")
+      TEST_ASSERT(text.find("<path  class='atom-0' d='M 282.95 136.966")
                   != std::string::npos);
 
 #else
@@ -2571,7 +2569,7 @@ void test18FixedScales() {
       outs.flush();
 #ifdef RDK_BUILD_FREETYPE_SUPPORT
       // where it starts drawing the l.
-      TEST_ASSERT(text.find("<path  class='atom-0' d='M 184.774 146.169")
+      TEST_ASSERT(text.find("<path  class='atom-0' d='M 185.032 144.892")
                   != std::string::npos);
 #else
       TEST_ASSERT(text.find("font-size:9px") != std::string::npos);
@@ -2594,7 +2592,7 @@ void test18FixedScales() {
       outs << text;
       outs.flush();
 #ifdef RDK_BUILD_FREETYPE_SUPPORT
-      TEST_ASSERT(text.find("<path  class='atom-2' d='M 73.1476 183.202")
+      TEST_ASSERT(text.find("<path  class='atom-2' d='M 72.34 182.504")
                   != std::string::npos);
 #else
       TEST_ASSERT(text.find("font-size:11px") != std::string::npos);
@@ -2611,7 +2609,7 @@ void test18FixedScales() {
       outs << text;
       outs.flush();
 #ifdef RDK_BUILD_FREETYPE_SUPPORT
-            TEST_ASSERT(text.find("<path  class='atom-2' d='M 103.17 169.752")
+            TEST_ASSERT(text.find("<path  class='atom-2' d='M 102.34 167.504")
                   != std::string::npos);
 #else
       TEST_ASSERT(text.find("font-size:6px") != std::string::npos);
@@ -2629,7 +2627,7 @@ void test18FixedScales() {
       outs << text;
       outs.flush();
 #ifdef RDK_BUILD_FREETYPE_SUPPORT
-      TEST_ASSERT(text.find("<path  class='atom-2' d='M 73.1476 183.202")
+      TEST_ASSERT(text.find("<path  class='atom-2' d='M 72.34 182.504")
                   != std::string::npos);
 #else
       TEST_ASSERT(text.find("font-size:11px") != std::string::npos);
@@ -2656,7 +2654,7 @@ void test19RotateDrawing() {
       outs << text;
       outs.flush();
 #ifdef RDK_BUILD_FREETYPE_SUPPORT
-      TEST_ASSERT(text.find("<path  class='atom-0' d='M 259.887 150.605") !=
+      TEST_ASSERT(text.find("<path  class='atom-0' d='M 282.95 136.966") !=
                   std::string::npos);
 #else
       TEST_ASSERT(text.find("<text x='255.813' y='168.577' class='atom-0' ") !=
@@ -2673,7 +2671,7 @@ void test19RotateDrawing() {
       outs << text;
       outs.flush();
 #ifdef RDK_BUILD_FREETYPE_SUPPORT
-      TEST_ASSERT(text.find("<path  class='atom-0' d='M 138.904 273.484") !=
+      TEST_ASSERT(text.find("<path  class='atom-0' d='M 139.729 273.727") !=
                   std::string::npos);
 #else
       TEST_ASSERT(text.find("<text x='138.75' y='288.068' class='atom-0'") !=
@@ -3086,7 +3084,6 @@ int main() {
 #endif
 
   RDLog::InitLogs();
-  testGithub781();
 
 #if 1
   test1();
