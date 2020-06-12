@@ -690,11 +690,11 @@ void test6() {
     outs << txt;
     outs.close();
     // start of bond-0
-    TEST_ASSERT(txt.find("<path class='bond-0' d='M 270.144,148.198"
-                         " L 210.072,252.246'")
+    TEST_ASSERT(txt.find("<path class='bond-0' d='M 270.144,147.597"
+                         " L 210.072,251.645'")
                 != std::string::npos);
     // start of first radical spot
-    TEST_ASSERT(txt.find("<path d='M 286.964,144.594 L 286.955,144.387")
+    TEST_ASSERT(txt.find("<path d='M 286.964,142.791 L 286.955,142.585")
                 != std::string::npos);
   }
 
@@ -2457,29 +2457,6 @@ void test17MaxMinFontSize() {
     TEST_ASSERT(m);
 
     {
-      auto m1 = "C[C@H](C1=C(C=CC(=C1Cl)F)Cl)OC2=C(N=CC(=C2)C3"
-                "=CN(N=C3)C4CCNCC4)N"_smiles;
-      std::ofstream outs((nameBase + "4.svg").c_str());
-      MolDraw2DSVG drawer(200, 200);
-      // this is currently the default min font size.  Repeated for
-      // documentation of test.
-      drawer.drawOptions().minFontSize = 12;
-      drawer.drawMolecule(*m1);
-      drawer.finishDrawing();
-      std::string text = drawer.getDrawingText();
-      outs << text;
-      outs.flush();
-#ifdef RDK_BUILD_FREETYPE_SUPPORT
-      // where it starts drawing the N
-      TEST_ASSERT(text.find("<path  class='atom-8' d='M 163.6 92.74")
-                  != std::string::npos);
-
-#else
-      TEST_ASSERT(text.find("font-size:20px") != std::string::npos);
-#endif
-    }
-
-    {
       std::ofstream outs((nameBase + "1.svg").c_str());
       MolDraw2DSVG drawer(300, 300);
       drawer.drawMolecule(*m);
@@ -2507,10 +2484,10 @@ void test17MaxMinFontSize() {
       outs.flush();
 #ifdef RDK_BUILD_FREETYPE_SUPPORT
       // where it starts drawing the N
-      TEST_ASSERT(text.find("<path  class='atom-4' d='M 139.195 167.722")
+      TEST_ASSERT(text.find("<path  class='atom-4' d='M 140.086 169.748")
                   != std::string::npos);
 #else
-      TEST_ASSERT(text.find("font-size:62px") != std::string::npos);
+      TEST_ASSERT(text.find("font-size:56px") != std::string::npos);
 #endif
     }
     {
@@ -2529,6 +2506,27 @@ void test17MaxMinFontSize() {
 
 #else
       TEST_ASSERT(text.find("font-size:20px") != std::string::npos);
+#endif
+    }
+    {
+      auto m1 = "C[C@H](C1=C(C=CC(=C1Cl)F)Cl)OC2=C(N=CC(=C2)C3"
+                "=CN(N=C3)C4CCNCC4)N"_smiles;
+      std::ofstream outs((nameBase + "4.svg").c_str());
+      MolDraw2DSVG drawer(200, 200);
+      // this is currently the default min font size.  Repeated for
+      // documentation of test.
+      drawer.drawOptions().minFontSize = 12;
+      drawer.drawMolecule(*m1);
+      drawer.finishDrawing();
+      std::string text = drawer.getDrawingText();
+      outs << text;
+      outs.flush();
+#ifdef RDK_BUILD_FREETYPE_SUPPORT
+      TEST_ASSERT(text.find("<path  class='atom-8' d='M 163.6 92.74")
+                  != std::string::npos);
+
+#else
+      TEST_ASSERT(text.find("font-size:12px") != std::string::npos);
 #endif
     }
   }
@@ -3088,9 +3086,9 @@ int main() {
 #endif
 
   RDLog::InitLogs();
-  test17MaxMinFontSize();
+  testGithub781();
 
-#if 0
+#if 1
   test1();
   test2();
   test4();

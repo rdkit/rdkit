@@ -2215,15 +2215,15 @@ OrientType MolDraw2D::calcRadicalRect(const ROMol &mol, const Atom *atom,
     y_min += at_draw_cds.y;
     y_max += at_draw_cds.y;
   } else {
-    x_min = at_draw_cds.x - 3 * spot_rad * scale();
-    x_max = at_draw_cds.x + 3 * spot_rad * scale();
-    y_min = at_draw_cds.y - 3 * spot_rad * scale();
-    y_max = at_draw_cds.y + 3 * spot_rad * scale();
+    x_min = at_draw_cds.x - 3 * spot_rad * text_drawer_->fontScale();
+    x_max = at_draw_cds.x + 3 * spot_rad * text_drawer_->fontScale();
+    y_min = at_draw_cds.y - 3 * spot_rad * text_drawer_->fontScale();
+    y_max = at_draw_cds.y + 3 * spot_rad * text_drawer_->fontScale();
   }
 
   auto rect_to_atom_coords = [&](StringRect &rect) {
-    rect.width_ /= scale();
-    rect.height_ /= scale();
+    rect.width_ /= text_drawer_->fontScale();
+    rect.height_ /= text_drawer_->fontScale();
     rect.trans_ = getAtomCoords(make_pair(rect.trans_.x, rect.trans_.y));
   };
 
@@ -2239,31 +2239,31 @@ OrientType MolDraw2D::calcRadicalRect(const ROMol &mol, const Atom *atom,
   };
 
   auto try_north = [&]() -> bool {
-    rad_rect.width_ = rad_size * scale();
-    rad_rect.height_ = spot_rad * 3.0 * scale();
+    rad_rect.width_ = rad_size * text_drawer_->fontScale();
+    rad_rect.height_ = spot_rad * 3.0 * text_drawer_->fontScale();
     rad_rect.trans_.x = at_draw_cds.x;
     rad_rect.trans_.y = y_max + 0.5 * rad_rect.height_;
     return try_all(OrientType::N);
   };
   auto try_south = [&]() -> bool {
-    rad_rect.width_ = rad_size * scale();
-    rad_rect.height_ = spot_rad * 3.0 * scale();
+    rad_rect.width_ = rad_size * text_drawer_->fontScale();
+    rad_rect.height_ = spot_rad * 3.0 * text_drawer_->fontScale();
     rad_rect.trans_.x = at_draw_cds.x;
     rad_rect.trans_.y = y_min - 0.5 * rad_rect.height_;
     return try_all(OrientType::S);
   };
   auto try_east = [&]() -> bool {
-    rad_rect.trans_.x = x_max + 3.0 * spot_rad * scale();
+    rad_rect.trans_.x = x_max + 3.0 * spot_rad * text_drawer_->fontScale();
     rad_rect.trans_.y = at_draw_cds.y;
-    rad_rect.width_ = spot_rad * 1.5 * scale();
-    rad_rect.height_ = rad_size * scale();
+    rad_rect.width_ = spot_rad * 1.5 * text_drawer_->fontScale();
+    rad_rect.height_ = rad_size * text_drawer_->fontScale();
     return try_all(OrientType::E);
   };
   auto try_west = [&]() -> bool {
-    rad_rect.trans_.x = x_min - 3.0 * spot_rad * scale();
+    rad_rect.trans_.x = x_min - 3.0 * spot_rad * text_drawer_->fontScale();
     rad_rect.trans_.y = at_draw_cds.y;
-    rad_rect.width_ = spot_rad * 1.5 * scale();
-    rad_rect.height_ = rad_size * scale();
+    rad_rect.width_ = spot_rad * 1.5 * text_drawer_->fontScale();
+    rad_rect.height_ = rad_size * text_drawer_->fontScale();
     return try_all(OrientType::W);
   };
 
@@ -2300,7 +2300,11 @@ OrientType MolDraw2D::calcRadicalRect(const ROMol &mol, const Atom *atom,
 
 // ****************************************************************************
 void MolDraw2D::drawRadicals(const ROMol &mol) {
-  double spot_rad = 0.2 * drawOptions().multipleBondOffset;
+
+  // take account of differing font scale and main scale if we've hit
+  // max or min font size.
+  double f_scale = text_drawer_->fontScale() / scale();
+  double spot_rad = 0.2 * drawOptions().multipleBondOffset * f_scale;
   setColour(DrawColour(0.0, 0.0, 0.0));
   // Point2D should be in atom coords
   auto draw_spot = [&](const Point2D &cds) {
@@ -2358,9 +2362,9 @@ void MolDraw2D::drawRadicals(const ROMol &mol) {
         }
         draw_spot(ncds);
         if(dir) {
-          ncds.y = cds.y - 3.0 * spot_rad;
+          ncds.y = cds.y - 2.0 * spot_rad;
         } else {
-          ncds.x = cds.x - 3.0 * spot_rad;
+          ncds.x = cds.x - 2.0 * spot_rad;
         }
         draw_spot(ncds);
         break;
@@ -2373,7 +2377,6 @@ void MolDraw2D::drawRadicals(const ROMol &mol) {
     if (!num_rade) {
       continue;
     }
-    spot_rad = 0.2 * drawOptions().multipleBondOffset;
     auto rad_rect = radicals_[activeMolIdx_][rad_num].first;
     OrientType draw_or = radicals_[activeMolIdx_][rad_num].second;
     if(draw_or == OrientType::N || draw_or == OrientType::S
