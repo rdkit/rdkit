@@ -44,7 +44,7 @@ std::string molToSVG(const ROMol &mol, unsigned int width, unsigned int height,
       pythonObjectToVect(pyHighlightAtoms, static_cast<int>(mol.getNumAtoms()));
   std::stringstream outs;
   MolDraw2DSVG drawer(width, height, outs);
-  drawer.setFontSize(fontSize / 24.);
+  //  drawer.setFontSize(fontSize / 24.);
   drawer.setLineWidth(drawer.lineWidth() * lineWidthMult);
   drawer.drawOptions().circleAtoms = includeAtomCircles;
   drawer.drawMolecule(mol, highlightAtoms.get(), nullptr, nullptr, confId);

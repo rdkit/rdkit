@@ -32,7 +32,7 @@ class DrawTextFT : public DrawText {
 
  public:
 
-  DrawTextFT(double max_fnt_sz);
+  DrawTextFT(double max_fnt_sz, double min_fnt_sz);
   ~DrawTextFT();
 
   void drawChar(char c, const Point2D &cds) override;

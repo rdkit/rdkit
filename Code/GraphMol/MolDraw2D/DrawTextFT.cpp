@@ -20,8 +20,8 @@ using namespace std;
 namespace RDKit {
 
 // ****************************************************************************
-DrawTextFT::DrawTextFT(double max_fnt_sz) :
-    DrawText(max_fnt_sz), x_trans_(0), y_trans_(0), string_y_max_(0) {
+  DrawTextFT::DrawTextFT(double max_fnt_sz, double min_fnt_sz) :
+    DrawText(max_fnt_sz, min_fnt_sz), x_trans_(0), y_trans_(0), string_y_max_(0) {
 
   string fontfile = getFontFile();
 

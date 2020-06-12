@@ -13,8 +13,9 @@
 namespace RDKit {
 
 // ****************************************************************************
-DrawTextFTCairo::DrawTextFTCairo(double max_fnt_sz, cairo_t *dp_cr)
-    : DrawTextFT(max_fnt_sz) , dp_cr_(dp_cr){
+  DrawTextFTCairo::DrawTextFTCairo(double max_fnt_sz, double min_fnt_sz,
+				   cairo_t *dp_cr)
+    : DrawTextFT(max_fnt_sz, min_fnt_sz) , dp_cr_(dp_cr){
 }
 
 // ****************************************************************************

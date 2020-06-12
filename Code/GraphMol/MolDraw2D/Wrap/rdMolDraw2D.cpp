@@ -657,9 +657,9 @@ BOOST_PYTHON_MODULE(rdMolDraw2D) {
   docString = "Drawer abstract base class";
   python::class_<RDKit::MolDraw2D, boost::noncopyable>(
       "MolDraw2D", docString.c_str(), python::no_init)
-      .def("SetFontSize", &RDKit::MolDraw2D::setFontSize,
-           "change the default font size")
-      .def("FontSize", &RDKit::MolDraw2D::fontSize, "get the default font size")
+      // .def("SetFontSize", &RDKit::MolDraw2D::setFontSize,
+      //      "change the default font size")
+      // .def("FontSize", &RDKit::MolDraw2D::fontSize, "get the default font size")
       .def(
           "DrawMolecule", RDKit::drawMoleculeHelper1,
           (python::arg("self"), python::arg("mol"),
@@ -772,7 +772,7 @@ BOOST_PYTHON_MODULE(rdMolDraw2D) {
       .def("DrawString",
            (void (RDKit::MolDraw2D::*)(const std::string &,
                                        const RDGeom::Point2D &,
-                                       RDKit::MolDraw2D::AlignType)) &
+                                       RDKit::TextAlignType)) &
                RDKit::MolDraw2D::drawString,
            (python::arg("self"), python::arg("string"), python::arg("pos"),
             python::arg("align")),

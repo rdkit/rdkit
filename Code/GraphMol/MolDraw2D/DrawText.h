@@ -43,7 +43,7 @@ class DrawText {
 
   static constexpr double FONT_SIZE = 0.6; // seems to be a good number
 
-  DrawText(double max_fnt_sz);
+  DrawText(double max_fnt_sz, double min_fnt_sz);
   virtual ~DrawText() {}
 
   DrawColour const &colour() const;

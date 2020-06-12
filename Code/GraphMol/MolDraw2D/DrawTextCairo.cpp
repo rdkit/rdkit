@@ -16,8 +16,8 @@ using namespace std;
 namespace RDKit {
 
 // ****************************************************************************
-DrawTextCairo::DrawTextCairo(double max_fnt_sz, cairo_t *dp_cr)
-    : DrawText(max_fnt_sz), dp_cr_(dp_cr) {
+  DrawTextCairo::DrawTextCairo(double max_fnt_sz, double min_fnt_sz, cairo_t *dp_cr)
+  : DrawText(max_fnt_sz, min_fnt_sz), dp_cr_(dp_cr) {
   cairo_select_font_face(dp_cr, "sans", CAIRO_FONT_SLANT_NORMAL,
                          CAIRO_FONT_WEIGHT_NORMAL);
   cairo_set_font_size(dp_cr, fontSize());

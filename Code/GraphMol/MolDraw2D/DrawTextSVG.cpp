@@ -24,8 +24,9 @@ namespace RDKit {
 string DrawColourToSVG(const RDKit::DrawColour &col);
 
 // ****************************************************************************
-DrawTextSVG::DrawTextSVG(double max_fnt_sz, ostream &oss, string &d_act_class) :
-    DrawText(max_fnt_sz), oss_(oss), d_active_class_(d_act_class) {
+  DrawTextSVG::DrawTextSVG(double max_fnt_sz, double min_fnt_sz,
+			   ostream &oss, string &d_act_class) :
+    DrawText(max_fnt_sz, min_fnt_sz), oss_(oss), d_active_class_(d_act_class) {
 }
 
 namespace {
