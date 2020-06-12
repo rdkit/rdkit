@@ -2909,8 +2909,8 @@ void testGithub2931() {
       TEST_ASSERT(text.find("stroke:#FF8C00;stroke-width:5px") !=
                   std::string::npos);
 #ifdef RDK_BUILD_FREETYPE_SUPPORT
-      TEST_ASSERT(text.find("<ellipse cx='242.126' cy='331.416'"
-                            " rx='11.043' ry='11.043'"
+      TEST_ASSERT(text.find("<ellipse cx='242.323' cy='335.054'"
+                            " rx='10.7676' ry='10.7676'"
                             " style='fill:none;stroke:#00FF00;")
                   != std::string::npos);
 #else
