@@ -808,10 +808,6 @@ Point2D MolDraw2D::getDrawCoords(const Point2D &mol_cds) const {
   x += x_offset_;
   y -= y_offset_;
   y = panelHeight() - y;
-//  cout << "at cods : " << mol_cds << "  draw cds " << x << " " << y << endl;
-//  cout << "scale : " << scale_ << endl;
-//  cout << "mins : " << x_min_ << " and " << y_min_ << endl;
-//  cout << "trans : " << x_trans_ << " and " << y_trans_ << endl;
 
   return Point2D(x, y);
 }
@@ -1523,11 +1519,21 @@ StringRect MolDraw2D::calcAnnotationPosition(const ROMol &mol,
   vector<std::shared_ptr<StringRect>> rects;
   vector<TextDrawType> draw_modes;
   vector<char> draw_chars;
+
+  // at this point, the scale() should still be 1, so min and max font sizes
+  // don't make sense, as we're effectively operating on atom coords rather
+  // than draw.
   double full_font_scale = text_drawer_->fontScale();
+  double min_fs = text_drawer_->minFontSize();
+  text_drawer_->setMinFontSize(-1);
+  double max_fs = text_drawer_->maxFontSize();
+  text_drawer_->setMaxFontSize(-1);
   text_drawer_->setFontScale(drawOptions().annotationFontScale * full_font_scale);
   text_drawer_->getStringRects(note, OrientType::N,
                                rects, draw_modes, draw_chars);
   text_drawer_->setFontScale(full_font_scale);
+  text_drawer_->setMinFontSize(min_fs);
+  text_drawer_->setMaxFontSize(max_fs);
 
   Point2D const &at1_cds = at_cds_[activeMolIdx_][bond->getBeginAtomIdx()];
   Point2D const &at2_cds = at_cds_[activeMolIdx_][bond->getEndAtomIdx()];
@@ -1551,7 +1557,7 @@ StringRect MolDraw2D::calcAnnotationPosition(const ROMol &mol,
       tr.width_ *= scale();
       tr.height_ *= scale();
 
-      if (!doesBondNoteClash(tr,rects,  mol, bond)) {
+      if (!doesBondNoteClash(tr, rects,  mol, bond)) {
         return note_rect;
       }
       if (note_rect.clash_score_ < least_worst_rect.clash_score_) {
@@ -1580,11 +1586,21 @@ void MolDraw2D::calcAtomAnnotationPosition(const ROMol &mol, const Atom *atom,
   vector<std::shared_ptr<StringRect>> rects;
   vector<TextDrawType> draw_modes;
   vector<char> draw_chars;
+
+  // at this point, the scale() should still be 1, so min and max font sizes
+  // don't make sense, as we're effectively operating on atom coords rather
+  // than draw.
   double full_font_scale = text_drawer_->fontScale();
+  double min_fs = text_drawer_->minFontSize();
+  text_drawer_->setMinFontSize(-1);
+  double max_fs = text_drawer_->maxFontSize();
+  text_drawer_->setMaxFontSize(-1);
   text_drawer_->setFontScale(drawOptions().annotationFontScale * full_font_scale);
   text_drawer_->getStringRects(note, OrientType::N,
                                rects, draw_modes, draw_chars);
   text_drawer_->setFontScale(full_font_scale);
+  text_drawer_->setMinFontSize(min_fs);
+  text_drawer_->setMaxFontSize(max_fs);
 
   double rad_step = 0.25;
   StringRect least_worst_rect = StringRect();

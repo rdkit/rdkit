@@ -962,7 +962,7 @@ void testGithub781() {
 #else
     TEST_ASSERT(txt.find(">C</text>") != std::string::npos);
     // the first radical marker
-    TEST_ASSERT(txt.find("<path d='M 327.273,281.591 L 327.258,281.239 L 327.212,280.89")
+    TEST_ASSERT(txt.find("<path d='M 318.364,288 L 318.356,287.828 L 318.334,287.657")
                 != std::string::npos);
 #endif
   }
@@ -1480,7 +1480,7 @@ void testDeuteriumTritium() {
       }
 #else
       // a bit kludgy, but...
-      if(line.find("<text x='253.753' y='157.636' class='atom-1'"
+      if(line.find("<text x='253.753' y='150.364' class='atom-1'"
                     " style='font-size:20px;font-style:normal;"
                     "font-weight:normal;fill-opacity:1;stroke:none;"
                     "font-family:sans-serif;text-anchor:start;"
@@ -1524,11 +1524,12 @@ void testDeuteriumTritium() {
         ++count;
       }
 #else
-      if (line.find("<text x='253.753' y='157.636' class='atom-1'"
-                     " style='font-size:20px;font-style:normal;"
-                     "font-weight:normal;fill-opacity:1;stroke:none;"
-                     "font-family:sans-serif;text-anchor:start;"
-                     "fill:#000000' >3</text>") != std::string::npos) {
+      if (line.find("<text x='253.753' y='150.364' class='atom-1'"
+                    " style='font-size:20px;font-style:normal;"
+                    "font-weight:normal;fill-opacity:1;stroke:none;"
+                    "font-family:sans-serif;text-anchor:start;"
+                    "fill:#000000' >3</text>")
+          != std::string::npos) {
         ++count;
       }
 #endif
@@ -2554,7 +2555,7 @@ void test18FixedScales() {
                   != std::string::npos);
 
 #else
-      TEST_ASSERT(text.find("font-size:37px") != std::string::npos);
+      TEST_ASSERT(text.find("font-size:33px") != std::string::npos);
 #endif
     }
     {
@@ -2572,7 +2573,7 @@ void test18FixedScales() {
       TEST_ASSERT(text.find("<path  class='atom-0' d='M 185.032 144.892")
                   != std::string::npos);
 #else
-      TEST_ASSERT(text.find("font-size:9px") != std::string::npos);
+      TEST_ASSERT(text.find("font-size:12px") != std::string::npos);
 #endif
     }
   }
@@ -2595,7 +2596,7 @@ void test18FixedScales() {
       TEST_ASSERT(text.find("<path  class='atom-2' d='M 72.34 182.504")
                   != std::string::npos);
 #else
-      TEST_ASSERT(text.find("font-size:11px") != std::string::npos);
+      TEST_ASSERT(text.find("font-size:12px") != std::string::npos);
 #endif
     }
     {
@@ -2612,7 +2613,7 @@ void test18FixedScales() {
             TEST_ASSERT(text.find("<path  class='atom-2' d='M 102.34 167.504")
                   != std::string::npos);
 #else
-      TEST_ASSERT(text.find("font-size:6px") != std::string::npos);
+      TEST_ASSERT(text.find("font-size:12px") != std::string::npos);
 #endif
     }
     {
@@ -2630,7 +2631,7 @@ void test18FixedScales() {
       TEST_ASSERT(text.find("<path  class='atom-2' d='M 72.34 182.504")
                   != std::string::npos);
 #else
-      TEST_ASSERT(text.find("font-size:11px") != std::string::npos);
+      TEST_ASSERT(text.find("font-size:12px") != std::string::npos);
 #endif
     }
   }
@@ -2657,7 +2658,7 @@ void test19RotateDrawing() {
       TEST_ASSERT(text.find("<path  class='atom-0' d='M 282.95 136.966") !=
                   std::string::npos);
 #else
-      TEST_ASSERT(text.find("<text x='255.813' y='168.577' class='atom-0' ") !=
+      TEST_ASSERT(text.find("<text x='256.827' y='166.888' class='atom-0'") !=
                   std::string::npos);
 #endif
     }
@@ -2674,7 +2675,7 @@ void test19RotateDrawing() {
       TEST_ASSERT(text.find("<path  class='atom-0' d='M 139.729 273.727") !=
                   std::string::npos);
 #else
-      TEST_ASSERT(text.find("<text x='138.75' y='288.068' class='atom-0'") !=
+      TEST_ASSERT(text.find("<text x='139.773' y='286.364' class='atom-0'") !=
                   std::string::npos);
 #endif
     }
@@ -2914,8 +2915,8 @@ void testGithub2931() {
                             " style='fill:none;stroke:#00FF00;")
                   != std::string::npos);
 #else
-      TEST_ASSERT(text.find("<ellipse cx='242.824' cy='328.227'"
-                            " rx='11.0404' ry='11.0404'"
+      TEST_ASSERT(text.find("<ellipse cx='243.052' cy='332.959'"
+                            " rx='10.6899' ry='10.6899'"
                             " style='fill:none;stroke:#00FF00;") !=
                   std::string::npos);
 #endif
@@ -2989,16 +2990,15 @@ void test20Annotate() {
     outs.flush();
     // annotation for atom 11
 #ifdef RDK_BUILD_FREETYPE_SUPPORT
-    TEST_ASSERT(text.find("<path  class='atom-11' d='M 411.35 227.412")
+    TEST_ASSERT(text.find("<path  class='atom-11' d='M 412.228 227.284")
                 != std::string::npos);
 #else
     // first one of atom note 11
-    TEST_ASSERT(text.find("<text x='413.508' y='254.092'"
-                          " class='note' style='font-size:13px;"
-                          "font-style:normal;font-weight:normal;"
-                          "fill-opacity:1;stroke:none;"
-                          "font-family:sans-serif;text-anchor:"
-                          "start;fill:#000000' >1</text>")
+    TEST_ASSERT(text.find("<text x='414.613' y='253.478' class='note'"
+                          " style='font-size:12px;font-style:normal;"
+                          "font-weight:normal;fill-opacity:1;stroke:none;"
+                          "font-family:sans-serif;text-anchor:start;"
+                          "fill:#000000' >1</text>")
                 != std::string::npos);
 #endif
   }
@@ -3063,15 +3063,16 @@ void test20Annotate() {
     outs.flush();
 #ifdef RDK_BUILD_FREETYPE_SUPPORT
     // first note
-    TEST_ASSERT(text.find("<path  class='note' d='M 160.359 175.897") !=
+    TEST_ASSERT(text.find("<path  class='note' d='M 164.326 176.452") !=
                 std::string::npos);
 #else
     // f of foolish
-    TEST_ASSERT(text.find("<text x='146.589' y='182.156' class='note'"
-                          " style='font-size:13px;font-style:normal;"
-                          "font-weight:normal;fill-opacity:1;"
-                          "stroke:none;font-family:sans-serif;"
-                          "text-anchor:start;fill:#000000' >f</text>") !=
+    TEST_ASSERT(text.find("<text x='152.166' y='181.531'"
+                          " class='note' style='font-size:12px;"
+                          "font-style:normal;font-weight:normal;"
+                          "fill-opacity:1;stroke:none;"
+                          "font-family:sans-serif;text-anchor:start;"
+                          "fill:#000000' >f</text>") !=
                 std::string::npos);
 #endif
   }
