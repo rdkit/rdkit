@@ -6,17 +6,44 @@
 #include <GraphMol/RDKitBase.h>
 #include <GraphMol/TautomerQuery/TautomerQuery.h>
 #include <GraphMol/ROMol.h>
-#include <GraphMol/SmilesParse/SmilesParse.h>
 #include <GraphMol/SmilesParse/SmilesWrite.h>
 #include <GraphMol/Substruct/SubstructMatch.h>
 #include <GraphMol/Fingerprints/Fingerprints.h>
 #include <DataStructs/BitOps.h>
 #include <GraphMol/MolPickler.h>
 #include <GraphMol/QueryOps.h>
+#include <GraphMol/SmilesParse/SmilesParse.h>
 
 // #define VERBOSE 1
 
 using namespace RDKit;
+
+TEST_CASE("TEMPLATE_ERROR") {
+  // for this guy the template needs to account for bonds modified when tautomers are sanitized
+  auto mol = "Cc1nc2ccccc2[nH]1"_smiles;
+  REQUIRE(mol);
+  auto target = "CN1C2=C(C(=O)Nc3ccccc3)C(=O)CCN2c2ccccc21"_smiles;
+  REQUIRE(target);
+
+  auto tautomerQuery =
+      std::unique_ptr<TautomerQuery>(TautomerQuery::fromMol(*mol));
+  auto match = false;
+  MatchVectType matchVect;
+  for (auto taut : tautomerQuery->getTautomers()) {
+    auto test = SubstructMatch(*target, *taut, matchVect);
+    std::cout << "Tautomer " << MolToSmiles(*taut) << " match " << test
+              << std::endl;
+    if (test) match = true;
+  }
+  CHECK(match);
+
+  SubstructMatchParameters params;
+  std::vector<ROMOL_SPTR> matchingTautomers;
+  auto matches =
+      tautomerQuery->substructOf(*target, params, &matchingTautomers);
+  CHECK(matches.size() == 1);
+  REQUIRE(matchingTautomers.size() == 1);
+}
 
 TEST_CASE("TEST_UNIQUIFY") {
   auto mol = "O=C1CCCCC1"_smiles;
@@ -38,8 +65,7 @@ TEST_CASE("TEST_UNIQUIFY") {
   REQUIRE(matchingTautomers.size() == 1);
 
   params.uniquify = false;
-  matches =
-      tautomerQuery->substructOf(*target, params, &matchingTautomers);
+  matches = tautomerQuery->substructOf(*target, params, &matchingTautomers);
   CHECK(matches.size() == 2);
   REQUIRE(matchingTautomers.size() == 2);
   CHECK(matchingTautomers[0] == matchingTautomers[1]);

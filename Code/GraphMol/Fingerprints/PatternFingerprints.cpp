@@ -186,7 +186,7 @@ bool isTautomerBondQuery(const Bond *b) {
 ExplicitBitVect *PatternFingerprintMol(const ROMol &mol, unsigned int fpSize,
                                        std::vector<unsigned int> *atomCounts,
                                        ExplicitBitVect *setOnlyBits,
-                                       bool tautomerFingerprints) {
+                                       bool tautomericFingerprint) {
   PRECONDITION(fpSize != 0, "fpSize==0");
   PRECONDITION(!atomCounts || atomCounts->size() >= mol.getNumAtoms(),
                "bad atomCounts size");
@@ -226,7 +226,7 @@ ExplicitBitVect *PatternFingerprintMol(const ROMol &mol, unsigned int fpSize,
   for (const auto bond : mol.bonds()) {
     if (isPatternComplexQuery(bond)) {
       isQueryBond.set(bond->getIdx());
-      if (tautomerFingerprints && isTautomerBondQuery(bond)) {
+      if (tautomericFingerprint && isTautomerBondQuery(bond)) {
         isTautomerBond.set(bond->getIdx());
       }
     }
@@ -312,7 +312,7 @@ ExplicitBitVect *PatternFingerprintMol(const ROMol &mol, unsigned int fpSize,
           }
         }
 
-        if (tautomerFingerprints) {
+        if (tautomericFingerprint) {
           if (isTautomerBond[bondIdx] || mbond->getIsAromatic() ||
               mbond->getBondType() == Bond::SINGLE ||
               mbond->getBondType() == Bond::DOUBLE ||
@@ -346,7 +346,7 @@ ExplicitBitVect *PatternFingerprintMol(const ROMol &mol, unsigned int fpSize,
 #endif
           res->setBit(bitId % fpSize);
         }
-        if (tautomerFingerprints) {
+        if (tautomericFingerprint) {
 #ifdef VERBOSE_FINGERPRINTING
           std::cerr << " tset: " << tautomerBitId << " "
                     << tautomerBitId % fpSize;

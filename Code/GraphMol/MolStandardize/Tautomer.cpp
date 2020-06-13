@@ -12,7 +12,6 @@
 #include <GraphMol/MolStandardize/FragmentCatalog/FragmentCatalogUtils.h>
 #include <GraphMol/SmilesParse/SmilesParse.h>
 #include <GraphMol/SmilesParse/SmilesWrite.h>
-#include <GraphMol/SmilesParse/SmartsWrite.h>
 #include <GraphMol/Substruct/SubstructMatch.h>
 #include <boost/dynamic_bitset.hpp>
 #include <algorithm>
@@ -24,6 +23,10 @@
 #include <utility>
 
 // #define VERBOSE_ENUMERATION 1
+
+#ifdef VERBOSE_ENUMERATION
+#include <GraphMol/SmilesParse/SmartsWrite.h>
+#endif
 
 using namespace RDKit;
 
@@ -366,7 +369,22 @@ std::vector<ROMOL_SPTR> TautomerEnumerator::enumerate(
 #endif
             const bool is_in = tautomers.find(tsmiles) != tautomers.end();
             if (!is_in) {
-              // std::cout << "New tautomer produced: " << tsmiles << std::endl;
+#ifdef VERBOSE_ENUMERATION
+              std::cout << "New tautomer produced: " << tsmiles << std::endl;
+#endif
+              // in addition to the above transformations, sanitzation may modify
+              // bonds, e.g. Cc1nc2ccccc2[nH]1
+              for (size_t i = 0; i < mol.getNumBonds(); i++) {
+                auto molBondType = mol.getBondWithIdx(i)->getBondType();
+                auto tautBondType = wproduct->getBondWithIdx(i)->getBondType();
+                if (molBondType != tautBondType && !modifiedBonds->operator[](i)) {
+#ifdef VERBOSE_ENUMERATION
+                  std::cout << "Sanitization has modified bond " << i
+                            << std::endl;
+#endif
+                  modifiedBonds->set(i);
+                }
+              }
               boost::shared_ptr<RWMol> kekulized_product(new RWMol(*wproduct));
               tautomers[tsmiles] = wproduct;
               MolOps::Kekulize(*kekulized_product, false);

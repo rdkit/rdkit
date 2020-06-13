@@ -14,9 +14,12 @@
 #include <GraphMol/QueryBond.h>
 #include <GraphMol/Substruct/SubstructUtils.h>
 #include <GraphMol/Fingerprints/Fingerprints.h>
-#include <GraphMol/SmilesParse/SmilesWrite.h>
 
 // #define VERBOSE
+
+#ifdef VERBOSE
+#include <GraphMol/SmilesParse/SmilesWrite.h>
+#endif
 
 namespace {
 
@@ -29,7 +32,8 @@ int getTargetIdx(int queryIdx, const MatchVectType &match) {
 
 // Adapted from Code/GraphMol/Substruct/SubstructUtils.cpp#removeDuplicates
 void removeTautomerDuplicates(std::vector<MatchVectType> &matches,
-                              std::vector<ROMOL_SPTR> *matchingTautomers, int nAtoms) {
+                              std::vector<ROMOL_SPTR> *matchingTautomers,
+                              int nAtoms) {
   //
   //  This works by tracking the indices of the atoms in each match vector.
   //  This can lead to unexpected behavior when looking at rings and queries
@@ -90,7 +94,6 @@ TautomerQuery *TautomerQuery::fromMol(
       new MolStandardize::TautomerCatalog(tautomerParams.get()));
   boost::dynamic_bitset<> modifiedAtomsBitSet(query.getNumAtoms());
   boost::dynamic_bitset<> modifiedBondsBitSet(query.getNumBonds());
-  const auto t2 = tautomerEnumerator.enumerate(query);
   const auto tautomers = tautomerEnumerator.enumerate(
       query, &modifiedAtomsBitSet, &modifiedBondsBitSet);
 
@@ -197,7 +200,8 @@ std::vector<MatchVectType> TautomerQuery::substructOf(
             << std::endl;
 #endif
 
-  // TODO create a functor so that I dont have to get all template matches before evaluating tautomer matches.
+  // TODO create a functor so that I dont have to get all template matches
+  // before evaluating tautomer matches.
   for (auto templateMatch : templateMatches) {
 #ifdef VERBOSE
     std::cout << "Checking template match" << std::endl;
@@ -222,11 +226,14 @@ std::vector<MatchVectType> TautomerQuery::substructOf(
 
 searchFinished:
 #ifdef VERBOSE
-  std::cout << "Returning " << matches.size() << std::endl;
+  std::cout << "Found " << matches.size() << " matches " << std::endl;
 #endif
 
   if (params.uniquify && matches.size() > 1) {
     removeTautomerDuplicates(matches, matchingTautomers, mol.getNumAtoms());
+#ifdef VERBOSE
+    std::cout << "After removing duplicates " << matches.size() << " matches " << std::endl;
+#endif
   }
   return matches;
 }

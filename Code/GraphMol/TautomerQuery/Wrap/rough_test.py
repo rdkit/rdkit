@@ -53,6 +53,23 @@ class TautomerQueryTestCase(TestCase):
         tautomer_query2 = rdTautomerQuery.TautomerQuery(mol, file)
         self.assertEqual(2, len(tautomer_query.GetTautomers()))
 
+
+    def test_parameter_searches(self):
+        mol = Chem.MolFromSmiles("O=C1CCCCC1")
+        tautomer_query = rdTautomerQuery.TautomerQuery(mol)
+        target = Chem.MolFromSmiles("O=C1CCCC(CC)C1")
+        params = Chem.SubstructMatchParameters()
+        params.uniquify = False
+        tautomer_matches = tautomer_query.GetSubstructMatchesWithTautomers(target, params)
+        self.assertEqual(2, len(tautomer_matches))
+        matches = tautomer_query.GetSubstructMatches(target, params)
+        self.assertEqual(2, len(matches))
+        match = tautomer_query.GetSubstructMatch(target, params)
+        self.assertEqual(7, len(match))
+        is_match = tautomer_query.IsSubstructOf(target, params)
+        self.assertTrue(is_match)
+
+
     def test_types(self):
         mol = Chem.MolFromSmiles("O=C1CCCCC1")
         tautomer_query = rdTautomerQuery.TautomerQuery(mol)
