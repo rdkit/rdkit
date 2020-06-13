@@ -18,6 +18,12 @@
 #include <GraphMol/MolDraw2D/MolDraw2D.h>
 #include <GraphMol/MolDraw2D/MolDraw2DSVG.h>
 #include <GraphMol/MolDraw2D/MolDraw2DUtils.h>
+#include <boost/algorithm/string/split.hpp>
+
+#ifdef RDK_BUILD_CAIRO_SUPPORT
+#include <cairo.h>
+#include "MolDraw2DCairo.h"
+#endif
 
 using namespace RDKit;
 
@@ -264,8 +270,7 @@ TEST_CASE("dative bonds", "[drawing, organometallics]") {
 
     CHECK(text.find("<path class='bond-2' d='M 61.7343,143.825"
                     " L 89.7427,152.925' style='fill:none;"
-                    "fill-rule:evenodd;stroke:#0000FF") !=
-          std::string::npos);
+                    "fill-rule:evenodd;stroke:#0000FF") != std::string::npos);
   }
 }
 
@@ -429,4 +434,83 @@ TEST_CASE("draw atom/bond indices", "[drawing]") {
       CHECK(text.find("<tspan>1</tspan>") == std::string::npos);
     }
   }
+}
+
+TEST_CASE("Github #3226: Lines in wedge bonds being drawn too closely together",
+          "[drawing]") {
+  auto m1 =
+      "C[C@H](C1=C(C=CC(=C1Cl)F)Cl)OC2=C(N=CC(=C2)C3=CN(N=C3)C4CCNCC4)N"_smiles;
+  REQUIRE(m1);
+  SECTION("larger SVG") {
+    {
+      MolDraw2DSVG drawer(450, 400);
+      drawer.drawMolecule(*m1);
+      drawer.finishDrawing();
+      std::string text = drawer.getDrawingText();
+      std::ofstream outs("testGithub3226_1.svg");
+      outs << text;
+      outs.flush();
+      std::vector<std::string> tkns;
+      boost::algorithm::find_all(tkns, text, "bond-0");
+      CHECK(tkns.size() == 6);
+    }
+  }
+#ifdef RDK_BUILD_CAIRO_SUPPORT
+  SECTION("larger PNG") {
+    {
+      MolDraw2DCairo drawer(450, 400);
+      drawer.drawMolecule(*m1);
+      drawer.finishDrawing();
+      drawer.writeDrawingText("testGithub3226_1.png");
+    }
+  }
+#endif
+  SECTION("smaller SVG") {
+    {
+      MolDraw2DSVG drawer(200, 150);
+      drawer.drawMolecule(*m1);
+      drawer.finishDrawing();
+      std::string text = drawer.getDrawingText();
+      std::ofstream outs("testGithub3226_2.svg");
+      outs << text;
+      outs.flush();
+      std::vector<std::string> tkns;
+      boost::algorithm::find_all(tkns, text, "bond-0");
+      CHECK(tkns.size() == 3);
+    }
+  }
+#ifdef RDK_BUILD_CAIRO_SUPPORT
+  SECTION("smaller PNG") {
+    {
+      MolDraw2DCairo drawer(200, 150);
+      drawer.drawMolecule(*m1);
+      drawer.finishDrawing();
+      drawer.writeDrawingText("testGithub3226_2.png");
+    }
+  }
+#endif
+  SECTION("middle SVG") {
+    {
+      MolDraw2DSVG drawer(250, 200);
+      drawer.drawMolecule(*m1);
+      drawer.finishDrawing();
+      std::string text = drawer.getDrawingText();
+      std::ofstream outs("testGithub3226_3.svg");
+      outs << text;
+      outs.flush();
+      std::vector<std::string> tkns;
+      boost::algorithm::find_all(tkns, text, "bond-0");
+      CHECK(tkns.size() == 3);
+    }
+  }
+#ifdef RDK_BUILD_CAIRO_SUPPORT
+  SECTION("middle PNG") {
+    {
+      MolDraw2DCairo drawer(250, 200);
+      drawer.drawMolecule(*m1);
+      drawer.finishDrawing();
+      drawer.writeDrawingText("testGithub3226_3.png");
+    }
+  }
+#endif
 }

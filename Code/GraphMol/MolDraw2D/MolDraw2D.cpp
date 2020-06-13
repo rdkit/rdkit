@@ -2169,10 +2169,10 @@ void MolDraw2D::drawWedgedBond(const Point2D &cds1, const Point2D &cds2,
 
   setColour(col1);
   if (draw_dashed) {
-    unsigned int nDashes = 10;
+    unsigned int nDashes = 6;
     // empirical cutoff to make sure we don't have too many dashes in the
     // wedge:
-    if ((cds1 - cds2).lengthSq() < 1.0) {
+    if (scale_ * (cds1 - cds2).lengthSq() < 50.0) {
       nDashes /= 2;
     }
 
@@ -2597,9 +2597,10 @@ vector<string> MolDraw2D::atomLabelToPieces(const string &label,
   }
 
   // if the orientation is E, any charge flag needs to be at the end.
-  if(orient == OrientType::E) {
+  if (orient == OrientType::E) {
     for (size_t i = 0; i < label_pieces.size(); ++i) {
-      if(label_pieces[i] == "<sup>+</sup>" || label_pieces[i] == "<sup>-</sup>") {
+      if (label_pieces[i] == "<sup>+</sup>" ||
+          label_pieces[i] == "<sup>-</sup>") {
         label_pieces.push_back(label_pieces[i]);
         label_pieces[i].clear();
         break;
@@ -2613,14 +2614,14 @@ vector<string> MolDraw2D::atomLabelToPieces(const string &label,
   vector<string> final_pieces;
   string curr_piece;
   bool had_symbol = false;
-  for(const auto p: label_pieces) {
-    if(p.empty()) {
+  for (const auto p : label_pieces) {
+    if (p.empty()) {
       continue;
     }
-    if(!isupper(p[0])) {
+    if (!isupper(p[0])) {
       curr_piece += p;
     } else {
-      if(had_symbol) {
+      if (had_symbol) {
         final_pieces.push_back(curr_piece);
         curr_piece = p;
         had_symbol = true;
@@ -2630,7 +2631,7 @@ vector<string> MolDraw2D::atomLabelToPieces(const string &label,
       }
     }
   }
-  if(!curr_piece.empty()) {
+  if (!curr_piece.empty()) {
     final_pieces.push_back(curr_piece);
   }
 
@@ -2989,8 +2990,8 @@ string MolDraw2D::getAtomSymbol(const RDKit::Atom &atom) const {
     }
 
     int num_h = (atom.getAtomicNum() == 6 && atom.getDegree() > 0)
-                ? 0
-                : atom.getTotalNumHs();  // FIX: still not quite right
+                    ? 0
+                    : atom.getTotalNumHs();  // FIX: still not quite right
     if (num_h > 0 && !atom.hasQuery()) {
       // the H text comes after the atomic symbol
       std::string h = "H";
@@ -3064,7 +3065,7 @@ MolDraw2D::OrientType MolDraw2D::getAtomOrientation(
     // atoms of single degree should always be either W or E, never N or S.  If
     // either of the latter, make it E if the slope is close to vertical,
     // otherwise have it either as required.
-    if(orient == OrientType::N || orient == OrientType::S) {
+    if (orient == OrientType::N || orient == OrientType::S) {
       if (atom.getDegree() == 1) {
         if (fabs(islope) > VERT_SLOPE) {
           orient = OrientType::E;
@@ -3075,7 +3076,7 @@ MolDraw2D::OrientType MolDraw2D::getAtomOrientation(
             orient = OrientType::E;
           }
         }
-      } else if(atom.getDegree() == 3) {
+      } else if (atom.getDegree() == 3) {
         // Atoms of degree 3 can sometimes have a bond pointing down with S
         // orientation or up with N orientation, which puts the H on the bond.
         auto mol = atom.getOwningMol();
@@ -3343,18 +3344,23 @@ bool doesLineIntersectLabel(const Point2D &ls, const Point2D &lf,
   return false;
 }
 
-std::ostream& operator<<(std::ostream &oss, const MolDraw2D::OrientType &o) {
-  switch(o) {
+std::ostream &operator<<(std::ostream &oss, const MolDraw2D::OrientType &o) {
+  switch (o) {
     case MolDraw2D::OrientType::C:
-      oss << "C"; break;
+      oss << "C";
+      break;
     case MolDraw2D::OrientType::N:
-      oss << "N"; break;
+      oss << "N";
+      break;
     case MolDraw2D::OrientType::S:
-      oss << "S"; break;
+      oss << "S";
+      break;
     case MolDraw2D::OrientType::E:
-      oss << "E"; break;
+      oss << "E";
+      break;
     case MolDraw2D::OrientType::W:
-      oss << "W"; break;
+      oss << "W";
+      break;
   }
   return oss;
 }
