@@ -10,7 +10,7 @@
 #include <GraphMol/RDKitBase.h>
 #include <cmath>
 #include "AtomicEnvironmentVector.h"
-#include <eigen3/Eigen/Dense>
+#include <Eigen/Dense>
 
 using namespace Eigen;
 
@@ -45,7 +45,7 @@ VectorXi GenerateSpeciesVector(const ROMol &mol) {
   auto numAtoms = mol.getNumAtoms();
   VectorXi species(numAtoms);
 
-  for (auto i = 0; i < numAtoms; i++) {
+  for (unsigned int i = 0; i < numAtoms; i++) {
     auto atom = mol.getAtomWithIdx(i);
 
     switch (atom->getAtomicNum()) {
@@ -79,53 +79,56 @@ VectorXi GenerateSpeciesVector(const ROMol &mol) {
 
   \return Matrix containing values at positions specified by index in vector2
 */
-ArrayXXd IndexSelect(ArrayXXd vector1, ArrayXXd vector2, ArrayXi index,
-                     unsigned int dim) {
+template <typename Derived>
+void IndexSelect(ArrayBase<Derived> *vector1, ArrayBase<Derived> *vector2,
+                 ArrayXi &index, unsigned int dim) {
   PRECONDITION(dim == 0 || dim == 1,
                "Only values 0 and 1 are accepted for dim");
   for (auto i = 0; i < index.size(); i++) {
     switch (dim) {
       case 0:
-        vector1.row(i) = vector2.row(index(i));
+        vector1->row(i) = vector2->row(index(i));
         break;
       case 1:
-        vector1.col(i) = vector2.col(index(i));
+        vector1->col(i) = vector2->col(index(i));
         break;
       default:
         throw ValueErrorException("Value of dim must be 0 or 1");
     }
   }
-  return vector1;
 }
 
 //! Computes pairs of atoms that are neighbors bypassing duplication to make
 //! calculation faster
 /*!
   \param coordinates  A matrix of size atoms * 3 containing coordinates of each
-  atom \param species      A vector of size atoms containing mapping from atom
-  index to encoding \param cutoff       Maximum distance within which 2 atoms
+  atom
+  \param species      A vector of size atoms containing mapping from atom
+  index to encoding
+  \param cutoff       Maximum distance within which 2 atoms
   are considered to be neighbours
+  \param atomIndex12  Array in which each column represents pairs of atoms
 
   \return 2 dimensional array with 2 rows with each column corresponding to a
   pair of atoms which are neighbours
 */
-ArrayXi NeighborPairs(ArrayXXd coordinates, VectorXi species, double cutoff,
-                      unsigned int numAtoms) {
-  PRECONDITION(coordinates.rows() == numAtoms,
+void NeighborPairs(ArrayXXd *coordinates, VectorXi *species, double cutoff,
+                   unsigned int numAtoms, ArrayXi *atomIndex12) {
+  PRECONDITION(coordinates->rows() == numAtoms,
                "Number of coordinate vectors must be same as number of atoms");
-  PRECONDITION(species.size() == numAtoms,
+  PRECONDITION(species->size() == numAtoms,
                "Size of species vector must be same as number of atoms");
 
   // Find atoms which are not H, C, N or O
-  auto paddingMask = species.array() == -1;
+  auto paddingMask = species->array() == -1;
   unsigned int cols = 0;
   auto numPairs = numAtoms * (numAtoms - 1) / 2;
 
   // Each column contains pair of indices of the upper
   // traingular matrix of size numAtoms
   MatrixXi upperTriag(2, numPairs);
-  for (auto i = 0; i < numAtoms; i++) {
-    for (auto j = i + 1; j < numAtoms; j++) {
+  for (unsigned int i = 0; i < numAtoms; i++) {
+    for (unsigned int j = i + 1; j < numAtoms; j++) {
       upperTriag.col(cols) << i, j;
       cols++;
     }
@@ -145,12 +148,11 @@ ArrayXi NeighborPairs(ArrayXXd coordinates, VectorXi species, double cutoff,
 
   // Select indices in upperTriagFlattened from coordinates
   ArrayXXd pairCoordinates(numPairs * 2, 3);
-  pairCoordinates =
-      IndexSelect(pairCoordinates, coordinates, upperTriagFlattened, 0);
+  IndexSelect(&pairCoordinates, coordinates, upperTriagFlattened, 0);
 
   // Find vector and distances between each pair of atoms
   ArrayXXd distances(numPairs, 3);
-  for (auto i = 0; i < numPairs; i++) {
+  for (unsigned int i = 0; i < numPairs; i++) {
     distances.row(i) =
         pairCoordinates.row(i) - pairCoordinates.row(i + numPairs);
   }
@@ -179,33 +181,35 @@ ArrayXi NeighborPairs(ArrayXXd coordinates, VectorXi species, double cutoff,
 
   // Store atom pairs distance between which is less than cutoff
   std::vector<int> indices;
-  std::vector<std::pair<int, int>> atomIndex12;
+  std::vector<std::pair<int, int>> atomIndex12_vec;
 
   for (auto i = 0; i < x.size(); i++) {
     if (x(i) == 1) {
-      atomIndex12.push_back(std::make_pair(upperTriag(0, i), upperTriag(1, i)));
+      atomIndex12_vec.push_back(
+          std::make_pair(upperTriag(0, i), upperTriag(1, i)));
     }
   }
 
-  ArrayXi atomIndex12Array(atomIndex12.size() * 2);
+  ArrayXi atomIndex12Array(atomIndex12_vec.size() * 2);
+  atomIndex12->resize(atomIndex12_vec.size() * 2);
   index = 0;
-  for (auto i : atomIndex12) {
-    atomIndex12Array(index) = i.first;
+  for (auto i : atomIndex12_vec) {
+    (*atomIndex12)(index) = i.first;
     index++;
   }
-  for (auto i : atomIndex12) {
-    atomIndex12Array(index) = i.second;
+  for (auto i : atomIndex12_vec) {
+    (*atomIndex12)(index) = i.second;
     index++;
   }
-
-  return atomIndex12Array;
 }
 
 //! Computes radial terms of the torchANI style atom features
 /*!
   \param cutoff     Maximum distance between 2 atoms to show if they contribute
-  to each other's environments \param distances  Distances between pairs of
-  atoms which are in each other's neighbourhoods \return Radial terms according
+  to each other's environments 
+  \param distances  Distances between pairs of
+  atoms which are in each other's neighbourhoods 
+  \return Radial terms according
   to each pair of distances in the molecule calculated using hard coded
   parameters
 */
@@ -236,8 +240,10 @@ ArrayXXd RadialTerms(double cutoff, ArrayXXd distances) {
 //! Computes angular terms of the torchANI style atom features
 /*!
   \param cutoff     Maximum distance between 2 atoms to show if they contribute
-  to each other's environments \param vector12   Pairs of vectors generated by a
-  triplet of 3 atoms which are in each other's neighbourhoods \return Angular
+  to each other's environments 
+  \param vector12   Pairs of vectors generated by a
+  triplet of 3 atoms which are in each other's neighbourhoods 
+  \return Angular
   terms according to each pair of distances in the molecule calculated using
   hard coded parameters
 */
@@ -337,6 +343,8 @@ std::vector<int> cumsum(std::vector<int> count, bool fromZero) {
 /*!
   \param atomIndex12Angular   Pairs of atoms close to each other according to
   defined cutoff
+  \param tripletInfo          pair of a vector containing indices of centrals atoms and Matrix
+  containing pairs of their neighbours
 
   \return pair of a vector containing indices of centrals atoms and Matrix
   containing pairs of their neighbours
@@ -353,16 +361,16 @@ std::vector<int> cumsum(std::vector<int> count, bool fromZero) {
     are (1, 2), (1, 3), (1, 4), (2, 3), (2, 4), (3, 4)
   \endverbatim
 */
-std::pair<std::vector<int>, ArrayXXi> TripleByMolecules(
-    ArrayXXi atomIndex12Angular) {
+void TripleByMolecules(ArrayXXi *atomIndex12Angular,
+                       std::pair<std::vector<int>, ArrayXXi> *tripletInfo) {
   // atomIndex12Angular is flattened and sorted and we keep track of initial
   // indices so that actual pairs can be calculated back later
   std::vector<std::pair<int, int>> atomIndex12AngularFlattened;
   auto index = 0;
-  for (auto i = 0; i < atomIndex12Angular.rows(); i++) {
-    for (auto j = 0; j < atomIndex12Angular.cols(); j++) {
+  for (auto i = 0; i < atomIndex12Angular->rows(); i++) {
+    for (auto j = 0; j < atomIndex12Angular->cols(); j++) {
       atomIndex12AngularFlattened.push_back(
-          std::make_pair(atomIndex12Angular(i, j), index));
+          std::make_pair((*atomIndex12Angular)(i, j), index));
       index++;
     }
   }
@@ -398,9 +406,8 @@ std::pair<std::vector<int>, ArrayXXi> TripleByMolecules(
     }
   }
 
-  std::vector<int> centralAtomIndex;
   for (size_t i = 0; i < pairIndices.size(); i++) {
-    centralAtomIndex.push_back(uniqueResults[pairIndices[i]]);
+    tripletInfo->first.push_back(uniqueResults[pairIndices[i]]);
   }
 
   // do local combinations within unique key, assuming sorted
@@ -483,19 +490,18 @@ std::pair<std::vector<int>, ArrayXXi> TripleByMolecules(
 
   // unsort from last part
   ArrayXXi localIndex12(2, sortedLocalIndex12.cols());
+  tripletInfo->second.resize(2, sortedLocalIndex12.cols());
   for (auto j = 0; j < sortedLocalIndex12.cols(); j++) {
-    localIndex12(0, j) = revIndices[sortedLocalIndex12(0, j)];
-    localIndex12(1, j) = revIndices[sortedLocalIndex12(1, j)];
+    tripletInfo->second(0, j) = revIndices[sortedLocalIndex12(0, j)];
+    tripletInfo->second(1, j) = revIndices[sortedLocalIndex12(1, j)];
   }
-
-  return std::make_pair(centralAtomIndex, localIndex12);
 }
 
 ArrayXXi TriuIndex(unsigned int numSpecies) {
   std::vector<int> species1, species2, pairIndex;
 
-  for (auto i = 0; i < numSpecies; i++) {
-    for (auto j = i; j < numSpecies; j++) {
+  for (unsigned int i = 0; i < numSpecies; i++) {
+    for (unsigned int j = i; j < numSpecies; j++) {
       species1.push_back(i);
       species2.push_back(j);
     }
@@ -536,8 +542,8 @@ ArrayXXd IndexAdd(ArrayXXd vector1, ArrayXXd vector2, ArrayXXi index,
   PRECONDITION(vector2.rows() == index.rows(), "Too few rows in vector2");
   for (auto idxCol = 0; idxCol < index.cols(); idxCol++) {
     for (auto i = 0; i < index.rows(); i++) {
-      for (auto j = 0; j < multi * numAtoms; j++) {
-        if (index(i, idxCol) == j) {
+      for (unsigned int j = 0; j < multi * numAtoms; j++) {
+        if (index(i, idxCol) == (int)j) {
           vector1.row(j) += vector2.row(i);
         }
       }
@@ -546,24 +552,25 @@ ArrayXXd IndexAdd(ArrayXXd vector1, ArrayXXd vector2, ArrayXXi index,
   return vector1;
 }
 
-ArrayXXd AtomicEnvironmentVector(double *pos, VectorXi species, unsigned int numAtoms) {
+ArrayXXd AtomicEnvironmentVector(double *pos, VectorXi &species,
+                                 unsigned int numAtoms) {
+  PRECONDITION(species.size() == numAtoms,
+               "Species encoding for each atom is required");
   ArrayXXd coordinates(numAtoms, 3);
-  unsigned int pos_index = 0;
-  for (auto i = 0; i < numAtoms; i++) {
-    coordinates.row(i) << pos[pos_index], pos[pos_index + 1], pos[pos_index + 2];
-    pos_index += 3;
+  for (unsigned int i = 0; i < numAtoms; i++) {
+    coordinates.row(i) << pos[3 * i], pos[3 * i + 1], pos[3 * i + 2];
   }
   // Fetch pairs of atoms which are neigbours which lie within the cutoff
   // distance 5.2 Angstroms. The constant was obtained by authors of torchANI
-  auto atomIndex12 = NeighborPairs(coordinates, species, 5.2, numAtoms);
+  ArrayXi atomIndex12;
+  NeighborPairs(&coordinates, &species, 5.2, numAtoms, &atomIndex12);
   ArrayXXd selectedCoordinates(atomIndex12.rows(), 3);
-  selectedCoordinates =
-      IndexSelect(selectedCoordinates, coordinates, atomIndex12, 0);
+  IndexSelect(&selectedCoordinates, &coordinates, atomIndex12, 0);
 
   // Vectors between pairs of atoms that lie in each other's neighborhoods
   unsigned int pairs = selectedCoordinates.rows() / 2;
   ArrayXXd vec(pairs, 3);
-  for (auto i = 0; i < pairs; i++) {
+  for (unsigned int i = 0; i < pairs; i++) {
     vec.row(i) =
         selectedCoordinates.row(i) - selectedCoordinates.row(i + pairs);
   }
@@ -572,7 +579,7 @@ ArrayXXd AtomicEnvironmentVector(double *pos, VectorXi species, unsigned int num
   ArrayXXi species12(2, pairs);
   ArrayXXi species12Flipped(2, pairs);
   ArrayXXi atomIndex12Unflattened(2, pairs);
-  for (auto i = 0; i < pairs; i++) {
+  for (unsigned int i = 0; i < pairs; i++) {
     species12(0, i) = species(atomIndex12(i));
     species12(1, i) = species(atomIndex12(i + pairs));
 
@@ -625,28 +632,18 @@ ArrayXXd AtomicEnvironmentVector(double *pos, VectorXi species, unsigned int num
 
   ArrayXXd vecAngular(evenCloserIndices.size(), 3);
 
-  species12Angular =
-      IndexSelect(species12Angular.matrix().cast<double>().array(),
-                  species12.matrix().cast<double>().array(), evenCloserIndices,
-                  1)
-          .matrix()
-          .cast<int>()
-          .array();
-  atomIndex12Angular =
-      IndexSelect(atomIndex12Angular.matrix().cast<double>().array(),
-                  atomIndex12Unflattened.matrix().cast<double>().array(),
-                  evenCloserIndices, 1)
-          .matrix()
-          .cast<int>()
-          .array();
-  vecAngular = IndexSelect(vecAngular, vec, evenCloserIndices, 0);
+  IndexSelect(&species12Angular, &species12, evenCloserIndices, 1);
+  IndexSelect(&atomIndex12Angular, &atomIndex12Unflattened, evenCloserIndices,
+              1);
+  IndexSelect(&vecAngular, &vec, evenCloserIndices, 0);
 
   auto n = evenCloserIndices.size();
 
   // Find Triplets for which angular terms are to be found
   // TripleByMolecules returns an array of central atoms and the corresponding
   // pair of atoms in an STL pair
-  auto tripletInfo = TripleByMolecules(atomIndex12Angular);
+  std::pair<std::vector<int>, ArrayXXi> tripletInfo;
+  TripleByMolecules(&atomIndex12Angular, &tripletInfo);
   auto pairIndex12 = tripletInfo.second;
   auto centralAtomIndex = tripletInfo.first;
   ArrayXXi sign12(2, pairIndex12.cols());
@@ -680,7 +677,7 @@ ArrayXXd AtomicEnvironmentVector(double *pos, VectorXi species, unsigned int num
   }
 
   ArrayXXd vecFlattened(pairIndex12Flattened.size(), 3);
-  vecFlattened = IndexSelect(vecFlattened, vecAngular, pairIndex12Flattened, 0);
+  IndexSelect(&vecFlattened, &vecAngular, pairIndex12Flattened, 0);
 
   ArrayXXd vec12(vecFlattened.rows(), 3);
   for (auto i = 0; i < vecFlattened.rows() / 2; i++) {
@@ -755,30 +752,6 @@ ArrayXXd AtomicEnvironmentVector(double *pos, VectorXi species, unsigned int num
 
   return finalAEV;
 
-}
-
-ArrayXXd AtomicEnvironmentVector(const ROMol &mol, int confId) {
-  PRECONDITION(mol.getNumConformers() >= 1, "molecule has no conformers");
-
-  auto numAtoms = mol.getNumAtoms();
-
-  const auto conf = mol.getConformer(confId);
-
-  ArrayXXd coordinates(numAtoms, 3);
-  auto species = GenerateSpeciesVector(mol);
-  double *pos;
-  pos = new double[3 * numAtoms];
-  unsigned pos_index = 0;
-  for (unsigned int i = 0; i < numAtoms; i++) {
-    auto atom = conf.getAtomPos(i);
-    pos[pos_index] = atom.x;
-    pos[pos_index + 1] = atom.y;
-    pos[pos_index + 2] = atom.z;
-    pos_index += 3;
-  }
-
-  auto aev = AtomicEnvironmentVector(pos, species, numAtoms);
-  return aev;
 }
 
 ArrayXXd AtomicEnvironmentVector(const ROMol &mol, int confId) {

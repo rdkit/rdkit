@@ -54,7 +54,7 @@ RDKIT_DESCRIPTORS_EXPORT Eigen::ArrayXXd AtomicEnvironmentVector(
   the input mol consisting of both radial and angular terms
 */
 RDKIT_DESCRIPTORS_EXPORT Eigen::ArrayXXd AtomicEnvironmentVector(
-    double *pos, Eigen::VectorXi species, unsigned int numAtoms);
+    double *pos, Eigen::VectorXi &species, unsigned int numAtoms);
 
 }  // namespace ANI
 }  // namespace Descriptors
