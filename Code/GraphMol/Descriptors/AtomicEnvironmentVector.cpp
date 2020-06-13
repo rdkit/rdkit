@@ -546,13 +546,12 @@ ArrayXXd IndexAdd(ArrayXXd vector1, ArrayXXd vector2, ArrayXXi index,
   return vector1;
 }
 
-ArrayXXd AtomicEnvironmentVector(double *pos, VectorXi species,
-                                 unsigned int numAtoms) {
-  PRECONDITION(species.size() == numAtoms,
-               "Species encoding for each atom is required");
+ArrayXXd AtomicEnvironmentVector(double *pos, VectorXi species, unsigned int numAtoms) {
   ArrayXXd coordinates(numAtoms, 3);
+  unsigned int pos_index = 0;
   for (auto i = 0; i < numAtoms; i++) {
-    coordinates.row(i) << pos[3 * i], pos[3 * i + 1], pos[3 * i + 2];
+    coordinates.row(i) << pos[pos_index], pos[pos_index + 1], pos[pos_index + 2];
+    pos_index += 3;
   }
   // Fetch pairs of atoms which are neigbours which lie within the cutoff
   // distance 5.2 Angstroms. The constant was obtained by authors of torchANI
@@ -755,6 +754,31 @@ ArrayXXd AtomicEnvironmentVector(double *pos, VectorXi species,
   finalAEV << finalRadialAEV, finalAngularAEV;
 
   return finalAEV;
+
+}
+
+ArrayXXd AtomicEnvironmentVector(const ROMol &mol, int confId) {
+  PRECONDITION(mol.getNumConformers() >= 1, "molecule has no conformers");
+
+  auto numAtoms = mol.getNumAtoms();
+
+  const auto conf = mol.getConformer(confId);
+
+  ArrayXXd coordinates(numAtoms, 3);
+  auto species = GenerateSpeciesVector(mol);
+  double *pos;
+  pos = new double[3 * numAtoms];
+  unsigned pos_index = 0;
+  for (unsigned int i = 0; i < numAtoms; i++) {
+    auto atom = conf.getAtomPos(i);
+    pos[pos_index] = atom.x;
+    pos[pos_index + 1] = atom.y;
+    pos[pos_index + 2] = atom.z;
+    pos_index += 3;
+  }
+
+  auto aev = AtomicEnvironmentVector(pos, species, numAtoms);
+  return aev;
 }
 
 ArrayXXd AtomicEnvironmentVector(const ROMol &mol, int confId) {

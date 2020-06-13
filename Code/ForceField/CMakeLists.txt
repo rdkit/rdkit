@@ -12,7 +12,8 @@ rdkit_library(ForceField
               MMFF/DistanceConstraint.cpp MMFF/AngleConstraint.cpp
               MMFF/TorsionConstraint.cpp MMFF/PositionConstraint.cpp
               MMFF/Params.cpp
-              LINK_LIBRARIES Optimizer Trajectory)
+              ANI/AtomicContrib.cpp
+              LINK_LIBRARIES Optimizer Trajectory ANIDescriptors)
 
 rdkit_headers(Contrib.h
               ForceField.h DEST ForceField)
@@ -42,8 +43,11 @@ rdkit_headers(MMFF/AngleBend.h
               MMFF/PositionConstraint.h
               MMFF/Params.h DEST ForceField/MMFF)
 
+rdkit_headers(ANI/AtomicContrib.h DEST ForceField/ANI)
+
 add_subdirectory(UFF)
 add_subdirectory(MMFF)
+add_subdirectory(ANI)
 if(RDK_BUILD_PYTHON_WRAPPERS)
 add_subdirectory(Wrap)
 endif()

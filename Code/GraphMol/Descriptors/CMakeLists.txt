@@ -1,7 +1,7 @@
 if(RDK_BUILD_DESCRIPTORS3D)
 
-  set(DESC3D_HDRS MolDescriptors3D.h EEM.h PBF.h PMI.h AUTOCORR3D.h RDF.h MORSE.h GETAWAY.h WHIM.h CoulombMat.h AtomicEnvironmentVector.h)
-  set(DESC3D_SOURCES EEM.cpp PBF.cpp PMI.cpp AUTOCORR3D.cpp RDF.cpp MORSE.cpp GETAWAY.cpp WHIM.cpp CoulombMat.cpp AtomicEnvironmentVector.cpp)
+  set(DESC3D_HDRS MolDescriptors3D.h EEM.h PBF.h PMI.h AUTOCORR3D.h RDF.h MORSE.h GETAWAY.h WHIM.h CoulombMat.h)
+  set(DESC3D_SOURCES EEM.cpp PBF.cpp PMI.cpp AUTOCORR3D.cpp RDF.cpp MORSE.cpp GETAWAY.cpp WHIM.cpp CoulombMat.cpp)
 
 endif(RDK_BUILD_DESCRIPTORS3D)
 
@@ -28,6 +28,11 @@ rdkit_headers(Crippen.h BCUT.h Lipinski.h
               USRDescriptor.h AtomFeat.h
               ${DESC3D_HDRS}
               DEST GraphMol/Descriptors)
+
+rdkit_library(ANIDescriptors 
+              AtomicEnvironmentVector.cpp
+              LINK_LIBRARIES RDGeneral)
+rdkit_headers(AtomicEnvironmentVector.h DEST GraphMol/Descriptors)
 
 rdkit_test(testDescriptors test.cpp
 LINK_LIBRARIES PartialCharges Descriptors )
@@ -66,7 +71,7 @@ LINK_LIBRARIES  Descriptors )
 LINK_LIBRARIES  Descriptors ForceFieldHelpers DistGeomHelpers  )
 if(RDK_HAS_EIGEN)
  rdkit_catch_test(AtomicEnvironmentVectorCatchTest AtomicEnvironmentVector_catch.cpp catch_main.cpp
-LINK_LIBRARIES Descriptors ForceFieldHelpers DistGeomHelpers)
+LINK_LIBRARIES ANIDescriptors FileParsers SmilesParse)
 endif(RDK_HAS_EIGEN)
 endif(RDK_BUILD_DESCRIPTORS3D)
 
