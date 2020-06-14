@@ -3085,8 +3085,9 @@ int main() {
 #endif
 
   RDLog::InitLogs();
+  testGithub860();
 
-#if 1
+#if 0
   test1();
   test2();
   test4();

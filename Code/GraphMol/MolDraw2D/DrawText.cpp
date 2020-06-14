@@ -575,8 +575,11 @@ void DrawText::drawChars(const Point2D &a_cds,
     draw_cds.x = a_cds.x + rects[i]->trans_.x - rects[i]->offset_.x;
     draw_cds.y = a_cds.y - rects[i]->trans_.y + rects[i]->offset_.y; // opposite sign convention
     draw_cds.y -= rects[i]->rect_corr_ + rects[i]->y_shift_;
+    double mfs = minFontSize();
+    setMinFontSize(-1);
     setFontScale(full_scale * selectScaleFactor(draw_chars[i], draw_modes[i]));
     drawChar(draw_chars[i], draw_cds);
+    setMinFontSize(mfs);
     setFontScale(full_scale);
   }
 
