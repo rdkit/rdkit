@@ -119,8 +119,8 @@ class DrawText {
 
  protected:
   // amount to scale subscripts and superscripts by
-  constexpr static double SUBS_SCALE = 0.66;
-  constexpr static double SUPER_SCALE = 0.66;
+  constexpr static double SUBS_SCALE = 0.75;
+  constexpr static double SUPER_SCALE = 0.75;
 
   virtual void alignString(TextAlignType align,
                            const std::vector<TextDrawType> &draw_modes,

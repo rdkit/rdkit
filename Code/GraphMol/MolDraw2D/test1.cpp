@@ -1480,8 +1480,8 @@ void testDeuteriumTritium() {
       }
 #else
       // a bit kludgy, but...
-      if(line.find("<text x='253.753' y='150.364' class='atom-1'"
-                    " style='font-size:20px;font-style:normal;"
+      if(line.find("<text x='248.246' y='154' class='atom-1'"
+                    " style='font-size:30px;font-style:normal;"
                     "font-weight:normal;fill-opacity:1;stroke:none;"
                     "font-family:sans-serif;text-anchor:start;"
                     "fill:#000000' >2</text>")
@@ -1524,8 +1524,8 @@ void testDeuteriumTritium() {
         ++count;
       }
 #else
-      if (line.find("<text x='253.753' y='150.364' class='atom-1'"
-                    " style='font-size:20px;font-style:normal;"
+      if (line.find("<text x='248.246' y='154' class='atom-1'"
+                    " style='font-size:30px;font-style:normal;"
                     "font-weight:normal;fill-opacity:1;stroke:none;"
                     "font-family:sans-serif;text-anchor:start;"
                     "fill:#000000' >3</text>")
@@ -3085,9 +3085,8 @@ int main() {
 #endif
 
   RDLog::InitLogs();
-  testGithub860();
 
-#if 0
+#if 1
   test1();
   test2();
   test4();
