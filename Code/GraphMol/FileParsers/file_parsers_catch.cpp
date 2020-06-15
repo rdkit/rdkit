@@ -1454,8 +1454,9 @@ TEST_CASE(
   }
 }
 
-
-TEST_CASE("github #3207: Attachment point info not being read from V2000 mol blocks", "[ctab][bug]") {
+TEST_CASE(
+    "github #3207: Attachment point info not being read from V2000 mol blocks",
+    "[ctab][bug]") {
   SECTION("ATTCHPT") {
     auto mol = R"CTAB(
   Mrv1824 06092009122D          
@@ -1477,5 +1478,27 @@ M  END
     auto molb = MolToV3KMolBlock(*mol);
     CHECK(molb.find("ATTCHPT=1") != std::string::npos);
     CHECK(molb.find("ATTCHPT=2") != std::string::npos);
+  }
+  SECTION("Val=-1") {
+    auto mol = R"CTAB(
+  Mrv1824 06092009122D          
+
+  3  2  0  0  0  0            999 V2000
+   -8.9061    3.8393    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -8.1917    4.2518    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -7.4772    3.8393    0.0000 N   0  0  0  0  0  0  0  0  0  0  0  0
+  1  2  1  0  0  0  0
+  2  3  1  0  0  0  0
+M  APO  2   1  -1   2   1
+M  END
+)CTAB"_ctab;
+    REQUIRE(mol);
+    CHECK(mol->getAtomWithIdx(0)->getProp<int>(
+              common_properties::molAttachPoint) == 3);
+    CHECK(mol->getAtomWithIdx(1)->getProp<int>(
+              common_properties::molAttachPoint) == 1);
+    auto molb = MolToV3KMolBlock(*mol);
+    CHECK(molb.find("ATTCHPT=1") != std::string::npos);
+    CHECK(molb.find("ATTCHPT=3") != std::string::npos);
   }
 }

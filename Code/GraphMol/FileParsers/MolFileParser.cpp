@@ -871,7 +871,8 @@ void ParseMarvinSmartsLine(RWMol *mol, const std::string &text,
   }
 }
 
-void ParseAttachPointLine(RWMol *mol, const std::string &text, unsigned int line) {
+void ParseAttachPointLine(RWMol *mol, const std::string &text,
+                          unsigned int line) {
   PRECONDITION(mol, "bad mol");
   PRECONDITION(text.substr(0, 6) == std::string("M  APO"), "bad APO line");
 
@@ -909,7 +910,18 @@ void ParseAttachPointLine(RWMol *mol, const std::string &text, unsigned int line
                << " not found";
         throw FileParseException(errout.str());
       } else {
-        atom->setProp(common_properties::molAttachPoint,val);
+        if (val == -1) {
+          // this is 3 in v3k mol blocks, so use that:
+          val = 3;
+        }
+        if (val < 0 || val > 3) {
+          std::ostringstream errout;
+          errout << "Value " << val << " from APO specification on line "
+                 << line << " is invalid";
+          throw FileParseException(errout.str());
+        } else if (val) {
+          atom->setProp(common_properties::molAttachPoint, val);
+        }
       }
     } catch (boost::bad_lexical_cast &) {
       std::ostringstream errout;
