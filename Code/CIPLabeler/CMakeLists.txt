@@ -1,5 +1,3 @@
-
-remove_definitions(-DRDKIT_GRAPHMOL_BUILD)
 add_definitions(-DRDKIT_CIPLABELER_BUILD)
 
 set(configs_src
@@ -27,7 +25,7 @@ rdkit_library(CIPLabeler
               LINK_LIBRARIES GraphMol)
 
 rdkit_headers(CIPLabeler.h
-              DEST GraphMol/CIPLabeler)
+              DEST CIPLabeler)
 
 rdkit_catch_test(testCIPLabeler catch_tests.cpp
                  CIPMol.cpp CIPLabeler.cpp
