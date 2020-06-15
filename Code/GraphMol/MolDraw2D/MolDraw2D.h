@@ -185,6 +185,8 @@ struct RDKIT_MOLDRAW2D_EXPORT MolDrawOptions {
   int minFontSize = 12; // likewise for -1.
   double annotationFontScale = 0.5;  // scales font relative to atom labels for
                                       // atom and bond annotation.
+  std::string fontFile = ""; // name of font for freetype rendering.  If given,
+                              // over-rides default
   DrawColour legendColour{0, 0,
                           0};  // color to be used for the legend (if present)
   double multipleBondOffset = 0.15;  // offset (in Angstrom) for the extra lines

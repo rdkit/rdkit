@@ -20,8 +20,10 @@ using namespace std;
 namespace RDKit {
 
 // ****************************************************************************
-  DrawTextFT::DrawTextFT(double max_fnt_sz, double min_fnt_sz) :
-    DrawText(max_fnt_sz, min_fnt_sz), x_trans_(0), y_trans_(0), string_y_max_(0) {
+  DrawTextFT::DrawTextFT(double max_fnt_sz, double min_fnt_sz,
+                         const string &font_file) :
+    DrawText(max_fnt_sz, min_fnt_sz), library_(nullptr), face_(nullptr),
+    x_trans_(0), y_trans_(0), string_y_max_(0) {
 
   string fontfile = getFontFile();
 
@@ -29,12 +31,13 @@ namespace RDKit {
   if(err_code != FT_Err_Ok) {
     throw runtime_error(string("Couldn't initialise Freetype."));
   }
-  // take the first face
-  err_code = FT_New_Face(library_, fontfile.c_str(), 0, &face_);
-  if(err_code != FT_Err_Ok) {
-    throw runtime_error(string("Font file ") + fontfile + string(" not found."));
-  }
-  em_scale_ = 1.0 / face_->units_per_EM;
+//  // take the first face
+//  err_code = FT_New_Face(library_, fontfile.c_str(), 0, &face_);
+//  if(err_code != FT_Err_Ok) {
+//    throw runtime_error(string("Font file ") + fontfile + string(" not found."));
+//  }
+//  em_scale_ = 1.0 / face_->units_per_EM;
+  setFontFile(font_file);
 
 }
 
@@ -103,12 +106,34 @@ double DrawTextFT::extractOutline() {
 // ****************************************************************************
 string DrawTextFT::getFontFile() const {
 
+  if(!font_file_.empty()) {
+    return font_file_;
+  }
   string ff_name = getenv("RDBASE") ? getenv("RDBASE") : "";
   if(ff_name.empty()) {
     return "NO_FONT_FILE"; // the c'tor will throw when this file isn't found.
   }
   ff_name += "/Code/GraphMol/MolDraw2D/Telex-Regular.ttf";
   return ff_name;
+
+}
+
+// ****************************************************************************
+void DrawTextFT::setFontFile(const string &font_file) {
+
+  if(face_ && font_file == font_file_) {
+    return;
+  }
+
+  font_file_ = font_file;
+  string ff = getFontFile();
+  FT_Done_Face(face_);
+  // take the first face
+  int err_code = FT_New_Face(library_, ff.c_str(), 0, &face_);
+  if(err_code != FT_Err_Ok) {
+    throw runtime_error(string("Font file ") + ff + string(" not found."));
+  }
+  em_scale_ = 1.0 / face_->units_per_EM;
 
 }
 

@@ -14,8 +14,9 @@ namespace RDKit {
 
 // ****************************************************************************
   DrawTextFTCairo::DrawTextFTCairo(double max_fnt_sz, double min_fnt_sz,
+                                   const std::string &font_file,
 				   cairo_t *dp_cr)
-    : DrawTextFT(max_fnt_sz, min_fnt_sz) , dp_cr_(dp_cr){
+    : DrawTextFT(max_fnt_sz, min_fnt_sz, font_file) , dp_cr_(dp_cr){
 }
 
 // ****************************************************************************

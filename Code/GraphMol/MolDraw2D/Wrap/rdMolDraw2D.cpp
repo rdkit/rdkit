@@ -606,6 +606,10 @@ BOOST_PYTHON_MODULE(rdMolDraw2D) {
           "Scale of font for atom and bond annotation relative to atom"
           "label font.  Default=0.75.")
       .def_readwrite(
+          "fontFile", &RDKit::MolDrawOptions::fontFile,
+          "Font file for use with FreeType text drawer."
+          )
+      .def_readwrite(
           "multipleBondOffset", &RDKit::MolDrawOptions::multipleBondOffset,
           "offset (in Angstroms) for the extra lines in a multiple bond")
       .def_readwrite("padding", &RDKit::MolDrawOptions::padding,

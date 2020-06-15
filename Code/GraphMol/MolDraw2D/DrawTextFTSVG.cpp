@@ -18,8 +18,10 @@ string DrawColourToSVG(const RDKit::DrawColour &col);
 
 // ****************************************************************************
   DrawTextFTSVG::DrawTextFTSVG(double max_fnt_sz, double min_fnt_sz,
+                               const std::string &font_file,
 			       ostream &oss, string &d_act_class)
-    : DrawTextFT(max_fnt_sz, min_fnt_sz), oss_(oss), d_active_class_(d_act_class) {
+    : DrawTextFT(max_fnt_sz, min_fnt_sz, font_file),
+      oss_(oss), d_active_class_(d_act_class) {
 }
 
 // ****************************************************************************

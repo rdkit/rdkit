@@ -3072,14 +3072,36 @@ void test20Annotate() {
   std::cerr << " Done" << std::endl;
 }
 
+void test21FontFile() {
+#ifdef RDK_BUILD_FREETYPE_SUPPORT
+  std::cout << " ----------------- Test 21 - different font" << std::endl;
+  // You have to look at this one, there's no algorithmic check.
+  {
+    auto m = "CO[C@@H](O)C1=C(O[C@H](F)Cl)C(C#N)=C1ONNC[NH3+]"_smiles;
+    TEST_ASSERT(m);
+    RDDepict::compute2DCoords(*m);
+    WedgeMolBonds(*m, &(m->getConformer()));
+    std::ofstream outs("test21_1.svg");
+    MolDraw2DSVG drawer(500, 500, outs);
+    std::string fName = getenv("RDBASE");
+    fName += "/Code/GraphMol/MolDraw2D/Amadeus.ttf";
+    drawer.drawOptions().fontFile = fName;
+    drawer.drawMolecule(*m);
+    drawer.finishDrawing();
+    outs.flush();
+  }
+#endif
+}
+
 int main() {
 #ifdef RDK_BUILD_COORDGEN_SUPPORT
   RDDepict::preferCoordGen = false;
 #endif
 
   RDLog::InitLogs();
+  test21FontFile();
 
-#if 1
+#if 0
   test1();
   test2();
   test4();

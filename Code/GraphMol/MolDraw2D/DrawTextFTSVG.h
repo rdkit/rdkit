@@ -22,6 +22,7 @@ class DrawTextFTSVG : public DrawTextFT {
 
  public:
   DrawTextFTSVG(double max_fnt_sz, double min_fnt_sz,
+                const std::string &font_file,
 		std::ostream &oss, std::string &d_act_class);
 
   int MoveToFunctionImpl(const FT_Vector *to) override;

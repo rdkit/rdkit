@@ -32,7 +32,8 @@ class DrawTextFT : public DrawText {
 
  public:
 
-  DrawTextFT(double max_fnt_sz, double min_fnt_sz);
+  DrawTextFT(double max_fnt_sz, double min_fnt_sz,
+             const std::string &font_file);
   ~DrawTextFT();
 
   void drawChar(char c, const Point2D &cds) override;
@@ -45,6 +46,11 @@ class DrawTextFT : public DrawText {
                                   const FT_Vector *controlTwo,
                                   const FT_Vector *to) = 0;
 
+  // unless over-ridden by the c'tor, this will return a hard-coded
+  // file from $RDBASE.
+  std::string getFontFile() const;
+  void setFontFile(const std::string &font_file) override;
+
  protected:
   double fontCoordToDrawCoord(FT_Pos fc) const;
   void fontPosToDrawPos(FT_Pos fx, FT_Pos fy, double &dx, double &dy) const;
@@ -55,14 +61,10 @@ class DrawTextFT : public DrawText {
 
   FT_Library library_;
   FT_Face face_;
+  std::string font_file_; // over-rides default if not empty.
   double x_trans_, y_trans_;
   mutable FT_Pos string_y_max_; // maximum y value of string drawn, for inverting y
   double em_scale_;
-
-  // look for a hard-coded font file under RDBase.  We may want to
-  // improve on this to give the user scope for having a different
-  // one.
-  std::string getFontFile() const;
 
   // return a vector of StringRects, one for each char in text, with
   // super- and subscripts taken into account.  Sizes in pixel coords,

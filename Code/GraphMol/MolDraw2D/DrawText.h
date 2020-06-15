@@ -57,6 +57,12 @@ class DrawText {
   double fontScale() const;
   void setFontScale(double new_scale);
 
+  // these are only relevant for the FreeType DrawText classes.
+  std::string getFontFile() const { return "";}
+  virtual void setFontFile(const std::string &font_file) {
+    RDUNUSED_PARAM(font_file);
+  }
+
   //! using the current scale, work out the size of the label
   /*!
      Bear in mind when implementing this, that, for example, NH2 will appear as
