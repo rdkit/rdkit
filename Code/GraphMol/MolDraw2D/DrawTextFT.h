@@ -55,7 +55,7 @@ class DrawTextFT : public DrawText {
 
   FT_Library library_;
   FT_Face face_;
-  FT_Pos x_trans_, y_trans_;
+  double x_trans_, y_trans_;
   mutable FT_Pos string_y_max_; // maximum y value of string drawn, for inverting y
   double em_scale_;
 

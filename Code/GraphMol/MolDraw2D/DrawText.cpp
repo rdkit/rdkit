@@ -422,7 +422,7 @@ void DrawText::adjustStringRectsForSuperSubScript(const vector<TextDrawType> &dr
               rects[j]->trans_.x += move_by;
             }
           }
-//          rects[i]->trans_.x = rects[i-1]->trans_.x;
+          rects[i]->trans_.x = rects[i-1]->trans_.x;
         }
         break;
       case TextDrawType::TextDrawSubscript:
@@ -441,7 +441,7 @@ void DrawText::adjustStringRectsForSuperSubScript(const vector<TextDrawType> &dr
               rects[j]->trans_.x += move_by;
             }
           }
-//          rects[i]->trans_.x = rects[i-1]->trans_.x;
+          rects[i]->trans_.x = rects[i-1]->trans_.x;
         }
         break;
       case TextDrawType::TextDrawNormal:
