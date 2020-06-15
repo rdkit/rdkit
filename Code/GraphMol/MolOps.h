@@ -345,6 +345,18 @@ struct RDKIT_GRAPHMOL_EXPORT AdjustQueryParameters {
       false; /**< remove stereochemistry info from double bonds that do not have
                 the stereoCare property set */
 
+  bool adjustConjugatedFiveRings =
+      false; /**< sets bond queries in conjugated five-rings to
+                SINGLE|DOUBLE|AROMATIC */
+
+  bool adjustSingleBondsToDegreeOneNeighbors =
+      false; /**<  sets single bonds between aromatic atoms and degree one
+                neighbors to SINGLE|AROMATIC */
+
+  bool adjustSingleBondsBetweenAromaticAtoms =
+      false; /**<  sets single bonds between two aromatic atoms to
+                SINGLE|AROMATIC */
+
   AdjustQueryParameters() {}
 };
 

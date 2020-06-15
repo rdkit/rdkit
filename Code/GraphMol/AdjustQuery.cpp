@@ -80,6 +80,14 @@ void parseAdjustQueryParametersFromJSON(MolOps::AdjustQueryParameters &p,
   p.adjustRingChain = pt.get("adjustRingChain", p.adjustRingChain);
   p.useStereoCareForBonds =
       pt.get("useStereoCareForBonds", p.useStereoCareForBonds);
+  p.adjustConjugatedFiveRings =
+      pt.get("adjustConjugatedFiveRings", p.adjustConjugatedFiveRings);
+  p.adjustSingleBondsToDegreeOneNeighbors =
+      pt.get("adjustSingleBondsToDegreeOneNeighbors",
+             p.adjustSingleBondsToDegreeOneNeighbors);
+  p.adjustSingleBondsBetweenAromaticAtoms =
+      pt.get("adjustSingleBondsBetweenAromaticAtoms",
+             p.adjustSingleBondsBetweenAromaticAtoms);
 
   std::string which;
   which = boost::to_upper_copy<std::string>(pt.get("adjustDegreeFlags", ""));

@@ -2393,6 +2393,26 @@ A note on the flags controlling which atoms/bonds are modified: \n\
         .def_readwrite("adjustRingChainFlags",
                        &MolOps::AdjustQueryParameters::adjustRingChainFlags,
                        "controls which atoms have ring-chain queries added")
+        .def_readwrite(
+            "useStereoCareForBonds",
+            &MolOps::AdjustQueryParameters::useStereoCareForBonds,
+            "if this is set sterochemistry information will be removed from "
+            "double bonds that do not have the stereoCare property set")
+        .def_readwrite(
+            "adjustConjugatedFiveRings",
+            &MolOps::AdjustQueryParameters::adjustConjugatedFiveRings,
+            "set bond queries in conjugated five-rings to "
+            "SINGLE|DOUBLE|AROMATIC")
+        .def_readwrite("adjustSingleBondsToDegreeOneNeighbors",
+                       &MolOps::AdjustQueryParameters::
+                           adjustSingleBondsToDegreeOneNeighbors,
+                       "set single bonds bewteen aromatic atoms and degree-one "
+                       "neighbors to SINGLE|AROMATIC")
+        .def_readwrite(
+            "adjustSingleBondsBetweenAromaticAtoms",
+            &MolOps::AdjustQueryParameters::
+                adjustSingleBondsBetweenAromaticAtoms,
+            "sets single bonds between two aromatic atoms to SINGLE|AROMATIC");
 
     docString =
         "Returns a new molecule where the query properties of atoms have been "
