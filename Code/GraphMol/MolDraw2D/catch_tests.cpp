@@ -234,8 +234,8 @@ TEST_CASE("dative bonds", "[drawing][organometallics]") {
     outs << text;
     outs.flush();
 
-    CHECK(text.find("<path class='bond-0' d='M 124.586,100"
-                    " L 85.2144,100' style='fill:none;"
+    CHECK(text.find("<path class='bond-0' d='M 126.052,100"
+                    " L 85.9675,100' style='fill:none;"
                     "fill-rule:evenodd;stroke:#0000FF;")
           != std::string::npos);
   }
@@ -270,8 +270,8 @@ TEST_CASE("dative bonds", "[drawing][organometallics]") {
     outs << text;
     outs.flush();
 
-    CHECK(text.find("<path class='bond-2' d='M 53.7562,140.668"
-                    " L 81.4916,149.68' style='fill:none;"
+    CHECK(text.find("<path class='bond-2' d='M 53.289,140.668"
+                    " L 81.0244,149.68' style='fill:none;"
                     "fill-rule:evenodd;stroke:#0000FF;")
           != std::string::npos);
   }
