@@ -236,6 +236,7 @@ struct RDKIT_MOLDRAW2D_EXPORT MolDrawOptions {
                                           // ellipses round longer labels.
   bool centreMoleculesBeforeDrawing = false;  // moves the centre of the drawn
                                               // molecule to (0,0)
+  bool explicitMethyl = false; // draw terminal methyl and related as CH3
 
   MolDrawOptions() {
     highlightColourPalette.emplace_back(

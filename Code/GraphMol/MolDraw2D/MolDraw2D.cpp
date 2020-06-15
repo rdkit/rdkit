@@ -2961,6 +2961,13 @@ string MolDraw2D::getAtomSymbol(const RDKit::Atom &atom) const {
     int num_h = (atom.getAtomicNum() == 6 && atom.getDegree() > 0)
                 ? 0
                 : atom.getTotalNumHs();  // FIX: still not quite right
+
+    if (drawOptions().explicitMethyl && atom.getAtomicNum() == 6
+        && atom.getDegree() == 1) {
+      symbol += atom.getSymbol();
+      num_h = atom.getTotalNumHs();
+    }
+
     if (num_h > 0 && !atom.hasQuery()) {
       // the H text comes after the atomic symbol
       std::string h = "H";

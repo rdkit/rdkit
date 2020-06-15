@@ -3090,7 +3090,36 @@ void test21FontFile() {
     drawer.finishDrawing();
     outs.flush();
   }
+  std::cerr << "Done" << std::endl;
 #endif
+}
+
+void test22ExplicitMethyl() {
+  std::cout << " ----------------- Test 22 - draw explicit methyls." << std::endl;
+  auto m = "CCC(C#C)C=C"_smiles;
+  TEST_ASSERT(m);
+  RDDepict::compute2DCoords(*m);
+  {
+    MolDraw2DSVG drawer(300, 300);
+    drawer.drawMolecule(*m);
+    drawer.finishDrawing();
+    std::string text = drawer.getDrawingText();
+    std::ofstream outs("test22_1.svg");
+    outs << text;
+    outs.flush();
+    TEST_ASSERT(text.find("class='atom-") == std::string::npos);
+  }
+  {
+    MolDraw2DSVG drawer(300, 300);
+    drawer.drawOptions().explicitMethyl = true;
+    drawer.drawMolecule(*m);
+    drawer.finishDrawing();
+    std::string text = drawer.getDrawingText();
+    std::ofstream outs("test22_2.svg");
+    outs << text;
+    outs.flush();
+    TEST_ASSERT(text.find("class='atom-") != std::string::npos);
+  }
 }
 
 int main() {
@@ -3099,9 +3128,8 @@ int main() {
 #endif
 
   RDLog::InitLogs();
-  test21FontFile();
 
-#if 0
+#if 1
   test1();
   test2();
   test4();
@@ -3143,6 +3171,8 @@ int main() {
   testGithub2762();
   testGithub2931();
   test20Annotate();
+  test21FontFile();
+  test22ExplicitMethyl();
 #endif
 
 }

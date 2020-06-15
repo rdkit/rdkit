@@ -657,7 +657,9 @@ BOOST_PYTHON_MODULE(rdMolDraw2D) {
       .def_readwrite("additionalAtomLabelPadding",
                      &RDKit::MolDrawOptions::additionalAtomLabelPadding,
                      "additional padding to leave around atom labels. "
-                     "Expressed as a fraction of the font size.");
+                     "Expressed as a fraction of the font size.")
+      .def_readwrite("explicitMethyl", &RDKit::MolDrawOptions::explicitMethyl,
+                     "Draw terminal methyls explictly.  Default is false.");
   docString = "Drawer abstract base class";
   python::class_<RDKit::MolDraw2D, boost::noncopyable>(
       "MolDraw2D", docString.c_str(), python::no_init)
