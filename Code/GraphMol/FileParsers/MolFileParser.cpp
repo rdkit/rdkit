@@ -910,16 +910,16 @@ void ParseAttachPointLine(RWMol *mol, const std::string &text,
                << " not found";
         throw FileParseException(errout.str());
       } else {
-        if (val == -1) {
-          // this is 3 in v3k mol blocks, so use that:
-          val = 3;
-        }
         if (val < 0 || val > 3) {
           std::ostringstream errout;
           errout << "Value " << val << " from APO specification on line "
                  << line << " is invalid";
           throw FileParseException(errout.str());
         } else if (val) {
+          if (val == 3) {
+            // this is -1 in v3k mol blocks, so use that:
+            val = -1;
+          }
           atom->setProp(common_properties::molAttachPoint, val);
         }
       }

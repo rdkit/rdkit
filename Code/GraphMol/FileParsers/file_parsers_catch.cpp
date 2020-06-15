@@ -1489,16 +1489,16 @@ M  END
    -7.4772    3.8393    0.0000 N   0  0  0  0  0  0  0  0  0  0  0  0
   1  2  1  0  0  0  0
   2  3  1  0  0  0  0
-M  APO  2   1  -1   2   1
+M  APO  2   1   3   2   1
 M  END
 )CTAB"_ctab;
     REQUIRE(mol);
     CHECK(mol->getAtomWithIdx(0)->getProp<int>(
-              common_properties::molAttachPoint) == 3);
+              common_properties::molAttachPoint) == -1);
     CHECK(mol->getAtomWithIdx(1)->getProp<int>(
               common_properties::molAttachPoint) == 1);
     auto molb = MolToV3KMolBlock(*mol);
     CHECK(molb.find("ATTCHPT=1") != std::string::npos);
-    CHECK(molb.find("ATTCHPT=3") != std::string::npos);
+    CHECK(molb.find("ATTCHPT=-1") != std::string::npos);
   }
 }
