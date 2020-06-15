@@ -2350,33 +2350,49 @@ A note on the flags controlling which atoms/bonds are modified: \n\
     python::class_<MolOps::AdjustQueryParameters>("AdjustQueryParameters",
                                                   docString.c_str())
         .def_readwrite("adjustDegree",
-                       &MolOps::AdjustQueryParameters::adjustDegree)
+                       &MolOps::AdjustQueryParameters::adjustDegree,
+                       "add degree queries")
         .def_readwrite("adjustDegreeFlags",
-                       &MolOps::AdjustQueryParameters::adjustDegreeFlags)
+                       &MolOps::AdjustQueryParameters::adjustDegreeFlags,
+                       "controls which atoms have their degree queries changed")
         .def_readwrite("adjustHeavyDegree",
-                       &MolOps::AdjustQueryParameters::adjustHeavyDegree)
-        .def_readwrite("adjustHeavyDegreeFlags",
-                       &MolOps::AdjustQueryParameters::adjustHeavyDegreeFlags)
+                       &MolOps::AdjustQueryParameters::adjustHeavyDegree,
+                       "adjust the heavy-atom degree")
+        .def_readwrite(
+            "adjustHeavyDegreeFlags",
+            &MolOps::AdjustQueryParameters::adjustHeavyDegreeFlags,
+            "controls which atoms have their heavy-atom degree queries changed")
         .def_readwrite("adjustRingCount",
-                       &MolOps::AdjustQueryParameters::adjustRingCount)
+                       &MolOps::AdjustQueryParameters::adjustRingCount,
+                       "add ring-count queries")
         .def_readwrite("adjustRingCountFlags",
-                       &MolOps::AdjustQueryParameters::adjustRingCountFlags)
-        .def_readwrite("makeDummiesQueries",
-                       &MolOps::AdjustQueryParameters::makeDummiesQueries)
+                       &MolOps::AdjustQueryParameters::adjustRingCountFlags,
+                       "controls which atoms have ring-count queries added")
+        .def_readwrite(
+            "makeDummiesQueries",
+            &MolOps::AdjustQueryParameters::makeDummiesQueries,
+            "convert dummy atoms without isotope labels to any-atom queries")
         .def_readwrite("aromatizeIfPossible",
-                       &MolOps::AdjustQueryParameters::aromatizeIfPossible)
+                       &MolOps::AdjustQueryParameters::aromatizeIfPossible,
+                       "perceive and set aromaticity")
         .def_readwrite("makeBondsGeneric",
-                       &MolOps::AdjustQueryParameters::makeBondsGeneric)
+                       &MolOps::AdjustQueryParameters::makeBondsGeneric,
+                       "converts bonds to generic queries (any bonds)")
         .def_readwrite("makeBondsGenericFlags",
-                       &MolOps::AdjustQueryParameters::makeBondsGenericFlags)
+                       &MolOps::AdjustQueryParameters::makeBondsGenericFlags,
+                       "controls which bonds are converted to generic queries")
         .def_readwrite("makeAtomsGeneric",
-                       &MolOps::AdjustQueryParameters::makeAtomsGeneric)
+                       &MolOps::AdjustQueryParameters::makeAtomsGeneric,
+                       "convert atoms to generic queries (any atoms)")
         .def_readwrite("makeAtomsGenericFlags",
-                       &MolOps::AdjustQueryParameters::makeAtomsGenericFlags)
+                       &MolOps::AdjustQueryParameters::makeAtomsGenericFlags,
+                       "controls which atoms are converted to generic queries")
         .def_readwrite("adjustRingChain",
-                       &MolOps::AdjustQueryParameters::adjustRingChain)
+                       &MolOps::AdjustQueryParameters::adjustRingChain,
+                       "add ring-chain queries to atoms")
         .def_readwrite("adjustRingChainFlags",
-                       &MolOps::AdjustQueryParameters::adjustRingChainFlags);
+                       &MolOps::AdjustQueryParameters::adjustRingChainFlags,
+                       "controls which atoms have ring-chain queries added")
 
     docString =
         "Returns a new molecule where the query properties of atoms have been "
