@@ -35,10 +35,8 @@ public:
 
   const std::vector<const SequenceRule *> &getRules() const;
 
-  Priority prioritise(const Node *node, std::vector<Edge *> &edges) const;
-
   Priority prioritise(const Node *node, std::vector<Edge *> &edges,
-                      bool deep) const;
+                      bool deep = true) const;
 
   std::vector<std::vector<Edge *>>
   getGroups(const std::vector<Edge *> &sorted) const;

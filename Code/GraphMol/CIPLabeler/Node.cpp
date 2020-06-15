@@ -106,7 +106,7 @@ void Node::add(Edge *e) { d_edges.push_back(e); }
 
 void Node::setAux(Descriptor desc) { d_aux = desc; }
 
-std::vector<Edge *> Node::getEdges() const {
+const std::vector<Edge *>& Node::getEdges() const {
   if (!isExpanded()) {
     auto non_const_this = const_cast<Node *>(this);
     non_const_this->d_flags |= EXPANDED;

@@ -30,7 +30,7 @@ public:
     }
   }
 
-  ~Rules() {
+  ~Rules() override {
     for (auto &rule : d_rules) {
       delete rule;
     }

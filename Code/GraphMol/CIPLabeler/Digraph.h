@@ -1,4 +1,11 @@
 //
+// Digraph is the core data structure for determining
+// Cahn–Ingold–Prelog (CIP) chirality of a molecule.
+//
+// It's a "directed graph" - meaning that each bond
+// has a start and an end. For CIP determination,
+// the start points back towards the atom that is
+// being labelled.
 //
 //  Copyright (C) 2020 Schrödinger, LLC
 //
@@ -47,12 +54,16 @@ public:
 
   const CIPMol &getMol() const;
 
-  Node *getOriginRoot() const;
+  Node *getOriginalRoot() const;
 
   Node *getCurrentRoot() const;
 
   int getNumNodes() const;
 
+  /**
+   * Get all nodes which refer to `atom` in order of
+   * distance from the root.
+   */
   std::vector<Node *> getNodes(Atom *atom) const;
 
   /**
@@ -69,6 +80,9 @@ public:
   /**
    * Sets the root node of this digraph by flipping the directions
    * of edges as required.
+   *
+   * This is more efficient than building a new Digraph, but is
+   * only valid for neighboring Nodes.
    *
    * @param newroot the new root
    */

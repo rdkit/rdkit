@@ -51,7 +51,7 @@ void Tetrahedral::setPrimaryLabel(Descriptor desc) {
     getFocus()->setProp(common_properties::_CIPCode, to_string(desc));
     return;
   case Descriptor::NONE:
-    throw std::runtime_error("Received an invalid as Atom Descriptor");
+    throw std::runtime_error("Received an invalid Atom Descriptor");
   case Descriptor::seqTrans:
   case Descriptor::seqCis:
   case Descriptor::E:
@@ -71,7 +71,7 @@ void Tetrahedral::setPrimaryLabel(Descriptor desc) {
 Descriptor Tetrahedral::label(const Rules &comp) {
   auto &digraph = getDigraph();
 
-  auto root = digraph.getOriginRoot();
+  auto root = digraph.getOriginalRoot();
   if (digraph.getCurrentRoot() != root) {
     digraph.changeRoot(root);
   }

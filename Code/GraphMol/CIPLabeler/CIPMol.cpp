@@ -37,12 +37,12 @@ CXXAtomIterator<MolGraph, Atom *> CIPMol::atoms() const {
 
 Bond *CIPMol::getBond(int idx) const { return d_mol.getBondWithIdx(idx); };
 
-CIPMolIterator<Bond *, ROMol::OEDGE_ITER> CIPMol::getBonds(Atom *atom) const {
+CIPMolSpan<Bond *, ROMol::OEDGE_ITER> CIPMol::getBonds(Atom *atom) const {
   PRECONDITION(atom, "bad atom")
   return {d_mol, d_mol.getAtomBonds(atom)};
 }
 
-CIPMolIterator<Atom *, ROMol::ADJ_ITER> CIPMol::getNeighbors(Atom *atom) const {
+CIPMolSpan<Atom *, ROMol::ADJ_ITER> CIPMol::getNeighbors(Atom *atom) const {
   PRECONDITION(atom, "bad atom")
   return {d_mol, d_mol.getAtomNeighbors(atom)};
 }

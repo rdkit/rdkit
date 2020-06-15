@@ -144,7 +144,7 @@ void check_incoming_edge_count(Node *root) {
 }
 
 void expandAll(Digraph &g) {
-  auto queue = std::list<Node *>({g.getOriginRoot()});
+  auto queue = std::list<Node *>({g.getOriginalRoot()});
 
   for (const auto &node : queue) {
 
@@ -204,7 +204,7 @@ TEST_CASE("Rule1a", "[accurateCIP]") {
     auto mol = "COC"_smiles;
     CIPLabeler::CIPMol cipmol(*mol);
     Digraph g(cipmol, cipmol.getAtom(1));
-    auto origin = g.getOriginRoot();
+    auto origin = g.getOriginalRoot();
 
     auto frac = origin->getAtomicNumFraction();
     REQUIRE(frac.numerator() == 8);
@@ -225,7 +225,7 @@ TEST_CASE("Rule1a", "[accurateCIP]") {
     auto mol = "CON"_smiles;
     CIPLabeler::CIPMol cipmol(*mol);
     Digraph g(cipmol, cipmol.getAtom(1));
-    auto origin = g.getOriginRoot();
+    auto origin = g.getOriginalRoot();
 
     auto frac = origin->getAtomicNumFraction();
     REQUIRE(frac.numerator() == 8);
@@ -257,7 +257,7 @@ TEST_CASE("Rule2", "[accurateCIP]") {
     auto mol = "COC"_smiles;
     CIPLabeler::CIPMol cipmol(*mol);
     Digraph g(cipmol, cipmol.getAtom(1));
-    auto origin = g.getOriginRoot();
+    auto origin = g.getOriginalRoot();
 
     auto frac = origin->getAtomicNumFraction();
     REQUIRE(frac.numerator() == 8);
@@ -278,7 +278,7 @@ TEST_CASE("Rule2", "[accurateCIP]") {
     auto mol = "CO[13C]"_smiles;
     CIPLabeler::CIPMol cipmol(*mol);
     Digraph g(cipmol, cipmol.getAtom(1));
-    auto origin = g.getOriginRoot();
+    auto origin = g.getOriginalRoot();
 
     auto frac = origin->getAtomicNumFraction();
     REQUIRE(frac.numerator() == 8);
@@ -303,7 +303,7 @@ TEST_CASE("Rule2", "[accurateCIP]") {
     auto mol = "[13C]O[14C]"_smiles;
     CIPLabeler::CIPMol cipmol(*mol);
     Digraph g(cipmol, cipmol.getAtom(1));
-    auto origin = g.getOriginRoot();
+    auto origin = g.getOriginalRoot();
 
     auto frac = origin->getAtomicNumFraction();
     REQUIRE(frac.numerator() == 8);

@@ -24,10 +24,6 @@ const std::vector<const SequenceRule *> &Sort::getRules() const {
   return d_rules;
 }
 
-Priority Sort::prioritise(const Node *node, std::vector<Edge *> &edges) const {
-  return prioritise(node, edges, true);
-}
-
 Priority Sort::prioritise(const Node *node, std::vector<Edge *> &edges,
                           bool deep) const {
   bool unique = true;
@@ -51,12 +47,12 @@ Priority Sort::prioritise(const Node *node, std::vector<Edge *> &edges,
       }
     }
 
-  return Priority(unique, numPseudoAsym == 1);
+  return {unique, numPseudoAsym == 1};
 }
 
 int Sort::compareSubstituents(const Node *node, const Edge *a, const Edge *b,
                               bool deep) const {
-  // ensure 'up' edges are moved to the front
+  // ensure 'out' edges are moved to the front
   if (!a->isBeg(node) && b->isBeg(node)) {
     return +1;
   } else if (a->isBeg(node) && !b->isBeg(node)) {
@@ -94,4 +90,4 @@ Sort::getGroups(const std::vector<Edge *> &sorted) const {
 }
 
 } // namespace CIPLabeler
-} // namespace RDKit
+}  // namespace RDKit

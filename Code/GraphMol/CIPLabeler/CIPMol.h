@@ -21,7 +21,7 @@ namespace RDKit {
 
 namespace CIPLabeler {
 
-template <typename T, typename U> class CIPMolIterator {
+template <typename T, typename U> class CIPMolSpan {
 public:
   class CIPMolIter {
   public:
@@ -47,8 +47,8 @@ public:
   };
 
 public:
-  CIPMolIterator() = delete;
-  CIPMolIterator(ROMol &mol, std::pair<U, U> &&itr)
+  CIPMolSpan() = delete;
+  CIPMolSpan(ROMol &mol, std::pair<U, U> &&itr)
       : d_mol{mol}, d_istart{std::move(itr.first)},
         d_iend{std::move(itr.second)} {}
 
@@ -67,6 +67,8 @@ public:
 
   explicit CIPMol(ROMol &mol);
 
+  // Average atomic number with other atoms that are in an
+  // aromatic ring with this one.
   boost::rational<int> getFractionalAtomicNum(Atom *atom) const;
 
   unsigned getNumAtoms() const;
@@ -79,12 +81,14 @@ public:
 
   Bond *getBond(int idx) const;
 
-  CIPMolIterator<Bond *, ROMol::OEDGE_ITER> getBonds(Atom *atom) const;
+  CIPMolSpan<Bond *, ROMol::OEDGE_ITER> getBonds(Atom *atom) const;
 
-  CIPMolIterator<Atom *, ROMol::ADJ_ITER> getNeighbors(Atom *atom) const;
+  CIPMolSpan<Atom *, ROMol::ADJ_ITER> getNeighbors(Atom *atom) const;
 
   bool isInRing(Bond *bond) const;
 
+  // Integer bond order of a kekulized molecule
+  // Dative bonds get bond order 0.
   int getBondOrder(Bond *bond) const;
 
 private:

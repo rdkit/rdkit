@@ -45,7 +45,7 @@ void Sp2Bond::setPrimaryLabel(Descriptor desc) {
     return;
   }
   case Descriptor::NONE:
-    throw std::runtime_error("Received an invalid as Bond Descriptor");
+    throw std::runtime_error("Received an invalid Bond Descriptor");
   case Descriptor::R:
   case Descriptor::S:
   case Descriptor::r:
@@ -64,18 +64,18 @@ Descriptor Sp2Bond::label(const Rules &comp) {
   const auto &focus1 = getFoci()[0];
   const auto &focus2 = getFoci()[1];
 
-  auto root1 = digraph.getOriginRoot();
+  auto root1 = digraph.getOriginalRoot();
   if (digraph.getCurrentRoot() != root1) {
     digraph.changeRoot(root1);
   }
 
   const auto &root1_edges = root1->getEdges();
   const auto &internal = findInternalEdge(root1_edges, focus1, focus2);
-  auto filter = [&internal](const Edge *e) { return e != internal; };
+  auto is_internal = [&internal](const Edge *e) { return e != internal; };
 
   std::vector<Edge *> edges1;
   std::copy_if(root1_edges.begin(), root1_edges.end(),
-               std::back_inserter(edges1), filter);
+               std::back_inserter(edges1), is_internal);
 
   const auto &priority1 = comp.sort(root1, edges1);
   if (!priority1.isUnique()) {
@@ -88,7 +88,7 @@ Descriptor Sp2Bond::label(const Rules &comp) {
   std::vector<Edge *> edges2;
   const auto &root2_edges = root2->getEdges();
   std::copy_if(root2_edges.begin(), root2_edges.end(),
-               std::back_inserter(edges2), filter);
+               std::back_inserter(edges2), is_internal);
 
   const auto &priority2 = comp.sort(root2, edges2);
   if (!priority2.isUnique()) {

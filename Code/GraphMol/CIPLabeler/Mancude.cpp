@@ -202,10 +202,11 @@ std::vector<boost::rational<int>> calcFracAtomNums(const CIPMol &mol) {
 
         if (types[i] == Type::Cv3D3Minus || types[i] == Type::Nv2D2Minus) {
           int j = 0;
-          for (; j < numres; ++j)
+          for (; j < numres; ++j) {
             if (resparts[j] == parts[i]) {
               break;
             }
+          }
           if (j >= numres) {
             resparts[numres] = parts[i];
             ++numres;

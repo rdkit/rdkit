@@ -114,10 +114,10 @@ bool labelAux(std::vector<std::unique_ptr<Configuration>> &configs,
     }
   }
 
-  auto pair_cmp = [](const Node_Cfg_Pair &a, const Node_Cfg_Pair &b) {
+  auto farthest = [](const Node_Cfg_Pair &a, const Node_Cfg_Pair &b) {
     return a.first->getDistance() > b.first->getDistance();
   };
-  std::sort(aux.begin(), aux.end(), pair_cmp);
+  std::sort(aux.begin(), aux.end(), farthest);
 
   boost::unordered_map<Node *, Descriptor> queue;
   int prev = std::numeric_limits<int>::max();
@@ -178,5 +178,5 @@ void assignCIPLabels(ROMol &mol) {
   assignCIPLabels(mol, atoms, bonds);
 }
 
-} // namespace CIPLabeler
-} // end of namespace RDKit
+}  // namespace CIPLabeler
+}  // namespace RDKit

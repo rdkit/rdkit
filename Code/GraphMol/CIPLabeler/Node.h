@@ -97,7 +97,7 @@ public:
 
   void setAux(Descriptor desc);
 
-  std::vector<Edge *> getEdges() const;
+  const std::vector<Edge *>& getEdges() const;
 
   std::vector<Edge *> getEdges(Atom *end) const;
 

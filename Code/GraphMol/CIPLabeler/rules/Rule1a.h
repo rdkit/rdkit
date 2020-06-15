@@ -15,6 +15,7 @@
 namespace RDKit {
 namespace CIPLabeler {
 
+// CIP Rule 1a: Higher atomic number precedes lower.
 class Rule1a : public SequenceRule {
 public:
   Rule1a();
