@@ -876,6 +876,7 @@ void MolDraw2D::setScale(int width, int height, const Point2D &minv,
   y_range_ *= 1 + 2 * drawOptions().padding;
 
   scale_ = std::min(double(width) / x_range_, double(height) / y_range_);
+  text_drawer_->setFontScale(scale_);
   double y_mid = y_min_ + 0.5 * y_range_;
   double x_mid = x_min_ + 0.5 * x_range_;
   x_trans_ = y_trans_ = 0.0;  // getDrawCoords uses [xy_]trans_
