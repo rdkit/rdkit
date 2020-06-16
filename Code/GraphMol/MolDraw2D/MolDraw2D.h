@@ -455,7 +455,7 @@ class RDKIT_MOLDRAW2D_EXPORT MolDraw2D {
 
   //! explicitly sets the scaling factors for the drawing
   void setScale(int width, int height, const Point2D &minv,
-                const Point2D &maxv);
+                const Point2D &maxv, const ROMol *mol=nullptr);
   //! sets the drawing offset (in drawing coords)
   void setOffset(int x, int y) {
     x_offset_ = x;

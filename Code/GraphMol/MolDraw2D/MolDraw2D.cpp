@@ -847,18 +847,32 @@ Point2D MolDraw2D::getAtomCoords(int at_num) const {
 
 // ****************************************************************************
 void MolDraw2D::setScale(int width, int height, const Point2D &minv,
-                         const Point2D &maxv) {
+                         const Point2D &maxv, const ROMol *mol) {
   PRECONDITION(width > 0, "bad width");
   PRECONDITION(height > 0, "bad height");
-  needs_scale_ = false;
 
-  x_min_ = minv.x;
-  y_min_ = minv.y;
-  double x_max = maxv.x;
-  double y_max = maxv.y;
+  double x_max, y_max;
+  if(mol) {
+    pushDrawDetails();
+    unique_ptr<RWMol> tmol = setupDrawMolecule(*mol, nullptr, nullptr, -1,
+                                               panelWidth(), panelHeight());
+    calculateScale(panel_width_, panel_height_, *tmol);
+    popDrawDetails();
+    x_min_ = min(minv.x, x_min_);
+    y_min_ = min(minv.y, y_min_);
+    x_max = max(maxv.x, x_range_ + x_min_);
+    y_max = max(maxv.y, y_range_ + y_min_);
+  } else {
+    x_min_ = minv.x;
+    y_min_ = minv.y;
+    x_max = maxv.x;
+    y_max = maxv.y;
+  }
 
   x_range_ = x_max - x_min_;
   y_range_ = y_max - y_min_;
+
+  needs_scale_ = false;
 
   if (x_range_ < 1.0e-4) {
     x_range_ = 1.0;

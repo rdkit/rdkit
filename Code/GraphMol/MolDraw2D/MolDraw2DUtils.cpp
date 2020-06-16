@@ -170,7 +170,8 @@ void contourAndDrawGrid(MolDraw2D &drawer, const double *grid,
                         const std::vector<double> &xcoords,
                         const std::vector<double> &ycoords, size_t nContours,
                         std::vector<double> &levels,
-                        const ContourParams &params) {
+                        const ContourParams &params,
+                        const ROMol *mol) {
   PRECONDITION(grid, "no data");
   PRECONDITION(params.colourMap.size() > 1,
                "colourMap must have at least two entries");
@@ -178,7 +179,7 @@ void contourAndDrawGrid(MolDraw2D &drawer, const double *grid,
   if (params.setScale) {
     Point2D minP = {xcoords[0], ycoords[0]};
     Point2D maxP = {xcoords.back(), ycoords.back()};
-    drawer.setScale(drawer.width(), drawer.height(), minP, maxP);
+    drawer.setScale(drawer.width(), drawer.height(), minP, maxP, mol);
   }
 
   size_t nX = xcoords.size();
@@ -284,7 +285,8 @@ void contourAndDrawGaussians(MolDraw2D &drawer,
                              const std::vector<double> &weights,
                              const std::vector<double> &widths,
                              size_t nContours, std::vector<double> &levels,
-                             const ContourParams &params) {
+                             const ContourParams &params,
+                             const ROMol *mol) {
   PRECONDITION(locs.size() == weights.size(), "size mismatch");
   PRECONDITION(locs.size() == widths.size(), "size mismatch");
 
@@ -315,7 +317,7 @@ void contourAndDrawGaussians(MolDraw2D &drawer,
       maxP.y += pad;
     }
 
-    drawer.setScale(drawer.width(), drawer.height(), minP, maxP);
+    drawer.setScale(drawer.width(), drawer.height(), minP, maxP, mol);
   }
 
   size_t nx = (size_t)ceil(drawer.range().x / params.gridResolution) + 1;

@@ -112,7 +112,9 @@ TEST_CASE("contour data", "[drawing][conrec]") {
 
     std::vector<double> levels;
     drawer.clearDrawing();
-    MolDraw2DUtils::contourAndDrawGrid(drawer, grid, xps, yps, 10, levels);
+    MolDraw2DUtils::contourAndDrawGrid(drawer, grid, xps, yps, 10, levels,
+                                       MolDraw2DUtils::ContourParams(),
+                                       m1.get());
     drawer.drawOptions().clearBackground = false;
     drawer.drawMolecule(*m1);
     drawer.finishDrawing();
@@ -141,7 +143,9 @@ TEST_CASE("contour data", "[drawing][conrec]") {
     std::vector<double> levels;
     drawer.clearDrawing();
     MolDraw2DUtils::contourAndDrawGaussians(drawer, cents, weights, widths, 10,
-                                            levels);
+                                            levels,
+                                            MolDraw2DUtils::ContourParams(),
+                                            m1.get());
 
     drawer.drawOptions().clearBackground = false;
     drawer.drawMolecule(*m1);
@@ -172,7 +176,7 @@ TEST_CASE("contour data", "[drawing][conrec]") {
     cps.fillGrid = true;
     drawer.clearDrawing();
     MolDraw2DUtils::contourAndDrawGaussians(drawer, cents, weights, widths, 10,
-                                            levels, cps);
+                                            levels, cps, m1.get());
 
     drawer.drawOptions().clearBackground = false;
     drawer.drawMolecule(*m1);
@@ -208,7 +212,7 @@ TEST_CASE("contour data", "[drawing][conrec]") {
     cps.gridResolution = 0.5;
     drawer.clearDrawing();
     MolDraw2DUtils::contourAndDrawGaussians(drawer, cents, weights, widths, 10,
-                                            levels, cps);
+                                            levels, cps, m2.get());
 
     drawer.drawOptions().clearBackground = false;
     drawer.drawMolecule(*m2);

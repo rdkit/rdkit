@@ -434,7 +434,8 @@ void addMoleculeMetadata(const RDKit::MolDraw2DSVG &self, const RDKit::ROMol &m,
 void contourAndDrawGaussiansHelper(
     RDKit::MolDraw2D &drawer, python::object pylocs, python::object pyheights,
     python::object pywidths, unsigned int nContours, python::object pylevels,
-    const MolDraw2DUtils::ContourParams &params) {
+    const MolDraw2DUtils::ContourParams &params,
+    const RDKit::ROMol *mol) {
   std::unique_ptr<std::vector<RDGeom::Point2D>> locs =
       pythonObjectToVect<RDGeom::Point2D>(pylocs);
   std::unique_ptr<std::vector<double>> heights =
@@ -448,14 +449,15 @@ void contourAndDrawGaussiansHelper(
     levels = std::unique_ptr<std::vector<double>>(new std::vector<double>);
   }
   MolDraw2DUtils::contourAndDrawGaussians(drawer, *locs, *heights, *widths,
-                                          nContours, *levels, params);
+                                          nContours, *levels, params, mol);
 }
 
 void contourAndDrawGridHelper(RDKit::MolDraw2D &drawer, python::object &data,
                               python::object &pyxcoords,
                               python::object &pyycoords, unsigned int nContours,
                               python::object &pylevels,
-                              const MolDraw2DUtils::ContourParams &params) {
+                              const MolDraw2DUtils::ContourParams &params,
+                              const RDKit::ROMol *mol) {
   if (!PyArray_Check(data.ptr())) {
     throw_value_error("data argument must be a numpy array");
   }
@@ -488,7 +490,7 @@ void contourAndDrawGridHelper(RDKit::MolDraw2D &drawer, python::object &data,
 
   MolDraw2DUtils::contourAndDrawGrid(drawer, (double *)PyArray_DATA(dataArr),
                                      *xcoords, *ycoords, nContours, *levels,
-                                     params);
+                                     params, mol);
 
   Py_DECREF(dataArr);
 }
@@ -899,6 +901,7 @@ BOOST_PYTHON_MODULE(rdMolDraw2D) {
   - nContours: the number of contours to draw
   - levels: the contours to use
   - ps: additional parameters controlling the contouring.
+  - mol: molecule used to help set scale.
 
   The values are calculated on a grid with spacing params.gridResolution.
   If params.setScale  is set, the grid size will be calculated based on the
@@ -912,13 +915,16 @@ BOOST_PYTHON_MODULE(rdMolDraw2D) {
   If params.fillGrid is set, the data on the grid will also be drawn using
   the color scheme in params.colourMap
 
+  If mol is not 0, uses the molecule to help set the scale, assuming that
+  it will be drawn over the plot, so needs to fit on it.
 */)DOC";
   python::def(
       "ContourAndDrawGaussians", &RDKit::contourAndDrawGaussiansHelper,
       (python::arg("drawer"), python::arg("locs"), python::arg("heights"),
        python::arg("widths"), python::arg("nContours") = 10,
        python::arg("levels") = python::object(),
-       python::arg("params") = RDKit::MolDraw2DUtils::ContourParams()),
+       python::arg("params") = RDKit::MolDraw2DUtils::ContourParams(),
+       python::arg("mol") = nullptr),
       docString.c_str());
   docString = R"DOC(Generates and draws contours for data on a grid
 
@@ -928,7 +934,8 @@ BOOST_PYTHON_MODULE(rdMolDraw2D) {
   - ycoords: the y coordinates of the grid
   - nContours: the number of contours to draw
   - levels: the contours to use
-  - ps: additional parameters controlling the contouring.
+  - ps: additional parameters controlling the contouring
+  - mol: molecule used to help set scale.
 
   The values are calculated on a grid with spacing params.gridResolution.
   If params.setScale  is set, the grid size will be calculated based on the
@@ -942,12 +949,15 @@ BOOST_PYTHON_MODULE(rdMolDraw2D) {
   If params.fillGrid is set, the data on the grid will also be drawn using
   the color scheme in params.colourMap
 
+  If mol is not 0, uses the molecule to help set the scale, assuming that
+  it will be drawn over the plot, so needs to fit on it.
 */)DOC";
   python::def(
       "ContourAndDrawGrid", &RDKit::contourAndDrawGridHelper,
       (python::arg("drawer"), python::arg("data"), python::arg("xcoords"),
        python::arg("ycoords"), python::arg("nContours") = 10,
        python::arg("levels") = python::object(),
-       python::arg("params") = RDKit::MolDraw2DUtils::ContourParams()),
+       python::arg("params") = RDKit::MolDraw2DUtils::ContourParams(),
+       python::arg("mol") = nullptr),
       docString.c_str());
 }
