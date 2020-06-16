@@ -349,6 +349,10 @@ struct RDKIT_GRAPHMOL_EXPORT AdjustQueryParameters {
       false; /**< sets bond queries in conjugated five-rings to
                 SINGLE|DOUBLE|AROMATIC */
 
+  bool setMDLFiveRingAromaticity =
+      false; /**< uses the 5-ring aromaticity behavior of the (former) MDL
+                software as documented in the Chemical Representation Guide */
+
   bool adjustSingleBondsToDegreeOneNeighbors =
       false; /**<  sets single bonds between aromatic atoms and degree one
                 neighbors to SINGLE|AROMATIC */

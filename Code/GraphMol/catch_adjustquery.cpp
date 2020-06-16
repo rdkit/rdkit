@@ -350,7 +350,34 @@ TEST_CASE("adjustQueryParameters from JSON") {
   }
 }
 
-TEST_CASE("five-rings") {
+
+TEST_CASE("MDL five-rings") {
+  MolOps::AdjustQueryParameters ps = MolOps::AdjustQueryParameters::noAdjustments();
+  ps.setMDLFiveRingAromaticity = true;
+  SECTION("query details") {
+    std::vector<std::tuple<std::string,std::string,std::string>> examples = {
+    {"adjustqueryprops_MDLfivering_1.mol","[#7H]1:[#6]:[#6]:[#6]:[#6]:1","[#7H]1:[#6]:[#6]:[#6]:[#6]:1"},
+    {"adjustqueryprops_MDLfivering_2.mol","[!#6&!#1]1:[#6]:[#6]:[#6]:[#6]:1","[!#6&!#1]1:[#6]:[#6]:[#6]:[#6]:1"},
+    {"adjustqueryprops_MDLfivering_3.mol","[!#1]1:[#6]:[#6]:[#6]:[#6]:1","[!#1]1-,:[#6]=,:[#6]-,:[#6]=,:[#6]-,:1"},
+    // NOTE that this is not technically correct according to the documentation, but if we make the bridging bond
+    // aromatic then it won't match azulene in a normal RDKit molecule, which is certainly not the intent of this.
+    {"adjustqueryprops_MDLfivering_4.mol","[#6]12:[#6]:[#6]:[#6]:[#6]-1:[#6]:[#6]:[#6]:[#6]:[#6]:2","[#6]12:[#6]:[#6]:[#6]:[#6]-1:[#6]:[#6]:[#6]:[#6]:[#6]:2"},
+    };
+    for( const auto tpl : examples){
+      auto fname = std::get<0>(tpl);
+      std::string pathName = getenv("RDBASE");
+      pathName += "/Code/GraphMol/test_data/";
+      std::unique_ptr<RWMol> qry(MolFileToMol(pathName + fname));
+      REQUIRE(qry);
+      CHECK(std::get<1>(tpl)==MolToSmarts(*qry));
+      MolOps::adjustQueryProperties(*qry,&ps);
+      CHECK(std::get<2>(tpl)==MolToSmarts(*qry));
+    } 
+  }
+}
+
+
+TEST_CASE("conjugated five-rings") {
   MolOps::AdjustQueryParameters ps = MolOps::AdjustQueryParameters::noAdjustments();
   ps.adjustConjugatedFiveRings = true;
   SECTION("matching") {

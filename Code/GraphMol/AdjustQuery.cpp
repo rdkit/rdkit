@@ -134,6 +134,116 @@ void adjustSingleBondsFromAromaticAtoms(RWMol &mol, bool toDegreeOneNeighbors,
   }
 }
 
+void setMDLAromaticity(RWMol &mol) {
+  // it would be simpler to use the substructure matcher for this, but we can't
+  // use SubstructMatch in the core GraphMol lib
+  if (!mol.getRingInfo()->isInitialized()) {
+    MolOps::symmetrizeSSSR(mol);
+  }
+  for (auto ring : mol.getRingInfo()->atomRings()) {
+    if (ring.size() != 5) {
+      continue;
+    }
+    size_t pin;
+    bool keepIt = true;
+    size_t dummy = ring.size() + 1;
+    for (size_t i = 0; i < ring.size(); ++i) {
+      auto ai = ring[i];
+      const auto atom = mol.getAtomWithIdx(ai);
+      std::string molfileSymbol;
+      atom->getPropIfPresent(common_properties::_MolFileSymbol, molfileSymbol);
+      if (!atom->getIsAromatic()) {
+        // we only do fully aromatic rings:
+        keepIt = false;
+        break;
+      } else if (atom->getAtomicNum() == 0 &&
+                 atom->getPropIfPresent(common_properties::_MolFileSymbol,
+                                        molfileSymbol) &&
+                 molfileSymbol == "A") {
+        if (dummy >= ring.size()) {
+          dummy = i;
+        } else {
+          // second dummy encountered, we won't do this ring.
+          keepIt = false;
+          break;
+        }
+      } else if (atom->getAtomicNum() != 6) {
+        // we only do rings consisting solely of C and *
+        keepIt = false;
+        break;
+      }
+      // we can't handle rings that have query bonds already:
+      auto oidx = ring[4];
+      if (i > 0) {
+        oidx = ring[i - 1];
+      }
+      auto bond = mol.getBondBetweenAtoms(ring[i], oidx);
+      ASSERT_INVARIANT(bond, "expected bond not found");
+      if (bond->hasQuery()) {
+        keepIt = false;
+        break;
+      }
+    }
+    if (keepIt && dummy < ring.size()) {
+      // we think about the 5-ring in three layers:
+      //   layer 0: the dummy
+      //   layer 1: the two atoms connected to the dummy
+      //   layer 2: the two atoms not connected to the dummy
+      auto l0 = ring[dummy];
+      std::vector<int> l1;
+      std::vector<int> l2;
+      for (auto ai : ring) {
+        if (ai == l0) {
+          continue;
+        } else if (mol.getBondBetweenAtoms(ai, l0)) {
+          l1.push_back(ai);
+        } else {
+          l2.push_back(ai);
+        }
+      }
+      ASSERT_INVARIANT(l1.size() == 2, "bad layer 1 size");
+      ASSERT_INVARIANT(l2.size() == 2, "bad layer 2 size");
+
+      QueryBond qbSingleAromatic;
+      {
+        BOND_OR_QUERY *q = new BOND_OR_QUERY;
+        q->addChild(QueryBond::QUERYBOND_QUERY::CHILD_TYPE(
+            makeBondOrderEqualsQuery(Bond::SINGLE)));
+        q->addChild(QueryBond::QUERYBOND_QUERY::CHILD_TYPE(
+            makeBondOrderEqualsQuery(Bond::AROMATIC)));
+        q->setDescription("BondOr");
+        qbSingleAromatic.setQuery(q);
+      }
+      QueryBond qbDoubleAromatic;
+      {
+        BOND_OR_QUERY *q = new BOND_OR_QUERY;
+        q->addChild(QueryBond::QUERYBOND_QUERY::CHILD_TYPE(
+            makeBondOrderEqualsQuery(Bond::DOUBLE)));
+        q->addChild(QueryBond::QUERYBOND_QUERY::CHILD_TYPE(
+            makeBondOrderEqualsQuery(Bond::AROMATIC)));
+        q->setDescription("BondOr");
+        qbDoubleAromatic.setQuery(q);
+      }
+      for (auto ai : l1) {
+        // l0 - l1 bonds:
+        auto bond = mol.getBondBetweenAtoms(ai, l0);
+        ASSERT_INVARIANT(bond, "expected l0-l1 bond not found");
+        mol.replaceBond(bond->getIdx(), &qbSingleAromatic);
+        // l1 - l2 bonds:
+        bond = mol.getBondBetweenAtoms(ai, l2[0]);
+        if (!bond) {
+          bond = mol.getBondBetweenAtoms(ai, l2[1]);
+        }
+        ASSERT_INVARIANT(bond, "expected l1-l2 bond not found");
+        mol.replaceBond(bond->getIdx(), &qbDoubleAromatic);
+      }
+      // l2 - l2 bond:
+      auto bond = mol.getBondBetweenAtoms(l2[0], l2[1]);
+      ASSERT_INVARIANT(bond, "expected l2-l2 bond not found");
+      mol.replaceBond(bond->getIdx(), &qbSingleAromatic);
+    }
+  }
+}
 }  // namespace
 void parseAdjustQueryParametersFromJSON(MolOps::AdjustQueryParameters &p,
                                         const std::string &json) {
@@ -376,6 +486,9 @@ void adjustQueryProperties(RWMol &mol, const AdjustQueryParameters *inParams) {
         }
       }
     }
+  }
+  if (params.setMDLFiveRingAromaticity) {
+    setMDLAromaticity(mol);
   }
   if (params.adjustConjugatedFiveRings) {
     adjustConjugatedFiveRings(mol);

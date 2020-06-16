@@ -2403,6 +2403,11 @@ A note on the flags controlling which atoms/bonds are modified: \n\
             &MolOps::AdjustQueryParameters::adjustConjugatedFiveRings,
             "set bond queries in conjugated five-rings to "
             "SINGLE|DOUBLE|AROMATIC")
+        .def_readwrite(
+            "setMDLFiveRingAromaticity",
+            &MolOps::AdjustQueryParameters::setMDLFiveRingAromaticity,
+            "uses the 5-ring aromaticity behavior of the (former) MDL software "
+            "as documented in the Chemical Representation Guide")
         .def_readwrite("adjustSingleBondsToDegreeOneNeighbors",
                        &MolOps::AdjustQueryParameters::
                            adjustSingleBondsToDegreeOneNeighbors,
