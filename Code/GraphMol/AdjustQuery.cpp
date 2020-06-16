@@ -105,7 +105,34 @@ void adjustConjugatedFiveRings(RWMol &mol) {
     }
   }
 }
-void adjustSingleBondsFromAromaticAtoms(RWMol &mol) {}
+void adjustSingleBondsFromAromaticAtoms(RWMol &mol, bool toDegreeOneNeighbors,
+                                        bool betweenAromaticAtoms) {
+  QueryBond qb;
+  qb.setQuery(makeBondOrderEqualsQuery(Bond::BondType::SINGLE));
+  qb.expandQuery(makeBondOrderEqualsQuery(Bond::BondType::AROMATIC),
+                 Queries::COMPOSITE_OR);
+  if (!mol.getRingInfo()->isInitialized()) {
+    MolOps::symmetrizeSSSR(mol);
+  }
+  for (auto bond : mol.bonds()) {
+    const auto bAt = bond->getBeginAtom();
+    const auto eAt = bond->getEndAtom();
+    if (!bond->hasQuery() && bond->getBondType() == Bond::BondType::SINGLE &&
+        (bAt->getIsAromatic() || eAt->getIsAromatic()) &&
+        !mol.getRingInfo()->numBondRings(bond->getIdx())) {
+      if (toDegreeOneNeighbors &&
+          (bAt->getIsAromatic() ^ eAt->getIsAromatic())) {
+        if ((bAt->getIsAromatic() && eAt->getDegree() == 1) ||
+            (eAt->getIsAromatic() && bAt->getDegree() == 1)) {
+          mol.replaceBond(bond->getIdx(), &qb);
+        }
+      } else if (betweenAromaticAtoms && bAt->getIsAromatic() &&
+                 eAt->getIsAromatic()) {
+        mol.replaceBond(bond->getIdx(), &qb);
+      }
+    }
+  }
+}
 
 }  // namespace
 void parseAdjustQueryParametersFromJSON(MolOps::AdjustQueryParameters &p,
@@ -355,7 +382,9 @@ void adjustQueryProperties(RWMol &mol, const AdjustQueryParameters *inParams) {
   }
   if (params.adjustSingleBondsToDegreeOneNeighbors ||
       params.adjustSingleBondsBetweenAromaticAtoms) {
-    adjustSingleBondsFromAromaticAtoms(mol);
+    adjustSingleBondsFromAromaticAtoms(
+        mol, params.adjustSingleBondsToDegreeOneNeighbors,
+        params.adjustSingleBondsBetweenAromaticAtoms);
   }
 }
 }  // namespace MolOps

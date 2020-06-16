@@ -440,3 +440,76 @@ TEST_CASE("five-rings") {
     }  
   }
 }
+
+TEST_CASE("single bonds to degree-one neighbors") {
+  MolOps::AdjustQueryParameters ps = MolOps::AdjustQueryParameters::noAdjustments();
+  ps.adjustSingleBondsToDegreeOneNeighbors = true;
+  SECTION("matching") {
+    std::vector<matchCase> examples = {
+      {"C2CCCc1c2nncc1","Cc1cnncc1",true,true},
+      {"C2CCCc1c2nncc1","CCc1cnncc1",true,true},
+      {"C2CCC(C)c1c2nncc1","CCc1cnncc1",true,true},
+      {"c2cccc1c2nncc1","Cc1cnncc1",false,true},
+      {"c2cccc1c2nncc1","CCc1cnncc1",false,false},
+      {"c2ccc(C)c1c2nncc1","CCc1cnncc1",false,false},
+
+      {"C2CCCc1[nH]ccc12","Cc1[nH]ccc1",true,true},
+      {"C2CCCc1[nH]ccc12","CCc1[nH]ccc1",true,true},
+      {"c2cccc1[nH]ccc12","Cc1[nH]ccc1",false,true},
+      {"c2cccc1[nH]ccc12","CCc1[nH]ccc1",false,false},
+
+    };
+    for( const auto tpl : examples){
+      auto smi = std::get<1>(tpl);
+      std::unique_ptr<RWMol> qry(SmilesToMol(smi));
+      REQUIRE(qry);
+      if(std::get<2>(tpl)){
+        CHECK_THAT(std::get<0>(tpl),IsSubstructOf(*qry,smi));
+      } else {
+        CHECK_THAT(std::get<0>(tpl),!IsSubstructOf(*qry,smi));
+      }
+      MolOps::adjustQueryProperties(*qry,&ps);
+      if(std::get<3>(tpl)){
+        CHECK_THAT(std::get<0>(tpl),IsSubstructOf(*qry,smi));
+      } else {
+        CHECK_THAT(std::get<0>(tpl),!IsSubstructOf(*qry,smi));
+      }
+    } 
+  }
+}
+
+TEST_CASE("single bonds to aromatic neighbors") {
+  MolOps::AdjustQueryParameters ps = MolOps::AdjustQueryParameters::noAdjustments();
+  ps.adjustSingleBondsBetweenAromaticAtoms = true;
+  SECTION("matching") {
+    std::vector<matchCase> examples = {
+      {"c1ncccc1-c1cnncc1","c1ncccc1-c1cnncc1",true,true},
+      {"C1=CC2=C(C=CC3=C2C=NN=C3)N=C1","c1ncccc1-c1cnncc1",false,true},
+      {"C1CC2=C(C=CC=N2)C2=C1C=NN=C2","c1ncccc1-c1cnncc1",true,true},
+      {"C1CC2=NN=CC3=C2C2=C(C=C3)N=CC=C12","c1ncccc1-c1cnncc1",false,true},
+      // confirm that we don't modify ring bonds
+      {"C1=CC2=C(C=CC3=C2C=NN=C3)N=C1","C1CC2=C(C=CC=N2)C2=C1C=NN=C2",false,false},
+      {"C1CC2=C(C=CC=N2)C2=C1C=NN=C2","C1CC2=C(C=CC=N2)C2=C1C=NN=C2",true,true},
+      {"C1CC2=NN=CC3=C2C2=C(C=C3)N=CC=C12","C1CC2=C(C=CC=N2)C2=C1C=NN=C2",false,false},
+
+
+    };
+    for( const auto tpl : examples){
+      auto smi = std::get<1>(tpl);
+      std::unique_ptr<RWMol> qry(SmilesToMol(smi));
+      REQUIRE(qry);
+      if(std::get<2>(tpl)){
+        CHECK_THAT(std::get<0>(tpl),IsSubstructOf(*qry,smi));
+      } else {
+        CHECK_THAT(std::get<0>(tpl),!IsSubstructOf(*qry,smi));
+      }
+      MolOps::adjustQueryProperties(*qry,&ps);
+      if(std::get<3>(tpl)){
+        CHECK_THAT(std::get<0>(tpl),IsSubstructOf(*qry,smi));
+      } else {
+        CHECK_THAT(std::get<0>(tpl),!IsSubstructOf(*qry,smi));
+      }
+    } 
+  }
+}
+

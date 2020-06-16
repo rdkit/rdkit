@@ -354,7 +354,7 @@ struct RDKIT_GRAPHMOL_EXPORT AdjustQueryParameters {
                 neighbors to SINGLE|AROMATIC */
 
   bool adjustSingleBondsBetweenAromaticAtoms =
-      false; /**<  sets single bonds between two aromatic atoms to
+      false; /**<  sets non-ring single bonds between two aromatic atoms to
                 SINGLE|AROMATIC */
   //! \brief returns an AdjustQueryParameters object with all adjustments
   //! disabled
