@@ -811,7 +811,8 @@ BOOST_PYTHON_MODULE(rdMolDraw2D) {
   python::class_<RDKit::MolDraw2DSVG, python::bases<RDKit::MolDraw2D>,
                  boost::noncopyable>("MolDraw2DSVG", docString.c_str(),
                                      python::init<int, int>())
-      .def(python::init<int, int, int, int>())
+    .def(python::init<int, int, int, int>())
+    .def(python::init<int, int, int, int, bool>())
       .def("FinishDrawing", &RDKit::MolDraw2DSVG::finishDrawing,
            "add the last bits of SVG to finish the drawing")
       .def("AddMoleculeMetadata", RDKit::addMoleculeMetadata,
