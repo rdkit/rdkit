@@ -21,7 +21,7 @@
 
 // a lot of the tests check <text> flags in the SVG.  That doesn't
 // happen with the Freetype versions
-static const bool NO_FREETYPE = false;
+static const bool NO_FREETYPE = true;
 
 using namespace RDKit;
 
