@@ -42,8 +42,9 @@
 #include <set>
 #include <utility>
 #include <vector>
+#include <chrono>
 
-//#define DEBUG
+// #define DEBUG
 
 namespace RDKit {
 
@@ -353,13 +354,7 @@ struct RGroupData {
   RGroupData(const RGroupData &rhs);
 
  public:
-  RGroupData()
-      : combinedMol(),
-        mols(),
-        smilesSet(),
-        smiles(),
-        attachments()
-        {}
+  RGroupData() : combinedMol(), mols(), smilesSet(), smiles(), attachments() {}
 
   void add(boost::shared_ptr<ROMol> newMol,
            const std::vector<int> &rlabel_attachments) {
@@ -761,21 +756,19 @@ struct RGroupDecompData {
     return results;
   }
 
-  class UsedLabels
-  {
-  public:
-
+  class UsedLabels {
+   public:
     std::set<int> labels_used;
     bool add(int rlabel) {
       if (labels_used.find(rlabel) != labels_used.end()) {
-	return false;
+        return false;
       }
       labels_used.insert(rlabel);
       return true;
     }
 
     int next() {
-      int i=1;
+      int i = 1;
       while (labels_used.find(i) != labels_used.end()) {
         ++i;
       }
@@ -783,10 +776,9 @@ struct RGroupDecompData {
       return i;
     }
   };
-  
+
   void relabelCore(RWMol &core, std::map<int, int> &mappings,
-		   UsedLabels &used_labels,
-                   const std::set<int> &indexLabels,
+                   UsedLabels &used_labels, const std::set<int> &indexLabels,
                    std::map<int, std::vector<int>> extraAtomRLabels) {
     // Now remap to proper rlabel ids
     //  if labels are positive, they come from User labels
@@ -829,15 +821,15 @@ struct RGroupDecompData {
     for (auto newLabel : indexLabels) {
       auto atm = atoms.find(newLabel);
       if (atm == atoms.end()) {
-	continue;
+        continue;
       }
-      
-      Atom * atom = atm->second;
-      
+
+      Atom *atom = atm->second;
+
       int rlabel;
       auto mapping = mappings.find(newLabel);
       if (mapping == mappings.end()) {
-	rlabel = used_labels.next();
+        rlabel = used_labels.next();
         mappings[newLabel] = rlabel;
       } else {
         rlabel = mapping->second;
@@ -981,8 +973,8 @@ struct RGroupDecompData {
       boost::shared_ptr<RWMol> labelledCore(new RWMol(coreIt->second));
       labelledCores[coreIt->first] = labelledCore;
 
-      relabelCore(*labelledCore.get(), finalRlabelMapping, used_labels, indexLabels,
-                  extraAtomRLabels);
+      relabelCore(*labelledCore.get(), finalRlabelMapping, used_labels,
+                  indexLabels, extraAtomRLabels);
     }
 
     for (auto &it : best) {
@@ -997,23 +989,25 @@ struct RGroupDecompData {
   int compute_num_added_rgroups(std::vector<size_t> &tied_permutation) {
     int num_added_rgroups = 0;
     for (int label : labels) {
-      if (label <= 0) { // label is not user supplied
-	for (size_t m = 0; m < tied_permutation.size(); ++m) {  // for each molecule
-	  auto rg = matches[m][tied_permutation[m]].rgroups.find(label);
-	  if (rg != matches[m][tied_permutation[m]].rgroups.end()) {
-	    if(rg->second->smiles.find_first_not_of("0123456789[]*H:.") <
-	       rg->second->smiles.length()) {
-	      num_added_rgroups +=1;//= label;		  
-	      break;
-	    }
-	  }
-	}
+      if (label <= 0) {  // label is not user supplied
+        for (size_t m = 0; m < tied_permutation.size();
+             ++m) {  // for each molecule
+          auto rg = matches[m][tied_permutation[m]].rgroups.find(label);
+          if (rg != matches[m][tied_permutation[m]].rgroups.end()) {
+            if (rg->second->smiles.find_first_not_of("0123456789[]*H:.") <
+                rg->second->smiles.length()) {
+              num_added_rgroups += 1;  //= label;
+              break;
+            }
+          }
+        }
       }
     }
     return num_added_rgroups;
   }
-  
+
   bool process(bool pruneMatches, bool finalize = false) {
+    auto t0 = std::chrono::steady_clock::now();
     if (matches.size() == 0) {
       return false;
     }
@@ -1024,7 +1018,7 @@ struct RGroupDecompData {
     size_t N = 1;
 
     for (size_t m = 0; m < M; ++m) {
-      size_t sz = matches[m].size(); // # permutations for molecule m
+      size_t sz = matches[m].size();  // # permutations for molecule m
       permutations.push_back(sz);
       N *= sz;
     }
@@ -1036,7 +1030,7 @@ struct RGroupDecompData {
     double best_score = 0;
     std::vector<size_t> best_permutation = permutation;
     std::vector<std::vector<size_t>> ties;
-    
+
     size_t count = 0;
 #ifdef DEBUG
     std::cerr << "Processing" << std::endl;
@@ -1044,7 +1038,7 @@ struct RGroupDecompData {
     CartesianProduct iterator(permutations);
     // Iterates through the permutation idx, i.e.
     //  [m1_permutation_idx,  m2_permutation_idx, m3_permutation_idx]
-    
+
     while (iterator.next()) {
       if (count > N) {
         throw ValueErrorException("Next did not finish");
@@ -1055,35 +1049,36 @@ struct RGroupDecompData {
 #endif
       double newscore = score(iterator.permutation, matches, labels);
 
-      if (fabs(newscore - best_score) < 1e-6) { // heuristic to overcome floating point comparison issues
-	ties.push_back(iterator.permutation);
-      }
-      else if (newscore > best_score) {
+      if (fabs(newscore - best_score) <
+          1e-6) {  // heuristic to overcome floating point comparison issues
+        ties.push_back(iterator.permutation);
+      } else if (newscore > best_score) {
 #ifdef DEBUG
         std::cerr << " ===> current best:" << newscore << ">" << best_score
                   << std::endl;
 #endif
-	ties.clear();
-	ties.push_back(iterator.permutation);
+        ties.clear();
+        ties.push_back(iterator.permutation);
         best_score = newscore;
         best_permutation = iterator.permutation;
       }
     }
-    
-    if(ties.size() > 1) {
+
+    if (ties.size() > 1) {
       // choose one that doesn't add rgroups inappropriately
       //  an rgroup is added when
       //  (1) the label is <=0
       //  (2) the group has any substituent with heavy atoms
       //   XXX Might be more efficient to add this comp to the score function
       int smallest_added_rgroups = 100000000;
-      for(auto tied_permutation: ties) {
-	int num_added_rgroups = compute_num_added_rgroups(tied_permutation);
-	if(num_added_rgroups  < smallest_added_rgroups) {
-	  smallest_added_rgroups = num_added_rgroups;
-	  best_permutation = tied_permutation;
-	}
+      for (auto tied_permutation : ties) {
+        int num_added_rgroups = compute_num_added_rgroups(tied_permutation);
+        if (num_added_rgroups < smallest_added_rgroups) {
+          smallest_added_rgroups = num_added_rgroups;
+          best_permutation = tied_permutation;
+        }
       }
+      checkForTimeout(t0, params.timeout);
     }
 
     permutation = best_permutation;
@@ -1185,7 +1180,9 @@ int RGroupDecomposition::add(const ROMol &inmol) {
       continue;
     } else {
       if (tmatches.size() > 1) {
-        if (data->matches.size() == 0) {
+        if (data->params.matchingStrategy == NoSymmetrization) {
+          tmatches.resize(1);
+        } else if (data->matches.size() == 0) {
           // Greedy strategy just grabs the first match and
           //  takes the best matches from the rest
           if (data->params.matchingStrategy == Greedy) {
@@ -1357,13 +1354,13 @@ std::vector<std::string> RGroupDecomposition::getRGroupLabels() const {
   // this is a bit of a cheat
   RGroupColumns cols = getRGroupsAsColumns();
   std::vector<std::string> labels;
-  for(auto it : cols) {
+  for (auto it : cols) {
     labels.push_back(it.first);
   }
   std::sort(labels.begin(), labels.end());
   return labels;
 }
-  
+
 RGroupRows RGroupDecomposition::getRGroupsAsRows() const {
   std::vector<RGroupMatch> permutation = data->GetCurrentBestPermutation();
 
@@ -1437,15 +1434,21 @@ RGroupColumns RGroupDecomposition::getRGroupsAsColumns() const {
   return groups;
 }
 
+const RGroupDecompositionParameters &RGroupDecomposition::params() const {
+  return data->params;
+}
+
 namespace {
 std::vector<unsigned int> Decomp(RGroupDecomposition &decomp,
                                  const std::vector<ROMOL_SPTR> &mols) {
+  auto t0 = std::chrono::steady_clock::now();
   std::vector<unsigned int> unmatched;
   for (size_t i = 0; i < mols.size(); ++i) {
     int v = decomp.add(*mols[i].get());
     if (v == -1) {
       unmatched.push_back(i);
     }
+    checkForTimeout(t0, decomp.params().timeout);
   }
   decomp.process();
   return unmatched;
