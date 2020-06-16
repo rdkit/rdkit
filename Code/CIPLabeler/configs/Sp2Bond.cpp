@@ -11,7 +11,7 @@
 
 #include "Sp2Bond.h"
 #include "../Sort.h"
-#include "../rules/Rules.hpp"
+#include "../rules/Rules.h"
 
 namespace RDKit {
 namespace CIPLabeler {

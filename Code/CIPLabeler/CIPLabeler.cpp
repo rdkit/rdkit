@@ -18,7 +18,7 @@
 #include "configs/Sp2Bond.h"
 #include "configs/Tetrahedral.h"
 
-#include "rules/Rules.hpp"
+#include "rules/Rules.h"
 #include "rules/Rule1a.h"
 #include "rules/Rule1b.h"
 #include "rules/Rule2.h"

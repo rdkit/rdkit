@@ -10,7 +10,7 @@
 //
 
 #include "Tetrahedral.h"
-#include "../rules/Rules.hpp"
+#include "../rules/Rules.h"
 
 namespace RDKit {
 namespace CIPLabeler {

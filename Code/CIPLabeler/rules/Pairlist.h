@@ -15,7 +15,7 @@
 #include <string>
 #include <vector>
 
-#include "../Descriptor.hpp"
+#include "../Descriptor.h"
 
 namespace RDKit {
 namespace CIPLabeler {

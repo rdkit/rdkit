@@ -10,7 +10,7 @@
 //
 #pragma once
 
-#include "Descriptor.hpp"
+#include "Descriptor.h"
 
 namespace RDKit {
 

@@ -14,7 +14,7 @@
 
 #include <GraphMol/RDKitBase.h>
 
-#include "Descriptor.hpp"
+#include "Descriptor.h"
 #include "Mancude.h"
 
 namespace RDKit {

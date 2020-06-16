@@ -11,8 +11,8 @@
 
 #include "Configuration.h"
 
-#include "../Priority.hpp"
-#include "../rules/Rules.hpp"
+#include "../Priority.h"
+#include "../rules/Rules.h"
 
 namespace RDKit {
 namespace CIPLabeler {

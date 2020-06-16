@@ -14,11 +14,11 @@
 #include <memory>
 #include <vector>
 
-#include "../Descriptor.hpp"
+#include "../Descriptor.h"
 #include "../Edge.h"
 #include "../Node.h"
 #include "../Sort.h"
-#include "Pairlist.hpp"
+#include "Pairlist.h"
 
 namespace RDKit {
 namespace CIPLabeler {

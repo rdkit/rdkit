@@ -12,7 +12,7 @@
 
 #include <vector>
 
-#include "Descriptor.hpp"
+#include "Descriptor.h"
 #include "Mancude.h"
 #include "Edge.h"
 

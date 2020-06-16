@@ -23,7 +23,7 @@
 
 #include "CIPLabeler.h"
 #include "Digraph.h"
-#include "rules/Pairlist.hpp"
+#include "rules/Pairlist.h"
 #include "rules/Rule1a.h"
 #include "rules/Rule2.h"
 

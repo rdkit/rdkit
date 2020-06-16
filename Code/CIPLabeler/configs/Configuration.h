@@ -13,7 +13,7 @@
 #include <memory>
 #include <vector>
 
-#include "../Descriptor.hpp"
+#include "../Descriptor.h"
 #include "../Digraph.h"
 #include "../CIPMol.h"
 

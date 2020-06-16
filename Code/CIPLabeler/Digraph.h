@@ -22,7 +22,7 @@
 
 #include "boost/rational.hpp"
 
-#include "TooManyNodesException.hpp"
+#include "TooManyNodesException.h"
 
 namespace RDKit {
 

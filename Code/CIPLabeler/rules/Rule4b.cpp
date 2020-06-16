@@ -17,7 +17,7 @@
 #include "Rule4b.h"
 
 #include "../Digraph.h"
-#include "Pairlist.hpp"
+#include "Pairlist.h"
 
 namespace RDKit {
 namespace CIPLabeler {

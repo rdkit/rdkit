@@ -11,7 +11,7 @@
 #pragma once
 
 #include <vector>
-#include "Priority.hpp"
+#include "Priority.h"
 
 namespace RDKit {
 namespace CIPLabeler {
