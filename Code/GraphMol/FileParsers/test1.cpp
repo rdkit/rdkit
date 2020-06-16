@@ -2060,62 +2060,75 @@ void testMolFileAtomQueries() {
     delete m;
   }
   {
-    std::string fName =
-        rdbase + "/Code/GraphMol/FileParsers/test_data/query_A.mol";
-    RWMol *m = MolFileToMol(fName);
-    TEST_ASSERT(m);
+    std::vector<std::string> fNames = {
+        rdbase + "/Code/GraphMol/FileParsers/test_data/query_A.mol",
+        rdbase + "/Code/GraphMol/FileParsers/test_data/query_A.v3k.mol",
+    };
+    for (const auto fName : fNames) {
+      std::unique_ptr<RWMol> m(MolFileToMol(fName));
+      TEST_ASSERT(m);
+      TEST_ASSERT(
+          m->getAtomWithIdx(6)->hasProp(common_properties::_MolFileSymbol));
+      TEST_ASSERT(m->getAtomWithIdx(6)->getProp<std::string>(
+                      common_properties::_MolFileSymbol) == "A");
 
-    RWMol *m2;
-    MatchVectType mv;
-    std::string smi;
+      RWMol *m2;
+      MatchVectType mv;
+      std::string smi;
 
-    smi = "[H]c1ccccc1";
-    m2 = SmilesToMol(smi, false, false);
-    MolOps::sanitizeMol(*m2);
-    TEST_ASSERT(!SubstructMatch(*m2, *m, mv));
-    delete m2;
+      smi = "[H]c1ccccc1";
+      m2 = SmilesToMol(smi, false, false);
+      MolOps::sanitizeMol(*m2);
+      TEST_ASSERT(!SubstructMatch(*m2, *m, mv));
+      delete m2;
 
-    smi = "Cc1ccccc1";
-    m2 = SmilesToMol(smi);
-    TEST_ASSERT(SubstructMatch(*m2, *m, mv));
-    TEST_ASSERT(mv.size() == 7);
-    delete m2;
+      smi = "Cc1ccccc1";
+      m2 = SmilesToMol(smi);
+      TEST_ASSERT(SubstructMatch(*m2, *m, mv));
+      TEST_ASSERT(mv.size() == 7);
+      delete m2;
 
-    smi = "Clc1ccccc1";
-    m2 = SmilesToMol(smi);
-    TEST_ASSERT(SubstructMatch(*m2, *m, mv));
-    TEST_ASSERT(mv.size() == 7);
-    delete m2;
-
-    delete m;
+      smi = "Clc1ccccc1";
+      m2 = SmilesToMol(smi);
+      TEST_ASSERT(SubstructMatch(*m2, *m, mv));
+      TEST_ASSERT(mv.size() == 7);
+      delete m2;
+    }
   }
   {
-    std::string fName =
-        rdbase + "/Code/GraphMol/FileParsers/test_data/query_Q.mol";
-    RWMol *m = MolFileToMol(fName);
-    TEST_ASSERT(m);
+    std::vector<std::string> fNames = {
+        rdbase + "/Code/GraphMol/FileParsers/test_data/query_Q.mol",
+        rdbase + "/Code/GraphMol/FileParsers/test_data/query_Q.v3k.mol",
+    };
+    for (const auto fName : fNames) {
+      std::unique_ptr<RWMol> m(MolFileToMol(fName));
+      TEST_ASSERT(m);
 
-    RWMol *m2;
-    MatchVectType mv;
-    std::string smi;
+      TEST_ASSERT(
+          m->getAtomWithIdx(6)->hasProp(common_properties::_MolFileSymbol));
+      TEST_ASSERT(m->getAtomWithIdx(6)->getProp<std::string>(
+                      common_properties::_MolFileSymbol) == "Q");
+      RWMol *m2;
+      MatchVectType mv;
+      std::string smi;
 
-    smi = "[H]c1ccccc1";
-    m2 = SmilesToMol(smi, false, false);
-    MolOps::sanitizeMol(*m2);
-    TEST_ASSERT(!SubstructMatch(*m2, *m, mv));
-    delete m2;
+      smi = "[H]c1ccccc1";
+      m2 = SmilesToMol(smi, false, false);
+      MolOps::sanitizeMol(*m2);
+      TEST_ASSERT(!SubstructMatch(*m2, *m, mv));
+      delete m2;
 
-    smi = "Cc1ccccc1";
-    m2 = SmilesToMol(smi);
-    TEST_ASSERT(!SubstructMatch(*m2, *m, mv));
-    delete m2;
+      smi = "Cc1ccccc1";
+      m2 = SmilesToMol(smi);
+      TEST_ASSERT(!SubstructMatch(*m2, *m, mv));
+      delete m2;
 
-    smi = "Clc1ccccc1";
-    m2 = SmilesToMol(smi);
-    TEST_ASSERT(SubstructMatch(*m2, *m, mv));
-    TEST_ASSERT(mv.size() == 7);
-    delete m2;
-    delete m;
+      smi = "Clc1ccccc1";
+      m2 = SmilesToMol(smi);
+      TEST_ASSERT(SubstructMatch(*m2, *m, mv));
+      TEST_ASSERT(mv.size() == 7);
+      delete m2;
+    }
   }
   BOOST_LOG(rdInfoLog) << "done" << std::endl;
 }
