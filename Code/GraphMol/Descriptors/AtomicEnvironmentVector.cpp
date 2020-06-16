@@ -112,7 +112,7 @@ void IndexSelect(ArrayBase<Derived> *vector1, ArrayBase<Derived> *vector2,
   \return 2 dimensional array with 2 rows with each column corresponding to a
   pair of atoms which are neighbours
 */
-void NeighborPairs(ArrayXXd *coordinates, VectorXi *species, double cutoff,
+void NeighborPairs(ArrayXXd *coordinates, const VectorXi *species, double cutoff,
                    unsigned int numAtoms, ArrayXi *atomIndex12) {
   PRECONDITION(coordinates->rows() == numAtoms,
                "Number of coordinate vectors must be same as number of atoms");
@@ -552,7 +552,7 @@ ArrayXXd IndexAdd(ArrayXXd vector1, ArrayXXd vector2, ArrayXXi index,
   return vector1;
 }
 
-ArrayXXd AtomicEnvironmentVector(double *pos, VectorXi &species,
+ArrayXXd AtomicEnvironmentVector(double *pos, const VectorXi &species,
                                  unsigned int numAtoms) {
   PRECONDITION(species.size() == numAtoms,
                "Species encoding for each atom is required");
