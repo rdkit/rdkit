@@ -351,10 +351,7 @@ TEST_CASE("adjustQueryParameters from JSON") {
 }
 
 TEST_CASE("five-rings") {
-  MolOps::AdjustQueryParameters ps;
-  ps.adjustDegree = false;
-  ps.makeDummiesQueries = false;
-  ps.aromatizeIfPossible = false;
+  MolOps::AdjustQueryParameters ps = MolOps::AdjustQueryParameters::noAdjustments();
   ps.adjustConjugatedFiveRings = true;
   SECTION("matching") {
     std::vector<matchCase> examples = {

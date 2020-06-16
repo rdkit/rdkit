@@ -356,7 +356,15 @@ struct RDKIT_GRAPHMOL_EXPORT AdjustQueryParameters {
   bool adjustSingleBondsBetweenAromaticAtoms =
       false; /**<  sets single bonds between two aromatic atoms to
                 SINGLE|AROMATIC */
-
+  //! \brief returns an AdjustQueryParameters object with all adjustments
+  //! disabled
+  static AdjustQueryParameters noAdjustments() {
+    AdjustQueryParameters res;
+    res.adjustDegree = false;
+    res.makeDummiesQueries = false;
+    res.aromatizeIfPossible = false;
+    return res;
+  }
   AdjustQueryParameters() {}
 };
 
