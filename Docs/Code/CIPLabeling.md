@@ -1,10 +1,20 @@
 # New CIP labelling
 
 This is a C++ port of https://github.com/SiMolecule/centres, which was
-originally written by John Mayfied in Java. The orignal algorithm was
+originally written by John Mayfield in Java. The orignal algorithm was
 described in:
 
 Hanson, R. M., Musacchio, S., Mayfield, J. W., Vainio, M. J., Yerin, A., Redkin, D. Algorithmic Analysis of Cahn−Ingold−Prelog Rules of Stereochemistry: Proposals for Revised Rules and a Guide for Machine Implementation. J. Chem. Inf. Model. 2018, 58, 1755-1765.
+
+
+### Details
+
+The main function is C++ RDKit:: CIPLabeler::assignCIPLabels()/ Python: 
+rdkit.Chem.rdCIPLabeler.AssignCIPLabels().
+
+`assignCIPLabels()` calculates E/Z bond stereochemistry, R/S tetrahedral chirality, and r/s pseudochirality 
+according to the Cahn−Ingold−Prelog rules. Each is stored in the _CIPCode property - including for bonds. 
+assignCIPLabels() relies on the caller to mark potential stereocenters.
 
 
 ### A couple of remarks:
@@ -13,9 +23,6 @@ molecule: the input already needs to have information on which atoms/bonds
 should be labeled. Also, for resolution of tetrahedral chirality, the parity
 of the atoms is required, and for double bond stereochemistry, the bond must
 have the appropriate bond directions set on the neighboring bonds.
-
-- This does not provide CIP rank information on, e.g., neighbors around a
-chiral center.
 
 - The input molecule does not require all Hydrogens to be explicit, the code
 will take them into account appropriately.
