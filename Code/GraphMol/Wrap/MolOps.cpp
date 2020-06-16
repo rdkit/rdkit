@@ -2412,7 +2412,9 @@ A note on the flags controlling which atoms/bonds are modified: \n\
             "adjustSingleBondsBetweenAromaticAtoms",
             &MolOps::AdjustQueryParameters::
                 adjustSingleBondsBetweenAromaticAtoms,
-            "sets single bonds between two aromatic atoms to SINGLE|AROMATIC");
+            "sets single bonds between two aromatic atoms to SINGLE|AROMATIC")
+        .def("NoAdjustments", &MolOps::AdjustQueryParameters::noAdjustments)
+        .staticmethod("NoAdjustments");
 
     docString =
         "Returns a new molecule where the query properties of atoms have been "
