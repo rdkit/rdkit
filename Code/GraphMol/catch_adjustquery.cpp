@@ -367,12 +367,16 @@ TEST_CASE("five-rings") {
     {"C1=CSC=C1","adjustqueryprops_fivering_1.mol",false,false},{"C1=CSC=C1","adjustqueryprops_fivering_2.mol",true,true},
     {"C1=CSC=C1","adjustqueryprops_fivering_3.mol",false,false},{"C1=CSC=C1","adjustqueryprops_fivering_4.mol",true,true},
     {"C1=CSC=C1","adjustqueryprops_fivering_5.mol",false,false},{"C1=CSC=C1","adjustqueryprops_fivering_6.mol",true,true},
+    // thiophene oxide
+    {"C1=CS(=O)C=C1","adjustqueryprops_fivering_1.mol",false,false},{"C1=CS(=O)C=C1","adjustqueryprops_fivering_2.mol",false,true},
+    {"C1=CS(=O)C=C1","adjustqueryprops_fivering_3.mol",false,false},{"C1=CS(=O)C=C1","adjustqueryprops_fivering_4.mol",false,true},
+    {"C1=CS(=O)C=C1","adjustqueryprops_fivering_5.mol",false,false},{"C1=CS(=O)C=C1","adjustqueryprops_fivering_6.mol",true,true},
     // furan
     {"C1=COC=C1","adjustqueryprops_fivering_1.mol",false,true},{"C1=COC=C1","adjustqueryprops_fivering_2.mol",true,true},
     {"C1=COC=C1","adjustqueryprops_fivering_3.mol",false,false},{"C1=COC=C1","adjustqueryprops_fivering_4.mol",false,false},
     {"C1=COC=C1","adjustqueryprops_fivering_5.mol",false,false},{"C1=COC=C1","adjustqueryprops_fivering_6.mol",false,false},
     };
-        for( const auto tpl : examples){
+    for( const auto tpl : examples){
       auto fname = std::get<1>(tpl);
       std::string pathName = getenv("RDBASE");
       pathName += "/Code/GraphMol/test_data/";
@@ -402,5 +406,37 @@ TEST_CASE("five-rings") {
     MolOps::adjustQueryProperties(*qry,&ps);
     smarts = MolToSmarts(*qry);
     CHECK(smarts=="[!#1]1-,=,:[#6]-,=,:[#6]-,=,:[#6]-,=,:[#6]-,=,:1");
+  }
+  SECTION("some edge cases") {
+    {    
+      auto qry="C1=COCC1"_smiles;
+      auto smarts = MolToSmarts(*qry);
+      CHECK(smarts == "[#6]1=[#6]-[#8]-[#6]-[#6]-1");
+      MolOps::adjustQueryProperties(*qry,&ps);
+      CHECK(MolToSmarts(*qry) == smarts);
+    }  
+    {    
+      auto qry="C1=CCC=C1"_smiles;
+      auto smarts = MolToSmarts(*qry);
+      CHECK(smarts == "[#6]1=[#6]-[#6]-[#6]=[#6]-1");
+      MolOps::adjustQueryProperties(*qry,&ps);
+      CHECK(MolToSmarts(*qry) == "[#6]1-,=,:[#6]-,=,:[#6]-,=,:[#6]-,=,:[#6]-,=,:1");
+    }  
+    { 
+      // conjugation (not bond order)   
+      auto qry="C1=COOO1"_smiles;
+      auto smarts = MolToSmarts(*qry);
+      CHECK(smarts == "[#6]1=[#6]-[#8]-[#8]-[#8]-1");
+      MolOps::adjustQueryProperties(*qry,&ps);
+      CHECK(MolToSmarts(*qry) == "[#6]1-,=,:[#6]-,=,:[#8]-,=,:[#8]-,=,:[#8]-,=,:1");
+    }  
+    { 
+      // conjugation (not bond order)   
+      auto qry="O=C1C(=O)C(=O)C(=O)C1=O"_smiles;
+      auto smarts = MolToSmarts(*qry);
+      CHECK(smarts == "[#8]=[#6]1-[#6](=[#8])-[#6](=[#8])-[#6](=[#8])-[#6]-1=[#8]");
+      MolOps::adjustQueryProperties(*qry,&ps);
+      CHECK(MolToSmarts(*qry) == "[#8]=[#6]1-,=,:[#6](=[#8])-,=,:[#6](=[#8])-,=,:[#6](=[#8])-,=,:[#6]-,=,:1=[#8]");
+    }  
   }
 }
