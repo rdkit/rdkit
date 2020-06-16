@@ -491,8 +491,6 @@ TEST_CASE("single bonds to aromatic neighbors") {
       {"C1=CC2=C(C=CC3=C2C=NN=C3)N=C1","C1CC2=C(C=CC=N2)C2=C1C=NN=C2",false,false},
       {"C1CC2=C(C=CC=N2)C2=C1C=NN=C2","C1CC2=C(C=CC=N2)C2=C1C=NN=C2",true,true},
       {"C1CC2=NN=CC3=C2C2=C(C=C3)N=CC=C12","C1CC2=C(C=CC=N2)C2=C1C=NN=C2",false,false},
-
-
     };
     for( const auto tpl : examples){
       auto smi = std::get<1>(tpl);
