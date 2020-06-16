@@ -312,6 +312,15 @@ typedef enum {
   ADJUST_IGNOREALL = 0xFFFFFFF
 } AdjustQueryWhichFlags;
 
+//! Parameters controlling the behavior of MolOps::adjustQueryProperties
+/*!
+
+  Note that some of the options here are either directly contradictory or make
+  no sense when combined with each other. We generally assume that client code
+  is doing something sensible and don't attempt to detect possible conflicts or
+  problems.
+
+*/
 struct RDKIT_GRAPHMOL_EXPORT AdjustQueryParameters {
   bool adjustDegree = true; /**< add degree queries */
   std::uint32_t adjustDegreeFlags = ADJUST_IGNOREDUMMIES | ADJUST_IGNORECHAINS;
@@ -381,7 +390,7 @@ RDKIT_GRAPHMOL_EXPORT void parseAdjustQueryParametersFromJSON(
   \param mol the molecule to adjust
   \param params controls the adjustments made
 
-  \return the new molecule
+  \return the new molecule, the caller owns the memory
 */
 RDKIT_GRAPHMOL_EXPORT ROMol *adjustQueryProperties(
     const ROMol &mol, const AdjustQueryParameters *params = nullptr);

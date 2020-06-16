@@ -63,6 +63,15 @@ unsigned int parseWhichString(const std::string &txt) {
 }
 
 void adjustConjugatedFiveRings(RWMol &mol) {
+  /*
+   The idea here is to allow conjugated five-rings to match either aromatic or
+   aliphatic rings
+
+   five-rings which contain at least 3 conjugated bonds have all of their
+   non-query bonds replaced with a SINGLE|DOUBLE|AROMATIC query.
+
+   */
+
   std::vector<Bond::BondType> bondTypesToModify = {
       Bond::BondType::SINGLE, Bond::BondType::DOUBLE, Bond::BondType::AROMATIC};
   if (!mol.getRingInfo()->isInitialized()) {
@@ -107,6 +116,14 @@ void adjustConjugatedFiveRings(RWMol &mol) {
 }
 void adjustSingleBondsFromAromaticAtoms(RWMol &mol, bool toDegreeOneNeighbors,
                                         bool betweenAromaticAtoms) {
+  /*
+  The idea here is to allow single bonds coming from aromatic atoms to match
+  aromatic bonds under particular circumstances. The conditions are:
+
+  1. toDegreeOneNeighbors: [D1]-[a] -> [D1]-,:[a]
+  2. betweenAromaticAtoms: [a]-[a] -> [a]-,:[a]
+
+  */
   QueryBond qb;
   qb.setQuery(makeBondOrderEqualsQuery(Bond::BondType::SINGLE));
   qb.expandQuery(makeBondOrderEqualsQuery(Bond::BondType::AROMATIC),
@@ -135,6 +152,16 @@ void adjustSingleBondsFromAromaticAtoms(RWMol &mol, bool toDegreeOneNeighbors,
 }
 
 void setMDLAromaticity(RWMol &mol) {
+  /*
+  The idea here is to make aromatic 5-rings that contain an "A" atom in the CTAB
+  match both aromatic and aliphatic rings.
+  Schematically, this converts the ring from:
+     ["A"]1:C:C:C:C:1
+  to:
+     ["A"]1-,:C=,:C-,:C=,:C-,:1
+
+  */
+
   // it would be simpler to use the substructure matcher for this, but we can't
   // use SubstructMatch in the core GraphMol lib
   if (!mol.getRingInfo()->isInitialized()) {
@@ -265,6 +292,8 @@ void parseAdjustQueryParametersFromJSON(MolOps::AdjustQueryParameters &p,
       pt.get("useStereoCareForBonds", p.useStereoCareForBonds);
   p.adjustConjugatedFiveRings =
       pt.get("adjustConjugatedFiveRings", p.adjustConjugatedFiveRings);
+  p.setMDLFiveRingAromaticity =
+      pt.get("setMDLFiveRingAromaticity", p.setMDLFiveRingAromaticity);
   p.adjustSingleBondsToDegreeOneNeighbors =
       pt.get("adjustSingleBondsToDegreeOneNeighbors",
              p.adjustSingleBondsToDegreeOneNeighbors);
