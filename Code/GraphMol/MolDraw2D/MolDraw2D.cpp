@@ -179,9 +179,7 @@ void MolDraw2D::drawMolecule(const ROMol &mol,
   pushDrawDetails();
   text_drawer_->setMaxFontSize(drawOptions().maxFontSize);
   text_drawer_->setMinFontSize(drawOptions().minFontSize);
-#ifdef RDK_BUILD_FREETYPE_SUPPORT
   text_drawer_->setFontFile(drawOptions().fontFile);
-#endif
 
   unique_ptr<RWMol> rwmol =
       setupMoleculeDraw(mol, highlight_atoms, highlight_radii, confId);

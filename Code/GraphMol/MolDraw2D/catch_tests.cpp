@@ -8,10 +8,6 @@
 //  of the RDKit source tree.
 //
 
-// a lot of the tests check <text> flags in the SVG.  That doesn't
-// happen with the Freetype versions
-#undef RDK_BUILD_FREETYPE_SUPPORT
-
 #define CATCH_CONFIG_MAIN  // This tells Catch to provide a main() - only do
                            // this in one cpp file
 #include "catch.hpp"
@@ -19,10 +15,13 @@
 #include <GraphMol/RDKitBase.h>
 
 #include <GraphMol/SmilesParse/SmilesParse.h>
-#include <GraphMol/FileParsers/FileParsers.h>
 #include <GraphMol/MolDraw2D/MolDraw2D.h>
 #include <GraphMol/MolDraw2D/MolDraw2DSVG.h>
 #include <GraphMol/MolDraw2D/MolDraw2DUtils.h>
+
+// a lot of the tests check <text> flags in the SVG.  That doesn't
+// happen with the Freetype versions
+static const bool NO_FREETYPE = false;
 
 using namespace RDKit;
 
@@ -33,7 +32,7 @@ TEST_CASE("prepareAndDrawMolecule", "[drawing]") {
 
     // we will be able to recognize that the prep worked because there
     // will be an H in the output:
-    MolDraw2DSVG drawer(200, 200);
+    MolDraw2DSVG drawer(200, 200, -1, -1, NO_FREETYPE);
     MolDraw2DUtils::prepareAndDrawMolecule(drawer, *m1);
     drawer.finishDrawing();
     std::string text = drawer.getDrawingText();
@@ -46,7 +45,7 @@ TEST_CASE("tag atoms in SVG", "[drawing][SVG]") {
     auto m1 = "C1N[C@@H]2OCC12"_smiles;
     REQUIRE(m1);
 
-    MolDraw2DSVG drawer(200, 200);
+    MolDraw2DSVG drawer(200, 200, -1, -1, NO_FREETYPE);
     MolDraw2DUtils::prepareMolForDrawing(*m1);
     drawer.drawMolecule(*m1);
     std::map<std::string, std::string> actions;
@@ -69,7 +68,7 @@ TEST_CASE("contour data", "[drawing][conrec]") {
   auto m1 = "C1N[C@@H]2OCC12"_smiles;
   REQUIRE(m1);
   SECTION("grid basics") {
-    MolDraw2DSVG drawer(250, 250);
+    MolDraw2DSVG drawer(250, 250, -1, -1, NO_FREETYPE);
     MolDraw2DUtils::prepareMolForDrawing(*m1);
 
     const size_t gridSz = 100;
@@ -124,7 +123,7 @@ TEST_CASE("contour data", "[drawing][conrec]") {
     delete[] grid;
   }
   SECTION("gaussian basics") {
-    MolDraw2DSVG drawer(250, 250);
+    MolDraw2DSVG drawer(250, 250, -1, -1, NO_FREETYPE);
     MolDraw2DUtils::prepareMolForDrawing(*m1);
     drawer.drawOptions().padding = 0.1;
 
@@ -153,7 +152,7 @@ TEST_CASE("contour data", "[drawing][conrec]") {
     outs.flush();
   }
   SECTION("gaussian fill") {
-    MolDraw2DSVG drawer(250, 250);
+    MolDraw2DSVG drawer(250, 250, -1, -1, NO_FREETYPE);
     MolDraw2DUtils::prepareMolForDrawing(*m1);
     drawer.drawOptions().padding = 0.1;
 
@@ -188,7 +187,7 @@ TEST_CASE("contour data", "[drawing][conrec]") {
     auto m2 = "C1N[C@@H]2OCC12C=CC"_smiles;
     REQUIRE(m2);
 
-    MolDraw2DSVG drawer(450, 250);
+    MolDraw2DSVG drawer(450, 250, -1, -1, NO_FREETYPE);
     MolDraw2DUtils::prepareMolForDrawing(*m2);
     drawer.drawOptions().padding = 0.1;
 
@@ -225,7 +224,7 @@ TEST_CASE("dative bonds", "[drawing][organometallics]") {
   SECTION("basics") {
     auto m1 = "N->[Pt]"_smiles;
     REQUIRE(m1);
-    MolDraw2DSVG drawer(200, 200);
+    MolDraw2DSVG drawer(200, 200, -1, -1, NO_FREETYPE);
     MolDraw2DUtils::prepareMolForDrawing(*m1);
     drawer.drawMolecule(*m1);
     drawer.finishDrawing();
@@ -242,7 +241,7 @@ TEST_CASE("dative bonds", "[drawing][organometallics]") {
   SECTION("more complex") {
     auto m1 = "N->1[C@@H]2CCCC[C@H]2N->[Pt]11OC(=O)C(=O)O1"_smiles;
     REQUIRE(m1);
-    MolDraw2DSVG drawer(200, 200);
+    MolDraw2DSVG drawer(200, 200, -1, -1, NO_FREETYPE);
     MolDraw2DUtils::prepareMolForDrawing(*m1);
     drawer.drawMolecule(*m1);
     drawer.finishDrawing();
@@ -261,7 +260,7 @@ TEST_CASE("dative bonds", "[drawing][organometallics]") {
     // if the tip of the arrow is blue.
     auto m1 = "[Cu++]->1->2.N1CCN2"_smiles;
     REQUIRE(m1);
-    MolDraw2DSVG drawer(200, 200);
+    MolDraw2DSVG drawer(200, 200, -1, -1, NO_FREETYPE);
     MolDraw2DUtils::prepareMolForDrawing(*m1);
     drawer.drawMolecule(*m1);
     drawer.finishDrawing();
@@ -282,7 +281,7 @@ TEST_CASE("zero-order bonds", "[drawing][organometallics]") {
     auto m1 = "N-[Pt]"_smiles;
     REQUIRE(m1);
     m1->getBondWithIdx(0)->setBondType(Bond::ZERO);
-    MolDraw2DSVG drawer(200, 200);
+    MolDraw2DSVG drawer(200, 200, -1, -1, NO_FREETYPE);
     MolDraw2DUtils::prepareMolForDrawing(*m1);
     drawer.drawMolecule(*m1);
     drawer.finishDrawing();
@@ -300,7 +299,7 @@ TEST_CASE("copying drawing options", "[drawing]") {
   REQUIRE(m1);
   SECTION("foundations") {
     {
-      MolDraw2DSVG drawer(200, 200);
+      MolDraw2DSVG drawer(200, 200, -1, -1, NO_FREETYPE);
       MolDraw2DUtils::prepareAndDrawMolecule(drawer, *m1);
       drawer.finishDrawing();
       std::string text = drawer.getDrawingText();
@@ -310,7 +309,7 @@ TEST_CASE("copying drawing options", "[drawing]") {
       CHECK(text.find("fill:#0000FF' >N</text>") != std::string::npos);
     }
     {
-      MolDraw2DSVG drawer(200, 200);
+      MolDraw2DSVG drawer(200, 200, -1, -1, NO_FREETYPE);
       assignBWPalette(drawer.drawOptions().atomColourPalette);
       MolDraw2DUtils::prepareAndDrawMolecule(drawer, *m1);
       drawer.finishDrawing();
@@ -324,7 +323,7 @@ TEST_CASE("copying drawing options", "[drawing]") {
   }
   SECTION("test") {
     {
-      MolDraw2DSVG drawer(200, 200);
+      MolDraw2DSVG drawer(200, 200, -1, -1, NO_FREETYPE);
       MolDrawOptions options = drawer.drawOptions();
       assignBWPalette(options.atomColourPalette);
       drawer.drawOptions() = options;
@@ -345,7 +344,7 @@ TEST_CASE("bad DrawMolecules() when molecules are not kekulized",
   auto m1 = "CCN(CC)CCn1nc2c3ccccc3sc3c(CNS(C)(=O)=O)ccc1c32"_smiles;
   REQUIRE(m1);
   SECTION("foundations") {
-    MolDraw2DSVG drawer(500, 200, 250, 200);
+    MolDraw2DSVG drawer(500, 200, 250, 200, NO_FREETYPE);
     drawer.drawOptions().prepareMolsBeforeDrawing = false;
     RWMol dm1(*m1);
     RWMol dm2(*m1);
@@ -375,7 +374,7 @@ TEST_CASE("draw atom/bond indices", "[drawing]") {
   REQUIRE(m1);
   SECTION("foundations") {
     {
-      MolDraw2DSVG drawer(250, 200);
+      MolDraw2DSVG drawer(250, 200, -1, -1, NO_FREETYPE);
       drawer.drawMolecule(*m1);
       drawer.finishDrawing();
       std::string text = drawer.getDrawingText();
@@ -388,7 +387,7 @@ TEST_CASE("draw atom/bond indices", "[drawing]") {
       CHECK(text.find(">)</text>") == std::string::npos);
     }
     {
-      MolDraw2DSVG drawer(250, 200);
+      MolDraw2DSVG drawer(250, 200, -1, -1, NO_FREETYPE);
       drawer.drawOptions().addAtomIndices = true;
       drawer.drawMolecule(*m1);
       drawer.finishDrawing();
@@ -403,7 +402,7 @@ TEST_CASE("draw atom/bond indices", "[drawing]") {
       CHECK(text.find("1,(S)") == std::string::npos);
     }
     {
-      MolDraw2DSVG drawer(250, 200);
+      MolDraw2DSVG drawer(250, 200, -1, -1, NO_FREETYPE);
       drawer.drawOptions().addBondIndices = true;
       drawer.drawMolecule(*m1);
       drawer.finishDrawing();
@@ -417,7 +416,7 @@ TEST_CASE("draw atom/bond indices", "[drawing]") {
             std::string::npos);
     }
     {
-      MolDraw2DSVG drawer(250, 200);
+      MolDraw2DSVG drawer(250, 200, -1, -1, NO_FREETYPE);
       drawer.drawOptions().addAtomIndices = true;
       drawer.drawOptions().addBondIndices = true;
       drawer.drawMolecule(*m1);
@@ -432,7 +431,7 @@ TEST_CASE("draw atom/bond indices", "[drawing]") {
             std::string::npos);
     }
     {
-      MolDraw2DSVG drawer(250, 200);
+      MolDraw2DSVG drawer(250, 200, -1, -1, NO_FREETYPE);
       m1->getAtomWithIdx(2)->setProp(common_properties::atomNote, "foo");
       drawer.drawOptions().addAtomIndices = true;
       drawer.drawOptions().addStereoAnnotation = true;

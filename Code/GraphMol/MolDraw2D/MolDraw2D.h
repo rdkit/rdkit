@@ -611,7 +611,7 @@ class RDKIT_MOLDRAW2D_EXPORT MolDraw2D {
   Point2D bbox_[2];
 
   virtual void initDrawing() = 0;
-  virtual void initTextDrawer() = 0;
+  virtual void initTextDrawer(bool noFreetype) = 0;
 
   // return a DrawColour based on the contents of highlight_atoms or
   // highlight_map, falling back to atomic number by default

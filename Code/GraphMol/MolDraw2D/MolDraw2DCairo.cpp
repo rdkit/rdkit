@@ -25,23 +25,25 @@ void MolDraw2DCairo::initDrawing() {
 //  drawOptions().backgroundColour = DrawColour(0.9, 0.9, 0.0);
 }
 
-void MolDraw2DCairo::initTextDrawer() {
+void MolDraw2DCairo::initTextDrawer(bool noFreetype) {
 
   double max_fnt_sz = drawOptions().maxFontSize;
   double min_fnt_sz = drawOptions().minFontSize;
 
+  if(noFreetype) {
+    text_drawer_.reset(new DrawTextCairo(max_fnt_sz, min_fnt_sz, dp_cr));
+  } else {
 #ifdef RDK_BUILD_FREETYPE_SUPPORT
-  try {
-    text_drawer_.reset(new DrawTextFTCairo(max_fnt_sz, min_fnt_sz,
-					   drawOptions().fontFile, dp_cr));
-  } catch(std::runtime_error &e) {
-    text_drawer_.reset(new DrawTextCairo(max_fnt_sz, min_fnt_sz,
-					 dp_cr));
-  }
+    try {
+      text_drawer_.reset(new DrawTextFTCairo(max_fnt_sz, min_fnt_sz,
+                                             drawOptions().fontFile, dp_cr));
+    } catch (std::runtime_error &e) {
+      text_drawer_.reset(new DrawTextCairo(max_fnt_sz, min_fnt_sz, dp_cr));
+    }
 #else
-  text_drawer_.reset(new DrawTextCairo(max_fnt_sz, min_fnt_sz,
-				       dp_cr));
+    text_drawer_.reset(new DrawTextCairo(max_fnt_sz, min_fnt_sz, dp_cr));
 #endif
+  }
 
 }
 

@@ -29,21 +29,22 @@ class RDKIT_MOLDRAW2D_EXPORT MolDraw2DCairo : public MolDraw2D {
  public:
   // does not take ownership of the drawing context
   MolDraw2DCairo(int width, int height, cairo_t *cr, int panelWidth = -1,
-                 int panelHeight = -1)
+                 int panelHeight = -1, bool noFreetype=false)
       : MolDraw2D(width, height, panelWidth, panelHeight), dp_cr(cr) {
     cairo_reference(dp_cr);
     initDrawing();
-    initTextDrawer();
+    initTextDrawer(noFreetype);
   };
-  MolDraw2DCairo(int width, int height, int panelWidth = -1,
-                 int panelHeight = -1)
+  MolDraw2DCairo(int width, int height,
+                 int panelWidth = -1, int panelHeight = -1,
+                 bool noFreetype=false)
       : MolDraw2D(width, height, panelWidth, panelHeight) {
     cairo_surface_t *surf =
         cairo_image_surface_create(CAIRO_FORMAT_ARGB32, width, height);
     dp_cr = cairo_create(surf);
     cairo_surface_destroy(surf);  // dp_cr has a reference to this now;
     initDrawing();
-    initTextDrawer();
+    initTextDrawer(noFreetype);
   };
   ~MolDraw2DCairo() {
     if (dp_cr) {
@@ -86,7 +87,7 @@ class RDKIT_MOLDRAW2D_EXPORT MolDraw2DCairo : public MolDraw2D {
   cairo_t *dp_cr;
 
   void initDrawing() override;
-  void initTextDrawer() override;
+  void initTextDrawer(bool noFreetype) override;
 
 };
 }  // namespace RDKit
