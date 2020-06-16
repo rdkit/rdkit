@@ -871,6 +871,67 @@ void ParseMarvinSmartsLine(RWMol *mol, const std::string &text,
   }
 }
 
+void ParseAttachPointLine(RWMol *mol, const std::string &text,
+                          unsigned int line) {
+  PRECONDITION(mol, "bad mol");
+  PRECONDITION(text.substr(0, 6) == std::string("M  APO"), "bad APO line");
+
+  unsigned int nent;
+  try {
+    nent = FileParserUtils::stripSpacesAndCast<unsigned int>(text.substr(6, 3));
+  } catch (boost::bad_lexical_cast &) {
+    std::ostringstream errout;
+    errout << "Cannot convert '" << text.substr(6, 3) << "' to int on line "
+           << line;
+    throw FileParseException(errout.str());
+  }
+  unsigned int spos = 9;
+  for (unsigned int ie = 0; ie < nent; ie++) {
+    unsigned int aid = 0;
+    int val = 0;
+    try {
+      aid = FileParserUtils::stripSpacesAndCast<unsigned int>(
+          text.substr(spos, 4));
+      spos += 4;
+      if (text.size() >= spos + 4 && text.substr(spos, 4) != "    ") {
+        val = FileParserUtils::stripSpacesAndCast<int>(text.substr(spos, 4));
+      }
+      if (!aid || aid > mol->getNumAtoms()) {
+        std::ostringstream errout;
+        errout << "Bad APO specification on line " << line;
+        throw FileParseException(errout.str());
+      }
+      spos += 4;
+      --aid;
+      Atom *atom = mol->getAtomWithIdx(aid);
+      if (!atom) {
+        std::ostringstream errout;
+        errout << "Atom " << aid << " from APO specification on line " << line
+               << " not found";
+        throw FileParseException(errout.str());
+      } else {
+        if (val < 0 || val > 3) {
+          std::ostringstream errout;
+          errout << "Value " << val << " from APO specification on line "
+                 << line << " is invalid";
+          throw FileParseException(errout.str());
+        } else if (val) {
+          if (val == 3) {
+            // this is -1 in v3k mol blocks, so use that:
+            val = -1;
+          }
+          atom->setProp(common_properties::molAttachPoint, val);
+        }
+      }
+    } catch (boost::bad_lexical_cast &) {
+      std::ostringstream errout;
+      errout << "Cannot convert '" << text.substr(spos, 4)
+             << "' to int on line " << line;
+      throw FileParseException(errout.str());
+    }
+  }
+}
+
 void ParseNewAtomList(RWMol *mol, const std::string &text, unsigned int line) {
   if (text.size() < 15) {
     std::ostringstream errout;
@@ -1731,6 +1792,8 @@ bool ParseMolBlockProperties(std::istream *inStream, unsigned int &line,
       ParseHYDLine(mol, tempStr, line);
     } else if (lineBeg == "M  MRV") {
       ParseMarvinSmartsLine(mol, tempStr, line);
+    } else if (lineBeg == "M  APO") {
+      ParseAttachPointLine(mol, tempStr, line);
     }
     line++;
     tempStr = getLine(inStream);
