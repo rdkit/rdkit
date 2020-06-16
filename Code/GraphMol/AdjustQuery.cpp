@@ -61,6 +61,52 @@ unsigned int parseWhichString(const std::string &txt) {
   }
   return res;
 }
+
+void adjustConjugatedFiveRings(RWMol &mol) {
+  std::vector<Bond::BondType> bondTypesToModify = {
+      Bond::BondType::SINGLE, Bond::BondType::DOUBLE, Bond::BondType::AROMATIC};
+  if (!mol.getRingInfo()->isInitialized()) {
+    MolOps::symmetrizeSSSR(mol);
+  }
+  for (auto ring : mol.getRingInfo()->bondRings()) {
+    // only consider 5-rings with at least 3 conjugated bonds
+    if (ring.size() != 5) {
+      continue;
+    }
+    unsigned int nconj = 0;
+    for (auto bi : ring) {
+      const auto bond = mol.getBondWithIdx(bi);
+      if (bond->getIsConjugated()) {
+        ++nconj;
+        if (nconj >= 3) {
+          break;
+        }
+      }
+    }
+    if (nconj < 3) {
+      continue;
+    }
+    // now make the adjustments
+    // FIX: replace this with the SingleOrDoubleOrAromatic query once the
+    // tautomer PR is merged
+    QueryBond qb;
+    qb.setQuery(makeBondOrderEqualsQuery(Bond::BondType::SINGLE));
+    qb.expandQuery(makeBondOrderEqualsQuery(Bond::BondType::DOUBLE),
+                   Queries::COMPOSITE_OR);
+    qb.expandQuery(makeBondOrderEqualsQuery(Bond::BondType::AROMATIC),
+                   Queries::COMPOSITE_OR);
+    for (auto bi : ring) {
+      const auto bond = mol.getBondWithIdx(bi);
+      if (!bond->hasQuery() &&
+          std::find(bondTypesToModify.begin(), bondTypesToModify.end(),
+                    bond->getBondType()) != bondTypesToModify.end()) {
+        mol.replaceBond(bi, &qb);
+      }
+    }
+  }
+}
+void adjustSingleBondsFromAromaticAtoms(RWMol &mol) {}
+
 }  // namespace
 void parseAdjustQueryParametersFromJSON(MolOps::AdjustQueryParameters &p,
                                         const std::string &json) {
@@ -303,6 +349,13 @@ void adjustQueryProperties(RWMol &mol, const AdjustQueryParameters *inParams) {
         }
       }
     }
+  }
+  if (params.adjustConjugatedFiveRings) {
+    adjustConjugatedFiveRings(mol);
+  }
+  if (params.adjustSingleBondsToDegreeOneNeighbors ||
+      params.adjustSingleBondsBetweenAromaticAtoms) {
+    adjustSingleBondsFromAromaticAtoms(mol);
   }
 }
 }  // namespace MolOps

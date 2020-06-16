@@ -25,16 +25,16 @@ using matchCase = std::tuple<std::string, std::string, bool, bool>;
 
 class _IsSubstructOf : public Catch::MatcherBase<const std::string &> {
   ROMol const *m_query;
-  std::string m_smarts;
+  std::string m_description;
   SubstructMatchParameters m_ps;
 
  public:
-  _IsSubstructOf(const ROMol &m, const std::string &smarts)
-      : m_query(&m), m_smarts(smarts) {}
+  _IsSubstructOf(const ROMol &m, const std::string &description)
+      : m_query(&m), m_description(description) {}
 
-  _IsSubstructOf(const ROMol &m, const std::string &smarts,
+  _IsSubstructOf(const ROMol &m, const std::string &description,
                  SubstructMatchParameters ps)
-      : m_query(&m), m_smarts(smarts), m_ps(ps) {}
+      : m_query(&m), m_description(description), m_ps(ps) {}
 
   virtual bool match(const std::string &smiles) const override {
     std::unique_ptr<ROMol> mol(SmilesToMol(smiles));
@@ -43,7 +43,7 @@ class _IsSubstructOf : public Catch::MatcherBase<const std::string &> {
 
   virtual std::string describe() const override {
     std::ostringstream ss;
-    ss << "is not a substructure of " << m_smarts;
+    ss << "is not a substructure of " << m_description;
     return ss.str();
   }
 };
@@ -352,27 +352,58 @@ TEST_CASE("adjustQueryParameters from JSON") {
 
 TEST_CASE("five-rings") {
   MolOps::AdjustQueryParameters ps;
+  ps.adjustDegree = false;
+  ps.makeDummiesQueries = false;
+  ps.aromatizeIfPossible = false;
   ps.adjustConjugatedFiveRings = true;
-  SECTION("basics") {
+  SECTION("matching") {
     std::vector<matchCase> examples = {
-    {"C1=CCC=C1","C1=CCC=C1",true,true},{"C1=CCC=C1","C1=C[#6,#7,#8]C=C1",true,true},
-    {"C1=CCC=C1","C:1:C:[!#1]:C:C:1",false,true}};
-    for( const auto tpl : examples){
-      std::unique_ptr<RWMol> qry(SmartsToMol(std::get<1>(tpl)));
+    // 1,3 cyclopentadiene
+    {"C1=CCC=C1","adjustqueryprops_fivering_1.mol",true,true},{"C1=CCC=C1","adjustqueryprops_fivering_2.mol",false,true},
+    {"C1=CCC=C1","adjustqueryprops_fivering_3.mol",true,true},{"C1=CCC=C1","adjustqueryprops_fivering_4.mol",false,false},
+    {"C1=CCC=C1","adjustqueryprops_fivering_5.mol",false,false},{"C1=CCC=C1","adjustqueryprops_fivering_6.mol",false,false},
+    // pyrrole
+    {"C1=CNC=C1","adjustqueryprops_fivering_1.mol",false,true},{"C1=CNC=C1","adjustqueryprops_fivering_2.mol",true,true},
+    {"C1=CNC=C1","adjustqueryprops_fivering_3.mol",false,false},{"C1=CNC=C1","adjustqueryprops_fivering_4.mol",false,false},
+    {"C1=CNC=C1","adjustqueryprops_fivering_5.mol",false,false},{"C1=CNC=C1","adjustqueryprops_fivering_6.mol",false,false},
+    // thiophene
+    {"C1=CSC=C1","adjustqueryprops_fivering_1.mol",false,false},{"C1=CSC=C1","adjustqueryprops_fivering_2.mol",true,true},
+    {"C1=CSC=C1","adjustqueryprops_fivering_3.mol",false,false},{"C1=CSC=C1","adjustqueryprops_fivering_4.mol",true,true},
+    {"C1=CSC=C1","adjustqueryprops_fivering_5.mol",false,false},{"C1=CSC=C1","adjustqueryprops_fivering_6.mol",true,true},
+    // furan
+    {"C1=COC=C1","adjustqueryprops_fivering_1.mol",false,true},{"C1=COC=C1","adjustqueryprops_fivering_2.mol",true,true},
+    {"C1=COC=C1","adjustqueryprops_fivering_3.mol",false,false},{"C1=COC=C1","adjustqueryprops_fivering_4.mol",false,false},
+    {"C1=COC=C1","adjustqueryprops_fivering_5.mol",false,false},{"C1=COC=C1","adjustqueryprops_fivering_6.mol",false,false},
+    };
+        for( const auto tpl : examples){
+      auto fname = std::get<1>(tpl);
+      std::string pathName = getenv("RDBASE");
+      pathName += "/Code/GraphMol/test_data/";
+      std::unique_ptr<RWMol> qry(MolFileToMol(pathName + fname));
       REQUIRE(qry);
       if(std::get<2>(tpl)){
-        CHECK_THAT(std::get<0>(tpl),IsSubstructOf(*qry,std::get<1>(tpl)));
+        CHECK_THAT(std::get<0>(tpl),IsSubstructOf(*qry,fname));
       } else {
-        CHECK_THAT(std::get<0>(tpl),!IsSubstructOf(*qry,std::get<1>(tpl)));
+        CHECK_THAT(std::get<0>(tpl),!IsSubstructOf(*qry,fname));
       }
       MolOps::adjustQueryProperties(*qry,&ps);
       if(std::get<3>(tpl)){
-        CHECK_THAT(std::get<0>(tpl),IsSubstructOf(*qry,std::get<1>(tpl)));
+        CHECK_THAT(std::get<0>(tpl),IsSubstructOf(*qry,fname));
       } else {
-        CHECK_THAT(std::get<0>(tpl),!IsSubstructOf(*qry,std::get<1>(tpl)));
+        CHECK_THAT(std::get<0>(tpl),!IsSubstructOf(*qry,fname));
       }
     } 
-
-
+  }
+  SECTION("query details") {
+    auto fname = "adjustqueryprops_fivering_2.mol";
+    std::string pathName = getenv("RDBASE");
+    pathName += "/Code/GraphMol/test_data/";
+    std::unique_ptr<RWMol> qry(MolFileToMol(pathName + fname));
+    REQUIRE(qry);
+    auto smarts = MolToSmarts(*qry);
+    CHECK(smarts=="[!#1]1:[#6]:[#6]:[#6]:[#6]:1");
+    MolOps::adjustQueryProperties(*qry,&ps);
+    smarts = MolToSmarts(*qry);
+    CHECK(smarts=="[!#1]1-,=,:[#6]-,=,:[#6]-,=,:[#6]-,=,:[#6]-,=,:1");
   }
 }
