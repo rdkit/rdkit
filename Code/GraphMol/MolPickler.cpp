@@ -20,6 +20,7 @@
 #include <DataStructs/DatastructsStreamOps.h>
 #include <Query/QueryObjects.h>
 #include <map>
+#include <iostream>
 #include <cstdint>
 #include <boost/algorithm/string.hpp>
 
@@ -757,6 +758,24 @@ AtomMonomerInfo *unpickleAtomMonomerInfo(std::istream &ss, int version) {
 
 }  // end of anonymous namespace
 
+// Resets the `exceptionState` of the passed stream `ss` in the destructor to the
+// `exceptionState` the stream ss was in, before setting `newExceptionState`.
+struct IOStreamExceptionStateResetter {
+  std::ios &originalStream;
+  std::ios_base::iostate originalExceptionState;
+  IOStreamExceptionStateResetter(std::ios &ss,
+                           std::ios_base::iostate newExceptionState)
+      : originalStream(ss), originalExceptionState(ss.exceptions()) {
+    ss.exceptions(newExceptionState);
+  }
+
+  ~IOStreamExceptionStateResetter() {
+    if (originalStream) {
+      originalStream.exceptions(originalExceptionState);
+    }
+  }
+};
+
 void MolPickler::pickleMol(const ROMol *mol, std::ostream &ss) {
   pickleMol(mol, ss, MolPickler::getDefaultPickleProperties());
 }
@@ -764,20 +783,44 @@ void MolPickler::pickleMol(const ROMol *mol, std::ostream &ss) {
 void MolPickler::pickleMol(const ROMol *mol, std::ostream &ss,
                            unsigned int propertyFlags) {
   PRECONDITION(mol, "empty molecule");
-  streamWrite(ss, endianId);
-  streamWrite(ss, static_cast<int>(VERSION));
-  streamWrite(ss, versionMajor);
-  streamWrite(ss, versionMinor);
-  streamWrite(ss, versionPatch);
-#ifndef OLD_PICKLE
-  if (mol->getNumAtoms() > 255) {
-    _pickle<int32_t>(mol, ss, propertyFlags);
-  } else {
-    _pickle<unsigned char>(mol, ss, propertyFlags);
+
+  // Ensure that the exception state of the `ostream` is reset to the previous
+  // state after we're done.
+  // Also enable exceptions here, so we're notified when we've reached EOF or
+  // any other problem.
+  IOStreamExceptionStateResetter resetter(ss, std::ios_base::eofbit |
+                                                  std::ios_base::failbit |
+                                                  std::ios_base::badbit);
+
+  try {
+    streamWrite(ss, endianId);
+    streamWrite(ss, static_cast<int>(VERSION));
+    streamWrite(ss, versionMajor);
+    streamWrite(ss, versionMinor);
+    streamWrite(ss, versionPatch);
+  #ifndef OLD_PICKLE
+    if (mol->getNumAtoms() > 255) {
+      _pickle<int32_t>(mol, ss, propertyFlags);
+    } else {
+      _pickle<unsigned char>(mol, ss, propertyFlags);
+    }
+  #else
+    _pickleV1(mol, ss);
+  #endif
+  } catch (const std::ios_base::failure &e) {
+    if (ss.eof()) {
+      throw MolPicklerException(
+          "Bad pickle format: unexpected End-of-File while writing");
+    } else if (ss.bad()) {
+      throw MolPicklerException("Bad pickle format: write error while writing");
+    } else if (ss.fail()) {
+      throw MolPicklerException(
+          "Bad pickle format: logical error while writing");
+    } else {
+      throw MolPicklerException(
+          "Bad pickle format: unexpected error while writing");
+    }
   }
-#else
-  _pickleV1(mol, ss);
-#endif
 }
 
 void MolPickler::pickleMol(const ROMol &mol, std::ostream &ss) {
@@ -806,50 +849,74 @@ void MolPickler::pickleMol(const ROMol &mol, std::string &ss) {
 // will be blown out by the end of this process.
 void MolPickler::molFromPickle(std::istream &ss, ROMol *mol) {
   PRECONDITION(mol, "empty molecule");
-  int32_t tmpInt;
 
-  mol->clearAllAtomBookmarks();
-  mol->clearAllBondBookmarks();
+  // Ensure that the exception state of the `istream` is reset to the previous
+  // state after we're done.
+  // Also enable exceptions here, so we're notified when we've reached EOF or
+  // any other problem.
+  IOStreamExceptionStateResetter resetter(ss, std::ios_base::eofbit |
+                                                  std::ios_base::failbit |
+                                                  std::ios_base::badbit);
 
-  streamRead(ss, tmpInt);
-  if (tmpInt != endianId) {
-    throw MolPicklerException(
-        "Bad pickle format: bad endian ID or invalid file format");
-  }
+  try {
+    int32_t tmpInt;
 
-  streamRead(ss, tmpInt);
-  if (static_cast<Tags>(tmpInt) != VERSION) {
-    throw MolPicklerException("Bad pickle format: no version tag");
-  }
-  int32_t majorVersion, minorVersion, patchVersion;
-  streamRead(ss, majorVersion);
-  streamRead(ss, minorVersion);
-  streamRead(ss, patchVersion);
-  if (majorVersion > versionMajor ||
-      (majorVersion == versionMajor && minorVersion > versionMinor)) {
-    BOOST_LOG(rdWarningLog)
-        << "Depickling from a version number (" << majorVersion << "."
-        << minorVersion << ")"
-        << "that is higher than our version (" << versionMajor << "."
-        << versionMinor << ").\nThis probably won't work." << std::endl;
-  }
-  majorVersion = 1000 * majorVersion + minorVersion * 10 + patchVersion;
-  if (majorVersion == 1) {
-    _depickleV1(ss, mol);
-  } else {
-    int32_t numAtoms;
-    streamRead(ss, numAtoms, majorVersion);
-    if (numAtoms > 255) {
-      _depickle<int32_t>(ss, mol, majorVersion, numAtoms);
-    } else {
-      _depickle<unsigned char>(ss, mol, majorVersion, numAtoms);
+    mol->clearAllAtomBookmarks();
+    mol->clearAllBondBookmarks();
+  
+    streamRead(ss, tmpInt);
+    if (tmpInt != endianId) {
+      throw MolPicklerException(
+          "Bad pickle format: bad endian ID or invalid file format");
     }
-  }
-  mol->clearAllAtomBookmarks();
-  mol->clearAllBondBookmarks();
-  if (majorVersion < 4000) {
-    // FIX for issue 220 - probably better to change the pickle format later
-    MolOps::assignStereochemistry(*mol, true);
+  
+    streamRead(ss, tmpInt);
+    if (static_cast<Tags>(tmpInt) != VERSION) {
+      throw MolPicklerException("Bad pickle format: no version tag");
+    }
+    int32_t majorVersion, minorVersion, patchVersion;
+    streamRead(ss, majorVersion);
+    streamRead(ss, minorVersion);
+    streamRead(ss, patchVersion);
+    if (majorVersion > versionMajor ||
+        (majorVersion == versionMajor && minorVersion > versionMinor)) {
+      BOOST_LOG(rdWarningLog)
+          << "Depickling from a version number (" << majorVersion << "."
+          << minorVersion << ")"
+          << "that is higher than our version (" << versionMajor << "."
+          << versionMinor << ").\nThis probably won't work." << std::endl;
+    }
+    majorVersion = 1000 * majorVersion + minorVersion * 10 + patchVersion;
+    if (majorVersion == 1) {
+      _depickleV1(ss, mol);
+    } else {
+      int32_t numAtoms;
+      streamRead(ss, numAtoms, majorVersion);
+      if (numAtoms > 255) {
+        _depickle<int32_t>(ss, mol, majorVersion, numAtoms);
+      } else {
+        _depickle<unsigned char>(ss, mol, majorVersion, numAtoms);
+      }
+    }
+    mol->clearAllAtomBookmarks();
+    mol->clearAllBondBookmarks();
+    if (majorVersion < 4000) {
+      // FIX for issue 220 - probably better to change the pickle format later
+      MolOps::assignStereochemistry(*mol, true);
+    }
+  } catch (const std::ios_base::failure &e) {
+    if (ss.eof()) {
+      throw MolPicklerException(
+          "Bad pickle format: unexpected End-of-File while reading");
+    } else if (ss.bad()) {
+      throw MolPicklerException("Bad pickle format: read error while reading");
+    } else if (ss.fail()) {
+      throw MolPicklerException(
+          "Bad pickle format: logical error while reading");
+    } else {
+      throw MolPicklerException(
+          "Bad pickle format: unexpected error while reading");
+    }
   }
 }
 void MolPickler::molFromPickle(const std::string &pickle, ROMol *mol) {

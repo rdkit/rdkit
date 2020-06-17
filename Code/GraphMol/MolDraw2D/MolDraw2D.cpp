@@ -174,7 +174,6 @@ void MolDraw2D::drawMolecule(const ROMol &mol,
                              const map<int, DrawColour> *highlight_bond_map,
                              const std::map<int, double> *highlight_radii,
                              int confId) {
-
   int origWidth = curr_width_;
   pushDrawDetails();
   text_drawer_->setMaxFontSize(drawOptions().maxFontSize);
@@ -188,6 +187,7 @@ void MolDraw2D::drawMolecule(const ROMol &mol,
     // clearly, the molecule is in a sorry state.
     return;
   }
+
   if (drawOptions().continuousHighlight) {
     // if we're doing continuous highlighting, start by drawing the highlights
     doContinuousHighlighting(draw_mol, highlight_atoms, highlight_bonds,
@@ -550,7 +550,6 @@ void MolDraw2D::drawReaction(
         RDGeom::Point3D(arrowEnd.x, arrowEnd.y, 0);
 
     tmol2.insertMol(*tmol);
-
     pushDrawDetails();
     extractAtomCoords(tmol2, 0, true);
     for(auto atom: tmol2.atoms()) {
@@ -644,10 +643,6 @@ void MolDraw2D::drawReaction(
   delete bond_highlights;
   delete bond_highlight_colors;
 
-#if 0
-  double o_font_size = fontSize();
-  setFontSize(2 * options_.legendFontSize / scale_);
-#endif
   double o_font_scale = text_drawer_->fontScale();
   double fsize = text_drawer_->fontSize();
   double new_font_scale = 2.0 * o_font_scale * drawOptions().legendFontSize / fsize;
@@ -668,9 +663,6 @@ void MolDraw2D::drawReaction(
   setColour(odc);
   text_drawer_->setFontScale(o_font_scale);
 
-#if 0
-  setFontSize(o_font_size);
-#endif
 }
 
 // ****************************************************************************
@@ -809,7 +801,6 @@ Point2D MolDraw2D::getDrawCoords(const Point2D &mol_cds) const {
   x += x_offset_;
   y -= y_offset_;
   y = panelHeight() - y;
-
   return Point2D(x, y);
 }
 
@@ -1211,7 +1202,6 @@ unique_ptr<RWMol> MolDraw2D::setupDrawMolecule(
     const ROMol &mol, const vector<int> *highlight_atoms,
     const map<int, double> *highlight_radii, int confId, int width,
     int height) {
-
   // prepareMolForDrawing needs a RWMol but don't copy the original mol
   // if we don't need to
   unique_ptr<RWMol> rwmol;
@@ -1990,6 +1980,7 @@ void MolDraw2D::drawBond(
   const Atom *at2 = mol.getAtomWithIdx(at2_idx);
   Point2D at1_cds = at_cds_[activeMolIdx_][at1_idx];
   Point2D at2_cds = at_cds_[activeMolIdx_][at2_idx];
+
   double double_bond_offset = options_.multipleBondOffset;
   // mol files from, for example, Marvin use a bond length of 1 for just about
   // everything. When this is the case, the default multipleBondOffset is just
@@ -2135,10 +2126,10 @@ void MolDraw2D::drawWedgedBond(const Point2D &cds1, const Point2D &cds2,
 
   setColour(col1);
   if (draw_dashed) {
-    unsigned int nDashes = 10;
+    unsigned int nDashes = 6;
     // empirical cutoff to make sure we don't have too many dashes in the
     // wedge:
-    if ((cds1 - cds2).lengthSq() < 1.0) {
+    if (scale_ * (cds1 - cds2).lengthSq() < 50.0) {
       nDashes /= 2;
     }
 
@@ -2536,7 +2527,6 @@ bool MolDraw2D::doesNoteClashNbourBonds(const StringRect &note_rect,
                                         const vector<std::shared_ptr<StringRect>> &rects,
                                         const ROMol &mol,
                                         const Atom *atom) const {
-
   double double_bond_offset = -1.0;
   Point2D const &at2_dcds = getDrawCoords(at_cds_[activeMolIdx_][atom->getIdx()]);
 
@@ -3064,7 +3054,7 @@ OrientType MolDraw2D::getAtomOrientation(const RDKit::Atom &atom) const {
     // atoms of single degree should always be either W or E, never N or S.  If
     // either of the latter, make it E if the slope is close to vertical,
     // otherwise have it either as required.
-    if(orient == OrientType::N || orient == OrientType::S) {
+    if (orient == OrientType::N || orient == OrientType::S) {
       if (atom.getDegree() == 1) {
         if (fabs(islope) > VERT_SLOPE) {
           orient = OrientType::E;
@@ -3075,7 +3065,7 @@ OrientType MolDraw2D::getAtomOrientation(const RDKit::Atom &atom) const {
             orient = OrientType::E;
           }
         }
-      } else if(atom.getDegree() == 3) {
+      } else if (atom.getDegree() == 3) {
         // Atoms of degree 3 can sometimes have a bond pointing down with S
         // orientation or up with N orientation, which puts the H on the bond.
         auto mol = atom.getOwningMol();
