@@ -10,7 +10,6 @@
 #include <GraphMol/RDKitBase.h>
 #include <cmath>
 #include "AtomicEnvironmentVector.h"
-#include <fstream>
 #include <Eigen/Dense>
 
 using namespace Eigen;
