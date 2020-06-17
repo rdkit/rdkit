@@ -4,8 +4,7 @@
 #include <RDGeneral/utils.h>
 #include <eigen3/Eigen/Dense>
 #include <GraphMol/Descriptors/AtomicEnvironmentVector.h>
-#include <typeinfo>
-
+#include <fstream>
 using namespace Eigen;
 
 // #ifdef RDK_HAS_EIGEN3
@@ -28,28 +27,36 @@ ANIAtomContrib::ANIAtomContrib(ForceField *owner, int atomType,
 
   switch (d_atomType) {
     case 0:
-      this->d_weights.push_back(ArrayXXd::Random(384, 160));
-      this->d_weights.push_back(ArrayXXd::Random(160, 128));
-      this->d_weights.push_back(ArrayXXd::Random(128, 96));
-      this->d_weights.push_back(ArrayXXd::Random(96, 1));
+      for (size_t i = 0; i < 4; i++) {
+        this->d_weights.push_back(ArrayXXd::Zero(1, 1));
+        Utils::loadFromCSV(&(this->d_weights[i]), 0, "weight", i, 'H');
+        this->d_biases.push_back(ArrayXXd::Zero(1, 1));
+        Utils::loadFromCSV(&(this->d_biases[i]), 0, "bias", i, 'H');
+      }
       break;
     case 1:
-      this->d_weights.push_back(ArrayXXd::Random(384, 144));
-      this->d_weights.push_back(ArrayXXd::Random(144, 112));
-      this->d_weights.push_back(ArrayXXd::Random(112, 96));
-      this->d_weights.push_back(ArrayXXd::Random(96, 1));
+      for (size_t i = 0; i < 4; i++) {
+        this->d_weights.push_back(ArrayXXd::Zero(1, 1));
+        Utils::loadFromCSV(&(this->d_weights[i]), 0, "weight", i, 'C');
+        this->d_biases.push_back(ArrayXXd::Zero(1, 1));
+        Utils::loadFromCSV(&(this->d_biases[i]), 0, "bias", i, 'C');
+      }
       break;
     case 2:
-      this->d_weights.push_back(ArrayXXd::Random(384, 128));
-      this->d_weights.push_back(ArrayXXd::Random(128, 112));
-      this->d_weights.push_back(ArrayXXd::Random(112, 96));
-      this->d_weights.push_back(ArrayXXd::Random(96, 1));
+      for (size_t i = 0; i < 4; i++) {
+        this->d_weights.push_back(ArrayXXd::Zero(1, 1));
+        Utils::loadFromCSV(&(this->d_weights[i]), 0, "weight", i, 'N');
+        this->d_biases.push_back(ArrayXXd::Zero(1, 1));
+        Utils::loadFromCSV(&(this->d_biases[i]), 0, "bias", i, 'N');
+      }
       break;
     case 3:
-      this->d_weights.push_back(ArrayXXd::Random(384, 144));
-      this->d_weights.push_back(ArrayXXd::Random(144, 112));
-      this->d_weights.push_back(ArrayXXd::Random(112, 96));
-      this->d_weights.push_back(ArrayXXd::Random(96, 1));
+      for (size_t i = 0; i < 4; i++) {
+        this->d_weights.push_back(ArrayXXd::Zero(1, 1));
+        Utils::loadFromCSV(&(this->d_weights[i]), 0, "weight", i, 'O');
+        this->d_biases.push_back(ArrayXXd::Zero(1, 1));
+        Utils::loadFromCSV(&(this->d_biases[i]), 0, "bias", i, 'O');
+      }
       break;
     case -1:
       break;
@@ -60,14 +67,21 @@ ANIAtomContrib::ANIAtomContrib(ForceField *owner, int atomType,
 }
 
 double ANIAtomContrib::forwardProp(ArrayXXd aev) const {
-  auto vec = aev.matrix();
   std::vector<ArrayXXd> layerOuts;
-  layerOuts.push_back((aev.matrix() * this->d_weights[0].matrix()).array());
+  if (aev.rows() != 1) {
+    aev.transposeInPlace();
+  }
+  layerOuts.push_back(
+      ((this->d_weights[0].matrix() * aev.matrix().transpose()).array() +
+       this->d_biases[0])
+          .transpose());
   Utils::CELU(layerOuts[0], 0.1);
   for (unsigned int layer = 1; layer < this->d_weights.size(); layer++) {
-    layerOuts.push_back(
-        (layerOuts[layer - 1].matrix() * this->d_weights[layer].matrix())
-            .array());
+    layerOuts.push_back(((this->d_weights[layer].matrix() *
+                          layerOuts[layer - 1].matrix().transpose())
+                             .array() +
+                         this->d_biases[layer])
+                            .transpose());
     if (layer < this->d_weights.size() - 1) Utils::CELU(layerOuts[layer], 0.1);
   }
   auto size = layerOuts.size();
@@ -95,6 +109,52 @@ double coeffMin(double val) { return std::min(double(0), val); }
 void CELU(ArrayXXd &input, double alpha) {
   input = input.unaryExpr(&RELU) +
           (alpha * ((input / alpha).exp() - 1)).unaryExpr(&coeffMin);
+}
+
+std::vector<std::string> tokenize(const std::string &s) {
+  boost::char_separator<char> sep(", \n\r\t");
+  boost::tokenizer<boost::char_separator<char>> tok(s, sep);
+  std::vector<std::string> tokens;
+  std::copy(tok.begin(), tok.end(),
+            std::back_inserter<std::vector<std::string>>(tokens));
+  return tokens;
+}
+
+void loadFromCSV(ArrayXXd *param, unsigned int model, std::string type,
+                 unsigned int layer, char atomType) {
+  std::string path = getenv("RDBASE");
+  std::string paramFile = path + "/Code/ForceField/ANI/Params/model" +
+                          std::to_string(model) + "/" + atomType + "_" +
+                          std::to_string(layer) + "_" + type;
+
+  std::ifstream instrmSF(paramFile);
+  std::string line;
+  std::vector<std::string> tokens;
+  std::vector<std::vector<double>> weight;
+  unsigned int cols = 1;
+  while (!instrmSF.eof()) {
+    std::getline(instrmSF, line);
+    tokens = tokenize(line);
+    std::vector<double> row;
+    for (auto v : tokens) {
+      std::istringstream os(v);
+      double d;
+      os >> d;
+      row.push_back(d);
+    }
+    if (row.size() > 0) {
+      cols = row.size();
+      weight.push_back(row);
+    }
+  }
+
+  param->resize(weight.size(), cols);
+
+  for (size_t i = 0; i < weight.size(); i++) {
+    for (size_t j = 0; j < weight[i].size(); j++) {
+      (*param)(i, j) = weight[i][j];
+    }
+  }
 }
 
 }  // namespace Utils

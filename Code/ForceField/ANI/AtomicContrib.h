@@ -7,6 +7,7 @@
 
 // #ifdef RDK_HAS_EIGEN3
 #include <eigen3/Eigen/Dense>
+#include <boost/tokenizer.hpp>
 using namespace Eigen;
 
 namespace ForceFields {
@@ -32,11 +33,16 @@ class RDKIT_FORCEFIELD_EXPORT ANIAtomContrib : public ForceFieldContrib {
   int d_numAtoms;
   VectorXi d_speciesVec;
   std::vector<ArrayXXd> d_weights;
+  std::vector<ArrayXXd> d_biases;
 };
 
 namespace Utils {
 
 void CELU(ArrayXXd &input, double alpha);
+
+void loadFromCSV(ArrayXXd *param, unsigned int model, std::string type, unsigned int layer, char atomType);
+
+std::vector<std::string> tokenize(const std::string &s);
 
 }  // namespace Utils
 }  // namespace ANI
