@@ -369,7 +369,7 @@ M  END""")
 
     d = Draw.MolDraw2DSVG(300, 300)
     d.ClearDrawing()
-    Draw.ContourAndDrawGaussians(d, gs, hs, ws)
+    Draw.ContourAndDrawGaussians(d, gs, hs, ws, mol=dm)
     d.drawOptions().clearBackground = False
     d.DrawMolecule(dm)
     d.FinishDrawing()
@@ -381,7 +381,7 @@ M  END""")
     d.ClearDrawing()
     ps = Draw.ContourParams()
     ps.fillGrid = True
-    Draw.ContourAndDrawGaussians(d, gs, hs, ws, params=ps)
+    Draw.ContourAndDrawGaussians(d, gs, hs, ws, params=ps, mol=dm)
     d.drawOptions().clearBackground = False
     d.DrawMolecule(dm)
     d.FinishDrawing()
@@ -390,10 +390,6 @@ M  END""")
       print(txt, file=outf)
 
   def testGridContours(self):
-    m = Chem.MolFromSmiles("C1N[C@@H]2OCC12")
-    dm = Draw.PrepareMolForDrawing(m)
-
-    conf = dm.GetConformer()
     grid = np.zeros((50, 100), np.double)
     ycoords = list(np.arange(0, 5, 0.1))
     xcoords = list(np.arange(0, 10, 0.1))
@@ -416,6 +412,7 @@ M  END""")
     d = Draw.MolDraw2DSVG(300, 300)
     d.ClearDrawing()
     Draw.ContourAndDrawGrid(d, np.transpose(grid), xcoords, ycoords)
+    d.drawOptions().clearBackground = False
     d.FinishDrawing()
     txt = d.GetDrawingText()
     with open("contour_from_py_3.svg", 'w+') as outf:

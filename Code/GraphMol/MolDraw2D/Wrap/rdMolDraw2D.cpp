@@ -435,7 +435,7 @@ void contourAndDrawGaussiansHelper(
     RDKit::MolDraw2D &drawer, python::object pylocs, python::object pyheights,
     python::object pywidths, unsigned int nContours, python::object pylevels,
     const MolDraw2DUtils::ContourParams &params,
-    const RDKit::ROMol *mol) {
+    python::object mol) {
   std::unique_ptr<std::vector<RDGeom::Point2D>> locs =
       pythonObjectToVect<RDGeom::Point2D>(pylocs);
   std::unique_ptr<std::vector<double>> heights =
@@ -448,8 +448,12 @@ void contourAndDrawGaussiansHelper(
   } else {
     levels = std::unique_ptr<std::vector<double>>(new std::vector<double>);
   }
+  ROMol *mol_p = nullptr;
+  if (mol) {
+    mol_p = python::extract<ROMol *>(mol);
+  }
   MolDraw2DUtils::contourAndDrawGaussians(drawer, *locs, *heights, *widths,
-                                          nContours, *levels, params, mol);
+                                          nContours, *levels, params, mol_p);
 }
 
 void contourAndDrawGridHelper(RDKit::MolDraw2D &drawer, python::object &data,
@@ -457,7 +461,7 @@ void contourAndDrawGridHelper(RDKit::MolDraw2D &drawer, python::object &data,
                               python::object &pyycoords, unsigned int nContours,
                               python::object &pylevels,
                               const MolDraw2DUtils::ContourParams &params,
-                              const RDKit::ROMol *mol) {
+			      python::object mol) {
   if (!PyArray_Check(data.ptr())) {
     throw_value_error("data argument must be a numpy array");
   }
@@ -488,9 +492,13 @@ void contourAndDrawGridHelper(RDKit::MolDraw2D &drawer, python::object &data,
     throw_value_error("data array and ycoords sizes do not match");
   }
 
+  ROMol *mol_p = nullptr;
+  if(mol) {
+    mol_p = python::extract<RDKit::ROMol *>(mol);
+  }
   MolDraw2DUtils::contourAndDrawGrid(drawer, (double *)PyArray_DATA(dataArr),
                                      *xcoords, *ycoords, nContours, *levels,
-                                     params, mol);
+                                     params, mol_p);
 
   Py_DECREF(dataArr);
 }
@@ -924,7 +932,7 @@ BOOST_PYTHON_MODULE(rdMolDraw2D) {
        python::arg("widths"), python::arg("nContours") = 10,
        python::arg("levels") = python::object(),
        python::arg("params") = RDKit::MolDraw2DUtils::ContourParams(),
-       python::arg("mol") = nullptr),
+       python::arg("mol") = python::object()),
       docString.c_str());
   docString = R"DOC(Generates and draws contours for data on a grid
 
@@ -958,6 +966,6 @@ BOOST_PYTHON_MODULE(rdMolDraw2D) {
        python::arg("ycoords"), python::arg("nContours") = 10,
        python::arg("levels") = python::object(),
        python::arg("params") = RDKit::MolDraw2DUtils::ContourParams(),
-       python::arg("mol") = nullptr),
+       python::arg("mol") = python::object()),
       docString.c_str());
 }
