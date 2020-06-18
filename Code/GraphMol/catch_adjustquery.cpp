@@ -355,16 +355,17 @@ TEST_CASE("MDL five-rings") {
   MolOps::AdjustQueryParameters ps = MolOps::AdjustQueryParameters::noAdjustments();
   ps.setMDLFiveRingAromaticity = true;
   SECTION("query details") {
-    std::vector<std::tuple<std::string,std::string,std::string>> examples = {
+    using extuple=std::tuple<std::string,std::string,std::string>;
+    std::vector<extuple> examples = {
     // no queries, no change
-    {"adjustqueryprops_MDLfivering_1.mol","[#7H]1:[#6]:[#6]:[#6]:[#6]:1",""},
+    extuple{"adjustqueryprops_MDLfivering_1.mol","[#7H]1:[#6]:[#6]:[#6]:[#6]:1",""},
     // Q atom, no change
-    {"adjustqueryprops_MDLfivering_2.mol","[!#6&!#1]1:[#6]:[#6]:[#6]:[#6]:1",""},
+    extuple{"adjustqueryprops_MDLfivering_2.mol","[!#6&!#1]1:[#6]:[#6]:[#6]:[#6]:1",""},
     // A atom, this one changes
-    {"adjustqueryprops_MDLfivering_3.mol","[!#1]1:[#6]:[#6]:[#6]:[#6]:1","[!#1]1-,:[#6]=,:[#6]-,:[#6]=,:[#6]-,:1"},
+    extuple{"adjustqueryprops_MDLfivering_3.mol","[!#1]1:[#6]:[#6]:[#6]:[#6]:1","[!#1]1-,:[#6]=,:[#6]-,:[#6]=,:[#6]-,:1"},
     // NOTE that this is not technically correct according to the documentation, but if we make the bridging bond
     // aromatic then it won't match azulene in a normal RDKit molecule, which is certainly not the intent of this.
-    {"adjustqueryprops_MDLfivering_4.mol","[#6]12:[#6]:[#6]:[#6]:[#6]-1:[#6]:[#6]:[#6]:[#6]:[#6]:2",""},
+    extuple{"adjustqueryprops_MDLfivering_4.mol","[#6]12:[#6]:[#6]:[#6]:[#6]-1:[#6]:[#6]:[#6]:[#6]:[#6]:2",""},
     };
     for( auto tpl : examples){
       if(std::get<2>(tpl).empty()){
@@ -389,40 +390,40 @@ TEST_CASE("conjugated five-rings") {
   SECTION("matching") {
     std::vector<matchCase> examples = {
     // 1,3 cyclopentadiene
-    {"C1=CCC=C1","adjustqueryprops_fivering_1.mol",true,true},
-    {"C1=CCC=C1","adjustqueryprops_fivering_2.mol",false,true},
-    {"C1=CCC=C1","adjustqueryprops_fivering_3.mol",true,true},
-    {"C1=CCC=C1","adjustqueryprops_fivering_4.mol",false,false},
-    {"C1=CCC=C1","adjustqueryprops_fivering_5.mol",false,false},
-    {"C1=CCC=C1","adjustqueryprops_fivering_6.mol",false,false},
+    matchCase{"C1=CCC=C1","adjustqueryprops_fivering_1.mol",true,true},
+    matchCase{"C1=CCC=C1","adjustqueryprops_fivering_2.mol",false,true},
+    matchCase{"C1=CCC=C1","adjustqueryprops_fivering_3.mol",true,true},
+    matchCase{"C1=CCC=C1","adjustqueryprops_fivering_4.mol",false,false},
+    matchCase{"C1=CCC=C1","adjustqueryprops_fivering_5.mol",false,false},
+    matchCase{"C1=CCC=C1","adjustqueryprops_fivering_6.mol",false,false},
     // pyrrole
-    {"C1=CNC=C1","adjustqueryprops_fivering_1.mol",false,true},
-    {"C1=CNC=C1","adjustqueryprops_fivering_2.mol",true,true},
-    {"C1=CNC=C1","adjustqueryprops_fivering_3.mol",false,false},
-    {"C1=CNC=C1","adjustqueryprops_fivering_4.mol",false,false},
-    {"C1=CNC=C1","adjustqueryprops_fivering_5.mol",false,false},
-    {"C1=CNC=C1","adjustqueryprops_fivering_6.mol",false,false},
+    matchCase{"C1=CNC=C1","adjustqueryprops_fivering_1.mol",false,true},
+    matchCase{"C1=CNC=C1","adjustqueryprops_fivering_2.mol",true,true},
+    matchCase{"C1=CNC=C1","adjustqueryprops_fivering_3.mol",false,false},
+    matchCase{"C1=CNC=C1","adjustqueryprops_fivering_4.mol",false,false},
+    matchCase{"C1=CNC=C1","adjustqueryprops_fivering_5.mol",false,false},
+    matchCase{"C1=CNC=C1","adjustqueryprops_fivering_6.mol",false,false},
     // thiophene
-    {"C1=CSC=C1","adjustqueryprops_fivering_1.mol",false,false},
-    {"C1=CSC=C1","adjustqueryprops_fivering_2.mol",true,true},
-    {"C1=CSC=C1","adjustqueryprops_fivering_3.mol",false,false},
-    {"C1=CSC=C1","adjustqueryprops_fivering_4.mol",true,true},
-    {"C1=CSC=C1","adjustqueryprops_fivering_5.mol",false,false},
-    {"C1=CSC=C1","adjustqueryprops_fivering_6.mol",true,true},
+    matchCase{"C1=CSC=C1","adjustqueryprops_fivering_1.mol",false,false},
+    matchCase{"C1=CSC=C1","adjustqueryprops_fivering_2.mol",true,true},
+    matchCase{"C1=CSC=C1","adjustqueryprops_fivering_3.mol",false,false},
+    matchCase{"C1=CSC=C1","adjustqueryprops_fivering_4.mol",true,true},
+    matchCase{"C1=CSC=C1","adjustqueryprops_fivering_5.mol",false,false},
+    matchCase{"C1=CSC=C1","adjustqueryprops_fivering_6.mol",true,true},
     // thiophene oxide
-    {"C1=CS(=O)C=C1","adjustqueryprops_fivering_1.mol",false,false},
-    {"C1=CS(=O)C=C1","adjustqueryprops_fivering_2.mol",false,true},
-    {"C1=CS(=O)C=C1","adjustqueryprops_fivering_3.mol",false,false},
-    {"C1=CS(=O)C=C1","adjustqueryprops_fivering_4.mol",false,true},
-    {"C1=CS(=O)C=C1","adjustqueryprops_fivering_5.mol",false,false},
-    {"C1=CS(=O)C=C1","adjustqueryprops_fivering_6.mol",true,true},
+    matchCase{"C1=CS(=O)C=C1","adjustqueryprops_fivering_1.mol",false,false},
+    matchCase{"C1=CS(=O)C=C1","adjustqueryprops_fivering_2.mol",false,true},
+    matchCase{"C1=CS(=O)C=C1","adjustqueryprops_fivering_3.mol",false,false},
+    matchCase{"C1=CS(=O)C=C1","adjustqueryprops_fivering_4.mol",false,true},
+    matchCase{"C1=CS(=O)C=C1","adjustqueryprops_fivering_5.mol",false,false},
+    matchCase{"C1=CS(=O)C=C1","adjustqueryprops_fivering_6.mol",true,true},
     // furan
-    {"C1=COC=C1","adjustqueryprops_fivering_1.mol",false,true},
-    {"C1=COC=C1","adjustqueryprops_fivering_2.mol",true,true},
-    {"C1=COC=C1","adjustqueryprops_fivering_3.mol",false,false},
-    {"C1=COC=C1","adjustqueryprops_fivering_4.mol",false,false},
-    {"C1=COC=C1","adjustqueryprops_fivering_5.mol",false,false},
-    {"C1=COC=C1","adjustqueryprops_fivering_6.mol",false,false},
+    matchCase{"C1=COC=C1","adjustqueryprops_fivering_1.mol",false,true},
+    matchCase{"C1=COC=C1","adjustqueryprops_fivering_2.mol",true,true},
+    matchCase{"C1=COC=C1","adjustqueryprops_fivering_3.mol",false,false},
+    matchCase{"C1=COC=C1","adjustqueryprops_fivering_4.mol",false,false},
+    matchCase{"C1=COC=C1","adjustqueryprops_fivering_5.mol",false,false},
+    matchCase{"C1=COC=C1","adjustqueryprops_fivering_6.mol",false,false},
     };
     for( const auto tpl : examples){
       auto fname = std::get<1>(tpl);
@@ -494,17 +495,17 @@ TEST_CASE("single bonds to degree-one neighbors") {
   ps.adjustSingleBondsToDegreeOneNeighbors = true;
   SECTION("matching") {
     std::vector<matchCase> examples = {
-      {"C2CCCc1c2nncc1","Cc1cnncc1",true,true},
-      {"C2CCCc1c2nncc1","CCc1cnncc1",true,true},
-      {"C2CCC(C)c1c2nncc1","CCc1cnncc1",true,true},
-      {"c2cccc1c2nncc1","Cc1cnncc1",false,true},
-      {"c2cccc1c2nncc1","CCc1cnncc1",false,false},
-      {"c2ccc(C)c1c2nncc1","CCc1cnncc1",false,false},
+      matchCase{"C2CCCc1c2nncc1","Cc1cnncc1",true,true},
+      matchCase{"C2CCCc1c2nncc1","CCc1cnncc1",true,true},
+      matchCase{"C2CCC(C)c1c2nncc1","CCc1cnncc1",true,true},
+      matchCase{"c2cccc1c2nncc1","Cc1cnncc1",false,true},
+      matchCase{"c2cccc1c2nncc1","CCc1cnncc1",false,false},
+      matchCase{"c2ccc(C)c1c2nncc1","CCc1cnncc1",false,false},
 
-      {"C2CCCc1[nH]ccc12","Cc1[nH]ccc1",true,true},
-      {"C2CCCc1[nH]ccc12","CCc1[nH]ccc1",true,true},
-      {"c2cccc1[nH]ccc12","Cc1[nH]ccc1",false,true},
-      {"c2cccc1[nH]ccc12","CCc1[nH]ccc1",false,false},
+      matchCase{"C2CCCc1[nH]ccc12","Cc1[nH]ccc1",true,true},
+      matchCase{"C2CCCc1[nH]ccc12","CCc1[nH]ccc1",true,true},
+      matchCase{"c2cccc1[nH]ccc12","Cc1[nH]ccc1",false,true},
+      matchCase{"c2cccc1[nH]ccc12","CCc1[nH]ccc1",false,false},
 
     };
     for( const auto tpl : examples){
@@ -531,14 +532,14 @@ TEST_CASE("single bonds to aromatic neighbors") {
   ps.adjustSingleBondsBetweenAromaticAtoms = true;
   SECTION("matching") {
     std::vector<matchCase> examples = {
-      {"c1ncccc1-c1cnncc1","c1ncccc1-c1cnncc1",true,true},
-      {"C1=CC2=C(C=CC3=C2C=NN=C3)N=C1","c1ncccc1-c1cnncc1",false,true},
-      {"C1CC2=C(C=CC=N2)C2=C1C=NN=C2","c1ncccc1-c1cnncc1",true,true},
-      {"C1CC2=NN=CC3=C2C2=C(C=C3)N=CC=C12","c1ncccc1-c1cnncc1",false,true},
+      matchCase{"c1ncccc1-c1cnncc1","c1ncccc1-c1cnncc1",true,true},
+      matchCase{"C1=CC2=C(C=CC3=C2C=NN=C3)N=C1","c1ncccc1-c1cnncc1",false,true},
+      matchCase{"C1CC2=C(C=CC=N2)C2=C1C=NN=C2","c1ncccc1-c1cnncc1",true,true},
+      matchCase{"C1CC2=NN=CC3=C2C2=C(C=C3)N=CC=C12","c1ncccc1-c1cnncc1",false,true},
       // confirm that we don't modify ring bonds
-      {"C1=CC2=C(C=CC3=C2C=NN=C3)N=C1","C1CC2=C(C=CC=N2)C2=C1C=NN=C2",false,false},
-      {"C1CC2=C(C=CC=N2)C2=C1C=NN=C2","C1CC2=C(C=CC=N2)C2=C1C=NN=C2",true,true},
-      {"C1CC2=NN=CC3=C2C2=C(C=C3)N=CC=C12","C1CC2=C(C=CC=N2)C2=C1C=NN=C2",false,false},
+      matchCase{"C1=CC2=C(C=CC3=C2C=NN=C3)N=C1","C1CC2=C(C=CC=N2)C2=C1C=NN=C2",false,false},
+      matchCase{"C1CC2=C(C=CC=N2)C2=C1C=NN=C2","C1CC2=C(C=CC=N2)C2=C1C=NN=C2",true,true},
+      matchCase{"C1CC2=NN=CC3=C2C2=C(C=C3)N=CC=C12","C1CC2=C(C=CC=N2)C2=C1C=NN=C2",false,false},
     };
     for( const auto tpl : examples){
       auto smi = std::get<1>(tpl);
