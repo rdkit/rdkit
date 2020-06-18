@@ -85,6 +85,9 @@ void MolDraw2DSVG::initTextDrawer(bool noFreetype) {
       text_drawer_.reset(new DrawTextFTSVG(
           max_fnt_sz, min_fnt_sz, drawOptions().fontFile, d_os, d_activeClass));
     } catch (std::runtime_error &e) {
+      BOOST_LOG(rdWarningLog) << e.what() << std::endl
+                              << "Falling back to native SVG text handling."
+                              << std::endl;
       text_drawer_.reset(
           new DrawTextSVG(max_fnt_sz, min_fnt_sz, d_os, d_activeClass));
     }

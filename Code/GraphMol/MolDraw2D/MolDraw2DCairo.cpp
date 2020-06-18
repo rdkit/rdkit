@@ -38,6 +38,10 @@ void MolDraw2DCairo::initTextDrawer(bool noFreetype) {
       text_drawer_.reset(new DrawTextFTCairo(max_fnt_sz, min_fnt_sz,
                                              drawOptions().fontFile, dp_cr));
     } catch (std::runtime_error &e) {
+      BOOST_LOG(rdWarningLog) << e.what() << endl
+                              << "Falling back to native Cairo text handling."
+                              << std::endl;
+      ;
       text_drawer_.reset(new DrawTextCairo(max_fnt_sz, min_fnt_sz, dp_cr));
     }
 #else

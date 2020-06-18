@@ -3084,7 +3084,21 @@ void test21FontFile() {
     std::ofstream outs("test21_1.svg");
     MolDraw2DSVG drawer(500, 500, outs);
     std::string fName = getenv("RDBASE");
-    fName += "/Code/GraphMol/MolDraw2D/Amadeus.ttf";
+    fName += "/Data/Fonts/Amadeus.ttf";
+    drawer.drawOptions().fontFile = fName;
+    drawer.drawMolecule(*m);
+    drawer.finishDrawing();
+    outs.flush();
+  }
+  {
+    auto m = "CO[C@@H](O)C1=C(O[C@H](F)Cl)C(C#N)=C1ONNC[NH3+]"_smiles;
+    TEST_ASSERT(m);
+    RDDepict::compute2DCoords(*m);
+    WedgeMolBonds(*m, &(m->getConformer()));
+    std::ofstream outs("test21_2.svg");
+    MolDraw2DSVG drawer(500, 500, outs);
+    std::string fName = getenv("RDBASE");
+    fName += "/Data/Fonts/No_Such_Font_File.ttf";
     drawer.drawOptions().fontFile = fName;
     drawer.drawMolecule(*m);
     drawer.finishDrawing();

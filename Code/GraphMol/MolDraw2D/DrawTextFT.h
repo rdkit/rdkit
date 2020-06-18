@@ -48,7 +48,7 @@ class DrawTextFT : public DrawText {
 
   // unless over-ridden by the c'tor, this will return a hard-coded
   // file from $RDBASE.
-  std::string getFontFile() const;
+  std::string getFontFile() const override;
   void setFontFile(const std::string &font_file) override;
 
  protected:

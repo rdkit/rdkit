@@ -58,7 +58,7 @@ class DrawText {
   void setFontScale(double new_scale);
 
   // these are only relevant for the FreeType DrawText classes.
-  std::string getFontFile() const { return "";}
+  virtual std::string getFontFile() const { return "";}
   virtual void setFontFile(const std::string &font_file) {
     RDUNUSED_PARAM(font_file);
   }

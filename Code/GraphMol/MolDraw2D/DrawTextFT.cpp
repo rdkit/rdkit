@@ -22,21 +22,13 @@ namespace RDKit {
 // ****************************************************************************
   DrawTextFT::DrawTextFT(double max_fnt_sz, double min_fnt_sz,
                          const string &font_file) :
-    DrawText(max_fnt_sz, min_fnt_sz), library_(nullptr), face_(nullptr),
-    x_trans_(0), y_trans_(0), string_y_max_(0) {
-
-  string fontfile = getFontFile();
+      DrawText(max_fnt_sz, min_fnt_sz), library_(nullptr), face_(nullptr),
+      x_trans_(0), y_trans_(0), string_y_max_(0) {
 
   int err_code = FT_Init_FreeType(&library_);
   if(err_code != FT_Err_Ok) {
     throw runtime_error(string("Couldn't initialise Freetype."));
   }
-//  // take the first face
-//  err_code = FT_New_Face(library_, fontfile.c_str(), 0, &face_);
-//  if(err_code != FT_Err_Ok) {
-//    throw runtime_error(string("Font file ") + fontfile + string(" not found."));
-//  }
-//  em_scale_ = 1.0 / face_->units_per_EM;
   setFontFile(font_file);
 
 }
@@ -111,9 +103,9 @@ string DrawTextFT::getFontFile() const {
   }
   string ff_name = getenv("RDBASE") ? getenv("RDBASE") : "";
   if(ff_name.empty()) {
-    return "NO_FONT_FILE"; // the c'tor will throw when this file isn't found.
+    throw runtime_error("Freetype not initialised because RDBASE not defined.");
   }
-  ff_name += "/Code/GraphMol/MolDraw2D/Telex-Regular.ttf";
+  ff_name += "/Data/Fonts/Telex-Regular.ttf";
   return ff_name;
 
 }
@@ -126,12 +118,13 @@ void DrawTextFT::setFontFile(const string &font_file) {
   }
 
   font_file_ = font_file;
-  string ff = getFontFile();
+  string font_file_ = getFontFile();
   FT_Done_Face(face_);
+  face_ = nullptr;
   // take the first face
-  int err_code = FT_New_Face(library_, ff.c_str(), 0, &face_);
+  int err_code = FT_New_Face(library_, font_file_.c_str(), 0, &face_);
   if(err_code != FT_Err_Ok) {
-    throw runtime_error(string("Font file ") + ff + string(" not found."));
+    throw runtime_error(string("Font file ") + font_file_ + string(" not found."));
   }
   em_scale_ = 1.0 / face_->units_per_EM;
 

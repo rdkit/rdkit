@@ -178,8 +178,15 @@ void MolDraw2D::drawMolecule(const ROMol &mol,
   pushDrawDetails();
   text_drawer_->setMaxFontSize(drawOptions().maxFontSize);
   text_drawer_->setMinFontSize(drawOptions().minFontSize);
-  text_drawer_->setFontFile(drawOptions().fontFile);
-
+  try {
+    text_drawer_->setFontFile(drawOptions().fontFile);
+  } catch(std::runtime_error &e) {
+    BOOST_LOG(rdWarningLog) << e.what() << std::endl;
+    text_drawer_->setFontFile("");
+    BOOST_LOG(rdWarningLog) << "Falling back to original font file "
+                            << text_drawer_->getFontFile() << "."
+                            << std::endl;
+  }
   unique_ptr<RWMol> rwmol =
       setupMoleculeDraw(mol, highlight_atoms, highlight_radii, confId);
   ROMol const &draw_mol = rwmol ? *(rwmol) : mol;
