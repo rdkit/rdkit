@@ -106,9 +106,14 @@ void adjustConjugatedFiveRings(RWMol &mol) {
                    Queries::COMPOSITE_OR);
     for (auto bi : ring) {
       const auto bond = mol.getBondWithIdx(bi);
-      if (!bond->hasQuery() &&
-          std::find(bondTypesToModify.begin(), bondTypesToModify.end(),
+      if (std::find(bondTypesToModify.begin(), bondTypesToModify.end(),
                     bond->getBondType()) != bondTypesToModify.end()) {
+        if (bond->hasQuery()) {
+          BOOST_LOG(rdWarningLog)
+              << "adjustConjugatedFiveRings: replacing a bond "
+                 "that already has a query"
+              << std::endl;
+        }
         mol.replaceBond(bi, &qb);
       }
     }
