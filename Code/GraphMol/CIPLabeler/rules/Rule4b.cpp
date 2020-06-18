@@ -230,7 +230,7 @@ void Rule4b::fillPairs(const Node *beg, PairList &plist) const {
 
     plist.add(node->getAux());
     auto edges = node->getEdges();
-    sorter.prioritise(node, edges);
+    sorter.prioritize(node, edges);
     for (const auto &edge : edges) {
       if (edge->isBeg(node) && !edge->getEnd()->isTerminal()) {
         queue.push_back(edge->getEnd());
@@ -262,7 +262,7 @@ int Rule4b::comparePairs(const Node *a, const Node *b, Descriptor refA,
     }
 
     auto edges = aNode->getEdges();
-    aSorter.prioritise(aNode, edges);
+    aSorter.prioritize(aNode, edges);
     for (const auto &edge : edges) {
       if (edge->isBeg(aNode) && !edge->getEnd()->isTerminal()) {
         aQueue.push_back(edge->getEnd());
@@ -270,7 +270,7 @@ int Rule4b::comparePairs(const Node *a, const Node *b, Descriptor refA,
     }
 
     edges = bNode->getEdges();
-    bSorter.prioritise(bNode, edges);
+    bSorter.prioritize(bNode, edges);
     for (const auto &edge : edges) {
       if (edge->isBeg(bNode) && !edge->getEnd()->isTerminal()) {
         bQueue.push_back(edge->getEnd());

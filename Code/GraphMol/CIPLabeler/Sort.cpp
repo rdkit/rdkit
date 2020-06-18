@@ -24,7 +24,7 @@ const std::vector<const SequenceRule *> &Sort::getRules() const {
   return d_rules;
 }
 
-Priority Sort::prioritise(const Node *node, std::vector<Edge *> &edges,
+Priority Sort::prioritize(const Node *node, std::vector<Edge *> &edges,
                           bool deep) const {
   bool unique = true;
   int numPseudoAsym = 0;

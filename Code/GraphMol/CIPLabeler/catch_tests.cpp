@@ -218,7 +218,7 @@ TEST_CASE("Rule1a", "[accurateCIP]") {
 
     CHECK(0 == rule.compare(edges[0], edges[1]));
 
-    CHECK(!rule.getSorter()->prioritise(origin, edges).isUnique());
+    CHECK(!rule.getSorter()->prioritize(origin, edges).isUnique());
   }
 
   SECTION("Compare different") {
@@ -248,7 +248,7 @@ TEST_CASE("Rule1a", "[accurateCIP]") {
     CHECK(rule.compare(edges[0], edges[1]) < 0);
     CHECK(rule.compare(edges[1], edges[0]) > 0);
 
-    CHECK(rule.getSorter()->prioritise(origin, edges).isUnique());
+    CHECK(rule.getSorter()->prioritize(origin, edges).isUnique());
   }
 }
 
@@ -271,7 +271,7 @@ TEST_CASE("Rule2", "[accurateCIP]") {
 
     CHECK(0 == rule.compare(edges[0], edges[1]));
 
-    CHECK(!rule.getSorter()->prioritise(origin, edges).isUnique());
+    CHECK(!rule.getSorter()->prioritize(origin, edges).isUnique());
   }
 
   SECTION("Compare different: Zero Mass Num") {
@@ -296,7 +296,7 @@ TEST_CASE("Rule2", "[accurateCIP]") {
     CHECK(rule.compare(edges[0], edges[1]) < 0);
     CHECK(rule.compare(edges[1], edges[0]) > 0);
 
-    CHECK(rule.getSorter()->prioritise(origin, edges).isUnique());
+    CHECK(rule.getSorter()->prioritize(origin, edges).isUnique());
   }
 
   SECTION("Compare different: Non-Zero Mass Num") {
@@ -321,7 +321,7 @@ TEST_CASE("Rule2", "[accurateCIP]") {
     CHECK(rule.compare(edges[0], edges[1]) < 0);
     CHECK(rule.compare(edges[1], edges[0]) > 0);
 
-    CHECK(rule.getSorter()->prioritise(origin, edges).isUnique());
+    CHECK(rule.getSorter()->prioritize(origin, edges).isUnique());
   }
 }
 

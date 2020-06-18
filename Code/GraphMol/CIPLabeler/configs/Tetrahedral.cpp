@@ -24,8 +24,7 @@ Tetrahedral::Tetrahedral(const CIPMol &mol, Atom *focus)
 
   std::vector<Atom *> carriers;
   carriers.reserve(4);
-  for (auto &bond : mol.getBonds(focus)) {
-    auto nbr = bond->getOtherAtom(focus);
+  for (auto &nbr : mol.getNeighbors(focus)) {
     carriers.push_back(nbr);
   }
   if (carriers.size() < 4) {
@@ -38,6 +37,7 @@ Tetrahedral::Tetrahedral(const CIPMol &mol, Atom *focus)
     // than the implicit H.
     carriers.push_back(nullptr);
   }
+  POSTCONDITION(carriers.size()==4, "configurtion must have 4 carriers");
 
   setCarriers(std::move(carriers));
 };

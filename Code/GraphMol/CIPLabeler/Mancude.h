@@ -42,7 +42,7 @@ enum class Type {
 /**
  * Calculate fractional atomic numbers for all atoms in the mol.
  * Using fractional atomic numbers makes sure that atoms in rings
- * that can be tautomerized are always considered with the same
+ * that have resonant structures are always considered with the same
  * priority.
  *
  */

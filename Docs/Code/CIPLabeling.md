@@ -1,19 +1,24 @@
 # New CIP labelling
 
 This is a C++ port of https://github.com/SiMolecule/centres, which was
-originally written by John Mayfield in Java. The orignal algorithm was
+originally written by John Mayfield in Java. The original algorithm was
 described in:
 
-Hanson, R. M., Musacchio, S., Mayfield, J. W., Vainio, M. J., Yerin, A., Redkin, D. Algorithmic Analysis of Cahn−Ingold−Prelog Rules of Stereochemistry: Proposals for Revised Rules and a Guide for Machine Implementation. J. Chem. Inf. Model. 2018, 58, 1755-1765.
+Hanson, R. M., Musacchio, S., Mayfield, J. W., Vainio, M. J., Yerin, A.,
+Redkin, D. Algorithmic Analysis of Cahn−Ingold−Prelog Rules of
+Stereochemistry: Proposals for Revised Rules and a Guide for Machine
+Implementation. J. Chem. Inf. Model. 2018, 58, 1755-1765.
 
 
 ### Details
 
-The main function is C++ RDKit:: CIPLabeler::assignCIPLabels()/ Python: 
+The main function is C++ RDKit:: CIPLabeler::assignCIPLabels()/ Python:
 rdkit.Chem.rdCIPLabeler.AssignCIPLabels().
 
-`assignCIPLabels()` calculates E/Z bond stereochemistry, R/S tetrahedral chirality, and r/s pseudochirality 
-according to the Cahn−Ingold−Prelog rules. Each is stored in the _CIPCode property - including for bonds. 
+`assignCIPLabels()` calculates E/Z bond stereochemistry, R/S tetrahedral
+chirality, and r/s pseudochirality according to the Cahn−Ingold−Prelog rules.
+Each is stored in the _CIPCode property - including for bonds.
+
 assignCIPLabels() relies on the caller to mark potential stereocenters.
 
 
@@ -33,7 +38,7 @@ on the relevant atoms and bonds.
 ### Some potential points of improvement might be:
 - Implement the stereo configuration modes that haven't been ported yet
 (atropoisomery, Square planar, extended tetrahedral & cis/trans...). These
-haven't been ported yed because RDKit cannot perceive these.
+haven't been ported yet because RDKit cannot perceive these.
 
 - Digraph generation/handling. It might be useful to improve the way nodes,
 edges and the digraph itself are handled, so that they don't need to be passed

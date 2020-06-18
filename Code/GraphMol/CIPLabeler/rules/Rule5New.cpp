@@ -79,7 +79,7 @@ void Rule5New::fillPairs(const Node *beg, PairList &plist) const {
 
     plist.add(node->getAux());
     auto edges = node->getEdges();
-    sorter.prioritise(node, edges);
+    sorter.prioritize(node, edges);
     for (const auto &edge : edges) {
       if (edge->isBeg(node) && !edge->getEnd()->isTerminal()) {
         queue.push_back(edge->getEnd());

@@ -22,8 +22,7 @@ class Node;
 
 /**
  * A simple insertion sort for substituents. The number of substituents is not
- * likely to
- * be very larger as such doing a merge sort would have little benefit.
+ * likely to be large enough that doing a merge sort would make a difference
  *
  */
 class Sort {
@@ -35,7 +34,7 @@ public:
 
   const std::vector<const SequenceRule *> &getRules() const;
 
-  Priority prioritise(const Node *node, std::vector<Edge *> &edges,
+  Priority prioritize(const Node *node, std::vector<Edge *> &edges,
                       bool deep = true) const;
 
   std::vector<std::vector<Edge *>>

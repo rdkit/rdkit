@@ -22,12 +22,16 @@ namespace CIPLabeler {
 
 /**
  * Calculate Stereochemical labels based on an accurate implementation
- * of the CIP rules, described in:
+ * of the CIP rules.
  *
- *  Hanson, R. M., Musacchio, S., Mayfield, J. W., Vainio, M. J., Yerin, A.,
- *  Redkin, D. Algorithmic Analysis of Cahn−Ingold−Prelog Rules of
- *  Stereochemistry: Proposals for Revised Rules and a Guide for Machine
- *  Implementation. J. Chem. Inf. Model. 2018, 58, 1755-1765.
+ * This is a C++ port of https://github.com/SiMolecule/centres, which was
+ * originally written by John Mayfield in Java. The original algorithm was
+ * described in:
+ *
+ * Hanson, R. M., Musacchio, S., Mayfield, J. W., Vainio, M. J., Yerin, A.,
+ * Redkin, D. Algorithmic Analysis of Cahn−Ingold−Prelog Rules of
+ * Stereochemistry: Proposals for Revised Rules and a Guide for Machine
+ * Implementation. J. Chem. Inf. Model. 2018, 58, 1755-1765.
  *
  *   \param mol - the molecule to be labelled.
  *

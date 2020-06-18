@@ -8,6 +8,7 @@
 //  which is included in the file license.txt, found at the root
 //  of the RDKit source tree.
 //
+#include "GraphMol/Chirality.h"
 
 #include "Sp2Bond.h"
 #include "../Sort.h"
@@ -23,7 +24,7 @@ Sp2Bond::Sp2Bond(const CIPMol &mol, Bond *bond, Bond::BondStereo cfg)
   CHECK_INVARIANT(d_cfg == Bond::STEREOTRANS || d_cfg == Bond::STEREOCIS,
                   "bad config")
 
-  auto stereo_atoms = MolOps::findStereoAtoms(bond);
+  auto stereo_atoms = Chirality::findStereoAtoms(bond);
   CHECK_INVARIANT(stereo_atoms.size() == 2, "incorrect number of stereo atoms")
 
   std::vector<Atom *> anchors{

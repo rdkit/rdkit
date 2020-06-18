@@ -16,8 +16,6 @@ add_subdirectory(GraphMol)
 add_subdirectory(Query)
 add_subdirectory(Features)
 
-add_subdirectory(CIPLabeler)
-
 add_subdirectory(DataManip)
 if(RDK_BIG_ENDIAN)
   message("Skipping build of SimDivPickers on big endian system")

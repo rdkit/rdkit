@@ -99,7 +99,7 @@ bool SeedTypes(std::vector<Type> &types, const CIPMol &mol) {
 
 // Reset atom types for atoms that have been given a type,
 // but cannot be part of a mancude system (more than one
-// typed neighbor is required for tautomerization to be possible)
+// typed neighbor is required for resonance to be possible)
 void RelaxTypes(std::vector<Type> &types, const CIPMol &mol) {
   std::list<Atom *> queue;
   auto counts = std::vector<int>(mol.getNumAtoms());
@@ -132,7 +132,7 @@ void RelaxTypes(std::vector<Type> &types, const CIPMol &mol) {
   }
 }
 
-// Mark mol atoms in the same tautomerizable part of the mol.
+// Mark mol atoms in the same resonant part of the mol.
 void VisitPart(std::vector<int> &parts, const std::vector<Type> &types,
                int part, Atom *atom, const CIPMol &mol) {
   Atom *next;
@@ -159,7 +159,7 @@ void VisitPart(std::vector<int> &parts, const std::vector<Type> &types,
   } while (atom != nullptr);
 }
 
-// Classify mol atoms into different tautomerizable parts of the mol.
+// Classify mol atoms into different resonant parts of the mol.
 int VisitParts(std::vector<int> &parts, const std::vector<Type> &types,
                const CIPMol &mol) {
   int numparts = 0;
@@ -183,10 +183,16 @@ std::vector<boost::rational<int>> calcFracAtomNums(const CIPMol &mol) {
     fractions.emplace_back(atom->getAtomicNum(), 1);
   }
 
+  // Mark all atoms which are potentially part of a resonance system.
   auto types = std::vector<Type>(num_atoms, Type::Other);
   if (SeedTypes(types, mol)) {
+
+    // Filter out atoms which cannot be resonant because
+    // of not having the proper environment.
     RelaxTypes(types, mol);
 
+    // Find resonant systems: parts stores the ids of the
+    // systems each atom is involved in.
     auto parts = std::vector<int>(num_atoms);
     int numparts = VisitParts(parts, types, mol);
 
@@ -200,6 +206,7 @@ std::vector<boost::rational<int>> calcFracAtomNums(const CIPMol &mol) {
         }
         auto atom = mol.getAtom(i);
 
+        // Find resonant structures caused by relocation of a negative charge.
         if (types[i] == Type::Cv3D3Minus || types[i] == Type::Nv2D2Minus) {
           int j = 0;
           for (; j < numres; ++j) {
@@ -231,6 +238,9 @@ std::vector<boost::rational<int>> calcFracAtomNums(const CIPMol &mol) {
       }
     }
 
+    // If there are any resonant structures due to negative charges,
+    // recalculate the average atomic number considering relocation
+    // of the charge through higher order bonds.
     if (numres > 0) {
       for (int j = 0; j < numres; ++j) {
         int numerator = 0;

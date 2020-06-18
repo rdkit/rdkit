@@ -486,7 +486,7 @@ void forwardReactantBondStereo(ReactantProductAtomMapping *mapping, Bond *pBond,
 
   const Atom *rStart = rBond->getBeginAtom();
   const Atom *rEnd = rBond->getEndAtom();
-  const auto rStereoAtoms = MolOps::findStereoAtoms(rBond);
+  const auto rStereoAtoms = Chirality::findStereoAtoms(rBond);
   if (rStereoAtoms.size() != 2) {
     BOOST_LOG(rdWarningLog)
         << "WARNING: neither stereo atoms nor CIP codes found for double bond. "

@@ -13,45 +13,10 @@ EXPECTED_LABELS_OVERRIDES = {
   'VS135': [],
   'VS154': ['6E', '7E'],
   'VS164': ['21R'],
-  'VS188': [],
-  'VS189': [],
-  'VS190': [],
-  'VS214': [],
   'VS231': [],
 
   # Chiralities not flagged by RDKit
   'VS132': [],
-  'VS207': ['10r', '2s', '5s', '7r'],
-  'VS226': ['12r', '15r', '19s', '22s', '28s', '2r', '31s', '5r'],
-  'VS246': [],
-  'VS247': [],
-  'VS248': [],
-
-  # This one is worrying: the missing chirality '2R'
-  # causes '7S', '15S' to flip into '7r', '15s'
-  'VS279': ['12s', '15s', '4r', '7r'],
-
-  # Chiralities not flagged by RDKit (Rule 6)
-  'VS280': [],
-  'VS281': [],
-  'VS282': [],
-  'VS283': [],
-  'VS284': [],
-  'VS285': [],
-  'VS286': [],
-  'VS288': [],
-  'VS289': [],
-  'VS290': [],
-  'VS291': [],
-  'VS292': [],
-  'VS293': ['11Z', '12Z', '3Z', '4Z', '7Z', '8Z'],
-  'VS294': ['10S', '2S', '6R', '9R'],
-  'VS295': ['10R', '2S', '6R', '9S'],
-  'VS296': [],
-  'VS297': [],
-  'VS298': [],
-  'VS299': [],
-  'VS300': [],
 }
 
 
@@ -78,7 +43,9 @@ def supplier(fname):
       except KeyError:
         expected = split_label_string(expected)
 
-      mol = Chem.MolFromSmiles(smiles)
+      mol = Chem.MolFromSmiles(smiles, sanitize=False)
+      Chem.SanitizeMol(mol)
+      Chem.SetBondStereoFromDirections(mol)
 
       yield mol, name, expected
 

@@ -7,57 +7,57 @@ class TestCase(unittest.TestCase):
 
   def testLabelAtomsList(self):
     mol = Chem.MolFromSmiles("C[C@H](Cl)CC[C@H](Cl)C")
-    assert mol
+    self.assertIsNotNone(mol)
 
     atom1 = mol.GetAtomWithIdx(1)
     atom5 = mol.GetAtomWithIdx(5)
 
-    assert atom1.HasProp("_CIPCode") == True
-    assert atom5.HasProp("_CIPCode") == True
+    self.assertTrue(atom1.HasProp("_CIPCode"))
+    self.assertTrue(atom5.HasProp("_CIPCode"))
 
     atom1.ClearProp("_CIPCode")
     atom5.ClearProp("_CIPCode")
 
     Chem.rdCIPLabeler.AssignCIPLabels(mol, [1], None)
 
-    assert atom1.GetProp("_CIPCode") == "S"
-    assert atom5.HasProp("_CIPCode") == False
+    self.assertEqual(atom1.GetProp("_CIPCode"), "S")
+    self.assertFalse(atom5.HasProp("_CIPCode"))
 
   def testLabelAtomsSet(self):
     mol = Chem.MolFromSmiles("C[C@H](Cl)CC[C@H](Cl)C")
-    assert mol
+    self.assertIsNotNone(mol)
 
     atom1 = mol.GetAtomWithIdx(1)
     atom5 = mol.GetAtomWithIdx(5)
 
-    assert atom1.HasProp("_CIPCode") == True
-    assert atom5.HasProp("_CIPCode") == True
+    self.assertTrue(atom1.HasProp("_CIPCode"))
+    self.assertTrue(atom5.HasProp("_CIPCode"))
 
     atom1.ClearProp("_CIPCode")
     atom5.ClearProp("_CIPCode")
 
     Chem.rdCIPLabeler.AssignCIPLabels(mol, {1}, None)
 
-    assert atom1.GetProp("_CIPCode") == "S"
-    assert atom5.HasProp("_CIPCode") == False
+    self.assertEqual(atom1.GetProp("_CIPCode"), "S")
+    self.assertFalse(atom5.HasProp("_CIPCode"))
 
   def testLabelBondsList(self):
     mol = Chem.MolFromSmiles(r"C\C=C\C=C/C")
-    assert mol
+    self.assertIsNotNone(mol)
 
     bond1 = mol.GetBondWithIdx(1)
     bond3 = mol.GetBondWithIdx(3)
 
-    assert bond1.GetBondType() == Chem.BondType.DOUBLE
-    assert bond3.GetBondType() == Chem.BondType.DOUBLE
+    self.assertEqual(bond1.GetBondType(), Chem.BondType.DOUBLE)
+    self.assertEqual(bond3.GetBondType(), Chem.BondType.DOUBLE)
 
-    assert bond1.HasProp("_CIPCode") == False
-    assert bond3.HasProp("_CIPCode") == False
+    self.assertFalse(bond1.HasProp("_CIPCode"))
+    self.assertFalse(bond3.HasProp("_CIPCode"))
 
     Chem.rdCIPLabeler.AssignCIPLabels(mol, None, [3])
 
-    assert bond1.HasProp("_CIPCode") == False
-    assert bond3.GetProp("_CIPCode") == "Z"
+    self.assertFalse(bond1.HasProp("_CIPCode"))
+    self.assertEqual(bond3.GetProp("_CIPCode"), "Z")
 
 
 if __name__ == '__main__':

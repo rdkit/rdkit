@@ -144,7 +144,7 @@ void SequenceRule::setSorter(const Sort *sorter) { dp_sorter.reset(sorter); }
 
 Priority SequenceRule::sort(const Node *node, std::vector<Edge *> &edges,
                             bool deep) const {
-  return getSorter()->prioritise(node, edges, deep);
+  return getSorter()->prioritize(node, edges, deep);
 }
 
 Priority SequenceRule::sort(const Node *node,
