@@ -168,7 +168,7 @@ class RDKIT_FORCEFIELD_EXPORT MMFFAromCollection {
                 : false);
   }
 
-  MMFFAromCollection(const std::uint8_t mmffArom[] = nullptr);
+  MMFFAromCollection(const std::vector<std::uint8_t> *mmffArom = nullptr);
   std::vector<std::uint8_t> d_params;  //!< the aromatic type vector
 };
 
@@ -191,7 +191,7 @@ class RDKIT_FORCEFIELD_EXPORT MMFFDefCollection {
 #endif
   }
 
-  MMFFDefCollection(std::string mmffDef="");
+  MMFFDefCollection(std::string mmffDef = "");
 
 #ifdef RDKIT_MMFF_PARAMS_USE_STD_MAP
   std::map<const unsigned int, MMFFDef> d_params;  //!< the parameter map
@@ -224,7 +224,7 @@ class RDKIT_FORCEFIELD_EXPORT MMFFPropCollection {
 #endif
   }
 
-  MMFFPropCollection(std::string mmffProp="");
+  MMFFPropCollection(std::string mmffProp = "");
 #ifdef RDKIT_MMFF_PARAMS_USE_STD_MAP
   std::map<const unsigned int, MMFFProp> d_params;  //!< the parameter map
 #else
@@ -252,7 +252,7 @@ class RDKIT_FORCEFIELD_EXPORT MMFFPBCICollection {
 #endif
   }
 
-  MMFFPBCICollection(std::string mmffPBCI="");
+  MMFFPBCICollection(std::string mmffPBCI = "");
 
 #ifdef RDKIT_MMFF_PARAMS_USE_STD_MAP
   std::map<const unsigned int, MMFFPBCI> d_params;  //!< the parameter map
@@ -317,7 +317,7 @@ class RDKIT_FORCEFIELD_EXPORT MMFFChgCollection {
     return std::make_pair(sign, mmffChgParams);
   }
 
-  MMFFChgCollection(std::string mmffChg="");
+  MMFFChgCollection(std::string mmffChg = "");
 
 //!< the parameter 3D-map
 #ifdef RDKIT_MMFF_PARAMS_USE_STD_MAP
@@ -392,7 +392,7 @@ class RDKIT_FORCEFIELD_EXPORT MMFFBondCollection {
     return mmffBondParams;
   }
 
-  MMFFBondCollection(std::string mmffBond="");
+  MMFFBondCollection(std::string mmffBond = "");
 #ifdef RDKIT_MMFF_PARAMS_USE_STD_MAP
   std::map<const unsigned int,
            std::map<const unsigned int, std::map<const unsigned int, MMFFBond>>>
@@ -411,7 +411,8 @@ class RDKIT_FORCEFIELD_EXPORT MMFFBndkCollection {
   /*!
     \return a pointer to the MMFFBndk object, NULL on failure.
   */
-  const MMFFBond *operator()(const int atomicNum, const int nbrAtomicNum) const {
+  const MMFFBond *operator()(const int atomicNum,
+                             const int nbrAtomicNum) const {
     const MMFFBond *mmffBndkParams = nullptr;
     unsigned int canAtomicNum = atomicNum;
     unsigned int canNbrAtomicNum = nbrAtomicNum;
@@ -450,7 +451,7 @@ class RDKIT_FORCEFIELD_EXPORT MMFFBndkCollection {
     return mmffBndkParams;
   }
 
-  MMFFBndkCollection(std::string mmffBndk="");
+  MMFFBndkCollection(std::string mmffBndk = "");
 #ifdef RDKIT_MMFF_PARAMS_USE_STD_MAP
   std::map<const unsigned int, std::map<const unsigned int, MMFFBond>>
       d_params;  //!< the parameter 2D-map
@@ -505,7 +506,7 @@ class RDKIT_FORCEFIELD_EXPORT MMFFHerschbachLaurieCollection {
     return mmffHerschbachLaurieParams;
   }
 
-  MMFFHerschbachLaurieCollection(std::string mmffHerschbachLaurie="");
+  MMFFHerschbachLaurieCollection(std::string mmffHerschbachLaurie = "");
 
 #ifdef RDKIT_MMFF_PARAMS_USE_STD_MAP
   std::map<const unsigned int,
@@ -542,7 +543,7 @@ class RDKIT_FORCEFIELD_EXPORT MMFFCovRadPauEleCollection {
 #endif
   }
 
-  MMFFCovRadPauEleCollection(std::string mmffCovRadPauEle="");
+  MMFFCovRadPauEleCollection(std::string mmffCovRadPauEle = "");
 #ifdef RDKIT_MMFF_PARAMS_USE_STD_MAP
   std::map<const unsigned int, MMFFCovRadPauEle>
       d_params;  //!< the parameter map
@@ -559,13 +560,13 @@ class RDKIT_FORCEFIELD_EXPORT MMFFAngleCollection {
     \return a pointer to the MMFFAngle object, NULL on failure.
   */
   const MMFFAngle *operator()(const MMFFDefCollection *mmffDef,
-			      const unsigned int angleType,
+                              const unsigned int angleType,
                               const unsigned int iAtomType,
                               const unsigned int jAtomType,
                               const unsigned int kAtomType) const {
     const MMFFAngle *mmffAngleParams = nullptr;
     unsigned int iter = 0;
- 
+
 // For bending of the i-j-k angle, a five-stage process based
 // in the level combinations 1-1-1,2-2-2,3-2-3,4-2-4, and
 // 5-2-5 is used. (MMFF.I, note 68, page 519)
@@ -650,7 +651,7 @@ class RDKIT_FORCEFIELD_EXPORT MMFFAngleCollection {
     return mmffAngleParams;
   }
 
-  MMFFAngleCollection(std::string mmffAngle="");
+  MMFFAngleCollection(std::string mmffAngle = "");
 #ifdef RDKIT_MMFF_PARAMS_USE_STD_MAP
   std::map<const unsigned int,
            std::map<const unsigned int,
@@ -749,7 +750,7 @@ class RDKIT_FORCEFIELD_EXPORT MMFFStbnCollection {
     return std::make_pair(swap, mmffStbnParams);
   }
 
-  MMFFStbnCollection(std::string mmffStbn="");
+  MMFFStbnCollection(std::string mmffStbn = "");
 #ifdef RDKIT_MMFF_PARAMS_USE_STD_MAP
   std::map<const unsigned int,
            std::map<const unsigned int,
@@ -806,7 +807,7 @@ class RDKIT_FORCEFIELD_EXPORT MMFFDfsbCollection {
     return std::make_pair(swap, mmffDfsbParams);
   }
 
-  MMFFDfsbCollection(std::string mmffDfsb="");
+  MMFFDfsbCollection(std::string mmffDfsb = "");
   std::map<const unsigned int,
            std::map<const unsigned int, std::map<const unsigned int, MMFFStbn>>>
       d_params;  //!< the parameter 3D-map
@@ -819,7 +820,7 @@ class RDKIT_FORCEFIELD_EXPORT MMFFOopCollection {
     \return a pointer to the MMFFOop object, NULL on failure.
   */
   const MMFFOop *operator()(const MMFFDefCollection *mmffDef,
-			    const unsigned int iAtomType,
+                            const unsigned int iAtomType,
                             const unsigned int jAtomType,
                             const unsigned int kAtomType,
                             const unsigned int lAtomType) const {
@@ -905,7 +906,7 @@ class RDKIT_FORCEFIELD_EXPORT MMFFOopCollection {
     return mmffOopParams;
   }
 
-  MMFFOopCollection(const bool isMMFFs, std::string mmffOop="");
+  MMFFOopCollection(const bool isMMFFs, std::string mmffOop = "");
 
 #ifdef RDKIT_MMFF_PARAMS_USE_STD_MAP
   std::map<const unsigned int,
@@ -929,7 +930,7 @@ class RDKIT_FORCEFIELD_EXPORT MMFFTorCollection {
     \return a pointer to the MMFFTor object, NULL on failure.
   */
   const std::pair<const unsigned int, const MMFFTor *> getMMFFTorParams(
-      const MMFFDefCollection *mmffDef,									
+      const MMFFDefCollection *mmffDef,
       const std::pair<unsigned int, unsigned int> torType,
       const unsigned int iAtomType, const unsigned int jAtomType,
       const unsigned int kAtomType, const unsigned int lAtomType) const {
@@ -1070,7 +1071,7 @@ class RDKIT_FORCEFIELD_EXPORT MMFFTorCollection {
     return std::make_pair(canTorType, mmffTorParams);
   }
 
-  MMFFTorCollection(const bool isMMFFs, std::string mmffTor="");
+  MMFFTorCollection(const bool isMMFFs, std::string mmffTor = "");
 #ifdef RDKIT_MMFF_PARAMS_USE_STD_MAP
   std::map<
       const unsigned int,
@@ -1121,7 +1122,7 @@ class RDKIT_FORCEFIELD_EXPORT MMFFVdWCollection {
 #endif
   }
 
-  MMFFVdWCollection(std::string mmffVdW="");
+  MMFFVdWCollection(std::string mmffVdW = "");
 #ifdef RDKIT_MMFF_PARAMS_USE_STD_MAP
   std::map<const unsigned int, MMFFVdW> d_params;  //!< the parameter map
 #else
