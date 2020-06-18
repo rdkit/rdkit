@@ -124,6 +124,9 @@ void adjustSingleBondsFromAromaticAtoms(RWMol &mol, bool toDegreeOneNeighbors,
   2. betweenAromaticAtoms: [a]-[a] -> [a]-,:[a]
 
   */
+  if (!toDegreeOneNeighbors && !betweenAromaticAtoms) {
+    return;
+  }
   QueryBond qb;
   qb.setQuery(makeBondOrderEqualsQuery(Bond::BondType::SINGLE));
   qb.expandQuery(makeBondOrderEqualsQuery(Bond::BondType::AROMATIC),
@@ -156,9 +159,10 @@ void setMDLAromaticity(RWMol &mol) {
   The idea here is to make aromatic 5-rings that contain an "A" atom in the CTAB
   match both aromatic and aliphatic rings.
   Schematically, this converts the ring from:
-     ["A"]1:C:C:C:C:1
+     ["A"]1:c:c:c:c:1
   to:
-     ["A"]1-,:C=,:C-,:C=,:C-,:1
+     ["A"]1-,:c=,:c-,:c=,:c-,:1
+  Note that "A" is an A atom from a CTAB, not a SMARTS aliphatic query
 
   */
 
@@ -178,7 +182,6 @@ void setMDLAromaticity(RWMol &mol) {
       auto ai = ring[i];
       const auto atom = mol.getAtomWithIdx(ai);
       std::string molfileSymbol;
-      atom->getPropIfPresent(common_properties::_MolFileSymbol, molfileSymbol);
       if (!atom->getIsAromatic()) {
         // we only do fully aromatic rings:
         keepIt = false;

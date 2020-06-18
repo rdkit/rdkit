@@ -356,14 +356,20 @@ TEST_CASE("MDL five-rings") {
   ps.setMDLFiveRingAromaticity = true;
   SECTION("query details") {
     std::vector<std::tuple<std::string,std::string,std::string>> examples = {
-    {"adjustqueryprops_MDLfivering_1.mol","[#7H]1:[#6]:[#6]:[#6]:[#6]:1","[#7H]1:[#6]:[#6]:[#6]:[#6]:1"},
-    {"adjustqueryprops_MDLfivering_2.mol","[!#6&!#1]1:[#6]:[#6]:[#6]:[#6]:1","[!#6&!#1]1:[#6]:[#6]:[#6]:[#6]:1"},
+    // no queries, no change
+    {"adjustqueryprops_MDLfivering_1.mol","[#7H]1:[#6]:[#6]:[#6]:[#6]:1",""},
+    // Q atom, no change
+    {"adjustqueryprops_MDLfivering_2.mol","[!#6&!#1]1:[#6]:[#6]:[#6]:[#6]:1",""},
+    // A atom, this one changes
     {"adjustqueryprops_MDLfivering_3.mol","[!#1]1:[#6]:[#6]:[#6]:[#6]:1","[!#1]1-,:[#6]=,:[#6]-,:[#6]=,:[#6]-,:1"},
     // NOTE that this is not technically correct according to the documentation, but if we make the bridging bond
     // aromatic then it won't match azulene in a normal RDKit molecule, which is certainly not the intent of this.
-    {"adjustqueryprops_MDLfivering_4.mol","[#6]12:[#6]:[#6]:[#6]:[#6]-1:[#6]:[#6]:[#6]:[#6]:[#6]:2","[#6]12:[#6]:[#6]:[#6]:[#6]-1:[#6]:[#6]:[#6]:[#6]:[#6]:2"},
+    {"adjustqueryprops_MDLfivering_4.mol","[#6]12:[#6]:[#6]:[#6]:[#6]-1:[#6]:[#6]:[#6]:[#6]:[#6]:2",""},
     };
-    for( const auto tpl : examples){
+    for( auto tpl : examples){
+      if(std::get<2>(tpl).empty()){
+        std::get<2>(tpl) = std::get<1>(tpl);
+      }
       auto fname = std::get<0>(tpl);
       std::string pathName = getenv("RDBASE");
       pathName += "/Code/GraphMol/test_data/";
@@ -383,25 +389,40 @@ TEST_CASE("conjugated five-rings") {
   SECTION("matching") {
     std::vector<matchCase> examples = {
     // 1,3 cyclopentadiene
-    {"C1=CCC=C1","adjustqueryprops_fivering_1.mol",true,true},{"C1=CCC=C1","adjustqueryprops_fivering_2.mol",false,true},
-    {"C1=CCC=C1","adjustqueryprops_fivering_3.mol",true,true},{"C1=CCC=C1","adjustqueryprops_fivering_4.mol",false,false},
-    {"C1=CCC=C1","adjustqueryprops_fivering_5.mol",false,false},{"C1=CCC=C1","adjustqueryprops_fivering_6.mol",false,false},
+    {"C1=CCC=C1","adjustqueryprops_fivering_1.mol",true,true},
+    {"C1=CCC=C1","adjustqueryprops_fivering_2.mol",false,true},
+    {"C1=CCC=C1","adjustqueryprops_fivering_3.mol",true,true},
+    {"C1=CCC=C1","adjustqueryprops_fivering_4.mol",false,false},
+    {"C1=CCC=C1","adjustqueryprops_fivering_5.mol",false,false},
+    {"C1=CCC=C1","adjustqueryprops_fivering_6.mol",false,false},
     // pyrrole
-    {"C1=CNC=C1","adjustqueryprops_fivering_1.mol",false,true},{"C1=CNC=C1","adjustqueryprops_fivering_2.mol",true,true},
-    {"C1=CNC=C1","adjustqueryprops_fivering_3.mol",false,false},{"C1=CNC=C1","adjustqueryprops_fivering_4.mol",false,false},
-    {"C1=CNC=C1","adjustqueryprops_fivering_5.mol",false,false},{"C1=CNC=C1","adjustqueryprops_fivering_6.mol",false,false},
+    {"C1=CNC=C1","adjustqueryprops_fivering_1.mol",false,true},
+    {"C1=CNC=C1","adjustqueryprops_fivering_2.mol",true,true},
+    {"C1=CNC=C1","adjustqueryprops_fivering_3.mol",false,false},
+    {"C1=CNC=C1","adjustqueryprops_fivering_4.mol",false,false},
+    {"C1=CNC=C1","adjustqueryprops_fivering_5.mol",false,false},
+    {"C1=CNC=C1","adjustqueryprops_fivering_6.mol",false,false},
     // thiophene
-    {"C1=CSC=C1","adjustqueryprops_fivering_1.mol",false,false},{"C1=CSC=C1","adjustqueryprops_fivering_2.mol",true,true},
-    {"C1=CSC=C1","adjustqueryprops_fivering_3.mol",false,false},{"C1=CSC=C1","adjustqueryprops_fivering_4.mol",true,true},
-    {"C1=CSC=C1","adjustqueryprops_fivering_5.mol",false,false},{"C1=CSC=C1","adjustqueryprops_fivering_6.mol",true,true},
+    {"C1=CSC=C1","adjustqueryprops_fivering_1.mol",false,false},
+    {"C1=CSC=C1","adjustqueryprops_fivering_2.mol",true,true},
+    {"C1=CSC=C1","adjustqueryprops_fivering_3.mol",false,false},
+    {"C1=CSC=C1","adjustqueryprops_fivering_4.mol",true,true},
+    {"C1=CSC=C1","adjustqueryprops_fivering_5.mol",false,false},
+    {"C1=CSC=C1","adjustqueryprops_fivering_6.mol",true,true},
     // thiophene oxide
-    {"C1=CS(=O)C=C1","adjustqueryprops_fivering_1.mol",false,false},{"C1=CS(=O)C=C1","adjustqueryprops_fivering_2.mol",false,true},
-    {"C1=CS(=O)C=C1","adjustqueryprops_fivering_3.mol",false,false},{"C1=CS(=O)C=C1","adjustqueryprops_fivering_4.mol",false,true},
-    {"C1=CS(=O)C=C1","adjustqueryprops_fivering_5.mol",false,false},{"C1=CS(=O)C=C1","adjustqueryprops_fivering_6.mol",true,true},
+    {"C1=CS(=O)C=C1","adjustqueryprops_fivering_1.mol",false,false},
+    {"C1=CS(=O)C=C1","adjustqueryprops_fivering_2.mol",false,true},
+    {"C1=CS(=O)C=C1","adjustqueryprops_fivering_3.mol",false,false},
+    {"C1=CS(=O)C=C1","adjustqueryprops_fivering_4.mol",false,true},
+    {"C1=CS(=O)C=C1","adjustqueryprops_fivering_5.mol",false,false},
+    {"C1=CS(=O)C=C1","adjustqueryprops_fivering_6.mol",true,true},
     // furan
-    {"C1=COC=C1","adjustqueryprops_fivering_1.mol",false,true},{"C1=COC=C1","adjustqueryprops_fivering_2.mol",true,true},
-    {"C1=COC=C1","adjustqueryprops_fivering_3.mol",false,false},{"C1=COC=C1","adjustqueryprops_fivering_4.mol",false,false},
-    {"C1=COC=C1","adjustqueryprops_fivering_5.mol",false,false},{"C1=COC=C1","adjustqueryprops_fivering_6.mol",false,false},
+    {"C1=COC=C1","adjustqueryprops_fivering_1.mol",false,true},
+    {"C1=COC=C1","adjustqueryprops_fivering_2.mol",true,true},
+    {"C1=COC=C1","adjustqueryprops_fivering_3.mol",false,false},
+    {"C1=COC=C1","adjustqueryprops_fivering_4.mol",false,false},
+    {"C1=COC=C1","adjustqueryprops_fivering_5.mol",false,false},
+    {"C1=COC=C1","adjustqueryprops_fivering_6.mol",false,false},
     };
     for( const auto tpl : examples){
       auto fname = std::get<1>(tpl);
