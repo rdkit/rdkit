@@ -138,7 +138,7 @@ TEST_CASE(
 
   };
   SECTION("#2197") {
-    for (const auto sma : smarts) {
+    for (const auto &sma : smarts) {
       std::unique_ptr<ROMol> mol(SmartsToMol(sma));
       REQUIRE(mol);
       CHECK(6 == mol->getNumAtoms());
@@ -149,7 +149,7 @@ TEST_CASE(
     }
   }
   SECTION("#2237") {
-    for (const auto sma : smarts) {
+    for (const auto &sma : smarts) {
       std::unique_ptr<ROMol> mol(SmartsToMol(sma));
       REQUIRE(mol);
       REQUIRE(MolToSmarts(*mol) == sma);

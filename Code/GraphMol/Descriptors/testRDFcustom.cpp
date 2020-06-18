@@ -414,7 +414,7 @@ void testGETAWAYcustom() {
      *        but setting it to 4 digits (= 0.0001) breaks this
      *        test due to the references.
      */
-    RDKit::Descriptors::GETAWAY(*m, dgetaway, -1, 0.0001, atomprop);
+    RDKit::Descriptors::GETAWAY(*m, dgetaway, -1, 0U, atomprop);
 
     std::vector<std::string> myrow = data[nDone];
     std::string inm = myrow[0];
