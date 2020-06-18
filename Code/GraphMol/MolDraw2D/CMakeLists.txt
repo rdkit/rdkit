@@ -9,10 +9,6 @@ rdkit_headers(MolDraw2D.h
   MolDraw2Dwx.h
   MolDraw2DUtils.h
   DrawText.h
-  DrawTextFT.h
-  DrawTextFTCairo.h
-  DrawTextFTSVG.h
-  DrawTextCairo.h
   DrawTextSVG.h
   DEST GraphMol/MolDraw2D
 )
@@ -21,7 +17,7 @@ remove_definitions(-DRDKIT_GRAPHMOL_BUILD)
 add_definitions(-DRDKIT_MOLDRAW2D_BUILD)
 rdkit_library(MolDraw2D MolDraw2D.cpp MolDraw2DSVG.cpp
   MolDraw2DDetails.cpp MolDraw2DUtils.cpp DrawText.cpp
-  DrawTextCairo.cpp DrawTextSVG.cpp
+  DrawTextSVG.cpp
   LINK_LIBRARIES
   ChemReactions FileParsers SmilesParse Depictor MolTransforms 
   SubstructMatch Subgraphs GraphMol EigenSolvers )
@@ -43,17 +39,17 @@ if(RDK_BUILD_CAIRO_SUPPORT)
 endif(RDK_BUILD_CAIRO_SUPPORT)
 
 if(RDK_BUILD_FREETYPE_SUPPORT)
-  find_package(Cairo REQUIRED)
-  target_compile_definitions(MolDraw2D PUBLIC "-DRDK_BUILD_CAIRO_SUPPORT")
-  target_link_libraries(MolDraw2D PUBLIC Cairo::Cairo)
   find_package(Freetype REQUIRED)
   target_compile_definitions(MolDraw2D PUBLIC "-DRDK_BUILD_FREETYPE_SUPPORT")
   target_link_libraries(MolDraw2D PUBLIC Freetype::Freetype)
-  target_sources(MolDraw2D PRIVATE MolDraw2DSVG.cpp MolDraw2DCairo.cpp DrawText.cpp
-          DrawTextFT.cpp DrawTextCairo.cpp DrawTextSVG.cpp DrawTextFTCairo.cpp
-          DrawTextFTSVG.cpp)
-  rdkit_headers(MolDraw2DCairo.h MolDraw2DSVG.h DrawText.h DrawTextFT.h
-          DrawTextCairo.h DrawTextSVG.h DrawTextFTCairo.h DrawTextFTSVG.h DEST GraphMol/MolDraw2D)
+  target_sources(MolDraw2D PRIVATE DrawText.cpp
+          DrawTextFT.cpp DrawTextFTSVG.cpp)
+  rdkit_headers(DrawText.h DrawTextFT.h
+          DrawTextFTSVG.h DEST GraphMol/MolDraw2D)
+  if(RDK_BUILD_CAIRO_SUPPORT)
+    target_sources(MolDraw2D PRIVATE DrawTextFTCairo.cpp)
+    rdkit_headers(DrawTextFTCairo.h DEST GraphMol/MolDraw2D)
+  endif(RDK_BUILD_CAIRO_SUPPORT)
 endif(RDK_BUILD_FREETYPE_SUPPORT)
 
 rdkit_test(moldraw2DTest1 test1.cpp LINK_LIBRARIES
