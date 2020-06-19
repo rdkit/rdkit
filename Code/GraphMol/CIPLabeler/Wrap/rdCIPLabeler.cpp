@@ -14,7 +14,7 @@
 #include "RDBoost/python.h"
 
 #include "GraphMol/RDKitBase.h"
-#include "Graphmol/CIPLabeler/CIPLabeler.h"
+#include "GraphMol/CIPLabeler/CIPLabeler.h"
 
 namespace python = boost::python;
 using RDKit::CIPLabeler::assignCIPLabels;

@@ -119,6 +119,8 @@ bool labelAux(std::vector<std::unique_ptr<Configuration>> &configs,
   };
   std::sort(aux.begin(), aux.end(), farthest);
 
+  // Using a boost::unordered_map because it is more performant
+  // than the STL version.
   boost::unordered_map<Node *, Descriptor> queue;
   int prev = std::numeric_limits<int>::max();
   for (const auto &e : aux) {
