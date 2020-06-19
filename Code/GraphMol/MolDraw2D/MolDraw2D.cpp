@@ -62,6 +62,7 @@ MolDraw2D::MolDraw2D(int width, int height, int panelWidth, int panelHeight)
       height_(height),
       panel_width_(panelWidth > 0 ? panelWidth : width),
       panel_height_(panelHeight > 0 ? panelHeight : height),
+      legend_height_(0),
       scale_(1.0),
       x_min_(0.0),
       y_min_(0.0),
@@ -260,9 +261,17 @@ void MolDraw2D::drawMolecule(const ROMol &mol, const std::string &legend,
                              const map<int, DrawColour> *highlight_bond_map,
                              const std::map<int, double> *highlight_radii,
                              int confId) {
+
+  if(!legend.empty()) {
+    legend_height_ = int(0.05 * double(panelHeight()));
+    if(legend_height_ < 20) {
+      legend_height_ = 20;
+    }
+  }
   drawMolecule(mol, highlight_atoms, highlight_bonds, highlight_atom_map,
                highlight_bond_map, highlight_radii, confId);
   drawLegend(legend);
+  legend_height_ = 0;
 }
 
 // ****************************************************************************
@@ -276,6 +285,10 @@ void MolDraw2D::drawMoleculeWithHighlights(
   vector<int> highlight_atoms;
   for (auto ha : highlight_atom_map) {
     highlight_atoms.emplace_back(ha.first);
+  }
+
+  if(!legend.empty()) {
+    legend_height_ = int(0.05 * double(panelHeight()));
   }
   pushDrawDetails();
   unique_ptr<RWMol> rwmol =
@@ -346,6 +359,7 @@ void MolDraw2D::drawMoleculeWithHighlights(
   curr_width_ = origWidth;
 
   drawLegend(legend);
+  legend_height_ = 0;
   popDrawDetails();
 }
 
@@ -563,7 +577,7 @@ void MolDraw2D::drawReaction(
       atom->calcImplicitValence();
     }
     extractAtomSymbols(tmol2);
-    calculateScale(panelWidth(), panelHeight(), tmol2);
+    calculateScale(panelWidth(), drawHeight(), tmol2);
     needs_scale_ = false;
     popDrawDetails();
   }
@@ -702,7 +716,7 @@ void MolDraw2D::drawMolecules(
   }
 
   vector<unique_ptr<RWMol>> tmols;
-  calculateScale(panelWidth(), panelHeight(), mols, highlight_atoms,
+  calculateScale(panelWidth(), drawHeight(), mols, highlight_atoms,
                  highlight_radii, confIds, tmols);
   // so drawMolecule doesn't recalculate the scale each time, and
   // undo all the good work.
@@ -807,7 +821,7 @@ Point2D MolDraw2D::getDrawCoords(const Point2D &mol_cds) const {
   // invert that:
   x += x_offset_;
   y -= y_offset_;
-  y = panelHeight() - y;
+  y = panelHeight() - legend_height_ - y;
   return Point2D(x, y);
 }
 
@@ -819,13 +833,10 @@ Point2D MolDraw2D::getDrawCoords(int at_num) const {
 
 // ****************************************************************************
 Point2D MolDraw2D::getAtomCoords(const pair<int, int> &screen_cds) const {
-  int screen_x = screen_cds.first - x_offset_;
-  int screen_y = screen_cds.second - y_offset_;
 
-  int x = int(double(screen_x) / scale_ + x_min_ - x_trans_);
-  int y = int(
-      double(y_min_ - y_trans_ - (screen_y - panelHeight()) / scale_));
-  return Point2D(x, y);
+  return getAtomCoords(make_pair(double(screen_cds.first),
+                                 double(screen_cds.second)));
+
 }
 
 Point2D MolDraw2D::getAtomCoords(const pair<double, double> &screen_cds) const {
@@ -833,7 +844,8 @@ Point2D MolDraw2D::getAtomCoords(const pair<double, double> &screen_cds) const {
   double screen_y = screen_cds.second - y_offset_;
   auto x = double(screen_x / scale_ + x_min_ - x_trans_);
   auto y =
-      double(y_min_ - y_trans_ - (screen_y - panelHeight()) / scale_);
+      double(y_min_ - y_trans_
+             - (screen_y - panelHeight() + legend_height_) / scale_);
   return Point2D(x, y);
 }
 
@@ -854,7 +866,7 @@ void MolDraw2D::setScale(int width, int height, const Point2D &minv,
     pushDrawDetails();
     unique_ptr<RWMol> tmol = setupDrawMolecule(*mol, nullptr, nullptr, -1,
                                                panelWidth(), panelHeight());
-    calculateScale(panel_width_, panel_height_, *tmol);
+    calculateScale(panelWidth(), drawHeight(), *tmol);
     popDrawDetails();
     x_min_ = min(minv.x, x_min_);
     y_min_ = min(minv.y, y_min_);
@@ -1297,7 +1309,7 @@ unique_ptr<RWMol> MolDraw2D::setupMoleculeDraw(
     const map<int, double> *highlight_radii, int confId) {
   unique_ptr<RWMol> rwmol =
       setupDrawMolecule(mol, highlight_atoms, highlight_radii, confId,
-                        panel_width_, panel_height_);
+                        panelWidth(), drawHeight());
   ROMol const &draw_mol = rwmol ? *(rwmol) : mol;
 
   if (drawOptions().includeAtomTags) {
@@ -1409,24 +1421,59 @@ void MolDraw2D::finishMoleculeDraw(const RDKit::ROMol &draw_mol,
 
 // ****************************************************************************
 void MolDraw2D::drawLegend(const string &legend) {
+
+  cout << "legend_height_ : " << legend_height_ << endl;
+  Point2D l(0, panelHeight() - legend_height_), r(panelWidth(), panelHeight() - legend_height_);
+  int olh = legend_height_;
+  legend_height_ = 0; // so we use the whole panel
+  setColour(DrawColour(1.0, 0.0, 0.0));
+  drawLine(getAtomCoords(make_pair(l.x, l.y)),
+           getAtomCoords(make_pair(r.x, r.y)));
+  Point2D ll(0, panelHeight() - 1), rl(panelWidth(), panelHeight() - 1);
+  setColour(DrawColour(0.0, 1.0, 0.0));
+  drawLine(getAtomCoords(make_pair(ll.x, ll.y)),
+           getAtomCoords(make_pair(rl.x, rl.y)));
+
   if (!legend.empty()) {
-    // the 0.94 is completely empirical and was brought over from Python
-    Point2D loc =
-        getAtomCoords(std::make_pair(panel_width_ / 2., 0.94 * panel_height_));
-    loc.x += x_offset_ / scale();
-    loc.y -= y_offset_ / scale();
+    string lit_leg = "<lit>" + legend + "</lit>";
+    Point2D loc(panel_width_ / 2, panelHeight() - olh);
+    cout << "dwaring lit_leg at " << loc << endl;
+    loc.x += x_offset_;
+    loc.y -= y_offset_;
 
     double o_font_scale = text_drawer_->fontScale();
     double fsize = text_drawer_->fontSize();
     double new_font_scale = o_font_scale * drawOptions().legendFontSize / fsize;
+    cout << "new_font_scale = " << new_font_scale << endl;
     text_drawer_->setFontScale(new_font_scale);
 
+    double x_min, y_min, x_max, y_max;
+    text_drawer_->getStringExtremes(lit_leg, OrientType::N, x_min, y_min,
+                                    x_max, y_max);
+    cout << "string extremes : " << x_min << " to " << x_max << " and "
+         << y_min << " to " << y_max << endl;
+    double leg_height = y_max - y_min;
+    while(leg_height > olh) {
+      new_font_scale *= double(olh) / leg_height;
+      cout << "revised new_font_scale = " << new_font_scale << endl;
+      double ominfs = text_drawer_->minFontSize();
+      text_drawer_->setMinFontSize(-1);
+      text_drawer_->setFontScale(new_font_scale);
+      text_drawer_->getStringExtremes(lit_leg, OrientType::N, x_min, y_min,
+                                      x_max, y_max);
+      cout << "string extremes : " << x_min << " to " << x_max << " and "
+           << y_min << " to " << y_max << " h = " << y_max - y_min << endl;
+      leg_height = y_max - y_min;
+      text_drawer_->setMinFontSize(ominfs);
+    }
+    loc.y = panelHeight() - leg_height;
     DrawColour odc = colour();
     text_drawer_->setColour(options_.legendColour);
-    drawString(legend, loc);
+    text_drawer_->drawString(lit_leg, loc, OrientType::N);
     setColour(odc);
     text_drawer_->setFontScale(o_font_scale);
   }
+  legend_height_ = olh;
 }
 
 // ****************************************************************************

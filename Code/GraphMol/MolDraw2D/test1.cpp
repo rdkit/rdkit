@@ -2944,6 +2944,37 @@ void testGithub2931() {
   std::cerr << " Done" << std::endl;
 }
 
+void testGithub3112() {
+
+  std::cout << " ----------------- Testing drawing of legends."
+            << std::endl;
+  {
+    auto m = "CCCC"_smiles;
+    TEST_ASSERT(m);
+    MolDraw2DUtils::prepareMolForDrawing(*m);
+    MolDraw2DSVG drawer(250, 200);
+    drawer.drawMolecule(*m, "NfoobarX");
+    drawer.finishDrawing();
+    std::string text = drawer.getDrawingText();
+    std::ofstream outs("testGithub3112_1.svg");
+    outs << text;
+    outs.close();
+  }
+  {
+    auto m = "CCCC"_smiles;
+    TEST_ASSERT(m);
+    MolDraw2DUtils::prepareMolForDrawing(*m);
+    MolDraw2DSVG drawer(250, 200);
+    drawer.drawMolecule(*m, "Nfoo\nbarX");
+    drawer.finishDrawing();
+    std::string text = drawer.getDrawingText();
+    std::ofstream outs("testGithub3112_2.svg");
+    outs << text;
+    outs.close();
+  }
+  std::cerr << " Done" << std::endl;
+}
+
 void test20Annotate() {
   std::cout << " ----------------- Testing annotation of 2D Drawing."
             << std::endl;
@@ -3142,8 +3173,9 @@ int main() {
 #endif
 
   RDLog::InitLogs();
+  testGithub3112();
 
-#if 1
+#if 0
   test1();
   test2();
   test4();

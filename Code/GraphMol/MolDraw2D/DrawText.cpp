@@ -518,6 +518,9 @@ void DrawText::getStringRects(const string &text, OrientType orient,
                               vector<char> &draw_chars) const {
 
   vector<string> text_bits = atomLabelToPieces(text, orient);
+  if(text_bits.empty()) {
+    return;
+  }
   if(orient == OrientType::W) {
     // stick the pieces together again backwards and draw as one so there
     // aren't ugly splits in the string.
@@ -588,11 +591,31 @@ void DrawText::drawChars(const Point2D &a_cds,
 // ****************************************************************************
 vector<string> atomLabelToPieces(const string &label, OrientType orient) {
 
-  // cout << "splitting " << label << " : " << orient << endl;
+   cout << "splitting " << label << " : " << orient << endl;
   vector<string> label_pieces;
   if (label.empty()) {
     return label_pieces;
   }
+
+  // split any strings on newlines
+  auto split_on_newline = [&](const string &str) -> vector<string> {
+    vector<string> tmp_fp;
+    string next_piece;
+    for(auto c: str) {
+      if (c == '\n') {
+        if(!next_piece.empty()) {
+          tmp_fp.push_back(next_piece);
+        }
+        next_piece = "";
+      } else {
+        next_piece += c;
+      }
+    }
+    if(!next_piece.empty()) {
+      tmp_fp.push_back(next_piece);
+    }
+    return tmp_fp;
+  };
 
   // if we have the mark-up <lit>XX</lit> the symbol is to be used
   // without modification
@@ -602,7 +625,7 @@ vector<string> atomLabelToPieces(const string &label, OrientType orient) {
     if (idx != string::npos) {
       lit_sym = lit_sym.substr(0, idx);
     }
-    label_pieces.emplace_back(lit_sym);
+    label_pieces.push_back(lit_sym);
     return label_pieces;
   }
 
@@ -624,8 +647,11 @@ vector<string> atomLabelToPieces(const string &label, OrientType orient) {
     }
     next_piece += label[i++];
   }
-  if (label_pieces.size() < 2) {
+  if (label_pieces.empty()) {
     return label_pieces;
+  }
+  if (label_pieces.size() == 1) {
+    return split_on_newline(label_pieces[0]);
   }
 
   // if the orientation is S or E, any charge flag needs to be at the end.
@@ -666,11 +692,18 @@ vector<string> atomLabelToPieces(const string &label, OrientType orient) {
     final_pieces.push_back(curr_piece);
   }
 
-  // cout << "Final pieces : " << endl;
-  // for(auto l: final_pieces) {
-  //   cout << l << endl;
-  // }
-  // cout << endl;
+  vector<string> tmp_fp;
+  for(auto str: final_pieces) {
+    vector<string> bits = split_on_newline(str);
+    tmp_fp.insert(tmp_fp.end(), bits.begin(), bits.end());
+  }
+  final_pieces = tmp_fp;
+
+   cout << "Final pieces : " << endl;
+   for(auto l: final_pieces) {
+     cout << l << endl;
+   }
+   cout << endl;
 
   return final_pieces;
 

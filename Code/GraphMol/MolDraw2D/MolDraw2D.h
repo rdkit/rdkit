@@ -433,6 +433,7 @@ class RDKIT_MOLDRAW2D_EXPORT MolDraw2D {
   virtual int panelWidth() const { return panel_width_; }
   //! return the height of the drawing panels.
   virtual int panelHeight() const { return panel_height_; }
+  virtual int drawHeight() const { return panel_height_ - legend_height_;}
 
   //! returns the drawing scale (conversion from molecular coords -> drawing
   // coords)
@@ -583,7 +584,7 @@ class RDKIT_MOLDRAW2D_EXPORT MolDraw2D {
 
  private:
   bool needs_scale_;
-  int width_, height_, panel_width_, panel_height_;
+  int width_, height_, panel_width_, panel_height_, legend_height_;
   double scale_;
   double x_min_, y_min_, x_range_, y_range_;
   double x_trans_, y_trans_;
