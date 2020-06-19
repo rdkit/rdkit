@@ -162,16 +162,16 @@ class TestCase(unittest.TestCase):
     newmol = Chem.RWMol()
 
     for atm in mol.GetAtoms():
-        ratm = Chem.Atom(atm.GetAtomicNum())
-        ratm.SetFormalCharge(atm.GetFormalCharge())
-        newmol.AddAtom(ratm)
+      ratm = Chem.Atom(atm.GetAtomicNum())
+      ratm.SetFormalCharge(atm.GetFormalCharge())
+      newmol.AddAtom(ratm)
 
-        atomidx = atm.GetIdx()
-        pos = oldconf.GetAtomPosition(atomidx)
-        newconf.SetAtomPosition(atomidx, pos)
+      atomidx = atm.GetIdx()
+      pos = oldconf.GetAtomPosition(atomidx)
+      newconf.SetAtomPosition(atomidx, pos)
 
     for bnd in mol.GetBonds():
-        newmol.AddBond(bnd.GetBeginAtomIdx(), bnd.GetEndAtomIdx(), Chem.BondType(bnd.GetBondType()))
+      newmol.AddBond(bnd.GetBeginAtomIdx(), bnd.GetEndAtomIdx(), Chem.BondType(bnd.GetBondType()))
     newmol.AddConformer(newconf)
 
     Chem.SanitizeMol(newmol)
@@ -357,6 +357,29 @@ class TestCase(unittest.TestCase):
     mol.GetBondWithIdx(1).SetStereo(Chem.rdchem.BondStereo.STEREOANY)
 
     assert len(list(AllChem.EnumerateStereoisomers(mol))) == 2
+
+  def testIssue3231(self):
+    mol = Chem.MolFromSmiles(
+      'C[C@H](OC1=C(N)N=CC(C2=CN(C3C[C@H](C)NCC3)N=C2)=C1)C4=C(Cl)C=CC(F)=C4Cl')
+    Chem.AssignStereochemistry(mol,force=True,flagPossibleStereoCenters=True)
+    l = Chem.FindMolChiralCenters(mol,includeUnassigned=True)
+    self.assertEqual(l, [(1, 'S'), (12, '?'), (14, 'S')])
+    enumsi_opt = AllChem.StereoEnumerationOptions(maxIsomers=20, onlyUnassigned=False)
+    isomers = list(AllChem.EnumerateStereoisomers(mol, enumsi_opt))
+    chi_cents = []
+    for iso in isomers:
+      Chem.AssignStereochemistry(iso)
+      chi_cents.append(Chem.FindMolChiralCenters(iso,includeUnassigned=True))
+    self.assertEqual(sorted(chi_cents),
+                     [[(1, 'R'), (12, 'R'), (14, 'R')], 
+                      [(1, 'R'), (12, 'R'), (14, 'S')], 
+                      [(1, 'R'), (12, 'S'), (14, 'R')], 
+                      [(1, 'R'), (12, 'S'), (14, 'S')],
+                      [(1, 'S'), (12, 'R'), (14, 'R')], 
+                      [(1, 'S'), (12, 'R'), (14, 'S')], 
+                      [(1, 'S'), (12, 'S'), (14, 'R')], 
+                      [(1, 'S'), (12, 'S'), (14, 'S')]])
+
 
 if __name__ == '__main__':
   unittest.main()

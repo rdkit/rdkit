@@ -291,6 +291,9 @@ def EnumerateStereoisomers(m, options=StereoEnumerationOptions(), verbose=False)
     """
 
     tm = Chem.Mol(m)
+    for atom in tm.GetAtoms():
+        atom.ClearProp("_CIPCode")
+    # FIX: deal with bonds here too
     flippers = _getFlippers(tm, options)
     nCenters = len(flippers)
     if not nCenters:
