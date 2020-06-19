@@ -941,7 +941,8 @@ RDKIT_GRAPHMOL_EXPORT void setBondStereoFromDirections(ROMol &mol);
   '_CIPCode' indicating their chiral code.
 
   \param mol     the molecule to use
-  \param cleanIt if true, atoms with a chiral specifier that aren't
+  \param cleanIt if true, any existing values of the property `_CIPCode`
+                 will be cleared, atoms with a chiral specifier that aren't
                  actually chiral (e.g. atoms with duplicate
                  substituents or only 2 substituents, etc.) will have
                  their chiral code set to CHI_UNSPECIFIED. Bonds with
