@@ -10,16 +10,14 @@
 
 #include <GraphMol/MolDraw2D/DrawTextFTSVG.h>
 
-using namespace std;
-
 namespace RDKit {
 
-string DrawColourToSVG(const RDKit::DrawColour &col);
+std::string DrawColourToSVG(const RDKit::DrawColour &col);
 
 // ****************************************************************************
   DrawTextFTSVG::DrawTextFTSVG(double max_fnt_sz, double min_fnt_sz,
                                const std::string &font_file,
-			       ostream &oss, string &d_act_class)
+			       std::ostream &oss, std::string &d_act_class)
     : DrawTextFT(max_fnt_sz, min_fnt_sz, font_file),
       oss_(oss), d_active_class_(d_act_class) {
 }
@@ -27,7 +25,6 @@ string DrawColourToSVG(const RDKit::DrawColour &col);
 // ****************************************************************************
 double DrawTextFTSVG::extractOutline() {
 
-//  cout << "DrawTextFTSVG : " << d_active_class_ << "XX" << endl;
   std::string col = DrawColourToSVG(colour());
 
   oss_ << "<path ";
@@ -38,7 +35,7 @@ double DrawTextFTSVG::extractOutline() {
   }
 
   double adv = DrawTextFT::extractOutline();
-  oss_ << "' fill='" << col << "'/>" << endl;
+  oss_ << "' fill='" << col << "'/>" << std::endl;
 
   return adv;
 
@@ -49,7 +46,7 @@ int DrawTextFTSVG::MoveToFunctionImpl(const FT_Vector *to) {
 
   double dx, dy;
   fontPosToDrawPos(to->x, to->y, dx, dy);
-  oss_ << "M " << dx << ' ' << dy << endl;
+  oss_ << "M " << dx << ' ' << dy << std::endl;
 
   return 0;
 }
@@ -59,7 +56,7 @@ int DrawTextFTSVG::LineToFunctionImpl(const FT_Vector *to) {
 
   double dx, dy;
   fontPosToDrawPos(to->x, to->y, dx, dy);
-  oss_ << "L " << dx << ' ' << dy << endl;
+  oss_ << "L " << dx << ' ' << dy << std::endl;
 
   return 0;
 }
@@ -75,7 +72,7 @@ int DrawTextFTSVG::ConicToFunctionImpl(const FT_Vector *control,
   fontPosToDrawPos(to->x, to->y, dx, dy);
 
   oss_ << "Q " << controlX << ' ' << controlY << ", "
-       << dx << ' ' << dy << endl;
+       << dx << ' ' << dy << std::endl;
 
   return 0;
 }
@@ -95,7 +92,7 @@ int DrawTextFTSVG::CubicToFunctionImpl(const FT_Vector *controlOne,
 
   oss_ << "C " << controlOneX << ' ' << controlOneY << ", "
        << controlTwoX << ' ' << controlTwoY << ", "
-       << dx << ' ' << dy << endl;
+       << dx << ' ' << dy << std::endl;
 
   return 0;
 }
