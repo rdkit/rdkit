@@ -53,7 +53,6 @@ namespace RDKit {
 
 class RGroupDecompositionHelper {
   RGroupDecomposition *decomp;
-  size_t cntr = 0;
 
  public:
   ~RGroupDecompositionHelper() { delete decomp; }

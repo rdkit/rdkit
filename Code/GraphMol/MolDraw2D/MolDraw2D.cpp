@@ -2612,7 +2612,7 @@ vector<string> MolDraw2D::atomLabelToPieces(const string &label,
   vector<string> final_pieces;
   string curr_piece;
   bool had_symbol = false;
-  for (const auto p : label_pieces) {
+  for (const auto &p : label_pieces) {
     if (p.empty()) {
       continue;
     }

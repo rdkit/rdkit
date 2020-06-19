@@ -156,7 +156,6 @@ double CalcRMS(ROMol &prbMol, const ROMol &refMol, int prbCid, int refCid,
     const Conformer &prbCnf = prbMol.getConformer(prbCid);
     const Conformer &refCnf = refMol.getConformer(refCid);
 
-    MatchVectType::const_iterator mi;
     for (const auto &mi : matche) {
       prbPoints.push_back(&prbCnf.getAtomPos(mi.first));
       refPoints.push_back(&refCnf.getAtomPos(mi.second));
