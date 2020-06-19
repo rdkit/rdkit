@@ -11,7 +11,7 @@ steps:
         numpy matplotlib pillow eigen pandas \
         sphinx recommonmark jupyter
     conda activate rdkit_build
-    conda install -c rdkit nox cairo
+    conda install -c rdkit nox cairo=1.14.6
   displayName: Setup build environment
 - bash: |
     source ${CONDA}/etc/profile.d/conda.sh
