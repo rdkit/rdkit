@@ -1665,24 +1665,25 @@ struct molops_wrapper {
 
     // ------------------------------------------------------------------------
     docString =
-        "Does the CIP stereochemistry assignment \n\
-  for the molecule's atoms (R/S) and double bond (Z/E).\n\
-  Chiral atoms will have a property '_CIPCode' indicating\n\
-  their chiral code.\n\
-\n\
-  ARGUMENTS:\n\
-\n\
-    - mol: the molecule to use\n\
-    - cleanIt: (optional) if provided, atoms with a chiral specifier that aren't\n\
-      actually chiral (e.g. atoms with duplicate substituents or only 2 substituents,\n\
-      etc.) will have their chiral code set to CHI_UNSPECIFIED. Bonds with \n\
-      STEREOCIS/STEREOTRANS specified that have duplicate substituents based upon the CIP \n\
-      atom ranks will be marked STEREONONE. \n\
-    - force: (optional) causes the calculation to be repeated, even if it has already\n\
-      been done\n\
-    - flagPossibleStereoCenters (optional)   set the _ChiralityPossible property on\n\
-      atoms that are possible stereocenters\n\
-\n";
+        R"DOC(Does the CIP stereochemistry assignment 
+  for the molecule's atoms (R/S) and double bond (Z/E).
+  Chiral atoms will have a property '_CIPCode' indicating
+  their chiral code.
+
+  ARGUMENTS:
+
+    - mol: the molecule to use
+    - cleanIt: (optional) if provided, any existing values of the property `_CIPCode`
+        will be cleared, atoms with a chiral specifier that aren't
+      actually chiral (e.g. atoms with duplicate substituents or only 2 substituents,
+      etc.) will have their chiral code set to CHI_UNSPECIFIED. Bonds with 
+      STEREOCIS/STEREOTRANS specified that have duplicate substituents based upon the CIP 
+      atom ranks will be marked STEREONONE. 
+    - force: (optional) causes the calculation to be repeated, even if it has already
+      been done
+    - flagPossibleStereoCenters (optional)   set the _ChiralityPossible property on
+      atoms that are possible stereocenters
+)DOC";
     python::def("AssignStereochemistry", MolOps::assignStereochemistry,
                 (python::arg("mol"), python::arg("cleanIt") = false,
                  python::arg("force") = false,

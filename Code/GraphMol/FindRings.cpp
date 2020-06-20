@@ -339,7 +339,6 @@ void findRingsD2nodes(const ROMol &tMol, VECT_INT_VECT &res,
   //    in findSSSRforDupCands)
   std::map<int, RINGINVAR_VECT> nodeInvars;
   std::map<int, RINGINVAR_VECT>::const_iterator nici;
-  DOUBLE_VECT_CI ici;
   BFSWorkspace bfs_workspace;
   for (d2i = d2nodes.begin(); d2i != d2nodes.end(); ++d2i) {
     cand = (*d2i);
