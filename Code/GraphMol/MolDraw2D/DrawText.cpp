@@ -293,7 +293,8 @@ bool DrawText::doesStringIntersect(const std::vector<std::shared_ptr<StringRect>
 // ****************************************************************************
 void DrawText::getStringExtremes(const std::string &label, OrientType orient,
                                  double &x_min, double &y_min,
-                                 double &x_max, double &y_max) const {
+                                 double &x_max, double &y_max,
+                                 bool dontSplit) const {
 
   if (label.empty()) {
     x_min = x_max = 0.0;
@@ -307,8 +308,9 @@ void DrawText::getStringExtremes(const std::string &label, OrientType orient,
   std::vector<std::shared_ptr<StringRect>> rects;
   std::vector<TextDrawType> draw_modes;
   std::vector<char> to_draw;
-  getStringRects(label, orient, rects, draw_modes, to_draw);
+  getStringRects(label, orient, rects, draw_modes, to_draw, dontSplit);
 
+  int i = 0;
   for(auto r: rects) {
     Point2D tl, tr, br, bl;
     r->calcCorners(tl, tr, br, bl, 0.0);
@@ -324,6 +326,7 @@ void DrawText::getStringExtremes(const std::string &label, OrientType orient,
     x_max = std::max(tr.x, x_max);
     y_max = std::max(bl.y, y_max);
     y_max = std::max(tr.y, y_max);
+    ++i;
   }
 
 }
@@ -361,22 +364,34 @@ void DrawText::alignString(TextAlignType talign,
   } else {
     // centre on the middle of the Normal text.  The super- or subscripts
     // should be at the ends.
-    double full_width = 0.0;
+    double x_min = std::numeric_limits<double>::max();
+    double x_max = -x_min;
     double y_min = std::numeric_limits<double>::max();
     double y_max = -y_min;
     align_offset.x = align_offset.y = 0.0;
     int num_norm = 0;
     for (size_t i = 0; i < rects.size(); ++i) {
       if (draw_modes[i] == TextDrawType::TextDrawNormal) {
-        full_width += rects[i]->width_;
-        y_max = std::max(y_max, rects[i]->trans_.y + rects[i]->height_ / 2);
-        y_min = std::min(y_min, rects[i]->trans_.y - rects[i]->height_ / 2);
+        Point2D tl, tr, br, bl;
+        rects[i]->calcCorners(tl, tr, br, bl, 0.0);
+        // sometimes the rect is in a coordinate frame where +ve y is down,
+        // sometimes it's up.  For these purposes, we don't care so long as
+        // the y_max is larger than the y_min.  We probably don't need to do
+        // all the tests for x_min and x_max;
+        x_min = std::min(bl.x, x_min);
+        x_min = std::min(tr.x, x_min);
+        y_min = std::min(bl.y, y_min);
+        y_min = std::min(tr.y, y_min);
+        x_max = std::max(bl.x, x_max);
+        x_max = std::max(tr.x, x_max);
+        y_max = std::max(bl.y, y_max);
+        y_max = std::max(tr.y, y_max);
         align_offset += rects[i]->offset_;
         ++num_norm;
       }
     }
-    align_trans.x = full_width / 2.0;
-    align_trans.y = (y_max + y_min) / 2.0;
+    align_trans.x = (x_max - x_min) / 2.0;
+    align_trans.y = 0.0;
     align_offset /= num_norm;
   }
 
@@ -513,9 +528,16 @@ bool setStringDrawMode(const std::string &instring,
 void DrawText::getStringRects(const std::string &text, OrientType orient,
                               std::vector<std::shared_ptr<StringRect> > &rects,
                               std::vector<TextDrawType> &draw_modes,
-                              std::vector<char> &draw_chars) const {
+                              std::vector<char> &draw_chars,
+                              bool dontSplit) const {
 
-  std::vector<std::string> text_bits = atomLabelToPieces(text, orient);
+  std::vector<std::string> text_bits;
+  if(!dontSplit) {
+    text_bits = atomLabelToPieces(text, orient);
+  } else {
+    text_bits.push_back(text);
+  }
+
   if(orient == OrientType::W) {
     // stick the pieces together again backwards and draw as one so there
     // aren't ugly splits in the string.

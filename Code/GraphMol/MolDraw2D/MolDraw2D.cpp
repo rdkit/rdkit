@@ -865,8 +865,8 @@ void MolDraw2D::setScale(int width, int height, const Point2D &minv,
   if(mol) {
     pushDrawDetails();
     unique_ptr<RWMol> tmol = setupDrawMolecule(*mol, nullptr, nullptr, -1,
-                                               panelWidth(), panelHeight());
-    calculateScale(panelWidth(), drawHeight(), *tmol);
+                                               width, height);
+    calculateScale(height, width, *tmol);
     popDrawDetails();
     x_min_ = min(minv.x, x_min_);
     y_min_ = min(minv.y, y_min_);
@@ -1422,58 +1422,73 @@ void MolDraw2D::finishMoleculeDraw(const RDKit::ROMol &draw_mol,
 // ****************************************************************************
 void MolDraw2D::drawLegend(const string &legend) {
 
-  cout << "legend_height_ : " << legend_height_ << endl;
-  Point2D l(0, panelHeight() - legend_height_), r(panelWidth(), panelHeight() - legend_height_);
   int olh = legend_height_;
   legend_height_ = 0; // so we use the whole panel
-  setColour(DrawColour(1.0, 0.0, 0.0));
-  drawLine(getAtomCoords(make_pair(l.x, l.y)),
-           getAtomCoords(make_pair(r.x, r.y)));
-  Point2D ll(0, panelHeight() - 1), rl(panelWidth(), panelHeight() - 1);
-  setColour(DrawColour(0.0, 1.0, 0.0));
-  drawLine(getAtomCoords(make_pair(ll.x, ll.y)),
-           getAtomCoords(make_pair(rl.x, rl.y)));
+
+  auto calc_legend_height = [&](const std::vector<std::string> &legend_bits,
+                                double &total_width, double &total_height) {
+    total_width = total_height = 0;
+    for (auto bit : legend_bits) {
+      double x_min, y_min, x_max, y_max;
+      text_drawer_->getStringExtremes(bit, OrientType::N, x_min, y_min, x_max,
+                                      y_max, true);
+      total_height += y_max - y_min;
+      total_width = std::max(total_width, x_max - x_min);
+    }
+  };
 
   if (!legend.empty()) {
-    string lit_leg = "<lit>" + legend + "</lit>";
-    Point2D loc(panel_width_ / 2, panelHeight() - olh);
-    cout << "dwaring lit_leg at " << loc << endl;
-    loc.x += x_offset_;
-    loc.y -= y_offset_;
+    std::vector<std::string> legend_bits;
+    // split any strings on newlines
+    string next_piece;
+    for (auto c : legend) {
+      if (c == '\n') {
+        if (!next_piece.empty()) {
+          legend_bits.push_back(next_piece);
+        }
+        next_piece = "";
+      } else {
+        next_piece += c;
+      }
+    }
+    if (!next_piece.empty()) {
+      legend_bits.push_back(next_piece);
+    }
+    double ominfs = text_drawer_->minFontSize();
+    text_drawer_->setMinFontSize(-1);
 
     double o_font_scale = text_drawer_->fontScale();
     double fsize = text_drawer_->fontSize();
     double new_font_scale = o_font_scale * drawOptions().legendFontSize / fsize;
-    cout << "new_font_scale = " << new_font_scale << endl;
     text_drawer_->setFontScale(new_font_scale);
-
-    double x_min, y_min, x_max, y_max;
-    text_drawer_->getStringExtremes(lit_leg, OrientType::N, x_min, y_min,
-                                    x_max, y_max);
-    cout << "string extremes : " << x_min << " to " << x_max << " and "
-         << y_min << " to " << y_max << endl;
-    double leg_height = y_max - y_min;
-    while(leg_height > olh) {
-      new_font_scale *= double(olh) / leg_height;
-      cout << "revised new_font_scale = " << new_font_scale << endl;
-      double ominfs = text_drawer_->minFontSize();
-      text_drawer_->setMinFontSize(-1);
+    double total_width, total_height;
+    calc_legend_height(legend_bits, total_width, total_height);
+    if (total_height > olh) {
+      new_font_scale *= double(olh) / total_height;
       text_drawer_->setFontScale(new_font_scale);
-      text_drawer_->getStringExtremes(lit_leg, OrientType::N, x_min, y_min,
-                                      x_max, y_max);
-      cout << "string extremes : " << x_min << " to " << x_max << " and "
-           << y_min << " to " << y_max << " h = " << y_max - y_min << endl;
-      leg_height = y_max - y_min;
-      text_drawer_->setMinFontSize(ominfs);
+      calc_legend_height(legend_bits, total_width, total_height);
     }
-    loc.y = panelHeight() - leg_height;
-    DrawColour odc = colour();
-    text_drawer_->setColour(options_.legendColour);
-    text_drawer_->drawString(lit_leg, loc, OrientType::N);
-    setColour(odc);
+    if (total_width > panelWidth()) {
+      new_font_scale *= double(panelWidth()) / total_width;
+      text_drawer_->setFontScale(new_font_scale);
+      calc_legend_height(legend_bits, total_width, total_height);
+    }
+
+    text_drawer_->setColour(drawOptions().legendColour);
+    Point2D loc(x_offset_ + panelWidth() / 2, y_offset_ + panelHeight() - total_height);
+    for(auto bit: legend_bits) {
+      text_drawer_->drawString(bit, loc, TextAlignType::MIDDLE);
+      double x_min, y_min, x_max, y_max;
+      text_drawer_->getStringExtremes(bit, OrientType::N,
+                                      x_min, y_min, x_max, y_max, true);
+      loc.y += y_max - y_min;
+    }
+    text_drawer_->setMinFontSize(ominfs);
     text_drawer_->setFontScale(o_font_scale);
   }
+
   legend_height_ = olh;
+
 }
 
 // ****************************************************************************

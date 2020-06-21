@@ -15,19 +15,17 @@
 #include <GraphMol/MolDraw2D/MolDraw2D.h>
 #include <GraphMol/MolDraw2D/DrawTextFT.h>
 
-using namespace std;
-
 namespace RDKit {
 
 // ****************************************************************************
   DrawTextFT::DrawTextFT(double max_fnt_sz, double min_fnt_sz,
-                         const string &font_file) :
+                         const std::string &font_file) :
       DrawText(max_fnt_sz, min_fnt_sz), library_(nullptr), face_(nullptr),
       x_trans_(0), y_trans_(0), string_y_max_(0) {
 
   int err_code = FT_Init_FreeType(&library_);
   if(err_code != FT_Err_Ok) {
-    throw runtime_error(string("Couldn't initialise Freetype."));
+    throw std::runtime_error(std::string("Couldn't initialise Freetype."));
   }
   setFontFile(font_file);
 
@@ -96,14 +94,14 @@ double DrawTextFT::extractOutline() {
 }
 
 // ****************************************************************************
-string DrawTextFT::getFontFile() const {
+std::string DrawTextFT::getFontFile() const {
 
   if(!font_file_.empty()) {
     return font_file_;
   }
-  string ff_name = getenv("RDBASE") ? getenv("RDBASE") : "";
+  std::string ff_name = getenv("RDBASE") ? getenv("RDBASE") : "";
   if(ff_name.empty()) {
-    throw runtime_error("Freetype not initialised because RDBASE not defined.");
+    throw std::runtime_error("Freetype not initialised because RDBASE not defined.");
   }
   ff_name += "/Data/Fonts/Telex-Regular.ttf";
   return ff_name;
@@ -111,30 +109,31 @@ string DrawTextFT::getFontFile() const {
 }
 
 // ****************************************************************************
-void DrawTextFT::setFontFile(const string &font_file) {
+void DrawTextFT::setFontFile(const std::string &font_file) {
 
   if(face_ && font_file == font_file_) {
     return;
   }
 
   font_file_ = font_file;
-  string font_file_ = getFontFile();
+  std::string font_file_ = getFontFile();
   FT_Done_Face(face_);
   face_ = nullptr;
   // take the first face
   int err_code = FT_New_Face(library_, font_file_.c_str(), 0, &face_);
   if(err_code != FT_Err_Ok) {
-    throw runtime_error(string("Font file ") + font_file_ + string(" not found."));
+    throw std::runtime_error(std::string("Font file ") + font_file_
+                             + std::string(" not found."));
   }
   em_scale_ = 1.0 / face_->units_per_EM;
 
 }
 
 // ****************************************************************************
-void DrawTextFT::getStringRects(const string &text,
-                                vector<shared_ptr<StringRect>> &rects,
-                                vector<TextDrawType> &draw_modes,
-                                vector<char> &draw_chars) const {
+void DrawTextFT::getStringRects(const std::string &text,
+                                std::vector<std::shared_ptr<StringRect>> &rects,
+                                std::vector<TextDrawType> &draw_modes,
+                                std::vector<char> &draw_chars) const {
 
   TextDrawType draw_mode = TextDrawType::TextDrawNormal;
   double running_x = 0.0, max_y = 0.0;
@@ -153,15 +152,21 @@ void DrawTextFT::getStringRects(const string &text,
     double p_y_min = oscale * fontCoordToDrawCoord(this_y_min);
     double p_x_max = oscale * fontCoordToDrawCoord(this_x_max);
     double p_y_max = oscale * fontCoordToDrawCoord(this_y_max);
+    double p_advance = oscale * fontCoordToDrawCoord(advance);
     double width = p_x_max - p_x_min;
+    if(!this_x_max) {
+      // it was a space, probably.
+      width = p_advance;
+    }
     double height = p_y_max - p_y_min;
     Point2D offset(p_x_min + width / 2.0, p_y_max / 2.0);
     Point2D g_centre(offset.x, p_y_max - height / 2.0);
-    rects.push_back(shared_ptr<StringRect>(new StringRect(offset, g_centre, width, height)));
+    rects.push_back(std::shared_ptr<StringRect>(new StringRect(offset, g_centre,
+                                                               width, height)));
     rects.back()->trans_.x = running_x;
     draw_modes.push_back(draw_mode);
-    running_x += p_x_max;
-    max_y = max(max_y, p_y_max);
+    running_x += this_x_max ? p_x_max : p_advance;
+    max_y = std::max(max_y, p_y_max);
   }
   for(auto r: rects) {
     r->g_centre_.y = max_y - r->g_centre_.y;
