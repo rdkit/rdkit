@@ -1,0 +1,2011 @@
+
+  Mrv0541 04191212102D          
+
+ 10 10  0  0  0  0            999 V2000
+   -0.1480    0.2044    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -0.1480   -0.6206    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -0.8625    0.6169    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    0.5665    0.6169    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -0.8625   -1.0331    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -1.5770    0.2044    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    1.2809    0.2044    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -1.5770   -0.6206    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    1.2809   -0.6206    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    1.9954    0.6169    0.0000 N   0  0  0  0  0  0  0  0  0  0  0  0
+  1  2  1  0  0  0  0
+  1  3  2  0  0  0  0
+  1  4  1  0  0  0  0
+  2  5  2  0  0  0  0
+  3  6  1  0  0  0  0
+  4  7  1  0  0  0  0
+  5  8  1  0  0  0  0
+  7  9  1  0  0  0  0
+  7 10  1  0  0  0  0
+  6  8  2  0  0  0  0
+M  END
+> <DATABASE_ID>
+DB00182
+
+> <DATABASE_NAME>
+drugbank
+
+> <SMILES>
+CC(N)CC1=CC=CC=C1
+
+> <INCHI_IDENTIFIER>
+InChI=1S/C9H13N/c1-8(10)7-9-5-3-2-4-6-9/h2-6,8H,7,10H2,1H3
+
+> <INCHI_KEY>
+KWTSXDURSIMDCE-UHFFFAOYSA-N
+
+> <FORMULA>
+C9H13N
+
+> <MOLECULAR_WEIGHT>
+135.2062
+
+> <EXACT_MASS>
+135.104799421
+
+> <JCHEM_ACCEPTOR_COUNT>
+1
+
+> <JCHEM_AVERAGE_POLARIZABILITY>
+16.174738885675872
+
+> <JCHEM_BIOAVAILABILITY>
+1
+
+> <JCHEM_DONOR_COUNT>
+1
+
+> <JCHEM_FORMAL_CHARGE>
+0
+
+> <JCHEM_GHOSE_FILTER>
+0
+
+> <JCHEM_IUPAC>
+1-phenylpropan-2-amine
+
+> <ALOGPS_LOGP>
+1.85
+
+> <JCHEM_LOGP>
+1.8042504816666665
+
+> <ALOGPS_LOGS>
+-1.89
+
+> <JCHEM_MDDR_LIKE_RULE>
+0
+
+> <JCHEM_NUMBER_OF_RINGS>
+1
+
+> <JCHEM_PHYSIOLOGICAL_CHARGE>
+1
+
+> <JCHEM_PKA_STRONGEST_BASIC>
+10.01443581771614
+
+> <JCHEM_POLAR_SURFACE_AREA>
+26.02
+
+> <JCHEM_REFRACTIVITY>
+43.7052
+
+> <JCHEM_ROTATABLE_BOND_COUNT>
+2
+
+> <JCHEM_RULE_OF_FIVE>
+1
+
+> <ALOGPS_SOLUBILITY>
+1.74e+00 g/l
+
+> <JCHEM_TRADITIONAL_IUPAC>
+adderall
+
+> <JCHEM_VEBER_RULE>
+1
+
+> <DRUGBANK_ID>
+DB00182
+
+> <SECONDARY_ACCESSION_NUMBERS>
+APRD00480
+
+> <DRUG_GROUPS>
+approved; illicit; investigational
+
+> <GENERIC_NAME>
+Amphetamine
+
+> <SYNONYMS>
+(+-)-alpha-Methylphenylethylamine; 1-phenyl-2-aminopropane; alpha-Methylbenzeneethaneamine; Amfetamina; Amfetamine; Amfetaminum; Amphetamine; beta-Aminopropylbenzene; beta-Phenylisopropylamin; Desoxynorephedrine; rac-(2R)-1-phenylpropan-2-amine; rac-amphetamine; α-methylbenzeneethaneamine; α-methylphenethylamine; β-aminopropylbenzene; β-phenylisopropylamine
+
+> <PRODUCTS>
+Act Amphetamine XR; Adderall; Adderall XR; Adzenys ER; Adzenys XR-ODT; Amphetamine Extended-Release Oral Suspension; Amphetamine Sulfate; Apo-amphetamine XR; Dextroamphetamine Saccharate and Amphetamine Aspartate and Dextroamphetamine Sulfate and Amphetamine Sulfate; Dextroamphetamine Saccharate, Amphetamine Aspartate (monohydrate), Dextroamphetamine Sulfate, Amphetamine Sulfate; Dextroamphetamine Saccharate, Amphetamine Aspartate Monohydrate, Dextroamphetamine Sulfate and Amphetamine Sulfate; Dextroamphetamine Saccharate, Amphetamine Aspartate Monohydrate, Dextroamphetamine Sulfate, and Amphetamine Sulfate; Dextroamphetamine Saccharate, Amphetamine Aspartate Monohydrate, Dextroamphetamine Sulfate, and Amphetamine Sulfate Extended-Release; Dextroamphetamine Saccharate, Amphetamine Aspartate, Dextroamphetamine Sulfate and Amphetamine Suflate; Dextroamphetamine Saccharate, Amphetamine Aspartate, Dextroamphetamine Sulfate and Amphetamine Sulfate; Dextroamphetamine Saccharate, Amphetamine Aspartate, Dextroamphetamine Sulfate, Amphetamine Sulfate; Dextroamphetamine Saccharate, Amphetamine Aspartate, Dextroamphetamine Sulfate, Amphetamine Sulfate Tablets,CII; Dextroamphetamine Saccharate, Amphetamine Aspartate, Dextroamphetamine Sulfate, and Amphetamine Sulfate; Dextroamphetamine saccharate, amphetamine aspartate monohydrate, dextroamphetamine sulfate and amphetamine sulfate; Dextroamphetamine saccharate, amphetamine aspartate monohydrate, dextroamphetamine sulfate, amphetamine sulfate; Dextroamphetamine saccharate, amphetamine aspartate monohydrate, dextroamphetamine sulfate, amphetamine sulfate ER; Dextroamphetamine saccharate, amphetamine aspartate, dextroamphetamine sulfate, and amphetamine sulfate; Dyanavel XR; Evekeo; Evekeo ODT; Mixed Salts of a Single Entity Amphetamine Product XR; Mydayis; PMS-amphetamines XR; Sandoz Amphetamine XR
+
+> <SALTS>
+Amphetamine adipate; Amphetamine aspartate; Amphetamine aspartate monohydrate; Amphetamine sulfate
+
+$$$$
+
+  Mrv1909 07021918052D          
+
+  9  8  0  0  0  0            999 V2000
+    0.3610   -0.4091    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    0.3610   -1.2400    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    0.3610    0.4174    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -0.3528    0.8309    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -1.0750    0.4174    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -1.7889    0.8309    0.0000 Cl  0  0  0  0  0  0  0  0  0  0  0  0
+    0.3610    1.2400    0.0000 O   0  0  0  0  0  0  0  0  0  0  0  0
+    1.0750    0.8309    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    1.7889    0.4174    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+  2  1  3  0  0  0  0
+  3  1  1  0  0  0  0
+  4  3  1  0  0  0  0
+  5  4  2  0  0  0  0
+  6  5  1  0  0  0  0
+  7  3  1  0  0  0  0
+  8  3  1  0  0  0  0
+  9  8  1  0  0  0  0
+M  END
+> <DATABASE_ID>
+DB00189
+
+> <DATABASE_NAME>
+drugbank
+
+> <SMILES>
+CCC(O)(\C=C\Cl)C#C
+
+> <INCHI_IDENTIFIER>
+InChI=1S/C7H9ClO/c1-3-7(9,4-2)5-6-8/h1,5-6,9H,4H2,2H3/b6-5+
+
+> <INCHI_KEY>
+ZEHYJZXQEQOSON-AATRIKPKSA-N
+
+> <FORMULA>
+C7H9ClO
+
+> <MOLECULAR_WEIGHT>
+144.6
+
+> <EXACT_MASS>
+144.0341926
+
+> <JCHEM_ACCEPTOR_COUNT>
+1
+
+> <JCHEM_ATOM_COUNT>
+18
+
+> <JCHEM_AVERAGE_POLARIZABILITY>
+14.766102360555642
+
+> <JCHEM_BIOAVAILABILITY>
+1
+
+> <JCHEM_DONOR_COUNT>
+1
+
+> <JCHEM_FORMAL_CHARGE>
+0
+
+> <JCHEM_GHOSE_FILTER>
+0
+
+> <JCHEM_IUPAC>
+(1E)-1-chloro-3-ethylpent-1-en-4-yn-3-ol
+
+> <ALOGPS_LOGP>
+1.45
+
+> <JCHEM_LOGP>
+1.620819461
+
+> <ALOGPS_LOGS>
+-3.00
+
+> <JCHEM_MDDR_LIKE_RULE>
+0
+
+> <JCHEM_NUMBER_OF_RINGS>
+0
+
+> <JCHEM_PHYSIOLOGICAL_CHARGE>
+0
+
+> <JCHEM_PKA_STRONGEST_ACIDIC>
+12.877910831568652
+
+> <JCHEM_PKA_STRONGEST_BASIC>
+-3.727001802271872
+
+> <JCHEM_POLAR_SURFACE_AREA>
+20.23
+
+> <JCHEM_REFRACTIVITY>
+38.6382
+
+> <JCHEM_ROTATABLE_BOND_COUNT>
+2
+
+> <JCHEM_RULE_OF_FIVE>
+1
+
+> <ALOGPS_SOLUBILITY>
+1.43e-01 g/l
+
+> <JCHEM_TRADITIONAL_IUPAC>
+ethchlorvynol
+
+> <JCHEM_VEBER_RULE>
+1
+
+> <DRUGBANK_ID>
+DB00189
+
+> <SECONDARY_ACCESSION_NUMBERS>
+APRD00958
+
+> <DRUG_GROUPS>
+approved; illicit; withdrawn
+
+> <GENERIC_NAME>
+Ethchlorvynol
+
+> <SYNONYMS>
+1-chloro-3-ethyl-1-penten-4-yn-3-ol; 1-Chloro-3-ethyl-pent-1-en-4-yn-3-ol; 3-(beta-chlorovinyl)-1-pentyn-3-ol; 3-(β-chlorovinyl)-1-pentyn-3-ol; etclorvinol; Ethchlorvynol; ethyl β-chlorovinyl ethynyl carbinol; β-chlorovinyl ethyl ethynyl carbinol
+
+> <PRODUCTS>
+Placidyl Cap 200mg; Placidyl Cap 500mg; Placidyl Cap 750mg
+
+> <INTERNATIONAL_BRANDS>
+Arvynol; Nostel; Placidyl; Roeridorm; Serenesil
+
+$$$$
+191
+  Mrv0541 02231214302D          
+
+ 11 11  0  0  0  0            999 V2000
+    3.7935    1.3943    0.0000 N   0  0  0  0  0  0  0  0  0  0  0  0
+    3.0791    0.9818    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    2.3645    0.5693    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    2.6665    1.6962    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    3.4916    0.2673    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    2.3645   -0.2558    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    3.0791   -0.6683    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    1.6500   -0.6683    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    3.0791   -1.4933    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    1.6500   -1.4933    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    2.3645   -1.9058    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+  1  2  1  0  0  0  0
+  2  3  1  0  0  0  0
+  2  4  1  0  0  0  0
+  2  5  1  0  0  0  0
+  3  6  1  0  0  0  0
+  6  7  2  0  0  0  0
+  6  8  1  0  0  0  0
+  7  9  1  0  0  0  0
+  8 10  2  0  0  0  0
+  9 11  2  0  0  0  0
+ 10 11  1  0  0  0  0
+M  END
+> <DATABASE_ID>
+DB00191
+
+> <DATABASE_NAME>
+drugbank
+
+> <SMILES>
+CC(C)(N)CC1=CC=CC=C1
+
+> <INCHI_IDENTIFIER>
+InChI=1S/C10H15N/c1-10(2,11)8-9-6-4-3-5-7-9/h3-7H,8,11H2,1-2H3
+
+> <INCHI_KEY>
+DHHVAGZRUROJKS-UHFFFAOYSA-N
+
+> <FORMULA>
+C10H15N
+
+> <MOLECULAR_WEIGHT>
+149.2328
+
+> <EXACT_MASS>
+149.120449485
+
+> <JCHEM_ACCEPTOR_COUNT>
+1
+
+> <JCHEM_AVERAGE_POLARIZABILITY>
+17.87496804528466
+
+> <JCHEM_BIOAVAILABILITY>
+1
+
+> <JCHEM_DONOR_COUNT>
+1
+
+> <JCHEM_FORMAL_CHARGE>
+0
+
+> <JCHEM_GHOSE_FILTER>
+0
+
+> <JCHEM_IUPAC>
+2-methyl-1-phenylpropan-2-amine
+
+> <ALOGPS_LOGP>
+2.32
+
+> <JCHEM_LOGP>
+2.0848271499999997
+
+> <ALOGPS_LOGS>
+-2.29
+
+> <JCHEM_MDDR_LIKE_RULE>
+0
+
+> <JCHEM_NUMBER_OF_RINGS>
+1
+
+> <JCHEM_PHYSIOLOGICAL_CHARGE>
+1
+
+> <JCHEM_PKA_STRONGEST_BASIC>
+10.248513745149388
+
+> <JCHEM_POLAR_SURFACE_AREA>
+26.02
+
+> <JCHEM_REFRACTIVITY>
+48.34340000000002
+
+> <JCHEM_ROTATABLE_BOND_COUNT>
+2
+
+> <JCHEM_RULE_OF_FIVE>
+1
+
+> <ALOGPS_SOLUBILITY>
+7.57e-01 g/l
+
+> <JCHEM_TRADITIONAL_IUPAC>
+phentermine
+
+> <JCHEM_VEBER_RULE>
+1
+
+> <DRUGBANK_ID>
+DB00191
+
+> <SECONDARY_ACCESSION_NUMBERS>
+APRD00093
+
+> <DRUG_GROUPS>
+approved; illicit
+
+> <GENERIC_NAME>
+Phentermine
+
+> <SYNONYMS>
+alpha,alpha-Dimethylphenethylamine; Fentermina; Phentermine; Phentermine resin; Phenterminum
+
+> <PRODUCTS>
+Adipex-P; Fastin Cap 30mg; Ionamin; Lomaira; Phentermine; Phentermine HCl; Phentermine HCl C-IV; Phentermine Hydrochloride; Phentermine Resin ER; Phentermine hydrochloride; Phetermine Hydrochloride; Qsymia; Suprenza
+
+> <INTERNATIONAL_BRANDS>
+Dapex; Duromine; Fastin; Obenix; Obestin-30; Oby-trim; Phentercot; Phentride; Umi-Pex
+
+> <SALTS>
+Phentermine hydrochloride
+
+$$$$
+237
+  Mrv0541 02231214322D          
+
+ 15 15  0  0  1  0            999 V2000
+    4.5080    0.1658    0.0000 O   0  0  0  0  0  0  0  0  0  0  0  0
+    1.6500    0.1658    0.0000 O   0  0  0  0  0  0  0  0  0  0  0  0
+    3.0791   -2.3092    0.0000 O   0  0  0  0  0  0  0  0  0  0  0  0
+    3.7935   -1.0717    0.0000 N   0  0  0  0  0  0  0  0  0  0  0  0
+    2.3645   -1.0717    0.0000 N   0  0  0  0  0  0  0  0  0  0  0  0
+    3.0791    0.1658    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    3.4916    0.8803    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    2.6665    0.8803    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    3.0791    1.5948    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    3.7935   -0.2467    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    2.3645   -0.2467    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    4.3166    0.8803    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    1.8415    0.8803    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    3.4916    2.3092    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    3.0791   -1.4842    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+  1 10  2  0  0  0  0
+  2 11  2  0  0  0  0
+  3 15  2  0  0  0  0
+  4 10  1  0  0  0  0
+  4 15  1  0  0  0  0
+  5 11  1  0  0  0  0
+  5 15  1  0  0  0  0
+  6  7  1  0  0  0  0
+  6  8  1  0  0  0  0
+  6 10  1  0  0  0  0
+  6 11  1  0  0  0  0
+  7  9  1  0  0  0  0
+  7 12  1  0  0  0  0
+  8 13  1  0  0  0  0
+  9 14  1  0  0  0  0
+M  END
+> <DATABASE_ID>
+DB00237
+
+> <DATABASE_NAME>
+drugbank
+
+> <SMILES>
+CCC(C)C1(CC)C(=O)NC(=O)NC1=O
+
+> <INCHI_IDENTIFIER>
+InChI=1S/C10H16N2O3/c1-4-6(3)10(5-2)7(13)11-9(15)12-8(10)14/h6H,4-5H2,1-3H3,(H2,11,12,13,14,15)
+
+> <INCHI_KEY>
+ZRIHAIZYIMGOAB-UHFFFAOYSA-N
+
+> <FORMULA>
+C10H16N2O3
+
+> <MOLECULAR_WEIGHT>
+212.2456
+
+> <EXACT_MASS>
+212.116092388
+
+> <JCHEM_ACCEPTOR_COUNT>
+3
+
+> <JCHEM_AVERAGE_POLARIZABILITY>
+21.410874790436942
+
+> <JCHEM_BIOAVAILABILITY>
+1
+
+> <JCHEM_DONOR_COUNT>
+2
+
+> <JCHEM_FORMAL_CHARGE>
+0
+
+> <JCHEM_GHOSE_FILTER>
+1
+
+> <JCHEM_IUPAC>
+5-(butan-2-yl)-5-ethyl-1,3-diazinane-2,4,6-trione
+
+> <ALOGPS_LOGP>
+1.70
+
+> <JCHEM_LOGP>
+1.4486825816666666
+
+> <ALOGPS_LOGS>
+-2.18
+
+> <JCHEM_MDDR_LIKE_RULE>
+0
+
+> <JCHEM_NUMBER_OF_RINGS>
+1
+
+> <JCHEM_PHYSIOLOGICAL_CHARGE>
+0
+
+> <JCHEM_PKA>
+12.151890058493215
+
+> <JCHEM_PKA_STRONGEST_ACIDIC>
+8.482024390046842
+
+> <JCHEM_POLAR_SURFACE_AREA>
+75.27
+
+> <JCHEM_REFRACTIVITY>
+53.40189999999999
+
+> <JCHEM_ROTATABLE_BOND_COUNT>
+3
+
+> <JCHEM_RULE_OF_FIVE>
+1
+
+> <ALOGPS_SOLUBILITY>
+1.39e+00 g/l
+
+> <JCHEM_TRADITIONAL_IUPAC>
+butabarbital
+
+> <JCHEM_VEBER_RULE>
+0
+
+> <DRUGBANK_ID>
+DB00237
+
+> <SECONDARY_ACCESSION_NUMBERS>
+APRD00752
+
+> <DRUG_GROUPS>
+approved; illicit
+
+> <GENERIC_NAME>
+Butabarbital
+
+> <SYNONYMS>
+5-ethyl-5-(1-methylpropyl)-2,4,6(1H,3H,5H)-pyrimidinetrione; 5-ethyl-5-(1-methylpropyl)barbituric acid; 5-sec-butyl-5-ethyl-2,4,6(1H,3H,5H)-pyrimidinetrione; 5-sec-butyl-5-ethylbarbituric acid; 5-sec-butyl-5-ethylpyrimidine-2,4,6(1H,3H,5H)-trione; Butabarbital; Secbutabarbital; Secbutabarbitale; Secbutabarbitalum
+
+> <PRODUCTS>
+Butisol Sodium; Butisol Sodium Tab 100mg; Butisol Sodium Tab 15mg; Butisol Sodium Tab 30mg; Phenazopyridine Hydrochloride, Hyoscyamine Hydrobromide, and Butabarbital; Phenazopyridine Plus; Pyrelle H.B.
+
+> <INTERNATIONAL_BRANDS>
+Butalan; Butisol; Sarisol No. 2
+
+> <SALTS>
+Butabarbital sodium
+
+$$$$
+241
+  Mrv0541 02231214322D          
+
+ 16 16  0  0  0  0            999 V2000
+    4.7291    0.1658    0.0000 O   0  0  0  0  0  0  0  0  0  0  0  0
+    1.8711    0.1658    0.0000 O   0  0  0  0  0  0  0  0  0  0  0  0
+    3.3001   -2.3092    0.0000 O   0  0  0  0  0  0  0  0  0  0  0  0
+    4.0145   -1.0717    0.0000 N   0  0  0  0  0  0  0  0  0  0  0  0
+    2.5856   -1.0717    0.0000 N   0  0  0  0  0  0  0  0  0  0  0  0
+    3.3001    0.1658    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    3.7126    0.8803    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    3.3001    1.5948    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    2.8876    0.8803    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    4.0145   -0.2467    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    2.5856   -0.2467    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    2.4751    1.5948    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    3.7126    2.3092    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    2.0625    0.8803    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    3.3001   -1.4842    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    1.6500    1.5948    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+  1 10  2  0  0  0  0
+  2 11  2  0  0  0  0
+  3 15  2  0  0  0  0
+  4 10  1  0  0  0  0
+  4 15  1  0  0  0  0
+  5 11  1  0  0  0  0
+  5 15  1  0  0  0  0
+  6  7  1  0  0  0  0
+  6  9  1  0  0  0  0
+  6 10  1  0  0  0  0
+  6 11  1  0  0  0  0
+  7  8  1  0  0  0  0
+  8 12  1  0  0  0  0
+  8 13  1  0  0  0  0
+  9 14  1  0  0  0  0
+ 14 16  2  0  0  0  0
+M  END
+> <DATABASE_ID>
+DB00241
+
+> <DATABASE_NAME>
+drugbank
+
+> <SMILES>
+CC(C)CC1(CC=C)C(=O)NC(=O)NC1=O
+
+> <INCHI_IDENTIFIER>
+InChI=1S/C11H16N2O3/c1-4-5-11(6-7(2)3)8(14)12-10(16)13-9(11)15/h4,7H,1,5-6H2,2-3H3,(H2,12,13,14,15,16)
+
+> <INCHI_KEY>
+UZVHFVZFNXBMQJ-UHFFFAOYSA-N
+
+> <FORMULA>
+C11H16N2O3
+
+> <MOLECULAR_WEIGHT>
+224.2563
+
+> <EXACT_MASS>
+224.116092388
+
+> <JCHEM_ACCEPTOR_COUNT>
+3
+
+> <JCHEM_AVERAGE_POLARIZABILITY>
+22.424209910653055
+
+> <JCHEM_BIOAVAILABILITY>
+1
+
+> <JCHEM_DONOR_COUNT>
+2
+
+> <JCHEM_FORMAL_CHARGE>
+0
+
+> <JCHEM_GHOSE_FILTER>
+1
+
+> <JCHEM_IUPAC>
+5-(2-methylpropyl)-5-(prop-2-en-1-yl)-1,3-diazinane-2,4,6-trione
+
+> <ALOGPS_LOGP>
+1.47
+
+> <JCHEM_LOGP>
+1.5892632603333325
+
+> <ALOGPS_LOGS>
+-2.00
+
+> <JCHEM_MDDR_LIKE_RULE>
+0
+
+> <JCHEM_NUMBER_OF_RINGS>
+1
+
+> <JCHEM_PHYSIOLOGICAL_CHARGE>
+0
+
+> <JCHEM_PKA>
+12.151206288215347
+
+> <JCHEM_PKA_STRONGEST_ACIDIC>
+8.481397724138178
+
+> <JCHEM_POLAR_SURFACE_AREA>
+75.27
+
+> <JCHEM_REFRACTIVITY>
+58.047
+
+> <JCHEM_ROTATABLE_BOND_COUNT>
+4
+
+> <JCHEM_RULE_OF_FIVE>
+1
+
+> <ALOGPS_SOLUBILITY>
+2.23e+00 g/l
+
+> <JCHEM_TRADITIONAL_IUPAC>
+butalbital
+
+> <JCHEM_VEBER_RULE>
+0
+
+> <DRUGBANK_ID>
+DB00241
+
+> <SECONDARY_ACCESSION_NUMBERS>
+APRD00266
+
+> <DRUG_GROUPS>
+approved; illicit
+
+> <GENERIC_NAME>
+Butalbital
+
+> <SYNONYMS>
+5-(2-methylpropyl)-5-prop-2-enyl-1,3-diazinane-2,4,6-trione; 5-allyl-5-(2-methylpropyl)barbituric acid; 5-allyl-5-(2'-methyl-n-propyl) barbituric acid; 5-allyl-5-isobutyl-2,4,6(1H,3H,5H)-pyrimidinetrione; 5-Allyl-5-isobutyl-pyrimidine-2,4,6-trione; 5-allyl-5-isobutylbarbituric acid; 5-isobutyl-5-allylbarbituric acid; Allylbarbital; Allylbarbitone; Allylbarbituric acid; Butalbarbital; Butalbital; Butalbitalum; iso-butylallylbarbituric acid; Itobarbital; Tetrallobarbital
+
+> <PRODUCTS>
+Acetaminophen, Butalbital and Caffeine; Alagesic LQ; Allzital; Ascomp with Codeine; Bupap; Butalbital Acetaminophen and Caffeine; Butalbital And Acetaminophen; Butalbital Compound; Butalbital and Acetaminophen; Butalbital and Acetaminophen 50 mg/325 mg; Butalbital, Acetaminophen and Caffeine; Butalbital, Acetaminophen and Caffeine Plus; Butalbital, Acetaminophen and Caffeine with Codeine Phosphate; Butalbital, Acetaminophen, Caffeine; Butalbital, Acetaminophen, Caffeine and Codeine Phosphate; Butalbital, Acetaminophen, Caffeine, and Codeine Phosphate; Butalbital, Acetaminophen, and Caffeine; Butalbital, Acetominophen and Caffeine; Butalbital, Aspirin and Caffeine; Butalbital, Aspirin, Caffeine and Codeine Phosphate; Butalbital, Aspirin, Caffeine, and Codeine Phosphate; Butalbital, Aspirin, and Caffeine; Butalbital, aspirin, and caffeine; Butapap; Capacet; Dolgic Plus; Esgic; Esgic-Plus; Fioricet; Fioricet with Codeine; Fiorinal; Fiorinal Tab; Fiorinal with Codeine; Fiorinal-C 1/2; Fiorinal-C 1/4; Margesic; Marten-Tab; Orbivan; Orbivan CF; PMS-pharnal Capsules; PMS-pharnal Tablets; PMS-pharnal-C 1/4 Capsules; PMS-pharnal-C1/2 Capsules; Phrenilin; Phrenilin Forte; Pronal - C1/2 Capsules; Pronal C1/4 Capsules; Pronal Capsules; Pronal Tablets; Tencon; Teva-tecnal; Teva-tecnal C 1/2; Teva-tecnal C 1/4; Trianal Capsules; Trianal C¼; Trianal C½; Trianal Tablet; Vanatol LQ; Vanatol S; Vtol LQ; Zebutal
+
+> <INTERNATIONAL_BRANDS>
+Sandoptal
+
+> <SALTS>
+Butalbital sodium
+
+$$$$
+
+  Mrv0541 08081309442D          
+
+ 16 16  0  0  1  0            999 V2000
+    1.8711    0.1658    0.0000 O   0  0  0  0  0  0  0  0  0  0  0  0
+    4.7291    0.1658    0.0000 O   0  0  0  0  0  0  0  0  0  0  0  0
+    3.3001   -2.3092    0.0000 O   0  0  0  0  0  0  0  0  0  0  0  0
+    2.5856   -1.0717    0.0000 N   0  0  0  0  0  0  0  0  0  0  0  0
+    4.0145   -1.0717    0.0000 N   0  0  0  0  0  0  0  0  0  0  0  0
+    3.3001    0.1658    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    3.7126    0.8803    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    2.8876    0.8803    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    3.3001    1.5948    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    2.5856   -0.2467    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    4.0145   -0.2467    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    4.5376    0.8803    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    3.3001   -1.4842    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    3.7126    2.3092    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    2.0625    0.8803    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    1.6500    1.5948    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+  1 10  2  0  0  0  0
+  2 11  2  0  0  0  0
+  3 13  2  0  0  0  0
+  4 10  1  0  0  0  0
+  4 13  1  0  0  0  0
+  5 11  1  0  0  0  0
+  5 13  1  0  0  0  0
+  6  7  1  0  0  0  0
+  6  8  1  0  0  0  0
+  6 10  1  0  0  0  0
+  6 11  1  0  0  0  0
+  7  9  1  0  0  0  0
+  7 12  1  0  0  0  0
+  8 15  1  0  0  0  0
+  9 14  1  0  0  0  0
+ 15 16  2  0  0  0  0
+M  END
+> <DATABASE_ID>
+DB00306
+
+> <DATABASE_NAME>
+drugbank
+
+> <SMILES>
+CCC(C)C1(CC=C)C(=O)NC(=O)NC1=O
+
+> <INCHI_IDENTIFIER>
+InChI=1S/C11H16N2O3/c1-4-6-11(7(3)5-2)8(14)12-10(16)13-9(11)15/h4,7H,1,5-6H2,2-3H3,(H2,12,13,14,15,16)
+
+> <INCHI_KEY>
+BJVVMKUXKQHWJK-UHFFFAOYSA-N
+
+> <FORMULA>
+C11H16N2O3
+
+> <MOLECULAR_WEIGHT>
+224.2563
+
+> <EXACT_MASS>
+224.116092388
+
+> <JCHEM_ACCEPTOR_COUNT>
+3
+
+> <JCHEM_AVERAGE_POLARIZABILITY>
+22.482020735327588
+
+> <JCHEM_BIOAVAILABILITY>
+1
+
+> <JCHEM_DONOR_COUNT>
+2
+
+> <JCHEM_FORMAL_CHARGE>
+0
+
+> <JCHEM_GHOSE_FILTER>
+1
+
+> <JCHEM_IUPAC>
+5-(butan-2-yl)-5-(prop-2-en-1-yl)-1,3-diazinane-2,4,6-trione
+
+> <ALOGPS_LOGP>
+1.87
+
+> <JCHEM_LOGP>
+1.5892632603333325
+
+> <ALOGPS_LOGS>
+-1.96
+
+> <JCHEM_MDDR_LIKE_RULE>
+0
+
+> <JCHEM_NUMBER_OF_RINGS>
+1
+
+> <JCHEM_PHYSIOLOGICAL_CHARGE>
+0
+
+> <JCHEM_PKA>
+12.14833825700984
+
+> <JCHEM_PKA_STRONGEST_ACIDIC>
+8.478768535925882
+
+> <JCHEM_POLAR_SURFACE_AREA>
+75.27
+
+> <JCHEM_REFRACTIVITY>
+58.047
+
+> <JCHEM_ROTATABLE_BOND_COUNT>
+4
+
+> <JCHEM_RULE_OF_FIVE>
+1
+
+> <ALOGPS_SOLUBILITY>
+2.46e+00 g/l
+
+> <JCHEM_TRADITIONAL_IUPAC>
+talbutal
+
+> <JCHEM_VEBER_RULE>
+0
+
+> <DRUGBANK_ID>
+DB00306
+
+> <SECONDARY_ACCESSION_NUMBERS>
+APRD01333
+
+> <DRUG_GROUPS>
+approved; illicit
+
+> <GENERIC_NAME>
+Talbutal
+
+> <SYNONYMS>
+(RS)-5-allyl-5-sec-butylpyrimidine-2,4,6(1H,3H,5H)-trione; 5-allyl-5-sec-butylbarbituric acid; sec-Butyl allyl barbituric acid; Talbutal; Talbutale; Talbutalum
+
+> <INTERNATIONAL_BRANDS>
+Lotusate
+
+$$$$
+
+  Mrv1902 04141921032D          
+
+ 23 27  0  0  0  0            999 V2000
+   -0.3917   -0.4145    0.0000 C   0  0  2  0  0  0  0  0  0  0  0  0
+   -0.3952    0.4076    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    0.3139   -0.8309    0.0000 C   0  0  2  0  0  0  0  0  0  0  0  0
+   -1.1115   -0.8203    0.0000 C   0  0  1  0  0  0  0  0  0  0  0  0
+    0.3139    0.0053    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -1.1115    0.8170    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    0.3174    0.8170    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    1.0302   -0.4216    0.0000 C   0  0  1  0  0  0  0  0  0  0  0  0
+    0.3105   -1.6530    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -1.9301    0.0546    0.0000 O   0  0  0  0  0  0  0  0  0  0  0  0
+   -1.1151   -1.6426    0.0000 C   0  0  2  0  0  0  0  0  0  0  0  0
+    1.7397   -0.0087    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -1.1115    1.6462    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    1.0338    0.4040    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    0.3174    1.6462    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    1.7466   -0.8380    0.0000 N   0  0  0  0  0  0  0  0  0  0  0  0
+   -0.4057   -2.0590    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -1.8349   -2.0554    0.0000 O   0  0  0  0  0  0  0  0  0  0  0  0
+   -0.3917    2.0590    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -1.8279    2.0590    0.0000 O   0  0  0  0  0  0  0  0  0  0  0  0
+    2.5442   -0.6192    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -2.5442    1.6462    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    1.1009   -1.3991    0.0000 H   0  0  0  0  0  0  0  0  0  0  0  0
+  1  2  1  0  0  0  0
+  1  3  1  0  0  0  0
+  1  4  1  0  0  0  0
+  1  5  1  1  0  0  0
+  2  6  2  0  0  0  0
+  2  7  1  0  0  0  0
+  3  8  1  0  0  0  0
+  3  9  1  0  0  0  0
+  4 10  1  6  0  0  0
+  4 11  1  0  0  0  0
+  6 13  1  0  0  0  0
+  7 14  1  0  0  0  0
+  7 15  2  0  0  0  0
+  8 16  1  1  0  0  0
+  9 17  2  0  0  0  0
+ 11 18  1  6  0  0  0
+ 13 19  2  0  0  0  0
+ 13 20  1  0  0  0  0
+ 16 21  1  0  0  0  0
+ 20 22  1  0  0  0  0
+  6 10  1  0  0  0  0
+  8 14  1  0  0  0  0
+ 11 17  1  0  0  0  0
+ 12 16  1  0  0  0  0
+ 15 19  1  0  0  0  0
+  3 23  1  1  0  0  0
+  5 12  1  0  0  0  0
+M  END
+> <DATABASE_ID>
+DB00318
+
+> <DATABASE_NAME>
+drugbank
+
+> <SMILES>
+[H][C@]12C=C[C@H](O)[C@@H]3OC4=C5C(C[C@H]1N(C)CC[C@@]235)=CC=C4OC
+
+> <INCHI_IDENTIFIER>
+InChI=1S/C18H21NO3/c1-19-8-7-18-11-4-5-13(20)17(18)22-16-14(21-2)6-3-10(15(16)18)9-12(11)19/h3-6,11-13,17,20H,7-9H2,1-2H3/t11-,12+,13-,17-,18-/m0/s1
+
+> <INCHI_KEY>
+OROGSEYTTFOCAN-DNJOTXNNSA-N
+
+> <FORMULA>
+C18H21NO3
+
+> <MOLECULAR_WEIGHT>
+299.3642
+
+> <EXACT_MASS>
+299.152143543
+
+> <JCHEM_ACCEPTOR_COUNT>
+4
+
+> <JCHEM_ATOM_COUNT>
+43
+
+> <JCHEM_AVERAGE_POLARIZABILITY>
+31.945923610648677
+
+> <JCHEM_BIOAVAILABILITY>
+1
+
+> <JCHEM_DONOR_COUNT>
+1
+
+> <JCHEM_FORMAL_CHARGE>
+0
+
+> <JCHEM_GHOSE_FILTER>
+1
+
+> <JCHEM_IUPAC>
+(1S,5R,13R,14S,17R)-10-methoxy-4-methyl-12-oxa-4-azapentacyclo[9.6.1.0^{1,13}.0^{5,17}.0^{7,18}]octadeca-7(18),8,10,15-tetraen-14-ol
+
+> <ALOGPS_LOGP>
+1.20
+
+> <JCHEM_LOGP>
+1.3429512830000006
+
+> <ALOGPS_LOGS>
+-2.72
+
+> <JCHEM_MDDR_LIKE_RULE>
+0
+
+> <JCHEM_NUMBER_OF_RINGS>
+5
+
+> <JCHEM_PHYSIOLOGICAL_CHARGE>
+1
+
+> <JCHEM_PKA_STRONGEST_ACIDIC>
+13.782739294723577
+
+> <JCHEM_PKA_STRONGEST_BASIC>
+9.19278496599547
+
+> <JCHEM_POLAR_SURFACE_AREA>
+41.93
+
+> <JCHEM_REFRACTIVITY>
+84.60470000000001
+
+> <JCHEM_ROTATABLE_BOND_COUNT>
+1
+
+> <JCHEM_RULE_OF_FIVE>
+1
+
+> <ALOGPS_SOLUBILITY>
+5.77e-01 g/l
+
+> <JCHEM_TRADITIONAL_IUPAC>
+(1S,5R,13R,14S,17R)-10-methoxy-4-methyl-12-oxa-4-azapentacyclo[9.6.1.0^{1,13}.0^{5,17}.0^{7,18}]octadeca-7(18),8,10,15-tetraen-14-ol
+
+> <JCHEM_VEBER_RULE>
+0
+
+> <DRUGBANK_ID>
+DB00318
+
+> <SECONDARY_ACCESSION_NUMBERS>
+APRD00120; DB09471
+
+> <DRUG_GROUPS>
+approved; illicit
+
+> <GENERIC_NAME>
+Codeine
+
+> <SYNONYMS>
+(−)-Codeine; (5alpha,6alpha)-7,8-Didehydro-4,5-epoxy-3-methoxy-17-methylmorphinan-6-ol; 7,8-didehydro-4,5α-epoxy-3-methoxy-17-methylmorphinan-6α-ol; Codein; Codeína; Codéine; Codeine anhydrous; Codeine polistirex; Codeinum; L-Codeine; Methylmorphine; morphine 3-methyl ether; Morphine monomethyl ether; morphine-3-methyl ether; O3-Methylmorphine
+
+> <PRODUCTS>
+(extra Strength) Acetaminophen, Caffeine & 8mg Codeine Phosphate Caplets; 222 Tablets; 282 Mep Tab; 282 Tab; 282 Tablets; 292 Tab; 292 Tablets; A & C Tablets With Codeine 15mg; A & C Tablets With Codeine 30mg; A.C. & C 8mg Tab; A.C. & C. 8 mg; A.C. & C. 8mg; A.C.& C Tablets; ACETAMINOPHEN AND CODEINe; ACETAMINOPHEN with CODEINE; Ac and C Tab 1/8gr; Ac&c Tablets; Acet 2; Acet 3; Acet Codeine 30; Acet Codeine 60; Acetaminophen 300mg, Caffeine & Codeine; Acetaminophen 325 C & C; Acetaminophen 325 Mg Caffeine and Codeine; Acetaminophen 325 Mg With 15 Mg Caffeine and 8 Mg Codeine Phosphate; Acetaminophen 500 Mg Compound Tablets With Codeine; Acetaminophen 500 Mg With 15 Mg Caffeine and 8 Mg Codeine Phosphate; Acetaminophen 500mg, Caffeine and 8mg Codeine Phosphate; Acetaminophen And Codeine; Acetaminophen And Codeine Phosphate; Acetaminophen Caffeine & 8mg Cod Phos Tab; Acetaminophen Caffeine & 8mg Cod. Phos. Tab; Acetaminophen Compound Tablets With Codeine 8mg; Acetaminophen Elixir With 8mg Codeine Phosphate Syrup; Acetaminophen W Codeine Tab; Acetaminophen With Codeine - Caplet; Acetaminophen and Codeine; Acetaminophen and Codeine Phosphate; Acetaminophen with Codeine; Acetaminophen, Aspirin and Codeine Phosphate; Acetaminophen, Caffeine & 8mg Codeine Phosphate; Acetaminophen, Caffeine & 8mg Codeine Phosphate Tablets; Acetaminophen, Caffeine & Codeine; Acetaminophen, Caffeine & Codeine Tablets; Acetaminophen, Caffeine and 8 Mg Of Codeine Phosphate Tablets; Acetaminophen, Caffeine and Codeine Phosphate Tablets; Acetaminophen, Caffeine, and 8mg Of Codeine Phosphate Tablets; Acetaminophen-caffeine-codeine; Acetaminophene Codeine Et Cafeine Caplets; Acetaminophene Codeine Et Cafeine Fort; Acetazone Forte C8; Acetylsalicylic Acid, Caffeine & 8 Mg Codeine Phosphate Tablets; Acetylsalicylic Acid, Caffeine and 8mg Codeine Phosphate; Airacof; Ala-hist Ac; Anacin With Codeine Tab; Apo-acetaco #1; Asa, Caffeine & 8mg Codeine Phosphate; Asa-caffeine-codeine; Ascomp with Codeine; Atasol 15; Atasol 30; Atasol 8; Axacet-C1/8; Axisal-C1/8; Balminil Codeine + Decongestant + Expectorant; Balminil Codeine Night Time + Expectorant; Benylin 2 Cold and Flu With Codeine; Benylin Codeine 3.3mg De Syr; Butalbital, Acetaminophen and Caffeine with Codeine Phosphate; Butalbital, Acetaminophen, Caffeine and Codeine Phosphate; Butalbital, Acetaminophen, Caffeine, and Codeine Phosphate; Butalbital, Aspirin, Caffeine and Codeine Phosphate; Butalbital, Aspirin, Caffeine, and Codeine Phosphate; C T Acetylsalicylic Acid Codeine and Caf Tab; C-2 Buffered With Codeine; C2 Buffered With Codeine Tab; C2 Tab With Codeine; Calmylin; Calmylin Ace; Calmylin Codeine D-E Syr; Calmylin Pse With Codeine; CapCof; Capital and Codeine; Carisoprodol, Aspirin and Codeine Phosphate; Cheracol Cough Syrup; Cheratussin AC; Cheratussin DAC; Chlorpheniramine and Codeine; Coactifed; Cocet; Cocet Plus; Codar AR; Codar D; Codar GF; Codeine 15; Codeine 30; Codeine Contin 100mg Controlled Release Tab; Codeine Contin 150mg Controlled Release Tab; Codeine Contin 200mg Controlled Release Tab; Codeine Contin 50mg Controlled Release Tab; Codeine Phosphate Guaifenesin; Codeine Phosphate Inj 30mg/ml; Codeine Phosphate Inj 60mg/ml; Codeine Phosphate Injection USP; Codeine Phosphate Syrup; Codeine Phosphate Tab 15mg; Codeine Phosphate Tab 30mg; Codeine Phosphate Tab 60mg; Codeine Phosphate and Guaifenesin; Codeine Phosphate and Pseudoephedrine Hydrochloride; Codeine Sulfate; Codeine Tab 15mg; Codeine Tab 30mg; Codeine and Chlorpheniramine Maleate ER; Codeine sulfate; Codeine-Guaifenesin; Codeprex Pennkinetic; Coditussin AC; Coditussin DAC; Codrix; Coryphen 325 Codeine 30 Tab; Coryphen 650 Codeine 30 Tab; Cotabs; Cotrifed; Cough Syr W Codeine Diphenhyd HCl & Ammon Cl; Cough Syr W.cod. Pseudoephed.hcl Guaifenesin; Cough Syrup; Cough Syrup With Codeine; Cough and Allergy Syrup With Codeine; Covan Syrup; Damylin Avec Codeine Sirop; Damylin With Codeine Syrup; Dex-Tuss; Dexphen w/ Codeine; Dimetane Expectorant C; Dimetane Expectorant-C Syr; Dimetapp-C; Dimetapp-C Syr; Empracet-30; Empracet-60; EndaCof C; EndaCof DC; EndaCof-C; Endal CD; Exdol 15tab; Exdol 30tab; Exdol 8 Tab; Exdol-15; Exdol-30; Exdol-8; ExeClear C; Fioricet with Codeine; Fiorinal with Codeine; Fiorinal-C 1/2; Fiorinal-C 1/4; G Tussin AC; Ganituss Nr; Guaiatussin AC; Guaiatussin AC Sugar Free; Guaifenesin AC; Guaifenesin DAC; Guaifenesin and Codeine Phosphate; Guaifenesin and Codeine Phosphate SF; Histex Ac; Iophen C NR; Lexuss 210; Linctus Codeine Blanc; Lortuss EX; M-clear Wc; M-end Max D; M-end PE; M-end Wc; MAR-COF CG Expectorant; Mar-cof BP; Maxi-Tuss CD; Mersyndol With Codeine; Mesehist WC; Methoxacet-C 1/8; Methoxisal-C 1/2; Methoxisal-C 1/4; Methoxisal-C 1/8; Muscle & Back Pain Relief - 8; Muscle & Back Pain Relief-8; Muscle and Back Pain Relief - 8 Tablets; Muscle and Back Pain Relief Caplets; Muscle and Back Pain Relief-8; Nasotuss; Neo AC; Ninjacof-XG; Notuss PE; Notuss-NX; Notuss-NXD; Novahistex C; Novo Ac and C 8mg Tab; Novo-gesic C15; Novo-gesic C30; Novo-gesic-C8; Nu-acetaco #1; Oradrine Tablets; PHL-acet-codeine 30; PHL-acet-codeine 60; PMS-acetaminophen With Codeine Elixir; PMS-codeine; PMS-pharnal-C 1/4 Capsules; PMS-pharnal-C1/2 Capsules; Painex Tab 0.25gr; Painex Tab 0.5gr; Parafon Forte C8 W Codeine Tab; Paveral Liq 10mg/ml; Pentuss Srs; Phenaphen No 2 Cap; Phenaphen No 3 Cap; Phenaphen No 4 Cap; Phenaphen No.2 Cap; Phenaphen No.3 Cap; Phenaphen No.4 Cap; Phenylhistine DH; Phrenilin; Pluratuss; Poly Hist NC; Poly-Tussin AC; Poly-tussin; Poly-tussin D; Pracet 30; Pro-clear Ac; Pro-red Ac; Procet-30; Prometh with Codeine; Promethazine HCl and Codeine Phosphate; Promethazine HCl, Phenylephrine HCl and Codeine Phosphate; Promethazine HCl, Phenylephrine HCl, Codeine Phosphate; Promethazine Hydrochloride Phenylephrine Hydrochloride and Codeine Phosphate; Promethazine Hydrochloride and Codeine Phosphate; Promethazine Hydrochloride, Phenylephrine Hydrochloride and Codeine Phosphate; Promethazine VC With Codeine; Promethazine VC with Codeine; Promethazine Vc With Codeine; Promethazine Vc With Codine; Promethazine With Codeine; Promethazine with Codeine; Pronal - C1/2 Capsules; Pronal C1/4 Capsules; Pseudodine C; Ratio-codeine; RelCof-C; Robafen AC; Robaxacet-8; Robaxisal C 1/2; Robaxisal C 1/4; Robaxisal C-1/8 Tablets; Robitussin Ac; Robitussin Syrup With Codeine; Rounox Avec Codeine 15tab; Rounox Codeine 30 Tab; Rounox Codeine 60 Tab; Routec and Codeine 30 - Tab; Rydex; Sinutab With Codeine Tablets; Soma; Spasmhalt-8; Spasmhalt-asa-8; Stanley Syrup W Codeine Phosphate; Statuss Green; Suppress Cough Syr W.cod.diphen.hcl Amm.chl.; TYLENOL with Codeine; Tamicode Tablets; Terpin Hydrate Codeine Elx CF; Teva-codeine; Teva-cotridin; Teva-cotridin Expectorant; Teva-emtec-30; Teva-lenoltec No. 1; Teva-lenoltec No. 2; Teva-lenoltec No. 3; Teva-lenoltec No. 4; Teva-tecnal C 1/2; Teva-tecnal C 1/4; Theracodeine-300; Tl-hist CD; Tl-hist Cm; Triacin-C; Trianal C¼; Trianal C½; Triatec-30; Triatec-8; Triatec-8 Fort; Tricode AR; Tricode GF; Tusnel C; Tussaminic C Forte Syrup; Tussaminic C Pediatric Syrup; Tuxarin; Tuzistra XR; Tylenol No 1 Tab; Tylenol No.1 Caplets; Tylenol No.1 Forte Caplets; Tylenol No1 Forte Tablets With Codeine; Tylenol W Codeine No2 Tab; Tylenol W Codeine No3 Tab; Tylenol W Codeine No4 Tab; Tylenol With Codeine Elixir; Tylenol With Codeine No. 2 - Tab; Tylenol With Codeine No. 3 - Tab; Tylenol With Codeine No. 4; Virtussin A/C; Virtussin AC; Virtussin Ac W/alc; Virtussin DAC; Wampole-acetaminophen/codeine/caffeine; Z-tuss Ac; Z-tuss E; Zodryl AC 25; Zodryl AC 30; Zodryl AC 35; Zodryl AC 40; Zodryl AC 50; Zodryl AC 60; Zodryl AC 80; Zodryl DAC 25; Zodryl DAC 30; Zodryl DAC 35; Zodryl DAC 40; Zodryl DAC 50; Zodryl DAC 60; Zodryl DAC 80; Zodryl DEC 25; Zodryl DEC 30; Zodryl DEC 35; Zodryl DEC 40; Zodryl DEC 50; Zodryl DEC 60; Zodryl DEC 80; Zotex-C
+
+> <INTERNATIONAL_BRANDS>
+Actacode; Bisoltus; Bromophar; Bronchicum; Bronchodine; Codant; Codedrill; Codein; Codeisan; Coderpina; Codicalm; Codicept; Codinex; Coducept; Cougel; Coutan; Dinco; Farmacod; Galcodine; Pectoral; Tussoret
+
+> <SALTS>
+Codeine hydrochloride; Codeine monohydrate; Codeine phosphate; Codeine phosphate hemihydrate; Codeine sulfate; Codeine sulfate anhydrous
+
+$$$$
+327
+  Mrv0541 02231214362D          
+
+ 24 28  0  0  1  0            999 V2000
+    1.9356   -0.2231    0.0000 O   0  0  0  0  0  0  0  0  0  0  0  0
+    1.7349   -2.3527    0.0000 O   0  0  0  0  0  0  0  0  0  0  0  0
+    1.7349    1.8149    0.0000 O   0  0  0  0  0  0  0  0  0  0  0  0
+    5.3440   -1.0939    0.0000 N   0  0  0  0  0  0  0  0  0  0  0  0
+    3.2006   -0.6814    0.0000 C   0  0  1  0  0  0  0  0  0  0  0  0
+    3.9151   -1.0939    0.0000 C   0  0  2  0  0  0  0  0  0  0  0  0
+    4.6296   -0.6814    0.0000 C   0  0  1  0  0  0  0  0  0  0  0  0
+    2.4861   -1.0939    0.0000 C   0  0  2  0  0  0  0  0  0  0  0  0
+    3.6773   -0.0764    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    3.2006    0.1436    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    3.9151   -1.9190    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    4.6296    0.1436    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    4.8506   -0.0764    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    3.9151    0.5561    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    3.2006   -2.3315    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    2.4861   -1.9190    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    2.4861    0.5561    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    5.9350   -1.7290    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    3.9151    1.3811    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    2.4861    1.3811    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    3.2006    1.7936    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    4.3612   -1.6255    0.0000 H   0  0  0  0  0  0  0  0  0  0  0  0
+    4.8675   -1.3334    0.0000 H   0  0  0  0  0  0  0  0  0  0  0  0
+    1.8196   -1.2870    0.0000 H   0  0  0  0  0  0  0  0  0  0  0  0
+  1  8  1  0  0  0  0
+  1 17  1  0  0  0  0
+  2 16  2  0  0  0  0
+  3 20  1  0  0  0  0
+  4  7  1  0  0  0  0
+  4 13  1  0  0  0  0
+  4 18  1  0  0  0  0
+  5  6  1  0  0  0  0
+  5  8  1  0  0  0  0
+  5  9  1  1  0  0  0
+  5 10  1  0  0  0  0
+  6  7  1  0  0  0  0
+  6 11  1  0  0  0  0
+  6 22  1  1  0  0  0
+  7 12  1  0  0  0  0
+  7 23  1  6  0  0  0
+  8 16  1  0  0  0  0
+  8 24  1  1  0  0  0
+  9 13  1  0  0  0  0
+ 10 14  2  0  0  0  0
+ 10 17  1  0  0  0  0
+ 11 15  1  0  0  0  0
+ 12 14  1  0  0  0  0
+ 14 19  1  0  0  0  0
+ 15 16  1  0  0  0  0
+ 17 20  2  0  0  0  0
+ 19 21  2  0  0  0  0
+ 20 21  1  0  0  0  0
+M  END
+> <DATABASE_ID>
+DB00327
+
+> <DATABASE_NAME>
+drugbank
+
+> <SMILES>
+[H][C@@]12OC3=C(O)C=CC4=C3[C@@]11CCN(C)[C@]([H])(C4)[C@]1([H])CCC2=O
+
+> <INCHI_IDENTIFIER>
+InChI=1S/C17H19NO3/c1-18-7-6-17-10-3-5-13(20)16(17)21-15-12(19)4-2-9(14(15)17)8-11(10)18/h2,4,10-11,16,19H,3,5-8H2,1H3/t10-,11+,16-,17-/m0/s1
+
+> <INCHI_KEY>
+WVLOADHCBXTIJK-YNHQPCIGSA-N
+
+> <FORMULA>
+C17H19NO3
+
+> <MOLECULAR_WEIGHT>
+285.3377
+
+> <EXACT_MASS>
+285.136493479
+
+> <JCHEM_ACCEPTOR_COUNT>
+4
+
+> <JCHEM_AVERAGE_POLARIZABILITY>
+30.023248428425724
+
+> <JCHEM_BIOAVAILABILITY>
+1
+
+> <JCHEM_DONOR_COUNT>
+1
+
+> <JCHEM_FORMAL_CHARGE>
+0
+
+> <JCHEM_GHOSE_FILTER>
+1
+
+> <JCHEM_IUPAC>
+(1S,5R,13R,17R)-10-hydroxy-4-methyl-12-oxa-4-azapentacyclo[9.6.1.0¹,¹³.0⁵,¹⁷.0⁷,¹⁸]octadeca-7(18),8,10-trien-14-one
+
+> <ALOGPS_LOGP>
+1.69
+
+> <JCHEM_LOGP>
+1.6227496759764108
+
+> <ALOGPS_LOGS>
+-1.81
+
+> <JCHEM_MDDR_LIKE_RULE>
+0
+
+> <JCHEM_NUMBER_OF_RINGS>
+5
+
+> <JCHEM_PHYSIOLOGICAL_CHARGE>
+1
+
+> <JCHEM_PKA>
+18.00207891919619
+
+> <JCHEM_PKA_STRONGEST_ACIDIC>
+10.107628114711872
+
+> <JCHEM_PKA_STRONGEST_BASIC>
+8.586674910405563
+
+> <JCHEM_POLAR_SURFACE_AREA>
+49.77
+
+> <JCHEM_REFRACTIVITY>
+78.26240000000001
+
+> <JCHEM_ROTATABLE_BOND_COUNT>
+0
+
+> <JCHEM_RULE_OF_FIVE>
+1
+
+> <ALOGPS_SOLUBILITY>
+4.39e+00 g/l
+
+> <JCHEM_TRADITIONAL_IUPAC>
+hydromorphone
+
+> <JCHEM_VEBER_RULE>
+0
+
+> <DRUGBANK_ID>
+DB00327
+
+> <SECONDARY_ACCESSION_NUMBERS>
+APRD01021
+
+> <DRUG_GROUPS>
+approved; illicit
+
+> <GENERIC_NAME>
+Hydromorphone
+
+> <SYNONYMS>
+(-)-(5R)-4,5-Epoxy-3-hydroxy-9α-methylmorphinan-6-one; 4,5-Epoxy-3-hydroxy-17-methylmorphinan-6-one; 4,5alpha-Epoxy-3-hydroxy-17-methyl-6-morphinanone; 6-Deoxy-7,8-dihydro-6-oxomorphine; 7,8-Dihydromorphinone; Dihydromorfinon; Dihydromorphinone; Dimorphone; Hidromorfona; Hydromorfona; Hydromorphone; Hydromorphonum; Idromorfone
+
+> <PRODUCTS>
+Apo-hydromorphone; Apo-hydromorphone CR; Bar-hydromorphone CR; Dilaudid; Dilaudid Hp; Dilaudid-HP; Dilaudid-HP-plus; Dilaudid-XP; Exalgo; HYDROmorphone Hydrochloride; Hydromorph Contin; Hydromorph Contin-controlled Release Cap - 12mg; Hydromorph Contin-controlled Release Cap - 18mg; Hydromorph Contin-controlled Release Cap - 24mg; Hydromorph Contin-controlled Release Cap - 30mg; Hydromorph Contin-controlled Release Cap - 3mg; Hydromorph Contin-controlled Release Cap - 6mg; Hydromorph.ir - 2mg; Hydromorph.ir - 4mg; Hydromorph.ir - 8mg; Hydromorphone; Hydromorphone HCl; Hydromorphone HCl Tab 2mg USP; Hydromorphone HCl Tab 4mg USP; Hydromorphone Hp 10; Hydromorphone Hp 20; Hydromorphone Hp 50; Hydromorphone Hp Forte Injection; Hydromorphone Hydrochloride; Hydromorphone Hydrochloride Extended-Release; Hydromorphone Hydrochloride Injection; Hydromorphone Hydrochloride Injection Hp 10; Hydromorphone Hydrochloride Injection Hp 50; Hydromorphone Hydrochloride Injection Hp Forte; Hydromorphone Hydrochloride Injection USP; Hydromorphone Hydrochloride Injection, USP; Hydromorphone Hydrochloride Sup 3mg; Hydromorphone hydrochloride; Hyrdomorphone Hydrochloride; Jurnista; PHL-hydromorphone; PHL-hydromorphone -syr 1mg/ml; PMS Hydromorphone Sirop 1mg/ml; PMS Hydromorphone Suppositoire 3mg; PMS-hydromorphone Tab 1mg; PMS-hydromorphone Tab 2mg; PMS-hydromorphone Tab 4mg; PMS-hydromorphone Tab 8mg; Palladone; Palladone XL - 12mg; Palladone XL - 16mg; Palladone XL - 24mg; Teva-hydromorphone
+
+> <SALTS>
+Hydromorphone hydrochloride; Hydromorphone sulfate
+
+$$$$
+349
+  Mrv0541 02231214372D          
+
+ 21 23  0  0  0  0            999 V2000
+    2.8172   -2.3593    0.0000 Cl  0  0  0  0  0  0  0  0  0  0  0  0
+    5.1124    1.1545    0.0000 O   0  0  0  0  0  0  0  0  0  0  0  0
+    2.6107    2.3593    0.0000 O   0  0  0  0  0  0  0  0  0  0  0  0
+    4.1245    0.1666    0.0000 N   0  0  0  0  0  0  0  0  0  0  0  0
+    2.4543    0.9709    0.0000 N   0  0  0  0  0  0  0  0  0  0  0  0
+    3.3812   -0.1914    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    2.6379    0.1666    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    3.7937    1.6159    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    4.3081    0.9709    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    2.9687    1.6159    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    4.7695   -0.3478    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    3.4586   -1.0473    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    1.9205   -0.3065    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    1.6500    1.1545    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    2.7524   -1.5367    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    1.9781   -1.1639    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    5.5375   -0.0464    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    4.6466   -1.1636    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    6.1825   -0.5608    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    5.2915   -1.6780    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    6.0595   -1.3765    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+  1 15  1  0  0  0  0
+  2  9  2  0  0  0  0
+  3 10  2  0  0  0  0
+  4  6  1  0  0  0  0
+  4  9  1  0  0  0  0
+  4 11  1  0  0  0  0
+  5  7  1  0  0  0  0
+  5 10  1  0  0  0  0
+  5 14  1  0  0  0  0
+  6  7  2  0  0  0  0
+  6 12  1  0  0  0  0
+  7 13  1  0  0  0  0
+  8  9  1  0  0  0  0
+  8 10  1  0  0  0  0
+ 11 17  2  0  0  0  0
+ 11 18  1  0  0  0  0
+ 12 15  2  0  0  0  0
+ 13 16  2  0  0  0  0
+ 15 16  1  0  0  0  0
+ 17 19  1  0  0  0  0
+ 18 20  2  0  0  0  0
+ 19 21  2  0  0  0  0
+ 20 21  1  0  0  0  0
+M  END
+> <DATABASE_ID>
+DB00349
+
+> <DATABASE_NAME>
+drugbank
+
+> <SMILES>
+CN1C2=C(C=C(Cl)C=C2)N(C2=CC=CC=C2)C(=O)CC1=O
+
+> <INCHI_IDENTIFIER>
+InChI=1S/C16H13ClN2O2/c1-18-13-8-7-11(17)9-14(13)19(16(21)10-15(18)20)12-5-3-2-4-6-12/h2-9H,10H2,1H3
+
+> <INCHI_KEY>
+CXOXHMZGEKVPMT-UHFFFAOYSA-N
+
+> <FORMULA>
+C16H13ClN2O2
+
+> <MOLECULAR_WEIGHT>
+300.74
+
+> <EXACT_MASS>
+300.066555377
+
+> <JCHEM_ACCEPTOR_COUNT>
+2
+
+> <JCHEM_AVERAGE_POLARIZABILITY>
+30.066074049985147
+
+> <JCHEM_BIOAVAILABILITY>
+1
+
+> <JCHEM_DONOR_COUNT>
+0
+
+> <JCHEM_FORMAL_CHARGE>
+0
+
+> <JCHEM_GHOSE_FILTER>
+1
+
+> <JCHEM_IUPAC>
+7-chloro-1-methyl-5-phenyl-2,3,4,5-tetrahydro-1H-1,5-benzodiazepine-2,4-dione
+
+> <ALOGPS_LOGP>
+2.14
+
+> <JCHEM_LOGP>
+2.554375973333333
+
+> <ALOGPS_LOGS>
+-3.26
+
+> <JCHEM_MDDR_LIKE_RULE>
+0
+
+> <JCHEM_NUMBER_OF_RINGS>
+3
+
+> <JCHEM_PHYSIOLOGICAL_CHARGE>
+-1
+
+> <JCHEM_PKA_STRONGEST_ACIDIC>
+4.068303914570974
+
+> <JCHEM_PKA_STRONGEST_BASIC>
+-6.723067238972568
+
+> <JCHEM_POLAR_SURFACE_AREA>
+40.620000000000005
+
+> <JCHEM_REFRACTIVITY>
+80.29860000000004
+
+> <JCHEM_ROTATABLE_BOND_COUNT>
+1
+
+> <JCHEM_RULE_OF_FIVE>
+1
+
+> <ALOGPS_SOLUBILITY>
+1.64e-01 g/l
+
+> <JCHEM_TRADITIONAL_IUPAC>
+clobazam
+
+> <JCHEM_VEBER_RULE>
+0
+
+> <DRUGBANK_ID>
+DB00349
+
+> <SECONDARY_ACCESSION_NUMBERS>
+APRD00307
+
+> <DRUG_GROUPS>
+approved; illicit
+
+> <GENERIC_NAME>
+Clobazam
+
+> <SYNONYMS>
+1-phenyl-5-methyl-8-chloro-1,2,4,5-tetrahydro-2,4-dioxo-3H-1,5-benzodiazepine; 7-Chloro-1-methyl-5-phenyl-1,5-dihydro-benzo[b][1,4]diazepine-2,4-dione; Clobazam; Clobazamum
+
+> <PRODUCTS>
+Apo-clobazam; Clobazam; Clobazam-10; Dom-clobazam; Frisium Tab 10mg; Frisium Tablet 10mg; Frisium Tablets 10mg; Ntp-clobazam; Onfi; PMS-clobazam; Ratio-clobazam; Sympazan; Teva-clobazam
+
+> <INTERNATIONAL_BRANDS>
+Aedon; Castilium; Clobam; Clobamax; Frisium; Grifoclobam; Mystan; Noiafren; Sederlona; Urbanil; Urbanol; Urbanyl; Venium
+
+$$$$
+371
+  Mrv0541 02231214382D          
+
+ 15 14  0  0  0  0            999 V2000
+    6.3799   -0.4529    0.0000 O   0  0  0  0  0  0  0  0  0  0  0  0
+    3.5220   -0.4529    0.0000 O   0  0  0  0  0  0  0  0  0  0  0  0
+    7.0944    0.7846    0.0000 O   0  0  0  0  0  0  0  0  0  0  0  0
+    2.8075   -1.6905    0.0000 O   0  0  0  0  0  0  0  0  0  0  0  0
+    7.8089   -0.4529    0.0000 N   0  0  0  0  0  0  0  0  0  0  0  0
+    2.0930   -0.4529    0.0000 N   0  0  0  0  0  0  0  0  0  0  0  0
+    4.9509   -0.4529    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    4.5384    0.2615    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    5.6655   -0.0404    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    4.2365   -0.8654    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    5.3634   -1.1675    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    4.9509    0.9760    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    4.5384    1.6905    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    7.0944   -0.0404    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    2.8075   -0.8654    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+  1  9  1  0  0  0  0
+  1 14  1  0  0  0  0
+  2 10  1  0  0  0  0
+  2 15  1  0  0  0  0
+  3 14  2  0  0  0  0
+  4 15  2  0  0  0  0
+  5 14  1  0  0  0  0
+  6 15  1  0  0  0  0
+  7  8  1  0  0  0  0
+  7  9  1  0  0  0  0
+  7 10  1  0  0  0  0
+  7 11  1  0  0  0  0
+  8 12  1  0  0  0  0
+ 12 13  1  0  0  0  0
+M  END
+> <DATABASE_ID>
+DB00371
+
+> <DATABASE_NAME>
+drugbank
+
+> <SMILES>
+CCCC(C)(COC(N)=O)COC(N)=O
+
+> <INCHI_IDENTIFIER>
+InChI=1S/C9H18N2O4/c1-3-4-9(2,5-14-7(10)12)6-15-8(11)13/h3-6H2,1-2H3,(H2,10,12)(H2,11,13)
+
+> <INCHI_KEY>
+NPPQSCRMBWNHMW-UHFFFAOYSA-N
+
+> <FORMULA>
+C9H18N2O4
+
+> <MOLECULAR_WEIGHT>
+218.2502
+
+> <EXACT_MASS>
+218.126657074
+
+> <JCHEM_ACCEPTOR_COUNT>
+2
+
+> <JCHEM_AVERAGE_POLARIZABILITY>
+22.653083876522018
+
+> <JCHEM_BIOAVAILABILITY>
+1
+
+> <JCHEM_DONOR_COUNT>
+2
+
+> <JCHEM_FORMAL_CHARGE>
+0
+
+> <JCHEM_GHOSE_FILTER>
+1
+
+> <JCHEM_IUPAC>
+2-[(carbamoyloxy)methyl]-2-methylpentyl carbamate
+
+> <ALOGPS_LOGP>
+1.06
+
+> <JCHEM_LOGP>
+0.9272528839999998
+
+> <ALOGPS_LOGS>
+-1.95
+
+> <JCHEM_MDDR_LIKE_RULE>
+0
+
+> <JCHEM_NUMBER_OF_RINGS>
+0
+
+> <JCHEM_PHYSIOLOGICAL_CHARGE>
+0
+
+> <JCHEM_PKA>
+15.63114431855761
+
+> <JCHEM_PKA_STRONGEST_ACIDIC>
+15.171696837219113
+
+> <JCHEM_POLAR_SURFACE_AREA>
+104.64
+
+> <JCHEM_REFRACTIVITY>
+53.03669999999999
+
+> <JCHEM_ROTATABLE_BOND_COUNT>
+8
+
+> <JCHEM_RULE_OF_FIVE>
+1
+
+> <ALOGPS_SOLUBILITY>
+2.47e+00 g/l
+
+> <JCHEM_TRADITIONAL_IUPAC>
+sowell
+
+> <JCHEM_VEBER_RULE>
+0
+
+> <DRUGBANK_ID>
+DB00371
+
+> <SECONDARY_ACCESSION_NUMBERS>
+APRD01095
+
+> <DRUG_GROUPS>
+approved; illicit
+
+> <GENERIC_NAME>
+Meprobamate
+
+> <SYNONYMS>
+Meprobamat; Meprobamate; Meprobamato; Meprobamatum; Meprobamic acid
+
+> <PRODUCTS>
+282 Mep Tab; Apo Meprobamate Tab 400mg; Equagesic; Equagesic Tablets; Equanil Tablets 400mg; Meditran 400mg; Meprobamate; Meprobamate Tab 400mg; Novo-mepro 200mg; Novo-mepro 400mg
+
+> <INTERNATIONAL_BRANDS>
+Equanil; Meprospan; Miltown
+
+$$$$
+404
+  Mrv0541 02231214392D          
+
+ 22 25  0  0  0  0            999 V2000
+    1.6500   -0.2321    0.0000 Cl  0  0  0  0  0  0  0  0  0  0  0  0
+    4.8159   -1.3269    0.0000 N   0  0  0  0  0  0  0  0  0  0  0  0
+    5.2284    0.4805    0.0000 N   0  0  0  0  0  0  0  0  0  0  0  0
+    6.1244   -1.5631    0.0000 N   0  0  0  0  0  0  0  0  0  0  0  0
+    5.7352   -2.2849    0.0000 N   0  0  0  0  0  0  0  0  0  0  0  0
+    4.0726   -0.9689    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    3.8890   -0.1645    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    5.5592   -0.9689    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    4.4034    0.4805    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    5.7428   -0.1645    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    4.9281   -2.1392    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    3.4517   -1.5630    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    3.0718    0.1014    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    4.0454    1.2238    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    2.6286   -1.3160    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    2.4374   -0.4783    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    4.3328   -2.7104    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    3.2227    1.2854    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    4.5102    1.9054    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    2.8648    2.0288    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    4.1523    2.6488    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    3.3296    2.7104    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+  1 16  1  0  0  0  0
+  2  6  1  0  0  0  0
+  2  8  1  0  0  0  0
+  2 11  1  0  0  0  0
+  3  9  2  0  0  0  0
+  3 10  1  0  0  0  0
+  4  5  1  0  0  0  0
+  4  8  2  0  0  0  0
+  5 11  2  0  0  0  0
+  6  7  2  0  0  0  0
+  6 12  1  0  0  0  0
+  7  9  1  0  0  0  0
+  7 13  1  0  0  0  0
+  8 10  1  0  0  0  0
+  9 14  1  0  0  0  0
+ 11 17  1  0  0  0  0
+ 12 15  2  0  0  0  0
+ 13 16  2  0  0  0  0
+ 14 18  2  0  0  0  0
+ 14 19  1  0  0  0  0
+ 15 16  1  0  0  0  0
+ 18 20  1  0  0  0  0
+ 19 21  2  0  0  0  0
+ 20 22  2  0  0  0  0
+ 21 22  1  0  0  0  0
+M  END
+> <DATABASE_ID>
+DB00404
+
+> <DATABASE_NAME>
+drugbank
+
+> <SMILES>
+CC1=NN=C2CN=C(C3=CC=CC=C3)C3=C(C=CC(Cl)=C3)N12
+
+> <INCHI_IDENTIFIER>
+InChI=1S/C17H13ClN4/c1-11-20-21-16-10-19-17(12-5-3-2-4-6-12)14-9-13(18)7-8-15(14)22(11)16/h2-9H,10H2,1H3
+
+> <INCHI_KEY>
+VREFGVBLTWBCJP-UHFFFAOYSA-N
+
+> <FORMULA>
+C17H13ClN4
+
+> <MOLECULAR_WEIGHT>
+308.765
+
+> <EXACT_MASS>
+308.082874143
+
+> <JCHEM_ACCEPTOR_COUNT>
+3
+
+> <JCHEM_AVERAGE_POLARIZABILITY>
+32.21940045856445
+
+> <JCHEM_BIOAVAILABILITY>
+1
+
+> <JCHEM_DONOR_COUNT>
+0
+
+> <JCHEM_FORMAL_CHARGE>
+0
+
+> <JCHEM_GHOSE_FILTER>
+1
+
+> <JCHEM_IUPAC>
+12-chloro-3-methyl-9-phenyl-2,4,5,8-tetraazatricyclo[8.4.0.0²,⁶]tetradeca-1(10),3,5,8,11,13-hexaene
+
+> <ALOGPS_LOGP>
+2.23
+
+> <JCHEM_LOGP>
+2.3741000000000003
+
+> <ALOGPS_LOGS>
+-3.98
+
+> <JCHEM_MDDR_LIKE_RULE>
+0
+
+> <JCHEM_NUMBER_OF_RINGS>
+4
+
+> <JCHEM_PHYSIOLOGICAL_CHARGE>
+0
+
+> <JCHEM_PKA_STRONGEST_ACIDIC>
+18.2996362847328
+
+> <JCHEM_PKA_STRONGEST_BASIC>
+5.076680256062132
+
+> <JCHEM_POLAR_SURFACE_AREA>
+43.07
+
+> <JCHEM_REFRACTIVITY>
+98.87900000000002
+
+> <JCHEM_ROTATABLE_BOND_COUNT>
+1
+
+> <JCHEM_RULE_OF_FIVE>
+1
+
+> <ALOGPS_SOLUBILITY>
+3.24e-02 g/l
+
+> <JCHEM_TRADITIONAL_IUPAC>
+neurol
+
+> <JCHEM_VEBER_RULE>
+0
+
+> <DRUGBANK_ID>
+DB00404
+
+> <SECONDARY_ACCESSION_NUMBERS>
+APRD00280; DB05925; DB05690
+
+> <DRUG_GROUPS>
+approved; illicit; investigational
+
+> <GENERIC_NAME>
+Alprazolam
+
+> <SYNONYMS>
+8-Chloro-1-methyl-6-phenyl-4H-s-triazolo(4,3-a)(1,4)benzodiazepine; Alprazolam
+
+> <PRODUCTS>
+ALPRAZOLAM extended release; Alprazolam; Alprazolam ER; Alprazolam Extended Release; Alprazolam Extended-Release; Alprazolam Extended-release; Alprazolam Tablets 0.25; Alprazolam Tablets 0.5mg; Alprazolam Ts; Alprazolam XR; Alprazolam-0.25; Alprazolam-0.5; Apo-alpraz; Apo-alpraz Ts; Gabazolamine; Gabazolamine-0.5; Ipg-alprazolam; Jamp-alprazolam; Mylan-alprazolam; Nat-alprazolam; Niravam; Ntp-alprazolam; Nu-alpraz Tab 0.25mg; Nu-alpraz Tab 0.5mg; Ratio-alprazolam; Riva-alprazolam; Riva-alprazolam 0.25 mg; Riva-alprazolam 0.5 mg; Sentrazolam AM; Teva-alprazolam; Xanax; Xanax Tab 0.5mg; Xanax Tab 1mg; Xanax Ts; Xanax XR
+
+> <INTERNATIONAL_BRANDS>
+Alplax; Alprazolan; Alpronax; Alprox; Alviz; Cassadan; Esparon; Ralozam; Restyl; Solanax; Staccato alprazolam; Tafil; Trankimazin; Tranquinal; Xanor
+
+$$$$
+
+  Mrv0541 09031308382D          
+
+ 25 27  0  0  1  0            999 V2000
+    7.6955   -5.8135    0.0000 C   0  0  1  0  0  0  0  0  0  0  0  0
+    8.4043   -6.2242    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    6.9797   -6.2242    0.0000 C   0  0  2  0  0  0  0  0  0  0  0  0
+    7.6989   -4.9925    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    8.4043   -7.0523    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    9.1200   -5.8135    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    6.9797   -7.0523    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    6.2674   -5.8101    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    6.9833   -4.5786    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    7.6955   -7.4627    0.0000 O   0  0  0  0  0  0  0  0  0  0  0  0
+    9.1200   -7.4627    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    9.8289   -6.2242    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    9.1200   -4.9891    0.0000 O   0  0  0  0  0  0  0  0  0  0  0  0
+    6.2674   -4.9891    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    6.9867   -3.7575    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    9.8289   -7.0523    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   10.5411   -7.4627    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   11.2569   -7.0487    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   11.9656   -7.4593    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   12.6814   -7.0487    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   13.3901   -7.4593    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    8.3657   -5.3925    0.0000 H   0  0  0  0  0  0  0  0  0  0  0  0
+    6.1587   -6.7681    0.0000 H   0  0  0  0  0  0  0  0  0  0  0  0
+    6.9797   -7.8773    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    6.2652   -7.4648    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+  1  2  1  0  0  0  0
+  1  3  1  0  0  0  0
+  1  4  1  0  0  0  0
+  2  5  2  0  0  0  0
+  2  6  1  0  0  0  0
+  3  7  1  0  0  0  0
+  3  8  1  0  0  0  0
+  4  9  2  0  0  0  0
+  5 10  1  0  0  0  0
+  5 11  1  0  0  0  0
+  6 12  2  0  0  0  0
+  6 13  1  0  0  0  0
+  8 14  1  0  0  0  0
+  9 15  1  0  0  0  0
+ 11 16  2  0  0  0  0
+ 16 17  1  0  0  0  0
+ 17 18  1  0  0  0  0
+ 18 19  1  0  0  0  0
+ 19 20  1  0  0  0  0
+ 20 21  1  0  0  0  0
+  7 10  1  0  0  0  0
+  9 14  1  0  0  0  0
+ 12 16  1  0  0  0  0
+  1 22  1  6  0  0  0
+  3 23  1  1  0  0  0
+  7 24  1  0  0  0  0
+  7 25  1  0  0  0  0
+M  END
+> <DATABASE_ID>
+DB00470
+
+> <DATABASE_NAME>
+drugbank
+
+> <SMILES>
+[H][C@@]12C=C(C)CC[C@@]1([H])C(C)(C)OC1=C2C(O)=CC(CCCCC)=C1
+
+> <INCHI_IDENTIFIER>
+InChI=1S/C21H30O2/c1-5-6-7-8-15-12-18(22)20-16-11-14(2)9-10-17(16)21(3,4)23-19(20)13-15/h11-13,16-17,22H,5-10H2,1-4H3/t16-,17-/m1/s1
+
+> <INCHI_KEY>
+CYQFCXCEBYINGO-IAGOWNOFSA-N
+
+> <FORMULA>
+C21H30O2
+
+> <MOLECULAR_WEIGHT>
+314.4617
+
+> <EXACT_MASS>
+314.224580204
+
+> <JCHEM_ACCEPTOR_COUNT>
+2
+
+> <JCHEM_AVERAGE_POLARIZABILITY>
+38.956941218234675
+
+> <JCHEM_BIOAVAILABILITY>
+1
+
+> <JCHEM_DONOR_COUNT>
+1
+
+> <JCHEM_FORMAL_CHARGE>
+0
+
+> <JCHEM_GHOSE_FILTER>
+0
+
+> <JCHEM_IUPAC>
+(6aR,10aR)-6,6,9-trimethyl-3-pentyl-6H,6aH,7H,8H,10aH-benzo[c]isochromen-1-ol
+
+> <ALOGPS_LOGP>
+7.29
+
+> <JCHEM_LOGP>
+5.944157107333333
+
+> <ALOGPS_LOGS>
+-5.08
+
+> <JCHEM_MDDR_LIKE_RULE>
+0
+
+> <JCHEM_NUMBER_OF_RINGS>
+3
+
+> <JCHEM_PHYSIOLOGICAL_CHARGE>
+0
+
+> <JCHEM_PKA_STRONGEST_ACIDIC>
+9.342429150192967
+
+> <JCHEM_PKA_STRONGEST_BASIC>
+-4.893304388168227
+
+> <JCHEM_POLAR_SURFACE_AREA>
+29.46
+
+> <JCHEM_REFRACTIVITY>
+96.73350000000002
+
+> <JCHEM_ROTATABLE_BOND_COUNT>
+4
+
+> <JCHEM_RULE_OF_FIVE>
+0
+
+> <ALOGPS_SOLUBILITY>
+2.63e-03 g/l
+
+> <JCHEM_TRADITIONAL_IUPAC>
+THC
+
+> <JCHEM_VEBER_RULE>
+1
+
+> <DRUGBANK_ID>
+DB00470
+
+> <SECONDARY_ACCESSION_NUMBERS>
+APRD00571
+
+> <DRUG_GROUPS>
+approved; illicit
+
+> <GENERIC_NAME>
+Dronabinol
+
+> <SYNONYMS>
+(-)-delta9-trans-Tetrahydrocannabinol; 1-trans-delta-9-Tetrahydrocannabinol; 3-Pentyl-6,6,9-trimethyl-6a,7,8,10a-tetrahydro-6H-dibenzo(b,d)pyran-1-ol; 6,6,9-Trimethyl-3-pentyl-6a,7,8,10a-tetrahydro-6H-benzo[c]chromen-1-ol; delta-9-tetrahydrocannabinol; delta-9-THC; delta(1)-tetrahydrocannabinol; delta(9)-THC; delta9-tetrahydrocannabinol; Dronabinol; Dronabinolum; Tetrahydrocannabinol; THC; Δ9-tetrahydrocannabinol
+
+> <PRODUCTS>
+Dronabinol; Marinol; Marinol Cap 10mg; Sativex; Syndros
+
+$$$$
+
+  Mrv1718010311718302D          
+
+ 21 23  0  0  0  0            999 V2000
+    1.5326   -0.3143    0.0000 N   0  3  0  0  0  0  0  0  0  0  0  0
+    0.0998    0.0219    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    0.7431   -0.4897    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    0.7431    1.3669    0.0000 N   0  0  0  0  0  0  0  0  0  0  0  0
+    1.8982    0.4312    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    0.0998    0.8553    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    1.5326    1.1916    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    2.0493   -0.9576    0.0000 O   0  5  0  0  0  0  0  0  0  0  0  0
+   -0.6165   -0.3874    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    0.3095   -1.1916    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -0.6165    1.2646    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    2.0493    1.8641    0.0000 N   0  0  0  0  0  0  0  0  0  0  0  0
+   -1.3329    0.0073    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -1.3329    0.8698    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -2.0493   -0.4312    0.0000 Cl  0  0  0  0  0  0  0  0  0  0  0  0
+   -0.5238   -1.1769    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    0.7042   -1.9080    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    1.7276    2.6244    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -0.9527   -1.8933    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    0.2753   -2.6244    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -0.5433   -2.6244    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+  2  3  1  0  0  0  0
+  3  1  2  0  0  0  0
+  4  7  2  0  0  0  0
+  5  1  1  0  0  0  0
+  6  2  2  0  0  0  0
+  7  5  1  0  0  0  0
+  8  1  1  0  0  0  0
+  9  2  1  0  0  0  0
+ 10  3  1  0  0  0  0
+ 11  6  1  0  0  0  0
+ 12  7  1  0  0  0  0
+ 13  9  2  0  0  0  0
+ 14 13  1  0  0  0  0
+ 15 13  1  0  0  0  0
+ 16 10  1  0  0  0  0
+ 17 10  2  0  0  0  0
+ 18 12  1  0  0  0  0
+ 19 16  2  0  0  0  0
+ 20 17  1  0  0  0  0
+ 21 19  1  0  0  0  0
+  6  4  1  0  0  0  0
+ 20 21  2  0  0  0  0
+ 11 14  2  0  0  0  0
+M  CHG  2   1   1   8  -1
+M  END
+> <DATABASE_ID>
+DB00475
+
+> <DATABASE_NAME>
+drugbank
+
+> <SMILES>
+CNC1=NC2=C(C=C(Cl)C=C2)C(C2=CC=CC=C2)=[N+]([O-])C1
+
+> <INCHI_IDENTIFIER>
+InChI=1S/C16H14ClN3O/c1-18-15-10-20(21)16(11-5-3-2-4-6-11)13-9-12(17)7-8-14(13)19-15/h2-9H,10H2,1H3,(H,18,19)
+
+> <INCHI_KEY>
+ANTSCNMPPGJYLG-UHFFFAOYSA-N
+
+> <FORMULA>
+C16H14ClN3O
+
+> <MOLECULAR_WEIGHT>
+299.755
+
+> <EXACT_MASS>
+299.082539792
+
+> <JCHEM_ACCEPTOR_COUNT>
+3
+
+> <JCHEM_ATOM_COUNT>
+35
+
+> <JCHEM_AVERAGE_POLARIZABILITY>
+31.220681309216832
+
+> <JCHEM_BIOAVAILABILITY>
+1
+
+> <JCHEM_DONOR_COUNT>
+1
+
+> <JCHEM_FORMAL_CHARGE>
+0
+
+> <JCHEM_GHOSE_FILTER>
+1
+
+> <JCHEM_IUPAC>
+7-chloro-2-(methylamino)-5-phenyl-3H-1,4-benzodiazepin-4-ium-4-olate
+
+> <ALOGPS_LOGP>
+2.01
+
+> <JCHEM_LOGP>
+0.18956609050315829
+
+> <ALOGPS_LOGS>
+-4.18
+
+> <JCHEM_MDDR_LIKE_RULE>
+0
+
+> <JCHEM_NUMBER_OF_RINGS>
+3
+
+> <JCHEM_PHYSIOLOGICAL_CHARGE>
+1
+
+> <JCHEM_PKA>
+16.431798916705144
+
+> <JCHEM_PKA_STRONGEST_ACIDIC>
+-2.687983529116578
+
+> <JCHEM_PKA_STRONGEST_BASIC>
+7.061261704810951
+
+> <JCHEM_POLAR_SURFACE_AREA>
+50.46
+
+> <JCHEM_REFRACTIVITY>
+87.3403
+
+> <JCHEM_ROTATABLE_BOND_COUNT>
+1
+
+> <JCHEM_RULE_OF_FIVE>
+1
+
+> <ALOGPS_SOLUBILITY>
+1.99e-02 g/l
+
+> <JCHEM_TRADITIONAL_IUPAC>
+chlordiazepoxide
+
+> <JCHEM_VEBER_RULE>
+0
+
+> <DRUGBANK_ID>
+DB00475
+
+> <SECONDARY_ACCESSION_NUMBERS>
+APRD00682
+
+> <DRUG_GROUPS>
+approved; illicit; investigational
+
+> <GENERIC_NAME>
+Chlordiazepoxide
+
+> <SYNONYMS>
+7-chloro-2-methylamino-5-phenyl-3H-1,4-benzodiazepin-4-oxide; CDP; Chloradiazepoxide; Chlordiazepoxide; Chlordiazepoxidum; Clopoxide; Clordiazepóxido; Methaminodiazepoxide
+
+> <PRODUCTS>
+CHLORDIAZEPOXIDE HYDROCHLORIDE and CLIDINIUM BROMIDE; Chlorax; Chlordiazepoxide; Chlordiazepoxide Cap 10mg; Chlordiazepoxide Cap 5mg; Chlordiazepoxide Clidinium; Chlordiazepoxide HCl; Chlordiazepoxide Hydrochloride; Chlordiazepoxide Hydrochloride And Clidinium Bromide; Chlordiazepoxide Hydrochloride and Clidinium Bromide; Chlordiazepoxide Hydrochloride/Clidinium Bromide; Chlordiazepoxide and Amitriptyline HCl; Chlordiazepoxide and Amitriptyline Hydrochloride; Chlordiazepoxyde 25 Cap; Chlordiazepoxyde Cap 10mg; Chlordiazepoxyde HCl Cap 25mg; Corax Cap 10mg; Corax Cap 25mg; Corax Cap 5mg; Corium Cap; Librax; Librium; Limbitrol; Limbitrol DS; Medilium Cap 10 10mg; Medilium Cap 5mg; Novo-poxide 10mg; Novo-poxide 25mg; Novo-poxide 5mg; Nu-chlorax Capsules USP; Pro Chlorax
+
+> <INTERNATIONAL_BRANDS>
+Angirex; Elenium; Helogaphen; Klopoxid; Libritabs; Multum; Napoton; Radepur; Risolid; Silibrin; Sonimen; Tropium
+
+> <SALTS>
+Chlordiazepoxide hydrochloride
+
+$$$$
