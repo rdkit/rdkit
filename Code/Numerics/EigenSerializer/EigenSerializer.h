@@ -1,3 +1,13 @@
+//
+//  Copyright (C) 2020 Manan Goel
+//
+//   @@ All Rights Reserved @@
+//  This file is part of the RDKit.
+//  The contents are covered by the terms of the BSD license
+//  which is included in the file license.txt, found at the root
+//  of the RDKit source tree.
+//
+// https://stackoverflow.com/questions/18382457/eigen-and-boostserialize
 #ifndef EIGEN_CONFIG_H_
 #define EIGEN_CONFIG_H_
 

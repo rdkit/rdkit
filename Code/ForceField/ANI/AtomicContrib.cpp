@@ -1,7 +1,18 @@
+//
+//  Copyright (C) 2020 Manan Goel
+//
+//   @@ All Rights Reserved @@
+//  This file is part of the RDKit.
+//  The contents are covered by the terms of the BSD license
+//  which is included in the file license.txt, found at the root
+//  of the RDKit source tree.
+//
+
 #include "AtomicContrib.h"
 #include <ForceField/ForceField.h>
 #include <RDGeneral/Invariant.h>
 #include <RDGeneral/utils.h>
+#include <Numerics/EigenSerializer/EigenSerializer.h>
 #include <Eigen/Dense>
 #include <GraphMol/Descriptors/AtomicEnvironmentVector.h>
 #include <fstream>
@@ -9,17 +20,19 @@ using namespace Eigen;
 
 namespace ForceFields {
 namespace ANI {
-ANIAtomContrib::ANIAtomContrib(ForceField *owner, int atomType, size_t atomIdx,
-                               VectorXi speciesVec, int numAtoms,
-                               size_t numLayers, size_t ensembleSize,
+ANIAtomContrib::ANIAtomContrib(ForceField *owner, int atomType,
+                               unsigned int atomIdx, VectorXi speciesVec,
+                               unsigned int numAtoms, unsigned int numLayers,
+                               unsigned int ensembleSize,
                                std::string modelType) {
   PRECONDITION(owner, "Bad Owner")
-  PRECONDITION(atomType == -1 || atomType == 0 || atomType == 1 ||
-                   atomType == 2 || atomType == 3,
-               "Incorrect Atom Type");
+  PRECONDITION(atomType == 0 || atomType == 1 || atomType == 2 || atomType == 3,
+               "Atom Type not Supported");
   PRECONDITION(modelType == "ANI-1x" || modelType == "ANI-1ccx",
                "Model Not currently supported")
-
+  PRECONDITION(ensembleSize > 0,
+               "There must be at least 1 model in the ensemble");
+  URANGE_CHECK(atomIdx, numAtoms);
   dp_forceField = owner;
   this->d_atomType = atomType;
   this->d_atomIdx = atomIdx;
@@ -31,13 +44,13 @@ ANIAtomContrib::ANIAtomContrib(ForceField *owner, int atomType, size_t atomIdx,
   if (this->d_atomEncoding.find(this->d_atomType) !=
       this->d_atomEncoding.end()) {
     auto atomicSymbol = this->d_atomEncoding[this->d_atomType];
-    for (size_t modelNum = 0; modelNum < ensembleSize; modelNum++) {
+    for (unsigned int modelNum = 0; modelNum < ensembleSize; modelNum++) {
       std::vector<ArrayXXd> currModelWeights;
       std::vector<ArrayXXd> currModelBiases;
-      for (size_t i = 0; i < numLayers; i++) {
-        Utils::loadFromCSV(&currModelWeights, modelNum, "weight", i,
+      for (unsigned int i = 0; i < numLayers; i++) {
+        Utils::loadFromBin(&currModelWeights, modelNum, "weight", i,
                            atomicSymbol, this->d_modelType);
-        Utils::loadFromCSV(&currModelBiases, modelNum, "bias", i, atomicSymbol,
+        Utils::loadFromBin(&currModelBiases, modelNum, "bias", i, atomicSymbol,
                            this->d_modelType);
       }
       this->d_weights.push_back(currModelWeights);
@@ -60,9 +73,10 @@ double ANIAtomContrib::forwardProp(ArrayXXd aev) const {
 
   std::vector<double> energies;
 
-  for (size_t modelNo = 0; modelNo < this->d_weights.size(); modelNo++) {
+  for (unsigned int modelNo = 0; modelNo < this->d_weights.size(); modelNo++) {
     auto temp = aev;
-    for (size_t layer = 0; layer < this->d_weights[modelNo].size(); layer++) {
+    for (unsigned int layer = 0; layer < this->d_weights[modelNo].size();
+         layer++) {
       temp =
           ((this->d_weights[modelNo][layer].matrix() * temp.matrix()).array() +
            this->d_biases[modelNo][layer])
@@ -109,9 +123,21 @@ std::vector<std::string> tokenize(const std::string &s) {
   return tokens;
 }
 
-void loadFromCSV(std::vector<ArrayXXd> *weights, size_t model,
-                 std::string weightType, size_t layer, std::string atomType,
-                 std::string modelType) {
+void loadFromBin(std::vector<ArrayXXd> *weights, unsigned int model,
+                 std::string weightType, unsigned int layer,
+                 std::string atomType, std::string modelType) {
+  std::string path = getenv("RDBASE");
+  std::string paramFile = path + "/Code/ForceField/ANI/Params/" + modelType +
+                          "/model" + std::to_string(model) + "/" + atomType +
+                          "_" + std::to_string(layer) + "_" + weightType + ".bin";
+  ArrayXXd weight;
+  RDNumeric::EigenSerializer::deSerialize(weight, paramFile);
+  weights->push_back(weight);
+}
+
+void loadFromCSV(std::vector<ArrayXXd> *weights, unsigned int model,
+                 std::string weightType, unsigned int layer,
+                 std::string atomType, std::string modelType) {
   std::string path = getenv("RDBASE");
   std::string paramFile = path + "/Code/ForceField/ANI/Params/" + modelType +
                           "/model" + std::to_string(model) + "/" + atomType +
@@ -125,7 +151,7 @@ void loadFromCSV(std::vector<ArrayXXd> *weights, size_t model,
   std::string line;
   std::vector<std::string> tokens;
   std::vector<std::vector<double>> weight;
-  size_t cols = 1;
+  unsigned int cols = 1;
   while (!instrmSF.eof()) {
     std::getline(instrmSF, line);
     tokens = tokenize(line);
@@ -144,8 +170,8 @@ void loadFromCSV(std::vector<ArrayXXd> *weights, size_t model,
 
   ArrayXXd param(weight.size(), cols);
 
-  for (size_t i = 0; i < weight.size(); i++) {
-    for (size_t j = 0; j < weight[i].size(); j++) {
+  for (unsigned int i = 0; i < weight.size(); i++) {
+    for (unsigned int j = 0; j < weight[i].size(); j++) {
       param(i, j) = weight[i][j];
     }
   }

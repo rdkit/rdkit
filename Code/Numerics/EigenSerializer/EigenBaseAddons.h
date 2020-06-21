@@ -1,3 +1,5 @@
+// https://stackoverflow.com/questions/18382457/eigen-and-boostserialize
+
 #ifndef EIGEN_DENSE_BASE_ADDONS_H_
 #define EIGEN_DENSE_BASE_ADDONS_H_
 
