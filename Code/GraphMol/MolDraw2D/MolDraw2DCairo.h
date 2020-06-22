@@ -76,7 +76,7 @@ class RDKIT_MOLDRAW2D_EXPORT MolDraw2DCairo : public MolDraw2D {
   // writes the PNG data to a file
   void writeDrawingText(const std::string &fName) const;
 
-#ifdef WIN32
+#if defined(WIN32) && !defined(RDK_BUILD_FREETYPE_SUPPORT) 
   bool supportsAnnotations() override {
      return false;
   }
