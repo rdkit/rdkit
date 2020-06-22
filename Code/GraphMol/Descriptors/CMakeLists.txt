@@ -31,7 +31,7 @@ rdkit_headers(Crippen.h BCUT.h Lipinski.h
 
 rdkit_library(ANIDescriptors 
               AtomicEnvironmentVector.cpp
-              LINK_LIBRARIES RDGeneral)
+              LINK_LIBRARIES RDGeneral EigenSerializer)
 rdkit_headers(AtomicEnvironmentVector.h DEST GraphMol/Descriptors)
 
 rdkit_test(testDescriptors test.cpp

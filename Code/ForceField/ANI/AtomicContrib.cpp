@@ -47,12 +47,8 @@ ANIAtomContrib::ANIAtomContrib(ForceField *owner, int atomType,
     for (unsigned int modelNum = 0; modelNum < ensembleSize; modelNum++) {
       std::vector<ArrayXXd> currModelWeights;
       std::vector<ArrayXXd> currModelBiases;
-      for (unsigned int i = 0; i < numLayers; i++) {
-        Utils::loadFromBin(&currModelWeights, modelNum, "weight", i,
-                           atomicSymbol, this->d_modelType);
-        Utils::loadFromBin(&currModelBiases, modelNum, "bias", i, atomicSymbol,
-                           this->d_modelType);
-      }
+      Utils::loadFromBin(&currModelWeights, &currModelBiases, modelNum,
+                         atomicSymbol, this->d_modelType);
       this->d_weights.push_back(currModelWeights);
       this->d_biases.push_back(currModelBiases);
     }
@@ -127,12 +123,28 @@ void loadFromBin(std::vector<ArrayXXd> *weights, unsigned int model,
                  std::string weightType, unsigned int layer,
                  std::string atomType, std::string modelType) {
   std::string path = getenv("RDBASE");
-  std::string paramFile = path + "/Code/ForceField/ANI/Params/" + modelType + "prime" +
+  std::string paramFile = path + "/Code/ForceField/ANI/Params/" + modelType +
                           "/model" + std::to_string(model) + "/" + atomType +
-                          "_" + std::to_string(layer) + "_" + weightType + ".bin";
+                          "_" + std::to_string(layer) + "_" + weightType +
+                          ".bin";
   ArrayXXf weight;
   RDNumeric::EigenSerializer::deSerialize(weight, paramFile);
   weights->push_back(weight.matrix().cast<double>().array());
+}
+
+void loadFromBin(std::vector<ArrayXXd> *weights, std::vector<ArrayXXd> *biases,
+                 unsigned int model, std::string atomType,
+                 std::string modelType) {
+  std::string path = getenv("RDBASE");
+  std::string paramFile = path + "/Code/ForceField/ANI/Params/" + modelType +
+                          "/model" + std::to_string(model) + ".bin";
+  std::vector<ArrayXXf> floatWeights, floatBiases;
+  RDNumeric::EigenSerializer::deSerializeAll(&floatWeights, &floatBiases,
+                                             paramFile, atomType);
+  for (unsigned int i = 0; i < floatWeights.size(); i++) {
+    weights->push_back(floatWeights[i].matrix().cast<double>().array());
+    biases->push_back(floatBiases[i].matrix().cast<double>().array());
+  }
 }
 
 void loadFromCSV(std::vector<ArrayXXd> *weights, unsigned int model,

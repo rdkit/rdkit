@@ -30,5 +30,8 @@ bool serialize(const T& data, const std::string& filename);
 template <typename T>
 bool deSerialize(T& data, const std::string& filename);
 
+template <typename T>
+bool deSerializeAll(std::vector<T>* weights, std::vector<T>* biases,
+                    std::string& filename, std::string atomType);
 }  // namespace EigenSerializer
 }  // namespace RDNumeric

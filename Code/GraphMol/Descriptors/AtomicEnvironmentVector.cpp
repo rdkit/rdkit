@@ -9,8 +9,9 @@
 
 #include <GraphMol/RDKitBase.h>
 #include <cmath>
+#include <Numerics/EigenSerializer/EigenSerializer.h>
 #include "AtomicEnvironmentVector.h"
-#include <Eigen/Dense>
+#include <eigen3/Eigen/Dense>
 
 using namespace Eigen;
 
@@ -49,6 +50,31 @@ VectorXi GenerateSpeciesVector(const ROMol &mol) {
     auto atom = mol.getAtomWithIdx(i);
 
     switch (atom->getAtomicNum()) {
+      case 1:
+        species[i] = 0;
+        break;
+      case 6:
+        species[i] = 1;
+        break;
+      case 7:
+        species[i] = 2;
+        break;
+      case 8:
+        species[i] = 3;
+        break;
+      default:
+        species[i] = -1;
+    }
+  }
+
+  return species;
+}
+
+VectorXi GenerateSpeciesVector(const int *atomNums, unsigned int numAtoms) {
+  VectorXi species(numAtoms);
+
+  for (unsigned int i = 0; i < numAtoms; i++) {
+    switch (atomNums[i]) {
       case 1:
         species[i] = 0;
         break;
@@ -220,19 +246,29 @@ ArrayXXd RadialTerms(double cutoff, ArrayXXd distances) {
   // there
   auto fc = CosineCutoff(distances, cutoff);
   // Different values for means of the gaussian symmetry functions
-  ArrayXd ShfR(16);
-  ShfR << 0.9, 1.16875, 1.4375, 1.70625, 1.975, 2.24375, 2.5125, 2.78125, 3.05,
-      3.31875, 3.5875, 3.85625, 4.1250, 4.39375, 4.6625, 4.93125;
+  std::string path = getenv("RDBASE");
+  std::string paramFilePath = path + "/Code/GraphMol/Descriptors/ANIParams/";
+  ArrayXd ShfR;
+  RDNumeric::EigenSerializer::deSerialize(ShfR, paramFilePath + "ShfR.bin");
   // Variance terms for the gaussian symmetry functions
-  double EtaR = 16;
-
+  ArrayXd EtaR;
+  RDNumeric::EigenSerializer::deSerialize(EtaR, paramFilePath + "EtaR.bin");
   // Size of ret is
   // distances.rows() * (number of means * number of variance terms)
-  ArrayXXd ret(distances.rows(), 16);
+  ArrayXXd ret(distances.rows(), ShfR.size() * EtaR.size());
   for (auto i = 0; i < distances.rows(); i++) {
-    auto intermediate =
-        0.25 * ((ShfR - distances(i)).pow(2) * EtaR * -1).exp() * fc(i);
-    ret.row(i) = intermediate;
+    ArrayXXd calculatedRowVector(1, ShfR.size() * EtaR.size());
+    unsigned int idx = 0;
+    for (auto etaIdx = 0; etaIdx < EtaR.size(); etaIdx++) {
+      auto intermediate =
+          0.25 * ((ShfR - distances(i)).pow(2) * EtaR(etaIdx) * -1).exp() *
+          fc(i);
+      for (unsigned int j = 0; j < intermediate.size(); j++) {
+        calculatedRowVector(0, idx + j) = intermediate(j);
+      }
+      idx += ShfR.size();
+    }
+    ret.row(i) = calculatedRowVector;
   }
   return ret;
 }
@@ -251,14 +287,23 @@ ArrayXXd AngularTerms(double cutoff, ArrayXXd vectors12) {
   // All the constants were determined in torchANI and have been taken from
   // there
   // Angle wise shift in the trigonometric term of the angular symmetry function
-  ArrayXd ShfZ(8);
-  ShfZ << 0.19634954, 0.58904862, 0.98174770, 1.3744468, 1.7671459, 2.1598449,
-      2.5525440, 2.9452431;
-  ArrayXd ShfA(4);
+
+  std::string path = getenv("RDBASE");
+  std::string paramFilePath = path + "/Code/GraphMol/Descriptors/ANIParams/";
+  // Variance terms for the gaussian symmetry functions
+
+  ArrayXd ShfZ;
+  RDNumeric::EigenSerializer::deSerialize(ShfZ, paramFilePath + "ShfZ.bin");
+  ArrayXd ShfA;
+  RDNumeric::EigenSerializer::deSerialize(ShfA, paramFilePath + "ShfA.bin");
   // distance wise shifts in the distance term of the angular symmetry function
-  ShfA << 0.90, 1.55, 2.20, 2.85;
-  double zeta = 32;
-  double etaA = 8;
+
+  // double zeta = 32;
+  ArrayXd zeta;
+  RDNumeric::EigenSerializer::deSerialize(zeta, paramFilePath + "zeta.bin");
+  // double etaA = 8;
+  ArrayXd etaA;
+  RDNumeric::EigenSerializer::deSerialize(etaA, paramFilePath + "etaA.bin");
 
   auto distances12 = vectors12.matrix().rowwise().norm().array();
 
@@ -277,14 +322,26 @@ ArrayXXd AngularTerms(double cutoff, ArrayXXd vectors12) {
   auto fcj12 = CosineCutoff(distances12, cutoff);
 
   // Angle dependent factors for the angular symmetry functions
-  ArrayXXd factor1(angles.rows(), 8);
+  ArrayXXd factor1(angles.rows(), ShfZ.size() * zeta.size());
   for (auto i = 0; i < angles.rows(); i++) {
-    factor1.row(i) =
-        (((-1 * (ShfZ.rowwise() - angles.row(i)).array()).cos().array() + 1)
-             .array() /
-         2)
-            .array()
-            .pow(zeta);
+    ArrayXXd calculatedRowVector(1, ShfZ.size() * zeta.size());
+    unsigned int idx = 0;
+    for (auto zetaIdx = 0; zetaIdx < zeta.size(); zetaIdx++) {
+      ArrayXXd intermediate(1, ShfZ.size());
+      intermediate
+          << (((-1 * (ShfZ.rowwise() - angles.row(i)).array()).cos().array() +
+               1)
+                  .array() /
+              2)
+                 .array()
+                 .pow(zeta(zetaIdx))
+                 .array();
+      for (unsigned int j = 0; j < intermediate.size(); j++) {
+        calculatedRowVector(0, j + idx) = intermediate(j);
+      }
+      idx += ShfZ.size();
+    }
+    factor1.row(i) = calculatedRowVector;
   }
 
   // Distance dependent factors for the angular symmetry functions from both
@@ -296,12 +353,23 @@ ArrayXXd AngularTerms(double cutoff, ArrayXXd vectors12) {
         distances12(i, 0) + distances12(i + distances12.rows() / 2, 0);
   }
 
-  ArrayXXd factor2(distance12sum.rows(), 4);
+  ArrayXXd factor2(distance12sum.rows(), ShfA.size() * etaA.size());
   for (auto i = 0; i < distance12sum.rows(); i++) {
-    factor2.row(i) =
-        ((ShfA.rowwise() - (distance12sum.array() / 2).row(i)).pow(2).array() *
-         -etaA)
-            .exp();
+    unsigned int idx = 0;
+    ArrayXXd calculatedRowVector(1, ShfA.size() * etaA.size());
+    for (auto etaAidx = 0; etaAidx < etaA.size(); etaAidx++) {
+      ArrayXXd intermediate(1, ShfA.size());
+      intermediate << ((ShfA.rowwise() - (distance12sum.array() / 2).row(i))
+                           .pow(2)
+                           .array() *
+                       -etaA(etaAidx))
+                          .exp();
+      for (auto j = 0; j < intermediate.size(); j++) {
+        calculatedRowVector(idx + j) = intermediate(j);
+      }
+      idx += ShfA.size();
+    }
+    factor2.row(i) = calculatedRowVector;
   }
 
   // cutoff terms from both vectors of the triplet

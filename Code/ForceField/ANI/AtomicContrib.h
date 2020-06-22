@@ -112,6 +112,18 @@ void loadFromBin(std::vector<ArrayXXd> *weights, unsigned int model,
                  std::string weightType, unsigned int layer,
                  std::string atomType, std::string modelType);
 
+/*!
+  Load all model weights from a single boost serialized file
+  \param weights    Pointer to array of weights of neural network
+  \param biases     Pointer to array of biases of neural network
+  \param model      Index of model in the ensemble
+  \param atomType   Atomic Symbol of atom
+  \param modelType  Architecture being used
+*/
+void loadFromBin(std::vector<ArrayXXd> *weights, std::vector<ArrayXXd> *biases,
+                 unsigned int model, std::string atomType,
+                 std::string modelType);
+
 //! Load self energy of atom from modelType/selfEnergies file
 void loadSelfEnergy(double *energy, std::string atomType,
                     std::string modelType);

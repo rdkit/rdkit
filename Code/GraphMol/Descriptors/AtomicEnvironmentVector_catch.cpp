@@ -259,6 +259,10 @@ TEST_CASE("Species Vector Generation", "[Atomic Species Encoding]") {
     VectorXi expected(5);
     expected << 0, 0, 0, 1, 0;
     CHECK(((expected - speciesVec).array() == 0).count() == numAtoms);
+    int atomNums[] = {1, 1, 1, 6, 1};
+    speciesVec = RDKit::Descriptors::ANI::GenerateSpeciesVector(atomNums, 5);
+    CHECK(speciesVec.size() == 5);
+    CHECK(((expected - speciesVec).array() == 0).count() == numAtoms);
   }
   SECTION("SO2") {
     std::string pathName = getenv("RDBASE");
@@ -271,6 +275,10 @@ TEST_CASE("Species Vector Generation", "[Atomic Species Encoding]") {
     CHECK(speciesVec.size() == numAtoms);
     VectorXi expected(3);
     expected << -1, 3, 3;
+    CHECK(((expected - speciesVec).array() == 0).count() == numAtoms);
+    int atomNums[] = {16, 8, 8};
+    speciesVec = RDKit::Descriptors::ANI::GenerateSpeciesVector(atomNums, 3);
+    CHECK(speciesVec.size() == 3);
     CHECK(((expected - speciesVec).array() == 0).count() == numAtoms);
   }
   SECTION("NH3") {
@@ -285,6 +293,10 @@ TEST_CASE("Species Vector Generation", "[Atomic Species Encoding]") {
     VectorXi expected(4);
     expected << 0, 0, 2, 0;
     CHECK(((expected - speciesVec).array() == 0).count() == numAtoms);
+    int atomNums[] = {1, 1, 7, 1};
+    speciesVec = RDKit::Descriptors::ANI::GenerateSpeciesVector(atomNums, 4);
+    CHECK(speciesVec.size() == 4);
+    CHECK(((expected - speciesVec).array() == 0).count() == numAtoms);
   }
   SECTION("Ethanol") {
     std::string pathName = getenv("RDBASE");
@@ -297,6 +309,12 @@ TEST_CASE("Species Vector Generation", "[Atomic Species Encoding]") {
     CHECK(speciesVec.size() == numAtoms);
     VectorXi expected(9);
     expected << 3, 1, 1, 0, 0, 0, 0, 0, 0;
+    CHECK(((expected - speciesVec).array() == 0).count() == numAtoms);
+
+
+    int atomNums[] = {8, 6, 6, 1, 1, 1, 1, 1, 1};
+    speciesVec = RDKit::Descriptors::ANI::GenerateSpeciesVector(atomNums, 9);
+    CHECK(speciesVec.size() == sizeof(atomNums)/sizeof(int));
     CHECK(((expected - speciesVec).array() == 0).count() == numAtoms);
   }
 }

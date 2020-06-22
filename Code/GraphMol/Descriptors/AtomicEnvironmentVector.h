@@ -30,15 +30,18 @@ const std::string AtomicEnvironmentVectorVersion = "1.0.0";
 RDKIT_DESCRIPTORS_EXPORT Eigen::VectorXi GenerateSpeciesVector(
     const ROMol &mol);
 
+RDKIT_DESCRIPTORS_EXPORT Eigen::VectorXi GenerateSpeciesVector(
+    const int *atomNums, unsigned int numAtoms);
+
 //! Calculates torchANI style symmetry functions combining both radial and
 //! angular terms
 /*!
   \param mol      Mol object for which symmetry functions are to be found
-  \param confId   Conformer ID for the conformer for which symmetry functions
-  are to be found
+  \param confId   Conformer ID for the conformer for which symmetry
+  functions are to be found
 
-  \return numAtoms * 384 shaped matrix containing 384 features for every atom in
-  the input mol consisting of both radial and angular terms
+  \return numAtoms * 384 shaped matrix containing 384 features for every
+  atom in the input mol consisting of both radial and angular terms
 */
 RDKIT_DESCRIPTORS_EXPORT Eigen::ArrayXXd AtomicEnvironmentVector(
     const ROMol &mol, int confId = -1);
