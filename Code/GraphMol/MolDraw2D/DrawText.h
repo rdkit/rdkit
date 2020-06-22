@@ -49,7 +49,9 @@ class DrawText {
   DrawColour const &colour() const;
   void setColour(const DrawColour &col);
 
+  // size in "pixels" i.e scale() * FONT_SIZE.
   double fontSize() const;
+  void setFontSize(double new_size);
   double maxFontSize() const;
   void setMaxFontSize(double new_max);
   double minFontSize() const;

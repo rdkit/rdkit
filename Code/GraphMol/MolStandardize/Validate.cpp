@@ -51,8 +51,7 @@ std::vector<ValidationErrorInfo> RDKitValidation::validate(
     try {
       atom->calcExplicitValence();
     } catch (const MolSanitizeException &e) {
-      errors.emplace_back("INFO: [ValenceValidation] " +
-                                           std::string(e.what()));
+      errors.emplace_back("INFO: [ValenceValidation] " + std::string(e.what()));
     }
   }
   return errors;
@@ -169,8 +168,8 @@ void IsotopeValidation::run(const ROMol &mol, bool reportAllFailures,
   }
 
   for (auto &isotope : isotopes) {
-    errors.emplace_back(
-        "INFO: [IsotopeValidation] Molecule contains isotope " + isotope);
+    errors.emplace_back("INFO: [IsotopeValidation] Molecule contains isotope " +
+                        isotope);
   }
 }
 
@@ -201,7 +200,7 @@ std::vector<ValidationErrorInfo> MolVSValidation::validate(
     const ROMol &mol, bool reportAllFailures) const {
   std::vector<ValidationErrorInfo> errors;
 
-  for (const auto method : this->d_validations) {
+  for (const auto &method : this->d_validations) {
     method->run(mol, reportAllFailures, errors);
   }
 
@@ -232,7 +231,7 @@ std::vector<ValidationErrorInfo> AllowedAtomsValidation::validate(
     if (!match) {
       std::string symbol = qatom->getSymbol();
       errors.emplace_back("INFO: [AllowedAtomsValidation] Atom " + symbol +
-                              " is not in allowedAtoms list");
+                          " is not in allowedAtoms list");
     }
   }
   return errors;
@@ -260,8 +259,8 @@ std::vector<ValidationErrorInfo> DisallowedAtomsValidation::validate(
     // if no match, append to list of errors.
     if (match) {
       std::string symbol = qatom->getSymbol();
-      errors.emplace_back("INFO: [DisallowedAtomsValidation] Atom " +
-                              symbol + " is in disallowedAtoms list");
+      errors.emplace_back("INFO: [DisallowedAtomsValidation] Atom " + symbol +
+                          " is in disallowedAtoms list");
     }
   }
   return errors;

@@ -153,7 +153,7 @@ TEST_CASE("getMolFragments", "[unittest][scaffolds]") {
 
     std::vector<std::pair<std::string, std::string>> res;
     res.reserve(frags.size());
-    for (const auto frag : frags) {
+    for (const auto &frag : frags) {
       res.push_back(std::make_pair(frag.first, MolToSmiles(*frag.second)));
     }
     std::sort(res.begin(), res.end());
@@ -204,7 +204,7 @@ TEST_CASE("addMolToNetwork", "[unittest][scaffolds]") {
                           return e.type ==
                                  ScaffoldNetwork::EdgeType::RemoveAttachment;
                         }) == 2);
-    CHECK(std::count(net.counts.begin(), net.counts.end(), 1) ==
+    CHECK(rdcast<size_t>(std::count(net.counts.begin(), net.counts.end(), 1)) ==
           net.counts.size());
 
     // make sure adding the same molecule again doesn't do anything except
@@ -213,7 +213,7 @@ TEST_CASE("addMolToNetwork", "[unittest][scaffolds]") {
     CHECK(net.nodes.size() == 9);
     CHECK(net.counts.size() == net.nodes.size());
     CHECK(net.edges.size() == 8);
-    CHECK(std::count(net.counts.begin(), net.counts.end(), 2) ==
+    CHECK(rdcast<size_t>(std::count(net.counts.begin(), net.counts.end(), 2)) ==
           net.counts.size());
   }
   SECTION("flucloxacillin") {
@@ -382,7 +382,7 @@ TEST_CASE("no attachment points", "[unittest][scaffolds]") {
                         [](ScaffoldNetwork::NetworkEdge e) {
                           return e.type == ScaffoldNetwork::EdgeType::Generic;
                         }) == 2);
-    CHECK(std::count(net.counts.begin(), net.counts.end(), 1) ==
+    CHECK(rdcast<size_t>(std::count(net.counts.begin(), net.counts.end(), 1)) ==
           net.counts.size());
   }
   SECTION("no generic") {
@@ -398,7 +398,7 @@ TEST_CASE("no attachment points", "[unittest][scaffolds]") {
                         [](ScaffoldNetwork::NetworkEdge e) {
                           return e.type == ScaffoldNetwork::EdgeType::Fragment;
                         }) == 2);
-    CHECK(std::count(net.counts.begin(), net.counts.end(), 1) ==
+    CHECK(rdcast<size_t>(std::count(net.counts.begin(), net.counts.end(), 1)) ==
           net.counts.size());
   }
   SECTION("generic bonds") {
@@ -751,19 +751,22 @@ TEST_CASE("Github #3177: seg fault with null molecules", "[bug]") {
     mols.emplace_back(nullptr);
     ScaffoldNetwork::ScaffoldNetworkParams ps =
         ScaffoldNetwork::getBRICSNetworkParams();
-    REQUIRE_THROWS_AS(ScaffoldNetwork::createScaffoldNetwork(mols,ps),ValueErrorException);
+    REQUIRE_THROWS_AS(ScaffoldNetwork::createScaffoldNetwork(mols, ps),
+                      ValueErrorException);
   }
   SECTION("including one valid molecule") {
     std::vector<ROMOL_SPTR> mols;
     mols.emplace_back(SmilesToMol("Cc1ccccc1"));
     mols.emplace_back(nullptr);
     ScaffoldNetwork::ScaffoldNetworkParams ps =
-    ScaffoldNetwork::getBRICSNetworkParams();
-    REQUIRE_THROWS_AS(ScaffoldNetwork::createScaffoldNetwork(mols,ps),ValueErrorException);
+        ScaffoldNetwork::getBRICSNetworkParams();
+    REQUIRE_THROWS_AS(ScaffoldNetwork::createScaffoldNetwork(mols, ps),
+                      ValueErrorException);
   }
 }
 
-TEST_CASE("GitHub #3153: Kekulization error in molecules with aromatic C+", "[bug]") {
+TEST_CASE("GitHub #3153: Kekulization error in molecules with aromatic C+",
+          "[bug]") {
   SECTION("Standard Representation") {
     auto smis = {"O=C1C=CC(CC2=CC=CC2)=CC=C1"};
     std::vector<ROMOL_SPTR> ms;
@@ -773,13 +776,11 @@ TEST_CASE("GitHub #3153: Kekulization error in molecules with aromatic C+", "[bu
       ms.push_back(ROMOL_SPTR(m));
     }
     ScaffoldNetwork::ScaffoldNetworkParams ps;
-    ScaffoldNetwork::ScaffoldNetwork net = 
+    ScaffoldNetwork::ScaffoldNetwork net =
         ScaffoldNetwork::createScaffoldNetwork(ms, ps);
     CHECK(net.nodes.size() == 9);
-    CHECK(
-      std::find(net.nodes.begin(), net.nodes.end(), "O=c1cccccc1") !=
-      net.nodes.end()
-    );
+    CHECK(std::find(net.nodes.begin(), net.nodes.end(), "O=c1cccccc1") !=
+          net.nodes.end());
     CHECK(net.counts.size() == net.nodes.size());
     CHECK(net.edges.size() == 8);
   }
@@ -792,14 +793,12 @@ TEST_CASE("GitHub #3153: Kekulization error in molecules with aromatic C+", "[bu
       ms.push_back(ROMOL_SPTR(m));
     }
     ScaffoldNetwork::ScaffoldNetworkParams ps;
-    ScaffoldNetwork::ScaffoldNetwork net = 
+    ScaffoldNetwork::ScaffoldNetwork net =
         ScaffoldNetwork::createScaffoldNetwork(ms, ps);
 
     CHECK(net.nodes.size() == 3);
-    CHECK(
-      std::find(net.nodes.begin(), net.nodes.end(), "c1cc[nH]c1") != 
-      net.nodes.end()
-    );
+    CHECK(std::find(net.nodes.begin(), net.nodes.end(), "c1cc[nH]c1") !=
+          net.nodes.end());
     CHECK(net.counts.size() == net.nodes.size());
     CHECK(net.edges.size() == 2);
   }
@@ -812,12 +811,10 @@ TEST_CASE("GitHub #3153: Kekulization error in molecules with aromatic C+", "[bu
       ms.push_back(ROMOL_SPTR(m));
     }
     ScaffoldNetwork::ScaffoldNetworkParams ps;
-    ScaffoldNetwork::ScaffoldNetwork net = 
+    ScaffoldNetwork::ScaffoldNetwork net =
         ScaffoldNetwork::createScaffoldNetwork(ms, ps);
-    CHECK(
-      std::find(net.nodes.begin(), net.nodes.end(), "C1=CCC(Cc2ccc[cH+]cc2)=C1") !=
-      net.nodes.end()
-    );
+    CHECK(std::find(net.nodes.begin(), net.nodes.end(),
+                    "C1=CCC(Cc2ccc[cH+]cc2)=C1") != net.nodes.end());
     CHECK(net.nodes.size() == 11);
     CHECK(net.counts.size() == net.nodes.size());
     CHECK(net.edges.size() == 10);

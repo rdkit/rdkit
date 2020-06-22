@@ -470,6 +470,10 @@ class RDKIT_MOLDRAW2D_EXPORT MolDraw2D {
   //! returns the width and height of the grid (in molecular coords)
   Point2D range() const { return Point2D(x_range_, y_range_); }
 
+  //! font size in drawing coordinate units. That's probably pixels.
+  virtual double fontSize() const;
+  virtual void setFontSize(double new_size);
+
   //! sets the current draw color
   virtual void setColour(const DrawColour &col) { curr_colour_ = col; }
   //! returns the current draw color

@@ -745,6 +745,7 @@ void ParseV3000ParseLabel(const std::string &label,
                           std::stringstream &lineStream, STR_VECT &dataFields,
                           unsigned int &line, SubstanceGroup &sgroup,
                           size_t nSgroups, RWMol *mol, bool &strictParsing) {
+  RDUNUSED_PARAM(nSgroups);
   // TODO: remove this once we find out how to handle XBHEAD & XBCORR
   if (label == "XBHEAD" || label == "XBCORR") {
     std::ostringstream errout;

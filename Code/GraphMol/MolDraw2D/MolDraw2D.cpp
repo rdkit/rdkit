@@ -570,12 +570,13 @@ void MolDraw2D::drawReaction(
     tmol2.getConformer().getAtomPos(1) =
         RDGeom::Point3D(arrowEnd.x, arrowEnd.y, 0);
 
-    tmol2.insertMol(*tmol);
-    pushDrawDetails();
-    extractAtomCoords(tmol2, 0, true);
     for(auto atom: tmol2.atoms()) {
       atom->calcImplicitValence();
     }
+
+    tmol2.insertMol(*tmol);
+    pushDrawDetails();
+    extractAtomCoords(tmol2, 0, true);
     extractAtomSymbols(tmol2);
     calculateScale(panelWidth(), drawHeight(), tmol2);
     needs_scale_ = false;
@@ -853,6 +854,16 @@ Point2D MolDraw2D::getAtomCoords(const pair<double, double> &screen_cds) const {
 Point2D MolDraw2D::getAtomCoords(int at_num) const {
   PRECONDITION(activeMolIdx_ >= 0, "bad active mol");
   return at_cds_[activeMolIdx_][at_num];
+}
+
+// ****************************************************************************
+double MolDraw2D::fontSize() const {
+  return text_drawer_->fontSize();
+}
+
+// ****************************************************************************
+void MolDraw2D::setFontSize(double new_size) {
+  text_drawer_->setFontSize(new_size);
 }
 
 // ****************************************************************************
