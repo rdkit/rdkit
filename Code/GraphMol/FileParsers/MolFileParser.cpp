@@ -12,6 +12,7 @@
 #include <boost/algorithm/string.hpp>
 #include <boost/tokenizer.hpp>
 #include <boost/algorithm/string/trim.hpp>
+#include <boost/format.hpp>
 #include <RDGeneral/BoostEndInclude.h>
 
 #include "FileParsers.h"
@@ -932,6 +933,90 @@ void ParseAttachPointLine(RWMol *mol, const std::string &text,
   }
 }
 
+// the format differs between V2000 and V3000, so we have to do a bit of
+// translation here
+void ParseLinkNodeLine(RWMol *mol, const std::string &text, unsigned int line) {
+  PRECONDITION(mol, "bad mol");
+  PRECONDITION(text.substr(0, 6) == std::string("M  LIN"), "bad LIN line");
+
+  unsigned int nent;
+  try {
+    nent = FileParserUtils::stripSpacesAndCast<unsigned int>(text.substr(6, 3));
+  } catch (boost::bad_lexical_cast &) {
+    std::ostringstream errout;
+    errout << "Cannot convert '" << text.substr(6, 3) << "' to int on line "
+           << line;
+    throw FileParseException(errout.str());
+  }
+  std::string propVal = "";
+  unsigned int spos = 9;
+  for (unsigned int ie = 0; ie < nent; ie++) {
+    try {
+      auto aid = FileParserUtils::stripSpacesAndCast<unsigned int>(
+          text.substr(spos, 4));
+      if (!aid || aid > mol->getNumAtoms()) {
+        std::ostringstream errout;
+        errout << "LIN specification has bad atom idx on line " << line;
+        throw FileParseException(errout.str());
+      }
+      spos += 4;
+
+      if (text.size() < spos + 4 || text.substr(spos, 4) == "    ") {
+        std::ostringstream errout;
+        errout << "LIN specification missing repeat count on line " << line;
+        throw FileParseException(errout.str());
+      }
+      auto repeatCount = FileParserUtils::stripSpacesAndCast<unsigned int>(
+          text.substr(spos, 4));
+      spos += 4;
+      if (repeatCount < 2) {
+        std::ostringstream errout;
+        errout << "LIN specification: repeat count must be >=2 on line "
+               << line;
+        throw FileParseException(errout.str());
+      }
+      unsigned int substB = 0;
+      unsigned int substC = 0;
+      if (text.size() >= spos + 4 && text.substr(spos, 4) != "    ") {
+        substB = FileParserUtils::stripSpacesAndCast<unsigned int>(
+            text.substr(spos, 4));
+      }
+      spos += 4;
+      if (text.size() >= spos + 4 && text.substr(spos, 4) != "    ") {
+        substC = FileParserUtils::stripSpacesAndCast<unsigned int>(
+            text.substr(spos, 4));
+      }
+      spos += 4;
+
+      if (!substB || substB > mol->getNumAtoms() ||
+          substC > mol->getNumAtoms()) {
+        std::ostringstream errout;
+        errout << "LIN specification has bad substituent idx on line " << line;
+        throw FileParseException(errout.str());
+      }
+
+      boost::format formatter;
+      if (substC) {
+        formatter = boost::format("1 %1% 2 %2% %3% %2% %4%") % repeatCount %
+                    aid % substB % substC;
+      } else {
+        formatter = boost::format("1 %1% 1 %2% %3%") % repeatCount % aid %
+                    substB % substC;
+      }
+      if (!propVal.empty()) {
+        propVal += "|";
+      }
+      propVal += formatter.str();
+    } catch (boost::bad_lexical_cast &) {
+      std::ostringstream errout;
+      errout << "Cannot convert '" << text.substr(spos, 4)
+             << "' to int on line " << line;
+      throw FileParseException(errout.str());
+    }
+    mol->setProp(common_properties::molFileLinkNodes, propVal);
+  }
+}
+
 void ParseNewAtomList(RWMol *mol, const std::string &text, unsigned int line) {
   if (text.size() < 15) {
     std::ostringstream errout;
@@ -1795,9 +1880,7 @@ bool ParseMolBlockProperties(std::istream *inStream, unsigned int &line,
     } else if (lineBeg == "M  APO") {
       ParseAttachPointLine(mol, tempStr, line);
     } else if (lineBeg == "M  LIN") {
-      // this has a different syntax from the V3K link node, so
-      // we can't save it under the same property
-      // ParseLinkNodeLine(mol, tempStr, line);
+      ParseLinkNodeLine(mol, tempStr, line);
     }
     line++;
     tempStr = getLine(inStream);
