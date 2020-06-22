@@ -918,7 +918,7 @@ void testRowColumnAlignmentProblem() {
       CHECK_RGROUP(it, expected[i]);
     }
 
-    for (const auto row : rows) {
+    for (const auto &row : rows) {
       TEST_ASSERT(row.count("Core") == 1);
       TEST_ASSERT(row.count("R1") == 1);
     }
@@ -931,7 +931,7 @@ void testRowColumnAlignmentProblem() {
     TEST_ASSERT(core.size() == 3);
     auto &R1 = cols["R1"];
     TEST_ASSERT(R1.size() == 3);
-    for (const auto rg : R1) {
+    for (const auto &rg : R1) {
       TEST_ASSERT(rg);
       TEST_ASSERT(rg->getNumAtoms());
     }
@@ -1181,6 +1181,7 @@ Cn1cnc2cc(Oc3cc(N4CCN(Cc5ccccc5-c5ccc(Cl)cc5)CC4)ccc3C(=O)NS(=O)(=O)c3ccc(NCCCN4
     bool ok = false;
     try {
       auto res = RGroupDecompose(cores, ms, rows, nullptr, ps);
+      RDUNUSED_PARAM(res);
     } catch (const std::runtime_error &) {
       ok = true;
     }
@@ -1197,6 +1198,7 @@ Cn1cnc2cc(Oc3cc(N4CCN(Cc5ccccc5-c5ccc(Cl)cc5)CC4)ccc3C(=O)NS(=O)(=O)c3ccc(NCCCN4
     bool ok = true;
     try {
       auto res = RGroupDecompose(cores, ms, rows, nullptr, ps);
+      RDUNUSED_PARAM(res);
     } catch (const std::runtime_error &) {
       ok = false;
     }

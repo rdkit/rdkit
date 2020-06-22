@@ -356,6 +356,7 @@ TEST_CASE("Specialized exceptions for sanitization errors", "[molops]") {
       CHECK_THROWS_AS(SmilesToMol(pr.first), AtomValenceException);
       try {
         auto m = SmilesToMol(pr.first);
+        RDUNUSED_PARAM(m);
       } catch (const AtomValenceException &e) {
         CHECK(e.getType() == "AtomValenceException");
         CHECK(e.getAtomIdx() == pr.second);
@@ -369,6 +370,7 @@ TEST_CASE("Specialized exceptions for sanitization errors", "[molops]") {
       CHECK_THROWS_AS(SmilesToMol(pr.first), AtomKekulizeException);
       try {
         auto m = SmilesToMol(pr.first);
+        RDUNUSED_PARAM(m);
       } catch (const AtomKekulizeException &e) {
         CHECK(e.getType() == "AtomKekulizeException");
         CHECK(e.getAtomIdx() == pr.second);
@@ -382,6 +384,7 @@ TEST_CASE("Specialized exceptions for sanitization errors", "[molops]") {
       CHECK_THROWS_AS(SmilesToMol(pr.first), KekulizeException);
       try {
         auto m = SmilesToMol(pr.first);
+        RDUNUSED_PARAM(m);
       } catch (const KekulizeException &e) {
         CHECK(e.getType() == "KekulizeException");
         CHECK(e.getAtomIndices() == pr.second);
@@ -814,15 +817,15 @@ TEST_CASE(
     std::vector<std::pair<unsigned int, std::string>> data = {
         {113, "Nh"}, {114, "Fl"}, {115, "Mc"},
         {116, "Lv"}, {117, "Ts"}, {118, "Og"}};
-    for (auto pr : data) {
+    for (const auto &pr : data) {
       CHECK(pt->getElementSymbol(pr.first) == pr.second);
     }
   }
   SECTION("symbol to number") {
-    std::vector<std::pair<unsigned int, std::string>> data = {
+    std::vector<std::pair<int, std::string>> data = {
         {113, "Nh"}, {114, "Fl"}, {115, "Mc"},  {116, "Lv"},
         {117, "Ts"}, {118, "Og"}, {113, "Uut"}, {115, "Uup"}};
-    for (auto pr : data) {
+    for (const auto &pr : data) {
       CHECK(pt->getAtomicNumber(pr.second) == pr.first);
     }
   }

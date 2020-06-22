@@ -170,7 +170,7 @@ ROMol *TautomerEnumerator::pickCanonical(
   int bestScore = std::numeric_limits<int>::min();
   std::string bestSmiles = "";
   ROMOL_SPTR bestMol;
-  for (const auto t : tautomers) {
+  for (const auto &t : tautomers) {
     auto score = scoreFunc(*t);
     // std::cerr << "  " << MolToSmiles(*t) << " " << score << std::endl;
     if (score > bestScore) {
