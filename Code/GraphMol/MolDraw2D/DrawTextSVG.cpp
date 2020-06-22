@@ -17,15 +17,13 @@
 #include <GraphMol/MolDraw2D/MolDraw2DSVG.h>
 #include <GraphMol/MolDraw2D/MolDraw2DDetails.h>
 
-using namespace std;
-
 namespace RDKit {
 
-string DrawColourToSVG(const RDKit::DrawColour &col);
+std::string DrawColourToSVG(const RDKit::DrawColour &col);
 
 // ****************************************************************************
   DrawTextSVG::DrawTextSVG(double max_fnt_sz, double min_fnt_sz,
-			   ostream &oss, string &d_act_class) :
+			   std::ostream &oss, std::string &d_act_class) :
     DrawText(max_fnt_sz, min_fnt_sz), oss_(oss), d_active_class_(d_act_class) {
 }
 
@@ -52,7 +50,7 @@ void DrawTextSVG::drawChar(char c, const Point2D &cds) {
   if (!d_active_class_.empty()) {
     oss_ << " class='" << d_active_class_ << "'";
   }
-  string cs;
+  std::string cs;
   cs += c;
   escape_xhtml(cs);
   oss_ << " style='font-size:" << fontSz
@@ -61,15 +59,15 @@ void DrawTextSVG::drawChar(char c, const Point2D &cds) {
        << "fill:" << col << "'";
   oss_ << " >";
   oss_ << cs;
-  oss_ << "</text>" << endl;
+  oss_ << "</text>" << std::endl;
 
 }
 
 // ****************************************************************************
-void DrawTextSVG::getStringRects(const string &text,
-                                 vector<shared_ptr<StringRect> > &rects,
-                                 vector<TextDrawType> &draw_modes,
-                                 vector<char> &draw_chars) const {
+void DrawTextSVG::getStringRects(const std::string &text,
+                                 std::vector<std::shared_ptr<StringRect> > &rects,
+                                 std::vector<TextDrawType> &draw_modes,
+                                 std::vector<char> &draw_chars) const {
 
   double running_x = 0.0;
   double act_font_size = fontSize();
@@ -85,8 +83,8 @@ void DrawTextSVG::getStringRects(const string &text,
     draw_modes.push_back(draw_mode);
     draw_chars.push_back(text[i]);
 
-    max_width = max(max_width,
-                    static_cast<double>(MolDraw2D_detail::char_widths[(int)text[i]]));
+    max_width = std::max(max_width,
+                         static_cast<double>(MolDraw2D_detail::char_widths[(int)text[i]]));
   }
 
   for (size_t i = 0; i < draw_chars.size(); ++i) {
@@ -110,7 +108,7 @@ void DrawTextSVG::getStringRects(const string &text,
       offset.y /= 2.0;
     }
     Point2D g_centre(char_width / 2, char_height / 2);
-    rects.push_back(shared_ptr<StringRect>(new StringRect(offset, g_centre, char_width, char_height)));
+    rects.push_back(std::shared_ptr<StringRect>(new StringRect(offset, g_centre, char_width, char_height)));
     rects.back()->trans_.x += running_x;
     // empirical spacing.
     if(draw_modes[i] != TextDrawType::TextDrawNormal) {
