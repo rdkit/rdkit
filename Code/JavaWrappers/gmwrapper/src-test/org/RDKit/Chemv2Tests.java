@@ -230,7 +230,6 @@ public class Chemv2Tests extends GraphMolTest {
           // System.out.print(svg);
           assertTrue(svg.indexOf("<svg") > -1);
           assertTrue(svg.indexOf("</svg>") > -1);
-          assertTrue(svg.indexOf("THE_LEGEND") > -1);
           assertTrue(svg.indexOf("fill:#FFFF00;") > -1);
           assertTrue(svg.indexOf("fill:#FF00FF;") > -1);
           assertTrue(svg.indexOf("fill:#00FFFF;") > -1);
