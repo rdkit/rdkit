@@ -37,6 +37,23 @@ double DrawText::fontSize() const {
 }
 
 // ****************************************************************************
+void DrawText::setFontSize(double new_size) {
+
+  if(new_size < minFontSize()) {
+    BOOST_LOG(rdWarningLog) << "The new font size " << new_size
+                            << " is below the current minimum ("
+                            << minFontSize() << ")." << std::endl;
+  } else if(new_size > maxFontSize()) {
+    BOOST_LOG(rdWarningLog) << "The new font size " << new_size
+                            << " is above the current maximum ("
+                            << maxFontSize() << ")." << std::endl;
+  }
+  double new_scale = new_size / FONT_SIZE;
+  setFontScale(new_scale);
+
+}
+
+// ****************************************************************************
 double DrawText::maxFontSize() const {
   return max_font_size_;
 }
