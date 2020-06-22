@@ -1253,6 +1253,8 @@ Atom *ParseMolFileAtomLine(const std::string text, RDGeom::Point3D &pos,
     } else {
       res->setAtomicNum(0);
     }
+    // save the symbol:
+    res->setProp(common_properties::_MolFileSymbol, symb);
     if (massDiff == 0 && symb[0] == 'R') {
       if (symb.length() > 1) {
         std::string rlabel = "";
@@ -1870,17 +1872,9 @@ Atom *ParseV3000AtomSymbol(std::string token, unsigned int &line) {
           // according to the MDL spec, these match anything
           res->setQuery(makeAtomNullQuery());
         } else if (token == "Q") {
-          auto *q = new ATOM_OR_QUERY;
-          q->setDescription("AtomOr");
-          q->setNegation(true);
-          q->addChild(
-              QueryAtom::QUERYATOM_QUERY::CHILD_TYPE(makeAtomNumQuery(6)));
-          q->addChild(
-              QueryAtom::QUERYATOM_QUERY::CHILD_TYPE(makeAtomNumQuery(1)));
-          res->setQuery(q);
+          res->setQuery(makeQAtomQuery());
         } else if (token == "A") {
-          res->setQuery(makeAtomNumQuery(1));
-          res->getQuery()->setNegation(true);
+          res->setQuery(makeAAtomQuery());
         }
         // queries have no implicit Hs:
         res->setNoImplicit(true);
@@ -1901,6 +1895,8 @@ Atom *ParseV3000AtomSymbol(std::string token, unsigned int &line) {
           res->setIsotope(rnumber);
         }
       }
+      res->setProp(common_properties::_MolFileSymbol, token);
+
     } else if (token == "D") {  // mol blocks support "D" and "T" as
                                 // shorthand... handle that.
       res = new Atom(1);
