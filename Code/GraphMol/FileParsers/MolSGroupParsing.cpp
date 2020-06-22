@@ -746,15 +746,13 @@ void ParseV3000ParseLabel(const std::string &label,
                           unsigned int &line, SubstanceGroup &sgroup,
                           size_t nSgroups, RWMol *mol, bool &strictParsing) {
   RDUNUSED_PARAM(nSgroups);
-  // TODO: remove this once we find out how to handle XBHEAD & XBCORR
+  // TODO: we could handle these in a more structured way
   if (label == "XBHEAD" || label == "XBCORR") {
-    std::ostringstream errout;
-    errout << "XBHEAD or XBCORR labels (found on line " << line
-           << ") are not yet supported";
-    throw FileParseException(errout.str());
-  }
-
-  if (label == "ATOMS") {
+    std::vector<unsigned int> bvect = ParseV3000Array<unsigned int>(lineStream);
+    std::transform(bvect.begin(), bvect.end(), bvect.begin(),
+                   [](unsigned int v) -> unsigned int { return v - 1; });
+    sgroup.setProp(label, bvect);
+  } else if (label == "ATOMS") {
     for (auto atomIdx : ParseV3000Array<unsigned int>(lineStream)) {
       sgroup.addAtomWithBookmark(atomIdx);
     }
