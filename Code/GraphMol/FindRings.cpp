@@ -69,9 +69,18 @@ void convertToBonds(const VECT_INT_VECT &res, VECT_INT_VECT &brings,
 
 namespace FindRings {
 using namespace RDKit;
-int smallestRingsBfs(const ROMol &mol, int root, VECT_INT_VECT &rings,
-                     boost::dynamic_bitset<> &activeBonds,
-                     INT_VECT *forbidden = nullptr);
+
+// An optimization to create a memory workspace that gets reused
+class BFSWorkspace {
+ public:
+  int smallestRingsBfs(const ROMol &mol, int root, VECT_INT_VECT &rings,
+                       boost::dynamic_bitset<> &activeBonds,
+                       INT_VECT *forbidden = nullptr);
+
+ private:
+  VECT_INT_VECT d_atPaths;
+};
+
 void trimBonds(unsigned int cand, const ROMol &tMol, INT_SET &changed,
                INT_VECT &atomDegrees, boost::dynamic_bitset<> &activeBonds);
 void storeRingInfo(const ROMol &mol, const INT_VECT &ring) {
@@ -147,6 +156,7 @@ void findSSSRforDupCands(const ROMol &mol, VECT_INT_VECT &res,
                          const RINGINVAR_INT_VECT_MAP &dupD2Cands,
                          INT_VECT &atomDegrees,
                          boost::dynamic_bitset<> activeBonds) {
+  BFSWorkspace bfs_workspace;
   for (const auto &dupD2Cand : dupD2Cands) {
     const INT_VECT &dupCands = dupD2Cand.second;
     if (dupCands.size() > 1) {
@@ -166,7 +176,7 @@ void findSSSRforDupCands(const ROMol &mol, VECT_INT_VECT &res,
 
         // now find the smallest ring/s around (*dupi)
         VECT_INT_VECT srings;
-        smallestRingsBfs(mol, dupCand, srings, activeBondsCopy);
+        bfs_workspace.smallestRingsBfs(mol, dupCand, srings, activeBondsCopy);
         for (VECT_INT_VECT_CI sri = srings.begin(); sri != srings.end();
              ++sri) {
           if (sri->size() < minSiz) {
@@ -329,13 +339,13 @@ void findRingsD2nodes(const ROMol &tMol, VECT_INT_VECT &res,
   //    in findSSSRforDupCands)
   std::map<int, RINGINVAR_VECT> nodeInvars;
   std::map<int, RINGINVAR_VECT>::const_iterator nici;
-  DOUBLE_VECT_CI ici;
+  BFSWorkspace bfs_workspace;
   for (d2i = d2nodes.begin(); d2i != d2nodes.end(); ++d2i) {
     cand = (*d2i);
     // std::cerr<<"    smallest rings bfs: "<<cand<<std::endl;
     VECT_INT_VECT srings;
     // we have to find all non duplicate possible smallest rings for each node
-    smallestRingsBfs(tMol, cand, srings, activeBonds);
+    bfs_workspace.smallestRingsBfs(tMol, cand, srings, activeBonds);
     for (VECT_INT_VECT_CI sri = srings.begin(); sri != srings.end(); ++sri) {
       const INT_VECT &nring = (*sri);
       std::uint32_t invr =
@@ -423,7 +433,8 @@ void findRingsD3Node(const ROMol &tMol, VECT_INT_VECT &res,
 
   // first find all smallest possible rings
   VECT_INT_VECT srings;
-  nsmall = smallestRingsBfs(tMol, cand, srings, activeBonds);
+  BFSWorkspace bfs_workspace;
+  nsmall = bfs_workspace.smallestRingsBfs(tMol, cand, srings, activeBonds);
 
   for (VECT_INT_VECT_CI sri = srings.begin(); sri != srings.end(); ++sri) {
     const INT_VECT &nring = (*sri);
@@ -489,7 +500,7 @@ void findRingsD3Node(const ROMol &tMol, VECT_INT_VECT &res,
       VECT_INT_VECT trings;
       INT_VECT forb;
       forb.push_back(f);
-      smallestRingsBfs(tMol, cand, trings, activeBonds, &forb);
+      bfs_workspace.smallestRingsBfs(tMol, cand, trings, activeBonds, &forb);
       for (VECT_INT_VECT_CI sri = trings.begin(); sri != trings.end(); ++sri) {
         const INT_VECT &nring = (*sri);
         std::uint32_t invr =
@@ -530,7 +541,7 @@ void findRingsD3Node(const ROMol &tMol, VECT_INT_VECT &res,
       VECT_INT_VECT trings;
       INT_VECT forb;
       forb.push_back(f2);
-      smallestRingsBfs(tMol, cand, trings, activeBonds, &forb);
+      bfs_workspace.smallestRingsBfs(tMol, cand, trings, activeBonds, &forb);
       for (VECT_INT_VECT_CI sri = trings.begin(); sri != trings.end(); ++sri) {
         const INT_VECT &nring = (*sri);
         std::uint32_t invr =
@@ -545,7 +556,7 @@ void findRingsD3Node(const ROMol &tMol, VECT_INT_VECT &res,
       trings.clear();
       forb.clear();
       forb.push_back(f1);
-      smallestRingsBfs(tMol, cand, trings, activeBonds, &forb);
+      bfs_workspace.smallestRingsBfs(tMol, cand, trings, activeBonds, &forb);
       for (VECT_INT_VECT_CI sri = trings.begin(); sri != trings.end(); ++sri) {
         const INT_VECT &nring = (*sri);
         std::uint32_t invr =
@@ -633,11 +644,12 @@ void trimBonds(unsigned int cand, const ROMol &tMol, INT_SET &changed,
  * RETURNS:
  *  number of smallest rings found
  ***********************************************************************************/
-int smallestRingsBfs(const ROMol &mol, int root, VECT_INT_VECT &rings,
-                     boost::dynamic_bitset<> &activeBonds,
-                     INT_VECT *forbidden) {
+int BFSWorkspace::smallestRingsBfs(const ROMol &mol, int root,
+                                   VECT_INT_VECT &rings,
+                                   boost::dynamic_bitset<> &activeBonds,
+                                   INT_VECT *forbidden) {
   // this function finds the smallest ring with the given root atom.
-  // if multiple smallest rings are found all of them are return
+  // if multiple smallest rings are found all of them are returned
   // if any atoms are specified in the forbidden list, those atoms are avoided.
 
   // FIX: this should be number of atoms in the fragment (if it's required at
@@ -646,18 +658,25 @@ int smallestRingsBfs(const ROMol &mol, int root, VECT_INT_VECT &rings,
   INT_VECT done(mol.getNumAtoms(), WHITE);
 
   if (forbidden) {
-    for (INT_VECT_CI dci = forbidden->begin(); dci != forbidden->end(); dci++) {
-      done[*dci] = BLACK;
+    for (auto i : *forbidden) {
+      done[i] = BLACK;
     }
   }
 
-  // it would be "nicer" to use a map for this, but that ends up being too slow:
-  VECT_INT_VECT atPaths(mol.getNumAtoms());
-  INT_VECT rpath(1, root);
-  atPaths[root] = rpath;
+  // it would be "nicer" to use a map for d_atPaths, but that ends up being too
+  // slow:
+  {
+    // reset all paths to 0 size, but don't deallocate.
+    for (auto &p : d_atPaths) {
+      p.clear();
+    }
+    d_atPaths.resize(mol.getNumAtoms());
+    d_atPaths[root].assign(1, root);
+  }
 
   std::deque<int> bfsq;
   bfsq.push_back(root);
+
   int curr = -1;
   unsigned int curSize = UINT_MAX;
   while (bfsq.size() > 0) {
@@ -674,7 +693,7 @@ int smallestRingsBfs(const ROMol &mol, int root, VECT_INT_VECT &rings,
 
     done[curr] = BLACK;
 
-    INT_VECT &cpath = atPaths[curr];
+    INT_VECT &cpath = d_atPaths[curr];
 
     ROMol::OEDGE_ITER beg, end;
     boost::tie(beg, end) = mol.getAtomBonds(mol.getAtomWithIdx(curr));
@@ -695,15 +714,15 @@ int smallestRingsBfs(const ROMol &mol, int root, VECT_INT_VECT &rings,
         // the queue and just looking up the colors?
         if (done[nbrIdx] == WHITE) {
           // we have never been to this node before through via any path
-          atPaths[nbrIdx] = cpath;
-          atPaths[nbrIdx].push_back(nbrIdx);
+          d_atPaths[nbrIdx] = cpath;
+          d_atPaths[nbrIdx].push_back(nbrIdx);
           done[nbrIdx] = GRAY;
           bfsq.push_back(nbrIdx);
         }  // end of found a untouched node
         else {
           // we have been here via a different path
           // there is a potential for ring closure here
-          INT_VECT npath = atPaths[nbrIdx];
+          INT_VECT npath = d_atPaths[nbrIdx];
           // make sure that the intersections of cpath and npath give exactly
           // one element and that should be the root element for correct ring
           // closure
@@ -750,9 +769,9 @@ int smallestRingsBfs(const ROMol &mol, int root, VECT_INT_VECT &rings,
       }      // end of nbrIdx not part of current path and not a done atom
     }        // end of loop over neighbors of current atom
   }          // moving to the next node
-  return rdcast<unsigned int>(
-      rings.size());  // if we are here we should have found everything around
-                      // the node
+
+  // if we are here we should have found everything around the node
+  return rdcast<unsigned int>(rings.size());
 }
 
 bool _atomSearchBFS(const ROMol &tMol, unsigned int startAtomIdx,

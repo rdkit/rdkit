@@ -312,6 +312,15 @@ typedef enum {
   ADJUST_IGNOREALL = 0xFFFFFFF
 } AdjustQueryWhichFlags;
 
+//! Parameters controlling the behavior of MolOps::adjustQueryProperties
+/*!
+
+  Note that some of the options here are either directly contradictory or make
+  no sense when combined with each other. We generally assume that client code
+  is doing something sensible and don't attempt to detect possible conflicts or
+  problems.
+
+*/
 struct RDKIT_GRAPHMOL_EXPORT AdjustQueryParameters {
   bool adjustDegree = true; /**< add degree queries */
   std::uint32_t adjustDegreeFlags = ADJUST_IGNOREDUMMIES | ADJUST_IGNORECHAINS;
@@ -345,6 +354,30 @@ struct RDKIT_GRAPHMOL_EXPORT AdjustQueryParameters {
       false; /**< remove stereochemistry info from double bonds that do not have
                 the stereoCare property set */
 
+  bool adjustConjugatedFiveRings =
+      false; /**< sets bond queries in conjugated five-rings to
+                SINGLE|DOUBLE|AROMATIC */
+
+  bool setMDLFiveRingAromaticity =
+      false; /**< uses the 5-ring aromaticity behavior of the (former) MDL
+                software as documented in the Chemical Representation Guide */
+
+  bool adjustSingleBondsToDegreeOneNeighbors =
+      false; /**<  sets single bonds between aromatic atoms and degree one
+                neighbors to SINGLE|AROMATIC */
+
+  bool adjustSingleBondsBetweenAromaticAtoms =
+      false; /**<  sets non-ring single bonds between two aromatic atoms to
+                SINGLE|AROMATIC */
+  //! \brief returns an AdjustQueryParameters object with all adjustments
+  //! disabled
+  static AdjustQueryParameters noAdjustments() {
+    AdjustQueryParameters res;
+    res.adjustDegree = false;
+    res.makeDummiesQueries = false;
+    res.aromatizeIfPossible = false;
+    return res;
+  }
   AdjustQueryParameters() {}
 };
 
@@ -357,7 +390,7 @@ RDKIT_GRAPHMOL_EXPORT void parseAdjustQueryParametersFromJSON(
   \param mol the molecule to adjust
   \param params controls the adjustments made
 
-  \return the new molecule
+  \return the new molecule, the caller owns the memory
 */
 RDKIT_GRAPHMOL_EXPORT ROMol *adjustQueryProperties(
     const ROMol &mol, const AdjustQueryParameters *params = nullptr);
@@ -938,7 +971,8 @@ RDKIT_GRAPHMOL_EXPORT void setBondStereoFromDirections(ROMol &mol);
   '_CIPCode' indicating their chiral code.
 
   \param mol     the molecule to use
-  \param cleanIt if true, atoms with a chiral specifier that aren't
+  \param cleanIt if true, any existing values of the property `_CIPCode`
+                 will be cleared, atoms with a chiral specifier that aren't
                  actually chiral (e.g. atoms with duplicate
                  substituents or only 2 substituents, etc.) will have
                  their chiral code set to CHI_UNSPECIFIED. Bonds with

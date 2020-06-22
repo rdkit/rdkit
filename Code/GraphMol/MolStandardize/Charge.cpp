@@ -327,7 +327,7 @@ ROMol *Uncharger::uncharge(const ROMol &mol) {
     if (n_matched > 0 && neg_surplus > 0) {
       boost::dynamic_bitset<> nonAcids(omol->getNumAtoms());
       nonAcids.set();
-      for (const auto pr : a_atoms) {
+      for (const auto &pr : a_atoms) {
         nonAcids.reset(pr.second);
       }
       unsigned int midx = 0;
@@ -365,7 +365,7 @@ ROMol *Uncharger::uncharge(const ROMol &mol) {
     if (a_matched > 0 && neg_surplus > 0) {
       unsigned int midx = 0;
       // zwitterion with more negative charges than quaternary positive centres
-      while (neg_surplus > 0  && midx < a_atoms.size()) {
+      while (neg_surplus > 0 && midx < a_atoms.size()) {
         // Add hydrogen to first negative acidic atom, increase formal charge
         // Until quaternary positive == negative total or no more negative atoms
         Atom *atom = omol->getAtomWithIdx(a_atoms[midx++].second);

@@ -1,6 +1,9 @@
 /Code/docs/
 /Code/JavaWrappers/gmwrapper/src/*
 /Code/JavaWrappers/gmwrapper/doc/*
+/Code/JavaWrappers/gmwrapper/build/*
+/Code/JavaWrappers/gmwrapper/build-test/*
+/Code/JavaWrappers/csharp_wrapper/swig_csharp
 
 #- Eclipse files
 /.project
@@ -11,6 +14,10 @@
 
 #- IDEA files
 /.idea
+
+#- VS Code files
+/.vscode
+/.vs
 
 #- Binary files
 __pycache__/
@@ -53,6 +60,7 @@ __pycache__/
 /External/INCHI-API/src/
 /External/rapidjson-1.1.0/
 /External/RingFamilies/RingDecomposerLib/
+/External/AvalonTools/SourceDistribution
 
 /rdkit/RDPaths.py
 /rdkit/Chem/inchi.py
