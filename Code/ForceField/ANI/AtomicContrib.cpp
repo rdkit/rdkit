@@ -127,12 +127,12 @@ void loadFromBin(std::vector<ArrayXXd> *weights, unsigned int model,
                  std::string weightType, unsigned int layer,
                  std::string atomType, std::string modelType) {
   std::string path = getenv("RDBASE");
-  std::string paramFile = path + "/Code/ForceField/ANI/Params/" + modelType +
+  std::string paramFile = path + "/Code/ForceField/ANI/Params/" + modelType + "prime" +
                           "/model" + std::to_string(model) + "/" + atomType +
                           "_" + std::to_string(layer) + "_" + weightType + ".bin";
-  ArrayXXd weight;
+  ArrayXXf weight;
   RDNumeric::EigenSerializer::deSerialize(weight, paramFile);
-  weights->push_back(weight);
+  weights->push_back(weight.matrix().cast<double>().array());
 }
 
 void loadFromCSV(std::vector<ArrayXXd> *weights, unsigned int model,

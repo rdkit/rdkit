@@ -31,10 +31,14 @@ template bool serialize<Eigen::ArrayXXd>(const Eigen::ArrayXXd&,
                                          const std::string&);
 template bool serialize<Eigen::MatrixXd>(const Eigen::MatrixXd&,
                                          const std::string&);
+template bool serialize<Eigen::ArrayXXf>(const Eigen::ArrayXXf&,
+                                         const std::string&);
 
 template bool deSerialize<Eigen::ArrayXXd>(Eigen::ArrayXXd&,
                                            const std::string&);
 template bool deSerialize<Eigen::MatrixXd>(Eigen::MatrixXd&,
+                                           const std::string&);
+template bool deSerialize<Eigen::ArrayXXf>(Eigen::ArrayXXf&,
                                            const std::string&);
 }  // namespace EigenSerializer
 }  // namespace RDNumeric
