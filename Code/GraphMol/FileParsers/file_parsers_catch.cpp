@@ -1533,5 +1533,8 @@ M  END
     REQUIRE(mol);
     CHECK(mol->getProp<std::string>(common_properties::molFileLinkNodes) ==
           "1 3 2 1 2 1 5|1 4 2 4 3 4 5");
+    auto molb = MolToV3KMolBlock(*mol);
+    CHECK(molb.find("LINKNODE 1 3 2 1 2 1 5") != std::string::npos);
+    CHECK(molb.find("LINKNODE 1 4 2 4 3 4 5") != std::string::npos);
   }
 }
