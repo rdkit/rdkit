@@ -2300,6 +2300,15 @@ EXAMPLES:\n\n\
                  python::arg("includeAtomCircles") = true),
                 docString.c_str());
 
+    docString =
+        R"DOC(Possible values:
+  - ADJUST_IGNORENONE: nothing will be ignored
+  - ADJUST_IGNORECHAINS: non-ring atoms/bonds will be ignored
+  - ADJUST_IGNORERINGS: ring atoms/bonds will be ignored
+  - ADJUST_IGNOREDUMMIES: dummy atoms will be ignored
+  - ADJUST_IGNORENONDUMMIES: non-dummy atoms will be ignored
+  - ADJUST_IGNOREALL: everything will be ignored
+)DOC";
     python::enum_<MolOps::AdjustQueryWhichFlags>("AdjustQueryWhichFlags")
         .value("ADJUST_IGNORENONE", MolOps::ADJUST_IGNORENONE)
         .value("ADJUST_IGNORECHAINS", MolOps::ADJUST_IGNORECHAINS)
@@ -2310,74 +2319,96 @@ EXAMPLES:\n\n\
         .export_values();
 
     docString =
-        "Parameters controlling which components of the query atoms are adjusted.\n\
-\n\
-Attributes:\n\
-  - adjustDegree: \n\
-    modified atoms have an explicit-degree query added based on their degree in the query \n\
-  - adjustHeavyDegree: \n\
-    modified atoms have a heavy-atom-degree query added based on their degree in the query \n\
-  - adjustDegreeFlags: \n\
-    controls which atoms have a degree query added \n\
-  - adjustRingCount: \n\
-    modified atoms have a ring-count query added based on their ring count in the query \n\
-  - adjustRingCountFlags: \n\
-    controls which atoms have a ring-count query added \n\
-  - makeDummiesQueries: \n\
-    dummy atoms that do not have a specified isotope are converted to any-atom queries \n\
-  - aromatizeIfPossible: \n\
-    attempts aromaticity perception on the molecule \n\
-  - makeBondsGeneric: \n\
-    convert bonds to generic (any) bonds \n\
-  - makeBondsGenericFlags: \n\
-    controls which bonds are made generic \n\
-  - makeAtomsGeneric: \n\
-    convert atoms to generic (any) atoms \n\
-  - makeAtomsGenericFlags: \n\
-    controls which atoms are made generic \n\
-  - adjustRingChain: \n\
-    modified atoms have a ring-chain query added based on whether or not they are in a ring \n\
-  - adjustRingChainFlags: \n\
-    controls which atoms have a ring-chain query added \n\
-\n\
-A note on the flags controlling which atoms/bonds are modified: \n\
-   These generally limit the set of atoms/bonds to be modified.\n\
-   For example:\n\
-       - ADJUST_IGNORERINGS atoms/bonds in rings will not be modified.\n\
-       - ADJUST_IGNORENONE causes all atoms/bonds to be modified\n\
-       - ADJUST_IGNOREALL no atoms/bonds will be modified\n\
-   Some of the options obviously make no sense for bonds\n\
-";
+        R"DOC(Parameters controlling which components of the query atoms/bonds are adjusted.
+
+Note that some of the options here are either directly contradictory or make
+  no sense when combined with each other. We generally assume that client code
+  is doing something sensible and don't attempt to detect possible conflicts or
+  problems.
+
+A note on the flags controlling which atoms/bonds are modified: 
+   These generally limit the set of atoms/bonds to be modified.
+   For example:
+       - ADJUST_IGNORERINGS atoms/bonds in rings will not be modified.
+       - ADJUST_IGNORENONE causes all atoms/bonds to be modified
+       - ADJUST_IGNOREALL no atoms/bonds will be modified
+   Some of the options obviously make no sense for bonds
+)DOC";
     python::class_<MolOps::AdjustQueryParameters>("AdjustQueryParameters",
                                                   docString.c_str())
         .def_readwrite("adjustDegree",
-                       &MolOps::AdjustQueryParameters::adjustDegree)
+                       &MolOps::AdjustQueryParameters::adjustDegree,
+                       "add degree queries")
         .def_readwrite("adjustDegreeFlags",
-                       &MolOps::AdjustQueryParameters::adjustDegreeFlags)
+                       &MolOps::AdjustQueryParameters::adjustDegreeFlags,
+                       "controls which atoms have their degree queries changed")
         .def_readwrite("adjustHeavyDegree",
-                       &MolOps::AdjustQueryParameters::adjustHeavyDegree)
-        .def_readwrite("adjustHeavyDegreeFlags",
-                       &MolOps::AdjustQueryParameters::adjustHeavyDegreeFlags)
+                       &MolOps::AdjustQueryParameters::adjustHeavyDegree,
+                       "adjust the heavy-atom degree")
+        .def_readwrite(
+            "adjustHeavyDegreeFlags",
+            &MolOps::AdjustQueryParameters::adjustHeavyDegreeFlags,
+            "controls which atoms have their heavy-atom degree queries changed")
         .def_readwrite("adjustRingCount",
-                       &MolOps::AdjustQueryParameters::adjustRingCount)
+                       &MolOps::AdjustQueryParameters::adjustRingCount,
+                       "add ring-count queries")
         .def_readwrite("adjustRingCountFlags",
-                       &MolOps::AdjustQueryParameters::adjustRingCountFlags)
-        .def_readwrite("makeDummiesQueries",
-                       &MolOps::AdjustQueryParameters::makeDummiesQueries)
+                       &MolOps::AdjustQueryParameters::adjustRingCountFlags,
+                       "controls which atoms have ring-count queries added")
+        .def_readwrite(
+            "makeDummiesQueries",
+            &MolOps::AdjustQueryParameters::makeDummiesQueries,
+            "convert dummy atoms without isotope labels to any-atom queries")
         .def_readwrite("aromatizeIfPossible",
-                       &MolOps::AdjustQueryParameters::aromatizeIfPossible)
+                       &MolOps::AdjustQueryParameters::aromatizeIfPossible,
+                       "perceive and set aromaticity")
         .def_readwrite("makeBondsGeneric",
-                       &MolOps::AdjustQueryParameters::makeBondsGeneric)
+                       &MolOps::AdjustQueryParameters::makeBondsGeneric,
+                       "converts bonds to generic queries (any bonds)")
         .def_readwrite("makeBondsGenericFlags",
-                       &MolOps::AdjustQueryParameters::makeBondsGenericFlags)
+                       &MolOps::AdjustQueryParameters::makeBondsGenericFlags,
+                       "controls which bonds are converted to generic queries")
         .def_readwrite("makeAtomsGeneric",
-                       &MolOps::AdjustQueryParameters::makeAtomsGeneric)
+                       &MolOps::AdjustQueryParameters::makeAtomsGeneric,
+                       "convert atoms to generic queries (any atoms)")
         .def_readwrite("makeAtomsGenericFlags",
-                       &MolOps::AdjustQueryParameters::makeAtomsGenericFlags)
+                       &MolOps::AdjustQueryParameters::makeAtomsGenericFlags,
+                       "controls which atoms are converted to generic queries")
         .def_readwrite("adjustRingChain",
-                       &MolOps::AdjustQueryParameters::adjustRingChain)
+                       &MolOps::AdjustQueryParameters::adjustRingChain,
+                       "add ring-chain queries to atoms")
         .def_readwrite("adjustRingChainFlags",
-                       &MolOps::AdjustQueryParameters::adjustRingChainFlags);
+                       &MolOps::AdjustQueryParameters::adjustRingChainFlags,
+                       "controls which atoms have ring-chain queries added")
+        .def_readwrite(
+            "useStereoCareForBonds",
+            &MolOps::AdjustQueryParameters::useStereoCareForBonds,
+            "if this is set sterochemistry information will be removed from "
+            "double bonds that do not have the stereoCare property set")
+        .def_readwrite(
+            "adjustConjugatedFiveRings",
+            &MolOps::AdjustQueryParameters::adjustConjugatedFiveRings,
+            "set bond queries in conjugated five-rings to "
+            "SINGLE|DOUBLE|AROMATIC")
+        .def_readwrite(
+            "setMDLFiveRingAromaticity",
+            &MolOps::AdjustQueryParameters::setMDLFiveRingAromaticity,
+            "uses the 5-ring aromaticity behavior of the (former) MDL software "
+            "as documented in the Chemical Representation Guide")
+        .def_readwrite("adjustSingleBondsToDegreeOneNeighbors",
+                       &MolOps::AdjustQueryParameters::
+                           adjustSingleBondsToDegreeOneNeighbors,
+                       "set single bonds bewteen aromatic atoms and degree-one "
+                       "neighbors to SINGLE|AROMATIC")
+        .def_readwrite("adjustSingleBondsBetweenAromaticAtoms",
+                       &MolOps::AdjustQueryParameters::
+                           adjustSingleBondsBetweenAromaticAtoms,
+                       "sets non-ring single bonds between two aromatic atoms "
+                       "to SINGLE|AROMATIC")
+        .def("NoAdjustments", &MolOps::AdjustQueryParameters::noAdjustments,
+             "Returns an AdjustQueryParameters object with all parameters set "
+             "to false")
+        .staticmethod("NoAdjustments");
 
     docString =
         "Returns a new molecule where the query properties of atoms have been "
