@@ -169,6 +169,7 @@ RDKIT_RDGENERAL_EXPORT extern const std::string molAtomClass;       // string
 RDKIT_RDGENERAL_EXPORT extern const std::string molAtomSeqId;       // int
 RDKIT_RDGENERAL_EXPORT extern const std::string molRxnExactChange;  // int
 RDKIT_RDGENERAL_EXPORT extern const std::string molReactStatus;     // int
+RDKIT_RDGENERAL_EXPORT extern const std::string molFileLinkNodes;   // string
 
 RDKIT_RDGENERAL_EXPORT extern const std::string _MolFileRLabel;  // unsigned int
 RDKIT_RDGENERAL_EXPORT extern const std::string _MolFileChiralFlag;  // int
@@ -318,7 +319,7 @@ typedef INT_SET::const_iterator INT_SET_CI;
 //! functor to compare two doubles with a tolerance
 struct RDKIT_RDGENERAL_EXPORT ltDouble {
  public:
-  ltDouble()  {};
+  ltDouble(){};
   bool operator()(double d1, double d2) const {
     if (fabs(d1 - d2) < _tol) {
       return false;

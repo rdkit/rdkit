@@ -1794,6 +1794,10 @@ bool ParseMolBlockProperties(std::istream *inStream, unsigned int &line,
       ParseMarvinSmartsLine(mol, tempStr, line);
     } else if (lineBeg == "M  APO") {
       ParseAttachPointLine(mol, tempStr, line);
+    } else if (lineBeg == "M  LIN") {
+      // this has a different syntax from the V3K link node, so
+      // we can't save it under the same property
+      // ParseLinkNodeLine(mol, tempStr, line);
     }
     line++;
     tempStr = getLine(inStream);
@@ -2664,8 +2668,18 @@ bool ParseV3000CTAB(std::istream *inStream, unsigned int &line, RWMol *mol,
   // do link nodes:
   boost::to_upper(tempStr);
   while (tempStr.length() > 8 && tempStr.substr(0, 8) == "LINKNODE") {
-    tempStr = getV3000Line(inStream, line);
     boost::to_upper(tempStr);
+    // if the line has nothing on it we just ignore it
+    if (tempStr.size() > 9) {
+      std::string existing = "";
+      if (mol->getPropIfPresent(common_properties::molFileLinkNodes,
+                                existing)) {
+        existing += "|";
+      }
+      existing += tempStr.substr(9);  // skip the "LINKNODE "
+      mol->setProp(common_properties::molFileLinkNodes, existing);
+    }
+    tempStr = getV3000Line(inStream, line);
   }
 
   while (tempStr.length() > 5 && tempStr.substr(0, 5) == "BEGIN") {
@@ -2701,7 +2715,7 @@ bool ParseV3000CTAB(std::istream *inStream, unsigned int &line, RWMol *mol,
   conf = nullptr;
 
   return fileComplete;
-}
+}  // namespace FileParserUtils
 
 bool ParseV2000CTAB(std::istream *inStream, unsigned int &line, RWMol *mol,
                     Conformer *&conf, bool &chiralityPossible,

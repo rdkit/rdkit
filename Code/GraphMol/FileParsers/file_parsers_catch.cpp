@@ -1502,3 +1502,36 @@ M  END
     CHECK(molb.find("ATTCHPT=-1") != std::string::npos);
   }
 }
+
+TEST_CASE("LINKNODE information being ignored", "[ctab][bug]") {
+  SECTION("ATTCHPT") {
+    auto mol = R"CTAB(
+  Mrv2007 06212005162D          
+
+  0  0  0     0  0            999 V3000
+M  V30 BEGIN CTAB
+M  V30 COUNTS 5 5 0 0 0
+M  V30 BEGIN ATOM
+M  V30 1 C -3.25 12.2683 0 0
+M  V30 2 C -4.4959 11.3631 0 0
+M  V30 3 C -4.02 9.8986 0 0
+M  V30 4 C -2.48 9.8986 0 0
+M  V30 5 C -2.0041 11.3631 0 0
+M  V30 END ATOM
+M  V30 BEGIN BOND
+M  V30 1 1 1 2
+M  V30 2 1 2 3
+M  V30 3 1 3 4
+M  V30 4 1 4 5
+M  V30 5 1 1 5
+M  V30 END BOND
+M  V30 LINKNODE 1 3 2 1 2 1 5
+M  V30 LINKNODE 1 4 2 4 3 4 5
+M  V30 END CTAB
+M  END
+)CTAB"_ctab;
+    REQUIRE(mol);
+    CHECK(mol->getProp<std::string>(common_properties::molFileLinkNodes) ==
+          "1 3 2 1 2 1 5|1 4 2 4 3 4 5");
+  }
+}
