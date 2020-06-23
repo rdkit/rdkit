@@ -1503,6 +1503,32 @@ M  END
   }
 }
 
+TEST_CASE("XBHEAD and XBCORR causing parser failures", "[bug][reader]") {
+  std::string rdbase = getenv("RDBASE");
+  SECTION("basics") {
+    std::string fName =
+        rdbase +
+        "/Code/GraphMol/FileParsers/sgroup_test_data/repeat_groups_query1.mol";
+    std::unique_ptr<RWMol> mol(MolFileToMol(fName));
+    REQUIRE(mol);
+    const auto &sgroups = getSubstanceGroups(*mol);
+    CHECK(sgroups.size() == 1);
+    CHECK(sgroups[0].hasProp("TYPE"));
+    CHECK(sgroups[0].getProp<std::string>("TYPE") == "SRU");
+    CHECK(sgroups[0].hasProp("XBHEAD"));
+    auto v = sgroups[0].getProp<std::vector<unsigned int>>("XBHEAD");
+    CHECK(v.size() == 2);
+    CHECK(v[0] == 5);
+    CHECK(v[1] == 0);
+
+    CHECK(sgroups[0].hasProp("XBCORR"));
+    CHECK(sgroups[0].getProp<std::vector<unsigned int>>("XBCORR").size() == 4);
+
+    auto mb = MolToV3KMolBlock(*mol);
+    CHECK(mb.find("XBHEAD=(2 6 1)") != std::string::npos);
+    CHECK(mb.find("XBCORR=(4 6 6 1 1)") != std::string::npos);
+  }
+}
 TEST_CASE("LINKNODE information being ignored", "[ctab][bug]") {
   SECTION("v3000") {
     auto mol = R"CTAB(

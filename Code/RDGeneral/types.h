@@ -177,6 +177,7 @@ RDKIT_RDGENERAL_EXPORT extern const std::string _MolFileAtomQuery;   // int
 RDKIT_RDGENERAL_EXPORT extern const std::string _MolFileBondQuery;   // int
 RDKIT_RDGENERAL_EXPORT extern const std::string _MolFileBondEndPts;  // string
 RDKIT_RDGENERAL_EXPORT extern const std::string _MolFileBondAttach;  // string
+RDKIT_RDGENERAL_EXPORT extern const std::string _MolFileSymbol;      // string
 RDKIT_RDGENERAL_EXPORT extern const std::string
     _MolFileBondType;  // unsigned int
 RDKIT_RDGENERAL_EXPORT extern const std::string

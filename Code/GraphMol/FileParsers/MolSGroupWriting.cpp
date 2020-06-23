@@ -491,6 +491,15 @@ std::string BuildV3000BondsBlock(const SubstanceGroup &sgroup) {
   ret << BuildV3000IdxVectorDataBlock("XBONDS", bonds.begin(), first_cbond);
   ret << BuildV3000IdxVectorDataBlock("CBONDS", first_cbond, bonds.end());
 
+  if (sgroup.hasProp("XBHEAD")) {
+    auto v = sgroup.getProp<std::vector<unsigned int>>("XBHEAD");
+    ret << BuildV3000IdxVectorDataBlock("XBHEAD", v.begin(), v.end());
+  }
+  if (sgroup.hasProp("XBCORR")) {
+    auto v = sgroup.getProp<std::vector<unsigned int>>("XBCORR");
+    ret << BuildV3000IdxVectorDataBlock("XBCORR", v.begin(), v.end());
+  }
+
   return ret.str();
 }
 
@@ -623,6 +632,7 @@ const std::string GetV3000MolFileSGroupLines(const unsigned int idx,
   os << idx << ' ' << sgroup.getProp<std::string>("TYPE") << ' ' << id;
 
   os << BuildV3000IdxVectorDataBlock("ATOMS", sgroup.getAtoms());
+  // also writes XBHEAD and XBCORR
   os << BuildV3000BondsBlock(sgroup);
   os << BuildV3000IdxVectorDataBlock("PATOMS", sgroup.getParentAtoms());
   os << FormatV3000StringPropertyBlock("SUBTYPE", sgroup);
@@ -630,8 +640,6 @@ const std::string GetV3000MolFileSGroupLines(const unsigned int idx,
   os << FormatV3000StringPropertyBlock("CONNECT", sgroup);
   os << FormatV3000ParentBlock(sgroup);
   os << FormatV3000CompNoBlock(sgroup);
-  // XBHEAD -> part of V2000 CRS, not supported yet
-  // XBCORR -> part of V2000 CRS, not supported yet
   os << FormatV3000StringPropertyBlock("LABEL", sgroup);
   os << FormatV3000BracketBlock(sgroup.getBrackets());
   os << FormatV3000StringPropertyBlock("ESTATE", sgroup);
