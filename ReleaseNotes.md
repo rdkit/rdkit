@@ -5,7 +5,7 @@
 - FindMCS() may return single atom MCSs, whereas previously it returned an empty
   MCS unless there was at least one commond bond across the input structures.
   So the MCS between molecules `CC` and `CO` is now `[#6]` rather than being null.
-- The fontSize()/setFontSize() (FontSize()/SetFontSize()) methods in MolDraw2D now
+- The fontSize()/setFontSize() (FontSize()/SetFontSize()) methods in MolDraw2D
   now work in units of pixels (more or less) instead of the molecule units.
 
 ## Code removed in this release:
