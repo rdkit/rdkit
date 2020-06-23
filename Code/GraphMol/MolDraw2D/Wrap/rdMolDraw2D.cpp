@@ -434,8 +434,7 @@ void addMoleculeMetadata(const RDKit::MolDraw2DSVG &self, const RDKit::ROMol &m,
 void contourAndDrawGaussiansHelper(
     RDKit::MolDraw2D &drawer, python::object pylocs, python::object pyheights,
     python::object pywidths, unsigned int nContours, python::object pylevels,
-    const MolDraw2DUtils::ContourParams &params,
-    python::object mol) {
+    const MolDraw2DUtils::ContourParams &params, python::object mol) {
   std::unique_ptr<std::vector<RDGeom::Point2D>> locs =
       pythonObjectToVect<RDGeom::Point2D>(pylocs);
   std::unique_ptr<std::vector<double>> heights =
@@ -461,7 +460,7 @@ void contourAndDrawGridHelper(RDKit::MolDraw2D &drawer, python::object &data,
                               python::object &pyycoords, unsigned int nContours,
                               python::object &pylevels,
                               const MolDraw2DUtils::ContourParams &params,
-			      python::object mol) {
+                              python::object mol) {
   if (!PyArray_Check(data.ptr())) {
     throw_value_error("data argument must be a numpy array");
   }
@@ -493,7 +492,7 @@ void contourAndDrawGridHelper(RDKit::MolDraw2D &drawer, python::object &data,
   }
 
   ROMol *mol_p = nullptr;
-  if(mol) {
+  if (mol) {
     mol_p = python::extract<RDKit::ROMol *>(mol);
   }
   MolDraw2DUtils::contourAndDrawGrid(drawer, (double *)PyArray_DATA(dataArr),
@@ -615,10 +614,8 @@ BOOST_PYTHON_MODULE(rdMolDraw2D) {
           "annotationFontScale", &RDKit::MolDrawOptions::annotationFontScale,
           "Scale of font for atom and bond annotation relative to atom"
           "label font.  Default=0.75.")
-      .def_readwrite(
-          "fontFile", &RDKit::MolDrawOptions::fontFile,
-          "Font file for use with FreeType text drawer."
-          )
+      .def_readwrite("fontFile", &RDKit::MolDrawOptions::fontFile,
+                     "Font file for use with FreeType text drawer.")
       .def_readwrite(
           "multipleBondOffset", &RDKit::MolDrawOptions::multipleBondOffset,
           "offset (in Angstroms) for the extra lines in a multiple bond")
@@ -673,9 +670,10 @@ BOOST_PYTHON_MODULE(rdMolDraw2D) {
   docString = "Drawer abstract base class";
   python::class_<RDKit::MolDraw2D, boost::noncopyable>(
       "MolDraw2D", docString.c_str(), python::no_init)
-      // .def("SetFontSize", &RDKit::MolDraw2D::setFontSize,
-      //      "change the default font size")
-      // .def("FontSize", &RDKit::MolDraw2D::fontSize, "get the default font size")
+      .def("SetFontSize", &RDKit::MolDraw2D::setFontSize,
+           "change the default font size. The units are, roughly, pixels.")
+      .def("FontSize", &RDKit::MolDraw2D::fontSize,
+           "get the default font size. The units are, roughly, pixels.")
       .def(
           "DrawMolecule", RDKit::drawMoleculeHelper1,
           (python::arg("self"), python::arg("mol"),
@@ -821,8 +819,8 @@ BOOST_PYTHON_MODULE(rdMolDraw2D) {
   python::class_<RDKit::MolDraw2DSVG, python::bases<RDKit::MolDraw2D>,
                  boost::noncopyable>("MolDraw2DSVG", docString.c_str(),
                                      python::init<int, int>())
-    .def(python::init<int, int, int, int>())
-    .def(python::init<int, int, int, int, bool>())
+      .def(python::init<int, int, int, int>())
+      .def(python::init<int, int, int, int, bool>())
       .def("FinishDrawing", &RDKit::MolDraw2DSVG::finishDrawing,
            "add the last bits of SVG to finish the drawing")
       .def("AddMoleculeMetadata", RDKit::addMoleculeMetadata,
