@@ -17,25 +17,49 @@
 #include <vector>
 #include <map>
 #include <string>
+#include <memory>
 
 namespace RDKit {
 namespace MolEnumerator {
 
 //! abstract base class
 class RDKIT_MOLENUMERATOR_EXPORT MolEnumeratorOp {
- private:
-  ROMol d_mol;
-
  public:
-  MolEnumeratorOp(const ROMol &mol) : d_mol(mol){};
-  MolEnumeratorOp(const MolEnumeratorOp &other) : d_mol(other.d_mol){};
-  MolEnumeratorOp &operator=(const MolEnumeratorOp &other) {
-    if (&other != this) {
-      d_mol = ROMol(other.d_mol);
-    }
-    return *this;
+  MolEnumeratorOp(){};
+  ~MolEnumeratorOp(){};
+  virtual std::vector<size_t> getVariationCounts() const = 0;
+  // caller owns the memory
+  virtual ROMol *operator()(const std::vector<size_t> &which) const = 0;
+};
+
+class RDKIT_MOLENUMERATOR_EXPORT PositionVariationOp : public MolEnumeratorOp {
+  PositionVariationOp(const std::shared_ptr<ROMol> mol) : dp_mol(mol) {
+    PRECONDITION(mol, "bad molecule");
+    initFromMol();
   };
-  ~MolEnumeratorOp() = default;
+  PositionVariationOp(const ROMol &mol) : dp_mol(new ROMol(mol)) {
+    initFromMol();
+  };
+  PositionVariationOp(const PositionVariationOp &other)
+      : dp_mol(other.dp_mol), d_variationPoints(other.d_variationPoints){};
+  PositionVariationOp &operator=(const PositionVariationOp &other) {
+    if (&other == this) {
+      return *this;
+    }
+    dp_mol = other.dp_mol;
+    d_variationPoints = other.d_variationPoints;
+  };
+
+  std::vector<size_t> getVariationCounts() const override { return {}; };
+  ROMol *operator()(const std::vector<size_t> &which) const override {
+    return nullptr;
+  };
+
+ private:
+  std::shared_ptr<ROMol> dp_mol;
+  std::vector<std::pair<unsigned int, std::vector<unsigned int>>>
+      d_variationPoints;
+  void initFromMol();
 };
 
 struct RDKIT_MOLENUMERATOR_EXPORT MolEnumeratorParams {
