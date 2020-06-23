@@ -41,7 +41,17 @@ Node::Node(Digraph *g, std::vector<char> &&visit, Atom *atom,
       d_flags{flags}, d_visit{std::move(visit)} {
   if (d_flags & DUPLICATE) {
     d_edges.reserve(4);
-  };
+    d_atomic_mass = 0.;
+  } else {
+    const auto &table = RDKit::PeriodicTable::getTable();
+    auto atomic_number = getAtomicNum();
+    auto isotope = getMassNum();
+    if (isotope == 0u) {
+      d_atomic_mass = table->getAtomicWeight(atomic_number);
+    } else {
+      d_atomic_mass = table->getMassForIsotope(atomic_number, isotope);
+    }
+  }
   if (d_visit.empty() || d_flags & DUPLICATE) {
     d_flags |= EXPANDED;
   }
@@ -62,12 +72,14 @@ int Node::getAtomicNum() const {
   return dp_atom->getAtomicNum();
 };
 
-double Node::getMassNum() const {
-  if (dp_atom == nullptr) {
-    return 0;
+unsigned Node::getMassNum() const {
+  if (dp_atom == nullptr || isDuplicate()) {
+    return 0u;
   }
   return dp_atom->getIsotope();
 }
+
+double Node::getAtomicMass() const { return d_atomic_mass; }
 
 Descriptor Node::getAux() const { return d_aux; }
 
@@ -106,7 +118,7 @@ void Node::add(Edge *e) { d_edges.push_back(e); }
 
 void Node::setAux(Descriptor desc) { d_aux = desc; }
 
-const std::vector<Edge *>& Node::getEdges() const {
+const std::vector<Edge *> &Node::getEdges() const {
   if (!isExpanded()) {
     auto non_const_this = const_cast<Node *>(this);
     non_const_this->d_flags |= EXPANDED;

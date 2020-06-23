@@ -19,7 +19,8 @@ class Sp2Bond : public Configuration {
 public:
   Sp2Bond() = delete;
 
-  Sp2Bond(const CIPMol &mol, Bond *bond, Bond::BondStereo cfg);
+  Sp2Bond(const CIPMol &mol, Bond *bond, Atom *startAtom, Atom *endAtom,
+          Bond::BondStereo cfg);
 
   void setPrimaryLabel(Descriptor desc) override;
 

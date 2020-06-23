@@ -10,7 +10,7 @@
 //
 #include <stdexcept>
 
-#include "RDGeneral/Invariant.h"
+#include <RDGeneral/Invariant.h>
 
 #include "Edge.h"
 #include "Node.h"

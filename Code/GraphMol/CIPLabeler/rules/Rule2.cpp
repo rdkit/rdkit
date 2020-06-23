@@ -9,7 +9,7 @@
 //  of the RDKit source tree.
 //
 
-#include "GraphMol/PeriodicTable.h"
+#include <GraphMol/PeriodicTable.h>
 
 #include "Rule2.h"
 
@@ -22,24 +22,23 @@ namespace CIPLabeler {
 Rule2::Rule2() = default;
 
 int Rule2::compare(const Edge *a, const Edge *b) const {
-  auto aAtomNum = a->getEnd()->getAtomicNum();
-  auto bAtomNum = b->getEnd()->getAtomicNum();
+  auto a_end = a->getEnd();
+  auto b_end = b->getEnd();
+
+  auto aAtomNum = a_end->getAtomicNum();
+  auto bAtomNum = b_end->getAtomicNum();
   if (aAtomNum == 0 || bAtomNum == 0) {
     return 0;
   }
 
-  int aMassNum = a->getEnd()->isDuplicate() ? 0 : a->getEnd()->getMassNum();
-  int bMassNum = b->getEnd()->isDuplicate() ? 0 : b->getEnd()->getMassNum();
-  if (aMassNum == 0 && bMassNum == 0) {
+  auto aMassNum = a_end->getMassNum();
+  auto bMassNum = b_end->getMassNum();
+  if (aMassNum == 0u && bMassNum == 0u) {
     return 0;
   }
 
-  const auto &table = RDKit::PeriodicTable::getTable();
-
-  auto aweight = aMassNum ? table->getMassForIsotope(aAtomNum, aMassNum)
-                          : table->getAtomicWeight(aAtomNum);
-  auto bweight = bMassNum ? table->getMassForIsotope(bAtomNum, bMassNum)
-                          : table->getAtomicWeight(bAtomNum);
+  auto aweight = a_end->getAtomicMass();
+  auto bweight = b_end->getAtomicMass();
 
   return three_way_comparison(aweight, bweight);
 }

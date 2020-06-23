@@ -71,7 +71,9 @@ public:
 
   int getAtomicNum() const;
 
-  double getMassNum() const;
+  unsigned getMassNum() const;
+
+  double getAtomicMass() const;
 
   Descriptor getAux() const;
 
@@ -97,7 +99,7 @@ public:
 
   void setAux(Descriptor desc);
 
-  const std::vector<Edge *>& getEdges() const;
+  const std::vector<Edge *> &getEdges() const;
 
   std::vector<Edge *> getEdges(Atom *end) const;
 
@@ -108,6 +110,7 @@ private:
   Atom *dp_atom;
   int d_dist;
   boost::rational<int> d_atomic_num;
+  double d_atomic_mass;
   Descriptor d_aux = Descriptor::NONE;
   int d_flags = 0x0;
 

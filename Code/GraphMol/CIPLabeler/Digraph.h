@@ -20,7 +20,7 @@
 #include <list>
 #include <vector>
 
-#include "boost/rational.hpp"
+#include <boost/rational.hpp>
 
 #include "TooManyNodesException.h"
 

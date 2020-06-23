@@ -37,7 +37,7 @@ Tetrahedral::Tetrahedral(const CIPMol &mol, Atom *focus)
     // than the implicit H.
     carriers.push_back(nullptr);
   }
-  POSTCONDITION(carriers.size()==4, "configurtion must have 4 carriers");
+  POSTCONDITION(carriers.size() == 4, "configurtion must have 4 carriers");
 
   setCarriers(std::move(carriers));
 };
@@ -50,8 +50,6 @@ void Tetrahedral::setPrimaryLabel(Descriptor desc) {
   case Descriptor::s:
     getFocus()->setProp(common_properties::_CIPCode, to_string(desc));
     return;
-  case Descriptor::NONE:
-    throw std::runtime_error("Received an invalid Atom Descriptor");
   case Descriptor::seqTrans:
   case Descriptor::seqCis:
   case Descriptor::E:
@@ -65,6 +63,8 @@ void Tetrahedral::setPrimaryLabel(Descriptor desc) {
   case Descriptor::OC_6:
     throw std::runtime_error(
         "Received a Descriptor that is not supported for atoms");
+  default:
+    throw std::runtime_error("Received an invalid Atom Descriptor");
   }
 }
 

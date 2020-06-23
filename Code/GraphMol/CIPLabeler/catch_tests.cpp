@@ -164,7 +164,7 @@ TEST_CASE("Digraph", "[accurateCIP]") {
       R"(CC1(OC2=C(C=3NC[C@@]4(C3C=C2)C([C@@H]5C[C@@]67C(N([C@]5(C4)CN6CC[C@@]7(C)O)C)=O)(C)C)OC=C1)C)"_smiles; // VS040
   CIPLabeler::CIPMol cipmol(*mol);
 
-  auto initial_root_idx = 1;
+  auto initial_root_idx = 1u;
   auto initial_root_atom = cipmol.getAtom(initial_root_idx);
 
   Digraph g(cipmol, initial_root_atom);
@@ -176,7 +176,7 @@ TEST_CASE("Digraph", "[accurateCIP]") {
 
   check_incoming_edge_count(current_root);
 
-  auto new_root_idx = 24;
+  auto new_root_idx = 24u;
   auto new_root_atom = cipmol.getAtom(new_root_idx);
   auto new_root_nodes = g.getNodes(new_root_atom);
   CHECK(new_root_nodes.size() == 104);

@@ -17,12 +17,18 @@ namespace RDKit {
 namespace CIPLabeler {
 
 /**
- * <b>Sequence Rule 1b</b>
- * <i>"A duplicate atom node whose corresponding nonduplicated atom
- * node is the root or is closer to the root ranks higher than
- * a duplicate atom node whose corresponding nonduplicated atom
- * node is farther from the root."</i>
+ * <b>Sequence Rule 2</b>
+ * <i>"Higher atomic mass number precedes lower."</i>
  *
+ * To resolve the ambiguity of what the "atomic mass"
+ * is in case of duplicate nodes, isotpes, etc, this is
+ * implmemented as the "proposed" rule 2 from the original
+ * paper:
+ *
+ * <i>"Higher mass precedes lower mass, where mass is defined
+ * in the case of a duplicate node as 0, an atom with isotope
+ * indicated as its exact isotopic mass, and in all other
+ * cases as the element’s atomic weight."</i>
  */
 class Rule2 : public SequenceRule {
 

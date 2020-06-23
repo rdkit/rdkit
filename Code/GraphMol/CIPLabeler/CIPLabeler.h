@@ -10,7 +10,7 @@
 //
 #pragma once
 
-#include "boost/dynamic_bitset.hpp"
+#include <boost/dynamic_bitset.hpp>
 
 #include <RDGeneral/export.h>
 
@@ -55,5 +55,5 @@ RDKIT_CIPLABELER_EXPORT void assignCIPLabels(ROMol &mol);
 RDKIT_CIPLABELER_EXPORT void
 assignCIPLabels(ROMol &mol, const boost::dynamic_bitset<> &atoms,
                 const boost::dynamic_bitset<> &bonds);
-}  // namespace CIPLabeler
-}  // namespace RDKit
+} // namespace CIPLabeler
+} // namespace RDKit

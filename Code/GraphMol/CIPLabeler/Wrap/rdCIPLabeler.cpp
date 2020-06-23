@@ -10,11 +10,11 @@
 //
 #include <string>
 
-#include "RDBoost/Wrap.h"
-#include "RDBoost/python.h"
+#include <RDBoost/Wrap.h>
+#include <RDBoost/python.h>
 
-#include "GraphMol/RDKitBase.h"
-#include "GraphMol/CIPLabeler/CIPLabeler.h"
+#include <GraphMol/RDKitBase.h>
+#include <GraphMol/CIPLabeler/CIPLabeler.h>
 
 namespace python = boost::python;
 using RDKit::CIPLabeler::assignCIPLabels;

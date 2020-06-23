@@ -89,7 +89,7 @@ int Rule4b::compare(const Edge *a, const Edge *b) const {
       std::sort(list2.rbegin(), list2.rend());
 
       for (auto i = 0u; i < list1.size(); ++i) {
-        int cmp = list1[0].compareTo(list2[0]);
+        int cmp = list1[i].compareTo(list2[i]);
         if (cmp != 0) {
           return cmp;
         }

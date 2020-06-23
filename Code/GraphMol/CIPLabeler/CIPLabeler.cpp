@@ -76,7 +76,8 @@ findConfigs(CIPMol &mol, const boost::dynamic_bitset<> &atoms,
       continue;
     }
 
-    std::unique_ptr<Sp2Bond> cfg(new Sp2Bond(mol, bond, bond_cfg));
+    std::unique_ptr<Sp2Bond> cfg(new Sp2Bond(mol, bond, bond->getBeginAtom(),
+                                             bond->getEndAtom(), bond_cfg));
     configs.push_back(std::move(cfg));
   }
 
@@ -180,5 +181,5 @@ void assignCIPLabels(ROMol &mol) {
   assignCIPLabels(mol, atoms, bonds);
 }
 
-}  // namespace CIPLabeler
-}  // namespace RDKit
+} // namespace CIPLabeler
+} // namespace RDKit
