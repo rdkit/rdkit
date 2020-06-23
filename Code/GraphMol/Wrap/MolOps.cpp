@@ -37,14 +37,13 @@ using boost_adaptbx::python::streambuf;
 namespace RDKit {
 std::string molToSVG(const ROMol &mol, unsigned int width, unsigned int height,
                      python::object pyHighlightAtoms, bool kekulize,
-                     unsigned int lineWidthMult, unsigned int fontSize,
+                     unsigned int lineWidthMult,
                      bool includeAtomCircles, int confId) {
   RDUNUSED_PARAM(kekulize);
   std::unique_ptr<std::vector<int>> highlightAtoms =
       pythonObjectToVect(pyHighlightAtoms, static_cast<int>(mol.getNumAtoms()));
   std::stringstream outs;
   MolDraw2DSVG drawer(width, height, outs);
-  drawer.setFontSize(fontSize / 24.);
   drawer.setLineWidth(drawer.lineWidth() * lineWidthMult);
   drawer.drawOptions().circleAtoms = includeAtomCircles;
   drawer.drawMolecule(mol, highlightAtoms.get(), nullptr, nullptr, confId);
