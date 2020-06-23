@@ -33,6 +33,7 @@ struct SupplierOptions {
   int confId3D = 0;
 };
 
+//! determines whether file and compression format are valid
 bool valid(std::string& fileFormat, std::string& compressionFormat) {
   //! current formats supported
   std::vector<std::string> fileFormats{"sdf", "mae", "smi", "csv",
@@ -56,7 +57,10 @@ bool valid(std::string& fileFormat, std::string& compressionFormat) {
         std::find(compressionFormats.begin(), compressionFormats.end(),
                   compressionFormat) != compressionFormats.end();
 
-    //! if the compression type is not valid then
+    //! if the compression type is not valid then we could be in the case
+    //! where the file name is of the form *.2.txt and so set the file format
+    //! (which was earlier .2) as the compression format (which was earlier
+    //! .txt) and set the compression format as an empty string
     if (!flag_compressionFormat) {
       fileFormat = compressionFormat;
       compressionFormat = "";
@@ -67,6 +71,7 @@ bool valid(std::string& fileFormat, std::string& compressionFormat) {
   return flag_fileFormat;
 }
 
+//! returns the file name givens the file path
 std::string getFileName(const std::string path) {
   char delimiter = '/';
   std::string fname = "";
@@ -77,6 +82,7 @@ std::string getFileName(const std::string path) {
   return fname;
 }
 
+//! given file path determines the file and compression format
 void determineFormat(const std::string path, std::string& fileFormat,
                      std::string& compressionFormat) {
   std::string fileName = getFileName(path);
@@ -106,14 +112,20 @@ void determineFormat(const std::string path, std::string& fileFormat,
   }
 }
 
+//! returns a MolSupplier object based on the file name instantiated
+//! with the relevant options provided in the SupplierOptions struct
+/*!
+    <b>Note:</b>
+      - the caller owns the memory and therefore the pointer must be deleted
+*/
 MolSupplier* getSupplier(const std::string& path,
                          const struct SupplierOptions opt) {
   std::string fileFormat = "";
   std::string compressionFormat = "";
-  determineFormat(
-      path, fileFormat,
-      compressionFormat);  //! get the file and compression format form the path
+  //! get the file and compression format form the path
+  determineFormat(path, fileFormat, compressionFormat);
 
+  //! Handle the case when there is no compression format
   if (compressionFormat.empty()) {
     std::ifstream* strm = new std::ifstream(path.c_str());
     if (fileFormat.compare("sdf") == 0) {
@@ -163,7 +175,9 @@ MolSupplier* getSupplier(const std::string& path,
                              opt.confId2D, opt.confId3D, opt.sanitize);
       return tdtsup;
     }
-  } else {
+  }
+  //! Handle the case when there is a compression format
+  else {
     auto* strm = new gzstream(path);
 
     if (fileFormat == "sdf") {
