@@ -34,6 +34,7 @@ void PositionVariationOp::initFromMol() {
               "atom");
         }
       }
+      d_dummiesAtEachPoint.push_back(bond->getOtherAtomIdx(atom->getIdx()));
       std::stringstream iss(endpts);
       std::vector<unsigned int> oats =
           RDKit::SGroupParsing::ParseV3000Array<unsigned int>(iss);
@@ -81,7 +82,13 @@ ROMol *PositionVariationOp::operator()(const std::vector<size_t> &which) const {
     }
     res->addBond(begAtomIdx, endAtomIdx, Bond::BondType::SINGLE);
   }
-
+  // now remove the dummies:
+  std::vector<size_t> atsToRemove = d_dummiesAtEachPoint;
+  std::sort(atsToRemove.begin(), atsToRemove.end());
+  for (auto riter = atsToRemove.rbegin(); riter != atsToRemove.rend();
+       ++riter) {
+    res->removeAtom(*riter);
+  }
   return static_cast<ROMol *>(res);
 }
 

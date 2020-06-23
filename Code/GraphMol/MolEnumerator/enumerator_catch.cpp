@@ -30,7 +30,7 @@ M  V30 BEGIN ATOM
 M  V30 1 C -1.7083 2.415 0 0
 M  V30 2 C -3.042 1.645 0 0
 M  V30 3 C -3.042 0.105 0 0
-M  V30 4 C -1.7083 -0.665 0 0
+M  V30 4 N -1.7083 -0.665 0 0
 M  V30 5 C -0.3747 0.105 0 0
 M  V30 6 C -0.3747 1.645 0 0
 M  V30 7 * -0.8192 1.3883 0 0
@@ -57,9 +57,16 @@ M  END)CTAB"_ctab;
     REQUIRE(vcnts.size() == 1);
     CHECK(vcnts[0] == 3);
 
-    std::vector<size_t> elems{1};
-    std::unique_ptr<ROMol> newmol(op(elems));
-    CHECK(MolToSmiles(*newmol) == "");
+    {
+      std::vector<size_t> elems{1};
+      std::unique_ptr<ROMol> newmol(op(elems));
+      CHECK(MolToSmiles(*newmol) == "COc1ccccn1");
+    }
+    {
+      std::vector<size_t> elems{2};
+      std::unique_ptr<ROMol> newmol(op(elems));
+      CHECK(MolToSmiles(*newmol) == "COc1cccnc1");
+    }
   }
 }
 

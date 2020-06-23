@@ -58,6 +58,7 @@ class RDKIT_MOLENUMERATOR_EXPORT PositionVariationOp : public MolEnumeratorOp {
   std::shared_ptr<ROMol> dp_mol;
   std::vector<std::pair<unsigned int, std::vector<unsigned int>>>
       d_variationPoints;
+  std::vector<size_t> d_dummiesAtEachPoint;
   void initFromMol();
 };
 
