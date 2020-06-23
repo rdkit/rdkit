@@ -29,18 +29,22 @@ using namespace ForceFields;
 namespace python = boost::python;
 
 #ifdef RDK_HAS_EIGEN3
-void ANIAddAtomContrib(PyForceField *self, int *speciesVec, int atomType,
-                       unsigned int atomIdx, unsigned int numAtoms,
-                       unsigned int numLayers, unsigned int ensembleSize,
-                       std::string modelType) {
+void ANIAddAtomContrib(PyForceField *self, python::list speciesVec,
+                       int atomType, unsigned int atomIdx,
+                       unsigned int numAtoms, unsigned int numLayers,
+                       unsigned int ensembleSize, python::str modelType) {
   ANI::ANIAtomContrib *contrib;
   Eigen::VectorXi speciesVector(numAtoms);
   for (unsigned int i = 0; i < numAtoms; i++) {
-    speciesVector(i) = speciesVec[i];
+    speciesVector(i) = python::extract<int>(speciesVec[i]);
+  }
+  std::string modelTypeStr = "";
+  for (unsigned int i = 0; i < python::len(modelType); i++) {
+    modelTypeStr += python::extract<std::string>(modelType[i]);
   }
   contrib = new ANI::ANIAtomContrib(self->field.get(), atomType, atomIdx,
                                     speciesVector, numAtoms, numLayers,
-                                    ensembleSize, modelType);
+                                    ensembleSize, modelTypeStr);
   self->field->contribs().push_back(ForceFields::ContribPtr(contrib));
 }
 #endif

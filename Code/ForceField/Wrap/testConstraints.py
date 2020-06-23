@@ -336,6 +336,21 @@ M  END"""
     self.assertTrue(r == 0)
     fq = conf.GetAtomPosition(1)
     self.assertTrue((fp - fq).Length() < 0.01)
+  
+  def testANIForceField(self):
+    self.dirName = os.path.join(RDConfig.RDBaseDir, 'Code', 'GraphMol', 'ForceFieldHelpers', 'UFF',
+                                'test_data')
+    fName = os.path.join(self.dirName, 'CH4.mol')
+    m = Chem.MolFromMolFile(fName, True, False)
+    ff = ChemicalForceFields.ANIGetMoleculeForceField(m, "ANI-1ccx", 8)
+    self.failUnless(ff)
+    positions = ff.Positions()
+    savedPos = list(positions)
+    e1 = ff.CalcEnergy(savedPos)
+    ff.AddANIAtomContrib([0, 0, 0, 1, 0], 1, 3, 5, 0, 8, "ANI-1ccx")
+    e2 = ff.CalcEnergy(savedPos)
+
+    self.assertAlmostEqual(38.0375 - abs(e2 - e1), 0.0748, 3)    
 
 
 if __name__ == '__main__':

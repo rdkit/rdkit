@@ -500,7 +500,15 @@ RETURNS: a list of (not_converged, energy) 2-tuples. \n\
                python::arg("numThreads") = 1, python::arg("maxIters") = 200),
               docString.c_str());
 
-  docString = "";
+  docString =
+      "returns an ANI force field for a molecule\n\n\
+  \n\
+  Arguments:\n\n\
+      - mol : the molecule of interest\n\
+      - modelType : Type of ANI based model\n\
+      - ensembleSize : Number of models inside the ensemble\n\
+      - confId : Conformer ID\n\
+      \n";
   python::def("ANIGetMoleculeForceField", RDKit::ANIGetMoleculeForceField,
               (python::arg("mol"), python::arg("modelType"),
                python::arg("ensembleSize"), python::arg("confId") = -1),
