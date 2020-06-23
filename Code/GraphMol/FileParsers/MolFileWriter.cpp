@@ -1,5 +1,5 @@
 //
-//  Copyright (C) 2003-2017 Greg Landrum and Rational Discovery LLC
+//  Copyright (C) 2003-2020 Greg Landrum and Rational Discovery LLC
 //
 //   @@ All Rights Reserved @@
 //  This file is part of the RDKit.
@@ -32,6 +32,8 @@
 #include <GraphMol/SmilesParse/SmilesWrite.h>
 #include <GraphMol/SmilesParse/SmartsWrite.h>
 #include <GraphMol/Depictor/RDDepictor.h>
+
+#include <boost/algorithm/string.hpp>
 
 using namespace RDKit::SGroupWriting;
 
@@ -1326,6 +1328,17 @@ std::string outputMolToMolBlock(const RWMol &tmol, int confId,
         res += GetV3000MolFileSGroupLines(++idx, sgroup);
       }
       res += "M  V30 END SGROUP\n";
+    }
+
+    if (tmol.hasProp(common_properties::molFileLinkNodes)) {
+      auto pval =
+          tmol.getProp<std::string>(common_properties::molFileLinkNodes);
+
+      std::vector<std::string> linknodes;
+      boost::split(linknodes, pval, boost::is_any_of("|"));
+      for (const auto &linknode : linknodes) {
+        res += "M  V30 LINKNODE " + linknode + "\n";
+      }
     }
 
     appendEnhancedStereoGroups(res, tmol);

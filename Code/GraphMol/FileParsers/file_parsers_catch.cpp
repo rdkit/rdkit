@@ -1529,3 +1529,63 @@ TEST_CASE("XBHEAD and XBCORR causing parser failures", "[bug][reader]") {
     CHECK(mb.find("XBCORR=(4 6 6 1 1)") != std::string::npos);
   }
 }
+TEST_CASE("LINKNODE information being ignored", "[ctab][bug]") {
+  SECTION("v3000") {
+    auto mol = R"CTAB(
+  Mrv2007 06212005162D          
+
+  0  0  0     0  0            999 V3000
+M  V30 BEGIN CTAB
+M  V30 COUNTS 5 5 0 0 0
+M  V30 BEGIN ATOM
+M  V30 1 C -3.25 12.2683 0 0
+M  V30 2 C -4.4959 11.3631 0 0
+M  V30 3 C -4.02 9.8986 0 0
+M  V30 4 C -2.48 9.8986 0 0
+M  V30 5 C -2.0041 11.3631 0 0
+M  V30 END ATOM
+M  V30 BEGIN BOND
+M  V30 1 1 1 2
+M  V30 2 1 2 3
+M  V30 3 1 3 4
+M  V30 4 1 4 5
+M  V30 5 1 1 5
+M  V30 END BOND
+M  V30 LINKNODE 1 3 2 1 2 1 5
+M  V30 LINKNODE 1 4 2 4 3 4 5
+M  V30 END CTAB
+M  END
+)CTAB"_ctab;
+    REQUIRE(mol);
+    CHECK(mol->getProp<std::string>(common_properties::molFileLinkNodes) ==
+          "1 3 2 1 2 1 5|1 4 2 4 3 4 5");
+    auto molb = MolToV3KMolBlock(*mol);
+    CHECK(molb.find("LINKNODE 1 3 2 1 2 1 5") != std::string::npos);
+    CHECK(molb.find("LINKNODE 1 4 2 4 3 4 5") != std::string::npos);
+  }
+  SECTION("v2000") {
+    auto mol = R"CTAB(
+  Mrv2007 06222015182D          
+
+  5  5  0  0  0  0            999 V2000
+   -1.7411    6.5723    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -2.4085    6.0874    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -2.1536    5.3028    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -1.3286    5.3028    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -1.0736    6.0874    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+  1  2  1  0  0  0  0
+  2  3  1  0  0  0  0
+  3  4  1  0  0  0  0
+  4  5  1  0  0  0  0
+  1  5  1  0  0  0  0
+M  LIN  2   1   3   2   5   4   4   3   5
+M  END
+)CTAB"_ctab;
+    REQUIRE(mol);
+    CHECK(mol->getProp<std::string>(common_properties::molFileLinkNodes) ==
+          "1 3 2 1 2 1 5|1 4 2 4 3 4 5");
+    auto molb = MolToV3KMolBlock(*mol);
+    CHECK(molb.find("LINKNODE 1 3 2 1 2 1 5") != std::string::npos);
+    CHECK(molb.find("LINKNODE 1 4 2 4 3 4 5") != std::string::npos);
+  }
+}
