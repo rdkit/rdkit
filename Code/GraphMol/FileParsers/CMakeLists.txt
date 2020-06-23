@@ -11,9 +11,9 @@ if(WIN32)
      add_definitions("-DBOOST_IOSTREAMS_DYN_LINK")
   endif()
 else()
-  find_package(Boost ${RDK_BOOST_VERSION} COMPONENTS system iostreams REQUIRED)
+  find_package(Boost ${RDK_BOOST_VERSION} COMPONENTS system iostreams filesystem REQUIRED)
   set (link_iostreams ${Boost_LIBRARIES})
-  if (NOT Boost_USE_STATIC_LIBS)
+	if (NOT Boost_USE_STATIC_LIBS)
      add_definitions("-DBOOST_IOSTREAMS_DYN_LINK")
   endif()
 endif()
@@ -53,6 +53,7 @@ rdkit_headers(FileParsers.h
               MolSupplier.h
               MolWriters.h
               SequenceParsers.h SequenceWriters.h
+              GeneralFileReader.h
               DEST GraphMol/FileParsers)
 
 rdkit_test(fileParsersTest1 test1.cpp
@@ -62,6 +63,9 @@ rdkit_test(fileParsersTest1 test1.cpp
 
 rdkit_test(testMolSupplier testMolSupplier.cpp
            LINK_LIBRARIES  FileParsers RDStreams)
+
+rdkit_test(testGeneralFileReader testGeneralFileReader.cpp
+					LINK_LIBRARIES FileParsers RDStreams)
 
 rdkit_test(testMolWriter testMolWriter.cpp LINK_LIBRARIES FileParsers )
 
