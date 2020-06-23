@@ -33,6 +33,7 @@ class RDKIT_MOLENUMERATOR_EXPORT MolEnumeratorOp {
 };
 
 class RDKIT_MOLENUMERATOR_EXPORT PositionVariationOp : public MolEnumeratorOp {
+ public:
   PositionVariationOp(const std::shared_ptr<ROMol> mol) : dp_mol(mol) {
     PRECONDITION(mol, "bad molecule");
     initFromMol();
@@ -49,11 +50,9 @@ class RDKIT_MOLENUMERATOR_EXPORT PositionVariationOp : public MolEnumeratorOp {
     dp_mol = other.dp_mol;
     d_variationPoints = other.d_variationPoints;
   };
+  std::vector<size_t> getVariationCounts() const override;
 
-  std::vector<size_t> getVariationCounts() const override { return {}; };
-  ROMol *operator()(const std::vector<size_t> &which) const override {
-    return nullptr;
-  };
+  ROMol *operator()(const std::vector<size_t> &which) const override;
 
  private:
   std::shared_ptr<ROMol> dp_mol;
