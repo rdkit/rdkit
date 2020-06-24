@@ -14,6 +14,7 @@
 #include <GraphMol/Substruct/SubstructMatch.h>
 #include <DataStructs/ExplicitBitVect.h>
 
+
 namespace RDKit {
 
 class RWMol;
@@ -35,7 +36,7 @@ class RDKIT_TAUTOMERQUERY_EXPORT TautomerQuery {
 
   // tests if a match to the template matches a specific tautomer
   bool matchTautomer(const ROMol &mol, const ROMol &tautomer,
-                     const MatchVectType &match,
+                     const std::vector<unsigned int> &match,
                      const SubstructMatchParameters &params) const;
 
  public:
@@ -74,6 +75,8 @@ class RDKIT_TAUTOMERQUERY_EXPORT TautomerQuery {
   const std::vector<size_t> getModifiedBonds() const { return d_modifiedBonds; }
 
   ~TautomerQuery();
+
+  friend class TautomerQueryMatcher;
 };
 
 // so we can use the templates in Code/GraphMol/Substruct/SubstructMatch.h

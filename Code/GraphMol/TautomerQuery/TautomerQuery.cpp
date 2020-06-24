@@ -6,6 +6,7 @@
 
 #include "TautomerQuery.h"
 #include <boost/smart_ptr.hpp>
+#include <functional>
 #include <GraphMol/RDKitBase.h>
 #include <GraphMol/MolStandardize/Tautomer.h>
 #include <GraphMol/Bond.h>
@@ -24,11 +25,6 @@
 namespace {
 
 using namespace RDKit;
-
-int getTargetIdx(int queryIdx, const MatchVectType &match) {
-  const auto pair = match[queryIdx];
-  return pair.second;
-}
 
 // Adapted from Code/GraphMol/Substruct/SubstructUtils.cpp#removeDuplicates
 void removeTautomerDuplicates(std::vector<MatchVectType> &matches,
@@ -70,6 +66,46 @@ void removeTautomerDuplicates(std::vector<MatchVectType> &matches,
 }  // namespace
 
 namespace RDKit {
+
+class TautomerQueryMatcher {
+ private:
+  const TautomerQuery &d_tautomerQuery;
+  const SubstructMatchParameters &d_params;
+  std::vector<ROMOL_SPTR> *d_matchingTautomers;
+
+ public:
+  TautomerQueryMatcher(const TautomerQuery &tautomerQuery,
+                       const SubstructMatchParameters &params,
+                       std::vector<ROMOL_SPTR> *matchingTautomers)
+      : d_tautomerQuery(tautomerQuery),
+        d_params(params),
+        d_matchingTautomers(matchingTautomers) {}
+
+  bool match(const ROMol &mol, const std::vector<unsigned int> &match) {
+#ifdef VERBOSE
+    std::cout << "Checking template match" << std::endl;
+#endif
+
+    for (auto tautomer : d_tautomerQuery.getTautomers()) {
+#ifdef VERBOSE
+      std::cout << "Checking Tautomer " << MolToSmiles(*tautomer) << std::endl;
+#endif
+      if (d_tautomerQuery.matchTautomer(mol, *tautomer, match, d_params)) {
+        auto matchingTautomer = d_params.extraFinalCheck
+                                    ? d_params.extraFinalCheck(mol, match)
+                                    : true;
+        if (matchingTautomer) {
+#ifdef VERBOSE
+          std::cout << "Got Match " << std::endl;
+#endif
+          if (d_matchingTautomers) d_matchingTautomers->push_back(tautomer);
+        }
+        return matchingTautomer;
+      }
+    }
+    return false;
+  }
+};
 
 TautomerQuery::TautomerQuery(const std::vector<ROMOL_SPTR> &tautomers,
                              const ROMol *const templateMolecule,
@@ -134,11 +170,12 @@ TautomerQuery *TautomerQuery::fromMol(
 }
 
 bool TautomerQuery::matchTautomer(
-    const ROMol &mol, const ROMol &tautomer, const MatchVectType &match,
+    const ROMol &mol, const ROMol &tautomer,
+    const std::vector<unsigned int> &match,
     const SubstructMatchParameters &params) const {
   for (auto idx : d_modifiedAtoms) {
     const auto queryAtom = tautomer.getAtomWithIdx(idx);
-    const auto targetAtom = mol.getAtomWithIdx(getTargetIdx(idx, match));
+    const auto targetAtom = mol.getAtomWithIdx(match[idx]);
 #ifdef VERBOSE
     std::cout << "Query atom " << queryAtom->getSymbol() << " target atom "
               << targetAtom->getSymbol() << std::endl;
@@ -155,8 +192,8 @@ bool TautomerQuery::matchTautomer(
     const auto queryBond = tautomer.getBondWithIdx(idx);
     const auto beginIdx = queryBond->getBeginAtomIdx();
     const auto endIdx = queryBond->getEndAtomIdx();
-    const auto targetBeginIdx = getTargetIdx(beginIdx, match);
-    const auto targetEndIdx = getTargetIdx(endIdx, match);
+    const auto targetBeginIdx = match[beginIdx];
+    const auto targetEndIdx = match[endIdx];
     const auto targetBond =
         mol.getBondBetweenAtoms(targetBeginIdx, targetEndIdx);
 #ifdef VERBOSE
@@ -183,7 +220,6 @@ std::vector<MatchVectType> TautomerQuery::substructOf(
   if (matchingTautomers) {
     matchingTautomers->clear();
   }
-  std::vector<MatchVectType> matches;
 
 #ifdef VERBOSE
   std::cout << "Tautomer search with query " << MolToSmiles(*d_templateMolecule)
@@ -191,40 +227,22 @@ std::vector<MatchVectType> TautomerQuery::substructOf(
             << params.maxMatches << std::endl;
 #endif
   SubstructMatchParameters templateParams(params);
-  templateParams.maxMatches = 1000;
+  // need to check all mappings of template to target
   templateParams.uniquify = false;
-  const auto templateMatches =
+
+  TautomerQueryMatcher tautomerQueryMatcher(*this, params,
+                                                  matchingTautomers);
+  // use this functor as a final check to see if any tautomer matches the target
+  auto checker = [&tautomerQueryMatcher](
+                     const ROMol &mol,
+                     const std::vector<unsigned int> &match) mutable {
+    return tautomerQueryMatcher.match(mol, match);
+  };
+  templateParams.extraFinalCheck = checker;
+
+  auto matches =
       RDKit::SubstructMatch(mol, *d_templateMolecule, templateParams);
-#ifdef VERBOSE
-  std::cout << "Number of template matches " << templateMatches.size()
-            << std::endl;
-#endif
 
-  // TODO create a functor so that I dont have to get all template matches
-  // before evaluating tautomer matches.
-  for (auto templateMatch : templateMatches) {
-#ifdef VERBOSE
-    std::cout << "Checking template match" << std::endl;
-#endif
-    for (auto tautomer : d_tautomers) {
-#ifdef VERBOSE
-      std::cout << "Checking Tautomer " << MolToSmiles(*tautomer) << std::endl;
-#endif
-      if (matchTautomer(mol, *tautomer, templateMatch, params)) {
-#ifdef VERBOSE
-        std::cout << "Got Match " << std::endl;
-#endif
-        matches.push_back(templateMatch);
-        if (matchingTautomers) {
-          matchingTautomers->push_back(tautomer);
-        }
-        if (matches.size() == params.maxMatches) goto searchFinished;
-        break;
-      }
-    }
-  }
-
-searchFinished:
 #ifdef VERBOSE
   std::cout << "Found " << matches.size() << " matches " << std::endl;
 #endif
@@ -232,7 +250,8 @@ searchFinished:
   if (params.uniquify && matches.size() > 1) {
     removeTautomerDuplicates(matches, matchingTautomers, mol.getNumAtoms());
 #ifdef VERBOSE
-    std::cout << "After removing duplicates " << matches.size() << " matches " << std::endl;
+    std::cout << "After removing duplicates " << matches.size() << " matches "
+              << std::endl;
 #endif
   }
   return matches;

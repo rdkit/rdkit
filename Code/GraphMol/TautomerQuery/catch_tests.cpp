@@ -31,8 +31,10 @@ TEST_CASE("TEMPLATE_ERROR") {
   MatchVectType matchVect;
   for (auto taut : tautomerQuery->getTautomers()) {
     auto test = SubstructMatch(*target, *taut, matchVect);
+#ifdef VERBOSE
     std::cout << "Tautomer " << MolToSmiles(*taut) << " match " << test
               << std::endl;
+#endif
     if (test) match = true;
   }
   CHECK(match);
@@ -95,7 +97,6 @@ TEST_CASE("DIFFERENT_TO_ENUMERATED") {
 }
 
 TEST_CASE("SIMPLE_ERROR") {
-  // test shows we need to set maxMatches > 1 when matching template
   auto mol = "CC=O"_smiles;
   REQUIRE(mol);
   auto tautomerQuery =
