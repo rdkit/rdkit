@@ -714,7 +714,7 @@ BOOST_PYTHON_MODULE(rdMolAlign) {
        python::arg("refId") = -1, python::arg("map") = python::object(),
        python::arg("maxMatches") = 1000000),
       docString.c_str());
-  
+
   docString =
       "Returns the RMS between two molecules, taking symmetry into account.\n\
       \n\

@@ -23,24 +23,23 @@
 #include <boost/tokenizer.hpp>
 #include <Geometry/point.h>
 
-typedef boost::tokenizer<boost::char_separator<char> > tokenizer;
+typedef boost::tokenizer<boost::char_separator<char>> tokenizer;
 
 namespace ForceFields {
 namespace MMFF {
 
-extern const std::uint8_t defaultMMFFArom[];
+const std::vector<std::uint8_t> defaultMMFFArom = {
+    37, 38, 39, 44, 58, 59, 63, 64, 65, 66, 69, 76, 78, 79, 80, 81, 82};
 
-MMFFAromCollection::MMFFAromCollection(const std::uint8_t *mmffArom) {
+MMFFAromCollection::MMFFAromCollection(
+    const std::vector<std::uint8_t> *mmffArom) {
   if (!mmffArom) {
-    mmffArom = defaultMMFFArom;
+    mmffArom = &defaultMMFFArom;
   }
-  for (unsigned int i = 0; i < sizeof(mmffArom) / sizeof(std::uint8_t); ++i) {
-    d_params.push_back(mmffArom[i]);
-  }
+  d_params.clear();
+  d_params.resize(mmffArom->size());
+  std::copy(mmffArom->begin(), mmffArom->end(), d_params.begin());
 }
-
-const std::uint8_t defaultMMFFArom[] = {37, 38, 39, 44, 58, 59, 63, 64, 65,
-                                          66, 69, 76, 78, 79, 80, 81, 82};
 
 extern const std::string defaultMMFFDef;
 

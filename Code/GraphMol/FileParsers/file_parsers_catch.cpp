@@ -1453,3 +1453,139 @@ TEST_CASE(
     CHECK(sgroups[2].getAttachPoints().size() == 2);
   }
 }
+
+TEST_CASE(
+    "github #3207: Attachment point info not being read from V2000 mol blocks",
+    "[ctab][bug]") {
+  SECTION("ATTCHPT") {
+    auto mol = R"CTAB(
+  Mrv1824 06092009122D          
+
+  3  2  0  0  0  0            999 V2000
+   -8.9061    3.8393    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -8.1917    4.2518    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -7.4772    3.8393    0.0000 N   0  0  0  0  0  0  0  0  0  0  0  0
+  1  2  1  0  0  0  0
+  2  3  1  0  0  0  0
+M  APO  2   1   2   2   1
+M  END
+)CTAB"_ctab;
+    REQUIRE(mol);
+    CHECK(mol->getAtomWithIdx(0)->getProp<int>(
+              common_properties::molAttachPoint) == 2);
+    CHECK(mol->getAtomWithIdx(1)->getProp<int>(
+              common_properties::molAttachPoint) == 1);
+    auto molb = MolToV3KMolBlock(*mol);
+    CHECK(molb.find("ATTCHPT=1") != std::string::npos);
+    CHECK(molb.find("ATTCHPT=2") != std::string::npos);
+  }
+  SECTION("Val=-1") {
+    auto mol = R"CTAB(
+  Mrv1824 06092009122D          
+
+  3  2  0  0  0  0            999 V2000
+   -8.9061    3.8393    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -8.1917    4.2518    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -7.4772    3.8393    0.0000 N   0  0  0  0  0  0  0  0  0  0  0  0
+  1  2  1  0  0  0  0
+  2  3  1  0  0  0  0
+M  APO  2   1   3   2   1
+M  END
+)CTAB"_ctab;
+    REQUIRE(mol);
+    CHECK(mol->getAtomWithIdx(0)->getProp<int>(
+              common_properties::molAttachPoint) == -1);
+    CHECK(mol->getAtomWithIdx(1)->getProp<int>(
+              common_properties::molAttachPoint) == 1);
+    auto molb = MolToV3KMolBlock(*mol);
+    CHECK(molb.find("ATTCHPT=1") != std::string::npos);
+    CHECK(molb.find("ATTCHPT=-1") != std::string::npos);
+  }
+}
+
+TEST_CASE("XBHEAD and XBCORR causing parser failures", "[bug][reader]") {
+  std::string rdbase = getenv("RDBASE");
+  SECTION("basics") {
+    std::string fName =
+        rdbase +
+        "/Code/GraphMol/FileParsers/sgroup_test_data/repeat_groups_query1.mol";
+    std::unique_ptr<RWMol> mol(MolFileToMol(fName));
+    REQUIRE(mol);
+    const auto &sgroups = getSubstanceGroups(*mol);
+    CHECK(sgroups.size() == 1);
+    CHECK(sgroups[0].hasProp("TYPE"));
+    CHECK(sgroups[0].getProp<std::string>("TYPE") == "SRU");
+    CHECK(sgroups[0].hasProp("XBHEAD"));
+    auto v = sgroups[0].getProp<std::vector<unsigned int>>("XBHEAD");
+    CHECK(v.size() == 2);
+    CHECK(v[0] == 5);
+    CHECK(v[1] == 0);
+
+    CHECK(sgroups[0].hasProp("XBCORR"));
+    CHECK(sgroups[0].getProp<std::vector<unsigned int>>("XBCORR").size() == 4);
+
+    auto mb = MolToV3KMolBlock(*mol);
+    CHECK(mb.find("XBHEAD=(2 6 1)") != std::string::npos);
+    CHECK(mb.find("XBCORR=(4 6 6 1 1)") != std::string::npos);
+  }
+}
+TEST_CASE("LINKNODE information being ignored", "[ctab][bug]") {
+  SECTION("v3000") {
+    auto mol = R"CTAB(
+  Mrv2007 06212005162D          
+
+  0  0  0     0  0            999 V3000
+M  V30 BEGIN CTAB
+M  V30 COUNTS 5 5 0 0 0
+M  V30 BEGIN ATOM
+M  V30 1 C -3.25 12.2683 0 0
+M  V30 2 C -4.4959 11.3631 0 0
+M  V30 3 C -4.02 9.8986 0 0
+M  V30 4 C -2.48 9.8986 0 0
+M  V30 5 C -2.0041 11.3631 0 0
+M  V30 END ATOM
+M  V30 BEGIN BOND
+M  V30 1 1 1 2
+M  V30 2 1 2 3
+M  V30 3 1 3 4
+M  V30 4 1 4 5
+M  V30 5 1 1 5
+M  V30 END BOND
+M  V30 LINKNODE 1 3 2 1 2 1 5
+M  V30 LINKNODE 1 4 2 4 3 4 5
+M  V30 END CTAB
+M  END
+)CTAB"_ctab;
+    REQUIRE(mol);
+    CHECK(mol->getProp<std::string>(common_properties::molFileLinkNodes) ==
+          "1 3 2 1 2 1 5|1 4 2 4 3 4 5");
+    auto molb = MolToV3KMolBlock(*mol);
+    CHECK(molb.find("LINKNODE 1 3 2 1 2 1 5") != std::string::npos);
+    CHECK(molb.find("LINKNODE 1 4 2 4 3 4 5") != std::string::npos);
+  }
+  SECTION("v2000") {
+    auto mol = R"CTAB(
+  Mrv2007 06222015182D          
+
+  5  5  0  0  0  0            999 V2000
+   -1.7411    6.5723    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -2.4085    6.0874    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -2.1536    5.3028    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -1.3286    5.3028    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -1.0736    6.0874    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+  1  2  1  0  0  0  0
+  2  3  1  0  0  0  0
+  3  4  1  0  0  0  0
+  4  5  1  0  0  0  0
+  1  5  1  0  0  0  0
+M  LIN  2   1   3   2   5   4   4   3   5
+M  END
+)CTAB"_ctab;
+    REQUIRE(mol);
+    CHECK(mol->getProp<std::string>(common_properties::molFileLinkNodes) ==
+          "1 3 2 1 2 1 5|1 4 2 4 3 4 5");
+    auto molb = MolToV3KMolBlock(*mol);
+    CHECK(molb.find("LINKNODE 1 3 2 1 2 1 5") != std::string::npos);
+    CHECK(molb.find("LINKNODE 1 4 2 4 3 4 5") != std::string::npos);
+  }
+}

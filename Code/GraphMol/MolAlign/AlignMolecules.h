@@ -131,7 +131,6 @@ RDKIT_MOLALIGN_EXPORT double getBestRMS(
     const std::vector<MatchVectType> &map = std::vector<MatchVectType>(),
     int maxMatches = 1e6);
 
-
 //! Returns the RMS between two molecules, taking symmetry into account.
 /*!
   This function will attempt to align all permutations of matching atom
@@ -154,9 +153,9 @@ RDKIT_MOLALIGN_EXPORT double getBestRMS(
   Best RMSD value found
 */
 RDKIT_MOLALIGN_EXPORT double CalcRMS(
-    ROMol &probeMol, const ROMol &refMol, int prbCid=-1, int refCid=-1,
-    const std::vector<MatchVectType> &map = std::vector<MatchVectType>(), int maxMatches=1e6,
-    const RDNumeric::DoubleVector *weights = nullptr);
+    ROMol &probeMol, const ROMol &refMol, int prbCid = -1, int refCid = -1,
+    const std::vector<MatchVectType> &map = std::vector<MatchVectType>(),
+    int maxMatches = 1e6, const RDNumeric::DoubleVector *weights = nullptr);
 
 //! Align the conformations of a molecule using a common set of atoms. If
 // the molecules contains queries, then the queries must also match exactly.

@@ -12,6 +12,7 @@
 #include <boost/algorithm/string.hpp>
 #include <boost/tokenizer.hpp>
 #include <boost/algorithm/string/trim.hpp>
+#include <boost/format.hpp>
 #include <RDGeneral/BoostEndInclude.h>
 
 #include "FileParsers.h"
@@ -871,6 +872,151 @@ void ParseMarvinSmartsLine(RWMol *mol, const std::string &text,
   }
 }
 
+void ParseAttachPointLine(RWMol *mol, const std::string &text,
+                          unsigned int line) {
+  PRECONDITION(mol, "bad mol");
+  PRECONDITION(text.substr(0, 6) == std::string("M  APO"), "bad APO line");
+
+  unsigned int nent;
+  try {
+    nent = FileParserUtils::stripSpacesAndCast<unsigned int>(text.substr(6, 3));
+  } catch (boost::bad_lexical_cast &) {
+    std::ostringstream errout;
+    errout << "Cannot convert '" << text.substr(6, 3) << "' to int on line "
+           << line;
+    throw FileParseException(errout.str());
+  }
+  unsigned int spos = 9;
+  for (unsigned int ie = 0; ie < nent; ie++) {
+    unsigned int aid = 0;
+    int val = 0;
+    try {
+      aid = FileParserUtils::stripSpacesAndCast<unsigned int>(
+          text.substr(spos, 4));
+      spos += 4;
+      if (text.size() >= spos + 4 && text.substr(spos, 4) != "    ") {
+        val = FileParserUtils::stripSpacesAndCast<int>(text.substr(spos, 4));
+      }
+      if (!aid || aid > mol->getNumAtoms()) {
+        std::ostringstream errout;
+        errout << "Bad APO specification on line " << line;
+        throw FileParseException(errout.str());
+      }
+      spos += 4;
+      --aid;
+      Atom *atom = mol->getAtomWithIdx(aid);
+      if (!atom) {
+        std::ostringstream errout;
+        errout << "Atom " << aid << " from APO specification on line " << line
+               << " not found";
+        throw FileParseException(errout.str());
+      } else {
+        if (val < 0 || val > 3) {
+          std::ostringstream errout;
+          errout << "Value " << val << " from APO specification on line "
+                 << line << " is invalid";
+          throw FileParseException(errout.str());
+        } else if (val) {
+          if (val == 3) {
+            // this is -1 in v3k mol blocks, so use that:
+            val = -1;
+          }
+          atom->setProp(common_properties::molAttachPoint, val);
+        }
+      }
+    } catch (boost::bad_lexical_cast &) {
+      std::ostringstream errout;
+      errout << "Cannot convert '" << text.substr(spos, 4)
+             << "' to int on line " << line;
+      throw FileParseException(errout.str());
+    }
+  }
+}
+
+// the format differs between V2000 and V3000, so we have to do a bit of
+// translation here
+void ParseLinkNodeLine(RWMol *mol, const std::string &text, unsigned int line) {
+  PRECONDITION(mol, "bad mol");
+  PRECONDITION(text.substr(0, 6) == std::string("M  LIN"), "bad LIN line");
+
+  unsigned int nent;
+  try {
+    nent = FileParserUtils::stripSpacesAndCast<unsigned int>(text.substr(6, 3));
+  } catch (boost::bad_lexical_cast &) {
+    std::ostringstream errout;
+    errout << "Cannot convert '" << text.substr(6, 3) << "' to int on line "
+           << line;
+    throw FileParseException(errout.str());
+  }
+  std::string propVal = "";
+  unsigned int spos = 9;
+  for (unsigned int ie = 0; ie < nent; ie++) {
+    try {
+      auto aid = FileParserUtils::stripSpacesAndCast<unsigned int>(
+          text.substr(spos, 4));
+      if (!aid || aid > mol->getNumAtoms()) {
+        std::ostringstream errout;
+        errout << "LIN specification has bad atom idx on line " << line;
+        throw FileParseException(errout.str());
+      }
+      spos += 4;
+
+      if (text.size() < spos + 4 || text.substr(spos, 4) == "    ") {
+        std::ostringstream errout;
+        errout << "LIN specification missing repeat count on line " << line;
+        throw FileParseException(errout.str());
+      }
+      auto repeatCount = FileParserUtils::stripSpacesAndCast<unsigned int>(
+          text.substr(spos, 4));
+      spos += 4;
+      if (repeatCount < 2) {
+        std::ostringstream errout;
+        errout << "LIN specification: repeat count must be >=2 on line "
+               << line;
+        throw FileParseException(errout.str());
+      }
+      unsigned int substB = 0;
+      unsigned int substC = 0;
+      if (text.size() >= spos + 4 && text.substr(spos, 4) != "    ") {
+        substB = FileParserUtils::stripSpacesAndCast<unsigned int>(
+            text.substr(spos, 4));
+      }
+      spos += 4;
+      if (text.size() >= spos + 4 && text.substr(spos, 4) != "    ") {
+        substC = FileParserUtils::stripSpacesAndCast<unsigned int>(
+            text.substr(spos, 4));
+      }
+      spos += 4;
+
+      if (!substB || substB > mol->getNumAtoms() ||
+          substC > mol->getNumAtoms()) {
+        std::ostringstream errout;
+        errout << "LIN specification has bad substituent idx on line " << line;
+        throw FileParseException(errout.str());
+      }
+
+      boost::format formatter;
+      if (substC) {
+        formatter = boost::format("1 %1% 2 %2% %3% %2% %4%") % repeatCount %
+                    aid % substB % substC;
+      } else {
+        formatter = boost::format("1 %1% 1 %2% %3%") % repeatCount % aid %
+                    substB % substC;
+      }
+      if (!propVal.empty()) {
+        propVal += "|";
+      }
+      propVal += formatter.str();
+    } catch (boost::bad_lexical_cast &) {
+      std::ostringstream errout;
+      errout << "Cannot convert '" << text.substr(spos, 4)
+             << "' to int on line " << line;
+      throw FileParseException(errout.str());
+    }
+    mol->setProp(common_properties::molFileLinkNodes, propVal);
+  }
+}
+
 void ParseNewAtomList(RWMol *mol, const std::string &text, unsigned int line) {
   if (text.size() < 15) {
     std::ostringstream errout;
@@ -1192,6 +1338,8 @@ Atom *ParseMolFileAtomLine(const std::string text, RDGeom::Point3D &pos,
     } else {
       res->setAtomicNum(0);
     }
+    // save the symbol:
+    res->setProp(common_properties::_MolFileSymbol, symb);
     if (massDiff == 0 && symb[0] == 'R') {
       if (symb.length() > 1) {
         std::string rlabel = "";
@@ -1731,6 +1879,10 @@ bool ParseMolBlockProperties(std::istream *inStream, unsigned int &line,
       ParseHYDLine(mol, tempStr, line);
     } else if (lineBeg == "M  MRV") {
       ParseMarvinSmartsLine(mol, tempStr, line);
+    } else if (lineBeg == "M  APO") {
+      ParseAttachPointLine(mol, tempStr, line);
+    } else if (lineBeg == "M  LIN") {
+      ParseLinkNodeLine(mol, tempStr, line);
     }
     line++;
     tempStr = getLine(inStream);
@@ -1807,17 +1959,9 @@ Atom *ParseV3000AtomSymbol(std::string token, unsigned int &line) {
           // according to the MDL spec, these match anything
           res->setQuery(makeAtomNullQuery());
         } else if (token == "Q") {
-          auto *q = new ATOM_OR_QUERY;
-          q->setDescription("AtomOr");
-          q->setNegation(true);
-          q->addChild(
-              QueryAtom::QUERYATOM_QUERY::CHILD_TYPE(makeAtomNumQuery(6)));
-          q->addChild(
-              QueryAtom::QUERYATOM_QUERY::CHILD_TYPE(makeAtomNumQuery(1)));
-          res->setQuery(q);
+          res->setQuery(makeQAtomQuery());
         } else if (token == "A") {
-          res->setQuery(makeAtomNumQuery(1));
-          res->getQuery()->setNegation(true);
+          res->setQuery(makeAAtomQuery());
         }
         // queries have no implicit Hs:
         res->setNoImplicit(true);
@@ -1838,6 +1982,8 @@ Atom *ParseV3000AtomSymbol(std::string token, unsigned int &line) {
           res->setIsotope(rnumber);
         }
       }
+      res->setProp(common_properties::_MolFileSymbol, token);
+
     } else if (token == "D") {  // mol blocks support "D" and "T" as
                                 // shorthand... handle that.
       res = new Atom(1);
@@ -2601,8 +2747,18 @@ bool ParseV3000CTAB(std::istream *inStream, unsigned int &line, RWMol *mol,
   // do link nodes:
   boost::to_upper(tempStr);
   while (tempStr.length() > 8 && tempStr.substr(0, 8) == "LINKNODE") {
-    tempStr = getV3000Line(inStream, line);
     boost::to_upper(tempStr);
+    // if the line has nothing on it we just ignore it
+    if (tempStr.size() > 9) {
+      std::string existing = "";
+      if (mol->getPropIfPresent(common_properties::molFileLinkNodes,
+                                existing)) {
+        existing += "|";
+      }
+      existing += tempStr.substr(9);  // skip the "LINKNODE "
+      mol->setProp(common_properties::molFileLinkNodes, existing);
+    }
+    tempStr = getV3000Line(inStream, line);
   }
 
   while (tempStr.length() > 5 && tempStr.substr(0, 5) == "BEGIN") {
@@ -2638,7 +2794,7 @@ bool ParseV3000CTAB(std::istream *inStream, unsigned int &line, RWMol *mol,
   conf = nullptr;
 
   return fileComplete;
-}
+}  // namespace FileParserUtils
 
 bool ParseV2000CTAB(std::istream *inStream, unsigned int &line, RWMol *mol,
                     Conformer *&conf, bool &chiralityPossible,
