@@ -1121,6 +1121,19 @@ TEST_CASE("github #2895: acepentalene aromaticity perception ",
   }
 }
 
+TEST_CASE("github #3256: fused ring aromaticity perception",
+          "[molops][bug][aromaticity]") {
+  SECTION("nitrogen only central ring") {
+    auto mol = "C1=CN2C3=CC=CN3C3=CC=CN3C2=C1"_smiles;
+    REQUIRE(mol);
+    for (const auto b: mol->bonds()) {
+      CHECK(b->getBondType() == Bond::AROMATIC);
+    }
+    auto smi = MolToSmiles(*mol);
+    CHECK(smi == "c1cc2n(c1)c1cccn1c1cccn21");
+  }
+}
+
 TEST_CASE("phosphine and arsine chirality", "[Chirality]") {
   SECTION("chiral center recognized") {
     auto mol1 = "C[P@](C1CCCC1)C1=CC=CC=C1"_smiles;
