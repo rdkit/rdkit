@@ -20,7 +20,7 @@
 using namespace RDKit;
 
 TEST_CASE("PositionVariation", "[MolEnumerator]") {
-  auto mol = R"CTAB(
+  auto mol1 = R"CTAB(
   Mrv2007 06232015292D          
 
   0  0  0     0  0            999 V3000
@@ -51,8 +51,41 @@ M  V30 END CTAB
 M  END)CTAB"_ctab;
   REQUIRE(mol);
 
-  SECTION("PositionVariationOp unit tests") {
-    MolEnumerator::PositionVariationOp op(*mol);
+  auto mol2 = R"CTAB(
+  Mrv2007 06242006032D          
+
+  0  0  0     0  0            999 V3000
+M  V30 BEGIN CTAB
+M  V30 COUNTS 10 8 0 0 0
+M  V30 BEGIN ATOM
+M  V30 1 C -1.7083 2.415 0 0
+M  V30 2 C -3.042 1.645 0 0
+M  V30 3 C -3.042 0.105 0 0
+M  V30 4 N -1.7083 -0.665 0 0
+M  V30 5 C -0.3747 0.105 0 0
+M  V30 6 C -0.3747 1.645 0 0
+M  V30 7 * -3.042 0.875 0 0
+M  V30 8 F -5.0434 0.875 0 0
+M  V30 9 * -1.0415 2.03 0 0
+M  V30 10 Cl -1.0415 4.34 0 0
+M  V30 END ATOM
+M  V30 BEGIN BOND
+M  V30 1 1 1 2
+M  V30 2 2 2 3
+M  V30 3 1 3 4
+M  V30 4 2 4 5
+M  V30 5 1 5 6
+M  V30 6 2 1 6
+M  V30 7 1 7 8 ENDPTS=(2 2 3) ATTACH=ANY
+M  V30 8 1 9 10 ENDPTS=(2 1 6) ATTACH=ANY
+M  V30 END BOND
+M  V30 END CTAB
+M  END
+)CTAB";
+  REQUIRE(mol2);
+
+  SECTION("PositionVariationOp unit tests 1") {
+    MolEnumerator::PositionVariationOp op(*mol1);
     auto vcnts = op.getVariationCounts();
     REQUIRE(vcnts.size() == 1);
     CHECK(vcnts[0] == 3);
