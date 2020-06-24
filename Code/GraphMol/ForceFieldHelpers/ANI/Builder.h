@@ -1,3 +1,13 @@
+//
+//  Copyright (C) 2020 Manan Goel
+//
+//   @@ All Rights Reserved @@
+//  This file is part of the RDKit.
+//  The contents are covered by the terms of the BSD license
+//  which is included in the file license.txt, found at the root
+//  of the RDKit source tree.
+//
+
 #include <RDGeneral/export.h>
 #ifndef RD_ANIBUILDER_H_
 #define RD_ANIBUILDER_H_
