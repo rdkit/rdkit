@@ -193,6 +193,46 @@ M  END
     self.assertEqual(len(v), 4)
     self.assertEqual(list(v), [5, 5, 0, 0])
 
+  def testDataFields(self):
+    mol = Chem.MolFromMolBlock('''
+  Mrv2007 06242013252D          
+
+  0  0  0     0  0            999 V3000
+M  V30 BEGIN CTAB
+M  V30 COUNTS 7 6 1 0 0
+M  V30 BEGIN ATOM
+M  V30 1 C -5.1782 0.0827 0 0
+M  V30 2 C -6.5119 -0.6873 0 0
+M  V30 3 C -3.8446 -0.6873 0 0
+M  V30 4 O -2.5109 0.0826 0 0
+M  V30 5 C -1.0732 -0.4692 0 0
+M  V30 6 C -5.1782 1.6227 0 0
+M  V30 7 C -6.5119 2.3927 0 0
+M  V30 END ATOM
+M  V30 BEGIN BOND
+M  V30 1 1 1 2
+M  V30 2 2 1 3
+M  V30 3 1 3 4
+M  V30 4 1 4 5
+M  V30 5 1 1 6
+M  V30 6 1 7 6
+M  V30 END BOND
+M  V30 BEGIN SGROUP
+M  V30 1 DAT 0 ATOMS=(2 1 6) FIELDNAME=property -
+M  V30 FIELDDISP="   -5.1782    0.0827    DA    ALL  0       0" -
+M  V30 FIELDDATA=val2 FIELDDATA=val1
+M  V30 END SGROUP
+M  V30 END CTAB
+M  END
+''')
+    self.assertIsNotNone(mol)
+    sgs = Chem.GetMolSubstanceGroups(mol)
+    self.assertEqual(len(sgs), 1)
+    sg = sgs[0]
+    self.assertEqual(sg.GetProp('TYPE'), 'DAT')
+    pv = sg.GetStringVectProp('DATAFIELDS')
+    self.assertEqual(list(pv), ['val2', 'val1'])
+
 
 if __name__ == '__main__':
   print("Testing SubstanceGroups wrapper")
