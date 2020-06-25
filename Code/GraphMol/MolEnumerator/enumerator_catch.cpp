@@ -49,7 +49,7 @@ M  V30 8 1 8 9
 M  V30 END BOND
 M  V30 END CTAB
 M  END)CTAB"_ctab;
-  REQUIRE(mol);
+  REQUIRE(mol1);
 
   auto mol2 = R"CTAB(
   Mrv2007 06242006032D          
@@ -81,7 +81,7 @@ M  V30 8 1 9 10 ENDPTS=(2 1 6) ATTACH=ANY
 M  V30 END BOND
 M  V30 END CTAB
 M  END
-)CTAB";
+)CTAB"_ctab;
   REQUIRE(mol2);
 
   SECTION("PositionVariationOp unit tests 1") {
@@ -99,6 +99,24 @@ M  END
       std::vector<size_t> elems{2};
       std::unique_ptr<ROMol> newmol(op(elems));
       CHECK(MolToSmiles(*newmol) == "COc1cccnc1");
+    }
+  }
+  SECTION("PositionVariationOp unit tests 2") {
+    MolEnumerator::PositionVariationOp op(*mol2);
+    auto vcnts = op.getVariationCounts();
+    REQUIRE(vcnts.size() == 2);
+    CHECK(vcnts[0] == 2);
+    CHECK(vcnts[1] == 2);
+
+    {
+      std::vector<size_t> elems{1, 0};
+      std::unique_ptr<ROMol> newmol(op(elems));
+      CHECK(MolToSmiles(*newmol) == "Fc1cc(Cl)ccn1");
+    }
+    {
+      std::vector<size_t> elems{0, 1};
+      std::unique_ptr<ROMol> newmol(op(elems));
+      CHECK(MolToSmiles(*newmol) == "Fc1cncc(Cl)c1");
     }
   }
 }
