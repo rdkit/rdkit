@@ -23,14 +23,14 @@
 
 namespace io = boost::iostreams;
 using namespace RDKit;
-
+using namespace GeneralMolSupplier;
 void testSdf() {
   //! Open uncompressed SDF file format
   std::string rdbase = getenv("RDBASE");
   std::string fname =
       rdbase + "/Code/GraphMol/FileParsers/test_data/NCI_aids_few.sdf";
-  struct SupplierOptions opt_sdf;
-  MolSupplier* sdsup = getSupplier(fname, opt_sdf);
+  struct SupplierOptions opt;
+  MolSupplier* sdsup = getSupplier(fname, opt);
   unsigned int i = 0;
   while (!sdsup->atEnd()) {
     ROMol* nmol = sdsup->next();
@@ -46,9 +46,8 @@ void testSdf() {
 
   //! Open compressed SDF file format
   fname = rdbase + "/Code/GraphMol/FileParsers/test_data/NCI_aids_few.sdf.gz";
-  struct SupplierOptions opt_sdf2;
-  opt_sdf2.takeOwnership = false;
-  MolSupplier* sdsup2 = getSupplier(fname, opt_sdf2);
+  opt.takeOwnership = false;
+  MolSupplier* sdsup2 = getSupplier(fname, opt);
   i = 0;
   while (!sdsup2->atEnd()) {
     ROMol* nmol = sdsup2->next();
@@ -99,9 +98,8 @@ void testMae() {
   std::string rdbase = getenv("RDBASE");
   std::string fname =
       rdbase + "/Code/GraphMol/FileParsers/test_data/props_test.mae";
-  struct SupplierOptions opt_sdf3;
-  MolSupplier* maesup = getSupplier(fname, opt_sdf3);
-
+  struct SupplierOptions opt;
+  MolSupplier* maesup = getSupplier(fname, opt);
   std::unique_ptr<ROMol> nmol(maesup->next());
   TEST_ASSERT(nmol);
 
@@ -151,8 +149,7 @@ void testMae() {
 
   //! Open compressed MAE file, .maegz format
   fname = rdbase + "/Code/GraphMol/FileParsers/test_data/1kv1.maegz";
-  struct SupplierOptions opt_cmae;
-  MolSupplier* cmaesup = getSupplier(fname, opt_cmae);
+  MolSupplier* cmaesup = getSupplier(fname, opt);
 
   std::shared_ptr<ROMol> nmol2;
   nmol2.reset(cmaesup->next());
@@ -171,9 +168,9 @@ void testTdt() {
   std::string rdbase = getenv("RDBASE");
   std::string fname =
       rdbase + "/Code/GraphMol/FileParsers/test_data/acd_few.tdt";
-  struct SupplierOptions opt_tdt;
-  opt_tdt.nameRecord = "PN";
-  MolSupplier* suppl = getSupplier(fname, opt_tdt);
+  struct SupplierOptions opt;
+  opt.nameRecord = "PN";
+  MolSupplier* suppl = getSupplier(fname, opt);
 
   unsigned int i = 0;
   while (!suppl->atEnd()) {
