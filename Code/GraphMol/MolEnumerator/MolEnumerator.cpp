@@ -99,6 +99,7 @@ ROMol *PositionVariationOp::operator()(const std::vector<size_t> &which) const {
 
 namespace {
 
+//! recursively builds the variations
 void getVariations(size_t level, std::vector<size_t> base,
                    std::vector<std::vector<size_t>> &variations,
                    const std::vector<size_t> &variationCounts,
@@ -117,13 +118,14 @@ void getVariations(size_t level, std::vector<size_t> base,
 }
 void enumerateVariations(std::vector<std::vector<size_t>> &variations,
                          const std::vector<size_t> &variationCounts,
-                         size_t maxToEnumerate, bool doRandom, int randomSeed) {
-  if (doRandom) {
+                         const MolEnumeratorParams &params) {
+  if (params.doRandom) {
     UNDER_CONSTRUCTION("random enumeration not yet supported");
   }
   variations.clear();
   std::vector<size_t> base(variationCounts.size(), 0);
-  getVariations(0, base, variations, variationCounts, maxToEnumerate, doRandom);
+  getVariations(0, base, variations, variationCounts, params.maxToEnumerate,
+                params.doRandom);
 }
 }  // namespace
 
@@ -134,8 +136,7 @@ MolBundle enumerate(const ROMol &mol, const MolEnumeratorParams &params) {
   op->initFromMol(mol);
   auto variationCounts = op->getVariationCounts();
   std::vector<std::vector<size_t>> variations;
-  enumerateVariations(variations, variationCounts, params.maxToEnumerate,
-                      params.doRandom, params.randomSeed);
+  enumerateVariations(variations, variationCounts, params);
   MolBundle res;
   for (const auto &variation : variations) {
     res.addMol(ROMOL_SPTR((*op)(variation)));

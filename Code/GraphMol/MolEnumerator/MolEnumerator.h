@@ -22,18 +22,30 @@
 namespace RDKit {
 namespace MolEnumerator {
 
-//! abstract base class
+//! abstract base class for the a molecule enumeration operation
 class RDKIT_MOLENUMERATOR_EXPORT MolEnumeratorOp {
  public:
   MolEnumeratorOp(){};
   ~MolEnumeratorOp(){};
+  //! returns a vector of the number of possible variations at variability point
+  //! covered by this operation
   virtual std::vector<size_t> getVariationCounts() const = 0;
-  // caller owns the memory
+  //! returns a the molecule corresponding to a particular variation
+  /*!  which.size() should be equal to the number of variation counts.
+      Note that the caller owns the returned pointer
+  */
   virtual ROMol *operator()(const std::vector<size_t> &which) const = 0;
+  //! initializes this operation to work on a particular molecule
   virtual void initFromMol(const ROMol &mol) = 0;
+  //! polymorphic copy
   virtual MolEnumeratorOp *copy() const = 0;
 };
 
+//! Molecule enumeration operation corresponding to position variation bonds
+/*! This uses ATTACH and ENDPTS properties on bonds and requires that the bond
+ * has one dummy atom (which will be discarded). The other atom of the bond will
+ * be connected to the atoms listed in the ENDPTS property
+ */
 class RDKIT_MOLENUMERATOR_EXPORT PositionVariationOp : public MolEnumeratorOp {
  public:
   PositionVariationOp(){};
@@ -53,12 +65,16 @@ class RDKIT_MOLENUMERATOR_EXPORT PositionVariationOp : public MolEnumeratorOp {
     dp_mol = other.dp_mol;
     d_variationPoints = other.d_variationPoints;
   };
+  //! \override
   std::vector<size_t> getVariationCounts() const override;
 
+  //! \override
   ROMol *operator()(const std::vector<size_t> &which) const override;
 
+  //! \override
   void initFromMol(const ROMol &mol) override;
 
+  //! \override
   MolEnumeratorOp *copy() const { return new PositionVariationOp(*this); }
 
  private:
@@ -69,6 +85,7 @@ class RDKIT_MOLENUMERATOR_EXPORT PositionVariationOp : public MolEnumeratorOp {
   void initFromMol();
 };
 
+//! Parameters used to control the molecule enumeration
 struct RDKIT_MOLENUMERATOR_EXPORT MolEnumeratorParams {
   bool sanitize = false;
   size_t maxToEnumerate = 1000;
@@ -77,6 +94,8 @@ struct RDKIT_MOLENUMERATOR_EXPORT MolEnumeratorParams {
   std::shared_ptr<MolEnumeratorOp> dp_operation;
 };
 
+//! Returns a MolBundle containing the molecules resulting from applying the
+//! operator contained in \c params to \c mol.
 MolBundle enumerate(const ROMol &mol, const MolEnumeratorParams &params);
 }  // namespace MolEnumerator
 }  // namespace RDKit
