@@ -3289,6 +3289,7 @@ int main() {
   test20Annotate();
   test21FontFile();
   test22ExplicitMethyl();
+  testGithub3112();
 #endif
 
 }
