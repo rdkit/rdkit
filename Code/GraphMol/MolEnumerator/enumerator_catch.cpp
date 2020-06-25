@@ -119,6 +119,42 @@ M  END
       CHECK(MolToSmiles(*newmol) == "Fc1cncc(Cl)c1");
     }
   }
+
+  SECTION("PositionVariationOp unit tests 3") {
+    MolEnumerator::PositionVariationOp op;
+    op.initFromMol(*mol1);
+    auto vcnts = op.getVariationCounts();
+    REQUIRE(vcnts.size() == 1);
+    CHECK(vcnts[0] == 3);
+  }
+
+  SECTION("enumeration basics 1") {
+    MolEnumerator::MolEnumeratorParams ps;
+    ps.dp_operation = std::shared_ptr<MolEnumerator::MolEnumeratorOp>(
+        new MolEnumerator::PositionVariationOp());
+    auto bundle = MolEnumerator::enumerate(*mol1, ps);
+    CHECK(bundle.size() == 3);
+    std::vector<std::string> tsmis = {"COc1ccncc1", "COc1ccccn1", "COc1cccnc1"};
+    std::vector<std::string> smis;
+    for (const auto molp : bundle.getMols()) {
+      smis.push_back(MolToSmiles(*molp));
+    }
+    CHECK(smis == tsmis);
+  }
+  SECTION("enumeration basics 2") {
+    MolEnumerator::MolEnumeratorParams ps;
+    ps.dp_operation = std::shared_ptr<MolEnumerator::MolEnumeratorOp>(
+        new MolEnumerator::PositionVariationOp());
+    auto bundle = MolEnumerator::enumerate(*mol2, ps);
+    CHECK(bundle.size() == 4);
+    std::vector<std::string> tsmis = {"Fc1cnccc1Cl", "Fc1cncc(Cl)c1",
+                                      "Fc1cc(Cl)ccn1", "Fc1ccc(Cl)cn1"};
+    std::vector<std::string> smis;
+    for (const auto molp : bundle.getMols()) {
+      smis.push_back(MolToSmiles(*molp));
+    }
+    CHECK(smis == tsmis);
+  }
 }
 
 TEST_CASE("LINKNODE", "[MolEnumerator]") {

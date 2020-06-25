@@ -30,10 +30,13 @@ class RDKIT_MOLENUMERATOR_EXPORT MolEnumeratorOp {
   virtual std::vector<size_t> getVariationCounts() const = 0;
   // caller owns the memory
   virtual ROMol *operator()(const std::vector<size_t> &which) const = 0;
+  virtual void initFromMol(const ROMol &mol) = 0;
+  virtual MolEnumeratorOp *copy() const = 0;
 };
 
 class RDKIT_MOLENUMERATOR_EXPORT PositionVariationOp : public MolEnumeratorOp {
  public:
+  PositionVariationOp(){};
   PositionVariationOp(const std::shared_ptr<ROMol> mol) : dp_mol(mol) {
     PRECONDITION(mol, "bad molecule");
     initFromMol();
@@ -54,22 +57,27 @@ class RDKIT_MOLENUMERATOR_EXPORT PositionVariationOp : public MolEnumeratorOp {
 
   ROMol *operator()(const std::vector<size_t> &which) const override;
 
+  void initFromMol(const ROMol &mol) override;
+
+  MolEnumeratorOp *copy() const { return new PositionVariationOp(*this); }
+
  private:
-  std::shared_ptr<ROMol> dp_mol;
+  std::shared_ptr<ROMol> dp_mol{nullptr};
   std::vector<std::pair<unsigned int, std::vector<unsigned int>>>
-      d_variationPoints;
-  std::vector<size_t> d_dummiesAtEachPoint;
+      d_variationPoints{};
+  std::vector<size_t> d_dummiesAtEachPoint{};
   void initFromMol();
 };
 
 struct RDKIT_MOLENUMERATOR_EXPORT MolEnumeratorParams {
   bool sanitize = false;
-  size_t maxToEnumerate = 0;
+  size_t maxToEnumerate = 1000;
   bool doRandom = false;
   int randomSeed = -1;
-  std::vector<MolEnumeratorOp> operations;
+  std::shared_ptr<MolEnumeratorOp> dp_operation;
 };
 
+MolBundle enumerate(const ROMol &mol, const MolEnumeratorParams &params);
 }  // namespace MolEnumerator
 }  // namespace RDKit
 

@@ -14,6 +14,10 @@
 namespace RDKit {
 namespace MolEnumerator {
 
+void PositionVariationOp::initFromMol(const ROMol &mol) {
+  dp_mol.reset(new ROMol(mol));
+  initFromMol();
+}
 void PositionVariationOp::initFromMol() {
   d_variationPoints.clear();
   if (!dp_mol) {
@@ -30,7 +34,8 @@ void PositionVariationOp::initFromMol() {
         atom = bond->getEndAtom();
         if (atom->getAtomicNum() == 0) {
           throw ValueErrorException(
-              "position variation bond does not have connection to a non-dummy "
+              "position variation bond does not have connection to a "
+              "non-dummy "
               "atom");
         }
       }
@@ -90,6 +95,52 @@ ROMol *PositionVariationOp::operator()(const std::vector<size_t> &which) const {
     res->removeAtom(*riter);
   }
   return static_cast<ROMol *>(res);
+}
+
+namespace {
+
+void getVariations(size_t level, std::vector<size_t> base,
+                   std::vector<std::vector<size_t>> &variations,
+                   const std::vector<size_t> &variationCounts,
+                   size_t maxToEnumerate, bool doRandom) {
+  for (size_t i = 0; i < variationCounts[level]; ++i) {
+    base[level] = i;
+    if (level + 1 >= variationCounts.size()) {
+      // at the bottom of the recursion
+      variations.push_back(base);
+    } else {
+      getVariations(level + 1, base, variations, variationCounts,
+                    maxToEnumerate, doRandom);
+    }
+    if (variations.size() >= maxToEnumerate) return;
+  }
+}
+void enumerateVariations(std::vector<std::vector<size_t>> &variations,
+                         const std::vector<size_t> &variationCounts,
+                         size_t maxToEnumerate, bool doRandom, int randomSeed) {
+  if (doRandom) {
+    UNDER_CONSTRUCTION("random enumeration not yet supported");
+  }
+  variations.clear();
+  std::vector<size_t> base(variationCounts.size(), 0);
+  getVariations(0, base, variations, variationCounts, maxToEnumerate, doRandom);
+}
+}  // namespace
+
+MolBundle enumerate(const ROMol &mol, const MolEnumeratorParams &params) {
+  PRECONDITION(params.dp_operation, "no operation set");
+  // copy the op since we will modify it:
+  auto op = std::unique_ptr<MolEnumeratorOp>(params.dp_operation->copy());
+  op->initFromMol(mol);
+  auto variationCounts = op->getVariationCounts();
+  std::vector<std::vector<size_t>> variations;
+  enumerateVariations(variations, variationCounts, params.maxToEnumerate,
+                      params.doRandom, params.randomSeed);
+  MolBundle res;
+  for (const auto &variation : variations) {
+    res.addMol(ROMOL_SPTR((*op)(variation)));
+  }
+  return res;
 }
 
 }  // namespace MolEnumerator
