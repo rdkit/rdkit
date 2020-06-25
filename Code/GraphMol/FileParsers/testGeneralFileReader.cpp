@@ -7,19 +7,21 @@
 //  which is included in the file license.txt, found at the root
 //  of the RDKit source tree.
 //
-#include <RDGeneral/test.h>
-#include <GraphMol/RDKitBase.h>
 #include <GraphMol/MonomerInfo.h>
-#include <string>
-#include <iostream>
-#include <fstream>
-#include <map>
-#include <memory>
+#include <GraphMol/RDKitBase.h>
 #include <RDGeneral/FileParseException.h>
 #include <RDGeneral/RDLog.h>
-#include "GeneralFileReader.h"
+#include <RDGeneral/test.h>
+
 #include <boost/iostreams/device/file.hpp>
 #include <boost/iostreams/filtering_stream.hpp>
+#include <fstream>
+#include <iostream>
+#include <map>
+#include <memory>
+#include <string>
+
+#include "GeneralFileReader.h"
 
 namespace io = boost::iostreams;
 using namespace RDKit;

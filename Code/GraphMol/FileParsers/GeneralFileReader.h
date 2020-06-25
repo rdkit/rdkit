@@ -9,12 +9,14 @@
 //
 #ifndef GENERAL_FILE_READER_H
 #define GENERAL_FILE_READER_H
-#include <string>
-#include <iostream>
-#include <vector>
-#include "MolSupplier.h"
 #include <RDGeneral/BadFileException.h>
 #include <RDStreams/streams.h>
+
+#include <iostream>
+#include <string>
+#include <vector>
+
+#include "MolSupplier.h"
 
 namespace RDKit {
 namespace GeneralMolSupplier {
@@ -148,9 +150,8 @@ MolSupplier* getSupplier(const std::string& path,
   std::istream* strm;
   if (compressionFormat.empty())
     strm = new std::ifstream(path.c_str());
-  else {
+  else
     strm = new gzstream(path);
-  }
 
   //! Handle the case when there is no compression format
   if (fileFormat.compare("sdf") == 0) {
