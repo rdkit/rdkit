@@ -99,7 +99,7 @@ struct RDKIT_MOLENUMERATOR_EXPORT MolEnumeratorParams {
 
 //! Returns a MolBundle containing the molecules resulting from applying the
 //! operator contained in \c params to \c mol.
-MolBundle enumerate(const ROMol &mol, const MolEnumeratorParams &params);
+RDKIT_MOLENUMERATOR_EXPORT MolBundle enumerate(const ROMol &mol, const MolEnumeratorParams &params);
 }  // namespace MolEnumerator
 }  // namespace RDKit
 
