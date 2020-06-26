@@ -147,10 +147,9 @@ TEST_CASE("contour data", "[drawing][conrec]") {
 
     std::vector<double> levels;
     drawer.clearDrawing();
-    MolDraw2DUtils::contourAndDrawGaussians(drawer, cents, weights, widths, 10,
-                                            levels,
-                                            MolDraw2DUtils::ContourParams(),
-                                            m1.get());
+    MolDraw2DUtils::contourAndDrawGaussians(
+        drawer, cents, weights, widths, 10, levels,
+        MolDraw2DUtils::ContourParams(), m1.get());
 
     drawer.drawOptions().clearBackground = false;
     drawer.drawMolecule(*m1);
@@ -244,8 +243,7 @@ TEST_CASE("dative bonds", "[drawing][organometallics]") {
 
     CHECK(text.find("<path class='bond-0' d='M 126.052,100 L 85.9675,100'"
                     " style='fill:none;fill-rule:evenodd;"
-                    "stroke:#0000FF;")
-          != std::string::npos);
+                    "stroke:#0000FF;") != std::string::npos);
   }
   SECTION("more complex") {
     auto m1 = "N->1[C@@H]2CCCC[C@H]2N->[Pt]11OC(=O)C(=O)O1"_smiles;
@@ -261,8 +259,7 @@ TEST_CASE("dative bonds", "[drawing][organometallics]") {
 
     CHECK(text.find("<path class='bond-7' d='M 101.307,79.424 "
                     "L 95.669,87.1848' style='fill:none;"
-                    "fill-rule:evenodd;stroke:#0000FF;")
-          != std::string::npos);
+                    "fill-rule:evenodd;stroke:#0000FF;") != std::string::npos);
   }
   SECTION("test colours") {
     // the dative bonds point the wrong way, but the point is to test
@@ -280,8 +277,7 @@ TEST_CASE("dative bonds", "[drawing][organometallics]") {
 
     CHECK(text.find("<path class='bond-2' d='M 53.289,140.668"
                     " L 81.0244,149.68' style='fill:none;"
-                    "fill-rule:evenodd;stroke:#0000FF;")
-          != std::string::npos);
+                    "fill-rule:evenodd;stroke:#0000FF;") != std::string::npos);
   }
 }
 
@@ -540,4 +536,21 @@ TEST_CASE("Github #3226: Lines in wedge bonds being drawn too closely together",
     }
   }
 #endif
+}
+
+TEST_CASE("github #3258: ", "[drawing][bug]") {
+  auto m1 = "CCN"_smiles;
+  REQUIRE(m1);
+  SECTION("foundations") {
+    MolDraw2DSVG drawer(500, 200, 250, 200, NO_FREETYPE);
+    drawer.drawOptions().addAtomIndices = true;
+    drawer.drawOptions().addBondIndices = true;
+    RWMol dm1(*m1);
+    RWMol dm2(*m1);
+    MOL_PTR_VECT ms{&dm1, &dm2};
+    drawer.drawMolecules(ms);
+    drawer.finishDrawing();
+    std::string text = drawer.getDrawingText();
+    CHECK(text.find(">,</text>") == std::string::npos);
+  }
 }
