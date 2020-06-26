@@ -26,7 +26,7 @@ namespace MolEnumerator {
 class RDKIT_MOLENUMERATOR_EXPORT MolEnumeratorOp {
  public:
   MolEnumeratorOp(){};
-  ~MolEnumeratorOp(){};
+  virtual ~MolEnumeratorOp(){};
   //! returns a vector of the number of possible variations at variability point
   //! covered by this operation
   virtual std::vector<size_t> getVariationCounts() const = 0;
@@ -64,6 +64,7 @@ class RDKIT_MOLENUMERATOR_EXPORT PositionVariationOp : public MolEnumeratorOp {
     }
     dp_mol = other.dp_mol;
     d_variationPoints = other.d_variationPoints;
+    return *this;
   };
   //! \override
   std::vector<size_t> getVariationCounts() const override;
@@ -75,7 +76,9 @@ class RDKIT_MOLENUMERATOR_EXPORT PositionVariationOp : public MolEnumeratorOp {
   void initFromMol(const ROMol &mol) override;
 
   //! \override
-  MolEnumeratorOp *copy() const { return new PositionVariationOp(*this); }
+  MolEnumeratorOp *copy() const override {
+    return new PositionVariationOp(*this);
+  }
 
  private:
   std::shared_ptr<ROMol> dp_mol{nullptr};

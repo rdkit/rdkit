@@ -666,6 +666,10 @@ std::vector<T> ParseV3000Array(std::stringstream &stream) {
   return values;
 }
 
+// force instantiation of the versions of this that we use
+template std::vector<unsigned int> ParseV3000Array(std::stringstream &stream);
+template std::vector<int> ParseV3000Array(std::stringstream &stream);
+
 void ParseV3000CStateLabel(RWMol *mol, SubstanceGroup &sgroup,
                            std::stringstream &stream, unsigned int line) {
   stream.get();  // discard parentheses
