@@ -71,6 +71,11 @@ RDKIT_MOLDRAW2D_EXPORT inline void addStereoAnnotation(const ROMol &mol) {
 
 //! add annotations with atom indices.
 RDKIT_MOLDRAW2D_EXPORT inline void addAtomIndices(const ROMol &mol) {
+  // we don't need this in the global set of tags since it will only be used
+  // here
+  if (mol.hasProp("_atomIndicesAdded")) return;
+  bool computed = true;
+  mol.setProp("_atomIndicesAdded", 1, computed);
   for (auto atom : mol.atoms()) {
     auto lab = std::to_string(atom->getIdx());
     if (atom->hasProp(common_properties::atomNote)) {
@@ -82,6 +87,11 @@ RDKIT_MOLDRAW2D_EXPORT inline void addAtomIndices(const ROMol &mol) {
 
 //! add annotations with bond indices.
 RDKIT_MOLDRAW2D_EXPORT inline void addBondIndices(const ROMol &mol) {
+  // we don't need this in the global set of tags since it will only be used
+  // here
+  if (mol.hasProp("_bondIndicesAdded")) return;
+  bool computed = true;
+  mol.setProp("_bondIndicesAdded", 1, computed);
   for (auto bond : mol.bonds()) {
     auto lab = std::to_string(bond->getIdx());
     if (bond->hasProp(common_properties::bondNote)) {
