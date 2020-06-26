@@ -552,5 +552,7 @@ TEST_CASE("github #3258: ", "[drawing][bug]") {
     drawer.finishDrawing();
     std::string text = drawer.getDrawingText();
     CHECK(text.find(">,</text>") == std::string::npos);
+    CHECK(!dm1.hasProp("_atomIndicesAdded"));
+    CHECK(!dm1.hasProp("_bondIndicesAdded"));
   }
 }
