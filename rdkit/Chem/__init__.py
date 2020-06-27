@@ -116,7 +116,6 @@ def FindMolChiralCenters(mol, force=True, includeUnassigned=False):
       centers.append((atom.GetIdx(), '?'))
   return centers
 
-
 #------------------------------------
 #
 #  doctest boilerplate
