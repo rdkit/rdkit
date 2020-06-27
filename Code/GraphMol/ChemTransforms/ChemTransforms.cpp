@@ -693,7 +693,7 @@ void addRecursiveQueries(
           break;
         }
         auto *tqp = new RecursiveStructureQuery(new ROMol(*(iter->second)));
-        boost::shared_ptr<RecursiveStructureQuery> nq(tqp);
+        std::shared_ptr<RecursiveStructureQuery> nq(tqp);
         qToAdd->addChild(nq);
       }
     } else {

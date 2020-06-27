@@ -12,6 +12,7 @@
 
 #include <GraphMol/RDKitBase.h>
 #include <GraphMol/QueryAtom.h>
+#include <GraphMol/MolPickler.h>
 #include <GraphMol/FileParsers/FileParsers.h>
 #include <GraphMol/SmilesParse/SmilesWrite.h>
 #include <GraphMol/SmilesParse/SmilesParse.h>
@@ -1611,6 +1612,26 @@ M  V30 END CTAB
 M  END
 )CTAB"_ctab;
     REQUIRE(mol);
+    for (const auto atom : mol->atoms()) {
+      REQUIRE(atom->hasQuery());
+      CHECK(!atom->getQuery()->getTypeLabel().empty());
+    }
+    std::string pkl;
+    MolPickler::pickleMol(*mol, pkl);
+    ROMol cp(pkl);
+    for (const auto atom : cp.atoms()) {
+      REQUIRE(atom->hasQuery());
+      CHECK(!atom->getQuery()->getTypeLabel().empty());
+    }
+    auto molb = MolToV3KMolBlock(*mol);
+    CHECK(molb.find(" A ") != std::string::npos);
+    CHECK(molb.find(" AH ") != std::string::npos);
+    CHECK(molb.find(" Q ") != std::string::npos);
+    CHECK(molb.find(" QH ") != std::string::npos);
+    CHECK(molb.find(" M ") != std::string::npos);
+    CHECK(molb.find(" MH ") != std::string::npos);
+    CHECK(molb.find(" X ") != std::string::npos);
+    CHECK(molb.find(" XH ") != std::string::npos);
   }
   SECTION("v2000") {
     auto mol = R"CTAB(*.*.*.*.*.*.*.* |$;Q_e;M_p;X_p;AH_p;QH_p;MH_p;XH_p$|
@@ -1628,5 +1649,27 @@ M  END
 M  END
 )CTAB"_ctab;
     REQUIRE(mol);
+    for (const auto atom : mol->atoms()) {
+      REQUIRE(atom->hasQuery());
+      CHECK(!atom->getQuery()->getTypeLabel().empty());
+    }
+    std::string pkl;
+    MolPickler::pickleMol(*mol, pkl);
+    ROMol cp(pkl);
+    for (const auto atom : cp.atoms()) {
+      REQUIRE(atom->hasQuery());
+      CHECK(!atom->getQuery()->getTypeLabel().empty());
+    }
+    auto molb = MolToMolBlock(*mol);
+    CHECK(molb.find(" A ") != std::string::npos);
+    CHECK(molb.find(" AH ") != std::string::npos);
+    CHECK(molb.find(" Q ") != std::string::npos);
+    CHECK(molb.find(" QH ") != std::string::npos);
+    CHECK(molb.find(" M ") != std::string::npos);
+    CHECK(molb.find(" MH ") != std::string::npos);
+    CHECK(molb.find(" X ") != std::string::npos);
+    CHECK(molb.find(" XH ") != std::string::npos);
+    /// SMARTS-based queries are not written for these:
+    CHECK(molb.find("V    ") == std::string::npos);
   }
 }
