@@ -1,5 +1,5 @@
 //
-// Copyright (c) 2003-2006 Greg Landrum and Rational Discovery LLC
+// Copyright (c) 2003-2020 Greg Landrum and Rational Discovery LLC
 //
 //   @@ All Rights Reserved @@
 //  This file is part of the RDKit.
@@ -8,8 +8,8 @@
 //  of the RDKit source tree.
 //
 #include <RDGeneral/export.h>
-#ifndef __RD_ANDQUERY_H__
-#define __RD_ANDQUERY_H__
+#ifndef RD_ANDQUERY_H
+#define RD_ANDQUERY_H
 
 #include "Query.h"
 
@@ -46,6 +46,7 @@ class AndQuery
     }
     res->setNegation(this->getNegation());
     res->d_description = this->d_description;
+    res->d_queryType = this->d_queryType;
     return res;
   };
 };
