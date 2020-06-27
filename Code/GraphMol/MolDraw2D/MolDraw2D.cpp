@@ -368,10 +368,12 @@ void MolDraw2D::get2DCoordsMol(RWMol &mol, double &offset, double spacing,
                                double &maxY, double &minY, int confId,
                                bool shiftAgents, double coordScale) {
   try {
+    RDLog::BlockLogs blocker;
     MolOps::sanitizeMol(mol);
   } catch (const MolSanitizeException &) {
     mol.updatePropertyCache(false);
     try {
+      RDLog::BlockLogs blocker;
       MolOps::Kekulize(mol, false);  // kekulize, but keep the aromatic flags!
     } catch (const MolSanitizeException &) {
       // don't need to do anything
@@ -380,9 +382,10 @@ void MolDraw2D::get2DCoordsMol(RWMol &mol, double &offset, double spacing,
   }
 
   const bool canonOrient = true;
+  const bool kekulize = false;  // don't kekulize, we just did that
   RDDepict::compute2DCoords(mol, nullptr, canonOrient);
   MolDraw2DUtils::prepareMolForDrawing(
-      mol, false);  // don't kekulize, we just did that
+      mol, kekulize);
   double minX = 1e8;
   double maxX = -1e8;
   double vShift = 0;
@@ -553,6 +556,9 @@ void MolDraw2D::drawReaction(
   get2DCoordsForReaction(nrxn, arrowBegin, arrowEnd, plusLocs, spacing,
                          confIds);
 
+  const bool originalPrepMols = drawOptions().prepareMolsBeforeDrawing;
+  drawOptions().prepareMolsBeforeDrawing = false;
+  
   ROMol *tmol = ChemicalReactionToRxnMol(nrxn);
   MolOps::findSSSR(*tmol);
 
@@ -684,7 +690,7 @@ void MolDraw2D::drawReaction(
 
   setColour(odc);
   text_drawer_->setFontScale(o_font_scale);
-
+  drawOptions().prepareMolsBeforeDrawing = originalPrepMols;
 }
 
 // ****************************************************************************

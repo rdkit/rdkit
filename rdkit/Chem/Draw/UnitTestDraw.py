@@ -13,6 +13,7 @@ import tempfile
 import unittest
 
 from rdkit import Chem
+from rdkit.Chem import AllChem
 from rdkit.Chem import rdDepictor
 from rdkit.Chem import Draw
 
@@ -232,6 +233,10 @@ class TestCase(unittest.TestCase):
         Draw.DrawRDKitBit(m,32,bi)
 
 
+  def testDrawReaction(self):
+    # this shouldn't throw an exception...
+    rxn = AllChem.ReactionFromSmarts("[c;H1:3]1:[c:4]:[c:5]:[c;H1:6]:[c:7]2:[nH:8]:[c:9]:[c;H1:1]:[c:2]:1:2.O=[C:10]1[#6;H2:11][#6;H2:12][N:13][#6;H2:14][#6;H2:15]1>>[#6;H2:12]3[#6;H1:11]=[C:10]([c:1]1:[c:9]:[n:8]:[c:7]2:[c:6]:[c:5]:[c:4]:[c:3]:[c:2]:1:2)[#6;H2:15][#6;H2:14][N:13]3")
+    img = Draw.ReactionToImage(rxn)
 
 
 if __name__ == '__main__':
