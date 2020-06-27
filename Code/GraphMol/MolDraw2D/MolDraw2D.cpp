@@ -2295,12 +2295,18 @@ void MolDraw2D::drawAtomLabel(int atom_num, const DrawColour &draw_colour) {
 // ****************************************************************************
 void MolDraw2D::drawAnnotation(const string &note,
                                const std::shared_ptr<StringRect> &note_rect) {
-
   double full_font_scale = text_drawer_->fontScale();
-  text_drawer_->setFontScale(drawOptions().annotationFontScale * full_font_scale);
+  // turn off minFontSize for the annotation, as we do want it to be smaller
+  // than the letters, even if that makes it tiny.  The annotation positions
+  // have been calculated on the assumption that this is the case, and if
+  // minFontSize is applied, they may well clash with the atom symbols.
+  double omfs = text_drawer_->minFontSize();
+  text_drawer_->setMinFontSize(-1);
+  text_drawer_->setFontScale(drawOptions().annotationFontScale *
+                             full_font_scale);
   drawString(note, note_rect->trans_);
+  text_drawer_->setMinFontSize(omfs);
   text_drawer_->setFontScale(full_font_scale);
-
 }
 
 // ****************************************************************************
