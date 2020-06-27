@@ -514,3 +514,22 @@ TEST_CASE("Github #3226: Lines in wedge bonds being drawn too closely together",
   }
 #endif
 }
+
+TEST_CASE("github #3258: ", "[drawing][bug]") {
+  auto m1 = "CCN"_smiles;
+  REQUIRE(m1);
+  SECTION("foundations") {
+    MolDraw2DSVG drawer(500, 200, 250, 200);
+    drawer.drawOptions().addAtomIndices = true;
+    drawer.drawOptions().addBondIndices = true;
+    RWMol dm1(*m1);
+    RWMol dm2(*m1);
+    MOL_PTR_VECT ms{&dm1, &dm2};
+    drawer.drawMolecules(ms);
+    drawer.finishDrawing();
+    std::string text = drawer.getDrawingText();
+    CHECK(text.find(">,</text>") == std::string::npos);
+    CHECK(!dm1.hasProp("_atomIndicesAdded"));
+    CHECK(!dm1.hasProp("_bondIndicesAdded"));
+  }
+}
