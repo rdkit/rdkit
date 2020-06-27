@@ -32,7 +32,7 @@ using std::int32_t;
 using std::uint32_t;
 namespace RDKit {
 
-const int32_t MolPickler::versionMajor = 11;
+const int32_t MolPickler::versionMajor = 12;
 const int32_t MolPickler::versionMinor = 0;
 const int32_t MolPickler::versionPatch = 0;
 const int32_t MolPickler::endianId = 0xDEADBEEF;
