@@ -1,3 +1,28 @@
+# Release_2020.03.4
+(Changes relative to Release_2020.03.3)
+
+## Acknowledgements:
+David Cosgrove, Brian Kelley, Ricardo Rodriguez Schmidt, 'paconius'
+
+## Bug Fixes:
+  - Attachment point info not being read from V2000 mol blocks
+ (github #3207 from greglandrum)
+  - Lines in wedge bonds being drawn too closely together
+ (github #3226 from paconius)
+  - EnumerateStereochemistry should clear CIP labels
+ (github #3231 from greglandrum)
+  - lock CI cairo version to force an install from the rdkit repo
+ (github #3240 from greglandrum)
+  - XBCORR and XBHEAD in Sgroups no longer cause parse failures
+ (github #3242 from greglandrum)
+  - LINKNODEs are ignored by the CTAB parsers
+ (github #3247 from greglandrum)
+  - add GetStringVectProp() to SubstanceGroup class
+ (github #3251 from greglandrum)
+  - Draw.MolsToGridImage repeating atom indices
+ (github #3258 from greglandrum)
+
+
 # Release_2020.03.3
 (Changes relative to Release_2020.03.2)
 
