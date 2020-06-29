@@ -3174,8 +3174,8 @@ void test20Annotate() {
 #ifdef RDK_BUILD_CAIRO_SUPPORT
     {
       MolDraw2DCairo drawer(200, 200);
-      drawer.drawMolecule(*m1);
       drawer.drawOptions().addAtomIndices = true;
+      drawer.drawMolecule(*m1);
       drawer.finishDrawing();
       drawer.writeDrawingText("test20_4.png");
     }
