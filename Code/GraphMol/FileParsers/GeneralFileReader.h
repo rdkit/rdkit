@@ -70,14 +70,17 @@ bool validate(std::string& fileFormat, std::string& compressionFormat) {
                   compressionFormat) != supportedCompressionFormats.end();
 
     //! Case A: Valid file format and valid compression format
-    if (flag_fileFormat && flag_compressionFormat) return true;
+    if (flag_fileFormat && flag_compressionFormat) {
+      return true;
+    }
 
     //! Case B, C: Valid file format but not valid compression format
     //! 						or invalid file format
     //! and valid compression format
     else if ((flag_fileFormat && !flag_compressionFormat) ||
-             (!flag_fileFormat && flag_compressionFormat))
+             (!flag_fileFormat && flag_compressionFormat)) {
       return false;
+    }
 
     //! Case D: Invalid file format and invalid compression format
     else {
@@ -110,16 +113,18 @@ void determineFormat(const std::string path, std::string& fileFormat,
   std::string fileName = getFileName(path);
   int dots = std::count(fileName.begin(), fileName.end(), '.');
 
-  if (dots == 0)
+  if (dots == 0) {
     throw std::invalid_argument(
         "Recieved Invalid File Format, no extension or compression");
+  }
 
   else if (dots == 1) {
     //! there is a file format but no compression format
     int pos = fileName.find(".");
     fileFormat = fileName.substr(pos + 1);
-    if (!validate(fileFormat, compressionFormat))
+    if (!validate(fileFormat, compressionFormat)) {
       throw std::invalid_argument("Recieved Invalid File Format");
+    }
   } else {
     //! there is a file and compression format
     int n = fileName.length();
@@ -128,9 +133,10 @@ void determineFormat(const std::string path, std::string& fileFormat,
     fileFormat = fileName.substr(p2 + 1, (p1 - p2) - 1);
     //! possible compression format
     compressionFormat = fileName.substr(p1 + 1, (n - p1) + 1);
-    if (!validate(fileFormat, compressionFormat))
+    if (!validate(fileFormat, compressionFormat)) {
       throw std::invalid_argument(
           "Recieved Invalid File or Compression Format");
+    }
   }
 }
 
@@ -148,10 +154,11 @@ MolSupplier* getSupplier(const std::string& path,
   //! get the file and compression format form the path
   determineFormat(path, fileFormat, compressionFormat);
   std::istream* strm;
-  if (compressionFormat.empty())
+  if (compressionFormat.empty()) {
     strm = new std::ifstream(path.c_str());
-  else
+  } else {
     strm = new gzstream(path);
+  }
 
   //! Handle the case when there is no compression format
   if (fileFormat.compare("sdf") == 0) {
