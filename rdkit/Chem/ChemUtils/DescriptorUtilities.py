@@ -36,8 +36,8 @@ class VectorDescriptorWrapper:
         self.func_key = "__%s"%(func.__name__)
         function_namespace = {}
         for i,n in enumerate(names):
-            def f(mol, key=self._get_key(i)):
-                return self.call_desc(mol, key)
+            def f(mol, index=i):
+                return self.call_desc(mol, index=index)
             f.__name__ = n
             f.__qualname__ = n
             f.version = version
@@ -48,15 +48,17 @@ class VectorDescriptorWrapper:
     def _get_key(self, index):
         return "%s%s"%(self.func_key, index)
     
-    def call_desc(self, mol, key):
-        if mol.HasProp(key):
-            return mol.GetDoubleProp(key)
-
+    def call_desc(self, mol, index):
+        if hasattr(mol, self.func_key):
+          results = getattr(mol, self.func_key, None)
+          if results is not None:
+            return results[index]
+        
         try:
           results = self.func(mol)
         except:
           return math.nan
-        _get_key = self._get_key
-        for i,v in enumerate(results):
-            mol.SetDoubleProp(_get_key(i), v)
-        return mol.GetDoubleProp(key)
+
+        setattr(mol, self.func_key, results)
+        return results[index]
+
