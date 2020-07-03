@@ -186,15 +186,12 @@ void setMDLAromaticity(RWMol &mol) {
     for (size_t i = 0; i < ring.size(); ++i) {
       auto ai = ring[i];
       const auto atom = mol.getAtomWithIdx(ai);
-      std::string molfileSymbol;
       if (!atom->getIsAromatic()) {
         // we only do fully aromatic rings:
         keepIt = false;
         break;
-      } else if (atom->getAtomicNum() == 0 &&
-                 atom->getPropIfPresent(common_properties::_MolFileSymbol,
-                                        molfileSymbol) &&
-                 molfileSymbol == "A") {
+      } else if (atom->getAtomicNum() == 0 && atom->hasQuery() &&
+                 atom->getQuery()->getTypeLabel() == "A") {
         if (dummy >= ring.size()) {
           dummy = i;
         } else {

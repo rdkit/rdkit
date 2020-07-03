@@ -1260,6 +1260,34 @@ void ParseAtomValue(RWMol *mol, std::string text, unsigned int line) {
               text.substr(7, text.length() - 7));
 }
 
+// We support the same special atom queries that we can read from
+// CXSMILES
+const std::vector<std::string> complexQueries = {"A", "AH", "Q", "QH",
+                                                 "X", "XH", "M", "MH"};
+void convertComplexNameToQuery(Atom *query, const std::string &symb) {
+  if (symb == "Q") {
+    query->setQuery(makeQAtomQuery());
+  } else if (symb == "QH") {
+    query->setQuery(makeQHAtomQuery());
+  } else if (symb == "A") {
+    query->setQuery(makeAAtomQuery());
+  } else if (symb == "AH") {
+    query->setQuery(makeAHAtomQuery());
+  } else if (symb == "X") {
+    query->setQuery(makeXAtomQuery());
+  } else if (symb == "XH") {
+    query->setQuery(makeXHAtomQuery());
+  } else if (symb == "M") {
+    query->setQuery(makeMAtomQuery());
+  } else if (symb == "MH") {
+    query->setQuery(makeMHAtomQuery());
+  } else {
+    // we control what this function gets called with, so we should never land
+    // here
+    ASSERT_INVARIANT(0, "bad complex query symbol");
+  }
+}
+
 Atom *ParseMolFileAtomLine(const std::string text, RDGeom::Point3D &pos,
                            unsigned int line) {
   std::string symb;
@@ -1318,18 +1346,19 @@ Atom *ParseMolFileAtomLine(const std::string text, RDGeom::Point3D &pos,
     }
   }
   auto *res = new Atom;
-  if (symb == "L" || symb == "A" || symb == "Q" || symb == "*" ||
-      symb == "LP" || symb == "R" || symb == "R#" ||
+  bool isComplexQueryName =
+      std::find(complexQueries.begin(), complexQueries.end(), symb) !=
+      complexQueries.end();
+  if (isComplexQueryName || symb == "L" || symb == "*" || symb == "LP" ||
+      symb == "R" || symb == "R#" ||
       (symb[0] == 'R' && symb >= "R0" && symb <= "R99")) {
-    if (symb == "A" || symb == "Q" || symb == "*" || symb == "R") {
+    if (isComplexQueryName || symb == "*" || symb == "R") {
       auto *query = new QueryAtom(0);
       if (symb == "*" || symb == "R") {
         // according to the MDL spec, these match anything
         query->setQuery(makeAtomNullQuery());
-      } else if (symb == "Q") {
-        query->setQuery(makeQAtomQuery());
-      } else if (symb == "A") {
-        query->setQuery(makeAAtomQuery());
+      } else if (isComplexQueryName) {
+        convertComplexNameToQuery(query, symb);
       }
       delete res;
       res = query;
@@ -1338,8 +1367,6 @@ Atom *ParseMolFileAtomLine(const std::string text, RDGeom::Point3D &pos,
     } else {
       res->setAtomicNum(0);
     }
-    // save the symbol:
-    res->setProp(common_properties::_MolFileSymbol, symb);
     if (massDiff == 0 && symb[0] == 'R') {
       if (symb.length() > 1) {
         std::string rlabel = "";
@@ -1951,17 +1978,19 @@ Atom *ParseV3000AtomSymbol(std::string token, unsigned int &line) {
     // it's a normal CTAB atom symbol:
     // NOTE: "R" and "R0"-"R99" are not in the v3K CTAB spec, but we're going to
     // support them anyway
-    if (token == "R" || (token[0] == 'R' && token >= "R0" && token <= "R99") ||
-        token == "R#" || token == "A" || token == "Q" || token == "*") {
-      if (token == "A" || token == "Q" || token == "*") {
+    bool isComplexQueryName =
+        std::find(complexQueries.begin(), complexQueries.end(), token) !=
+        complexQueries.end();
+    if (isComplexQueryName || token == "R" ||
+        (token[0] == 'R' && token >= "R0" && token <= "R99") || token == "R#" ||
+        token == "*") {
+      if (isComplexQueryName || token == "*") {
         res = new QueryAtom(0);
         if (token == "*") {
           // according to the MDL spec, these match anything
           res->setQuery(makeAtomNullQuery());
-        } else if (token == "Q") {
-          res->setQuery(makeQAtomQuery());
-        } else if (token == "A") {
-          res->setQuery(makeAAtomQuery());
+        } else if (isComplexQueryName) {
+          convertComplexNameToQuery(res, token);
         }
         // queries have no implicit Hs:
         res->setNoImplicit(true);
@@ -1982,8 +2011,6 @@ Atom *ParseV3000AtomSymbol(std::string token, unsigned int &line) {
           res->setIsotope(rnumber);
         }
       }
-      res->setProp(common_properties::_MolFileSymbol, token);
-
     } else if (token == "D") {  // mol blocks support "D" and "T" as
                                 // shorthand... handle that.
       res = new Atom(1);
