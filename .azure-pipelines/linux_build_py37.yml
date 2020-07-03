@@ -5,9 +5,9 @@ steps:
     conda config --set always_yes yes --set changeps1 no
     conda update -q conda
     conda info -a
-    conda create --name rdkit_build $(python) $(compiler) cmake \
+    conda create --name rdkit_build $(compiler) cmake \
         boost-cpp=$(boost_version) boost=$(boost_version) \
-        py-boost=$(boost_version) \
+        py-boost=$(boost_version) libboost=$(boost_version) \
         numpy matplotlib pillow eigen pandas \
         sphinx recommonmark jupyter
     conda activate rdkit_build
