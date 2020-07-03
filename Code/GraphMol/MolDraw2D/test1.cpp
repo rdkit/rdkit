@@ -3085,18 +3085,17 @@ void test20Annotate() {
     std::ofstream outs("test20_1.svg");
     outs << text;
     outs.flush();
-    // annotation for atom 11
 #ifdef RDK_BUILD_FREETYPE_SUPPORT
-    TEST_ASSERT(text.find("<path  class='atom-11' d='M 412.413 228.028")
-                != std::string::npos);
+    // first note (atom 0)
+    TEST_ASSERT(text.find("<path  class='note' d='M 44.9405 115.662") !=
+                std::string::npos);
 #else
     // first one of atom note 11
     TEST_ASSERT(text.find("<text x='414.06' y='253.478' class='note'"
                           " style='font-size:12px;font-style:normal;"
                           "font-weight:normal;fill-opacity:1;stroke:none;"
                           "font-family:sans-serif;text-anchor:start;"
-                          "fill:#000000' >1</text>")
-                != std::string::npos);
+                          "fill:#000000' >1</text>") != std::string::npos);
 #endif
   }
 
@@ -3167,8 +3166,41 @@ void test20Annotate() {
                           " style='font-size:12px;font-style:normal;"
                           "font-weight:normal;fill-opacity:1;stroke:none;"
                           "font-family:sans-serif;text-anchor:start;"
-                          "fill:#000000' >f</text>") !=
+                          "fill:#000000' >f</text>") != std::string::npos);
+#endif
+  }
+  {
+    auto m1 = "S=C1N=C(NC(CC#N)(C)C=C=C)NC2=NNN=C21"_smiles;
+#ifdef RDK_BUILD_CAIRO_SUPPORT
+    {
+      MolDraw2DCairo drawer(200, 200);
+      drawer.drawOptions().addAtomIndices = true;
+      drawer.drawMolecule(*m1);
+      drawer.finishDrawing();
+      drawer.writeDrawingText("test20_4.png");
+    }
+#endif
+
+    MolDraw2DSVG drawer(200, 200);
+    drawer.drawOptions().addAtomIndices = true;
+    drawer.drawMolecule(*m1);
+    drawer.finishDrawing();
+    std::string text = drawer.getDrawingText();
+    std::ofstream outs("test20_4.svg");
+    outs << text;
+    outs.flush();
+#ifdef RDK_BUILD_FREETYPE_SUPPORT
+    // first note (atom 0)
+    TEST_ASSERT(text.find("<path  class='note' d='M 17.9762 46.6634") !=
                 std::string::npos);
+#else
+    // first one of atom note 11
+    TEST_ASSERT(text.find("<text x='164.595' y='101.936'"
+                          " class='note' style='font-size:6px;"
+                          "font-style:normal;font-weight:normal;"
+                          "fill-opacity:1;stroke:none;"
+                          "font-family:sans-serif;text-anchor:start;"
+                          "fill:#000000' >1</text>") != std::string::npos);
 #endif
   }
   std::cerr << " Done" << std::endl;
