@@ -1622,6 +1622,8 @@ M  END
     for (const auto atom : cp.atoms()) {
       REQUIRE(atom->hasQuery());
       CHECK(!atom->getQuery()->getTypeLabel().empty());
+      CHECK(atom->getQuery()->getTypeLabel() ==
+            mol->getAtomWithIdx(atom->getIdx())->getQuery()->getTypeLabel());
     }
     auto molb = MolToV3KMolBlock(*mol);
     CHECK(molb.find(" A ") != std::string::npos);
@@ -1659,6 +1661,8 @@ M  END
     for (const auto atom : cp.atoms()) {
       REQUIRE(atom->hasQuery());
       CHECK(!atom->getQuery()->getTypeLabel().empty());
+      CHECK(atom->getQuery()->getTypeLabel() ==
+            mol->getAtomWithIdx(atom->getIdx())->getQuery()->getTypeLabel());
     }
     auto molb = MolToMolBlock(*mol);
     CHECK(molb.find(" A ") != std::string::npos);
