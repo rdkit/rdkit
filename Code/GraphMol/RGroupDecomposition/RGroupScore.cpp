@@ -1,7 +1,19 @@
+//
+//  Copyright (C) 2017 Novartis Institutes for BioMedical Research
+//
+//   @@ All Rights Reserved @@
+//  This file is part of the RDKit.
+//  The contents are covered by the terms of the BSD license
+//  which is included in the file license.txt, found at the root
+//  of the RDKit source tree.
+//
 #include "RGroupScore.h"
 
 namespace RDKit {
+  
 // stupid total score
+// This has to handle all permutations and doesn't do anything terribly smart
+//  For r-groups with large symmetries, this can take way too long.
 double score(const std::vector<size_t> &permutation,
              const std::vector<std::vector<RGroupMatch>> &matches,
              const std::set<int> &labels) {

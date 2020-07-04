@@ -1,3 +1,12 @@
+//
+//  Copyright (C) 2017 Novartis Institutes for BioMedical Research
+//
+//   @@ All Rights Reserved @@
+//  This file is part of the RDKit.
+//  The contents are covered by the terms of the BSD license
+//  which is included in the file license.txt, found at the root
+//  of the RDKit source tree.
+//
 #ifndef RGROUP_DATA
 #define RGROUP_DATA
 
@@ -15,11 +24,12 @@ namespace RDKit
 {
   
 struct RGroupData {
+  //! A single rgroup attached to a given core.
   boost::shared_ptr<RWMol> combinedMol;
   std::vector<boost::shared_ptr<ROMol>> mols;  // All the mols in the rgroup
   std::set<std::string> smilesSet;             // used for rgroup equivalence
-  std::string smiles;                    // smiles for all the mols in the rgroup (with attachments)
-  std::set<int> attachments;  // attachment points
+  std::string smiles;                          // smiles for all the mols in the rgroup (with attachments)
+  std::set<int> attachments;                   // core attachment points
   bool labelled{false};
 
  private:
@@ -86,7 +96,7 @@ struct RGroupData {
 
  private:
   std::string getSmiles()
-      const {  // compute the canonical smiles for the attachments
+      const {  // compute the canonical smiles for the attachments (bug: removes dupes since we are using a set...)
     std::string s;
     for (const auto &it : smilesSet) {
       if (s.length()) {
