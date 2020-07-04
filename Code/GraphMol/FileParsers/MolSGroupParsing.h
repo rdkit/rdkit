@@ -11,6 +11,7 @@
 
 #pragma once
 #include <GraphMol/SubstanceGroup.h>
+#include <sstream>
 
 namespace RDKit {
 
@@ -86,10 +87,16 @@ void ParseSGroupV2000SBTLine(IDX_TO_SGROUP_MAP &sGroupMap, RWMol *mol,
 template <class T>
 std::vector<T> ParseV3000Array(std::stringstream &stream);
 #if defined(WIN32) && defined(RDKIT_DYN_LINK)
-template RDKIT_FILEPARSERS_EXPORT std::vector<int> ParseV3000Array(std::stringstream &);
-template RDKIT_FILEPARSERS_EXPORT std::vector<unsigned int> ParseV3000Array(std::stringstream &);
+template RDKIT_FILEPARSERS_EXPORT std::vector<int> ParseV3000Array(
+    std::stringstream &);
+template RDKIT_FILEPARSERS_EXPORT std::vector<unsigned int> ParseV3000Array(
+    std::stringstream &);
 #endif
-
+template <class T>
+std::vector<T> ParseV3000Array(const std::string &s) {
+  std::stringstream stream(s);
+  return ParseV3000Array<T>(stream);
+}
 
 void ParseV3000CStateLabel(unsigned int line, const std::string &type,
                            SubstanceGroup *sgroup, std::stringstream &stream);

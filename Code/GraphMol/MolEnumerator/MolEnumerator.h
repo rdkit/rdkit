@@ -32,13 +32,13 @@ class RDKIT_MOLENUMERATOR_EXPORT MolEnumeratorOp {
   virtual std::vector<size_t> getVariationCounts() const = 0;
   //! returns a the molecule corresponding to a particular variation
   /*!  which.size() should be equal to the number of variation counts.
-      Note that the caller owns the returned pointer
-  */
-  virtual ROMol *operator()(const std::vector<size_t> &which) const = 0;
+   */
+  virtual std::unique_ptr<ROMol> operator()(
+      const std::vector<size_t> &which) const = 0;
   //! initializes this operation to work on a particular molecule
   virtual void initFromMol(const ROMol &mol) = 0;
   //! polymorphic copy
-  virtual MolEnumeratorOp *copy() const = 0;
+  virtual std::unique_ptr<MolEnumeratorOp> copy() const = 0;
 };
 
 //! Molecule enumeration operation corresponding to position variation bonds
@@ -70,14 +70,15 @@ class RDKIT_MOLENUMERATOR_EXPORT PositionVariationOp : public MolEnumeratorOp {
   std::vector<size_t> getVariationCounts() const override;
 
   //! \override
-  ROMol *operator()(const std::vector<size_t> &which) const override;
+  std::unique_ptr<ROMol> operator()(
+      const std::vector<size_t> &which) const override;
 
   //! \override
   void initFromMol(const ROMol &mol) override;
 
   //! \override
-  MolEnumeratorOp *copy() const override {
-    return new PositionVariationOp(*this);
+  std::unique_ptr<MolEnumeratorOp> copy() const override {
+    return std::unique_ptr<MolEnumeratorOp>(new PositionVariationOp(*this));
   }
 
  private:
@@ -99,7 +100,8 @@ struct RDKIT_MOLENUMERATOR_EXPORT MolEnumeratorParams {
 
 //! Returns a MolBundle containing the molecules resulting from applying the
 //! operator contained in \c params to \c mol.
-RDKIT_MOLENUMERATOR_EXPORT MolBundle enumerate(const ROMol &mol, const MolEnumeratorParams &params);
+RDKIT_MOLENUMERATOR_EXPORT MolBundle
+enumerate(const ROMol &mol, const MolEnumeratorParams &params);
 }  // namespace MolEnumerator
 }  // namespace RDKit
 

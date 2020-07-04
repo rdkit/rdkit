@@ -40,9 +40,8 @@ void PositionVariationOp::initFromMol() {
         }
       }
       d_dummiesAtEachPoint.push_back(bond->getOtherAtomIdx(atom->getIdx()));
-      std::stringstream iss(endpts);
       std::vector<unsigned int> oats =
-          RDKit::SGroupParsing::ParseV3000Array<unsigned int>(iss);
+          RDKit::SGroupParsing::ParseV3000Array<unsigned int>(endpts);
       // decrement the indices and do error checking:
       for (auto &oat : oats) {
         if (oat == 0 || oat > dp_mol->getNumAtoms()) {
@@ -65,7 +64,8 @@ std::vector<size_t> PositionVariationOp::getVariationCounts() const {
   return res;
 }
 
-ROMol *PositionVariationOp::operator()(const std::vector<size_t> &which) const {
+std::unique_ptr<ROMol> PositionVariationOp::operator()(
+    const std::vector<size_t> &which) const {
   PRECONDITION(dp_mol, "no molecule");
   if (which.size() != d_variationPoints.size()) {
     throw ValueErrorException("bad element choice in enumeration");
@@ -94,7 +94,7 @@ ROMol *PositionVariationOp::operator()(const std::vector<size_t> &which) const {
        ++riter) {
     res->removeAtom(*riter);
   }
-  return static_cast<ROMol *>(res);
+  return std::unique_ptr<ROMol>(static_cast<ROMol *>(res));
 }
 
 namespace {
@@ -132,14 +132,15 @@ void enumerateVariations(std::vector<std::vector<size_t>> &variations,
 MolBundle enumerate(const ROMol &mol, const MolEnumeratorParams &params) {
   PRECONDITION(params.dp_operation, "no operation set");
   // copy the op since we will modify it:
-  auto op = std::unique_ptr<MolEnumeratorOp>(params.dp_operation->copy());
+  auto op = params.dp_operation->copy();
   op->initFromMol(mol);
   auto variationCounts = op->getVariationCounts();
   std::vector<std::vector<size_t>> variations;
   enumerateVariations(variations, variationCounts, params);
   MolBundle res;
   for (const auto &variation : variations) {
-    res.addMol(ROMOL_SPTR((*op)(variation)));
+    auto newMol = (*op)(variation);
+    res.addMol(ROMOL_SPTR(newMol.release()));
   }
   return res;
 }
