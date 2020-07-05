@@ -404,6 +404,7 @@ struct RGroupDecompData {
   }
 
   bool process(bool pruneMatches, bool finalize = false) {
+    auto t0 = std::chrono::steady_clock::now();
     if (matches.size() == 0) {
       return false;
     }
