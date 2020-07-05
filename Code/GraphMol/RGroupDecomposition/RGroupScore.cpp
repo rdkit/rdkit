@@ -14,6 +14,11 @@ namespace RDKit {
 // stupid total score
 // This has to handle all permutations and doesn't do anything terribly smart
 //  For r-groups with large symmetries, this can take way too long.
+struct rgroup_column {
+  int count;
+  bool onlyH;
+};
+  
 double score(const std::vector<size_t> &permutation,
              const std::vector<std::vector<RGroupMatch>> &matches,
              const std::set<int> &labels) {
@@ -26,13 +31,13 @@ double score(const std::vector<size_t> &permutation,
             << " num matches: " << matches.size() << std::endl;
 #endif
 
+  // For each label (group)
   for (int l : labels) {
 #ifdef DEBUG
     std::cerr << "Label: " << l << std::endl;
 #endif
-    std::map<std::string, int> matchSet;
+    std::map<std::string, rgroup_column> matchSet;
     std::map<std::set<int>, int> linkerMatchSet;
-    std::map<std::string, int> onlyH;
 
     for (size_t m = 0; m < permutation.size(); ++m) {  // for each molecule
       auto rg = matches[m][permutation[m]].rgroups.find(l);
@@ -41,15 +46,18 @@ double score(const std::vector<size_t> &permutation,
         std::cerr << "  combined: " << MolToSmiles(*rg->second->combinedMol)
                   << std::endl;
         std::cerr << " RGroup: " << rg->second->smiles << " "
-                  << rg->second->smiles.find_first_not_of("0123456789[]*H:.");
+                  << rg->second->isHydrogen() << std::endl;;
 #endif
-        matchSet[rg->second->smiles] += 1;
+	rgroup_column &col = matchSet[rg->second->smiles];
+	col.count += 1;
+	//matchSet[rg->second->smiles] += 1;
         // detect whether or not this is an H
-        if (rg->second->smiles.find_first_not_of("0123456789[]*H:.") <
-            rg->second->smiles.length()) {
-          onlyH[rg->second->smiles] = 0;
+        if (rg->second->isHydrogen()) {
+	  col.onlyH = true;
+          //onlyH[rg->second->smiles] = 1;
         } else {
-          onlyH[rg->second->smiles] = 1;
+	  col.onlyH = false;
+          //onlyH[rg->second->smiles] = 0;
         }
 #ifdef DEBUG
         std::cerr << " " << rg->second->combinedMol->getNumAtoms(false)
@@ -57,8 +65,7 @@ double score(const std::vector<size_t> &permutation,
                   << " score: " << matchSet[rg->second->smiles] << std::endl;
 #endif
         // XXX Use fragment counts to see if we are linking cycles?
-        if (rg->second->smiles.find(".") == std::string::npos &&
-            rg->second->attachments.size() > 1) {
+        if (rg->second->is_linker) {
           linkerMatchSet[rg->second->attachments]++;
 #ifdef DEBUG
           std::cerr << " Linker Score: "
@@ -71,8 +78,7 @@ double score(const std::vector<size_t> &permutation,
     // get the counts for each rgroup found and sort in reverse order
     std::vector<float> equivalentRGroupCount;
 
-    for (std::map<std::string, int>::const_iterator it = matchSet.begin();
-         it != matchSet.end(); ++it) {
+    for (const auto &kv :  matchSet) {
 #ifdef DEBUG
       std::cerr << " equiv: " << it->first << " " << it->second << " "
                 << permutation.size() << std::endl;
@@ -80,15 +86,15 @@ double score(const std::vector<size_t> &permutation,
 
       // if the rgroup is hydrogens, only consider if the group is all
       //  hydrogen, otherwise score based on the non hydrogens
-      if (onlyH[it->first]) {
-        if (static_cast<size_t>(it->second) == permutation.size()) {
-          equivalentRGroupCount.push_back(static_cast<float>(it->second));
+      if (kv.second.onlyH) {
+        if (static_cast<size_t>(kv.second.count) == permutation.size()) {
+          equivalentRGroupCount.push_back(static_cast<float>(kv.second.count));
         } else {
           // hydrogens in a mixed group don't contribute to the score
           equivalentRGroupCount.push_back(0.0);
         }
       } else {
-        equivalentRGroupCount.push_back(static_cast<float>(it->second));
+        equivalentRGroupCount.push_back(static_cast<float>(kv.second.count));
       }
     }
     std::sort(equivalentRGroupCount.begin(), equivalentRGroupCount.end(),
@@ -113,12 +119,10 @@ double score(const std::vector<size_t> &permutation,
     //  because these belong to 2 rgroups we really want these to stay
     //  ** this heuristic really should be taken care of above **
     int maxLinkerMatches = 0;
-    for (std::map<std::set<int>, int>::const_iterator it =
-             linkerMatchSet.begin();
-         it != linkerMatchSet.end(); ++it) {
-      if (it->second > 1) {
-        if (it->second > maxLinkerMatches) {
-          maxLinkerMatches = it->second;
+    for (const auto &it : linkerMatchSet ) {
+      if (it.second > 1) {
+        if (it.second > maxLinkerMatches) {
+          maxLinkerMatches = it.second;
         }
       }
     }

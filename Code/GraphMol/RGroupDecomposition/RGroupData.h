@@ -30,7 +30,11 @@ struct RGroupData {
   std::set<std::string> smilesSet;             // used for rgroup equivalence
   std::string smiles;                          // smiles for all the mols in the rgroup (with attachments)
   std::set<int> attachments;                   // core attachment points
-  bool labelled{false};
+  bool rgroup_is_hydrogen = false;
+  bool single_fragment = true;
+  bool multiple_attachments = false;
+  bool is_linker = false;
+  bool labelled = false;
 
  private:
   RGroupData(const RGroupData &rhs);
@@ -60,12 +64,15 @@ struct RGroupData {
       combinedMol = boost::shared_ptr<RWMol>(new RWMol(*mols[0].get()));
     } else {
       ROMol *m = combineMols(*combinedMol.get(), *newMol.get());
+      single_fragment = false;
       m->updateProps(*combinedMol.get());
       combinedMol.reset(new RWMol(*m));
       delete m;
     }
     smiles = getSmiles();
     combinedMol->setProp(common_properties::internalRgroupSmiles, smiles);
+    computeIsHydrogen();
+    is_linker = single_fragment && attachments.size() > 1;
   }
 
   std::map<int, int> getNumBondsToRlabels() const {
@@ -82,21 +89,26 @@ struct RGroupData {
     return rlabelsUsedCount;
   }
 
-  bool isHydrogen() const {  // is the rgroup all Hs
+  bool isHydrogen() const {
+    return rgroup_is_hydrogen;
+  }
+  
+ private:
+  void computeIsHydrogen() {  // is the rgroup all Hs
     for (const auto &mol : mols) {
       for (ROMol::AtomIterator atIt = mol->beginAtoms();
            atIt != mol->endAtoms(); ++atIt) {
         if ((*atIt)->getAtomicNum() > 1) {
-          return false;
+	  rgroup_is_hydrogen = false;
+	  return;
         }
       }
     }
-    return true;
+    rgroup_is_hydrogen = true;
   }
 
- private:
-  std::string getSmiles()
-      const {  // compute the canonical smiles for the attachments (bug: removes dupes since we are using a set...)
+  //! compute the canonical smiles for the attachments (bug: removes dupes since we are using a set...)
+  std::string getSmiles() const {
     std::string s;
     for (const auto &it : smilesSet) {
       if (s.length()) {

@@ -13,7 +13,7 @@
 #include "RGroupDecomp.h"
 #include "RGroupMatch.h"
 #include "RGroupScore.h"
-
+#include <chrono>
 #include <vector>
 #include <map>
 
@@ -392,8 +392,7 @@ struct RGroupDecompData {
              ++m) {  // for each molecule
           auto rg = matches[m][tied_permutation[m]].rgroups.find(label);
           if (rg != matches[m][tied_permutation[m]].rgroups.end()) {
-            if (rg->second->smiles.find_first_not_of("0123456789[]*H:.") <
-                rg->second->smiles.length()) {
+            if (!rg->second->isHydrogen()) {
               num_added_rgroups += 1;  //= label;
               break;
             }
@@ -405,7 +404,6 @@ struct RGroupDecompData {
   }
 
   bool process(bool pruneMatches, bool finalize = false) {
-    auto t0 = std::chrono::steady_clock::now();
     if (matches.size() == 0) {
       return false;
     }
@@ -436,7 +434,6 @@ struct RGroupDecompData {
     CartesianProduct iterator(permutations);
     // Iterates through the permutation idx, i.e.
     //  [m1_permutation_idx,  m2_permutation_idx, m3_permutation_idx]
-
     while (iterator.next()) {
       if (count > N) {
         throw ValueErrorException("Next did not finish");
@@ -460,6 +457,7 @@ struct RGroupDecompData {
         best_score = newscore;
         best_permutation = iterator.permutation;
       }
+      count++;
     }
 
     if (ties.size() > 1) {

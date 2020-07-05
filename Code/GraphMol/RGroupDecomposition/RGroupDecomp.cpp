@@ -88,6 +88,8 @@ int RGroupDecomposition::add(const ROMol &inmol) {
   std::vector<MatchVectType> tmatches;
 
   // Find the first matching core.
+  auto t0 = std::chrono::steady_clock::now();
+  
   for (std::map<int, RWMol>::const_iterator coreIt = data->cores.begin();
        coreIt != data->cores.end(); ++coreIt) {
     {
@@ -165,6 +167,8 @@ int RGroupDecomposition::add(const ROMol &inmol) {
       break;
     }
   }
+  auto t1 = std::chrono::steady_clock::now(); 
+  //std::cerr << "All matches took: " << std::chrono::duration_cast<std::chrono::seconds>(t1-t0).count() << "s" << std::endl;
 
   if (core == nullptr) {
     return -1;
@@ -183,6 +187,7 @@ int RGroupDecomposition::add(const ROMol &inmol) {
 
   std::vector<RGroupMatch> potentialMatches;
 
+  t0 = std::chrono::steady_clock::now();
   for (auto &tmatche : tmatches) {
     boost::scoped_ptr<ROMol> tMol;
     {
@@ -307,6 +312,8 @@ int RGroupDecomposition::add(const ROMol &inmol) {
       data->process(true);
     }
   }
+  t1 = std::chrono::steady_clock::now();                                                                                        
+  std::cerr << "preprocessing took: " << std::chrono::duration_cast<std::chrono::milliseconds>(t1-t0).count() << "ms" << std::endl;
   return data->matches.size() - 1;
 }
 
