@@ -1,5 +1,5 @@
 //
-// Copyright (c) 2003-2006 Greg Landrum and Rational Discovery LLC
+// Copyright (c) 2003-2020 Greg Landrum and Rational Discovery LLC
 //
 //   @@ All Rights Reserved @@
 //  This file is part of the RDKit.
@@ -8,8 +8,8 @@
 //  of the RDKit source tree.
 //
 #include <RDGeneral/export.h>
-#ifndef __RD_LESSQUERY_H__
-#define __RD_LESSQUERY_H__
+#ifndef RD_LESSQUERY_H
+#define RD_LESSQUERY_H
 #include "Query.h"
 #include "EqualityQuery.h"
 
@@ -59,6 +59,7 @@ class LessQuery
     res->setTol(this->d_tol);
     res->setDataFunc(this->d_dataFunc);
     res->d_description = this->d_description;
+    res->d_queryType = this->d_queryType;
     return res;
   };
 

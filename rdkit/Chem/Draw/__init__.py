@@ -15,7 +15,7 @@ from rdkit.Chem.Draw import rdMolDraw2D
 from rdkit.Chem.Draw.MolDrawing import MolDrawing, DrawingOptions
 from rdkit.Chem.Draw.rdMolDraw2D import *
 from rdkit.Chem import rdDepictor
-from rdkit import Chem
+from rdkit import Chem, rdBase
 
 
 def _getCanvas():
@@ -417,6 +417,7 @@ def _okToKekulizeMol(mol, kekulize):
 
 def _moltoimg(mol, sz, highlights, legend, returnPNG=False, drawOptions=None, **kwargs):
   try:
+    blocker = rdBase.BlockLogs()
     mol.GetAtomWithIdx(0).GetExplicitValence()
   except RuntimeError:
     mol.UpdatePropertyCache(False)
@@ -426,6 +427,7 @@ def _moltoimg(mol, sz, highlights, legend, returnPNG=False, drawOptions=None, **
 
 
   try:
+    blocker = rdBase.BlockLogs()
     mc = rdMolDraw2D.PrepareMolForDrawing(mol, kekulize=kekulize, wedgeBonds=wedge)
   except ValueError:  # <- can happen on a kekulization failure
     mc = rdMolDraw2D.PrepareMolForDrawing(mol, kekulize=False, wedgeBonds=wedge)
@@ -444,11 +446,10 @@ def _moltoimg(mol, sz, highlights, legend, returnPNG=False, drawOptions=None, **
     # we already prepared the molecule:
     d2d.drawOptions().prepareMolsBeforeDrawing = False
     bondHighlights = kwargs.get('highlightBonds',None)
-    if bondHighlights is not None:
-      d2d.DrawMolecule(mc, legend=legend, highlightAtoms=highlights, 
-                      highlightBonds=bondHighlights)
-    else:
-      d2d.DrawMolecule(mc, legend=legend, highlightAtoms=highlights)
+    d2d.DrawMolecule(mc,
+                     legend=legend or "",
+                     highlightAtoms=highlights or [], 
+                     highlightBonds=bondHighlights or [])
     d2d.FinishDrawing()
     if returnPNG:
       img = d2d.GetDrawingText()
@@ -459,6 +460,7 @@ def _moltoimg(mol, sz, highlights, legend, returnPNG=False, drawOptions=None, **
 
 def _moltoSVG(mol, sz, highlights, legend, kekulize, drawOptions=None, **kwargs):
   try:
+    blocker = rdBase.BlockLogs()
     mol.GetAtomWithIdx(0).GetExplicitValence()
   except RuntimeError:
     mol.UpdatePropertyCache(False)
@@ -466,6 +468,7 @@ def _moltoSVG(mol, sz, highlights, legend, kekulize, drawOptions=None, **kwargs)
   kekulize = _okToKekulizeMol(mol, kekulize)
 
   try:
+    blocker = rdBase.BlockLogs()
     mc = rdMolDraw2D.PrepareMolForDrawing(mol, kekulize=kekulize)
   except ValueError:  # <- can happen on a kekulization failure
     mc = rdMolDraw2D.PrepareMolForDrawing(mol, kekulize=False)
@@ -474,11 +477,10 @@ def _moltoSVG(mol, sz, highlights, legend, kekulize, drawOptions=None, **kwargs)
     d2d.SetDrawOptions(drawOptions)
 
   bondHighlights = kwargs.get('highlightBonds',None)
-  if bondHighlights is not None:
-    d2d.DrawMolecule(mc, legend=legend, highlightAtoms=highlights, 
-                    highlightBonds=bondHighlights)
-  else:
-    d2d.DrawMolecule(mc, legend=legend, highlightAtoms=highlights)
+  d2d.DrawMolecule(mc,
+                   legend=legend or "",
+                   highlightAtoms=highlights or [], 
+                   highlightBonds=bondHighlights or [])
   d2d.FinishDrawing()
   svg = d2d.GetDrawingText()
   return svg
@@ -521,8 +523,11 @@ def _MolsToGridImage(mols, molsPerRow=3, subImgSize=(200, 200), legends=None,
         if hasattr(dops, k):
           setattr(dops, k, v)
           del kwargs[k]
-    d2d.DrawMolecules(list(mols), legends=legends, highlightAtoms=highlightAtomLists,
-                      highlightBonds=highlightBondLists, **kwargs)
+    d2d.DrawMolecules(list(mols),
+                      legends=legends or None,
+                      highlightAtoms=highlightAtomLists,
+                      highlightBonds=highlightBondLists,
+                      **kwargs)
     d2d.FinishDrawing()
     res = _drawerToImage(d2d)
 
@@ -553,8 +558,11 @@ def _MolsToGridSVG(mols, molsPerRow=3, subImgSize=(200, 200), legends=None, high
       if hasattr(dops, k):
         setattr(dops, k, v)
         del kwargs[k]
-  d2d.DrawMolecules(list(mols), legends=legends, highlightAtoms=highlightAtomLists,
-                    highlightBonds=highlightBondLists, **kwargs)
+  d2d.DrawMolecules(list(mols),
+                    legends=legends or None,
+                    highlightAtoms=highlightAtomLists or [],
+                    highlightBonds=highlightBondLists or [],
+                    **kwargs)
   d2d.FinishDrawing()
   res = d2d.GetDrawingText()
   return res

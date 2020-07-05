@@ -16,7 +16,6 @@
 #include <GraphMol/FileParsers/MolSupplier.h>
 #include <GraphMol/RDKitBase.h>
 #include <RDBoost/PySequenceHolder.h>
-#include <RDBoost/iterator_next.h>
 
 #include "MolSupplier.h"
 
@@ -83,7 +82,7 @@ struct sdmolsup_wrap {
         .def("__iter__", (SDMolSupplier * (*)(SDMolSupplier *)) & MolSupplIter,
              python::return_internal_reference<1>())
         .def(
-            NEXT_METHOD,
+            "__next__",
             (ROMol * (*)(SDMolSupplier *)) & MolSupplNextAcceptNullLastMolecule,
             "Returns the next molecule in the file.  Raises _StopIteration_ "
             "on EOF.\n",

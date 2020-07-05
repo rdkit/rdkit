@@ -344,9 +344,8 @@ ATOM_EQUALS_QUERY *makeAtomInRingQuery() {
 
 ATOM_OR_QUERY *makeQAtomQuery() {
   auto *res = new ATOM_OR_QUERY;
-  res->setDescription("AtomOr");  // FIX: we really should label this more
-                                  // descriptively so that it can be output more
-                                  // cleanly
+  res->setDescription("AtomOr");
+  res->setTypeLabel("Q");
   res->setNegation(true);
   res->addChild(
       Queries::Query<int, Atom const *, true>::CHILD_TYPE(makeAtomNumQuery(6)));
@@ -357,15 +356,18 @@ ATOM_OR_QUERY *makeQAtomQuery() {
 ATOM_EQUALS_QUERY *makeQHAtomQuery() {
   ATOM_EQUALS_QUERY *res = makeAtomNumQuery(6);
   res->setNegation(true);
+  res->setTypeLabel("QH");
   return res;
 }
 ATOM_EQUALS_QUERY *makeAAtomQuery() {
   ATOM_EQUALS_QUERY *res = makeAtomNumQuery(1);
   res->setNegation(true);
+  res->setTypeLabel("A");
   return res;
 }
 ATOM_EQUALS_QUERY *makeAHAtomQuery() {
   auto *res = rdcast<ATOM_EQUALS_QUERY *>(makeAtomNullQuery());
+  res->setTypeLabel("AH");
   return res;
 }
 
@@ -382,12 +384,15 @@ ATOM_OR_QUERY *makeXAtomQuery() {
       makeAtomNumQuery(53)));
   res->addChild(Queries::Query<int, Atom const *, true>::CHILD_TYPE(
       makeAtomNumQuery(85)));
+  res->setTypeLabel("X");
+
   return res;
 }
 ATOM_OR_QUERY *makeXHAtomQuery() {
   ATOM_OR_QUERY *res = makeXAtomQuery();
   res->addChild(
       Queries::Query<int, Atom const *, true>::CHILD_TYPE(makeAtomNumQuery(1)));
+  res->setTypeLabel("XH");
   return res;
 }
 
@@ -399,6 +404,8 @@ ATOM_OR_QUERY *makeMAtomQuery() {
   ATOM_OR_QUERY *res = makeMHAtomQuery();
   res->addChild(
       Queries::Query<int, Atom const *, true>::CHILD_TYPE(makeAtomNumQuery(1)));
+  res->setTypeLabel("M");
+
   return res;
 }
 ATOM_OR_QUERY *makeMHAtomQuery() {
@@ -451,6 +458,7 @@ ATOM_OR_QUERY *makeMHAtomQuery() {
       makeAtomNumQuery(85)));
   res->addChild(Queries::Query<int, Atom const *, true>::CHILD_TYPE(
       makeAtomNumQuery(86)));
+  res->setTypeLabel("MH");
   return res;
 }
 
@@ -508,6 +516,15 @@ RDKIT_GRAPHMOL_EXPORT BOND_EQUALS_QUERY *makeSingleOrAromaticBondQuery() {
   res->setVal(true);
   res->setDataFunc(queryBondIsSingleOrAromatic);
   res->setDescription("SingleOrAromaticBond");
+  return res;
+};
+
+RDKIT_GRAPHMOL_EXPORT BOND_EQUALS_QUERY *
+makeSingleOrDoubleOrAromaticBondQuery() {
+  auto *res = new BOND_EQUALS_QUERY;
+  res->setVal(true);
+  res->setDataFunc(queryBondIsSingleOrDoubleOrAromatic);
+  res->setDescription("SingleOrDoubleOrAromaticBond");
   return res;
 };
 
