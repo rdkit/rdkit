@@ -99,6 +99,9 @@ bool validate(std::string& fileFormat, std::string& compressionFormat) {
 //! returns the file name givens the file path
 std::string getFileName(const std::string path) {
   char delimiter = '/';
+#ifdef _WIN32
+  delimiter = '\\';
+#endif
   std::string fname = "";
   auto slash = path.rfind(delimiter, path.length());
   if (slash != std::string::npos) {
@@ -115,15 +118,16 @@ void determineFormat(const std::string path, std::string& fileFormat,
 
   if (dots == 0) {
     throw std::invalid_argument(
-        "Recieved Invalid File Format, no extension or compression");
+        "Unable to determine file format: no filename extension found");
   }
 
   else if (dots == 1) {
     //! there is a file format but no compression format
-    int pos = fileName.find(".");
+    int pos = fileName.rfind(".");
     fileFormat = fileName.substr(pos + 1);
     if (!validate(fileFormat, compressionFormat)) {
-      throw std::invalid_argument("Recieved Invalid File Format");
+      throw std::invalid_argument(
+          "Unable to determine file format: unsupported filename extension");
     }
   } else {
     //! there is a file and compression format
@@ -135,7 +139,7 @@ void determineFormat(const std::string path, std::string& fileFormat,
     compressionFormat = fileName.substr(p1 + 1, (n - p1) + 1);
     if (!validate(fileFormat, compressionFormat)) {
       throw std::invalid_argument(
-          "Recieved Invalid File or Compression Format");
+          "Unable to determine file format: unsupported extension");
     }
   }
 }
