@@ -36,6 +36,9 @@ void testFileName() {
   std::string w2 = "A:\\Temp\\Folder1/Folder2/Folder3\\File.txt.csv";
   std::string w3 = "A::\\Temp\\Folder1/Folder2\\Folder3/File.txt.csv";
 
+  //! No base directory
+  std::string d1 = "File.txt.csv";
+
   std::string out_u1 = getFileName(u1);
   TEST_ASSERT(out_u1 == "few.2.smi.csv");
 
@@ -50,6 +53,9 @@ void testFileName() {
 
   std::string out_w3 = getFileName(w3);
   TEST_ASSERT(out_w3 == "File.txt.csv");
+
+  std::string out_d1 = getFileName(d1);
+  TEST_ASSERT(out_d1 == "File.txt.csv");
 }
 
 void testSdf() {

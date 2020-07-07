@@ -106,19 +106,18 @@ std::string getFileName(const std::string path) {
   auto slash1 = path.rfind(delimiter, n);
   auto slash2 = path.rfind(delimiter_win, n);
   if (slash1 == std::string::npos && slash2 != std::string::npos) {
-    fname += path.substr(slash2 + 1, n - slash1);
+    fname += path.substr(slash2 + 1);
   } else if (slash1 != std::string::npos && slash2 == std::string::npos) {
-    fname += path.substr(slash1 + 1, n - slash1);
+    fname += path.substr(slash1 + 1);
   } else if (slash1 != std::string::npos && slash2 != std::string::npos) {
     if (n - slash1 > n - slash2) {
-      fname += path.substr(slash2 + 1, n - slash2);
+      fname += path.substr(slash2 + 1);
     } else {
-      fname += path.substr(slash1 + 1, n - slash1);
+      fname += path.substr(slash1 + 1);
     }
   } else {
-    throw std::invalid_argument(
-        "Unable to determine filename from path: no back or forward slash "
-        "found");
+    //! in this case we assume that the path name is the filename
+    fname += path;
   }
 
   return fname;
