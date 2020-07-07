@@ -29,11 +29,13 @@ namespace ANI {
   \return 2 dimensional array containing corresponding values computed by cutoff
   function
 */
-ArrayXXd CosineCutoff(ArrayXXd distances, double cutoff) {
+template <typename Derived>
+ArrayXXd CosineCutoff(ArrayBase<Derived> *distances, double cutoff) {
   // Cosine cutoff function assuming all distances are less than the cutoff
-  PRECONDITION((distances <= cutoff).count() == distances.size(),
+  PRECONDITION(cutoff > 0.0, "Cutoff must be greater than zero");
+  PRECONDITION(((*distances) <= cutoff).count() == distances->size(),
                "All distances must be less than the cutoff");
-  return 0.5 * (distances * (M_PI / cutoff)).cos() + 0.5;
+  return 0.5 * ((*distances) * (M_PI / cutoff)).cos() + 0.5;
 }
 
 VectorXi GenerateSpeciesVector(const ROMol &mol) {
@@ -63,7 +65,7 @@ VectorXi GenerateSpeciesVector(const ROMol &mol) {
         species[i] = 3;
         break;
       default:
-        species[i] = -1;
+        throw ValueErrorException("Atom Type Not Supported");
     }
   }
 
@@ -71,6 +73,7 @@ VectorXi GenerateSpeciesVector(const ROMol &mol) {
 }
 
 VectorXi GenerateSpeciesVector(const int *atomNums, unsigned int numAtoms) {
+  PRECONDITION(atomNums != nullptr, "Array of atom types is NULL")
   VectorXi species(numAtoms);
 
   for (unsigned int i = 0; i < numAtoms; i++) {
@@ -88,7 +91,7 @@ VectorXi GenerateSpeciesVector(const int *atomNums, unsigned int numAtoms) {
         species[i] = 3;
         break;
       default:
-        species[i] = -1;
+        throw ValueErrorException("Atom Type Not Supported");
     }
   }
 
@@ -108,6 +111,8 @@ VectorXi GenerateSpeciesVector(const int *atomNums, unsigned int numAtoms) {
 template <typename Derived>
 void IndexSelect(ArrayBase<Derived> *vector1, ArrayBase<Derived> *vector2,
                  ArrayXi &index, unsigned int dim) {
+  PRECONDITION(vector1 != nullptr && vector2 != nullptr,
+               "Input vectors are NULL");
   PRECONDITION(dim == 0 || dim == 1,
                "Only values 0 and 1 are accepted for dim");
   for (auto i = 0; i < index.size(); i++) {
@@ -140,6 +145,8 @@ void IndexSelect(ArrayBase<Derived> *vector1, ArrayBase<Derived> *vector2,
 */
 void NeighborPairs(ArrayXXd *coordinates, const VectorXi *species,
                    double cutoff, unsigned int numAtoms, ArrayXi *atomIndex12) {
+  PRECONDITION(coordinates != nullptr, "Coordinates are NULL");
+  PRECONDITION(species != nullptr, "species vector is NULL");
   PRECONDITION(coordinates->rows() == numAtoms,
                "Number of coordinate vectors must be same as number of atoms");
   PRECONDITION(species->size() == numAtoms,
@@ -239,23 +246,25 @@ void NeighborPairs(ArrayXXd *coordinates, const VectorXi *species,
   to each pair of distances in the molecule calculated using hard coded
   parameters
 */
-ArrayXXd RadialTerms(double cutoff, ArrayXXd distances) {
+template <typename Derived>
+void RadialTerms(double cutoff, ArrayBase<Derived> &distances,
+                 ArrayXXd &RadialTerms_) {
   // Find cutoff factor for each pair of atoms which lie in each other's
   // neghborhoods
   // All the constants were determined in torchANI and have been taken from
   // there
-  auto fc = CosineCutoff(distances, cutoff);
+  auto fc = CosineCutoff(&distances, cutoff);
   // Different values for means of the gaussian symmetry functions
   std::string path = getenv("RDBASE");
   std::string paramFilePath = path + "/Code/GraphMol/Descriptors/ANIParams/";
   ArrayXd ShfR;
-  RDNumeric::EigenSerializer::deSerialize(ShfR, paramFilePath + "ShfR.bin");
+  RDNumeric::EigenSerializer::deserialize(ShfR, paramFilePath + "ShfR.bin");
   // Variance terms for the gaussian symmetry functions
   ArrayXd EtaR;
-  RDNumeric::EigenSerializer::deSerialize(EtaR, paramFilePath + "EtaR.bin");
-  // Size of ret is
-  // distances.rows() * (number of means * number of variance terms)
-  ArrayXXd ret(distances.rows(), ShfR.size() * EtaR.size());
+  RDNumeric::EigenSerializer::deserialize(EtaR, paramFilePath + "EtaR.bin");
+
+  RadialTerms_.resize(distances.rows(), ShfR.size() * EtaR.size());
+
   for (auto i = 0; i < distances.rows(); i++) {
     ArrayXXd calculatedRowVector(1, ShfR.size() * EtaR.size());
     unsigned int idx = 0;
@@ -268,9 +277,8 @@ ArrayXXd RadialTerms(double cutoff, ArrayXXd distances) {
       }
       idx += ShfR.size();
     }
-    ret.row(i) = calculatedRowVector;
+    RadialTerms_.row(i) = calculatedRowVector;
   }
-  return ret;
 }
 
 //! Computes angular terms of the torchANI style atom features
@@ -283,7 +291,9 @@ ArrayXXd RadialTerms(double cutoff, ArrayXXd distances) {
   terms according to each pair of distances in the molecule calculated using
   hard coded parameters
 */
-ArrayXXd AngularTerms(double cutoff, ArrayXXd vectors12) {
+template <typename Derived>
+void AngularTerms(double cutoff, ArrayBase<Derived> &vectors12,
+                  ArrayXXd &AngularTerms_) {
   // All the constants were determined in torchANI and have been taken from
   // there
   // Angle wise shift in the trigonometric term of the angular symmetry function
@@ -293,17 +303,15 @@ ArrayXXd AngularTerms(double cutoff, ArrayXXd vectors12) {
   // Variance terms for the gaussian symmetry functions
 
   ArrayXd ShfZ;
-  RDNumeric::EigenSerializer::deSerialize(ShfZ, paramFilePath + "ShfZ.bin");
+  RDNumeric::EigenSerializer::deserialize(ShfZ, paramFilePath + "ShfZ.bin");
   ArrayXd ShfA;
-  RDNumeric::EigenSerializer::deSerialize(ShfA, paramFilePath + "ShfA.bin");
+  RDNumeric::EigenSerializer::deserialize(ShfA, paramFilePath + "ShfA.bin");
   // distance wise shifts in the distance term of the angular symmetry function
 
-  // double zeta = 32;
   ArrayXd zeta;
-  RDNumeric::EigenSerializer::deSerialize(zeta, paramFilePath + "zeta.bin");
-  // double etaA = 8;
+  RDNumeric::EigenSerializer::deserialize(zeta, paramFilePath + "zeta.bin");
   ArrayXd etaA;
-  RDNumeric::EigenSerializer::deSerialize(etaA, paramFilePath + "etaA.bin");
+  RDNumeric::EigenSerializer::deserialize(etaA, paramFilePath + "etaA.bin");
 
   auto distances12 = vectors12.matrix().rowwise().norm().array();
 
@@ -311,15 +319,18 @@ ArrayXXd AngularTerms(double cutoff, ArrayXXd vectors12) {
   // taking dot product of the 2 vectors
   ArrayXXd cosineAngles(vectors12.rows() / 2, 1);
   for (auto i = 0; i < vectors12.rows() / 2; i++) {
-    cosineAngles(i, 0) = vectors12.matrix().row(i).dot(
+    auto dotProduct = vectors12.matrix().row(i).dot(
         vectors12.matrix().row(i + vectors12.rows() / 2));
+    auto vector1Norm = vectors12.matrix().row(i).norm();
+    auto vector2Norm = vectors12.matrix().row(i + vectors12.rows() / 2).norm();
+    if (vector1Norm == 0 || vector2Norm == 0) {
+      throw ValueErrorException("2 Atoms have the same position vector");
+    }
     cosineAngles(i, 0) =
-        0.95 * cosineAngles(i, 0) /
-        (vectors12.matrix().row(i).norm() *
-         vectors12.matrix().row(i + vectors12.rows() / 2).norm());
+        0.95 * dotProduct / (vector1Norm * vector2Norm);
   }
   auto angles = cosineAngles.acos();
-  auto fcj12 = CosineCutoff(distances12, cutoff);
+  auto fcj12 = CosineCutoff(&distances12, cutoff);
 
   // Angle dependent factors for the angular symmetry functions
   ArrayXXd factor1(angles.rows(), ShfZ.size() * zeta.size());
@@ -378,33 +389,32 @@ ArrayXXd AngularTerms(double cutoff, ArrayXXd vectors12) {
     fcj12prod(i, 0) = fcj12(i, 0) * fcj12(i + fcj12.rows() / 2, 0);
   }
 
-  ArrayXXd ret(fcj12prod.rows(), 32);
-  for (auto i = 0; i < ret.rows(); i++) {
+  AngularTerms_.resize(fcj12prod.rows(), 32);
+  for (auto i = 0; i < AngularTerms_.rows(); i++) {
     unsigned int idx = 0;
     for (auto j = 0; j < 4; j++) {
       for (auto k = 0; k < 8; k++) {
-        ret(i, idx) = 2 * factor1(i, k) * factor2(i, j) * fcj12prod(i, 0);
+        AngularTerms_(i, idx) =
+            2 * factor1(i, k) * factor2(i, j) * fcj12prod(i, 0);
         idx++;
       }
     }
   }
-  return ret;
 }
 
-std::vector<int> cumsum(std::vector<int> count, bool fromZero) {
-  std::vector<int> cumulativeSum;
+void cumsum(std::vector<int> count, bool fromZero,
+            std::vector<int> *cumsumCount) {
+  PRECONDITION(cumsumCount != nullptr, "Cumulative sum count array is null");
   if (fromZero == true) {
-    cumulativeSum.push_back(0);
+    cumsumCount->push_back(0);
   } else {
-    cumulativeSum.push_back(count[0]);
+    cumsumCount->push_back(count[0]);
   }
   unsigned int index = 1;
   for (size_t i = 0 + (unsigned int)(!fromZero); i < count.size() - 1; i++) {
-    cumulativeSum.push_back(cumulativeSum[index - 1] + count[i]);
+    cumsumCount->push_back((*cumsumCount)[index - 1] + count[i]);
     index++;
   }
-
-  return cumulativeSum;
 }
 
 //! Calculates triplets of atoms according to pairs of atoms close to each other
@@ -433,6 +443,8 @@ void TripleByMolecules(ArrayXXi *atomIndex12Angular,
                        std::pair<std::vector<int>, ArrayXXi> *tripletInfo) {
   // atomIndex12Angular is flattened and sorted and we keep track of initial
   // indices so that actual pairs can be calculated back later
+  PRECONDITION(atomIndex12Angular != nullptr, "Array of atom pairs is NULL");
+  PRECONDITION(tripletInfo != nullptr, "Output variable is NULL");
   std::vector<std::pair<int, int>> atomIndex12AngularFlattened;
   auto index = 0;
   for (auto i = 0; i < atomIndex12Angular->rows(); i++) {
@@ -542,8 +554,8 @@ void TripleByMolecules(ArrayXXi *atomIndex12Angular,
       index++;
     }
   }
-
-  auto cumsumCount = cumsum(counts, true);
+  std::vector<int> cumsumCount;
+  cumsum(counts, true, &cumsumCount);
 
   VectorXi extraLocalIndex12(pairIndices.size());
   index = 0;
@@ -565,7 +577,7 @@ void TripleByMolecules(ArrayXXi *atomIndex12Angular,
   }
 }
 
-ArrayXXi TriuIndex(unsigned int numSpecies) {
+void TriuIndex(unsigned int numSpecies, ArrayXXi &triuIndices) {
   std::vector<int> species1, species2, pairIndex;
 
   for (unsigned int i = 0; i < numSpecies; i++) {
@@ -575,16 +587,15 @@ ArrayXXi TriuIndex(unsigned int numSpecies) {
     }
     pairIndex.push_back(i);
   }
+  triuIndices.resize(numSpecies, numSpecies);
   ArrayXXi ret(numSpecies, numSpecies);
   unsigned int index1 = 0;
 
   for (size_t i = 0; i < species1.size(); i++) {
-    ret(species1[i], species2[i]) = index1;
-    ret(species2[i], species1[i]) = index1;
+    triuIndices(species1[i], species2[i]) = index1;
+    triuIndices(species2[i], species1[i]) = index1;
     index1++;
   }
-
-  return ret;
 }
 
 //! Accumulate the elements of a Matrix into another Matrix by adding to the
@@ -604,8 +615,9 @@ ArrayXXi TriuIndex(unsigned int numSpecies) {
   vector1
   \endverbatim
 */
-ArrayXXd IndexAdd(ArrayXXd vector1, ArrayXXd vector2, ArrayXXi index,
-                  unsigned int multi, unsigned int numAtoms) {
+template <typename Derived>
+void IndexAdd(ArrayXXd &vector1, ArrayXXd &vector2, ArrayBase<Derived> &index,
+              unsigned int multi, unsigned int numAtoms) {
   PRECONDITION(vector1.rows() == multi * numAtoms, "Too few rows in vector1");
   PRECONDITION(vector2.rows() == index.rows(), "Too few rows in vector2");
   for (auto idxCol = 0; idxCol < index.cols(); idxCol++) {
@@ -617,13 +629,14 @@ ArrayXXd IndexAdd(ArrayXXd vector1, ArrayXXd vector2, ArrayXXi index,
       }
     }
   }
-  return vector1;
+  // return vector1;
 }
 
 ArrayXXd AtomicEnvironmentVector(double *pos, const VectorXi &species,
                                  unsigned int numAtoms) {
   PRECONDITION(species.size() == numAtoms,
                "Species encoding for each atom is required");
+  PRECONDITION(pos != nullptr, "Array of positions is NULL");
   ArrayXXd coordinates(numAtoms, 3);
   for (unsigned int i = 0; i < numAtoms; i++) {
     coordinates.row(i) << pos[3 * i], pos[3 * i + 1], pos[3 * i + 2];
@@ -636,40 +649,38 @@ ArrayXXd AtomicEnvironmentVector(double *pos, const VectorXi &species,
   IndexSelect(&selectedCoordinates, &coordinates, atomIndex12, 0);
 
   // Vectors between pairs of atoms that lie in each other's neighborhoods
-  unsigned int pairs = selectedCoordinates.rows() / 2;
-  ArrayXXd vec(pairs, 3);
-  for (unsigned int i = 0; i < pairs; i++) {
+  unsigned int numPairs = selectedCoordinates.rows() / 2;
+  ArrayXXd vec(numPairs, 3);
+  for (unsigned int i = 0; i < numPairs; i++) {
     vec.row(i) =
-        selectedCoordinates.row(i) - selectedCoordinates.row(i + pairs);
+        selectedCoordinates.row(i) - selectedCoordinates.row(i + numPairs);
   }
 
   auto distances = vec.matrix().rowwise().norm().array();
-  ArrayXXi species12(2, pairs);
-  ArrayXXi species12Flipped(2, pairs);
-  ArrayXXi atomIndex12Unflattened(2, pairs);
-  for (unsigned int i = 0; i < pairs; i++) {
+  ArrayXXi species12(2, numPairs);
+  ArrayXXi species12Flipped(2, numPairs);
+  ArrayXXi atomIndex12Unflattened(2, numPairs);
+  for (unsigned int i = 0; i < numPairs; i++) {
     species12(0, i) = species(atomIndex12(i));
-    species12(1, i) = species(atomIndex12(i + pairs));
+    species12(1, i) = species(atomIndex12(i + numPairs));
 
     species12Flipped(1, i) = species(atomIndex12(i));
-    species12Flipped(0, i) = species(atomIndex12(i + pairs));
+    species12Flipped(0, i) = species(atomIndex12(i + numPairs));
 
     atomIndex12Unflattened(0, i) = atomIndex12(i);
-    atomIndex12Unflattened(1, i) = atomIndex12(i + pairs);
+    atomIndex12Unflattened(1, i) = atomIndex12(i + numPairs);
   }
 
   // Obtain indices to use for constructing final radial aev
   // The constant 4 comes from the fact that each atom will have 4 kinds of
   // interactions. For Example, for H it is HC, HO, HN and HX where X is any
   // other atom
-  auto index12 = atomIndex12Unflattened * 4 + species12Flipped;
-
-  auto RadialTerms_ = RadialTerms(5.2, distances);
+  auto index12 = (atomIndex12Unflattened * 4 + species12Flipped).transpose();
+  ArrayXXd RadialTerms_;
+  RadialTerms(5.2, distances, RadialTerms_);
 
   ArrayXXd radialAEV = ArrayXXd::Zero(4 * numAtoms, 16);
-
-  radialAEV =
-      IndexAdd(radialAEV, RadialTerms_, index12.transpose(), 4, numAtoms);
+  IndexAdd(radialAEV, RadialTerms_, index12, 4, numAtoms);
 
   // Each atom finally has a total of 64 radial terms
   ArrayXXd finalRadialAEV(numAtoms, 64);
@@ -755,8 +766,8 @@ ArrayXXd AtomicEnvironmentVector(double *pos, const VectorXi &species,
   for (auto i = vecFlattened.rows() / 2; i < vecFlattened.rows(); i++) {
     vec12.row(i) = vecFlattened.row(i) * sign12(1, i - vecFlattened.rows() / 2);
   }
-
-  auto AngularTerms_ = AngularTerms(3.5, vec12);
+  ArrayXXd AngularTerms_;
+  AngularTerms(3.5, vec12, AngularTerms_);
 
   ArrayXXi centralAtomIndexArr(centralAtomIndex.size(), 1);
 
@@ -792,7 +803,8 @@ ArrayXXd AtomicEnvironmentVector(double *pos, const VectorXi &species,
   }
 
   ArrayXXi index(species12_.cols(), 1);
-  auto triuIndices = TriuIndex(4);
+  ArrayXXi triuIndices;
+  TriuIndex(4, triuIndices);
 
   for (auto i = 0; i < species12_.cols(); i++) {
     index.row(i) = triuIndices(species12_(0, i), species12_(1, i));
@@ -801,7 +813,7 @@ ArrayXXd AtomicEnvironmentVector(double *pos, const VectorXi &species,
   index = index + (centralAtomIndexArr.array() * 10).array();
 
   ArrayXXd angularAEV = ArrayXXd::Zero(10 * numAtoms, 32);
-  angularAEV = IndexAdd(angularAEV, AngularTerms_, index, 10, numAtoms);
+  IndexAdd(angularAEV, AngularTerms_, index, 10, numAtoms);
 
   ArrayXXd finalAngularAEV(numAtoms, 320);
   atomIdx = 0;

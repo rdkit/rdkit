@@ -150,52 +150,6 @@ TEST_CASE("Symmetry Function Accuracy", "[Symmetry Function]") {
     }
   }
 
-  SECTION("SO2") {
-    std::string pathName = getenv("RDBASE");
-
-    std::string molFile =
-        pathName + "/Code/GraphMol/Descriptors/test_data/SO2.mol";
-    std::string fNameSF =
-        pathName + "/Code/GraphMol/Descriptors/test_data/SO2.out";
-
-    std::ifstream instrmSF;
-    instrmSF.open(fNameSF);
-
-    std::string line;
-    std::vector<std::string> tokens;
-    std::vector<std::vector<double>> expectedOutput;
-
-    while (!instrmSF.eof()) {
-      std::getline(instrmSF, line);
-      tokens = tokenize(line);
-      std::vector<double> row;
-      for (auto v : tokens) {
-        std::istringstream os(v);
-        double d;
-        os >> d;
-        row.push_back(d);
-      }
-      expectedOutput.push_back(row);
-    }
-
-    RDKit::ROMOL_SPTR mol(RDKit::MolFileToMol(molFile, true, false));
-    int confId = -1;
-
-    auto aev = RDKit::Descriptors::ANI::AtomicEnvironmentVector(*mol, confId);
-
-    CHECK(aev.rows() == mol->getNumAtoms());
-    CHECK(aev.cols() == 384);
-
-    auto aevOutput = EigenMatToSTLVector(aev);
-
-    for (unsigned int i = 0; i < expectedOutput.size(); i++) {
-      for (unsigned int j = 0; j < expectedOutput[i].size(); j++) {
-        auto diff = std::fabs(expectedOutput[i][j] - aevOutput[i][j]);
-        CHECK(diff < 0.2);
-      }
-    }
-  }
-
   SECTION("Ethanol") {
     std::string pathName = getenv("RDBASE");
 
@@ -233,9 +187,7 @@ TEST_CASE("Symmetry Function Accuracy", "[Symmetry Function]") {
     CHECK(aev.rows() == mol->getNumAtoms());
     CHECK(aev.cols() == 384);
 
-
     auto aevOutput = EigenMatToSTLVector(aev);
-
 
     for (unsigned int i = 0; i < expectedOutput.size(); i++) {
       for (unsigned int j = 0; j < expectedOutput[i].size(); j++) {
@@ -270,16 +222,8 @@ TEST_CASE("Species Vector Generation", "[Atomic Species Encoding]") {
     std::string molFile =
         pathName + "/Code/GraphMol/Descriptors/test_data/SO2.mol";
     RDKit::ROMOL_SPTR mol(RDKit::MolFileToMol(molFile, true, false));
-    auto speciesVec = RDKit::Descriptors::ANI::GenerateSpeciesVector(*mol);
-    auto numAtoms = mol->getNumAtoms();
-    CHECK(speciesVec.size() == numAtoms);
-    VectorXi expected(3);
-    expected << -1, 3, 3;
-    CHECK(((expected - speciesVec).array() == 0).count() == numAtoms);
-    int atomNums[] = {16, 8, 8};
-    speciesVec = RDKit::Descriptors::ANI::GenerateSpeciesVector(atomNums, 3);
-    CHECK(speciesVec.size() == 3);
-    CHECK(((expected - speciesVec).array() == 0).count() == numAtoms);
+    REQUIRE_THROWS_AS(RDKit::Descriptors::ANI::GenerateSpeciesVector(*mol),
+                      ValueErrorException);
   }
   SECTION("NH3") {
     std::string pathName = getenv("RDBASE");
@@ -311,10 +255,9 @@ TEST_CASE("Species Vector Generation", "[Atomic Species Encoding]") {
     expected << 3, 1, 1, 0, 0, 0, 0, 0, 0;
     CHECK(((expected - speciesVec).array() == 0).count() == numAtoms);
 
-
     int atomNums[] = {8, 6, 6, 1, 1, 1, 1, 1, 1};
     speciesVec = RDKit::Descriptors::ANI::GenerateSpeciesVector(atomNums, 9);
-    CHECK(speciesVec.size() == sizeof(atomNums)/sizeof(int));
+    CHECK(speciesVec.size() == sizeof(atomNums) / sizeof(int));
     CHECK(((expected - speciesVec).array() == 0).count() == numAtoms);
   }
 }
