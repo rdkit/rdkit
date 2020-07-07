@@ -31,8 +31,7 @@ void addANIContribs(const ROMol &mol, ForceFields::ForceField *field,
 
   for (unsigned int i = 0; i < numAtoms; i++) {
     auto atom = conf.getAtomPos(i);
-    ANIAtomContrib *ac;
-    ac = new ForceFields::ANI::ANIAtomContrib(field, speciesVec(i), i,
+    auto ac = new ForceFields::ANI::ANIAtomContrib(field, speciesVec(i), i,
                                               speciesVec, numAtoms, numLayers,
                                               ensembleSize, modelType);
     field->contribs().push_back(ForceFields::ContribPtr(ac));

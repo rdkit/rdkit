@@ -30,7 +30,7 @@ TEST_CASE("Check ANI Force Field builder") {
     std::string filePath = pathName + "/Code/GraphMol/Descriptors/test_data/CH4.mol";
 
     auto mol = MolFileToMol(filePath, true, false);
-    TEST_ASSERT(mol);
+    REQUIRE(mol);
     int confId = -1;
     auto field = RDKit::ANI::constructForceField(*mol, "ANI-1ccx", 8);
     field->initialize();
@@ -45,13 +45,14 @@ TEST_CASE("Check ANI Force Field builder") {
       pos[3 * i + 2] = atom.z;
     }
     CHECK(std::fabs(field->calcEnergy(pos) - (-40.0553)) < 0.05);
+    delete[] pos;
   }
   SECTION("ANI-1x") {
     std::string pathName = getenv("RDBASE");
     std::string filePath = pathName + "/Code/GraphMol/Descriptors/test_data/CH4.mol";
 
     auto mol = MolFileToMol(filePath, true, false);
-    TEST_ASSERT(mol);
+    REQUIRE(mol);
     int confId = -1;
     auto field = RDKit::ANI::constructForceField(*mol, "ANI-1x", 8);
     field->initialize();
@@ -66,5 +67,14 @@ TEST_CASE("Check ANI Force Field builder") {
       pos[3 * i + 2] = atom.z;
     }
     CHECK(std::fabs(field->calcEnergy(pos) - (-40.0517)) < 0.05);
+    delete[] pos;
+  }
+  SECTION("Unsupported Atoms") {
+    std::string pathName = getenv("RDBASE");
+    std::string filePath = pathName + "/Code/GraphMol/Descriptors/test_data/SO2.mol";
+
+    auto mol = MolFileToMol(filePath, true, false);
+    REQUIRE(mol);
+    REQUIRE_THROWS_AS(RDKit::ANI::constructForceField(*mol, "ANI-1x", 8), ValueErrorException);
   }
 }
