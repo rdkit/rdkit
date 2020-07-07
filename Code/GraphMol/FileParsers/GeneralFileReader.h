@@ -42,60 +42,25 @@ std::vector<std::string> supportedFileFormats{"sdf", "mae", "maegz", "smi",
 std::vector<std::string> supportedCompressionFormats{"gz"};
 
 //! determines whether file and compression format are valid
-bool validate(std::string& fileFormat, std::string& compressionFormat) {
-  bool flag_fileFormat = true;
-  bool flag_compressionFormat = true;
-
+bool validate(const std::string fileFormat,
+              const std::string compressionFormat) {
   //! Case 1: No compression format
   if (compressionFormat.empty()) {
-    //! Unconventional format types
-    if (fileFormat.compare("maegz") == 0) {
-      fileFormat = "mae";
-      compressionFormat = "gz";
-      return true;
-    }
-
-    //! Usual file formats
     return std::find(supportedFileFormats.begin(), supportedFileFormats.end(),
                      fileFormat) != supportedFileFormats.end();
   }
   //! Case 2: With compression format
-  else {
-    flag_fileFormat =
-        std::find(supportedFileFormats.begin(), supportedFileFormats.end(),
-                  fileFormat) != supportedFileFormats.end();
-    flag_compressionFormat =
-        std::find(supportedCompressionFormats.begin(),
-                  supportedCompressionFormats.end(),
-                  compressionFormat) != supportedCompressionFormats.end();
 
-    //! Case A: Valid file format and valid compression format
-    if (flag_fileFormat && flag_compressionFormat) {
-      return true;
-    }
+  bool flagFileFormat =
+      std::find(supportedFileFormats.begin(), supportedFileFormats.end(),
+                fileFormat) != supportedFileFormats.end();
+  bool flagCompressionFormat =
+      std::find(supportedCompressionFormats.begin(),
+                supportedCompressionFormats.end(),
+                compressionFormat) != supportedCompressionFormats.end();
 
-    //! Case B, C: Valid file format but not valid compression format
-    //! 						or invalid file format
-    //! and valid compression format
-    else if ((flag_fileFormat && !flag_compressionFormat) ||
-             (!flag_fileFormat && flag_compressionFormat)) {
-      return false;
-    }
-
-    //! Case D: Invalid file format and invalid compression format
-    else {
-      //! it is possible that we have read a file with name *.2.txt (for
-      //! example) thus fileformat = "2" and compressionformat = "txt", so we
-      //! try to set the file format as the compression format and the
-      //! compression format as an empty string. Then we check of validity.
-      fileFormat = compressionFormat;
-      compressionFormat = "";
-      return std::find(supportedFileFormats.begin(), supportedFileFormats.end(),
-                       fileFormat) != supportedFileFormats.end();
-    }
-  }
+  return flagFileFormat && flagCompressionFormat;
 }
-
 //! returns the file name givens the file path
 std::string getFileName(const std::string path) {
   char delimiter = '/';
@@ -134,6 +99,13 @@ void determineFormat(const std::string path, std::string& fileFormat,
     //! there is a file format but no compression format
     int pos = fileName.rfind(".");
     fileFormat = fileName.substr(pos + 1);
+
+    //! unconventional file format
+    if (fileFormat.compare("maegz") == 0) {
+      fileFormat = "mae";
+      compressionFormat = "gz";
+    }
+
     if (!validate(fileFormat, compressionFormat)) {
       throw std::invalid_argument(
           "Unable to determine file format: unsupported filename extension");
@@ -143,11 +115,18 @@ void determineFormat(const std::string path, std::string& fileFormat,
     int p1 = fileName.rfind(".");
     int p2 = fileName.rfind(".", p1 - 1);
     fileFormat = fileName.substr(p2 + 1, (p1 - p2) - 1);
-    //! possible compression format
     compressionFormat = fileName.substr(p1 + 1);
     if (!validate(fileFormat, compressionFormat)) {
-      throw std::invalid_argument(
-          "Unable to determine file format: unsupported extension");
+      //! it is possible that we have read a file with name *.2.txt (for
+      //! example) thus fileformat = "2" and compressionformat = "txt", so we
+      //! try to set the file format as the compression format and the
+      //! compression format as an empty string. Then we check of validity.
+      fileFormat = compressionFormat;
+      compressionFormat = "";
+      if (!validate(fileFormat, compressionFormat)) {
+        throw std::invalid_argument(
+            "Unable to determine file format: unsupported extension");
+      }
     }
   }
 }

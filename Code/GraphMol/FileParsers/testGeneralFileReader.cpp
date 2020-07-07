@@ -62,7 +62,7 @@ void testDetermineFormat() {
   std::string fname2 = "first_200.tpsa.csv";
   std::string fname3 = "esters.prop_name_trunc.sdf";
   std::string fname4 = "NCI_aids_few.sdf.gz";
-
+  std::string fname5 = "t.o.o.m.a.n.y.dots.mae";
   std::string fileFormat, compressionFormat;
 
   determineFormat(fname1, fileFormat, compressionFormat);
@@ -80,6 +80,10 @@ void testDetermineFormat() {
   determineFormat(fname4, fileFormat, compressionFormat);
   TEST_ASSERT(fileFormat == "sdf");
   TEST_ASSERT(compressionFormat == "gz");
+
+  determineFormat(fname5, fileFormat, compressionFormat);
+  TEST_ASSERT(fileFormat == "mae");
+  TEST_ASSERT(compressionFormat == "");
 }
 
 void testSdf() {
