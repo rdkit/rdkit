@@ -26,6 +26,32 @@
 namespace io = boost::iostreams;
 using namespace RDKit;
 using namespace GeneralMolSupplier;
+void testFileName() {
+  //! UNIX style path
+  std::string u1 = "/users/mark/bobapples/few.2.smi.csv";
+  std::string u2 = "/users/mark/bobapples/few.2.2.smi";
+
+  //! WINDOWS style path
+  std::string w1 = "A:\\Temp\\File.txt.csv";
+  std::string w2 = "A:\\Temp\\Folder1/Folder2/Folder3\\File.txt.csv";
+  std::string w3 = "A::\\Temp\\Folder1/Folder2\\Folder3/File.txt.csv";
+
+  std::string out_u1 = getFileName(u1);
+  TEST_ASSERT(out_u1 == "few.2.smi.csv");
+
+  std::string out_u2 = getFileName(u2);
+  TEST_ASSERT(out_u2 == "few.2.2.smi");
+
+  std::string out_w1 = getFileName(w1);
+  TEST_ASSERT(out_w1 == "File.txt.csv");
+
+  std::string out_w2 = getFileName(w2);
+  TEST_ASSERT(out_w2 == "File.txt.csv");
+
+  std::string out_w3 = getFileName(w3);
+  TEST_ASSERT(out_w3 == "File.txt.csv");
+}
+
 void testSdf() {
   //! Open uncompressed SDF file format
   std::string rdbase = getenv("RDBASE");
@@ -203,6 +229,16 @@ void testTdt() {
 
 int main() {
   RDLog::InitLogs();
+
+  BOOST_LOG(rdErrorLog) << "\n-----------------------------------------\n";
+  testFileName();
+  BOOST_LOG(rdErrorLog) << "Finished: testFileName()\n";
+  BOOST_LOG(rdErrorLog) << "-----------------------------------------\n\n";
+
+  BOOST_LOG(rdErrorLog) << "\n-----------------------------------------\n";
+  testSdf();
+  BOOST_LOG(rdErrorLog) << "Finished: testSdf()\n";
+  BOOST_LOG(rdErrorLog) << "-----------------------------------------\n\n";
 
   BOOST_LOG(rdErrorLog) << "\n-----------------------------------------\n";
   testSdf();

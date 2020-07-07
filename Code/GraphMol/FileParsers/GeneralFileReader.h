@@ -99,14 +99,28 @@ bool validate(std::string& fileFormat, std::string& compressionFormat) {
 //! returns the file name givens the file path
 std::string getFileName(const std::string path) {
   char delimiter = '/';
-#ifdef _WIN32
-  delimiter = '\\';
-#endif
+  char delimiter_win = '\\';
+  auto n = path.length();
   std::string fname = "";
-  auto slash = path.rfind(delimiter, path.length());
-  if (slash != std::string::npos) {
-    fname += path.substr(slash + 1, path.length() - slash);
+
+  auto slash1 = path.rfind(delimiter, path.length());
+  auto slash2 = path.rfind(delimiter_win, path.length());
+  if (slash1 == std::string::npos && slash2 != std::string::npos) {
+    fname += path.substr(slash2 + 1, n - slash1);
+  } else if (slash1 != std::string::npos && slash2 == std::string::npos) {
+    fname += path.substr(slash1 + 1, n - slash1);
+  } else if (slash1 != std::string::npos && slash2 != std::string::npos) {
+    if (n - slash1 > n - slash2) {
+      fname += path.substr(slash2 + 1, n - slash2);
+    } else {
+      fname += path.substr(slash1 + 1, n - slash1);
+    }
+  } else {
+    throw std::invalid_argument(
+        "Unable to determine filename from path: no back or forward slash "
+        "found");
   }
+
   return fname;
 }
 
