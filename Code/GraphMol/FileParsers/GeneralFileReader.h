@@ -110,11 +110,7 @@ std::string getFileName(const std::string path) {
   } else if (slash1 != std::string::npos && slash2 == std::string::npos) {
     fname += path.substr(slash1 + 1);
   } else if (slash1 != std::string::npos && slash2 != std::string::npos) {
-    if (n - slash1 > n - slash2) {
-      fname += path.substr(slash2 + 1);
-    } else {
-      fname += path.substr(slash1 + 1);
-    }
+    fname += path.substr(std::max(slash1, slash2) + 1);
   } else {
     //! in this case we assume that the path name is the filename
     fname += path;
