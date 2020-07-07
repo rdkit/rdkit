@@ -1,5 +1,6 @@
 
 add_definitions(-DRDKIT_GRAPHMOL_BUILD)
+
 rdkit_library(GraphMol
               Atom.cpp QueryAtom.cpp QueryBond.cpp Bond.cpp
               MolOps.cpp FindRings.cpp ROMol.cpp RWMol.cpp PeriodicTable.cpp
@@ -76,6 +77,8 @@ add_subdirectory(MolDraw2D)
 add_subdirectory(FMCS)
 add_subdirectory(MolHash)
 add_subdirectory(MMPA)
+
+add_subdirectory(CIPLabeler)
 
 if(RDK_BUILD_STRUCTCHECKER_SUPPORT)
 add_subdirectory(StructChecker)
