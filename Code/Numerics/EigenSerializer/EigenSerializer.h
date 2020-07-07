@@ -28,10 +28,49 @@ template <typename T>
 bool serialize(const T& data, const std::string& filename);
 
 template <typename T>
-bool deSerialize(T& data, const std::string& filename);
+bool serialize(const T& data, const std::ofstream& ofs);
 
 template <typename T>
-bool deSerializeAll(std::vector<T>* weights, std::vector<T>* biases,
+bool deserialize(T& data, const std::string& filename);
+
+template <typename T>
+bool deserialize(T& data, const std::ifstream& ifs);
+
+template <typename T>
+bool deserializeAll(std::vector<T>* weights, std::vector<T>* biases,
                     std::string& filename, std::string atomType);
+
+template <typename T>
+bool deserializeAll(std::vector<T>* weights, std::vector<T>* biases,
+                    std::ifstream& ifs, std::string atomType);
+
+template <typename T>
+bool serializeAll(
+    std::vector<std::pair<std::string, std::vector<std::pair<std::string, T>>>>*
+        weightsAndBiasesForEachAtomType,
+    std::ofstream& ofs);
+
+/*!
+    Stores boost serialized eigen matrix in "fileName"
+    \param weightsAndBiasesForEachAtomType formatted as follows
+        H : "weight"    -> ArrayXXd/ArrayXXf
+            "bias"      -> ArrayXXd/ArrayXXf
+            "weight"    -> ArrayXXd/ArrayXXf
+            "bias"      -> ArrayXXd/ArrayXXf
+                            (in order of layers of NN)
+        O : "weight"    -> ArrayXXd/ArrayXXf
+            "bias"      -> ArrayXXd/ArrayXXf
+            "weight"    -> ArrayXXd/ArrayXXf
+            "bias"      -> ArrayXXd/ArrayXXf
+        and so on for different atom types
+    \param fileName     File in which the the first argument is stored
+    \return true/false if values were stored or not
+*/
+
+template <typename T>
+bool serializeAll(
+    std::vector<std::pair<std::string, std::vector<std::pair<std::string, T>>>>*
+        weightsAndBiasesForEachAtomType,
+    const std::string& fileName);
 }  // namespace EigenSerializer
 }  // namespace RDNumeric
