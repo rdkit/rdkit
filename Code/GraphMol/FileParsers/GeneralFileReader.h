@@ -103,8 +103,8 @@ std::string getFileName(const std::string path) {
   auto n = path.length();
   std::string fname = "";
 
-  auto slash1 = path.rfind(delimiter, path.length());
-  auto slash2 = path.rfind(delimiter_win, path.length());
+  auto slash1 = path.rfind(delimiter, n);
+  auto slash2 = path.rfind(delimiter_win, n);
   if (slash1 == std::string::npos && slash2 != std::string::npos) {
     fname += path.substr(slash2 + 1, n - slash1);
   } else if (slash1 != std::string::npos && slash2 == std::string::npos) {
