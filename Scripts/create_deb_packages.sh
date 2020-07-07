@@ -12,6 +12,7 @@ cmake \
     -DRDK_BUILD_INCHI_SUPPORT=ON \
     -DRDK_BUILD_AVALON_SUPPORT=ON \
     -DRDK_BUILD_PYTHON_WRAPPERS=ON \
+    -DRDK_BUILD_CAIRO_SUPPORT=ON \
     -DCMAKE_INSTALL_PREFIX=/usr \
     ../
 nprocs=`getconf _NPROCESSORS_ONLN`
@@ -23,6 +24,7 @@ cpack -G DEB
 #  curl \
 #  wget \
 #  libboost-all-dev \
+#  libcairo2-dev \
 #  cmake \
 #  git \
 #  g++ \

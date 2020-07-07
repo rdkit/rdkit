@@ -144,7 +144,8 @@ const unsigned int substructLayers = 0x07;
 RDKIT_FINGERPRINTS_EXPORT ExplicitBitVect *PatternFingerprintMol(
     const ROMol &mol, unsigned int fpSize = 2048,
     std::vector<unsigned int> *atomCounts = nullptr,
-    ExplicitBitVect *setOnlyBits = nullptr);
+    ExplicitBitVect *setOnlyBits = nullptr,
+    bool tautomericFingerprint = false);
 
 RDKIT_FINGERPRINTS_EXPORT SparseIntVect<boost::uint64_t>
     *getUnfoldedRDKFingerprintMol(

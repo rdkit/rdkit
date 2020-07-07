@@ -52,6 +52,7 @@ add_subdirectory(FileParsers)
 add_subdirectory(Substruct)
 add_subdirectory(ChemReactions)
 add_subdirectory(ChemTransforms)
+add_subdirectory(TautomerQuery)
 
 add_subdirectory(Subgraphs)
 add_subdirectory(FilterCatalog)

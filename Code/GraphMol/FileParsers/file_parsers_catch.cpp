@@ -12,6 +12,7 @@
 
 #include <GraphMol/RDKitBase.h>
 #include <GraphMol/QueryAtom.h>
+#include <GraphMol/MolPickler.h>
 #include <GraphMol/FileParsers/FileParsers.h>
 #include <GraphMol/SmilesParse/SmilesWrite.h>
 #include <GraphMol/SmilesParse/SmilesParse.h>
@@ -1527,5 +1528,152 @@ TEST_CASE("XBHEAD and XBCORR causing parser failures", "[bug][reader]") {
     auto mb = MolToV3KMolBlock(*mol);
     CHECK(mb.find("XBHEAD=(2 6 1)") != std::string::npos);
     CHECK(mb.find("XBCORR=(4 6 6 1 1)") != std::string::npos);
+  }
+}
+TEST_CASE("LINKNODE information being ignored", "[ctab][bug]") {
+  SECTION("v3000") {
+    auto mol = R"CTAB(
+  Mrv2007 06212005162D          
+
+  0  0  0     0  0            999 V3000
+M  V30 BEGIN CTAB
+M  V30 COUNTS 5 5 0 0 0
+M  V30 BEGIN ATOM
+M  V30 1 C -3.25 12.2683 0 0
+M  V30 2 C -4.4959 11.3631 0 0
+M  V30 3 C -4.02 9.8986 0 0
+M  V30 4 C -2.48 9.8986 0 0
+M  V30 5 C -2.0041 11.3631 0 0
+M  V30 END ATOM
+M  V30 BEGIN BOND
+M  V30 1 1 1 2
+M  V30 2 1 2 3
+M  V30 3 1 3 4
+M  V30 4 1 4 5
+M  V30 5 1 1 5
+M  V30 END BOND
+M  V30 LINKNODE 1 3 2 1 2 1 5
+M  V30 LINKNODE 1 4 2 4 3 4 5
+M  V30 END CTAB
+M  END
+)CTAB"_ctab;
+    REQUIRE(mol);
+    CHECK(mol->getProp<std::string>(common_properties::molFileLinkNodes) ==
+          "1 3 2 1 2 1 5|1 4 2 4 3 4 5");
+    auto molb = MolToV3KMolBlock(*mol);
+    CHECK(molb.find("LINKNODE 1 3 2 1 2 1 5") != std::string::npos);
+    CHECK(molb.find("LINKNODE 1 4 2 4 3 4 5") != std::string::npos);
+  }
+  SECTION("v2000") {
+    auto mol = R"CTAB(
+  Mrv2007 06222015182D          
+
+  5  5  0  0  0  0            999 V2000
+   -1.7411    6.5723    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -2.4085    6.0874    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -2.1536    5.3028    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -1.3286    5.3028    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -1.0736    6.0874    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+  1  2  1  0  0  0  0
+  2  3  1  0  0  0  0
+  3  4  1  0  0  0  0
+  4  5  1  0  0  0  0
+  1  5  1  0  0  0  0
+M  LIN  2   1   3   2   5   4   4   3   5
+M  END
+)CTAB"_ctab;
+    REQUIRE(mol);
+    CHECK(mol->getProp<std::string>(common_properties::molFileLinkNodes) ==
+          "1 3 2 1 2 1 5|1 4 2 4 3 4 5");
+    auto molb = MolToV3KMolBlock(*mol);
+    CHECK(molb.find("LINKNODE 1 3 2 1 2 1 5") != std::string::npos);
+    CHECK(molb.find("LINKNODE 1 4 2 4 3 4 5") != std::string::npos);
+  }
+}
+TEST_CASE("more complex queries in CTAB parsers", "[ctab]") {
+  SECTION("v3000") {
+    auto mol = R"CTAB(*.*.*.*.*.*.*.* |$;Q_e;M_p;X_p;AH_p;QH_p;MH_p;XH_p$|
+  manual  06272007272D          
+
+  0  0  0     0  0            999 V3000
+M  V30 BEGIN CTAB
+M  V30 COUNTS 8 0 0 0 0
+M  V30 BEGIN ATOM
+M  V30 1 A -3.2083 5.25 0 0
+M  V30 2 Q -0.25 6 0 0
+M  V30 3 M 4.5417 6.0417 0 0
+M  V30 4 X 1.2917 4.2083 0 0
+M  V30 5 AH -4.2083 5.25 0 0
+M  V30 6 QH -1.25 6 0 0
+M  V30 7 MH 3.5417 6.0417 0 0
+M  V30 8 XH 0.2917 4.2083 0 0
+M  V30 END ATOM
+M  V30 END CTAB
+M  END
+)CTAB"_ctab;
+    REQUIRE(mol);
+    for (const auto atom : mol->atoms()) {
+      REQUIRE(atom->hasQuery());
+      CHECK(!atom->getQuery()->getTypeLabel().empty());
+    }
+    std::string pkl;
+    MolPickler::pickleMol(*mol, pkl);
+    ROMol cp(pkl);
+    for (const auto atom : cp.atoms()) {
+      REQUIRE(atom->hasQuery());
+      CHECK(!atom->getQuery()->getTypeLabel().empty());
+      CHECK(atom->getQuery()->getTypeLabel() ==
+            mol->getAtomWithIdx(atom->getIdx())->getQuery()->getTypeLabel());
+    }
+    auto molb = MolToV3KMolBlock(*mol);
+    CHECK(molb.find(" A ") != std::string::npos);
+    CHECK(molb.find(" AH ") != std::string::npos);
+    CHECK(molb.find(" Q ") != std::string::npos);
+    CHECK(molb.find(" QH ") != std::string::npos);
+    CHECK(molb.find(" M ") != std::string::npos);
+    CHECK(molb.find(" MH ") != std::string::npos);
+    CHECK(molb.find(" X ") != std::string::npos);
+    CHECK(molb.find(" XH ") != std::string::npos);
+  }
+  SECTION("v2000") {
+    auto mol = R"CTAB(*.*.*.*.*.*.*.* |$;Q_e;M_p;X_p;AH_p;QH_p;MH_p;XH_p$|
+  manual  06272007272D          
+
+  8  0  0  0  0  0            999 V2000
+   -3.2083    5.2500    0.0000 A   0  0  0  0  0  0  0  0  0  0  0  0
+   -0.2500    6.0000    0.0000 Q   0  0  0  0  0  0  0  0  0  0  0  0
+    4.5417    6.0417    0.0000 M   0  0  0  0  0  0  0  0  0  0  0  0
+    1.2917    4.2083    0.0000 X   0  0  0  0  0  0  0  0  0  0  0  0
+   -4.2083    5.2500    0.0000 AH  0  0  0  0  0  0  0  0  0  0  0  0
+   -1.2500    6.0000    0.0000 QH  0  0  0  0  0  0  0  0  0  0  0  0
+    3.5417    6.0417    0.0000 MH  0  0  0  0  0  0  0  0  0  0  0  0
+    0.2917    4.2083    0.0000 XH  0  0  0  0  0  0  0  0  0  0  0  0
+M  END
+)CTAB"_ctab;
+    REQUIRE(mol);
+    for (const auto atom : mol->atoms()) {
+      REQUIRE(atom->hasQuery());
+      CHECK(!atom->getQuery()->getTypeLabel().empty());
+    }
+    std::string pkl;
+    MolPickler::pickleMol(*mol, pkl);
+    ROMol cp(pkl);
+    for (const auto atom : cp.atoms()) {
+      REQUIRE(atom->hasQuery());
+      CHECK(!atom->getQuery()->getTypeLabel().empty());
+      CHECK(atom->getQuery()->getTypeLabel() ==
+            mol->getAtomWithIdx(atom->getIdx())->getQuery()->getTypeLabel());
+    }
+    auto molb = MolToMolBlock(*mol);
+    CHECK(molb.find(" A ") != std::string::npos);
+    CHECK(molb.find(" AH ") != std::string::npos);
+    CHECK(molb.find(" Q ") != std::string::npos);
+    CHECK(molb.find(" QH ") != std::string::npos);
+    CHECK(molb.find(" M ") != std::string::npos);
+    CHECK(molb.find(" MH ") != std::string::npos);
+    CHECK(molb.find(" X ") != std::string::npos);
+    CHECK(molb.find(" XH ") != std::string::npos);
+    /// SMARTS-based queries are not written for these:
+    CHECK(molb.find("V    ") == std::string::npos);
   }
 }

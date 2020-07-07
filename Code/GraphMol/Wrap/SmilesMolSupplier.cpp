@@ -11,7 +11,6 @@
 
 #define NO_IMPORT_ARRAY
 #include <RDBoost/python.h>
-#include <RDBoost/iterator_next.h>
 #include <string>
 
 // ours
@@ -96,7 +95,7 @@ struct smimolsup_wrap {
         .def("__iter__",
              (SmilesMolSupplier * (*)(SmilesMolSupplier *)) & MolSupplIter,
              python::return_internal_reference<1>())
-        .def(NEXT_METHOD, (ROMol * (*)(SmilesMolSupplier *)) & MolSupplNext,
+        .def("__next__", (ROMol * (*)(SmilesMolSupplier *)) & MolSupplNext,
              "Returns the next molecule in the file.  Raises _StopIteration_ "
              "on EOF.\n",
              python::return_value_policy<python::manage_new_object>())

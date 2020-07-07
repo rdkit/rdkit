@@ -400,6 +400,33 @@ Primitive        Property               Notes
 =========  ====================  ===================
 
 
+Mol/SDF Support and Extensions
+==============================
+
+The RDKit covers an extensive subset of the features in the V2000 and V3000 CTAB specfication.
+This subset should be better documented.
+
+Here are the non-element atom queries that are supported:
+  - A: any heavy atom
+  - Q: any non-carbon heavy atom
+  - *: unspecfied (interpreted as any atom)
+  - L: (v2000): atom list
+  - AH: (ChemAxon Extension) any atom
+  - QH: (ChemAxon Extension) any non-carbon atom
+  - X: (ChemAxon Extension) halogen
+  - XH: (ChemAxon Extension) halogen or hydrogen
+  - M: (ChemAxon Extension) metal ("contains alkali metals, alkaline earth metals, transition 
+        metals, actinides, lanthanides, poor(basic) metals, Ge, Sb, and Po")
+  - MH: (ChemAxon Extension) metal or hydrogen
+
+
+Here's a partial list of the features that are supported:
+  - enhanced stereochemistry (V3000 only)
+  - Sgroups: Sgroups are read and written, but interpretation of their contents is still very much
+    a work in progress
+
+
+
 
 
 Ring Finding and SSSR

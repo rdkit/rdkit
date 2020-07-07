@@ -2067,10 +2067,8 @@ void testMolFileAtomQueries() {
     for (const auto fName : fNames) {
       std::unique_ptr<RWMol> m(MolFileToMol(fName));
       TEST_ASSERT(m);
-      TEST_ASSERT(
-          m->getAtomWithIdx(6)->hasProp(common_properties::_MolFileSymbol));
-      TEST_ASSERT(m->getAtomWithIdx(6)->getProp<std::string>(
-                      common_properties::_MolFileSymbol) == "A");
+      TEST_ASSERT(m->getAtomWithIdx(6)->hasQuery());
+      TEST_ASSERT(m->getAtomWithIdx(6)->getQuery()->getTypeLabel() == "A");
 
       RWMol *m2;
       MatchVectType mv;
@@ -2104,10 +2102,8 @@ void testMolFileAtomQueries() {
       std::unique_ptr<RWMol> m(MolFileToMol(fName));
       TEST_ASSERT(m);
 
-      TEST_ASSERT(
-          m->getAtomWithIdx(6)->hasProp(common_properties::_MolFileSymbol));
-      TEST_ASSERT(m->getAtomWithIdx(6)->getProp<std::string>(
-                      common_properties::_MolFileSymbol) == "Q");
+      TEST_ASSERT(m->getAtomWithIdx(6)->hasQuery());
+      TEST_ASSERT(m->getAtomWithIdx(6)->getQuery()->getTypeLabel() == "Q");
       RWMol *m2;
       MatchVectType mv;
       std::string smi;

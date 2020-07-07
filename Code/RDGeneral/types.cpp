@@ -45,7 +45,6 @@ const std::string _MolFileBondAttach = "_MolFileBondAttach";
 const std::string _MolFileBondType = "_MolFileBondType";
 const std::string _MolFileBondStereo = "_MolFileBondStereo";
 const std::string _MolFileBondCfg = "_MolFileBondCfg";
-const std::string _MolFileSymbol = "_MolFileSymbol";
 
 const std::string _Name = "_Name";
 const std::string _NeedsQueryScan = "_NeedsQueryScan";
@@ -108,6 +107,7 @@ const std::string molStereoCare = "molStereoCare";
 const std::string molRxnComponent = "molRxnComponent";
 const std::string molRxnRole = "molRxnRole";
 const std::string molTotValence = "molTotValence";
+const std::string molFileLinkNodes = "molLinkNodes";
 const std::string numArom = "numArom";
 const std::string origNoImplicit = "origNoImplicit";
 const std::string ringMembership = "ringMembership";
