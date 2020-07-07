@@ -140,12 +140,11 @@ void determineFormat(const std::string path, std::string& fileFormat,
     }
   } else {
     //! there is a file and compression format
-    int n = fileName.length();
     int p1 = fileName.rfind(".");
     int p2 = fileName.rfind(".", p1 - 1);
     fileFormat = fileName.substr(p2 + 1, (p1 - p2) - 1);
     //! possible compression format
-    compressionFormat = fileName.substr(p1 + 1, (n - p1) + 1);
+    compressionFormat = fileName.substr(p1 + 1);
     if (!validate(fileFormat, compressionFormat)) {
       throw std::invalid_argument(
           "Unable to determine file format: unsupported extension");

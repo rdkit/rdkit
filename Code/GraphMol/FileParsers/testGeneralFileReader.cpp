@@ -39,23 +39,47 @@ void testFileName() {
   //! No base directory
   std::string d1 = "File.txt.csv";
 
-  std::string out_u1 = getFileName(u1);
-  TEST_ASSERT(out_u1 == "few.2.smi.csv");
+  std::string outU1 = getFileName(u1);
+  TEST_ASSERT(outU1 == "few.2.smi.csv");
 
-  std::string out_u2 = getFileName(u2);
-  TEST_ASSERT(out_u2 == "few.2.2.smi");
+  std::string outU2 = getFileName(u2);
+  TEST_ASSERT(outU2 == "few.2.2.smi");
 
-  std::string out_w1 = getFileName(w1);
-  TEST_ASSERT(out_w1 == "File.txt.csv");
+  std::string outW1 = getFileName(w1);
+  TEST_ASSERT(outW1 == "File.txt.csv");
 
-  std::string out_w2 = getFileName(w2);
-  TEST_ASSERT(out_w2 == "File.txt.csv");
+  std::string outW2 = getFileName(w2);
+  TEST_ASSERT(outW2 == "File.txt.csv");
 
-  std::string out_w3 = getFileName(w3);
-  TEST_ASSERT(out_w3 == "File.txt.csv");
+  std::string outW3 = getFileName(w3);
+  TEST_ASSERT(outW3 == "File.txt.csv");
 
-  std::string out_d1 = getFileName(d1);
-  TEST_ASSERT(out_d1 == "File.txt.csv");
+  std::string outD1 = getFileName(d1);
+  TEST_ASSERT(outD1 == "File.txt.csv");
+}
+void testDetermineFormat() {
+  std::string fname1 = "1kv1.maegz";
+  std::string fname2 = "first_200.tpsa.csv";
+  std::string fname3 = "esters.prop_name_trunc.sdf";
+  std::string fname4 = "NCI_aids_few.sdf.gz";
+
+  std::string fileFormat, compressionFormat;
+
+  determineFormat(fname1, fileFormat, compressionFormat);
+  TEST_ASSERT(fileFormat == "mae");
+  TEST_ASSERT(compressionFormat == "gz");
+
+  determineFormat(fname2, fileFormat, compressionFormat);
+  TEST_ASSERT(fileFormat == "csv");
+  TEST_ASSERT(compressionFormat == "");
+
+  determineFormat(fname3, fileFormat, compressionFormat);
+  TEST_ASSERT(fileFormat == "sdf");
+  TEST_ASSERT(compressionFormat == "");
+
+  determineFormat(fname4, fileFormat, compressionFormat);
+  TEST_ASSERT(fileFormat == "sdf");
+  TEST_ASSERT(compressionFormat == "gz");
 }
 
 void testSdf() {
@@ -239,6 +263,11 @@ int main() {
   BOOST_LOG(rdErrorLog) << "\n-----------------------------------------\n";
   testFileName();
   BOOST_LOG(rdErrorLog) << "Finished: testFileName()\n";
+  BOOST_LOG(rdErrorLog) << "-----------------------------------------\n\n";
+
+  BOOST_LOG(rdErrorLog) << "\n-----------------------------------------\n";
+  testDetermineFormat();
+  BOOST_LOG(rdErrorLog) << "Finished: testDetermineFormat()\n";
   BOOST_LOG(rdErrorLog) << "-----------------------------------------\n\n";
 
   BOOST_LOG(rdErrorLog) << "\n-----------------------------------------\n";
