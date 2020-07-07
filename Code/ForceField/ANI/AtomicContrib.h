@@ -42,11 +42,11 @@ class RDKIT_FORCEFIELD_EXPORT ANIAtomContrib : public ForceFieldContrib {
     \param modelType    model types like ANI-1x and ANI-1ccx
   */
   ANIAtomContrib(ForceField *owner, int atomType, unsigned int atomIdx,
-                 VectorXi speciesVec, unsigned int numAtoms,
+                 VectorXi &speciesVec, unsigned int numAtoms,
                  unsigned int numLayers, unsigned int ensembleSize,
                  std::string modelType);
   double getEnergy(double *pos) const;
-  double getEnergy(Eigen::ArrayXXd aev) const;
+  double getEnergy(Eigen::ArrayXXd &aev) const;
   void getGrad(double *pos, double *grad) const;
 
   /*!
@@ -58,7 +58,7 @@ class RDKIT_FORCEFIELD_EXPORT ANIAtomContrib : public ForceFieldContrib {
     \return         Contribtution to the total energy of molecule according to
                     interactions
   */
-  double forwardProp(ArrayXXd aev) const;
+  double forwardProp(ArrayXXd &aev) const;
 
   virtual ANIAtomContrib *copy() const { return new ANIAtomContrib(*this); };
 

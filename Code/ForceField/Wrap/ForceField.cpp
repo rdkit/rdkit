@@ -32,19 +32,15 @@ namespace python = boost::python;
 void ANIAddAtomContrib(PyForceField *self, python::list speciesVec,
                        int atomType, unsigned int atomIdx,
                        unsigned int numAtoms, unsigned int numLayers,
-                       unsigned int ensembleSize, python::str modelType) {
+                       unsigned int ensembleSize, std::string modelType) {
   ANI::ANIAtomContrib *contrib;
   Eigen::VectorXi speciesVector(numAtoms);
   for (unsigned int i = 0; i < numAtoms; i++) {
     speciesVector(i) = python::extract<int>(speciesVec[i]);
   }
-  std::string modelTypeStr = "";
-  for (unsigned int i = 0; i < python::len(modelType); i++) {
-    modelTypeStr += python::extract<std::string>(modelType[i]);
-  }
   contrib = new ANI::ANIAtomContrib(self->field.get(), atomType, atomIdx,
                                     speciesVector, numAtoms, numLayers,
-                                    ensembleSize, modelTypeStr);
+                                    ensembleSize, modelType);
   self->field->contribs().push_back(ForceFields::ContribPtr(contrib));
 }
 #endif

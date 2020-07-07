@@ -21,7 +21,7 @@ using namespace Eigen;
 namespace ForceFields {
 namespace ANI {
 ANIAtomContrib::ANIAtomContrib(ForceField *owner, int atomType,
-                               unsigned int atomIdx, VectorXi speciesVec,
+                               unsigned int atomIdx, VectorXi &speciesVec,
                                unsigned int numAtoms, unsigned int numLayers,
                                unsigned int ensembleSize,
                                std::string modelType) {
@@ -59,7 +59,7 @@ ANIAtomContrib::ANIAtomContrib(ForceField *owner, int atomType,
   }
 }
 
-double ANIAtomContrib::forwardProp(ArrayXXd aev) const {
+double ANIAtomContrib::forwardProp(ArrayXXd &aev) const {
   if (this->d_atomType == -1) {
     return 0;
   }
@@ -68,7 +68,7 @@ double ANIAtomContrib::forwardProp(ArrayXXd aev) const {
   }
 
   std::vector<double> energies;
-
+  energies.reserve(this->d_weights.size());
   for (unsigned int modelNo = 0; modelNo < this->d_weights.size(); modelNo++) {
     auto temp = aev;
     for (unsigned int layer = 0; layer < this->d_weights[modelNo].size();
@@ -88,12 +88,14 @@ double ANIAtomContrib::forwardProp(ArrayXXd aev) const {
 double ANIAtomContrib::getEnergy(double *pos) const {
   auto aev = RDKit::Descriptors::ANI::AtomicEnvironmentVector(
       pos, this->d_speciesVec, this->d_numAtoms);
-  return this->ANIAtomContrib::forwardProp(aev.row(this->d_atomIdx)) +
+  ArrayXXd row = aev.row(this->d_atomIdx);
+  return this->ANIAtomContrib::forwardProp(row) +
          this->d_selfEnergy;
 }
 
-double ANIAtomContrib::getEnergy(Eigen::ArrayXXd aev) const {
-  return this->ANIAtomContrib::forwardProp(aev.row(this->d_atomIdx)) +
+double ANIAtomContrib::getEnergy(Eigen::ArrayXXd &aev) const {
+  ArrayXXd row = aev.row(this->d_atomIdx);
+  return this->ANIAtomContrib::forwardProp(row) +
          this->d_selfEnergy;
 }
 
@@ -101,9 +103,9 @@ void ANIAtomContrib::getGrad(double *pos, double *grad) const {}
 
 namespace Utils {
 
-double RELU(double val) { return std::max((double)0, val); }
+double RELU(double val) { return std::max(0.0, val); }
 
-double coeffMin(double val) { return std::min(double(0), val); }
+double coeffMin(double val) { return std::min(0.0, val); }
 
 void CELU(ArrayXXd &input, double alpha) {
   input = input.unaryExpr(&RELU) +
@@ -128,7 +130,7 @@ void loadFromBin(std::vector<ArrayXXd> *weights, unsigned int model,
                           "_" + std::to_string(layer) + "_" + weightType +
                           ".bin";
   ArrayXXf weight;
-  RDNumeric::EigenSerializer::deSerialize(weight, paramFile);
+  RDNumeric::EigenSerializer::deserialize(weight, paramFile);
   weights->push_back(weight.matrix().cast<double>().array());
 }
 
@@ -139,7 +141,7 @@ void loadFromBin(std::vector<ArrayXXd> *weights, std::vector<ArrayXXd> *biases,
   std::string paramFile = path + "/Code/ForceField/ANI/Params/" + modelType +
                           "/model" + std::to_string(model) + ".bin";
   std::vector<ArrayXXf> floatWeights, floatBiases;
-  RDNumeric::EigenSerializer::deSerializeAll(&floatWeights, &floatBiases,
+  RDNumeric::EigenSerializer::deserializeAll(&floatWeights, &floatBiases,
                                              paramFile, atomType);
   for (unsigned int i = 0; i < floatWeights.size(); i++) {
     weights->push_back(floatWeights[i].matrix().cast<double>().array());

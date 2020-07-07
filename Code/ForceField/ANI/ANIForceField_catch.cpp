@@ -22,13 +22,13 @@
 #include <Eigen/Dense>
 
 using namespace Eigen;
+using namespace Catch::literals;
 
 TEST_CASE("ANI-1ccx NN Forward Pass", "[ANI Force Field]") {
+  std::string pathName = getenv("RDBASE");
+  std::string dirPath = pathName + "/Code/GraphMol/Descriptors/test_data/";
   SECTION("CH4") {
-    std::string pathName = getenv("RDBASE");
-
-    std::string molFile =
-        pathName + "/Code/GraphMol/Descriptors/test_data/CH4.mol";
+    std::string molFile = dirPath + "CH4.mol";
 
     RDKit::ROMOL_SPTR mol(RDKit::MolFileToMol(molFile, true, false));
     int confId = -1;
@@ -47,19 +47,16 @@ TEST_CASE("ANI-1ccx NN Forward Pass", "[ANI Force Field]") {
       pos[3 * i + 1] = atom.y;
       pos[3 * i + 2] = atom.z;
 
-      ForceFields::ANI::ANIAtomContrib *ac;
-      ac = new ForceFields::ANI::ANIAtomContrib(
+      
+      auto ac = new ForceFields::ANI::ANIAtomContrib(
           &field, speciesVec(i), i, speciesVec, numAtoms, 4, 8, "ANI-1ccx");
       field.contribs().push_back(ForceFields::ContribPtr(ac));
     }
     field.initialize();
-    CHECK(std::fabs(field.calcEnergy(pos) - (-40.0553)) < 0.05);
+    CHECK(field.calcEnergy(pos) == (-40.0553_a).margin(0.05));
   }
   SECTION("NH3") {
-    std::string pathName = getenv("RDBASE");
-
-    std::string molFile =
-        pathName + "/Code/GraphMol/Descriptors/test_data/NH3.mol";
+    std::string molFile = dirPath + "NH3.mol";
 
     RDKit::ROMOL_SPTR mol(RDKit::MolFileToMol(molFile, true, false));
     int confId = -1;
@@ -78,19 +75,16 @@ TEST_CASE("ANI-1ccx NN Forward Pass", "[ANI Force Field]") {
       pos[3 * i + 1] = atom.y;
       pos[3 * i + 2] = atom.z;
 
-      ForceFields::ANI::ANIAtomContrib *ac;
-      ac = new ForceFields::ANI::ANIAtomContrib(
+      
+      auto ac = new ForceFields::ANI::ANIAtomContrib(
           &field, speciesVec(i), i, speciesVec, numAtoms, 4, 8, "ANI-1ccx");
       field.contribs().push_back(ForceFields::ContribPtr(ac));
     }
     field.initialize();
-    CHECK(std::fabs(field.calcEnergy(pos) - (-56.1652)) < 0.05);
+    CHECK(field.calcEnergy(pos) == (-56.1652_a).margin(0.05));
   }
   SECTION("Ethanol") {
-    std::string pathName = getenv("RDBASE");
-
-    std::string molFile =
-        pathName + "/Code/GraphMol/Descriptors/test_data/ethanol.sdf";
+    std::string molFile = dirPath + "ethanol.sdf";
 
     RDKit::ROMOL_SPTR mol(RDKit::MolFileToMol(molFile, true, false));
     int confId = -1;
@@ -109,22 +103,21 @@ TEST_CASE("ANI-1ccx NN Forward Pass", "[ANI Force Field]") {
       pos[3 * i + 1] = atom.y;
       pos[3 * i + 2] = atom.z;
 
-      ForceFields::ANI::ANIAtomContrib *ac;
-      ac = new ForceFields::ANI::ANIAtomContrib(
+      
+      auto ac = new ForceFields::ANI::ANIAtomContrib(
           &field, speciesVec(i), i, speciesVec, numAtoms, 4, 8, "ANI-1ccx");
       field.contribs().push_back(ForceFields::ContribPtr(ac));
     }
     field.initialize();
-    CHECK(std::fabs(field.calcEnergy(pos) - (-154.8904)) < 0.05);
+    CHECK(field.calcEnergy(pos) == (-154.8904_a).margin(0.05));
   }
 }
 
 TEST_CASE("ANI-1x NN Forward Pass", "[ANI Force Field]") {
+  std::string pathName = getenv("RDBASE");
+  std::string dirPath = pathName + "/Code/GraphMol/Descriptors/test_data/";
   SECTION("CH4") {
-    std::string pathName = getenv("RDBASE");
-
-    std::string molFile =
-        pathName + "/Code/GraphMol/Descriptors/test_data/CH4.mol";
+    std::string molFile = dirPath + "CH4.mol";
 
     RDKit::ROMOL_SPTR mol(RDKit::MolFileToMol(molFile, true, false));
     int confId = -1;
@@ -143,19 +136,16 @@ TEST_CASE("ANI-1x NN Forward Pass", "[ANI Force Field]") {
       pos[3 * i + 1] = atom.y;
       pos[3 * i + 2] = atom.z;
 
-      ForceFields::ANI::ANIAtomContrib *ac;
-      ac = new ForceFields::ANI::ANIAtomContrib(
+      
+      auto ac = new ForceFields::ANI::ANIAtomContrib(
           &field, speciesVec(i), i, speciesVec, numAtoms, 4, 8, "ANI-1x");
       field.contribs().push_back(ForceFields::ContribPtr(ac));
     }
     field.initialize();
-    CHECK(std::fabs(field.calcEnergy(pos) - (-40.0517)) < 0.05);
+    CHECK(field.calcEnergy(pos) == (-40.0517_a).margin(0.05));
   }
   SECTION("NH3") {
-    std::string pathName = getenv("RDBASE");
-
-    std::string molFile =
-        pathName + "/Code/GraphMol/Descriptors/test_data/NH3.mol";
+    std::string molFile = dirPath + "NH3.mol";
 
     RDKit::ROMOL_SPTR mol(RDKit::MolFileToMol(molFile, true, false));
     int confId = -1;
@@ -174,19 +164,16 @@ TEST_CASE("ANI-1x NN Forward Pass", "[ANI Force Field]") {
       pos[3 * i + 1] = atom.y;
       pos[3 * i + 2] = atom.z;
 
-      ForceFields::ANI::ANIAtomContrib *ac;
-      ac = new ForceFields::ANI::ANIAtomContrib(
+      
+      auto ac = new ForceFields::ANI::ANIAtomContrib(
           &field, speciesVec(i), i, speciesVec, numAtoms, 4, 8, "ANI-1x");
       field.contribs().push_back(ForceFields::ContribPtr(ac));
     }
     field.initialize();
-    CHECK(std::fabs(field.calcEnergy(pos) - (-56.1592)) < 0.05);
+    CHECK(field.calcEnergy(pos) == (-56.1592_a).margin(0.05));
   }
   SECTION("Ethanol") {
-    std::string pathName = getenv("RDBASE");
-
-    std::string molFile =
-        pathName + "/Code/GraphMol/Descriptors/test_data/ethanol.sdf";
+    std::string molFile = dirPath + "ethanol.sdf";
 
     RDKit::ROMOL_SPTR mol(RDKit::MolFileToMol(molFile, true, false));
     int confId = -1;
@@ -205,13 +192,13 @@ TEST_CASE("ANI-1x NN Forward Pass", "[ANI Force Field]") {
       pos[3 * i + 1] = atom.y;
       pos[3 * i + 2] = atom.z;
 
-      ForceFields::ANI::ANIAtomContrib *ac;
-      ac = new ForceFields::ANI::ANIAtomContrib(
+      
+      auto ac = new ForceFields::ANI::ANIAtomContrib(
           &field, speciesVec(i), i, speciesVec, numAtoms, 4, 8, "ANI-1x");
       field.contribs().push_back(ForceFields::ContribPtr(ac));
     }
     field.initialize();
-    CHECK(std::fabs(field.calcEnergy(pos) - (-154.9892)) < 0.05);
+    CHECK(field.calcEnergy(pos) == (-154.9892_a).margin(0.05));
   }
 }
 TEST_CASE("QM7 Test Cases") {
@@ -250,8 +237,9 @@ TEST_CASE("QM7 Test Cases") {
     }
     fieldANI1x.initialize();
     fieldANI1ccx.initialize();
-    CHECK(std::fabs(fieldANI1x.calcEnergy(pos) - (-209.0046)) < 0.05);
-    CHECK(std::fabs(fieldANI1ccx.calcEnergy(pos) - (-208.9733)) < 0.05);
+    CHECK(fieldANI1x.calcEnergy(pos) == (-209.0046_a).margin(0.05));
+    CHECK(fieldANI1ccx.calcEnergy(pos) == (-208.9733_a).margin(0.05));
+    
   }
   SECTION("1N 3C 1O and 9H") {
     int species[] = {7, 6, 6, 6, 8, 1, 1, 1, 1, 1, 1, 1, 1, 1};
@@ -292,8 +280,8 @@ TEST_CASE("QM7 Test Cases") {
     }
     fieldANI1x.initialize();
     fieldANI1ccx.initialize();
-    CHECK(std::fabs(fieldANI1x.calcEnergy(pos) - (-248.1921)) < 0.05);
-    CHECK(std::fabs(fieldANI1ccx.calcEnergy(pos) - (-248.2279)) < 0.05);
+    CHECK(fieldANI1x.calcEnergy(pos) == (-248.1921_a).margin(0.05));
+    CHECK(fieldANI1ccx.calcEnergy(pos) == (-248.2279_a).margin(0.05));
   }
   SECTION("1N 5C 9H") {
     int species[] = {7, 6, 6, 6, 6, 6, 1, 1, 1, 1, 1, 1, 1, 1, 1};
@@ -335,8 +323,9 @@ TEST_CASE("QM7 Test Cases") {
     }
     fieldANI1x.initialize();
     fieldANI1ccx.initialize();
-    CHECK(std::fabs(fieldANI1x.calcEnergy(pos) - (-249.0084)) < 0.05);
-    CHECK(std::fabs(fieldANI1ccx.calcEnergy(pos) - (-249.0295)) < 0.05);
+    CHECK(fieldANI1x.calcEnergy(pos) == (-249.0084_a).margin(0.05));
+    CHECK(fieldANI1ccx.calcEnergy(pos) == (-249.0295_a).margin(0.05));
+    
   }
   SECTION("5C 1O 8H") {
     int species[] = {6, 6, 6, 6, 6, 8, 1, 1, 1, 1, 1, 1, 1, 1};
@@ -378,8 +367,8 @@ TEST_CASE("QM7 Test Cases") {
     }
     fieldANI1x.initialize();
     fieldANI1ccx.initialize();
-    CHECK(std::fabs(fieldANI1x.calcEnergy(pos) - (-269.0078)) < 0.05);
-    CHECK(std::fabs(fieldANI1ccx.calcEnergy(pos) - (-269.0295)) < 0.05);
+    CHECK(fieldANI1x.calcEnergy(pos) == (-269.0078_a).margin(0.05));
+    CHECK(fieldANI1ccx.calcEnergy(pos) == (-269.0295_a).margin(0.05));
   }
   SECTION("6C 1N 13H") {
     int species[] = {6, 6, 6, 7, 6, 6, 6, 1, 1, 1,
@@ -429,7 +418,7 @@ TEST_CASE("QM7 Test Cases") {
     }
     fieldANI1x.initialize();
     fieldANI1ccx.initialize();
-    CHECK(std::fabs(fieldANI1x.calcEnergy(pos) - (-289.1283)) < 0.05);
-    CHECK(std::fabs(fieldANI1ccx.calcEnergy(pos) - (-289.1044)) < 0.05);
+    CHECK(fieldANI1x.calcEnergy(pos) == (-289.1283_a).margin(0.05));
+    CHECK(fieldANI1ccx.calcEnergy(pos) == (-289.1044_a).margin(0.05));
   }
 }
