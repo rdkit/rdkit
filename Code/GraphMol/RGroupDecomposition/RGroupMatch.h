@@ -17,7 +17,6 @@ typedef std::map<int, RData> R_DECOMP;
 
 //! RGroupMatch is the decomposition for a single molecule
 struct RGroupMatch {
-  //! RGroupMatch is the decomposition for a single molecule
   size_t   core_idx; // index of the matching core
   R_DECOMP rgroups;  // rlabel->RGroupData mapping
 
