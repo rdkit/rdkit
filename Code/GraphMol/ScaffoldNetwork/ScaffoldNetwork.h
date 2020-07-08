@@ -181,6 +181,14 @@ RDKIT_SCAFFOLDNETWORK_EXPORT ScaffoldNetworkParams getBRICSNetworkParams();
 
 }  // namespace ScaffoldNetwork
 }  // namespace RDKit
-BOOST_CLASS_VERSION(RDKit::ScaffoldNetwork::ScaffoldNetwork, 1)
+
+namespace boost {
+namespace serialization {
+template <>
+struct version<RDKit::ScaffoldNetwork::ScaffoldNetwork> {
+  BOOST_STATIC_CONSTANT(unsigned int, value = 1);
+};
+}  // namespace serialization
+}  // namespace boost
 
 #endif
