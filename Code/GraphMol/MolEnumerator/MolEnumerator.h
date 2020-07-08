@@ -105,7 +105,10 @@ class RDKIT_MOLENUMERATOR_EXPORT LinkNodeOp : public MolEnumeratorOp {
   LinkNodeOp(const LinkNodeOp &other)
       : dp_mol(other.dp_mol),
         dp_frame(other.dp_frame),
-        d_countAtEachPoint(other.d_countAtEachPoint){};
+        d_countAtEachPoint(other.d_countAtEachPoint),
+        d_variations(other.d_variations),
+        d_pointRanges(other.d_pointRanges),
+        d_isotopeMap(other.d_isotopeMap){};
   LinkNodeOp &operator=(const LinkNodeOp &other) {
     if (&other == this) {
       return *this;
@@ -113,6 +116,9 @@ class RDKIT_MOLENUMERATOR_EXPORT LinkNodeOp : public MolEnumeratorOp {
     dp_mol = other.dp_mol;
     dp_frame = other.dp_frame;
     d_countAtEachPoint = other.d_countAtEachPoint;
+    d_variations = other.d_variations;
+    d_pointRanges = other.d_pointRanges;
+    d_isotopeMap = other.d_isotopeMap;
     return *this;
   };
   //! \override
@@ -134,7 +140,9 @@ class RDKIT_MOLENUMERATOR_EXPORT LinkNodeOp : public MolEnumeratorOp {
   std::shared_ptr<ROMol> dp_mol{nullptr};
   std::shared_ptr<RWMol> dp_frame{nullptr};
   std::vector<size_t> d_countAtEachPoint{};
+  std::vector<std::tuple<unsigned, unsigned, unsigned>> d_variations;
   std::vector<std::pair<unsigned, unsigned>> d_pointRanges;
+  std::map<unsigned, unsigned> d_isotopeMap;
 
   void initFromMol();
 };

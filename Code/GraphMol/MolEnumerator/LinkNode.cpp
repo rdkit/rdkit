@@ -49,7 +49,9 @@ void LinkNodeOp::initFromMol() {
   std::string attachSmarts = "";
   std::vector<std::string> linkEnums;
   std::vector<std::string> molEnums;
-
+  d_variations.clear();
+  d_pointRanges.clear();
+  d_isotopeMap.clear();
   for (auto linknode : tokenizer(pval, pipesep)) {
     std::string productSmarts = "";
     tokenizer tokens(linknode, spacesep);
@@ -81,33 +83,10 @@ void LinkNodeOp::initFromMol() {
     }
     d_countAtEachPoint.push_back(maxRep - minRep + 1);
     d_pointRanges.push_back(std::make_pair(minRep, maxRep));
-    unsigned int variationIdx = d_countAtEachPoint.size();
     unsigned int nBonds = data[2];
     if (nBonds != 2) {
       UNDER_CONSTRUCTION(
           "only link nodes with 2 bonds are currently supported");
-    }
-    std::vector<std::string> bondSmarts;
-    for (unsigned int idx = 0; idx < nBonds; ++idx) {
-      auto begAtIdx = data[3 + 2 * idx] - 1;
-      auto endAtIdx = data[3 + 2 * idx + 1] - 1;
-      auto bnd = dp_frame->getBondBetweenAtoms(begAtIdx, endAtIdx);
-      if (!bnd) {
-        std::ostringstream errout;
-        errout << "bond not found between atoms for LINKNODE '" << linknode
-               << "'";
-        throw ValueErrorException(errout.str());
-      }
-      bondSmarts.push_back(SmartsWrite::GetBondSmarts((QueryBond *)(bnd)));
-      auto bondLabel = variationIdx * 100 + 10 * idx;
-      Atom dummy(0);
-      dummy.setIsotope(bondLabel);
-      auto d1idx = dp_frame->addAtom(&dummy);
-      dp_frame->addBond(begAtIdx, d1idx, Bond::SINGLE);
-      dummy.setIsotope(bondLabel + 1);
-      auto d2idx = dp_frame->addAtom(&dummy);
-      dp_frame->addBond(endAtIdx, d2idx, Bond::SINGLE);
-      dp_frame->removeBond(begAtIdx, endAtIdx);
     }
     // both bonds must start from the same atom:
     if (data[3] != data[5]) {
@@ -116,52 +95,34 @@ void LinkNodeOp::initFromMol() {
              << "'";
       throw ValueErrorException(errout.str());
     }
-
-#if 0    
-    auto fmt1 = boost::format("[%d#0]-[*:%d]-[%d#0]") % (variationIdx * 100) %
-                (variationIdx) % (variationIdx * 100 + 10);
-    std::string reactSmarts = fmt1.str();
-    // Unfortunately the enumeration reactions for the first pass, where the
-    // two attachment points are on the atom, and the second pass, where the two
-    // attachment points are on different atoms, have to be different:
-    auto fmt1 =
-        boost::format("[%d#0]-[*:%d]-[%d#0]>>[%d#0]-[*:%d]-[*:%d]-[%d#0]") %
-        (variationIdx * 100) % (variationIdx) % (variationIdx * 100 + 10) %
-        (variationIdx * 100) % (variationIdx) % (variationIdx) %
-        (variationIdx * 100 + 10);
-    auto fmt2 =
-        boost::format(
-            "([%d#0]-[*:%d].[*:%d]-[%d#0])>>[%d#0]-[*:%d]-[*:%d]-[%d#0]") %
-        (variationIdx * 100) % (variationIdx) % (variationIdx * 100 + 10) %
-        (variationIdx * 100) % (variationIdx) % (variationIdx) %
-        (variationIdx * 100 + 10);
-    auto rxn1 = std::shared_ptr<ChemicalReaction>(
-        RxnSmartsToChemicalReaction(fmt1.str()));
-    ASSERT_INVARIANT(rxn1, "reaction is somehow bad");
-    rxn1->initReactantMatchers();
-    enumReactions1.push_back(rxn1);
-    auto rxn1 = std::shared_ptr<ChemicalReaction>(
-        RxnSmartsToChemicalReaction(fmt1.str()));
-    ASSERT_INVARIANT(rxn1, "reaction is somehow bad");
-    rxn1->initReactantMatchers();
-    enumReactions1.push_back(rxn1);
-
-    std::cerr << "  react: " << reactSmarts << std::endl;
-    std::cerr << "  react enumerator: " << fmt2 << std::endl;
-#endif
-    // std::cerr << "  product: " << productSmarts << std::endl;
+    auto varAtom = dp_frame->getAtomWithIdx(data[3] - 1);
+    auto attach1 = dp_frame->getAtomWithIdx(data[4] - 1);
+    auto attach2 = dp_frame->getAtomWithIdx(data[6] - 1);
+    if (!dp_frame->getBondBetweenAtoms(data[4] - 1, data[3] - 1) ||
+        !dp_frame->getBondBetweenAtoms(data[4] - 1, data[3] - 1)) {
+      std::ostringstream errout;
+      errout << "bond not found between atoms in LINKNODE '" << linknode << "'";
+      throw ValueErrorException(errout.str());
+    }
+    // save the isotope values:
+    if (d_isotopeMap.find(1000 * data[3]) == d_isotopeMap.end()) {
+      d_isotopeMap[1000 * data[3]] = varAtom->getIsotope();
+    }
+    if (d_isotopeMap.find(1000 * data[4]) == d_isotopeMap.end()) {
+      d_isotopeMap[1000 * data[4]] = attach1->getIsotope();
+    }
+    if (d_isotopeMap.find(1000 * data[6]) == d_isotopeMap.end()) {
+      d_isotopeMap[1000 * data[6]] = attach2->getIsotope();
+    }
+    varAtom->setIsotope(1000 * data[3]);
+    attach1->setIsotope(1000 * data[4]);
+    attach2->setIsotope(1000 * data[6]);
+    d_variations.push_back(
+        std::make_tuple(1000 * data[3], 1000 * data[4], 1000 * data[6]));
   }
-  std::cerr << ">>>>  " << MolToSmiles(*dp_frame) << std::endl;
 }
 
 std::vector<size_t> LinkNodeOp::getVariationCounts() const {
-  // std::vector<size_t> res(d_variationPoints.size());
-  // std::transform(
-  //     d_variationPoints.begin(), d_variationPoints.end(), res.begin(),
-  //     [](std::pair<unsigned int, std::vector<unsigned int>> pr) -> size_t {
-  //       return pr.second.size();
-  //     });
-  // return res;
   return d_countAtEachPoint;
 }
 
@@ -178,41 +139,54 @@ std::unique_ptr<ROMol> LinkNodeOp::operator()(
       throw ValueErrorException("bad element value in enumeration");
     }
   }
-  // we do the enumeration and attach one side in a single reaction.
-  // we can't attach both sides because it's entirely possible that a
-  // single atom has multiple attachment points and that would lead to
-  // a mess.
-  std::string reacts = "";
-  std::string prods = "";
+  // we do the enumeration of each of the variation points independantly
+  ROMOL_SPTR res(new ROMol(*dp_frame));
   for (size_t i = 0; i < which.size(); ++i) {
+    // FIX need a special case here for when the variation points are bonded to
+    // each other
     auto variationIdx = i + 1;
     auto variationCount = d_pointRanges[i].first + which[i];
-    auto reactFormat = boost::format("[%d#0]-[*:%d]-[%d#0].[%d#0][*:%d]") %
-                       (variationIdx * 100) % (10 * variationIdx) %
-                       (variationIdx * 100 + 10) % (variationIdx * 100 + 1) %
-                       (10 * variationIdx + 1);
-    auto react = reactFormat.str();
-    if (!reacts.empty()) {
-      reacts += ".";
+    auto reactFormat =
+        boost::format("[%d*:%d]-[%d*:%d]-[%d*:%d]") %
+        (std::get<1>(d_variations[i])) % (variationIdx * 100 + 1) %
+        (std::get<0>(d_variations[i])) % (variationIdx * 100) %
+        (std::get<2>(d_variations[i])) % (variationIdx * 100 + 2);
+    auto reacts = reactFormat.str();
+
+    auto prodFormat = boost::format("[*:%d]") % (variationIdx * 100 + 1);
+    auto prods = prodFormat.str();
+    for (size_t j = 0; j < variationCount - 1; ++j) {
+      prods += (boost::format("-[*:%d]") % (variationIdx * 100)).str();
     }
-    reacts += reactFormat.str();
-    auto prodFormat = boost::format("[*:%d]-[*:%d]") % (10 * variationIdx + 1) %
-                      (10 * variationIdx);
-    auto prod = prodFormat.str();
-    for (size_t j = 1; j < variationCount; ++j) {
-      prod += (boost::format("-[*:%d]") % variationIdx).str();
-    }
-    prod += (boost::format("-[%d#0]") % (variationIdx * 100 + 10)).str();
-    if (!prods.empty()) {
-      prods += ".";
-    }
-    prods += prod;
+    prods +=
+        (boost::format("-[%d*:%d]-[*:%d]") % (std::get<0>(d_variations[i])) %
+         (variationIdx * 100) % (variationIdx * 100 + 2))
+            .str();
+    auto reactSmarts = reacts + ">>" + prods;
+    // std::cerr << "variation index: " << variationIdx
+    //           << " count: " << variationCount << " reaction " << reactSmarts
+    //           << std::endl;
+    std::unique_ptr<ChemicalReaction> rxn(
+        RxnSmartsToChemicalReaction(reactSmarts));
+    ASSERT_INVARIANT(rxn, "reaction could not be constructed");
+    rxn->initReactantMatchers();
+    ROMOL_SPTR reactant(new ROMol(*res));
+    auto ps = rxn->runReactant(reactant, 0);
+    ASSERT_INVARIANT(!ps.empty(), "no products from reaction");
+    ASSERT_INVARIANT(ps[0].size() == 1, "too many products from reaction");
+    res = ps[0][0];
+    // std::cerr << "   APPLICATION: " << MolToSmiles(*res) << std::endl;
   }
-  reacts = "(" + reacts + ")";
-  prods = "(" + prods + ")";
-  std::cerr << reacts << ">>" << prods << std::endl;
-  RWMol *res = new RWMol(*dp_mol);
-  return std::unique_ptr<ROMol>(static_cast<ROMol *>(res));
+  // reset the original isotopes
+  for (auto atom : res->atoms()) {
+    if (atom->getIsotope() >= 1000) {
+      auto iter = d_isotopeMap.find(atom->getIsotope());
+      if (iter != d_isotopeMap.end()) {
+        atom->setIsotope(iter->second);
+      }
+    }
+  }
+  return std::unique_ptr<ROMol>(new ROMol(*res));
 }
 
 }  // namespace MolEnumerator
