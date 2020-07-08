@@ -291,8 +291,14 @@ class RDKIT_CHEMREACTIONS_EXPORT ChemicalReaction : public RDProps {
   /*!
       This must be called after adding reactants and before calling
       runReactants.
+
+      \param silent: If this bool is true, no messages will be logged during the
+     validation.
+                     By default, validation problems are reported to the warning
+     and error
+                     logs depending on their severity.
   */
-  void initReactantMatchers();
+  void initReactantMatchers(bool silent = false);
 
   bool isInitialized() const { return !df_needsInit; };
 
