@@ -150,8 +150,8 @@ class RDKIT_MOLENUMERATOR_EXPORT LinkNodeOp : public MolEnumeratorOp {
 struct RDKIT_MOLENUMERATOR_EXPORT MolEnumeratorParams {
   bool sanitize = false;
   size_t maxToEnumerate = 1000;
-  bool doRandom = false;
-  int randomSeed = -1;
+  bool doRandom = false;  //< not yet implemented
+  int randomSeed = -1;    //< not yet implemented
   std::shared_ptr<MolEnumeratorOp> dp_operation;
 };
 
