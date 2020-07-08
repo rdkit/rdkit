@@ -167,9 +167,15 @@ std::unique_ptr<ROMol> LinkNodeOp::operator()(
     std::unique_ptr<ChemicalReaction> rxn(
         RxnSmartsToChemicalReaction(reactSmarts));
     ASSERT_INVARIANT(rxn, "reaction could not be constructed");
-    rxn->initReactantMatchers();
+    // we expect warnings for these alchemical reactions. :-)
+    bool silent = true;
+    rxn->initReactantMatchers(silent);
     ROMOL_SPTR reactant(new ROMol(*res));
-    auto ps = rxn->runReactant(reactant, 0);
+    std::vector<MOL_SPTR_VECT> ps;
+    {
+      RDLog::BlockLogs blocker;
+      ps = rxn->runReactant(reactant, 0);
+    }
     ASSERT_INVARIANT(!ps.empty(), "no products from reaction");
     ASSERT_INVARIANT(ps[0].size() == 1, "too many products from reaction");
     res = ps[0][0];
