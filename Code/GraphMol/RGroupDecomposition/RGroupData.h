@@ -22,9 +22,9 @@
 
 namespace RDKit
 {
-  
+
+//! A single rgroup attached to a given core.  
 struct RGroupData {
-  //! A single rgroup attached to a given core.
   boost::shared_ptr<RWMol> combinedMol;
   std::vector<boost::shared_ptr<ROMol>> mols;  // All the mols in the rgroup
   std::set<std::string> smilesSet;             // used for rgroup equivalence
