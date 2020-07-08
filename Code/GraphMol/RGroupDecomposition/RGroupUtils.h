@@ -35,12 +35,15 @@ std::string labellingToString(Labelling type);
 
 //! Get the RLabels,atom mapping for the current molecule
 std::map<int, Atom *> getRlabels(const RWMol &mol);
+
 //! Remove the  user labels from the atom
 void clearInputLabels(Atom *atom);
+
 //! Set the rgroup label for the current atom, this also sets the
 //  appropriate  MDL or other label
 bool setLabel(Atom *atom, int label, std::set<int> &labels, int &maxLabel,
               bool relabel, Labelling type);
+
 //! Returns true if the core has a dummy atom
 bool hasDummy(const RWMol &core);
 }

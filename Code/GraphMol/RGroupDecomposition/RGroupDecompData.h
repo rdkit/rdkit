@@ -435,6 +435,7 @@ struct RGroupDecompData {
     CartesianProduct iterator(permutations);
     // Iterates through the permutation idx, i.e.
     //  [m1_permutation_idx,  m2_permutation_idx, m3_permutation_idx]
+
     while (iterator.next()) {
       if (count > N) {
         throw ValueErrorException("Next did not finish");

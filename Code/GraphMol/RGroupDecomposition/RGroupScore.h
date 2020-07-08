@@ -15,8 +15,8 @@
 #include <set>
 namespace RDKit {
 
+//! iterate through all possible permutations of the rgroups
 struct CartesianProduct {
-  // iterate through all possible permutations of the rgroups
   std::vector<size_t> permutation;
   std::vector<size_t> sizes;
   size_t maxPermutations;
