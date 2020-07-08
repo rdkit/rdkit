@@ -158,8 +158,7 @@ M  END
 }
 
 TEST_CASE("LINKNODE", "[MolEnumerator]") {
-  SECTION("basics") {
-    auto mol = R"CTAB(
+  auto mol1 = R"CTAB(one linknode
   Mrv2007 06222005102D          
 
   0  0  0     0  0            999 V3000
@@ -184,6 +183,110 @@ M  V30 END BOND
 M  V30 LINKNODE 1 4 2 1 2 1 5
 M  V30 END CTAB
 M  END)CTAB"_ctab;
-    REQUIRE(mol);
+  REQUIRE(mol1);
+  auto mol2 = R"CTAB(two linknodes
+  Mrv2014 07072016412D          
+
+  0  0  0     0  0            999 V3000
+M  V30 BEGIN CTAB
+M  V30 COUNTS 7 7 0 0 0
+M  V30 BEGIN ATOM
+M  V30 1 C 8.25 12.1847 0 0
+M  V30 2 C 6.9164 12.9547 0 0
+M  V30 3 C 7.2366 14.4611 0 0
+M  V30 4 C 8.7681 14.622 0 0
+M  V30 5 C 9.3945 13.2151 0 0
+M  V30 6 O 8.25 10.6447 0 0
+M  V30 7 F 9.5382 15.9557 0 0
+M  V30 END ATOM
+M  V30 BEGIN BOND
+M  V30 1 1 1 2
+M  V30 2 1 2 3
+M  V30 3 1 4 5
+M  V30 4 1 1 5
+M  V30 5 1 3 4
+M  V30 6 1 1 6
+M  V30 7 1 4 7
+M  V30 END BOND
+M  V30 LINKNODE 1 3 2 1 2 1 5
+M  V30 LINKNODE 1 2 2 4 3 4 5
+M  V30 END CTAB
+M  END)CTAB"_ctab;
+  REQUIRE(mol2);
+  auto mol3 = R"CTAB(no linknodes
+  Mrv2007 06222005102D          
+
+  0  0  0     0  0            999 V3000
+M  V30 BEGIN CTAB
+M  V30 COUNTS 6 6 0 0 0
+M  V30 BEGIN ATOM
+M  V30 1 C 8.25 12.1847 0 0
+M  V30 2 C 6.9164 12.9547 0 0
+M  V30 3 C 6.9164 14.4947 0 0
+M  V30 4 C 9.5836 14.4947 0 0
+M  V30 5 C 9.5836 12.9547 0 0
+M  V30 6 O 8.25 10.6447 0 0
+M  V30 END ATOM
+M  V30 BEGIN BOND
+M  V30 1 1 1 2
+M  V30 2 1 2 3
+M  V30 3 1 4 5
+M  V30 4 1 1 5
+M  V30 5 1 3 4
+M  V30 6 1 1 6
+M  V30 END BOND
+M  V30 END CTAB
+M  END)CTAB"_ctab;
+  REQUIRE(mol3);
+  // TODO: add a test for neighboring LINKNODES
+  SECTION("LinkNode unit tests 1") {
+    MolEnumerator::LinkNodeOp op;
+    op.initFromMol(*mol1);
+    auto vcnts = op.getVariationCounts();
+    REQUIRE(vcnts.size() == 1);
+    CHECK(vcnts[0] == 4);
+
+    {
+      std::vector<size_t> elems{0};
+      std::unique_ptr<ROMol> newmol(op(elems));
+      CHECK(MolToSmiles(*newmol) == "OC1CCCC1");
+    }
+    {
+      std::vector<size_t> elems{2};
+      std::unique_ptr<ROMol> newmol(op(elems));
+      CHECK(MolToSmiles(*newmol) == "OC1C(O)C(O)CCCC1");
+    }
+  }
+#if 1
+  SECTION("LinkNode unit tests 2") {
+    MolEnumerator::LinkNodeOp op;
+    op.initFromMol(*mol2);
+    auto vcnts = op.getVariationCounts();
+    REQUIRE(vcnts.size() == 2);
+    CHECK(vcnts[0] == 3);
+    CHECK(vcnts[1] == 2);
+
+    {
+      std::vector<size_t> elems{0, 0};
+      std::unique_ptr<ROMol> newmol(op(elems));
+      CHECK(MolToSmiles(*newmol) == "OC1CC(F)CC1");
+    }
+    {
+      std::vector<size_t> elems{2, 0};
+      std::unique_ptr<ROMol> newmol(op(elems));
+      CHECK(MolToSmiles(*newmol) == "OC1C(O)C(O)CC(F)CC1");
+    }
+    {
+      std::vector<size_t> elems{0, 1};
+      std::unique_ptr<ROMol> newmol(op(elems));
+      CHECK(MolToSmiles(*newmol) == "OC1C(F)CC(F)CC1");
+    }
+  }
+#endif
+  SECTION("LinkNode unit tests 3") {
+    MolEnumerator::LinkNodeOp op;
+    op.initFromMol(*mol3);
+    auto vcnts = op.getVariationCounts();
+    REQUIRE(vcnts.size() == 0);
   }
 }
