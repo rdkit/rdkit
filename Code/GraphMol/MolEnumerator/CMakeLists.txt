@@ -10,6 +10,6 @@ rdkit_headers(MolEnumerator.h DEST GraphMol/MolEnumerator)
 rdkit_catch_test(testMolEnumerator catch_main.cpp enumerator_catch.cpp 
 LINK_LIBRARIES MolEnumerator SmilesParse FileParsers )
 
-#if(RDK_BUILD_PYTHON_WRAPPERS)
-#add_subdirectory(Wrap)
-#endif()
+if(RDK_BUILD_PYTHON_WRAPPERS)
+add_subdirectory(Wrap)
+endif()
