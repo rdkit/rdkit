@@ -20,6 +20,7 @@
 #include <memory>
 
 namespace RDKit {
+class ChemicalReaction;
 namespace MolEnumerator {
 
 //! abstract base class for the a molecule enumeration operation
@@ -86,6 +87,55 @@ class RDKIT_MOLENUMERATOR_EXPORT PositionVariationOp : public MolEnumeratorOp {
   std::vector<std::pair<unsigned int, std::vector<unsigned int>>>
       d_variationPoints{};
   std::vector<size_t> d_dummiesAtEachPoint{};
+  void initFromMol();
+};
+
+//! Molecule enumeration operation corresponding to LINKNODES
+/*!
+ */
+class RDKIT_MOLENUMERATOR_EXPORT LinkNodeOp : public MolEnumeratorOp {
+ public:
+  LinkNodeOp(){};
+  LinkNodeOp(const std::shared_ptr<ROMol> mol) : dp_mol(mol) {
+    PRECONDITION(mol, "bad molecule");
+    initFromMol();
+  };
+  LinkNodeOp(const ROMol &mol) : dp_mol(new ROMol(mol)) { initFromMol(); };
+  // FIX: copy all members here and for operator=
+  LinkNodeOp(const LinkNodeOp &other)
+      : dp_mol(other.dp_mol),
+        dp_frame(other.dp_frame),
+        d_countAtEachPoint(other.d_countAtEachPoint){};
+  LinkNodeOp &operator=(const LinkNodeOp &other) {
+    if (&other == this) {
+      return *this;
+    }
+    dp_mol = other.dp_mol;
+    dp_frame = other.dp_frame;
+    d_countAtEachPoint = other.d_countAtEachPoint;
+    return *this;
+  };
+  //! \override
+  std::vector<size_t> getVariationCounts() const override;
+
+  //! \override
+  std::unique_ptr<ROMol> operator()(
+      const std::vector<size_t> &which) const override;
+
+  //! \override
+  void initFromMol(const ROMol &mol) override;
+
+  //! \override
+  std::unique_ptr<MolEnumeratorOp> copy() const override {
+    return std::unique_ptr<MolEnumeratorOp>(new LinkNodeOp(*this));
+  }
+
+ private:
+  std::shared_ptr<ROMol> dp_mol{nullptr};
+  std::shared_ptr<RWMol> dp_frame{nullptr};
+  std::vector<size_t> d_countAtEachPoint{};
+  std::vector<std::pair<unsigned, unsigned>> d_pointRanges;
+
   void initFromMol();
 };
 

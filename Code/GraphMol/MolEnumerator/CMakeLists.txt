@@ -1,7 +1,7 @@
 remove_definitions(-DRDKIT_GRAPHMOL_BUILD)
 add_definitions(-DRDKIT_MOLENUMERATOR_BUILD)
 rdkit_library(MolEnumerator
-              MolEnumerator.cpp
+              MolEnumerator.cpp PositionVariation.cpp LinkNode.cpp
               LINK_LIBRARIES FileParsers ChemReactions ChemTransforms 
               SubstructMatch GraphMol RDGeneral)
 
