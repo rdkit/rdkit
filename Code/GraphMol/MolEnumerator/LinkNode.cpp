@@ -142,8 +142,6 @@ std::unique_ptr<ROMol> LinkNodeOp::operator()(
   // we do the enumeration of each of the variation points independantly
   ROMOL_SPTR res(new ROMol(*dp_frame));
   for (size_t i = 0; i < which.size(); ++i) {
-    // FIX need a special case here for when the variation points are bonded to
-    // each other
     auto variationIdx = i + 1;
     auto variationCount = d_pointRanges[i].first + which[i];
     auto reactFormat =

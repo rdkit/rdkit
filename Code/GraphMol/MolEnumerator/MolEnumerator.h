@@ -101,7 +101,6 @@ class RDKIT_MOLENUMERATOR_EXPORT LinkNodeOp : public MolEnumeratorOp {
     initFromMol();
   };
   LinkNodeOp(const ROMol &mol) : dp_mol(new ROMol(mol)) { initFromMol(); };
-  // FIX: copy all members here and for operator=
   LinkNodeOp(const LinkNodeOp &other)
       : dp_mol(other.dp_mol),
         dp_frame(other.dp_frame),

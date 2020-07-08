@@ -395,20 +395,4 @@ M  END)CTAB"_ctab;
     }
     CHECK(smis == tsmis);
   }
-#if 0
-  SECTION("enumeration basics 2") {
-    MolEnumerator::MolEnumeratorParams ps;
-    ps.dp_operation = std::shared_ptr<MolEnumerator::MolEnumeratorOp>(
-        new MolEnumerator::PositionVariationOp());
-    auto bundle = MolEnumerator::enumerate(*mol2, ps);
-    CHECK(bundle.size() == 4);
-    std::vector<std::string> tsmis = {"Fc1cnccc1Cl", "Fc1cncc(Cl)c1",
-                                      "Fc1cc(Cl)ccn1", "Fc1ccc(Cl)cn1"};
-    std::vector<std::string> smis;
-    for (const auto molp : bundle.getMols()) {
-      smis.push_back(MolToSmiles(*molp));
-    }
-    CHECK(smis == tsmis);
-  }
-#endif
 }
