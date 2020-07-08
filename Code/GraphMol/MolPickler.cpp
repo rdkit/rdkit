@@ -32,7 +32,7 @@ using std::int32_t;
 using std::uint32_t;
 namespace RDKit {
 
-const int32_t MolPickler::versionMajor = 11;
+const int32_t MolPickler::versionMajor = 12;
 const int32_t MolPickler::versionMinor = 0;
 const int32_t MolPickler::versionPatch = 0;
 const int32_t MolPickler::endianId = 0xDEADBEEF;
@@ -129,6 +129,10 @@ template <class T>
 void pickleQuery(std::ostream &ss, const Query<int, T const *, true> *query) {
   PRECONDITION(query, "no query");
   streamWrite(ss, query->getDescription());
+  if (!query->getTypeLabel().empty()) {
+    streamWrite(ss, MolPickler::QUERY_TYPELABEL);
+    streamWrite(ss, query->getTypeLabel());
+  }
   if (query->getNegation()) {
     streamWrite(ss, MolPickler::QUERY_ISNEGATED);
   }
@@ -355,6 +359,8 @@ void finalizeQueryFromDescription(Query<int, Bond const *, true> *query,
     query->setDataFunc(queryIsBondInNRings);
   } else if (descr == "SingleOrAromaticBond") {
     query->setDataFunc(queryBondIsSingleOrAromatic);
+  } else if (descr == "SingleOrDoubleOrAromaticBond") {
+    query->setDataFunc(queryBondIsSingleOrDoubleOrAromatic);
   } else if (descr == "BondNull") {
     query->setDataFunc(nullDataFun);
     query->setMatchFunc(nullQueryFun);
@@ -501,11 +507,16 @@ Query<int, Atom const *, true> *unpickleQuery(std::istream &ss,
                                               Atom const *owner, int version) {
   PRECONDITION(owner, "no query");
   std::string descr;
+  std::string typeLabel = "";
   bool isNegated = false;
   Query<int, Atom const *, true> *res;
   streamRead(ss, descr, version);
   MolPickler::Tags tag;
   streamRead(ss, tag, version);
+  if (tag == MolPickler::QUERY_TYPELABEL) {
+    streamRead(ss, typeLabel, version);
+    streamRead(ss, tag, version);
+  }
   if (tag == MolPickler::QUERY_ISNEGATED) {
     isNegated = true;
     streamRead(ss, tag, version);
@@ -543,6 +554,7 @@ Query<int, Atom const *, true> *unpickleQuery(std::istream &ss,
 
   res->setNegation(isNegated);
   res->setDescription(descr);
+  if (!typeLabel.empty()) res->setTypeLabel(typeLabel);
 
   finalizeQueryFromDescription(res, owner);
 
@@ -758,13 +770,14 @@ AtomMonomerInfo *unpickleAtomMonomerInfo(std::istream &ss, int version) {
 
 }  // end of anonymous namespace
 
-// Resets the `exceptionState` of the passed stream `ss` in the destructor to the
-// `exceptionState` the stream ss was in, before setting `newExceptionState`.
+// Resets the `exceptionState` of the passed stream `ss` in the destructor to
+// the `exceptionState` the stream ss was in, before setting
+// `newExceptionState`.
 struct IOStreamExceptionStateResetter {
   std::ios &originalStream;
   std::ios_base::iostate originalExceptionState;
   IOStreamExceptionStateResetter(std::ios &ss,
-                           std::ios_base::iostate newExceptionState)
+                                 std::ios_base::iostate newExceptionState)
       : originalStream(ss), originalExceptionState(ss.exceptions()) {
     ss.exceptions(newExceptionState);
   }
@@ -798,15 +811,15 @@ void MolPickler::pickleMol(const ROMol *mol, std::ostream &ss,
     streamWrite(ss, versionMajor);
     streamWrite(ss, versionMinor);
     streamWrite(ss, versionPatch);
-  #ifndef OLD_PICKLE
+#ifndef OLD_PICKLE
     if (mol->getNumAtoms() > 255) {
       _pickle<int32_t>(mol, ss, propertyFlags);
     } else {
       _pickle<unsigned char>(mol, ss, propertyFlags);
     }
-  #else
+#else
     _pickleV1(mol, ss);
-  #endif
+#endif
   } catch (const std::ios_base::failure &e) {
     if (ss.eof()) {
       throw MolPicklerException(
@@ -863,13 +876,13 @@ void MolPickler::molFromPickle(std::istream &ss, ROMol *mol) {
 
     mol->clearAllAtomBookmarks();
     mol->clearAllBondBookmarks();
-  
+
     streamRead(ss, tmpInt);
     if (tmpInt != endianId) {
       throw MolPicklerException(
           "Bad pickle format: bad endian ID or invalid file format");
     }
-  
+
     streamRead(ss, tmpInt);
     if (static_cast<Tags>(tmpInt) != VERSION) {
       throw MolPicklerException("Bad pickle format: no version tag");
