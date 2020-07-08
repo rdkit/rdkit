@@ -395,4 +395,36 @@ M  END)CTAB"_ctab;
     }
     CHECK(smis == tsmis);
   }
+  SECTION("enumeration basics 2") {
+    auto mol = R"CTAB(no linknodes
+  Mrv2007 06222005102D          
+
+  0  0  0     0  0            999 V3000
+M  V30 BEGIN CTAB
+M  V30 COUNTS 6 6 0 0 0
+M  V30 BEGIN ATOM
+M  V30 1 C 8.25 12.1847 0 0
+M  V30 2 C 6.9164 12.9547 0 0
+M  V30 3 C 6.9164 14.4947 0 0
+M  V30 4 C 9.5836 14.4947 0 0
+M  V30 5 C 9.5836 12.9547 0 0
+M  V30 6 O 8.25 10.6447 0 0
+M  V30 END ATOM
+M  V30 BEGIN BOND
+M  V30 1 1 1 2
+M  V30 2 1 2 3
+M  V30 3 1 4 5
+M  V30 4 1 1 5
+M  V30 5 1 3 4
+M  V30 6 1 1 6
+M  V30 END BOND
+M  V30 END CTAB
+M  END)CTAB"_ctab;
+    REQUIRE(mol);
+    MolEnumerator::MolEnumeratorParams ps;
+    ps.dp_operation = std::shared_ptr<MolEnumerator::MolEnumeratorOp>(
+        new MolEnumerator::LinkNodeOp());
+    auto bundle = MolEnumerator::enumerate(*mol, ps);
+    CHECK(bundle.size() == 0);
+  }
 }
