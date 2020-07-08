@@ -13,6 +13,7 @@
 
 #include "../RDKitBase.h"
 #include <GraphMol/Substruct/SubstructMatch.h>
+#include <chrono>
 
 namespace RDKit {
 
@@ -39,6 +40,7 @@ typedef enum {
   Greedy = 0x01,
   GreedyChunks = 0x02,
   Exhaustive = 0x04,  // not really useful for large sets
+  NoSymmetrization = 0x08,
 } RGroupMatching;
 
 typedef enum {
@@ -53,33 +55,16 @@ typedef enum {
 } RGroupCoreAlignment;
 
 struct RDKIT_RGROUPDECOMPOSITION_EXPORT RGroupDecompositionParameters {
-  unsigned int labels;
-  unsigned int matchingStrategy;
-  unsigned int rgroupLabelling;
-  unsigned int alignment;
+  unsigned int labels = AutoDetect;
+  unsigned int matchingStrategy = GreedyChunks;
+  unsigned int rgroupLabelling = AtomMap | MDLRGroup;
+  unsigned int alignment = MCS;
 
-  unsigned int chunkSize;
-  bool onlyMatchAtRGroups;
-  bool removeAllHydrogenRGroups;
-  bool removeHydrogensPostMatch;
-
-  RGroupDecompositionParameters(unsigned int labels = AutoDetect,
-                                unsigned int strategy = GreedyChunks,
-                                unsigned int labelling = AtomMap | MDLRGroup,
-                                unsigned int alignment = MCS,
-                                unsigned int chunkSize = 5,
-                                bool matchOnlyAtRGroups = false,
-                                bool removeHydrogenOnlyGroups = true,
-                                bool removeHydrogensPostMatch = true)
-      : labels(labels),
-        matchingStrategy(strategy),
-        rgroupLabelling(labelling),
-        alignment(alignment),
-        chunkSize(chunkSize),
-        onlyMatchAtRGroups(matchOnlyAtRGroups),
-        removeAllHydrogenRGroups(removeHydrogenOnlyGroups),
-        removeHydrogensPostMatch(removeHydrogensPostMatch)
-        {}
+  unsigned int chunkSize = 5;
+  bool onlyMatchAtRGroups = false;
+  bool removeAllHydrogenRGroups = true;
+  bool removeHydrogensPostMatch = true;
+  double timeout = -1.0;  ///< timeout in seconds. <=0 indicates no timeout
 
   // Determine how to assign the rgroup labels from the given core
   unsigned int autoGetLabels(const RWMol &);
@@ -117,9 +102,10 @@ class RDKIT_RGROUPDECOMPOSITION_EXPORT RGroupDecomposition {
   int add(const ROMol &mol);
   bool process();
 
+  const RGroupDecompositionParameters &params() const;
   //! return the current group labels
   std::vector<std::string> getRGroupLabels() const;
-  
+
   //! return rgroups in row order group[row][attachment_point] = ROMol
   RGroupRows getRGroupsAsRows() const;
   //! return rgroups in column order group[attachment_point][row] = ROMol
@@ -137,6 +123,21 @@ RDKIT_RGROUPDECOMPOSITION_EXPORT unsigned int RGroupDecompose(
     RGroupColumns &columns, std::vector<unsigned int> *unmatched = nullptr,
     const RGroupDecompositionParameters &options =
         RGroupDecompositionParameters());
+
+inline bool checkForTimeout(const std::chrono::steady_clock::time_point &t0,
+                            double timeout, bool throwOnTimeout = true) {
+  if (timeout <= 0) return false;
+  auto t1 = std::chrono::steady_clock::now();
+  std::chrono::duration<double> elapsed = t1 - t0;
+  if (elapsed.count() >= timeout) {
+    if (throwOnTimeout) {
+      throw std::runtime_error("operation timed out");
+    }
+    return true;
+  }
+  return false;
+}
+
 }  // namespace RDKit
 
 #endif

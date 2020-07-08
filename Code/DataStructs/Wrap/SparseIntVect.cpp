@@ -28,7 +28,7 @@ python::object SIVToBinaryText(const SparseIntVect<IndexType> &siv) {
       python::handle<>(PyBytes_FromStringAndSize(res.c_str(), res.length())));
   return retval;
 }
-}
+}  // namespace
 
 template <typename IndexType>
 struct siv_pickle_suite : python::pickle_suite {
@@ -96,7 +96,7 @@ python::list BulkTversky(const T &siv1, python::list sivs, double a, double b,
   }
   return res;
 }
-}
+}  // namespace
 
 std::string sparseIntVectDoc =
     "A container class for storing integer\n\
@@ -122,7 +122,7 @@ struct sparseIntVec_wrapper {
   template <typename IndexType>
   static void wrapOne(const char *className) {
     python::class_<SparseIntVect<IndexType>,
-                   boost::shared_ptr<SparseIntVect<IndexType> > >(
+                   boost::shared_ptr<SparseIntVect<IndexType>>>(
         className, sparseIntVectDoc.c_str(),
         python::init<IndexType>("Constructor"))
         .def(python::init<std::string>())
@@ -135,7 +135,15 @@ struct sparseIntVec_wrapper {
         .def(python::self & python::self)
         .def(python::self | python::self)
         .def(python::self - python::self)
-        .def(python::self -= python::self)
+#ifdef __clang__
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wself-assign-overloaded"
+#endif
+        .def(python::self -=
+             python::self)  // clang warns incorrectly on this construct
+#ifdef __clang__
+#pragma GCC diagnostic pop
+#endif
         .def(python::self + python::self)
         .def(python::self += python::self)
         .def(python::self == python::self)
@@ -166,7 +174,7 @@ struct sparseIntVec_wrapper {
         (python::args("siv1"), python::args("siv2"),
          python::args("returnDistance") = false, python::args("bounds") = 0.0),
         "return the Dice similarity between two vectors");
-    python::def("BulkDiceSimilarity", &BulkDice<SparseIntVect<IndexType> >,
+    python::def("BulkDiceSimilarity", &BulkDice<SparseIntVect<IndexType>>,
                 (python::args("v1"), python::args("v2"),
                  python::args("returnDistance") = false),
                 "return the Dice similarities between one vector and a "
@@ -177,7 +185,7 @@ struct sparseIntVec_wrapper {
          python::args("returnDistance") = false, python::args("bounds") = 0.0),
         "return the Tanimoto similarity between two vectors");
     python::def("BulkTanimotoSimilarity",
-                &BulkTanimoto<SparseIntVect<IndexType> >,
+                &BulkTanimoto<SparseIntVect<IndexType>>,
                 (python::args("v1"), python::args("v2"),
                  python::args("returnDistance") = false),
                 "return the Tanimoto similarities between one vector and a "
@@ -187,8 +195,7 @@ struct sparseIntVec_wrapper {
                  python::args("b"), python::args("returnDistance") = false,
                  python::args("bounds") = 0.0),
                 "return the Tversky similarity between two vectors");
-    python::def("BulkTverskySimilarity",
-                &BulkTversky<SparseIntVect<IndexType> >,
+    python::def("BulkTverskySimilarity", &BulkTversky<SparseIntVect<IndexType>>,
                 (python::args("v1"), python::args("v2"), python::args("a"),
                  python::args("b"), python::args("returnDistance") = false),
                 "return the Tversky similarities between one vector and a "

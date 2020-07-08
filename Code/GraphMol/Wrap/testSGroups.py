@@ -150,6 +150,89 @@ M  END''')
     self.assertNotEqual(mb.find('BRKXYZ'), -1)
     self.assertNotEqual(mb.find('CONNECT=HT'), -1)
 
+  def testXBONDS(self):
+    mol = Chem.MolFromMolBlock('''
+  Mrv1824 06192020192D          
+
+  0  0  0     0  0            999 V3000
+M  V30 BEGIN CTAB
+M  V30 COUNTS 6 6 1 0 0
+M  V30 BEGIN ATOM
+M  V30 1 C -1.25 0.7484 0 0
+M  V30 2 C -2.5837 -0.0216 0 0
+M  V30 3 C -2.5837 -1.5617 0 0
+M  V30 4 C -1.25 -2.3317 0 0
+M  V30 5 C 0.0837 -1.5617 0 0
+M  V30 6 C 0.0837 -0.0216 0 0
+M  V30 END ATOM
+M  V30 BEGIN BOND
+M  V30 1 1 1 2
+M  V30 2 1 2 3
+M  V30 3 1 3 4
+M  V30 4 1 4 5
+M  V30 5 1 5 6
+M  V30 6 1 1 6
+M  V30 END BOND
+M  V30 BEGIN SGROUP
+M  V30 1 SRU 0 ATOMS=(1 1) XBONDS=(2 1 6) XBHEAD=(2 6 1) XBCORR=(4 6 6 1 1) -
+M  V30 BRKXYZ=(9 -2.02 -0.0216 0 -2.02 1.5184 0 0 0 0) BRKXYZ=(9 -0.48 1.5184 -
+M  V30 0 -0.48 -0.0216 0 0 0 0) CONNECT=HT LABEL="1-3"
+M  V30 END SGROUP
+M  V30 END CTAB
+M  END
+''')
+    self.assertIsNotNone(mol)
+    sgs = Chem.GetMolSubstanceGroups(mol)
+    self.assertEqual(len(sgs), 1)
+    sg = sgs[0]
+    self.assertEqual(sg.GetProp('TYPE'), 'SRU')
+    v = sg.GetUnsignedVectProp('XBHEAD')
+    self.assertEqual(len(v), 2)
+    self.assertEqual(list(v), [5, 0])
+    v = sg.GetUnsignedVectProp('XBCORR')
+    self.assertEqual(len(v), 4)
+    self.assertEqual(list(v), [5, 5, 0, 0])
+
+  def testDataFields(self):
+    mol = Chem.MolFromMolBlock('''
+  Mrv2007 06242013252D          
+
+  0  0  0     0  0            999 V3000
+M  V30 BEGIN CTAB
+M  V30 COUNTS 7 6 1 0 0
+M  V30 BEGIN ATOM
+M  V30 1 C -5.1782 0.0827 0 0
+M  V30 2 C -6.5119 -0.6873 0 0
+M  V30 3 C -3.8446 -0.6873 0 0
+M  V30 4 O -2.5109 0.0826 0 0
+M  V30 5 C -1.0732 -0.4692 0 0
+M  V30 6 C -5.1782 1.6227 0 0
+M  V30 7 C -6.5119 2.3927 0 0
+M  V30 END ATOM
+M  V30 BEGIN BOND
+M  V30 1 1 1 2
+M  V30 2 2 1 3
+M  V30 3 1 3 4
+M  V30 4 1 4 5
+M  V30 5 1 1 6
+M  V30 6 1 7 6
+M  V30 END BOND
+M  V30 BEGIN SGROUP
+M  V30 1 DAT 0 ATOMS=(2 1 6) FIELDNAME=property -
+M  V30 FIELDDISP="   -5.1782    0.0827    DA    ALL  0       0" -
+M  V30 FIELDDATA=val2 FIELDDATA=val1
+M  V30 END SGROUP
+M  V30 END CTAB
+M  END
+''')
+    self.assertIsNotNone(mol)
+    sgs = Chem.GetMolSubstanceGroups(mol)
+    self.assertEqual(len(sgs), 1)
+    sg = sgs[0]
+    self.assertEqual(sg.GetProp('TYPE'), 'DAT')
+    pv = sg.GetStringVectProp('DATAFIELDS')
+    self.assertEqual(list(pv), ['val2', 'val1'])
+
 
 if __name__ == '__main__':
   print("Testing SubstanceGroups wrapper")

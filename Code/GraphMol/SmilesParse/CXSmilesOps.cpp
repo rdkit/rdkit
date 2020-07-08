@@ -605,7 +605,7 @@ std::string get_radical_block(const ROMol &mol,
     }
   }
   if (rads.size()) {
-    for (const auto pr : rads) {
+    for (const auto &pr : rads) {
       switch (pr.first) {
         case 1:
           res += "^1:";
@@ -674,8 +674,7 @@ std::string get_atom_props_block(const ROMol &mol,
   return res;
 }
 
-void appendToCXExtension(const std::string& addition, std::string& base)
-{
+void appendToCXExtension(const std::string &addition, std::string &base) {
   if (!addition.empty()) {
     if (base.size() > 1) {
       base += ",";

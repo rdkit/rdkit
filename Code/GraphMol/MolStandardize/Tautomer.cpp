@@ -22,6 +22,12 @@
 #include <boost/flyweight/no_tracking.hpp>
 #include <utility>
 
+// #define VERBOSE_ENUMERATION 1
+
+#ifdef VERBOSE_ENUMERATION
+#include <GraphMol/SmilesParse/SmartsWrite.h>
+#endif
+
 using namespace RDKit;
 
 namespace RDKit {
@@ -170,9 +176,11 @@ ROMol *TautomerEnumerator::pickCanonical(
   int bestScore = std::numeric_limits<int>::min();
   std::string bestSmiles = "";
   ROMOL_SPTR bestMol;
-  for (const auto t : tautomers) {
+  for (const auto &t : tautomers) {
     auto score = scoreFunc(*t);
-    // std::cerr << "  " << MolToSmiles(*t) << " " << score << std::endl;
+#ifdef VERBOSE_ENUMERATION
+    std::cerr << "  " << MolToSmiles(*t) << " " << score << std::endl;
+#endif
     if (score > bestScore) {
       bestScore = score;
       bestSmiles = MolToSmiles(*t);
@@ -191,7 +199,9 @@ ROMol *TautomerEnumerator::pickCanonical(
 std::vector<ROMOL_SPTR> TautomerEnumerator::enumerate(
     const ROMol &mol, boost::dynamic_bitset<> *modifiedAtoms,
     boost::dynamic_bitset<> *modifiedBonds) const {
-  // std::cout << "**********************************" << std::endl;
+#ifdef VERBOSE_ENUMERATION
+  std::cout << "**********************************" << std::endl;
+#endif
   PRECONDITION(dp_catalog, "no catalog!");
   const TautomerCatalogParams *tautparams = dp_catalog->getCatalogParams();
   PRECONDITION(tautparams, "");
@@ -234,11 +244,13 @@ std::vector<ROMOL_SPTR> TautomerEnumerator::enumerate(
   while (tautomers.size() < MAX_TAUTOMERS) {
     // std::map automatically sorts tautomers into alphabetical order (SMILES)
     for (const auto &tautomer : tautomers) {
-      // std::cout << "Done : " << std::endl;
-      // for (const auto d : done) {
-      //   std::cout << d << std::endl;
-      // }
-      // std::cout << "Looking at tautomer: " << tautomer.first << std::endl;
+#ifdef VERBOSE_ENUMERATION
+      std::cout << "Done : " << std::endl;
+      for (const auto d : done) {
+        std::cout << d << std::endl;
+      }
+      std::cout << "Looking at tautomer: " << tautomer.first << std::endl;
+#endif
       std::string tsmiles;
       if (std::find(done.begin(), done.end(), tautomer.first) != done.end()) {
         continue;
@@ -264,12 +276,14 @@ std::vector<ROMOL_SPTR> TautomerEnumerator::enumerate(
           if (!matched) {
             continue;
           } else {
-            // std::cout << "kmol: " << kmol->first << std::endl;
-            // std::cout << MolToSmiles(*(kmol->second)) << std::endl;
-            // std::cout << "transform mol: " << MolToSmarts(*(transform.Mol))
-            //           << std::endl;
+#ifdef VERBOSE_ENUMERATION
+            std::cout << "kmol: " << kmol->first << std::endl;
+            std::cout << MolToSmiles(*(kmol->second)) << std::endl;
+            std::cout << "transform mol: " << MolToSmarts(*(transform.Mol))
+                      << std::endl;
 
-            // std::cout << "Matched: " << name << std::endl;
+            std::cout << "Matched: " << name << std::endl;
+#endif
           }
           for (const auto &match : matches) {
             std::vector<int> idx_matches;
@@ -307,20 +321,22 @@ std::vector<ROMOL_SPTR> TautomerEnumerator::enumerate(
                 ++bi;
               } else {
                 Bond::BondType bondtype = bond->getBondType();
-                //								std::cout
-                //<< "Bond as double: " << bond->getBondTypeAsDouble() <<
-                // std::endl;
-                // std::cout
-                // << bondtype << std::endl;
+#ifdef VERBOSE_ENUMERATION
+                std::cout << "Bond as double: " << bond->getBondTypeAsDouble()
+                          << std::endl;
+                std::cout << bondtype << std::endl;
+#endif
                 if (bondtype == 1) {
                   bond->setBondType(Bond::DOUBLE);
-                  //									std::cout
-                  //<< "Set bond to double" << std::endl;
+#ifdef VERBOSE_ENUMERATION
+                  std::cout << "Set bond to double" << std::endl;
+#endif
                 }
                 if (bondtype == 2) {
                   bond->setBondType(Bond::SINGLE);
-                  //									std::cout
-                  //<< "Set bond to single" << std::endl;
+#ifdef VERBOSE_ENUMERATION
+                  std::cout << "Set bond to single" << std::endl;
+#endif
                 }
                 modifiedBonds->set(bond->getIdx());
               }
@@ -337,33 +353,55 @@ std::vector<ROMOL_SPTR> TautomerEnumerator::enumerate(
             }
 
             boost::shared_ptr<RWMol> wproduct(new RWMol(*product));
+#ifdef VERBOSE_ENUMERATION
             // wproduct->updatePropertyCache(false);
-            // std::cout << "pre-sanitization: "
-            //           << MolToSmiles(*wproduct, true, true) << std::endl;
+            std::cout << "pre-sanitization: "
+                      << MolToSmiles(*wproduct, true, true) << std::endl;
+#endif
             MolOps::sanitizeMol(*wproduct);
             //						MolOps::sanitizeMol(*static_cast<RWMol*>(product.get()));
             tsmiles = MolToSmiles(*wproduct, true);
-            //						std::string name;
-            //						(transform.Mol)->getProp(common_properties::_Name,
-            // name);
-            // std::cout << "Applied rule: " << name << " to " << tautomer.first
-            //           << std::endl;
+#ifdef VERBOSE_ENUMERATION
+            std::string name;
+            (transform.Mol)->getProp(common_properties::_Name, name);
+            std::cout << "Applied rule: " << name << " to " << tautomer.first
+                      << std::endl;
+#endif
             const bool is_in = tautomers.find(tsmiles) != tautomers.end();
             if (!is_in) {
-              // std::cout << "New tautomer produced: " << tsmiles << std::endl;
+#ifdef VERBOSE_ENUMERATION
+              std::cout << "New tautomer produced: " << tsmiles << std::endl;
+#endif
+              // in addition to the above transformations, sanitzation may modify
+              // bonds, e.g. Cc1nc2ccccc2[nH]1
+              for (size_t i = 0; i < mol.getNumBonds(); i++) {
+                auto molBondType = mol.getBondWithIdx(i)->getBondType();
+                auto tautBondType = wproduct->getBondWithIdx(i)->getBondType();
+                if (molBondType != tautBondType && !modifiedBonds->operator[](i)) {
+#ifdef VERBOSE_ENUMERATION
+                  std::cout << "Sanitization has modified bond " << i
+                            << std::endl;
+#endif
+                  modifiedBonds->set(i);
+                }
+              }
               boost::shared_ptr<RWMol> kekulized_product(new RWMol(*wproduct));
               tautomers[tsmiles] = wproduct;
               MolOps::Kekulize(*kekulized_product, false);
               kekulized_mols[tsmiles] = kekulized_product;
 
-              // std::cout << "Now completed: " << std::endl;
-              // for (const auto &tautomer : tautomers) {
-              //   std::cout << tautomer.first << std::endl;
-              // }
+#ifdef VERBOSE_ENUMERATION
+              std::cout << "Now completed: " << std::endl;
+              for (const auto &tautomer : tautomers) {
+                std::cout << tautomer.first << std::endl;
+              }
+#endif
 
             } else {
-              // std::cout << "Previous tautomer produced again: " << tsmiles
-              //           << std::endl;
+#ifdef VERBOSE_ENUMERATION
+              std::cout << "Previous tautomer produced again: " << tsmiles
+                        << std::endl;
+#endif
             }
           }
         }

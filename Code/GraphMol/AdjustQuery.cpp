@@ -61,6 +61,221 @@ unsigned int parseWhichString(const std::string &txt) {
   }
   return res;
 }
+
+void adjustConjugatedFiveRings(RWMol &mol) {
+  /*
+   The idea here is to allow conjugated five-rings to match either aromatic or
+   aliphatic rings
+
+   five-rings which contain at least 3 conjugated bonds have all of their
+   non-query bonds replaced with a SINGLE|DOUBLE|AROMATIC query.
+
+   */
+
+  std::vector<Bond::BondType> bondTypesToModify = {
+      Bond::BondType::SINGLE, Bond::BondType::DOUBLE, Bond::BondType::AROMATIC};
+  if (!mol.getRingInfo()->isInitialized()) {
+    MolOps::symmetrizeSSSR(mol);
+  }
+  for (auto ring : mol.getRingInfo()->bondRings()) {
+    // only consider 5-rings with at least 3 conjugated bonds
+    if (ring.size() != 5) {
+      continue;
+    }
+    unsigned int nconj = 0;
+    for (auto bi : ring) {
+      const auto bond = mol.getBondWithIdx(bi);
+      if (bond->getIsConjugated()) {
+        ++nconj;
+        if (nconj >= 3) {
+          break;
+        }
+      }
+    }
+    if (nconj < 3) {
+      continue;
+    }
+    // now make the adjustments
+    // FIX: replace this with the SingleOrDoubleOrAromatic query once the
+    // tautomer PR is merged
+    QueryBond qb;
+    qb.setQuery(makeBondOrderEqualsQuery(Bond::BondType::SINGLE));
+    qb.expandQuery(makeBondOrderEqualsQuery(Bond::BondType::DOUBLE),
+                   Queries::COMPOSITE_OR);
+    qb.expandQuery(makeBondOrderEqualsQuery(Bond::BondType::AROMATIC),
+                   Queries::COMPOSITE_OR);
+    for (auto bi : ring) {
+      const auto bond = mol.getBondWithIdx(bi);
+      if (std::find(bondTypesToModify.begin(), bondTypesToModify.end(),
+                    bond->getBondType()) != bondTypesToModify.end()) {
+        if (bond->hasQuery()) {
+          BOOST_LOG(rdWarningLog)
+              << "adjustConjugatedFiveRings: replacing a bond "
+                 "that already has a query"
+              << std::endl;
+        }
+        mol.replaceBond(bi, &qb);
+      }
+    }
+  }
+}
+void adjustSingleBondsFromAromaticAtoms(RWMol &mol, bool toDegreeOneNeighbors,
+                                        bool betweenAromaticAtoms) {
+  /*
+  The idea here is to allow single bonds coming from aromatic atoms to match
+  aromatic bonds under particular circumstances. The conditions are:
+
+  1. toDegreeOneNeighbors: [D1]-[a] -> [D1]-,:[a]
+  2. betweenAromaticAtoms: [a]-[a] -> [a]-,:[a]
+
+  */
+  if (!toDegreeOneNeighbors && !betweenAromaticAtoms) {
+    return;
+  }
+  QueryBond qb;
+  qb.setQuery(makeBondOrderEqualsQuery(Bond::BondType::SINGLE));
+  qb.expandQuery(makeBondOrderEqualsQuery(Bond::BondType::AROMATIC),
+                 Queries::COMPOSITE_OR);
+  if (!mol.getRingInfo()->isInitialized()) {
+    MolOps::symmetrizeSSSR(mol);
+  }
+  for (auto bond : mol.bonds()) {
+    const auto bAt = bond->getBeginAtom();
+    const auto eAt = bond->getEndAtom();
+    if (!bond->hasQuery() && bond->getBondType() == Bond::BondType::SINGLE &&
+        (bAt->getIsAromatic() || eAt->getIsAromatic()) &&
+        !mol.getRingInfo()->numBondRings(bond->getIdx())) {
+      if (toDegreeOneNeighbors &&
+          (bAt->getIsAromatic() ^ eAt->getIsAromatic())) {
+        if ((bAt->getIsAromatic() && eAt->getDegree() == 1) ||
+            (eAt->getIsAromatic() && bAt->getDegree() == 1)) {
+          mol.replaceBond(bond->getIdx(), &qb);
+        }
+      } else if (betweenAromaticAtoms && bAt->getIsAromatic() &&
+                 eAt->getIsAromatic()) {
+        mol.replaceBond(bond->getIdx(), &qb);
+      }
+    }
+  }
+}
+
+void setMDLAromaticity(RWMol &mol) {
+  /*
+  The idea here is to make aromatic 5-rings that contain an "A" atom in the CTAB
+  match both aromatic and aliphatic rings.
+  Schematically, this converts the ring from:
+     ["A"]1:c:c:c:c:1
+  to:
+     ["A"]1-,:c=,:c-,:c=,:c-,:1
+  Note that "A" is an A atom from a CTAB, not a SMARTS aliphatic query
+
+  */
+
+  // it would be simpler to use the substructure matcher for this, but we can't
+  // use SubstructMatch in the core GraphMol lib
+  if (!mol.getRingInfo()->isInitialized()) {
+    MolOps::symmetrizeSSSR(mol);
+  }
+  for (auto ring : mol.getRingInfo()->atomRings()) {
+    if (ring.size() != 5) {
+      continue;
+    }
+    size_t pin;
+    bool keepIt = true;
+    size_t dummy = ring.size() + 1;
+    for (size_t i = 0; i < ring.size(); ++i) {
+      auto ai = ring[i];
+      const auto atom = mol.getAtomWithIdx(ai);
+      if (!atom->getIsAromatic()) {
+        // we only do fully aromatic rings:
+        keepIt = false;
+        break;
+      } else if (atom->getAtomicNum() == 0 && atom->hasQuery() &&
+                 atom->getQuery()->getTypeLabel() == "A") {
+        if (dummy >= ring.size()) {
+          dummy = i;
+        } else {
+          // second dummy encountered, we won't do this ring.
+          keepIt = false;
+          break;
+        }
+      } else if (atom->getAtomicNum() != 6) {
+        // we only do rings consisting solely of C and *
+        keepIt = false;
+        break;
+      }
+      // we can't handle rings that have query bonds already:
+      auto oidx = ring[4];
+      if (i > 0) {
+        oidx = ring[i - 1];
+      }
+      auto bond = mol.getBondBetweenAtoms(ring[i], oidx);
+      ASSERT_INVARIANT(bond, "expected bond not found");
+      if (bond->hasQuery()) {
+        keepIt = false;
+        break;
+      }
+    }
+    if (keepIt && dummy < ring.size()) {
+      // we think about the 5-ring in three layers:
+      //   layer 0: the dummy
+      //   layer 1: the two atoms connected to the dummy
+      //   layer 2: the two atoms not connected to the dummy
+      auto l0 = ring[dummy];
+      std::vector<int> l1;
+      std::vector<int> l2;
+      for (auto ai : ring) {
+        if (ai == l0) {
+          continue;
+        } else if (mol.getBondBetweenAtoms(ai, l0)) {
+          l1.push_back(ai);
+        } else {
+          l2.push_back(ai);
+        }
+      }
+      ASSERT_INVARIANT(l1.size() == 2, "bad layer 1 size");
+      ASSERT_INVARIANT(l2.size() == 2, "bad layer 2 size");
+
+      QueryBond qbSingleAromatic;
+      {
+        BOND_OR_QUERY *q = new BOND_OR_QUERY;
+        q->addChild(QueryBond::QUERYBOND_QUERY::CHILD_TYPE(
+            makeBondOrderEqualsQuery(Bond::SINGLE)));
+        q->addChild(QueryBond::QUERYBOND_QUERY::CHILD_TYPE(
+            makeBondOrderEqualsQuery(Bond::AROMATIC)));
+        q->setDescription("BondOr");
+        qbSingleAromatic.setQuery(q);
+      }
+      QueryBond qbDoubleAromatic;
+      {
+        BOND_OR_QUERY *q = new BOND_OR_QUERY;
+        q->addChild(QueryBond::QUERYBOND_QUERY::CHILD_TYPE(
+            makeBondOrderEqualsQuery(Bond::DOUBLE)));
+        q->addChild(QueryBond::QUERYBOND_QUERY::CHILD_TYPE(
+            makeBondOrderEqualsQuery(Bond::AROMATIC)));
+        q->setDescription("BondOr");
+        qbDoubleAromatic.setQuery(q);
+      }
+      for (auto ai : l1) {
+        // l0 - l1 bonds:
+        auto bond = mol.getBondBetweenAtoms(ai, l0);
+        ASSERT_INVARIANT(bond, "expected l0-l1 bond not found");
+        mol.replaceBond(bond->getIdx(), &qbSingleAromatic);
+        // l1 - l2 bonds:
+        bond = mol.getBondBetweenAtoms(ai, l2[0]);
+        if (!bond) {
+          bond = mol.getBondBetweenAtoms(ai, l2[1]);
+        }
+        ASSERT_INVARIANT(bond, "expected l1-l2 bond not found");
+        mol.replaceBond(bond->getIdx(), &qbDoubleAromatic);
+      }
+      // l2 - l2 bond:
+      auto bond = mol.getBondBetweenAtoms(l2[0], l2[1]);
+      ASSERT_INVARIANT(bond, "expected l2-l2 bond not found");
+      mol.replaceBond(bond->getIdx(), &qbSingleAromatic);
+    }
+  }
+}
 }  // namespace
 void parseAdjustQueryParametersFromJSON(MolOps::AdjustQueryParameters &p,
                                         const std::string &json) {
@@ -80,6 +295,16 @@ void parseAdjustQueryParametersFromJSON(MolOps::AdjustQueryParameters &p,
   p.adjustRingChain = pt.get("adjustRingChain", p.adjustRingChain);
   p.useStereoCareForBonds =
       pt.get("useStereoCareForBonds", p.useStereoCareForBonds);
+  p.adjustConjugatedFiveRings =
+      pt.get("adjustConjugatedFiveRings", p.adjustConjugatedFiveRings);
+  p.setMDLFiveRingAromaticity =
+      pt.get("setMDLFiveRingAromaticity", p.setMDLFiveRingAromaticity);
+  p.adjustSingleBondsToDegreeOneNeighbors =
+      pt.get("adjustSingleBondsToDegreeOneNeighbors",
+             p.adjustSingleBondsToDegreeOneNeighbors);
+  p.adjustSingleBondsBetweenAromaticAtoms =
+      pt.get("adjustSingleBondsBetweenAromaticAtoms",
+             p.adjustSingleBondsBetweenAromaticAtoms);
 
   std::string which;
   which = boost::to_upper_copy<std::string>(pt.get("adjustDegreeFlags", ""));
@@ -295,6 +520,18 @@ void adjustQueryProperties(RWMol &mol, const AdjustQueryParameters *inParams) {
         }
       }
     }
+  }
+  if (params.setMDLFiveRingAromaticity) {
+    setMDLAromaticity(mol);
+  }
+  if (params.adjustConjugatedFiveRings) {
+    adjustConjugatedFiveRings(mol);
+  }
+  if (params.adjustSingleBondsToDegreeOneNeighbors ||
+      params.adjustSingleBondsBetweenAromaticAtoms) {
+    adjustSingleBondsFromAromaticAtoms(
+        mol, params.adjustSingleBondsToDegreeOneNeighbors,
+        params.adjustSingleBondsBetweenAromaticAtoms);
   }
 }
 }  // namespace MolOps
