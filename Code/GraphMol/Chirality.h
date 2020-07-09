@@ -58,32 +58,27 @@ RDKIT_GRAPHMOL_EXPORT Bond::BondStereo translateEZLabelToCisTrans(
 /// @endcond
 
 enum class StereoType {
-  Unspecified, 
-  Atom_Tetrahedral, 
-  Bond_Double, // single double bond and odd-numbered cumulenes
-  Bond_Cumulene_Even, // even-numbered cumulenes
-  Bond_Atropisomer 
+  Unspecified,
+  Atom_Tetrahedral,
+  Bond_Double,         // single double bond and odd-numbered cumulenes
+  Bond_Cumulene_Even,  // even-numbered cumulenes
+  Bond_Atropisomer
 };
 
-enum class StereoDescriptor {
-  None,
-  Tet_CW,
-  Tet_CCW,
-  Bond_Cis,
-  Bond_Trans
-};
+enum class StereoDescriptor { None, Tet_CW, Tet_CCW, Bond_Cis, Bond_Trans };
 
-enum class StereoSpecified { Unspecified, // no information provided
-Specified, 
-Unknown // deliberately marked as unknown
+enum class StereoSpecified {
+  Unspecified,  // no information provided
+  Specified,
+  Unknown  // deliberately marked as unknown
 };
 
 struct RDKIT_GRAPHMOL_EXPORT StereoInfo {
   static const unsigned NOATOM;  // used to mark missing atoms
   StereoType type = StereoType::Unspecified;
   StereoSpecified specified = StereoSpecified::Unspecified;
-  unsigned centeredOn=NOATOM;
-  StereoDescriptor descriptor=StereoDescriptor::None;
+  unsigned centeredOn = NOATOM;
+  StereoDescriptor descriptor = StereoDescriptor::None;
   std::vector<unsigned> controllingAtoms;  // all atoms around the atom or bond.
                                            // Order is important
 };
@@ -104,7 +99,6 @@ RDKIT_GRAPHMOL_EXPORT StereoInfo getStereoInfo(const Atom *atom);
 
 }  // namespace detail
 /// @endcond
-
 
 RDKIT_GRAPHMOL_EXPORT INT_VECT findStereoAtoms(const Bond *bond);
 
