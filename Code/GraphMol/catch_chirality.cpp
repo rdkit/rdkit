@@ -494,3 +494,34 @@ TEST_CASE("para-stereocenters and assignStereochemistry", "[chirality]") {
     CHECK(stereoInfo[6].centeredOn == 3);
   }
 }
+
+TEST_CASE("ring stereochemistry", "[chirality]") {
+  SECTION("specified") {
+    auto mol = "C[C@H]1CC[C@@H](C)CC1"_smiles;
+    REQUIRE(mol);
+    auto stereoInfo = Chirality::findPotentialStereo(*mol);
+    REQUIRE(stereoInfo.size() == 2);
+    CHECK(stereoInfo[0].type == Chirality::StereoType::Atom_Tetrahedral);
+    CHECK(stereoInfo[0].centeredOn == 1);
+    CHECK(stereoInfo[0].specified == Chirality::StereoSpecified::Specified);
+    CHECK(stereoInfo[1].type == Chirality::StereoType::Atom_Tetrahedral);
+    CHECK(stereoInfo[1].centeredOn == 4);
+    CHECK(stereoInfo[1].specified == Chirality::StereoSpecified::Specified);
+  }
+#if 0
+  //FIX this still isn't working
+  SECTION("specified") {
+    auto mol = "CC1CCC(C)CC1"_smiles;
+    REQUIRE(mol);
+    auto stereoInfo = Chirality::findPotentialStereo(*mol);
+    REQUIRE(stereoInfo.size() == 2);
+    CHECK(stereoInfo[0].type == Chirality::StereoType::Atom_Tetrahedral);
+    CHECK(stereoInfo[0].centeredOn == 1);
+    CHECK(stereoInfo[0].specified == Chirality::StereoSpecified::Unspecified);
+
+    CHECK(stereoInfo[1].type == Chirality::StereoType::Atom_Tetrahedral);
+    CHECK(stereoInfo[1].centeredOn == 4);
+    CHECK(stereoInfo[1].specified == Chirality::StereoSpecified::Unspecified);
+  }
+#endif
+}
