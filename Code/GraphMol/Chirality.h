@@ -84,7 +84,7 @@ struct RDKIT_GRAPHMOL_EXPORT StereoInfo {
 };
 
 /*!
-  \param mol the molecule to be search
+  \param mol the molecule to be searched
 */
 RDKIT_GRAPHMOL_EXPORT std::vector<StereoInfo> findPotentialStereo(
     const ROMol &mol);
