@@ -466,8 +466,13 @@ void initFragmentCanonAtoms(const ROMol &mol,
                             std::vector<Canon::canon_atom> &atoms,
                             bool includeChirality,
                             const std::vector<std::string> *atomSymbols,
+                            const std::vector<std::string> *bondSymbols,
                             const boost::dynamic_bitset<> &atomsInPlay,
                             const boost::dynamic_bitset<> &bondsInPlay) {
+  PRECONDITION(!atomSymbols || atomSymbols->size() == mol.getNumAtoms(),
+               "bad atom symbols");
+  PRECONDITION(!bondSymbols || bondSymbols->size() == mol.getNumBonds(),
+               "bad bond symbols");
   // start by initializing the atoms
   for (unsigned int i = 0; i < mol.getNumAtoms(); ++i) {
     atoms[i].atom = mol.getAtomWithIdx(i);
@@ -489,23 +494,25 @@ void initFragmentCanonAtoms(const ROMol &mol,
 
   // now deal with the bonds in the fragment.
   // these set the atomic degrees and update the neighbor lists
-  for (ROMol::ConstBondIterator bI = mol.beginBonds(); bI != mol.endBonds();
-       ++bI) {
-    if (!bondsInPlay[(*bI)->getIdx()] ||
-        !atomsInPlay[(*bI)->getBeginAtomIdx()] ||
-        !atomsInPlay[(*bI)->getEndAtomIdx()]) {
+  for (const auto bond : mol.bonds()) {
+    if (!bondsInPlay[bond->getIdx()] || !atomsInPlay[bond->getBeginAtomIdx()] ||
+        !atomsInPlay[bond->getEndAtomIdx()]) {
       continue;
     }
-    Canon::canon_atom &begAt = atoms[(*bI)->getBeginAtomIdx()];
-    Canon::canon_atom &endAt = atoms[(*bI)->getEndAtomIdx()];
-    begAt.nbrIds[begAt.degree] = (*bI)->getEndAtomIdx();
-    endAt.nbrIds[endAt.degree] = (*bI)->getBeginAtomIdx();
+    Canon::canon_atom &begAt = atoms[bond->getBeginAtomIdx()];
+    Canon::canon_atom &endAt = atoms[bond->getEndAtomIdx()];
+    begAt.nbrIds[begAt.degree] = bond->getEndAtomIdx();
+    endAt.nbrIds[endAt.degree] = bond->getBeginAtomIdx();
     begAt.degree++;
     endAt.degree++;
     begAt.bonds.push_back(
-        makeBondHolder(*bI, (*bI)->getEndAtomIdx(), includeChirality));
+        makeBondHolder(bond, bond->getEndAtomIdx(), includeChirality));
     endAt.bonds.push_back(
-        makeBondHolder(*bI, (*bI)->getBeginAtomIdx(), includeChirality));
+        makeBondHolder(bond, bond->getBeginAtomIdx(), includeChirality));
+    if (bondSymbols) {
+      begAt.bonds.back().p_symbol = &(*bondSymbols)[bond->getIdx()];
+      endAt.bonds.back().p_symbol = &(*bondSymbols)[bond->getIdx()];
+    }
   }
 
   // and now we can do the last bit for each atom
@@ -622,12 +629,15 @@ void rankFragmentAtoms(const ROMol &mol, std::vector<unsigned int> &res,
                        const boost::dynamic_bitset<> &atomsInPlay,
                        const boost::dynamic_bitset<> &bondsInPlay,
                        const std::vector<std::string> *atomSymbols,
+                       const std::vector<std::string> *bondSymbols,
                        bool breakTies, bool includeChirality,
                        bool includeIsotopes) {
   PRECONDITION(atomsInPlay.size() == mol.getNumAtoms(), "bad atomsInPlay size");
   PRECONDITION(bondsInPlay.size() == mol.getNumBonds(), "bad bondsInPlay size");
   PRECONDITION(!atomSymbols || atomSymbols->size() == mol.getNumAtoms(),
                "bad atomSymbols size");
+  PRECONDITION(!bondSymbols || bondSymbols->size() == mol.getNumBonds(),
+               "bad bondSymbols size");
 
   res.resize(mol.getNumAtoms());
 
@@ -636,8 +646,8 @@ void rankFragmentAtoms(const ROMol &mol, std::vector<unsigned int> &res,
   }
 
   std::vector<Canon::canon_atom> atoms(mol.getNumAtoms());
-  initFragmentCanonAtoms(mol, atoms, includeChirality, atomSymbols, atomsInPlay,
-                         bondsInPlay);
+  initFragmentCanonAtoms(mol, atoms, includeChirality, atomSymbols, bondSymbols,
+                         atomsInPlay, bondsInPlay);
 
   AtomCompareFunctor ftor(&atoms.front(), mol, &atomsInPlay, &bondsInPlay);
   ftor.df_useIsotopes = includeIsotopes;

@@ -34,7 +34,7 @@ TEST_CASE("bond StereoInfo", "[unittest]") {
       CHECK(sinfo.controllingAtoms[2] == 3);
       CHECK(sinfo.controllingAtoms[3] == 5);
       CHECK(sinfo.specified == Chirality::StereoSpecified::Unspecified);
-      CHECK(sinfo.descriptor == Chirality::StereoDescriptor::None );
+      CHECK(sinfo.descriptor == Chirality::StereoDescriptor::None);
     }
     {
       auto mol = "CC=NC=N"_smiles;
@@ -54,9 +54,9 @@ TEST_CASE("bond StereoInfo", "[unittest]") {
       auto mol = "C/C=C(/C#C)C"_smiles;
       REQUIRE(mol);
 
-      CHECK(mol->getBondWithIdx(1)->getStereoAtoms().size()==2);
-      CHECK(mol->getBondWithIdx(1)->getStereoAtoms()[0]==0);
-      CHECK(mol->getBondWithIdx(1)->getStereoAtoms()[1]==3);
+      CHECK(mol->getBondWithIdx(1)->getStereoAtoms().size() == 2);
+      CHECK(mol->getBondWithIdx(1)->getStereoAtoms()[0] == 0);
+      CHECK(mol->getBondWithIdx(1)->getStereoAtoms()[1] == 3);
 
       auto sinfo = Chirality::detail::getStereoInfo(mol->getBondWithIdx(1));
       CHECK(sinfo.type == Chirality::StereoType::Bond_Double);
@@ -67,15 +67,16 @@ TEST_CASE("bond StereoInfo", "[unittest]") {
       CHECK(sinfo.controllingAtoms[2] == 3);
       CHECK(sinfo.controllingAtoms[3] == 5);
       CHECK(sinfo.specified == Chirality::StereoSpecified::Specified);
-      CHECK(sinfo.descriptor == Chirality::StereoDescriptor::Bond_Trans );
+      CHECK(sinfo.descriptor == Chirality::StereoDescriptor::Bond_Trans);
     }
-    { // check an example where one of the stereo atoms isn't the first neighbor
+    {  // check an example where one of the stereo atoms isn't the first
+       // neighbor
       auto mol = "C/C=C(/C)C#C"_smiles;
       REQUIRE(mol);
 
-      CHECK(mol->getBondWithIdx(1)->getStereoAtoms().size()==2);
-      CHECK(mol->getBondWithIdx(1)->getStereoAtoms()[0]==0);
-      CHECK(mol->getBondWithIdx(1)->getStereoAtoms()[1]==4);
+      CHECK(mol->getBondWithIdx(1)->getStereoAtoms().size() == 2);
+      CHECK(mol->getBondWithIdx(1)->getStereoAtoms()[0] == 0);
+      CHECK(mol->getBondWithIdx(1)->getStereoAtoms()[1] == 4);
 
       auto sinfo = Chirality::detail::getStereoInfo(mol->getBondWithIdx(1));
       CHECK(sinfo.type == Chirality::StereoType::Bond_Double);
@@ -86,15 +87,15 @@ TEST_CASE("bond StereoInfo", "[unittest]") {
       CHECK(sinfo.controllingAtoms[2] == 3);
       CHECK(sinfo.controllingAtoms[3] == 4);
       CHECK(sinfo.specified == Chirality::StereoSpecified::Specified);
-      CHECK(sinfo.descriptor == Chirality::StereoDescriptor::Bond_Trans );
+      CHECK(sinfo.descriptor == Chirality::StereoDescriptor::Bond_Trans);
     }
     {
       auto mol = "C/C=C(\\C#C)C"_smiles;
       REQUIRE(mol);
 
-      CHECK(mol->getBondWithIdx(1)->getStereoAtoms().size()==2);
-      CHECK(mol->getBondWithIdx(1)->getStereoAtoms()[0]==0);
-      CHECK(mol->getBondWithIdx(1)->getStereoAtoms()[1]==3);
+      CHECK(mol->getBondWithIdx(1)->getStereoAtoms().size() == 2);
+      CHECK(mol->getBondWithIdx(1)->getStereoAtoms()[0] == 0);
+      CHECK(mol->getBondWithIdx(1)->getStereoAtoms()[1] == 3);
 
       auto sinfo = Chirality::detail::getStereoInfo(mol->getBondWithIdx(1));
       CHECK(sinfo.type == Chirality::StereoType::Bond_Double);
@@ -105,9 +106,9 @@ TEST_CASE("bond StereoInfo", "[unittest]") {
       CHECK(sinfo.controllingAtoms[2] == 3);
       CHECK(sinfo.controllingAtoms[3] == 5);
       CHECK(sinfo.specified == Chirality::StereoSpecified::Specified);
-      CHECK(sinfo.descriptor == Chirality::StereoDescriptor::Bond_Cis );
+      CHECK(sinfo.descriptor == Chirality::StereoDescriptor::Bond_Cis);
     }
-    {// any bonds
+    {  // any bonds
       auto mol = "CC=C(C#C)C"_smiles;
       REQUIRE(mol);
 
@@ -122,7 +123,7 @@ TEST_CASE("bond StereoInfo", "[unittest]") {
       CHECK(sinfo.controllingAtoms[2] == 3);
       CHECK(sinfo.controllingAtoms[3] == 5);
       CHECK(sinfo.specified == Chirality::StereoSpecified::Unknown);
-      CHECK(sinfo.descriptor == Chirality::StereoDescriptor::None );
+      CHECK(sinfo.descriptor == Chirality::StereoDescriptor::None);
     }
   }
 }
@@ -174,8 +175,8 @@ TEST_CASE("atom StereoInfo", "[unittest]") {
       CHECK(sinfo.controllingAtoms[1] == 2);
       CHECK(sinfo.controllingAtoms[2] == 3);
       CHECK(sinfo.controllingAtoms[3] == 4);
-      CHECK(sinfo.specified == Chirality::StereoSpecified::Unspecified); 
-      CHECK(sinfo.descriptor==Chirality::StereoDescriptor::None);
+      CHECK(sinfo.specified == Chirality::StereoSpecified::Unspecified);
+      CHECK(sinfo.descriptor == Chirality::StereoDescriptor::None);
 
       sinfo = Chirality::detail::getStereoInfo(mol->getAtomWithIdx(6));
       CHECK(sinfo.type == Chirality::StereoType::Atom_Tetrahedral);
@@ -184,8 +185,8 @@ TEST_CASE("atom StereoInfo", "[unittest]") {
       CHECK(sinfo.controllingAtoms[0] == 5);
       CHECK(sinfo.controllingAtoms[1] == 7);
       CHECK(sinfo.controllingAtoms[2] == 8);
-      CHECK(sinfo.specified == Chirality::StereoSpecified::Unspecified); 
-      CHECK(sinfo.descriptor==Chirality::StereoDescriptor::None);
+      CHECK(sinfo.specified == Chirality::StereoSpecified::Unspecified);
+      CHECK(sinfo.descriptor == Chirality::StereoDescriptor::None);
     }
 
     {
@@ -199,7 +200,7 @@ TEST_CASE("atom StereoInfo", "[unittest]") {
       CHECK(sinfo.controllingAtoms[1] == 2);
       CHECK(sinfo.controllingAtoms[2] == 3);
       CHECK(sinfo.controllingAtoms[3] == 4);
-      CHECK(sinfo.specified == Chirality::StereoSpecified::Specified); 
+      CHECK(sinfo.specified == Chirality::StereoSpecified::Specified);
       CHECK(sinfo.descriptor == Chirality::StereoDescriptor::Tet_CCW);
     }
 
@@ -329,6 +330,71 @@ TEST_CASE("isAtomPotentialStereoAtom", "[unittest]") {
   }
 }
 
+TEST_CASE("possible stereochemistry on atoms", "[chirality]") {
+  SECTION("specified") {
+    {
+      auto mol = "CC(C)(O)[C@](Cl)(F)I"_smiles;
+      REQUIRE(mol);
+      auto stereoInfo = Chirality::findPotentialStereo(*mol);
+      REQUIRE(stereoInfo.size() == 1);
+      CHECK(stereoInfo[0].type == Chirality::StereoType::Atom_Tetrahedral);
+      CHECK(stereoInfo[0].specified == Chirality::StereoSpecified::Specified);
+      CHECK(stereoInfo[0].centeredOn == 4);
+      std::vector<unsigned> catoms = {1, 5, 6, 7};
+      CHECK(stereoInfo[0].controllingAtoms == catoms);
+    }
+    {
+      auto mol = "C[C@@H](O)[C@H](C)[C@H](C)O"_smiles;
+      REQUIRE(mol);
+      auto stereoInfo = Chirality::findPotentialStereo(*mol);
+      REQUIRE(stereoInfo.size() == 3);
+      CHECK(stereoInfo[0].type == Chirality::StereoType::Atom_Tetrahedral);
+      CHECK(stereoInfo[0].specified == Chirality::StereoSpecified::Specified);
+      CHECK(stereoInfo[0].centeredOn == 1);
+
+      CHECK(stereoInfo[1].type == Chirality::StereoType::Atom_Tetrahedral);
+      CHECK(stereoInfo[1].specified == Chirality::StereoSpecified::Specified);
+      CHECK(stereoInfo[1].centeredOn == 3);
+
+      CHECK(stereoInfo[2].type == Chirality::StereoType::Atom_Tetrahedral);
+      CHECK(stereoInfo[2].specified == Chirality::StereoSpecified::Specified);
+      CHECK(stereoInfo[2].centeredOn == 5);
+    }
+
+    {
+      auto mol = "FC(F)(F)[C@@H](O)[C@H](C)[C@H](C(F)(F)F)O"_smiles;
+      REQUIRE(mol);
+      auto stereoInfo = Chirality::findPotentialStereo(*mol);
+      REQUIRE(stereoInfo.size() == 3);
+      CHECK(stereoInfo[0].type == Chirality::StereoType::Atom_Tetrahedral);
+      CHECK(stereoInfo[0].specified == Chirality::StereoSpecified::Specified);
+      CHECK(stereoInfo[0].centeredOn == 4);
+
+      CHECK(stereoInfo[1].type == Chirality::StereoType::Atom_Tetrahedral);
+      CHECK(stereoInfo[1].specified == Chirality::StereoSpecified::Specified);
+      CHECK(stereoInfo[1].centeredOn == 6);
+
+      CHECK(stereoInfo[2].type == Chirality::StereoType::Atom_Tetrahedral);
+      CHECK(stereoInfo[2].specified == Chirality::StereoSpecified::Specified);
+      CHECK(stereoInfo[2].centeredOn == 8);
+    }
+  }
+
+  SECTION("simple unspecified") {
+    {
+      auto mol = "CC(C)(O)C(Cl)(F)I"_smiles;
+      REQUIRE(mol);
+      auto stereoInfo = Chirality::findPotentialStereo(*mol);
+      REQUIRE(stereoInfo.size() == 1);
+      CHECK(stereoInfo[0].type == Chirality::StereoType::Atom_Tetrahedral);
+      CHECK(stereoInfo[0].specified == Chirality::StereoSpecified::Unspecified);
+      CHECK(stereoInfo[0].centeredOn == 4);
+      std::vector<unsigned> catoms = {1, 5, 6, 7};
+      CHECK(stereoInfo[0].controllingAtoms == catoms);
+    }
+  }
+}
+
 TEST_CASE("possible stereochemistry on bonds", "[chirality]") {
   SECTION("simplest") {
     {
@@ -338,11 +404,9 @@ TEST_CASE("possible stereochemistry on bonds", "[chirality]") {
       REQUIRE(stereoInfo.size() == 1);
       CHECK(stereoInfo[0].type == Chirality::StereoType::Bond_Double);
       CHECK(stereoInfo[0].centeredOn == 1);
-      REQUIRE(stereoInfo[0].controllingAtoms.size() == 4);
-      CHECK(stereoInfo[0].controllingAtoms[0] == 0);
-      CHECK(stereoInfo[0].controllingAtoms[1] == Chirality::StereoInfo::NOATOM);
-      CHECK(stereoInfo[0].controllingAtoms[2] == 3);
-      CHECK(stereoInfo[0].controllingAtoms[3] == Chirality::StereoInfo::NOATOM);
+      std::vector<unsigned> catoms = {0, Chirality::StereoInfo::NOATOM, 3,
+                                      Chirality::StereoInfo::NOATOM};
+      CHECK(stereoInfo[0].controllingAtoms == catoms);
     }
     {
       auto mol = "CC=C(C)C"_smiles;
@@ -362,12 +426,9 @@ TEST_CASE("possible stereochemistry on bonds", "[chirality]") {
       auto stereoInfo = Chirality::findPotentialStereo(*mol);
       REQUIRE(stereoInfo.size() == 1);
       CHECK(stereoInfo[0].type == Chirality::StereoType::Bond_Double);
-      CHECK(stereoInfo[0].centeredOn == 1);
-      REQUIRE(stereoInfo[0].controllingAtoms.size() == 4);
-      CHECK(stereoInfo[0].controllingAtoms[0] == 0);
-      CHECK(stereoInfo[0].controllingAtoms[1] == 2);
-      CHECK(stereoInfo[0].controllingAtoms[2] == 4);
-      CHECK(stereoInfo[0].controllingAtoms[3] == 5);
+      CHECK(stereoInfo[0].centeredOn == 2);
+      std::vector<unsigned> catoms = {0, 2, 4, 5};
+      CHECK(stereoInfo[0].controllingAtoms == catoms);
     }
     {
       auto mol = "CC=C(Cl)C"_smiles;
@@ -376,18 +437,15 @@ TEST_CASE("possible stereochemistry on bonds", "[chirality]") {
       REQUIRE(stereoInfo.size() == 1);
       CHECK(stereoInfo[0].type == Chirality::StereoType::Bond_Double);
       CHECK(stereoInfo[0].centeredOn == 1);
-      REQUIRE(stereoInfo[0].controllingAtoms.size() == 4);
-      CHECK(stereoInfo[0].controllingAtoms[0] == 0);
-      CHECK(stereoInfo[0].controllingAtoms[1] == 3);
-      CHECK(stereoInfo[0].controllingAtoms[2] == 4);
-      CHECK(stereoInfo[0].controllingAtoms[3] == Chirality::StereoInfo::NOATOM);
+      std::vector<unsigned> catoms = {0, Chirality::StereoInfo::NOATOM, 3, 4};
+      CHECK(stereoInfo[0].controllingAtoms == catoms);
     }
   }
 }
 
 TEST_CASE("para-stereocenters and assignStereochemistry", "[chirality]") {
   SECTION("simplest") {
-    auto mol = "CC(F)CC(C)F"_smiles;
+    auto mol = "CC(F)C(C)C(C)F"_smiles;
     REQUIRE(mol);
     auto stereoInfo = Chirality::findPotentialStereo(*mol);
     REQUIRE(stereoInfo.size() == 3);
@@ -399,7 +457,7 @@ TEST_CASE("para-stereocenters and assignStereochemistry", "[chirality]") {
     CHECK(stereoInfo[1].centeredOn == 3);
     CHECK(stereoInfo[1].controllingAtoms.size() == 3);
     CHECK(stereoInfo[2].type == Chirality::StereoType::Atom_Tetrahedral);
-    CHECK(stereoInfo[2].centeredOn == 4);
+    CHECK(stereoInfo[2].centeredOn == 5);
     CHECK(stereoInfo[2].controllingAtoms.size() == 3);
   }
 
@@ -419,92 +477,20 @@ TEST_CASE("para-stereocenters and assignStereochemistry", "[chirality]") {
               });
     REQUIRE(stereoInfo.size() == 7);
 
-    CHECK(stereoInfo[0].type == Chirality::StereoType::Atom_Tetrahedral);
-    CHECK(stereoInfo[0].centeredOn == 3);
-    CHECK(stereoInfo[1].type == Chirality::StereoType::Atom_Tetrahedral);
-    CHECK(stereoInfo[1].centeredOn == 7);
-    CHECK(stereoInfo[2].type == Chirality::StereoType::Atom_Tetrahedral);
-    CHECK(stereoInfo[2].centeredOn == 9);
-
+    CHECK(stereoInfo[0].type == Chirality::StereoType::Bond_Double);
+    CHECK(stereoInfo[0].centeredOn == 13);
+    CHECK(stereoInfo[1].type == Chirality::StereoType::Bond_Double);
+    CHECK(stereoInfo[1].centeredOn == 10);
+    CHECK(stereoInfo[2].type == Chirality::StereoType::Bond_Double);
+    CHECK(stereoInfo[2].centeredOn == 4);
     CHECK(stereoInfo[3].type == Chirality::StereoType::Bond_Double);
-    CHECK(stereoInfo[4].centeredOn == 4);
-    CHECK(stereoInfo[5].type == Chirality::StereoType::Bond_Double);
-    CHECK(stereoInfo[5].centeredOn == 9);
-    CHECK(stereoInfo[6].type == Chirality::StereoType::Bond_Double);
-    CHECK(stereoInfo[6].centeredOn == 12);
-  }
-}
-#if 0
-TEST_CASE("possible stereochemistry on bonds", "[molops]") {
-  SECTION("simplest") {
-    {
-      auto mol = "CC=CC"_smiles;
-      REQUIRE(mol);
-      MolOps::assignStereochemistry(*mol, cleanIt, force,
-                                    flagPossibleStereoCenters);
-      CHECK(mol->getBondWithIdx(1)->hasProp(
-          common_properties::_ChiralityPossible));
-    }
-    {
-      auto mol = "CC=C(C)C"_smiles;
-      REQUIRE(mol);
-      bool cleanIt = true;
-      bool force = true;
-      bool flagPossibleStereoCenters = true;
-      MolOps::assignStereochemistry(*mol, cleanIt, force,
-                                    flagPossibleStereoCenters);
-      CHECK(!mol->getBondWithIdx(1)->hasProp(
-          common_properties::_ChiralityPossible));
-    }
-    {
-      auto mol = "CC=C"_smiles;
-      REQUIRE(mol);
-      bool cleanIt = true;
-      bool force = true;
-      bool flagPossibleStereoCenters = true;
-      MolOps::assignStereochemistry(*mol, cleanIt, force,
-                                    flagPossibleStereoCenters);
-      CHECK(!mol->getBondWithIdx(1)->hasProp(
-          common_properties::_ChiralityPossible));
-    }
-  }
-}
+    CHECK(stereoInfo[3].centeredOn == 1);
 
-TEST_CASE("para-stereocenters and assignStereochemistry", "[molops]") {
-  SECTION("simplest") {
-    auto mol = "CC(F)CC(C)F"_smiles;
-    REQUIRE(mol);
-    bool cleanIt = true;
-    bool force = true;
-    bool flagPossibleStereoCenters = true;
-    MolOps::assignStereochemistry(*mol, cleanIt, force,
-                                  flagPossibleStereoCenters);
-    CHECK(
-        mol->getAtomWithIdx(1)->hasProp(common_properties::_ChiralityPossible));
-    CHECK(
-        mol->getAtomWithIdx(4)->hasProp(common_properties::_ChiralityPossible));
-    CHECK(
-        mol->getAtomWithIdx(3)->hasProp(common_properties::_ChiralityPossible));
-  }
-
-  SECTION("including bonds") {
-    // thanks to Salome Rieder for this nasty example
-    auto mol = "CC=CC(C=CC)C(C)C(C=CC)C=CC"_smiles;
-    REQUIRE(mol);
-    CHECK(
-        mol->getAtomWithIdx(7)->hasProp(common_properties::_ChiralityPossible));
-    CHECK(
-        mol->getAtomWithIdx(3)->hasProp(common_properties::_ChiralityPossible));
-    CHECK(
-        mol->getAtomWithIdx(9)->hasProp(common_properties::_ChiralityPossible));
-    CHECK(mol->getBondBetweenAtoms(13, 14)->hasProp(
-        common_properties::_ChiralityPossible));
-    CHECK(mol->getBondBetweenAtoms(4, 5)->hasProp(
-        common_properties::_ChiralityPossible));
-    CHECK(mol->getBondBetweenAtoms(1, 2)->hasProp(
-        common_properties::_ChiralityPossible));
-    CHECK(mol->getBondBetweenAtoms(10, 11)->hasProp(
-        common_properties::_ChiralityPossible));
+    CHECK(stereoInfo[4].type == Chirality::StereoType::Atom_Tetrahedral);
+    CHECK(stereoInfo[4].centeredOn == 9);
+    CHECK(stereoInfo[5].type == Chirality::StereoType::Atom_Tetrahedral);
+    CHECK(stereoInfo[5].centeredOn == 7);
+    CHECK(stereoInfo[6].type == Chirality::StereoType::Atom_Tetrahedral);
+    CHECK(stereoInfo[6].centeredOn == 3);
   }
 }
-#endif
