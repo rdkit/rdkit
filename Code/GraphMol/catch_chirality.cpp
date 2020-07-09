@@ -493,6 +493,17 @@ TEST_CASE("para-stereocenters and assignStereochemistry", "[chirality]") {
     CHECK(stereoInfo[6].type == Chirality::StereoType::Atom_Tetrahedral);
     CHECK(stereoInfo[6].centeredOn == 3);
   }
+  SECTION("sugar fun") {
+    auto mol = "C1(O)C(O)C(O)C(O)C(O)C1O"_smiles;
+    REQUIRE(mol);
+    auto stereoInfo = Chirality::findPotentialStereo(*mol);
+    REQUIRE(stereoInfo.size() == 6);
+    for (const auto &si : stereoInfo) {
+      CHECK(si.type == Chirality::StereoType::Atom_Tetrahedral);
+      CHECK(si.centeredOn % 2 == 0);
+      CHECK(si.specified == Chirality::StereoSpecified::Unspecified);
+    }
+  }
 }
 
 TEST_CASE("ring stereochemistry", "[chirality]") {
