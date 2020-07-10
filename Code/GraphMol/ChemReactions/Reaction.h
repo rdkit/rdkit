@@ -205,18 +205,16 @@ class RDKIT_CHEMREACTIONS_EXPORT ChemicalReaction : public RDProps {
   /*!
 
     \param reactants  the reactants to be used. The length of this must be equal
-    to
-                      this->getNumReactantTemplates()
+    to this->getNumReactantTemplates()
     \param maxProducts:  if non zero, the maximum number of products to generate
-                         before stopping.  If hit a warning will be generated.
+    before stopping.  If hit a warning will be generated.
 
     \return a vector of vectors of products. Each subvector will be
             this->getNumProductTemplates() long.
 
     We return a vector of vectors of products because each individual template
-    may
-    map multiple times onto its reactant. This leads to multiple possible result
-    sets.
+    may map multiple times onto its reactant. This leads to multiple possible
+    result sets.
   */
   std::vector<MOL_SPTR_VECT> runReactants(
       const MOL_SPTR_VECT reactants, unsigned int numProducts = 1000) const;
@@ -293,10 +291,8 @@ class RDKIT_CHEMREACTIONS_EXPORT ChemicalReaction : public RDProps {
       runReactants.
 
       \param silent: If this bool is true, no messages will be logged during the
-     validation.
-                     By default, validation problems are reported to the warning
-     and error
-                     logs depending on their severity.
+      validation. By default, validation problems are reported to the warning
+      and error logs depending on their severity.
   */
   void initReactantMatchers(bool silent = false);
 
@@ -306,17 +302,14 @@ class RDKIT_CHEMREACTIONS_EXPORT ChemicalReaction : public RDProps {
   //"reasonable"
   /*!
       \return   true if the reaction validates without errors (warnings do not
-     stop
-                validation)
+      stop validation)
 
       \param numWarnings used to return the number of validation warnings
       \param numErrors   used to return the number of validation errors
 
       \param silent: If this bool is true, no messages will be logged during the
-     validation.
-                     By default, validation problems are reported to the warning
-     and error
-                     logs depending on their severity.
+      validation. By default, validation problems are reported to the warning
+      and error logs depending on their severity.
 
   */
   bool validate(unsigned int &numWarnings, unsigned int &numErrors,
@@ -393,8 +386,7 @@ RDKIT_CHEMREACTIONS_EXPORT bool isMoleculeAgentOfReaction(
   \param rxn the reaction we are interested in
 
   \param mappedAtomsOnly if set, atoms that are not mapped will not be included
-  in
-       the list of changed atoms (otherwise they are automatically included)
+  in the list of changed atoms (otherwise they are automatically included)
 
    How are changed atoms recognized?
        1) Atoms whose degree changes
