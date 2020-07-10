@@ -48,20 +48,22 @@ bool testSingleProducerMultipleConsumers() {
   const int numConsumerThreads =
       (numToProduce * numProducerThreads) / numToConsume;
 
-	int sum = 0;
-	int producer_count = 0;
-	int consumer_count = 0;
+  int sum = 0;
+  int producer_count = 0;
+  int consumer_count = 0;
 
   std::vector<std::thread> producers(numProducerThreads);
   std::vector<std::thread> consumers(numConsumerThreads);
 
   //! start producer threads
   for (int i = 0; i < numProducerThreads; i++) {
-    producers[i] = std::thread(std::bind(produce, std::ref(q), std::ref(producer_count)));
+    producers[i] =
+        std::thread(std::bind(produce, std::ref(q), std::ref(producer_count)));
   }
   //! start consumer threads
   for (int i = 0; i < numConsumerThreads; i++) {
-    consumers[i] = std::thread(std::bind(consume, std::ref(q), std::ref(consumer_count), std::ref(sum)));
+    consumers[i] = std::thread(std::bind(
+        consume, std::ref(q), std::ref(consumer_count), std::ref(sum)));
   }
 
   std::for_each(producers.begin(), producers.end(),
@@ -74,15 +76,16 @@ bool testSingleProducerMultipleConsumers() {
   int expectedProducerCount = numToProduce * numProducerThreads;
   int expectedConsumerCount = numToConsume * numConsumerThreads;
 
-	return (sum == expectedSum) && (producer_count == expectedProducerCount) && (consumer_count == expectedConsumerCount);
+  return (sum == expectedSum) && (producer_count == expectedProducerCount) &&
+         (consumer_count == expectedConsumerCount);
 }
 
-void testMultipleTimes(){
-	const int runs = 100000;
-	for(int i = 0; i < runs; i++){
-		bool result = testSingleProducerMultipleConsumers();
-		TEST_ASSERT(result == true);
-	}
+void testMultipleTimes() {
+  const int runs = 100000;
+  for (int i = 0; i < runs; i++) {
+    bool result = testSingleProducerMultipleConsumers();
+    TEST_ASSERT(result == true);
+  }
 }
 
 int main() {

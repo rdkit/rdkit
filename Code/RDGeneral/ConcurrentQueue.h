@@ -3,6 +3,7 @@
 #define CONCURRENT_QUEUE
 #include <condition_variable>
 #include <iostream>
+#include <queue>
 #include <thread>
 #include <vector>
 
