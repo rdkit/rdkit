@@ -15,8 +15,8 @@ using namespace std::placeholders;
 std::atomic<int> sum(0);
 std::atomic<int> producer_count(0);
 std::atomic<int> consumer_count(0);
-const int numToProduce = 1000;
-const int numToConsume = 250;
+const int numToProduce = 100;
+const int numToConsume = 25;
 
 void testPushAndPop() {
   ConcurrentQueue<int>* q = new ConcurrentQueue<int>(4);
@@ -47,7 +47,7 @@ void consume(ConcurrentQueue<int>& q) {
 }
 void testSomeProducerSomeConsumer() {
   ConcurrentQueue<int> q(10);
-  const int numProducerThreads = 5;
+  const int numProducerThreads = 2;
   const int numConsumerThreads =
       (numToProduce * numProducerThreads) / numToConsume;
   std::vector<std::thread> producers(numProducerThreads);
@@ -71,6 +71,10 @@ void testSomeProducerSomeConsumer() {
                     (numToProduce * numProducerThreads + 1) / 2;
   int expectedProducerCount = numToProduce * numProducerThreads;
   int expectedConsumerCount = numToConsume * numConsumerThreads;
+
+	std::cout << "Sum: " << sum << "\n";
+	std::cout << "Producer Count: " << producer_count << "\n";
+	std::cout << "Consumer Count: " << consumer_count << "\n";
 
   TEST_ASSERT(sum == expectedSum);
   TEST_ASSERT(producer_count == expectedProducerCount);
