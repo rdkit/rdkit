@@ -13,7 +13,6 @@
 #include "RGroupDecomp.h"
 #include "RGroupMatch.h"
 #include "RGroupScore.h"
-#include <chrono>
 #include <vector>
 #include <map>
 
@@ -404,11 +403,10 @@ struct RGroupDecompData {
   }
 
   bool process(bool pruneMatches, bool finalize = false) {
-    auto t0 = std::chrono::steady_clock::now();
     if (matches.size() == 0) {
       return false;
     }
-
+    auto t0 = std::chrono::steady_clock::now();
     // Exhaustive search, get the MxN matrix
     size_t M = matches.size();  // Number of molecules
     std::vector<size_t> permutations;
