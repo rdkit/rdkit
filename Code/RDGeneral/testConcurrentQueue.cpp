@@ -12,9 +12,6 @@ using namespace RDKit;
 namespace io = boost::iostreams;
 using namespace std::placeholders;
 
-std::atomic<int> sum(0);
-std::atomic<int> producer_count(0);
-std::atomic<int> consumer_count(0);
 const int numToProduce = 100;
 const int numToConsume = 25;
 
@@ -31,35 +28,40 @@ void testPushAndPop() {
   delete (q);
 }
 
-void produce(ConcurrentQueue<int>& q) {
+void produce(ConcurrentQueue<int>& q, int& producer_count) {
   for (int i = 0; i < numToProduce; ++i) {
     ++producer_count;
     q.push(producer_count);
   }
 }
 
-void consume(ConcurrentQueue<int>& q) {
+void consume(ConcurrentQueue<int>& q, int& consumer_count, int& sum) {
   for (int i = 0; i < numToConsume; ++i) {
     auto item = q.pop();
     ++consumer_count;
     sum += item;
   }
 }
-void testSomeProducerSomeConsumer() {
+bool testSingleProducerMultipleConsumers() {
   ConcurrentQueue<int> q(10);
-  const int numProducerThreads = 2;
+  const int numProducerThreads = 1;
   const int numConsumerThreads =
       (numToProduce * numProducerThreads) / numToConsume;
+
+	int sum = 0;
+	int producer_count = 0;
+	int consumer_count = 0;
+
   std::vector<std::thread> producers(numProducerThreads);
   std::vector<std::thread> consumers(numConsumerThreads);
 
   //! start producer threads
   for (int i = 0; i < numProducerThreads; i++) {
-    producers[i] = std::thread(std::bind(produce, std::ref(q)));
+    producers[i] = std::thread(std::bind(produce, std::ref(q), std::ref(producer_count)));
   }
   //! start consumer threads
   for (int i = 0; i < numConsumerThreads; i++) {
-    consumers[i] = std::thread(std::bind(consume, std::ref(q)));
+    consumers[i] = std::thread(std::bind(consume, std::ref(q), std::ref(consumer_count), std::ref(sum)));
   }
 
   std::for_each(producers.begin(), producers.end(),
@@ -72,13 +74,15 @@ void testSomeProducerSomeConsumer() {
   int expectedProducerCount = numToProduce * numProducerThreads;
   int expectedConsumerCount = numToConsume * numConsumerThreads;
 
-	std::cout << "Sum: " << sum << "\n";
-	std::cout << "Producer Count: " << producer_count << "\n";
-	std::cout << "Consumer Count: " << consumer_count << "\n";
+	return (sum == expectedSum) && (producer_count == expectedProducerCount) && (consumer_count == expectedConsumerCount);
+}
 
-  TEST_ASSERT(sum == expectedSum);
-  TEST_ASSERT(producer_count == expectedProducerCount);
-  TEST_ASSERT(consumer_count == expectedConsumerCount);
+void testMultipleTimes(){
+	const int runs = 100000;
+	for(int i = 0; i < runs; i++){
+		bool result = testSingleProducerMultipleConsumers();
+		TEST_ASSERT(result == true);
+	}
 }
 
 int main() {
@@ -92,8 +96,8 @@ int main() {
 #ifdef RDK_TEST_MULTITHREADED
   //! multiple producers and multiple consumers
   BOOST_LOG(rdErrorLog) << "\n-----------------------------------------\n";
-  testSomeProducerSomeConsumer();
-  BOOST_LOG(rdErrorLog) << "Finished: testSomeProducerSomeConsumer() \n";
+  testMultipleTimes();
+  BOOST_LOG(rdErrorLog) << "Finished: testMultipleTimes() \n";
   BOOST_LOG(rdErrorLog) << "\n-----------------------------------------\n";
 #endif
   return 0;
