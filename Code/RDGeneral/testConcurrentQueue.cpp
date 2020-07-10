@@ -85,13 +85,13 @@ int main() {
   testPushAndPop();
   BOOST_LOG(rdErrorLog) << "Finished: testPushAndPop() \n";
   BOOST_LOG(rdErrorLog) << "\n-----------------------------------------\n";
-
+	#ifdef RDK_TEST_MULTITHREADED
   //! multiple producers and multiple consumers
   BOOST_LOG(rdErrorLog) << "\n-----------------------------------------\n";
   testSomeProducerSomeConsumer();
   BOOST_LOG(rdErrorLog) << "Finished: testSomeProducerSomeConsumer() \n";
   BOOST_LOG(rdErrorLog) << "\n-----------------------------------------\n";
-
+	#endif 
   return 0;
 }
 
