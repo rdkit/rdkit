@@ -91,7 +91,7 @@ int main() {
   testSomeProducerSomeConsumer();
   BOOST_LOG(rdErrorLog) << "Finished: testSomeProducerSomeConsumer() \n";
   BOOST_LOG(rdErrorLog) << "\n-----------------------------------------\n";
-	#endif 
+  #endif
   return 0;
 }
 
