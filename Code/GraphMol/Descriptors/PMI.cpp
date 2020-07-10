@@ -192,9 +192,11 @@ double eccentricity(const ROMol& mol, int confId, bool useAtomicMasses,
   PRECONDITION(mol.getNumConformers() >= 1, "molecule has no conformers");
   double pm1, pm2, pm3;
   if (!getMoments(mol, confId, useAtomicMasses, pm1, pm2, pm3, force)) {
+    std::cerr << "  FAIL " << std::endl;
     // the eigenvector calculation failed
     return 0.0;  // FIX: throw an exception here?
   }
+  std::cerr << "  evals: " << pm1 << " " << pm2 << " " << pm3 << std::endl;
   if (pm3 < 1e-4) {
     // no coordinates
     return 0.0;
