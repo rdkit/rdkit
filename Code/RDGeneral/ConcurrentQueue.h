@@ -23,7 +23,7 @@ class ConcurrentQueue {
   }
   void push(E element);
   E pop();
-	bool isEmpty();
+  bool isEmpty();
 };
 
 template <class E>
@@ -35,8 +35,8 @@ void ConcurrentQueue<E>::push(E element) {
   bool wasEmpty = (head == tail);
   this->elements.at(this->tail % this->capacity) = element;
   this->tail++;
-	//! the queue was empty before but affter adding the element
-	//! it is not anymore, thus notify all the consumers to consume
+  //! the queue was empty before but affter adding the element
+  //! it is not anymore, thus notify all the consumers to consume
   if (wasEmpty) {
     notEmpty.notify_all();
   }
@@ -51,8 +51,9 @@ E ConcurrentQueue<E>::pop() {
   bool wasFull = (head + capacity == tail);
   E element = this->elements.at(this->head % this->capacity);
   this->head++;
-	//! the queue was full before but now it is not since we have consumed the element
-	//! thus notify the producer to producer, i.e. put an element in the queue
+  //! the queue was full before but now it is not since we have consumed the
+  //! element thus notify the producer to producer, i.e. put an element in the
+  //! queue
   if (wasFull) {
     notFull.notify_all();
   }
@@ -61,10 +62,10 @@ E ConcurrentQueue<E>::pop() {
 
 template <class E>
 bool ConcurrentQueue<E>::isEmpty() {
-	std::unique_lock<std::mutex> lk(lock);
-	return (this->head == this->tail);
+  std::unique_lock<std::mutex> lk(lock);
+  return (this->head == this->tail);
 }
 
 }  // namespace RDKit
 #endif
-#endif 
+#endif
