@@ -137,7 +137,7 @@ struct RGroupDecompData {
           bool labelHasCore = labelCores[label].find(position.core_idx) !=
                               labelCores[label].end();
           if (labelHasCore && (rgroup == position.rgroups.end() ||
-                               !rgroup->second->isHydrogen())) {
+                               !rgroup->second->is_hydrogen)) {
             allH = false;
             break;
           }
@@ -391,7 +391,7 @@ struct RGroupDecompData {
              ++m) {  // for each molecule
           auto rg = matches[m][tied_permutation[m]].rgroups.find(label);
           if (rg != matches[m][tied_permutation[m]].rgroups.end()) {
-            if (!rg->second->isHydrogen()) {
+            if (!rg->second->is_hydrogen) {
               num_added_rgroups += 1;  //= label;
               break;
             }

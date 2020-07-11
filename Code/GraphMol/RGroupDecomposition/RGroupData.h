@@ -30,7 +30,7 @@ struct RGroupData {
   std::set<std::string> smilesSet;             // used for rgroup equivalence
   std::string smiles;                          // smiles for all the mols in the rgroup (with attachments)
   std::set<int> attachments;                   // core attachment points
-  bool rgroup_is_hydrogen = false;
+  bool is_hydrogen = false;
   bool single_fragment = true;
   bool multiple_attachments = false;
   bool is_linker = false;
@@ -89,22 +89,18 @@ struct RGroupData {
     return rlabelsUsedCount;
   }
 
-  bool isHydrogen() const {
-    return rgroup_is_hydrogen;
-  }
-  
  private:
   void computeIsHydrogen() {  // is the rgroup all Hs
     for (const auto &mol : mols) {
       for (ROMol::AtomIterator atIt = mol->beginAtoms();
            atIt != mol->endAtoms(); ++atIt) {
         if ((*atIt)->getAtomicNum() > 1) {
-	  rgroup_is_hydrogen = false;
+	  is_hydrogen = false;
 	  return;
         }
       }
     }
-    rgroup_is_hydrogen = true;
+    is_hydrogen = true;
   }
 
   //! compute the canonical smiles for the attachments (bug: removes dupes since we are using a set...)

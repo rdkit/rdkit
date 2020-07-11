@@ -15,7 +15,7 @@ namespace RDKit {
 // This has to handle all permutations and doesn't do anything terribly smart
 //  For r-groups with large symmetries, this can take way too long.
 struct rgroup_column {
-  int count;
+  unsigned int count;
   bool onlyH;
 };
   
@@ -46,25 +46,21 @@ double score(const std::vector<size_t> &permutation,
         std::cerr << "  combined: " << MolToSmiles(*rg->second->combinedMol)
                   << std::endl;
         std::cerr << " RGroup: " << rg->second->smiles << " "
-                  << rg->second->isHydrogen() << std::endl;;
+                  << rg->second->is_hydrogen << std::endl;;
 #endif
 	rgroup_column &col = matchSet[rg->second->smiles];
 	col.count += 1;
-	//matchSet[rg->second->smiles] += 1;
         // detect whether or not this is an H
-        if (rg->second->isHydrogen()) {
+        if (rg->second->is_hydrogen) {
 	  col.onlyH = true;
-          //onlyH[rg->second->smiles] = 1;
         } else {
 	  col.onlyH = false;
-          //onlyH[rg->second->smiles] = 0;
         }
 #ifdef DEBUG
         std::cerr << " " << rg->second->combinedMol->getNumAtoms(false)
                   << " isH: " << onlyH[rg->second->smiles]
                   << " score: " << matchSet[rg->second->smiles] << std::endl;
 #endif
-        // XXX Use fragment counts to see if we are linking cycles?
         if (rg->second->is_linker) {
           linkerMatchSet[rg->second->attachments]++;
 #ifdef DEBUG
@@ -74,7 +70,7 @@ double score(const std::vector<size_t> &permutation,
         }
       }
     }
-
+    
     // get the counts for each rgroup found and sort in reverse order
     std::vector<float> equivalentRGroupCount;
 
