@@ -651,7 +651,11 @@ void ParseSGroupV2000SBTLine(IDX_TO_SGROUP_MAP &sGroupMap, RWMol *mol,
 
 template <class T>
 std::vector<T> ParseV3000Array(std::stringstream &stream) {
-  stream.get();  // discard parentheses
+  auto paren = stream.get();  // discard parentheses
+  if (paren != '(') {
+    BOOST_LOG(rdWarningLog)
+        << "WARNING: first character of V3000 array is not '('" << std::endl;
+  }
 
   unsigned int count;
   stream >> count;
@@ -662,9 +666,17 @@ std::vector<T> ParseV3000Array(std::stringstream &stream) {
     stream >> value;
     values.push_back(value);
   }
-  stream.get();  // discard parentheses
+  paren = stream.get();  // discard parentheses
+  if (paren != ')') {
+    BOOST_LOG(rdWarningLog)
+        << "WARNING: final character of V3000 array is not ')'" << std::endl;
+  }
   return values;
 }
+
+// force instantiation of the versions of this that we use
+template std::vector<unsigned int> ParseV3000Array(std::stringstream &stream);
+template std::vector<int> ParseV3000Array(std::stringstream &stream);
 
 void ParseV3000CStateLabel(RWMol *mol, SubstanceGroup &sgroup,
                            std::stringstream &stream, unsigned int line) {

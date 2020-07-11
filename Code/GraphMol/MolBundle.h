@@ -1,5 +1,5 @@
 //
-//  Copyright (C) 2017 Greg Landrum
+//  Copyright (C) 2017-2020 Greg Landrum
 //
 //   @@ All Rights Reserved @@
 //  This file is part of the RDKit.
@@ -31,11 +31,10 @@
 namespace RDKit {
 class ROMol;
 
-//! MolBundle contains (conceptually) a collection of ROMols with the same
-//! topology
+//! MolBundle contains a collection of related ROMols
 /*!
-  This is designed to allow handling things like enhanced stereochemistry,
-  but can no doubt be (ab)used in other ways.
+  This is designed to allow handling things like enumerating link nodes,
+  polymers, etc.
 */
 class MolBundle : public RDProps {
  public:
@@ -53,19 +52,8 @@ class MolBundle : public RDProps {
   };
 
   //! adds a new molecule and returns the total number of molecules
-  //!  enforces that the new molecule has the same number of atoms and bonds
-  //!  as the molecules that are already there.
   virtual size_t addMol(boost::shared_ptr<ROMol> nmol) {
     PRECONDITION(nmol.get(), "bad mol pointer");
-    if (d_mols.size()) {
-      if (nmol->getNumAtoms() != d_mols[0]->getNumAtoms())
-        throw ValueErrorException(
-            "all molecules in a bundle must have the same number of atoms");
-      // REVIEW: should we allow different numbers of bonds?
-      if (nmol->getNumBonds() != d_mols[0]->getNumBonds())
-        throw ValueErrorException(
-            "all molecules in a bundle must have the same number of bonds");
-    }
     d_mols.push_back(nmol);
     return (d_mols.size());
   }
@@ -81,8 +69,48 @@ class MolBundle : public RDProps {
     return getMol(idx);
   };
 
- private:
+ protected:
   std::vector<boost::shared_ptr<ROMol>> d_mols;
+};
+
+//! FixedMolSizeMolBundle contains a collection of ROMols with the same
+//! number of atoms and bonds.
+/*!
+  This is designed to allow handling things like enhanced stereochemistry,
+  but can no doubt be (ab)used in other ways.
+
+  Implementation note: at the moment this isn't taking advantage of the fact
+  that the number of atoms and bonds remains constant. This may be used in the
+  future to allow this to be more efficient.
+
+*/
+class FixedMolSizeMolBundle : public MolBundle {
+ public:
+  FixedMolSizeMolBundle() : MolBundle(){};
+
+  //! copy constructor
+  FixedMolSizeMolBundle(const FixedMolSizeMolBundle &other)
+      : MolBundle(other){};
+
+  ~FixedMolSizeMolBundle() override{};
+
+  //! adds a new molecule and returns the total number of molecules
+  //!  enforces that the new molecule has the same number of atoms and bonds
+  //!  as the molecules that are already there.
+  size_t addMol(boost::shared_ptr<ROMol> nmol) override {
+    PRECONDITION(nmol.get(), "bad mol pointer");
+    if (d_mols.size()) {
+      if (nmol->getNumAtoms() != d_mols[0]->getNumAtoms())
+        throw ValueErrorException(
+            "all molecules in a bundle must have the same number of atoms");
+      // REVIEW: should we allow different numbers of bonds?
+      if (nmol->getNumBonds() != d_mols[0]->getNumBonds())
+        throw ValueErrorException(
+            "all molecules in a bundle must have the same number of bonds");
+    }
+    d_mols.push_back(nmol);
+    return (d_mols.size());
+  }
 };
 
 };  // namespace RDKit
