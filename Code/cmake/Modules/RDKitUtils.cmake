@@ -216,21 +216,6 @@ function(downloadAndCheckMD5 url target md5chksum)
   endif()
 endfunction(downloadAndCheckMD5)
 
-function(overwriteIfChanged src dest)
-  set(overwrite TRUE)
-  if (EXISTS "${dest}")
-    computeMD5("${dest}" destMD5)
-    computeMD5("${src}" srcMD5)
-    if (${destMD5} STREQUAL ${srcMD5})
-      set(overwrite FALSE)
-    endif()
-  endif()
-  if (overwrite)
-    get_filename_component(destDir "${dest}" DIRECTORY)
-    file(COPY "${src}" DESTINATION "${destDir}")
-  endif()
-endfunction(overwriteIfChanged)
-
 function(createExportTestHeaders)
   file(GLOB_RECURSE cmakeLists LIST_DIRECTORIES false
        ${CMAKE_SOURCE_DIR}/CMakeLists.txt)
@@ -284,8 +269,10 @@ function(createExportTestHeaders)
       "#undef RDKIT_${exportLib}_BUILD\n"
       "#endif\n")
   endforeach()
-  overwriteIfChanged("${CMAKE_BINARY_DIR}/${exportPath}.tmp" "${CMAKE_SOURCE_DIR}/${exportPath}")
-  overwriteIfChanged("${CMAKE_BINARY_DIR}/${testPath}.tmp" "${CMAKE_SOURCE_DIR}/${testPath}")
+  execute_process(COMMAND ${CMAKE_COMMAND} -E copy_if_different
+    "${CMAKE_BINARY_DIR}/${exportPath}.tmp" "${CMAKE_SOURCE_DIR}/${exportPath}")
+  execute_process(COMMAND ${CMAKE_COMMAND} -E copy_if_different
+    "${CMAKE_BINARY_DIR}/${testPath}.tmp" "${CMAKE_SOURCE_DIR}/${testPath}")
 endfunction(createExportTestHeaders)
 
 function(patchCoordGenMaeExportHeaders keyword path)
