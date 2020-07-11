@@ -22,7 +22,8 @@ else()
 endif()
 
 add_definitions(-DRDKIT_RDSTREAMS_BUILD)
+set(boost_iostreams Boost::iostreams)
 endif(RDK_USE_BOOST_IOSTREAMS)
 rdkit_library(RDStreams streams.cpp
-              LINK_LIBRARIES ${Boost_LIBRARIES} ${link_iostreams} ${zlib_lib})
+              LINK_LIBRARIES ${boost_iostreams} ${zlib_lib})
 rdkit_headers(streams.h DEST RDStreams)
