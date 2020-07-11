@@ -64,7 +64,7 @@ if(RDK_BUILD_MAEPARSER_SUPPORT)
 else (RDK_BUILD_MAEPARSER_SUPPORT)
 
   set(RDK_MAEPARSER_LIBS CACHE STRING "the external libraries" FORCE)
-
+  
 endif(RDK_BUILD_MAEPARSER_SUPPORT)
 
 if(RDK_BUILD_COORDGEN_SUPPORT)
@@ -105,7 +105,7 @@ if(RDK_BUILD_COORDGEN_SUPPORT)
 
   include_directories(${coordgen_INCLUDE_DIRS})
 
-  set(RDK_COORDGEN_LIBS MolAlign ${coordgen_LIBRARIES} ${maeparser_LIBRARIES} ${Boost_LIBRARIES}
+  set(RDK_COORDGEN_LIBS MolAlign ${coordgen_LIBRARIES} ${RDK_MAEPARSER_LIBS} ${Boost_LIBRARIES}
       CACHE STRING "the external libraries" FORCE)
   rdkit_headers(CoordGen.h DEST GraphMol)
 
