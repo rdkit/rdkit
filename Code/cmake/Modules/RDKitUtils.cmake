@@ -247,7 +247,7 @@ function(createExportTestHeaders)
   list(REMOVE_DUPLICATES exportLibs)
   list(SORT exportLibs)
   set(exportPath "Code/RDGeneral/export.h")
-  file(WRITE "${CMAKE_BINARY_DIR}/${exportPath}"
+  file(WRITE "${CMAKE_BINARY_DIR}/${exportPath}.tmp"
     "// auto-generated __declspec definition header\n"
     "#pragma once\n"
     "#ifndef SWIG\n"
@@ -259,12 +259,12 @@ function(createExportTestHeaders)
     "#include <boost/config.hpp>\n"
     "#endif\n")
   set(testPath "Code/RDGeneral/test.h")
-  file(WRITE "${CMAKE_BINARY_DIR}/${testPath}"
+  file(WRITE "${CMAKE_BINARY_DIR}/${testPath}.tmp"
     "// auto-generated header to be imported in all cpp tests\n"
     "#pragma once\n")
   foreach(exportLib ${exportLibs})
     string(TOUPPER "${exportLib}" exportLib)
-    file(APPEND "${CMAKE_BINARY_DIR}/${exportPath}"
+    file(APPEND "${CMAKE_BINARY_DIR}/${exportPath}.tmp"
       "\n"
       "// RDKIT_${exportLib}_EXPORT definitions\n"
       "#if defined(BOOST_HAS_DECLSPEC) && defined(RDKIT_DYN_LINK) && !defined(SWIG)\n"
@@ -278,14 +278,14 @@ function(createExportTestHeaders)
       "#define RDKIT_${exportLib}_EXPORT\n"
       "#endif\n"
       "// RDKIT_${exportLib}_EXPORT end definitions\n")
-    file(APPEND "${CMAKE_BINARY_DIR}/${testPath}"
+    file(APPEND "${CMAKE_BINARY_DIR}/${testPath}.tmp"
       "\n"
       "#ifdef RDKIT_${exportLib}_BUILD\n"
       "#undef RDKIT_${exportLib}_BUILD\n"
       "#endif\n")
   endforeach()
-  overwriteIfChanged("${CMAKE_BINARY_DIR}/${exportPath}" "${CMAKE_SOURCE_DIR}/${exportPath}")
-  overwriteIfChanged("${CMAKE_BINARY_DIR}/${testPath}" "${CMAKE_SOURCE_DIR}/${testPath}")
+  overwriteIfChanged("${CMAKE_BINARY_DIR}/${exportPath}.tmp" "${CMAKE_SOURCE_DIR}/${exportPath}")
+  overwriteIfChanged("${CMAKE_BINARY_DIR}/${testPath}.tmp" "${CMAKE_SOURCE_DIR}/${testPath}")
 endfunction(createExportTestHeaders)
 
 function(patchCoordGenMaeExportHeaders keyword path)
