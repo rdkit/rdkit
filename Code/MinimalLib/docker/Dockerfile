@@ -34,8 +34,8 @@ RUN ./emsdk update-tags && \
 RUN mkdir /src
 WORKDIR /src
 ENV RDBASE=/src/rdkit
-ARG RDKIT_BRANCH=fix/github3267
-RUN git clone https://github.com/greglandrum/rdkit.git
+ARG RDKIT_BRANCH=master
+RUN git clone https://github.com/rdkit/rdkit.git
 WORKDIR $RDBASE
 RUN git checkout $RDKIT_BRANCH
 
