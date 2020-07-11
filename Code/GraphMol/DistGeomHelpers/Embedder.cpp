@@ -407,7 +407,7 @@ bool generateInitialCoords(RDGeom::PointPtrVect *positions,
     }
     gotCoords = DistGeom::computeRandomCoords(*positions, boxSize, *rng);
     if (embedParams.useRandomCoords && embedParams.coordMap != nullptr) {
-      for (const auto v : *embedParams.coordMap) {
+      for (const auto &v : *embedParams.coordMap) {
         auto p = positions->at(v.first);
         for (unsigned int ci = 0; ci < v.second.dimension(); ++ci) {
           (*p)[ci] = v.second[ci];
@@ -428,7 +428,7 @@ bool firstMinimization(RDGeom::PointPtrVect *positions,
   bool gotCoords = true;
   boost::dynamic_bitset<> fixedPts(positions->size());
   if (embedParams.useRandomCoords && embedParams.coordMap != nullptr) {
-    for (const auto v : *embedParams.coordMap) {
+    for (const auto &v : *embedParams.coordMap) {
       fixedPts.set(v.first);
     }
   }
@@ -436,7 +436,7 @@ bool firstMinimization(RDGeom::PointPtrVect *positions,
       *eargs.mmat, *positions, *eargs.chiralCenters, 1.0, 0.1, nullptr,
       embedParams.basinThresh, &fixedPts));
   if (embedParams.useRandomCoords && embedParams.coordMap != nullptr) {
-    for (const auto v : *embedParams.coordMap) {
+    for (const auto &v : *embedParams.coordMap) {
       field->fixedPoints().push_back(v.first);
     }
   }
@@ -481,7 +481,7 @@ bool checkTetrahedralCenters(const RDGeom::PointPtrVect *positions,
   // for each of the atoms in the "tetrahedralCarbons" list, make sure
   // that there is a minimum volume around them and that they are inside
   // that volume. (this is part of github #971)
-  for (const auto tetSet : *eargs.tetrahedralCarbons) {
+  for (const auto &tetSet : *eargs.tetrahedralCarbons) {
     // it could happen that the centroid is outside the volume defined
     // by the other
     // four points. That is also a fail.
@@ -505,7 +505,7 @@ bool checkChiralCenters(const RDGeom::PointPtrVect *positions,
                         const EmbedParameters &embedParams) {
   RDUNUSED_PARAM(embedParams);
   // check the chiral volume:
-  for (const auto chiralSet : *eargs.chiralCenters) {
+  for (const auto &chiralSet : *eargs.chiralCenters) {
     double vol = DistGeom::ChiralViolationContrib::calcChiralVolume(
         chiralSet->d_idx1, chiralSet->d_idx2, chiralSet->d_idx3,
         chiralSet->d_idx4, *positions);
@@ -534,7 +534,7 @@ bool minimizeFourthDimension(RDGeom::PointPtrVect *positions,
       *eargs.mmat, *positions, *eargs.chiralCenters, 0.2, 1.0, nullptr,
       embedParams.basinThresh));
   if (embedParams.useRandomCoords && embedParams.coordMap != nullptr) {
-    for (const auto v : *embedParams.coordMap) {
+    for (const auto &v : *embedParams.coordMap) {
       field2->fixedPoints().push_back(v.first);
     }
   }
@@ -582,7 +582,7 @@ bool minimizeWithExpTorsions(RDGeom::PointPtrVect &positions,
                                                      *eargs.etkdgDetails));
   }
   if (embedParams.useRandomCoords && embedParams.coordMap != nullptr) {
-    for (const auto v : *embedParams.coordMap) {
+    for (const auto &v : *embedParams.coordMap) {
       field->fixedPoints().push_back(v.first);
     }
   }
@@ -605,7 +605,7 @@ bool minimizeWithExpTorsions(RDGeom::PointPtrVect &positions,
             *eargs.mmat, positions3D, eargs.etkdgDetails->improperAtoms,
             eargs.etkdgDetails->atomNums));
     if (embedParams.useRandomCoords && embedParams.coordMap != nullptr) {
-      for (const auto v : *embedParams.coordMap) {
+      for (const auto &v : *embedParams.coordMap) {
         field2->fixedPoints().push_back(v.first);
       }
     }
@@ -641,7 +641,7 @@ bool finalChiralChecks(RDGeom::PointPtrVect *positions,
   RDUNUSED_PARAM(embedParams);
   // "distance matrix" chirality test
   std::set<int> atoms;
-  for (const auto chiralSet : *eargs.chiralCenters) {
+  for (const auto &chiralSet : *eargs.chiralCenters) {
     if (chiralSet->d_idx0 != chiralSet->d_idx4) {
       atoms.insert(chiralSet->d_idx0);
       atoms.insert(chiralSet->d_idx1);
@@ -662,7 +662,7 @@ bool finalChiralChecks(RDGeom::PointPtrVect *positions,
   }
 
   // "center in volume" chirality test
-  for (const auto chiralSet : *eargs.chiralCenters) {
+  for (const auto &chiralSet : *eargs.chiralCenters) {
     // it could happen that the centroid is outside the volume defined
     // by the other four points. That is also a fail.
     if (!_centerInVolume(chiralSet, *positions)) {

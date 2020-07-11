@@ -6035,6 +6035,16 @@ M  END
     qa = rdqueries.MHAtomQueryAtom()
     self.assertEqual(tuple(x.GetIdx() for x in m.GetAtomsMatchingQuery(qa)), (0, 4))
 
+  def testAdjustQueryPropertiesFiveRings(self):
+    mol = Chem.MolFromSmiles('c1cc[nH]c1')
+    nops = Chem.AdjustQueryParameters.NoAdjustments()
+    nmol = Chem.AdjustQueryProperties(mol, nops)
+    self.assertEqual(Chem.MolToSmarts(nmol), "[#6]1:[#6]:[#6]:[#7H]:[#6]:1")
+
+    nops.adjustConjugatedFiveRings = True
+    nmol = Chem.AdjustQueryProperties(mol, nops)
+    self.assertEqual(Chem.MolToSmarts(nmol), "[#6]1-,=,:[#6]-,=,:[#6]-,=,:[#7H]-,=,:[#6]-,=,:1")
+
 
 if __name__ == '__main__':
   if "RDTESTCASE" in os.environ:

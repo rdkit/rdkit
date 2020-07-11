@@ -42,4 +42,6 @@
 
 #cmakedefine RDK_BUILD_CAIRO_SUPPORT
 
+#cmakedefine RDK_BUILD_FREETYPE_SUPPORT
+
 #cmakedefine RDK_USE_URF

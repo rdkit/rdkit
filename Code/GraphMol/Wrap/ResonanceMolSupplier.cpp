@@ -20,7 +20,6 @@
 #include <GraphMol/Resonance.h>
 #include <GraphMol/Substruct/SubstructMatch.h>
 #include <RDBoost/PySequenceHolder.h>
-#include <RDBoost/iterator_next.h>
 
 #include "MolSupplier.h"
 #include "substructmethods.h"
@@ -211,7 +210,7 @@ struct resmolsup_wrap {
             "__iter__",
             (ResonanceMolSupplier * (*)(ResonanceMolSupplier *)) & MolSupplIter,
             python::return_internal_reference<1>())
-        .def(NEXT_METHOD,
+        .def("__next__",
              (ROMol * (*)(ResonanceMolSupplier *)) &
                  MolSupplNextAcceptNullLastMolecule,
              "Returns the next resonance structure in the supplier. Raises "
