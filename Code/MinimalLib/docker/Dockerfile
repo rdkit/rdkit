@@ -34,7 +34,7 @@ RUN ./emsdk update-tags && \
 RUN mkdir /src
 WORKDIR /src
 ENV RDBASE=/src/rdkit
-ARG RDKIT_BRANCH=dev/update_emscripten_build 
+ARG RDKIT_BRANCH=fix/github3267
 RUN git clone https://github.com/greglandrum/rdkit.git
 WORKDIR $RDBASE
 RUN git checkout $RDKIT_BRANCH
@@ -44,7 +44,7 @@ WORKDIR build
 
 RUN echo "source /opt/emsdk/emsdk_env.sh" >> ~/.bashrc
 SHELL ["/bin/bash", "-c", "-l"]
-RUN emcmake cmake -DBoost_INCLUDE_DIR=/opt/boost/include -DRDK_BUILD_FREETYPE_SUPPORT=ON -DRDK_BUILD_MINIMAL_LIB=ON \
+RUN emcmake cmake -DBoost_INCLUDE_DIR=/opt/boost/include -DRDK_BUILD_FREETYPE_SUPPORT=OFF -DRDK_BUILD_MINIMAL_LIB=ON \
   -DRDK_BUILD_PYTHON_WRAPPERS=OFF -DRDK_BUILD_CPP_TESTS=OFF -DRDK_BUILD_INCHI_SUPPORT=ON \
   -DRDK_USE_BOOST_SERIALIZATION=OFF -DRDK_OPTIMIZE_POPCNT=OFF -DRDK_BUILD_THREADSAFE_SSS=OFF \
   -DRDK_BUILD_DESCRIPTORS3D=OFF -DRDK_TEST_MULTITHREADED=OFF -DRDK_BUILD_COORDGEN_SUPPORT=OFF \
