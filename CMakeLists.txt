@@ -179,6 +179,11 @@ if(RDK_BUILD_COORDGEN_SUPPORT)
     include_directories(${RDKit_ExternalDir})
 endif()
 
+if(RDK_BUILD_MAEPARSER_SUPPORT)
+    add_definitions(-DRDK_BUILD_MAEPARSER_SUPPORT)
+    include_directories(${RDKit_ExternalDir})
+endif()
+
 if(RDK_USE_URF)
   ADD_DEFINITIONS("-DRDK_USE_URF")
   include_directories(${RDKit_ExternalDir}/RingFamilies/RingDecomposerLib/src/RingDecomposerLib)
