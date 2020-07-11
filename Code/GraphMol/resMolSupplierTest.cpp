@@ -250,7 +250,6 @@ void testZwitterion() {
   delete resMolSuppl;
   resMolSuppl = new ResonanceMolSupplier(
       (ROMol &)*mol, ResonanceMolSupplier::ALLOW_CHARGE_SEPARATION);
-  std::cerr << "resMolSuppl->length() " << resMolSuppl->length() << std::endl;
   TEST_ASSERT(resMolSuppl->length() == 2);
   mol0 = (*resMolSuppl)[0];
   ROMol *mol1 = (*resMolSuppl)[1];
