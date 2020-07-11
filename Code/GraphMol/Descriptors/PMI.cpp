@@ -197,8 +197,8 @@ double eccentricity(const ROMol& mol, int confId, bool useAtomicMasses,
     return 0.0;  // FIX: throw an exception here?
   }
   std::cerr << "  evals: " << pm1 << " " << pm2 << " " << pm3 << std::endl;
-  if (pm3 < 1e-4) {
-    // no coordinates
+  if (pm3 < 1e-4 || (pm3 * pm3 - pm1 * pm1) < 1e-4) {
+    // no coordinates or very close to degeneracy
     return 0.0;
   } else {
     return sqrt(pm3 * pm3 - pm1 * pm1) / pm3;
