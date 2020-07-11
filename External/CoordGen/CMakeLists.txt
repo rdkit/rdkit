@@ -3,6 +3,7 @@ include(RDKitUtils)
 
 if(RDK_BUILD_MAEPARSER_SUPPORT)
   if((NOT MSVC) OR RDK_INSTALL_DLLS_MSVC)
+    add_definitions(-DIN_MAEPARSER)
   endif()
 
   find_package(Boost ${RDK_BOOST_VERSION} COMPONENTS system iostreams REQUIRED)
