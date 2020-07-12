@@ -13,7 +13,6 @@
 #include "RGroupDecomp.h"
 #include "RGroupMatch.h"
 #include "RGroupScore.h"
-
 #include <vector>
 #include <map>
 
@@ -138,7 +137,7 @@ struct RGroupDecompData {
           bool labelHasCore = labelCores[label].find(position.core_idx) !=
                               labelCores[label].end();
           if (labelHasCore && (rgroup == position.rgroups.end() ||
-                               !rgroup->second->isHydrogen())) {
+                               !rgroup->second->is_hydrogen)) {
             allH = false;
             break;
           }
@@ -392,8 +391,7 @@ struct RGroupDecompData {
              ++m) {  // for each molecule
           auto rg = matches[m][tied_permutation[m]].rgroups.find(label);
           if (rg != matches[m][tied_permutation[m]].rgroups.end()) {
-            if (rg->second->smiles.find_first_not_of("0123456789[]*H:.") <
-                rg->second->smiles.length()) {
+            if (!rg->second->is_hydrogen) {
               num_added_rgroups += 1;  //= label;
               break;
             }
@@ -405,11 +403,10 @@ struct RGroupDecompData {
   }
 
   bool process(bool pruneMatches, bool finalize = false) {
-    auto t0 = std::chrono::steady_clock::now();
     if (matches.size() == 0) {
       return false;
     }
-
+    auto t0 = std::chrono::steady_clock::now();
     // Exhaustive search, get the MxN matrix
     size_t M = matches.size();  // Number of molecules
     std::vector<size_t> permutations;
@@ -460,6 +457,7 @@ struct RGroupDecompData {
         best_score = newscore;
         best_permutation = iterator.permutation;
       }
+      count++;
     }
 
     if (ties.size() > 1) {
