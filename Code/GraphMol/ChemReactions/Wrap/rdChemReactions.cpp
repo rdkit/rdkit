@@ -526,6 +526,7 @@ Sample Usage:
                RDKit::RunReactant,
            "apply the reaction to a single reactant")
       .def("Initialize", &RDKit::ChemicalReaction::initReactantMatchers,
+           (python::arg("self"), python::arg("silent") = false),
            "initializes the reaction so that it can be used")
       .def("IsInitialized", &RDKit::ChemicalReaction::isInitialized,
            "checks if the reaction is ready for use")
