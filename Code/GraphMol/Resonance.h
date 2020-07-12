@@ -33,8 +33,8 @@ typedef std::unordered_map<std::size_t, ConjElectrons *> CEMap;
 
 /*!
  * Create a derived class from this abstract base class
- * and implement the callback() method.
- * The callback() method is called at each iteration of the
+ * and implement the operator()() method.
+ * The operator()() method is called at each iteration of the
  * algorithm, and provides a mechanism to monitor or stop
  * its progress.
  * To have your callback called, pass an instance of your
@@ -72,7 +72,7 @@ class RDKIT_GRAPHMOL_EXPORT ResonanceMolSupplierCallback {
       \return true if the resonance structure generation should continue;
               false if the resonance structure generation should stop.
    */
-  virtual bool callback() const = 0;
+  virtual bool operator()() const = 0;
 
  private:
   struct ResonanceProgress {

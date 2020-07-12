@@ -1693,7 +1693,7 @@ void ResonanceMolSupplier::buildCEMap(CEMap &ceMap, unsigned int conjGrpIdx) {
           d_callback->d_progress[conjGrpIdx].d_totalStructs = ceMap.size();
           d_callback->d_progress[conjGrpIdx].d_diverseStructs =
               ceDegCount.size();
-          if (!d_callback->callback()) {
+          if (!(*d_callback)()) {
             d_wasCanceled = true;
             break;
           }

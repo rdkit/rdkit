@@ -68,9 +68,9 @@ class PyResonanceMolSupplierCallback
     return d_cppCallback->getNumDiverseStructures(conjGrpIdx);
   }
   inline python::object getCallbackOverride() const {
-    return get_override("callback");
+    return get_override("__call__");
   }
-  bool callback() const { return getCallbackOverride()(); }
+  bool operator()() const { return getCallbackOverride()(); }
   python::object getPyCallbackObject() { return d_pyCallbackObject; }
 
  private:
@@ -102,7 +102,7 @@ void setProgressCallbackHelper(ResonanceMolSupplier &suppl,
   if (extractCallback.check()) {
     if (!PyCallable_Check(extractCallback()->getCallbackOverride().ptr())) {
       PyErr_SetString(PyExc_AttributeError,
-                      "The callback attribute in the "
+                      "The __call__ attribute in the "
                       "rdchem.ResonanceMolSupplierCallback subclass "
                       "must exist and be a callable method");
       python::throw_error_already_set();
@@ -120,8 +120,8 @@ void setProgressCallbackHelper(ResonanceMolSupplier &suppl,
 
 std::string resonanceMolSupplierCallbackClassDoc =
     "Create a derived class from this abstract base class and\n\
-    implement the callback() method.\n\
-    The callback() method is called at each iteration of the\n\
+    implement the __call__() method.\n\
+    The __call__() method is called at each iteration of the\n\
     algorithm, and provides a mechanism to monitor or stop\n\
     its progress.\n\n\
     To have your callback called, pass an instance of your\n\
@@ -194,8 +194,8 @@ struct resmolsup_wrap {
                  PyResonanceMolSupplierCallback::wrapGetNumDiverseStructures,
              "Get the number of non-degenrate resonance structures "
              "generated so far for the passed conjugated group index.\n")
-        .def("callback",
-             python::pure_virtual(&PyResonanceMolSupplierCallback::callback),
+        .def("__call__",
+             python::pure_virtual(&PyResonanceMolSupplierCallback::operator()),
              "This must be implemented in the derived class. "
              "Return true if the resonance structure generation "
              "should continue; false if the resonance structure "

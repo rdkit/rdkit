@@ -897,13 +897,13 @@ void testGitHub2597() {
                        << "testGitHub2597" << std::endl;
   {
     class MyCallBack : public ResonanceMolSupplierCallback {
-      bool callback() const {
+      bool operator()() const {
         TEST_ASSERT(getNumConjGrps() == 1);
         return (getNumStructures(0) < 12);
       }
     };
     class MyCallBack2 : public ResonanceMolSupplierCallback {
-      bool callback() const {
+      bool operator()() const {
         TEST_ASSERT(getNumConjGrps() == 1);
         return (getNumDiverseStructures(0) < 8);
       }

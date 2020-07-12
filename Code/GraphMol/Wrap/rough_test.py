@@ -4126,7 +4126,7 @@ $$$$
 
   def testGitHub2597(self):
     class MyBrokenCallBack(Chem.ResonanceMolSupplier):
-      def callback(self):
+      def __call__(self):
         return True
 
     class MyBrokenCallBack2(Chem.ResonanceMolSupplierCallback):
@@ -4137,7 +4137,7 @@ $$$$
         super().__init__()
         self._parent = parent
 
-      def callback(self):
+      def __call__(self):
         self._parent.assertEqual(self.GetNumConjGrps(), 1)
         return (self.GetNumStructures(0) < 12)
 
@@ -4146,7 +4146,7 @@ $$$$
         super().__init__()
         self._parent = parent
 
-      def callback(self):
+      def __call__(self):
         self._parent.assertEqual(self.GetNumConjGrps(), 1)
         return (self.GetNumDiverseStructures(0) < 8)
 
@@ -4157,7 +4157,7 @@ $$$$
         self.timeout = timedelta(seconds=3)
         self._parent = parent
 
-      def callback(self):
+      def __call__(self):
         if (self.start_time is None):
           self.start_time = datetime.now()
         return (datetime.now() - self.start_time < self.timeout)
