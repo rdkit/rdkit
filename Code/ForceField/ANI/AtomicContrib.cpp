@@ -45,8 +45,8 @@ ANIAtomContrib::ANIAtomContrib(ForceField *owner, int atomType,
       this->d_atomEncoding.end()) {
     auto atomicSymbol = this->d_atomEncoding[this->d_atomType];
     for (unsigned int modelNum = 0; modelNum < ensembleSize; modelNum++) {
-      std::vector<ArrayXXd> currModelWeights;
-      std::vector<ArrayXXd> currModelBiases;
+      std::vector<MatrixXd> currModelWeights;
+      std::vector<MatrixXd> currModelBiases;
       Utils::loadFromBin(&currModelWeights, &currModelBiases, modelNum,
                          atomicSymbol, this->d_modelType);
       this->d_weights.push_back(currModelWeights);
@@ -63,21 +63,25 @@ double ANIAtomContrib::forwardProp(ArrayXXd &aev) const {
   if (this->d_atomType == -1) {
     return 0;
   }
+
   if (aev.cols() != 1) {
     aev.transposeInPlace();
   }
 
+  MatrixXd aevMat = aev.matrix();
+
   std::vector<double> energies;
   energies.reserve(this->d_weights.size());
   for (unsigned int modelNo = 0; modelNo < this->d_weights.size(); modelNo++) {
-    auto temp = aev;
+    auto temp = aevMat;
     for (unsigned int layer = 0; layer < this->d_weights[modelNo].size();
          layer++) {
-      temp =
-          ((this->d_weights[modelNo][layer].matrix() * temp.matrix()).array() +
-           this->d_biases[modelNo][layer])
-              .eval();
-      if (layer < this->d_weights[modelNo].size() - 1) Utils::CELU(temp, 0.1);
+      temp = ((this->d_weights[modelNo][layer] * temp) +
+              this->d_biases[modelNo][layer])
+                 .eval();
+      if (layer < this->d_weights[modelNo].size() - 1) {
+        Utils::CELU(temp, 0.1);
+      }
     }
     energies.push_back(temp.coeff(0, 0));
   }
@@ -89,27 +93,23 @@ double ANIAtomContrib::getEnergy(double *pos) const {
   auto aev = RDKit::Descriptors::ANI::AtomicEnvironmentVector(
       pos, this->d_speciesVec, this->d_numAtoms);
   ArrayXXd row = aev.row(this->d_atomIdx);
-  return this->ANIAtomContrib::forwardProp(row) +
-         this->d_selfEnergy;
+  return this->ANIAtomContrib::forwardProp(row) + this->d_selfEnergy;
 }
 
 double ANIAtomContrib::getEnergy(Eigen::ArrayXXd &aev) const {
   ArrayXXd row = aev.row(this->d_atomIdx);
-  return this->ANIAtomContrib::forwardProp(row) +
-         this->d_selfEnergy;
+  return this->ANIAtomContrib::forwardProp(row) + this->d_selfEnergy;
 }
 
 void ANIAtomContrib::getGrad(double *pos, double *grad) const {}
 
 namespace Utils {
 
-double RELU(double val) { return std::max(0.0, val); }
-
-double coeffMin(double val) { return std::min(0.0, val); }
-
-void CELU(ArrayXXd &input, double alpha) {
-  input = input.unaryExpr(&RELU) +
-          (alpha * ((input / alpha).exp() - 1)).unaryExpr(&coeffMin);
+void CELU(MatrixXd &input, double alpha) {
+  input = input.unaryExpr([&](double val) {
+    return std::max(0.0, val) +
+           std::min(alpha * (std::exp(val / alpha) - 1), 0.0);
+  });
 }
 
 std::vector<std::string> tokenize(const std::string &s) {
@@ -121,7 +121,7 @@ std::vector<std::string> tokenize(const std::string &s) {
   return tokens;
 }
 
-void loadFromBin(std::vector<ArrayXXd> *weights, unsigned int model,
+void loadFromBin(std::vector<MatrixXd> *weights, unsigned int model,
                  std::string weightType, unsigned int layer,
                  std::string atomType, std::string modelType) {
   std::string path = getenv("RDBASE");
@@ -129,27 +129,27 @@ void loadFromBin(std::vector<ArrayXXd> *weights, unsigned int model,
                           "/model" + std::to_string(model) + "/" + atomType +
                           "_" + std::to_string(layer) + "_" + weightType +
                           ".bin";
-  ArrayXXf weight;
+  MatrixXf weight;
   RDNumeric::EigenSerializer::deserialize(weight, paramFile);
-  weights->push_back(weight.matrix().cast<double>().array());
+  weights->push_back(weight.cast<double>());
 }
 
-void loadFromBin(std::vector<ArrayXXd> *weights, std::vector<ArrayXXd> *biases,
+void loadFromBin(std::vector<MatrixXd> *weights, std::vector<MatrixXd> *biases,
                  unsigned int model, std::string atomType,
                  std::string modelType) {
   std::string path = getenv("RDBASE");
   std::string paramFile = path + "/Code/ForceField/ANI/Params/" + modelType +
                           "/model" + std::to_string(model) + ".bin";
-  std::vector<ArrayXXf> floatWeights, floatBiases;
+  std::vector<MatrixXf> floatWeights, floatBiases;
   RDNumeric::EigenSerializer::deserializeAll(&floatWeights, &floatBiases,
                                              paramFile, atomType);
   for (unsigned int i = 0; i < floatWeights.size(); i++) {
-    weights->push_back(floatWeights[i].matrix().cast<double>().array());
-    biases->push_back(floatBiases[i].matrix().cast<double>().array());
+    weights->push_back(floatWeights[i].cast<double>());
+    biases->push_back(floatBiases[i].cast<double>());
   }
 }
 
-void loadFromCSV(std::vector<ArrayXXd> *weights, unsigned int model,
+void loadFromCSV(std::vector<MatrixXd> *weights, unsigned int model,
                  std::string weightType, unsigned int layer,
                  std::string atomType, std::string modelType) {
   std::string path = getenv("RDBASE");
@@ -182,7 +182,7 @@ void loadFromCSV(std::vector<ArrayXXd> *weights, unsigned int model,
     }
   }
 
-  ArrayXXd param(weight.size(), cols);
+  MatrixXd param(weight.size(), cols);
 
   for (unsigned int i = 0; i < weight.size(); i++) {
     for (unsigned int j = 0; j < weight[i].size(); j++) {

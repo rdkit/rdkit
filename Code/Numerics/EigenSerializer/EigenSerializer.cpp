@@ -126,6 +126,8 @@ template bool serialize<Eigen::ArrayXXf>(const Eigen::ArrayXXf&,
                                          const std::string&);
 template bool serialize<Eigen::ArrayXd>(const Eigen::ArrayXd&,
                                         const std::string&);
+template bool serialize<Eigen::MatrixXf>(const Eigen::MatrixXf&,
+                                         const std::string&);
 
 template bool deserialize<Eigen::ArrayXXd>(Eigen::ArrayXXd&,
                                            const std::string&);
@@ -134,6 +136,8 @@ template bool deserialize<Eigen::MatrixXd>(Eigen::MatrixXd&,
 template bool deserialize<Eigen::ArrayXXf>(Eigen::ArrayXXf&,
                                            const std::string&);
 template bool deserialize<Eigen::ArrayXd>(Eigen::ArrayXd&, const std::string&);
+template bool deserialize<Eigen::MatrixXf>(Eigen::MatrixXf&,
+                                           const std::string&);
 
 template bool deserializeAll<Eigen::ArrayXXd>(std::vector<Eigen::ArrayXXd>*,
                                               std::vector<Eigen::ArrayXXd>*,
@@ -141,11 +145,24 @@ template bool deserializeAll<Eigen::ArrayXXd>(std::vector<Eigen::ArrayXXd>*,
 template bool deserializeAll<Eigen::ArrayXXf>(std::vector<Eigen::ArrayXXf>*,
                                               std::vector<Eigen::ArrayXXf>*,
                                               std::string&, std::string);
+template bool deserializeAll<Eigen::MatrixXf>(std::vector<Eigen::MatrixXf>*,
+                                              std::vector<Eigen::MatrixXf>*,
+                                              std::string&, std::string);
+template bool deserializeAll<Eigen::MatrixXd>(std::vector<Eigen::MatrixXd>*,
+                                              std::vector<Eigen::MatrixXd>*,
+                                              std::string&, std::string);
+
 template bool deserializeAll<Eigen::ArrayXXd>(std::vector<Eigen::ArrayXXd>*,
                                               std::vector<Eigen::ArrayXXd>*,
                                               std::ifstream&, std::string);
 template bool deserializeAll<Eigen::ArrayXXf>(std::vector<Eigen::ArrayXXf>*,
                                               std::vector<Eigen::ArrayXXf>*,
+                                              std::ifstream&, std::string);
+template bool deserializeAll<Eigen::MatrixXd>(std::vector<Eigen::MatrixXd>*,
+                                              std::vector<Eigen::MatrixXd>*,
+                                              std::ifstream&, std::string);
+template bool deserializeAll<Eigen::MatrixXf>(std::vector<Eigen::MatrixXf>*,
+                                              std::vector<Eigen::MatrixXf>*,
                                               std::ifstream&, std::string);
 
 template bool serializeAll<Eigen::ArrayXXf>(
@@ -155,6 +172,14 @@ template bool serializeAll<Eigen::ArrayXXf>(
 template bool serializeAll<Eigen::ArrayXXd>(
     std::vector<std::pair<
         std::string, std::vector<std::pair<std::string, Eigen::ArrayXXd>>>>*,
+    const std::string&);
+template bool serializeAll<Eigen::MatrixXf>(
+    std::vector<std::pair<
+        std::string, std::vector<std::pair<std::string, Eigen::MatrixXf>>>>*,
+    const std::string&);
+template bool serializeAll<Eigen::MatrixXd>(
+    std::vector<std::pair<
+        std::string, std::vector<std::pair<std::string, Eigen::MatrixXd>>>>*,
     const std::string&);
 
 template bool serializeAll<Eigen::ArrayXXf>(
@@ -164,6 +189,14 @@ template bool serializeAll<Eigen::ArrayXXf>(
 template bool serializeAll<Eigen::ArrayXXd>(
     std::vector<std::pair<
         std::string, std::vector<std::pair<std::string, Eigen::ArrayXXd>>>>*,
+    std::ofstream&);
+template bool serializeAll<Eigen::MatrixXf>(
+    std::vector<std::pair<
+        std::string, std::vector<std::pair<std::string, Eigen::MatrixXf>>>>*,
+    std::ofstream&);
+template bool serializeAll<Eigen::MatrixXd>(
+    std::vector<std::pair<
+        std::string, std::vector<std::pair<std::string, Eigen::MatrixXd>>>>*,
     std::ofstream&);
 
 }  // namespace EigenSerializer

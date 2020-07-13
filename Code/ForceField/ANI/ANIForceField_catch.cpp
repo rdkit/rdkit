@@ -19,7 +19,15 @@
 #include <ForceField/ANI/AtomicContrib.h>
 #include <ForceField/ForceField.h>
 #include <GraphMol/Descriptors/AtomicEnvironmentVector.h>
+#include <GraphMol/ForceFieldHelpers/MMFF/Builder.h>
+#include <GraphMol/ForceFieldHelpers/MMFF/AtomTyper.h>
+#include <ForceField/MMFF/Params.h>
+#include <ForceField/MMFF/DistanceConstraint.h>
+#include <ForceField/MMFF/AngleConstraint.h>
+#include <ForceField/MMFF/TorsionConstraint.h>
+#include <ForceField/MMFF/PositionConstraint.h>
 #include <Eigen/Dense>
+#include <chrono>
 
 using namespace Eigen;
 using namespace Catch::literals;
@@ -47,7 +55,6 @@ TEST_CASE("ANI-1ccx NN Forward Pass", "[ANI Force Field]") {
       pos[3 * i + 1] = atom.y;
       pos[3 * i + 2] = atom.z;
 
-      
       auto ac = new ForceFields::ANI::ANIAtomContrib(
           &field, speciesVec(i), i, speciesVec, numAtoms, 4, 8, "ANI-1ccx");
       field.contribs().push_back(ForceFields::ContribPtr(ac));
@@ -75,7 +82,6 @@ TEST_CASE("ANI-1ccx NN Forward Pass", "[ANI Force Field]") {
       pos[3 * i + 1] = atom.y;
       pos[3 * i + 2] = atom.z;
 
-      
       auto ac = new ForceFields::ANI::ANIAtomContrib(
           &field, speciesVec(i), i, speciesVec, numAtoms, 4, 8, "ANI-1ccx");
       field.contribs().push_back(ForceFields::ContribPtr(ac));
@@ -103,7 +109,6 @@ TEST_CASE("ANI-1ccx NN Forward Pass", "[ANI Force Field]") {
       pos[3 * i + 1] = atom.y;
       pos[3 * i + 2] = atom.z;
 
-      
       auto ac = new ForceFields::ANI::ANIAtomContrib(
           &field, speciesVec(i), i, speciesVec, numAtoms, 4, 8, "ANI-1ccx");
       field.contribs().push_back(ForceFields::ContribPtr(ac));
@@ -136,7 +141,6 @@ TEST_CASE("ANI-1x NN Forward Pass", "[ANI Force Field]") {
       pos[3 * i + 1] = atom.y;
       pos[3 * i + 2] = atom.z;
 
-      
       auto ac = new ForceFields::ANI::ANIAtomContrib(
           &field, speciesVec(i), i, speciesVec, numAtoms, 4, 8, "ANI-1x");
       field.contribs().push_back(ForceFields::ContribPtr(ac));
@@ -164,7 +168,6 @@ TEST_CASE("ANI-1x NN Forward Pass", "[ANI Force Field]") {
       pos[3 * i + 1] = atom.y;
       pos[3 * i + 2] = atom.z;
 
-      
       auto ac = new ForceFields::ANI::ANIAtomContrib(
           &field, speciesVec(i), i, speciesVec, numAtoms, 4, 8, "ANI-1x");
       field.contribs().push_back(ForceFields::ContribPtr(ac));
@@ -192,7 +195,6 @@ TEST_CASE("ANI-1x NN Forward Pass", "[ANI Force Field]") {
       pos[3 * i + 1] = atom.y;
       pos[3 * i + 2] = atom.z;
 
-      
       auto ac = new ForceFields::ANI::ANIAtomContrib(
           &field, speciesVec(i), i, speciesVec, numAtoms, 4, 8, "ANI-1x");
       field.contribs().push_back(ForceFields::ContribPtr(ac));
@@ -239,7 +241,6 @@ TEST_CASE("QM7 Test Cases") {
     fieldANI1ccx.initialize();
     CHECK(fieldANI1x.calcEnergy(pos) == (-209.0046_a).margin(0.05));
     CHECK(fieldANI1ccx.calcEnergy(pos) == (-208.9733_a).margin(0.05));
-    
   }
   SECTION("1N 3C 1O and 9H") {
     int species[] = {7, 6, 6, 6, 8, 1, 1, 1, 1, 1, 1, 1, 1, 1};
@@ -325,7 +326,6 @@ TEST_CASE("QM7 Test Cases") {
     fieldANI1ccx.initialize();
     CHECK(fieldANI1x.calcEnergy(pos) == (-249.0084_a).margin(0.05));
     CHECK(fieldANI1ccx.calcEnergy(pos) == (-249.0295_a).margin(0.05));
-    
   }
   SECTION("5C 1O 8H") {
     int species[] = {6, 6, 6, 6, 6, 8, 1, 1, 1, 1, 1, 1, 1, 1};

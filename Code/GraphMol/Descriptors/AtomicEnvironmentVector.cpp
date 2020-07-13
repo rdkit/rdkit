@@ -11,7 +11,7 @@
 #include <cmath>
 #include <Numerics/EigenSerializer/EigenSerializer.h>
 #include "AtomicEnvironmentVector.h"
-#include <eigen3/Eigen/Dense>
+#include <Eigen/Dense>
 
 using namespace Eigen;
 
@@ -35,6 +35,7 @@ ArrayXXd CosineCutoff(ArrayBase<Derived> *distances, double cutoff) {
   PRECONDITION(cutoff > 0.0, "Cutoff must be greater than zero");
   PRECONDITION(((*distances) <= cutoff).count() == distances->size(),
                "All distances must be less than the cutoff");
+  PRECONDITION(distances != nullptr, "Array of distances is NULL");
   return 0.5 * ((*distances) * (M_PI / cutoff)).cos() + 0.5;
 }
 
@@ -326,8 +327,7 @@ void AngularTerms(double cutoff, ArrayBase<Derived> &vectors12,
     if (vector1Norm == 0 || vector2Norm == 0) {
       throw ValueErrorException("2 Atoms have the same position vector");
     }
-    cosineAngles(i, 0) =
-        0.95 * dotProduct / (vector1Norm * vector2Norm);
+    cosineAngles(i, 0) = 0.95 * dotProduct / (vector1Norm * vector2Norm);
   }
   auto angles = cosineAngles.acos();
   auto fcj12 = CosineCutoff(&distances12, cutoff);

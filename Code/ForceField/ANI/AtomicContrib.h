@@ -67,8 +67,8 @@ class RDKIT_FORCEFIELD_EXPORT ANIAtomContrib : public ForceFieldContrib {
   int d_atomIdx;
   int d_numAtoms;
   VectorXi d_speciesVec;
-  std::vector<std::vector<ArrayXXd>> d_weights;
-  std::vector<std::vector<ArrayXXd>> d_biases;
+  std::vector<std::vector<MatrixXd>> d_weights;
+  std::vector<std::vector<MatrixXd>> d_biases;
   double d_selfEnergy;
   unsigned int d_ensembleSize;
   std::string d_modelType;
@@ -84,7 +84,7 @@ namespace Utils {
   \param input      Vector from hidden layer
   \param alpha      hyperparameter for CELU
 */
-void CELU(ArrayXXd &input, double alpha);
+void CELU(MatrixXd &input, double alpha);
 
 /*!
   Load model weights from CSV file
@@ -95,7 +95,7 @@ void CELU(ArrayXXd &input, double alpha);
   \param atomType   Atomic Symbol of atom
   \param modelType  Architecture being used
 */
-void loadFromCSV(std::vector<ArrayXXd> *weights, unsigned int model,
+void loadFromCSV(std::vector<MatrixXd> *weights, unsigned int model,
                  std::string weightType, unsigned int layer,
                  std::string atomType, std::string modelType);
 
@@ -108,7 +108,7 @@ void loadFromCSV(std::vector<ArrayXXd> *weights, unsigned int model,
   \param atomType   Atomic Symbol of atom
   \param modelType  Architecture being used
 */
-void loadFromBin(std::vector<ArrayXXd> *weights, unsigned int model,
+void loadFromBin(std::vector<MatrixXd> *weights, unsigned int model,
                  std::string weightType, unsigned int layer,
                  std::string atomType, std::string modelType);
 
@@ -120,7 +120,7 @@ void loadFromBin(std::vector<ArrayXXd> *weights, unsigned int model,
   \param atomType   Atomic Symbol of atom
   \param modelType  Architecture being used
 */
-void loadFromBin(std::vector<ArrayXXd> *weights, std::vector<ArrayXXd> *biases,
+void loadFromBin(std::vector<MatrixXd> *weights, std::vector<MatrixXd> *biases,
                  unsigned int model, std::string atomType,
                  std::string modelType);
 
