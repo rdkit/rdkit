@@ -402,7 +402,7 @@ void wrap_sdsupplier();
 void wrap_forwardsdsupplier();
 void wrap_tdtsupplier();
 void wrap_smisupplier();
-#ifdef RDK_BUILD_COORDGEN_SUPPORT
+#ifdef RDK_BUILD_MAEPARSER_SUPPORT
 void wrap_maesupplier();
 #endif
 
@@ -1456,7 +1456,7 @@ BOOST_PYTHON_MODULE(rdmolfiles) {
   wrap_forwardsdsupplier();
   wrap_tdtsupplier();
   wrap_smisupplier();
-#ifdef RDK_BUILD_COORDGEN_SUPPORT
+#ifdef RDK_BUILD_MAEPARSER_SUPPORT
   wrap_maesupplier();
 #endif
   // wrap_pdbsupplier();

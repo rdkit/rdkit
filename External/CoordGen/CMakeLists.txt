@@ -1,14 +1,10 @@
 add_custom_target(coordgen_support ALL)
+include(RDKitUtils)
 
-if(RDK_BUILD_COORDGEN_SUPPORT)
-  include(RDKitUtils)
-
-  if(MSVC AND (NOT RDK_INSTALL_DLLS_MSVC))
-    add_definitions(-DSTATIC_COORDGEN)
-  else(MSVC AND (NOT RDK_INSTALL_DLLS_MSVC))
+if(RDK_BUILD_MAEPARSER_SUPPORT)
+  if((NOT MSVC) OR RDK_INSTALL_DLLS_MSVC)
     add_definitions(-DIN_MAEPARSER)
-    add_definitions(-DIN_COORDGEN)
-  endif(MSVC AND (NOT RDK_INSTALL_DLLS_MSVC))
+  endif()
 
   find_package(Boost ${RDK_BOOST_VERSION} COMPONENTS system iostreams REQUIRED)
   set (link_iostreams ${Boost_LIBRARIES})
@@ -61,9 +57,26 @@ if(RDK_BUILD_COORDGEN_SUPPORT)
 
   endif(MAEPARSER_FORCE_BUILD OR (NOT maeparser_FOUND))
 
+  include_directories(${maeparser_INCLUDE_DIRS})
+
+  set(RDK_MAEPARSER_LIBS ${maeparser_LIBRARIES} ${Boost_LIBRARIES}
+      CACHE STRING "the external libraries" FORCE)
+
+else (RDK_BUILD_MAEPARSER_SUPPORT)
+
+  set(RDK_MAEPARSER_LIBS CACHE STRING "the external libraries" FORCE)
+  
+endif(RDK_BUILD_MAEPARSER_SUPPORT)
+
+if(RDK_BUILD_COORDGEN_SUPPORT)
+  if(MSVC AND (NOT RDK_INSTALL_DLLS_MSVC))
+    add_definitions(-DSTATIC_COORDGEN)
+  else(MSVC AND (NOT RDK_INSTALL_DLLS_MSVC))
+    add_definitions(-DIN_COORDGEN)
+  endif(MSVC AND (NOT RDK_INSTALL_DLLS_MSVC))
+
   find_package(coordgen MODULE)
   if(COORDGEN_FORCE_BUILD OR (NOT coordgen_FOUND))
-
     if(NOT DEFINED COORDGEN_DIR)
       set(COORDGEN_DIR "${CMAKE_CURRENT_SOURCE_DIR}/coordgen")
     endif()
@@ -85,19 +98,15 @@ if(RDK_BUILD_COORDGEN_SUPPORT)
     set(coordgen_INCLUDE_DIRS ${CMAKE_CURRENT_SOURCE_DIR}
         CACHE STRING "CoordGen Include File" FORCE)
     file(GLOB CGSOURCES "${COORDGEN_DIR}/*.cpp")
-    rdkit_library(coordgen ${CGSOURCES} SHARED LINK_LIBRARIES ${maeparser_LIBRARIES})
+    rdkit_library(coordgen ${CGSOURCES} SHARED )
     install(TARGETS coordgen DESTINATION ${RDKit_LibDir})
     set(coordgen_LIBRARIES coordgen)
 
   endif(COORDGEN_FORCE_BUILD OR (NOT coordgen_FOUND))
 
-  include_directories(${maeparser_INCLUDE_DIRS})
   include_directories(${coordgen_INCLUDE_DIRS})
 
-  install(FILES DESTINATION ${RDKit_ShareDir}/Data
-          COMPONENT data)
-
-  set(RDK_COORDGEN_LIBS MolAlign ${coordgen_LIBRARIES} ${maeparser_LIBRARIES} ${Boost_LIBRARIES}
+  set(RDK_COORDGEN_LIBS MolAlign ${coordgen_LIBRARIES} ${RDK_MAEPARSER_LIBS} ${Boost_LIBRARIES}
       CACHE STRING "the external libraries" FORCE)
   rdkit_headers(CoordGen.h DEST GraphMol)
 

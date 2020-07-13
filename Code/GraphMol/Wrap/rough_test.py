@@ -5923,12 +5923,13 @@ M  END
         Chem.SDMolSupplier,
         Chem.TDTMolSupplier,
         #Chem.CompressedSDMolSupplier,
-        Chem.MaeMolSupplier
     ]:
       print("supplier:", supplier)
       with self.assertRaises(OSError):
         suppl = supplier(d)
-
+    if hasattr(Chem, 'MaeMolSupplier'):
+      with self.assertRaises(OSError):
+        suppl = Chem.MaeMolSupplier(d)
     os.rmdir(d)
 
   def testRandomSmilesVect(self):
