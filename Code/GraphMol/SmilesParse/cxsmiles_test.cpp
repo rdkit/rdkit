@@ -535,6 +535,21 @@ void testErrorsInCXSmiles() {
   BOOST_LOG(rdInfoLog) << "done" << std::endl;
 }
 
+void testMDLQueriesInCXSmiles() {
+  BOOST_LOG(rdInfoLog) << "Testing handling of MDL queries in CXSMILES"
+                       << std::endl;
+
+  {  // just ring bonds
+    auto m =
+        "[#6]-[#6]-1-[#6]-[#6]-1 "
+        "|rb:0:0,1:*,2:2|"_smiles;
+    TEST_ASSERT(m);
+    auto sma = MolToSmarts(*m);
+    TEST_ASSERT(sma == "[#6&x0]-[#6&x2]1-[#6&x2]-[#6]-1");
+  }
+  BOOST_LOG(rdInfoLog) << "done" << std::endl;
+}
+
 int main(int argc, char *argv[]) {
   (void)argc;
   (void)argv;
@@ -553,4 +568,5 @@ int main(int argc, char *argv[]) {
   testEnhancedStereo();
   testHTMLCharCodes();
   testErrorsInCXSmiles();
+  testMDLQueriesInCXSmiles();
 }
