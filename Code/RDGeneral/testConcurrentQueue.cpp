@@ -101,11 +101,11 @@ bool testSingleProducerMultipleConsumers() {
 }
 
 void testMultipleTimes() {
-  const int runs = 1000;
-  for (int i = 0; i < runs; i++) {
+  const int trials = 10000;
+  for (int i = 0; i < trials; i++) {
     bool result = testSingleProducerMultipleConsumers();
-    // std::cerr << "\rIterations remaining : " << (runs - 1 - i) << ' '  <<
-    // std::flush;
+    std::cerr << "\rIterations remaining : " << (trials - i - 1) << ' '
+              << std::flush;
     TEST_ASSERT(result == true);
   }
 }
