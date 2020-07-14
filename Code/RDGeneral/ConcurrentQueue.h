@@ -11,62 +11,82 @@ namespace RDKit {
 template <class E>
 class ConcurrentQueue {
  public:
-  int capacity, head, tail;
-  std::vector<E> elements;
+  size_t capacity;
+	bool done;
   std::mutex lock;
-  std::condition_variable notEmpty, notFull;
-  ConcurrentQueue<E>(int capacity) {
+  std::condition_variable cv_push, cv_pop;
+	std::queue<E> q;
+  ConcurrentQueue<E>(size_t capacity) {
     this->capacity = capacity;
-    std::vector<E> elements(capacity);
-    this->elements = elements;
-    this->head = 0;
-    this->tail = 0;
+		this->done = false;
   }
-  void push(E element);
-  E pop();
+  void push(const E& element);
+  bool pop(E& element);
   bool isEmpty();
+	bool getDone();
+	void setDone();
+	size_t limit();
+	size_t size();
 };
 
 template <class E>
-void ConcurrentQueue<E>::push(E element) {
+void ConcurrentQueue<E>::push(const E& element) {
   std::unique_lock<std::mutex> lk(lock);
-  while (this->head + this->capacity == this->tail) {
-    notFull.wait(lk);
-  }
-  bool wasEmpty = (head == tail);
-  this->elements.at(this->tail % this->capacity) = element;
-  this->tail++;
-  //! the queue was empty before but affter adding the element
-  //! it is not anymore, thus notify all the consumers to consume
-  if (wasEmpty) {
-    notEmpty.notify_all();
-  }
+	while(q.size() >= capacity){
+		cv_push.wait(lk);
+	}
+	q.push(element);
+	cv_pop.notify_one();
 }
 
 template <class E>
-E ConcurrentQueue<E>::pop() {
+bool ConcurrentQueue<E>::pop(E& element) {
   std::unique_lock<std::mutex> lk(lock);
-  while (this->head == this->tail) {
-    notEmpty.wait(lk);
-  }
-  bool wasFull = (head + capacity == tail);
-  E element = this->elements.at(this->head % this->capacity);
-  this->head++;
-  //! the queue was full before but now it is not since we have consumed the
-  //! element thus notify the producer to producer, i.e. put an element in the
-  //! queue
-  if (wasFull) {
-    notFull.notify_all();
-  }
-  return element;
+	while(q.empty()){
+		if(done){
+			return false;
+		}
+		cv_pop.wait(lk);
+	}
+	element = q.front();
+	q.pop();
+	cv_push.notify_one();
+	return true;
 }
 
 template <class E>
 bool ConcurrentQueue<E>::isEmpty() {
   std::unique_lock<std::mutex> lk(lock);
-  return (this->head == this->tail);
+  return q.empty();
 }
+
+template <class E>
+void ConcurrentQueue<E>::setDone() {
+  std::unique_lock<std::mutex> lk(lock);
+	done = true;
+	cv_pop.notify_all();
+}
+
+template <class E>
+bool ConcurrentQueue<E>::getDone() {
+  std::unique_lock<std::mutex> lk(lock);
+  return done;
+}
+
+template <class E>
+size_t ConcurrentQueue<E>::limit() {
+  return capacity;
+}
+
+template <class E>
+size_t ConcurrentQueue<E>::size() {
+  std::unique_lock<std::mutex> lk(lock);
+  return q.size();
+}
+
+
 
 }  // namespace RDKit
 #endif
 #endif
+

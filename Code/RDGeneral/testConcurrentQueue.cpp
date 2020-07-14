@@ -5,85 +5,103 @@
 #include <atomic>
 #include <functional>
 #include <vector>
-
+#include <sstream>
+#include <iomanip>
 #include "ConcurrentQueue.h"
 
 using namespace RDKit;
 namespace io = boost::iostreams;
 using namespace std::placeholders;
 
-const int numToProduce = 100;
-const int numToConsume = 25;
+struct PrintThread : public std::stringstream {
+          static inline std::mutex cout_mutex;
+          ~PrintThread() {
+              std::lock_guard<std::mutex> l {cout_mutex};
+              std::cout << rdbuf();
+          }
+      };
 
 void testPushAndPop() {
   ConcurrentQueue<int>* q = new ConcurrentQueue<int>(4);
+	int e1, e2, e3;
+	TEST_ASSERT(q->isEmpty());	
+	TEST_ASSERT(q->limit() == 4);
+
   q->push(1);
   q->push(2);
   q->push(3);
-  q->push(4);
-  TEST_ASSERT(q->pop() == 1);
-  TEST_ASSERT(q->pop() == 2);
-  TEST_ASSERT(q->pop() == 3);
-  TEST_ASSERT(q->pop() == 4);
+	TEST_ASSERT(!q->isEmpty());
+	TEST_ASSERT(q->size() == 3);
+
+	TEST_ASSERT(q->pop(e1));
+	TEST_ASSERT(q->pop(e2));
+	TEST_ASSERT(q->pop(e3));
+  
+	TEST_ASSERT(e1 == 1);
+  TEST_ASSERT(e2 == 2);
+  TEST_ASSERT(e3 == 3);
+
+	TEST_ASSERT(q->isEmpty());
+	
   delete (q);
 }
 
-void produce(ConcurrentQueue<int>& q, int& producer_count) {
+void produce(ConcurrentQueue<int>& q, const size_t id, const int numToProduce) {
   for (int i = 0; i < numToProduce; ++i) {
-    ++producer_count;
-    q.push(producer_count);
-  }
+    q.push(i);
+		//PrintThread{} << "   Producer " << id << " --> item " << std::setw(3) << i << '\n';
+  }	
+		//PrintThread{} << "EXIT: Producer " << id << '\n';
 }
 
-void consume(ConcurrentQueue<int>& q, int& consumer_count, int& sum) {
-  for (int i = 0; i < numToConsume; ++i) {
-    auto item = q.pop();
-    ++consumer_count;
-    sum += item;
-  }
+void consume(ConcurrentQueue<int>& q, const size_t id, int& sum) {
+	int element;
+	while(q.pop(element)){	
+			sum += element;
+			//PrintThread{} << "                  item " << std::setw(3) << element  << " --> Consumer " << id << '\n';
+	}
+		//PrintThread{} << "EXIT: Consumer " << id << '\n';
 }
+
+
 bool testSingleProducerMultipleConsumers() {
-  ConcurrentQueue<int> q(10);
-  const int numProducerThreads = 1;
-  const int numConsumerThreads =
-      (numToProduce * numProducerThreads) / numToConsume;
-
-  int sum = 0;
-  int producer_count = 0;
-  int consumer_count = 0;
-
+  ConcurrentQueue<int> q(5);
+	TEST_ASSERT(q.isEmpty());
+  const int numProducerThreads = 2;
+  const int numConsumerThreads = 3;
+	const int numToProduce = 10;
+	const int expectedSum = numProducerThreads * (numToProduce - 1) * (numToProduce)/2;
+	int sum = 0;
+	
   std::vector<std::thread> producers(numProducerThreads);
   std::vector<std::thread> consumers(numConsumerThreads);
 
   //! start producer threads
   for (int i = 0; i < numProducerThreads; i++) {
-    producers[i] =
-        std::thread(std::bind(produce, std::ref(q), std::ref(producer_count)));
+    producers[i] = std::thread(produce, std::ref(q), i,  numToProduce);
   }
   //! start consumer threads
   for (int i = 0; i < numConsumerThreads; i++) {
-    consumers[i] = std::thread(std::bind(
-        consume, std::ref(q), std::ref(consumer_count), std::ref(sum)));
+    consumers[i] = std::thread(consume, std::ref(q), i, std::ref(sum));
   }
 
   std::for_each(producers.begin(), producers.end(),
                 std::mem_fn(&std::thread::join));
-  std::for_each(consumers.begin(), consumers.end(),
+	//! the producer is done producing
+  q.setDone();
+
+	std::for_each(consumers.begin(), consumers.end(),
                 std::mem_fn(&std::thread::join));
+	TEST_ASSERT(q.isEmpty());
 
-  int expectedSum = (numToProduce * numProducerThreads) *
-                    (numToProduce * numProducerThreads + 1) / 2;
-  int expectedProducerCount = numToProduce * numProducerThreads;
-  int expectedConsumerCount = numToConsume * numConsumerThreads;
-
-  return (sum == expectedSum) && (producer_count == expectedProducerCount) &&
-         (consumer_count == expectedConsumerCount);
+  return (sum == expectedSum);
 }
 
 void testMultipleTimes() {
-  const int runs = 100000;
+  const int runs = 1000;
   for (int i = 0; i < runs; i++) {
     bool result = testSingleProducerMultipleConsumers();
+		//std::cerr << "\rIterations remaining : " << (runs - 1 - i) << ' '  << std::flush;
     TEST_ASSERT(result == true);
   }
 }
@@ -107,3 +125,4 @@ int main() {
 }
 
 #endif
+
