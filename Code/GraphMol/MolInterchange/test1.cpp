@@ -448,6 +448,14 @@ void testEitherStereo() {
     auto mols = MolInterchange::JSONDataToMols(jsond);
     TEST_ASSERT(mols[0]->getBondWithIdx(1)->getStereo() == Bond::STEREOANY);
   }
+  {
+    auto mol = "CC=CC"_smiles;
+    TEST_ASSERT(mol);
+    mol->getBondWithIdx(1)->setStereo(Bond::STEREOANY);
+    auto jsond = MolInterchange::MolToJSONData(*mol);
+    auto mols = MolInterchange::JSONDataToMols(jsond);
+    TEST_ASSERT(mols[0]->getBondWithIdx(1)->getStereo() == Bond::STEREOANY);
+  }
   BOOST_LOG(rdInfoLog) << "done" << std::endl;
 }
 
