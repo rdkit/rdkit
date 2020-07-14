@@ -1,5 +1,5 @@
 //
-//  Copyright (C) 2016 Greg Landrum
+//  Copyright (C) 2016-2020 Greg Landrum
 //
 //   @@ All Rights Reserved @@
 //  This file is part of the RDKit.
@@ -12,6 +12,7 @@
 #include <GraphMol/RDKitBase.h>
 #include "SmilesParse.h"
 #include "SmilesWrite.h"
+#include "SmartsWrite.h"
 #include <RDGeneral/RDLog.h>
 using namespace RDKit;
 
@@ -547,6 +548,17 @@ void testMDLQueriesInCXSmiles() {
     auto sma = MolToSmarts(*m);
     TEST_ASSERT(sma == "[#6&x0]-[#6&x2]1-[#6&x2]-[#6]-1");
   }
+
+  {  // everything together
+    auto m =
+        "[#6]-[#6]-1-[#6]-[#6]-1 "
+        "|rb:0:0,1:*,2:2,s:3:*,u:0|"_smiles;
+    TEST_ASSERT(m);
+    auto sma = MolToSmarts(*m);
+    std::cerr << sma << std::endl;
+    TEST_ASSERT(sma == "ff");
+  }
+
   BOOST_LOG(rdInfoLog) << "done" << std::endl;
 }
 
