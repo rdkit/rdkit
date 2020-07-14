@@ -13,8 +13,8 @@
     \brief Includes a bunch of functionality for handling Atom and Bond queries.
 */
 #include <RDGeneral/export.h>
-#ifndef _RD_QUERY_OPS_H
-#define _RD_QUERY_OPS_H
+#ifndef RD_QUERY_OPS_H
+#define RD_QUERY_OPS_H
 
 #include <GraphMol/RDKitBase.h>
 #include <Query/QueryObjects.h>
@@ -1030,6 +1030,11 @@ Queries::EqualityQuery<int, const Target *, true> *makePropQuery(
 RDKIT_GRAPHMOL_EXPORT bool isComplexQuery(const Bond *b);
 RDKIT_GRAPHMOL_EXPORT bool isComplexQuery(const Atom *a);
 RDKIT_GRAPHMOL_EXPORT bool isAtomAromatic(const Atom *a);
-};  // namespace RDKit
 
+namespace QueryOps {
+RDKIT_GRAPHMOL_EXPORT void completeMolQueries(
+    RWMol *mol, unsigned int magicVal = 0xDEADBEEF);
+RDKIT_GRAPHMOL_EXPORT Atom *replaceAtomWithQueryAtom(RWMol *mol, Atom *atom);
+}  // namespace QueryOps
+}  // namespace RDKit
 #endif
