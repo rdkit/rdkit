@@ -87,8 +87,6 @@ Module.onRuntimeInitialized = () => {
     test_basics();
     test_sketcher_services();
     test_sketcher_services2();
+    console.log("Tests finished successfully");
 };
-
-
-
 

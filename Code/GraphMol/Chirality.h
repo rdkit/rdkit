@@ -56,6 +56,9 @@ RDKIT_GRAPHMOL_EXPORT const Bond *getNeighboringDirectedBond(const ROMol &mol,
 RDKIT_GRAPHMOL_EXPORT Bond::BondStereo translateEZLabelToCisTrans(
     Bond::BondStereo label);
 
+
+RDKIT_GRAPHMOL_EXPORT INT_VECT findStereoAtoms(const Bond *bond);
+
 }  // namespace Chirality
 }  // namespace RDKit
 /// @endcond

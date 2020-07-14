@@ -51,6 +51,7 @@ option(RDK_USE_STRICT_ROTOR_DEFINITION "Use the most strict rotatable bond defin
 option(RDK_BUILD_DESCRIPTORS3D "Build the 3D descriptors calculators, requires Eigen3 to be installed" ON)
 option(RDK_BUILD_FREESASA_SUPPORT "build the rdkit freesasa wrapper" OFF )
 option(RDK_BUILD_COORDGEN_SUPPORT "build the rdkit coordgen wrapper" ON )
+option(RDK_BUILD_MAEPARSER_SUPPORT "build the rdkit MAE parser wrapper" ON )
 option(RDK_BUILD_MOLINTERCHANGE_SUPPORT "build in support for CommonChem molecule interchange" ON )
 option(RDK_BUILD_YAEHMOP_SUPPORT "build support for the YAeHMOP wrapper" OFF)
 option(RDK_BUILD_STRUCTCHECKER_SUPPORT "build in support for the StructChecker alpha (not recommended, use the MolVS integration instead)" OFF )
@@ -175,6 +176,11 @@ endif(RDK_BUILD_SWIG_WRAPPERS)
 
 if(RDK_BUILD_COORDGEN_SUPPORT)
     add_definitions(-DRDK_BUILD_COORDGEN_SUPPORT)
+    include_directories(${RDKit_ExternalDir})
+endif()
+
+if(RDK_BUILD_MAEPARSER_SUPPORT)
+    add_definitions(-DRDK_BUILD_MAEPARSER_SUPPORT)
     include_directories(${RDKit_ExternalDir})
 endif()
 
