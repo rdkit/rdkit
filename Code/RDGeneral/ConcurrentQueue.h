@@ -18,10 +18,7 @@ class ConcurrentQueue {
   std::queue<E> q;
 
  public:
-  ConcurrentQueue<E>(size_t capacity) {
-    this->capacity = capacity;
-    this->done = false;
-  }
+  ConcurrentQueue<E>(size_t capacity) : capacity(capacity), done(false) {}
   void push(const E& element);
   bool pop(E& element);
   bool isEmpty();

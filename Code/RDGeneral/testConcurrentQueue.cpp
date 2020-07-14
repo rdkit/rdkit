@@ -11,9 +11,8 @@
 #include "ConcurrentQueue.h"
 
 using namespace RDKit;
-namespace io = boost::iostreams;
-using namespace std::placeholders;
 
+//! method for thread-safe printing, only for debugging
 struct PrintThread : public std::stringstream {
   static inline std::mutex cout_mutex;
   ~PrintThread() {
@@ -31,6 +30,7 @@ void testPushAndPop() {
   q->push(1);
   q->push(2);
   q->push(3);
+
   TEST_ASSERT(!q->isEmpty());
   TEST_ASSERT(q->size() == 3);
 
@@ -50,32 +50,25 @@ void testPushAndPop() {
 void produce(ConcurrentQueue<int>& q, const size_t id, const int numToProduce) {
   for (int i = 0; i < numToProduce; ++i) {
     q.push(i);
-    // PrintThread{} << "   Producer " << id << " --> item " << std::setw(3) <<
-    // i << '\n';
   }
-  // PrintThread{} << "EXIT: Producer " << id << '\n';
 }
 
-void consume(ConcurrentQueue<int>& q, const size_t id, int& sum) {
+std::atomic_int at_sum(0);
+
+void consume(ConcurrentQueue<int>& q, const size_t id) {
   int element;
   while (q.pop(element)) {
-    sum += element;
-    // PrintThread{} << "                  item " << std::setw(3) << element  <<
-    // " --> Consumer " << id << '\n';
+    at_sum += element;
   }
-  // PrintThread{} << "EXIT: Consumer " << id << '\n';
 }
 
-bool testSingleProducerMultipleConsumers() {
+bool testProducerConsumer(const int numProducerThreads,
+                          const int numConsumerThreads) {
   ConcurrentQueue<int> q(5);
   TEST_ASSERT(q.isEmpty());
-  const int numProducerThreads = 2;
-  const int numConsumerThreads = 3;
   const int numToProduce = 10;
   const int expectedSum =
       numProducerThreads * (numToProduce - 1) * (numToProduce) / 2;
-  int sum = 0;
-
   std::vector<std::thread> producers(numProducerThreads);
   std::vector<std::thread> consumers(numConsumerThreads);
 
@@ -83,9 +76,10 @@ bool testSingleProducerMultipleConsumers() {
   for (int i = 0; i < numProducerThreads; i++) {
     producers[i] = std::thread(produce, std::ref(q), i, numToProduce);
   }
+  at_sum = 0;
   //! start consumer threads
   for (int i = 0; i < numConsumerThreads; i++) {
-    consumers[i] = std::thread(consume, std::ref(q), i, std::ref(sum));
+    consumers[i] = std::thread(consume, std::ref(q), i);
   }
 
   std::for_each(producers.begin(), producers.end(),
@@ -97,17 +91,49 @@ bool testSingleProducerMultipleConsumers() {
                 std::mem_fn(&std::thread::join));
   TEST_ASSERT(q.isEmpty());
 
-  return (sum == expectedSum);
+  return (at_sum == expectedSum);
 }
 
 void testMultipleTimes() {
   const int trials = 10000;
+  //! Single Producer, Single Consumer
   for (int i = 0; i < trials; i++) {
-    bool result = testSingleProducerMultipleConsumers();
-    std::cerr << "\rIterations remaining : " << (trials - i - 1) << ' '
-              << std::flush;
-    TEST_ASSERT(result == true);
+    bool result = testProducerConsumer(1, 1);
+    std::cerr
+        << "\rTesting Single Producer, Single Consumer. Iterations Remaining: "
+        << (trials - i - 1) << ' ' << std::flush;
+    TEST_ASSERT(result);
   }
+  std::cout << std::endl;
+
+  //! Single Producer, Multiple Consumer
+  for (int i = 0; i < trials; i++) {
+    bool result = testProducerConsumer(1, 5);
+    std::cerr << "\rTesting Single Producer, Multiple Consumer. Iterations "
+                 "Remaining: "
+              << (trials - i - 1) << ' ' << std::flush;
+    TEST_ASSERT(result);
+  }
+  std::cout << std::endl;
+  //! Multiple Producer, Single Consumer
+  for (int i = 0; i < trials; i++) {
+    bool result = testProducerConsumer(5, 1);
+    std::cerr << "\rTesting Multiple Producer, Single Consumer. Iterations "
+                 "Remaining: "
+              << (trials - i - 1) << ' ' << std::flush;
+    TEST_ASSERT(result);
+  }
+  std::cout << std::endl;
+
+  //! Multiple Producer, Multiple Consumer
+  for (int i = 0; i < trials; i++) {
+    bool result = testProducerConsumer(2, 4);
+    std::cerr << "\rTesting Multiple Producer, Mutiple Consumer. Iterations "
+                 "Remaining: "
+              << (trials - i - 1) << ' ' << std::flush;
+    TEST_ASSERT(result);
+  }
+  std::cout << std::endl;
 }
 
 int main() {
