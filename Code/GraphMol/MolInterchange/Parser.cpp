@@ -177,7 +177,8 @@ void readBond(RWMol *mol, const rj::Value &bondVal,
     throw FileParseException("Bad Format: bad bond order for bond");
   }
   bnd->setBondType(bolookup.find(bo)->second);
-  if (bondVal.HasMember("stereoAtoms")) {
+  std::string stereo = getStringDefaultValue("stereo", bondVal, bondDefaults);
+  if (stereo != "unspecified") {
     needStereoLoop = true;
   }
 }
@@ -186,23 +187,23 @@ void readBondStereo(Bond *bnd, const rj::Value &bondVal,
                     const DefaultValueCache &bondDefaults) {
   PRECONDITION(bnd, "no bond");
 
+  std::string stereo = getStringDefaultValue("stereo", bondVal, bondDefaults);
+  if (stereo == "unspecified") {
+    return;
+  }
+  if (stereolookup.find(stereo) == stereolookup.end()) {
+    throw FileParseException("Bad Format: bond stereo value for bond");
+  }
   const auto &miter = bondVal.FindMember("stereoAtoms");
   if (miter != bondVal.MemberEnd()) {
     const auto aids = miter->value.GetArray();
     bnd->setStereoAtoms(aids[0].GetInt(), aids[1].GetInt());
-    std::string stereo = getStringDefaultValue("stereo", bondVal, bondDefaults);
-    if (stereolookup.find(stereo) == stereolookup.end()) {
-      throw FileParseException("Bad Format: bond stereo value for bond");
-    }
-    bnd->setStereo(stereolookup.find(stereo)->second);
-
-  } else {
-    if (bondVal.HasMember("stereo")) {
-      throw FileParseException(
-          "Bad Format: bond stereo provided without stereoAtoms");
-    }
+  } else if (stereo != "either") {
+    throw FileParseException(
+        "Bad Format: bond stereo provided without stereoAtoms");
   }
-}
+  bnd->setStereo(stereolookup.find(stereo)->second);
+}  // namespace
 
 void readConformer(Conformer *conf, const rj::Value &confVal) {
   PRECONDITION(conf, "no conformer");
@@ -491,7 +492,7 @@ std::vector<boost::shared_ptr<ROMol>> DocToMols(
   return res;
 }
 
-}  // end of anonymous namespace
+}  // namespace
 
 std::vector<boost::shared_ptr<ROMol>> JSONDataStreamToMols(
     std::istream *inStream, const JSONParseParameters &params) {
@@ -510,5 +511,5 @@ std::vector<boost::shared_ptr<ROMol>> JSONDataToMols(
   return DocToMols(doc, params);
 }
 
-}  // end of namespace MolInterchange
+}  // namespace MolInterchange
 }  // end of namespace RDKit
