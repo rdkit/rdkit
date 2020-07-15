@@ -573,8 +573,7 @@ void testMDLQueriesInCXSmiles() {
         "|rb:0:0,1:*,2:2,s:3:*,u:0|"_smiles;
     TEST_ASSERT(m);
     auto sma = MolToSmarts(*m);
-    std::cerr << sma << std::endl;
-    TEST_ASSERT(sma == "ff");
+    TEST_ASSERT(sma == "[#6&x0&$(*=,:,#*)]-[#6&x2]1-[#6&x2]-[#6&d2]-1");
   }
 
   BOOST_LOG(rdInfoLog) << "done" << std::endl;
