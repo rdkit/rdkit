@@ -393,6 +393,66 @@ bool parse_linknodes(Iterator &first, Iterator last, RDKit::RWMol &mol) {
   mol.setProp(common_properties::molFileLinkNodes, accum);
   return true;
 }
+
+template <typename Iterator>
+bool parse_variable_attachments(Iterator &first, Iterator last,
+                                RDKit::RWMol &mol) {
+  // these look like: CO*.C1=CC=NC=C1 |m:2:3.5.4|
+  // that corresponds to replacing the bond to atom 2 with bonds to atom 3, 5,
+  // or 4
+  //
+  if (first >= last || *first != 'm' || first + 1 >= last ||
+      *(first + 1) != ':') {
+    return false;
+  }
+  first += 2;
+
+  while (first < last && *first >= '0' && *first <= '9') {
+    unsigned int at1idx;
+    if (!read_int(first, last, at1idx)) {
+      return false;
+    }
+    if (mol.getAtomWithIdx(at1idx)->getDegree() != 1) {
+      BOOST_LOG(rdWarningLog)
+          << "position variation bond to atom with more than one bond"
+          << std::endl;
+      return false;
+    }
+    if (first < last && *first == ':') {
+      ++first;
+    } else {
+      BOOST_LOG(rdWarningLog) << "improperly formatted m: block" << std::endl;
+      return false;
+    }
+    std::vector<std::string> others;
+    while (first < last && *first >= '0' && *first <= '9') {
+      unsigned int aidx;
+      if (!read_int(first, last, aidx)) {
+        return false;
+      }
+      others.push_back((boost::format("%d") % (aidx + 1)).str());
+      if (first < last && *first == '.') {
+        ++first;
+      }
+    }
+    std::string endPts = (boost::format("(%d") % others.size()).str();
+    for (auto idx : others) {
+      endPts += " " + idx;
+    }
+    endPts += ")";
+
+    for (auto nbri : boost::make_iterator_range(
+             mol.getAtomBonds(mol.getAtomWithIdx(at1idx)))) {
+      auto bnd = mol[nbri];
+      bnd->setProp(common_properties::_MolFileBondEndPts, endPts);
+      bnd->setProp(common_properties::_MolFileBondAttach, std::string("ANY"));
+    }
+    if (first < last && *first == ',') {
+      ++first;
+    }
+  }
+  return true;
+}
 template <typename Iterator>
 bool parse_substitution(Iterator &first, Iterator last, RDKit::RWMol &mol) {
   if (first >= last || *first != 's' || first + 1 >= last ||
@@ -614,6 +674,10 @@ bool parse_it(Iterator &first, Iterator last, RDKit::RWMol &mol) {
       if (!parse_substitution(first, last, mol)) {
         return false;
       }
+    } else if (*first == 'm') {
+      if (!parse_variable_attachments(first, last, mol)) {
+        return false;
+      }
     } else {
       ++first;
     }
@@ -625,7 +689,7 @@ bool parse_it(Iterator &first, Iterator last, RDKit::RWMol &mol) {
   ++first;  // step past the last '|'
   return true;
 }
-}  // end of namespace parser
+}  // namespace parser
 
 namespace {
 template <typename Q>

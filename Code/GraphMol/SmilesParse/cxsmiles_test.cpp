@@ -600,6 +600,51 @@ void testLinknodesInCXSmiles() {
   BOOST_LOG(rdInfoLog) << "done" << std::endl;
 }
 
+void testVariableAttachmentInCXSmiles() {
+  BOOST_LOG(rdInfoLog)
+      << "Testing handling of variable attachment bonds in CXSMILES"
+      << std::endl;
+
+  {
+    auto m = "CO*.C1=CC=NC=C1 |m:2:3.5.4|"_smiles;
+    TEST_ASSERT(m);
+    const auto bnd = m->getBondBetweenAtoms(1, 2);
+    TEST_ASSERT(bnd);
+    TEST_ASSERT(bnd->hasProp(common_properties::_MolFileBondAttach));
+    TEST_ASSERT(bnd->getProp<std::string>(
+                    common_properties::_MolFileBondAttach) == "ANY");
+    TEST_ASSERT(bnd->hasProp(common_properties::_MolFileBondEndPts));
+    TEST_ASSERT(bnd->getProp<std::string>(
+                    common_properties::_MolFileBondEndPts) == "(3 4 6 5)");
+  }
+
+  {
+    auto m = "F*.Cl*.C1=CC=NC=C1 |m:1:9.8,3:4.5|"_smiles;
+    TEST_ASSERT(m);
+    {
+      const auto bnd = m->getBondBetweenAtoms(0, 1);
+      TEST_ASSERT(bnd);
+      TEST_ASSERT(bnd->hasProp(common_properties::_MolFileBondAttach));
+      TEST_ASSERT(bnd->getProp<std::string>(
+                      common_properties::_MolFileBondAttach) == "ANY");
+      TEST_ASSERT(bnd->hasProp(common_properties::_MolFileBondEndPts));
+      TEST_ASSERT(bnd->getProp<std::string>(
+                      common_properties::_MolFileBondEndPts) == "(2 10 9)");
+    }
+    {
+      const auto bnd = m->getBondBetweenAtoms(2, 3);
+      TEST_ASSERT(bnd);
+      TEST_ASSERT(bnd->hasProp(common_properties::_MolFileBondAttach));
+      TEST_ASSERT(bnd->getProp<std::string>(
+                      common_properties::_MolFileBondAttach) == "ANY");
+      TEST_ASSERT(bnd->hasProp(common_properties::_MolFileBondEndPts));
+      TEST_ASSERT(bnd->getProp<std::string>(
+                      common_properties::_MolFileBondEndPts) == "(2 5 6)");
+    }
+  }
+  BOOST_LOG(rdInfoLog) << "done" << std::endl;
+}
+
 int main(int argc, char *argv[]) {
   (void)argc;
   (void)argv;
@@ -620,4 +665,5 @@ int main(int argc, char *argv[]) {
   testErrorsInCXSmiles();
   testMDLQueriesInCXSmiles();
   testLinknodesInCXSmiles();
+  testVariableAttachmentInCXSmiles();
 }
