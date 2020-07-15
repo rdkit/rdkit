@@ -10,15 +10,6 @@
 
 using namespace RDKit;
 
-//! struct for thread-safe printing, only for debugging
-struct PrintThread : public std::stringstream {
-  static inline std::mutex cout_mutex;
-  ~PrintThread() {
-    std::lock_guard<std::mutex> lk{cout_mutex};
-    std::cout << rdbuf();
-  }
-};
-
 //! method for testing basic ConcurrentQueue operations
 void testPushAndPop() {
   ConcurrentQueue<int>* q = new ConcurrentQueue<int>(4);
@@ -109,41 +100,26 @@ void testMultipleTimes() {
   //! Single Producer, Single Consumer
   for (int i = 0; i < trials; i++) {
     bool result = testProducerConsumer(1, 1);
-    std::cerr << "\rTesting: 1 Producer, 1 Consumer. Iterations Remaining: "
-              << (trials - i - 1) << ' ' << std::flush;
     TEST_ASSERT(result);
   }
-  std::cout << std::endl;
 
   //! Single Producer, Multiple Consumer
   for (int i = 0; i < trials; i++) {
     bool result = testProducerConsumer(1, 5);
-    std::cerr << "\rTesting: 1 Producer, 5 Consumers. Iterations "
-                 "Remaining: "
-              << (trials - i - 1) << ' ' << std::flush;
     TEST_ASSERT(result);
   }
-  std::cout << std::endl;
 
   //! Multiple Producer, Single Consumer
   for (int i = 0; i < trials; i++) {
     bool result = testProducerConsumer(5, 1);
-    std::cerr << "\rTesting: 5 Producers, 1 Consumer. Iterations "
-                 "Remaining: "
-              << (trials - i - 1) << ' ' << std::flush;
     TEST_ASSERT(result);
   }
-  std::cout << std::endl;
 
   //! Multiple Producer, Multiple Consumer
   for (int i = 0; i < trials; i++) {
     bool result = testProducerConsumer(2, 4);
-    std::cerr << "\rTesting: 2 Producers, 4 Consumers. Iterations "
-                 "Remaining: "
-              << (trials - i - 1) << ' ' << std::flush;
     TEST_ASSERT(result);
   }
-  std::cout << std::endl;
 }
 
 int main() {

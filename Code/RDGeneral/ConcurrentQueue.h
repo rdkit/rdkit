@@ -14,7 +14,7 @@ class ConcurrentQueue {
   std::mutex lock;
   //! we need two condition variables to establish communication
   //! between popping (consumer threads) and pushing (producer threads)
-  std::condition_variable go_push, go_pop;
+  std::condition_variable goPush, goPop;
   std::queue<E> q;
 
  public:
@@ -47,10 +47,10 @@ template <class E>
 void ConcurrentQueue<E>::push(const E& element) {
   std::unique_lock<std::mutex> lk(lock);
   while (q.size() == capacity) {
-    go_push.wait(lk);
+    goPush.wait(lk);
   }
   q.push(element);
-  go_pop.notify_one();
+  goPop.notify_one();
 }
 
 template <class E>
@@ -60,11 +60,11 @@ bool ConcurrentQueue<E>::pop(E& element) {
     if (done) {
       return false;
     }
-    go_pop.wait(lk);
+    goPop.wait(lk);
   }
   element = q.front();
   q.pop();
-  go_push.notify_one();
+  goPush.notify_one();
   return true;
 }
 
@@ -78,7 +78,7 @@ template <class E>
 void ConcurrentQueue<E>::setDone() {
   std::unique_lock<std::mutex> lk(lock);
   done = true;
-  go_pop.notify_all();
+  goPop.notify_all();
 }
 
 template <class E>
