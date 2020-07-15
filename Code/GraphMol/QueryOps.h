@@ -95,14 +95,12 @@ static inline int queryAtomNonHydrogenDegree(Atom const *at) {
 };
 static inline int queryAtomHeavyAtomDegree(Atom const *at) {
   int heavyDegree = 0;
-  ROMol::ADJ_ITER nbrIdx, endNbrs;
-  boost::tie(nbrIdx, endNbrs) = at->getOwningMol().getAtomNeighbors(at);
-  while (nbrIdx != endNbrs) {
-    const Atom *nbr = at->getOwningMol()[*nbrIdx];
+  for (const auto &nbri :
+       boost::make_iterator_range(at->getOwningMol().getAtomNeighbors(at))) {
+    const auto nbr = at->getOwningMol()[nbri];
     if (nbr->getAtomicNum() > 1) {
       heavyDegree++;
     }
-    ++nbrIdx;
   }
 
   return heavyDegree;
@@ -123,10 +121,10 @@ static inline int queryAtomExplicitValence(Atom const *at) {
   return at->getExplicitValence() - at->getNumExplicitHs();
 };
 static inline int queryAtomTotalValence(Atom const *at) {
-  return at->getExplicitValence() + at->getImplicitValence();
+  return at->getTotalValence();
 };
 static inline int queryAtomUnsaturated(Atom const *at) {
-  return static_cast<int>(at->getDegree()) < at->getExplicitValence();
+  return at->getTotalDegree() < at->getTotalValence();
 };
 static inline int queryAtomNum(Atom const *at) { return at->getAtomicNum(); };
 static inline int makeAtomType(int atomic_num, bool aromatic) {
@@ -644,7 +642,8 @@ RDKIT_GRAPHMOL_EXPORT BOND_EQUALS_QUERY *makeBondOrderEqualsQuery(
 //! returns a Query for unspecified SMARTS bonds
 RDKIT_GRAPHMOL_EXPORT BOND_EQUALS_QUERY *makeSingleOrAromaticBondQuery();
 //! returns a Query for tautomeric bonds
-RDKIT_GRAPHMOL_EXPORT BOND_EQUALS_QUERY *makeSingleOrDoubleOrAromaticBondQuery();
+RDKIT_GRAPHMOL_EXPORT BOND_EQUALS_QUERY *
+makeSingleOrDoubleOrAromaticBondQuery();
 //! returns a Query for matching bond directions
 RDKIT_GRAPHMOL_EXPORT BOND_EQUALS_QUERY *makeBondDirEqualsQuery(
     Bond::BondDir what);
