@@ -2,25 +2,24 @@
 #include <RDGeneral/Invariant.h>
 #include <RDGeneral/RDLog.h>
 
-#include <atomic>
 #include <functional>
 #include <iomanip>
 #include <sstream>
-#include <vector>
 
 #include "ConcurrentQueue.h"
 
 using namespace RDKit;
 
-//! method for thread-safe printing, only for debugging
+//! struct for thread-safe printing, only for debugging
 struct PrintThread : public std::stringstream {
   static inline std::mutex cout_mutex;
   ~PrintThread() {
-    std::lock_guard<std::mutex> l{cout_mutex};
+    std::lock_guard<std::mutex> lk{cout_mutex};
     std::cout << rdbuf();
   }
 };
 
+//! method for testing basic ConcurrentQueue operations
 void testPushAndPop() {
   ConcurrentQueue<int>* q = new ConcurrentQueue<int>(4);
   int e1, e2, e3;
@@ -47,43 +46,43 @@ void testPushAndPop() {
   delete (q);
 }
 
-void produce(ConcurrentQueue<int>& q, const size_t id, const int numToProduce) {
+void produce(ConcurrentQueue<int>& q, const int numToProduce) {
   for (int i = 0; i < numToProduce; ++i) {
     q.push(i);
   }
 }
 
-std::atomic_int at_sum(0);
-
-void consume(ConcurrentQueue<int>& q, const size_t id) {
+void consume(ConcurrentQueue<int>& q, std::vector<int>& result) {
   int element;
   while (q.pop(element)) {
-    at_sum += element;
+    result.push_back(element);
   }
 }
 
+//! multithreaded testing for ConcurrentQueue
 bool testProducerConsumer(const int numProducerThreads,
                           const int numConsumerThreads) {
   ConcurrentQueue<int> q(5);
   TEST_ASSERT(q.isEmpty());
+
   const int numToProduce = 10;
-  const int expectedSum =
-      numProducerThreads * (numToProduce - 1) * (numToProduce) / 2;
+
   std::vector<std::thread> producers(numProducerThreads);
   std::vector<std::thread> consumers(numConsumerThreads);
+  std::vector<std::vector<int>> results(numConsumerThreads);
 
   //! start producer threads
   for (int i = 0; i < numProducerThreads; i++) {
-    producers[i] = std::thread(produce, std::ref(q), i, numToProduce);
+    producers[i] = std::thread(produce, std::ref(q), numToProduce);
   }
-  at_sum = 0;
   //! start consumer threads
   for (int i = 0; i < numConsumerThreads; i++) {
-    consumers[i] = std::thread(consume, std::ref(q), i);
+    consumers[i] = std::thread(consume, std::ref(q), std::ref(results[i]));
   }
 
   std::for_each(producers.begin(), producers.end(),
                 std::mem_fn(&std::thread::join));
+
   //! the producer is done producing
   q.setDone();
 
@@ -91,7 +90,18 @@ bool testProducerConsumer(const int numProducerThreads,
                 std::mem_fn(&std::thread::join));
   TEST_ASSERT(q.isEmpty());
 
-  return (at_sum == expectedSum);
+  std::vector<int> frequency(numToProduce, 0);
+  for (auto& result : results) {
+    for (auto& element : result) {
+      frequency[element] += 1;
+    }
+  }
+  for (auto& freq : frequency) {
+    if (freq != numProducerThreads) {
+      return false;
+    }
+  }
+  return true;
 }
 
 void testMultipleTimes() {
@@ -99,9 +109,8 @@ void testMultipleTimes() {
   //! Single Producer, Single Consumer
   for (int i = 0; i < trials; i++) {
     bool result = testProducerConsumer(1, 1);
-    std::cerr
-        << "\rTesting Single Producer, Single Consumer. Iterations Remaining: "
-        << (trials - i - 1) << ' ' << std::flush;
+    std::cerr << "\rTesting: 1 Producer, 1 Consumer. Iterations Remaining: "
+              << (trials - i - 1) << ' ' << std::flush;
     TEST_ASSERT(result);
   }
   std::cout << std::endl;
@@ -109,16 +118,17 @@ void testMultipleTimes() {
   //! Single Producer, Multiple Consumer
   for (int i = 0; i < trials; i++) {
     bool result = testProducerConsumer(1, 5);
-    std::cerr << "\rTesting Single Producer, Multiple Consumer. Iterations "
+    std::cerr << "\rTesting: 1 Producer, 5 Consumers. Iterations "
                  "Remaining: "
               << (trials - i - 1) << ' ' << std::flush;
     TEST_ASSERT(result);
   }
   std::cout << std::endl;
+
   //! Multiple Producer, Single Consumer
   for (int i = 0; i < trials; i++) {
     bool result = testProducerConsumer(5, 1);
-    std::cerr << "\rTesting Multiple Producer, Single Consumer. Iterations "
+    std::cerr << "\rTesting: 5 Producers, 1 Consumer. Iterations "
                  "Remaining: "
               << (trials - i - 1) << ' ' << std::flush;
     TEST_ASSERT(result);
@@ -128,7 +138,7 @@ void testMultipleTimes() {
   //! Multiple Producer, Multiple Consumer
   for (int i = 0; i < trials; i++) {
     bool result = testProducerConsumer(2, 4);
-    std::cerr << "\rTesting Multiple Producer, Mutiple Consumer. Iterations "
+    std::cerr << "\rTesting: 2 Producers, 4 Consumers. Iterations "
                  "Remaining: "
               << (trials - i - 1) << ' ' << std::flush;
     TEST_ASSERT(result);
@@ -139,13 +149,11 @@ void testMultipleTimes() {
 int main() {
   RDLog::InitLogs();
 
-  //! test basic push and pop operations
   BOOST_LOG(rdErrorLog) << "\n-----------------------------------------\n";
   testPushAndPop();
   BOOST_LOG(rdErrorLog) << "Finished: testPushAndPop() \n";
   BOOST_LOG(rdErrorLog) << "\n-----------------------------------------\n";
 #ifdef RDK_TEST_MULTITHREADED
-  //! multiple producers and multiple consumers
   BOOST_LOG(rdErrorLog) << "\n-----------------------------------------\n";
   testMultipleTimes();
   BOOST_LOG(rdErrorLog) << "Finished: testMultipleTimes() \n";

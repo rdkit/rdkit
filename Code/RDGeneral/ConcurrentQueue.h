@@ -2,10 +2,8 @@
 #ifndef CONCURRENT_QUEUE
 #define CONCURRENT_QUEUE
 #include <condition_variable>
-#include <iostream>
 #include <queue>
 #include <thread>
-#include <vector>
 
 namespace RDKit {
 template <class E>
@@ -14,28 +12,45 @@ class ConcurrentQueue {
   size_t capacity;
   bool done;
   std::mutex lock;
-  std::condition_variable cv_push, cv_pop;
+  //! we need two condition variables to establish communication
+  //! between popping (consumer threads) and pushing (producer threads)
+  std::condition_variable go_push, go_pop;
   std::queue<E> q;
 
  public:
   ConcurrentQueue<E>(size_t capacity) : capacity(capacity), done(false) {}
+  //! tries to push an element into the queue if it is not full without
+  //! modifying the variable element
   void push(const E& element);
+
+  //! tries to pop an element from the queue if it is not empty and not done
+  //! the boolean value indicates the whether popping is successful
   bool pop(E& element);
+
+  //! checks whether the ConcurrentQueue is empty
   bool isEmpty();
+
+  //! returns the value of the variable done
   bool getDone();
+
+  //! sets the variable done = true
   void setDone();
+
+  //! returns the capacity of the ConcurrentQueue
   size_t limit();
+
+  //! returns the current size of the queue
   size_t size();
 };
 
 template <class E>
 void ConcurrentQueue<E>::push(const E& element) {
   std::unique_lock<std::mutex> lk(lock);
-  while (q.size() >= capacity) {
-    cv_push.wait(lk);
+  while (q.size() == capacity) {
+    go_push.wait(lk);
   }
   q.push(element);
-  cv_pop.notify_one();
+  go_pop.notify_one();
 }
 
 template <class E>
@@ -45,11 +60,11 @@ bool ConcurrentQueue<E>::pop(E& element) {
     if (done) {
       return false;
     }
-    cv_pop.wait(lk);
+    go_pop.wait(lk);
   }
   element = q.front();
   q.pop();
-  cv_push.notify_one();
+  go_push.notify_one();
   return true;
 }
 
@@ -63,7 +78,7 @@ template <class E>
 void ConcurrentQueue<E>::setDone() {
   std::unique_lock<std::mutex> lk(lock);
   done = true;
-  cv_pop.notify_all();
+  go_pop.notify_all();
 }
 
 template <class E>
