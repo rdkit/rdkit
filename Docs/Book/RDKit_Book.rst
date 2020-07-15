@@ -356,6 +356,7 @@ Primitive                  Property                   "Default value"  Range?   
 =========  =========================================  ===============  ======  =========
 a          "aromatic atom"
 A          "aliphatic atom"
+d          "non-hydrogen degree"                      1                Y       extension
 D          "explicit degree"                          1                Y
 h          "number of implicit hs"                    >0               Y
 H          "total number of Hs"                       1

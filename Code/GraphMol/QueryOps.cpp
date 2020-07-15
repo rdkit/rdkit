@@ -504,6 +504,13 @@ ATOM_EQUALS_QUERY *makeAtomHasAliphaticHeteroatomNbrsQuery() {
   return res;
 }
 
+ATOM_EQUALS_QUERY *makeAtomNonHydrogenDegreeQuery(int what) {
+  auto *res =
+      makeAtomSimpleQuery<ATOM_EQUALS_QUERY>(what, queryAtomNonHydrogenDegree);
+  res->setDescription("AtomNonHydrogenDegree");
+  return res;
+}
+
 BOND_EQUALS_QUERY *makeBondOrderEqualsQuery(Bond::BondType what) {
   auto *res = new BOND_EQUALS_QUERY;
   res->setVal(what);

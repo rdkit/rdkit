@@ -80,9 +80,19 @@ static inline int queryAtomExplicitDegree(Atom const *at) {
 static inline int queryAtomTotalDegree(Atom const *at) {
   return at->getTotalDegree();
 };
+//! includes D and T
 static inline int queryAtomNonHydrogenDegree(Atom const *at) {
-  return at->getTotalDegree() - at->getTotalNumHs(true);
-}
+  int res = 0;
+  for (const auto &nbri :
+       boost::make_iterator_range(at->getOwningMol().getAtomNeighbors(at))) {
+    const auto nbr = at->getOwningMol()[nbri];
+    if (nbr->getAtomicNum() != 1 || nbr->getIsotope() > 1) {
+      res++;
+    }
+  }
+
+  return res;
+};
 static inline int queryAtomHeavyAtomDegree(Atom const *at) {
   int heavyDegree = 0;
   ROMol::ADJ_ITER nbrIdx, endNbrs;
@@ -618,6 +628,15 @@ T *makeAtomHasAliphaticHeteroatomNbrsQuery(const std::string &descr) {
 //! \overload
 RDKIT_GRAPHMOL_EXPORT ATOM_EQUALS_QUERY *
 makeAtomHasAliphaticHeteroatomNbrsQuery();
+
+//! returns a Query for matching the number of non-hydrogen neighbors
+template <class T>
+T *makeAtomNonHydrogenDegreeQuery(int what, const std::string &descr) {
+  return makeAtomSimpleQuery<T>(what, queryAtomNonHydrogenDegree, descr);
+}
+//! \overload
+RDKIT_GRAPHMOL_EXPORT ATOM_EQUALS_QUERY *makeAtomNonHydrogenDegreeQuery(
+    int what);
 
 //! returns a Query for matching bond orders
 RDKIT_GRAPHMOL_EXPORT BOND_EQUALS_QUERY *makeBondOrderEqualsQuery(

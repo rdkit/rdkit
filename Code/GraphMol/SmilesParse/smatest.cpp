@@ -112,6 +112,7 @@ void testPass() {
     "C%(1000)CCC%(1000)",    // github #2909
     "C%(1000)CC(C%(1000))",  // github #2909
     "C%(1000)CC.C%(1000)",   // github #2909
+    "[C;d2])",               // non-hydrogen degree
 
     "EOS"
   };
