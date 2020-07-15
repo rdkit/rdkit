@@ -32,7 +32,7 @@ namespace RDKit
     - <b> rxn </b> the reaction itself.
 */
 
-struct DeprotectData {
+struct RDKIT_DEPROTECT_EXPORT DeprotectData {
   std::string deprotection_class;
   std::string reaction_smarts;
   std::string abbreviation;
@@ -58,7 +58,7 @@ struct DeprotectData {
 };
 
 //! Retrieves the build in list of common deprotections
-const std::vector<DeprotectData> &getDeprotections();
+RDKIT_DEPROTECT_EXPORT const std::vector<DeprotectData> &getDeprotections();
 
 //! Deprotect a molecule
 /*!
@@ -70,8 +70,9 @@ const std::vector<DeprotectData> &getDeprotections();
 
      \return The deprotected form of the input molecule
 */
-std::unique_ptr<ROMol> deprotect(const ROMol& mol,
-				 const std::vector<DeprotectData> &deprotections = getDeprotections());
+RDKIT_DEPROTECT_EXPORT std::unique_ptr<ROMol> deprotect(
+		  const ROMol& mol,
+		  const std::vector<DeprotectData> &deprotections = getDeprotections());
 }
 
 #endif
