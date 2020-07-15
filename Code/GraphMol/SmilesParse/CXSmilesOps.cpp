@@ -251,6 +251,33 @@ bool parse_coordinate_bonds(Iterator &first, Iterator last, RDKit::RWMol &mol) {
 }
 
 template <typename Iterator>
+bool parse_unsaturation(Iterator &first, Iterator last, RDKit::RWMol &mol) {
+  if (first + 1 >= last || *first != 'u') {
+    return false;
+  }
+  ++first;
+  if (first >= last || *first != ':') {
+    return false;
+  }
+  ++first;
+  while (first < last && *first >= '0' && *first <= '9') {
+    unsigned int idx;
+    if (!read_int(first, last, idx)) {
+      return false;
+    }
+    auto atom = mol.getAtomWithIdx(idx);
+    if (!atom->hasQuery()) {
+      atom = QueryOps::replaceAtomWithQueryAtom(&mol, atom);
+    }
+    atom->expandQuery(makeAtomUnsaturatedQuery(), Queries::COMPOSITE_AND);
+    if (first < last && *first == ',') {
+      ++first;
+    }
+  }
+  return true;
+}
+
+template <typename Iterator>
 bool parse_ring_bonds(Iterator &first, Iterator last, RDKit::RWMol &mol) {
   if (first >= last || *first != 'r' || first + 1 >= last ||
       *(first + 1) != 'b' || first + 2 >= last || *(first + 2) != ':') {
@@ -304,6 +331,46 @@ bool parse_ring_bonds(Iterator &first, Iterator last, RDKit::RWMol &mol) {
       q->setDataFunc(queryAtomRingBondCount);
       atom->expandQuery(q, Queries::COMPOSITE_AND);
     }
+    if (first < last && *first == ',') {
+      ++first;
+    }
+  }
+  return true;
+}
+
+template <typename Iterator>
+bool parse_substitution(Iterator &first, Iterator last, RDKit::RWMol &mol) {
+  if (first >= last || *first != 's' || first + 1 >= last ||
+      *(first + 1) != ':') {
+    return false;
+  }
+  first += 2;
+  while (first < last && *first >= '0' && *first <= '9') {
+    unsigned int n1;
+    if (!read_int(first, last, n1)) {
+      return false;
+    }
+    // check that we can read at least two more characters:
+    if (first + 1 >= last || *first != ':') {
+      return false;
+    }
+    ++first;
+    unsigned int n2;
+    if (*first == '*') {
+      ++first;
+      n2 = 0xDEADBEEF;
+      mol.setProp(common_properties::_NeedsQueryScan, 1);
+    } else {
+      if (!read_int(first, last, n2)) {
+        return false;
+      }
+    }
+    auto atom = mol.getAtomWithIdx(n1);
+    if (!atom->hasQuery()) {
+      atom = QueryOps::replaceAtomWithQueryAtom(&mol, atom);
+    }
+    atom->expandQuery(makeAtomNonHydrogenDegreeQuery(n2),
+                      Queries::COMPOSITE_AND);
     if (first < last && *first == ',') {
       ++first;
     }
@@ -480,6 +547,14 @@ bool parse_it(Iterator &first, Iterator last, RDKit::RWMol &mol) {
       if (!parse_ring_bonds(first, last, mol)) {
         return false;
       }
+    } else if (*first == 'u') {
+      if (!parse_unsaturation(first, last, mol)) {
+        return false;
+      }
+    } else if (*first == 's') {
+      if (!parse_substitution(first, last, mol)) {
+        return false;
+      }
     } else {
       ++first;
     }
@@ -565,6 +640,7 @@ void parseCXExtensions(RDKit::RWMol &mol, const std::string &extText,
   processCXSmilesLabels(mol);
 }
 }  // end of namespace SmilesParseOps
+
 namespace RDKit {
 namespace SmilesWrite {
 namespace {

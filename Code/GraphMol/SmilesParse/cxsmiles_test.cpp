@@ -549,6 +549,24 @@ void testMDLQueriesInCXSmiles() {
     TEST_ASSERT(sma == "[#6&x0]-[#6&x2]1-[#6&x2]-[#6]-1");
   }
 
+  {  // unsaturation
+    auto m =
+        "[#6]-[#6]-1-[#6]-[#6]-1 "
+        "|u:0,2|"_smiles;
+    TEST_ASSERT(m);
+    auto sma = MolToSmarts(*m);
+    TEST_ASSERT(sma == "[#6&$(*=,:,#*)]-[#6]1-[#6&$(*=,:,#*)]-[#6]-1");
+  }
+
+  {  // substitution count
+    auto m =
+        "[#6]-[#6]-1-[#6]-[#6]-1 "
+        "|s:3:*,1:3|"_smiles;
+    TEST_ASSERT(m);
+    auto sma = MolToSmarts(*m);
+    TEST_ASSERT(sma == "[#6]-[#6&d3]1-[#6]-[#6&d2]-1");
+  }
+
   {  // everything together
     auto m =
         "[#6]-[#6]-1-[#6]-[#6]-1 "
