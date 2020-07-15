@@ -339,6 +339,61 @@ bool parse_ring_bonds(Iterator &first, Iterator last, RDKit::RWMol &mol) {
 }
 
 template <typename Iterator>
+bool parse_linknodes(Iterator &first, Iterator last, RDKit::RWMol &mol) {
+  // these look like: |LN:1:1.3.2.6,4:1.4.3.6|
+  // that's two records:
+  //   1:1.3.2.6: 1-3 repeats, atom 1-2, 1-6
+  //   4:1.4.3.6: 1-4 repeats, atom 4-4, 4-6
+  // which maps to the property value "1 3 2 2 3 2 7|1 4 2 5 4 5 7"
+  if (first >= last || *first != 'L' || first + 1 >= last ||
+      *(first + 1) != 'N' || first + 2 >= last || *(first + 2) != ':') {
+    return false;
+  }
+  first += 3;
+  std::string accum = "";
+  while (first < last && *first >= '0' && *first <= '9') {
+    unsigned int atidx;
+    if (!read_int(first, last, atidx)) {
+      return false;
+    }
+    // check that we can read at least two more characters:
+    if (first + 1 >= last || *first != ':') {
+      return false;
+    }
+    ++first;
+    unsigned int startReps;
+    if (!read_int(first, last, startReps)) {
+      return false;
+    }
+    ++first;
+    unsigned int endReps;
+    if (!read_int(first, last, endReps)) {
+      return false;
+    }
+    ++first;
+    unsigned int idx1;
+    if (!read_int(first, last, idx1)) {
+      return false;
+    }
+    ++first;
+    unsigned int idx2;
+    if (!read_int(first, last, idx2)) {
+      return false;
+    }
+    if (first < last && *first == ',') {
+      ++first;
+    }
+    if (!accum.empty()) {
+      accum += "|";
+    }
+    accum += (boost::format("%d %d 2 %d %d %d %d") % startReps % endReps %
+              (atidx + 1) % (idx1 + 1) % (atidx + 1) % (idx2 + 1))
+                 .str();
+  }
+  mol.setProp(common_properties::molFileLinkNodes, accum);
+  return true;
+}
+template <typename Iterator>
 bool parse_substitution(Iterator &first, Iterator last, RDKit::RWMol &mol) {
   if (first >= last || *first != 's' || first + 1 >= last ||
       *(first + 1) != ':') {
@@ -545,6 +600,10 @@ bool parse_it(Iterator &first, Iterator last, RDKit::RWMol &mol) {
       }
     } else if (*first == 'r' && first + 1 < last && first[1] == 'b') {
       if (!parse_ring_bonds(first, last, mol)) {
+        return false;
+      }
+    } else if (*first == 'L' && first + 1 < last && first[1] == 'N') {
+      if (!parse_linknodes(first, last, mol)) {
         return false;
       }
     } else if (*first == 'u') {

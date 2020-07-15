@@ -579,6 +579,27 @@ void testMDLQueriesInCXSmiles() {
   BOOST_LOG(rdInfoLog) << "done" << std::endl;
 }
 
+void testLinknodesInCXSmiles() {
+  BOOST_LOG(rdInfoLog) << "Testing handling of LINKNODES in CXSMILES"
+                       << std::endl;
+
+  {
+    auto m = "OC1CCC(F)C1 |LN:1:1.3.2.6|"_smiles;
+    TEST_ASSERT(m);
+    std::string lns;
+    TEST_ASSERT(m->getPropIfPresent(common_properties::molFileLinkNodes, lns));
+    TEST_ASSERT(lns == "1 3 2 2 3 2 7")
+  }
+  {
+    auto m = "OC1CCC(F)C1 |LN:1:1.3.2.6,4:1.4.3.6|"_smiles;
+    TEST_ASSERT(m);
+    std::string lns;
+    TEST_ASSERT(m->getPropIfPresent(common_properties::molFileLinkNodes, lns));
+    TEST_ASSERT(lns == "1 3 2 2 3 2 7|1 4 2 5 4 5 7")
+  }
+  BOOST_LOG(rdInfoLog) << "done" << std::endl;
+}
+
 int main(int argc, char *argv[]) {
   (void)argc;
   (void)argv;
@@ -598,4 +619,5 @@ int main(int argc, char *argv[]) {
   testHTMLCharCodes();
   testErrorsInCXSmiles();
   testMDLQueriesInCXSmiles();
+  testLinknodesInCXSmiles();
 }
