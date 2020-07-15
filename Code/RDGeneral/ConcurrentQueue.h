@@ -97,7 +97,6 @@ size_t ConcurrentQueue<E>::size() {
   std::unique_lock<std::mutex> lk(lock);
   return q.size();
 }
-
 }  // namespace RDKit
 #endif
 #endif
