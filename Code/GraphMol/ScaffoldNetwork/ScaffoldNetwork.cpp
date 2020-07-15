@@ -210,10 +210,16 @@ void addMolToNetwork(const ROMol &mol, ScaffoldNetwork &network,
     boost::shared_ptr<ROMol> pmol(pruneMol(*fmol, params));
     fmol.swap(pmol);
   }
+  std::set<size_t> entriesFromMol;
   auto fsmi = MolToSmiles(*fmol);
   if (ismi != fsmi) {
     auto iidx = addEntryIfMissing(network.nodes, ismi, &network.counts);
     auto fidx = addEntryIfMissing(network.nodes, fsmi, &network.counts);
+    if (params.collectMolCounts) {
+      entriesFromMol.insert(iidx);
+      entriesFromMol.insert(fidx);
+    }
+
     addEntryIfMissing(network.edges,
                       NetworkEdge({iidx, fidx, EdgeType::Initialize}));
 
@@ -223,6 +229,9 @@ void addMolToNetwork(const ROMol &mol, ScaffoldNetwork &network,
       std::unique_ptr<ROMol> gmol(makeScaffoldGeneric(*fmol, doAtoms, doBonds));
       auto gsmi = MolToSmiles(*gmol);
       auto gidx = addEntryIfMissing(network.nodes, gsmi, &network.counts);
+      if (params.collectMolCounts) {
+        entriesFromMol.insert(gidx);
+      }
       addEntryIfMissing(network.edges,
                         NetworkEdge({fidx, gidx, EdgeType::Generic}));
       if (params.includeGenericBondScaffolds) {
@@ -232,6 +241,9 @@ void addMolToNetwork(const ROMol &mol, ScaffoldNetwork &network,
             makeScaffoldGeneric(*fmol, doAtoms, doBonds));
         auto gbsmi = MolToSmiles(*gbmol);
         auto gbidx = addEntryIfMissing(network.nodes, gbsmi, &network.counts);
+        if (params.collectMolCounts) {
+          entriesFromMol.insert(gbidx);
+        }
         if (gidx != gbidx) {
           addEntryIfMissing(network.edges,
                             NetworkEdge({gidx, gbidx, EdgeType::GenericBond}));
@@ -240,7 +252,10 @@ void addMolToNetwork(const ROMol &mol, ScaffoldNetwork &network,
     }
   } else {
     // add the base molecule to the network
-    addEntryIfMissing(network.nodes, fsmi, &network.counts);
+    auto midx = addEntryIfMissing(network.nodes, fsmi, &network.counts);
+    if (params.collectMolCounts) {
+      entriesFromMol.insert(midx);
+    }
   }
 
   auto frags = getMolFragments(*fmol, params);
@@ -253,6 +268,10 @@ void addMolToNetwork(const ROMol &mol, ScaffoldNetwork &network,
     auto iidx = addEntryIfMissing(network.nodes, smi);
     auto lsmi = MolToSmiles(*fragMol);
     auto lidx = addEntryIfMissing(network.nodes, lsmi, &network.counts);
+    if (params.collectMolCounts) {
+      entriesFromMol.insert(lidx);
+    }
+
     addEntryIfMissing(network.edges,
                       NetworkEdge({iidx, lidx, EdgeType::Fragment}));
 
@@ -263,6 +282,10 @@ void addMolToNetwork(const ROMol &mol, ScaffoldNetwork &network,
           makeScaffoldGeneric(*fragMol, doAtoms, doBonds));
       auto gsmi = MolToSmiles(*gmol);
       auto gidx = addEntryIfMissing(network.nodes, gsmi, &network.counts);
+      if (params.collectMolCounts) {
+        entriesFromMol.insert(gidx);
+      }
+
       addEntryIfMissing(network.edges,
                         NetworkEdge({lidx, gidx, EdgeType::Generic}));
       if (params.includeGenericBondScaffolds) {
@@ -272,6 +295,10 @@ void addMolToNetwork(const ROMol &mol, ScaffoldNetwork &network,
             makeScaffoldGeneric(*fragMol, doAtoms, doBonds));
         auto gbsmi = MolToSmiles(*gbmol);
         auto gbidx = addEntryIfMissing(network.nodes, gbsmi, &network.counts);
+        if (params.collectMolCounts) {
+          entriesFromMol.insert(gbidx);
+        }
+
         if (gidx != gbidx) {
           addEntryIfMissing(network.edges,
                             NetworkEdge({gidx, gbidx, EdgeType::GenericBond}));
@@ -285,6 +312,10 @@ void addMolToNetwork(const ROMol &mol, ScaffoldNetwork &network,
       std::unique_ptr<ROMol> amol(removeAttachmentPoints(*fragMol, params));
       auto asmi = MolToSmiles(*amol);
       auto aidx = addEntryIfMissing(network.nodes, asmi, &network.counts);
+      if (params.collectMolCounts) {
+        entriesFromMol.insert(aidx);
+      }
+
       addEntryIfMissing(network.edges,
                         NetworkEdge({lidx, aidx, EdgeType::RemoveAttachment}));
       if (params.includeGenericScaffolds) {
@@ -294,6 +325,10 @@ void addMolToNetwork(const ROMol &mol, ScaffoldNetwork &network,
             makeScaffoldGeneric(*amol, doAtoms, doBonds));
         auto gsmi = MolToSmiles(*gmol);
         auto gidx = addEntryIfMissing(network.nodes, gsmi, &network.counts);
+        if (params.collectMolCounts) {
+          entriesFromMol.insert(gidx);
+        }
+
         addEntryIfMissing(network.edges,
                           NetworkEdge({aidx, gidx, EdgeType::Generic}));
         if (params.includeGenericBondScaffolds) {
@@ -303,6 +338,10 @@ void addMolToNetwork(const ROMol &mol, ScaffoldNetwork &network,
               makeScaffoldGeneric(*amol, doAtoms, doBonds));
           auto gbsmi = MolToSmiles(*gbmol);
           auto gbidx = addEntryIfMissing(network.nodes, gbsmi, &network.counts);
+          if (params.collectMolCounts) {
+            entriesFromMol.insert(gbidx);
+          }
+
           if (gidx != gbidx) {
             addEntryIfMissing(
                 network.edges,
@@ -310,6 +349,16 @@ void addMolToNetwork(const ROMol &mol, ScaffoldNetwork &network,
           }
         }
       }
+    }
+  }
+  if (params.collectMolCounts) {  // update the molCounts, entriesPerMol has
+                                  // all the entries we just touched
+    auto maxVal = *entriesFromMol.rbegin();
+    if (network.molCounts.size() <= maxVal) {
+      network.molCounts.resize(maxVal + 1, 0u);
+    }
+    for (auto idx : entriesFromMol) {
+      network.molCounts[idx]++;
     }
   }
 }
@@ -325,9 +374,9 @@ void updateScaffoldNetwork(const T &mols, ScaffoldNetwork &network,
         "without attachments");
   }
   for (const auto &mol : mols) {
-    if(!mol){
+    if (!mol) {
       throw ValueErrorException(
-        "updateScaffoldNetwork called with null molecule");
+          "updateScaffoldNetwork called with null molecule");
     }
     detail::addMolToNetwork(*mol, network, params);
   }
