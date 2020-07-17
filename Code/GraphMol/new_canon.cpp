@@ -220,7 +220,8 @@ void rankWithFunctor(T &ftor, bool breakTies, int *order,
 #endif
   RefinePartitions(mol, atoms, ftor, true, order, count, activeset, next,
                    changed, touched);
-#ifdef VERBOSE_CANON
+#if 0
+  //#ifdef VERBOSE_CANON
   std::cerr << "2--------" << std::endl;
   for (unsigned int i = 0; i < mol.getNumAtoms(); ++i) {
     std::cerr << order[i] + 1 << " "
@@ -240,7 +241,8 @@ void rankWithFunctor(T &ftor, bool breakTies, int *order,
     ActivatePartitions(nAts, order, count, activeset, next, changed);
     RefinePartitions(mol, atoms, scftor, true, order, count, activeset, next,
                      changed, touched);
-#ifdef VERBOSE_CANON
+#if 0
+    // #ifdef VERBOSE_CANON
     std::cerr << "2a--------" << std::endl;
     for (unsigned int i = 0; i < mol.getNumAtoms(); ++i) {
       std::cerr << order[i] + 1 << " "
@@ -422,10 +424,10 @@ void getChiralBonds(const ROMol &mol, const Atom *at,
 
   if (!at->needsUpdatePropertyCache()) {
     for (unsigned int ii = 0; ii < at->getTotalNumHs(); ++ii) {
-      nbrs.emplace_back(Bond::SINGLE, Bond::STEREONONE,
-                                ATNUM_CLASS_OFFSET, ATNUM_CLASS_OFFSET);
-      nbrs.emplace_back(Bond::SINGLE, Bond::STEREONONE,
-                                ATNUM_CLASS_OFFSET, ATNUM_CLASS_OFFSET);
+      nbrs.emplace_back(Bond::SINGLE, Bond::STEREONONE, ATNUM_CLASS_OFFSET,
+                        ATNUM_CLASS_OFFSET);
+      nbrs.emplace_back(Bond::SINGLE, Bond::STEREONONE, ATNUM_CLASS_OFFSET,
+                        ATNUM_CLASS_OFFSET);
     }
   }
 }

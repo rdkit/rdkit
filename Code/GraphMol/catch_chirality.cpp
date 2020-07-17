@@ -510,6 +510,8 @@ TEST_CASE("ring stereochemistry", "[chirality]") {
   SECTION("specified") {
     auto mol = "C[C@H]1CC[C@@H](C)CC1"_smiles;
     REQUIRE(mol);
+    std::cerr << "------------ 1 -------------" << std::endl;
+
     auto stereoInfo = Chirality::findPotentialStereo(*mol);
     REQUIRE(stereoInfo.size() == 2);
     CHECK(stereoInfo[0].type == Chirality::StereoType::Atom_Tetrahedral);
@@ -519,11 +521,12 @@ TEST_CASE("ring stereochemistry", "[chirality]") {
     CHECK(stereoInfo[1].centeredOn == 4);
     CHECK(stereoInfo[1].specified == Chirality::StereoSpecified::Specified);
   }
-#if 0
-  //FIX this still isn't working
+#if 1
+  // FIX this still isn't working
   SECTION("specified") {
     auto mol = "CC1CCC(C)CC1"_smiles;
     REQUIRE(mol);
+    std::cerr << "------------ 2 -------------" << std::endl;
     auto stereoInfo = Chirality::findPotentialStereo(*mol);
     REQUIRE(stereoInfo.size() == 2);
     CHECK(stereoInfo[0].type == Chirality::StereoType::Atom_Tetrahedral);
@@ -532,6 +535,84 @@ TEST_CASE("ring stereochemistry", "[chirality]") {
 
     CHECK(stereoInfo[1].type == Chirality::StereoType::Atom_Tetrahedral);
     CHECK(stereoInfo[1].centeredOn == 4);
+    CHECK(stereoInfo[1].specified == Chirality::StereoSpecified::Unspecified);
+  }
+#endif
+  SECTION("four ring") {
+    auto mol = "C[C@H]1C[C@@H](C)C1"_smiles;
+    auto stereoInfo = Chirality::findPotentialStereo(*mol);
+    REQUIRE(stereoInfo.size() == 2);
+    CHECK(stereoInfo[0].type == Chirality::StereoType::Atom_Tetrahedral);
+    CHECK(stereoInfo[0].centeredOn == 1);
+    CHECK(stereoInfo[0].specified == Chirality::StereoSpecified::Specified);
+
+    CHECK(stereoInfo[1].type == Chirality::StereoType::Atom_Tetrahedral);
+    CHECK(stereoInfo[1].centeredOn == 3);
+    CHECK(stereoInfo[1].specified == Chirality::StereoSpecified::Specified);
+  }
+  SECTION("four ring unspecified") {
+    auto mol = "CC1CC(C)C1"_smiles;
+    auto stereoInfo = Chirality::findPotentialStereo(*mol);
+    REQUIRE(stereoInfo.size() == 2);
+    CHECK(stereoInfo[0].type == Chirality::StereoType::Atom_Tetrahedral);
+    CHECK(stereoInfo[0].centeredOn == 1);
+    CHECK(stereoInfo[0].specified == Chirality::StereoSpecified::Unspecified);
+
+    CHECK(stereoInfo[1].type == Chirality::StereoType::Atom_Tetrahedral);
+    CHECK(stereoInfo[1].centeredOn == 3);
+    CHECK(stereoInfo[1].specified == Chirality::StereoSpecified::Unspecified);
+  }
+}
+
+TEST_CASE("tricky recursive example from Dan Nealschneider", "[chirality]") {
+  SECTION("adapted") {
+    auto mol = "CC=C1CCC(O)CC1"_smiles;
+    REQUIRE(mol);
+    mol->updatePropertyCache();
+    MolOps::setBondStereoFromDirections(*mol);
+    std::cerr << "------------ 1 -------------" << std::endl;
+    auto stereoInfo = Chirality::findPotentialStereo(*mol);
+    REQUIRE(stereoInfo.size() == 2);
+    CHECK(stereoInfo[0].type == Chirality::StereoType::Atom_Tetrahedral);
+    CHECK(stereoInfo[0].centeredOn == 5);
+    CHECK(stereoInfo[0].specified == Chirality::StereoSpecified::Specified);
+    CHECK(stereoInfo[1].type == Chirality::StereoType::Bond_Double);
+    CHECK(stereoInfo[1].centeredOn == 1);
+    CHECK(stereoInfo[1].specified == Chirality::StereoSpecified::Specified);
+  }
+  SECTION("simplified") {
+    // can't sanitize this because the current (2020.03) assignStereochemistry
+    // code doesn't recognize the stereo here and removes it
+    SmilesParserParams ps;
+    ps.sanitize = false;
+    ps.removeHs = false;
+    std::unique_ptr<ROMol> mol(SmilesToMol("C/C=C1/C[C@H](O)C1", ps));
+    REQUIRE(mol);
+    mol->updatePropertyCache();
+    MolOps::setBondStereoFromDirections(*mol);
+    std::cerr << "------------ 2 -------------" << std::endl;
+    auto stereoInfo = Chirality::findPotentialStereo(*mol);
+    REQUIRE(stereoInfo.size() == 2);
+    CHECK(stereoInfo[0].type == Chirality::StereoType::Atom_Tetrahedral);
+    CHECK(stereoInfo[0].centeredOn == 4);
+    CHECK(stereoInfo[0].specified == Chirality::StereoSpecified::Specified);
+    CHECK(stereoInfo[1].type == Chirality::StereoType::Bond_Double);
+    CHECK(stereoInfo[1].centeredOn == 1);
+    CHECK(stereoInfo[1].specified == Chirality::StereoSpecified::Specified);
+  }
+#if 1
+  // FIX this still isn't working
+  SECTION("unspecified") {
+    auto mol = "CC=C1C[CH](O)C1"_smiles;
+    REQUIRE(mol);
+    std::cerr << "------------ 3 -------------" << std::endl;
+    auto stereoInfo = Chirality::findPotentialStereo(*mol);
+    REQUIRE(stereoInfo.size() == 2);
+    CHECK(stereoInfo[0].type == Chirality::StereoType::Atom_Tetrahedral);
+    CHECK(stereoInfo[0].centeredOn == 4);
+    CHECK(stereoInfo[0].specified == Chirality::StereoSpecified::Unspecified);
+    CHECK(stereoInfo[1].type == Chirality::StereoType::Bond_Double);
+    CHECK(stereoInfo[1].centeredOn == 1);
     CHECK(stereoInfo[1].specified == Chirality::StereoSpecified::Unspecified);
   }
 #endif

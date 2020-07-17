@@ -273,8 +273,11 @@ std::string getBondSymbol(const Bond *bond) {
   return res;
 }
 
-std::vector<StereoInfo> findPotentialStereo(const ROMol &mol) {
+std::vector<StereoInfo> findPotentialStereo(const ROMol &omol) {
+  ROMol mol(omol);
   std::vector<StereoInfo> res;
+
+  // FIX: this never removes stereo
 
   boost::dynamic_bitset<> knownAtoms(mol.getNumAtoms());
   boost::dynamic_bitset<> possibleAtoms(mol.getNumAtoms());
@@ -297,6 +300,8 @@ std::vector<StereoInfo> findPotentialStereo(const ROMol &mol) {
           throw ValueErrorException("bad StereoInfo.specified type");
       }
       possibleAtoms.set(aidx);
+      atom->setChiralTag(Atom::CHI_TETRAHEDRAL_CW);
+      std::cerr << " yes: " << aidx << std::endl;
       atomSymbols[aidx] =
           (boost::format("%s-%d") % atom->getSymbol() % atom->getIdx()).str();
     } else {
@@ -345,13 +350,15 @@ std::vector<StereoInfo> findPotentialStereo(const ROMol &mol) {
   // FIX: think through what the next two mean here
   // note that the AtomCompareFunctor doesn't look at anything after
   // it sees a symbol
-  bool includeChirality = false;
+  bool includeChirality = true;
   bool includeIsotopes = false;
   Canon::rankFragmentAtoms(mol, aranks, atomsInPlay, bondsInPlay, &atomSymbols,
                            &bondSymbols, breakTies, includeChirality,
                            includeIsotopes);
 
-  for (const auto atom : mol.atoms()) {
+  // notice that we're looping over the original molecule here, not the one
+  // we modified
+  for (const auto atom : omol.atoms()) {
     auto aidx = atom->getIdx();
     if (possibleAtoms[aidx] && !knownAtoms[aidx]) {
       auto sinfo = detail::getStereoInfo(atom);
@@ -363,6 +370,8 @@ std::vector<StereoInfo> findPotentialStereo(const ROMol &mol) {
       bool haveADupe = false;
       for (auto nbrIdx : sinfo.controllingAtoms) {
         auto rnk = aranks[nbrIdx];
+        std::cerr << "       " << aidx << " " << nbrIdx << "(" << rnk << ")"
+                  << std::endl;
         if (std::find(nbrs.begin(), nbrs.end(), rnk) != nbrs.end()) {
           haveADupe = true;
           break;
@@ -376,7 +385,7 @@ std::vector<StereoInfo> findPotentialStereo(const ROMol &mol) {
     }
   }
 
-  for (const auto bond : mol.bonds()) {
+  for (const auto bond : omol.bonds()) {
     auto bidx = bond->getIdx();
     if (possibleBonds[bidx] && !knownBonds[bidx]) {
       auto sinfo = detail::getStereoInfo(bond);
