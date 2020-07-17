@@ -9,14 +9,10 @@
 //  of the RDKit source tree.
 //
 
-#include "catch.hpp"
-
 #include <fstream>
 #include <RDGeneral/Invariant.h>
 #include <GraphMol/RDKitBase.h>
-#include <GraphMol/new_canon.h>
-#include <GraphMol/RDKitQueries.h>
-#include <GraphMol/Chirality.h>
+#include <GraphMol/MolPickler.h>
 #include <GraphMol/FileParsers/FileParsers.h>
 #include <GraphMol/SmilesParse/SmilesParse.h>
 #include <GraphMol/SmilesParse/SmilesWrite.h>
@@ -26,13 +22,45 @@ using namespace RDKit;
 std::string pathName = std::string(getenv("RDBASE")) +
                        std::string("/Code/GraphMol/ossfuzz_testdata/");
 
-TEST_CASE("Mol file parsing", "[ossfuzz]") {
-  SECTION("Issue 24074") {
+void molFileParsingTests() {
+  {  // Issue 24074
     std::string fname = pathName +
                         "clusterfuzz-testcase-minimized-mol_data_stream_to_mol_"
                         "fuzzer-5318835625000960";
     std::ifstream ins(fname, std::ifstream::in | std::ifstream::binary);
     unsigned int line;
-    REQUIRE_THROWS_AS(MolDataStreamToMol(&ins, line), Invar::Invariant);
+    bool ok;
+    try {
+      MolDataStreamToMol(&ins, line);
+      ok = false;
+    } catch (const Invar::Invariant &) {
+      ok = true;
+    }
+    TEST_ASSERT(ok);
   }
+}
+
+void depicklingTests() {
+  {  // Issue 23896
+    std::string fname = pathName +
+                        "clusterfuzz-testcase-minimized-mol_deserialization_"
+                        "fuzzer-6283983225880576";
+    std::ifstream ins(fname, std::ifstream::in | std::ifstream::binary);
+    unsigned int line;
+    ROMol res;
+    bool ok;
+    try {
+      MolPickler::molFromPickle(ins, res);
+      ok = false;
+    } catch (const std::runtime_error &) {
+      ok = true;
+    }
+    TEST_ASSERT(ok);
+  }
+}
+
+int main() {
+  RDLog::InitLogs();
+  molFileParsingTests();
+  depicklingTests();
 }
