@@ -14,21 +14,13 @@
 
 namespace python = boost::python;
 namespace RDKit {
-  // boost::python doesn't support unique_ptr so we convert to shared for
+  // note: boost::python doesn't support unique_ptr so we convert to shared for
   //  python.
-  template< typename T >
-  inline
-  std::vector< T > to_std_vector( const python::object& iterable )
-  {
-    return std::vector< T >( python::stl_input_iterator< T >( iterable ),
-                             python::stl_input_iterator< T >( ) );
-  }
-
   boost::shared_ptr<ROMol> DeprotectVectWrap(
 		  const ROMol &mol,
 		  const python::object &iterable) {
     //		  const std::vector<DeprotectData> &deprotections) {
-    auto deprotections = to_std_vector<DeprotectData>(iterable);
+    auto deprotections = pythonObjectToVect<DeprotectData>(iterable);
     auto res = deprotect(mol, deprotections);
     auto m = boost::shared_ptr<ROMol>(res.get());
     res.release();
@@ -66,7 +58,7 @@ struct deprotect_wrap {
       " deprotectdata.deprotection_class - functional group being protected\n"
       " deprotectdata.reaction_smarts - reaction smarts used for deprotection\n"
       " deprotectdata.abbreviation - common abbreviation for the protecting group\n"
-      " deprotectdata.full_name - full IUPAC name for the protecting group\n"
+      " deprotectdata.full_name - full name for the protecting group\n"
       "\n"
       "\n"
       ;

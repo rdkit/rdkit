@@ -28,7 +28,7 @@ namespace RDKit
     - <b>deprotection_class</b> functional group being protected (i.e. amine, alcohol, ...)
     - <b>reaction_smarts</b> the reaction smarts pattern for removing the protecting group
     - <b>abbreviation</b> common abbreviation for the protecting group (Boc, Fmoc)
-    - <b>full_name</b> full IUPAC name for the protecting group
+    - <b>full_name</b> full name for the protecting group
     - <b> rxn </b> the reaction itself.
 */
 
@@ -57,7 +57,7 @@ struct RDKIT_DEPROTECT_EXPORT DeprotectData {
 
 };
 
-//! Retrieves the build in list of common deprotections
+//! Retrieves the built in list of common deprotections
 RDKIT_DEPROTECT_EXPORT const std::vector<DeprotectData> &getDeprotections();
 
 //! Deprotect a molecule
