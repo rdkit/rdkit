@@ -59,24 +59,34 @@ int toInt(const std::string &input, bool acceptSpaces) {
   int res = 0;
   // don't need to worry about locale stuff here because
   // we're not going to have delimiters
-  res = strtol(input.c_str(), nullptr, 10);
-  if (!res && !acceptSpaces && input[0] == ' ') {
-    std::string trimmed = boost::trim_copy(input);
-    if (trimmed.length() == 0) {
+
+  // sanity check on the input since strtol doesn't do it for us:
+  const char *txt = input.c_str();
+  while (*txt != '\x00') {
+    if ((*txt >= '0' && *txt <= '9') || (acceptSpaces && *txt == ' ') ||
+        *txt == '+' || *txt == '-') {
+      ++txt;
+    } else {
       throw boost::bad_lexical_cast();
     }
   }
+  res = strtol(input.c_str(), nullptr, 10);
   return res;
 }
 
 double toDouble(const std::string &input, bool acceptSpaces) {
-  double res = atof(input.c_str());
-  if (res == 0.0 && !acceptSpaces && input[0] == ' ') {
-    std::string trimmed = boost::trim_copy(input);
-    if (trimmed.length() == 0) {
+  // sanity check on the input since strtol doesn't do it for us:
+  const char *txt = input.c_str();
+  // check for ',' and '.' because locale
+  while (*txt != '\x00') {
+    if ((*txt >= '0' && *txt <= '9') || (acceptSpaces && *txt == ' ') ||
+        *txt == '+' || *txt == '-' || *txt == ',' || *txt == '.') {
+      ++txt;
+    } else {
       throw boost::bad_lexical_cast();
     }
   }
+  double res = atof(input.c_str());
   return res;
 }
 
