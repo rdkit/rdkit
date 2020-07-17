@@ -826,7 +826,7 @@ void ParseMarvinSmartsLine(RWMol *mol, const std::string &text,
   // M  MRV SMA   1 [*;A]
   // 01234567890123456789
   //           1111111111
-  if (text.substr(SMA, 3) != "SMA") {
+  if (text.substr(0, 10) != "M  MRV SMA") {
     return;
   }
 
