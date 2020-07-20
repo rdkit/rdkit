@@ -27,6 +27,7 @@
 #include <GraphMol/PeriodicTable.h>
 #include <GraphMol/Descriptors/AtomicEnvironmentVector.h>
 #include <Eigen/Dense>
+#include <Numerics/EigenSerializer/EigenSerializer.h>
 
 using namespace Eigen;
 
@@ -52,6 +53,37 @@ std::vector<std::vector<double>> EigenMatToSTLVector(ArrayXXd aev) {
 }
 
 TEST_CASE("Symmetry Function Accuracy", "[Symmetry Function]") {
+  std::map<std::string, Eigen::ArrayXXd> params;
+  std::string path = getenv("RDBASE");
+  std::string paramFilePath =
+      path + "/Code/ForceField/ANI/Params/ANI-1ccx/AEVParams/";
+
+  // Weights for the radial symmetry functions
+  ArrayXd ShfR;
+  RDNumeric::EigenSerializer::deserialize(ShfR, paramFilePath + "ShfR.bin");
+  // Variance terms for the gaussian symmetry functions
+  ArrayXd EtaR;
+  RDNumeric::EigenSerializer::deserialize(EtaR, paramFilePath + "EtaR.bin");
+
+  // Weights for the angular symmetry functions
+  ArrayXd ShfZ;
+  RDNumeric::EigenSerializer::deserialize(ShfZ, paramFilePath + "ShfZ.bin");
+  ArrayXd ShfA;
+  RDNumeric::EigenSerializer::deserialize(ShfA, paramFilePath + "ShfA.bin");
+  // distance wise shifts in the distance term of the angular symmetry function
+
+  ArrayXd zeta;
+  RDNumeric::EigenSerializer::deserialize(zeta, paramFilePath + "zeta.bin");
+  ArrayXd etaA;
+  RDNumeric::EigenSerializer::deserialize(etaA, paramFilePath + "etaA.bin");
+
+  params.insert(std::make_pair("ShfR", ShfR));
+  params.insert(std::make_pair("EtaR", EtaR));
+  params.insert(std::make_pair("ShfZ", ShfZ));
+  params.insert(std::make_pair("ShfA", ShfA));
+  params.insert(std::make_pair("zeta", zeta));
+  params.insert(std::make_pair("etaA", etaA));
+  // params.insert(std::make_pair("HAHA", ArrayXXd::Random(10, 10)));
   SECTION("CH4") {
     std::string pathName = getenv("RDBASE");
 
@@ -88,7 +120,7 @@ TEST_CASE("Symmetry Function Accuracy", "[Symmetry Function]") {
     RDKit::ROMOL_SPTR mol(RDKit::MolFileToMol(molFile, true, false));
     int confId = -1;
 
-    auto aev = RDKit::Descriptors::ANI::AtomicEnvironmentVector(*mol, confId);
+    auto aev = RDKit::Descriptors::ANI::AtomicEnvironmentVector(*mol, &params, confId);
 
     CHECK(aev.rows() == mol->getNumAtoms());
     CHECK(aev.cols() == 384);
@@ -135,7 +167,7 @@ TEST_CASE("Symmetry Function Accuracy", "[Symmetry Function]") {
     RDKit::ROMOL_SPTR mol(RDKit::MolFileToMol(molFile, true, false));
     int confId = -1;
 
-    auto aev = RDKit::Descriptors::ANI::AtomicEnvironmentVector(*mol, confId);
+    auto aev = RDKit::Descriptors::ANI::AtomicEnvironmentVector(*mol, &params, confId);
 
     CHECK(aev.rows() == mol->getNumAtoms());
     CHECK(aev.cols() == 384);
@@ -182,7 +214,7 @@ TEST_CASE("Symmetry Function Accuracy", "[Symmetry Function]") {
     RDKit::ROMOL_SPTR mol(RDKit::MolFileToMol(molFile, false, false));
     int confId = -1;
 
-    auto aev = RDKit::Descriptors::ANI::AtomicEnvironmentVector(*mol, confId);
+    auto aev = RDKit::Descriptors::ANI::AtomicEnvironmentVector(*mol, &params, confId);
 
     CHECK(aev.rows() == mol->getNumAtoms());
     CHECK(aev.cols() == 384);

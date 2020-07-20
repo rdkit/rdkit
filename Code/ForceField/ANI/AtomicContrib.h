@@ -74,6 +74,7 @@ class RDKIT_FORCEFIELD_EXPORT ANIAtomContrib : public ForceFieldContrib {
   std::string d_modelType;
   std::map<int, std::string> d_atomEncoding = {
       {0, "H"}, {1, "C"}, {2, "N"}, {3, "O"}};
+  std::map<std::string, ArrayXXd> d_aevParams;
 };
 
 namespace Utils {

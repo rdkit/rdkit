@@ -21,9 +21,4 @@
 #include <GraphMol/Descriptors/GETAWAY.h>
 #include <GraphMol/Descriptors/AUTOCORR3D.h>
 #include <GraphMol/Descriptors/PMI.h>
-
-#ifdef RDK_HAS_EIGEN3
-#include <GraphMol/Descriptors/AtomicEnvironmentVector.h>
-#endif
-
 #endif

@@ -57,6 +57,37 @@ ANIAtomContrib::ANIAtomContrib(ForceField *owner, int atomType,
   } else {
     this->d_selfEnergy = 0;
   }
+
+  // Different values for means of the gaussian symmetry functions
+  std::string path = getenv("RDBASE");
+  std::string paramFilePath =
+      path + "/Code/ForceField/ANI/Params/" + modelType + "/AEVParams/";
+
+  // Weights for the radial symmetry functions
+  ArrayXd ShfR;
+  RDNumeric::EigenSerializer::deserialize(ShfR, paramFilePath + "ShfR.bin");
+  // Variance terms for the gaussian symmetry functions
+  ArrayXd EtaR;
+  RDNumeric::EigenSerializer::deserialize(EtaR, paramFilePath + "EtaR.bin");
+
+  // Weights for the angular symmetry functions
+  ArrayXd ShfZ;
+  RDNumeric::EigenSerializer::deserialize(ShfZ, paramFilePath + "ShfZ.bin");
+  ArrayXd ShfA;
+  RDNumeric::EigenSerializer::deserialize(ShfA, paramFilePath + "ShfA.bin");
+  // distance wise shifts in the distance term of the angular symmetry function
+
+  ArrayXd zeta;
+  RDNumeric::EigenSerializer::deserialize(zeta, paramFilePath + "zeta.bin");
+  ArrayXd etaA;
+  RDNumeric::EigenSerializer::deserialize(etaA, paramFilePath + "etaA.bin");
+
+  this->d_aevParams.insert(std::make_pair("ShfR", ShfR));
+  this->d_aevParams.insert(std::make_pair("EtaR", EtaR));
+  this->d_aevParams.insert(std::make_pair("ShfZ", ShfZ));
+  this->d_aevParams.insert(std::make_pair("ShfA", ShfA));
+  this->d_aevParams.insert(std::make_pair("zeta", zeta));
+  this->d_aevParams.insert(std::make_pair("etaA", etaA));
 }
 
 double ANIAtomContrib::forwardProp(ArrayXXd &aev) const {
@@ -91,7 +122,7 @@ double ANIAtomContrib::forwardProp(ArrayXXd &aev) const {
 
 double ANIAtomContrib::getEnergy(double *pos) const {
   auto aev = RDKit::Descriptors::ANI::AtomicEnvironmentVector(
-      pos, this->d_speciesVec, this->d_numAtoms);
+      pos, this->d_speciesVec, this->d_numAtoms, &(this->d_aevParams));
   ArrayXXd row = aev.row(this->d_atomIdx);
   return this->ANIAtomContrib::forwardProp(row) + this->d_selfEnergy;
 }

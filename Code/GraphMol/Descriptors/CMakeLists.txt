@@ -71,7 +71,7 @@ LINK_LIBRARIES  Descriptors )
 LINK_LIBRARIES  Descriptors ForceFieldHelpers DistGeomHelpers  )
 if(RDK_HAS_EIGEN)
  rdkit_catch_test(AtomicEnvironmentVectorCatchTest AtomicEnvironmentVector_catch.cpp catch_main.cpp
-LINK_LIBRARIES ANIDescriptors FileParsers SmilesParse)
+LINK_LIBRARIES ANIDescriptors FileParsers SmilesParse EigenSerializer)
 endif(RDK_HAS_EIGEN)
 endif(RDK_BUILD_DESCRIPTORS3D)
 

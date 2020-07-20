@@ -42,7 +42,6 @@ TEST_CASE("ANI-1ccx NN Forward Pass", "[ANI Force Field]") {
     int confId = -1;
     auto conf = mol->getConformer(confId);
     auto numAtoms = mol->getNumAtoms();
-    auto aev = RDKit::Descriptors::ANI::AtomicEnvironmentVector(*mol, confId);
     auto speciesVec = RDKit::Descriptors::ANI::GenerateSpeciesVector(*mol);
     ForceFields::ForceField field;
     auto &ps = field.positions();
@@ -69,7 +68,6 @@ TEST_CASE("ANI-1ccx NN Forward Pass", "[ANI Force Field]") {
     int confId = -1;
     auto conf = mol->getConformer(confId);
     auto numAtoms = mol->getNumAtoms();
-    auto aev = RDKit::Descriptors::ANI::AtomicEnvironmentVector(*mol, confId);
     auto speciesVec = RDKit::Descriptors::ANI::GenerateSpeciesVector(*mol);
     ForceFields::ForceField field;
     auto &ps = field.positions();
@@ -96,7 +94,6 @@ TEST_CASE("ANI-1ccx NN Forward Pass", "[ANI Force Field]") {
     int confId = -1;
     auto conf = mol->getConformer(confId);
     auto numAtoms = mol->getNumAtoms();
-    auto aev = RDKit::Descriptors::ANI::AtomicEnvironmentVector(*mol, confId);
     auto speciesVec = RDKit::Descriptors::ANI::GenerateSpeciesVector(*mol);
     ForceFields::ForceField field;
     auto &ps = field.positions();
@@ -128,7 +125,6 @@ TEST_CASE("ANI-1x NN Forward Pass", "[ANI Force Field]") {
     int confId = -1;
     auto conf = mol->getConformer(confId);
     auto numAtoms = mol->getNumAtoms();
-    auto aev = RDKit::Descriptors::ANI::AtomicEnvironmentVector(*mol, confId);
     auto speciesVec = RDKit::Descriptors::ANI::GenerateSpeciesVector(*mol);
     ForceFields::ForceField field;
     auto &ps = field.positions();
@@ -155,7 +151,6 @@ TEST_CASE("ANI-1x NN Forward Pass", "[ANI Force Field]") {
     int confId = -1;
     auto conf = mol->getConformer(confId);
     auto numAtoms = mol->getNumAtoms();
-    auto aev = RDKit::Descriptors::ANI::AtomicEnvironmentVector(*mol, confId);
     auto speciesVec = RDKit::Descriptors::ANI::GenerateSpeciesVector(*mol);
     ForceFields::ForceField field;
     auto &ps = field.positions();
@@ -182,7 +177,6 @@ TEST_CASE("ANI-1x NN Forward Pass", "[ANI Force Field]") {
     int confId = -1;
     auto conf = mol->getConformer(confId);
     auto numAtoms = mol->getNumAtoms();
-    auto aev = RDKit::Descriptors::ANI::AtomicEnvironmentVector(*mol, confId);
     auto speciesVec = RDKit::Descriptors::ANI::GenerateSpeciesVector(*mol);
     ForceFields::ForceField field;
     auto &ps = field.positions();

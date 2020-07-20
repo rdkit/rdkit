@@ -249,20 +249,15 @@ void NeighborPairs(ArrayXXd *coordinates, const VectorXi *species,
 */
 template <typename Derived>
 void RadialTerms(double cutoff, ArrayBase<Derived> &distances,
-                 ArrayXXd &RadialTerms_) {
+                 ArrayXXd &RadialTerms_,
+                 const std::map<std::string, Eigen::ArrayXXd> *params) {
   // Find cutoff factor for each pair of atoms which lie in each other's
   // neghborhoods
   // All the constants were determined in torchANI and have been taken from
   // there
   auto fc = CosineCutoff(&distances, cutoff);
-  // Different values for means of the gaussian symmetry functions
-  std::string path = getenv("RDBASE");
-  std::string paramFilePath = path + "/Code/GraphMol/Descriptors/ANIParams/";
-  ArrayXd ShfR;
-  RDNumeric::EigenSerializer::deserialize(ShfR, paramFilePath + "ShfR.bin");
-  // Variance terms for the gaussian symmetry functions
-  ArrayXd EtaR;
-  RDNumeric::EigenSerializer::deserialize(EtaR, paramFilePath + "EtaR.bin");
+  ArrayXd EtaR = params->find("EtaR")->second;
+  ArrayXd ShfR = params->find("ShfR")->second;
 
   RadialTerms_.resize(distances.rows(), ShfR.size() * EtaR.size());
 
@@ -294,25 +289,15 @@ void RadialTerms(double cutoff, ArrayBase<Derived> &distances,
 */
 template <typename Derived>
 void AngularTerms(double cutoff, ArrayBase<Derived> &vectors12,
-                  ArrayXXd &AngularTerms_) {
+                  ArrayXXd &AngularTerms_,
+                  const std::map<std::string, Eigen::ArrayXXd> *params) {
   // All the constants were determined in torchANI and have been taken from
   // there
   // Angle wise shift in the trigonometric term of the angular symmetry function
-
-  std::string path = getenv("RDBASE");
-  std::string paramFilePath = path + "/Code/GraphMol/Descriptors/ANIParams/";
-  // Variance terms for the gaussian symmetry functions
-
-  ArrayXd ShfZ;
-  RDNumeric::EigenSerializer::deserialize(ShfZ, paramFilePath + "ShfZ.bin");
-  ArrayXd ShfA;
-  RDNumeric::EigenSerializer::deserialize(ShfA, paramFilePath + "ShfA.bin");
-  // distance wise shifts in the distance term of the angular symmetry function
-
-  ArrayXd zeta;
-  RDNumeric::EigenSerializer::deserialize(zeta, paramFilePath + "zeta.bin");
-  ArrayXd etaA;
-  RDNumeric::EigenSerializer::deserialize(etaA, paramFilePath + "etaA.bin");
+  ArrayXd ShfZ = params->find("ShfZ")->second;
+  ArrayXd ShfA = params->find("ShfA")->second;
+  ArrayXd zeta = params->find("zeta")->second;
+  ArrayXd etaA = params->find("etaA")->second;
 
   auto distances12 = vectors12.matrix().rowwise().norm().array();
 
@@ -632,8 +617,9 @@ void IndexAdd(ArrayXXd &vector1, ArrayXXd &vector2, ArrayBase<Derived> &index,
   // return vector1;
 }
 
-ArrayXXd AtomicEnvironmentVector(double *pos, const VectorXi &species,
-                                 unsigned int numAtoms) {
+ArrayXXd AtomicEnvironmentVector(
+    double *pos, const VectorXi &species, unsigned int numAtoms,
+    const std::map<std::string, Eigen::ArrayXXd> *params) {
   PRECONDITION(species.size() == numAtoms,
                "Species encoding for each atom is required");
   PRECONDITION(pos != nullptr, "Array of positions is NULL");
@@ -677,7 +663,7 @@ ArrayXXd AtomicEnvironmentVector(double *pos, const VectorXi &species,
   // other atom
   auto index12 = (atomIndex12Unflattened * 4 + species12Flipped).transpose();
   ArrayXXd RadialTerms_;
-  RadialTerms(5.2, distances, RadialTerms_);
+  RadialTerms(5.2, distances, RadialTerms_, params);
 
   ArrayXXd radialAEV = ArrayXXd::Zero(4 * numAtoms, 16);
   IndexAdd(radialAEV, RadialTerms_, index12, 4, numAtoms);
@@ -767,7 +753,7 @@ ArrayXXd AtomicEnvironmentVector(double *pos, const VectorXi &species,
     vec12.row(i) = vecFlattened.row(i) * sign12(1, i - vecFlattened.rows() / 2);
   }
   ArrayXXd AngularTerms_;
-  AngularTerms(3.5, vec12, AngularTerms_);
+  AngularTerms(3.5, vec12, AngularTerms_, params);
 
   ArrayXXi centralAtomIndexArr(centralAtomIndex.size(), 1);
 
@@ -832,7 +818,9 @@ ArrayXXd AtomicEnvironmentVector(double *pos, const VectorXi &species,
   return finalAEV;
 }
 
-ArrayXXd AtomicEnvironmentVector(const ROMol &mol, int confId) {
+ArrayXXd AtomicEnvironmentVector(
+    const ROMol &mol, const std::map<std::string, Eigen::ArrayXXd> *params,
+    int confId) {
   PRECONDITION(mol.getNumConformers() >= 1, "molecule has no conformers");
 
   auto numAtoms = mol.getNumAtoms();
@@ -850,7 +838,7 @@ ArrayXXd AtomicEnvironmentVector(const ROMol &mol, int confId) {
     pos[3 * i + 2] = atom.z;
   }
 
-  return AtomicEnvironmentVector(pos, species, numAtoms);
+  return AtomicEnvironmentVector(pos, species, numAtoms, params);
 }
 }  // namespace ANI
 }  // namespace Descriptors
