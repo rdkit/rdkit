@@ -25,6 +25,7 @@
 #include <boost/archive/text_iarchive.hpp>
 #include <boost/serialization/vector.hpp>
 #include <boost/serialization/shared_ptr.hpp>
+#include <boost/serialization/version.hpp>
 #include <RDGeneral/BoostEndInclude.h>
 #endif
 
@@ -52,6 +53,8 @@ struct RDKIT_SCAFFOLDNETWORK_EXPORT ScaffoldNetworkParams {
       true;  ///< remove chirality and bond stereo when flattening
   bool flattenKeepLargest =
       true;  ///< keep only the largest fragment when doing flattening
+  bool collectMolCounts = true;  ///< keep track of the number of molecules each
+                                 ///< scaffold was reached from
 
   std::vector<std::shared_ptr<ChemicalReaction>>
       bondBreakersRxns;  ///< the reaction(s) used to fragment. Should expect a
@@ -100,6 +103,8 @@ struct RDKIT_SCAFFOLDNETWORK_EXPORT ScaffoldNetwork {
   std::vector<std::string> nodes;  ///< SMILES for the scaffolds
   std::vector<unsigned>
       counts;  ///< number of times each scaffold was encountered
+  std::vector<unsigned>
+      molCounts;  ///< number of molecules each scaffold was found in
   std::vector<NetworkEdge> edges;  ///< edges in the network
   ScaffoldNetwork(){};
 #ifdef RDK_USE_BOOST_SERIALIZATION
@@ -116,6 +121,9 @@ struct RDKIT_SCAFFOLDNETWORK_EXPORT ScaffoldNetwork {
     RDUNUSED_PARAM(version);
     ar &nodes;
     ar &counts;
+    if (version > 0) {
+      ar &molCounts;
+    }
     ar &edges;
   }
 #endif
@@ -173,5 +181,14 @@ RDKIT_SCAFFOLDNETWORK_EXPORT ScaffoldNetworkParams getBRICSNetworkParams();
 
 }  // namespace ScaffoldNetwork
 }  // namespace RDKit
+
+namespace boost {
+namespace serialization {
+template <>
+struct version<RDKit::ScaffoldNetwork::ScaffoldNetwork> {
+  BOOST_STATIC_CONSTANT(int, value = 1);
+};
+}  // namespace serialization
+}  // namespace boost
 
 #endif
