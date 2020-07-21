@@ -83,7 +83,6 @@ TEST_CASE("Symmetry Function Accuracy", "[Symmetry Function]") {
   params.insert(std::make_pair("ShfA", ShfA));
   params.insert(std::make_pair("zeta", zeta));
   params.insert(std::make_pair("etaA", etaA));
-  // params.insert(std::make_pair("HAHA", ArrayXXd::Random(10, 10)));
   SECTION("CH4") {
     std::string pathName = getenv("RDBASE");
 
