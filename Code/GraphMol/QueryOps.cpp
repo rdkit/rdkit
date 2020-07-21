@@ -365,8 +365,8 @@ ATOM_EQUALS_QUERY *makeAAtomQuery() {
   res->setTypeLabel("A");
   return res;
 }
-ATOM_EQUALS_QUERY *makeAHAtomQuery() {
-  auto *res = rdcast<ATOM_EQUALS_QUERY *>(makeAtomNullQuery());
+ATOM_NULL_QUERY *makeAHAtomQuery() {
+  auto *res = makeAtomNullQuery();
   res->setTypeLabel("AH");
   return res;
 }
