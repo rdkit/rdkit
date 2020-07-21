@@ -15,7 +15,6 @@ void testPushAndPop() {
   ConcurrentQueue<int>* q = new ConcurrentQueue<int>(4);
   int e1, e2, e3;
   TEST_ASSERT(q->isEmpty());
-  TEST_ASSERT(q->limit() == 4);
 
   q->push(1);
   q->push(2);
