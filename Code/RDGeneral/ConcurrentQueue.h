@@ -26,6 +26,10 @@ class ConcurrentQueue {
   std::condition_variable d_goPush, d_goPop;
   std::queue<E> d_q;
 
+ private:
+  ConcurrentQueue<E>(const ConcurrentQueue<E>&);
+  ConcurrentQueue<E>& operator=(const ConcurrentQueue<E>&);
+
  public:
   ConcurrentQueue<E>(size_t capacity) : d_capacity(capacity), d_done(false) {}
   //! tries to push an element into the queue if it is not full without
