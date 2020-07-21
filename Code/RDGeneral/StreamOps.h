@@ -145,7 +145,7 @@ inline boost::uint32_t readPackedIntFromStream(std::stringstream &ss) {
   int shift, offset;
   char tmp;
   ss.read(&tmp, sizeof(tmp));
-  if (ss.failbit) {
+  if (ss.fail()) {
     throw std::runtime_error("failed to read from stream");
   }
 
@@ -155,7 +155,7 @@ inline boost::uint32_t readPackedIntFromStream(std::stringstream &ss) {
     shift = 1;
   } else if ((val & 3) == 1) {
     ss.read((char *)&tmp, sizeof(tmp));
-    if (ss.failbit) {
+    if (ss.fail()) {
       throw std::runtime_error("failed to read from stream");
     }
 
@@ -164,13 +164,13 @@ inline boost::uint32_t readPackedIntFromStream(std::stringstream &ss) {
     offset = (1 << 7);
   } else if ((val & 7) == 3) {
     ss.read((char *)&tmp, sizeof(tmp));
-    if (ss.failbit) {
+    if (ss.fail()) {
       throw std::runtime_error("failed to read from stream");
     }
 
     val |= (UCHAR(tmp) << 8);
     ss.read((char *)&tmp, sizeof(tmp));
-    if (ss.failbit) {
+    if (ss.fail()) {
       throw std::runtime_error("failed to read from stream");
     }
 
@@ -179,19 +179,19 @@ inline boost::uint32_t readPackedIntFromStream(std::stringstream &ss) {
     offset = (1 << 7) + (1 << 14);
   } else {
     ss.read((char *)&tmp, sizeof(tmp));
-    if (ss.failbit) {
+    if (ss.fail()) {
       throw std::runtime_error("failed to read from stream");
     }
 
     val |= (UCHAR(tmp) << 8);
     ss.read((char *)&tmp, sizeof(tmp));
-    if (ss.failbit) {
+    if (ss.fail()) {
       throw std::runtime_error("failed to read from stream");
     }
 
     val |= (UCHAR(tmp) << 16);
     ss.read((char *)&tmp, sizeof(tmp));
-    if (ss.failbit) {
+    if (ss.fail()) {
       throw std::runtime_error("failed to read from stream");
     }
 
@@ -274,7 +274,7 @@ template <typename T>
 void streamRead(std::istream &ss, T &loc) {
   T tloc;
   ss.read((char *)&tloc, sizeof(T));
-  if (ss.failbit) {
+  if (ss.fail()) {
     throw std::runtime_error("failed to read from stream");
   }
   loc = EndianSwapBytes<LITTLE_ENDIAN_ORDER, HOST_ENDIAN_ORDER>(tloc);
@@ -291,12 +291,12 @@ inline void streamRead(std::istream &ss, std::string &what, int version) {
   RDUNUSED_PARAM(version);
   unsigned int l;
   ss.read((char *)&l, sizeof(l));
-  if (ss.failbit) {
+  if (ss.fail()) {
     throw std::runtime_error("failed to read from stream");
   }
   char *buff = new char[l];
   ss.read(buff, sizeof(char) * l);
-  if (ss.failbit) {
+  if (ss.fail()) {
     throw std::runtime_error("failed to read from stream");
   }
   what = std::string(buff, l);

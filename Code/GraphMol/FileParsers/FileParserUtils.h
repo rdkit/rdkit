@@ -34,7 +34,7 @@ T stripSpacesAndCast(const std::string &input, bool acceptSpaces = false) {
   }
 }
 RDKIT_FILEPARSERS_EXPORT int toInt(const std::string &input,
-                                   bool acceptSpaces = false);
+                                   bool acceptSpaces = true);
 RDKIT_FILEPARSERS_EXPORT double toDouble(const std::string &input,
                                          bool acceptSpaces = true);
 
