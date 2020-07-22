@@ -48,7 +48,7 @@ struct PyMCSAtomCompare : public boost::python::wrapper<PyMCSAtomCompare> {
     python::throw_error_already_set();
     return false;
   }
-  // DEPRECATED: remove from here in release 2021.01
+  // DEPRECATED: remove the following compare() method in release 2021.01
   virtual bool compare(const MCSAtomCompareParameters&,
                        const ROMol&, unsigned int, const ROMol&, unsigned int) {
     PyErr_SetString(PyExc_AttributeError,
@@ -57,7 +57,6 @@ struct PyMCSAtomCompare : public boost::python::wrapper<PyMCSAtomCompare> {
     python::throw_error_already_set();
     return false;
   }
-  // DEPRECATED: remove until here in release 2021.01
   bool hasPythonOverride(const char *attrName) {
     auto obj = get_override(attrName);
     return PyCallable_Check(obj.ptr());
@@ -97,7 +96,7 @@ struct PyMCSBondCompare : public boost::python::wrapper<PyMCSBondCompare> {
     python::throw_error_already_set();
     return false;
   }
-  // DEPRECATED: remove from here in release 2021.01
+  // DEPRECATED: remove the following compare() method in release 2021.01
   virtual bool compare(const MCSBondCompareParameters&,
                        const ROMol&, unsigned int, const ROMol&, unsigned int) {
     PyErr_SetString(PyExc_AttributeError,
@@ -106,7 +105,6 @@ struct PyMCSBondCompare : public boost::python::wrapper<PyMCSBondCompare> {
     python::throw_error_already_set();
     return false;
   }
-  // DEPRECATED: remove until here in release 2021.01
   const MCSParameters *mcsParameters;
   std::set<const ROMol *> ringMatchTablesMols;
   FMCS::RingMatchTableSet ringMatchTables;
@@ -146,7 +144,7 @@ struct PyMCSProgress : public boost::python::wrapper<PyMCSProgress> {
     python::throw_error_already_set();
     return false;
   }
-  // DEPRECATED: remove from here in release 2021.01
+  // DEPRECATED: remove the following callback() method in release 2021.01
   virtual bool callback(const MCSProgressData&,
                         const MCSParameters&) {
     PyErr_SetString(PyExc_AttributeError,
@@ -155,7 +153,6 @@ struct PyMCSProgress : public boost::python::wrapper<PyMCSProgress> {
     python::throw_error_already_set();
     return false;
   }
-  // DEPRECATED: remove until here in release 2021.01
 };
 
 class PyMCSProgressData {
