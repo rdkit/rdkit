@@ -561,7 +561,7 @@ RDKIT_GRAPHMOL_EXPORT ATOM_EQUALS_QUERY *makeAtomRingBondCountQuery(int what);
 //! returns a Query for matching generic A atoms (heavy atoms)
 RDKIT_GRAPHMOL_EXPORT ATOM_EQUALS_QUERY *makeAAtomQuery();
 //! returns a Query for matching generic AH atoms (any atom)
-RDKIT_GRAPHMOL_EXPORT ATOM_EQUALS_QUERY *makeAHAtomQuery();
+RDKIT_GRAPHMOL_EXPORT ATOM_NULL_QUERY *makeAHAtomQuery();
 //! returns a Query for matching generic Q atoms (heteroatoms)
 RDKIT_GRAPHMOL_EXPORT ATOM_OR_QUERY *makeQAtomQuery();
 //! returns a Query for matching generic QH atoms (heteroatom or H)
