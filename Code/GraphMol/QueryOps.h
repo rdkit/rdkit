@@ -80,7 +80,7 @@ static inline int queryAtomExplicitDegree(Atom const *at) {
 static inline int queryAtomTotalDegree(Atom const *at) {
   return at->getTotalDegree();
 };
-//! includes D and T
+//! D and T are treated as "non-hydrogen" here
 static inline int queryAtomNonHydrogenDegree(Atom const *at) {
   int res = 0;
   for (const auto &nbri :
@@ -93,6 +93,7 @@ static inline int queryAtomNonHydrogenDegree(Atom const *at) {
 
   return res;
 };
+//! D and T are not treated as heavy atoms here
 static inline int queryAtomHeavyAtomDegree(Atom const *at) {
   int heavyDegree = 0;
   for (const auto &nbri :
