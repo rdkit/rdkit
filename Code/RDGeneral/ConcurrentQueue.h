@@ -15,7 +15,7 @@
 #include <thread>
 
 namespace RDKit {
-template <class E>
+template <typename E>
 class ConcurrentQueue {
  private:
   size_t d_capacity;
@@ -56,7 +56,7 @@ class ConcurrentQueue {
   size_t size() const;
 };
 
-template <class E>
+template <typename E>
 void ConcurrentQueue<E>::push(const E& element) {
   std::unique_lock<std::mutex> lk(d_lock);
   while (d_q.size() == d_capacity) {
@@ -66,7 +66,7 @@ void ConcurrentQueue<E>::push(const E& element) {
   d_goPop.notify_one();
 }
 
-template <class E>
+template <typename E>
 bool ConcurrentQueue<E>::pop(E& element) {
   std::unique_lock<std::mutex> lk(d_lock);
   while (d_q.empty()) {
@@ -81,26 +81,26 @@ bool ConcurrentQueue<E>::pop(E& element) {
   return true;
 }
 
-template <class E>
+template <typename E>
 bool ConcurrentQueue<E>::isEmpty() const {
   std::unique_lock<std::mutex> lk(d_lock);
   return d_q.empty();
 }
 
-template <class E>
+template <typename E>
 bool ConcurrentQueue<E>::getDone() const {
   std::unique_lock<std::mutex> lk(d_lock);
   return d_done;
 }
 
-template <class E>
+template <typename E>
 void ConcurrentQueue<E>::setDone() {
   std::unique_lock<std::mutex> lk(d_lock);
   d_done = true;
   d_goPop.notify_all();
 }
 
-template <class E>
+template <typename E>
 size_t ConcurrentQueue<E>::size() const {
   std::unique_lock<std::mutex> lk(d_lock);
   return d_q.size();
