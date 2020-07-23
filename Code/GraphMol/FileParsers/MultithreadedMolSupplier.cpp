@@ -35,14 +35,13 @@ MultithreadedMolSupplier::MultithreadedMolSupplier(std::istream* inStream,
 }
 
 MultithreadedMolSupplier::MultithreadedMolSupplier(const std::string fileName,
-                                                   bool takeOwnership,
                                                    int numWriterThreads,
                                                    size_t sizeInputQueue,
                                                    size_t sizeOutputQueue) {
   dp_inStream = openAndCheckStream(fileName);
   CHECK_INVARIANT(dp_inStream, "bad instream");
   CHECK_INVARIANT(!(dp_inStream->eof()), "early EOF");
-  df_owner = takeOwnership;
+  df_owner = false;
   if (numWriterThreads == -1) {
     d_numWriterThreads = (int)getNumThreadsToUse(numWriterThreads);
   } else {
@@ -91,6 +90,7 @@ void MultithreadedMolSupplier::inputConsumer() {
 ROMol* MultithreadedMolSupplier::next() {
   std::shared_ptr<ROMol> mol(nullptr);
   if (d_outputQueue->pop(mol)) {
+		std::cout << "Popping elements from the output queue" << std::endl;
     return mol.get();
   }
   return nullptr;
@@ -109,7 +109,7 @@ void MultithreadedMolSupplier::startThreads() {
   d_outputQueue->setDone();
 }
 
-bool MultithreadedMolSupplier::atEnd() { return d_outputQueue->getDone(); }
+bool MultithreadedMolSupplier::atEnd() { return getEnd();  }
 
 void MultithreadedMolSupplier::reset() { ; }
 

@@ -12,11 +12,27 @@
 namespace RDKit {
 MultithreadedSmilesMolSupplier::MultithreadedSmilesMolSupplier(
     const std::string &fileName, const std::string &delimiter, int smilesColumn,
-    int nameColumn, bool titleLine, bool sanitize) {
+    int nameColumn, bool titleLine, bool sanitize, int numWriterThreads,
+    size_t sizeInputQueue, size_t sizeOutputQueue) {
   init();
   dp_inStream = openAndCheckStream(fileName);
   CHECK_INVARIANT(dp_inStream, "bad instream");
   CHECK_INVARIANT(!(dp_inStream->eof()), "early EOF");
+
+  df_owner = false;
+  if (numWriterThreads == -1) {
+    d_numWriterThreads = (int)getNumThreadsToUse(numWriterThreads);
+  } else {
+    d_numWriterThreads =
+        std::min(numWriterThreads, (int)getNumThreadsToUse(numWriterThreads));
+  }
+
+  d_sizeInputQueue = sizeInputQueue;
+  d_sizeOutputQueue = sizeOutputQueue;
+  d_inputQueue = new ConcurrentQueue<std::tuple<std::string, unsigned int>>(
+      d_sizeInputQueue);
+  d_outputQueue =
+      new ConcurrentQueue<std::shared_ptr<ROMol>>(d_sizeOutputQueue);
 
   d_delim = delimiter;
   df_sanitize = sanitize;
@@ -33,13 +49,26 @@ MultithreadedSmilesMolSupplier::MultithreadedSmilesMolSupplier() { init(); }
 
 MultithreadedSmilesMolSupplier::MultithreadedSmilesMolSupplier(
     std::istream *inStream, bool takeOwnership, const std::string &delimiter,
-    int smilesColumn, int nameColumn, bool titleLine, bool sanitize) {
+    int smilesColumn, int nameColumn, bool titleLine, bool sanitize,
+    int numWriterThreads, size_t sizeInputQueue, size_t sizeOutputQueue){
+  init();
   CHECK_INVARIANT(inStream, "bad instream");
   CHECK_INVARIANT(!(inStream->eof()), "early EOF");
-
-  init();
   dp_inStream = inStream;
   df_owner = takeOwnership;
+  if (numWriterThreads == -1) {
+    d_numWriterThreads = (int)getNumThreadsToUse(numWriterThreads);
+  } else {
+    d_numWriterThreads =
+        std::min(numWriterThreads, (int)getNumThreadsToUse(numWriterThreads));
+  }
+  d_sizeInputQueue = sizeInputQueue;
+  d_sizeOutputQueue = sizeOutputQueue;
+  d_inputQueue = new ConcurrentQueue<std::tuple<std::string, unsigned int>>(
+      d_sizeInputQueue);
+  d_outputQueue =
+      new ConcurrentQueue<std::shared_ptr<ROMol>>(d_sizeOutputQueue);
+
   d_delim = delimiter;
   df_sanitize = sanitize;
   df_title = titleLine;
@@ -57,6 +86,16 @@ MultithreadedSmilesMolSupplier::~MultithreadedSmilesMolSupplier() {
 }
 
 void MultithreadedSmilesMolSupplier::init() {
+  dp_inStream = nullptr;
+  df_owner = true;
+  d_numWriterThreads = 1;
+  d_sizeInputQueue = 10;
+  d_sizeOutputQueue = 10;
+  d_inputQueue = new ConcurrentQueue<std::tuple<std::string, unsigned int>>(
+      d_sizeInputQueue);
+  d_outputQueue =
+      new ConcurrentQueue<std::shared_ptr<ROMol>>(d_sizeOutputQueue);
+
   dp_inStream = nullptr;
   df_owner = true;
   df_end = false;
@@ -111,6 +150,10 @@ void MultithreadedSmilesMolSupplier::checkForEnd() {
     dp_inStream->seekg(0);
     df_end = false;
   }
+}
+
+bool MultithreadedSmilesMolSupplier::getEnd(){
+	return df_end;
 }
 
 // --------------------------------------------------

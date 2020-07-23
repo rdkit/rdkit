@@ -16,17 +16,19 @@ namespace RDKit {
 class RDKIT_FILEPARSERS_EXPORT MultithreadedSmilesMolSupplier
     : public MultithreadedMolSupplier {
  public:
-  explicit MultithreadedSmilesMolSupplier(const std::string &fileName,
-                                          const std::string &delimiter = " \t",
-                                          int smilesColumn = 0,
-                                          int nameColumn = 1,
-                                          bool titleLine = true,
-                                          bool sanitize = true);
+  explicit MultithreadedSmilesMolSupplier(
+      const std::string &fileName, const std::string &delimiter = " \t",
+      int smilesColumn = 0, int nameColumn = 1, bool titleLine = true,
+      bool sanitize = true, int numWriterThreads = 10,
+      size_t sizeInputQueue = 10, size_t sizeOutputQueue = 10);
   MultithreadedSmilesMolSupplier();
   explicit MultithreadedSmilesMolSupplier(
       std::istream *inStream, bool takeOwnership = true,
       const std::string &delimiter = " \t", int smilesColumn = 0,
-      int nameColumn = 1, bool titleLine = true, bool sanitize = true);
+      int nameColumn = 1, bool titleLine = true, bool sanitize = true,
+      int numWriterThreads = 10, size_t sizeInputQueue = 10,
+      size_t sizeOutputQueue = 10);
+
   ~MultithreadedSmilesMolSupplier();
 
   //! initialize data members
@@ -37,7 +39,9 @@ class RDKIT_FILEPARSERS_EXPORT MultithreadedSmilesMolSupplier
   long int skipComments();
   //! checks if there is a line to be read from the file
   void checkForEnd();
-  //! reads next record and returns whether or not EOF was hit
+	//! returns df_end
+	bool getEnd();  
+	//! reads next record and returns whether or not EOF was hit
   bool extractNextRecord(std::string &record, unsigned int &lineNum);
   //! parses the record and returns the resulting molecule
   ROMol *processMoleculeRecord(const std::string &record, unsigned int lineNum);

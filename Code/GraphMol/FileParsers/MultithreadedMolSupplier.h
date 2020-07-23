@@ -38,7 +38,7 @@ class RDKIT_FILEPARSERS_EXPORT MultithreadedMolSupplier : public MolSupplier {
   MultithreadedMolSupplier(std::istream *inStream, bool takeOwnership,
                            int numWriterThreads, size_t sizeInputQueue,
                            size_t sizeOutputQueue);
-  MultithreadedMolSupplier(std::string fileName, bool takeOwnership,
+  MultithreadedMolSupplier(std::string fileName,
                            int numWriterThreads, size_t sizeInputQueue,
                            size_t sizeOutputQueue);
   //! intialize data memebers
@@ -57,19 +57,20 @@ class RDKIT_FILEPARSERS_EXPORT MultithreadedMolSupplier : public MolSupplier {
   //! starts reader and writer threads
   void startThreads();
 
-  //! not sure how to implement this method yet
+  //! use atEnd method of the 
   bool atEnd();
 
   //! not sure how to implement this method yet
   void reset();
 
  private:
+	virtual bool getEnd() = 0;
   virtual bool extractNextRecord(std::string &record,
                                  unsigned int &lineNum) = 0;
   virtual ROMol *processMoleculeRecord(const std::string &record,
                                        unsigned int lineNum) = 0;
 
- private:
+ protected:
   const int d_numReaderThread = 1;  // fix number of reader threads to 1
   int d_numWriterThreads;           // number of writer threads
   size_t d_sizeInputQueue;          // size of input queue
