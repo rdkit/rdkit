@@ -28,7 +28,8 @@ MultithreadedMolSupplier::MultithreadedMolSupplier(std::istream* inStream,
   }
   d_sizeInputQueue = sizeInputQueue;
   d_sizeOutputQueue = sizeOutputQueue;
-  d_inputQueue = new ConcurrentQueue<Record>(d_sizeInputQueue);
+  d_inputQueue = new ConcurrentQueue<std::tuple<std::string, unsigned int>>(
+      d_sizeInputQueue);
   d_outputQueue =
       new ConcurrentQueue<std::shared_ptr<ROMol>>(d_sizeOutputQueue);
 }
@@ -51,7 +52,8 @@ MultithreadedMolSupplier::MultithreadedMolSupplier(const std::string fileName,
 
   d_sizeInputQueue = sizeInputQueue;
   d_sizeOutputQueue = sizeOutputQueue;
-  d_inputQueue = new ConcurrentQueue<Record>(d_sizeInputQueue);
+  d_inputQueue = new ConcurrentQueue<std::tuple<std::string, unsigned int>>(
+      d_sizeInputQueue);
   d_outputQueue =
       new ConcurrentQueue<std::shared_ptr<ROMol>>(d_sizeOutputQueue);
 }
@@ -62,7 +64,8 @@ void MultithreadedMolSupplier::init() {
   d_numWriterThreads = 1;
   d_sizeInputQueue = 10;
   d_sizeOutputQueue = 10;
-  d_inputQueue = new ConcurrentQueue<Record>(d_sizeInputQueue);
+  d_inputQueue = new ConcurrentQueue<std::tuple<std::string, unsigned int>>(
+      d_sizeInputQueue);
   d_outputQueue =
       new ConcurrentQueue<std::shared_ptr<ROMol>>(d_sizeOutputQueue);
 }
@@ -71,16 +74,15 @@ void MultithreadedMolSupplier::inputProducer() {
   std::string record;
   unsigned int lineNum;
   while (extractNextRecord(record, lineNum)) {
-    struct Record r;
-    r.record = record;
-    r.lineNum = lineNum;
+    auto r = std::tuple<std::string, unsigned int>{record, lineNum};
     d_inputQueue->push(r);
   }
 }
 
 void MultithreadedMolSupplier::inputConsumer() {
-  struct Record r while (d_inputQueue->pop(r)) {
-    ROMol* mol = processMoleculeRecord(r.record, r.lineNum);
+  std::tuple<std::string, unsigned int> r;
+  while (d_inputQueue->pop(r)) {
+    ROMol* mol = processMoleculeRecord(std::get<0>(r), std::get<1>(r));
     std::shared_ptr<ROMol> shared_mol(mol);
     d_outputQueue->push(shared_mol);
   }
@@ -89,20 +91,26 @@ void MultithreadedMolSupplier::inputConsumer() {
 ROMol* MultithreadedMolSupplier::next() {
   std::shared_ptr<ROMol> mol(nullptr);
   if (d_outputQueue->pop(mol)) {
-    return mol;
+    return mol.get();
   }
   return nullptr;
 }
 
 void MultithreadedMolSupplier::startThreads() {
   std::vector<std::thread> writers(d_numWriterThreads);
-  std::thread reader = std::thread(inputProducer);
+  std::thread reader(&MultithreadedMolSupplier::inputProducer, this);
   for (int i = 0; i < d_numWriterThreads; i++) {
-    writers[i] = std::thread(inputConsumers);
+    writers[i] = std::thread(&MultithreadedMolSupplier::inputConsumer, this);
   }
   reader.join();
-  reader.setDone();
+  d_inputQueue->setDone();
   std::for_each(writers.begin(), writers.end(),
                 std::mem_fn(&std::thread::join));
-  writers.setDone();
+  d_outputQueue->setDone();
 }
+
+bool MultithreadedMolSupplier::atEnd() { return d_outputQueue->getDone(); }
+
+void MultithreadedMolSupplier::reset() { ; }
+
+}  // namespace RDKit

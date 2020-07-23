@@ -12,6 +12,7 @@
 #define MULTITHREADED_SMILES_MOL_SUPPLIER
 #include "MultithreadedMolSupplier.h"
 
+namespace RDKit {
 class RDKIT_FILEPARSERS_EXPORT MultithreadedSmilesMolSupplier
     : public MultithreadedMolSupplier {
  public:
@@ -30,7 +31,11 @@ class RDKIT_FILEPARSERS_EXPORT MultithreadedSmilesMolSupplier
 
   //! initialize data members
   void init();
-  // check if there is a line to be read from the file
+  //! Returns the position of the beginning of the next
+  //! non-comment line in the input stream. -1 is returned if
+  //! no line could be read;
+  long int skipComments();
+  //! checks if there is a line to be read from the file
   void checkForEnd();
   //! reads next record and returns whether or not EOF was hit
   bool extractNextRecord(std::string &record);
@@ -48,3 +53,6 @@ class RDKIT_FILEPARSERS_EXPORT MultithreadedSmilesMolSupplier
   int d_smi = 0;            // column id for the smile string
   int d_name = 1;           // column id for the name
 };
+}  // namespace RDKit
+#endif
+#endif

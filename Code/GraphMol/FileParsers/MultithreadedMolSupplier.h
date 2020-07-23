@@ -16,6 +16,7 @@
 #include <RDGeneral/ConcurrentQueue.h>
 #include <RDGeneral/FileParseException.h>
 #include <RDGeneral/RDLog.h>
+#include <RDGeneral/RDThreads.h>
 #include <RDGeneral/StreamOps.h>
 
 #include <boost/tokenizer.hpp>
@@ -30,11 +31,6 @@
 typedef boost::tokenizer<boost::char_separator<char>> tokenizer;
 
 namespace RDKit {
-
-struct Record {
-  std::string record;
-  unsigned int lineNum;
-};
 
 class RDKIT_FILEPARSERS_EXPORT MultithreadedMolSupplier : public MolSupplier {
  public:
@@ -62,10 +58,10 @@ class RDKIT_FILEPARSERS_EXPORT MultithreadedMolSupplier : public MolSupplier {
   void startThreads();
 
   //! not sure how to implement this method yet
-  virtual bool atEnd();
+  bool atEnd();
 
   //! not sure how to implement this method yet
-  virtual void reset();
+  void reset();
 
  private:
   virtual bool extractNextRecord(std::string &record,
@@ -74,12 +70,13 @@ class RDKIT_FILEPARSERS_EXPORT MultithreadedMolSupplier : public MolSupplier {
                                        unsigned int lineNum) = 0;
 
  private:
-  const int d_numReaderThread = 1;         // fix number of reader threads to 1
-  int d_numWriterThreads;                  // number of writer threads
-  size_t d_sizeInputQueue;                 // size of input queue
-  size_t d_sizeOutputQueue;                // size of output queue
-  Concurrent Queue<Record> *d_inputQueue;  // concurrent input queue
-  Concurrent Queue<std::shared_ptr<ROMol>>
+  const int d_numReaderThread = 1;  // fix number of reader threads to 1
+  int d_numWriterThreads;           // number of writer threads
+  size_t d_sizeInputQueue;          // size of input queue
+  size_t d_sizeOutputQueue;         // size of output queue
+  ConcurrentQueue<std::tuple<std::string, unsigned int>>
+      *d_inputQueue;  // concurrent input queue
+  ConcurrentQueue<std::shared_ptr<ROMol>>
       *d_outputQueue;  // concurrent output queue
 };
 }  // namespace RDKit
