@@ -125,11 +125,7 @@ void setConjugation(ROMol &mol) {
   // start with all bonds being marked unconjugated
   // except for aromatic bonds
   for (auto bond : mol.bonds()) {
-    if (bond->getIsAromatic()) {
-      bond->setIsConjugated(true);
-    } else {
-      bond->setIsConjugated(false);
-    }
+    bond->setIsConjugated(bond->getIsAromatic());
   }
 
   // loop over each atom and check if the bonds connecting to it can
