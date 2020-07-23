@@ -38,9 +38,9 @@ class RDKIT_FILEPARSERS_EXPORT MultithreadedSmilesMolSupplier
   //! checks if there is a line to be read from the file
   void checkForEnd();
   //! reads next record and returns whether or not EOF was hit
-  bool extractNextRecord(std::string &record);
+  bool extractNextRecord(std::string &record, unsigned int &lineNum);
   //! parses the record and returns the resulting molecule
-  ROMol *processMoleculeRecord(const std::string &record);
+  ROMol *processMoleculeRecord(const std::string &record, unsigned int lineNum);
 
  private:
   bool df_end = false;      // have we reached the end of the file?

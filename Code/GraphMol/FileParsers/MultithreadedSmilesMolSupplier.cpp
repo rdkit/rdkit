@@ -83,11 +83,12 @@ long int MultithreadedSmilesMolSupplier::skipComments() {
 
   std::streampos prev = dp_inStream->tellg();
   std::string tempStr;
-  if (!this->extractNextRecord(tempStr)) {
+  unsigned int lineNum;
+  if (!this->extractNextRecord(tempStr, lineNum)) {
     // if we didn't immediately hit EOF, loop until we get a valid line:
     while ((tempStr[0] == '#') || (strip(tempStr).size() == 0)) {
       prev = dp_inStream->tellg();
-      this->extractNextRecord(tempStr);
+      this->extractNextRecord(tempStr, lineNum);
       if (this->atEnd()) {
         break;
       }
@@ -123,7 +124,8 @@ void MultithreadedSmilesMolSupplier::checkForEnd() {
 //      incremented
 //
 // --------------------------------------------------
-bool MultithreadedSmilesMolSupplier::extractNextRecord(std::string &record) {
+bool MultithreadedSmilesMolSupplier::extractNextRecord(std::string &record,
+                                                       unsigned int &lineNum) {
   PRECONDITION(dp_inStream, "bad stream");
   if (df_end) {
     return "";
@@ -141,11 +143,12 @@ bool MultithreadedSmilesMolSupplier::extractNextRecord(std::string &record) {
     dp_inStream->clear();
   }
   d_line++;
+  lineNum = d_line;
   return df_end;
 }
 
 ROMol *MultithreadedSmilesMolSupplier::processMoleculeRecord(
-    const std::string &record) {
+    const std::string &record, unsigned int lineNum) {
   ROMol *res = nullptr;
 
   try {
@@ -163,7 +166,8 @@ ROMol *MultithreadedSmilesMolSupplier::processMoleculeRecord(
     }
     if (recs.size() <= static_cast<unsigned int>(d_smi)) {
       std::ostringstream errout;
-      errout << "ERROR: line #" << d_line << "does not contain enough tokens\n";
+      errout << "ERROR: line #" << lineNum
+             << "does not contain enough tokens\n";
       throw FileParseException(errout.str());
     }
 
@@ -187,13 +191,13 @@ ROMol *MultithreadedSmilesMolSupplier::processMoleculeRecord(
     if (d_name == -1) {
       // if no name defaults it to the line number we read it from string
       std::ostringstream tstr;
-      tstr << d_line;
+      tstr << lineNum;
       std::string mname = tstr.str();
       res->setProp(common_properties::_Name, mname);
     } else {
       if (d_name >= static_cast<int>(recs.size())) {
         BOOST_LOG(rdWarningLog)
-            << "WARNING: no name column found on line " << d_line << std::endl;
+            << "WARNING: no name column found on line " << lineNum << std::endl;
       } else {
         res->setProp(common_properties::_Name, recs[d_name]);
       }
@@ -225,7 +229,7 @@ ROMol *MultithreadedSmilesMolSupplier::processMoleculeRecord(
   } catch (const SmilesParseException &pe) {
     // Couldn't parse the passed in smiles
     // Simply print out a message
-    BOOST_LOG(rdErrorLog) << "ERROR: Smiles parse error on line " << d_line
+    BOOST_LOG(rdErrorLog) << "ERROR: Smiles parse error on line " << lineNum
                           << "\n";
     BOOST_LOG(rdErrorLog) << "ERROR: " << pe.what() << "\n";
     res = nullptr;
@@ -233,13 +237,13 @@ ROMol *MultithreadedSmilesMolSupplier::processMoleculeRecord(
     // We couldn't sanitize the molecule
     //  write out an error message
     BOOST_LOG(rdErrorLog) << "ERROR: Could not sanitize molecule on line "
-                          << d_line << std::endl;
+                          << lineNum << std::endl;
     BOOST_LOG(rdErrorLog) << "ERROR: " << se.what() << "\n";
     res = nullptr;
   } catch (...) {
     //  write out an error message
     BOOST_LOG(rdErrorLog) << "ERROR: Could not process molecule on line "
-                          << d_line << std::endl;
+                          << lineNum << std::endl;
     res = nullptr;
   }
 
