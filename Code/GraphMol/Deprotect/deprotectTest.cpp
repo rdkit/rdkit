@@ -26,8 +26,7 @@ TEST_CASE("Standard deprotections", "[deprotect]") {
     REQUIRE(res);
     CHECK(MolToSmiles(*res) == "NCc1ccccc1N");
     CHECK(res->getProp<int>("DEPROTECTION_COUNT") == 2);
-    std::vector<std::string> expected {"Boc", "Boc"};
-    CHECK(res->getProp<std::vector<std::string>>("DEPROTECTIONS") ==
-	  expected);
+    std::vector<std::string> expected{"Boc", "Boc"};
+    CHECK(res->getProp<std::vector<std::string>>("DEPROTECTIONS") == expected);
   }
 }
