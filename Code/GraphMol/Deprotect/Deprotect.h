@@ -14,6 +14,7 @@
 #include <GraphMol/RDKitBase.h>
 #include <GraphMol/ChemReactions/Reaction.h>
 #include <string>
+#include <memory>
 
 namespace RDKit
 {
@@ -37,7 +38,7 @@ struct RDKIT_DEPROTECT_EXPORT DeprotectData {
   std::string reaction_smarts;
   std::string abbreviation;
   std::string full_name;
-  boost::shared_ptr<ChemicalReaction> rxn; // so much easier than unique_ptr, sigh...
+  std::shared_ptr<ChemicalReaction> rxn; // so much easier than unique_ptr, sigh...
 
   DeprotectData(const std::string &deprotection_class,
 		const std::string &reaction_smarts,
@@ -52,7 +53,7 @@ struct RDKIT_DEPROTECT_EXPORT DeprotectData {
 
   //! Returns true if the deprotection is valid
   bool isValid() const {
-    return rxn.get() != nullptr;
+    return rxn.get() != nullptr && rxn.getNumProductTemplates() == 1;
   }
 
 };

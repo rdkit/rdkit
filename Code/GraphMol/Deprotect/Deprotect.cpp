@@ -27,8 +27,14 @@ DeprotectData::DeprotectData(const std::string &deprotection_class,
   full_name(full_name), 
   rxn(RxnSmartsToChemicalReaction(reaction_smarts))
 {
-  if (rxn.get())
+  if (rxn.get()) {
+    if (rxn->getNumProductTemplates() == 1) {
+      BOOST_LOG(rdErrorLog) << "Deprotection reactions must have exactly one product" <<
+	std::endl;
+    }
     rxn->initReactantMatchers();
+  }
+
 }
 
 const std::vector<DeprotectData> &getDeprotections() {
@@ -61,8 +67,8 @@ const std::vector<DeprotectData> &getDeprotections() {
   return deprotections;
 }
   
-std::unique_ptr<ROMol> deprotect(const ROMol& mol, const std::vector<DeprotectData> &deprotections) {
-  std::set<std::string> found;
+std::unique_ptr<ROMol> deprotect(const ROMol& mol,
+				 const std::vector<DeprotectData> &deprotections) {
   std::vector<std::string> deprotections_used;
   
   bool something_happened = true;
@@ -74,26 +80,21 @@ std::unique_ptr<ROMol> deprotect(const ROMol& mol, const std::vector<DeprotectDa
 	// error and contine;
 	continue;
       }
-      MOL_SPTR_VECT rVect = { m };
-      auto results = deprotect.rxn->runReactants(rVect);
-      for( auto &prods : results ) {
-	CHECK_INVARIANT(prods.size() == 1, "Number of products in deprotection reaction must be one");
-	auto prod = prods[0];
+      for( auto &prod : deprotect.rxn->runReactant(m,0) ) {
 	try {
 	  RDLog::BlockLogs blocker;
 	  MolOps::sanitizeMol(*dynamic_cast<RWMol*>(prod.get()));
 	} catch (MolSanitizeException &) {
 	  continue;
 	}
-
-	auto smiles = MolToSmiles(*prod);
-	if (found.find(smiles) == found.end()) {
-	  found.insert(smiles);
-	  deprotections_used.push_back(deprotect.abbreviation);
-	  something_happened = true;
-	  m = prod;
-	  break;//  prods : results
+	deprotections_used.push_back(deprotect.abbreviation);
+	m = prod;
+	if (deprotections_used >= MAX_DEPROTECTIONS) {
+	  BOOST_LOG(rdErrorLog) << "Too many deprotections, halting..."  << std::endl;
 	}
+	else
+	  something_happened = true;
+	break;
       }
     }
   }

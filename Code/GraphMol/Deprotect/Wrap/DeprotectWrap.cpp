@@ -21,7 +21,7 @@ namespace RDKit {
 		  const python::object &iterable) {
     //		  const std::vector<DeprotectData> &deprotections) {
     auto deprotections = pythonObjectToVect<DeprotectData>(iterable);
-    auto res = deprotect(mol, deprotections);
+    auto res = deprotect(mol, *deprotections);
     auto m = boost::shared_ptr<ROMol>(res.get());
     res.release();
     return m;
