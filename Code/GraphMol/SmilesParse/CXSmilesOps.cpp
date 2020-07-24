@@ -345,6 +345,12 @@ bool parse_linknodes(Iterator &first, Iterator last, RDKit::RWMol &mol) {
   //   1:1.3.2.6: 1-3 repeats, atom 1-2, 1-6
   //   4:1.4.3.6: 1-4 repeats, atom 4-4, 4-6
   // which maps to the property value "1 3 2 2 3 2 7|1 4 2 5 4 5 7"
+  // If the linking atom only has two neighbors then the outer atom
+  // specification (the last two digits) can be left out. So for a molecule
+  // where atom 1 has bonds only to atoms 2 and 6 we could have
+  // |LN:1:1.3|
+  // instead of
+  // |LN:1:1.3.2.6|
   if (first >= last || *first != 'L' || first + 1 >= last ||
       *(first + 1) != 'N' || first + 2 >= last || *(first + 2) != ':') {
     return false;
@@ -370,19 +376,29 @@ bool parse_linknodes(Iterator &first, Iterator last, RDKit::RWMol &mol) {
     if (!read_int(first, last, endReps)) {
       return false;
     }
-    ++first;
     unsigned int idx1;
-    if (!read_int(first, last, idx1)) {
-      return false;
-    }
-    ++first;
     unsigned int idx2;
-    if (!read_int(first, last, idx2)) {
+    if (first < last && *first == '.') {
+      ++first;
+      if (!read_int(first, last, idx1)) {
+        return false;
+      }
+      ++first;
+      if (!read_int(first, last, idx2)) {
+        return false;
+      }
+    } else if (mol.getAtomWithIdx(atidx)->getDegree() == 2) {
+      auto nbrs = mol.getAtomNeighbors(mol.getAtomWithIdx(atidx));
+      idx1 = *nbrs.first;
+      nbrs.first++;
+      idx2 = *nbrs.first;
+    } else {
       return false;
     }
     if (first < last && *first == ',') {
       ++first;
     }
+
     if (!accum.empty()) {
       accum += "|";
     }

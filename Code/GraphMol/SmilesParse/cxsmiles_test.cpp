@@ -597,6 +597,23 @@ void testLinknodesInCXSmiles() {
     TEST_ASSERT(m->getPropIfPresent(common_properties::molFileLinkNodes, lns));
     TEST_ASSERT(lns == "1 3 2 2 3 2 7|1 4 2 5 4 5 7")
   }
+  {  // linknodes with implicit outer atoms
+    auto m = "OC1CCCC1 |LN:4:1.3|"_smiles;
+    TEST_ASSERT(m);
+    std::string lns;
+    TEST_ASSERT(m->getPropIfPresent(common_properties::molFileLinkNodes, lns));
+    TEST_ASSERT(lns == "1 3 2 5 4 5 6")
+  }
+  {  // linknodes with implicit outer atoms : fails because atom is
+     // three-connected
+    bool ok = false;
+    try {
+      auto m = "OC1CCC(F)C1 |LN:1:1.3|"_smiles;
+    } catch (const RDKit::SmilesParseException &) {
+      ok = true;
+    }
+    TEST_ASSERT(ok);
+  }
   BOOST_LOG(rdInfoLog) << "done" << std::endl;
 }
 
