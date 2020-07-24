@@ -31,40 +31,36 @@
 typedef boost::tokenizer<boost::char_separator<char>> tokenizer;
 
 namespace RDKit {
-
 class RDKIT_FILEPARSERS_EXPORT MultithreadedMolSupplier : public MolSupplier {
+  // this is an abstract base class to concurrently supply molecules one at a
+  // time
  public:
-  MultithreadedMolSupplier();
-  MultithreadedMolSupplier(std::istream *inStream, bool takeOwnership,
-                           int numWriterThreads, size_t sizeInputQueue,
-                           size_t sizeOutputQueue);
-  MultithreadedMolSupplier(std::string fileName,
-                           int numWriterThreads, size_t sizeInputQueue,
-                           size_t sizeOutputQueue);
-  //! intialize data memebers
-  void init();
-
+  MultithreadedMolSupplier(){};
+  virtual ~MultithreadedMolSupplier(){};
   //! reads lines from input stream to populate the input queue
   void inputProducer();
-
   //! parses lines from the input queue converting them to ROMol objects
   //! populating the output queue
-  void inputConsumer();
-
+  void inputConsumer(size_t id);
   //! pop elements from the output queue
   ROMol *next();
-
   //! starts reader and writer threads
   void startThreads();
-
-  //! use atEnd method of the 
+  //! use atEnd method of the
   bool atEnd();
 
-  //! not sure how to implement this method yet
-  void reset();
+ private:
+  // disable automatic copy constructors and assignment operators
+  // for this class and its subclasses.  They will likely be
+  // carrying around stream pointers and copying those is a recipe
+  // for disaster.
+  MultithreadedMolSupplier(const MultithreadedMolSupplier &);
+  MultithreadedMolSupplier &operator=(const MultithreadedMolSupplier &);
 
  private:
-	virtual bool getEnd() = 0;
+  virtual void reset();
+  virtual void init() = 0;
+  virtual bool getEnd() = 0;
   virtual bool extractNextRecord(std::string &record,
                                  unsigned int &lineNum) = 0;
   virtual ROMol *processMoleculeRecord(const std::string &record,

@@ -9,107 +9,81 @@
 //
 #include "MultithreadedMolSupplier.h"
 
+#include <GraphMol/SmilesParse/SmilesWrite.h>
+
+#include <iomanip>
+#include <mutex>
+#include <sstream>
+
 namespace RDKit {
 
-MultithreadedMolSupplier::MultithreadedMolSupplier() { init(); }
-
-MultithreadedMolSupplier::MultithreadedMolSupplier(std::istream* inStream,
-                                                   bool takeOwnership,
-                                                   int numWriterThreads,
-                                                   size_t sizeInputQueue,
-                                                   size_t sizeOutputQueue) {
-  dp_inStream = inStream;
-  df_owner = takeOwnership;
-  if (numWriterThreads == -1) {
-    d_numWriterThreads = (int)getNumThreadsToUse(numWriterThreads);
-  } else {
-    d_numWriterThreads =
-        std::min(numWriterThreads, (int)getNumThreadsToUse(numWriterThreads));
+//! method for thread-safe printing, only for debugging
+struct PrintThread : public std::stringstream {
+  static inline std::mutex cout_mutex;
+  ~PrintThread() {
+    std::lock_guard<std::mutex> l{cout_mutex};
+    std::cout << rdbuf();
   }
-  d_sizeInputQueue = sizeInputQueue;
-  d_sizeOutputQueue = sizeOutputQueue;
-  d_inputQueue = new ConcurrentQueue<std::tuple<std::string, unsigned int>>(
-      d_sizeInputQueue);
-  d_outputQueue =
-      new ConcurrentQueue<std::shared_ptr<ROMol>>(d_sizeOutputQueue);
-}
-
-MultithreadedMolSupplier::MultithreadedMolSupplier(const std::string fileName,
-                                                   int numWriterThreads,
-                                                   size_t sizeInputQueue,
-                                                   size_t sizeOutputQueue) {
-  dp_inStream = openAndCheckStream(fileName);
-  CHECK_INVARIANT(dp_inStream, "bad instream");
-  CHECK_INVARIANT(!(dp_inStream->eof()), "early EOF");
-  df_owner = false;
-  if (numWriterThreads == -1) {
-    d_numWriterThreads = (int)getNumThreadsToUse(numWriterThreads);
-  } else {
-    d_numWriterThreads =
-        std::min(numWriterThreads, (int)getNumThreadsToUse(numWriterThreads));
-  }
-
-  d_sizeInputQueue = sizeInputQueue;
-  d_sizeOutputQueue = sizeOutputQueue;
-  d_inputQueue = new ConcurrentQueue<std::tuple<std::string, unsigned int>>(
-      d_sizeInputQueue);
-  d_outputQueue =
-      new ConcurrentQueue<std::shared_ptr<ROMol>>(d_sizeOutputQueue);
-}
-
-void MultithreadedMolSupplier::init() {
-  dp_inStream = nullptr;
-  df_owner = true;
-  d_numWriterThreads = 1;
-  d_sizeInputQueue = 10;
-  d_sizeOutputQueue = 10;
-  d_inputQueue = new ConcurrentQueue<std::tuple<std::string, unsigned int>>(
-      d_sizeInputQueue);
-  d_outputQueue =
-      new ConcurrentQueue<std::shared_ptr<ROMol>>(d_sizeOutputQueue);
-}
+};
 
 void MultithreadedMolSupplier::inputProducer() {
   std::string record;
   unsigned int lineNum;
   while (extractNextRecord(record, lineNum)) {
     auto r = std::tuple<std::string, unsigned int>{record, lineNum};
+    PrintThread{}
+        << "Reader id: 0, Pushing elements into the input queue, lineNum: "
+        << lineNum << std::endl;
     d_inputQueue->push(r);
   }
+  PrintThread{} << "Exit Input Producer, done reading" << std::endl;
 }
 
-void MultithreadedMolSupplier::inputConsumer() {
+void MultithreadedMolSupplier::inputConsumer(size_t id) {
   std::tuple<std::string, unsigned int> r;
   while (d_inputQueue->pop(r)) {
     ROMol* mol = processMoleculeRecord(std::get<0>(r), std::get<1>(r));
     std::shared_ptr<ROMol> shared_mol(mol);
+    PrintThread{} << "Consumer id: " << id
+                  << ", Pushing elements into the output queue, lineNum: "
+                  << std::get<1>(r) << std::endl;
+    //! possible deadlock here if the output queue is full
     d_outputQueue->push(shared_mol);
   }
+  PrintThread{} << "Exit Input Consumer: " << id
+                << ", done processing molecules" << std::endl;
 }
 
 ROMol* MultithreadedMolSupplier::next() {
+  std::cout << "Next method is being called" << std::endl;
   std::shared_ptr<ROMol> mol(nullptr);
   if (d_outputQueue->pop(mol)) {
-		std::cout << "Popping elements from the output queue" << std::endl;
+    PrintThread{} << "Popping elements from the output queue"
+                  << MolToSmiles(*mol.get()) << std::endl;
     return mol.get();
   }
+  PrintThread{} << "We have a nullptr" << std::endl;
   return nullptr;
 }
 
 void MultithreadedMolSupplier::startThreads() {
   std::vector<std::thread> writers(d_numWriterThreads);
+
   std::thread reader(&MultithreadedMolSupplier::inputProducer, this);
   for (int i = 0; i < d_numWriterThreads; i++) {
-    writers[i] = std::thread(&MultithreadedMolSupplier::inputConsumer, this);
+    writers[i] = std::thread(&MultithreadedMolSupplier::inputConsumer, this, i);
   }
   reader.join();
+  //! done reading elements from the file
   d_inputQueue->setDone();
+
   std::for_each(writers.begin(), writers.end(),
                 std::mem_fn(&std::thread::join));
+  //! done wrting elements from the input queue
   d_outputQueue->setDone();
 }
 
-bool MultithreadedMolSupplier::atEnd() { return getEnd();  }
+bool MultithreadedMolSupplier::atEnd() { return d_outputQueue->isEmpty(); }
 
 void MultithreadedMolSupplier::reset() { ; }
 

@@ -9,7 +9,19 @@
 //
 #include "MultithreadedSmilesMolSupplier.h"
 
+#include <iomanip>
+#include <mutex>
+#include <sstream>
 namespace RDKit {
+//! method for thread-safe printing, only for debugging
+struct PrintThread : public std::stringstream {
+  static inline std::mutex cout_mutex;
+  ~PrintThread() {
+    std::lock_guard<std::mutex> l{cout_mutex};
+    std::cout << rdbuf();
+  }
+};
+
 MultithreadedSmilesMolSupplier::MultithreadedSmilesMolSupplier(
     const std::string &fileName, const std::string &delimiter, int smilesColumn,
     int nameColumn, bool titleLine, bool sanitize, int numWriterThreads,
@@ -45,12 +57,10 @@ MultithreadedSmilesMolSupplier::MultithreadedSmilesMolSupplier(
   POSTCONDITION(dp_inStream, "bad instream");
 }
 
-MultithreadedSmilesMolSupplier::MultithreadedSmilesMolSupplier() { init(); }
-
 MultithreadedSmilesMolSupplier::MultithreadedSmilesMolSupplier(
     std::istream *inStream, bool takeOwnership, const std::string &delimiter,
     int smilesColumn, int nameColumn, bool titleLine, bool sanitize,
-    int numWriterThreads, size_t sizeInputQueue, size_t sizeOutputQueue){
+    int numWriterThreads, size_t sizeInputQueue, size_t sizeOutputQueue) {
   init();
   CHECK_INVARIANT(inStream, "bad instream");
   CHECK_INVARIANT(!(inStream->eof()), "early EOF");
@@ -78,6 +88,8 @@ MultithreadedSmilesMolSupplier::MultithreadedSmilesMolSupplier(
   this->checkForEnd();
   POSTCONDITION(dp_inStream, "bad instream");
 }
+
+MultithreadedSmilesMolSupplier::MultithreadedSmilesMolSupplier() { init(); }
 
 MultithreadedSmilesMolSupplier::~MultithreadedSmilesMolSupplier() {
   if (df_owner && dp_inStream) {
@@ -116,19 +128,18 @@ void MultithreadedSmilesMolSupplier::init() {
 //
 long int MultithreadedSmilesMolSupplier::skipComments() {
   PRECONDITION(dp_inStream, "bad stream");
-  if (this->atEnd()) {
+  if (this->getEnd()) {
     return -1;
   }
 
   std::streampos prev = dp_inStream->tellg();
-  std::string tempStr;
-  unsigned int lineNum;
-  if (!this->extractNextRecord(tempStr, lineNum)) {
+  std::string tempStr = this->nextLine();
+  if (!df_end) {
     // if we didn't immediately hit EOF, loop until we get a valid line:
     while ((tempStr[0] == '#') || (strip(tempStr).size() == 0)) {
       prev = dp_inStream->tellg();
-      this->extractNextRecord(tempStr, lineNum);
-      if (this->atEnd()) {
+      tempStr = this->nextLine();
+      if (this->getEnd()) {
         break;
       }
     }
@@ -152,9 +163,7 @@ void MultithreadedSmilesMolSupplier::checkForEnd() {
   }
 }
 
-bool MultithreadedSmilesMolSupplier::getEnd(){
-	return df_end;
-}
+bool MultithreadedSmilesMolSupplier::getEnd() { return df_end; }
 
 // --------------------------------------------------
 //
@@ -167,13 +176,12 @@ bool MultithreadedSmilesMolSupplier::getEnd(){
 //      incremented
 //
 // --------------------------------------------------
-bool MultithreadedSmilesMolSupplier::extractNextRecord(std::string &record,
-                                                       unsigned int &lineNum) {
+std::string MultithreadedSmilesMolSupplier::nextLine() {
   PRECONDITION(dp_inStream, "bad stream");
   if (df_end) {
     return "";
   }
-  record = getLine(dp_inStream);
+  std::string record = getLine(dp_inStream);
   if (record == "") {
     // got an empty string, check to see if we hit EOF:
     if (dp_inStream->eof() || dp_inStream->bad()) {
@@ -186,8 +194,35 @@ bool MultithreadedSmilesMolSupplier::extractNextRecord(std::string &record,
     dp_inStream->clear();
   }
   d_line++;
+  return record;
+}
+
+bool MultithreadedSmilesMolSupplier::extractNextRecord(std::string &record,
+                                                       unsigned int &lineNum) {
+  PRECONDITION(dp_inStream, "bad stream");
+  if (this->getEnd()) {
+    return -1;
+  }
+
+  std::streampos prev = dp_inStream->tellg();
+  std::string tempStr = this->nextLine();
+  if (!df_end) {
+    // if we didn't immediately hit EOF, loop until we get a valid line:
+    while ((tempStr[0] == '#') || (strip(tempStr).size() == 0)) {
+      prev = dp_inStream->tellg();
+      tempStr = this->nextLine();
+      if (this->getEnd()) {
+        break;
+      }
+    }
+  }
+  record = tempStr;
   lineNum = d_line;
-  return df_end;
+  // if we hit EOF without getting a proper line, return -1:
+  if (tempStr.empty() || (tempStr[0] == '#') || (strip(tempStr).size() == 0)) {
+    return false;
+  }
+  return true;
 }
 
 ROMol *MultithreadedSmilesMolSupplier::processMoleculeRecord(
@@ -292,4 +327,5 @@ ROMol *MultithreadedSmilesMolSupplier::processMoleculeRecord(
 
   return res;
 }
+
 }  // namespace RDKit
