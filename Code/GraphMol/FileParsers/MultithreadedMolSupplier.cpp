@@ -11,6 +11,7 @@
 
 #include <GraphMol/SmilesParse/SmilesWrite.h>
 
+#include <chrono>
 #include <iomanip>
 #include <mutex>
 #include <sstream>
@@ -44,10 +45,15 @@ void MultithreadedMolSupplier::inputConsumer(size_t id) {
   while (d_inputQueue->pop(r)) {
     ROMol* mol = processMoleculeRecord(std::get<0>(r), std::get<1>(r));
     std::shared_ptr<ROMol> shared_mol(mol);
-    PrintThread{} << "Consumer id: " << id
+    PrintThread{} << "Input Consumer id: " << id
                   << ", Pushing elements into the output queue, lineNum: "
                   << std::get<1>(r) << std::endl;
     //! possible deadlock here if the output queue is full
+    while (d_outputQueue->size() == d_sizeOutputQueue) {
+      PrintThread{} << "Output Queue is full" << std::endl;
+      std::this_thread::sleep_for(std::chrono::milliseconds(200));
+    }
+    PrintThread{} << "Output Queue is not full here" << std::endl;
     d_outputQueue->push(shared_mol);
   }
   PrintThread{} << "Exit Input Consumer: " << id
