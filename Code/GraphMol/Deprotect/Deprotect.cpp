@@ -15,7 +15,7 @@
 #include <boost/smart_ptr.hpp>
 
 namespace RDKit {
-
+namespace Deprotect {
 DeprotectData::DeprotectData(const std::string &deprotection_class,
                              const std::string &reaction_smarts,
                              const std::string &abbreviation,
@@ -28,7 +28,7 @@ DeprotectData::DeprotectData(const std::string &deprotection_class,
       full_name(full_name),
       rxn(RxnSmartsToChemicalReaction(reaction_smarts)) {
   if (rxn.get()) {
-    if (rxn->getNumProductTemplates() == 1) {
+    if (rxn->getNumProductTemplates() != 1) {
       BOOST_LOG(rdErrorLog)
           << "Deprotection reactions must have exactly one product"
           << std::endl;
@@ -98,6 +98,7 @@ const std::vector<DeprotectData> &getDeprotections() {
   return deprotections;
 }
 
+const unsigned int MAX_DEPROTECTIONS = 100;
 std::unique_ptr<ROMol> deprotect(
     const ROMol &mol, const std::vector<DeprotectData> &deprotections) {
   std::vector<std::string> deprotections_used;
@@ -111,16 +112,16 @@ std::unique_ptr<ROMol> deprotect(
         // error and contine;
         continue;
       }
-      for (auto &prod : deprotect.rxn->runReactant(m, 0)) {
+      for (auto &prods : deprotect.rxn->runReactant(m, 0)) {
+        m = prods[0];
         try {
           RDLog::BlockLogs blocker;
-          MolOps::sanitizeMol(*dynamic_cast<RWMol *>(prod.get()));
+          MolOps::sanitizeMol(*dynamic_cast<RWMol *>(m.get()));
         } catch (MolSanitizeException &) {
           continue;
         }
         deprotections_used.push_back(deprotect.abbreviation);
-        m = prod;
-        if (deprotections_used >= MAX_DEPROTECTIONS) {
+        if (deprotections_used.size() >= MAX_DEPROTECTIONS) {
           BOOST_LOG(rdErrorLog)
               << "Too many deprotections, halting..." << std::endl;
         } else
@@ -135,4 +136,5 @@ std::unique_ptr<ROMol> deprotect(
   return std::unique_ptr<ROMol>(new ROMol(*m.get()));
 };
 
-}  // namespace RDKit
+}  // namespace Deprotect
+} // namespace RDKit

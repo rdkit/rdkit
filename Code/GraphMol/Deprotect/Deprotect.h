@@ -17,7 +17,7 @@
 #include <memory>
 
 namespace RDKit {
-
+namespace Deprotect {
 /*! Data for Deprotecting molecules
 
  Deprotects are described as reactions that remove the protecting
@@ -57,7 +57,7 @@ struct RDKIT_DEPROTECT_EXPORT DeprotectData {
 
   //! Returns true if the deprotection is valid
   bool isValid() const {
-    return rxn.get() != nullptr && rxn.getNumProductTemplates() == 1;
+    return rxn.get() != nullptr && rxn->getNumProductTemplates() == 1;
   }
 };
 
@@ -79,6 +79,6 @@ RDKIT_DEPROTECT_EXPORT const std::vector<DeprotectData> &getDeprotections();
 RDKIT_DEPROTECT_EXPORT std::unique_ptr<ROMol> deprotect(
     const ROMol &mol,
     const std::vector<DeprotectData> &deprotections = getDeprotections());
-}  // namespace RDKit
-
+}  // namspace Deprotect 
+} // namespace RDKit
 #endif

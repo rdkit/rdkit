@@ -18,23 +18,23 @@ namespace RDKit {
 //  python.
 boost::shared_ptr<ROMol> DeprotectVectWrap(const ROMol &mol,
                                            const python::object &iterable) {
-  //		  const std::vector<DeprotectData> &deprotections) {
-  auto deprotections = pythonObjectToVect<DeprotectData>(iterable);
-  auto res = deprotect(mol, *deprotections);
+  std::vector<Deprotect::DeprotectData> deprotections;
+  pythonObjectToVect<Deprotect::DeprotectData>(iterable, deprotections);
+  auto res = Deprotect::deprotect(mol, deprotections);
   auto m = boost::shared_ptr<ROMol>(res.get());
   res.release();
   return m;
 }
 
 boost::shared_ptr<ROMol> DeprotectWrap(const ROMol &mol) {
-  auto res = deprotect(mol, getDeprotections());
+  auto res = Deprotect::deprotect(mol, Deprotect::getDeprotections());
   auto m = boost::shared_ptr<ROMol>(res.get());
   res.release();
   return m;
 }
 
 //! Make a copy so we don't try and change a const vector
-std::vector<DeprotectData> GetDeprotectionsWrap() { return getDeprotections(); }
+std::vector<Deprotect::DeprotectData> GetDeprotectionsWrap() { return Deprotect::getDeprotections(); }
 }  // namespace RDKit
 
 struct deprotect_wrap {
@@ -64,20 +64,20 @@ struct deprotect_wrap {
         "\n"
         "\n";
 
-    python::class_<std::vector<RDKit::DeprotectData>>("DeprotectDataVect")
+    python::class_<std::vector<RDKit::Deprotect::DeprotectData>>("DeprotectDataVect")
         .def(
-            python::vector_indexing_suite<std::vector<RDKit::DeprotectData>>());
+	     python::vector_indexing_suite<std::vector<RDKit::Deprotect::DeprotectData>>());
 
-    python::class_<RDKit::DeprotectData>(
+    python::class_<RDKit::Deprotect::DeprotectData>(
         "DeprotectData", deprotect_doc_string,
         python::init<std::string, std::string, std::string, std::string>(
             constructor_doc))
         .def_readonly("deprotection_class",
-                      &RDKit::DeprotectData::deprotection_class)
-        .def_readonly("full_name", &RDKit::DeprotectData::full_name)
-        .def_readonly("abbreviation", &RDKit::DeprotectData::abbreviation)
-        .def_readonly("reaction_smarts", &RDKit::DeprotectData::reaction_smarts)
-        .def("isValid", &RDKit::DeprotectData::isValid,
+                      &RDKit::Deprotect::DeprotectData::deprotection_class)
+        .def_readonly("full_name", &RDKit::Deprotect::DeprotectData::full_name)
+        .def_readonly("abbreviation", &RDKit::Deprotect::DeprotectData::abbreviation)
+        .def_readonly("reaction_smarts", &RDKit::Deprotect::DeprotectData::reaction_smarts)
+        .def("isValid", &RDKit::Deprotect::DeprotectData::isValid,
              "Returns True if the DeprotectData has a valid reaction");
 
     python::def("getDeprotections", &RDKit::GetDeprotectionsWrap,
