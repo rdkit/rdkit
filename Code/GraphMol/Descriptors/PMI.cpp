@@ -195,8 +195,8 @@ double eccentricity(const ROMol& mol, int confId, bool useAtomicMasses,
     // the eigenvector calculation failed
     return 0.0;  // FIX: throw an exception here?
   }
-  if (pm3 < 1e-4) {
-    // no coordinates
+  if (pm3 < 1e-4 || (pm3 * pm3 - pm1 * pm1) < 1e-4) {
+    // no coordinates or very close to degeneracy
     return 0.0;
   } else {
     return sqrt(pm3 * pm3 - pm1 * pm1) / pm3;
