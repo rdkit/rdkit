@@ -19,6 +19,7 @@
 #include <GraphMol/SmilesParse/SmilesParse.h>
 #include <GraphMol/SmilesParse/SmilesWrite.h>
 #include <GraphMol/SmilesParse/SmartsWrite.h>
+#include <boost/format.hpp>
 
 using namespace RDKit;
 #if 1
@@ -1311,5 +1312,26 @@ TEST_CASE("github #3150 MolOps::removeHs removes hydrides", "[bug][molops]") {
     MolOps::removeAllHs(cp);
     CHECK(cp.getNumAtoms() == 1);
     CHECK(MolOps::getFormalCharge(cp) == 1);
+  }
+}
+
+TEST_CASE("hybridization of unknown atom types", "[bug][molops]") {
+  SECTION("Basics") {
+    auto m = "[U][U][U]"_smiles;
+    REQUIRE(m);
+    for (const auto atom : m->atoms()) {
+      CHECK(atom->getHybridization() == Atom::HybridizationType::S);
+    }
+  }
+  SECTION("comprehensive") {
+    std::string smiles = "";
+    for (unsigned int i = 89; i <= 118; ++i) {
+      smiles += (boost::format("[#%d]") % i).str();
+    }
+    std::unique_ptr<ROMol> m(SmilesToMol(smiles));
+    REQUIRE(m);
+    for (const auto atom : m->atoms()) {
+      CHECK(atom->getHybridization() == Atom::HybridizationType::S);
+    }
   }
 }

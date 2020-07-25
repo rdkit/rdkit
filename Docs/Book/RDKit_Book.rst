@@ -231,13 +231,19 @@ The RDKit supports parsing and writing a subset of the extended SMILES functiona
 
 The features which are parsed include:
 
-- atomic coordinates
-- atomic values
-- atomic labels
-- atomic properties
-- coordinate bonds (these are translated into double bonds)
-- radicals
+- atomic coordinates ``()``
+- atomic values ``$_AV:``
+- atomic labels/aliases ``$`` (recognized aliases are ``_AP``, ``star_e``,
+  ``Q_e``, ``QH_p``, ``AH_P``, ``X_p``, ``XH_p``, ``M_p``, ``MH_p``, ``*``)
+- atomic properties ``atomprop``
+- coordinate bonds ``C`` (these are translated into double bonds)
+- radicals ``^``
 - enhanced stereo (these are converted into ``StereoGroups``)
+- linknodes ``LN``
+- multi-center attachments ``m``
+- ring bond count specifications ``rb``
+- non-hydrogen substitution count specifications ``s``
+- unsaturation specification ``u``
 
 The features which are written by :py:func:`rdkit.Chem.rdmolfiles.MolToCXSmiles`
 (note the specialized writer function) include:
@@ -356,6 +362,7 @@ Primitive                  Property                   "Default value"  Range?   
 =========  =========================================  ===============  ======  =========
 a          "aromatic atom"
 A          "aliphatic atom"
+d          "non-hydrogen degree"                      1                Y       extension
 D          "explicit degree"                          1                Y
 h          "number of implicit hs"                    >0               Y
 H          "total number of Hs"                       1

@@ -1,5 +1,5 @@
 //
-//  Copyright (C) 2016 Greg Landrum
+//  Copyright (C) 2016-2020 Greg Landrum
 //
 //   @@ All Rights Reserved @@
 //  This file is part of the RDKit.
@@ -12,6 +12,7 @@
 #include <GraphMol/RDKitBase.h>
 #include "SmilesParse.h"
 #include "SmilesWrite.h"
+#include "SmartsWrite.h"
 #include <RDGeneral/RDLog.h>
 using namespace RDKit;
 
@@ -535,6 +536,132 @@ void testErrorsInCXSmiles() {
   BOOST_LOG(rdInfoLog) << "done" << std::endl;
 }
 
+void testMDLQueriesInCXSmiles() {
+  BOOST_LOG(rdInfoLog) << "Testing handling of MDL queries in CXSMILES"
+                       << std::endl;
+
+  {  // just ring bonds
+    auto m =
+        "[#6]-[#6]-1-[#6]-[#6]-1 "
+        "|rb:0:0,1:*,2:2|"_smiles;
+    TEST_ASSERT(m);
+    auto sma = MolToSmarts(*m);
+    TEST_ASSERT(sma == "[#6&x0]-[#6&x2]1-[#6&x2]-[#6]-1");
+  }
+
+  {  // unsaturation
+    auto m =
+        "[#6]-[#6]-1-[#6]-[#6]-1 "
+        "|u:0,2|"_smiles;
+    TEST_ASSERT(m);
+    auto sma = MolToSmarts(*m);
+    TEST_ASSERT(sma == "[#6&$(*=,:,#*)]-[#6]1-[#6&$(*=,:,#*)]-[#6]-1");
+  }
+
+  {  // substitution count
+    auto m =
+        "[#6]-[#6]-1-[#6]-[#6]-1 "
+        "|s:3:*,1:3|"_smiles;
+    TEST_ASSERT(m);
+    auto sma = MolToSmarts(*m);
+    TEST_ASSERT(sma == "[#6]-[#6&d3]1-[#6]-[#6&d2]-1");
+  }
+
+  {  // everything together
+    auto m =
+        "[#6]-[#6]-1-[#6]-[#6]-1 "
+        "|rb:0:0,1:*,2:2,s:3:*,u:0|"_smiles;
+    TEST_ASSERT(m);
+    auto sma = MolToSmarts(*m);
+    TEST_ASSERT(sma == "[#6&x0&$(*=,:,#*)]-[#6&x2]1-[#6&x2]-[#6&d2]-1");
+  }
+
+  BOOST_LOG(rdInfoLog) << "done" << std::endl;
+}
+
+void testLinknodesInCXSmiles() {
+  BOOST_LOG(rdInfoLog) << "Testing handling of LINKNODES in CXSMILES"
+                       << std::endl;
+
+  {
+    auto m = "OC1CCC(F)C1 |LN:1:1.3.2.6|"_smiles;
+    TEST_ASSERT(m);
+    std::string lns;
+    TEST_ASSERT(m->getPropIfPresent(common_properties::molFileLinkNodes, lns));
+    TEST_ASSERT(lns == "1 3 2 2 3 2 7")
+  }
+  {
+    auto m = "OC1CCC(F)C1 |LN:1:1.3.2.6,4:1.4.3.6|"_smiles;
+    TEST_ASSERT(m);
+    std::string lns;
+    TEST_ASSERT(m->getPropIfPresent(common_properties::molFileLinkNodes, lns));
+    TEST_ASSERT(lns == "1 3 2 2 3 2 7|1 4 2 5 4 5 7")
+  }
+  {  // linknodes with implicit outer atoms
+    auto m = "OC1CCCC1 |LN:4:1.3|"_smiles;
+    TEST_ASSERT(m);
+    std::string lns;
+    TEST_ASSERT(m->getPropIfPresent(common_properties::molFileLinkNodes, lns));
+    TEST_ASSERT(lns == "1 3 2 5 4 5 6")
+  }
+  {  // linknodes with implicit outer atoms : fails because atom is
+     // three-connected
+    bool ok = false;
+    try {
+      auto m = "OC1CCC(F)C1 |LN:1:1.3|"_smiles;
+    } catch (const RDKit::SmilesParseException &) {
+      ok = true;
+    }
+    TEST_ASSERT(ok);
+  }
+  BOOST_LOG(rdInfoLog) << "done" << std::endl;
+}
+
+void testVariableAttachmentInCXSmiles() {
+  BOOST_LOG(rdInfoLog)
+      << "Testing handling of variable attachment bonds in CXSMILES"
+      << std::endl;
+
+  {
+    auto m = "CO*.C1=CC=NC=C1 |m:2:3.5.4|"_smiles;
+    TEST_ASSERT(m);
+    const auto bnd = m->getBondBetweenAtoms(1, 2);
+    TEST_ASSERT(bnd);
+    TEST_ASSERT(bnd->hasProp(common_properties::_MolFileBondAttach));
+    TEST_ASSERT(bnd->getProp<std::string>(
+                    common_properties::_MolFileBondAttach) == "ANY");
+    TEST_ASSERT(bnd->hasProp(common_properties::_MolFileBondEndPts));
+    TEST_ASSERT(bnd->getProp<std::string>(
+                    common_properties::_MolFileBondEndPts) == "(3 4 6 5)");
+  }
+
+  {
+    auto m = "F*.Cl*.C1=CC=NC=C1 |m:1:9.8,3:4.5|"_smiles;
+    TEST_ASSERT(m);
+    {
+      const auto bnd = m->getBondBetweenAtoms(0, 1);
+      TEST_ASSERT(bnd);
+      TEST_ASSERT(bnd->hasProp(common_properties::_MolFileBondAttach));
+      TEST_ASSERT(bnd->getProp<std::string>(
+                      common_properties::_MolFileBondAttach) == "ANY");
+      TEST_ASSERT(bnd->hasProp(common_properties::_MolFileBondEndPts));
+      TEST_ASSERT(bnd->getProp<std::string>(
+                      common_properties::_MolFileBondEndPts) == "(2 10 9)");
+    }
+    {
+      const auto bnd = m->getBondBetweenAtoms(2, 3);
+      TEST_ASSERT(bnd);
+      TEST_ASSERT(bnd->hasProp(common_properties::_MolFileBondAttach));
+      TEST_ASSERT(bnd->getProp<std::string>(
+                      common_properties::_MolFileBondAttach) == "ANY");
+      TEST_ASSERT(bnd->hasProp(common_properties::_MolFileBondEndPts));
+      TEST_ASSERT(bnd->getProp<std::string>(
+                      common_properties::_MolFileBondEndPts) == "(2 5 6)");
+    }
+  }
+  BOOST_LOG(rdInfoLog) << "done" << std::endl;
+}
+
 int main(int argc, char *argv[]) {
   (void)argc;
   (void)argv;
@@ -553,4 +680,7 @@ int main(int argc, char *argv[]) {
   testEnhancedStereo();
   testHTMLCharCodes();
   testErrorsInCXSmiles();
+  testMDLQueriesInCXSmiles();
+  testLinknodesInCXSmiles();
+  testVariableAttachmentInCXSmiles();
 }

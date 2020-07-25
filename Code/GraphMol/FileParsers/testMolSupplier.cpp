@@ -103,7 +103,7 @@ int testMolSup() {
     }
     TEST_ASSERT(i == 16);
   }
-#ifdef RDK_BUILD_COORDGEN_SUPPORT
+#ifdef RDK_BUILD_MAEPARSER_SUPPORT
   {  // Test reading properties
     fname = rdbase + "/Code/GraphMol/FileParsers/test_data/props_test.mae";
 
@@ -283,7 +283,7 @@ int testMolSup() {
     TEST_ASSERT(info->getChainId() == "A");
     TEST_ASSERT(info->getResidueNumber() == 5);
   }
-#endif  // RDK_BUILD_COORDGEN_SUPPORT
+#endif  // RDK_BUILD_MAEPARSER_SUPPORT
   return 1;
 }
 
@@ -2281,7 +2281,7 @@ int testForwardSDSupplier() {
   }
 #endif
 
-#ifdef RDK_BUILD_COORDGEN_SUPPORT
+#ifdef RDK_BUILD_MAEPARSER_SUPPORT
   // Now test that Maestro parsing of gz files works
   std::string maefname =
       rdbase + "/Code/GraphMol/FileParsers/test_data/NCI_aids_few.mae";
@@ -2335,7 +2335,7 @@ int testForwardSDSupplier() {
     }
     TEST_ASSERT(i == 16);
   }
-#endif  // RDK_BUILD_COORDGEN_SUPPORT
+#endif  // RDK_BUILD_MAEPARSER_SUPPORT
 
   return 1;
 }
@@ -2685,7 +2685,7 @@ M  END
   }
 }
 
-#ifdef RDK_BUILD_COORDGEN_SUPPORT
+#ifdef RDK_BUILD_MAEPARSER_SUPPORT
 void testGitHub2881() {
   std::string data = R"DATA(f_m_ct { 
  s_m_title

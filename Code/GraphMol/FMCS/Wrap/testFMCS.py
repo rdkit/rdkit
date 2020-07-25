@@ -33,7 +33,7 @@ class BondMatchOrderMatrix:
         return self.MatchMatrix[i][j]
 
 class CompareAny(rdFMCS.MCSAtomCompare):
-    def compare(self, p, mol1, atom1, mol2, atom2):
+    def __call__(self, p, mol1, atom1, mol2, atom2):
         if (p.MatchChiralTag and not self.CheckAtomChirality(p, mol1, atom1, mol2, atom2)):
             return False
         if (p.MatchFormalCharge and not self.CheckAtomCharge(p, mol1, atom1, mol2, atom2)):
@@ -43,18 +43,18 @@ class CompareAny(rdFMCS.MCSAtomCompare):
         return True
 
 class CompareAnyHeavyAtom(CompareAny):
-    def compare(self, p, mol1, atom1, mol2, atom2):
+    def __call__(self, p, mol1, atom1, mol2, atom2):
         a1 = mol1.GetAtomWithIdx(atom1)
         a2 = mol2.GetAtomWithIdx(atom2)
         # Any atom, including H, matches another atom of the same type,  according to
         # the other flags
         if (a1.GetAtomicNum() == a2.GetAtomicNum() or
             (a1.GetAtomicNum() > 1 and a2.GetAtomicNum() > 1)):
-            return CompareAny.compare(self, p, mol1, atom1, mol2, atom2)
+            return CompareAny.__call__(self, p, mol1, atom1, mol2, atom2)
         return False
 
 class CompareElements(rdFMCS.MCSAtomCompare):
-    def compare(self, p, mol1, atom1, mol2, atom2):
+    def __call__(self, p, mol1, atom1, mol2, atom2):
         a1 = mol1.GetAtomWithIdx(atom1)
         a2 = mol2.GetAtomWithIdx(atom2)
         if (a1.GetAtomicNum() != a2.GetAtomicNum()):
@@ -70,7 +70,7 @@ class CompareElements(rdFMCS.MCSAtomCompare):
         return True
 
 class CompareIsotopes(rdFMCS.MCSAtomCompare):
-    def compare(self, p, mol1, atom1, mol2, atom2):
+    def __call__(self, p, mol1, atom1, mol2, atom2):
         a1 = mol1.GetAtomWithIdx(atom1)
         a2 = mol2.GetAtomWithIdx(atom2)
         if (a1.GetIsotope() != a2.GetIsotope()):
@@ -85,7 +85,7 @@ class CompareIsotopes(rdFMCS.MCSAtomCompare):
 
 class CompareOrder(rdFMCS.MCSBondCompare):
     match = BondMatchOrderMatrix(True)  # ignore Aromatization
-    def compare(self, p, mol1, bond1, mol2, bond2):
+    def __call__(self, p, mol1, bond1, mol2, bond2):
         b1 = mol1.GetBondWithIdx(bond1)
         b2 = mol2.GetBondWithIdx(bond2)
         t1 = b1.GetBondType()
@@ -99,7 +99,7 @@ class CompareOrder(rdFMCS.MCSBondCompare):
         return False
 
 class AtomCompareCompareIsInt(rdFMCS.MCSAtomCompare):
-    compare = 1
+    __call__ = 1
 
 class AtomCompareNoCompare(rdFMCS.MCSAtomCompare):
     pass
@@ -110,7 +110,7 @@ class AtomCompareUserData(rdFMCS.MCSAtomCompare):
         self._matchAnyHet = False
     def setMatchAnyHet(self, v):
         self._matchAnyHet = v
-    def compare(self, p, mol1, atom1, mol2, atom2):
+    def __call__(self, p, mol1, atom1, mol2, atom2):
         a1 = mol1.GetAtomWithIdx(atom1)
         a2 = mol2.GetAtomWithIdx(atom2)
         if (a1.GetAtomicNum() != a2.GetAtomicNum() and
@@ -129,7 +129,7 @@ class AtomCompareUserData(rdFMCS.MCSAtomCompare):
         return True
 
 class BondCompareCompareIsInt(rdFMCS.MCSBondCompare):
-    compare = 1
+    __call__ = 1
 
 class BondCompareNoCompare(rdFMCS.MCSBondCompare):
     pass
@@ -140,7 +140,7 @@ class BondCompareUserData(rdFMCS.MCSBondCompare):
         self.match = None
     def setIgnoreAromatization(self, v):
         self.match = BondMatchOrderMatrix(v)
-    def compare(self, p, mol1, bond1, mol2, bond2):
+    def __call__(self, p, mol1, bond1, mol2, bond2):
         b1 = mol1.GetBondWithIdx(bond1)
         b2 = mol2.GetBondWithIdx(bond2)
         t1 = b1.GetBondType()
@@ -154,7 +154,7 @@ class BondCompareUserData(rdFMCS.MCSBondCompare):
         return False
 
 class ProgressCallbackCallbackIsInt(rdFMCS.MCSProgress):
-    callback = 1
+    __call__ = 1
 
 class ProgressCallbackNoCallback(rdFMCS.MCSProgress):
     pass
@@ -164,7 +164,7 @@ class ProgressCallback(rdFMCS.MCSProgress):
         super().__init__()
         self.parent = parent
         self.callCount = 0
-    def callback(self, stat, params):
+    def __call__(self, stat, params):
         self.callCount += 1
         self.parent.assertTrue(isinstance(stat, rdFMCS.MCSProgressData))
         self.parent.assertTrue(hasattr(stat, "numAtoms"))
@@ -182,16 +182,12 @@ class ProgressCallback(rdFMCS.MCSProgress):
 class Common:
     @staticmethod
     def getParams(**kwargs):
-        have_kw = False
         params = rdFMCS.MCSParameters()
         for kw in ("AtomTyper", "BondTyper"):
-            try:
-                v = kwargs[kw]
-            except KeyError:
-                pass
-            else:
-                have_kw = True
-                setattr(params, kw, v())
+            v = kwargs.get(kw, None)
+            if v is not None:
+                v_instance = v()
+                setattr(params, kw, v_instance)
         return params
 
     @staticmethod
@@ -707,6 +703,38 @@ class TestCase(unittest.TestCase):
             AtomTyper=CompareElements,
             BondTyper=CompareOrder)
 
+    # DEPRECATED: remove from here in release 2021.01
+    def test1PythonImplDeprecated(self):
+        atom_call = CompareElements.__call__
+        setattr(CompareElements, "compare", CompareElements.__call__)
+        delattr(CompareElements, "__call__")
+        bond_call = CompareOrder.__call__
+        setattr(CompareOrder, "compare", CompareOrder.__call__)
+        delattr(CompareOrder, "__call__")
+        Common.test1(self,
+            AtomTyper=CompareElements,
+            BondTyper=CompareOrder)
+        setattr(CompareElements, "__call__", atom_call)
+        delattr(CompareElements, "compare")
+        setattr(CompareOrder, "__call__", bond_call)
+        delattr(CompareOrder, "compare")
+
+    def test1PythonImplDeprecatedTypo(self):
+        atom_call = CompareElements.__call__
+        setattr(CompareElements, "comparx", CompareElements.__call__)
+        delattr(CompareElements, "__call__")
+        bond_call = CompareOrder.__call__
+        setattr(CompareOrder, "comparx", CompareOrder.__call__)
+        delattr(CompareOrder, "__call__")
+        self.assertRaises(TypeError, lambda self: Common.test1(self,
+            AtomTyper=CompareElements,
+            BondTyper=CompareOrder))
+        setattr(CompareElements, "__call__", atom_call)
+        delattr(CompareElements, "comparx")
+        setattr(CompareOrder, "__call__", bond_call)
+        delattr(CompareOrder, "comparx")
+    # DEPRECATED: remove until here in release 2021.01
+
     def test2(self):
         Common.test2(self)
 
@@ -809,8 +837,8 @@ class TestCase(unittest.TestCase):
         ms = [Chem.MolFromSmiles(x) for x in smis]
         self.assertRaises(TypeError, lambda ps: setattr(ps, "AtomTyper",
                           AtomCompareCompareIsInt()))
-        ps.AtomTyper = AtomCompareNoCompare()
-        self.assertRaises(TypeError, lambda ms, ps: rdFMCS.FindMCS(ms, ps))
+        self.assertRaises(TypeError, lambda ps: setattr(ps, "AtomTyper",
+                          AtomCompareNoCompare()))
 
     def test13MCSAtomCompareUserData(self):
         smis = ['CCOCCOC', 'CCNCCCC']
@@ -830,8 +858,8 @@ class TestCase(unittest.TestCase):
         ms = [Chem.MolFromSmiles(x) for x in smis]
         self.assertRaises(TypeError, lambda ps: setattr(ps, "BondTyper",
                           BondCompareCompareIsInt()))
-        ps.BondTyper = BondCompareNoCompare()
-        self.assertRaises(TypeError, lambda ms, ps: rdFMCS.FindMCS(ms, ps))
+        self.assertRaises(TypeError, lambda ps: setattr(ps, "BondTyper",
+                          BondCompareNoCompare()))
 
     def test15MCSBondCompareUserData(self):
         smis = ['C1CC=CCC1', 'c1ccccc1']
@@ -852,8 +880,8 @@ class TestCase(unittest.TestCase):
         ms = [Chem.MolFromSmiles(x) for x in smis]
         self.assertRaises(TypeError, lambda ps: setattr(ps, "ProgressCallback",
                           ProgressCallbackCallbackIsInt()))
-        ps.ProgressCallback = ProgressCallbackNoCallback()
-        self.assertRaises(TypeError, lambda ms, ps: rdFMCS.FindMCS(ms, ps))
+        self.assertRaises(TypeError, lambda ps: setattr(ps, "ProgressCallback",
+                          ProgressCallbackNoCallback()))
 
     def test17MCSProgressCallbackCancel(self):
         ps = rdFMCS.MCSParameters()
@@ -864,6 +892,24 @@ class TestCase(unittest.TestCase):
         mcs = rdFMCS.FindMCS(ms, ps)
         self.assertTrue(mcs.canceled)
         self.assertEqual(ps.ProgressCallback.callCount, 3)
+
+    # DEPRECATED: remove from here in release 2021.01
+    def test17MCSProgressCallbackCancelDeprecated(self):
+        callback = ProgressCallback.__call__
+        setattr(ProgressCallback, "callback", ProgressCallback.__call__)
+        delattr(ProgressCallback, "__call__")
+        self.test17MCSProgressCallbackCancel()
+        setattr(ProgressCallback, "__call__", callback)
+        delattr(ProgressCallback, "callback")
+
+    def test17MCSProgressCallbackCancelDeprecatedTypo(self):
+        callback = ProgressCallback.__call__
+        setattr(ProgressCallback, "callbacx", ProgressCallback.__call__)
+        delattr(ProgressCallback, "__call__")
+        self.assertRaises(TypeError, self.test17MCSProgressCallbackCancel)
+        setattr(ProgressCallback, "__call__", callback)
+        delattr(ProgressCallback, "callbacx")
+    # DEPRECATED: remove until here in release 2021.01
 
 if __name__ == "__main__":
     unittest.main()
