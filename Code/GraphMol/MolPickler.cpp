@@ -1,5 +1,5 @@
 //
-//  Copyright (C) 2001-2018 Greg Landrum and Rational Discovery LLC
+//  Copyright (C) 2001-2020 Greg Landrum and Rational Discovery LLC
 //
 //   @@ All Rights Reserved @@
 //  This file is part of the RDKit.
@@ -33,7 +33,7 @@ using std::uint32_t;
 namespace RDKit {
 
 const int32_t MolPickler::versionMajor = 12;
-const int32_t MolPickler::versionMinor = 0;
+const int32_t MolPickler::versionMinor = 1;
 const int32_t MolPickler::versionPatch = 0;
 const int32_t MolPickler::endianId = 0xDEADBEEF;
 
@@ -316,6 +316,8 @@ void finalizeQueryFromDescription(Query<int, Atom const *, true> *query,
     query->setDataFunc(queryAtomHasHeteroatomNbrs);
   } else if (descr == "AtomNumHeteroatomNeighbors") {
     query->setDataFunc(queryAtomNumHeteroatomNbrs);
+  } else if (descr == "AtomNonHydrogenDegree") {
+    query->setDataFunc(queryAtomNonHydrogenDegree);
   } else if (descr == "AtomHasAliphaticHeteroatomNeighbors") {
     query->setDataFunc(queryAtomHasAliphaticHeteroatomNbrs);
   } else if (descr == "AtomNumAliphaticHeteroatomNeighbors") {

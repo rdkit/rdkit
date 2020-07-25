@@ -180,7 +180,6 @@ void setMDLAromaticity(RWMol &mol) {
     if (ring.size() != 5) {
       continue;
     }
-    size_t pin;
     bool keepIt = true;
     size_t dummy = ring.size() + 1;
     for (size_t i = 0; i < ring.size(); ++i) {

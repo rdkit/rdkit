@@ -13,8 +13,8 @@
     \brief Includes a bunch of functionality for handling Atom and Bond queries.
 */
 #include <RDGeneral/export.h>
-#ifndef _RD_QUERY_OPS_H
-#define _RD_QUERY_OPS_H
+#ifndef RD_QUERY_OPS_H
+#define RD_QUERY_OPS_H
 
 #include <GraphMol/RDKitBase.h>
 #include <Query/QueryObjects.h>
@@ -80,19 +80,28 @@ static inline int queryAtomExplicitDegree(Atom const *at) {
 static inline int queryAtomTotalDegree(Atom const *at) {
   return at->getTotalDegree();
 };
+//! D and T are treated as "non-hydrogen" here
 static inline int queryAtomNonHydrogenDegree(Atom const *at) {
-  return at->getTotalDegree() - at->getTotalNumHs(true);
-}
+  int res = 0;
+  for (const auto &nbri :
+       boost::make_iterator_range(at->getOwningMol().getAtomNeighbors(at))) {
+    const auto nbr = at->getOwningMol()[nbri];
+    if (nbr->getAtomicNum() != 1 || nbr->getIsotope() > 1) {
+      res++;
+    }
+  }
+
+  return res;
+};
+//! D and T are not treated as heavy atoms here
 static inline int queryAtomHeavyAtomDegree(Atom const *at) {
   int heavyDegree = 0;
-  ROMol::ADJ_ITER nbrIdx, endNbrs;
-  boost::tie(nbrIdx, endNbrs) = at->getOwningMol().getAtomNeighbors(at);
-  while (nbrIdx != endNbrs) {
-    const Atom *nbr = at->getOwningMol()[*nbrIdx];
+  for (const auto &nbri :
+       boost::make_iterator_range(at->getOwningMol().getAtomNeighbors(at))) {
+    const auto nbr = at->getOwningMol()[nbri];
     if (nbr->getAtomicNum() > 1) {
       heavyDegree++;
     }
-    ++nbrIdx;
   }
 
   return heavyDegree;
@@ -113,10 +122,10 @@ static inline int queryAtomExplicitValence(Atom const *at) {
   return at->getExplicitValence() - at->getNumExplicitHs();
 };
 static inline int queryAtomTotalValence(Atom const *at) {
-  return at->getExplicitValence() + at->getImplicitValence();
+  return at->getTotalValence();
 };
 static inline int queryAtomUnsaturated(Atom const *at) {
-  return static_cast<int>(at->getDegree()) < at->getExplicitValence();
+  return at->getTotalDegree() < at->getTotalValence();
 };
 static inline int queryAtomNum(Atom const *at) { return at->getAtomicNum(); };
 static inline int makeAtomType(int atomic_num, bool aromatic) {
@@ -619,13 +628,23 @@ T *makeAtomHasAliphaticHeteroatomNbrsQuery(const std::string &descr) {
 RDKIT_GRAPHMOL_EXPORT ATOM_EQUALS_QUERY *
 makeAtomHasAliphaticHeteroatomNbrsQuery();
 
+//! returns a Query for matching the number of non-hydrogen neighbors
+template <class T>
+T *makeAtomNonHydrogenDegreeQuery(int what, const std::string &descr) {
+  return makeAtomSimpleQuery<T>(what, queryAtomNonHydrogenDegree, descr);
+}
+//! \overload
+RDKIT_GRAPHMOL_EXPORT ATOM_EQUALS_QUERY *makeAtomNonHydrogenDegreeQuery(
+    int what);
+
 //! returns a Query for matching bond orders
 RDKIT_GRAPHMOL_EXPORT BOND_EQUALS_QUERY *makeBondOrderEqualsQuery(
     Bond::BondType what);
 //! returns a Query for unspecified SMARTS bonds
 RDKIT_GRAPHMOL_EXPORT BOND_EQUALS_QUERY *makeSingleOrAromaticBondQuery();
 //! returns a Query for tautomeric bonds
-RDKIT_GRAPHMOL_EXPORT BOND_EQUALS_QUERY *makeSingleOrDoubleOrAromaticBondQuery();
+RDKIT_GRAPHMOL_EXPORT BOND_EQUALS_QUERY *
+makeSingleOrDoubleOrAromaticBondQuery();
 //! returns a Query for matching bond directions
 RDKIT_GRAPHMOL_EXPORT BOND_EQUALS_QUERY *makeBondDirEqualsQuery(
     Bond::BondDir what);
@@ -1030,6 +1049,11 @@ Queries::EqualityQuery<int, const Target *, true> *makePropQuery(
 RDKIT_GRAPHMOL_EXPORT bool isComplexQuery(const Bond *b);
 RDKIT_GRAPHMOL_EXPORT bool isComplexQuery(const Atom *a);
 RDKIT_GRAPHMOL_EXPORT bool isAtomAromatic(const Atom *a);
-};  // namespace RDKit
 
+namespace QueryOps {
+RDKIT_GRAPHMOL_EXPORT void completeMolQueries(
+    RWMol *mol, unsigned int magicVal = 0xDEADBEEF);
+RDKIT_GRAPHMOL_EXPORT Atom *replaceAtomWithQueryAtom(RWMol *mol, Atom *atom);
+}  // namespace QueryOps
+}  // namespace RDKit
 #endif

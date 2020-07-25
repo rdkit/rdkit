@@ -137,6 +137,10 @@ std::string getAtomSmartsSimple(const QueryAtom *qatom,
     res << "D";
     hasVal = true;
     needParen = true;
+  } else if (descrip == "AtomNonHydrogenDegree") {
+    res << "d";
+    hasVal = true;
+    needParen = true;
   } else if (descrip == "AtomTotalDegree") {
     res << "X";
     hasVal = true;

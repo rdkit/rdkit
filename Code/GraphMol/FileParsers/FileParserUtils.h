@@ -58,6 +58,7 @@ RDKIT_FILEPARSERS_EXPORT bool ParseV2000CTAB(
 RDKIT_FILEPARSERS_EXPORT void finishMolProcessing(RWMol *res, bool chiralityPossible, bool sanitize,
                          bool removeHs);
 
+//! Deprecated, please use QueryOps::replaceAtomWithQueryAtom instead
 RDKIT_FILEPARSERS_EXPORT Atom *replaceAtomWithQueryAtom(RWMol *mol, Atom *atom);
 
 //! applies a particular property to the atoms as an atom property list

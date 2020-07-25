@@ -15,6 +15,13 @@
 - The old MolHash code has been removed from the C++ code, all wrappers, and the
   PostgreSQL cartridge.
 
+## Deprecated code (to be removed in a future release):
+- The function `FileParserUtils::replaceAtomWithQueryAtom()` has been moved to
+  the namespace QueryOps. Please use `QueryOps::replaceAtomWithQueryAtom()`
+  instead. The version in the `FileParserUtils` namespace will be removed in the
+  next release.
+
+
 
 
 # Release_2020.03.1
