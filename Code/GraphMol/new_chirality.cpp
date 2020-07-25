@@ -300,7 +300,7 @@ std::vector<StereoInfo> findPotentialStereo(const ROMol &omol) {
           throw ValueErrorException("bad StereoInfo.specified type");
       }
       possibleAtoms.set(aidx);
-      atom->setChiralTag(Atom::CHI_TETRAHEDRAL_CW);
+      // atom->setChiralTag(Atom::CHI_TETRAHEDRAL_CW);
       // std::cerr << " yes: " << aidx << std::endl;
       atomSymbols[aidx] =
           (boost::format("%s-%d") % atom->getSymbol() % atom->getIdx()).str();
