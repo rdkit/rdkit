@@ -18,7 +18,7 @@
 #include <GraphMol/Deprotect/Deprotect.h>
 
 using namespace RDKit;
-
+using namespace RDKit::Deprotect;
 TEST_CASE("Standard deprotections", "[deprotect]") {
   SECTION("simple deprotections") {
     auto m = "N(C(=O)OC(C)(C)C)Cc1ccccc1NC(=O)OC(C)(C)C"_smiles;
