@@ -11,6 +11,7 @@
 
 #include "new_canon.h"
 #include <GraphMol/RDKitBase.h>
+#include <GraphMol/QueryOps.h>
 #include <cstdint>
 #include <boost/foreach.hpp>
 #include <cstring>
@@ -561,10 +562,11 @@ void updateAtomNeighborIndex(canon_atom *atoms, std::vector<bondholder> &nbrs) {
 void updateAtomNeighborNumSwaps(
     canon_atom *atoms, std::vector<bondholder> &nbrs, unsigned int atomIdx,
     std::vector<std::pair<unsigned int, unsigned int>> &result) {
+  bool isRingAtom = queryIsAtomInRing(atoms[atomIdx].atom);
   for (auto &nbr : nbrs) {
     unsigned nbrIdx = nbr.nbrIdx;
 
-    if (atoms[nbrIdx].atom->getChiralTag() != 0) {
+    if (isRingAtom && atoms[nbrIdx].atom->getChiralTag() != 0) {
       std::vector<int> ref, probe;
       for (unsigned i = 0; i < atoms[nbrIdx].degree; ++i) {
         ref.push_back(atoms[nbrIdx].nbrIds[i]);

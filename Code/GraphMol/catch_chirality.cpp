@@ -335,6 +335,7 @@ TEST_CASE("possible stereochemistry on atoms", "[chirality]") {
     {
       auto mol = "CC(C)(O)[C@](Cl)(F)I"_smiles;
       REQUIRE(mol);
+      std::cerr << "--- 1" << std::endl;
       auto stereoInfo = Chirality::findPotentialStereo(*mol);
       REQUIRE(stereoInfo.size() == 1);
       CHECK(stereoInfo[0].type == Chirality::StereoType::Atom_Tetrahedral);
@@ -343,9 +344,11 @@ TEST_CASE("possible stereochemistry on atoms", "[chirality]") {
       std::vector<unsigned> catoms = {1, 5, 6, 7};
       CHECK(stereoInfo[0].controllingAtoms == catoms);
     }
+#if 1
     {
       auto mol = "C[C@@H](O)[C@H](C)[C@H](C)O"_smiles;
       REQUIRE(mol);
+      std::cerr << "--- 2" << std::endl;
       auto stereoInfo = Chirality::findPotentialStereo(*mol);
       REQUIRE(stereoInfo.size() == 3);
       CHECK(stereoInfo[0].type == Chirality::StereoType::Atom_Tetrahedral);
@@ -364,6 +367,8 @@ TEST_CASE("possible stereochemistry on atoms", "[chirality]") {
     {
       auto mol = "FC(F)(F)[C@@H](O)[C@H](C)[C@H](C(F)(F)F)O"_smiles;
       REQUIRE(mol);
+      std::cerr << "--- 3" << std::endl;
+
       auto stereoInfo = Chirality::findPotentialStereo(*mol);
       REQUIRE(stereoInfo.size() == 3);
       CHECK(stereoInfo[0].type == Chirality::StereoType::Atom_Tetrahedral);
@@ -378,12 +383,14 @@ TEST_CASE("possible stereochemistry on atoms", "[chirality]") {
       CHECK(stereoInfo[2].specified == Chirality::StereoSpecified::Specified);
       CHECK(stereoInfo[2].centeredOn == 8);
     }
+#endif
   }
-
   SECTION("simple unspecified") {
     {
       auto mol = "CC(C)(O)C(Cl)(F)I"_smiles;
       REQUIRE(mol);
+      std::cerr << "--- 4" << std::endl;
+
       auto stereoInfo = Chirality::findPotentialStereo(*mol);
       REQUIRE(stereoInfo.size() == 1);
       CHECK(stereoInfo[0].type == Chirality::StereoType::Atom_Tetrahedral);
