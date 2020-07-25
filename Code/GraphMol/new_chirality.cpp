@@ -301,7 +301,7 @@ std::vector<StereoInfo> findPotentialStereo(const ROMol &omol) {
       }
       possibleAtoms.set(aidx);
       atom->setChiralTag(Atom::CHI_TETRAHEDRAL_CW);
-      std::cerr << " yes: " << aidx << std::endl;
+      // std::cerr << " yes: " << aidx << std::endl;
       atomSymbols[aidx] =
           (boost::format("%s-%d") % atom->getSymbol() % atom->getIdx()).str();
     } else {
@@ -370,8 +370,8 @@ std::vector<StereoInfo> findPotentialStereo(const ROMol &omol) {
       bool haveADupe = false;
       for (auto nbrIdx : sinfo.controllingAtoms) {
         auto rnk = aranks[nbrIdx];
-        std::cerr << "       " << aidx << " " << nbrIdx << "(" << rnk << ")"
-                  << std::endl;
+        // std::cerr << "       " << aidx << " " << nbrIdx << "(" << rnk << ")"
+        //           << std::endl;
         if (std::find(nbrs.begin(), nbrs.end(), rnk) != nbrs.end()) {
           haveADupe = true;
           break;
