@@ -44,6 +44,8 @@ class RDKIT_FILEPARSERS_EXPORT MultithreadedMolSupplier : public MolSupplier {
   void inputConsumer(size_t id);
   //! pop elements from the output queue
   ROMol *next();
+  //! join writer threads
+  void joinReaderAndWriters();
   //! starts reader and writer threads
   void startThreads();
   //! use atEnd method of the
@@ -66,15 +68,18 @@ class RDKIT_FILEPARSERS_EXPORT MultithreadedMolSupplier : public MolSupplier {
   virtual ROMol *processMoleculeRecord(const std::string &record,
                                        unsigned int lineNum) = 0;
 
+ private:
+  std::vector<std::thread> writers;
+  std::thread reader;
+
  protected:
   const int d_numReaderThread = 1;  // fix number of reader threads to 1
   int d_numWriterThreads;           // number of writer threads
   size_t d_sizeInputQueue;          // size of input queue
   size_t d_sizeOutputQueue;         // size of output queue
   ConcurrentQueue<std::tuple<std::string, unsigned int>>
-      *d_inputQueue;  // concurrent input queue
-  ConcurrentQueue<std::shared_ptr<ROMol>>
-      *d_outputQueue;  // concurrent output queue
+      *d_inputQueue;                        // concurrent input queue
+  ConcurrentQueue<ROMol *> *d_outputQueue;  // concurrent output queue
 };
 }  // namespace RDKit
 #endif

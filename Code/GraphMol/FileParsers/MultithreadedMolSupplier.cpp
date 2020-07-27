@@ -12,6 +12,7 @@
 #include <GraphMol/SmilesParse/SmilesWrite.h>
 
 #include <chrono>
+#include <future>
 #include <iomanip>
 #include <mutex>
 #include <sstream>
@@ -32,64 +33,63 @@ void MultithreadedMolSupplier::inputProducer() {
   unsigned int lineNum;
   while (extractNextRecord(record, lineNum)) {
     auto r = std::tuple<std::string, unsigned int>{record, lineNum};
-    PrintThread{}
-        << "Reader id: 0, Pushing elements into the input queue, lineNum: "
-        << lineNum << std::endl;
+    /*
+PrintThread{}
+<< "Reader id: 0, Pushing elements into the input queue, lineNum: "
+<< lineNum << std::endl;
+    */
     d_inputQueue->push(r);
   }
-  PrintThread{} << "Exit Input Producer, done reading" << std::endl;
+  // PrintThread{} << "Exit Input Producer, done reading" << std::endl;
 }
 
 void MultithreadedMolSupplier::inputConsumer(size_t id) {
   std::tuple<std::string, unsigned int> r;
   while (d_inputQueue->pop(r)) {
     ROMol* mol = processMoleculeRecord(std::get<0>(r), std::get<1>(r));
-    std::shared_ptr<ROMol> shared_mol(mol);
-    PrintThread{} << "Input Consumer id: " << id
+    /*
+                PrintThread{} << "Input Consumer id: " << id
                   << ", Pushing elements into the output queue, lineNum: "
                   << std::get<1>(r) << std::endl;
-    //! possible deadlock here if the output queue is full
-    while (d_outputQueue->size() == d_sizeOutputQueue) {
-      PrintThread{} << "Output Queue is full" << std::endl;
-      std::this_thread::sleep_for(std::chrono::milliseconds(200));
-    }
-    PrintThread{} << "Output Queue is not full here" << std::endl;
-    d_outputQueue->push(shared_mol);
+                */
+    d_outputQueue->push(mol);
   }
-  PrintThread{} << "Exit Input Consumer: " << id
-                << ", done processing molecules" << std::endl;
+  // PrintThread{} << "Exit Input Consumer: " << id
+  //             << ", done processing molecules" << std::endl;
 }
 
 ROMol* MultithreadedMolSupplier::next() {
-  std::cout << "Next method is being called" << std::endl;
-  std::shared_ptr<ROMol> mol(nullptr);
+  ROMol* mol;
+  // std::cout << "Size of output queue: " << d_outputQueue->size() <<
+  // std::endl;
   if (d_outputQueue->pop(mol)) {
-    PrintThread{} << "Popping elements from the output queue"
-                  << MolToSmiles(*mol.get()) << std::endl;
-    return mol.get();
+    //  PrintThread{} << "Popping elements from the output queue: "
+    //              << MolToSmiles(*mol) << std::endl;
+    return mol;
   }
-  PrintThread{} << "We have a nullptr" << std::endl;
+  // PrintThread{} << "We have a nullptr" << std::endl;
   return nullptr;
 }
 
-void MultithreadedMolSupplier::startThreads() {
-  std::vector<std::thread> writers(d_numWriterThreads);
-
-  std::thread reader(&MultithreadedMolSupplier::inputProducer, this);
-  for (int i = 0; i < d_numWriterThreads; i++) {
-    writers[i] = std::thread(&MultithreadedMolSupplier::inputConsumer, this, i);
-  }
+void MultithreadedMolSupplier::joinReaderAndWriters() {
   reader.join();
-  //! done reading elements from the file
   d_inputQueue->setDone();
-
   std::for_each(writers.begin(), writers.end(),
                 std::mem_fn(&std::thread::join));
-  //! done wrting elements from the input queue
   d_outputQueue->setDone();
 }
 
-bool MultithreadedMolSupplier::atEnd() { return d_outputQueue->isEmpty(); }
+void MultithreadedMolSupplier::startThreads() {
+  //! start reader threads
+  reader = std::thread(&MultithreadedMolSupplier::inputProducer, this);
+  //! start writer threads
+  for (int i = 0; i < d_numWriterThreads; i++) {
+    writers.push_back(
+        std::thread(&MultithreadedMolSupplier::inputConsumer, this, i));
+  }
+}
+
+bool MultithreadedMolSupplier::atEnd() { return d_outputQueue->getDone(); }
 
 void MultithreadedMolSupplier::reset() { ; }
 

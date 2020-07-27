@@ -37,22 +37,19 @@ void testSmi() {
   unsigned int i;
   MultithreadedSmilesMolSupplier sup(fname, ",", 1, 0, true);
   sup.startThreads();
-  std::cout << "threads started" << std::endl;
-  while (!sup.atEnd()) {
-    std::cout << "we are calling next" << std::endl;
-    ROMol* mol = sup.next();
-    if (i == 3) {
-      mol->getProp(common_properties::_Name, mname);
-      CHECK_INVARIANT(mname == "4", "");
-      mol->getProp("Column_2", mname);
-      CHECK_INVARIANT(mname == "82.78", "");
+  auto func = [&]() {
+    while (!sup.atEnd()) {
+      ROMol* mol = sup.next();
+      if (mol == nullptr) {
+        break;
+      }
+      delete mol;
+      i++;
     }
-    delete mol;
-    i++;
-  }
-
-  std::cout << "Number of lines = " << i << std::endl;
-
+  };
+  std::thread th(func);
+  sup.joinReaderAndWriters();
+  th.join();
   TEST_ASSERT(i == 10);
 }
 
@@ -63,5 +60,6 @@ int main() {
   testSmi();
   BOOST_LOG(rdErrorLog) << "Finished: testSmi()\n";
   BOOST_LOG(rdErrorLog) << "-----------------------------------------\n\n";
+
   return 0;
 }

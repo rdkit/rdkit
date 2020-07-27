@@ -43,8 +43,7 @@ MultithreadedSmilesMolSupplier::MultithreadedSmilesMolSupplier(
   d_sizeOutputQueue = sizeOutputQueue;
   d_inputQueue = new ConcurrentQueue<std::tuple<std::string, unsigned int>>(
       d_sizeInputQueue);
-  d_outputQueue =
-      new ConcurrentQueue<std::shared_ptr<ROMol>>(d_sizeOutputQueue);
+  d_outputQueue = new ConcurrentQueue<ROMol *>(d_sizeOutputQueue);
 
   d_delim = delimiter;
   df_sanitize = sanitize;
@@ -76,8 +75,7 @@ MultithreadedSmilesMolSupplier::MultithreadedSmilesMolSupplier(
   d_sizeOutputQueue = sizeOutputQueue;
   d_inputQueue = new ConcurrentQueue<std::tuple<std::string, unsigned int>>(
       d_sizeInputQueue);
-  d_outputQueue =
-      new ConcurrentQueue<std::shared_ptr<ROMol>>(d_sizeOutputQueue);
+  d_outputQueue = new ConcurrentQueue<ROMol *>(d_sizeOutputQueue);
 
   d_delim = delimiter;
   df_sanitize = sanitize;
@@ -105,8 +103,7 @@ void MultithreadedSmilesMolSupplier::init() {
   d_sizeOutputQueue = 10;
   d_inputQueue = new ConcurrentQueue<std::tuple<std::string, unsigned int>>(
       d_sizeInputQueue);
-  d_outputQueue =
-      new ConcurrentQueue<std::shared_ptr<ROMol>>(d_sizeOutputQueue);
+  d_outputQueue = new ConcurrentQueue<ROMol *>(d_sizeOutputQueue);
 
   dp_inStream = nullptr;
   df_owner = true;
@@ -228,7 +225,6 @@ bool MultithreadedSmilesMolSupplier::extractNextRecord(std::string &record,
 ROMol *MultithreadedSmilesMolSupplier::processMoleculeRecord(
     const std::string &record, unsigned int lineNum) {
   ROMol *res = nullptr;
-
   try {
     // -----------
     // tokenize the input line:
