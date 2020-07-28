@@ -869,3 +869,36 @@ TEST_CASE("Serialization", "[serialization]") {
   }
 }
 #endif
+
+TEST_CASE("molCounts", "[scaffolds]") {
+  SECTION("basics") {
+    auto smis = {"C1CC(C1)C1C(C1C1NCCCC1)C1OCCC1",
+                 "C1CC(C1)C1C(C1C1NCCCC1)C1CCCC1"};
+    std::vector<ROMOL_SPTR> ms;
+    for (const auto smi : smis) {
+      auto m = SmilesToMol(smi);
+      REQUIRE(m);
+      ms.push_back(ROMOL_SPTR(m));
+    }
+    ScaffoldNetwork::ScaffoldNetworkParams ps;
+    ps.includeGenericScaffolds = false;
+    ps.includeScaffoldsWithoutAttachments = false;
+    ScaffoldNetwork::ScaffoldNetwork net =
+        ScaffoldNetwork::createScaffoldNetwork(ms, ps);
+    CHECK(net.nodes.size() == 16);
+    CHECK(net.counts.size() == net.nodes.size());
+    CHECK(net.edges.size() == 40);
+    std::vector<std::pair<std::string, unsigned int>> endps = {
+        {"*C1CCC1", 2u},
+        {"*C1CCCCN1", 2u},
+        {"*C1CCCO1", 1u},
+        {"*C1CCCC1", 1u},
+        {"*C1C(*)C1*", 2u}};
+    for (const auto endp : endps) {
+      auto loc = std::find(net.nodes.begin(), net.nodes.end(), endp.first);
+      CHECK(loc != net.nodes.end());
+      auto idx = loc - net.nodes.begin();
+      CHECK(net.molCounts[idx] == endp.second);
+    }
+  }
+}

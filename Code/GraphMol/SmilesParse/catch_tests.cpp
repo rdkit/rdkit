@@ -717,3 +717,21 @@ TEST_CASE(
     CHECK(osz == sz);
   }
 }
+
+TEST_CASE("d primitive in SMARTS", "[smarts][extension]") {
+  SmilesParserParams ps;
+  ps.removeHs = false;
+  std::unique_ptr<ROMol> m(SmilesToMol("[H]OCO[2H]", ps));
+  REQUIRE(m);
+  CHECK(m->getNumAtoms() == 5);
+  SECTION("basics") {
+    auto q = "[d2]"_smarts;
+    REQUIRE(q);
+    CHECK(SubstructMatch(*m, *q).size() == 2);
+  }
+  SECTION("comparison to D") {
+    auto q = "[D2]"_smarts;
+    REQUIRE(q);
+    CHECK(SubstructMatch(*m, *q).size() == 3);
+  }
+}

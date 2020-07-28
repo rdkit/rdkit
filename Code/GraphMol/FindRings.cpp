@@ -170,6 +170,7 @@ void findSSSRforDupCands(const ROMol &mol, VECT_INT_VECT &res,
         boost::dynamic_bitset<> activeBondsCopy = activeBonds;
         INT_SET changed;
         auto dmci = dupMap.find(dupCand);
+        CHECK_INVARIANT(dmci != dupMap.end(), "duplicate could not be found");
         for (int dni : dmci->second) {
           trimBonds(dni, mol, changed, atomDegreesCopy, activeBondsCopy);
         }

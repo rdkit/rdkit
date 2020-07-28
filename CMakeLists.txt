@@ -66,7 +66,13 @@ set(RDK_BOOST_VERSION "1.58.0")
 
 if(NOT MSVC)
   if(RDK_OPTIMIZE_POPCNT)
+    if(CMAKE_HOST_SYSTEM_PROCESSOR STREQUAL "aarch64")
+      message("RDK_OPTIMIZE_POPCNT is not available on aarch64")
+    elseif(CMAKE_HOST_SYSTEM_PROCESSOR STREQUAL "ppc64le")
+      set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -mpopcntb")
+    else()
       set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -mpopcnt")
+    endif()
   endif()
 endif()
 
