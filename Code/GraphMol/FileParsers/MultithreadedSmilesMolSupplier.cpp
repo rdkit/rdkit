@@ -38,7 +38,6 @@ MultithreadedSmilesMolSupplier::MultithreadedSmilesMolSupplier(
     d_numWriterThreads =
         std::min(numWriterThreads, (int)getNumThreadsToUse(numWriterThreads));
   }
-
   d_sizeInputQueue = sizeInputQueue;
   d_sizeOutputQueue = sizeOutputQueue;
   d_inputQueue = new ConcurrentQueue<std::tuple<std::string, unsigned int>>(
@@ -98,9 +97,10 @@ MultithreadedSmilesMolSupplier::~MultithreadedSmilesMolSupplier() {
 void MultithreadedSmilesMolSupplier::init() {
   dp_inStream = nullptr;
   df_owner = true;
-  d_numWriterThreads = 1;
-  d_sizeInputQueue = 10;
-  d_sizeOutputQueue = 10;
+  d_numWriterThreads = 2;
+  d_sizeInputQueue = 5;
+  d_sizeOutputQueue = 5;
+
   d_inputQueue = new ConcurrentQueue<std::tuple<std::string, unsigned int>>(
       d_sizeInputQueue);
   d_outputQueue = new ConcurrentQueue<ROMol *>(d_sizeOutputQueue);

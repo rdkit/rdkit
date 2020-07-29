@@ -20,9 +20,13 @@
 #include <RDGeneral/StreamOps.h>
 
 #include <boost/tokenizer.hpp>
+#include <chrono>
 #include <cstdlib>
 #include <functional>
+#include <future>
+#include <iomanip>
 #include <memory>
+#include <mutex>
 #include <sstream>
 
 #include "FileParsers.h"
@@ -38,14 +42,14 @@ class RDKIT_FILEPARSERS_EXPORT MultithreadedMolSupplier : public MolSupplier {
   MultithreadedMolSupplier(){};
   virtual ~MultithreadedMolSupplier(){};
   //! reads lines from input stream to populate the input queue
-  void inputProducer();
+  void reader();
   //! parses lines from the input queue converting them to ROMol objects
   //! populating the output queue
-  void inputConsumer(size_t id);
+  void writer(size_t id);
   //! pop elements from the output queue
   ROMol *next();
-  //! join writer threads
-  void joinReaderAndWriters();
+  //! join the reader thread
+  void joinReaderAndWriter();
   //! starts reader and writer threads
   void startThreads();
   //! use atEnd method of the
@@ -69,8 +73,8 @@ class RDKIT_FILEPARSERS_EXPORT MultithreadedMolSupplier : public MolSupplier {
                                        unsigned int lineNum) = 0;
 
  private:
-  std::vector<std::thread> writers;
-  std::thread reader;
+  std::vector<std::thread> writerThreads;  // vector writer threads
+  std::thread readerThread;                // single reader thread
 
  protected:
   const int d_numReaderThread = 1;  // fix number of reader threads to 1

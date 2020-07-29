@@ -29,27 +29,34 @@
 namespace io = boost::iostreams;
 using namespace RDKit;
 
+void func(MultithreadedSmilesMolSupplier& sup, unsigned int& i) {
+  while (!sup.atEnd()) {
+    ROMol* mol = sup.next();
+    if (mol == nullptr) {
+      break;
+    }
+    delete mol;
+    i++;
+  }
+}
+
 void testSmi() {
   std::string mname;
   std::string rdbase = getenv("RDBASE");
   std::string fname =
       rdbase + "/Code/GraphMol/FileParsers/test_data/fewSmi.csv";
   unsigned int i;
+  //! create the mol supplier with the usual syntax
   MultithreadedSmilesMolSupplier sup(fname, ",", 1, 0, true);
+
   sup.startThreads();
-  auto func = [&]() {
-    while (!sup.atEnd()) {
-      ROMol* mol = sup.next();
-      if (mol == nullptr) {
-        break;
-      }
-      delete mol;
-      i++;
-    }
-  };
-  std::thread th(func);
-  sup.joinReaderAndWriters();
+  //! run your method in a seperate thread
+  std::thread th(func, std::ref(sup), std::ref(i));
+  sup.joinReaderAndWriter();
+  //! join the thread after the reader and writer method
   th.join();
+
+  std::cout << "i = " << i << std::endl;
   TEST_ASSERT(i == 10);
 }
 
