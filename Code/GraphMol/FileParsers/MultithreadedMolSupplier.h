@@ -19,15 +19,8 @@
 #include <RDGeneral/RDThreads.h>
 #include <RDGeneral/StreamOps.h>
 
+#include <atomic>
 #include <boost/tokenizer.hpp>
-#include <chrono>
-#include <cstdlib>
-#include <functional>
-#include <future>
-#include <iomanip>
-#include <memory>
-#include <mutex>
-#include <sstream>
 
 #include "FileParsers.h"
 #include "MolSupplier.h"
@@ -39,23 +32,25 @@ class RDKIT_FILEPARSERS_EXPORT MultithreadedMolSupplier : public MolSupplier {
   // this is an abstract base class to concurrently supply molecules one at a
   // time
  public:
-  MultithreadedMolSupplier(){};
-  virtual ~MultithreadedMolSupplier(){};
+  MultithreadedMolSupplier() { std::atomic_init(&threadCounter, 1); };
+  virtual ~MultithreadedMolSupplier() { endThreads(); };
   //! reads lines from input stream to populate the input queue
   void reader();
   //! parses lines from the input queue converting them to ROMol objects
   //! populating the output queue
-  void writer(size_t id);
+  void writer();
   //! pop elements from the output queue
   ROMol *next();
-  //! join the reader thread
-  void joinReaderAndWriter();
-  //! starts reader and writer threads
-  void startThreads();
   //! use atEnd method of the
   bool atEnd();
 
+ protected:
+  //! starts reader and writer threads
+  void startThreads();
+
  private:
+  //! join the reader thread
+  void endThreads();
   // disable automatic copy constructors and assignment operators
   // for this class and its subclasses.  They will likely be
   // carrying around stream pointers and copying those is a recipe
@@ -73,6 +68,7 @@ class RDKIT_FILEPARSERS_EXPORT MultithreadedMolSupplier : public MolSupplier {
                                        unsigned int lineNum) = 0;
 
  private:
+  std::atomic<int> threadCounter;          // thread counter
   std::vector<std::thread> writerThreads;  // vector writer threads
   std::thread readerThread;                // single reader thread
 

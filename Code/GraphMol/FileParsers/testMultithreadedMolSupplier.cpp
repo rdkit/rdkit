@@ -29,35 +29,36 @@
 namespace io = boost::iostreams;
 using namespace RDKit;
 
-void func(MultithreadedSmilesMolSupplier& sup, unsigned int& i) {
-  while (!sup.atEnd()) {
-    ROMol* mol = sup.next();
-    if (mol == nullptr) {
-      break;
-    }
-    delete mol;
-    i++;
-  }
-}
-
-void testSmi() {
+void testSmiGeneral(int numWriterThreads, size_t sizeInputQueue,
+                    size_t sizeOutputQueue) {
   std::string mname;
   std::string rdbase = getenv("RDBASE");
   std::string fname =
       rdbase + "/Code/GraphMol/FileParsers/test_data/fewSmi.csv";
-  unsigned int i;
-  //! create the mol supplier with the usual syntax
-  MultithreadedSmilesMolSupplier sup(fname, ",", 1, 0, true);
+  unsigned int nMols = 0;
+  MultithreadedSmilesMolSupplier sup(fname, ",", 1, 0, true, true,
+                                     numWriterThreads, sizeInputQueue,
+                                     sizeOutputQueue);
+  while (!sup.atEnd()) {
+    ROMol* mol = sup.next();
+    if (mol != nullptr) {
+      ++nMols;
+    }
+    delete mol;
+  }
+  TEST_ASSERT(nMols == 10);
+}
 
-  sup.startThreads();
-  //! run your method in a seperate thread
-  std::thread th(func, std::ref(sup), std::ref(i));
-  sup.joinReaderAndWriter();
-  //! join the thread after the reader and writer method
-  th.join();
+void testSmi() {
+  //! try to construct a multithreaded smiles mol supplier with different
+  //! parameters
+  testSmiGeneral(2, 5, 5);
+  testSmiGeneral(5, 5, 5);
+  testSmiGeneral(2, 5, 10);
+  testSmiGeneral(2, 10, 5);
 
-  std::cout << "i = " << i << std::endl;
-  TEST_ASSERT(i == 10);
+  //! an extreme case
+  testSmiGeneral(2, 1, 1);
 }
 
 int main() {

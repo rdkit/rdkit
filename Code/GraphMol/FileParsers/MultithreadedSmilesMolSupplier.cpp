@@ -13,14 +13,6 @@
 #include <mutex>
 #include <sstream>
 namespace RDKit {
-//! method for thread-safe printing, only for debugging
-struct PrintThread : public std::stringstream {
-  static inline std::mutex cout_mutex;
-  ~PrintThread() {
-    std::lock_guard<std::mutex> l{cout_mutex};
-    std::cout << rdbuf();
-  }
-};
 
 MultithreadedSmilesMolSupplier::MultithreadedSmilesMolSupplier(
     const std::string &fileName, const std::string &delimiter, int smilesColumn,
@@ -52,6 +44,7 @@ MultithreadedSmilesMolSupplier::MultithreadedSmilesMolSupplier(
   df_end = false;
 
   this->checkForEnd();
+  startThreads();
   POSTCONDITION(dp_inStream, "bad instream");
 }
 
@@ -83,10 +76,14 @@ MultithreadedSmilesMolSupplier::MultithreadedSmilesMolSupplier(
   d_name = nameColumn;
   df_end = false;
   this->checkForEnd();
+  startThreads();
   POSTCONDITION(dp_inStream, "bad instream");
 }
 
-MultithreadedSmilesMolSupplier::MultithreadedSmilesMolSupplier() { init(); }
+MultithreadedSmilesMolSupplier::MultithreadedSmilesMolSupplier() {
+  init();
+  startThreads();
+}
 
 MultithreadedSmilesMolSupplier::~MultithreadedSmilesMolSupplier() {
   if (df_owner && dp_inStream) {
