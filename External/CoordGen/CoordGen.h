@@ -32,6 +32,7 @@ struct CoordGenParams {
       SKETCHER_STANDARD_PRECISION;  // controls sketch precision
   bool dbg_useConstrained = true;   // debugging
   bool dbg_useFixed = false;        // debugging
+  bool minimizeOnly = false;        // don't actually generate full coords
 };
 
 static CoordGenParams defaultParams;
@@ -83,8 +84,14 @@ unsigned int addCoords(T& mol, const CoordGenParams* params = nullptr) {
     atom->molecule = min_mol;  // seems like this should be in addNewAtom()
     atom->atomicNumber = oatom->getAtomicNum();
     atom->charge = oatom->getFormalCharge();
-    if (hasTemplateMatch ||
-        params->coordMap.find(oatom->getIdx()) != params->coordMap.end()) {
+    if (params->minimizeOnly) {
+      auto coords = mol.getConformer().getAtomPos(oatom->getIdx());
+      atom->coordinates = sketcherMinimizerPointF(coords.x * scaleFactor,
+                                                  coords.y * scaleFactor);
+      atom->fixed = false;
+      atom->constrained = false;
+    } else if (hasTemplateMatch || params->coordMap.find(oatom->getIdx()) !=
+                                       params->coordMap.end()) {
       atom->constrained = params->dbg_useConstrained;
       atom->fixed = params->dbg_useFixed;
       RDGeom::Point2D coords;
@@ -156,7 +163,11 @@ unsigned int addCoords(T& mol, const CoordGenParams* params = nullptr) {
   }
 
   minimizer.initialize(min_mol);
-  minimizer.runGenerateCoordinates();
+  if (!params->minimizeOnly) {
+    auto tmp = minimizer.runGenerateCoordinates();
+  } else {
+    minimizer.m_minimizer.minimizeMolecule(min_mol);
+  }
   auto conf = new Conformer(mol.getNumAtoms());
   for (size_t i = 0; i < mol.getNumAtoms(); ++i) {
     conf->setAtomPos(
@@ -165,8 +176,9 @@ unsigned int addCoords(T& mol, const CoordGenParams* params = nullptr) {
     // std::cerr << atom->coordinates << std::endl;
   }
   conf->set3D(false);
-
-  mol.clearConformers();
+  if (!params->minimizeOnly) {
+    mol.clearConformers();
+  }
   auto res = mol.addConformer(conf, true);
   if (params->coordMap.empty() && !params->templateMol) {
     // center the coordinates

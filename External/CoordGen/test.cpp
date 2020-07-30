@@ -487,12 +487,69 @@ void testGithub3131() {
   BOOST_LOG(rdInfoLog) << "done" << std::endl;
 }
 
+void testCoordgenMinimize() {
+  BOOST_LOG(rdInfoLog) << "-------------------------------------" << std::endl;
+  BOOST_LOG(rdInfoLog) << "testing coordgen minimize" << std::endl;
+  {
+    auto m1 =
+        R"CTAB(
+  Mrv2014 07302005442D          
+
+  0  0  0     0  0            999 V3000
+M  V30 BEGIN CTAB
+M  V30 COUNTS 10 11 0 0 0
+M  V30 BEGIN ATOM
+M  V30 1 C 3.3741 -12.4894 0 0
+M  V30 2 C 4.7698 -13.1402 0 0
+M  V30 3 C 6.0313 -12.2569 0 0
+M  V30 4 C 5.8971 -10.7228 0 0
+M  V30 5 C 4.5014 -10.072 0 0
+M  V30 6 C 3.2399 -10.9553 0 0
+M  V30 7 C 4.4148 -11.2907 0 0
+M  V30 8 C 1.8442 -10.3045 0 0
+M  V30 9 C 3.1057 -9.4212 0 0
+M  V30 10 C 1.5715 -9.5554 0 0
+M  V30 END ATOM
+M  V30 BEGIN BOND
+M  V30 1 1 1 2
+M  V30 2 1 2 3
+M  V30 3 1 3 4
+M  V30 4 1 4 5
+M  V30 5 1 5 6
+M  V30 6 1 1 6
+M  V30 7 1 1 7
+M  V30 8 1 7 4
+M  V30 9 1 6 8
+M  V30 10 1 8 9
+M  V30 11 1 9 10
+M  V30 END BOND
+M  V30 END CTAB
+M  END
+)CTAB"_ctab;
+    TEST_ASSERT(m1);
+    TEST_ASSERT(m1->getNumConformers() == 1);
+    ROMol m2(*m1);
+    // std::cerr << " FULL CG" << std::endl;
+    // TEST_ASSERT(CoordGen::addCoords(m2) == 0);
+    // std::cerr << MolToV3KMolBlock(m2) << std::endl;
+    CoordGen::CoordGenParams ps;
+    ps.minimizeOnly = true;
+    std::cerr << " minimize only" << std::endl;
+    TEST_ASSERT(CoordGen::addCoords(*m1, &ps));
+    std::cerr << MolToV3KMolBlock(*m1) << std::endl;
+  }
+  BOOST_LOG(rdInfoLog) << "done" << std::endl;
+}
+
 int main(int argc, char* argv[]) {
   (void)argc;
   (void)argv;
   RDLog::InitLogs();
+#if 0
   test2();
   test1();
   testGithub1929();
   testGithub3131();
+#endif
+  testCoordgenMinimize();
 }
