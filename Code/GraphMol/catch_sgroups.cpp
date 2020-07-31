@@ -338,3 +338,31 @@ M  END
           std::string::npos);
   }
 }
+
+TEST_CASE(
+    "Github #3315: SubstanceGroups should not be written with quotes around "
+    "missing fields",
+    "[Sgroups][bug]") {
+  SECTION("basics") {
+    auto m1 = R"CTAB(
+  Mrv2014 07312012022D          
+
+  2  1  0  0  0  0            999 V2000
+    1.4295    0.1449    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    1.4266   -0.6801    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+  2  1  1  0  0  0  0
+M  STY  1   1 DAT
+M  SAL   1  1   1
+M  SDT   1 test sgroup                                           
+M  SDD   1     0.5348   -0.3403    DRU   ALL  0       0  
+M  SED   1 sgroupval
+M  END
+)CTAB"_ctab;
+    REQUIRE(m1);
+    auto molb = MolToV3KMolBlock(*m1);
+    CHECK(molb.find("FIELDINFO") == std::string::npos);
+    CHECK(molb.find("QUERYTYPE") == std::string::npos);
+    CHECK(molb.find("QUERYOP") == std::string::npos);
+    CHECK(molb.find("FIELDNAME") != std::string::npos);
+  }
+}
