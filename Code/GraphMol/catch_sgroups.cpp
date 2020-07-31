@@ -286,3 +286,55 @@ TEST_CASE("Build and test sample molecule", "[Sgroups]") {
     CHECK(dataFields[2] == "SAMPLE DATA FIELD 3");
   }
 }
+
+TEST_CASE("Removing sgroups", "[Sgroups]") {
+  SECTION("basics") {
+    auto m1 = R"CTAB(
+  Mrv2014 07312005252D          
+ 
+  0  0  0     0  0            999 V3000
+M  V30 BEGIN CTAB
+M  V30 COUNTS 7 6 3 0 0
+M  V30 BEGIN ATOM
+M  V30 1 * -12.75 11.5 0 0
+M  V30 2 O -11.4163 12.27 0 0
+M  V30 3 C -10.0826 11.5 0 0
+M  V30 4 C -8.749 12.27 0 0
+M  V30 5 O -10.0826 9.96 0 0
+M  V30 6 N -7.4153 11.5 0 0
+M  V30 7 C -6.0816 12.27 0 0
+M  V30 END ATOM
+M  V30 BEGIN BOND
+M  V30 1 1 1 2
+M  V30 2 1 2 3
+M  V30 3 1 3 4
+M  V30 4 2 3 5
+M  V30 5 1 4 6
+M  V30 6 1 6 7
+M  V30 END BOND
+M  V30 BEGIN SGROUP
+M  V30 1 SRU 0 ATOMS=(3 2 3 5) XBONDS=(2 1 3) BRKXYZ=(9 -9.9955 12.6173 0 -
+M  V30 -9.0715 11.0169 0 0 0 0) BRKXYZ=(9 -11.5035 11.1527 0 -12.4275 12.7531 -
+M  V30 0 0 0 0) CONNECT=HT LABEL=n
+M  V30 2 DAT 0 ATOMS=(1 6) FIELDNAME=foo_data -
+M  V30 FIELDDISP="   -7.4153   11.5000    DAU   ALL  0       0" -
+M  V30 MRV_FIELDDISP=0 FIELDDATA=bar
+M  V30 3 DAT 0 ATOMS=(1 7) FIELDNAME=bar_data -
+M  V30 FIELDDISP="   -6.0816   12.2700    DAU   ALL  0       0" -
+M  V30 MRV_FIELDDISP=0 FIELDDATA=baz
+M  V30 END SGROUP
+M  V30 END CTAB
+M  END
+)CTAB"_ctab;
+    REQUIRE(m1);
+    auto &sgs = getSubstanceGroups(*m1);
+    CHECK(sgs.size() == 3);
+    sgs.erase(++sgs.begin());
+    CHECK(sgs.size() == 2);
+    CHECK(getSubstanceGroups(*m1).size() == 2);
+    auto molb = MolToV3KMolBlock(*m1);
+    CHECK(molb.find("foo_data") == std::string::npos);
+    CHECK(molb.find("M  V30 2 DAT 0 ATOMS=(1 7) FIELDNAME=bar_data") !=
+          std::string::npos);
+  }
+}
