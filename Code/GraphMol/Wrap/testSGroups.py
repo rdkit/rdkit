@@ -287,7 +287,8 @@ M  END''')
     newsg = Chem.AddMolSubstanceGroup(mol2, sgs[1])
     newsg.SetProp("FIELDNAME", "blah_data")
     molb = Chem.MolToV3KMolBlock(mol2)
-    self.assertGreater(molb.find("M  V30 2 DAT 0 ATOMS=(1 7) FIELDNAME=blah_data"), 0)
+    print(molb)
+    self.assertGreater(molb.find("M  V30 3 DAT 0 ATOMS=(1 6) FIELDNAME=blah_data"), 0)
 
 
 if __name__ == '__main__':
