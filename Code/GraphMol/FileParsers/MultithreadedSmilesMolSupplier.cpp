@@ -16,20 +16,16 @@ namespace RDKit {
 
 MultithreadedSmilesMolSupplier::MultithreadedSmilesMolSupplier(
     const std::string &fileName, const std::string &delimiter, int smilesColumn,
-    int nameColumn, bool titleLine, bool sanitize, int numWriterThreads,
-    size_t sizeInputQueue, size_t sizeOutputQueue) {
+    int nameColumn, bool titleLine, bool sanitize,
+    unsigned int numWriterThreads, size_t sizeInputQueue,
+    size_t sizeOutputQueue) {
   init();
   dp_inStream = openAndCheckStream(fileName);
   CHECK_INVARIANT(dp_inStream, "bad instream");
   CHECK_INVARIANT(!(dp_inStream->eof()), "early EOF");
 
   df_owner = false;
-  if (numWriterThreads == -1) {
-    d_numWriterThreads = (int)getNumThreadsToUse(numWriterThreads);
-  } else {
-    d_numWriterThreads =
-        std::min(numWriterThreads, (int)getNumThreadsToUse(numWriterThreads));
-  }
+  d_numWriterThreads = numWriterThreads;
   d_sizeInputQueue = sizeInputQueue;
   d_sizeOutputQueue = sizeOutputQueue;
   d_inputQueue = new ConcurrentQueue<std::tuple<std::string, unsigned int>>(
@@ -51,18 +47,14 @@ MultithreadedSmilesMolSupplier::MultithreadedSmilesMolSupplier(
 MultithreadedSmilesMolSupplier::MultithreadedSmilesMolSupplier(
     std::istream *inStream, bool takeOwnership, const std::string &delimiter,
     int smilesColumn, int nameColumn, bool titleLine, bool sanitize,
-    int numWriterThreads, size_t sizeInputQueue, size_t sizeOutputQueue) {
+    unsigned int numWriterThreads, size_t sizeInputQueue,
+    size_t sizeOutputQueue) {
   init();
   CHECK_INVARIANT(inStream, "bad instream");
   CHECK_INVARIANT(!(inStream->eof()), "early EOF");
   dp_inStream = inStream;
   df_owner = takeOwnership;
-  if (numWriterThreads == -1) {
-    d_numWriterThreads = (int)getNumThreadsToUse(numWriterThreads);
-  } else {
-    d_numWriterThreads =
-        std::min(numWriterThreads, (int)getNumThreadsToUse(numWriterThreads));
-  }
+  d_numWriterThreads = numWriterThreads;
   d_sizeInputQueue = sizeInputQueue;
   d_sizeOutputQueue = sizeOutputQueue;
   d_inputQueue = new ConcurrentQueue<std::tuple<std::string, unsigned int>>(

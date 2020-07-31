@@ -11,27 +11,31 @@
 #ifndef CONCURRENT_QUEUE
 #define CONCURRENT_QUEUE
 #include <condition_variable>
-#include <queue>
 #include <thread>
+#include <vector>
 
 namespace RDKit {
 template <typename E>
 class ConcurrentQueue {
  private:
-  size_t d_capacity;
+  unsigned int d_capacity;
   bool d_done;
+  std::vector<E> d_elements;
+  unsigned int d_head, d_tail;
   mutable std::mutex d_lock;
-  //! we need two condition variables to establish communication
-  //! between popping (consumer threads) and pushing (producer threads)
-  std::condition_variable d_goPush, d_goPop;
-  std::queue<E> d_q;
+  std::condition_variable d_notEmpty, d_notFull;
 
  private:
   ConcurrentQueue<E>(const ConcurrentQueue<E>&);
   ConcurrentQueue<E>& operator=(const ConcurrentQueue<E>&);
 
  public:
-  ConcurrentQueue<E>(size_t capacity) : d_capacity(capacity), d_done(false) {}
+  ConcurrentQueue<E>(unsigned int capacity)
+      : d_capacity(capacity), d_done(false), d_head(0), d_tail(0) {
+    std::vector<E> elements(capacity);
+    d_elements = elements;
+  }
+
   //! tries to push an element into the queue if it is not full without
   //! modifying the variable element, if the queue is full then pushing an
   //! element will result in blocking
@@ -51,40 +55,54 @@ class ConcurrentQueue {
 
   //! sets the variable d_done = true
   void setDone();
-
-  //! returns the current size of the queue
-  size_t size() const;
 };
 
 template <typename E>
 void ConcurrentQueue<E>::push(const E& element) {
   std::unique_lock<std::mutex> lk(d_lock);
-  while (d_q.size() == d_capacity) {
-    d_goPush.wait(lk);
+  //! concurrent queue is full so we wait until
+  //! it is not full
+  while (d_head + d_capacity == d_tail) {
+    d_notFull.wait(lk);
   }
-  d_q.push(element);
-  d_goPop.notify_one();
+  bool wasEmpty = (d_head == d_tail);
+  d_elements.at(d_tail % d_capacity) = element;
+  d_tail++;
+  //! if the concurrent queue was empty before
+  //! then it is not any more since we have "pushed" an element
+  //! thus we notify all the consumer threads
+  if (wasEmpty) {
+    d_notEmpty.notify_all();
+  }
 }
 
 template <typename E>
 bool ConcurrentQueue<E>::pop(E& element) {
   std::unique_lock<std::mutex> lk(d_lock);
-  while (d_q.empty()) {
+  //! concurrent queue is empty so we wait until
+  //! it is not empty
+  while (d_head == d_tail) {
     if (d_done) {
       return false;
     }
-    d_goPop.wait(lk);
+    d_notEmpty.wait(lk);
   }
-  element = d_q.front();
-  d_q.pop();
-  d_goPush.notify_one();
+  bool wasFull = (d_head + d_capacity == d_tail);
+  element = d_elements.at(d_head % d_capacity);
+  d_head++;
+  //! if the concurrent queue was full before
+  //! then it is not any more since we have "popped" an element
+  //! thus we notify all producer threads
+  if (wasFull) {
+    d_notFull.notify_all();
+  }
   return true;
 }
 
 template <typename E>
 bool ConcurrentQueue<E>::isEmpty() const {
   std::unique_lock<std::mutex> lk(d_lock);
-  return d_q.empty();
+  return (d_head == d_tail);
 }
 
 template <typename E>
@@ -97,14 +115,9 @@ template <typename E>
 void ConcurrentQueue<E>::setDone() {
   std::unique_lock<std::mutex> lk(d_lock);
   d_done = true;
-  d_goPop.notify_all();
+  d_notEmpty.notify_all();
 }
 
-template <typename E>
-size_t ConcurrentQueue<E>::size() const {
-  std::unique_lock<std::mutex> lk(d_lock);
-  return d_q.size();
-}
 }  // namespace RDKit
 #endif
 #endif

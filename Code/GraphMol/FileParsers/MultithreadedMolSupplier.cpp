@@ -9,12 +9,11 @@
 //
 #include "MultithreadedMolSupplier.h"
 namespace RDKit {
-
 void MultithreadedMolSupplier::reader() {
   std::string record;
   unsigned int lineNum;
   while (extractNextRecord(record, lineNum)) {
-    auto r = std::tuple<std::string, int>{record, lineNum};
+    auto r = std::tuple<std::string, unsigned int>{record, lineNum};
     d_inputQueue->push(r);
   }
   d_inputQueue->setDone();
@@ -26,6 +25,7 @@ void MultithreadedMolSupplier::writer() {
     ROMol* mol = processMoleculeRecord(std::get<0>(r), std::get<1>(r));
     d_outputQueue->push(mol);
   }
+
   if (threadCounter != d_numWriterThreads) {
     ++threadCounter;
   } else {
@@ -52,8 +52,8 @@ void MultithreadedMolSupplier::startThreads() {
   //! run the reader function in a seperate thread
   readerThread = std::thread(&MultithreadedMolSupplier::reader, this);
   //! run the writer function in seperate threads
-  for (int i = 0; i < d_numWriterThreads; i++) {
-    writerThreads.push_back(
+  for (unsigned int i = 0; i < d_numWriterThreads; i++) {
+    writerThreads.emplace_back(
         std::thread(&MultithreadedMolSupplier::writer, this));
   }
 }

@@ -32,7 +32,7 @@ class RDKIT_FILEPARSERS_EXPORT MultithreadedMolSupplier : public MolSupplier {
   // this is an abstract base class to concurrently supply molecules one at a
   // time
  public:
-  MultithreadedMolSupplier() { std::atomic_init(&threadCounter, 1); };
+  MultithreadedMolSupplier(){};
   virtual ~MultithreadedMolSupplier() { endThreads(); };
   //! reads lines from input stream to populate the input queue
   void reader();
@@ -41,7 +41,7 @@ class RDKIT_FILEPARSERS_EXPORT MultithreadedMolSupplier : public MolSupplier {
   void writer();
   //! pop elements from the output queue
   ROMol *next();
-  //! use atEnd method of the
+  //! returns true when all records have been read from the supplier
   bool atEnd();
 
  protected:
@@ -68,13 +68,14 @@ class RDKIT_FILEPARSERS_EXPORT MultithreadedMolSupplier : public MolSupplier {
                                        unsigned int lineNum) = 0;
 
  private:
-  std::atomic<int> threadCounter;          // thread counter
-  std::vector<std::thread> writerThreads;  // vector writer threads
-  std::thread readerThread;                // single reader thread
+  std::atomic<unsigned int> threadCounter{1};  // thread counter
+  std::vector<std::thread> writerThreads;      // vector writer threads
+  std::thread readerThread;                    // single reader thread
 
  protected:
-  const int d_numReaderThread = 1;  // fix number of reader threads to 1
-  int d_numWriterThreads;           // number of writer threads
+  const unsigned int d_numReaderThread =
+      1;                            // fix number of reader threads to 1
+  unsigned int d_numWriterThreads;  // number of writer threads
   size_t d_sizeInputQueue;          // size of input queue
   size_t d_sizeOutputQueue;         // size of output queue
   ConcurrentQueue<std::tuple<std::string, unsigned int>>

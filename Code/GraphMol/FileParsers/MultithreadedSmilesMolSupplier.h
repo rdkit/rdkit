@@ -19,14 +19,14 @@ class RDKIT_FILEPARSERS_EXPORT MultithreadedSmilesMolSupplier
   explicit MultithreadedSmilesMolSupplier(
       const std::string &fileName, const std::string &delimiter = " \t",
       int smilesColumn = 0, int nameColumn = 1, bool titleLine = true,
-      bool sanitize = true, int numWriterThreads = 2, size_t sizeInputQueue = 5,
-      size_t sizeOutputQueue = 5);
+      bool sanitize = true, unsigned int numWriterThreads = 2,
+      size_t sizeInputQueue = 5, size_t sizeOutputQueue = 5);
 
   explicit MultithreadedSmilesMolSupplier(
       std::istream *inStream, bool takeOwnership = true,
       const std::string &delimiter = " \t", int smilesColumn = 0,
       int nameColumn = 1, bool titleLine = true, bool sanitize = true,
-      int numWriterThreads = 2, size_t sizeInputQueue = 5,
+      unsigned int numWriterThreads = 2, size_t sizeInputQueue = 5,
       size_t sizeOutputQueue = 5);
   MultithreadedSmilesMolSupplier();
   ~MultithreadedSmilesMolSupplier();
