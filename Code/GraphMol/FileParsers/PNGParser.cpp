@@ -52,11 +52,11 @@ std::map<std::string, std::string> PNGStreamToMetadata(std::istream &inStream) {
   while (inStream) {
     std::uint32_t blockLen;
     inStream.read((char *)&blockLen, sizeof(blockLen));
+    // PNG is big endian, make sure we handle the order correctly
     blockLen = EndianSwapBytes<BIG_ENDIAN_ORDER, HOST_ENDIAN_ORDER>(blockLen);
     char bytes[5];
     bytes[4] = 0;
     inStream.read(bytes, 4);
-    std::cerr << " bytes: " << bytes << " " << blockLen << std::endl;
     auto beginBlock = inStream.tellg();
     if (bytes[0] == 'I' && bytes[1] == 'E' && bytes[2] == 'N' &&
         bytes[3] == 'D') {
@@ -67,13 +67,10 @@ std::map<std::string, std::string> PNGStreamToMetadata(std::istream &inStream) {
       // in a tEXt block, read the key:
       std::string key;
       std::getline(inStream, key, '\0');
-      std::cerr << "KEY: " << key << std::endl;
       auto dataLen = blockLen - key.size() - 1;
       std::string value(dataLen, (char)0);
-      if (key == PNGData::smilesTag) {
-        inStream.read(&value.front(), dataLen);
-        res[key] = value;
-      }
+      inStream.read(&value.front(), dataLen);
+      res[key] = value;
     }
     inStream.seekg(beginBlock);
     inStream.ignore(blockLen + 4);  // the extra 4 bytes are the CRC
@@ -94,6 +91,7 @@ std::string addMetadataToPNGStream(
   for (auto byte : pngHeader) {
     res << byte;
   }
+
   // copy over everything up to IEND
   bool foundEnd = false;
   std::uint32_t finalCRC;
@@ -102,7 +100,6 @@ std::string addMetadataToPNGStream(
     inStream.read((char *)&blockLen, sizeof(blockLen));
     char bytes[4];
     inStream.read(bytes, 4);
-    std::cerr << " fresh: " << bytes << std::endl;
     if (bytes[0] == 'I' && bytes[1] == 'E' && bytes[2] == 'N' &&
         bytes[3] == 'D') {
       foundEnd = true;
@@ -111,6 +108,7 @@ std::string addMetadataToPNGStream(
     }
     res.write((char *)&blockLen, sizeof(blockLen));
     res.write(bytes, 4);
+    // PNG is big endian, make sure we handle the order correctly
     blockLen = EndianSwapBytes<BIG_ENDIAN_ORDER, HOST_ENDIAN_ORDER>(blockLen);
     std::string block(blockLen + 4, 0);
     inStream.read((char *)&block.front(),
@@ -120,7 +118,8 @@ std::string addMetadataToPNGStream(
   if (!foundEnd) {
     throw FileParseException("did not find IEND block in PNG");
   }
-#if 1
+
+  // write out the metadata:
   for (const auto pr : metadata) {
     std::stringstream blk;
     blk.write("tEXt", 4);
@@ -133,14 +132,17 @@ std::string addMetadataToPNGStream(
     boost::crc_32_type crc;
     crc.process_bytes((void const *)blob.c_str(), blob.size());
     std::uint32_t crcVal = crc.checksum();
+    // PNG is big endian, make sure we handle the order correctly
     blksize = EndianSwapBytes<HOST_ENDIAN_ORDER, BIG_ENDIAN_ORDER>(blksize);
 
     res.write((char *)&blksize, sizeof(blksize));
     res.write(blob.c_str(), blob.size());
+    // PNG is big endian, make sure we handle the order correctly
     crcVal = EndianSwapBytes<HOST_ENDIAN_ORDER, BIG_ENDIAN_ORDER>(crcVal);
     res.write((char *)&crcVal, sizeof(crcVal));
   }
-#endif
+
+  // write out the IEND block
   std::uint32_t blksize = 0;
   res.write((char *)&blksize, sizeof(blksize));
 
