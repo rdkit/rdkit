@@ -19,6 +19,7 @@
 
 #include <string>
 #include <fstream>
+#include <sstream>
 #include <map>
 
 namespace RDKit {
@@ -32,12 +33,31 @@ RDKIT_FILEPARSERS_EXPORT std::map<std::string, std::string> PNGStreamToMetadata(
     std::istream &inStream);
 RDKIT_FILEPARSERS_EXPORT std::map<std::string, std::string> PNGFileToMetadata(
     const std::string fname) {
-  std::ifstream inStream(fname.c_str(), std::ios_base::binary);
+  std::ifstream inStream(fname.c_str(), std::ios::binary);
   if (!inStream || (inStream.bad())) {
     throw BadFileException((boost::format("Bad input file %s") % fname).str());
   }
   return PNGStreamToMetadata(inStream);
-};
+}
+RDKIT_FILEPARSERS_EXPORT std::map<std::string, std::string> PNGStringToMetadata(
+    const std::string data) {
+  std::stringstream inStream(data);
+  return PNGStreamToMetadata(inStream);
+}
+RDKIT_FILEPARSERS_EXPORT std::string addMetadataToPNGStream(
+    std::istream &iStream, const std::map<std::string, std::string> &metadata);
+RDKIT_FILEPARSERS_EXPORT std::string addMetadataToPNGString(
+    const std::string &pngString,
+    const std::map<std::string, std::string> &metadata) {
+  std::stringstream inStream(pngString);
+  return addMetadataToPNGStream(inStream, metadata);
+}
+RDKIT_FILEPARSERS_EXPORT std::string addMetadataToPNGFile(
+    const std::string &fname,
+    const std::map<std::string, std::string> &metadata) {
+  std::ifstream inStream(fname.c_str(), std::ios::binary);
+  return addMetadataToPNGStream(inStream, metadata);
+}
 
 }  // namespace RDKit
 
