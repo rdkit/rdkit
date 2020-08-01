@@ -1684,7 +1684,6 @@ TEST_CASE("read metadata from PNG", "[reader][PNG]") {
   SECTION("basics") {
     std::string fname =
         rdbase + "/Code/GraphMol/FileParsers/test_data/colchicine.png";
-    std::cerr << "----- metadata " << std::endl;
     auto metadata = PNGFileToMetadata(fname);
     REQUIRE(metadata.find(PNGData::smilesTag) != metadata.end());
     CHECK(
@@ -1703,7 +1702,6 @@ TEST_CASE("read metadata from PNG", "[reader][PNG]") {
     std::string fname =
         rdbase +
         "/Code/GraphMol/FileParsers/test_data/colchicine.no_metadata.png";
-    std::cerr << "----- no metadata " << std::endl;
     auto metadata = PNGFileToMetadata(fname);
     REQUIRE(metadata.empty());
   }
@@ -1726,15 +1724,32 @@ TEST_CASE("write metadata to PNG", "[writer][PNG]") {
         "02577,3.3802,;-5.50431,3.63304,;-3.06754,4.53423,;-1.15762,2.9429,;0."
         "340111,3.02541,;2.23963,-0.530891,;1.98679,-2.00943,;3.14082,-2.96766,"
         ";3.6465,-0.0105878,;4.80053,-0.968822,;4.54769,-2.44736,)|";
-    std::cerr << "----- ADD metadata " << std::endl;
     auto pngData = addMetadataToPNGFile(fname, metadata);
     std::ofstream ofs("write_metadata.png");
     ofs.write(pngData.c_str(), pngData.size());
     ofs.flush();
 
-    std::cerr << "----- READ metadata " << std::endl;
     auto ometadata = PNGStringToMetadata(pngData);
     REQUIRE(ometadata.find(PNGData::smilesTag) != ometadata.end());
     CHECK(ometadata[PNGData::smilesTag] == metadata[PNGData::smilesTag]);
   }
+}
+
+TEST_CASE("read molecule from PNG", "[reader][PNG]") {
+  std::string rdbase = getenv("RDBASE");
+  SECTION("basics") {
+    std::string fname =
+        rdbase + "/Code/GraphMol/FileParsers/test_data/colchicine.png";
+    std::unique_ptr<ROMol> mol(PNGFileToMol(fname));
+    REQUIRE(mol);
+    CHECK(mol->getNumAtoms() == 29);
+    CHECK(mol->getNumConformers() == 1);
+  }
+  // SECTION("no metadata") {
+  //   std::string fname =
+  //       rdbase +
+  //       "/Code/GraphMol/FileParsers/test_data/colchicine.no_metadata.png";
+  //   auto metadata = PNGFileToMetadata(fname);
+  //   REQUIRE(metadata.empty());
+  // }
 }

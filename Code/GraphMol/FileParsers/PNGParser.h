@@ -14,6 +14,7 @@
 #include <RDGeneral/types.h>
 #include <RDGeneral/BadFileException.h>
 #include <GraphMol/RDKitBase.h>
+#include <GraphMol/SmilesParse/SmilesParse.h>
 
 #include <boost/format.hpp>
 
@@ -29,10 +30,11 @@ RDKIT_FILEPARSERS_EXPORT extern const std::string smilesTag;
 RDKIT_FILEPARSERS_EXPORT extern const std::string molTag;
 RDKIT_FILEPARSERS_EXPORT extern const std::string jsonTag;
 }  // namespace PNGData
+
 RDKIT_FILEPARSERS_EXPORT std::map<std::string, std::string> PNGStreamToMetadata(
     std::istream &inStream);
 RDKIT_FILEPARSERS_EXPORT std::map<std::string, std::string> PNGFileToMetadata(
-    const std::string fname) {
+    const std::string &fname) {
   std::ifstream inStream(fname.c_str(), std::ios::binary);
   if (!inStream || (inStream.bad())) {
     throw BadFileException((boost::format("Bad input file %s") % fname).str());
@@ -40,10 +42,30 @@ RDKIT_FILEPARSERS_EXPORT std::map<std::string, std::string> PNGFileToMetadata(
   return PNGStreamToMetadata(inStream);
 }
 RDKIT_FILEPARSERS_EXPORT std::map<std::string, std::string> PNGStringToMetadata(
-    const std::string data) {
+    const std::string &data) {
   std::stringstream inStream(data);
   return PNGStreamToMetadata(inStream);
 }
+
+RDKIT_FILEPARSERS_EXPORT ROMol *PNGStreamToMol(
+    std::istream &inStream,
+    const SmilesParserParams &params = SmilesParserParams());
+RDKIT_FILEPARSERS_EXPORT ROMol *PNGFileToMol(
+    const std::string &fname,
+    const SmilesParserParams &params = SmilesParserParams()) {
+  std::ifstream inStream(fname.c_str(), std::ios::binary);
+  if (!inStream || (inStream.bad())) {
+    throw BadFileException((boost::format("Bad input file %s") % fname).str());
+  }
+  return PNGStreamToMol(inStream, params);
+}
+RDKIT_FILEPARSERS_EXPORT ROMol *PNGStringToMol(
+    const std::string &data,
+    const SmilesParserParams &params = SmilesParserParams()) {
+  std::stringstream inStream(data);
+  return PNGStreamToMol(inStream, params);
+}
+
 RDKIT_FILEPARSERS_EXPORT std::string addMetadataToPNGStream(
     std::istream &iStream, const std::map<std::string, std::string> &metadata);
 RDKIT_FILEPARSERS_EXPORT std::string addMetadataToPNGString(

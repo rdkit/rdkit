@@ -152,4 +152,21 @@ std::string addMetadataToPNGStream(
   return res.str();
 }
 
+ROMol *PNGStreamToMol(std::istream &inStream,
+                      const SmilesParserParams &params) {
+  ROMol *res = nullptr;
+  auto metadata = PNGStreamToMetadata(inStream);
+  bool formatFound = false;
+  for (const auto pr : metadata) {
+    if (pr.first == PNGData::smilesTag) {
+      res = SmilesToMol(pr.second, params);
+      formatFound = true;
+    }
+  }
+  if (!formatFound) {
+    throw FileParseException("No suitable metadata found.");
+  }
+  return res;
+}
+
 }  // namespace RDKit
