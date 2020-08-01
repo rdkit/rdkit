@@ -1698,4 +1698,11 @@ TEST_CASE("read metadata from PNG", "[reader][PNG]") {
         "340111,3.02541,;2.23963,-0.530891,;1.98679,-2.00943,;3.14082,-2.96766,"
         ";3.6465,-0.0105878,;4.80053,-0.968822,;4.54769,-2.44736,)|");
   }
+  SECTION("no metadata") {
+    std::string fname =
+        rdbase +
+        "/Code/GraphMol/FileParsers/test_data/colchicine.no_metadata.png";
+    auto metadata = PNGFileToMetadata(fname);
+    REQUIRE(metadata.empty());
+  }
 }

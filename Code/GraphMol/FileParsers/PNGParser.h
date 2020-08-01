@@ -23,6 +23,11 @@
 
 namespace RDKit {
 
+namespace PNGData {
+RDKIT_FILEPARSERS_EXPORT extern const std::string smilesTag;
+RDKIT_FILEPARSERS_EXPORT extern const std::string molTag;
+RDKIT_FILEPARSERS_EXPORT extern const std::string jsonTag;
+}  // namespace PNGData
 RDKIT_FILEPARSERS_EXPORT std::map<std::string, std::string> PNGStreamToMetadata(
     std::istream &inStream);
 RDKIT_FILEPARSERS_EXPORT std::map<std::string, std::string> PNGFileToMetadata(

@@ -19,8 +19,13 @@
 
 namespace RDKit {
 
-RDKIT_FILEPARSERS_EXPORT std::map<std::string, std::string> PNGStreamToMetadata(
-    std::istream &inStream) {
+namespace PNGData {
+const std::string smilesTag = "rdkitSMILES";
+const std::string molTag = "rdkitMOL";
+const std::string jsonTag = "rdkitJSON";
+}  // namespace PNGData
+
+std::map<std::string, std::string> PNGStreamToMetadata(std::istream &inStream) {
   // confirm that it's a PNG file:
   std::vector<unsigned char> header = {137, 80, 78, 71, 13, 10, 26, 10};
   for (auto byte : header) {
@@ -31,6 +36,7 @@ RDKIT_FILEPARSERS_EXPORT std::map<std::string, std::string> PNGStreamToMetadata(
     }
   }
 
+  std::map<std::string, std::string> res;
   // the file is organized in chunks. Read through them until we find the tEXt
   // block FIX: at some point we'll want to also include zEXt here, but that
   // requires zlib
@@ -38,25 +44,29 @@ RDKIT_FILEPARSERS_EXPORT std::map<std::string, std::string> PNGStreamToMetadata(
     std::uint32_t blockLen;
     inStream.read((char *)&blockLen, sizeof(blockLen));
     blockLen = EndianSwapBytes<BIG_ENDIAN_ORDER, HOST_ENDIAN_ORDER>(blockLen);
-    std::cerr << "  block len: " << blockLen << std::endl;
     char bytes[4];
     inStream.read(bytes, 4);
     auto beginBlock = inStream.tellg();
-    std::cerr << "bytes: " << bytes << std::endl;
     if (bytes[0] == 'I' && bytes[1] == 'E' && bytes[2] == 'N' &&
         bytes[3] == 'D') {
-      std::cerr << " done! " << std::endl;
       break;
     }
     if (bytes[0] == 't' && bytes[1] == 'E' && bytes[2] == 'X' &&
         bytes[3] == 't') {
-      std::cerr << "tEXt!" << std::endl;
+      // in a tEXt block, read the key:
+      std::string key;
+      std::getline(inStream, key, '\0');
+      auto dataLen = blockLen - key.size() - 1;
+      std::string value(dataLen, (char)0);
+      if (key == PNGData::smilesTag) {
+        inStream.read(&value.front(), dataLen);
+        res[key] = value;
+      }
     }
     inStream.seekg(beginBlock);
     inStream.ignore(blockLen + 4);  // the extra 4 bytes are the CRC
   }
 
-  std::map<std::string, std::string> res;
   return res;
 };
 
