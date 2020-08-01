@@ -509,18 +509,19 @@ std::string FormatV3000StringPropertyBlock(const std::string &prop,
 
   std::string propValue;
   if (sgroup.getPropIfPresent(prop, propValue)) {
-    ret << ' ' << prop << '=';
-    bool hasSpaces =
-        (propValue.end() != find(propValue.begin(), propValue.end(), ' '));
+    if (!propValue.empty()) {
+      ret << ' ' << prop << '=';
+      bool hasSpaces = propValue.find(' ') != std::string::npos;
 
-    if (hasSpaces || propValue.empty()) {
-      ret << "\"";
-    }
+      if (hasSpaces) {
+        ret << "\"";
+      }
 
-    ret << propValue;
+      ret << propValue;
 
-    if (hasSpaces || propValue.empty()) {
-      ret << "\"";
+      if (hasSpaces) {
+        ret << "\"";
+      }
     }
   }
 

@@ -45,6 +45,11 @@ SubstanceGroup *createMolSubstanceGroup(ROMol &mol, std::string type) {
   return &(getSubstanceGroups(mol).back());
 }
 
+SubstanceGroup *addMolSubstanceGroup(ROMol &mol, const SubstanceGroup &sgroup) {
+  addSubstanceGroup(mol, sgroup);
+  return &(getSubstanceGroups(mol).back());
+}
+
 void addBracketHelper(SubstanceGroup &self, python::object pts) {
   unsigned int sz = python::extract<unsigned int>(pts.attr("__len__")());
   if (sz != 2 && sz != 3) {
@@ -197,7 +202,15 @@ struct sgroup_wrap {
                 "removes all SubstanceGroups from a molecule (if any)");
     python::def("CreateMolSubstanceGroup", &createMolSubstanceGroup,
                 (python::arg("mol"), python::arg("type")),
-                "creates a new SubstanceGroup associated with a molecule",
+                "creates a new SubstanceGroup associated with a molecule, "
+                "returns the new SubstanceGroup",
+                python::return_value_policy<
+                    python::reference_existing_object,
+                    python::with_custodian_and_ward_postcall<0, 1>>());
+    python::def("AddMolSubstanceGroup", &addMolSubstanceGroup,
+                (python::arg("mol"), python::arg("sgroup")),
+                "adds a copy of a SubstanceGroup to a molecule, returns the "
+                "new SubstanceGroup",
                 python::return_value_policy<
                     python::reference_existing_object,
                     python::with_custodian_and_ward_postcall<0, 1>>());
