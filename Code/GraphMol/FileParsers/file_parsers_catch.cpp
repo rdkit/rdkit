@@ -17,6 +17,7 @@
 #include <GraphMol/SmilesParse/SmilesWrite.h>
 #include <GraphMol/SmilesParse/SmilesParse.h>
 #include <GraphMol/SmilesParse/SmartsWrite.h>
+#include <GraphMol/FileParsers/PNGParser.h>
 
 using namespace RDKit;
 
@@ -1675,5 +1676,26 @@ M  END
     CHECK(molb.find(" XH ") != std::string::npos);
     /// SMARTS-based queries are not written for these:
     CHECK(molb.find("V    ") == std::string::npos);
+  }
+}
+
+TEST_CASE("read metadata from PNG", "[reader][PNG]") {
+  std::string rdbase = getenv("RDBASE");
+  SECTION("basics") {
+    std::string fname =
+        rdbase + "/Code/GraphMol/FileParsers/test_data/colchicine.png";
+    auto metadata = PNGFileToMetadata(fname);
+    REQUIRE(metadata.find("rdkitSMILES") != metadata.end());
+    CHECK(
+        metadata["rdkitSMILES"] ==
+        "COc1cc2c(-c3ccc(OC)c(=O)cc3[C@@H](NC(C)=O)CC2)c(OC)c1OC "
+        "|(6.46024,1.03002,;5.30621,1.98825,;3.89934,1.46795,;2.74531,2.42618,;"
+        "1.33844,1.90588,;1.0856,0.427343,;-0.228013,-0.296833,;0.1857,-1."
+        "73865,;-0.683614,-2.96106,;-2.18134,-3.04357,;-2.75685,-4.42878,;-4."
+        "24422,-4.62298,;-3.17967,-1.92404,;-4.62149,-2.33775,;-2.92683,-0."
+        "445502,;-1.61322,0.278673,;-2.02693,1.72049,;-3.50547,1.97333,;-4."
+        "02577,3.3802,;-5.50431,3.63304,;-3.06754,4.53423,;-1.15762,2.9429,;0."
+        "340111,3.02541,;2.23963,-0.530891,;1.98679,-2.00943,;3.14082,-2.96766,"
+        ";3.6465,-0.0105878,;4.80053,-0.968822,;4.54769,-2.44736,)|");
   }
 }
