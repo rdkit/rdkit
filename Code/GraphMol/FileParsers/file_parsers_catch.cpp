@@ -18,6 +18,7 @@
 #include <GraphMol/SmilesParse/SmilesParse.h>
 #include <GraphMol/SmilesParse/SmartsWrite.h>
 #include <GraphMol/FileParsers/PNGParser.h>
+#include <RDGeneral/FileParseException.h>
 
 using namespace RDKit;
 
@@ -1737,7 +1738,7 @@ TEST_CASE("write metadata to PNG", "[writer][PNG]") {
 
 TEST_CASE("read molecule from PNG", "[reader][PNG]") {
   std::string rdbase = getenv("RDBASE");
-  SECTION("basics") {
+  SECTION("smiles") {
     std::string fname =
         rdbase + "/Code/GraphMol/FileParsers/test_data/colchicine.png";
     std::unique_ptr<ROMol> mol(PNGFileToMol(fname));
@@ -1745,11 +1746,18 @@ TEST_CASE("read molecule from PNG", "[reader][PNG]") {
     CHECK(mol->getNumAtoms() == 29);
     CHECK(mol->getNumConformers() == 1);
   }
-  // SECTION("no metadata") {
-  //   std::string fname =
-  //       rdbase +
-  //       "/Code/GraphMol/FileParsers/test_data/colchicine.no_metadata.png";
-  //   auto metadata = PNGFileToMetadata(fname);
-  //   REQUIRE(metadata.empty());
-  // }
+  SECTION("mol") {
+    std::string fname =
+        rdbase + "/Code/GraphMol/FileParsers/test_data/colchicine.mol.png";
+    std::unique_ptr<ROMol> mol(PNGFileToMol(fname));
+    REQUIRE(mol);
+    CHECK(mol->getNumAtoms() == 29);
+    CHECK(mol->getNumConformers() == 1);
+  }
+  SECTION("no metadata") {
+    std::string fname =
+        rdbase +
+        "/Code/GraphMol/FileParsers/test_data/colchicine.no_metadata.png";
+    REQUIRE_THROWS_AS(PNGFileToMol(fname), FileParseException);
+  }
 }

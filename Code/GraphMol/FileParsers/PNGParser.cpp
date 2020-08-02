@@ -17,6 +17,7 @@
 #include <RDGeneral/StreamOps.h>
 #include <vector>
 #include <boost/crc.hpp>
+#include "FileParsers.h"
 
 namespace RDKit {
 
@@ -62,6 +63,7 @@ std::map<std::string, std::string> PNGStreamToMetadata(std::istream &inStream) {
         bytes[3] == 'D') {
       break;
     }
+    // FIX: we should also eventually deal with zTXt
     if (blockLen > 0 && bytes[0] == 't' && bytes[1] == 'E' && bytes[2] == 'X' &&
         bytes[3] == 't') {
       // in a tEXt block, read the key:
@@ -160,6 +162,9 @@ ROMol *PNGStreamToMol(std::istream &inStream,
   for (const auto pr : metadata) {
     if (pr.first == PNGData::smilesTag) {
       res = SmilesToMol(pr.second, params);
+      formatFound = true;
+    } else if (pr.first == PNGData::molTag) {
+      res = MolBlockToMol(pr.second, params.sanitize, params.removeHs);
       formatFound = true;
     }
   }
