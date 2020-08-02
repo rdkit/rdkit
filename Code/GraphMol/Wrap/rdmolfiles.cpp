@@ -25,6 +25,7 @@
 #include <GraphMol/FileParsers/FileParserUtils.h>
 #include <GraphMol/FileParsers/SequenceParsers.h>
 #include <GraphMol/FileParsers/SequenceWriters.h>
+#include <GraphMol/FileParsers/PNGParser.h>
 #include <RDGeneral/BadFileException.h>
 #include <RDGeneral/FileParseException.h>
 
@@ -390,6 +391,39 @@ python::list MolToRandomSmilesHelper(const ROMol &mol, unsigned int numSmiles,
     pyres.append(smi);
   }
   return pyres;
+}
+
+ROMol *MolFromPNGFile(const char *filename, python::object pyParams) {
+  SmilesParserParams params;
+  if (pyParams) {
+    params = python::extract<SmilesParserParams>(pyParams);
+  }
+  ROMol *newM = nullptr;
+  try {
+    newM = PNGFileToMol(filename, params);
+  } catch (RDKit::BadFileException &e) {
+    PyErr_SetString(PyExc_IOError, e.what());
+    throw python::error_already_set();
+  } catch (RDKit::FileParseException &e) {
+    BOOST_LOG(rdWarningLog) << e.what() << std::endl;
+  } catch (...) {
+  }
+  return newM;
+}
+
+ROMol *MolFromPNGString(python::object png, python::object pyParams) {
+  SmilesParserParams params;
+  if (pyParams) {
+    params = python::extract<SmilesParserParams>(pyParams);
+  }
+  ROMol *newM = nullptr;
+  try {
+    newM = PNGStringToMol(pyObjectToString(png), params);
+  } catch (RDKit::FileParseException &e) {
+    BOOST_LOG(rdWarningLog) << e.what() << std::endl;
+  } catch (...) {
+  }
+  return newM;
 }
 
 }  // namespace RDKit
@@ -1445,6 +1479,41 @@ BOOST_PYTHON_MODULE(rdmolfiles) {
        python::arg("allBondsExplicit") = false,
        python::arg("allHsExplicit") = false),
       "returns a list of SMILES generated using the randomSmiles algorithm");
+
+  docString =
+      "Construct a molecule from metadata in a PNG string.\n\n\
+     ARGUMENTS:\n\
+   \n\
+       - PNG: the PNG string\n\
+   \n\
+       - params: used to provide optional parameters for the SMILES parsing\n\
+   \n\
+     RETURNS:\n\
+   \n\
+       a Mol object, None on failure.\n\
+   \n";
+  python::def("MolFromPNGString", MolFromPNGString,
+              (python::arg("png"), python::arg("params") = python::object()),
+              docString.c_str(),
+              python::return_value_policy<python::manage_new_object>());
+
+  docString =
+      "Construct a molecule from metadata in a PNG file.\n\n\
+     ARGUMENTS:\n\
+   \n\
+       - PNG: the PNG filename\n\
+   \n\
+       - params: used to provide optional parameters for the SMILES parsing\n\
+   \n\
+     RETURNS:\n\
+   \n\
+       a Mol object, None on failure.\n\
+   \n";
+  python::def(
+      "MolFromPNGFile", MolFromPNGFile,
+      (python::arg("filename"), python::arg("params") = python::object()),
+      docString.c_str(),
+      python::return_value_policy<python::manage_new_object>());
 
 /********************************************************
  * MolSupplier stuff
