@@ -72,6 +72,12 @@ std::map<std::string, std::string> PNGStreamToMetadata(std::istream &inStream) {
       auto dataLen = blockLen - key.size() - 1;
       std::string value(dataLen, (char)0);
       inStream.read(&value.front(), dataLen);
+      if (res.find(key) != res.end()) {
+        BOOST_LOG(rdWarningLog) << "The key '" << key
+                                << "' was found more than once in the data. "
+                                   "The last version is being kept."
+                                << std::endl;
+      }
       res[key] = value;
     }
     inStream.seekg(beginBlock);
@@ -153,6 +159,13 @@ std::string addMetadataToPNGStream(
   res.write((char *)&finalCRC, sizeof(finalCRC));
   return res.str();
 }
+
+std::string addMolToPNGStream(std::istream &iStream, const ROMol &mol) {
+  std::string smi = MolToCXSmiles(mol);
+  std::map<std::string, std::string> metadata;
+  metadata[PNGData::smilesTag] = smi;
+  return addMetadataToPNGStream(iStream, metadata);
+};
 
 ROMol *PNGStreamToMol(std::istream &inStream,
                       const SmilesParserParams &params) {

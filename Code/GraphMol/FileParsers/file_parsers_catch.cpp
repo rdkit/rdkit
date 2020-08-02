@@ -1761,3 +1761,22 @@ TEST_CASE("read molecule from PNG", "[reader][PNG]") {
     REQUIRE_THROWS_AS(PNGFileToMol(fname), FileParseException);
   }
 }
+
+TEST_CASE("write molecule to PNG", "[writer][PNG]") {
+  std::string rdbase = getenv("RDBASE");
+  SECTION("basics") {
+    std::string fname =
+        rdbase +
+        "/Code/GraphMol/FileParsers/test_data/colchicine.no_metadata.png";
+    std::ifstream strm(fname, std::ios::in | std::ios::binary);
+    auto colchicine =
+        "COc1cc2c(c(OC)c1OC)-c1ccc(OC)c(=O)cc1[C@@H](NC(C)=O)CC2"_smiles;
+    REQUIRE(colchicine);
+    auto pngString = addMolToPNGStream(strm, *colchicine);
+    // read it back out
+    std::unique_ptr<ROMol> mol(PNGStringToMol(pngString));
+    REQUIRE(mol);
+    CHECK(mol->getNumAtoms() == 29);
+    CHECK(mol->getNumConformers() == 0);
+  }
+}

@@ -15,6 +15,7 @@
 #include <RDGeneral/BadFileException.h>
 #include <GraphMol/RDKitBase.h>
 #include <GraphMol/SmilesParse/SmilesParse.h>
+#include <GraphMol/SmilesParse/SmilesWrite.h>
 
 #include <boost/format.hpp>
 
@@ -78,6 +79,19 @@ RDKIT_FILEPARSERS_EXPORT std::string addMetadataToPNGFile(
     const std::map<std::string, std::string> &metadata) {
   std::ifstream inStream(fname.c_str(), std::ios::binary);
   return addMetadataToPNGStream(inStream, metadata);
+}
+
+RDKIT_FILEPARSERS_EXPORT std::string addMolToPNGStream(std::istream &iStream,
+                                                       const ROMol &mol);
+RDKIT_FILEPARSERS_EXPORT std::string addMolToPNGString(
+    const std::string &pngString, const ROMol &mol) {
+  std::stringstream inStream(pngString);
+  return addMolToPNGStream(inStream, mol);
+}
+RDKIT_FILEPARSERS_EXPORT std::string addMolToPNGFile(const std::string &fname,
+                                                     const ROMol &mol) {
+  std::ifstream inStream(fname.c_str(), std::ios::binary);
+  return addMolToPNGStream(inStream, mol);
 }
 
 }  // namespace RDKit
