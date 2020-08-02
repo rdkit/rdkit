@@ -55,8 +55,7 @@ std::map<std::string, std::string> PNGStreamToMetadata(std::istream &inStream) {
     inStream.read((char *)&blockLen, sizeof(blockLen));
     // PNG is big endian, make sure we handle the order correctly
     blockLen = EndianSwapBytes<BIG_ENDIAN_ORDER, HOST_ENDIAN_ORDER>(blockLen);
-    char bytes[5];
-    bytes[4] = 0;
+    char bytes[4];
     inStream.read(bytes, 4);
     auto beginBlock = inStream.tellg();
     if (bytes[0] == 'I' && bytes[1] == 'E' && bytes[2] == 'N' &&
