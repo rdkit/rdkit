@@ -19,7 +19,7 @@ rdkit_library(MolDraw2D MolDraw2D.cpp MolDraw2DSVG.cpp
   MolDraw2DDetails.cpp MolDraw2DUtils.cpp DrawText.cpp
   DrawTextSVG.cpp
   LINK_LIBRARIES
-  ChemReactions FileParsers SmilesParse Depictor MolTransforms 
+  ChemReactions Depictor MolTransforms 
   SubstructMatch Subgraphs GraphMol EigenSolvers )
 
 if(RDK_BUILD_QT_SUPPORT)

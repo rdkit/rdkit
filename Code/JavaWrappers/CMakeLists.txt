@@ -26,7 +26,7 @@ set(swigRDKitLibList "${swigRDKitLibList}"
   "Depictor;SubstructMatch;ChemReactions;Fingerprints;ChemTransforms;"
   "Subgraphs;GraphMol;DataStructs;Trajectory;Descriptors;"
   "PartialCharges;MolTransforms;DistGeomHelpers;DistGeometry;"
-  "ForceFieldHelpers;ForceField;EigenSolvers;Optimizer;MolAlign;"
+  "ForceFieldHelpers;ForceField;EigenSolvers;Optimizer;MolAlign;O3AAlign;"
   "Alignment;SimDivPickers;RDGeometryLib;RDStreams;RDGeneral;"
 )
 #if(RDK_BUILD_COORDGEN_SUPPORT)
