@@ -20,7 +20,7 @@ MultithreadedSmilesMolSupplier::MultithreadedSmilesMolSupplier(
   CHECK_INVARIANT(dp_inStream, "bad instream");
   CHECK_INVARIANT(!(dp_inStream->eof()), "early EOF");
 
-  df_owner = false;
+  df_owner = true;
   d_numWriterThreads = numWriterThreads;
   d_sizeInputQueue = sizeInputQueue;
   d_sizeOutputQueue = sizeOutputQueue;
@@ -36,7 +36,7 @@ MultithreadedSmilesMolSupplier::MultithreadedSmilesMolSupplier(
   df_title = titleLine;
   d_smi = smilesColumn;
   d_name = nameColumn;
-  df_end = false;
+
   this->checkForEnd();
   startThreads();
   POSTCONDITION(dp_inStream, "bad instream");
@@ -67,7 +67,7 @@ MultithreadedSmilesMolSupplier::MultithreadedSmilesMolSupplier(
   df_title = titleLine;
   d_smi = smilesColumn;
   d_name = nameColumn;
-  df_end = false;
+
   this->checkForEnd();
   startThreads();
   POSTCONDITION(dp_inStream, "bad instream");
@@ -98,8 +98,6 @@ void MultithreadedSmilesMolSupplier::init() {
       new ConcurrentQueue<std::tuple<ROMol *, std::string, unsigned int>>(
           d_sizeOutputQueue);
 
-  dp_inStream = nullptr;
-  df_owner = true;
   df_end = false;
   d_line = -1;
 }
