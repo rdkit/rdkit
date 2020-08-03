@@ -43,6 +43,13 @@ class RDKIT_FILEPARSERS_EXPORT MultithreadedMolSupplier : public MolSupplier {
   ROMol *next();
   //! returns true when all records have been read from the supplier
   bool atEnd();
+  //! returns the record id of the last extracted item
+  //! Note: d_recordId >= 1, therefore the value 0 is returned
+  //! if and only if the function is called before extracting next
+  //! record
+  unsigned int getLastRecordId() const { return d_recordId - 1; }
+  //! returns the text block for the last extracted item
+  std::string getLastItemText() const { return d_itemText; }
 
  protected:
   //! starts reader and writer threads
@@ -61,26 +68,29 @@ class RDKIT_FILEPARSERS_EXPORT MultithreadedMolSupplier : public MolSupplier {
  private:
   virtual void reset();
   virtual void init() = 0;
-  virtual bool getEnd() = 0;
-  virtual bool extractNextRecord(std::string &record,
-                                 unsigned int &lineNum) = 0;
+  virtual bool getEnd() const = 0;
+  virtual bool extractNextRecord(std::string &record, unsigned int &lineNum,
+                                 unsigned int &index) = 0;
   virtual ROMol *processMoleculeRecord(const std::string &record,
                                        unsigned int lineNum) = 0;
 
  private:
-  std::atomic<unsigned int> threadCounter{1};  // thread counter
-  std::vector<std::thread> writerThreads;      // vector writer threads
-  std::thread readerThread;                    // single reader thread
+  std::atomic<unsigned int> d_threadCounter{1};  // thread counter
+  std::vector<std::thread> d_writerThreads;      // vector writer threads
+  std::thread d_readerThread;                    // single reader thread
 
  protected:
+  unsigned int d_recordId = 1;  // stores record id
+  std::string d_itemText;       // stores the record
   const unsigned int d_numReaderThread =
       1;                            // fix number of reader threads to 1
   unsigned int d_numWriterThreads;  // number of writer threads
   size_t d_sizeInputQueue;          // size of input queue
   size_t d_sizeOutputQueue;         // size of output queue
-  ConcurrentQueue<std::tuple<std::string, unsigned int>>
-      *d_inputQueue;                        // concurrent input queue
-  ConcurrentQueue<ROMol *> *d_outputQueue;  // concurrent output queue
+  ConcurrentQueue<std::tuple<std::string, unsigned int, unsigned int>>
+      *d_inputQueue;  // concurrent input queue
+  ConcurrentQueue<std::tuple<ROMol *, std::string, unsigned int>>
+      *d_outputQueue;  // concurrent output queue
 };
 }  // namespace RDKit
 #endif

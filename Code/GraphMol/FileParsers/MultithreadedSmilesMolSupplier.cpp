@@ -9,11 +9,7 @@
 //
 #include "MultithreadedSmilesMolSupplier.h"
 
-#include <iomanip>
-#include <mutex>
-#include <sstream>
 namespace RDKit {
-
 MultithreadedSmilesMolSupplier::MultithreadedSmilesMolSupplier(
     const std::string &fileName, const std::string &delimiter, int smilesColumn,
     int nameColumn, bool titleLine, bool sanitize,
@@ -28,9 +24,12 @@ MultithreadedSmilesMolSupplier::MultithreadedSmilesMolSupplier(
   d_numWriterThreads = numWriterThreads;
   d_sizeInputQueue = sizeInputQueue;
   d_sizeOutputQueue = sizeOutputQueue;
-  d_inputQueue = new ConcurrentQueue<std::tuple<std::string, unsigned int>>(
-      d_sizeInputQueue);
-  d_outputQueue = new ConcurrentQueue<ROMol *>(d_sizeOutputQueue);
+  d_inputQueue =
+      new ConcurrentQueue<std::tuple<std::string, unsigned int, unsigned int>>(
+          d_sizeInputQueue);
+  d_outputQueue =
+      new ConcurrentQueue<std::tuple<ROMol *, std::string, unsigned int>>(
+          d_sizeOutputQueue);
 
   d_delim = delimiter;
   df_sanitize = sanitize;
@@ -38,7 +37,6 @@ MultithreadedSmilesMolSupplier::MultithreadedSmilesMolSupplier(
   d_smi = smilesColumn;
   d_name = nameColumn;
   df_end = false;
-
   this->checkForEnd();
   startThreads();
   POSTCONDITION(dp_inStream, "bad instream");
@@ -57,9 +55,12 @@ MultithreadedSmilesMolSupplier::MultithreadedSmilesMolSupplier(
   d_numWriterThreads = numWriterThreads;
   d_sizeInputQueue = sizeInputQueue;
   d_sizeOutputQueue = sizeOutputQueue;
-  d_inputQueue = new ConcurrentQueue<std::tuple<std::string, unsigned int>>(
-      d_sizeInputQueue);
-  d_outputQueue = new ConcurrentQueue<ROMol *>(d_sizeOutputQueue);
+  d_inputQueue =
+      new ConcurrentQueue<std::tuple<std::string, unsigned int, unsigned int>>(
+          d_sizeInputQueue);
+  d_outputQueue =
+      new ConcurrentQueue<std::tuple<ROMol *, std::string, unsigned int>>(
+          d_sizeOutputQueue);
 
   d_delim = delimiter;
   df_sanitize = sanitize;
@@ -90,14 +91,16 @@ void MultithreadedSmilesMolSupplier::init() {
   d_sizeInputQueue = 5;
   d_sizeOutputQueue = 5;
 
-  d_inputQueue = new ConcurrentQueue<std::tuple<std::string, unsigned int>>(
-      d_sizeInputQueue);
-  d_outputQueue = new ConcurrentQueue<ROMol *>(d_sizeOutputQueue);
+  d_inputQueue =
+      new ConcurrentQueue<std::tuple<std::string, unsigned int, unsigned int>>(
+          d_sizeInputQueue);
+  d_outputQueue =
+      new ConcurrentQueue<std::tuple<ROMol *, std::string, unsigned int>>(
+          d_sizeOutputQueue);
 
   dp_inStream = nullptr;
   df_owner = true;
   df_end = false;
-  d_next = -1;
   d_line = -1;
 }
 
@@ -149,7 +152,7 @@ void MultithreadedSmilesMolSupplier::checkForEnd() {
   }
 }
 
-bool MultithreadedSmilesMolSupplier::getEnd() { return df_end; }
+bool MultithreadedSmilesMolSupplier::getEnd() const { return df_end; }
 
 // --------------------------------------------------
 //
@@ -184,7 +187,8 @@ std::string MultithreadedSmilesMolSupplier::nextLine() {
 }
 
 bool MultithreadedSmilesMolSupplier::extractNextRecord(std::string &record,
-                                                       unsigned int &lineNum) {
+                                                       unsigned int &lineNum,
+                                                       unsigned int &index) {
   PRECONDITION(dp_inStream, "bad stream");
   if (this->getEnd()) {
     return -1;
@@ -202,12 +206,15 @@ bool MultithreadedSmilesMolSupplier::extractNextRecord(std::string &record,
       }
     }
   }
-  record = tempStr;
-  lineNum = d_line;
   // if we hit EOF without getting a proper line, return -1:
   if (tempStr.empty() || (tempStr[0] == '#') || (strip(tempStr).size() == 0)) {
     return false;
   }
+  record = tempStr;
+  index = d_recordId;
+  lineNum = d_line;
+  ++d_recordId;
+  d_itemText = record;
   return true;
 }
 

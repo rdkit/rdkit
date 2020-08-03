@@ -52,6 +52,7 @@ void testSmiConcurrent(std::string path, std::string delimiter,
   MultithreadedSmilesMolSupplier sup(fname, delimiter, smilesColumn, nameColumn,
                                      titleLine, sanitize, numWriterThreads,
                                      sizeInputQueue, sizeOutputQueue);
+  std::string last_smiles;
   while (!sup.atEnd()) {
     ROMol* mol = sup.next();
     if (mol != nullptr) {
@@ -59,8 +60,7 @@ void testSmiConcurrent(std::string path, std::string delimiter,
     }
     delete mol;
   }
-  PrintThread{} << "testSmiConcurrent with threads: " << numWriterThreads
-                << ", nMols = " << nMols << "\n";
+  TEST_ASSERT(sup.getLastRecordId() == expectedResult);
   TEST_ASSERT(nMols == expectedResult);
 }
 
@@ -88,13 +88,11 @@ void testSmiCorrectness() {
   */
   std::string path = "/Code/GraphMol/FileParsers/test_data/fewSmi.csv";
   unsigned int expectedResult = 10;
-  // testSmiOld(path, ",", 1, 0, false, true, expectedResult);
   testSmiConcurrent(path, ",", 1, 0, false, true, 2, 5, 5, expectedResult);
   testSmiConcurrent(path, ",", 1, 0, false, true, 3, 5, 5, expectedResult);
   testSmiConcurrent(path, ",", 1, 0, false, true, 4, 5, 10, expectedResult);
   testSmiConcurrent(path, ",", 1, 0, false, true, 1, 10, 10, expectedResult);
   testSmiConcurrent(path, ",", 1, 0, false, true, 3, 1, 1, expectedResult);
-  std::cout << "Correctness Test Done!\n";
 }
 
 void testSmiPerformance() {
@@ -132,10 +130,11 @@ int main() {
   BOOST_LOG(rdErrorLog) << "Finished: testSmiCorrectness()\n";
   BOOST_LOG(rdErrorLog) << "-----------------------------------------\n\n";
 
-  BOOST_LOG(rdErrorLog) << "\n-----------------------------------------\n";
-  testSmiPerformance();
-  BOOST_LOG(rdErrorLog) << "Finished: testSmiPerformance()\n";
-  BOOST_LOG(rdErrorLog) << "-----------------------------------------\n\n";
-
+  /*
+    BOOST_LOG(rdErrorLog) << "\n-----------------------------------------\n";
+    testSmiPerformance();
+    BOOST_LOG(rdErrorLog) << "Finished: testSmiPerformance()\n";
+    BOOST_LOG(rdErrorLog) << "-----------------------------------------\n\n";
+  */
   return 0;
 }

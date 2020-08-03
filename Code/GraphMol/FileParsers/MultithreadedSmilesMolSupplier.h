@@ -11,7 +11,6 @@
 #ifndef MULTITHREADED_SMILES_MOL_SUPPLIER
 #define MULTITHREADED_SMILES_MOL_SUPPLIER
 #include "MultithreadedMolSupplier.h"
-
 namespace RDKit {
 class RDKIT_FILEPARSERS_EXPORT MultithreadedSmilesMolSupplier
     : public MultithreadedMolSupplier {
@@ -40,17 +39,17 @@ class RDKIT_FILEPARSERS_EXPORT MultithreadedSmilesMolSupplier
   //! checks if there is a line to be read from the file
   void checkForEnd();
   //! returns df_end
-  bool getEnd();
+  bool getEnd() const;
   //! get next line
   std::string nextLine();
   //! reads next record and returns whether or not EOF was hit
-  bool extractNextRecord(std::string &record, unsigned int &lineNum);
+  bool extractNextRecord(std::string &record, unsigned int &lineNum,
+                         unsigned int &index);
   //! parses the record and returns the resulting molecule
   ROMol *processMoleculeRecord(const std::string &record, unsigned int lineNum);
 
  private:
   bool df_end = false;      // have we reached the end of the file?
-  int d_next = 0;           // the  molecule we are ready to read
   int d_line = 0;           // line number we are currently on
   std::string d_delim;      // the delimiter string
   bool df_sanitize = true;  // sanitize molecules before returning them?

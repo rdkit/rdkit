@@ -11,49 +11,53 @@
 namespace RDKit {
 void MultithreadedMolSupplier::reader() {
   std::string record;
-  unsigned int lineNum;
-  while (extractNextRecord(record, lineNum)) {
-    auto r = std::tuple<std::string, unsigned int>{record, lineNum};
+  unsigned int lineNum, index;
+  while (extractNextRecord(record, lineNum, index)) {
+    auto r = std::tuple<std::string, unsigned int, unsigned int>{
+        record, lineNum, index};
     d_inputQueue->push(r);
   }
   d_inputQueue->setDone();
 }
 
 void MultithreadedMolSupplier::writer() {
-  std::tuple<std::string, unsigned int> r;
+  std::tuple<std::string, unsigned int, unsigned int> r;
   while (d_inputQueue->pop(r)) {
     ROMol* mol = processMoleculeRecord(std::get<0>(r), std::get<1>(r));
-    d_outputQueue->push(mol);
+    auto temp = std::tuple<ROMol*, std::string, unsigned int>{
+        mol, std::get<0>(r), std::get<2>(r)};
+    d_outputQueue->push(temp);
   }
 
-  if (threadCounter != d_numWriterThreads) {
-    ++threadCounter;
+  if (d_threadCounter != d_numWriterThreads) {
+    ++d_threadCounter;
   } else {
     d_outputQueue->setDone();
   }
 }
 
 ROMol* MultithreadedMolSupplier::next() {
-  ROMol* mol;
-  if (d_outputQueue->pop(mol)) {
+  std::tuple<ROMol*, std::string, unsigned int> r;
+  if (d_outputQueue->pop(r)) {
+    ROMol* mol = std::get<0>(r);
     return mol;
   }
   return nullptr;
 }
 
 void MultithreadedMolSupplier::endThreads() {
-  readerThread.join();
-  for (auto& thread : writerThreads) {
+  d_readerThread.join();
+  for (auto& thread : d_writerThreads) {
     thread.join();
   }
 }
 
 void MultithreadedMolSupplier::startThreads() {
   //! run the reader function in a seperate thread
-  readerThread = std::thread(&MultithreadedMolSupplier::reader, this);
+  d_readerThread = std::thread(&MultithreadedMolSupplier::reader, this);
   //! run the writer function in seperate threads
   for (unsigned int i = 0; i < d_numWriterThreads; i++) {
-    writerThreads.emplace_back(
+    d_writerThreads.emplace_back(
         std::thread(&MultithreadedMolSupplier::writer, this));
   }
 }
