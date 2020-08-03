@@ -5,7 +5,7 @@ rdkit_library(MolAlign AlignMolecules.cpp
               LINK_LIBRARIES MolTransforms SubstructMatch Alignment GraphMol RDGeneral)
 
 rdkit_library(O3AAlign O3AAlignMolecules.cpp
-              LINK_LIBRARIES MolTransforms SubstructMatch Alignment GraphMol RDGeneral ForceFieldHelpers)
+              LINK_LIBRARIES MolAlign MolTransforms SubstructMatch Alignment GraphMol RDGeneral ForceFieldHelpers)
 
 rdkit_headers(AlignMolecules.h O3AAlignMolecules.h DEST GraphMol/MolAlign)
 
