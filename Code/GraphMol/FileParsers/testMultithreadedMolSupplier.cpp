@@ -52,7 +52,6 @@ void testSmiConcurrent(std::string path, std::string delimiter,
   MultithreadedSmilesMolSupplier sup(fname, delimiter, smilesColumn, nameColumn,
                                      titleLine, sanitize, numWriterThreads,
                                      sizeInputQueue, sizeOutputQueue);
-  std::string last_smiles;
   while (!sup.atEnd()) {
     ROMol* mol = sup.next();
     if (mol != nullptr) {
