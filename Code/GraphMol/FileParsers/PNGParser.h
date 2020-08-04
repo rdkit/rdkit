@@ -86,17 +86,21 @@ RDKIT_FILEPARSERS_EXPORT std::string addMetadataToPNGFile(
   return addMetadataToPNGStream(inStream, metadata, compressed);
 }
 
-RDKIT_FILEPARSERS_EXPORT std::string addMolToPNGStream(std::istream &iStream,
-                                                       const ROMol &mol);
+RDKIT_FILEPARSERS_EXPORT std::string addMolToPNGStream(
+    const ROMol &mol, std::istream &iStream, bool includeSmiles = true,
+    bool includeMol = true);
 RDKIT_FILEPARSERS_EXPORT std::string addMolToPNGString(
-    const std::string &pngString, const ROMol &mol) {
+    const ROMol &mol, const std::string &pngString, bool includeSmiles = true,
+    bool includeMol = true) {
   std::stringstream inStream(pngString);
-  return addMolToPNGStream(inStream, mol);
+  return addMolToPNGStream(mol, inStream, includeSmiles, includeMol);
 }
-RDKIT_FILEPARSERS_EXPORT std::string addMolToPNGFile(const std::string &fname,
-                                                     const ROMol &mol) {
+RDKIT_FILEPARSERS_EXPORT std::string addMolToPNGFile(const ROMol &mol,
+                                                     const std::string &fname,
+                                                     bool includeSmiles = true,
+                                                     bool includeMol = true) {
   std::ifstream inStream(fname.c_str(), std::ios::binary);
-  return addMolToPNGStream(inStream, mol);
+  return addMolToPNGStream(mol, inStream, includeSmiles, includeMol);
 }
 
 }  // namespace RDKit

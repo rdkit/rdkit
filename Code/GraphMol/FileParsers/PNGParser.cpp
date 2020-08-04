@@ -72,7 +72,9 @@ std::map<std::string, std::string> PNGStreamToMetadata(std::istream &inStream) {
         bytes[3] == 'D') {
       break;
     }
+#ifndef RDK_USE_BOOST_IOSTREAMS
     bool alreadyWarned = false;
+#endif
     if (blockLen > 0 &&
         ((bytes[0] == 't' && bytes[1] == 'E') ||
          (bytes[0] == 'z' && bytes[1] == 'T')) &&
@@ -241,10 +243,17 @@ std::string addMetadataToPNGStream(
   return res.str();
 }
 
-std::string addMolToPNGStream(std::istream &iStream, const ROMol &mol) {
-  std::string smi = MolToCXSmiles(mol);
+std::string addMolToPNGStream(const ROMol &mol, std::istream &iStream,
+                              bool includeSmiles, bool includeMol) {
   std::map<std::string, std::string> metadata;
-  metadata[PNGData::smilesTag] = smi;
+  if (includeSmiles) {
+    std::string smi = MolToCXSmiles(mol);
+    metadata[PNGData::smilesTag] = smi;
+  }
+  if (includeMol) {
+    std::string mb = MolToMolBlock(mol);
+    metadata[PNGData::molTag] = mb;
+  }
   return addMetadataToPNGStream(iStream, metadata);
 };
 
