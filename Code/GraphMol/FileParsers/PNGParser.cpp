@@ -18,6 +18,9 @@
 #include <vector>
 #include <boost/crc.hpp>
 #include "FileParsers.h"
+#ifdef RDK_USE_BOOST_IOSTREAMS
+#include <zlib.h>
+#endif
 
 namespace RDKit {
 
@@ -69,9 +72,11 @@ std::map<std::string, std::string> PNGStreamToMetadata(std::istream &inStream) {
         bytes[3] == 'D') {
       break;
     }
-    // FIX: we should also eventually deal with zTXt
-    if (blockLen > 0 && bytes[0] == 't' && bytes[1] == 'E' && bytes[2] == 'X' &&
-        bytes[3] == 't') {
+    bool alreadyWarned = false;
+    if (blockLen > 0 &&
+        ((bytes[0] == 't' && bytes[1] == 'E') ||
+         (bytes[0] == 'z' && bytes[1] == 'T')) &&
+        bytes[2] == 'X' && bytes[3] == 't') {
       // in a tEXt block, read the key:
       std::string key;
       std::getline(inStream, key, '\0');
@@ -79,10 +84,44 @@ std::map<std::string, std::string> PNGStreamToMetadata(std::istream &inStream) {
         throw FileParseException("error when reading from PNG");
       }
       auto dataLen = blockLen - key.size() - 1;
-      std::string value(dataLen, (char)0);
-      inStream.read(&value.front(), dataLen);
-      if (inStream.fail()) {
-        throw FileParseException("error when reading from PNG");
+      std::string value;
+      if (bytes[0] == 't') {
+        value.resize(dataLen);
+        inStream.read(&value.front(), dataLen);
+        if (inStream.fail()) {
+          throw FileParseException("error when reading from PNG");
+        }
+      } else if (bytes[0] == 'z') {
+        value = "";
+#ifdef RDK_USE_BOOST_IOSTREAMS
+        std::unique_ptr<Bytef[]> compressedData(new Bytef[dataLen]);
+        inStream.read((char *)compressedData.get(), dataLen);
+        if (inStream.fail()) {
+          throw FileParseException("error when reading from PNG");
+        }
+        // we apparently have to guess how large the output data will be
+        uLongf uncompressedDataLen = dataLen * 10;
+        std::unique_ptr<Bytef[]> uncompressedData(
+            new Bytef[uncompressedDataLen]);
+        if (*compressedData.get() != 0 ||
+            uncompress(uncompressedData.get(), &uncompressedDataLen,
+                       compressedData.get() + 1, dataLen - 1)) {
+          // problems
+        } else {
+          uncompressedData[uncompressedDataLen] = '\0';
+          value = (const char *)uncompressedData.get();
+        }
+#else
+        if (!alreadyWarned) {
+          BOOST_LOG(rdWarningLog)
+              << "compressed metadata found in PNG, but the RDKit was not "
+                 "compiled with support for this. Skipping it."
+              << std::endl;
+          alreadyWarned = true;
+        }
+#endif
+      } else {
+        CHECK_INVARIANT(0, "impossible value");
       }
       if (res.find(key) != res.end()) {
         BOOST_LOG(rdWarningLog) << "The key '" << key
@@ -90,7 +129,9 @@ std::map<std::string, std::string> PNGStreamToMetadata(std::istream &inStream) {
                                    "The last version is being kept."
                                 << std::endl;
       }
-      res[key] = value;
+      if (!value.empty()) {
+        res[key] = value;
+      }
     }
     inStream.seekg(beginBlock);
     inStream.ignore(blockLen + 4);  // the extra 4 bytes are the CRC

@@ -1710,6 +1710,7 @@ TEST_CASE("read metadata from PNG", "[reader][PNG]") {
     std::string text = "NOT A PNG";
     REQUIRE_THROWS_AS(PNGStringToMetadata(text), FileParseException);
   }
+
   SECTION("truncated PNG") {
     std::string fname =
         rdbase + "/Code/GraphMol/FileParsers/test_data/colchicine.png";
@@ -1726,6 +1727,15 @@ TEST_CASE("read metadata from PNG", "[reader][PNG]") {
     REQUIRE_THROWS_AS(PNGStringToMetadata(data.substr(1000)),
                       FileParseException);
   }
+#ifdef RDK_USE_BOOST_IOSTREAMS
+  SECTION("compressed metadata") {
+    std::string fname =
+        rdbase + "/Code/GraphMol/FileParsers/test_data/colchicine.mrv.png";
+    auto metadata = PNGFileToMetadata(fname);
+    REQUIRE(metadata.find("molSource") != metadata.end());
+    CHECK(metadata["molSource"].find("<MChemicalStruct>") != std::string::npos);
+  }
+#endif
 }
 
 TEST_CASE("write metadata to PNG", "[writer][PNG]") {
