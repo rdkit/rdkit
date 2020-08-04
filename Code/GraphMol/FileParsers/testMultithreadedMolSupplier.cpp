@@ -63,7 +63,6 @@ void testSmiConcurrent(std::string path, std::string delimiter,
     ROMol* mol = sup.next();
     unsigned int id = sup.getLastRecordId();
     bitVector[id - 1] = 1;
-    std::string item = sup.getLastItemText();
     if (mol != nullptr) {
       ++nMols;
     }
