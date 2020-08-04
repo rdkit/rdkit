@@ -16,6 +16,7 @@
 #include <cstdlib>
 
 #include "coordgen/sketcherMinimizer.h"
+#include "coordgen/CoordgenFragmenter.h"
 
 namespace RDKit {
 namespace CoordGen {
@@ -166,6 +167,7 @@ unsigned int addCoords(T& mol, const CoordGenParams* params = nullptr) {
   if (!params->minimizeOnly) {
     auto tmp = minimizer.runGenerateCoordinates();
   } else {
+    CoordgenFragmenter::splitIntoFragments(min_mol);
     minimizer.m_minimizer.minimizeMolecule(min_mol);
   }
   auto conf = new Conformer(mol.getNumAtoms());
@@ -176,9 +178,9 @@ unsigned int addCoords(T& mol, const CoordGenParams* params = nullptr) {
     // std::cerr << atom->coordinates << std::endl;
   }
   conf->set3D(false);
-  if (!params->minimizeOnly) {
-    mol.clearConformers();
-  }
+  // if (!params->minimizeOnly) {
+  mol.clearConformers();
+  //}
   auto res = mol.addConformer(conf, true);
   if (params->coordMap.empty() && !params->templateMol) {
     // center the coordinates

@@ -535,7 +535,74 @@ M  END
     CoordGen::CoordGenParams ps;
     ps.minimizeOnly = true;
     std::cerr << " minimize only" << std::endl;
-    TEST_ASSERT(CoordGen::addCoords(*m1, &ps));
+    CoordGen::addCoords(*m1, &ps);
+    std::cerr << MolToV3KMolBlock(*m1) << std::endl;
+  }
+  {
+    auto m1 =
+        R"CTAB(
+  Mrv2014 08042019502D          
+
+  0  0  0     0  0            999 V3000
+M  V30 BEGIN CTAB
+M  V30 COUNTS 19 21 0 0 0
+M  V30 BEGIN ATOM
+M  V30 1 C -6.3333 -4.7717 0 0
+M  V30 2 C -7.667 -4.0017 0 0
+M  V30 3 C -9.0008 -4.7717 0 0
+M  V30 4 C -9.0008 -6.3117 0 0
+M  V30 5 C -7.667 -7.0817 0 0
+M  V30 6 C -6.3333 -6.3117 0 0
+M  V30 7 C -4.9997 -7.0817 0 0
+M  V30 8 C -3.6659 -6.3117 0 0
+M  V30 9 C -3.6659 -4.7717 0 0
+M  V30 10 C -4.9997 -4.0017 0 0
+M  V30 11 C -2.3322 -4.0016 0 0
+M  V30 12 C -2.5332 -5.5285 0 0
+M  V30 13 C -1.4443 -4.4395 0 0
+M  V30 14 C -9.0007 -3.2317 0 0
+M  V30 15 C -7.9117 -2.1427 0 0
+M  V30 16 O -10.0896 -4.3206 0 0
+M  V30 17 C -7.9117 -0.6027 0 0
+M  V30 18 C -6.6217 -1.0194 0 0
+M  V30 19 C -6.3717 -2.1427 0 0
+M  V30 END ATOM
+M  V30 BEGIN BOND
+M  V30 1 1 1 2
+M  V30 2 2 2 3
+M  V30 3 1 3 4
+M  V30 4 2 4 5
+M  V30 5 1 5 6
+M  V30 6 2 7 8
+M  V30 7 1 8 9
+M  V30 8 2 9 10
+M  V30 9 2 1 6
+M  V30 10 1 1 10
+M  V30 11 1 6 7
+M  V30 12 1 9 11
+M  V30 13 1 11 12
+M  V30 14 1 12 13
+M  V30 15 1 2 14
+M  V30 16 1 14 15
+M  V30 17 2 14 16
+M  V30 18 1 17 18
+M  V30 19 1 18 19
+M  V30 20 1 17 15
+M  V30 21 1 15 19
+M  V30 END BOND
+M  V30 END CTAB
+M  END
+)CTAB"_ctab;
+    TEST_ASSERT(m1);
+    TEST_ASSERT(m1->getNumConformers() == 1);
+    ROMol m2(*m1);
+    // std::cerr << " FULL CG" << std::endl;
+    // TEST_ASSERT(CoordGen::addCoords(m2) == 0);
+    // std::cerr << MolToV3KMolBlock(m2) << std::endl;
+    CoordGen::CoordGenParams ps;
+    ps.minimizeOnly = true;
+    std::cerr << " minimize only" << std::endl;
+    CoordGen::addCoords(*m1, &ps);
     std::cerr << MolToV3KMolBlock(*m1) << std::endl;
   }
   BOOST_LOG(rdInfoLog) << "done" << std::endl;
