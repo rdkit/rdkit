@@ -13,6 +13,7 @@
 // https://github.com/openbabel/openbabel/blob/master/src/formats/pngformat.cpp
 
 #include "PNGParser.h"
+#include <GraphMol/MolPickler.h>
 #include <RDGeneral/FileParseException.h>
 #include <RDGeneral/StreamOps.h>
 #include <vector>
@@ -27,7 +28,7 @@ namespace RDKit {
 namespace PNGData {
 const std::string smilesTag = "rdkitSMILES";
 const std::string molTag = "rdkitMOL";
-const std::string jsonTag = "rdkitJSON";
+const std::string pklTag = "rdkitPKL";
 }  // namespace PNGData
 
 namespace {
@@ -111,8 +112,9 @@ std::map<std::string, std::string> PNGStreamToMetadata(std::istream &inStream) {
               << "cannot uncompress data associatd with key " << key
               << " skipping it." << std::endl;
         } else {
-          uncompressedData[uncompressedDataLen] = '\0';
-          value = (const char *)uncompressedData.get();
+          // uncompressedData[uncompressedDataLen] = '\0';
+          value = std::string((const char *)uncompressedData.get(),
+                              uncompressedDataLen);
         }
 #else
         if (!alreadyWarned) {
@@ -243,8 +245,14 @@ std::string addMetadataToPNGStream(
 }
 
 std::string addMolToPNGStream(const ROMol &mol, std::istream &iStream,
-                              bool includeSmiles, bool includeMol) {
+                              bool includePkl, bool includeSmiles,
+                              bool includeMol) {
   std::map<std::string, std::string> metadata;
+  if (includePkl) {
+    std::string pkl;
+    MolPickler::pickleMol(mol, pkl);
+    metadata[PNGData::pklTag] = pkl;
+  }
   if (includeSmiles) {
     std::string smi = MolToCXSmiles(mol);
     metadata[PNGData::smilesTag] = smi;
@@ -262,12 +270,18 @@ ROMol *PNGStreamToMol(std::istream &inStream,
   auto metadata = PNGStreamToMetadata(inStream);
   bool formatFound = false;
   for (const auto pr : metadata) {
-    if (pr.first == PNGData::smilesTag) {
+    if (pr.first == PNGData::pklTag) {
+      res = new ROMol(pr.second);
+      formatFound = true;
+    } else if (pr.first == PNGData::smilesTag) {
       res = SmilesToMol(pr.second, params);
       formatFound = true;
     } else if (pr.first == PNGData::molTag) {
       res = MolBlockToMol(pr.second, params.sanitize, params.removeHs);
       formatFound = true;
+    }
+    if (formatFound) {
+      break;
     }
   }
   if (!formatFound) {

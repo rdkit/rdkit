@@ -427,12 +427,14 @@ ROMol *MolFromPNGString(python::object png, python::object pyParams) {
 }
 
 python::object addMolToPNGStringHelper(const ROMol &mol, python::object png,
-                                       bool includeSmiles, bool includeMol) {
+                                       bool includePkl, bool includeSmiles,
+                                       bool includeMol) {
   std::cerr << "extract" << std::endl;
   std::string cstr = python::extract<std::string>(png);
   std::cerr << "done " << cstr.size() << std::endl;
 
-  auto res = addMolToPNGString(mol, cstr, includeSmiles, includeMol);
+  auto res =
+      addMolToPNGString(mol, cstr, includePkl, includeSmiles, includeMol);
 
   python::object retval = python::object(
       python::handle<>(PyBytes_FromStringAndSize(res.c_str(), res.length())));
@@ -1536,6 +1538,8 @@ BOOST_PYTHON_MODULE(rdmolfiles) {
 
        - filename: the PNG filename
 
+       - includePkl: include the RDKit's internal binary format in the output
+
        - includeSmiles: include CXSmiles in the output
 
        - includeMol: include CTAB (Mol) in the output
@@ -1545,7 +1549,8 @@ BOOST_PYTHON_MODULE(rdmolfiles) {
   python::def(
       "MolMetadataToPNGFile", addMolToPNGFile,
       (python::arg("mol"), python::arg("filename"),
-       python::arg("includeSmiles") = true, python::arg("includeMol") = false),
+       python::arg("includePkl") = true, python::arg("includeSmiles") = true,
+       python::arg("includeMol") = false),
       docString.c_str());
 
   docString =
@@ -1557,6 +1562,8 @@ BOOST_PYTHON_MODULE(rdmolfiles) {
 
        - png: the PNG string
 
+       - includePkl: include the RDKit's internal binary format in the output
+
        - includeSmiles: include CXSmiles in the output
 
        - includeMol: include CTAB (Mol) in the output
@@ -1565,7 +1572,7 @@ BOOST_PYTHON_MODULE(rdmolfiles) {
        a Mol object, None on failure.)DOC";
   python::def(
       "MolMetadataToPNGString", addMolToPNGStringHelper,
-      (python::arg("mol"), python::arg("png"),
+      (python::arg("mol"), python::arg("png"), python::arg("includePkl") = true,
        python::arg("includeSmiles") = true, python::arg("includeMol") = false),
       docString.c_str());
 

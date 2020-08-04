@@ -1808,6 +1808,22 @@ TEST_CASE("write molecule to PNG", "[writer][PNG]") {
     CHECK(mol->getNumAtoms() == 29);
     CHECK(mol->getNumConformers() == 0);
   }
+  SECTION("use SMILES") {
+    std::string fname =
+        rdbase +
+        "/Code/GraphMol/FileParsers/test_data/colchicine.no_metadata.png";
+    std::ifstream strm(fname, std::ios::in | std::ios::binary);
+    auto colchicine =
+        "COc1cc2c(c(OC)c1OC)-c1ccc(OC)c(=O)cc1[C@@H](NC(C)=O)CC2"_smiles;
+    REQUIRE(colchicine);
+    bool includePkl = false;
+    auto pngString = addMolToPNGStream(*colchicine, strm, includePkl);
+    // read it back out
+    std::unique_ptr<ROMol> mol(PNGStringToMol(pngString));
+    REQUIRE(mol);
+    CHECK(mol->getNumAtoms() == 29);
+    CHECK(mol->getNumConformers() == 0);
+  }
   SECTION("use MOL") {
     std::string fname =
         rdbase +
@@ -1816,10 +1832,11 @@ TEST_CASE("write molecule to PNG", "[writer][PNG]") {
     auto colchicine =
         "COc1cc2c(c(OC)c1OC)-c1ccc(OC)c(=O)cc1[C@@H](NC(C)=O)CC2"_smiles;
     REQUIRE(colchicine);
+    bool includePkl = false;
     bool includeSmiles = false;
     bool includeMol = true;
-    auto pngString =
-        addMolToPNGStream(*colchicine, strm, includeSmiles, includeMol);
+    auto pngString = addMolToPNGStream(*colchicine, strm, includePkl,
+                                       includeSmiles, includeMol);
     // read it back out
     std::unique_ptr<ROMol> mol(PNGStringToMol(pngString));
     REQUIRE(mol);
