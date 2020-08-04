@@ -66,19 +66,24 @@ RDKIT_FILEPARSERS_EXPORT ROMol *PNGStringToMol(
   return PNGStreamToMol(inStream, params);
 }
 
+//! The compressed flag is ignored if the RDKit is not built with
+//! boost::iostreams support
 RDKIT_FILEPARSERS_EXPORT std::string addMetadataToPNGStream(
-    std::istream &iStream, const std::map<std::string, std::string> &metadata);
+    std::istream &iStream, const std::map<std::string, std::string> &metadata,
+    bool compressed = true);
 RDKIT_FILEPARSERS_EXPORT std::string addMetadataToPNGString(
     const std::string &pngString,
-    const std::map<std::string, std::string> &metadata) {
+    const std::map<std::string, std::string> &metadata,
+    bool compressed = true) {
   std::stringstream inStream(pngString);
-  return addMetadataToPNGStream(inStream, metadata);
+  return addMetadataToPNGStream(inStream, metadata, compressed);
 }
 RDKIT_FILEPARSERS_EXPORT std::string addMetadataToPNGFile(
     const std::string &fname,
-    const std::map<std::string, std::string> &metadata) {
+    const std::map<std::string, std::string> &metadata,
+    bool compressed = true) {
   std::ifstream inStream(fname.c_str(), std::ios::binary);
-  return addMetadataToPNGStream(inStream, metadata);
+  return addMetadataToPNGStream(inStream, metadata, compressed);
 }
 
 RDKIT_FILEPARSERS_EXPORT std::string addMolToPNGStream(std::istream &iStream,

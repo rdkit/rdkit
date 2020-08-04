@@ -1759,7 +1759,6 @@ TEST_CASE("write metadata to PNG", "[writer][PNG]") {
     std::ofstream ofs("write_metadata.png");
     ofs.write(pngData.c_str(), pngData.size());
     ofs.flush();
-
     auto ometadata = PNGStringToMetadata(pngData);
     REQUIRE(ometadata.find(PNGData::smilesTag) != ometadata.end());
     CHECK(ometadata[PNGData::smilesTag] == metadata[PNGData::smilesTag]);

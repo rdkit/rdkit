@@ -106,7 +106,9 @@ std::map<std::string, std::string> PNGStreamToMetadata(std::istream &inStream) {
         if (*compressedData.get() != 0 ||
             uncompress(uncompressedData.get(), &uncompressedDataLen,
                        compressedData.get() + 1, dataLen - 1)) {
-          // problems
+          BOOST_LOG(rdWarningLog)
+              << "cannot uncompress data associatd with key " << key
+              << " skipping it." << std::endl;
         } else {
           uncompressedData[uncompressedDataLen] = '\0';
           value = (const char *)uncompressedData.get();
@@ -141,8 +143,11 @@ std::map<std::string, std::string> PNGStreamToMetadata(std::istream &inStream) {
 };
 
 std::string addMetadataToPNGStream(
-    std::istream &inStream,
-    const std::map<std::string, std::string> &metadata) {
+    std::istream &inStream, const std::map<std::string, std::string> &metadata,
+    bool compressed) {
+#ifndef RDK_USE_BOOST_IOSTREAMS
+  compressed = false;
+#endif
   // confirm that it's a PNG file:
   if (!checkPNGHeader(inStream)) {
     throw FileParseException("PNG header not recognized");
@@ -183,10 +188,33 @@ std::string addMetadataToPNGStream(
   // write out the metadata:
   for (const auto pr : metadata) {
     std::stringstream blk;
-    blk.write("tEXt", 4);
-    // write the name along with a zero
-    blk.write(pr.first.c_str(), pr.first.size() + 1);
-    blk.write(pr.second.c_str(), pr.second.size());
+    if (!compressed) {
+      blk.write("tEXt", 4);
+      // write the name along with a zero
+      blk.write(pr.first.c_str(), pr.first.size() + 1);
+      blk.write(pr.second.c_str(), pr.second.size());
+    } else {
+#ifdef RDK_USE_BOOST_IOSTREAMS
+      uLongf compressedLen = pr.second.size();
+      std::unique_ptr<Bytef[]> dest(new Bytef[compressedLen]);
+      if (compress2(dest.get(), &compressedLen,
+                    (const Bytef *)pr.second.c_str(), pr.second.size(),
+                    Z_BEST_COMPRESSION) != Z_OK) {
+        throw FileParseException("could not compress data");
+      }
+      blk.write("zTXt", 4);
+      // write the name along with a zero
+      blk.write(pr.first.c_str(), pr.first.size() + 1);
+      // write the compressed data
+      // first a zero for the "compression method":
+      blk.write("\0", 1);
+      blk.write((const char *)dest.get(), compressedLen);
+#else
+      // we shouldn't get here since we disabled compressed at the beginning of
+      // the function, but check to be sure
+      CHECK_INVARIANT(0, "compression support not enabled");
+#endif
+    }
     auto blob = blk.str();
     std::uint32_t blksize =
         blob.size() - 4;  // we don't include the tag in the size;
