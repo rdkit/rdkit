@@ -55,6 +55,9 @@ class ConcurrentQueue {
 
   //! sets the variable d_done = true
   void setDone();
+
+  //! clears the vector
+  void clear();
 };
 
 template <typename E>
@@ -116,6 +119,12 @@ void ConcurrentQueue<E>::setDone() {
   std::unique_lock<std::mutex> lk(d_lock);
   d_done = true;
   d_notEmpty.notify_all();
+}
+
+template <typename E>
+void ConcurrentQueue<E>::clear() {
+  std::unique_lock<std::mutex> lk(d_lock);
+  d_elements.clear();
 }
 
 }  // namespace RDKit

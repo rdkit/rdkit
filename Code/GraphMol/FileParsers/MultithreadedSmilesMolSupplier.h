@@ -57,6 +57,7 @@ class RDKIT_FILEPARSERS_EXPORT MultithreadedSmilesMolSupplier
   bool df_title = true;     // do we have a title line?
   int d_smi = 0;            // column id for the smile string
   int d_name = 1;           // column id for the name
+  unsigned int d_currentRecordId = 1;  // current record id
 };
 }  // namespace RDKit
 #endif

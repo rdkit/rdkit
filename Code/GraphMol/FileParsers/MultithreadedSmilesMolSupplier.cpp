@@ -75,6 +75,12 @@ MultithreadedSmilesMolSupplier::MultithreadedSmilesMolSupplier(
 
 MultithreadedSmilesMolSupplier::MultithreadedSmilesMolSupplier() {
   init();
+  d_inputQueue =
+      new ConcurrentQueue<std::tuple<std::string, unsigned int, unsigned int>>(
+          d_sizeInputQueue);
+  d_outputQueue =
+      new ConcurrentQueue<std::tuple<ROMol *, std::string, unsigned int>>(
+          d_sizeOutputQueue);
   startThreads();
 }
 
@@ -90,14 +96,6 @@ void MultithreadedSmilesMolSupplier::init() {
   d_numWriterThreads = 2;
   d_sizeInputQueue = 5;
   d_sizeOutputQueue = 5;
-
-  d_inputQueue =
-      new ConcurrentQueue<std::tuple<std::string, unsigned int, unsigned int>>(
-          d_sizeInputQueue);
-  d_outputQueue =
-      new ConcurrentQueue<std::tuple<ROMol *, std::string, unsigned int>>(
-          d_sizeOutputQueue);
-
   df_end = false;
   d_line = -1;
 }
@@ -209,10 +207,9 @@ bool MultithreadedSmilesMolSupplier::extractNextRecord(std::string &record,
     return false;
   }
   record = tempStr;
-  index = d_recordId;
   lineNum = d_line;
-  ++d_recordId;
-  d_itemText = record;
+  index = d_currentRecordId;
+  ++d_currentRecordId;
   return true;
 }
 

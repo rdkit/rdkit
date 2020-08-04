@@ -40,6 +40,8 @@ ROMol* MultithreadedMolSupplier::next() {
   std::tuple<ROMol*, std::string, unsigned int> r;
   if (d_outputQueue->pop(r)) {
     ROMol* mol = std::get<0>(r);
+    d_lastItemText = std::get<1>(r);
+    d_lastRecordId = std::get<2>(r);
     return mol;
   }
   return nullptr;

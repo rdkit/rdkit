@@ -33,7 +33,22 @@ class RDKIT_FILEPARSERS_EXPORT MultithreadedMolSupplier : public MolSupplier {
   // time
  public:
   MultithreadedMolSupplier(){};
-  virtual ~MultithreadedMolSupplier() { endThreads(); };
+  virtual ~MultithreadedMolSupplier() {
+    endThreads();
+    //! destroy all objects in the input queue
+    d_inputQueue->clear();
+    //! delete the pointer to the input queue
+    delete d_inputQueue;
+    std::tuple<ROMol *, std::string, unsigned int> r;
+    while (d_outputQueue->pop(r)) {
+      ROMol *m = std::get<0>(r);
+      delete m;
+    }
+    //! destroy all objects in the output queue
+    d_outputQueue->clear();
+    //! delete the pointer to the output queue
+    delete d_outputQueue;
+  };
   //! reads lines from input stream to populate the input queue
   void reader();
   //! parses lines from the input queue converting them to ROMol objects
@@ -47,9 +62,9 @@ class RDKIT_FILEPARSERS_EXPORT MultithreadedMolSupplier : public MolSupplier {
   //! Note: d_recordId >= 1, therefore the value 0 is returned
   //! if and only if the function is called before extracting next
   //! record
-  unsigned int getLastRecordId() const { return d_recordId - 1; }
+  unsigned int getLastRecordId() const { return d_lastRecordId; }
   //! returns the text block for the last extracted item
-  std::string getLastItemText() const { return d_itemText; }
+  std::string getLastItemText() const { return d_lastItemText; }
 
  protected:
   //! starts reader and writer threads
@@ -80,8 +95,8 @@ class RDKIT_FILEPARSERS_EXPORT MultithreadedMolSupplier : public MolSupplier {
   std::thread d_readerThread;                    // single reader thread
 
  protected:
-  unsigned int d_recordId = 1;  // stores record id
-  std::string d_itemText;       // stores the record
+  unsigned int d_lastRecordId = 0;  // stores record id
+  std::string d_lastItemText;       // stores the record
   const unsigned int d_numReaderThread =
       1;                            // fix number of reader threads to 1
   unsigned int d_numWriterThreads;  // number of writer threads
