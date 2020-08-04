@@ -53,11 +53,17 @@ std::map<std::string, std::string> PNGStreamToMetadata(std::istream &inStream) {
   while (inStream) {
     std::uint32_t blockLen;
     inStream.read((char *)&blockLen, sizeof(blockLen));
+    if (inStream.fail()) {
+      throw FileParseException("error when reading from PNG");
+    }
     // PNG is big endian, make sure we handle the order correctly
     blockLen = EndianSwapBytes<BIG_ENDIAN_ORDER, HOST_ENDIAN_ORDER>(blockLen);
     char bytes[5];
     bytes[4] = 0;
     inStream.read(bytes, 4);
+    if (inStream.fail()) {
+      throw FileParseException("error when reading from PNG");
+    }
     auto beginBlock = inStream.tellg();
     if (bytes[0] == 'I' && bytes[1] == 'E' && bytes[2] == 'N' &&
         bytes[3] == 'D') {
@@ -69,9 +75,15 @@ std::map<std::string, std::string> PNGStreamToMetadata(std::istream &inStream) {
       // in a tEXt block, read the key:
       std::string key;
       std::getline(inStream, key, '\0');
+      if (inStream.fail()) {
+        throw FileParseException("error when reading from PNG");
+      }
       auto dataLen = blockLen - key.size() - 1;
       std::string value(dataLen, (char)0);
       inStream.read(&value.front(), dataLen);
+      if (inStream.fail()) {
+        throw FileParseException("error when reading from PNG");
+      }
       if (res.find(key) != res.end()) {
         BOOST_LOG(rdWarningLog) << "The key '" << key
                                 << "' was found more than once in the data. "

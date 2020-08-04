@@ -1706,6 +1706,26 @@ TEST_CASE("read metadata from PNG", "[reader][PNG]") {
     auto metadata = PNGFileToMetadata(fname);
     REQUIRE(metadata.empty());
   }
+  SECTION("bad PNG") {
+    std::string text = "NOT A PNG";
+    REQUIRE_THROWS_AS(PNGStringToMetadata(text), FileParseException);
+  }
+  SECTION("truncated PNG") {
+    std::string fname =
+        rdbase + "/Code/GraphMol/FileParsers/test_data/colchicine.png";
+    auto istr = std::ifstream(fname, std::ios_base::binary);
+    istr.seekg(0, istr.end);
+    auto sz = istr.tellg();
+    istr.seekg(0, istr.beg);
+    char *buff = new char[sz];
+    istr.read(buff, sz);
+    std::string data(buff, sz);
+    delete[] buff;
+    auto metadata = PNGStringToMetadata(data);
+    REQUIRE(!metadata.empty());
+    REQUIRE_THROWS_AS(PNGStringToMetadata(data.substr(1000)),
+                      FileParseException);
+  }
 }
 
 TEST_CASE("write metadata to PNG", "[writer][PNG]") {
