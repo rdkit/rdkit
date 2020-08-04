@@ -16,6 +16,8 @@ else()
   if (NOT Boost_USE_STATIC_LIBS)
      add_definitions("-DBOOST_IOSTREAMS_DYN_LINK")
   endif()
+  find_package(ZLIB)
+  set(zlib_lib ${ZLIB_LIBRARIES})
 endif()
 ADD_DEFINITIONS("-DRDK_USE_BOOST_IOSTREAMS")
 endif(RDK_USE_BOOST_IOSTREAMS)
@@ -45,7 +47,7 @@ rdkit_library(FileParsers
               ProximityBonds.cpp
               SequenceParsers.cpp SequenceWriters.cpp
               SVGParser.cpp PNGParser.cpp
-              LINK_LIBRARIES Depictor SmilesParse GraphMol ${RDK_MAEPARSER_LIBS} ${regex_lib} ${link_iostreams})
+              LINK_LIBRARIES Depictor SmilesParse GraphMol ${RDK_MAEPARSER_LIBS} ${regex_lib} ${link_iostreams} ${zlib_lib})
 
 rdkit_headers(FileParsers.h
               FileParserUtils.h
