@@ -33,7 +33,7 @@ RDKIT_FILEPARSERS_EXPORT extern const std::string molTag;
 
 RDKIT_FILEPARSERS_EXPORT std::map<std::string, std::string> PNGStreamToMetadata(
     std::istream &inStream);
-RDKIT_FILEPARSERS_EXPORT std::map<std::string, std::string> PNGFileToMetadata(
+inline std::map<std::string, std::string> PNGFileToMetadata(
     const std::string &fname) {
   std::ifstream inStream(fname.c_str(), std::ios::binary);
   if (!inStream || (inStream.bad())) {
@@ -41,7 +41,7 @@ RDKIT_FILEPARSERS_EXPORT std::map<std::string, std::string> PNGFileToMetadata(
   }
   return PNGStreamToMetadata(inStream);
 }
-RDKIT_FILEPARSERS_EXPORT std::map<std::string, std::string> PNGStringToMetadata(
+inline std::map<std::string, std::string> PNGStringToMetadata(
     const std::string &data) {
   std::stringstream inStream(data);
   return PNGStreamToMetadata(inStream);
@@ -50,7 +50,7 @@ RDKIT_FILEPARSERS_EXPORT std::map<std::string, std::string> PNGStringToMetadata(
 RDKIT_FILEPARSERS_EXPORT ROMol *PNGStreamToMol(
     std::istream &inStream,
     const SmilesParserParams &params = SmilesParserParams());
-RDKIT_FILEPARSERS_EXPORT ROMol *PNGFileToMol(
+inline ROMol *PNGFileToMol(
     const std::string &fname,
     const SmilesParserParams &params = SmilesParserParams()) {
   std::ifstream inStream(fname.c_str(), std::ios::binary);
@@ -59,7 +59,7 @@ RDKIT_FILEPARSERS_EXPORT ROMol *PNGFileToMol(
   }
   return PNGStreamToMol(inStream, params);
 }
-RDKIT_FILEPARSERS_EXPORT ROMol *PNGStringToMol(
+inline ROMol *PNGStringToMol(
     const std::string &data,
     const SmilesParserParams &params = SmilesParserParams()) {
   std::stringstream inStream(data);
@@ -71,14 +71,14 @@ RDKIT_FILEPARSERS_EXPORT ROMol *PNGStringToMol(
 RDKIT_FILEPARSERS_EXPORT std::string addMetadataToPNGStream(
     std::istream &iStream, const std::map<std::string, std::string> &metadata,
     bool compressed = true);
-RDKIT_FILEPARSERS_EXPORT std::string addMetadataToPNGString(
+inline std::string addMetadataToPNGString(
     const std::string &pngString,
     const std::map<std::string, std::string> &metadata,
     bool compressed = true) {
   std::stringstream inStream(pngString);
   return addMetadataToPNGStream(inStream, metadata, compressed);
 }
-RDKIT_FILEPARSERS_EXPORT std::string addMetadataToPNGFile(
+inline std::string addMetadataToPNGFile(
     const std::string &fname,
     const std::map<std::string, std::string> &metadata,
     bool compressed = true) {
@@ -89,16 +89,16 @@ RDKIT_FILEPARSERS_EXPORT std::string addMetadataToPNGFile(
 RDKIT_FILEPARSERS_EXPORT std::string addMolToPNGStream(
     const ROMol &mol, std::istream &iStream, bool includeSmiles = true,
     bool includeMol = true);
-RDKIT_FILEPARSERS_EXPORT std::string addMolToPNGString(
-    const ROMol &mol, const std::string &pngString, bool includeSmiles = true,
-    bool includeMol = true) {
+inline std::string addMolToPNGString(const ROMol &mol,
+                                     const std::string &pngString,
+                                     bool includeSmiles = true,
+                                     bool includeMol = true) {
   std::stringstream inStream(pngString);
   return addMolToPNGStream(mol, inStream, includeSmiles, includeMol);
 }
-RDKIT_FILEPARSERS_EXPORT std::string addMolToPNGFile(const ROMol &mol,
-                                                     const std::string &fname,
-                                                     bool includeSmiles = true,
-                                                     bool includeMol = true) {
+inline std::string addMolToPNGFile(const ROMol &mol, const std::string &fname,
+                                   bool includeSmiles = true,
+                                   bool includeMol = true) {
   std::ifstream inStream(fname.c_str(), std::ios::binary);
   return addMolToPNGStream(mol, inStream, includeSmiles, includeMol);
 }
