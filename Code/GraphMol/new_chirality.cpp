@@ -302,7 +302,6 @@ std::vector<StereoInfo> findPotentialStereo(const ROMol &omol) {
       possibleAtoms.set(aidx);
       // set "fake stereo"
       atom->setChiralTag(Atom::CHI_TETRAHEDRAL_CW);
-      std::cerr << " yes: " << aidx << std::endl;
       atomSymbols[aidx] =
           (boost::format("%s-%d") % atom->getSymbol() % atom->getIdx()).str();
     } else {
@@ -351,14 +350,6 @@ std::vector<StereoInfo> findPotentialStereo(const ROMol &omol) {
   // FIX: think through what the next two mean here
   // note that the AtomCompareFunctor doesn't look at anything after
   // it sees a symbol
-
-  // 25.07.2020 FIX: the problem at the moment is that we need includeChirality
-  // and the assignment of fake stereo to get unspecified centers in rings to be
-  // recognized BUT... this makes the terminal methyls connected to atom 1 of
-  // CC(C)(O)[C@](Cl)(F)I distinct from each other, and *that* results in atom 1
-  // being identified as a possible stereocenter. Sigh...
-  // the solution may be to make the chiral atom functor only modify ring atoms?
-
   bool includeChirality = true;
   bool includeIsotopes = false;
   Canon::rankFragmentAtoms(mol, aranks, atomsInPlay, bondsInPlay, &atomSymbols,
@@ -379,8 +370,6 @@ std::vector<StereoInfo> findPotentialStereo(const ROMol &omol) {
       bool haveADupe = false;
       for (auto nbrIdx : sinfo.controllingAtoms) {
         auto rnk = aranks[nbrIdx];
-        std::cerr << "       " << aidx << " " << nbrIdx << "(" << rnk << ")"
-                  << std::endl;
         if (std::find(nbrs.begin(), nbrs.end(), rnk) != nbrs.end()) {
           haveADupe = true;
           break;
@@ -388,11 +377,8 @@ std::vector<StereoInfo> findPotentialStereo(const ROMol &omol) {
           nbrs.push_back(rnk);
         }
       }
-      std::cerr << "  dupe at? " << aidx << " " << haveADupe << " "
-                << res.size() << std::endl;
       if (!haveADupe) {
         res.push_back(sinfo);
-        std::cerr << "  push! " << res.size() << std::endl;
       }
     }
   }

@@ -335,7 +335,6 @@ TEST_CASE("possible stereochemistry on atoms", "[chirality]") {
     {
       auto mol = "CC(C)(O)[C@](Cl)(F)I"_smiles;
       REQUIRE(mol);
-      std::cerr << "--- 1" << std::endl;
       auto stereoInfo = Chirality::findPotentialStereo(*mol);
       REQUIRE(stereoInfo.size() == 1);
       CHECK(stereoInfo[0].type == Chirality::StereoType::Atom_Tetrahedral);
@@ -344,11 +343,9 @@ TEST_CASE("possible stereochemistry on atoms", "[chirality]") {
       std::vector<unsigned> catoms = {1, 5, 6, 7};
       CHECK(stereoInfo[0].controllingAtoms == catoms);
     }
-#if 1
     {
       auto mol = "C[C@@H](O)[C@H](C)[C@H](C)O"_smiles;
       REQUIRE(mol);
-      std::cerr << "--- 2" << std::endl;
       auto stereoInfo = Chirality::findPotentialStereo(*mol);
       REQUIRE(stereoInfo.size() == 3);
       CHECK(stereoInfo[0].type == Chirality::StereoType::Atom_Tetrahedral);
@@ -367,8 +364,6 @@ TEST_CASE("possible stereochemistry on atoms", "[chirality]") {
     {
       auto mol = "FC(F)(F)[C@@H](O)[C@H](C)[C@H](C(F)(F)F)O"_smiles;
       REQUIRE(mol);
-      std::cerr << "--- 3" << std::endl;
-
       auto stereoInfo = Chirality::findPotentialStereo(*mol);
       REQUIRE(stereoInfo.size() == 3);
       CHECK(stereoInfo[0].type == Chirality::StereoType::Atom_Tetrahedral);
@@ -383,13 +378,11 @@ TEST_CASE("possible stereochemistry on atoms", "[chirality]") {
       CHECK(stereoInfo[2].specified == Chirality::StereoSpecified::Specified);
       CHECK(stereoInfo[2].centeredOn == 8);
     }
-#endif
   }
   SECTION("simple unspecified") {
     {
       auto mol = "CC(C)(O)C(Cl)(F)I"_smiles;
       REQUIRE(mol);
-      std::cerr << "--- 4" << std::endl;
 
       auto stereoInfo = Chirality::findPotentialStereo(*mol);
       REQUIRE(stereoInfo.size() == 1);
@@ -528,8 +521,6 @@ TEST_CASE("ring stereochemistry", "[chirality]") {
     CHECK(stereoInfo[1].centeredOn == 4);
     CHECK(stereoInfo[1].specified == Chirality::StereoSpecified::Specified);
   }
-#if 1
-  // FIX this still isn't working
   SECTION("unspecified") {
     auto mol = "CC1CCC(C)CC1"_smiles;
     REQUIRE(mol);
@@ -544,7 +535,6 @@ TEST_CASE("ring stereochemistry", "[chirality]") {
     CHECK(stereoInfo[1].centeredOn == 4);
     CHECK(stereoInfo[1].specified == Chirality::StereoSpecified::Unspecified);
   }
-#endif
   SECTION("four ring") {
     auto mol = "C[C@H]1C[C@@H](C)C1"_smiles;
     auto stereoInfo = Chirality::findPotentialStereo(*mol);
@@ -571,7 +561,7 @@ TEST_CASE("ring stereochemistry", "[chirality]") {
   }
 }
 #if 0
-// FIX: the double bond stereo in rings isn't working
+// FIX: the double bond stereo in rings isn't working. This also fails with the canonicalizer, so it's not unique to this code
 TEST_CASE("tricky recursive example from Dan Nealschneider", "[chirality]") {
   SECTION("adapted") {
     auto mol = "CC=C1CCC(O)CC1"_smiles;
@@ -608,7 +598,6 @@ TEST_CASE("tricky recursive example from Dan Nealschneider", "[chirality]") {
     CHECK(stereoInfo[1].centeredOn == 1);
     CHECK(stereoInfo[1].specified == Chirality::StereoSpecified::Specified);
   }
-#if 1
   // FIX this still isn't working
   SECTION("unspecified") {
     auto mol = "CC=C1C[CH](O)C1"_smiles;
@@ -623,6 +612,5 @@ TEST_CASE("tricky recursive example from Dan Nealschneider", "[chirality]") {
     CHECK(stereoInfo[1].centeredOn == 1);
     CHECK(stereoInfo[1].specified == Chirality::StereoSpecified::Unspecified);
   }
-#endif
 }
 #endif

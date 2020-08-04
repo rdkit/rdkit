@@ -603,6 +603,9 @@ void updateAtomNeighborNumSwaps(
 
 void rankMolAtoms(const ROMol &mol, std::vector<unsigned int> &res,
                   bool breakTies, bool includeChirality, bool includeIsotopes) {
+  if (!mol.getRingInfo()->isInitialized()) {
+    MolOps::fastFindRings(mol);
+  }
   res.resize(mol.getNumAtoms());
 
   if (!mol.getNumAtoms()) {
@@ -641,6 +644,9 @@ void rankFragmentAtoms(const ROMol &mol, std::vector<unsigned int> &res,
   PRECONDITION(!bondSymbols || bondSymbols->size() == mol.getNumBonds(),
                "bad bondSymbols size");
 
+  if (!mol.getRingInfo()->isInitialized()) {
+    MolOps::fastFindRings(mol);
+  }
   res.resize(mol.getNumAtoms());
 
   if (!mol.getNumAtoms()) {
@@ -668,6 +674,9 @@ void rankFragmentAtoms(const ROMol &mol, std::vector<unsigned int> &res,
 }  // end of rankFragmentAtoms()
 
 void chiralRankMolAtoms(const ROMol &mol, std::vector<unsigned int> &res) {
+  if (!mol.getRingInfo()->isInitialized()) {
+    MolOps::fastFindRings(mol);
+  }
   res.resize(mol.getNumAtoms());
 
   if (!mol.getNumAtoms()) {

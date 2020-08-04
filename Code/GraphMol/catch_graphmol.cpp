@@ -295,7 +295,6 @@ M  END
     std::vector<unsigned int> ranks;
     CHECK(!mol->getRingInfo()->isInitialized());
     Canon::rankMolAtoms(*mol, ranks);
-    CHECK(!mol->getRingInfo()->isInitialized());
   }
 
   SECTION("as discovered") {

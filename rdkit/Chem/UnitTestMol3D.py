@@ -392,7 +392,7 @@ class TestCase(unittest.TestCase):
     mol = Chem.MolFromSmiles('CC=CC')
     mol.GetBondWithIdx(1).SetStereo(Chem.rdchem.BondStereo.STEREOANY)
 
-    assert len(list(AllChem.EnumerateStereoisomers(mol))) == 2
+    self.assertEqual(len(list(AllChem.EnumerateStereoisomers(mol))),2)
 
   def testIssue3231(self):
     mol = Chem.MolFromSmiles(
