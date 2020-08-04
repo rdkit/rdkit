@@ -426,6 +426,19 @@ ROMol *MolFromPNGString(python::object png, python::object pyParams) {
   return newM;
 }
 
+python::object addMolToPNGStringHelper(const ROMol &mol, python::object png,
+                                       bool includeSmiles, bool includeMol) {
+  std::cerr << "extract" << std::endl;
+  std::string cstr = python::extract<std::string>(png);
+  std::cerr << "done " << cstr.size() << std::endl;
+
+  auto res = addMolToPNGString(mol, cstr, includeSmiles, includeMol);
+
+  python::object retval = python::object(
+      python::handle<>(PyBytes_FromStringAndSize(res.c_str(), res.length())));
+  return retval;
+}
+
 }  // namespace RDKit
 
 // MolSupplier stuff
@@ -1481,39 +1494,80 @@ BOOST_PYTHON_MODULE(rdmolfiles) {
       "returns a list of SMILES generated using the randomSmiles algorithm");
 
   docString =
-      "Construct a molecule from metadata in a PNG string.\n\n\
-     ARGUMENTS:\n\
-   \n\
-       - PNG: the PNG string\n\
-   \n\
-       - params: used to provide optional parameters for the SMILES parsing\n\
-   \n\
-     RETURNS:\n\
-   \n\
-       a Mol object, None on failure.\n\
-   \n";
+      R"DOC(Construct a molecule from metadata in a PNG string.
+
+     ARGUMENTS:
+
+       - png: the PNG string
+
+       - params: used to provide optional parameters for the metadata parsing
+
+     RETURNS:
+       a Mol object, None on failure.
+  )DOC";
   python::def("MolFromPNGString", MolFromPNGString,
               (python::arg("png"), python::arg("params") = python::object()),
               docString.c_str(),
               python::return_value_policy<python::manage_new_object>());
 
   docString =
-      "Construct a molecule from metadata in a PNG file.\n\n\
-     ARGUMENTS:\n\
-   \n\
-       - PNG: the PNG filename\n\
-   \n\
-       - params: used to provide optional parameters for the SMILES parsing\n\
-   \n\
-     RETURNS:\n\
-   \n\
-       a Mol object, None on failure.\n\
-   \n";
+      R"DOC(Construct a molecule from metadata in a PNG file.
+
+     ARGUMENTS:
+
+       - filename: the PNG filename
+
+       - params: used to provide optional parameters for the metadata parsing
+
+     RETURNS:
+       a Mol object, None on failure.)DOC";
   python::def(
       "MolFromPNGFile", MolFromPNGFile,
       (python::arg("filename"), python::arg("params") = python::object()),
       docString.c_str(),
       python::return_value_policy<python::manage_new_object>());
+
+  docString =
+      R"DOC(Writes molecular metadata to a PNG file.
+
+     ARGUMENTS:
+
+       - mol: the molecule
+
+       - filename: the PNG filename
+
+       - includeSmiles: include CXSmiles in the output
+
+       - includeMol: include CTAB (Mol) in the output
+
+     RETURNS:
+       a Mol object, None on failure.)DOC";
+  python::def(
+      "MolMetadataToPNGFile", addMolToPNGFile,
+      (python::arg("mol"), python::arg("filename"),
+       python::arg("includeSmiles") = true, python::arg("includeMol") = false),
+      docString.c_str());
+
+  docString =
+      R"DOC(Adds molecular metadata to a PNG string.
+
+     ARGUMENTS:
+
+       - mol: the molecule
+
+       - png: the PNG string
+
+       - includeSmiles: include CXSmiles in the output
+
+       - includeMol: include CTAB (Mol) in the output
+
+     RETURNS:
+       a Mol object, None on failure.)DOC";
+  python::def(
+      "MolMetadataToPNGString", addMolToPNGStringHelper,
+      (python::arg("mol"), python::arg("png"),
+       python::arg("includeSmiles") = true, python::arg("includeMol") = false),
+      docString.c_str());
 
 /********************************************************
  * MolSupplier stuff
