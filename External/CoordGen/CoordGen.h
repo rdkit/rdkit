@@ -85,6 +85,17 @@ unsigned int addCoords(T& mol, const CoordGenParams* params = nullptr) {
     }
   }
 
+  // if we're doing coordinate minimization it makes our life easier to
+  // start by translating to the origin
+  RDGeom::Point3D centroid{0.0, 0.0, 0.0};
+  if (params->minimizeOnly) {
+    auto conf = mol.getConformer();
+    for (unsigned int i = 0; i < mol.getNumAtoms(); ++i) {
+      centroid += conf.getAtomPos(i);
+    }
+    centroid /= mol.getNumAtoms();
+  }
+
   std::vector<sketcherMinimizerAtom*> ats(mol.getNumAtoms());
   for (auto atit = mol.beginAtoms(); atit != mol.endAtoms(); ++atit) {
     auto oatom = *atit;
@@ -94,6 +105,7 @@ unsigned int addCoords(T& mol, const CoordGenParams* params = nullptr) {
     atom->charge = oatom->getFormalCharge();
     if (params->minimizeOnly) {
       auto coords = mol.getConformer().getAtomPos(oatom->getIdx());
+      coords -= centroid;
       atom->coordinates = sketcherMinimizerPointF(coords.x * scaleFactor,
                                                   coords.y * scaleFactor);
       atom->fixed = false;
@@ -102,7 +114,6 @@ unsigned int addCoords(T& mol, const CoordGenParams* params = nullptr) {
                                        params->coordMap.end()) {
       atom->constrained = params->dbg_useConstrained;
       atom->fixed = params->dbg_useFixed;
-      RDGeom::Point2D coords;
       if (hasTemplateMatch) {
         for (auto& pr : mv) {
           if (pr.second == static_cast<int>(oatom->getIdx())) {
@@ -113,7 +124,6 @@ unsigned int addCoords(T& mol, const CoordGenParams* params = nullptr) {
             break;
           }
         }
-        coords = params->coordMap.find(oatom->getIdx())->second;
       } else {
         const RDGeom::Point2D& coords =
             params->coordMap.find(oatom->getIdx())->second;
@@ -124,6 +134,14 @@ unsigned int addCoords(T& mol, const CoordGenParams* params = nullptr) {
     ats[oatom->getIdx()] = atom;
   }
 
+  // coordgen has its own ideas about what bond lengths should be
+  // if we are doing minimizeOnly we want to do a rigid scaling after the
+  // minimization in order to try and get as close to where we started as
+  // possible
+  double singleBondLenAccum = 0.0;
+  double bondLenAccum = 0.0;
+  unsigned nSingle = 0;
+
   std::vector<sketcherMinimizerBond*> bnds(mol.getNumBonds());
   for (auto bndit = mol.beginBonds(); bndit != mol.endBonds(); ++bndit) {
     auto obnd = *bndit;
@@ -133,6 +151,13 @@ unsigned int addCoords(T& mol, const CoordGenParams* params = nullptr) {
     switch (obnd->getBondType()) {
       case Bond::SINGLE:
         bnd->bondOrder = 1;
+        if (params->minimizeOnly) {
+          ++nSingle;
+          singleBondLenAccum +=
+              (mol.getConformer().getAtomPos(obnd->getBeginAtomIdx()) -
+               mol.getConformer().getAtomPos(obnd->getEndAtomIdx()))
+                  .length();
+        }
         break;
       case Bond::DOUBLE:
         bnd->bondOrder = 2;
@@ -147,6 +172,20 @@ unsigned int addCoords(T& mol, const CoordGenParams* params = nullptr) {
         BOOST_LOG(rdWarningLog) << "unrecognized bond type";
     }
     bnds[obnd->getIdx()] = bnd;
+    if (params->minimizeOnly) {
+      bondLenAccum += (mol.getConformer().getAtomPos(obnd->getBeginAtomIdx()) -
+                       mol.getConformer().getAtomPos(obnd->getEndAtomIdx()))
+                          .length();
+    }
+  }
+  double avgBondLen = 1.0;
+  if (params->minimizeOnly) {
+    if (nSingle) {
+      avgBondLen = singleBondLenAccum / nSingle;
+    }
+    if (mol.getNumBonds()) {
+      avgBondLen = bondLenAccum / mol.getNumBonds();
+    }
   }
 
   // setup double bond stereo
@@ -179,9 +218,15 @@ unsigned int addCoords(T& mol, const CoordGenParams* params = nullptr) {
   }
   auto conf = new Conformer(mol.getNumAtoms());
   for (size_t i = 0; i < mol.getNumAtoms(); ++i) {
-    conf->setAtomPos(
-        i, RDGeom::Point3D(ats[i]->coordinates.x() / scaleFactor,
-                           ats[i]->coordinates.y() / scaleFactor, 0.0));
+    auto coords = RDGeom::Point3D(ats[i]->coordinates.x() / scaleFactor,
+                                  ats[i]->coordinates.y() / scaleFactor, 0.0);
+    if (params->minimizeOnly) {
+      // readjust the average bond length from 1 (coordgen's target)
+      // to whatever we started with
+      coords *= avgBondLen;
+      coords += centroid;
+    }
+    conf->setAtomPos(i, coords);
     // std::cerr << atom->coordinates << std::endl;
   }
   conf->set3D(false);
@@ -199,4 +244,4 @@ unsigned int addCoords(T& mol, const CoordGenParams* params = nullptr) {
   return res;
 }
 }  // end of namespace CoordGen
-}  // end of namespace RDKit
+}  // namespace RDKit

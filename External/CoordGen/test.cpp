@@ -16,6 +16,7 @@
 #include <GraphMol/Substruct/SubstructMatch.h>
 #include <GraphMol/MolAlign/AlignMolecules.h>
 #include <GraphMol/MolTransforms/MolTransforms.h>
+#include <GraphMol/ChemTransforms/ChemTransforms.h>
 
 #include <RDGeneral/RDLog.h>
 
@@ -526,30 +527,23 @@ M  END
     auto ref = R"CTAB(
      RDKit          2D
 
-  0  0  0  0  0  0  0  0  0  0999 V3000
-M  V30 BEGIN CTAB
-M  V30 COUNTS 8 8 0 0 0
-M  V30 BEGIN ATOM
-M  V30 1 C -1.07067 -0.773332 0 0
-M  V30 2 C -1.89738 -0.208397 0 0
-M  V30 3 C -1.29974 0.594988 0 0
-M  V30 4 C -0.472977 0.0300696 0 0
-M  V30 5 C 0.504747 0.194919 0 0
-M  V30 6 O 0.853488 1.13234 0 0
-M  V30 7 O 1.14331 -0.575268 0 0
-M  V30 8 C 2.1297 -0.407048 0 0
-M  V30 END ATOM
-M  V30 BEGIN BOND
-M  V30 1 1 1 2
-M  V30 2 1 2 3
-M  V30 3 1 3 4
-M  V30 4 1 4 5
-M  V30 5 2 5 6
-M  V30 6 1 5 7
-M  V30 7 1 7 8
-M  V30 8 1 4 1
-M  V30 END BOND
-M  V30 END CTAB
+  8  8  0  0  0  0  0  0  0  0999 V2000
+   -1.5738   -1.1409    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -2.7946   -0.3071    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -1.9122    0.8790    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -0.6914    0.0452    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    0.7517    0.2885    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    1.2665    1.6721    0.0000 O   0  0  0  0  0  0  0  0  0  0  0  0
+    1.6941   -0.8483    0.0000 O   0  0  0  0  0  0  0  0  0  0  0  0
+    3.1500   -0.6002    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+  1  2  1  0
+  2  3  1  0
+  3  4  1  0
+  4  5  1  0
+  5  6  2  0
+  5  7  1  0
+  7  8  1  0
+  4  1  1  0
 M  END
 )CTAB"_ctab;
     TEST_ASSERT(ref);
@@ -558,7 +552,8 @@ M  END
     CoordGen::CoordGenParams ps;
     ps.minimizeOnly = true;
     CoordGen::addCoords(*m1, &ps);
-    double rmsd = MolAlign::alignMol(*m1, *ref);
+    ROMol m2(*m1);
+    double rmsd = MolAlign::alignMol(m2, *ref);
     TEST_ASSERT(rmsd < 0.1);
   }
   BOOST_LOG(rdInfoLog) << "done" << std::endl;

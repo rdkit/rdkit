@@ -116,7 +116,7 @@ if(RDK_BUILD_COORDGEN_SUPPORT)
 
   rdkit_test(testCoordGen test.cpp
     LINK_LIBRARIES
-    ${RDK_COORDGEN_LIBS} Depictor
+    ${RDK_COORDGEN_LIBS} Depictor ChemTransforms
     FileParsers SmilesParse SubstructMatch GraphMol
     RDGeneral DataStructs RDGeneral RDGeometryLib
     ${RDKit_THREAD_LIBS})
