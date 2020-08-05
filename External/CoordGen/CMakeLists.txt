@@ -90,8 +90,8 @@ if(RDK_BUILD_COORDGEN_SUPPORT)
           ${CMAKE_CURRENT_SOURCE_DIR}/coordgenlibs-${RELEASE_NO}.tar.gz
           WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR})
         
-        // FIX: this is a workaround until https://github.com/schrodinger/coordgenlibs/pull/76
-        // is merged and a new coordgen release is done
+        # FIX: this is a workaround until https://github.com/schrodinger/coordgenlibs/pull/76
+        # is merged and a new coordgen release is done
         file(RENAME "coordgenlibs-${RELEASE_NO}" "${COORDGEN_DIR}")
         set(fileToPatch "${COORDGEN_DIR}/CoordgenFragmenter.h")
         configure_file("${fileToPatch}" "${fileToPatch}.orig" COPYONLY)
