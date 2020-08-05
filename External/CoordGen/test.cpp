@@ -493,117 +493,73 @@ void testCoordgenMinimize() {
   {
     auto m1 =
         R"CTAB(
-  Mrv2014 07302005442D          
+  Mrv2014 08052005142D          
 
   0  0  0     0  0            999 V3000
 M  V30 BEGIN CTAB
-M  V30 COUNTS 10 11 0 0 0
+M  V30 COUNTS 8 8 0 0 0
 M  V30 BEGIN ATOM
-M  V30 1 C 3.3741 -12.4894 0 0
-M  V30 2 C 4.7698 -13.1402 0 0
-M  V30 3 C 6.0313 -12.2569 0 0
-M  V30 4 C 5.8971 -10.7228 0 0
-M  V30 5 C 4.5014 -10.072 0 0
-M  V30 6 C 3.2399 -10.9553 0 0
-M  V30 7 C 4.4148 -11.2907 0 0
-M  V30 8 C 1.8442 -10.3045 0 0
-M  V30 9 C 3.1057 -9.4212 0 0
-M  V30 10 C 1.5715 -9.5554 0 0
+M  V30 1 C -2.1121 -0.3399 0 0
+M  V30 2 C -3.3708 0.5474 0 0
+M  V30 3 C -1.9835 0.9311 0 0
+M  V30 4 C -0.7248 0.0437 0 0
+M  V30 5 C 0.7926 0.3064 0 0
+M  V30 6 O 1.3239 1.7518 0 0
+M  V30 7 O 0.612 -1.2514 0 0
+M  V30 8 C 1.3429 -0.2989 0 0
 M  V30 END ATOM
 M  V30 BEGIN BOND
 M  V30 1 1 1 2
 M  V30 2 1 2 3
 M  V30 3 1 3 4
 M  V30 4 1 4 5
-M  V30 5 1 5 6
-M  V30 6 1 1 6
-M  V30 7 1 1 7
-M  V30 8 1 7 4
-M  V30 9 1 6 8
-M  V30 10 1 8 9
-M  V30 11 1 9 10
+M  V30 5 2 5 6
+M  V30 6 1 5 7
+M  V30 7 1 7 8
+M  V30 8 1 4 1
 M  V30 END BOND
 M  V30 END CTAB
 M  END
 )CTAB"_ctab;
     TEST_ASSERT(m1);
     TEST_ASSERT(m1->getNumConformers() == 1);
-    ROMol m2(*m1);
-    // std::cerr << " FULL CG" << std::endl;
-    // TEST_ASSERT(CoordGen::addCoords(m2) == 0);
-    // std::cerr << MolToV3KMolBlock(m2) << std::endl;
-    CoordGen::CoordGenParams ps;
-    ps.minimizeOnly = true;
-    std::cerr << " minimize only" << std::endl;
-    CoordGen::addCoords(*m1, &ps);
-    std::cerr << MolToV3KMolBlock(*m1) << std::endl;
-  }
-  {
-    auto m1 =
-        R"CTAB(
-  Mrv2014 08042019502D          
+    auto ref = R"CTAB(
+     RDKit          2D
 
-  0  0  0     0  0            999 V3000
+  0  0  0  0  0  0  0  0  0  0999 V3000
 M  V30 BEGIN CTAB
-M  V30 COUNTS 19 21 0 0 0
+M  V30 COUNTS 8 8 0 0 0
 M  V30 BEGIN ATOM
-M  V30 1 C -6.3333 -4.7717 0 0
-M  V30 2 C -7.667 -4.0017 0 0
-M  V30 3 C -9.0008 -4.7717 0 0
-M  V30 4 C -9.0008 -6.3117 0 0
-M  V30 5 C -7.667 -7.0817 0 0
-M  V30 6 C -6.3333 -6.3117 0 0
-M  V30 7 C -4.9997 -7.0817 0 0
-M  V30 8 C -3.6659 -6.3117 0 0
-M  V30 9 C -3.6659 -4.7717 0 0
-M  V30 10 C -4.9997 -4.0017 0 0
-M  V30 11 C -2.3322 -4.0016 0 0
-M  V30 12 C -2.5332 -5.5285 0 0
-M  V30 13 C -1.4443 -4.4395 0 0
-M  V30 14 C -9.0007 -3.2317 0 0
-M  V30 15 C -7.9117 -2.1427 0 0
-M  V30 16 O -10.0896 -4.3206 0 0
-M  V30 17 C -7.9117 -0.6027 0 0
-M  V30 18 C -6.6217 -1.0194 0 0
-M  V30 19 C -6.3717 -2.1427 0 0
+M  V30 1 C -1.07067 -0.773332 0 0
+M  V30 2 C -1.89738 -0.208397 0 0
+M  V30 3 C -1.29974 0.594988 0 0
+M  V30 4 C -0.472977 0.0300696 0 0
+M  V30 5 C 0.504747 0.194919 0 0
+M  V30 6 O 0.853488 1.13234 0 0
+M  V30 7 O 1.14331 -0.575268 0 0
+M  V30 8 C 2.1297 -0.407048 0 0
 M  V30 END ATOM
 M  V30 BEGIN BOND
 M  V30 1 1 1 2
-M  V30 2 2 2 3
+M  V30 2 1 2 3
 M  V30 3 1 3 4
-M  V30 4 2 4 5
-M  V30 5 1 5 6
-M  V30 6 2 7 8
-M  V30 7 1 8 9
-M  V30 8 2 9 10
-M  V30 9 2 1 6
-M  V30 10 1 1 10
-M  V30 11 1 6 7
-M  V30 12 1 9 11
-M  V30 13 1 11 12
-M  V30 14 1 12 13
-M  V30 15 1 2 14
-M  V30 16 1 14 15
-M  V30 17 2 14 16
-M  V30 18 1 17 18
-M  V30 19 1 18 19
-M  V30 20 1 17 15
-M  V30 21 1 15 19
+M  V30 4 1 4 5
+M  V30 5 2 5 6
+M  V30 6 1 5 7
+M  V30 7 1 7 8
+M  V30 8 1 4 1
 M  V30 END BOND
 M  V30 END CTAB
 M  END
 )CTAB"_ctab;
-    TEST_ASSERT(m1);
-    TEST_ASSERT(m1->getNumConformers() == 1);
-    ROMol m2(*m1);
-    // std::cerr << " FULL CG" << std::endl;
-    // TEST_ASSERT(CoordGen::addCoords(m2) == 0);
-    // std::cerr << MolToV3KMolBlock(m2) << std::endl;
+    TEST_ASSERT(ref);
+    TEST_ASSERT(ref->getNumConformers() == 1);
+
     CoordGen::CoordGenParams ps;
     ps.minimizeOnly = true;
-    std::cerr << " minimize only" << std::endl;
     CoordGen::addCoords(*m1, &ps);
-    std::cerr << MolToV3KMolBlock(*m1) << std::endl;
+    double rmsd = MolAlign::alignMol(*m1, *ref);
+    TEST_ASSERT(rmsd < 0.1);
   }
   BOOST_LOG(rdInfoLog) << "done" << std::endl;
 }
@@ -612,7 +568,7 @@ int main(int argc, char* argv[]) {
   (void)argc;
   (void)argv;
   RDLog::InitLogs();
-#if 0
+#if 1
   test2();
   test1();
   testGithub1929();

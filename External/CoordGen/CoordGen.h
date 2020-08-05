@@ -60,6 +60,12 @@ unsigned int addCoords(T& mol, const CoordGenParams* params = nullptr) {
       templateFileDir += "/Data/";
     }
   }
+
+  if (params->minimizeOnly && !mol.getNumConformers()) {
+    throw ValueErrorException(
+        "minimizeOnly set but molecule has no conformers");
+  }
+
   double scaleFactor = params->coordgenScaling;
 
   sketcherMinimizer minimizer(params->minimizerPrecision);
@@ -72,7 +78,8 @@ unsigned int addCoords(T& mol, const CoordGenParams* params = nullptr) {
   }
   bool hasTemplateMatch = false;
   MatchVectType mv;
-  if (params->templateMol && params->templateMol->getNumConformers() == 1) {
+  if (!params->minimizeOnly && params->templateMol &&
+      params->templateMol->getNumConformers() == 1) {
     if (SubstructMatch(mol, *(params->templateMol), mv)) {
       hasTemplateMatch = true;
     }
@@ -165,7 +172,7 @@ unsigned int addCoords(T& mol, const CoordGenParams* params = nullptr) {
 
   minimizer.initialize(min_mol);
   if (!params->minimizeOnly) {
-    auto tmp = minimizer.runGenerateCoordinates();
+    minimizer.runGenerateCoordinates();
   } else {
     CoordgenFragmenter::splitIntoFragments(min_mol);
     minimizer.m_minimizer.minimizeMolecule(min_mol);
@@ -178,11 +185,10 @@ unsigned int addCoords(T& mol, const CoordGenParams* params = nullptr) {
     // std::cerr << atom->coordinates << std::endl;
   }
   conf->set3D(false);
-  // if (!params->minimizeOnly) {
   mol.clearConformers();
-  //}
   auto res = mol.addConformer(conf, true);
-  if (params->coordMap.empty() && !params->templateMol) {
+  if (!params->minimizeOnly && params->coordMap.empty() &&
+      !params->templateMol) {
     // center the coordinates
     RDGeom::Transform3D tf;
     auto centroid = MolTransforms::computeCentroid(*conf);
