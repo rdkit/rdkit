@@ -86,6 +86,8 @@ bool MultithreadedMolSupplier::atEnd() {
   return (d_outputQueue->isEmpty() && d_outputQueue->getDone());
 }
 
-void MultithreadedMolSupplier::reset() { ; }
+void MultithreadedMolSupplier::reset() {
+  UNDER_CONSTRUCTION("reset() not supported for MultithreadedMolSupplier();");
+}
 
 }  // namespace RDKit

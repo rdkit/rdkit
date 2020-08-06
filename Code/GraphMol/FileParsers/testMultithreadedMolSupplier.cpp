@@ -153,11 +153,10 @@ int main() {
   BOOST_LOG(rdErrorLog) << "-----------------------------------------\n\n";
 
   /*
-          BOOST_LOG(rdErrorLog) <<
-     "\n-----------------------------------------\n"; testSmiPerformance();
-          BOOST_LOG(rdErrorLog) << "Finished: testSmiPerformance()\n";
-          BOOST_LOG(rdErrorLog) <<
-     "-----------------------------------------\n\n";
+  BOOST_LOG(rdErrorLog) << "\n-----------------------------------------\n";
+        testSmiPerformance();
+  BOOST_LOG(rdErrorLog) << "Finished: testSmiPerformance()\n";
+  BOOST_LOG(rdErrorLog) << "-----------------------------------------\n\n";
   */
 
 #endif

@@ -30,7 +30,6 @@ class RDKIT_FILEPARSERS_EXPORT MultithreadedSmilesMolSupplier
   MultithreadedSmilesMolSupplier();
   ~MultithreadedSmilesMolSupplier();
 
-  //! initialize data members using init to prevent code duplication
   void init(){};
   void _init(bool takeOwnership, const std::string &delimiter, int smilesColumn,
              int nameColumn, bool titleLine, bool sanitize,

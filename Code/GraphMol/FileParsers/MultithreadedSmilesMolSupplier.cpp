@@ -120,7 +120,7 @@ long int MultithreadedSmilesMolSupplier::skipComments() {
 }
 
 // ensures that there is a line available to be read
-// from the file:
+// from the file
 void MultithreadedSmilesMolSupplier::checkForEnd() {
   PRECONDITION(dp_inStream, "no stream");
   int pos = this->skipComments();
@@ -133,17 +133,6 @@ void MultithreadedSmilesMolSupplier::checkForEnd() {
 
 bool MultithreadedSmilesMolSupplier::getEnd() const { return df_end; }
 
-// --------------------------------------------------
-//
-//  Returns true if EOF is hit else false.
-//
-//  Side-effects:
-//    - If EOF is hit without reading anything, the df_end
-//      flag will be set.
-//    - If a real line is read, our d_line counter is
-//      incremented
-//
-// --------------------------------------------------
 std::string MultithreadedSmilesMolSupplier::nextLine() {
   PRECONDITION(dp_inStream, "bad stream");
   if (df_end) {
@@ -192,8 +181,8 @@ void MultithreadedSmilesMolSupplier::processTitleLine() {
 //  Moves to the position of a particular entry in the
 //  stream.
 //
-//  If insufficient entries are present, a FileParseException
-//    will be thrown
+//  If insufficient entries are present, the method returns false
+//	instead of throwing an exception
 //
 bool MultithreadedSmilesMolSupplier::moveTo(unsigned int idx) {
   PRECONDITION(dp_inStream, "bad instream");
