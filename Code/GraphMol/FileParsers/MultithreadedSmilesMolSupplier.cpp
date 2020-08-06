@@ -15,28 +15,12 @@ MultithreadedSmilesMolSupplier::MultithreadedSmilesMolSupplier(
     int nameColumn, bool titleLine, bool sanitize,
     unsigned int numWriterThreads, size_t sizeInputQueue,
     size_t sizeOutputQueue) {
-  init();
   dp_inStream = openAndCheckStream(fileName);
   CHECK_INVARIANT(dp_inStream, "bad instream");
   CHECK_INVARIANT(!(dp_inStream->eof()), "early EOF");
-
-  df_owner = true;
-  d_numWriterThreads = numWriterThreads;
-  d_sizeInputQueue = sizeInputQueue;
-  d_sizeOutputQueue = sizeOutputQueue;
-  d_inputQueue =
-      new ConcurrentQueue<std::tuple<std::string, unsigned int, unsigned int>>(
-          d_sizeInputQueue);
-  d_outputQueue =
-      new ConcurrentQueue<std::tuple<ROMol *, std::string, unsigned int>>(
-          d_sizeOutputQueue);
-
-  d_delim = delimiter;
-  df_sanitize = sanitize;
-  df_title = titleLine;
-  d_smi = smilesColumn;
-  d_name = nameColumn;
-
+  // set df_takeOwnership = true
+  _init(true, delimiter, smilesColumn, nameColumn, titleLine, sanitize,
+        numWriterThreads, sizeInputQueue, sizeOutputQueue);
   this->checkForEnd();
   startThreads();
   POSTCONDITION(dp_inStream, "bad instream");
@@ -47,40 +31,19 @@ MultithreadedSmilesMolSupplier::MultithreadedSmilesMolSupplier(
     int smilesColumn, int nameColumn, bool titleLine, bool sanitize,
     unsigned int numWriterThreads, size_t sizeInputQueue,
     size_t sizeOutputQueue) {
-  init();
   CHECK_INVARIANT(inStream, "bad instream");
   CHECK_INVARIANT(!(inStream->eof()), "early EOF");
   dp_inStream = inStream;
-  df_owner = takeOwnership;
-  d_numWriterThreads = numWriterThreads;
-  d_sizeInputQueue = sizeInputQueue;
-  d_sizeOutputQueue = sizeOutputQueue;
-  d_inputQueue =
-      new ConcurrentQueue<std::tuple<std::string, unsigned int, unsigned int>>(
-          d_sizeInputQueue);
-  d_outputQueue =
-      new ConcurrentQueue<std::tuple<ROMol *, std::string, unsigned int>>(
-          d_sizeOutputQueue);
-
-  d_delim = delimiter;
-  df_sanitize = sanitize;
-  df_title = titleLine;
-  d_smi = smilesColumn;
-  d_name = nameColumn;
-
+  _init(takeOwnership, delimiter, smilesColumn, nameColumn, titleLine, sanitize,
+        numWriterThreads, sizeInputQueue, sizeOutputQueue);
   this->checkForEnd();
   startThreads();
   POSTCONDITION(dp_inStream, "bad instream");
 }
 
 MultithreadedSmilesMolSupplier::MultithreadedSmilesMolSupplier() {
-  init();
-  d_inputQueue =
-      new ConcurrentQueue<std::tuple<std::string, unsigned int, unsigned int>>(
-          d_sizeInputQueue);
-  d_outputQueue =
-      new ConcurrentQueue<std::tuple<ROMol *, std::string, unsigned int>>(
-          d_sizeOutputQueue);
+  dp_inStream = nullptr;
+  _init(true, "", 0, 1, true, true, 2, 5, 5);
   startThreads();
 }
 
@@ -90,14 +53,34 @@ MultithreadedSmilesMolSupplier::~MultithreadedSmilesMolSupplier() {
   }
 }
 
-void MultithreadedSmilesMolSupplier::init() {
-  dp_inStream = nullptr;
-  df_owner = true;
-  d_numWriterThreads = 2;
-  d_sizeInputQueue = 5;
-  d_sizeOutputQueue = 5;
+void MultithreadedSmilesMolSupplier::_init(bool takeOwnership,
+                                           const std::string &delimiter,
+                                           int smilesColumn, int nameColumn,
+                                           bool titleLine, bool sanitize,
+                                           unsigned int numWriterThreads,
+                                           size_t sizeInputQueue,
+                                           size_t sizeOutputQueue) {
+  df_owner = takeOwnership;
+  d_delim = delimiter;
+  d_smi = smilesColumn;
+  d_name = nameColumn;
+  df_title = titleLine;
+  df_sanitize = sanitize;
+  d_numWriterThreads = numWriterThreads;
+  d_sizeInputQueue = sizeInputQueue;
+  d_sizeOutputQueue = sizeOutputQueue;
+  d_inputQueue =
+      new ConcurrentQueue<std::tuple<std::string, unsigned int, unsigned int>>(
+          d_sizeInputQueue);
+  d_outputQueue =
+      new ConcurrentQueue<std::tuple<ROMol *, std::string, unsigned int>>(
+          d_sizeOutputQueue);
   df_end = false;
+  d_len = -1;
+  d_next = -1;
   d_line = -1;
+  d_molpos.clear();
+  d_lineNums.clear();
 }
 
 // --------------------------------------------------
@@ -182,35 +165,151 @@ std::string MultithreadedSmilesMolSupplier::nextLine() {
   return record;
 }
 
-bool MultithreadedSmilesMolSupplier::extractNextRecord(std::string &record,
-                                                       unsigned int &lineNum,
-                                                       unsigned int &index) {
+// --------------------------------------------------
+//
+//  Reads and processes the title line
+//
+void MultithreadedSmilesMolSupplier::processTitleLine() {
   PRECONDITION(dp_inStream, "bad stream");
-  if (this->getEnd()) {
-    return -1;
+  int pos = this->skipComments();
+  if (pos >= 0) {
+    dp_inStream->seekg(pos);
+
+    std::string tempStr = getLine(dp_inStream);
+    boost::char_separator<char> sep(d_delim.c_str(), "",
+                                    boost::keep_empty_tokens);
+    tokenizer tokens(tempStr, sep);
+    for (tokenizer::iterator tokIter = tokens.begin(); tokIter != tokens.end();
+         ++tokIter) {
+      std::string pname = strip(*tokIter);
+      d_props.push_back(pname);
+    }
+  }
+}
+
+// --------------------------------------------------
+//
+//  Moves to the position of a particular entry in the
+//  stream.
+//
+//  If insufficient entries are present, a FileParseException
+//    will be thrown
+//
+bool MultithreadedSmilesMolSupplier::moveTo(unsigned int idx) {
+  PRECONDITION(dp_inStream, "bad instream");
+  // get the easy situations (boundary conditions) out of the
+  // way first:
+  if (d_len > -1 && idx >= static_cast<unsigned int>(d_len)) {
+    df_end = true;
+    return false;
   }
 
-  std::streampos prev = dp_inStream->tellg();
-  std::string tempStr = this->nextLine();
-  if (!df_end) {
-    // if we didn't immediately hit EOF, loop until we get a valid line:
-    while ((tempStr[0] == '#') || (strip(tempStr).size() == 0)) {
-      prev = dp_inStream->tellg();
-      tempStr = this->nextLine();
-      if (this->getEnd()) {
+  // dp_inStream->seekg() is called for all idx values
+  // and earlier calls to next() may have put the stream into a bad state
+  dp_inStream->clear();
+
+  // -----------
+  // Case 1: we have already read the particular entry:
+  //
+  // Set the stream position and return
+  // -----------
+  if (!d_molpos.empty() && d_molpos.size() > idx) {
+    dp_inStream->clear();  // clear the EOF tag if it has been set
+    df_end = false;
+    dp_inStream->seekg(d_molpos[idx]);
+    d_next = idx;
+    d_line = d_lineNums[idx];
+    return true;
+  }
+
+  // -----------
+  // Case 2: we haven't read the entry, so move forward until
+  //   we've gone far enough.
+  // -----------
+  if (d_molpos.empty()) {
+    // if we are just starting out, process the title line
+    dp_inStream->seekg(0);
+    if (df_title) {
+      this->processTitleLine();
+    }
+  } else {
+    // move to the last position we've seen:
+    dp_inStream->seekg(d_molpos.back());
+    // read that line:
+    std::string tmp = getLine(dp_inStream);
+  }
+
+  // the stream pointer is now at the last thing we read in
+  while (d_molpos.size() <= idx) {
+    int nextP = this->skipComments();
+    if (nextP < 0) {
+      return false;
+    } else {
+      d_molpos.emplace_back(nextP);
+      d_lineNums.push_back(d_line);
+      if (d_molpos.size() == idx + 1 && df_end) {
+        // boundary condition: we could read the point we were looking for
+        // but not the next one.
+        // indicate that we've reached EOF:
+        dp_inStream->clear();
+        dp_inStream->seekg(0, std::ios_base::end);
+        d_len = d_molpos.size();
         break;
       }
     }
   }
-  // if we hit EOF without getting a proper line, return -1:
-  if (tempStr.empty() || (tempStr[0] == '#') || (strip(tempStr).size() == 0)) {
-    return false;
-  }
-  record = tempStr;
-  lineNum = d_line;
-  index = d_currentRecordId;
-  ++d_currentRecordId;
+
+  POSTCONDITION(d_molpos.size() > idx, "not enough lines");
+  dp_inStream->seekg(d_molpos[idx]);
+  d_next = idx;
   return true;
+}
+
+bool MultithreadedSmilesMolSupplier::extractNextRecord(std::string &record,
+                                                       unsigned int &lineNum,
+                                                       unsigned int &index) {
+  PRECONDITION(dp_inStream, "bad stream");
+  if (d_next < 0) {
+    d_next = 0;
+  }
+
+  if (moveTo(d_next)) {
+    // bad index length
+    CHECK_INVARIANT(static_cast<int>(d_molpos.size()) > d_next,
+                    "bad index length");
+    // ---------
+    // if we get here we can just build the molecule:
+    // ---------
+    // set the stream to the relevant position:
+    dp_inStream->clear();  // clear the EOF tag if it has been set
+    dp_inStream->seekg(d_molpos[d_next]);
+    d_line = d_lineNums[d_next];
+    // grab the line:
+    std::string inLine = getLine(dp_inStream);
+
+    if (d_len < 0 && this->skipComments() < 0) {
+      d_len = d_molpos.size();
+    }
+
+    // make sure the line number is correct:
+    if (d_next < static_cast<int>(d_lineNums.size())) {
+      d_line = d_lineNums[d_next];
+    }
+
+    ++d_next;
+    // if we just hit the last one, simulate EOF:
+    if (d_len > 0 && d_next == d_len) {
+      df_end = true;
+    }
+
+    record = inLine;
+    lineNum = d_line;
+    index = d_currentRecordId;
+    ++d_currentRecordId;
+    return true;
+  }
+
+  return false;
 }
 
 ROMol *MultithreadedSmilesMolSupplier::processMoleculeRecord(

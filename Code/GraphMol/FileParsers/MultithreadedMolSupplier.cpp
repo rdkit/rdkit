@@ -9,6 +9,24 @@
 //
 #include "MultithreadedMolSupplier.h"
 namespace RDKit {
+
+MultithreadedMolSupplier::~MultithreadedMolSupplier() {
+  endThreads();
+  // destroy all objects in the input queue
+  d_inputQueue->clear();
+  // delete the pointer to the input queue
+  delete d_inputQueue;
+  std::tuple<ROMol*, std::string, unsigned int> r;
+  while (d_outputQueue->pop(r)) {
+    ROMol* m = std::get<0>(r);
+    delete m;
+  }
+  // destroy all objects in the output queue
+  d_outputQueue->clear();
+  // delete the pointer to the output queue
+  delete d_outputQueue;
+}
+
 void MultithreadedMolSupplier::reader() {
   std::string record;
   unsigned int lineNum, index;
@@ -55,9 +73,9 @@ void MultithreadedMolSupplier::endThreads() {
 }
 
 void MultithreadedMolSupplier::startThreads() {
-  //! run the reader function in a seperate thread
+  // run the reader function in a seperate thread
   d_readerThread = std::thread(&MultithreadedMolSupplier::reader, this);
-  //! run the writer function in seperate threads
+  // run the writer function in seperate threads
   for (unsigned int i = 0; i < d_numWriterThreads; i++) {
     d_writerThreads.emplace_back(
         std::thread(&MultithreadedMolSupplier::writer, this));

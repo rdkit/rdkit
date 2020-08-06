@@ -54,9 +54,9 @@ void testSmiConcurrent(std::string path, std::string delimiter,
   MultithreadedSmilesMolSupplier sup(fname, delimiter, smilesColumn, nameColumn,
                                      titleLine, sanitize, numWriterThreads,
                                      sizeInputQueue, sizeOutputQueue);
-  //! we have not called the next method yet
+  // we have not called the next method yet
   TEST_ASSERT(sup.getLastRecordId() == 0);
-  //! initially no bit is set in the bitVector, sanity check
+  // initially no bit is set in the bitVector, sanity check
   TEST_ASSERT(!bitVector.any());
 
   while (!sup.atEnd()) {
@@ -64,11 +64,13 @@ void testSmiConcurrent(std::string path, std::string delimiter,
     unsigned int id = sup.getLastRecordId();
     bitVector[id - 1] = 1;
     if (mol != nullptr) {
+      // PrintThread{} << "record: " << sup.getLastItemText() << ", mol: " <<
+      // MolToSmiles(*mol) << ", id: " << id << "\n";
       ++nMols;
     }
     delete mol;
   }
-  //! if all bits are set then we have seen possible ids
+  // if all bits are set then we have seen possible ids
   TEST_ASSERT(bitVector.all());
   TEST_ASSERT(nMols == expectedResult);
 }
@@ -98,24 +100,19 @@ void testSmiCorrectness() {
   std::string path = "/Code/GraphMol/FileParsers/test_data/fewSmi.csv";
   unsigned int expectedResult = 10;
   testSmiConcurrent(path, ",", 1, 0, false, true, 2, 5, 5, expectedResult);
-  /*
-    testSmiConcurrent(path, ",", 1, 0, false, true, 3, 5, 5, expectedResult);
-    testSmiConcurrent(path, ",", 1, 0, false, true, 4, 5, 10, expectedResult);
-    testSmiConcurrent(path, ",", 1, 0, false, true, 1, 10, 10, expectedResult);
-    testSmiConcurrent(path, ",", 1, 0, false, true, 3, 1, 1, expectedResult);
 
-          //! different file
-          path = "/Regress/Data/znp.50k.smi";
-          expectedResult = 50000;
-    testSmiConcurrent(path, " \t", 0, 1, false, true, 4, 1000, 100,
-                        expectedResult);
-    testSmiConcurrent(path, " \t", 0, 1, false, true, 4, 100, 1000,
-                        expectedResult);
-    testSmiConcurrent(path, " \t", 0, 1, false, true, 3, 1000, 100,
-                        expectedResult);
-    testSmiConcurrent(path, " \t", 0, 1, false, true, 2, 10, 100,
-                        expectedResult);
-  */
+  path = "/Code/GraphMol/FileParsers/test_data/fewSmi.2.csv";
+  expectedResult = 10;
+  testSmiConcurrent(path, ",", 1, 0, true, true, 2, 5, 5, expectedResult);
+
+  path = "/Code/GraphMol/FileParsers/test_data/first_200.tpsa.csv";
+  expectedResult = 200;
+  testSmiConcurrent(path, ",", 0, -1, true, true, 2, 5, 5, expectedResult);
+
+  path = "/Regress/Data/znp.50k.smi";
+  expectedResult = 50000;
+  testSmiConcurrent(path, " \t", 0, 1, false, true, 4, 1000, 100,
+                    expectedResult);
 }
 
 void testSmiPerformance() {
@@ -130,7 +127,7 @@ void testSmiPerformance() {
   auto stop = high_resolution_clock::now();
   auto duration = duration_cast<milliseconds>(stop - start);
   std::cout << "Duration for SmilesMolSupplier: " << duration.count()
-            << " (seconds) \n";
+            << " (milliseconds) \n";
 
   unsigned int maxThreadCount = std::thread::hardware_concurrency() + 4;
   std::cout << "Maximum Threads available: " << maxThreadCount << "\n";
@@ -141,7 +138,8 @@ void testSmiPerformance() {
     stop = high_resolution_clock::now();
     duration = duration_cast<milliseconds>(stop - start);
     std::cout << "Duration for testSmiConcurent with " << i
-              << "  writer threads: " << duration.count() << " (seconds) \n";
+              << "  writer threads: " << duration.count()
+              << " (milliseconds) \n";
   }
 }
 
@@ -155,11 +153,13 @@ int main() {
   BOOST_LOG(rdErrorLog) << "-----------------------------------------\n\n";
 
   /*
-    BOOST_LOG(rdErrorLog) << "\n-----------------------------------------\n";
-    testSmiPerformance();
-    BOOST_LOG(rdErrorLog) << "Finished: testSmiPerformance()\n";
-    BOOST_LOG(rdErrorLog) << "-----------------------------------------\n\n";
+          BOOST_LOG(rdErrorLog) <<
+     "\n-----------------------------------------\n"; testSmiPerformance();
+          BOOST_LOG(rdErrorLog) << "Finished: testSmiPerformance()\n";
+          BOOST_LOG(rdErrorLog) <<
+     "-----------------------------------------\n\n";
   */
+
 #endif
 
   return 0;

@@ -30,8 +30,12 @@ class RDKIT_FILEPARSERS_EXPORT MultithreadedSmilesMolSupplier
   MultithreadedSmilesMolSupplier();
   ~MultithreadedSmilesMolSupplier();
 
-  //! initialize data members
-  void init();
+  //! initialize data members using init to prevent code duplication
+  void init(){};
+  void _init(bool takeOwnership, const std::string &delimiter, int smilesColumn,
+             int nameColumn, bool titleLine, bool sanitize,
+             unsigned int numWriterThreads, size_t sizeInputQueue,
+             size_t sizeOutputQueue);
   //! Returns the position of the beginning of the next
   //! non-comment line in the input stream. -1 is returned if
   //! no line could be read;
@@ -42,6 +46,10 @@ class RDKIT_FILEPARSERS_EXPORT MultithreadedSmilesMolSupplier
   bool getEnd() const;
   //! get next line
   std::string nextLine();
+  //! reads and processes the title line
+  void processTitleLine();
+  //! move to the position of a particular entry in the stream
+  bool moveTo(unsigned int idx);
   //! reads next record and returns whether or not EOF was hit
   bool extractNextRecord(std::string &record, unsigned int &lineNum,
                          unsigned int &index);
@@ -49,15 +57,20 @@ class RDKIT_FILEPARSERS_EXPORT MultithreadedSmilesMolSupplier
   ROMol *processMoleculeRecord(const std::string &record, unsigned int lineNum);
 
  private:
-  bool df_end = false;      // have we reached the end of the file?
-  int d_line = 0;           // line number we are currently on
-  std::string d_delim;      // the delimiter string
-  bool df_sanitize = true;  // sanitize molecules before returning them?
-  STR_VECT d_props;         // vector of property names
-  bool df_title = true;     // do we have a title line?
-  int d_smi = 0;            // column id for the smile string
-  int d_name = 1;           // column id for the name
-  unsigned int d_currentRecordId = 1;  // current record id
+  bool df_end = false;  //! have we reached the end of the file?
+  int d_len = 0;        //! total number of smiles in the file
+  int d_next = 0;       //! the  molecule we are ready to read
+  int d_line = 0;       //! line number we are currently on
+  std::vector<std::streampos>
+      d_molpos;  //! vector of positions in the file for molecules
+  std::vector<int> d_lineNums;
+  std::string d_delim;      //! the delimiter string
+  bool df_sanitize = true;  //! sanitize molecules before returning them?
+  STR_VECT d_props;         //! vector of property names
+  bool df_title = true;     //! do we have a title line?
+  int d_smi = 0;            //! column id for the smile string
+  int d_name = 1;           //! column id for the name
+  unsigned int d_currentRecordId = 1;  //! current record id
 };
 }  // namespace RDKit
 #endif
