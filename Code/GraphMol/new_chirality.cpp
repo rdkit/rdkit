@@ -43,7 +43,7 @@ StereoInfo getStereoInfo(const Bond *bond) {
     sinfo.centeredOn = bond->getIdx();
     sinfo.controllingAtoms.reserve(4);
 
-    const auto mol = bond->getOwningMol();
+    const auto &mol = bond->getOwningMol();
     for (const auto &nbri :
          boost::make_iterator_range(mol.getAtomBonds(beginAtom))) {
       const auto &nbr = mol[nbri];
@@ -129,7 +129,7 @@ StereoInfo getStereoInfo(const Atom *atom) {
   sinfo.centeredOn = atom->getIdx();
   sinfo.controllingAtoms.reserve(atom->getDegree());
 
-  const auto mol = atom->getOwningMol();
+  const auto &mol = atom->getOwningMol();
   for (const auto &nbri : boost::make_iterator_range(mol.getAtomBonds(atom))) {
     const auto &bnd = mol[nbri];
     sinfo.controllingAtoms.push_back(bnd->getOtherAtomIdx(atom->getIdx()));
@@ -193,7 +193,7 @@ bool isAtomPotentialTetrahedralCenter(const Atom *atom) {
   if (atom->getTotalDegree() > 4) {
     return false;
   } else {
-    auto mol = atom->getOwningMol();
+    const auto &mol = atom->getOwningMol();
     auto degree = mol.getAtomDegree(atom);
     if (degree == 4) {
       // chirality is always possible with 4 nbrs
@@ -274,7 +274,7 @@ std::string getBondSymbol(const Bond *bond) {
 }
 
 std::vector<StereoInfo> findPotentialStereo(const ROMol &omol) {
-  ROMol mol(omol);
+  const ROMol mol(omol);
   std::vector<StereoInfo> res;
 
   // FIX: this never removes stereo
