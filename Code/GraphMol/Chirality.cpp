@@ -385,7 +385,6 @@ Bond::BondDir getOppositeBondDir(Bond::BondDir dir) {
   }
 }
 
-
 void setBondDirRelativeToAtom(Bond *bond, Atom *atom, Bond::BondDir dir,
                               bool reverse, boost::dynamic_bitset<> &needsDir) {
   PRECONDITION(bond, "bad bond");
@@ -428,12 +427,12 @@ void updateDoubleBondNeighbors(ROMol &mol, Bond *dblBond, const Conformer *conf,
   }
   needsDir.set(dblBond->getIdx(), 0);
 #if 0
-    std::cerr << "**********************\n";
-    std::cerr << "**********************\n";
-    std::cerr << "**********************\n";
-    std::cerr << "UDBN: " << dblBond->getIdx() << " "
-              << dblBond->getBeginAtomIdx() << "=" << dblBond->getEndAtomIdx()
-              << "\n";
+  std::cerr << "**********************\n";
+  std::cerr << "**********************\n";
+  std::cerr << "**********************\n";
+  std::cerr << "UDBN: " << dblBond->getIdx() << " "
+            << dblBond->getBeginAtomIdx() << "=" << dblBond->getEndAtomIdx()
+            << "\n";
 #endif
 
   ROMol::OEDGE_ITER beg, end;
@@ -713,19 +712,19 @@ void updateDoubleBondNeighbors(ROMol &mol, Bond *dblBond, const Conformer *conf,
     needsDir[obond2->getIdx()] = 0;
   }
 #if 0
-    std::cerr << "  1:" << bond1->getIdx() << " ";
-    if (obond1)
-      std::cerr << obond1->getIdx() << std::endl;
-    else
-      std::cerr << "N/A" << std::endl;
-    std::cerr << "  2:" << bond2->getIdx() << " ";
-    if (obond2)
-      std::cerr << obond2->getIdx() << std::endl;
-    else
-      std::cerr << "N/A" << std::endl;
-    std::cerr << "**********************\n";
-    std::cerr << "**********************\n";
-    std::cerr << "**********************\n";
+  std::cerr << "  1:" << bond1->getIdx() << " ";
+  if (obond1)
+    std::cerr << obond1->getIdx() << std::endl;
+  else
+    std::cerr << "N/A" << std::endl;
+  std::cerr << "  2:" << bond2->getIdx() << " ";
+  if (obond2)
+    std::cerr << obond2->getIdx() << std::endl;
+  else
+    std::cerr << "N/A" << std::endl;
+  std::cerr << "**********************\n";
+  std::cerr << "**********************\n";
+  std::cerr << "**********************\n";
 #endif
   BOOST_FOREACH (Bond *oDblBond, followupBonds) {
     // std::cerr << "FOLLOWUP: " << oDblBond->getIdx() << " "
@@ -1411,8 +1410,8 @@ std::pair<bool, bool> isAtomPotentialChiralCenter(
 
     // figure out if this is a legal chiral center or not:
     if (!hasDupes) {
-      if (nbrs.size() < 3 
-       && (atom->getAtomicNum() != 15 && atom->getAtomicNum() != 33)) {
+      if (nbrs.size() < 3 &&
+          (atom->getAtomicNum() != 15 && atom->getAtomicNum() != 33)) {
         // less than three neighbors is never stereogenic
         // unless it is a phosphine/arsine with implicit H
         legalCenter = false;
@@ -2271,10 +2270,8 @@ void assignChiralTypesFrom3D(ROMol &mol, int confId, bool replaceExistingTags) {
 }
 
 void assignChiralTypesFromMolParity(ROMol &mol, bool replaceExistingTags) {
-  static const std::vector<Atom::ChiralType> chiralTypeVect {
-    Atom::CHI_TETRAHEDRAL_CW,
-    Atom::CHI_TETRAHEDRAL_CCW
-  };
+  static const std::vector<Atom::ChiralType> chiralTypeVect{
+      Atom::CHI_TETRAHEDRAL_CW, Atom::CHI_TETRAHEDRAL_CCW};
   // if the molecule already has stereochemistry
   // perceived, remove the flags that indicate
   // this... what we're about to do will require
@@ -2296,7 +2293,7 @@ void assignChiralTypesFromMolParity(ROMol &mol, bool replaceExistingTags) {
   //       |                    |
   //       2                    1
   //
-  for (auto atom: mol.atoms()) {
+  for (auto atom : mol.atoms()) {
     // if we aren't replacing existing tags and the atom is already tagged,
     // punt:
     if (!replaceExistingTags && atom->getChiralTag() != Atom::CHI_UNSPECIFIED) {
@@ -2313,14 +2310,13 @@ void assignChiralTypesFromMolParity(ROMol &mol, bool replaceExistingTags) {
     --parity;
     RDKit::ROMol::OBOND_ITER_PAIR nbrBonds = mol.getAtomBonds(atom);
     INT_LIST nbrBondIdxList;
-    std::transform(nbrBonds.first, nbrBonds.second,
-      std::back_inserter(nbrBondIdxList), [mol](const ROMol::edge_descriptor &e) {
-        return mol[e]->getIdx();
-      });
+    std::transform(
+        nbrBonds.first, nbrBonds.second, std::back_inserter(nbrBondIdxList),
+        [mol](const ROMol::edge_descriptor &e) { return mol[e]->getIdx(); });
     unsigned int atomIdx = atom->getIdx();
     nbrBondIdxList.sort([mol, atomIdx](const int ai, const int bi) {
-      return (mol.getBondWithIdx(ai)->getOtherAtomIdx(atomIdx)
-        < mol.getBondWithIdx(bi)->getOtherAtomIdx(atomIdx));
+      return (mol.getBondWithIdx(ai)->getOtherAtomIdx(atomIdx) <
+              mol.getBondWithIdx(bi)->getOtherAtomIdx(atomIdx));
     });
     int nSwaps = atom->getPerturbationOrder(nbrBondIdxList);
     if (nSwaps % 2) {
@@ -2443,10 +2439,8 @@ void setDoubleBondNeighborDirections(ROMol &mol, const Conformer *conf) {
         std::accumulate(dblBondNbrs[dblBond->getIdx()].begin(),
                         dblBondNbrs[dblBond->getIdx()].end(), 0);
     // and favor double bonds that are *not* in rings. The combination of
-    // using
-    // the sum
-    // above (instead of the max) and this ring-membershipt test seem to fix
-    // sf.net issue 3009836
+    // using the sum above (instead of the max) and this ring-membershipt test
+    // seem to fix sf.net issue 3009836
     if (!(mol.getRingInfo()->numBondRings(dblBond->getIdx()))) {
       countHere *= 10;
     }
