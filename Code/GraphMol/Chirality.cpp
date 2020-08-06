@@ -2378,14 +2378,16 @@ void setDoubleBondNeighborDirections(ROMol &mol, const Conformer *conf) {
         if (nbrBond->getBondType() == Bond::SINGLE ||
             nbrBond->getBondType() == Bond::AROMATIC) {
           singleBondCounts[nbrBond->getIdx()] += 1;
-          if (nbrBond->getBondDir() == Bond::NONE) {
+          auto nbrDir = nbrBond->getBondDir();
+          if (nbrDir == Bond::BondDir::NONE ||
+              nbrDir == Bond::BondDir::ENDDOWNRIGHT ||
+              nbrDir == Bond::BondDir::ENDUPRIGHT) {
             needsDir[nbrBond->getIdx()] = 1;
           }
           needsDir[(*bondIt)->getIdx()] = 1;
           dblBondNbrs[(*bondIt)->getIdx()].push_back(nbrBond->getIdx());
           // the search may seem inefficient, but these vectors are going to
-          // be
-          // at most 2 long (with very few exceptions). It's just not worth
+          // be at most 2 long (with very few exceptions). It's just not worth
           // using a different data structure
           if (std::find(singleBondNbrs[nbrBond->getIdx()].begin(),
                         singleBondNbrs[nbrBond->getIdx()].end(),
@@ -2402,7 +2404,10 @@ void setDoubleBondNeighborDirections(ROMol &mol, const Conformer *conf) {
         if (nbrBond->getBondType() == Bond::SINGLE ||
             nbrBond->getBondType() == Bond::AROMATIC) {
           singleBondCounts[nbrBond->getIdx()] += 1;
-          if (nbrBond->getBondDir() == Bond::NONE) {
+          auto nbrDir = nbrBond->getBondDir();
+          if (nbrDir == Bond::BondDir::NONE ||
+              nbrDir == Bond::BondDir::ENDDOWNRIGHT ||
+              nbrDir == Bond::BondDir::ENDUPRIGHT) {
             needsDir[nbrBond->getIdx()] = 1;
           }
           needsDir[(*bondIt)->getIdx()] = 1;

@@ -1560,6 +1560,20 @@ void testGithub1567() {
   BOOST_LOG(rdInfoLog) << "Finished" << std::endl;
 }
 
+void testCanonicalDiastereomers() {
+  // FIX: this is another one that we dno't currently handle properly
+#if 0
+  BOOST_LOG(rdInfoLog) << "testing diastereomer problem." << std::endl;
+
+  auto m1 = "F[C@@H](Cl)[C@H](F)Cl"_smiles;
+  auto m2 = "F[C@H](Cl)[C@@H](F)Cl"_smiles;
+  auto smi1 = MolToSmiles(*m1);
+  auto smi2 = MolToSmiles(*m2);
+  TEST_ASSERT(smi1 != smi2);
+  BOOST_LOG(rdInfoLog) << "Finished" << std::endl;
+#endif
+}
+
 void testRingsAndDoubleBonds() {
 // FIX: we don't currently handle this case properly
 #if 0
@@ -1587,7 +1601,7 @@ void testRingsAndDoubleBonds() {
 
 int main() {
   RDLog::InitLogs();
-#if 0
+#if 1
   test1();
   test2();
   test3();
@@ -1604,6 +1618,6 @@ int main() {
   testGithub1567();
 #endif
   testRingsAndDoubleBonds();
-
+  testCanonicalDiastereomers();
   return 0;
 }
