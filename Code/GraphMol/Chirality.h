@@ -81,7 +81,12 @@ struct RDKIT_GRAPHMOL_EXPORT StereoInfo {
   unsigned centeredOn = NOATOM;
   StereoDescriptor descriptor = StereoDescriptor::None;
   std::vector<unsigned> controllingAtoms;  // all atoms around the atom or bond.
-                                           // Order is important
+  // Order is important
+  bool operator==(const StereoInfo &other) const {
+    return type == other.type && specified == other.specified &&
+           centeredOn == other.centeredOn && descriptor == other.descriptor &&
+           controllingAtoms == other.controllingAtoms;
+  }
 };
 
 /*!
