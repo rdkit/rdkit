@@ -9,7 +9,7 @@ rdkit_library(GraphMol
               MolDiscriminators.cpp ConjugHybrid.cpp AddHs.cpp
               Matrices.cpp Chirality.cpp RingInfo.cpp Conformer.cpp
               Renumber.cpp AdjustQuery.cpp Resonance.cpp StereoGroup.cpp
-              new_canon.cpp SubstanceGroup.cpp new_chirality.cpp
+              new_canon.cpp SubstanceGroup.cpp FindStereo.cpp
               SHARED
               LINK_LIBRARIES RDGeometryLib RDGeneral  )
 if(RDK_USE_URF)

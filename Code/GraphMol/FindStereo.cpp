@@ -11,8 +11,6 @@
 #include <RDGeneral/Ranking.h>
 #include <GraphMol/new_canon.h>
 #include <RDGeneral/types.h>
-#include <sstream>
-#include <set>
 #include <algorithm>
 #include <RDGeneral/utils.h>
 #include <RDGeneral/Invariant.h>
