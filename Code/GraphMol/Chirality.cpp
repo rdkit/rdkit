@@ -609,9 +609,11 @@ void updateDoubleBondNeighbors(ROMol &mol, Bond *dblBond, const Conformer *conf,
     // std::cerr << "   angle: " << ang << " sameTorsionDir: " << sameTorsionDir
     // << "\n";
   } else {
-    if (dblBond->getStereo() == Bond::STEREOCIS) {
+    if (dblBond->getStereo() == Bond::STEREOCIS ||
+        dblBond->getStereo() == Bond::STEREOZ) {
       sameTorsionDir = false;
-    } else if (dblBond->getStereo() == Bond::STEREOTRANS) {
+    } else if (dblBond->getStereo() == Bond::STEREOTRANS ||
+               dblBond->getStereo() == Bond::STEREOE) {
       sameTorsionDir = true;
     } else {
       return;

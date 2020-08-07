@@ -783,11 +783,12 @@ void testChiralityCleanup() {
   TEST_ASSERT(mol->getBondWithIdx(10)->getBondType() == Bond::DOUBLE);
   mol->getBondWithIdx(10)->setStereoAtoms(4, 12);
   mol->getBondWithIdx(10)->setStereo(Bond::STEREOCIS);
-  std::cerr << "3>>>--------------------------" << std::endl;
+  // std::cerr << "3>>>--------------------------" << std::endl;
   MolOps::setDoubleBondNeighborDirections(*mol);
-  std::cerr << "<<<--------------------------" << std::endl;
+  // std::cerr << "<<<--------------------------" << std::endl;
+  // mol->debugMol(std::cerr);
   MolOps::assignStereochemistry(*mol, true, true);
-  BOOST_LOG(rdInfoLog) << MolToSmiles(*mol, true) << std::endl;
+  // BOOST_LOG(rdInfoLog) << MolToSmiles(*mol, true) << std::endl;
   TEST_ASSERT(MolToSmiles(*mol, true) == "CC/C=C\\C(/C=C\\CC)=C(CC)CO");
   delete mol;
 
