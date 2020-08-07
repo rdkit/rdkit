@@ -471,28 +471,30 @@ TEST_CASE("para-stereocenters and assignStereochemistry", "[chirality]") {
     std::sort(stereoInfo.begin(), stereoInfo.end(),
               [](const Chirality::StereoInfo &a,
                  const Chirality::StereoInfo &b) -> bool {
-                return (a.type > b.type) || (a.centeredOn > b.centeredOn) ||
-                       (a.descriptor > b.descriptor) ||
-                       (a.controllingAtoms > b.controllingAtoms);
+                return (a.type < b.type) && (a.centeredOn < b.centeredOn) &&
+                       (a.specified < b.specified) &&
+                       (a.descriptor < b.descriptor) &&
+                       (a.controllingAtoms < b.controllingAtoms);
               });
     REQUIRE(stereoInfo.size() == 7);
 
-    CHECK(stereoInfo[0].type == Chirality::StereoType::Bond_Double);
-    CHECK(stereoInfo[0].centeredOn == 13);
-    CHECK(stereoInfo[1].type == Chirality::StereoType::Bond_Double);
-    CHECK(stereoInfo[1].centeredOn == 10);
-    CHECK(stereoInfo[2].type == Chirality::StereoType::Bond_Double);
-    CHECK(stereoInfo[2].centeredOn == 4);
+    CHECK(stereoInfo[6].type == Chirality::StereoType::Bond_Double);
+    CHECK(stereoInfo[6].centeredOn == 13);
+    CHECK(stereoInfo[5].type == Chirality::StereoType::Bond_Double);
+    CHECK(stereoInfo[5].centeredOn == 10);
+    CHECK(stereoInfo[4].type == Chirality::StereoType::Bond_Double);
+    CHECK(stereoInfo[4].centeredOn == 4);
     CHECK(stereoInfo[3].type == Chirality::StereoType::Bond_Double);
     CHECK(stereoInfo[3].centeredOn == 1);
 
-    CHECK(stereoInfo[4].type == Chirality::StereoType::Atom_Tetrahedral);
-    CHECK(stereoInfo[4].centeredOn == 9);
-    CHECK(stereoInfo[5].type == Chirality::StereoType::Atom_Tetrahedral);
-    CHECK(stereoInfo[5].centeredOn == 7);
-    CHECK(stereoInfo[6].type == Chirality::StereoType::Atom_Tetrahedral);
-    CHECK(stereoInfo[6].centeredOn == 3);
+    CHECK(stereoInfo[2].type == Chirality::StereoType::Atom_Tetrahedral);
+    CHECK(stereoInfo[2].centeredOn == 9);
+    CHECK(stereoInfo[1].type == Chirality::StereoType::Atom_Tetrahedral);
+    CHECK(stereoInfo[1].centeredOn == 7);
+    CHECK(stereoInfo[0].type == Chirality::StereoType::Atom_Tetrahedral);
+    CHECK(stereoInfo[0].centeredOn == 3);
   }
+
   SECTION("sugar fun") {
     auto mol = "C1(O)C(O)C(O)C(O)C(O)C1O"_smiles;
     REQUIRE(mol);
