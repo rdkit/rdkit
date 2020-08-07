@@ -271,9 +271,9 @@ std::string getBondSymbol(const Bond *bond) {
   return res;
 }
 
-std::vector<StereoInfo> findPotentialStereo(const ROMol &omol) {
-  const ROMol mol(omol);
+std::vector<StereoInfo> findPotentialStereo(const ROMol &mol) {
   std::vector<StereoInfo> res;
+  std::map<int, Atom::ChiralType> ochiralTypes;
 
   // FIX: this never removes stereo
 
@@ -299,6 +299,7 @@ std::vector<StereoInfo> findPotentialStereo(const ROMol &omol) {
       }
       possibleAtoms.set(aidx);
       // set "fake stereo"
+      ochiralTypes[atom->getIdx()] = atom->getChiralTag();
       atom->setChiralTag(Atom::CHI_TETRAHEDRAL_CW);
       atomSymbols[aidx] =
           (boost::format("%s-%d") % atom->getSymbol() % atom->getIdx()).str();
@@ -356,8 +357,11 @@ std::vector<StereoInfo> findPotentialStereo(const ROMol &omol) {
 
   // notice that we're looping over the original molecule here, not the one
   // we modified
-  for (const auto atom : omol.atoms()) {
+  for (const auto atom : mol.atoms()) {
     auto aidx = atom->getIdx();
+    if (ochiralTypes.find(aidx) != ochiralTypes.end()) {
+      atom->setChiralTag(ochiralTypes[aidx]);
+    }
     if (possibleAtoms[aidx] && !knownAtoms[aidx]) {
       auto sinfo = detail::getStereoInfo(atom);
       ASSERT_INVARIANT(
@@ -381,7 +385,7 @@ std::vector<StereoInfo> findPotentialStereo(const ROMol &omol) {
     }
   }
 
-  for (const auto bond : omol.bonds()) {
+  for (const auto bond : mol.bonds()) {
     auto bidx = bond->getIdx();
     if (possibleBonds[bidx] && !knownBonds[bidx]) {
       auto sinfo = detail::getStereoInfo(bond);
