@@ -22,8 +22,9 @@
 
 namespace RDKit {
 namespace Chirality {
-//unsigned StereoInfo::NOATOM = std::numeric_limits<unsigned>::max();
-
+#ifndef _MSC_VER  
+const unsigned StereoInfo::NOATOM = std::numeric_limits<unsigned>::max();
+#endif
 namespace detail {
 
 StereoInfo getStereoInfo(const Bond *bond) {
