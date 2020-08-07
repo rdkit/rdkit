@@ -11,6 +11,8 @@
 #include <GraphMol/RDKitBase.h>
 #include <GraphMol/SmilesParse/SmilesParse.h>
 #include <GraphMol/SmilesParse/SmilesWrite.h>
+#include <chrono>
+#include <ctime>
 
 using namespace RDKit;
 using namespace MolStandardize;
@@ -24,725 +26,312 @@ void testEnumerator() {
       rdbase + "/Data/MolStandardize/tautomerTransforms.in";
   auto tautparams = std::unique_ptr<TautomerCatalogParams>(
       new TautomerCatalogParams(tautomerFile));
-  unsigned int ntautomers = tautparams->getNumTautomers();
-  TEST_ASSERT(ntautomers == 34);
+
+  // DEPRECATED, remove from here in release 2021.01
+  {
+    unsigned int ntransforms = tautparams->getNumTautomers();
+    TEST_ASSERT(ntransforms == 36);
+  }
+  // DEPRECATED, remove until here in release 2021.01
+
+  unsigned int ntransforms = tautparams->getTransforms().size();
+  TEST_ASSERT(ntransforms == 36);
 
   TautomerEnumerator te(new TautomerCatalog(tautparams.get()));
 
-  // Enumerate 1,3 keto/enol tautomer.
-  std::string smi1 = "C1(=CCCCC1)O";
-  std::shared_ptr<ROMol> m1(SmilesToMol(smi1));
-  std::vector<ROMOL_SPTR> res = te.enumerate(*m1);
-  std::vector<std::string> ans = {"O=C1CCCCC1", "OC1=CCCCC1"};
-  TEST_ASSERT(res.size() == ans.size());
-  for (size_t i = 0; i < res.size(); ++i) {
-    TEST_ASSERT(MolToSmiles(*res[i]) == ans[i]);
-  }
+  std::function<void(const std::string &, const std::vector<std::string> &)>
+      checkAns([te](const std::string &smi,
+                    const std::vector<std::string> &ans) {
+        ROMOL_SPTR m(SmilesToMol(smi));
+        TautomerEnumeratorResult res = te.enumerate(*m);
+        TEST_ASSERT(res.status == Completed);
+        size_t sz = std::max(res.tautomers.size(), ans.size());
+        bool exceedingTautomer = false;
+        bool missingTautomer = false;
+        bool wrongTautomer = false;
+        for (size_t i = 0; i < sz; ++i) {
+          if (i >= res.tautomers.size()) {
+            missingTautomer = true;
+            std::cerr << "missingTautomer, ans " << ans[i] << std::endl;
+          } else if (i >= ans.size()) {
+            exceedingTautomer = true;
+            std::cerr << "exceedingTautomer, taut "
+                      << MolToSmiles(*res.tautomers[i]) << std::endl;
+          } else if (MolToSmiles(*res.tautomers[i]) != ans[i]) {
+            wrongTautomer = true;
+            std::cerr << "wrongTautomer, taut "
+                      << MolToSmiles(*res.tautomers[i]) << ", ans " << ans[i]
+                      << std::endl;
+          }
+        }
+        TEST_ASSERT(!(missingTautomer || exceedingTautomer || wrongTautomer));
+      });
 
   // Enumerate 1,3 keto/enol tautomer.
-  std::string smi2 = "C1(CCCCC1)=O";
-  std::shared_ptr<ROMol> m2(SmilesToMol(smi2));
-  std::vector<ROMOL_SPTR> res2 = te.enumerate(*m2);
-  std::vector<std::string> ans2 = {"O=C1CCCCC1", "OC1=CCCCC1"};
-  TEST_ASSERT(res2.size() == ans2.size());
-  for (size_t i = 0; i < res2.size(); ++i) {
-    TEST_ASSERT(MolToSmiles(*res2[i]) == ans2[i]);
-  }
+  checkAns("C1(=CCCCC1)O", {"O=C1CCCCC1", "OC1=CCCCC1"});
+
+  // Enumerate 1,3 keto/enol tautomer.
+  checkAns("C1(=CCCCC1)O", {"O=C1CCCCC1", "OC1=CCCCC1"});
+
+  // Enumerate 1,3 keto/enol tautomer.
+  checkAns("C1(CCCCC1)=O", {"O=C1CCCCC1", "OC1=CCCCC1"});
 
   // Enumerate acetophenone keto/enol tautomer.
-  std::string smi3 = "C(=C)(O)C1=CC=CC=C1";
-  std::shared_ptr<ROMol> m3(SmilesToMol(smi3));
-  std::vector<ROMOL_SPTR> res3 = te.enumerate(*m3);
-  std::vector<std::string> ans3 = {"C=C(O)c1ccccc1", "CC(=O)c1ccccc1"};
-  TEST_ASSERT(res3.size() == ans3.size());
-  for (size_t i = 0; i < res3.size(); ++i) {
-    TEST_ASSERT(MolToSmiles(*res3[i]) == ans3[i]);
-  }
+  checkAns("C(=C)(O)C1=CC=CC=C1", {"C=C(O)c1ccccc1", "CC(=O)c1ccccc1"});
 
   // Enumerate acetone keto/enol tautomer.
-  std::string smi4 = "CC(C)=O";
-  std::shared_ptr<ROMol> m4(SmilesToMol(smi4));
-  std::vector<ROMOL_SPTR> res4 = te.enumerate(*m4);
-  std::vector<std::string> ans4 = {"C=C(C)O", "CC(C)=O"};
-  TEST_ASSERT(res4.size() == ans4.size());
-  for (size_t i = 0; i < res4.size(); ++i) {
-    TEST_ASSERT(MolToSmiles(*res4[i]) == ans4[i]);
-  }
+  checkAns("CC(C)=O", {"C=C(C)O", "CC(C)=O"});
 
   // keto/enol tautomer
-  std::string smi5 = "OC(C)=C(C)C";
-  std::shared_ptr<ROMol> m5(SmilesToMol(smi5));
-  std::vector<ROMOL_SPTR> res5 = te.enumerate(*m5);
-  std::vector<std::string> ans5 = {"C=C(O)C(C)C", "CC(=O)C(C)C", "CC(C)=C(C)O"};
-  TEST_ASSERT(res5.size() == ans5.size());
-  for (size_t i = 0; i < res5.size(); ++i) {
-    TEST_ASSERT(MolToSmiles(*res5[i]) == ans5[i]);
-  }
+  checkAns("OC(C)=C(C)C", {"C=C(O)C(C)C", "CC(=O)C(C)C", "CC(C)=C(C)O"});
 
   // 1-phenyl-2-propanone enol/keto
-  std::string smi6 = "c1(ccccc1)CC(=O)C";
-  std::shared_ptr<ROMol> m6(SmilesToMol(smi6));
-  std::vector<ROMOL_SPTR> res6 = te.enumerate(*m6);
-  std::vector<std::string> ans6 = {"C=C(O)Cc1ccccc1", "CC(=O)Cc1ccccc1",
-                                   "CC(O)=Cc1ccccc1"};
-  TEST_ASSERT(res6.size() == ans6.size());
-  for (size_t i = 0; i < res6.size(); ++i) {
-    TEST_ASSERT(MolToSmiles(*res6[i]) == ans6[i]);
-  }
+  checkAns("c1(ccccc1)CC(=O)C",
+           {"C=C(O)Cc1ccccc1", "CC(=O)Cc1ccccc1", "CC(O)=Cc1ccccc1"});
 
   // 1,5 keto/enol tautomer
-  std::string smi7 = "Oc1nccc2cc[nH]c(=N)c12";
-  std::shared_ptr<ROMol> m7(SmilesToMol(smi7));
-  std::vector<ROMOL_SPTR> res7 = te.enumerate(*m7);
-  std::vector<std::string> ans7 = {
-      "N=c1[nH]ccc2cc[nH]c(=O)c12", "N=c1[nH]ccc2ccnc(O)c12",
-      "N=c1nccc2cc[nH]c(O)c1-2",    "Nc1[nH]ccc2ccnc(=O)c1-2",
-      "Nc1nccc2cc[nH]c(=O)c12",     "Nc1nccc2ccnc(O)c12"};
-  TEST_ASSERT(res7.size() == ans7.size());
-  for (size_t i = 0; i < res7.size(); ++i) {
-    TEST_ASSERT(MolToSmiles(*res7[i]) == ans7[i]);
-  }
+  checkAns("Oc1nccc2cc[nH]c(=N)c12",
+           {"N=c1[nH]ccc2cc[nH]c(=O)c12", "N=c1[nH]ccc2ccnc(O)c12",
+            "N=c1nccc2cc[nH]c(O)c1-2", "Nc1[nH]ccc2ccnc(=O)c1-2",
+            "Nc1nccc2cc[nH]c(=O)c12", "Nc1nccc2ccnc(O)c12"});
 
   // 1,5 keto/enol tautomer
-  std::string smi8 = "C1(C=CCCC1)=O";
-  std::shared_ptr<ROMol> m8(SmilesToMol(smi8));
-  std::vector<ROMOL_SPTR> res8 = te.enumerate(*m8);
-  std::vector<std::string> ans8 = {"O=C1C=CCCC1", "O=C1CC=CCC1", "OC1=CC=CCC1",
-                                   "OC1=CCC=CC1", "OC1=CCCC=C1"};
-  TEST_ASSERT(res8.size() == ans8.size());
-  for (size_t i = 0; i < res8.size(); ++i) {
-    TEST_ASSERT(MolToSmiles(*res8[i]) == ans8[i]);
-  }
+  checkAns("C1(C=CCCC1)=O", {"O=C1C=CCCC1", "O=C1CC=CCC1", "OC1=CC=CCC1",
+                             "OC1=CCC=CC1", "OC1=CCCC=C1"});
 
   // 1,5 keto/enol tautomer
-  std::string smi9 = "C1(=CC=CCC1)O";
-  std::shared_ptr<ROMol> m9(SmilesToMol(smi9));
-  std::vector<ROMOL_SPTR> res9 = te.enumerate(*m9);
-  std::vector<std::string> ans9 = {"O=C1C=CCCC1", "O=C1CC=CCC1", "OC1=CC=CCC1",
-                                   "OC1=CCC=CC1", "OC1=CCCC=C1"};
-  TEST_ASSERT(res9.size() == ans9.size());
-  for (size_t i = 0; i < res9.size(); ++i) {
-    TEST_ASSERT(MolToSmiles(*res9[i]) == ans9[i]);
-  }
+  checkAns("C1(=CC=CCC1)O", {"O=C1C=CCCC1", "O=C1CC=CCC1", "OC1=CC=CCC1",
+                             "OC1=CCC=CC1", "OC1=CCCC=C1"});
 
   // aliphatic imine tautomer
-  std::string smi10 = "C1(CCCCC1)=N";
-  std::shared_ptr<ROMol> m10(SmilesToMol(smi10));
-  std::vector<ROMOL_SPTR> res10 = te.enumerate(*m10);
-  std::vector<std::string> ans10 = {"N=C1CCCCC1", "NC1=CCCCC1"};
-  TEST_ASSERT(res10.size() == ans10.size());
-  for (size_t i = 0; i < res10.size(); ++i) {
-    TEST_ASSERT(MolToSmiles(*res10[i]) == ans10[i]);
-  }
+  checkAns("C1(CCCCC1)=N", {"N=C1CCCCC1", "NC1=CCCCC1"});
 
   // aliphatic imine tautomer
-  std::string smi11 = "C1(=CCCCC1)N";
-  std::shared_ptr<ROMol> m11(SmilesToMol(smi11));
-  std::vector<ROMOL_SPTR> res11 = te.enumerate(*m11);
-  std::vector<std::string> ans11 = {"N=C1CCCCC1", "NC1=CCCCC1"};
-  TEST_ASSERT(res11.size() == ans11.size());
-  for (size_t i = 0; i < res11.size(); ++i) {
-    TEST_ASSERT(MolToSmiles(*res11[i]) == ans11[i]);
-  }
+  checkAns("C1(=CCCCC1)N", {"N=C1CCCCC1", "NC1=CCCCC1"});
 
   // special imine tautomer
-  std::string smi12 = "C1(C=CC=CN1)=CC";
-  std::shared_ptr<ROMol> m12(SmilesToMol(smi12));
-  std::vector<ROMOL_SPTR> res12 = te.enumerate(*m12);
-  std::vector<std::string> ans12 = {"CC=C1C=CC=CN1", "CC=C1C=CCC=N1",
-                                    "CCc1ccccn1"};
-  TEST_ASSERT(res12.size() == ans12.size());
-  for (size_t i = 0; i < res12.size(); ++i) {
-    TEST_ASSERT(MolToSmiles(*res12[i]) == ans12[i]);
-  }
+  checkAns("C1(C=CC=CN1)=CC", {"CC=C1C=CC=CN1", "CC=C1C=CCC=N1", "CCc1ccccn1"});
 
   // special imine tautomer
-  std::string smi13 = "C1(=NC=CC=C1)CC";
-  std::shared_ptr<ROMol> m13(SmilesToMol(smi13));
-  std::vector<ROMOL_SPTR> res13 = te.enumerate(*m13);
-  std::vector<std::string> ans13 = {"CC=C1C=CC=CN1", "CC=C1C=CCC=N1",
-                                    "CCc1ccccn1"};
-  TEST_ASSERT(res13.size() == ans13.size());
-  for (size_t i = 0; i < res13.size(); ++i) {
-    TEST_ASSERT(MolToSmiles(*res13[i]) == ans13[i]);
-  }
+  checkAns("C1(=NC=CC=C1)CC", {"CC=C1C=CC=CN1", "CC=C1C=CCC=N1", "CCc1ccccn1"});
 
   // 1,3 aromatic heteroatom H shift
-  std::string smi14 = "O=c1cccc[nH]1";
-  std::shared_ptr<ROMol> m14(SmilesToMol(smi14));
-  std::vector<ROMOL_SPTR> res14 = te.enumerate(*m14);
-  std::vector<std::string> ans14 = {"O=c1cccc[nH]1", "Oc1ccccn1"};
-  TEST_ASSERT(res14.size() == ans14.size());
-  for (size_t i = 0; i < res14.size(); ++i) {
-    TEST_ASSERT(MolToSmiles(*res14[i]) == ans14[i]);
-  }
+  checkAns("O=c1cccc[nH]1", {"O=c1cccc[nH]1", "Oc1ccccn1"});
 
   // 1,3 aromatic heteroatom H shift
-  std::string smi15 = "Oc1ccccn1";
-  std::shared_ptr<ROMol> m15(SmilesToMol(smi15));
-  std::vector<ROMOL_SPTR> res15 = te.enumerate(*m15);
-  std::vector<std::string> ans15 = {"O=c1cccc[nH]1", "Oc1ccccn1"};
-  TEST_ASSERT(res15.size() == ans15.size());
-  for (size_t i = 0; i < res15.size(); ++i) {
-    TEST_ASSERT(MolToSmiles(*res15[i]) == ans15[i]);
-  }
+  checkAns("Oc1ccccn1", {"O=c1cccc[nH]1", "Oc1ccccn1"});
 
   // 1,3 aromatic heteroatom H shift
-  std::string smi16 = "Oc1ncc[nH]1";
-  std::shared_ptr<ROMol> m16(SmilesToMol(smi16));
-  std::vector<ROMOL_SPTR> res16 = te.enumerate(*m16);
-  std::vector<std::string> ans16 = {"O=c1[nH]cc[nH]1", "Oc1ncc[nH]1"};
-  TEST_ASSERT(res16.size() == ans16.size());
-  for (size_t i = 0; i < res16.size(); ++i) {
-    TEST_ASSERT(MolToSmiles(*res16[i]) == ans16[i]);
-  }
+  checkAns("Oc1ncc[nH]1", {"O=c1[nH]cc[nH]1", "Oc1ncc[nH]1"});
 
   // 1,3 heteroatom H shift
-  std::string smi17 = "OC(C)=NC";
-  std::shared_ptr<ROMol> m17(SmilesToMol(smi17));
-  std::vector<ROMOL_SPTR> res17 = te.enumerate(*m17);
-  std::vector<std::string> ans17 = {"C=C(O)NC", "CN=C(C)O", "CNC(C)=O"};
-  TEST_ASSERT(res17.size() == ans17.size());
-  for (size_t i = 0; i < res17.size(); ++i) {
-    TEST_ASSERT(MolToSmiles(*res17[i]) == ans17[i]);
-  }
+  checkAns("OC(C)=NC", {"C=C(O)NC", "CN=C(C)O", "CNC(C)=O"});
 
   // 1,3 heteroatom H shift
-  std::string smi18 = "CNC(C)=O";
-  std::shared_ptr<ROMol> m18(SmilesToMol(smi18));
-  std::vector<ROMOL_SPTR> res18 = te.enumerate(*m18);
-  std::vector<std::string> ans18 = {"C=C(O)NC", "CN=C(C)O", "CNC(C)=O"};
-  TEST_ASSERT(res18.size() == ans18.size());
-  for (size_t i = 0; i < res18.size(); ++i) {
-    TEST_ASSERT(MolToSmiles(*res18[i]) == ans18[i]);
-  }
+  checkAns("CNC(C)=O", {"C=C(O)NC", "CN=C(C)O", "CNC(C)=O"});
 
   // 1,3 heteroatom H shift
-  std::string smi19 = "S=C(N)N";
-  std::shared_ptr<ROMol> m19(SmilesToMol(smi19));
-  std::vector<ROMOL_SPTR> res19 = te.enumerate(*m19);
-  std::vector<std::string> ans19 = {"N=C(N)S", "NC(N)=S"};
-  TEST_ASSERT(res19.size() == ans19.size());
-  for (size_t i = 0; i < res19.size(); ++i) {
-    TEST_ASSERT(MolToSmiles(*res19[i]) == ans19[i]);
-  }
+  checkAns("S=C(N)N", {"N=C(N)S", "NC(N)=S"});
 
   // 1,3 heteroatom H shift
-  std::string smi20 = "SC(N)=N";
-  std::shared_ptr<ROMol> m20(SmilesToMol(smi20));
-  std::vector<ROMOL_SPTR> res20 = te.enumerate(*m20);
-  std::vector<std::string> ans20 = {"N=C(N)S", "NC(N)=S"};
-  TEST_ASSERT(res20.size() == ans20.size());
-  for (size_t i = 0; i < res20.size(); ++i) {
-    TEST_ASSERT(MolToSmiles(*res20[i]) == ans20[i]);
-  }
+  checkAns("SC(N)=N", {"N=C(N)S", "NC(N)=S"});
 
   // 1,3 heteroatom H shift
-  std::string smi21 = "N=c1[nH]ccn(C)1";
-  std::shared_ptr<ROMol> m21(SmilesToMol(smi21));
-  std::vector<ROMOL_SPTR> res21 = te.enumerate(*m21);
-  std::vector<std::string> ans21 = {"Cn1cc[nH]c1=N", "Cn1ccnc1N"};
-  TEST_ASSERT(res21.size() == ans21.size());
-  for (size_t i = 0; i < res21.size(); ++i) {
-    TEST_ASSERT(MolToSmiles(*res21[i]) == ans21[i]);
-  }
+  checkAns("N=c1[nH]ccn(C)1", {"Cn1cc[nH]c1=N", "Cn1ccnc1N"});
 
   // 1,3 heteroatom H shift
-  std::string smi22 = "CN=c1[nH]cncc1";
-  std::shared_ptr<ROMol> m22(SmilesToMol(smi22));
-  std::vector<ROMOL_SPTR> res22 = te.enumerate(*m22);
-  std::vector<std::string> ans22 = {"CN=c1cc[nH]cn1", "CN=c1ccnc[nH]1",
-                                    "CNc1ccncn1"};
-  TEST_ASSERT(res22.size() == ans22.size());
-  for (size_t i = 0; i < res22.size(); ++i) {
-    TEST_ASSERT(MolToSmiles(*res22[i]) == ans22[i]);
-  }
+  checkAns("CN=c1[nH]cncc1",
+           {"CN=c1cc[nH]cn1", "CN=c1ccnc[nH]1", "CNc1ccncn1"});
 
   // 1,5 aromatic heteroatom H shift
-  std::string smi23 = "Oc1cccc2ccncc12";
-  std::shared_ptr<ROMol> m23(SmilesToMol(smi23));
-  std::vector<ROMOL_SPTR> res23 = te.enumerate(*m23);
-  std::vector<std::string> ans23 = {"O=c1cccc2cc[nH]cc1-2", "Oc1cccc2ccncc12"};
-  TEST_ASSERT(res23.size() == ans23.size());
-  for (size_t i = 0; i < res23.size(); ++i) {
-    TEST_ASSERT(MolToSmiles(*res23[i]) == ans23[i]);
-  }
+  checkAns("Oc1cccc2ccncc12", {"O=c1cccc2cc[nH]cc1-2", "Oc1cccc2ccncc12"});
 
   // 1,5 aromatic heteroatom H shift
-  std::string smi24 = "O=c1cccc2cc[nH]cc1-2";
-  std::shared_ptr<ROMol> m24(SmilesToMol(smi24));
-  std::vector<ROMOL_SPTR> res24 = te.enumerate(*m24);
-  std::vector<std::string> ans24 = {"O=c1cccc2cc[nH]cc1-2", "Oc1cccc2ccncc12"};
-  TEST_ASSERT(res24.size() == ans24.size());
-  for (size_t i = 0; i < res24.size(); ++i) {
-    TEST_ASSERT(MolToSmiles(*res24[i]) == ans24[i]);
-  }
+  checkAns("O=c1cccc2cc[nH]cc1-2", {"O=c1cccc2cc[nH]cc1-2", "Oc1cccc2ccncc12"});
 
   // 1,5 aromatic heteroatom H shift
-  std::string smi25 = "Cc1n[nH]c2ncnn12";
-  std::shared_ptr<ROMol> m25(SmilesToMol(smi25));
-  std::vector<ROMOL_SPTR> res25 = te.enumerate(*m25);
-  std::vector<std::string> ans25 = {"C=C1NN=C2N=CNN12", "C=C1NN=C2NC=NN12",
-                                    "C=C1NNc2ncnn21",   "Cc1n[nH]c2ncnn12",
-                                    "Cc1nnc2[nH]cnn12", "Cc1nnc2nc[nH]n12"};
-  TEST_ASSERT(res25.size() == ans25.size());
-  for (size_t i = 0; i < res25.size(); ++i) {
-    TEST_ASSERT(MolToSmiles(*res25[i]) == ans25[i]);
-  }
+  checkAns("Cc1n[nH]c2ncnn12",
+           {"C=C1NN=C2N=CNN12", "C=C1NN=C2NC=NN12", "C=C1NNc2ncnn21",
+            "Cc1n[nH]c2ncnn12", "Cc1nnc2[nH]cnn12", "Cc1nnc2nc[nH]n12"});
 
   // 1,5 aromatic heteroatom H shift
-  std::string smi26 = "Cc1nnc2nc[nH]n12";
-  std::shared_ptr<ROMol> m26(SmilesToMol(smi26));
-  std::vector<ROMOL_SPTR> res26 = te.enumerate(*m26);
-  std::vector<std::string> ans26 = {"C=C1NN=C2N=CNN12", "C=C1NN=C2NC=NN12",
-                                    "C=C1NNc2ncnn21",   "Cc1n[nH]c2ncnn12",
-                                    "Cc1nnc2[nH]cnn12", "Cc1nnc2nc[nH]n12"};
-  TEST_ASSERT(res26.size() == ans26.size());
-  for (size_t i = 0; i < res26.size(); ++i) {
-    TEST_ASSERT(MolToSmiles(*res26[i]) == ans26[i]);
-  }
+  checkAns("Cc1nnc2nc[nH]n12",
+           {"C=C1NN=C2N=CNN12", "C=C1NN=C2NC=NN12", "C=C1NNc2ncnn21",
+            "Cc1n[nH]c2ncnn12", "Cc1nnc2[nH]cnn12", "Cc1nnc2nc[nH]n12"});
 
   // 1,5 aromatic heteroatom H shift
-  std::string smi29 = "Oc1ccncc1";
-  std::shared_ptr<ROMol> m29(SmilesToMol(smi29));
-  std::vector<ROMOL_SPTR> res29 = te.enumerate(*m29);
-  std::vector<std::string> ans29 = {"O=c1cc[nH]cc1", "Oc1ccncc1"};
-  TEST_ASSERT(res29.size() == ans29.size());
-  for (size_t i = 0; i < res29.size(); ++i) {
-    TEST_ASSERT(MolToSmiles(*res29[i]) == ans29[i]);
-  }
+  checkAns("Oc1ccncc1", {"O=c1cc[nH]cc1", "Oc1ccncc1"});
 
   // 1,5 aromatic heteroatom H shift
-  std::string smi27 = "Oc1c(cccc3)c3nc2ccncc12";
-  std::shared_ptr<ROMol> m27(SmilesToMol(smi27));
-  std::vector<ROMOL_SPTR> res27 = te.enumerate(*m27);
-  std::vector<std::string> ans27 = {"O=c1c2c[nH]ccc-2nc2ccccc12",
-                                    "O=c1c2ccccc2[nH]c2ccncc12",
-                                    "Oc1c2ccccc2nc2ccncc12"};
-  TEST_ASSERT(res27.size() == ans27.size());
-  for (size_t i = 0; i < res27.size(); ++i) {
-    TEST_ASSERT(MolToSmiles(*res27[i]) == ans27[i]);
-  }
+  checkAns("Oc1c(cccc3)c3nc2ccncc12",
+           {"O=c1c2c[nH]ccc-2nc2ccccc12", "O=c1c2ccccc2[nH]c2ccncc12",
+            "Oc1c2ccccc2nc2ccncc12"});
 
   // 1,3 and 1,5 aromatic heteroatom H shift
-  std::string smi28 = "Oc1ncncc1";
-  std::shared_ptr<ROMol> m28(SmilesToMol(smi28));
-  std::vector<ROMOL_SPTR> res28 = te.enumerate(*m28);
-  std::vector<std::string> ans28 = {"O=c1cc[nH]cn1", "O=c1ccnc[nH]1",
-                                    "Oc1ccncn1"};
-  TEST_ASSERT(res28.size() == ans28.size());
-  for (size_t i = 0; i < res28.size(); ++i) {
-    TEST_ASSERT(MolToSmiles(*res28[i]) == ans28[i]);
-  }
+  checkAns("Oc1ncncc1", {"O=c1cc[nH]cn1", "O=c1ccnc[nH]1", "Oc1ccncn1"});
 
   // 1,5 aromatic heteroatom H shift
-  std::string smi30 = "C2(=C1C(=NC=N1)[NH]C(=N2)N)O";
-  std::shared_ptr<ROMol> m30(SmilesToMol(smi30));
-  std::vector<ROMOL_SPTR> res30 = te.enumerate(*m30);
-  std::vector<std::string> ans30 = {
-      "N=c1[nH]c(=O)c2[nH]cnc2[nH]1", "N=c1[nH]c(=O)c2nc[nH]c2[nH]1",
-      "N=c1[nH]c2ncnc-2c(O)[nH]1",    "N=c1nc(O)c2[nH]cnc2[nH]1",
-      "N=c1nc(O)c2nc[nH]c2[nH]1",     "N=c1nc2[nH]cnc2c(O)[nH]1",
-      "N=c1nc2nc[nH]c2c(O)[nH]1",     "Nc1nc(=O)c2[nH]cnc2[nH]1",
-      "Nc1nc(=O)c2nc[nH]c2[nH]1",     "Nc1nc(O)c2[nH]cnc2n1",
-      "Nc1nc(O)c2nc[nH]c2n1",         "Nc1nc(O)c2ncnc-2[nH]1",
-      "Nc1nc2[nH]cnc2c(=O)[nH]1",     "Nc1nc2nc[nH]c2c(=O)[nH]1",
-      "Nc1nc2ncnc-2c(O)[nH]1"};
-  TEST_ASSERT(res30.size() == ans30.size());
-  for (size_t i = 0; i < res30.size(); ++i) {
-    TEST_ASSERT(MolToSmiles(*res30[i]) == ans30[i]);
-  }
+  checkAns("C2(=C1C(=NC=N1)[NH]C(=N2)N)O",
+           {"N=c1[nH]c(=O)c2[nH]cnc2[nH]1", "N=c1[nH]c(=O)c2nc[nH]c2[nH]1",
+            "N=c1[nH]c2ncnc-2c(O)[nH]1", "N=c1nc(O)c2[nH]cnc2[nH]1",
+            "N=c1nc(O)c2nc[nH]c2[nH]1", "N=c1nc2[nH]cnc2c(O)[nH]1",
+            "N=c1nc2nc[nH]c2c(O)[nH]1", "Nc1nc(=O)c2[nH]cnc2[nH]1",
+            "Nc1nc(=O)c2nc[nH]c2[nH]1", "Nc1nc(O)c2[nH]cnc2n1",
+            "Nc1nc(O)c2nc[nH]c2n1", "Nc1nc(O)c2ncnc-2[nH]1",
+            "Nc1nc2[nH]cnc2c(=O)[nH]1", "Nc1nc2nc[nH]c2c(=O)[nH]1",
+            "Nc1nc2ncnc-2c(O)[nH]1"});
 
   // 1,5 aromatic heteroatom H shift
-  std::string smi31 = "C2(C1=C([NH]C=N1)[NH]C(=N2)N)=O";
-  std::shared_ptr<ROMol> m31(SmilesToMol(smi31));
-  std::vector<ROMOL_SPTR> res31 = te.enumerate(*m31);
-  std::vector<std::string> ans31 = {
-      "N=c1[nH]c(=O)c2[nH]cnc2[nH]1", "N=c1[nH]c(=O)c2nc[nH]c2[nH]1",
-      "N=c1[nH]c2ncnc-2c(O)[nH]1",    "N=c1nc(O)c2[nH]cnc2[nH]1",
-      "N=c1nc(O)c2nc[nH]c2[nH]1",     "N=c1nc2[nH]cnc2c(O)[nH]1",
-      "N=c1nc2nc[nH]c2c(O)[nH]1",     "Nc1nc(=O)c2[nH]cnc2[nH]1",
-      "Nc1nc(=O)c2nc[nH]c2[nH]1",     "Nc1nc(O)c2[nH]cnc2n1",
-      "Nc1nc(O)c2nc[nH]c2n1",         "Nc1nc(O)c2ncnc-2[nH]1",
-      "Nc1nc2[nH]cnc2c(=O)[nH]1",     "Nc1nc2nc[nH]c2c(=O)[nH]1",
-      "Nc1nc2ncnc-2c(O)[nH]1"};
-  TEST_ASSERT(res31.size() == ans31.size());
-  for (size_t i = 0; i < res31.size(); ++i) {
-    TEST_ASSERT(MolToSmiles(*res31[i]) == ans31[i]);
-  }
+  checkAns("C2(C1=C([NH]C=N1)[NH]C(=N2)N)=O",
+           {"N=c1[nH]c(=O)c2[nH]cnc2[nH]1", "N=c1[nH]c(=O)c2nc[nH]c2[nH]1",
+            "N=c1[nH]c2ncnc-2c(O)[nH]1", "N=c1nc(O)c2[nH]cnc2[nH]1",
+            "N=c1nc(O)c2nc[nH]c2[nH]1", "N=c1nc2[nH]cnc2c(O)[nH]1",
+            "N=c1nc2nc[nH]c2c(O)[nH]1", "Nc1nc(=O)c2[nH]cnc2[nH]1",
+            "Nc1nc(=O)c2nc[nH]c2[nH]1", "Nc1nc(O)c2[nH]cnc2n1",
+            "Nc1nc(O)c2nc[nH]c2n1", "Nc1nc(O)c2ncnc-2[nH]1",
+            "Nc1nc2[nH]cnc2c(=O)[nH]1", "Nc1nc2nc[nH]c2c(=O)[nH]1",
+            "Nc1nc2ncnc-2c(O)[nH]1"});
 
   // 1,5 aromatic heteroatom H shift
-  std::string smi32 = "Oc1n(C)ncc1";
-  std::shared_ptr<ROMol> m32(SmilesToMol(smi32));
-  std::vector<ROMOL_SPTR> res32 = te.enumerate(*m32);
-  std::vector<std::string> ans32 = {"CN1N=CCC1=O", "Cn1[nH]ccc1=O",
-                                    "Cn1nccc1O"};
-  TEST_ASSERT(res32.size() == ans32.size());
-  for (size_t i = 0; i < res32.size(); ++i) {
-    TEST_ASSERT(MolToSmiles(*res32[i]) == ans32[i]);
-  }
+  checkAns("Oc1n(C)ncc1", {"CN1N=CCC1=O", "Cn1[nH]ccc1=O", "Cn1nccc1O"});
 
   // 1,5 aromatic heteroatom H shift
-  std::string smi33 = "O=c1nc2[nH]ccn2cc1";
-  std::shared_ptr<ROMol> m33(SmilesToMol(smi33));
-  std::vector<ROMOL_SPTR> res33 = te.enumerate(*m33);
-  std::vector<std::string> ans33 = {"O=c1ccn2cc[nH]c2n1", "O=c1ccn2ccnc2[nH]1",
-                                    "Oc1ccn2ccnc2n1"};
-  TEST_ASSERT(res33.size() == ans33.size());
-  for (size_t i = 0; i < res33.size(); ++i) {
-    TEST_ASSERT(MolToSmiles(*res33[i]) == ans33[i]);
-  }
+  checkAns("O=c1nc2[nH]ccn2cc1",
+           {"O=c1ccn2cc[nH]c2n1", "O=c1ccn2ccnc2[nH]1", "Oc1ccn2ccnc2n1"});
 
   // 1,5 aromatic heteroatom H shift
-  std::string smi34 = "N=c1nc[nH]cc1";
-  std::shared_ptr<ROMol> m34(SmilesToMol(smi34));
-  std::vector<ROMOL_SPTR> res34 = te.enumerate(*m34);
-  std::vector<std::string> ans34 = {"N=c1cc[nH]cn1", "N=c1ccnc[nH]1",
-                                    "Nc1ccncn1"};
-  TEST_ASSERT(res34.size() == ans34.size());
-  for (size_t i = 0; i < res34.size(); ++i) {
-    TEST_ASSERT(MolToSmiles(*res34[i]) == ans34[i]);
-  }
+  checkAns("N=c1nc[nH]cc1", {"N=c1cc[nH]cn1", "N=c1ccnc[nH]1", "Nc1ccncn1"});
 
   // 1,5 aromatic heteroatom H shift
-  std::string smi35 = "N=c(c1)ccn2cc[nH]c12";
-  std::shared_ptr<ROMol> m35(SmilesToMol(smi35));
-  std::vector<ROMOL_SPTR> res35 = te.enumerate(*m35);
-  std::vector<std::string> ans35 = {"N=c1ccn2cc[nH]c2c1", "Nc1ccn2ccnc2c1"};
-  TEST_ASSERT(res35.size() == ans35.size());
-  for (size_t i = 0; i < res35.size(); ++i) {
-    TEST_ASSERT(MolToSmiles(*res35[i]) == ans35[i]);
-  }
+  checkAns("N=c(c1)ccn2cc[nH]c12", {"N=c1ccn2cc[nH]c2c1", "Nc1ccn2ccnc2c1"});
 
   // 1,5 aromatic heteroatom H shift
-  std::string smi36 = "CN=c1nc[nH]cc1";
-  std::shared_ptr<ROMol> m36(SmilesToMol(smi36));
-  std::vector<ROMOL_SPTR> res36 = te.enumerate(*m36);
-  std::vector<std::string> ans36 = {"CN=c1cc[nH]cn1", "CN=c1ccnc[nH]1",
-                                    "CNc1ccncn1"};
-  TEST_ASSERT(res36.size() == ans36.size());
-  for (size_t i = 0; i < res36.size(); ++i) {
-    TEST_ASSERT(MolToSmiles(*res36[i]) == ans36[i]);
-  }
+  checkAns("CN=c1nc[nH]cc1",
+           {"CN=c1cc[nH]cn1", "CN=c1ccnc[nH]1", "CNc1ccncn1"});
 
   // 1,7 aromatic heteroatom H shift
-  std::string smi37 = "c1ccc2[nH]c(-c3nc4ccccc4[nH]3)nc2c1";
-  std::shared_ptr<ROMol> m37(SmilesToMol(smi37));
-  std::vector<ROMOL_SPTR> res37 = te.enumerate(*m37);
-  std::vector<std::string> ans37 = {"c1ccc2[nH]c(-c3nc4ccccc4[nH]3)nc2c1",
-                                    "c1ccc2c(c1)=NC(c1nc3ccccc3[nH]1)N=2",
-                                    "c1ccc2c(c1)NC(=C1N=c3ccccc3=N1)N2"};
-  TEST_ASSERT(res37.size() == ans37.size());
-  for (size_t i = 0; i < res37.size(); ++i) {
-    TEST_ASSERT(MolToSmiles(*res37[i]) == ans37[i]);
-  }
+  checkAns("c1ccc2[nH]c(-c3nc4ccccc4[nH]3)nc2c1",
+           {"c1ccc2[nH]c(-c3nc4ccccc4[nH]3)nc2c1",
+            "c1ccc2c(c1)=NC(c1nc3ccccc3[nH]1)N=2",
+            "c1ccc2c(c1)NC(=C1N=c3ccccc3=N1)N2"});
 
   // 1,7 aromatic heteroatom H shift
-  std::string smi38 = "c1ccc2c(c1)NC(=C1N=c3ccccc3=N1)N2";
-  std::shared_ptr<ROMol> m38(SmilesToMol(smi38));
-  std::vector<ROMOL_SPTR> res38 = te.enumerate(*m38);
-  std::vector<std::string> ans38 = {"c1ccc2[nH]c(-c3nc4ccccc4[nH]3)nc2c1",
-                                    "c1ccc2c(c1)=NC(c1nc3ccccc3[nH]1)N=2",
-                                    "c1ccc2c(c1)NC(=C1N=c3ccccc3=N1)N2"};
-  TEST_ASSERT(res38.size() == ans38.size());
-  for (size_t i = 0; i < res38.size(); ++i) {
-    TEST_ASSERT(MolToSmiles(*res38[i]) == ans38[i]);
-  }
+  checkAns("c1ccc2c(c1)NC(=C1N=c3ccccc3=N1)N2",
+           {"c1ccc2[nH]c(-c3nc4ccccc4[nH]3)nc2c1",
+            "c1ccc2c(c1)=NC(c1nc3ccccc3[nH]1)N=2",
+            "c1ccc2c(c1)NC(=C1N=c3ccccc3=N1)N2"});
 
   // 1,9 aromatic heteroatom H shift
-  std::string smi39 = "CNc1ccnc2ncnn21";
-  std::shared_ptr<ROMol> m39(SmilesToMol(smi39));
-  std::vector<ROMOL_SPTR> res39 = te.enumerate(*m39);
-  std::vector<std::string> ans39 = {"CN=c1cc[nH]c2ncnn12",
-                                    "CN=c1ccnc2[nH]cnn12",
-                                    "CN=c1ccnc2nc[nH]n12", "CNc1ccnc2ncnn12"};
-  TEST_ASSERT(res39.size() == ans39.size());
-  for (size_t i = 0; i < res39.size(); ++i) {
-    TEST_ASSERT(MolToSmiles(*res39[i]) == ans39[i]);
-  }
+  checkAns("CNc1ccnc2ncnn21", {"CN=c1cc[nH]c2ncnn12", "CN=c1ccnc2[nH]cnn12",
+                               "CN=c1ccnc2nc[nH]n12", "CNc1ccnc2ncnn12"});
 
   // 1,9 aromatic heteroatom H shift
-  std::string smi40 = "CN=c1ccnc2nc[nH]n21";
-  std::shared_ptr<ROMol> m40(SmilesToMol(smi40));
-  std::vector<ROMOL_SPTR> res40 = te.enumerate(*m40);
-  std::vector<std::string> ans40 = {"CN=c1cc[nH]c2ncnn12",
-                                    "CN=c1ccnc2[nH]cnn12",
-                                    "CN=c1ccnc2nc[nH]n12", "CNc1ccnc2ncnn12"};
-  TEST_ASSERT(res40.size() == ans40.size());
-  for (size_t i = 0; i < res40.size(); ++i) {
-    TEST_ASSERT(MolToSmiles(*res40[i]) == ans40[i]);
-  }
+  checkAns("CN=c1ccnc2nc[nH]n21", {"CN=c1cc[nH]c2ncnn12", "CN=c1ccnc2[nH]cnn12",
+                                   "CN=c1ccnc2nc[nH]n12", "CNc1ccnc2ncnn12"});
 
   // 1,11 aromatic heteroatom H shift
-  std::string smi41 = "Nc1ccc(C=C2C=CC(=O)C=C2)cc1";
-  std::shared_ptr<ROMol> m41(SmilesToMol(smi41));
-  std::vector<ROMOL_SPTR> res41 = te.enumerate(*m41);
-  std::vector<std::string> ans41 = {
-      "N=C1C=CC(=CC2C=CC(=O)C=C2)C=C1", "N=C1C=CC(=Cc2ccc(O)cc2)C=C1",
-      "N=C1C=CC(C=C2C=CC(=O)C=C2)C=C1", "Nc1ccc(C=C2C=CC(=O)C=C2)cc1"};
-  TEST_ASSERT(res41.size() == ans41.size());
-  for (size_t i = 0; i < res41.size(); ++i) {
-    TEST_ASSERT(MolToSmiles(*res41[i]) == ans41[i]);
-  }
+  checkAns("Nc1ccc(C=C2C=CC(=O)C=C2)cc1",
+           {"N=C1C=CC(=CC2C=CC(=O)C=C2)C=C1", "N=C1C=CC(=Cc2ccc(O)cc2)C=C1",
+            "N=C1C=CC(C=C2C=CC(=O)C=C2)C=C1", "Nc1ccc(C=C2C=CC(=O)C=C2)cc1"});
 
   // 1,11 aromatic heteroatom H shift
-  std::string smi42 = "N=C1C=CC(=Cc2ccc(O)cc2)C=C1";
-  std::shared_ptr<ROMol> m42(SmilesToMol(smi42));
-  std::vector<ROMOL_SPTR> res42 = te.enumerate(*m42);
-  std::vector<std::string> ans42 = {
-      "N=C1C=CC(=CC2C=CC(=O)C=C2)C=C1", "N=C1C=CC(=Cc2ccc(O)cc2)C=C1",
-      "N=C1C=CC(C=C2C=CC(=O)C=C2)C=C1", "Nc1ccc(C=C2C=CC(=O)C=C2)cc1"};
-  TEST_ASSERT(res42.size() == ans42.size());
-  for (size_t i = 0; i < res42.size(); ++i) {
-    TEST_ASSERT(MolToSmiles(*res42[i]) == ans42[i]);
-  }
+  checkAns("N=C1C=CC(=Cc2ccc(O)cc2)C=C1",
+           {"N=C1C=CC(=CC2C=CC(=O)C=C2)C=C1", "N=C1C=CC(=Cc2ccc(O)cc2)C=C1",
+            "N=C1C=CC(C=C2C=CC(=O)C=C2)C=C1", "Nc1ccc(C=C2C=CC(=O)C=C2)cc1"});
 
   // heterocyclic tautomer
-  std::string smi43 = "n1ccc2ccc[nH]c12";
-  std::shared_ptr<ROMol> m43(SmilesToMol(smi43));
-  std::vector<ROMOL_SPTR> res43 = te.enumerate(*m43);
-  std::vector<std::string> ans43 = {"c1c[nH]c2nccc-2c1", "c1cnc2[nH]ccc2c1"};
-  TEST_ASSERT(res43.size() == ans43.size());
-  for (size_t i = 0; i < res43.size(); ++i) {
-    TEST_ASSERT(MolToSmiles(*res43[i]) == ans43[i]);
-  }
+  checkAns("n1ccc2ccc[nH]c12", {"c1c[nH]c2nccc-2c1", "c1cnc2[nH]ccc2c1"});
 
   // heterocyclic tautomer
-  std::string smi44 = "c1cc(=O)[nH]c2nccn12";
-  std::shared_ptr<ROMol> m44(SmilesToMol(smi44));
-  std::vector<ROMOL_SPTR> res44 = te.enumerate(*m44);
-  std::vector<std::string> ans44 = {"O=c1ccn2cc[nH]c2n1", "O=c1ccn2ccnc2[nH]1",
-                                    "Oc1ccn2ccnc2n1"};
-  TEST_ASSERT(res44.size() == ans44.size());
-  for (size_t i = 0; i < res44.size(); ++i) {
-    TEST_ASSERT(MolToSmiles(*res44[i]) == ans44[i]);
-  }
+  checkAns("c1cc(=O)[nH]c2nccn12",
+           {"O=c1ccn2cc[nH]c2n1", "O=c1ccn2ccnc2[nH]1", "Oc1ccn2ccnc2n1"});
 
   // heterocyclic tautomer
-  std::string smi45 = "c1cnc2c[nH]ccc12";
-  std::shared_ptr<ROMol> m45(SmilesToMol(smi45));
-  std::vector<ROMOL_SPTR> res45 = te.enumerate(*m45);
-  std::vector<std::string> ans45 = {"c1cc2cc[nH]c2cn1", "c1cc2cc[nH]cc-2n1"};
-  TEST_ASSERT(res45.size() == ans45.size());
-  for (size_t i = 0; i < res45.size(); ++i) {
-    TEST_ASSERT(MolToSmiles(*res45[i]) == ans45[i]);
-  }
+  checkAns("c1cnc2c[nH]ccc12", {"c1cc2cc[nH]c2cn1", "c1cc2cc[nH]cc-2n1"});
 
   // heterocyclic tautomer
-  std::string smi46 = "n1ccc2c[nH]ccc12";
-  std::shared_ptr<ROMol> m46(SmilesToMol(smi46));
-  std::vector<ROMOL_SPTR> res46 = te.enumerate(*m46);
-  std::vector<std::string> ans46 = {"c1cc2[nH]ccc2cn1", "c1cc2c[nH]ccc-2n1"};
-  TEST_ASSERT(res46.size() == ans46.size());
-  for (size_t i = 0; i < res46.size(); ++i) {
-    TEST_ASSERT(MolToSmiles(*res46[i]) == ans46[i]);
-  }
+  checkAns("n1ccc2c[nH]ccc12", {"c1cc2[nH]ccc2cn1", "c1cc2c[nH]ccc-2n1"});
 
   // heterocyclic tautomer
-  std::string smi47 = "c1cnc2ccc[nH]c12";
-  std::shared_ptr<ROMol> m47(SmilesToMol(smi47));
-  std::vector<ROMOL_SPTR> res47 = te.enumerate(*m47);
-  std::vector<std::string> ans47 = {"c1c[nH]c2ccnc-2c1", "c1cnc2cc[nH]c2c1"};
-  TEST_ASSERT(res47.size() == ans47.size());
-  for (size_t i = 0; i < res47.size(); ++i) {
-    TEST_ASSERT(MolToSmiles(*res47[i]) == ans47[i]);
-  }
+  checkAns("c1cnc2ccc[nH]c12", {"c1c[nH]c2ccnc-2c1", "c1cnc2cc[nH]c2c1"});
 
   // furanone tautomer
-  std::string smi48 = "C1=CC=C(O1)O";
-  std::shared_ptr<ROMol> m48(SmilesToMol(smi48));
-  std::vector<ROMOL_SPTR> res48 = te.enumerate(*m48);
-  std::vector<std::string> ans48 = {"O=C1CC=CO1", "Oc1ccco1"};
-  TEST_ASSERT(res48.size() == ans48.size());
-  for (size_t i = 0; i < res48.size(); ++i) {
-    TEST_ASSERT(MolToSmiles(*res48[i]) == ans48[i]);
-  }
+  checkAns("C1=CC=C(O1)O", {"O=C1CC=CO1", "Oc1ccco1"});
 
   // furanone tautomer
-  std::string smi49 = "O=C1CC=CO1";
-  std::shared_ptr<ROMol> m49(SmilesToMol(smi49));
-  std::vector<ROMOL_SPTR> res49 = te.enumerate(*m49);
-  std::vector<std::string> ans49 = {"O=C1CC=CO1", "Oc1ccco1"};
-  TEST_ASSERT(res49.size() == ans49.size());
-  for (size_t i = 0; i < res49.size(); ++i) {
-    TEST_ASSERT(MolToSmiles(*res49[i]) == ans49[i]);
-  }
+  checkAns("O=C1CC=CO1", {"O=C1CC=CO1", "Oc1ccco1"});
 
   // keten/ynol tautomer
-  std::string smi50 = "CC=C=O";
-  std::shared_ptr<ROMol> m50(SmilesToMol(smi50));
-  std::vector<ROMOL_SPTR> res50 = te.enumerate(*m50);
-  std::vector<std::string> ans50 = {"CC#CO", "CC=C=O"};
-  TEST_ASSERT(res50.size() == ans50.size());
-  for (size_t i = 0; i < res50.size(); ++i) {
-    TEST_ASSERT(MolToSmiles(*res50[i]) == ans50[i]);
-  }
+  checkAns("CC=C=O", {"CC#CO", "CC=C=O"});
 
   // keten/ynol tautomer
-  std::string smi51 = "CC#CO";
-  std::shared_ptr<ROMol> m51(SmilesToMol(smi51));
-  std::vector<ROMOL_SPTR> res51 = te.enumerate(*m51);
-  std::vector<std::string> ans51 = {"CC#CO", "CC=C=O"};
-  TEST_ASSERT(res51.size() == ans51.size());
-  for (size_t i = 0; i < res51.size(); ++i) {
-    TEST_ASSERT(MolToSmiles(*res51[i]) == ans51[i]);
-  }
+  checkAns("CC#CO", {"CC#CO", "CC=C=O"});
 
   // ionic nitro/aci-nitro tautomer
-  std::string smi52 = "C([N+](=O)[O-])C";
-  std::shared_ptr<ROMol> m52(SmilesToMol(smi52));
-  std::vector<ROMOL_SPTR> res52 = te.enumerate(*m52);
-  std::vector<std::string> ans52 = {"CC=[N+]([O-])O", "CC[N+](=O)[O-]"};
-  TEST_ASSERT(res52.size() == ans52.size());
-  for (size_t i = 0; i < res52.size(); ++i) {
-    TEST_ASSERT(MolToSmiles(*res52[i]) == ans52[i]);
-  }
+  checkAns("C([N+](=O)[O-])C", {"CC=[N+]([O-])O", "CC[N+](=O)[O-]"});
 
   // ionic nitro/aci-nitro tautomer
-  std::string smi53 = "C(=[N+](O)[O-])C";
-  std::shared_ptr<ROMol> m53(SmilesToMol(smi53));
-  std::vector<ROMOL_SPTR> res53 = te.enumerate(*m53);
-  std::vector<std::string> ans53 = {"CC=[N+]([O-])O", "CC[N+](=O)[O-]"};
-  TEST_ASSERT(res53.size() == ans53.size());
-  for (size_t i = 0; i < res53.size(); ++i) {
-    TEST_ASSERT(MolToSmiles(*res53[i]) == ans53[i]);
-  }
+  checkAns("C(=[N+](O)[O-])C", {"CC=[N+]([O-])O", "CC[N+](=O)[O-]"});
 
   // oxim nitroso tautomer
-  std::string smi54 = "CC(C)=NO";
-  std::shared_ptr<ROMol> m54(SmilesToMol(smi54));
-  std::vector<ROMOL_SPTR> res54 = te.enumerate(*m54);
-  std::vector<std::string> ans54 = {"C=C(C)NO", "CC(C)=NO", "CC(C)N=O"};
-  TEST_ASSERT(res54.size() == ans54.size());
-  for (size_t i = 0; i < res54.size(); ++i) {
-    TEST_ASSERT(MolToSmiles(*res54[i]) == ans54[i]);
-  }
+  checkAns("CC(C)=NO", {"C=C(C)NO", "CC(C)=NO", "CC(C)N=O"});
 
   // oxim nitroso tautomer
-  std::string smi55 = "CC(C)N=O";
-  std::shared_ptr<ROMol> m55(SmilesToMol(smi55));
-  std::vector<ROMOL_SPTR> res55 = te.enumerate(*m55);
-  std::vector<std::string> ans55 = {"C=C(C)NO", "CC(C)=NO", "CC(C)N=O"};
-  TEST_ASSERT(res55.size() == ans55.size());
-  for (size_t i = 0; i < res55.size(); ++i) {
-    TEST_ASSERT(MolToSmiles(*res55[i]) == ans55[i]);
-  }
+  checkAns("CC(C)N=O", {"C=C(C)NO", "CC(C)=NO", "CC(C)N=O"});
 
   // oxim/nitroso tautomer via phenol
-  std::string smi56 = "O=Nc1ccc(O)cc1";
-  std::shared_ptr<ROMol> m56(SmilesToMol(smi56));
-  std::vector<ROMOL_SPTR> res56 = te.enumerate(*m56);
-  std::vector<std::string> ans56 = {"O=C1C=CC(=NO)C=C1", "O=NC1C=CC(=O)C=C1",
-                                    "O=Nc1ccc(O)cc1"};
-  TEST_ASSERT(res56.size() == ans56.size());
-  for (size_t i = 0; i < res56.size(); ++i) {
-    TEST_ASSERT(MolToSmiles(*res56[i]) == ans56[i]);
-  }
+  checkAns("O=Nc1ccc(O)cc1",
+           {"O=C1C=CC(=NO)C=C1", "O=NC1C=CC(=O)C=C1", "O=Nc1ccc(O)cc1"});
 
   // oxim/nitroso tautomer via phenol
-  std::string smi57 = "O=C1C=CC(=NO)C=C1";
-  std::shared_ptr<ROMol> m57(SmilesToMol(smi57));
-  std::vector<ROMOL_SPTR> res57 = te.enumerate(*m57);
-  std::vector<std::string> ans57 = {"O=C1C=CC(=NO)C=C1", "O=NC1C=CC(=O)C=C1",
-                                    "O=Nc1ccc(O)cc1"};
-  TEST_ASSERT(res57.size() == ans57.size());
-  for (size_t i = 0; i < res57.size(); ++i) {
-    TEST_ASSERT(MolToSmiles(*res57[i]) == ans57[i]);
-  }
+  checkAns("O=C1C=CC(=NO)C=C1",
+           {"O=C1C=CC(=NO)C=C1", "O=NC1C=CC(=O)C=C1", "O=Nc1ccc(O)cc1"});
 
   // cyano/iso-cyanic acid tautomer
-  std::string smi58 = "C(#N)O";
-  std::shared_ptr<ROMol> m58(SmilesToMol(smi58));
-  std::vector<ROMOL_SPTR> res58 = te.enumerate(*m58);
-  std::vector<std::string> ans58 = {"N#CO", "N=C=O"};
-  TEST_ASSERT(res58.size() == ans58.size());
-  for (size_t i = 0; i < res58.size(); ++i) {
-    TEST_ASSERT(MolToSmiles(*res58[i]) == ans58[i]);
-  }
+  checkAns("C(#N)O", {"N#CO", "N=C=O"});
 
   // cyano/iso-cyanic acid tautomer
-  std::string smi59 = "C(=N)=O";
-  std::shared_ptr<ROMol> m59(SmilesToMol(smi59));
-  std::vector<ROMOL_SPTR> res59 = te.enumerate(*m59);
-  std::vector<std::string> ans59 = {"N#CO", "N=C=O"};
-  TEST_ASSERT(res59.size() == ans59.size());
-  for (size_t i = 0; i < res59.size(); ++i) {
-    TEST_ASSERT(MolToSmiles(*res59[i]) == ans59[i]);
-  }
+  checkAns("C(=N)=O", {"N#CO", "N=C=O"});
+
+  // formamidinesulfinic acid tautomer
+  checkAns("NC(N)=S(=O)=O",
+           {"N=C(N)S(=O)O", "N=C(N)[SH](=O)=O", "NC(N)=S(=O)=O"});
+
+  // formamidinesulfinic acid tautomer
+  checkAns("NC(=N)S(=O)O",
+           {"N=C(N)S(=O)O", "N=C(N)[SH](=O)=O", "NC(N)=S(=O)=O"});
 
   // isocyanide tautomer
-  std::string smi60 = "C#N";
-  std::shared_ptr<ROMol> m60(SmilesToMol(smi60));
-  std::vector<ROMOL_SPTR> res60 = te.enumerate(*m60);
-  std::vector<std::string> ans60 = {"C#N", "[C-]#[NH+]"};
-  TEST_ASSERT(res60.size() == ans60.size());
-  for (size_t i = 0; i < res60.size(); ++i) {
-    TEST_ASSERT(MolToSmiles(*res60[i]) == ans60[i]);
-  }
+  checkAns("C#N", {"C#N", "[C-]#[NH+]"});
 
   // isocyanide tautomer
-  std::string smi61 = "[C-]#[NH+]";
-  std::shared_ptr<ROMol> m61(SmilesToMol(smi61));
-  std::vector<ROMOL_SPTR> res61 = te.enumerate(*m61);
-  std::vector<std::string> ans61 = {"C#N", "[C-]#[NH+]"};
-  TEST_ASSERT(res61.size() == ans61.size());
-  for (size_t i = 0; i < res61.size(); ++i) {
-    TEST_ASSERT(MolToSmiles(*res61[i]) == ans61[i]);
-  }
+  checkAns("[C-]#[NH+]", {"C#N", "[C-]#[NH+]"});
 
   // phosphonic acid tautomer
-  std::string smi62 = "[PH](=O)(O)(O)";
-  std::shared_ptr<ROMol> m62(SmilesToMol(smi62));
-  std::vector<ROMOL_SPTR> res62 = te.enumerate(*m62);
-  std::vector<std::string> ans62 = {"O=[PH](O)O", "OP(O)O"};
-  TEST_ASSERT(res62.size() == ans62.size());
-  for (size_t i = 0; i < res62.size(); ++i) {
-    TEST_ASSERT(MolToSmiles(*res62[i]) == ans62[i]);
-  }
+  checkAns("[PH](=O)(O)(O)", {"O=[PH](O)O", "OP(O)O"});
 
   // phosphonic acid tautomer
-  std::string smi63 = "P(O)(O)O";
-  std::shared_ptr<ROMol> m63(SmilesToMol(smi63));
-  std::vector<ROMOL_SPTR> res63 = te.enumerate(*m63);
-  std::vector<std::string> ans63 = {"O=[PH](O)O", "OP(O)O"};
-  TEST_ASSERT(res63.size() == ans63.size());
-  for (size_t i = 0; i < res63.size(); ++i) {
-    TEST_ASSERT(MolToSmiles(*res63[i]) == ans63[i]);
-  }
+  checkAns("P(O)(O)O", {"O=[PH](O)O", "OP(O)O"});
 
   // Remove stereochemistry from mobile double bonds
-  std::string smi64 = "c1(ccccc1)/C=C(/O)\\C";
-  std::shared_ptr<ROMol> m64(SmilesToMol(smi64));
-  std::vector<ROMOL_SPTR> res64 = te.enumerate(*m64);
-  std::vector<std::string> ans64 = {"CC(O)=Cc1ccccc1", "C=C(O)Cc1ccccc1",
-                                    "CC(=O)Cc1ccccc1"};
-  TEST_ASSERT(res64.size() == ans64.size());
-  for (size_t i = 0; i < res64.size(); ++i) {
-    // std::cout << MolToSmiles(*res64[i]) << ", " << ans64[i] << std::endl;
-    TEST_ASSERT(MolToSmiles(*res64[i]) == ans64[i]);
-  }
+  checkAns("c1(ccccc1)/C=C(/O)\\C",
+           {"C=C(O)Cc1ccccc1", "CC(=O)Cc1ccccc1", "CC(O)=Cc1ccccc1"});
 
   // Remove stereochemistry from mobile double bonds
-  std::string smi65 = "C/C=C/C(C)=O";
-  std::shared_ptr<ROMol> m65(SmilesToMol(smi65));
-  std::vector<ROMOL_SPTR> res65 = te.enumerate(*m65);
-  std::vector<std::string> ans65 = {"CC=CC(C)=O", "C=C(O)C=CC", "C=CC=C(C)O",
-                                    "C=CCC(=C)O", "C=CCC(C)=O"};
-  TEST_ASSERT(res65.size() == ans65.size());
-  for (size_t i = 0; i < res65.size(); ++i) {
-    TEST_ASSERT(MolToSmiles(*res65[i]) == ans65[i]);
-  }
+  checkAns("C/C=C/C(C)=O", {"C=C(O)C=CC", "C=CC=C(C)O", "C=CCC(=C)O",
+                            "C=CCC(C)=O", "CC=CC(C)=O"});
 
   // Remove stereochemistry from mobile double bonds
   std::string smi66 = "C/C=C\\C(C)=O";
-  std::shared_ptr<ROMol> m66(SmilesToMol(smi66));
-  std::vector<ROMOL_SPTR> res66 = te.enumerate(*m66);
-  std::vector<std::string> ans66 = {"C=C(O)C=CC", "C=CC=C(C)O", "CC=CC(C)=O",
-                                    "C=CCC(=C)O", "C=CCC(C)=O"};
-  TEST_ASSERT(res66.size() == ans66.size());
+  ROMOL_SPTR m66(SmilesToMol(smi66));
+  TautomerEnumeratorResult res66 = te.enumerate(*m66);
+  std::vector<std::string> ans66 = {"C=C(O)C=CC", "C=CC=C(C)O", "C=CCC(=C)O",
+                                    "C=CCC(C)=O", "CC=CC(C)=O"};
+  TEST_ASSERT(res66.tautomers.size() == ans66.size());
+  TEST_ASSERT(res66.status == Completed);
 
   std::vector<std::string> sm66;
-  for (const auto &r : res66) {
+  for (const auto &r : res66.tautomers) {
     sm66.push_back(MolToSmiles(*r));
   }
   // sort both for alphabetical order
@@ -752,8 +341,8 @@ void testEnumerator() {
 
   // Gaunine tautomers
   std::string smi67 = "N1C(N)=NC=2N=CNC2C1=O";
-  std::shared_ptr<ROMol> m67(SmilesToMol(smi67));
-  std::vector<ROMOL_SPTR> res67 = te.enumerate(*m67);
+  ROMOL_SPTR m67(SmilesToMol(smi67));
+  TautomerEnumeratorResult res67 = te.enumerate(*m67);
   std::vector<std::string> ans67 = {
       "N=c1[nH]c(=O)c2[nH]cnc2[nH]1", "N=c1[nH]c(=O)c2nc[nH]c2[nH]1",
       "N=c1[nH]c2ncnc-2c(O)[nH]1",    "N=c1nc(O)c2[nH]cnc2[nH]1",
@@ -763,21 +352,215 @@ void testEnumerator() {
       "Nc1nc(O)c2nc[nH]c2n1",         "Nc1nc(O)c2ncnc-2[nH]1",
       "Nc1nc2[nH]cnc2c(=O)[nH]1",     "Nc1nc2nc[nH]c2c(=O)[nH]1",
       "Nc1nc2ncnc-2c(O)[nH]1"};
-  TEST_ASSERT(res67.size() == ans67.size());
+  TEST_ASSERT(res67.tautomers.size() == ans67.size());
+  TEST_ASSERT(res67.status == Completed);
   std::vector<std::string> sm67;
-  for (const auto &r : res67) {
+  for (const auto &r : res67.tautomers) {
     sm67.push_back(MolToSmiles(*r));
   }
-  // sort both for alphabetical order
+  // sort both by alphabetical order
   std::sort(sm67.begin(), sm67.end());
   std::sort(ans67.begin(), ans67.end());
   TEST_ASSERT(sm67 == ans67);
 
   // Test a structure with hundreds of tautomers.
   std::string smi68 = "[H][C](CO)(NC(=O)C1=C(O)C(O)=CC=C1)C(O)=O";
-  std::shared_ptr<ROMol> m68(SmilesToMol(smi68));
-  std::vector<ROMOL_SPTR> res68 = te.enumerate(*m68);
-  TEST_ASSERT(res68.size() == 375);
+  ROMOL_SPTR m68(SmilesToMol(smi68));
+  TautomerEnumeratorResult res68 = te.enumerate(*m68);
+  // the maxTransforms limit is hit before the maxTautomers one
+  TEST_ASSERT(res68.tautomers.size() == 292);
+  TEST_ASSERT(res68.status == MaxTransformsReached);
+  BOOST_LOG(rdInfoLog) << "Finished" << std::endl;
+}
+
+void testEnumeratorParams() {
+  BOOST_LOG(rdInfoLog)
+      << "-----------------------\n Testing TautomerEnumerator params"
+      << std::endl;
+
+  // Test a structure with hundreds of tautomers.
+  std::string smi68 = "[H][C](CO)(NC(=O)C1=C(O)C(O)=CC=C1)C(O)=O";
+  ROMOL_SPTR m68(SmilesToMol(smi68));
+
+  {
+    TautomerEnumerator te;
+    TautomerEnumeratorResult res68 = te.enumerate(*m68);
+    TEST_ASSERT(res68.tautomers.size() == 292);
+    TEST_ASSERT(res68.status == MaxTransformsReached);
+  }
+  {
+    CleanupParameters params;
+    params.maxTautomers = 50;
+    TautomerEnumerator te(params);
+    TautomerEnumeratorResult res68 = te.enumerate(*m68);
+    TEST_ASSERT(res68.tautomers.size() == 50);
+    TEST_ASSERT(res68.status == MaxTautomersReached);
+  }
+  std::string sAlaSmi = "C[C@H](N)C(=O)O";
+  ROMOL_SPTR sAla(SmilesToMol(sAlaSmi));
+  {
+    // test remove (S)-Ala stereochemistry
+    TEST_ASSERT(sAla->getAtomWithIdx(1)->getChiralTag() ==
+                Atom::CHI_TETRAHEDRAL_CCW);
+    TEST_ASSERT(sAla->getAtomWithIdx(1)->getProp<std::string>(
+                    common_properties::_CIPCode) == "S");
+    CleanupParameters params;
+    params.tautomerRemoveSp3Stereo = true;
+    TautomerEnumerator te(params);
+    TautomerEnumeratorResult res = te.enumerate(*sAla);
+    for (const auto taut : res.tautomers) {
+      TEST_ASSERT(taut->getAtomWithIdx(1)->getChiralTag() ==
+                  Atom::CHI_UNSPECIFIED);
+      TEST_ASSERT(
+          !taut->getAtomWithIdx(1)->hasProp(common_properties::_CIPCode));
+    }
+  }
+  {
+    // test retain (S)-Ala stereochemistry
+    TEST_ASSERT(sAla->getAtomWithIdx(1)->getChiralTag() ==
+                Atom::CHI_TETRAHEDRAL_CCW);
+    TEST_ASSERT(sAla->getAtomWithIdx(1)->getProp<std::string>(
+                    common_properties::_CIPCode) == "S");
+    CleanupParameters params;
+    params.tautomerRemoveSp3Stereo = false;
+    TautomerEnumerator te(params);
+    TautomerEnumeratorResult res = te.enumerate(*sAla);
+    for (const auto taut : res.tautomers) {
+      const auto tautAtom = taut->getAtomWithIdx(1);
+      if (tautAtom->getHybridization() == Atom::SP3) {
+        TEST_ASSERT(tautAtom->hasProp(common_properties::_CIPCode));
+        TEST_ASSERT(
+            tautAtom->getProp<std::string>(common_properties::_CIPCode) == "S");
+        TEST_ASSERT(tautAtom->getChiralTag() == Atom::CHI_TETRAHEDRAL_CCW);
+      } else {
+        TEST_ASSERT(!tautAtom->hasProp(common_properties::_CIPCode));
+        TEST_ASSERT(tautAtom->getChiralTag() == Atom::CHI_UNSPECIFIED);
+      }
+    }
+  }
+  std::string eEnolSmi = "C/C=C/O";
+  ROMOL_SPTR eEnol(SmilesToMol(eEnolSmi));
+  TEST_ASSERT(eEnol->getBondWithIdx(1)->getStereo() == Bond::STEREOE);
+  {
+    // test remove enol E stereochemistry
+    CleanupParameters params;
+    params.tautomerRemoveBondStereo = true;
+    TautomerEnumerator te(params);
+    TautomerEnumeratorResult res = te.enumerate(*eEnol);
+    for (const auto taut : res.tautomers) {
+      TEST_ASSERT(taut->getBondWithIdx(1)->getStereo() == Bond::STEREONONE);
+    }
+  }
+  {
+    // test retain enol E stereochemistry
+    CleanupParameters params;
+    params.tautomerRemoveBondStereo = false;
+    TautomerEnumerator te(params);
+    TautomerEnumeratorResult res = te.enumerate(*eEnol);
+    for (const auto taut : res.tautomers) {
+      if (taut->getBondWithIdx(1)->getBondType() == Bond::DOUBLE) {
+        TEST_ASSERT(taut->getBondWithIdx(1)->getStereo() == Bond::STEREOE);
+      }
+    }
+  }
+  std::string zEnolSmi = "C/C=C\\O";
+  ROMOL_SPTR zEnol(SmilesToMol(zEnolSmi));
+  TEST_ASSERT(zEnol->getBondWithIdx(1)->getStereo() == Bond::STEREOZ);
+  {
+    // test remove enol Z stereochemistry
+    CleanupParameters params;
+    params.tautomerRemoveBondStereo = true;
+    TautomerEnumerator te(params);
+    TautomerEnumeratorResult res = te.enumerate(*zEnol);
+    for (const auto taut : res.tautomers) {
+      TEST_ASSERT(taut->getBondWithIdx(1)->getStereo() == Bond::STEREONONE);
+    }
+  }
+  {
+    // test retain enol Z stereochemistry
+    CleanupParameters params;
+    params.tautomerRemoveBondStereo = false;
+    TautomerEnumerator te(params);
+    TautomerEnumeratorResult res = te.enumerate(*zEnol);
+    for (const auto taut : res.tautomers) {
+      if (taut->getBondWithIdx(1)->getBondType() == Bond::DOUBLE) {
+        TEST_ASSERT(taut->getBondWithIdx(1)->getStereo() == Bond::STEREOZ);
+      }
+    }
+  }
+
+  BOOST_LOG(rdInfoLog) << "Finished" << std::endl;
+}
+
+void testEnumeratorCallback() {
+  class MyTautomerEnumeratorCallback : public TautomerEnumeratorCallback {
+   public:
+    MyTautomerEnumeratorCallback(double timeoutMs)
+        : d_timeoutMs(timeoutMs), d_start(std::chrono::system_clock::now()) {}
+    bool operator()(const ROMol &, const TautomerEnumeratorResult &) override {
+      double elapsedMs = std::chrono::duration_cast<std::chrono::milliseconds>(
+                             std::chrono::system_clock::now() - d_start)
+                             .count();
+      return (elapsedMs < d_timeoutMs);
+    }
+
+   private:
+    double d_timeoutMs;
+    std::chrono::time_point<std::chrono::system_clock> d_start;
+  };
+
+  BOOST_LOG(rdInfoLog)
+      << "-----------------------\n Testing TautomerEnumerator callback"
+      << std::endl;
+
+  // Test a structure with hundreds of tautomers.
+  std::string smi68 = "[H][C](CO)(NC(=O)C1=C(O)C(O)=CC=C1)C(O)=O";
+  ROMOL_SPTR m68(SmilesToMol(smi68));
+
+  CleanupParameters params;
+  params.maxTransforms = 10000;
+  params.maxTautomers = 10000;
+  {
+    TautomerEnumerator te(params);
+    te.setCallback(new MyTautomerEnumeratorCallback(50.0));
+    TautomerEnumeratorResult res68 = te.enumerate(*m68);
+    // either the enumeration was canceled due to timeout
+    // or it has completed very quickly
+    bool hasReachedTimeout =
+        (res68.tautomers.size() < 375 && res68.status == Canceled);
+    bool hasCompleted =
+        (res68.tautomers.size() == 375 && res68.status == Completed);
+    if (hasReachedTimeout) {
+      std::cerr << "Enumeration was canceled due to timeout (50 ms)"
+                << std::endl;
+    }
+    if (hasCompleted) {
+      std::cerr << "Enumeration has completed" << std::endl;
+    }
+    TEST_ASSERT(hasReachedTimeout || hasCompleted);
+    TEST_ASSERT(hasReachedTimeout ^ hasCompleted);
+  }
+  {
+    TautomerEnumerator te(params);
+    te.setCallback(new MyTautomerEnumeratorCallback(10000.0));
+    TautomerEnumeratorResult res68 = te.enumerate(*m68);
+    // either the enumeration completed
+    // or it ran very slowly and was canceled due to timeout
+    bool hasReachedTimeout =
+        (res68.tautomers.size() < 375 && res68.status == Canceled);
+    bool hasCompleted =
+        (res68.tautomers.size() == 375 && res68.status == Completed);
+    if (hasReachedTimeout) {
+      std::cerr << "Enumeration was canceled due to timeout (10 s)"
+                << std::endl;
+    }
+    if (hasCompleted) {
+      std::cerr << "Enumeration has completed" << std::endl;
+    }
+    TEST_ASSERT(hasReachedTimeout || hasCompleted);
+    TEST_ASSERT(hasReachedTimeout ^ hasCompleted);
+  }
+
   BOOST_LOG(rdInfoLog) << "Finished" << std::endl;
 }
 
@@ -860,8 +643,15 @@ void testCanonicalize() {
       rdbase + "/Data/MolStandardize/tautomerTransforms.in";
   auto tautparams = std::unique_ptr<TautomerCatalogParams>(
       new TautomerCatalogParams(tautomerFile));
-  unsigned int ntautomers = tautparams->getNumTautomers();
-  TEST_ASSERT(ntautomers == 34);
+  // DEPRECATED, remove from here in release 2021.01
+  {
+    unsigned int ntransforms = tautparams->getNumTautomers();
+    TEST_ASSERT(ntransforms == 36);
+  }
+  // DEPRECATED, remove until here in release 2021.01
+
+  unsigned int ntransforms = tautparams->getTransforms().size();
+  TEST_ASSERT(ntransforms == 36);
 
   TautomerEnumerator te(new TautomerCatalog(tautparams.get()));
 
@@ -870,11 +660,6 @@ void testCanonicalize() {
     TEST_ASSERT(mol);
     std::unique_ptr<ROMol> res{te.canonicalize(*mol)};
     TEST_ASSERT(res);
-    if (MolToSmiles(*res) != itm.second) {
-      std::cerr << itm.first << " -> " << MolToSmiles(*res) << " instead of "
-                << itm.second << std::endl;
-    }
-
     TEST_ASSERT(MolToSmiles(*res) == itm.second);
   }
   BOOST_LOG(rdInfoLog) << "Finished" << std::endl;
@@ -889,16 +674,23 @@ void testPickCanonical() {
       rdbase + "/Data/MolStandardize/tautomerTransforms.in";
   auto tautparams = std::unique_ptr<TautomerCatalogParams>(
       new TautomerCatalogParams(tautomerFile));
-  unsigned int ntautomers = tautparams->getNumTautomers();
-  TEST_ASSERT(ntautomers == 34);
+  // DEPRECATED, remove from here in release 2021.01
+  {
+    unsigned int ntransforms = tautparams->getNumTautomers();
+    TEST_ASSERT(ntransforms == 36);
+  }
+  // DEPRECATED, remove until here in release 2021.01
+
+  unsigned int ntransforms = tautparams->getTransforms().size();
+  TEST_ASSERT(ntransforms == 36);
 
   TautomerEnumerator te(new TautomerCatalog(tautparams.get()));
 
   for (const auto &itm : canonTautomerData) {
     std::unique_ptr<ROMol> mol{SmilesToMol(itm.first)};
     TEST_ASSERT(mol);
-    auto tauts = te.enumerate(*mol);
-    std::unique_ptr<ROMol> res{te.pickCanonical(tauts)};
+    auto tautRes = te.enumerate(*mol);
+    std::unique_ptr<ROMol> res{te.pickCanonical(tautRes.tautomers)};
     TEST_ASSERT(res);
     // std::cerr << itm.first<<" -> "<<MolToSmiles(*res)<<std::endl;
     TEST_ASSERT(MolToSmiles(*res) == itm.second);
@@ -916,8 +708,15 @@ void testCustomScoreFunc() {
       rdbase + "/Data/MolStandardize/tautomerTransforms.in";
   auto tautparams = std::unique_ptr<TautomerCatalogParams>(
       new TautomerCatalogParams(tautomerFile));
-  unsigned int ntautomers = tautparams->getNumTautomers();
-  TEST_ASSERT(ntautomers == 34);
+  // DEPRECATED, remove from here in release 2021.01
+  {
+    unsigned int ntransforms = tautparams->getNumTautomers();
+    TEST_ASSERT(ntransforms == 36);
+  }
+  // DEPRECATED, remove until here in release 2021.01
+
+  unsigned int ntransforms = tautparams->getTransforms().size();
+  TEST_ASSERT(ntransforms == 36);
 
   TautomerEnumerator te(new TautomerCatalog(tautparams.get()));
 
@@ -941,9 +740,9 @@ void testCustomScoreFunc() {
       TEST_ASSERT(MolToSmiles(*res) == itm.second);
     }
     {
-      auto tauts = te.enumerate(*mol);
+      auto tautRes = te.enumerate(*mol);
       std::unique_ptr<ROMol> res{
-          te.pickCanonical(tauts, [](const ROMol &m) -> int {
+          te.pickCanonical(tautRes.tautomers, [](const ROMol &m) -> int {
             return MolStandardize::TautomerScoringFunctions::scoreRings(m);
           })};
       TEST_ASSERT(res);
@@ -963,15 +762,22 @@ void testEnumerationProblems() {
       rdbase + "/Data/MolStandardize/tautomerTransforms.in";
   auto tautparams = std::unique_ptr<TautomerCatalogParams>(
       new TautomerCatalogParams(tautomerFile));
-  unsigned int ntautomers = tautparams->getNumTautomers();
-  TEST_ASSERT(ntautomers == 34);
+  // DEPRECATED, remove from here in release 2021.01
+  {
+    unsigned int ntransforms = tautparams->getNumTautomers();
+    TEST_ASSERT(ntransforms == 36);
+  }
+  // DEPRECATED, remove until here in release 2021.01
+
+  unsigned int ntransforms = tautparams->getTransforms().size();
+  TEST_ASSERT(ntransforms == 36);
 
   TautomerEnumerator te(new TautomerCatalog(tautparams.get()));
 #if 1
   {  // from the discussion of #2908
     auto mol = "O=C(C1=C[NH+]=CC=C1)[O-]"_smiles;
-    auto tauts = te.enumerate(*mol);
-    TEST_ASSERT(tauts.size() == 1);
+    auto tautRes = te.enumerate(*mol);
+    TEST_ASSERT(tautRes.tautomers.size() == 1);
   }
 #endif
   {  // one of the examples from the tautobase paper
@@ -979,11 +785,11 @@ void testEnumerationProblems() {
         "[S:1]=[c:2]1[nH+:3][c:5]([NH2:9])[nH:8][c:7]2[c:4]1[n:6][nH:10][n:11]2"_smiles;
     TEST_ASSERT(m);
 
-    auto tauts = te.enumerate(*m);
+    auto tautRes = te.enumerate(*m);
     // for (auto taut : tauts) {
     //   std::cerr << MolToSmiles(*taut) << std::endl;
     // }
-    TEST_ASSERT(tauts.size() == 12);
+    TEST_ASSERT(tautRes.tautomers.size() == 12);
   }
 
   BOOST_LOG(rdInfoLog) << "Finished" << std::endl;
@@ -998,28 +804,35 @@ void testPickCanonical2() {
       rdbase + "/Data/MolStandardize/tautomerTransforms.in";
   auto tautparams = std::unique_ptr<TautomerCatalogParams>(
       new TautomerCatalogParams(tautomerFile));
-  unsigned int ntautomers = tautparams->getNumTautomers();
-  TEST_ASSERT(ntautomers == 34);
+  // DEPRECATED, remove from here in release 2021.01
+  {
+    unsigned int ntransforms = tautparams->getNumTautomers();
+    TEST_ASSERT(ntransforms == 36);
+  }
+  // DEPRECATED, remove until here in release 2021.01
+
+  unsigned int ntransforms = tautparams->getTransforms().size();
+  TEST_ASSERT(ntransforms == 36);
 
   TautomerEnumerator te(new TautomerCatalog(tautparams.get()));
   {
     auto mol = "CN=c1nc[nH]cc1"_smiles;
     TEST_ASSERT(mol);
-    auto tauts = te.enumerate(*mol);
-    for (const auto &taut : tauts) {
+    auto tautRes = te.enumerate(*mol);
+    for (const auto &taut : tautRes.tautomers) {
       std::cerr << MolToSmiles(*taut) << std::endl;
     }
-    std::unique_ptr<ROMol> canon{te.pickCanonical(tauts)};
+    std::unique_ptr<ROMol> canon{te.pickCanonical(tautRes.tautomers)};
     std::cerr << "res: " << MolToSmiles(*canon) << std::endl;
   }
   {
     auto mol = "CN=c1[nH]cccc1"_smiles;
     TEST_ASSERT(mol);
-    auto tauts = te.enumerate(*mol);
-    for (const auto &taut : tauts) {
+    auto tautRes = te.enumerate(*mol);
+    for (const auto &taut : tautRes.tautomers) {
       std::cerr << MolToSmiles(*taut) << std::endl;
     }
-    std::unique_ptr<ROMol> canon{te.pickCanonical(tauts)};
+    std::unique_ptr<ROMol> canon{te.pickCanonical(tautRes.tautomers)};
     std::cerr << "res: " << MolToSmiles(*canon) << std::endl;
   }
   BOOST_LOG(rdInfoLog) << "Finished" << std::endl;
@@ -1035,25 +848,30 @@ void testEnumerateDetails() {
       rdbase + "/Data/MolStandardize/tautomerTransforms.in";
   auto tautparams = std::unique_ptr<TautomerCatalogParams>(
       new TautomerCatalogParams(tautomerFile));
-  unsigned int ntautomers = tautparams->getNumTautomers();
-  TEST_ASSERT(ntautomers == 34);
+  // DEPRECATED, remove from here in release 2021.01
+  {
+    unsigned int ntransforms = tautparams->getNumTautomers();
+    TEST_ASSERT(ntransforms == 36);
+  }
+  // DEPRECATED, remove until here in release 2021.01
+
+  unsigned int ntransforms = tautparams->getTransforms().size();
+  TEST_ASSERT(ntransforms == 36);
   TautomerEnumerator te(new TautomerCatalog(tautparams.get()));
   {
     auto mol = "c1ccccc1CN=c1[nH]cccc1"_smiles;
     TEST_ASSERT(mol);
-    boost::dynamic_bitset<> atomsModified(mol->getNumAtoms());
-    boost::dynamic_bitset<> bondsModified(mol->getNumBonds());
 
-    auto tauts = te.enumerate(*mol, &atomsModified, &bondsModified);
-    TEST_ASSERT(tauts.size() == 2);
-    TEST_ASSERT(atomsModified.count() == 2);
-    TEST_ASSERT(bondsModified.count() == 7);
-    TEST_ASSERT(atomsModified[7]);
-    TEST_ASSERT(atomsModified[9]);
-    TEST_ASSERT(!bondsModified[0]);
-    TEST_ASSERT(bondsModified[7]);
-    TEST_ASSERT(bondsModified[8]);
-    TEST_ASSERT(bondsModified[14]);
+    auto tautRes = te.enumerate(*mol);
+    TEST_ASSERT(tautRes.tautomers.size() == 2);
+    TEST_ASSERT(tautRes.modifiedAtoms.count() == 2);
+    TEST_ASSERT(tautRes.modifiedBonds.count() == 7);
+    TEST_ASSERT(tautRes.modifiedAtoms[7]);
+    TEST_ASSERT(tautRes.modifiedAtoms[9]);
+    TEST_ASSERT(!tautRes.modifiedBonds[0]);
+    TEST_ASSERT(tautRes.modifiedBonds[7]);
+    TEST_ASSERT(tautRes.modifiedBonds[8]);
+    TEST_ASSERT(tautRes.modifiedBonds[14]);
   }
   BOOST_LOG(rdInfoLog) << "Finished" << std::endl;
 }
@@ -1068,15 +886,22 @@ void testGithub2990() {
       rdbase + "/Data/MolStandardize/tautomerTransforms.in";
   auto tautparams = std::unique_ptr<TautomerCatalogParams>(
       new TautomerCatalogParams(tautomerFile));
-  unsigned int ntautomers = tautparams->getNumTautomers();
-  TEST_ASSERT(ntautomers == 34);
+  // DEPRECATED, remove from here in release 2021.01
+  {
+    unsigned int ntransforms = tautparams->getNumTautomers();
+    TEST_ASSERT(ntransforms == 36);
+  }
+  // DEPRECATED, remove until here in release 2021.01
+
+  unsigned int ntransforms = tautparams->getTransforms().size();
+  TEST_ASSERT(ntransforms == 36);
   TautomerEnumerator te(new TautomerCatalog(tautparams.get()));
   {
     // atom stereo
     auto mol = "COC(=O)[C@@H](N)CO"_smiles;
     TEST_ASSERT(mol);
-    auto tauts = te.enumerate(*mol);
-    for (const auto &taut : tauts) {
+    auto res = te.enumerate(*mol);
+    for (const auto &taut : res.tautomers) {
       auto smi = MolToSmiles(*taut);
       // std::cerr << smi << std::endl;
       TEST_ASSERT(smi.find("@H") == std::string::npos);
@@ -1086,8 +911,8 @@ void testGithub2990() {
     // atom stereo, atoms not in the tautomer zone are still ok
     auto mol = "C[C@](Cl)(F)COC(=O)[C@@H](N)CO"_smiles;
     TEST_ASSERT(mol);
-    auto tauts = te.enumerate(*mol);
-    for (const auto &taut : tauts) {
+    auto res = te.enumerate(*mol);
+    for (const auto &taut : res.tautomers) {
       auto smi = MolToSmiles(*taut);
       // std::cerr << smi << std::endl;
       TEST_ASSERT(smi.find("@H") == std::string::npos);
@@ -1111,8 +936,8 @@ void testGithub2990() {
     TEST_ASSERT(mol->getBondBetweenAtoms(4, 5)->getStereo() >
                 Bond::BondStereo::STEREOANY);
 
-    auto tauts = te.enumerate(*mol);
-    for (const auto &taut : tauts) {
+    auto res = te.enumerate(*mol);
+    for (const auto &taut : res.tautomers) {
       TEST_ASSERT(taut->getBondBetweenAtoms(0, 1)->getBondDir() !=
                   Bond::BondDir::NONE);
       TEST_ASSERT(taut->getBondBetweenAtoms(2, 3)->getBondDir() !=
@@ -1131,10 +956,243 @@ void testGithub2990() {
   BOOST_LOG(rdInfoLog) << "Finished" << std::endl;
 }
 
+void testPickCanonicalCIPChangeOnChiralCenter() {
+  BOOST_LOG(rdInfoLog)
+      << "-----------------------\n testPickCanonicalCIPChangeOnChiralCenter"
+      << std::endl;
+
+  struct CanonicalTaut {
+    static ROMOL_SPTR get(const TautomerEnumeratorResult &res) {
+      std::vector<int> scores;
+      scores.reserve(res.tautomers.size());
+      std::transform(res.tautomers.begin(), res.tautomers.end(),
+                     std::back_inserter(scores), [](const ROMOL_SPTR &m) {
+                       return TautomerScoringFunctions::scoreTautomer(*m);
+                     });
+      std::vector<size_t> indices(res.tautomers.size());
+      std::iota(indices.begin(), indices.end(), 0);
+      int bestIdx =
+          *std::max_element(indices.begin(), indices.end(),
+                            [scores](const size_t &a, const size_t &b) {
+                              if (scores.at(a) != scores.at(b)) {
+                                return (scores.at(a) < scores.at(b));
+                              }
+                              return (a < b);
+                            });
+      TEST_ASSERT(*std::max_element(scores.begin(), scores.end()) ==
+                  scores.at(bestIdx));
+      return res.tautomers.at(bestIdx);
+    }
+  };
+
+  auto mol = "CC\\C=C(/O)[C@@H](C)C(C)=O"_smiles;
+  TEST_ASSERT(mol.get());
+  TEST_ASSERT(mol->getAtomWithIdx(5)->getChiralTag() ==
+              Atom::CHI_TETRAHEDRAL_CW);
+  TEST_ASSERT(mol->getAtomWithIdx(5)->getProp<std::string>(
+                  common_properties::_CIPCode) == "R");
+  {
+    // here the chirality disappears as the chiral center is itself involved in
+    // tautomerism
+    TautomerEnumerator te;
+    ROMOL_SPTR canTaut(te.canonicalize(*mol));
+    TEST_ASSERT(canTaut.get());
+    TEST_ASSERT(canTaut->getAtomWithIdx(5)->getChiralTag() ==
+                Atom::CHI_UNSPECIFIED);
+    TEST_ASSERT(
+        !canTaut->getAtomWithIdx(5)->hasProp(common_properties::_CIPCode));
+    TEST_ASSERT(MolToSmiles(*canTaut) == "CCCC(=O)C(C)C(C)=O");
+  }
+  {
+    // here the chirality stays even if the chiral center is itself involved in
+    // tautomerism because of the tautomerRemoveSp3Stereo parameter being set to
+    // false
+    CleanupParameters params;
+    params.tautomerRemoveSp3Stereo = false;
+    TautomerEnumerator te(params);
+    ROMOL_SPTR canTaut(te.canonicalize(*mol));
+    TEST_ASSERT(canTaut.get());
+    TEST_ASSERT(canTaut->getAtomWithIdx(5)->getChiralTag() ==
+                Atom::CHI_TETRAHEDRAL_CW);
+    TEST_ASSERT(canTaut->getAtomWithIdx(5)->getProp<std::string>(
+                    common_properties::_CIPCode) == "S");
+    TEST_ASSERT(MolToSmiles(*canTaut) == "CCCC(=O)[C@@H](C)C(C)=O");
+  }
+  {
+    // here the chirality disappears as the chiral center is itself involved in
+    // tautomerism the reassignStereo setting has no influence
+    TautomerEnumerator te;
+    auto res = te.enumerate(*mol);
+    TEST_ASSERT(res.status == Completed);
+    TEST_ASSERT(res.tautomers.size() == 8);
+    ROMOL_SPTR bestTaut = CanonicalTaut::get(res);
+    TEST_ASSERT(bestTaut.get());
+    TEST_ASSERT(bestTaut->getAtomWithIdx(5)->getChiralTag() ==
+                Atom::CHI_UNSPECIFIED);
+    TEST_ASSERT(
+        !bestTaut->getAtomWithIdx(5)->hasProp(common_properties::_CIPCode));
+    TEST_ASSERT(MolToSmiles(*bestTaut) == "CCCC(=O)C(C)C(C)=O");
+  }
+  {
+    // here the chirality disappears as the chiral center is itself involved in
+    // tautomerism the reassignStereo setting has no influence
+    TautomerEnumerator te;
+    auto res = te.enumerate(*mol, false);
+    TEST_ASSERT(res.status == Completed);
+    TEST_ASSERT(res.tautomers.size() == 8);
+    ROMOL_SPTR bestTaut = CanonicalTaut::get(res);
+    TEST_ASSERT(bestTaut.get());
+    TEST_ASSERT(bestTaut->getAtomWithIdx(5)->getChiralTag() ==
+                Atom::CHI_UNSPECIFIED);
+    TEST_ASSERT(
+        !bestTaut->getAtomWithIdx(5)->hasProp(common_properties::_CIPCode));
+    TEST_ASSERT(MolToSmiles(*bestTaut) == "CCCC(=O)C(C)C(C)=O");
+  }
+  {
+    // here the chirality stays even if the chiral center is itself involved in
+    // tautomerism because of the tautomerRemoveSp3Stereo parameter being set to
+    // false as reassignStereo by default is true, the CIP code has  been
+    // recomputed and therefore it is now S (correct)
+    CleanupParameters params;
+    params.tautomerRemoveSp3Stereo = false;
+    TautomerEnumerator te(params);
+    auto res = te.enumerate(*mol);
+    TEST_ASSERT(res.status == Completed);
+    TEST_ASSERT(res.tautomers.size() == 8);
+    ROMOL_SPTR bestTaut = CanonicalTaut::get(res);
+    TEST_ASSERT(bestTaut.get());
+    TEST_ASSERT(bestTaut->getAtomWithIdx(5)->getChiralTag() ==
+                Atom::CHI_TETRAHEDRAL_CW);
+    TEST_ASSERT(bestTaut->getAtomWithIdx(5)->getProp<std::string>(
+                    common_properties::_CIPCode) == "S");
+    TEST_ASSERT(MolToSmiles(*bestTaut) == "CCCC(=O)[C@@H](C)C(C)=O");
+  }
+  {
+    // here the chirality stays even if the chiral center is itself involved in
+    // tautomerism because of the tautomerRemoveSp3Stereo parameter being set to
+    // false as reassignStereo is false, the CIP code has not been recomputed
+    // and therefore it is still R (incorrect)
+    CleanupParameters params;
+    params.tautomerRemoveSp3Stereo = false;
+    TautomerEnumerator te(params);
+    auto res = te.enumerate(*mol, false);
+    TEST_ASSERT(res.status == Completed);
+    TEST_ASSERT(res.tautomers.size() == 8);
+    ROMOL_SPTR bestTaut = CanonicalTaut::get(res);
+    TEST_ASSERT(bestTaut.get());
+    TEST_ASSERT(bestTaut->getAtomWithIdx(5)->getChiralTag() ==
+                Atom::CHI_TETRAHEDRAL_CW);
+    TEST_ASSERT(bestTaut->getAtomWithIdx(5)->getProp<std::string>(
+                    common_properties::_CIPCode) == "R");
+    TEST_ASSERT(MolToSmiles(*bestTaut) == "CCCC(=O)[C@@H](C)C(C)=O");
+  }
+
+  mol = "CC\\C=C(/O)[C@@](CC)(C)C(C)=O"_smiles;
+  TEST_ASSERT(mol.get());
+  TEST_ASSERT(mol->getAtomWithIdx(5)->getChiralTag() ==
+              Atom::CHI_TETRAHEDRAL_CW);
+  TEST_ASSERT(mol->getAtomWithIdx(5)->getProp<std::string>(
+                  common_properties::_CIPCode) == "S");
+  // here the chirality stays no matter how tautomerRemoveSp3Stereo
+  // is set as the chiral center is not involved in tautomerism
+  {
+    TautomerEnumerator te;
+    ROMOL_SPTR canTaut(te.canonicalize(*mol));
+    TEST_ASSERT(canTaut.get());
+    TEST_ASSERT(canTaut->getAtomWithIdx(5)->getChiralTag() ==
+                Atom::CHI_TETRAHEDRAL_CW);
+    TEST_ASSERT(canTaut->getAtomWithIdx(5)->getProp<std::string>(
+                    common_properties::_CIPCode) == "R");
+    TEST_ASSERT(MolToSmiles(*canTaut) == "CCCC(=O)[C@](C)(CC)C(C)=O");
+  }
+  {
+    CleanupParameters params;
+    params.tautomerRemoveSp3Stereo = false;
+    TautomerEnumerator te(params);
+    ROMOL_SPTR canTaut(te.canonicalize(*mol));
+    TEST_ASSERT(canTaut.get());
+    TEST_ASSERT(canTaut->getAtomWithIdx(5)->getChiralTag() ==
+                Atom::CHI_TETRAHEDRAL_CW);
+    TEST_ASSERT(canTaut->getAtomWithIdx(5)->getProp<std::string>(
+                    common_properties::_CIPCode) == "R");
+    TEST_ASSERT(MolToSmiles(*canTaut) == "CCCC(=O)[C@](C)(CC)C(C)=O");
+  }
+  {
+    // as reassignStereo by default is true, the CIP code has been recomputed
+    // and therefore it is now R (correct)
+    TautomerEnumerator te;
+    auto res = te.enumerate(*mol);
+    TEST_ASSERT(res.status == Completed);
+    TEST_ASSERT(res.tautomers.size() == 4);
+    ROMOL_SPTR bestTaut = CanonicalTaut::get(res);
+    TEST_ASSERT(bestTaut.get());
+    TEST_ASSERT(bestTaut->getAtomWithIdx(5)->getChiralTag() ==
+                Atom::CHI_TETRAHEDRAL_CW);
+    TEST_ASSERT(bestTaut->getAtomWithIdx(5)->getProp<std::string>(
+                    common_properties::_CIPCode) == "R");
+    TEST_ASSERT(MolToSmiles(*bestTaut) == "CCCC(=O)[C@](C)(CC)C(C)=O");
+  }
+  {
+    // as reassignStereo is false, the CIP code has not been recomputed
+    // and therefore it is still S (incorrect)
+    TautomerEnumerator te;
+    auto res = te.enumerate(*mol, false);
+    TEST_ASSERT(res.status == Completed);
+    TEST_ASSERT(res.tautomers.size() == 4);
+    ROMOL_SPTR bestTaut = CanonicalTaut::get(res);
+    TEST_ASSERT(bestTaut.get());
+    TEST_ASSERT(bestTaut->getAtomWithIdx(5)->getChiralTag() ==
+                Atom::CHI_TETRAHEDRAL_CW);
+    TEST_ASSERT(bestTaut->getAtomWithIdx(5)->getProp<std::string>(
+                    common_properties::_CIPCode) == "S");
+    TEST_ASSERT(MolToSmiles(*bestTaut) == "CCCC(=O)[C@](C)(CC)C(C)=O");
+  }
+  {
+    // as reassignStereo by default is true, the CIP code has  been recomputed
+    // and therefore it is now R (correct)
+    CleanupParameters params;
+    params.tautomerRemoveSp3Stereo = false;
+    TautomerEnumerator te(params);
+    auto res = te.enumerate(*mol);
+    TEST_ASSERT(res.status == Completed);
+    TEST_ASSERT(res.tautomers.size() == 4);
+    ROMOL_SPTR bestTaut = CanonicalTaut::get(res);
+    TEST_ASSERT(bestTaut.get());
+    TEST_ASSERT(bestTaut->getAtomWithIdx(5)->getChiralTag() ==
+                Atom::CHI_TETRAHEDRAL_CW);
+    TEST_ASSERT(bestTaut->getAtomWithIdx(5)->getProp<std::string>(
+                    common_properties::_CIPCode) == "R");
+    TEST_ASSERT(MolToSmiles(*bestTaut) == "CCCC(=O)[C@](C)(CC)C(C)=O");
+  }
+  {
+    // here the chirality stays even if the tautomerRemoveSp3Stereo parameter
+    // is set to false as the chiral center is not involved in tautomerism
+    // as reassignStereo is false, the CIP code has not been recomputed
+    // and therefore it is still S (incorrect)
+    CleanupParameters params;
+    params.tautomerRemoveSp3Stereo = false;
+    TautomerEnumerator te(params);
+    auto res = te.enumerate(*mol, false);
+    TEST_ASSERT(res.status == Completed);
+    TEST_ASSERT(res.tautomers.size() == 4);
+    ROMOL_SPTR bestTaut = CanonicalTaut::get(res);
+    TEST_ASSERT(bestTaut.get());
+    TEST_ASSERT(bestTaut->getAtomWithIdx(5)->getChiralTag() ==
+                Atom::CHI_TETRAHEDRAL_CW);
+    TEST_ASSERT(bestTaut->getAtomWithIdx(5)->getProp<std::string>(
+                    common_properties::_CIPCode) == "S");
+    TEST_ASSERT(MolToSmiles(*bestTaut) == "CCCC(=O)[C@](C)(CC)C(C)=O");
+  }
+
+  BOOST_LOG(rdInfoLog) << "Finished" << std::endl;
+}
+
 int main() {
   RDLog::InitLogs();
 #if 1
   testEnumerator();
+  testEnumeratorParams();
+  testEnumeratorCallback();
   testCanonicalize();
   testPickCanonical();
   testCustomScoreFunc();
@@ -1143,5 +1201,6 @@ int main() {
   testPickCanonical2();
   testEnumerateDetails();
   testGithub2990();
+  testPickCanonicalCIPChangeOnChiralCenter();
   return 0;
 }

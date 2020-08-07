@@ -34,20 +34,6 @@ namespace RDKit {
 
 namespace MolStandardize {
 
-namespace detail {
-std::vector<std::pair<unsigned int, unsigned int>> pairwise(
-    const std::vector<int> vect) {
-  std::vector<std::pair<unsigned int, unsigned int>> pvect;
-  for (size_t i = 0; i < vect.size() - 1; ++i) {
-    std::pair<unsigned int, unsigned int> p =
-        std::pair<unsigned int, unsigned int>(vect[i], vect[i + 1]);
-    pvect.push_back(p);
-  }
-  return pvect;
-}
-
-}  // namespace detail
-
 namespace TautomerScoringFunctions {
 int scoreRings(const ROMol &mol) {
   int score = 0;
@@ -93,7 +79,7 @@ int scoreRings(const ROMol &mol) {
 
 struct smarts_mol_holder {
   std::string d_smarts;
-  std::shared_ptr<ROMol> dp_mol;
+  ROMOL_SPTR dp_mol;
   smarts_mol_holder(const std::string &smarts) : d_smarts(smarts) {
     dp_mol.reset(SmartsToMol(smarts));
   }
@@ -108,7 +94,7 @@ struct SubstructTerm {
   std::string name;
   std::string smarts;
   int score;
-  std::shared_ptr<ROMol> matcher;
+  ROMOL_SPTR matcher;
   SubstructTerm(std::string aname, std::string asmarts, int ascore)
       : name(std::move(aname)), smarts(std::move(asmarts)), score(ascore) {
     matcher = smarts_mol_flyweight(smarts).get().dp_mol;
@@ -148,7 +134,8 @@ int scoreSubstructs(const ROMol &mol) {
     score += matches.size() * term.score;
   }
   return score;
-};
+}
+
 int scoreHeteroHs(const ROMol &mol) {
   int score = 0;
   for (const auto &at : mol.atoms()) {
@@ -158,47 +145,145 @@ int scoreHeteroHs(const ROMol &mol) {
     }
   }
   return score;
-
-  return 1;
-};
+}
 }  // namespace TautomerScoringFunctions
 
-unsigned int MAX_TAUTOMERS = 1000;
+TautomerEnumerator::TautomerEnumerator(const CleanupParameters &params)
+    : d_maxTautomers(params.maxTautomers),
+      d_maxTransforms(params.maxTransforms),
+      d_removeSp3Stereo(params.tautomerRemoveSp3Stereo),
+      d_removeBondStereo(params.tautomerRemoveBondStereo) {
+  TautomerCatalogParams tautParams(params.tautomerTransforms);
+  dp_catalog.reset(new TautomerCatalog(&tautParams));
+}
 
 ROMol *TautomerEnumerator::pickCanonical(
-    const std::vector<ROMOL_SPTR> &tautomers,
+    std::vector<ROMOL_SPTR> &tautomers,
     boost::function<int(const ROMol &mol)> scoreFunc) const {
   PRECONDITION(scoreFunc, "no scoring function");
-  if (tautomers.size() == 1) {
-    return new ROMol(*tautomers[0]);
-  }
-  // Calculate score for each tautomer
-  int bestScore = std::numeric_limits<int>::min();
-  std::string bestSmiles = "";
   ROMOL_SPTR bestMol;
-  for (const auto &t : tautomers) {
-    auto score = scoreFunc(*t);
+  if (tautomers.size() == 1) {
+    bestMol = tautomers.front();
+  } else {
+    // Calculate score for each tautomer
+    int bestScore = std::numeric_limits<int>::min();
+    std::string bestSmiles = "";
+    for (const auto &t : tautomers) {
+      auto score = scoreFunc(*t);
 #ifdef VERBOSE_ENUMERATION
-    std::cerr << "  " << MolToSmiles(*t) << " " << score << std::endl;
+      std::cerr << "  " << MolToSmiles(*t) << " " << score << std::endl;
 #endif
-    if (score > bestScore) {
-      bestScore = score;
-      bestSmiles = MolToSmiles(*t);
-      bestMol = t;
-    } else if (score == bestScore) {
-      auto smiles = MolToSmiles(*t);
-      if (smiles < bestSmiles) {
-        bestSmiles = smiles;
+      if (score > bestScore) {
+        bestScore = score;
+        bestSmiles = MolToSmiles(*t);
         bestMol = t;
+      } else if (score == bestScore) {
+        auto smiles = MolToSmiles(*t);
+        if (smiles < bestSmiles) {
+          bestSmiles = smiles;
+          bestMol = t;
+        }
       }
     }
   }
-  return new ROMol(*bestMol);
+  ROMol *res = new ROMol(*bestMol);
+  static const bool cleanIt = true;
+  static const bool force = true;
+  MolOps::assignStereochemistry(*res, cleanIt, force);
+
+  return res;
 }
 
-std::vector<ROMOL_SPTR> TautomerEnumerator::enumerate(
-    const ROMol &mol, boost::dynamic_bitset<> *modifiedAtoms,
-    boost::dynamic_bitset<> *modifiedBonds) const {
+struct Tautomer {
+  ROMOL_SPTR tautomer;
+  ROMOL_SPTR kekulized;
+  size_t numModifiedAtoms;
+  size_t numModifiedBonds;
+};
+
+bool TautomerEnumerator::setTautomerStereo(const ROMol &mol, ROMol &taut,
+                                           const TautomerEnumeratorResult &res,
+                                           bool reassignStereo) const {
+  bool modified = false;
+  for (auto atom : mol.atoms()) {
+    auto atomIdx = atom->getIdx();
+    if (!res.modifiedAtoms.test(atomIdx)) {
+      continue;
+    }
+    auto tautAtom = taut.getAtomWithIdx(atomIdx);
+    // clear chiral tag on sp2 atoms
+    if (tautAtom->getHybridization() == Atom::SP2 || d_removeSp3Stereo) {
+      modified |= (tautAtom->getChiralTag() != Atom::CHI_UNSPECIFIED);
+      tautAtom->setChiralTag(Atom::CHI_UNSPECIFIED);
+      if (tautAtom->hasProp(common_properties::_CIPCode)) {
+        tautAtom->clearProp(common_properties::_CIPCode);
+      }
+    } else {
+      modified |= (tautAtom->getChiralTag() != atom->getChiralTag());
+      tautAtom->setChiralTag(atom->getChiralTag());
+      if (atom->hasProp(common_properties::_CIPCode)) {
+        tautAtom->setProp(
+            common_properties::_CIPCode,
+            atom->getProp<std::string>(common_properties::_CIPCode));
+      }
+    }
+  }
+  // remove stereochemistry on bonds that are part of a tautomeric path
+  for (auto bond : mol.bonds()) {
+    auto bondIdx = bond->getIdx();
+    if (!res.modifiedBonds.test(bondIdx)) {
+      continue;
+    }
+    std::vector<unsigned int> bondsToClearDirs;
+    if (bond->getBondType() == Bond::DOUBLE &&
+        bond->getStereo() > Bond::STEREOANY) {
+      // look around the beginning and end atoms and check for bonds with
+      // direction set
+      for (auto atom : {bond->getBeginAtom(), bond->getEndAtom()}) {
+        for (const auto &nbri :
+             boost::make_iterator_range(mol.getAtomBonds(atom))) {
+          const auto &obnd = mol[nbri];
+          if (obnd->getBondDir() == Bond::ENDDOWNRIGHT ||
+              obnd->getBondDir() == Bond::ENDUPRIGHT) {
+            bondsToClearDirs.push_back(obnd->getIdx());
+          }
+        }
+      }
+    }
+    auto tautBond = taut.getBondWithIdx(bondIdx);
+    if (tautBond->getBondType() != Bond::DOUBLE || d_removeBondStereo) {
+      modified |= (tautBond->getStereo() != Bond::STEREONONE);
+      tautBond->setStereo(Bond::STEREONONE);
+      tautBond->getStereoAtoms().clear();
+      for (auto bi : bondsToClearDirs) {
+        taut.getBondWithIdx(bi)->setBondDir(Bond::NONE);
+      }
+    } else {
+      const INT_VECT &sa = bond->getStereoAtoms();
+      modified |= (tautBond->getStereo() != bond->getStereo() ||
+                   sa.size() != tautBond->getStereoAtoms().size());
+      if (sa.size() == 2) {
+        tautBond->setStereoAtoms(sa.front(), sa.back());
+      }
+      tautBond->setStereo(bond->getStereo());
+      for (auto bi : bondsToClearDirs) {
+        taut.getBondWithIdx(bi)->setBondDir(
+            mol.getBondWithIdx(bi)->getBondDir());
+      }
+    }
+  }
+  if (reassignStereo) {
+    static const bool cleanIt = true;
+    static const bool force = true;
+    MolOps::assignStereochemistry(taut, cleanIt, force);
+  } else {
+    taut.setProp(common_properties::_StereochemDone, 1);
+  }
+  return modified;
+}
+
+TautomerEnumeratorResult TautomerEnumerator::enumerate(
+    const ROMol &mol, bool reassignStereo) const {
 #ifdef VERBOSE_ENUMERATION
   std::cout << "**********************************" << std::endl;
 #endif
@@ -206,42 +291,31 @@ std::vector<ROMOL_SPTR> TautomerEnumerator::enumerate(
   const TautomerCatalogParams *tautparams = dp_catalog->getCatalogParams();
   PRECONDITION(tautparams, "");
 
-  PRECONDITION(!modifiedAtoms || modifiedAtoms->size() >= mol.getNumAtoms(),
-               "bitset too small");
-  PRECONDITION(!modifiedBonds || modifiedBonds->size() >= mol.getNumBonds(),
-               "bitset too small");
-
-  std::unique_ptr<boost::dynamic_bitset<>> matp;
-  if (!modifiedAtoms) {
-    // we need the modified atom for internal purposes. If the user didn't give
-    // us one, we have to make our own:
-    matp.reset(new boost::dynamic_bitset<>(mol.getNumAtoms()));
-    modifiedAtoms = matp.get();
-  }
-  std::unique_ptr<boost::dynamic_bitset<>> mbp;
-  if (!modifiedBonds) {
-    // we need the modified bonds for internal purposes. If the user didn't give
-    // us one, we have to make our own:
-    mbp.reset(new boost::dynamic_bitset<>(mol.getNumBonds()));
-    modifiedBonds = mbp.get();
-  }
+  TautomerEnumeratorResult res;
 
   const std::vector<TautomerTransform> &transforms =
       tautparams->getTransforms();
 
-  // Enumerate all possible tautomers and return them as a list.
+  // Enumerate all possible tautomers and return them as a vector.
+  // smi is the input molecule SMILES
   std::string smi = MolToSmiles(mol, true);
-  boost::shared_ptr<ROMol> taut(new ROMol(mol));
-  std::map<std::string, boost::shared_ptr<ROMol>> tautomers = {{smi, taut}};
+  // taut is a copy of the input molecule
+  ROMOL_SPTR taut(new ROMol(mol));
   // Create a kekulized form of the molecule to match the SMARTS against
-  boost::shared_ptr<RWMol> kekulized(new RWMol(mol));
+  RWMOL_SPTR kekulized(new RWMol(mol));
   MolOps::Kekulize(*kekulized, false);
-  std::map<std::string, boost::shared_ptr<ROMol>> kekulized_mols = {
-      {smi, kekulized}};
-  std::vector<std::string> done;
-  bool broken = false;
+  std::map<std::string, Tautomer> tautomers = {{smi, {taut, kekulized, 0, 0}}};
+  std::set<std::string> done;
+  res.modifiedAtoms.resize(mol.getNumAtoms());
+  res.modifiedBonds.resize(mol.getNumBonds());
+  bool completed = false;
+  bool bailOut = false;
+  unsigned int nTransforms = 0;
+  static const std::array<const char *, 4> statusMsg{
+      "completed", "max tautomers reached", "max transforms reached",
+      "canceled"};
 
-  while (tautomers.size() < MAX_TAUTOMERS) {
+  while (!bailOut) {
     // std::map automatically sorts tautomers into alphabetical order (SMILES)
     for (const auto &tautomer : tautomers) {
 #ifdef VERBOSE_ENUMERATION
@@ -252,56 +326,62 @@ std::vector<ROMOL_SPTR> TautomerEnumerator::enumerate(
       std::cout << "Looking at tautomer: " << tautomer.first << std::endl;
 #endif
       std::string tsmiles;
-      if (std::find(done.begin(), done.end(), tautomer.first) != done.end()) {
+      if (done.count(tautomer.first)) {
         continue;
       } else {
         // done does not contain tautomer
         for (const auto &transform : transforms) {
-          // find kekulized_mol in kekulized_mols with same smiles as taut
-          auto kmol = kekulized_mols.find(tautomer.first);
-          //					if (search !=
-          // kekulized_mols.end() 					for
-          // (const auto &mol : kekulized_mols) { if (mol.first ==
-          // tautomer.first) { std::cout << mol.first << std::endl;
-          //							}
-          //					std::cout <<
-          // MolToSmiles(*transform.Mol)
-          //<< std::endl;
+          if (bailOut) {
+            break;
+          }
+          // kmol is the kekulized version of the tautomer
+          const auto &kmol = tautomer.second.kekulized;
           std::vector<MatchVectType> matches;
           unsigned int matched =
-              SubstructMatch(*(kmol->second), *(transform.Mol), matches);
-          std::string name;
-          (transform.Mol)->getProp(common_properties::_Name, name);
+              SubstructMatch(*kmol, *(transform.Mol), matches);
 
           if (!matched) {
             continue;
-          } else {
-#ifdef VERBOSE_ENUMERATION
-            std::cout << "kmol: " << kmol->first << std::endl;
-            std::cout << MolToSmiles(*(kmol->second)) << std::endl;
-            std::cout << "transform mol: " << MolToSmarts(*(transform.Mol))
-                      << std::endl;
-
-            std::cout << "Matched: " << name << std::endl;
-#endif
           }
+          ++nTransforms;
+#ifdef VERBOSE_ENUMERATION
+          std::string name;
+          (transform.Mol)->getProp(common_properties::_Name, name);
+          std::cout << "kmol: " << kmol->first << std::endl;
+          std::cout << MolToSmiles(*(kmol->second)) << std::endl;
+          std::cout << "transform mol: " << MolToSmarts(*(transform.Mol))
+                    << std::endl;
+
+          std::cout << "Matched: " << name << std::endl;
+#endif
+          // loop over transform matches
           for (const auto &match : matches) {
-            std::vector<int> idx_matches;
-            for (const auto &pair : match) {
-              idx_matches.push_back(pair.second);
+            if (nTransforms >= d_maxTransforms) {
+              res.status = MaxTransformsReached;
+              bailOut = true;
+            } else if (tautomers.size() >= d_maxTautomers) {
+              res.status = MaxTautomersReached;
+              bailOut = true;
+            } else if (d_callback.get() && !(*d_callback)(mol, res)) {
+              res.status = Canceled;
+              bailOut = true;
+            }
+            if (bailOut) {
+              break;
             }
             // Create a copy of in the input molecule so we can modify it
             // Use kekule form so bonds are explicitly single/double instead of
             // aromatic
-            boost::shared_ptr<ROMol> product(new ROMol(*(kmol->second)));
+            ROMOL_SPTR product(new ROMol(*kmol));
             // Remove a hydrogen from the first matched atom and add one to the
             // last
-            Atom *first = product->getAtomWithIdx(idx_matches[0]);
-            Atom *last = product->getAtomWithIdx(idx_matches.back());
-            modifiedAtoms->set(idx_matches[0]);
-            modifiedAtoms->set(idx_matches.back());
-            first->setNumExplicitHs(
-                std::max((unsigned int)0, first->getTotalNumHs() - 1));
+            int firstIdx = match.front().second;
+            int lastIdx = match.back().second;
+            Atom *first = product->getAtomWithIdx(firstIdx);
+            Atom *last = product->getAtomWithIdx(lastIdx);
+            res.modifiedAtoms.set(firstIdx);
+            res.modifiedAtoms.set(lastIdx);
+            first->setNumExplicitHs(std::max(0U, first->getTotalNumHs() - 1));
             last->setNumExplicitHs(last->getTotalNumHs() + 1);
             // Remove any implicit hydrogens from the first and last atoms
             // now we have set the count explicitly
@@ -309,13 +389,11 @@ std::vector<ROMOL_SPTR> TautomerEnumerator::enumerate(
             last->setNoImplicit(true);
             // Adjust bond orders
             unsigned int bi = 0;
-            std::vector<std::pair<unsigned int, unsigned int>> pvect =
-                detail::pairwise(idx_matches);
-            for (const auto &pair : pvect) {
-              Bond *bond =
-                  product->getBondBetweenAtoms(pair.first, pair.second);
+            for (size_t i = 0; i < match.size() - 1; ++i) {
+              Bond *bond = product->getBondBetweenAtoms(match[i].second,
+                                                        match[i + 1].second);
               ASSERT_INVARIANT(bond, "required bond not found");
-              // check if bonds is specified in tatuomer.in file
+              // check if bonds is specified in tautomer.in file
               if (!transform.BondTypes.empty()) {
                 bond->setBondType(transform.BondTypes[bi]);
                 ++bi;
@@ -326,40 +404,44 @@ std::vector<ROMOL_SPTR> TautomerEnumerator::enumerate(
                           << std::endl;
                 std::cout << bondtype << std::endl;
 #endif
-                if (bondtype == 1) {
+                if (bondtype == Bond::SINGLE) {
                   bond->setBondType(Bond::DOUBLE);
 #ifdef VERBOSE_ENUMERATION
                   std::cout << "Set bond to double" << std::endl;
 #endif
                 }
-                if (bondtype == 2) {
+                if (bondtype == Bond::DOUBLE) {
                   bond->setBondType(Bond::SINGLE);
 #ifdef VERBOSE_ENUMERATION
                   std::cout << "Set bond to single" << std::endl;
 #endif
                 }
-                modifiedBonds->set(bond->getIdx());
               }
+              res.modifiedBonds.set(bond->getIdx());
             }
             // TODO adjust charges
             if (!transform.Charges.empty()) {
               unsigned int ci = 0;
-              for (const auto idx : idx_matches) {
-                Atom *atom = product->getAtomWithIdx(idx);
+              for (const auto &pair : match) {
+                Atom *atom = product->getAtomWithIdx(pair.second);
                 atom->setFormalCharge(atom->getFormalCharge() +
-                                      transform.Charges[ci]);
-                ++ci;
+                                      transform.Charges[ci++]);
               }
             }
 
-            boost::shared_ptr<RWMol> wproduct(new RWMol(*product));
+            RWMOL_SPTR wproduct(new RWMol(*product));
 #ifdef VERBOSE_ENUMERATION
-            // wproduct->updatePropertyCache(false);
             std::cout << "pre-sanitization: "
                       << MolToSmiles(*wproduct, true, true) << std::endl;
 #endif
-            MolOps::sanitizeMol(*wproduct);
-            //						MolOps::sanitizeMol(*static_cast<RWMol*>(product.get()));
+            unsigned int failedOp;
+            MolOps::sanitizeMol(*wproduct, failedOp,
+                                MolOps::SANITIZE_KEKULIZE |
+                                    MolOps::SANITIZE_SETAROMATICITY |
+                                    MolOps::SANITIZE_SETCONJUGATION |
+                                    MolOps::SANITIZE_SETHYBRIDIZATION |
+                                    MolOps::SANITIZE_ADJUSTHS);
+            setTautomerStereo(mol, *wproduct, res, reassignStereo);
             tsmiles = MolToSmiles(*wproduct, true);
 #ifdef VERBOSE_ENUMERATION
             std::string name;
@@ -367,116 +449,82 @@ std::vector<ROMOL_SPTR> TautomerEnumerator::enumerate(
             std::cout << "Applied rule: " << name << " to " << tautomer.first
                       << std::endl;
 #endif
-            const bool is_in = tautomers.find(tsmiles) != tautomers.end();
-            if (!is_in) {
-#ifdef VERBOSE_ENUMERATION
-              std::cout << "New tautomer produced: " << tsmiles << std::endl;
-#endif
-              // in addition to the above transformations, sanitzation may modify
-              // bonds, e.g. Cc1nc2ccccc2[nH]1
-              for (size_t i = 0; i < mol.getNumBonds(); i++) {
-                auto molBondType = mol.getBondWithIdx(i)->getBondType();
-                auto tautBondType = wproduct->getBondWithIdx(i)->getBondType();
-                if (molBondType != tautBondType && !modifiedBonds->operator[](i)) {
-#ifdef VERBOSE_ENUMERATION
-                  std::cout << "Sanitization has modified bond " << i
-                            << std::endl;
-#endif
-                  modifiedBonds->set(i);
-                }
-              }
-              boost::shared_ptr<RWMol> kekulized_product(new RWMol(*wproduct));
-              tautomers[tsmiles] = wproduct;
-              MolOps::Kekulize(*kekulized_product, false);
-              kekulized_mols[tsmiles] = kekulized_product;
-
-#ifdef VERBOSE_ENUMERATION
-              std::cout << "Now completed: " << std::endl;
-              for (const auto &tautomer : tautomers) {
-                std::cout << tautomer.first << std::endl;
-              }
-#endif
-
-            } else {
+            if (tautomers.find(tsmiles) != tautomers.end()) {
 #ifdef VERBOSE_ENUMERATION
               std::cout << "Previous tautomer produced again: " << tsmiles
                         << std::endl;
 #endif
+              continue;
             }
+#ifdef VERBOSE_ENUMERATION
+            std::cout << "New tautomer produced: " << tsmiles << std::endl;
+#endif
+            // in addition to the above transformations, sanitzation may modify
+            // bonds, e.g. Cc1nc2ccccc2[nH]1
+            for (size_t i = 0; i < mol.getNumBonds(); i++) {
+              auto molBondType = mol.getBondWithIdx(i)->getBondType();
+              auto tautBondType = wproduct->getBondWithIdx(i)->getBondType();
+              if (molBondType != tautBondType && !res.modifiedBonds.test(i)) {
+#ifdef VERBOSE_ENUMERATION
+                std::cout << "Sanitization has modified bond " << i
+                          << std::endl;
+#endif
+                res.modifiedBonds.set(i);
+              }
+            }
+            RWMOL_SPTR kekulized_product(new RWMol(*wproduct));
+            MolOps::Kekulize(*kekulized_product, false);
+            tautomers[tsmiles] = {
+                std::move(wproduct), std::move(kekulized_product),
+                res.modifiedAtoms.count(), res.modifiedBonds.count()};
+
+#ifdef VERBOSE_ENUMERATION
+            std::cout << "Now completed: " << std::endl;
+            for (const auto &tautomer : tautomers) {
+              std::cout << tautomer.first << std::endl;
+            }
+#endif
           }
         }
       }
-      done.push_back(tautomer.first);
+      done.insert(tautomer.first);
     }
     if (tautomers.size() == done.size()) {
-      broken = true;
+      completed = true;
       break;
     }
   }  // while
-  if (!broken) {
-    BOOST_LOG(rdWarningLog) << "Tautomer enumeration stopped at maximum "
-                            << MAX_TAUTOMERS << std::endl;
+  if (completed) {
+    BOOST_LOG(rdInfoLog) << "Tautomer enumeration completed at "
+                         << tautomers.size() << " tautomers" << std::endl;
+  } else {
+    BOOST_LOG(rdWarningLog)
+        << "Tautomer enumeration stopped at " << tautomers.size()
+        << " tautomers: " << statusMsg.at(res.status) << std::endl;
   }
 
-  // remove chirality on atoms that were modified:
-  for (auto atom : mol.atoms()) {
-    auto atomIdx = atom->getIdx();
-    if ((*modifiedAtoms)[atomIdx]) {
-      for (auto &tautomer : tautomers) {
-        tautomer.second->getAtomWithIdx(atomIdx)->setChiralTag(
-            Atom::ChiralType::CHI_UNSPECIFIED);
+  size_t maxNumModifiedAtoms = res.modifiedAtoms.count();
+  size_t maxNumModifiedBonds = res.modifiedBonds.count();
+  for (auto it = tautomers.begin(); it != tautomers.end();) {
+    auto &taut = it->second;
+    if ((taut.numModifiedAtoms < maxNumModifiedAtoms ||
+         taut.numModifiedBonds < maxNumModifiedBonds) &&
+        setTautomerStereo(mol, *taut.tautomer, res, reassignStereo)) {
+      Tautomer tautStored = std::move(taut);
+      it = tautomers.erase(it);
+      tautStored.numModifiedAtoms = maxNumModifiedAtoms;
+      tautStored.numModifiedBonds = maxNumModifiedBonds;
+      auto insertRes = tautomers.insert(std::make_pair(
+          MolToSmiles(*tautStored.tautomer), std::move(tautStored)));
+      if (insertRes.second) {
+        it = insertRes.first;
       }
+    } else {
+      ++it;
     }
   }
-  // remove chirality on bonds that are part of a tautomeric path
-  for (auto bond : mol.bonds()) {
-    auto bondIdx = bond->getIdx();
-    if ((*modifiedBonds)[bondIdx] && bond->getBondType() == Bond::DOUBLE &&
-        bond->getStereo() > Bond::BondStereo::STEREOANY) {
-      // look around the beginning and end atoms and check for bonds with
-      // direction set
-      boost::dynamic_bitset<> bondsToClearDirs(mol.getNumBonds());
-      ROMol::OEDGE_ITER beg, end;
-      boost::tie(beg, end) = mol.getAtomBonds(bond->getBeginAtom());
-      while (beg != end) {
-        auto obnd = mol[*beg];
-        if (obnd->getBondDir() == Bond::BondDir::ENDDOWNRIGHT ||
-            obnd->getBondDir() == Bond::BondDir::ENDUPRIGHT) {
-          bondsToClearDirs.set(obnd->getIdx());
-        }
-        ++beg;
-      }
-      boost::tie(beg, end) = mol.getAtomBonds(bond->getEndAtom());
-      while (beg != end) {
-        auto obnd = mol[*beg];
-        if (obnd->getBondDir() == Bond::BondDir::ENDDOWNRIGHT ||
-            obnd->getBondDir() == Bond::BondDir::ENDUPRIGHT) {
-          bondsToClearDirs.set(obnd->getIdx());
-        }
-        ++beg;
-      }
-      for (auto &tautomer : tautomers) {
-        tautomer.second->getBondWithIdx(bondIdx)->setStereo(Bond::STEREONONE);
-        tautomer.second->getBondWithIdx(bondIdx)->getStereoAtoms().clear();
-        for (unsigned int bi = 0; bi < mol.getNumBonds(); ++bi) {
-          if (bondsToClearDirs[bi]) {
-            tautomer.second->getBondWithIdx(bi)->setBondDir(
-                Bond::BondDir::NONE);
-          }
-        }
-      }
-    }
-  }
-  // Clean up stereochemistry
-  for (auto &tautomer : tautomers) {
-    bool cleanIt = true;
-    bool force = true;
-    MolOps::assignStereochemistry(*tautomer.second, cleanIt, force);
-  }
-
-  std::vector<ROMOL_SPTR> res;
   for (const auto &tautomer : tautomers) {
-    res.push_back(tautomer.second);
+    res.tautomers.emplace_back(tautomer.second.tautomer);
   }
   return res;
 }

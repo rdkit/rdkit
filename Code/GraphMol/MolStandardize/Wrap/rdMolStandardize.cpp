@@ -103,9 +103,6 @@ BOOST_PYTHON_MODULE(rdMolStandardize) {
       .def_readwrite("maxRestarts",
                      &RDKit::MolStandardize::CleanupParameters::maxRestarts,
                      "maximum number of restarts")
-      .def_readwrite("maxTautomers",
-                     &RDKit::MolStandardize::CleanupParameters::maxTautomers,
-                     "maximum number of tautomers to generate")
       .def_readwrite("preferOrganic",
                      &RDKit::MolStandardize::CleanupParameters::preferOrganic,
                      "prefer organic fragments to inorganic ones when deciding "
@@ -114,8 +111,24 @@ BOOST_PYTHON_MODULE(rdMolStandardize) {
                      &RDKit::MolStandardize::CleanupParameters::doCanonical,
                      "apply atom-order dependent normalizations (like "
                      "uncharging) in a canonical order")
-
-      ;
+      .def_readwrite("maxTautomers",
+                     &RDKit::MolStandardize::CleanupParameters::maxTautomers,
+                     "maximum number of tautomers to generate (defaults to "
+                     "1000)")
+      .def_readwrite("maxTransforms",
+                     &RDKit::MolStandardize::CleanupParameters::maxTransforms,
+                     "maximum number of transforms to apply during tautomer "
+                     "enumeration (defaults to 1000)")
+      .def_readwrite(
+          "tautomerRemoveSp3Stereo",
+          &RDKit::MolStandardize::CleanupParameters::tautomerRemoveSp3Stereo,
+          "remove stereochemistry from sp3 centers involved in "
+          "tautomerism (defaults to true)")
+      .def_readwrite(
+          "tautomerRemoveBondStereo",
+          &RDKit::MolStandardize::CleanupParameters::tautomerRemoveBondStereo,
+          "remove stereochemistry from double bonds involved in "
+          "tautomerism (defaults to true)");
 
   docString = "Standardizes a molecule";
   python::def("Cleanup", cleanupHelper,
