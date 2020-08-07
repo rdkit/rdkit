@@ -539,7 +539,7 @@ TEST_CASE("single bonds to aromatic neighbors") {
       // confirm that we don't modify ring bonds
       matchCase{"C1=CC2=C(C=CC3=C2C=NN=C3)N=C1","C1CC2=C(C=CC=N2)C2=C1C=NN=C2",false,false},
       matchCase{"C1CC2=C(C=CC=N2)C2=C1C=NN=C2","C1CC2=C(C=CC=N2)C2=C1C=NN=C2",true,true},
-      matchCase{"C1CC2=NN=CC3=C2C2=C(C=C3)N=CC=C12","C1CC2=C(C=CC=N2)C2=C1C=NN=C2",false,false},
+      matchCase{"C1CC2=C3C(C=CC4=NN=CC1=C34)=CC=N2","C1CC2=C(C=CC=N2)C2=C1C=NN=C2",false,true}, // was github #3325
     };
     for( const auto tpl : examples){
       auto smi = std::get<1>(tpl);
@@ -559,4 +559,3 @@ TEST_CASE("single bonds to aromatic neighbors") {
     } 
   }
 }
-
