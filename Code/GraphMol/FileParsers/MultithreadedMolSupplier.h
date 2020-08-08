@@ -21,6 +21,10 @@
 
 #include <atomic>
 #include <boost/tokenizer.hpp>
+#include <fstream>
+#include <iomanip>
+#include <mutex>
+#include <sstream>
 
 #include "FileParsers.h"
 #include "MolSupplier.h"
@@ -28,6 +32,14 @@
 typedef boost::tokenizer<boost::char_separator<char>> tokenizer;
 
 namespace RDKit {
+struct PrintThread : public std::stringstream {
+  static inline std::mutex cout_mutex;
+  ~PrintThread() {
+    std::lock_guard<std::mutex> l{cout_mutex};
+    std::cout << rdbuf();
+  }
+};
+
 class RDKIT_FILEPARSERS_EXPORT MultithreadedMolSupplier : public MolSupplier {
   //! this is an abstract base class to concurrently supply molecules one at a
   //! time
