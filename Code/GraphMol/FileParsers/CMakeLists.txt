@@ -45,6 +45,8 @@ rdkit_library(FileParsers
               ProximityBonds.cpp
               SequenceParsers.cpp SequenceWriters.cpp
               SVGParser.cpp
+							MultithreadedMolSupplier.cpp
+							MultithreadedSmilesMolSupplier.cpp
               LINK_LIBRARIES Depictor SmilesParse GraphMol ${RDK_COORDGEN_LIBS} ${regex_lib} ${link_iostreams})
 
 rdkit_headers(FileParsers.h
@@ -54,7 +56,9 @@ rdkit_headers(FileParsers.h
               MolWriters.h
               SequenceParsers.h SequenceWriters.h
               GeneralFileReader.h
-              DEST GraphMol/FileParsers)
+							MultithreadedMolSupplier.h
+							MulithreadedSmilesMolSupplier.h
+							DEST GraphMol/FileParsers)
 
 rdkit_test(fileParsersTest1 test1.cpp
            LINK_LIBRARIES FileParsers SubstructMatch )
@@ -65,6 +69,9 @@ rdkit_test(testMolSupplier testMolSupplier.cpp
            LINK_LIBRARIES  FileParsers RDStreams)
 
 rdkit_test(testGeneralFileReader testGeneralFileReader.cpp
+					LINK_LIBRARIES FileParsers RDStreams)
+
+rdkit_test(testMultithreadedMolSupplier testMultithreadedMolSupplier.cpp
 					LINK_LIBRARIES FileParsers RDStreams)
 
 rdkit_test(testMolWriter testMolWriter.cpp LINK_LIBRARIES FileParsers )
