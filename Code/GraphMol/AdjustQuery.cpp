@@ -99,11 +99,7 @@ void adjustConjugatedFiveRings(RWMol &mol) {
     // FIX: replace this with the SingleOrDoubleOrAromatic query once the
     // tautomer PR is merged
     QueryBond qb;
-    qb.setQuery(makeBondOrderEqualsQuery(Bond::BondType::SINGLE));
-    qb.expandQuery(makeBondOrderEqualsQuery(Bond::BondType::DOUBLE),
-                   Queries::COMPOSITE_OR);
-    qb.expandQuery(makeBondOrderEqualsQuery(Bond::BondType::AROMATIC),
-                   Queries::COMPOSITE_OR);
+    qb.setQuery(makeSingleOrDoubleOrAromaticBondQuery());
     for (auto bi : ring) {
       const auto bond = mol.getBondWithIdx(bi);
       if (std::find(bondTypesToModify.begin(), bondTypesToModify.end(),
@@ -133,9 +129,7 @@ void adjustSingleBondsFromAromaticAtoms(RWMol &mol, bool toDegreeOneNeighbors,
     return;
   }
   QueryBond qb;
-  qb.setQuery(makeBondOrderEqualsQuery(Bond::BondType::SINGLE));
-  qb.expandQuery(makeBondOrderEqualsQuery(Bond::BondType::AROMATIC),
-                 Queries::COMPOSITE_OR);
+  qb.setQuery(makeSingleOrAromaticBondQuery());
   if (!mol.getRingInfo()->isInitialized()) {
     MolOps::symmetrizeSSSR(mol);
   }
@@ -143,8 +137,7 @@ void adjustSingleBondsFromAromaticAtoms(RWMol &mol, bool toDegreeOneNeighbors,
     const auto bAt = bond->getBeginAtom();
     const auto eAt = bond->getEndAtom();
     if (!bond->hasQuery() && bond->getBondType() == Bond::BondType::SINGLE &&
-        (bAt->getIsAromatic() || eAt->getIsAromatic()) &&
-        !mol.getRingInfo()->numBondRings(bond->getIdx())) {
+        (bAt->getIsAromatic() || eAt->getIsAromatic())) {
       if (toDegreeOneNeighbors &&
           (bAt->getIsAromatic() ^ eAt->getIsAromatic())) {
         if ((bAt->getIsAromatic() && eAt->getDegree() == 1) ||

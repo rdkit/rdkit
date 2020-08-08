@@ -177,7 +177,7 @@ bool isPatternComplexQuery(const Bond *b) {
 bool isTautomerBondQuery(const Bond *b) {
   // assumes we have already tested true for isPatternComplexQuery
   auto description = b->getQuery()->getDescription();
-  return description == "SingleOrDoubleOrAromaticBond";
+  return description =="SingleOrDoubleOrAromaticBond" || description == "SingleOrAromaticBond";
 }
 
 }  // namespace
