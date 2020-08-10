@@ -10,14 +10,6 @@
 #include "MultithreadedSDMolSupplier.h"
 
 namespace RDKit {
-struct PrintThread : public std::stringstream {
-  static inline std::mutex cout_mutex;
-  ~PrintThread() {
-    std::lock_guard<std::mutex> l{cout_mutex};
-    std::cout << rdbuf();
-  }
-};
-
 MultithreadedSDMolSupplier::MultithreadedSDMolSupplier(
     const std::string &fileName, bool sanitize, bool removeHs,
     bool strictParsing, unsigned int numWriterThreads, size_t sizeInputQueue,

@@ -21,10 +21,7 @@
 
 #include <atomic>
 #include <boost/tokenizer.hpp>
-#include <fstream>
-#include <iomanip>
 #include <mutex>
-#include <sstream>
 
 #include "FileParsers.h"
 #include "MolSupplier.h"

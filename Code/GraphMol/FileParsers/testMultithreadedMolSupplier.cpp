@@ -190,10 +190,6 @@ void testSDCorrectness() {
   path = "/Regress/Data/mols1000.sdf";
   expectedResult = 1000;
   testSDConcurrent(path, false, true, true, 2, 5, 5, expectedResult);
-
-  path = "/Regress/Data/chembl26_very_active.sdf";
-  expectedResult = 35767;
-  testSDConcurrent(path, false, true, false, 2, 5, 5, expectedResult);
 }
 
 void testPerformance() {
