@@ -35,6 +35,16 @@ namespace io = boost::iostreams;
 using namespace RDKit;
 using namespace std::chrono;
 
+// thread safe printing for debugging
+// Example: PrintThread{} << "something";
+struct PrintThread : public std::stringstream {
+  static inline std::mutex cout_mutex;
+  ~PrintThread() {
+    std::lock_guard<std::mutex> l{cout_mutex};
+    std::cout << rdbuf();
+  }
+};
+
 void testSmiConcurrent(std::string path, std::string delimiter,
                        int smilesColumn, int nameColumn, bool titleLine,
                        bool sanitize, unsigned int numWriterThreads,
@@ -57,8 +67,6 @@ void testSmiConcurrent(std::string path, std::string delimiter,
     unsigned int id = sup.getLastRecordId();
     bitVector[id - 1] = 1;
     if (mol != nullptr) {
-      // PrintThread{} << "record: " << sup.getLastItemText() << ", mol: " <<
-      // MolToSmiles(*mol) << ", id: " << id << "\n";
       ++nMols;
     }
     delete mol;
@@ -89,8 +97,6 @@ void testSDConcurrent(std::string path, bool sanitize, bool removeHs,
     unsigned int id = sup.getLastRecordId();
     bitVector[id - 1] = 1;
     if (mol != nullptr) {
-      // PrintThread{} << "record: " << sup.getLastItemText() << ", mol: " <<
-      // MolToSmiles(*mol) << ", id: " << id << "\n";
       ++nMols;
     }
     delete mol;
@@ -160,9 +166,26 @@ void testSDCorrectness() {
   /*
           TEST CORRECTNESS
   */
+
   std::string path = "/Code/GraphMol/FileParsers/test_data/NCI_aids_few.sdf";
   unsigned int expectedResult = 16;
   testSDConcurrent(path, false, true, true, 2, 5, 5, expectedResult);
+
+  path = "/Code/GraphMol/FileParsers/test_data/outNCI_few_molsupplier.sdf";
+  expectedResult = 16;
+  testSDConcurrent(path, true, true, true, 2, 5, 5, expectedResult);
+
+  path = "/Code/GraphMol/FileParsers/test_data/esters_end.sdf";
+  expectedResult = 6;
+  testSDConcurrent(path, true, true, true, 2, 5, 5, expectedResult);
+
+  path = "/Code/GraphMol/FileParsers/test_data/strictLax1.sdf";
+  expectedResult = 2;
+  testSDConcurrent(path, true, true, true, 2, 5, 5, expectedResult);
+
+  path = "/Code/GraphMol/FileParsers/test_data/strictLax1.sdf";
+  expectedResult = 2;
+  testSDConcurrent(path, true, true, false, 2, 5, 5, expectedResult);
 
   path = "/Regress/Data/mols1000.sdf";
   expectedResult = 1000;
@@ -236,10 +259,12 @@ int main() {
   BOOST_LOG(rdErrorLog) << "Finished: testSDCorrectness()\n";
   BOOST_LOG(rdErrorLog) << "-----------------------------------------\n\n";
 
-  BOOST_LOG(rdErrorLog) << "\n-----------------------------------------\n";
-  testPerformance();
-  BOOST_LOG(rdErrorLog) << "Finished: testPerformance()\n";
-  BOOST_LOG(rdErrorLog) << "-----------------------------------------\n\n";
+  /*
+    BOOST_LOG(rdErrorLog) << "\n-----------------------------------------\n";
+    testPerformance();
+    BOOST_LOG(rdErrorLog) << "Finished: testPerformance()\n";
+    BOOST_LOG(rdErrorLog) << "-----------------------------------------\n\n";
+  */
 
 #endif
 

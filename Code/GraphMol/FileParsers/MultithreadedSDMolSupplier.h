@@ -12,6 +12,7 @@
 #define MULTITHREADED_SD_MOL_SUPPLIER
 #include "FileParserUtils.h"
 #include "MultithreadedMolSupplier.h"
+
 namespace RDKit {
 class RDKIT_FILEPARSERS_EXPORT MultithreadedSDMolSupplier
     : public MultithreadedMolSupplier {
@@ -35,26 +36,22 @@ class RDKIT_FILEPARSERS_EXPORT MultithreadedSDMolSupplier
   void _init(bool takeOwnership, bool sanitize, bool removeHs,
              bool strictParsing, unsigned int numWriterThreads,
              size_t sizeInputQueue, size_t sizeOutputQueue);
-  bool moveTo(unsigned int idx);
   void checkForEnd();
   bool getEnd() const;
   //! reads next record and returns whether or not EOF was hit
   bool extractNextRecord(std::string &record, unsigned int &lineNum,
                          unsigned int &index);
-  void readMolProps(ROMol *mol);
   //! parses the record and returns the resulting molecule
   ROMol *processMoleculeRecord(const std::string &record, unsigned int lineNum);
 
  private:
-  bool df_end = false;  // have we reached the end of the file?
-  int d_line = 0;       // line number we are currently on
+  bool df_end = false;  //! have we reached the end of the file?
+  int d_line = 0;       //! line number we are currently on
   bool df_sanitize = true, df_removeHs = true, df_strictParsing = true;
   bool df_processPropertyLists = true;
   bool df_eofHitOnRead = false;
-  int d_len = 0;  // total number of mol bloakcs in the file (initialized to -1)
-  int d_last = 0;  // the molecule we are ready to read
-  std::vector<std::streampos> d_molpos;
   unsigned int d_currentRecordId = 1;  //! current record id
+  std::streampos d_lastMolPos;  //! keeps track of the last molecule position
 };
 }  // namespace RDKit
 #endif
