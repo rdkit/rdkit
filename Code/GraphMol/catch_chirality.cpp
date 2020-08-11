@@ -616,3 +616,71 @@ TEST_CASE("tricky recursive example from Dan Nealschneider", "[chirality]") {
   }
 }
 #endif
+
+TEST_CASE("unknown stereo", "[chirality]") {
+  SECTION("atoms") {
+    auto mol = "CC(O)C[C@@H](O)F"_smiles;
+    REQUIRE(mol);
+    REQUIRE(mol->getBondBetweenAtoms(0, 1));
+    mol->getBondBetweenAtoms(0, 1)->setBondDir(Bond::BondDir::UNKNOWN);
+    auto stereoInfo = Chirality::findPotentialStereo(*mol);
+    REQUIRE(stereoInfo.size() == 2);
+    CHECK(stereoInfo[0].type == Chirality::StereoType::Atom_Tetrahedral);
+    CHECK(stereoInfo[0].centeredOn == 1);
+    CHECK(stereoInfo[0].specified == Chirality::StereoSpecified::Unknown);
+    CHECK(stereoInfo[1].type == Chirality::StereoType::Atom_Tetrahedral);
+    CHECK(stereoInfo[1].centeredOn == 4);
+    CHECK(stereoInfo[1].specified == Chirality::StereoSpecified::Specified);
+  }
+  SECTION("atoms2") {
+    // artificial situation: "squiggly bond" overrides the specified atomic
+    // stereo
+    auto mol = "C[C@H](O)C[C@@H](O)F"_smiles;
+    REQUIRE(mol);
+    REQUIRE(mol->getBondBetweenAtoms(0, 1));
+    mol->getBondBetweenAtoms(0, 1)->setBondDir(Bond::BondDir::UNKNOWN);
+    auto stereoInfo = Chirality::findPotentialStereo(*mol);
+    REQUIRE(stereoInfo.size() == 2);
+    CHECK(stereoInfo[0].type == Chirality::StereoType::Atom_Tetrahedral);
+    CHECK(stereoInfo[0].centeredOn == 1);
+    CHECK(stereoInfo[0].specified == Chirality::StereoSpecified::Unknown);
+    CHECK(stereoInfo[1].type == Chirality::StereoType::Atom_Tetrahedral);
+    CHECK(stereoInfo[1].centeredOn == 4);
+    CHECK(stereoInfo[1].specified == Chirality::StereoSpecified::Specified);
+  }
+  SECTION("bonds") {
+    auto mol = "CC=CC"_smiles;
+    REQUIRE(mol);
+    REQUIRE(mol->getBondBetweenAtoms(1, 2));
+    mol->getBondBetweenAtoms(1, 2)->setBondDir(Bond::BondDir::EITHERDOUBLE);
+    auto stereoInfo = Chirality::findPotentialStereo(*mol);
+    REQUIRE(stereoInfo.size() == 1);
+    CHECK(stereoInfo[0].type == Chirality::StereoType::Bond_Double);
+    CHECK(stereoInfo[0].centeredOn == 1);
+    CHECK(stereoInfo[0].specified == Chirality::StereoSpecified::Unknown);
+  }
+  SECTION("bonds with squiggle bonds") {
+    {  // to begin atom
+      auto mol = "CC=CC"_smiles;
+      REQUIRE(mol);
+      REQUIRE(mol->getBondBetweenAtoms(0, 1));
+      mol->getBondBetweenAtoms(0, 1)->setBondDir(Bond::BondDir::UNKNOWN);
+      auto stereoInfo = Chirality::findPotentialStereo(*mol);
+      REQUIRE(stereoInfo.size() == 1);
+      CHECK(stereoInfo[0].type == Chirality::StereoType::Bond_Double);
+      CHECK(stereoInfo[0].centeredOn == 1);
+      CHECK(stereoInfo[0].specified == Chirality::StereoSpecified::Unknown);
+    }
+    {  // to end atom
+      auto mol = "CC=CC"_smiles;
+      REQUIRE(mol);
+      REQUIRE(mol->getBondBetweenAtoms(2, 3));
+      mol->getBondBetweenAtoms(2, 3)->setBondDir(Bond::BondDir::UNKNOWN);
+      auto stereoInfo = Chirality::findPotentialStereo(*mol);
+      REQUIRE(stereoInfo.size() == 1);
+      CHECK(stereoInfo[0].type == Chirality::StereoType::Bond_Double);
+      CHECK(stereoInfo[0].centeredOn == 1);
+      CHECK(stereoInfo[0].specified == Chirality::StereoSpecified::Unknown);
+    }
+  }
+}

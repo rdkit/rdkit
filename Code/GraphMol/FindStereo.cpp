@@ -1,5 +1,5 @@
 //
-//  Copyright (C) 2020 Greg Landrum and Rational Discovery LLC
+//  Copyright (C) 2020 Greg Landrum and T5 Informatics GmbH
 //
 //   @@ All Rights Reserved @@
 //  This file is part of the RDKit.
@@ -42,11 +42,15 @@ StereoInfo getStereoInfo(const Bond *bond) {
     sinfo.centeredOn = bond->getIdx();
     sinfo.controllingAtoms.reserve(4);
 
+    bool seenSquiggleBond = false;
     const auto &mol = bond->getOwningMol();
     for (const auto &nbri :
          boost::make_iterator_range(mol.getAtomBonds(beginAtom))) {
       const auto &nbr = mol[nbri];
       if (nbr->getIdx() != bond->getIdx()) {
+        if (nbr->getBondDir() == Bond::BondDir::UNKNOWN) {
+          seenSquiggleBond = true;
+        }
         sinfo.controllingAtoms.push_back(
             nbr->getOtherAtomIdx(beginAtom->getIdx()));
       }
@@ -58,6 +62,9 @@ StereoInfo getStereoInfo(const Bond *bond) {
          boost::make_iterator_range(mol.getAtomBonds(endAtom))) {
       const auto &nbr = mol[nbri];
       if (nbr->getIdx() != bond->getIdx()) {
+        if (nbr->getBondDir() == Bond::BondDir::UNKNOWN) {
+          seenSquiggleBond = true;
+        }
         sinfo.controllingAtoms.push_back(
             nbr->getOtherAtomIdx(endAtom->getIdx()));
       }
@@ -66,11 +73,10 @@ StereoInfo getStereoInfo(const Bond *bond) {
       sinfo.controllingAtoms.push_back(StereoInfo::NOATOM);
     }
     Bond::BondStereo stereo = bond->getStereo();
-    if (stereo == Bond::BondStereo::STEREONONE) {
-      // don't need to do anything
-    } else if (stereo == Bond::BondStereo::STEREOANY) {
+    if (stereo == Bond::BondStereo::STEREOANY ||
+        bond->getBondDir() == Bond::BondDir::EITHERDOUBLE || seenSquiggleBond) {
       sinfo.specified = Chirality::StereoSpecified::Unknown;
-    } else {
+    } else if (stereo != Bond::BondStereo::STEREONONE) {
       if (stereo == Bond::BondStereo::STEREOE ||
           stereo == Bond::BondStereo::STEREOZ) {
         stereo = Chirality::translateEZLabelToCisTrans(stereo);
@@ -129,33 +135,44 @@ StereoInfo getStereoInfo(const Atom *atom) {
   sinfo.controllingAtoms.reserve(atom->getDegree());
 
   const auto &mol = atom->getOwningMol();
+  int explicitUnknownStereo = 0;
   for (const auto &nbri : boost::make_iterator_range(mol.getAtomBonds(atom))) {
     const auto &bnd = mol[nbri];
+    if (bnd->getBondDir() == Bond::UNKNOWN) {
+      explicitUnknownStereo = 1;
+    } else if (!explicitUnknownStereo) {
+      bnd->getPropIfPresent<int>(common_properties::_UnknownStereo,
+                                 explicitUnknownStereo);
+    }
     sinfo.controllingAtoms.push_back(bnd->getOtherAtomIdx(atom->getIdx()));
   }
   std::vector<unsigned> origNbrOrder = sinfo.controllingAtoms;
   std::sort(sinfo.controllingAtoms.begin(), sinfo.controllingAtoms.end());
 
-  Atom::ChiralType stereo = atom->getChiralTag();
-  if (stereo == Atom::ChiralType::CHI_TETRAHEDRAL_CCW ||
-      stereo == Atom::ChiralType::CHI_TETRAHEDRAL_CW) {
-    sinfo.specified = StereoSpecified::Specified;
-    unsigned nSwaps =
-        countSwapsToInterconvert(origNbrOrder, sinfo.controllingAtoms);
-    if (nSwaps % 2) {
-      stereo = (stereo == Atom::ChiralType::CHI_TETRAHEDRAL_CCW
-                    ? Atom::ChiralType::CHI_TETRAHEDRAL_CW
-                    : Atom::ChiralType::CHI_TETRAHEDRAL_CCW);
-    }
-    switch (stereo) {
-      case Atom::ChiralType::CHI_TETRAHEDRAL_CCW:
-        sinfo.descriptor = StereoDescriptor::Tet_CCW;
-        break;
-      case Atom::ChiralType::CHI_TETRAHEDRAL_CW:
-        sinfo.descriptor = StereoDescriptor::Tet_CW;
-        break;
-      default:
-        UNDER_CONSTRUCTION("unrecognized chiral flag");
+  if (explicitUnknownStereo) {
+    sinfo.specified = StereoSpecified::Unknown;
+  } else {
+    Atom::ChiralType stereo = atom->getChiralTag();
+    if (stereo == Atom::ChiralType::CHI_TETRAHEDRAL_CCW ||
+        stereo == Atom::ChiralType::CHI_TETRAHEDRAL_CW) {
+      sinfo.specified = StereoSpecified::Specified;
+      unsigned nSwaps =
+          countSwapsToInterconvert(origNbrOrder, sinfo.controllingAtoms);
+      if (nSwaps % 2) {
+        stereo = (stereo == Atom::ChiralType::CHI_TETRAHEDRAL_CCW
+                      ? Atom::ChiralType::CHI_TETRAHEDRAL_CW
+                      : Atom::ChiralType::CHI_TETRAHEDRAL_CCW);
+      }
+      switch (stereo) {
+        case Atom::ChiralType::CHI_TETRAHEDRAL_CCW:
+          sinfo.descriptor = StereoDescriptor::Tet_CCW;
+          break;
+        case Atom::ChiralType::CHI_TETRAHEDRAL_CW:
+          sinfo.descriptor = StereoDescriptor::Tet_CW;
+          break;
+        default:
+          UNDER_CONSTRUCTION("unrecognized chiral flag");
+      }
     }
   }
 
@@ -288,6 +305,7 @@ std::vector<StereoInfo> findPotentialStereo(const ROMol &mol) {
       switch (sinfo.specified) {
         case Chirality::StereoSpecified::Unknown:
           knownAtoms.set(aidx);
+          res.push_back(sinfo);
           break;
         case Chirality::StereoSpecified::Specified:
           res.push_back(sinfo);
@@ -318,6 +336,7 @@ std::vector<StereoInfo> findPotentialStereo(const ROMol &mol) {
       auto sinfo = detail::getStereoInfo(bond);
       switch (sinfo.specified) {
         case Chirality::StereoSpecified::Unknown:
+          res.push_back(sinfo);
           knownBonds.set(bidx);
           break;
         case Chirality::StereoSpecified::Specified:
