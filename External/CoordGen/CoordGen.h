@@ -90,10 +90,7 @@ unsigned int addCoords(T& mol, const CoordGenParams* params = nullptr) {
   RDGeom::Point3D centroid{0.0, 0.0, 0.0};
   if (params->minimizeOnly) {
     auto conf = mol.getConformer();
-    for (unsigned int i = 0; i < mol.getNumAtoms(); ++i) {
-      centroid += conf.getAtomPos(i);
-    }
-    centroid /= mol.getNumAtoms();
+    centroid = MolTransforms::computeCentroid(conf);
   }
 
   std::vector<sketcherMinimizerAtom*> ats(mol.getNumAtoms());
@@ -182,8 +179,7 @@ unsigned int addCoords(T& mol, const CoordGenParams* params = nullptr) {
   if (params->minimizeOnly) {
     if (nSingle) {
       avgBondLen = singleBondLenAccum / nSingle;
-    }
-    if (mol.getNumBonds()) {
+    } else if (mol.getNumBonds()) {
       avgBondLen = bondLenAccum / mol.getNumBonds();
     }
   }
