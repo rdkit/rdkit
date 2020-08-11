@@ -22,7 +22,7 @@
 
 namespace RDKit {
 namespace Chirality {
-#ifndef _MSC_VER  
+#ifndef _MSC_VER
 const unsigned StereoInfo::NOATOM = std::numeric_limits<unsigned>::max();
 #endif
 namespace detail {
@@ -347,17 +347,12 @@ std::vector<StereoInfo> findPotentialStereo(const ROMol &mol) {
   bondsInPlay.set();
   std::vector<unsigned int> aranks;
   bool breakTies = false;
-  // FIX: think through what the next two mean here
-  // note that the AtomCompareFunctor doesn't look at anything after
-  // it sees a symbol
   bool includeChirality = true;
   bool includeIsotopes = false;
   Canon::rankFragmentAtoms(mol, aranks, atomsInPlay, bondsInPlay, &atomSymbols,
                            &bondSymbols, breakTies, includeChirality,
                            includeIsotopes);
 
-  // notice that we're looping over the original molecule here, not the one
-  // we modified
   for (const auto atom : mol.atoms()) {
     auto aidx = atom->getIdx();
     if (ochiralTypes.find(aidx) != ochiralTypes.end()) {
