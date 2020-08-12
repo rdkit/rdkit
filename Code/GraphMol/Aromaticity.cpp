@@ -369,11 +369,13 @@ void applyHuckelToFused(
 
   size_t nRingBonds;
   {
-    std::unordered_set<int> fusedBonds;
+    boost::dynamic_bitset<> fusedBonds(mol.getNumBonds());
     for (auto ridx: fused) {
-      fusedBonds.insert(brings[ridx].begin(), brings[ridx].end());
+      for (auto bidx: brings[ridx]) {
+        fusedBonds[bidx] = true;
+      }
     }
-    nRingBonds = rdcast<unsigned int>(fusedBonds.size());
+    nRingBonds = rdcast<unsigned int>(fusedBonds.count());
   }
   std::set<unsigned int> doneBonds;
   while (1) {
