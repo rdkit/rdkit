@@ -684,3 +684,46 @@ TEST_CASE("unknown stereo", "[chirality]") {
     }
   }
 }
+
+TEST_CASE("cleaning chirality", "[chirality]") {
+  SECTION("atoms") {
+    auto mol = "CC(O)C"_smiles;
+    REQUIRE(mol);
+    mol->getAtomWithIdx(1)->setChiralTag(Atom::ChiralType::CHI_TETRAHEDRAL_CW);
+    {
+      // by default we don't clean up, so the chiral center survives even though
+      // we don't get any results:
+      auto stereoInfo = Chirality::findPotentialStereo(*mol);
+      CHECK(stereoInfo.size() == 0);
+      CHECK(mol->getAtomWithIdx(1)->getChiralTag() ==
+            Atom::ChiralType::CHI_TETRAHEDRAL_CW);
+    }
+    {
+      bool cleanIt = true;
+      auto stereoInfo = Chirality::findPotentialStereo(*mol, cleanIt);
+      CHECK(stereoInfo.size() == 0);
+      CHECK(mol->getAtomWithIdx(1)->getChiralTag() ==
+            Atom::ChiralType::CHI_UNSPECIFIED);
+    }
+  }
+  SECTION("bonds") {
+    auto mol = "CC=C(C)C"_smiles;
+    REQUIRE(mol);
+    mol->getBondWithIdx(1)->setStereoAtoms(0, 3);
+    mol->getBondWithIdx(1)->setStereo(Bond::BondStereo::STEREOCIS);
+    {
+      // by default we don't clean up, so the stereo bond survives even though
+      // we don't get any results:
+      auto stereoInfo = Chirality::findPotentialStereo(*mol);
+      CHECK(stereoInfo.size() == 0);
+      CHECK(mol->getBondWithIdx(1)->getStereo() == Bond::BondStereo::STEREOCIS);
+    }
+    {
+      bool cleanIt = true;
+      auto stereoInfo = Chirality::findPotentialStereo(*mol, cleanIt);
+      CHECK(stereoInfo.size() == 0);
+      CHECK(mol->getBondWithIdx(1)->getStereo() ==
+            Bond::BondStereo::STEREONONE);
+    }
+  }
+}

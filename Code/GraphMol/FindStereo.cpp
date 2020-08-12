@@ -289,8 +289,7 @@ std::string getBondSymbol(const Bond *bond) {
   return res;
 }
 
-std::vector<StereoInfo> findPotentialStereo(const ROMol &mol) {
-  std::vector<StereoInfo> res;
+std::vector<StereoInfo> findPotentialStereo(ROMol &mol, bool cleanIt) {
   std::map<int, Atom::ChiralType> ochiralTypes;
 
   // FIX: this never removes stereo
@@ -304,11 +303,7 @@ std::vector<StereoInfo> findPotentialStereo(const ROMol &mol) {
       auto sinfo = detail::getStereoInfo(atom);
       switch (sinfo.specified) {
         case Chirality::StereoSpecified::Unknown:
-          knownAtoms.set(aidx);
-          res.push_back(sinfo);
-          break;
         case Chirality::StereoSpecified::Specified:
-          res.push_back(sinfo);
           knownAtoms.set(aidx);
           break;
         case Chirality::StereoSpecified::Unspecified:
@@ -336,11 +331,7 @@ std::vector<StereoInfo> findPotentialStereo(const ROMol &mol) {
       auto sinfo = detail::getStereoInfo(bond);
       switch (sinfo.specified) {
         case Chirality::StereoSpecified::Unknown:
-          res.push_back(sinfo);
-          knownBonds.set(bidx);
-          break;
         case Chirality::StereoSpecified::Specified:
-          res.push_back(sinfo);
           knownBonds.set(bidx);
           break;
         case Chirality::StereoSpecified::Unspecified:
@@ -371,17 +362,14 @@ std::vector<StereoInfo> findPotentialStereo(const ROMol &mol) {
   Canon::rankFragmentAtoms(mol, aranks, atomsInPlay, bondsInPlay, &atomSymbols,
                            &bondSymbols, breakTies, includeChirality,
                            includeIsotopes);
-
+  std::vector<StereoInfo> res;
   for (const auto atom : mol.atoms()) {
     auto aidx = atom->getIdx();
     if (ochiralTypes.find(aidx) != ochiralTypes.end()) {
       atom->setChiralTag(ochiralTypes[aidx]);
     }
-    if (possibleAtoms[aidx] && !knownAtoms[aidx]) {
+    if (possibleAtoms[aidx]) {
       auto sinfo = detail::getStereoInfo(atom);
-      ASSERT_INVARIANT(
-          sinfo.specified == Chirality ::StereoSpecified::Unspecified,
-          "unexpected specification label");
       std::vector<unsigned int> nbrs;
       nbrs.reserve(sinfo.controllingAtoms.size());
       bool haveADupe = false;
@@ -396,17 +384,17 @@ std::vector<StereoInfo> findPotentialStereo(const ROMol &mol) {
       }
       if (!haveADupe) {
         res.push_back(sinfo);
+      } else if (cleanIt &&
+                 sinfo.specified != Chirality::StereoSpecified::Unspecified) {
+        atom->setChiralTag(Atom::ChiralType::CHI_UNSPECIFIED);
       }
     }
   }
 
   for (const auto bond : mol.bonds()) {
     auto bidx = bond->getIdx();
-    if (possibleBonds[bidx] && !knownBonds[bidx]) {
+    if (possibleBonds[bidx]) {
       auto sinfo = detail::getStereoInfo(bond);
-      ASSERT_INVARIANT(
-          sinfo.specified == Chirality ::StereoSpecified::Unspecified,
-          "unexpected specification label");
       ASSERT_INVARIANT(sinfo.controllingAtoms.size() == 4,
                        "bad controlling atoms size");
       bool haveADupe = false;
@@ -424,10 +412,21 @@ std::vector<StereoInfo> findPotentialStereo(const ROMol &mol) {
       }
       if (!haveADupe) {
         res.push_back(sinfo);
+      } else if (cleanIt &&
+                 sinfo.specified != Chirality::StereoSpecified::Unspecified) {
+        bond->setStereo(Bond::BondStereo::STEREONONE);
       }
     }
   }
+  // auto res = possible;
   return res;
+}
+
+// const_casts are always ugly, but we know that findPotentialStereo() doesn't
+// modify the molecule if cleanIt is false:
+std::vector<StereoInfo> findPotentialStereo(const ROMol &mol) {
+  bool cleanIt = false;
+  return findPotentialStereo(const_cast<ROMol &>(mol), cleanIt);
 }
 
 }  // namespace Chirality

@@ -76,7 +76,8 @@ enum class StereoSpecified {
 struct RDKIT_GRAPHMOL_EXPORT StereoInfo {
   // REVIEW: absolute stereo data member?
 #ifdef _MSC_VER
-  static const unsigned NOATOM=std::numeric_limits<unsigned>::max();  // used to mark missing atoms
+  static const unsigned NOATOM =
+      std::numeric_limits<unsigned>::max();  // used to mark missing atoms
 #else
   static const unsigned NOATOM;  // used to mark missing atoms
 #endif
@@ -94,8 +95,13 @@ struct RDKIT_GRAPHMOL_EXPORT StereoInfo {
 };
 
 /*!
-  \param mol the molecule to be searched
+  \param mol the molecule to look for stereo int
+  \param cleanIt remove chirality/stereo specifications from atoms/bonds that
+     cannot be chiral/stereo
 */
+RDKIT_GRAPHMOL_EXPORT std::vector<StereoInfo> findPotentialStereo(ROMol &mol,
+                                                                  bool cleanIt);
+//! overload
 RDKIT_GRAPHMOL_EXPORT std::vector<StereoInfo> findPotentialStereo(
     const ROMol &mol);
 

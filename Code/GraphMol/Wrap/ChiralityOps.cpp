@@ -21,9 +21,12 @@ struct chiralityops_wrapper {
   static void wrap() {
     RegisterVectorConverter<Chirality::StereoInfo>();
 
-    python::def("FindPotentialStereo", &Chirality::findPotentialStereo,
-                python::with_custodian_and_ward_postcall<0, 1>(),
-                "find potential stereo elements in a molecule");
+    python::def("FindPotentialStereo",
+                (std::vector<Chirality::StereoInfo>(*)(ROMol &, bool)) &
+                    Chirality::findPotentialStereo,
+                (python::arg("mol"), python::arg("cleanIt") = false),
+                "find potential stereo elements in a molecule",
+                python::with_custodian_and_ward_postcall<0, 1>());
   };
 };
 }  // namespace RDKit
