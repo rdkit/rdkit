@@ -1,3 +1,27 @@
+# Release_2020.03.5
+(Changes relative to Release_2020.03.5)
+
+## Acknowledgements:
+Jinserk Baik, Gareth Jones, Steven Kearnes, Jaime Rodriguez-Guerra
+
+## Bug Fixes:
+  - ctest pythonTestDirChem failed
+ (github #2757 from jinserk)
+  - MinimalLib Dockerfile is broken at HEAD
+ (github #3267 from skearnes)
+  - Get PPC builds working
+ (github #3285 from greglandrum)
+  - ScaffoldNetwork not in C# wrappers
+ (github #3289 from jones-gareth)
+  - bonds with "either' stereo cannot be read from JSON
+ (github #3290 from greglandrum)
+  - Not possible to copy SubstanceGroups in Python
+ (github #3312 from greglandrum)
+  - Stereochemistry perception getting confused by a bad drawing.
+ (github #3314 from greglandrum)
+  - SubstanceGroups should not be written with quotes around missing fields
+ (github #3315 from greglandrum)
+
 # Release_2020.03.4
 (Changes relative to Release_2020.03.3)
 
