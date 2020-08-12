@@ -10,7 +10,6 @@
 #ifdef RDK_THREADSAFE_SSS
 #ifndef MULTITHREADED_SD_MOL_SUPPLIER
 #define MULTITHREADED_SD_MOL_SUPPLIER
-#include "FileParserUtils.h"
 #include "MultithreadedMolSupplier.h"
 
 namespace RDKit {
@@ -51,7 +50,6 @@ class RDKIT_FILEPARSERS_EXPORT MultithreadedSDMolSupplier
   bool df_processPropertyLists = true;
   bool df_eofHitOnRead = false;
   unsigned int d_currentRecordId = 1;  //! current record id
-  std::streampos d_lastMolPos;  //! keeps track of the last molecule position
 };
 }  // namespace RDKit
 #endif

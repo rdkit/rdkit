@@ -166,7 +166,6 @@ void testSDCorrectness() {
   /*
           TEST CORRECTNESS
   */
-
   std::string path = "/Code/GraphMol/FileParsers/test_data/NCI_aids_few.sdf";
   unsigned int expectedResult = 16;
   testSDConcurrent(path, false, true, true, 2, 5, 5, expectedResult);
@@ -177,6 +176,10 @@ void testSDCorrectness() {
 
   path = "/Code/GraphMol/FileParsers/test_data/esters_end.sdf";
   expectedResult = 6;
+  testSDConcurrent(path, true, true, true, 2, 5, 5, expectedResult);
+
+  path = "/Regress/Data/O2.sdf";
+  expectedResult = 1;
   testSDConcurrent(path, true, true, true, 2, 5, 5, expectedResult);
 
   path = "/Code/GraphMol/FileParsers/test_data/strictLax1.sdf";
@@ -256,10 +259,11 @@ int main() {
   BOOST_LOG(rdErrorLog) << "-----------------------------------------\n\n";
 
   /*
-    BOOST_LOG(rdErrorLog) << "\n-----------------------------------------\n";
-    testPerformance();
-    BOOST_LOG(rdErrorLog) << "Finished: testPerformance()\n";
-    BOOST_LOG(rdErrorLog) << "-----------------------------------------\n\n";
+          BOOST_LOG(rdErrorLog) <<
+     "\n-----------------------------------------\n"; testPerformance();
+          BOOST_LOG(rdErrorLog) << "Finished: testPerformance()\n";
+          BOOST_LOG(rdErrorLog) <<
+     "-----------------------------------------\n\n";
   */
 
 #endif

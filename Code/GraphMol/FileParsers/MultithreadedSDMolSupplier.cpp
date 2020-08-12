@@ -9,6 +9,8 @@
 //
 #include "MultithreadedSDMolSupplier.h"
 
+#include "FileParserUtils.h"
+
 namespace RDKit {
 MultithreadedSDMolSupplier::MultithreadedSDMolSupplier(
     const std::string &fileName, bool sanitize, bool removeHs,
@@ -61,7 +63,6 @@ void MultithreadedSDMolSupplier::_init(bool takeOwnership, bool sanitize,
   df_end = false;
   d_line = 0;
   df_processPropertyLists = true;
-  d_lastMolPos = dp_inStream->tellg();
 }
 
 MultithreadedSDMolSupplier::~MultithreadedSDMolSupplier() {
@@ -73,7 +74,8 @@ MultithreadedSDMolSupplier::~MultithreadedSDMolSupplier() {
 }
 
 // ensures that there is a line available to be read
-// from the file:
+// from the file, implementation identical to the method in
+// in ForwardSDMolSupplier
 void MultithreadedSDMolSupplier::checkForEnd() {
   PRECONDITION(dp_inStream, "no stream");
   // we will call it end of file if we have more than 4 contiguous empty lines
@@ -82,25 +84,36 @@ void MultithreadedSDMolSupplier::checkForEnd() {
     df_end = true;
     return;
   }
+
   // we are not at the end of file, check for blank lines
-  unsigned int nempty = 0;
+  unsigned int numEmpty = 0;
   std::string tempStr;
+  // in case df_end is not set then, reset file pointer
+  std::streampos holder = dp_inStream->tellg();
   for (unsigned int i = 0; i < 4; i++) {
     tempStr = getLine(dp_inStream);
     if (dp_inStream->eof()) {
       df_end = true;
-      return;
+      break;
     }
     if (tempStr.find_first_not_of(" \t\r\n") == std::string::npos) {
-      ++nempty;
+      ++numEmpty;
     }
   }
-  if (nempty == 4) {
+  if (numEmpty == 4) {
     df_end = true;
+  }
+  // we need to reset the file pointer to read the next record
+  if (!df_end) {
+    dp_inStream->clear();
+    dp_inStream->seekg(holder);
   }
 }
 
-bool MultithreadedSDMolSupplier::getEnd() const { return df_end; }
+bool MultithreadedSDMolSupplier::getEnd() const {
+  PRECONDITION(dp_inStream, "no stream");
+  return df_end;
+}
 
 bool MultithreadedSDMolSupplier::extractNextRecord(std::string &record,
                                                    unsigned int &lineNum,
@@ -110,24 +123,24 @@ bool MultithreadedSDMolSupplier::extractNextRecord(std::string &record,
     df_end = true;
     return false;
   }
+
+  std::string currentStr, prevStr;
   record = "";
-  std::string tempStr;
-  dp_inStream->seekg(d_lastMolPos);
   lineNum = d_line;
   while (!dp_inStream->eof() && !dp_inStream->fail() &&
-         (tempStr[0] != '$' || tempStr.substr(0, 4) != "$$$$")) {
-    tempStr = getLine(dp_inStream);
-    record += tempStr + "\n";
-    if (tempStr[0] == '$' && tempStr.substr(0, 4) == "$$$$") {
-      std::streampos posHold = dp_inStream->tellg();
-      this->checkForEnd();
-      if (!this->df_end) {
-        d_lastMolPos = posHold;
-      }
-    }
+         (prevStr.find_first_not_of(" \t\r\n") != std::string::npos ||
+          currentStr[0] != '$' || currentStr.substr(0, 4) != "$$$$")) {
+    prevStr = currentStr;
+    std::getline(*dp_inStream, currentStr);
+    record += currentStr + "\n";
     ++d_line;
+    if (prevStr.find_first_not_of(" \t\r\n") == std::string::npos &&
+        currentStr[0] == '$' && currentStr.substr(0, 4) == "$$$$") {
+      this->checkForEnd();
+    }
   }
-
+  //	PrintThread{} << "record: \n" << record;
+  //	PrintThread{} << "------------------------------------------\n";
   index = d_currentRecordId;
   ++d_currentRecordId;
   return true;
@@ -136,7 +149,9 @@ bool MultithreadedSDMolSupplier::extractNextRecord(std::string &record,
 ROMol *MultithreadedSDMolSupplier::processMoleculeRecord(
     const std::string &record, unsigned int lineNum) {
   PRECONDITION(dp_inStream, "no stream");
-  auto res = MolBlockToMol(record, df_sanitize, df_removeHs, df_strictParsing);
+  std::istringstream inStream(record);
+  auto res = MolDataStreamToMol(inStream, lineNum, df_sanitize, df_removeHs,
+                                df_strictParsing);
   return res;
 }
 
