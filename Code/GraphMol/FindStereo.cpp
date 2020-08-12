@@ -289,7 +289,8 @@ std::string getBondSymbol(const Bond *bond) {
   return res;
 }
 
-std::vector<StereoInfo> findPotentialStereo(ROMol &mol, bool cleanIt) {
+std::vector<StereoInfo> findPotentialStereo(ROMol &mol, bool cleanIt,
+                                            bool flagPossible) {
   std::map<int, Atom::ChiralType> ochiralTypes;
 
   // FIX: this never removes stereo
@@ -311,12 +312,17 @@ std::vector<StereoInfo> findPotentialStereo(ROMol &mol, bool cleanIt) {
         default:
           throw ValueErrorException("bad StereoInfo.specified type");
       }
-      possibleAtoms.set(aidx);
-      // set "fake stereo"
-      ochiralTypes[atom->getIdx()] = atom->getChiralTag();
-      atom->setChiralTag(Atom::CHI_TETRAHEDRAL_CW);
-      atomSymbols[aidx] =
-          (boost::format("%s-%d") % atom->getSymbol() % atom->getIdx()).str();
+      if (flagPossible ||
+          sinfo.specified != Chirality::StereoSpecified::Unspecified) {
+        possibleAtoms.set(aidx);
+        // set "fake stereo"
+        ochiralTypes[atom->getIdx()] = atom->getChiralTag();
+        atom->setChiralTag(Atom::CHI_TETRAHEDRAL_CW);
+        atomSymbols[aidx] =
+            (boost::format("%s-%d") % atom->getSymbol() % atom->getIdx()).str();
+      } else {
+        atomSymbols[aidx] = atom->getSymbol();
+      }
     } else {
       atomSymbols[aidx] = atom->getSymbol();
     }
@@ -339,9 +345,15 @@ std::vector<StereoInfo> findPotentialStereo(ROMol &mol, bool cleanIt) {
         default:
           throw ValueErrorException("bad StereoInfo.specified type");
       }
-      possibleBonds.set(bidx);
-      bondSymbols[bidx] =
-          (boost::format("%s-%d") % getBondSymbol(bond) % bond->getIdx()).str();
+      if (flagPossible ||
+          sinfo.specified != Chirality::StereoSpecified::Unspecified) {
+        possibleBonds.set(bidx);
+        bondSymbols[bidx] =
+            (boost::format("%s-%d") % getBondSymbol(bond) % bond->getIdx())
+                .str();
+      } else {
+        bondSymbols[bidx] = getBondSymbol(bond);
+      }
     } else {
       bondSymbols[bidx] = getBondSymbol(bond);
     }

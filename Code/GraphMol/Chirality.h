@@ -99,8 +99,8 @@ struct RDKIT_GRAPHMOL_EXPORT StereoInfo {
   \param cleanIt remove chirality/stereo specifications from atoms/bonds that
      cannot be chiral/stereo
 */
-RDKIT_GRAPHMOL_EXPORT std::vector<StereoInfo> findPotentialStereo(ROMol &mol,
-                                                                  bool cleanIt);
+RDKIT_GRAPHMOL_EXPORT std::vector<StereoInfo> findPotentialStereo(
+    ROMol &mol, bool cleanIt, bool flagPossible = true);
 //! overload
 RDKIT_GRAPHMOL_EXPORT std::vector<StereoInfo> findPotentialStereo(
     const ROMol &mol);

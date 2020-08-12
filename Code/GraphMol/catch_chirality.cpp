@@ -727,3 +727,56 @@ TEST_CASE("cleaning chirality", "[chirality]") {
     }
   }
 }
+
+TEST_CASE("flagPossible", "[chirality]") {
+  SECTION("atoms") {
+    auto mol = "CC(O)[C@H](F)O"_smiles;
+    REQUIRE(mol);
+    {
+      // by default we do use flagPossible:
+      auto stereoInfo = Chirality::findPotentialStereo(*mol);
+      REQUIRE(stereoInfo.size() == 2);
+      CHECK(stereoInfo[0].type == Chirality::StereoType::Atom_Tetrahedral);
+      CHECK(stereoInfo[0].centeredOn == 1);
+      CHECK(stereoInfo[0].specified == Chirality::StereoSpecified::Unspecified);
+      CHECK(stereoInfo[1].type == Chirality::StereoType::Atom_Tetrahedral);
+      CHECK(stereoInfo[1].centeredOn == 3);
+      CHECK(stereoInfo[1].specified == Chirality::StereoSpecified::Specified);
+    }
+    {
+      bool cleanIt = false;
+      bool flagPossible = false;
+      auto stereoInfo =
+          Chirality::findPotentialStereo(*mol, cleanIt, flagPossible);
+      REQUIRE(stereoInfo.size() == 1);
+      CHECK(stereoInfo[0].type == Chirality::StereoType::Atom_Tetrahedral);
+      CHECK(stereoInfo[0].centeredOn == 3);
+      CHECK(stereoInfo[0].specified == Chirality::StereoSpecified::Specified);
+    }
+  }
+  SECTION("bonds") {
+    auto mol = "CC=C/C=C/C"_smiles;
+    REQUIRE(mol);
+    {
+      // by default we do use flagPossible
+      auto stereoInfo = Chirality::findPotentialStereo(*mol);
+      REQUIRE(stereoInfo.size() == 2);
+      CHECK(stereoInfo[0].type == Chirality::StereoType::Bond_Double);
+      CHECK(stereoInfo[0].centeredOn == 1);
+      CHECK(stereoInfo[0].specified == Chirality::StereoSpecified::Unspecified);
+      CHECK(stereoInfo[1].type == Chirality::StereoType::Bond_Double);
+      CHECK(stereoInfo[1].centeredOn == 3);
+      CHECK(stereoInfo[1].specified == Chirality::StereoSpecified::Specified);
+    }
+    {
+      bool cleanIt = true;
+      bool flagPossible = false;
+      auto stereoInfo =
+          Chirality::findPotentialStereo(*mol, cleanIt, flagPossible);
+      REQUIRE(stereoInfo.size() == 1);
+      CHECK(stereoInfo[0].type == Chirality::StereoType::Bond_Double);
+      CHECK(stereoInfo[0].centeredOn == 3);
+      CHECK(stereoInfo[0].specified == Chirality::StereoSpecified::Specified);
+    }
+  }
+}
