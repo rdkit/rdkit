@@ -153,4 +153,4 @@ rdkit_catch_test(graphmolTestsCatch catch_graphmol.cpp catch_main.cpp
            LINK_LIBRARIES SubstructMatch FileParsers SmilesParse GraphMol RDGeometryLib RDGeneral)
 
 rdkit_catch_test(graphmolSGroupCatch catch_sgroups.cpp  catch_main.cpp
-           LINK_LIBRARIES SmilesParse GraphMol RDGeometryLib RDGeneral)
+           LINK_LIBRARIES SmilesParse FileParsers GraphMol RDGeometryLib RDGeneral)
