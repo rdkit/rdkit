@@ -8,8 +8,8 @@
 //  which is included in the file license.txt, found at the root
 //  of the RDKit source tree.
 //
-#ifndef _RD_NULLQUERYALGEBRA_H
-#define _RD_NULLQUERYALGEBRA_H
+#ifndef RD_NULLQUERYALGEBRA_H
+#define RD_NULLQUERYALGEBRA_H
 
 #include <GraphMol/QueryOps.h>
 
@@ -17,7 +17,7 @@ namespace RDKit {
 namespace {
 template <class T>
 void mergeBothNullQ(T *&returnQuery, T *&otherNullQ,
-                      Queries::CompositeQueryType how) {
+                    Queries::CompositeQueryType how) {
   bool negatedQ = returnQuery->getNegation();
   bool negatedOtherQ = otherNullQ->getNegation();
 
@@ -42,7 +42,7 @@ void mergeBothNullQ(T *&returnQuery, T *&otherNullQ,
 
 template <class T>
 void mergeNullQFirst(T *&returnQuery, T *&otherQ,
-                       Queries::CompositeQueryType how) {
+                     Queries::CompositeQueryType how) {
   bool negatedQ = returnQuery->getNegation();
 
   if (how == Queries::COMPOSITE_AND) {
@@ -77,7 +77,7 @@ void mergeNullQueries(T *&returnQuery, bool isQueryNull, T *&otherQuery,
   } else if (isQueryNull) {
     mergeNullQFirst(returnQuery, otherQuery, how);
   } else if (isOtherQNull) {
-    std::swap(returnQuery,otherQuery);
+    std::swap(returnQuery, otherQuery);
     mergeNullQFirst(returnQuery, otherQuery, how);
   }
 }

@@ -147,6 +147,34 @@ class TestCase(unittest.TestCase):
     self.assertLess(fpd1, fpd2)
     self.assertLess(fpd2, fpd3)
 
+  def testVectorDescriptors(self):
+    m = Chem.MolFromSmiles('CCCc1ccccc1')
+    results = rdMolDescriptors.BCUT2D(m)
+    names = ["BCUT2D_%s"%s for s in ('MWHI',"MWLOW","CHGHI","CHGLO",
+                                     "LOGPHI","LOGPLOW","MRHI","MRLOW")]
+    for i,n in  enumerate(names):
+      f = getattr(Descriptors, n)
+      self.assertEqual(results[i], f(m))
+
+    results = rdMolDescriptors.CalcAUTOCORR2D(m)
+    names = ["AUTOCORR2D_%s"%str(i+1) for i in range(192)]
+    for i,n in enumerate(names):
+      f = getattr(Descriptors, n)
+      self.assertEqual(results[i], f(m))
+
+    def testVectorDescriptorsInDescList(self):
+      # First try only bcuts should exist
+      descriptors = set([n for n,_ in Descriptors.descList])
+      names = set(["BCUT2D_%s"%str(i+1) for i in range(8)])
+      self.assertEqual(descriptors.intersection(names), names)
+      
+      Descriptors.setupAUTOCORRDescriptors()
+      descriptors2 = set([n for n,_ in Descriptors.descList])
+      self.assertEqual(descriptors2.intersection(descriptors), descriptors)
+
+      names = ["AUTOCORR2D_%s"%str(i+1) for i in range(192)]
+      self.assertEqual(descriptors.intersection(names), names)
+
 
 if __name__ == '__main__':
   unittest.main()

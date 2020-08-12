@@ -170,6 +170,7 @@ void findSSSRforDupCands(const ROMol &mol, VECT_INT_VECT &res,
         boost::dynamic_bitset<> activeBondsCopy = activeBonds;
         INT_SET changed;
         auto dmci = dupMap.find(dupCand);
+        CHECK_INVARIANT(dmci != dupMap.end(), "duplicate could not be found");
         for (int dni : dmci->second) {
           trimBonds(dni, mol, changed, atomDegreesCopy, activeBondsCopy);
         }
@@ -318,6 +319,7 @@ void findRingsD2nodes(const ROMol &tMol, VECT_INT_VECT &res,
   RINGINVAR_INT_VECT_MAP dupD2Cands;
   int cand;
   INT_VECT_CI d2i;
+  INT_SET changed;
 
   INT_INT_VECT_MAP dupMap;
   // here is an example of molecule where the this scheme of finding other node
@@ -388,17 +390,26 @@ void findRingsD2nodes(const ROMol &tMol, VECT_INT_VECT &res,
 
     // We don't want to trim the bonds connecting cand here - this can disrupt
     // a second small ring. Here is an example SC(C3C1CC(C3)CC(C2S)(O)C1)2S
-    // by trimming the bond connecting to atom #4 , we loose the smallest ring
-    // that
-    // contains atom #7. Issue 134
-    // MolOps::trimBonds(cand, tMol, changed);
+    // by trimming the bond connecting to atom #4, we lose the smallest ring
+    // that contains atom #7. Issue 134
+
+    // But if there were no rings found, trimming isn't dangerous, and can
+    // save wasted time for long chains.
+    if (srings.empty()) {
+      changed = {cand};
+      while (!changed.empty()) {
+        int cand = *(changed.begin());
+        changed.erase(changed.begin());
+        trimBonds(cand, tMol, changed, atomDegrees, activeBonds);
+      }
+    }
   }
 
   // now deal with any d2 nodes that resulted in duplicate rings before trimming
   // their bonds.
   // it is possible that one of these nodes is involved a different small ring,
-  // that is not found
-  // because the first nodes has not be trimmed. Here is an example molecule:
+  // that is not found  because the first nodes has not be trimmed. Here is an
+  // example molecule:
   // CC1=CC=C(C=C1)S(=O)(=O)O[CH]2[CH]3CO[CH](O3)[CH]4OC(C)(C)O[CH]24
   findSSSRforDupCands(tMol, res, invars, dupMap, dupD2Cands, atomDegrees,
                       activeBonds);

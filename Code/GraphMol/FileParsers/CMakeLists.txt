@@ -20,7 +20,7 @@ endif()
 ADD_DEFINITIONS("-DRDK_USE_BOOST_IOSTREAMS")
 endif(RDK_USE_BOOST_IOSTREAMS)
 
-if(RDK_BUILD_COORDGEN_SUPPORT)
+if(RDK_BUILD_MAEPARSER_SUPPORT)
     include_directories(${maeparser_INCLUDE_DIRS})
     set (maesupplier MaeMolSupplier.cpp)
 endif()
@@ -45,7 +45,7 @@ rdkit_library(FileParsers
               ProximityBonds.cpp
               SequenceParsers.cpp SequenceWriters.cpp
               SVGParser.cpp
-              LINK_LIBRARIES Depictor SmilesParse GraphMol ${RDK_COORDGEN_LIBS} ${regex_lib} ${link_iostreams})
+              LINK_LIBRARIES Depictor SmilesParse GraphMol ${RDK_MAEPARSER_LIBS} ${regex_lib} ${link_iostreams})
 
 rdkit_headers(FileParsers.h
               FileParserUtils.h

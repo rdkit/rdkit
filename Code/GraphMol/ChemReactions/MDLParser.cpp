@@ -31,6 +31,7 @@
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 //
 
+#include <GraphMol/QueryOps.h>
 #include <GraphMol/ChemReactions/Reaction.h>
 #include <GraphMol/ChemReactions/ReactionParser.h>
 #include <GraphMol/FileParsers/FileParsers.h>
@@ -345,8 +346,7 @@ ChemicalReaction *RxnDataStreamToChemicalReaction(std::istream &inStream,
     // to write the mol block, we need ring information:
     for (ROMol::AtomIterator atomIt = (*iter)->beginAtoms();
          atomIt != (*iter)->endAtoms(); ++atomIt) {
-      FileParserUtils::replaceAtomWithQueryAtom((RWMol *)iter->get(),
-                                                (*atomIt));
+      QueryOps::replaceAtomWithQueryAtom((RWMol *)iter->get(), (*atomIt));
     }
   }
   for (MOL_SPTR_VECT::const_iterator iter = res->beginProductTemplates();
@@ -354,8 +354,7 @@ ChemicalReaction *RxnDataStreamToChemicalReaction(std::istream &inStream,
     // to write the mol block, we need ring information:
     for (ROMol::AtomIterator atomIt = (*iter)->beginAtoms();
          atomIt != (*iter)->endAtoms(); ++atomIt) {
-      FileParserUtils::replaceAtomWithQueryAtom((RWMol *)iter->get(),
-                                                (*atomIt));
+      QueryOps::replaceAtomWithQueryAtom((RWMol *)iter->get(), (*atomIt));
     }
   }
   updateProductsStereochem(res);
