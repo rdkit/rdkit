@@ -27,17 +27,15 @@ sys.path.insert(0, os.path.abspath('exts'))
 
 # Add any Sphinx extension module names here, as strings. They can be extensions
 # coming with Sphinx (named 'sphinx.ext.*') or your custom ones.
-extensions = ['sphinx.ext.autodoc', 'sphinx.ext.doctest']  # , 'extapi']
+extensions = ['sphinx.ext.autodoc', 'sphinx.ext.doctest', 'recommonmark']  # , 'extapi']
 #autosummary_generate = True
 doctest_test_doctest_blocks = ""
 
 # Add any paths that contain templates here, relative to this directory.
 templates_path = ['_templates']
 
-source_parsers = {'.md': CommonMarkParser}
-
 # The suffix of source filenames.
-source_suffix = ['.rst', '.md']
+# source_suffix = ['.rst', '.md']
 
 # The encoding of source files.
 #source_encoding = 'utf-8-sig'
@@ -70,7 +68,7 @@ release = '2020.09.1'
 
 # List of patterns, relative to source directory, that match files and
 # directories to ignore when looking for source files.
-exclude_patterns = ['_build',  'C++Examples']
+exclude_patterns = ['_build', 'C++Examples']
 
 # The reST default role (used for this markup: `text`) to use for all documents.
 #default_role = None
