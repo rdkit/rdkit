@@ -393,6 +393,23 @@ TEST_CASE("possible stereochemistry on atoms", "[chirality]") {
       CHECK(stereoInfo[0].controllingAtoms == catoms);
     }
   }
+  SECTION("atoms with unknown set, real") {
+    auto mol = "FC(O)C"_smiles;
+    REQUIRE(mol);
+    mol->getBondBetweenAtoms(0, 1)->setBondDir(Bond::BondDir::UNKNOWN);
+    auto stereoInfo = Chirality::findPotentialStereo(*mol);
+    CHECK(stereoInfo.size() == 1);
+    CHECK(stereoInfo[0].type == Chirality::StereoType::Atom_Tetrahedral);
+    CHECK(stereoInfo[0].specified == Chirality::StereoSpecified::Unknown);
+    CHECK(stereoInfo[0].centeredOn == 1);
+  }
+  SECTION("atoms with unknown set, not real") {
+    auto mol = "CC(O)C"_smiles;
+    REQUIRE(mol);
+    mol->getBondBetweenAtoms(0, 1)->setBondDir(Bond::BondDir::UNKNOWN);
+    auto stereoInfo = Chirality::findPotentialStereo(*mol);
+    CHECK(stereoInfo.size() == 0);
+  }
 }
 
 TEST_CASE("possible stereochemistry on bonds", "[chirality]") {
