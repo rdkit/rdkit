@@ -159,12 +159,7 @@ std::vector<std::string> enumerateTautomerSmiles(
 
   auto res = te.enumerate(*mol);
 
-  std::vector<std::string> tsmiles;
-  for (const auto &r : res.tautomers) {
-    tsmiles.push_back(MolToSmiles(*r));
-  }
-
-  return tsmiles;
+  return res.smiles();
 }
 
 }  // end of namespace MolStandardize

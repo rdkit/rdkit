@@ -230,9 +230,20 @@ chlorine	[Cl]
     self.assertEqual(Chem.MolToSmiles(ctaut), "O=C1CCCCC1")
 
     taut_res = enumerator.Enumerate(m)
-    self.assertEqual(len(taut_res.tautomers), 2)
-    ctauts = list(sorted(Chem.MolToSmiles(x) for x in taut_res.tautomers))
+    self.assertEqual(len(taut_res), 2)
+    ctauts = list(sorted(Chem.MolToSmiles(x) for x in taut_res))
     self.assertEqual(ctauts, ['O=C1CCCCC1', 'OC1=CCCCC1'])
+    self.assertEqual(list(taut_res.smiles), ['O=C1CCCCC1', 'OC1=CCCCC1'])
+    # this tests the non-templated overload
+    self.assertEqual(Chem.MolToSmiles(enumerator.PickCanonical(taut_res)), "O=C1CCCCC1")
+    # this tests the templated overload
+    self.assertEqual(Chem.MolToSmiles(enumerator.PickCanonical(set(taut_res()))), "O=C1CCCCC1")
+    with self.assertRaises(TypeError):
+      enumerator.PickCanonical(1)
+    with self.assertRaises(TypeError):
+      enumerator.PickCanonical([0, 1])
+    self.assertEqual(Chem.MolToSmiles(enumerator.PickCanonical(
+                     Chem.MolFromSmiles(x) for x in ['O=C1CCCCC1', 'OC1=CCCCC1'])), "O=C1CCCCC1")
 
     def scorefunc1(mol):
       ' stupid tautomer scoring function '
@@ -261,6 +272,54 @@ chlorine	[Cl]
     self.assertEqual(enumerator.ScoreTautomer(Chem.MolFromSmiles('N=c1[nH]cccc1')), 99)
     self.assertEqual(enumerator.ScoreTautomer(Chem.MolFromSmiles('Nc1ncccc1')), 100)
 
+    def scorefunc2(mol):
+      ' stupid tautomer scoring function '
+      p = Chem.MolFromSmarts('O=C')
+      return len(mol.GetSubstructMatches(p))
+
+    m = Chem.MolFromSmiles("C1(=CCCCC1)O")
+    ctaut = enumerator.Canonicalize(m, scorefunc1)
+    self.assertEqual(Chem.MolToSmiles(ctaut), "OC1=CCCCC1")
+    ctaut = enumerator.Canonicalize(m, scorefunc2)
+    self.assertEqual(Chem.MolToSmiles(ctaut), "O=C1CCCCC1")
+    # make sure lambdas work
+    ctaut = enumerator.Canonicalize(
+      m, lambda x: len(x.GetSubstructMatches(Chem.MolFromSmarts('C=O'))))
+    self.assertEqual(Chem.MolToSmiles(ctaut), "O=C1CCCCC1")
+
+    # make sure we behave if we return something bogus from the scoring function
+    with self.assertRaises(TypeError):
+      ctaut = enumerator.Canonicalize(m, lambda x: 'fail')
+
+    self.assertEqual(enumerator.ScoreTautomer(Chem.MolFromSmiles('N=c1[nH]cccc1')), 99)
+    self.assertEqual(enumerator.ScoreTautomer(Chem.MolFromSmiles('Nc1ncccc1')), 100)
+
+    res = enumerator.Enumerate(m)
+    # this test the specialized overload
+    ctaut = enumerator.PickCanonical(res, scorefunc1)
+    self.assertEqual(Chem.MolToSmiles(ctaut), "OC1=CCCCC1")
+    ctaut = enumerator.PickCanonical(res, scorefunc2)
+    self.assertEqual(Chem.MolToSmiles(ctaut), "O=C1CCCCC1")
+    # make sure lambdas work
+    ctaut = enumerator.PickCanonical(
+      res, lambda x: len(x.GetSubstructMatches(Chem.MolFromSmarts('C=O'))))
+    self.assertEqual(Chem.MolToSmiles(ctaut), "O=C1CCCCC1")
+    # make sure we behave if we return something bogus from the scoring function
+    with self.assertRaises(TypeError):
+      ctaut = enumerator.PickCanonical(res, lambda x: 'fail')
+    # this test the non-specialized overload
+    ctaut = enumerator.PickCanonical(set(res()), scorefunc1)
+    self.assertEqual(Chem.MolToSmiles(ctaut), "OC1=CCCCC1")
+    ctaut = enumerator.PickCanonical(set(res()), scorefunc2)
+    self.assertEqual(Chem.MolToSmiles(ctaut), "O=C1CCCCC1")
+    # make sure lambdas work
+    ctaut = enumerator.PickCanonical(
+      set(res()), lambda x: len(x.GetSubstructMatches(Chem.MolFromSmarts('C=O'))))
+    self.assertEqual(Chem.MolToSmiles(ctaut), "O=C1CCCCC1")
+    # make sure we behave if we return something bogus from the scoring function
+    with self.assertRaises(TypeError):
+      ctaut = enumerator.PickCanonical(set(res()), lambda x: 'fail')
+
   def test14TautomerDetails(self):
     enumerator = rdMolStandardize.TautomerEnumerator()
     m = Chem.MolFromSmiles("c1ccccc1CN=c1[nH]cccc1")
@@ -286,14 +345,15 @@ chlorine	[Cl]
 
     enumerator = rdMolStandardize.TautomerEnumerator()
     res68 = enumerator.Enumerate(m68)
-    self.assertEqual(len(res68.tautomers), 292)
+    self.assertEqual(len(res68), 292)
+    self.assertEqual(len(res68.tautomers), len(res68))
     self.assertEqual(res68.status, rdMolStandardize.TautomerEnumeratorStatus.MaxTransformsReached)
 
     params = rdMolStandardize.CleanupParameters()
     params.maxTautomers = 50;
     enumerator = rdMolStandardize.TautomerEnumerator(params)
     res68 = enumerator.Enumerate(m68)
-    self.assertEqual(len(res68.tautomers), 50)
+    self.assertEqual(len(res68), 50)
     self.assertEqual(res68.status, rdMolStandardize.TautomerEnumeratorStatus.MaxTautomersReached)
 
     sAlaSmi = "C[C@H](N)C(=O)O"
@@ -305,9 +365,43 @@ chlorine	[Cl]
     params.tautomerRemoveSp3Stereo = True
     enumerator = rdMolStandardize.TautomerEnumerator(params)
     res = enumerator.Enumerate(sAla)
+    for taut in res:
+      self.assertEqual(taut.GetAtomWithIdx(1).GetChiralTag(), Chem.ChiralType.CHI_UNSPECIFIED)
+      self.assertFalse(taut.GetAtomWithIdx(1).HasProp("_CIPCode"))
     for taut in res.tautomers:
       self.assertEqual(taut.GetAtomWithIdx(1).GetChiralTag(), Chem.ChiralType.CHI_UNSPECIFIED)
       self.assertFalse(taut.GetAtomWithIdx(1).HasProp("_CIPCode"))
+    for i, taut in enumerate(res):
+      self.assertEqual(Chem.MolToSmiles(taut), Chem.MolToSmiles(res.tautomers[i]))
+    self.assertEqual(len(res), len(res.smiles))
+    self.assertEqual(len(res), len(res.tautomers))
+    self.assertEqual(len(res), len(res()))
+    self.assertEqual(len(res), len(res.smilesTautomerMap))
+    for i, taut in enumerate(res.tautomers):
+      self.assertEqual(Chem.MolToSmiles(taut), Chem.MolToSmiles(res[i]))
+      self.assertEqual(Chem.MolToSmiles(taut), res.smiles[i])
+      self.assertEqual(Chem.MolToSmiles(taut), Chem.MolToSmiles(res.smilesTautomerMap.values()[i].tautomer))
+    for i, k in enumerate(res.smilesTautomerMap.keys()):
+      self.assertEqual(k, res.smiles[i])
+    for i, v in enumerate(res.smilesTautomerMap.values()):
+      self.assertEqual(Chem.MolToSmiles(v.tautomer), Chem.MolToSmiles(res[i]))
+    for i, (k, v) in enumerate(res.smilesTautomerMap.items()):
+      self.assertEqual(k, res.smiles[i])
+      self.assertEqual(Chem.MolToSmiles(v.tautomer), Chem.MolToSmiles(res[i]))
+    for i, smiles in enumerate(res.smiles):
+      self.assertEqual(smiles, Chem.MolToSmiles(res[i]))
+      self.assertEqual(smiles, res.smilesTautomerMap.keys()[i])
+    self.assertEqual(Chem.MolToSmiles(res.tautomers[-1]), Chem.MolToSmiles(res[-1]))
+    self.assertEqual(Chem.MolToSmiles(res[-1]), Chem.MolToSmiles(res[len(res)-1]))
+    self.assertEqual(Chem.MolToSmiles(res.tautomers[-1]), Chem.MolToSmiles(res.tautomers[len(res)-1]))
+    with self.assertRaises(IndexError):
+      res[len(res)]
+    with self.assertRaises(IndexError):
+      res[-len(res)-1]
+    with self.assertRaises(IndexError):
+      res.tautomers[len(res)]
+    with self.assertRaises(IndexError):
+      res.tautomers[-len(res.tautomers)-1]
 
     # test retain (S)-Ala stereochemistry
     self.assertEqual(sAla.GetAtomWithIdx(1).GetChiralTag(), Chem.ChiralType.CHI_TETRAHEDRAL_CCW)
@@ -316,7 +410,7 @@ chlorine	[Cl]
     params.tautomerRemoveSp3Stereo = False
     enumerator = rdMolStandardize.TautomerEnumerator(params)
     res = enumerator.Enumerate(sAla)
-    for taut in res.tautomers:
+    for taut in res:
       tautAtom = taut.GetAtomWithIdx(1)
       if (tautAtom.GetHybridization() == Chem.HybridizationType.SP3):
         self.assertEqual(tautAtom.GetChiralTag(), Chem.ChiralType.CHI_TETRAHEDRAL_CCW)
@@ -353,14 +447,14 @@ chlorine	[Cl]
     params.tautomerRemoveBondStereo = True
     enumerator = rdMolStandardize.TautomerEnumerator(params)
     res = enumerator.Enumerate(zEnol)
-    for taut in res.tautomers:
+    for taut in res:
       self.assertEqual(taut.GetBondWithIdx(1).GetStereo(), Chem.BondStereo.STEREONONE)
     # test retain enol Z stereochemistry
     params = rdMolStandardize.CleanupParameters()
     params.tautomerRemoveBondStereo = False
     enumerator = rdMolStandardize.TautomerEnumerator(params)
     res = enumerator.Enumerate(zEnol)
-    for taut in res.tautomers:
+    for taut in res:
       if (taut.GetBondWithIdx(1).GetBondType() == Chem.BondType.DOUBLE):
         self.assertEqual(taut.GetBondWithIdx(1).GetStereo(), Chem.BondStereo.STEREOZ)
 

@@ -7,6 +7,8 @@
 //  which is included in the file license.txt, found at the root
 //  of the RDKit source tree.
 //
+#define NO_IMPORT_ARRAY
+#include <boost/python/suite/indexing/map_indexing_suite.hpp>
 #include <RDBoost/Wrap.h>
 
 #include <GraphMol/RDKitBase.h>
@@ -21,31 +23,60 @@ namespace {
 class PyTautomerEnumeratorResult {
  public:
   PyTautomerEnumeratorResult(const MolStandardize::TautomerEnumeratorResult &tr)
-      : d_tr(std::move(tr)) {
+      : d_tr(new MolStandardize::TautomerEnumeratorResult(std::move(tr))) {
     python::list atList;
     python::list bndList;
-    for (unsigned int i = 0; i < tr.modifiedAtoms.size(); ++i) {
-      if (d_tr.modifiedAtoms.test(i)) {
+    for (unsigned int i = 0; i < d_tr->modifiedAtoms().size(); ++i) {
+      if (d_tr->modifiedAtoms().test(i)) {
         atList.append(i);
       }
     }
-    for (unsigned int i = 0; i < tr.modifiedBonds.size(); ++i) {
-      if (d_tr.modifiedBonds.test(i)) {
+    for (unsigned int i = 0; i < d_tr->modifiedBonds().size(); ++i) {
+      if (d_tr->modifiedBonds().test(i)) {
         bndList.append(i);
       }
     }
     d_atTuple = python::tuple(atList);
     d_bndTuple = python::tuple(bndList);
   }
-  inline const std::vector<ROMOL_SPTR> &tautomers() { return d_tr.tautomers; }
-  inline MolStandardize::TautomerEnumeratorStatus status() {
-    return d_tr.status;
+  inline const std::vector<ROMOL_SPTR> *tautomers() const {
+    return new std::vector<ROMOL_SPTR>(std::move(d_tr->tautomers()));
   }
-  inline python::tuple modifiedAtoms() { return d_atTuple; }
-  inline python::tuple modifiedBonds() { return d_bndTuple; }
+  inline const std::vector<std::string> *smiles() const {
+    return new std::vector<std::string>(std::move(d_tr->smiles()));
+  }
+  inline const MolStandardize::SmilesTautomerMap &smilesTautomerMap() const {
+    return d_tr->smilesTautomerMap();
+  }
+  inline MolStandardize::TautomerEnumeratorStatus status() const {
+    return d_tr->status();
+  }
+  inline python::tuple modifiedAtoms() const { return d_atTuple; }
+  inline python::tuple modifiedBonds() const { return d_bndTuple; }
+  inline const MolStandardize::TautomerEnumeratorResult::const_iterator begin()
+      const {
+    return d_tr->begin();
+  }
+  inline const MolStandardize::TautomerEnumeratorResult::const_iterator end()
+      const {
+    return d_tr->end();
+  }
+  inline int size() const { return d_tr->size(); }
+  RDKit::ROMol *at(int pos) const {
+    if (pos < 0) {
+      pos += size();
+    }
+    if (pos < 0 || pos >= size()) {
+      PyErr_SetString(PyExc_IndexError, "index out of bounds");
+      python::throw_error_already_set();
+      return nullptr;
+    }
+    return new RDKit::ROMol(*d_tr->at(pos));
+  }
+  const MolStandardize::TautomerEnumeratorResult *get() { return d_tr.get(); }
 
  private:
-  const MolStandardize::TautomerEnumeratorResult d_tr;
+  boost::shared_ptr<MolStandardize::TautomerEnumeratorResult> d_tr;
   python::tuple d_atTuple;
   python::tuple d_bndTuple;
 };
@@ -76,6 +107,44 @@ class PyTautomerEnumeratorCallback
   PyTautomerEnumeratorCallback *d_cppCallback;
   python::object d_pyCallbackObject;
 };
+
+typedef boost::shared_ptr<MolStandardize::Tautomer> TAUT_SPTR;
+
+ROMol *getTautomerHelper(const TAUT_SPTR &self) {
+  return new ROMol(*self->tautomer);
+}
+
+ROMol *getKekulizedHelper(const TAUT_SPTR &self) {
+  return new ROMol(*self->kekulized);
+}
+
+python::tuple smilesTautomerMapKeysHelper(
+    const MolStandardize::SmilesTautomerMap &self) {
+  python::list keys;
+  for (const auto &pair : self) {
+    keys.append(pair.first);
+  }
+  return python::tuple(keys);
+}
+
+python::tuple smilesTautomerMapValuesHelper(
+    const MolStandardize::SmilesTautomerMap &self) {
+  python::list values;
+  for (const auto &pair : self) {
+    values.append(TAUT_SPTR(new MolStandardize::Tautomer(pair.second)));
+  }
+  return python::tuple(values);
+}
+
+python::tuple smilesTautomerMapItemsHelper(
+    const MolStandardize::SmilesTautomerMap &self) {
+  python::list items;
+  for (const auto &pair : self) {
+    items.append(python::make_tuple(
+        pair.first, TAUT_SPTR(new MolStandardize::Tautomer(pair.second))));
+  }
+  return python::tuple(items);
+}
 
 python::object getCallbackHelper(const MolStandardize::TautomerEnumerator &te) {
   PyTautomerEnumeratorCallback *cppCallback =
@@ -135,11 +204,6 @@ MolStandardize::TautomerEnumerator *createDefaultEnumerator() {
   return EnumeratorFromParams(ps);
 }
 
-ROMol *canonicalizeHelper(const MolStandardize::TautomerEnumerator &self,
-                          const ROMol &mol) {
-  return self.canonicalize(mol);
-}
-
 class pyobjFunctor {
  public:
   pyobjFunctor(python::object obj) : dp_obj(std::move(obj)) {}
@@ -152,10 +216,45 @@ class pyobjFunctor {
   python::object dp_obj;
 };
 
+ROMol *canonicalizeHelper(const MolStandardize::TautomerEnumerator &self,
+                          const ROMol &mol) {
+  return self.canonicalize(mol);
+}
+
 ROMol *canonicalizeHelper2(const MolStandardize::TautomerEnumerator &self,
                            const ROMol &mol, python::object scoreFunc) {
   pyobjFunctor ftor(scoreFunc);
   return self.canonicalize(mol, ftor);
+}
+
+inline std::vector<ROMOL_SPTR> extractPythonIterable(const python::object &o) {
+  if (!PyObject_HasAttrString(o.ptr(), "__iter__")) {
+    PyErr_SetString(PyExc_TypeError,
+                    "the passed object should be an iterable of Mol objects");
+    python::throw_error_already_set();
+    return std::vector<ROMOL_SPTR>();
+  }
+  return std::vector<ROMOL_SPTR>(python::stl_input_iterator<ROMOL_SPTR>(o),
+                                 python::stl_input_iterator<ROMOL_SPTR>());
+}
+
+ROMol *pickCanonicalHelper(const MolStandardize::TautomerEnumerator &self,
+                           const python::object &o) {
+  python::extract<PyTautomerEnumeratorResult *> e(o);
+  if (e.check()) {
+    return self.pickCanonical(*e()->get());
+  }
+  return self.pickCanonical(extractPythonIterable(o));
+}
+
+ROMol *pickCanonicalHelper2(const MolStandardize::TautomerEnumerator &self,
+                            const python::object &o, python::object scoreFunc) {
+  pyobjFunctor ftor(scoreFunc);
+  python::extract<PyTautomerEnumeratorResult *> e(o);
+  if (e.check()) {
+    return self.pickCanonical(*e()->get(), ftor);
+  }
+  return self.pickCanonical(extractPythonIterable(o), ftor);
 }
 
 PyTautomerEnumeratorResult *enumerateHelper(
@@ -184,14 +283,56 @@ struct tautomer_wrapper {
              "Return True if the tautomer enumeration should continue; "
              "False if the tautomer enumeration should stop.\n");
 
+    python::class_<MolStandardize::Tautomer, TAUT_SPTR>(
+        "Tautomer",
+        "used to hold the aromatic and kekulized versions "
+        "of each tautomer",
+        python::no_init)
+        .add_property(
+            "tautomer",
+            python::make_function(
+                &getTautomerHelper,
+                python::return_value_policy<python::manage_new_object>()),
+            "aromatic version of the tautomer")
+        .add_property(
+            "kekulized",
+            python::make_function(
+                &getKekulizedHelper,
+                python::return_value_policy<python::manage_new_object>()),
+            "kekulized version of the tautomer");
+
+    python::class_<MolStandardize::SmilesTautomerMap, boost::noncopyable>(
+        "SmilesTautomerMap",
+        "maps SMILES strings to the respective Tautomer objects",
+        python::no_init)
+        .def(python::map_indexing_suite<MolStandardize::SmilesTautomerMap,
+                                        true>())
+        .def("keys", &smilesTautomerMapKeysHelper)
+        .def("values", &smilesTautomerMapValuesHelper)
+        .def("items", &smilesTautomerMapItemsHelper);
+
     python::class_<PyTautomerEnumeratorResult, boost::noncopyable>(
         "TautomerEnumeratorResult",
         "used to return tautomer enumeration results", python::no_init)
         .add_property(
             "tautomers",
-            python::make_function(&PyTautomerEnumeratorResult::tautomers,
-                                  python::return_internal_reference<>()),
+            python::make_function(
+                &PyTautomerEnumeratorResult::tautomers,
+                python::return_value_policy<python::manage_new_object>()),
             "tautomers generated by the enumerator")
+        .add_property(
+            "smiles",
+            python::make_function(
+                &PyTautomerEnumeratorResult::smiles,
+                python::return_value_policy<python::manage_new_object>()),
+            "SMILES of tautomers generated by the enumerator")
+        .add_property("smilesTautomerMap",
+                      python::make_function(
+                          &PyTautomerEnumeratorResult::smilesTautomerMap,
+                          python::return_value_policy<
+                              python::reference_existing_object>()),
+                      "dictionary mapping SMILES strings to the respective "
+                      "Tautomer objects")
         .add_property("status", &PyTautomerEnumeratorResult::status,
                       "whether the enumeration completed or not; see "
                       "TautomerEnumeratorStatus for possible values")
@@ -202,7 +343,15 @@ struct tautomer_wrapper {
         .add_property(
             "modifiedBonds",
             python::make_function(&PyTautomerEnumeratorResult::modifiedBonds),
-            "tuple of bond indices modified by the transforms");
+            "tuple of bond indices modified by the transforms")
+        .def("__call__", &PyTautomerEnumeratorResult::tautomers,
+             python::return_value_policy<python::manage_new_object>(),
+             "tautomers generated by the enumerator")
+        .def("__iter__", python::range(&PyTautomerEnumeratorResult::begin,
+                                       &PyTautomerEnumeratorResult::end))
+        .def("__getitem__", &PyTautomerEnumeratorResult::at,
+             python::return_value_policy<python::manage_new_object>())
+        .def("__len__", &PyTautomerEnumeratorResult::size);
 
     python::class_<MolStandardize::TautomerEnumerator, boost::noncopyable>(
         "TautomerEnumerator", python::no_init)
@@ -244,8 +393,18 @@ struct tautomer_wrapper {
             "Canonicalize", &canonicalizeHelper2,
             (python::arg("self"), python::arg("mol"), python::arg("scoreFunc")),
             python::return_value_policy<python::manage_new_object>(),
-            "returns the canonical tautomer for a molecule using a custom "
-            "scoring function")
+            "picks the canonical tautomer from an iterable of molecules "
+            "using a custom scoring function")
+        .def("PickCanonical", &pickCanonicalHelper,
+             (python::arg("self"), python::arg("iterable")),
+             python::return_value_policy<python::manage_new_object>(),
+             "picks the canonical tautomer from an iterable of molecules")
+        .def("PickCanonical", &pickCanonicalHelper2,
+             (python::arg("self"), python::arg("iterable"),
+              python::arg("scoreFunc")),
+             python::return_value_policy<python::manage_new_object>(),
+             "returns the canonical tautomer for a molecule using a custom "
+             "scoring function")
         .def("ScoreTautomer",
              &MolStandardize::TautomerScoringFunctions::scoreTautomer,
              (python::arg("mol")),

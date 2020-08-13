@@ -131,16 +131,16 @@ TautomerQuery *TautomerQuery::fromMol(
   const auto res = tautomerEnumerator.enumerate(query);
 
   std::vector<size_t> modifiedAtoms;
-  modifiedAtoms.reserve(res.modifiedAtoms.count());
+  modifiedAtoms.reserve(res.modifiedAtoms().count());
   for (size_t i = 0; i < query.getNumAtoms(); i++) {
-    if (res.modifiedAtoms[i]) {
+    if (res.modifiedAtoms().test(i)) {
       modifiedAtoms.push_back(i);
     }
   }
   std::vector<size_t> modifiedBonds;
-  modifiedBonds.reserve(res.modifiedBonds.count());
+  modifiedBonds.reserve(res.modifiedBonds().count());
   for (size_t i = 0; i < query.getNumBonds(); i++) {
-    if (res.modifiedBonds[i]) {
+    if (res.modifiedBonds().test(i)) {
       modifiedBonds.push_back(i);
     }
   }
@@ -162,7 +162,7 @@ TautomerQuery *TautomerQuery::fromMol(
     delete queryBond;
   }
 
-  return new TautomerQuery(res.tautomers,
+  return new TautomerQuery(res.tautomers(),
                            static_cast<ROMol *>(templateMolecule),
                            modifiedAtoms, modifiedBonds);
 }
