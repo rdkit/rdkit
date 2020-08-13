@@ -347,7 +347,7 @@ def ConstrainedEmbed(mol, core, useTethers=True, coreConfId=-1, randomseed=2342,
     # realign
     rms = AlignMol(mol, core, atomMap=algMap)
   mol.SetProp('EmbedRMS', str(rms))
-  return mol
+  return ci
 
 
 def AssignBondOrdersFromTemplate(refmol, mol):
