@@ -36,7 +36,7 @@ using namespace RDKit;
 using namespace std::chrono;
 
 // thread safe printing for debugging
-// Example: PrintThread{} << "something";
+// Usage Example: PrintThread{} << "something";
 struct PrintThread : public std::stringstream {
   static inline std::mutex cout_mutex;
   ~PrintThread() {
@@ -140,6 +140,37 @@ void testSDOld(std::string path, bool sanitize, bool removeHs,
   TEST_ASSERT(numMols == expectedResult);
 }
 
+void testSmiProperties() {
+  std::string rdbase = getenv("RDBASE");
+  std::string fname =
+      rdbase + "/Code/GraphMol/FileParsers/test_data/fewSmi.2.csv";
+  std::vector<std::string> nameVector, tpsaVector;
+  std::string tempStr;
+  SmilesMolSupplier sup(fname, ",", 1, 0, true);
+  MultithreadedSmilesMolSupplier multiSup(fname, ",", 1, 0, true);
+  while (!multiSup.atEnd()) {
+    ROMol* mol = multiSup.next();
+    if (mol != nullptr) {
+      mol->getProp(common_properties::_Name, tempStr);
+      nameVector.push_back(tempStr);
+      mol->getProp("TPSA", tempStr);
+      tpsaVector.push_back(tempStr);
+    }
+  }
+
+  while (!sup.atEnd()) {
+    ROMol* mol = sup.next();
+    if (mol != nullptr) {
+      mol->getProp(common_properties::_Name, tempStr);
+      TEST_ASSERT(std::find(nameVector.begin(), nameVector.end(), tempStr) !=
+                  nameVector.end());
+      mol->getProp("TPSA", tempStr);
+      TEST_ASSERT(std::find(tpsaVector.begin(), tpsaVector.end(), tempStr) !=
+                  tpsaVector.end());
+    }
+  }
+}
+
 void testSmiCorrectness() {
   /*
           TEST CORRECTNESS
@@ -160,6 +191,42 @@ void testSmiCorrectness() {
   expectedResult = 50000;
   testSmiConcurrent(path, " \t", 0, 1, false, true, 4, 1000, 100,
                     expectedResult);
+  /*
+          TEST PROPERTIES
+  */
+  testSmiProperties();
+}
+
+void testSDProperties() {
+  std::string rdbase = getenv("RDBASE");
+  std::string fname =
+      rdbase + "/Code/GraphMol/FileParsers/test_data/NCI_aids_few.sdf";
+  std::vector<std::string> nameVector;
+  std::string tempStr;
+  SDMolSupplier sup(fname, false);
+  MultithreadedSDMolSupplier multiSup(fname, false);
+
+  while (!multiSup.atEnd()) {
+    ROMol* mol = multiSup.next();
+    if (mol != nullptr) {
+      TEST_ASSERT(mol->hasProp(common_properties::_Name));
+      mol->getProp(common_properties::_Name, tempStr);
+      nameVector.push_back(tempStr);
+      TEST_ASSERT(mol->hasProp("NCI_AIDS_Antiviral_Screen_Conclusion"));
+      TEST_ASSERT(mol->hasProp("CAS_RN"));
+      TEST_ASSERT(mol->hasProp("NSC"));
+    }
+  }
+
+  while (!sup.atEnd()) {
+    ROMol* mol = sup.next();
+    if (mol != nullptr) {
+      TEST_ASSERT(mol->hasProp(common_properties::_Name));
+      mol->getProp(common_properties::_Name, tempStr);
+      TEST_ASSERT(std::find(nameVector.begin(), nameVector.end(), tempStr) !=
+                  nameVector.end());
+    }
+  }
 }
 
 void testSDCorrectness() {
@@ -180,19 +247,16 @@ void testSDCorrectness() {
 
   path = "/Regress/Data/O2.sdf";
   expectedResult = 1;
-  testSDConcurrent(path, true, true, true, 2, 5, 5, expectedResult);
-
-  path = "/Code/GraphMol/FileParsers/test_data/strictLax1.sdf";
-  expectedResult = 2;
-  testSDConcurrent(path, true, true, true, 2, 5, 5, expectedResult);
-
-  path = "/Code/GraphMol/FileParsers/test_data/strictLax1.sdf";
-  expectedResult = 2;
   testSDConcurrent(path, true, true, false, 2, 5, 5, expectedResult);
 
   path = "/Regress/Data/mols1000.sdf";
   expectedResult = 1000;
   testSDConcurrent(path, false, true, true, 2, 5, 5, expectedResult);
+
+  /*
+          TEST PROPERTIES
+  */
+  testSDProperties();
 }
 
 void testPerformance() {
@@ -259,11 +323,11 @@ int main() {
   BOOST_LOG(rdErrorLog) << "-----------------------------------------\n\n";
 
   /*
-          BOOST_LOG(rdErrorLog) <<
-     "\n-----------------------------------------\n"; testPerformance();
-          BOOST_LOG(rdErrorLog) << "Finished: testPerformance()\n";
-          BOOST_LOG(rdErrorLog) <<
-     "-----------------------------------------\n\n";
+    BOOST_LOG(rdErrorLog) << "\n-----------------------------------------\n";
+    testPerfomance();
+    BOOST_LOG(rdErrorLog) << "Finished: testPerformance()\n";
+    BOOST_LOG(rdErrorLog) << "-----------------------------------------\n\n";
+
   */
 
 #endif

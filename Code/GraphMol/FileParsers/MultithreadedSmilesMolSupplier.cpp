@@ -131,7 +131,10 @@ void MultithreadedSmilesMolSupplier::checkForEnd() {
   }
 }
 
-bool MultithreadedSmilesMolSupplier::getEnd() const { return df_end; }
+bool MultithreadedSmilesMolSupplier::getEnd() const {
+  PRECONDITION(dp_inStream, "no stream");
+  return df_end;
+}
 
 std::string MultithreadedSmilesMolSupplier::nextLine() {
   PRECONDITION(dp_inStream, "bad stream");
