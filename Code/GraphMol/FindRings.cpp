@@ -728,7 +728,7 @@ int BFSWorkspace::smallestRingsBfs(const ROMol &mol, int root,
         ring = {nbrIdx};
         // forwards path
         int parent = d_parents[nbrIdx];
-        while (parent != -1) {
+        while (parent != -1 && parent != root) {
           ring.push_back(parent);
           parent = d_parents[parent];
         }
@@ -736,7 +736,7 @@ int BFSWorkspace::smallestRingsBfs(const ROMol &mol, int root,
         // backwards path
         ring.insert(ring.begin(), curr);
         parent = d_parents[curr];
-        while (parent != -1 && parent != root) {
+        while (parent != -1) {
           // Is the least common ancestor not the root?
           if (std::find(ring.begin(), ring.end(), parent) != ring.end()) {
             ring.clear();
