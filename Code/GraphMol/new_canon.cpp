@@ -603,14 +603,16 @@ void updateAtomNeighborNumSwaps(
 
 void rankMolAtoms(const ROMol &mol, std::vector<unsigned int> &res,
                   bool breakTies, bool includeChirality, bool includeIsotopes) {
-  if (!mol.getRingInfo()->isInitialized()) {
-    MolOps::fastFindRings(mol);
-  }
-  res.resize(mol.getNumAtoms());
-
   if (!mol.getNumAtoms()) {
     return;
   }
+
+  bool clearRings = false;
+  if (!mol.getRingInfo()->isInitialized()) {
+    MolOps::fastFindRings(mol);
+    clearRings = true;
+  }
+  res.resize(mol.getNumAtoms());
 
   std::vector<Canon::canon_atom> atoms(mol.getNumAtoms());
   initCanonAtoms(mol, atoms, includeChirality);
@@ -628,6 +630,10 @@ void rankMolAtoms(const ROMol &mol, std::vector<unsigned int> &res,
   }
   free(order);
   freeCanonAtoms(atoms);
+
+  if (clearRings) {
+    mol.getRingInfo()->reset();
+  }
 }  // end of rankMolAtoms()
 
 void rankFragmentAtoms(const ROMol &mol, std::vector<unsigned int> &res,
@@ -644,14 +650,16 @@ void rankFragmentAtoms(const ROMol &mol, std::vector<unsigned int> &res,
   PRECONDITION(!bondSymbols || bondSymbols->size() == mol.getNumBonds(),
                "bad bondSymbols size");
 
-  if (!mol.getRingInfo()->isInitialized()) {
-    MolOps::fastFindRings(mol);
-  }
-  res.resize(mol.getNumAtoms());
-
   if (!mol.getNumAtoms()) {
     return;
   }
+
+  bool clearRings = false;
+  if (!mol.getRingInfo()->isInitialized()) {
+    MolOps::fastFindRings(mol);
+    clearRings = true;
+  }
+  res.resize(mol.getNumAtoms());
 
   std::vector<Canon::canon_atom> atoms(mol.getNumAtoms());
   initFragmentCanonAtoms(mol, atoms, includeChirality, atomSymbols, bondSymbols,
@@ -671,17 +679,22 @@ void rankFragmentAtoms(const ROMol &mol, std::vector<unsigned int> &res,
   }
   free(order);
   freeCanonAtoms(atoms);
+  if (clearRings) {
+    mol.getRingInfo()->reset();
+  }
 }  // end of rankFragmentAtoms()
 
 void chiralRankMolAtoms(const ROMol &mol, std::vector<unsigned int> &res) {
-  if (!mol.getRingInfo()->isInitialized()) {
-    MolOps::fastFindRings(mol);
-  }
-  res.resize(mol.getNumAtoms());
-
   if (!mol.getNumAtoms()) {
     return;
   }
+
+  bool clearRings = false;
+  if (!mol.getRingInfo()->isInitialized()) {
+    MolOps::fastFindRings(mol);
+    clearRings = true;
+  }
+  res.resize(mol.getNumAtoms());
 
   std::vector<Canon::canon_atom> atoms(mol.getNumAtoms());
   initChiralCanonAtoms(mol, atoms);
@@ -696,6 +709,10 @@ void chiralRankMolAtoms(const ROMol &mol, std::vector<unsigned int> &res) {
   }
   free(order);
   freeCanonAtoms(atoms);
+  if (clearRings) {
+    mol.getRingInfo()->reset();
+  }
+
 }  // end of rankMolAtoms()
 }  // namespace Canon
 }  // namespace RDKit
