@@ -458,6 +458,23 @@ TEST_CASE("possible stereochemistry on bonds", "[chirality]") {
       CHECK(stereoInfo[0].controllingAtoms == catoms);
     }
   }
+  SECTION("bond with unknown set, real") {
+    auto mol = "CC=C(C)F"_smiles;
+    REQUIRE(mol);
+    mol->getBondWithIdx(1)->setStereo(Bond::BondStereo::STEREOANY);
+    auto stereoInfo = Chirality::findPotentialStereo(*mol);
+    REQUIRE(stereoInfo.size() == 1);
+    CHECK(stereoInfo[0].type == Chirality::StereoType::Bond_Double);
+    CHECK(stereoInfo[0].centeredOn == 1);
+    CHECK(stereoInfo[0].specified == Chirality::StereoSpecified::Unknown);
+  }
+  SECTION("bond with unknown set, not real") {
+    auto mol = "CC=C(C)C"_smiles;
+    REQUIRE(mol);
+    mol->getBondWithIdx(1)->setStereo(Bond::BondStereo::STEREOANY);
+    auto stereoInfo = Chirality::findPotentialStereo(*mol);
+    CHECK(stereoInfo.size() == 0);
+  }
 }
 
 TEST_CASE("para-stereocenters and assignStereochemistry", "[chirality]") {
