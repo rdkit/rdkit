@@ -307,102 +307,81 @@ bool MultithreadedSmilesMolSupplier::extractNextRecord(std::string &record,
 ROMol *MultithreadedSmilesMolSupplier::processMoleculeRecord(
     const std::string &record, unsigned int lineNum) {
   ROMol *res = nullptr;
-  try {
-    // -----------
-    // tokenize the input line:
-    // -----------
-    boost::char_separator<char> sep(d_delim.c_str(), "",
-                                    boost::keep_empty_tokens);
-    tokenizer tokens(record, sep);
-    STR_VECT recs;
-    for (tokenizer::iterator tokIter = tokens.begin(); tokIter != tokens.end();
-         ++tokIter) {
-      std::string rec = strip(*tokIter);
-      recs.push_back(rec);
-    }
-    if (recs.size() <= static_cast<unsigned int>(d_smi)) {
-      std::ostringstream errout;
-      errout << "ERROR: line #" << lineNum
-             << "does not contain enough tokens\n";
-      throw FileParseException(errout.str());
-    }
 
-    // -----------
-    // get the smiles and create a molecule
-    // -----------
-    SmilesParserParams params;
-    params.sanitize = df_sanitize;
-    params.allowCXSMILES = false;
-    params.parseName = false;
-    res = SmilesToMol(recs[d_smi], params);
-    if (!res) {
-      std::stringstream errout;
-      errout << "Cannot create molecule from : '" << recs[d_smi] << "'";
-      throw SmilesParseException(errout.str());
-    }
-
-    // -----------
-    // get the name (if there's a name column)
-    // -----------
-    if (d_name == -1) {
-      // if no name defaults it to the line number we read it from string
-      std::ostringstream tstr;
-      tstr << lineNum;
-      std::string mname = tstr.str();
-      res->setProp(common_properties::_Name, mname);
-    } else {
-      if (d_name >= static_cast<int>(recs.size())) {
-        BOOST_LOG(rdWarningLog)
-            << "WARNING: no name column found on line " << lineNum << std::endl;
-      } else {
-        res->setProp(common_properties::_Name, recs[d_name]);
-      }
-    }
-
-    // -----------
-    // read in the properties
-    // -----------
-    unsigned int iprop = 0;
-    for (unsigned int col = 0; col < recs.size(); col++) {
-      if (static_cast<int>(col) == d_smi || static_cast<int>(col) == d_name) {
-        continue;
-      }
-      std::string pname, pval;
-      if (d_props.size() > col) {
-        pname = d_props[col];
-      } else {
-        pname = "Column_";
-        std::stringstream ss;
-        ss << col;
-        pname += ss.str();
-      }
-
-      pval = recs[col];
-      res->setProp(pname, pval);
-      iprop++;
-    }
-
-  } catch (const SmilesParseException &pe) {
-    // Couldn't parse the passed in smiles
-    // Simply print out a message
-    BOOST_LOG(rdErrorLog) << "ERROR: Smiles parse error on line " << lineNum
-                          << "\n";
-    BOOST_LOG(rdErrorLog) << "ERROR: " << pe.what() << "\n";
-    res = nullptr;
-  } catch (const MolSanitizeException &se) {
-    // We couldn't sanitize the molecule
-    //  write out an error message
-    BOOST_LOG(rdErrorLog) << "ERROR: Could not sanitize molecule on line "
-                          << lineNum << std::endl;
-    BOOST_LOG(rdErrorLog) << "ERROR: " << se.what() << "\n";
-    res = nullptr;
-  } catch (...) {
-    //  write out an error message
-    BOOST_LOG(rdErrorLog) << "ERROR: Could not process molecule on line "
-                          << lineNum << std::endl;
-    res = nullptr;
+  // -----------
+  // tokenize the input line:
+  // -----------
+  boost::char_separator<char> sep(d_delim.c_str(), "",
+                                  boost::keep_empty_tokens);
+  tokenizer tokens(record, sep);
+  STR_VECT recs;
+  for (tokenizer::iterator tokIter = tokens.begin(); tokIter != tokens.end();
+       ++tokIter) {
+    std::string rec = strip(*tokIter);
+    recs.push_back(rec);
+  }
+  if (recs.size() <= static_cast<unsigned int>(d_smi)) {
+    std::ostringstream errout;
+    errout << "ERROR: line #" << lineNum << "does not contain enough tokens\n";
+    throw FileParseException(errout.str());
   }
 
+  // -----------
+  // get the smiles and create a molecule
+  // -----------
+  SmilesParserParams params;
+  params.sanitize = df_sanitize;
+  params.allowCXSMILES = false;
+  params.parseName = false;
+  res = SmilesToMol(recs[d_smi], params);
+  if (!res) {
+    std::stringstream errout;
+    errout << "Cannot create molecule from : '" << recs[d_smi] << "'";
+    throw SmilesParseException(errout.str());
+  }
+
+  // -----------
+  // get the name (if there's a name column)
+  // -----------
+  if (d_name == -1) {
+    // if no name defaults it to the line number we read it from string
+    std::ostringstream tstr;
+    tstr << lineNum;
+    std::string mname = tstr.str();
+    res->setProp(common_properties::_Name, mname);
+  } else {
+    if (d_name >= static_cast<int>(recs.size())) {
+      d_mutexLogging.lock();
+      BOOST_LOG(rdWarningLog)
+          << "WARNING: no name column found on line " << lineNum << std::endl;
+      d_mutexLogging.unlock();
+    } else {
+      res->setProp(common_properties::_Name, recs[d_name]);
+    }
+  }
+
+  // -----------
+  // read in the properties
+  // -----------
+  unsigned int iprop = 0;
+  for (unsigned int col = 0; col < recs.size(); col++) {
+    if (static_cast<int>(col) == d_smi || static_cast<int>(col) == d_name) {
+      continue;
+    }
+    std::string pname, pval;
+    if (d_props.size() > col) {
+      pname = d_props[col];
+    } else {
+      pname = "Column_";
+      std::stringstream ss;
+      ss << col;
+      pname += ss.str();
+    }
+
+    pval = recs[col];
+    res->setProp(pname, pval);
+    iprop++;
+  }
   return res;
 }
 

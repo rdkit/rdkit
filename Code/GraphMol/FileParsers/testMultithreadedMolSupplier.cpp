@@ -91,12 +91,11 @@ void testSDConcurrent(std::string path, bool sanitize, bool removeHs,
   TEST_ASSERT(sup.getLastRecordId() == 0);
   // initially no bit is set in the bitVector, sanity check
   TEST_ASSERT(!bitVector.any());
-
   while (!sup.atEnd()) {
     ROMol* mol = sup.next();
-    unsigned int id = sup.getLastRecordId();
-    bitVector[id - 1] = 1;
     if (mol != nullptr) {
+      unsigned int id = sup.getLastRecordId();
+      bitVector[id - 1] = 1;
       ++nMols;
     }
     delete mol;
@@ -221,7 +220,6 @@ void testSDProperties() {
   while (!sup.atEnd()) {
     ROMol* mol = sup.next();
     if (mol != nullptr) {
-      TEST_ASSERT(mol->hasProp(common_properties::_Name));
       mol->getProp(common_properties::_Name, tempStr);
       TEST_ASSERT(std::find(nameVector.begin(), nameVector.end(), tempStr) !=
                   nameVector.end());
@@ -233,6 +231,7 @@ void testSDCorrectness() {
   /*
           TEST CORRECTNESS
   */
+
   std::string path = "/Code/GraphMol/FileParsers/test_data/NCI_aids_few.sdf";
   unsigned int expectedResult = 16;
   testSDConcurrent(path, false, true, true, 2, 5, 5, expectedResult);
@@ -244,6 +243,14 @@ void testSDCorrectness() {
   path = "/Code/GraphMol/FileParsers/test_data/esters_end.sdf";
   expectedResult = 6;
   testSDConcurrent(path, true, true, true, 2, 5, 5, expectedResult);
+
+  // strict parsing results in reading 0 out of 2 records
+  path = "/Code/GraphMol/FileParsers/test_data/strictLax1.sdf";
+  expectedResult = 0;
+  testSDConcurrent(path, true, true, true, 2, 5, 5, expectedResult);
+
+  expectedResult = 2;
+  testSDConcurrent(path, true, true, false, 2, 5, 5, expectedResult);
 
   path = "/Regress/Data/O2.sdf";
   expectedResult = 1;

@@ -9,9 +9,21 @@
 //
 #include "MultithreadedMolSupplier.h"
 namespace RDKit {
-
 MultithreadedMolSupplier::~MultithreadedMolSupplier() {
   endThreads();
+  // rethrow the exceptions once the threads have been executed
+  for (auto const& e : d_exceptions) {
+    try {
+      if (e != nullptr) {
+        std::rethrow_exception(e);
+      }
+    } catch (std::exception const& ex) {
+      BOOST_LOG(rdErrorLog) << "ERROR: " << ex.what() << "\n";
+    }
+  }
+  // exception_ptr is a smart shared pointer so we only
+  // need to clear the vector
+  d_exceptions.clear();
   // destroy all objects in the input queue
   d_inputQueue->clear();
   // delete the pointer to the input queue
@@ -41,10 +53,19 @@ void MultithreadedMolSupplier::reader() {
 void MultithreadedMolSupplier::writer() {
   std::tuple<std::string, unsigned int, unsigned int> r;
   while (d_inputQueue->pop(r)) {
-    ROMol* mol = processMoleculeRecord(std::get<0>(r), std::get<1>(r));
-    auto temp = std::tuple<ROMol*, std::string, unsigned int>{
-        mol, std::get<0>(r), std::get<2>(r)};
-    d_outputQueue->push(temp);
+    try {
+      ROMol* mol = processMoleculeRecord(std::get<0>(r), std::get<1>(r));
+      auto temp = std::tuple<ROMol*, std::string, unsigned int>{
+          mol, std::get<0>(r), std::get<2>(r)};
+      d_outputQueue->push(temp);
+    } catch (...) {
+      std::lock_guard<std::mutex> lock(d_mutex);
+      d_exceptions.push_back(std::current_exception());
+      // fill the queue wih a null value
+      auto nullValue = std::tuple<ROMol*, std::string, unsigned int>{
+          nullptr, std::get<0>(r), std::get<2>(r)};
+      d_outputQueue->push(nullValue);
+    }
   }
 
   if (d_threadCounter != d_numWriterThreads) {
@@ -84,6 +105,14 @@ void MultithreadedMolSupplier::startThreads() {
 
 bool MultithreadedMolSupplier::atEnd() {
   return (d_outputQueue->isEmpty() && d_outputQueue->getDone());
+}
+
+unsigned int MultithreadedMolSupplier::getLastRecordId() const {
+  return d_lastRecordId;
+}
+
+std::string MultithreadedMolSupplier::getLastItemText() const {
+  return d_lastItemText;
 }
 
 void MultithreadedMolSupplier::reset() {
