@@ -440,54 +440,70 @@ def ChangeMoleculeRendering(frame=None, renderer='PNG'):
       frame._repr_html_ = types.MethodType(defPandasRepr, frame)
 
 
+
+
+
+
 def LoadSDF(filename, idName='ID', molColName='ROMol', includeFingerprints=False,
             isomericSmiles=True, smilesName=None, embedProps=False, removeHs=True,
-            strictParsing=True):
-  '''Read file in SDF format and return as Pandas data frame.
-    If embedProps=True all properties also get embedded in Mol objects in the molecule column.
-    If molColName=None molecules would not be present in resulting DataFrame (only properties
-    would be read).
-    '''
-  if isinstance(filename, str):
-    if filename.lower()[-3:] == ".gz":
-      import gzip
-      f = gzip.open(filename, "rb")
+            strictParsing=True, sanitize=False):
+    '''Read file in SDF format and return as Pandas data frame.
+      If embedProps=True all properties also get embedded in Mol objects in the molecule column.
+      If molColName=None molecules would not be present in resulting DataFrame (only properties
+      would be read).
+      '''
+    if isinstance(filename, str):
+        if filename.lower()[-3:] == ".gz":
+            import gzip
+            f = gzip.open(filename, "rb")
+        else:
+            f = open(filename, 'rb')
+        close = f.close
     else:
-      f = open(filename, 'rb')
-    close = f.close
-  else:
-    f = filename
-    close = None  # don't close an open file that was passed in
-  records = []
-  indices = []
-  for i, mol in enumerate(
-      Chem.ForwardSDMolSupplier(f, sanitize=(molColName is not None), removeHs=removeHs,
-                                strictParsing=strictParsing)):
-    if mol is None:
-      continue
-    row = dict((k, mol.GetProp(k)) for k in mol.GetPropNames())
-    if molColName is not None and not embedProps:
-      for prop in mol.GetPropNames():
-        mol.ClearProp(prop)
-    if mol.HasProp('_Name'):
-      row[idName] = mol.GetProp('_Name')
-    if smilesName is not None:
-      try:
-        row[smilesName] = Chem.MolToSmiles(mol, isomericSmiles=isomericSmiles)
-      except:
-        log.warning('No valid smiles could be generated for molecule %s', i)
-        row[smilesName] = None
-    if molColName is not None and not includeFingerprints:
-      row[molColName] = mol
-    elif molColName is not None:
-      row[molColName] = _MolPlusFingerprint(mol)
-    records.append(row)
-    indices.append(i)
+        f = filename
+        # don't close an open file that was passed in(molColName is not None)
+        close = None
+    records = []
+    indices = []
+    for i, mol in enumerate(
+        Chem.ForwardSDMolSupplier(f, sanitize=False, removeHs=removeHs,
+                                  strictParsing=strictParsing)):
+        if not sanitize:
+            Chem.SanitizeMol(mol, Chem.SanitizeFlags.SANITIZE_FINDRADICALS |
+                             Chem.SanitizeFlags.SANITIZE_KEKULIZE |
+                             Chem.SanitizeFlags.SANITIZE_SETAROMATICITY |
+                             Chem.SanitizeFlags.SANITIZE_SETCONJUGATION |
+                             Chem.SanitizeFlags.SANITIZE_SETHYBRIDIZATION |
+                             Chem.SanitizeFlags.SANITIZE_SYMMRINGS,
+                             catchErrors=True)
+        if mol is None:
+            print(i)
+            continue
+        row = dict((k, mol.GetProp(k)) for k in mol.GetPropNames())
+        if molColName is not None and not embedProps:
+            for prop in mol.GetPropNames():
+                mol.ClearProp(prop)
+        if mol.HasProp('_Name'):
+            row[idName] = mol.GetProp('_Name')
+        if smilesName is not None:
+            try:
+                row[smilesName] = Chem.MolToSmiles(
+                    mol, isomericSmiles=isomericSmiles)
+            except:
+                log.warning(
+                    'No valid smiles could be generated for molecule %s', i)
+                row[smilesName] = None
+        if molColName is not None and not includeFingerprints:
+            row[molColName] = mol
+        elif molColName is not None:
+            row[molColName] = _MolPlusFingerprint(mol)
+        records.append(row)
+        indices.append(i)
 
-  if close is not None:
-    close()
-  RenderImagesInAllDataFrames(images=True)
-  return pd.DataFrame(records, index=indices)
+    if close is not None:
+        close()
+    RenderImagesInAllDataFrames(images=True)
+    return pd.DataFrame(records, index=indices)
 
 
 def WriteSDF(df, out, molColName='ROMol', idName=None, properties=None, allNumeric=False):
