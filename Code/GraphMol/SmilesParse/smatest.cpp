@@ -156,7 +156,8 @@ void testFail() {
   // alternate good and bad smiles here to ensure that the parser can resume
   // parsing
   // on good input:
-  string smis[] = {"CC=(CO)C", "CC(=CO)C", "C1CC",  "C1CC1", "fff", "C1CC1",
+  string smis[] = {"CC=(CO)C", "CC(=CO)C", "C1CC",  "C1CC1",
+                   "fff",      "C1CC1",
                    "C=0",  // part of sf.net issue 2525792
                    "C1CC1",
                    "C0",  // part of sf.net issue 2525792
@@ -164,7 +165,8 @@ void testFail() {
                    "C-0",  // part of sf.net issue 2525792
                    "C1CC1",
                    "C+0",  // part of sf.net issue 2525792
-                   "C1CC1",    "[HQ]",     "C1CC1", "EOS"};
+                   "C1CC1",    "[HQ]",     "C1CC1", "[55555555555555C]",
+                   "C1CC1",    "EOS"};
   while (smis[i] != "EOS") {
     string smi = smis[i];
     boost::logging::disable_logs("rdApp.error");
