@@ -65,6 +65,13 @@ void streamRead(std::istream &ss, MolPickler::Tags &tag, int version) {
   }
 }
 
+void streamReadPositiveChar(std::istream &ss, char &res, int version) {
+  streamRead(ss, res, version);
+  if (res < 0) {
+    throw MolPicklerException("invalid value in pickle");
+  }
+}
+
 namespace {
 static unsigned int defaultProperties = PicklerOps::NoProps;
 static CustomPropHandlerVec defaultPropHandlers = {};
@@ -1370,22 +1377,16 @@ void MolPickler::_unpickleAtomData(std::istream &ss, Atom *atom, int version) {
   atom->setFormalCharge(static_cast<int>(tmpSchar));
 
   if (propFlags & (1 << 2)) {
-    streamRead(ss, tmpChar, version);
+    streamReadPositiveChar(ss, tmpChar, version);
   } else {
     tmpChar = 0;
-  }
-  if (tmpChar < 0) {
-    throw MolPicklerException("invalid value in pickle");
   }
   atom->setChiralTag(static_cast<Atom::ChiralType>(tmpChar));
 
   if (propFlags & (1 << 3)) {
-    streamRead(ss, tmpChar, version);
+    streamReadPositiveChar(ss, tmpChar, version);
   } else {
     tmpChar = Atom::SP3;
-  }
-  if (tmpChar < 0) {
-    throw MolPicklerException("invalid value in pickle");
   }
   atom->setHybridization(static_cast<Atom::HybridizationType>(tmpChar));
 
@@ -1410,12 +1411,9 @@ void MolPickler::_unpickleAtomData(std::istream &ss, Atom *atom, int version) {
   }
   atom->d_implicitValence = tmpChar;
   if (propFlags & (1 << 7)) {
-    streamRead(ss, tmpChar, version);
+    streamReadPositiveChar(ss, tmpChar, version);
   } else {
     tmpChar = 0;
-  }
-  if (tmpChar < 0) {
-    throw MolPicklerException("invalid value in pickle");
   }
   atom->d_numRadicalElectrons = static_cast<unsigned int>(tmpChar);
 
@@ -1816,22 +1814,13 @@ Bond *MolPickler::_addBondFromPickle(std::istream &ss, ROMol *mol, int version,
     bond->setIsConjugated(flags & 0x1 << 5);
 
     if (version < 7000) {
-      streamRead(ss, tmpChar, version);
-      if (tmpChar < 0) {
-        throw MolPicklerException("invalid value in pickle");
-      }
+      streamReadPositiveChar(ss, tmpChar, version);
       bond->setBondType(static_cast<Bond::BondType>(tmpChar));
-      streamRead(ss, tmpChar, version);
-      if (tmpChar < 0) {
-        throw MolPicklerException("invalid value in pickle");
-      }
+      streamReadPositiveChar(ss, tmpChar, version);
       bond->setBondDir(static_cast<Bond::BondDir>(tmpChar));
 
       if (version > 3000) {
-        streamRead(ss, tmpChar, version);
-        if (tmpChar < 0) {
-          throw MolPicklerException("invalid value in pickle");
-        }
+        streamReadPositiveChar(ss, tmpChar, version);
         auto stereo = static_cast<Bond::BondStereo>(tmpChar);
         bond->setStereo(stereo);
         if (stereo != Bond::STEREONONE) {
@@ -1844,30 +1833,21 @@ Bond *MolPickler::_addBondFromPickle(std::istream &ss, ROMol *mol, int version,
       }
     } else {
       if (flags & (0x1 << 3)) {
-        streamRead(ss, tmpChar, version);
-        if (tmpChar < 0) {
-          throw MolPicklerException("invalid value in pickle");
-        }
+        streamReadPositiveChar(ss, tmpChar, version);
         bond->setBondType(static_cast<Bond::BondType>(tmpChar));
       } else {
         bond->setBondType(Bond::SINGLE);
       }
 
       if (flags & (0x1 << 2)) {
-        streamRead(ss, tmpChar, version);
-        if (tmpChar < 0) {
-          throw MolPicklerException("invalid value in pickle");
-        }
+        streamReadPositiveChar(ss, tmpChar, version);
         bond->setBondDir(static_cast<Bond::BondDir>(tmpChar));
       } else {
         bond->setBondDir(Bond::NONE);
       }
 
       if (flags & (0x1 << 1)) {
-        streamRead(ss, tmpChar, version);
-        if (tmpChar < 0) {
-          throw MolPicklerException("invalid value in pickle");
-        }
+        streamReadPositiveChar(ss, tmpChar, version);
         auto stereo = static_cast<Bond::BondStereo>(tmpChar);
         streamRead(ss, tmpChar, version);
         for (char i = 0; i < tmpChar; ++i) {

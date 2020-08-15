@@ -89,7 +89,7 @@ unsigned int toUnsigned(const std::string &input, bool acceptSpaces) {
       throw boost::bad_lexical_cast();
     }
   }
-  res = strtol(input.c_str(), nullptr, 10);
+  res = strtoul(input.c_str(), nullptr, 10);
   return res;
 }
 
