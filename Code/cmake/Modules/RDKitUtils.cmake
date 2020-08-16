@@ -125,16 +125,11 @@ macro(rdkit_python_extension)
                               ${RDK_PYTHON_OUTPUT_DIRECTORY}/${RDKPY_DEST})
     endif(WIN32)
 
-    if(WIN32 OR "${Py_ENABLE_SHARED}" STREQUAL "1")
-      target_link_libraries(${RDKPY_NAME} ${RDKPY_LINK_LIBRARIES}
-                            ${PYTHON_LIBRARIES} ${Boost_LIBRARIES} )
+    target_link_libraries(${RDKPY_NAME} ${RDKPY_LINK_LIBRARIES}
+                          RDBoost rdkit_py_base rdkit_base )
+    if("${PYTHON_LDSHARED}" STREQUAL "")
     else()
-      target_link_libraries(${RDKPY_NAME} ${RDKPY_LINK_LIBRARIES}
-                            ${Boost_LIBRARIES} )
-      if("${PYTHON_LDSHARED}" STREQUAL "")
-      else()
-        set_target_properties(${RDKPY_NAME} PROPERTIES LINK_FLAGS ${PYTHON_LDSHARED})
-      endif()
+      set_target_properties(${RDKPY_NAME} PROPERTIES LINK_FLAGS ${PYTHON_LDSHARED})
     endif()
 
     INSTALL(TARGETS ${RDKPY_NAME}
@@ -221,21 +216,6 @@ function(downloadAndCheckMD5 url target md5chksum)
   endif()
 endfunction(downloadAndCheckMD5)
 
-function(overwriteIfChanged src dest)
-  set(overwrite TRUE)
-  if (EXISTS "${dest}")
-    computeMD5("${dest}" destMD5)
-    computeMD5("${src}" srcMD5)
-    if (${destMD5} STREQUAL ${srcMD5})
-      set(overwrite FALSE)
-    endif()
-  endif()
-  if (overwrite)
-    get_filename_component(destDir "${dest}" DIRECTORY)
-    file(COPY "${src}" DESTINATION "${destDir}")
-  endif()
-endfunction(overwriteIfChanged)
-
 function(createExportTestHeaders)
   file(GLOB_RECURSE cmakeLists LIST_DIRECTORIES false
        ${CMAKE_SOURCE_DIR}/CMakeLists.txt)
@@ -252,7 +232,7 @@ function(createExportTestHeaders)
   list(REMOVE_DUPLICATES exportLibs)
   list(SORT exportLibs)
   set(exportPath "Code/RDGeneral/export.h")
-  file(WRITE "${CMAKE_BINARY_DIR}/${exportPath}"
+  file(WRITE "${CMAKE_BINARY_DIR}/${exportPath}.tmp"
     "// auto-generated __declspec definition header\n"
     "#pragma once\n"
     "#ifndef SWIG\n"
@@ -264,12 +244,12 @@ function(createExportTestHeaders)
     "#include <boost/config.hpp>\n"
     "#endif\n")
   set(testPath "Code/RDGeneral/test.h")
-  file(WRITE "${CMAKE_BINARY_DIR}/${testPath}"
+  file(WRITE "${CMAKE_BINARY_DIR}/${testPath}.tmp"
     "// auto-generated header to be imported in all cpp tests\n"
     "#pragma once\n")
   foreach(exportLib ${exportLibs})
     string(TOUPPER "${exportLib}" exportLib)
-    file(APPEND "${CMAKE_BINARY_DIR}/${exportPath}"
+    file(APPEND "${CMAKE_BINARY_DIR}/${exportPath}.tmp"
       "\n"
       "// RDKIT_${exportLib}_EXPORT definitions\n"
       "#if defined(BOOST_HAS_DECLSPEC) && defined(RDKIT_DYN_LINK) && !defined(SWIG)\n"
@@ -283,14 +263,16 @@ function(createExportTestHeaders)
       "#define RDKIT_${exportLib}_EXPORT\n"
       "#endif\n"
       "// RDKIT_${exportLib}_EXPORT end definitions\n")
-    file(APPEND "${CMAKE_BINARY_DIR}/${testPath}"
+    file(APPEND "${CMAKE_BINARY_DIR}/${testPath}.tmp"
       "\n"
       "#ifdef RDKIT_${exportLib}_BUILD\n"
       "#undef RDKIT_${exportLib}_BUILD\n"
       "#endif\n")
   endforeach()
-  overwriteIfChanged("${CMAKE_BINARY_DIR}/${exportPath}" "${CMAKE_SOURCE_DIR}/${exportPath}")
-  overwriteIfChanged("${CMAKE_BINARY_DIR}/${testPath}" "${CMAKE_SOURCE_DIR}/${testPath}")
+  execute_process(COMMAND ${CMAKE_COMMAND} -E copy_if_different
+    "${CMAKE_BINARY_DIR}/${exportPath}.tmp" "${CMAKE_SOURCE_DIR}/${exportPath}")
+  execute_process(COMMAND ${CMAKE_COMMAND} -E copy_if_different
+    "${CMAKE_BINARY_DIR}/${testPath}.tmp" "${CMAKE_SOURCE_DIR}/${testPath}")
 endfunction(createExportTestHeaders)
 
 function(patchCoordGenMaeExportHeaders keyword path)

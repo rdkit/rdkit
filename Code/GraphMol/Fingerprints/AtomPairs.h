@@ -79,15 +79,15 @@ const std::string atomPairsVersion = "1.1.0";
 */
 RDKIT_FINGERPRINTS_EXPORT SparseIntVect<std::int32_t> *getAtomPairFingerprint(
     const ROMol &mol, unsigned int minLength, unsigned int maxLength,
-    const std::vector<std::uint32_t> *fromAtoms = 0,
-    const std::vector<std::uint32_t> *ignoreAtoms = 0,
-    const std::vector<std::uint32_t> *atomInvariants = 0,
+    const std::vector<std::uint32_t> *fromAtoms = nullptr,
+    const std::vector<std::uint32_t> *ignoreAtoms = nullptr,
+    const std::vector<std::uint32_t> *atomInvariants = nullptr,
     bool includeChirality = false, bool use2D = true, int confId = -1);
 //! \overload
 RDKIT_FINGERPRINTS_EXPORT SparseIntVect<std::int32_t> *getAtomPairFingerprint(
-    const ROMol &mol, const std::vector<std::uint32_t> *fromAtoms = 0,
-    const std::vector<std::uint32_t> *ignoreAtoms = 0,
-    const std::vector<std::uint32_t> *atomInvariants = 0,
+    const ROMol &mol, const std::vector<std::uint32_t> *fromAtoms = nullptr,
+    const std::vector<std::uint32_t> *ignoreAtoms = nullptr,
+    const std::vector<std::uint32_t> *atomInvariants = nullptr,
     bool includeChirality = false, bool use2D = true, int confId = -1);
 
 //! returns the hashed atom-pair fingerprint for a molecule
@@ -121,9 +121,9 @@ RDKIT_FINGERPRINTS_EXPORT SparseIntVect<std::int32_t>
     *getHashedAtomPairFingerprint(
         const ROMol &mol, unsigned int nBits = 2048, unsigned int minLength = 1,
         unsigned int maxLength = maxPathLen - 1,
-        const std::vector<std::uint32_t> *fromAtoms = 0,
-        const std::vector<std::uint32_t> *ignoreAtoms = 0,
-        const std::vector<std::uint32_t> *atomInvariants = 0,
+        const std::vector<std::uint32_t> *fromAtoms = nullptr,
+        const std::vector<std::uint32_t> *ignoreAtoms = nullptr,
+        const std::vector<std::uint32_t> *atomInvariants = nullptr,
         bool includeChirality = false, bool use2D = true, int confId = -1);
 //! returns the hashed atom-pair fingerprint for a molecule as a bit vector
 /*!
@@ -158,9 +158,9 @@ RDKIT_FINGERPRINTS_EXPORT ExplicitBitVect *
 getHashedAtomPairFingerprintAsBitVect(
     const ROMol &mol, unsigned int nBits = 2048, unsigned int minLength = 1,
     unsigned int maxLength = maxPathLen - 1,
-    const std::vector<std::uint32_t> *fromAtoms = 0,
-    const std::vector<std::uint32_t> *ignoreAtoms = 0,
-    const std::vector<std::uint32_t> *atomInvariants = 0,
+    const std::vector<std::uint32_t> *fromAtoms = nullptr,
+    const std::vector<std::uint32_t> *ignoreAtoms = nullptr,
+    const std::vector<std::uint32_t> *atomInvariants = nullptr,
     unsigned int nBitsPerEntry = 4, bool includeChirality = false,
     bool use2D = true, int confId = -1);
 
@@ -193,9 +193,9 @@ getHashedAtomPairFingerprintAsBitVect(
 RDKIT_FINGERPRINTS_EXPORT SparseIntVect<boost::int64_t>
     *getTopologicalTorsionFingerprint(
         const ROMol &mol, unsigned int targetSize = 4,
-        const std::vector<std::uint32_t> *fromAtoms = 0,
-        const std::vector<std::uint32_t> *ignoreAtoms = 0,
-        const std::vector<std::uint32_t> *atomInvariants = 0,
+        const std::vector<std::uint32_t> *fromAtoms = nullptr,
+        const std::vector<std::uint32_t> *ignoreAtoms = nullptr,
+        const std::vector<std::uint32_t> *atomInvariants = nullptr,
         bool includeChirality = false);
 //! returns a hashed topological-torsion fingerprint for a molecule
 /*!
@@ -227,9 +227,9 @@ RDKIT_FINGERPRINTS_EXPORT SparseIntVect<boost::int64_t>
 RDKIT_FINGERPRINTS_EXPORT SparseIntVect<boost::int64_t> *
 getHashedTopologicalTorsionFingerprint(
     const ROMol &mol, unsigned int nBits = 2048, unsigned int targetSize = 4,
-    const std::vector<std::uint32_t> *fromAtoms = 0,
-    const std::vector<std::uint32_t> *ignoreAtoms = 0,
-    const std::vector<std::uint32_t> *atomInvariants = 0,
+    const std::vector<std::uint32_t> *fromAtoms = nullptr,
+    const std::vector<std::uint32_t> *ignoreAtoms = nullptr,
+    const std::vector<std::uint32_t> *atomInvariants = nullptr,
     bool includeChirality = false);
 //! returns a hashed topological-torsion fingerprint for a molecule as a bit
 // vector
@@ -258,9 +258,9 @@ getHashedTopologicalTorsionFingerprint(
 RDKIT_FINGERPRINTS_EXPORT ExplicitBitVect *
 getHashedTopologicalTorsionFingerprintAsBitVect(
     const ROMol &mol, unsigned int nBits = 2048, unsigned int targetSize = 4,
-    const std::vector<std::uint32_t> *fromAtoms = 0,
-    const std::vector<std::uint32_t> *ignoreAtoms = 0,
-    const std::vector<std::uint32_t> *atomInvariants = 0,
+    const std::vector<std::uint32_t> *fromAtoms = nullptr,
+    const std::vector<std::uint32_t> *ignoreAtoms = nullptr,
+    const std::vector<std::uint32_t> *atomInvariants = nullptr,
     unsigned int nBitsPerEntry = 4, bool includeChirality = false);
 }  // namespace AtomPairs
 }  // namespace RDKit

@@ -742,7 +742,7 @@ void testEnumerator() {
   TEST_ASSERT(res66.size() == ans66.size());
 
   std::vector<std::string> sm66;
-  for (const auto r : res66) {
+  for (const auto &r : res66) {
     sm66.push_back(MolToSmiles(*r));
   }
   // sort both for alphabetical order
@@ -765,7 +765,7 @@ void testEnumerator() {
       "Nc1nc2ncnc-2c(O)[nH]1"};
   TEST_ASSERT(res67.size() == ans67.size());
   std::vector<std::string> sm67;
-  for (const auto r : res67) {
+  for (const auto &r : res67) {
     sm67.push_back(MolToSmiles(*r));
   }
   // sort both for alphabetical order
@@ -865,7 +865,7 @@ void testCanonicalize() {
 
   TautomerEnumerator te(new TautomerCatalog(tautparams.get()));
 
-  for (const auto itm : canonTautomerData) {
+  for (const auto &itm : canonTautomerData) {
     std::unique_ptr<ROMol> mol{SmilesToMol(itm.first)};
     TEST_ASSERT(mol);
     std::unique_ptr<ROMol> res{te.canonicalize(*mol)};
@@ -894,7 +894,7 @@ void testPickCanonical() {
 
   TautomerEnumerator te(new TautomerCatalog(tautparams.get()));
 
-  for (const auto itm : canonTautomerData) {
+  for (const auto &itm : canonTautomerData) {
     std::unique_ptr<ROMol> mol{SmilesToMol(itm.first)};
     TEST_ASSERT(mol);
     auto tauts = te.enumerate(*mol);
@@ -929,7 +929,7 @@ void testCustomScoreFunc() {
       {"CC(C)=O", "C=C(C)O"},
       {"OC(C)=C(C)C", "C=C(O)C(C)C"},
   };
-  for (const auto itm : subsetTautomerData) {
+  for (const auto &itm : subsetTautomerData) {
     std::unique_ptr<ROMol> mol{SmilesToMol(itm.first)};
     TEST_ASSERT(mol);
     {
@@ -1006,7 +1006,7 @@ void testPickCanonical2() {
     auto mol = "CN=c1nc[nH]cc1"_smiles;
     TEST_ASSERT(mol);
     auto tauts = te.enumerate(*mol);
-    for (const auto taut : tauts) {
+    for (const auto &taut : tauts) {
       std::cerr << MolToSmiles(*taut) << std::endl;
     }
     std::unique_ptr<ROMol> canon{te.pickCanonical(tauts)};
@@ -1016,12 +1016,118 @@ void testPickCanonical2() {
     auto mol = "CN=c1[nH]cccc1"_smiles;
     TEST_ASSERT(mol);
     auto tauts = te.enumerate(*mol);
-    for (const auto taut : tauts) {
+    for (const auto &taut : tauts) {
       std::cerr << MolToSmiles(*taut) << std::endl;
     }
     std::unique_ptr<ROMol> canon{te.pickCanonical(tauts)};
     std::cerr << "res: " << MolToSmiles(*canon) << std::endl;
   }
+  BOOST_LOG(rdInfoLog) << "Finished" << std::endl;
+}
+
+void testEnumerateDetails() {
+  BOOST_LOG(rdInfoLog)
+      << "-----------------------\n Testing getting details back "
+         "from tautomer enumeration"
+      << std::endl;
+  std::string rdbase = getenv("RDBASE");
+  std::string tautomerFile =
+      rdbase + "/Data/MolStandardize/tautomerTransforms.in";
+  auto tautparams = std::unique_ptr<TautomerCatalogParams>(
+      new TautomerCatalogParams(tautomerFile));
+  unsigned int ntautomers = tautparams->getNumTautomers();
+  TEST_ASSERT(ntautomers == 34);
+  TautomerEnumerator te(new TautomerCatalog(tautparams.get()));
+  {
+    auto mol = "c1ccccc1CN=c1[nH]cccc1"_smiles;
+    TEST_ASSERT(mol);
+    boost::dynamic_bitset<> atomsModified(mol->getNumAtoms());
+    boost::dynamic_bitset<> bondsModified(mol->getNumBonds());
+
+    auto tauts = te.enumerate(*mol, &atomsModified, &bondsModified);
+    TEST_ASSERT(tauts.size() == 2);
+    TEST_ASSERT(atomsModified.count() == 2);
+    TEST_ASSERT(bondsModified.count() == 7);
+    TEST_ASSERT(atomsModified[7]);
+    TEST_ASSERT(atomsModified[9]);
+    TEST_ASSERT(!bondsModified[0]);
+    TEST_ASSERT(bondsModified[7]);
+    TEST_ASSERT(bondsModified[8]);
+    TEST_ASSERT(bondsModified[14]);
+  }
+  BOOST_LOG(rdInfoLog) << "Finished" << std::endl;
+}
+
+void testGithub2990() {
+  BOOST_LOG(rdInfoLog) << "-----------------------\n Testing Github #2990: "
+                          "Tautomer enumeration "
+                          "should remove stereo in all tautomers"
+                       << std::endl;
+  std::string rdbase = getenv("RDBASE");
+  std::string tautomerFile =
+      rdbase + "/Data/MolStandardize/tautomerTransforms.in";
+  auto tautparams = std::unique_ptr<TautomerCatalogParams>(
+      new TautomerCatalogParams(tautomerFile));
+  unsigned int ntautomers = tautparams->getNumTautomers();
+  TEST_ASSERT(ntautomers == 34);
+  TautomerEnumerator te(new TautomerCatalog(tautparams.get()));
+  {
+    // atom stereo
+    auto mol = "COC(=O)[C@@H](N)CO"_smiles;
+    TEST_ASSERT(mol);
+    auto tauts = te.enumerate(*mol);
+    for (const auto &taut : tauts) {
+      auto smi = MolToSmiles(*taut);
+      // std::cerr << smi << std::endl;
+      TEST_ASSERT(smi.find("@H") == std::string::npos);
+    }
+  }
+  {
+    // atom stereo, atoms not in the tautomer zone are still ok
+    auto mol = "C[C@](Cl)(F)COC(=O)[C@@H](N)CO"_smiles;
+    TEST_ASSERT(mol);
+    auto tauts = te.enumerate(*mol);
+    for (const auto &taut : tauts) {
+      auto smi = MolToSmiles(*taut);
+      // std::cerr << smi << std::endl;
+      TEST_ASSERT(smi.find("@H") == std::string::npos);
+      TEST_ASSERT(smi.find("@]") != std::string::npos);
+    }
+  }
+  {
+    // bond stereo
+    auto mol = "C/C=C/C/N=c1/[nH]cccc1"_smiles;
+    TEST_ASSERT(mol);
+    TEST_ASSERT(mol->getBondBetweenAtoms(0, 1)->getBondDir() !=
+                Bond::BondDir::NONE);
+    TEST_ASSERT(mol->getBondBetweenAtoms(2, 3)->getBondDir() !=
+                Bond::BondDir::NONE);
+    TEST_ASSERT(mol->getBondBetweenAtoms(3, 4)->getBondDir() !=
+                Bond::BondDir::NONE);
+    TEST_ASSERT(mol->getBondBetweenAtoms(5, 6)->getBondDir() !=
+                Bond::BondDir::NONE);
+    TEST_ASSERT(mol->getBondBetweenAtoms(1, 2)->getStereo() >
+                Bond::BondStereo::STEREOANY);
+    TEST_ASSERT(mol->getBondBetweenAtoms(4, 5)->getStereo() >
+                Bond::BondStereo::STEREOANY);
+
+    auto tauts = te.enumerate(*mol);
+    for (const auto &taut : tauts) {
+      TEST_ASSERT(taut->getBondBetweenAtoms(0, 1)->getBondDir() !=
+                  Bond::BondDir::NONE);
+      TEST_ASSERT(taut->getBondBetweenAtoms(2, 3)->getBondDir() !=
+                  Bond::BondDir::NONE);
+      TEST_ASSERT(taut->getBondBetweenAtoms(3, 4)->getBondDir() ==
+                  Bond::BondDir::NONE);
+      TEST_ASSERT(taut->getBondBetweenAtoms(5, 6)->getBondDir() ==
+                  Bond::BondDir::NONE);
+      TEST_ASSERT(taut->getBondBetweenAtoms(1, 2)->getStereo() >
+                  Bond::BondStereo::STEREOANY);
+      TEST_ASSERT(taut->getBondBetweenAtoms(4, 5)->getStereo() ==
+                  Bond::BondStereo::STEREONONE);
+    }
+  }
+
   BOOST_LOG(rdInfoLog) << "Finished" << std::endl;
 }
 
@@ -1035,5 +1141,7 @@ int main() {
   testEnumerationProblems();
 #endif
   testPickCanonical2();
+  testEnumerateDetails();
+  testGithub2990();
   return 0;
 }

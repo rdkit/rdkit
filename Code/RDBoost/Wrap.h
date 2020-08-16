@@ -19,6 +19,7 @@
 //
 #include <boost/python.hpp>
 #include <boost/python/stl_iterator.hpp>
+#include <boost/dynamic_bitset.hpp>
 #include <memory>
 
 #include <boost/python/suite/indexing/vector_indexing_suite.hpp>
@@ -135,12 +136,27 @@ void pythonObjectToVect(const python::object &obj, std::vector<T> &res) {
   }
 }
 
+RDKIT_RDBOOST_EXPORT boost::dynamic_bitset<> pythonObjectToDynBitset(const python::object &obj,
+                                                   boost::dynamic_bitset<>::size_type maxV);
+
+
 // Quiet warnings on GCC
 #if defined(__GNUC__) || defined(__GNUG__)
 #define RDUNUSED __attribute__((__unused__))
 #else
 #define RDUNUSED
 #endif
+
+class PyGILStateHolder {
+public:
+  PyGILStateHolder() :
+    d_gstate(PyGILState_Ensure()) {}
+  ~PyGILStateHolder() {
+    PyGILState_Release(d_gstate);
+  }
+private:
+  PyGILState_STATE d_gstate;
+};
 
 #ifdef RDK_THREADSAFE_SSS
 // Release the Global Interpreter lock at certain places
@@ -154,7 +170,7 @@ class RDKIT_RDBOOST_EXPORT RDUNUSED NOGIL {
 
   inline ~NOGIL() {
     PyEval_RestoreThread(m_thread_state);
-    m_thread_state = NULL;
+    m_thread_state = nullptr;
   }
 
  private:

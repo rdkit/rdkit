@@ -31,7 +31,7 @@ rdkit_library(FilterCatalog
               FilterMatchers.cpp
               FunctionalGroupHierarchy.cpp
               LINK_LIBRARIES Subgraphs SubstructMatch SmilesParse
-              GraphMol RDGeometryLib Catalogs RDGeneral ${RDKit_SERIALIZATION_LIBS} )
+              GraphMol Catalogs ${RDKit_SERIALIZATION_LIBS} )
 
 rdkit_headers(FilterCatalogEntry.h
               FilterCatalog.h
@@ -45,6 +45,4 @@ add_subdirectory(Wrap)
 endif()
 
 rdkit_test(filterCatalogTest filtercatalogtest.cpp
-           LINK_LIBRARIES FilterCatalog
-           Catalogs SubstructMatch FileParsers SmilesParse GraphMol RDGeometryLib RDGeneral
-           ${RDKit_SERIALIZATION_LIBS})
+           LINK_LIBRARIES FilterCatalog SmilesParse FileParsers )

@@ -46,7 +46,11 @@ bool isAtomCandForChiralH(const RWMol &mol, const Atom *atom) {
 void prepareMolForDrawing(RWMol &mol, bool kekulize, bool addChiralHs,
                           bool wedgeBonds, bool forceCoords) {
   if (kekulize) {
-    MolOps::Kekulize(mol, false);  // kekulize, but keep the aromatic flags!
+    try {
+      MolOps::Kekulize(mol, false);  // kekulize, but keep the aromatic flags!
+    } catch(const RDKit::AtomKekulizeException &e) {
+      std::cerr << e.what() << std::endl;
+    }
   }
   if (addChiralHs) {
     std::vector<unsigned int> chiralAts;
@@ -134,14 +138,22 @@ void updateDrawerParamsFromJSON(MolDraw2D &drawer, const std::string &json) {
   PT_OPT_GET(includeAtomTags);
   PT_OPT_GET(clearBackground);
   PT_OPT_GET(legendFontSize);
+  PT_OPT_GET(maxFontSize);
+  PT_OPT_GET(minFontSize);
+  PT_OPT_GET(annotationFontScale);
+  PT_OPT_GET(fontFile);
   PT_OPT_GET(multipleBondOffset);
   PT_OPT_GET(padding);
   PT_OPT_GET(additionalAtomLabelPadding);
   PT_OPT_GET(bondLineWidth);
+  PT_OPT_GET(highlightBondWidthMultiplier);
   PT_OPT_GET(prepareMolsBeforeDrawing);
   PT_OPT_GET(fixedScale);
   PT_OPT_GET(fixedBondLength);
   PT_OPT_GET(rotate);
+  PT_OPT_GET(addStereoAnnotation);
+  PT_OPT_GET(atomHighlightsAreCircles);
+  PT_OPT_GET(centreMoleculesBeforeDrawing);
   get_colour_option(&pt, "highlightColour", opts.highlightColour);
   get_colour_option(&pt, "backgroundColour", opts.backgroundColour);
   get_colour_option(&pt, "legendColour", opts.legendColour);
@@ -158,7 +170,8 @@ void contourAndDrawGrid(MolDraw2D &drawer, const double *grid,
                         const std::vector<double> &xcoords,
                         const std::vector<double> &ycoords, size_t nContours,
                         std::vector<double> &levels,
-                        const ContourParams &params) {
+                        const ContourParams &params,
+                        const ROMol *mol) {
   PRECONDITION(grid, "no data");
   PRECONDITION(params.colourMap.size() > 1,
                "colourMap must have at least two entries");
@@ -166,7 +179,7 @@ void contourAndDrawGrid(MolDraw2D &drawer, const double *grid,
   if (params.setScale) {
     Point2D minP = {xcoords[0], ycoords[0]};
     Point2D maxP = {xcoords.back(), ycoords.back()};
-    drawer.setScale(drawer.width(), drawer.height(), minP, maxP);
+    drawer.setScale(drawer.width(), drawer.height(), minP, maxP, mol);
   }
 
   size_t nX = xcoords.size();
@@ -272,7 +285,8 @@ void contourAndDrawGaussians(MolDraw2D &drawer,
                              const std::vector<double> &weights,
                              const std::vector<double> &widths,
                              size_t nContours, std::vector<double> &levels,
-                             const ContourParams &params) {
+                             const ContourParams &params,
+                             const ROMol *mol) {
   PRECONDITION(locs.size() == weights.size(), "size mismatch");
   PRECONDITION(locs.size() == widths.size(), "size mismatch");
 
@@ -303,7 +317,7 @@ void contourAndDrawGaussians(MolDraw2D &drawer,
       maxP.y += pad;
     }
 
-    drawer.setScale(drawer.width(), drawer.height(), minP, maxP);
+    drawer.setScale(drawer.width(), drawer.height(), minP, maxP, mol);
   }
 
   size_t nx = (size_t)ceil(drawer.range().x / params.gridResolution) + 1;

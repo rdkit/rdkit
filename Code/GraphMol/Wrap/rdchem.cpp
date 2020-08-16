@@ -14,7 +14,6 @@
 #include <GraphMol/RDKitBase.h>
 #include <GraphMol/SanitException.h>
 #include <RDBoost/import_array.h>
-#include <RDBoost/iterator_next.h>
 
 #ifdef RDK_THREADSAFE_SSS
 // Thread local storage for output buffer for RDKit Logging
@@ -67,10 +66,10 @@ struct PySysErrWrite : std::ostream, std::streambuf {
     buffer += c;
     if (c == '\n') {
       // Python IO is not thread safe, so grab the GIL
-      PyGILState_STATE gstate;
-      gstate = PyGILState_Ensure();
-      PySys_WriteStderr("%s", (prefix + buffer).c_str());
-      PyGILState_Release(gstate);
+      {
+        PyGILStateHolder h;
+        PySys_WriteStderr("%s", (prefix + buffer).c_str());
+      }
       buffer.clear();
     }
   }
@@ -139,7 +138,7 @@ void sanitExceptionTranslator(const EXC_TYPE &x, PyObject *pyExcType) {
   PRECONDITION(pyExcType != nullptr, "global type not initialized");
   python::object pyExcInstance(python::handle<>(python::borrowed(pyExcType)));
   pyExcInstance.attr("cause") = x;
-  PyErr_SetString(pyExcType, x.message());
+  PyErr_SetString(pyExcType, x.what());
 }
 
 // pattern from here:
@@ -171,7 +170,7 @@ BOOST_PYTHON_MODULE(rdchem) {
   python::class_<MolSanitizeException>("_cppMolSanitizeException",
                                        "exception arising from sanitization",
                                        python::no_init)
-      .def("Message", &MolSanitizeException::message)
+      .def("Message", &MolSanitizeException::what)
       .def("GetType", &MolSanitizeException::getType);
   python::register_ptr_to_python<boost::shared_ptr<MolSanitizeException>>();
   molSanitizeExceptionType = createExceptionClass("MolSanitizeException");
@@ -246,7 +245,7 @@ BOOST_PYTHON_MODULE(rdchem) {
       .def("__iter__", &AtomIterSeq::__iter__,
            python::return_internal_reference<
                1, python::with_custodian_and_ward_postcall<0, 1>>())
-      .def(NEXT_METHOD, &AtomIterSeq::next,
+      .def("__next__", &AtomIterSeq::next,
            python::return_value_policy<python::reference_existing_object>())
 
       .def("__len__", &AtomIterSeq::len)
@@ -259,7 +258,7 @@ BOOST_PYTHON_MODULE(rdchem) {
       .def("__iter__", &QueryAtomIterSeq::__iter__,
            python::return_internal_reference<
                1, python::with_custodian_and_ward_postcall<0, 1>>())
-      .def(NEXT_METHOD, &QueryAtomIterSeq::next,
+      .def("__next__", &QueryAtomIterSeq::next,
            python::return_value_policy<python::reference_existing_object>())
       .def("__len__", &QueryAtomIterSeq::len)
       .def("__getitem__", &QueryAtomIterSeq::get_item,

@@ -15,6 +15,7 @@ steps:
     -DRDK_BUILD_PYTHON_WRAPPERS=OFF \
     -DRDK_USE_BOOST_REGEX=OFF \
     -DRDK_BUILD_COORDGEN_SUPPORT=ON \
+    -DRDK_BUILD_MAEPARSER_SUPPORT=ON \
     -DRDK_OPTIMIZE_POPCNT=ON \
     -DRDK_BUILD_TEST_GZIP=ON \
     -DRDK_BUILD_AVALON_SUPPORT=ON \
@@ -33,5 +34,9 @@ steps:
 - bash: |
     cd build
     sh ./Code/PgSQL/rdkit/pgsql_regress.sh
+    if [ -e ./Code/PgSQL/rdkit/regression.diffs ]
+    then
+      cat ./Code/PgSQL/rdkit/regression.diffs
+    fi
   displayName: Run tests
 

@@ -245,7 +245,7 @@ void setHydrogenCoords(ROMol *mol, unsigned int hydIdx, unsigned int heavyIdx) {
             unsigned int cip = 0;
             tAtom->getPropIfPresent<unsigned int>(common_properties::_CIPRank,
                                                   cip);
-            nbrs.push_back(std::make_pair(cip, rdcast<int>(*nbrIdx)));
+            nbrs.emplace_back(cip, rdcast<int>(*nbrIdx));
           }
           ++nbrIdx;
         }
@@ -707,6 +707,21 @@ void removeHs(RWMol &mol, const RemoveHsParameters &ps, bool sanitize) {
     if (!ps.removeMapped && atom->getAtomMapNum()) {
       continue;
     }
+    if (!ps.removeInSGroups) {
+      bool skipIt = false;
+      for (const auto &sg : getSubstanceGroups(mol)) {
+        if (sg.includesAtom(atom->getIdx())) {
+          skipIt = true;
+          break;
+        }
+      }
+      if (skipIt) {
+        continue;
+      }
+    }
+    if (!ps.removeHydrides && atom->getFormalCharge() == -1) {
+      continue;
+    }
     bool removeIt = true;
     if (atom->getDegree() &&
         (!ps.removeDummyNeighbors || !ps.removeDefiningBondStereo ||
@@ -786,7 +801,7 @@ ROMol *removeHs(const ROMol &mol, const RemoveHsParameters &ps, bool sanitize) {
   auto *res = new RWMol(mol);
   try {
     removeHs(*res, ps, sanitize);
-  } catch (MolSanitizeException &se) {
+  } catch (const MolSanitizeException &) {
     delete res;
     throw;
   }
@@ -804,7 +819,7 @@ ROMol *removeHs(const ROMol &mol, bool implicitOnly, bool updateExplicitCount,
   auto *res = new RWMol(mol);
   try {
     removeHs(*res, implicitOnly, updateExplicitCount, sanitize);
-  } catch (MolSanitizeException &se) {
+  } catch (const MolSanitizeException &) {
     delete res;
     throw;
   }
@@ -822,14 +837,16 @@ void removeAllHs(RWMol &mol, bool sanitize) {
   ps.removeWithWedgedBond = true;
   ps.removeWithQuery = true;
   ps.removeNonimplicit = true;
+  ps.removeInSGroups = true;
   ps.showWarnings = false;
+  ps.removeHydrides = true;
   removeHs(mol, ps, sanitize);
 };
 ROMol *removeAllHs(const ROMol &mol, bool sanitize) {
   auto *res = new RWMol(mol);
   try {
     removeAllHs(*res, sanitize);
-  } catch (MolSanitizeException &se) {
+  } catch (const MolSanitizeException &) {
     delete res;
     throw;
   }

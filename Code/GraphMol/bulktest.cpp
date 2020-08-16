@@ -16,7 +16,7 @@
 #include <RDGeneral/RDLog.h>
 
 #include <iostream>
-#include <stdlib.h>
+#include <cstdlib>
 
 using namespace RDKit;
 using namespace std;

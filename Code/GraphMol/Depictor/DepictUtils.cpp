@@ -9,7 +9,7 @@
 //  of the RDKit source tree.
 //
 #include <RDGeneral/types.h>
-#include <math.h>
+#include <cmath>
 #include <Geometry/point.h>
 #include <Geometry/Transform2D.h>
 #include "DepictUtils.h"
@@ -225,10 +225,8 @@ RDKit::INT_VECT findNextRingToEmbed(const RDKit::INT_VECT &doneRings,
   PRECONDITION(fusedRings.size() > 1, "");
 
   RDKit::INT_VECT commonAtoms, res, doneAtoms, notDone;
-  RDKit::INT_VECT_CI dri;
-  for (unsigned int i = 0; i < fusedRings.size(); i++) {
-    if (std::find(doneRings.begin(), doneRings.end(), static_cast<int>(i)) ==
-        doneRings.end()) {
+  for (int i = 0; i < rdcast<int>(fusedRings.size()); i++) {
+    if (std::find(doneRings.begin(), doneRings.end(), i) == doneRings.end()) {
       notDone.push_back(i);
     }
   }
@@ -404,13 +402,10 @@ INT_PAIR_VECT findBondsPairsToPermuteDeg4(const RDGeom::Point2D &center,
   CHECK_INVARIANT(nbrBids.size() == 4, "");
   CHECK_INVARIANT(nbrLocs.size() == 4, "");
 
-  VECT_C_POINT::const_iterator npi;
-
   std::vector<RDGeom::Point2D> nbrPts;
-  RDKit::INT_VECT_CI aci;
-
-  for (npi = nbrLocs.begin(); npi != nbrLocs.end(); npi++) {
-    RDGeom::Point2D v = (*(*npi)) - center;
+  nbrPts.reserve(nbrLocs.size());
+  for (const auto &nloc : nbrLocs) {
+    RDGeom::Point2D v = (*nloc) - center;
     nbrPts.push_back(v);
   }
 
@@ -501,4 +496,4 @@ template RDKit::INT_DEQUE rankAtomsByRank(const RDKit::ROMol &mol,
 template RDKit::INT_LIST rankAtomsByRank(const RDKit::ROMol &mol,
                                          const RDKit::INT_LIST &commAtms,
                                          bool ascending);
-}
+}  // namespace RDDepict

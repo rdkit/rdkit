@@ -11,7 +11,7 @@
 using namespace RDKit;
 using namespace TemplateEnum;
 
-#include <math.h>
+#include <cmath>
 
 bool feq(RDGeom::Point3D p1, RDGeom::Point3D p2, double tol = 1e-4) {
   return feq(p1.x, p2.x, tol) && feq(p1.y, p2.y, tol) && feq(p1.z, p2.z, tol);

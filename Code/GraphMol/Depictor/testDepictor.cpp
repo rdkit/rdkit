@@ -26,7 +26,7 @@
 #include <Geometry/point.h>
 #include <Geometry/Transform3D.h>
 #include <RDGeneral/utils.h>
-#include <stdlib.h>
+#include <cstdlib>
 
 #include <boost/tokenizer.hpp>
 typedef boost::tokenizer<boost::char_separator<char>> tokenizer;

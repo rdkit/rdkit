@@ -77,9 +77,9 @@ ROMol *FragmentRemover::remove(const ROMol &mol) {
 
   // track original fragment index with the fragment itself
   std::vector<std::pair<boost::shared_ptr<ROMol>, unsigned int>> frags;
-  for (const auto frag :
+  for (const auto &frag :
        MolOps::getMolFrags(mol, sanitizeFrags, nullptr, &atomFragMapping)) {
-    frags.push_back(std::make_pair(frag, frags.size()));
+    frags.emplace_back(frag, frags.size());
   }
 
   for (auto &fgci : fgrps) {
@@ -122,7 +122,7 @@ ROMol *FragmentRemover::remove(const ROMol &mol) {
   boost::dynamic_bitset<> atomsToRemove(mol.getNumAtoms());
   atomsToRemove.set();
   // loop over remaining fragments and track atoms that need to be removed
-  for (const auto frag : frags) {
+  for (const auto &frag : frags) {
     unsigned int fragIdx = frag.second;
     for (auto atomIdx : atomFragMapping[fragIdx]) {
       atomsToRemove.set(atomIdx, false);
@@ -212,8 +212,7 @@ ROMol *LargestFragmentChooser::choose(const ROMol &mol) {
   return new ROMol(*(l.Fragment));
 }
 
-LargestFragmentChooser::Largest::Largest()
-    : Smiles(""), Fragment(nullptr), NumAtoms(0), Weight(0), Organic(false) {}
+LargestFragmentChooser::Largest::Largest() : Smiles(""), Fragment(nullptr) {}
 
 LargestFragmentChooser::Largest::Largest(std::string &smiles,
                                          boost::shared_ptr<ROMol> fragment,

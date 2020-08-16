@@ -15,7 +15,8 @@
 //       with the distribution.
 //     * Neither the name of Novartis Institutes for BioMedical Research Inc.
 //       nor the names of its contributors may be used to endorse or promote
-//       products derived from this software without specific prior written permission.
+//       products derived from this software without specific prior written
+//       permission.
 //
 // THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
 // "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
@@ -52,14 +53,15 @@
 using namespace RDKit;
 using namespace RDKit::ConformerParser;
 
-void test1(){
+void test1() {
   BOOST_LOG(rdErrorLog) << "-------------------------------------" << std::endl;
   BOOST_LOG(rdErrorLog) << "    Test ConformerParser." << std::endl;
 
   ROMol *mol = SmilesToMol("CCC");
-  std::vector<std::vector<double> > coords;
+  std::vector<std::vector<double>> coords;
   std::string rdbase = getenv("RDBASE");
-  std::string fName = rdbase + "/Contrib/ConformerParser/test_data/water_coords_bad.trx";
+  std::string fName =
+      rdbase + "/Contrib/ConformerParser/test_data/water_coords_bad.trx";
   bool ok = false;
   try {
     readAmberTrajectory(fName, coords, mol->getNumAtoms());
@@ -73,7 +75,7 @@ void test1(){
   try {
     readAmberTrajectory(fName, coords, mol->getNumAtoms());
   } catch (ValueErrorException &e) {
-    //std::cout << e.message() << std::endl;
+    // std::cout << e.what() << std::endl;
     ok = true;
   }
   TEST_ASSERT(ok);
@@ -103,18 +105,16 @@ void test1(){
   TEST_ASSERT(coords[1].size() == 9);
   res = addConformersFromList(*mol, coords);
   TEST_ASSERT((*mol).getNumConformers() == 2);
-  
+
   BOOST_LOG(rdErrorLog) << "  done" << std::endl;
 }
-
 
 //-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*
 //
 //-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*
-int main(){
+int main() {
   RDLog::InitLogs();
 #if 1
   test1();
 #endif
-
 }

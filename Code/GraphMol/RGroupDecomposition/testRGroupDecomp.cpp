@@ -40,6 +40,8 @@
 #include <GraphMol/FileParsers/FileParsers.h>
 #include <GraphMol/FileParsers/MolSupplier.h>
 #include <RDGeneral/Exceptions.h>
+#include <boost/tokenizer.hpp>
+typedef boost::tokenizer<boost::char_separator<char>> tokenizer;
 
 using namespace RDKit;
 
@@ -120,7 +122,8 @@ void testRGroupOnlyMatching() {
                        << std::endl;
 
   RWMol *core = SmilesToMol("c1ccccc1[1*]");
-  RGroupDecompositionParameters params(IsotopeLabels);
+  RGroupDecompositionParameters params;
+  params.labels = IsotopeLabels;
   params.onlyMatchAtRGroups = true;
 
   RGroupDecomposition decomp(*core, params);
@@ -160,7 +163,8 @@ void testRingMatching() {
   BOOST_LOG(rdInfoLog) << "test rgroup decomp ring matching" << std::endl;
 
   RWMol *core = SmilesToMol("c1ccc[1*]1");
-  RGroupDecompositionParameters params(IsotopeLabels);
+  RGroupDecompositionParameters params;
+  params.labels = IsotopeLabels;
 
   RGroupDecomposition decomp(*core, params);
   for (int i = 0; i < 3; ++i) {
@@ -283,9 +287,9 @@ void testMultiCore() {
       << "********************************************************\n";
   BOOST_LOG(rdInfoLog) << "test multi core" << std::endl;
   std::vector<ROMOL_SPTR> cores;
-  cores.push_back(ROMOL_SPTR(SmartsToMol("C1CCNCCC1")));
-  cores.push_back(ROMOL_SPTR(SmilesToMol("C1CCOCCC1")));
-  cores.push_back(ROMOL_SPTR(SmilesToMol("C1CCSCCC1")));
+  cores.emplace_back(SmartsToMol("C1CCNCCC1"));
+  cores.emplace_back(SmilesToMol("C1CCOCCC1"));
+  cores.emplace_back(SmilesToMol("C1CCSCCC1"));
 
   RGroupDecomposition decomp(cores);
   for (unsigned int i = 0; i < sizeof(coreSmi) / sizeof(const char *); ++i) {
@@ -525,8 +529,9 @@ void testMatchOnlyAtRgroupHs() {
     }
   }
   delete core;
-  TEST_ASSERT(ss.str() ==
-              "Rgroup===Core\nCCO[*:1]\nCCO[*:1]\nRgroup===R1\n[H][*:1]\nC[*:1]\n");
+  TEST_ASSERT(
+      ss.str() ==
+      "Rgroup===Core\nCCO[*:1]\nCCO[*:1]\nRgroup===R1\n[H][*:1]\nC[*:1]\n");
 }
 
 void testGithub2332() {
@@ -801,7 +806,7 @@ $$$$)CTAB";
       SDMolSupplier sdsup;
       sdsup.setData(sdcores);
       while (!sdsup.atEnd()) {
-        cores.push_back(ROMOL_SPTR(sdsup.next()));
+        cores.emplace_back(sdsup.next());
       }
     }
 
@@ -832,7 +837,7 @@ $$$$)CTAB";
       SDMolSupplier sdsup;
       sdsup.setData(sdcores);
       while (!sdsup.atEnd()) {
-        cores.push_back(ROMOL_SPTR(sdsup.next()));
+        cores.emplace_back(sdsup.next());
       }
     }
 
@@ -859,13 +864,12 @@ $$$$)CTAB";
         "Core:N1C(N([*:2])[*:4])C2C(NC1[*:1])[*:5]C([*:3])[*:6]2 "
         "R2:C(CC[*:2])CC[*:4] R4:C(CC[*:2])CC[*:4] R5:N([*:5])[*:5] "
         "R6:C([*:6])[*:6]",
-	"Core:N1C(N([*:2])[*:4])C2C(NC1[*:1])[*:5]C([*:3])[*:6]2 "
-	"R2:C[*:2] R4:[H][*:4] R5:S([*:5])[*:5] R6:CC(C)C([*:6])[*:6]",
-	"Core:C1C([*:1])NC(N([*:2])[*:4])C2C1[*:5]C([*:3])[*:6]2 "
-	"R2:C[*:2] R4:[H][*:4] R5:S([*:5])[*:5] R6:CC(C)C([*:6])[*:6]",
-	"Core:C1C([*:1])NC(N([*:2])[*:4])C2C1[*:5]C([*:3])[*:6]2 "
-	"R2:[H][*:2] R4:[H][*:4] R5:CN([*:5])[*:5] R6:N([*:6])[*:6]"
-    };
+        "Core:N1C(N([*:2])[*:4])C2C(NC1[*:1])[*:5]C([*:3])[*:6]2 "
+        "R2:C[*:2] R4:[H][*:4] R5:S([*:5])[*:5] R6:CC(C)C([*:6])[*:6]",
+        "Core:C1C([*:1])NC(N([*:2])[*:4])C2C1[*:5]C([*:3])[*:6]2 "
+        "R2:C[*:2] R4:[H][*:4] R5:S([*:5])[*:5] R6:CC(C)C([*:6])[*:6]",
+        "Core:C1C([*:1])NC(N([*:2])[*:4])C2C1[*:5]C([*:3])[*:6]2 "
+        "R2:[H][*:2] R4:[H][*:4] R5:CN([*:5])[*:5] R6:N([*:6])[*:6]"};
 
     int i = 0;
     for (RGroupRows::const_iterator it = rows.begin(); it != rows.end();
@@ -884,7 +888,7 @@ void testRowColumnAlignmentProblem() {
   std::vector<std::string> csmiles = {"c1c([*:1])cncn1", "c1c([*:1])cccn1"};
   std::vector<ROMOL_SPTR> cores;
   for (auto smi : csmiles) {
-    cores.push_back(ROMOL_SPTR(SmilesToMol(smi)));
+    cores.emplace_back(SmilesToMol(smi));
   }
 
   std::vector<std::string> msmiles = {"c1c(F)cccn1", "c1c(F)cncn1",
@@ -905,15 +909,16 @@ void testRowColumnAlignmentProblem() {
     TEST_ASSERT(rows.size() == mols.size());
     // dump rgroups
     const char *expected[] = {"Core:c1cncc([*:1])c1 R1:F[*:1]",
-			      "Core:c1ncc([*:1])cn1 R1:F[*:1]",
-			      "Core:c1cncc([*:1])c1 R1:Cl[*:1]"};
+                              "Core:c1ncc([*:1])cn1 R1:F[*:1]",
+                              "Core:c1cncc([*:1])c1 R1:Cl[*:1]"};
 
-    int i=0;
-    for (RGroupRows::const_iterator it = rows.begin(); it != rows.end(); ++it, ++i) {
+    int i = 0;
+    for (RGroupRows::const_iterator it = rows.begin(); it != rows.end();
+         ++it, ++i) {
       CHECK_RGROUP(it, expected[i]);
     }
 
-    for (const auto row : rows) {
+    for (const auto &row : rows) {
       TEST_ASSERT(row.count("Core") == 1);
       TEST_ASSERT(row.count("R1") == 1);
     }
@@ -926,7 +931,7 @@ void testRowColumnAlignmentProblem() {
     TEST_ASSERT(core.size() == 3);
     auto &R1 = cols["R1"];
     TEST_ASSERT(R1.size() == 3);
-    for (const auto rg : R1) {
+    for (const auto &rg : R1) {
       TEST_ASSERT(rg);
       TEST_ASSERT(rg->getNumAtoms());
     }
@@ -937,36 +942,37 @@ void testRowColumnAlignmentProblem() {
 
 void testSymmetryIssues() {
   BOOST_LOG(rdInfoLog)
-    << "********************************************************\n";
+      << "********************************************************\n";
   BOOST_LOG(rdInfoLog) << "Testing R-Group symmetry issues \n";
 
-  auto m1 = "c1c(F)cccn1"_smiles; 
+  auto m1 = "c1c(F)cccn1"_smiles;
   auto m2 = "c1c(Cl)c(C)ccn1"_smiles;
   auto m3 = "c1c(O)cccn1"_smiles;
   auto m4 = "c1cc(C)c(F)cn1"_smiles;
   auto core = "c1c([*:1])c([*:2])ccn1"_smiles;
-  RGroupDecomposition decomp(*core);
-  decomp.add(*m1);
-  decomp.add(*m2);
-  decomp.add(*m3);
-  decomp.add(*m4);
-  decomp.process();
-  std::stringstream ss;
-  auto groups = decomp.getRGroupsAsColumns();
-  std::set<std::string> r_labels;
-  for (auto &column : groups) {
-    r_labels.insert(column.first);
-    ss << "Rgroup===" << column.first << std::endl;
-    for (auto &rgroup : column.second) {
-      ss << MolToSmiles(*rgroup) << std::endl;
+  {
+    RGroupDecomposition decomp(*core);
+    decomp.add(*m1);
+    decomp.add(*m2);
+    decomp.add(*m3);
+    decomp.add(*m4);
+    decomp.process();
+    std::stringstream ss;
+    auto groups = decomp.getRGroupsAsColumns();
+    std::set<std::string> r_labels;
+    for (auto &column : groups) {
+      r_labels.insert(column.first);
+      ss << "Rgroup===" << column.first << std::endl;
+      for (auto &rgroup : column.second) {
+        ss << MolToSmiles(*rgroup) << std::endl;
+      }
     }
-  }
-  // We only want two groups added
-  
-  TEST_ASSERT(r_labels == std::set<std::string>({"Core", "R1", "R2"}));  
-  TEST_ASSERT(groups.size() == 3);
-  
-  TEST_ASSERT(ss.str() == R"RES(Rgroup===Core
+    // We only want two groups added
+
+    TEST_ASSERT(r_labels == std::set<std::string>({"Core", "R1", "R2"}));
+    TEST_ASSERT(groups.size() == 3);
+
+    TEST_ASSERT(ss.str() == R"RES(Rgroup===Core
 c1cc([*:2])c([*:1])cn1
 c1cc([*:2])c([*:1])cn1
 c1cc([*:2])c([*:1])cn1
@@ -982,7 +988,225 @@ C[*:2]
 [H][*:2]
 C[*:2]
 )RES");
+  }
+  {  // repeat that without symmetrization (testing #3224)
+    RGroupDecompositionParameters ps;
+    ps.matchingStrategy = RDKit::NoSymmetrization;
+    RGroupDecomposition decomp(*core, ps);
+    decomp.add(*m1);
+    decomp.add(*m2);
+    decomp.add(*m3);
+    decomp.add(*m4);
+    decomp.process();
+    std::stringstream ss;
+    auto groups = decomp.getRGroupsAsColumns();
+    std::set<std::string> r_labels;
+    for (auto &column : groups) {
+      r_labels.insert(column.first);
+      ss << "Rgroup===" << column.first << std::endl;
+      for (auto &rgroup : column.second) {
+        ss << MolToSmiles(*rgroup) << std::endl;
+      }
+    }
+    TEST_ASSERT(r_labels == std::set<std::string>({"Core", "R1", "R2", "R3"}));
+    TEST_ASSERT(groups.size() == 4);
+
+    TEST_ASSERT(ss.str() == R"RES(Rgroup===Core
+c1ncc([*:3])c([*:2])c1[*:1]
+c1ncc([*:3])c([*:2])c1[*:1]
+c1ncc([*:3])c([*:2])c1[*:1]
+c1ncc([*:3])c([*:2])c1[*:1]
+Rgroup===R1
+F[*:1]
+Cl[*:1]
+O[*:1]
+[H][*:1]
+Rgroup===R2
+[H][*:2]
+C[*:2]
+[H][*:2]
+C[*:2]
+Rgroup===R3
+[H][*:3]
+[H][*:3]
+[H][*:3]
+F[*:3]
+)RES");
+  }
 }
+
+void testSymmetryPerformance() {
+  BOOST_LOG(rdInfoLog)
+      << "********************************************************\n";
+  BOOST_LOG(rdInfoLog) << "Testing R-Group symmetry issues \n";
+  boost::logging::disable_logs("rdApp.warning");
+
+  std::string smis =
+      R"DATA(CN(C)Cc1cccc(Oc2cc(N3CCN(Cc4ccccc4-c4ccc(Cl)cc4)CC3)ccc2C(=O)NS(=O)(=O)c2ccc(NCC3CCOCC3)c([N+](=O)[O-])c2)c1
+CNc1cccc(Oc2cc(N3CCN(Cc4ccccc4-c4ccc(Cl)cc4)CC3)ccc2C(=O)NS(=O)(=O)c2ccc(NCC3CCOCC3)c([N+](=O)[O-])c2)c1
+Cc1cc2cc(Oc3cc(N4CCN(CC5=C(c6ccc(Cl)cc6)CC(C)(C)CC5)CC4)ccc3C(=O)NS(=O)(=O)c3ccc(NC4CCN(C)CC4)c([N+](=O)[O-])c3)ccc2[nH]1
+Cc1cc2cc(Oc3cc(N4CCN(CC5=C(c6ccc(Cl)cc6)CC(C)(C)CC5)CC4)ccc3C(=O)NS(=O)(=O)c3ccc(NCCCN4CCOCC4)c([N+](=O)[O-])c3)ccc2[nH]1
+O=C(NS(=O)(=O)c1ccc(NCC2CCOCC2)c([N+](=O)[O-])c1)c1ccc(N2CCN(Cc3ccccc3-c3ccc(Cl)cc3)CC2)cc1Oc1ccccc1Cl
+O=C(NS(=O)(=O)c1ccc(NCC2CCOCC2)c([N+](=O)[O-])c1)c1ccc(N2CCN(Cc3ccccc3-c3ccc(Cl)cc3)CC2)cc1Oc1cccc(Cl)c1
+O=C(NS(=O)(=O)c1ccc(NCC2CCOCC2)c([N+](=O)[O-])c1)c1ccc(N2CCN(Cc3ccccc3-c3ccc(Cl)cc3)CC2)cc1Oc1ccc(Cl)cc1
+O=C(NS(=O)(=O)c1ccc(NCC2CCOCC2)c([N+](=O)[O-])c1)c1ccc(N2CCN(Cc3ccccc3-c3ccc(Cl)cc3)CC2)cc1Oc1cccc([N+](=O)[O-])c1
+O=C(NS(=O)(=O)c1ccc(NCCCN2CCOCC2)c([N+](=O)[O-])c1)c1ccc(N2CCN(Cc3ccccc3-c3ccc(Cl)cc3)CC2)cc1Oc1cccc(CO)c1
+CN(C)CCCNc1ccc(S(=O)(=O)NC(=O)c2ccc(N3CCN(Cc4ccccc4-c4ccc(Cl)cc4)CC3)cc2Oc2ccccc2Cl)cc1[N+](=O)[O-]
+O=C(NS(=O)(=O)c1ccc(NCCCN2CCOCC2)c([N+](=O)[O-])c1)c1ccc(N2CCN(Cc3ccccc3-c3ccc(Cl)cc3)CC2)cc1Oc1cccc(Cl)c1
+O=C(NS(=O)(=O)c1ccc(NCCCN2CCOCC2)c([N+](=O)[O-])c1)c1ccc(N2CCN(Cc3ccccc3-c3ccc(Cl)cc3)CC2)cc1Oc1ccc(Cl)cc1
+CN(C)CCCNc1ccc(S(=O)(=O)NC(=O)c2ccc(N3CCN(Cc4ccccc4-c4ccc(Cl)cc4)CC3)cc2Oc2cccc(Cl)c2)cc1[N+](=O)[O-]
+CN(C)CCCNc1ccc(S(=O)(=O)NC(=O)c2ccc(N3CCN(Cc4ccccc4-c4ccc(Cl)cc4)CC3)cc2Oc2ccc(Cl)cc2)cc1[N+](=O)[O-]
+CN(C)CCCNc1ccc(S(=O)(=O)NC(=O)c2ccc(N3CCN(Cc4ccccc4-c4ccc(Cl)cc4)CC3)cc2Oc2cccc3c2ccn3C)cc1[N+](=O)[O-]
+CC(=O)Nc1cccc(Oc2cc(N3CCN(Cc4ccccc4-c4ccc(Cl)cc4)CC3)ccc2C(=O)NS(=O)(=O)c2ccc(NCC3CCOCC3)c([N+](=O)[O-])c2)c1
+Nc1ccc(Oc2cc(N3CCN(Cc4ccccc4-c4ccc(Cl)cc4)CC3)ccc2C(=O)NS(=O)(=O)c2ccc(NCC3CCOCC3)c([N+](=O)[O-])c2)cc1
+Nc1cccc(Oc2cc(N3CCN(Cc4ccccc4-c4ccc(Cl)cc4)CC3)ccc2C(=O)NS(=O)(=O)c2ccc(NCC3CCOCC3)c([N+](=O)[O-])c2)c1
+COc1cccc(Oc2cc(N3CCN(Cc4ccccc4-c4ccc(Cl)cc4)CC3)ccc2C(=O)NS(=O)(=O)c2ccc(NCC3CCOCC3)c([N+](=O)[O-])c2)c1
+CN(C)c1cccc(Oc2cc(N3CCN(Cc4ccccc4-c4ccc(Cl)cc4)CC3)ccc2C(=O)NS(=O)(=O)c2ccc(NCC3CCOCC3)c([N+](=O)[O-])c2)c1
+N#Cc1cccc(Oc2cc(N3CCN(Cc4ccccc4-c4ccc(Cl)cc4)CC3)ccc2C(=O)NS(=O)(=O)c2ccc(NCC3CCOCC3)c([N+](=O)[O-])c2)c1
+Cc1nc2ccc(Oc3cc(N4CCN(Cc5ccccc5-c5ccc(Cl)cc5)CC4)ccc3C(=O)NS(=O)(=O)c3ccc(NCC4CCOCC4)c([N+](=O)[O-])c3)cc2s1
+Cc1nc2cc(Oc3cc(N4CCN(Cc5ccccc5-c5ccc(Cl)cc5)CC4)ccc3C(=O)NS(=O)(=O)c3ccc(NCCCN4CCOCC4)c([N+](=O)[O-])c3)ccc2s1
+Cc1nc2cc(Oc3cc(N4CCN(Cc5ccccc5-c5ccc(Cl)cc5)CC4)ccc3C(=O)NS(=O)(=O)c3ccc(NCCCN(C)C)c([N+](=O)[O-])c3)ccc2s1
+CN(C)C(=O)CCc1ccccc1Oc1cc(N2CCN(Cc3ccccc3-c3ccc(Cl)cc3)CC2)ccc1C(=O)NS(=O)(=O)c1ccc(NCC2CCOCC2)c([N+](=O)[O-])c1
+CN(C)C(=O)Cc1ccccc1Oc1cc(N2CCN(Cc3ccccc3-c3ccc(Cl)cc3)CC2)ccc1C(=O)NS(=O)(=O)c1ccc(NCC2CCOCC2)c([N+](=O)[O-])c1
+CN(C)CCCc1ccccc1Oc1cc(N2CCN(Cc3ccccc3-c3ccc(Cl)cc3)CC2)ccc1C(=O)NS(=O)(=O)c1ccc(NCC2CCOCC2)c([N+](=O)[O-])c1
+CN(C)CCc1ccccc1Oc1cc(N2CCN(Cc3ccccc3-c3ccc(Cl)cc3)CC2)ccc1C(=O)NS(=O)(=O)c1ccc(NCC2CCOCC2)c([N+](=O)[O-])c1
+CN(C)C(=O)c1ccccc1Oc1cc(N2CCN(Cc3ccccc3-c3ccc(Cl)cc3)CC2)ccc1C(=O)NS(=O)(=O)c1ccc(NCC2CCOCC2)c([N+](=O)[O-])c1
+CN(C)Cc1ccccc1Oc1cc(N2CCN(Cc3ccccc3-c3ccc(Cl)cc3)CC2)ccc1C(=O)NS(=O)(=O)c1ccc(NCC2CCOCC2)c([N+](=O)[O-])c1
+CN(C)CCCNc1ccc(S(=O)(=O)NC(=O)c2ccc(N3CCN(Cc4ccccc4-c4ccc(Cl)cc4)CC3)cc2Oc2cccc(N3CCOCC3)c2)cc1[N+](=O)[O-]
+Cc1nc(C)c(-c2cccc(Oc3cc(N4CCN(Cc5ccccc5-c5ccc(Cl)cc5)CC4)ccc3C(=O)NS(=O)(=O)c3ccc(NCCCN4CCOCC4)c([N+](=O)[O-])c3)c2)s1
+CN1CCC(Nc2ccc(S(=O)(=O)NC(=O)c3ccc(N4CCN(CC5=C(c6ccc(Cl)cc6)CC(C)(C)CC5)CC4)cc3Oc3cc(Cl)cc(Cl)c3)cc2[N+](=O)[O-])CC1
+CN1CCC(Nc2ccc(S(=O)(=O)NC(=O)c3ccc(N4CCN(CC5=C(c6ccc(Cl)cc6)CC(C)(C)CC5)CC4)cc3Oc3cccc(Cl)c3)cc2[N+](=O)[O-])CC1
+CN(C)CCOc1ccc(-c2ccc(Cl)cc2)c(CN2CCN(c3ccc(C(=O)NS(=O)(=O)c4ccc(NC5CCN(C)CC5)c([N+](=O)[O-])c4)c(Oc4cccc(Cl)c4)c3)CC2)c1
+CN1CCC(Nc2ccc(S(=O)(=O)NC(=O)c3ccc(N4CCN(CC5=C(c6ccc(Cl)cc6)CC(C)(C)OC5)CC4)cc3Oc3ccccc3Cl)cc2[N+](=O)[O-])CC1
+CN(C)CCOc1cccc(Oc2cc(N3CCN(Cc4ccccc4-c4ccc(Cl)cc4)CC3)ccc2C(=O)NS(=O)(=O)c2ccc(NCC3CCOCC3)c([N+](=O)[O-])c2)c1
+CN1CCC(Nc2ccc(S(=O)(=O)NC(=O)c3ccc(N4CCN(CC5=C(c6ccc(Cl)cc6)CC(C)(C)CC5)CC4)cc3Oc3ccc(N)c(Cl)c3)cc2[N+](=O)[O-])CC1
+CC(C)N1CCC(Nc2ccc(S(=O)(=O)NC(=O)c3ccc(N4CCN(CC5=C(c6ccc(Cl)cc6)CC(C)(C)CC5)CC4)cc3Oc3ccccc3Cl)cc2[N+](=O)[O-])CC1
+CN1CCC(Nc2ccc(S(=O)(=O)NC(=O)c3ccc(N4CCN(CC5=C(c6ccc(Cl)cc6)CC(C)(C)CC5)CC4)cc3Oc3ccccc3Br)cc2[N+](=O)[O-])CC1
+CN1CCC(Nc2ccc(S(=O)(=O)NC(=O)c3ccc(N4CCN(CC5=C(c6ccc(Cl)cc6)CCCC5)CC4)cc3Oc3ccccc3Cl)cc2[N+](=O)[O-])CC1
+Cc1n[nH]c2cccc(Oc3cc(N4CCN(CC5=C(c6ccc(Cl)cc6)CC(C)(C)CC5)CC4)ccc3C(=O)NS(=O)(=O)c3ccc(NCCCN4CCOCC4)c([N+](=O)[O-])c3)c12
+CN1CCC(Nc2ccc(S(=O)(=O)NC(=O)c3ccc(N4CCN(CC5=C(c6ccc(Cl)cc6)CC(C)(C)CC5)CC4)cc3Oc3cccc(F)c3F)cc2[N+](=O)[O-])CC1
+CN1CCC(Nc2ccc(S(=O)(=O)NC(=O)c3ccc(N4CCN(CC5=C(c6ccc(Cl)cc6)CC(C)(C)CC5)CC4)cc3Oc3cccc(Br)c3)cc2[N+](=O)[O-])CC1
+CCN1CCC(Nc2ccc(S(=O)(=O)NC(=O)c3ccc(N4CCN(CC5=C(c6ccc(Cl)cc6)CC(C)(C)CC5)CC4)cc3Oc3ccccc3Cl)cc2[N+](=O)[O-])CC1
+CN1C(C)(C)CC(Nc2ccc(S(=O)(=O)NC(=O)c3ccc(N4CCN(CC5=C(c6ccc(Cl)cc6)CC(C)(C)CC5)CC4)cc3Oc3ccccc3Cl)cc2[N+](=O)[O-])CC1(C)C
+CC1(C)CCC(CN2CCN(c3ccc(C(=O)NS(=O)(=O)c4ccc(NC5CCN(C6CCOCC6)CC5)c([N+](=O)[O-])c4)c(Oc4cccc(F)c4F)c3)CC2)=C(c2ccc(Cl)cc2)C1
+CN1CCC(Nc2ccc(S(=O)(=O)NC(=O)c3ccc(N4CCN(CC5=C(c6ccc(Cl)cc6)CC(C)(C)CC5)CC4)cc3Oc3cc(F)c4[nH]ccc4c3)cc2[N+](=O)[O-])CC1
+CC1(C)CCC(CN2CCN(c3ccc(C(=O)NS(=O)(=O)c4ccc(NCCCN5CCOCC5)c([N+](=O)[O-])c4)c(Oc4cccc(F)c4F)c3)CC2)=C(c2ccc(Cl)cc2)C1
+CC1(C)CCC(CN2CCN(c3ccc(C(=O)NS(=O)(=O)c4ccc(NCCCN5CCOCC5)c([N+](=O)[O-])c4)c(Oc4ccc(N)c(Cl)c4)c3)CC2)=C(c2ccc(Cl)cc2)C1
+O=C(NS(=O)(=O)c1ccc(NCC2CCOCC2)c([N+](=O)[O-])c1)c1ccc(N2CCN(Cc3cc(CCN4CCCC4)ccc3-c3ccc(Cl)cc3)CC2)cc1Oc1cccc(Cl)c1
+CN1CCC(Nc2ccc(S(=O)(=O)NC(=O)c3ccc(N4CCN(CC5=C(c6ccc(Cl)cc6)CC(C)(C)CC5)CC4)cc3Oc3cccc(Cl)c3Cl)cc2[N+](=O)[O-])CC1
+Cc1n[nH]c2cccc(Oc3cc(N4CCN(CC5=C(c6ccc(Cl)cc6)CC(C)(C)CC5)CC4)ccc3C(=O)NS(=O)(=O)c3ccc(NC4CCN(C)CC4)c([N+](=O)[O-])c3)c12
+CN1CCC(Nc2ccc(S(=O)(=O)NC(=O)c3ccc(N4CCN(CC5=C(c6ccc(Cl)cc6)CCCCC5)CC4)cc3Oc3ccccc3Cl)cc2[N+](=O)[O-])CC1
+CN1CCC(Nc2ccc(S(=O)(=O)NC(=O)c3ccc(N4CCN(CC5=C(c6ccc(Cl)cc6)CC(C)(C)CC5)CC4)cc3Oc3cccc(C(F)(F)F)c3)cc2[N+](=O)[O-])CC1
+CN(C)CCCNc1ccc(S(=O)(=O)NC(=O)c2ccc(N3CCN(Cc4ccccc4-c4ccc(Cl)cc4)CC3)cc2Oc2cccc3c2CCC(=O)N3)cc1[N+](=O)[O-]
+CN1CCC(Nc2ccc(S(=O)(=O)NC(=O)c3ccc(N4CCN(CC5=C(c6ccc(Cl)cc6)CC(C)(C)CC5)CC4)cc3Oc3ccccc3Cl)cc2S(=O)(=O)C(F)(F)F)CC1
+CN1CCC(Nc2ccc(S(=O)(=O)NC(=O)c3ccc(N4CCN(CC5=C(c6ccc(Cl)cc6)CC(C)(C)CC5)CC4)cc3Oc3cc(Cl)ccc3Cl)cc2[N+](=O)[O-])CC1
+CN1CCC(Nc2ccc(S(=O)(=O)NC(=O)c3ccc(N4CCN(CC5=C(c6ccc(Cl)cc6)CC(C)(C)CC5)CC4)cc3Oc3ccc(F)cc3Cl)cc2[N+](=O)[O-])CC1
+CN1CCC(Nc2ccc(S(=O)(=O)NC(=O)c3ccc(N4CCN(CC5=C(c6ccc(Cl)cc6)CC(C)(C)C5)CC4)cc3Oc3ccccc3Cl)cc2[N+](=O)[O-])CC1
+Cc1c[nH]c2cccc(Oc3cc(N4CCN(CC5=C(c6ccc(Cl)cc6)CC(C)(C)CC5)CC4)ccc3C(=O)NS(=O)(=O)c3ccc(NCCCN4CCOCC4)c([N+](=O)[O-])c3)c12
+CN1CCC(Nc2ccc(S(=O)(=O)NC(=O)c3ccc(N4CCN(CC5=C(c6ccc(Cl)cc6)CC(C)(C)CC5)CC4)cc3Oc3cccc(C(F)(F)F)c3Cl)cc2[N+](=O)[O-])CC1
+CC1(C)CCC(CN2CCN(c3ccc(C(=O)NS(=O)(=O)c4ccc(NC5CCN(C6CC6)CC5)c([N+](=O)[O-])c4)c(Oc4ccccc4Cl)c3)CC2)=C(c2ccc(Cl)cc2)C1
+Cc1c[nH]c2cccc(Oc3cc(N4CCN(CC5=C(c6ccc(Cl)cc6)CC(C)(C)CC5)CC4)ccc3C(=O)NS(=O)(=O)c3ccc(NC4CCN(C)CC4)c([N+](=O)[O-])c3)c12
+CC1(C)CCC(CN2CCN(c3ccc(C(=O)NS(=O)(=O)c4ccc(NCCCN5CCOCC5)c([N+](=O)[O-])c4)c(Oc4cc(Cl)ccc4Cl)c3)CC2)=C(c2ccc(Cl)cc2)C1
+Cn1ccc2c(Oc3cc(N4CCN(Cc5ccccc5-c5ccc(Cl)cc5)CC4)ccc3C(=O)NS(=O)(=O)c3ccc(NCCCN4CCOCC4)c([N+](=O)[O-])c3)cccc21
+O=C(NS(=O)(=O)c1ccc(NCCCN2CCOCC2)c([N+](=O)[O-])c1)c1ccc(N2CCN(Cc3ccccc3-c3ccc(Cl)cc3)CC2)cc1Oc1cccc(N2CCOCC2)c1
+CN(C)CCCNc1ccc(S(=O)(=O)NC(=O)c2ccc(N3CCN(Cc4ccccc4-c4ccc(Cl)cc4)CC3)cc2Oc2ccc3[nH]cc(CCC(=O)N4CCOCC4)c3c2)cc1[N+](=O)[O-]
+O=C(NS(=O)(=O)c1ccc(NCC2CCOCC2)c([N+](=O)[O-])c1)c1ccc(N2CCN(Cc3ccccc3-c3ccc(Cl)cc3)CC2)cc1Oc1cccc(OCc2ccccc2)c1
+N#Cc1ccc(Oc2cc(N3CCN(Cc4ccccc4-c4ccc(Cl)cc4)CC3)ccc2C(=O)NS(=O)(=O)c2ccc(NCC3CCOCC3)c([N+](=O)[O-])c2)cc1
+O=C(NS(=O)(=O)c1ccc(NCC2CCOCC2)c([N+](=O)[O-])c1)c1ccc(N2CCN(Cc3ccccc3-c3ccc(Cl)cc3)CC2)cc1Oc1ccc2[nH]cc(CCC(=O)N3CCOCC3)c2c1
+O=C(NS(=O)(=O)c1ccc(NCC2CCOCC2)c([N+](=O)[O-])c1)c1ccc(N2CCN(Cc3ccccc3-c3ccc(Cl)cc3)CC2)cc1Oc1ccc2[nH]cc(CCCN3CCOCC3)c2c1
+CN(C)Cc1ccc(Oc2cc(N3CCN(Cc4ccccc4-c4ccc(Cl)cc4)CC3)ccc2C(=O)NS(=O)(=O)c2ccc(NCC3CCOCC3)c([N+](=O)[O-])c2)cc1
+O=C(NS(=O)(=O)c1ccc(NCC2CCOCC2)c([N+](=O)[O-])c1)c1ccc(N2CCN(Cc3ccccc3-c3ccc(Cl)cc3)CC2)cc1Oc1ccc(-n2ccnc2)cc1
+O=C(NS(=O)(=O)c1ccc(NCC2CCOCC2)cc1)c1ccc(N2CCN(Cc3ccccc3-c3ccc(Cl)cc3)CC2)cc1Oc1cccc([N+](=O)[O-])c1
+CCN(Cc1ccc(Oc2cc(N3CCN(Cc4ccccc4-c4ccc(Cl)cc4)CC3)ccc2C(=O)NS(=O)(=O)c2ccc(NCC3CCOCC3)c([N+](=O)[O-])c2)cc1)C(=O)OC(C)(C)C
+CCN(Cc1cccc(Oc2cc(N3CCN(Cc4ccccc4-c4ccc(Cl)cc4)CC3)ccc2C(=O)NS(=O)(=O)c2ccc(NCC3CCOCC3)c([N+](=O)[O-])c2)c1)C(=O)OC(C)(C)C
+CCNCc1ccc(Oc2cc(N3CCN(Cc4ccccc4-c4ccc(Cl)cc4)CC3)ccc2C(=O)NS(=O)(=O)c2ccc(NCC3CCOCC3)c([N+](=O)[O-])c2)cc1
+CCNCc1cccc(Oc2cc(N3CCN(Cc4ccccc4-c4ccc(Cl)cc4)CC3)ccc2C(=O)NS(=O)(=O)c2ccc(NCC3CCOCC3)c([N+](=O)[O-])c2)c1
+CC(=O)Nc1ccc(Oc2cc(N3CCN(Cc4ccccc4-c4ccc(Cl)cc4)CC3)ccc2C(=O)NS(=O)(=O)c2ccc(NCC3CCOCC3)c([N+](=O)[O-])c2)cc1
+CC(C)(C)OC(=O)Nc1ccc(Oc2cc(N3CCN(Cc4ccccc4-c4ccc(Cl)cc4)CC3)ccc2C(=O)NS(=O)(=O)c2ccc(NCC3CCOCC3)c([N+](=O)[O-])c2)cc1
+O=C(NS(=O)(=O)c1ccc(NCC2CCOCC2)c([N+](=O)[O-])c1)c1ccc(N2CCN(Cc3ccccc3-c3ccc(Cl)cc3)CC2)cc1Oc1ccccc1-c1ccccc1
+CC(C)(C)OC(=O)Nc1cccc(Oc2cc(N3CCN(Cc4ccccc4-c4ccc(Cl)cc4)CC3)ccc2C(=O)NS(=O)(=O)c2ccc(NCC3CCOCC3)c([N+](=O)[O-])c2)c1
+O=C(NS(=O)(=O)c1ccc(NCC2CCOCC2)c([N+](=O)[O-])c1)c1ccc(N2CCN(Cc3ccccc3-c3ccc(Cl)cc3)CC2)cc1Oc1cccc(-c2ccccc2)c1
+CN(C)CCc1ccc(Oc2cc(N3CCN(Cc4ccccc4-c4ccc(Cl)cc4)CC3)ccc2C(=O)NS(=O)(=O)c2ccc(NCC3CCOCC3)c([N+](=O)[O-])c2)cc1
+O=C(NS(=O)(=O)c1ccc(NCC2CCOCC2)c([N+](=O)[O-])c1)c1ccc(N2CCN(Cc3ccccc3-c3ccc(Cl)cc3)CC2)cc1Oc1ccc(OCc2ccccc2)cc1
+O=C(NS(=O)(=O)c1ccc(NCC2CCOCC2)c([N+](=O)[O-])c1)c1ccc(N2CCN(Cc3ccccc3-c3ccc(Cl)cc3)CC2)cc1Oc1cccc(N2CCOCC2)c1
+Cc1nc2cc(Oc3cc(N4CCN(Cc5ccccc5-c5ccc(Cl)cc5)CC4)ccc3C(=O)NS(=O)(=O)c3ccc(NCC4CCOCC4)c([N+](=O)[O-])c3)ccc2s1
+CC(C)(C)OC(=O)N1CCN(c2cccc(Oc3cc(N4CCN(Cc5ccccc5-c5ccc(Cl)cc5)CC4)ccc3C(=O)NS(=O)(=O)c3ccc(NCC4CCOCC4)c([N+](=O)[O-])c3)c2)CC1
+CN(C)CCCNc1ccc(S(=O)(=O)NC(=O)c2ccc(N3CCN(Cc4ccccc4-c4ccc(Cl)cc4)CC3)cc2Oc2cccc(OCc3ccccc3)c2)cc1[N+](=O)[O-]
+O=C(NS(=O)(=O)c1ccc(NCCCN2CCOCC2)c([N+](=O)[O-])c1)c1ccc(N2CCN(Cc3ccccc3-c3ccc(Cl)cc3)CC2)cc1Oc1cccc(OCc2ccccc2)c1
+O=C(NS(=O)(=O)c1ccc(NCC2CCOCC2)c([N+](=O)[O-])c1)c1ccc(N2CCN(Cc3ccccc3-c3ccc(Cl)cc3)CC2)cc1Oc1ccc(OCCN2CCOCC2)cc1
+O=C1CCc2c(cccc2Oc2cc(N3CCN(Cc4ccccc4-c4ccc(Cl)cc4)CC3)ccc2C(=O)NS(=O)(=O)c2ccc(NCC3CCOCC3)c([N+](=O)[O-])c2)N1
+O=C(NS(=O)(=O)c1ccc(NCCCN2CCOCC2)c([N+](=O)[O-])c1)c1ccc(N2CCN(Cc3ccccc3-c3ccc(Cl)cc3)CC2)cc1Oc1ccc(OCc2ccccc2)cc1
+CC(C)(C)OC(=O)N1CCN(c2ccc(Oc3cc(N4CCN(Cc5ccccc5-c5ccc(Cl)cc5)CC4)ccc3C(=O)NS(=O)(=O)c3ccc(NCCCN4CCOCC4)c([N+](=O)[O-])c3)cc2)CC1
+O=C(NS(=O)(=O)c1ccc(NCCCN2CCOCC2)c([N+](=O)[O-])c1)c1ccc(N2CCN(Cc3ccccc3-c3ccc(Cl)cc3)CC2)cc1Oc1cccc(-c2ccncc2)c1
+O=C(NS(=O)(=O)c1ccc(NCCCN2CCOCC2)c([N+](=O)[O-])c1)c1ccc(N2CCN(Cc3ccccc3-c3ccc(Cl)cc3)CC2)cc1Oc1ccc(-c2ccncc2)cc1
+O=C(NS(=O)(=O)c1ccc(NCCCN2CCOCC2)c([N+](=O)[O-])c1)c1ccc(N2CCN(Cc3ccccc3-c3ccc(Cl)cc3)CC2)cc1Oc1ccc(-c2cccnc2)cc1
+CN(C)C(=O)COc1ccc(Oc2cc(N3CCN(Cc4ccccc4-c4ccc(Cl)cc4)CC3)ccc2C(=O)NS(=O)(=O)c2ccc(NCC3CCOCC3)c([N+](=O)[O-])c2)cc1
+Cn1cnc2cc(Oc3cc(N4CCN(Cc5ccccc5-c5ccc(Cl)cc5)CC4)ccc3C(=O)NS(=O)(=O)c3ccc(NCCCN4CCOCC4)c([N+](=O)[O-])c3)ccc21)DATA";
+  std::vector<ROMOL_SPTR> ms;
+  boost::char_separator<char> sep(" \n");
+  tokenizer tokens(smis, sep);
+  for (tokenizer::iterator token = tokens.begin(); token != tokens.end();
+       ++token) {
+    std::string smi = *token;
+    RWMol *m = SmilesToMol(smi);
+    TEST_ASSERT(m);
+    ms.push_back(ROMOL_SPTR(m));
+  }
+  auto core = "O=C(NS(=O)(=O)c1ccccc1)c1ccccc1Oc1ccccc1"_smiles;
+
+  {
+    std::cerr << "iterative" << std::endl;
+    RGroupDecompositionParameters ps = RGroupDecompositionParameters();
+    ps.timeout = 1.0;
+    RGroupDecomposition decomp(*core, ps);
+    bool ok = false;
+    try {
+      size_t ndone = 0;
+      for (auto m : ms) {
+        decomp.add(*m);
+        ++ndone;
+      }
+    } catch (const std::runtime_error &) {
+      ok = true;
+    }
+    TEST_ASSERT(ok);
+  }
+  {
+    RGroupDecompositionParameters ps = RGroupDecompositionParameters();
+    ps.timeout = 2.0;
+    std::cerr << "bulk" << std::endl;
+    std::vector<ROMOL_SPTR> cores;
+    cores.push_back(ROMOL_SPTR(new ROMol(*core)));
+    RGroupRows rows;
+    bool ok = false;
+    try {
+      auto res = RGroupDecompose(cores, ms, rows, nullptr, ps);
+      RDUNUSED_PARAM(res);
+    } catch (const std::runtime_error &) {
+      ok = true;
+    }
+    TEST_ASSERT(ok);
+  }
+  {
+    RGroupDecompositionParameters ps = RGroupDecompositionParameters();
+    ps.timeout = 1.0;
+    ps.matchingStrategy = RDKit::NoSymmetrization;
+    std::cerr << "bulk, no symmetry" << std::endl;
+    std::vector<ROMOL_SPTR> cores;
+    cores.push_back(ROMOL_SPTR(new ROMol(*core)));
+    RGroupRows rows;
+    bool ok = true;
+    try {
+      auto res = RGroupDecompose(cores, ms, rows, nullptr, ps);
+      RDUNUSED_PARAM(res);
+    } catch (const std::runtime_error &) {
+      ok = false;
+    }
+    TEST_ASSERT(ok);
+  }
+  boost::logging::enable_logs("rdApp.warning");
+}
+
 int main() {
   RDLog::InitLogs();
 
@@ -1004,9 +1228,10 @@ int main() {
   testGitHubIssue1705();
   testGithub2332();
   testSDFGRoupMultiCoreNoneShouldMatch();
-#endif
   testRowColumnAlignmentProblem();
   testSymmetryIssues();
+#endif
+  testSymmetryPerformance();
   BOOST_LOG(rdInfoLog)
       << "********************************************************\n";
   return 0;

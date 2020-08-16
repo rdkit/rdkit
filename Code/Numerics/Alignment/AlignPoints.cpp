@@ -14,7 +14,7 @@
 #include <Geometry/Transform3D.h>
 #include <Numerics/Vector.h>
 
-#define TOLERANCE 1.e-6
+constexpr double TOLERANCE = 1.e-6;
 
 namespace RDNumeric {
 

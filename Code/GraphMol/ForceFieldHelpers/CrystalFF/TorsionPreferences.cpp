@@ -44,6 +44,8 @@ using namespace RDKit;
  */
 #include "torsionPreferences_v1.in"
 #include "torsionPreferences_v2.in"
+#include "torsionPreferences_smallrings.in"
+#include "torsionPreferences_macrocycles.in"
 
 //! A structure used to the experimental torsion patterns
 struct ExpTorsionAngle {
@@ -59,7 +61,7 @@ class ExpTorsionAngleCollection {
  public:
   typedef std::vector<ExpTorsionAngle> ParamsVect;
   static const ExpTorsionAngleCollection *getParams(
-      unsigned int version, const std::string &paramData = "");
+      unsigned int version, bool useSmallRingTorsions, bool useMacrocycleTorsions, const std::string &paramData = "");
   ParamsVect::const_iterator begin() const { return d_params.begin(); };
   ParamsVect::const_iterator end() const { return d_params.end(); };
   ExpTorsionAngleCollection(const std::string &paramData);
@@ -74,7 +76,7 @@ typedef boost::flyweight<
     param_flyweight;
 
 const ExpTorsionAngleCollection *ExpTorsionAngleCollection::getParams(
-    unsigned int version, const std::string &paramData) {
+    unsigned int version, bool useSmallRingTorsions, bool useMacrocycleTorsions, const std::string &paramData) {
   std::string params;
   if (paramData == "") {
     switch (version) {
@@ -90,6 +92,12 @@ const ExpTorsionAngleCollection *ExpTorsionAngleCollection::getParams(
   } else {
     params = paramData;
   }
+  if (useSmallRingTorsions)
+	  params += torsionPreferencesSmallRings;
+
+  if (useMacrocycleTorsions)
+	  params += torsionPreferencesMacrocycles;
+
   const ExpTorsionAngleCollection *res = &(param_flyweight(params).get());
   return res;
 }
@@ -135,7 +143,9 @@ ExpTorsionAngleCollection::ExpTorsionAngleCollection(
 }
 
 void getExperimentalTorsions(const RDKit::ROMol &mol, CrystalFFDetails &details,
-                             bool useExpTorsions, bool useBasicKnowledge,
+                             bool useExpTorsions, 
+                             bool useSmallRingTorsions,bool useMacrocycleTorsions,
+                             bool useBasicKnowledge,
                              unsigned int version, bool verbose) {
   unsigned int nb = mol.getNumBonds();
   unsigned int na = mol.getNumAtoms();
@@ -151,12 +161,43 @@ void getExperimentalTorsions(const RDKit::ROMol &mol, CrystalFFDetails &details,
   unsigned int aid1, aid2, aid3, aid4;
   unsigned int bid2;
 
+  // exclude bonds in bridged ring systems
+  boost::dynamic_bitset<> excludedBonds(nb);
+  const RingInfo *rinfo = mol.getRingInfo();
+  const VECT_INT_VECT &bondRings = rinfo->bondRings();
+  VECT_INT_VECT_CI rii, rjj;
+  for (rii = bondRings.begin(); rii != bondRings.end(); ++rii) {
+    boost::dynamic_bitset<> rs1(nb); // bitset for ring 1
+    for (unsigned int i = 0; i < rii->size(); i++) {
+      rs1[(*rii)[i]] = 1;
+    }
+    for (rjj = rii+1; rjj != bondRings.end(); ++rjj) {
+      unsigned int nInCommon = 0;
+      for (auto rjj_i : *rjj) {
+        if (rs1[rjj_i]) {
+          ++nInCommon;
+          if (nInCommon > 1) {
+            break;
+          }
+        }
+      }
+      if (nInCommon > 1) {  // more than one bond in common
+        for (unsigned int i = 0; i < rii->size(); i++) {
+          excludedBonds[(*rii)[i]] = 1; // exclude all bonds of ring 1
+        }
+        for (unsigned int i = 0; i < rjj->size(); i++) {
+          excludedBonds[(*rjj)[i]] = 1; // exclude all bonds of ring 2
+        }
+      }
+    }
+  }
+
   boost::dynamic_bitset<> doneBonds(nb);
 
   if (useExpTorsions) {
     // we set the torsion angles with experimental data
     const ExpTorsionAngleCollection *params =
-        ExpTorsionAngleCollection::getParams(version);
+        ExpTorsionAngleCollection::getParams(version, useSmallRingTorsions, useMacrocycleTorsions);
 
     // loop over patterns
     for (const auto &param : *params) {
@@ -173,6 +214,10 @@ void getExperimentalTorsions(const RDKit::ROMol &mol, CrystalFFDetails &details,
         aid4 = (*matchIt)[param.idx[3]].second;
         // FIX: check if bond is NULL
         bid2 = mol.getBondBetweenAtoms(aid2, aid3)->getIdx();
+	// check that a bond is part of maximum one ring
+	if (mol.getRingInfo()->numBondRings(bid2) > 1 || excludedBonds[bid2] == 1) {
+	  doneBonds[bid2] = 1;
+	}
         if (!doneBonds[bid2]) {
           doneBonds[bid2] = 1;
           std::vector<int> atoms(4);
@@ -181,8 +226,7 @@ void getExperimentalTorsions(const RDKit::ROMol &mol, CrystalFFDetails &details,
           atoms[2] = aid3;
           atoms[3] = aid4;
           details.expTorsionAtoms.push_back(atoms);
-          details.expTorsionAngles.push_back(
-              std::make_pair(param.signs, param.V));
+          details.expTorsionAngles.emplace_back(param.signs, param.V);
           if (verbose) {
             std::cout << param.smarts << ": " << aid1 << " " << aid2 << " "
                       << aid3 << " " << aid4 << ", (";
@@ -289,7 +333,7 @@ void getExperimentalTorsions(const RDKit::ROMol &mol, CrystalFFDetails &details,
           signs[1] = -1;  // MMFF sign for m = 2
           std::vector<double> fconsts(6, 0.0);
           fconsts[1] = 100.0;  // 7.0 is MMFF force constants for aromatic rings
-          details.expTorsionAngles.push_back(std::make_pair(signs, fconsts));
+          details.expTorsionAngles.emplace_back(signs, fconsts);
           /*if (verbose) {
             std::cout << "SP2 ring: " << aid1 << " " << aid2 << " " << aid3 << "
           " << aid4 << std::endl;

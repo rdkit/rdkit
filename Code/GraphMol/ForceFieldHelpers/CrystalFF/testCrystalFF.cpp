@@ -22,7 +22,7 @@
 #include <ForceField/ForceField.h>
 #include <iostream>
 #include <string>
-#include <math.h>
+#include <cmath>
 
 using namespace RDGeom;
 using namespace RDKit;
@@ -123,7 +123,7 @@ void testTorsionPrefs() {
   TEST_ASSERT(mol);
 
   ForceFields::CrystalFF::CrystalFFDetails details;
-  ForceFields::CrystalFF::getExperimentalTorsions(*mol, details, true, false, 1,
+  ForceFields::CrystalFF::getExperimentalTorsions(*mol, details, true, false, false, false, 1,
                                                   false);
   TEST_ASSERT(details.expTorsionAtoms.size() == 1);
   TEST_ASSERT(details.expTorsionAngles.size() == 1);
@@ -136,16 +136,90 @@ void testTorsionPrefs() {
   mol = SmilesToMol("CCCCC");
   TEST_ASSERT(mol);
 
-  ForceFields::CrystalFF::getExperimentalTorsions(*mol, details, true, false, 1,
+  ForceFields::CrystalFF::getExperimentalTorsions(*mol, details, true, false, false, false, 1,
                                                   false);
   TEST_ASSERT(details.expTorsionAtoms.size() == 2);
   TEST_ASSERT(details.expTorsionAngles.size() == 2);
   delete mol;
 }
 
+void testTorsionPrefsSmallRings() {
+  ROMol *mol;
+  ForceFields::CrystalFF::CrystalFFDetails details;
+  mol = SmilesToMol("C1COCC1");
+  TEST_ASSERT(mol);
+
+  //small ring torsion turned off
+  ForceFields::CrystalFF::getExperimentalTorsions(*mol, details, true, false, false,
+                                                  false, 1, false);
+  TEST_ASSERT(details.expTorsionAtoms.size() == 0);
+  TEST_ASSERT(details.expTorsionAngles.size() == 0);
+
+  //small ring torsion turned on
+  ForceFields::CrystalFF::getExperimentalTorsions(*mol, details, true, true, false,
+                                                  false, 1, false);
+  TEST_ASSERT(details.expTorsionAtoms.size() > 0);
+  TEST_ASSERT(details.expTorsionAngles.size() > 0);
+  delete mol;
+}
+
+void testTorsionPrefsBridgedSmallRings() {
+  // test bridged system does not trigger any small ring torsion
+  ROMol *mol;
+  ForceFields::CrystalFF::CrystalFFDetails details;
+
+  mol = SmilesToMol("O[C@H]1C[C@H]2CC[C@]1(C)C2(C)C");
+  TEST_ASSERT(mol);
+
+  //small ring torsion turned off
+  ForceFields::CrystalFF::getExperimentalTorsions(*mol, details, true, true, false,
+                                                  false, 1, false);
+  TEST_ASSERT(details.expTorsionAtoms.size() == 0);
+  TEST_ASSERT(details.expTorsionAngles.size() == 0);
+  delete mol;
+}
+
+void testTorsionPrefsMacrocycles() {
+  ROMol *mol;
+  ForceFields::CrystalFF::CrystalFFDetails details;
+  mol = SmilesToMol("C1COCCCCCCC1");
+  TEST_ASSERT(mol);
+
+  // macrocycle ring torsion turned off
+  ForceFields::CrystalFF::getExperimentalTorsions(*mol, details, true, false, false,
+                                                  false, 1, false);
+  TEST_ASSERT(details.expTorsionAtoms.size() == 0);
+  TEST_ASSERT(details.expTorsionAngles.size() == 0);
+
+  // macrocycle ring torsion turned on
+  ForceFields::CrystalFF::getExperimentalTorsions(*mol, details, true, false, true,
+                                                  false, 1, false);
+  TEST_ASSERT(details.expTorsionAtoms.size() > 0);
+  TEST_ASSERT(details.expTorsionAngles.size() > 0);
+  delete mol;
+}
+
 int main() {
+  RDLog::InitLogs();
+  BOOST_LOG(rdInfoLog)
+      << "********************************************************\n";
+  BOOST_LOG(rdInfoLog) << "Testing Crystal ForceField\n";
+
+  BOOST_LOG(rdInfoLog) << "\t---------------------------------\n";
+  BOOST_LOG(rdInfoLog) << "\t SMARTS parsing\n";
   testTorsionAngleM6();
+
+  BOOST_LOG(rdInfoLog) << "\t---------------------------------\n";
+  BOOST_LOG(rdInfoLog) << "\t Seeing if non-ring torsions are applied\n";
   testTorsionPrefs();
+
+  BOOST_LOG(rdInfoLog) << "\t---------------------------------\n";
+  BOOST_LOG(rdInfoLog) << "\t Seeing if small ring torsions are applied\n";
+  testTorsionPrefsSmallRings();
+
+  BOOST_LOG(rdInfoLog) << "\t---------------------------------\n";
+  BOOST_LOG(rdInfoLog) << "\t Seeing if macrocycle ring torsions are applied\n";
+  testTorsionPrefsMacrocycles();
 
   return 0;
 }

@@ -18,6 +18,7 @@
 #include <boost/iostreams/stream.hpp>
 #include "BoostEndInclude.h"
 #include <iostream>
+#include <vector>
 namespace boost {
 namespace logging {
 
@@ -36,8 +37,8 @@ class RDKIT_RDGENERAL_EXPORT rdLogger {
       : dp_dest(dest),
         df_owner(owner),
         df_enabled(true),
-        tee(NULL),
-        teestream(NULL){};
+        tee(nullptr),
+        teestream(nullptr){};
 
   //! Sets a stream to tee the output to.
   void SetTee(std::ostream &stream) {
@@ -53,8 +54,8 @@ class RDKIT_RDGENERAL_EXPORT rdLogger {
     if (dp_dest) {
       delete teestream;
       delete tee;
-      tee = NULL;
-      teestream = NULL;
+      tee = nullptr;
+      teestream = nullptr;
     }
   }
   ~rdLogger() {
@@ -63,12 +64,12 @@ class RDKIT_RDGENERAL_EXPORT rdLogger {
       if (df_owner) {
         delete dp_dest;
       }
-      dp_dest = NULL;
+      dp_dest = nullptr;
     }
     delete teestream;
-    teestream = NULL;
+    teestream = nullptr;
     delete tee;
-    tee = NULL;
+    tee = nullptr;
   }
 
  private:
@@ -80,6 +81,7 @@ RDKIT_RDGENERAL_EXPORT void enable_logs(const char *arg);
 RDKIT_RDGENERAL_EXPORT void enable_logs(const std::string &arg);
 RDKIT_RDGENERAL_EXPORT void disable_logs(const char *arg);
 RDKIT_RDGENERAL_EXPORT void disable_logs(const std::string &arg);
+RDKIT_RDGENERAL_EXPORT std::string log_status();
 }  // namespace logging
 }  // namespace boost
 namespace RDLog {
@@ -90,18 +92,14 @@ RDKIT_RDGENERAL_EXPORT std::ostream &toStream(std::ostream &);
   RDLog::toStream((__arg__->teestream) ? *(__arg__->teestream)  \
                                        : *(__arg__->dp_dest))
 
-RDKIT_RDGENERAL_EXPORT extern std::shared_ptr<boost::logging::rdLogger>
-    rdAppLog;
-RDKIT_RDGENERAL_EXPORT extern std::shared_ptr<boost::logging::rdLogger>
-    rdDebugLog;
-RDKIT_RDGENERAL_EXPORT extern std::shared_ptr<boost::logging::rdLogger>
-    rdInfoLog;
-RDKIT_RDGENERAL_EXPORT extern std::shared_ptr<boost::logging::rdLogger>
-    rdErrorLog;
-RDKIT_RDGENERAL_EXPORT extern std::shared_ptr<boost::logging::rdLogger>
-    rdWarningLog;
-RDKIT_RDGENERAL_EXPORT extern std::shared_ptr<boost::logging::rdLogger>
-    rdStatusLog;
+using RDLogger = std::shared_ptr<boost::logging::rdLogger>;
+
+RDKIT_RDGENERAL_EXPORT extern RDLogger rdAppLog;
+RDKIT_RDGENERAL_EXPORT extern RDLogger rdDebugLog;
+RDKIT_RDGENERAL_EXPORT extern RDLogger rdInfoLog;
+RDKIT_RDGENERAL_EXPORT extern RDLogger rdErrorLog;
+RDKIT_RDGENERAL_EXPORT extern RDLogger rdWarningLog;
+RDKIT_RDGENERAL_EXPORT extern RDLogger rdStatusLog;
 
 #else
 #define BOOST_LOG_NO_LIB
@@ -115,5 +113,12 @@ BOOST_DECLARE_LOG(rdStatusLog)
 #endif
 namespace RDLog {
 RDKIT_RDGENERAL_EXPORT void InitLogs();
+
+// ! Temporarily block logging until this object goes out of scope
+struct RDKIT_RDGENERAL_EXPORT BlockLogs {
+  std::vector<RDLogger> logs_to_reenable;
+   BlockLogs();
+  ~BlockLogs();
+};
 }
 #endif

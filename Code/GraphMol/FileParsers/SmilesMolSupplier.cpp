@@ -217,14 +217,14 @@ ROMol *SmilesMolSupplier::processLine(std::string inLine) {
     // Simply print out a message
     BOOST_LOG(rdErrorLog) << "ERROR: Smiles parse error on line " << d_line
                           << "\n";
-    BOOST_LOG(rdErrorLog) << "ERROR: " << pe.message() << "\n";
+    BOOST_LOG(rdErrorLog) << "ERROR: " << pe.what() << "\n";
     res = nullptr;
   } catch (const MolSanitizeException &se) {
     // We couldn't sanitize the molecule
     //  write out an error message
     BOOST_LOG(rdErrorLog) << "ERROR: Could not sanitize molecule on line "
                           << d_line << std::endl;
-    BOOST_LOG(rdErrorLog) << "ERROR: " << se.message() << "\n";
+    BOOST_LOG(rdErrorLog) << "ERROR: " << se.what() << "\n";
     res = nullptr;
   } catch (...) {
     //  write out an error message
@@ -403,7 +403,7 @@ void SmilesMolSupplier::moveTo(unsigned int idx) {
              << "ran out of lines\n";
       throw FileParseException(errout.str());
     } else {
-      d_molpos.push_back(nextP);
+      d_molpos.emplace_back(nextP);
       d_lineNums.push_back(d_line);
       if (d_molpos.size() == idx + 1 && df_end) {
         // boundary condition: we could read the point we were looking for
@@ -521,7 +521,7 @@ unsigned int SmilesMolSupplier::length() {
     }
     int pos = this->skipComments();
     while (pos >= 0) {
-      d_molpos.push_back(pos);
+      d_molpos.emplace_back(pos);
       d_lineNums.push_back(d_line);
       pos = this->skipComments();
     }

@@ -6949,7 +6949,7 @@ bool check_bond_stereo(const ROMOL_SPTR &mol, unsigned bond_idx,
 
 ROMOL_SPTR run_simple_reaction(const std::string &reaction,
                                const ROMOL_SPTR &reactant) {
-  const auto rxn = RxnSmartsToChemicalReaction(reaction);
+  std::unique_ptr<ChemicalReaction> rxn{RxnSmartsToChemicalReaction(reaction)};
   TEST_ASSERT(rxn);
   TEST_ASSERT(rxn->getNumReactantTemplates() == 1);
   TEST_ASSERT(rxn->getNumProductTemplates() == 1);
@@ -7135,7 +7135,8 @@ void testOtherBondStereo() {
 
   {  // Reaction changes order of the stereo bond
     const std::string reaction(R"([C:1]=[C:2]>>[C:1]-[C:2])");
-    const auto rxn = RxnSmartsToChemicalReaction(reaction);
+    std::unique_ptr<ChemicalReaction> rxn{
+        RxnSmartsToChemicalReaction(reaction)};
     TEST_ASSERT(rxn);
     TEST_ASSERT(rxn->getNumReactantTemplates() == 1);
     TEST_ASSERT(rxn->getNumProductTemplates() == 1);
@@ -7161,7 +7162,8 @@ void testOtherBondStereo() {
      // (no directed bonds enclosing the double bond)
     const std::string reaction(
         R"([C:1]/[C:2]=[C:3]/[Br:4]>>[C:1][C:2]=[C:3]-[Br:4])");
-    const auto rxn = RxnSmartsToChemicalReaction(reaction);
+    std::unique_ptr<ChemicalReaction> rxn{
+        RxnSmartsToChemicalReaction(reaction)};
     TEST_ASSERT(rxn);
     TEST_ASSERT(rxn->getNumReactantTemplates() == 1);
     TEST_ASSERT(rxn->getNumProductTemplates() == 1);
@@ -7190,7 +7192,8 @@ void testOtherBondStereo() {
   }
   {  // Reaction with 2 product sets
     const std::string reaction(R"([C:1]=[C:2]>>[Si:1]=[C:2])");
-    const auto rxn = RxnSmartsToChemicalReaction(reaction);
+    std::unique_ptr<ChemicalReaction> rxn{
+        RxnSmartsToChemicalReaction(reaction)};
     TEST_ASSERT(rxn);
     TEST_ASSERT(rxn->getNumReactantTemplates() == 1);
     TEST_ASSERT(rxn->getNumProductTemplates() == 1);
@@ -7218,7 +7221,8 @@ void testOtherBondStereo() {
     TEST_ASSERT(check_bond_stereo(mol2, 2, 0, 4, Bond::BondStereo::STEREOE));
 
     const std::string reaction(R"([C:1]=[C:2][Br:3]>>[C:1]=[C:2].[Br:3])");
-    const auto rxn = RxnSmartsToChemicalReaction(reaction);
+    std::unique_ptr<ChemicalReaction> rxn{
+        RxnSmartsToChemicalReaction(reaction)};
     TEST_ASSERT(rxn);
     TEST_ASSERT(rxn->getNumReactantTemplates() == 1);
     TEST_ASSERT(rxn->getNumProductTemplates() == 2);
@@ -7245,7 +7249,8 @@ void testOtherBondStereo() {
 
     const std::string reaction(
         R"([Cl:4][C:1]=[C:2][Br:3]>>[C:1]=[C:2].[Br:3].[Cl:4])");
-    const auto rxn = RxnSmartsToChemicalReaction(reaction);
+    std::unique_ptr<ChemicalReaction> rxn{
+        RxnSmartsToChemicalReaction(reaction)};
     TEST_ASSERT(rxn);
     TEST_ASSERT(rxn->getNumReactantTemplates() == 1);
     TEST_ASSERT(rxn->getNumProductTemplates() == 3);
@@ -7385,6 +7390,24 @@ void testDblBondCrash() {
   }
 }
 
+void testGithub3097() {
+  BOOST_LOG(rdInfoLog) << "-------------------------------------" << std::endl;
+  BOOST_LOG(rdInfoLog) << "Testing Github issue # 3097" << std::endl;
+
+  std::string smi =
+      "[c:6][n:7][c:8].[N:14]#[N:15]>>[C:6].[C:8][N:7]=[N+:14]=[N-:15]";
+  std::unique_ptr<ChemicalReaction> rxn{RxnSmartsToChemicalReaction(smi)};
+  TEST_ASSERT(rxn);
+  rxn->initReactantMatchers();
+
+  auto mol1 = RWMOL_SPTR(SmilesToMol("c1cc[nH]c1"));
+  auto mol2 = RWMOL_SPTR(SmilesToMol("N#N"));
+  std::vector<ROMOL_SPTR> v{mol1, mol2};
+  auto prods = rxn->runReactants(v);
+  // if products are not empty this is already a success
+  TEST_ASSERT(prods.size() > 0);
+}
+
 int main() {
   RDLog::InitLogs();
 
@@ -7475,6 +7498,7 @@ int main() {
   testStereoBondIsomerization();
   testOtherBondStereo();
   testGithub2547();
+  testGithub3097();
 #endif
   testDblBondCrash();
 

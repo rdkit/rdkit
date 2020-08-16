@@ -2060,62 +2060,71 @@ void testMolFileAtomQueries() {
     delete m;
   }
   {
-    std::string fName =
-        rdbase + "/Code/GraphMol/FileParsers/test_data/query_A.mol";
-    RWMol *m = MolFileToMol(fName);
-    TEST_ASSERT(m);
+    std::vector<std::string> fNames = {
+        rdbase + "/Code/GraphMol/FileParsers/test_data/query_A.mol",
+        rdbase + "/Code/GraphMol/FileParsers/test_data/query_A.v3k.mol",
+    };
+    for (const auto fName : fNames) {
+      std::unique_ptr<RWMol> m(MolFileToMol(fName));
+      TEST_ASSERT(m);
+      TEST_ASSERT(m->getAtomWithIdx(6)->hasQuery());
+      TEST_ASSERT(m->getAtomWithIdx(6)->getQuery()->getTypeLabel() == "A");
 
-    RWMol *m2;
-    MatchVectType mv;
-    std::string smi;
+      RWMol *m2;
+      MatchVectType mv;
+      std::string smi;
 
-    smi = "[H]c1ccccc1";
-    m2 = SmilesToMol(smi, false, false);
-    MolOps::sanitizeMol(*m2);
-    TEST_ASSERT(!SubstructMatch(*m2, *m, mv));
-    delete m2;
+      smi = "[H]c1ccccc1";
+      m2 = SmilesToMol(smi, false, false);
+      MolOps::sanitizeMol(*m2);
+      TEST_ASSERT(!SubstructMatch(*m2, *m, mv));
+      delete m2;
 
-    smi = "Cc1ccccc1";
-    m2 = SmilesToMol(smi);
-    TEST_ASSERT(SubstructMatch(*m2, *m, mv));
-    TEST_ASSERT(mv.size() == 7);
-    delete m2;
+      smi = "Cc1ccccc1";
+      m2 = SmilesToMol(smi);
+      TEST_ASSERT(SubstructMatch(*m2, *m, mv));
+      TEST_ASSERT(mv.size() == 7);
+      delete m2;
 
-    smi = "Clc1ccccc1";
-    m2 = SmilesToMol(smi);
-    TEST_ASSERT(SubstructMatch(*m2, *m, mv));
-    TEST_ASSERT(mv.size() == 7);
-    delete m2;
-
-    delete m;
+      smi = "Clc1ccccc1";
+      m2 = SmilesToMol(smi);
+      TEST_ASSERT(SubstructMatch(*m2, *m, mv));
+      TEST_ASSERT(mv.size() == 7);
+      delete m2;
+    }
   }
   {
-    std::string fName =
-        rdbase + "/Code/GraphMol/FileParsers/test_data/query_Q.mol";
-    RWMol *m = MolFileToMol(fName);
-    TEST_ASSERT(m);
+    std::vector<std::string> fNames = {
+        rdbase + "/Code/GraphMol/FileParsers/test_data/query_Q.mol",
+        rdbase + "/Code/GraphMol/FileParsers/test_data/query_Q.v3k.mol",
+    };
+    for (const auto fName : fNames) {
+      std::unique_ptr<RWMol> m(MolFileToMol(fName));
+      TEST_ASSERT(m);
 
-    RWMol *m2;
-    MatchVectType mv;
-    std::string smi;
+      TEST_ASSERT(m->getAtomWithIdx(6)->hasQuery());
+      TEST_ASSERT(m->getAtomWithIdx(6)->getQuery()->getTypeLabel() == "Q");
+      RWMol *m2;
+      MatchVectType mv;
+      std::string smi;
 
-    smi = "[H]c1ccccc1";
-    m2 = SmilesToMol(smi, false, false);
-    MolOps::sanitizeMol(*m2);
-    TEST_ASSERT(!SubstructMatch(*m2, *m, mv));
-    delete m2;
+      smi = "[H]c1ccccc1";
+      m2 = SmilesToMol(smi, false, false);
+      MolOps::sanitizeMol(*m2);
+      TEST_ASSERT(!SubstructMatch(*m2, *m, mv));
+      delete m2;
 
-    smi = "Cc1ccccc1";
-    m2 = SmilesToMol(smi);
-    TEST_ASSERT(!SubstructMatch(*m2, *m, mv));
-    delete m2;
+      smi = "Cc1ccccc1";
+      m2 = SmilesToMol(smi);
+      TEST_ASSERT(!SubstructMatch(*m2, *m, mv));
+      delete m2;
 
-    smi = "Clc1ccccc1";
-    m2 = SmilesToMol(smi);
-    TEST_ASSERT(SubstructMatch(*m2, *m, mv));
-    TEST_ASSERT(mv.size() == 7);
-    delete m2;
-    delete m;
+      smi = "Clc1ccccc1";
+      m2 = SmilesToMol(smi);
+      TEST_ASSERT(SubstructMatch(*m2, *m, mv));
+      TEST_ASSERT(mv.size() == 7);
+      delete m2;
+    }
   }
   BOOST_LOG(rdInfoLog) << "done" << std::endl;
 }
@@ -3909,8 +3918,7 @@ void testPDBFile() {
                 Bond::AROMATIC);
     TEST_ASSERT(m->getBondBetweenAtoms(120, 114)->getBondType() ==
                 Bond::AROMATIC);
-    TEST_ASSERT(m->getBondBetweenAtoms(39, 38)->getBondType() ==
-                Bond::DOUBLE);
+    TEST_ASSERT(m->getBondBetweenAtoms(39, 38)->getBondType() == Bond::DOUBLE);
     TEST_ASSERT(m->getBondBetweenAtoms(138, 140)->getBondType() ==
                 Bond::AROMATIC);
     delete m;
@@ -3941,10 +3949,8 @@ void testPDBFile() {
                     ->getIsHeteroAtom());
     TEST_ASSERT(m->getBondBetweenAtoms(104, 103)->getBondType() ==
                 Bond::AROMATIC);
-    TEST_ASSERT(m->getBondBetweenAtoms(60, 61)->getBondType() ==
-                Bond::DOUBLE);
-    TEST_ASSERT(m->getBondBetweenAtoms(38, 37)->getBondType() ==
-                Bond::DOUBLE);
+    TEST_ASSERT(m->getBondBetweenAtoms(60, 61)->getBondType() == Bond::DOUBLE);
+    TEST_ASSERT(m->getBondBetweenAtoms(38, 37)->getBondType() == Bond::DOUBLE);
     TEST_ASSERT(m->getBondBetweenAtoms(148, 149)->getBondType() ==
                 Bond::DOUBLE);
 
@@ -4247,8 +4253,7 @@ void testGithub194() {
 
 void testGithub196() {
   BOOST_LOG(rdInfoLog)
-      << "testing github issue 196: left justified bond topology"
-      << std::endl;
+      << "testing github issue 196: left justified bond topology" << std::endl;
   std::string rdbase = getenv("RDBASE");
   rdbase += "/Code/GraphMol/FileParsers/test_data/";
   {
@@ -4358,7 +4363,7 @@ void testPDBResidues() {
     TEST_ASSERT(m->getAtomWithIdx(0)->getMonomerInfo()->getMonomerType() ==
                 AtomMonomerInfo::PDBRESIDUE);
     std::vector<std::string> keep;
-    keep.push_back("8NH");
+    keep.emplace_back("8NH");
     std::map<std::string, boost::shared_ptr<ROMol>> res =
         MolOps::getMolFragsWithQuery(*m, getResidue, false, &keep);
 
@@ -4384,7 +4389,7 @@ void testPDBResidues() {
     TEST_ASSERT(m->getAtomWithIdx(0)->getMonomerInfo()->getMonomerType() ==
                 AtomMonomerInfo::PDBRESIDUE);
     std::vector<std::string> keep;
-    keep.push_back("8NH");
+    keep.emplace_back("8NH");
     std::map<std::string, boost::shared_ptr<ROMol>> res =
         MolOps::getMolFragsWithQuery(*m, getResidue, false, &keep, true);
 
@@ -5127,7 +5132,7 @@ void testMarvinSMATag() {
       ok = true;
       TEST_ASSERT(
           std::string("Cannot parse smarts: 'MyDogHasFleas' on line 12") ==
-          e.message());
+          e.what());
     }
     TEST_ASSERT(ok);
   }

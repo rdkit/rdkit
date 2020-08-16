@@ -33,8 +33,28 @@
 
 %{
 #include <GraphMol/ChemTransforms/ChemTransforms.h>
+#include <GraphMol/ChemTransforms/MolFragmenter.h>
+#include <GraphMol/Bond.h>
 // Fixes annoying compilation namespace issue
 typedef RDKit::MatchVectType MatchVectType;
+
+// Partial binding to one overload of RDKit::fragmentOnBonds
+RDKit::ROMol *fragmentMolOnBonds(
+    const RDKit::ROMol &mol, const std::vector<int> &bondIndices,
+    bool addDummies = true, 
+    const std::vector<std::pair<unsigned int, unsigned int>> *dummyLabels = nullptr,
+    std::vector<int> *nCutsPerAtom = nullptr) {
+        // The c# wrapper is unable to wrap vector<unsigned int> so pass in vector<int> and convert
+        std::vector<unsigned int> uBondIndices(bondIndices.begin(), bondIndices.end());
+        std::vector<unsigned int> uNCutsPerAtom;
+        if (nCutsPerAtom) {
+            uNCutsPerAtom.insert(uNCutsPerAtom.begin(), nCutsPerAtom->begin(), nCutsPerAtom->end());
+        }
+        auto cutsPerAtomPtr = nCutsPerAtom ? &uNCutsPerAtom : nullptr;
+        // Can't handle the 5th argument of vector<BondType> as swig will not wrap vector of enum
+        return RDKit::MolFragmenter::fragmentOnBonds(mol, uBondIndices, addDummies, dummyLabels, nullptr, cutsPerAtomPtr);
+ }
+
 %}
 
 %newobject deleteSubstructs;
@@ -42,9 +62,19 @@ typedef RDKit::MatchVectType MatchVectType;
 %newobject replaceCores;
 %newobject MurckoDecompose;
 %template(StringMolMap) std::map<std::string,boost::shared_ptr<RDKit::ROMol> >;
+%include <GraphMol/Bond.h>
 %include <GraphMol/ChemTransforms/ChemTransforms.h>
 
+%newobject fragmentMolOnBonds;
 %ignore fragmentOnBonds;
+%rename("fragmentOnBonds") fragmentMolOnBonds;
+
+RDKit::ROMol *fragmentMolOnBonds(
+    const RDKit::ROMol &mol, const std::vector<int> &bondIndices,
+    bool addDummies = true, 
+    const std::vector<std::pair<unsigned int, unsigned int>> *dummyLabels = nullptr,
+    std::vector<int> *nCutsPerAtom = nullptr);
+
 %ignore fragmentOnSomeBonds;
 %ignore constructFragmenterAtomTypes;
 %ignore constructBRICSAtomTypes;

@@ -55,13 +55,13 @@ namespace python = boost::python;
 void rdChemicalReactionParserExceptionTranslator(
     RDKit::ChemicalReactionParserException const &x) {
   std::ostringstream ss;
-  ss << "ChemicalReactionParserException: " << x.message();
+  ss << "ChemicalReactionParserException: " << x.what();
   PyErr_SetString(PyExc_ValueError, ss.str().c_str());
 }
 void rdChemicalReactionExceptionTranslator(
     RDKit::ChemicalReactionException const &x) {
   std::ostringstream ss;
-  ss << "ChemicalParserException: " << x.message();
+  ss << "ChemicalParserException: " << x.what();
   PyErr_SetString(PyExc_ValueError, ss.str().c_str());
 }
 
@@ -526,6 +526,7 @@ Sample Usage:
                RDKit::RunReactant,
            "apply the reaction to a single reactant")
       .def("Initialize", &RDKit::ChemicalReaction::initReactantMatchers,
+           (python::arg("self"), python::arg("silent") = false),
            "initializes the reaction so that it can be used")
       .def("IsInitialized", &RDKit::ChemicalReaction::isInitialized,
            "checks if the reaction is ready for use")

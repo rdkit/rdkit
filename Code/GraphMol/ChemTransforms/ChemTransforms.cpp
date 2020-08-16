@@ -1,5 +1,5 @@
 //
-//  Copyright (C) 2006-2018 Greg Landrum
+//  Copyright (C) 2006-2020 Greg Landrum
 //
 //   @@ All Rights Reserved @@
 //  This file is part of the RDKit.
@@ -361,7 +361,7 @@ ROMol *replaceCore(const ROMol &mol, const ROMol &core,
   std::vector<std::pair<int, int>> matchorder_atomidx;
   for (unsigned int i = 0; i < origNumAtoms; ++i) {
     int queryatom = allIndices[i];
-    matchorder_atomidx.push_back(std::make_pair(queryatom, i));
+    matchorder_atomidx.emplace_back(queryatom, i);
   }
 
   std::sort(matchorder_atomidx.begin(), matchorder_atomidx.end());
@@ -412,9 +412,9 @@ ROMol *replaceCore(const ROMol &mol, const ROMol &core,
           //  order
           //  right now so save and sort later.
           if (mapping != -1) {
-            dummies.push_back(std::make_pair(mapping, newAt));
+            dummies.emplace_back(mapping, newAt);
           } else {
-            dummies.push_back(std::make_pair(matchingIndices[nbrIdx], newAt));
+            dummies.emplace_back(matchingIndices[nbrIdx], newAt);
           }
 
           newMol->addAtom(newAt, false, true);
@@ -587,6 +587,10 @@ ROMol *MurckoDecompose(const ROMol &mol) {
           } else if (nbr->getIsAromatic() && nbr->getAtomicNum() != 6) {
             // fix aromatic heteroatoms:
             nbr->setNumExplicitHs(1);
+          } else if (nbr->getIsAromatic() && nbr->getAtomicNum() == 6 &&
+                     nbr->getFormalCharge() == 1) {
+            // fix aromatic carbocations
+            nbr->setNumExplicitHs(1);
           } else if (nbr->getNoImplicit() ||
                      nbr->getChiralTag() != Atom::CHI_UNSPECIFIED) {
             nbr->setNoImplicit(false);
@@ -679,6 +683,8 @@ void addRecursiveQueries(
       boost::tokenizer<boost::char_separator<char>> tokens(pval, sep);
       boost::tokenizer<boost::char_separator<char>>::iterator token;
       qToAdd = new ATOM_OR_QUERY();
+      qToAdd->setDescription("AtomOr");
+
       for (token = tokens.begin(); token != tokens.end(); ++token) {
         auto iter = queries.find(*token);
         if (iter == queries.end()) {
@@ -687,7 +693,7 @@ void addRecursiveQueries(
           break;
         }
         auto *tqp = new RecursiveStructureQuery(new ROMol(*(iter->second)));
-        boost::shared_ptr<RecursiveStructureQuery> nq(tqp);
+        std::shared_ptr<RecursiveStructureQuery> nq(tqp);
         qToAdd->addChild(nq);
       }
     } else {

@@ -142,10 +142,10 @@ class streambuf : public std::basic_streambuf<char> {
         py_seek(getattr(python_file_obj, "seek", bp::object())),
         py_tell(getattr(python_file_obj, "tell", bp::object())),
         buffer_size(buffer_size_ != 0 ? buffer_size_ : default_buffer_size),
-        write_buffer(0),
+        write_buffer(nullptr),
         pos_of_read_buffer_end_in_py_file(0),
         pos_of_write_buffer_end_in_py_file(buffer_size),
-        farthest_pptr(0) {
+        farthest_pptr(nullptr) {
     TEST_ASSERT(buffer_size != 0);
     /* Some Python file objects (e.g. sys.stdout and sys.stdin)
        have non-functional seek and tell. If so, assign None to
@@ -179,7 +179,7 @@ class streambuf : public std::basic_streambuf<char> {
       farthest_pptr = pptr();
     } else {
       // The first attempt at output will result in a call to overflow
-      setp(0, 0);
+      setp(nullptr, nullptr);
     }
 
     if (py_tell != bp::object()) {
@@ -195,20 +195,20 @@ class streambuf : public std::basic_streambuf<char> {
       : streambuf(python_file_obj, buffer_size_) {
 #if 1
     bp::object io_mod = bp::import("io");
-    CHECK_INVARIANT(io_mod,"module not found");
-    bp::object iobase = io_mod.attr("TextIOBase");;
-    CHECK_INVARIANT(iobase,"base class not found");
-#else 
+    CHECK_INVARIANT(io_mod, "module not found");
+    bp::object iobase = io_mod.attr("TextIOBase");
+    CHECK_INVARIANT(iobase, "base class not found");
+#else
     // using statics to save an undetermined amount of time results in
     // alarming seg faults on windows. so we don't do it. Keep this here
     // for the moment though in case someone manages to figure that out in
-    // the future       
+    // the future
     static bp::object io_mod = bp::object();
     static bp::object iobase = bp::object();
-    if(!io_mod) io_mod = bp::import("io");
-    if(io_mod && !iobase) iobase = io_mod.attr("TextIOBase");
-    CHECK_INVARIANT(io_mod,"module not found");
-    CHECK_INVARIANT(iobase,"base class not found");
+    if (!io_mod) io_mod = bp::import("io");
+    if (io_mod && !iobase) iobase = io_mod.attr("TextIOBase");
+    CHECK_INVARIANT(io_mod, "module not found");
+    CHECK_INVARIANT(iobase, "base class not found");
 #endif
 
     bool isTextMode = PyObject_IsInstance(python_file_obj.ptr(), iobase.ptr());
@@ -259,7 +259,7 @@ class streambuf : public std::basic_streambuf<char> {
     bp::ssize_t py_n_read;
     if (PyBytes_AsStringAndSize(read_buffer.ptr(), &read_buffer_data,
                                 &py_n_read) == -1) {
-      setg(0, 0, 0);
+      setg(nullptr, nullptr, nullptr);
       throw std::invalid_argument(
           "The method 'read' of the Python file object "
           "did not return a string.");
@@ -503,15 +503,8 @@ struct ostream : private streambuf_capsule, streambuf::ostream {
         streambuf::ostream(python_streambuf) {}
 
   ~ostream() noexcept {
-    try {
-      if (this->good()) this->flush();
-    } catch (bp::error_already_set&) {
-      PyErr_Clear();
-      throw std::runtime_error(
-          "Problem closing python ostream.\n"
-          "  Known limitation: the error is unrecoverable. Sorry.\n"
-          "  Suggestion for programmer: add ostream.flush() before"
-          " returning.");
+    if (this->good()) {
+      this->flush();
     }
   }
 };

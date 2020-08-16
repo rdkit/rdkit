@@ -36,7 +36,7 @@
 #include "WHIM.h"
 #include "MolData3Ddescriptors.h"
 
-#include <math.h>
+#include <cmath>
 #include <Eigen/Dense>
 #include <Eigen/SVD>
 

@@ -69,9 +69,20 @@ void convertToBonds(const VECT_INT_VECT &res, VECT_INT_VECT &brings,
 
 namespace FindRings {
 using namespace RDKit;
-int smallestRingsBfs(const ROMol &mol, int root, VECT_INT_VECT &rings,
-                     boost::dynamic_bitset<> &activeBonds,
-                     INT_VECT *forbidden = nullptr);
+
+// An optimization to create a memory workspace that gets reused
+class BFSWorkspace {
+ public:
+  int smallestRingsBfs(const ROMol &mol, int root, VECT_INT_VECT &rings,
+                       boost::dynamic_bitset<> &activeBonds,
+                       INT_VECT *forbidden = nullptr);
+
+ private:
+  INT_VECT d_parents;
+  std::vector<unsigned int> d_depths;
+  INT_VECT d_done;
+};
+
 void trimBonds(unsigned int cand, const ROMol &tMol, INT_SET &changed,
                INT_VECT &atomDegrees, boost::dynamic_bitset<> &activeBonds);
 void storeRingInfo(const ROMol &mol, const INT_VECT &ring) {
@@ -147,6 +158,7 @@ void findSSSRforDupCands(const ROMol &mol, VECT_INT_VECT &res,
                          const RINGINVAR_INT_VECT_MAP &dupD2Cands,
                          INT_VECT &atomDegrees,
                          boost::dynamic_bitset<> activeBonds) {
+  BFSWorkspace bfs_workspace;
   for (const auto &dupD2Cand : dupD2Cands) {
     const INT_VECT &dupCands = dupD2Cand.second;
     if (dupCands.size() > 1) {
@@ -160,13 +172,14 @@ void findSSSRforDupCands(const ROMol &mol, VECT_INT_VECT &res,
         boost::dynamic_bitset<> activeBondsCopy = activeBonds;
         INT_SET changed;
         auto dmci = dupMap.find(dupCand);
+        CHECK_INVARIANT(dmci != dupMap.end(), "duplicate could not be found");
         for (int dni : dmci->second) {
           trimBonds(dni, mol, changed, atomDegreesCopy, activeBondsCopy);
         }
 
         // now find the smallest ring/s around (*dupi)
         VECT_INT_VECT srings;
-        smallestRingsBfs(mol, dupCand, srings, activeBondsCopy);
+        bfs_workspace.smallestRingsBfs(mol, dupCand, srings, activeBondsCopy);
         for (VECT_INT_VECT_CI sri = srings.begin(); sri != srings.end();
              ++sri) {
           if (sri->size() < minSiz) {
@@ -306,13 +319,12 @@ void findRingsD2nodes(const ROMol &tMol, VECT_INT_VECT &res,
                       boost::dynamic_bitset<> &ringAtoms) {
   // place to record any duplicate rings discovered from the current d2 nodes
   RINGINVAR_INT_VECT_MAP dupD2Cands;
-  int cand;
   INT_VECT_CI d2i;
+  INT_SET changed;
 
   INT_INT_VECT_MAP dupMap;
   // here is an example of molecule where the this scheme of finding other node
-  // that
-  // result in duplicates is necessary : C12=CON=C1C(C4)CC3CC2CC4C3
+  // that result in duplicates is necessary : C12=CON=C1C(C4)CC3CC2CC4C3
   // It would help to draw this molecule, and number the atoms but here is what
   // happen
   //  - there are 6 d2 node - 1, 6, 7, 9, 11, 13
@@ -329,15 +341,13 @@ void findRingsD2nodes(const ROMol &tMol, VECT_INT_VECT &res,
   //    in findSSSRforDupCands)
   std::map<int, RINGINVAR_VECT> nodeInvars;
   std::map<int, RINGINVAR_VECT>::const_iterator nici;
-  DOUBLE_VECT_CI ici;
-  for (d2i = d2nodes.begin(); d2i != d2nodes.end(); ++d2i) {
-    cand = (*d2i);
+  BFSWorkspace bfs_workspace;
+  for (auto& cand: d2nodes) {
     // std::cerr<<"    smallest rings bfs: "<<cand<<std::endl;
     VECT_INT_VECT srings;
     // we have to find all non duplicate possible smallest rings for each node
-    smallestRingsBfs(tMol, cand, srings, activeBonds);
-    for (VECT_INT_VECT_CI sri = srings.begin(); sri != srings.end(); ++sri) {
-      const INT_VECT &nring = (*sri);
+    bfs_workspace.smallestRingsBfs(tMol, cand, srings, activeBonds);
+    for (const auto& nring: srings) {
       std::uint32_t invr =
           RingUtils::computeRingInvariant(nring, tMol.getNumAtoms());
       if (invars.find(invr) == invars.end()) {
@@ -362,14 +372,14 @@ void findRingsD2nodes(const ROMol &tMol, VECT_INT_VECT &res,
 
       nodeInvars[cand].push_back(invr);
       // check if this ring is duplicate with something else
-      for (nici = nodeInvars.begin(); nici != nodeInvars.end(); nici++) {
-        if (nici->first != cand) {
-          if (std::find(nici->second.begin(), nici->second.end(), invr) !=
-              nici->second.end()) {
+      for (auto& nici: nodeInvars) {
+        if (nici.first != cand) {
+          if (std::find(nici.second.begin(), nici.second.end(), invr) !=
+              nici.second.end()) {
             // ok we discovered this ring via another node before
             // add that node as duplicate to this node and vice versa
-            dupMap[cand].push_back(nici->first);
-            dupMap[nici->first].push_back(cand);
+            dupMap[cand].push_back(nici.first);
+            dupMap[nici.first].push_back(cand);
           }
         }
       }
@@ -378,17 +388,26 @@ void findRingsD2nodes(const ROMol &tMol, VECT_INT_VECT &res,
 
     // We don't want to trim the bonds connecting cand here - this can disrupt
     // a second small ring. Here is an example SC(C3C1CC(C3)CC(C2S)(O)C1)2S
-    // by trimming the bond connecting to atom #4 , we loose the smallest ring
-    // that
-    // contains atom #7. Issue 134
-    // MolOps::trimBonds(cand, tMol, changed);
+    // by trimming the bond connecting to atom #4, we lose the smallest ring
+    // that contains atom #7. Issue 134
+
+    // But if there were no rings found, trimming isn't dangerous, and can
+    // save wasted time for long chains.
+    if (srings.empty()) {
+      changed = {cand};
+      while (!changed.empty()) {
+        int cand = *(changed.begin());
+        changed.erase(changed.begin());
+        trimBonds(cand, tMol, changed, atomDegrees, activeBonds);
+      }
+    }
   }
 
   // now deal with any d2 nodes that resulted in duplicate rings before trimming
   // their bonds.
   // it is possible that one of these nodes is involved a different small ring,
-  // that is not found
-  // because the first nodes has not be trimmed. Here is an example molecule:
+  // that is not found  because the first nodes has not be trimmed. Here is an
+  // example molecule:
   // CC1=CC=C(C=C1)S(=O)(=O)O[CH]2[CH]3CO[CH](O3)[CH]4OC(C)(C)O[CH]24
   findSSSRforDupCands(tMol, res, invars, dupMap, dupD2Cands, atomDegrees,
                       activeBonds);
@@ -423,7 +442,8 @@ void findRingsD3Node(const ROMol &tMol, VECT_INT_VECT &res,
 
   // first find all smallest possible rings
   VECT_INT_VECT srings;
-  nsmall = smallestRingsBfs(tMol, cand, srings, activeBonds);
+  BFSWorkspace bfs_workspace;
+  nsmall = bfs_workspace.smallestRingsBfs(tMol, cand, srings, activeBonds);
 
   for (VECT_INT_VECT_CI sri = srings.begin(); sri != srings.end(); ++sri) {
     const INT_VECT &nring = (*sri);
@@ -489,7 +509,7 @@ void findRingsD3Node(const ROMol &tMol, VECT_INT_VECT &res,
       VECT_INT_VECT trings;
       INT_VECT forb;
       forb.push_back(f);
-      smallestRingsBfs(tMol, cand, trings, activeBonds, &forb);
+      bfs_workspace.smallestRingsBfs(tMol, cand, trings, activeBonds, &forb);
       for (VECT_INT_VECT_CI sri = trings.begin(); sri != trings.end(); ++sri) {
         const INT_VECT &nring = (*sri);
         std::uint32_t invr =
@@ -530,7 +550,7 @@ void findRingsD3Node(const ROMol &tMol, VECT_INT_VECT &res,
       VECT_INT_VECT trings;
       INT_VECT forb;
       forb.push_back(f2);
-      smallestRingsBfs(tMol, cand, trings, activeBonds, &forb);
+      bfs_workspace.smallestRingsBfs(tMol, cand, trings, activeBonds, &forb);
       for (VECT_INT_VECT_CI sri = trings.begin(); sri != trings.end(); ++sri) {
         const INT_VECT &nring = (*sri);
         std::uint32_t invr =
@@ -545,7 +565,7 @@ void findRingsD3Node(const ROMol &tMol, VECT_INT_VECT &res,
       trings.clear();
       forb.clear();
       forb.push_back(f1);
-      smallestRingsBfs(tMol, cand, trings, activeBonds, &forb);
+      bfs_workspace.smallestRingsBfs(tMol, cand, trings, activeBonds, &forb);
       for (VECT_INT_VECT_CI sri = trings.begin(); sri != trings.end(); ++sri) {
         const INT_VECT &nring = (*sri);
         std::uint32_t invr =
@@ -583,7 +603,7 @@ int greatestComFac(long curfac, long nfac) {
 
 /******************************************************************************
  * SUMMARY:
- *  remove the bond in the molecule that connect to the spcified atom
+ *  remove the bond in the molecule that connect to the specified atom
  *
  * ARGUMENTS:
  *  cand - the node(atom) of interest
@@ -614,6 +634,8 @@ void trimBonds(unsigned int cand, const ROMol &tMol, INT_SET &changed,
   }
 }
 
+
+
 /*******************************************************************************
  * SUMMARY:
  *  this again is a modified version of the BFS algorithm in Figueras paper to
@@ -633,32 +655,33 @@ void trimBonds(unsigned int cand, const ROMol &tMol, INT_SET &changed,
  * RETURNS:
  *  number of smallest rings found
  ***********************************************************************************/
-int smallestRingsBfs(const ROMol &mol, int root, VECT_INT_VECT &rings,
-                     boost::dynamic_bitset<> &activeBonds,
-                     INT_VECT *forbidden) {
+int BFSWorkspace::smallestRingsBfs(const ROMol &mol, int root,
+                                   VECT_INT_VECT &rings,
+                                   boost::dynamic_bitset<> &activeBonds,
+                                   INT_VECT *forbidden) {
   // this function finds the smallest ring with the given root atom.
-  // if multiple smallest rings are found all of them are return
+  // if multiple smallest rings are found all of them are returned
   // if any atoms are specified in the forbidden list, those atoms are avoided.
 
   // FIX: this should be number of atoms in the fragment (if it's required at
   // all, see below)
   const int WHITE = 0, GRAY = 1, BLACK = 2;
-  INT_VECT done(mol.getNumAtoms(), WHITE);
+  d_done.assign(mol.getNumAtoms(), WHITE);
 
   if (forbidden) {
-    for (INT_VECT_CI dci = forbidden->begin(); dci != forbidden->end(); dci++) {
-      done[*dci] = BLACK;
+    for (auto i : *forbidden) {
+      d_done[i] = BLACK;
     }
   }
 
-  // it would be "nicer" to use a map for this, but that ends up being too slow:
-  VECT_INT_VECT atPaths(mol.getNumAtoms());
-  INT_VECT rpath(1, root);
-  atPaths[root] = rpath;
+  d_parents.assign(mol.getNumAtoms(), -1);
+  d_depths.assign(mol.getNumAtoms(), 0);
 
   std::deque<int> bfsq;
   bfsq.push_back(root);
-  int curr = -1;
+
+  INT_VECT ring;
+
   unsigned int curSize = UINT_MAX;
   while (bfsq.size() > 0) {
     if (bfsq.size() >= RingUtils::MAX_BFSQ_SIZE) {
@@ -669,12 +692,15 @@ int smallestRingsBfs(const ROMol &mol, int root, VECT_INT_VECT &rings,
       throw ValueErrorException(msg);
     }
 
-    curr = bfsq.front();
+    const int curr = bfsq.front();
     bfsq.pop_front();
+    d_done[curr] = BLACK;
 
-    done[curr] = BLACK;
-
-    INT_VECT &cpath = atPaths[curr];
+    const unsigned int depth = d_depths[curr] + 1;
+    if (depth > curSize) {
+      // depth is the shortest cycle I _could_ find this round.
+      break;
+    }
 
     ROMol::OEDGE_ITER beg, end;
     boost::tie(beg, end) = mol.getAtomBonds(mol.getAtomWithIdx(curr));
@@ -685,74 +711,57 @@ int smallestRingsBfs(const ROMol &mol, int root, VECT_INT_VECT &rings,
         continue;
       }
       int nbrIdx = bond->getOtherAtomIdx(curr);
-      if ((std::find(cpath.begin(), cpath.end(), nbrIdx) == cpath.end()) &&
-          done[nbrIdx] != BLACK) {
-        // i.e. we are not at a node that is making up the current path
-        // and we are not a node that has been completely explored before
-        // (it has been a curr node before)
+      if (d_done[nbrIdx] == BLACK || d_parents[curr] == nbrIdx) {
+        continue;
+      }
+      if (d_done[nbrIdx] == WHITE) {
+        // we have never been to this node before through via any path
+        d_parents[nbrIdx] = curr;
+        d_done[nbrIdx] = GRAY;
+        d_depths[nbrIdx] = depth;
+        bfsq.push_back(nbrIdx);
+      } else {
+        // we have been here via a different path
+        // there is a potential for ring closure here
+        // stitch together the two paths
 
-        // FIX: can we avoid this find by coloring atoms gray when they go into
-        // the queue and just looking up the colors?
-        if (done[nbrIdx] == WHITE) {
-          // we have never been to this node before through via any path
-          atPaths[nbrIdx] = cpath;
-          atPaths[nbrIdx].push_back(nbrIdx);
-          done[nbrIdx] = GRAY;
-          bfsq.push_back(nbrIdx);
-        }  // end of found a untouched node
-        else {
-          // we have been here via a different path
-          // there is a potential for ring closure here
-          INT_VECT npath = atPaths[nbrIdx];
-          // make sure that the intersections of cpath and npath give exactly one
-          // element and that should be the root element for correct ring
-          // closure
-          int id = -1;
-          unsigned int com = 0;
-          for (INT_VECT_CI ci = cpath.begin(); ci != cpath.end(); ++ci) {
-            if (std::find(npath.begin(), npath.end(), (*ci)) != npath.end()) {
-              com++;
-              id = (*ci);
-              if (id != root) {
-                break;
-              }
-            }
-          }  // end of found stuff in common with neighbor
+        ring = {nbrIdx};
+        // forwards path
+        int parent = d_parents[nbrIdx];
+        while (parent != -1 && parent != root) {
+          ring.push_back(parent);
+          parent = d_parents[parent];
+        }
 
-          if (id == root) {  // we found a ring
-            // make the ring
-            INT_VECT ring = cpath;
+        // backwards path
+        ring.insert(ring.begin(), curr);
+        parent = d_parents[curr];
+        while (parent != -1) {
+          // Is the least common ancestor not the root?
+          if (std::find(ring.begin(), ring.end(), parent) != ring.end()) {
+            ring.clear();
+            break;
+          }
+          ring.insert(ring.begin(), parent);
+          parent = d_parents[parent];
+        }
 
-            // remove the root node and attach the other half of the ring from
-            // npath
-            // reverse this piece so that the ring is traversed correctly
-
-            // FIX: we're probably assured that root is the first node, so we
-            // can
-            //  just pop it from the front
-            npath.erase(std::remove(npath.begin(), npath.end(), root));
-
-#ifndef WIN32
-            ring.insert(ring.end(), npath.rbegin(), npath.rend());
-#else  // I <heart> MSVC++ v6
-            std::reverse(npath.begin(), npath.end());
-            ring.insert(ring.end(), npath.begin(), npath.end());
-#endif
-            if (ring.size() <= curSize) {
-              curSize = rdcast<unsigned int>(ring.size());
-              rings.push_back(ring);
-            } else {
-              // we are done with the smallest rings
-              return rdcast<unsigned int>(rings.size());
-            }
-          }  // end of found a ring
-        }    // end of we have seen this neighbor before
-      }      // end of nbrIdx not part of current path and not a done atom
+        // Found a new small ring including the root.
+        if (ring.size() > 1) {
+          if (ring.size() <= curSize) {
+            curSize = rdcast<unsigned int>(ring.size());
+            rings.push_back(ring);
+          } else {
+            // we are done with the smallest rings
+            return rdcast<unsigned int>(rings.size());
+          }
+        }
+      }
     }        // end of loop over neighbors of current atom
   }          // moving to the next node
-  return rdcast<unsigned int>(
-      rings.size());  // if we are here we should have found everything around
-                      // the node
+
+  // if we are here we should have found everything around the node
+  return rdcast<unsigned int>(rings.size());
 }
 
 bool _atomSearchBFS(const ROMol &tMol, unsigned int startAtomIdx,
@@ -918,8 +927,8 @@ int findSSSR(const ROMol &mol, VECT_INT_VECT &res) {
   VECT_INT_VECT frags;
   INT_VECT curFrag;
   unsigned int nfrags = getMolFrags(mol, frags);
-  for (unsigned int fi = 0; fi < nfrags;
-       fi++) {  // loop over the fragments in a molecule
+  // loop over the fragments in a molecule
+  for (unsigned int fi = 0; fi < nfrags; ++fi) {
     VECT_INT_VECT fragRes;
     curFrag = frags[fi];
 
@@ -928,21 +937,19 @@ int findSSSR(const ROMol &mol, VECT_INT_VECT &res) {
     }
 
     // the following is the list of atoms that are useful in the next round of
-    // trimming
-    // basically atoms that become degree 0 or 1 because of bond removals
+    // trimming basically atoms that become degree 0 or 1 because of bond removals
     // initialized with atoms of degrees 0 and 1
     INT_SET changed;
     int bndcnt_with_zero_order_bonds = 0;
     unsigned int nbnds = 0;
-    for (INT_VECT_CI aidi = curFrag.begin(); aidi != curFrag.end(); aidi++) {
-      int atom_idx = *aidi;
+    for (auto atom_idx: curFrag) {
       bndcnt_with_zero_order_bonds += atomDegreesWithZeroOrderBonds[atom_idx];
 
       int deg = atomDegrees[atom_idx];
 
       nbnds += deg;
       if (deg < 2) {
-        changed.insert((*aidi));
+        changed.insert(atom_idx);
       }
     }
 
@@ -1135,19 +1142,17 @@ int symmetrizeSSSR(ROMol &mol) {
 
 int symmetrizeSSSR(ROMol &mol, VECT_INT_VECT &res) {
   res.clear();
-  res.resize(0);
-  unsigned int nsssr;
   VECT_INT_VECT sssrs;
 
   // FIX: need to set flag here the symmetrization has been done in order to
   // avoid repeating this work
   if (!mol.getRingInfo()->isInitialized()) {
-    nsssr = findSSSR(mol, sssrs);
+    findSSSR(mol, sssrs);
   } else {
     sssrs = mol.getRingInfo()->atomRings();
-    nsssr = rdcast<unsigned int>(sssrs.size());
   }
 
+  res.reserve(sssrs.size());
   for (const auto &r : sssrs) {
     res.emplace_back(r);
   }
@@ -1360,7 +1365,8 @@ void findRingFamilies(const ROMol &mol) {
 }
 #else
 void findRingFamilies(const ROMol &mol) {
-  BOOST_LOG(rdErrorLog)<<"This version of the RDKit was built without URF support"<<std::endl;
+  BOOST_LOG(rdErrorLog)
+      << "This version of the RDKit was built without URF support" << std::endl;
 }
 #endif
 }  // namespace MolOps

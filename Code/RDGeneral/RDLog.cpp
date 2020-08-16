@@ -13,14 +13,16 @@
 #if 1
 #include <iomanip>
 #include <string>
-#include <time.h>
+#include <ctime>
+#include <iostream>
+#include <sstream>
 
-std::shared_ptr<boost::logging::rdLogger> rdAppLog = nullptr;
-std::shared_ptr<boost::logging::rdLogger> rdDebugLog = nullptr;
-std::shared_ptr<boost::logging::rdLogger> rdInfoLog = nullptr;
-std::shared_ptr<boost::logging::rdLogger> rdErrorLog = nullptr;
-std::shared_ptr<boost::logging::rdLogger> rdWarningLog = nullptr;
-std::shared_ptr<boost::logging::rdLogger> rdStatusLog = nullptr;
+RDLogger rdAppLog = nullptr;
+RDLogger rdDebugLog = nullptr;
+RDLogger rdInfoLog = nullptr;
+RDLogger rdErrorLog = nullptr;
+RDLogger rdWarningLog = nullptr;
+RDLogger rdStatusLog = nullptr;
 
 namespace boost {
 namespace logging {
@@ -73,6 +75,44 @@ void disable_logs(const std::string &arg) {
     }
   }
 };
+
+bool is_log_enabled(RDLogger log) {
+  if (log && log.get() != nullptr) {
+    if( log->df_enabled ) {
+      return true;
+    }
+  }
+  return false;
+}
+
+void get_log_status(std::ostream &ss,
+		    const std::string &name,
+		    RDLogger log) {
+  ss << name << ":";
+  if (log && log.get() != nullptr) {
+    if( log->df_enabled ) {
+      ss << "enabled";
+    }
+    else {
+      ss << "disabled";
+    }
+  } else {
+    ss << "unitialized";
+  }
+}
+  
+std::string log_status() {
+  std::stringstream ss;
+  get_log_status(ss, "rdApp.debug", rdDebugLog);
+  ss << std::endl;
+  get_log_status(ss, "rdApp.info", rdInfoLog);
+  ss << std::endl;
+  get_log_status(ss, "rdApp.warning", rdWarningLog);
+  ss << std::endl;
+  get_log_status(ss, "rdApp.error", rdErrorLog);
+  return ss.str();
+}
+  
 }  // namespace logging
 }  // namespace boost
 
@@ -155,5 +195,26 @@ void InitLogs() {
   // start with the debug log disabled:
   logging::disable_logs("rdApp.debug");
 };
+
 }  // namespace RDLog
 #endif
+
+namespace RDLog {
+  
+BlockLogs::BlockLogs() {
+  auto logs = {rdDebugLog, rdInfoLog, rdWarningLog, rdErrorLog};
+  for(auto log: logs) {
+    if(log != nullptr && is_log_enabled(log))
+      log->df_enabled = false;
+    logs_to_reenable.push_back(log);
+  }
+}
+
+BlockLogs::~BlockLogs() {
+  for(auto log : logs_to_reenable) {
+    if(log != nullptr && log.get() != nullptr)
+      log->df_enabled = true;
+  }
+}
+
+}

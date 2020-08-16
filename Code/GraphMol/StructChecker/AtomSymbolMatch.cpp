@@ -12,8 +12,8 @@
 #define _GNU_SOURCE
 #endif
 
-#include <string.h>
-#include <ctype.h>
+#include <cstring>
+#include <cctype>
 #include "Pattern.h"
 
 namespace RDKit {

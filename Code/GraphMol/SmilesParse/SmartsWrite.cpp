@@ -137,6 +137,10 @@ std::string getAtomSmartsSimple(const QueryAtom *qatom,
     res << "D";
     hasVal = true;
     needParen = true;
+  } else if (descrip == "AtomNonHydrogenDegree") {
+    res << "d";
+    hasVal = true;
+    needParen = true;
   } else if (descrip == "AtomTotalDegree") {
     res << "X";
     hasVal = true;
@@ -371,6 +375,8 @@ std::string getBondSmartsSimple(const Bond *bond,
     res += "@";
   } else if (descrip == "SingleOrAromaticBond") {
     // don't need to do anything here... :-)
+  } else if (descrip == "SingleOrDoubleOrAromaticBond") {
+    res += "-,=,:";
   } else if (descrip == "BondDir") {
     int val = bquery->getVal();
     if (val == static_cast<int>(Bond::ENDDOWNRIGHT)) {
@@ -422,30 +428,20 @@ std::string _recurseGetSmarts(const QueryAtom *qatom,
   //   NOT (a AND b) = ( NOT (a)) AND ( NOT (b))
   //   NOT (a OR b) = ( NOT (a)) OR ( NOT (b))
 
-  std::string descrip = node->getDescription();
-  std::string res = "";
+  auto descrip = node->getDescription();
 
-  const QueryAtom::QUERYATOM_QUERY *child1;
-  const QueryAtom::QUERYATOM_QUERY *child2;
   unsigned int child1Features = 0;
   unsigned int child2Features = 0;
-  QueryAtom::QUERYATOM_QUERY::CHILD_VECT_CI chi;
-  chi = node->beginChildren();
-  child1 = chi->get();
-  chi++;
-  child2 = chi->get();
-  chi++;
-  // OK we should be at the end of vector by now - since we can have only two
-  // children,
-  // well - at least in this case
-  CHECK_INVARIANT(chi == node->endChildren(), "Too many children on the query");
+  auto chi = node->beginChildren();
+  auto child1 = chi->get();
+  auto dsc1 = child1->getDescription();
 
-  std::string dsc1, dsc2;
-  dsc1 = child1->getDescription();
-  dsc2 = child2->getDescription();
-  std::string csmarts1, csmarts2;
+  ++chi;
+  CHECK_INVARIANT(chi != node->endChildren(),
+                  "Not enough children on the query");
 
   bool needParen;
+  std::string csmarts1;
   // deal with the first child
   if (dsc1 == "RecursiveStructure") {
     csmarts1 = getRecursiveStructureQuerySmarts(child1);
@@ -463,24 +459,6 @@ std::string _recurseGetSmarts(const QueryAtom *qatom,
     bool nneg = (negate) ^ (child1->getNegation());
     csmarts1 = _recurseGetSmarts(qatom, child1, nneg, child1Features);
   }
-
-  // deal with the second child
-  if (dsc2 == "RecursiveStructure") {
-    csmarts2 = getRecursiveStructureQuerySmarts(child2);
-    features |= static_cast<unsigned int>(QueryBoolFeatures::HAS_RECURSION);
-  } else if ((dsc2 != "AtomOr") && (dsc2 != "AtomAnd")) {
-    // child 2 is a simple node
-    const auto *tchild = static_cast<const ATOM_EQUALS_QUERY *>(child2);
-    csmarts2 = getAtomSmartsSimple(qatom, tchild, needParen);
-    bool nneg = (negate) ^ (tchild->getNegation());
-    if (nneg) {
-      csmarts2 = "!" + csmarts2;
-    }
-  } else {
-    bool nneg = (negate) ^ (child2->getNegation());
-    csmarts2 = _recurseGetSmarts(qatom, child2, nneg, child2Features);
-  }
-
   // ok if we have a negation and we have an OR , we have to change to
   // an AND since we propagated the negation
   // i.e NOT (A OR B) = (NOT (A)) AND (NOT(B))
@@ -491,9 +469,34 @@ std::string _recurseGetSmarts(const QueryAtom *qatom,
       descrip = "AtomOr";
     }
   }
+  auto res = csmarts1;
+  while (chi != node->endChildren()) {
+    auto child2 = chi->get();
+    ++chi;
 
-  res += _combineChildSmarts(csmarts1, child1Features, csmarts2, child2Features,
-                             descrip, features);
+    auto dsc2 = child2->getDescription();
+    std::string csmarts2;
+
+    // deal with the next child
+    if (dsc2 == "RecursiveStructure") {
+      csmarts2 = getRecursiveStructureQuerySmarts(child2);
+      features |= static_cast<unsigned int>(QueryBoolFeatures::HAS_RECURSION);
+    } else if ((dsc2 != "AtomOr") && (dsc2 != "AtomAnd")) {
+      // child 2 is a simple node
+      const auto *tchild = static_cast<const ATOM_EQUALS_QUERY *>(child2);
+      csmarts2 = getAtomSmartsSimple(qatom, tchild, needParen);
+      bool nneg = (negate) ^ (tchild->getNegation());
+      if (nneg) {
+        csmarts2 = "!" + csmarts2;
+      }
+    } else {
+      bool nneg = (negate) ^ (child2->getNegation());
+      csmarts2 = _recurseGetSmarts(qatom, child2, nneg, child2Features);
+    }
+
+    res = _combineChildSmarts(res, child1Features, csmarts2, child2Features,
+                              descrip, features);
+  }
   return res;
 }
 

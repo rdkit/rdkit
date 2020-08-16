@@ -30,6 +30,8 @@
 #include <boost/lexical_cast.hpp>
 #include <RDGeneral/BoostEndInclude.h>
 #include <GraphMol/RDKitBase.h>
+#include <GraphMol/QueryOps.h>
+
 #include "SmilesParseOps.h"
 #include <RDGeneral/RDLog.h>
 #include <RDGeneral/Invariant.h>
@@ -231,7 +233,7 @@ RWMol *toMol(const std::string &inp,
     if (func == smarts_parse) {
       nm = "SMARTS";
     }
-    BOOST_LOG(rdErrorLog) << nm << " Parse Error: " << e.message()
+    BOOST_LOG(rdErrorLog) << nm << " Parse Error: " << e.what()
                           << " for input: '" << origInp << "'" << std::endl;
     res = nullptr;
   }
@@ -259,7 +261,7 @@ Atom *toAtom(const std::string &inp, int func(const std::string &, Atom *&)) {
     if (func != smiles_atom_parse) {
       nm = "SMARTS";
     }
-    BOOST_LOG(rdErrorLog) << nm << " Parse Error: " << e.message()
+    BOOST_LOG(rdErrorLog) << nm << " Parse Error: " << e.what()
                           << " for input: '" << inp << "'" << std::endl;
     res = nullptr;
   }
@@ -279,7 +281,7 @@ Bond *toBond(const std::string &inp, int func(const std::string &, Bond *&)) {
     if (func != smiles_bond_parse) {
       nm = "SMARTS";
     }
-    BOOST_LOG(rdErrorLog) << nm << " Parse Error: " << e.message()
+    BOOST_LOG(rdErrorLog) << nm << " Parse Error: " << e.what()
                           << " for input: '" << inp << "'" << std::endl;
     res = nullptr;
   }
@@ -366,8 +368,9 @@ RWMol *SmilesToMol(const std::string &smiles,
     std::string::const_iterator pos = cxPart.cbegin();
     try {
       SmilesParseOps::parseCXExtensions(*res, cxPart, pos);
-    } catch (const SmilesParseException &e) {
+    } catch (const SmilesParseException &) {
       if (params.strictCXSMILES) {
+        delete res;
         throw;
       }
     }
@@ -394,6 +397,16 @@ RWMol *SmilesToMol(const std::string &smiles,
     bool cleanIt = true, force = true, flagPossible = true;
     MolOps::assignStereochemistry(*res, cleanIt, force, flagPossible);
   }
+  if (res && res->hasProp(common_properties::_NeedsQueryScan)) {
+    res->clearProp(common_properties::_NeedsQueryScan);
+    if (!params.sanitize) {
+      // we know that this can be the ring bond query, do ring perception if we
+      // need to:
+      MolOps::fastFindRings(*res);
+    }
+    QueryOps::completeMolQueries(res, 0xDEADBEEF);
+  }
+
   if (res && !name.empty()) {
     res->setProp(common_properties::_Name, name);
   }

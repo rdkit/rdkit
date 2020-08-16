@@ -1,6 +1,6 @@
 //
 //
-//  Copyright (C) 2002-2018 Greg Landrum and T5 Informatics GmbH
+//  Copyright (C) 2018-2020 Greg Landrum and T5 Informatics GmbH
 //
 //   @@ All Rights Reserved @@
 //  This file is part of the RDKit.
@@ -71,6 +71,7 @@ RWMol buildSampleMolecule() {
   //// First SubstanceGroup ////
   {
     SubstanceGroup sg(&mol, "MUL");
+    sg.setProp("index", 1u);
 
     sg.setProp("SUBTYPE", "BLO");
     sg.setProp("MULT", "n");
@@ -110,6 +111,7 @@ RWMol buildSampleMolecule() {
   //// Second SubstanceGroup ////
   {
     SubstanceGroup sg(&mol, "SUP");
+    sg.setProp("index", 2u);
 
     // Add some atoms and bonds
     for (unsigned i = 3; i < 6; ++i) {
@@ -131,6 +133,7 @@ RWMol buildSampleMolecule() {
   //// Third SubstanceGroup ////
   {
     SubstanceGroup sg(&mol, "DAT");
+    sg.setProp("index", 3u);
 
     sg.setProp("FIELDNAME", "SAMPLE FIELD NAME");  // 30 char max
     // Field Type is ignored in V3000
@@ -148,9 +151,9 @@ RWMol buildSampleMolecule() {
     addSubstanceGroup(mol, sg);
   }
 
-  // Set a parent with higher index
+  // We have to set a parent with a lower index in V2000 mol blocks:
   const auto &sgroups = getSubstanceGroups(mol);
-  sgroups.at(0).setProp<unsigned int>("PARENT", 2);
+  sgroups.at(1).setProp<unsigned int>("PARENT", 1u);
 
   return mol;
 }
@@ -192,10 +195,10 @@ void checkSampleMolecule(const RWMol &mol) {
     TEST_ASSERT(sg.getProp<unsigned int>("COMPNO") == 7);
     TEST_ASSERT(sg.getProp<std::string>("ESTATE") == "E");
 
-    std::vector<std::array<std::array<double, 3>, 3>> brackets_reference = {{
+    std::vector<std::array<std::array<double, 3>, 3>> brackets_reference = {
         {{{{1., 3., 0.}}, {{5., 7., 0.}}, {{0., 0., 0.}}}},
         {{{{2., 4., 0.}}, {{6., 8., 0.}}, {{0., 0., 0.}}}},
-    }};
+    };
     testBrackets(sg.getBrackets(), brackets_reference);
 
     auto cstates = sg.getCStates();
@@ -214,8 +217,6 @@ void checkSampleMolecule(const RWMol &mol) {
     TEST_ASSERT(ap[0].id == "XX");
 
     TEST_ASSERT(sg.getProp<std::string>("BRKTYP") == "PAREN");
-
-    TEST_ASSERT(sg.getProp<unsigned int>("PARENT") == 2u);
   }
 
   {
@@ -255,6 +256,7 @@ void checkSampleMolecule(const RWMol &mol) {
     TEST_ASSERT(ap[0].aIdx == atoms[0]);
     TEST_ASSERT(ap[0].lvIdx == -1);
     TEST_ASSERT(ap[0].id == "YY");
+    TEST_ASSERT(sg.getProp<unsigned int>("PARENT") == 1u);
   }
 
   {
@@ -324,10 +326,10 @@ void testParseSubstanceGroups(const std::string &rdbase) {
         {};  // No bonds defined in this mol
     testIdxVector(sgroup.getBonds(), bonds_reference);
 
-    std::vector<std::array<std::array<double, 3>, 3>> brackets_reference = {{
+    std::vector<std::array<std::array<double, 3>, 3>> brackets_reference = {
         {{{{-3.9679, -0.1670, 0.}}, {{-3.9679, 2.1705, 0.}}, {{0., 0., 0.}}}},
         {{{{-0.7244, 2.1705, 0.}}, {{-0.7244, -0.1670, 0.}}, {{0., 0., 0.}}}},
-    }};
+    };
     testBrackets(sgroup.getBrackets(), brackets_reference);
   }
 
@@ -456,21 +458,32 @@ void testModifyMol() {
       << std::endl;
 
   auto mol = buildSampleMolecule();
+
+  // make sure that calling clear() on the molecule actually clears out
+  // SubstanceGroups
+  //  This was GitHub #3167
+  {
+    auto tmol = mol;
+    TEST_ASSERT(getSubstanceGroups(tmol).size() == 3);
+    tmol.clear();
+    TEST_ASSERT(getSubstanceGroups(tmol).size() == 0);
+  }
+
   auto mol_copy = mol;
 
   const auto &sgroups = getSubstanceGroups(mol);
   TEST_ASSERT(sgroups.size() == 3);
 
-  {  // insertion will drop SubstanceGroups
+  {  // insertion does not affect SubstanceGroups
     const auto &sgroups = getSubstanceGroups(mol_copy);
     TEST_ASSERT(sgroups.size() == 3);
 
     mol_copy.insertMol(mol);
 
-    TEST_ASSERT(sgroups.size() == 0);
+    TEST_ASSERT(sgroups.size() == 3);
   }
   {
-    // adding an atom will drop SubstanceGroups
+    // adding an atom does not affect SubstanceGroups
     mol_copy = mol;
 
     const auto &sgroups = getSubstanceGroups(mol_copy);
@@ -478,10 +491,10 @@ void testModifyMol() {
 
     mol_copy.addAtom();
 
-    TEST_ASSERT(sgroups.size() == 0);
+    TEST_ASSERT(sgroups.size() == 3);
   }
   {
-    // replacing an atom will drop SubstanceGroups
+    // replacing an atom will drop SubstanceGroups that include that atom
     mol_copy = mol;
 
     const auto &sgroups = getSubstanceGroups(mol_copy);
@@ -490,10 +503,10 @@ void testModifyMol() {
     auto new_atom = Atom();
     mol_copy.replaceAtom(1, &new_atom);
 
-    TEST_ASSERT(sgroups.size() == 0);
+    TEST_ASSERT(sgroups.size() == 1);
   }
   {
-    // replacing a new bond will drop SubstanceGroups
+    // replacing a bond will drop SubstanceGroups that include that bond
     mol_copy = mol;
 
     const auto &sgroups = getSubstanceGroups(mol_copy);
@@ -502,10 +515,10 @@ void testModifyMol() {
     auto new_bond = Bond(Bond::SINGLE);
     mol_copy.replaceBond(1, &new_bond);
 
-    TEST_ASSERT(sgroups.size() == 0);
+    TEST_ASSERT(sgroups.size() == 1);
   }
   {
-    // removing an atom will drop SubstanceGroups
+    // removing an atom will drop SubstanceGroups that include that atom
     mol_copy = mol;
 
     const auto &sgroups = getSubstanceGroups(mol_copy);
@@ -513,10 +526,11 @@ void testModifyMol() {
 
     mol_copy.removeAtom(1);
 
-    TEST_ASSERT(sgroups.size() == 0);
+    TEST_ASSERT(sgroups.size() == 1);
   }
   {
-    // creating a new bond between existing atoms will drop SubstanceGroups
+    // creating a new bond between existing atoms does not affect
+    // SubstanceGroups
     mol_copy = mol;
 
     const auto &sgroups = getSubstanceGroups(mol_copy);
@@ -524,10 +538,10 @@ void testModifyMol() {
 
     mol_copy.addBond(1, 3, Bond::SINGLE);
 
-    TEST_ASSERT(sgroups.size() == 0);
+    TEST_ASSERT(sgroups.size() == 3);
   }
   {
-    // removing a bond will drop SubstanceGroups
+    // removing a bond will drop SubstanceGroups that involve that bond
     mol_copy = mol;
 
     const auto &sgroups = getSubstanceGroups(mol_copy);
@@ -535,10 +549,10 @@ void testModifyMol() {
 
     mol_copy.removeBond(1, 2);
 
-    TEST_ASSERT(sgroups.size() == 0);
+    TEST_ASSERT(sgroups.size() == 1);
   }
   {
-    // creating a partial bond will drop SubstanceGroups
+    // creating a partial bond does not effect SubstanceGroups
     mol_copy = mol;
 
     const auto &sgroups = getSubstanceGroups(mol_copy);
@@ -546,7 +560,7 @@ void testModifyMol() {
 
     auto *b = mol_copy.createPartialBond(1, Bond::SINGLE);
 
-    TEST_ASSERT(sgroups.size() == 0);
+    TEST_ASSERT(sgroups.size() == 3);
     delete b;
   }
 }
@@ -573,6 +587,448 @@ void testSubstanceGroupChanges(const std::string &rdbase) {
   TEST_ASSERT(sgroups2[0].getProp<std::string>("FIELDNAME") == "pKa");
 }
 
+void testSubstanceGroupsAndRemoveAtoms(const std::string &rdbase) {
+  BOOST_LOG(rdInfoLog)
+      << " ----------> Test impact of removeAtom on SubstanceGroups"
+      << std::endl;
+  {
+    std::string fName =
+        rdbase + "/Code/GraphMol/test_data/sgroups_and_remove_atoms_1.mol";
+    std::unique_ptr<RWMol> mol(MolFileToMol(fName));
+    TEST_ASSERT(mol);
+    TEST_ASSERT(mol->getNumAtoms() == 13);
+    {
+      auto &sgroups = getSubstanceGroups(*mol);
+      TEST_ASSERT(sgroups.size() == 1);
+      TEST_ASSERT(sgroups[0].getAtoms().size() == 3);
+      std::vector<unsigned int> tgt{10, 11, 12};
+      TEST_ASSERT(sgroups[0].getAtoms() == tgt);
+      TEST_ASSERT(sgroups[0].getBonds().size() == 1);
+      tgt = {9};
+      TEST_ASSERT(sgroups[0].getBonds() == tgt);
+      auto aps = sgroups[0].getAttachPoints();
+      TEST_ASSERT(aps.size() == 1);
+      TEST_ASSERT(aps[0].aIdx == 11);
+      TEST_ASSERT(aps[0].lvIdx == 3);
+    }
+    // remove an atom that's not in an S-group
+    mol->removeAtom(9);
+    TEST_ASSERT(mol->getNumAtoms() == 12);
+    {
+      auto &sgroups = getSubstanceGroups(*mol);
+      TEST_ASSERT(sgroups.size() == 1);
+      TEST_ASSERT(sgroups[0].getAtoms().size() == 3);
+      std::vector<unsigned int> tgt{9, 10, 11};
+      TEST_ASSERT(sgroups[0].getAtoms() == tgt);
+      TEST_ASSERT(sgroups[0].getBonds().size() == 1);
+      tgt = {8};
+      TEST_ASSERT(sgroups[0].getBonds() == tgt);
+      auto aps = sgroups[0].getAttachPoints();
+      TEST_ASSERT(aps.size() == 1);
+      TEST_ASSERT(aps[0].aIdx == 10);
+      TEST_ASSERT(aps[0].lvIdx == 3);
+    }
+    // remove an atom that is in an S-group
+    mol->removeAtom(10);
+    TEST_ASSERT(mol->getNumAtoms() == 11);
+    {
+      auto &sgroups = getSubstanceGroups(*mol);
+      TEST_ASSERT(sgroups.empty());
+    }
+  }
+  {
+    // example with hs to be removed
+    std::string fName =
+        rdbase + "/Code/GraphMol/test_data/sgroups_and_remove_atoms_2.mol";
+    std::unique_ptr<RWMol> mol(MolFileToMol(fName));
+    TEST_ASSERT(mol);
+    TEST_ASSERT(mol->getNumAtoms() == 14);
+    {
+      auto &sgroups = getSubstanceGroups(*mol);
+      TEST_ASSERT(sgroups.size() == 2);
+      TEST_ASSERT(sgroups[0].getAtoms().size() == 3);
+      std::vector<unsigned int> tgt{9, 11, 12};
+      TEST_ASSERT(sgroups[0].getAtoms() == tgt);
+      TEST_ASSERT(sgroups[0].getBonds().size() == 1);
+      TEST_ASSERT(sgroups[0].getBonds()[0] == 9);
+
+      TEST_ASSERT(sgroups[1].getAtoms().size() == 2);
+      tgt = {10, 13};
+      TEST_ASSERT(sgroups[1].getAtoms() == tgt);
+      TEST_ASSERT(sgroups[1].getBonds().size() == 1);
+      TEST_ASSERT(sgroups[1].getBonds()[0] == 10);
+    }
+    // remove an atom in the first S group, make sure the second one survives
+    mol->removeAtom(11);
+    TEST_ASSERT(mol->getNumAtoms() == 13);
+    {
+      auto &sgroups = getSubstanceGroups(*mol);
+      TEST_ASSERT(sgroups.size() == 1);
+      TEST_ASSERT(sgroups[0].getAtoms().size() == 2);
+      std::vector<unsigned int> tgt{10, 12};
+      TEST_ASSERT(sgroups[0].getAtoms() == tgt);
+      TEST_ASSERT(sgroups[0].getBonds().size() == 1);
+      TEST_ASSERT(sgroups[0].getBonds()[0] == 9);
+    }
+  }
+  {  // example with CSTATE
+    std::string fName =
+        rdbase + "/Code/GraphMol/test_data/sgroups_and_remove_atoms_3.mol";
+    std::unique_ptr<RWMol> mol(MolFileToMol(fName));
+    TEST_ASSERT(mol);
+    TEST_ASSERT(mol->getNumAtoms() == 14);
+    {
+      auto &sgroups = getSubstanceGroups(*mol);
+      TEST_ASSERT(sgroups.size() == 1);
+      TEST_ASSERT(sgroups[0].getAtoms().size() == 7);
+      std::vector<unsigned int> tgt{7, 8, 9, 10, 11, 12, 13};
+      TEST_ASSERT(sgroups[0].getAtoms() == tgt);
+      TEST_ASSERT(sgroups[0].getBonds().size() == 1);
+      tgt = {8};
+      TEST_ASSERT(sgroups[0].getBonds() == tgt);
+      auto cstates = sgroups[0].getCStates();
+      TEST_ASSERT(cstates.size() == 1);
+      TEST_ASSERT(cstates[0].bondIdx == 8);
+    }
+    // remove an atom that's not in an S-group
+    mol->removeAtom(1);
+    TEST_ASSERT(mol->getNumAtoms() == 13);
+    {
+      auto &sgroups = getSubstanceGroups(*mol);
+      TEST_ASSERT(sgroups.size() == 1);
+      TEST_ASSERT(sgroups[0].getAtoms().size() == 7);
+      std::vector<unsigned int> tgt{6, 7, 8, 9, 10, 11, 12};
+      TEST_ASSERT(sgroups[0].getAtoms() == tgt);
+      TEST_ASSERT(sgroups[0].getBonds().size() == 1);
+      tgt = {6};
+      TEST_ASSERT(sgroups[0].getBonds() == tgt);
+      auto cstates = sgroups[0].getCStates();
+      TEST_ASSERT(cstates.size() == 1);
+      TEST_ASSERT(cstates[0].bondIdx == 6);
+    }
+    // remove an atom that is in an S-group
+    mol->removeAtom(10);
+    TEST_ASSERT(mol->getNumAtoms() == 12);
+    {
+      auto &sgroups = getSubstanceGroups(*mol);
+      TEST_ASSERT(sgroups.empty());
+    }
+  }
+  {  // example with PATOMS
+    std::string fName =
+        rdbase + "/Code/GraphMol/test_data/sgroups_and_remove_atoms_4.mol";
+    std::unique_ptr<RWMol> mol(MolFileToMol(fName));
+    TEST_ASSERT(mol);
+    TEST_ASSERT(mol->getNumAtoms() == 9);
+    {
+      auto &sgroups = getSubstanceGroups(*mol);
+      TEST_ASSERT(sgroups.size() == 1);
+      TEST_ASSERT(sgroups[0].getAtoms().size() == 6);
+      std::vector<unsigned int> tgt{2, 3, 5, 6, 7, 8};
+      TEST_ASSERT(sgroups[0].getAtoms() == tgt);
+      TEST_ASSERT(sgroups[0].getBonds().size() == 2);
+      tgt = {7, 6};
+      TEST_ASSERT(sgroups[0].getBonds() == tgt);
+      TEST_ASSERT(sgroups[0].getParentAtoms().size() == 3);
+      tgt = {2, 3, 5};
+      TEST_ASSERT(sgroups[0].getParentAtoms() == tgt);
+    }
+    // remove an atom that's not in an S-group
+    mol->removeAtom(0u);
+    TEST_ASSERT(mol->getNumAtoms() == 8);
+    {
+      auto &sgroups = getSubstanceGroups(*mol);
+      TEST_ASSERT(sgroups.size() == 1);
+      TEST_ASSERT(sgroups[0].getAtoms().size() == 6);
+      std::vector<unsigned int> tgt{1, 2, 4, 5, 6, 7};
+      TEST_ASSERT(sgroups[0].getAtoms() == tgt);
+      TEST_ASSERT(sgroups[0].getBonds().size() == 2);
+      tgt = {6, 5};
+      TEST_ASSERT(sgroups[0].getBonds() == tgt);
+      TEST_ASSERT(sgroups[0].getParentAtoms().size() == 3);
+      tgt = {1, 2, 4};
+      TEST_ASSERT(sgroups[0].getParentAtoms() == tgt);
+    }
+    // remove an atom that is in an S-group
+    mol->removeAtom(7);
+    TEST_ASSERT(mol->getNumAtoms() == 7);
+    {
+      auto &sgroups = getSubstanceGroups(*mol);
+      TEST_ASSERT(sgroups.empty());
+    }
+  }
+
+  {  // example with parent
+    std::string fName =
+        rdbase + "/Code/GraphMol/test_data/sgroups_and_remove_atoms_5.mol";
+    std::unique_ptr<RWMol> mol(MolFileToMol(fName));
+    TEST_ASSERT(mol);
+    TEST_ASSERT(mol->getNumAtoms() == 18);
+    {
+      auto &sgroups = getSubstanceGroups(*mol);
+      TEST_ASSERT(sgroups.size() == 3);
+      TEST_ASSERT(sgroups[0].hasProp("index"))
+      TEST_ASSERT(sgroups[0].getProp<unsigned int>("index") == 1);
+      TEST_ASSERT(sgroups[0].getAtoms().size() == 3);
+      std::vector<unsigned int> tgt{3, 2, 7};
+      TEST_ASSERT(sgroups[0].getAtoms() == tgt);
+      TEST_ASSERT(sgroups[0].getBonds().size() == 2);
+      tgt = {1, 8};
+      TEST_ASSERT(sgroups[0].getBonds() == tgt);
+
+      TEST_ASSERT(sgroups[1].hasProp("index"))
+      TEST_ASSERT(sgroups[1].getProp<unsigned int>("index") == 2);
+      TEST_ASSERT(sgroups[1].getAtoms().size() == 6);
+      tgt = {5, 4, 10, 15, 16, 17};
+      TEST_ASSERT(sgroups[1].getAtoms() == tgt);
+      TEST_ASSERT(sgroups[1].getBonds().size() == 2);
+      tgt = {8, 16};
+      TEST_ASSERT(sgroups[1].getBonds() == tgt);
+      TEST_ASSERT(sgroups[1].hasProp("PARENT"))
+      TEST_ASSERT(sgroups[1].getProp<unsigned int>("PARENT") == 1);
+    }
+    // remove an atom that's not in an S-group
+    mol->removeAtom(0u);
+    TEST_ASSERT(mol->getNumAtoms() == 17);
+    {
+      auto &sgroups = getSubstanceGroups(*mol);
+      TEST_ASSERT(sgroups.size() == 3);
+      TEST_ASSERT(sgroups[0].getAtoms().size() == 3);
+      std::vector<unsigned int> tgt{2, 1, 7};
+    }
+    // remove an atom that is in a parent S-group
+    mol->removeAtom(1);
+    TEST_ASSERT(mol->getNumAtoms() == 16);
+    {
+      auto &sgroups = getSubstanceGroups(*mol);
+      TEST_ASSERT(sgroups.size() == 1);
+      TEST_ASSERT(sgroups[0].getAtoms().size() == 4);
+      TEST_ASSERT(sgroups[0].hasProp("index"))
+      TEST_ASSERT(sgroups[0].getProp<unsigned int>("index") == 3);
+    }
+  }
+
+  {  // example with sgroup hierarchy
+    std::string fName =
+        rdbase + "/Code/GraphMol/test_data/sgroups_and_remove_atoms_6.mol";
+    std::unique_ptr<RWMol> mol(MolFileToMol(fName));
+    TEST_ASSERT(mol);
+    TEST_ASSERT(mol->getNumAtoms() == 13);
+    {
+      auto &sgroups = getSubstanceGroups(*mol);
+      TEST_ASSERT(sgroups.size() == 3);
+      TEST_ASSERT(sgroups[0].hasProp("index"))
+      TEST_ASSERT(sgroups[0].getProp<unsigned int>("index") == 1);
+      TEST_ASSERT(sgroups[0].getAtoms().size() == 3);
+      std::vector<unsigned int> tgt{3, 2, 7};
+      TEST_ASSERT(sgroups[0].getAtoms() == tgt);
+      TEST_ASSERT(sgroups[0].getBonds().size() == 2);
+      tgt = {1, 8};
+      TEST_ASSERT(sgroups[0].getBonds() == tgt);
+
+      TEST_ASSERT(sgroups[1].hasProp("index"))
+      TEST_ASSERT(sgroups[1].getProp<unsigned int>("index") == 2);
+      TEST_ASSERT(sgroups[1].getAtoms().size() == 3);
+      tgt = {5, 4, 10};
+      TEST_ASSERT(sgroups[1].getAtoms() == tgt);
+      TEST_ASSERT(sgroups[1].getBonds().size() == 2);
+      tgt = {8, 11};
+      TEST_ASSERT(sgroups[1].getBonds() == tgt);
+      TEST_ASSERT(sgroups[1].hasProp("PARENT"))
+      TEST_ASSERT(sgroups[1].getProp<unsigned int>("PARENT") == 1);
+
+      TEST_ASSERT(sgroups[2].hasProp("index"))
+      TEST_ASSERT(sgroups[2].getProp<unsigned int>("index") == 3);
+      TEST_ASSERT(sgroups[2].getAtoms().size() == 2);
+      tgt = {9, 8};
+      TEST_ASSERT(sgroups[2].getAtoms() == tgt);
+      TEST_ASSERT(sgroups[2].getBonds().size() == 2);
+      tgt = {5, 10};
+      TEST_ASSERT(sgroups[2].getBonds() == tgt);
+      TEST_ASSERT(sgroups[2].hasProp("PARENT"))
+      TEST_ASSERT(sgroups[2].getProp<unsigned int>("PARENT") == 2);
+    }
+    // remove an atom that's not in an S-group
+    mol->removeAtom(0u);
+    TEST_ASSERT(mol->getNumAtoms() == 12);
+    {
+      auto &sgroups = getSubstanceGroups(*mol);
+      TEST_ASSERT(sgroups.size() == 3);
+      TEST_ASSERT(sgroups[0].getAtoms().size() == 3);
+      std::vector<unsigned int> tgt{2, 1, 6};
+    }
+    // remove an atom that is in an S-group at the top of the hierarchy
+    mol->removeAtom(1);
+    TEST_ASSERT(mol->getNumAtoms() == 11);
+    {
+      auto &sgroups = getSubstanceGroups(*mol);
+      TEST_ASSERT(sgroups.size() == 0);
+    }
+  }
+
+  {  // example with things in odd order and large id values
+     // NOTE that biovia draw doesn't parse this file properly
+    std::string fName =
+        rdbase + "/Code/GraphMol/test_data/sgroups_and_remove_atoms_7.mol";
+    std::unique_ptr<RWMol> mol(MolFileToMol(fName));
+    TEST_ASSERT(mol);
+    TEST_ASSERT(mol->getNumAtoms() == 18);
+    {
+      auto &sgroups = getSubstanceGroups(*mol);
+      TEST_ASSERT(sgroups.size() == 3);
+      TEST_ASSERT(sgroups[2].hasProp("index"))
+      TEST_ASSERT(sgroups[2].getProp<unsigned int>("index") == 20);
+      TEST_ASSERT(sgroups[2].getAtoms().size() == 6);
+      std::vector<unsigned int> tgt{5, 4, 10, 15, 16, 17};
+      TEST_ASSERT(sgroups[2].getAtoms() == tgt);
+      TEST_ASSERT(sgroups[2].getBonds().size() == 2);
+      tgt = {8, 16};
+      TEST_ASSERT(sgroups[2].getBonds() == tgt);
+      TEST_ASSERT(sgroups[2].getParentAtoms().size() == 3);
+      tgt = {5, 4, 10};
+      TEST_ASSERT(sgroups[2].getParentAtoms() == tgt);
+      TEST_ASSERT(sgroups[2].hasProp("PARENT"))
+      TEST_ASSERT(sgroups[2].getProp<unsigned int>("PARENT") == 10);
+
+      TEST_ASSERT(sgroups[1].hasProp("index"))
+      TEST_ASSERT(sgroups[1].getProp<unsigned int>("index") == 10);
+      TEST_ASSERT(sgroups[1].getAtoms().size() == 3);
+      tgt = {3, 2, 7};
+      TEST_ASSERT(sgroups[1].getAtoms() == tgt);
+      TEST_ASSERT(sgroups[1].getBonds().size() == 2);
+      tgt = {1, 8};
+      TEST_ASSERT(sgroups[1].getBonds() == tgt);
+      TEST_ASSERT(sgroups[1].getParentAtoms().size() == 0);
+    }
+  }
+  {  // copolymer example with PARENT
+    std::string fName =
+        rdbase + "/Code/GraphMol/test_data/sgroups_copolymer.mol";
+    std::unique_ptr<RWMol> mol(MolFileToMol(fName));
+    TEST_ASSERT(mol);
+    TEST_ASSERT(mol->getNumAtoms() == 9);
+    {
+      auto &sgroups = getSubstanceGroups(*mol);
+      TEST_ASSERT(sgroups.size() == 3);
+      TEST_ASSERT(sgroups[2].hasProp("index"))
+      TEST_ASSERT(sgroups[2].getProp<unsigned int>("index") == 10);
+      TEST_ASSERT(sgroups[2].getAtoms().size() == 5);
+      std::vector<unsigned int> tgt{3, 2, 4, 5, 7};
+      TEST_ASSERT(sgroups[2].getAtoms() == tgt);
+      TEST_ASSERT(sgroups[2].getBonds().size() == 2);
+      tgt = {1, 5};
+      TEST_ASSERT(sgroups[2].getBonds() == tgt);
+      TEST_ASSERT(!sgroups[2].hasProp("PARENT"))
+
+      TEST_ASSERT(sgroups[0].hasProp("index"))
+      TEST_ASSERT(sgroups[0].getProp<unsigned int>("index") == 2);
+      TEST_ASSERT(sgroups[0].getAtoms().size() == 2);
+      tgt = {3, 2};
+      TEST_ASSERT(sgroups[0].getAtoms() == tgt);
+      TEST_ASSERT(sgroups[0].getBonds().size() == 2);
+      tgt = {1, 3};
+      TEST_ASSERT(sgroups[0].getBonds() == tgt);
+      TEST_ASSERT(sgroups[0].hasProp("PARENT"))
+      TEST_ASSERT(sgroups[0].getProp<unsigned int>("PARENT") == 10);
+    }
+    // remove an atom that's not in an S-group
+    mol->removeAtom(0u);
+    TEST_ASSERT(mol->getNumAtoms() == 8);
+    {
+      auto &sgroups = getSubstanceGroups(*mol);
+      TEST_ASSERT(sgroups.size() == 3);
+      TEST_ASSERT(sgroups[2].hasProp("index"))
+      TEST_ASSERT(sgroups[2].getProp<unsigned int>("index") == 10);
+      TEST_ASSERT(sgroups[2].getAtoms().size() == 5);
+      std::vector<unsigned int> tgt{2, 1, 3, 4, 6};
+      TEST_ASSERT(sgroups[2].getAtoms() == tgt);
+      TEST_ASSERT(sgroups[2].getBonds().size() == 2);
+      tgt = {0, 4};
+      TEST_ASSERT(sgroups[2].getBonds() == tgt);
+      TEST_ASSERT(!sgroups[2].hasProp("PARENT"))
+
+      TEST_ASSERT(sgroups[0].hasProp("index"))
+      TEST_ASSERT(sgroups[0].getProp<unsigned int>("index") == 2);
+      TEST_ASSERT(sgroups[0].getAtoms().size() == 2);
+      tgt = {2, 1};
+      TEST_ASSERT(sgroups[0].getAtoms() == tgt);
+      TEST_ASSERT(sgroups[0].getBonds().size() == 2);
+      tgt = {0, 2};
+      TEST_ASSERT(sgroups[0].getBonds() == tgt);
+      TEST_ASSERT(sgroups[0].hasProp("PARENT"))
+      TEST_ASSERT(sgroups[0].getProp<unsigned int>("PARENT") == 10);
+    }
+    // remove an atom from parent, make sure children also get deleted
+    mol->removeAtom(1u);
+    TEST_ASSERT(mol->getNumAtoms() == 7);
+    {
+      auto &sgroups = getSubstanceGroups(*mol);
+      TEST_ASSERT(sgroups.size() == 0);
+    }
+  }
+  {  // copolymer example 2 with PARENT, same as the previous but with a
+     // different ordering in the input file
+    std::string fName =
+        rdbase + "/Code/GraphMol/test_data/sgroups_copolymer2.mol";
+    std::unique_ptr<RWMol> mol(MolFileToMol(fName));
+    TEST_ASSERT(mol);
+    TEST_ASSERT(mol->getNumAtoms() == 9);
+    {
+      auto &sgroups = getSubstanceGroups(*mol);
+      TEST_ASSERT(sgroups.size() == 3);
+      TEST_ASSERT(sgroups[2].hasProp("index"))
+      TEST_ASSERT(sgroups[2].getProp<unsigned int>("index") == 10);
+      TEST_ASSERT(sgroups[2].getAtoms().size() == 5);
+      std::vector<unsigned int> tgt{3, 2, 4, 5, 7};
+      TEST_ASSERT(sgroups[2].getAtoms() == tgt);
+      TEST_ASSERT(sgroups[2].getBonds().size() == 2);
+      tgt = {1, 5};
+      TEST_ASSERT(sgroups[2].getBonds() == tgt);
+      TEST_ASSERT(!sgroups[2].hasProp("PARENT"))
+
+      TEST_ASSERT(sgroups[0].hasProp("index"))
+      TEST_ASSERT(sgroups[0].getProp<unsigned int>("index") == 2);
+      TEST_ASSERT(sgroups[0].getAtoms().size() == 2);
+      tgt = {3, 2};
+      TEST_ASSERT(sgroups[0].getAtoms() == tgt);
+      TEST_ASSERT(sgroups[0].getBonds().size() == 2);
+      tgt = {1, 3};
+      TEST_ASSERT(sgroups[0].getBonds() == tgt);
+      TEST_ASSERT(sgroups[0].hasProp("PARENT"))
+      TEST_ASSERT(sgroups[0].getProp<unsigned int>("PARENT") == 10);
+    }
+  }
+}
+
+void testSubstanceGroupsAndRemoveHs(const std::string &rdbase) {
+  BOOST_LOG(rdInfoLog) << " ----------> Test impact of SubstanceGroups on "
+                          "removeHs (GitHub #3169)"
+                       << std::endl;
+  {
+    std::string fName =
+        rdbase + "/Code/GraphMol/test_data/sgroups_and_remove_Hs_1.mol";
+    std::unique_ptr<RWMol> mol(MolFileToMol(fName));
+    TEST_ASSERT(mol);
+    TEST_ASSERT(mol->getNumAtoms() == 8);
+    TEST_ASSERT(getSubstanceGroups(*mol).size() == 1);
+
+    {
+      RWMol mol_copy = *mol;
+      MolOps::RemoveHsParameters ps;
+      ps.removeInSGroups = true;
+      MolOps::removeHs(mol_copy, ps);
+      TEST_ASSERT(mol_copy.getNumAtoms() == 6);
+      TEST_ASSERT(getSubstanceGroups(mol_copy).size() == 0);
+    }
+    {  // check removeAllHs() too
+      RWMol mol_copy = *mol;
+      MolOps::removeAllHs(mol_copy);
+      TEST_ASSERT(mol_copy.getNumAtoms() == 6);
+      TEST_ASSERT(getSubstanceGroups(mol_copy).size() == 0);
+    }
+  }
+}
+
 int main() {
   std::string rdbase = std::string(getenv("RDBASE"));
   if (rdbase.empty()) {
@@ -581,7 +1037,7 @@ int main() {
   }
 
   RDLog::InitLogs();
-
+#if 1
   testCreateSubstanceGroups();
   testParseSubstanceGroups(rdbase);
   testSubstanceGroupsRoundTrip(rdbase, false);  // test V2000
@@ -589,5 +1045,9 @@ int main() {
   testPickleSubstanceGroups();
   testModifyMol();
   testSubstanceGroupChanges(rdbase);
+#endif
+  testSubstanceGroupsAndRemoveAtoms(rdbase);
+  testSubstanceGroupsAndRemoveHs(rdbase);
+
   return 0;
 }

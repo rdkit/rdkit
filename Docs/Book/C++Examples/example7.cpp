@@ -9,18 +9,18 @@
 
 int main( int argc , char **argv ) {
 
-  RDKit::ROMOL_SPTR mol( RDKit::SmilesToMol( "OC1C2C1CC2" ) );
+  std::shared_ptr<RDKit::ROMol> mol( RDKit::SmilesToMol( "OC1C2C1CC2" ) );
 
   if( !mol->getRingInfo()->isInitialized() ) {
     RDKit::MolOps::findSSSR( *mol );
   }
-  for( unsigned int i = 0 , is = mol->getNumAtoms() ; i < is ; ++i ) {
+  for( unsigned int i = 0; i < mol->getNumAtoms() ; ++i ) {
     const RDKit::Atom *atom = mol->getAtomWithIdx( i );
     std::cout << mol->getRingInfo()->numAtomRings( atom->getIdx() ) << " ";
   }
   std::cout << std::endl;
 
-  for( unsigned int i = 0 , is = mol->getNumBonds() ; i < is ; ++i ) {
+  for( unsigned int i = 0; i < mol->getNumBonds() ; ++i ) {
     const RDKit::Bond *bond = mol->getBondWithIdx( i );
     std::cout << mol->getRingInfo()->numBondRings( bond->getIdx() ) << " ";
   }
@@ -45,9 +45,9 @@ int main( int argc , char **argv ) {
   RDKit::VECT_INT_VECT rings;
   RDKit::MolOps::symmetrizeSSSR( *mol , rings );
   std::cout << "Number of symmetric SSSR rings : " << rings.size() << std::endl;
-  for( RDKit::VECT_INT_VECT::iterator it1 = rings.begin() , it1_end = rings.end() ; it1 != it1_end ; ++it1 ) {
-    for( RDKit::INT_VECT::iterator it2 = it1->begin() , it2_end = it1->end() ; it2 != it2_end ; ++it2 ) {
-      std::cout << *it2 << " ";
+  for( auto ring: rings ) {
+    for( auto ringat: ring ) {
+      std::cout << ringat << " ";
     }
     std::cout << std::endl;
   }

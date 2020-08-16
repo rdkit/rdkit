@@ -18,7 +18,8 @@
 
 #include <iostream>
 #include <sstream>
-#include "MolDraw2D.h"
+#include <GraphMol/MolDraw2D/MolDraw2D.h>
+#include <GraphMol/MolDraw2D/DrawTextSVG.h>
 
 // ****************************************************************************
 
@@ -28,14 +29,18 @@ class RDKIT_MOLDRAW2D_EXPORT MolDraw2DSVG : public MolDraw2D {
  public:
   // initialize to use a particular ostream
   MolDraw2DSVG(int width, int height, std::ostream &os, int panelWidth = -1,
-               int panelHeight = -1)
+               int panelHeight = -1, bool noFreetype = false)
       : MolDraw2D(width, height, panelWidth, panelHeight), d_os(os) {
     initDrawing();
+    initTextDrawer(noFreetype);
   };
+
   // initialize to use the internal stringstream
-  MolDraw2DSVG(int width, int height, int panelWidth = -1, int panelHeight = -1)
+  MolDraw2DSVG(int width, int height, int panelWidth = -1,
+               int panelHeight = -1, bool noFreetype = false)
       : MolDraw2D(width, height, panelWidth, panelHeight), d_os(d_ss) {
     initDrawing();
+    initTextDrawer(noFreetype);
   };
 
   void setColour(const DrawColour &col) override;
@@ -46,13 +51,6 @@ class RDKIT_MOLDRAW2D_EXPORT MolDraw2DSVG : public MolDraw2D {
   void finishDrawing();
 
   void drawLine(const Point2D &cds1, const Point2D &cds2) override;
-  void drawString(const std::string &str, const Point2D &cds) override;
-  void drawString(const std::string &str, const Point2D &cds,
-                  AlignType align) override;
-  void alignString(const std::string &str,
-                   const std::string &align_char, int align,
-                   const Point2D &in_cds, Point2D &out_cds) const override;
-
   void drawPolygon(const std::vector<Point2D> &cds) override;
   void drawEllipse(const Point2D &cds1, const Point2D &cds2) override;
   void clearDrawing() override;
@@ -61,11 +59,6 @@ class RDKIT_MOLDRAW2D_EXPORT MolDraw2DSVG : public MolDraw2D {
                     const DrawColour &col1, const DrawColour &col2,
                     unsigned int nSegments = 16,
                     double vertOffset = 0.05) override;
-
-  // using the current scale, work out the size of the label in molecule
-  // coordinates
-  void getStringSize(const std::string &label, double &label_width,
-                     double &label_height) const override;
 
   // this only makes sense if the object was initialized without a stream
   std::string getDrawingText() const { return d_ss.str(); };
@@ -88,8 +81,8 @@ class RDKIT_MOLDRAW2D_EXPORT MolDraw2DSVG : public MolDraw2D {
   std::stringstream d_ss;
   std::string d_activeClass;
 
-  void drawChar(char c, const Point2D &cds) override;
-  void initDrawing();
+  void initDrawing() override;
+  void initTextDrawer(bool noFreetype) override;
 
  protected:
   void drawBond(
@@ -99,6 +92,11 @@ class RDKIT_MOLDRAW2D_EXPORT MolDraw2DSVG : public MolDraw2D {
       const std::vector<int> *highlight_bonds = nullptr,
       const std::map<int, DrawColour> *highlight_bond_map = nullptr,
       const std::vector<std::pair<DrawColour, DrawColour> > *bond_colours = nullptr) override;
+  void drawAtomLabel(int atom_num, const DrawColour &draw_colour) override;
+  void drawAnnotation(const std::string &note,
+                      const std::shared_ptr<StringRect> &note_rect) override;
+
 };
+
 }  // namespace RDKit
 #endif  // MOLDRAW2DSVG_H

@@ -24,14 +24,21 @@ ScaffoldNetwork::ScaffoldNetwork *createNetworkHelper(
     const ScaffoldNetwork::ScaffoldNetworkParams &params) {
   auto mols = pythonObjectToVect<ROMOL_SPTR>(pmols);
   ScaffoldNetwork::ScaffoldNetwork *res = new ScaffoldNetwork::ScaffoldNetwork;
-  updateScaffoldNetwork(*mols, *res, params);
+  {
+    NOGIL gil;
+
+    updateScaffoldNetwork(*mols, *res, params);
+  }
   return res;
 }
 void updateNetworkHelper(python::object pmols,
                          ScaffoldNetwork::ScaffoldNetwork &net,
                          const ScaffoldNetwork::ScaffoldNetworkParams &params) {
   auto mols = pythonObjectToVect<ROMOL_SPTR>(pmols);
-  updateScaffoldNetwork(*mols, net, params);
+  {
+    NOGIL gil;
+    updateScaffoldNetwork(*mols, net, params);
+  }
 }
 
 ScaffoldNetwork::ScaffoldNetworkParams *getBRICSParams() {
@@ -73,7 +80,7 @@ BOOST_PYTHON_MODULE(rdScaffoldNetwork) {
       boost::python::type_id<std::vector<ScaffoldNetwork::NetworkEdge>>();
   const boost::python::converter::registration *reg =
       boost::python::converter::registry::query(info);
-  if (reg == NULL || (*reg).m_to_python == NULL) {
+  if (reg == nullptr || (*reg).m_to_python == nullptr) {
     python::class_<std::vector<ScaffoldNetwork::NetworkEdge>>(
         "NetworkEdge_VECT")
         .def(python::vector_indexing_suite<
@@ -123,7 +130,11 @@ BOOST_PYTHON_MODULE(rdScaffoldNetwork) {
       .def_readwrite(
           "flattenKeepLargest",
           &ScaffoldNetwork::ScaffoldNetworkParams::flattenKeepLargest,
-          "keep only the largest fragment when doing flattening");
+          "keep only the largest fragment when doing flattening")
+      .def_readwrite("collectMolCounts",
+                     &ScaffoldNetwork::ScaffoldNetworkParams::collectMolCounts,
+                     "keep track of the number of molecules each scaffold was "
+                     "found in");
 
   python::enum_<ScaffoldNetwork::EdgeType>("EdgeType")
       .value("Fragment", ScaffoldNetwork::EdgeType::Fragment)
@@ -154,6 +165,8 @@ BOOST_PYTHON_MODULE(rdScaffoldNetwork) {
       .def_readonly("counts", &ScaffoldNetwork::ScaffoldNetwork::counts,
                     "the number of times each node was encountered while "
                     "building the network.")
+      .def_readonly("molCounts", &ScaffoldNetwork::ScaffoldNetwork::molCounts,
+                    "the number of moleclues each node was found in.")
       .def_readonly("edges", &ScaffoldNetwork::ScaffoldNetwork::edges,
                     "the sequence of network edges");
 

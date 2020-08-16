@@ -107,6 +107,7 @@ const std::string molStereoCare = "molStereoCare";
 const std::string molRxnComponent = "molRxnComponent";
 const std::string molRxnRole = "molRxnRole";
 const std::string molTotValence = "molTotValence";
+const std::string molFileLinkNodes = "molLinkNodes";
 const std::string numArom = "numArom";
 const std::string origNoImplicit = "origNoImplicit";
 const std::string ringMembership = "ringMembership";
@@ -121,6 +122,9 @@ const std::string molAtomClass = "molClass";
 const std::string molAtomSeqId = "molSeqid";
 const std::string molRxnExactChange = "molRxnExachg";
 const std::string molReactStatus = "molReactStatus";
+
+const std::string atomNote = "atomNote";
+const std::string bondNote = "bondNote";
 
 }  // namespace common_properties
 

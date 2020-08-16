@@ -31,6 +31,7 @@
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 //
 
+#include <GraphMol/QueryOps.h>
 #include <GraphMol/ChemReactions/Reaction.h>
 #include <GraphMol/ChemReactions/ReactionParser.h>
 #include <GraphMol/FileParsers/FileParsers.h>
@@ -109,7 +110,7 @@ void ParseV2000RxnBlock(std::istream &inStream, unsigned int &line,
     } catch (FileParseException &e) {
       std::ostringstream errout;
       errout << "Cannot parse reactant " << i << ". The error was:\n\t"
-             << e.message();
+             << e.what();
       throw ChemicalReactionParserException(errout.str());
     }
     if (!react) {
@@ -132,7 +133,7 @@ void ParseV2000RxnBlock(std::istream &inStream, unsigned int &line,
     } catch (FileParseException &e) {
       std::ostringstream errout;
       errout << "Cannot parse product " << i << ". The error was:\n\t"
-             << e.message();
+             << e.what();
       throw ChemicalReactionParserException(errout.str());
     }
     if (!prod) {
@@ -156,7 +157,7 @@ void ParseV2000RxnBlock(std::istream &inStream, unsigned int &line,
     } catch (FileParseException &e) {
       std::ostringstream errout;
       errout << "Cannot parse agent " << i << ". The error was:\n\t"
-             << e.message();
+             << e.what();
       throw ChemicalReactionParserException(errout.str());
     }
     rxn->addAgentTemplate(ROMOL_SPTR(agent));
@@ -215,7 +216,7 @@ void ParseV3000RxnBlock(std::istream &inStream, unsigned int &line,
     } catch (FileParseException &e) {
       std::ostringstream errout;
       errout << "Cannot parse reactant " << i << ". The error was:\n\t"
-             << e.message();
+             << e.what();
       delete react;
       throw ChemicalReactionParserException(errout.str());
     }
@@ -253,7 +254,7 @@ void ParseV3000RxnBlock(std::istream &inStream, unsigned int &line,
     } catch (FileParseException &e) {
       std::ostringstream errout;
       errout << "Cannot parse product " << i << ". The error was:\n\t"
-             << e.message();
+             << e.what();
       delete prod;
       throw ChemicalReactionParserException(errout.str());
     }
@@ -290,7 +291,7 @@ void ParseV3000RxnBlock(std::istream &inStream, unsigned int &line,
     } catch (FileParseException &e) {
       std::ostringstream errout;
       errout << "Cannot parse agent " << i << ". The error was:\n\t"
-             << e.message();
+             << e.what();
       delete agent;
       throw ChemicalReactionParserException(errout.str());
     }
@@ -345,8 +346,7 @@ ChemicalReaction *RxnDataStreamToChemicalReaction(std::istream &inStream,
     // to write the mol block, we need ring information:
     for (ROMol::AtomIterator atomIt = (*iter)->beginAtoms();
          atomIt != (*iter)->endAtoms(); ++atomIt) {
-      FileParserUtils::replaceAtomWithQueryAtom((RWMol *)iter->get(),
-                                                (*atomIt));
+      QueryOps::replaceAtomWithQueryAtom((RWMol *)iter->get(), (*atomIt));
     }
   }
   for (MOL_SPTR_VECT::const_iterator iter = res->beginProductTemplates();
@@ -354,8 +354,7 @@ ChemicalReaction *RxnDataStreamToChemicalReaction(std::istream &inStream,
     // to write the mol block, we need ring information:
     for (ROMol::AtomIterator atomIt = (*iter)->beginAtoms();
          atomIt != (*iter)->endAtoms(); ++atomIt) {
-      FileParserUtils::replaceAtomWithQueryAtom((RWMol *)iter->get(),
-                                                (*atomIt));
+      QueryOps::replaceAtomWithQueryAtom((RWMol *)iter->get(), (*atomIt));
     }
   }
   updateProductsStereochem(res);

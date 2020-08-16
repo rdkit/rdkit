@@ -146,72 +146,6 @@ class StereoBondEndCap {
     return {{}, swapStereo};
   }
 };
-
-const Atom *findHighestCIPNeighbor(const Atom *atom, const Atom *skipAtom) {
-  PRECONDITION(atom, "bad atom");
-
-  unsigned bestCipRank = 0;
-  const Atom *bestCipRankedAtom = nullptr;
-  const auto &mol = atom->getOwningMol();
-
-  for (const auto &index :
-       boost::make_iterator_range(mol.getAtomNeighbors(atom))) {
-    const auto neighbor = mol[index];
-    if (neighbor == skipAtom) {
-      continue;
-    }
-    unsigned cip = 0;
-    if (!neighbor->getPropIfPresent(common_properties::_CIPRank, cip)) {
-      // If at least one of the atoms doesn't have a CIP rank, the highest rank
-      // does not make sense, so return a nullptr.
-      return nullptr;
-    } else if (cip > bestCipRank || bestCipRankedAtom == nullptr) {
-      bestCipRank = cip;
-      bestCipRankedAtom = neighbor;
-    } else if (cip == bestCipRank) {
-      // This also doesn't make sense if there is a tie (if that's possible).
-      // We still keep the best CIP rank in case something better comes around
-      // (also not sure if that's possible).
-      BOOST_LOG(rdWarningLog)
-          << "Warning: duplicate CIP ranks found in findHighestCIPNeighbor()"
-          << std::endl;
-      bestCipRankedAtom = nullptr;
-    }
-  }
-  return bestCipRankedAtom;
-}
-
-INT_VECT findStereoAtoms(const Bond *bond) {
-  PRECONDITION(bond, "bad bond");
-  PRECONDITION(bond->hasOwningMol(), "no mol");
-  PRECONDITION(bond->getBondType() == Bond::DOUBLE, "not double bond");
-  PRECONDITION(bond->getStereo() > Bond::BondStereo::STEREOANY,
-               "no defined stereo");
-
-  if (!bond->getStereoAtoms().empty()) {
-    return bond->getStereoAtoms();
-  }
-  if (bond->getStereo() == Bond::BondStereo::STEREOE ||
-      bond->getStereo() == Bond::BondStereo::STEREOZ) {
-    const Atom *startStereoAtom =
-        findHighestCIPNeighbor(bond->getBeginAtom(), bond->getEndAtom());
-    const Atom *endStereoAtom =
-        findHighestCIPNeighbor(bond->getEndAtom(), bond->getBeginAtom());
-
-    if (startStereoAtom == nullptr || endStereoAtom == nullptr) {
-      return {};
-    }
-
-    int startStereoAtomIdx = static_cast<int>(startStereoAtom->getIdx());
-    int endStereoAtomIdx = static_cast<int>(endStereoAtom->getIdx());
-
-    return {startStereoAtomIdx, endStereoAtomIdx};
-  } else {
-    BOOST_LOG(rdWarningLog) << "Unable to assign stereo atoms for bond "
-                            << bond->getIdx() << std::endl;
-    return {};
-  }
-}
 }  // namespace
 
 bool getReactantMatches(const MOL_SPTR_VECT &reactants,
@@ -552,7 +486,7 @@ void forwardReactantBondStereo(ReactantProductAtomMapping *mapping, Bond *pBond,
 
   const Atom *rStart = rBond->getBeginAtom();
   const Atom *rEnd = rBond->getEndAtom();
-  const auto rStereoAtoms = findStereoAtoms(rBond);
+  const auto rStereoAtoms = Chirality::findStereoAtoms(rBond);
   if (rStereoAtoms.size() != 2) {
     BOOST_LOG(rdWarningLog)
         << "WARNING: neither stereo atoms nor CIP codes found for double bond. "
@@ -631,23 +565,29 @@ void forwardReactantBondStereo(ReactantProductAtomMapping *mapping, Bond *pBond,
   unsigned pEndAnchorIdx =
       reactProdMapAnchorIdx(pBond->getEndAtom(), pEndAnchorCandidates.first);
 
-  pBond->setStereoAtoms(pStartAnchorIdx, pEndAnchorIdx);
-
-  bool flipStereo =
-      (pStartAnchorCandidates.second + pEndAnchorCandidates.second) % 2;
-
-  if (rBond->getStereo() == Bond::BondStereo::STEREOCIS ||
-      rBond->getStereo() == Bond::BondStereo::STEREOZ) {
-    if (flipStereo) {
-      pBond->setStereo(Bond::BondStereo::STEREOTRANS);
-    } else {
-      pBond->setStereo(Bond::BondStereo::STEREOCIS);
-    }
+  const ROMol &m=pBond->getOwningMol();
+  if (m.getBondBetweenAtoms(pBond->getBeginAtomIdx(), pStartAnchorIdx) == nullptr ||
+      m.getBondBetweenAtoms(pBond->getEndAtomIdx(), pEndAnchorIdx) == nullptr) {
+    BOOST_LOG(rdWarningLog)
+      << "stereo atoms in input cannot be mapped to output (atoms are no longer bonded)\n";
   } else {
-    if (flipStereo) {
-      pBond->setStereo(Bond::BondStereo::STEREOCIS);
+    pBond->setStereoAtoms(pStartAnchorIdx, pEndAnchorIdx);
+    bool flipStereo =
+      (pStartAnchorCandidates.second + pEndAnchorCandidates.second) % 2;
+  
+    if (rBond->getStereo() == Bond::BondStereo::STEREOCIS ||
+	rBond->getStereo() == Bond::BondStereo::STEREOZ) {
+      if (flipStereo) {
+	pBond->setStereo(Bond::BondStereo::STEREOTRANS);
+      } else {
+	pBond->setStereo(Bond::BondStereo::STEREOCIS);
+      }
     } else {
-      pBond->setStereo(Bond::BondStereo::STEREOTRANS);
+      if (flipStereo) {
+	pBond->setStereo(Bond::BondStereo::STEREOCIS);
+      } else {
+	pBond->setStereo(Bond::BondStereo::STEREOTRANS);
+      }
     }
   }
 }
@@ -702,8 +642,8 @@ void updateStereoBonds(RWMOL_SPTR product, const ROMol &reactant,
       Atom *pStart = pBond->getBeginAtom();
       Atom *pEnd = pBond->getEndAtom();
 
-      pStart->calcImplicitValence(true);
-      pEnd->calcImplicitValence(true);
+      pStart->calcImplicitValence(false);
+      pEnd->calcImplicitValence(false);
 
       if (pStart->getTotalDegree() < 3 || pEnd->getTotalDegree() < 3) {
         pBond->setStereo(Bond::BondStereo::STEREONONE);
@@ -1578,15 +1518,15 @@ ROMol *reduceProductToSideChains(const ROMOL_SPTR &product,
         if (!nbr->hasProp(common_properties::reactionMapNum) &&
             nbr->hasProp(common_properties::reactantAtomIdx)) {
           if (nbr->hasProp(WAS_DUMMY)) {
-            bonds_to_product.push_back(RGroup(
+            bonds_to_product.emplace_back(
                 nbr,
                 mol->getBondBetweenAtoms(scaffold_atom->getIdx(), *nbrIdx)
                     ->getBondType(),
-                nbr->getProp<int>(common_properties::reactionMapNum)));
+                nbr->getProp<int>(common_properties::reactionMapNum));
           } else {
-            bonds_to_product.push_back(RGroup(
+            bonds_to_product.emplace_back(
                 nbr, mol->getBondBetweenAtoms(scaffold_atom->getIdx(), *nbrIdx)
-                         ->getBondType()));
+                         ->getBondType());
           }
         }
 

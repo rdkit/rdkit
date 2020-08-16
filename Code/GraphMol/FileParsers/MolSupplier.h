@@ -22,14 +22,14 @@
 #include <GraphMol/ROMol.h>
 #include <RDGeneral/BadFileException.h>
 
-#ifdef RDK_BUILD_COORDGEN_SUPPORT
+#ifdef RDK_BUILD_MAEPARSER_SUPPORT
 namespace schrodinger {
 namespace mae {
 class Reader;
 class Block;
 }  // namespace mae
 }  // namespace schrodinger
-#endif  // RDK_BUILD_COORDGEN_SUPPORT
+#endif  // RDK_BUILD_MAEPARSER_SUPPORT
 
 namespace RDKit {
 RDKIT_FILEPARSERS_EXPORT std::string strip(const std::string &orig);
@@ -126,7 +126,7 @@ class RDKIT_FILEPARSERS_EXPORT ForwardSDMolSupplier : public MolSupplier {
     if (df_owner && dp_inStream) {
       delete dp_inStream;
       df_owner = false;
-      dp_inStream = NULL;
+      dp_inStream = nullptr;
     }
   };
 
@@ -398,7 +398,7 @@ class RDKIT_FILEPARSERS_EXPORT PDBMolSupplier : public MolSupplier {
   bool df_sanitize, df_removeHs, df_proximityBonding;
   unsigned int d_flavor;
 };
-#ifdef RDK_BUILD_COORDGEN_SUPPORT
+#ifdef RDK_BUILD_MAEPARSER_SUPPORT
 //! lazy file parser for MAE files
 class RDKIT_FILEPARSERS_EXPORT MaeMolSupplier : public MolSupplier {
   /**
@@ -435,7 +435,7 @@ class RDKIT_FILEPARSERS_EXPORT MaeMolSupplier : public MolSupplier {
   std::shared_ptr<std::istream> dp_sInStream;
   std::string d_stored_exc;
 };
-#endif  // RDK_BUILD_COORDGEN_SUPPORT
+#endif  // RDK_BUILD_MAEPARSER_SUPPORT
 }  // namespace RDKit
 
 #endif

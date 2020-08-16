@@ -18,11 +18,13 @@
 #include <RDGeneral/types.h>
 #include <GraphMol/ROMol.h>
 #include <GraphMol/Conformer.h>
-#include <math.h>
+#include <cmath>
 #include <GraphMol/MolOps.h>
 #include <GraphMol/Rings.h>
 #include <Geometry/point.h>
 #include <Geometry/Transform2D.h>
+#include <Geometry/Transform3D.h>
+#include <GraphMol/MolTransforms/MolTransforms.h>
 #include <GraphMol/Substruct/SubstructMatch.h>
 #include "EmbeddedFrag.h"
 #include "DepictUtils.h"
@@ -176,7 +178,7 @@ void _shiftCoords(std::list<EmbeddedFrag> &efrags) {
     ++eri;
   }
 }
-}
+}  // namespace DepictorLocal
 
 void computeInitialCoords(RDKit::ROMol &mol,
                           const RDGeom::INT_POINT2D_MAP *coordMap,
@@ -315,7 +317,8 @@ unsigned int compute2DCoords(RDKit::ROMol &mol,
     if (coordMap) {
       params.coordMap = *coordMap;
     }
-    return RDKit::CoordGen::addCoords(mol, &params);
+    unsigned int cid = RDKit::CoordGen::addCoords(mol, &params);
+    return cid;
   };
 #endif
   // storage for pieces of a molecule/s that are embedded in 2D
@@ -566,4 +569,4 @@ void generateDepictionMatching3DStructure(RDKit::ROMol &mol,
   RDDepict::compute2DCoordsMimicDistMat(mol, &dmat, false, true, 0.5, 3, 100,
                                         25, true, forceRDKit);
 }
-}
+}  // namespace RDDepict

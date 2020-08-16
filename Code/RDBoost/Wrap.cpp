@@ -40,7 +40,7 @@ void translate_index_error(IndexErrorException const& e) {
 }
 
 void translate_value_error(ValueErrorException const& e) {
-  throw_value_error(e.message());
+  throw_value_error(e.what());
 }
 
 void translate_key_error(KeyErrorException const& e) {
@@ -57,4 +57,23 @@ void throw_runtime_error(const std::string err) {
 void translate_invariant_error(Invar::Invariant const& e) {
   throw_runtime_error(e.toUserString());
 }
+
+boost::dynamic_bitset<> pythonObjectToDynBitset(const python::object &obj,
+                                                   boost::dynamic_bitset<>::size_type maxV) {
+  boost::dynamic_bitset<> res(maxV);
+  if (obj) {
+    python::stl_input_iterator<boost::dynamic_bitset<>::size_type> beg(obj), end;
+    while (beg != end) {
+      auto v = *beg;
+      if (v >= maxV) {
+        throw_value_error("list element larger than allowed value");
+      }
+      res.set(v);
+      ++beg;
+    }
+  }
+  return res;
+}
+
+
 #endif

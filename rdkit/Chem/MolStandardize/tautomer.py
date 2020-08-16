@@ -9,7 +9,6 @@ This module contains tools for enumerating tautomers and determining a canonical
 :license: MIT, see LICENSE file for more details.
 """
 
-
 import copy
 import logging
 
@@ -31,7 +30,7 @@ class TautomerTransform(object):
     """
 
     BONDMAP = {'-': BondType.SINGLE, '=': BondType.DOUBLE,
-        '#': BondType.TRIPLE, ':': BondType.AROMATIC}
+            '#': BondType.TRIPLE, ':': BondType.AROMATIC}
     CHARGEMAP = {'+': 1, '0': 0, '-': -1}
 
     def __init__(self, name, smarts, bonds=(), charges=(), radicals=()):

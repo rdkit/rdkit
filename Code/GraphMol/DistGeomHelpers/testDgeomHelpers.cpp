@@ -23,7 +23,7 @@
 #include <iostream>
 #include "BoundsMatrixBuilder.h"
 #include "Embedder.h"
-#include <stdlib.h>
+#include <cstdlib>
 #include <GraphMol/FileParsers/MolWriters.h>
 #include <GraphMol/FileParsers/MolSupplier.h>
 #include <GraphMol/ROMol.h>
@@ -32,7 +32,7 @@
 #include <RDGeneral/FileParseException.h>
 #include <ForceField/ForceField.h>
 #include <GraphMol/MolAlign/AlignMolecules.h>
-#include <math.h>
+#include <cmath>
 #include <RDGeneral/Exceptions.h>
 
 #include <boost/tokenizer.hpp>
@@ -574,7 +574,8 @@ void testMultipleConfsExpTors() {
   ROMol *m = SmilesToMol(smi, 0, 1);
   INT_VECT cids = DGeomHelpers::EmbedMultipleConfs(
       *m, 10, 30, 100, true, false, -1, true, 1, -1.0, nullptr, 1e-3, false,
-      true, true, true);
+      true, false, false, false, 5.0, false, 1, false, false);
+
   INT_VECT_CI ci;
   // SDWriter writer("junk.sdf");
   double energy;
@@ -1882,6 +1883,72 @@ void testEmbedParameters() {
     delete ref;
     delete mol;
   }
+  // small ring torsions improvement test
+  {
+    std::string fname = rdbase +
+                        "/Code/GraphMol/DistGeomHelpers/test_data/"
+                        "simple_torsion.smallring.etkdgv3.mol";
+    RWMol *ref = MolFileToMol(fname, true, false);
+    TEST_ASSERT(ref);
+    RWMol *mol = SmilesToMol("C1CCCCC1");
+    TEST_ASSERT(mol);
+    MolOps::addHs(*mol);
+    TEST_ASSERT(ref->getNumAtoms() == mol->getNumAtoms());
+    DGeomHelpers::EmbedParameters params(DGeomHelpers::srETKDGv3);
+    params.randomSeed = 42;
+    TEST_ASSERT(DGeomHelpers::EmbedMolecule(*mol, params) == 0);
+    // std::cerr << MolToMolBlock(*ref) << std::endl;
+    // std::cerr << MolToMolBlock(*mol) << std::endl;
+    // std::cerr << fname << std::endl;
+    compareConfs(ref, mol);
+
+    delete ref;
+    delete mol;
+  }
+  // macrocycles torsions backward compatibility test
+  {
+    std::string fname = rdbase +
+                        "/Code/GraphMol/DistGeomHelpers/test_data/"
+                        "simple_torsion.macrocycle.etkdg.mol";
+    RWMol *ref = MolFileToMol(fname, true, false);
+    TEST_ASSERT(ref);
+    RWMol *mol = SmilesToMol("O=C1NCCCCCCCCC1");
+    TEST_ASSERT(mol);
+    MolOps::addHs(*mol);
+    TEST_ASSERT(ref->getNumAtoms() == mol->getNumAtoms());
+    DGeomHelpers::EmbedParameters params(DGeomHelpers::ETKDG);
+    params.randomSeed = 42;
+    TEST_ASSERT(DGeomHelpers::EmbedMolecule(*mol, params) == 0);
+    // std::cerr << MolToMolBlock(*ref) << std::endl;
+    // std::cerr << MolToMolBlock(*mol) << std::endl;
+    // std::cerr << fname << std::endl;
+    compareConfs(ref, mol);
+
+    delete ref;
+    delete mol;
+  }
+  // macrocycles torsions improvement test
+  {
+    std::string fname = rdbase +
+                        "/Code/GraphMol/DistGeomHelpers/test_data/"
+                        "simple_torsion.macrocycle.etkdgv3.mol";
+    RWMol *ref = MolFileToMol(fname, true, false);
+    TEST_ASSERT(ref);
+    RWMol *mol = SmilesToMol("C1NCCCCCCCCC1");
+    TEST_ASSERT(mol);
+    MolOps::addHs(*mol);
+    TEST_ASSERT(ref->getNumAtoms() == mol->getNumAtoms());
+    DGeomHelpers::EmbedParameters params(DGeomHelpers::ETKDGv3);
+    params.randomSeed = 42;
+    TEST_ASSERT(DGeomHelpers::EmbedMolecule(*mol, params) == 0);
+    // std::cerr << MolToMolBlock(*ref) << std::endl;
+    // std::cerr << MolToMolBlock(*mol) << std::endl;
+    // std::cerr << fname << std::endl;
+    compareConfs(ref, mol);
+
+    delete ref;
+    delete mol;
+  }
 }
 
 void testGithub1227() {
@@ -2199,6 +2266,18 @@ void testDisableFragmentation() {
   }
 }
 
+void testGithub3019() {
+  {  // make sure the mechanics work
+    std::unique_ptr<RWMol> m(SmilesToMol(std::string(2000, 'C')));
+    TEST_ASSERT(m);
+    TEST_ASSERT(m->getNumAtoms() == 2000);
+    DGeomHelpers::EmbedParameters params;
+    params.randomSeed = 0xf00d;
+    int cid = DGeomHelpers::EmbedMolecule(*m, params);
+    TEST_ASSERT(cid >= 0);
+  }
+}
+
 int main() {
   RDLog::InitLogs();
   BOOST_LOG(rdInfoLog)
@@ -2384,7 +2463,6 @@ int main() {
   BOOST_LOG(rdInfoLog) << "\t Github #2246: Use coordMap when starting "
                           "embedding from random coords\n";
   testGithub2246();
-#endif
 
   BOOST_LOG(rdInfoLog) << "\t---------------------------------\n";
   BOOST_LOG(rdInfoLog) << "\t Providing a distance bounds matrix.\n";
@@ -2393,6 +2471,14 @@ int main() {
   BOOST_LOG(rdInfoLog) << "\t---------------------------------\n";
   BOOST_LOG(rdInfoLog) << "\t Disabling fragmentation.\n";
   testDisableFragmentation();
+#endif
+
+#ifdef EXECUTE_LONG_TESTS
+  BOOST_LOG(rdInfoLog) << "\t---------------------------------\n";
+  BOOST_LOG(rdInfoLog)
+      << "\t Github #3019: Seg fault for very large molecules.\n";
+  testGithub3019();
+#endif
 
   BOOST_LOG(rdInfoLog)
       << "*******************************************************\n";

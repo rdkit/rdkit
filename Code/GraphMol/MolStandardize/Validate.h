@@ -40,7 +40,6 @@ class RDKIT_MOLSTANDARDIZE_EXPORT ValidationErrorInfo : public std::exception {
     BOOST_LOG(rdInfoLog) << d_msg << std::endl;
   };
   const char *what() const noexcept override { return d_msg.c_str(); };
-  const char *message() const noexcept { return what(); };
   ~ValidationErrorInfo() noexcept {};
 
  private:
@@ -51,6 +50,9 @@ class RDKIT_MOLSTANDARDIZE_EXPORT ValidationErrorInfo : public std::exception {
 // four different ValidationMethods inherit from.
 class RDKIT_MOLSTANDARDIZE_EXPORT ValidationMethod {
  public:
+  ValidationMethod() = default;
+  virtual ~ValidationMethod() = default;
+
   virtual std::vector<ValidationErrorInfo> validate(
       const ROMol &mol, bool reportAllFailures) const = 0;
 };

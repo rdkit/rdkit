@@ -75,7 +75,7 @@ class RDKIT_SIMDIVPICKERS_EXPORT DistPicker {
 };
 
 namespace {
-class RDKIT_SIMDIVPICKERS_EXPORT distmatFunctor {
+class distmatFunctor {
  public:
   distmatFunctor(const double *distMat) : dp_distMat(distMat){};
   double operator()(unsigned int i, unsigned int j) {

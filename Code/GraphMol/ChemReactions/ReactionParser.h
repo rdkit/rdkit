@@ -50,8 +50,7 @@ class RDKIT_CHEMREACTIONS_EXPORT ChemicalReactionParserException
   explicit ChemicalReactionParserException(const std::string &msg)
       : _msg(msg){};
   //! get the error message
-  const char *what() const noexcept override{ return _msg.c_str(); };
-  const char *message() const noexcept{ return what(); };
+  const char *what() const noexcept override { return _msg.c_str(); };
   ~ChemicalReactionParserException() noexcept {};
 
  private:
@@ -83,7 +82,7 @@ RDKIT_CHEMREACTIONS_EXPORT ChemicalReaction *RxnDataStreamToChemicalReaction(
  */
 RDKIT_CHEMREACTIONS_EXPORT ChemicalReaction *RxnSmartsToChemicalReaction(
     const std::string &text,
-    std::map<std::string, std::string> *replacements = 0,
+    std::map<std::string, std::string> *replacements = nullptr,
     bool useSmiles = false);
 
 //! Parse a ROMol into a ChemicalReaction, RXN role must be set before

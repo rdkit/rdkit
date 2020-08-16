@@ -94,12 +94,11 @@ include_directories(${CMAKE_CURRENT_SOURCE_DIR})
 include_directories(${AVALON_SRC_PATH})
 
 add_definitions(-DRDKIT_AVALONLIB_BUILD)
-rdkit_library(AvalonLib AvalonTools.cpp SHARED LINK_LIBRARIES avalon_clib FileParsers SmilesParse GraphMol DataStructs RDGeometryLib RDGeneral )
+rdkit_library(AvalonLib AvalonTools.cpp SHARED 
+     LINK_LIBRARIES avalon_clib FileParsers SmilesParse GraphMol DataStructs  )
 rdkit_headers(AvalonTools.h DEST GraphMol)
 rdkit_test(testAvalonLib1 test1.cpp
-           LINK_LIBRARIES AvalonLib avalon_clib
-	   SubstructMatch
-	   FileParsers SmilesParse GraphMol DataStructs RDGeometryLib RDGeneral)
+           LINK_LIBRARIES AvalonLib SubstructMatch )
 
 if(RDK_BUILD_PYTHON_WRAPPERS)
 add_subdirectory(Wrap)

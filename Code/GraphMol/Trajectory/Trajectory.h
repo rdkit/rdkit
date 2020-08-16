@@ -29,7 +29,7 @@ class RDKIT_TRAJECTORY_EXPORT Trajectory {
      the Trajectory takes ownership of the SnapshotVect
    */
   Trajectory(unsigned int dimension, unsigned int numPoints,
-             SnapshotVect *snapshotVect = NULL);
+             SnapshotVect *snapshotVect = nullptr);
   /*! \brief Copy constructor
    */
   Trajectory(const Trajectory &other);

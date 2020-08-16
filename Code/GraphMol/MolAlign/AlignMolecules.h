@@ -29,7 +29,6 @@ class RDKIT_MOLALIGN_EXPORT MolAlignException : public std::exception {
   MolAlignException(const std::string msg) : _msg(msg){};
   //! get the error message
   const char *what() const noexcept override { return _msg.c_str(); };
-  const char *message() const noexcept { return what(); };
   ~MolAlignException() noexcept {};
 
  private:
@@ -66,8 +65,8 @@ class RDKIT_MOLALIGN_EXPORT MolAlignException : public std::exception {
 */
 RDKIT_MOLALIGN_EXPORT double getAlignmentTransform(
     const ROMol &prbMol, const ROMol &refMol, RDGeom::Transform3D &trans,
-    int prbCid = -1, int refCid = -1, const MatchVectType *atomMap = 0,
-    const RDNumeric::DoubleVector *weights = 0, bool reflect = false,
+    int prbCid = -1, int refCid = -1, const MatchVectType *atomMap = nullptr,
+    const RDNumeric::DoubleVector *weights = nullptr, bool reflect = false,
     unsigned int maxIters = 50);
 
 //! Optimally (minimum RMSD) align a molecule to another molecule
@@ -99,8 +98,8 @@ RDKIT_MOLALIGN_EXPORT double getAlignmentTransform(
 */
 RDKIT_MOLALIGN_EXPORT double alignMol(
     ROMol &prbMol, const ROMol &refMol, int prbCid = -1, int refCid = -1,
-    const MatchVectType *atomMap = 0,
-    const RDNumeric::DoubleVector *weights = 0, bool reflect = false,
+    const MatchVectType *atomMap = nullptr,
+    const RDNumeric::DoubleVector *weights = nullptr, bool reflect = false,
     unsigned int maxIters = 50);
 
 //! Returns the optimal RMS for aligning two molecules, taking
@@ -132,6 +131,32 @@ RDKIT_MOLALIGN_EXPORT double getBestRMS(
     const std::vector<MatchVectType> &map = std::vector<MatchVectType>(),
     int maxMatches = 1e6);
 
+//! Returns the RMS between two molecules, taking symmetry into account.
+/*!
+  This function will attempt to align all permutations of matching atom
+  orders in both molecules, for some molecules it will lead to 'combinatorial
+  explosion' especially if hydrogens are present.
+
+  \param probeMol   the molecule to be aligned to the reference
+  \param refMol     the reference molecule
+  \param probeId    (optional) probe conformation to use
+  \param refId      (optional) reference conformation to use
+  \param map        (optional) a vector of vectors of pairs of atom IDs
+                    (probe AtomId, ref AtomId) used to compute the alignments.
+                    If not provided, these will be generated using a
+                    substructure search.
+  \param maxMatches (optional) if map is empty, this will be the max number of
+                    matches found in a SubstructMatch().
+  \param weights    (optional) weights for each pair of atom.
+
+  <b>Returns</b>
+  Best RMSD value found
+*/
+RDKIT_MOLALIGN_EXPORT double CalcRMS(
+    ROMol &probeMol, const ROMol &refMol, int prbCid = -1, int refCid = -1,
+    const std::vector<MatchVectType> &map = std::vector<MatchVectType>(),
+    int maxMatches = 1e6, const RDNumeric::DoubleVector *weights = nullptr);
+
 //! Align the conformations of a molecule using a common set of atoms. If
 // the molecules contains queries, then the queries must also match exactly.
 
@@ -149,10 +174,10 @@ RDKIT_MOLALIGN_EXPORT double getBestRMS(
                    conformations
 */
 RDKIT_MOLALIGN_EXPORT void alignMolConformers(
-    ROMol &mol, const std::vector<unsigned int> *atomIds = 0,
-    const std::vector<unsigned int> *confIds = 0,
-    const RDNumeric::DoubleVector *weights = 0, bool reflect = false,
-    unsigned int maxIters = 50, std::vector<double> *RMSlist = 0);
+    ROMol &mol, const std::vector<unsigned int> *atomIds = nullptr,
+    const std::vector<unsigned int> *confIds = nullptr,
+    const RDNumeric::DoubleVector *weights = nullptr, bool reflect = false,
+    unsigned int maxIters = 50, std::vector<double> *RMSlist = nullptr);
 }  // namespace MolAlign
 }  // namespace RDKit
 #endif

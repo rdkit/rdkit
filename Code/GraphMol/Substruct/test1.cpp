@@ -1724,6 +1724,7 @@ void testGithub2570() {
     std::vector<MatchVectType> matches;
     TEST_ASSERT(SubstructMatch(*mol, *query, matches, uniquify,
                                recursionPossible, useChirality));
+    delete query;
   }
   {
     const auto mol = R"([C@H](O)(F)Cl)"_smiles;
@@ -1740,6 +1741,7 @@ void testGithub2570() {
     std::vector<MatchVectType> matches;
     TEST_ASSERT(SubstructMatch(*mol, *query, matches, uniquify,
                                recursionPossible, useChirality));
+    delete query;
   }
   {
     const auto mol = R"([C@](O)(F)(Cl)C)"_smiles;
@@ -1805,6 +1807,7 @@ void testEZVsCisTransMatch() {
     TEST_ASSERT(check.second == SubstructMatch(*mol, *query, match,
                                                recursionPossible,
                                                useChirality));
+    delete query;
   }
   // Symmetrize stereoatoms
   for (const auto &check : checks) {
@@ -1825,6 +1828,7 @@ void testEZVsCisTransMatch() {
     TEST_ASSERT(check.second == SubstructMatch(*mol, *query, match,
                                                recursionPossible,
                                                useChirality));
+    delete query;
   }
   // Flip one stereoatom and the label
   for (const auto &check : checks) {
@@ -1848,6 +1852,7 @@ void testEZVsCisTransMatch() {
     TEST_ASSERT(check.second == SubstructMatch(*mol, *query, match,
                                                recursionPossible,
                                                useChirality));
+    delete query;
   }
 }
 

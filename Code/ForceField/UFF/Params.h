@@ -140,7 +140,7 @@ class RDKIT_FORCEFIELD_EXPORT ParamCollection {
     if (res != d_params.end()) {
       return &((*res).second);
     }
-    return 0;
+    return nullptr;
   }
 
  private:

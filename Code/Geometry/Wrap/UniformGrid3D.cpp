@@ -135,10 +135,18 @@ struct uGrid3D_wrapper {
              "of \n"
              "occupancy\n")
 
-        .def(python::self &= python::self)
-        .def(python::self |= python::self)
         .def(python::self += python::self)
+#ifdef __clang__
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wself-assign-overloaded"
+#endif
+        .def(python::self &=
+             python::self)  // clang warns incorrectly on these constructs
+        .def(python::self |= python::self)
         .def(python::self -= python::self)
+#ifdef __clang__
+#pragma GCC diagnostic pop
+#endif
 
         .def_pickle(RDGeom::ug3d_pickle_suite())
 
@@ -156,7 +164,7 @@ struct uGrid3D_wrapper {
                 "Write the grid to a grid file");
 
     python::def("TverskyIndex", tverskyIndex<UniformGrid3D>,
-                "Compute the tversky index between two grid objects"); 
+                "Compute the tversky index between two grid objects");
     python::def("TanimotoDistance", tanimotoDistance<UniformGrid3D>,
                 "Compute the tanimoto distance between two grid objects");
     python::def("ProtrudeDistance", protrudeDistance<UniformGrid3D>,
@@ -169,6 +177,6 @@ struct uGrid3D_wrapper {
         "Find a grid's terminal points (defined in the subshape algorithm).");
   }
 };
-}
+}  // namespace RDGeom
 
 void wrap_uniformGrid() { RDGeom::uGrid3D_wrapper::wrap(); }

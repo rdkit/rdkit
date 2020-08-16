@@ -1,16 +1,12 @@
 add_custom_target(coordgen_support ALL)
+include(RDKitUtils)
 
-if(RDK_BUILD_COORDGEN_SUPPORT)
-  include(RDKitUtils)
-
-  if(MSVC AND (NOT RDK_INSTALL_DLLS_MSVC))
-    add_definitions(-DSTATIC_COORDGEN)
-  else(MSVC AND (NOT RDK_INSTALL_DLLS_MSVC))
+if(RDK_BUILD_MAEPARSER_SUPPORT)
+  if((NOT MSVC) OR RDK_INSTALL_DLLS_MSVC)
     add_definitions(-DIN_MAEPARSER)
-    add_definitions(-DIN_COORDGEN)
-  endif(MSVC AND (NOT RDK_INSTALL_DLLS_MSVC))
+  endif()
 
-  find_package(Boost 1.56.0 COMPONENTS system iostreams REQUIRED)
+  find_package(Boost ${RDK_BOOST_VERSION} COMPONENTS system iostreams REQUIRED)
   set (link_iostreams ${Boost_LIBRARIES})
   if (NOT Boost_USE_STATIC_LIBS)
     add_definitions("-DBOOST_IOSTREAMS_DYN_LINK")
@@ -18,7 +14,7 @@ if(RDK_BUILD_COORDGEN_SUPPORT)
 
   if (WIN32)
     set( T_LIBS ${Boost_LIBRARIES})
-    find_package(Boost 1.58.0 COMPONENTS zlib)
+    find_package(Boost ${RDK_BOOST_VERSION} COMPONENTS zlib)
     set( Boost_LIBRARIES ${T_LIBS} ${Boost_LIBRARIES})
 
   else()
@@ -37,8 +33,8 @@ if(RDK_BUILD_COORDGEN_SUPPORT)
     endif()
 
     if(NOT EXISTS "${MAEPARSER_DIR}/MaeParser.hpp")
-        set(RELEASE_NO "1.2.2")
-        set(MD5 "3c42d4f98e5fc3214ff991ccf76938bd")
+        set(RELEASE_NO "1.2.3")
+        set(MD5 "4ead02a0bf87110d1caae79ab42a5747")
         downloadAndCheckMD5("https://github.com/schrodinger/maeparser/archive/v${RELEASE_NO}.tar.gz"
               "${CMAKE_CURRENT_SOURCE_DIR}/maeparser-v${RELEASE_NO}.tar.gz" ${MD5})
         execute_process(COMMAND ${CMAKE_COMMAND} -E tar zxf
@@ -61,16 +57,33 @@ if(RDK_BUILD_COORDGEN_SUPPORT)
 
   endif(MAEPARSER_FORCE_BUILD OR (NOT maeparser_FOUND))
 
+  include_directories(${maeparser_INCLUDE_DIRS})
+
+  set(RDK_MAEPARSER_LIBS ${maeparser_LIBRARIES} ${Boost_LIBRARIES}
+      CACHE STRING "the external libraries" FORCE)
+
+else (RDK_BUILD_MAEPARSER_SUPPORT)
+
+  set(RDK_MAEPARSER_LIBS CACHE STRING "the external libraries" FORCE)
+  
+endif(RDK_BUILD_MAEPARSER_SUPPORT)
+
+if(RDK_BUILD_COORDGEN_SUPPORT)
+  if(MSVC AND (NOT RDK_INSTALL_DLLS_MSVC))
+    add_definitions(-DSTATIC_COORDGEN)
+  else(MSVC AND (NOT RDK_INSTALL_DLLS_MSVC))
+    add_definitions(-DIN_COORDGEN)
+  endif(MSVC AND (NOT RDK_INSTALL_DLLS_MSVC))
+
   find_package(coordgen MODULE)
   if(COORDGEN_FORCE_BUILD OR (NOT coordgen_FOUND))
-
     if(NOT DEFINED COORDGEN_DIR)
       set(COORDGEN_DIR "${CMAKE_CURRENT_SOURCE_DIR}/coordgen")
     endif()
 
     if(NOT EXISTS "${COORDGEN_DIR}/sketcherMinimizer.h")
-        set(RELEASE_NO "1.3.2")
-        set(MD5 "06a67c9ba7668946e89d0baa52dc8d04")
+        set(RELEASE_NO "1.4.1")
+        set(MD5 "d9a925c9569bc08e241a01669f43d639")
         downloadAndCheckMD5("https://github.com/schrodinger/coordgenlibs/archive/v${RELEASE_NO}.tar.gz"
               "${CMAKE_CURRENT_SOURCE_DIR}/coordgenlibs-${RELEASE_NO}.tar.gz" ${MD5})
         execute_process(COMMAND ${CMAKE_COMMAND} -E tar zxf
@@ -85,21 +98,15 @@ if(RDK_BUILD_COORDGEN_SUPPORT)
     set(coordgen_INCLUDE_DIRS ${CMAKE_CURRENT_SOURCE_DIR}
         CACHE STRING "CoordGen Include File" FORCE)
     file(GLOB CGSOURCES "${COORDGEN_DIR}/*.cpp")
-    rdkit_library(coordgen ${CGSOURCES} SHARED LINK_LIBRARIES ${maeparser_LIBRARIES})
+    rdkit_library(coordgen ${CGSOURCES} SHARED )
     install(TARGETS coordgen DESTINATION ${RDKit_LibDir})
     set(coordgen_LIBRARIES coordgen)
-    set(coordgen_TEMPLATE_FILE ${COORDGEN_DIR}/templates.mae )
 
   endif(COORDGEN_FORCE_BUILD OR (NOT coordgen_FOUND))
 
-  include_directories(${maeparser_INCLUDE_DIRS})
   include_directories(${coordgen_INCLUDE_DIRS})
 
-  install(FILES ${coordgen_TEMPLATE_FILE}
-          DESTINATION ${RDKit_ShareDir}/Data
-          COMPONENT data)
-
-  set(RDK_COORDGEN_LIBS MolAlign ${coordgen_LIBRARIES} ${maeparser_LIBRARIES} ${Boost_LIBRARIES}
+  set(RDK_COORDGEN_LIBS MolAlign ${coordgen_LIBRARIES} ${RDK_MAEPARSER_LIBS} ${Boost_LIBRARIES}
       CACHE STRING "the external libraries" FORCE)
   rdkit_headers(CoordGen.h DEST GraphMol)
 

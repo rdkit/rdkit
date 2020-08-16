@@ -17,7 +17,7 @@
 #include <GraphMol/MolPickler.h>
 #include <GraphMol/Subgraphs/SubgraphUtils.h>
 #include <GraphMol/Subgraphs/Subgraphs.h>
-#include <stdlib.h>
+#include <cstdlib>
 #include <iostream>
 #include <fstream>
 #include <cstdint>

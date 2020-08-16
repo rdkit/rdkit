@@ -7,7 +7,7 @@ rdkit_headers(ChemicalFeature.h
               FreeChemicalFeature.h DEST ChemicalFeatures)
 
 rdkit_test(testChemicalFeatures testChemicalFeatures.cpp 
-           LINK_LIBRARIES ChemicalFeatures RDGeneral)
+           LINK_LIBRARIES ChemicalFeatures)
 
 if(RDK_BUILD_PYTHON_WRAPPERS)
 add_subdirectory(Wrap)

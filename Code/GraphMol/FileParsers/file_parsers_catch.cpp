@@ -12,6 +12,7 @@
 
 #include <GraphMol/RDKitBase.h>
 #include <GraphMol/QueryAtom.h>
+#include <GraphMol/MolPickler.h>
 #include <GraphMol/FileParsers/FileParsers.h>
 #include <GraphMol/SmilesParse/SmilesWrite.h>
 #include <GraphMol/SmilesParse/SmilesParse.h>
@@ -19,7 +20,7 @@
 
 using namespace RDKit;
 
-TEST_CASE("Basic SVG Parsing", "[SVG,parser]") {
+TEST_CASE("Basic SVG Parsing", "[SVG][reader]") {
   SECTION("basics") {
     std::string svg = R"SVG(<?xml version='1.0' encoding='iso-8859-1'?>
 <svg version='1.1' baseProfile='full'
@@ -79,7 +80,7 @@ width='200px' height='200px' >
 TEST_CASE(
     "Github #2040: Failure to parse V3K mol file with bonds to multi-center "
     "linkage points",
-    "[bug,parser]") {
+    "[bug][reader]") {
   std::string rdbase = getenv("RDBASE");
   SECTION("basics") {
     std::string fName =
@@ -101,7 +102,7 @@ TEST_CASE(
 }
 
 TEST_CASE("Github #2225: failure round-tripping mol block with Q atoms",
-          "[bug,writer]") {
+          "[bug][writer]") {
   std::string rdbase = getenv("RDBASE");
   SECTION("basics") {
     std::string fName =
@@ -182,7 +183,7 @@ TEST_CASE("Github #2225: failure round-tripping mol block with Q atoms",
 }
 TEST_CASE(
     "Github #2229: problem round-tripping mol files with bond topology info",
-    "[bug,writer]") {
+    "[bug][writer]") {
   std::string rdbase = getenv("RDBASE");
   std::string fName =
       rdbase + "/Code/GraphMol/FileParsers/test_data/github2229_1.mol";
@@ -215,7 +216,7 @@ TEST_CASE(
     REQUIRE(mol2->getBondWithIdx(7)->hasQuery());
   }
 }
-TEST_CASE("preserve mol file properties on bonds", "[parser,ctab]") {
+TEST_CASE("preserve mol file properties on bonds", "[reader][ctab]") {
   SECTION("basics") {
     std::string molblock = R"CTAB(
   Mrv1810 02111915042D          
@@ -272,7 +273,7 @@ M  END
 }
 
 TEST_CASE("github #2277 : Failure when parsing mol block with M PXA",
-          "[parser,ctab]") {
+          "[reader][ctab]") {
   std::string molblock = R"CTAB(
   Mrv1810 02151911552D          
 
@@ -425,7 +426,7 @@ M  END)CTAB";
   }
 }
 
-TEST_CASE("parsing of SCN lines", "[bug, sgroups]") {
+TEST_CASE("parsing of SCN lines", "[bug][sgroups]") {
   SECTION("basics") {
     std::string molblock = R"CTAB(
   MJ171200
@@ -613,7 +614,7 @@ M  END
   }
 }
 
-TEST_CASE("A couple more S group problems", "[bug, sgroups]") {
+TEST_CASE("A couple more S group problems", "[bug][sgroups]") {
   std::string molblock = R"CTAB(CHEMBL3666739
       SciTegic05171617282D
 
@@ -738,7 +739,7 @@ M  END
   }
 }
 
-TEST_CASE("XYZ", "[XYZ,writer]") {
+TEST_CASE("XYZ", "[XYZ][writer]") {
   SECTION("basics") {
     std::unique_ptr<RWMol> mol{new RWMol{}};
     mol->setProp(common_properties::_Name,
@@ -771,7 +772,7 @@ H      0.635000    0.635000    0.635000
   }
 }
 
-TEST_CASE("valence writing 1", "[bug,writer]") {
+TEST_CASE("valence writing 1", "[bug][writer]") {
   SECTION("carbon") {
     std::string molblock = R"CTAB(carbon atom
 
@@ -815,7 +816,7 @@ M  END)CTAB";
 }
 
 TEST_CASE("Github #2695: Error when a squiggle bond is in an aromatic ring",
-          "[bug,reader]") {
+          "[bug][reader]") {
   SECTION("reported") {
     auto ctab = R"CTAB(
   -ISIS-  -- StrEd -- 
@@ -868,7 +869,7 @@ M  END)CTAB";
   }
 }
 
-TEST_CASE("Github #2917: _ctab _mol2 and _pdb support", "[feature,reader]") {
+TEST_CASE("Github #2917: _ctab _mol2 and _pdb support", "[feature][reader]") {
   SECTION("_ctab") {
     auto mol = R"CTAB(
   Mrv1810 01292008292D          
@@ -1000,7 +1001,7 @@ GASTEIGER
   }
 }
 
-TEST_CASE("handling STBOX properties from v3k ctabs", "[feature,v3k]") {
+TEST_CASE("handling STBOX properties from v3k ctabs", "[feature][v3k]") {
   SECTION("atoms and bonds") {
     auto mol = R"CTAB(basic test
   Mrv1810 01292006422D          
@@ -1144,7 +1145,7 @@ M  END
   }
 }
 
-TEST_CASE("github #2829: support MRV_IMPLICIT_H", "[feature,sgroups]") {
+TEST_CASE("github #2829: support MRV_IMPLICIT_H", "[feature][sgroups]") {
   SECTION("basics v2k") {
     auto mol = R"CTAB(
   Mrv1810 01302015262D          
@@ -1291,7 +1292,7 @@ M  END
   }
 }
 
-TEST_CASE("extra v3k mol file properties", "[ctab,v3k]") {
+TEST_CASE("extra v3k mol file properties", "[ctab][v3k]") {
   SECTION("ATTCHPT") {
     auto mol = R"CTAB(
   Mrv2007 03132014352D          
@@ -1427,5 +1428,252 @@ M  END)CTAB"_ctab;
     auto molb = MolToV3KMolBlock(*mol);
     CHECK(molb.find("ENDPTS=(3 1 2 3) ATTACH=ANY") != std::string::npos);
     CHECK(molb.find("RXCTR=1") != std::string::npos);
+  }
+}
+
+TEST_CASE(
+    "Problems parsing SGroup abbreviations with multiple attachment points",
+    "[bug][parser]") {
+  std::string rdbase = getenv("RDBASE");
+  SECTION("basics") {
+    std::string fName =
+        rdbase + "/Code/GraphMol/FileParsers/test_data/sgroup_ap_bug.mol";
+    std::unique_ptr<RWMol> mol(MolFileToMol(fName));
+    REQUIRE(mol);
+
+    const auto &sgroups = getSubstanceGroups(*mol);
+    CHECK(sgroups.size() == 3);
+    CHECK(sgroups[0].hasProp("TYPE"));
+    CHECK(sgroups[0].getProp<std::string>("TYPE") == "SUP");
+    CHECK(sgroups[0].getAttachPoints().size() == 1);
+    CHECK(sgroups[1].hasProp("TYPE"));
+    CHECK(sgroups[1].getProp<std::string>("TYPE") == "SUP");
+    CHECK(sgroups[1].getAttachPoints().size() == 1);
+    CHECK(sgroups[2].hasProp("TYPE"));
+    CHECK(sgroups[2].getProp<std::string>("TYPE") == "SUP");
+    CHECK(sgroups[2].getAttachPoints().size() == 2);
+  }
+}
+
+TEST_CASE(
+    "github #3207: Attachment point info not being read from V2000 mol blocks",
+    "[ctab][bug]") {
+  SECTION("ATTCHPT") {
+    auto mol = R"CTAB(
+  Mrv1824 06092009122D          
+
+  3  2  0  0  0  0            999 V2000
+   -8.9061    3.8393    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -8.1917    4.2518    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -7.4772    3.8393    0.0000 N   0  0  0  0  0  0  0  0  0  0  0  0
+  1  2  1  0  0  0  0
+  2  3  1  0  0  0  0
+M  APO  2   1   2   2   1
+M  END
+)CTAB"_ctab;
+    REQUIRE(mol);
+    CHECK(mol->getAtomWithIdx(0)->getProp<int>(
+              common_properties::molAttachPoint) == 2);
+    CHECK(mol->getAtomWithIdx(1)->getProp<int>(
+              common_properties::molAttachPoint) == 1);
+    auto molb = MolToV3KMolBlock(*mol);
+    CHECK(molb.find("ATTCHPT=1") != std::string::npos);
+    CHECK(molb.find("ATTCHPT=2") != std::string::npos);
+  }
+  SECTION("Val=-1") {
+    auto mol = R"CTAB(
+  Mrv1824 06092009122D          
+
+  3  2  0  0  0  0            999 V2000
+   -8.9061    3.8393    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -8.1917    4.2518    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -7.4772    3.8393    0.0000 N   0  0  0  0  0  0  0  0  0  0  0  0
+  1  2  1  0  0  0  0
+  2  3  1  0  0  0  0
+M  APO  2   1   3   2   1
+M  END
+)CTAB"_ctab;
+    REQUIRE(mol);
+    CHECK(mol->getAtomWithIdx(0)->getProp<int>(
+              common_properties::molAttachPoint) == -1);
+    CHECK(mol->getAtomWithIdx(1)->getProp<int>(
+              common_properties::molAttachPoint) == 1);
+    auto molb = MolToV3KMolBlock(*mol);
+    CHECK(molb.find("ATTCHPT=1") != std::string::npos);
+    CHECK(molb.find("ATTCHPT=-1") != std::string::npos);
+  }
+}
+
+TEST_CASE("XBHEAD and XBCORR causing parser failures", "[bug][reader]") {
+  std::string rdbase = getenv("RDBASE");
+  SECTION("basics") {
+    std::string fName =
+        rdbase +
+        "/Code/GraphMol/FileParsers/sgroup_test_data/repeat_groups_query1.mol";
+    std::unique_ptr<RWMol> mol(MolFileToMol(fName));
+    REQUIRE(mol);
+    const auto &sgroups = getSubstanceGroups(*mol);
+    CHECK(sgroups.size() == 1);
+    CHECK(sgroups[0].hasProp("TYPE"));
+    CHECK(sgroups[0].getProp<std::string>("TYPE") == "SRU");
+    CHECK(sgroups[0].hasProp("XBHEAD"));
+    auto v = sgroups[0].getProp<std::vector<unsigned int>>("XBHEAD");
+    CHECK(v.size() == 2);
+    CHECK(v[0] == 5);
+    CHECK(v[1] == 0);
+
+    CHECK(sgroups[0].hasProp("XBCORR"));
+    CHECK(sgroups[0].getProp<std::vector<unsigned int>>("XBCORR").size() == 4);
+
+    auto mb = MolToV3KMolBlock(*mol);
+    CHECK(mb.find("XBHEAD=(2 6 1)") != std::string::npos);
+    CHECK(mb.find("XBCORR=(4 6 6 1 1)") != std::string::npos);
+  }
+}
+TEST_CASE("LINKNODE information being ignored", "[ctab][bug]") {
+  SECTION("v3000") {
+    auto mol = R"CTAB(
+  Mrv2007 06212005162D          
+
+  0  0  0     0  0            999 V3000
+M  V30 BEGIN CTAB
+M  V30 COUNTS 5 5 0 0 0
+M  V30 BEGIN ATOM
+M  V30 1 C -3.25 12.2683 0 0
+M  V30 2 C -4.4959 11.3631 0 0
+M  V30 3 C -4.02 9.8986 0 0
+M  V30 4 C -2.48 9.8986 0 0
+M  V30 5 C -2.0041 11.3631 0 0
+M  V30 END ATOM
+M  V30 BEGIN BOND
+M  V30 1 1 1 2
+M  V30 2 1 2 3
+M  V30 3 1 3 4
+M  V30 4 1 4 5
+M  V30 5 1 1 5
+M  V30 END BOND
+M  V30 LINKNODE 1 3 2 1 2 1 5
+M  V30 LINKNODE 1 4 2 4 3 4 5
+M  V30 END CTAB
+M  END
+)CTAB"_ctab;
+    REQUIRE(mol);
+    CHECK(mol->getProp<std::string>(common_properties::molFileLinkNodes) ==
+          "1 3 2 1 2 1 5|1 4 2 4 3 4 5");
+    auto molb = MolToV3KMolBlock(*mol);
+    CHECK(molb.find("LINKNODE 1 3 2 1 2 1 5") != std::string::npos);
+    CHECK(molb.find("LINKNODE 1 4 2 4 3 4 5") != std::string::npos);
+  }
+  SECTION("v2000") {
+    auto mol = R"CTAB(
+  Mrv2007 06222015182D          
+
+  5  5  0  0  0  0            999 V2000
+   -1.7411    6.5723    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -2.4085    6.0874    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -2.1536    5.3028    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -1.3286    5.3028    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -1.0736    6.0874    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+  1  2  1  0  0  0  0
+  2  3  1  0  0  0  0
+  3  4  1  0  0  0  0
+  4  5  1  0  0  0  0
+  1  5  1  0  0  0  0
+M  LIN  2   1   3   2   5   4   4   3   5
+M  END
+)CTAB"_ctab;
+    REQUIRE(mol);
+    CHECK(mol->getProp<std::string>(common_properties::molFileLinkNodes) ==
+          "1 3 2 1 2 1 5|1 4 2 4 3 4 5");
+    auto molb = MolToV3KMolBlock(*mol);
+    CHECK(molb.find("LINKNODE 1 3 2 1 2 1 5") != std::string::npos);
+    CHECK(molb.find("LINKNODE 1 4 2 4 3 4 5") != std::string::npos);
+  }
+}
+TEST_CASE("more complex queries in CTAB parsers", "[ctab]") {
+  SECTION("v3000") {
+    auto mol = R"CTAB(*.*.*.*.*.*.*.* |$;Q_e;M_p;X_p;AH_p;QH_p;MH_p;XH_p$|
+  manual  06272007272D          
+
+  0  0  0     0  0            999 V3000
+M  V30 BEGIN CTAB
+M  V30 COUNTS 8 0 0 0 0
+M  V30 BEGIN ATOM
+M  V30 1 A -3.2083 5.25 0 0
+M  V30 2 Q -0.25 6 0 0
+M  V30 3 M 4.5417 6.0417 0 0
+M  V30 4 X 1.2917 4.2083 0 0
+M  V30 5 AH -4.2083 5.25 0 0
+M  V30 6 QH -1.25 6 0 0
+M  V30 7 MH 3.5417 6.0417 0 0
+M  V30 8 XH 0.2917 4.2083 0 0
+M  V30 END ATOM
+M  V30 END CTAB
+M  END
+)CTAB"_ctab;
+    REQUIRE(mol);
+    for (const auto atom : mol->atoms()) {
+      REQUIRE(atom->hasQuery());
+      CHECK(!atom->getQuery()->getTypeLabel().empty());
+    }
+    std::string pkl;
+    MolPickler::pickleMol(*mol, pkl);
+    ROMol cp(pkl);
+    for (const auto atom : cp.atoms()) {
+      REQUIRE(atom->hasQuery());
+      CHECK(!atom->getQuery()->getTypeLabel().empty());
+      CHECK(atom->getQuery()->getTypeLabel() ==
+            mol->getAtomWithIdx(atom->getIdx())->getQuery()->getTypeLabel());
+    }
+    auto molb = MolToV3KMolBlock(*mol);
+    CHECK(molb.find(" A ") != std::string::npos);
+    CHECK(molb.find(" AH ") != std::string::npos);
+    CHECK(molb.find(" Q ") != std::string::npos);
+    CHECK(molb.find(" QH ") != std::string::npos);
+    CHECK(molb.find(" M ") != std::string::npos);
+    CHECK(molb.find(" MH ") != std::string::npos);
+    CHECK(molb.find(" X ") != std::string::npos);
+    CHECK(molb.find(" XH ") != std::string::npos);
+  }
+  SECTION("v2000") {
+    auto mol = R"CTAB(*.*.*.*.*.*.*.* |$;Q_e;M_p;X_p;AH_p;QH_p;MH_p;XH_p$|
+  manual  06272007272D          
+
+  8  0  0  0  0  0            999 V2000
+   -3.2083    5.2500    0.0000 A   0  0  0  0  0  0  0  0  0  0  0  0
+   -0.2500    6.0000    0.0000 Q   0  0  0  0  0  0  0  0  0  0  0  0
+    4.5417    6.0417    0.0000 M   0  0  0  0  0  0  0  0  0  0  0  0
+    1.2917    4.2083    0.0000 X   0  0  0  0  0  0  0  0  0  0  0  0
+   -4.2083    5.2500    0.0000 AH  0  0  0  0  0  0  0  0  0  0  0  0
+   -1.2500    6.0000    0.0000 QH  0  0  0  0  0  0  0  0  0  0  0  0
+    3.5417    6.0417    0.0000 MH  0  0  0  0  0  0  0  0  0  0  0  0
+    0.2917    4.2083    0.0000 XH  0  0  0  0  0  0  0  0  0  0  0  0
+M  END
+)CTAB"_ctab;
+    REQUIRE(mol);
+    for (const auto atom : mol->atoms()) {
+      REQUIRE(atom->hasQuery());
+      CHECK(!atom->getQuery()->getTypeLabel().empty());
+    }
+    std::string pkl;
+    MolPickler::pickleMol(*mol, pkl);
+    ROMol cp(pkl);
+    for (const auto atom : cp.atoms()) {
+      REQUIRE(atom->hasQuery());
+      CHECK(!atom->getQuery()->getTypeLabel().empty());
+      CHECK(atom->getQuery()->getTypeLabel() ==
+            mol->getAtomWithIdx(atom->getIdx())->getQuery()->getTypeLabel());
+    }
+    auto molb = MolToMolBlock(*mol);
+    CHECK(molb.find(" A ") != std::string::npos);
+    CHECK(molb.find(" AH ") != std::string::npos);
+    CHECK(molb.find(" Q ") != std::string::npos);
+    CHECK(molb.find(" QH ") != std::string::npos);
+    CHECK(molb.find(" M ") != std::string::npos);
+    CHECK(molb.find(" MH ") != std::string::npos);
+    CHECK(molb.find(" X ") != std::string::npos);
+    CHECK(molb.find(" XH ") != std::string::npos);
+    /// SMARTS-based queries are not written for these:
+    CHECK(molb.find("V    ") == std::string::npos);
   }
 }

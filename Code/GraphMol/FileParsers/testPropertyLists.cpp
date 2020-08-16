@@ -132,7 +132,7 @@ TEST_CASE("processMolPropertyLists", "[atom_list_properties]") {
   }
 }
 
-TEST_CASE("basic SDF handling", "[SDF,atom_list_properties]") {
+TEST_CASE("basic SDF handling", "[SDF][atom_list_properties]") {
   std::string sdf = R"SDF(
      RDKit  2D
 

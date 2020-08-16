@@ -14,7 +14,7 @@
 #include <vector>
 #include <stack>
 #include <map>
-#include <boost/unordered_map.hpp>
+#include <unordered_map>
 
 namespace RDKit {
 class ROMol;
@@ -29,7 +29,60 @@ typedef std::map<unsigned int, AtomElectrons *> ConjAtomMap;
 typedef std::vector<ConjElectrons *> CEVect;
 typedef std::vector<CEVect2 *> CEVect3;
 typedef std::vector<std::uint8_t> ConjFP;
-typedef boost::unordered_map<std::size_t, ConjElectrons *> CEMap;
+typedef std::unordered_map<std::size_t, ConjElectrons *> CEMap;
+
+/*!
+ * Create a derived class from this abstract base class
+ * and implement the operator()() method.
+ * The operator()() method is called at each iteration of the
+ * algorithm, and provides a mechanism to monitor or stop
+ * its progress.
+ * To have your callback called, pass an instance of your
+ * derived class to ResonanceMolSupplier::setProgressCallback().
+ */
+class RDKIT_GRAPHMOL_EXPORT ResonanceMolSupplierCallback {
+  friend class ResonanceMolSupplier;
+
+ public:
+  ResonanceMolSupplierCallback() {}
+  virtual ~ResonanceMolSupplierCallback() {}
+  /*! Get the number of conjugated groups this molecule has. */
+  unsigned int getNumConjGrps() const { return d_progress.size(); }
+  /*! Get the maximum number of resonance structures the supplier
+      is allowed to generate.
+      \return The number of structures.
+   */
+  size_t getMaxStructures() const { return d_maxStructs; }
+  /*! Get the number of resonance structures generated so far
+      for a certain conjugated group.
+      \param conjGrpIdx the conjugated group index.
+      \return the number of resonance structures generated so far
+              for this group.
+   */
+  size_t getNumStructures(unsigned int conjGrpIdx) const;
+  /*! Get the number of resonance structures with a different score
+      (i.e., non-degenerate) generated so far for a certain conjugated
+      group.
+      \param conjGrpIdx the conjugated group index.
+      \return the number of non-degenrate resonance structures generated
+              so far for this group.
+   */
+  size_t getNumDiverseStructures(unsigned int conjGrpIdx) const;
+  /*! Pure virtual; this must be implemented in the derived class.
+      \return true if the resonance structure generation should continue;
+              false if the resonance structure generation should stop.
+   */
+  virtual bool operator()() const = 0;
+
+ private:
+  struct ResonanceProgress {
+    size_t d_totalStructs;
+    size_t d_diverseStructs;
+  };
+  size_t d_maxStructs{0};
+  std::vector<ResonanceProgress> d_progress;
+};
+
 class RDKIT_GRAPHMOL_EXPORT ResonanceMolSupplier {
  public:
   typedef enum {
@@ -45,11 +98,16 @@ class RDKIT_GRAPHMOL_EXPORT ResonanceMolSupplier {
     /*! if the UNCONSTRAINED_CATIONS flag is not set, positively
      *  charged atoms left and right of N with an incomplete octet are
      *  acceptable only if the conjugated group has a positive total
-     *  formal charge */
+     *  formal charge.
+     *  UNCONSTRAINED_CATIONS implies ALLOW_INCOMPLETE_OCTETS
+     *  and ALLOW_CHARGE_SEPARATION.
+     */
     UNCONSTRAINED_CATIONS = (1 << 3),
     /*! if the UNCONSTRAINED_ANIONS flag is not set, negatively
      *  charged atoms left of N are acceptable only if the conjugated
-     *  group has a negative total formal charge */
+     *  group has a negative total formal charge.
+     *  UNCONSTRAINED_ANIONS implies ALLOW_CHARGE_SEPARATION.
+     */
     UNCONSTRAINED_ANIONS = (1 << 4)
   } ResonanceFlags;
   /*!
@@ -70,14 +128,14 @@ class RDKIT_GRAPHMOL_EXPORT ResonanceMolSupplier {
                        unsigned int maxStructs = 1000);
   ~ResonanceMolSupplier();
   /*! Returns a reference to the Kekulized form of the ROMol the
-   * ResonanceMolSupplier was initialized with */
+   *  ResonanceMolSupplier was initialized with */
   const ROMol &mol() const { return *d_mol; }
   /*! Returns the flags the ResonanceMolSupplier was initialized with
    */
   unsigned int flags() const { return d_flags; }
   /*! Returns the number of individual conjugated groups
       in the molecule */
-  unsigned int getNumConjGrps() const { return d_nConjGrp; };
+  unsigned int getNumConjGrps() const { return d_nConjGrp; }
   /*! Given a bond index, it returns the index of the conjugated
    *  group the bond belongs to, or -1 if it is not conjugated */
   int getBondConjGrpIdx(unsigned int bi) const;
@@ -90,13 +148,31 @@ class RDKIT_GRAPHMOL_EXPORT ResonanceMolSupplier {
    *  to the number of concurrent threads supported by the hardware)
    */
   void setNumThreads(int numThreads = 1);
+  /*! Pass a pointer to an instance of a class derived from
+   *  ResonanceMolSupplierCallback, which must implement the callback()
+   *  method. The ResonanceMolSupplier takes ownership of the pointer,
+   *  which must not be deleted.
+   */
+  void setProgressCallback(ResonanceMolSupplierCallback *callback);
+  /*! Get the pointer to the ResonanceMolSupplierCallback subclass
+   *  instance (do not delete it, has the ResonanceMolSupplier takes
+   *  ownership of the pointer), or nullptr if none was set.
+   */
+  ResonanceMolSupplierCallback *getProgressCallback() {
+    return d_callback.get();
+  }
+  /*! Returns true if the resonance structure generation was canceled
+   *  before completion due to the ResMolSupplierProgressCallback
+   *  having returned false.
+   */
+  bool wasCanceled() const { return d_wasCanceled; }
   /*! Ask ResonanceMolSupplier to enumerate resonance structures
    *  (automatically done as soon as any attempt to access them is
    *  made) */
   void enumerate();
   /*! Returns true if resonance structure enumeration has already
    *  happened */
-  bool getIsEnumerated() { return d_isEnumerated; };
+  bool getIsEnumerated() { return d_isEnumerated; }
   /*! Returns the number of resonance structures in the
    *  ResonanceMolSupplier */
   unsigned int length();
@@ -132,12 +208,13 @@ class RDKIT_GRAPHMOL_EXPORT ResonanceMolSupplier {
   unsigned int d_idx;
   unsigned int d_numThreads;
   bool d_isEnumerated;
+  bool d_wasCanceled;
   CEVect3 d_ceVect3;
-  void buildCEMap(CEMap &ceMap, unsigned int conjGrpIdx);
   const ROMol *d_mol;
   std::vector<int> d_bondConjGrpIdx;
   std::vector<int> d_atomConjGrpIdx;
-  std::vector<unsigned int> d_enumIdx;
+  std::vector<size_t> d_enumIdx;
+  std::unique_ptr<ResonanceMolSupplierCallback> d_callback;
   // disable copy constructor and assignment operator
   ResonanceMolSupplier(const ResonanceMolSupplier &);
   ResonanceMolSupplier &operator=(const ResonanceMolSupplier &);
@@ -146,11 +223,10 @@ class RDKIT_GRAPHMOL_EXPORT ResonanceMolSupplier {
   void resizeCeVect();
   void trimCeVect2();
   void prepEnumIdxVect();
-  void idxToCEPerm(unsigned int idx, std::vector<unsigned int> &c) const;
+  void idxToCEPerm(size_t idx, std::vector<unsigned int> &c) const;
   void setResonanceMolSupplierLength();
-  void storeCEMap(CEMap &ceMap, unsigned int conjGrpIdx);
-  void enumerateNbArrangements(CEMap &ceMap, CEMap &ceMapTmp);
-  void pruneStructures(CEMap &ceMap);
+  void buildCEMap(CEMap &ceMap, unsigned int conjGrpIdx);
+  void storeCEMap(const CEMap &ceMap, unsigned int conjGrpIdx);
   void assignBondsFormalChargesHelper(ROMol &mol,
                                       std::vector<unsigned int> &c) const;
   ROMol *assignBondsFormalCharges(std::vector<unsigned int> &c) const;
