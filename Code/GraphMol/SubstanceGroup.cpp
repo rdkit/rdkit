@@ -59,6 +59,7 @@ void SubstanceGroup::addAtomWithIdx(unsigned int idx) {
 void SubstanceGroup::addAtomWithBookmark(int mark) {
   PRECONDITION(dp_mol, "bad mol");
   Atom *atom = dp_mol->getUniqueAtomWithBookmark(mark);
+  PRECONDITION(atom, "atom not found");
   d_atoms.push_back(atom->getIdx());
 }
 

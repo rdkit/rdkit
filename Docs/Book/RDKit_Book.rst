@@ -231,13 +231,19 @@ The RDKit supports parsing and writing a subset of the extended SMILES functiona
 
 The features which are parsed include:
 
-- atomic coordinates
-- atomic values
-- atomic labels
-- atomic properties
-- coordinate bonds (these are translated into double bonds)
-- radicals
+- atomic coordinates ``()``
+- atomic values ``$_AV:``
+- atomic labels/aliases ``$`` (recognized aliases are ``_AP``, ``star_e``,
+  ``Q_e``, ``QH_p``, ``AH_P``, ``X_p``, ``XH_p``, ``M_p``, ``MH_p``, ``*``)
+- atomic properties ``atomprop``
+- coordinate bonds ``C`` (these are translated into double bonds)
+- radicals ``^``
 - enhanced stereo (these are converted into ``StereoGroups``)
+- linknodes ``LN``
+- multi-center attachments ``m``
+- ring bond count specifications ``rb``
+- non-hydrogen substitution count specifications ``s``
+- unsaturation specification ``u``
 
 The features which are written by :py:func:`rdkit.Chem.rdmolfiles.MolToCXSmiles`
 (note the specialized writer function) include:
@@ -351,33 +357,34 @@ Please ignore those characters.
 
 **Atoms**
 
-=========  =========================================  ===============  ======  =========
-Primitive                  Property                   "Default value"  Range?    Notes
-=========  =========================================  ===============  ======  =========
-a          "aromatic atom"
-A          "aliphatic atom"
-D          "explicit degree"                          1                Y
-h          "number of implicit hs"                    >0               Y
-H          "total number of Hs"                       1
-r          "size of smallest SSSR ring"               >0               Y
-R          "number of SSSR rings"                     >0               Y
-v          "total valence"                            1                Y
-x          "number of ring bonds"                     >0               Y
-X          "total degree"                             1                Y
-z          "number of heteroatom neighbors"           >0               Y       extension
-Z          "number of aliphatic heteroatom neighbors" >0               Y       extension
+=========  ==========================================  ===============  ======  =========
+Primitive                  Property                    "Default value"  Range?    Notes
+=========  ==========================================  ===============  ======  =========
+a          "aromatic atom" 
+A          "aliphatic atom" 
+d          "non-hydrogen degree"                       1                Y       extension
+D          "explicit degree"                           1                Y
+h          "number of implicit hs"                     >0               Y
+H          "total number of Hs"                        1
+r          "size of smallest SSSR ring"                >0               Y
+R          "number of SSSR rings"                      >0               Y
+v          "total valence"                             1                Y
+x          "number of ring bonds"                      >0               Y
+X          "total degree"                              1                Y
+z          "number of heteroatom neighbors"            >0               Y       extension
+Z          "number of aliphatic heteroatom neighbors"  >0               Y       extension
 \*         "any atom"
-\+         "positive charge"                          1                Y
+\+         "positive charge"                           1                Y
 ++         "+2 charge"
-\-         "negative charge"                          1                Y
+\-         "negative charge"                           1                Y
 \--        "-2 charge"
-^0         "S hybridized"                             n/a              N       extension
-^1         "SP hybridized"                            n/a              N       extension
-^2         "SP2 hybridized"                           n/a              N       extension
-^3         "SP3 hybridized"                           n/a              N       extension
-^4         "SP3D hybridized"                          n/a              N       extension
-^5         "SP3D2 hybridized"                         n/a              N       extension
-=========  =========================================  ===============  ======  =========
+^0         "S hybridized"                              n/a              N       extension
+^1         "SP hybridized"                             n/a              N       extension
+^2         "SP2 hybridized"                            n/a              N       extension
+^3         "SP3 hybridized"                            n/a              N       extension
+^4         "SP3D hybridized"                           n/a              N       extension
+^5         "SP3D2 hybridized"                          n/a              N       extension
+=========  ==========================================  ===============  ======  =========
 
 
 

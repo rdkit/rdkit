@@ -19,6 +19,7 @@
 #include <GraphMol/SmilesParse/SmilesParse.h>
 #include <GraphMol/SmilesParse/SmilesWrite.h>
 #include <GraphMol/SmilesParse/SmartsWrite.h>
+#include <boost/format.hpp>
 
 using namespace RDKit;
 #if 1
@@ -168,7 +169,7 @@ TEST_CASE(
   }
   SECTION("the original molecule") {
     std::string mb = R"CTAB(
-  Mrv1810 02131915062D          
+  Mrv1810 02131915062D
 
  18 20  0  0  1  0            999 V2000
    -0.7207   -1.3415    0.0000 N   0  0  1  0  0  0  0  0  0  0  0  0
@@ -271,7 +272,7 @@ TEST_CASE(
     "[bug][molops]") {
   SECTION("underlying problem") {
     std::string molb = R"CTAB(testmol
-  Mrv1824 05081910082D          
+  Mrv1824 05081910082D
 
   4  4  0  0  0  0            999 V2000
     6.9312   -8.6277    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
@@ -299,7 +300,7 @@ M  END
 
   SECTION("as discovered") {
     std::string molb = R"CTAB(testmol
-  Mrv1824 05081910082D          
+  Mrv1824 05081910082D
 
   4  4  0  0  0  0            999 V2000
     6.9312   -9.4527    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
@@ -432,7 +433,7 @@ TEST_CASE(
     "[bug][molops]") {
   SECTION("basics-Pb") {
     std::string mb = R"CTAB(
-  Mrv1810 08141905562D          
+  Mrv1810 08141905562D
 
   5  0  0  0  0  0            999 V2000
    -3.6316   -0.4737    0.0000 Pb  0  0  0  0  0  0  0  0  0  0  0  0
@@ -450,7 +451,7 @@ M  END
   }
   SECTION("basics-Sn") {
     std::string mb = R"CTAB(
-  Mrv1810 08141905562D          
+  Mrv1810 08141905562D
 
   5  0  0  0  0  0            999 V2000
    -3.6316   -0.4737    0.0000 Sn  0  0  0  0  0  0  0  0  0  0  0  0
@@ -468,7 +469,7 @@ M  END
   }
   SECTION("basics-Ge") {
     std::string mb = R"CTAB(
-  Mrv1810 08141905562D          
+  Mrv1810 08141905562D
 
   5  0  0  0  0  0            999 V2000
    -3.6316   -0.4737    0.0000 Ge  0  0  0  0  0  0  0  0  0  0  0  0
@@ -490,7 +491,7 @@ TEST_CASE(
     "[bug][molops]") {
   SECTION("basics-Pb") {
     std::string mb = R"CTAB(
-  Mrv1810 08141905562D          
+  Mrv1810 08141905562D
 
   3  0  0  0  0  0            999 V2000
    -3.6316   -0.4737    0.0000 Pb  0  0  0  0  0  0  0  0  0  0  0  0
@@ -506,7 +507,7 @@ M  END
   }
   SECTION("basics-Sn") {
     std::string mb = R"CTAB(
-  Mrv1810 08141905562D          
+  Mrv1810 08141905562D
 
   3  0  0  0  0  0            999 V2000
    -3.6316   -0.4737    0.0000 Sn  0  0  0  0  0  0  0  0  0  0  0  0
@@ -527,7 +528,7 @@ TEST_CASE(
     "[bug][stereochemistry]") {
   SECTION("basics") {
     std::string mb = R"CTAB(mol
-  Mrv1824 09191901002D          
+  Mrv1824 09191901002D
 
   6  5  0  0  0  0            999 V2000
    -1.6986   -7.4294    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
@@ -560,7 +561,7 @@ TEST_CASE(
     "[stereochemistry]") {
   SECTION("basics 1a") {
     std::string mb = R"CTAB(
-  Mrv1810 10141909562D          
+  Mrv1810 10141909562D
 
   4  3  0  0  0  0            999 V2000
     3.3412   -2.9968    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
@@ -582,7 +583,7 @@ M  END
   }
   SECTION("basics 1b") {
     std::string mb = R"CTAB(
-  Mrv1810 10141909562D          
+  Mrv1810 10141909562D
 
   4  3  0  0  0  0            999 V2000
     3.3412   -2.9968    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
@@ -604,7 +605,7 @@ M  END
   }
   SECTION("basics 2a") {
     std::string mb = R"CTAB(
-  Mrv1810 10141909582D          
+  Mrv1810 10141909582D
 
   4  3  0  0  0  0            999 V2000
     3.4745   -5.2424    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
@@ -626,7 +627,7 @@ M  END
   }
   SECTION("basics 2b") {
     std::string mb = R"CTAB(
-  Mrv1810 10141909582D          
+  Mrv1810 10141909582D
 
   4  3  0  0  0  0            999 V2000
     3.4745   -5.2424    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
@@ -833,7 +834,7 @@ TEST_CASE(
 TEST_CASE("github #2775", "[valence][bug]") {
   SECTION("basics") {
     std::string molblock = R"CTAB(bismuth citrate
-  Mrv1810 11111908592D          
+  Mrv1810 11111908592D
 
  14 12  0  0  0  0            999 V2000
     7.4050   -0.5957    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
@@ -1121,6 +1122,19 @@ TEST_CASE("github #2895: acepentalene aromaticity perception ",
   }
 }
 
+TEST_CASE("github #3256: fused ring aromaticity perception",
+          "[molops][bug][aromaticity]") {
+  SECTION("nitrogen only central ring") {
+    auto mol = "C1=CN2C3=CC=CN3C3=CC=CN3C2=C1"_smiles;
+    REQUIRE(mol);
+    for (const auto b: mol->bonds()) {
+      CHECK(b->getBondType() == Bond::AROMATIC);
+    }
+    auto smi = MolToSmiles(*mol);
+    CHECK(smi == "c1cc2n(c1)c1cccn1c1cccn21");
+  }
+}
+
 TEST_CASE("phosphine and arsine chirality", "[Chirality]") {
   SECTION("chiral center recognized") {
     auto mol1 = "C[P@](C1CCCC1)C1=CC=CC=C1"_smiles;
@@ -1311,5 +1325,26 @@ TEST_CASE("github #3150 MolOps::removeHs removes hydrides", "[bug][molops]") {
     MolOps::removeAllHs(cp);
     CHECK(cp.getNumAtoms() == 1);
     CHECK(MolOps::getFormalCharge(cp) == 1);
+  }
+}
+
+TEST_CASE("hybridization of unknown atom types", "[bug][molops]") {
+  SECTION("Basics") {
+    auto m = "[U][U][U]"_smiles;
+    REQUIRE(m);
+    for (const auto atom : m->atoms()) {
+      CHECK(atom->getHybridization() == Atom::HybridizationType::S);
+    }
+  }
+  SECTION("comprehensive") {
+    std::string smiles = "";
+    for (unsigned int i = 89; i <= 118; ++i) {
+      smiles += (boost::format("[#%d]") % i).str();
+    }
+    std::unique_ptr<ROMol> m(SmilesToMol(smiles));
+    REQUIRE(m);
+    for (const auto atom : m->atoms()) {
+      CHECK(atom->getHybridization() == Atom::HybridizationType::S);
+    }
   }
 }

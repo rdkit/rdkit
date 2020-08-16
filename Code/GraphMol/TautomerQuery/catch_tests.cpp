@@ -218,13 +218,14 @@ TEST_CASE("TEST_FINGERPRINT") {
   auto templateMol = tautomerQuery->getTemplateMolecule();
 
   // this test molecule has complex query bonds where the template has query
-  // bonds, but they are not tautomer bonds.
+  // bonds, but they are not identified as tautomer bonds.
   RWMol molWithoutTautomerBonds(*mol);
   std::vector<std::pair<int, int>> atomIndexes;
   for (auto modifiedBondIdx : tautomerQuery->getModifiedBonds()) {
-    auto bondQuery = makeSingleOrAromaticBondQuery();
     auto queryBond = new QueryBond();
-    queryBond->setQuery(bondQuery);
+    queryBond->setQuery(makeBondOrderEqualsQuery(Bond::BondType::SINGLE));
+    queryBond->expandQuery(makeBondOrderEqualsQuery(Bond::BondType::AROMATIC),
+                   Queries::COMPOSITE_OR);
     molWithoutTautomerBonds.replaceBond(modifiedBondIdx, queryBond, true);
     delete queryBond;
   }

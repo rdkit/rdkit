@@ -220,6 +220,11 @@ size_t setup_smarts_string(const std::string &text,yyscan_t yyscanner){
 	yylval->atom->setQuery(makeAtomExplicitDegreeQuery(1));
 	return COMPLEX_ATOM_QUERY_TOKEN;
 }
+<IN_ATOM_STATE>d {
+	yylval->atom = new QueryAtom();
+	yylval->atom->setQuery(makeAtomNonHydrogenDegreeQuery(1));
+	return COMPLEX_ATOM_QUERY_TOKEN;
+}
 
 <IN_ATOM_STATE>X {
 	yylval->atom = new QueryAtom();
