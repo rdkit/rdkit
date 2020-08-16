@@ -29,6 +29,11 @@ rdkit_headers(Crippen.h BCUT.h Lipinski.h
               ${DESC3D_HDRS}
               DEST GraphMol/Descriptors)
 
+rdkit_library(ANIDescriptors 
+              AtomicEnvironmentVector.cpp
+              LINK_LIBRARIES RDGeneral EigenSerializer)
+rdkit_headers(AtomicEnvironmentVector.h DEST GraphMol/Descriptors)
+
 rdkit_test(testDescriptors test.cpp
 LINK_LIBRARIES PartialCharges Descriptors )
 
@@ -64,6 +69,10 @@ LINK_LIBRARIES  Descriptors )
 LINK_LIBRARIES  Descriptors )
  rdkit_test(testCoulombMat testCoulombMat.cpp
 LINK_LIBRARIES  Descriptors ForceFieldHelpers DistGeomHelpers  )
+if(RDK_HAS_EIGEN)
+ rdkit_catch_test(AtomicEnvironmentVectorCatchTest AtomicEnvironmentVector_catch.cpp catch_main.cpp
+LINK_LIBRARIES ANIDescriptors FileParsers SmilesParse EigenSerializer)
+endif(RDK_HAS_EIGEN)
 endif(RDK_BUILD_DESCRIPTORS3D)
 
 

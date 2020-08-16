@@ -350,6 +350,26 @@ M  END"""
     self.assertEqual(len(res), 2)
     self.assertEqual(res[0], res[1])
     self.assertEqual(res[0], (-1, -1.0))
+  
+  def testANIBuilder(self):
+    fName = os.path.join(self.dirName, 'CH4.mol')
+    m = Chem.MolFromMolFile(fName, True, False)
+
+    ff = ChemicalForceFields.ANIGetMoleculeForceField(m, "ANI-1ccx", 8)
+    self.failUnless(ff)
+    positions = ff.Positions()
+    savedPos = list(positions)
+    e1 = ff.CalcEnergy(savedPos)
+
+    self.failUnless((e1 - (-40.0553)) < 0.05)
+
+    ff1 = ChemicalForceFields.ANIGetMoleculeForceField(m, "ANI-1x", 8)
+    self.failUnless(ff1)
+    positions = ff1.Positions()
+    savedPos = list(positions)
+    e1 = ff1.CalcEnergy(savedPos)
+
+    self.failUnless((e1 - (-40.0517)) < 0.05)
 
 if __name__ == '__main__':
   unittest.main()
