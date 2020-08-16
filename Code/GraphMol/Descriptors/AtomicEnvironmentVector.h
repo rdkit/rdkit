@@ -43,9 +43,9 @@ RDKIT_DESCRIPTORS_EXPORT Eigen::VectorXi GenerateSpeciesVector(
   \return numAtoms * 384 shaped matrix containing 384 features for every
   atom in the input mol consisting of both radial and angular terms
 */
-RDKIT_DESCRIPTORS_EXPORT Eigen::ArrayXXd AtomicEnvironmentVector(
-    const ROMol &mol, const std::map<std::string, Eigen::ArrayXXd> *params,
-    int confId = -1);
+RDKIT_DESCRIPTORS_EXPORT void AtomicEnvironmentVector(
+    Eigen::ArrayXXd &AEV, const ROMol &mol,
+    const std::map<std::string, Eigen::ArrayXXd> *params, int confId = -1);
 
 //! Calculates torchANI style symmetry functions combining both radial and
 //! angular terms
@@ -57,8 +57,9 @@ RDKIT_DESCRIPTORS_EXPORT Eigen::ArrayXXd AtomicEnvironmentVector(
   \return numAtoms * 384 shaped matrix containing 384 features for every atom in
   the input mol consisting of both radial and angular terms
 */
-RDKIT_DESCRIPTORS_EXPORT Eigen::ArrayXXd AtomicEnvironmentVector(
-    double *pos, const Eigen::VectorXi &species, unsigned int numAtoms,
+RDKIT_DESCRIPTORS_EXPORT void AtomicEnvironmentVector(
+    Eigen::ArrayXXd &AEV, double *pos, const Eigen::VectorXi &species,
+    unsigned int numAtoms,
     const std::map<std::string, Eigen::ArrayXXd> *params);
 
 }  // namespace ANI

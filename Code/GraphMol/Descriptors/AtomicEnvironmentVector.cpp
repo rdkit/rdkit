@@ -211,7 +211,7 @@ void NeighborPairs(ArrayXXd *coordinates, const VectorXi *species,
     }
   }
 
-  auto x = dist.array() <= cutoff;
+  auto x = (dist <= cutoff);
 
   // Store atom pairs distance between which is less than cutoff
   std::vector<int> indices;
@@ -324,14 +324,8 @@ void AngularTerms(double cutoff, ArrayBase<Derived> &vectors12,
     unsigned int idx = 0;
     for (auto zetaIdx = 0; zetaIdx < zeta.size(); zetaIdx++) {
       ArrayXXd intermediate(1, ShfZ.size());
-      intermediate
-          << (((-1 * (ShfZ.rowwise() - angles.row(i)).array()).cos().array() +
-               1)
-                  .array() /
-              2)
-                 .array()
-                 .pow(zeta(zetaIdx))
-                 .array();
+      intermediate << (((-1 * (ShfZ.rowwise() - angles.row(i))).cos() + 1) / 2)
+                          .pow(zeta(zetaIdx));
       for (unsigned int j = 0; j < intermediate.size(); j++) {
         calculatedRowVector(0, j + idx) = intermediate(j);
       }
@@ -355,9 +349,7 @@ void AngularTerms(double cutoff, ArrayBase<Derived> &vectors12,
     ArrayXXd calculatedRowVector(1, ShfA.size() * etaA.size());
     for (auto etaAidx = 0; etaAidx < etaA.size(); etaAidx++) {
       ArrayXXd intermediate(1, ShfA.size());
-      intermediate << ((ShfA.rowwise() - (distance12sum.array() / 2).row(i))
-                           .pow(2)
-                           .array() *
+      intermediate << ((ShfA.rowwise() - (distance12sum / 2).row(i)).pow(2) *
                        -etaA(etaAidx))
                           .exp();
       for (auto j = 0; j < intermediate.size(); j++) {
@@ -531,7 +523,7 @@ void TripleByMolecules(ArrayXXi *atomIndex12Angular,
       index += (m * (m - 1) / 2);
     }
   }
-  ArrayXXi sortedLocalIndex12(2, (mask.array() == 1).count());
+  ArrayXXi sortedLocalIndex12(2, (mask == 1).count());
   index = 0;
   for (auto i = 0; i < mask.size(); i++) {
     if (mask(0, i) == 1) {
@@ -550,8 +542,7 @@ void TripleByMolecules(ArrayXXi *atomIndex12Angular,
   }
 
   sortedLocalIndex12 =
-      (sortedLocalIndex12.matrix().rowwise() + extraLocalIndex12.transpose())
-          .array();
+      (sortedLocalIndex12.matrix().rowwise() + extraLocalIndex12.transpose());
 
   // unsort from last part
   ArrayXXi localIndex12(2, sortedLocalIndex12.cols());
@@ -614,11 +605,10 @@ void IndexAdd(ArrayXXd &vector1, ArrayXXd &vector2, ArrayBase<Derived> &index,
       }
     }
   }
-  // return vector1;
 }
 
-ArrayXXd AtomicEnvironmentVector(
-    double *pos, const VectorXi &species, unsigned int numAtoms,
+void AtomicEnvironmentVector(
+    ArrayXXd &AEV, double *pos, const VectorXi &species, unsigned int numAtoms,
     const std::map<std::string, Eigen::ArrayXXd> *params) {
   PRECONDITION(species.size() == numAtoms,
                "Species encoding for each atom is required");
@@ -631,6 +621,11 @@ ArrayXXd AtomicEnvironmentVector(
   // distance 5.2 Angstroms. The constant was obtained by authors of torchANI
   ArrayXi atomIndex12;
   NeighborPairs(&coordinates, &species, 5.2, numAtoms, &atomIndex12);
+  if (atomIndex12.size() == 0) {
+    AEV.resize(numAtoms, 384);
+    AEV = ArrayXXd::Zero(numAtoms, 384);
+    return;
+  }
   ArrayXXd selectedCoordinates(atomIndex12.rows(), 3);
   IndexSelect(&selectedCoordinates, &coordinates, atomIndex12, 0);
 
@@ -680,7 +675,7 @@ ArrayXXd AtomicEnvironmentVector(
   // Distance cutoff for angular terms is smaller  than for radial terms, so we
   // construct a smaller neighbor list. The authors of torchANI found that the
   // cutoff 3.5 gave best results
-  ArrayXi evenCloserIndices((distances.array() <= 3.5).count());
+  ArrayXi evenCloserIndices((distances <= 3.5).count());
   unsigned int idx = 0;
   for (auto i = 0; i < distances.size(); i++) {
     if (distances(i) <= 3.5) {
@@ -726,11 +721,8 @@ ArrayXXd AtomicEnvironmentVector(
 
   n = atomIndex12Angular.cols();
 
-  // pairIndex12 = pairindex12 % n
-  auto localIndex = pairIndex12.cast<int>();
-
   pairIndex12 =
-      (localIndex.array() - (localIndex.array() / n).array() * n).array();
+      pairIndex12.unaryExpr([&](int val) { return val % n; }).cast<int>();
 
   ArrayXi pairIndex12Flattened(2 * pairIndex12.cols());
   idx = 0;
@@ -796,7 +788,7 @@ ArrayXXd AtomicEnvironmentVector(
     index.row(i) = triuIndices(species12_(0, i), species12_(1, i));
   }
   // The constant 10 comes from 10 pairs that can be formed
-  index = index + (centralAtomIndexArr.array() * 10).array();
+  index = index + (centralAtomIndexArr * 10);
 
   ArrayXXd angularAEV = ArrayXXd::Zero(10 * numAtoms, 32);
   IndexAdd(angularAEV, AngularTerms_, index, 10, numAtoms);
@@ -811,16 +803,15 @@ ArrayXXd AtomicEnvironmentVector(
     atomIdx++;
   }
 
-  ArrayXXd finalAEV(finalRadialAEV.rows(),
-                    finalRadialAEV.cols() + finalAngularAEV.cols());
-  finalAEV << finalRadialAEV, finalAngularAEV;
+  AEV.resize(finalRadialAEV.rows(),
+             finalRadialAEV.cols() + finalAngularAEV.cols());
+  AEV << finalRadialAEV, finalAngularAEV;
 
-  return finalAEV;
 }
 
-ArrayXXd AtomicEnvironmentVector(
-    const ROMol &mol, const std::map<std::string, Eigen::ArrayXXd> *params,
-    int confId) {
+void AtomicEnvironmentVector(
+    ArrayXXd &AEV, const ROMol &mol,
+    const std::map<std::string, Eigen::ArrayXXd> *params, int confId) {
   PRECONDITION(mol.getNumConformers() >= 1, "molecule has no conformers");
 
   auto numAtoms = mol.getNumAtoms();
@@ -838,7 +829,7 @@ ArrayXXd AtomicEnvironmentVector(
     pos[3 * i + 2] = atom.z;
   }
 
-  return AtomicEnvironmentVector(pos, species, numAtoms, params);
+  AtomicEnvironmentVector(AEV, pos, species, numAtoms, params);
 }
 }  // namespace ANI
 }  // namespace Descriptors

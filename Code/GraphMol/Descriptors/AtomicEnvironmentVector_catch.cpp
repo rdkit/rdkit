@@ -119,7 +119,9 @@ TEST_CASE("Symmetry Function Accuracy", "[Symmetry Function]") {
     RDKit::ROMOL_SPTR mol(RDKit::MolFileToMol(molFile, true, false));
     int confId = -1;
 
-    auto aev = RDKit::Descriptors::ANI::AtomicEnvironmentVector(*mol, &params, confId);
+    ArrayXXd aev;
+    RDKit::Descriptors::ANI::AtomicEnvironmentVector(aev, *mol, &params,
+                                                     confId);
 
     CHECK(aev.rows() == mol->getNumAtoms());
     CHECK(aev.cols() == 384);
@@ -166,7 +168,9 @@ TEST_CASE("Symmetry Function Accuracy", "[Symmetry Function]") {
     RDKit::ROMOL_SPTR mol(RDKit::MolFileToMol(molFile, true, false));
     int confId = -1;
 
-    auto aev = RDKit::Descriptors::ANI::AtomicEnvironmentVector(*mol, &params, confId);
+    ArrayXXd aev;
+    RDKit::Descriptors::ANI::AtomicEnvironmentVector(aev, *mol, &params,
+                                                     confId);
 
     CHECK(aev.rows() == mol->getNumAtoms());
     CHECK(aev.cols() == 384);
@@ -213,7 +217,9 @@ TEST_CASE("Symmetry Function Accuracy", "[Symmetry Function]") {
     RDKit::ROMOL_SPTR mol(RDKit::MolFileToMol(molFile, false, false));
     int confId = -1;
 
-    auto aev = RDKit::Descriptors::ANI::AtomicEnvironmentVector(*mol, &params, confId);
+    ArrayXXd aev;
+    RDKit::Descriptors::ANI::AtomicEnvironmentVector(aev, *mol, &params,
+                                                     confId);
 
     CHECK(aev.rows() == mol->getNumAtoms());
     CHECK(aev.cols() == 384);
