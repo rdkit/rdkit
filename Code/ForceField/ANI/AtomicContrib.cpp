@@ -121,8 +121,9 @@ double ANIAtomContrib::forwardProp(ArrayXXd &aev) const {
 }
 
 double ANIAtomContrib::getEnergy(double *pos) const {
-  auto aev = RDKit::Descriptors::ANI::AtomicEnvironmentVector(
-      pos, this->d_speciesVec, this->d_numAtoms, &(this->d_aevParams));
+  ArrayXXd aev;
+  RDKit::Descriptors::ANI::AtomicEnvironmentVector(
+      aev, pos, this->d_speciesVec, this->d_numAtoms, &(this->d_aevParams));
   ArrayXXd row = aev.row(this->d_atomIdx);
   return this->ANIAtomContrib::forwardProp(row) + this->d_selfEnergy;
 }
@@ -132,7 +133,39 @@ double ANIAtomContrib::getEnergy(Eigen::ArrayXXd &aev) const {
   return this->ANIAtomContrib::forwardProp(row) + this->d_selfEnergy;
 }
 
-void ANIAtomContrib::getGrad(double *pos, double *grad) const {}
+void ANIAtomContrib::getGrad(double *pos, double *grad) const {
+  auto initEnergy = this->dp_forceField->calcEnergy(pos);
+
+  // + - x movement
+  pos[3 * this->d_atomIdx] += 1e-5;
+  auto posXEnergy = this->dp_forceField->calcEnergy(pos);
+
+  pos[3 * this->d_atomIdx] -= 2e-5;
+  auto negXEnergy = this->dp_forceField->calcEnergy(pos);
+
+  grad[3 * this->d_atomIdx] = (posXEnergy - negXEnergy) / (2e-5);
+  pos[3 * this->d_atomIdx] += 1e-5;
+
+  // + - Y movement
+  pos[3 * this->d_atomIdx + 1] += 1e-5;
+  auto posYEnergy = this->dp_forceField->calcEnergy(pos);
+
+  pos[3 * this->d_atomIdx + 1] -= 2e-5;
+  auto negYEnergy = this->dp_forceField->calcEnergy(pos);
+
+  grad[3 * this->d_atomIdx + 1] = (posYEnergy - negYEnergy) / (2e-5);
+  pos[3 * this->d_atomIdx + 1] += 1e-5;
+
+  // + - Z movement
+  pos[3 * this->d_atomIdx + 2] += 1e-5;
+  auto posZEnergy = this->dp_forceField->calcEnergy(pos);
+
+  pos[3 * this->d_atomIdx + 2] -= 2e-5;
+  auto negZEnergy = this->dp_forceField->calcEnergy(pos);
+
+  grad[3 * this->d_atomIdx + 2] = (posZEnergy - negZEnergy) / (2e-5);
+  pos[3 * this->d_atomIdx + 2] += 1e-5;
+}
 
 namespace Utils {
 
