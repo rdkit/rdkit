@@ -14,6 +14,12 @@ rdkit_library(ForceField
               MMFF/Params.cpp
               LINK_LIBRARIES Optimizer Trajectory)
 
+if(RDK_HAS_EIGEN)
+rdkit_library(ANIForceField
+             ANI/AtomicContrib.cpp
+             LINK_LIBRARIES Optimizer Trajectory ANIDescriptors EigenSerializer)
+endif(RDK_HAS_EIGEN)
+
 rdkit_headers(Contrib.h
               ForceField.h DEST ForceField)
 
@@ -41,9 +47,15 @@ rdkit_headers(MMFF/AngleBend.h
               MMFF/TorsionConstraint.h
               MMFF/PositionConstraint.h
               MMFF/Params.h DEST ForceField/MMFF)
+if(RDK_HAS_EIGEN)
+rdkit_headers(ANI/AtomicContrib.h DEST ForceField/ANI)
+endif(RDK_HAS_EIGEN)
 
 add_subdirectory(UFF)
 add_subdirectory(MMFF)
+if(RDK_HAS_EIGEN)
+add_subdirectory(ANI)
+endif(RDK_HAS_EIGEN)
 if(RDK_BUILD_PYTHON_WRAPPERS)
 add_subdirectory(Wrap)
 endif()
