@@ -829,8 +829,6 @@ void dfsBuildStack(ROMol &mol, int atomIdx, int inBondIdx,
     }
     Bond *bond = possiblesIt->get<2>();
     Atom *otherAtom = mol.getAtomWithIdx(possibleIdx);
-    // unsigned int lowestRingIdx;
-    INT_VECT::const_iterator cAIt;
     // ww might have some residual data from earlier calls, clean that up:
     otherAtom->clearProp(common_properties::_TraversalBondIndexOrder);
     travList.push_back(bond->getIdx());

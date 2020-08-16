@@ -1,5 +1,5 @@
 //
-//  Copyright (C) 2003-2017 Greg Landrum and Rational Discovery LLC
+//  Copyright (C) 2003-2020 Greg Landrum and Rational Discovery LLC
 //
 //   @@ All Rights Reserved @@
 //  This file is part of the RDKit.
@@ -32,6 +32,8 @@
 #include <GraphMol/SmilesParse/SmilesWrite.h>
 #include <GraphMol/SmilesParse/SmartsWrite.h>
 #include <GraphMol/Depictor/RDDepictor.h>
+
+#include <boost/algorithm/string.hpp>
 
 using namespace RDKit::SGroupWriting;
 
@@ -284,7 +286,8 @@ const std::string GetMolFileQueryInfo(
   }
   for (const auto atom : mol.atoms()) {
     bool wrote_query = false;
-    if (!listQs[atom->getIdx()] && hasComplexQuery(atom)) {
+    if (!listQs[atom->getIdx()] && !queryListAtoms[atom->getIdx()] &&
+        hasComplexQuery(atom)) {
       std::string sma =
           SmartsWrite::GetAtomSmarts(static_cast<const QueryAtom *>(atom));
       ss << "V  " << std::setw(3) << atom->getIdx() + 1 << " " << sma
@@ -439,26 +442,49 @@ const std::string AtomGetMolFileSymbol(
     res = atom->getSymbol();
   } else {
     if (!atom->hasProp(common_properties::dummyLabel)) {
-      if (atom->hasQuery() && atom->getQuery()->getNegation() &&
-          atom->getQuery()->getDescription() == "AtomAtomicNum" &&
-          static_cast<ATOM_EQUALS_QUERY *>(atom->getQuery())->getVal() == 1) {
+      if (atom->hasQuery() &&
+          (atom->getQuery()->getTypeLabel() == "A" ||
+           (atom->getQuery()->getNegation() &&
+            atom->getQuery()->getDescription() == "AtomAtomicNum" &&
+            static_cast<ATOM_EQUALS_QUERY *>(atom->getQuery())->getVal() ==
+                1))) {
         res = "A";
-      } else if (atom->hasQuery() && atom->getQuery()->getNegation() &&
-                 atom->getQuery()->getDescription() == "AtomOr" &&
-                 atom->getQuery()->endChildren() -
-                         atom->getQuery()->beginChildren() ==
-                     2 &&
-                 (*atom->getQuery()->beginChildren())->getDescription() ==
-                     "AtomAtomicNum" &&
-                 static_cast<ATOM_EQUALS_QUERY *>(
-                     (*atom->getQuery()->beginChildren()).get())
-                         ->getVal() == 6 &&
-                 (*++(atom->getQuery()->beginChildren()))->getDescription() ==
-                     "AtomAtomicNum" &&
-                 static_cast<ATOM_EQUALS_QUERY *>(
-                     (*++(atom->getQuery()->beginChildren())).get())
-                         ->getVal() == 1) {
+      } else if (atom->hasQuery() &&
+                 (atom->getQuery()->getTypeLabel() == "Q" ||
+                  (atom->getQuery()->getNegation() &&
+                   atom->getQuery()->getDescription() == "AtomOr" &&
+                   atom->getQuery()->endChildren() -
+                           atom->getQuery()->beginChildren() ==
+                       2 &&
+                   (*atom->getQuery()->beginChildren())->getDescription() ==
+                       "AtomAtomicNum" &&
+                   static_cast<ATOM_EQUALS_QUERY *>(
+                       (*atom->getQuery()->beginChildren()).get())
+                           ->getVal() == 6 &&
+                   (*++(atom->getQuery()->beginChildren()))->getDescription() ==
+                       "AtomAtomicNum" &&
+                   static_cast<ATOM_EQUALS_QUERY *>(
+                       (*++(atom->getQuery()->beginChildren())).get())
+                           ->getVal() == 1))) {
         res = "Q";
+        queryListAtoms.set(atom->getIdx());
+      } else if (atom->hasQuery() && atom->getQuery()->getTypeLabel() == "X") {
+        res = "X";
+        queryListAtoms.set(atom->getIdx());
+      } else if (atom->hasQuery() && atom->getQuery()->getTypeLabel() == "M") {
+        res = "M";
+        queryListAtoms.set(atom->getIdx());
+      } else if (atom->hasQuery() && atom->getQuery()->getTypeLabel() == "AH") {
+        res = "AH";
+        queryListAtoms.set(atom->getIdx());
+      } else if (atom->hasQuery() && atom->getQuery()->getTypeLabel() == "QH") {
+        res = "QH";
+        queryListAtoms.set(atom->getIdx());
+      } else if (atom->hasQuery() && atom->getQuery()->getTypeLabel() == "XH") {
+        res = "XH";
+        queryListAtoms.set(atom->getIdx());
+      } else if (atom->hasQuery() && atom->getQuery()->getTypeLabel() == "MH") {
+        res = "MH";
         queryListAtoms.set(atom->getIdx());
       } else if (hasComplexQuery(atom)) {
         if (hasListQuery(atom)) {
@@ -1326,6 +1352,17 @@ std::string outputMolToMolBlock(const RWMol &tmol, int confId,
         res += GetV3000MolFileSGroupLines(++idx, sgroup);
       }
       res += "M  V30 END SGROUP\n";
+    }
+
+    if (tmol.hasProp(common_properties::molFileLinkNodes)) {
+      auto pval =
+          tmol.getProp<std::string>(common_properties::molFileLinkNodes);
+
+      std::vector<std::string> linknodes;
+      boost::split(linknodes, pval, boost::is_any_of("|"));
+      for (const auto &linknode : linknodes) {
+        res += "M  V30 LINKNODE " + linknode + "\n";
+      }
     }
 
     appendEnhancedStereoGroups(res, tmol);

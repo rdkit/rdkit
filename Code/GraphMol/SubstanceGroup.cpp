@@ -59,6 +59,7 @@ void SubstanceGroup::addAtomWithIdx(unsigned int idx) {
 void SubstanceGroup::addAtomWithBookmark(int mark) {
   PRECONDITION(dp_mol, "bad mol");
   Atom *atom = dp_mol->getUniqueAtomWithBookmark(mark);
+  PRECONDITION(atom, "atom not found");
   d_atoms.push_back(atom->getIdx());
 }
 
@@ -176,7 +177,7 @@ bool SubstanceGroup::adjustToRemovedAtom(unsigned int atomIdx) {
     }
   }
   for (auto &ap : d_saps) {
-    if (ap.aIdx == atomIdx || ap.lvIdx == atomIdx) {
+    if (ap.aIdx == atomIdx || ap.lvIdx == rdcast<int>(atomIdx)) {
       throw SubstanceGroupException(
           "adjustToRemovedAtom() called on SubstanceGroup which contains the "
           "atom");
@@ -185,7 +186,7 @@ bool SubstanceGroup::adjustToRemovedAtom(unsigned int atomIdx) {
       res = true;
       --ap.aIdx;
     }
-    if (ap.lvIdx > atomIdx) {
+    if (ap.lvIdx > rdcast<int>(atomIdx)) {
       res = true;
       --ap.lvIdx;
     }
@@ -229,7 +230,7 @@ bool SubstanceGroup::includesAtom(unsigned int atomIdx) const {
     return true;
   }
   for (const auto &ap : d_saps) {
-    if (ap.aIdx == atomIdx || ap.lvIdx == atomIdx) {
+    if (ap.aIdx == atomIdx || ap.lvIdx == rdcast<int>(atomIdx)) {
       return true;
     }
   }

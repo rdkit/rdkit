@@ -30,6 +30,8 @@
 #include <boost/lexical_cast.hpp>
 #include <RDGeneral/BoostEndInclude.h>
 #include <GraphMol/RDKitBase.h>
+#include <GraphMol/QueryOps.h>
+
 #include "SmilesParseOps.h"
 #include <RDGeneral/RDLog.h>
 #include <RDGeneral/Invariant.h>
@@ -395,6 +397,16 @@ RWMol *SmilesToMol(const std::string &smiles,
     bool cleanIt = true, force = true, flagPossible = true;
     MolOps::assignStereochemistry(*res, cleanIt, force, flagPossible);
   }
+  if (res && res->hasProp(common_properties::_NeedsQueryScan)) {
+    res->clearProp(common_properties::_NeedsQueryScan);
+    if (!params.sanitize) {
+      // we know that this can be the ring bond query, do ring perception if we
+      // need to:
+      MolOps::fastFindRings(*res);
+    }
+    QueryOps::completeMolQueries(res, 0xDEADBEEF);
+  }
+
   if (res && !name.empty()) {
     res->setProp(common_properties::_Name, name);
   }

@@ -20,7 +20,6 @@
 #include <GraphMol/FileParsers/MolSupplier.h>
 #include <GraphMol/RDKitBase.h>
 #include <RDBoost/python_streambuf.h>
-#include <RDBoost/iterator_next.h>
 
 #include <maeparser/MaeConstants.hpp>
 #include <maeparser/Reader.hpp>
@@ -117,7 +116,7 @@ struct maemolsup_wrap {
         .def(python::init<std::string, bool, bool>(
             (python::arg("filename"), python::arg("sanitize") = true,
              python::arg("removeHs") = true)))
-        .def(NEXT_METHOD, (ROMol * (*)(LocalMaeMolSupplier *)) & MolSupplNext,
+        .def("__next__", (ROMol * (*)(LocalMaeMolSupplier *)) & MolSupplNext,
              "Returns the next molecule in the file.  Raises _StopIteration_ "
              "on EOF.\n",
              python::return_value_policy<python::manage_new_object>())

@@ -21,7 +21,7 @@ steps:
         boost-cpp=$(boost_version) boost=$(boost_version) \
         py-boost=$(boost_version) libboost=$(boost_version) \
         numpy matplotlib cairo pillow eigen pandas  \
-        sphinx recommonmark jupyter
+        sphinx=3.1.2 recommonmark jupyter
   displayName: Setup build environment
 - bash: |
     source ${CONDA}/etc/profile.d/conda.sh
@@ -37,6 +37,7 @@ steps:
     -DRDK_BUILD_PYTHON_WRAPPERS=ON \
     -DRDK_USE_BOOST_REGEX=ON \
     -DRDK_BUILD_COORDGEN_SUPPORT=ON \
+    -DRDK_BUILD_MAEPARSER_SUPPORT=ON \
     -DRDK_OPTIMIZE_POPCNT=ON \
     -DRDK_BUILD_TEST_GZIP=ON \
     -DRDK_BUILD_FREESASA_SUPPORT=ON \

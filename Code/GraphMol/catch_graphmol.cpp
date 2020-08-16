@@ -19,6 +19,7 @@
 #include <GraphMol/SmilesParse/SmilesParse.h>
 #include <GraphMol/SmilesParse/SmilesWrite.h>
 #include <GraphMol/SmilesParse/SmartsWrite.h>
+#include <boost/format.hpp>
 
 using namespace RDKit;
 #if 1
@@ -168,7 +169,7 @@ TEST_CASE(
   }
   SECTION("the original molecule") {
     std::string mb = R"CTAB(
-  Mrv1810 02131915062D          
+  Mrv1810 02131915062D
 
  18 20  0  0  1  0            999 V2000
    -0.7207   -1.3415    0.0000 N   0  0  1  0  0  0  0  0  0  0  0  0
@@ -271,7 +272,7 @@ TEST_CASE(
     "[bug][molops]") {
   SECTION("underlying problem") {
     std::string molb = R"CTAB(testmol
-  Mrv1824 05081910082D          
+  Mrv1824 05081910082D
 
   4  4  0  0  0  0            999 V2000
     6.9312   -8.6277    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
@@ -299,7 +300,7 @@ M  END
 
   SECTION("as discovered") {
     std::string molb = R"CTAB(testmol
-  Mrv1824 05081910082D          
+  Mrv1824 05081910082D
 
   4  4  0  0  0  0            999 V2000
     6.9312   -9.4527    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
@@ -356,6 +357,7 @@ TEST_CASE("Specialized exceptions for sanitization errors", "[molops]") {
       CHECK_THROWS_AS(SmilesToMol(pr.first), AtomValenceException);
       try {
         auto m = SmilesToMol(pr.first);
+        RDUNUSED_PARAM(m);
       } catch (const AtomValenceException &e) {
         CHECK(e.getType() == "AtomValenceException");
         CHECK(e.getAtomIdx() == pr.second);
@@ -369,6 +371,7 @@ TEST_CASE("Specialized exceptions for sanitization errors", "[molops]") {
       CHECK_THROWS_AS(SmilesToMol(pr.first), AtomKekulizeException);
       try {
         auto m = SmilesToMol(pr.first);
+        RDUNUSED_PARAM(m);
       } catch (const AtomKekulizeException &e) {
         CHECK(e.getType() == "AtomKekulizeException");
         CHECK(e.getAtomIdx() == pr.second);
@@ -382,6 +385,7 @@ TEST_CASE("Specialized exceptions for sanitization errors", "[molops]") {
       CHECK_THROWS_AS(SmilesToMol(pr.first), KekulizeException);
       try {
         auto m = SmilesToMol(pr.first);
+        RDUNUSED_PARAM(m);
       } catch (const KekulizeException &e) {
         CHECK(e.getType() == "KekulizeException");
         CHECK(e.getAtomIndices() == pr.second);
@@ -429,7 +433,7 @@ TEST_CASE(
     "[bug][molops]") {
   SECTION("basics-Pb") {
     std::string mb = R"CTAB(
-  Mrv1810 08141905562D          
+  Mrv1810 08141905562D
 
   5  0  0  0  0  0            999 V2000
    -3.6316   -0.4737    0.0000 Pb  0  0  0  0  0  0  0  0  0  0  0  0
@@ -447,7 +451,7 @@ M  END
   }
   SECTION("basics-Sn") {
     std::string mb = R"CTAB(
-  Mrv1810 08141905562D          
+  Mrv1810 08141905562D
 
   5  0  0  0  0  0            999 V2000
    -3.6316   -0.4737    0.0000 Sn  0  0  0  0  0  0  0  0  0  0  0  0
@@ -465,7 +469,7 @@ M  END
   }
   SECTION("basics-Ge") {
     std::string mb = R"CTAB(
-  Mrv1810 08141905562D          
+  Mrv1810 08141905562D
 
   5  0  0  0  0  0            999 V2000
    -3.6316   -0.4737    0.0000 Ge  0  0  0  0  0  0  0  0  0  0  0  0
@@ -487,7 +491,7 @@ TEST_CASE(
     "[bug][molops]") {
   SECTION("basics-Pb") {
     std::string mb = R"CTAB(
-  Mrv1810 08141905562D          
+  Mrv1810 08141905562D
 
   3  0  0  0  0  0            999 V2000
    -3.6316   -0.4737    0.0000 Pb  0  0  0  0  0  0  0  0  0  0  0  0
@@ -503,7 +507,7 @@ M  END
   }
   SECTION("basics-Sn") {
     std::string mb = R"CTAB(
-  Mrv1810 08141905562D          
+  Mrv1810 08141905562D
 
   3  0  0  0  0  0            999 V2000
    -3.6316   -0.4737    0.0000 Sn  0  0  0  0  0  0  0  0  0  0  0  0
@@ -524,7 +528,7 @@ TEST_CASE(
     "[bug][stereochemistry]") {
   SECTION("basics") {
     std::string mb = R"CTAB(mol
-  Mrv1824 09191901002D          
+  Mrv1824 09191901002D
 
   6  5  0  0  0  0            999 V2000
    -1.6986   -7.4294    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
@@ -557,7 +561,7 @@ TEST_CASE(
     "[stereochemistry]") {
   SECTION("basics 1a") {
     std::string mb = R"CTAB(
-  Mrv1810 10141909562D          
+  Mrv1810 10141909562D
 
   4  3  0  0  0  0            999 V2000
     3.3412   -2.9968    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
@@ -579,7 +583,7 @@ M  END
   }
   SECTION("basics 1b") {
     std::string mb = R"CTAB(
-  Mrv1810 10141909562D          
+  Mrv1810 10141909562D
 
   4  3  0  0  0  0            999 V2000
     3.3412   -2.9968    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
@@ -601,7 +605,7 @@ M  END
   }
   SECTION("basics 2a") {
     std::string mb = R"CTAB(
-  Mrv1810 10141909582D          
+  Mrv1810 10141909582D
 
   4  3  0  0  0  0            999 V2000
     3.4745   -5.2424    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
@@ -623,7 +627,7 @@ M  END
   }
   SECTION("basics 2b") {
     std::string mb = R"CTAB(
-  Mrv1810 10141909582D          
+  Mrv1810 10141909582D
 
   4  3  0  0  0  0            999 V2000
     3.4745   -5.2424    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
@@ -814,15 +818,15 @@ TEST_CASE(
     std::vector<std::pair<unsigned int, std::string>> data = {
         {113, "Nh"}, {114, "Fl"}, {115, "Mc"},
         {116, "Lv"}, {117, "Ts"}, {118, "Og"}};
-    for (auto pr : data) {
+    for (const auto &pr : data) {
       CHECK(pt->getElementSymbol(pr.first) == pr.second);
     }
   }
   SECTION("symbol to number") {
-    std::vector<std::pair<unsigned int, std::string>> data = {
+    std::vector<std::pair<int, std::string>> data = {
         {113, "Nh"}, {114, "Fl"}, {115, "Mc"},  {116, "Lv"},
         {117, "Ts"}, {118, "Og"}, {113, "Uut"}, {115, "Uup"}};
-    for (auto pr : data) {
+    for (const auto &pr : data) {
       CHECK(pt->getAtomicNumber(pr.second) == pr.first);
     }
   }
@@ -830,7 +834,7 @@ TEST_CASE(
 TEST_CASE("github #2775", "[valence][bug]") {
   SECTION("basics") {
     std::string molblock = R"CTAB(bismuth citrate
-  Mrv1810 11111908592D          
+  Mrv1810 11111908592D
 
  14 12  0  0  0  0            999 V2000
     7.4050   -0.5957    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
@@ -1118,301 +1122,21 @@ TEST_CASE("github #2895: acepentalene aromaticity perception ",
   }
 }
 
-TEST_CASE("handling of bondStereoCare in updateQueryProperties") {
-  SECTION("fully specified") {
-    auto mol = R"CTAB(basic test
-  Mrv1810 01292006422D          
-
-  0  0  0     0  0            999 V3000
-M  V30 BEGIN CTAB
-M  V30 COUNTS 4 3 0 0 0
-M  V30 BEGIN ATOM
-M  V30 1 C -7.0316 2.0632 0 0 STBOX=1
-M  V30 2 C -5.6979 2.8332 0 0 STBOX=1
-M  V30 3 O -4.3642 2.0632 0 0
-M  V30 4 F -8.3653 2.8332 0 0
-M  V30 END ATOM
-M  V30 BEGIN BOND
-M  V30 1 1 2 3
-M  V30 2 1 1 4
-M  V30 3 2 1 2 STBOX=1
-M  V30 END BOND
-M  V30 END CTAB
-M  END
-)CTAB"_ctab;
+TEST_CASE("github #3256: fused ring aromaticity perception",
+          "[molops][bug][aromaticity]") {
+  SECTION("nitrogen only central ring") {
+    auto mol = "C1=CN2C3=CC=CN3C3=CC=CN3C2=C1"_smiles;
     REQUIRE(mol);
-    REQUIRE(mol->getBondBetweenAtoms(0, 1));
-    CHECK(mol->getBondBetweenAtoms(0, 1)->getStereo() ==
-          Bond::BondStereo::STEREOE);
-    MolOps::AdjustQueryParameters ps;
-    ps.useStereoCareForBonds = true;
-    MolOps::adjustQueryProperties(*mol, &ps);
-    CHECK(mol->getBondBetweenAtoms(0, 1)->getStereo() ==
-          Bond::BondStereo::STEREOE);
-  }
-  SECTION("fully unspecified") {
-    auto mol = R"CTAB(basic test
-  Mrv1810 01292006422D          
-
-  0  0  0     0  0            999 V3000
-M  V30 BEGIN CTAB
-M  V30 COUNTS 4 3 0 0 0
-M  V30 BEGIN ATOM
-M  V30 1 C -7.0316 2.0632 0 0
-M  V30 2 C -5.6979 2.8332 0 0
-M  V30 3 O -4.3642 2.0632 0 0
-M  V30 4 F -8.3653 2.8332 0 0
-M  V30 END ATOM
-M  V30 BEGIN BOND
-M  V30 1 1 2 3
-M  V30 2 1 1 4
-M  V30 3 2 1 2
-M  V30 END BOND
-M  V30 END CTAB
-M  END
-)CTAB"_ctab;
-    REQUIRE(mol);
-    REQUIRE(mol->getBondBetweenAtoms(0, 1));
-    CHECK(mol->getBondBetweenAtoms(0, 1)->getStereo() ==
-          Bond::BondStereo::STEREOE);
-    MolOps::AdjustQueryParameters ps;
-    ps.useStereoCareForBonds = true;
-    MolOps::adjustQueryProperties(*mol, &ps);
-    CHECK(mol->getBondBetweenAtoms(0, 1)->getStereo() ==
-          Bond::BondStereo::STEREONONE);
-  }
-  SECTION("partially unspecified") {
-    std::vector<std::string> mbs = {R"CTAB(keep
-  Mrv1810 01292006422D          
-
-  0  0  0     0  0            999 V3000
-M  V30 BEGIN CTAB
-M  V30 COUNTS 4 3 0 0 0
-M  V30 BEGIN ATOM
-M  V30 1 C -7.0316 2.0632 0 0 STBOX=1
-M  V30 2 C -5.6979 2.8332 0 0 STBOX=1
-M  V30 3 O -4.3642 2.0632 0 0
-M  V30 4 F -8.3653 2.8332 0 0
-M  V30 END ATOM
-M  V30 BEGIN BOND
-M  V30 1 1 2 3
-M  V30 2 1 1 4
-M  V30 3 2 1 2
-M  V30 END BOND
-M  V30 END CTAB
-M  END
-)CTAB",
-                                    R"CTAB(keep
-  Mrv1810 01292006422D          
-
-  0  0  0     0  0            999 V3000
-M  V30 BEGIN CTAB
-M  V30 COUNTS 4 3 0 0 0
-M  V30 BEGIN ATOM
-M  V30 1 C -7.0316 2.0632 0 0
-M  V30 2 C -5.6979 2.8332 0 0
-M  V30 3 O -4.3642 2.0632 0 0
-M  V30 4 F -8.3653 2.8332 0 0
-M  V30 END ATOM
-M  V30 BEGIN BOND
-M  V30 1 1 2 3
-M  V30 2 1 1 4
-M  V30 3 2 1 2 STBOX=1
-M  V30 END BOND
-M  V30 END CTAB
-M  END
-)CTAB",
-                                    R"CTAB(remove
-  Mrv1810 01292006422D          
-
-  0  0  0     0  0            999 V3000
-M  V30 BEGIN CTAB
-M  V30 COUNTS 4 3 0 0 0
-M  V30 BEGIN ATOM
-M  V30 1 C -7.0316 2.0632 0 0
-M  V30 2 C -5.6979 2.8332 0 0
-M  V30 3 O -4.3642 2.0632 0 0
-M  V30 4 F -8.3653 2.8332 0 0
-M  V30 END ATOM
-M  V30 BEGIN BOND
-M  V30 1 1 2 3
-M  V30 2 1 1 4
-M  V30 3 2 1 2 STBOX=0
-M  V30 END BOND
-M  V30 END CTAB
-M  END
-)CTAB",
-                                    R"CTAB(remove
-  Mrv1810 01292006422D          
-
-  0  0  0     0  0            999 V3000
-M  V30 BEGIN CTAB
-M  V30 COUNTS 4 3 0 0 0
-M  V30 BEGIN ATOM
-M  V30 1 C -7.0316 2.0632 0 0 
-M  V30 2 C -5.6979 2.8332 0 0 STBOX=1
-M  V30 3 O -4.3642 2.0632 0 0
-M  V30 4 F -8.3653 2.8332 0 0
-M  V30 END ATOM
-M  V30 BEGIN BOND
-M  V30 1 1 2 3
-M  V30 2 1 1 4
-M  V30 3 2 1 2
-M  V30 END BOND
-M  V30 END CTAB
-M  END
-)CTAB",
-                                    R"CTAB(remove
-  Mrv1810 01292006422D          
-
-  0  0  0     0  0            999 V3000
-M  V30 BEGIN CTAB
-M  V30 COUNTS 4 3 0 0 0
-M  V30 BEGIN ATOM
-M  V30 1 C -7.0316 2.0632 0 0 STBOX=1
-M  V30 2 C -5.6979 2.8332 0 0
-M  V30 3 O -4.3642 2.0632 0 0
-M  V30 4 F -8.3653 2.8332 0 0
-M  V30 END ATOM
-M  V30 BEGIN BOND
-M  V30 1 1 2 3
-M  V30 2 1 1 4
-M  V30 3 2 1 2
-M  V30 END BOND
-M  V30 END CTAB
-M  END
-)CTAB"};
-    for (const auto &mb : mbs) {
-      std::unique_ptr<RWMol> mol{MolBlockToMol(mb)};
-      REQUIRE(mol);
-      REQUIRE(mol->getBondBetweenAtoms(0, 1));
-      CHECK(mol->getBondBetweenAtoms(0, 1)->getStereo() ==
-            Bond::BondStereo::STEREOE);
-      MolOps::AdjustQueryParameters ps;
-      ps.useStereoCareForBonds = true;
-      MolOps::adjustQueryProperties(*mol, &ps);
-      if (mol->getProp<std::string>(common_properties::_Name) == "keep") {
-        CHECK(mol->getBondBetweenAtoms(0, 1)->getStereo() ==
-              Bond::BondStereo::STEREOE);
-      } else {
-        CHECK(mol->getBondBetweenAtoms(0, 1)->getStereo() ==
-              Bond::BondStereo::STEREONONE);
-      }
+    for (const auto b: mol->bonds()) {
+      CHECK(b->getBondType() == Bond::AROMATIC);
     }
-  }
-  SECTION("V2000") {
-    auto mol = R"CTAB(basic test
-  Mrv1810 01292015042D          
-
-  4  3  0  0  0  0            999 V2000
-   -3.7669    1.1053    0.0000 C   0  0  0  0  1  0  0  0  0  0  0  0
-   -3.0524    1.5178    0.0000 C   0  0  0  0  1  0  0  0  0  0  0  0
-   -2.3380    1.1053    0.0000 O   0  0  0  0  0  0  0  0  0  0  0  0
-   -4.4814    1.5178    0.0000 F   0  0  0  0  0  0  0  0  0  0  0  0
-  2  3  1  0  0  0  0
-  1  4  1  0  0  0  0
-  1  2  2  0  0  0  0
-M  END
-)CTAB"_ctab;
-    REQUIRE(mol);
-    CHECK(mol->getAtomWithIdx(0)->hasProp(common_properties::molStereoCare));
-    CHECK(mol->getAtomWithIdx(1)->hasProp(common_properties::molStereoCare));
-    REQUIRE(mol->getBondBetweenAtoms(0, 1));
-    CHECK(mol->getBondBetweenAtoms(0, 1)->getStereo() ==
-          Bond::BondStereo::STEREOE);
-    // property added by the CTAB parser:
-    CHECK(mol->getBondBetweenAtoms(0, 1)->hasProp(
-        common_properties::molStereoCare));
-    MolOps::AdjustQueryParameters ps;
-    ps.useStereoCareForBonds = true;
-    MolOps::adjustQueryProperties(*mol, &ps);
-    CHECK(mol->getBondBetweenAtoms(0, 1)->getStereo() ==
-          Bond::BondStereo::STEREOE);
-  }
-  SECTION("molecule from SMILES") {
-    auto mol = "C/C=C/C"_smiles;
-    REQUIRE(mol);
-    REQUIRE(mol->getBondBetweenAtoms(2, 1));
-    CHECK(mol->getBondBetweenAtoms(2, 1)->getStereo() ==
-          Bond::BondStereo::STEREOE);
-    MolOps::AdjustQueryParameters ps;
-    ps.useStereoCareForBonds = true;
-    // since stereoCare is not set on the bond from SMILES,
-    // stereochem will be removed:
-    {
-      RWMol molcp(*mol);
-      MolOps::adjustQueryProperties(molcp, &ps);
-      CHECK(molcp.getBondBetweenAtoms(2, 1)->getStereo() ==
-            Bond::BondStereo::STEREONONE);
-    }
-    // but we can preserve it by setting the property:
-    {
-      RWMol molcp(*mol);
-      molcp.getBondBetweenAtoms(2, 1)->setProp(common_properties::molStereoCare,
-                                               1);
-      MolOps::adjustQueryProperties(molcp, &ps);
-      CHECK(molcp.getBondBetweenAtoms(2, 1)->getStereo() ==
-            Bond::BondStereo::STEREOE);
-    }
-  }
-}
-
-TEST_CASE("updateQueryParameters from JSON") {
-  SECTION("basics") {
-    MolOps::AdjustQueryParameters ps;
-    CHECK(ps.makeAtomsGeneric == false);
-    CHECK(ps.makeBondsGeneric == false);
-    CHECK(ps.makeBondsGenericFlags == MolOps::ADJUST_IGNORENONE);
-
-    std::string json = R"JSON({"makeAtomsGeneric":true})JSON";
-    MolOps::parseAdjustQueryParametersFromJSON(ps, json);
-
-    CHECK(ps.makeAtomsGeneric == true);
-    CHECK(ps.makeBondsGeneric == false);
-    // the parsing updates the parameters, it doesn't replace them:
-
-    json = R"JSON({"makeBondsGeneric":true,
-      "makeBondsGenericFlags":"IGNOREDUMMIES|IGNORECHAINS"})JSON";
-    MolOps::parseAdjustQueryParametersFromJSON(ps, json);
-
-    CHECK(ps.makeAtomsGeneric == true);
-    CHECK(ps.makeBondsGeneric == true);
-    CHECK(ps.makeBondsGenericFlags ==
-          (MolOps::ADJUST_IGNOREDUMMIES | MolOps::ADJUST_IGNORECHAINS));
-  }
-  SECTION("useStereoCare") {
-    MolOps::AdjustQueryParameters ps;
-    CHECK(ps.useStereoCareForBonds == false);
-
-    std::string json = R"JSON({"useStereoCareForBonds":true})JSON";
-    MolOps::parseAdjustQueryParametersFromJSON(ps, json);
-    CHECK(ps.useStereoCareForBonds == true);
-    json = R"JSON({"useStereoCareForBonds":false})JSON";
-    MolOps::parseAdjustQueryParametersFromJSON(ps, json);
-    CHECK(ps.useStereoCareForBonds == false);
-  }
-  SECTION("bogus contents") {
-    MolOps::AdjustQueryParameters ps;
-    CHECK(ps.adjustDegree == true);
-    CHECK(ps.adjustDegreeFlags ==
-          (MolOps::ADJUST_IGNOREDUMMIES | MolOps::ADJUST_IGNORECHAINS));
-
-    std::string json = R"JSON({"bogosity":true})JSON";
-    MolOps::parseAdjustQueryParametersFromJSON(ps, json);
-    CHECK(ps.adjustDegree == true);
-
-    json = R"JSON({"adjustDegree":"foo"})JSON";
-    MolOps::parseAdjustQueryParametersFromJSON(ps, json);
-    CHECK(ps.adjustDegree == true);
-
-    json = R"JSON({"adjustDegreeFlags":"IGNORENONE|bogus"})JSON";
-    // clang-format off
-    CHECK_THROWS_AS(MolOps::parseAdjustQueryParametersFromJSON(ps, json),ValueErrorException);
+    auto smi = MolToSmiles(*mol);
+    CHECK(smi == "c1cc2n(c1)c1cccn1c1cccn21");
   }
 }
 
 TEST_CASE("phosphine and arsine chirality", "[Chirality]") {
-  SECTION("chiral center recognized"){
+  SECTION("chiral center recognized") {
     auto mol1 = "C[P@](C1CCCC1)C1=CC=CC=C1"_smiles;
     auto mol2 = "C[As@](C1CCCC1)C1=CC=CC=C1"_smiles;
     REQUIRE(mol1);
@@ -1420,7 +1144,7 @@ TEST_CASE("phosphine and arsine chirality", "[Chirality]") {
     CHECK(mol1->getAtomWithIdx(1)->getChiralTag() != Atom::CHI_UNSPECIFIED);
     CHECK(mol2->getAtomWithIdx(1)->getChiralTag() != Atom::CHI_UNSPECIFIED);
   }
-  SECTION("chiral center selective"){
+  SECTION("chiral center selective") {
     auto mol1 = "C[P@](C)C1CCCCC1"_smiles;
     auto mol2 = "C[As@](C)C1CCCCC1"_smiles;
     REQUIRE(mol1);
@@ -1428,21 +1152,21 @@ TEST_CASE("phosphine and arsine chirality", "[Chirality]") {
     CHECK(mol1->getAtomWithIdx(1)->getChiralTag() == Atom::CHI_UNSPECIFIED);
     CHECK(mol2->getAtomWithIdx(1)->getChiralTag() == Atom::CHI_UNSPECIFIED);
   }
-  SECTION("chiral center specific: P"){
+  SECTION("chiral center specific: P") {
     auto mol1 = "C[P@](C1CCCC1)C1=CC=CC=C1"_smiles;
     auto mol2 = "C[P@@](C1CCCC1)C1=CC=CC=C1"_smiles;
-    REQUIRE(mol1); 
+    REQUIRE(mol1);
     REQUIRE(mol2);
     CHECK(MolToSmiles(*mol1) != MolToSmiles(*mol2));
   }
-  SECTION("chiral center specific: As"){
+  SECTION("chiral center specific: As") {
     auto mol1 = "C[As@](C1CCCC1)C1=CC=CC=C1"_smiles;
     auto mol2 = "C[As@@](C1CCCC1)C1=CC=CC=C1"_smiles;
-    REQUIRE(mol1); 
+    REQUIRE(mol1);
     REQUIRE(mol2);
     CHECK(MolToSmiles(*mol1) != MolToSmiles(*mol2));
   }
-  SECTION("chiral center, implicit H: P"){
+  SECTION("chiral center, implicit H: P") {
     auto mol1 = "C[P@H]C1CCCCC1"_smiles;
     auto mol2 = "C[P@@H]C1CCCCC1"_smiles;
     REQUIRE(mol1);
@@ -1450,7 +1174,7 @@ TEST_CASE("phosphine and arsine chirality", "[Chirality]") {
     CHECK(mol1->getAtomWithIdx(1)->getChiralTag() != Atom::CHI_UNSPECIFIED);
     CHECK(mol1->getAtomWithIdx(1)->getChiralTag() != Atom::CHI_UNSPECIFIED);
   }
-  SECTION("chiral center, implicit H: As"){
+  SECTION("chiral center, implicit H: As") {
     auto mol1 = "C[As@H]C1CCCCC1"_smiles;
     auto mol2 = "C[As@@H]C1CCCCC1"_smiles;
     REQUIRE(mol1);
@@ -1458,14 +1182,14 @@ TEST_CASE("phosphine and arsine chirality", "[Chirality]") {
     CHECK(mol1->getAtomWithIdx(1)->getChiralTag() != Atom::CHI_UNSPECIFIED);
     CHECK(mol1->getAtomWithIdx(1)->getChiralTag() != Atom::CHI_UNSPECIFIED);
   }
-  SECTION("chiral center specific, implicit H: P"){
+  SECTION("chiral center specific, implicit H: P") {
     auto mol1 = "C[P@H]C1CCCCC1"_smiles;
     auto mol2 = "C[P@@H]C1CCCCC1"_smiles;
     REQUIRE(mol1);
     REQUIRE(mol2);
     CHECK(MolToSmiles(*mol1) != MolToSmiles(*mol2));
   }
-  SECTION("chiral center specific, implicit H: As"){
+  SECTION("chiral center specific, implicit H: As") {
     auto mol1 = "C[As@H]C1CCCCC1"_smiles;
     auto mol2 = "C[As@@H]C1CCCCC1"_smiles;
     REQUIRE(mol1);
@@ -1475,23 +1199,22 @@ TEST_CASE("phosphine and arsine chirality", "[Chirality]") {
 }
 
 TEST_CASE("github #2890", "[bug][molops][stereo]") {
-    auto mol = "CC=CC"_smiles;
-    REQUIRE(mol);
+  auto mol = "CC=CC"_smiles;
+  REQUIRE(mol);
 
-    auto bond = mol->getBondWithIdx(1);
-    bond->setStereo(Bond::STEREOANY);
-    REQUIRE(bond->getStereoAtoms().empty());
+  auto bond = mol->getBondWithIdx(1);
+  bond->setStereo(Bond::STEREOANY);
+  REQUIRE(bond->getStereoAtoms().empty());
 
-    MolOps::findPotentialStereoBonds(*mol);
-    CHECK(bond->getStereo() == Bond::STEREOANY);
-    CHECK(bond->getStereoAtoms().size() == 2);
+  MolOps::findPotentialStereoBonds(*mol);
+  CHECK(bond->getStereo() == Bond::STEREOANY);
+  CHECK(bond->getStereoAtoms().size() == 2);
 }
-
 
 TEST_CASE("github #3150 MolOps::removeHs removes hydrides", "[bug][molops]") {
   SmilesParserParams smilesPs;
   smilesPs.removeHs = false;
-  
+
   SECTION("Hydride ion remove Hydrides false") {
     std::unique_ptr<RWMol> m{SmilesToMol("[H-]", smilesPs)};
     REQUIRE(m);
@@ -1499,7 +1222,8 @@ TEST_CASE("github #3150 MolOps::removeHs removes hydrides", "[bug][molops]") {
     ps.removeHydrides = false;
     RWMol cp(*m);
     MolOps::removeHs(cp, ps);
-    // H atom not removed in this case because by default H atoms with degree 0 are not removed
+    // H atom not removed in this case because by default H atoms with degree 0
+    // are not removed
     CHECK(cp.getNumAtoms() == 1);
     CHECK(MolOps::getFormalCharge(cp) == -1);
   }
@@ -1511,7 +1235,8 @@ TEST_CASE("github #3150 MolOps::removeHs removes hydrides", "[bug][molops]") {
     ps.removeHydrides = true;
     RWMol cp(*m);
     MolOps::removeHs(cp, ps);
-    // H atom not removed in this case because by default H atoms with degree 0 are not removed
+    // H atom not removed in this case because by default H atoms with degree 0
+    // are not removed
     CHECK(cp.getNumAtoms() == 1);
     CHECK(MolOps::getFormalCharge(cp) == -1);
   }
@@ -1601,5 +1326,25 @@ TEST_CASE("github #3150 MolOps::removeHs removes hydrides", "[bug][molops]") {
     CHECK(cp.getNumAtoms() == 1);
     CHECK(MolOps::getFormalCharge(cp) == 1);
   }
+}
 
+TEST_CASE("hybridization of unknown atom types", "[bug][molops]") {
+  SECTION("Basics") {
+    auto m = "[U][U][U]"_smiles;
+    REQUIRE(m);
+    for (const auto atom : m->atoms()) {
+      CHECK(atom->getHybridization() == Atom::HybridizationType::S);
+    }
+  }
+  SECTION("comprehensive") {
+    std::string smiles = "";
+    for (unsigned int i = 89; i <= 118; ++i) {
+      smiles += (boost::format("[#%d]") % i).str();
+    }
+    std::unique_ptr<ROMol> m(SmilesToMol(smiles));
+    REQUIRE(m);
+    for (const auto atom : m->atoms()) {
+      CHECK(atom->getHybridization() == Atom::HybridizationType::S);
+    }
+  }
 }

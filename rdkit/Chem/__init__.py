@@ -22,6 +22,7 @@ _HasSubstructMatchStr = rdchem._HasSubstructMatchStr
 from rdkit.Chem.rdchem import *
 from rdkit.Chem.rdmolfiles import *
 from rdkit.Chem.rdmolops import *
+from rdkit.Chem.rdCIPLabeler import *
 from rdkit.Chem.inchi import *
 try:
     # This is an optional component of the build
@@ -115,7 +116,6 @@ def FindMolChiralCenters(mol, force=True, includeUnassigned=False):
     elif includeUnassigned and atom.HasProp('_ChiralityPossible'):
       centers.append((atom.GetIdx(), '?'))
   return centers
-
 
 #------------------------------------
 #

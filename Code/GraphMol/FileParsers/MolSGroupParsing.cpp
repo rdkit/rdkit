@@ -651,7 +651,11 @@ void ParseSGroupV2000SBTLine(IDX_TO_SGROUP_MAP &sGroupMap, RWMol *mol,
 
 template <class T>
 std::vector<T> ParseV3000Array(std::stringstream &stream) {
-  stream.get();  // discard parentheses
+  auto paren = stream.get();  // discard parentheses
+  if (paren != '(') {
+    BOOST_LOG(rdWarningLog)
+        << "WARNING: first character of V3000 array is not '('" << std::endl;
+  }
 
   unsigned int count;
   stream >> count;
@@ -662,9 +666,17 @@ std::vector<T> ParseV3000Array(std::stringstream &stream) {
     stream >> value;
     values.push_back(value);
   }
-  stream.get();  // discard parentheses
+  paren = stream.get();  // discard parentheses
+  if (paren != ')') {
+    BOOST_LOG(rdWarningLog)
+        << "WARNING: final character of V3000 array is not ')'" << std::endl;
+  }
   return values;
 }
+
+// force instantiation of the versions of this that we use
+template std::vector<unsigned int> ParseV3000Array(std::stringstream &stream);
+template std::vector<int> ParseV3000Array(std::stringstream &stream);
 
 void ParseV3000CStateLabel(RWMol *mol, SubstanceGroup &sgroup,
                            std::stringstream &stream, unsigned int line) {
@@ -745,15 +757,14 @@ void ParseV3000ParseLabel(const std::string &label,
                           std::stringstream &lineStream, STR_VECT &dataFields,
                           unsigned int &line, SubstanceGroup &sgroup,
                           size_t nSgroups, RWMol *mol, bool &strictParsing) {
-  // TODO: remove this once we find out how to handle XBHEAD & XBCORR
+  RDUNUSED_PARAM(nSgroups);
+  // TODO: we could handle these in a more structured way
   if (label == "XBHEAD" || label == "XBCORR") {
-    std::ostringstream errout;
-    errout << "XBHEAD or XBCORR labels (found on line " << line
-           << ") are not yet supported";
-    throw FileParseException(errout.str());
-  }
-
-  if (label == "ATOMS") {
+    std::vector<unsigned int> bvect = ParseV3000Array<unsigned int>(lineStream);
+    std::transform(bvect.begin(), bvect.end(), bvect.begin(),
+                   [](unsigned int v) -> unsigned int { return v - 1; });
+    sgroup.setProp(label, bvect);
+  } else if (label == "ATOMS") {
     for (auto atomIdx : ParseV3000Array<unsigned int>(lineStream)) {
       sgroup.addAtomWithBookmark(atomIdx);
     }
