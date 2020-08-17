@@ -36,12 +36,12 @@ RDKIT_DESCRIPTORS_EXPORT Eigen::VectorXi GenerateSpeciesVector(
 //! Calculates torchANI style symmetry functions combining both radial and
 //! angular terms
 /*!
+  \param AEV      Variable in which AEVs are to be stored
   \param mol      Mol object for which symmetry functions are to be found
+  \param params   Symmetry Function parameters
   \param confId   Conformer ID for the conformer for which symmetry
   functions are to be found
 
-  \return numAtoms * 384 shaped matrix containing 384 features for every
-  atom in the input mol consisting of both radial and angular terms
 */
 RDKIT_DESCRIPTORS_EXPORT void AtomicEnvironmentVector(
     Eigen::ArrayXXd &AEV, const ROMol &mol,
@@ -50,12 +50,11 @@ RDKIT_DESCRIPTORS_EXPORT void AtomicEnvironmentVector(
 //! Calculates torchANI style symmetry functions combining both radial and
 //! angular terms
 /*!
+  \param AEV      Variable in which AEVs are to be stored
   \param pos      Array of positions of atoms
   \param species  Encoding of atom types with index
   \param numAtoms Number of Atoms
-
-  \return numAtoms * 384 shaped matrix containing 384 features for every atom in
-  the input mol consisting of both radial and angular terms
+  \param params   Symmetry Function parameters
 */
 RDKIT_DESCRIPTORS_EXPORT void AtomicEnvironmentVector(
     Eigen::ArrayXXd &AEV, double *pos, const Eigen::VectorXi &species,
