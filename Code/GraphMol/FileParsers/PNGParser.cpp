@@ -21,6 +21,9 @@
 #include "FileParsers.h"
 #ifdef RDK_USE_BOOST_IOSTREAMS
 #include <zlib.h>
+#include <boost/iostreams/filtering_streambuf.hpp>
+#include <boost/iostreams/copy.hpp>
+#include <boost/iostreams/filter/zlib.hpp>
 #endif
 
 namespace RDKit {
@@ -43,6 +46,28 @@ bool checkPNGHeader(std::istream &inStream) {
   }
   return true;
 }
+
+#ifdef RDK_USE_BOOST_IOSTREAMS
+std::string uncompressString(const std::string &ztext) {
+  std::stringstream compressed(ztext);
+  std::stringstream uncompressed;
+  boost::iostreams::filtering_streambuf<boost::iostreams::input> bioOutstream;
+  bioOutstream.push(boost::iostreams::zlib_decompressor());
+  bioOutstream.push(compressed);
+  boost::iostreams::copy(bioOutstream, uncompressed);
+  return uncompressed.str();
+}
+std::string compressString(const std::string &text) {
+  std::stringstream uncompressed(text);
+  std::stringstream compressed;
+  boost::iostreams::filtering_streambuf<boost::iostreams::input> bioOutstream;
+  bioOutstream.push(boost::iostreams::zlib_compressor());
+  bioOutstream.push(uncompressed);
+  boost::iostreams::copy(bioOutstream, compressed);
+  return compressed.str();
+}
+
+#endif
 }  // namespace
 
 std::map<std::string, std::string> PNGStreamToMetadata(std::istream &inStream) {
@@ -94,29 +119,15 @@ std::map<std::string, std::string> PNGStreamToMetadata(std::istream &inStream) {
           throw FileParseException("error when reading from PNG");
         }
       } else if (bytes[0] == 'z') {
-        value = "";
 #ifdef RDK_USE_BOOST_IOSTREAMS
-        std::unique_ptr<Bytef[]> compressedData(new Bytef[dataLen]);
-        inStream.read((char *)compressedData.get(), dataLen);
+        value.resize(dataLen);
+        inStream.read(&value.front(), dataLen);
         if (inStream.fail()) {
           throw FileParseException("error when reading from PNG");
         }
-        // we apparently have to guess how large the output data will be
-        uLongf uncompressedDataLen = dataLen * 10;
-        std::unique_ptr<Bytef[]> uncompressedData(
-            new Bytef[uncompressedDataLen]);
-        if (*compressedData.get() != 0 ||
-            uncompress(uncompressedData.get(), &uncompressedDataLen,
-                       compressedData.get() + 1, dataLen - 1)) {
-          BOOST_LOG(rdWarningLog)
-              << "cannot uncompress data associatd with key " << key
-              << " skipping it." << std::endl;
-        } else {
-          // uncompressedData[uncompressedDataLen] = '\0';
-          value = std::string((const char *)uncompressedData.get(),
-                              uncompressedDataLen);
-        }
+        value = uncompressString(value.substr(1, dataLen - 1));
 #else
+        value = "";
         if (!alreadyWarned) {
           BOOST_LOG(rdWarningLog)
               << "compressed metadata found in PNG, but the RDKit was not "
@@ -198,20 +209,14 @@ std::string addMetadataToPNGStream(
       blk.write(pr.second.c_str(), pr.second.size());
     } else {
 #ifdef RDK_USE_BOOST_IOSTREAMS
-      uLongf compressedLen = pr.second.size();
-      std::unique_ptr<Bytef[]> dest(new Bytef[compressedLen]);
-      if (compress2(dest.get(), &compressedLen,
-                    (const Bytef *)pr.second.c_str(), pr.second.size(),
-                    Z_BEST_COMPRESSION) != Z_OK) {
-        throw FileParseException("could not compress data");
-      }
       blk.write("zTXt", 4);
       // write the name along with a zero
       blk.write(pr.first.c_str(), pr.first.size() + 1);
       // write the compressed data
       // first a zero for the "compression method":
       blk.write("\0", 1);
-      blk.write((const char *)dest.get(), compressedLen);
+      auto dest = compressString(pr.second);
+      blk.write((const char *)dest.c_str(), dest.size());
 #else
       // we shouldn't get here since we disabled compressed at the beginning of
       // the function, but check to be sure
