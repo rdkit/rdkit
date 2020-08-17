@@ -22,17 +22,26 @@ namespace ANI {
 
 //! Builds and returns an ANI force field for a molecule
 /*!
-    \param mol              the molecule to use
-    \param modelType        type of model used
-    \param ensembleSize     number of models in the ensemble
-    \param confId           Conformer ID
+  \param mol              the molecule to use
+  \param modelType        type of model used
+  \param ensembleSize     number of models in the ensemble
+  \param confId           Conformer ID
 
-    \return the new force field
+  \return the new force field
 */
 RDKIT_FORCEFIELDHELPERS_EXPORT ForceFields::ForceField *constructForceField(
     ROMol &mol, std::string modelType, unsigned int ensembleSize,
     int confId = -1);
 namespace Tools {
+//! Adds ANI style contribution to the ForceField
+/*!
+  \param mol              the molecule to use
+  \param field            Pointer to the ForceField object
+  \param modelType        type of model used
+  \param numLayers        Number of layers in the Neural Network
+  \param ensembleSize     number of models in the ensemble
+  \param confId           Conformer ID
+*/
 RDKIT_FORCEFIELDHELPERS_EXPORT void addANIContribs(
     const ROMol &mol, ForceFields::ForceField *field, std::string modelType,
     unsigned int numLayers, unsigned int ensembleSize, int confId = -1);

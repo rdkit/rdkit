@@ -13,7 +13,7 @@ rdkit_headers(MMFF/AtomTyper.h
               MMFF/Builder.h MMFF/MMFF.h DEST GraphMol/ForceFieldHelpers/MMFF)
 rdkit_headers(CrystalFF/TorsionAngleM6.h CrystalFF/TorsionPreferences.h
               DEST GraphMol/ForceFieldHelpers/CrystalFF)
-rdkit_headers(ANI/Builder.h DEST GraphMol/ForceFieldHelpers/ANI)
+rdkit_headers(ANI/Builder.h ANI/ANI.h DEST GraphMol/ForceFieldHelpers/ANI)
 
 add_subdirectory(MMFF)
 add_subdirectory(UFF)

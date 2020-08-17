@@ -362,14 +362,29 @@ M  END"""
     e1 = ff.CalcEnergy(savedPos)
 
     self.failUnless((e1 - (-40.0553)) < 0.05)
+    r = ff.Minimize()
+    self.failUnless(r == 0)
+    e2 = ff.CalcEnergy()
+    self.failUnless(e2 < e1)
 
-    ff1 = ChemicalForceFields.ANIGetMoleculeForceField(m, "ANI-1x", 8)
+    m1 = Chem.MolFromMolFile(fName, True, False)
+    ff1 = ChemicalForceFields.ANIGetMoleculeForceField(m1, "ANI-1x", 8)
     self.failUnless(ff1)
-    positions = ff1.Positions()
-    savedPos = list(positions)
-    e1 = ff1.CalcEnergy(savedPos)
+    positions1 = ff1.Positions()
+    savedPos1 = list(positions1)
+    e1 = ff1.CalcEnergy(savedPos1)
 
     self.failUnless((e1 - (-40.0517)) < 0.05)
+    r = ff1.Minimize()
+    self.failUnless(r == 0)
+    e2 = ff1.CalcEnergy()
+    self.failUnless(e2 < e1)
+
+    m2 = Chem.MolFromMolFile(fName, True, False)
+    ff2 = ChemicalForceFields.ANIOptimizeMoleculeConfs(m2)
+    self.assertEqual(len(ff2), 1)
+    self.assertEqual(ff2[0][0], 0)
+    self.failUnless(ff2[0][1] < -40.0553)
 
 if __name__ == '__main__':
   unittest.main()
