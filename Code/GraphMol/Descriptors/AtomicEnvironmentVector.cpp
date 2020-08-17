@@ -245,7 +245,6 @@ void NeighborPairs(ArrayXXd *coordinates, const VectorXi *species,
   \param RadialTerms_ terms according to each pair of distances in the molecule
   calculated using hard coded parameters
   \param params       Symmetry Function parameters
-*/
 template <typename Derived>
 void RadialTerms(double cutoff, ArrayBase<Derived> &distances,
                  ArrayXXd &RadialTerms_,
@@ -625,6 +624,7 @@ void AtomicEnvironmentVector(
     AEV = ArrayXXd::Zero(numAtoms, 384);
     return;
   }
+
   ArrayXXd selectedCoordinates(atomIndex12.rows(), 3);
   IndexSelect(&selectedCoordinates, &coordinates, atomIndex12, 0);
 
