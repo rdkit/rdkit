@@ -38,9 +38,8 @@ class TestCase(unittest.TestCase):
     self.assertTrue(txt.find(">l</text>") != -1)
     self.assertTrue(txt.find(">a</text>") != -1)
 
+  @unittest.skipUnless(hasattr(Draw, 'MolDraw2DCairo'), 'Cairo support not enabled')
   def testGithubIssue571(self):
-    if not hasattr(Draw, 'MolDraw2DCairo'):
-      return
     m = Chem.MolFromSmiles('c1ccc(C)c(C)c1C')
     AllChem.Compute2DCoords(m)
     d = Draw.MolDraw2DCairo(300, 300)
@@ -508,7 +507,7 @@ M  END
     d.FinishDrawing()
     txt = d.GetDrawingText()
     self.assertEqual(txt.find("class='atom-"), -1)
-    
+
     d = rdMolDraw2D.MolDraw2DSVG(250, 200)
     do = rdMolDraw2D.MolDrawOptions()
     do.explicitMethyl = True
@@ -517,7 +516,7 @@ M  END
     d.FinishDrawing()
     txt = d.GetDrawingText()
     self.assertNotEqual(txt.find("class='atom-"), -1)
-        
+
   def testDrawMoleculeWithHighlights(self):
     COLS = [(1.0, 0.0, 0.0), (0.0, 1.0, 0.0), (0.0, 0.0, 1.0), (1.0, 0.55, 0.0)]
 
@@ -583,6 +582,32 @@ M  END
     smi = 'c1ccccc1Cl'
     smarts = []
     do_a_picture(smi, smarts, 'pyTest3')
+
+  @unittest.skipUnless(hasattr(Draw, 'MolDraw2DCairo'), 'Cairo support not enabled')
+  def testPNGMetadata(self):
+    m = Chem.MolFromMolBlock('''
+  Mrv2014 08172015242D          
+
+  0  0  0     0  0            999 V3000
+M  V30 BEGIN CTAB
+M  V30 COUNTS 3 2 0 0 0
+M  V30 BEGIN ATOM
+M  V30 1 C 2.31 -1.3337 0 0
+M  V30 2 C 3.6437 -2.1037 0 0
+M  V30 3 O 4.9774 -1.3337 0 0
+M  V30 END ATOM
+M  V30 BEGIN BOND
+M  V30 1 1 1 2
+M  V30 2 1 2 3
+M  V30 END BOND
+M  V30 END CTAB
+M  END''')
+    d = Draw.MolDraw2DCairo(200, 200)
+    d.DrawMolecule(m)
+    d.AddMoleculeMetadata(m)
+    txt = d.GetDrawingText()
+    nm = Chem.MolFromPNGString(txt)
+    self.assertEqual(Chem.MolToSmiles(m), Chem.MolToSmiles(nm))
 
 
 if __name__ == "__main__":
