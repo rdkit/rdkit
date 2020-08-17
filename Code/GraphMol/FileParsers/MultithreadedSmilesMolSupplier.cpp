@@ -19,8 +19,8 @@ MultithreadedSmilesMolSupplier::MultithreadedSmilesMolSupplier(
   CHECK_INVARIANT(dp_inStream, "bad instream");
   CHECK_INVARIANT(!(dp_inStream->eof()), "early EOF");
   // set df_takeOwnership = true
-  _init(true, delimiter, smilesColumn, nameColumn, titleLine, sanitize,
-        numWriterThreads, sizeInputQueue, sizeOutputQueue);
+  initFromSettings(true, delimiter, smilesColumn, nameColumn, titleLine,
+                   sanitize, numWriterThreads, sizeInputQueue, sizeOutputQueue);
   this->checkForEnd();
   startThreads();
   POSTCONDITION(dp_inStream, "bad instream");
@@ -34,8 +34,9 @@ MultithreadedSmilesMolSupplier::MultithreadedSmilesMolSupplier(
   CHECK_INVARIANT(inStream, "bad instream");
   CHECK_INVARIANT(!(inStream->eof()), "early EOF");
   dp_inStream = inStream;
-  _init(takeOwnership, delimiter, smilesColumn, nameColumn, titleLine, sanitize,
-        numWriterThreads, sizeInputQueue, sizeOutputQueue);
+  initFromSettings(takeOwnership, delimiter, smilesColumn, nameColumn,
+                   titleLine, sanitize, numWriterThreads, sizeInputQueue,
+                   sizeOutputQueue);
   this->checkForEnd();
   startThreads();
   POSTCONDITION(dp_inStream, "bad instream");
@@ -43,7 +44,7 @@ MultithreadedSmilesMolSupplier::MultithreadedSmilesMolSupplier(
 
 MultithreadedSmilesMolSupplier::MultithreadedSmilesMolSupplier() {
   dp_inStream = nullptr;
-  _init(true, "", 0, 1, true, true, 2, 5, 5);
+  initFromSettings(true, "", 0, 1, true, true, 2, 5, 5);
   startThreads();
 }
 
@@ -53,13 +54,11 @@ MultithreadedSmilesMolSupplier::~MultithreadedSmilesMolSupplier() {
   }
 }
 
-void MultithreadedSmilesMolSupplier::_init(bool takeOwnership,
-                                           const std::string &delimiter,
-                                           int smilesColumn, int nameColumn,
-                                           bool titleLine, bool sanitize,
-                                           unsigned int numWriterThreads,
-                                           size_t sizeInputQueue,
-                                           size_t sizeOutputQueue) {
+void MultithreadedSmilesMolSupplier::initFromSettings(
+    bool takeOwnership, const std::string &delimiter, int smilesColumn,
+    int nameColumn, bool titleLine, bool sanitize,
+    unsigned int numWriterThreads, size_t sizeInputQueue,
+    size_t sizeOutputQueue) {
   df_owner = takeOwnership;
   d_delim = delimiter;
   d_smi = smilesColumn;

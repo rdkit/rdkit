@@ -31,10 +31,6 @@ class RDKIT_FILEPARSERS_EXPORT MultithreadedSmilesMolSupplier
   ~MultithreadedSmilesMolSupplier();
 
   void init(){};
-  void _init(bool takeOwnership, const std::string &delimiter, int smilesColumn,
-             int nameColumn, bool titleLine, bool sanitize,
-             unsigned int numWriterThreads, size_t sizeInputQueue,
-             size_t sizeOutputQueue);
   //! Returns the position of the beginning of the next
   //! non-comment line in the input stream. -1 is returned if
   //! no line could be read;
@@ -54,6 +50,12 @@ class RDKIT_FILEPARSERS_EXPORT MultithreadedSmilesMolSupplier
                          unsigned int &index);
   //! parses the record and returns the resulting molecule
   ROMol *processMoleculeRecord(const std::string &record, unsigned int lineNum);
+
+ private:
+  void initFromSettings(bool takeOwnership, const std::string &delimiter,
+                        int smilesColumn, int nameColumn, bool titleLine,
+                        bool sanitize, unsigned int numWriterThreads,
+                        size_t sizeInputQueue, size_t sizeOutputQueue);
 
  private:
   bool df_end = false;  //! have we reached the end of the file?

@@ -17,8 +17,8 @@ MultithreadedSDMolSupplier::MultithreadedSDMolSupplier(
     bool strictParsing, unsigned int numWriterThreads, size_t sizeInputQueue,
     size_t sizeOutputQueue) {
   dp_inStream = openAndCheckStream(fileName);
-  _init(true, sanitize, removeHs, strictParsing, numWriterThreads,
-        sizeInputQueue, sizeOutputQueue);
+  initFromSettings(true, sanitize, removeHs, strictParsing, numWriterThreads,
+                   sizeInputQueue, sizeOutputQueue);
   POSTCONDITION(dp_inStream, "bad instream");
   startThreads();
 }
@@ -29,23 +29,24 @@ MultithreadedSDMolSupplier::MultithreadedSDMolSupplier(
     size_t sizeOutputQueue) {
   PRECONDITION(inStream, "bad stream");
   dp_inStream = inStream;
-  _init(takeOwnership, sanitize, removeHs, strictParsing, numWriterThreads,
-        sizeInputQueue, sizeOutputQueue);
+  initFromSettings(takeOwnership, sanitize, removeHs, strictParsing,
+                   numWriterThreads, sizeInputQueue, sizeOutputQueue);
   POSTCONDITION(dp_inStream, "bad instream");
   startThreads();
 }
 
 MultithreadedSDMolSupplier::MultithreadedSDMolSupplier() {
   dp_inStream = nullptr;
-  _init(false, true, true, true, 2, 5, 5);
+  initFromSettings(false, true, true, true, 2, 5, 5);
   startThreads();
 }
 
-void MultithreadedSDMolSupplier::_init(bool takeOwnership, bool sanitize,
-                                       bool removeHs, bool strictParsing,
-                                       unsigned int numWriterThreads,
-                                       size_t sizeInputQueue,
-                                       size_t sizeOutputQueue) {
+void MultithreadedSDMolSupplier::initFromSettings(bool takeOwnership,
+                                                  bool sanitize, bool removeHs,
+                                                  bool strictParsing,
+                                                  unsigned int numWriterThreads,
+                                                  size_t sizeInputQueue,
+                                                  size_t sizeOutputQueue) {
   df_owner = takeOwnership;
   df_sanitize = sanitize;
   df_removeHs = removeHs;

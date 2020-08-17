@@ -31,10 +31,6 @@ class RDKIT_FILEPARSERS_EXPORT MultithreadedSDMolSupplier
   ~MultithreadedSDMolSupplier();
   void init(){};
 
-  //! initialize data members
-  void _init(bool takeOwnership, bool sanitize, bool removeHs,
-             bool strictParsing, unsigned int numWriterThreads,
-             size_t sizeInputQueue, size_t sizeOutputQueue);
   void checkForEnd();
   bool getEnd() const;
   //! reads next record and returns whether or not EOF was hit
@@ -43,6 +39,11 @@ class RDKIT_FILEPARSERS_EXPORT MultithreadedSDMolSupplier
   void readMolProps(ROMol *mol, std::istringstream &inStream);
   //! parses the record and returns the resulting molecule
   ROMol *processMoleculeRecord(const std::string &record, unsigned int lineNum);
+
+ private:
+  void initFromSettings(bool takeOwnership, bool sanitize, bool removeHs,
+                        bool strictParsing, unsigned int numWriterThreads,
+                        size_t sizeInputQueue, size_t sizeOutputQueue);
 
  private:
   bool df_end = false;  //! have we reached the end of the file?
