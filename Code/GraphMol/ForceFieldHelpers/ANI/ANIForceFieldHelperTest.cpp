@@ -88,9 +88,9 @@ TEST_CASE("Check ANI Force Field builder") {
     CHECK(res.second < -40.0517);
     std::vector<std::pair<int, double>> res1;
     RDKit::ANI::ANIOptimizeMoleculeConfs(*mol, res1, "ANI-1x", 8);
-    for (auto i : res1) {
-      std::cout << i.first << ": " << i.second << std::endl;
-    }
+
+    CHECK(res1.size() == 1);
+    CHECK(res1[0].second < (-40.0517));
   }
   SECTION("Unsupported Atoms") {
     std::string pathName = getenv("RDBASE");
