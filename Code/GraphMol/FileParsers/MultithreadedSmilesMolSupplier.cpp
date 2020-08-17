@@ -351,10 +351,8 @@ ROMol *MultithreadedSmilesMolSupplier::processMoleculeRecord(
     res->setProp(common_properties::_Name, mname);
   } else {
     if (d_name >= static_cast<int>(recs.size())) {
-      d_mutexLogging.lock();
       BOOST_LOG(rdWarningLog)
           << "WARNING: no name column found on line " << lineNum << std::endl;
-      d_mutexLogging.unlock();
     } else {
       res->setProp(common_properties::_Name, recs[d_name]);
     }

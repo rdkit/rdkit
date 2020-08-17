@@ -79,8 +79,6 @@ class RDKIT_FILEPARSERS_EXPORT MultithreadedMolSupplier : public MolSupplier {
   std::atomic<unsigned int> d_threadCounter{1};  //! thread counter
   std::vector<std::thread> d_writerThreads;      //! vector writer threads
   std::thread d_readerThread;                    //! single reader thread
-  std::mutex d_mutex;                            //! mutex for exceptions vector
-  std::vector<std::exception_ptr> d_exceptions;  //! for storing exceptions
 
  protected:
   unsigned int d_lastRecordId = 0;           //! stores last extracted record id
@@ -89,7 +87,6 @@ class RDKIT_FILEPARSERS_EXPORT MultithreadedMolSupplier : public MolSupplier {
   unsigned int d_numWriterThreads;           //! number of writer threads
   size_t d_sizeInputQueue;                   //! size of input queue
   size_t d_sizeOutputQueue;                  //! size of output queue
-  std::mutex d_mutexLogging;                 //! mutex for logging warnings
   ConcurrentQueue<std::tuple<std::string, unsigned int, unsigned int>>
       *d_inputQueue;  //! concurrent input queue
   ConcurrentQueue<std::tuple<ROMol *, std::string, unsigned int>>

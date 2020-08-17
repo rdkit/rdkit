@@ -230,18 +230,12 @@ void MultithreadedSDMolSupplier::readMolProps(ROMol *mol,
         } else {
           if (!warningIssued) {
             if (hasProp) {
-              d_mutexLogging.lock();
               BOOST_LOG(rdWarningLog)
-                  << "Property <" << dlabel << "> will be truncated after "
-                  << "the first blank line" << std::endl;
-              d_mutexLogging.unlock();
+                  << "Property <" << dlabel
+                  << "> will be truncated after the first blank line\n";
             } else {
-              d_mutexLogging.lock();
-              BOOST_LOG(rdWarningLog)
-                  << "Spurious data before the first property will be "
-                     "ignored"
-                  << std::endl;
-              d_mutexLogging.unlock();
+              BOOST_LOG(rdWarningLog) << "Spurious data before the first "
+                                         "property will be ignored\n";
             }
             warningIssued = true;
           }

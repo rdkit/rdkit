@@ -11,19 +11,6 @@
 namespace RDKit {
 MultithreadedMolSupplier::~MultithreadedMolSupplier() {
   endThreads();
-  // rethrow the exceptions once the threads have been executed
-  for (auto const& e : d_exceptions) {
-    try {
-      if (e != nullptr) {
-        std::rethrow_exception(e);
-      }
-    } catch (std::exception const& ex) {
-      BOOST_LOG(rdErrorLog) << "ERROR: " << ex.what() << "\n";
-    }
-  }
-  // exception_ptr is a smart shared pointer so we only
-  // need to clear the vector
-  d_exceptions.clear();
   // destroy all objects in the input queue
   d_inputQueue->clear();
   // delete the pointer to the input queue
@@ -59,8 +46,6 @@ void MultithreadedMolSupplier::writer() {
           mol, std::get<0>(r), std::get<2>(r)};
       d_outputQueue->push(temp);
     } catch (...) {
-      std::lock_guard<std::mutex> lock(d_mutex);
-      d_exceptions.push_back(std::current_exception());
       // fill the queue wih a null value
       auto nullValue = std::tuple<ROMol*, std::string, unsigned int>{
           nullptr, std::get<0>(r), std::get<2>(r)};
