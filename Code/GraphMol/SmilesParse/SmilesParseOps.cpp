@@ -151,6 +151,7 @@ void AddFragToMol(RWMol *mol, RWMol *frag, Bond::BondType bondOrder,
         newB->setOwningMol(mol);
         newB->setBeginAtomIdx(atomIdx1);
         newB->setEndAtomIdx(atomIdx2);
+        newB->setProp(RDKit::common_properties::_unspecifiedOrder, 1);
         mol->addBond(newB);
         delete newB;
       } else {
