@@ -426,11 +426,6 @@ void setAtomPalette(RDKit::MolDrawOptions &self, python::object cmap) {
   updateAtomPalette(self, cmap);
 }
 
-void addMoleculeMetadata(const RDKit::MolDraw2DSVG &self, const RDKit::ROMol &m,
-                         int confId) {
-  self.addMoleculeMetadata(m, confId);
-}
-
 void contourAndDrawGaussiansHelper(
     RDKit::MolDraw2D &drawer, python::object pylocs, python::object pyheights,
     python::object pywidths, unsigned int nContours, python::object pylevels,
@@ -823,7 +818,9 @@ BOOST_PYTHON_MODULE(rdMolDraw2D) {
       .def(python::init<int, int, int, int, bool>())
       .def("FinishDrawing", &RDKit::MolDraw2DSVG::finishDrawing,
            "add the last bits of SVG to finish the drawing")
-      .def("AddMoleculeMetadata", RDKit::addMoleculeMetadata,
+      .def("AddMoleculeMetadata",
+           (void (RDKit::MolDraw2DSVG::*)(const RDKit::ROMol &, int) const) &
+               RDKit::MolDraw2DSVG::addMoleculeMetadata,
            (python::arg("mol"), python::arg("confId") = -1),
            "add RDKit-specific information to the bottom of the drawing")
       .def("TagAtoms", RDKit::tagAtomHelper,
@@ -844,7 +841,12 @@ BOOST_PYTHON_MODULE(rdMolDraw2D) {
       .def("GetDrawingText", &RDKit::getCairoDrawingText,
            "return the PNG data as a string")
       .def("WriteDrawingText", &RDKit::MolDraw2DCairo::writeDrawingText,
-           "write the PNG data to the named file");
+           "write the PNG data to the named file")
+      .def("AddMoleculeMetadata",
+           (void (RDKit::MolDraw2DCairo::*)(const RDKit::ROMol &, int)) &
+               RDKit::MolDraw2DCairo::addMoleculeMetadata,
+           (python::arg("mol"), python::arg("confId") = -1),
+           "add molecule metadata to the output");
 #endif
   docString =
       "Does some cleanup operations on the molecule to prepare it to draw "

@@ -29,15 +29,14 @@ class RDKIT_MOLDRAW2D_EXPORT MolDraw2DCairo : public MolDraw2D {
  public:
   // does not take ownership of the drawing context
   MolDraw2DCairo(int width, int height, cairo_t *cr, int panelWidth = -1,
-                 int panelHeight = -1, bool noFreetype=false)
+                 int panelHeight = -1, bool noFreetype = false)
       : MolDraw2D(width, height, panelWidth, panelHeight), dp_cr(cr) {
     cairo_reference(dp_cr);
     initDrawing();
     initTextDrawer(noFreetype);
   };
-  MolDraw2DCairo(int width, int height,
-                 int panelWidth = -1, int panelHeight = -1,
-                 bool noFreetype=false)
+  MolDraw2DCairo(int width, int height, int panelWidth = -1,
+                 int panelHeight = -1, bool noFreetype = false)
       : MolDraw2D(width, height, panelWidth, panelHeight) {
     cairo_surface_t *surf =
         cairo_image_surface_create(CAIRO_FORMAT_ARGB32, width, height);
@@ -69,26 +68,31 @@ class RDKIT_MOLDRAW2D_EXPORT MolDraw2DCairo : public MolDraw2D {
 
   void drawWavyLine(const Point2D &cds1, const Point2D &cds2,
                     const DrawColour &col1, const DrawColour &col2,
-                    unsigned int nSegments = 16, double vertOffset = 0.05) override;
+                    unsigned int nSegments = 16,
+                    double vertOffset = 0.05) override;
 
   // returns the PNG data in a string
   std::string getDrawingText() const;
   // writes the PNG data to a file
   void writeDrawingText(const std::string &fName) const;
 
-#if defined(WIN32) && !defined(RDK_BUILD_FREETYPE_SUPPORT) 
-  bool supportsAnnotations() override {
-     return false;
-  }
-#endif
+  // adds metadata describing the molecule to the PNG. This allows
+  // molecules to be re-built from PNG with PNGStringToMol
+  void addMoleculeMetadata(const ROMol &mol, int confId = -1);
+  void addMoleculeMetadata(const std::vector<ROMol *> &mols,
+                           const std::vector<int> confIds = {});
 
+#if defined(WIN32) && !defined(RDK_BUILD_FREETYPE_SUPPORT)
+  bool supportsAnnotations() override { return false; }
+#endif
 
  private:
   cairo_t *dp_cr;
+  std::vector<std::pair<std::string, std::string>> d_metadata;
 
   void initDrawing() override;
   void initTextDrawer(bool noFreetype) override;
-
+  std::string addMetadataToPNG(const std::string &png) const;
 };
 }  // namespace RDKit
 #endif  // MOLDRAW2DCAIRO_H
