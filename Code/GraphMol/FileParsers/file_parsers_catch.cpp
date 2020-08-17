@@ -1686,9 +1686,15 @@ TEST_CASE("read metadata from PNG", "[reader][PNG]") {
     std::string fname =
         rdbase + "/Code/GraphMol/FileParsers/test_data/colchicine.png";
     auto metadata = PNGFileToMetadata(fname);
-    REQUIRE(metadata.find(PNGData::smilesTag) != metadata.end());
+
+    auto iter =
+        std::find_if(metadata.begin(), metadata.end(),
+                     [](const std::pair<std::string, std::string> &val) {
+                       return val.first == PNGData::smilesTag;
+                     });
+    REQUIRE(iter != metadata.end());
     CHECK(
-        metadata[PNGData::smilesTag] ==
+        iter->second ==
         "COc1cc2c(-c3ccc(OC)c(=O)cc3[C@@H](NC(C)=O)CC2)c(OC)c1OC "
         "|(6.46024,1.03002,;5.30621,1.98825,;3.89934,1.46795,;2.74531,2.42618,;"
         "1.33844,1.90588,;1.0856,0.427343,;-0.228013,-0.296833,;0.1857,-1."
@@ -1732,8 +1738,13 @@ TEST_CASE("read metadata from PNG", "[reader][PNG]") {
     std::string fname =
         rdbase + "/Code/GraphMol/FileParsers/test_data/colchicine.mrv.png";
     auto metadata = PNGFileToMetadata(fname);
-    REQUIRE(metadata.find("molSource") != metadata.end());
-    CHECK(metadata["molSource"].find("<MChemicalStruct>") != std::string::npos);
+    auto iter =
+        std::find_if(metadata.begin(), metadata.end(),
+                     [](const std::pair<std::string, std::string> &val) {
+                       return val.first == "molSource";
+                     });
+    REQUIRE(iter != metadata.end());
+    CHECK(iter->second.find("<MChemicalStruct>") != std::string::npos);
   }
 #endif
 }
@@ -1744,24 +1755,30 @@ TEST_CASE("write metadata to PNG", "[writer][PNG]") {
     std::string fname =
         rdbase +
         "/Code/GraphMol/FileParsers/test_data/colchicine.no_metadata.png";
-    std::map<std::string, std::string> metadata;
-    metadata[PNGData::smilesTag] =
-        "COc1cc2c(-c3ccc(OC)c(=O)cc3[C@@H](NC(C)=O)CC2)c(OC)c1OC "
-        "|(6.46024,1.03002,;5.30621,1.98825,;3.89934,1.46795,;2.74531,2.42618,;"
-        "1.33844,1.90588,;1.0856,0.427343,;-0.228013,-0.296833,;0.1857,-1."
-        "73865,;-0.683614,-2.96106,;-2.18134,-3.04357,;-2.75685,-4.42878,;-4."
-        "24422,-4.62298,;-3.17967,-1.92404,;-4.62149,-2.33775,;-2.92683,-0."
-        "445502,;-1.61322,0.278673,;-2.02693,1.72049,;-3.50547,1.97333,;-4."
-        "02577,3.3802,;-5.50431,3.63304,;-3.06754,4.53423,;-1.15762,2.9429,;0."
-        "340111,3.02541,;2.23963,-0.530891,;1.98679,-2.00943,;3.14082,-2.96766,"
-        ";3.6465,-0.0105878,;4.80053,-0.968822,;4.54769,-2.44736,)|";
+    std::vector<std::pair<std::string, std::string>> metadata;
+    metadata.push_back(std::make_pair(
+        PNGData::smilesTag,
+        std::string(
+            "COc1cc2c(-c3ccc(OC)c(=O)cc3[C@@H](NC(C)=O)CC2)c(OC)c1OC "
+            "|(6.46024,1.03002,;5.30621,1.98825,;3.89934,1.46795,;2.74531,2."
+            "42618,;1.33844,1.90588,;1.0856,0.427343,;-0.228013,-0.296833,;0."
+            "1857,-1.73865,;-0.683614,-2.96106,;-2.18134,-3.04357,;-2.75685,-4."
+            "42878,;-4.24422,-4.62298,;-3.17967,-1.92404,;-4.62149,-2.33775,;-"
+            "2.92683,-0.445502,;-1.61322,0.278673,;-2.02693,1.72049,;-3.50547,"
+            "1.97333,;-4.02577,3.3802,;-5.50431,3.63304,;-3.06754,4.53423,;-1."
+            "15762,2.9429,;0.340111,3.02541,;2.23963,-0.530891,;1.98679,-2."
+            "00943,;3.14082,-2.96766,;3.6465,-0.0105878,;4.80053,-0.968822,;4."
+            "54769,-2.44736,)|")));
     auto pngData = addMetadataToPNGFile(fname, metadata);
     std::ofstream ofs("write_metadata.png");
     ofs.write(pngData.c_str(), pngData.size());
     ofs.flush();
     auto ometadata = PNGStringToMetadata(pngData);
-    REQUIRE(ometadata.find(PNGData::smilesTag) != ometadata.end());
-    CHECK(ometadata[PNGData::smilesTag] == metadata[PNGData::smilesTag]);
+    REQUIRE(ometadata.size() == metadata.size());
+    for (unsigned int i = 0; i < ometadata.size(); ++i) {
+      CHECK(ometadata[i].first == metadata[i].first);
+      CHECK(ometadata[i].second == metadata[i].second);
+    }
   }
 }
 

@@ -22,7 +22,6 @@
 #include <string>
 #include <fstream>
 #include <sstream>
-#include <map>
 
 namespace RDKit {
 
@@ -32,9 +31,9 @@ RDKIT_FILEPARSERS_EXPORT extern const std::string molTag;
 RDKIT_FILEPARSERS_EXPORT extern const std::string pklTag;
 }  // namespace PNGData
 
-RDKIT_FILEPARSERS_EXPORT std::map<std::string, std::string> PNGStreamToMetadata(
-    std::istream &inStream);
-inline std::map<std::string, std::string> PNGFileToMetadata(
+RDKIT_FILEPARSERS_EXPORT std::vector<std::pair<std::string, std::string>>
+PNGStreamToMetadata(std::istream &inStream);
+inline std::vector<std::pair<std::string, std::string>> PNGFileToMetadata(
     const std::string &fname) {
   std::ifstream inStream(fname.c_str(), std::ios::binary);
   if (!inStream || (inStream.bad())) {
@@ -42,7 +41,7 @@ inline std::map<std::string, std::string> PNGFileToMetadata(
   }
   return PNGStreamToMetadata(inStream);
 }
-inline std::map<std::string, std::string> PNGStringToMetadata(
+inline std::vector<std::pair<std::string, std::string>> PNGStringToMetadata(
     const std::string &data) {
   std::stringstream inStream(data);
   return PNGStreamToMetadata(inStream);
@@ -70,18 +69,19 @@ inline ROMol *PNGStringToMol(
 //! The compressed flag is ignored if the RDKit is not built with
 //! boost::iostreams support
 RDKIT_FILEPARSERS_EXPORT std::string addMetadataToPNGStream(
-    std::istream &iStream, const std::map<std::string, std::string> &metadata,
+    std::istream &iStream,
+    const std::vector<std::pair<std::string, std::string>> &metadata,
     bool compressed = true);
 inline std::string addMetadataToPNGString(
     const std::string &pngString,
-    const std::map<std::string, std::string> &metadata,
+    const std::vector<std::pair<std::string, std::string>> &metadata,
     bool compressed = true) {
   std::stringstream inStream(pngString);
   return addMetadataToPNGStream(inStream, metadata, compressed);
 }
 inline std::string addMetadataToPNGFile(
     const std::string &fname,
-    const std::map<std::string, std::string> &metadata,
+    const std::vector<std::pair<std::string, std::string>> &metadata,
     bool compressed = true) {
   std::ifstream inStream(fname.c_str(), std::ios::binary);
   return addMetadataToPNGStream(inStream, metadata, compressed);

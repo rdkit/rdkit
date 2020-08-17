@@ -70,12 +70,13 @@ std::string compressString(const std::string &text) {
 #endif
 }  // namespace
 
-std::map<std::string, std::string> PNGStreamToMetadata(std::istream &inStream) {
+std::vector<std::pair<std::string, std::string>> PNGStreamToMetadata(
+    std::istream &inStream) {
   // confirm that it's a PNG file:
   if (!checkPNGHeader(inStream)) {
     throw FileParseException("PNG header not recognized");
   }
-  std::map<std::string, std::string> res;
+  std::vector<std::pair<std::string, std::string>> res;
   // the file is organized in chunks. Read through them until we find the tEXt
   // block FIX: at some point we'll want to also include zEXt here, but that
   // requires zlib
@@ -139,14 +140,8 @@ std::map<std::string, std::string> PNGStreamToMetadata(std::istream &inStream) {
       } else {
         CHECK_INVARIANT(0, "impossible value");
       }
-      if (res.find(key) != res.end()) {
-        BOOST_LOG(rdWarningLog) << "The key '" << key
-                                << "' was found more than once in the data. "
-                                   "The last version is being kept."
-                                << std::endl;
-      }
       if (!value.empty()) {
-        res[key] = value;
+        res.push_back(std::make_pair(key, value));
       }
     }
     inStream.seekg(beginBlock);
@@ -157,7 +152,8 @@ std::map<std::string, std::string> PNGStreamToMetadata(std::istream &inStream) {
 };
 
 std::string addMetadataToPNGStream(
-    std::istream &inStream, const std::map<std::string, std::string> &metadata,
+    std::istream &inStream,
+    const std::vector<std::pair<std::string, std::string>> &metadata,
     bool compressed) {
 #ifndef RDK_USE_BOOST_IOSTREAMS
   compressed = false;
@@ -252,19 +248,19 @@ std::string addMetadataToPNGStream(
 std::string addMolToPNGStream(const ROMol &mol, std::istream &iStream,
                               bool includePkl, bool includeSmiles,
                               bool includeMol) {
-  std::map<std::string, std::string> metadata;
+  std::vector<std::pair<std::string, std::string>> metadata;
   if (includePkl) {
     std::string pkl;
     MolPickler::pickleMol(mol, pkl);
-    metadata[PNGData::pklTag] = pkl;
+    metadata.push_back(std::make_pair(PNGData::pklTag, pkl));
   }
   if (includeSmiles) {
     std::string smi = MolToCXSmiles(mol);
-    metadata[PNGData::smilesTag] = smi;
+    metadata.push_back(std::make_pair(PNGData::smilesTag, smi));
   }
   if (includeMol) {
     std::string mb = MolToMolBlock(mol);
-    metadata[PNGData::molTag] = mb;
+    metadata.push_back(std::make_pair(PNGData::molTag, mb));
   }
   return addMetadataToPNGStream(iStream, metadata);
 };
