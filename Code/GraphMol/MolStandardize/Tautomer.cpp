@@ -451,12 +451,6 @@ TautomerEnumeratorResult TautomerEnumerator::enumerate(
       break;
     }
   }  // while
-  if (!completed) {
-    BOOST_LOG(rdWarningLog)
-        << "Tautomer enumeration stopped at " << res.d_tautomers.size()
-        << " tautomers: " << statusMsg.at(res.d_status) << std::endl;
-  }
-
   size_t maxNumModifiedAtoms = res.d_modifiedAtoms.count();
   size_t maxNumModifiedBonds = res.d_modifiedBonds.count();
   for (auto it = res.d_tautomers.begin(); it != res.d_tautomers.end();) {
@@ -478,6 +472,12 @@ TautomerEnumeratorResult TautomerEnumerator::enumerate(
     }
   }
   res.fillTautomersItVec();
+  if (!completed) {
+    BOOST_LOG(rdWarningLog)
+        << "Tautomer enumeration stopped at " << res.d_tautomers.size()
+        << " tautomers: " << statusMsg.at(res.d_status) << std::endl;
+  }
+
   return res;
 }
 
