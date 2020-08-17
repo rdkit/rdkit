@@ -11,6 +11,7 @@
 #include <iostream>
 #include <vector>
 #include <list>
+#include <limits>
 
 #include <GraphMol/RDKitBase.h>
 #include <GraphMol/SmilesParse/SmilesParse.h>
@@ -404,7 +405,15 @@ number:  ZERO_TOKEN
 
 /* --------------------------------------------------------------- */
 nonzero_number:  NONZERO_DIGIT_TOKEN
-| nonzero_number digit { $$ = $1*10 + $2; }
+| nonzero_number digit { 
+  if($1 >= std::numeric_limits<std::int32_t>::max()/10 || 
+     $1*10 >= std::numeric_limits<std::int32_t>::max()-$2 ){
+     yyerror(input,molList,branchPoints,scanner,start_token,"number too large");
+     yyErrorCleanup(molList);
+     YYABORT;
+  }
+  $$ = $1*10 + $2; 
+  }
 ;
 
 digit: NONZERO_DIGIT_TOKEN
