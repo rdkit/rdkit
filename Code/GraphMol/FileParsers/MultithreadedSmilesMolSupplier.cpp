@@ -75,11 +75,7 @@ void MultithreadedSmilesMolSupplier::initFromSettings(
       new ConcurrentQueue<std::tuple<ROMol *, std::string, unsigned int>>(
           d_sizeOutputQueue);
   df_end = false;
-  d_len = -1;
-  d_next = -1;
   d_line = -1;
-  d_molpos.clear();
-  d_lineNums.clear();
 }
 
 // --------------------------------------------------
@@ -165,7 +161,6 @@ void MultithreadedSmilesMolSupplier::processTitleLine() {
   int pos = this->skipComments();
   if (pos >= 0) {
     dp_inStream->seekg(pos);
-
     std::string tempStr = getLine(dp_inStream);
     boost::char_separator<char> sep(d_delim.c_str(), "",
                                     boost::keep_empty_tokens);
@@ -178,129 +173,45 @@ void MultithreadedSmilesMolSupplier::processTitleLine() {
   }
 }
 
-// --------------------------------------------------
-//
-//  Moves to the position of a particular entry in the
-//  stream.
-//
-//  If insufficient entries are present, the method returns false
-//	instead of throwing an exception
-//
-bool MultithreadedSmilesMolSupplier::moveTo(unsigned int idx) {
-  PRECONDITION(dp_inStream, "bad instream");
-  // get the easy situations (boundary conditions) out of the
-  // way first:
-  if (d_len > -1 && idx >= static_cast<unsigned int>(d_len)) {
-    df_end = true;
-    return false;
-  }
-
-  // dp_inStream->seekg() is called for all idx values
-  // and earlier calls to next() may have put the stream into a bad state
-  dp_inStream->clear();
-
-  // -----------
-  // Case 1: we have already read the particular entry:
-  //
-  // Set the stream position and return
-  // -----------
-  if (!d_molpos.empty() && d_molpos.size() > idx) {
-    dp_inStream->clear();  // clear the EOF tag if it has been set
-    df_end = false;
-    dp_inStream->seekg(d_molpos[idx]);
-    d_next = idx;
-    d_line = d_lineNums[idx];
-    return true;
-  }
-
-  // -----------
-  // Case 2: we haven't read the entry, so move forward until
-  //   we've gone far enough.
-  // -----------
-  if (d_molpos.empty()) {
-    // if we are just starting out, process the title line
-    dp_inStream->seekg(0);
-    if (df_title) {
-      this->processTitleLine();
-    }
-  } else {
-    // move to the last position we've seen:
-    dp_inStream->seekg(d_molpos.back());
-    // read that line:
-    std::string tmp = getLine(dp_inStream);
-  }
-
-  // the stream pointer is now at the last thing we read in
-  while (d_molpos.size() <= idx) {
-    int nextP = this->skipComments();
-    if (nextP < 0) {
-      return false;
-    } else {
-      d_molpos.emplace_back(nextP);
-      d_lineNums.push_back(d_line);
-      if (d_molpos.size() == idx + 1 && df_end) {
-        // boundary condition: we could read the point we were looking for
-        // but not the next one.
-        // indicate that we've reached EOF:
-        dp_inStream->clear();
-        dp_inStream->seekg(0, std::ios_base::end);
-        d_len = d_molpos.size();
-        break;
-      }
-    }
-  }
-
-  POSTCONDITION(d_molpos.size() > idx, "not enough lines");
-  dp_inStream->seekg(d_molpos[idx]);
-  d_next = idx;
-  return true;
-}
-
 bool MultithreadedSmilesMolSupplier::extractNextRecord(std::string &record,
                                                        unsigned int &lineNum,
                                                        unsigned int &index) {
   PRECONDITION(dp_inStream, "bad stream");
-  if (d_next < 0) {
-    d_next = 0;
+  if (this->getEnd()) {
+    return -1;
   }
 
-  if (moveTo(d_next)) {
-    // bad index length
-    CHECK_INVARIANT(static_cast<int>(d_molpos.size()) > d_next,
-                    "bad index length");
-    // ---------
-    // if we get here we can just build the molecule:
-    // ---------
-    // set the stream to the relevant position:
-    dp_inStream->clear();  // clear the EOF tag if it has been set
-    dp_inStream->seekg(d_molpos[d_next]);
-    d_line = d_lineNums[d_next];
-    // grab the line:
-    std::string inLine = getLine(dp_inStream);
-
-    if (d_len < 0 && this->skipComments() < 0) {
-      d_len = d_molpos.size();
+  // need to process title line
+  // if we have not called next yet and the current record id = 1
+  // then we are seeking the first record
+  if (d_lastRecordId == 0 && d_currentRecordId == 1) {
+    dp_inStream->seekg(0);
+    if (df_title) {
+      this->processTitleLine();
     }
-
-    // make sure the line number is correct:
-    if (d_next < static_cast<int>(d_lineNums.size())) {
-      d_line = d_lineNums[d_next];
-    }
-
-    ++d_next;
-    // if we just hit the last one, simulate EOF:
-    if (d_len > 0 && d_next == d_len) {
-      df_end = true;
-    }
-
-    record = inLine;
-    lineNum = d_line;
-    index = d_currentRecordId;
-    ++d_currentRecordId;
-    return true;
   }
 
-  return false;
+  std::streampos prev = dp_inStream->tellg();
+  std::string tempStr = this->nextLine();
+  if (!df_end) {
+    // if we didn't immediately hit EOF, loop until we get a valid line:
+    while ((tempStr[0] == '#') || (strip(tempStr).size() == 0)) {
+      prev = dp_inStream->tellg();
+      tempStr = this->nextLine();
+      if (this->getEnd()) {
+        break;
+      }
+    }
+  }
+  // if we hit EOF without getting a proper line, return -1:
+  if (tempStr.empty() || (tempStr[0] == '#') || (strip(tempStr).size() == 0)) {
+    return false;
+  }
+  record = tempStr;
+  lineNum = d_line;
+  index = d_currentRecordId;
+  ++d_currentRecordId;
+  return true;
 }
 
 ROMol *MultithreadedSmilesMolSupplier::processMoleculeRecord(
