@@ -271,7 +271,7 @@ TautomerEnumeratorResult TautomerEnumerator::enumerate(
       "completed", "max tautomers reached", "max transforms reached",
       "canceled"};
 
-  while (!bailOut) {
+  while (!completed && !bailOut) {
     // std::map automatically sorts res.d_tautomers into alphabetical order
     // (SMILES)
     for (const auto &tautomer : res.d_tautomers) {
@@ -446,31 +446,33 @@ TautomerEnumeratorResult TautomerEnumerator::enumerate(
       }
       done.insert(tautomer.first);
     }
-    if (res.d_tautomers.size() == done.size()) {
-      completed = true;
-      break;
+    completed = (res.d_tautomers.size() <= done.size());
+    size_t maxNumModifiedAtoms = res.d_modifiedAtoms.count();
+    size_t maxNumModifiedBonds = res.d_modifiedBonds.count();
+    for (auto it = res.d_tautomers.begin(); it != res.d_tautomers.end();) {
+      auto &taut = it->second;
+      if ((taut.d_numModifiedAtoms < maxNumModifiedAtoms ||
+           taut.d_numModifiedBonds < maxNumModifiedBonds) &&
+          setTautomerStereo(mol, *taut.tautomer, res, reassignStereo)) {
+        Tautomer tautStored = std::move(taut);
+        it = res.d_tautomers.erase(it);
+        tautStored.d_numModifiedAtoms = maxNumModifiedAtoms;
+        tautStored.d_numModifiedBonds = maxNumModifiedBonds;
+        auto insertRes = res.d_tautomers.insert(std::make_pair(
+            MolToSmiles(*tautStored.tautomer), std::move(tautStored)));
+        if (insertRes.second) {
+          it = insertRes.first;
+        }
+      } else {
+        ++it;
+      }
+    }
+    if (bailOut && res.d_tautomers.size() < d_maxTautomers &&
+        res.d_status == MaxTautomersReached) {
+      res.d_status = Completed;
+      bailOut = false;
     }
   }  // while
-  size_t maxNumModifiedAtoms = res.d_modifiedAtoms.count();
-  size_t maxNumModifiedBonds = res.d_modifiedBonds.count();
-  for (auto it = res.d_tautomers.begin(); it != res.d_tautomers.end();) {
-    auto &taut = it->second;
-    if ((taut.d_numModifiedAtoms < maxNumModifiedAtoms ||
-         taut.d_numModifiedBonds < maxNumModifiedBonds) &&
-        setTautomerStereo(mol, *taut.tautomer, res, reassignStereo)) {
-      Tautomer tautStored = std::move(taut);
-      it = res.d_tautomers.erase(it);
-      tautStored.d_numModifiedAtoms = maxNumModifiedAtoms;
-      tautStored.d_numModifiedBonds = maxNumModifiedBonds;
-      auto insertRes = res.d_tautomers.insert(std::make_pair(
-          MolToSmiles(*tautStored.tautomer), std::move(tautStored)));
-      if (insertRes.second) {
-        it = insertRes.first;
-      }
-    } else {
-      ++it;
-    }
-  }
   res.fillTautomersItVec();
   if (!completed) {
     BOOST_LOG(rdWarningLog)
