@@ -723,6 +723,33 @@ M  END
             _reacts = [Chem.MolToSmarts(r) for r in _rxn.GetReactants()]
             _prods = [Chem.MolToSmarts(p) for p in _rxn.GetProducts()]
 
+    def test_PNGMetadata(self):
+        fname = os.path.join(self.dataDir,'reaction1.smarts.png')
+        rxn = rdChemReactions.ReactionFromPNGFile(fname)
+        self.failIf(rxn is None)
+        self.assertEqual(rxn.GetNumReactantTemplates(),2)
+        self.assertEqual(rxn.GetNumProductTemplates(),1)
+
+        png = open(os.path.join(self.dataDir,'reaction1.no_metadata.png'),'rb').read()
+        npng = rdChemReactions.ReactionMetadataToPNGString(rxn,png)
+        nrxn = rdChemReactions.ReactionFromPNGString(npng)
+        self.failIf(nrxn is None)
+        self.assertEqual(nrxn.GetNumReactantTemplates(),2)
+        self.assertEqual(nrxn.GetNumProductTemplates(),1)
+        opts = [{'includePkl':True,'includeSmiles':False,'includeSmarts':False,'includeRxn':False},
+        {'includePkl':False,'includeSmiles':True,'includeSmarts':False,'includeRxn':False},
+        {'includePkl':False,'includeSmiles':False,'includeSmarts':True,'includeRxn':False},
+        {'includePkl':False,'includeSmiles':False,'includeSmarts':False,'includeRxn':True},
+        ]
+        for opt in opts:
+          npng = rdChemReactions.ReactionMetadataToPNGString(rxn,png,**opt)
+          nrxn = rdChemReactions.ReactionFromPNGString(npng)
+          self.failIf(nrxn is None)
+          self.assertEqual(nrxn.GetNumReactantTemplates(),2)
+          self.assertEqual(nrxn.GetNumProductTemplates(),1)
+
+
+
 def _getProductCXSMILES(product):
   """
   Clear properties.
@@ -905,6 +932,8 @@ class StereoGroupTests(unittest.TestCase):
       mol = Chem.MolFromSmiles("C/C=C/C")
       #  this shouldn't raise
       rxn.RunReactants([mol])
+
+      
 
 if __name__ == '__main__':
     unittest.main(verbosity=True)
