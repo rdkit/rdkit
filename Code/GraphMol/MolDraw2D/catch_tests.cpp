@@ -606,6 +606,19 @@ M  END
       CHECK(png.find(PNGData::molTag) == std::string::npos);
       CHECK(png.find(PNGData::pklTag) == std::string::npos);
     }
+    {  // draw multiple molecules
+      MolDraw2DCairo drawer(250, 200);
+      drawer.drawMolecule(*m1);
+      drawer.drawMolecule(*m1);
+      drawer.finishDrawing();
+      auto png = drawer.getDrawingText();
+      CHECK(png.find(PNGData::smilesTag) != std::string::npos);
+      CHECK(png.find(PNGData::molTag) != std::string::npos);
+      CHECK(png.find(PNGData::pklTag) != std::string::npos);
+      CHECK(png.find(PNGData::smilesTag + "1") != std::string::npos);
+      CHECK(png.find(PNGData::molTag + "1") != std::string::npos);
+      CHECK(png.find(PNGData::pklTag + "1") != std::string::npos);
+    }
   }
   SECTION("reaction") {
     std::unique_ptr<ChemicalReaction> rxn(RxnSmartsToChemicalReaction(

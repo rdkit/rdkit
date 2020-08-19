@@ -3303,6 +3303,8 @@ void MolDraw2D::tabulaRasa() {
   x_trans_ = y_trans_ = 0.0;
   x_offset_ = y_offset_ = 0;
   curr_width_ = 2;
+  d_metadata.clear();
+  d_numMetadataEntries = 0;
 }
 
 // ****************************************************************************

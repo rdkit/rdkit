@@ -18,6 +18,8 @@
 #include <RDGeneral/StreamOps.h>
 #include <vector>
 #include <boost/crc.hpp>
+#include <boost/algorithm/string.hpp>
+
 #include "FileParsers.h"
 #ifdef RDK_USE_BOOST_IOSTREAMS
 #include <zlib.h>
@@ -297,14 +299,14 @@ std::vector<std::unique_ptr<ROMol>> PNGStreamToMols(
   std::vector<std::unique_ptr<ROMol>> res;
   auto metadata = PNGStreamToMetadata(inStream);
   for (const auto pr : metadata) {
-    if (pr.first != tagToUse) {
+    if (!boost::starts_with(pr.first, tagToUse)) {
       continue;
     }
-    if (pr.first == PNGData::pklTag) {
+    if (boost::starts_with(pr.first, PNGData::pklTag)) {
       res.emplace_back(new ROMol(pr.second));
-    } else if (pr.first == PNGData::smilesTag) {
+    } else if (boost::starts_with(pr.first, PNGData::smilesTag)) {
       res.emplace_back(SmilesToMol(pr.second, params));
-    } else if (pr.first == PNGData::molTag) {
+    } else if (boost::starts_with(pr.first, PNGData::molTag)) {
       res.emplace_back(
           MolBlockToMol(pr.second, params.sanitize, params.removeHs));
     }

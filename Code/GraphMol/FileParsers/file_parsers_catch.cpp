@@ -1913,3 +1913,45 @@ TEST_CASE("multiple molecules in the PNG", "[writer][PNG]") {
     }
   }
 }
+
+TEST_CASE("multiple molecules in the PNG, second example", "[writer][PNG]") {
+  std::string rdbase = getenv("RDBASE");
+
+  std::vector<std::string> smiles = {"c1ccccc1", "CCO", "CC(=O)O", "c1ccccn1"};
+  std::vector<std::unique_ptr<ROMol>> mols;
+  for (const auto smi : smiles) {
+    mols.emplace_back(SmilesToMol(smi));
+  }
+  SECTION("pickles") {
+    std::string fname =
+        rdbase + "/Code/GraphMol/FileParsers/test_data/multiple_mols.png";
+    std::ifstream strm(fname, std::ios::in | std::ios::binary);
+    auto molsRead = PNGStreamToMols(strm);
+    REQUIRE(molsRead.size() == mols.size());
+    for (unsigned i = 0; i < molsRead.size(); ++i) {
+      CHECK(MolToSmiles(*molsRead[i]) == MolToSmiles(*mols[i]));
+    }
+  }
+  SECTION("SMILES") {
+    std::vector<std::pair<std::string, std::string>> metadata;
+    for (const auto &mol : mols) {
+      std::string pkl = "BOGUS";
+      // add bogus pickle data so we know that's not being read
+      metadata.push_back(std::make_pair(PNGData::pklTag, pkl));
+      metadata.push_back(std::make_pair(PNGData::smilesTag, MolToSmiles(*mol)));
+    }
+    // for the purposes of this test we'll add the metadata to an unrelated
+    // PNG
+    std::string fname =
+        rdbase +
+        "/Code/GraphMol/FileParsers/test_data/colchicine.no_metadata.png";
+    std::ifstream strm(fname, std::ios::in | std::ios::binary);
+    auto png = addMetadataToPNGStream(strm, metadata);
+    std::stringstream pngstrm(png);
+    auto molsRead = PNGStreamToMols(pngstrm, PNGData::smilesTag);
+    REQUIRE(molsRead.size() == mols.size());
+    for (unsigned i = 0; i < molsRead.size(); ++i) {
+      CHECK(MolToSmiles(*molsRead[i]) == MolToSmiles(*mols[i]));
+    }
+  }
+}

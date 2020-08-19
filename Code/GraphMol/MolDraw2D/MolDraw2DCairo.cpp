@@ -25,6 +25,7 @@
 #include <GraphMol/ChemReactions/ReactionPickler.h>
 
 #include <GraphMol/SmilesParse/SmilesWrite.h>
+#include <boost/format.hpp>
 
 namespace RDKit {
 void MolDraw2DCairo::initDrawing() {
@@ -211,19 +212,25 @@ std::string MolDraw2DCairo::addMetadataToPNG(const std::string &png) const {
 namespace {
 void addMoleculeMetadata(
     const ROMol &mol, int confId,
-    std::vector<std::pair<std::string, std::string>> &metadata) {
+    std::vector<std::pair<std::string, std::string>> &metadata, unsigned idx) {
+  // it's legal to repeat a tag, but a lot of software doesn't show all values
+  // so we append a suffix to disambiguate when necessary
+  std::string suffix = "";
+  if (idx) {
+    suffix = (boost::format("%d") % idx).str();
+  }
   std::string pkl;
   MolPickler::pickleMol(mol, pkl);
-  metadata.push_back(std::make_pair(PNGData::pklTag, pkl));
+  metadata.push_back(std::make_pair(PNGData::pklTag + suffix, pkl));
 
   bool includeStereo = true;
   if (mol.getNumConformers()) {
     auto molb = MolToMolBlock(mol, includeStereo, confId);
-    metadata.push_back(std::make_pair(PNGData::molTag, molb));
+    metadata.push_back(std::make_pair(PNGData::molTag + suffix, molb));
   }
   // MolToCXSmiles() is missing the feature that lets us specify confIds
   auto smiles = MolToCXSmiles(mol);
-  metadata.push_back(std::make_pair(PNGData::smilesTag, smiles));
+  metadata.push_back(std::make_pair(PNGData::smilesTag + suffix, smiles));
 }
 void addReactionMetadata(
     const ChemicalReaction &rxn,
@@ -237,7 +244,8 @@ void addReactionMetadata(
 }  // namespace
 
 void MolDraw2DCairo::updateMetadata(const ROMol &mol, int confId) {
-  addMoleculeMetadata(mol, confId, d_metadata);
+  addMoleculeMetadata(mol, confId, d_metadata, d_numMetadataEntries);
+  ++d_numMetadataEntries;
 }
 void MolDraw2DCairo::updateMetadata(const ChemicalReaction &rxn) {
   addReactionMetadata(rxn, d_metadata);

@@ -788,6 +788,7 @@ class RDKIT_MOLDRAW2D_EXPORT MolDraw2D {
 
  protected:
   std::vector<std::pair<std::string, std::string>> d_metadata;
+  unsigned int d_numMetadataEntries=0;
 
   virtual void doContinuousHighlighting(
       const ROMol &mol, const std::vector<int> *highlight_atoms,
