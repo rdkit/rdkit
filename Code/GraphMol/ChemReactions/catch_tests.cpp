@@ -1,5 +1,5 @@
 //
-//  Copyright (c) 2018 Greg Landrum
+//  Copyright (c) 2018-2020 Greg Landrum
 //
 //   @@ All Rights Reserved @@
 //  This file is part of the RDKit.
@@ -22,6 +22,7 @@
 #include <GraphMol/ChemReactions/ReactionParser.h>
 #include <GraphMol/ChemReactions/ReactionRunner.h>
 #include <GraphMol/ChemReactions/ReactionUtils.h>
+#include <GraphMol/FileParsers/PNGParser.h>
 
 using namespace RDKit;
 using std::unique_ptr;
@@ -271,5 +272,99 @@ TEST_CASE("GithHub #3119: partial reacting atom detection", "[Reaction][Bug]") {
     CHECK(rAtoms[0].size() == 2);
     CHECK(rAtoms[0][0] == 6);
     CHECK(rAtoms[0][1] == 10);
+  }
+}
+
+TEST_CASE("reaction data in PNGs 1", "[Reaction][PNG]") {
+  std::string pathName = getenv("RDBASE");
+  pathName += "/Code/GraphMol/ChemReactions/testData/";
+  std::string sma =
+      "[cH:1]1[cH:2][cH:3][cH:4][cH:5][c:6]1-[Br].[#6:7]B(O)O>>[cH:1]1[cH:2]["
+      "cH:3][cH:4][cH:5][c:6]1-[#6:7]";
+  SECTION("add/read metadata") {
+    std::vector<std::pair<std::string, std::string>> metadata;
+    metadata.push_back(std::make_pair(PNGData::rxnSmartsTag, sma));
+    std::string fname = pathName + "reaction1.no_metadata.png";
+    bool compressed = false;
+    auto pngData = addMetadataToPNGFile(fname, metadata, compressed);
+    metadata = PNGStringToMetadata(pngData);
+    auto iter =
+        std::find_if(metadata.begin(), metadata.end(),
+                     [](const std::pair<std::string, std::string>& val) {
+                       return val.first == PNGData::rxnSmartsTag;
+                     });
+    REQUIRE(iter != metadata.end());
+  }
+  SECTION("read from file") {
+    std::string fname = pathName + "reaction1.smarts.png";
+    std::unique_ptr<ChemicalReaction> rxn(PNGFileToChemicalReaction(fname));
+    REQUIRE(rxn);
+    CHECK(rxn->getNumReactantTemplates() == 2);
+    CHECK(rxn->getNumProductTemplates() == 1);
+  }
+  SECTION("add/read reaction to/from file") {
+    std::unique_ptr<ChemicalReaction> rxn(RxnSmartsToChemicalReaction(sma));
+    REQUIRE(rxn);
+    std::string fname = pathName + "reaction1.no_metadata.png";
+    {
+      auto pngData = addChemicalReactionToPNGFile(*rxn, fname);
+      std::unique_ptr<ChemicalReaction> nrxn(
+          PNGStringToChemicalReaction(pngData));
+      REQUIRE(nrxn);
+      CHECK(nrxn->getNumReactantTemplates() == 2);
+      CHECK(nrxn->getNumProductTemplates() == 1);
+    }
+    {
+      bool includePkl = true;
+      bool includeSmiles = false;
+      bool includeSmarts = false;
+      bool includeRxn = false;
+      auto pngData = addChemicalReactionToPNGFile(
+          *rxn, fname, includePkl, includeSmiles, includeSmarts, includeRxn);
+      std::unique_ptr<ChemicalReaction> nrxn(
+          PNGStringToChemicalReaction(pngData));
+      REQUIRE(nrxn);
+      CHECK(nrxn->getNumReactantTemplates() == 2);
+      CHECK(nrxn->getNumProductTemplates() == 1);
+    }
+    {
+      bool includePkl = false;
+      bool includeSmiles = true;
+      bool includeSmarts = false;
+      bool includeRxn = false;
+      auto pngData = addChemicalReactionToPNGFile(
+          *rxn, fname, includePkl, includeSmiles, includeSmarts, includeRxn);
+      std::unique_ptr<ChemicalReaction> nrxn(
+          PNGStringToChemicalReaction(pngData));
+      REQUIRE(nrxn);
+      CHECK(nrxn->getNumReactantTemplates() == 2);
+      CHECK(nrxn->getNumProductTemplates() == 1);
+    }
+    {
+      bool includePkl = false;
+      bool includeSmiles = false;
+      bool includeSmarts = true;
+      bool includeRxn = false;
+      auto pngData = addChemicalReactionToPNGFile(
+          *rxn, fname, includePkl, includeSmiles, includeSmarts, includeRxn);
+      std::unique_ptr<ChemicalReaction> nrxn(
+          PNGStringToChemicalReaction(pngData));
+      REQUIRE(nrxn);
+      CHECK(nrxn->getNumReactantTemplates() == 2);
+      CHECK(nrxn->getNumProductTemplates() == 1);
+    }
+    {
+      bool includePkl = false;
+      bool includeSmiles = false;
+      bool includeSmarts = false;
+      bool includeRxn = true;
+      auto pngData = addChemicalReactionToPNGFile(
+          *rxn, fname, includePkl, includeSmiles, includeSmarts, includeRxn);
+      std::unique_ptr<ChemicalReaction> nrxn(
+          PNGStringToChemicalReaction(pngData));
+      REQUIRE(nrxn);
+      CHECK(nrxn->getNumReactantTemplates() == 2);
+      CHECK(nrxn->getNumProductTemplates() == 1);
+    }
   }
 }

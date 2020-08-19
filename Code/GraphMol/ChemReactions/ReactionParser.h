@@ -31,11 +31,16 @@
 //
 
 #include <RDGeneral/export.h>
-#ifndef __RD_REACTIONPARSER_H_21Aug2006__
-#define __RD_REACTIONPARSER_H_21Aug2006__
+#ifndef RD_REACTIONPARSER_H_21Aug2006
+#define RD_REACTIONPARSER_H_21Aug2006
 
 #include <string>
 #include <iostream>
+#include <fstream>
+#include <sstream>
+#include <boost/format.hpp>
+#include <RDGeneral/BadFileException.h>
+#include <RDGeneral/FileParseException.h>
 
 namespace RDKit {
 class ChemicalReaction;
@@ -57,15 +62,9 @@ class RDKIT_CHEMREACTIONS_EXPORT ChemicalReactionParserException
   std::string _msg;
 };
 
-//! Parse a text block in MDL rxn format into a ChemicalReaction
-RDKIT_CHEMREACTIONS_EXPORT ChemicalReaction *RxnBlockToChemicalReaction(
-    const std::string &rxnBlock);
-//! Parse a file in MDL rxn format into a ChemicalReaction
-RDKIT_CHEMREACTIONS_EXPORT ChemicalReaction *RxnFileToChemicalReaction(
-    const std::string &fileName);
-//! Parse a text stream in MDL rxn format into a ChemicalReaction
-RDKIT_CHEMREACTIONS_EXPORT ChemicalReaction *RxnDataStreamToChemicalReaction(
-    std::istream &rxnStream, unsigned int &line);
+//---------------------------------------------------------------------------
+//! \name Reaction SMARTS/SMILES Support
+//@{
 
 //! Parse a string containing "Reaction SMARTS" into a ChemicalReaction
 /*!
@@ -85,6 +84,19 @@ RDKIT_CHEMREACTIONS_EXPORT ChemicalReaction *RxnSmartsToChemicalReaction(
     std::map<std::string, std::string> *replacements = nullptr,
     bool useSmiles = false);
 
+//! returns the reaction SMARTS for a reaction
+RDKIT_CHEMREACTIONS_EXPORT std::string ChemicalReactionToRxnSmarts(
+    const ChemicalReaction &rxn);
+
+//! returns the reaction SMILES for a reaction
+RDKIT_CHEMREACTIONS_EXPORT std::string ChemicalReactionToRxnSmiles(
+    const ChemicalReaction &rxn, bool canonical = true);
+//@}
+
+//---------------------------------------------------------------------------
+//! \name Reaction Mol Support
+//@{
+
 //! Parse a ROMol into a ChemicalReaction, RXN role must be set before
 /*!
    Alternative to build a reaction from a molecule (fragments) which have RXN
@@ -97,15 +109,25 @@ RDKIT_CHEMREACTIONS_EXPORT ChemicalReaction *RxnSmartsToChemicalReaction(
 RDKIT_CHEMREACTIONS_EXPORT ChemicalReaction *RxnMolToChemicalReaction(
     const ROMol &mol);
 
-//! returns the reaction SMARTS for a reaction
-RDKIT_CHEMREACTIONS_EXPORT std::string ChemicalReactionToRxnSmarts(
+//! returns a ROMol with RXN roles used to describe the reaction
+RDKIT_CHEMREACTIONS_EXPORT ROMol *ChemicalReactionToRxnMol(
     const ChemicalReaction &rxn);
+//@}
 
-//! returns the reaction SMILES for a reaction
-RDKIT_CHEMREACTIONS_EXPORT std::string ChemicalReactionToRxnSmiles(
-    const ChemicalReaction &rxn, bool canonical = true);
+//---------------------------------------------------------------------------
+//! \name MDL rxn Support
+//@{
 
-//! returns an RXN block for a reaction
+//! Parse a text block in MDL rxn format into a ChemicalReaction
+RDKIT_CHEMREACTIONS_EXPORT ChemicalReaction *RxnBlockToChemicalReaction(
+    const std::string &rxnBlock);
+//! Parse a file in MDL rxn format into a ChemicalReaction
+RDKIT_CHEMREACTIONS_EXPORT ChemicalReaction *RxnFileToChemicalReaction(
+    const std::string &fileName);
+//! Parse a text stream in MDL rxn format into a ChemicalReaction
+RDKIT_CHEMREACTIONS_EXPORT ChemicalReaction *RxnDataStreamToChemicalReaction(
+    std::istream &rxnStream, unsigned int &line);
+//! returns an rxn block for a reaction
 /*!
    \param rxn            chemical reaction
    \param separateAgents flag to decide if agents were put in a separate block,
@@ -115,9 +137,59 @@ RDKIT_CHEMREACTIONS_EXPORT std::string ChemicalReactionToRxnSmiles(
 RDKIT_CHEMREACTIONS_EXPORT std::string ChemicalReactionToRxnBlock(
     const ChemicalReaction &rxn, bool separateAgents = false);
 
-//! returns a ROMol with RXN roles used to describe the reaction
-RDKIT_CHEMREACTIONS_EXPORT ROMol *ChemicalReactionToRxnMol(
-    const ChemicalReaction &rxn);
+//@}
+
+//---------------------------------------------------------------------------
+//! \name PNG Support
+//@{
+
+namespace PNGData {
+RDKIT_CHEMREACTIONS_EXPORT extern const std::string rxnSmilesTag;
+RDKIT_CHEMREACTIONS_EXPORT extern const std::string rxnSmartsTag;
+RDKIT_CHEMREACTIONS_EXPORT extern const std::string rxnRxnTag;
+RDKIT_CHEMREACTIONS_EXPORT extern const std::string rxnPklTag;
+}  // namespace PNGData
+
+//! Parses metadata from a PNG into a ChemicalReaction
+RDKIT_CHEMREACTIONS_EXPORT ChemicalReaction *PNGStreamToChemicalReaction(
+    std::istream &pngStream);
+inline ChemicalReaction *PNGStringToChemicalReaction(const std::string &data) {
+  std::stringstream inStream(data);
+  return PNGStreamToChemicalReaction(inStream);
+};
+inline ChemicalReaction *PNGFileToChemicalReaction(const std::string &fname) {
+  std::ifstream inStream(fname.c_str(), std::ios::binary);
+  if (!inStream || (inStream.bad())) {
+    throw BadFileException((boost::format("Bad input file %s") % fname).str());
+  }
+  return PNGStreamToChemicalReaction(inStream);
+};
+
+RDKIT_CHEMREACTIONS_EXPORT std::string addChemicalReactionToPNGStream(
+    const ChemicalReaction &rxn, std::istream &iStream, bool includePkl = true,
+    bool includeSmiles = true, bool includeSmarts = false,
+    bool includeRxn = false);
+inline std::string addChemicalReactionToPNGString(const ChemicalReaction &rxn,
+                                                  const std::string &pngString,
+                                                  bool includePkl = true,
+                                                  bool includeSmiles = true,
+                                                  bool includeSmarts = false,
+                                                  bool includeRxn = false) {
+  std::stringstream inStream(pngString);
+  return addChemicalReactionToPNGStream(
+      rxn, inStream, includePkl, includeSmiles, includeSmarts, includeRxn);
+}
+inline std::string addChemicalReactionToPNGFile(const ChemicalReaction &rxn,
+                                                const std::string &fname,
+                                                bool includePkl = true,
+                                                bool includeSmiles = true,
+                                                bool includeSmarts = false,
+                                                bool includeRxn = false) {
+  std::ifstream inStream(fname.c_str(), std::ios::binary);
+  return addChemicalReactionToPNGStream(
+      rxn, inStream, includePkl, includeSmiles, includeSmarts, includeRxn);
+}
+//@}
 
 };  // namespace RDKit
 
