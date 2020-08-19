@@ -32,7 +32,7 @@ rdkit_headers(Crippen.h BCUT.h Lipinski.h
 if(RDK_BUILD_ANI)
 rdkit_library(ANIDescriptors 
               AtomicEnvironmentVector.cpp
-              LINK_LIBRARIES RDGeneral EigenSerializer)
+              LINK_LIBRARIES RDGeneral EigenSerializer GraphMol)
 rdkit_headers(AtomicEnvironmentVector.h DEST GraphMol/Descriptors)
 endif(RDK_BUILD_ANI)
 
