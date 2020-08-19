@@ -66,6 +66,10 @@ inline ROMol *PNGStringToMol(
   return PNGStreamToMol(inStream, params);
 }
 
+RDKIT_FILEPARSERS_EXPORT std::vector<std::unique_ptr<ROMol>> PNGStreamToMols(
+    std::istream &inStream, const std::string &tagToUse = PNGData::pklTag,
+    const SmilesParserParams &params = SmilesParserParams());
+
 //! The compressed flag is ignored if the RDKit is not built with
 //! boost::iostreams support
 RDKIT_FILEPARSERS_EXPORT std::string addMetadataToPNGStream(

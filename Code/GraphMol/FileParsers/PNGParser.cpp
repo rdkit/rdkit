@@ -291,4 +291,25 @@ ROMol *PNGStreamToMol(std::istream &inStream,
   return res;
 }
 
+std::vector<std::unique_ptr<ROMol>> PNGStreamToMols(
+    std::istream &inStream, const std::string &tagToUse,
+    const SmilesParserParams &params) {
+  std::vector<std::unique_ptr<ROMol>> res;
+  auto metadata = PNGStreamToMetadata(inStream);
+  for (const auto pr : metadata) {
+    if (pr.first != tagToUse) {
+      continue;
+    }
+    if (pr.first == PNGData::pklTag) {
+      res.emplace_back(new ROMol(pr.second));
+    } else if (pr.first == PNGData::smilesTag) {
+      res.emplace_back(SmilesToMol(pr.second, params));
+    } else if (pr.first == PNGData::molTag) {
+      res.emplace_back(
+          MolBlockToMol(pr.second, params.sanitize, params.removeHs));
+    }
+  }
+  return res;
+}
+
 }  // namespace RDKit
