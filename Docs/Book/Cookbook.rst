@@ -562,7 +562,7 @@ Sidechain-Core Enumeration
 ===========================
 
 | **Author:** Chris Earnshaw, Stephen Roughley, Greg Landrum (Vincent Scalfani added loop example)
-| **Source:** `<https://sourceforge.net/p/rdkit/mailman/message/35730514/>`_
+| **Source:** `<https://sourceforge.net/p/rdkit/mailman/message/35730514/>`_ and `<https://www.rdkit.org/docs/source/rdkit.Chem.rdChemReactions.html>`_
 | **Index ID#:** RDKitCB_29
 | **Summary:** Replace sidechains on a core and enumerate the combinations.
 
@@ -570,14 +570,33 @@ Sidechain-Core Enumeration
 
    from rdkit import Chem
    from rdkit.Chem import Draw
+   from rdkit.Chem import AllChem
 
 .. testcode::
    
-   core = Chem.MolFromSmiles('*c1c(C)cccc1(O)')
-   chain = Chem.MolFromSmiles('CN*')
+   # core is '*c1c(C)cccc1(O)'
+   # chain is 'CN*'
+
    rxn = AllChem.ReactionFromSmarts('[c:1][#0].[#0][*:2]>>[c:1]-[*:2]')
-   ps = rxn.RunReactants((core,chain))
-   print(Chem.MolToSmiles(ps[0][0],isomericSmiles=True))
+   reacts = (Chem.MolFromSmiles('*c1c(C)cccc1(O)'),Chem.MolFromSmiles('CN*'))
+   products = rxn.RunReactants(reacts) # tuple
+   print(len(products))
+
+.. testoutput::
+   
+   1
+
+.. testcode::
+
+   print(len(products[0]))
+
+.. testoutput::
+
+   1
+
+.. testcode::
+
+   print(Chem.MolToSmiles(products[0][0])) # [0][0] to index out the rdchem mol object
 
 .. testoutput::
    
@@ -589,10 +608,11 @@ Sidechain-Core Enumeration
    # sidechains in such a way that the atom you want to attach to the core 
    # is the first one (atom zero), there's a somewhat easier way to do this 
    # kind of simple replacement:
+
    core = Chem.MolFromSmiles('*c1c(C)cccc1(O)')
-   chain2 = Chem.MolFromSmiles('NC')
-   ps2 = Chem.ReplaceSubstructs(core,Chem.MolFromSmarts('[#0]'),chain2)
-   print(Chem.MolToSmiles(ps2[0],isomericSmiles=True))
+   chain = Chem.MolFromSmiles('NC')
+   products = Chem.ReplaceSubstructs(core,Chem.MolFromSmarts('[#0]'),chain) # tuple
+   print(Chem.MolToSmiles(products[0]))
 
 .. testoutput::
 
@@ -601,23 +621,25 @@ Sidechain-Core Enumeration
 .. testcode::
 
    # Here is an example in a loop for an imidazolium core with alkyl chains
+
    core = Chem.MolFromSmiles('*[n+]1cc[nH]c1')
    chains = ['C','CC','CCC','CCCC','CCCCC','CCCCCC']
    chainMols = [Chem.MolFromSmiles(chain) for chain in chains]
-   combined_smi =[]
+
+   product_smi = []
    for chainMol in chainMols:
-       combined_mol = Chem.ReplaceSubstructs(core,Chem.MolFromSmarts('[#0]'),chainMol)
-       combined_smi.append(Chem.MolToSmiles(combined_mol[0],isomericSmiles=True))
-   print(combined_smi)
+       product_mol = Chem.ReplaceSubstructs(core,Chem.MolFromSmarts('[#0]'),chainMol)
+       product_smi.append(Chem.MolToSmiles(product_mol[0]))
+   print(product_smi)
 
 .. testoutput::
-   
+
    ['C[n+]1cc[nH]c1', 'CC[n+]1cc[nH]c1', 'CCC[n+]1cc[nH]c1', 'CCCC[n+]1cc[nH]c1', 'CCCCC[n+]1cc[nH]c1', 'CCCCCC[n+]1cc[nH]c1']
 
 .. testcode::
 
    # View the enumerated molecules:
-   Draw.MolsToGridImage([Chem.MolFromSmiles(smi) for smi in combined_smi])
+   Draw.MolsToGridImage([Chem.MolFromSmiles(smi) for smi in product_smi])
 
 .. image:: images/RDKitCB_29_im0.png
 
