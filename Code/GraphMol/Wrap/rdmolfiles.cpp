@@ -429,9 +429,7 @@ ROMol *MolFromPNGString(python::object png, python::object pyParams) {
 python::object addMolToPNGStringHelper(const ROMol &mol, python::object png,
                                        bool includePkl, bool includeSmiles,
                                        bool includeMol) {
-  std::cerr << "extract" << std::endl;
   std::string cstr = python::extract<std::string>(png);
-  std::cerr << "done " << cstr.size() << std::endl;
 
   auto res =
       addMolToPNGString(mol, cstr, includePkl, includeSmiles, includeMol);
