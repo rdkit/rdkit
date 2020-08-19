@@ -2,4 +2,4 @@ rdkit_catch_test(ANIForceFieldBuilderTest ANIForceFieldHelperTest.cpp catch_main
     LINK_LIBRARIES 
     DistGeomHelpers ForceFieldHelpers
     FileParsers MolTransforms SmilesParse 
-    SubstructMatch MolAlign ANIDescriptors ANIForceField)
+    SubstructMatch MolAlign ANIDescriptors ANIForceField ANIForceFieldHelpers)

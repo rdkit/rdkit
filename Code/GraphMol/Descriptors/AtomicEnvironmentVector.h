@@ -11,7 +11,7 @@
 #define AtomicEnvironmentVectorRDKIT_H_JUNE2020
 #ifdef RDK_HAS_EIGEN3
 
-#ifdef RDK_BUILD_DESCRIPTORS3D
+#ifdef RDK_BUILD_ANI
 #include <Eigen/Dense>
 namespace RDKit {
 class ROMol;

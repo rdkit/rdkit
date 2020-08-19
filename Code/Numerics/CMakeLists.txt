@@ -1,8 +1,9 @@
 add_subdirectory(Alignment)  
 add_subdirectory(EigenSolvers)
 add_subdirectory(Optimizer)
+if(RDK_HAS_EIGEN)
 add_subdirectory(EigenSerializer)
-
+endif(RDK_HAS_EIGEN)
 rdkit_headers(Matrix.h
               SquareMatrix.h
               SymmMatrix.h

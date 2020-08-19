@@ -22,12 +22,14 @@
 #include <GraphMol/ForceFieldHelpers/MMFF/AtomTyper.h>
 #include <GraphMol/ForceFieldHelpers/MMFF/Builder.h>
 #include <GraphMol/ForceFieldHelpers/MMFF/MMFF.h>
+#ifdef RDK_BUILD_ANI
 #include <GraphMol/ForceFieldHelpers/ANI/Builder.h>
 #include <GraphMol/ForceFieldHelpers/ANI/ANI.h>
+#endif
 namespace python = boost::python;
 
 namespace RDKit {
-
+#ifdef RDK_BUILD_ANI
 int ANIHelper(ROMol &mol, int maxIters, int confId, std::string modelType,
               unsigned int ensembleSize) {
   NOGIL gil;
@@ -51,6 +53,7 @@ python::object ANIConfsHelper(ROMol &mol, int numThreads, int maxIters,
   }
   return std::move(pyres);
 }
+#endif
 
 int UFFHelper(ROMol &mol, int maxIters, double vdwThresh, int confId,
               bool ignoreInterfragInteractions) {
@@ -195,7 +198,7 @@ bool MMFFHasAllMoleculeParams(const ROMol &mol) {
 
   return mmffMolProperties.isValid();
 }
-
+#ifdef RDK_BUILD_ANI
 ForceFields::PyForceField *ANIGetMoleculeForceField(ROMol &mol,
                                                     std::string modelType,
                                                     unsigned int ensembleSize,
@@ -213,6 +216,7 @@ ForceFields::PyForceField *ANIGetMoleculeForceField(ROMol &mol,
 
   return pyFF;
 }
+#endif
 };  // namespace RDKit
 
 namespace ForceFields {
@@ -525,7 +529,7 @@ RETURNS: a list of (not_converged, energy) 2-tuples. \n\
               (python::arg("mol"), python::arg("ff"),
                python::arg("numThreads") = 1, python::arg("maxIters") = 200),
               docString.c_str());
-
+#ifdef RDK_BUILD_ANI
 //   docString =
 //       "Uses ANI NN to optimize a molecule's structure\n\n\
 //  \n\
@@ -581,4 +585,5 @@ RETURNS: a list of (not_converged, energy) 2-tuples. \n\
                python::arg("ensembleSize"), python::arg("confId") = -1),
               python::return_value_policy<python::manage_new_object>(),
               docString.c_str());
+#endif
 }

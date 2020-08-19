@@ -22,13 +22,15 @@
 #include <ForceField/MMFF/AngleConstraint.h>
 #include <ForceField/MMFF/TorsionConstraint.h>
 #include <ForceField/MMFF/PositionConstraint.h>
+#ifdef RDK_BUILD_ANI
 #include <ForceField/ANI/AtomicContrib.h>
+#endif
 #include "PyForceField.h"
 
 using namespace ForceFields;
 namespace python = boost::python;
 
-#ifdef RDK_HAS_EIGEN3
+#ifdef RDK_BUILD_ANI
 void ANIAddAtomContrib(PyForceField *self, python::list speciesVec,
                        int atomType, unsigned int atomIdx,
                        unsigned int numAtoms, unsigned int numLayers,
@@ -428,7 +430,7 @@ BOOST_PYTHON_MODULE(rdForceField) {
            (python::arg("self"), python::arg("idx"), python::arg("maxDispl"),
             python::arg("forceConstant")),
            "Adds a position constraint to the MMFF force field.")
-#ifdef RDK_HAS_EIGEN3
+#ifdef RDK_BUILD_ANI
       .def("AddANIAtomContrib", ANIAddAtomContrib,
            (python::arg("self"), python::arg("speciesVec"),
             python::arg("atomType"), python::arg("atomIdx"),
