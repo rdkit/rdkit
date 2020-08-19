@@ -1,5 +1,5 @@
 //
-//  Copyright (C) 2015 Greg Landrum
+//  Copyright (C) 2015-2020 Greg Landrum
 //
 //   @@ All Rights Reserved @@
 //  This file is part of the RDKit.
@@ -20,6 +20,10 @@
 #endif
 #include <GraphMol/FileParsers/PNGParser.h>
 #include <GraphMol/FileParsers/FileParsers.h>
+#include <GraphMol/ChemReactions/Reaction.h>
+#include <GraphMol/ChemReactions/ReactionParser.h>
+#include <GraphMol/ChemReactions/ReactionPickler.h>
+
 #include <GraphMol/SmilesParse/SmilesWrite.h>
 
 namespace RDKit {
@@ -204,26 +208,39 @@ std::string MolDraw2DCairo::addMetadataToPNG(const std::string &png) const {
 }
 
 // ****************************************************************************
-void MolDraw2DCairo::addMoleculeMetadata(const ROMol &mol, int confId) {
+namespace {
+void addMoleculeMetadata(
+    const ROMol &mol, int confId,
+    std::vector<std::pair<std::string, std::string>> &metadata) {
+  std::string pkl;
+  MolPickler::pickleMol(mol, pkl);
+  metadata.push_back(std::make_pair(PNGData::pklTag, pkl));
+
   bool includeStereo = true;
   if (mol.getNumConformers()) {
     auto molb = MolToMolBlock(mol, includeStereo, confId);
-    d_metadata.push_back(std::make_pair(PNGData::molTag, molb));
+    metadata.push_back(std::make_pair(PNGData::molTag, molb));
   }
   // MolToCXSmiles() is missing the feature that lets us specify confIds
   auto smiles = MolToCXSmiles(mol);
-  d_metadata.push_back(std::make_pair(PNGData::smilesTag, smiles));
+  metadata.push_back(std::make_pair(PNGData::smilesTag, smiles));
 }
+void addReactionMetadata(
+    const ChemicalReaction &rxn,
+    std::vector<std::pair<std::string, std::string>> &metadata) {
+  std::string pkl;
+  ReactionPickler::pickleReaction(rxn, pkl);
+  metadata.push_back(std::make_pair(PNGData::rxnPklTag, pkl));
+  metadata.push_back(
+      std::make_pair(PNGData::rxnSmartsTag, ChemicalReactionToRxnSmarts(rxn)));
+}
+}  // namespace
 
-void MolDraw2DCairo::addMoleculeMetadata(const std::vector<ROMol *> &mols,
-                                         const std::vector<int> confIds) {
-  for (unsigned int i = 0; i < mols.size(); ++i) {
-    int confId = -1;
-    if (confIds.size() == mols.size()) {
-      confId = confIds[i];
-    }
-    addMoleculeMetadata(*(mols[i]), confId);
-  }
-};
+void MolDraw2DCairo::updateMetadata(const ROMol &mol, int confId) {
+  addMoleculeMetadata(mol, confId, d_metadata);
+}
+void MolDraw2DCairo::updateMetadata(const ChemicalReaction &rxn) {
+  addReactionMetadata(rxn, d_metadata);
+}
 
 }  // namespace RDKit

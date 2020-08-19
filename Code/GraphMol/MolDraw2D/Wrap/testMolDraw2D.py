@@ -604,7 +604,6 @@ M  V30 END CTAB
 M  END''')
     d = Draw.MolDraw2DCairo(200, 200)
     d.DrawMolecule(m)
-    d.AddMoleculeMetadata(m)
     txt = d.GetDrawingText()
     nm = Chem.MolFromPNGString(txt)
     self.assertEqual(Chem.MolToSmiles(m), Chem.MolToSmiles(nm))

@@ -76,23 +76,21 @@ class RDKIT_MOLDRAW2D_EXPORT MolDraw2DCairo : public MolDraw2D {
   // writes the PNG data to a file
   void writeDrawingText(const std::string &fName) const;
 
-  // adds metadata describing the molecule to the PNG. This allows
-  // molecules to be re-built from PNG with PNGStringToMol
-  void addMoleculeMetadata(const ROMol &mol, int confId = -1);
-  void addMoleculeMetadata(const std::vector<ROMol *> &mols,
-                           const std::vector<int> confIds = {});
-
 #if defined(WIN32) && !defined(RDK_BUILD_FREETYPE_SUPPORT)
   bool supportsAnnotations() override { return false; }
 #endif
 
  private:
   cairo_t *dp_cr;
-  std::vector<std::pair<std::string, std::string>> d_metadata;
+
+  void updateMetadata(const ROMol &mol, int confId) override;
+  void updateMetadata(const ChemicalReaction &rxn) override;
 
   void initDrawing() override;
   void initTextDrawer(bool noFreetype) override;
   std::string addMetadataToPNG(const std::string &png) const;
+  void updateMetadata(const ROMol &mol) const;
+  void updateMetadata(const ChemicalReaction &rxn) const;
 };
 }  // namespace RDKit
 #endif  // MOLDRAW2DCAIRO_H

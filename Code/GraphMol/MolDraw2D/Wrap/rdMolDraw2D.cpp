@@ -661,7 +661,11 @@ BOOST_PYTHON_MODULE(rdMolDraw2D) {
                      "additional padding to leave around atom labels. "
                      "Expressed as a fraction of the font size.")
       .def_readwrite("explicitMethyl", &RDKit::MolDrawOptions::explicitMethyl,
-                     "Draw terminal methyls explictly.  Default is false.");
+                     "Draw terminal methyls explictly.  Default is false.")
+      .def_readwrite(
+          "includeMetadata", &RDKit::MolDrawOptions::includeMetadata,
+          "When possible, include metadata about molecules and reactions to "
+          "allow them to be reconstructed. Default is true.");
   docString = "Drawer abstract base class";
   python::class_<RDKit::MolDraw2D, boost::noncopyable>(
       "MolDraw2D", docString.c_str(), python::no_init)
@@ -841,12 +845,7 @@ BOOST_PYTHON_MODULE(rdMolDraw2D) {
       .def("GetDrawingText", &RDKit::getCairoDrawingText,
            "return the PNG data as a string")
       .def("WriteDrawingText", &RDKit::MolDraw2DCairo::writeDrawingText,
-           "write the PNG data to the named file")
-      .def("AddMoleculeMetadata",
-           (void (RDKit::MolDraw2DCairo::*)(const RDKit::ROMol &, int)) &
-               RDKit::MolDraw2DCairo::addMoleculeMetadata,
-           (python::arg("mol"), python::arg("confId") = -1),
-           "add molecule metadata to the output");
+           "write the PNG data to the named file");
 #endif
   docString =
       "Does some cleanup operations on the molecule to prepare it to draw "
