@@ -439,6 +439,47 @@ python::object addMolToPNGStringHelper(const ROMol &mol, python::object png,
   return retval;
 }
 
+python::object MolsFromPNGFile(const char *filename, const std::string &tag,
+                               python::object pyParams) {
+  SmilesParserParams params;
+  if (pyParams) {
+    params = python::extract<SmilesParserParams>(pyParams);
+  }
+  std::vector<std::unique_ptr<ROMol>> mols;
+  try {
+    mols = PNGFileToMols(filename, tag, params);
+  } catch (RDKit::BadFileException &e) {
+    PyErr_SetString(PyExc_IOError, e.what());
+    throw python::error_already_set();
+  } catch (RDKit::FileParseException &e) {
+    BOOST_LOG(rdWarningLog) << e.what() << std::endl;
+  } catch (...) {
+  }
+  python::list res;
+  for (auto &mol : mols) {
+    // take ownership of the data from the unique_ptr
+    ROMOL_SPTR sptr(mol.release());
+    res.append(sptr);
+  }
+  return python::tuple(res);
+}
+
+python::tuple MolsFromPNGString(python::object png, const std::string &tag,
+                                python::object pyParams) {
+  SmilesParserParams params;
+  if (pyParams) {
+    params = python::extract<SmilesParserParams>(pyParams);
+  }
+  auto mols = PNGStringToMols(pyObjectToString(png), tag, params);
+  python::list res;
+  for (auto &mol : mols) {
+    // take ownership of the data from the unique_ptr
+    ROMOL_SPTR sptr(mol.release());
+    res.append(sptr);
+  }
+  return python::tuple(res);
+}
+
 }  // namespace RDKit
 
 // MolSupplier stuff
@@ -1526,6 +1567,15 @@ BOOST_PYTHON_MODULE(rdmolfiles) {
       (python::arg("filename"), python::arg("params") = python::object()),
       docString.c_str(),
       python::return_value_policy<python::manage_new_object>());
+
+  python::def("MolsFromPNGString", MolsFromPNGString,
+              (python::arg("png"), python::arg("tag") = PNGData::pklTag,
+               python::arg("params") = python::object()),
+              "returns a tuple of molecules constructed from the PNG string");
+  python::def("MolsFromPNGFile", MolsFromPNGFile,
+              (python::arg("filename"), python::arg("tag") = PNGData::pklTag,
+               python::arg("params") = python::object()),
+              "returns a tuple of molecules constructed from the PNG file");
 
   docString =
       R"DOC(Writes molecular metadata to a PNG file.

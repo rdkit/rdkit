@@ -6095,6 +6095,15 @@ M  END
     self.assertIsNotNone(mol)
     self.assertEqual(mol.GetNumAtoms(), 29)
 
+  def testMolsFromPNG(self):
+    refMols = [Chem.MolFromSmiles(x) for x in ('c1ccccc1', 'CCO', 'CC(=O)O', 'c1ccccn1')]
+    fileN = os.path.join(RDConfig.RDBaseDir, 'Code', 'GraphMol', 'FileParsers', 'test_data',
+                         'multiple_mols.png')
+    mols = Chem.MolsFromPNGFile(fileN)
+    self.assertEqual(len(mols), len(refMols))
+    for mol, refMol in zip(mols, refMols):
+      self.assertEqual(Chem.MolToSmiles(mol), Chem.MolToSmiles(refMol))
+
 
 if __name__ == '__main__':
   if "RDTESTCASE" in os.environ:

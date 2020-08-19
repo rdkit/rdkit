@@ -69,6 +69,21 @@ inline ROMol *PNGStringToMol(
 RDKIT_FILEPARSERS_EXPORT std::vector<std::unique_ptr<ROMol>> PNGStreamToMols(
     std::istream &inStream, const std::string &tagToUse = PNGData::pklTag,
     const SmilesParserParams &params = SmilesParserParams());
+inline std::vector<std::unique_ptr<ROMol>> PNGFileToMols(
+    const std::string &fname, const std::string &tagToUse = PNGData::pklTag,
+    const SmilesParserParams &params = SmilesParserParams()) {
+  std::ifstream inStream(fname.c_str(), std::ios::binary);
+  if (!inStream || (inStream.bad())) {
+    throw BadFileException((boost::format("Bad input file %s") % fname).str());
+  }
+  return PNGStreamToMols(inStream, tagToUse, params);
+}
+inline std::vector<std::unique_ptr<ROMol>> PNGStringToMols(
+    const std::string &data, const std::string &tagToUse = PNGData::pklTag,
+    const SmilesParserParams &params = SmilesParserParams()) {
+  std::stringstream inStream(data);
+  return PNGStreamToMols(inStream, tagToUse, params);
+}
 
 //! The compressed flag is ignored if the RDKit is not built with
 //! boost::iostreams support
