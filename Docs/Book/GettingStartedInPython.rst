@@ -952,6 +952,8 @@ If the PNG contains multiple molecules we can retrieve them all at once using
 .. doctest::
 
   >>> from rdkit.Chem import Draw
+  >>> print(Draw.__file__)
+  >>> Draw.MolsToGridImage
   >>> png = Draw.MolsToGridImage(ms,returnPNG=True)
   >>> type(png)
   <class 'bytes'>
