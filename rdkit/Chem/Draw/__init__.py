@@ -149,7 +149,8 @@ def _legacyMolToImage(mol, size, kekulize, wedgeBonds, fitImage, options, canvas
   else:
     canvas.flush()
     return img
- 
+
+
 def MolToImage(mol, size=(300, 300), kekulize=True, wedgeBonds=True, fitImage=False, options=None,
                canvas=None, **kwargs):
   """Returns a PIL image containing a drawing of the molecule
@@ -185,19 +186,20 @@ def MolToImage(mol, size=(300, 300), kekulize=True, wedgeBonds=True, fitImage=Fa
   """
   if not mol:
     raise ValueError('Null molecule provided')
-  if canvas is not None or not hasattr(rdMolDraw2D,'MolDraw2DCairo'):
-    return _legacyMolToImage(mol,size,kekulize,wedgeBonds,fitImage,
-                             options,canvas,**kwargs)
-  if type(options)==DrawingOptions:
-    warnings.warn("legacy DrawingOptions not translated for new drawing code, please update manually",DeprecationWarning)
+  if canvas is not None or not hasattr(rdMolDraw2D, 'MolDraw2DCairo'):
+    return _legacyMolToImage(mol, size, kekulize, wedgeBonds, fitImage, options, canvas, **kwargs)
+  if type(options) == DrawingOptions:
+    warnings.warn(
+      "legacy DrawingOptions not translated for new drawing code, please update manually",
+      DeprecationWarning)
     options = None
-  return _moltoimg(mol,size,kwargs.get('highlightAtoms',[]),
-                   kwargs.get('legend',''),highlightBonds=kwargs.get('highlightBonds',[]),
-                   drawOptions=options,
-                  kekulize=kekulize,wedgeBonds=wedgeBonds)
+  return _moltoimg(mol, size, kwargs.get('highlightAtoms', []), kwargs.get('legend', ''),
+                   highlightBonds=kwargs.get('highlightBonds', []), drawOptions=options,
+                   kekulize=kekulize, wedgeBonds=wedgeBonds)
 
-def _legacyMolToFile(mol, fileName, size, kekulize, wedgeBonds, imageType,
-              fitImage, options, **kwargs):
+
+def _legacyMolToFile(mol, fileName, size, kekulize, wedgeBonds, imageType, fitImage, options,
+                     **kwargs):
   """ Generates a drawing of a molecule and writes it to a file
   """
   if options is None:
@@ -227,6 +229,7 @@ def _legacyMolToFile(mol, fileName, size, kekulize, wedgeBonds, imageType,
   else:
     canvas.save()
 
+
 def MolToFile(mol, filename, size=(300, 300), kekulize=True, wedgeBonds=True, imageType=None,
               fitImage=False, options=None, **kwargs):
   """ Generates a drawing of a molecule and writes it to a file
@@ -240,40 +243,42 @@ def MolToFile(mol, filename, size=(300, 300), kekulize=True, wedgeBonds=True, im
   if imageType is None:
     imageType = os.path.splitext(filename)[1][1:]
 
-  if imageType not in ('svg','png'):
-    _legacyMolToFile(mol,filename,size,kekulize,wedgeBonds,imageType,fitImage,options,
-                       **kwargs)
-  
-  if type(options)==DrawingOptions:
-    warnings.warn("legacy DrawingOptions not translated for new drawing code, please update manually",DeprecationWarning)
+  if imageType not in ('svg', 'png'):
+    _legacyMolToFile(mol, filename, size, kekulize, wedgeBonds, imageType, fitImage, options,
+                     **kwargs)
+
+  if type(options) == DrawingOptions:
+    warnings.warn(
+      "legacy DrawingOptions not translated for new drawing code, please update manually",
+      DeprecationWarning)
     options = None
-  if imageType=='png':
+  if imageType == 'png':
     drawfn = _moltoimg
     mode = 'b'
-  elif imageType=='svg':
+  elif imageType == 'svg':
     drawfn = _moltoSVG
     mode = 't'
   else:
     raise ValueError("unsupported output format")
-  data = drawfn(mol,size,kwargs.get('highlightAtoms',[]),
-                  kwargs.get('legend',''),highlightBonds=kwargs.get('highlightBonds',[]),
-                  drawOptions=options,
-                kekulize=kekulize,wedgeBonds=wedgeBonds,returnPNG=True)
-  with open(filename,'w+'+mode) as outf:
+  data = drawfn(mol, size, kwargs.get('highlightAtoms', []), kwargs.get('legend', ''),
+                highlightBonds=kwargs.get('highlightBonds', []), drawOptions=options,
+                kekulize=kekulize, wedgeBonds=wedgeBonds, returnPNG=True)
+  with open(filename, 'w+' + mode) as outf:
     outf.write(data)
     outf.close()
- 
+
+
 def MolToImageFile(mol, filename, size=(300, 300), kekulize=True, wedgeBonds=True, **kwargs):
   """  DEPRECATED:  please use MolToFile instead
 
   """
-  warnings.warn("MolToImageFile is deprecated, please use MolToFile instead",DeprecationWarning)
+  warnings.warn("MolToImageFile is deprecated, please use MolToFile instead", DeprecationWarning)
   img = MolToImage(mol, size=size, kekulize=kekulize, wedgeBonds=wedgeBonds, **kwargs)
   img.save(filename)
 
 
-def ShowMol(mol, size=(300, 300), kekulize=True, wedgeBonds=True, title='RDKit Molecule', 
-            stayInFront=True,**kwargs):
+def ShowMol(mol, size=(300, 300), kekulize=True, wedgeBonds=True, title='RDKit Molecule',
+            stayInFront=True, **kwargs):
   """ Generates a picture of a molecule and displays it in a Tkinter window
   """
   import tkinter
@@ -289,7 +294,7 @@ def ShowMol(mol, size=(300, 300), kekulize=True, wedgeBonds=True, title='RDKit M
   tkRoot.geometry('%dx%d' % (img.size))
   tkRoot.lift()
   if stayInFront:
-    tkRoot.attributes('-topmost',True)
+    tkRoot.attributes('-topmost', True)
   tkRoot.mainloop()
 
 
@@ -423,8 +428,7 @@ def _moltoimg(mol, sz, highlights, legend, returnPNG=False, drawOptions=None, **
     mol.UpdatePropertyCache(False)
 
   kekulize = _okToKekulizeMol(mol, kwargs.get('kekulize', True))
-  wedge = kwargs.get('wedgeBonds',True)
-
+  wedge = kwargs.get('wedgeBonds', True)
 
   try:
     blocker = rdBase.BlockLogs()
@@ -445,10 +449,8 @@ def _moltoimg(mol, sz, highlights, legend, returnPNG=False, drawOptions=None, **
       d2d.drawOptions().setHighlightColor(kwargs['highlightColor'])
     # we already prepared the molecule:
     d2d.drawOptions().prepareMolsBeforeDrawing = False
-    bondHighlights = kwargs.get('highlightBonds',None)
-    d2d.DrawMolecule(mc,
-                     legend=legend or "",
-                     highlightAtoms=highlights or [], 
+    bondHighlights = kwargs.get('highlightBonds', None)
+    d2d.DrawMolecule(mc, legend=legend or "", highlightAtoms=highlights or [],
                      highlightBonds=bondHighlights or [])
     d2d.FinishDrawing()
     if returnPNG:
@@ -476,10 +478,8 @@ def _moltoSVG(mol, sz, highlights, legend, kekulize, drawOptions=None, **kwargs)
   if drawOptions is not None:
     d2d.SetDrawOptions(drawOptions)
 
-  bondHighlights = kwargs.get('highlightBonds',None)
-  d2d.DrawMolecule(mc,
-                   legend=legend or "",
-                   highlightAtoms=highlights or [], 
+  bondHighlights = kwargs.get('highlightBonds', None)
+  d2d.DrawMolecule(mc, legend=legend or "", highlightAtoms=highlights or [],
                    highlightBonds=bondHighlights or [])
   d2d.FinishDrawing()
   svg = d2d.GetDrawingText()
@@ -487,7 +487,8 @@ def _moltoSVG(mol, sz, highlights, legend, kekulize, drawOptions=None, **kwargs)
 
 
 def _MolsToGridImage(mols, molsPerRow=3, subImgSize=(200, 200), legends=None,
-                     highlightAtomLists=None, highlightBondLists=None, drawOptions=None, **kwargs):
+                     highlightAtomLists=None, highlightBondLists=None, drawOptions=None,
+                     returnPNG=False, **kwargs):
   """ returns a PIL Image of the grid
   """
   if legends is None:
@@ -523,13 +524,13 @@ def _MolsToGridImage(mols, molsPerRow=3, subImgSize=(200, 200), legends=None,
         if hasattr(dops, k):
           setattr(dops, k, v)
           del kwargs[k]
-    d2d.DrawMolecules(list(mols),
-                      legends=legends or None,
-                      highlightAtoms=highlightAtomLists,
-                      highlightBonds=highlightBondLists,
-                      **kwargs)
+    d2d.DrawMolecules(list(mols), legends=legends or None, highlightAtoms=highlightAtomLists,
+                      highlightBonds=highlightBondLists, **kwargs)
     d2d.FinishDrawing()
-    res = _drawerToImage(d2d)
+    if not returnPNG:
+      res = _drawerToImage(d2d)
+    else:
+      res = d2d.GetDrawingText()
 
   return res
 
@@ -558,18 +559,16 @@ def _MolsToGridSVG(mols, molsPerRow=3, subImgSize=(200, 200), legends=None, high
       if hasattr(dops, k):
         setattr(dops, k, v)
         del kwargs[k]
-  d2d.DrawMolecules(list(mols),
-                    legends=legends or None,
-                    highlightAtoms=highlightAtomLists or [],
-                    highlightBonds=highlightBondLists or [],
-                    **kwargs)
+  d2d.DrawMolecules(list(mols), legends=legends or None, highlightAtoms=highlightAtomLists or [],
+                    highlightBonds=highlightBondLists or [], **kwargs)
   d2d.FinishDrawing()
   res = d2d.GetDrawingText()
   return res
 
 
 def MolsToGridImage(mols, molsPerRow=3, subImgSize=(200, 200), legends=None,
-                    highlightAtomLists=None, highlightBondLists=None, useSVG=False, **kwargs):
+                    highlightAtomLists=None, highlightBondLists=None, useSVG=False, returnPNG=False,
+                    **kwargs):
   if legends and len(legends) > len(mols):
     legends = legends[:len(mols)]
   if highlightAtomLists and len(highlightAtomLists) > len(mols):
@@ -584,7 +583,7 @@ def MolsToGridImage(mols, molsPerRow=3, subImgSize=(200, 200), legends=None,
   else:
     return _MolsToGridImage(mols, molsPerRow=molsPerRow, subImgSize=subImgSize, legends=legends,
                             highlightAtomLists=highlightAtomLists,
-                            highlightBondLists=highlightBondLists, **kwargs)
+                            highlightBondLists=highlightBondLists, returnPNG=returnPNG, **kwargs)
 
 
 def _legacyReactionToImage(rxn, subImgSize=(200, 200), **kwargs):
@@ -625,7 +624,8 @@ def _legacyReactionToImage(rxn, subImgSize=(200, 200), **kwargs):
   return res
 
 
-def ReactionToImage(rxn, subImgSize=(200, 200), useSVG=False, drawOptions=None, **kwargs):
+def ReactionToImage(rxn, subImgSize=(200, 200), useSVG=False, drawOptions=None, returnPNG=False,
+                    **kwargs):
   if not useSVG and not hasattr(rdMolDraw2D, 'MolDraw2DCairo'):
     return _legacyReactionToImage(rxn, subImgSize=subImgSize, **kwargs)
   else:
@@ -638,7 +638,7 @@ def ReactionToImage(rxn, subImgSize=(200, 200), useSVG=False, drawOptions=None, 
       d.SetDrawOptions(drawOptions)
     d.DrawReaction(rxn, **kwargs)
     d.FinishDrawing()
-    if useSVG:
+    if useSVG or returnPNG:
       return d.GetDrawingText()
     else:
       return _drawerToImage(d)
