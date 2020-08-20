@@ -54,10 +54,7 @@ def _getCanvas():
 def _createCanvas(size):
   useAGG, useCairo, Canvas = _getCanvas()
   if useAGG or useCairo:
-    try:
-      import Image
-    except ImportError:
-      from PIL import Image
+    from PIL import Image
     img = Image.new("RGBA", size, (0, 0, 0, 0))
     canvas = Canvas(img)
   else:
@@ -387,10 +384,7 @@ fig.savefig('coumlogps.colored.png',bbox_inches='tight')
 def MolsToImage(mols, subImgSize=(200, 200), legends=None, **kwargs):
   """
   """
-  try:
-    import Image
-  except ImportError:
-    from PIL import Image
+  from PIL import Image
   if legends is None:
     legends = [None] * len(mols)
   res = Image.new("RGBA", (subImgSize[0] * len(mols), subImgSize[1]))
@@ -403,10 +397,7 @@ from io import BytesIO
 
 
 def _drawerToImage(d2d):
-  try:
-    import Image
-  except ImportError:
-    from PIL import Image
+  from PIL import Image
   sio = BytesIO(d2d.GetDrawingText())
   return Image.open(sio)
 
@@ -499,10 +490,7 @@ def _MolsToGridImage(mols, molsPerRow=3, subImgSize=(200, 200), legends=None,
     nRows += 1
 
   if not hasattr(rdMolDraw2D, 'MolDraw2DCairo'):
-    try:
-      import Image
-    except ImportError:
-      from PIL import Image
+    from PIL import Image
     res = Image.new("RGBA", (molsPerRow * subImgSize[0], nRows * subImgSize[1]), (255, 255, 255, 0))
     for i, mol in enumerate(mols):
       row = i // molsPerRow
@@ -587,10 +575,7 @@ def MolsToGridImage(mols, molsPerRow=3, subImgSize=(200, 200), legends=None,
 
 
 def _legacyReactionToImage(rxn, subImgSize=(200, 200), **kwargs):
-  try:
-    import Image
-  except ImportError:
-    from PIL import Image
+  from PIL import Image
 
   mols = []
   for i in range(rxn.GetNumReactantTemplates()):
