@@ -11,7 +11,7 @@
 #define GENERAL_FILE_READER_H
 #include <RDGeneral/BadFileException.h>
 #include <RDStreams/streams.h>
-
+#include <boost/algorithm/string.hpp>
 #include <iostream>
 #include <string>
 #include <vector>
@@ -87,48 +87,33 @@ std::string getFileName(const std::string path) {
 //! given file path determines the file and compression format
 void determineFormat(const std::string path, std::string& fileFormat,
                      std::string& compressionFormat) {
-  std::string fileName = getFileName(path);
-  int dots = std::count(fileName.begin(), fileName.end(), '.');
-
-  if (dots == 0) {
-    throw std::invalid_argument(
-        "Unable to determine file format: no filename extension found");
-  }
-
-  else if (dots == 1) {
-    //! there is a file format but no compression format
-    int pos = fileName.rfind(".");
-    fileFormat = fileName.substr(pos + 1);
-
-    //! unconventional file format
-    if (fileFormat.compare("maegz") == 0) {
-      fileFormat = "mae";
-      compressionFormat = "gz";
-    }
-
-    if (!validate(fileFormat, compressionFormat)) {
-      throw std::invalid_argument(
-          "Unable to determine file format: unsupported filename extension");
-    }
-  } else {
-    //! there is a file and compression format
-    int p1 = fileName.rfind(".");
-    int p2 = fileName.rfind(".", p1 - 1);
-    fileFormat = fileName.substr(p2 + 1, (p1 - p2) - 1);
-    compressionFormat = fileName.substr(p1 + 1);
-    if (!validate(fileFormat, compressionFormat)) {
-      //! it is possible that we have read a file with name *.2.txt (for
-      //! example) thus fileformat = "2" and compressionformat = "txt", so we
-      //! try to set the file format as the compression format and the
-      //! compression format as an empty string. Then we check of validity.
-      fileFormat = compressionFormat;
-      compressionFormat = "";
-      if (!validate(fileFormat, compressionFormat)) {
-        throw std::invalid_argument(
-            "Unable to determine file format: unsupported extension");
-      }
-    }
-  }
+	//! filename without compression format
+	std::string basename;  
+	//! Special case maegz.
+	//! NOTE: also supporting case-insensitive filesystems
+	if(boost::algorithm::ends_with(path, ".maegz")){
+		fileFormat = "mae";
+		compressionFormat = "gz";
+		return;
+	}
+	else if(boost::algorithm::ends_with(path, ".gz")){
+		compressionFormat = "gz";
+		basename = path.substr(0, path.size() - 3);
+	} else if( boost::algorithm::ends_with(path, ".zst") ||
+      boost::algorithm::ends_with(path, ".bz2") ||
+      boost::algorithm::ends_with(path, ".7z")){
+		throw std::invalid_argument("Unsupported compression extension");	
+	} else {
+ 		basename = path;
+		compressionFormat = "";
+	}
+	for (auto const& suffix: supportedFileFormats) {
+		 if (boost::algorithm::ends_with(basename, "." + suffix)) {
+				 fileFormat = suffix;
+				 return;
+		 }
+	}
+	throw std::invalid_argument("Unsupported structure or compression extension");
 }
 
 //! returns a MolSupplier object based on the file name instantiated
