@@ -11,20 +11,20 @@
 #ifndef MULTITHREADED_SD_MOL_SUPPLIER
 #define MULTITHREADED_SD_MOL_SUPPLIER
 #include "MultithreadedMolSupplier.h"
-
 namespace RDKit {
+
 class RDKIT_FILEPARSERS_EXPORT MultithreadedSDMolSupplier
     : public MultithreadedMolSupplier {
  public:
   explicit MultithreadedSDMolSupplier(
       const std::string &fileName, bool sanitize = true, bool removeHs = true,
-      bool strictParsing = true, unsigned int numWriterThreads = 2,
+      bool strictParsing = true, unsigned int numWriterThreads = 1,
       size_t sizeInputQueue = 5, size_t sizeOutputQueue = 5);
 
   explicit MultithreadedSDMolSupplier(
       std::istream *inStream, bool takeOwnership = true, bool sanitize = true,
       bool removeHs = true, bool strictParsing = true,
-      unsigned int numWriterThreads = 2, size_t sizeInputQueue = 5,
+      unsigned int numWriterThreads = 1, size_t sizeInputQueue = 5,
       size_t sizeOutputQueue = 5);
 
   MultithreadedSDMolSupplier();
@@ -33,6 +33,10 @@ class RDKIT_FILEPARSERS_EXPORT MultithreadedSDMolSupplier
 
   void checkForEnd();
   bool getEnd() const;
+  void setProcessPropertyLists(bool val) { df_processPropertyLists = val; }
+  bool getProcessPropertyLists() const { return df_processPropertyLists; }
+  bool getEOFHitOnRead() const { return df_eofHitOnRead; }
+
   //! reads next record and returns whether or not EOF was hit
   bool extractNextRecord(std::string &record, unsigned int &lineNum,
                          unsigned int &index);
@@ -40,12 +44,10 @@ class RDKIT_FILEPARSERS_EXPORT MultithreadedSDMolSupplier
   //! parses the record and returns the resulting molecule
   ROMol *processMoleculeRecord(const std::string &record, unsigned int lineNum);
 
- private:
+ protected:
   void initFromSettings(bool takeOwnership, bool sanitize, bool removeHs,
                         bool strictParsing, unsigned int numWriterThreads,
                         size_t sizeInputQueue, size_t sizeOutputQueue);
-
- private:
   bool df_end = false;  //! have we reached the end of the file?
   int d_line = 0;       //! line number we are currently on
   bool df_sanitize = true, df_removeHs = true, df_strictParsing = true;

@@ -75,6 +75,10 @@ struct multiSDMolSup_wrap {
              python::arg("sizeInputQueue") = 5,
              python::arg("sizeOutputQueue") = 5),
             multiSdsDocStr.c_str()))
+        .def("__iter__",
+             (MultithreadedSDMolSupplier * (*)(MultithreadedSDMolSupplier *)) &
+                 MolSupplIter,
+             python::return_internal_reference<1>())
         .def("__next__",
              (ROMol * (*)(MultithreadedSDMolSupplier *)) & MolForwardSupplNext,
              "Returns the next molecule in the file. Raises _StopIteration_ "
@@ -85,9 +89,17 @@ struct multiSDMolSup_wrap {
         .def("GetLastRecordId",
              (unsigned int (*)(MultithreadedSDMolSupplier *)) & MolSupplLastId,
              "Returns the record id for the last extracted item.\n")
-        .def("GetItemText",
+        .def("GetLastItemText",
              (std::string(*)(MultithreadedSDMolSupplier *)) & MolSupplLastItem,
-             "Returns the text for the last extracted item.\n");
+             "Returns the text for the last extracted item.\n")
+        .def("GetProcessPropertyLists",
+             &MultithreadedSDMolSupplier::getProcessPropertyLists,
+             "returns whether or not any property lists that are present will "
+             "be processed when reading molecules")
+        .def("SetProcessPropertyLists",
+             &MultithreadedSDMolSupplier::setProcessPropertyLists,
+             "sets whether or not any property lists that are present will be "
+             "processed when reading molecules");
   };
 };
 }  // namespace RDKit

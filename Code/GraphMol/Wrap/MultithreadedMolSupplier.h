@@ -32,6 +32,11 @@ ROMol *MolForwardSupplNext(T *suppl) {
 }
 
 template <typename T>
+T *MolSupplIter(T *suppl) {
+  return suppl;
+}
+
+template <typename T>
 std::string MolSupplLastItem(T *supp) {
   return supp->getLastItemText();
 }

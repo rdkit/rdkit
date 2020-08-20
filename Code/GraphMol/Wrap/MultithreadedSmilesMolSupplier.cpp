@@ -78,10 +78,15 @@ struct multiSmiMolSup_wrap {
             (python::arg("fileName"), python::arg("delimiter") = " \t",
              python::arg("smilesColumn") = 0, python::arg("nameColumn") = 1,
              python::arg("titleLine") = true, python::arg("sanitize") = true,
-             python::arg("numWriterThreads") = 2,
+             python::arg("numWriterThreads") = 1,
              python::arg("sizeInputQueue") = 5,
              python::arg("sizeOutputQueue") = 5),
             multiSmsDocStr.c_str()))
+        .def("__iter__",
+             (MultithreadedSmilesMolSupplier *
+              (*)(MultithreadedSmilesMolSupplier *)) &
+                 MolSupplIter,
+             python::return_internal_reference<1>())
         .def("__next__",
              (ROMol * (*)(MultithreadedSmilesMolSupplier *)) &
                  MolForwardSupplNext,
@@ -94,7 +99,7 @@ struct multiSmiMolSup_wrap {
              (unsigned int (*)(MultithreadedSmilesMolSupplier *)) &
                  MolSupplLastId,
              "Returns the record id for the last extracted item.\n")
-        .def("GetItemText",
+        .def("GetLastItemText",
              (std::string(*)(MultithreadedSmilesMolSupplier *)) &
                  MolSupplLastItem,
              "Returns the text for the last extracted item.\n");

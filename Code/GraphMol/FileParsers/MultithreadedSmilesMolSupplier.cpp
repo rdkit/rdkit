@@ -44,13 +44,15 @@ MultithreadedSmilesMolSupplier::MultithreadedSmilesMolSupplier(
 
 MultithreadedSmilesMolSupplier::MultithreadedSmilesMolSupplier() {
   dp_inStream = nullptr;
-  initFromSettings(true, "", 0, 1, true, true, 2, 5, 5);
+  initFromSettings(true, "", 0, 1, true, true, 1, 5, 5);
   startThreads();
 }
 
 MultithreadedSmilesMolSupplier::~MultithreadedSmilesMolSupplier() {
   if (df_owner && dp_inStream) {
     delete dp_inStream;
+    df_owner = false;
+    dp_inStream = nullptr;
   }
 }
 
@@ -178,7 +180,7 @@ bool MultithreadedSmilesMolSupplier::extractNextRecord(std::string &record,
                                                        unsigned int &index) {
   PRECONDITION(dp_inStream, "bad stream");
   if (this->getEnd()) {
-    return -1;
+    return false;
   }
 
   // need to process title line

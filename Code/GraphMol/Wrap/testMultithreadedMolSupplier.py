@@ -12,7 +12,8 @@ class TestCase(unittest.TestCase):
     i = 0
     while not smiSup.atEnd():
       mol = next(smiSup)
-      i += 1
+      if(mol):
+        i += 1
     self.assertTrue(i == 200)
     fileN = os.path.join(RDConfig.RDBaseDir, 'Code', 'GraphMol', 'FileParsers', 'test_data', 'fewSmi.csv')
     #fileN = "../FileParsers/test_data/fewSmi.csv"
@@ -35,13 +36,13 @@ class TestCase(unittest.TestCase):
     molNames = ["48", "78", "128", "163", "164", "170", "180", "186", "192", "203", "210", "211", "213", "220", "229", "256"]
     confusedMolNames = []
     i = 0
-    while not sdSup.atEnd():
-      mol = next(sdSup)
-      self.assertTrue(mol)
-      confusedMolNames.append(mol.GetProp("_Name"))
-      i += 1 
+    for mol in sdSup:
+      if(mol):
+        confusedMolNames.append(mol.GetProp("_Name"))
+        i += 1 
     self.assertTrue(len(molNames) == i)
     self.assertTrue(sorted(confusedMolNames) == sorted(molNames))
+
 
 if __name__ == '__main__':
   print("Testing MultithreadedMolSupplier (Smiles and SD)")

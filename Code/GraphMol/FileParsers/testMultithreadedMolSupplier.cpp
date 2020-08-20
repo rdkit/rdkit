@@ -14,6 +14,7 @@
 #include <RDGeneral/FileParseException.h>
 #include <RDGeneral/RDLog.h>
 #include <RDGeneral/test.h>
+#include <RDStreams/streams.h>
 
 #include <boost/dynamic_bitset.hpp>
 #include <boost/iostreams/device/file.hpp>
@@ -27,7 +28,6 @@
 #include <sstream>
 #include <string>
 
-#include "MultithreadedMolSupplier.h"
 #include "MultithreadedSDMolSupplier.h"
 #include "MultithreadedSmilesMolSupplier.h"
 
@@ -45,18 +45,16 @@ struct PrintThread : public std::stringstream {
   }
 };
 
-void testSmiConcurrent(std::string path, std::string delimiter,
-                       int smilesColumn, int nameColumn, bool titleLine,
-                       bool sanitize, unsigned int numWriterThreads,
-                       size_t sizeInputQueue, size_t sizeOutputQueue,
-                       unsigned int expectedResult) {
-  std::string rdbase = getenv("RDBASE");
-  std::string fname = rdbase + path;
+void testSmiConcurrent(std::istream* strm, bool takeOwnership,
+                       std::string delimiter, int smilesColumn, int nameColumn,
+                       bool titleLine, bool sanitize,
+                       unsigned int numWriterThreads, size_t sizeInputQueue,
+                       size_t sizeOutputQueue, unsigned int expectedResult) {
   unsigned int nMols = 0;
   boost::dynamic_bitset<> bitVector(expectedResult);
-  MultithreadedSmilesMolSupplier sup(fname, delimiter, smilesColumn, nameColumn,
-                                     titleLine, sanitize, numWriterThreads,
-                                     sizeInputQueue, sizeOutputQueue);
+  MultithreadedSmilesMolSupplier sup(
+      strm, takeOwnership, delimiter, smilesColumn, nameColumn, titleLine,
+      sanitize, numWriterThreads, sizeInputQueue, sizeOutputQueue);
   // we have not called the next method yet
   TEST_ASSERT(sup.getLastRecordId() == 0);
   // initially no bit is set in the bitVector, sanity check
@@ -64,9 +62,48 @@ void testSmiConcurrent(std::string path, std::string delimiter,
 
   while (!sup.atEnd()) {
     ROMol* mol = sup.next();
-    unsigned int id = sup.getLastRecordId();
-    bitVector[id - 1] = 1;
-    if (mol != nullptr) {
+    if (mol) {
+      unsigned int id = sup.getLastRecordId();
+      bitVector[id - 1] = 1;
+      ++nMols;
+    }
+    delete mol;
+  }
+  // if all bits are set then we have seen possible ids
+  TEST_ASSERT(bitVector.all());
+  TEST_ASSERT(nMols == expectedResult);
+}
+
+void testSmiConcurrent(std::string path, std::string delimiter,
+                       int smilesColumn, int nameColumn, bool titleLine,
+                       bool sanitize, unsigned int numWriterThreads,
+                       size_t sizeInputQueue, size_t sizeOutputQueue,
+                       unsigned int expectedResult) {
+  std::string rdbase = getenv("RDBASE");
+  std::string fname = rdbase + path;
+  std::istream* strm = new std::ifstream(fname.c_str());
+  testSmiConcurrent(strm, true, delimiter, smilesColumn, nameColumn, titleLine,
+                    sanitize, numWriterThreads, sizeInputQueue, sizeOutputQueue,
+                    expectedResult);
+}
+void testSDConcurrent(std::istream* strm, bool sanitize, bool removeHs,
+                      bool strictParsing, unsigned int numWriterThreads,
+                      size_t sizeInputQueue, size_t sizeOutputQueue,
+                      unsigned int expectedResult) {
+  unsigned int nMols = 0;
+  boost::dynamic_bitset<> bitVector(expectedResult);
+  MultithreadedSDMolSupplier sup(strm, true, sanitize, removeHs, strictParsing,
+                                 numWriterThreads, sizeInputQueue,
+                                 sizeOutputQueue);
+  // we have not called the next method yet
+  TEST_ASSERT(sup.getLastRecordId() == 0);
+  // initially no bit is set in the bitVector, sanity check
+  TEST_ASSERT(!bitVector.any());
+  while (!sup.atEnd()) {
+    ROMol* mol = sup.next();
+    if (mol) {
+      unsigned int id = sup.getLastRecordId();
+      bitVector[id - 1] = 1;
       ++nMols;
     }
     delete mol;
@@ -82,40 +119,20 @@ void testSDConcurrent(std::string path, bool sanitize, bool removeHs,
                       unsigned int expectedResult) {
   std::string rdbase = getenv("RDBASE");
   std::string fname = rdbase + path;
-  unsigned int nMols = 0;
-  boost::dynamic_bitset<> bitVector(expectedResult);
-  MultithreadedSDMolSupplier sup(fname, sanitize, removeHs, strictParsing,
-                                 numWriterThreads, sizeInputQueue,
-                                 sizeOutputQueue);
-  // we have not called the next method yet
-  TEST_ASSERT(sup.getLastRecordId() == 0);
-  // initially no bit is set in the bitVector, sanity check
-  TEST_ASSERT(!bitVector.any());
-  while (!sup.atEnd()) {
-    ROMol* mol = sup.next();
-    if (mol != nullptr) {
-      unsigned int id = sup.getLastRecordId();
-      bitVector[id - 1] = 1;
-      ++nMols;
-    }
-    delete mol;
-  }
-  // if all bits are set then we have seen possible ids
-  TEST_ASSERT(bitVector.all());
-  TEST_ASSERT(nMols == expectedResult);
+  std::istream* strm = new std::ifstream(fname.c_str());
+  testSDConcurrent(strm, sanitize, removeHs, strictParsing, numWriterThreads,
+                   sizeInputQueue, sizeOutputQueue, expectedResult);
 }
 
-void testSmiOld(std::string path, std::string delimiter, int smilesColumn,
+void testSmiOld(std::istream* strm, std::string delimiter, int smilesColumn,
                 int nameColumn, bool titleLine, bool sanitize,
                 unsigned int expectedResult) {
-  std::string rdbase = getenv("RDBASE");
-  std::string fname = rdbase + path;
   unsigned int numMols = 0;
-  SmilesMolSupplier sup(fname, delimiter, smilesColumn, nameColumn, titleLine,
-                        sanitize);
+  SmilesMolSupplier sup(strm, true, delimiter, smilesColumn, nameColumn,
+                        titleLine, sanitize);
   while (!sup.atEnd()) {
     ROMol* mol = sup.next();
-    if (mol != nullptr) {
+    if (mol) {
       ++numMols;
     }
     delete mol;
@@ -123,15 +140,13 @@ void testSmiOld(std::string path, std::string delimiter, int smilesColumn,
   TEST_ASSERT(numMols == expectedResult);
 }
 
-void testSDOld(std::string path, bool sanitize, bool removeHs,
+void testSDOld(std::istream* strm, bool sanitize, bool removeHs,
                bool strictParsing, unsigned int expectedResult) {
-  std::string rdbase = getenv("RDBASE");
-  std::string fname = rdbase + path;
   unsigned int numMols = 0;
-  SDMolSupplier sup(fname, sanitize, removeHs, strictParsing);
+  SDMolSupplier sup(strm, true, sanitize, removeHs, strictParsing);
   while (!sup.atEnd()) {
     ROMol* mol = sup.next();
-    if (mol != nullptr) {
+    if (mol) {
       ++numMols;
     }
     delete mol;
@@ -174,24 +189,39 @@ void testSmiCorrectness() {
   /*
           TEST CORRECTNESS
   */
-  std::string path = "/Code/GraphMol/FileParsers/test_data/fewSmi.csv";
-  unsigned int expectedResult = 10;
+  std::string path;
+  unsigned int expectedResult;
+  std::string rdbase = getenv("RDBASE");
+
+  path = "/Code/GraphMol/FileParsers/test_data/fewSmi.csv";
+  expectedResult = 10;
   testSmiConcurrent(path, ",", 1, 0, false, true, 2, 5, 5, expectedResult);
+  std::cerr << path << " done!\n";
 
   path = "/Code/GraphMol/FileParsers/test_data/fewSmi.2.csv";
   expectedResult = 10;
   testSmiConcurrent(path, ",", 1, 0, true, true, 2, 5, 5, expectedResult);
+  std::cerr << path << " done!\n";
 
   path = "/Code/GraphMol/FileParsers/test_data/first_200.tpsa.csv";
   expectedResult = 200;
   testSmiConcurrent(path, ",", 0, -1, true, true, 2, 5, 5, expectedResult);
+  std::cerr << path << " done!\n";
 
-  path = "/Regress/Data/znp.50k.smi";
-  expectedResult = 50000;
-  testSmiConcurrent(path, " \t", 0, 1, false, true, 4, 1000, 100,
-                    expectedResult);
   /*
-          TEST PROPERTIES
+  #ifdef RDK_USE_BOOST_IOSTREAMS
+          path = rdbase + "/Regress/Data/znp.50k.smi.gz";
+          std::istream* strm = new gzstream(path);
+          expectedResult = 50000;
+          testSmiConcurrent(path, false, " \t", 0, 1, false, true, 4, 1000, 100,
+                      expectedResult);
+          std::cerr << path << " done!\n";
+  #endif
+  */
+
+  /*
+
+    TEST PROPERTIES
   */
   testSmiProperties();
 }
@@ -231,18 +261,23 @@ void testSDCorrectness() {
   /*
           TEST CORRECTNESS
   */
+  std::string rdbase = getenv("RDBASE");
+  std::string path;
+  unsigned int expectedResult;
 
-  std::string path = "/Code/GraphMol/FileParsers/test_data/NCI_aids_few.sdf";
-  unsigned int expectedResult = 16;
+  path = "/Code/GraphMol/FileParsers/test_data/NCI_aids_few.sdf";
+  expectedResult = 16;
   testSDConcurrent(path, false, true, true, 2, 5, 5, expectedResult);
+  std::cerr << path << " done!\n";
 
   path = "/Code/GraphMol/FileParsers/test_data/outNCI_few_molsupplier.sdf";
-  expectedResult = 16;
   testSDConcurrent(path, true, true, true, 2, 5, 5, expectedResult);
+  std::cerr << path << " done!\n";
 
   path = "/Code/GraphMol/FileParsers/test_data/esters_end.sdf";
   expectedResult = 6;
   testSDConcurrent(path, true, true, true, 2, 5, 5, expectedResult);
+  std::cerr << path << " done!\n";
 
   // strict parsing results in reading 0 out of 2 records
   path = "/Code/GraphMol/FileParsers/test_data/strictLax1.sdf";
@@ -251,14 +286,23 @@ void testSDCorrectness() {
 
   expectedResult = 2;
   testSDConcurrent(path, true, true, false, 2, 5, 5, expectedResult);
+  std::cerr << path << " done!\n";
 
-  path = "/Regress/Data/O2.sdf";
+  path = "/Code/GraphMol/FileParsers/test_data/O2.sdf";
   expectedResult = 1;
   testSDConcurrent(path, true, true, false, 2, 5, 5, expectedResult);
+  std::cerr << path << " done!\n";
 
-  path = "/Regress/Data/mols1000.sdf";
-  expectedResult = 1000;
-  testSDConcurrent(path, false, true, true, 2, 5, 5, expectedResult);
+  /*
+  #ifdef RDK_USE_BOOST_IOSTREAMS
+          path = rdbase + "/Regress/Data/mols.1000.sdf.gz";
+          std::istream* strm = new gzstream(path);
+          expectedResult = 1000;
+          testSDConcurrent(strm, false, true, true, 2, 5, 5, expectedResult);
+          std::cerr << path << " done!\n";
+
+  #endif
+  */
 
   /*
           TEST PROPERTIES
@@ -270,11 +314,14 @@ void testPerformance() {
   /*
           TEST PERFORMANCE
   */
-  std::string path = "/Regress/Data/znp.50k.smi";
+
+  std::string rdbase = getenv("RDBASE");
+  std::string path = rdbase + "/Regress/Data/znp.50k.smi.gz";
+  std::istream* stream = new gzstream(path);
   unsigned int expectedResult = 50000;
 
   auto start = high_resolution_clock::now();
-  testSmiOld(path, " \t", 0, 1, false, true, expectedResult);
+  testSmiOld(stream, " \t", 0, 1, false, true, expectedResult);
   auto stop = high_resolution_clock::now();
   auto duration = duration_cast<milliseconds>(stop - start);
   std::cout << "Duration for SmilesMolSupplier: " << duration.count()
@@ -284,7 +331,7 @@ void testPerformance() {
   std::cout << "Maximum Threads available: " << maxThreadCount << "\n";
   for (unsigned int i = maxThreadCount; i >= 1; --i) {
     start = high_resolution_clock::now();
-    testSmiConcurrent(path, " \t", 0, 1, false, true, i, 1000, 100,
+    testSmiConcurrent(stream, false, " \t", 0, 1, false, true, i, 1000, 100,
                       expectedResult);
     stop = high_resolution_clock::now();
     duration = duration_cast<milliseconds>(stop - start);
@@ -293,11 +340,12 @@ void testPerformance() {
               << " (milliseconds) \n";
   }
 
-  path = "/Regress/Data/chembl26_very_active.sdf";
+  path = rdbase + "/Regress/Data/chembl26_very_active.sdf.gz";
+  std::istream* strm = new gzstream(path);
   expectedResult = 35767;
 
   start = high_resolution_clock::now();
-  testSDOld(path, false, true, false, expectedResult);
+  testSDOld(strm, false, true, false, expectedResult);
   stop = high_resolution_clock::now();
   duration = duration_cast<milliseconds>(stop - start);
   std::cout << "Duration for SDMolSupplier: " << duration.count()
@@ -305,7 +353,7 @@ void testPerformance() {
 
   for (unsigned int i = maxThreadCount; i >= 1; --i) {
     start = high_resolution_clock::now();
-    testSDConcurrent(path, false, true, true, i, 1000, 4000, expectedResult);
+    testSDConcurrent(strm, false, true, true, i, 1000, 4000, expectedResult);
     stop = high_resolution_clock::now();
     duration = duration_cast<milliseconds>(stop - start);
     std::cout << "Duration for testSDConcurent with " << i

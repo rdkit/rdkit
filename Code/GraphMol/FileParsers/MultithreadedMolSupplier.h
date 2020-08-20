@@ -21,7 +21,6 @@
 
 #include <atomic>
 #include <boost/tokenizer.hpp>
-#include <mutex>
 
 #include "FileParsers.h"
 #include "MolSupplier.h"
@@ -50,8 +49,6 @@ class RDKIT_FILEPARSERS_EXPORT MultithreadedMolSupplier : public MolSupplier {
  protected:
   //! starts reader and writer threads
   void startThreads();
-
- private:
   //! reads lines from input stream to populate the input queue
   void reader();
   //! parses lines from the input queue converting them to ROMol objects
