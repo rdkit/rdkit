@@ -30,10 +30,8 @@ try:
 except ImportError:
   _canUse3D = False
 
-try:
-  import Image
-except ImportError:
-  from PIL import Image
+from PIL import Image
+from PIL.PngImagePlugin import PngInfo
 
 molSize = (450, 150)
 highlightSubstructs = True
@@ -166,8 +164,12 @@ _GetSubstructMatches.__doc__ = rdchem.Mol.GetSubstructMatches.__doc__
 # code for displaying PIL images directly,
 def display_pil_image(img):
   """displayhook function for PIL Images, rendered as PNG"""
+  # pull metadata from the image, if there
+  metadata = PngInfo()
+  for k, v in img.text.items():
+    metadata.add_text(k, v)
   bio = BytesIO()
-  img.save(bio, format='PNG')
+  img.save(bio, format='PNG', pnginfo=metadata)
   return bio.getvalue()
 
 
@@ -356,4 +358,3 @@ def UninstallIPythonRenderer():
     rdchem.Mol.Debug = rdchem.Mol.__DebugMol
     del rdchem.Mol.__DebugMol
   _rendererInstalled = False
-
