@@ -1,15 +1,15 @@
 // https://stackoverflow.com/questions/18382457/eigen-and-boostserialize
-#include <Numerics/EigenSerializer/EigenSerializer.h>
+#include <Numerics/EigenSerializer/EigenSerializerNonPortable.h>
 #include <RDGeneral/Invariant.h>
 namespace RDNumeric {
-namespace EigenSerializer {
+namespace EigenSerializerNonPortable {
 template <typename T>
 bool serialize(const T& data, std::ofstream& ofs) {
   if (!ofs.is_open()) {
     return false;
   }
   {
-    portable_binary_oarchive oa(ofs);
+    boost::archive::binary_oarchive oa(ofs);
     oa << data;
   }
   ofs.close();
@@ -28,7 +28,7 @@ bool deserialize(T& data, std::ifstream& ifs) {
     return false;
   }
   {
-    portable_binary_iarchive ia(ifs);
+    boost::archive::binary_iarchive ia(ifs);
     ia >> data;
   }
   ifs.close();
@@ -59,7 +59,7 @@ bool deserializeAll(std::vector<T>* weights, std::vector<T>* biases,
     return false;
   }
   {
-    portable_binary_iarchive ia(ifs);
+    boost::archive::binary_iarchive ia(ifs);
 
     std::streampos archiveOffset = ifs.tellg();
     std::streampos streamEnd = ifs.seekg(0, std::ios_base::end).tellg();
@@ -94,7 +94,7 @@ bool serializeAll(
     return false;
   }
   {
-    portable_binary_oarchive oa(ofs);
+    boost::archive::binary_oarchive oa(ofs);
     for (unsigned int i = 0; i < weightsAndBiasesForEachAtomType->size(); i++) {
       auto atomType = (*weightsAndBiasesForEachAtomType)[i].first;
       auto weights = (*weightsAndBiasesForEachAtomType)[i].second;

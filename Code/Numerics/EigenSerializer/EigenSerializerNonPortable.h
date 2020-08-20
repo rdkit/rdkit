@@ -24,7 +24,7 @@
 #include <fstream>
 
 namespace RDNumeric {
-namespace EigenSerializer {
+namespace EigenSerializerNonPortable {
 
 template <typename T>
 bool serialize(const T& data, const std::string& filename);

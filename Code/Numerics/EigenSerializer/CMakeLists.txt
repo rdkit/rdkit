@@ -5,9 +5,11 @@ else()
     set(RDKit_SERIALIZATION_LIBS )
 endif()
 
-rdkit_library(EigenSerializer EigenSerializer.cpp LINK_LIBRARIES RDGeneral ${RDKit_SERIALIZATION_LIBS})
+rdkit_library(PortableSerializationLibs portable_binary_iarchive.cpp portable_binary_oarchive.cpp LINK_LIBRARIES RDGeneral ${RDKit_SERIALIZATION_LIBS})
+rdkit_library(EigenSerializer EigenSerializer.cpp LINK_LIBRARIES RDGeneral PortableSerializationLibs)
 
+rdkit_headers(portable_binary_archive.hpp portable_binary_oarchive.hpp portable_binary_iarchive.hpp DEST Numerics/EigenSerializer)
 rdkit_headers(EigenSerializer.h EigenBaseAddons.h DEST Numerics/EigenSerializer)
 rdkit_catch_test(testEigenSerializer 
                  EigenSerializer_catch.cpp catch_main.cpp 
-                 LINK_LIBRARIES RDGeneral ${RDKit_SERIALIZATION_LIBS} EigenSerializer)
+                 LINK_LIBRARIES RDGeneral PortableSerializationLibs EigenSerializer)
