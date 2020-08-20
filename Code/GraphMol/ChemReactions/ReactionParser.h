@@ -143,6 +143,7 @@ RDKIT_CHEMREACTIONS_EXPORT std::string ChemicalReactionToRxnBlock(
 //! \name PNG Support
 //@{
 
+//! Tags used for PNG metadata
 namespace PNGData {
 RDKIT_CHEMREACTIONS_EXPORT extern const std::string rxnSmilesTag;
 RDKIT_CHEMREACTIONS_EXPORT extern const std::string rxnSmartsTag;
@@ -150,13 +151,27 @@ RDKIT_CHEMREACTIONS_EXPORT extern const std::string rxnRxnTag;
 RDKIT_CHEMREACTIONS_EXPORT extern const std::string rxnPklTag;
 }  // namespace PNGData
 
-//! Parses metadata from a PNG into a ChemicalReaction
+//! \brief constructs a ChemicalReaction from the metadata in a PNG stream
+/*!
+
+Looks through the metadata in the PNG to find the first tag that matches one of
+the tags in \c RDKit::PNGData. A molecule is constructed from this chunk.
+
+Throws a \c FileParseException if no suitable tag is found.
+
+The caller is responsible for the returned pointer.
+
+ */
 RDKIT_CHEMREACTIONS_EXPORT ChemicalReaction *PNGStreamToChemicalReaction(
     std::istream &pngStream);
+//! \brief constructs a ChemicalReaction from the metadata in a PNG string
+//! See \c PNGStreamToChemicalReaction() for more details
 inline ChemicalReaction *PNGStringToChemicalReaction(const std::string &data) {
   std::stringstream inStream(data);
   return PNGStreamToChemicalReaction(inStream);
 };
+//! \brief constructs a ChemicalReaction from the metadata in a PNG file
+//! See \c PNGStreamToChemicalReaction() for more details
 inline ChemicalReaction *PNGFileToChemicalReaction(const std::string &fname) {
   std::ifstream inStream(fname.c_str(), std::ios::binary);
   if (!inStream || (inStream.bad())) {
@@ -165,10 +180,24 @@ inline ChemicalReaction *PNGFileToChemicalReaction(const std::string &fname) {
   return PNGStreamToChemicalReaction(inStream);
 };
 
+//! \brief adds metadata for a ChemicalReaction to the data from a PNG stream.
+//! The modified PNG data is returned.
+/*!
+
+  \param rxn            the reaction to add
+  \param iStream        the stream to read from
+  \param includePkl     include a reaction pickle
+  \param includeSmiles  include reaction SMILES for the reaction
+  \param includeSmarts  include reaction SMARTS for the reaction
+  \param includeRxn     include an RXN block for the reaction
+
+*/
 RDKIT_CHEMREACTIONS_EXPORT std::string addChemicalReactionToPNGStream(
     const ChemicalReaction &rxn, std::istream &iStream, bool includePkl = true,
     bool includeSmiles = true, bool includeSmarts = false,
     bool includeRxn = false);
+//! \brief adds metadata for a ChemicalReaction to the data from a PNG string.
+//! See addChemicalReactionToPNGStream() for more details.
 inline std::string addChemicalReactionToPNGString(const ChemicalReaction &rxn,
                                                   const std::string &pngString,
                                                   bool includePkl = true,
@@ -179,6 +208,8 @@ inline std::string addChemicalReactionToPNGString(const ChemicalReaction &rxn,
   return addChemicalReactionToPNGStream(
       rxn, inStream, includePkl, includeSmiles, includeSmarts, includeRxn);
 }
+//! \brief adds metadata for a ChemicalReaction to the data from a PNG string.
+//! See addChemicalReactionToPNGStream() for more details.
 inline std::string addChemicalReactionToPNGFile(const ChemicalReaction &rxn,
                                                 const std::string &fname,
                                                 bool includePkl = true,
