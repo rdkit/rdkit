@@ -24,7 +24,6 @@ set(urflib_INCLUDE_DIRS ${URFLIB_DIR}
 file(GLOB URFSOURCES "${URFLIB_DIR}/*.c")
 
 if((MSVC AND RDK_INSTALL_DLLS_MSVC) OR ((NOT MSVC) AND WIN32))
-    add_definitions("-DRDKIT_URFLIB_BUILD")
     set (ringdecomposerlib_h ${URFLIB_DIR}/RingDecomposerLib.h)
     file(READ ${ringdecomposerlib_h} ringdecomposerlib_h_data)
     if (NOT "${ringdecomposerlib_h_data}" MATCHES "RDKIT_URFLIB_BUILD")
@@ -33,6 +32,7 @@ if((MSVC AND RDK_INSTALL_DLLS_MSVC) OR ((NOT MSVC) AND WIN32))
     endif()
 endif()
 rdkit_library(RingDecomposerLib ${URFSOURCES} SHARED)
+target_compile_definitions(RingDecomposerLib PRIVATE RDKIT_URFLIB_BUILD)
 install(TARGETS RingDecomposerLib DESTINATION ${RDKit_LibDir})
 rdkit_headers(${URFLIB_DIR}/RingDecomposerLib.h DEST "")
 

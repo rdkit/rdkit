@@ -1,10 +1,9 @@
 
-remove_definitions(-DRDKIT_GRAPHMOL_BUILD)
-add_definitions(-DRDKIT_FRAGCATALOG_BUILD)
 rdkit_library(FragCatalog
               FragCatalogUtils.cpp FragCatGenerator.cpp FragCatalogEntry.cpp 
               FragCatParams.cpp FragFPGenerator.cpp
               LINK_LIBRARIES Subgraphs SubstructMatch SmilesParse Catalogs GraphMol RDGeneral )
+target_compile_definitions(FragCatalog PRIVATE RDKIT_FRAGCATALOG_BUILD)
 
 rdkit_headers(FragCatalogEntry.h
               FragCatalogUtils.h

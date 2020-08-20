@@ -1,9 +1,8 @@
 
-remove_definitions(-DRDKIT_GRAPHMOL_BUILD)
-add_definitions(-DRDKIT_SUBSTRUCTMATCH_BUILD)
 rdkit_library(SubstructMatch 
               SubstructMatch.cpp SubstructUtils.cpp
               LINK_LIBRARIES GraphMol RDGeneral)
+target_compile_definitions(SubstructMatch PRIVATE RDKIT_SUBSTRUCTMATCH_BUILD)
 
 rdkit_headers(SubstructMatch.h
               SubstructUtils.h DEST GraphMol/Substruct)

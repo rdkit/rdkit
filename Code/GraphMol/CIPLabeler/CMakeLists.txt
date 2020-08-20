@@ -1,4 +1,3 @@
-add_definitions(-DRDKIT_CIPLABELER_BUILD)
 
 set(configs_src
     configs/Configuration.cpp
@@ -23,6 +22,7 @@ rdkit_library(CIPLabeler
               Mancude.cpp Digraph.cpp Node.cpp Edge.cpp Sort.cpp
               ${configs_src} ${rules_src}
               LINK_LIBRARIES GraphMol)
+target_compile_definitions(CIPLabeler PRIVATE RDKIT_CIPLABELER_BUILD)
 
 rdkit_headers(CIPLabeler.h
               DEST CIPLabeler)
