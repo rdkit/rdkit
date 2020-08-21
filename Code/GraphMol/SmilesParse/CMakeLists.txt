@@ -51,14 +51,13 @@ else(BISON_EXECUTABLE)
 endif(BISON_EXECUTABLE)
 
 
-remove_definitions(-DRDKIT_GRAPHMOL_BUILD)
-add_definitions(-DRDKIT_SMILESPARSE_BUILD)
 rdkit_library(SmilesParse
               SmilesParse.cpp SmilesParseOps.cpp
               SmilesWrite.cpp SmartsWrite.cpp CXSmilesOps.cpp
               ${BISON_OUTPUT_FILES}
               ${FLEX_OUTPUT_FILES}
               LINK_LIBRARIES GraphMol RDGeneral)
+target_compile_definitions(SmilesParse PRIVATE RDKIT_SMILESPARSE_BUILD)
 
 rdkit_headers(primes.h
               SmartsWrite.h

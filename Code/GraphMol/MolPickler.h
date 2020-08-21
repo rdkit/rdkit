@@ -138,6 +138,8 @@ class RDKIT_GRAPHMOL_EXPORT MolPickler {
     BEGINCONFPROPS,
     BEGINCONFS_DOUBLE,
     QUERY_TYPELABEL,
+    // add new entries above here
+    INVALID_TAG = 255
   } Tags;
 
   static unsigned int getDefaultPickleProperties();
