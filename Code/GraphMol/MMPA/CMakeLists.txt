@@ -3,11 +3,10 @@ if (MSVC)
 endif(MSVC)
 
 
-remove_definitions(-DRDKIT_GRAPHMOL_BUILD)
-add_definitions(-DRDKIT_MMPA_BUILD)
 rdkit_library(MMPA
               MMPA.cpp
               LINK_LIBRARIES SubstructMatch Depictor FileParsers ChemTransforms GraphMol RDGeneral )
+target_compile_definitions(MMPA PRIVATE RDKIT_MMPA_BUILD)
 
 rdkit_headers(MMPA.h
               DEST GraphMol/MMPA)

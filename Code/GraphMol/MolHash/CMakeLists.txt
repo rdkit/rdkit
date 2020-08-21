@@ -1,9 +1,8 @@
 
-remove_definitions(-DRDKIT_GRAPHMOL_BUILD)
-add_definitions(-DRDKIT_MOLHASH_BUILD)
 rdkit_library(MolHash
               hashfunctions.cpp normalize.cpp
               LINK_LIBRARIES Depictor Descriptors GraphMol)
+target_compile_definitions(MolHash PRIVATE RDKIT_MOLHASH_BUILD)
 
 rdkit_headers(MolHash.h nmmolhash.h           
               DEST GraphMol/MolHash)

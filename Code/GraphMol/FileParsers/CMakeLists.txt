@@ -1,6 +1,4 @@
 
-remove_definitions(-DRDKIT_GRAPHMOL_BUILD)
-add_definitions(-DRDKIT_FILEPARSERS_BUILD)
 
 if(RDK_USE_BOOST_IOSTREAMS)
 if(WIN32)
@@ -55,7 +53,8 @@ rdkit_library(FileParsers
               ProximityBonds.cpp
               SequenceParsers.cpp SequenceWriters.cpp
               SVGParser.cpp PNGParser.cpp
-              LINK_LIBRARIES Depictor SmilesParse GraphMol ${RDK_MAEPARSER_LIBS} ${regex_lib} ${link_iostreams} ${zlib_lib})
+              LINK_LIBRARIES Depictor SmilesParse GraphMol ${RDK_MAEPARSER_LIBS} ${regex_lib} ${link_iostreams})
+target_compile_definitions(FileParsers PRIVATE RDKIT_FILEPARSERS_BUILD)
 
 rdkit_headers(FileParsers.h
               FileParserUtils.h

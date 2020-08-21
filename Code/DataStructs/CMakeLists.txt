@@ -3,12 +3,12 @@ if(RDK_OPTIMIZE_POPCNT)
 endif()
 
 
-add_definitions(-DRDKIT_DATASTRUCTS_BUILD)
 rdkit_library(DataStructs
               BitVect.cpp SparseBitVect.cpp ExplicitBitVect.cpp Utils.cpp
               base64.cpp BitOps.cpp DiscreteDistMat.cpp
               DiscreteValueVect.cpp FPBReader.cpp MultiFPBReader.cpp
               LINK_LIBRARIES RDGeneral)
+target_compile_definitions(DataStructs PRIVATE RDKIT_DATASTRUCTS_BUILD)
 
 rdkit_headers(base64.h
               BitOps.h
