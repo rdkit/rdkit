@@ -81,7 +81,7 @@ unsigned int countSwapsToInterconvert(const T &ref, T probe) {
   return nSwaps;
 }
 
-std::string augmentTagName(const std::string &tag);
+RDKIT_RDGENERAL_EXPORT std::string augmentTagName(const std::string &tag);
 }  // namespace RDKit
 
 // contribution from dkoes
