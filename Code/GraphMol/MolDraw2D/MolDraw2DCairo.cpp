@@ -221,25 +221,28 @@ void addMoleculeMetadata(
   }
   std::string pkl;
   MolPickler::pickleMol(mol, pkl);
-  metadata.push_back(std::make_pair(PNGData::pklTag + suffix, pkl));
+  metadata.push_back(
+      std::make_pair(augmentTagName(PNGData::pklTag + suffix), pkl));
 
   bool includeStereo = true;
   if (mol.getNumConformers()) {
     auto molb = MolToMolBlock(mol, includeStereo, confId);
-    metadata.push_back(std::make_pair(PNGData::molTag + suffix, molb));
+    metadata.push_back(
+        std::make_pair(augmentTagName(PNGData::molTag + suffix), molb));
   }
   // MolToCXSmiles() is missing the feature that lets us specify confIds
   auto smiles = MolToCXSmiles(mol);
-  metadata.push_back(std::make_pair(PNGData::smilesTag + suffix, smiles));
+  metadata.push_back(
+      std::make_pair(augmentTagName(PNGData::smilesTag + suffix), smiles));
 }
 void addReactionMetadata(
     const ChemicalReaction &rxn,
     std::vector<std::pair<std::string, std::string>> &metadata) {
   std::string pkl;
   ReactionPickler::pickleReaction(rxn, pkl);
-  metadata.push_back(std::make_pair(PNGData::rxnPklTag, pkl));
-  metadata.push_back(
-      std::make_pair(PNGData::rxnSmartsTag, ChemicalReactionToRxnSmarts(rxn)));
+  metadata.push_back(std::make_pair(augmentTagName(PNGData::rxnPklTag), pkl));
+  metadata.push_back(std::make_pair(augmentTagName(PNGData::rxnSmartsTag),
+                                    ChemicalReactionToRxnSmarts(rxn)));
 }
 }  // namespace
 

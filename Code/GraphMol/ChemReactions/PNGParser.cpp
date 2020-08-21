@@ -12,13 +12,14 @@
 #include <GraphMol/ChemReactions/ReactionPickler.h>
 #include <GraphMol/ChemReactions/ReactionParser.h>
 #include <GraphMol/FileParsers/PNGParser.h>
+#include <boost/algorithm/string.hpp>
 
 namespace RDKit {
 
 namespace PNGData {
-const std::string rxnSmilesTag = "rdkitReactionSmiles";
-const std::string rxnSmartsTag = "rdkitReactionSmarts";
-const std::string rxnRxnTag = "rdkitReactionRxn";
+const std::string rxnSmilesTag = "ReactionSmiles";
+const std::string rxnSmartsTag = "ReactionSmarts";
+const std::string rxnRxnTag = "ReactionRxn";
 const std::string rxnPklTag = "rdkitReactionPKL";
 }  // namespace PNGData
 
@@ -31,19 +32,21 @@ std::string addChemicalReactionToPNGStream(const ChemicalReaction &rxn,
   if (includePkl) {
     std::string pkl;
     ReactionPickler::pickleReaction(rxn, pkl);
-    metadata.push_back(std::make_pair(PNGData::rxnPklTag, pkl));
+    metadata.push_back(std::make_pair(augmentTagName(PNGData::rxnPklTag), pkl));
   }
   if (includeSmiles) {
     std::string smi = ChemicalReactionToRxnSmiles(rxn);
-    metadata.push_back(std::make_pair(PNGData::rxnSmilesTag, smi));
+    metadata.push_back(
+        std::make_pair(augmentTagName(PNGData::rxnSmilesTag), smi));
   }
   if (includeSmarts) {
     std::string smi = ChemicalReactionToRxnSmarts(rxn);
-    metadata.push_back(std::make_pair(PNGData::rxnSmartsTag, smi));
+    metadata.push_back(
+        std::make_pair(augmentTagName(PNGData::rxnSmartsTag), smi));
   }
   if (includeRxn) {
     std::string mb = ChemicalReactionToRxnBlock(rxn);
-    metadata.push_back(std::make_pair(PNGData::rxnRxnTag, mb));
+    metadata.push_back(std::make_pair(augmentTagName(PNGData::rxnRxnTag), mb));
   }
   return addMetadataToPNGStream(iStream, metadata);
 };
@@ -53,18 +56,18 @@ ChemicalReaction *PNGStreamToChemicalReaction(std::istream &inStream) {
   auto metadata = PNGStreamToMetadata(inStream);
   bool formatFound = false;
   for (const auto pr : metadata) {
-    if (pr.first == PNGData::rxnPklTag) {
+    if (boost::starts_with(pr.first, PNGData::rxnPklTag)) {
       res = new ChemicalReaction(pr.second);
       formatFound = true;
-    } else if (pr.first == PNGData::rxnSmilesTag) {
+    } else if (boost::starts_with(pr.first, PNGData::rxnSmilesTag)) {
       std::map<std::string, std::string> *replacements = nullptr;
       bool useSmiles = true;
       res = RxnSmartsToChemicalReaction(pr.second, replacements, useSmiles);
       formatFound = true;
-    } else if (pr.first == PNGData::rxnSmartsTag) {
+    } else if (boost::starts_with(pr.first, PNGData::rxnSmartsTag)) {
       res = RxnSmartsToChemicalReaction(pr.second);
       formatFound = true;
-    } else if (pr.first == PNGData::rxnRxnTag) {
+    } else if (boost::starts_with(pr.first, PNGData::rxnRxnTag)) {
       res = RxnBlockToChemicalReaction(pr.second);
       formatFound = true;
     }

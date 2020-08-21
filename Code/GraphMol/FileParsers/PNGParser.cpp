@@ -31,8 +31,8 @@
 namespace RDKit {
 
 namespace PNGData {
-const std::string smilesTag = "rdkitSMILES";
-const std::string molTag = "rdkitMOL";
+const std::string smilesTag = "SMILES";
+const std::string molTag = "MOL";
 const std::string pklTag = "rdkitPKL";
 }  // namespace PNGData
 
@@ -254,15 +254,15 @@ std::string addMolToPNGStream(const ROMol &mol, std::istream &iStream,
   if (includePkl) {
     std::string pkl;
     MolPickler::pickleMol(mol, pkl);
-    metadata.push_back(std::make_pair(PNGData::pklTag, pkl));
+    metadata.push_back(std::make_pair(augmentTagName(PNGData::pklTag), pkl));
   }
   if (includeSmiles) {
     std::string smi = MolToCXSmiles(mol);
-    metadata.push_back(std::make_pair(PNGData::smilesTag, smi));
+    metadata.push_back(std::make_pair(augmentTagName(PNGData::smilesTag), smi));
   }
   if (includeMol) {
     std::string mb = MolToMolBlock(mol);
-    metadata.push_back(std::make_pair(PNGData::molTag, mb));
+    metadata.push_back(std::make_pair(augmentTagName(PNGData::molTag), mb));
   }
   return addMetadataToPNGStream(iStream, metadata);
 };
@@ -273,13 +273,13 @@ ROMol *PNGStreamToMol(std::istream &inStream,
   auto metadata = PNGStreamToMetadata(inStream);
   bool formatFound = false;
   for (const auto pr : metadata) {
-    if (pr.first == PNGData::pklTag) {
+    if (boost::starts_with(pr.first, PNGData::pklTag)) {
       res = new ROMol(pr.second);
       formatFound = true;
-    } else if (pr.first == PNGData::smilesTag) {
+    } else if (boost::starts_with(pr.first, PNGData::smilesTag)) {
       res = SmilesToMol(pr.second, params);
       formatFound = true;
-    } else if (pr.first == PNGData::molTag) {
+    } else if (boost::starts_with(pr.first, PNGData::molTag)) {
       res = MolBlockToMol(pr.second, params.sanitize, params.removeHs);
       formatFound = true;
     }

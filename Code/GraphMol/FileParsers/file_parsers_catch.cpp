@@ -19,6 +19,7 @@
 #include <GraphMol/SmilesParse/SmartsWrite.h>
 #include <GraphMol/FileParsers/PNGParser.h>
 #include <RDGeneral/FileParseException.h>
+#include <boost/algorithm/string.hpp>
 
 using namespace RDKit;
 
@@ -1690,7 +1691,7 @@ TEST_CASE("read metadata from PNG", "[reader][PNG]") {
     auto iter =
         std::find_if(metadata.begin(), metadata.end(),
                      [](const std::pair<std::string, std::string> &val) {
-                       return val.first == PNGData::smilesTag;
+                       return boost::starts_with(val.first, PNGData::smilesTag);
                      });
     REQUIRE(iter != metadata.end());
     CHECK(
