@@ -1,9 +1,9 @@
 
-add_definitions(-DRDKIT_RDGEOMETRYLIB_BUILD)
 rdkit_library(RDGeometryLib 
               point.cpp Transform2D.cpp Transform3D.cpp 
               UniformGrid3D.cpp GridUtils.cpp
               LINK_LIBRARIES DataStructs RDGeneral)
+target_compile_definitions(RDGeometryLib PRIVATE RDKIT_RDGEOMETRYLIB_BUILD)
 
 rdkit_headers(Grid3D.h
               GridUtils.h

@@ -1,11 +1,11 @@
 
-remove_definitions(-DRDKIT_GRAPHMOL_BUILD)
-add_definitions(-DRDKIT_MOLALIGN_BUILD)
 rdkit_library(MolAlign AlignMolecules.cpp 
               LINK_LIBRARIES MolTransforms SubstructMatch Alignment GraphMol RDGeneral)
+target_compile_definitions(MolAlign PRIVATE RDKIT_MOLALIGN_BUILD)
 
 rdkit_library(O3AAlign O3AAlignMolecules.cpp
               LINK_LIBRARIES MolAlign MolTransforms SubstructMatch Alignment GraphMol RDGeneral ForceFieldHelpers)
+target_compile_definitions(O3AAlign PRIVATE RDKIT_MOLALIGN_BUILD)
 
 rdkit_headers(AlignMolecules.h O3AAlignMolecules.h DEST GraphMol/MolAlign)
 

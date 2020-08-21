@@ -7,13 +7,12 @@ endif()
 
 if(RDK_BUILD_THREADSAFE_SSS)
 
-remove_definitions(-DRDKIT_GRAPHMOL_BUILD)
-add_definitions(-DRDKIT_SUBSTRUCTLIBRARY_BUILD)
 rdkit_library(SubstructLibrary
               SubstructLibrary.cpp
 	      PatternFactory.cpp
               LINK_LIBRARIES Fingerprints SubstructMatch SmilesParse
               GraphMol Catalogs DataStructs RDGeneral ${RDKit_SERIALIZATION_LIBS})
+target_compile_definitions(SubstructLibrary PRIVATE RDKIT_SUBSTRUCTLIBRARY_BUILD)
 
 rdkit_headers(SubstructLibrary.h
               SubstructLibrarySerialization.h
