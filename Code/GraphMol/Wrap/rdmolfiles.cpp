@@ -426,6 +426,18 @@ ROMol *MolFromPNGString(python::object png, python::object pyParams) {
   return newM;
 }
 
+python::object addMolToPNGFileHelper(const ROMol &mol, python::object fname,
+                                     bool includePkl, bool includeSmiles,
+                                     bool includeMol) {
+  std::string cstr = python::extract<std::string>(fname);
+
+  auto res = addMolToPNGFile(mol, cstr, includePkl, includeSmiles, includeMol);
+
+  python::object retval = python::object(
+      python::handle<>(PyBytes_FromStringAndSize(res.c_str(), res.length())));
+  return retval;
+}
+
 python::object addMolToPNGStringHelper(const ROMol &mol, python::object png,
                                        bool includePkl, bool includeSmiles,
                                        bool includeMol) {
@@ -1595,7 +1607,7 @@ BOOST_PYTHON_MODULE(rdmolfiles) {
      RETURNS:
        a Mol object, None on failure.)DOC";
   python::def(
-      "MolMetadataToPNGFile", addMolToPNGFile,
+      "MolMetadataToPNGFile", addMolToPNGFileHelper,
       (python::arg("mol"), python::arg("filename"),
        python::arg("includePkl") = true, python::arg("includeSmiles") = true,
        python::arg("includeMol") = false),

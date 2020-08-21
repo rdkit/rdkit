@@ -411,6 +411,19 @@ python::object addReactionToPNGStringHelper(const ChemicalReaction &rxn,
       python::handle<>(PyBytes_FromStringAndSize(res.c_str(), res.length())));
   return retval;
 }
+python::object addReactionToPNGFileHelper(const ChemicalReaction &rxn,
+                                          python::object fname, bool includePkl,
+                                          bool includeSmiles,
+                                          bool includeSmarts, bool includeRxn) {
+  std::string cstr = python::extract<std::string>(fname);
+
+  auto res = addChemicalReactionToPNGFile(rxn, cstr, includePkl, includeSmiles,
+                                          includeSmarts, includeRxn);
+
+  python::object retval = python::object(
+      python::handle<>(PyBytes_FromStringAndSize(res.c_str(), res.length())));
+  return retval;
+}
 
 }  // namespace RDKit
 
@@ -778,7 +791,7 @@ of the replacements argument.",
               "construct a ChemicalReaction from an string with PNG data",
               python::return_value_policy<python::manage_new_object>());
   python::def(
-      "ReactionMetadataToPNGFile", RDKit::addChemicalReactionToPNGFile,
+      "ReactionMetadataToPNGFile", RDKit::addReactionToPNGFileHelper,
       (python::arg("mol"), python::arg("filename"),
        python::arg("includePkl") = true, python::arg("includeSmiles") = true,
        python::arg("includeSmarts") = false, python::arg("includeMol") = false),

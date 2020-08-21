@@ -6095,6 +6095,11 @@ M  END
     self.assertIsNotNone(mol)
     self.assertEqual(mol.GetNumAtoms(), 29)
 
+    nd = Chem.MolMetadataToPNGFile(mol, fileN)
+    mol = Chem.MolFromPNGString(nd)
+    self.assertIsNotNone(mol)
+    self.assertEqual(mol.GetNumAtoms(), 29)
+
   def testMolsFromPNG(self):
     refMols = [Chem.MolFromSmiles(x) for x in ('c1ccccc1', 'CCO', 'CC(=O)O', 'c1ccccn1')]
     fileN = os.path.join(RDConfig.RDBaseDir, 'Code', 'GraphMol', 'FileParsers', 'test_data',
