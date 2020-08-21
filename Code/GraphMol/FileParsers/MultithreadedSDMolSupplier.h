@@ -44,10 +44,12 @@ class RDKIT_FILEPARSERS_EXPORT MultithreadedSDMolSupplier
   //! parses the record and returns the resulting molecule
   ROMol *processMoleculeRecord(const std::string &record, unsigned int lineNum);
 
- protected:
+ private:
   void initFromSettings(bool takeOwnership, bool sanitize, bool removeHs,
                         bool strictParsing, unsigned int numWriterThreads,
                         size_t sizeInputQueue, size_t sizeOutputQueue);
+
+ private:
   bool df_end = false;  //! have we reached the end of the file?
   int d_line = 0;       //! line number we are currently on
   bool df_sanitize = true, df_removeHs = true, df_strictParsing = true;

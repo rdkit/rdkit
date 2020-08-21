@@ -7,12 +7,7 @@
 //  which is included in the file license.txt, found at the root
 //  of the RDKit source tree.
 //
-#include <GraphMol/MonomerInfo.h>
-#include <GraphMol/RDKitBase.h>
 #include <GraphMol/SmilesParse/SmilesWrite.h>
-#include <RDGeneral/ConcurrentQueue.h>
-#include <RDGeneral/FileParseException.h>
-#include <RDGeneral/RDLog.h>
 #include <RDGeneral/test.h>
 #include <RDStreams/streams.h>
 
@@ -20,13 +15,6 @@
 #include <boost/iostreams/device/file.hpp>
 #include <boost/iostreams/filtering_stream.hpp>
 #include <chrono>
-#include <fstream>
-#include <iomanip>
-#include <iostream>
-#include <map>
-#include <memory>
-#include <sstream>
-#include <string>
 
 #include "MultithreadedSDMolSupplier.h"
 #include "MultithreadedSmilesMolSupplier.h"
@@ -86,43 +74,6 @@ void testSmiConcurrent(std::string path, std::string delimiter,
                     sanitize, numWriterThreads, sizeInputQueue, sizeOutputQueue,
                     expectedResult);
 }
-void testSDConcurrent(std::istream* strm, bool sanitize, bool removeHs,
-                      bool strictParsing, unsigned int numWriterThreads,
-                      size_t sizeInputQueue, size_t sizeOutputQueue,
-                      unsigned int expectedResult) {
-  unsigned int nMols = 0;
-  boost::dynamic_bitset<> bitVector(expectedResult);
-  MultithreadedSDMolSupplier sup(strm, true, sanitize, removeHs, strictParsing,
-                                 numWriterThreads, sizeInputQueue,
-                                 sizeOutputQueue);
-  // we have not called the next method yet
-  TEST_ASSERT(sup.getLastRecordId() == 0);
-  // initially no bit is set in the bitVector, sanity check
-  TEST_ASSERT(!bitVector.any());
-  while (!sup.atEnd()) {
-    ROMol* mol = sup.next();
-    if (mol) {
-      unsigned int id = sup.getLastRecordId();
-      bitVector[id - 1] = 1;
-      ++nMols;
-    }
-    delete mol;
-  }
-  // if all bits are set then we have seen possible ids
-  TEST_ASSERT(bitVector.all());
-  TEST_ASSERT(nMols == expectedResult);
-}
-
-void testSDConcurrent(std::string path, bool sanitize, bool removeHs,
-                      bool strictParsing, unsigned int numWriterThreads,
-                      size_t sizeInputQueue, size_t sizeOutputQueue,
-                      unsigned int expectedResult) {
-  std::string rdbase = getenv("RDBASE");
-  std::string fname = rdbase + path;
-  std::istream* strm = new std::ifstream(fname.c_str());
-  testSDConcurrent(strm, sanitize, removeHs, strictParsing, numWriterThreads,
-                   sizeInputQueue, sizeOutputQueue, expectedResult);
-}
 
 void testSmiOld(std::istream* strm, std::string delimiter, int smilesColumn,
                 int nameColumn, bool titleLine, bool sanitize,
@@ -137,20 +88,7 @@ void testSmiOld(std::istream* strm, std::string delimiter, int smilesColumn,
     }
     delete mol;
   }
-  TEST_ASSERT(numMols == expectedResult);
-}
-
-void testSDOld(std::istream* strm, bool sanitize, bool removeHs,
-               bool strictParsing, unsigned int expectedResult) {
-  unsigned int numMols = 0;
-  SDMolSupplier sup(strm, true, sanitize, removeHs, strictParsing);
-  while (!sup.atEnd()) {
-    ROMol* mol = sup.next();
-    if (mol) {
-      ++numMols;
-    }
-    delete mol;
-  }
+  std::cerr << "Number of mols in Smi Old: " << numMols << "\n";
   TEST_ASSERT(numMols == expectedResult);
 }
 
@@ -208,6 +146,13 @@ void testSmiCorrectness() {
   testSmiConcurrent(path, ",", 0, -1, true, true, 2, 5, 5, expectedResult);
   std::cerr << path << " done!\n";
 
+  // sanity check, try to use original SmilesMolSupplier [NOT WORKING!]
+  path = rdbase + "/Regress/Data/znp.50k.smi.gz";
+  expectedResult = 50000;
+  std::istream* strm = new gzstream(path);
+  testSmiOld(strm, " \t", 0, 1, false, true, expectedResult);
+  std::cerr << path << " done!\n";
+
   /*
   #ifdef RDK_USE_BOOST_IOSTREAMS
           path = rdbase + "/Regress/Data/znp.50k.smi.gz";
@@ -224,6 +169,44 @@ void testSmiCorrectness() {
     TEST PROPERTIES
   */
   testSmiProperties();
+}
+
+void testSDConcurrent(std::istream* strm, bool sanitize, bool removeHs,
+                      bool strictParsing, unsigned int numWriterThreads,
+                      size_t sizeInputQueue, size_t sizeOutputQueue,
+                      unsigned int expectedResult) {
+  unsigned int nMols = 0;
+  boost::dynamic_bitset<> bitVector(expectedResult);
+  MultithreadedSDMolSupplier sup(strm, true, sanitize, removeHs, strictParsing,
+                                 numWriterThreads, sizeInputQueue,
+                                 sizeOutputQueue);
+  // we have not called the next method yet
+  TEST_ASSERT(sup.getLastRecordId() == 0);
+  // initially no bit is set in the bitVector, sanity check
+  TEST_ASSERT(!bitVector.any());
+  while (!sup.atEnd()) {
+    ROMol* mol = sup.next();
+    if (mol) {
+      unsigned int id = sup.getLastRecordId();
+      bitVector[id - 1] = 1;
+      ++nMols;
+    }
+    delete mol;
+  }
+  // if all bits are set then we have seen possible ids
+  TEST_ASSERT(bitVector.all());
+  TEST_ASSERT(nMols == expectedResult);
+}
+
+void testSDConcurrent(std::string path, bool sanitize, bool removeHs,
+                      bool strictParsing, unsigned int numWriterThreads,
+                      size_t sizeInputQueue, size_t sizeOutputQueue,
+                      unsigned int expectedResult) {
+  std::string rdbase = getenv("RDBASE");
+  std::string fname = rdbase + path;
+  std::istream* strm = new std::ifstream(fname.c_str());
+  testSDConcurrent(strm, sanitize, removeHs, strictParsing, numWriterThreads,
+                   sizeInputQueue, sizeOutputQueue, expectedResult);
 }
 
 void testSDProperties() {
@@ -255,6 +238,20 @@ void testSDProperties() {
                   nameVector.end());
     }
   }
+}
+
+void testSDOld(std::istream* strm, bool sanitize, bool removeHs,
+               bool strictParsing, unsigned int expectedResult) {
+  unsigned int numMols = 0;
+  SDMolSupplier sup(strm, true, sanitize, removeHs, strictParsing);
+  while (!sup.atEnd()) {
+    ROMol* mol = sup.next();
+    if (mol) {
+      ++numMols;
+    }
+    delete mol;
+  }
+  TEST_ASSERT(numMols == expectedResult);
 }
 
 void testSDCorrectness() {
