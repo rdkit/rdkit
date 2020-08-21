@@ -91,24 +91,24 @@ void determineFormat(const std::string path, std::string& fileFormat,
 	std::string basename;  
 	//! Special case maegz.
 	//! NOTE: also supporting case-insensitive filesystems
-	if(boost::algorithm::ends_with(path, ".maegz")){
+	if(boost::algorithm::iends_with(path, ".maegz")){
 		fileFormat = "mae";
 		compressionFormat = "gz";
 		return;
 	}
-	else if(boost::algorithm::ends_with(path, ".gz")){
+	else if(boost::algorithm::iends_with(path, ".gz")){
 		compressionFormat = "gz";
 		basename = path.substr(0, path.size() - 3);
-	} else if( boost::algorithm::ends_with(path, ".zst") ||
-      boost::algorithm::ends_with(path, ".bz2") ||
-      boost::algorithm::ends_with(path, ".7z")){
+	} else if( boost::algorithm::iends_with(path, ".zst") ||
+      boost::algorithm::iends_with(path, ".bz2") ||
+      boost::algorithm::iends_with(path, ".7z")){
 		throw std::invalid_argument("Unsupported compression extension");	
 	} else {
  		basename = path;
 		compressionFormat = "";
 	}
 	for (auto const& suffix: supportedFileFormats) {
-		 if (boost::algorithm::ends_with(basename, "." + suffix)) {
+		 if (boost::algorithm::iends_with(basename, "." + suffix)) {
 				 fileFormat = suffix;
 				 return;
 		 }
