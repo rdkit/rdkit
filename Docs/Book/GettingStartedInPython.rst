@@ -29,6 +29,13 @@ Reading and Writing Molecules
 Reading single molecules
 ========================
 
+.. testsetup::
+  
+  # clean up in case these tests are running in a python process that has already
+  # imported the IPythonConsole code
+  from rdkit.Chem.Draw import IPythonConsole
+  IPythonConsole.UninstallIPythonRenderer()
+
 The majority of the basic molecular functionality is found in module :py:mod:`rdkit.Chem`:
 
 .. doctest::
@@ -952,11 +959,7 @@ If the PNG contains multiple molecules we can retrieve them all at once using
 .. doctest::
 
   >>> from rdkit.Chem import Draw
-  >>> print(Draw.__file__)
-  >>> Draw.MolsToGridImage
   >>> png = Draw.MolsToGridImage(ms,returnPNG=True)
-  >>> type(png)
-  <class 'bytes'>
   >>> mols = Chem.MolsFromPNGString(png)
   >>> for mol in mols:
   ...     print(Chem.MolToSmiles(mol))
