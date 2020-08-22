@@ -86,29 +86,29 @@ void MultithreadedSDMolSupplier::checkForEnd() {
     return;
   }
 
-  // we are not at the end of file, check for blank lines
-  unsigned int numEmpty = 0;
-  std::string tempStr;
-  // in case df_end is not set then, reset file pointer
-  std::streampos holder = dp_inStream->tellg();
-  for (unsigned int i = 0; i < 4; i++) {
-    tempStr = getLine(dp_inStream);
-    if (dp_inStream->eof()) {
+  /*
+    // we are not at the end of file, check for blank lines
+    unsigned int numEmpty = 0;
+    std::string tempStr;
+    // in case df_end is not set then, reset file pointer
+    std::streampos holder = dp_inStream->tellg();
+          if(static_cast<long int>(holder) == -1){ std::cerr << "putan\n";
+    return;} for (unsigned int i = 0; i < 4; i++) { tempStr =
+    getLine(dp_inStream); if (dp_inStream->eof()) { df_end = true; break;
+      }
+      if (tempStr.find_first_not_of(" \t\r\n") == std::string::npos) {
+        ++numEmpty;
+      }
+    }
+    if (numEmpty == 4) {
       df_end = true;
-      break;
     }
-    if (tempStr.find_first_not_of(" \t\r\n") == std::string::npos) {
-      ++numEmpty;
+    // we need to reset the file pointer to read the next record
+    if (!df_end) {
+      dp_inStream->clear();
+      dp_inStream->seekg(holder);
     }
-  }
-  if (numEmpty == 4) {
-    df_end = true;
-  }
-  // we need to reset the file pointer to read the next record
-  if (!df_end) {
-    dp_inStream->clear();
-    dp_inStream->seekg(holder);
-  }
+  */
 }
 
 bool MultithreadedSDMolSupplier::getEnd() const {

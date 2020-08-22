@@ -75,12 +75,12 @@ void testSmiConcurrent(std::string path, std::string delimiter,
                     expectedResult);
 }
 
-void testSmiOld(std::istream* strm, std::string delimiter, int smilesColumn,
+void testSmiOld(std::string path, std::string delimiter, int smilesColumn,
                 int nameColumn, bool titleLine, bool sanitize,
                 unsigned int expectedResult) {
   unsigned int numMols = 0;
-  SmilesMolSupplier sup(strm, true, delimiter, smilesColumn, nameColumn,
-                        titleLine, sanitize);
+  SmilesMolSupplier sup(path, delimiter, smilesColumn, nameColumn, titleLine,
+                        sanitize);
   while (!sup.atEnd()) {
     ROMol* mol = sup.next();
     if (mol) {
@@ -128,34 +128,31 @@ void testSmiCorrectness() {
   std::string path;
   unsigned int expectedResult;
   std::string rdbase = getenv("RDBASE");
-  int trials = 10;
-  for (int i = 0; i < trials; i++) {
-    path = "/Code/GraphMol/FileParsers/test_data/fewSmi.csv";
-    expectedResult = 10;
-    testSmiConcurrent(path, ",", 1, 0, false, true, 2, 5, 5, expectedResult);
+  path = "/Code/GraphMol/FileParsers/test_data/fewSmi.csv";
+  expectedResult = 10;
+  testSmiConcurrent(path, ",", 1, 0, false, true, 2, 5, 5, expectedResult);
 
-    path = "/Code/GraphMol/FileParsers/test_data/fewSmi.2.csv";
-    expectedResult = 10;
-    testSmiConcurrent(path, ",", 1, 0, true, true, 2, 5, 5, expectedResult);
+  path = "/Code/GraphMol/FileParsers/test_data/fewSmi.2.csv";
+  expectedResult = 10;
+  testSmiConcurrent(path, ",", 1, 0, true, true, 2, 5, 5, expectedResult);
 
-    path = "/Code/GraphMol/FileParsers/test_data/first_200.tpsa.csv";
-    expectedResult = 200;
-    testSmiConcurrent(path, ",", 0, -1, true, true, 2, 5, 5, expectedResult);
+  path = "/Code/GraphMol/FileParsers/test_data/first_200.tpsa.csv";
+  expectedResult = 200;
+  testSmiConcurrent(path, ",", 0, -1, true, true, 2, 5, 5, expectedResult);
 
 #ifdef RDK_USE_BOOST_IOSTREAMS
-    path = rdbase + "/Regress/Data/znp.50k.smi.gz";
-    std::istream* strm = new gzstream(path);
-    expectedResult = 50000;
-    testSmiConcurrent(strm, true, " \t", 0, 1, false, false, 3, 1000, 100,
-                      expectedResult);
+  path = rdbase + "/Regress/Data/znp.50k.smi.gz";
+  std::istream* strm = new gzstream(path);
+  expectedResult = 50000;
+  testSmiConcurrent(strm, true, " \t", 0, 1, false, false, 3, 1000, 100,
+                    expectedResult);
 #endif
-    /*
+  /*
 
-            TEST PROPERTIES
+          TEST PROPERTIES
 
-    */
-    testSmiProperties();
-  }
+  */
+  testSmiProperties();
 }
 
 void testSDConcurrent(std::istream* strm, bool takeOwnership, bool sanitize,
@@ -228,10 +225,10 @@ void testSDProperties() {
   }
 }
 
-void testSDOld(std::istream* strm, bool sanitize, bool removeHs,
+void testSDOld(std::string path, bool sanitize, bool removeHs,
                bool strictParsing, unsigned int expectedResult) {
   unsigned int numMols = 0;
-  SDMolSupplier sup(strm, true, sanitize, removeHs, strictParsing);
+  SDMolSupplier sup(path, sanitize, removeHs, strictParsing);
   while (!sup.atEnd()) {
     ROMol* mol = sup.next();
     if (mol) {
@@ -249,20 +246,16 @@ void testSDCorrectness() {
   std::string rdbase = getenv("RDBASE");
   std::string path;
   unsigned int expectedResult;
-
   path = "/Code/GraphMol/FileParsers/test_data/NCI_aids_few.sdf";
   expectedResult = 16;
   testSDConcurrent(path, false, true, true, 2, 5, 5, expectedResult);
-  std::cerr << path << " done!\n";
 
   path = "/Code/GraphMol/FileParsers/test_data/outNCI_few_molsupplier.sdf";
   testSDConcurrent(path, true, true, true, 2, 5, 5, expectedResult);
-  std::cerr << path << " done!\n";
 
   path = "/Code/GraphMol/FileParsers/test_data/esters_end.sdf";
   expectedResult = 6;
   testSDConcurrent(path, true, true, true, 2, 5, 5, expectedResult);
-  std::cerr << path << " done!\n";
 
   // strict parsing results in reading 0 out of 2 records
   path = "/Code/GraphMol/FileParsers/test_data/strictLax1.sdf";
@@ -271,23 +264,20 @@ void testSDCorrectness() {
 
   expectedResult = 2;
   testSDConcurrent(path, true, true, false, 2, 5, 5, expectedResult);
-  std::cerr << path << " done!\n";
 
   path = "/Code/GraphMol/FileParsers/test_data/O2.sdf";
   expectedResult = 1;
   testSDConcurrent(path, true, true, false, 2, 5, 5, expectedResult);
-  std::cerr << path << " done!\n";
 
 #ifdef RDK_USE_BOOST_IOSTREAMS
+
   path = rdbase + "/Regress/Data/mols.1000.sdf.gz";
   std::istream* strm = new gzstream(path);
   expectedResult = 1000;
   testSDConcurrent(strm, true, false, true, true, 2, 5, 5, expectedResult);
-  std::cerr << path << " done!\n";
 #endif
-
   /*
-          TEST PROPERTIES
+                                  TEST PROPERTIES
   */
   testSDProperties();
 }
@@ -295,25 +285,30 @@ void testSDCorrectness() {
 void testPerformance() {
   /*
           TEST PERFORMANCE
+                                        NOTE: Only use this method when you have
+     extracted the files znp.50k.smi.gz and chembl26_very_active.sdf.gz in the
+     $RDBASE/Regress/Data directory.
   */
 
   std::string rdbase = getenv("RDBASE");
-  std::string path = rdbase + "/Regress/Data/znp.50k.smi.gz";
-  std::istream* stream = new gzstream(path);
+  std::string path = "/Regress/Data/znp.50k.smi";
   unsigned int expectedResult = 50000;
 
   auto start = high_resolution_clock::now();
-  testSmiOld(stream, " \t", 0, 1, false, true, expectedResult);
+  // NOTE: have to use path instead of stream, since the tellg()
+  //       method, which is used in implementation of the supplier
+  // 			 fails for this file.
+  testSmiOld(rdbase + path, " \t", 0, 1, false, true, expectedResult);
   auto stop = high_resolution_clock::now();
   auto duration = duration_cast<milliseconds>(stop - start);
   std::cout << "Duration for SmilesMolSupplier: " << duration.count()
             << " (milliseconds) \n";
 
   unsigned int maxThreadCount = std::thread::hardware_concurrency() + 4;
-  std::cout << "Maximum Threads available: " << maxThreadCount << "\n";
+
   for (unsigned int i = maxThreadCount; i >= 1; --i) {
     start = high_resolution_clock::now();
-    testSmiConcurrent(stream, false, " \t", 0, 1, false, true, i, 1000, 100,
+    testSmiConcurrent(path, " \t", 0, 1, false, true, i, 1000, 100,
                       expectedResult);
     stop = high_resolution_clock::now();
     duration = duration_cast<milliseconds>(stop - start);
@@ -322,12 +317,13 @@ void testPerformance() {
               << " (milliseconds) \n";
   }
 
-  path = rdbase + "/Regress/Data/chembl26_very_active.sdf.gz";
-  std::istream* strm = new gzstream(path);
+  path = "/Regress/Data/chembl26_very_active.sdf";
   expectedResult = 35767;
-
   start = high_resolution_clock::now();
-  testSDOld(strm, false, true, false, expectedResult);
+  // NOTE: have to use path instead of stream, since the tellg()
+  //       method, which is used in implementation of the supplier
+  // 			 fails for this file.
+  testSDOld(rdbase + path, false, true, false, expectedResult);
   stop = high_resolution_clock::now();
   duration = duration_cast<milliseconds>(stop - start);
   std::cout << "Duration for SDMolSupplier: " << duration.count()
@@ -335,8 +331,7 @@ void testPerformance() {
 
   for (unsigned int i = maxThreadCount; i >= 1; --i) {
     start = high_resolution_clock::now();
-    testSDConcurrent(strm, true, false, true, true, i, 1000, 4000,
-                     expectedResult);
+    testSDConcurrent(path, false, true, true, i, 1000, 4000, expectedResult);
     stop = high_resolution_clock::now();
     duration = duration_cast<milliseconds>(stop - start);
     std::cout << "Duration for testSDConcurent with " << i
@@ -355,21 +350,18 @@ int main() {
   BOOST_LOG(rdErrorLog) << "Finished: testSmiCorrectness()\n";
   BOOST_LOG(rdErrorLog) << "-----------------------------------------\n\n";
 
+  BOOST_LOG(rdErrorLog) << "\n-----------------------------------------\n";
+  testSDCorrectness();
+  BOOST_LOG(rdErrorLog) << "Finished: testSDCorrectness()\n";
+  BOOST_LOG(rdErrorLog) << "-----------------------------------------\n\n";
+
   /*
-
     BOOST_LOG(rdErrorLog) << "\n-----------------------------------------\n";
-    testSDCorrectness();
-    BOOST_LOG(rdErrorLog) << "Finished: testSDCorrectness()\n";
-    BOOST_LOG(rdErrorLog) << "-----------------------------------------\n\n";
-
-
+          testPerformance();
+    BOOST_LOG(rdErrorLog) << "Finished: testPerformance()\n";
           BOOST_LOG(rdErrorLog) <<
-       "\n-----------------------------------------\n"; testPerformance();
-          BOOST_LOG(rdErrorLog) << "Finished: testPerformance()\n";
-          BOOST_LOG(rdErrorLog) <<
-       "-----------------------------------------\n\n";
-
-        */
+    "-----------------------------------------\n\n";
+  */
 
 #endif
 
