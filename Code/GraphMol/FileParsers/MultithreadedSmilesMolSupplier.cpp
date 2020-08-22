@@ -21,7 +21,6 @@ MultithreadedSmilesMolSupplier::MultithreadedSmilesMolSupplier(
   // set df_takeOwnership = true
   initFromSettings(true, delimiter, smilesColumn, nameColumn, titleLine,
                    sanitize, numWriterThreads, sizeInputQueue, sizeOutputQueue);
-  this->checkForEnd();
   startThreads();
   POSTCONDITION(dp_inStream, "bad instream");
 }
@@ -37,7 +36,6 @@ MultithreadedSmilesMolSupplier::MultithreadedSmilesMolSupplier(
   initFromSettings(takeOwnership, delimiter, smilesColumn, nameColumn,
                    titleLine, sanitize, numWriterThreads, sizeInputQueue,
                    sizeOutputQueue);
-  this->checkForEnd();
   startThreads();
   POSTCONDITION(dp_inStream, "bad instream");
 }
@@ -80,78 +78,9 @@ void MultithreadedSmilesMolSupplier::initFromSettings(
   d_line = -1;
 }
 
-// --------------------------------------------------
-//
-//  Returns the position of the beginning of the next
-//  non-comment line in the input stream. -1 is returned if
-//  no line could be read;
-//
-//  Side-effects:
-//    - If EOF is hit without finding a valid line, the df_end
-//      flag will be set.
-//    - Our d_line counter is incremented for each line read
-//
-long int MultithreadedSmilesMolSupplier::skipComments() {
-  PRECONDITION(dp_inStream, "bad stream");
-  if (this->getEnd()) {
-    return -1;
-  }
-
-  std::streampos prev = dp_inStream->tellg();
-  std::string tempStr = this->nextLine();
-  if (!df_end) {
-    // if we didn't immediately hit EOF, loop until we get a valid line:
-    while ((tempStr[0] == '#') || (strip(tempStr).size() == 0)) {
-      prev = dp_inStream->tellg();
-      tempStr = this->nextLine();
-      if (this->getEnd()) {
-        break;
-      }
-    }
-  }
-  // if we hit EOF without getting a proper line, return -1:
-  if (tempStr.empty() || (tempStr[0] == '#') || (strip(tempStr).size() == 0)) {
-    return -1;
-  }
-  return static_cast<long int>(prev);
-}
-
-// ensures that there is a line available to be read
-// from the file
-void MultithreadedSmilesMolSupplier::checkForEnd() {
-  PRECONDITION(dp_inStream, "no stream");
-  int pos = this->skipComments();
-  if (pos != -1) {
-    d_line = -1;
-    dp_inStream->seekg(0);
-    df_end = false;
-  }
-}
-
 bool MultithreadedSmilesMolSupplier::getEnd() const {
   PRECONDITION(dp_inStream, "no stream");
   return df_end;
-}
-
-std::string MultithreadedSmilesMolSupplier::nextLine() {
-  PRECONDITION(dp_inStream, "bad stream");
-  if (df_end) {
-    return "";
-  }
-  std::string record = getLine(dp_inStream);
-  if (record == "") {
-    // got an empty string, check to see if we hit EOF:
-    if (dp_inStream->eof() || dp_inStream->bad()) {
-      // yes, set our flag:
-      df_end = true;
-    }
-  } else if (dp_inStream->eof()) {
-    // we got some data before hitting EOF. So clear the
-    // flag on inStream
-    dp_inStream->clear();
-  }
-  d_line++;
-  return record;
 }
 
 // --------------------------------------------------
@@ -160,18 +89,19 @@ std::string MultithreadedSmilesMolSupplier::nextLine() {
 //
 void MultithreadedSmilesMolSupplier::processTitleLine() {
   PRECONDITION(dp_inStream, "bad stream");
-  int pos = this->skipComments();
-  if (pos >= 0) {
-    dp_inStream->seekg(pos);
-    std::string tempStr = getLine(dp_inStream);
-    boost::char_separator<char> sep(d_delim.c_str(), "",
-                                    boost::keep_empty_tokens);
-    tokenizer tokens(tempStr, sep);
-    for (tokenizer::iterator tokIter = tokens.begin(); tokIter != tokens.end();
-         ++tokIter) {
-      std::string pname = strip(*tokIter);
-      d_props.push_back(pname);
-    }
+  std::string tempStr = getLine(dp_inStream);
+  // loop until we get a valid line
+  while (!dp_inStream->eof() && !dp_inStream->fail() &&
+         ((tempStr[0] == '#') || (strip(tempStr).size() == 0))) {
+    tempStr = getLine(dp_inStream);
+  }
+  boost::char_separator<char> sep(d_delim.c_str(), "",
+                                  boost::keep_empty_tokens);
+  tokenizer tokens(tempStr, sep);
+  for (tokenizer::iterator tokIter = tokens.begin(); tokIter != tokens.end();
+       ++tokIter) {
+    std::string pname = strip(*tokIter);
+    d_props.push_back(pname);
   }
 }
 
@@ -179,7 +109,8 @@ bool MultithreadedSmilesMolSupplier::extractNextRecord(std::string &record,
                                                        unsigned int &lineNum,
                                                        unsigned int &index) {
   PRECONDITION(dp_inStream, "bad stream");
-  if (this->getEnd()) {
+  if (dp_inStream->eof()) {
+    df_end = true;
     return false;
   }
 
@@ -187,28 +118,17 @@ bool MultithreadedSmilesMolSupplier::extractNextRecord(std::string &record,
   // if we have not called next yet and the current record id = 1
   // then we are seeking the first record
   if (d_lastRecordId == 0 && d_currentRecordId == 1) {
-    dp_inStream->seekg(0);
     if (df_title) {
       this->processTitleLine();
     }
   }
+  std::string tempStr = getLine(dp_inStream);
+  record = "";
+  while (!dp_inStream->eof() && !dp_inStream->fail() &&
+         ((tempStr[0] == '#') || (strip(tempStr).size() == 0))) {
+    tempStr = getLine(dp_inStream);
+  }
 
-  std::streampos prev = dp_inStream->tellg();
-  std::string tempStr = this->nextLine();
-  if (!df_end) {
-    // if we didn't immediately hit EOF, loop until we get a valid line:
-    while ((tempStr[0] == '#') || (strip(tempStr).size() == 0)) {
-      prev = dp_inStream->tellg();
-      tempStr = this->nextLine();
-      if (this->getEnd()) {
-        break;
-      }
-    }
-  }
-  // if we hit EOF without getting a proper line, return -1:
-  if (tempStr.empty() || (tempStr[0] == '#') || (strip(tempStr).size() == 0)) {
-    return false;
-  }
   record = tempStr;
   lineNum = d_line;
   index = d_currentRecordId;

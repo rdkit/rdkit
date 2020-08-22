@@ -31,16 +31,8 @@ class RDKIT_FILEPARSERS_EXPORT MultithreadedSmilesMolSupplier
   ~MultithreadedSmilesMolSupplier();
 
   void init(){};
-  //! Returns the position of the beginning of the next
-  //! non-comment line in the input stream. -1 is returned if
-  //! no line could be read;
-  long int skipComments();
-  //! checks if there is a line to be read from the file
-  void checkForEnd();
   //! returns df_end
   bool getEnd() const;
-  //! get next line
-  std::string nextLine();
   //! reads and processes the title line
   void processTitleLine();
   //! reads next record and returns whether or not EOF was hit

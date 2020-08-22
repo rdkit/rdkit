@@ -58,7 +58,6 @@ void testSmiConcurrent(std::istream* strm, bool takeOwnership,
     delete mol;
   }
   // if all bits are set then we have seen possible ids
-  PrintThread{} << "testSmiConcurrent, Number of mols: " << nMols << "\n";
   TEST_ASSERT(bitVector.all());
   TEST_ASSERT(nMols == expectedResult);
 }
@@ -122,7 +121,6 @@ void testSmiProperties() {
     }
   }
 }
-
 void testSmiCorrectness() {
   /*
           TEST CORRECTNESS
@@ -130,37 +128,34 @@ void testSmiCorrectness() {
   std::string path;
   unsigned int expectedResult;
   std::string rdbase = getenv("RDBASE");
+  int trials = 10;
+  for (int i = 0; i < trials; i++) {
+    path = "/Code/GraphMol/FileParsers/test_data/fewSmi.csv";
+    expectedResult = 10;
+    testSmiConcurrent(path, ",", 1, 0, false, true, 2, 5, 5, expectedResult);
 
-  path = "/Code/GraphMol/FileParsers/test_data/fewSmi.csv";
-  expectedResult = 10;
-  testSmiConcurrent(path, ",", 1, 0, false, true, 2, 5, 5, expectedResult);
-  std::cerr << path << " done!\n";
+    path = "/Code/GraphMol/FileParsers/test_data/fewSmi.2.csv";
+    expectedResult = 10;
+    testSmiConcurrent(path, ",", 1, 0, true, true, 2, 5, 5, expectedResult);
 
-  path = "/Code/GraphMol/FileParsers/test_data/fewSmi.2.csv";
-  expectedResult = 10;
-  testSmiConcurrent(path, ",", 1, 0, true, true, 2, 5, 5, expectedResult);
-  std::cerr << path << " done!\n";
-
-  path = "/Code/GraphMol/FileParsers/test_data/first_200.tpsa.csv";
-  expectedResult = 200;
-  testSmiConcurrent(path, ",", 0, -1, true, true, 2, 5, 5, expectedResult);
-  std::cerr << path << " done!\n";
+    path = "/Code/GraphMol/FileParsers/test_data/first_200.tpsa.csv";
+    expectedResult = 200;
+    testSmiConcurrent(path, ",", 0, -1, true, true, 2, 5, 5, expectedResult);
 
 #ifdef RDK_USE_BOOST_IOSTREAMS
-  path = rdbase + "/Regress/Data/znp.50k.smi.gz";
-  std::istream* strm = new gzstream(path);
-  expectedResult = 50000;
-  testSmiConcurrent(strm, true, " \t", 0, 1, false, true, 3, 1000, 100,
-                    expectedResult);
-  std::cerr << path << " done!\n";
+    path = rdbase + "/Regress/Data/znp.50k.smi.gz";
+    std::istream* strm = new gzstream(path);
+    expectedResult = 50000;
+    testSmiConcurrent(strm, true, " \t", 0, 1, false, false, 3, 1000, 100,
+                      expectedResult);
 #endif
+    /*
 
-  /*
+            TEST PROPERTIES
 
-
-    TEST PROPERTIES
-  */
-  testSmiProperties();
+    */
+    testSmiProperties();
+  }
 }
 
 void testSDConcurrent(std::istream* strm, bool takeOwnership, bool sanitize,
@@ -360,19 +355,21 @@ int main() {
   BOOST_LOG(rdErrorLog) << "Finished: testSmiCorrectness()\n";
   BOOST_LOG(rdErrorLog) << "-----------------------------------------\n\n";
 
-  BOOST_LOG(rdErrorLog) << "\n-----------------------------------------\n";
-  testSDCorrectness();
-  BOOST_LOG(rdErrorLog) << "Finished: testSDCorrectness()\n";
-  BOOST_LOG(rdErrorLog) << "-----------------------------------------\n\n";
-
   /*
-        BOOST_LOG(rdErrorLog) <<
-     "\n-----------------------------------------\n"; testPerformance();
-        BOOST_LOG(rdErrorLog) << "Finished: testPerformance()\n";
-        BOOST_LOG(rdErrorLog) <<
-     "-----------------------------------------\n\n";
 
-      */
+    BOOST_LOG(rdErrorLog) << "\n-----------------------------------------\n";
+    testSDCorrectness();
+    BOOST_LOG(rdErrorLog) << "Finished: testSDCorrectness()\n";
+    BOOST_LOG(rdErrorLog) << "-----------------------------------------\n\n";
+
+
+          BOOST_LOG(rdErrorLog) <<
+       "\n-----------------------------------------\n"; testPerformance();
+          BOOST_LOG(rdErrorLog) << "Finished: testPerformance()\n";
+          BOOST_LOG(rdErrorLog) <<
+       "-----------------------------------------\n\n";
+
+        */
 
 #endif
 
