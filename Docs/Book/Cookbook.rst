@@ -1600,7 +1600,6 @@ Energy calculation using ANI-1x and ANI-1ccx
          2  5  1  0  0  0  0
          3  6  1  0  0  0  0
          3  7  1  0  0  0  0
-  #   ff = ChemicalForceFields.ANIGetMoleculeForceField(m, "ANI-1ccx", 8)
          3  8  1  0  0  0  0
    M  END""")
    ff = ChemicalForceFields.ANIGetMoleculeForceField(mol1, "ANI-1ccx", 8)
@@ -1611,6 +1610,7 @@ Energy calculation using ANI-1x and ANI-1ccx
 
 Minimizing the molecule energy. In this case the default conformer of the molecule will be taken IDed by -1 and minimized. 
 Unless the initial conformation is the most stable, e_minimized will be less than e_initial.
+
 .. Example::
    
    ff = ChemicalForceFields.ANIGetMoleculeForceField(mol1, "ANI-1ccx", 8)
@@ -1620,11 +1620,13 @@ Unless the initial conformation is the most stable, e_minimized will be less tha
 
 
 Shorter way optimizing specific conformations of the molecule are the following
+
 .. Example::
 
    ChemicalForceFields.ANIOptimizeMolecule(mol1, numIterations, conformerId, "ANI-1x", 8)
 
 Optimizing all the conformations of a molecule
+
 .. Example::
 
    ChemicalForceFields.ANIOptimizeMoleculeConfs(mol1, numThreads, numIterations, "ANI-1ccx", 8)
