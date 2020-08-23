@@ -1574,6 +1574,7 @@ Molecule Optimization with ANI NN as a ForceField
 | **Summary:**  Showcase various ways for optimizing different conformers of molecules using the ANI learned Force Field.
 
 Energy calculation using ANI-1x and ANI-1ccx
+
 .. Example::
 
    from rdkit import Chem
