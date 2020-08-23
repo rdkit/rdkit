@@ -26,11 +26,12 @@ std::pair<int, double> ANIOptimizeMolecule(ROMol &mol, std::string modelType,
                                            unsigned int ensembleSize,
                                            int confId = -1,
                                            int maxIters = 1000) {
-  ForceFields::ForceField *ff =
-      ANI::constructForceField(mol, modelType, ensembleSize, confId);
+  // ForceFields::ForceField *ff =
+  //     ANI::constructForceField(mol, modelType, ensembleSize, confId);
+  std::unique_ptr<ForceFields::ForceField> ff(
+      ANI::constructForceField(mol, modelType, ensembleSize, confId));
   std::pair<int, double> res =
       ForceFieldsHelper::OptimizeMolecule(*ff, maxIters);
-  delete ff;
   return res;
 }
 
@@ -50,10 +51,9 @@ void ANIOptimizeMoleculeConfs(ROMol &mol,
                               std::vector<std::pair<int, double>> &res,
                               std::string modelType, unsigned int ensembleSize,
                               int numThreads = 1, int maxIters = 1000) {
-  ForceFields::ForceField *ff =
-      ANI::constructForceField(mol, modelType, ensembleSize, -1);
+  std::unique_ptr<ForceFields::ForceField> ff(
+      ANI::constructForceField(mol, modelType, ensembleSize, -1));
   ForceFieldsHelper::OptimizeMoleculeConfs(mol, *ff, res, numThreads, maxIters);
-  delete ff;
 }
 }  // namespace ANI
 }  // namespace RDKit

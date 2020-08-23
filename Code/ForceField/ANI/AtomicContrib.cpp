@@ -134,37 +134,37 @@ double ANIAtomContrib::getEnergy(Eigen::ArrayXXd &aev) const {
 }
 
 void ANIAtomContrib::getGrad(double *pos, double *grad) const {
-  auto initEnergy = this->dp_forceField->calcEnergy(pos);
+  double displacement = 1e-5;
 
   // + - x movement
-  pos[3 * this->d_atomIdx] += 1e-5;
+  pos[3 * this->d_atomIdx] += displacement;
   auto posXEnergy = this->dp_forceField->calcEnergy(pos);
 
-  pos[3 * this->d_atomIdx] -= 2e-5;
+  pos[3 * this->d_atomIdx] -= 2 * displacement;
   auto negXEnergy = this->dp_forceField->calcEnergy(pos);
 
-  grad[3 * this->d_atomIdx] = (posXEnergy - negXEnergy) / (2e-5);
-  pos[3 * this->d_atomIdx] += 1e-5;
+  grad[3 * this->d_atomIdx] = (posXEnergy - negXEnergy) / (2 * displacement);
+  pos[3 * this->d_atomIdx] += displacement;
 
   // + - Y movement
-  pos[3 * this->d_atomIdx + 1] += 1e-5;
+  pos[3 * this->d_atomIdx + 1] += displacement;
   auto posYEnergy = this->dp_forceField->calcEnergy(pos);
 
-  pos[3 * this->d_atomIdx + 1] -= 2e-5;
+  pos[3 * this->d_atomIdx + 1] -= 2 * displacement;
   auto negYEnergy = this->dp_forceField->calcEnergy(pos);
 
-  grad[3 * this->d_atomIdx + 1] = (posYEnergy - negYEnergy) / (2e-5);
-  pos[3 * this->d_atomIdx + 1] += 1e-5;
+  grad[3 * this->d_atomIdx + 1] = (posYEnergy - negYEnergy) / (2 * displacement);
+  pos[3 * this->d_atomIdx + 1] += displacement;
 
   // + - Z movement
-  pos[3 * this->d_atomIdx + 2] += 1e-5;
+  pos[3 * this->d_atomIdx + 2] += displacement;
   auto posZEnergy = this->dp_forceField->calcEnergy(pos);
 
-  pos[3 * this->d_atomIdx + 2] -= 2e-5;
+  pos[3 * this->d_atomIdx + 2] -= 2 * displacement;
   auto negZEnergy = this->dp_forceField->calcEnergy(pos);
 
-  grad[3 * this->d_atomIdx + 2] = (posZEnergy - negZEnergy) / (2e-5);
-  pos[3 * this->d_atomIdx + 2] += 1e-5;
+  grad[3 * this->d_atomIdx + 2] = (posZEnergy - negZEnergy) / (2 * displacement);
+  pos[3 * this->d_atomIdx + 2] += displacement;
 }
 
 namespace Utils {
