@@ -1575,7 +1575,6 @@ Molecule Optimization with ANI NN as a ForceField
 
 Energy calculation using ANI-1x and ANI-1ccx
 
-.. Example::
 
    from rdkit import Chem
    from rdkit.Chem import ChemicalForceFields
@@ -1612,7 +1611,6 @@ Energy calculation using ANI-1x and ANI-1ccx
 Minimizing the molecule energy. In this case the default conformer of the molecule will be taken IDed by -1 and minimized. 
 Unless the initial conformation is the most stable, e_minimized will be less than e_initial.
 
-.. Example::
    
    ff = ChemicalForceFields.ANIGetMoleculeForceField(mol1, "ANI-1ccx", 8)
    e_initial = ff.CalcEnergy()
@@ -1622,13 +1620,11 @@ Unless the initial conformation is the most stable, e_minimized will be less tha
 
 Shorter way optimizing specific conformations of the molecule are the following
 
-.. Example::
 
    ChemicalForceFields.ANIOptimizeMolecule(mol1, numIterations, conformerId, "ANI-1x", 8)
 
 Optimizing all the conformations of a molecule
 
-.. Example::
 
    ChemicalForceFields.ANIOptimizeMoleculeConfs(mol1, numThreads, numIterations, "ANI-1ccx", 8)
 
