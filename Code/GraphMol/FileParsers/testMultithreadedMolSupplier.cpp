@@ -141,6 +141,7 @@ void testSmiCorrectness() {
   testSmiConcurrent(path, ",", 0, -1, true, true, 2, 5, 5, expectedResult);
 
 #ifdef RDK_USE_BOOST_IOSTREAMS
+
   path = rdbase + "/Regress/Data/znp.50k.smi.gz";
   std::istream* strm = new gzstream(path);
   expectedResult = 50000;
@@ -149,7 +150,7 @@ void testSmiCorrectness() {
 #endif
   /*
 
-          TEST PROPERTIES
+     TEST PROPERTIES
 
   */
   testSmiProperties();
@@ -250,9 +251,6 @@ void testSDCorrectness() {
   expectedResult = 16;
   testSDConcurrent(path, false, true, true, 2, 5, 5, expectedResult);
 
-  path = "/Code/GraphMol/FileParsers/test_data/outNCI_few_molsupplier.sdf";
-  testSDConcurrent(path, true, true, true, 2, 5, 5, expectedResult);
-
   path = "/Code/GraphMol/FileParsers/test_data/esters_end.sdf";
   expectedResult = 6;
   testSDConcurrent(path, true, true, true, 2, 5, 5, expectedResult);
@@ -275,68 +273,79 @@ void testSDCorrectness() {
   std::istream* strm = new gzstream(path);
   expectedResult = 1000;
   testSDConcurrent(strm, true, false, true, true, 2, 5, 5, expectedResult);
+
 #endif
   /*
-                                  TEST PROPERTIES
+     TEST PROPERTIES
   */
   testSDProperties();
 }
 
 void testPerformance() {
   /*
-          TEST PERFORMANCE
-                                        NOTE: Only use this method when you have
+     TEST PERFORMANCE
+     
+     NOTE: Only use this method when you have
      extracted the files znp.50k.smi.gz and chembl26_very_active.sdf.gz in the
      $RDBASE/Regress/Data directory.
   */
-
   std::string rdbase = getenv("RDBASE");
-  std::string path = "/Regress/Data/znp.50k.smi";
-  unsigned int expectedResult = 50000;
+  unsigned int maxThreadCount =
+      std::min(std::thread::hardware_concurrency() + 4, 4u);
+#if 1
 
-  auto start = high_resolution_clock::now();
-  // NOTE: have to use path instead of stream, since the tellg()
-  //       method, which is used in implementation of the supplier
-  // 			 fails for this file.
-  testSmiOld(rdbase + path, " \t", 0, 1, false, true, expectedResult);
-  auto stop = high_resolution_clock::now();
-  auto duration = duration_cast<milliseconds>(stop - start);
-  std::cout << "Duration for SmilesMolSupplier: " << duration.count()
-            << " (milliseconds) \n";
-
-  unsigned int maxThreadCount = std::thread::hardware_concurrency() + 4;
-
-  for (unsigned int i = maxThreadCount; i >= 1; --i) {
-    start = high_resolution_clock::now();
-    testSmiConcurrent(path, " \t", 0, 1, false, true, i, 1000, 100,
-                      expectedResult);
-    stop = high_resolution_clock::now();
-    duration = duration_cast<milliseconds>(stop - start);
-    std::cout << "Duration for testSmiConcurent with " << i
-              << "  writer threads: " << duration.count()
+  {
+    std::string path = "/Regress/Data/znp.50k.smi";
+    std::string gzpath = "/Regress/Data/znp.50k.smi.gz";
+    unsigned int expectedResult = 50000;
+    auto start = high_resolution_clock::now();
+    // NOTE: have to use path instead of stream, since the tellg()
+    //       method, which is used in implementation of the supplier
+    // 			 fails for this file.
+    testSmiOld(rdbase + path, " \t", 0, 1, false, true, expectedResult);
+    auto stop = high_resolution_clock::now();
+    auto duration = duration_cast<milliseconds>(stop - start);
+    std::cout << "Duration for SmilesMolSupplier: " << duration.count()
               << " (milliseconds) \n";
+
+    for (unsigned int i = maxThreadCount; i >= 1; --i) {
+      std::istream* strm = new gzstream(rdbase + gzpath);
+      start = high_resolution_clock::now();
+      testSmiConcurrent(strm, true, " \t", 0, 1, false, true, i, 1000, 100,
+                        expectedResult);
+      stop = high_resolution_clock::now();
+      duration = duration_cast<milliseconds>(stop - start);
+      std::cout << "Duration for testSmiConcurent with " << i
+                << "  writer threads: " << duration.count()
+                << " (milliseconds) \n";
+    }
   }
-
-  path = "/Regress/Data/chembl26_very_active.sdf";
-  expectedResult = 35767;
-  start = high_resolution_clock::now();
-  // NOTE: have to use path instead of stream, since the tellg()
-  //       method, which is used in implementation of the supplier
-  // 			 fails for this file.
-  testSDOld(rdbase + path, false, true, false, expectedResult);
-  stop = high_resolution_clock::now();
-  duration = duration_cast<milliseconds>(stop - start);
-  std::cout << "Duration for SDMolSupplier: " << duration.count()
-            << " (milliseconds) \n";
-
-  for (unsigned int i = maxThreadCount; i >= 1; --i) {
-    start = high_resolution_clock::now();
-    testSDConcurrent(path, false, true, true, i, 1000, 4000, expectedResult);
-    stop = high_resolution_clock::now();
-    duration = duration_cast<milliseconds>(stop - start);
-    std::cout << "Duration for testSDConcurent with " << i
-              << "  writer threads: " << duration.count()
+#endif
+  {
+    std::string path = "/Regress/Data/chembl26_very_active.sdf";
+    std::string gzpath = "/Regress/Data/chembl26_very_active.sdf.gz";
+    unsigned int expectedResult = 35767;
+    auto start = high_resolution_clock::now();
+    // NOTE: have to use path instead of stream, since the tellg()
+    //       method, which is used in implementation of the supplier
+    // 			 fails for this file.
+    testSDOld(rdbase + path, true, true, false, expectedResult);
+    auto stop = high_resolution_clock::now();
+    auto duration = duration_cast<milliseconds>(stop - start);
+    std::cout << "Duration for SDMolSupplier: " << duration.count()
               << " (milliseconds) \n";
+
+    for (unsigned int i = maxThreadCount; i >= 1; --i) {
+      std::istream* strm = new gzstream(rdbase + gzpath);
+      start = high_resolution_clock::now();
+      testSDConcurrent(strm, true, false, true, true, i, 1000, 4000,
+                       expectedResult);
+      stop = high_resolution_clock::now();
+      duration = duration_cast<milliseconds>(stop - start);
+      std::cout << "Duration for testSDConcurent with " << i
+                << "  writer threads: " << duration.count()
+                << " (milliseconds) \n";
+    }
   }
 }
 
@@ -354,14 +363,14 @@ int main() {
   testSDCorrectness();
   BOOST_LOG(rdErrorLog) << "Finished: testSDCorrectness()\n";
   BOOST_LOG(rdErrorLog) << "-----------------------------------------\n\n";
+ 
+/*
+  BOOST_LOG(rdErrorLog) << "\n-----------------------------------------\n";
+  testPerformance();
+  BOOST_LOG(rdErrorLog) << "Finished: testPerformance()\n";
+  BOOST_LOG(rdErrorLog) << "-----------------------------------------\n\n";
+*/
 
-  /*
-    BOOST_LOG(rdErrorLog) << "\n-----------------------------------------\n";
-          testPerformance();
-    BOOST_LOG(rdErrorLog) << "Finished: testPerformance()\n";
-          BOOST_LOG(rdErrorLog) <<
-    "-----------------------------------------\n\n";
-  */
 
 #endif
 
