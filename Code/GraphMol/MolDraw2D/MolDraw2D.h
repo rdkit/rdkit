@@ -516,16 +516,6 @@ class RDKIT_MOLDRAW2D_EXPORT MolDraw2D {
   //! returns the current line width
   virtual int lineWidth() const { return curr_width_; }
 
-  //! clears the contents of the drawing
-  virtual void clearDrawing() = 0;
-  //! draws a line from \c cds1 to \c cds2 using the current drawing style
-  // in atom coords.
-  virtual void drawLine(const Point2D &cds1, const Point2D &cds2) = 0;
-  //! draw a polygon.  Note that if fillPolys() returns false, it
-  //! doesn't close the path.  If you want it to in that case, you
-  //! do it explicitly yourself.
-  virtual void drawPolygon(const std::vector<Point2D> &cds) = 0;
-
   //! using the current scale, work out the size of the label in molecule
   //! coordinates.
   /*!
