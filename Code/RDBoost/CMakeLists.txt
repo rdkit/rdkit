@@ -1,11 +1,7 @@
 if(WIN32 OR "${Py_ENABLE_SHARED}" STREQUAL "1")
-
-  add_definitions(-DRDKIT_RDBOOST_BUILD)
-  rdkit_library(RDBoost Wrap.cpp
+    rdkit_library(RDBoost Wrap.cpp
                 LINK_LIBRARIES RDGeneral rdkit_py_base rdkit_base)
 else()
-
-    add_definitions(-DRDKIT_RDBOOST_BUILD)
     rdkit_library(RDBoost Wrap.cpp
                 LINK_LIBRARIES RDGeneral rdkit_base)
     if("${PYTHON_LDSHARED}" STREQUAL "")
@@ -14,6 +10,7 @@ else()
        set_target_properties(RDBoost PROPERTIES LINK_FLAGS ${LDSHARED})
     endif()
 endif()
+target_compile_definitions(RDBoost PRIVATE RDKIT_RDBOOST_BUILD)
 
 rdkit_headers(Wrap.h PySequenceHolder.h
               list_indexing_suite.hpp
