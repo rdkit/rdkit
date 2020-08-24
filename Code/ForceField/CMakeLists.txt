@@ -18,6 +18,7 @@ if(RDK_BUILD_ANI)
 rdkit_library(ANIForceField
              ANI/AtomicContrib.cpp
              LINK_LIBRARIES Optimizer Trajectory ANIDescriptors EigenSerializer ForceField)
+target_compile_definitions(ANIForceField PRIVATE RDKIT_ANIFORCEFIELD_BUILD)
 endif(RDK_BUILD_ANI)
 
 rdkit_headers(Contrib.h

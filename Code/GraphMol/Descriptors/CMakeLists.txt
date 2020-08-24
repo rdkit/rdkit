@@ -33,6 +33,7 @@ rdkit_library(ANIDescriptors
               AtomicEnvironmentVector.cpp
               LINK_LIBRARIES RDGeneral EigenSerializer GraphMol)
 rdkit_headers(AtomicEnvironmentVector.h DEST GraphMol/Descriptors)
+target_compile_definitions(ANIDescriptors PRIVATE RDKIT_ANIDESCRIPTORS_BUILD)
 endif(RDK_BUILD_ANI)
 
 rdkit_test(testDescriptors test.cpp
