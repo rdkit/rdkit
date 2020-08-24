@@ -26,12 +26,12 @@ namespace RDKit {
 
 class DrawTextJS : public DrawText {
  public:
-  DrawTextJS(double max_fnt_sz, double min_fnt_sz, emscripten::val &canvas);
+  DrawTextJS(double max_fnt_sz, double min_fnt_sz, emscripten::val &context);
 
   void drawChar(char c, const Point2D &cds) override;
 
  private:
-  emscripten::val &canvas_;
+  emscripten::val &context_;
 
   // return a vector of StringRects, one for each char in text, with
   // super- and subscripts taken into account.  Sizes in pixel coords,

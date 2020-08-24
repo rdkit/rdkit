@@ -24,6 +24,36 @@
       console.log('smiles: ' + m1.get_smiles());
       m1.delete();
       callback("CC(=O)Oc1ccccc1C(=O)O");
+      //callback("CCO");
+
+
+      // var c = document.getElementById("rdkit-canvas");
+      // var ctx = c.getContext("2d");
+      // /*
+      //       ctx.moveTo(178.7, 100);
+      //       ctx.lineTo(21.3, 9.1);
+      //       ctx.stroke();
+      //       ctx.moveTo(178.7, 100);
+      //       ctx.lineTo(21.3, 190.9);
+      //       ctx.stroke();
+      //       ctx.moveTo(21.3, 9.1);
+      //       ctx.lineTo(21.3, 190.9);
+      //       ctx.stroke();
+      // */
+      // ctx.moveTo(179, 100);
+      // ctx.lineTo(21, 9);
+      // ctx.stroke();
+      // ctx.moveTo(179, 100);
+      // ctx.lineTo(21, 191);
+      // ctx.stroke();
+      // ctx.moveTo(21, 9);
+      // ctx.lineTo(21, 191);
+      // ctx.stroke();
+
+      // ctx.font = "24px sans-serif";
+      // ctx.fillText("Hello world", 120, 200);
+
+
     }
   };
   function draw(mol) {
@@ -31,6 +61,10 @@
     if (svg == "") return;
     var ob = document.getElementById("drawing");
     ob.outerHTML = "<div id='drawing'>" + svg + "</div>";
+
+    mol.draw_to_canvas("rdkit-canvas", 400, 300);
+    alert("back!");
+
   }
   function draw_with_highlights(mol, atomids) {
     var svg = mol.get_svg_with_highlights(atomids);
@@ -82,6 +116,11 @@
     <h2>Computed values</h2>
 
     <div id="descrs"></div>
+    <div id="canvas-div">
+      <h1>HTML5 canvas</h1>
+      <canvas id="rdkit-canvas" width="400" height="300" style="border:1px solid #000000;">
+      </canvas>
+    </div>
   </div>
 
 </body>

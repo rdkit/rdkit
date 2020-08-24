@@ -25,6 +25,9 @@ EMSCRIPTEN_BINDINGS(RDKit_minimal) {
                     &JSMol::get_svg))
 
       .function("get_svg_with_highlights", &JSMol::get_svg_with_highlights)
+#ifdef __EMSCRIPTEN__
+      .function("draw_to_canvas", &JSMol::draw_to_canvas)
+#endif
       .function("get_substruct_match", &JSMol::get_substruct_match)
       .function("get_substruct_matches", &JSMol::get_substruct_matches)
       .function("get_descriptors", &JSMol::get_descriptors)

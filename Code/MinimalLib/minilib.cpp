@@ -34,6 +34,12 @@
 #include <rapidjson/stringbuffer.h>
 #include <rapidjson/writer.h>
 
+#ifdef __EMSCRIPTEN__
+#include <emscripten.h>
+#include <emscripten/val.h>
+#include <GraphMol/MolDraw2D/MolDraw2DJS.h>
+#endif
+
 namespace rj = rapidjson;
 
 using namespace RDKit;
@@ -156,6 +162,28 @@ std::string JSMol::get_svg_with_highlights(const std::string &details) const {
 
   return svg_(*d_mol, w, h, &atomIds, &bondIds);
 }
+
+std::string JSMol::draw_to_canvas(const std::string &id, int width,
+                                  int height) const {
+  if (!d_mol) return "no molecule";
+#ifdef __EMSCRIPTEN__
+
+  // EM_ASM_({alert("DRAW!")});
+
+  auto canvas = emscripten::val::global("document")
+                    .call<emscripten::val>("getElementById", id);
+  // EM_ASM_({alert("context")});
+  auto ctx = canvas.call<emscripten::val>("getContext", std::string("2d"));
+  // EM_ASM_({alert("construct")});
+  MolDraw2DJS d2d(width, height, ctx);
+  // EM_ASM_({alert("draw")});
+
+  MolDraw2DUtils::prepareAndDrawMolecule(d2d, *d_mol);
+#else
+  return "no JS support";
+#endif
+}
+
 std::string JSMol::get_inchi() const {
   if (!d_mol) return "";
   ExtraInchiReturnValues rv;

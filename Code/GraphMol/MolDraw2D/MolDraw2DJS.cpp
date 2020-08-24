@@ -26,6 +26,8 @@
 
 namespace RDKit {
 
+std::string DrawColourToSVG(const RDKit::DrawColour &col);
+
 // ****************************************************************************
 void MolDraw2DJS::initDrawing() {}
 
@@ -57,10 +59,19 @@ void MolDraw2DJS::initTextDrawer(bool noFreetype) {
 void MolDraw2DJS::drawLine(const Point2D &cds1, const Point2D &cds2) {
   Point2D c1 = getDrawCoords(cds1);
   Point2D c2 = getDrawCoords(cds2);
-  // std::string col = DrawColourToSVG(colour());
+  std::string col = DrawColourToSVG(colour());
   unsigned int width = getDrawLineWidth();
   std::string dashString = "";
   const DashPattern &dashes = dash();
+  // EM_ASM_({alert("DRAW! " + $0 + " " + $1 + " " + $2 + " " + $3)},
+  //         c1.x, c1.y, c2.x, c2.y);
+
+  d_context.call<void>("beginPath");
+  d_context.set("lineWidth", width);
+  d_context.set("strokeStyle", col);
+  d_context.call<void>("moveTo", std::round(c1.x), std::round(c1.y));
+  d_context.call<void>("lineTo", std::round(c2.x), std::round(c2.y));
+  d_context.call<void>("stroke");
 }
 
 // ****************************************************************************
@@ -88,7 +99,10 @@ void MolDraw2DJS::drawEllipse(const Point2D &cds1, const Point2D &cds2) {
 
 // ****************************************************************************
 void MolDraw2DJS::clearDrawing() {
-  // std::string col = DrawColourToSVG(drawOptions().backgroundColour);
+  std::string col = DrawColourToSVG(drawOptions().backgroundColour);
+  d_context.call<void>("clearRect", 0, 0, width(), height());
+  d_context.set("fillStyle", col);
+  d_context.call<void>("fillRect", 0, 0, width(), height());
 }
 
 }  // namespace RDKit
