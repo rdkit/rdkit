@@ -35,6 +35,8 @@ T stripSpacesAndCast(const std::string &input, bool acceptSpaces = false) {
 }
 RDKIT_FILEPARSERS_EXPORT int toInt(const std::string &input,
                                    bool acceptSpaces = true);
+RDKIT_FILEPARSERS_EXPORT unsigned int toUnsigned(const std::string &input,
+                                                 bool acceptSpaces = true);
 RDKIT_FILEPARSERS_EXPORT double toDouble(const std::string &input,
                                          bool acceptSpaces = true);
 
@@ -55,8 +57,9 @@ RDKIT_FILEPARSERS_EXPORT bool ParseV2000CTAB(
     bool strictParsing = true);
 
 //! finishes up the processing (sanitization, etc.) of a molecule read from CTAB
-RDKIT_FILEPARSERS_EXPORT void finishMolProcessing(RWMol *res, bool chiralityPossible, bool sanitize,
-                         bool removeHs);
+RDKIT_FILEPARSERS_EXPORT void finishMolProcessing(RWMol *res,
+                                                  bool chiralityPossible,
+                                                  bool sanitize, bool removeHs);
 
 //! Deprecated, please use QueryOps::replaceAtomWithQueryAtom instead
 RDKIT_FILEPARSERS_EXPORT Atom *replaceAtomWithQueryAtom(RWMol *mol, Atom *atom);

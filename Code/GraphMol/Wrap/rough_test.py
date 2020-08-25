@@ -4125,7 +4125,9 @@ $$$$
     self.assertEqual(len(resMolSuppl2), 3)
 
   def testGitHub2597(self):
+
     class MyBrokenCallBack(Chem.ResonanceMolSupplier):
+
       def __call__(self):
         return True
 
@@ -4133,6 +4135,7 @@ $$$$
       pass
 
     class ExceedNumStructures(Chem.ResonanceMolSupplierCallback):
+
       def __init__(self, parent):
         super().__init__()
         self._parent = parent
@@ -4142,6 +4145,7 @@ $$$$
         return (self.GetNumStructures(0) < 12)
 
     class ExceedNumDiverseStructures(Chem.ResonanceMolSupplierCallback):
+
       def __init__(self, parent):
         super().__init__()
         self._parent = parent
@@ -4151,6 +4155,7 @@ $$$$
         return (self.GetNumDiverseStructures(0) < 8)
 
     class ExceedTimeout(Chem.ResonanceMolSupplierCallback):
+
       def __init__(self, parent):
         super().__init__()
         self.start_time = None
@@ -4162,7 +4167,8 @@ $$$$
           self.start_time = datetime.now()
         return (datetime.now() - self.start_time < self.timeout)
 
-    mol = Chem.MolFromSmiles("ClC1=NC(NC2=CC=CC3=C2C(=O)C2=CC=CC=C2C3=O)=NC(NC2=CC=CC3=C2C(=O)C2=CC=CC=C2C3=O)=N1")
+    mol = Chem.MolFromSmiles(
+      "ClC1=NC(NC2=CC=CC3=C2C(=O)C2=CC=CC=C2C3=O)=NC(NC2=CC=CC3=C2C(=O)C2=CC=CC=C2C3=O)=N1")
     resMolSuppl = Chem.ResonanceMolSupplier(mol)
     self.assertEqual(len(resMolSuppl), 1)
     resMolSuppl = Chem.ResonanceMolSupplier(mol, Chem.KEKULE_ALL)
@@ -4191,9 +4197,8 @@ $$$$
     resMolSuppl.SetProgressCallback(ExceedNumDiverseStructures(self))
     self.assertEqual(len(resMolSuppl), 9)
     self.assertTrue(resMolSuppl.WasCanceled())
-    resMolSuppl = Chem.ResonanceMolSupplier(mol, Chem.UNCONSTRAINED_CATIONS |
-                                            Chem.UNCONSTRAINED_ANIONS |
-                                            Chem.KEKULE_ALL)
+    resMolSuppl = Chem.ResonanceMolSupplier(
+      mol, Chem.UNCONSTRAINED_CATIONS | Chem.UNCONSTRAINED_ANIONS | Chem.KEKULE_ALL)
     resMolSuppl.SetProgressCallback(ExceedTimeout(self))
     resMolSuppl.Enumerate()
     print(len(resMolSuppl))
@@ -4910,7 +4915,6 @@ M  END
     self.assertEqual(b.Size(), 3)
     b.AddMol(Chem.MolFromSmiles('CCCC'))
     self.assertEqual(b.Size(), 4)
-
 
   def testGithub1622(self):
     nonaromatics = (
@@ -6097,6 +6101,46 @@ M  END
                                      includeCIP=True)
     self.assertEqual(len(ctrs), 2)
     self.assertEqual(ctrs, [(1, 'S'), (5, '?')])
+
+  def testMolFromPNG(self):
+    fileN = os.path.join(RDConfig.RDBaseDir, 'Code', 'GraphMol', 'FileParsers', 'test_data',
+                         'colchicine.png')
+    mol = Chem.MolFromPNGFile(fileN)
+    self.assertIsNotNone(mol)
+    self.assertEqual(mol.GetNumAtoms(), 29)
+
+    d = open(fileN, 'rb').read()
+    mol = Chem.MolFromPNGString(d)
+    self.assertIsNotNone(mol)
+    self.assertEqual(mol.GetNumAtoms(), 29)
+
+  def testMolToPNG(self):
+    fileN = os.path.join(RDConfig.RDBaseDir, 'Code', 'GraphMol', 'FileParsers', 'test_data',
+                         'colchicine.no_metadata.png')
+
+    d = open(fileN, 'rb').read()
+    mol = Chem.MolFromSmiles("COc1cc2c(c(OC)c1OC)-c1ccc(OC)c(=O)cc1[C@@H](NC(C)=O)CC2")
+    self.assertIsNotNone(mol)
+    self.assertEqual(mol.GetNumAtoms(), 29)
+
+    nd = Chem.MolMetadataToPNGString(mol, d)
+    mol = Chem.MolFromPNGString(nd)
+    self.assertIsNotNone(mol)
+    self.assertEqual(mol.GetNumAtoms(), 29)
+
+    nd = Chem.MolMetadataToPNGFile(mol, fileN)
+    mol = Chem.MolFromPNGString(nd)
+    self.assertIsNotNone(mol)
+    self.assertEqual(mol.GetNumAtoms(), 29)
+
+  def testMolsFromPNG(self):
+    refMols = [Chem.MolFromSmiles(x) for x in ('c1ccccc1', 'CCO', 'CC(=O)O', 'c1ccccn1')]
+    fileN = os.path.join(RDConfig.RDBaseDir, 'Code', 'GraphMol', 'FileParsers', 'test_data',
+                         'multiple_mols.png')
+    mols = Chem.MolsFromPNGFile(fileN)
+    self.assertEqual(len(mols), len(refMols))
+    for mol, refMol in zip(mols, refMols):
+      self.assertEqual(Chem.MolToSmiles(mol), Chem.MolToSmiles(refMol))
 
 
 if __name__ == '__main__':

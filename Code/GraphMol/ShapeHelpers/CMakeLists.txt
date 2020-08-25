@@ -1,8 +1,7 @@
 
-remove_definitions(-DRDKIT_GRAPHMOL_BUILD)
-add_definitions(-DRDKIT_SHAPEHELPERS_BUILD)
 rdkit_library(ShapeHelpers ShapeEncoder.cpp ShapeUtils.cpp
               LINK_LIBRARIES MolTransforms GraphMol RDGeneral)
+target_compile_definitions(ShapeHelpers PRIVATE RDKIT_SHAPEHELPERS_BUILD)
 
 rdkit_headers(ShapeEncoder.h
               ShapeUtils.h DEST GraphMol/ShapeHelpers)

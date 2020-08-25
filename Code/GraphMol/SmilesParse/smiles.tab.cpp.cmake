@@ -85,6 +85,7 @@
 #include <iostream>
 #include <vector>
 #include <list>
+#include <limits>
 
 #include <GraphMol/RDKitBase.h>
 #include <GraphMol/SmilesParse/SmilesParse.h>
@@ -142,7 +143,7 @@ yysmiles_error( const char *input,
 
 
 
-#line 146 "/scratch/RDKit_git/Code/GraphMol/SmilesParse/smiles.tab.cpp"
+#line 147 "/scratch/RDKit_git/Code/GraphMol/SmilesParse/smiles.tab.cpp"
 
 # ifndef YY_CAST
 #  ifdef __cplusplus
@@ -223,14 +224,14 @@ extern int yysmiles_debug;
 #if ! defined YYSTYPE && ! defined YYSTYPE_IS_DECLARED
 union YYSTYPE
 {
-#line 88 "smiles.yy"
+#line 89 "smiles.yy"
 
   int                      moli;
   RDKit::Atom * atom;
   RDKit::Bond * bond;
   int                      ival;
 
-#line 234 "/scratch/RDKit_git/Code/GraphMol/SmilesParse/smiles.tab.cpp"
+#line 235 "/scratch/RDKit_git/Code/GraphMol/SmilesParse/smiles.tab.cpp"
 
 };
 typedef union YYSTYPE YYSTYPE;
@@ -242,12 +243,12 @@ typedef union YYSTYPE YYSTYPE;
 
 int yysmiles_parse (const char *input, std::vector<RDKit::RWMol *> *molList, RDKit::Atom* &lastAtom, RDKit::Bond* &lastBond, std::list<unsigned int> *branchPoints, void *scanner, int& start_token);
 /* "%code provides" blocks.  */
-#line 83 "smiles.yy"
+#line 84 "smiles.yy"
 
 #define YY_DECL int yylex \
                (YYSTYPE * yylval_param , yyscan_t yyscanner, int& start_token)
 
-#line 251 "/scratch/RDKit_git/Code/GraphMol/SmilesParse/smiles.tab.cpp"
+#line 252 "/scratch/RDKit_git/Code/GraphMol/SmilesParse/smiles.tab.cpp"
 
 #endif /* !YY_YYSMILES_SCRATCH_RDKIT_GIT_CODE_GRAPHMOL_SMILESPARSE_SMILES_TAB_HPP_INCLUDED  */
 
@@ -614,14 +615,14 @@ static const yytype_int8 yytranslate[] =
   /* YYRLINE[YYN] -- Source line where rule number YYN was defined.  */
 static const yytype_int16 yyrline[] =
 {
-       0,   118,   118,   121,   125,   128,   132,   136,   139,   144,
-     147,   155,   156,   157,   158,   166,   177,   187,   207,   215,
-     221,   239,   260,   276,   286,   306,   314,   327,   328,   334,
-     335,   341,   349,   350,   351,   352,   353,   354,   355,   359,
-     360,   361,   362,   363,   364,   365,   366,   367,   371,   372,
-     373,   377,   378,   379,   380,   381,   382,   386,   387,   391,
-     392,   393,   394,   395,   396,   397,   401,   402,   406,   407,
-     410,   411
+       0,   119,   119,   122,   126,   129,   133,   137,   140,   145,
+     148,   156,   157,   158,   159,   167,   178,   188,   208,   216,
+     222,   240,   261,   277,   287,   307,   315,   328,   329,   335,
+     336,   342,   350,   351,   352,   353,   354,   355,   356,   360,
+     361,   362,   363,   364,   365,   366,   367,   368,   372,   373,
+     374,   378,   379,   380,   381,   382,   383,   387,   388,   392,
+     393,   394,   395,   396,   397,   398,   402,   403,   407,   408,
+     419,   420
 };
 #endif
 
@@ -1245,69 +1246,69 @@ yydestruct (const char *yymsg, int yytype, YYSTYPE *yyvaluep, const char *input,
   switch (yytype)
     {
     case 6: /* AROMATIC_ATOM_TOKEN  */
-#line 109 "smiles.yy"
+#line 110 "smiles.yy"
             { delete ((*yyvaluep).atom); }
-#line 1251 "/scratch/RDKit_git/Code/GraphMol/SmilesParse/smiles.tab.cpp"
+#line 1252 "/scratch/RDKit_git/Code/GraphMol/SmilesParse/smiles.tab.cpp"
         break;
 
     case 7: /* ATOM_TOKEN  */
-#line 109 "smiles.yy"
+#line 110 "smiles.yy"
             { delete ((*yyvaluep).atom); }
-#line 1257 "/scratch/RDKit_git/Code/GraphMol/SmilesParse/smiles.tab.cpp"
+#line 1258 "/scratch/RDKit_git/Code/GraphMol/SmilesParse/smiles.tab.cpp"
         break;
 
     case 8: /* ORGANIC_ATOM_TOKEN  */
-#line 109 "smiles.yy"
+#line 110 "smiles.yy"
             { delete ((*yyvaluep).atom); }
-#line 1263 "/scratch/RDKit_git/Code/GraphMol/SmilesParse/smiles.tab.cpp"
+#line 1264 "/scratch/RDKit_git/Code/GraphMol/SmilesParse/smiles.tab.cpp"
         break;
 
     case 25: /* BOND_TOKEN  */
-#line 110 "smiles.yy"
+#line 111 "smiles.yy"
             { delete ((*yyvaluep).bond); }
-#line 1269 "/scratch/RDKit_git/Code/GraphMol/SmilesParse/smiles.tab.cpp"
+#line 1270 "/scratch/RDKit_git/Code/GraphMol/SmilesParse/smiles.tab.cpp"
         break;
 
     case 33: /* bondd  */
-#line 110 "smiles.yy"
+#line 111 "smiles.yy"
             { delete ((*yyvaluep).bond); }
-#line 1275 "/scratch/RDKit_git/Code/GraphMol/SmilesParse/smiles.tab.cpp"
+#line 1276 "/scratch/RDKit_git/Code/GraphMol/SmilesParse/smiles.tab.cpp"
         break;
 
     case 34: /* atomd  */
-#line 109 "smiles.yy"
+#line 110 "smiles.yy"
             { delete ((*yyvaluep).atom); }
-#line 1281 "/scratch/RDKit_git/Code/GraphMol/SmilesParse/smiles.tab.cpp"
+#line 1282 "/scratch/RDKit_git/Code/GraphMol/SmilesParse/smiles.tab.cpp"
         break;
 
     case 35: /* charge_element  */
-#line 109 "smiles.yy"
+#line 110 "smiles.yy"
             { delete ((*yyvaluep).atom); }
-#line 1287 "/scratch/RDKit_git/Code/GraphMol/SmilesParse/smiles.tab.cpp"
+#line 1288 "/scratch/RDKit_git/Code/GraphMol/SmilesParse/smiles.tab.cpp"
         break;
 
     case 36: /* h_element  */
-#line 109 "smiles.yy"
+#line 110 "smiles.yy"
             { delete ((*yyvaluep).atom); }
-#line 1293 "/scratch/RDKit_git/Code/GraphMol/SmilesParse/smiles.tab.cpp"
+#line 1294 "/scratch/RDKit_git/Code/GraphMol/SmilesParse/smiles.tab.cpp"
         break;
 
     case 37: /* chiral_element  */
-#line 109 "smiles.yy"
+#line 110 "smiles.yy"
             { delete ((*yyvaluep).atom); }
-#line 1299 "/scratch/RDKit_git/Code/GraphMol/SmilesParse/smiles.tab.cpp"
+#line 1300 "/scratch/RDKit_git/Code/GraphMol/SmilesParse/smiles.tab.cpp"
         break;
 
     case 38: /* element  */
-#line 109 "smiles.yy"
+#line 110 "smiles.yy"
             { delete ((*yyvaluep).atom); }
-#line 1305 "/scratch/RDKit_git/Code/GraphMol/SmilesParse/smiles.tab.cpp"
+#line 1306 "/scratch/RDKit_git/Code/GraphMol/SmilesParse/smiles.tab.cpp"
         break;
 
     case 39: /* simple_atom  */
-#line 109 "smiles.yy"
+#line 110 "smiles.yy"
             { delete ((*yyvaluep).atom); }
-#line 1311 "/scratch/RDKit_git/Code/GraphMol/SmilesParse/smiles.tab.cpp"
+#line 1312 "/scratch/RDKit_git/Code/GraphMol/SmilesParse/smiles.tab.cpp"
         break;
 
       default:
@@ -1579,95 +1580,95 @@ yyreduce:
   switch (yyn)
     {
   case 2:
-#line 118 "smiles.yy"
+#line 119 "smiles.yy"
               {
 // the molList has already been updated, no need to do anything
 }
-#line 1587 "/scratch/RDKit_git/Code/GraphMol/SmilesParse/smiles.tab.cpp"
+#line 1588 "/scratch/RDKit_git/Code/GraphMol/SmilesParse/smiles.tab.cpp"
     break;
 
   case 3:
-#line 121 "smiles.yy"
+#line 122 "smiles.yy"
                              {
   lastAtom = (yyvsp[-1].atom);
   YYACCEPT;
 }
-#line 1596 "/scratch/RDKit_git/Code/GraphMol/SmilesParse/smiles.tab.cpp"
+#line 1597 "/scratch/RDKit_git/Code/GraphMol/SmilesParse/smiles.tab.cpp"
     break;
 
   case 4:
-#line 125 "smiles.yy"
+#line 126 "smiles.yy"
                           {
   YYABORT;
 }
-#line 1604 "/scratch/RDKit_git/Code/GraphMol/SmilesParse/smiles.tab.cpp"
+#line 1605 "/scratch/RDKit_git/Code/GraphMol/SmilesParse/smiles.tab.cpp"
     break;
 
   case 5:
-#line 128 "smiles.yy"
+#line 129 "smiles.yy"
                              {
   lastBond = (yyvsp[-1].bond);
   YYACCEPT;
 }
-#line 1613 "/scratch/RDKit_git/Code/GraphMol/SmilesParse/smiles.tab.cpp"
+#line 1614 "/scratch/RDKit_git/Code/GraphMol/SmilesParse/smiles.tab.cpp"
     break;
 
   case 6:
-#line 132 "smiles.yy"
+#line 133 "smiles.yy"
                    {
   delete (yyvsp[0].bond);
   YYABORT;
 }
-#line 1622 "/scratch/RDKit_git/Code/GraphMol/SmilesParse/smiles.tab.cpp"
+#line 1623 "/scratch/RDKit_git/Code/GraphMol/SmilesParse/smiles.tab.cpp"
     break;
 
   case 7:
-#line 136 "smiles.yy"
+#line 137 "smiles.yy"
              {
   YYABORT;
 }
-#line 1630 "/scratch/RDKit_git/Code/GraphMol/SmilesParse/smiles.tab.cpp"
+#line 1631 "/scratch/RDKit_git/Code/GraphMol/SmilesParse/smiles.tab.cpp"
     break;
 
   case 8:
-#line 139 "smiles.yy"
+#line 140 "smiles.yy"
                             {
   yyerrok;
   yyErrorCleanup(molList);
   YYABORT;
 }
-#line 1640 "/scratch/RDKit_git/Code/GraphMol/SmilesParse/smiles.tab.cpp"
+#line 1641 "/scratch/RDKit_git/Code/GraphMol/SmilesParse/smiles.tab.cpp"
     break;
 
   case 9:
-#line 144 "smiles.yy"
+#line 145 "smiles.yy"
                        {
   YYACCEPT;
 }
-#line 1648 "/scratch/RDKit_git/Code/GraphMol/SmilesParse/smiles.tab.cpp"
+#line 1649 "/scratch/RDKit_git/Code/GraphMol/SmilesParse/smiles.tab.cpp"
     break;
 
   case 10:
-#line 147 "smiles.yy"
+#line 148 "smiles.yy"
                   {
   yyerrok;
   yyErrorCleanup(molList);
   YYABORT;
 }
-#line 1658 "/scratch/RDKit_git/Code/GraphMol/SmilesParse/smiles.tab.cpp"
+#line 1659 "/scratch/RDKit_git/Code/GraphMol/SmilesParse/smiles.tab.cpp"
     break;
 
   case 14:
-#line 158 "smiles.yy"
+#line 159 "smiles.yy"
                  {
   delete (yyvsp[0].atom);
   YYABORT;
 }
-#line 1667 "/scratch/RDKit_git/Code/GraphMol/SmilesParse/smiles.tab.cpp"
+#line 1668 "/scratch/RDKit_git/Code/GraphMol/SmilesParse/smiles.tab.cpp"
     break;
 
   case 15:
-#line 166 "smiles.yy"
+#line 167 "smiles.yy"
            {
   int sz     = molList->size();
   molList->resize( sz + 1);
@@ -1678,11 +1679,11 @@ yyreduce:
   //delete $1;
   (yyval.moli) = sz;
 }
-#line 1682 "/scratch/RDKit_git/Code/GraphMol/SmilesParse/smiles.tab.cpp"
+#line 1683 "/scratch/RDKit_git/Code/GraphMol/SmilesParse/smiles.tab.cpp"
     break;
 
   case 16:
-#line 177 "smiles.yy"
+#line 178 "smiles.yy"
                   {
   RWMol *mp = (*molList)[(yyval.moli)];
   Atom *a1 = mp->getActiveAtom();
@@ -1692,11 +1693,11 @@ yyreduce:
 	      SmilesParseOps::GetUnspecifiedBondType(mp,a1,mp->getAtomWithIdx(atomIdx2)));
   //delete $2;
 }
-#line 1696 "/scratch/RDKit_git/Code/GraphMol/SmilesParse/smiles.tab.cpp"
+#line 1697 "/scratch/RDKit_git/Code/GraphMol/SmilesParse/smiles.tab.cpp"
     break;
 
   case 17:
-#line 187 "smiles.yy"
+#line 188 "smiles.yy"
                         {
   RWMol *mp = (*molList)[(yyval.moli)];
   int atomIdx1 = mp->getActiveAtom()->getIdx();
@@ -1716,11 +1717,11 @@ yyreduce:
   mp->addBond((yyvsp[-1].bond),true);
   //delete $3;
 }
-#line 1720 "/scratch/RDKit_git/Code/GraphMol/SmilesParse/smiles.tab.cpp"
+#line 1721 "/scratch/RDKit_git/Code/GraphMol/SmilesParse/smiles.tab.cpp"
     break;
 
   case 18:
-#line 207 "smiles.yy"
+#line 208 "smiles.yy"
                         {
   RWMol *mp = (*molList)[(yyval.moli)];
   int atomIdx1 = mp->getActiveAtom()->getIdx();
@@ -1728,21 +1729,21 @@ yyreduce:
   mp->addBond(atomIdx1,atomIdx2,Bond::SINGLE);
   //delete $3;
 }
-#line 1732 "/scratch/RDKit_git/Code/GraphMol/SmilesParse/smiles.tab.cpp"
+#line 1733 "/scratch/RDKit_git/Code/GraphMol/SmilesParse/smiles.tab.cpp"
     break;
 
   case 19:
-#line 215 "smiles.yy"
+#line 216 "smiles.yy"
                             {
   RWMol *mp = (*molList)[(yyval.moli)];
   (yyvsp[0].atom)->setProp(RDKit::common_properties::_SmilesStart,1,true);
   mp->addAtom((yyvsp[0].atom),true,true);
 }
-#line 1742 "/scratch/RDKit_git/Code/GraphMol/SmilesParse/smiles.tab.cpp"
+#line 1743 "/scratch/RDKit_git/Code/GraphMol/SmilesParse/smiles.tab.cpp"
     break;
 
   case 20:
-#line 221 "smiles.yy"
+#line 222 "smiles.yy"
                   {
   RWMol * mp = (*molList)[(yyval.moli)];
   Atom *atom=mp->getActiveAtom();
@@ -1760,11 +1761,11 @@ yyreduce:
   tmp.push_back(-((yyvsp[0].ival)+1));
   atom->setProp(RDKit::common_properties::_RingClosures,tmp);
 }
-#line 1764 "/scratch/RDKit_git/Code/GraphMol/SmilesParse/smiles.tab.cpp"
+#line 1765 "/scratch/RDKit_git/Code/GraphMol/SmilesParse/smiles.tab.cpp"
     break;
 
   case 21:
-#line 239 "smiles.yy"
+#line 240 "smiles.yy"
                              {
   RWMol * mp = (*molList)[(yyval.moli)];
   Atom *atom=mp->getActiveAtom();
@@ -1785,11 +1786,11 @@ yyreduce:
   atom->setProp(RDKit::common_properties::_RingClosures,tmp);
   delete (yyvsp[-1].bond);
 }
-#line 1789 "/scratch/RDKit_git/Code/GraphMol/SmilesParse/smiles.tab.cpp"
+#line 1790 "/scratch/RDKit_git/Code/GraphMol/SmilesParse/smiles.tab.cpp"
     break;
 
   case 22:
-#line 260 "smiles.yy"
+#line 261 "smiles.yy"
                               {
   RWMol * mp = (*molList)[(yyval.moli)];
   Atom *atom=mp->getActiveAtom();
@@ -1805,11 +1806,11 @@ yyreduce:
   tmp.push_back(-((yyvsp[0].ival)+1));
   atom->setProp(RDKit::common_properties::_RingClosures,tmp);
 }
-#line 1809 "/scratch/RDKit_git/Code/GraphMol/SmilesParse/smiles.tab.cpp"
+#line 1810 "/scratch/RDKit_git/Code/GraphMol/SmilesParse/smiles.tab.cpp"
     break;
 
   case 23:
-#line 276 "smiles.yy"
+#line 277 "smiles.yy"
                              {
   RWMol *mp = (*molList)[(yyval.moli)];
   Atom *a1 = mp->getActiveAtom();
@@ -1820,11 +1821,11 @@ yyreduce:
   //delete $3;
   branchPoints->push_back(atomIdx1);
 }
-#line 1824 "/scratch/RDKit_git/Code/GraphMol/SmilesParse/smiles.tab.cpp"
+#line 1825 "/scratch/RDKit_git/Code/GraphMol/SmilesParse/smiles.tab.cpp"
     break;
 
   case 24:
-#line 286 "smiles.yy"
+#line 287 "smiles.yy"
                                          {
   RWMol *mp = (*molList)[(yyval.moli)];
   int atomIdx1 = mp->getActiveAtom()->getIdx();
@@ -1845,11 +1846,11 @@ yyreduce:
   //delete $4;
   branchPoints->push_back(atomIdx1);
 }
-#line 1849 "/scratch/RDKit_git/Code/GraphMol/SmilesParse/smiles.tab.cpp"
+#line 1850 "/scratch/RDKit_git/Code/GraphMol/SmilesParse/smiles.tab.cpp"
     break;
 
   case 25:
-#line 306 "smiles.yy"
+#line 307 "smiles.yy"
                                          {
   RWMol *mp = (*molList)[(yyval.moli)];
   int atomIdx1 = mp->getActiveAtom()->getIdx();
@@ -1858,11 +1859,11 @@ yyreduce:
   //delete $4;
   branchPoints->push_back(atomIdx1);
 }
-#line 1862 "/scratch/RDKit_git/Code/GraphMol/SmilesParse/smiles.tab.cpp"
+#line 1863 "/scratch/RDKit_git/Code/GraphMol/SmilesParse/smiles.tab.cpp"
     break;
 
   case 26:
-#line 314 "smiles.yy"
+#line 315 "smiles.yy"
                         {
   if(branchPoints->empty()){
      yyerror(input,molList,branchPoints,scanner,start_token,"extra close parentheses");
@@ -1873,200 +1874,208 @@ yyreduce:
   mp->setActiveAtom(branchPoints->back());
   branchPoints->pop_back();
 }
-#line 1877 "/scratch/RDKit_git/Code/GraphMol/SmilesParse/smiles.tab.cpp"
+#line 1878 "/scratch/RDKit_git/Code/GraphMol/SmilesParse/smiles.tab.cpp"
     break;
 
   case 28:
-#line 328 "smiles.yy"
+#line 329 "smiles.yy"
                         {
           (yyval.bond) = new Bond(Bond::SINGLE);
           }
-#line 1885 "/scratch/RDKit_git/Code/GraphMol/SmilesParse/smiles.tab.cpp"
+#line 1886 "/scratch/RDKit_git/Code/GraphMol/SmilesParse/smiles.tab.cpp"
     break;
 
   case 30:
-#line 336 "smiles.yy"
+#line 337 "smiles.yy"
 {
   (yyval.atom) = (yyvsp[-3].atom);
   (yyval.atom)->setNoImplicit(true);
   (yyval.atom)->setProp(RDKit::common_properties::molAtomMapNumber,(yyvsp[-1].ival));
 }
-#line 1895 "/scratch/RDKit_git/Code/GraphMol/SmilesParse/smiles.tab.cpp"
+#line 1896 "/scratch/RDKit_git/Code/GraphMol/SmilesParse/smiles.tab.cpp"
     break;
 
   case 31:
-#line 342 "smiles.yy"
+#line 343 "smiles.yy"
 {
   (yyval.atom) = (yyvsp[-1].atom);
   (yyvsp[-1].atom)->setNoImplicit(true);
 }
-#line 1904 "/scratch/RDKit_git/Code/GraphMol/SmilesParse/smiles.tab.cpp"
+#line 1905 "/scratch/RDKit_git/Code/GraphMol/SmilesParse/smiles.tab.cpp"
     break;
 
   case 33:
-#line 350 "smiles.yy"
+#line 351 "smiles.yy"
                        { (yyvsp[-1].atom)->setFormalCharge(1); }
-#line 1910 "/scratch/RDKit_git/Code/GraphMol/SmilesParse/smiles.tab.cpp"
+#line 1911 "/scratch/RDKit_git/Code/GraphMol/SmilesParse/smiles.tab.cpp"
     break;
 
   case 34:
-#line 351 "smiles.yy"
+#line 352 "smiles.yy"
                                   { (yyvsp[-2].atom)->setFormalCharge(2); }
-#line 1916 "/scratch/RDKit_git/Code/GraphMol/SmilesParse/smiles.tab.cpp"
+#line 1917 "/scratch/RDKit_git/Code/GraphMol/SmilesParse/smiles.tab.cpp"
     break;
 
   case 35:
-#line 352 "smiles.yy"
+#line 353 "smiles.yy"
                               { (yyvsp[-2].atom)->setFormalCharge((yyvsp[0].ival)); }
-#line 1922 "/scratch/RDKit_git/Code/GraphMol/SmilesParse/smiles.tab.cpp"
+#line 1923 "/scratch/RDKit_git/Code/GraphMol/SmilesParse/smiles.tab.cpp"
     break;
 
   case 36:
-#line 353 "smiles.yy"
+#line 354 "smiles.yy"
                         { (yyvsp[-1].atom)->setFormalCharge(-1); }
-#line 1928 "/scratch/RDKit_git/Code/GraphMol/SmilesParse/smiles.tab.cpp"
+#line 1929 "/scratch/RDKit_git/Code/GraphMol/SmilesParse/smiles.tab.cpp"
     break;
 
   case 37:
-#line 354 "smiles.yy"
+#line 355 "smiles.yy"
                                     { (yyvsp[-2].atom)->setFormalCharge(-2); }
-#line 1934 "/scratch/RDKit_git/Code/GraphMol/SmilesParse/smiles.tab.cpp"
+#line 1935 "/scratch/RDKit_git/Code/GraphMol/SmilesParse/smiles.tab.cpp"
     break;
 
   case 38:
-#line 355 "smiles.yy"
+#line 356 "smiles.yy"
                                { (yyvsp[-2].atom)->setFormalCharge(-(yyvsp[0].ival)); }
-#line 1940 "/scratch/RDKit_git/Code/GraphMol/SmilesParse/smiles.tab.cpp"
+#line 1941 "/scratch/RDKit_git/Code/GraphMol/SmilesParse/smiles.tab.cpp"
     break;
 
   case 39:
-#line 359 "smiles.yy"
+#line 360 "smiles.yy"
                         { (yyval.atom) = new Atom(1); }
-#line 1946 "/scratch/RDKit_git/Code/GraphMol/SmilesParse/smiles.tab.cpp"
+#line 1947 "/scratch/RDKit_git/Code/GraphMol/SmilesParse/smiles.tab.cpp"
     break;
 
   case 40:
-#line 360 "smiles.yy"
+#line 361 "smiles.yy"
                                  { (yyval.atom) = new Atom(1); (yyval.atom)->setIsotope((yyvsp[-1].ival)); }
-#line 1952 "/scratch/RDKit_git/Code/GraphMol/SmilesParse/smiles.tab.cpp"
+#line 1953 "/scratch/RDKit_git/Code/GraphMol/SmilesParse/smiles.tab.cpp"
     break;
 
   case 41:
-#line 361 "smiles.yy"
+#line 362 "smiles.yy"
                                   { (yyval.atom) = new Atom(1); (yyval.atom)->setNumExplicitHs(1); }
-#line 1958 "/scratch/RDKit_git/Code/GraphMol/SmilesParse/smiles.tab.cpp"
+#line 1959 "/scratch/RDKit_git/Code/GraphMol/SmilesParse/smiles.tab.cpp"
     break;
 
   case 42:
-#line 362 "smiles.yy"
+#line 363 "smiles.yy"
                                          { (yyval.atom) = new Atom(1); (yyval.atom)->setIsotope((yyvsp[-2].ival)); (yyval.atom)->setNumExplicitHs(1);}
-#line 1964 "/scratch/RDKit_git/Code/GraphMol/SmilesParse/smiles.tab.cpp"
+#line 1965 "/scratch/RDKit_git/Code/GraphMol/SmilesParse/smiles.tab.cpp"
     break;
 
   case 43:
-#line 363 "smiles.yy"
+#line 364 "smiles.yy"
                                          { (yyval.atom) = new Atom(1); (yyval.atom)->setNumExplicitHs((yyvsp[0].ival)); }
-#line 1970 "/scratch/RDKit_git/Code/GraphMol/SmilesParse/smiles.tab.cpp"
+#line 1971 "/scratch/RDKit_git/Code/GraphMol/SmilesParse/smiles.tab.cpp"
     break;
 
   case 44:
-#line 364 "smiles.yy"
+#line 365 "smiles.yy"
                                                 { (yyval.atom) = new Atom(1); (yyval.atom)->setIsotope((yyvsp[-3].ival)); (yyval.atom)->setNumExplicitHs((yyvsp[0].ival));}
-#line 1976 "/scratch/RDKit_git/Code/GraphMol/SmilesParse/smiles.tab.cpp"
+#line 1977 "/scratch/RDKit_git/Code/GraphMol/SmilesParse/smiles.tab.cpp"
     break;
 
   case 46:
-#line 366 "smiles.yy"
+#line 367 "smiles.yy"
                                                         { (yyval.atom) = (yyvsp[-1].atom); (yyvsp[-1].atom)->setNumExplicitHs(1);}
-#line 1982 "/scratch/RDKit_git/Code/GraphMol/SmilesParse/smiles.tab.cpp"
+#line 1983 "/scratch/RDKit_git/Code/GraphMol/SmilesParse/smiles.tab.cpp"
     break;
 
   case 47:
-#line 367 "smiles.yy"
+#line 368 "smiles.yy"
                                                 { (yyval.atom) = (yyvsp[-2].atom); (yyvsp[-2].atom)->setNumExplicitHs((yyvsp[0].ival));}
-#line 1988 "/scratch/RDKit_git/Code/GraphMol/SmilesParse/smiles.tab.cpp"
+#line 1989 "/scratch/RDKit_git/Code/GraphMol/SmilesParse/smiles.tab.cpp"
     break;
 
   case 49:
-#line 372 "smiles.yy"
+#line 373 "smiles.yy"
                    { (yyvsp[-1].atom)->setChiralTag(Atom::CHI_TETRAHEDRAL_CCW); }
-#line 1994 "/scratch/RDKit_git/Code/GraphMol/SmilesParse/smiles.tab.cpp"
+#line 1995 "/scratch/RDKit_git/Code/GraphMol/SmilesParse/smiles.tab.cpp"
     break;
 
   case 50:
-#line 373 "smiles.yy"
+#line 374 "smiles.yy"
                             { (yyvsp[-2].atom)->setChiralTag(Atom::CHI_TETRAHEDRAL_CW); }
-#line 2000 "/scratch/RDKit_git/Code/GraphMol/SmilesParse/smiles.tab.cpp"
+#line 2001 "/scratch/RDKit_git/Code/GraphMol/SmilesParse/smiles.tab.cpp"
     break;
 
   case 52:
-#line 378 "smiles.yy"
+#line 379 "smiles.yy"
                                            { (yyvsp[0].atom)->setIsotope( (yyvsp[-1].ival) ); (yyval.atom) = (yyvsp[0].atom); }
-#line 2006 "/scratch/RDKit_git/Code/GraphMol/SmilesParse/smiles.tab.cpp"
+#line 2007 "/scratch/RDKit_git/Code/GraphMol/SmilesParse/smiles.tab.cpp"
     break;
 
   case 54:
-#line 380 "smiles.yy"
+#line 381 "smiles.yy"
                                                    { (yyvsp[0].atom)->setIsotope( (yyvsp[-1].ival) ); (yyval.atom) = (yyvsp[0].atom); }
-#line 2012 "/scratch/RDKit_git/Code/GraphMol/SmilesParse/smiles.tab.cpp"
+#line 2013 "/scratch/RDKit_git/Code/GraphMol/SmilesParse/smiles.tab.cpp"
     break;
 
   case 55:
-#line 381 "smiles.yy"
+#line 382 "smiles.yy"
                                                  { (yyval.atom) = new Atom((yyvsp[0].ival)); }
-#line 2018 "/scratch/RDKit_git/Code/GraphMol/SmilesParse/smiles.tab.cpp"
+#line 2019 "/scratch/RDKit_git/Code/GraphMol/SmilesParse/smiles.tab.cpp"
     break;
 
   case 56:
-#line 382 "smiles.yy"
+#line 383 "smiles.yy"
                                                          { (yyval.atom) = new Atom((yyvsp[0].ival)); (yyval.atom)->setIsotope((yyvsp[-2].ival)); }
-#line 2024 "/scratch/RDKit_git/Code/GraphMol/SmilesParse/smiles.tab.cpp"
+#line 2025 "/scratch/RDKit_git/Code/GraphMol/SmilesParse/smiles.tab.cpp"
     break;
 
   case 60:
-#line 392 "smiles.yy"
+#line 393 "smiles.yy"
                                           { (yyval.ival) = (yyvsp[-1].ival)*10+(yyvsp[0].ival); }
-#line 2030 "/scratch/RDKit_git/Code/GraphMol/SmilesParse/smiles.tab.cpp"
+#line 2031 "/scratch/RDKit_git/Code/GraphMol/SmilesParse/smiles.tab.cpp"
     break;
 
   case 61:
-#line 393 "smiles.yy"
+#line 394 "smiles.yy"
                                                          { (yyval.ival) = (yyvsp[-1].ival); }
-#line 2036 "/scratch/RDKit_git/Code/GraphMol/SmilesParse/smiles.tab.cpp"
+#line 2037 "/scratch/RDKit_git/Code/GraphMol/SmilesParse/smiles.tab.cpp"
     break;
 
   case 62:
-#line 394 "smiles.yy"
+#line 395 "smiles.yy"
                                                                { (yyval.ival) = (yyvsp[-2].ival)*10+(yyvsp[-1].ival); }
-#line 2042 "/scratch/RDKit_git/Code/GraphMol/SmilesParse/smiles.tab.cpp"
+#line 2043 "/scratch/RDKit_git/Code/GraphMol/SmilesParse/smiles.tab.cpp"
     break;
 
   case 63:
-#line 395 "smiles.yy"
+#line 396 "smiles.yy"
                                                                      { (yyval.ival) = (yyvsp[-3].ival)*100+(yyvsp[-2].ival)*10+(yyvsp[-1].ival); }
-#line 2048 "/scratch/RDKit_git/Code/GraphMol/SmilesParse/smiles.tab.cpp"
+#line 2049 "/scratch/RDKit_git/Code/GraphMol/SmilesParse/smiles.tab.cpp"
     break;
 
   case 64:
-#line 396 "smiles.yy"
+#line 397 "smiles.yy"
                                                                            { (yyval.ival) = (yyvsp[-4].ival)*1000+(yyvsp[-3].ival)*100+(yyvsp[-2].ival)*10+(yyvsp[-1].ival); }
-#line 2054 "/scratch/RDKit_git/Code/GraphMol/SmilesParse/smiles.tab.cpp"
+#line 2055 "/scratch/RDKit_git/Code/GraphMol/SmilesParse/smiles.tab.cpp"
     break;
 
   case 65:
-#line 397 "smiles.yy"
+#line 398 "smiles.yy"
                                                                                  { (yyval.ival) = (yyvsp[-5].ival)*10000+(yyvsp[-4].ival)*1000+(yyvsp[-3].ival)*100+(yyvsp[-2].ival)*10+(yyvsp[-1].ival); }
-#line 2060 "/scratch/RDKit_git/Code/GraphMol/SmilesParse/smiles.tab.cpp"
+#line 2061 "/scratch/RDKit_git/Code/GraphMol/SmilesParse/smiles.tab.cpp"
     break;
 
   case 69:
-#line 407 "smiles.yy"
-                       { (yyval.ival) = (yyvsp[-1].ival)*10 + (yyvsp[0].ival); }
-#line 2066 "/scratch/RDKit_git/Code/GraphMol/SmilesParse/smiles.tab.cpp"
+#line 408 "smiles.yy"
+                       { 
+  if((yyvsp[-1].ival) >= std::numeric_limits<std::int32_t>::max()/10 || 
+     (yyvsp[-1].ival)*10 >= std::numeric_limits<std::int32_t>::max()-(yyvsp[0].ival) ){
+     yyerror(input,molList,branchPoints,scanner,start_token,"number too large");
+     yyErrorCleanup(molList);
+     YYABORT;
+  }
+  (yyval.ival) = (yyvsp[-1].ival)*10 + (yyvsp[0].ival); 
+  }
+#line 2075 "/scratch/RDKit_git/Code/GraphMol/SmilesParse/smiles.tab.cpp"
     break;
 
 
-#line 2070 "/scratch/RDKit_git/Code/GraphMol/SmilesParse/smiles.tab.cpp"
+#line 2079 "/scratch/RDKit_git/Code/GraphMol/SmilesParse/smiles.tab.cpp"
 
       default: break;
     }
@@ -2298,5 +2307,5 @@ yyreturn:
 #endif
   return yyresult;
 }
-#line 421 "smiles.yy"
+#line 430 "smiles.yy"
 
