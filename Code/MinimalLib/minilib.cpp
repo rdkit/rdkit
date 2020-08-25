@@ -493,3 +493,9 @@ JSMol *get_qmol(const std::string &input) {
 }
 
 std::string version() { return std::string(rdkitVersion); }
+
+void prefer_coordgen(bool useCoordGen) {
+#ifdef RDK_BUILD_COORDGEN_SUPPORT
+  RDDepict::preferCoordGen = useCoordGen;
+#endif
+}

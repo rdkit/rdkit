@@ -51,6 +51,7 @@ EMSCRIPTEN_BINDINGS(RDKit_minimal) {
       .function("remove_hs", &JSMol::remove_hs);
 
   function("version", &version);
+  function("prefer_coordgen", &prefer_coordgen);
   function("get_inchikey_for_inchi", &get_inchikey_for_inchi);
   function("get_mol", &get_mol, allow_raw_pointers());
   function("get_qmol", &get_qmol, allow_raw_pointers());
