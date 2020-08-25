@@ -23,7 +23,6 @@
 namespace python = boost::python;
 
 namespace RDKit {
-
 std::string multiSmilesMolSupplierClassDoc =
     "A class which concurrently supplies molecules from a text file.\n\
 \n\
@@ -31,13 +30,16 @@ std::string multiSmilesMolSupplierClassDoc =
 \n\
     1) Lazy evaluation: the molecules might not be constructed until we ask for them:\n\n\
        >>> suppl = MultithreadedSmilesMolSupplier('in.smi')\n\
-       >>> while not suppl.atEnd():\n\
-			 ...    mol = next(suppl)\n\
-       ...    mol.GetNumAtoms()\n\
+       >>> for mol in suppl:\n\
+       ...    if(mol):\n\
+       ...      mol.GetNumAtoms()\n\
 \n\
-  If the input file has a title line and more than two columns (smiles and id), the\n\
-  additional columns will be used to set properties on each molecule.  The properties\n\
-  are accessible using the mol.GetProp(propName) method.\n\
+    2) Lazy evaluation 2:\n\n\
+       >>> suppl = MultithreadedSmilesMolSupplier('in.smi')\n\
+       >>> while (!suppl.atEnd()):\n\
+       ...    mol = next(mol)\n\
+       ...    if(mol):\n\
+       ...      mol.GetNumAtoms()\n\
 \n";
 
 std::string multiSmsDocStr =
@@ -46,7 +48,7 @@ std::string multiSmsDocStr =
 \n\
     - fileName: name of the file to be read\n\
 \n\
-    - delimiter: (optional) text delimiter (a string).  Defauts to ' '.\n\
+    - delimiter: (optional) text delimiter (a string).  Defauts to ' \t'.\n\
 \n\
     - smilesColumn: (optional) index of the column containing the SMILES\n\
       data.  Defaults to 0.\n\
@@ -55,16 +57,16 @@ std::string multiSmsDocStr =
       Defaults to 1.\n\
 \n\
     - titleLine: (optional) set this toggle if the file contains a title line.\n\
-      Defaults to 1.\n\
+      Defaults to true.\n\
 \n\
     - sanitize: (optional) toggles sanitization of molecules as they are read.\n\
-      Defaults to 1.\n\
+      Defaults to true.\n\
 \n\
-    - numWriterThreads: (optional) number of writer threads\n\
+    - numWriterThreads: (optional) number of writer threads. Defaults to 1.\n\
 \n\
-    - sizeInputQueue: (optional) size of input queue\n\
+    - sizeInputQueue: (optional) size of input/reader queue. Defaults to 5.\n\
 \n\
-    - sizeOutputQueue: (optional) size of output queue\n\
+    - sizeOutputQueue: (optional) size of output/writer queue. Defaults to 5.\n\
 \n";
 
 struct multiSmiMolSup_wrap {
