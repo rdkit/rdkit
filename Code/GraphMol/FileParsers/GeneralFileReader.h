@@ -17,6 +17,8 @@
 #include <vector>
 
 #include "MolSupplier.h"
+#include "MultithreadedSmilesMolSupplier.h"
+#include "MultithreadedSDMolSupplier.h"
 
 namespace RDKit {
 namespace GeneralMolSupplier {
@@ -34,6 +36,8 @@ struct SupplierOptions {
   std::string nameRecord = "";
   int confId2D = -1;
   int confId3D = 0;
+
+	unsigned int numWriterThreads = 0;
 };
 //! current supported file formats
 std::vector<std::string> supportedFileFormats{"sdf", "mae", "maegz", "smi",
@@ -94,34 +98,25 @@ MolSupplier* getSupplier(const std::string& path,
   }
 
   //! Dispatch to the appropriate supplier
-  if (fileFormat.compare("sdf") == 0) {
+  if (fileFormat == "sdf") {
+		if(opt.numWriterThreads > 0){
+			MultithreadedSDMolSupplier* sdsup = new MultithreadedSDMolSupplier(
+				strm, true, opt.sanitize, opt.removeHs, opt.strictParsing, opt.numWriterThreads);
+			return sdsup;			
+		} 
     ForwardSDMolSupplier* sdsup = new ForwardSDMolSupplier(
         strm, true, opt.sanitize, opt.removeHs, opt.strictParsing);
     return sdsup;
   }
 
-  else if (fileFormat == "smi") {
-    SmilesMolSupplier* smsup =
-        new SmilesMolSupplier(strm, true, opt.delimiter, opt.smilesColumn,
-                              opt.nameColumn, opt.titleLine, opt.sanitize);
-    return smsup;
-  }
-
-  else if (fileFormat == "csv") {
-    SmilesMolSupplier* smsup =
-        new SmilesMolSupplier(strm, true, opt.delimiter, opt.smilesColumn,
-                              opt.nameColumn, opt.titleLine, opt.sanitize);
-    return smsup;
-  }
-
-  else if (fileFormat == "txt") {
-    SmilesMolSupplier* smsup =
-        new SmilesMolSupplier(strm, true, opt.delimiter, opt.smilesColumn,
-                              opt.nameColumn, opt.titleLine, opt.sanitize);
-    return smsup;
-  }
-
-  else if (fileFormat == "tsv") {
+  else if (fileFormat == "smi" || fileFormat == "csv" || fileFormat == "txt" ||
+					 fileFormat == "tsv") {
+		if(opt.numWriterThreads > 0){
+			MultithreadedSmilesMolSupplier* smsup = new MultithreadedSmilesMolSupplier(
+				strm, true, opt.delimiter, opt.smilesColumn,  opt.nameColumn, opt.titleLine,
+				opt.sanitize, opt.numWriterThreads);
+			return smsup;
+		}
     SmilesMolSupplier* smsup =
         new SmilesMolSupplier(strm, true, opt.delimiter, opt.smilesColumn,
                               opt.nameColumn, opt.titleLine, opt.sanitize);

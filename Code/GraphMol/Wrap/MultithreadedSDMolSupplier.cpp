@@ -9,7 +9,6 @@
 //
 
 #define NO_IMPORT_ARRAY
-#include <RDBoost/iterator_next.h>
 #include <RDBoost/python.h>
 
 #include <string>
@@ -18,6 +17,7 @@
 #include <GraphMol/FileParsers/MultithreadedSDMolSupplier.h>
 #include <GraphMol/RDKitBase.h>
 #include <RDGeneral/FileParseException.h>
+
 #include "MolSupplier.h"
 #include "MultithreadedMolSupplier.h"
 
@@ -31,14 +31,17 @@ std::string multiSDMolSupplierClassDoc =
   Usage examples:\n\
 \n\
     1) Lazy evaluation: the molecules might not be constructed until we ask for them:\n\n\
-       >>> suppl = MultithreadedSDMolSupplier('in.smi')\n\
-       >>> while not suppl.atEnd():\n\
-			 ...    mol = next(mol)\n\
-       ...    mol.GetNumAtoms()\n\
+       >>> suppl = MultithreadedSDMolSupplier('in.sdf')\n\
+       >>> for mol in suppl:\n\
+       ...    if(mol):\n\
+       ...      mol.GetNumAtoms()\n\
 \n\
-  If the input file has a title line and more than two columns (smiles and id), the\n\
-  additional columns will be used to set properties on each molecule.  The properties\n\
-  are accessible using the mol.GetProp(propName) method.\n\
+    2) Lazy evaluation 2:\n\n\
+       >>> suppl = MultithreadedSDMolSupplier('in.sdf')\n\
+       >>> while (!suppl.atEnd()):\n\
+       ...    mol = next(mol)\n\
+       ...    if(mol):\n\
+       ...      mol.GetNumAtoms()\n\
 \n";
 
 std::string multiSdsDocStr =
@@ -48,17 +51,17 @@ std::string multiSdsDocStr =
     - fileName: name of the file to be read\n\
 \n\
     - sanitize: (optional) toggles sanitization of molecules as they are read.\n\
-      Defaults to 1.\n\
+      Defaults to true.\n\
 \n\
-    - removeHs: (optional) removes Hs\n\
+    - removeHs: (optional) removes Hs. Defaults to true.\n\
 \n\
-    - strictParsing: (optional) allows strict or lax parsing\n\
+    - strictParsing: (optional) allows strict or lax parsing. Defaults to true.\n\
 \n\
-    - numWriterThreads: (optional) number of writer threads\n\
+    - numWriterThreads: (optional) number of writer threads. Defaults to 1.\n\
 \n\
-    - sizeInputQueue: (optional) size of input queue\n\
+    - sizeInputQueue: (optional) size of input/reader queue. Defaults to 5.\n\
 \n\
-    - sizeOutputQueue: (optional) size of output queue\n\
+    - sizeOutputQueue: (optional) size of output/writer queue. Defaults to 5.\n\
 \n";
 
 struct multiSDMolSup_wrap {

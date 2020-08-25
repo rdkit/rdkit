@@ -82,6 +82,24 @@ void testSdf() {
   }
   TEST_ASSERT(i == 16);
 
+	//! Use Multithreaded Supplier
+  struct SupplierOptions optConcurrent;
+	optConcurrent.sanitize = false;
+	optConcurrent.numWriterThreads = 2; 
+  MolSupplier* sdsupMulti = getSupplier(fname, optConcurrent);
+  i = 0;
+  while (!sdsupMulti->atEnd()) {
+    ROMol* nmol = sdsupMulti->next();
+    if (nmol) {
+      TEST_ASSERT(nmol->hasProp(common_properties::_Name));
+      TEST_ASSERT(nmol->hasProp("NCI_AIDS_Antiviral_Screen_Conclusion"));
+      delete nmol;
+      i++;
+    }
+  }
+  TEST_ASSERT(i == 16);
+
+
   //! Open compressed SDF file format
   fname = rdbase + "/Code/GraphMol/FileParsers/test_data/NCI_aids_few.sdf.gz";
   opt.takeOwnership = false;
@@ -99,6 +117,7 @@ void testSdf() {
   TEST_ASSERT(i == 16);
 
   delete sdsup;
+	delete sdsupMulti;
   delete sdsup2;
 }
 
@@ -128,7 +147,23 @@ void testSmi() {
     i++;
   }
   TEST_ASSERT(i == 10);
+
+	//! Use Multithreaded Supplier  
+  opt_smi.numWriterThreads = 2;
+  MolSupplier* supMulti = getSupplier(fname, opt_smi);
+  i = 0;
+  while (!supMulti->atEnd()) {
+    ROMol* mol = supMulti->next();
+   	if(mol){
+			delete mol;
+  	  i++;
+		}
+  }
+  TEST_ASSERT(i == 10);
+
   delete sup;
+	delete supMulti;
+
 }
 
 void testMae() {
