@@ -153,7 +153,8 @@ void ANIAtomContrib::getGrad(double *pos, double *grad) const {
   pos[3 * this->d_atomIdx + 1] -= 2 * displacement;
   auto negYEnergy = this->dp_forceField->calcEnergy(pos);
 
-  grad[3 * this->d_atomIdx + 1] = (posYEnergy - negYEnergy) / (2 * displacement);
+  grad[3 * this->d_atomIdx + 1] =
+      (posYEnergy - negYEnergy) / (2 * displacement);
   pos[3 * this->d_atomIdx + 1] += displacement;
 
   // + - Z movement
@@ -163,7 +164,8 @@ void ANIAtomContrib::getGrad(double *pos, double *grad) const {
   pos[3 * this->d_atomIdx + 2] -= 2 * displacement;
   auto negZEnergy = this->dp_forceField->calcEnergy(pos);
 
-  grad[3 * this->d_atomIdx + 2] = (posZEnergy - negZEnergy) / (2 * displacement);
+  grad[3 * this->d_atomIdx + 2] =
+      (posZEnergy - negZEnergy) / (2 * displacement);
   pos[3 * this->d_atomIdx + 2] += displacement;
 }
 

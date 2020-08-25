@@ -221,7 +221,6 @@ TEST_CASE("Symmetry Function Accuracy", "[Symmetry Function]") {
     RDKit::Descriptors::ANI::AtomicEnvironmentVector(aev, *mol, &params,
                                                      confId);
 
-
     CHECK(aev.rows() == mol->getNumAtoms());
     CHECK(aev.cols() == 384);
 

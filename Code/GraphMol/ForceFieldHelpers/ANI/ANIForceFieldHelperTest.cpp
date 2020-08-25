@@ -57,7 +57,6 @@ TEST_CASE("Check ANI Force Field builder") {
     std::string filePath =
         pathName + "/Code/GraphMol/Descriptors/test_data/CH4.mol";
 
-
     auto mol = MolFileToMol(filePath, true, false);
     REQUIRE(mol);
     int confId = -1;
