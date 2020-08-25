@@ -1,0 +1,19 @@
+# [GSoC 2020] General File Reader and Multithreaded Mol Supplier
+## Overview
+The General File Reader, as the name suggests, provides the user with the appropriate `MolSupplier` object to parse a file of a given format. Thus for instance earlier if one wanted to parse a file of smiles, say`input.smi`, then one would need to explicitly construct an object `SmilesMolSupplier` with relevant constructor parameters. However, with the implementation provided in the GeneralFileReader, one can easily pass the file name along with supplier options to obtain the appropriate `MolSupplier` object determined by the file format. Furthermore, the General File Reader also provides an interface with Multithreaded Mol Suppliers for Smiles and SDF file formats. Besides the implementation[link], test cases are included here[link], demonstrating the utility of the General File Reader.
+
+The Multithreaded Mol Supplier provides a concurrent implementation of the usual base class `MolSupplier`. Due to time constraints, multithreaded versions of only Smiles, and SD Mol Suppliers were implemented. The motivation for this part stemmed from parsing large Smiles or SDF files. With the current implementation, the user for instance can construct the object `MultithreadedSmilesMolSupplier` with relevant constructor parameters to parse a given file. Besides the implementation[link], test cases are also included here[link] which demonstrate the correctness and performance of the `MultithreadedMolSupplier`.
+
+## Implementation
+Implementation of the General File Reader is quite concise and makes use of only two methods `determineFormat` and `getSupplier`. The former determines the file and the compression format given pathname, while the latter returns a pointer to `MolSupplier` object based on the pathname and the `SupplierOptions`.
+
+Regarding the implementation of the `MultithreadedMolSupplier`, the first step was to implement a thread-safe blocking queue of fixed capacity. This would allow us to extract and process records from the file concurrently. The concurrent queue was implemented with a single lock and two condition variables to signal whether the queue was empty or full. Test cases checking the correctness of the `ConcurrentQueue` are included here[link].
+
+The next step required the implementation of the base class `MultithreadedMolSupplier` which would manage the input and output queue. The input queue would be populated by the method `extractNextRecord` that would read a record from a given file/stream, whereas the output queue would be populated by the method `processMoleculeRecord` that would first pop a record from the input queue and then process it into an object of type `ROMol *`. The reader thread would thus call `extractNextRecord` until no record can be read, while the writer thread(s) would call the method `processMoleculeRecord` until the output queue is done and empty. The child classes `MultithreadedSmilesMolSupplier` and `MultithreadedSDMolSupplier` primarily provide implementations of the methods, `extractNextRecord` and `processMoleculeRecord`. Both suppliers were tested on various files with different parameter values for input queue size, output queue size, and the number of writer threads. 
+
+## Further Work
+Due to time constraints and the difficulty involved in the debugging concurrent code, there were a few things that could not be completed.
+1. In cases where the file format is less defined, it might have been useful to parse the file content to discover the file format and possible Supplier options. The current implementation does not support this and only uses the pathname to determine the appropriate Supplier.
+2. Wrappers for the Multithreaded Smiles and SD Suppliers in other languages such as Java were not implemented in this project.
+
+
