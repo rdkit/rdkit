@@ -95,6 +95,7 @@ bool serializeAll(
   }
   {
     portable_binary_oarchive oa(ofs);
+
     for (unsigned int i = 0; i < weightsAndBiasesForEachAtomType->size(); i++) {
       auto atomType = (*weightsAndBiasesForEachAtomType)[i].first;
       auto weights = (*weightsAndBiasesForEachAtomType)[i].second;

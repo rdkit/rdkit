@@ -49,12 +49,14 @@ TEST_CASE("Check ANI Force Field builder") {
     CHECK(std::fabs(field->calcEnergy(pos) - (-40.0553)) < 0.05);
     field->minimize();
     CHECK(field->calcEnergy() - (-40.0553) < 0);
+
     delete[] pos;
   }
   SECTION("ANI-1x") {
     std::string pathName = getenv("RDBASE");
     std::string filePath =
         pathName + "/Code/GraphMol/Descriptors/test_data/CH4.mol";
+
 
     auto mol = MolFileToMol(filePath, true, false);
     REQUIRE(mol);
