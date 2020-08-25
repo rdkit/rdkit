@@ -39,10 +39,10 @@ Alternatively, you can also send Cookbook revisions and addition requests to the
 
    The Index ID# (e.g., **RDKitCB_##**) is simply a way to track Cookbook entries and image file names. 
    New Cookbook additions are sequentially index numbered, regardless of where they are placed 
-   within the document. As such, for reference, the next Cookbook entry is **RDKitCB_25**.
+   within the document. As such, for reference, the next Cookbook entry is **RDKitCB_30**.
 
-Drawing Molecules (in a Jupyter Environment)
-**********************************************
+Drawing Molecules (Jupyter)
+*******************************
 
 Include an Atom Index
 ======================
@@ -86,7 +86,7 @@ Include a Calculation
 ======================
 
 | **Author:** Greg Landrum
-| **Source:** `https://sourceforge.net/p/rdkit/mailman/message/36457619/`_
+| **Source:** `<https://sourceforge.net/p/rdkit/mailman/message/36457619/>`_
 | **Index ID#:** RDKitCB_23
 | **Summary:** Draw a molecule with a calculation value displayed (e.g., Gasteiger Charge)
 
@@ -102,6 +102,7 @@ Include a Calculation
    m
 
 .. image:: images/RDKitCB_23_im0.png
+   :scale: 75%
 
 .. testcode::
 
@@ -112,6 +113,7 @@ Include a Calculation
    m2
 
 .. image:: images/RDKitCB_23_im1.png
+   :scale: 75%
 
 Black and White Molecules
 ==========================
@@ -205,6 +207,52 @@ Without Implicit Hydrogens
 .. image:: images/RDKitCB_17_im1.png
 
 
+Bonds and Bonding
+*******************
+
+Hybridization Type and Count
+==============================
+
+| **Author:** Jean-Marc Nuzillard and Andrew Dalke
+| **Source:** `<https://sourceforge.net/p/rdkit/mailman/message/37021222/>`_ and `<https://sourceforge.net/p/rdkit/mailman/message/37025886/>`_
+| **Index ID#:** RDKitCB_26
+| **Summary:** Get hybridization type and count
+
+.. testcode::
+
+   from rdkit import Chem
+   m = Chem.MolFromSmiles("CN1C=NC2=C1C(=O)N(C(=O)N2C)C")
+   for x in m.GetAtoms():
+       print(x.GetIdx(), x.GetHybridization())
+
+.. testoutput::
+  
+   0 SP3
+   1 SP2
+   2 SP2
+   3 SP2
+   4 SP2
+   5 SP2
+   6 SP2
+   7 SP2
+   8 SP2
+   9 SP2
+   10 SP2
+   11 SP2
+   12 SP3
+   13 SP3
+
+.. testcode::
+   
+   # if you want to count hybridization type (e.g., SP3):
+   from rdkit import Chem
+   m = Chem.MolFromSmiles("CN1C=NC2=C1C(=O)N(C(=O)N2C)C")
+   print(sum((x.GetHybridization() == Chem.HybridizationType.SP3) for x in m.GetAtoms()))
+
+.. testoutput::
+
+   3
+
 Rings, Aromaticity, and Kekulization
 *************************************
 
@@ -259,7 +307,7 @@ Count Ring Systems
 Identify Aromatic Rings
 ========================
 
-| **Author:** Benjamin Datko/ Greg Landrum
+| **Author:** Benjamin Datko and Greg Landrum
 | **Source:** `<https://sourceforge.net/p/rdkit/mailman/message/36860045/>`_ and `<https://sourceforge.net/p/rdkit/mailman/message/23801106/>`_
 | **Index ID#:** RDKitCB_8
 | **Summary:** Identify which rings are aromatic in a molecule
@@ -271,6 +319,7 @@ Identify Aromatic Rings
    m
 
 .. image:: images/RDKitCB_8_im0.png
+   :scale: 75%
 
 .. testcode::
 
@@ -317,8 +366,8 @@ Identify Aromatic Rings
 
    False
 
-Identify Aromatic Atoms (e.g., carbon)
-=======================================
+Identify Aromatic Atoms
+==========================
 
 | **Author:** Paolo Tosco
 | **Source:** `<https://sourceforge.net/p/rdkit/mailman/message/36862879/>`_
@@ -448,6 +497,7 @@ Create Fragments
    mol1
 
 .. image:: images/RDKitCB_7_im0.png
+   :scale: 75%
 
 .. testcode::
 
@@ -477,18 +527,21 @@ Create Fragments
    mol2_f_tuple[0]
 
 .. image:: images/RDKitCB_7_im3.png
+   :scale: 75%
 
 .. testcode::
 
    mol2_f_tuple[1]
 
 .. image:: images/RDKitCB_7_im4.png
+   :scale: 75%
 
 .. testcode::
 
    mol2_f_tuple[2]
 
 .. image:: images/RDKitCB_7_im5.png
+   :scale: 75%
 
 .. testcode::
 
@@ -502,7 +555,93 @@ Create Fragments
    MolsToGridImage(Chem.GetMolFrags(rwmol, asMols=True))
 
 .. image:: images/RDKitCB_7_im6.png
+   :scale: 75%
 
+
+Sidechain-Core Enumeration 
+===========================
+
+| **Author:** Chris Earnshaw, Stephen Roughley, Greg Landrum (Vincent Scalfani added loop example)
+| **Source:** `<https://sourceforge.net/p/rdkit/mailman/message/35730514/>`_ and `<https://www.rdkit.org/docs/source/rdkit.Chem.rdChemReactions.html>`_
+| **Index ID#:** RDKitCB_29
+| **Summary:** Replace sidechains on a core and enumerate the combinations.
+
+.. testcode::
+
+   from rdkit import Chem
+   from rdkit.Chem import Draw
+   from rdkit.Chem import AllChem
+
+.. testcode::
+   
+   # core is '*c1c(C)cccc1(O)'
+   # chain is 'CN*'
+
+   rxn = AllChem.ReactionFromSmarts('[c:1][#0].[#0][*:2]>>[c:1]-[*:2]')
+   reacts = (Chem.MolFromSmiles('*c1c(C)cccc1(O)'),Chem.MolFromSmiles('CN*'))
+   products = rxn.RunReactants(reacts) # tuple
+   print(len(products))
+
+.. testoutput::
+   
+   1
+
+.. testcode::
+
+   print(len(products[0]))
+
+.. testoutput::
+
+   1
+
+.. testcode::
+
+   print(Chem.MolToSmiles(products[0][0])) # [0][0] to index out the rdchem mol object
+
+.. testoutput::
+   
+   CNc1c(C)cccc1O
+
+.. testcode::
+
+   # The above reaction-based approach is flexible, however if you can generate your 
+   # sidechains in such a way that the atom you want to attach to the core 
+   # is the first one (atom zero), there's a somewhat easier way to do this 
+   # kind of simple replacement:
+
+   core = Chem.MolFromSmiles('*c1c(C)cccc1(O)')
+   chain = Chem.MolFromSmiles('NC')
+   products = Chem.ReplaceSubstructs(core,Chem.MolFromSmarts('[#0]'),chain) # tuple
+   print(Chem.MolToSmiles(products[0]))
+
+.. testoutput::
+
+   CNc1c(C)cccc1O
+
+.. testcode::
+
+   # Here is an example in a loop for an imidazolium core with alkyl chains
+
+   core = Chem.MolFromSmiles('*[n+]1cc[nH]c1')
+   chains = ['C','CC','CCC','CCCC','CCCCC','CCCCCC']
+   chainMols = [Chem.MolFromSmiles(chain) for chain in chains]
+
+   product_smi = []
+   for chainMol in chainMols:
+       product_mol = Chem.ReplaceSubstructs(core,Chem.MolFromSmarts('[#0]'),chainMol)
+       product_smi.append(Chem.MolToSmiles(product_mol[0]))
+   print(product_smi)
+
+.. testoutput::
+
+   ['C[n+]1cc[nH]c1', 'CC[n+]1cc[nH]c1', 'CCC[n+]1cc[nH]c1', 'CCCC[n+]1cc[nH]c1', 'CCCCC[n+]1cc[nH]c1', 'CCCCCC[n+]1cc[nH]c1']
+
+.. testcode::
+
+   # View the enumerated molecules:
+   Draw.MolsToGridImage([Chem.MolFromSmiles(smi) for smi in product_smi])
+
+.. image:: images/RDKitCB_29_im0.png
 
 Substructure Matching
 ***********************
@@ -541,7 +680,7 @@ Functional Group with SMARTS queries
 Macrocycles with SMARTS queries
 =====================================
 
-| **Author:** Ivan Tubert-Brohman / David Cosgrove (Vincent Scalfani added example)
+| **Author:** Ivan Tubert-Brohman and David Cosgrove (Vincent Scalfani added example)
 | **Source:** `<https://sourceforge.net/p/rdkit/mailman/message/36781480/>`_
 | **Index ID#:** RDKitCB_13
 | **Summary:** Match a macrocycle ring with a SMARTS query 
@@ -688,6 +827,7 @@ Within the Same Fragment
    m1
 
 .. image:: images/RDKitCB_20_im0.png
+   :scale: 75%
 
 .. testcode::
 
@@ -733,7 +873,7 @@ Descriptor Calculations
 Molecule Hash Strings
 ======================
 
-| **Author:** Vincent Scalfani / Takayuki Serizawa
+| **Author:** Vincent Scalfani and Takayuki Serizawa
 | **Source:** `<https://gist.github.com/vfscalfani/f77d90f9f27e0f820b966882cdadccd0>`_ and `<https://iwatobipen.wordpress.com/2019/10/27/a-new-function-of-rdkit201909-rdkit-chemoinformatics/>`_
 | **Index ID#:** RDKitCB_21
 | **Summary:** Calculate hash strings for molecules with the NextMove MolHash functionality within RDKit.
@@ -751,6 +891,7 @@ Molecule Hash Strings
    s
 
 .. image:: images/RDKitCB_21_im0.png
+   :scale: 75%
 
 .. testcode::
 
@@ -1147,6 +1288,52 @@ Reversing Reactions
 
 *N.B.* This approach isn't perfect and won't work for every reaction. Reactions that include extensive query information in the original reactants are very likely to be problematic.
 
+Reaction Fingerprints and Similarity
+======================================
+
+| **Author:** Greg Landrum
+| **Source:** `<https://sourceforge.net/p/rdkit/mailman/message/37034626/>`_
+| **Index ID#:** RDKitCB_27
+| **Summary:** Construct a reaction fingerprint and compute similarity
+| **Reference Note:** Reaction fingerprinting algorithm [#schneider2015]_ 
+
+
+.. testcode::
+   
+   from rdkit import Chem
+   from rdkit.Chem import rdChemReactions
+   from rdkit.Chem import DataStructs
+
+.. testcode::
+   
+   # construct the chemical reactions
+   rxn1 = rdChemReactions.ReactionFromSmarts('CCCO>>CCC=O')
+   rxn2 = rdChemReactions.ReactionFromSmarts('CC(O)C>>CC(=O)C')
+   rxn3 = rdChemReactions.ReactionFromSmarts('NCCO>>NCC=O')
+
+   # construct difference fingerprint (subtracts reactant fingerprint from product)
+   fp1 = rdChemReactions.CreateDifferenceFingerprintForReaction(rxn1)
+   fp2 = rdChemReactions.CreateDifferenceFingerprintForReaction(rxn2)
+   fp3 = rdChemReactions.CreateDifferenceFingerprintForReaction(rxn3)
+
+   print(DataStructs.TanimotoSimilarity(fp1,fp2))
+
+.. testoutput::
+   
+   0.0
+
+.. testcode::
+
+   # The similarity between fp1 and fp2 is zero because as far as the reaction 
+   # fingerprint is concerned, the parts which change within the reactions have 
+   # nothing in common with each other.
+   # In contrast, fp1 and fp3 have some common parts
+   print(DataStructs.TanimotoSimilarity(fp1,fp3))
+
+.. testoutput::
+
+   0.42857142857142855
+
 Error Messages
 ****************
 
@@ -1171,7 +1358,7 @@ Explicit Valence Error - Partial Sanitization
    Chem.SanitizeMol(m,Chem.SanitizeFlags.SANITIZE_FINDRADICALS|Chem.SanitizeFlags.SANITIZE_KEKULIZE|Chem.SanitizeFlags.SANITIZE_SETAROMATICITY|Chem.SanitizeFlags.SANITIZE_SETCONJUGATION|Chem.SanitizeFlags.SANITIZE_SETHYBRIDIZATION|Chem.SanitizeFlags.SANITIZE_SYMMRINGS,catchErrors=True)
 
 
-Capturing Error Messages with Chem.DetectChemistryProblems
+Detect Chemistry Problems
 ==========================================================
 
 | **Author:** Greg Landrum
@@ -1231,7 +1418,7 @@ Miscellaneous Topics
 Explicit Valence and Number of Hydrogens
 ==============================================
 
-| **Author:** Michael Palmer/ Greg Landrum
+| **Author:** Michael Palmer and Greg Landrum
 | **Source:** `<https://sourceforge.net/p/rdkit/mailman/message/29679834/>`_
 | **Index ID#:** RDKitCB_11
 | **Summary:** Calculate the explicit valence, number of explicit and implicit hydrogens, and total number of hydrogens on an atom. See the link for an important explanation about terminology and implementation of these methods in RDKit. Highlights are presented below.
@@ -1415,7 +1602,7 @@ Organometallics with Dative Bonds
 Enumerate SMILES
 ==================
 
-| **Author:** Guillaume Godin/Greg Landrum
+| **Author:** Guillaume Godin and Greg Landrum
 | **Source:** `<https://sourceforge.net/p/rdkit/mailman/message/36591616/>`_
 | **Index ID#:** RDKitCB_24
 | **Summary:** Enumerate variations of SMILES strings for the same molecule.
@@ -1467,10 +1654,71 @@ Enumerate SMILES
     'C(C)(N)C1CC1']
 
 
+
+Reorder Atoms
+==================================
+
+| **Author:** Jeffrey Van Santen and Paolo Tosco
+| **Source:** `<https://sourceforge.net/p/rdkit/mailman/message/37085522/>`_ and `<https://gist.github.com/ptosco/36574d7f025a932bc1b8db221903a8d2>`_
+| **Index ID#:** RDKitCB_28
+| **Summary:** Create a canonical order of atoms independent of input.
+
+.. testcode::
+
+   from rdkit import Chem
+   from rdkit.Chem.Draw import MolsToGridImage
+
+.. testcode::
+
+   m = Chem.MolFromSmiles("c1([C@H](C)CC)cccc2ccccc12")
+   m1 = Chem.MolFromSmiles("c12ccccc1c(ccc2)[C@H](C)CC")
+   print(Chem.MolToSmiles(m) == Chem.MolToSmiles(m1))
+
+.. testoutput::
+
+   True
+
+.. testcode::
+
+   # check if current canonical atom ordering matches
+   m_neworder = tuple(zip(*sorted([(j, i) for i, j in enumerate(Chem.CanonicalRankAtoms(m))])))[1]
+   m1_neworder = tuple(zip(*sorted([(j, i) for i, j in enumerate(Chem.CanonicalRankAtoms(m1))])))[1]
+   print(m_neworder == m1_neworder)
+
+.. testoutput::
+
+   False
+
+.. testcode::
+
+   # add atom numbers in images
+   def addAtomIndices(mol):
+       for i, a in enumerate(mol.GetAtoms()):
+           a.SetAtomMapNum(i)
+
+.. testcode::
+
+   addAtomIndices(m)
+   addAtomIndices(m1)
+   MolsToGridImage((m, m1))
+
+.. image:: images/RDKitCB_28_im0.png
+
+.. testcode::
+
+   # renumber atoms with same canonical ordering
+   m_renum = Chem.RenumberAtoms(m, m_neworder)
+   m1_renum = Chem.RenumberAtoms(m1, m1_neworder)
+   addAtomIndices(m_renum)
+   addAtomIndices(m1_renum)
+   MolsToGridImage((m_renum, m1_renum))
+
+.. image:: images/RDKitCB_28_im1.png
+
 Conformer Generation with ETKDG
-==================
+=================================
 | **Author:** Shuzhe Wang
-| **Source:** 
+| **Source:** Direct contribution to Cookbook
 | **Index ID#:** RDKitCB_25
 | **Summary:**  Showcase various tricks for conformer generation with ETKDG
 
@@ -1479,19 +1727,19 @@ Conformer Generation with ETKDG
    from rdkit import Chem
    from rdkit.Chem import AllChem 
 
-To yield more chemically meaningful conformers, Riniker and Landrum implemented the experimental torsion knowledge distance geometry (ETKDG) method [#riniker] which uses torsion angle preferences from the Cambridge Structural Database (CSD) to correct the conformers after distance geometry has been used to generate them. The configs of various conformer generation options are stored in a EmbedParameter object. To explicitly call the ETKDG EmbedParameter object:
+To yield more chemically meaningful conformers, Riniker and Landrum implemented the experimental torsion knowledge distance geometry (ETKDG) method [#riniker]_ which uses torsion angle preferences from the Cambridge Structural Database (CSD) to correct the conformers after distance geometry has been used to generate them. The configs of various conformer generation options are stored in a EmbedParameter object. To explicitly call the ETKDG EmbedParameter object:
 
 .. testcode::
 
    params = AllChem.ETKDG()
 
-At the moment this is the default conformer generation routine in RDKit. A newer set of torsion angle potentials were published in 2016 [#guba], to use these instead:
+At the moment this is the default conformer generation routine in RDKit. A newer set of torsion angle potentials were published in 2016 [#guba]_, to use these instead:
 
 .. testcode::
 
    params = AllChem.ETKDGv2()
 
-In 2020, we devised some improvements to the ETKDG method for sampling small rings and macrocycles [#wang].
+In 2020, we devised some improvements to the ETKDG method for sampling small rings and macrocycles [#wang]_.
 
 .. testcode::
 
@@ -1549,15 +1797,17 @@ Both of these setters can be used to help sampling all kinds of molecules as the
 
 .. rubric:: References
 
-.. [#Hartenfeller2011] Markus Hartenfeller, Martin Eberle, Peter Meier, Cristina Nieto-Oberhuber, Karl-Heinz Altmann, Gisbert Schneider, Edgar Jacoby, and Steffen Renner Journal of Chemical Information and Modeling 2011 51 (12), 3093-3098. DOI: 10.1021/ci200379p
+.. [#Hartenfeller2011] Hartenfeller, M.; Eberle, M.; Meier,P.; Nieto-Oberhuber, C.; Altmann, K.-H.; Schneider, G.; Jacoby, E.; and Renner, S. A Collection of Robust Organic Synthesis Reactions for In Silico Molecule Design. *J. Chem Inf. Model.* **2011**, 51(12), 3093-3098. `<https://pubs.acs.org/doi/10.1021/ci200379p>`_
 
-.. [#OBoyle] Noel O'Boyle and Roger Sayle. Making a hash of it: the advantage of selectively leaving out structural information. 259th ACS National Meeting Presentation, 2019, San Diego, CA. `<https://www.nextmovesoftware.com/talks/OBoyle_MolHash_ACS_201908.pdf>`_
+.. [#OBoyle] O'Boyle, N. and Sayle, R. Making a hash of it: the advantage of selectively leaving out structural information. 259th ACS National Meeting Presentation, 2019, San Diego, CA. `<https://www.nextmovesoftware.com/talks/OBoyle_MolHash_ACS_201908.pdf>`_
 
-.. [#riniker] Riniker, S.; Landrum, G. A. "Better Informed Distance Geometry: Using What We Know To Improve Conformation Generation" *J. Chem. Inf. Comp. Sci.* **55**:2562-74 (2015) 
+.. [#riniker] Riniker, S.; Landrum, G. A. Better Informed Distance Geometry: Using What We Know To Improve Conformation Generation. *J. Chem. Inf. Model.* **2015**, 55(12), 2562-74. `<https://doi.org/10.1021/acs.jcim.5b00654>`_
 
-.. [#guba] Guba, M.; Meyder, A.; Rarrey, M.; Hert, J. "Torsion Library Reloaded: A New Version of Expert-Derived SMARTS Rules for Assessing Conformations of Small Molecules" *J. Chem. Inf. Comp. Sci.* **56**:1-5 (2016)
+.. [#guba] Guba, M.; Meyder, A.; Rarrey, M.; Hert, J. Torsion Library Reloaded: A New Version of Expert-Derived SMARTS Rules for Assessing Conformations of Small Molecules. *J. Chem. Inf. Model.* **2016**, 56(1), 1-5. `<https://pubs.acs.org/doi/10.1021/acs.jcim.5b00522>`_
 
-.. [#wang] Wang, S.; Witek, J.; Landrum, G. A.; Riniker, S. "Improving Conformer Generation for Small Rings and Macrocycles Based on Distance Geometry and Experimental Torsional-Angle Preferences" *J. Chem. Inf. Comp. Sci.* **60**:2044-2058 (2020)
+.. [#wang] Wang, S.; Witek, J.; Landrum, G. A.; Riniker, S. Improving Conformer Generation for Small Rings and Macrocycles Based on Distance Geometry and Experimental Torsional-Angle Preferences. *J. Chem. Inf. Model.* **2020**, 60(4), 2044-2058. `<https://pubs.acs.org/doi/10.1021/acs.jcim.0c00025>`_
+
+.. [#schneider2015] Schneider, N.; Lowe, D.M.; Sayle, R.A.; Landrum, G. A. Development of a Novel Fingerprint for Chemical Reactions and Its Application to Large-Scale Reaction Classification and Similarity. *J. Chem. Inf. Model.* **2015**, 55(1), 39-53. `<https://pubs.acs.org/doi/abs/10.1021/ci5006614>`_
 
 .. testcleanup::
 
