@@ -8,8 +8,8 @@
 //  of the RDKit source tree.
 //
 #include <RDGeneral/export.h>
-#ifndef RD_WRAP_MOLSUPPLIER_H
-#define RD_WRAP_MOLSUPPLIER_H
+#ifndef RD_WRAP_MTMOLSUPPLIER_H
+#define RD_WRAP_MTMOLSUPPLIER_H
 //! Template functions for wrapping suppliers as python iterators.
 
 #include <GraphMol/RDKitBase.h>
@@ -20,29 +20,17 @@ namespace RDKit {
 // Note that this returns a pointer to the supplier itself, so be careful
 // that it doesn't get deleted by python!
 template <typename T>
-ROMol *MolForwardSupplNext(T *suppl) {
-  ROMol *res = nullptr;
-  if (!suppl->atEnd()) {
-    res = suppl->next();
-  } else {
-    PyErr_SetString(PyExc_StopIteration, "End of supplier hit");
-    throw boost::python::error_already_set();
-  }
-  return res;
-}
-
-template <typename T>
-T *MolSupplIter(T *suppl) {
+T *MTMolSupplIter(T *suppl) {
   return suppl;
 }
 
 template <typename T>
-std::string MolSupplLastItem(T *supp) {
+std::string MTMolSupplLastItem(T *supp) {
   return supp->getLastItemText();
 }
 
 template <typename T>
-unsigned int MolSupplLastId(T *supp) {
+unsigned int MTMolSupplLastId(T *supp) {
   return supp->getLastRecordId();
 }
 
