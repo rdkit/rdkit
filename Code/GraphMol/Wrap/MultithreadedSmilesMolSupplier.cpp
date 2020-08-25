@@ -7,9 +7,7 @@
 //  which is included in the file license.txt, found at the root
 //  of the RDKit source tree.
 //
-
 #define NO_IMPORT_ARRAY
-#include <RDBoost/iterator_next.h>
 #include <RDBoost/python.h>
 
 #include <string>

@@ -9,7 +9,6 @@
 //
 
 #define NO_IMPORT_ARRAY
-#include <RDBoost/iterator_next.h>
 #include <RDBoost/python.h>
 
 #include <string>
@@ -18,6 +17,7 @@
 #include <GraphMol/FileParsers/MultithreadedSDMolSupplier.h>
 #include <GraphMol/RDKitBase.h>
 #include <RDGeneral/FileParseException.h>
+
 #include "MolSupplier.h"
 #include "MultithreadedMolSupplier.h"
 
