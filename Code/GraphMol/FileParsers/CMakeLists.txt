@@ -74,7 +74,7 @@ rdkit_test(testGeneralFileReader testGeneralFileReader.cpp
 					LINK_LIBRARIES FileParsers RDStreams)
 
 rdkit_test(testMultithreadedMolSupplier testMultithreadedMolSupplier.cpp
-					LINK_LIBRARIES FileParsers RDStreams)
+					LINK_LIBRARIES FileParsers Fingerprints RDStreams)
 
 rdkit_test(testMolWriter testMolWriter.cpp LINK_LIBRARIES FileParsers )
 
