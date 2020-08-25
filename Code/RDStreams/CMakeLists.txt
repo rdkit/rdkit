@@ -20,8 +20,10 @@ else()
   endif()
 endif()
 
-add_definitions(-DRDKIT_RDSTREAMS_BUILD)
+set(boost_iostreams Boost::iostreams)
 endif(RDK_USE_BOOST_IOSTREAMS)
 rdkit_library(RDStreams streams.cpp
-              LINK_LIBRARIES Boost::iostreams ${zlib_lib})
+              LINK_LIBRARIES ${boost_iostreams} ${zlib_lib})
+target_compile_definitions(RDStreams PRIVATE RDKIT_RDSTREAMS_BUILD)
+
 rdkit_headers(streams.h DEST RDStreams)

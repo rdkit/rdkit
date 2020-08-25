@@ -5,6 +5,11 @@
 - FindMCS() may return single atom MCSs, whereas previously it returned an empty
   MCS unless there was at least one commond bond across the input structures.
   So the MCS between molecules `CC` and `CO` is now `[#6]` rather than being null.
+- The fontSize()/setFontSize() (FontSize()/SetFontSize()) methods in MolDraw2D
+  now work in units of pixels (more or less) instead of the molecule units.
+- The Open3DAlign functionality is now in its own separate library - `O3AAlign`
+  in cmake. If you are working in C++ and using O3A functionality, you'll need
+  to link against this library as well now.
 
 ## Code removed in this release:
 - To improve API consistency of the exceptions in RDKit with the default ones in
@@ -12,6 +17,13 @@
   exceptions have been removed in favor of `what()`. 
 - The old MolHash code has been removed from the C++ code, all wrappers, and the
   PostgreSQL cartridge.
+
+## Deprecated code (to be removed in a future release):
+- The function `FileParserUtils::replaceAtomWithQueryAtom()` has been moved to
+  the namespace QueryOps. Please use `QueryOps::replaceAtomWithQueryAtom()`
+  instead. The version in the `FileParserUtils` namespace will be removed in the
+  next release.
+
 
 
 

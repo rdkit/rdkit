@@ -1,10 +1,10 @@
 
-remove_definitions(-DRDKIT_GRAPHMOL_BUILD)
-add_definitions(-DRDKIT_RGROUPDECOMPOSITION_BUILD)
-rdkit_library(RGroupDecomposition RGroupDecomp.cpp
+rdkit_library(RGroupDecomposition RGroupDecomp.cpp RGroupUtils.cpp
+				  RGroupDecompParams.cpp RGroupScore.cpp
   LINK_LIBRARIES
   FMCS ChemTransforms SubstructMatch SmilesParse 
  GraphMol RDGeneral)
+target_compile_definitions(RGroupDecomposition PRIVATE RDKIT_RGROUPDECOMPOSITION_BUILD)
 
 rdkit_headers(
    RGroupDecomp.h

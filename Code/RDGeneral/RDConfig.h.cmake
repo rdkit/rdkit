@@ -34,6 +34,8 @@
 
 #cmakedefine RDK_BUILD_COORDGEN_SUPPORT
 
+#cmakedefine RDK_BUILD_MAEPARSER_SUPPORT
+
 #cmakedefine RDK_BUILD_AVALON_SUPPORT
 
 #cmakedefine RDK_BUILD_INCHI_SUPPORT
@@ -41,5 +43,7 @@
 #cmakedefine RDK_BUILD_SLN_SUPPORT
 
 #cmakedefine RDK_BUILD_CAIRO_SUPPORT
+
+#cmakedefine RDK_BUILD_FREETYPE_SUPPORT
 
 #cmakedefine RDK_USE_URF

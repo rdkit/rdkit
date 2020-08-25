@@ -21,7 +21,7 @@ rdkit_python_extension(rdqueries
                        LINK_LIBRARIES
                        GraphMol  )
 
-if(RDK_BUILD_COORDGEN_SUPPORT)
+if(RDK_BUILD_MAEPARSER_SUPPORT)
     set (maesupplier MaeMolSupplier.cpp)
     include_directories(${maeparser_INCLUDE_DIRS})
 endif()

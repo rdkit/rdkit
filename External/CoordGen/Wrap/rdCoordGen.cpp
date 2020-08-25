@@ -71,7 +71,10 @@ struct coordgen_wrapper {
                        "directory containing the templates.mae file")
         .def_readwrite("minimizerPrecision",
                        &CoordGen::CoordGenParams::minimizerPrecision,
-                       "controls sketcher precision");
+                       "controls sketcher precision")
+        .def_readwrite("minimizeOnly", &CoordGen::CoordGenParams::minimizeOnly,
+                       "uses coordgen's force field to cleanup the 2D "
+                       "coordinates of the active conformation");
     python::def("SetDefaultTemplateFileDir", SetDefaultTemplateFileDir);
     docString =
         "Add 2D coordinates.\n"

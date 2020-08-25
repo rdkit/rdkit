@@ -1,9 +1,8 @@
-remove_definitions(-DRDKIT_GRAPHMOL_BUILD)
-add_definitions(-DRDKIT_SCAFFOLDNETWORK_BUILD)
 rdkit_library(ScaffoldNetwork
               ScaffoldNetwork.cpp
               LINK_LIBRARIES MolStandardize ChemReactions ChemTransforms SmilesParse 
               SubstructMatch GraphMol RDGeneral)
+target_compile_definitions(ScaffoldNetwork PRIVATE RDKIT_SCAFFOLDNETWORK_BUILD)
 
 rdkit_headers(ScaffoldNetwork.h DEST GraphMol/ScaffoldNetwork)
 

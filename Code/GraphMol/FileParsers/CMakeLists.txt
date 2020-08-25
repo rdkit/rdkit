@@ -1,6 +1,4 @@
 
-remove_definitions(-DRDKIT_GRAPHMOL_BUILD)
-add_definitions(-DRDKIT_FILEPARSERS_BUILD)
 
 if(RDK_USE_BOOST_IOSTREAMS)
 if(WIN32)
@@ -10,17 +8,27 @@ if(WIN32)
   if (NOT Boost_USE_STATIC_LIBS)
      add_definitions("-DBOOST_IOSTREAMS_DYN_LINK")
   endif()
+  if(Boost_zlib_FOUND)
+    set(zlib_lib Boost::zlib)
+  else()
+    find_package(ZLIB)
+    set(zlib_lib ${ZLIB_LIBRARIES})
+  endif()
+
+
 else()
   find_package(Boost ${RDK_BOOST_VERSION} COMPONENTS system iostreams REQUIRED)
   set (link_iostreams ${Boost_LIBRARIES})
   if (NOT Boost_USE_STATIC_LIBS)
      add_definitions("-DBOOST_IOSTREAMS_DYN_LINK")
   endif()
+  find_package(ZLIB)
+  set(zlib_lib ${ZLIB_LIBRARIES})
 endif()
 ADD_DEFINITIONS("-DRDK_USE_BOOST_IOSTREAMS")
 endif(RDK_USE_BOOST_IOSTREAMS)
 
-if(RDK_BUILD_COORDGEN_SUPPORT)
+if(RDK_BUILD_MAEPARSER_SUPPORT)
     include_directories(${maeparser_INCLUDE_DIRS})
     set (maesupplier MaeMolSupplier.cpp)
 endif()
@@ -44,11 +52,12 @@ rdkit_library(FileParsers
               ${maesupplier}
               ProximityBonds.cpp
               SequenceParsers.cpp SequenceWriters.cpp
-              SVGParser.cpp
+              SVGParser.cpp PNGParser.cpp
 							MultithreadedMolSupplier.cpp
 							MultithreadedSmilesMolSupplier.cpp
 							MultithreadedSDMolSupplier.cpp
-              LINK_LIBRARIES Depictor SmilesParse GraphMol ${RDK_COORDGEN_LIBS} ${regex_lib} ${link_iostreams})
+              LINK_LIBRARIES Depictor SmilesParse GraphMol ${RDK_MAEPARSER_LIBS} ${regex_lib} ${link_iostreams})
+target_compile_definitions(FileParsers PRIVATE RDKIT_FILEPARSERS_BUILD)
 
 rdkit_headers(FileParsers.h
               FileParserUtils.h
@@ -60,7 +69,8 @@ rdkit_headers(FileParsers.h
 							MultithreadedMolSupplier.h
 							MulithreadedSmilesMolSupplier.h
 							MultithreadedSDMolSupplier.h
-							DEST GraphMol/FileParsers)
+              PNGParser.h
+              DEST GraphMol/FileParsers)
 
 rdkit_test(fileParsersTest1 test1.cpp
            LINK_LIBRARIES FileParsers SubstructMatch )

@@ -34,6 +34,10 @@ using RDGeom::Point2D;
 
 namespace RDKit {
 
+class DrawText;
+enum class TextAlignType:unsigned char;
+enum class OrientType:unsigned char;
+
 struct DrawColour {
   double r = 0.0, g = 0.0, b = 0.0, a = 1.0;
   DrawColour() = default;
@@ -63,26 +67,67 @@ struct DrawColour {
 
 // for holding dimensions of the rectangle round a string.
 struct StringRect {
-  Point2D centre_;
-  double width_{0.0};
-  double height_{0.0};
-  int clash_score_{0};  // rough measure of how badly it clashed with other
-                        // things lower is better, 0 is no clash.
-  StringRect() : centre_(0.0, 0.0) {}
-  StringRect(const Point2D &in_cds)
-      : centre_(in_cds), width_(0.0), height_(0.0), clash_score_(0) {}
-  // tl is top, left; br is bottom, right
-  void calcCorners(Point2D &tl, Point2D &tr, Point2D &br, Point2D &bl) const {
-    double wb2 = width_ / 2.0;
-    double hb2 = height_ / 2.0;
-    tl = Point2D(centre_.x - wb2, centre_.y + hb2);
-    tr = Point2D(centre_.x + wb2, centre_.y + hb2);
-    br = Point2D(centre_.x + wb2, centre_.y - hb2);
-    bl = Point2D(centre_.x - wb2, centre_.y - hb2);
+  Point2D trans_; // Where to draw char relative to other chars in string
+  Point2D offset_; // offset for draw coords so char is centred correctly
+  Point2D g_centre_; // glyph centre relative to the origin of the char.
+  double y_shift_; // shift the whole thing in y by this. For multi-line text.
+  double width_, height_; // of the glyph itself, not the character cell
+  double rect_corr_; // because if we move a char one way, we need to move the rectangle the other.
+  int clash_score_;  // rough measure of how badly it clashed with other things
+                     // lower is better, 0 is no clash.
+  StringRect()
+      : trans_(0.0, 0.0), offset_(0.0, 0.0), g_centre_(offset_),
+        y_shift_(0.0), width_(0.0),
+        height_(0.0), rect_corr_(0.0), clash_score_(0) {}
+  StringRect(const Point2D &offset, const Point2D &g_centre, double w, double h)
+      : trans_(0.0, 0.0), offset_(offset), g_centre_(g_centre),
+        y_shift_(0.0), width_(w),
+        height_(h), rect_corr_(0.0), clash_score_(0) {}
+  // tl is top, left; br is bottom, right of the glyph, relative to the
+  // centre. Padding in draw coords.
+  void calcCorners(Point2D &tl, Point2D &tr, Point2D &br, Point2D &bl,
+                   double padding) const {
+    double wb2 = padding + width_ / 2.0;
+    double hb2 = padding + height_ / 2.0;
+    Point2D c = trans_ + g_centre_ - offset_;
+    c.y -= y_shift_;
+    tl = Point2D(c.x - wb2, c.y - hb2);
+    tr = Point2D(c.x + wb2, c.y - hb2);
+    br = Point2D(c.x + wb2, c.y + hb2);
+    bl = Point2D(c.x - wb2, c.y + hb2);
   }
   bool doesItIntersect(const StringRect &other) const {
-    if (fabs(centre_.x - other.centre_.x) < (width_ + other.width_) / 2.0 &&
-        fabs(centre_.y - other.centre_.y) < (height_ + other.height_) / 2.0) {
+    Point2D ttl, ttr, tbr, tbl;
+    calcCorners(ttl, ttr, tbr, tbl, 0.0);
+    // is +ve y up or down?
+    if(ttl.y < tbl.y) {
+      std::swap(ttl, tbl);
+      std::swap(ttr, tbr);
+    }
+    Point2D otl, otr, obr, obl;
+    other.calcCorners(otl, otr, obr, obl, 0.0);
+    if(otl.y < obl.y) {
+      std::swap(otl, obl);
+      std::swap(otr, obr);
+    }
+     if((otl.x >= ttl.x && otl.x <= ttr.x
+        && otl.y >= tbl.y && otl.y <= ttl.y)
+       || (otr.x >= ttl.x && otr.x <= ttr.x
+           && otr.y >= tbl.y && otr.y <= ttl.y)
+       || (obr.x >= ttl.x && obr.x <= ttr.x
+           && obr.y >= tbl.y && obr.y <= ttl.y)
+       || (obl.x >= ttl.x && obl.x <= ttr.x
+           && obl.y >= tbl.y && obl.y <= ttl.y)) {
+      return true;
+    }
+    if((ttl.x >= otl.x && ttl.x <= otr.x
+        && ttl.y >= obl.y && ttl.y <= otl.y)
+       || (ttr.x >= otl.x && ttr.x <= otr.x
+           && ttr.y >= obl.y && ttr.y <= otl.y)
+       || (tbr.x >= otl.x && tbr.x <= otr.x
+           && tbr.y >= obl.y && tbr.y <= otl.y)
+       || (tbl.x >= otl.x && tbl.x <= otr.x
+           && tbl.y >= obl.y && tbl.y <= otl.y)) {
       return true;
     }
     return false;
@@ -133,12 +178,15 @@ struct RDKIT_MOLDRAW2D_EXPORT MolDrawOptions {
                                 // drawing a molecule
   DrawColour backgroundColour{
       1, 1, 1};             // color to be used while clearing the background
-  int legendFontSize = 12;  // font size (in pixels) to be used for the legend
+  int legendFontSize = 16;  // font size (in pixels) to be used for the legend
                             // (if present)
   int maxFontSize = 40;  // maximum size in pixels for font in drawn molecule.
                          // -1 means no max.
-  double annotationFontScale = 0.75;  // scales font relative to atom labels for
+  int minFontSize = 12; // likewise for -1.
+  double annotationFontScale = 0.5;  // scales font relative to atom labels for
                                       // atom and bond annotation.
+  std::string fontFile = ""; // name of font for freetype rendering.  If given,
+                              // over-rides default
   DrawColour legendColour{0, 0,
                           0};  // color to be used for the legend (if present)
   double multipleBondOffset = 0.15;  // offset (in Angstrom) for the extra lines
@@ -188,6 +236,10 @@ struct RDKIT_MOLDRAW2D_EXPORT MolDrawOptions {
                                           // ellipses round longer labels.
   bool centreMoleculesBeforeDrawing = false;  // moves the centre of the drawn
                                               // molecule to (0,0)
+  bool explicitMethyl = false;  // draw terminal methyl and related as CH3
+  bool includeMetadata =
+      true;  // when possible include metadata about molecules and reactions in
+             // the output to allow them to be reconstructed
 
   MolDrawOptions() {
     highlightColourPalette.emplace_back(
@@ -213,14 +265,6 @@ struct RDKIT_MOLDRAW2D_EXPORT MolDrawOptions {
 //! MolDraw2D is the base class for doing 2D renderings of molecules
 class RDKIT_MOLDRAW2D_EXPORT MolDraw2D {
  public:
-  enum class OrientType : unsigned char { C = 0, N, E, S, W };
-  // for aligning the drawing of text to the passed in coords.
-  typedef enum { START, MIDDLE, END } AlignType;
-  typedef enum {
-    TextDrawNormal = 0,
-    TextDrawSuperscript,
-    TextDrawSubscript
-  } TextDrawType;
 
   //! constructor for a particular size
   /*!
@@ -233,23 +277,8 @@ class RDKIT_MOLDRAW2D_EXPORT MolDraw2D {
     sizes of the panels individual molecules are drawn in when
     \c drawMolecules() is called.
   */
-  MolDraw2D(int width, int height, int panelWidth, int panelHeight)
-      : needs_scale_(true),
-        width_(width),
-        height_(height),
-        panel_width_(panelWidth > 0 ? panelWidth : width),
-        panel_height_(panelHeight > 0 ? panelHeight : height),
-        scale_(1.0),
-        x_trans_(0.0),
-        y_trans_(0.0),
-        x_offset_(0),
-        y_offset_(0),
-        font_size_(0.5),
-        curr_width_(2),
-        fill_polys_(true),
-        activeMolIdx_(-1) {}
-
-  virtual ~MolDraw2D() {}
+  MolDraw2D(int width, int height, int panelWidth, int panelHeight);
+  virtual ~MolDraw2D();
 
   //! draw a single molecule
   /*!
@@ -407,13 +436,14 @@ class RDKIT_MOLDRAW2D_EXPORT MolDraw2D {
   virtual int panelWidth() const { return panel_width_; }
   //! return the height of the drawing panels.
   virtual int panelHeight() const { return panel_height_; }
+  virtual int drawHeight() const { return panel_height_ - legend_height_;}
 
   //! returns the drawing scale (conversion from molecular coords -> drawing
   // coords)
   double scale() const { return scale_; }
   //! calculates the drawing scale (conversion from molecular coords -> drawing
   // coords)
-  void calculateScale(int width, int height,
+  void calculateScale(int width, int height, const ROMol &mol,
                       const std::vector<int> *highlight_atoms = nullptr,
                       const std::map<int, double> *highlight_radii = nullptr);
   //! overload
@@ -429,7 +459,7 @@ class RDKIT_MOLDRAW2D_EXPORT MolDraw2D {
 
   //! explicitly sets the scaling factors for the drawing
   void setScale(int width, int height, const Point2D &minv,
-                const Point2D &maxv);
+                const Point2D &maxv, const ROMol *mol=nullptr);
   //! sets the drawing offset (in drawing coords)
   void setOffset(int x, int y) {
     x_offset_ = x;
@@ -443,12 +473,8 @@ class RDKIT_MOLDRAW2D_EXPORT MolDraw2D {
   //! returns the width and height of the grid (in molecular coords)
   Point2D range() const { return Point2D(x_range_, y_range_); }
 
-  //! returns the font size (in molecule units)
-  virtual double fontSize() const { return font_size_; }
-  double drawFontSize() const;
-
-  //! set font size in molecule coordinate units. That's probably Angstrom for
-  //! RDKit.
+  //! font size in drawing coordinate units. That's probably pixels.
+  virtual double fontSize() const;
   virtual void setFontSize(double new_size);
 
   //! sets the current draw color
@@ -465,15 +491,10 @@ class RDKIT_MOLDRAW2D_EXPORT MolDraw2D {
   //! returns the current line width
   virtual int lineWidth() const { return curr_width_; }
 
-  //! establishes whether to put string draw mode into super- or sub-script
-  //! mode based on contents of instring from i onwards. Increments i
-  //! appropriately
-  //! \returns true or false depending on whether it did something or not
-  bool setStringDrawMode(const std::string &instring, TextDrawType &draw_mode,
-                         int &i) const;
   //! clears the contents of the drawing
   virtual void clearDrawing() = 0;
   //! draws a line from \c cds1 to \c cds2 using the current drawing style
+  // in atom coords.
   virtual void drawLine(const Point2D &cds1, const Point2D &cds2) = 0;
 
   //! using the current scale, work out the size of the label in molecule
@@ -484,30 +505,22 @@ class RDKIT_MOLDRAW2D_EXPORT MolDraw2D {
      accounted for in the width and height.
    */
   virtual void getStringSize(const std::string &label, double &label_width,
-                             double &label_height) const = 0;
+                             double &label_height) const;
   // get the overall size of the label, allowing for it being split
   // into pieces according to orientation.
   void getLabelSize(const std::string &label, OrientType orient,
                     double &label_width, double &label_height) const;
+  // return extremes for string in molecule coords.
+  void getStringExtremes(const std::string &label, OrientType orient,
+                         const Point2D &cds, double &x_min, double &y_min,
+                         double &x_max, double &y_max) const;
+
   //! drawString centres the string on cds.
   virtual void drawString(const std::string &str, const Point2D &cds);
   // unless the specific drawer over-rides this overload, it will just call
   // the first one.  SVG for one needs the alignment flag.
   virtual void drawString(const std::string &str, const Point2D &cds,
-                          AlignType align);
-  // draw the vector of strings from cds putting the nth+1 at the end of
-  // the nth.  Aligns them according to OrientType.
-  virtual void drawStrings(const std::vector<std::string> &labels,
-                           const Point2D &cds, OrientType orient);
-  // calculate where to put the centre of the str so that the first/last
-  // character, which might have <sub> or <sup> labels, is at in_cds.
-  // Normally, the whole string would be centred on in_cds.
-  // If align is 0, it's left aligned, 1 it's right aligned, anything
-  // else and it's not done at all.
-  virtual void alignString(const std::string &str,
-                           const std::string &align_char, int align,
-                           const Point2D &in_cds, Point2D &out_cds) const;
-
+                          TextAlignType align);
   //! draw a polygon.  Note that if fillPolys() returns false, it
   //! doesn't close the path.  If you want it to in that case, you
   //! do it explicitly yourself.
@@ -572,16 +585,17 @@ class RDKIT_MOLDRAW2D_EXPORT MolDraw2D {
 
   virtual bool supportsAnnotations() { return true; }
 
+ protected:
+
+  std::unique_ptr<DrawText> text_drawer_;
+
  private:
   bool needs_scale_;
-  int width_, height_, panel_width_, panel_height_;
+  int width_, height_, panel_width_, panel_height_, legend_height_;
   double scale_;
   double x_min_, y_min_, x_range_, y_range_;
   double x_trans_, y_trans_;
   int x_offset_, y_offset_;  // translation in screen coordinates
-  // font_size_ in molecule coordinate units. Default 0.5 (a bit bigger
-  // than the default width of a double bond)
-  double font_size_;
   int curr_width_;
   bool fill_polys_;
   int activeMolIdx_;
@@ -593,13 +607,19 @@ class RDKIT_MOLDRAW2D_EXPORT MolDraw2D {
   std::vector<std::vector<Point2D>> at_cds_;  // from mol
   std::vector<std::vector<int>> atomic_nums_;
   std::vector<std::vector<std::pair<std::string, OrientType>>> atom_syms_;
+  // by the time atom_notes_ and bonds_notes_ are drawn, we're only ever
+  // using the trans_ member of the StringRect, but it is convenient to
+  // keep the whole thing rather than just a StringPos for the position
+  // for calculating the scale of the drawing.  Went a long way down
+  // the rabbit hole before realising this, hence this note.
   std::vector<std::vector<std::shared_ptr<StringRect>>> atom_notes_;
   std::vector<std::vector<std::shared_ptr<StringRect>>> bond_notes_;
+  std::vector<std::vector<std::pair<std::shared_ptr<StringRect>, OrientType>>> radicals_;
 
   Point2D bbox_[2];
 
-  // draw the char, with the bottom left hand corner at cds
-  virtual void drawChar(char c, const Point2D &cds) = 0;
+  virtual void initDrawing() = 0;
+  virtual void initTextDrawer(bool noFreetype) = 0;
 
   // return a DrawColour based on the contents of highlight_atoms or
   // highlight_map, falling back to atomic number by default
@@ -680,7 +700,9 @@ class RDKIT_MOLDRAW2D_EXPORT MolDraw2D {
   void extractAtomSymbols(const ROMol &mol);
   void extractAtomNotes(const ROMol &mol);
   void extractBondNotes(const ROMol &mol);
+  void extractRadicals(const ROMol &mol);
 
+  // coords in atom coords
   virtual void drawLine(const Point2D &cds1, const Point2D &cds2,
                         const DrawColour &col1, const DrawColour &col2);
   void drawWedgedBond(const Point2D &cds1, const Point2D &cds2,
@@ -692,9 +714,8 @@ class RDKIT_MOLDRAW2D_EXPORT MolDraw2D {
   void drawAtomLabel(int atom_num,
                      const std::vector<int> *highlight_atoms = nullptr,
                      const std::map<int, DrawColour> *highlight_map = nullptr);
-  void drawAtomLabel(int atom_num, const DrawColour &draw_colour);
-  virtual void drawAnnotation(const std::string &note,
-                              const std::shared_ptr<StringRect> &note_rect);
+  OrientType calcRadicalRect(const ROMol &mol, const Atom *atom,
+                             StringRect &rad_rect);
   void drawRadicals(const ROMol &mol);
   // find a good starting point for scanning round the annotation
   // atom.  If we choose well, the first angle should be the one.
@@ -703,25 +724,27 @@ class RDKIT_MOLDRAW2D_EXPORT MolDraw2D {
   // see if the note will clash with anything else drawn on the molecule.
   // note_vec should have unit length.  note_rad is the radius along
   // note_vec that the note will be drawn.
-  bool doesAtomNoteClash(StringRect &note_rect, const StringRect &atsym_rect,
-                         const ROMol &mol, unsigned int atom_idx);
-  bool doesBondNoteClash(StringRect &note_rect, const ROMol &mol,
+  bool doesAtomNoteClash(StringRect &note_rect,
+                         const std::vector<std::shared_ptr<StringRect>> &rects,
+                         const ROMol &mol,
+                         unsigned int atom_idx);
+  bool doesBondNoteClash(StringRect &note_rect,
+                         const std::vector<std::shared_ptr<StringRect>> &rects,
+                         const ROMol &mol,
                          const Bond *bond);
   // does the note_vec form an unacceptably acute angle with one of the
   // bonds from atom to its neighbours.
-  bool doesNoteClashNbourBonds(const StringRect &note_rect, const ROMol &mol,
-                               const Atom *atom) const;
+  bool doesNoteClashNbourBonds(const StringRect &note_rect,
+                               const std::vector<std::shared_ptr<StringRect>> &rects,
+                               const ROMol &mol, const Atom *atom) const;
   // does the note intersect with atsym, and if not, any other atom symbol.
   bool doesNoteClashAtomLabels(const StringRect &note_rect,
-                               const StringRect &atsym_rect, const ROMol &mol,
+                               const std::vector<std::shared_ptr<StringRect>> &rects,
+                               const ROMol &mol,
                                unsigned int atom_idx) const;
-  bool doesNoteClashOtherNotes(const StringRect &note_rect) const;
-  // take the label for the given atom and return the individual pieces
-  // that need to be drawn for it.  So NH<sub>2</sub> will return
-  // "N", "H<sub>2</sub>".
-  std::vector<std::string> atomLabelToPieces(int atom_num) const;
-  std::vector<std::string> atomLabelToPieces(const std::string &label,
-                                             OrientType orient) const;
+  bool doesNoteClashOtherNotes(const StringRect &note_rect,
+                               const std::vector<std::shared_ptr<StringRect>> &rects) const;
+
   // cds1 and cds2 are 2 atoms in a ring.  Returns the perpendicular pointing
   // into the ring.
   Point2D bondInsideRing(const ROMol &mol, const Bond *bond,
@@ -743,17 +766,30 @@ class RDKIT_MOLDRAW2D_EXPORT MolDraw2D {
 
   // adds LaTeX-like annotation for super- and sub-script.
   std::pair<std::string, OrientType> getAtomSymbolAndOrientation(
-      const Atom &atom, const ROMol &mol) const;
+      const Atom &atom) const;
   std::string getAtomSymbol(const Atom &atom) const;
-  OrientType getAtomOrientation(const Atom &atom, const Point2D &nbr_sum) const;
+  OrientType getAtomOrientation(const Atom &atom) const;
 
   // things used by calculateScale.
   void adjustScaleForAtomLabels(const std::vector<int> *highlight_atoms,
                                 const std::map<int, double> *highlight_radii);
+  void adjustScaleForRadicals(const ROMol &mol);
   void adjustScaleForAnnotation(
       const std::vector<std::shared_ptr<StringRect>> &notes);
 
+ private:
+  virtual void updateMetadata(const ROMol &mol, int confId) {
+    RDUNUSED_PARAM(mol);
+    RDUNUSED_PARAM(confId);
+  };
+  virtual void updateMetadata(const ChemicalReaction &rxn) {
+    RDUNUSED_PARAM(rxn);
+  };
+
  protected:
+  std::vector<std::pair<std::string, std::string>> d_metadata;
+  unsigned int d_numMetadataEntries=0;
+
   virtual void doContinuousHighlighting(
       const ROMol &mol, const std::vector<int> *highlight_atoms,
       const std::vector<int> *highlight_bonds,
@@ -773,6 +809,9 @@ class RDKIT_MOLDRAW2D_EXPORT MolDraw2D {
       const std::map<int, DrawColour> *highlight_bond_map = nullptr,
       const std::vector<std::pair<DrawColour, DrawColour>> *bond_colours =
           nullptr);
+  virtual void drawAtomLabel(int atom_num, const DrawColour &draw_colour);
+  virtual void drawAnnotation(const std::string &note,
+                              const std::shared_ptr<StringRect> &note_rect);
 
   // calculate normalised perpendicular to vector between two coords
   Point2D calcPerpendicular(const Point2D &cds1, const Point2D &cds2) const;
@@ -794,7 +833,7 @@ class RDKIT_MOLDRAW2D_EXPORT MolDraw2D {
                            Point2D &l2f) const;
 
   // calculate the width to draw a line in draw coords.
-  virtual unsigned int getDrawLineWidth();
+  virtual unsigned int getDrawLineWidth() const;
 
   // sort out coords and scale for drawing reactions.
   void get2DCoordsForReaction(ChemicalReaction &rxn, Point2D &arrowBegin,
@@ -817,9 +856,8 @@ RDKIT_MOLDRAW2D_EXPORT bool doLinesIntersect(const Point2D &l1s,
 // rectangle of the string.
 RDKIT_MOLDRAW2D_EXPORT bool doesLineIntersectLabel(const Point2D &ls,
                                                    const Point2D &lf,
-                                                   const StringRect &lab_rect);
-
-std::ostream &operator<<(std::ostream &oss, const MolDraw2D::OrientType &o);
+                                                   const StringRect &lab_rect,
+                                                   double padding=0.0);
 
 }  // namespace RDKit
 

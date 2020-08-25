@@ -1,6 +1,4 @@
 
-remove_definitions(-DRDKIT_GRAPHMOL_BUILD)
-add_definitions(-DRDKIT_MOLSTANDARDIZE_BUILD)
 rdkit_library(MolStandardize
               MolStandardize.cpp
 	      Metal.cpp
@@ -22,6 +20,7 @@ rdkit_library(MolStandardize
         TautomerCatalog/TautomerCatalogParams.cpp
         TautomerCatalog/TautomerCatalogUtils.cpp
 	      LINK_LIBRARIES ChemReactions ChemTransforms SmilesParse SubstructMatch Descriptors GraphMol )
+target_compile_definitions(MolStandardize PRIVATE RDKIT_MOLSTANDARDIZE_BUILD)
 
 rdkit_headers(MolStandardize.h
 	      Metal.h

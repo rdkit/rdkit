@@ -99,11 +99,7 @@ void adjustConjugatedFiveRings(RWMol &mol) {
     // FIX: replace this with the SingleOrDoubleOrAromatic query once the
     // tautomer PR is merged
     QueryBond qb;
-    qb.setQuery(makeBondOrderEqualsQuery(Bond::BondType::SINGLE));
-    qb.expandQuery(makeBondOrderEqualsQuery(Bond::BondType::DOUBLE),
-                   Queries::COMPOSITE_OR);
-    qb.expandQuery(makeBondOrderEqualsQuery(Bond::BondType::AROMATIC),
-                   Queries::COMPOSITE_OR);
+    qb.setQuery(makeSingleOrDoubleOrAromaticBondQuery());
     for (auto bi : ring) {
       const auto bond = mol.getBondWithIdx(bi);
       if (std::find(bondTypesToModify.begin(), bondTypesToModify.end(),
@@ -133,9 +129,7 @@ void adjustSingleBondsFromAromaticAtoms(RWMol &mol, bool toDegreeOneNeighbors,
     return;
   }
   QueryBond qb;
-  qb.setQuery(makeBondOrderEqualsQuery(Bond::BondType::SINGLE));
-  qb.expandQuery(makeBondOrderEqualsQuery(Bond::BondType::AROMATIC),
-                 Queries::COMPOSITE_OR);
+  qb.setQuery(makeSingleOrAromaticBondQuery());
   if (!mol.getRingInfo()->isInitialized()) {
     MolOps::symmetrizeSSSR(mol);
   }
@@ -143,8 +137,7 @@ void adjustSingleBondsFromAromaticAtoms(RWMol &mol, bool toDegreeOneNeighbors,
     const auto bAt = bond->getBeginAtom();
     const auto eAt = bond->getEndAtom();
     if (!bond->hasQuery() && bond->getBondType() == Bond::BondType::SINGLE &&
-        (bAt->getIsAromatic() || eAt->getIsAromatic()) &&
-        !mol.getRingInfo()->numBondRings(bond->getIdx())) {
+        (bAt->getIsAromatic() || eAt->getIsAromatic())) {
       if (toDegreeOneNeighbors &&
           (bAt->getIsAromatic() ^ eAt->getIsAromatic())) {
         if ((bAt->getIsAromatic() && eAt->getDegree() == 1) ||
@@ -180,21 +173,17 @@ void setMDLAromaticity(RWMol &mol) {
     if (ring.size() != 5) {
       continue;
     }
-    size_t pin;
     bool keepIt = true;
     size_t dummy = ring.size() + 1;
     for (size_t i = 0; i < ring.size(); ++i) {
       auto ai = ring[i];
       const auto atom = mol.getAtomWithIdx(ai);
-      std::string molfileSymbol;
       if (!atom->getIsAromatic()) {
         // we only do fully aromatic rings:
         keepIt = false;
         break;
-      } else if (atom->getAtomicNum() == 0 &&
-                 atom->getPropIfPresent(common_properties::_MolFileSymbol,
-                                        molfileSymbol) &&
-                 molfileSymbol == "A") {
+      } else if (atom->getAtomicNum() == 0 && atom->hasQuery() &&
+                 atom->getQuery()->getTypeLabel() == "A") {
         if (dummy >= ring.size()) {
           dummy = i;
         } else {

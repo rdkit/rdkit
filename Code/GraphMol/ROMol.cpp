@@ -204,7 +204,6 @@ Atom *ROMol::getAtomWithBookmark(int mark) {
   PRECONDITION(d_atomBookmarks.count(mark) != 0, "atom bookmark not found");
   PRECONDITION(d_atomBookmarks[mark].begin() != d_atomBookmarks[mark].end(),
                "atom bookmark not found");
-
   return *(d_atomBookmarks[mark].begin());
 };
 

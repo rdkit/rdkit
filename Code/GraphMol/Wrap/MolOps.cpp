@@ -37,14 +37,13 @@ using boost_adaptbx::python::streambuf;
 namespace RDKit {
 std::string molToSVG(const ROMol &mol, unsigned int width, unsigned int height,
                      python::object pyHighlightAtoms, bool kekulize,
-                     unsigned int lineWidthMult, unsigned int fontSize,
+                     unsigned int lineWidthMult,
                      bool includeAtomCircles, int confId) {
   RDUNUSED_PARAM(kekulize);
   std::unique_ptr<std::vector<int>> highlightAtoms =
       pythonObjectToVect(pyHighlightAtoms, static_cast<int>(mol.getNumAtoms()));
   std::stringstream outs;
   MolDraw2DSVG drawer(width, height, outs);
-  drawer.setFontSize(fontSize / 24.);
   drawer.setLineWidth(drawer.lineWidth() * lineWidthMult);
   drawer.drawOptions().circleAtoms = includeAtomCircles;
   drawer.drawMolecule(mol, highlightAtoms.get(), nullptr, nullptr, confId);
@@ -584,7 +583,8 @@ ExplicitBitVect *wrapLayeredFingerprint(
 }
 ExplicitBitVect *wrapPatternFingerprint(const ROMol &mol, unsigned int fpSize,
                                         python::list atomCounts,
-                                        ExplicitBitVect *includeOnlyBits) {
+                                        ExplicitBitVect *includeOnlyBits,
+                                        bool tautomerFingerprints) {
   std::vector<unsigned int> *atomCountsV = nullptr;
   if (atomCounts) {
     atomCountsV = new std::vector<unsigned int>;
@@ -600,7 +600,7 @@ ExplicitBitVect *wrapPatternFingerprint(const ROMol &mol, unsigned int fpSize,
   }
 
   ExplicitBitVect *res;
-  res = RDKit::PatternFingerprintMol(mol, fpSize, atomCountsV, includeOnlyBits);
+  res = RDKit::PatternFingerprintMol(mol, fpSize, atomCountsV, includeOnlyBits, tautomerFingerprints);
 
   if (atomCountsV) {
     for (unsigned int i = 0; i < atomCountsV->size(); ++i) {
@@ -1999,7 +1999,8 @@ ARGUMENTS:\n\
     python::def("PatternFingerprint", wrapPatternFingerprint,
                 (python::arg("mol"), python::arg("fpSize") = 2048,
                  python::arg("atomCounts") = python::list(),
-                 python::arg("setOnlyBits") = (ExplicitBitVect *)nullptr),
+                 python::arg("setOnlyBits") = (ExplicitBitVect *)nullptr,
+                 python::arg("tautomerFingerprints") = false),
                 docString.c_str(),
                 python::return_value_policy<python::manage_new_object>());
 

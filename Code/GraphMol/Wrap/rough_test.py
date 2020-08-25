@@ -10,6 +10,7 @@ it's intended to be shallow, but broad
 
 import os, sys, tempfile, gzip, gc
 import unittest, doctest
+from datetime import datetime, timedelta
 from rdkit import RDConfig, rdBase
 from rdkit import DataStructs
 from rdkit import Chem
@@ -4018,7 +4019,7 @@ CAS<~>
       self.assertEqual(len(matches), 2)
       self.assertEqual(matches, ((66, 67, 69, 68), (123, 124, 126, 125)))
 
-  def testGitHUb1166(self):
+  def testGitHub1166(self):
     mol = Chem.MolFromSmiles('NC(=[NH2+])c1ccc(cc1)C(=O)[O-]')
     resMolSuppl = Chem.ResonanceMolSupplier(mol, Chem.KEKULE_ALL)
     self.assertEqual(len(resMolSuppl), 8)
@@ -4122,6 +4123,86 @@ $$$$
     self.assertEqual(len(resMolSuppl1), 3)
     resMolSuppl2 = Chem.ResonanceMolSupplier(mol2, Chem.KEKULE_ALL)
     self.assertEqual(len(resMolSuppl2), 3)
+
+  def testGitHub2597(self):
+
+    class MyBrokenCallBack(Chem.ResonanceMolSupplier):
+
+      def __call__(self):
+        return True
+
+    class MyBrokenCallBack2(Chem.ResonanceMolSupplierCallback):
+      pass
+
+    class ExceedNumStructures(Chem.ResonanceMolSupplierCallback):
+
+      def __init__(self, parent):
+        super().__init__()
+        self._parent = parent
+
+      def __call__(self):
+        self._parent.assertEqual(self.GetNumConjGrps(), 1)
+        return (self.GetNumStructures(0) < 12)
+
+    class ExceedNumDiverseStructures(Chem.ResonanceMolSupplierCallback):
+
+      def __init__(self, parent):
+        super().__init__()
+        self._parent = parent
+
+      def __call__(self):
+        self._parent.assertEqual(self.GetNumConjGrps(), 1)
+        return (self.GetNumDiverseStructures(0) < 8)
+
+    class ExceedTimeout(Chem.ResonanceMolSupplierCallback):
+
+      def __init__(self, parent):
+        super().__init__()
+        self.start_time = None
+        self.timeout = timedelta(seconds=3)
+        self._parent = parent
+
+      def __call__(self):
+        if (self.start_time is None):
+          self.start_time = datetime.now()
+        return (datetime.now() - self.start_time < self.timeout)
+
+    mol = Chem.MolFromSmiles(
+      "ClC1=NC(NC2=CC=CC3=C2C(=O)C2=CC=CC=C2C3=O)=NC(NC2=CC=CC3=C2C(=O)C2=CC=CC=C2C3=O)=N1")
+    resMolSuppl = Chem.ResonanceMolSupplier(mol)
+    self.assertEqual(len(resMolSuppl), 1)
+    resMolSuppl = Chem.ResonanceMolSupplier(mol, Chem.KEKULE_ALL)
+
+    self.assertEqual(len(resMolSuppl), 32)
+    resMolSuppl = Chem.ResonanceMolSupplier(mol, Chem.ALLOW_CHARGE_SEPARATION, 10)
+    self.assertEqual(len(resMolSuppl), 10)
+    self.assertFalse(resMolSuppl.WasCanceled())
+    resMolSuppl = Chem.ResonanceMolSupplier(mol, Chem.ALLOW_CHARGE_SEPARATION)
+    callback = resMolSuppl.GetProgressCallback()
+    self.assertIsNone(callback)
+    resMolSuppl.SetProgressCallback(ExceedNumStructures(self))
+    callback = resMolSuppl.GetProgressCallback()
+    self.assertTrue(isinstance(callback, ExceedNumStructures))
+    resMolSuppl.SetProgressCallback(None)
+    callback = resMolSuppl.GetProgressCallback()
+    self.assertIsNone(callback)
+    resMolSuppl.SetProgressCallback(ExceedNumStructures(self))
+    self.assertEqual(len(resMolSuppl), 12)
+    self.assertTrue(resMolSuppl.WasCanceled())
+    resMolSuppl = Chem.ResonanceMolSupplier(mol, Chem.ALLOW_CHARGE_SEPARATION)
+    with self.assertRaises(TypeError):
+      resMolSuppl.SetProgressCallback(MyBrokenCallBack())
+    with self.assertRaises(AttributeError):
+      resMolSuppl.SetProgressCallback(MyBrokenCallBack2())
+    resMolSuppl.SetProgressCallback(ExceedNumDiverseStructures(self))
+    self.assertEqual(len(resMolSuppl), 9)
+    self.assertTrue(resMolSuppl.WasCanceled())
+    resMolSuppl = Chem.ResonanceMolSupplier(
+      mol, Chem.UNCONSTRAINED_CATIONS | Chem.UNCONSTRAINED_ANIONS | Chem.KEKULE_ALL)
+    resMolSuppl.SetProgressCallback(ExceedTimeout(self))
+    resMolSuppl.Enumerate()
+    print(len(resMolSuppl))
+    self.assertTrue(resMolSuppl.WasCanceled())
 
   def testAtomBondProps(self):
     m = Chem.MolFromSmiles('c1ccccc1')
@@ -4816,6 +4897,24 @@ M  END
 
     self.assertEqual(len(Chem.MolFromSmiles('Fc1c(C)cccc1').GetSubstructMatch(b)), 0)
     self.assertEqual(len(Chem.MolFromSmiles('Fc1c(C)cccc1').GetSubstructMatches(b)), 0)
+
+  def testMolBundles3(self):
+    smis = ('CCC', 'CCO', 'CCN')
+    b = Chem.FixedMolSizeMolBundle()
+    for smi in smis:
+      b.AddMol(Chem.MolFromSmiles(smi))
+    self.assertEqual(len(b), 3)
+    self.assertEqual(b.Size(), 3)
+    with self.assertRaises(ValueError):
+      b.AddMol(Chem.MolFromSmiles('CCCC'))
+
+    b = Chem.MolBundle()
+    for smi in smis:
+      b.AddMol(Chem.MolFromSmiles(smi))
+    self.assertEqual(len(b), 3)
+    self.assertEqual(b.Size(), 3)
+    b.AddMol(Chem.MolFromSmiles('CCCC'))
+    self.assertEqual(b.Size(), 4)
 
   def testGithub1622(self):
     nonaromatics = (
@@ -5904,12 +6003,13 @@ M  END
         Chem.SDMolSupplier,
         Chem.TDTMolSupplier,
         #Chem.CompressedSDMolSupplier,
-        Chem.MaeMolSupplier
     ]:
       print("supplier:", supplier)
       with self.assertRaises(OSError):
         suppl = supplier(d)
-
+    if hasattr(Chem, 'MaeMolSupplier'):
+      with self.assertRaises(OSError):
+        suppl = Chem.MaeMolSupplier(d)
     os.rmdir(d)
 
   def testRandomSmilesVect(self):
@@ -5968,6 +6068,46 @@ M  END
     nops.adjustConjugatedFiveRings = True
     nmol = Chem.AdjustQueryProperties(mol, nops)
     self.assertEqual(Chem.MolToSmarts(nmol), "[#6]1-,=,:[#6]-,=,:[#6]-,=,:[#7H]-,=,:[#6]-,=,:1")
+
+  def testMolFromPNG(self):
+    fileN = os.path.join(RDConfig.RDBaseDir, 'Code', 'GraphMol', 'FileParsers', 'test_data',
+                         'colchicine.png')
+    mol = Chem.MolFromPNGFile(fileN)
+    self.assertIsNotNone(mol)
+    self.assertEqual(mol.GetNumAtoms(), 29)
+
+    d = open(fileN, 'rb').read()
+    mol = Chem.MolFromPNGString(d)
+    self.assertIsNotNone(mol)
+    self.assertEqual(mol.GetNumAtoms(), 29)
+
+  def testMolToPNG(self):
+    fileN = os.path.join(RDConfig.RDBaseDir, 'Code', 'GraphMol', 'FileParsers', 'test_data',
+                         'colchicine.no_metadata.png')
+
+    d = open(fileN, 'rb').read()
+    mol = Chem.MolFromSmiles("COc1cc2c(c(OC)c1OC)-c1ccc(OC)c(=O)cc1[C@@H](NC(C)=O)CC2")
+    self.assertIsNotNone(mol)
+    self.assertEqual(mol.GetNumAtoms(), 29)
+
+    nd = Chem.MolMetadataToPNGString(mol, d)
+    mol = Chem.MolFromPNGString(nd)
+    self.assertIsNotNone(mol)
+    self.assertEqual(mol.GetNumAtoms(), 29)
+
+    nd = Chem.MolMetadataToPNGFile(mol, fileN)
+    mol = Chem.MolFromPNGString(nd)
+    self.assertIsNotNone(mol)
+    self.assertEqual(mol.GetNumAtoms(), 29)
+
+  def testMolsFromPNG(self):
+    refMols = [Chem.MolFromSmiles(x) for x in ('c1ccccc1', 'CCO', 'CC(=O)O', 'c1ccccn1')]
+    fileN = os.path.join(RDConfig.RDBaseDir, 'Code', 'GraphMol', 'FileParsers', 'test_data',
+                         'multiple_mols.png')
+    mols = Chem.MolsFromPNGFile(fileN)
+    self.assertEqual(len(mols), len(refMols))
+    for mol, refMol in zip(mols, refMols):
+      self.assertEqual(Chem.MolToSmiles(mol), Chem.MolToSmiles(refMol))
 
 
 if __name__ == '__main__':

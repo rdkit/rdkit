@@ -137,6 +137,10 @@ std::string getAtomSmartsSimple(const QueryAtom *qatom,
     res << "D";
     hasVal = true;
     needParen = true;
+  } else if (descrip == "AtomNonHydrogenDegree") {
+    res << "d";
+    hasVal = true;
+    needParen = true;
   } else if (descrip == "AtomTotalDegree") {
     res << "X";
     hasVal = true;
@@ -371,6 +375,8 @@ std::string getBondSmartsSimple(const Bond *bond,
     res += "@";
   } else if (descrip == "SingleOrAromaticBond") {
     // don't need to do anything here... :-)
+  } else if (descrip == "SingleOrDoubleOrAromaticBond") {
+    res += "-,=,:";
   } else if (descrip == "BondDir") {
     int val = bquery->getVal();
     if (val == static_cast<int>(Bond::ENDDOWNRIGHT)) {

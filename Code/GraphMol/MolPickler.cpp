@@ -1,5 +1,5 @@
 //
-//  Copyright (C) 2001-2018 Greg Landrum and Rational Discovery LLC
+//  Copyright (C) 2001-2020 Greg Landrum and Rational Discovery LLC
 //
 //   @@ All Rights Reserved @@
 //  This file is part of the RDKit.
@@ -32,8 +32,8 @@ using std::int32_t;
 using std::uint32_t;
 namespace RDKit {
 
-const int32_t MolPickler::versionMajor = 11;
-const int32_t MolPickler::versionMinor = 0;
+const int32_t MolPickler::versionMajor = 12;
+const int32_t MolPickler::versionMinor = 1;
 const int32_t MolPickler::versionPatch = 0;
 const int32_t MolPickler::endianId = 0xDEADBEEF;
 
@@ -51,11 +51,24 @@ void streamRead(std::istream &ss, MolPickler::Tags &tag, int version) {
   if (version < 7000) {
     int32_t tmp;
     streamRead(ss, tmp, version);
+    if (tmp < 0 || tmp >= MolPickler::Tags::INVALID_TAG) {
+      throw MolPicklerException("Invalid tag found.");
+    }
     tag = static_cast<MolPickler::Tags>(tmp);
   } else {
     unsigned char tmp;
     streamRead(ss, tmp, version);
+    if (tmp >= MolPickler::Tags::INVALID_TAG) {
+      throw MolPicklerException("Invalid tag found.");
+    }
     tag = static_cast<MolPickler::Tags>(tmp);
+  }
+}
+
+void streamReadPositiveChar(std::istream &ss, char &res, int version) {
+  streamRead(ss, res, version);
+  if (res < 0) {
+    throw MolPicklerException("invalid value in pickle");
   }
 }
 
@@ -129,6 +142,10 @@ template <class T>
 void pickleQuery(std::ostream &ss, const Query<int, T const *, true> *query) {
   PRECONDITION(query, "no query");
   streamWrite(ss, query->getDescription());
+  if (!query->getTypeLabel().empty()) {
+    streamWrite(ss, MolPickler::QUERY_TYPELABEL);
+    streamWrite(ss, query->getTypeLabel());
+  }
   if (query->getNegation()) {
     streamWrite(ss, MolPickler::QUERY_ISNEGATED);
   }
@@ -312,6 +329,8 @@ void finalizeQueryFromDescription(Query<int, Atom const *, true> *query,
     query->setDataFunc(queryAtomHasHeteroatomNbrs);
   } else if (descr == "AtomNumHeteroatomNeighbors") {
     query->setDataFunc(queryAtomNumHeteroatomNbrs);
+  } else if (descr == "AtomNonHydrogenDegree") {
+    query->setDataFunc(queryAtomNonHydrogenDegree);
   } else if (descr == "AtomHasAliphaticHeteroatomNeighbors") {
     query->setDataFunc(queryAtomHasAliphaticHeteroatomNbrs);
   } else if (descr == "AtomNumAliphaticHeteroatomNeighbors") {
@@ -355,6 +374,8 @@ void finalizeQueryFromDescription(Query<int, Bond const *, true> *query,
     query->setDataFunc(queryIsBondInNRings);
   } else if (descr == "SingleOrAromaticBond") {
     query->setDataFunc(queryBondIsSingleOrAromatic);
+  } else if (descr == "SingleOrDoubleOrAromaticBond") {
+    query->setDataFunc(queryBondIsSingleOrDoubleOrAromatic);
   } else if (descr == "BondNull") {
     query->setDataFunc(nullDataFun);
     query->setMatchFunc(nullQueryFun);
@@ -501,11 +522,16 @@ Query<int, Atom const *, true> *unpickleQuery(std::istream &ss,
                                               Atom const *owner, int version) {
   PRECONDITION(owner, "no query");
   std::string descr;
+  std::string typeLabel = "";
   bool isNegated = false;
   Query<int, Atom const *, true> *res;
   streamRead(ss, descr, version);
   MolPickler::Tags tag;
   streamRead(ss, tag, version);
+  if (tag == MolPickler::QUERY_TYPELABEL) {
+    streamRead(ss, typeLabel, version);
+    streamRead(ss, tag, version);
+  }
   if (tag == MolPickler::QUERY_ISNEGATED) {
     isNegated = true;
     streamRead(ss, tag, version);
@@ -543,6 +569,7 @@ Query<int, Atom const *, true> *unpickleQuery(std::istream &ss,
 
   res->setNegation(isNegated);
   res->setDescription(descr);
+  if (!typeLabel.empty()) res->setTypeLabel(typeLabel);
 
   finalizeQueryFromDescription(res, owner);
 
@@ -758,13 +785,14 @@ AtomMonomerInfo *unpickleAtomMonomerInfo(std::istream &ss, int version) {
 
 }  // end of anonymous namespace
 
-// Resets the `exceptionState` of the passed stream `ss` in the destructor to the
-// `exceptionState` the stream ss was in, before setting `newExceptionState`.
+// Resets the `exceptionState` of the passed stream `ss` in the destructor to
+// the `exceptionState` the stream ss was in, before setting
+// `newExceptionState`.
 struct IOStreamExceptionStateResetter {
   std::ios &originalStream;
   std::ios_base::iostate originalExceptionState;
   IOStreamExceptionStateResetter(std::ios &ss,
-                           std::ios_base::iostate newExceptionState)
+                                 std::ios_base::iostate newExceptionState)
       : originalStream(ss), originalExceptionState(ss.exceptions()) {
     ss.exceptions(newExceptionState);
   }
@@ -798,15 +826,15 @@ void MolPickler::pickleMol(const ROMol *mol, std::ostream &ss,
     streamWrite(ss, versionMajor);
     streamWrite(ss, versionMinor);
     streamWrite(ss, versionPatch);
-  #ifndef OLD_PICKLE
+#ifndef OLD_PICKLE
     if (mol->getNumAtoms() > 255) {
       _pickle<int32_t>(mol, ss, propertyFlags);
     } else {
       _pickle<unsigned char>(mol, ss, propertyFlags);
     }
-  #else
+#else
     _pickleV1(mol, ss);
-  #endif
+#endif
   } catch (const std::ios_base::failure &e) {
     if (ss.eof()) {
       throw MolPicklerException(
@@ -863,13 +891,13 @@ void MolPickler::molFromPickle(std::istream &ss, ROMol *mol) {
 
     mol->clearAllAtomBookmarks();
     mol->clearAllBondBookmarks();
-  
+
     streamRead(ss, tmpInt);
     if (tmpInt != endianId) {
       throw MolPicklerException(
           "Bad pickle format: bad endian ID or invalid file format");
     }
-  
+
     streamRead(ss, tmpInt);
     if (static_cast<Tags>(tmpInt) != VERSION) {
       throw MolPicklerException("Bad pickle format: no version tag");
@@ -885,6 +913,10 @@ void MolPickler::molFromPickle(std::istream &ss, ROMol *mol) {
           << minorVersion << ")"
           << "that is higher than our version (" << versionMajor << "."
           << versionMinor << ").\nThis probably won't work." << std::endl;
+    }
+    // version sanity checking
+    if (majorVersion > 1000 || minorVersion > 100 || patchVersion > 100) {
+      throw MolPicklerException("unreasonable version numbers");
     }
     majorVersion = 1000 * majorVersion + minorVersion * 10 + patchVersion;
     if (majorVersion == 1) {
@@ -1345,14 +1377,14 @@ void MolPickler::_unpickleAtomData(std::istream &ss, Atom *atom, int version) {
   atom->setFormalCharge(static_cast<int>(tmpSchar));
 
   if (propFlags & (1 << 2)) {
-    streamRead(ss, tmpChar, version);
+    streamReadPositiveChar(ss, tmpChar, version);
   } else {
     tmpChar = 0;
   }
   atom->setChiralTag(static_cast<Atom::ChiralType>(tmpChar));
 
   if (propFlags & (1 << 3)) {
-    streamRead(ss, tmpChar, version);
+    streamReadPositiveChar(ss, tmpChar, version);
   } else {
     tmpChar = Atom::SP3;
   }
@@ -1379,7 +1411,7 @@ void MolPickler::_unpickleAtomData(std::istream &ss, Atom *atom, int version) {
   }
   atom->d_implicitValence = tmpChar;
   if (propFlags & (1 << 7)) {
-    streamRead(ss, tmpChar, version);
+    streamReadPositiveChar(ss, tmpChar, version);
   } else {
     tmpChar = 0;
   }
@@ -1497,13 +1529,18 @@ Conformer *MolPickler::_conformerFromPickle(std::istream &ss, int version) {
   auto *conf = new Conformer(numAtoms);
   conf->setId(cid);
   conf->set3D(is3D);
-  for (unsigned int i = 0; i < numAtoms; i++) {
-    streamRead(ss, tmpFloat, version);
-    conf->getAtomPos(i).x = static_cast<double>(tmpFloat);
-    streamRead(ss, tmpFloat, version);
-    conf->getAtomPos(i).y = static_cast<double>(tmpFloat);
-    streamRead(ss, tmpFloat, version);
-    conf->getAtomPos(i).z = static_cast<double>(tmpFloat);
+  try {
+    for (unsigned int i = 0; i < numAtoms; i++) {
+      streamRead(ss, tmpFloat, version);
+      conf->getAtomPos(i).x = static_cast<double>(tmpFloat);
+      streamRead(ss, tmpFloat, version);
+      conf->getAtomPos(i).y = static_cast<double>(tmpFloat);
+      streamRead(ss, tmpFloat, version);
+      conf->getAtomPos(i).z = static_cast<double>(tmpFloat);
+    }
+  } catch (...) {
+    delete conf;
+    throw;
   }
   return conf;
 }
@@ -1777,13 +1814,13 @@ Bond *MolPickler::_addBondFromPickle(std::istream &ss, ROMol *mol, int version,
     bond->setIsConjugated(flags & 0x1 << 5);
 
     if (version < 7000) {
-      streamRead(ss, tmpChar, version);
+      streamReadPositiveChar(ss, tmpChar, version);
       bond->setBondType(static_cast<Bond::BondType>(tmpChar));
-      streamRead(ss, tmpChar, version);
+      streamReadPositiveChar(ss, tmpChar, version);
       bond->setBondDir(static_cast<Bond::BondDir>(tmpChar));
 
       if (version > 3000) {
-        streamRead(ss, tmpChar, version);
+        streamReadPositiveChar(ss, tmpChar, version);
         auto stereo = static_cast<Bond::BondStereo>(tmpChar);
         bond->setStereo(stereo);
         if (stereo != Bond::STEREONONE) {
@@ -1796,21 +1833,21 @@ Bond *MolPickler::_addBondFromPickle(std::istream &ss, ROMol *mol, int version,
       }
     } else {
       if (flags & (0x1 << 3)) {
-        streamRead(ss, tmpChar, version);
+        streamReadPositiveChar(ss, tmpChar, version);
         bond->setBondType(static_cast<Bond::BondType>(tmpChar));
       } else {
         bond->setBondType(Bond::SINGLE);
       }
 
       if (flags & (0x1 << 2)) {
-        streamRead(ss, tmpChar, version);
+        streamReadPositiveChar(ss, tmpChar, version);
         bond->setBondDir(static_cast<Bond::BondDir>(tmpChar));
       } else {
         bond->setBondDir(Bond::NONE);
       }
 
       if (flags & (0x1 << 1)) {
-        streamRead(ss, tmpChar, version);
+        streamReadPositiveChar(ss, tmpChar, version);
         auto stereo = static_cast<Bond::BondStereo>(tmpChar);
         streamRead(ss, tmpChar, version);
         for (char i = 0; i < tmpChar; ++i) {

@@ -6,10 +6,10 @@ CONFIGURE_FILE(${CMAKE_CURRENT_SOURCE_DIR}/RDConfig.h.cmake
               ${CMAKE_CURRENT_SOURCE_DIR}/RDConfig.h )
 
 
-add_definitions(-DRDKIT_RDGENERAL_BUILD)
 rdkit_library(RDGeneral
               Invariant.cpp types.cpp utils.cpp RDLog.cpp 
               LocaleSwitcher.cpp versions.cpp SHARED)
+target_compile_definitions(RDGeneral PRIVATE RDKIT_RDGENERAL_BUILD)
 
 if(MINGW)
   set(hasMSVCRuntime "FALSE")

@@ -16,8 +16,10 @@
 #ifndef MOLDRAW2DCAIRO_H
 #define MOLDRAW2DCAIRO_H
 
-#include <GraphMol/MolDraw2D/MolDraw2D.h>
 #include <cairo.h>
+
+#include <GraphMol/MolDraw2D/DrawTextCairo.h>
+#include <GraphMol/MolDraw2D/MolDraw2D.h>
 
 // ****************************************************************************
 
@@ -27,19 +29,21 @@ class RDKIT_MOLDRAW2D_EXPORT MolDraw2DCairo : public MolDraw2D {
  public:
   // does not take ownership of the drawing context
   MolDraw2DCairo(int width, int height, cairo_t *cr, int panelWidth = -1,
-                 int panelHeight = -1)
+                 int panelHeight = -1, bool noFreetype = false)
       : MolDraw2D(width, height, panelWidth, panelHeight), dp_cr(cr) {
     cairo_reference(dp_cr);
     initDrawing();
+    initTextDrawer(noFreetype);
   };
   MolDraw2DCairo(int width, int height, int panelWidth = -1,
-                 int panelHeight = -1)
+                 int panelHeight = -1, bool noFreetype = false)
       : MolDraw2D(width, height, panelWidth, panelHeight) {
     cairo_surface_t *surf =
         cairo_image_surface_create(CAIRO_FORMAT_ARGB32, width, height);
     dp_cr = cairo_create(surf);
     cairo_surface_destroy(surf);  // dp_cr has a reference to this now;
     initDrawing();
+    initTextDrawer(noFreetype);
   };
   ~MolDraw2DCairo() {
     if (dp_cr) {
@@ -58,36 +62,35 @@ class RDKIT_MOLDRAW2D_EXPORT MolDraw2DCairo : public MolDraw2D {
   void finishDrawing();
 
   void drawLine(const Point2D &cds1, const Point2D &cds2) override;
-  void drawChar(char c, const Point2D &cds) override;
   // void drawString( const std::string &str, const Point2D &cds );
   void drawPolygon(const std::vector<Point2D> &cds) override;
   void clearDrawing() override;
 
   void drawWavyLine(const Point2D &cds1, const Point2D &cds2,
                     const DrawColour &col1, const DrawColour &col2,
-                    unsigned int nSegments = 16, double vertOffset = 0.05) override;
-
-  // using the current scale, work out the size of the label in molecule
-  // coordinates
-  void getStringSize(const std::string &label, double &label_width,
-                     double &label_height) const override;
+                    unsigned int nSegments = 16,
+                    double vertOffset = 0.05) override;
 
   // returns the PNG data in a string
   std::string getDrawingText() const;
   // writes the PNG data to a file
   void writeDrawingText(const std::string &fName) const;
 
-#ifdef WIN32
-  bool supportsAnnotations() override {
-     return false;
-  }
+#if defined(WIN32) && !defined(RDK_BUILD_FREETYPE_SUPPORT)
+  bool supportsAnnotations() override { return false; }
 #endif
-
 
  private:
   cairo_t *dp_cr;
 
-  void initDrawing();
+  void updateMetadata(const ROMol &mol, int confId) override;
+  void updateMetadata(const ChemicalReaction &rxn) override;
+
+  void initDrawing() override;
+  void initTextDrawer(bool noFreetype) override;
+  std::string addMetadataToPNG(const std::string &png) const;
+  void updateMetadata(const ROMol &mol) const;
+  void updateMetadata(const ChemicalReaction &rxn) const;
 };
 }  // namespace RDKit
 #endif  // MOLDRAW2DCAIRO_H

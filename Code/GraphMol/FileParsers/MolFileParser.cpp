@@ -12,6 +12,7 @@
 #include <boost/algorithm/string.hpp>
 #include <boost/tokenizer.hpp>
 #include <boost/algorithm/string/trim.hpp>
+#include <boost/format.hpp>
 #include <RDGeneral/BoostEndInclude.h>
 
 #include "FileParsers.h"
@@ -58,24 +59,53 @@ int toInt(const std::string &input, bool acceptSpaces) {
   int res = 0;
   // don't need to worry about locale stuff here because
   // we're not going to have delimiters
-  res = strtol(input.c_str(), nullptr, 10);
-  if (!res && !acceptSpaces && input[0] == ' ') {
-    std::string trimmed = boost::trim_copy(input);
-    if (trimmed.length() == 0) {
+
+  // sanity check on the input since strtol doesn't do it for us:
+  const char *txt = input.c_str();
+  while (*txt != '\x00') {
+    if ((*txt >= '0' && *txt <= '9') || (acceptSpaces && *txt == ' ') ||
+        *txt == '+' || *txt == '-') {
+      ++txt;
+    } else {
       throw boost::bad_lexical_cast();
     }
   }
+  res = strtol(input.c_str(), nullptr, 10);
+  return res;
+}
+
+unsigned int toUnsigned(const std::string &input, bool acceptSpaces) {
+  unsigned res = 0;
+  // don't need to worry about locale stuff here because
+  // we're not going to have delimiters
+
+  // sanity check on the input since strtol doesn't do it for us:
+  const char *txt = input.c_str();
+  while (*txt != '\x00') {
+    if ((*txt >= '0' && *txt <= '9') || (acceptSpaces && *txt == ' ') ||
+        *txt == '+') {
+      ++txt;
+    } else {
+      throw boost::bad_lexical_cast();
+    }
+  }
+  res = strtoul(input.c_str(), nullptr, 10);
   return res;
 }
 
 double toDouble(const std::string &input, bool acceptSpaces) {
-  double res = atof(input.c_str());
-  if (res == 0.0 && !acceptSpaces && input[0] == ' ') {
-    std::string trimmed = boost::trim_copy(input);
-    if (trimmed.length() == 0) {
+  // sanity check on the input since strtol doesn't do it for us:
+  const char *txt = input.c_str();
+  // check for ',' and '.' because locale
+  while (*txt != '\x00') {
+    if ((*txt >= '0' && *txt <= '9') || (acceptSpaces && *txt == ' ') ||
+        *txt == '+' || *txt == '-' || *txt == ',' || *txt == '.') {
+      ++txt;
+    } else {
       throw boost::bad_lexical_cast();
     }
   }
+  double res = atof(input.c_str());
   return res;
 }
 
@@ -112,53 +142,12 @@ std::string getV3000Line(std::istream *inStream, unsigned int &line) {
 }
 
 Atom *replaceAtomWithQueryAtom(RWMol *mol, Atom *atom) {
-  PRECONDITION(mol, "bad molecule");
-  PRECONDITION(atom, "bad atom");
-  if (atom->hasQuery()) {
-    return atom;
-  }
-
-  QueryAtom qa(*atom);
-  unsigned int idx = atom->getIdx();
-
-  if (atom->getFormalCharge() != 0) {
-    qa.expandQuery(makeAtomFormalChargeQuery(atom->getFormalCharge()));
-  }
-  if (atom->hasProp(common_properties::_hasMassQuery)) {
-    qa.expandQuery(makeAtomMassQuery(static_cast<int>(atom->getMass())));
-  }
-  mol->replaceAtom(idx, &qa);
-  return mol->getAtomWithIdx(idx);
+  return QueryOps::replaceAtomWithQueryAtom(mol, atom);
 }
 }  // namespace FileParserUtils
 using RDKit::FileParserUtils::getV3000Line;
 
 namespace {
-
-void completeQueryAndChildren(ATOM_EQUALS_QUERY *query, Atom *tgt,
-                              int magicVal) {
-  PRECONDITION(query, "no query");
-  PRECONDITION(tgt, "no atom");
-  if (query->getVal() == magicVal) {
-    int tgtVal = query->getDataFunc()(tgt);
-    query->setVal(tgtVal);
-  }
-  QueryAtom::QUERYATOM_QUERY::CHILD_VECT_CI childIt;
-  for (childIt = query->beginChildren(); childIt != query->endChildren();
-       ++childIt) {
-    completeQueryAndChildren((ATOM_EQUALS_QUERY *)(childIt->get()), tgt,
-                             magicVal);
-  }
-}
-void completeMolQueries(RWMol *mol, int magicVal = 0xDEADBEEF) {
-  for (ROMol::AtomIterator ai = mol->beginAtoms(); ai != mol->endAtoms();
-       ++ai) {
-    if ((*ai)->hasQuery()) {
-      auto *query = static_cast<ATOM_EQUALS_QUERY *>((*ai)->getQuery());
-      completeQueryAndChildren(query, *ai, magicVal);
-    }
-  }
-}
 
 bool startsWith(const std::string &haystack, const char *needle, size_t size) {
   return haystack.compare(0u, size, needle, size) == 0;
@@ -198,7 +187,7 @@ std::string parseEnhancedStereo(std::istream *inStream, unsigned int &line,
         throw FileParseException(errout.str());
       }
 
-      const unsigned int count = FileParserUtils::toInt(match[2], true);
+      const unsigned int count = FileParserUtils::toUnsigned(match[2], true);
       std::vector<Atom *> atoms;
       std::stringstream ss(match[3]);
       unsigned int index;
@@ -519,7 +508,7 @@ void ParseSubstitutionCountLine(RWMol *mol, const std::string &text,
             throw FileParseException(errout.str());
         }
         if (!atom->hasQuery()) {
-          atom = FileParserUtils::replaceAtomWithQueryAtom(mol, atom);
+          atom = QueryOps::replaceAtomWithQueryAtom(mol, atom);
         }
         atom->expandQuery(q, Queries::COMPOSITE_AND);
         spos += 4;
@@ -563,7 +552,7 @@ void ParseUnsaturationLine(RWMol *mol, const std::string &text,
         } else if (count == 1) {
           ATOM_EQUALS_QUERY *q = makeAtomUnsaturatedQuery();
           if (!atom->hasQuery()) {
-            atom = FileParserUtils::replaceAtomWithQueryAtom(mol, atom);
+            atom = QueryOps::replaceAtomWithQueryAtom(mol, atom);
           }
           atom->expandQuery(q, Queries::COMPOSITE_AND);
         } else {
@@ -642,7 +631,7 @@ void ParseRingBondCountLine(RWMol *mol, const std::string &text,
             throw FileParseException(errout.str());
         }
         if (!atom->hasQuery()) {
-          atom = FileParserUtils::replaceAtomWithQueryAtom(mol, atom);
+          atom = QueryOps::replaceAtomWithQueryAtom(mol, atom);
         }
         atom->expandQuery(q, Queries::COMPOSITE_AND);
         spos += 4;
@@ -825,7 +814,7 @@ void ParseMarvinSmartsLine(RWMol *mol, const std::string &text,
   // M  MRV SMA   1 [*;A]
   // 01234567890123456789
   //           1111111111
-  if (text.substr(SMA, 3) != "SMA") {
+  if (text.substr(0, 10) != "M  MRV SMA") {
     return;
   }
 
@@ -929,6 +918,90 @@ void ParseAttachPointLine(RWMol *mol, const std::string &text,
              << "' to int on line " << line;
       throw FileParseException(errout.str());
     }
+  }
+}
+
+// the format differs between V2000 and V3000, so we have to do a bit of
+// translation here
+void ParseLinkNodeLine(RWMol *mol, const std::string &text, unsigned int line) {
+  PRECONDITION(mol, "bad mol");
+  PRECONDITION(text.substr(0, 6) == std::string("M  LIN"), "bad LIN line");
+
+  unsigned int nent;
+  try {
+    nent = FileParserUtils::stripSpacesAndCast<unsigned int>(text.substr(6, 3));
+  } catch (boost::bad_lexical_cast &) {
+    std::ostringstream errout;
+    errout << "Cannot convert '" << text.substr(6, 3) << "' to int on line "
+           << line;
+    throw FileParseException(errout.str());
+  }
+  std::string propVal = "";
+  unsigned int spos = 9;
+  for (unsigned int ie = 0; ie < nent; ie++) {
+    try {
+      auto aid = FileParserUtils::stripSpacesAndCast<unsigned int>(
+          text.substr(spos, 4));
+      if (!aid || aid > mol->getNumAtoms()) {
+        std::ostringstream errout;
+        errout << "LIN specification has bad atom idx on line " << line;
+        throw FileParseException(errout.str());
+      }
+      spos += 4;
+
+      if (text.size() < spos + 4 || text.substr(spos, 4) == "    ") {
+        std::ostringstream errout;
+        errout << "LIN specification missing repeat count on line " << line;
+        throw FileParseException(errout.str());
+      }
+      auto repeatCount = FileParserUtils::stripSpacesAndCast<unsigned int>(
+          text.substr(spos, 4));
+      spos += 4;
+      if (repeatCount < 2) {
+        std::ostringstream errout;
+        errout << "LIN specification: repeat count must be >=2 on line "
+               << line;
+        throw FileParseException(errout.str());
+      }
+      unsigned int substB = 0;
+      unsigned int substC = 0;
+      if (text.size() >= spos + 4 && text.substr(spos, 4) != "    ") {
+        substB = FileParserUtils::stripSpacesAndCast<unsigned int>(
+            text.substr(spos, 4));
+      }
+      spos += 4;
+      if (text.size() >= spos + 4 && text.substr(spos, 4) != "    ") {
+        substC = FileParserUtils::stripSpacesAndCast<unsigned int>(
+            text.substr(spos, 4));
+      }
+      spos += 4;
+
+      if (!substB || substB > mol->getNumAtoms() ||
+          substC > mol->getNumAtoms()) {
+        std::ostringstream errout;
+        errout << "LIN specification has bad substituent idx on line " << line;
+        throw FileParseException(errout.str());
+      }
+
+      boost::format formatter;
+      if (substC) {
+        formatter = boost::format("1 %1% 2 %2% %3% %2% %4%") % repeatCount %
+                    aid % substB % substC;
+      } else {
+        formatter = boost::format("1 %1% 1 %2% %3%") % repeatCount % aid %
+                    substB % substC;
+      }
+      if (!propVal.empty()) {
+        propVal += "|";
+      }
+      propVal += formatter.str();
+    } catch (boost::bad_lexical_cast &) {
+      std::ostringstream errout;
+      errout << "Cannot convert '" << text.substr(spos, 4)
+             << "' to int on line " << line;
+      throw FileParseException(errout.str());
+    }
+    mol->setProp(common_properties::molFileLinkNodes, propVal);
   }
 }
 
@@ -1062,7 +1135,7 @@ void ParseV3000RGroups(RWMol *mol, Atom *&atom, const std::string &text,
              << line;
       throw FileParseException(errout.str());
     }
-    atom = FileParserUtils::replaceAtomWithQueryAtom(mol, atom);
+    atom = QueryOps::replaceAtomWithQueryAtom(mol, atom);
     atom->setProp(common_properties::_MolFileRLabel, rLabel);
     std::string dLabel = "R" + std::to_string(rLabel);
     atom->setProp(common_properties::dummyLabel, dLabel);
@@ -1175,6 +1248,34 @@ void ParseAtomValue(RWMol *mol, std::string text, unsigned int line) {
               text.substr(7, text.length() - 7));
 }
 
+// We support the same special atom queries that we can read from
+// CXSMILES
+const std::vector<std::string> complexQueries = {"A", "AH", "Q", "QH",
+                                                 "X", "XH", "M", "MH"};
+void convertComplexNameToQuery(Atom *query, const std::string &symb) {
+  if (symb == "Q") {
+    query->setQuery(makeQAtomQuery());
+  } else if (symb == "QH") {
+    query->setQuery(makeQHAtomQuery());
+  } else if (symb == "A") {
+    query->setQuery(makeAAtomQuery());
+  } else if (symb == "AH") {
+    query->setQuery(makeAHAtomQuery());
+  } else if (symb == "X") {
+    query->setQuery(makeXAtomQuery());
+  } else if (symb == "XH") {
+    query->setQuery(makeXHAtomQuery());
+  } else if (symb == "M") {
+    query->setQuery(makeMAtomQuery());
+  } else if (symb == "MH") {
+    query->setQuery(makeMHAtomQuery());
+  } else {
+    // we control what this function gets called with, so we should never land
+    // here
+    ASSERT_INVARIANT(0, "bad complex query symbol");
+  }
+}
+
 Atom *ParseMolFileAtomLine(const std::string text, RDGeom::Point3D &pos,
                            unsigned int line) {
   std::string symb;
@@ -1233,18 +1334,19 @@ Atom *ParseMolFileAtomLine(const std::string text, RDGeom::Point3D &pos,
     }
   }
   auto *res = new Atom;
-  if (symb == "L" || symb == "A" || symb == "Q" || symb == "*" ||
-      symb == "LP" || symb == "R" || symb == "R#" ||
+  bool isComplexQueryName =
+      std::find(complexQueries.begin(), complexQueries.end(), symb) !=
+      complexQueries.end();
+  if (isComplexQueryName || symb == "L" || symb == "*" || symb == "LP" ||
+      symb == "R" || symb == "R#" ||
       (symb[0] == 'R' && symb >= "R0" && symb <= "R99")) {
-    if (symb == "A" || symb == "Q" || symb == "*" || symb == "R") {
+    if (isComplexQueryName || symb == "*" || symb == "R") {
       auto *query = new QueryAtom(0);
       if (symb == "*" || symb == "R") {
         // according to the MDL spec, these match anything
         query->setQuery(makeAtomNullQuery());
-      } else if (symb == "Q") {
-        query->setQuery(makeQAtomQuery());
-      } else if (symb == "A") {
-        query->setQuery(makeAAtomQuery());
+      } else if (isComplexQueryName) {
+        convertComplexNameToQuery(query, symb);
       }
       delete res;
       res = query;
@@ -1253,8 +1355,6 @@ Atom *ParseMolFileAtomLine(const std::string text, RDGeom::Point3D &pos,
     } else {
       res->setAtomicNum(0);
     }
-    // save the symbol:
-    res->setProp(common_properties::_MolFileSymbol, symb);
     if (massDiff == 0 && symb[0] == 'R') {
       if (symb.length() > 1) {
         std::string rlabel = "";
@@ -1441,11 +1541,11 @@ Bond *ParseMolFileBondLine(const std::string &text, unsigned int line) {
   }
 
   try {
-    idx1 = FileParserUtils::toInt(text.substr(spos, 3));
+    idx1 = FileParserUtils::toUnsigned(text.substr(spos, 3));
     spos += 3;
-    idx2 = FileParserUtils::toInt(text.substr(spos, 3));
+    idx2 = FileParserUtils::toUnsigned(text.substr(spos, 3));
     spos += 3;
-    bType = FileParserUtils::toInt(text.substr(spos, 3));
+    bType = FileParserUtils::toUnsigned(text.substr(spos, 3));
   } catch (boost::bad_lexical_cast &) {
     std::ostringstream errout;
     errout << "Cannot convert '" << text.substr(spos, 3) << "' to int on line "
@@ -1532,7 +1632,7 @@ Bond *ParseMolFileBondLine(const std::string &text, unsigned int line) {
 
   if (text.size() >= 12 && text.substr(9, 3) != "  0") {
     try {
-      stereo = FileParserUtils::toInt(text.substr(9, 3));
+      stereo = FileParserUtils::toUnsigned(text.substr(9, 3));
       switch (stereo) {
         case 0:
           res->setBondDir(Bond::NONE);
@@ -1796,6 +1896,8 @@ bool ParseMolBlockProperties(std::istream *inStream, unsigned int &line,
       ParseMarvinSmartsLine(mol, tempStr, line);
     } else if (lineBeg == "M  APO") {
       ParseAttachPointLine(mol, tempStr, line);
+    } else if (lineBeg == "M  LIN") {
+      ParseLinkNodeLine(mol, tempStr, line);
     }
     line++;
     tempStr = getLine(inStream);
@@ -1864,17 +1966,19 @@ Atom *ParseV3000AtomSymbol(std::string token, unsigned int &line) {
     // it's a normal CTAB atom symbol:
     // NOTE: "R" and "R0"-"R99" are not in the v3K CTAB spec, but we're going to
     // support them anyway
-    if (token == "R" || (token[0] == 'R' && token >= "R0" && token <= "R99") ||
-        token == "R#" || token == "A" || token == "Q" || token == "*") {
-      if (token == "A" || token == "Q" || token == "*") {
+    bool isComplexQueryName =
+        std::find(complexQueries.begin(), complexQueries.end(), token) !=
+        complexQueries.end();
+    if (isComplexQueryName || token == "R" ||
+        (token[0] == 'R' && token >= "R0" && token <= "R99") || token == "R#" ||
+        token == "*") {
+      if (isComplexQueryName || token == "*") {
         res = new QueryAtom(0);
         if (token == "*") {
           // according to the MDL spec, these match anything
           res->setQuery(makeAtomNullQuery());
-        } else if (token == "Q") {
-          res->setQuery(makeQAtomQuery());
-        } else if (token == "A") {
-          res->setQuery(makeAAtomQuery());
+        } else if (isComplexQueryName) {
+          convertComplexNameToQuery(res, token);
         }
         // queries have no implicit Hs:
         res->setNoImplicit(true);
@@ -1895,8 +1999,6 @@ Atom *ParseV3000AtomSymbol(std::string token, unsigned int &line) {
           res->setIsotope(rnumber);
         }
       }
-      res->setProp(common_properties::_MolFileSymbol, token);
-
     } else if (token == "D") {  // mol blocks support "D" and "T" as
                                 // shorthand... handle that.
       res = new Atom(1);
@@ -2019,7 +2121,7 @@ void ParseV3000AtomProps(RWMol *mol, Atom *&atom, typename T::iterator &token,
       if (val != "0") {
         auto hcount = FileParserUtils::toInt(val);
         if (!atom->hasQuery()) {
-          atom = FileParserUtils::replaceAtomWithQueryAtom(mol, atom);
+          atom = QueryOps::replaceAtomWithQueryAtom(mol, atom);
         }
         if (hcount == -1) {
           hcount = 0;
@@ -2029,7 +2131,7 @@ void ParseV3000AtomProps(RWMol *mol, Atom *&atom, typename T::iterator &token,
     } else if (prop == "UNSAT") {
       if (val == "1") {
         if (!atom->hasQuery()) {
-          atom = FileParserUtils::replaceAtomWithQueryAtom(mol, atom);
+          atom = QueryOps::replaceAtomWithQueryAtom(mol, atom);
         }
         atom->expandQuery(makeAtomUnsaturatedQuery());
       }
@@ -2037,7 +2139,7 @@ void ParseV3000AtomProps(RWMol *mol, Atom *&atom, typename T::iterator &token,
       if (val != "0") {
         auto rbcount = FileParserUtils::toInt(val);
         if (!atom->hasQuery()) {
-          atom = FileParserUtils::replaceAtomWithQueryAtom(mol, atom);
+          atom = QueryOps::replaceAtomWithQueryAtom(mol, atom);
         }
         if (rbcount == -1) {
           rbcount = 0;
@@ -2519,7 +2621,7 @@ void ProcessMolProps(RWMol *mol) {
     if (atom->getPropIfPresent(common_properties::molSubstCount, ival) &&
         ival != 0) {
       if (!atom->hasQuery()) {
-        atom = FileParserUtils::replaceAtomWithQueryAtom(mol, atom);
+        atom = QueryOps::replaceAtomWithQueryAtom(mol, atom);
       }
       bool gtQuery = false;
       if (ival == -1) {
@@ -2605,8 +2707,8 @@ bool ParseV3000CTAB(std::istream *inStream, unsigned int &line, RWMol *mol,
     throw FileParseException(errout.str());
   }
 
-  nAtoms = FileParserUtils::toInt(splitLine[0]);
-  nBonds = FileParserUtils::toInt(splitLine[1]);
+  nAtoms = FileParserUtils::toUnsigned(splitLine[0]);
+  nBonds = FileParserUtils::toUnsigned(splitLine[1]);
   if (!nAtoms) {
     throw FileParseException("molecule has no atoms");
   }
@@ -2615,13 +2717,13 @@ bool ParseV3000CTAB(std::istream *inStream, unsigned int &line, RWMol *mol,
   unsigned int nSgroups = 0, n3DConstraints = 0, chiralFlag = 0;
   (void)chiralFlag;  // needs to be read
   if (splitLine.size() > 2) {
-    nSgroups = FileParserUtils::toInt(splitLine[2]);
+    nSgroups = FileParserUtils::toUnsigned(splitLine[2]);
   }
   if (splitLine.size() > 3) {
-    n3DConstraints = FileParserUtils::toInt(splitLine[3]);
+    n3DConstraints = FileParserUtils::toUnsigned(splitLine[3]);
   }
   if (splitLine.size() > 4) {
-    chiralFlag = FileParserUtils::toInt(splitLine[4]);
+    chiralFlag = FileParserUtils::toUnsigned(splitLine[4]);
   }
 
   ParseV3000AtomBlock(inStream, line, nAtoms, mol, conf);
@@ -2660,8 +2762,18 @@ bool ParseV3000CTAB(std::istream *inStream, unsigned int &line, RWMol *mol,
   // do link nodes:
   boost::to_upper(tempStr);
   while (tempStr.length() > 8 && tempStr.substr(0, 8) == "LINKNODE") {
-    tempStr = getV3000Line(inStream, line);
     boost::to_upper(tempStr);
+    // if the line has nothing on it we just ignore it
+    if (tempStr.size() > 9) {
+      std::string existing = "";
+      if (mol->getPropIfPresent(common_properties::molFileLinkNodes,
+                                existing)) {
+        existing += "|";
+      }
+      existing += tempStr.substr(9);  // skip the "LINKNODE "
+      mol->setProp(common_properties::molFileLinkNodes, existing);
+    }
+    tempStr = getV3000Line(inStream, line);
   }
 
   while (tempStr.length() > 5 && tempStr.substr(0, 5) == "BEGIN") {
@@ -2697,7 +2809,7 @@ bool ParseV3000CTAB(std::istream *inStream, unsigned int &line, RWMol *mol,
   conf = nullptr;
 
   return fileComplete;
-}
+}  // namespace FileParserUtils
 
 bool ParseV2000CTAB(std::istream *inStream, unsigned int &line, RWMol *mol,
                     Conformer *&conf, bool &chiralityPossible,
@@ -2801,7 +2913,7 @@ void finishMolProcessing(RWMol *res, bool chiralityPossible, bool sanitize,
 
   if (res->hasProp(common_properties::_NeedsQueryScan)) {
     res->clearProp(common_properties::_NeedsQueryScan);
-    completeMolQueries(res);
+    QueryOps::completeMolQueries(res);
   }
 }
 }  // namespace FileParserUtils
@@ -2870,9 +2982,9 @@ RWMol *MolDataStreamToMol(std::istream *inStream, unsigned int &line,
   // this needs to go into a try block because if the lexical_cast throws an
   // exception we want to catch and delete mol before leaving this function
   try {
-    nAtoms = FileParserUtils::toInt(tempStr.substr(spos, 3), true);
+    nAtoms = FileParserUtils::toUnsigned(tempStr.substr(spos, 3), true);
     spos = 3;
-    nBonds = FileParserUtils::toInt(tempStr.substr(spos, 3), true);
+    nBonds = FileParserUtils::toUnsigned(tempStr.substr(spos, 3), true);
     spos = 6;
   } catch (boost::bad_lexical_cast &) {
     if (res) {
@@ -2881,43 +2993,45 @@ RWMol *MolDataStreamToMol(std::istream *inStream, unsigned int &line,
     }
     std::ostringstream errout;
     errout << "Cannot convert '" << tempStr.substr(spos, 3)
-           << "' to int on line " << line;
+           << "' to unsigned int on line " << line;
     throw FileParseException(errout.str());
   }
   try {
     spos = 6;
     if (tempStr.size() >= 9) {
-      nLists = FileParserUtils::toInt(tempStr.substr(spos, 3), true);
+      nLists = FileParserUtils::toUnsigned(tempStr.substr(spos, 3), true);
     }
 
     spos = 12;
     if (tempStr.size() >= spos + 3) {
-      chiralFlag = FileParserUtils::toInt(tempStr.substr(spos, 3), true);
+      chiralFlag = FileParserUtils::toUnsigned(tempStr.substr(spos, 3), true);
     }
 
     spos = 15;
     if (tempStr.size() >= spos + 3) {
-      nsText = FileParserUtils::toInt(tempStr.substr(spos, 3), true);
+      nsText = FileParserUtils::toUnsigned(tempStr.substr(spos, 3), true);
     }
 
     spos = 18;
     if (tempStr.size() >= spos + 3) {
-      nRxnComponents = FileParserUtils::toInt(tempStr.substr(spos, 3), true);
+      nRxnComponents =
+          FileParserUtils::toUnsigned(tempStr.substr(spos, 3), true);
     }
 
     spos = 21;
     if (tempStr.size() >= spos + 3) {
-      nReactants = FileParserUtils::toInt(tempStr.substr(spos, 3), true);
+      nReactants = FileParserUtils::toUnsigned(tempStr.substr(spos, 3), true);
     }
 
     spos = 24;
     if (tempStr.size() >= spos + 3) {
-      nProducts = FileParserUtils::toInt(tempStr.substr(spos, 3), true);
+      nProducts = FileParserUtils::toUnsigned(tempStr.substr(spos, 3), true);
     }
 
     spos = 27;
     if (tempStr.size() >= spos + 3) {
-      nIntermediates = FileParserUtils::toInt(tempStr.substr(spos, 3), true);
+      nIntermediates =
+          FileParserUtils::toUnsigned(tempStr.substr(spos, 3), true);
     }
 
   } catch (boost::bad_lexical_cast &) {
