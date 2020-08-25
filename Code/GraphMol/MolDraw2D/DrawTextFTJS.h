@@ -8,7 +8,7 @@
 // Original author: Greg Landrum
 //
 
-#ifndef RDKIT_DRAWTEXTFTSJS_H
+#ifndef RDKIT_DRAWTEXTFTJS_H
 #define RDKIT_DRAWTEXTFTJS_H
 
 #include <iosfwd>
@@ -38,7 +38,6 @@ class DrawTextFTJS : public DrawTextFT {
 
  private:
   emscripten::val &context_;
-  std::string &d_active_class_;
 };
 
 }  // namespace RDKit

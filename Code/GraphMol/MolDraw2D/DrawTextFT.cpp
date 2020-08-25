@@ -42,8 +42,6 @@ DrawTextFT::~DrawTextFT() {
 
 // ****************************************************************************
 void DrawTextFT::drawChar(char c, const Point2D &cds) {
-  EM_ASM_({alert("dtFT drawChar! " + $0)}, c);
-
   FT_Load_Char(face_, c, FT_LOAD_NO_SCALE | FT_LOAD_NO_BITMAP);
   x_trans_ = cds.x;
   y_trans_ = cds.y;
