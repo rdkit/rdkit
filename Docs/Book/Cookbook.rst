@@ -39,7 +39,7 @@ Alternatively, you can also send Cookbook revisions and addition requests to the
 
    The Index ID# (e.g., **RDKitCB_##**) is simply a way to track Cookbook entries and image file names. 
    New Cookbook additions are sequentially index numbered, regardless of where they are placed 
-   within the document. As such, for reference, the next Cookbook entry is **RDKitCB_30**.
+   within the document. As such, for reference, the next Cookbook entry is **RDKitCB_31**.
 
 Drawing Molecules (Jupyter)
 *******************************
@@ -1820,7 +1820,7 @@ Molecule Optimization with ANI NN as a ForceField
 ==================
 | **Author:** Manan Goel
 | **Source:** 
-| **Index ID#:** RDKitCB_26
+| **Index ID#:** RDKitCB_30
 | **Summary:**  Showcase various ways for optimizing different conformers of molecules using the ANI learned Force Field.
 
 Energy calculation using ANI-1x and ANI-1ccx
