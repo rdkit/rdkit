@@ -5,6 +5,7 @@ rdkit_python_extension(rdForceFieldHelpers rdForceFields.cpp
                        DEST Chem
                        LINK_LIBRARIES
                        ForceFieldHelpers ANIForceFieldHelpers)
+add_pytest(pyForceFieldHelpersANI ${CMAKE_CURRENT_SOURCE_DIR}/testANIHelpers.py)
 else()
 
 rdkit_python_extension(rdForceFieldHelpers rdForceFields.cpp

@@ -530,18 +530,18 @@ RETURNS: a list of (not_converged, energy) 2-tuples. \n\
                python::arg("numThreads") = 1, python::arg("maxIters") = 200),
               docString.c_str());
 #ifdef RDK_BUILD_ANI
-//   docString =
-//       "Uses ANI NN to optimize a molecule's structure\n\n\
-//  \n\
-//  ARGUMENTS:\n\n\
-//     - mol : the molecule of interest\n\
-//     - maxIters : the maximum number of iterations (defaults to 200)\n\
-//     - confId : indicates which conformer to optimize\n\
-//     - modelType : Type of ANI architecture\n\
-//     - ensembleSize : Number of NNs in the model\n\
-// \n\
-//  RETURNS : 0 if the optimization converged, 1 if more iterations are
-//       required ";
+  docString =
+      "Uses ANI NN to optimize a molecule's structure\n\n\
+ \n\
+ ARGUMENTS:\n\n\
+    - mol : the molecule of interest\n\
+    - maxIters : the maximum number of iterations (defaults to 200)\n\
+    - confId : indicates which conformer to optimize\n\
+    - modelType : Type of ANI architecture\n\
+    - ensembleSize : Number of NNs in the model\n\
+\n\
+ RETURNS : 0 if the optimization converged, 1 if more iterations are required.\n\
+\n";
   python::def(
       "ANIOptimizeMolecule", RDKit::ANIHelper,
       (python::arg("mol"), python::arg("maxIters") = 200,
