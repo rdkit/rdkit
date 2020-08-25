@@ -23,6 +23,7 @@
 
 #include <boost/format.hpp>
 #include <sstream>
+#include <cmath>
 
 namespace RDKit {
 
@@ -111,8 +112,17 @@ void MolDraw2DJS::drawEllipse(const Point2D &cds1, const Point2D &cds2) {
   w = w > 0 ? w : -1 * w;
   h = h > 0 ? h : -1 * h;
 
-  // std::string col = DrawColourToSVG(colour());
+  std::string col = DrawColourToSVG(colour());
   unsigned int width = getDrawLineWidth();
+  d_context.call<void>("beginPath");
+  d_context.set("lineWidth", width);
+  d_context.set("strokeStyle", col);
+  d_context.call<void>("ellipse", cx, cy, w / 2, h / 2, 0, 0, 2 * M_PI);
+  if (fillPolys()) {
+    d_context.set("fillStyle", col);
+    d_context.call<void>("fill");
+  }
+  d_context.call<void>("stroke");
 }
 
 // ****************************************************************************

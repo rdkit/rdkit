@@ -25,6 +25,8 @@ class JSMol {
   std::string get_svg_with_highlights(const std::string &details) const;
   std::string draw_to_canvas(const std::string &id, int width,
                              int height) const;
+  std::string draw_to_canvas_with_highlights(const std::string &id,
+                                             const std::string &details) const;
   std::string get_substruct_match(const JSMol &q) const;
   std::string get_substruct_matches(const JSMol &q) const;
   std::string get_descriptors() const;

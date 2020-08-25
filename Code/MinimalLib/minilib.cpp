@@ -171,9 +171,73 @@ std::string JSMol::draw_to_canvas(const std::string &id, int width,
   auto canvas = emscripten::val::global("document")
                     .call<emscripten::val>("getElementById", id);
   auto ctx = canvas.call<emscripten::val>("getContext", std::string("2d"));
+  if (width < 0) {
+    width = canvas["width"].as<int>();
+  }
+  if (height < 0) {
+    height = canvas["height"].as<int>();
+  }
   MolDraw2DJS *d2d = new MolDraw2DJS(width, height, ctx);
 
   MolDraw2DUtils::prepareAndDrawMolecule(*d2d, *d_mol);
+  delete d2d;
+  return "ok";
+#else
+  return "no JS support";
+#endif
+}
+
+std::string JSMol::draw_to_canvas_with_highlights(
+    const std::string &id, const std::string &details) const {
+  if (!d_mol) return "";
+
+#ifdef __EMSCRIPTEN__
+  rj::Document doc;
+  doc.Parse(details.c_str());
+  if (!doc.IsObject()) return "Invalid JSON";
+
+  std::vector<int> atomIds;
+  if (!doc.HasMember("atoms") || !doc["atoms"].IsArray()) {
+    return "JSON doesn't contain 'atoms' field, or it is not an array";
+  }
+  for (const auto &molval : doc["atoms"].GetArray()) {
+    if (!molval.IsInt()) return ("Atom IDs should be integers");
+    atomIds.push_back(static_cast<int>(molval.GetInt()));
+  }
+  std::vector<int> bondIds;
+  if (doc.HasMember("bonds")) {
+    if (!doc["bonds"].IsArray()) {
+      return "JSON contain 'bonds' field, but it is not an array";
+    }
+    for (const auto &molval : doc["bonds"].GetArray()) {
+      if (!molval.IsInt()) return ("Bond IDs should be integers");
+      bondIds.push_back(static_cast<int>(molval.GetInt()));
+    }
+  }
+
+  auto canvas = emscripten::val::global("document")
+                    .call<emscripten::val>("getElementById", id);
+  auto ctx = canvas.call<emscripten::val>("getContext", std::string("2d"));
+
+  unsigned int w = canvas["width"].as<unsigned int>();
+  if (doc.HasMember("width")) {
+    if (!doc["width"].IsUint()) {
+      return "JSON contains 'width' field, but it is not an unsigned int";
+    }
+    w = doc["width"].GetUint();
+  }
+
+  unsigned int h = canvas["height"].as<unsigned int>();
+  if (doc.HasMember("height")) {
+    if (!doc["height"].IsUint()) {
+      return "JSON contains 'height' field, but it is not an unsigned int";
+    }
+    h = doc["height"].GetUint();
+  }
+
+  MolDraw2DJS *d2d = new MolDraw2DJS(w, h, ctx);
+
+  MolDraw2DUtils::prepareAndDrawMolecule(*d2d, *d_mol, "", &atomIds, &bondIds);
   delete d2d;
   return "ok";
 #else

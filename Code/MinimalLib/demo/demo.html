@@ -62,15 +62,15 @@
     var ob = document.getElementById("drawing");
     ob.outerHTML = "<div id='drawing'>" + svg + "</div>";
 
-    mol.draw_to_canvas("rdkit-canvas", 400, 300);
-    alert("back!");
-
+    mol.draw_to_canvas("rdkit-canvas", -1, -1);
   }
   function draw_with_highlights(mol, atomids) {
     var svg = mol.get_svg_with_highlights(atomids);
     if (svg == "") return;
     var ob = document.getElementById("drawing");
     ob.outerHTML = "<div id='drawing'>" + svg + "</div>";
+    mol.draw_to_canvas_with_highlights("rdkit-canvas", atomids);
+
   }
   function callback(text) {
     var mol = Module.get_mol(text);
