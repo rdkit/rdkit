@@ -51,7 +51,7 @@ void MultithreadedSDMolSupplier::initFromSettings(bool takeOwnership,
   df_sanitize = sanitize;
   df_removeHs = removeHs;
   df_strictParsing = strictParsing;
-  d_numWriterThreads = numWriterThreads;
+  d_numWriterThreads = getNumThreadsToUse(numWriterThreads);
   d_sizeInputQueue = sizeInputQueue;
   d_sizeOutputQueue = sizeOutputQueue;
   d_inputQueue =

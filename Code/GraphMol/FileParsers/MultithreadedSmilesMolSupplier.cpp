@@ -65,7 +65,7 @@ void MultithreadedSmilesMolSupplier::initFromSettings(
   d_name = nameColumn;
   df_title = titleLine;
   df_sanitize = sanitize;
-  d_numWriterThreads = numWriterThreads;
+  d_numWriterThreads = getNumThreadsToUse(numWriterThreads);
   d_sizeInputQueue = sizeInputQueue;
   d_sizeOutputQueue = sizeOutputQueue;
   d_inputQueue =

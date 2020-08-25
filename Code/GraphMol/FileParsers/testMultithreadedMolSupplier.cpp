@@ -7,6 +7,7 @@
 //  which is included in the file license.txt, found at the root
 //  of the RDKit source tree.
 //
+#include <GraphMol/Fingerprints/MorganFingerprints.h>
 #include <GraphMol/SmilesParse/SmilesWrite.h>
 #include <RDGeneral/test.h>
 #include <RDStreams/streams.h>
@@ -18,8 +19,6 @@
 
 #include "MultithreadedSDMolSupplier.h"
 #include "MultithreadedSmilesMolSupplier.h"
-
-#include <GraphMol/Fingerprints/MorganFingerprints.h>
 
 namespace io = boost::iostreams;
 using namespace RDKit;
@@ -413,4 +412,3 @@ int main() {
 
   return 0;
 }
-
