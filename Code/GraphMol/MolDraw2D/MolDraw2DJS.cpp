@@ -64,17 +64,23 @@ void MolDraw2DJS::drawLine(const Point2D &cds1, const Point2D &cds2) {
   unsigned int width = getDrawLineWidth();
   std::string dashString = "";
   const DashPattern &dashes = dash();
-  // EM_ASM_({alert("DRAW! " + $0 + " " + $1 + " " + $2 + " " + $3)},
-  //         c1.x, c1.y, c2.x, c2.y);
 
   d_context.call<void>("beginPath");
   d_context.set("lineWidth", width);
   d_context.set("strokeStyle", col);
+  if (dashes.size()) {
+    d_context.call<void>("setLineDash", emscripten::typed_memory_view(
+                                            dashes.size(), dashes.data()));
+  }
   d_context.call<void>("moveTo", std::round(c1.x), std::round(c1.y));
   d_context.call<void>("lineTo", std::round(c2.x), std::round(c2.y));
   d_context.call<void>("stroke");
+  if (dashes.size()) {
+    static const DashPattern nodash;
+    d_context.call<void>("setLineDash", emscripten::typed_memory_view(
+                                            nodash.size(), nodash.data()));
+  }
 }
-
 // ****************************************************************************
 void MolDraw2DJS::drawPolygon(const std::vector<Point2D> &cds) {
   PRECONDITION(cds.size() >= 3, "must have at least three points");
