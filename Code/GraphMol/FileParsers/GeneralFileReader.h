@@ -41,49 +41,6 @@ std::vector<std::string> supportedFileFormats{"sdf", "mae", "maegz", "smi",
 //! current supported compression formats
 std::vector<std::string> supportedCompressionFormats{"gz"};
 
-//! determines whether file and compression format are valid
-bool validate(const std::string fileFormat,
-              const std::string compressionFormat) {
-  //! Case 1: No compression format
-  if (compressionFormat.empty()) {
-    return std::find(supportedFileFormats.begin(), supportedFileFormats.end(),
-                     fileFormat) != supportedFileFormats.end();
-  }
-  //! Case 2: With compression format
-
-  bool flagFileFormat =
-      std::find(supportedFileFormats.begin(), supportedFileFormats.end(),
-                fileFormat) != supportedFileFormats.end();
-  bool flagCompressionFormat =
-      std::find(supportedCompressionFormats.begin(),
-                supportedCompressionFormats.end(),
-                compressionFormat) != supportedCompressionFormats.end();
-
-  return flagFileFormat && flagCompressionFormat;
-}
-//! returns the file name givens the file path
-std::string getFileName(const std::string path) {
-  char delimiter = '/';
-  char delimiter_win = '\\';
-  auto n = path.length();
-  std::string fname = "";
-
-  auto slash1 = path.rfind(delimiter, n);
-  auto slash2 = path.rfind(delimiter_win, n);
-  if (slash1 == std::string::npos && slash2 != std::string::npos) {
-    fname += path.substr(slash2 + 1);
-  } else if (slash1 != std::string::npos && slash2 == std::string::npos) {
-    fname += path.substr(slash1 + 1);
-  } else if (slash1 != std::string::npos && slash2 != std::string::npos) {
-    fname += path.substr(std::max(slash1, slash2) + 1);
-  } else {
-    //! in this case we assume that the path name is the filename
-    fname += path;
-  }
-
-  return fname;
-}
-
 //! given file path determines the file and compression format
 void determineFormat(const std::string path, std::string& fileFormat,
                      std::string& compressionFormat) {
@@ -136,7 +93,7 @@ MolSupplier* getSupplier(const std::string& path,
     strm = new gzstream(path);
   }
 
-  //! Handle the case when there is no compression format
+  //! Dispatch to the appropriate supplier
   if (fileFormat.compare("sdf") == 0) {
     ForwardSDMolSupplier* sdsup = new ForwardSDMolSupplier(
         strm, true, opt.sanitize, opt.removeHs, opt.strictParsing);

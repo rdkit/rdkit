@@ -26,37 +26,7 @@
 namespace io = boost::iostreams;
 using namespace RDKit;
 using namespace GeneralMolSupplier;
-void testFileName() {
-  //! UNIX style path
-  std::string u1 = "/users/mark/bobapples/few.2.smi.csv";
-  std::string u2 = "/users/mark/bobapples/few.2.2.smi";
 
-  //! WINDOWS style path
-  std::string w1 = "A:\\Temp\\File.txt.csv";
-  std::string w2 = "A:\\Temp\\Folder1/Folder2/Folder3\\File.txt.csv";
-  std::string w3 = "A::\\Temp\\Folder1/Folder2\\Folder3/File.txt.csv";
-
-  //! No base directory
-  std::string d1 = "File.txt.csv";
-
-  std::string outU1 = getFileName(u1);
-  TEST_ASSERT(outU1 == "few.2.smi.csv");
-
-  std::string outU2 = getFileName(u2);
-  TEST_ASSERT(outU2 == "few.2.2.smi");
-
-  std::string outW1 = getFileName(w1);
-  TEST_ASSERT(outW1 == "File.txt.csv");
-
-  std::string outW2 = getFileName(w2);
-  TEST_ASSERT(outW2 == "File.txt.csv");
-
-  std::string outW3 = getFileName(w3);
-  TEST_ASSERT(outW3 == "File.txt.csv");
-
-  std::string outD1 = getFileName(d1);
-  TEST_ASSERT(outD1 == "File.txt.csv");
-}
 void testDetermineFormat() {
   std::string fname1 = "1kv1.maegz";
   std::string fname2 = "first_200.tpsa.csv";
@@ -271,18 +241,8 @@ int main() {
   RDLog::InitLogs();
 
   BOOST_LOG(rdErrorLog) << "\n-----------------------------------------\n";
-  testFileName();
-  BOOST_LOG(rdErrorLog) << "Finished: testFileName()\n";
-  BOOST_LOG(rdErrorLog) << "-----------------------------------------\n\n";
-
-  BOOST_LOG(rdErrorLog) << "\n-----------------------------------------\n";
   testDetermineFormat();
   BOOST_LOG(rdErrorLog) << "Finished: testDetermineFormat()\n";
-  BOOST_LOG(rdErrorLog) << "-----------------------------------------\n\n";
-
-  BOOST_LOG(rdErrorLog) << "\n-----------------------------------------\n";
-  testSdf();
-  BOOST_LOG(rdErrorLog) << "Finished: testSdf()\n";
   BOOST_LOG(rdErrorLog) << "-----------------------------------------\n\n";
 
   BOOST_LOG(rdErrorLog) << "\n-----------------------------------------\n";
