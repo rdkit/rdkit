@@ -19,6 +19,8 @@
 #include "MultithreadedSDMolSupplier.h"
 #include "MultithreadedSmilesMolSupplier.h"
 
+#include <GraphMol/Fingerprints/MorganFingerprints.h>
+
 namespace io = boost::iostreams;
 using namespace RDKit;
 using namespace std::chrono;
@@ -37,7 +39,8 @@ void testSmiConcurrent(std::istream* strm, bool takeOwnership,
                        std::string delimiter, int smilesColumn, int nameColumn,
                        bool titleLine, bool sanitize,
                        unsigned int numWriterThreads, size_t sizeInputQueue,
-                       size_t sizeOutputQueue, unsigned int expectedResult) {
+                       size_t sizeOutputQueue, unsigned int expectedResult,
+                       bool extras = false) {
   unsigned int nMols = 0;
   boost::dynamic_bitset<> bitVector(expectedResult);
   MultithreadedSmilesMolSupplier sup(
@@ -53,6 +56,10 @@ void testSmiConcurrent(std::istream* strm, bool takeOwnership,
     if (mol) {
       unsigned int id = sup.getLastRecordId();
       bitVector[id - 1] = 1;
+      if (extras) {
+        std::unique_ptr<ExplicitBitVect> fp(
+            MorganFingerprints::getFingerprintAsBitVect(*mol, 2, 2048));
+      }
       ++nMols;
     }
     delete mol;
@@ -66,24 +73,28 @@ void testSmiConcurrent(std::string path, std::string delimiter,
                        int smilesColumn, int nameColumn, bool titleLine,
                        bool sanitize, unsigned int numWriterThreads,
                        size_t sizeInputQueue, size_t sizeOutputQueue,
-                       unsigned int expectedResult) {
+                       unsigned int expectedResult, bool extras = false) {
   std::string rdbase = getenv("RDBASE");
   std::string fname = rdbase + path;
   std::istream* strm = new std::ifstream(fname.c_str());
   testSmiConcurrent(strm, true, delimiter, smilesColumn, nameColumn, titleLine,
                     sanitize, numWriterThreads, sizeInputQueue, sizeOutputQueue,
-                    expectedResult);
+                    expectedResult, extras);
 }
 
 void testSmiOld(std::string path, std::string delimiter, int smilesColumn,
                 int nameColumn, bool titleLine, bool sanitize,
-                unsigned int expectedResult) {
+                unsigned int expectedResult, bool extras = false) {
   unsigned int numMols = 0;
   SmilesMolSupplier sup(path, delimiter, smilesColumn, nameColumn, titleLine,
                         sanitize);
   while (!sup.atEnd()) {
     ROMol* mol = sup.next();
     if (mol) {
+      if (extras) {
+        std::unique_ptr<ExplicitBitVect> fp(
+            MorganFingerprints::getFingerprintAsBitVect(*mol, 2, 2048));
+      }
       ++numMols;
     }
     delete mol;
@@ -159,7 +170,8 @@ void testSmiCorrectness() {
 void testSDConcurrent(std::istream* strm, bool takeOwnership, bool sanitize,
                       bool removeHs, bool strictParsing,
                       unsigned int numWriterThreads, size_t sizeInputQueue,
-                      size_t sizeOutputQueue, unsigned int expectedResult) {
+                      size_t sizeOutputQueue, unsigned int expectedResult,
+                      bool extras = false) {
   unsigned int nMols = 0;
   boost::dynamic_bitset<> bitVector(expectedResult);
   MultithreadedSDMolSupplier sup(strm, takeOwnership, sanitize, removeHs,
@@ -175,6 +187,10 @@ void testSDConcurrent(std::istream* strm, bool takeOwnership, bool sanitize,
       unsigned int id = sup.getLastRecordId();
       bitVector[id - 1] = 1;
       ++nMols;
+      if (extras) {
+        std::unique_ptr<ExplicitBitVect> fp(
+            MorganFingerprints::getFingerprintAsBitVect(*mol, 2, 2048));
+      }
     }
     delete mol;
   }
@@ -186,13 +202,13 @@ void testSDConcurrent(std::istream* strm, bool takeOwnership, bool sanitize,
 void testSDConcurrent(std::string path, bool sanitize, bool removeHs,
                       bool strictParsing, unsigned int numWriterThreads,
                       size_t sizeInputQueue, size_t sizeOutputQueue,
-                      unsigned int expectedResult) {
+                      unsigned int expectedResult, bool extras = false) {
   std::string rdbase = getenv("RDBASE");
   std::string fname = rdbase + path;
   std::istream* strm = new std::ifstream(fname.c_str());
   testSDConcurrent(strm, true, sanitize, removeHs, strictParsing,
                    numWriterThreads, sizeInputQueue, sizeOutputQueue,
-                   expectedResult);
+                   expectedResult, extras);
 }
 
 void testSDProperties() {
@@ -227,13 +243,18 @@ void testSDProperties() {
 }
 
 void testSDOld(std::string path, bool sanitize, bool removeHs,
-               bool strictParsing, unsigned int expectedResult) {
+               bool strictParsing, unsigned int expectedResult,
+               bool extras = false) {
   unsigned int numMols = 0;
   SDMolSupplier sup(path, sanitize, removeHs, strictParsing);
   while (!sup.atEnd()) {
     ROMol* mol = sup.next();
     if (mol) {
       ++numMols;
+      if (extras) {
+        std::unique_ptr<ExplicitBitVect> fp(
+            MorganFingerprints::getFingerprintAsBitVect(*mol, 2, 2048));
+      }
     }
     delete mol;
   }
@@ -284,7 +305,7 @@ void testSDCorrectness() {
 void testPerformance() {
   /*
      TEST PERFORMANCE
-     
+
      NOTE: Only use this method when you have
      extracted the files znp.50k.smi.gz and chembl26_very_active.sdf.gz in the
      $RDBASE/Regress/Data directory.
@@ -302,7 +323,15 @@ void testPerformance() {
     // NOTE: have to use path instead of stream, since the tellg()
     //       method, which is used in implementation of the supplier
     // 			 fails for this file.
-    testSmiOld(rdbase + path, " \t", 0, 1, false, true, expectedResult);
+
+    std::string delim = " \t";
+    int smilesColumn = 0;
+    int nameColumn = 1;
+    bool titleLine = false;
+    bool sanitize = true;
+    bool extras = true;
+    testSmiOld(rdbase + path, delim, smilesColumn, nameColumn, titleLine,
+               sanitize, expectedResult, extras);
     auto stop = high_resolution_clock::now();
     auto duration = duration_cast<milliseconds>(stop - start);
     std::cout << "Duration for SmilesMolSupplier: " << duration.count()
@@ -311,8 +340,10 @@ void testPerformance() {
     for (unsigned int i = maxThreadCount; i >= 1; --i) {
       std::istream* strm = new gzstream(rdbase + gzpath);
       start = high_resolution_clock::now();
-      testSmiConcurrent(strm, true, " \t", 0, 1, false, true, i, 1000, 100,
-                        expectedResult);
+      bool takeOwnership = true;
+      testSmiConcurrent(strm, takeOwnership, delim, smilesColumn, nameColumn,
+                        titleLine, sanitize, i, 1000, 100, expectedResult,
+                        extras);
       stop = high_resolution_clock::now();
       duration = duration_cast<milliseconds>(stop - start);
       std::cout << "Duration for testSmiConcurent with " << i
@@ -321,7 +352,14 @@ void testPerformance() {
     }
   }
 #endif
+
   {
+    std::string delim = " \t";
+    bool sanitize = true;
+    bool removeHs = true;
+    bool strictParsing = false;
+    bool extras = true;
+
     std::string path = "/Regress/Data/chembl26_very_active.sdf";
     std::string gzpath = "/Regress/Data/chembl26_very_active.sdf.gz";
     unsigned int expectedResult = 35767;
@@ -329,7 +367,8 @@ void testPerformance() {
     // NOTE: have to use path instead of stream, since the tellg()
     //       method, which is used in implementation of the supplier
     // 			 fails for this file.
-    testSDOld(rdbase + path, true, true, false, expectedResult);
+    testSDOld(rdbase + path, sanitize, removeHs, strictParsing, expectedResult,
+              extras);
     auto stop = high_resolution_clock::now();
     auto duration = duration_cast<milliseconds>(stop - start);
     std::cout << "Duration for SDMolSupplier: " << duration.count()
@@ -337,9 +376,10 @@ void testPerformance() {
 
     for (unsigned int i = maxThreadCount; i >= 1; --i) {
       std::istream* strm = new gzstream(rdbase + gzpath);
+      bool takeOwnership = true;
       start = high_resolution_clock::now();
-      testSDConcurrent(strm, true, false, true, true, i, 1000, 4000,
-                       expectedResult);
+      testSDConcurrent(strm, takeOwnership, sanitize, removeHs, strictParsing,
+                       i, 1000, 4000, expectedResult, extras);
       stop = high_resolution_clock::now();
       duration = duration_cast<milliseconds>(stop - start);
       std::cout << "Duration for testSDConcurent with " << i
@@ -363,16 +403,14 @@ int main() {
   testSDCorrectness();
   BOOST_LOG(rdErrorLog) << "Finished: testSDCorrectness()\n";
   BOOST_LOG(rdErrorLog) << "-----------------------------------------\n\n";
- 
-/*
+
   BOOST_LOG(rdErrorLog) << "\n-----------------------------------------\n";
   testPerformance();
   BOOST_LOG(rdErrorLog) << "Finished: testPerformance()\n";
   BOOST_LOG(rdErrorLog) << "-----------------------------------------\n\n";
-*/
-
 
 #endif
 
   return 0;
 }
+
