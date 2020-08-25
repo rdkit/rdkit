@@ -21,7 +21,6 @@ void testPushAndPop() {
   q->push(3);
 
   TEST_ASSERT(!q->isEmpty());
-  TEST_ASSERT(q->size() == 3);
 
   TEST_ASSERT(q->pop(e1));
   TEST_ASSERT(q->pop(e2));

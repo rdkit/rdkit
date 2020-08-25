@@ -34,28 +34,32 @@ class RDKIT_FILEPARSERS_EXPORT MultithreadedMolSupplier : public MolSupplier {
  public:
   MultithreadedMolSupplier(){};
   virtual ~MultithreadedMolSupplier();
-  //! reads lines from input stream to populate the input queue
-  void reader();
-  //! parses lines from the input queue converting them to ROMol objects
-  //! populating the output queue
-  void writer();
   //! pop elements from the output queue
   ROMol *next();
   //! returns true when all records have been read from the supplier
   bool atEnd();
+
+  //! included for the interface, always returns false
+  bool getEOFHitOnRead() const { return false; }
+
   //! returns the record id of the last extracted item
   //! Note: d_LastRecordId = 0, initially therefore the value 0 is returned
   //! if and only if the function is called before extracting the first
   //! record
-  unsigned int getLastRecordId() const { return d_lastRecordId; }
+  unsigned int getLastRecordId() const;
   //! returns the text block for the last extracted item
-  std::string getLastItemText() const { return d_lastItemText; }
+  std::string getLastItemText() const;
 
  protected:
   //! starts reader and writer threads
   void startThreads();
 
  private:
+  //! reads lines from input stream to populate the input queue
+  void reader();
+  //! parses lines from the input queue converting them to ROMol objects
+  //! populating the output queue
+  void writer();
   //! finalizes the reader and writer threads
   void endThreads();
   //! disable automatic copy constructors and assignment operators
@@ -64,13 +68,14 @@ class RDKIT_FILEPARSERS_EXPORT MultithreadedMolSupplier : public MolSupplier {
   //! for disaster.
   MultithreadedMolSupplier(const MultithreadedMolSupplier &);
   MultithreadedMolSupplier &operator=(const MultithreadedMolSupplier &);
-
- private:
+  //! not yet implemented
   virtual void reset();
   virtual void init() = 0;
   virtual bool getEnd() const = 0;
+  //! extracts next record from the input file or stream
   virtual bool extractNextRecord(std::string &record, unsigned int &lineNum,
                                  unsigned int &index) = 0;
+  //! processes the record into an ROMol object
   virtual ROMol *processMoleculeRecord(const std::string &record,
                                        unsigned int lineNum) = 0;
 
@@ -86,6 +91,7 @@ class RDKIT_FILEPARSERS_EXPORT MultithreadedMolSupplier : public MolSupplier {
   unsigned int d_numWriterThreads;           //! number of writer threads
   size_t d_sizeInputQueue;                   //! size of input queue
   size_t d_sizeOutputQueue;                  //! size of output queue
+
   ConcurrentQueue<std::tuple<std::string, unsigned int, unsigned int>>
       *d_inputQueue;  //! concurrent input queue
   ConcurrentQueue<std::tuple<ROMol *, std::string, unsigned int>>

@@ -18,38 +18,23 @@ class RDKIT_FILEPARSERS_EXPORT MultithreadedSmilesMolSupplier
   explicit MultithreadedSmilesMolSupplier(
       const std::string &fileName, const std::string &delimiter = " \t",
       int smilesColumn = 0, int nameColumn = 1, bool titleLine = true,
-      bool sanitize = true, unsigned int numWriterThreads = 2,
+      bool sanitize = true, unsigned int numWriterThreads = 1,
       size_t sizeInputQueue = 5, size_t sizeOutputQueue = 5);
 
   explicit MultithreadedSmilesMolSupplier(
       std::istream *inStream, bool takeOwnership = true,
       const std::string &delimiter = " \t", int smilesColumn = 0,
       int nameColumn = 1, bool titleLine = true, bool sanitize = true,
-      unsigned int numWriterThreads = 2, size_t sizeInputQueue = 5,
+      unsigned int numWriterThreads = 1, size_t sizeInputQueue = 5,
       size_t sizeOutputQueue = 5);
   MultithreadedSmilesMolSupplier();
   ~MultithreadedSmilesMolSupplier();
 
-  //! initialize data members using init to prevent code duplication
   void init(){};
-  void _init(bool takeOwnership, const std::string &delimiter, int smilesColumn,
-             int nameColumn, bool titleLine, bool sanitize,
-             unsigned int numWriterThreads, size_t sizeInputQueue,
-             size_t sizeOutputQueue);
-  //! Returns the position of the beginning of the next
-  //! non-comment line in the input stream. -1 is returned if
-  //! no line could be read;
-  long int skipComments();
-  //! checks if there is a line to be read from the file
-  void checkForEnd();
   //! returns df_end
   bool getEnd() const;
-  //! get next line
-  std::string nextLine();
   //! reads and processes the title line
   void processTitleLine();
-  //! move to the position of a particular entry in the stream
-  bool moveTo(unsigned int idx);
   //! reads next record and returns whether or not EOF was hit
   bool extractNextRecord(std::string &record, unsigned int &lineNum,
                          unsigned int &index);
@@ -57,13 +42,15 @@ class RDKIT_FILEPARSERS_EXPORT MultithreadedSmilesMolSupplier
   ROMol *processMoleculeRecord(const std::string &record, unsigned int lineNum);
 
  private:
-  bool df_end = false;  //! have we reached the end of the file?
-  int d_len = 0;        //! total number of smiles in the file
-  int d_next = 0;       //! the  molecule we are ready to read
-  int d_line = 0;       //! line number we are currently on
-  std::vector<std::streampos>
-      d_molpos;  //! vector of positions in the file for molecules
-  std::vector<int> d_lineNums;
+  void initFromSettings(bool takeOwnership, const std::string &delimiter,
+                        int smilesColumn, int nameColumn, bool titleLine,
+                        bool sanitize, unsigned int numWriterThreads,
+                        size_t sizeInputQueue, size_t sizeOutputQueue);
+
+ private:
+  bool df_end = false;      //! have we reached the end of the file?
+  int d_len = 0;            //! total number of smiles in the file
+  int d_line = 0;           //! line number we are currently on
   std::string d_delim;      //! the delimiter string
   bool df_sanitize = true;  //! sanitize molecules before returning them?
   STR_VECT d_props;         //! vector of property names

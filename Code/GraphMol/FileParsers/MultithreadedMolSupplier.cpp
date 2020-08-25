@@ -9,7 +9,6 @@
 //
 #include "MultithreadedMolSupplier.h"
 namespace RDKit {
-
 MultithreadedMolSupplier::~MultithreadedMolSupplier() {
   endThreads();
   // destroy all objects in the input queue
@@ -41,10 +40,17 @@ void MultithreadedMolSupplier::reader() {
 void MultithreadedMolSupplier::writer() {
   std::tuple<std::string, unsigned int, unsigned int> r;
   while (d_inputQueue->pop(r)) {
-    ROMol* mol = processMoleculeRecord(std::get<0>(r), std::get<1>(r));
-    auto temp = std::tuple<ROMol*, std::string, unsigned int>{
-        mol, std::get<0>(r), std::get<2>(r)};
-    d_outputQueue->push(temp);
+    try {
+      ROMol* mol = processMoleculeRecord(std::get<0>(r), std::get<1>(r));
+      auto temp = std::tuple<ROMol*, std::string, unsigned int>{
+          mol, std::get<0>(r), std::get<2>(r)};
+      d_outputQueue->push(temp);
+    } catch (...) {
+      // fill the queue wih a null value
+      auto nullValue = std::tuple<ROMol*, std::string, unsigned int>{
+          nullptr, std::get<0>(r), std::get<2>(r)};
+      d_outputQueue->push(nullValue);
+    }
   }
 
   if (d_threadCounter != d_numWriterThreads) {
@@ -86,6 +92,16 @@ bool MultithreadedMolSupplier::atEnd() {
   return (d_outputQueue->isEmpty() && d_outputQueue->getDone());
 }
 
-void MultithreadedMolSupplier::reset() { ; }
+unsigned int MultithreadedMolSupplier::getLastRecordId() const {
+  return d_lastRecordId;
+}
+
+std::string MultithreadedMolSupplier::getLastItemText() const {
+  return d_lastItemText;
+}
+
+void MultithreadedMolSupplier::reset() {
+  UNDER_CONSTRUCTION("reset() not supported for MultithreadedMolSupplier();");
+}
 
 }  // namespace RDKit
