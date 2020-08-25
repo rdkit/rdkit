@@ -19,6 +19,7 @@
 #include <GraphMol/RDKitBase.h>
 #include <RDGeneral/FileParseException.h>
 
+#include "MolSupplier.h"
 #include "MultithreadedMolSupplier.h"
 
 namespace python = boost::python;
@@ -85,7 +86,7 @@ struct multiSmiMolSup_wrap {
         .def("__iter__",
              (MultithreadedSmilesMolSupplier *
               (*)(MultithreadedSmilesMolSupplier *)) &
-                 MolSupplIter,
+                 MTMolSupplIter,
              python::return_internal_reference<1>())
         .def("__next__",
              (ROMol * (*)(MultithreadedSmilesMolSupplier *)) &
@@ -97,11 +98,11 @@ struct multiSmiMolSup_wrap {
              "Returns true if we have read all records else false.\n")
         .def("GetLastRecordId",
              (unsigned int (*)(MultithreadedSmilesMolSupplier *)) &
-                 MolSupplLastId,
+                 MTMolSupplLastId,
              "Returns the record id for the last extracted item.\n")
         .def("GetLastItemText",
              (std::string(*)(MultithreadedSmilesMolSupplier *)) &
-                 MolSupplLastItem,
+                 MTMolSupplLastItem,
              "Returns the text for the last extracted item.\n");
   };
 };

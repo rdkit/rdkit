@@ -38,6 +38,10 @@ class RDKIT_FILEPARSERS_EXPORT MultithreadedMolSupplier : public MolSupplier {
   ROMol *next();
   //! returns true when all records have been read from the supplier
   bool atEnd();
+
+  //! included for the interface, always returns false
+  bool getEOFHitOnRead() const { return false; }
+
   //! returns the record id of the last extracted item
   //! Note: d_LastRecordId = 0, initially therefore the value 0 is returned
   //! if and only if the function is called before extracting the first
@@ -87,6 +91,7 @@ class RDKIT_FILEPARSERS_EXPORT MultithreadedMolSupplier : public MolSupplier {
   unsigned int d_numWriterThreads;           //! number of writer threads
   size_t d_sizeInputQueue;                   //! size of input queue
   size_t d_sizeOutputQueue;                  //! size of output queue
+
   ConcurrentQueue<std::tuple<std::string, unsigned int, unsigned int>>
       *d_inputQueue;  //! concurrent input queue
   ConcurrentQueue<std::tuple<ROMol *, std::string, unsigned int>>
