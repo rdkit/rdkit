@@ -7,6 +7,9 @@
   So the MCS between molecules `CC` and `CO` is now `[#6]` rather than being null.
 - The fontSize()/setFontSize() (FontSize()/SetFontSize()) methods in MolDraw2D
   now work in units of pixels (more or less) instead of the molecule units.
+- The Open3DAlign functionality is now in its own separate library - `O3AAlign`
+  in cmake. If you are working in C++ and using O3A functionality, you'll need
+  to link against this library as well now.
 
 ## Code removed in this release:
 - To improve API consistency of the exceptions in RDKit with the default ones in

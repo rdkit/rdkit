@@ -1,6 +1,5 @@
 
 remove_definitions(-DRDKIT_GRAPHMOL_BUILD)
-add_definitions(-DRDKIT_DEPICTOR_BUILD)
 
 if(RDK_BUILD_COORDGEN_SUPPORT)
 
@@ -16,6 +15,7 @@ endif()
 rdkit_library(Depictor
               RDDepictor.cpp EmbeddedFrag.cpp DepictUtils.cpp
               LINK_LIBRARIES ${RDK_COORDGEN_LIBS} SubstructMatch GraphMol RDGeneral)
+target_compile_definitions(Depictor PRIVATE RDKIT_DEPICTOR_BUILD)
 
 rdkit_headers(DepictUtils.h
               EmbeddedFrag.h

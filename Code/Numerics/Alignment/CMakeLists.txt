@@ -1,6 +1,6 @@
 
-add_definitions(-DRDKIT_ALIGNMENT_BUILD)
 rdkit_library(Alignment AlignPoints.cpp LINK_LIBRARIES RDGeometryLib)
+target_compile_definitions(Alignment PRIVATE RDKIT_ALIGNMENT_BUILD)
 
 rdkit_headers(AlignPoints.h DEST Numerics/Alignment)
 
