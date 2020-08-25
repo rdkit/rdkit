@@ -78,8 +78,26 @@ void MolDraw2DJS::drawLine(const Point2D &cds1, const Point2D &cds2) {
 void MolDraw2DJS::drawPolygon(const std::vector<Point2D> &cds) {
   PRECONDITION(cds.size() >= 3, "must have at least three points");
 
-  // std::string col = DrawColourToSVG(colour());
+  std::string col = DrawColourToSVG(colour());
   unsigned int width = getDrawLineWidth();
+
+  d_context.call<void>("beginPath");
+  d_context.set("lineWidth", width);
+  d_context.set("lineCap", std::string("butt"));
+  d_context.set("lineJoin", std::string("round"));
+  d_context.set("strokeStyle", col);
+  Point2D c0 = getDrawCoords(cds[0]);
+  d_context.call<void>("moveTo", std::round(c0.x), std::round(c0.y));
+  for (unsigned int i = 1; i < cds.size(); ++i) {
+    Point2D ci = getDrawCoords(cds[i]);
+    d_context.call<void>("lineTo", std::round(ci.x), std::round(ci.y));
+  }
+  d_context.call<void>("closePath");
+  if (fillPolys()) {
+    d_context.set("fillStyle", col);
+    d_context.call<void>("fill");
+  }
+  d_context.call<void>("stroke");
 }
 
 // ****************************************************************************

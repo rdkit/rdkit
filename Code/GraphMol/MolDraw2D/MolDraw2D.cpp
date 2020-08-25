@@ -236,6 +236,7 @@ void MolDraw2D::drawMolecule(const ROMol &mol,
     atom_colours.emplace_back(
         getColour(this_at->getIdx(), highlight_atoms, highlight_atom_map));
   }
+
   finishMoleculeDraw(draw_mol, atom_colours);
   // popDrawDetails();
   curr_width_ = origWidth;
@@ -378,8 +379,7 @@ void MolDraw2D::get2DCoordsMol(RWMol &mol, double &offset, double spacing,
   const bool canonOrient = true;
   const bool kekulize = false;  // don't kekulize, we just did that
   RDDepict::compute2DCoords(mol, nullptr, canonOrient);
-  MolDraw2DUtils::prepareMolForDrawing(
-      mol, kekulize);
+  MolDraw2DUtils::prepareMolForDrawing(mol, kekulize);
   double minX = 1e8;
   double maxX = -1e8;
   double vShift = 0;
@@ -552,7 +552,7 @@ void MolDraw2D::drawReaction(
 
   const bool originalPrepMols = drawOptions().prepareMolsBeforeDrawing;
   drawOptions().prepareMolsBeforeDrawing = false;
-  
+
   ROMol *tmol = ChemicalReactionToRxnMol(nrxn);
   MolOps::findSSSR(*tmol);
 
