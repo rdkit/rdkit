@@ -8,12 +8,22 @@ if(WIN32)
   if (NOT Boost_USE_STATIC_LIBS)
      add_definitions("-DBOOST_IOSTREAMS_DYN_LINK")
   endif()
+  if(Boost_zlib_FOUND)
+    set(zlib_lib Boost::zlib)
+  else()
+    find_package(ZLIB)
+    set(zlib_lib ${ZLIB_LIBRARIES})
+  endif()
+
+
 else()
   find_package(Boost ${RDK_BOOST_VERSION} COMPONENTS system iostreams REQUIRED)
   set (link_iostreams ${Boost_LIBRARIES})
   if (NOT Boost_USE_STATIC_LIBS)
      add_definitions("-DBOOST_IOSTREAMS_DYN_LINK")
   endif()
+  find_package(ZLIB)
+  set(zlib_lib ${ZLIB_LIBRARIES})
 endif()
 ADD_DEFINITIONS("-DRDK_USE_BOOST_IOSTREAMS")
 endif(RDK_USE_BOOST_IOSTREAMS)
@@ -42,7 +52,7 @@ rdkit_library(FileParsers
               ${maesupplier}
               ProximityBonds.cpp
               SequenceParsers.cpp SequenceWriters.cpp
-              SVGParser.cpp
+              SVGParser.cpp PNGParser.cpp
               LINK_LIBRARIES Depictor SmilesParse GraphMol ${RDK_MAEPARSER_LIBS} ${regex_lib} ${link_iostreams})
 target_compile_definitions(FileParsers PRIVATE RDKIT_FILEPARSERS_BUILD)
 
@@ -52,6 +62,7 @@ rdkit_headers(FileParsers.h
               MolSupplier.h
               MolWriters.h
               SequenceParsers.h SequenceWriters.h
+              PNGParser.h
               DEST GraphMol/FileParsers)
 
 rdkit_test(fileParsersTest1 test1.cpp

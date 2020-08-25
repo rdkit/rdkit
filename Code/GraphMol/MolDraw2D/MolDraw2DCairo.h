@@ -29,15 +29,14 @@ class RDKIT_MOLDRAW2D_EXPORT MolDraw2DCairo : public MolDraw2D {
  public:
   // does not take ownership of the drawing context
   MolDraw2DCairo(int width, int height, cairo_t *cr, int panelWidth = -1,
-                 int panelHeight = -1, bool noFreetype=false)
+                 int panelHeight = -1, bool noFreetype = false)
       : MolDraw2D(width, height, panelWidth, panelHeight), dp_cr(cr) {
     cairo_reference(dp_cr);
     initDrawing();
     initTextDrawer(noFreetype);
   };
-  MolDraw2DCairo(int width, int height,
-                 int panelWidth = -1, int panelHeight = -1,
-                 bool noFreetype=false)
+  MolDraw2DCairo(int width, int height, int panelWidth = -1,
+                 int panelHeight = -1, bool noFreetype = false)
       : MolDraw2D(width, height, panelWidth, panelHeight) {
     cairo_surface_t *surf =
         cairo_image_surface_create(CAIRO_FORMAT_ARGB32, width, height);
@@ -69,26 +68,29 @@ class RDKIT_MOLDRAW2D_EXPORT MolDraw2DCairo : public MolDraw2D {
 
   void drawWavyLine(const Point2D &cds1, const Point2D &cds2,
                     const DrawColour &col1, const DrawColour &col2,
-                    unsigned int nSegments = 16, double vertOffset = 0.05) override;
+                    unsigned int nSegments = 16,
+                    double vertOffset = 0.05) override;
 
   // returns the PNG data in a string
   std::string getDrawingText() const;
   // writes the PNG data to a file
   void writeDrawingText(const std::string &fName) const;
 
-#if defined(WIN32) && !defined(RDK_BUILD_FREETYPE_SUPPORT) 
-  bool supportsAnnotations() override {
-     return false;
-  }
+#if defined(WIN32) && !defined(RDK_BUILD_FREETYPE_SUPPORT)
+  bool supportsAnnotations() override { return false; }
 #endif
-
 
  private:
   cairo_t *dp_cr;
 
+  void updateMetadata(const ROMol &mol, int confId) override;
+  void updateMetadata(const ChemicalReaction &rxn) override;
+
   void initDrawing() override;
   void initTextDrawer(bool noFreetype) override;
-
+  std::string addMetadataToPNG(const std::string &png) const;
+  void updateMetadata(const ROMol &mol) const;
+  void updateMetadata(const ChemicalReaction &rxn) const;
 };
 }  // namespace RDKit
 #endif  // MOLDRAW2DCAIRO_H

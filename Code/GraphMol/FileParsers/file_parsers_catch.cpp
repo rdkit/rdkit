@@ -17,6 +17,9 @@
 #include <GraphMol/SmilesParse/SmilesWrite.h>
 #include <GraphMol/SmilesParse/SmilesParse.h>
 #include <GraphMol/SmilesParse/SmartsWrite.h>
+#include <GraphMol/FileParsers/PNGParser.h>
+#include <RDGeneral/FileParseException.h>
+#include <boost/algorithm/string.hpp>
 
 using namespace RDKit;
 
@@ -1675,5 +1678,281 @@ M  END
     CHECK(molb.find(" XH ") != std::string::npos);
     /// SMARTS-based queries are not written for these:
     CHECK(molb.find("V    ") == std::string::npos);
+  }
+}
+
+TEST_CASE("read metadata from PNG", "[reader][PNG]") {
+  std::string rdbase = getenv("RDBASE");
+  SECTION("basics") {
+    std::string fname =
+        rdbase + "/Code/GraphMol/FileParsers/test_data/colchicine.png";
+    auto metadata = PNGFileToMetadata(fname);
+
+    auto iter =
+        std::find_if(metadata.begin(), metadata.end(),
+                     [](const std::pair<std::string, std::string> &val) {
+                       return boost::starts_with(val.first, PNGData::smilesTag);
+                     });
+    REQUIRE(iter != metadata.end());
+    CHECK(
+        iter->second ==
+        "COc1cc2c(-c3ccc(OC)c(=O)cc3[C@@H](NC(C)=O)CC2)c(OC)c1OC "
+        "|(6.46024,1.03002,;5.30621,1.98825,;3.89934,1.46795,;2.74531,2.42618,;"
+        "1.33844,1.90588,;1.0856,0.427343,;-0.228013,-0.296833,;0.1857,-1."
+        "73865,;-0.683614,-2.96106,;-2.18134,-3.04357,;-2.75685,-4.42878,;-4."
+        "24422,-4.62298,;-3.17967,-1.92404,;-4.62149,-2.33775,;-2.92683,-0."
+        "445502,;-1.61322,0.278673,;-2.02693,1.72049,;-3.50547,1.97333,;-4."
+        "02577,3.3802,;-5.50431,3.63304,;-3.06754,4.53423,;-1.15762,2.9429,;0."
+        "340111,3.02541,;2.23963,-0.530891,;1.98679,-2.00943,;3.14082,-2.96766,"
+        ";3.6465,-0.0105878,;4.80053,-0.968822,;4.54769,-2.44736,)|");
+  }
+  SECTION("no metadata") {
+    std::string fname =
+        rdbase +
+        "/Code/GraphMol/FileParsers/test_data/colchicine.no_metadata.png";
+    auto metadata = PNGFileToMetadata(fname);
+    REQUIRE(metadata.empty());
+  }
+  SECTION("bad PNG") {
+    std::string text = "NOT A PNG";
+    REQUIRE_THROWS_AS(PNGStringToMetadata(text), FileParseException);
+  }
+
+  SECTION("truncated PNG") {
+    std::string fname =
+        rdbase + "/Code/GraphMol/FileParsers/test_data/colchicine.png";
+    auto istr = std::ifstream(fname, std::ios_base::binary);
+    istr.seekg(0, istr.end);
+    auto sz = istr.tellg();
+    istr.seekg(0, istr.beg);
+    char *buff = new char[sz];
+    istr.read(buff, sz);
+    std::string data(buff, sz);
+    delete[] buff;
+    auto metadata = PNGStringToMetadata(data);
+    REQUIRE(!metadata.empty());
+    REQUIRE_THROWS_AS(PNGStringToMetadata(data.substr(1000)),
+                      FileParseException);
+  }
+#ifdef RDK_USE_BOOST_IOSTREAMS
+  SECTION("compressed metadata") {
+    std::string fname =
+        rdbase + "/Code/GraphMol/FileParsers/test_data/colchicine.mrv.png";
+    auto metadata = PNGFileToMetadata(fname);
+    auto iter =
+        std::find_if(metadata.begin(), metadata.end(),
+                     [](const std::pair<std::string, std::string> &val) {
+                       return val.first == "molSource";
+                     });
+    REQUIRE(iter != metadata.end());
+    CHECK(iter->second.find("<MChemicalStruct>") != std::string::npos);
+  }
+#endif
+}
+
+TEST_CASE("write metadata to PNG", "[writer][PNG]") {
+  std::string rdbase = getenv("RDBASE");
+  SECTION("basics") {
+    std::string fname =
+        rdbase +
+        "/Code/GraphMol/FileParsers/test_data/colchicine.no_metadata.png";
+    std::vector<std::pair<std::string, std::string>> metadata;
+    metadata.push_back(std::make_pair(
+        PNGData::smilesTag,
+        std::string(
+            "COc1cc2c(-c3ccc(OC)c(=O)cc3[C@@H](NC(C)=O)CC2)c(OC)c1OC "
+            "|(6.46024,1.03002,;5.30621,1.98825,;3.89934,1.46795,;2.74531,2."
+            "42618,;1.33844,1.90588,;1.0856,0.427343,;-0.228013,-0.296833,;0."
+            "1857,-1.73865,;-0.683614,-2.96106,;-2.18134,-3.04357,;-2.75685,-4."
+            "42878,;-4.24422,-4.62298,;-3.17967,-1.92404,;-4.62149,-2.33775,;-"
+            "2.92683,-0.445502,;-1.61322,0.278673,;-2.02693,1.72049,;-3.50547,"
+            "1.97333,;-4.02577,3.3802,;-5.50431,3.63304,;-3.06754,4.53423,;-1."
+            "15762,2.9429,;0.340111,3.02541,;2.23963,-0.530891,;1.98679,-2."
+            "00943,;3.14082,-2.96766,;3.6465,-0.0105878,;4.80053,-0.968822,;4."
+            "54769,-2.44736,)|")));
+    auto pngData = addMetadataToPNGFile(fname, metadata);
+    std::ofstream ofs("write_metadata.png");
+    ofs.write(pngData.c_str(), pngData.size());
+    ofs.flush();
+    auto ometadata = PNGStringToMetadata(pngData);
+    REQUIRE(ometadata.size() == metadata.size());
+    for (unsigned int i = 0; i < ometadata.size(); ++i) {
+      CHECK(ometadata[i].first == metadata[i].first);
+      CHECK(ometadata[i].second == metadata[i].second);
+    }
+  }
+}
+
+TEST_CASE("read molecule from PNG", "[reader][PNG]") {
+  std::string rdbase = getenv("RDBASE");
+  SECTION("smiles") {
+    std::string fname =
+        rdbase + "/Code/GraphMol/FileParsers/test_data/colchicine.png";
+    std::unique_ptr<ROMol> mol(PNGFileToMol(fname));
+    REQUIRE(mol);
+    CHECK(mol->getNumAtoms() == 29);
+    CHECK(mol->getNumConformers() == 1);
+  }
+  SECTION("mol") {
+    std::string fname =
+        rdbase + "/Code/GraphMol/FileParsers/test_data/colchicine.mol.png";
+    std::unique_ptr<ROMol> mol(PNGFileToMol(fname));
+    REQUIRE(mol);
+    CHECK(mol->getNumAtoms() == 29);
+    CHECK(mol->getNumConformers() == 1);
+  }
+  SECTION("no metadata") {
+    std::string fname =
+        rdbase +
+        "/Code/GraphMol/FileParsers/test_data/colchicine.no_metadata.png";
+    REQUIRE_THROWS_AS(PNGFileToMol(fname), FileParseException);
+  }
+}
+
+TEST_CASE("write molecule to PNG", "[writer][PNG]") {
+  std::string rdbase = getenv("RDBASE");
+  SECTION("basics") {
+    std::string fname =
+        rdbase +
+        "/Code/GraphMol/FileParsers/test_data/colchicine.no_metadata.png";
+    std::ifstream strm(fname, std::ios::in | std::ios::binary);
+    auto colchicine =
+        "COc1cc2c(c(OC)c1OC)-c1ccc(OC)c(=O)cc1[C@@H](NC(C)=O)CC2"_smiles;
+    REQUIRE(colchicine);
+    auto pngString = addMolToPNGStream(*colchicine, strm);
+    // read it back out
+    std::unique_ptr<ROMol> mol(PNGStringToMol(pngString));
+    REQUIRE(mol);
+    CHECK(mol->getNumAtoms() == 29);
+    CHECK(mol->getNumConformers() == 0);
+  }
+  SECTION("use SMILES") {
+    std::string fname =
+        rdbase +
+        "/Code/GraphMol/FileParsers/test_data/colchicine.no_metadata.png";
+    std::ifstream strm(fname, std::ios::in | std::ios::binary);
+    auto colchicine =
+        "COc1cc2c(c(OC)c1OC)-c1ccc(OC)c(=O)cc1[C@@H](NC(C)=O)CC2"_smiles;
+    REQUIRE(colchicine);
+    bool includePkl = false;
+    auto pngString = addMolToPNGStream(*colchicine, strm, includePkl);
+    // read it back out
+    std::unique_ptr<ROMol> mol(PNGStringToMol(pngString));
+    REQUIRE(mol);
+    CHECK(mol->getNumAtoms() == 29);
+    CHECK(mol->getNumConformers() == 0);
+  }
+  SECTION("use MOL") {
+    std::string fname =
+        rdbase +
+        "/Code/GraphMol/FileParsers/test_data/colchicine.no_metadata.png";
+    std::ifstream strm(fname, std::ios::in | std::ios::binary);
+    auto colchicine =
+        "COc1cc2c(c(OC)c1OC)-c1ccc(OC)c(=O)cc1[C@@H](NC(C)=O)CC2"_smiles;
+    REQUIRE(colchicine);
+    bool includePkl = false;
+    bool includeSmiles = false;
+    bool includeMol = true;
+    auto pngString = addMolToPNGStream(*colchicine, strm, includePkl,
+                                       includeSmiles, includeMol);
+    // read it back out
+    std::unique_ptr<ROMol> mol(PNGStringToMol(pngString));
+    REQUIRE(mol);
+    CHECK(mol->getNumAtoms() == 29);
+    CHECK(mol->getNumConformers() == 1);
+  }
+}
+TEST_CASE("multiple molecules in the PNG", "[writer][PNG]") {
+  std::string rdbase = getenv("RDBASE");
+
+  std::vector<std::string> smiles = {"c1ccccc1", "CCCOC", "c1ncccc1"};
+  std::vector<std::unique_ptr<ROMol>> mols;
+  for (const auto smi : smiles) {
+    mols.emplace_back(SmilesToMol(smi));
+  }
+  SECTION("pickles") {
+    std::vector<std::pair<std::string, std::string>> metadata;
+    for (const auto &mol : mols) {
+      std::string pkl;
+      MolPickler::pickleMol(*mol, pkl);
+      metadata.push_back(std::make_pair(PNGData::pklTag, pkl));
+    }
+    // for the purposes of this test we'll add the metadata to an unrelated
+    // PNG
+    std::string fname =
+        rdbase +
+        "/Code/GraphMol/FileParsers/test_data/colchicine.no_metadata.png";
+    std::ifstream strm(fname, std::ios::in | std::ios::binary);
+    auto png = addMetadataToPNGStream(strm, metadata);
+    std::stringstream pngstrm(png);
+    auto molsRead = PNGStreamToMols(pngstrm);
+    REQUIRE(molsRead.size() == mols.size());
+    for (unsigned i = 0; i < molsRead.size(); ++i) {
+      CHECK(MolToSmiles(*molsRead[i]) == MolToSmiles(*mols[i]));
+    }
+  }
+  SECTION("SMILES") {
+    std::vector<std::pair<std::string, std::string>> metadata;
+    for (const auto &mol : mols) {
+      std::string pkl = "BOGUS";
+      // add bogus pickle data so we know that's not being read
+      metadata.push_back(std::make_pair(PNGData::pklTag, pkl));
+      metadata.push_back(std::make_pair(PNGData::smilesTag, MolToSmiles(*mol)));
+    }
+    // for the purposes of this test we'll add the metadata to an unrelated
+    // PNG
+    std::string fname =
+        rdbase +
+        "/Code/GraphMol/FileParsers/test_data/colchicine.no_metadata.png";
+    std::ifstream strm(fname, std::ios::in | std::ios::binary);
+    auto png = addMetadataToPNGStream(strm, metadata);
+    std::stringstream pngstrm(png);
+    auto molsRead = PNGStreamToMols(pngstrm, PNGData::smilesTag);
+    REQUIRE(molsRead.size() == mols.size());
+    for (unsigned i = 0; i < molsRead.size(); ++i) {
+      CHECK(MolToSmiles(*molsRead[i]) == MolToSmiles(*mols[i]));
+    }
+  }
+}
+
+TEST_CASE("multiple molecules in the PNG, second example", "[writer][PNG]") {
+  std::string rdbase = getenv("RDBASE");
+
+  std::vector<std::string> smiles = {"c1ccccc1", "CCO", "CC(=O)O", "c1ccccn1"};
+  std::vector<std::unique_ptr<ROMol>> mols;
+  for (const auto smi : smiles) {
+    mols.emplace_back(SmilesToMol(smi));
+  }
+  SECTION("pickles") {
+    std::string fname =
+        rdbase + "/Code/GraphMol/FileParsers/test_data/multiple_mols.png";
+    std::ifstream strm(fname, std::ios::in | std::ios::binary);
+    auto molsRead = PNGStreamToMols(strm);
+    REQUIRE(molsRead.size() == mols.size());
+    for (unsigned i = 0; i < molsRead.size(); ++i) {
+      CHECK(MolToSmiles(*molsRead[i]) == MolToSmiles(*mols[i]));
+    }
+  }
+  SECTION("SMILES") {
+    std::vector<std::pair<std::string, std::string>> metadata;
+    for (const auto &mol : mols) {
+      std::string pkl = "BOGUS";
+      // add bogus pickle data so we know that's not being read
+      metadata.push_back(std::make_pair(PNGData::pklTag, pkl));
+      metadata.push_back(std::make_pair(PNGData::smilesTag, MolToSmiles(*mol)));
+    }
+    // for the purposes of this test we'll add the metadata to an unrelated
+    // PNG
+    std::string fname =
+        rdbase +
+        "/Code/GraphMol/FileParsers/test_data/colchicine.no_metadata.png";
+    std::ifstream strm(fname, std::ios::in | std::ios::binary);
+    auto png = addMetadataToPNGStream(strm, metadata);
+    std::stringstream pngstrm(png);
+    auto molsRead = PNGStreamToMols(pngstrm, PNGData::smilesTag);
+    REQUIRE(molsRead.size() == mols.size());
+    for (unsigned i = 0; i < molsRead.size(); ++i) {
+      CHECK(MolToSmiles(*molsRead[i]) == MolToSmiles(*mols[i]));
+    }
   }
 }

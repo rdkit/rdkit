@@ -1,5 +1,5 @@
 //
-//  Copyright (C) 2015 Greg Landrum
+//  Copyright (C) 2015-2020 Greg Landrum
 //
 //   @@ All Rights Reserved @@
 //  This file is part of the RDKit.
@@ -11,26 +11,34 @@
 //
 
 #include <cairo.h>
+#include <fstream>
 #include <GraphMol/MolDraw2D/MolDraw2DCairo.h>
 #ifdef RDK_BUILD_FREETYPE_SUPPORT
 #include <GraphMol/MolDraw2D/DrawTextFTCairo.h>
 #else
 #include <GraphMol/MolDraw2D/DrawTextCairo.h>
 #endif
+#include <GraphMol/FileParsers/PNGParser.h>
+#include <GraphMol/FileParsers/FileParsers.h>
+#include <GraphMol/ChemReactions/Reaction.h>
+#include <GraphMol/ChemReactions/ReactionParser.h>
+#include <GraphMol/ChemReactions/ReactionPickler.h>
+
+#include <GraphMol/SmilesParse/SmilesWrite.h>
+#include <boost/format.hpp>
 
 namespace RDKit {
 void MolDraw2DCairo::initDrawing() {
   PRECONDITION(dp_cr, "no draw context");
   cairo_set_line_cap(dp_cr, CAIRO_LINE_CAP_BUTT);
-//  drawOptions().backgroundColour = DrawColour(0.9, 0.9, 0.0);
+  //  drawOptions().backgroundColour = DrawColour(0.9, 0.9, 0.0);
 }
 
 void MolDraw2DCairo::initTextDrawer(bool noFreetype) {
-
   double max_fnt_sz = drawOptions().maxFontSize;
   double min_fnt_sz = drawOptions().minFontSize;
 
-  if(noFreetype) {
+  if (noFreetype) {
     text_drawer_.reset(new DrawTextCairo(max_fnt_sz, min_fnt_sz, dp_cr));
   } else {
 #ifdef RDK_BUILD_FREETYPE_SUPPORT
@@ -38,16 +46,15 @@ void MolDraw2DCairo::initTextDrawer(bool noFreetype) {
       text_drawer_.reset(new DrawTextFTCairo(max_fnt_sz, min_fnt_sz,
                                              drawOptions().fontFile, dp_cr));
     } catch (std::runtime_error &e) {
-      BOOST_LOG(rdWarningLog) << e.what() << std::endl
-                              << "Falling back to native Cairo text handling."
-                              << std::endl;
+      BOOST_LOG(rdWarningLog)
+          << e.what() << std::endl
+          << "Falling back to native Cairo text handling." << std::endl;
       text_drawer_.reset(new DrawTextCairo(max_fnt_sz, min_fnt_sz, dp_cr));
     }
 #else
     text_drawer_.reset(new DrawTextCairo(max_fnt_sz, min_fnt_sz, dp_cr));
 #endif
   }
-
 }
 
 // ****************************************************************************
@@ -138,7 +145,7 @@ void MolDraw2DCairo::drawPolygon(const std::vector<Point2D> &cds) {
   cairo_set_dash(dp_cr, nullptr, 0, 0);
   cairo_set_line_width(dp_cr, width);
 
-  if(!cds.empty()) {
+  if (!cds.empty()) {
     Point2D lc = getDrawCoords(cds.front());
     cairo_move_to(dp_cr, lc.x, lc.y);
     for (unsigned int i = 1; i < cds.size(); ++i) {
@@ -178,15 +185,73 @@ std::string MolDraw2DCairo::getDrawingText() const {
   std::string res = "";
   cairo_surface_t *surf = cairo_get_target(dp_cr);
   cairo_surface_write_to_png_stream(surf, &grab_str, (void *)&res);
+  res = addMetadataToPNG(res);
   return res;
 };
 
 void MolDraw2DCairo::writeDrawingText(const std::string &fName) const {
   PRECONDITION(dp_cr, "no draw context");
-  cairo_surface_t *surf = cairo_get_target(dp_cr);
-  if(cairo_surface_write_to_png(surf, fName.c_str()) != CAIRO_STATUS_SUCCESS) {
-    std::cerr << "Failed to write PNG file " << fName << std::endl;
+  auto png = getDrawingText();
+  std::ofstream outs(fName.c_str(), std::ios_base::binary | std::ios_base::out);
+  if (!outs || outs.bad()) {
+    BOOST_LOG(rdErrorLog) << "Failed to write PNG file " << fName << std::endl;
+    return;
   }
+  outs.write(png.c_str(), png.size());
 };
+
+std::string MolDraw2DCairo::addMetadataToPNG(const std::string &png) const {
+  if (d_metadata.empty()) {
+    return png;
+  }
+
+  return RDKit::addMetadataToPNGString(png, d_metadata);
+}
+
+// ****************************************************************************
+namespace {
+void addMoleculeMetadata(
+    const ROMol &mol, int confId,
+    std::vector<std::pair<std::string, std::string>> &metadata, unsigned idx) {
+  // it's legal to repeat a tag, but a lot of software doesn't show all values
+  // so we append a suffix to disambiguate when necessary
+  std::string suffix = "";
+  if (idx) {
+    suffix = (boost::format("%d") % idx).str();
+  }
+  std::string pkl;
+  MolPickler::pickleMol(mol, pkl);
+  metadata.push_back(
+      std::make_pair(augmentTagName(PNGData::pklTag + suffix), pkl));
+
+  bool includeStereo = true;
+  if (mol.getNumConformers()) {
+    auto molb = MolToMolBlock(mol, includeStereo, confId);
+    metadata.push_back(
+        std::make_pair(augmentTagName(PNGData::molTag + suffix), molb));
+  }
+  // MolToCXSmiles() is missing the feature that lets us specify confIds
+  auto smiles = MolToCXSmiles(mol);
+  metadata.push_back(
+      std::make_pair(augmentTagName(PNGData::smilesTag + suffix), smiles));
+}
+void addReactionMetadata(
+    const ChemicalReaction &rxn,
+    std::vector<std::pair<std::string, std::string>> &metadata) {
+  std::string pkl;
+  ReactionPickler::pickleReaction(rxn, pkl);
+  metadata.push_back(std::make_pair(augmentTagName(PNGData::rxnPklTag), pkl));
+  metadata.push_back(std::make_pair(augmentTagName(PNGData::rxnSmartsTag),
+                                    ChemicalReactionToRxnSmarts(rxn)));
+}
+}  // namespace
+
+void MolDraw2DCairo::updateMetadata(const ROMol &mol, int confId) {
+  addMoleculeMetadata(mol, confId, d_metadata, d_numMetadataEntries);
+  ++d_numMetadataEntries;
+}
+void MolDraw2DCairo::updateMetadata(const ChemicalReaction &rxn) {
+  addReactionMetadata(rxn, d_metadata);
+}
 
 }  // namespace RDKit
