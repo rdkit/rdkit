@@ -48,7 +48,7 @@ void prepareMolForDrawing(RWMol &mol, bool kekulize, bool addChiralHs,
   if (kekulize) {
     try {
       MolOps::Kekulize(mol, false);  // kekulize, but keep the aromatic flags!
-    } catch(const RDKit::AtomKekulizeException &e) {
+    } catch (const RDKit::AtomKekulizeException &e) {
       std::cerr << e.what() << std::endl;
     }
   }
@@ -95,7 +95,6 @@ void prepareAndDrawMolecule(MolDraw2D &drawer, const ROMol &mol,
                       highlight_atom_map, highlight_bond_map, highlight_radii,
                       confId);
   drawer.drawOptions().prepareMolsBeforeDrawing = old_prep_mol;
-
 }
 
 void updateDrawerParamsFromJSON(MolDraw2D &drawer, const char *json) {
@@ -134,6 +133,7 @@ void updateDrawerParamsFromJSON(MolDraw2D &drawer, const std::string &json) {
   PT_OPT_GET(circleAtoms);
   PT_OPT_GET(continuousHighlight);
   PT_OPT_GET(fillHighlights);
+  PT_OPT_GET(highlightRadius);
   PT_OPT_GET(flagCloseContactsDist);
   PT_OPT_GET(includeAtomTags);
   PT_OPT_GET(clearBackground);
@@ -151,12 +151,18 @@ void updateDrawerParamsFromJSON(MolDraw2D &drawer, const std::string &json) {
   PT_OPT_GET(fixedScale);
   PT_OPT_GET(fixedBondLength);
   PT_OPT_GET(rotate);
+  PT_OPT_GET(addAtomIndices);
+  PT_OPT_GET(addBondIndices);
   PT_OPT_GET(addStereoAnnotation);
   PT_OPT_GET(atomHighlightsAreCircles);
   PT_OPT_GET(centreMoleculesBeforeDrawing);
+  PT_OPT_GET(explicitMethyl);
+  PT_OPT_GET(includeMetadata);
+
   get_colour_option(&pt, "highlightColour", opts.highlightColour);
   get_colour_option(&pt, "backgroundColour", opts.backgroundColour);
   get_colour_option(&pt, "legendColour", opts.legendColour);
+  get_colour_option(&pt, "symbolColour", opts.symbolColour);
   if (pt.find("atomLabels") != pt.not_found()) {
     BOOST_FOREACH (boost::property_tree::ptree::value_type const &item,
                    pt.get_child("atomLabels")) {
@@ -170,8 +176,7 @@ void contourAndDrawGrid(MolDraw2D &drawer, const double *grid,
                         const std::vector<double> &xcoords,
                         const std::vector<double> &ycoords, size_t nContours,
                         std::vector<double> &levels,
-                        const ContourParams &params,
-                        const ROMol *mol) {
+                        const ContourParams &params, const ROMol *mol) {
   PRECONDITION(grid, "no data");
   PRECONDITION(params.colourMap.size() > 1,
                "colourMap must have at least two entries");
@@ -253,8 +258,9 @@ void contourAndDrawGrid(MolDraw2D &drawer, const double *grid,
   }
 
   if (nContours) {
-    if(nContours > levels.size()){
-      throw ValueErrorException("nContours larger than the size of the level list");
+    if (nContours > levels.size()) {
+      throw ValueErrorException(
+          "nContours larger than the size of the level list");
     }
     std::vector<conrec::ConrecSegment> segs;
     conrec::Contour(grid, 0, nX - 1, 0, nY - 1, xcoords.data(), ycoords.data(),
@@ -285,8 +291,7 @@ void contourAndDrawGaussians(MolDraw2D &drawer,
                              const std::vector<double> &weights,
                              const std::vector<double> &widths,
                              size_t nContours, std::vector<double> &levels,
-                             const ContourParams &params,
-                             const ROMol *mol) {
+                             const ContourParams &params, const ROMol *mol) {
   PRECONDITION(locs.size() == weights.size(), "size mismatch");
   PRECONDITION(locs.size() == widths.size(), "size mismatch");
 
