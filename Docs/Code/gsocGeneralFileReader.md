@@ -16,4 +16,16 @@ Due to time constraints and the difficulty involved in debugging concurrent code
 1. In cases where the file format is less defined, it might be useful to parse the file content to discover the file format and possible Supplier options. The current implementation does not support this and only uses the pathname to determine the appropriate Supplier.
 2. Wrappers for the Multithreaded Smiles and SD Suppliers in other languages such as Java were not implemented in this project.
 
+## Changes made for the General File Reader and Multithreaded Mol Supplier:
+
+- [Link to the Pull Request](https://github.com/rdkit/rdkit/pull/3363/commits)
+
+List of important files added:
+
+- [GeneralFileReader.h](https://github.com/shrey183/rdkit/blob/GSOC-2020/Code/GraphMol/FileParsers/GeneralFileReader.h) and [testGeneralFileReader.cpp](https://github.com/shrey183/rdkit/blob/GSOC-2020/Code/GraphMol/FileParsers/testGeneralFileReader.cpp)
+- [ConcurrentQueue.h](https://github.com/shrey183/rdkit/blob/GSOC-2020/Code/RDGeneral/ConcurrentQueue.h) and [testConcurrentQueue.cpp](https://github.com/shrey183/rdkit/blob/GSOC-2020/Code/RDGeneral/testConcurrentQueue.cpp)
+- [MultithreadedMolSupplier.h](https://github.com/shrey183/rdkit/blob/GSOC-2020/Code/GraphMol/FileParsers/MultithreadedMolSupplier.h) and [MultithreadedMolSupplier.cpp](https://github.com/shrey183/rdkit/blob/GSOC-2020/Code/GraphMol/FileParsers/MultithreadedMolSupplier.cpp)
+- [MultithreadedSmilesMolSupplier.h](https://github.com/shrey183/rdkit/blob/GSOC-2020/Code/GraphMol/FileParsers/MultithreadedSmilesMolSupplier.h), [MultithreadedSmilesMolSupplier.cpp](https://github.com/shrey183/rdkit/blob/GSOC-2020/Code/GraphMol/FileParsers/MultithreadedSmilesMolSupplier.cpp) and its [Python wrapper](https://github.com/shrey183/rdkit/blob/GSOC-2020/Code/GraphMol/Wrap/MultithreadedSmilesMolSupplier.cpp)
+- [MultithreadedSDMolSupplier.h](https://github.com/shrey183/rdkit/blob/GSOC-2020/Code/GraphMol/FileParsers/MultithreadedSDMolSupplier.h), [MultithreadedSDMolSupplier.cpp](https://github.com/shrey183/rdkit/blob/GSOC-2020/Code/GraphMol/FileParsers/MultithreadedSDMolSupplier.cpp) and its [Python wrapper](https://github.com/shrey183/rdkit/blob/GSOC-2020/Code/GraphMol/Wrap/MultithreadedSDMolSupplier.cpp).
+- [testMultithreadedMolSupplier.cpp](https://github.com/shrey183/rdkit/blob/GSOC-2020/Code/GraphMol/FileParsers/testMultithreadedMolSupplier.cpp) and [testMultithreadedMolSupplier.py](https://github.com/shrey183/rdkit/blob/GSOC-2020/Code/GraphMol/Wrap/testMultithreadedMolSupplier.py) for testing Python wrappers.
 
