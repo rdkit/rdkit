@@ -27,7 +27,7 @@ using namespace std::chrono;
 // thread safe printing for debugging
 // Usage Example: PrintThread{} << "something";
 struct PrintThread : public std::stringstream {
-  static inline std::mutex cout_mutex;
+  static std::mutex cout_mutex;
   ~PrintThread() {
     std::lock_guard<std::mutex> l{cout_mutex};
     std::cout << rdbuf();
