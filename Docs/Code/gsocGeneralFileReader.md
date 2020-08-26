@@ -1,8 +1,20 @@
+**Do Not Review**
+
 # [GSoC 2020] General File Reader and Multithreaded Mol Supplier
 ## Overview
 The General File Reader, as the name suggests, provides the user with the appropriate `MolSupplier` object to parse a file of a given format. Thus for instance earlier if one wanted to parse a file of smiles, say `input.smi`, then one would need to explicitly construct an object `SmilesMolSupplier`. However, with the implementation provided in the GeneralFileReader, one can easily pass the file name along with supplier options to obtain the appropriate `MolSupplier` object determined by the file format. Furthermore, the General File Reader also provides an interface with the `MultithreadedMolSupplier` objects for Smiles and SDF file formats. Besides the implementation, test cases are also included to demonstrate the utility of the General File Reader.
 
-The Multithreaded Mol Supplier provides a concurrent implementation of the usual base class `MolSupplier`. Due to time constraints, multithreaded versions of only Smiles, and SD Mol Suppliers were implemented. The motivation for this part stemmed from parsing large Smiles or SDF files. With the current implementation the user, for instance, can construct the object `MultithreadedSmilesMolSupplier` to parse a smiles file with large number of records. Besides the implementation, test cases are also included to demonstrate the correctness and performance of the `MultithreadedMolSupplier`.
+The Multithreaded Mol Supplier provides a concurrent implementation of the usual base class `MolSupplier`. Due to time constraints, multithreaded versions of only Smiles, and SD Mol Suppliers were implemented. The motivation for this part stemmed from parsing large Smiles or SDF files. With the current implementation the user, for instance, can construct the object `MultithreadedSmilesMolSupplier` to parse a smiles file with a large number of records. Besides the implementation, test cases are also included to demonstrate the correctness and performance of the `MultithreadedMolSupplier`. Here is a brief summary of the performance result obtained by running the function `testPerformance` on @greglandrum's machine:
+
+```
+Duration for SmilesMolSupplier: 6256 (milliseconds)
+Maximum Duration for MultithreadedSmilesMolSupplier: 6972 (milliseconds) with 1 writer thread
+Minimum Duration for MultithreadedSmilesMolSupplier: 855 (milliseconds) with 15 writer threads
+
+Duration for SDMolSupplier: 2584 (milliseconds) 
+Maximum Duration for MultithreadedSDMolSupplier: 2784 (milliseconds) with 1 writer thread
+Minimum Duration for MultithreadedSDMolSupplier: 729 (milliseconds) with 7 writer threads
+```
 
 ## Implementation
 Implementation of the General File Reader is quite concise and makes use of only two methods `determineFormat` and `getSupplier`. The former determines the file and the compression format given pathname, while the latter returns a pointer to `MolSupplier` object given pathname and `SupplierOptions`.
@@ -18,8 +30,6 @@ Due to time constraints and the difficulty involved in debugging concurrent code
 
 ## Changes made for the General File Reader and Multithreaded Mol Supplier:
 
-- [Link to the Pull Request](https://github.com/rdkit/rdkit/pull/3363/commits)
-
 List of important files added:
 
 - [GeneralFileReader.h](https://github.com/shrey183/rdkit/blob/GSOC-2020/Code/GraphMol/FileParsers/GeneralFileReader.h) and [testGeneralFileReader.cpp](https://github.com/shrey183/rdkit/blob/GSOC-2020/Code/GraphMol/FileParsers/testGeneralFileReader.cpp)
@@ -28,4 +38,9 @@ List of important files added:
 - [MultithreadedSmilesMolSupplier.h](https://github.com/shrey183/rdkit/blob/GSOC-2020/Code/GraphMol/FileParsers/MultithreadedSmilesMolSupplier.h), [MultithreadedSmilesMolSupplier.cpp](https://github.com/shrey183/rdkit/blob/GSOC-2020/Code/GraphMol/FileParsers/MultithreadedSmilesMolSupplier.cpp) and its [Python wrapper](https://github.com/shrey183/rdkit/blob/GSOC-2020/Code/GraphMol/Wrap/MultithreadedSmilesMolSupplier.cpp)
 - [MultithreadedSDMolSupplier.h](https://github.com/shrey183/rdkit/blob/GSOC-2020/Code/GraphMol/FileParsers/MultithreadedSDMolSupplier.h), [MultithreadedSDMolSupplier.cpp](https://github.com/shrey183/rdkit/blob/GSOC-2020/Code/GraphMol/FileParsers/MultithreadedSDMolSupplier.cpp) and its [Python wrapper](https://github.com/shrey183/rdkit/blob/GSOC-2020/Code/GraphMol/Wrap/MultithreadedSDMolSupplier.cpp).
 - [testMultithreadedMolSupplier.cpp](https://github.com/shrey183/rdkit/blob/GSOC-2020/Code/GraphMol/FileParsers/testMultithreadedMolSupplier.cpp) and [testMultithreadedMolSupplier.py](https://github.com/shrey183/rdkit/blob/GSOC-2020/Code/GraphMol/Wrap/testMultithreadedMolSupplier.py) for testing Python wrappers.
+
+
+
+#### Any other comments?
+This project is still work in progress.
 
