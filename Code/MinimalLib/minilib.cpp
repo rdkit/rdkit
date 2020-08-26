@@ -78,31 +78,22 @@ ROMol *qmol_from_input(const std::string &input) {
   return res;
 }
 
-std::string svg_(const ROMol &m, unsigned int w, unsigned int h,
-                 const std::vector<int> *highlight_atoms = nullptr,
-                 const std::vector<int> *highlight_bonds = nullptr) {
-  MolDraw2DSVG drawer(w, h);
-
-  MolDraw2DUtils::prepareAndDrawMolecule(drawer, m, "", highlight_atoms,
-                                         highlight_bonds);
-  drawer.finishDrawing();
-
-  return drawer.getDrawingText();
-}
-
 std::string process_details(const std::string &details, unsigned int &width,
-                            unsigned int &height, std::vector<int> &atomIds,
+                            unsigned int &height, std::string &legend,
+                            std::vector<int> &atomIds,
                             std::vector<int> &bondIds) {
   rj::Document doc;
   doc.Parse(details.c_str());
   if (!doc.IsObject()) return "Invalid JSON";
 
-  if (!doc.HasMember("atoms") || !doc["atoms"].IsArray()) {
-    return "JSON doesn't contain 'atoms' field, or it is not an array";
-  }
-  for (const auto &molval : doc["atoms"].GetArray()) {
-    if (!molval.IsInt()) return ("Atom IDs should be integers");
-    atomIds.push_back(molval.GetInt());
+  if (doc.HasMember("atoms")) {
+    if (!doc["atoms"].IsArray()) {
+      return "JSON doesn't contain 'atoms' field, or it is not an array";
+    }
+    for (const auto &molval : doc["atoms"].GetArray()) {
+      if (!molval.IsInt()) return ("Atom IDs should be integers");
+      atomIds.push_back(molval.GetInt());
+    }
   }
   if (doc.HasMember("bonds")) {
     if (!doc["bonds"].IsArray()) {
@@ -127,9 +118,39 @@ std::string process_details(const std::string &details, unsigned int &width,
     }
     height = doc["height"].GetUint();
   }
+
+  if (doc.HasMember("legend")) {
+    if (!doc["legend"].IsString()) {
+      return "JSON contains 'legend' field, but it is not a string";
+    }
+    legend = doc["legend"].GetString();
+  }
+
   return "";
 }
 
+std::string svg_(const ROMol &m, unsigned int w, unsigned int h,
+                 const std::string &details = "") {
+  std::vector<int> atomIds;
+  std::vector<int> bondIds;
+  std::string legend = "";
+  if (!details.empty()) {
+    auto problems = process_details(details, w, h, legend, atomIds, bondIds);
+    if (!problems.empty()) {
+      return problems;
+    }
+  }
+
+  MolDraw2DSVG drawer(w, h);
+  if (!details.empty()) {
+    MolDraw2DUtils::updateDrawerParamsFromJSON(drawer, details);
+  }
+
+  MolDraw2DUtils::prepareAndDrawMolecule(drawer, m, legend, &atomIds, &bondIds);
+  drawer.finishDrawing();
+
+  return drawer.getDrawingText();
+}
 }  // namespace
 
 std::string JSMol::get_smiles() const {
@@ -143,15 +164,9 @@ std::string JSMol::get_svg(unsigned int w, unsigned int h) const {
 std::string JSMol::get_svg_with_highlights(const std::string &details) const {
   if (!d_mol) return "";
 
-  std::vector<int> atomIds;
-  std::vector<int> bondIds;
   unsigned int w = d_defaultWidth;
   unsigned int h = d_defaultHeight;
-  auto problems = process_details(details, w, h, atomIds, bondIds);
-  if (!problems.empty()) {
-    return problems;
-  }
-  return svg_(*d_mol, w, h, &atomIds, &bondIds);
+  return svg_(*d_mol, w, h, details);
 }
 
 std::string JSMol::draw_to_canvas(const std::string &id, int width,
@@ -169,7 +184,6 @@ std::string JSMol::draw_to_canvas(const std::string &id, int width,
     height = canvas["height"].as<int>();
   }
   MolDraw2DJS *d2d = new MolDraw2DJS(width, height, ctx);
-
   MolDraw2DUtils::prepareAndDrawMolecule(*d2d, *d_mol);
   delete d2d;
   return "";
@@ -192,14 +206,19 @@ std::string JSMol::draw_to_canvas_with_highlights(
 
   unsigned int w = canvas["width"].as<unsigned int>();
   unsigned int h = canvas["height"].as<unsigned int>();
-  auto problems = process_details(details, w, h, atomIds, bondIds);
+  std::string legend = "";
+  auto problems = process_details(details, w, h, legend, atomIds, bondIds);
   if (!problems.empty()) {
     return problems;
   }
 
   MolDraw2DJS *d2d = new MolDraw2DJS(w, h, ctx);
+  if (!details.empty()) {
+    MolDraw2DUtils::updateDrawerParamsFromJSON(*d2d, details);
+  }
 
-  MolDraw2DUtils::prepareAndDrawMolecule(*d2d, *d_mol, "", &atomIds, &bondIds);
+  MolDraw2DUtils::prepareAndDrawMolecule(*d2d, *d_mol, legend, &atomIds,
+                                         &bondIds);
   delete d2d;
   return "";
 #else
