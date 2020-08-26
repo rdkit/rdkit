@@ -17,9 +17,8 @@
 #include <Geometry/point.h>
 #ifdef RDK_BUILD_FREETYPE_SUPPORT
 #include <GraphMol/MolDraw2D/DrawTextFTJS.h>
-#else
-#include <GraphMol/MolDraw2D/DrawTextJS.h>
 #endif
+#include <GraphMol/MolDraw2D/DrawTextJS.h>
 
 #include <boost/format.hpp>
 #include <sstream>

@@ -23,7 +23,6 @@
 #include <emscripten/val.h>
 
 #include <GraphMol/MolDraw2D/MolDraw2D.h>
-#include <GraphMol/MolDraw2D/DrawTextJS.h>
 
 // ****************************************************************************
 

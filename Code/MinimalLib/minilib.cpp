@@ -79,35 +79,57 @@ ROMol *qmol_from_input(const std::string &input) {
 }
 
 std::string svg_(const ROMol &m, unsigned int w, unsigned int h,
-                 const std::vector<unsigned int> *atomIds = nullptr,
-                 const std::vector<unsigned int> *bondIds = nullptr) {
+                 const std::vector<int> *highlight_atoms = nullptr,
+                 const std::vector<int> *highlight_bonds = nullptr) {
   MolDraw2DSVG drawer(w, h);
-  std::vector<int> *highlight_atoms = nullptr;
-  if (atomIds && atomIds->size()) {
-    highlight_atoms = new std::vector<int>;
-    highlight_atoms->reserve(atomIds->size());
-    for (auto ai : *atomIds) {
-      highlight_atoms->push_back(ai);
-    }
-  }
-
-  std::vector<int> *highlight_bonds = nullptr;
-  if (bondIds && bondIds->size()) {
-    highlight_bonds = new std::vector<int>;
-    highlight_bonds->reserve(bondIds->size());
-    for (auto ai : *bondIds) {
-      highlight_bonds->push_back(ai);
-    }
-  }
 
   MolDraw2DUtils::prepareAndDrawMolecule(drawer, m, "", highlight_atoms,
                                          highlight_bonds);
   drawer.finishDrawing();
-  delete highlight_atoms;
-  delete highlight_bonds;
 
   return drawer.getDrawingText();
 }
+
+std::string process_details(const std::string &details, unsigned int &width,
+                            unsigned int &height, std::vector<int> &atomIds,
+                            std::vector<int> &bondIds) {
+  rj::Document doc;
+  doc.Parse(details.c_str());
+  if (!doc.IsObject()) return "Invalid JSON";
+
+  if (!doc.HasMember("atoms") || !doc["atoms"].IsArray()) {
+    return "JSON doesn't contain 'atoms' field, or it is not an array";
+  }
+  for (const auto &molval : doc["atoms"].GetArray()) {
+    if (!molval.IsInt()) return ("Atom IDs should be integers");
+    atomIds.push_back(molval.GetInt());
+  }
+  if (doc.HasMember("bonds")) {
+    if (!doc["bonds"].IsArray()) {
+      return "JSON contain 'bonds' field, but it is not an array";
+    }
+    for (const auto &molval : doc["bonds"].GetArray()) {
+      if (!molval.IsInt()) return ("Bond IDs should be integers");
+      bondIds.push_back(molval.GetInt());
+    }
+  }
+
+  if (doc.HasMember("width")) {
+    if (!doc["width"].IsUint()) {
+      return "JSON contains 'width' field, but it is not an unsigned int";
+    }
+    width = doc["width"].GetUint();
+  }
+
+  if (doc.HasMember("height")) {
+    if (!doc["height"].IsUint()) {
+      return "JSON contains 'height' field, but it is not an unsigned int";
+    }
+    height = doc["height"].GetUint();
+  }
+  return "";
+}
+
 }  // namespace
 
 std::string JSMol::get_smiles() const {
@@ -121,45 +143,14 @@ std::string JSMol::get_svg(unsigned int w, unsigned int h) const {
 std::string JSMol::get_svg_with_highlights(const std::string &details) const {
   if (!d_mol) return "";
 
-  rj::Document doc;
-  doc.Parse(details.c_str());
-  if (!doc.IsObject()) return "Invalid JSON";
-
-  std::vector<unsigned int> atomIds;
-  if (!doc.HasMember("atoms") || !doc["atoms"].IsArray()) {
-    return "JSON doesn't contain 'atoms' field, or it is not an array";
-  }
-  for (const auto &molval : doc["atoms"].GetArray()) {
-    if (!molval.IsInt()) return ("Atom IDs should be integers");
-    atomIds.push_back(static_cast<unsigned int>(molval.GetInt()));
-  }
-  std::vector<unsigned int> bondIds;
-  if (doc.HasMember("bonds")) {
-    if (!doc["bonds"].IsArray()) {
-      return "JSON contain 'bonds' field, but it is not an array";
-    }
-    for (const auto &molval : doc["bonds"].GetArray()) {
-      if (!molval.IsInt()) return ("Bond IDs should be integers");
-      bondIds.push_back(static_cast<unsigned int>(molval.GetInt()));
-    }
-  }
-
+  std::vector<int> atomIds;
+  std::vector<int> bondIds;
   unsigned int w = d_defaultWidth;
-  if (doc.HasMember("width")) {
-    if (!doc["width"].IsUint()) {
-      return "JSON contains 'width' field, but it is not an unsigned int";
-    }
-    w = doc["width"].GetUint();
-  }
-
   unsigned int h = d_defaultHeight;
-  if (doc.HasMember("height")) {
-    if (!doc["height"].IsUint()) {
-      return "JSON contains 'height' field, but it is not an unsigned int";
-    }
-    h = doc["height"].GetUint();
+  auto problems = process_details(details, w, h, atomIds, bondIds);
+  if (!problems.empty()) {
+    return problems;
   }
-
   return svg_(*d_mol, w, h, &atomIds, &bondIds);
 }
 
@@ -181,7 +172,7 @@ std::string JSMol::draw_to_canvas(const std::string &id, int width,
 
   MolDraw2DUtils::prepareAndDrawMolecule(*d2d, *d_mol);
   delete d2d;
-  return "ok";
+  return "";
 #else
   return "no JS support";
 #endif
@@ -192,54 +183,25 @@ std::string JSMol::draw_to_canvas_with_highlights(
   if (!d_mol) return "";
 
 #ifdef __EMSCRIPTEN__
-  rj::Document doc;
-  doc.Parse(details.c_str());
-  if (!doc.IsObject()) return "Invalid JSON";
-
   std::vector<int> atomIds;
-  if (!doc.HasMember("atoms") || !doc["atoms"].IsArray()) {
-    return "JSON doesn't contain 'atoms' field, or it is not an array";
-  }
-  for (const auto &molval : doc["atoms"].GetArray()) {
-    if (!molval.IsInt()) return ("Atom IDs should be integers");
-    atomIds.push_back(static_cast<int>(molval.GetInt()));
-  }
   std::vector<int> bondIds;
-  if (doc.HasMember("bonds")) {
-    if (!doc["bonds"].IsArray()) {
-      return "JSON contain 'bonds' field, but it is not an array";
-    }
-    for (const auto &molval : doc["bonds"].GetArray()) {
-      if (!molval.IsInt()) return ("Bond IDs should be integers");
-      bondIds.push_back(static_cast<int>(molval.GetInt()));
-    }
-  }
 
   auto canvas = emscripten::val::global("document")
                     .call<emscripten::val>("getElementById", id);
   auto ctx = canvas.call<emscripten::val>("getContext", std::string("2d"));
 
   unsigned int w = canvas["width"].as<unsigned int>();
-  if (doc.HasMember("width")) {
-    if (!doc["width"].IsUint()) {
-      return "JSON contains 'width' field, but it is not an unsigned int";
-    }
-    w = doc["width"].GetUint();
-  }
-
   unsigned int h = canvas["height"].as<unsigned int>();
-  if (doc.HasMember("height")) {
-    if (!doc["height"].IsUint()) {
-      return "JSON contains 'height' field, but it is not an unsigned int";
-    }
-    h = doc["height"].GetUint();
+  auto problems = process_details(details, w, h, atomIds, bondIds);
+  if (!problems.empty()) {
+    return problems;
   }
 
   MolDraw2DJS *d2d = new MolDraw2DJS(w, h, ctx);
 
   MolDraw2DUtils::prepareAndDrawMolecule(*d2d, *d_mol, "", &atomIds, &bondIds);
   delete d2d;
-  return "ok";
+  return "";
 #else
   return "no JS support";
 #endif
@@ -305,7 +267,7 @@ std::string JSMol::get_substruct_matches(const JSMol &q) const {
     rj::Document doc;
     doc.SetArray();
 
-    for (const auto match : matches) {
+    for (const auto &match : matches) {
       rj::Value rjMatch(rj::kObjectType);
       get_sss_json(d_mol.get(), q.d_mol.get(), match, rjMatch, doc);
       doc.PushBack(rjMatch, doc.GetAllocator());
