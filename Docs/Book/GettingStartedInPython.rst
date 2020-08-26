@@ -161,7 +161,7 @@ Note that ForwardSDMolSuppliers cannot be used as random-access objects:
     ...
   TypeError: 'ForwardSDMolSupplier' object does not support indexing
 
-For reading Smiles or SDF files with large number of records concurrently, Multithreaded Mol Suppliers can be used like this:
+For reading Smiles or SDF files with large number of records concurrently, MultithreadedMolSuppliers can be used like this:
 
 .. doctest::
 
@@ -175,7 +175,7 @@ For reading Smiles or SDF files with large number of records concurrently, Multi
   20
   24
 
-By default a single reader thread is used to extract records from the file and a single writer threads is used to process them. Note that due to multithreading the output may not be in the expected order. Furthermore, the MultithreadedSmilesMolSupplier and the MultithreadedSDMolSupplier cannot be used as random-access objects. 
+By default a single reader thread is used to extract records from the file and a single writer thread is used to process them. Note that due to multithreading the output may not be in the expected order. Furthermore, the MultithreadedSmilesMolSupplier and the MultithreadedSDMolSupplier cannot be used as random-access objects. 
 
 .. doctest::
 
