@@ -170,8 +170,8 @@ For reading Smiles or SDF files with large number of records concurrently, Multi
   >>> for mol in sdSupl:
   ...   if(mol): 
   ...     i += 1
-  ... print(i)
   ...
+  >>> print(i)
   4
   
 By default a single reader thread is used to extract records from the file and a single writer thread is used to process them. Note that due to multithreading the output may not be in the expected order. Furthermore, the MultithreadedSmilesMolSupplier and the MultithreadedSDMolSupplier cannot be used as random-access objects. 
