@@ -26,6 +26,7 @@
 #include <GraphMol/Descriptors/MolDescriptors.h>
 #include <GraphMol/Fingerprints/MorganFingerprints.h>
 #include <GraphMol/Depictor/RDDepictor.h>
+#include <GraphMol/CIPLabeler/CIPLabeler.h>
 #include <DataStructs/BitOps.h>
 
 #include <INCHI-API/inchi.h>
@@ -346,6 +347,7 @@ std::string JSMol::get_stereo_tags() const {
   bool flagPossibleStereocenters = true;
   MolOps::assignStereochemistry(*d_mol, cleanIt, force,
                                 flagPossibleStereocenters);
+  CIPLabeler::assignCIPLabels(*d_mol);
 
   rj::Value rjAtoms(rj::kArrayType);
   for (const auto atom : d_mol->atoms()) {
@@ -369,19 +371,17 @@ std::string JSMol::get_stereo_tags() const {
 
   rj::Value rjBonds(rj::kArrayType);
   for (const auto bond : d_mol->bonds()) {
-    std::string cip = "";
-    if (bond->getStereo() == Bond::STEREOE)
-      cip = "(E)";
-    else if (bond->getStereo() == Bond::STEREOZ)
-      cip = "(Z)";
-    if (cip.empty()) continue;
-    rj::Value entry(rj::kArrayType);
-    entry.PushBack(bond->getBeginAtomIdx(), doc.GetAllocator());
-    entry.PushBack(bond->getEndAtomIdx(), doc.GetAllocator());
-    rj::Value v;
-    v.SetString(cip.c_str(), cip.size(), doc.GetAllocator());
-    entry.PushBack(v, doc.GetAllocator());
-    rjBonds.PushBack(entry, doc.GetAllocator());
+    std::string cip;
+    if (bond->getPropIfPresent(common_properties::_CIPCode, cip)) {
+      cip = "(" + cip + ")";
+      rj::Value entry(rj::kArrayType);
+      entry.PushBack(bond->getBeginAtomIdx(), doc.GetAllocator());
+      entry.PushBack(bond->getEndAtomIdx(), doc.GetAllocator());
+      rj::Value v;
+      v.SetString(cip.c_str(), cip.size(), doc.GetAllocator());
+      entry.PushBack(v, doc.GetAllocator());
+      rjBonds.PushBack(entry, doc.GetAllocator());
+    }
   }
 
   doc.AddMember("CIP_bonds", rjBonds, doc.GetAllocator());
