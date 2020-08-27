@@ -12,6 +12,7 @@
 
 #include <GraphMol/RDKitBase.h>
 #include <RDBoost/python.h>
+#include <RDBoost/python_streambuf.h>
 #include <RDGeneral/FileParseException.h>
 #include <RDGeneral/export.h>
 
