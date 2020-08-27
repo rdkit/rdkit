@@ -35,53 +35,13 @@
 #include <rapidjson/stringbuffer.h>
 #include <rapidjson/writer.h>
 
-#ifdef __EMSCRIPTEN__
-#include <emscripten.h>
-#include <emscripten/val.h>
-#include <GraphMol/MolDraw2D/MolDraw2DJS.h>
-#endif
-
 namespace rj = rapidjson;
 
 using namespace RDKit;
 
-namespace {
-ROMol *mol_from_input(const std::string &input) {
-  RWMol *res = nullptr;
-  if (input.find("M  END") != std::string::npos) {
-    bool sanitize = false;
-    res = MolBlockToMol(input, sanitize);
-  } else {
-    SmilesParserParams ps;
-    ps.sanitize = false;
-    res = SmilesToMol(input, ps);
-  }
-  if (res) {
-    try {
-      MolOps::sanitizeMol(*res);
-      MolOps::assignStereochemistry(*res, true, true, true);
-    } catch (...) {
-      delete res;
-      res = nullptr;
-    }
-  }
-  return res;
-}
-
-ROMol *qmol_from_input(const std::string &input) {
-  RWMol *res = nullptr;
-  if (input.find("M  END") != std::string::npos) {
-    bool sanitize = false;
-    res = MolBlockToMol(input, sanitize);
-  } else {
-    res = SmartsToMol(input);
-  }
-  return res;
-}
-
 std::string process_details(const std::string &details, unsigned int &width,
-                            unsigned int &height, std::string &legend,
-                            std::vector<int> &atomIds,
+                            unsigned int &height, int &offsetx, int &offsety,
+                            std::string &legend, std::vector<int> &atomIds,
                             std::vector<int> &bondIds) {
   rj::Document doc;
   doc.Parse(details.c_str());
@@ -120,6 +80,20 @@ std::string process_details(const std::string &details, unsigned int &width,
     height = doc["height"].GetUint();
   }
 
+  if (doc.HasMember("offsetx")) {
+    if (!doc["offsetx"].IsInt()) {
+      return "JSON contains 'offsetx' field, but it is not an int";
+    }
+    offsetx = doc["offsetx"].GetInt();
+  }
+
+  if (doc.HasMember("offsety")) {
+    if (!doc["offsety"].IsInt()) {
+      return "JSON contains 'offsety' field, but it is not an int";
+    }
+    offsety = doc["offsety"].GetInt();
+  }
+
   if (doc.HasMember("legend")) {
     if (!doc["legend"].IsString()) {
       return "JSON contains 'legend' field, but it is not a string";
@@ -130,13 +104,49 @@ std::string process_details(const std::string &details, unsigned int &width,
   return "";
 }
 
+namespace {
+ROMol *mol_from_input(const std::string &input) {
+  RWMol *res = nullptr;
+  if (input.find("M  END") != std::string::npos) {
+    bool sanitize = false;
+    res = MolBlockToMol(input, sanitize);
+  } else {
+    SmilesParserParams ps;
+    ps.sanitize = false;
+    res = SmilesToMol(input, ps);
+  }
+  if (res) {
+    try {
+      MolOps::sanitizeMol(*res);
+      MolOps::assignStereochemistry(*res, true, true, true);
+    } catch (...) {
+      delete res;
+      res = nullptr;
+    }
+  }
+  return res;
+}
+
+ROMol *qmol_from_input(const std::string &input) {
+  RWMol *res = nullptr;
+  if (input.find("M  END") != std::string::npos) {
+    bool sanitize = false;
+    res = MolBlockToMol(input, sanitize);
+  } else {
+    res = SmartsToMol(input);
+  }
+  return res;
+}
+
 std::string svg_(const ROMol &m, unsigned int w, unsigned int h,
                  const std::string &details = "") {
   std::vector<int> atomIds;
   std::vector<int> bondIds;
   std::string legend = "";
   if (!details.empty()) {
-    auto problems = process_details(details, w, h, legend, atomIds, bondIds);
+    int offsetx = 0, offsety = 0;
+    auto problems = process_details(details, w, h, offsetx, offsety, legend,
+                                    atomIds, bondIds);
     if (!problems.empty()) {
       return problems;
     }
@@ -168,63 +178,6 @@ std::string JSMol::get_svg_with_highlights(const std::string &details) const {
   unsigned int w = d_defaultWidth;
   unsigned int h = d_defaultHeight;
   return svg_(*d_mol, w, h, details);
-}
-
-std::string JSMol::draw_to_canvas(const std::string &id, int width,
-                                  int height) const {
-  if (!d_mol) return "no molecule";
-#ifdef __EMSCRIPTEN__
-
-  auto canvas = emscripten::val::global("document")
-                    .call<emscripten::val>("getElementById", id);
-  auto ctx = canvas.call<emscripten::val>("getContext", std::string("2d"));
-  if (width < 0) {
-    width = canvas["width"].as<int>();
-  }
-  if (height < 0) {
-    height = canvas["height"].as<int>();
-  }
-  MolDraw2DJS *d2d = new MolDraw2DJS(width, height, ctx);
-  MolDraw2DUtils::prepareAndDrawMolecule(*d2d, *d_mol);
-  delete d2d;
-  return "";
-#else
-  return "no JS support";
-#endif
-}
-
-std::string JSMol::draw_to_canvas_with_highlights(
-    const std::string &id, const std::string &details) const {
-  if (!d_mol) return "";
-
-#ifdef __EMSCRIPTEN__
-  std::vector<int> atomIds;
-  std::vector<int> bondIds;
-
-  auto canvas = emscripten::val::global("document")
-                    .call<emscripten::val>("getElementById", id);
-  auto ctx = canvas.call<emscripten::val>("getContext", std::string("2d"));
-
-  unsigned int w = canvas["width"].as<unsigned int>();
-  unsigned int h = canvas["height"].as<unsigned int>();
-  std::string legend = "";
-  auto problems = process_details(details, w, h, legend, atomIds, bondIds);
-  if (!problems.empty()) {
-    return problems;
-  }
-
-  MolDraw2DJS *d2d = new MolDraw2DJS(w, h, ctx);
-  if (!details.empty()) {
-    MolDraw2DUtils::updateDrawerParamsFromJSON(*d2d, details);
-  }
-
-  MolDraw2DUtils::prepareAndDrawMolecule(*d2d, *d_mol, legend, &atomIds,
-                                         &bondIds);
-  delete d2d;
-  return "";
-#else
-  return "no JS support";
-#endif
 }
 
 std::string JSMol::get_inchi() const {

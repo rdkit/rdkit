@@ -75,7 +75,8 @@
     if (svg == "") return;
     var ob = document.getElementById("drawing");
     ob.outerHTML = "<div id='drawing'>" + svg + "</div>";
-    mol.draw_to_canvas_with_highlights("rdkit-canvas", tdetails);
+    var canvas = document.getElementById("rdkit-canvas");
+    mol.draw_to_canvas_with_highlights(canvas, tdetails);
 
   }
   function draw(mol) {
@@ -86,8 +87,8 @@
     if (svg == "") return;
     var ob = document.getElementById("drawing");
     ob.outerHTML = "<div id='drawing'>" + svg + "</div>";
-
-    mol.draw_to_canvas("rdkit-canvas", -1, -1);
+    var canvas = document.getElementById("rdkit-canvas");
+    mol.draw_to_canvas(canvas, -1, -1);
   }
   function callback(text, update_descrs) {
     var mol = Module.get_mol(text);

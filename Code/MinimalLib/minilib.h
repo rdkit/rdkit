@@ -23,10 +23,6 @@ class JSMol {
     return get_svg(d_defaultWidth, d_defaultHeight);
   };
   std::string get_svg_with_highlights(const std::string &details) const;
-  std::string draw_to_canvas(const std::string &id, int width,
-                             int height) const;
-  std::string draw_to_canvas_with_highlights(const std::string &id,
-                                             const std::string &details) const;
   std::string get_substruct_match(const JSMol &q) const;
   std::string get_substruct_matches(const JSMol &q) const;
   std::string get_descriptors() const;
@@ -44,7 +40,6 @@ class JSMol {
   std::string remove_hs() const;
   std::string add_hs() const;
 
- private:
   std::unique_ptr<RDKit::ROMol> d_mol;
   static constexpr unsigned int d_defaultWidth = 250;
   static constexpr unsigned int d_defaultHeight = 200;
