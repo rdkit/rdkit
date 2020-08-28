@@ -10,11 +10,6 @@
 
 #include <GraphMol/MolDraw2D/DrawText.h>
 
-#ifdef __EMSCRIPTEN__
-#include <emscripten.h>
-#include <emscripten/val.h>
-#endif
-
 namespace RDKit {
 
 // ****************************************************************************
