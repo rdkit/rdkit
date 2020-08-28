@@ -34,7 +34,7 @@ TEST_CASE("Check ANI Force Field builder") {
     auto mol = MolFileToMol(filePath, true, false);
     REQUIRE(mol);
     int confId = -1;
-    auto field = RDKit::ANI::constructForceField(*mol, "ANI-1ccx", 8);
+    std::unique_ptr<ForceFields::ForceField> field(RDKit::ANI::constructForceField(*mol, "ANI-1ccx", 8));
     field->initialize();
     auto numAtoms = mol->getNumAtoms();
     double *pos;
@@ -60,7 +60,7 @@ TEST_CASE("Check ANI Force Field builder") {
     auto mol = MolFileToMol(filePath, true, false);
     REQUIRE(mol);
     int confId = -1;
-    auto field = RDKit::ANI::constructForceField(*mol, "ANI-1x", 8);
+    std::unique_ptr<ForceFields::ForceField> field(RDKit::ANI::constructForceField(*mol, "ANI-1ccx", 8));
     field->initialize();
     auto numAtoms = mol->getNumAtoms();
     double *pos;

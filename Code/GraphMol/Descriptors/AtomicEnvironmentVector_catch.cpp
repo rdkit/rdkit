@@ -56,7 +56,7 @@ TEST_CASE("Symmetry Function Accuracy", "[Symmetry Function]") {
   std::map<std::string, Eigen::ArrayXXd> params;
   std::string path = getenv("RDBASE");
   std::string paramFilePath =
-      path + "/Code/ForceField/ANI/Params/ANI-1ccx/AEVParams/";
+      path + "/Data/ANIParams/ANI-1ccx/AEVParams/";
 
   // Weights for the radial symmetry functions
   ArrayXd ShfR;

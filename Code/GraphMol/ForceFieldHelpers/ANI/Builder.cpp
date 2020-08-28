@@ -47,7 +47,12 @@ ForceFields::ForceField *constructForceField(ROMol &mol, std::string modelType,
   for (unsigned int i = 0; i < mol.getNumAtoms(); i++) {
     res->positions().push_back(&conf.getAtomPos(i));
   }
-  Tools::addANIContribs(mol, res, modelType, 0, ensembleSize, confId);
+  try {
+    Tools::addANIContribs(mol, res, modelType, 0, ensembleSize, confId);
+  } catch (const ValueErrorException &) {
+    delete res;
+    throw;
+  }
   return res;
 }
 
