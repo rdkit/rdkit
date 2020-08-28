@@ -1,7 +1,7 @@
 if(RDK_BUILD_DESCRIPTORS3D)
 
-  set(DESC3D_HDRS MolDescriptors3D.h EEM.h PBF.h PMI.h AUTOCORR3D.h RDF.h MORSE.h GETAWAY.h WHIM.h CoulombMat.h AtomicEnvironmentVector.h)
-  set(DESC3D_SOURCES EEM.cpp PBF.cpp PMI.cpp AUTOCORR3D.cpp RDF.cpp MORSE.cpp GETAWAY.cpp WHIM.cpp CoulombMat.cpp AtomicEnvironmentVector.cpp)
+  set(DESC3D_HDRS MolDescriptors3D.h EEM.h PBF.h PMI.h AUTOCORR3D.h RDF.h MORSE.h GETAWAY.h WHIM.h CoulombMat.h)
+  set(DESC3D_SOURCES EEM.cpp PBF.cpp PMI.cpp AUTOCORR3D.cpp RDF.cpp MORSE.cpp GETAWAY.cpp WHIM.cpp CoulombMat.cpp)
 
 endif(RDK_BUILD_DESCRIPTORS3D)
 
@@ -27,6 +27,14 @@ rdkit_headers(Crippen.h BCUT.h Lipinski.h
               USRDescriptor.h AtomFeat.h
               ${DESC3D_HDRS}
               DEST GraphMol/Descriptors)
+
+if(RDK_BUILD_ANI)
+rdkit_library(ANIDescriptors 
+              AtomicEnvironmentVector.cpp
+              LINK_LIBRARIES RDGeneral EigenSerializer GraphMol)
+rdkit_headers(AtomicEnvironmentVector.h DEST GraphMol/Descriptors)
+target_compile_definitions(ANIDescriptors PRIVATE RDKIT_ANIDESCRIPTORS_BUILD)
+endif(RDK_BUILD_ANI)
 
 rdkit_test(testDescriptors test.cpp
 LINK_LIBRARIES PartialCharges Descriptors )
@@ -63,10 +71,10 @@ LINK_LIBRARIES  Descriptors )
 LINK_LIBRARIES  Descriptors )
  rdkit_test(testCoulombMat testCoulombMat.cpp
 LINK_LIBRARIES  Descriptors ForceFieldHelpers DistGeomHelpers  )
-if(RDK_HAS_EIGEN)
+if(RDK_BUILD_ANI)
  rdkit_catch_test(AtomicEnvironmentVectorCatchTest AtomicEnvironmentVector_catch.cpp catch_main.cpp
-LINK_LIBRARIES Descriptors ForceFieldHelpers DistGeomHelpers)
-endif(RDK_HAS_EIGEN)
+LINK_LIBRARIES ANIDescriptors FileParsers SmilesParse EigenSerializer)
+endif(RDK_BUILD_ANI)
 endif(RDK_BUILD_DESCRIPTORS3D)
 
 

@@ -117,23 +117,6 @@ python::tuple calcCrippenDescriptors(const RDKit::ROMol &mol,
 }
 
 #ifdef RDK_BUILD_DESCRIPTORS3D
-
-#ifdef RDK_HAS_EIGEN3
-python::tuple calcANIAtomicEnvironmentVector(const RDKit::ROMol &mol,
-                                             int confId) {
-  auto aev = RDKit::Descriptors::ANI::AtomicEnvironmentVector(mol, confId);
-  python::list result;
-  for (auto i = 0; i < aev.rows(); i++) {
-    python::list row;
-    for (auto j = 0; j < aev.cols(); j++) {
-      row.append(aev(i, j));
-    }
-    result.append(python::tuple(row));
-  }
-  return python::tuple(result);
-}
-#endif
-
 python::tuple calcCoulombMat(const RDKit::ROMol &mol, int confId) {
   std::vector<std::vector<double>> results;
   RDKit::Descriptors::CoulombMat(mol, results, confId);
@@ -1572,15 +1555,6 @@ BOOST_PYTHON_MODULE(rdMolDescriptors) {
               python::return_value_policy<python::manage_new_object>());
 
 #ifdef RDK_BUILD_DESCRIPTORS3D
-#ifdef RDK_HAS_EIGEN3
-  python::scope().attr("_CalcANIAtomicEnvironmentVector_version") =
-      RDKit::Descriptors::ANI::AtomicEnvironmentVectorVersion;
-  docString =
-      "Returns torchANI style feature vectors for each atom in the molecule";
-  python::def("CalcANIAtomicEnvironmentVector", calcANIAtomicEnvironmentVector,
-              (python::arg("mol"), python::arg("confId") = -1),
-              docString.c_str());
-#endif
   python::scope().attr("_CalcCoulombMat_version") =
       RDKit::Descriptors::CoulombMatVersion;
   docString = "Returns severals Coulomb randomized matrices";

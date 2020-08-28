@@ -39,7 +39,7 @@ Alternatively, you can also send Cookbook revisions and addition requests to the
 
    The Index ID# (e.g., **RDKitCB_##**) is simply a way to track Cookbook entries and image file names. 
    New Cookbook additions are sequentially index numbered, regardless of where they are placed 
-   within the document. As such, for reference, the next Cookbook entry is **RDKitCB_30**.
+   within the document. As such, for reference, the next Cookbook entry is **RDKitCB_31**.
 
 Drawing Molecules (Jupyter)
 *******************************
@@ -1814,6 +1814,75 @@ Both of these setters can be used to help sampling all kinds of molecules as the
    # This must be at the end
    # Does cleanup for any modules to come afterwards
    IPythonConsole.UninstallIPythonRenderer()
+
+
+Molecule Optimization with ANI NN as a ForceField
+==================
+| **Author:** Manan Goel
+| **Source:** 
+| **Index ID#:** RDKitCB_30
+| **Summary:**  Showcase various ways for optimizing different conformers of molecules using the ANI learned Force Field.
+
+Energy calculation using ANI-1x and ANI-1ccx
+
+.. Examples::
+
+   from rdkit import Chem
+   from rdkit.Chem import ChemicalForceFields
+
+   mol1 = Chem.MolFromMolBlock("""
+        702
+         -OEChem-06062004443D
+
+         9  8  0     0  0  0  0  0  0999 V2000
+          -1.1712    0.2997    0.0000 O   0  0  0  0  0  0  0  0  0  0  0  0
+          -0.0463   -0.5665    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+           1.2175    0.2668    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+          -0.0958   -1.2120    0.8819 H   0  0  0  0  0  0  0  0  0  0  0  0
+          -0.0952   -1.1938   -0.8946 H   0  0  0  0  0  0  0  0  0  0  0  0
+           2.1050   -0.3720   -0.0177 H   0  0  0  0  0  0  0  0  0  0  0  0
+           1.2426    0.9307   -0.8704 H   0  0  0  0  0  0  0  0  0  0  0  0
+           1.2616    0.9052    0.8886 H   0  0  0  0  0  0  0  0  0  0  0  0
+          -1.1291    0.8364    0.8099 H   0  0  0  0  0  0  0  0  0  0  0  0
+         1  2  1  0  0  0  0
+         1  9  1  0  0  0  0
+         2  3  1  0  0  0  0
+         2  4  1  0  0  0  0
+         2  5  1  0  0  0  0
+         3  6  1  0  0  0  0
+         3  7  1  0  0  0  0
+         3  8  1  0  0  0  0
+   M  END""")
+   ff = ChemicalForceFields.ANIGetMoleculeForceField(mol1, "ANI-1ccx", 8)
+   ff1 = ChemicalForceFields.ANIGetMoleculeForceField(mol1, "ANI-1x", 8)
+
+   e = ff.CalcEnergy()
+   e1 = ff1.CalcEnergy()
+
+Minimizing the molecule energy. In this case the default conformer of the molecule will be taken IDed by -1 and minimized. 
+Unless the initial conformation is the most stable, e_minimized will be less than e_initial.
+
+.. Examples::
+
+   ff = ChemicalForceFields.ANIGetMoleculeForceField(mol1, "ANI-1ccx", 8)
+   e_initial = ff.CalcEnergy()
+   r = ff.Minimize()
+   e_minimized = ff.CalcEnergy()
+
+
+Shorter way optimizing specific conformations of the molecule are the following
+
+.. Examples::
+
+   ChemicalForceFields.ANIOptimizeMolecule(mol1, numIterations, conformerId, "ANI-1x", 8)
+
+Optimizing all the conformations of a molecule
+
+.. Examples::
+
+   ChemicalForceFields.ANIOptimizeMoleculeConfs(mol1, numThreads, numIterations, "ANI-1ccx", 8)
+
+The last argument in both cases is the number of models in the ensemble. ANI-1x and ANI-ccx both have 8 models by default.
 
 
 License

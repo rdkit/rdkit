@@ -22,10 +22,39 @@
 #include <GraphMol/ForceFieldHelpers/MMFF/AtomTyper.h>
 #include <GraphMol/ForceFieldHelpers/MMFF/Builder.h>
 #include <GraphMol/ForceFieldHelpers/MMFF/MMFF.h>
-
+#ifdef RDK_BUILD_ANI
+#include <GraphMol/ForceFieldHelpers/ANI/Builder.h>
+#include <GraphMol/ForceFieldHelpers/ANI/ANI.h>
+#endif
 namespace python = boost::python;
 
 namespace RDKit {
+#ifdef RDK_BUILD_ANI
+int ANIHelper(ROMol &mol, int maxIters, int confId, std::string modelType,
+              unsigned int ensembleSize) {
+  NOGIL gil;
+  return ANI::ANIOptimizeMolecule(mol, modelType, ensembleSize, confId,
+                                  maxIters)
+      .first;
+}
+
+python::object ANIConfsHelper(ROMol &mol, int numThreads, int maxIters,
+                              std::string modelType,
+                              unsigned int ensembleSize) {
+  std::vector<std::pair<int, double>> res;
+  {
+    NOGIL gil;
+    ANI::ANIOptimizeMoleculeConfs(mol, res, modelType, ensembleSize, numThreads,
+                                  maxIters);
+  }
+  python::list pyres;
+  for (auto &itm : res) {
+    pyres.append(python::make_tuple(itm.first, itm.second));
+  }
+  return std::move(pyres);
+}
+#endif
+
 int UFFHelper(ROMol &mol, int maxIters, double vdwThresh, int confId,
               bool ignoreInterfragInteractions) {
   NOGIL gil;
@@ -169,6 +198,25 @@ bool MMFFHasAllMoleculeParams(const ROMol &mol) {
 
   return mmffMolProperties.isValid();
 }
+#ifdef RDK_BUILD_ANI
+ForceFields::PyForceField *ANIGetMoleculeForceField(ROMol &mol,
+                                                    std::string modelType,
+                                                    unsigned int ensembleSize,
+                                                    int confId = -1) {
+  ForceFields::PyForceField *pyFF = nullptr;
+  boost::python::list result;
+
+  ForceFields::ForceField *ff =
+      ANI::constructForceField(mol, modelType, ensembleSize, confId);
+  pyFF = new ForceFields::PyForceField(ff);
+
+  auto x = ff->positions();
+
+  pyFF->initialize();
+
+  return pyFF;
+}
+#endif
 };  // namespace RDKit
 
 namespace ForceFields {
@@ -481,4 +529,61 @@ RETURNS: a list of (not_converged, energy) 2-tuples. \n\
               (python::arg("mol"), python::arg("ff"),
                python::arg("numThreads") = 1, python::arg("maxIters") = 200),
               docString.c_str());
+#ifdef RDK_BUILD_ANI
+  docString =
+      "Uses ANI NN to optimize a molecule's structure\n\n\
+ \n\
+ ARGUMENTS:\n\n\
+    - mol : the molecule of interest\n\
+    - maxIters : the maximum number of iterations (defaults to 200)\n\
+    - confId : indicates which conformer to optimize\n\
+    - modelType : Type of ANI architecture\n\
+    - ensembleSize : Number of NNs in the model\n\
+\n\
+ RETURNS : 0 if the optimization converged, 1 if more iterations are required.\n\
+\n";
+  python::def(
+      "ANIOptimizeMolecule", RDKit::ANIHelper,
+      (python::arg("mol"), python::arg("maxIters") = 200,
+       python::arg("confId") = -1, python::arg("modelType") = "ANI-1ccx",
+       python::arg("ensembleSize") = 8),
+      docString.c_str());
+
+  docString =
+      "uses ANI to optimize all of a molecule's conformations\n\n\
+ \n\
+ ARGUMENTS:\n\n\
+    - mol : the molecule of interest\n\
+    - numThreads : the number of threads to use, only has an effect if the RDKit\n\
+                   was built with thread support (defaults to 1)\n\
+                   If set to zero, the max supported by the system will be used.\n\
+    - maxIters : the maximum number of iterations (defaults to 200)\n\
+    - modelType : Type of ANI based model (ANI-1x or ANI-1ccx)\n\
+    - ensembleSize : Number of models inside the ensemble\n\
+\n\
+ RETURNS: a list of (not_converged, energy) 2-tuples. \n\
+     If not_converged is 0 the optimization converged for that conformer.\n\
+\n";
+  python::def(
+      "ANIOptimizeMoleculeConfs", RDKit::ANIConfsHelper,
+      (python::arg("mol"), python::arg("numThreads") = 1,
+       python::arg("maxIters") = 200, python::arg("modelType") = "ANI-1ccx",
+       python::arg("ensembleSize") = 8),
+      docString.c_str());
+
+  docString =
+      "returns an ANI force field for a molecule\n\n\
+  \n\
+  Arguments:\n\n\
+      - mol : the molecule of interest\n\
+      - modelType : Type of ANI based model (ANI-1x or ANI-1ccx)\n\
+      - ensembleSize : Number of models inside the ensemble\n\
+      - confId : Conformer ID\n\
+      \n";
+  python::def("ANIGetMoleculeForceField", RDKit::ANIGetMoleculeForceField,
+              (python::arg("mol"), python::arg("modelType"),
+               python::arg("ensembleSize"), python::arg("confId") = -1),
+              python::return_value_policy<python::manage_new_object>(),
+              docString.c_str());
+#endif
 }

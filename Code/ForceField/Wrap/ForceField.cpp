@@ -22,10 +22,30 @@
 #include <ForceField/MMFF/AngleConstraint.h>
 #include <ForceField/MMFF/TorsionConstraint.h>
 #include <ForceField/MMFF/PositionConstraint.h>
+#ifdef RDK_BUILD_ANI
+#include <ForceField/ANI/AtomicContrib.h>
+#endif
 #include "PyForceField.h"
 
 using namespace ForceFields;
 namespace python = boost::python;
+
+#ifdef RDK_BUILD_ANI
+void ANIAddAtomContrib(PyForceField *self, python::list speciesVec,
+                       int atomType, unsigned int atomIdx,
+                       unsigned int numAtoms, unsigned int numLayers,
+                       unsigned int ensembleSize, std::string modelType) {
+  ANI::ANIAtomContrib *contrib;
+  Eigen::VectorXi speciesVector(numAtoms);
+  for (unsigned int i = 0; i < numAtoms; i++) {
+    speciesVector(i) = python::extract<int>(speciesVec[i]);
+  }
+  contrib = new ANI::ANIAtomContrib(self->field.get(), atomType, atomIdx,
+                                    speciesVector, numAtoms, numLayers,
+                                    ensembleSize, modelType);
+  self->field->contribs().push_back(ForceFields::ContribPtr(contrib));
+}
+#endif
 
 void ForceFieldAddDistanceConstraint(PyForceField *self, unsigned int idx1,
                                      unsigned int idx2, double minLen,
@@ -129,7 +149,9 @@ double PyForceField::calcEnergyWithPos(const python::object &pos) {
     size_t s = this->field->dimension() * this->field->numPoints();
     size_t numElements = python::extract<size_t>(pos.attr("__len__")());
     if (s != numElements) {
-      throw ValueErrorException("The Python container must have length equal to Dimension() * NumPoints()");
+      throw ValueErrorException(
+          "The Python container must have length equal to Dimension() * "
+          "NumPoints()");
     }
     std::vector<double> c(s);
     for (size_t i = 0; i < s; ++i) {
@@ -148,7 +170,7 @@ PyObject *PyForceField::positions() {
   const RDGeom::PointPtrVect &p = this->field->positions();
   size_t i = 0;
   PyObject *coordItem;
-  for (const auto pptr: p) {
+  for (const auto pptr : p) {
     for (size_t j = 0; j < 3; ++j) {
       coordItem = PyFloat_FromDouble((*pptr)[j]);
       PyTuple_SetItem(coordTuple, i++, coordItem);
@@ -165,7 +187,9 @@ PyObject *PyForceField::calcGradWithPos(const python::object &pos) {
   if (pos != python::object()) {
     size_t numElements = python::extract<size_t>(pos.attr("__len__")());
     if (s != numElements) {
-      throw ValueErrorException("The Python container must have length equal to Dimension() * NumPoints()");
+      throw ValueErrorException(
+          "The Python container must have length equal to Dimension() * "
+          "NumPoints()");
     }
     std::vector<double> c(s);
     for (size_t i = 0; i < s; ++i) {
@@ -182,18 +206,19 @@ PyObject *PyForceField::calcGradWithPos(const python::object &pos) {
   return gradTuple;
 }
 
-python::tuple PyForceField::minimizeTrajectory(unsigned int snapshotFreq, int maxIts, double forceTol, double energyTol) {
+python::tuple PyForceField::minimizeTrajectory(unsigned int snapshotFreq,
+                                               int maxIts, double forceTol,
+                                               double energyTol) {
   PRECONDITION(this->field, "no force field");
   RDKit::SnapshotVect snapshotVect;
-  int resInt = this->field->minimize(snapshotFreq, &snapshotVect,
-                               maxIts, forceTol, energyTol);
+  int resInt = this->field->minimize(snapshotFreq, &snapshotVect, maxIts,
+                                     forceTol, energyTol);
   python::list l;
   for (RDKit::SnapshotVect::const_iterator it = snapshotVect.begin();
        it != snapshotVect.end(); ++it) {
     l.append(new RDKit::Snapshot(*it));
   }
   return python::make_tuple(resInt, l);
-  
 }
 
 PyObject *PyMMFFMolProperties::getMMFFBondStretchParams(
@@ -302,22 +327,24 @@ BOOST_PYTHON_MODULE(rdForceField) {
 
   python::class_<PyForceField>("ForceField", "A force field", python::no_init)
       .def("CalcEnergy",
-           (double (PyForceField::*)(const python::object &) const) &PyForceField::calcEnergyWithPos,
+           (double (PyForceField::*)(const python::object &) const) &
+               PyForceField::calcEnergyWithPos,
            (python::arg("pos") = python::object()),
            "Returns the energy (in kcal/mol) of the current arrangement\n"
            "or of the supplied coordinate list (if non-empty)")
       .def("CalcGrad", &PyForceField::calcGradWithPos,
            (python::arg("pos") = python::object()),
            "Returns a tuple filled with the per-coordinate gradients\n"
-           "of the current arrangement or of the supplied coordinate list (if non-empty)")
+           "of the current arrangement or of the supplied coordinate list (if "
+           "non-empty)")
       .def("Positions", &PyForceField::positions,
            "Returns a tuple filled with the coordinates of the\n"
            "points the ForceField is handling")
       .def("Dimension",
-           (unsigned int (PyForceField::*)() const) &PyForceField::dimension,
+           (unsigned int (PyForceField::*)() const) & PyForceField::dimension,
            "Returns the dimension of the ForceField")
       .def("NumPoints",
-           (unsigned int (PyForceField::*)() const) &PyForceField::numPoints,
+           (unsigned int (PyForceField::*)() const) & PyForceField::numPoints,
            "Returns the number of points the ForceField is handling")
       .def("Minimize", &PyForceField::minimize,
            (python::arg("maxIts") = 200, python::arg("forceTol") = 1e-4,
@@ -329,7 +356,8 @@ BOOST_PYTHON_MODULE(rdForceField) {
             python::arg("forceTol") = 1e-4, python::arg("energyTol") = 1e-6),
            "Runs some minimization iterations, recording the minimization "
            "trajectory every snapshotFreq steps.\n\n"
-           "Returns a (int, []) tuple; the int is 0 if the minimization succeeded, "
+           "Returns a (int, []) tuple; the int is 0 if the minimization "
+           "succeeded, "
            "while the list contains Snapshot objects.")
       .def("AddDistanceConstraint", ForceFieldAddDistanceConstraint,
            (python::arg("self"), python::arg("idx1"), python::arg("idx2"),
@@ -402,6 +430,14 @@ BOOST_PYTHON_MODULE(rdForceField) {
            (python::arg("self"), python::arg("idx"), python::arg("maxDispl"),
             python::arg("forceConstant")),
            "Adds a position constraint to the MMFF force field.")
+#ifdef RDK_BUILD_ANI
+      .def("AddANIAtomContrib", ANIAddAtomContrib,
+           (python::arg("self"), python::arg("speciesVec"),
+            python::arg("atomType"), python::arg("atomIdx"),
+            python::arg("numAtoms"), python::arg("numLayers"),
+            python::arg("ensembleSize"), python::arg("modelType")),
+           "Adds a atomic contribution according to ANI model Forcefield")
+#endif
       .def("Initialize", &PyForceField::initialize,
            "initializes the force field (call this before minimizing)")
       .def("AddExtraPoint", &PyForceField::addExtraPoint,
@@ -428,15 +464,18 @@ BOOST_PYTHON_MODULE(rdForceField) {
             python::arg("idx2")),
            "Retrieves MMFF bond stretch parameters for atoms with indexes "
            "idx1, idx2 "
-           "as a (bondType, kb, r0) tuple, or None if no parameters could be "
+           "as a (bondType, kb, r0) tuple, or None if no parameters could "
+           "be "
            "found")
       .def("GetMMFFAngleBendParams",
            &PyMMFFMolProperties::getMMFFAngleBendParams,
            (python::arg("self"), python::arg("mol"), python::arg("idx1"),
             python::arg("idx2"), python::arg("idx3")),
-           "Retrieves MMFF angle bend parameters for atoms with indexes idx1, "
+           "Retrieves MMFF angle bend parameters for atoms with indexes "
+           "idx1, "
            "idx2, idx3 "
-           "as a (angleType, ka, theta0) tuple, or None if no parameters could "
+           "as a (angleType, ka, theta0) tuple, or None if no parameters "
+           "could "
            "be found")
       .def("GetMMFFStretchBendParams",
            &PyMMFFMolProperties::getMMFFStretchBendParams,
@@ -456,7 +495,8 @@ BOOST_PYTHON_MODULE(rdForceField) {
       .def("GetMMFFOopBendParams", &PyMMFFMolProperties::getMMFFOopBendParams,
            (python::arg("self"), python::arg("mol"), python::arg("idx1"),
             python::arg("idx2"), python::arg("idx3"), python::arg("idx4")),
-           "Retrieves MMFF out-of-plane bending force constant for atoms with "
+           "Retrieves MMFF out-of-plane bending force constant for atoms "
+           "with "
            "indexes "
            "idx1, idx2, idx3, idx4 as a koop float value")
       .def("GetMMFFVdWParams", &PyMMFFMolProperties::getMMFFVdWParams,
@@ -477,11 +517,13 @@ BOOST_PYTHON_MODULE(rdForceField) {
            "Sets the DielConst MMFF property (defaults to 1.0)")
       .def("SetMMFFBondTerm", &PyMMFFMolProperties::setMMFFBondTerm,
            (python::arg("self"), python::arg("state") = true),
-           "Sets the bond term to be included in the MMFF equation (defaults "
+           "Sets the bond term to be included in the MMFF equation "
+           "(defaults "
            "to True)")
       .def("SetMMFFAngleTerm", &PyMMFFMolProperties::setMMFFAngleTerm,
            (python::arg("self"), python::arg("state") = true),
-           "Sets the angle term to be included in the MMFF equation (defaults "
+           "Sets the angle term to be included in the MMFF equation "
+           "(defaults "
            "to True)")
       .def("SetMMFFStretchBendTerm",
            &PyMMFFMolProperties::setMMFFStretchBendTerm,
@@ -510,7 +552,8 @@ BOOST_PYTHON_MODULE(rdForceField) {
            "defaults to \"MMFF94\")")
       .def("SetMMFFVerbosity", &PyMMFFMolProperties::setMMFFVerbosity,
            (python::arg("self"), python::arg("verbosity") = 0),
-           "Sets the MMFF verbosity (0: none; 1: low; 2: high; defaults to 0)");
+           "Sets the MMFF verbosity (0: none; 1: low; 2: high; defaults to "
+           "0)");
 }
 /*
     (python::arg("self"), python::arg("mol"), python::arg("idx1"),

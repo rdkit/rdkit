@@ -50,6 +50,8 @@ __pycache__/
 /Code/GraphMol/SmilesParse/smiles.tab.cpp
 /Code/GraphMol/SmilesParse/smiles.tab.hpp
 
+/Data/ANIParams
+
 /External/**/*.tar.gz
 /External/**/*.zip
 /External/catch/catch/
