@@ -6,8 +6,6 @@ if(RDK_BUILD_DESCRIPTORS3D)
 endif(RDK_BUILD_DESCRIPTORS3D)
 
 
-remove_definitions(-DRDKIT_GRAPHMOL_BUILD)
-add_definitions(-DRDKIT_DESCRIPTORS_BUILD)
 rdkit_library(Descriptors
               Crippen.cpp BCUT.cpp MolDescriptors.cpp MolSurf.cpp Lipinski.cpp ConnectivityDescriptors.cpp
               MQN.cpp
@@ -17,6 +15,7 @@ rdkit_library(Descriptors
               ${DESC3D_SOURCES}
               LINK_LIBRARIES PartialCharges SmilesParse FileParsers Subgraphs SubstructMatch MolTransforms GraphMol
                  EigenSolvers RDGeneral)
+target_compile_definitions(Descriptors PRIVATE RDKIT_DESCRIPTORS_BUILD)
 
 rdkit_headers(Crippen.h BCUT.h Lipinski.h
               MolDescriptors.h

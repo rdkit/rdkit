@@ -13,14 +13,13 @@ rdkit_headers(MolDraw2D.h
   DEST GraphMol/MolDraw2D
 )
 
-remove_definitions(-DRDKIT_GRAPHMOL_BUILD)
-add_definitions(-DRDKIT_MOLDRAW2D_BUILD)
 rdkit_library(MolDraw2D MolDraw2D.cpp MolDraw2DSVG.cpp
   MolDraw2DDetails.cpp MolDraw2DUtils.cpp DrawText.cpp
   DrawTextSVG.cpp
   LINK_LIBRARIES
-  ChemReactions FileParsers SmilesParse Depictor MolTransforms 
+  ChemReactions Depictor MolTransforms 
   SubstructMatch Subgraphs GraphMol EigenSolvers )
+target_compile_definitions(MolDraw2D PRIVATE RDKIT_MOLDRAW2D_BUILD)
 
 if(RDK_BUILD_QT_SUPPORT)
   find_package(Qt5 COMPONENTS Widgets OpenGL REQUIRED)

@@ -17,7 +17,11 @@
 #include <GraphMol/MolDraw2D/MolDraw2D.h>
 #include <GraphMol/MolDraw2D/MolDraw2DSVG.h>
 #include <GraphMol/MolDraw2D/MolDraw2DUtils.h>
+#include <GraphMol/FileParsers/FileParsers.h>
+#include <GraphMol/FileParsers/PNGParser.h>
 #include <boost/algorithm/string/split.hpp>
+#include <GraphMol/ChemReactions/Reaction.h>
+#include <GraphMol/ChemReactions/ReactionParser.h>
 
 #ifdef RDK_BUILD_CAIRO_SUPPORT
 #include <cairo.h>
@@ -556,3 +560,99 @@ TEST_CASE("github #3258: ", "[drawing][bug]") {
     CHECK(!dm1.hasProp("_bondIndicesAdded"));
   }
 }
+
+#ifdef RDK_BUILD_CAIRO_SUPPORT
+TEST_CASE("adding png metadata", "[drawing][png]") {
+  SECTION("molecule") {
+    auto m1 = R"CTAB(
+  Mrv2014 08172015242D          
+
+  0  0  0     0  0            999 V3000
+M  V30 BEGIN CTAB
+M  V30 COUNTS 3 2 0 0 0
+M  V30 BEGIN ATOM
+M  V30 1 C 2.31 -1.3337 0 0
+M  V30 2 C 3.6437 -2.1037 0 0
+M  V30 3 O 4.9774 -1.3337 0 0
+M  V30 END ATOM
+M  V30 BEGIN BOND
+M  V30 1 1 1 2
+M  V30 2 1 2 3
+M  V30 END BOND
+M  V30 END CTAB
+M  END
+)CTAB"_ctab;
+    REQUIRE(m1);
+    {
+      MolDraw2DCairo drawer(250, 200);
+      drawer.drawMolecule(*m1);
+      drawer.finishDrawing();
+      auto png = drawer.getDrawingText();
+      drawer.writeDrawingText("testPNGMetadata_1.png");
+      CHECK(png.find(PNGData::smilesTag) != std::string::npos);
+      CHECK(png.find(PNGData::molTag) != std::string::npos);
+      CHECK(png.find(PNGData::pklTag) != std::string::npos);
+      std::unique_ptr<ROMol> newmol(PNGStringToMol(png));
+      REQUIRE(newmol);
+      CHECK(MolToCXSmiles(*m1) == MolToCXSmiles(*newmol));
+    }
+    {  // disable metadata output
+      MolDraw2DCairo drawer(250, 200);
+      drawer.drawOptions().includeMetadata = false;
+      drawer.drawMolecule(*m1);
+      drawer.finishDrawing();
+      auto png = drawer.getDrawingText();
+      CHECK(png.find(PNGData::smilesTag) == std::string::npos);
+      CHECK(png.find(PNGData::molTag) == std::string::npos);
+      CHECK(png.find(PNGData::pklTag) == std::string::npos);
+    }
+    {  // draw multiple molecules
+      MolDraw2DCairo drawer(250, 200);
+      drawer.drawMolecule(*m1);
+      drawer.drawMolecule(*m1);
+      drawer.finishDrawing();
+      auto png = drawer.getDrawingText();
+      CHECK(png.find(PNGData::smilesTag) != std::string::npos);
+      CHECK(png.find(PNGData::molTag) != std::string::npos);
+      CHECK(png.find(PNGData::pklTag) != std::string::npos);
+      CHECK(png.find(PNGData::smilesTag + "1") != std::string::npos);
+      CHECK(png.find(PNGData::molTag + "1") != std::string::npos);
+      CHECK(png.find(PNGData::pklTag + "1") != std::string::npos);
+    }
+  }
+  SECTION("reaction") {
+    std::unique_ptr<ChemicalReaction> rxn(RxnSmartsToChemicalReaction(
+        "[N:1][C:2][C:3](=[O:4])[O:5].[N:6][C:7][C:8](=[O:9])[O:10]>>[N:1]1[C:"
+        "2][C:3](=[O:4])[N:6][C:7][C:8]1=[O:9].[O:5][O:10]"));
+    REQUIRE(rxn);
+    {
+      MolDraw2DCairo drawer(600, 200);
+      drawer.drawReaction(*rxn);
+      drawer.finishDrawing();
+      auto png = drawer.getDrawingText();
+      drawer.writeDrawingText("testPNGMetadata_2.png");
+      CHECK(png.find(PNGData::smilesTag) == std::string::npos);
+      CHECK(png.find(PNGData::molTag) == std::string::npos);
+      CHECK(png.find(PNGData::pklTag) == std::string::npos);
+      CHECK(png.find(PNGData::rxnPklTag) != std::string::npos);
+      CHECK(png.find(PNGData::rxnSmartsTag) != std::string::npos);
+      std::unique_ptr<ChemicalReaction> rxn2(PNGStringToChemicalReaction(png));
+      REQUIRE(rxn2);
+      CHECK(ChemicalReactionToRxnSmarts(*rxn) ==
+            ChemicalReactionToRxnSmarts(*rxn2));
+    }
+    {  // disable metadata
+      MolDraw2DCairo drawer(600, 200);
+      drawer.drawOptions().includeMetadata = false;
+      drawer.drawReaction(*rxn);
+      drawer.finishDrawing();
+      auto png = drawer.getDrawingText();
+      CHECK(png.find(PNGData::smilesTag) == std::string::npos);
+      CHECK(png.find(PNGData::molTag) == std::string::npos);
+      CHECK(png.find(PNGData::pklTag) == std::string::npos);
+      CHECK(png.find(PNGData::rxnPklTag) == std::string::npos);
+      CHECK(png.find(PNGData::rxnSmartsTag) == std::string::npos);
+    }
+  }
+}
+#endif

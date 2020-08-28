@@ -1,6 +1,4 @@
 
-remove_definitions(-DRDKIT_GRAPHMOL_BUILD)
-add_definitions(-DRDKIT_FINGERPRINTS_BUILD)
 rdkit_library(Fingerprints
               Fingerprints.cpp PatternFingerprints.cpp MorganFingerprints.cpp
               AtomPairs.cpp MACCS.cpp MHFP.cpp FingerprintGenerator.cpp 
@@ -8,6 +6,7 @@ rdkit_library(Fingerprints
               FingerprintUtil.cpp TopologicalTorsionGenerator.cpp
               LINK_LIBRARIES DataStructs Subgraphs SubstructMatch SmilesParse GraphMol RDGeneral
               )
+target_compile_definitions(Fingerprints PRIVATE RDKIT_FINGERPRINTS_BUILD)
 
 rdkit_headers(AtomPairs.h
               Fingerprints.h

@@ -21,8 +21,6 @@ if (PYTHONINTERP_FOUND)
 endif()
 
 
-remove_definitions(-DRDKIT_GRAPHMOL_BUILD)
-add_definitions(-DRDKIT_FILTERCATALOG_BUILD)
 rdkit_library(FilterCatalog
               Filters.cpp
               FilterCatalog.cpp
@@ -32,6 +30,7 @@ rdkit_library(FilterCatalog
               FunctionalGroupHierarchy.cpp
               LINK_LIBRARIES Subgraphs SubstructMatch SmilesParse
               GraphMol Catalogs ${RDKit_SERIALIZATION_LIBS} )
+target_compile_definitions(FilterCatalog PRIVATE RDKIT_FILTERCATALOG_BUILD)
 
 rdkit_headers(FilterCatalogEntry.h
               FilterCatalog.h

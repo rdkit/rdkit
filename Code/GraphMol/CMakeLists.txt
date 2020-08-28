@@ -1,6 +1,4 @@
 
-add_definitions(-DRDKIT_GRAPHMOL_BUILD)
-
 rdkit_library(GraphMol
               Atom.cpp QueryAtom.cpp QueryBond.cpp Bond.cpp
               MolOps.cpp FindRings.cpp ROMol.cpp RWMol.cpp PeriodicTable.cpp
@@ -12,6 +10,7 @@ rdkit_library(GraphMol
               new_canon.cpp SubstanceGroup.cpp
               SHARED
               LINK_LIBRARIES RDGeometryLib RDGeneral  )
+target_compile_definitions(GraphMol PRIVATE RDKIT_GRAPHMOL_BUILD)
 if(RDK_USE_URF)
   target_link_libraries(GraphMol PUBLIC ${RDK_URF_LIBS})
 endif()

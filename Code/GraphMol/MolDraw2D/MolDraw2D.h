@@ -236,7 +236,10 @@ struct RDKIT_MOLDRAW2D_EXPORT MolDrawOptions {
                                           // ellipses round longer labels.
   bool centreMoleculesBeforeDrawing = false;  // moves the centre of the drawn
                                               // molecule to (0,0)
-  bool explicitMethyl = false; // draw terminal methyl and related as CH3
+  bool explicitMethyl = false;  // draw terminal methyl and related as CH3
+  bool includeMetadata =
+      true;  // when possible include metadata about molecules and reactions in
+             // the output to allow them to be reconstructed
 
   MolDrawOptions() {
     highlightColourPalette.emplace_back(
@@ -774,7 +777,19 @@ class RDKIT_MOLDRAW2D_EXPORT MolDraw2D {
   void adjustScaleForAnnotation(
       const std::vector<std::shared_ptr<StringRect>> &notes);
 
+ private:
+  virtual void updateMetadata(const ROMol &mol, int confId) {
+    RDUNUSED_PARAM(mol);
+    RDUNUSED_PARAM(confId);
+  };
+  virtual void updateMetadata(const ChemicalReaction &rxn) {
+    RDUNUSED_PARAM(rxn);
+  };
+
  protected:
+  std::vector<std::pair<std::string, std::string>> d_metadata;
+  unsigned int d_numMetadataEntries=0;
+
   virtual void doContinuousHighlighting(
       const ROMol &mol, const std::vector<int> *highlight_atoms,
       const std::vector<int> *highlight_bonds,

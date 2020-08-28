@@ -1,9 +1,8 @@
 
-remove_definitions(-DRDKIT_GRAPHMOL_BUILD)
-add_definitions(-DRDKIT_TAUTOMERQUERY_BUILD)
 rdkit_library(TautomerQuery 
               TautomerQuery.cpp
               LINK_LIBRARIES GraphMol RDGeneral MolStandardize)
+target_compile_definitions(TautomerQuery PRIVATE RDKIT_TAUTOMERQUERY_BUILD)
 
 rdkit_headers(TautomerQuery.h
               DEST GraphMol/TautomerQuery)
