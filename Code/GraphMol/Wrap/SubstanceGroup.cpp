@@ -73,6 +73,14 @@ python::tuple getCStatesHelper(const SubstanceGroup &self) {
   return python::tuple(res);
 }
 
+python::tuple getBracketsHelper(const SubstanceGroup &self) {
+  python::list res;
+  for (const auto brk : self.getBrackets()) {
+    res.append(python::make_tuple(brk[0], brk[1], brk[2]));
+  }
+  return python::tuple(res);
+}
+
 }  // namespace
 
 std::string sGroupClassDoc =
@@ -121,6 +129,7 @@ struct sgroup_wrap {
         .def("AddBondWithBookmark", &SubstanceGroup::addBondWithBookmark)
         .def("AddAttachPoint", &SubstanceGroup::addAttachPoint)
         .def("AddBracket", addBracketHelper)
+        .def("GetBrackets", getBracketsHelper)
 
         .def("SetProp",
              (void (RDProps::*)(const std::string &, std::string, bool) const) &

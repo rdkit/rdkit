@@ -338,6 +338,60 @@ M  END
     self.assertAlmostEqual(cs0.vector.x, -1.02, 2)
     self.assertAlmostEqual(cs0.vector.y, -0.59, 2)
 
+  def testBrackets(self):
+    mol = Chem.MolFromMolBlock('''
+  Mrv2014 08282011142D          
+
+  0  0  0     0  0            999 V3000
+M  V30 BEGIN CTAB
+M  V30 COUNTS 6 5 1 0 0
+M  V30 BEGIN ATOM
+M  V30 1 C -15.7083 2 0 0
+M  V30 2 C -14.3747 2.77 0 0
+M  V30 3 O -13.041 2 0 0
+M  V30 4 C -11.7073 2.77 0 0
+M  V30 5 C -10.3736 2 0 0
+M  V30 6 C -9.0399 2.77 0 0
+M  V30 END ATOM
+M  V30 BEGIN BOND
+M  V30 1 1 1 2
+M  V30 2 1 2 3
+M  V30 3 1 3 4
+M  V30 4 1 4 5
+M  V30 5 1 5 6
+M  V30 END BOND
+M  V30 BEGIN SGROUP
+M  V30 1 MON 0 ATOMS=(2 3 4) BRKXYZ=(9 -13.811 1.23 0 -13.811 3.54 0 0 0 0) -
+M  V30 BRKXYZ=(9 -10.9373 3.54 0 -10.9373 1.23 0 0 0 0)
+M  V30 END SGROUP
+M  V30 END CTAB
+M  END''')
+    sgs = Chem.GetMolSubstanceGroups(mol)
+    self.assertEqual(len(sgs), 1)
+    sg0 = sgs[0]
+    pd = sg0.GetPropsAsDict()
+    self.assertTrue('TYPE' in pd)
+    self.assertEqual(pd['TYPE'], 'MON')
+    brackets = sg0.GetBrackets()
+    self.assertEqual(len(brackets), 2)
+    b = brackets[0]
+    self.assertEqual(len(b), 3)
+    self.assertAlmostEqual(b[0].x, -13.811, 3)
+    self.assertAlmostEqual(b[0].y, 1.230, 3)
+    self.assertAlmostEqual(b[1].x, -13.811, 3)
+    self.assertAlmostEqual(b[1].y, 3.540, 3)
+    self.assertAlmostEqual(b[2].x, 0, 3)
+    self.assertAlmostEqual(b[2].y, 0, 3)
+
+    b = brackets[1]
+    self.assertEqual(len(b), 3)
+    self.assertAlmostEqual(b[0].x, -10.937, 3)
+    self.assertAlmostEqual(b[0].y, 3.54, 3)
+    self.assertAlmostEqual(b[1].x, -10.937, 3)
+    self.assertAlmostEqual(b[1].y, 1.23, 3)
+    self.assertAlmostEqual(b[2].x, 0, 3)
+    self.assertAlmostEqual(b[2].y, 0, 3)
+
 
 if __name__ == '__main__':
   print("Testing SubstanceGroups wrapper")
