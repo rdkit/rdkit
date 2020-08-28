@@ -10,4 +10,3 @@ rdkit_python_extension(rdForceField ForceField.cpp
                        LINK_LIBRARIES ForceFieldHelpers)
 endif(RDK_BUILD_ANI)
 add_pytest(pyForceFieldConstraints ${CMAKE_CURRENT_SOURCE_DIR}/testConstraints.py)
-add_pytest(pyForceFieldANI ${CMAKE_CURRENT_SOURCE_DIR}/testANI.py)
