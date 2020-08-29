@@ -619,6 +619,8 @@ BOOST_PYTHON_MODULE(rdMolDraw2D) {
       .def_readwrite(
           "bondLineWidth", &RDKit::MolDrawOptions::bondLineWidth,
           "if positive, this overrides the default line width for bonds")
+      .def_readwrite("scaleBondWidth", &RDKit::MolDrawOptions::scaleBondWidth,
+                     "Scales the width of drawn bonds.")
       .def_readwrite("highlightBondWidthMultiplier",
                      &RDKit::MolDrawOptions::highlightBondWidthMultiplier,
                      "What to multiply default bond width by for highlighting "
