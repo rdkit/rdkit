@@ -66,7 +66,7 @@ void MolDraw2DCairo::drawLine(const Point2D &cds1, const Point2D &cds2) {
   Point2D c1 = getDrawCoords(cds1);
   Point2D c2 = getDrawCoords(cds2);
 
-  unsigned int width = getDrawLineWidth();
+  double width = getDrawLineWidth();
   std::string dashString = "";
 
   cairo_set_line_width(dp_cr, width);
@@ -105,7 +105,7 @@ void MolDraw2DCairo::drawWavyLine(const Point2D &cds1, const Point2D &cds2,
 
   Point2D c1 = getDrawCoords(cds1);
 
-  unsigned int width = getDrawLineWidth();
+  double width = getDrawLineWidth();
   cairo_set_line_width(dp_cr, width);
   cairo_set_dash(dp_cr, nullptr, 0, 0);
   setColour(col1);

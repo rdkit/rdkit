@@ -200,8 +200,8 @@ struct RDKIT_MOLDRAW2D_EXPORT MolDrawOptions {
   std::vector<std::vector<int>> atomRegions;  // regions
   DrawColour symbolColour{
       0, 0, 0};  // color to be used for the symbols and arrows in reactions
-  int bondLineWidth = -1;  // if positive, this overrides the default line width
-                           // when drawing bonds
+  int bondLineWidth = 2;  // default line width when drawing bonds
+  bool scaleBondWidth = false; // whether to apply scale() to the bond width
   int highlightBondWidthMultiplier = 8;  // what to multiply standard bond width
                                          // by for highlighting.
   bool prepareMolsBeforeDrawing = true;  // call prepareMolForDrawing() on each
@@ -484,9 +484,9 @@ class RDKIT_MOLDRAW2D_EXPORT MolDraw2D {
   virtual const DashPattern &dash() const { return curr_dash_; }
 
   //! sets the current line width
-  virtual void setLineWidth(int width) { curr_width_ = width; }
+  virtual void setLineWidth(int width) { drawOptions().bondLineWidth = width; }
   //! returns the current line width
-  virtual int lineWidth() const { return curr_width_; }
+  virtual int lineWidth() const { return drawOptions().bondLineWidth; }
 
   //! clears the contents of the drawing
   virtual void clearDrawing() = 0;
@@ -593,7 +593,6 @@ class RDKIT_MOLDRAW2D_EXPORT MolDraw2D {
   double x_min_, y_min_, x_range_, y_range_;
   double x_trans_, y_trans_;
   int x_offset_, y_offset_;  // translation in screen coordinates
-  int curr_width_;
   bool fill_polys_;
   int activeMolIdx_;
 
@@ -818,7 +817,7 @@ class RDKIT_MOLDRAW2D_EXPORT MolDraw2D {
                            Point2D &l2f) const;
 
   // calculate the width to draw a line in draw coords.
-  virtual unsigned int getDrawLineWidth() const;
+  virtual double getDrawLineWidth() const;
 
   // sort out coords and scale for drawing reactions.
   void get2DCoordsForReaction(ChemicalReaction &rxn, Point2D &arrowBegin,
