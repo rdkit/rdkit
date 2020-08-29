@@ -2910,8 +2910,8 @@ void testGithub2931() {
                             " style='fill:none;stroke:#00FF00;") !=
                   std::string::npos);
 #else
-      TEST_ASSERT(text.find("<ellipse cx='243.376' cy='315.326'"
-                            " rx='10.1913' ry='10.1913'"
+      TEST_ASSERT(text.find("<ellipse cx='242.228' cy='313.005'"
+                            " rx='10.3633' ry='10.3633'"
                             " style='fill:none;stroke:#00FF00;") !=
                   std::string::npos);
 #endif
