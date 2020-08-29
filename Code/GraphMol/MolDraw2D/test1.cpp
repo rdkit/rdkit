@@ -1086,9 +1086,7 @@ void testGithub774() {
 void test9MolLegends() {
   std::cout << " ----------------- Test 9 (molecule legends)" << std::endl;
   {
-    std::string smiles = "CC[13CH2][CH2:7][CH-]C[15NH2+]C";
-    std::string nameBase = "test5_1";
-    ROMol *m = SmilesToMol(smiles);
+    auto m = "CC[13CH2][CH2:7][CH-]C[15NH2+]C"_smiles;
     TEST_ASSERT(m);
     RDDepict::compute2DCoords(*m);
     WedgeMolBonds(*m, &(m->getConformer()));
@@ -1099,7 +1097,6 @@ void test9MolLegends() {
     std::ofstream outs("test9_1.svg");
     outs << txt;
     // TEST_ASSERT(txt.find("<svg")!=std::string::npos);
-    delete m;
   }
   std::cerr << " Done" << std::endl;
 }
@@ -2219,6 +2216,9 @@ void testGithub1322() {
 }
 
 void testGithub565() {
+  // this is expected not to give a good looking drawing.  There is now
+  // There is now a drawOptions().fixedBondLength achieve this.  I think
+  // this test should be withdrawn.
   std::cout << " ----------------- Testing github 565: support a fixed bond "
                "length in the MolDraw2D code"
             << std::endl;
@@ -3346,6 +3346,7 @@ int main() {
 #endif
 
   RDLog::InitLogs();
+
 #if 1
   test1();
   test2();
