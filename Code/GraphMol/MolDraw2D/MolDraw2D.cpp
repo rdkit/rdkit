@@ -118,7 +118,7 @@ void MolDraw2D::doContinuousHighlighting(
   if(tgt_lw < 2) {
     tgt_lw = 2;
   }
-  
+
   bool orig_fp = fillPolys();
   if (highlight_bonds) {
     for (auto this_at : mol.atoms()) {
@@ -246,6 +246,9 @@ void MolDraw2D::drawMolecule(const ROMol &mol,
   // popDrawDetails();
   setLineWidth(origWidth);
 
+  if (drawOptions().includeMetadata) {
+    this->updateMetadata(draw_mol, confId);
+  }
   // {
   //   Point2D p1(x_min_, y_min_), p2(x_min_ + x_range_, y_min_ + y_range_);
   //   setColour(DrawColour(0, 0, 0));
@@ -384,8 +387,7 @@ void MolDraw2D::get2DCoordsMol(RWMol &mol, double &offset, double spacing,
   const bool canonOrient = true;
   const bool kekulize = false;  // don't kekulize, we just did that
   RDDepict::compute2DCoords(mol, nullptr, canonOrient);
-  MolDraw2DUtils::prepareMolForDrawing(
-      mol, kekulize);
+  MolDraw2DUtils::prepareMolForDrawing(mol, kekulize);
   double minX = 1e8;
   double maxX = -1e8;
   double vShift = 0;
@@ -556,9 +558,10 @@ void MolDraw2D::drawReaction(
   get2DCoordsForReaction(nrxn, arrowBegin, arrowEnd, plusLocs, spacing,
                          confIds);
 
-  const bool originalPrepMols = drawOptions().prepareMolsBeforeDrawing;
+  MolDrawOptions origDrawOptions = drawOptions();
   drawOptions().prepareMolsBeforeDrawing = false;
-  
+  drawOptions().includeMetadata = false;
+
   ROMol *tmol = ChemicalReactionToRxnMol(nrxn);
   MolOps::findSSSR(*tmol);
 
@@ -689,9 +692,13 @@ void MolDraw2D::drawReaction(
   // The arrow:
   drawArrow(arrowBegin, arrowEnd);
 
+  if (origDrawOptions.includeMetadata) {
+    this->updateMetadata(nrxn);
+  }
+
   setColour(odc);
   text_drawer_->setFontScale(o_font_scale);
-  drawOptions().prepareMolsBeforeDrawing = originalPrepMols;
+  drawOptions() = origDrawOptions;
 }
 
 // ****************************************************************************
@@ -3303,6 +3310,8 @@ void MolDraw2D::tabulaRasa() {
   scale_ = 1.0;
   x_trans_ = y_trans_ = 0.0;
   x_offset_ = y_offset_ = 0;
+  d_metadata.clear();
+  d_numMetadataEntries = 0;
 }
 
 // ****************************************************************************
