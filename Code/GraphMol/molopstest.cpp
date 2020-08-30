@@ -1976,6 +1976,100 @@ void testAddHsCoords() {
   delete m;
   delete m2;
 
+  // make sure Hs are on the xy plane if conformer is 2D
+  smi = "C=C";
+  m = SmilesToMol(smi);
+  TEST_ASSERT(m);
+  TEST_ASSERT(m->getNumAtoms() == 2);
+  conf = new Conformer(2);
+  m->addConformer(conf);
+  conf->setAtomPos(0, RDGeom::Point3D(0, 0, 0));
+  conf->setAtomPos(1, RDGeom::Point3D(1.3, 0, 0));
+  conf->set3D(false);
+
+  m2 = MolOps::addHs(*m, false, true);
+
+  conf2 = &(m2->getConformer());
+
+  TEST_ASSERT(m2->getNumAtoms() == 6);
+
+  TEST_ASSERT(feq(conf2->getAtomPos(2).z, 0.0));
+  TEST_ASSERT(feq(conf2->getAtomPos(3).z, 0.0));
+  TEST_ASSERT(feq(conf2->getAtomPos(4).z, 0.0));
+  TEST_ASSERT(feq(conf2->getAtomPos(5).z, 0.0));
+  delete m;
+  delete m2;
+
+  // make sure NHs are on the same plane as the double bond
+  smi = "NC=C";
+  unsigned int nh2Idx = 0;
+  unsigned int chIdx = 1;
+  unsigned int ch2Idx = 2;
+  m = SmilesToMol(smi);
+  TEST_ASSERT(m);
+  TEST_ASSERT(m->getNumAtoms() == 3);
+  conf = new Conformer(3);
+  m->addConformer(conf);
+  conf->setAtomPos(nh2Idx, RDGeom::Point3D(1.759236, 0.825542, 1.347849));
+  conf->setAtomPos(chIdx, RDGeom::Point3D(0.817392, 0.181048, 2.180373));
+  conf->setAtomPos(ch2Idx, RDGeom::Point3D(-0.070943, 0.888262, 2.875625));
+
+  m2 = MolOps::addHs(*m, false, true);
+
+  conf2 = &(m2->getConformer());
+
+  TEST_ASSERT(m2->getNumAtoms() == 8);
+
+  auto nh2NbrRange = boost::make_iterator_range(
+      m2->getAtomNeighbors(m2->getAtomWithIdx(nh2Idx)));
+  std::vector<ROMol::vertex_descriptor> nh2His(2);
+  auto it = std::copy_if(nh2NbrRange.begin(), nh2NbrRange.end(), nh2His.begin(),
+                         [m2](const ROMol::vertex_descriptor &nbri) {
+                           return ((*m2)[nbri]->getAtomicNum() == 1);
+                         });
+  TEST_ASSERT(it == nh2His.begin() + 2);
+  auto chNbrRange = boost::make_iterator_range(
+      m2->getAtomNeighbors(m2->getAtomWithIdx(chIdx)));
+  std::vector<ROMol::vertex_descriptor> chHis(1);
+  it = std::copy_if(chNbrRange.begin(), chNbrRange.end(), chHis.begin(),
+                    [m2](const ROMol::vertex_descriptor &nbri) {
+                      return ((*m2)[nbri]->getAtomicNum() == 1);
+                    });
+  TEST_ASSERT(it == chHis.begin() + 1);
+  auto ch2NbrRange = boost::make_iterator_range(
+      m2->getAtomNeighbors(m2->getAtomWithIdx(ch2Idx)));
+  std::vector<ROMol::vertex_descriptor> ch2His(2);
+  it = std::copy_if(ch2NbrRange.begin(), ch2NbrRange.end(), ch2His.begin(),
+                    [m2](const ROMol::vertex_descriptor &nbri) {
+                      return ((*m2)[nbri]->getAtomicNum() == 1);
+                    });
+  TEST_ASSERT(it == ch2His.begin() + 2);
+  RDGeom::Point3D nccNormal =
+      (conf2->getAtomPos(nh2Idx) - conf2->getAtomPos(chIdx))
+          .crossProduct((conf2->getAtomPos(ch2Idx) - conf2->getAtomPos(chIdx)));
+  nccNormal.normalize();
+  RDGeom::Point3D hnhNormal =
+      (conf2->getAtomPos((*m2)[nh2His[0]]->getIdx()) -
+       conf2->getAtomPos(nh2Idx))
+          .crossProduct(conf2->getAtomPos((*m2)[nh2His[1]]->getIdx()) -
+                        conf2->getAtomPos(nh2Idx));
+  hnhNormal.normalize();
+  RDGeom::Point3D hchNormal =
+      (conf2->getAtomPos((*m2)[ch2His[0]]->getIdx()) -
+       conf2->getAtomPos(ch2Idx))
+          .crossProduct(conf2->getAtomPos((*m2)[ch2His[1]]->getIdx()) -
+                        conf2->getAtomPos(ch2Idx));
+  hchNormal.normalize();
+  RDGeom::Point3D hcnNormal =
+      (conf2->getAtomPos((*m2)[chHis[0]]->getIdx()) - conf2->getAtomPos(chIdx))
+          .crossProduct((conf2->getAtomPos(nh2Idx) - conf2->getAtomPos(chIdx)));
+  hcnNormal.normalize();
+  TEST_ASSERT(feq(fabs(nccNormal.dotProduct(hnhNormal)), 1.0));
+  TEST_ASSERT(feq(fabs(nccNormal.dotProduct(hchNormal)), 1.0));
+  TEST_ASSERT(feq(fabs(nccNormal.dotProduct(hcnNormal)), 1.0));
+  delete m;
+  delete m2;
+
   smi = "C#C";
   m = SmilesToMol(smi);
   TEST_ASSERT(m);
