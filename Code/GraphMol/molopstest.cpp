@@ -1977,6 +1977,75 @@ void testAddHsCoords() {
   delete m;
   delete m2;
 
+  {
+    // make sure Hs are on the xy plane if conformer is 2D
+    auto m = "C=C"_smiles;
+    TEST_ASSERT(m.get());
+    TEST_ASSERT(m->getNumAtoms() == 2);
+    conf = new Conformer(2);
+    m->addConformer(conf);
+    conf->setAtomPos(0, RDGeom::Point3D(0, 0, 0));
+    conf->setAtomPos(1, RDGeom::Point3D(1.3, 0, 0));
+    conf->set3D(false);
+
+    MolOps::addHs(*m, false, true);
+
+    conf = &(m->getConformer());
+
+    TEST_ASSERT(m->getNumAtoms() == 6);
+
+    TEST_ASSERT(feq(conf->getAtomPos(2).z, 0.0));
+    TEST_ASSERT(feq(conf->getAtomPos(3).z, 0.0));
+    TEST_ASSERT(feq(conf->getAtomPos(4).z, 0.0));
+    TEST_ASSERT(feq(conf->getAtomPos(5).z, 0.0));
+  }
+
+  {
+    // make sure NHs are on the same plane as the double bond
+    auto m = "NC=C"_smiles;
+    TEST_ASSERT(m.get());
+    TEST_ASSERT(m->getNumAtoms() == 3);
+    unsigned int nh2Idx = 0;
+    unsigned int chIdx = 1;
+    unsigned int ch2Idx = 2;
+    conf = new Conformer(3);
+    m->addConformer(conf);
+    conf->setAtomPos(nh2Idx, RDGeom::Point3D(1.759236, 0.825542, 1.347849));
+    conf->setAtomPos(chIdx, RDGeom::Point3D(0.817392, 0.181048, 2.180373));
+    conf->setAtomPos(ch2Idx, RDGeom::Point3D(-0.070943, 0.888262, 2.875625));
+
+    MolOps::addHs(*m, false, true);
+
+    conf = &(m->getConformer());
+
+    TEST_ASSERT(m->getNumAtoms() == 8);
+
+    std::vector<unsigned int> nh2HIdxs{3, 4};
+    unsigned int chHIdx = 5;
+    std::vector<unsigned int> ch2HIdxs{6, 7};
+    RDGeom::Point3D nccNormal =
+        (conf->getAtomPos(nh2Idx) - conf->getAtomPos(chIdx))
+            .crossProduct((conf->getAtomPos(ch2Idx) - conf->getAtomPos(chIdx)));
+    nccNormal.normalize();
+    RDGeom::Point3D hnhNormal =
+        (conf->getAtomPos(nh2HIdxs[0]) - conf->getAtomPos(nh2Idx))
+            .crossProduct(conf->getAtomPos(nh2HIdxs[1]) -
+                          conf->getAtomPos(nh2Idx));
+    hnhNormal.normalize();
+    RDGeom::Point3D hchNormal =
+        (conf->getAtomPos(ch2HIdxs[0]) - conf->getAtomPos(ch2Idx))
+            .crossProduct(conf->getAtomPos(nh2HIdxs[1]) -
+                          conf->getAtomPos(ch2Idx));
+    hchNormal.normalize();
+    RDGeom::Point3D hcnNormal =
+        (conf->getAtomPos(chHIdx) - conf->getAtomPos(chIdx))
+            .crossProduct((conf->getAtomPos(nh2Idx) - conf->getAtomPos(chIdx)));
+    hcnNormal.normalize();
+    TEST_ASSERT(feq(fabs(nccNormal.dotProduct(hnhNormal)), 1.0));
+    TEST_ASSERT(feq(fabs(nccNormal.dotProduct(hchNormal)), 1.0));
+    TEST_ASSERT(feq(fabs(nccNormal.dotProduct(hcnNormal)), 1.0));
+  }
+
   smi = "C#C";
   m = SmilesToMol(smi);
   TEST_ASSERT(m);

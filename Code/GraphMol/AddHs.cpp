@@ -124,13 +124,19 @@ void setHydrogenCoords(ROMol *mol, unsigned int hydIdx, unsigned int heavyIdx) {
             (*cfi)->setAtomPos(hydIdx, hydPos);
             break;
           case Atom::SP2:
-            // default position is to just take an arbitrary perpendicular:
-            perpVect = nbr1Vect.getPerpendicular();
+            // default 3D position is to just take an arbitrary perpendicular
+            // for 2D we take the normal to the xy plane
+            if ((*cfi)->is3D()) {
+              perpVect = nbr1Vect.getPerpendicular();
+            } else {
+              perpVect.z = 1.0;
+            }
             if (nbr1->getDegree() > 1) {
               // can we use the neighboring atom to establish a perpendicular?
               nbrBond = mol->getBondBetweenAtoms(heavyIdx, nbr1->getIdx());
               if (nbrBond->getIsAromatic() ||
-                  nbrBond->getBondType() == Bond::DOUBLE) {
+                  nbrBond->getBondType() == Bond::DOUBLE ||
+                  nbrBond->getIsConjugated()) {
                 nbr2 = getAtomNeighborNot(mol, nbr1, heavyAtom);
                 nbr2Vect =
                     nbr1Pos.directionVector((*cfi)->getAtomPos(nbr2->getIdx()));
