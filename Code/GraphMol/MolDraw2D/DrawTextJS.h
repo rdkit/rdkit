@@ -5,33 +5,33 @@
 //  which is included in the file license.txt, found at the root
 //  of the RDKit source tree.
 //
-// Original author: David Cosgrove (CozChemIx) on 29/04/2020.
+// Original author: Greg Landrum
 //
-// A concrete class derived from DrawText that uses SVG
+// A concrete class derived from DrawText that uses the JS Canvas
 // to draw text onto a picture.
+// Requires emscripten
 
-#ifndef RDKIT_DRAWTEXTSVG_H
-#define RDKIT_DRAWTEXTSVG_H
+#ifndef RDKIT_DRAWTEXTJS_H
+#define RDKIT_DRAWTEXTJS_H
 
 #include <iosfwd>
 
+#include <emscripten.h>
+#include <emscripten/val.h>
 #include <GraphMol/MolDraw2D/DrawText.h>
 
 namespace RDKit {
 
 // ****************************************************************************
 
-class DrawTextSVG : public DrawText {
-
+class DrawTextJS : public DrawText {
  public:
-  DrawTextSVG(double max_fnt_sz, double min_fnt_sz, std::ostream &oss,
-              std::string &d_act_class);
+  DrawTextJS(double max_fnt_sz, double min_fnt_sz, emscripten::val &context);
 
-   void drawChar(char c, const Point2D &cds) override;
+  void drawChar(char c, const Point2D &cds) override;
 
  private:
-  std::ostream &oss_;
-  std::string &d_active_class_;
+  emscripten::val &context_;
 
   // fills a vector of StringRects, one for each char in text, with
   // super- and subscripts taken into account.  Sizes in pixel coords,
@@ -40,9 +40,8 @@ class DrawTextSVG : public DrawText {
                       std::vector<std::shared_ptr<StringRect>> &rects,
                       std::vector<TextDrawType> &draw_modes,
                       std::vector<char> &draw_chars) const override;
-
 };
 
-} // namespace RDKit
+}  // namespace RDKit
 
 #endif  // RDKIT_DRAWTEXTSVG_H
