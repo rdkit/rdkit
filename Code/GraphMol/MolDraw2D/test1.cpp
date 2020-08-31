@@ -1360,7 +1360,7 @@ M  END";
     TEST_ASSERT(text.find("<path class='bond-1' d='M 126.46,111.639"
                           " L 182.698,86.8632 L 176.033,75.3193 Z'"
                           " style='fill:#000000;fill-rule:evenodd;"
-                          "fill-opacity=1;stroke:#000000;")
+                          "fill-opacity:1;stroke:#000000;")
                 != std::string::npos);
 #endif
     delete m;
@@ -1420,7 +1420,7 @@ M  END";
     TEST_ASSERT(text.find("<path class='bond-3' d='M 105.087,114.797"
                           " L 78.5054,90.9436 L 73.9878,97.2355 Z'"
                           " style='fill:#000000;fill-rule:evenodd;"
-                          "fill-opacity=1;stroke:#000000;")
+                          "fill-opacity:1;stroke:#000000;")
                 != std::string::npos);
 #endif
 
