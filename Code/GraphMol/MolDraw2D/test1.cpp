@@ -2562,7 +2562,7 @@ void test18FixedScales() {
       outs.flush();
 #ifdef RDK_BUILD_FREETYPE_SUPPORT
       // where it starts drawing the l.
-      TEST_ASSERT(text.find("<path  class='atom-0' d='M 186.029 145.446")
+      TEST_ASSERT(text.find("<path  class='atom-0' d='M 179.263 150.221")
                   != std::string::npos);
 #else
       TEST_ASSERT(text.find("font-size:12px") != std::string::npos);
@@ -2585,7 +2585,7 @@ void test18FixedScales() {
       outs << text;
       outs.flush();
 #ifdef RDK_BUILD_FREETYPE_SUPPORT
-      TEST_ASSERT(text.find("<path  class='atom-2' d='M 72.9974 183.349")
+      TEST_ASSERT(text.find("<path  class='atom-2' d='M 73.3085 183.882")
                   != std::string::npos);
 #else
       TEST_ASSERT(text.find("font-size:12px") != std::string::npos);
@@ -2602,7 +2602,7 @@ void test18FixedScales() {
       outs << text;
       outs.flush();
 #ifdef RDK_BUILD_FREETYPE_SUPPORT
-            TEST_ASSERT(text.find("<path  class='atom-2' d='M 103.103 168.282")
+            TEST_ASSERT(text.find("<path  class='atom-2' d='M 104.042 170.304")
                   != std::string::npos);
 #else
       TEST_ASSERT(text.find("font-size:12px") != std::string::npos);
@@ -2620,8 +2620,8 @@ void test18FixedScales() {
       outs << text;
       outs.flush();
 #ifdef RDK_BUILD_FREETYPE_SUPPORT
-      TEST_ASSERT(text.find("<path  class='atom-2' d='M 72.9974 183.349")
-                  != std::string::npos);
+      TEST_ASSERT(text.find("<path  class='atom-2' d='M 73.3085 183.882") !=
+                  std::string::npos);
 #else
       TEST_ASSERT(text.find("font-size:12px") != std::string::npos);
 #endif
@@ -3191,7 +3191,7 @@ void test20Annotate() {
     outs.flush();
 #ifdef RDK_BUILD_FREETYPE_SUPPORT
     // first note (atom 0)
-    TEST_ASSERT(text.find("<path  class='note' d='M 17.9762 46.6634") !=
+    TEST_ASSERT(text.find("<path  class='note' d='M 17.9762 46.2647") !=
                 std::string::npos);
 #else
     // first one of atom note 11
