@@ -2028,11 +2028,13 @@ void testAddHsCoords() {
     nccNormal.normalize();
     RDGeom::Point3D hnhNormal =
         (conf->getAtomPos(nh2HIdxs[0]) - conf->getAtomPos(nh2Idx))
-            .crossProduct(conf->getAtomPos(nh2HIdxs[1]) - conf->getAtomPos(nh2Idx));
+            .crossProduct(conf->getAtomPos(nh2HIdxs[1]) -
+                          conf->getAtomPos(nh2Idx));
     hnhNormal.normalize();
     RDGeom::Point3D hchNormal =
         (conf->getAtomPos(ch2HIdxs[0]) - conf->getAtomPos(ch2Idx))
-            .crossProduct(conf->getAtomPos(nh2HIdxs[1]) - conf->getAtomPos(ch2Idx));
+            .crossProduct(conf->getAtomPos(nh2HIdxs[1]) -
+                          conf->getAtomPos(ch2Idx));
     hchNormal.normalize();
     RDGeom::Point3D hcnNormal =
         (conf->getAtomPos(chHIdx) - conf->getAtomPos(chIdx))
