@@ -207,7 +207,7 @@ void MolDraw2DSVG::drawPolygon(const std::vector<Point2D> &cds) {
   }
   if (fillPolys()) {
     // the Z closes the path which we don't want for unfilled polygons
-    d_os << " Z' style='fill:" << col << ";fill-rule:evenodd;fill-opacity=" << colour().a
+    d_os << " Z' style='fill:" << col << ";fill-rule:evenodd;fill-opacity:" << colour().a
          << ";";
   } else {
     d_os << "' style='fill:none;";

@@ -108,7 +108,8 @@ void test1() {
     // in this one, all three double bonds in the phenyl ring need to be inside
     // the aromatic ring.  There was a time when one of them strayed into the
     // aliphatic ring.
-    std::string smiles = "CN1CC[C@]23c4c5ccc(O)c4O[C@H]2[C@@H](O)C=C[C@H]3[C@H]1C5";
+    std::string smiles =
+        "CN1CC[C@]23c4c5ccc(O)c4O[C@H]2[C@@H](O)C=C[C@H]3[C@H]1C5";
     ROMol *m = SmilesToMol(smiles);
     TEST_ASSERT(m);
     RDDepict::compute2DCoords(*m);
@@ -2719,8 +2720,8 @@ void test20Annotate() {
     TEST_ASSERT(text.find("x='423.22' y='249.655' style='font-size:14px;"
                           "font-style:normal;font-weight:normal;"
                           "fill-opacity:1;stroke:none;"
-                          "font-family:sans-serif;fill:#000000' ><tspan>11")
-                != std::string::npos);
+                          "font-family:sans-serif;fill:#000000' ><tspan>11") !=
+                std::string::npos);
   }
 
   {
