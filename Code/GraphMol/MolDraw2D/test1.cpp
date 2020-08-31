@@ -2565,7 +2565,7 @@ void test18FixedScales() {
       TEST_ASSERT(text.find("<path  class='atom-0' d='M 179.263 150.221")
                   != std::string::npos);
 #else
-      TEST_ASSERT(text.find("font-size:12px") != std::string::npos);
+      TEST_ASSERT(text.find("font-size:9px") != std::string::npos);
 #endif
     }
   }
@@ -2588,7 +2588,7 @@ void test18FixedScales() {
       TEST_ASSERT(text.find("<path  class='atom-2' d='M 73.3085 183.882")
                   != std::string::npos);
 #else
-      TEST_ASSERT(text.find("font-size:12px") != std::string::npos);
+      TEST_ASSERT(text.find("font-size:10px") != std::string::npos);
 #endif
     }
     {
@@ -2605,7 +2605,7 @@ void test18FixedScales() {
             TEST_ASSERT(text.find("<path  class='atom-2' d='M 104.042 170.304")
                   != std::string::npos);
 #else
-      TEST_ASSERT(text.find("font-size:12px") != std::string::npos);
+      TEST_ASSERT(text.find("font-size:6px") != std::string::npos);
 #endif
     }
     {
@@ -2623,7 +2623,7 @@ void test18FixedScales() {
       TEST_ASSERT(text.find("<path  class='atom-2' d='M 73.3085 183.882") !=
                   std::string::npos);
 #else
-      TEST_ASSERT(text.find("font-size:12px") != std::string::npos);
+      TEST_ASSERT(text.find("font-size:10px") != std::string::npos);
 #endif
     }
   }
@@ -3195,8 +3195,8 @@ void test20Annotate() {
                 std::string::npos);
 #else
     // first one of atom note 11
-    TEST_ASSERT(text.find("<text x='164.595' y='101.936'"
-                          " class='note' style='font-size:6px;"
+    TEST_ASSERT(text.find("<text x='165.624' y='101.391'"
+                          " class='note' style='font-size:4px;"
                           "font-style:normal;font-weight:normal;"
                           "fill-opacity:1;stroke:none;"
                           "font-family:sans-serif;text-anchor:start;"
