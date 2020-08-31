@@ -26,16 +26,6 @@ DrawTextJS::DrawTextJS(double max_fnt_sz, double min_fnt_sz,
                        emscripten::val &context)
     : DrawText(max_fnt_sz, min_fnt_sz), context_(context) {}
 
-namespace {
-void escape_xhtml(std::string &data) {
-  boost::algorithm::replace_all(data, "&", "&amp;");
-  boost::algorithm::replace_all(data, "\"", "&quot;");
-  boost::algorithm::replace_all(data, "\'", "&apos;");
-  boost::algorithm::replace_all(data, "<", "&lt;");
-  boost::algorithm::replace_all(data, ">", "&gt;");
-}
-}  // namespace
-
 // ****************************************************************************
 // draw the char, with the bottom left hand corner at cds
 void DrawTextJS::drawChar(char c, const Point2D &cds) {

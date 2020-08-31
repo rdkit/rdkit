@@ -33,7 +33,7 @@ class DrawTextJS : public DrawText {
  private:
   emscripten::val &context_;
 
-  // return a vector of StringRects, one for each char in text, with
+  // fills a vector of StringRects, one for each char in text, with
   // super- and subscripts taken into account.  Sizes in pixel coords,
   // i.e. scaled by fontScale().
   void getStringRects(const std::string &text,

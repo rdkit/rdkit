@@ -49,7 +49,7 @@ void prepareMolForDrawing(RWMol &mol, bool kekulize, bool addChiralHs,
     try {
       MolOps::Kekulize(mol, false);  // kekulize, but keep the aromatic flags!
     } catch (const RDKit::AtomKekulizeException &e) {
-      std::cerr << e.what() << std::endl;
+      BOOST_LOG(rdInfoLog) << e.what() << std::endl;
     }
   }
   if (addChiralHs) {

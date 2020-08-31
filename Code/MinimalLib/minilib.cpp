@@ -143,8 +143,8 @@ std::string svg_(const ROMol &m, unsigned int w, unsigned int h,
   std::vector<int> atomIds;
   std::vector<int> bondIds;
   std::string legend = "";
+  int offsetx = 0, offsety = 0;
   if (!details.empty()) {
-    int offsetx = 0, offsety = 0;
     auto problems = process_details(details, w, h, offsetx, offsety, legend,
                                     atomIds, bondIds);
     if (!problems.empty()) {
@@ -156,6 +156,7 @@ std::string svg_(const ROMol &m, unsigned int w, unsigned int h,
   if (!details.empty()) {
     MolDraw2DUtils::updateDrawerParamsFromJSON(drawer, details);
   }
+  drawer.setOffset(offsetx, offsety);
 
   MolDraw2DUtils::prepareAndDrawMolecule(drawer, m, legend, &atomIds, &bondIds);
   drawer.finishDrawing();
