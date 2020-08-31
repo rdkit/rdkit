@@ -1,7 +1,5 @@
-import os
-import sys
-import unittest
-import doctest
+import os, sys, unittest, doctest
+import gzip
 from rdkit import RDConfig, rdBase
 from rdkit import Chem
 from rdkit import __version__
@@ -42,7 +40,7 @@ class TestCase(unittest.TestCase):
         self.assertTrue(i == 10)
         self.assertTrue(sorted(confusedNames) == sorted(names))
         self.assertTrue(sorted(confusedProps) == sorted(props))
-
+        
     def testMultiSDMolSupplier(self):
         fileN = os.path.join(RDConfig.RDBaseDir, 'Code', 'GraphMol',
                              'FileParsers', 'test_data', 'NCI_aids_few.sdf')
@@ -59,7 +57,25 @@ class TestCase(unittest.TestCase):
         self.assertTrue(len(molNames) == i)
         self.assertTrue(sorted(confusedMolNames) == sorted(molNames))
 
+        # try opening with streambuf
+        fileN = os.path.join(RDConfig.RDBaseDir, 'Code', 'GraphMol', 'FileParsers', 'test_data',
+                         'NCI_aids_few.sdf.gz') 
+       # try opening with gzip
+        inf = gzip.open(fileN)
+        if(inf):
+          gSup = Chem.openWithCompressedStream(inf)
+          confusedMolNames = []
+          i = 0
+          for mol in gSup:
+            if(mol):
+              confusedMolNames.append(mol.GetProp("_Name"))
+              i += 1
+          self.assertTrue(len(molNames) == i)
+          self.assertTrue(sorted(confusedMolNames) == sorted(molNames))
+           
+          
 
+  
 if __name__ == '__main__':
     print("Testing Smiles and SD MultithreadedMolSupplier")
     unittest.main()

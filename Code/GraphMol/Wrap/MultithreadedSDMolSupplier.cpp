@@ -11,8 +11,8 @@
 #define NO_IMPORT_ARRAY
 #include <RDBoost/python.h>
 
+#include <fstream>
 #include <string>
-
 // ours
 #include <GraphMol/FileParsers/MultithreadedSDMolSupplier.h>
 #include <GraphMol/RDKitBase.h>
@@ -22,6 +22,7 @@
 #include "MultithreadedMolSupplier.h"
 
 namespace python = boost::python;
+using boost_adaptbx::python::streambuf;
 
 namespace RDKit {
 
@@ -64,8 +65,31 @@ std::string multiSdsDocStr =
     - sizeOutputQueue: (optional) size of output/writer queue. Defaults to 5.\n\
 \n";
 
+MultithreadedSDMolSupplier* MTMolSupplCompressedStream(
+    python::object& input, bool sanitize = true, bool removeHs = true,
+    bool strictParsing = true, unsigned int numWriterThreads = 1,
+    size_t sizeInputQueue = 5, size_t sizeOutputQueue = 5) {
+  auto* sb = new streambuf(input, 'b');
+  auto* inStream = new streambuf::istream(*sb);
+  MultithreadedSDMolSupplier* sup = new MultithreadedSDMolSupplier(
+      inStream, true, sanitize, removeHs, strictParsing, numWriterThreads,
+      sizeInputQueue, sizeOutputQueue);
+  return sup;
+}
+
 struct multiSDMolSup_wrap {
   static void wrap() {
+
+    python::def(
+        "openWithCompressedStream", MTMolSupplCompressedStream,
+        "Returns MultithreadedSDMolSupplier object with compressed stream",
+        (python::arg("fileobj"), python::arg("sanitize") = true,
+         python::arg("removeHs") = true, python::arg("strictParsing") = true,
+         python::arg("numWriterThreads") = 1, python::arg("sizeInputQueue") = 5,
+         python::arg("sizeOutputQueue") = 5),
+        python::with_custodian_and_ward_postcall<
+            0, 1, python::return_value_policy<python::manage_new_object>>());
+
     python::class_<MultithreadedSDMolSupplier, boost::noncopyable>(
         "MultithreadedSDMolSupplier", multiSDMolSupplierClassDoc.c_str(),
         python::init<>())
@@ -79,24 +103,22 @@ struct multiSDMolSup_wrap {
              python::arg("sizeOutputQueue") = 5),
             multiSdsDocStr.c_str()))
         .def("__iter__",
-             (MultithreadedSDMolSupplier * (*)(MultithreadedSDMolSupplier *)) &
+             (MultithreadedSDMolSupplier * (*)(MultithreadedSDMolSupplier*)) &
                  MTMolSupplIter,
              python::return_internal_reference<1>())
         .def("__next__",
-             (ROMol * (*)(MultithreadedSDMolSupplier *)) & MolForwardSupplNext,
+             (ROMol * (*)(MultithreadedSDMolSupplier*)) & MolForwardSupplNext,
              "Returns the next molecule in the file. Raises _StopIteration_ "
              "on EOF.\n",
              python::return_value_policy<python::manage_new_object>())
         .def("atEnd", &MultithreadedSDMolSupplier::atEnd,
              "Returns true if we have read all records else false.\n")
-        .def(
-            "GetLastRecordId",
-            (unsigned int (*)(MultithreadedSDMolSupplier *)) & MTMolSupplLastId,
-            "Returns the record id for the last extracted item.\n")
-        .def(
-            "GetLastItemText",
-            (std::string(*)(MultithreadedSDMolSupplier *)) & MTMolSupplLastItem,
-            "Returns the text for the last extracted item.\n")
+        .def("GetLastRecordId",
+             (unsigned int (*)(MultithreadedSDMolSupplier*)) & MTMolSupplLastId,
+             "Returns the record id for the last extracted item.\n")
+        .def("GetLastItemText",
+             (std::string(*)(MultithreadedSDMolSupplier*)) & MTMolSupplLastItem,
+             "Returns the text for the last extracted item.\n")
         .def("GetProcessPropertyLists",
              &MultithreadedSDMolSupplier::getProcessPropertyLists,
              "returns whether or not any property lists that are present will "
