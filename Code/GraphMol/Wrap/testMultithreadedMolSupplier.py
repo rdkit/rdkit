@@ -60,24 +60,9 @@ class TestCase(unittest.TestCase):
         # try opening with streambuf
         fileN = os.path.join(RDConfig.RDBaseDir, 'Code', 'GraphMol', 'FileParsers', 'test_data',
                          'NCI_aids_few.sdf.gz') 
-        sb = rdBase.streambuf(gzip.open(fileN))
-        """
-        if(sb):
-          print("opening file with streambuf")
-          gSup = Chem.openWithCompressedStreambuf(sb)
-          confusedMolNames = []
-          i = 0
-          for mol in gSup:
-            if(mol):
-              confusedMolNames.append(mol.GetProp("_Name"))
-              i += 1
-          self.assertTrue(len(molNames) == i)
-          self.assertTrue(sorted(confusedMolNames) == sorted(molNames))
-        """
-        # try opening with gzip
+       # try opening with gzip
         inf = gzip.open(fileN)
         if(inf):
-          print("opening file with gzip")
           gSup = Chem.openWithCompressedStream(inf)
           confusedMolNames = []
           i = 0
