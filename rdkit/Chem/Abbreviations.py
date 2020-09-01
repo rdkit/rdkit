@@ -210,6 +210,11 @@ def find_applicable_abbreviation_matches(mol, abbrevs, maxCoverage=0.4):
   return res
 
 
+def create_abbreviation_sgroups(mol, matchTpls):
+  for tpl in matchTpls:
+    match, label, query = tpl
+
+
 def condense_mol_abbreviations(mol, abbrevs, maxCoverage=0.4):
   applicable = find_applicable_abbreviation_matches(mol, abbrevs, maxCoverage=maxCoverage)
   return _apply_matches(mol, applicable)
