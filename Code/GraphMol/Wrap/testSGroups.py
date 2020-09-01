@@ -392,6 +392,74 @@ M  END''')
     self.assertAlmostEqual(b[2].x, 0, 3)
     self.assertAlmostEqual(b[2].y, 0, 3)
 
+  def testAttachPoints(self):
+    mol = Chem.MolFromMolBlock('''
+  Mrv2014 09012006262D          
+
+  0  0  0     0  0            999 V3000
+M  V30 BEGIN CTAB
+M  V30 COUNTS 4 3 1 0 0
+M  V30 BEGIN ATOM
+M  V30 1 C -5.0833 0.0833 0 0
+M  V30 2 C -3.7497 0.8533 0 0
+M  V30 3 O -2.416 0.0833 0 0
+M  V30 4 O -3.7497 2.3933 0 0
+M  V30 END ATOM
+M  V30 BEGIN BOND
+M  V30 1 1 1 2
+M  V30 2 1 2 3
+M  V30 3 2 2 4
+M  V30 END BOND
+M  V30 BEGIN SGROUP
+M  V30 1 SUP 0 ATOMS=(3 2 3 4) SAP=(3 2 1 1) XBONDS=(1 1) LABEL=CO2H ESTATE=E
+M  V30 END SGROUP
+M  V30 END CTAB
+M  END''')
+    sgs = Chem.GetMolSubstanceGroups(mol)
+    self.assertEqual(len(sgs), 1)
+    sg0 = sgs[0]
+    pd = sg0.GetPropsAsDict()
+    self.assertTrue('TYPE' in pd)
+    self.assertEqual(pd['TYPE'], 'SUP')
+    aps = sg0.GetAttachPoints()
+    self.assertEqual(len(aps), 1)
+    self.assertEqual(aps[0].aIdx, 1)
+    self.assertEqual(aps[0].lvIdx, 0)
+    self.assertEqual(aps[0].id, '1')
+
+    mol = Chem.MolFromMolBlock('''
+  Mrv2014 09012006262D          
+
+  0  0  0     0  0            999 V3000
+M  V30 BEGIN CTAB
+M  V30 COUNTS 4 3 0 0 0
+M  V30 BEGIN ATOM
+M  V30 1 C -5.0833 0.0833 0 0
+M  V30 2 C -3.7497 0.8533 0 0
+M  V30 3 O -2.416 0.0833 0 0
+M  V30 4 O -3.7497 2.3933 0 0
+M  V30 END ATOM
+M  V30 BEGIN BOND
+M  V30 1 1 1 2
+M  V30 2 1 2 3
+M  V30 3 2 2 4
+M  V30 END BOND
+M  V30 END CTAB
+M  END''')
+    sgs = Chem.GetMolSubstanceGroups(mol)
+    self.assertEqual(len(sgs), 0)
+
+    sg = Chem.CreateMolSubstanceGroup(mol, "SUP")
+    sg.AddAtomWithIdx(1)
+    sg.AddAtomWithIdx(2)
+    sg.AddAtomWithIdx(3)
+    sg.AddBondWithIdx(0)
+    sg.SetProp('LABEL', 'CO2H')
+    sg.AddAttachPoint(1, 0, '1')
+    molb = Chem.MolToV3KMolBlock(mol)
+    self.assertGreater(
+      molb.find('M  V30 1 SUP 0 ATOMS=(3 2 3 4) XBONDS=(1 1) LABEL=CO2H SAP=(3 2 1 1)'), 0)
+
 
 if __name__ == '__main__':
   print("Testing SubstanceGroups wrapper")
