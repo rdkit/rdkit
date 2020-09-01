@@ -43,7 +43,7 @@
 #include <utility>
 #include <vector>
 
-// #define DEBUG
+#define VERBOSE
 
 namespace RDKit {
 
@@ -156,7 +156,10 @@ int RGroupDecomposition::add(const ROMol &inmol) {
     }
   }
 
-  if (rcore == nullptr) {
+  if (core == nullptr) {
+#ifdef VERBOSE
+    std::cout << "No core matches" << std::endl;
+#endif
     return -1;
   }
 
@@ -272,6 +275,9 @@ int RGroupDecomposition::add(const ROMol &inmol) {
     BOOST_LOG(rdWarningLog)
         << "No attachment points in side chains" << std::endl;
 
+#ifdef VERBOSE
+    std::cout << "No attachment points in side chains" << std::endl;
+#endif
     return -1;
   }
 
