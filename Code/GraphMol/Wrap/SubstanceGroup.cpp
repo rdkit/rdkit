@@ -81,6 +81,13 @@ python::tuple getBracketsHelper(const SubstanceGroup &self) {
   return python::tuple(res);
 }
 
+python::tuple getAttachPointsHelper(const SubstanceGroup &self) {
+  python::list res;
+  for (const auto ap : self.getAttachPoints()) {
+    res.append(ap);
+  }
+  return python::tuple(res);
+}
 }  // namespace
 
 std::string sGroupClassDoc =
@@ -89,14 +96,22 @@ std::string sGroupClassDoc =
 struct sgroup_wrap {
   static void wrap() {
     RegisterVectorConverter<SubstanceGroup>("SubstanceGroup_VECT");
-    RegisterVectorConverter<SubstanceGroup::CState>(
-        "SubstanceGroupCState_VECT");
 
     python::class_<SubstanceGroup::CState,
                    boost::shared_ptr<SubstanceGroup::CState>>(
         "SubstanceGroupCState", "CSTATE for a SubstanceGroup", python::init<>())
-        .def_readwrite("bondIdx", &SubstanceGroup::CState::bondIdx)
-        .def_readwrite("vector", &SubstanceGroup::CState::vector);
+        .def_readonly("bondIdx", &SubstanceGroup::CState::bondIdx)
+        .def_readonly("vector", &SubstanceGroup::CState::vector);
+
+    python::class_<SubstanceGroup::AttachPoint,
+                   boost::shared_ptr<SubstanceGroup::AttachPoint>>(
+        "SubstanceGroupAttach", "AttachPoint for a SubstanceGroup",
+        python::init<>())
+        .def_readonly("aIdx", &SubstanceGroup::AttachPoint::aIdx,
+                      "attachment index")
+        .def_readonly("lvIdx", &SubstanceGroup::AttachPoint::lvIdx,
+                      "leaving atom or index (0 for implied)")
+        .def_readonly("id", &SubstanceGroup::AttachPoint::id, "attachment id");
 
     python::class_<SubstanceGroup, boost::shared_ptr<SubstanceGroup>>(
         "SubstanceGroup", sGroupClassDoc.c_str(), python::no_init)
@@ -128,6 +143,7 @@ struct sgroup_wrap {
         .def("GetCStates", getCStatesHelper)
         .def("AddBondWithBookmark", &SubstanceGroup::addBondWithBookmark)
         .def("AddAttachPoint", &SubstanceGroup::addAttachPoint)
+        .def("GetAttachPoints", getAttachPointsHelper)
         .def("AddBracket", addBracketHelper)
         .def("GetBrackets", getBracketsHelper)
 
