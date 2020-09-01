@@ -80,10 +80,38 @@ def preprocessAbbreviations(abbrevText=defaultAbbreviations):
     for at in q.GetAtoms():
       if not isDummy(at):
         nqAts += 1
+    q = Chem.AdjustQueryProperties(q, ps)
     q._numNondummyAtoms = nqAts
-
-    fgs[nm] = Chem.AdjustQueryProperties(q, ps)
+    fgs[nm] = q
   return fgs
+
+
+def _apply_matches(mol, matchTpls):
+  toRemove = []
+  res = Chem.RWMol(mol)
+  for tpl in matchTpls:
+    match, label, query = tpl
+
+    # remove the dummy atom at the front of the match
+    match = list(match)
+    del match[0]
+
+    dummyIdx = res.AddAtom(Chem.Atom(0))
+    res.GetAtomWithIdx(dummyIdx).SetProp("atomLabel", label)
+    needCoords = mol.GetNumConformers() > 0
+    for qidx, midx in enumerate(match):
+      if needCoords:
+        res.GetConformer().SetAtomPosition(dummyIdx, res.GetConformer().GetAtomPosition(midx))
+        needCoords = False
+      assert midx not in toRemove
+      toRemove.append(midx)
+      if mol.GetAtomWithIdx(midx).GetDegree() > query.GetAtomWithIdx(qidx).GetDegree():
+        for at in mol.GetAtomWithIdx(midx).GetNeighbors():
+          if at.GetIdx() not in match:
+            res.AddBond(at.GetIdx(), dummyIdx, Chem.BondType.SINGLE)
+  for idx in sorted(toRemove, reverse=True):
+    res.RemoveAtom(idx)
+  return res
 
 
 def condense_abbreviation(mol, pattern, label, maxCoverage=0.4):
@@ -148,6 +176,7 @@ def condense_abbreviation(mol, pattern, label, maxCoverage=0.4):
 
 from collections import namedtuple
 abbreviation_match = namedtuple('abbreviation_match', ('match', 'label', 'query'))
+import sys
 
 
 def find_applicable_abbreviation_matches(mol, abbrevs, maxCoverage=0.4):
@@ -163,13 +192,13 @@ def find_applicable_abbreviation_matches(mol, abbrevs, maxCoverage=0.4):
       if nQAts / mol.GetNumAtoms() >= maxCoverage:
         continue
 
-    covered = set()
+    covered = set()  # includes only the actual atoms, not the attachment point
     matches = mol.GetSubstructMatches(query)
     for match in matches:
-      if covered.intersection(match) or match[1] in firstAts:
+      if covered.intersection(match[1:]) or match[1] in firstAts:
         # overlaps one of these we already matched
         continue
-      covered.update(match)
+      covered.update(match[1:])
       dummies.append(match[0])
       firstAts.append(match[1])
       tres.append(abbreviation_match(match, label, query))
@@ -179,6 +208,11 @@ def find_applicable_abbreviation_matches(mol, abbrevs, maxCoverage=0.4):
       res.append(tpl)
 
   return res
+
+
+def condense_mol_abbreviations(mol, abbrevs, maxCoverage=0.4):
+  applicable = find_applicable_abbreviation_matches(mol, abbrevs, maxCoverage=maxCoverage)
+  return _apply_matches(mol, applicable)
 
 
 ###---------------------------------------
@@ -234,6 +268,45 @@ class TestCase(unittest.TestCase):
     self.assertEqual(matches[0].label, 'CF3')
     self.assertEqual(matches[1].match, (4, 5, 6, 7))
     self.assertEqual(matches[1].label, 'CO2H')
+
+    m = Chem.MolFromSmiles('FC(F)(F)C(=O)O')
+    matches = find_applicable_abbreviation_matches(m, self.defaultAbbrevs, maxCoverage=1.0)
+    self.assertEqual(len(matches), 0)
+
+    m = Chem.MolFromSmiles('FC(F)(F)C(F)F')
+    matches = find_applicable_abbreviation_matches(m, self.defaultAbbrevs, maxCoverage=1.0)
+    self.assertEqual(len(matches), 1)
+    self.assertEqual(matches[0].match, (4, 1, 0, 2, 3))
+    self.assertEqual(matches[0].label, 'CF3')
+
+    m = Chem.MolFromSmiles('FC(F)(F)C(F)(F)F')
+    matches = find_applicable_abbreviation_matches(m, self.defaultAbbrevs, maxCoverage=1.0)
+    self.assertEqual(len(matches), 0)
+
+    m = Chem.MolFromSmiles('CCCC(F)(F)F')
+    matches = find_applicable_abbreviation_matches(m, self.defaultAbbrevs, maxCoverage=0.4)
+    self.assertEqual(len(matches), 1)
+    self.assertEqual(matches[0].match, (2, 1, 0))
+    self.assertEqual(matches[0].label, 'Et')
+
+    # overlapping, but one is too big, so we get an abbrev
+    m = Chem.MolFromSmiles('CCC(F)(F)F')
+    matches = find_applicable_abbreviation_matches(m, self.defaultAbbrevs, maxCoverage=0.4)
+    self.assertEqual(len(matches), 1)
+    self.assertEqual(matches[0].match, (2, 1, 0))
+    self.assertEqual(matches[0].label, 'Et')
+    # same example, size constraint removed, no abbrev
+    m = Chem.MolFromSmiles('CCC(F)(F)F')
+    matches = find_applicable_abbreviation_matches(m, self.defaultAbbrevs, maxCoverage=1.0)
+    self.assertEqual(len(matches), 0)
+
+  def testCondense(self):
+    m = Chem.MolFromSmiles('FC(F)(F)CC(=O)O')
+    nm = condense_mol_abbreviations(m, self.defaultAbbrevs, maxCoverage=1.0)
+    self.assertEqual(Chem.MolToCXSmiles(nm), '*C* |$CF3;;CO2H$|')
+    m = Chem.MolFromSmiles('CCC(F)(F)F')
+    nm = condense_mol_abbreviations(m, self.defaultAbbrevs)
+    self.assertEqual(Chem.MolToCXSmiles(nm), '*C(F)(F)F |$Et;;;;$|')
 
 
 if __name__ == '__main__':  # pragma: nocover
