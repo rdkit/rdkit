@@ -37,12 +37,12 @@ CF3      F3C      C(F)(F)F
 CCl3     Cl3C     C(Cl)(Cl)Cl
 CN       NC       C#N
 NC       CN       [N+]#[C-]
-N(OH)CH3 CH3(OH)N N(O)C
+N(OH)CH3 CH3(OH)N N([OH])C
 NO2      O2N      [N+](=O)[O-]
 NO       ON       N=O
-SO3H     HO3S     S(=O)(=O)O
-CO2H     HOOC     C(=O)O		blue
-COOH     HOOC     C(=O)O		blue
+SO3H     HO3S     S(=O)(=O)[OH]
+CO2H     HOOC     C(=O)[OH]		blue
+COOH     HOOC     C(=O)[OH]		blue
 OEt      EtO      OCC
 OAc      AcO      OC(=O)C
 NHAc     AcNH     NC(=O)C
@@ -74,7 +74,7 @@ def preprocessAbbreviations(abbrevText=defaultAbbreviations):
     smi = l[2]
     if not smi.startswith('*') and not smi.startswith('[*'):
       smi = '*' + smi
-    q = Chem.MolFromSmiles(smi)
+    q = Chem.MolFromSmarts(smi)
 
     nqAts = 0
     for at in q.GetAtoms():
@@ -146,6 +146,41 @@ def condense_abbreviation(mol, pattern, label, maxCoverage=0.4):
   return res
 
 
+from collections import namedtuple
+abbreviation_match = namedtuple('abbreviation_match', ('match', 'label', 'query'))
+
+
+def find_applicable_abbreviation_matches(mol, abbrevs, maxCoverage=0.4):
+  if not mol.GetNumAtoms():
+    return []
+
+  tres = []
+  dummies = []
+  firstAts = []
+  for label, query in abbrevs.items():
+    if maxCoverage > 0 and maxCoverage < 1:
+      nQAts = query._numNondummyAtoms
+      if nQAts / mol.GetNumAtoms() >= maxCoverage:
+        continue
+
+    covered = set()
+    matches = mol.GetSubstructMatches(query)
+    for match in matches:
+      if covered.intersection(match) or match[1] in firstAts:
+        # overlaps one of these we already matched
+        continue
+      covered.update(match)
+      dummies.append(match[0])
+      firstAts.append(match[1])
+      tres.append(abbreviation_match(match, label, query))
+  res = []
+  for tpl, dummy, firstAt in zip(tres, dummies, firstAts):
+    if dummy not in firstAts:
+      res.append(tpl)
+
+  return res
+
+
 ###---------------------------------------
 # Testing code
 import unittest
@@ -174,11 +209,14 @@ class TestCase(unittest.TestCase):
       ('C1CC(C(F)(F)F)C1C(=O)O', '*C1CCC1C(F)(F)F |$COOH;;;;;;;;$|', 'COOH'),
       ('C1CC(C(F)(F)F)C1C(=O)O', '*C1CCC1C(F)(F)F |$CO2H;;;;;;;;$|', 'CO2H'),
       ('C1CC(C(F)(F)F)C1C(=O)O', '*C1CCC1C(=O)O |$CF3;;;;;;;$|', 'CF3'),
+      ('C1CC(C(F)(F)F)C1C(=O)[O-]', '*C1CCC1C(F)(F)F |$COO-;;;;;;;;$|', 'COO-'),
+      ('C1CC(C(F)(F)F)C1C(=O)O', 'O=C(O)C1CCC1C(F)(F)F', 'COO-'),
+      ('C1CC(C(F)(F)F)C1C(=O)[O-]', 'O=C([O-])C1CCC1C(F)(F)F', 'COOH'),
     ]:
       m = Chem.MolFromSmiles(ismi)
       substm = condense_abbreviation(m, self.defaultAbbrevs[label], label)
       smi = Chem.MolToCXSmiles(substm)
-      self.assertEqual(osmi, smi)
+      self.assertEqual(osmi, smi, msg=f' for input {ismi}')
 
   def testMaxCoverage(self):
     m = Chem.MolFromSmiles('CC(=O)O')
@@ -186,6 +224,16 @@ class TestCase(unittest.TestCase):
     self.assertEqual(Chem.MolToCXSmiles(substm), 'CC(=O)O')
     substm = condense_abbreviation(m, self.defaultAbbrevs['CO2H'], 'CO2H', maxCoverage=1.0)
     self.assertEqual(Chem.MolToCXSmiles(substm), '*C |$CO2H;$|')
+
+  def testFindApplicable(self):
+    m = Chem.MolFromSmiles('FC(F)(F)CC(=O)O')
+    matches = find_applicable_abbreviation_matches(m, self.defaultAbbrevs, maxCoverage=1.0)
+    self.assertEqual(len(matches), 2)
+    matches = sorted(matches)
+    self.assertEqual(matches[0].match, (4, 1, 0, 2, 3))
+    self.assertEqual(matches[0].label, 'CF3')
+    self.assertEqual(matches[1].match, (4, 5, 6, 7))
+    self.assertEqual(matches[1].label, 'CO2H')
 
 
 if __name__ == '__main__':  # pragma: nocover
