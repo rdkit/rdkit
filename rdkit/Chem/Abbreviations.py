@@ -114,6 +114,19 @@ def _apply_matches(mol, matchTpls):
   return res
 
 
+def _label_matches(mol, matchTpls):
+  for tpl in matchTpls:
+    match, label, query = tpl
+    sg = Chem.CreateMolSubstanceGroup(mol, 'SUP')
+    sg.SetProp('LABEL', tpl.label)
+    for aid in tpl.match[1:]:
+      sg.AddAtomWithIdx(aid)
+    bnd = mol.GetBondBetweenAtoms(tpl.match[0], tpl.match[1])
+    assert bnd
+    sg.AddBondWithIdx(bnd.GetIdx())
+    sg.AddAttachPoint(match[1], match[0], "1")
+
+
 def condense_abbreviation(mol, pattern, label, maxCoverage=0.4):
   '''
 
@@ -220,6 +233,11 @@ def condense_mol_abbreviations(mol, abbrevs, maxCoverage=0.4):
   return _apply_matches(mol, applicable)
 
 
+def label_mol_abbreviations(mol, abbrevs, maxCoverage=0.4):
+  applicable = find_applicable_abbreviation_matches(mol, abbrevs, maxCoverage=maxCoverage)
+  _label_matches(mol, applicable)
+
+
 ###---------------------------------------
 # Testing code
 import unittest
@@ -312,6 +330,29 @@ class TestCase(unittest.TestCase):
     m = Chem.MolFromSmiles('CCC(F)(F)F')
     nm = condense_mol_abbreviations(m, self.defaultAbbrevs)
     self.assertEqual(Chem.MolToCXSmiles(nm), '*C(F)(F)F |$Et;;;;$|')
+
+  def testLabel(self):
+    m = Chem.MolFromSmiles('CC(C)CC(F)(F)F')
+    label_mol_abbreviations(m, self.defaultAbbrevs, maxCoverage=1.0)
+    sgs = Chem.GetMolSubstanceGroups(m)
+    self.assertEqual(len(sgs), 2)
+    self.assertEqual(sgs[0].GetProp('TYPE'), "SUP")
+    self.assertEqual(sgs[0].GetProp('LABEL'), "iPr")
+    self.assertEqual(list(sgs[0].GetAtoms()), [1, 0, 2])
+    self.assertEqual(list(sgs[0].GetBonds()), [2])
+    aps = sgs[0].GetAttachPoints()
+    self.assertEqual(len(aps), 1)
+    self.assertEqual(aps[0].aIdx, 1)
+    self.assertEqual(aps[0].lvIdx, 3)
+
+    self.assertEqual(sgs[1].GetProp('TYPE'), "SUP")
+    self.assertEqual(sgs[1].GetProp('LABEL'), "CF3")
+    self.assertEqual(list(sgs[1].GetAtoms()), [4, 5, 6, 7])
+    self.assertEqual(list(sgs[1].GetBonds()), [3])
+    aps = sgs[1].GetAttachPoints()
+    self.assertEqual(len(aps), 1)
+    self.assertEqual(aps[0].aIdx, 4)
+    self.assertEqual(aps[0].lvIdx, 3)
 
 
 if __name__ == '__main__':  # pragma: nocover
