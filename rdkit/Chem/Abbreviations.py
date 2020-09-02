@@ -95,20 +95,26 @@ def _apply_matches(mol, matchTpls):
     # remove the dummy atom at the front of the match
     match = list(match)
     del match[0]
+    offset = 1
 
-    dummyIdx = res.AddAtom(Chem.Atom(0))
-    res.GetAtomWithIdx(dummyIdx).SetProp("atomLabel", label)
-    needCoords = mol.GetNumConformers() > 0
+    # convert the first atom in the match to be the abbreviation.
+    # this avoids having to worry about messing up chirality, etc.
+    connectIdx = match[0]
+    connectingAtom = res.GetAtomWithIdx(match[0])
+    connectingAtom.SetProp("atomLabel", label)
+    connectingAtom.SetFormalCharge(0)
+    connectingAtom.SetAtomicNum(0)
+    connectingAtom.SetIsotope(0)
     for qidx, midx in enumerate(match):
-      if needCoords:
-        res.GetConformer().SetAtomPosition(dummyIdx, res.GetConformer().GetAtomPosition(midx))
-        needCoords = False
+      if midx == connectIdx:
+        # we already dealt with the first atom
+        continue
       assert midx not in toRemove
       toRemove.append(midx)
-      if mol.GetAtomWithIdx(midx).GetDegree() > query.GetAtomWithIdx(qidx).GetDegree():
+      if mol.GetAtomWithIdx(midx).GetDegree() > query.GetAtomWithIdx(qidx + offset).GetDegree():
         for at in mol.GetAtomWithIdx(midx).GetNeighbors():
           if at.GetIdx() not in match:
-            res.AddBond(at.GetIdx(), dummyIdx, Chem.BondType.SINGLE)
+            res.AddBond(at.GetIdx(), connectIdx, Chem.BondType.SINGLE)
   for idx in sorted(toRemove, reverse=True):
     res.RemoveAtom(idx)
   return res
@@ -166,22 +172,31 @@ def condense_abbreviation(mol, pattern, label, maxCoverage=0.4):
     if dummyAtFront:
       match = list(match)
       del match[0]
+      offset = 1
+    else:
+      offset = 0
     if covered.intersection(set(match)):
       print("overlapping match ignored")
       continue
     covered.update(match)
-    dummyIdx = res.AddAtom(Chem.Atom(0))
-    needCoords = mol.GetNumConformers() > 0
-    res.GetAtomWithIdx(dummyIdx).SetProp("atomLabel", label)
+
+    # convert the first atom in the match to be the abbreviation.
+    # this avoids having to worry about messing up chirality, etc.
+    connectIdx = match[0]
+    connectingAtom = res.GetAtomWithIdx(match[0])
+    connectingAtom.SetProp("atomLabel", label)
+    connectingAtom.SetFormalCharge(0)
+    connectingAtom.SetAtomicNum(0)
+    connectingAtom.SetIsotope(0)
     for qidx, midx in enumerate(match):
-      if needCoords:
-        res.GetConformer().SetAtomPosition(dummyIdx, res.GetConformer().GetAtomPosition(midx))
-        needCoords = False
+      if midx == connectIdx:
+        # we already dealt with the first atom
+        continue
       toRemove.append(midx)
-      if mol.GetAtomWithIdx(midx).GetDegree() > query.GetAtomWithIdx(qidx).GetDegree():
+      if mol.GetAtomWithIdx(midx).GetDegree() > query.GetAtomWithIdx(qidx + offset).GetDegree():
         for at in mol.GetAtomWithIdx(midx).GetNeighbors():
           if at.GetIdx() not in match:
-            res.AddBond(at.GetIdx(), dummyIdx, Chem.BondType.SINGLE)
+            res.AddBond(at.GetIdx(), connectIdx, Chem.BondType.SINGLE)
   for idx in sorted(toRemove, reverse=True):
     res.RemoveAtom(idx)
   return res
@@ -330,6 +345,11 @@ class TestCase(unittest.TestCase):
     m = Chem.MolFromSmiles('CCC(F)(F)F')
     nm = condense_mol_abbreviations(m, self.defaultAbbrevs)
     self.assertEqual(Chem.MolToCXSmiles(nm), '*C(F)(F)F |$Et;;;;$|')
+
+    # make sure we don't mess up chirality
+    m = Chem.MolFromSmiles('FC(F)(F)[C@](Cl)(F)I')
+    nm = condense_mol_abbreviations(m, self.defaultAbbrevs, maxCoverage=1.0)
+    self.assertEqual(Chem.MolToCXSmiles(nm), '*[C@@](F)(Cl)I |$CF3;;;;$|')
 
   def testLabel(self):
     m = Chem.MolFromSmiles('CC(C)CC(F)(F)F')
