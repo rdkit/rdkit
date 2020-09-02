@@ -26,31 +26,55 @@
       callback("CC(=O)Oc1ccccc1C(=O)O");
     }
   };
+  function form_to_details(details) {
+    var controls = ["addAtomIndices", "addBondIndices", "explicitMethyl", "addStereoAnnotation"];
+    for (i in controls) {
+      var control = controls[i];
+      details[control] = document.getElementById(control).checked
+    }
+    var texts = ["legend", "bondLineWidth", "legendFontSize"];
+    for (i in texts) {
+      var control = texts[i];
+      details[control] = document.getElementById(control).value
+    }
+  }
+  function draw_with_highlights(mol, details) {
+    form_to_details(details);
+    var tdetails = JSON.stringify(details)
+    var svg = mol.get_svg_with_highlights(tdetails);
+    if (svg == "") return;
+    var ob = document.getElementById("drawing");
+    ob.outerHTML = "<div id='drawing'>" + svg + "</div>";
+    var canvas = document.getElementById("rdkit-canvas");
+    mol.draw_to_canvas_with_highlights(canvas, tdetails);
+
+  }
   function draw(mol) {
+    var details = {};
+    draw_with_highlights(mol, details);
+    return;
     var svg = mol.get_svg();
     if (svg == "") return;
     var ob = document.getElementById("drawing");
     ob.outerHTML = "<div id='drawing'>" + svg + "</div>";
+    var canvas = document.getElementById("rdkit-canvas");
+    mol.draw_to_canvas(canvas, -1, -1);
   }
-  function draw_with_highlights(mol, atomids) {
-    var svg = mol.get_svg_with_highlights(atomids);
-    if (svg == "") return;
-    var ob = document.getElementById("drawing");
-    ob.outerHTML = "<div id='drawing'>" + svg + "</div>";
-  }
-  function callback(text) {
+  function callback(text, update_descrs) {
     var mol = Module.get_mol(text);
     if (mol.is_valid()) {
       draw(mol);
       var ob = document.getElementById("can_smiles");
       ob.outerHTML = "<div id='can_smiles'>" + mol.get_smiles() + "</div>";
-      var descrs = JSON.parse(mol.get_descriptors());
-      var db = document.getElementById("descrs");
-      db.outerHTML = "<div id='descrs'>" +
-        "<b>AMW:</b> " + descrs.amw +
-        "<br /><b>MolLogP:</b> " + descrs.CrippenClogP +
-        "<br /><b>MFP2:</b> " + mol.get_morgan_fp(2, 128) +
-        "</div>";
+      if (update_descrs) {
+        var descrs = JSON.parse(mol.get_descriptors());
+        var db = document.getElementById("descrs");
+        db.outerHTML = "<div id='descrs'>" +
+          "<b>AMW:</b> " + descrs.amw +
+          "<br /><b>MolLogP:</b> " + descrs.CrippenClogP +
+          "<br /><b>MFP2:</b> " + mol.get_morgan_fp(2, 128) +
+          "</div>";
+      }
     }
     mol.delete();
   }
@@ -60,10 +84,19 @@
     if (mol.is_valid() && qmol.is_valid()) {
       var mdetails = mol.get_substruct_match(qmol);
       var match = JSON.parse(mdetails);
-      if (match.atoms && match.atoms.length) draw_with_highlights(mol, mdetails);
+      if (match.atoms && match.atoms.length) draw_with_highlights(mol, match);
     }
     mol.delete();
     qmol.delete();
+  }
+  function option_changed(cb) {
+    var smi = document.getElementById('smiles_input').value;
+    var sma = document.getElementById('smarts_input').value;
+    if (sma) {
+      sma_callback(sma);
+    } else {
+      callback(smi, false);
+    }
   }
 </script>
 <script src="./RDKit_minimal.js"></script>
@@ -76,12 +109,36 @@
       <div id="can_smiles"></div>
     </div>
     <br>
-    SMILES: <input id="smiles_input" type="text" value="CC(=O)Oc1ccccc1C(=O)O" onkeyup="callback(this.value)">
+    SMILES: <input id="smiles_input" type="text" value="CC(=O)Oc1ccccc1C(=O)O" onkeyup="callback(this.value,true)">
     SMARTS: <input id="smarts_input" type="text" value="" onkeyup="sma_callback(this.value)">
     <br>
     <h2>Computed values</h2>
 
     <div id="descrs"></div>
+    <div id="canvas-div">
+      <h1>HTML5 canvas</h1>
+      <canvas id="rdkit-canvas" width="400" height="300" style="border:1px solid #000000;">
+      </canvas>
+      <br />
+      <input type="checkbox" id="addAtomIndices" name="atomIndices" onclick="option_changed(this);">
+      <label for="addAtomIndices">atomIndices</label>
+      <input type="checkbox" id="addBondIndices" name="bondIndices" onclick="option_changed(this);">
+      <label for="addBondIndices">bondIndices</label>
+      <input type="checkbox" id="addStereoAnnotation" name="addStereoAnnotation" onclick="option_changed(this);">
+      <label for="addStereoAnnotation">addStereoAnnotation</label>
+      <br />
+      <input type="checkbox" id="explicitMethyl" name="explicitMethyl" onclick="option_changed(this);" />
+      <label for="explicitMethyl">explicitMethyl</label>
+      <br />
+      <input type="text" id="legend" onkeyup="option_changed(this);"><label for="legend">legend</label>
+      <input type="text" id="legendFontSize" onkeyup="option_changed(this);"><label
+        for="legendFontSize">legendFontSize</label>
+      <br />
+      <input type="number" id="bondLineWidth" onkeyup="option_changed(this);"><label
+        for="bondLineWidth">bondLineWidth</label>
+
+    </div>
+
   </div>
 
 </body>

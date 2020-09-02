@@ -509,7 +509,6 @@ void testGithubIssue562() {
     TEST_ASSERT(m->getAtomWithIdx(0)->getNoImplicit() == true);
 
     std::string oinchi = MolToInchi(*m, tmp);
-
     TEST_ASSERT(oinchi == inchi);
 
     delete m;
@@ -721,12 +720,69 @@ M  END
   BOOST_LOG(rdInfoLog) << "done" << std::endl;
 }
 
+void testGithub3365() {
+  BOOST_LOG(rdErrorLog) << "-------------------------------------" << std::endl;
+  BOOST_LOG(rdInfoLog)
+      << "testing github #3365: problems with high radical counts" << std::endl;
+
+  {
+    auto m = "[C]"_smiles;
+    TEST_ASSERT(m);
+    TEST_ASSERT(m->getAtomWithIdx(0)->getNumRadicalElectrons() == 4);
+    ExtraInchiReturnValues tmp;
+    std::string inchi = MolToInchi(*m, tmp);
+    TEST_ASSERT(inchi == "InChI=1S/C");
+  }
+  {
+    auto m = "[CH]"_smiles;
+    TEST_ASSERT(m);
+    TEST_ASSERT(m->getAtomWithIdx(0)->getNumRadicalElectrons() == 3);
+    ExtraInchiReturnValues tmp;
+    std::string inchi = MolToInchi(*m, tmp);
+    TEST_ASSERT(inchi == "InChI=1S/CH/h1H");
+  }
+  {
+    auto m = "[CH2]"_smiles;
+    TEST_ASSERT(m);
+    TEST_ASSERT(m->getAtomWithIdx(0)->getNumRadicalElectrons() == 2);
+    ExtraInchiReturnValues tmp;
+    std::string inchi = MolToInchi(*m, tmp);
+    TEST_ASSERT(inchi == "InChI=1S/CH2/h1H2");
+  }
+  {
+    auto m = "[CH3]"_smiles;
+    TEST_ASSERT(m);
+    TEST_ASSERT(m->getAtomWithIdx(0)->getNumRadicalElectrons() == 1);
+    ExtraInchiReturnValues tmp;
+    std::string inchi = MolToInchi(*m, tmp);
+    TEST_ASSERT(inchi == "InChI=1S/CH3/h1H3");
+  }
+  {
+    auto m = "C[SH](C)=O"_smiles;
+    TEST_ASSERT(m);
+    TEST_ASSERT(m->getAtomWithIdx(1)->getNumRadicalElectrons() == 1);
+    ExtraInchiReturnValues tmp;
+    std::string inchi = MolToInchi(*m, tmp);
+    TEST_ASSERT(inchi == "InChI=1S/C2H7OS/c1-4(2)3/h4H,1-2H3");
+  }
+  {
+    auto m = "C[SH](C)(O)O"_smiles;
+    TEST_ASSERT(m);
+    TEST_ASSERT(m->getAtomWithIdx(1)->getNumRadicalElectrons() == 1);
+    ExtraInchiReturnValues tmp;
+    std::string inchi = MolToInchi(*m, tmp);
+    TEST_ASSERT(inchi == "InChI=1S/C2H9O2S/c1-5(2,3)4/h3-5H,1-2H3");
+  }
+
+  BOOST_LOG(rdInfoLog) << "done" << std::endl;
+}
+
 //-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*
 //
 //-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*
 int main() {
   RDLog::InitLogs();
-#if 1
+#if 0
   testGithubIssue3();
   testGithubIssue8();
   testGithubIssue40();
@@ -735,9 +791,10 @@ int main() {
   testGithubIssue296();
   testMultiThread();
   testGithubIssue437();
-  testGithubIssue562();
   testGithubIssue614();
   testGithubIssue1572();
-#endif
   testMolBlockToInchi();
+#endif
+  testGithubIssue562();
+  testGithub3365();
 }

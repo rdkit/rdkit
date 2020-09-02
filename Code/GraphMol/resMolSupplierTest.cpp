@@ -897,13 +897,13 @@ void testGitHub2597() {
                        << "testGitHub2597" << std::endl;
   {
     class MyCallBack : public ResonanceMolSupplierCallback {
-      bool operator()() const {
+      bool operator()() {
         TEST_ASSERT(getNumConjGrps() == 1);
         return (getNumStructures(0) < 12);
       }
     };
     class MyCallBack2 : public ResonanceMolSupplierCallback {
-      bool operator()() const {
+      bool operator()() {
         TEST_ASSERT(getNumConjGrps() == 1);
         return (getNumDiverseStructures(0) < 8);
       }
@@ -947,6 +947,20 @@ void testGitHub2597() {
   }
 }
 
+void testGitHub3349() {
+  BOOST_LOG(rdInfoLog) << "-----------------------\n"
+                       << "testGitHub3349" << std::endl;
+  RWMol *mol = SmilesToMol("CC(=O)[O-]->[*]");
+  auto *resMolSuppl =
+      new ResonanceMolSupplier(*mol, ResonanceMolSupplier::KEKULE_ALL);
+  // This erroneously returned a single resonance structure
+  // as dative and zero-order bonds were not accounted for (#3349)
+  TEST_ASSERT(resMolSuppl->length() == 2);
+  delete resMolSuppl;
+  delete mol;
+}
+
+
 int main() {
   RDLog::InitLogs();
 #if 1
@@ -970,6 +984,7 @@ int main() {
   testConjGrpPerception();
   testGitHub3048();
   testGitHub2597();
+  testGitHub3349();
 #endif
   return 0;
 }
