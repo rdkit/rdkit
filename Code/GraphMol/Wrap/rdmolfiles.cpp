@@ -913,7 +913,11 @@ BOOST_PYTHON_MODULE(rdmolfiles) {
                      "being returned")
       .def_readwrite("removeHs", &RDKit::SmilesParserParams::removeHs,
                      "controls whether or not Hs are removed before the "
-                     "molecule is returned");
+                     "molecule is returned")
+      .def_readwrite("useLegacyStereo",
+                     &RDKit::SmilesParserParams::useLegacyStereo,
+                     "controls whether or not the legacy stereochemistry "
+                     "perception code is used");
   docString =
       "Construct a molecule from a SMILES string.\n\n\
      ARGUMENTS:\n\

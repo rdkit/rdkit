@@ -24,12 +24,10 @@ class StereoEnumerationOptions(object):
           - onlyStereoGroups: Only find stereoisomers that differ at the
             StereoGroups associated with the molecule.
     """
-  __slots__ = ('tryEmbedding', 'onlyUnassigned',
-               'onlyStereoGroups', 'maxIsomers', 'rand', 'unique')
+  __slots__ = ('tryEmbedding', 'onlyUnassigned', 'onlyStereoGroups', 'maxIsomers', 'rand', 'unique')
 
-  def __init__(self, tryEmbedding=False, onlyUnassigned=True,
-               maxIsomers=1024, rand=None, unique=True,
-               onlyStereoGroups=False):
+  def __init__(self, tryEmbedding=False, onlyUnassigned=True, maxIsomers=1024, rand=None,
+               unique=True, onlyStereoGroups=False):
     self.tryEmbedding = tryEmbedding
     self.onlyUnassigned = onlyUnassigned
     self.onlyStereoGroups = onlyStereoGroups
@@ -39,6 +37,7 @@ class StereoEnumerationOptions(object):
 
 
 class _BondFlipper(object):
+
   def __init__(self, bond):
     self.bond = bond
 
@@ -50,6 +49,7 @@ class _BondFlipper(object):
 
 
 class _AtomFlipper(object):
+
   def __init__(self, atom):
     self.atom = atom
 
@@ -61,6 +61,7 @@ class _AtomFlipper(object):
 
 
 class _StereoGroupFlipper(object):
+
   def __init__(self, group):
     self._original_parities = [(a, a.GetChiralTag()) for a in group.GetAtoms()]
 
@@ -78,20 +79,17 @@ class _StereoGroupFlipper(object):
 
 def _getFlippers(mol, options):
   Chem.FindPotentialStereoBonds(mol)
-
   flippers = []
   if not options.onlyStereoGroups:
     for atom in mol.GetAtoms():
       if atom.HasProp("_ChiralityPossible"):
-        if (not options.onlyUnassigned
-                or atom.GetChiralTag() == Chem.ChiralType.CHI_UNSPECIFIED):
+        if (not options.onlyUnassigned or atom.GetChiralTag() == Chem.ChiralType.CHI_UNSPECIFIED):
           flippers.append(_AtomFlipper(atom))
 
     for bond in mol.GetBonds():
       bstereo = bond.GetStereo()
       if bstereo != Chem.BondStereo.STEREONONE:
-        if (not options.onlyUnassigned
-                or bstereo == Chem.BondStereo.STEREOANY):
+        if (not options.onlyUnassigned or bstereo == Chem.BondStereo.STEREOANY):
           flippers.append(_BondFlipper(bond))
 
   if options.onlyUnassigned:
@@ -104,6 +102,7 @@ def _getFlippers(mol, options):
 
 
 class _RangeBitsGenerator(object):
+
   def __init__(self, nCenters):
     self.nCenters = nCenters
 
@@ -111,7 +110,9 @@ class _RangeBitsGenerator(object):
     for val in range(2**self.nCenters):
       yield val
 
+
 class _UniqueRandomBitsGenerator(object):
+
   def __init__(self, nCenters, maxIsomers, rand):
     self.nCenters = nCenters
     self.maxIsomers = maxIsomers
@@ -158,6 +159,7 @@ def GetStereoisomerCount(m, options=StereoEnumerationOptions()):
   tm = Chem.Mol(m)
   flippers = _getFlippers(tm, options)
   return 2**len(flippers)
+
 
 def EnumerateStereoisomers(m, options=StereoEnumerationOptions(), verbose=False):
   """ returns a generator that yields possible stereoisomers for a molecule
@@ -227,15 +229,15 @@ def EnumerateStereoisomers(m, options=StereoEnumerationOptions(), verbose=False)
     ...     print(smi)
     ...
     F[C@@H](Cl)/C=C/C=C/[C@@H](F)Cl
-    F[C@@H](Cl)/C=C\\C=C/[C@@H](F)Cl
-    F[C@@H](Cl)/C=C\\C=C\\[C@@H](F)Cl
-    F[C@@H](Cl)/C=C\\C=C\\[C@H](F)Cl
-    F[C@H](Cl)/C=C/C=C/[C@@H](F)Cl
+    F[C@@H](Cl)/C=C/C=C/[C@H](F)Cl
+    F[C@@H](Cl)/C=C/C=C\[C@H](F)Cl
+    F[C@@H](Cl)/C=C\C=C/[C@@H](F)Cl
+    F[C@@H](Cl)/C=C\C=C/[C@H](F)Cl
+    F[C@@H](Cl)/C=C\C=C\[C@@H](F)Cl
+    F[C@@H](Cl)/C=C\C=C\[C@H](F)Cl
     F[C@H](Cl)/C=C/C=C/[C@H](F)Cl
-    F[C@H](Cl)/C=C\\C=C/[C@@H](F)Cl
-    F[C@H](Cl)/C=C\\C=C/[C@H](F)Cl
-    F[C@H](Cl)/C=C\\C=C\\[C@@H](F)Cl
-    F[C@H](Cl)/C=C\\C=C\\[C@H](F)Cl
+    F[C@H](Cl)/C=C\C=C/[C@H](F)Cl
+    F[C@H](Cl)/C=C\C=C\[C@H](F)Cl
 
     By default the code only expands unspecified stereocenters:
 
@@ -292,7 +294,6 @@ def EnumerateStereoisomers(m, options=StereoEnumerationOptions(), verbose=False)
   tm = Chem.Mol(m)
   for atom in tm.GetAtoms():
     atom.ClearProp("_CIPCode")
-  # FIX: deal with bonds here too
   flippers = _getFlippers(tm, options)
   nCenters = len(flippers)
   if not nCenters:
@@ -321,8 +322,11 @@ def EnumerateStereoisomers(m, options=StereoEnumerationOptions(), verbose=False)
     for i in range(nCenters):
       flag = bool(bitflag & (1 << i))
       flippers[i].flip(flag)
-
     isomer = Chem.Mol(tm)
+    Chem.SetDoubleBondNeighborDirections(isomer)
+    isomer.ClearComputedProps()
+
+    Chem.AssignStereochemistry(isomer, cleanIt=True, force=True)
     if options.unique:
       cansmi = Chem.MolToSmiles(isomer, isomericSmiles=True)
       if cansmi in isomersSeen:

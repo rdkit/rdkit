@@ -295,7 +295,6 @@ M  END
     std::vector<unsigned int> ranks;
     CHECK(!mol->getRingInfo()->isInitialized());
     Canon::rankMolAtoms(*mol, ranks);
-    CHECK(!mol->getRingInfo()->isInitialized());
   }
 
   SECTION("as discovered") {
@@ -780,9 +779,37 @@ M  END
 }
 
 TEST_CASE("setDoubleBondNeighborDirections()", "[stereochemistry][bug]") {
-  SECTION("basics") {
+  SECTION("basics cis") {
     auto m = "CC=CC"_smiles;
     REQUIRE(m);
+    m->getBondWithIdx(1)->getStereoAtoms() = {0, 3};
+    m->getBondWithIdx(1)->setStereo(Bond::STEREOCIS);
+    MolOps::setDoubleBondNeighborDirections(*m);
+    CHECK(m->getBondWithIdx(0)->getBondDir() == Bond::ENDUPRIGHT);
+    CHECK(m->getBondWithIdx(2)->getBondDir() == Bond::ENDDOWNRIGHT);
+    CHECK(MolToSmiles(*m) == "C/C=C\\C");
+  }
+  SECTION("basics trans") {
+    auto m = "CC=CC"_smiles;
+    REQUIRE(m);
+    m->getBondWithIdx(1)->getStereoAtoms() = {0, 3};
+    m->getBondWithIdx(1)->setStereo(Bond::STEREOTRANS);
+    MolOps::setDoubleBondNeighborDirections(*m);
+    CHECK(m->getBondWithIdx(0)->getBondDir() == Bond::ENDUPRIGHT);
+    CHECK(m->getBondWithIdx(2)->getBondDir() == Bond::ENDUPRIGHT);
+    CHECK(MolToSmiles(*m) == "C/C=C/C");
+  }
+  SECTION("swap (Github #3322)") {
+    auto m = "CC=CC"_smiles;
+    REQUIRE(m);
+    m->getBondWithIdx(1)->getStereoAtoms() = {0, 3};
+    m->getBondWithIdx(1)->setStereo(Bond::STEREOTRANS);
+    MolOps::setDoubleBondNeighborDirections(*m);
+    CHECK(m->getBondWithIdx(0)->getBondDir() == Bond::ENDUPRIGHT);
+    CHECK(m->getBondWithIdx(2)->getBondDir() == Bond::ENDUPRIGHT);
+    CHECK(MolToSmiles(*m) == "C/C=C/C");
+
+    m->clearComputedProps();
     m->getBondWithIdx(1)->getStereoAtoms() = {0, 3};
     m->getBondWithIdx(1)->setStereo(Bond::STEREOCIS);
     MolOps::setDoubleBondNeighborDirections(*m);
