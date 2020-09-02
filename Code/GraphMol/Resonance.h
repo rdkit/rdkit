@@ -72,7 +72,7 @@ class RDKIT_GRAPHMOL_EXPORT ResonanceMolSupplierCallback {
       \return true if the resonance structure generation should continue;
               false if the resonance structure generation should stop.
    */
-  virtual bool operator()() const = 0;
+  virtual bool operator()() = 0;
 
  private:
   struct ResonanceProgress {
@@ -158,7 +158,7 @@ class RDKIT_GRAPHMOL_EXPORT ResonanceMolSupplier {
    *  instance (do not delete it, has the ResonanceMolSupplier takes
    *  ownership of the pointer), or nullptr if none was set.
    */
-  ResonanceMolSupplierCallback *getProgressCallback() {
+  ResonanceMolSupplierCallback *getProgressCallback() const {
     return d_callback.get();
   }
   /*! Returns true if the resonance structure generation was canceled
