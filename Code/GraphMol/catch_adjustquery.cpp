@@ -578,5 +578,14 @@ TEST_CASE("github #3388: Information about charges and isotopes lost when callin
     auto sma = SmartsWrite::GetAtomSmarts(&atm);
     CHECK(sma=="[#6&13*&-]");
   }
+  SECTION("root cause2") {
+    // since we don't have a way to query for number of radical electrons in SMARTS,
+    // we need to check that a different way:
+    auto mol = "[CH2]C[O-]"_smiles;
+    REQUIRE(mol);
+    QueryAtom atm(*mol->getAtomWithIdx(0));
+    auto descr = describeQuery(&atm);
+    CHECK(descr.find("AtomNumRadicalElectrons 1 = val")!=std::string::npos);
+  }
 }
 
