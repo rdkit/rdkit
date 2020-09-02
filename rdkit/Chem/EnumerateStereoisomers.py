@@ -322,25 +322,11 @@ def EnumerateStereoisomers(m, options=StereoEnumerationOptions(), verbose=False)
     for i in range(nCenters):
       flag = bool(bitflag & (1 << i))
       flippers[i].flip(flag)
-    # tm.Debug()
     isomer = Chem.Mol(tm)
-    # isomer.Debug()
     Chem.SetDoubleBondNeighborDirections(isomer)
-    # isomer.Debug()
     isomer.ClearComputedProps()
 
-    # for bond in isomer.GetBonds():
-    #   if bond.GetBondType() == Chem.BondType.DOUBLE:
-    #     print(bond.GetIdx(), bond.GetStereo(), list(bond.GetStereoAtoms()))
     Chem.AssignStereochemistry(isomer, cleanIt=True, force=True)
-    #isomer.Debug()
-    # for bond in isomer.GetBonds():
-    #   if bond.GetBondType() == Chem.BondType.DOUBLE:
-    #     print(bond.GetIdx(), bond.GetStereo(), list(bond.GetStereoAtoms()))
-
-    #isomer.ClearProp("_BondsPotentialStereo")
-    #print(isomer.GetPropsAsDict(includePrivate=True, includeComputed=True))
-    # print("-----")
     if options.unique:
       cansmi = Chem.MolToSmiles(isomer, isomericSmiles=True)
       if cansmi in isomersSeen:

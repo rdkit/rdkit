@@ -359,78 +359,95 @@ std::vector<StereoInfo> findPotentialStereo(ROMol &mol, bool cleanIt,
     }
   }
 
-  // we will use the canonicalization code, pretending that each potential
-  // stereo atom and bond is specified and different from all others. After
-  // we've done that we can re-examine the potential stereo atoms and bonds and
-  // remove any where two controlling atoms have the same rank
-  boost::dynamic_bitset<> atomsInPlay(mol.getNumAtoms());
-  atomsInPlay.set();
-  boost::dynamic_bitset<> bondsInPlay(mol.getNumBonds());
-  bondsInPlay.set();
-  std::vector<unsigned int> aranks;
-  bool breakTies = false;
-  bool includeChirality = true;
-  bool includeIsotopes = false;
-  Canon::rankFragmentAtoms(mol, aranks, atomsInPlay, bondsInPlay, &atomSymbols,
-                           &bondSymbols, breakTies, includeChirality,
-                           includeIsotopes);
   std::vector<StereoInfo> res;
-  for (const auto atom : mol.atoms()) {
-    auto aidx = atom->getIdx();
-    if (ochiralTypes.find(aidx) != ochiralTypes.end()) {
-      atom->setChiralTag(ochiralTypes[aidx]);
-    }
-    if (possibleAtoms[aidx]) {
-      auto sinfo = detail::getStereoInfo(atom);
-      std::vector<unsigned int> nbrs;
-      nbrs.reserve(sinfo.controllingAtoms.size());
-      bool haveADupe = false;
-      for (auto nbrIdx : sinfo.controllingAtoms) {
-        auto rnk = aranks[nbrIdx];
-        if (std::find(nbrs.begin(), nbrs.end(), rnk) != nbrs.end()) {
-          haveADupe = true;
-          break;
+  while (possibleAtoms.count() || possibleBonds.count()) {
+    res.clear();
+    bool removedStereo = false;
+
+    // we will use the canonicalization code, pretending that each potential
+    // stereo atom and bond is specified and different from all others. After
+    // we've done that we can re-examine the potential stereo atoms and bonds
+    // and remove any where two controlling atoms have the same rank
+    boost::dynamic_bitset<> atomsInPlay(mol.getNumAtoms());
+    atomsInPlay.set();
+    boost::dynamic_bitset<> bondsInPlay(mol.getNumBonds());
+    bondsInPlay.set();
+    std::vector<unsigned int> aranks;
+    const bool breakTies = false;
+    const bool includeChirality = true;
+    const bool includeIsotopes = false;
+    Canon::rankFragmentAtoms(mol, aranks, atomsInPlay, bondsInPlay,
+                             &atomSymbols, &bondSymbols, breakTies,
+                             includeChirality, includeIsotopes);
+    for (const auto atom : mol.atoms()) {
+      auto aidx = atom->getIdx();
+      if (ochiralTypes.find(aidx) != ochiralTypes.end()) {
+        atom->setChiralTag(ochiralTypes[aidx]);
+      }
+      if (possibleAtoms[aidx]) {
+        auto sinfo = detail::getStereoInfo(atom);
+        std::vector<unsigned int> nbrs;
+        nbrs.reserve(sinfo.controllingAtoms.size());
+        bool haveADupe = false;
+        for (auto nbrIdx : sinfo.controllingAtoms) {
+          auto rnk = aranks[nbrIdx];
+          if (std::find(nbrs.begin(), nbrs.end(), rnk) != nbrs.end()) {
+            haveADupe = true;
+            break;
+          } else {
+            nbrs.push_back(rnk);
+          }
+        }
+        if (!haveADupe) {
+          res.push_back(std::move(sinfo));
         } else {
-          nbrs.push_back(rnk);
+          removedStereo = true;
+          atomSymbols[aidx] = atom->getSymbol();
+          possibleAtoms[aidx] = 0;
+          if (cleanIt &&
+              sinfo.specified != Chirality::StereoSpecified::Unspecified) {
+            atom->setChiralTag(Atom::ChiralType::CHI_UNSPECIFIED);
+          }
         }
       }
-      if (!haveADupe) {
-        res.push_back(sinfo);
-      } else if (cleanIt &&
-                 sinfo.specified != Chirality::StereoSpecified::Unspecified) {
-        atom->setChiralTag(Atom::ChiralType::CHI_UNSPECIFIED);
-      }
     }
-  }
 
-  for (const auto bond : mol.bonds()) {
-    auto bidx = bond->getIdx();
-    if (possibleBonds[bidx]) {
-      auto sinfo = detail::getStereoInfo(bond);
-      ASSERT_INVARIANT(sinfo.controllingAtoms.size() == 4,
-                       "bad controlling atoms size");
-      bool haveADupe = false;
-      if (sinfo.controllingAtoms[0] != Chirality::StereoInfo::NOATOM &&
-          sinfo.controllingAtoms[1] != Chirality::StereoInfo::NOATOM &&
-          aranks[sinfo.controllingAtoms[0]] ==
-              aranks[sinfo.controllingAtoms[1]]) {
-        haveADupe = true;
-      }
-      if (sinfo.controllingAtoms[2] != Chirality::StereoInfo::NOATOM &&
-          sinfo.controllingAtoms[3] != Chirality::StereoInfo::NOATOM &&
-          aranks[sinfo.controllingAtoms[2]] ==
-              aranks[sinfo.controllingAtoms[3]]) {
-        haveADupe = true;
-      }
-      if (!haveADupe) {
-        res.push_back(sinfo);
-      } else if (cleanIt &&
-                 sinfo.specified != Chirality::StereoSpecified::Unspecified) {
-        bond->setStereo(Bond::BondStereo::STEREONONE);
+    for (const auto bond : mol.bonds()) {
+      auto bidx = bond->getIdx();
+      if (possibleBonds[bidx]) {
+        auto sinfo = detail::getStereoInfo(bond);
+        ASSERT_INVARIANT(sinfo.controllingAtoms.size() == 4,
+                         "bad controlling atoms size");
+        bool haveADupe = false;
+        if (sinfo.controllingAtoms[0] != Chirality::StereoInfo::NOATOM &&
+            sinfo.controllingAtoms[1] != Chirality::StereoInfo::NOATOM &&
+            aranks[sinfo.controllingAtoms[0]] ==
+                aranks[sinfo.controllingAtoms[1]]) {
+          haveADupe = true;
+        }
+        if (sinfo.controllingAtoms[2] != Chirality::StereoInfo::NOATOM &&
+            sinfo.controllingAtoms[3] != Chirality::StereoInfo::NOATOM &&
+            aranks[sinfo.controllingAtoms[2]] ==
+                aranks[sinfo.controllingAtoms[3]]) {
+          haveADupe = true;
+        }
+        if (!haveADupe) {
+          res.push_back(std::move(sinfo));
+        } else {
+          removedStereo = true;
+          bondSymbols[bidx] = getBondSymbol(bond);
+          possibleBonds[bidx] = 0;
+          if (cleanIt &&
+              sinfo.specified != Chirality::StereoSpecified::Unspecified) {
+            bond->setStereo(Bond::BondStereo::STEREONONE);
+          }
+        }
       }
     }
+    if (!removedStereo) {
+      break;
+    }
   }
-  // auto res = possible;
   return res;
 }
 

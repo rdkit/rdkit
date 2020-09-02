@@ -827,3 +827,24 @@ TEST_CASE("flagPossible", "[chirality]") {
     }
   }
 }
+
+TEST_CASE("cleanup after removing possible centers", "[chirality]") {
+  SECTION("atoms1") {
+    auto mol = "FC(Cl)(F)C(C(Cl)(F)F)I"_smiles;
+    REQUIRE(mol);
+    auto stereoInfo = Chirality::findPotentialStereo(*mol);
+    CHECK(stereoInfo.empty());
+  }
+  SECTION("bonds1") {
+    auto mol = "FC(Cl)(F)C(C(Cl)(F)F)=CF"_smiles;
+    REQUIRE(mol);
+    auto stereoInfo = Chirality::findPotentialStereo(*mol);
+    CHECK(stereoInfo.empty());
+  }
+  SECTION("atoms2") {
+    auto mol = "ClC(F)(F)C(=CC(F)C=C(C(F)(F)Cl)C(F)(F)Cl)C(Cl)(F)F"_smiles;
+    REQUIRE(mol);
+    auto stereoInfo = Chirality::findPotentialStereo(*mol);
+    CHECK(stereoInfo.empty());
+  }
+}
