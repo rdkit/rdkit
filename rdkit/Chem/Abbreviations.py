@@ -312,7 +312,7 @@ def condense_mol_abbreviations(mol, abbrevs, maxCoverage=0.4, sanitize=True):
   applicable = find_applicable_abbreviation_matches(mol, abbrevs, maxCoverage=maxCoverage)
   res = _apply_matches(mol, applicable)
   if sanitize:
-    Chem.SanitizeMol(res)
+    Chem.GetSymmSSSR(mol)
   return res
 
 
