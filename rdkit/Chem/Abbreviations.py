@@ -272,7 +272,8 @@ def find_applicable_abbreviation_matches(mol, abbrevs, maxCoverage=0.4):
   if not mol.GetNumAtoms():
     return []
 
-  # will just return if we already have ringinfo
+  # we need ring info.
+  # this will just return if it's already there
   Chem.FastFindRings(mol)
 
   tres = []
@@ -307,9 +308,12 @@ def create_abbreviation_sgroups(mol, matchTpls):
     match, label, query = tpl
 
 
-def condense_mol_abbreviations(mol, abbrevs, maxCoverage=0.4):
+def condense_mol_abbreviations(mol, abbrevs, maxCoverage=0.4, sanitize=True):
   applicable = find_applicable_abbreviation_matches(mol, abbrevs, maxCoverage=maxCoverage)
-  return _apply_matches(mol, applicable)
+  res = _apply_matches(mol, applicable)
+  if sanitize:
+    Chem.SanitizeMol(res)
+  return res
 
 
 def label_mol_abbreviations(mol, abbrevs, maxCoverage=0.4):
