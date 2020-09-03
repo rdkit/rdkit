@@ -16,6 +16,9 @@
 #include <Geometry/point.h>
 #include <boost/foreach.hpp>
 #include <boost/lexical_cast.hpp>
+#include <boost/tokenizer.hpp>
+#include <boost/algorithm/string/trim.hpp>
+#include <boost/algorithm/string/classification.hpp>
 #include <boost/dynamic_bitset.hpp>
 
 namespace RDKit {
@@ -421,12 +424,70 @@ void AssignHsResidueInfo(RWMol &mol) {
   }
 }
 
+std::string isoHsToStringTuple(const std::deque<unsigned int> &isoHs) {
+  std::stringstream ss;
+  std::copy(isoHs.begin(), isoHs.end(),
+            std::ostream_iterator<unsigned int>(ss, ","));
+  return "(" + ss.str() + ")";
+}
+
+std::map<unsigned int, std::deque<unsigned int>> getIsoMap(const ROMol &mol) {
+  std::map<unsigned int, std::deque<unsigned int>> isoMap;
+  for (auto atom : mol.atoms()) {
+    if (atom->hasProp(common_properties::_isotopicHs)) {
+      atom->clearProp(common_properties::_isotopicHs);
+    }
+  }
+  for (auto bond : mol.bonds()) {
+    auto ba = bond->getBeginAtom();
+    auto ea = bond->getEndAtom();
+    int ha = -1;
+    unsigned int iso;
+    if (ba->getAtomicNum() == 1 && ba->getIsotope() &&
+        ea->getAtomicNum() != 1) {
+      ha = ea->getIdx();
+      iso = ba->getIsotope();
+    } else if (ea->getAtomicNum() == 1 && ea->getIsotope() &&
+               ba->getAtomicNum() != 1) {
+      ha = ba->getIdx();
+      iso = ea->getIsotope();
+    }
+    if (ha == -1) {
+      continue;
+    }
+    auto &v = isoMap[ha];
+    v.push_back(iso);
+  }
+  return isoMap;
+}
+
 }  // end of unnamed namespace
 
 namespace MolOps {
 
 void addHs(RWMol &mol, bool explicitOnly, bool addCoords,
            const UINT_VECT *onlyOnAtoms, bool addResidueInfo) {
+  // retrieve and store _isotopicHs (if any)
+  std::map<unsigned int, std::deque<unsigned int>> isoMapFromProp;
+  for (auto atom : mol.atoms()) {
+    if (!atom->hasProp(common_properties::_isotopicHs)) {
+      continue;
+    }
+    std::string isotopicHsProp =
+        atom->getProp<std::string>(common_properties::_isotopicHs);
+    boost::trim_if(isotopicHsProp, boost::is_any_of(" \t\r\n,()[]{}"));
+    boost::tokenizer<> tokens(isotopicHsProp);
+    std::deque<unsigned int> isoHs;
+    std::transform(tokens.begin(), tokens.end(), std::back_inserter(isoHs),
+                   [](const std::string &t) {
+                     return boost::lexical_cast<unsigned int>(t);
+                   });
+    if (!isoHs.empty()) {
+      isoMapFromProp[atom->getIdx()] = std::move(isoHs);
+    }
+  }
+  std::map<unsigned int, std::deque<unsigned int>> isoMap = getIsoMap(mol);
+  unsigned int numAtomsBeforeAddHs = mol.getNumAtoms();
   // when we hit each atom, clear its computed properties
   // NOTE: it is essential that we not clear the ring info in the
   // molecule's computed properties.  We don't want to have to
@@ -500,6 +561,42 @@ void addHs(RWMol &mol, bool explicitOnly, bool addCoords,
     // update the atom's derived properties (valence count, etc.)
     // no sense in being strict here (was github #2782)
     newAt->updatePropertyCache(false);
+  }
+  for (unsigned int i = numAtomsBeforeAddHs; i < mol.getNumAtoms(); ++i) {
+    auto hAtom = mol.getAtomWithIdx(i);
+    for (const auto &nbri :
+         boost::make_iterator_range(mol.getAtomNeighbors(hAtom))) {
+      const auto &nbr = mol[nbri];
+      if (nbr->getAtomicNum() == 1) {
+        continue;
+      }
+      auto it = isoMapFromProp.find(nbr->getIdx());
+      if (it == isoMapFromProp.end()) {
+        continue;
+      }
+      auto &isoHsFromProp = it->second;
+      if (isoHsFromProp.empty()) {
+        continue;
+      }
+      it = isoMap.find(nbr->getIdx());
+      if (it != isoMap.end() && it->second.size() >= isoHsFromProp.size()) {
+        // The current isotope count on this heavy atom is >= than the
+        // one stored in the _isotopicHs property. This means the user has
+        // already manually set isotopes and we should not add more
+        continue;
+      }
+      auto iso = isoHsFromProp.front();
+      isoHsFromProp.pop_front();
+      hAtom->setIsotope(iso);
+    }
+  }
+  // store the updated isotopic Hs as atom properties
+  for (auto pair : isoMapFromProp) {
+    if (!pair.second.empty()) {
+      mol.getAtomWithIdx(pair.first)
+          ->setProp(common_properties::_isotopicHs,
+                    isoHsToStringTuple(pair.second));
+    }
   }
   // take care of AtomPDBResidueInfo for Hs if root atom has it
   if (addResidueInfo) {
@@ -681,8 +778,32 @@ void molRemoveH(RWMol &mol, unsigned int idx, bool updateExplicitCount) {
 }  // end of anonymous namespace
 
 void removeHs(RWMol &mol, const RemoveHsParameters &ps, bool sanitize) {
+  if (ps.removeAndTrackIsotopes) {
+    // if there are any non-isotopic Hs remove them first
+    // to make sure chirality is preserved
+    bool needRemoveHs = false;
+    for (auto atom : mol.atoms()) {
+      if (atom->getAtomicNum() == 1 && atom->getIsotope() == 0) {
+        needRemoveHs = true;
+        break;
+      }
+    }
+    if (needRemoveHs) {
+      RemoveHsParameters psCopy(ps);
+      psCopy.removeAndTrackIsotopes = false;
+      psCopy.removeIsotopes = false;
+      removeHs(mol, psCopy, false);
+    }
+  }
   for (auto atom : mol.atoms()) {
     atom->updatePropertyCache(false);
+  }
+  if (ps.removeAndTrackIsotopes) {
+    for (auto pair : getIsoMap(mol)) {
+      mol.getAtomWithIdx(pair.first)
+          ->setProp(common_properties::_isotopicHs,
+                    isoHsToStringTuple(pair.second));
+    }
   }
   boost::dynamic_bitset<> atomsToRemove{mol.getNumAtoms(), 0};
   for (auto atom : mol.atoms()) {
@@ -703,7 +824,8 @@ void removeHs(RWMol &mol, const RemoveHsParameters &ps, bool sanitize) {
     if (!ps.removeHigherDegrees && atom->getDegree() > 1) {
       continue;
     }
-    if (!ps.removeIsotopes && atom->getIsotope()) {
+    if (!ps.removeIsotopes && !ps.removeAndTrackIsotopes &&
+        atom->getIsotope()) {
       continue;
     }
     if (!ps.removeNonimplicit &&
