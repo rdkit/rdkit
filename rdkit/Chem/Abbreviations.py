@@ -9,14 +9,15 @@
 
 #
 from rdkit import Chem
+from rdkit.Chem import rdqueries
 import re
 
-# ADAPTED FROM: https://github.com/openbabel/superatoms/blob/master/superatom.txt
 defaultAbbreviations = '''
 # Translations of superatom labels to SMILES.
 # First atom of SMILES string should be the one connected to the rest of
 # the molecule.
 # Empty lines and lines starting with # are ignored.
+# ADAPTED FROM: https://github.com/openbabel/superatoms/blob/master/superatom.txt
 # Originally from http://cactus.nci.nih.gov/osra/
 # The left-aligned form is the one recognized in MDL alias lines;
 # the right-aligned form may be used in 2D depiction.
@@ -55,20 +56,64 @@ CO2-     -OOC     C(=O)[O-]
 COO-     -OOC     C(=O)[O-]
 '''
 
+defaultLinkers = '''
+# Translations of linker superatom labels to SMILES.
+# First atom of SMILES string should be a dummy connected to the rest of
+# the molecule. The other linker dummy/dummies show the other attachments
+# Empty lines and lines starting with # are ignored.
+# Originally from http://cactus.nci.nih.gov/osra/
+# The left-aligned form is the one recognized in MDL alias lines;
+# the right-aligned form may be used in 2D depiction.
+#
+# careful with the order in this list: matching goes from top to bottom
+# and later matches are not allowed to overlap earlier ones (the dummy 
+# atoms are not used when figuring out overlap)
+#
+#left   right  SMILES		color
+PEG4  PEG4    *OCCOCCOCCOCC*
+PEG3  PEG3    *OCCOCCOCC*
+pentyl  pentyl  *CCCCC*
+cyhex cyhex   *C1CCC(*)CC1
+# the amino acids
+ala ala *N[C@@H](C)C(=O)*
+arg arg *N[C@@H](CCCNC(N)=[NH])C(=O)*
+asn asn *N[C@@H](CC(N)=O)C(=O)*
+asp asp *N[C@@H](CC(O)=O)C(=O)*
+cys cys *N[C@@H](CS)C(=O)*
+gln gln *N[C@@H](CCC(N)=O)C(=O)*
+glu glu *N[C@@H](CCC(O)=O)C(=O)*
+gly gly *NCC(=O)*
+his his *N[C@@H](Cc1c[nH]cn1)C(=O)*
+ile ile *N[C@@H](C(C)CC)C(=O)*
+leu leu *N[C@@H](CC(C)C)C(=O)*
+lys lys *N[C@@H](CCCCN)C(=O)*
+met met *N[C@@H](CCSC)C(=O)*
+phe phe *N[C@@H](Cc1ccccc1)C(=O)*
+pro pro *N1[C@@H](CCC1)C(=O)*
+ser ser *N[C@@H](CO)C(=O)*
+thr thr *N[C@@H](C(O)C)C(=O)*
+trp trp *N[C@@H](Cc1c[nH]c2ccccc21)C(=O)*
+tyr tyr *N[C@@H](Cc1ccc(O)cc1)C(=O)*
+val val *N[C@@H](C(C)C)C(=O)*    
+'''
+
 
 def isDummy(at):
   return at.GetAtomicNum() == 0 and \
-      ((not at.HasQuery()) or at.DescribeQuery().strip() == 'AtomNull')
+      (at.HasProp('_dummy') or (not at.HasQuery()) or at.DescribeQuery().strip() == 'AtomNull')
 
 
-def preprocessAbbreviations(abbrevText=defaultAbbreviations):
+def preprocessAbbreviations(abbrevText=defaultAbbreviations, removeExtraDummies=False,
+                            allowConnectionToDummies=False):
   ls = [
     re.split(r'[\s]+', x) for x in abbrevText.split('\n') if (x and x[0] != '#' and x[0] != ' ')
   ]
   fgs = {}
   ps = Chem.AdjustQueryParameters()
   ps.adjustDegree = True
-  ps.adjustDegreeFlags = Chem.AdjustQueryWhichFlags.ADJUST_IGNORENONE | Chem.AdjustQueryWhichFlags.ADJUST_IGNOREDUMMIES
+  ps.adjustDegreeFlags = Chem.AdjustQueryWhichFlags.ADJUST_IGNOREDUMMIES
+  ps.adjustRingCount = True
+  ps.adjustRingCountFlags = Chem.AdjustQueryWhichFlags.ADJUST_IGNOREDUMMIES
   for l in ls:
     nm = l[0]
     smi = l[2]
@@ -80,7 +125,22 @@ def preprocessAbbreviations(abbrevText=defaultAbbreviations):
     for at in q.GetAtoms():
       if not isDummy(at):
         nqAts += 1
+
     q = Chem.AdjustQueryProperties(q, ps)
+    if not allowConnectionToDummies:
+      at = q.GetAtomWithIdx(0)
+      at.ExpandQuery(rdqueries.AtomNumEqualsQueryAtom(0, negate=True),
+                     how=Chem.CompositeQueryType.COMPOSITE_AND)
+      at.SetIntProp('_dummy', 1)
+
+      # modify the query on the first atom
+    if removeExtraDummies:
+      q = Chem.RWMol(q)
+      for aidx in range(q.GetNumAtoms(), 1, -1):
+        if isDummy(q.GetAtomWithIdx(aidx - 1)):
+          q.RemoveAtom(aidx - 1)
+          nqAts -= 1
+
     q._numNondummyAtoms = nqAts
     fgs[nm] = q
   return fgs
@@ -91,7 +151,6 @@ def _apply_matches(mol, matchTpls):
   res = Chem.RWMol(mol)
   for tpl in matchTpls:
     match, label, query = tpl
-
     # remove the dummy atom at the front of the match
     match = list(match)
     del match[0]
@@ -105,6 +164,8 @@ def _apply_matches(mol, matchTpls):
     connectingAtom.SetFormalCharge(0)
     connectingAtom.SetAtomicNum(0)
     connectingAtom.SetIsotope(0)
+    # set the hybridization so that these are drawn linear
+    connectingAtom.SetHybridization(Chem.HybridizationType.SP)
     for qidx, midx in enumerate(match):
       if midx == connectIdx:
         # we already dealt with the first atom
@@ -145,7 +206,7 @@ def condense_abbreviation(mol, pattern, label, maxCoverage=0.4):
   '''
   if not mol.GetNumAtoms():
     return Chem.Mol(mol)
-  if type(pattern) == Chem.Mol:
+  if type(pattern) in (Chem.Mol, Chem.RWMol):
     query = pattern
   else:
     query = Chem.MolFromSmarts(pattern)
@@ -211,16 +272,19 @@ def find_applicable_abbreviation_matches(mol, abbrevs, maxCoverage=0.4):
   if not mol.GetNumAtoms():
     return []
 
+  # will just return if we already have ringinfo
+  Chem.FastFindRings(mol)
+
   tres = []
   dummies = []
   firstAts = []
+  covered = set()  # includes only the actual atoms, not the attachment point
   for label, query in abbrevs.items():
     if maxCoverage > 0 and maxCoverage < 1:
       nQAts = query._numNondummyAtoms
       if nQAts / mol.GetNumAtoms() >= maxCoverage:
         continue
 
-    covered = set()  # includes only the actual atoms, not the attachment point
     matches = mol.GetSubstructMatches(query)
     for match in matches:
       if covered.intersection(match[1:]) or match[1] in firstAts:
@@ -261,7 +325,10 @@ import unittest
 class TestCase(unittest.TestCase):
 
   def setUp(self):
-    self.defaultAbbrevs = preprocessAbbreviations()
+    self.defaultAbbrevs = preprocessAbbreviations(abbrevText=defaultAbbreviations)
+    self.defaultLinkers = preprocessAbbreviations(abbrevText=defaultLinkers,
+                                                  removeExtraDummies=True,
+                                                  allowConnectionToDummies=True)
 
   def testBasicsFromSmarts1(self):
     for ismi, osmi, sma, label in [
@@ -373,6 +440,57 @@ class TestCase(unittest.TestCase):
     self.assertEqual(len(aps), 1)
     self.assertEqual(aps[0].aIdx, 4)
     self.assertEqual(aps[0].lvIdx, 3)
+
+  def testCondenseLinker(self):
+    m = Chem.MolFromSmiles('FCOCCOCCOCCCl')
+    self.assertTrue(m.HasSubstructMatch(self.defaultLinkers['PEG3']))
+    nm = condense_abbreviation(m, self.defaultLinkers['PEG3'], 'PEG3', maxCoverage=1)
+    self.assertEqual(Chem.MolToCXSmiles(nm), 'FC*Cl |$;;PEG3;$|')
+
+    m = Chem.MolFromSmiles('FCOCCOCCOCCOCCOCCOCCCl')
+    self.assertTrue(m.HasSubstructMatch(self.defaultLinkers['PEG3']))
+    nm = condense_abbreviation(m, self.defaultLinkers['PEG3'], 'PEG3', maxCoverage=1)
+    self.assertEqual(Chem.MolToCXSmiles(nm), 'FC**Cl |$;;PEG3;PEG3;$|')
+
+  def testApplicableLinkers(self):
+    m = Chem.MolFromSmiles('FCOCCOCCOCCNCCCCCCl')
+    matches = find_applicable_abbreviation_matches(m, self.defaultLinkers, maxCoverage=1.0)
+    self.assertEqual(len(matches), 2)
+    self.assertEqual(matches[0].match, (1, 2, 3, 4, 5, 6, 7, 8, 9, 10))
+    self.assertEqual(matches[0].label, 'PEG3')
+    self.assertEqual(matches[1].match, (11, 12, 13, 14, 15, 16))
+    self.assertEqual(matches[1].label, 'pentyl')
+
+    m = Chem.MolFromSmiles('FCOCCOCCOCCCCCCCCl')
+    matches = find_applicable_abbreviation_matches(m, self.defaultLinkers, maxCoverage=1.0)
+    self.assertEqual(len(matches), 2)
+    self.assertEqual(matches[0].match, (1, 2, 3, 4, 5, 6, 7, 8, 9, 10))
+    self.assertEqual(matches[0].label, 'PEG3')
+    self.assertEqual(matches[1].match, (10, 11, 12, 13, 14, 15))
+    self.assertEqual(matches[1].label, 'pentyl')
+
+  def testCondenseLinkers(self):
+    m = Chem.MolFromSmiles('FCOCCOCCOCCCCCCCCl')
+    nm = condense_mol_abbreviations(m, self.defaultLinkers, maxCoverage=1.0)
+    self.assertEqual(Chem.MolToCXSmiles(nm), 'FC**Cl |$;;PEG3;pentyl;$|')
+
+    m = Chem.MolFromSmiles('COC1CCC(C)CC1')
+    nm = condense_mol_abbreviations(m, self.defaultLinkers, maxCoverage=1.0)
+    self.assertEqual(Chem.MolToCXSmiles(nm), 'C*OC |$;cyhex;;$|')
+
+  def testAbbreviationsAndLinkers(self):
+    m = Chem.MolFromSmiles('COC1CCC(C)CC1')
+    # wouldn't normally do this in this order:
+    nm = condense_mol_abbreviations(m, self.defaultAbbrevs, maxCoverage=1.0)
+    self.assertEqual(Chem.MolToCXSmiles(nm), '*C1CCC(C)CC1 |$OMe;;;;;;;$|')
+    nm = condense_mol_abbreviations(nm, self.defaultLinkers, maxCoverage=1.0)
+    self.assertEqual(Chem.MolToCXSmiles(nm), '**C |$OMe;cyhex;$|')
+
+    # This is a more logical order
+    nm = condense_mol_abbreviations(m, self.defaultLinkers, maxCoverage=1.0)
+    self.assertEqual(Chem.MolToCXSmiles(nm), 'C*OC |$;cyhex;;$|')
+    nm = condense_mol_abbreviations(nm, self.defaultAbbrevs, maxCoverage=1.0)
+    self.assertEqual(Chem.MolToCXSmiles(nm), 'C*OC |$;cyhex;;$|')
 
 
 if __name__ == '__main__':  # pragma: nocover
