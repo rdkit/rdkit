@@ -655,4 +655,24 @@ M  END
     }
   }
 }
+
+TEST_CASE(
+    "github #3392: prepareMolForDrawing() incorrectly adds chiral Hs if no "
+    "ring info is present",
+    "[bug]") {
+  SECTION("foundations") {
+    SmilesParserParams ps;
+    ps.sanitize = false;
+    ps.removeHs = false;
+    std::unique_ptr<RWMol> m1(SmilesToMol("C[C@H](F)Cl", ps));
+    REQUIRE(m1);
+    m1->updatePropertyCache();
+    CHECK(m1->getNumAtoms() == 4);
+    const bool kekulize = false;
+    const bool addChiralHs = true;
+    MolDraw2DUtils::prepareMolForDrawing(*m1, kekulize, addChiralHs);
+    CHECK(m1->getNumAtoms() == 4);
+  }
+}
+
 #endif
