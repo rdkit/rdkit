@@ -478,6 +478,11 @@ class TestCase(unittest.TestCase):
     nm = condense_mol_abbreviations(m, self.defaultLinkers, maxCoverage=1.0)
     self.assertEqual(Chem.MolToCXSmiles(nm), 'C*OC |$;cyhex;;$|')
 
+  def testPeptides(self):
+    m = Chem.MolFromSequence('GYTKC')
+    nm = condense_mol_abbreviations(m, self.defaultLinkers, maxCoverage=1.0)
+    self.assertEqual(Chem.MolToCXSmiles(nm), 'NCC(=O)****O |$;;;;tyr;thr;lys;cys;$|')
+
   def testAbbreviationsAndLinkers(self):
     m = Chem.MolFromSmiles('COC1CCC(C)CC1')
     # wouldn't normally do this in this order:
