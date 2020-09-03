@@ -2215,63 +2215,6 @@ void testGithub1322() {
   std::cerr << " Done" << std::endl;
 }
 
-void testGithub565() {
-  // this is expected not to give a good looking drawing.  There is now
-  // There is now a drawOptions().fixedBondLength achieve this.  I think
-  // this test should be withdrawn.
-  std::cout << " ----------------- Testing github 565: support a fixed bond "
-               "length in the MolDraw2D code"
-            << std::endl;
-  {
-    std::string smiles = "CCCCC";
-    RWMol *m1 = SmilesToMol(smiles);
-    TEST_ASSERT(m1);
-    MolDraw2DUtils::prepareMolForDrawing(*m1);
-
-    Point2D minV, maxV;
-    const Conformer &cnf = m1->getConformer();
-    minV.x = maxV.x = cnf.getAtomPos(0).x;
-    minV.y = maxV.y = cnf.getAtomPos(0).y;
-    for (unsigned int i = 1; i < m1->getNumAtoms(); i++) {
-      minV.x = std::min(minV.x, cnf.getAtomPos(i).x);
-      minV.y = std::min(minV.y, cnf.getAtomPos(i).y);
-      maxV.x = std::max(maxV.x, cnf.getAtomPos(i).x);
-      maxV.y = std::max(maxV.y, cnf.getAtomPos(i).y);
-    }
-
-    {
-      unsigned int dpa = 100;
-      unsigned int w = dpa * (maxV.x - minV.x);
-      unsigned int h = dpa * (maxV.y - minV.y);
-
-      MolDraw2DSVG drawer(w, h);
-      drawer.setScale(w, h, minV, maxV);
-      drawer.drawMolecule(*m1, "m1");
-      drawer.finishDrawing();
-      std::string text = drawer.getDrawingText();
-      std::ofstream outs("test565_1.svg");
-      outs << text;
-      outs.flush();
-    }
-    {
-      unsigned int dpa = 50;
-      unsigned int w = dpa * (maxV.x - minV.x);
-      unsigned int h = dpa * (maxV.y - minV.y);
-
-      MolDraw2DSVG drawer(w, h);
-      drawer.setScale(w, h, minV, maxV);
-      drawer.drawMolecule(*m1, "m1");
-      drawer.finishDrawing();
-      std::string text = drawer.getDrawingText();
-      std::ofstream outs("test565_2.svg");
-      outs << text;
-      outs.flush();
-    }
-    delete m1;
-  }
-  std::cerr << " Done" << std::endl;
-}
-
 void test14BWPalette() {
   std::cout << " ----------------- Testing use of a black & white palette"
             << std::endl;
