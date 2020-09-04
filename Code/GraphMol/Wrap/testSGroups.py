@@ -287,8 +287,178 @@ M  END''')
     newsg = Chem.AddMolSubstanceGroup(mol2, sgs[1])
     newsg.SetProp("FIELDNAME", "blah_data")
     molb = Chem.MolToV3KMolBlock(mol2)
-    print(molb)
     self.assertGreater(molb.find("M  V30 3 DAT 0 ATOMS=(1 6) FIELDNAME=blah_data"), 0)
+
+  def testCStates(self):
+    mol = Chem.MolFromMolBlock('''
+  ACCLDraw08282007542D
+
+  0  0  0     0  0            999 V3000
+M  V30 BEGIN CTAB
+M  V30 COUNTS 9 9 1 0 0
+M  V30 BEGIN ATOM
+M  V30 1 C 8.759 -6.2839 0 0 
+M  V30 2 C 10.8013 -6.2833 0 0 
+M  V30 3 C 9.7821 -5.6936 0 0 
+M  V30 4 C 10.8013 -7.4648 0 0 
+M  V30 5 C 8.759 -7.4701 0 0 
+M  V30 6 C 9.7847 -8.0543 0 0 
+M  V30 7 C 11.8245 -5.6926 0 0 
+M  V30 8 O 12.8482 -6.2834 0 0 
+M  V30 9 O 11.8245 -4.5104 0 0 
+M  V30 END ATOM
+M  V30 BEGIN BOND
+M  V30 1 1 6 4 
+M  V30 2 2 5 6 
+M  V30 3 1 2 3 
+M  V30 4 1 1 5 
+M  V30 5 2 4 2 
+M  V30 6 2 3 1 
+M  V30 7 2 7 9 
+M  V30 8 1 7 8 
+M  V30 9 1 2 7 
+M  V30 END BOND
+M  V30 BEGIN SGROUP
+M  V30 1 SUP 1 ATOMS=(3 7 8 9) XBONDS=(1 9) CSTATE=(4 9 -1.02 -0.59 0) LABEL=-
+M  V30 CO2H 
+M  V30 END SGROUP
+M  V30 END CTAB
+M  END
+''')
+    sgs = Chem.GetMolSubstanceGroups(mol)
+    self.assertEqual(len(sgs), 1)
+    sg0 = sgs[0]
+    pd = sg0.GetPropsAsDict()
+    self.assertTrue('TYPE' in pd)
+    self.assertEqual(pd['TYPE'], 'SUP')
+    cstates = sg0.GetCStates()
+    self.assertEqual(len(cstates), 1)
+    cs0 = cstates[0]
+    self.assertEqual(cs0.bondIdx, 8)
+    self.assertAlmostEqual(cs0.vector.x, -1.02, 2)
+    self.assertAlmostEqual(cs0.vector.y, -0.59, 2)
+
+  def testBrackets(self):
+    mol = Chem.MolFromMolBlock('''
+  Mrv2014 08282011142D          
+
+  0  0  0     0  0            999 V3000
+M  V30 BEGIN CTAB
+M  V30 COUNTS 6 5 1 0 0
+M  V30 BEGIN ATOM
+M  V30 1 C -15.7083 2 0 0
+M  V30 2 C -14.3747 2.77 0 0
+M  V30 3 O -13.041 2 0 0
+M  V30 4 C -11.7073 2.77 0 0
+M  V30 5 C -10.3736 2 0 0
+M  V30 6 C -9.0399 2.77 0 0
+M  V30 END ATOM
+M  V30 BEGIN BOND
+M  V30 1 1 1 2
+M  V30 2 1 2 3
+M  V30 3 1 3 4
+M  V30 4 1 4 5
+M  V30 5 1 5 6
+M  V30 END BOND
+M  V30 BEGIN SGROUP
+M  V30 1 MON 0 ATOMS=(2 3 4) BRKXYZ=(9 -13.811 1.23 0 -13.811 3.54 0 0 0 0) -
+M  V30 BRKXYZ=(9 -10.9373 3.54 0 -10.9373 1.23 0 0 0 0)
+M  V30 END SGROUP
+M  V30 END CTAB
+M  END''')
+    sgs = Chem.GetMolSubstanceGroups(mol)
+    self.assertEqual(len(sgs), 1)
+    sg0 = sgs[0]
+    pd = sg0.GetPropsAsDict()
+    self.assertTrue('TYPE' in pd)
+    self.assertEqual(pd['TYPE'], 'MON')
+    brackets = sg0.GetBrackets()
+    self.assertEqual(len(brackets), 2)
+    b = brackets[0]
+    self.assertEqual(len(b), 3)
+    self.assertAlmostEqual(b[0].x, -13.811, 3)
+    self.assertAlmostEqual(b[0].y, 1.230, 3)
+    self.assertAlmostEqual(b[1].x, -13.811, 3)
+    self.assertAlmostEqual(b[1].y, 3.540, 3)
+    self.assertAlmostEqual(b[2].x, 0, 3)
+    self.assertAlmostEqual(b[2].y, 0, 3)
+
+    b = brackets[1]
+    self.assertEqual(len(b), 3)
+    self.assertAlmostEqual(b[0].x, -10.937, 3)
+    self.assertAlmostEqual(b[0].y, 3.54, 3)
+    self.assertAlmostEqual(b[1].x, -10.937, 3)
+    self.assertAlmostEqual(b[1].y, 1.23, 3)
+    self.assertAlmostEqual(b[2].x, 0, 3)
+    self.assertAlmostEqual(b[2].y, 0, 3)
+
+  def testAttachPoints(self):
+    mol = Chem.MolFromMolBlock('''
+  Mrv2014 09012006262D          
+
+  0  0  0     0  0            999 V3000
+M  V30 BEGIN CTAB
+M  V30 COUNTS 4 3 1 0 0
+M  V30 BEGIN ATOM
+M  V30 1 C -5.0833 0.0833 0 0
+M  V30 2 C -3.7497 0.8533 0 0
+M  V30 3 O -2.416 0.0833 0 0
+M  V30 4 O -3.7497 2.3933 0 0
+M  V30 END ATOM
+M  V30 BEGIN BOND
+M  V30 1 1 1 2
+M  V30 2 1 2 3
+M  V30 3 2 2 4
+M  V30 END BOND
+M  V30 BEGIN SGROUP
+M  V30 1 SUP 0 ATOMS=(3 2 3 4) SAP=(3 2 1 1) XBONDS=(1 1) LABEL=CO2H ESTATE=E
+M  V30 END SGROUP
+M  V30 END CTAB
+M  END''')
+    sgs = Chem.GetMolSubstanceGroups(mol)
+    self.assertEqual(len(sgs), 1)
+    sg0 = sgs[0]
+    pd = sg0.GetPropsAsDict()
+    self.assertTrue('TYPE' in pd)
+    self.assertEqual(pd['TYPE'], 'SUP')
+    aps = sg0.GetAttachPoints()
+    self.assertEqual(len(aps), 1)
+    self.assertEqual(aps[0].aIdx, 1)
+    self.assertEqual(aps[0].lvIdx, 0)
+    self.assertEqual(aps[0].id, '1')
+
+    mol = Chem.MolFromMolBlock('''
+  Mrv2014 09012006262D          
+
+  0  0  0     0  0            999 V3000
+M  V30 BEGIN CTAB
+M  V30 COUNTS 4 3 0 0 0
+M  V30 BEGIN ATOM
+M  V30 1 C -5.0833 0.0833 0 0
+M  V30 2 C -3.7497 0.8533 0 0
+M  V30 3 O -2.416 0.0833 0 0
+M  V30 4 O -3.7497 2.3933 0 0
+M  V30 END ATOM
+M  V30 BEGIN BOND
+M  V30 1 1 1 2
+M  V30 2 1 2 3
+M  V30 3 2 2 4
+M  V30 END BOND
+M  V30 END CTAB
+M  END''')
+    sgs = Chem.GetMolSubstanceGroups(mol)
+    self.assertEqual(len(sgs), 0)
+
+    sg = Chem.CreateMolSubstanceGroup(mol, "SUP")
+    sg.AddAtomWithIdx(1)
+    sg.AddAtomWithIdx(2)
+    sg.AddAtomWithIdx(3)
+    sg.AddBondWithIdx(0)
+    sg.SetProp('LABEL', 'CO2H')
+    sg.AddAttachPoint(1, 0, '1')
+    molb = Chem.MolToV3KMolBlock(mol)
+    self.assertGreater(
+      molb.find('M  V30 1 SUP 0 ATOMS=(3 2 3 4) XBONDS=(1 1) LABEL=CO2H SAP=(3 2 1 1)'), 0)
 
 
 if __name__ == '__main__':
