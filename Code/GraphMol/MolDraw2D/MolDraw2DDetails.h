@@ -53,56 +53,9 @@ RDKIT_MOLDRAW2D_EXPORT void arcPoints(const Point2D &cds1, const Point2D &cds2,
                                       std::vector<Point2D> &res,
                                       float startAng = 0, float extent = 360);
 
-//! add R/S and E/Z annotation to atoms and bonds respectively.
-RDKIT_MOLDRAW2D_EXPORT inline void addStereoAnnotation(const ROMol &mol) {
-  const auto &sgs = mol.getStereoGroups();
-  std::vector<unsigned int> doneAts(mol.getNumAtoms(), 0);
-  unsigned int grpid = 1;
-  for (const auto &sg : sgs) {
-    for (const auto atm : sg.getAtoms()) {
-      std::string lab = "";
-      switch (sg.getGroupType()) {
-        case StereoGroupType::STEREO_ABSOLUTE:
-          doneAts[atm->getIdx()] = 1;
-          break;
-        case StereoGroupType::STEREO_OR:
-          lab = (boost::format("or%d") % grpid).str();
-          doneAts[atm->getIdx()] = 2;
-          break;
-        case StereoGroupType::STEREO_AND:
-          lab = (boost::format("and%d") % grpid).str();
-          doneAts[atm->getIdx()] = 2;
-          break;
-        default:
-          break;
-      }
-      if (!lab.empty()) {
-        atm->setProp(common_properties::atomNote, lab);
-      }
-    }
-    if (sg.getGroupType() != StereoGroupType::STEREO_ABSOLUTE) {
-      ++grpid;
-    }
-  }
-  for (auto atom : mol.atoms()) {
-    if (doneAts[atom->getIdx()] < 2 && atom->hasProp("_CIPCode")) {
-      std::string lab = "";
-      if (doneAts[atom->getIdx()] == 1) {
-        lab = "abs ";
-      }
-      lab += "(" + atom->getProp<std::string>("_CIPCode") + ")";
-
-      atom->setProp(common_properties::atomNote, lab);
-    }
-  }
-  for (auto bond : mol.bonds()) {
-    if (bond->getStereo() == Bond::STEREOE) {
-      bond->setProp(common_properties::bondNote, "(E)");
-    } else if (bond->getStereo() == Bond::STEREOZ) {
-      bond->setProp(common_properties::bondNote, "(Z)");
-    }
-  }
-};  // namespace MolDraw2D_detail
+//! add R/S, relative stereo, and E/Z annotations to atoms and bonds
+RDKIT_MOLDRAW2D_EXPORT void addStereoAnnotation(
+    const ROMol &mol, bool includeRelativeCIP = false);
 
 //! add annotations with atom indices.
 RDKIT_MOLDRAW2D_EXPORT inline void addAtomIndices(const ROMol &mol) {
