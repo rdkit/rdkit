@@ -93,12 +93,14 @@ void testAtomLabels() {
     TEST_ASSERT(m->getAtomWithIdx(3)->getAtomicNum() == 0);
     TEST_ASSERT(m->getAtomWithIdx(3)->getProp<std::string>(
                     common_properties::atomLabel) == "_AP1");
-    TEST_ASSERT(m->getAtomWithIdx(3)->getAtomMapNum() == 1);
+    // we used to set an atom map for attachment points. This was github #3393
+    TEST_ASSERT(m->getAtomWithIdx(3)->getAtomMapNum() == 0);
 
     TEST_ASSERT(m->getAtomWithIdx(5)->getAtomicNum() == 0);
     TEST_ASSERT(m->getAtomWithIdx(5)->getProp<std::string>(
                     common_properties::atomLabel) == "_AP2");
-    TEST_ASSERT(m->getAtomWithIdx(5)->getAtomMapNum() == 2);
+    // we used to set an atom map for attachment points. This was github #3393
+    TEST_ASSERT(m->getAtomWithIdx(5)->getAtomMapNum() == 0);
 
     delete m;
   }
