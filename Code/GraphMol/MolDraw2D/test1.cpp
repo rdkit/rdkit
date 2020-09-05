@@ -211,6 +211,7 @@ void test2() {}
 
 void test3() {
   std::cout << " ----------------- Test 3" << std::endl;
+#if 0
   {
     std::string smiles = "C1CC1CC1ON1";
     std::string nameBase = "test3_1";
@@ -371,7 +372,6 @@ void test3() {
     }
 #endif
     {
-      std::cout << "test3_5" << std::endl;
       std::ofstream outs((nameBase + ".svg").c_str());
       MolDraw2DSVG drawer(200, 200, outs);
       drawer.drawOptions() = options;
@@ -459,7 +459,7 @@ void test3() {
     }
     delete m;
   }
-
+#endif
   std::cout << " Done" << std::endl;
 }
 
@@ -3280,6 +3280,123 @@ void testGithub3305() {
     drawer.writeDrawingText("testGithub3305_3.png");
   }
 #endif
+  {
+    auto m = "CCOC(=O)Nc1ccc(SCC2COC(Cn3ccnc3)(c3ccc(Cl)cc3Cl)O2)cc1"_smiles;
+    TEST_ASSERT(m);
+    RDDepict::compute2DCoords(*m);
+    WedgeMolBonds(*m, &(m->getConformer()));
+
+    std::string nameBase = "testGithub3305_";
+    static const int ha[] = {17, 18, 19, 20, 21, 6, 7, 8, 9, 31, 32};
+    std::vector<int> highlight_atoms(ha, ha + sizeof(ha) / sizeof(int));
+    std::map<int, DrawColour> highlight_colors;
+    MolDrawOptions options;
+    options.circleAtoms = true;
+    options.highlightColour = DrawColour(1, .5, .5);
+    options.continuousHighlight = true;
+
+#ifdef RDK_BUILD_CAIRO_SUPPORT
+    {
+      MolDraw2DCairo drawer(200, 200);
+      options.scaleHighlightBondWidth = true;
+      drawer.drawOptions() = options;
+      drawer.drawMolecule(*m, &highlight_atoms, &highlight_colors);
+      drawer.finishDrawing();
+      drawer.writeDrawingText(nameBase + "4.png");
+    }
+#endif
+    {
+      MolDraw2DSVG drawer(200, 200);
+      options.scaleHighlightBondWidth = true;
+      drawer.drawOptions() = options;
+      drawer.drawMolecule(*m, &highlight_atoms, &highlight_colors);
+      drawer.finishDrawing();
+      std::string text = drawer.getDrawingText();
+      std::ofstream outs("testGithub3305_4.svg");
+      outs << text;
+      outs.flush();
+      TEST_ASSERT(text.find("stroke:#FF7F7F;stroke-width:2.65") !=
+                  std::string::npos);
+      TEST_ASSERT(text.find("stroke:#FF7F7F;stroke-width:16px") ==
+                  std::string::npos);
+    }
+#ifdef RDK_BUILD_CAIRO_SUPPORT
+    {
+      MolDraw2DCairo drawer(200, 200);
+      options.scaleHighlightBondWidth = false;
+      drawer.drawOptions() = options;
+      drawer.drawMolecule(*m, &highlight_atoms, &highlight_colors);
+      drawer.finishDrawing();
+      drawer.writeDrawingText(nameBase + "5.png");
+    }
+#endif
+    {
+      MolDraw2DSVG drawer(200, 200);
+      options.scaleHighlightBondWidth = false;
+      drawer.drawOptions() = options;
+      drawer.drawMolecule(*m, &highlight_atoms, &highlight_colors);
+      drawer.finishDrawing();
+      std::string text = drawer.getDrawingText();
+      std::ofstream outs((nameBase + "5.svg").c_str());
+      outs << text;
+      outs.flush();
+      TEST_ASSERT(text.find("stroke:#FF7F7F;stroke-width:2.65") ==
+                  std::string::npos);
+      TEST_ASSERT(text.find("stroke:#FF7F7F;stroke-width:16px") !=
+                  std::string::npos);
+    }
+    options.continuousHighlight = false;
+#ifdef RDK_BUILD_CAIRO_SUPPORT
+    {
+      MolDraw2DCairo drawer(200, 200);
+      options.scaleHighlightBondWidth = true;
+      drawer.drawOptions() = options;
+      drawer.drawMolecule(*m, &highlight_atoms, &highlight_colors);
+      drawer.finishDrawing();
+      drawer.writeDrawingText(nameBase + "6.png");
+    }
+#endif
+    {
+      MolDraw2DSVG drawer(200, 200);
+      options.scaleHighlightBondWidth = true;
+      drawer.drawOptions() = options;
+      drawer.drawMolecule(*m, &highlight_atoms, &highlight_colors);
+      drawer.finishDrawing();
+      std::ofstream outs((nameBase + "6.svg").c_str());
+      std::string text = drawer.getDrawingText();
+      outs << text;
+      outs.flush();
+      TEST_ASSERT(text.find("stroke:#FF7F7F;stroke-width:0.66") !=
+                  std::string::npos);
+      TEST_ASSERT(text.find("stroke:#FF7F7F;stroke-width:4px") ==
+                  std::string::npos);
+    }
+#ifdef RDK_BUILD_CAIRO_SUPPORT
+    {
+      MolDraw2DCairo drawer(200, 200);
+      options.scaleHighlightBondWidth = false;
+      drawer.drawOptions() = options;
+      drawer.drawMolecule(*m, &highlight_atoms, &highlight_colors);
+      drawer.finishDrawing();
+      drawer.writeDrawingText(nameBase + "7.png");
+    }
+#endif
+    {
+      MolDraw2DSVG drawer(200, 200);
+      options.scaleHighlightBondWidth = false;
+      drawer.drawOptions() = options;
+      drawer.drawMolecule(*m, &highlight_atoms, &highlight_colors);
+      drawer.finishDrawing();
+      std::ofstream outs((nameBase + "7.svg").c_str());
+      std::string text = drawer.getDrawingText();
+      outs << text;
+      outs.flush();
+      TEST_ASSERT(text.find("stroke:#FF7F7F;stroke-width:0.66") ==
+                  std::string::npos);
+      TEST_ASSERT(text.find("stroke:#FF7F7F;stroke-width:4px") !=
+                  std::string::npos);
+    }
+  }
   std::cerr << "Done" << std::endl;
 }
 
@@ -3289,8 +3406,9 @@ int main() {
 #endif
 
   RDLog::InitLogs();
+  testGithub3305();
 
-#if 1
+#if 0
   test1();
   test2();
   test4();
@@ -3319,7 +3437,6 @@ int main() {
   testGithub1035();
   testGithub1271();
   testGithub1322();
-  testGithub565();
   test14BWPalette();
   test15ContinuousHighlightingWithGrid();
   test17MaxMinFontSize();
