@@ -3406,9 +3406,8 @@ int main() {
 #endif
 
   RDLog::InitLogs();
-  testGithub3305();
 
-#if 0
+#if 1
   test1();
   test2();
   test4();
