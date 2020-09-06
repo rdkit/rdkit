@@ -82,9 +82,11 @@ class RDKIT_GRAPHMOL_EXPORT SubstanceGroup : public RDProps {
     }
   };
 
-  // Unfortunately, SWIG generated wrapper code uses temporary variables that require a default ctor not be deleted.
   //! No default constructor
-  // SubstanceGroup() = delete;
+  #ifndef SWIG
+   // Unfortunately, SWIG generated wrapper code uses temporary variables that require a default ctor not be deleted.
+   SubstanceGroup() = delete;
+  #endif // !SWIG
 
   //! Main Constructor. Ownership is only set on this side of the relationship:
   //! mol->addSubstanceGroup(sgroup) still needs to be called to get ownership
