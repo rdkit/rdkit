@@ -16,7 +16,6 @@
 #include <GraphMol/FileParsers/MolFileStereochem.h>
 
 #include <RDGeneral/BoostStartInclude.h>
-#include <boost/foreach.hpp>
 #include <boost/lexical_cast.hpp>
 #include <boost/property_tree/ptree.hpp>
 #include <boost/property_tree/json_parser.hpp>
@@ -33,8 +32,8 @@ bool isAtomCandForChiralH(const RWMol &mol, const Atom *atom) {
   // conditions for needing a chiral H:
   //   - stereochem specified
   //   - in at least two rings
-  if ((!mol.getRingInfo()->isInitialized() ||
-       mol.getRingInfo()->numAtomRings(atom->getIdx()) > 1) &&
+  if (mol.getRingInfo()->isInitialized() &&
+      mol.getRingInfo()->numAtomRings(atom->getIdx()) > 1 &&
       (atom->getChiralTag() == Atom::CHI_TETRAHEDRAL_CCW ||
        atom->getChiralTag() == Atom::CHI_TETRAHEDRAL_CW)) {
     return true;
@@ -54,10 +53,9 @@ void prepareMolForDrawing(RWMol &mol, bool kekulize, bool addChiralHs,
   }
   if (addChiralHs) {
     std::vector<unsigned int> chiralAts;
-    for (RWMol::AtomIterator atIt = mol.beginAtoms(); atIt != mol.endAtoms();
-         ++atIt) {
-      if (isAtomCandForChiralH(mol, *atIt)) {
-        chiralAts.push_back((*atIt)->getIdx());
+    for (auto atom : mol.atoms()) {
+      if (isAtomCandForChiralH(mol, atom)) {
+        chiralAts.push_back(atom->getIdx());
       }
     }
     if (chiralAts.size()) {
@@ -156,8 +154,7 @@ void updateDrawerParamsFromJSON(MolDraw2D &drawer, const std::string &json) {
   get_colour_option(&pt, "backgroundColour", opts.backgroundColour);
   get_colour_option(&pt, "legendColour", opts.legendColour);
   if (pt.find("atomLabels") != pt.not_found()) {
-    BOOST_FOREACH (boost::property_tree::ptree::value_type const &item,
-                   pt.get_child("atomLabels")) {
+    for (const auto &item : pt.get_child("atomLabels")) {
       opts.atomLabels[boost::lexical_cast<int>(item.first)] =
           item.second.get_value<std::string>();
     }
