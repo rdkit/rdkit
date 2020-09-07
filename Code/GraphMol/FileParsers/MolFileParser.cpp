@@ -1005,6 +1005,34 @@ void ParseLinkNodeLine(RWMol *mol, const std::string &text, unsigned int line) {
   }
 }
 
+// Recursively populates querySet with COMPOSITE_AND queries
+// present in the input query. If the logic of the input query
+// is more complex, it returns nullptr and empty set.
+// The returned ptr should only be checked for not being null
+// and not used for any other purposes, as the actual result is
+// the querySet
+const QueryAtom::QUERYATOM_QUERY *getAndQuerySet(
+    const QueryAtom::QUERYATOM_QUERY *q,
+    std::set<const QueryAtom::QUERYATOM_QUERY *> &querySet) {
+  if (q) {
+    auto qOrig = q;
+    for (auto cq = qOrig->beginChildren(); cq != qOrig->endChildren(); ++cq) {
+      if (q == qOrig && q->getDescription() != "AtomAnd") {
+        q = nullptr;
+        break;
+      }
+      q = getAndQuerySet(cq->get(), querySet);
+    }
+    if (q == qOrig) {
+      querySet.insert(q);
+    }
+  }
+  if (!q) {
+    querySet.clear();
+  }
+  return q;
+}
+
 void ParseNewAtomList(RWMol *mol, const std::string &text, unsigned int line) {
   if (text.size() < 15) {
     std::ostringstream errout;
@@ -1026,7 +1054,6 @@ void ParseNewAtomList(RWMol *mol, const std::string &text, unsigned int line) {
     throw FileParseException(errout.str());
   }
   URANGE_CHECK(idx, mol->getNumAtoms());
-  QueryAtom *a = nullptr;
 
   int nQueries;
   try {
@@ -1050,6 +1077,10 @@ void ParseNewAtomList(RWMol *mol, const std::string &text, unsigned int line) {
            << "." << std::endl;
     throw FileParseException(errout.str());
   }
+  QueryAtom *a = nullptr;
+  QueryAtom *qaOrig = nullptr;
+  QueryAtom::QUERYATOM_QUERY *qOrig = nullptr;
+  Atom *aOrig = mol->getAtomWithIdx(idx);
   for (unsigned int i = 0; i < static_cast<unsigned int>(nQueries); i++) {
     unsigned int pos = 16 + i * 4;
     if (text.size() < pos + 4) {
@@ -1062,15 +1093,36 @@ void ParseNewAtomList(RWMol *mol, const std::string &text, unsigned int line) {
     atSymb.erase(atSymb.find(' '), atSymb.size());
     int atNum = PeriodicTable::getTable()->getAtomicNumber(atSymb);
     if (!i) {
-      a = new QueryAtom(*(mol->getAtomWithIdx(idx)));
-      // replace the query:
+      if (aOrig->hasQuery()) {
+        qaOrig = dynamic_cast<QueryAtom *>(aOrig);
+        if (qaOrig) {
+          qOrig = qaOrig->getQuery();
+        }
+      }
+      a = new QueryAtom(*aOrig);
       a->setAtomicNum(atNum);
+      if (!qOrig) {
+        qOrig = a->getQuery()->copy();
+      }
       a->setQuery(makeAtomNumQuery(atNum));
     } else {
       a->expandQuery(makeAtomNumQuery(atNum), Queries::COMPOSITE_OR, true);
     }
   }
   ASSERT_INVARIANT(a, "no atom built");
+  if (qOrig) {
+    std::set<const QueryAtom::QUERYATOM_QUERY *> querySet;
+    if (getAndQuerySet(qOrig, querySet)) {
+      for (auto q : querySet) {
+        if (q->getDescription() != "AtomAtomicNum") {
+          a->expandQuery(q->copy(), Queries::COMPOSITE_AND, true);
+        }
+      }
+    }
+    if (!qaOrig) {
+      delete qOrig;
+    }
+  }
   a->setProp(common_properties::_MolFileAtomQuery, 1);
   switch (text[14]) {
     case 'T':
