@@ -2,7 +2,13 @@
 // Created by Gareth Jones on 9/2/2020.
 //
 // Copyright 2020 Schrodinger, Inc
-//
+//  @@ All Rights Reserved @@
+//  This file is part of the RDKit.
+//  The contents are covered by the terms of the BSD license
+//  which is included in the file license.txt, found at the root
+//  of the RDKit source tree.
+
+
 
 %{
 #include <GraphMol/SubstanceGroup.h>
@@ -36,7 +42,7 @@ unsigned int getSubstanceGroupCount(RDKit::ROMol &mol);
 %include <GraphMol/SubstanceGroup.h>
 
 %extend RDKit::SubstanceGroup {
-  // Wrap getAtoms, getParentAtoms and getBonds to return vector<int> by value (nor reference).
+  // Wrap getAtoms, getParentAtoms and getBonds to return vector<int> by value (not reference).
   // int instead of unsigned int as vector<unsigned int> is not wrapped in C#
   // Not using references to avoid a free() error from Java
   const std::vector<int> getSgAtoms() {
