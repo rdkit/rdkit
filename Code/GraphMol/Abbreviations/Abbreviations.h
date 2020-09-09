@@ -24,6 +24,10 @@ RDKIT_ABBREVIATIONS_EXPORT struct AbbreviationDefinition {
   std::string rlabel;
   std::string smarts;
   std::shared_ptr<ROMol> mol;
+  bool operator==(const AbbreviationDefinition& other) const {
+    return llabel == other.llabel && rlabel == other.rlabel &&
+           smarts == other.smarts;
+  }
 };
 RDKIT_ABBREVIATIONS_EXPORT struct AbbreviationMatch {
   std::vector<std::pair<int, int>> match;

@@ -101,6 +101,7 @@ std::vector<AbbreviationMatch> findApplicableAbbreviationMatches(
   boost::dynamic_bitset<> covered(mol.getNumAtoms());
 
   for (const auto& abbrev : abbrevs) {
+    CHECK_INVARIANT(abbrev.mol, "molecule is null");
     if (maxCoverage > 0) {
       unsigned int nDummies;
       abbrev.mol->getProp(common_properties::numDummies, nDummies);
