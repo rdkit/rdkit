@@ -14,6 +14,7 @@
 #include <GraphMol/Abbreviations/Abbreviations.h>
 #include <GraphMol/SmilesParse/SmilesWrite.h>
 #include <GraphMol/SmilesParse/SmilesParse.h>
+#include <GraphMol/FileParsers/SequenceParsers.h>
 
 using namespace RDKit;
 
@@ -143,6 +144,122 @@ TEST_CASE("findApplicableMatches linkers") {
       CHECK(matches[1].abbrev.llabel == "pentyl");
       CHECK(matches[0].match[9].second == 10);
       CHECK(matches[1].match[0].second == 10);
+    }
+  }
+}
+
+TEST_CASE("applyMatches") {
+  auto abbrevs = Abbreviations::Utils::getDefaultAbbreviations();
+  SECTION("basics") {
+    {
+      auto m = "FC(F)(F)CC(=O)O"_smiles;
+      REQUIRE(m);
+      double maxCoverage = 1.0;
+      auto matches = Abbreviations::findApplicableAbbreviationMatches(
+          *m, abbrevs, maxCoverage);
+      CHECK(matches.size() == 2);
+      Abbreviations::applyMatches(*m, matches);
+      CHECK(m->getNumAtoms() == 3);
+      CHECK(MolToCXSmiles(*m) == "*C* |$CF3;;CO2H$|");
+    }
+  }
+}
+
+TEST_CASE("applyMatches linkers") {
+  auto linkers = Abbreviations::Utils::getDefaultLinkers();
+  SECTION("basics") {
+    {
+      auto m = "FCOCCOCCOCCCCCCCCl"_smiles;
+      REQUIRE(m);
+      double maxCoverage = 1.0;
+      auto matches = Abbreviations::findApplicableAbbreviationMatches(
+          *m, linkers, maxCoverage);
+      CHECK(matches.size() == 2);
+      Abbreviations::applyMatches(*m, matches);
+      CHECK(m->getNumAtoms() == 5);
+      CHECK(MolToCXSmiles(*m) == "FC**Cl |$;;PEG3;pentyl;$|");
+    }
+    {
+      auto m = "COC1CCC(C)CC1"_smiles;
+      REQUIRE(m);
+      double maxCoverage = 1.0;
+      auto matches = Abbreviations::findApplicableAbbreviationMatches(
+          *m, linkers, maxCoverage);
+      CHECK(matches.size() == 1);
+      Abbreviations::applyMatches(*m, matches);
+      CHECK(m->getNumAtoms() == 4);
+      CHECK(MolToCXSmiles(*m) == "C*OC |$;cyhex;;$|");
+    }
+  }
+}
+
+TEST_CASE("condense abbreviations") {
+  auto abbrevs = Abbreviations::Utils::getDefaultAbbreviations();
+  SECTION("basics") {
+    {
+      auto m = "FC(F)(F)CC(=O)O"_smiles;
+      REQUIRE(m);
+      double maxCoverage = 1.0;
+      Abbreviations::condenseMolAbbreviations(*m, abbrevs, maxCoverage);
+      CHECK(MolToCXSmiles(*m) == "*C* |$CF3;;CO2H$|");
+    }
+  }
+}
+
+TEST_CASE("condense abbreviations linkers") {
+  auto linkers = Abbreviations::Utils::getDefaultLinkers();
+  SECTION("basics") {
+    {
+      auto m = "FCOCCOCCOCCCCCCCCl"_smiles;
+      REQUIRE(m);
+      double maxCoverage = 1.0;
+      Abbreviations::condenseMolAbbreviations(*m, linkers, maxCoverage);
+      CHECK(m->getNumAtoms() == 5);
+      CHECK(MolToCXSmiles(*m) == "FC**Cl |$;;PEG3;pentyl;$|");
+    }
+    {
+      auto m = "COC1CCC(C)CC1"_smiles;
+      REQUIRE(m);
+      double maxCoverage = 1.0;
+      Abbreviations::condenseMolAbbreviations(*m, linkers, maxCoverage);
+      CHECK(m->getNumAtoms() == 4);
+      CHECK(MolToCXSmiles(*m) == "C*OC |$;cyhex;;$|");
+    }
+  }
+  SECTION("peptides") {
+    std::unique_ptr<RWMol> m(SequenceToMol("GYTKC"));
+    REQUIRE(m);
+    double maxCoverage = 1.0;
+    Abbreviations::condenseMolAbbreviations(*m, linkers, maxCoverage);
+    CHECK(MolToCXSmiles(*m) == "NCC(=O)****O |$;;;;tyr;thr;lys;cys;$|");
+  }
+}
+
+TEST_CASE("abbreviations and linkers") {
+  auto abbrevs = Abbreviations::Utils::getDefaultAbbreviations();
+  auto linkers = Abbreviations::Utils::getDefaultLinkers();
+  SECTION("basics") {
+    {  // this isn't the order we'd normally do this in:
+      auto m = "COC1CCC(C)CC1"_smiles;
+      REQUIRE(m);
+      double maxCoverage = 1.0;
+      Abbreviations::condenseMolAbbreviations(*m, abbrevs, maxCoverage);
+      CHECK(m->getNumAtoms() == 8);
+      CHECK(MolToCXSmiles(*m) == "*C1CCC(C)CC1 |$OMe;;;;;;;$|");
+      Abbreviations::condenseMolAbbreviations(*m, linkers, maxCoverage);
+      CHECK(m->getNumAtoms() == 3);
+      CHECK(MolToCXSmiles(*m) == "**C |$OMe;cyhex;$|");
+    }
+    {  // a more sensible order
+      auto m = "COC1CCC(C)CC1"_smiles;
+      REQUIRE(m);
+      double maxCoverage = 1.0;
+      Abbreviations::condenseMolAbbreviations(*m, linkers, maxCoverage);
+      CHECK(m->getNumAtoms() == 4);
+      CHECK(MolToCXSmiles(*m) == "C*OC |$;cyhex;;$|");
+      Abbreviations::condenseMolAbbreviations(*m, abbrevs, maxCoverage);
+      CHECK(m->getNumAtoms() == 4);
+      CHECK(MolToCXSmiles(*m) == "C*OC |$;cyhex;;$|");
     }
   }
 }

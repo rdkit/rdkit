@@ -45,9 +45,15 @@ parseAbbreviations(const std::string& text, bool removeExtraDummies = false,
                    bool allowConnectionToDummies = false);
 }  // namespace Utils
 
-std::vector<AbbreviationMatch> findApplicableAbbreviationMatches(
+RDKIT_ABBREVIATIONS_EXPORT std::vector<AbbreviationMatch>
+findApplicableAbbreviationMatches(
     const ROMol& mol, const std::vector<AbbreviationDefinition>& abbrevs,
     double maxCoverage = 0.4);
+RDKIT_ABBREVIATIONS_EXPORT void applyMatches(
+    RWMol& mol, const std::vector<AbbreviationMatch>& matches);
+RDKIT_ABBREVIATIONS_EXPORT void condenseMolAbbreviations(
+    RWMol& mol, const std::vector<AbbreviationDefinition>& abbrevs,
+    double maxCoverage = 0.4, bool sanitize = true);
 
 }  // namespace Abbreviations
 }  // namespace RDKit
