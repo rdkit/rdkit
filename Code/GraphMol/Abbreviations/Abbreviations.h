@@ -25,6 +25,13 @@ RDKIT_ABBREVIATIONS_EXPORT struct AbbreviationDefinition {
   std::string smarts;
   std::shared_ptr<ROMol> mol;
 };
+RDKIT_ABBREVIATIONS_EXPORT struct AbbreviationMatch {
+  std::vector<std::pair<int, int>> match;
+  AbbreviationDefinition abbrev;
+  AbbreviationMatch(const std::vector<std::pair<int, int>>& matchArg,
+                    const AbbreviationDefinition& abbrevArg)
+      : match(matchArg), abbrev(abbrevArg){};
+};
 namespace common_properties {
 RDKIT_ABBREVIATIONS_EXPORT extern const std::string numDummies;
 }
@@ -37,6 +44,10 @@ RDKIT_ABBREVIATIONS_EXPORT std::vector<AbbreviationDefinition>
 parseAbbreviations(const std::string& text, bool removeExtraDummies = false,
                    bool allowConnectionToDummies = false);
 }  // namespace Utils
+
+std::vector<AbbreviationMatch> findApplicableAbbreviationMatches(
+    const ROMol& mol, const std::vector<AbbreviationDefinition>& abbrevs,
+    double maxCoverage = 0.4);
 
 }  // namespace Abbreviations
 }  // namespace RDKit
