@@ -263,3 +263,66 @@ TEST_CASE("abbreviations and linkers") {
     }
   }
 }
+
+TEST_CASE("labelMatches") {
+  auto abbrevs = Abbreviations::Utils::getDefaultAbbreviations();
+  SECTION("basics") {
+    {
+      auto m = "CC(C)CC(F)(F)F"_smiles;
+      REQUIRE(m);
+      double maxCoverage = 1.0;
+      auto matches = Abbreviations::findApplicableAbbreviationMatches(
+          *m, abbrevs, maxCoverage);
+      CHECK(matches.size() == 2);
+      Abbreviations::labelMatches(*m, matches);
+      CHECK(m->getNumAtoms() == 8);
+      const auto &sgs = getSubstanceGroups(*m);
+      REQUIRE(sgs.size() == 2);
+      CHECK(sgs[0].getProp<std::string>("TYPE") == "SUP");
+      CHECK(sgs[0].getProp<std::string>("LABEL") == "iPr");
+      CHECK(sgs[0].getBonds() == std::vector<unsigned int>({2}));
+      CHECK(sgs[0].getAtoms() == std::vector<unsigned int>({1, 0, 2}));
+      CHECK(sgs[0].getAttachPoints().size() == 1);
+      CHECK(sgs[0].getAttachPoints()[0].aIdx == 1);
+      CHECK(sgs[0].getAttachPoints()[0].lvIdx == 3);
+
+      CHECK(sgs[1].getProp<std::string>("TYPE") == "SUP");
+      CHECK(sgs[1].getProp<std::string>("LABEL") == "CF3");
+      CHECK(sgs[1].getBonds() == std::vector<unsigned int>({3}));
+      CHECK(sgs[1].getAtoms() == std::vector<unsigned int>({4, 5, 6, 7}));
+      CHECK(sgs[1].getAttachPoints().size() == 1);
+      CHECK(sgs[1].getAttachPoints()[0].aIdx == 4);
+      CHECK(sgs[1].getAttachPoints()[0].lvIdx == 3);
+    }
+  }
+}
+
+TEST_CASE("labelMolAbbreviations") {
+  auto abbrevs = Abbreviations::Utils::getDefaultAbbreviations();
+  SECTION("basics") {
+    {
+      auto m = "CC(C)CC(F)(F)F"_smiles;
+      REQUIRE(m);
+      double maxCoverage = 1.0;
+      Abbreviations::labelMolAbbreviations(*m, abbrevs, maxCoverage);
+      CHECK(m->getNumAtoms() == 8);
+      const auto &sgs = getSubstanceGroups(*m);
+      REQUIRE(sgs.size() == 2);
+      CHECK(sgs[0].getProp<std::string>("TYPE") == "SUP");
+      CHECK(sgs[0].getProp<std::string>("LABEL") == "iPr");
+      CHECK(sgs[0].getBonds() == std::vector<unsigned int>({2}));
+      CHECK(sgs[0].getAtoms() == std::vector<unsigned int>({1, 0, 2}));
+      CHECK(sgs[0].getAttachPoints().size() == 1);
+      CHECK(sgs[0].getAttachPoints()[0].aIdx == 1);
+      CHECK(sgs[0].getAttachPoints()[0].lvIdx == 3);
+
+      CHECK(sgs[1].getProp<std::string>("TYPE") == "SUP");
+      CHECK(sgs[1].getProp<std::string>("LABEL") == "CF3");
+      CHECK(sgs[1].getBonds() == std::vector<unsigned int>({3}));
+      CHECK(sgs[1].getAtoms() == std::vector<unsigned int>({4, 5, 6, 7}));
+      CHECK(sgs[1].getAttachPoints().size() == 1);
+      CHECK(sgs[1].getAttachPoints()[0].aIdx == 4);
+      CHECK(sgs[1].getAttachPoints()[0].lvIdx == 3);
+    }
+  }
+}

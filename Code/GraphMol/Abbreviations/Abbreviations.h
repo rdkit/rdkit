@@ -51,9 +51,14 @@ findApplicableAbbreviationMatches(
     double maxCoverage = 0.4);
 RDKIT_ABBREVIATIONS_EXPORT void applyMatches(
     RWMol& mol, const std::vector<AbbreviationMatch>& matches);
+RDKIT_ABBREVIATIONS_EXPORT void labelMatches(
+    RWMol& mol, const std::vector<AbbreviationMatch>& matches);
 RDKIT_ABBREVIATIONS_EXPORT void condenseMolAbbreviations(
     RWMol& mol, const std::vector<AbbreviationDefinition>& abbrevs,
     double maxCoverage = 0.4, bool sanitize = true);
+RDKIT_ABBREVIATIONS_EXPORT void labelMolAbbreviations(
+    RWMol& mol, const std::vector<AbbreviationDefinition>& abbrevs,
+    double maxCoverage = 0.4);
 
 }  // namespace Abbreviations
 }  // namespace RDKit

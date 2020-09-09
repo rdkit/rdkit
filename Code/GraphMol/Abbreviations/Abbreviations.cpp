@@ -65,6 +65,25 @@ void applyMatches(RWMol& mol, const std::vector<AbbreviationMatch>& matches) {
   }
 }
 
+void labelMatches(RWMol& mol, const std::vector<AbbreviationMatch>& matches) {
+  for (const auto& amatch : matches) {
+    // throughout this remember that atom 0 in the match is the dummy
+    SubstanceGroup sg(&mol, "SUP");
+    sg.setProp("LABEL", amatch.abbrev.llabel);
+
+    for (unsigned int i = 1; i < amatch.match.size(); ++i) {
+      const auto& pr = amatch.match[i];
+      sg.addAtomWithIdx(pr.second);
+    }
+    auto bnd =
+        mol.getBondBetweenAtoms(amatch.match[0].second, amatch.match[1].second);
+    CHECK_INVARIANT(bnd, "bond to attachment point not found");
+    sg.addBondWithIdx(bnd->getIdx());
+    sg.addAttachPoint(amatch.match[1].second, amatch.match[0].second, "1");
+    addSubstanceGroup(mol, sg);
+  }
+}
+
 std::vector<AbbreviationMatch> findApplicableAbbreviationMatches(
     const ROMol& mol, const std::vector<AbbreviationDefinition>& abbrevs,
     double maxCoverage) {
@@ -139,6 +158,14 @@ void condenseMolAbbreviations(
   if (sanitize) {
     MolOps::symmetrizeSSSR(mol);
   }
+};
+
+void labelMolAbbreviations(RWMol& mol,
+                           const std::vector<AbbreviationDefinition>& abbrevs,
+                           double maxCoverage) {
+  auto applicable =
+      findApplicableAbbreviationMatches(mol, abbrevs, maxCoverage);
+  labelMatches(mol, applicable);
 };
 
 }  // namespace Abbreviations
