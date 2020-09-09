@@ -114,6 +114,14 @@ ROMol *createAbbreviationMol(const std::string &txt, bool removeExtraDummies,
     smarts = txt;
   }
   RWMol *q = SmartsToMol(smarts);
+  if (!q) {
+    return q;
+  }
+  if (q->getNumAtoms() < 2) {
+    BOOST_LOG(rdErrorLog) << "abbreviation with <2 atoms ignored" << std::endl;
+    delete q;
+    return nullptr;
+  }
   MolOps::AdjustQueryParameters ps;
   ps.adjustDegree = true;
   ps.adjustDegreeFlags = MolOps::AdjustQueryWhichFlags::ADJUST_IGNOREDUMMIES;
@@ -159,7 +167,9 @@ std::vector<AbbreviationDefinition> parseAbbreviations(
     defn.smarts = *field;
     defn.mol.reset(detail::createAbbreviationMol(
         defn.smarts, removeExtraDummies, allowConnectionToDummies));
-    res.push_back(defn);
+    if (defn.mol) {
+      res.push_back(defn);
+    }
   }
 
   return res;
