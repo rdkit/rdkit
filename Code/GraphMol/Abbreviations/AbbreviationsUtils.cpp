@@ -175,10 +175,12 @@ std::vector<AbbreviationDefinition> parseAbbreviations(
   return res;
 }
 std::vector<AbbreviationDefinition> getDefaultAbbreviations() {
-  return parseAbbreviations(data::defaultAbbreviations);
+  static auto defs = parseAbbreviations(data::defaultAbbreviations);
+  return defs;
 }
 std::vector<AbbreviationDefinition> getDefaultLinkers() {
-  return parseAbbreviations(data::defaultLinkers, true, true);
+  static auto defs = parseAbbreviations(data::defaultLinkers, true, true);
+  return defs;
 }
 }  // namespace Utils
 
