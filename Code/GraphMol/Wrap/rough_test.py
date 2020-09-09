@@ -6142,7 +6142,20 @@ M  END
     for mol, refMol in zip(mols, refMols):
       self.assertEqual(Chem.MolToSmiles(mol), Chem.MolToSmiles(refMol))
 
+  def test_github3403(self):
+    core1 = "[$(C-!@[a])](=O)(Cl)"
+    sma = Chem.MolFromSmarts(core1)
+    
+    m = Chem.MolFromSmiles("c1ccccc1C(=O)Cl")
+    assert not m.HasSubstructMatch(sma, recursionPossible=False), "I shouldn't match (1)"
+    
+    m = Chem.MolFromSmiles("c1ccccc1C(=O)Cl")
+    assert mh.HasSubstructMatch(sma)
+    
+    m = Chem.MolFromSmiles("c1ccccc1C(=O)Cl")
+    assert not m.HasSubstructMatch(sma, recursionPossible=False), "I shouldn't match (2)"
 
+    
 if __name__ == '__main__':
   if "RDTESTCASE" in os.environ:
     suite = unittest.TestSuite()
