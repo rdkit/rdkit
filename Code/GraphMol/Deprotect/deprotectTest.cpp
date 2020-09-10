@@ -31,19 +31,19 @@ TEST_CASE("Standard deprotections", "[deprotect]") {
     CHECK(res->getProp<std::vector<std::string>>("DEPROTECTIONS") == expected);
   }
   SECTION("test deprotection examples") {
-    for(auto &data : getDeprotectData()) {
+    for(auto &data : getDeprotections()) {
       std::vector<DeprotectData> vect = {data};
       std::vector<std::string> examples;
       boost::split(examples, data.example, boost::is_any_of(">"));
-      std::unqiue_ptr<ROMol> start(SmilesToMol(examples[0]));
-      std::unqiue_ptr<ROMol> end(SmilesToMol(examples[2]));
+      std::unique_ptr<ROMol> start(SmilesToMol(examples[0]));
+      std::unique_ptr<ROMol> end(SmilesToMol(examples[2]));
       // check the one
-      auto res = deprotect(*m, vect);
-      CHECK(MolToSmiles(*res) == MolToSmiles(**end));
+      auto res = deprotect(*start, vect);
+      CHECK(MolToSmiles(*res) == MolToSmiles(*end));
       // check them all
 
-      res = deprotect(*m);
-      CHECK(MolToSmiles(*res) == MolToSmiles(**end));
+      res = deprotect(*start);
+      CHECK(MolToSmiles(*res) == MolToSmiles(*end));
     }
-
+  }
 }
