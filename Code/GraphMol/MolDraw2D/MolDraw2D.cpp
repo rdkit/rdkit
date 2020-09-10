@@ -2987,13 +2987,14 @@ void MolDraw2D::adjustBondEndForLabel(int atnum, const Point2D &nbr_cds,
 pair<string, OrientType> MolDraw2D::getAtomSymbolAndOrientation(
     const Atom &atom) const {
   OrientType orient = getAtomOrientation(atom);
-  string symbol = getAtomSymbol(atom);
+  string symbol = getAtomSymbol(atom, orient);
 
   return std::make_pair(symbol, orient);
 }
 
 // ****************************************************************************
-string MolDraw2D::getAtomSymbol(const RDKit::Atom &atom) const {
+string MolDraw2D::getAtomSymbol(const RDKit::Atom &atom,
+                                OrientType orientation) const {
   // adds XML-like annotation for super- and sub-script, in the same manner
   // as MolDrawing.py. My first thought was for a LaTeX-like system,
   // obviously...
@@ -3006,6 +3007,25 @@ string MolDraw2D::getAtomSymbol(const RDKit::Atom &atom) const {
     // specified labels are trump: no matter what else happens we will show
     // them.
     symbol = drawOptions().atomLabels.find(atom.getIdx())->second;
+  } else if (atom.hasProp(common_properties::_displayLabel) ||
+             atom.hasProp(common_properties::_displayLabelW)) {
+    // logic here: if either _displayLabel or _displayLabelW is set, we will
+    // definitely use one of those. if only one is set, we'll use that one if
+    // both are set and the orientation is W then we'll use _displayLabelW,
+    // otherwise _displayLabel
+
+    std::string lbl;
+    std::string lblw;
+    atom.getPropIfPresent(common_properties::_displayLabel, lbl);
+    atom.getPropIfPresent(common_properties::_displayLabelW, lblw);
+    if (lbl.empty()) {
+      lbl = lblw;
+    }
+    if (orientation == OrientType::W && !lblw.empty()) {
+      symbol = lblw;
+    } else {
+      symbol = lbl;
+    }
   } else if (atom.hasProp(common_properties::atomLabel)) {
     symbol = atom.getProp<std::string>(common_properties::atomLabel);
   } else if (drawOptions().dummiesAreAttachments && atom.getAtomicNum() == 0 &&
@@ -3089,7 +3109,7 @@ string MolDraw2D::getAtomSymbol(const RDKit::Atom &atom) const {
   }
   // cout << "Atom symbol " << atom.getIdx() << " : " << symbol << endl;
   return symbol;
-}
+}  // namespace RDKit
 
 // ****************************************************************************
 OrientType MolDraw2D::getAtomOrientation(const RDKit::Atom &atom) const {

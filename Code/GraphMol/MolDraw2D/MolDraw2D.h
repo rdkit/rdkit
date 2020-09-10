@@ -782,7 +782,7 @@ class RDKIT_MOLDRAW2D_EXPORT MolDraw2D {
   // adds LaTeX-like annotation for super- and sub-script.
   std::pair<std::string, OrientType> getAtomSymbolAndOrientation(
       const Atom &atom) const;
-  std::string getAtomSymbol(const Atom &atom) const;
+  std::string getAtomSymbol(const Atom &atom, OrientType orientation) const;
   OrientType getAtomOrientation(const Atom &atom) const;
 
   // things used by calculateScale.

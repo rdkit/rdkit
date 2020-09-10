@@ -736,7 +736,7 @@ of threads allowed on your computer.
 The original 2D->3D conversion provided with the RDKit was not intended
 to be a replacement for a “real” conformational analysis tool; it
 merely provides quick 3D structures for cases when they are
-required. We believe, however, that the newer ETKDG method[#riniker2]_ should be
+required. We believe, however, that the newer ETKDG method [#riniker2]_ should be
 adequate for most purposes.
 
 
@@ -899,12 +899,12 @@ data/test_multi_colours.py, which produces the somewhat garish
 
 As of version 2020.03, it is possible to add arbitrary small strings
 to annotate atoms and bonds in the drawing.  The strings are added as
-properties 'atomNote' and
-'bondNote' and they will be placed automatically
+properties ``atomNote`` and
+``bondNote`` and they will be placed automatically
 close to the atom or bond in question in a manner intended to minimise
 their clash with the rest of the drawing.  For convenience, here are 3
 flags in 
-`MolDraw2DOptions` that will add stereo information (R/S to atoms, E/Z
+``MolDraw2DOptions`` that will add stereo information (R/S to atoms, E/Z
 to bonds) and atom and bond sequence numbers.
 
 .. doctest::
@@ -917,12 +917,69 @@ to bonds) and atom and bond sequence numbers.
    >>> d.drawOptions().addAtomIndices = True
    >>> d.DrawMolecule(mol)
    >>> d.FinishDrawing()
-   >>> with open('atom_annotation_1.png', 'wb') as f:   # doctest: +SKIP
-   ...     f.write(d.GetDrawingText())
+   >>> d.WriteDrawingText('atom_annotation_1.png')   # doctest: +SKIP
 
 will produce
 
 .. image:: images/atom_annotation_1.png
+
+If atoms have an ``atomLabel`` property set, this will be used when drawing them:
+
+.. doctest::
+   
+   >>> smi = 'c1nc(*)ccc1* |$;;;R1;;;;R2$|'
+   >>> mol = Chem.MolFromSmiles(smi)
+   >>> mol.GetAtomWithIdx(3).GetProp("atomLabel")
+   'R1'
+   >>> mol.GetAtomWithIdx(7).GetProp("atomLabel")
+   'R2'
+   >>> d = rdMolDraw2D.MolDraw2DCairo(250, 250)
+   >>> rdMolDraw2D.PrepareAndDrawMolecule(d,mol)
+   >>> d.WriteDrawingText("./images/atom_labels_1.png")   # doctest: +SKIP
+
+gives:
+
+.. image:: images/atom_labels_1.png
+
+Since the ``atomLabel`` property is also used for other things (for example in CXSMILES as demonstrated),
+if you want to provide your own atom labels, it's better to use the ``_displayLabel`` property:
+
+   >>> smi = 'c1nc(*)ccc1* |$;;;R1;;;;R2$|'
+   >>> mol = Chem.MolFromSmiles(smi)
+   >>> mol.GetAtomWithIdx(3).SetProp("_displayLabel","R<sub>1</sub>")
+   >>> mol.GetAtomWithIdx(7).SetProp("_displayLabel","R<sub>2</sub>")
+   >>> d = rdMolDraw2D.MolDraw2DCairo(250, 250)
+   >>> rdMolDraw2D.PrepareAndDrawMolecule(d,mol)
+   >>> d.WriteDrawingText("./images/atom_labels_2.png")   # doctest: +SKIP
+
+this gives:
+
+.. image:: images/atom_labels_2.png
+
+Note that you can use ``<sup>`` and ``<sub>`` in these labels to provide super- and subscripts.
+
+Finally, if you have atom labels which should be displayed differently when the bond comes 
+into them from the right (the West), you can also set the ``_displayLabelW`` property:
+
+
+.. doctest::
+
+   >>> smi = 'c1nc(*)ccc1* |$;;;R1;;;;R2$|'
+   >>> mol = Chem.MolFromSmiles(smi)
+   >>> mol.GetAtomWithIdx(3).SetProp("_displayLabel","CO<sub>2</sub>H")
+   >>> mol.GetAtomWithIdx(3).SetProp("_displayLabelW","HO<sub>2</sub>C")
+   >>> mol.GetAtomWithIdx(7).SetProp("_displayLabel","CO<sub>2</sub><sup>-</sup>")
+   >>> mol.GetAtomWithIdx(7).SetProp("_displayLabelW","<sup>-</sup>OOC")
+   >>> d = rdMolDraw2D.MolDraw2DCairo(250, 250)
+   >>> rdMolDraw2D.PrepareAndDrawMolecule(d,mol)
+   >>> d.WriteDrawingText("./images/atom_labels_3.png")   # doctest: +SKIP
+
+this gives:
+
+.. image:: images/atom_labels_3.png
+
+
+
 
 Metadata in Molecule Images
 ===========================
