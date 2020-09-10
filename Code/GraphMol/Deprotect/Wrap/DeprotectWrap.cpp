@@ -77,10 +77,11 @@ struct deprotect_wrap {
         .def_readonly("full_name", &RDKit::Deprotect::DeprotectData::full_name)
         .def_readonly("abbreviation", &RDKit::Deprotect::DeprotectData::abbreviation)
         .def_readonly("reaction_smarts", &RDKit::Deprotect::DeprotectData::reaction_smarts)
+        .def_readonly("example", &RDKit::Deprotect::DeprotectData::example)
         .def("isValid", &RDKit::Deprotect::DeprotectData::isValid,
              "Returns True if the DeprotectData has a valid reaction");
 
-    python::def("getDeprotections", &RDKit::GetDeprotectionsWrap,
+    python::def("GetDeprotections", &RDKit::GetDeprotectionsWrap,
                 "Return the default list of deprotections");
 
     python::def("Deprotect", &RDKit::DeprotectWrap, python::arg("mol"),

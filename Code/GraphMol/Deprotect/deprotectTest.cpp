@@ -16,6 +16,7 @@
 #include <GraphMol/SmilesParse/SmilesParse.h>
 #include <GraphMol/SmilesParse/SmilesWrite.h>
 #include <GraphMol/Deprotect/Deprotect.h>
+#include <boost/algorithm/string.hpp>
 
 using namespace RDKit;
 using namespace RDKit::Deprotect;
@@ -29,4 +30,20 @@ TEST_CASE("Standard deprotections", "[deprotect]") {
     std::vector<std::string> expected{"Boc", "Boc"};
     CHECK(res->getProp<std::vector<std::string>>("DEPROTECTIONS") == expected);
   }
+  SECTION("test deprotection examples") {
+    for(auto &data : getDeprotectData()) {
+      std::vector<DeprotectData> vect = {data};
+      std::vector<std::string> examples;
+      boost::split(examples, data.example, boost::is_any_of(">"));
+      std::unqiue_ptr<ROMol> start(SmilesToMol(examples[0]));
+      std::unqiue_ptr<ROMol> end(SmilesToMol(examples[2]));
+      // check the one
+      auto res = deprotect(*m, vect);
+      CHECK(MolToSmiles(*res) == MolToSmiles(**end));
+      // check them all
+
+      res = deprotect(*m);
+      CHECK(MolToSmiles(*res) == MolToSmiles(**end));
+    }
+
 }

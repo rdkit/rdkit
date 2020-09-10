@@ -33,5 +33,17 @@ class TestCase(unittest.TestCase):
         self.assertEqual(m2.GetPropsAsDict()["DEPROTECTION_COUNT"],
                          2)
 
+    def test_examples(self):
+        count = 0
+        for data in rd.GetDeprotections():
+            if data.example:
+                start,end = data.example.split(">>")
+                m = Chem.MolFromSmiles(start)
+                m2 = rd.Deprotect(m, [data])
+                print("Testing", data.full_name)
+                self.assertEqual(Chem.MolToSmiles(m2), Chem.CanonSmiles(end))
+                count += 1
+        assert count
+                
 if __name__ == "__main__":
     unittest.main()
