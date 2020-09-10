@@ -53,7 +53,7 @@ const std::vector<DeprotectData> &getDeprotections() {
        "methoxymethyl_ether",
        "COCOC>>CO"},
       {"alcohol", "[C;R0][O;R0][C;R0][C;R0][O;R0][C;R0][O;X2:1]>>[O;H1:1]",
-       "MEM", "β-Methoxyethoxymethyl_ether",
+       "MEM", "beta-Methoxyethoxymethyl_ether",
        "C(C)(C)OCOCCOC>>C(C)(C)O"},
       {"alcohol", "[O;!$(*C(=O)):1]c1[c;H1][c;H1][c;H1][c;H1][c;H1]1>>[O;H1:1]",
        "Bn", "benzyl",
