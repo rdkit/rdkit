@@ -20,13 +20,14 @@ class RWMol;
 
 namespace Abbreviations {
 RDKIT_ABBREVIATIONS_EXPORT struct AbbreviationDefinition {
-  std::string llabel;
-  std::string rlabel;
+  std::string label;
+  std::string displayLabel;
+  std::string displayLabelW;
   std::string smarts;
   std::shared_ptr<ROMol> mol;
   bool operator==(const AbbreviationDefinition& other) const {
-    return llabel == other.llabel && rlabel == other.rlabel &&
-           smarts == other.smarts;
+    return label == other.label && displayLabel == other.displayLabel &&
+           displayLabelW == other.displayLabelW && smarts == other.smarts;
   }
 };
 RDKIT_ABBREVIATIONS_EXPORT struct AbbreviationMatch {
@@ -59,11 +60,14 @@ getDefaultLinkers();
 Format of the text data:
   A series of lines, each of which contains:
 
-    label rlabel SMARTS
+    label SMARTS displayLabel displayLabelW
 
+  the "displayLabel" and "displayLabelW" fields are optional.
   where label is the label used for the abbreviation,
-  rlabel is the display label if a bond comes in from the right,
-  and SMARTS is the SMARTS definition of the abbreviation.
+  SMARTS is the SMARTS definition of the abbreviation.
+  displayLabel is used in drawings to render the abbreviations.
+  displayLabelW is the display label if a bond comes in from the right
+
   Use dummies to indicate attachment points. The assumption is that the first
   atom is a dummy (one will be added if this is not true) and that the second
   atom is the surrogate for the rest of the group.

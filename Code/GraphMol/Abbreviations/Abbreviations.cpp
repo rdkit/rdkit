@@ -30,7 +30,16 @@ void applyMatches(RWMol& mol, const std::vector<AbbreviationMatch>& matches) {
     auto connectIdx = amatch.match[1].second;
     auto connectingAtom = mol.getAtomWithIdx(connectIdx);
     connectingAtom->setProp(RDKit::common_properties::atomLabel,
-                            amatch.abbrev.llabel);
+                            amatch.abbrev.label);
+    if (!amatch.abbrev.displayLabel.empty()) {
+      connectingAtom->setProp(RDKit::common_properties::_displayLabel,
+                              amatch.abbrev.displayLabel);
+    }
+    if (!amatch.abbrev.displayLabelW.empty()) {
+      connectingAtom->setProp(RDKit::common_properties::_displayLabelW,
+                              amatch.abbrev.displayLabelW);
+    }
+
     connectingAtom->setFormalCharge(0);
     connectingAtom->setAtomicNum(0);
     connectingAtom->setIsotope(0);
@@ -69,7 +78,7 @@ void labelMatches(RWMol& mol, const std::vector<AbbreviationMatch>& matches) {
   for (const auto& amatch : matches) {
     // throughout this remember that atom 0 in the match is the dummy
     SubstanceGroup sg(&mol, "SUP");
-    sg.setProp("LABEL", amatch.abbrev.llabel);
+    sg.setProp("LABEL", amatch.abbrev.label);
 
     for (unsigned int i = 1; i < amatch.match.size(); ++i) {
       const auto& pr = amatch.match[i];

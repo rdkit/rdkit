@@ -21,10 +21,10 @@ class TestCase(unittest.TestCase):
     self.defaultLinkers = rdAbbreviations.GetDefaultLinkers()
 
   def testParsingAbbrevs(self):
-    defn = '''CO2Et    EtO2C    C(=O)OCC
-COOEt    EtOOC    C(=O)OCC
-OiBu     iBuO     OCC(C)C
-tBu      tBu      C(C)(C)C'''
+    defn = '''CO2Et    C(=O)OCC
+COOEt    C(=O)OCC
+OiBu     OCC(C)C
+tBu      C(C)(C)C'''
     abbrevs = rdAbbreviations.ParseAbbreviations(defn)
     m = Chem.MolFromSmiles('CCC(=O)OCC')
     nm = rdAbbreviations.CondenseMolAbbreviations(m, abbrevs, maxCoverage=1.0)

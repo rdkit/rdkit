@@ -22,8 +22,9 @@ TEST_CASE("parsing") {
   SECTION("abbreviations") {
     auto abbrevs = Abbreviations::Utils::getDefaultAbbreviations();
     CHECK(abbrevs.size() == 29);
-    CHECK(abbrevs[0].llabel == "CO2Et");
-    CHECK(abbrevs[0].rlabel == "EtO2C");
+    CHECK(abbrevs[0].label == "CO2Et");
+    CHECK(abbrevs[0].displayLabel == "CO<sub>2</sub>Et");
+    CHECK(abbrevs[0].displayLabelW == "EtO<sub>2</sub>C");
     CHECK(abbrevs[0].smarts == "C(=O)OCC");
     REQUIRE(abbrevs[0].mol);
     CHECK(abbrevs[0].mol->getNumAtoms() == 6);
@@ -35,8 +36,9 @@ TEST_CASE("parsing") {
   SECTION("linkers") {
     auto abbrevs = Abbreviations::Utils::getDefaultLinkers();
     CHECK(abbrevs.size() == 24);
-    CHECK(abbrevs[0].llabel == "PEG4");
-    CHECK(abbrevs[0].rlabel == "PEG4");
+    CHECK(abbrevs[0].label == "PEG4");
+    CHECK(abbrevs[0].displayLabel == "PEG4");
+    CHECK(abbrevs[0].displayLabelW.empty());
     CHECK(abbrevs[0].smarts == "*OCCOCCOCCOCC*");
     REQUIRE(abbrevs[0].mol);
     CHECK(abbrevs[0].mol->getNumAtoms() == 13);
@@ -46,13 +48,13 @@ TEST_CASE("parsing") {
     CHECK(nDummies == 1);
   }
   SECTION("bad SMILES in defintions") {
-    const std::string defns = R"ABBREVS(CO2Et    EtO2C    C(=O)OCC
-COOEt    EtOOC    fail
-OiBu     iBuO     OCC(C)C)ABBREVS";
+    const std::string defns = R"ABBREVS(CO2Et    C(=O)OCC
+COOEt    fail
+OiBu     OCC(C)C)ABBREVS";
     auto abbrevs = Abbreviations::Utils::parseAbbreviations(defns);
     REQUIRE(abbrevs.size() == 2);
-    CHECK(abbrevs[0].llabel == "CO2Et");
-    CHECK(abbrevs[1].llabel == "OiBu");
+    CHECK(abbrevs[0].label == "CO2Et");
+    CHECK(abbrevs[1].label == "OiBu");
   }
 }
 
@@ -72,7 +74,7 @@ TEST_CASE("findApplicableMatches") {
       auto matches = Abbreviations::findApplicableAbbreviationMatches(
           *m, abbrevs, maxCoverage);
       CHECK(matches.size() == 1);
-      CHECK(matches[0].abbrev.llabel == "CF3");
+      CHECK(matches[0].abbrev.label == "CF3");
       CHECK(matches[0].match[0].second == 2);
       CHECK(matches[0].match[1].second == 3);
     }
@@ -85,8 +87,8 @@ TEST_CASE("findApplicableMatches") {
       auto matches = Abbreviations::findApplicableAbbreviationMatches(
           *m, abbrevs, maxCoverage);
       CHECK(matches.size() == 2);
-      CHECK(matches[0].abbrev.llabel == "CF3");
-      CHECK(matches[1].abbrev.llabel == "CO2H");
+      CHECK(matches[0].abbrev.label == "CF3");
+      CHECK(matches[1].abbrev.label == "CO2H");
     }
     {  // overlapping
       auto m = "FC(F)(F)C(=O)O"_smiles;
@@ -111,7 +113,7 @@ TEST_CASE("findApplicableMatches") {
       auto matches = Abbreviations::findApplicableAbbreviationMatches(
           *m, abbrevs, maxCoverage);
       CHECK(matches.size() == 1);
-      CHECK(matches[0].abbrev.llabel == "Et");
+      CHECK(matches[0].abbrev.label == "Et");
       // remove the size constraint and there's no abbreviation:
       maxCoverage = 1.0;
       matches = Abbreviations::findApplicableAbbreviationMatches(*m, abbrevs,
@@ -130,8 +132,8 @@ TEST_CASE("findApplicableMatches linkers") {
       auto matches = Abbreviations::findApplicableAbbreviationMatches(
           *m, linkers, maxCoverage);
       CHECK(matches.size() == 2);
-      CHECK(matches[0].abbrev.llabel == "PEG3");
-      CHECK(matches[1].abbrev.llabel == "pentyl");
+      CHECK(matches[0].abbrev.label == "PEG3");
+      CHECK(matches[1].abbrev.label == "pentyl");
     }
     {  // directly connected
       auto m = "FCOCCOCCOCCCCCCCCl"_smiles;
@@ -140,8 +142,8 @@ TEST_CASE("findApplicableMatches linkers") {
       auto matches = Abbreviations::findApplicableAbbreviationMatches(
           *m, linkers, maxCoverage);
       CHECK(matches.size() == 2);
-      CHECK(matches[0].abbrev.llabel == "PEG3");
-      CHECK(matches[1].abbrev.llabel == "pentyl");
+      CHECK(matches[0].abbrev.label == "PEG3");
+      CHECK(matches[1].abbrev.label == "pentyl");
       CHECK(matches[0].match[9].second == 10);
       CHECK(matches[1].match[0].second == 10);
     }

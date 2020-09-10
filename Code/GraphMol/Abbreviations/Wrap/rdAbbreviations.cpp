@@ -49,11 +49,14 @@ BOOST_PYTHON_MODULE(rdAbbreviations) {
 
   python::class_<Abbreviations::AbbreviationDefinition>(
       "AbbreviationDefinition", "Abbreviation Definition", python::init<>())
-      .def_readwrite("llabel", &Abbreviations::AbbreviationDefinition::llabel,
+      .def_readwrite("label", &Abbreviations::AbbreviationDefinition::label,
                      "the label")
       .def_readwrite(
-          "rlabel", &Abbreviations::AbbreviationDefinition::rlabel,
+          "displayLabel", &Abbreviations::AbbreviationDefinition::displayLabel,
           "the label in a drawing when the bond comes from the right")
+      .def_readwrite("displayLabelW",
+                     &Abbreviations::AbbreviationDefinition::displayLabelW,
+                     "the label in a drawing when the bond comes from the west")
       .def_readwrite(
           "mol", &Abbreviations::AbbreviationDefinition::mol,
           "the query molecule (should have a dummy as the first atom)");
