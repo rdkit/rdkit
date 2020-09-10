@@ -6147,13 +6147,13 @@ M  END
     sma = Chem.MolFromSmarts(core1)
     
     m = Chem.MolFromSmiles("c1ccccc1C(=O)Cl")
-    assert not m.HasSubstructMatch(sma, recursionPossible=False), "I shouldn't match (1)"
+    self.assertFalse(m.HasSubstructMatch(sma, recursionPossible=False))
     
     m = Chem.MolFromSmiles("c1ccccc1C(=O)Cl")
-    assert mh.HasSubstructMatch(sma)
+    self.assertTrue(m.HasSubstructMatch(sma))
     
     m = Chem.MolFromSmiles("c1ccccc1C(=O)Cl")
-    assert not m.HasSubstructMatch(sma, recursionPossible=False), "I shouldn't match (2)"
+    self.assertFalse(m.HasSubstructMatch(sma, recursionPossible=False))
 
     
 if __name__ == '__main__':
