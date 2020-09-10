@@ -5916,18 +5916,35 @@ M  END
 
   def testRandomSmilesVect(self):
     m = Chem.MolFromSmiles("C1OCC1N(CO)(Cc1ccccc1NCCl)")
-    v = Chem.MolToRandomSmilesVect(m,5,randomSeed=0xf00d)
-    self.assertEqual(v,["c1cc(CN(C2COC2)CO)c(cc1)NCCl", "N(CCl)c1c(CN(C2COC2)CO)cccc1",
-        "N(CCl)c1ccccc1CN(C1COC1)CO", "OCN(Cc1ccccc1NCCl)C1COC1",
-        "C(N(C1COC1)Cc1c(cccc1)NCCl)O"])
-    
-    v = Chem.MolToRandomSmilesVect(m,5,randomSeed=0xf00d,allHsExplicit=True)
-    self.assertEqual(v,["[cH]1[cH][c]([CH2][N]([CH]2[CH2][O][CH2]2)[CH2][OH])[c]([cH][cH]1)[NH][CH2][Cl]", 
-        "[NH]([CH2][Cl])[c]1[c]([CH2][N]([CH]2[CH2][O][CH2]2)[CH2][OH])[cH][cH][cH][cH]1",
-        "[NH]([CH2][Cl])[c]1[cH][cH][cH][cH][c]1[CH2][N]([CH]1[CH2][O][CH2]1)[CH2][OH]", 
-        "[OH][CH2][N]([CH2][c]1[cH][cH][cH][cH][c]1[NH][CH2][Cl])[CH]1[CH2][O][CH2]1", 
-        "[CH2]([N]([CH]1[CH2][O][CH2]1)[CH2][c]1[c]([cH][cH][cH][cH]1)[NH][CH2][Cl])[OH]"])
+    v = Chem.MolToRandomSmilesVect(m, 5, randomSeed=0xf00d)
+    self.assertEqual(v, [
+      "c1cc(CN(C2COC2)CO)c(cc1)NCCl", "N(CCl)c1c(CN(C2COC2)CO)cccc1", "N(CCl)c1ccccc1CN(C1COC1)CO",
+      "OCN(Cc1ccccc1NCCl)C1COC1", "C(N(C1COC1)Cc1c(cccc1)NCCl)O"
+    ])
 
+    v = Chem.MolToRandomSmilesVect(m, 5, randomSeed=0xf00d, allHsExplicit=True)
+    self.assertEqual(v, [
+      "[cH]1[cH][c]([CH2][N]([CH]2[CH2][O][CH2]2)[CH2][OH])[c]([cH][cH]1)[NH][CH2][Cl]",
+      "[NH]([CH2][Cl])[c]1[c]([CH2][N]([CH]2[CH2][O][CH2]2)[CH2][OH])[cH][cH][cH][cH]1",
+      "[NH]([CH2][Cl])[c]1[cH][cH][cH][cH][c]1[CH2][N]([CH]1[CH2][O][CH2]1)[CH2][OH]",
+      "[OH][CH2][N]([CH2][c]1[cH][cH][cH][cH][c]1[NH][CH2][Cl])[CH]1[CH2][O][CH2]1",
+      "[CH2]([N]([CH]1[CH2][O][CH2]1)[CH2][c]1[c]([cH][cH][cH][cH]1)[NH][CH2][Cl])[OH]"
+    ])
+
+  def test_github3403(self):
+    core1 = "[$(C-!@[a])](=O)(Cl)"
+    sma = Chem.MolFromSmarts(core1)
+    
+    m = Chem.MolFromSmiles("c1ccccc1C(=O)Cl")
+    self.assertFalse(m.HasSubstructMatch(sma, recursionPossible=False))
+    
+    m = Chem.MolFromSmiles("c1ccccc1C(=O)Cl")
+    self.assertTrue(m.HasSubstructMatch(sma))
+    
+    m = Chem.MolFromSmiles("c1ccccc1C(=O)Cl")
+    self.assertFalse(m.HasSubstructMatch(sma, recursionPossible=False))
+
+    
 if __name__ == '__main__':
   if "RDTESTCASE" in os.environ:
     suite = unittest.TestSuite()
