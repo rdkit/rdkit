@@ -270,6 +270,13 @@ C1CCO[C@@](S)(P)1
         self.assertEqual(set(rg.GetRGroupLabels()),
                          set(rg.GetRGroupsAsColumns()))
 
+    def test_github3402(self):
+        core1 = "[$(C-!@[a])](=O)(Cl)"
+        sma = Chem.MolFromSmarts(core1)
+        m = Chem.MolFromSmiles("c1ccccc1C(=O)Cl")
+        self.assertEqual(RGroupDecompose(sma, [m], asSmiles=True),
+                      ([{'Core': 'O=[*:1]Cl', 'R1': 'c1ccc(C([*:1])=[*:1])cc1'}], []))
+    
         
 if __name__ == '__main__':
   unittest.main()
