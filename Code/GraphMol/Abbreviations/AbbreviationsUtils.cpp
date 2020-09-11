@@ -44,11 +44,19 @@ const std::string defaultAbbreviations =
     R"ABBREVS(CO2Et    C(=O)OCC  CO<sub>2</sub>Et    EtO<sub>2</sub>C
 COOEt    C(=O)OCC  CO<sub>2</sub>Et    EtO<sub>2</sub>C
 OiBu     OCC(C)C   OiBu     iBuO
-tBu      C(C)(C)C  tBu      tBu
-nBu      CCCC      nBu      nBu
-iPr      C(C)C     iPr      iPr
-nPr      CCC       nPr      nPr
-Et       CC        Et       Et
+nDec     CCCCCCCCCC  nDec
+nNon     CCCCCCCCC   nNon
+nOct     CCCCCCCC    nOct
+nHept    CCCCCCC     nHept
+nHex     CCCCCC      nHex
+nPent    CCCCC       nPent
+iPent    C(C)CCC     iPent
+tBu      C(C)(C)C    tBu
+iBu      C(C)CC      iBu
+nBu      CCCC        nBu
+iPr      C(C)C       iPr
+nPr      CCC         nPr
+Et       CC          Et
 NCF3     NC(F)(F)F NCF<sub>3</sub>     F<sub>3</sub>CN
 CF3      C(F)(F)F  CF<sub>3</sub>      F<sub>3</sub>C
 CCl3     C(Cl)(Cl)Cl CCl<sub>3</sub>     Cl<sub>3</sub>C
@@ -63,7 +71,7 @@ COOH     C(=O)[OH] COOH     HOOC
 OEt      OCC   OEt      EtO
 OAc      OC(=O)C   OAc      AcO
 NHAc     NC(=O)C   NHAc     AcNH
-Ac       C(=O)C    Ac       Ac
+Ac       C(=O)C    Ac
 CHO      C=O   CHO      OHC
 NMe      NC    NMe      MeN
 SMe      SC    SMe      MeS
@@ -79,10 +87,17 @@ the molecule. The other linker dummy/dummies show the other attachments
 
 */
 const std::string defaultLinkers =
-    R"ABBREVS(PEG4  *OCCOCCOCCOCC* PEG4
+    R"ABBREVS(PEG6  *OCCOCCOCCOCCOCC* PEG6
+PEG5  *OCCOCCOCCOCCOCC* PEG5
+PEG4  *OCCOCCOCCOCC* PEG4
 PEG3  *OCCOCCOCC* PEG3
-pentyl  *CCCCC* pentyl
-cyhex   *C1CCC(*)CC1  cyhex
+Dec   *CCCCCCCCCC*
+Non   *CCCCCCCCC*
+Oct   *CCCCCCCC*
+Hept  *CCCCCCC*
+Hex   *CCCCCC*
+Pent  *CCCCC* pentyl
+Cy   *C1CCC(*)CC1  Cy
 ala *N[C@@H](C)C(=O)* ala
 arg *N[C@@H](CCCNC(N)=[NH])C(=O)* arg
 asn *N[C@@H](CC(N)=O)C(=O)* asn
