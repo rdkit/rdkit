@@ -7712,6 +7712,14 @@ void testRemoveAndTrackIsotopes() {
   MolOps::RemoveHsParameters ps;
   ps.removeAndTrackIsotopes = true;
   std::unique_ptr<ROMol> mNoH(removeHs(*static_cast<ROMol *>(m.get()), ps));
+  TEST_ASSERT(mNoH->getAtomWithIdx(0)->getAtomicNum() == 6);
+  TEST_ASSERT(mNoH->getAtomWithIdx(0)->hasProp(common_properties::_isotopicHs));
+  TEST_ASSERT(mNoH->getAtomWithIdx(0)->getProp<std::string>(
+                  common_properties::_isotopicHs) == "(2,)");
+  TEST_ASSERT(mNoH->getAtomWithIdx(30)->getAtomicNum() == 6);
+  TEST_ASSERT(
+      !mNoH->getAtomWithIdx(30)->hasProp(common_properties::_isotopicHs));
+
   IsotopicHsCount mNoH_isotopicHsPerHeavy(*mNoH);
   unsigned int mNoH_numExplicitHs;
   unsigned int mNoH_numImplicitHs;
@@ -7940,6 +7948,7 @@ void testRemoveAndTrackIsotopes() {
   TEST_ASSERT(chiralTypeSetAfterRemoveAllHsAddHsRemoveHs.size() == 1 &&
               *chiralTypeSetAfterRemoveAllHsAddHsRemoveHs.begin() ==
                   Atom::CHI_TETRAHEDRAL_CCW);
+  BOOST_LOG(rdInfoLog) << "Finished" << std::endl;
 }
 
 #ifdef RDK_USE_URF
@@ -8105,9 +8114,9 @@ int main() {
   testGithub1928();
   testGithub1990();
   testPotentialStereoBonds();
-  testRemoveAndTrackIsotopes();
-#endif
   testRingFamilies();
+#endif
+  testRemoveAndTrackIsotopes();
 
   return 0;
 }
