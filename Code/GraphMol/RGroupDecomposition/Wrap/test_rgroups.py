@@ -397,5 +397,13 @@ Cn1cnc2cc(Oc3cc(N4CCN(Cc5ccccc5-c5ccc(Cl)cc5)CC4)ccc3C(=O)NS(=O)(=O)c3ccc(NCCCN4
       columns2, unmatched = RGroupDecompose([core], mols, asRows=False, options=ps)
 
 
+  def test_github3402(self):
+    core1 = "[$(C-!@[a])](=O)(Cl)"
+    sma = Chem.MolFromSmarts(core1)
+    m = Chem.MolFromSmiles("c1ccccc1C(=O)Cl")
+    self.assertEqual(RGroupDecompose(sma, [m], asSmiles=True),
+                     ([{'Core': 'O=[*:1]Cl', 'R1': 'c1ccc(C([*:1])=[*:1])cc1'}], []))
+    
+    
 if __name__ == '__main__':
   unittest.main()
