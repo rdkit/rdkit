@@ -3224,12 +3224,14 @@ void testGithub3305() {
   auto m = "CCC(C#C)C=C"_smiles;
   TEST_ASSERT(m);
   RDDepict::compute2DCoords(*m);
+  std::string nameBase = "testGithub3305_";
+
   {
     MolDraw2DSVG drawer(300, 300);
     drawer.drawMolecule(*m);
     drawer.finishDrawing();
     std::string text = drawer.getDrawingText();
-    std::ofstream outs("testGithub3305_1.svg");
+    std::ofstream outs(nameBase + "1.svg");
     outs << text;
     outs.flush();
     TEST_ASSERT(text.find("stroke-width:2px") != std::string::npos);
@@ -3240,7 +3242,7 @@ void testGithub3305() {
     drawer.drawMolecule(*m);
     drawer.finishDrawing();
     std::string text = drawer.getDrawingText();
-    std::ofstream outs("testGithub3305_2.svg");
+    std::ofstream outs(nameBase + "2.svg");
     outs << text;
     outs.flush();
     TEST_ASSERT(text.find("stroke-width:2px") != std::string::npos);
@@ -3252,7 +3254,7 @@ void testGithub3305() {
     drawer.drawMolecule(*m);
     drawer.finishDrawing();
     std::string text = drawer.getDrawingText();
-    std::ofstream outs("testGithub3305_3.svg");
+    std::ofstream outs(nameBase + "3.svg");
     outs << text;
     outs.flush();
     TEST_ASSERT(text.find("stroke-width:4.19891px") != std::string::npos);
@@ -3262,14 +3264,14 @@ void testGithub3305() {
     MolDraw2DCairo drawer(300, 300);
     drawer.drawMolecule(*m);
     drawer.finishDrawing();
-    drawer.writeDrawingText("testGithub3305_1.png");
+    drawer.writeDrawingText(nameBase + "1.png");
   }
   {
     MolDraw2DCairo drawer(600, 600);
     drawer.drawOptions().bondLineWidth = 2;
     drawer.drawMolecule(*m);
     drawer.finishDrawing();
-    drawer.writeDrawingText("testGithub3305_2.png");
+    drawer.writeDrawingText(nameBase + "2.png");
   }
   {
     MolDraw2DCairo drawer(600, 600);
@@ -3277,7 +3279,7 @@ void testGithub3305() {
     drawer.drawOptions().scaleBondWidth = true;
     drawer.drawMolecule(*m);
     drawer.finishDrawing();
-    drawer.writeDrawingText("testGithub3305_3.png");
+    drawer.writeDrawingText(nameBase + "3.png");
   }
 #endif
   {
@@ -3286,7 +3288,6 @@ void testGithub3305() {
     RDDepict::compute2DCoords(*m);
     WedgeMolBonds(*m, &(m->getConformer()));
 
-    std::string nameBase = "testGithub3305_";
     static const int ha[] = {17, 18, 19, 20, 21, 6, 7, 8, 9, 31, 32};
     std::vector<int> highlight_atoms(ha, ha + sizeof(ha) / sizeof(int));
     std::map<int, DrawColour> highlight_colors;
@@ -3312,10 +3313,10 @@ void testGithub3305() {
       drawer.drawMolecule(*m, &highlight_atoms, &highlight_colors);
       drawer.finishDrawing();
       std::string text = drawer.getDrawingText();
-      std::ofstream outs("testGithub3305_4.svg");
+      std::ofstream outs(nameBase + "4.svg");
       outs << text;
       outs.flush();
-      TEST_ASSERT(text.find("stroke:#FF7F7F;stroke-width:2.65") !=
+      TEST_ASSERT(text.find("stroke:#FF7F7F;stroke-width:2.6") !=
                   std::string::npos);
       TEST_ASSERT(text.find("stroke:#FF7F7F;stroke-width:16px") ==
                   std::string::npos);
@@ -3340,7 +3341,7 @@ void testGithub3305() {
       std::ofstream outs((nameBase + "5.svg").c_str());
       outs << text;
       outs.flush();
-      TEST_ASSERT(text.find("stroke:#FF7F7F;stroke-width:2.65") ==
+      TEST_ASSERT(text.find("stroke:#FF7F7F;stroke-width:2.6") ==
                   std::string::npos);
       TEST_ASSERT(text.find("stroke:#FF7F7F;stroke-width:16px") !=
                   std::string::npos);
@@ -3366,7 +3367,7 @@ void testGithub3305() {
       std::string text = drawer.getDrawingText();
       outs << text;
       outs.flush();
-      TEST_ASSERT(text.find("stroke:#FF7F7F;stroke-width:0.66") !=
+      TEST_ASSERT(text.find("stroke:#FF7F7F;stroke-width:0.6") !=
                   std::string::npos);
       TEST_ASSERT(text.find("stroke:#FF7F7F;stroke-width:4px") ==
                   std::string::npos);
@@ -3391,7 +3392,7 @@ void testGithub3305() {
       std::string text = drawer.getDrawingText();
       outs << text;
       outs.flush();
-      TEST_ASSERT(text.find("stroke:#FF7F7F;stroke-width:0.66") ==
+      TEST_ASSERT(text.find("stroke:#FF7F7F;stroke-width:0.6") ==
                   std::string::npos);
       TEST_ASSERT(text.find("stroke:#FF7F7F;stroke-width:4px") !=
                   std::string::npos);
