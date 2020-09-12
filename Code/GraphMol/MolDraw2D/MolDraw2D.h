@@ -151,7 +151,7 @@ typedef std::vector<unsigned int> DashPattern;
 inline void assignDefaultPalette(ColourPalette &palette) {
   palette.clear();
   palette[-1] = DrawColour(0, 0, 0);
-  palette[0] = DrawColour(0.5, 0.5, 0.5);
+  palette[0] = DrawColour(0.1, 0.1, 0.1);
   palette[1] = palette[6] = DrawColour(0.0, 0.0, 0.0);
   palette[7] = DrawColour(0.0, 0.0, 1.0);
   palette[8] = DrawColour(1.0, 0.0, 0.0);
