@@ -43,6 +43,8 @@ void applyMatches(RWMol& mol, const std::vector<AbbreviationMatch>& matches) {
     connectingAtom->setFormalCharge(0);
     connectingAtom->setAtomicNum(0);
     connectingAtom->setIsotope(0);
+    connectingAtom->setIsAromatic(false);
+
     // set the hybridization so these are drawn linearly
     connectingAtom->setHybridization(Atom::HybridizationType::SP);
 
