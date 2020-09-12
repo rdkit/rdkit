@@ -78,6 +78,7 @@ add_subdirectory(MolHash)
 add_subdirectory(MMPA)
 
 add_subdirectory(CIPLabeler)
+add_subdirectory(Deprotect)
 
 if(RDK_BUILD_STRUCTCHECKER_SUPPORT)
 add_subdirectory(StructChecker)
