@@ -76,6 +76,9 @@ BOOST_PYTHON_MODULE(rdAbbreviations) {
               (python::arg("text"), python::arg("removeExtraDummies") = false,
                python::arg("allowConnectionToDummies") = false),
               "returns a set of abbreviation definitions from a string");
+  python::def("ParseLinkers", &Abbreviations::Utils::parseLinkers,
+              (python::arg("text")),
+              "returns a set of linker definitions from a string");
   python::def(
       "CondenseMolAbbreviations", &condenseMolAbbreviationsHelper,
       (python::arg("mol"), python::arg("abbrevs"),

@@ -87,7 +87,17 @@ the molecule. The other linker dummy/dummies show the other attachments
 
 */
 const std::string defaultLinkers =
-    R"ABBREVS(PEG6  *OCCOCCOCCOCCOCC* PEG6
+    R"ABBREVS(PEG6  *OCCOCCOCCOCCOCCOCC* PEG6
+PEG5  *OCCOCCOCCOCCOCC* PEG5
+PEG4  *OCCOCCOCCOCC* PEG4
+PEG3  *OCCOCCOCC* PEG3
+Dec   *CCCCCCCCCC*
+Non   *CCCCCCCCC*
+Oct   *CCCCCCCC*
+Hept  *CCCCCCC*)ABBREVS";
+// other possible abbreviations that might be useful:
+/*
+PEG6  *OCCOCCOCCOCCOCC* PEG6
 PEG5  *OCCOCCOCCOCCOCC* PEG5
 PEG4  *OCCOCCOCCOCC* PEG4
 PEG3  *OCCOCCOCC* PEG3
@@ -96,7 +106,7 @@ Non   *CCCCCCCCC*
 Oct   *CCCCCCCC*
 Hept  *CCCCCCC*
 Hex   *CCCCCC*
-Pent  *CCCCC* pentyl
+Pent  *CCCCC*
 Cy   *C1CCC(*)CC1  Cy
 ala *N[C@@H](C)C(=O)* ala
 arg *N[C@@H](CCCNC(N)=[NH])C(=O)* arg
@@ -117,7 +127,8 @@ ser *N[C@@H](CO)C(=O)* ser
 thr *N[C@@H](C(O)C)C(=O)* thr
 trp *N[C@@H](Cc1c[nH]c2ccccc21)C(=O)* trp
 tyr *N[C@@H](Cc1ccc(O)cc1)C(=O)* tyr
-val *N[C@@H](C(C)C)C(=O)* val)ABBREVS";
+val *N[C@@H](C(C)C)C(=O)* val
+*/
 }  // namespace data
 
 namespace detail {

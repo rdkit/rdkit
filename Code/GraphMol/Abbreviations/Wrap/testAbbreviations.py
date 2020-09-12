@@ -19,6 +19,9 @@ class TestCase(unittest.TestCase):
   def setUp(self):
     self.defaultAbbrevs = rdAbbreviations.GetDefaultAbbreviations()
     self.defaultLinkers = rdAbbreviations.GetDefaultLinkers()
+    self.customLinkers = rdAbbreviations.ParseLinkers('''PEG3  *OCCOCCOCC* PEG3
+Pent  *CCCCC*
+Cy   *C1CCC(*)CC1  Cy''')
 
   def testParsingAbbrevs(self):
     defn = '''CO2Et    C(=O)OCC
@@ -67,32 +70,27 @@ tBu      C(C)(C)C'''
     self.assertEqual(aps[0].lvIdx, 3)
 
   def testCondenseLinkers(self):
-    m = Chem.MolFromSmiles('FCOCCOCCOCCCCCCCCl')
+    m = Chem.MolFromSmiles('FCOCCOCCOCCCCCCCCCCl')
     nm = rdAbbreviations.CondenseMolAbbreviations(m, self.defaultLinkers, maxCoverage=1.0)
-    self.assertEqual(Chem.MolToCXSmiles(nm), 'FC**Cl |$;;PEG3;pentyl;$|')
+    self.assertEqual(Chem.MolToCXSmiles(nm), 'FC**Cl |$;;PEG3;Hept;$|')
 
     m = Chem.MolFromSmiles('COC1CCC(C)CC1')
-    nm = rdAbbreviations.CondenseMolAbbreviations(m, self.defaultLinkers, maxCoverage=1.0)
-    self.assertEqual(Chem.MolToCXSmiles(nm), 'C*OC |$;cyhex;;$|')
-
-  def testPeptides(self):
-    m = Chem.MolFromSequence('GYTKC')
-    nm = rdAbbreviations.CondenseMolAbbreviations(m, self.defaultLinkers, maxCoverage=1.0)
-    self.assertEqual(Chem.MolToCXSmiles(nm), 'NCC(=O)****O |$;;;;tyr;thr;lys;cys;$|')
+    nm = rdAbbreviations.CondenseMolAbbreviations(m, self.customLinkers, maxCoverage=1.0)
+    self.assertEqual(Chem.MolToCXSmiles(nm), 'C*OC |$;Cy;;$|')
 
   def testAbbreviationsAndLinkers(self):
     m = Chem.MolFromSmiles('COC1CCC(C)CC1')
     # wouldn't normally do this in this order:
     nm = rdAbbreviations.CondenseMolAbbreviations(m, self.defaultAbbrevs, maxCoverage=1.0)
     self.assertEqual(Chem.MolToCXSmiles(nm), '*C1CCC(C)CC1 |$OMe;;;;;;;$|')
-    nm = rdAbbreviations.CondenseMolAbbreviations(nm, self.defaultLinkers, maxCoverage=1.0)
-    self.assertEqual(Chem.MolToCXSmiles(nm), '**C |$OMe;cyhex;$|')
+    nm = rdAbbreviations.CondenseMolAbbreviations(nm, self.customLinkers, maxCoverage=1.0)
+    self.assertEqual(Chem.MolToCXSmiles(nm), '**C |$OMe;Cy;$|')
 
     # This is a more logical order
-    nm = rdAbbreviations.CondenseMolAbbreviations(m, self.defaultLinkers, maxCoverage=1.0)
-    self.assertEqual(Chem.MolToCXSmiles(nm), 'C*OC |$;cyhex;;$|')
+    nm = rdAbbreviations.CondenseMolAbbreviations(m, self.customLinkers, maxCoverage=1.0)
+    self.assertEqual(Chem.MolToCXSmiles(nm), 'C*OC |$;Cy;;$|')
     nm = rdAbbreviations.CondenseMolAbbreviations(nm, self.defaultAbbrevs, maxCoverage=1.0)
-    self.assertEqual(Chem.MolToCXSmiles(nm), 'C*OC |$;cyhex;;$|')
+    self.assertEqual(Chem.MolToCXSmiles(nm), 'C*OC |$;Cy;;$|')
 
 
 if __name__ == '__main__':  # pragma: nocover

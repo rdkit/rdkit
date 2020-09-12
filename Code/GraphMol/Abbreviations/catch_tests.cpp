@@ -21,7 +21,7 @@ using namespace RDKit;
 TEST_CASE("parsing") {
   SECTION("abbreviations") {
     auto abbrevs = Abbreviations::Utils::getDefaultAbbreviations();
-    CHECK(abbrevs.size() == 29);
+    CHECK(abbrevs.size() == 37);
     CHECK(abbrevs[0].label == "CO2Et");
     CHECK(abbrevs[0].displayLabel == "CO<sub>2</sub>Et");
     CHECK(abbrevs[0].displayLabelW == "EtO<sub>2</sub>C");
@@ -35,13 +35,13 @@ TEST_CASE("parsing") {
   }
   SECTION("linkers") {
     auto abbrevs = Abbreviations::Utils::getDefaultLinkers();
-    CHECK(abbrevs.size() == 24);
-    CHECK(abbrevs[0].label == "PEG4");
-    CHECK(abbrevs[0].displayLabel == "PEG4");
+    CHECK(abbrevs.size() == 8);
+    CHECK(abbrevs[0].label == "PEG6");
+    CHECK(abbrevs[0].displayLabel == "PEG6");
     CHECK(abbrevs[0].displayLabelW.empty());
-    CHECK(abbrevs[0].smarts == "*OCCOCCOCCOCC*");
+    CHECK(abbrevs[0].smarts == "*OCCOCCOCCOCCOCCOCC*");
     REQUIRE(abbrevs[0].mol);
-    CHECK(abbrevs[0].mol->getNumAtoms() == 13);
+    CHECK(abbrevs[0].mol->getNumAtoms() == 19);
     unsigned int nDummies = 0;
     CHECK(abbrevs[0].mol->getPropIfPresent(
         Abbreviations::common_properties::numDummies, nDummies));
@@ -126,24 +126,24 @@ TEST_CASE("findApplicableMatches linkers") {
   auto linkers = Abbreviations::Utils::getDefaultLinkers();
   SECTION("basics") {
     {
-      auto m = "FCOCCOCCOCCNCCCCCCl"_smiles;
+      auto m = "FCOCCOCCOCCNCCCCCCCCl"_smiles;
       REQUIRE(m);
       double maxCoverage = 1.0;
       auto matches = Abbreviations::findApplicableAbbreviationMatches(
           *m, linkers, maxCoverage);
       CHECK(matches.size() == 2);
       CHECK(matches[0].abbrev.label == "PEG3");
-      CHECK(matches[1].abbrev.label == "pentyl");
+      CHECK(matches[1].abbrev.label == "Hept");
     }
     {  // directly connected
-      auto m = "FCOCCOCCOCCCCCCCCl"_smiles;
+      auto m = "FCOCCOCCOCCCCCCCCCCl"_smiles;
       REQUIRE(m);
       double maxCoverage = 1.0;
       auto matches = Abbreviations::findApplicableAbbreviationMatches(
           *m, linkers, maxCoverage);
       CHECK(matches.size() == 2);
       CHECK(matches[0].abbrev.label == "PEG3");
-      CHECK(matches[1].abbrev.label == "pentyl");
+      CHECK(matches[1].abbrev.label == "Hept");
       CHECK(matches[0].match[9].second == 10);
       CHECK(matches[1].match[0].second == 10);
     }
@@ -168,7 +168,10 @@ TEST_CASE("applyMatches") {
 }
 
 TEST_CASE("applyMatches linkers") {
-  auto linkers = Abbreviations::Utils::getDefaultLinkers();
+  auto linkers =
+      Abbreviations::Utils::parseLinkers(R"ABBREV(PEG3  *OCCOCCOCC* PEG3
+Pent  *CCCCC*
+Cy   *C1CCC(*)CC1  Cy)ABBREV");
   SECTION("basics") {
     {
       auto m = "FCOCCOCCOCCCCCCCCl"_smiles;
@@ -179,7 +182,7 @@ TEST_CASE("applyMatches linkers") {
       CHECK(matches.size() == 2);
       Abbreviations::applyMatches(*m, matches);
       CHECK(m->getNumAtoms() == 5);
-      CHECK(MolToCXSmiles(*m) == "FC**Cl |$;;PEG3;pentyl;$|");
+      CHECK(MolToCXSmiles(*m) == "FC**Cl |$;;PEG3;Pent;$|");
     }
     {
       auto m = "COC1CCC(C)CC1"_smiles;
@@ -190,7 +193,7 @@ TEST_CASE("applyMatches linkers") {
       CHECK(matches.size() == 1);
       Abbreviations::applyMatches(*m, matches);
       CHECK(m->getNumAtoms() == 4);
-      CHECK(MolToCXSmiles(*m) == "C*OC |$;cyhex;;$|");
+      CHECK(MolToCXSmiles(*m) == "C*OC |$;Cy;;$|");
     }
   }
 }
@@ -210,36 +213,61 @@ TEST_CASE("condense abbreviations") {
 
 TEST_CASE("condense abbreviations linkers") {
   auto linkers = Abbreviations::Utils::getDefaultLinkers();
+  auto customLinkers =
+      Abbreviations::Utils::parseLinkers(R"ABBREV(PEG3  *OCCOCCOCC* PEG3
+Pent  *CCCCC*
+Cy   *C1CCC(*)CC1  Cy
+ala *N[C@@H](C)C(=O)* ala
+arg *N[C@@H](CCCNC(N)=[NH])C(=O)* arg
+asn *N[C@@H](CC(N)=O)C(=O)* asn
+asp *N[C@@H](CC(O)=O)C(=O)* asp
+cys *N[C@@H](CS)C(=O)* cys
+gln *N[C@@H](CCC(N)=O)C(=O)* gln
+glu *N[C@@H](CCC(O)=O)C(=O)* glu
+gly *NCC(=O)* gly
+his *N[C@@H](Cc1c[nH]cn1)C(=O)* his
+ile *N[C@@H](C(C)CC)C(=O)* ile
+leu *N[C@@H](CC(C)C)C(=O)* leu
+lys *N[C@@H](CCCCN)C(=O)* lys
+met *N[C@@H](CCSC)C(=O)* met
+phe *N[C@@H](Cc1ccccc1)C(=O)* phe
+pro *N1[C@@H](CCC1)C(=O)* pro
+ser *N[C@@H](CO)C(=O)* ser
+thr *N[C@@H](C(O)C)C(=O)* thr
+trp *N[C@@H](Cc1c[nH]c2ccccc21)C(=O)* trp
+tyr *N[C@@H](Cc1ccc(O)cc1)C(=O)* tyr
+val *N[C@@H](C(C)C)C(=O)* val)ABBREV");
   SECTION("basics") {
     {
-      auto m = "FCOCCOCCOCCCCCCCCl"_smiles;
+      auto m = "FCOCCOCCOCCCCCCCCCCl"_smiles;
       REQUIRE(m);
       double maxCoverage = 1.0;
       Abbreviations::condenseMolAbbreviations(*m, linkers, maxCoverage);
       CHECK(m->getNumAtoms() == 5);
-      CHECK(MolToCXSmiles(*m) == "FC**Cl |$;;PEG3;pentyl;$|");
+      CHECK(MolToCXSmiles(*m) == "FC**Cl |$;;PEG3;Hept;$|");
     }
     {
       auto m = "COC1CCC(C)CC1"_smiles;
       REQUIRE(m);
       double maxCoverage = 1.0;
-      Abbreviations::condenseMolAbbreviations(*m, linkers, maxCoverage);
+      Abbreviations::condenseMolAbbreviations(*m, customLinkers, maxCoverage);
       CHECK(m->getNumAtoms() == 4);
-      CHECK(MolToCXSmiles(*m) == "C*OC |$;cyhex;;$|");
+      CHECK(MolToCXSmiles(*m) == "C*OC |$;Cy;;$|");
     }
   }
   SECTION("peptides") {
     std::unique_ptr<RWMol> m(SequenceToMol("GYTKC"));
     REQUIRE(m);
     double maxCoverage = 1.0;
-    Abbreviations::condenseMolAbbreviations(*m, linkers, maxCoverage);
+    Abbreviations::condenseMolAbbreviations(*m, customLinkers, maxCoverage);
     CHECK(MolToCXSmiles(*m) == "NCC(=O)****O |$;;;;tyr;thr;lys;cys;$|");
   }
 }
 
 TEST_CASE("abbreviations and linkers") {
   auto abbrevs = Abbreviations::Utils::getDefaultAbbreviations();
-  auto linkers = Abbreviations::Utils::getDefaultLinkers();
+  auto linkers = Abbreviations::Utils::parseLinkers(
+      R"ABBREV(Cy   *C1CCC(*)CC1  Cy)ABBREV");
   SECTION("basics") {
     {  // this isn't the order we'd normally do this in:
       auto m = "COC1CCC(C)CC1"_smiles;
@@ -250,7 +278,7 @@ TEST_CASE("abbreviations and linkers") {
       CHECK(MolToCXSmiles(*m) == "*C1CCC(C)CC1 |$OMe;;;;;;;$|");
       Abbreviations::condenseMolAbbreviations(*m, linkers, maxCoverage);
       CHECK(m->getNumAtoms() == 3);
-      CHECK(MolToCXSmiles(*m) == "**C |$OMe;cyhex;$|");
+      CHECK(MolToCXSmiles(*m) == "**C |$OMe;Cy;$|");
     }
     {  // a more sensible order
       auto m = "COC1CCC(C)CC1"_smiles;
@@ -258,10 +286,10 @@ TEST_CASE("abbreviations and linkers") {
       double maxCoverage = 1.0;
       Abbreviations::condenseMolAbbreviations(*m, linkers, maxCoverage);
       CHECK(m->getNumAtoms() == 4);
-      CHECK(MolToCXSmiles(*m) == "C*OC |$;cyhex;;$|");
+      CHECK(MolToCXSmiles(*m) == "C*OC |$;Cy;;$|");
       Abbreviations::condenseMolAbbreviations(*m, abbrevs, maxCoverage);
       CHECK(m->getNumAtoms() == 4);
-      CHECK(MolToCXSmiles(*m) == "C*OC |$;cyhex;;$|");
+      CHECK(MolToCXSmiles(*m) == "C*OC |$;Cy;;$|");
     }
   }
 }
