@@ -462,12 +462,14 @@ std::vector<MatchVectType> SubstructMatch(
     }
   }
 
-#ifdef RDK_THREADSAFE_SSS
   if (params.recursionPossible) {
-    BOOST_FOREACH (RecursiveStructureQuery *v, locked)
+    BOOST_FOREACH (RecursiveStructureQuery *v, locked) {
+      v->clear();
+#ifdef RDK_THREADSAFE_SSS
       v->d_mutex.unlock();
-  }
 #endif
+    }
+  }
   return matches;
 }
 
