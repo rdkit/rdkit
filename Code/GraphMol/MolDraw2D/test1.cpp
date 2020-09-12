@@ -3401,6 +3401,28 @@ void testGithub3305() {
   std::cerr << "Done" << std::endl;
 }
 
+void testGithub3391() {
+  std::cout
+      << " ----------------- Test Github 3391 - maxFontSize interacting badly"
+         " with DrawMolecules."
+      << std::endl;
+  auto m = "C"_smiles;
+  {
+    MolDraw2DSVG drawer(400, 200, 200, 200);
+    drawer.drawOptions().maxFontSize = 14;
+    std::vector<ROMol *> mols;
+    mols.push_back(m.get());
+    mols.push_back(m.get());
+    drawer.drawMolecules(mols);
+    drawer.finishDrawing();
+    std::string text = drawer.getDrawingText();
+    std::ofstream outs("testGithub3391_1.svg");
+    outs << text;
+    outs.flush();
+  }
+  std::cerr << "Done" << std::endl;
+}
+
 int main() {
 #ifdef RDK_BUILD_COORDGEN_SUPPORT
   RDDepict::preferCoordGen = false;
@@ -3453,6 +3475,7 @@ int main() {
   test22ExplicitMethyl();
   testGithub3112();
   testGithub3305();
+  testGithub3391();
 #endif
 
 }
