@@ -757,6 +757,9 @@ Atom *replaceAtomWithQueryAtom(RWMol *mol, Atom *atom) {
   QueryAtom qa(*atom);
   unsigned int idx = atom->getIdx();
 
+  if (atom->getFormalCharge() != 0) {
+    qa.expandQuery(makeAtomFormalChargeQuery(atom->getFormalCharge()));
+  }
   if (atom->hasProp(common_properties::_hasMassQuery)) {
     qa.expandQuery(makeAtomMassQuery(static_cast<int>(atom->getMass())));
   }

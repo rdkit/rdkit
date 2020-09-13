@@ -1269,21 +1269,37 @@ M  END
   const bool sanitize = false;
   const bool removeHs = true;
   const bool strictParsing = true;
-  unsigned int line = 0;
 
   for (const auto &molblock : molblocks) {
-    std::istringstream inStream(molblock);
-    RWMOL_SPTR m(
-        MolDataStreamToMol(inStream, line, sanitize, removeHs, strictParsing));
+    RWMOL_SPTR m(MolBlockToMol(molblock, sanitize, removeHs, strictParsing));
     TEST_ASSERT(m->getNumAtoms() == 4);
     const Atom *a = m->getAtomWithIdx(3);
     TEST_ASSERT(a->hasQuery());
-    std::string q(describeQuery(a));
-    TEST_ASSERT(q.find("AtomAtomicNum 8") != std::string::npos &&
-                q.find("AtomAtomicNum 16") != std::string::npos &&
-                q.find("AtomExplicitDegree 1") != std::string::npos &&
-                q.find("AtomFormalCharge -1") != std::string::npos);
+    const QueryAtom *qa = dynamic_cast<const QueryAtom *>(a);
+    TEST_ASSERT(qa);
+    TEST_ASSERT(describeQuery(a) == R"MOL(AtomAnd
+  AtomAnd
+    AtomOr
+      AtomAtomicNum 8 = val
+      AtomAtomicNum 16 = val
+    AtomFormalCharge -1 = val
+  AtomExplicitDegree 1 = val
+)MOL");
+    TEST_ASSERT(SmartsWrite::GetAtomSmarts(qa) == "[#8,#16;-;D1:2]");
   }
+}
+
+void testReplaceChargedAtomWithQueryAtom() {
+  BOOST_LOG(rdInfoLog) << "-----------------------\n";
+  BOOST_LOG(rdInfoLog) << "Test replaceAtomWithQueryAtom on a charged atom"
+                       << std::endl;
+  auto mol = "[NH3+]C"_smiles;
+  auto a = mol->getAtomWithIdx(0);
+  const QueryAtom *qa = dynamic_cast<const QueryAtom *>(
+      QueryOps::replaceAtomWithQueryAtom(mol.get(), a));
+  TEST_ASSERT(qa);
+  std::cerr << "*** testReplaceChargedAtomWithQueryAtom "
+            << SmartsWrite::GetAtomSmarts(qa) << std::endl;
 }
 
 void testGithub608() {
@@ -1590,6 +1606,7 @@ int main() {
 #endif
   testAtomListLineRoundTrip();
   testAtomListLineWithOtherQueries();
+  testReplaceChargedAtomWithQueryAtom();
 
   return 0;
 }

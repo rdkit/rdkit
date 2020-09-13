@@ -1005,15 +1005,15 @@ void ParseLinkNodeLine(RWMol *mol, const std::string &text, unsigned int line) {
   }
 }
 
-// Recursively populates querySet with COMPOSITE_AND queries
+// Recursively populates queryVect with COMPOSITE_AND queries
 // present in the input query. If the logic of the input query
 // is more complex, it returns nullptr and empty set.
 // The returned ptr should only be checked for not being null
 // and not used for any other purposes, as the actual result is
-// the querySet
-const QueryAtom::QUERYATOM_QUERY *getAndQuerySet(
+// the queryVect
+const QueryAtom::QUERYATOM_QUERY *getAndQueries(
     const QueryAtom::QUERYATOM_QUERY *q,
-    std::set<const QueryAtom::QUERYATOM_QUERY *> &querySet) {
+    std::vector<const QueryAtom::QUERYATOM_QUERY *> &queryVect) {
   if (q) {
     auto qOrig = q;
     for (auto cq = qOrig->beginChildren(); cq != qOrig->endChildren(); ++cq) {
@@ -1021,14 +1021,14 @@ const QueryAtom::QUERYATOM_QUERY *getAndQuerySet(
         q = nullptr;
         break;
       }
-      q = getAndQuerySet(cq->get(), querySet);
+      q = getAndQueries(cq->get(), queryVect);
     }
     if (q == qOrig) {
-      querySet.insert(q);
+      queryVect.push_back(q);
     }
   }
   if (!q) {
-    querySet.clear();
+    queryVect.clear();
   }
   return q;
 }
@@ -1111,9 +1111,9 @@ void ParseNewAtomList(RWMol *mol, const std::string &text, unsigned int line) {
   }
   ASSERT_INVARIANT(a, "no atom built");
   if (qOrig) {
-    std::set<const QueryAtom::QUERYATOM_QUERY *> querySet;
-    if (getAndQuerySet(qOrig, querySet)) {
-      for (auto q : querySet) {
+    std::vector<const QueryAtom::QUERYATOM_QUERY *> queryVect;
+    if (getAndQueries(qOrig, queryVect)) {
+      for (const auto &q : queryVect) {
         if (q->getDescription() != "AtomAtomicNum") {
           a->expandQuery(q->copy(), Queries::COMPOSITE_AND, true);
         }
