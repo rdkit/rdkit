@@ -1294,12 +1294,13 @@ void testReplaceChargedAtomWithQueryAtom() {
   BOOST_LOG(rdInfoLog) << "Test replaceAtomWithQueryAtom on a charged atom"
                        << std::endl;
   auto mol = "[NH3+]C"_smiles;
+  TEST_ASSERT(mol.get());
   auto a = mol->getAtomWithIdx(0);
+  TEST_ASSERT(a);
   const QueryAtom *qa = dynamic_cast<const QueryAtom *>(
       QueryOps::replaceAtomWithQueryAtom(mol.get(), a));
   TEST_ASSERT(qa);
-  std::cerr << "*** testReplaceChargedAtomWithQueryAtom "
-            << SmartsWrite::GetAtomSmarts(qa) << std::endl;
+  TEST_ASSERT(SmartsWrite::GetAtomSmarts(qa) == "[#7&+]");
 }
 
 void testGithub608() {
