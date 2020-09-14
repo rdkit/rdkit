@@ -74,6 +74,8 @@ __pycache__/
 /Code/ForceField/MMFF/test_data/MMFF94s_reference.log
 /Code/ForceField/MMFF/test_data/testMMFFForceField.log
 
+/Code/ForceField/ANI/Params
+
 /Code/GraphMol/Depictor/test_data/cis_trans_cpp.out.sdf
 /Code/GraphMol/Depictor/test_data/collisions.out.sdf
 /Code/GraphMol/Depictor/test_data/first_200.out.sdf

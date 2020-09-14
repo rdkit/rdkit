@@ -117,7 +117,6 @@ python::tuple calcCrippenDescriptors(const RDKit::ROMol &mol,
 }
 
 #ifdef RDK_BUILD_DESCRIPTORS3D
-
 python::tuple calcCoulombMat(const RDKit::ROMol &mol, int confId) {
   std::vector<std::vector<double>> results;
   RDKit::Descriptors::CoulombMat(mol, results, confId);
