@@ -300,6 +300,9 @@ void testEnumerator() {
   checkAns("NC(=N)S(=O)O",
            {"N=C(N)S(=O)O", "N=C(N)[SH](=O)=O", "NC(N)=S(=O)=O"});
 
+  // formamidinesulfonic acid tautomer
+  checkAns("NC(=N)S(=O)(=O)O", {"N=C(N)S(=O)(=O)O"});
+
   // isocyanide tautomer
   checkAns("C#N", {"C#N", "[C-]#[NH+]"});
 
