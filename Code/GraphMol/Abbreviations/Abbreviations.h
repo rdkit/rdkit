@@ -25,9 +25,14 @@ RDKIT_ABBREVIATIONS_EXPORT struct AbbreviationDefinition {
   std::string displayLabelW;
   std::string smarts;
   std::shared_ptr<ROMol> mol;
+  // AbbreviationDefinition()
+  // label(""),displayLabel(""),displayLabelW(""),smarts(""),mol(nullptr) {}
   bool operator==(const AbbreviationDefinition& other) const {
     return label == other.label && displayLabel == other.displayLabel &&
            displayLabelW == other.displayLabelW && smarts == other.smarts;
+  }
+  bool operator!=(const AbbreviationDefinition& other) const {
+    return !(*this == other);
   }
 };
 RDKIT_ABBREVIATIONS_EXPORT struct AbbreviationMatch {
@@ -36,6 +41,13 @@ RDKIT_ABBREVIATIONS_EXPORT struct AbbreviationMatch {
   AbbreviationMatch(const std::vector<std::pair<int, int>>& matchArg,
                     const AbbreviationDefinition& abbrevArg)
       : match(matchArg), abbrev(abbrevArg){};
+  AbbreviationMatch() : match(), abbrev(){};
+  bool operator==(const AbbreviationMatch& other) const {
+    return abbrev == other.abbrev && match == other.match;
+  }
+  bool operator!=(const AbbreviationMatch& other) const {
+    return !(*this == other);
+  }
 };
 namespace common_properties {
 RDKIT_ABBREVIATIONS_EXPORT extern const std::string numDummies;
