@@ -389,6 +389,12 @@ ADD_TEST(JavaBitOpsTests
     -cp "${JUNIT_JAR}${PATH_SEP}${CMAKE_JAVA_TEST_OUTDIR}${PATH_SEP}${CMAKE_CURRENT_SOURCE_DIR}/org.RDKit.jar"
     org.RDKit.MolStandardizeTest)
 
+ADD_TEST(JavaSubstanceGroupTests
+    java -Djava.library.path=${CMAKE_CURRENT_SOURCE_DIR}
+	-cp "${JUNIT_JAR}${PATH_SEP}${CMAKE_JAVA_TEST_OUTDIR}${PATH_SEP}${CMAKE_CURRENT_SOURCE_DIR}/org.RDKit.jar"
+	org.RDKit.SubstanceGroupTests)
+
+
 
 INSTALL(TARGETS GraphMolWrap
               DESTINATION ${CMAKE_CURRENT_SOURCE_DIR} )

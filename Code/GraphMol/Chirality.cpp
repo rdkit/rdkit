@@ -419,12 +419,12 @@ void updateDoubleBondNeighbors(ROMol &mol, Bond *dblBond, const Conformer *conf,
   }
   needsDir.set(dblBond->getIdx(), 0);
 #if 0
-    std::cerr << "**********************\n";
-    std::cerr << "**********************\n";
-    std::cerr << "**********************\n";
-    std::cerr << "UDBN: " << dblBond->getIdx() << " "
-              << dblBond->getBeginAtomIdx() << "=" << dblBond->getEndAtomIdx()
-              << "\n";
+  std::cerr << "**********************\n";
+  std::cerr << "**********************\n";
+  std::cerr << "**********************\n";
+  std::cerr << "UDBN: " << dblBond->getIdx() << " "
+            << dblBond->getBeginAtomIdx() << "=" << dblBond->getEndAtomIdx()
+            << "\n";
 #endif
 
   ROMol::OEDGE_ITER beg, end;
@@ -601,9 +601,11 @@ void updateDoubleBondNeighbors(ROMol &mol, Bond *dblBond, const Conformer *conf,
     // std::cerr << "   angle: " << ang << " sameTorsionDir: " << sameTorsionDir
     // << "\n";
   } else {
-    if (dblBond->getStereo() == Bond::STEREOCIS) {
+    if (dblBond->getStereo() == Bond::STEREOCIS ||
+        dblBond->getStereo() == Bond::STEREOZ) {
       sameTorsionDir = false;
-    } else if (dblBond->getStereo() == Bond::STEREOTRANS) {
+    } else if (dblBond->getStereo() == Bond::STEREOTRANS ||
+               dblBond->getStereo() == Bond::STEREOE) {
       sameTorsionDir = true;
     } else {
       return;
@@ -704,19 +706,19 @@ void updateDoubleBondNeighbors(ROMol &mol, Bond *dblBond, const Conformer *conf,
     needsDir[obond2->getIdx()] = 0;
   }
 #if 0
-    std::cerr << "  1:" << bond1->getIdx() << " ";
-    if (obond1)
-      std::cerr << obond1->getIdx() << std::endl;
-    else
-      std::cerr << "N/A" << std::endl;
-    std::cerr << "  2:" << bond2->getIdx() << " ";
-    if (obond2)
-      std::cerr << obond2->getIdx() << std::endl;
-    else
-      std::cerr << "N/A" << std::endl;
-    std::cerr << "**********************\n";
-    std::cerr << "**********************\n";
-    std::cerr << "**********************\n";
+  std::cerr << "  1:" << bond1->getIdx() << " ";
+  if (obond1)
+    std::cerr << obond1->getIdx() << std::endl;
+  else
+    std::cerr << "N/A" << std::endl;
+  std::cerr << "  2:" << bond2->getIdx() << " ";
+  if (obond2)
+    std::cerr << obond2->getIdx() << std::endl;
+  else
+    std::cerr << "N/A" << std::endl;
+  std::cerr << "**********************\n";
+  std::cerr << "**********************\n";
+  std::cerr << "**********************\n";
 #endif
   BOOST_FOREACH (Bond *oDblBond, followupBonds) {
     // std::cerr << "FOLLOWUP: " << oDblBond->getIdx() << " "
@@ -2366,14 +2368,16 @@ void setDoubleBondNeighborDirections(ROMol &mol, const Conformer *conf) {
         if (nbrBond->getBondType() == Bond::SINGLE ||
             nbrBond->getBondType() == Bond::AROMATIC) {
           singleBondCounts[nbrBond->getIdx()] += 1;
-          if (nbrBond->getBondDir() == Bond::NONE) {
+          auto nbrDir = nbrBond->getBondDir();
+          if (nbrDir == Bond::BondDir::NONE ||
+              nbrDir == Bond::BondDir::ENDDOWNRIGHT ||
+              nbrDir == Bond::BondDir::ENDUPRIGHT) {
             needsDir[nbrBond->getIdx()] = 1;
           }
           needsDir[(*bondIt)->getIdx()] = 1;
           dblBondNbrs[(*bondIt)->getIdx()].push_back(nbrBond->getIdx());
           // the search may seem inefficient, but these vectors are going to
-          // be
-          // at most 2 long (with very few exceptions). It's just not worth
+          // be at most 2 long (with very few exceptions). It's just not worth
           // using a different data structure
           if (std::find(singleBondNbrs[nbrBond->getIdx()].begin(),
                         singleBondNbrs[nbrBond->getIdx()].end(),
@@ -2390,7 +2394,10 @@ void setDoubleBondNeighborDirections(ROMol &mol, const Conformer *conf) {
         if (nbrBond->getBondType() == Bond::SINGLE ||
             nbrBond->getBondType() == Bond::AROMATIC) {
           singleBondCounts[nbrBond->getIdx()] += 1;
-          if (nbrBond->getBondDir() == Bond::NONE) {
+          auto nbrDir = nbrBond->getBondDir();
+          if (nbrDir == Bond::BondDir::NONE ||
+              nbrDir == Bond::BondDir::ENDDOWNRIGHT ||
+              nbrDir == Bond::BondDir::ENDUPRIGHT) {
             needsDir[nbrBond->getIdx()] = 1;
           }
           needsDir[(*bondIt)->getIdx()] = 1;
@@ -2426,10 +2433,8 @@ void setDoubleBondNeighborDirections(ROMol &mol, const Conformer *conf) {
         std::accumulate(dblBondNbrs[dblBond->getIdx()].begin(),
                         dblBondNbrs[dblBond->getIdx()].end(), 0);
     // and favor double bonds that are *not* in rings. The combination of
-    // using
-    // the sum
-    // above (instead of the max) and this ring-membershipt test seem to fix
-    // sf.net issue 3009836
+    // using the sum above (instead of the max) and this ring-membershipt test
+    // seem to fix sf.net issue 3009836
     if (!(mol.getRingInfo()->numBondRings(dblBond->getIdx()))) {
       countHere *= 10;
     }

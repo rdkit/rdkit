@@ -297,12 +297,19 @@ void fixExplicitImplicitHs(ROMol &mol) {
 // object constructor
 AtomElectrons::AtomElectrons(ConjElectrons *parent, const Atom *a)
     : d_nb(0),
-      d_tv(static_cast<std::uint8_t>(a->getTotalDegree())),
       d_fc(0),
       d_flags(0),
       d_atom(a),
       d_parent(parent) {
   PRECONDITION(d_atom, "d_atom cannot be NULL");
+  d_tv = static_cast<std::uint8_t>(a->getTotalDegree());
+  const ROMol &mol = d_atom->getOwningMol();
+  for (const auto &bNbri :
+       boost::make_iterator_range(mol.getAtomBonds(d_atom))) {
+    if (d_tv && mol[bNbri]->getBondType() >= Bond::DATIVEONE) {
+      --d_tv;
+    }
+  }
 }
 
 // copy constructor

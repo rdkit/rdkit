@@ -91,7 +91,7 @@ int RGroupDecomposition::add(const ROMol &inmol) {
        coreIt != data->cores.end(); ++coreIt) {
     {
       const bool uniquify = false;
-      const bool recursionPossible = false;
+      const bool recursionPossible = true;
       const bool useChirality = true;
       SubstructMatch(mol, coreIt->second, tmatches, uniquify, recursionPossible,
                      useChirality);

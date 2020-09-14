@@ -33,7 +33,7 @@ class DrawTextSVG : public DrawText {
   std::ostream &oss_;
   std::string &d_active_class_;
 
-  // return a vector of StringRects, one for each char in text, with
+  // fills a vector of StringRects, one for each char in text, with
   // super- and subscripts taken into account.  Sizes in pixel coords,
   // i.e. scaled by fontScale().
   void getStringRects(const std::string &text,

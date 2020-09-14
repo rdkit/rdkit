@@ -1,5 +1,5 @@
 //
-//  Copyright (C) 2008 Greg Landrum
+//  Copyright (C) 2008-2020 Greg Landrum
 //
 //   @@ All Rights Reserved @@
 //  This file is part of the RDKit.
@@ -9,22 +9,22 @@
 //
 /*! \file Chirality.h
 
-  \brief Not intended for client-code use.
-
 */
 #include <RDGeneral/export.h>
-#ifndef _RD_CHIRALITY_20AUG2008_H_
-#define _RD_CHIRALITY_20AUG2008_H_
+#ifndef RD_CHIRALITY_20AUG2008_H
+#define RD_CHIRALITY_20AUG2008_H
 #include <RDGeneral/types.h>
 #include <GraphMol/Bond.h>
+#include <boost/dynamic_bitset.hpp>
+#include <limits>
 
-/// @cond
 namespace RDKit {
 class Atom;
 class Bond;
 class ROMol;
 
 namespace Chirality {
+/// @cond
 /*!
   \param mol the molecule to be altered
   \param ranks  used to return the set of ranks.
@@ -55,11 +55,71 @@ RDKIT_GRAPHMOL_EXPORT const Bond *getNeighboringDirectedBond(const ROMol &mol,
  */
 RDKIT_GRAPHMOL_EXPORT Bond::BondStereo translateEZLabelToCisTrans(
     Bond::BondStereo label);
+/// @endcond
 
+enum class StereoType {
+  Unspecified,
+  Atom_Tetrahedral,
+  Bond_Double,         // single double bond and odd-numbered cumulenes
+  Bond_Cumulene_Even,  // even-numbered cumulenes
+  Bond_Atropisomer
+};
+
+enum class StereoDescriptor { None, Tet_CW, Tet_CCW, Bond_Cis, Bond_Trans };
+
+enum class StereoSpecified {
+  Unspecified,  // no information provided
+  Specified,
+  Unknown  // deliberately marked as unknown
+};
+
+struct RDKIT_GRAPHMOL_EXPORT StereoInfo {
+  // REVIEW: absolute stereo data member?
+#ifdef _MSC_VER
+  static const unsigned NOATOM =
+      std::numeric_limits<unsigned>::max();  // used to mark missing atoms
+#else
+  static const unsigned NOATOM;  // used to mark missing atoms
+#endif
+  StereoType type = StereoType::Unspecified;
+  StereoSpecified specified = StereoSpecified::Unspecified;
+  unsigned centeredOn = NOATOM;
+  StereoDescriptor descriptor = StereoDescriptor::None;
+  std::vector<unsigned> controllingAtoms;  // all atoms around the atom or bond.
+  // Order is important
+  bool operator==(const StereoInfo &other) const {
+    return type == other.type && specified == other.specified &&
+           centeredOn == other.centeredOn && descriptor == other.descriptor &&
+           controllingAtoms == other.controllingAtoms;
+  }
+};
+
+//! identifies potential stereoatoms and stereobonds in a molecule
+/*!
+
+  \param mol the molecule to look for stereo in
+  \param cleanIt remove chirality/stereo specifications from atoms/bonds that
+     cannot be chiral/stereo
+*/
+RDKIT_GRAPHMOL_EXPORT std::vector<StereoInfo> findPotentialStereo(
+    ROMol &mol, bool cleanIt, bool flagPossible = true);
+//! overload
+RDKIT_GRAPHMOL_EXPORT std::vector<StereoInfo> findPotentialStereo(
+    const ROMol &mol);
+
+/// @cond
+namespace detail {
+RDKIT_GRAPHMOL_EXPORT bool isAtomPotentialTetrahedralCenter(const Atom *atom);
+RDKIT_GRAPHMOL_EXPORT bool isAtomPotentialStereoAtom(const Atom *atom);
+RDKIT_GRAPHMOL_EXPORT bool isBondPotentialStereoBond(const Bond *bond);
+RDKIT_GRAPHMOL_EXPORT StereoInfo getStereoInfo(const Bond *bond);
+RDKIT_GRAPHMOL_EXPORT StereoInfo getStereoInfo(const Atom *atom);
+
+}  // namespace detail
+/// @endcond
 
 RDKIT_GRAPHMOL_EXPORT INT_VECT findStereoAtoms(const Bond *bond);
 
 }  // namespace Chirality
 }  // namespace RDKit
-/// @endcond
 #endif

@@ -48,6 +48,7 @@ void wrap_monomerinfo();
 void wrap_resmolsupplier();
 void wrap_molbundle();
 void wrap_sgroup();
+void wrap_chirality();
 
 struct PySysErrWrite : std::ostream, std::streambuf {
   std::string prefix;
@@ -289,6 +290,7 @@ BOOST_PYTHON_MODULE(rdchem) {
   wrap_resmolsupplier();
   wrap_molbundle();
   wrap_sgroup();
+  wrap_chirality();
 
   //*********************************************
   //

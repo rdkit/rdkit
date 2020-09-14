@@ -7,7 +7,7 @@ rdkit_library(GraphMol
               MolDiscriminators.cpp ConjugHybrid.cpp AddHs.cpp
               Matrices.cpp Chirality.cpp RingInfo.cpp Conformer.cpp
               Renumber.cpp AdjustQuery.cpp Resonance.cpp StereoGroup.cpp
-              new_canon.cpp SubstanceGroup.cpp
+              new_canon.cpp SubstanceGroup.cpp FindStereo.cpp
               SHARED
               LINK_LIBRARIES RDGeometryLib RDGeneral  )
 target_compile_definitions(GraphMol PRIVATE RDKIT_GRAPHMOL_BUILD)
@@ -78,6 +78,7 @@ add_subdirectory(MolHash)
 add_subdirectory(MMPA)
 
 add_subdirectory(CIPLabeler)
+add_subdirectory(Deprotect)
 
 if(RDK_BUILD_STRUCTCHECKER_SUPPORT)
 add_subdirectory(StructChecker)
@@ -157,3 +158,7 @@ rdkit_catch_test(graphmolSGroupCatch catch_sgroups.cpp  catch_main.cpp
 
 rdkit_catch_test(graphmolAdjustQueryCatch catch_adjustquery.cpp catch_main.cpp
            LINK_LIBRARIES SubstructMatch FileParsers SmilesParse GraphMol )
+           
+rdkit_catch_test(chiralityTestsCatch catch_chirality.cpp catch_main.cpp
+           LINK_LIBRARIES FileParsers SmilesParse GraphMol )
+

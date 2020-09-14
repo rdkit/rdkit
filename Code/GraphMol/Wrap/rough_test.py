@@ -6069,6 +6069,39 @@ M  END
     nmol = Chem.AdjustQueryProperties(mol, nops)
     self.assertEqual(Chem.MolToSmarts(nmol), "[#6]1-,=,:[#6]-,=,:[#6]-,=,:[#7H]-,=,:[#6]-,=,:1")
 
+  def testFindPotentialStereo(self):
+    mol = Chem.MolFromSmiles('C[C@H](F)C=CC')
+    si = Chem.FindPotentialStereo(mol)
+    self.assertEqual(len(si), 2)
+    self.assertEqual(si[0].type, Chem.StereoType.Atom_Tetrahedral)
+    self.assertEqual(si[0].specified, Chem.StereoSpecified.Specified)
+    self.assertEqual(si[0].centeredOn, 1)
+    self.assertEqual(si[0].descriptor, Chem.StereoDescriptor.Tet_CCW)
+    self.assertEqual(list(si[0].controllingAtoms), [0, 2, 3])
+    self.assertEqual(si[1].type, Chem.StereoType.Bond_Double)
+    self.assertEqual(si[1].specified, Chem.StereoSpecified.Unspecified)
+    self.assertEqual(si[1].centeredOn, 3)
+    self.assertEqual(si[1].descriptor, Chem.StereoDescriptor.NoValue)
+    self.assertEqual(list(si[1].controllingAtoms),
+                     [1, Chem.StereoInfo.NOATOM, 5, Chem.StereoInfo.NOATOM])
+
+  def testNewFindMolChiralCenters(self):
+    mol = Chem.MolFromSmiles('C[C@H](F)C=CC(F)Cl')
+    ctrs = Chem.FindMolChiralCenters(mol, useLegacyImplementation=False)
+    self.assertEqual(len(ctrs), 1)
+    self.assertEqual(ctrs, [(1, 'S')])
+    ctrs = Chem.FindMolChiralCenters(mol, useLegacyImplementation=False, includeCIP=False)
+    self.assertEqual(len(ctrs), 1)
+    self.assertEqual(ctrs, [(1, 'Tet_CCW')])
+    ctrs = Chem.FindMolChiralCenters(mol, useLegacyImplementation=False, includeUnassigned=True,
+                                     includeCIP=False)
+    self.assertEqual(len(ctrs), 2)
+    self.assertEqual(ctrs, [(1, 'Tet_CCW'), (5, '?')])
+    ctrs = Chem.FindMolChiralCenters(mol, useLegacyImplementation=False, includeUnassigned=True,
+                                     includeCIP=True)
+    self.assertEqual(len(ctrs), 2)
+    self.assertEqual(ctrs, [(1, 'S'), (5, '?')])
+
   def testMolFromPNG(self):
     fileN = os.path.join(RDConfig.RDBaseDir, 'Code', 'GraphMol', 'FileParsers', 'test_data',
                          'colchicine.png')
@@ -6109,7 +6142,20 @@ M  END
     for mol, refMol in zip(mols, refMols):
       self.assertEqual(Chem.MolToSmiles(mol), Chem.MolToSmiles(refMol))
 
+  def test_github3403(self):
+    core1 = "[$(C-!@[a])](=O)(Cl)"
+    sma = Chem.MolFromSmarts(core1)
+    
+    m = Chem.MolFromSmiles("c1ccccc1C(=O)Cl")
+    self.assertFalse(m.HasSubstructMatch(sma, recursionPossible=False))
+    
+    m = Chem.MolFromSmiles("c1ccccc1C(=O)Cl")
+    self.assertTrue(m.HasSubstructMatch(sma))
+    
+    m = Chem.MolFromSmiles("c1ccccc1C(=O)Cl")
+    self.assertFalse(m.HasSubstructMatch(sma, recursionPossible=False))
 
+    
 if __name__ == '__main__':
   if "RDTESTCASE" in os.environ:
     suite = unittest.TestSuite()
