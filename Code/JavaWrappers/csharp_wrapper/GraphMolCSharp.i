@@ -256,6 +256,7 @@ typedef unsigned long long int	uintmax_t;
 %include "../TautomerQuery.i"
 %include "../SubstanceGroup.i"
 %include "../MolHash.i"
+%include "../Abbreviations.i"
 %include "../Streams.i"
 
 
