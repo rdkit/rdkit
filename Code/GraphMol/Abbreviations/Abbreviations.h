@@ -120,7 +120,7 @@ RDKIT_ABBREVIATIONS_EXPORT void condenseMolAbbreviations(
 RDKIT_ABBREVIATIONS_EXPORT void labelMolAbbreviations(
     RWMol& mol, const std::vector<AbbreviationDefinition>& abbrevs,
     double maxCoverage = 0.4);
-//! collapses abbreviation substance groups
+//! collapses abbreviation (i.e. "SUP") substance groups
 RDKIT_ABBREVIATIONS_EXPORT void condenseAbbreviationSubstanceGroups(RWMol& mol);
 
 }  // namespace Abbreviations

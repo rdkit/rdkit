@@ -31,6 +31,12 @@ ROMol *condenseMolAbbreviationsHelper(const ROMol *mol,
   return rdcast<ROMol *>(res);
 }
 
+ROMol *condenseAbbreviationSGroupHelper(const ROMol *mol) {
+  RWMol *res = new RWMol(*mol);
+  Abbreviations::condenseAbbreviationSubstanceGroups(*res);
+  return rdcast<ROMol *>(res);
+}
+
 ROMol *labelMolAbbreviationsHelper(const ROMol *mol, python::object pyabbrevs,
                                    double maxCoverage) {
   RWMol *res = new RWMol(*mol);
@@ -60,13 +66,7 @@ BOOST_PYTHON_MODULE(rdAbbreviations) {
       .def_readwrite(
           "mol", &Abbreviations::AbbreviationDefinition::mol,
           "the query molecule (should have a dummy as the first atom)");
-#if 0
-  python::class_<Abbreviations::AbbreviationMatch>(
-      "AbbreviationMatch", "Abbreviation match to a molecule", python::no_init)
-      // FIX: figure out a wrapper for the match object?
-      .def_readonly("abbrev", &Abbreviations::AbbreviationMatch::abbrev,
-                    "the definition");
-#endif
+
   python::def("GetDefaultAbbreviations",
               &Abbreviations::Utils::getDefaultAbbreviations,
               "returns a list of the default abbreviation definitions");
@@ -91,4 +91,10 @@ BOOST_PYTHON_MODULE(rdAbbreviations) {
               python::return_value_policy<python::manage_new_object>(),
               "finds abbreviations and adds to them to a molecule as \"SUP\" "
               "SubstanceGroups");
+  python::def(
+      "CondenseAbbreviationSubstanceGroups", &condenseAbbreviationSGroupHelper,
+      (python::arg("mol")),
+      python::return_value_policy<python::manage_new_object>(),
+      "finds and replaces abbrevation (i.e. \"SUP\") substance groups in a "
+      "molecule.");
 }

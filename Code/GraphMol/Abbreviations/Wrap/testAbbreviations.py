@@ -92,6 +92,39 @@ tBu      C(C)(C)C'''
     nm = rdAbbreviations.CondenseMolAbbreviations(nm, self.defaultAbbrevs, maxCoverage=1.0)
     self.assertEqual(Chem.MolToCXSmiles(nm), 'C*OC |$;Cy;;$|')
 
+  def testAbbreviationsSubstanceGroups(self):
+    m = Chem.MolFromMolBlock('''
+  Mrv2014 09152006492D          
+
+  0  0  0     0  0            999 V3000
+M  V30 BEGIN CTAB
+M  V30 COUNTS 7 7 1 0 0
+M  V30 BEGIN ATOM
+M  V30 1 C 5.25 -5.9858 0 0
+M  V30 2 C 4.48 -7.3196 0 0
+M  V30 3 C 6.02 -7.3196 0 0
+M  V30 4 F 8.6873 -8.8596 0 0
+M  V30 5 C 7.3537 -8.0896 0 0
+M  V30 6 F 6.02 -8.8596 0 0
+M  V30 7 F 7.3537 -6.5496 0 0
+M  V30 END ATOM
+M  V30 BEGIN BOND
+M  V30 1 1 1 2
+M  V30 2 1 3 1
+M  V30 3 1 2 3
+M  V30 4 1 3 5
+M  V30 5 1 4 5
+M  V30 6 1 5 6
+M  V30 7 1 5 7
+M  V30 END BOND
+M  V30 BEGIN SGROUP
+M  V30 1 SUP 0 ATOMS=(4 4 5 6 7) SAP=(3 5 3 1) XBONDS=(1 4) LABEL=CF3
+M  V30 END SGROUP
+M  V30 END CTAB
+M  END''')
+    nm = rdAbbreviations.CondenseAbbreviationSubstanceGroups(m)
+    self.assertEqual(Chem.MolToCXSmiles(nm), '*C1CC1 |$CF3;;;$|')
+
 
 if __name__ == '__main__':  # pragma: nocover
   unittest.main()
