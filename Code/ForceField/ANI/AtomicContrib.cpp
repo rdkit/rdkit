@@ -86,6 +86,10 @@ ANIAtomContrib::ANIAtomContrib(ForceField *owner, VectorXi &speciesVec,
   this->d_atomTypes.resize(speciesVec.size());
   for (long i = 0; i < speciesVec.size(); i++) {
     std::string element = table->getElementSymbol(speciesVec[i]);
+    if (indices_by_element.find(element) == indices_by_element.end()) {
+      throw ValueErrorException("Element not Supported: " + element);
+      return;
+    }
     this->d_atomTypes[i] = indices_by_element[element];
   }
 

@@ -33,12 +33,12 @@ using namespace Catch::literals;
 
   // get atomic number for each atom in mol
 VectorXi get_atomic_numbers(const RDKit::ROMol &mol) {
-  auto numAtoms = mol.getNumAtoms();
-  VectorXi speciesVec(numAtoms);
-  for (unsigned int i = 0; i < numAtoms; i++) {
+  VectorXi speciesVec(mol.getNumAtoms());
+  for (unsigned int i = 0; i < mol.getNumAtoms(); i++) {
     auto atom = mol.getAtomWithIdx(i);
     speciesVec[i] = atom->getAtomicNum();
   }
+  return speciesVec;
 }
 
 TEST_CASE("ANI-1ccx NN Forward Pass", "[ANI Force Field]") {
@@ -50,12 +50,11 @@ TEST_CASE("ANI-1ccx NN Forward Pass", "[ANI Force Field]") {
     RDKit::ROMOL_SPTR mol(RDKit::MolFileToMol(molFile, true, false));
     int confId = -1;
     auto conf = mol->getConformer(confId);
-    auto numAtoms = mol->getNumAtoms();
     auto speciesVec = get_atomic_numbers(*mol);
     ForceFields::ForceField field;
     auto &ps = field.positions();
     double *pos;
-    pos = new double[numAtoms * 3];
+    pos = new double[mol->getNumAtoms() * 3];
     for (unsigned int i = 0; i < mol->getNumAtoms(); i++) {
       auto atom = conf.getAtomPos(i);
       ps.push_back(&atom);
@@ -194,7 +193,7 @@ TEST_CASE("ANI-1x NN Forward Pass", "[ANI Force Field]") {
       pos[3 * i + 2] = atom.z;
     }
     auto ac = new ForceFields::ANI::ANIAtomContrib(
-        &field, speciesVec, "ANI-1ccx");
+        &field, speciesVec, "ANI-1x");
     field.contribs().push_back(ForceFields::ContribPtr(ac));
     field.initialize();
     CHECK(field.calcEnergy(pos) == (-154.9892_a).margin(0.05));
@@ -203,8 +202,11 @@ TEST_CASE("ANI-1x NN Forward Pass", "[ANI Force Field]") {
 TEST_CASE("QM7 Test Cases") {
   std::string rdbase = getenv("RDBASE");
   SECTION("3C 1N and 5H Molecule") {
-    VectorXi speciesVec; speciesVec << 6, 6, 6, 6, 7, 1, 1, 1, 1, 1;
+    printf("START TEST: 3C 1N and 5H Molecule\n");
     unsigned int numAtoms = 10;
+    VectorXi speciesVec(numAtoms);
+    speciesVec << 6, 6, 6, 6, 7, 1, 1, 1, 1, 1;
+    printf("speciesVec = %lu\n", speciesVec.size());
     ForceFields::ForceField fieldANI1x, fieldANI1ccx;
 
     double pos[] = {
@@ -218,11 +220,9 @@ TEST_CASE("QM7 Test Cases") {
         1.1301696300506592, -0.8761904239654541,     -1.7236380577087402,
         5.016429424285889,  -3.997413396835327,      0.014909938909113407,
         8.040104866027832,  -2.2334485054016113,     0.015911493450403214};
-    ForceFields::ANI::ANIAtomContrib *ac1;
-    ac1 = new ForceFields::ANI::ANIAtomContrib(
+    auto ac1 = new ForceFields::ANI::ANIAtomContrib(
         &fieldANI1x, speciesVec, "ANI-1x");
-    ForceFields::ANI::ANIAtomContrib *ac2;
-    ac2 = new ForceFields::ANI::ANIAtomContrib(
+    auto ac2 = new ForceFields::ANI::ANIAtomContrib(
         &fieldANI1ccx, speciesVec, "ANI-1ccx");
     fieldANI1x.contribs().push_back(ForceFields::ContribPtr(ac1));
     fieldANI1ccx.contribs().push_back(ForceFields::ContribPtr(ac2));
@@ -238,8 +238,9 @@ TEST_CASE("QM7 Test Cases") {
     CHECK(fieldANI1ccx.calcEnergy(pos) == (-208.9733_a).margin(0.05));
   }
   SECTION("1N 3C 1O and 9H") {
-    VectorXi speciesVec; speciesVec << 7, 6, 6, 6, 8, 1, 1, 1, 1, 1, 1, 1, 1, 1;
     unsigned int numAtoms = 14;
+    VectorXi speciesVec(numAtoms);
+    speciesVec << 7, 6, 6, 6, 8, 1, 1, 1, 1, 1, 1, 1, 1, 1;
     ForceFields::ForceField fieldANI1x, fieldANI1ccx;
 
     double pos[] = {
@@ -257,11 +258,9 @@ TEST_CASE("QM7 Test Cases") {
         9.32322883605957,   4.67402982711792,     -0.26873794198036194,
         9.555381774902344,  1.6062861680984497,   -1.5811527967453003,
         9.00974178314209,   2.783963441848755,    3.6356818675994873};
-    ForceFields::ANI::ANIAtomContrib *ac1;
-    ac1 = new ForceFields::ANI::ANIAtomContrib(
+    auto ac1 = new ForceFields::ANI::ANIAtomContrib(
         &fieldANI1x, speciesVec, "ANI-1x");
-    ForceFields::ANI::ANIAtomContrib *ac2;
-    ac2 = new ForceFields::ANI::ANIAtomContrib(
+    auto ac2 = new ForceFields::ANI::ANIAtomContrib(
         &fieldANI1ccx, speciesVec, "ANI-1ccx");
     fieldANI1x.contribs().push_back(ForceFields::ContribPtr(ac1));
     fieldANI1ccx.contribs().push_back(ForceFields::ContribPtr(ac2));
@@ -277,8 +276,9 @@ TEST_CASE("QM7 Test Cases") {
     CHECK(fieldANI1ccx.calcEnergy(pos) == (-248.2279_a).margin(0.05));
   }
   SECTION("1N 5C 9H") {
-    VectorXi speciesVec; speciesVec << 7, 6, 6, 6, 6, 6, 1, 1, 1, 1, 1, 1, 1, 1, 1;
     unsigned int numAtoms = 15;
+    VectorXi speciesVec(numAtoms);
+    speciesVec << 7, 6, 6, 6, 6, 6, 1, 1, 1, 1, 1, 1, 1, 1, 1;
     ForceFields::ForceField fieldANI1x, fieldANI1ccx;
 
     double pos[] = {
@@ -297,11 +297,9 @@ TEST_CASE("QM7 Test Cases") {
         9.267745971679688,  1.8809388875961304,   2.165493965148926,
         9.537825584411621,  3.8325536251068115,   -0.5140811204910278,
         12.562162399291992, -3.02358078956604,    -3.24534010887146};
-    ForceFields::ANI::ANIAtomContrib *ac1;
-    ac1 = new ForceFields::ANI::ANIAtomContrib(
+    auto ac1 = new ForceFields::ANI::ANIAtomContrib(
         &fieldANI1x, speciesVec, "ANI-1x");
-    ForceFields::ANI::ANIAtomContrib *ac2;
-    ac2 = new ForceFields::ANI::ANIAtomContrib(
+    auto ac2 = new ForceFields::ANI::ANIAtomContrib(
         &fieldANI1ccx, speciesVec, "ANI-1ccx");
     fieldANI1x.contribs().push_back(ForceFields::ContribPtr(ac1));
     fieldANI1ccx.contribs().push_back(ForceFields::ContribPtr(ac2));
@@ -317,8 +315,9 @@ TEST_CASE("QM7 Test Cases") {
     CHECK(fieldANI1ccx.calcEnergy(pos) == (-249.0295_a).margin(0.05));
   }
   SECTION("5C 1O 8H") {
-    VectorXi speciesVec; speciesVec << 6, 6, 6, 6, 6, 8, 1, 1, 1, 1, 1, 1, 1, 1;
     unsigned int numAtoms = 14;
+    VectorXi speciesVec(numAtoms);
+    speciesVec << 6, 6, 6, 6, 6, 8, 1, 1, 1, 1, 1, 1, 1, 1;
     ForceFields::ForceField fieldANI1x, fieldANI1ccx;
 
     double pos[] = {
@@ -337,11 +336,9 @@ TEST_CASE("QM7 Test Cases") {
         5.169175624847412,  2.650114059448242,     -3.2528233528137207,
         8.815553665161133,  3.1873443126678467,    1.0119673013687134,
     };
-    ForceFields::ANI::ANIAtomContrib *ac1;
-    ac1 = new ForceFields::ANI::ANIAtomContrib(
+    auto ac1 = new ForceFields::ANI::ANIAtomContrib(
         &fieldANI1x, speciesVec, "ANI-1x");
-    ForceFields::ANI::ANIAtomContrib *ac2;
-    ac2 = new ForceFields::ANI::ANIAtomContrib(
+    auto ac2 = new ForceFields::ANI::ANIAtomContrib(
       &fieldANI1ccx, speciesVec, "ANI-1ccx");
     fieldANI1x.contribs().push_back(ForceFields::ContribPtr(ac1));
     fieldANI1ccx.contribs().push_back(ForceFields::ContribPtr(ac2));
@@ -357,9 +354,9 @@ TEST_CASE("QM7 Test Cases") {
     CHECK(fieldANI1ccx.calcEnergy(pos) == (-269.0295_a).margin(0.05));
   }
   SECTION("6C 1N 13H") {
-    VectorXi speciesVec;
-    speciesVec << 6, 6, 6, 7, 6, 6, 6, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1;
     unsigned int numAtoms = 20;
+    VectorXi speciesVec(numAtoms);
+    speciesVec << 6, 6, 6, 7, 6, 6, 6, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1;
     ForceFields::ForceField fieldANI1x, fieldANI1ccx;
 
     double pos[] = {
@@ -383,13 +380,10 @@ TEST_CASE("QM7 Test Cases") {
         8.529033660888672,  0.1181078851222992,   4.241074562072754,
         6.8076629638671875, -3.61893892288208,    0.5778782367706299,
         4.953671455383301,  -2.7142891883850098,  3.2221720218658447,
-
     };
-    ForceFields::ANI::ANIAtomContrib *ac1;
-    ac1 = new ForceFields::ANI::ANIAtomContrib(
+    auto ac1 = new ForceFields::ANI::ANIAtomContrib(
         &fieldANI1x, speciesVec, "ANI-1x");
-    ForceFields::ANI::ANIAtomContrib *ac2;
-    ac2 = new ForceFields::ANI::ANIAtomContrib(
+    auto ac2 = new ForceFields::ANI::ANIAtomContrib(
       &fieldANI1ccx, speciesVec, "ANI-1ccx");
     fieldANI1x.contribs().push_back(ForceFields::ContribPtr(ac1));
     fieldANI1ccx.contribs().push_back(ForceFields::ContribPtr(ac2));
