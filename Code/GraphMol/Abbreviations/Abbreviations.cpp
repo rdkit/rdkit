@@ -52,8 +52,11 @@ void applyMatches(RWMol& mol, const std::vector<AbbreviationMatch>& matches) {
       const auto& pr = amatch.match[i];
       CHECK_INVARIANT(!toRemove[pr.second], "overlapping matches");
       toRemove.set(pr.second);
-      if (mol.getAtomWithIdx(pr.second)->getDegree() >
-          amatch.abbrev.mol->getAtomWithIdx(pr.first)->getDegree()) {
+      // if there's a molecule associated with the match, check to see if
+      // additional bonds need to be formed
+      if (amatch.abbrev.mol &&
+          mol.getAtomWithIdx(pr.second)->getDegree() >
+              amatch.abbrev.mol->getAtomWithIdx(pr.first)->getDegree()) {
         for (const auto& nbri : boost::make_iterator_range(
                  mol.getAtomNeighbors(mol.getAtomWithIdx(pr.second)))) {
           const auto& nbr = mol[nbri];
@@ -67,6 +70,10 @@ void applyMatches(RWMol& mol, const std::vector<AbbreviationMatch>& matches) {
           }
         }
       }
+    }
+    // make connections between any extraAttachAtoms and the connection point
+    for (auto oaidx : amatch.abbrev.extraAttachAtoms) {
+      mol.addBond(oaidx, connectIdx, Bond::BondType::SINGLE);
     }
   }
   for (unsigned int i = toRemove.size(); i > 0; --i) {
@@ -179,6 +186,71 @@ void labelMolAbbreviations(RWMol& mol,
       findApplicableAbbreviationMatches(mol, abbrevs, maxCoverage);
   labelMatches(mol, applicable);
 };
+
+RDKIT_ABBREVIATIONS_EXPORT void condenseAbbreviationSubstanceGroups(
+    RWMol& mol) {
+  auto& molSGroups = getSubstanceGroups(mol);
+  std::vector<AbbreviationMatch> abbrevMatches;
+  for (const auto& sg : molSGroups) {
+    if (sg.getProp<std::string>("TYPE") == "SUP") {
+      AbbreviationMatch abbrevMatch;
+      std::string label = "abbrev";
+      sg.getPropIfPresent("LABEL", label);
+      abbrevMatch.abbrev.label = label;
+      auto ats = sg.getAtoms();
+      auto bnds = sg.getBonds();
+      if (bnds.empty()) {
+        BOOST_LOG(rdWarningLog) << "SUP group without any bonds" << std::endl;
+      } else {
+        bool firstAttachFound = false;
+        for (unsigned int i = 0; i < bnds.size(); ++i) {
+          auto bnd = mol.getBondWithIdx(bnds[i]);
+          unsigned int mAt;  // sgroup atom in the match
+          unsigned int oAt;  // add the first attachment point to the beginning
+                             // of the atom list
+          if (std::find(ats.begin(), ats.end(), bnd->getBeginAtomIdx()) !=
+              ats.end()) {
+            oAt = bnd->getEndAtomIdx();
+            mAt = bnd->getBeginAtomIdx();
+          } else if (std::find(ats.begin(), ats.end(), bnd->getEndAtomIdx()) !=
+                     ats.end()) {
+            oAt = bnd->getBeginAtomIdx();
+            mAt = bnd->getEndAtomIdx();
+          } else {
+            BOOST_LOG(rdWarningLog) << "SUP group includes bond not connected "
+                                       "to any of the abbreviation atoms"
+                                    << std::endl;
+            continue;
+          }
+
+          if (!firstAttachFound) {
+            // make sure the atom connected to the first attachment point
+            // is the first one in the match
+            if (*ats.begin() != mAt) {
+              ats.erase(std::find(ats.begin(), ats.end(), mAt));
+              ats.insert(ats.begin(), mAt);
+            }
+            ats.insert(ats.begin(), oAt);
+            firstAttachFound = true;
+          } else {
+            abbrevMatch.abbrev.extraAttachAtoms.push_back(oAt);
+          }
+        }
+      }
+
+      // create a match record:
+      for (unsigned int i = 0; i < ats.size(); ++i) {
+        abbrevMatch.match.push_back({i, ats[i]});
+      }
+      abbrevMatches.push_back(abbrevMatch);
+    }
+  }
+  if (!abbrevMatches.empty()) {
+    applyMatches(mol, abbrevMatches);
+  } else {
+    BOOST_LOG(rdWarningLog) << "no suitable SubstanceGroups found" << std::endl;
+  }
+};  // namespace Abbreviations
 
 }  // namespace Abbreviations
 }  // namespace RDKit

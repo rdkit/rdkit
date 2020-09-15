@@ -15,6 +15,7 @@
 #include <GraphMol/SmilesParse/SmilesWrite.h>
 #include <GraphMol/SmilesParse/SmilesParse.h>
 #include <GraphMol/FileParsers/SequenceParsers.h>
+#include <GraphMol/FileParsers/FileParsers.h>
 
 using namespace RDKit;
 
@@ -354,5 +355,176 @@ TEST_CASE("labelMolAbbreviations") {
       CHECK(sgs[1].getAttachPoints()[0].aIdx == 4);
       CHECK(sgs[1].getAttachPoints()[0].lvIdx == 3);
     }
+  }
+}
+
+TEST_CASE("condenseAbbreviationSubstanceGroups") {
+  SECTION("abbreviations") {
+    auto m = R"CTAB(
+  ACCLDraw09152005292D
+
+  0  0  0     0  0            999 V3000
+M  V30 BEGIN CTAB
+M  V30 COUNTS 10 10 2 0 0
+M  V30 BEGIN ATOM
+M  V30 1 C 12.8333 -9.32 0 0 CFG=3 
+M  V30 2 C 13.8565 -8.7293 0 0 
+M  V30 3 O 14.8802 -9.3201 0 0 
+M  V30 4 O 13.8565 -7.5471 0 0 
+M  V30 5 C 11.6489 -9.32 0 0 
+M  V30 6 C 12.241 -10.3432 0 0 CFG=3 
+M  V30 7 C 12.241 -11.5253 0 0 CFG=3 
+M  V30 8 F 12.241 -12.5874 0 0 
+M  V30 9 F 11.0366 -11.5253 0 0 
+M  V30 10 F 13.4231 -11.5253 0 0 
+M  V30 END ATOM
+M  V30 BEGIN BOND
+M  V30 1 2 2 4 
+M  V30 2 1 2 3 
+M  V30 3 1 1 2 
+M  V30 4 1 5 6 
+M  V30 5 1 5 1 
+M  V30 6 1 1 6 
+M  V30 7 1 7 10 
+M  V30 8 1 7 9 
+M  V30 9 1 7 8 
+M  V30 10 1 6 7 
+M  V30 END BOND
+M  V30 BEGIN SGROUP
+M  V30 1 SUP 1 ATOMS=(3 2 3 4) XBONDS=(1 3) CSTATE=(4 3 -1.02 -0.59 0) LABEL=-
+M  V30 CO2H 
+M  V30 2 SUP 2 ATOMS=(4 7 8 9 10) XBONDS=(1 10) CSTATE=(4 10 0 1.18 0) LABEL=-
+M  V30 CF3 
+M  V30 END SGROUP
+M  V30 END CTAB
+M  END)CTAB"_ctab;
+    REQUIRE(m);
+    CHECK(m->getNumAtoms() == 10);
+    Abbreviations::condenseAbbreviationSubstanceGroups(*m);
+    CHECK(m->getNumAtoms() == 5);
+    // remove the conformer before generating CXSMILES
+    m->clearConformers();
+    CHECK(MolToCXSmiles(*m) == "*C1CC1* |$CO2H;;;;CF3$|");
+  }
+  SECTION("abbreviations MRV") {
+    auto m = R"CTAB(
+  Mrv2014 09152006492D          
+
+  0  0  0     0  0            999 V3000
+M  V30 BEGIN CTAB
+M  V30 COUNTS 7 7 1 0 0
+M  V30 BEGIN ATOM
+M  V30 1 C 5.25 -5.9858 0 0
+M  V30 2 C 4.48 -7.3196 0 0
+M  V30 3 C 6.02 -7.3196 0 0
+M  V30 4 F 8.6873 -8.8596 0 0
+M  V30 5 C 7.3537 -8.0896 0 0
+M  V30 6 F 6.02 -8.8596 0 0
+M  V30 7 F 7.3537 -6.5496 0 0
+M  V30 END ATOM
+M  V30 BEGIN BOND
+M  V30 1 1 1 2
+M  V30 2 1 3 1
+M  V30 3 1 2 3
+M  V30 4 1 3 5
+M  V30 5 1 4 5
+M  V30 6 1 5 6
+M  V30 7 1 5 7
+M  V30 END BOND
+M  V30 BEGIN SGROUP
+M  V30 1 SUP 0 ATOMS=(4 4 5 6 7) SAP=(3 5 3 1) XBONDS=(1 4) LABEL=CF3
+M  V30 END SGROUP
+M  V30 END CTAB
+M  END
+)CTAB"_ctab;
+    REQUIRE(m);
+    CHECK(m->getNumAtoms() == 7);
+    Abbreviations::condenseAbbreviationSubstanceGroups(*m);
+    CHECK(m->getNumAtoms() == 4);
+    // remove the conformer before generating CXSMILES
+    m->clearConformers();
+    CHECK(MolToCXSmiles(*m) == "*C1CC1 |$CF3;;;$|");
+  }
+
+  SECTION("linker") {
+    auto m = R"CTAB(
+  ACCLDraw09152006102D
+
+  0  0  0     0  0            999 V3000
+M  V30 BEGIN CTAB
+M  V30 COUNTS 8 7 1 0 0
+M  V30 BEGIN ATOM
+M  V30 1 C 7.2482 -5.1911 0 0 
+M  V30 2 O 5.8143 -6.2327 0 0 
+M  V30 3 C 6.77 -5.5382 0 0 
+M  V30 4 C 7.8494 -6.0186 0 0 
+M  V30 5 O 8.8052 -5.3241 0 0 
+M  V30 6 C 9.8845 -5.8046 0 0 
+M  V30 7 C 10.8403 -5.1101 0 0 
+M  V30 8 C 9.4066 -6.1518 0 0 
+M  V30 END ATOM
+M  V30 BEGIN BOND
+M  V30 1 1 1 2 
+M  V30 2 1 2 3 
+M  V30 3 1 3 4 
+M  V30 4 1 4 5 
+M  V30 5 1 5 6 
+M  V30 6 1 6 7 
+M  V30 7 1 7 8 
+M  V30 END BOND
+M  V30 BEGIN SGROUP
+M  V30 1 SUP 1 ATOMS=(6 2 3 4 5 6 7) XBONDS=(2 1 7) CSTATE=(4 1 -1.08 0.48 0) -
+M  V30 CSTATE=(4 7 1.08 -0.48 0) LABEL=PEG2 
+M  V30 END SGROUP
+M  V30 END CTAB
+M  END)CTAB"_ctab;
+    REQUIRE(m);
+    CHECK(m->getNumAtoms() == 8);
+    Abbreviations::condenseAbbreviationSubstanceGroups(*m);
+    CHECK(m->getNumAtoms() == 3);
+    // remove the conformer before generating CXSMILES
+    m->clearConformers();
+    CHECK(MolToCXSmiles(*m) == "C*C |$;PEG2;$|");
+  }
+  SECTION("linker MRV") {
+    auto m = R"CTAB(
+  Mrv2014 09152006522D          
+
+  0  0  0     0  0            999 V3000
+M  V30 BEGIN CTAB
+M  V30 COUNTS 8 7 1 0 0
+M  V30 BEGIN ATOM
+M  V30 1 C 1.625 -8.9167 0 0
+M  V30 2 O 2.9587 -8.1467 0 0
+M  V30 3 C 4.2924 -8.9167 0 0
+M  V30 4 C 5.626 -8.1467 0 0
+M  V30 5 O 6.9597 -8.9167 0 0
+M  V30 6 C 8.2934 -8.1467 0 0
+M  V30 7 C 9.6271 -8.9167 0 0
+M  V30 8 C 10.9608 -8.1467 0 0
+M  V30 END ATOM
+M  V30 BEGIN BOND
+M  V30 1 1 1 2
+M  V30 2 1 2 3
+M  V30 3 1 3 4
+M  V30 4 1 4 5
+M  V30 5 1 5 6
+M  V30 6 1 6 7
+M  V30 7 1 7 8
+M  V30 END BOND
+M  V30 BEGIN SGROUP
+M  V30 1 SUP 0 ATOMS=(6 2 3 4 5 6 7) SAP=(3 2 1 1) SAP=(3 7 8 2) XBONDS=(2 1 -
+M  V30 7) LABEL=PEG2 ESTATE=E
+M  V30 END SGROUP
+M  V30 END CTAB
+M  END
+)CTAB"_ctab;
+    REQUIRE(m);
+    CHECK(m->getNumAtoms() == 8);
+    Abbreviations::condenseAbbreviationSubstanceGroups(*m);
+    CHECK(m->getNumAtoms() == 3);
+    // remove the conformer before generating CXSMILES
+    m->clearConformers();
+    CHECK(MolToCXSmiles(*m) == "C*C |$;PEG2;$|");
   }
 }

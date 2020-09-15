@@ -24,9 +24,8 @@ RDKIT_ABBREVIATIONS_EXPORT struct AbbreviationDefinition {
   std::string displayLabel;
   std::string displayLabelW;
   std::string smarts;
-  std::shared_ptr<ROMol> mol;
-  // AbbreviationDefinition()
-  // label(""),displayLabel(""),displayLabelW(""),smarts(""),mol(nullptr) {}
+  std::shared_ptr<ROMol> mol;                  //! optional
+  std::vector<unsigned int> extraAttachAtoms;  //! optional
   bool operator==(const AbbreviationDefinition& other) const {
     return label == other.label && displayLabel == other.displayLabel &&
            displayLabelW == other.displayLabelW && smarts == other.smarts;
@@ -116,10 +115,13 @@ RDKIT_ABBREVIATIONS_EXPORT void labelMatches(
 RDKIT_ABBREVIATIONS_EXPORT void condenseMolAbbreviations(
     RWMol& mol, const std::vector<AbbreviationDefinition>& abbrevs,
     double maxCoverage = 0.4, bool sanitize = true);
-//! convenience function for finding and labeling abbreviations
+//! convenience function for finding and labeling abbreviations as SUP
+//! SubstanceGroups
 RDKIT_ABBREVIATIONS_EXPORT void labelMolAbbreviations(
     RWMol& mol, const std::vector<AbbreviationDefinition>& abbrevs,
     double maxCoverage = 0.4);
+//! collapses abbreviation substance groups
+RDKIT_ABBREVIATIONS_EXPORT void condenseAbbreviationSubstanceGroups(RWMol& mol);
 
 }  // namespace Abbreviations
 }  // namespace RDKit
