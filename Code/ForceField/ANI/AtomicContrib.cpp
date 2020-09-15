@@ -50,9 +50,9 @@ ANIAtomContrib::ANIAtomContrib(ForceField *owner, VectorXi &speciesVec,
   PRECONDITION(owner, "This ForceField contrib needs an owner")
   dp_forceField = owner;
   // load element mapping and atomic self-energies
-  this->paramDir = model;
+  this->paramDir = model; // first try opening as a param dir
   std::ifstream selfEnergyFile(paramDir + "/selfEnergies");
-  if (!selfEnergyFile.is_open()) {  // try default location
+  if (!selfEnergyFile.is_open()) {  // next, try default location
     std::string rdbase = getenv("RDBASE");
     paramDir = rdbase + "/Code/ForceField/ANI/Params/" + model;
     selfEnergyFile.open(paramDir + "/selfEnergies");
@@ -87,7 +87,7 @@ ANIAtomContrib::ANIAtomContrib(ForceField *owner, VectorXi &speciesVec,
   for (long i = 0; i < speciesVec.size(); i++) {
     std::string element = table->getElementSymbol(speciesVec[i]);
     if (indices_by_element.find(element) == indices_by_element.end()) {
-      throw ValueErrorException("Element not Supported: " + element);
+      throw ValueErrorException("Element not supported: " + element);
       return;
     }
     this->d_atomTypes[i] = indices_by_element[element];
@@ -100,10 +100,10 @@ ANIAtomContrib::ANIAtomContrib(ForceField *owner, VectorXi &speciesVec,
     std::string paramFile =
         paramDir + "/model" + std::to_string(model_i) + ".bin";
     FILE *fp = fopen(paramFile.c_str(), "rb");  // check that file exists
-    fclose(fp);
     if (!fp) {
-      break;
+      break;  // stop at first file that doesn't exist
     }
+    fclose(fp);  // if file did exist, close it (deserializeAll reopens it)
     this->d_weights.resize(model_i + 1);
     this->d_biases.resize(model_i + 1);
     this->d_weights[model_i].resize(n_elements);
