@@ -3316,8 +3316,7 @@ void testGithub3305() {
       std::ofstream outs(nameBase + "4.svg");
       outs << text;
       outs.flush();
-      std::cerr << text << std::endl;
-      TEST_ASSERT(text.find("stroke:#FF7F7F;stroke-width:2.6") !=
+      TEST_ASSERT(text.find("stroke:#FF7F7F;stroke-width:2.7") !=
                   std::string::npos);
       TEST_ASSERT(text.find("stroke:#FF7F7F;stroke-width:16px") ==
                   std::string::npos);

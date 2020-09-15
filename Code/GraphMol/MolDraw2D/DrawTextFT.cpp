@@ -112,14 +112,12 @@ void DrawTextFT::setFontFile(const std::string &font_file) {
   face_ = nullptr;
   // take the first face
   if (!font_file_.empty()) {
-    std::cerr << "loading font from " << font_file << std::endl;
     int err_code = FT_New_Face(library_, font_file_.c_str(), 0, &face_);
     if (err_code != FT_Err_Ok) {
       throw std::runtime_error(std::string("Font file ") + font_file_ +
                                std::string(" not found."));
     }
   } else {
-    std::cerr << "loading built in font" << std::endl;
     int err_code = FT_New_Memory_Face(library_, (FT_Byte *)telex_ttf.c_str(),
                                       telex_ttf.size(), 0, &face_);
     if (err_code != FT_Err_Ok) {
