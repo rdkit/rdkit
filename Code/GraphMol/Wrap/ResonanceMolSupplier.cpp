@@ -70,7 +70,7 @@ class PyResonanceMolSupplierCallback
   inline python::object getCallbackOverride() const {
     return get_override("__call__");
   }
-  bool operator()() const { return getCallbackOverride()(); }
+  bool operator()() { return getCallbackOverride()(); }
   python::object getPyCallbackObject() { return d_pyCallbackObject; }
 
  private:
@@ -78,7 +78,7 @@ class PyResonanceMolSupplierCallback
   python::object d_pyCallbackObject;
 };
 
-python::object getProgressCallbackHelper(ResonanceMolSupplier &suppl) {
+python::object getProgressCallbackHelper(const ResonanceMolSupplier &suppl) {
   PyResonanceMolSupplierCallback *cppCallback =
       dynamic_cast<PyResonanceMolSupplierCallback *>(
           suppl.getProgressCallback());
@@ -111,9 +111,9 @@ void setProgressCallbackHelper(ResonanceMolSupplier &suppl,
           new PyResonanceMolSupplierCallback(callbackObject));
     }
   } else {
-    PyErr_SetString(
-        PyExc_TypeError,
-        "Expected an instance of a Chem.ResonanceMolSupplierCallback subclass");
+    PyErr_SetString(PyExc_TypeError,
+                    "Expected an instance of a "
+                    "rdchem.ResonanceMolSupplierCallback subclass");
     python::throw_error_already_set();
   }
 }
@@ -197,8 +197,8 @@ struct resmolsup_wrap {
         .def("__call__",
              python::pure_virtual(&PyResonanceMolSupplierCallback::operator()),
              "This must be implemented in the derived class. "
-             "Return true if the resonance structure generation "
-             "should continue; false if the resonance structure "
+             "Return True if the resonance structure generation "
+             "should continue; False if the resonance structure "
              "generation should stop.\n");
 
     python::class_<ResonanceMolSupplier, boost::noncopyable>(
@@ -247,11 +247,11 @@ struct resmolsup_wrap {
             "structures (defaults to 1; 0 selects the number of concurrent\n"
             "threads supported by the hardware; negative values are added\n"
             "to the number of concurrent threads supported by the hardware).\n")
-        .def("SetProgressCallback", setProgressCallbackHelper,
+        .def("SetProgressCallback", &setProgressCallbackHelper,
              "Pass an instance of a class derived from\n"
              "ResonanceMolSupplierCallback, which must implement the\n"
-             "callback() method.\n")
-        .def("GetProgressCallback", getProgressCallbackHelper,
+             "__call__() method.\n")
+        .def("GetProgressCallback", &getProgressCallbackHelper,
              "Get the ResonanceMolSupplierCallback subclass instance,\n"
              "or None if none was set.\n")
         .def("WasCanceled", &ResonanceMolSupplier::wasCanceled,

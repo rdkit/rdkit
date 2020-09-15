@@ -726,12 +726,7 @@ void processCXSmilesLabels(RDKit::RWMol &mol) {
        atIt != mol.endAtoms(); ++atIt) {
     std::string symb = "";
     if ((*atIt)->getPropIfPresent(RDKit::common_properties::atomLabel, symb)) {
-      if (symb.size() > 3 && symb[0] == '_' && symb[1] == 'A' &&
-          symb[2] == 'P') {
-        auto mapNum =
-            boost::lexical_cast<unsigned int>(symb.substr(3, symb.size() - 3));
-        (*atIt)->setAtomMapNum(mapNum);
-      } else if (symb == "star_e") {
+      if (symb == "star_e") {
         /* according to the MDL spec, these match anything, but in MARVIN they
         are "unspecified end groups" for polymers */
         addquery(makeAtomNullQuery(), symb, mol, (*atIt)->getIdx());

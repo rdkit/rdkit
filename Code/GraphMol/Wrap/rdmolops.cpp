@@ -22,6 +22,7 @@ namespace python = boost::python;
 using namespace RDKit;
 
 void wrap_molops();
+void wrap_chiralityops();
 
 BOOST_PYTHON_MODULE(rdmolops) {
   python::scope().attr("__doc__") =
@@ -32,4 +33,5 @@ BOOST_PYTHON_MODULE(rdmolops) {
   // Functions from MolOps
   //****************************
   wrap_molops();
+  wrap_chiralityops();
 }

@@ -40,7 +40,6 @@ class JSMol {
   std::string remove_hs() const;
   std::string add_hs() const;
 
- private:
   std::unique_ptr<RDKit::ROMol> d_mol;
   static constexpr unsigned int d_defaultWidth = 250;
   static constexpr unsigned int d_defaultHeight = 200;
@@ -50,3 +49,4 @@ std::string get_inchikey_for_inchi(const std::string &input);
 JSMol *get_mol(const std::string &input);
 JSMol *get_qmol(const std::string &input);
 std::string version();
+void prefer_coordgen(bool prefer);

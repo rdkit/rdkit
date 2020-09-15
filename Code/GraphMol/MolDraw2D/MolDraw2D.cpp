@@ -243,6 +243,7 @@ void MolDraw2D::drawMolecule(const ROMol &mol,
     atom_colours.emplace_back(
         getColour(this_at->getIdx(), highlight_atoms, highlight_atom_map));
   }
+
   finishMoleculeDraw(draw_mol, atom_colours);
   // popDrawDetails();
   setLineWidth(origWidth);
@@ -2231,11 +2232,18 @@ void MolDraw2D::drawWedgedBond(const Point2D &cds1, const Point2D &cds2,
 
   setColour(col1);
   if (draw_dashed) {
-    unsigned int nDashes = 6;
+    unsigned int nDashes;
     // empirical cutoff to make sure we don't have too many dashes in the
     // wedge:
-    if (scale_ * (cds1 - cds2).lengthSq() < 50.0) {
-      nDashes /= 2;
+    auto factor = scale_ * (cds1 - cds2).lengthSq();
+    if (factor < 35) {
+      nDashes = 3;
+    } else if (factor < 40) {
+      nDashes = 4;
+    } else if (factor < 45) {
+      nDashes = 5;
+    } else {
+      nDashes = 6;
     }
 
     int orig_lw = lineWidth();
@@ -2253,7 +2261,6 @@ void MolDraw2D::drawWedgedBond(const Point2D &cds1, const Point2D &cds2,
       drawLine(e11, e22);
     }
     setLineWidth(orig_lw);
-
   } else {
     if (col1 == col2) {
       drawTriangle(cds1, end1, end2);
@@ -2268,7 +2275,7 @@ void MolDraw2D::drawWedgedBond(const Point2D &cds1, const Point2D &cds2,
       drawTriangle(mid1, mid2, end2);
     }
   }
-}
+}  // namespace RDKit
 
 // ****************************************************************************
 void MolDraw2D::drawDativeBond(const Point2D &cds1, const Point2D &cds2,

@@ -559,3 +559,33 @@ TEST_CASE("single bonds to aromatic neighbors") {
     } 
   }
 }
+
+TEST_CASE("github #3388: Information about charges and isotopes lost when calling AdjustQueryProperties") {
+  MolOps::AdjustQueryParameters ps = MolOps::AdjustQueryParameters::noAdjustments();
+  ps.adjustDegree = true;
+  ps.adjustDegreeFlags = MolOps::AdjustQueryWhichFlags::ADJUST_IGNORENONE;
+  SECTION("basics") {
+    auto mol = "[13CH3]C[O-]"_smiles;
+    REQUIRE(mol);
+    MolOps::adjustQueryProperties(*mol,&ps);
+    auto sma = MolToSmarts(*mol);
+    CHECK(sma=="[#6&13*&D1]-[#6&D2]-[#8&-&D1]");
+  }
+  SECTION("root cause") {
+    auto mol = "[13CH2-]C[O-]"_smiles;
+    REQUIRE(mol);
+    QueryAtom atm(*mol->getAtomWithIdx(0));
+    auto sma = SmartsWrite::GetAtomSmarts(&atm);
+    CHECK(sma=="[#6&13*&-]");
+  }
+  SECTION("root cause2") {
+    // since we don't have a way to query for number of radical electrons in SMARTS,
+    // we need to check that a different way:
+    auto mol = "[CH2]C[O-]"_smiles;
+    REQUIRE(mol);
+    QueryAtom atm(*mol->getAtomWithIdx(0));
+    auto descr = describeQuery(&atm);
+    CHECK(descr.find("AtomNumRadicalElectrons 1 = val")!=std::string::npos);
+  }
+}
+
