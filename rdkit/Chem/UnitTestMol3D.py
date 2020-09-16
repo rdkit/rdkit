@@ -194,6 +194,7 @@ class TestCase(unittest.TestCase):
     mol = Chem.MolFromSmiles('CC(F)=CC(Cl)C')
     smiles = set(
       Chem.MolToSmiles(i, isomericSmiles=True) for i in AllChem.EnumerateStereoisomers(mol))
+    print(smiles)
     self.assertEqual(len(smiles), 4)
 
   def testEnumerateStereoisomersLargeRandomSample(self):
@@ -302,6 +303,7 @@ class TestCase(unittest.TestCase):
     smiles = set(
       Chem.MolToSmiles(i, isomericSmiles=True)
       for i in AllChem.EnumerateStereoisomers(fully_assigned, opts))
+    print(smiles)
     self.assertEqual(
       smiles,
       set([
@@ -318,6 +320,7 @@ class TestCase(unittest.TestCase):
       Chem.MolToSmiles(i, isomericSmiles=True) for i in AllChem.EnumerateStereoisomers(mol, opts)
     ]
     self.assertEqual(len(smiles), 4)
+    print(set(smiles))
     self.assertEqual(len(set(smiles)), 3)
 
     mol = Chem.MolFromSmiles('FC(Cl)C(Cl)F')
@@ -352,16 +355,19 @@ class TestCase(unittest.TestCase):
     mol = Chem.MolFromSmiles('FC(Cl)C=CC=CC(F)Cl')
     opts = AllChem.StereoEnumerationOptions(unique=True)
     smiles = set(
-      Chem.MolToSmiles(i, isomericSmiles=True) for i in AllChem.EnumerateStereoisomers(mol, opts))
+      sorted(
+        Chem.MolToSmiles(i, isomericSmiles=True)
+        for i in AllChem.EnumerateStereoisomers(mol, opts)))
     self.assertEqual(
       smiles,
-      set([
-        'F[C@H](Cl)/C=C\\C=C\\[C@@H](F)Cl', 'F[C@H](Cl)/C=C/C=C/[C@H](F)Cl',
-        'F[C@H](Cl)/C=C/C=C/[C@@H](F)Cl', 'F[C@H](Cl)/C=C\\C=C/[C@@H](F)Cl',
-        'F[C@H](Cl)/C=C\\C=C\\[C@H](F)Cl', 'F[C@H](Cl)/C=C\\C=C/[C@H](F)Cl',
-        'F[C@@H](Cl)/C=C/C=C/[C@@H](F)Cl', 'F[C@@H](Cl)/C=C\\C=C\\[C@H](F)Cl',
-        'F[C@@H](Cl)/C=C\\C=C\\[C@@H](F)Cl', 'F[C@@H](Cl)/C=C\\C=C/[C@@H](F)Cl'
-      ]))
+      set(
+        sorted([
+          'F[C@H](Cl)/C=C\\C=C\\[C@H](F)Cl', 'F[C@@H](Cl)/C=C\\C=C/[C@H](F)Cl',
+          'F[C@@H](Cl)/C=C/C=C/[C@@H](F)Cl', 'F[C@@H](Cl)/C=C\\C=C\\[C@@H](F)Cl',
+          'F[C@H](Cl)/C=C\\C=C/[C@H](F)Cl', 'F[C@@H](Cl)/C=C/C=C/[C@H](F)Cl',
+          'F[C@@H](Cl)/C=C\\C=C/[C@@H](F)Cl', 'F[C@@H](Cl)/C=C/C=C\\[C@H](F)Cl',
+          'F[C@H](Cl)/C=C/C=C/[C@H](F)Cl', 'F[C@@H](Cl)/C=C\\C=C\\[C@H](F)Cl'
+        ])))
 
   def testEnumerateStereoisomersOnlyEnhancedStereo(self):
     rdbase = os.environ["RDBASE"]
@@ -392,7 +398,7 @@ class TestCase(unittest.TestCase):
     mol = Chem.MolFromSmiles('CC=CC')
     mol.GetBondWithIdx(1).SetStereo(Chem.rdchem.BondStereo.STEREOANY)
 
-    assert len(list(AllChem.EnumerateStereoisomers(mol))) == 2
+    self.assertEqual(len(list(AllChem.EnumerateStereoisomers(mol))), 2)
 
   def testIssue3231(self):
     mol = Chem.MolFromSmiles(

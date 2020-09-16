@@ -8,8 +8,8 @@
 //  of the RDKit source tree.
 //
 
-#define CATCH_CONFIG_MAIN // This tells Catch to provide a main() - only do
-                          // this in one cpp file
+#define CATCH_CONFIG_MAIN  // This tells Catch to provide a main() - only do
+                           // this in one cpp file
 
 #include <bitset>
 #include <list>
@@ -122,7 +122,6 @@ void check_incoming_edge_count(Node *root) {
   auto queue = std::list<Node *>({root});
 
   for (const auto &node : queue) {
-
     int incoming_edges = 0;
     for (const auto &e : node->getEdges()) {
       if (!e->isBeg(node)) {
@@ -147,7 +146,6 @@ void expandAll(Digraph &g) {
   auto queue = std::list<Node *>({g.getOriginalRoot()});
 
   for (const auto &node : queue) {
-
     for (const auto &e : node->getEdges()) {
       if (!e->isBeg(node)) {
         continue;
@@ -161,7 +159,7 @@ void expandAll(Digraph &g) {
 
 TEST_CASE("Digraph", "[accurateCIP]") {
   auto mol =
-      R"(CC1(OC2=C(C=3NC[C@@]4(C3C=C2)C([C@@H]5C[C@@]67C(N([C@]5(C4)CN6CC[C@@]7(C)O)C)=O)(C)C)OC=C1)C)"_smiles; // VS040
+      R"(CC1(OC2=C(C=3NC[C@@]4(C3C=C2)C([C@@H]5C[C@@]67C(N([C@]5(C4)CN6CC[C@@]7(C)O)C)=O)(C)C)OC=C1)C)"_smiles;  // VS040
   CIPLabeler::CIPMol cipmol(*mol);
 
   auto initial_root_idx = 1u;
@@ -342,7 +340,7 @@ TEST_CASE("Tetrahedral assignment", "[accurateCIP]") {
 }
 
 TEST_CASE("Double bond stereo assignment", "[accurateCIP]") {
-  auto mol = R"(CC\C(\C(\C)=N\O)=N\O)"_smiles; // VS013
+  auto mol = R"(CC\C(\C(\C)=N\O)=N\O)"_smiles;  // VS013
   REQUIRE(mol->getNumAtoms() == 9);
 
   auto bond_1 = mol->getBondWithIdx(4);
@@ -365,7 +363,6 @@ TEST_CASE("Double bond stereo assignment", "[accurateCIP]") {
 }
 
 TEST_CASE("phosphine and arsine chirality", "[accurateCIP]") {
-
   const std::vector<std::pair<std::string, std::string>> mols{
       {"C[P@](C1CCCC1)C1=CC=CC=C1", "R"},
       {"C[As@@](C1CCCC1)C1=CC=CC=C1", "S"},
@@ -431,5 +428,42 @@ TEST_CASE("assign specific atoms and bonds", "[accurateCIP]") {
     CHECK(bond1->hasProp(common_properties::_CIPCode) == false);
     CHECK(bond3->getPropIfPresent(common_properties::_CIPCode, stereo) == true);
     CHECK(stereo == "Z");
+  }
+}
+
+TEST_CASE("para-stereochemistry", "[accurateCIP]") {
+  SECTION("example 1") {
+    // slightly simplified complex example from Salome Rieder
+    auto mol = "C\\C=C/[C@@H](\\C=C\\O)[C@H](C)[C@H](\\C=C/C)\\C=C\\O"_smiles;
+    REQUIRE(mol);
+    CIPLabeler::assignCIPLabels(*mol);
+
+    std::string chirality;
+    CHECK(mol->getAtomWithIdx(3)->getPropIfPresent(common_properties::_CIPCode,
+                                                   chirality) == true);
+    CHECK(chirality == "R");
+    CHECK(mol->getAtomWithIdx(7)->getPropIfPresent(common_properties::_CIPCode,
+                                                   chirality) == true);
+    CHECK(chirality == "r");
+    CHECK(mol->getAtomWithIdx(9)->getPropIfPresent(common_properties::_CIPCode,
+                                                   chirality) == true);
+    CHECK(chirality == "S");
+  }
+  SECTION("example 2") {
+    // lovely complex example from Salome Rieder
+    auto mol = "C\\C=C/[C@@H](\\C=C\\C)[C@H](C)[C@H](\\C=C/C)\\C=C\\C"_smiles;
+    REQUIRE(mol);
+    CIPLabeler::assignCIPLabels(*mol);
+
+    std::string chirality;
+    CHECK(mol->getAtomWithIdx(3)->getPropIfPresent(common_properties::_CIPCode,
+                                                   chirality) == true);
+    CHECK(chirality == "R");
+    CHECK(mol->getAtomWithIdx(7)->getPropIfPresent(common_properties::_CIPCode,
+                                                   chirality) == true);
+    CHECK(chirality == "r");
+    CHECK(mol->getAtomWithIdx(9)->getPropIfPresent(common_properties::_CIPCode,
+                                                   chirality) == true);
+    CHECK(chirality == "S");
   }
 }

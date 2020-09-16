@@ -29,6 +29,8 @@ struct RDKIT_SMILESPARSE_EXPORT SmilesParserParams {
       true; /**< throw an exception if the CXSMILES parsing fails */
   bool parseName = false; /**< parse (and set) the molecule name as well */
   bool removeHs = true;   /**< remove Hs after constructing the molecule */
+  bool useLegacyStereo =
+      true; /**< use the legacy stereochemistry perception code */
 };
 RDKIT_SMILESPARSE_EXPORT RWMol *SmilesToMol(const std::string &smi,
                                             const SmilesParserParams &params);

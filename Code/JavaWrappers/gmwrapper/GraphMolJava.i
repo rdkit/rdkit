@@ -235,6 +235,7 @@ typedef unsigned long long int	uintmax_t;
 %include "../RGroupDecomposition.i"
 %include "../ScaffoldNetwork.i"
 %include "../TautomerQuery.i"
+%include "../SubstanceGroup.i"
 %include "../MolEnumerator.i"
 %include "../MolHash.i"
 %include "../Streams.i"

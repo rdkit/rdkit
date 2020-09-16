@@ -7,15 +7,18 @@ option(RDK_BUILD_FREETYPE_SUPPORT "build support for FreeType font handling" ON)
 rdkit_headers(MolDraw2D.h
   MolDraw2DSVG.h
   MolDraw2Dwx.h
+  MolDraw2DJS.h
   MolDraw2DUtils.h
   DrawText.h
   DrawTextSVG.h
+  DrawTextJS.h
   DEST GraphMol/MolDraw2D
 )
 
 rdkit_library(MolDraw2D MolDraw2D.cpp MolDraw2DSVG.cpp
   MolDraw2DDetails.cpp MolDraw2DUtils.cpp DrawText.cpp
-  DrawTextSVG.cpp
+  DrawTextSVG.cpp 
+  MolDraw2DJS.cpp DrawTextJS.cpp
   LINK_LIBRARIES
   ChemReactions Depictor MolTransforms 
   SubstructMatch Subgraphs GraphMol EigenSolvers )
@@ -45,11 +48,11 @@ endif(RDK_BUILD_CAIRO_SUPPORT)
 if(RDK_BUILD_FREETYPE_SUPPORT)
   target_compile_definitions(MolDraw2D PUBLIC "-DRDK_BUILD_FREETYPE_SUPPORT")
   target_sources(MolDraw2D PRIVATE DrawText.cpp
-          DrawTextFT.cpp DrawTextFTSVG.cpp)
+          DrawTextFT.cpp DrawTextFTSVG.cpp DrawTextFTJS.cpp)
   if(RDK_INSTALL_STATIC_LIBS)
     target_compile_definitions(MolDraw2D_static PUBLIC "-DRDK_BUILD_FREETYPE_SUPPORT")
     target_sources(MolDraw2D_static PRIVATE DrawText.cpp
-          DrawTextFT.cpp DrawTextFTSVG.cpp)
+          DrawTextFT.cpp DrawTextFTSVG.cpp DrawTextFTJS.cpp)
   endif()
   if( ${CMAKE_SYSTEM_NAME} MATCHES "Emscripten")
       set(USE_FLAGS "-s USE_FREETYPE=1")
@@ -67,7 +70,7 @@ if(RDK_BUILD_FREETYPE_SUPPORT)
       endif()
   endif()
   rdkit_headers(DrawText.h DrawTextFT.h
-          DrawTextFTSVG.h DEST GraphMol/MolDraw2D)
+          DrawTextFTSVG.h DrawTextFTJS.h DEST GraphMol/MolDraw2D)
   if(RDK_BUILD_CAIRO_SUPPORT)
     target_sources(MolDraw2D PRIVATE DrawTextFTCairo.cpp)
     if(RDK_INSTALL_STATIC_LIBS)
@@ -81,7 +84,7 @@ rdkit_test(moldraw2DTest1 test1.cpp LINK_LIBRARIES
   MolDraw2D )
 
 rdkit_catch_test(moldraw2DTestCatch catch_tests.cpp LINK_LIBRARIES
-  MolDraw2D )
+  MolDraw2D CIPLabeler )
 
 rdkit_test(moldraw2DRxnTest1 rxn_test1.cpp LINK_LIBRARIES
   MolDraw2D )

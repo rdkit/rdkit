@@ -111,4 +111,13 @@
     return bonds;
   }
 
+  // also matches ATOM_NULL_QUERY
+  void setQuery(RDKit::ATOM_OR_QUERY *query) {
+    $self->setQuery(query);
+  }
+
+  void setQuery(RDKit::ATOM_EQUALS_QUERY *query) {
+    $self->setQuery(query);
+  }
+
 }
