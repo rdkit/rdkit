@@ -1731,7 +1731,6 @@ void MolDraw2D::drawHighlightedBonds(
     const map<int, int> &highlight_linewidth_multipliers,
     const map<int, double> *highlight_radii) {
   int orig_lw = lineWidth();
-  cout << "drawhighlightedbonds" << endl;
   for (auto hb : highlight_bond_map) {
     int bond_idx = hb.first;
     if (!drawOptions().fillHighlights) {

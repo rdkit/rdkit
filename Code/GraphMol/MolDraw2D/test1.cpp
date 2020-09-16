@@ -1938,7 +1938,7 @@ void test13JSONConfig() {
 #endif
     // these days the bond line width scales with the rest of the
     // drawing, and at this size this comes out as 6px.
-    TEST_ASSERT(text.find("stroke-width:5px") != std::string::npos);
+    TEST_ASSERT(text.find("stroke-width:5.0px") != std::string::npos);
   }
   std::cerr << " Done" << std::endl;
 }
@@ -2290,7 +2290,7 @@ void test15ContinuousHighlightingWithGrid() {
       std::ofstream outs("test15_1.svg");
       outs << text;
       outs.flush();
-      TEST_ASSERT(text.find("stroke:#FF7F7F;stroke-width:4px;") ==
+      TEST_ASSERT(text.find("stroke:#FF7F7F;stroke-width:4.0px;") ==
                   std::string::npos);
     }
 
@@ -2303,9 +2303,7 @@ void test15ContinuousHighlightingWithGrid() {
       std::ofstream outs("test15_2.svg");
       outs << text;
       outs.flush();
-      // cowardly attempt to avoid floating point differences on the line-width
-      // which is now a float, not an int.
-      TEST_ASSERT(text.find("stroke:#FF7F7F;stroke-width:4.2") !=
+      TEST_ASSERT(text.find("stroke:#FF7F7F;stroke-width:4.3px") !=
                   std::string::npos);
     }
     for (auto &&mol : mols) {
@@ -2713,8 +2711,8 @@ void testGithub2151() {
       std::ofstream outs("testGithub2151_1.svg");
       outs << text;
       outs.flush();
-      TEST_ASSERT(text.find("stroke-width:2px") != std::string::npos);
-      TEST_ASSERT(text.find("stroke-width:3px") == std::string::npos);
+      TEST_ASSERT(text.find("stroke-width:2.0px") != std::string::npos);
+      TEST_ASSERT(text.find("stroke-width:3.0px") == std::string::npos);
     }
     {
       MolDraw2DSVG drawer(200, 200);
@@ -2728,8 +2726,8 @@ void testGithub2151() {
       std::ofstream outs("testGithub2151_2.svg");
       outs << text;
       outs.flush();
-      TEST_ASSERT(text.find("stroke-width:2px") == std::string::npos);
-      TEST_ASSERT(text.find("stroke-width:8px") != std::string::npos);
+      TEST_ASSERT(text.find("stroke-width:2.0px") == std::string::npos);
+      TEST_ASSERT(text.find("stroke-width:8.0px") != std::string::npos);
     }
   }
   std::cerr << " Done" << std::endl;
@@ -2845,7 +2843,7 @@ void testGithub2931() {
       std::ofstream outs("testGithub2931_1.svg");
       outs << text;
       outs.flush();
-      TEST_ASSERT(text.find("stroke:#FF8C00;stroke-width:5.5") !=
+      TEST_ASSERT(text.find("stroke:#FF8C00;stroke-width:5.6px") !=
                   std::string::npos);
 #ifdef RDK_BUILD_FREETYPE_SUPPORT
       TEST_ASSERT(text.find("<ellipse cx='242.185' cy='367.491'"
@@ -2871,7 +2869,7 @@ void testGithub2931() {
       std::ofstream outs("testGithub2931_2.svg");
       outs << text;
       outs.flush();
-      TEST_ASSERT(text.find("stroke:#FF8C00;stroke-width:5.5") !=
+      TEST_ASSERT(text.find("stroke:#FF8C00;stroke-width:5.6px") !=
                   std::string::npos);
 #ifdef RDK_BUILD_FREETYPE_SUPPORT
       TEST_ASSERT(text.find("<ellipse cx='242.154' cy='367.046'"
@@ -3234,7 +3232,7 @@ void testGithub3305() {
     std::ofstream outs(nameBase + "1.svg");
     outs << text;
     outs.flush();
-    TEST_ASSERT(text.find("stroke-width:2px") != std::string::npos);
+    TEST_ASSERT(text.find("stroke-width:2.0px") != std::string::npos);
   }
   {
     MolDraw2DSVG drawer(600, 600);
@@ -3245,7 +3243,7 @@ void testGithub3305() {
     std::ofstream outs(nameBase + "2.svg");
     outs << text;
     outs.flush();
-    TEST_ASSERT(text.find("stroke-width:2px") != std::string::npos);
+    TEST_ASSERT(text.find("stroke-width:2.0px") != std::string::npos);
   }
   {
     MolDraw2DSVG drawer(600, 600);
@@ -3257,7 +3255,7 @@ void testGithub3305() {
     std::ofstream outs(nameBase + "3.svg");
     outs << text;
     outs.flush();
-    TEST_ASSERT(text.find("stroke-width:4.19891px") != std::string::npos);
+    TEST_ASSERT(text.find("stroke-width:4.2px") != std::string::npos);
   }
 #ifdef RDK_BUILD_CAIRO_SUPPORT
   {
@@ -3316,9 +3314,9 @@ void testGithub3305() {
       std::ofstream outs(nameBase + "4.svg");
       outs << text;
       outs.flush();
-      TEST_ASSERT(text.find("stroke:#FF7F7F;stroke-width:2.7") !=
+      TEST_ASSERT(text.find("stroke:#FF7F7F;stroke-width:2.7px") !=
                   std::string::npos);
-      TEST_ASSERT(text.find("stroke:#FF7F7F;stroke-width:16px") ==
+      TEST_ASSERT(text.find("stroke:#FF7F7F;stroke-width:16.0px") ==
                   std::string::npos);
     }
 #ifdef RDK_BUILD_CAIRO_SUPPORT
@@ -3332,6 +3330,8 @@ void testGithub3305() {
     }
 #endif
     {
+      // this picture will have very thick highlights which will look
+      // bad - don't be surprised when you see it.
       MolDraw2DSVG drawer(200, 200);
       options.scaleHighlightBondWidth = false;
       drawer.drawOptions() = options;
@@ -3341,9 +3341,9 @@ void testGithub3305() {
       std::ofstream outs((nameBase + "5.svg").c_str());
       outs << text;
       outs.flush();
-      TEST_ASSERT(text.find("stroke:#FF7F7F;stroke-width:2.6") ==
+      TEST_ASSERT(text.find("stroke:#FF7F7F;stroke-width:2.7px") ==
                   std::string::npos);
-      TEST_ASSERT(text.find("stroke:#FF7F7F;stroke-width:16px") !=
+      TEST_ASSERT(text.find("stroke:#FF7F7F;stroke-width:16.0px") !=
                   std::string::npos);
     }
     options.continuousHighlight = false;
@@ -3367,9 +3367,9 @@ void testGithub3305() {
       std::string text = drawer.getDrawingText();
       outs << text;
       outs.flush();
-      TEST_ASSERT(text.find("stroke:#FF7F7F;stroke-width:0.6") !=
+      TEST_ASSERT(text.find("stroke:#FF7F7F;stroke-width:0.7px") !=
                   std::string::npos);
-      TEST_ASSERT(text.find("stroke:#FF7F7F;stroke-width:4px") ==
+      TEST_ASSERT(text.find("stroke:#FF7F7F;stroke-width:4.0px") ==
                   std::string::npos);
     }
 #ifdef RDK_BUILD_CAIRO_SUPPORT
@@ -3392,9 +3392,9 @@ void testGithub3305() {
       std::string text = drawer.getDrawingText();
       outs << text;
       outs.flush();
-      TEST_ASSERT(text.find("stroke:#FF7F7F;stroke-width:0.6") ==
+      TEST_ASSERT(text.find("stroke:#FF7F7F;stroke-width:0.7px") ==
                   std::string::npos);
-      TEST_ASSERT(text.find("stroke:#FF7F7F;stroke-width:4px") !=
+      TEST_ASSERT(text.find("stroke:#FF7F7F;stroke-width:4.0px") !=
                   std::string::npos);
     }
   }
