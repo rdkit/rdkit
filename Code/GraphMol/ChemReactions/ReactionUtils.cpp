@@ -88,7 +88,7 @@ bool hasReactionMoleculeTemplateSubstructMatch(
   }
   return false;
 }
-}
+}  // namespace
 
 bool hasReactantTemplateSubstructMatch(const ChemicalReaction &rxn,
                                        const ChemicalReaction &query_rxn) {
@@ -171,66 +171,174 @@ bool isReactionTemplateMoleculeAgent(const ROMol &mol, double agentThreshold) {
 
 namespace {
 
-void getMappingNumAtomIdxMapReactants(const ChemicalReaction& rxn, std::map<int,Atom::ChiralType>& reactantMapping){
+void getMappingNumAtomIdxMapReactants(
+    const ChemicalReaction &rxn, std::map<int, Atom *> &reactantAtomMapping) {
   for (auto reactIt = rxn.beginReactantTemplates();
        reactIt != rxn.endReactantTemplates(); ++reactIt) {
-    for(ROMol::AtomIterator reactAtomIt=(*reactIt)->beginAtoms();
-        reactAtomIt!=(*reactIt)->endAtoms();++reactAtomIt){
-      int reactMapNum = -1;
-      (*reactAtomIt)->getPropIfPresent(common_properties::molAtomMapNumber,reactMapNum);
-      if(reactMapNum > -1){
-        reactantMapping.insert(std::make_pair(reactMapNum,(*reactAtomIt)->getChiralTag()));
+    for (const auto atom : (*reactIt)->atoms()) {
+      int reactMapNum;
+      if (atom->getPropIfPresent(common_properties::molAtomMapNumber,
+                                 reactMapNum)) {
+        reactantAtomMapping[reactMapNum] = atom;
       }
     }
   }
 }
-}
+}  // namespace
 
 void updateProductsStereochem(ChemicalReaction *rxn) {
-  std::map<int, Atom::ChiralType> reactantMapping;
+  std::map<int, Atom *> reactantMapping;
   getMappingNumAtomIdxMapReactants(*rxn, reactantMapping);
   for (MOL_SPTR_VECT::const_iterator prodIt = rxn->beginProductTemplates();
        prodIt != rxn->endProductTemplates(); ++prodIt) {
-    for (ROMol::AtomIterator prodAtomIt = (*prodIt)->beginAtoms();
-         prodAtomIt != (*prodIt)->endAtoms(); ++prodAtomIt) {
-      if ((*prodAtomIt)->hasProp(common_properties::molInversionFlag)) {
+    for (auto prodAtom : (*prodIt)->atoms()) {
+      if (prodAtom->hasProp(common_properties::molInversionFlag)) {
         continue;
       }
-      if (!(*prodAtomIt)->hasProp(common_properties::molAtomMapNumber)) {
+      if (!prodAtom->hasProp(common_properties::molAtomMapNumber)) {
         // if we have stereochemistry specified, it's automatically creating
         // stereochem:
-        (*prodAtomIt)->setProp(common_properties::molInversionFlag, 4);
+        prodAtom->setProp(common_properties::molInversionFlag, 4);
         continue;
       }
       int mapNum;
-      (*prodAtomIt)->getProp(common_properties::molAtomMapNumber, mapNum);
+      prodAtom->getProp(common_properties::molAtomMapNumber, mapNum);
       if (reactantMapping.find(mapNum) != reactantMapping.end()) {
-        if ((*prodAtomIt)->getChiralTag() != Atom::CHI_UNSPECIFIED &&
-            (*prodAtomIt)->getChiralTag() != Atom::CHI_OTHER) {
-          if (reactantMapping[mapNum] != Atom::CHI_UNSPECIFIED &&
-              reactantMapping[mapNum] != Atom::CHI_OTHER) {
-            // both have stereochem specified:
-            if (reactantMapping[mapNum] == (*prodAtomIt)->getChiralTag()) {
-              (*prodAtomIt)->setProp(common_properties::molInversionFlag, 2);
+        const auto reactAtom = reactantMapping[mapNum];
+        if (prodAtom->getChiralTag() != Atom::CHI_UNSPECIFIED &&
+            prodAtom->getChiralTag() != Atom::CHI_OTHER) {
+          if (reactAtom->getChiralTag() != Atom::CHI_UNSPECIFIED &&
+              reactAtom->getChiralTag() != Atom::CHI_OTHER) {
+            // both have stereochem specified, we're either preserving or
+            // inverting
+            if (reactAtom->getChiralTag() == prodAtom->getChiralTag()) {
+              prodAtom->setProp(common_properties::molInversionFlag, 2);
             } else {
               // FIX: this is technically fragile: it should be checking
               // if the atoms both have tetrahedral chirality. However,
               // at the moment that's the only chirality available, so there's
               // no need to go monkeying around.
-              (*prodAtomIt)->setProp(common_properties::molInversionFlag, 1);
+              prodAtom->setProp(common_properties::molInversionFlag, 1);
             }
+
+            // FIX this should move out into a separate function
+            // last thing to check here: if the ordering of the bonds around
+            // the atom changed from reactants->products then we may need
+            // to adjust the inversion flag
+
+            if (reactAtom->getDegree() >= 3 &&
+                reactAtom->getDegree() == prodAtom->getDegree()) {
+              std::vector<int> reactOrder;
+              unsigned int nReactUnmapped = 0;
+              for (const auto &nbri : boost::make_iterator_range(
+                       reactAtom->getOwningMol().getAtomNeighbors(reactAtom))) {
+                const auto &nbrAtom = reactAtom->getOwningMol()[nbri];
+                if (nbrAtom->getAtomMapNum() > 0) {
+                  reactOrder.push_back(nbrAtom->getAtomMapNum());
+                } else {
+                  reactOrder.push_back(-1);
+                  nReactUnmapped++;
+                }
+              }
+              if (nReactUnmapped <= 1) {
+                std::vector<int> prodOrder;
+                unsigned int nProdUnmapped = 0;
+                for (const auto &nbri : boost::make_iterator_range(
+                         (*prodIt)->getAtomNeighbors(prodAtom))) {
+                  const auto &nbrAtom = (**prodIt)[nbri];
+                  if (nbrAtom->getAtomMapNum() > 0) {
+                    prodOrder.push_back(nbrAtom->getAtomMapNum());
+                  } else {
+                    prodOrder.push_back(-1);
+                    nProdUnmapped++;
+                  }
+                }
+                if (nProdUnmapped <= 1) {
+                  // check that each element of the product mappings is
+                  // in the reactant mappings
+                  bool allFound = true;
+                  for (auto poElem : prodOrder) {
+                    if (poElem >= 0) {
+                      if (std::find(reactOrder.begin(), reactOrder.end(),
+                                    poElem) == reactOrder.end()) {
+                        // this one was not there, is there an unmapped slot for
+                        // it (i.e. a -1 value in the reactOrder)?
+                        if (nReactUnmapped) {
+                          auto negOne = std::find(reactOrder.begin(),
+                                                  reactOrder.end(), -1);
+                          if (negOne != reactOrder.end()) {
+                            *negOne = poElem;
+                            --nReactUnmapped;
+                          } else {
+                            allFound = false;
+                            break;
+                          }
+                        } else {
+                          allFound = false;
+                          break;
+                        }
+                      }
+                    }
+                  }
+                  if (allFound) {
+                    // found a match for all the product atoms, what about all
+                    // the reactant atoms?
+                    for (auto roElem : reactOrder) {
+                      if (std::find(prodOrder.begin(), prodOrder.end(),
+                                    roElem) == prodOrder.end()) {
+                        if (nProdUnmapped) {
+                          auto negOne =
+                              std::find(prodOrder.begin(), prodOrder.end(), -1);
+                          if (negOne != prodOrder.end()) {
+                            *negOne = roElem;
+                            --nProdUnmapped;
+                          } else {
+                            allFound = false;
+                            break;
+                          }
+                        } else {
+                          allFound = false;
+                          break;
+                        }
+                      }
+                    }
+                  }
+                  if (allFound) {
+                    auto nSwaps =
+                        countSwapsToInterconvert(reactOrder, prodOrder);
+                    if (nSwaps % 2) {
+                      std::cerr << "changing it! " << prodAtom->getIdx()
+                                << std::endl;
+                      auto mival = prodAtom->getProp<int>(
+                          common_properties::molInversionFlag);
+                      if (mival == 1) {
+                        prodAtom->setProp(common_properties::molInversionFlag,
+                                          2);
+                      } else if (mival == 2) {
+                        prodAtom->setProp(common_properties::molInversionFlag,
+                                          1);
+                      } else {
+                        CHECK_INVARIANT(false, "inconsistent molInversionFlag");
+                      }
+                    }
+                  }
+                }
+              }
+            }
+
           } else {
             // stereochem in the product, but not in the reactant
-            (*prodAtomIt)->setProp(common_properties::molInversionFlag, 4);
+            prodAtom->setProp(common_properties::molInversionFlag, 4);
           }
-        } else if (reactantMapping[mapNum] != Atom::CHI_UNSPECIFIED &&
-                   reactantMapping[mapNum] != Atom::CHI_OTHER) {
+        } else if (reactantMapping[mapNum]->getChiralTag() !=
+                       Atom::CHI_UNSPECIFIED &&
+                   reactantMapping[mapNum]->getChiralTag() != Atom::CHI_OTHER) {
           // stereochem in the reactant, but not the product:
-          (*prodAtomIt)->setProp(common_properties::molInversionFlag, 3);
+          prodAtom->setProp(common_properties::molInversionFlag, 3);
         }
       } else {
         // introduction of new stereocenter by the reaction
-        (*prodAtomIt)->setProp(common_properties::molInversionFlag, 4);
+        prodAtom->setProp(common_properties::molInversionFlag, 4);
       }
     }
   }
@@ -238,26 +346,25 @@ void updateProductsStereochem(ChemicalReaction *rxn) {
 
 namespace {
 
-void removeMappingNumbersFromReactionMoleculeTemplate(const MOL_SPTR_VECT &molVec){
+void removeMappingNumbersFromReactionMoleculeTemplate(
+    const MOL_SPTR_VECT &molVec) {
   for (const auto &begin : molVec) {
     ROMol &mol = *begin.get();
-    for(ROMol::AtomIterator atomIt=mol.beginAtoms();
-        atomIt!=mol.endAtoms();++atomIt){
-      if((*atomIt)->hasProp(common_properties::molAtomMapNumber)){
+    for (ROMol::AtomIterator atomIt = mol.beginAtoms();
+         atomIt != mol.endAtoms(); ++atomIt) {
+      if ((*atomIt)->hasProp(common_properties::molAtomMapNumber)) {
         (*atomIt)->clearProp(common_properties::molAtomMapNumber);
       }
     }
   }
 }
 
-}
+}  // namespace
 
-void removeMappingNumbersFromReactions(const ChemicalReaction &rxn){
-
+void removeMappingNumbersFromReactions(const ChemicalReaction &rxn) {
   removeMappingNumbersFromReactionMoleculeTemplate(rxn.getAgents());
   removeMappingNumbersFromReactionMoleculeTemplate(rxn.getProducts());
   removeMappingNumbersFromReactionMoleculeTemplate(rxn.getReactants());
 }
 
-} // end of RDKit namespace
-
+}  // namespace RDKit

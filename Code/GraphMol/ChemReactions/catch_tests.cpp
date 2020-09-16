@@ -117,7 +117,7 @@ TEST_CASE("Github #2366 Enhanced Stereo", "[Reaction][StereoGroup][bug]") {
 
     clearAtomMappingProps(*p0);
     clearAtomMappingProps(*p1);
-    CHECK(MolToCXSmiles(*p0) == "O[C@@H](F)Cl |&1:1|");
+    CHECK(MolToCXSmiles(*p0) == "O[C@H](F)Cl |&1:1|");
     CHECK(MolToCXSmiles(*p1) == "O[C@@H](Cl)Br |&1:1|");
   }
   SECTION("Reaction combines StereoGroups") {
@@ -138,7 +138,7 @@ TEST_CASE("Github #2366 Enhanced Stereo", "[Reaction][StereoGroup][bug]") {
     auto p0 = prods[0][0];
 
     clearAtomMappingProps(*p0);
-    CHECK(MolToCXSmiles(*p0) == "F[C@@H](Cl)[C@H](Cl)Br |&1:1,&2:3|");
+    CHECK(MolToCXSmiles(*p0) == "F[C@H](Cl)[C@H](Cl)Br |&1:1,&2:3|");
   }
 }
 
@@ -370,67 +370,110 @@ TEST_CASE("reaction data in PNGs 1", "[Reaction][PNG]") {
 }
 
 TEST_CASE("Github #2891", "[Reaction][chirality][bug]") {
-  SECTION("super simplified (alchemy)") {
-    auto r1_1 = ROMOL_SPTR(SmilesToMol("O[C@@H](Br)C"));
-    auto r1_2 = ROMOL_SPTR(SmilesToMol("O[C@H](Br)C"));
-    auto r1_3 = ROMOL_SPTR(SmilesToMol("O[C@@H](C)Br"));
-    auto r1_4 = ROMOL_SPTR(SmilesToMol("O[C@H](C)Br"));
-    auto r2 = ROMOL_SPTR(SmilesToMol("SCC"));
+  SECTION("simplified") {
+    auto r1_1 = ROMOL_SPTR(SmilesToMol("C[C@H](F)Br"));
+    auto r1_2 = ROMOL_SPTR(SmilesToMol("C[C@@H](F)Br"));
+    auto r1_3 = ROMOL_SPTR(SmilesToMol("C[C@@H](Br)F"));
+    auto r1_4 = ROMOL_SPTR(SmilesToMol("C[C@H](Br)F"));
 
-    std::unique_ptr<ChemicalReaction> rxn(
-        RxnSmartsToChemicalReaction("[C@:1][Br:2].S[C:4]>>[C@@:1][S:2][*:4]"));
+    std::unique_ptr<ChemicalReaction> rxn(RxnSmartsToChemicalReaction(
+        "[C:4][C@:2]([F:1])[Br:3]>>[C:4][C@@:2]([F:1])[S:3]"));
     REQUIRE(rxn);
     rxn->initReactantMatchers();
     {
-      MOL_SPTR_VECT reacts{r1_1, r2};
+      MOL_SPTR_VECT reacts{r1_1};
       auto ps = rxn->runReactants(reacts);
       CHECK(ps.size() == 1);
       CHECK(ps[0].size() == 1);
-      r1_1->debugMol(std::cerr);
-      ps[0][0]->updatePropertyCache();
-      ps[0][0]->debugMol(std::cerr);
-      auto tsmi = MolToSmiles(*("O[C@H](SCC)C"_smiles));
+      auto tsmi = MolToSmiles(*("C[C@@H](F)S"_smiles));
       CHECK(MolToSmiles(*ps[0][0]) == tsmi);
     }
     {
-      MOL_SPTR_VECT reacts{r1_2, r2};
+      MOL_SPTR_VECT reacts{r1_2};
       auto ps = rxn->runReactants(reacts);
       CHECK(ps.size() == 1);
       CHECK(ps[0].size() == 1);
-      auto tsmi = MolToSmiles(*("O[C@@H](SCC)C"_smiles));
+      auto tsmi = MolToSmiles(*("C[C@H](F)S"_smiles));
       CHECK(MolToSmiles(*ps[0][0]) == tsmi);
     }
     {
-      MOL_SPTR_VECT reacts{r1_3, r2};
+      MOL_SPTR_VECT reacts{r1_3};
       auto ps = rxn->runReactants(reacts);
       CHECK(ps.size() == 1);
       CHECK(ps[0].size() == 1);
-      std::cerr << "------------" << std::endl;
-      r1_3->debugMol(std::cerr);
-      ps[0][0]->updatePropertyCache();
-      ps[0][0]->debugMol(std::cerr);
-      auto tsmi = MolToSmiles(*("O[C@H](C)SCC"_smiles));
+      auto tsmi = MolToSmiles(*("C[C@@H](F)S"_smiles));
       CHECK(MolToSmiles(*ps[0][0]) == tsmi);
     }
     {
-      MOL_SPTR_VECT reacts{r1_4, r2};
+      MOL_SPTR_VECT reacts{r1_4};
       auto ps = rxn->runReactants(reacts);
       CHECK(ps.size() == 1);
       CHECK(ps[0].size() == 1);
-      auto tsmi = MolToSmiles(*("O[C@@H](C)SCC"_smiles));
+      auto tsmi = MolToSmiles(*("C[C@H](F)S"_smiles));
       CHECK(MolToSmiles(*ps[0][0]) == tsmi);
     }
   }
-#if 0
-  SECTION("more specified atoms") {
+
+  SECTION("simplified2") {
+    auto r1_1 = ROMOL_SPTR(SmilesToMol("C[C@H](F)Br"));
+    auto r1_2 = ROMOL_SPTR(SmilesToMol("C[C@@H](F)Br"));
+    auto r1_3 = ROMOL_SPTR(SmilesToMol("C[C@@H](Br)F"));
+    auto r1_4 = ROMOL_SPTR(SmilesToMol("C[C@H](Br)F"));
+
+    // makes sure we also handle swaps in the atom ordering properly
+    // this isn't an inversion, despite going @->@@, because the atom order also
+    // changes
+    std::unique_ptr<ChemicalReaction> rxn(RxnSmartsToChemicalReaction(
+        "[C:4][C@:2]([F:1])[Br:3]>>[C:4][C@@:2]([S:3])[F:1]"));
+    REQUIRE(rxn);
+    rxn->initReactantMatchers();
+    CHECK(rxn->getProducts()[0]->getAtomWithIdx(1)->getProp<int>(
+              common_properties::molInversionFlag) == 2);
+    {
+      MOL_SPTR_VECT reacts{r1_1};
+      auto ps = rxn->runReactants(reacts);
+      CHECK(ps.size() == 1);
+      CHECK(ps[0].size() == 1);
+      auto tsmi = MolToSmiles(*("C[C@H](F)S"_smiles));
+      CHECK(MolToSmiles(*ps[0][0]) == tsmi);
+    }
+    {
+      MOL_SPTR_VECT reacts{r1_2};
+      auto ps = rxn->runReactants(reacts);
+      CHECK(ps.size() == 1);
+      CHECK(ps[0].size() == 1);
+      auto tsmi = MolToSmiles(*("C[C@@H](F)S"_smiles));
+      CHECK(MolToSmiles(*ps[0][0]) == tsmi);
+    }
+    {
+      MOL_SPTR_VECT reacts{r1_3};
+      auto ps = rxn->runReactants(reacts);
+      CHECK(ps.size() == 1);
+      CHECK(ps[0].size() == 1);
+      auto tsmi = MolToSmiles(*("C[C@H](F)S"_smiles));
+      CHECK(MolToSmiles(*ps[0][0]) == tsmi);
+    }
+    {
+      MOL_SPTR_VECT reacts{r1_4};
+      auto ps = rxn->runReactants(reacts);
+      CHECK(ps.size() == 1);
+      CHECK(ps[0].size() == 1);
+      auto tsmi = MolToSmiles(*("C[C@@H](F)S"_smiles));
+      CHECK(MolToSmiles(*ps[0][0]) == tsmi);
+    }
+  }
+
+  SECTION("reported1") {
     auto r1_1 = ROMOL_SPTR(SmilesToMol("O[C@@H](Br)c1ccccc1"));
     auto r1_2 = ROMOL_SPTR(SmilesToMol("O[C@H](Br)c1ccccc1"));
     auto r1_3 = ROMOL_SPTR(SmilesToMol("O[C@@H](c1ccccc1)Br"));
     auto r1_4 = ROMOL_SPTR(SmilesToMol("O[C@H](c1ccccc1)Br"));
     auto r2 = ROMOL_SPTR(SmilesToMol("SCC"));
 
-    std::unique_ptr<ChemicalReaction> rxn(RxnSmartsToChemicalReaction(
-        "[O:5][C@:1]([Br:2])[*:6].[S:3][C:4]>>[*:5][C@@:1]([S:3][*:4])[*:6]"));
+    std::cerr << "reported2" << std::endl;
+    std::unique_ptr<ChemicalReaction> rxn(
+        RxnSmartsToChemicalReaction("[O:5][C@:1]([Br:2])[*:6].[S:3][C:4]>>[*:"
+                                    "5][C@@:1]([S:3][*:4])[*:6]"));
     REQUIRE(rxn);
     rxn->initReactantMatchers();
     {
@@ -438,9 +481,6 @@ TEST_CASE("Github #2891", "[Reaction][chirality][bug]") {
       auto ps = rxn->runReactants(reacts);
       CHECK(ps.size() == 1);
       CHECK(ps[0].size() == 1);
-      r1_1->debugMol(std::cerr);
-      ps[0][0]->updatePropertyCache();
-      ps[0][0]->debugMol(std::cerr);
       auto tsmi = MolToSmiles(*("O[C@H](SCC)c1ccccc1"_smiles));
       CHECK(MolToSmiles(*ps[0][0]) == tsmi);
     }
@@ -457,10 +497,6 @@ TEST_CASE("Github #2891", "[Reaction][chirality][bug]") {
       auto ps = rxn->runReactants(reacts);
       CHECK(ps.size() == 1);
       CHECK(ps[0].size() == 1);
-      std::cerr << "------------" << std::endl;
-      r1_3->debugMol(std::cerr);
-      ps[0][0]->updatePropertyCache();
-      ps[0][0]->debugMol(std::cerr);
       auto tsmi = MolToSmiles(*("O[C@H](c1ccccc1)SCC"_smiles));
       CHECK(MolToSmiles(*ps[0][0]) == tsmi);
     }
@@ -473,5 +509,49 @@ TEST_CASE("Github #2891", "[Reaction][chirality][bug]") {
       CHECK(MolToSmiles(*ps[0][0]) == tsmi);
     }
   }
-#endif
+
+  SECTION("reported2") {
+    auto r1_1 = ROMOL_SPTR(SmilesToMol("C[C@@H](Br)c1ccccc1"));
+    auto r1_2 = ROMOL_SPTR(SmilesToMol("C[C@H](Br)c1ccccc1"));
+    auto r1_3 = ROMOL_SPTR(SmilesToMol("C[C@@H](c1ccccc1)Br"));
+    auto r1_4 = ROMOL_SPTR(SmilesToMol("C[C@H](c1ccccc1)Br"));
+    auto r2 = ROMOL_SPTR(SmilesToMol("SCC"));
+    std::cerr << "reported2" << std::endl;
+    std::unique_ptr<ChemicalReaction> rxn(RxnSmartsToChemicalReaction(
+        "[C@:1][Br:2].[S:3][C:4]>>[C@@:1][*:3][*:4]"));
+    REQUIRE(rxn);
+    rxn->initReactantMatchers();
+    {
+      MOL_SPTR_VECT reacts{r1_1, r2};
+      auto ps = rxn->runReactants(reacts);
+      CHECK(ps.size() == 1);
+      CHECK(ps[0].size() == 1);
+      auto tsmi = MolToSmiles(*("C[C@H](SCC)c1ccccc1"_smiles));
+      CHECK(MolToSmiles(*ps[0][0]) == tsmi);
+    }
+    {
+      MOL_SPTR_VECT reacts{r1_2, r2};
+      auto ps = rxn->runReactants(reacts);
+      CHECK(ps.size() == 1);
+      CHECK(ps[0].size() == 1);
+      auto tsmi = MolToSmiles(*("C[C@@H](SCC)c1ccccc1"_smiles));
+      CHECK(MolToSmiles(*ps[0][0]) == tsmi);
+    }
+    {
+      MOL_SPTR_VECT reacts{r1_3, r2};
+      auto ps = rxn->runReactants(reacts);
+      CHECK(ps.size() == 1);
+      CHECK(ps[0].size() == 1);
+      auto tsmi = MolToSmiles(*("C[C@H](c1ccccc1)SCC"_smiles));
+      CHECK(MolToSmiles(*ps[0][0]) == tsmi);
+    }
+    {
+      MOL_SPTR_VECT reacts{r1_4, r2};
+      auto ps = rxn->runReactants(reacts);
+      CHECK(ps.size() == 1);
+      CHECK(ps[0].size() == 1);
+      auto tsmi = MolToSmiles(*("C[C@@H](c1ccccc1)SCC"_smiles));
+      CHECK(MolToSmiles(*ps[0][0]) == tsmi);
+    }
+  }
 }

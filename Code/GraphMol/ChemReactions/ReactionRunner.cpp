@@ -565,28 +565,29 @@ void forwardReactantBondStereo(ReactantProductAtomMapping *mapping, Bond *pBond,
   unsigned pEndAnchorIdx =
       reactProdMapAnchorIdx(pBond->getEndAtom(), pEndAnchorCandidates.first);
 
-  const ROMol &m=pBond->getOwningMol();
-  if (m.getBondBetweenAtoms(pBond->getBeginAtomIdx(), pStartAnchorIdx) == nullptr ||
+  const ROMol &m = pBond->getOwningMol();
+  if (m.getBondBetweenAtoms(pBond->getBeginAtomIdx(), pStartAnchorIdx) ==
+          nullptr ||
       m.getBondBetweenAtoms(pBond->getEndAtomIdx(), pEndAnchorIdx) == nullptr) {
-    BOOST_LOG(rdWarningLog)
-      << "stereo atoms in input cannot be mapped to output (atoms are no longer bonded)\n";
+    BOOST_LOG(rdWarningLog) << "stereo atoms in input cannot be mapped to "
+                               "output (atoms are no longer bonded)\n";
   } else {
     pBond->setStereoAtoms(pStartAnchorIdx, pEndAnchorIdx);
     bool flipStereo =
-      (pStartAnchorCandidates.second + pEndAnchorCandidates.second) % 2;
-  
+        (pStartAnchorCandidates.second + pEndAnchorCandidates.second) % 2;
+
     if (rBond->getStereo() == Bond::BondStereo::STEREOCIS ||
-	rBond->getStereo() == Bond::BondStereo::STEREOZ) {
+        rBond->getStereo() == Bond::BondStereo::STEREOZ) {
       if (flipStereo) {
-	pBond->setStereo(Bond::BondStereo::STEREOTRANS);
+        pBond->setStereo(Bond::BondStereo::STEREOTRANS);
       } else {
-	pBond->setStereo(Bond::BondStereo::STEREOCIS);
+        pBond->setStereo(Bond::BondStereo::STEREOCIS);
       }
     } else {
       if (flipStereo) {
-	pBond->setStereo(Bond::BondStereo::STEREOCIS);
+        pBond->setStereo(Bond::BondStereo::STEREOCIS);
       } else {
-	pBond->setStereo(Bond::BondStereo::STEREOTRANS);
+        pBond->setStereo(Bond::BondStereo::STEREOTRANS);
       }
     }
   }
@@ -739,7 +740,6 @@ void checkProductChirality(Atom::ChiralType reactantChirality,
                            Atom *productAtom) {
   int flagVal;
   productAtom->getProp(common_properties::molInversionFlag, flagVal);
-
   switch (flagVal) {
     case 0:
       // reaction doesn't have anything to say about the chirality
@@ -1006,12 +1006,16 @@ void checkAndCorrectChiralityOfMatchingAtomsInProduct(
     unsigned productAtomIdx = mapping->reactProdAtomMap[reactantAtomIdx][i];
     Atom *productAtom = product->getAtomWithIdx(productAtomIdx);
 
-    if (productAtom->getChiralTag() != Atom::CHI_UNSPECIFIED ||
-        reactantAtom.getChiralTag() == Atom::CHI_UNSPECIFIED ||
-        reactantAtom.getChiralTag() == Atom::CHI_OTHER ||
-        productAtom->hasProp(common_properties::molInversionFlag)) {
+    int inversionFlag = 0;
+    productAtom->getPropIfPresent(common_properties::molInversionFlag,
+                                  inversionFlag);
+    // if stereochemistry wasn't present in the reactant or if we're
+    // either creating or destroying stereo we don't mess with this
+    if (reactantAtom.getChiralTag() == Atom::CHI_UNSPECIFIED ||
+        reactantAtom.getChiralTag() == Atom::CHI_OTHER || inversionFlag > 2) {
       continue;
     }
+
     // we can only do something sensible here if we have the same number of
     // bonds in the reactants and the products:
     if (reactantAtom.getDegree() != productAtom->getDegree()) {
@@ -1070,7 +1074,17 @@ void checkAndCorrectChiralityOfMatchingAtomsInProduct(
     if (!nUnknown) {
       productAtom->setChiralTag(reactantAtom.getChiralTag());
       int nSwaps = reactantAtom.getPerturbationOrder(pOrder);
+      bool invert = false;
       if (nSwaps % 2) {
+        invert = true;
+      }
+      int inversionFlag;
+      if (productAtom->getPropIfPresent(common_properties::molInversionFlag,
+                                        inversionFlag) &&
+          inversionFlag == 1) {
+        invert = !invert;
+      }
+      if (invert) {
         productAtom->invertChirality();
       }
     }
@@ -1098,10 +1112,10 @@ void checkAndCorrectChiralityOfProduct(
       if (reactAtomDegree != product->getAtomDegree(productAtom)) {
         // If the number of bonds to the atom has changed in the course of the
         // reaction we're lost, so remove chirality.
-        //  A word of explanation here: the atoms in the chiralAtomsToCheck set
-        //  are not explicitly mapped atoms of the reaction, so we really have
-        //  no idea what to do with this case. At the moment I'm not even really
-        //  sure how this could happen, but better safe than sorry.
+        //  A word of explanation here: the atoms in the chiralAtomsToCheck
+        //  set are not explicitly mapped atoms of the reaction, so we really
+        //  have no idea what to do with this case. At the moment I'm not even
+        //  really sure how this could happen, but better safe than sorry.
         productAtom->setChiralTag(Atom::CHI_UNSPECIFIED);
       } else if (reactantAtom->getChiralTag() == Atom::CHI_TETRAHEDRAL_CW ||
                  reactantAtom->getChiralTag() == Atom::CHI_TETRAHEDRAL_CCW) {
@@ -1265,9 +1279,9 @@ void addReactantAtomsAndBonds(const ChemicalReaction &rxn, RWMOL_SPTR product,
   }  // end of loop over matched atoms
 
   // ---------- ---------- ---------- ---------- ---------- ----------
-  // now we need to loop over atoms from the reactants that were chiral but not
-  // directly involved in the reaction in order to make sure their chirality
-  // hasn't been disturbed
+  // now we need to loop over atoms from the reactants that were chiral but
+  // not directly involved in the reaction in order to make sure their
+  // chirality hasn't been disturbed
   checkAndCorrectChiralityOfProduct(chiralAtomsToCheck, product, mapping);
 
   updateStereoBonds(product, *reactant, mapping);
@@ -1283,6 +1297,7 @@ void addReactantAtomsAndBonds(const ChemicalReaction &rxn, RWMOL_SPTR product,
     productConf->resize(product->getNumAtoms());
     generateProductConformers(productConf, *reactant, mapping);
   }
+
   delete (mapping);
 }  // end of addReactantAtomsAndBonds
 
@@ -1297,7 +1312,8 @@ generateOneProductSet(const ChemicalReaction &rxn,
   // generate conformers for the products:
   bool doConfs = false;
   // if any of the reactants have a single bond with directionality specified,
-  // we will make sure that the output molecules have directionality specified.
+  // we will make sure that the output molecules have directionality
+  // specified.
   bool doBondDirs = false;
   for (const auto &reactant : reactants) {
     if (reactant->getNumConformers()) {
