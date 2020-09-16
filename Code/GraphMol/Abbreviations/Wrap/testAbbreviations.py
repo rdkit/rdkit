@@ -123,6 +123,7 @@ M  V30 END SGROUP
 M  V30 END CTAB
 M  END''')
     nm = rdAbbreviations.CondenseAbbreviationSubstanceGroups(m)
+    nm.RemoveAllConformers() # avoid coords in CXSMILES
     self.assertEqual(Chem.MolToCXSmiles(nm), '*C1CC1 |$CF3;;;$|')
 
 
