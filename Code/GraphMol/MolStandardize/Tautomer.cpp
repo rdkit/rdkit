@@ -238,6 +238,19 @@ bool TautomerEnumerator::setTautomerStereo(const ROMol &mol, ROMol &taut,
   return modified;
 }
 
+std::vector<ROMOL_SPTR> TautomerEnumerator::enumerate(
+    const ROMol &mol, boost::dynamic_bitset<> *modifiedAtoms,
+    boost::dynamic_bitset<> *modifiedBonds) const {
+  TautomerEnumeratorResult tresult = enumerate(mol);
+  if (modifiedAtoms) {
+    *modifiedAtoms = tresult.modifiedAtoms();
+  }
+  if (modifiedBonds) {
+    *modifiedBonds = tresult.modifiedBonds();
+  }
+  return tresult.tautomers();
+}
+
 TautomerEnumeratorResult TautomerEnumerator::enumerate(
     const ROMol &mol, bool reassignStereo) const {
 #ifdef VERBOSE_ENUMERATION
