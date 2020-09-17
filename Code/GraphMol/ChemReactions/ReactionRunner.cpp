@@ -1016,23 +1016,30 @@ void checkAndCorrectChiralityOfMatchingAtomsInProduct(
       continue;
     }
 
-    // we can only do something sensible here if we have the same number of
-    // bonds in the reactants and the products:
-    if (reactantAtom.getDegree() != productAtom->getDegree()) {
+    // we can only do something sensible here if the degree in the reactants
+    // and products differs by at most one
+    if (reactantAtom.getDegree() < 3 || productAtom->getDegree() < 3 ||
+        std::abs(static_cast<int>(reactantAtom.getDegree()) -
+                 static_cast<int>(productAtom->getDegree())) > 1) {
       continue;
     }
     unsigned int nUnknown = 0;
+    // get the order of the bonds around the atom in the reactant:
+    INT_LIST rOrder;
+    for (const auto &nbri :
+         boost::make_iterator_range(reactant.getAtomBonds(&reactantAtom))) {
+      rOrder.push_back(reactant[nbri]->getIdx());
+    }
     INT_LIST pOrder;
-    ROMol::ADJ_ITER nbrIdx, endNbrs;
-    boost::tie(nbrIdx, endNbrs) = product->getAtomNeighbors(productAtom);
-    while (nbrIdx != endNbrs) {
-      if (mapping->prodReactAtomMap.find(*nbrIdx) ==
+    for (const auto &nbri :
+         boost::make_iterator_range(product->getAtomNeighbors(productAtom))) {
+      if (mapping->prodReactAtomMap.find(nbri) ==
               mapping->prodReactAtomMap.end() ||
           !reactant.getBondBetweenAtoms(reactantAtom.getIdx(),
-                                        mapping->prodReactAtomMap[*nbrIdx])) {
+                                        mapping->prodReactAtomMap[nbri])) {
         ++nUnknown;
-        // if there's more than one bond in the product that doesn't correspond
-        // to anything in the reactant, we're also doomed
+        // if there's more than one bond in the product that doesn't
+        // correspond to anything in the reactant, we're also doomed
         if (nUnknown > 1) {
           break;
         }
@@ -1040,40 +1047,63 @@ void checkAndCorrectChiralityOfMatchingAtomsInProduct(
         pOrder.push_back(-1);
       } else {
         const Bond *rBond = reactant.getBondBetweenAtoms(
-            reactantAtom.getIdx(), mapping->prodReactAtomMap[*nbrIdx]);
+            reactantAtom.getIdx(), mapping->prodReactAtomMap[nbri]);
         CHECK_INVARIANT(rBond, "expected reactant bond not found");
         pOrder.push_back(rBond->getIdx());
       }
-      ++nbrIdx;
     }
     if (nUnknown == 1) {
-      // find the reactant bond that hasn't yet been accounted for:
-      int unmatchedBond = -1;
-      boost::tie(nbrIdx, endNbrs) = reactant.getAtomNeighbors(&reactantAtom);
-      while (nbrIdx != endNbrs) {
-        const Bond *rBond =
-            reactant.getBondBetweenAtoms(reactantAtom.getIdx(), *nbrIdx);
-        if (std::find(pOrder.begin(), pOrder.end(), rBond->getIdx()) ==
-            pOrder.end()) {
-          unmatchedBond = rBond->getIdx();
-          break;
+      if (reactantAtom.getDegree() == productAtom->getDegree()) {
+        // there's a reactant bond that hasn't yet been accounted for:
+        int unmatchedBond = -1;
+
+        for (const auto &nbri : boost::make_iterator_range(
+                 reactant.getAtomNeighbors(&reactantAtom))) {
+          const Bond *rBond =
+              reactant.getBondBetweenAtoms(reactantAtom.getIdx(), nbri);
+          if (std::find(pOrder.begin(), pOrder.end(), rBond->getIdx()) ==
+              pOrder.end()) {
+            unmatchedBond = rBond->getIdx();
+            break;
+          }
         }
-        ++nbrIdx;
-      }
-      // what must be true at this point:
-      //  1) there's a -1 in pOrder that we'll substitute for
-      //  2) unmatchedBond contains the index of the substitution
-      auto bPos = std::find(pOrder.begin(), pOrder.end(), -1);
-      if (unmatchedBond >= 0 && bPos != pOrder.end()) {
-        *bPos = unmatchedBond;
-      }
-      if (std::find(pOrder.begin(), pOrder.end(), -1) == pOrder.end()) {
-        nUnknown = 0;
+        // what must be true at this point:
+        //  1) there's a -1 in pOrder that we'll substitute for
+        //  2) unmatchedBond contains the index of the substitution
+        auto bPos = std::find(pOrder.begin(), pOrder.end(), -1);
+        if (unmatchedBond >= 0 && bPos != pOrder.end()) {
+          *bPos = unmatchedBond;
+        }
+        if (std::find(pOrder.begin(), pOrder.end(), -1) == pOrder.end()) {
+          nUnknown = 0;
+        }
+      } else if (productAtom->getDegree() > reactantAtom.getDegree()) {
+        // the product has an extra bond. we can just remove the -1 from the
+        // list:
+        auto bPos = std::find(pOrder.begin(), pOrder.end(), -1);
+        pOrder.erase(bPos);
+        if (std::find(pOrder.begin(), pOrder.end(), -1) == pOrder.end()) {
+          nUnknown = 0;
+        }
       }
     }
     if (!nUnknown) {
+      if (reactantAtom.getDegree() > productAtom->getDegree()) {
+        // we lost a bond from the reactant.
+        // we can just remove the unmatched reactant bond from the list
+        INT_LIST::iterator rOrderIter = rOrder.begin();
+        while (rOrderIter != rOrder.end()) {
+          // we may invalidate the iterator so keep track of what comes next:
+          auto thisOne = rOrderIter++;
+          if (std::find(pOrder.begin(), pOrder.end(), *thisOne) ==
+              pOrder.end()) {
+            // not in the products:
+            rOrder.erase(thisOne);
+          }
+        }
+      }
       productAtom->setChiralTag(reactantAtom.getChiralTag());
-      int nSwaps = reactantAtom.getPerturbationOrder(pOrder);
+      int nSwaps = countSwapsToInterconvert(rOrder, pOrder);
       bool invert = false;
       if (nSwaps % 2) {
         invert = true;

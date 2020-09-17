@@ -370,6 +370,45 @@ TEST_CASE("reaction data in PNGs 1", "[Reaction][PNG]") {
 }
 
 TEST_CASE("Github #2891", "[Reaction][chirality][bug]") {
+  SECTION("reaction parsing inversion logic") {
+    std::vector<std::pair<std::string, int>> tests{
+        {"[C:4][C@:2]([F:1])[Br:3]>>[C:4][C@:2]([F:1])[S:3]", 2},
+        {"[C:4][C@@:2]([F:1])[Br:3]>>[C:4][C@:2]([F:1])[S:3]", 1},
+        {"[C:4][C@:2]([F:1])[Br:3]>>[C:4][C@:2]([S:3])[F:1]", 1},
+        {"[C:4][C@@:2]([F:1])[Br:3]>>[C:4][C@:2]([S:3])[F:1]", 2},
+        // add mapped substituents
+        {"[C:4][C@:2]([F:1])[Br:3]>>[C:4][C@:2]([F:1])([S:3])[Cl:5]", 2},
+        {"[C:4][C@@:2]([F:1])[Br:3]>>[C:4][C@:2]([F:1])([S:3])[Cl:5]", 1},
+        {"[C:4][C@:2]([F:1])[Br:3]>>[C:4][C@:2]([F:1])([Cl:5])[S:3]", 1},
+        {"[C:4][C@@:2]([F:1])[Br:3]>>[C:4][C@:2]([F:1])([Cl:5])[S:3]", 2},
+        // remove mapped substituents
+        {"[C:4][C@:2]([F:1])([Br:3])[Cl:5]>>[C:4][C@:2]([F:1])[S:3]", 2},
+        {"[C:4][C@@:2]([F:1])([Br:3])[Cl:5]>>[C:4][C@:2]([F:1])[S:3]", 1},
+        {"[C:4][C@:2]([F:1])([Cl:5])[Br:3]>>[C:4][C@:2]([F:1])[S:3]", 1},
+        {"[C:4][C@@:2]([F:1])([Cl:5])[Br:3]>>[C:4][C@:2]([F:1])[S:3]", 2},
+        // add unmapped substituents
+        {"[C:4][C@:2]([F:1])[Br:3]>>[C:4][C@:2]([F:1])([S:3])[Cl]", 2},
+        {"[C:4][C@@:2]([F:1])[Br:3]>>[C:4][C@:2]([F:1])([S:3])[Cl]", 1},
+        {"[C:4][C@:2]([F:1])[Br:3]>>[C:4][C@:2]([F:1])([Cl])[S:3]", 1},
+        {"[C:4][C@@:2]([F:1])[Br:3]>>[C:4][C@:2]([F:1])([Cl])[S:3]", 2},
+        // remove unmapped substituents
+        {"[C:4][C@:2]([F:1])([Br:3])[Cl]>>[C:4][C@:2]([F:1])[S:3]", 2},
+        {"[C:4][C@@:2]([F:1])([Br:3])[Cl]>>[C:4][C@:2]([F:1])[S:3]", 1},
+        {"[C:4][C@:2]([F:1])([Cl])[Br:3]>>[C:4][C@:2]([F:1])[S:3]", 1},
+        {"[C:4][C@@:2]([F:1])([Cl])[Br:3]>>[C:4][C@:2]([F:1])[S:3]", 2},
+    };
+    for (const auto& pr : tests) {
+      std::unique_ptr<ChemicalReaction> rxn(
+          RxnSmartsToChemicalReaction(pr.first));
+      REQUIRE(rxn);
+      auto minv = rxn->getProducts()[0]->getAtomWithIdx(1)->getProp<int>(
+          common_properties::molInversionFlag);
+      if (minv != pr.second) {
+        std::cerr << pr.first << std::endl;
+      }
+      CHECK(minv == pr.second);
+    }
+  }
   SECTION("simplified") {
     auto r1_1 = ROMOL_SPTR(SmilesToMol("C[C@H](F)Br"));
     auto r1_2 = ROMOL_SPTR(SmilesToMol("C[C@@H](F)Br"));
@@ -421,8 +460,8 @@ TEST_CASE("Github #2891", "[Reaction][chirality][bug]") {
     auto r1_4 = ROMOL_SPTR(SmilesToMol("C[C@H](Br)F"));
 
     // makes sure we also handle swaps in the atom ordering properly
-    // this isn't an inversion, despite going @->@@, because the atom order also
-    // changes
+    // this isn't an inversion, despite going @->@@, because the atom order
+    // also changes
     std::unique_ptr<ChemicalReaction> rxn(RxnSmartsToChemicalReaction(
         "[C:4][C@:2]([F:1])[Br:3]>>[C:4][C@@:2]([S:3])[F:1]"));
     REQUIRE(rxn);
@@ -463,6 +502,53 @@ TEST_CASE("Github #2891", "[Reaction][chirality][bug]") {
     }
   }
 
+  SECTION("simplified3") {
+    auto r1_1 = ROMOL_SPTR(SmilesToMol("C[C@H](F)Br"));
+    auto r1_2 = ROMOL_SPTR(SmilesToMol("C[C@@H](F)Br"));
+    auto r1_3 = ROMOL_SPTR(SmilesToMol("C[C@@H](Br)F"));
+    auto r1_4 = ROMOL_SPTR(SmilesToMol("C[C@H](Br)F"));
+
+    // adding a bond in the products.
+    std::unique_ptr<ChemicalReaction> rxn(RxnSmartsToChemicalReaction(
+        "[C:4][C@:2]([F:1])[Br:3]>>[C:4][C@@:2](O)([F:1])[S:3]"));
+    REQUIRE(rxn);
+    rxn->initReactantMatchers();
+    CHECK(rxn->getProducts()[0]->getAtomWithIdx(1)->getProp<int>(
+              common_properties::molInversionFlag) == 1);
+    {
+      MOL_SPTR_VECT reacts{r1_1};
+      auto ps = rxn->runReactants(reacts);
+      CHECK(ps.size() == 1);
+      CHECK(ps[0].size() == 1);
+      auto tsmi = MolToSmiles(*("C[C@@](O)(F)S"_smiles));
+      CHECK(MolToSmiles(*ps[0][0]) == tsmi);
+    }
+    {
+      MOL_SPTR_VECT reacts{r1_2};
+      auto ps = rxn->runReactants(reacts);
+      CHECK(ps.size() == 1);
+      CHECK(ps[0].size() == 1);
+      auto tsmi = MolToSmiles(*("C[C@](O)(F)S"_smiles));
+      CHECK(MolToSmiles(*ps[0][0]) == tsmi);
+    }
+    {
+      MOL_SPTR_VECT reacts{r1_3};
+      auto ps = rxn->runReactants(reacts);
+      CHECK(ps.size() == 1);
+      CHECK(ps[0].size() == 1);
+      auto tsmi = MolToSmiles(*("C[C@@](O)(F)S"_smiles));
+      CHECK(MolToSmiles(*ps[0][0]) == tsmi);
+    }
+    {
+      MOL_SPTR_VECT reacts{r1_4};
+      auto ps = rxn->runReactants(reacts);
+      CHECK(ps.size() == 1);
+      CHECK(ps[0].size() == 1);
+      auto tsmi = MolToSmiles(*("C[C@](O)(F)S"_smiles));
+      CHECK(MolToSmiles(*ps[0][0]) == tsmi);
+    }
+  }
+
   SECTION("reported1") {
     auto r1_1 = ROMOL_SPTR(SmilesToMol("O[C@@H](Br)c1ccccc1"));
     auto r1_2 = ROMOL_SPTR(SmilesToMol("O[C@H](Br)c1ccccc1"));
@@ -470,7 +556,6 @@ TEST_CASE("Github #2891", "[Reaction][chirality][bug]") {
     auto r1_4 = ROMOL_SPTR(SmilesToMol("O[C@H](c1ccccc1)Br"));
     auto r2 = ROMOL_SPTR(SmilesToMol("SCC"));
 
-    std::cerr << "reported2" << std::endl;
     std::unique_ptr<ChemicalReaction> rxn(
         RxnSmartsToChemicalReaction("[O:5][C@:1]([Br:2])[*:6].[S:3][C:4]>>[*:"
                                     "5][C@@:1]([S:3][*:4])[*:6]"));
@@ -516,7 +601,6 @@ TEST_CASE("Github #2891", "[Reaction][chirality][bug]") {
     auto r1_3 = ROMOL_SPTR(SmilesToMol("C[C@@H](c1ccccc1)Br"));
     auto r1_4 = ROMOL_SPTR(SmilesToMol("C[C@H](c1ccccc1)Br"));
     auto r2 = ROMOL_SPTR(SmilesToMol("SCC"));
-    std::cerr << "reported2" << std::endl;
     std::unique_ptr<ChemicalReaction> rxn(RxnSmartsToChemicalReaction(
         "[C@:1][Br:2].[S:3][C:4]>>[C@@:1][*:3][*:4]"));
     REQUIRE(rxn);
