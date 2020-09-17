@@ -152,14 +152,14 @@ TautomerEnumerator::TautomerEnumerator(const CleanupParameters &params)
     : d_maxTautomers(params.maxTautomers),
       d_maxTransforms(params.maxTransforms),
       d_removeSp3Stereo(params.tautomerRemoveSp3Stereo),
-      d_removeBondStereo(params.tautomerRemoveBondStereo) {
+      d_removeBondStereo(params.tautomerRemoveBondStereo),
+      d_reassignStereo(params.tautomerReassignStereo) {
   TautomerCatalogParams tautParams(params.tautomerTransforms);
   dp_catalog.reset(new TautomerCatalog(&tautParams));
 }
 
-bool TautomerEnumerator::setTautomerStereo(const ROMol &mol, ROMol &taut,
-                                           const TautomerEnumeratorResult &res,
-                                           bool reassignStereo) const {
+bool TautomerEnumerator::setTautomerStereo(
+    const ROMol &mol, ROMol &taut, const TautomerEnumeratorResult &res) const {
   bool modified = false;
   for (auto atom : mol.atoms()) {
     auto atomIdx = atom->getIdx();
@@ -228,7 +228,7 @@ bool TautomerEnumerator::setTautomerStereo(const ROMol &mol, ROMol &taut,
       }
     }
   }
-  if (reassignStereo) {
+  if (d_reassignStereo) {
     static const bool cleanIt = true;
     static const bool force = true;
     MolOps::assignStereochemistry(taut, cleanIt, force);
@@ -251,8 +251,7 @@ std::vector<ROMOL_SPTR> TautomerEnumerator::enumerate(
   return tresult.tautomers();
 }
 
-TautomerEnumeratorResult TautomerEnumerator::enumerate(
-    const ROMol &mol, bool reassignStereo) const {
+TautomerEnumeratorResult TautomerEnumerator::enumerate(const ROMol &mol) const {
 #ifdef VERBOSE_ENUMERATION
   std::cout << "**********************************" << std::endl;
 #endif
@@ -411,7 +410,7 @@ TautomerEnumeratorResult TautomerEnumerator::enumerate(
                                     MolOps::SANITIZE_SETCONJUGATION |
                                     MolOps::SANITIZE_SETHYBRIDIZATION |
                                     MolOps::SANITIZE_ADJUSTHS);
-            setTautomerStereo(mol, *wproduct, res, reassignStereo);
+            setTautomerStereo(mol, *wproduct, res);
             tsmiles = MolToSmiles(*wproduct, true);
 #ifdef VERBOSE_ENUMERATION
             std::string name;
@@ -466,7 +465,7 @@ TautomerEnumeratorResult TautomerEnumerator::enumerate(
       auto &taut = it->second;
       if ((taut.d_numModifiedAtoms < maxNumModifiedAtoms ||
            taut.d_numModifiedBonds < maxNumModifiedBonds) &&
-          setTautomerStereo(mol, *taut.tautomer, res, reassignStereo)) {
+          setTautomerStereo(mol, *taut.tautomer, res)) {
         Tautomer tautStored = std::move(taut);
         it = res.d_tautomers.erase(it);
         tautStored.d_numModifiedAtoms = maxNumModifiedAtoms;
@@ -534,7 +533,9 @@ ROMol *TautomerEnumerator::pickCanonical(
 
 ROMol *TautomerEnumerator::canonicalize(
     const ROMol &mol, boost::function<int(const ROMol &mol)> scoreFunc) const {
-  auto res = enumerate(mol, false);
+  auto thisCopy = TautomerEnumerator(*this);
+  thisCopy.setReassignStereo(false);
+  auto res = thisCopy.enumerate(mol);
   if (res.empty()) {
     BOOST_LOG(rdWarningLog)
         << "no tautomers found, returning input molecule" << std::endl;

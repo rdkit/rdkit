@@ -123,12 +123,17 @@ BOOST_PYTHON_MODULE(rdMolStandardize) {
           "tautomerRemoveSp3Stereo",
           &RDKit::MolStandardize::CleanupParameters::tautomerRemoveSp3Stereo,
           "remove stereochemistry from sp3 centers involved in "
-          "tautomerism (defaults to true)")
+          "tautomerism (defaults to True)")
       .def_readwrite(
           "tautomerRemoveBondStereo",
           &RDKit::MolStandardize::CleanupParameters::tautomerRemoveBondStereo,
           "remove stereochemistry from double bonds involved in "
-          "tautomerism (defaults to true)");
+          "tautomerism (defaults to True)")
+      .def_readwrite(
+          "tautomerReassignStereo",
+          &RDKit::MolStandardize::CleanupParameters::tautomerReassignStereo,
+          "call AssignStereochemistry on all generated tautomers "
+          "(defaults to True)");
 
   docString = "Standardizes a molecule";
   python::def("Cleanup", cleanupHelper,

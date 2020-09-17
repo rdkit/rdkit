@@ -1076,8 +1076,10 @@ void testPickCanonicalCIPChangeOnChiralCenter() {
   {
     // here the chirality disappears as the chiral center is itself involved in
     // tautomerism the reassignStereo setting has no influence
-    TautomerEnumerator te;
-    auto res = te.enumerate(*mol, false);
+    CleanupParameters params;
+    params.tautomerReassignStereo = false;
+    TautomerEnumerator te(params);
+    auto res = te.enumerate(*mol);
     TEST_ASSERT(res.status() == Completed);
     TEST_ASSERT(res.size() == 8);
     ROMOL_SPTR bestTaut = CanonicalTaut::get(res);
@@ -1114,8 +1116,9 @@ void testPickCanonicalCIPChangeOnChiralCenter() {
     // and therefore it is still R (incorrect)
     CleanupParameters params;
     params.tautomerRemoveSp3Stereo = false;
+    params.tautomerReassignStereo = false;
     TautomerEnumerator te(params);
-    auto res = te.enumerate(*mol, false);
+    auto res = te.enumerate(*mol);
     TEST_ASSERT(res.status() == Completed);
     TEST_ASSERT(res.size() == 8);
     ROMOL_SPTR bestTaut = CanonicalTaut::get(res);
@@ -1175,8 +1178,10 @@ void testPickCanonicalCIPChangeOnChiralCenter() {
   {
     // as reassignStereo is false, the CIP code has not been recomputed
     // and therefore it is still S (incorrect)
-    TautomerEnumerator te;
-    auto res = te.enumerate(*mol, false);
+    CleanupParameters params;
+    params.tautomerReassignStereo = false;
+    TautomerEnumerator te(params);
+    auto res = te.enumerate(*mol);
     TEST_ASSERT(res.status() == Completed);
     TEST_ASSERT(res.size() == 4);
     ROMOL_SPTR bestTaut = CanonicalTaut::get(res);
@@ -1211,8 +1216,9 @@ void testPickCanonicalCIPChangeOnChiralCenter() {
     // and therefore it is still S (incorrect)
     CleanupParameters params;
     params.tautomerRemoveSp3Stereo = false;
+    params.tautomerReassignStereo = false;
     TautomerEnumerator te(params);
-    auto res = te.enumerate(*mol, false);
+    auto res = te.enumerate(*mol);
     TEST_ASSERT(res.status() == Completed);
     TEST_ASSERT(res.size() == 4);
     ROMOL_SPTR bestTaut = CanonicalTaut::get(res);

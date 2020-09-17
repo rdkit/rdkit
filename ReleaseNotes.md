@@ -15,8 +15,8 @@
   object instead of a vector of molecules. Note that if you are iterating over
   the results of a call to `enumerate()` you shouldn't need to change your code.
   If you want to invoke the old (and deprecated, see below) form from C++, call
-  `TautomerNumerator::enumerate(mol,nullptr)` or explicitly pass a
-  `boost::dynamic_bitset` to capture the modified atoms. 
+  `TautomerNumerator::enumerate(mol, nullptr)` or explicitly pass a
+  `boost::dynamic_bitset*` to capture the modified atoms.
 
 ## Code removed in this release:
 - To improve API consistency of the exceptions in RDKit with the default ones in

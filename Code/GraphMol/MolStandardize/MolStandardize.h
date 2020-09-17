@@ -66,6 +66,9 @@ struct RDKIT_MOLSTANDARDIZE_EXPORT CleanupParameters {
   bool tautomerRemoveBondStereo{
       true};  //! Whether to remove stereochemistry from double
               //! bonds involved in tautomerism (defaults to true)
+  bool tautomerReassignStereo{
+      true};  //! Whether enumerate() should call assignStereochemistry
+              //! on all generated tautomers (defaults to true)
   CleanupParameters()
       :  // TODO
          //			normalizations(""),//this->DEFAULT_TRANSFORMS),

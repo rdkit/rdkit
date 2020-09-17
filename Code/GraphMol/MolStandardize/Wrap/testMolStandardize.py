@@ -567,8 +567,10 @@ chlorine	[Cl]
 
     # here the chirality disappears as the chiral center is itself involved in tautomerism
     # the reassignStereo setting has no influence
-    te = rdMolStandardize.TautomerEnumerator()
-    res = te.Enumerate(mol, False)
+    params = rdMolStandardize.CleanupParameters()
+    params.tautomerReassignStereo = False
+    te = rdMolStandardize.TautomerEnumerator(params)
+    res = te.Enumerate(mol)
     self.assertEqual(res.status, rdMolStandardize.TautomerEnumeratorStatus.Completed)
     self.assertEqual(len(res.tautomers), 8)
     best_taut = get_canonical_taut(res)
@@ -599,8 +601,9 @@ chlorine	[Cl]
     # and therefore it is still R (incorrect)
     params = rdMolStandardize.CleanupParameters()
     params.tautomerRemoveSp3Stereo = False
+    params.tautomerReassignStereo = False
     te = rdMolStandardize.TautomerEnumerator(params)
-    res = te.Enumerate(mol, False)
+    res = te.Enumerate(mol)
     self.assertEqual(res.status, rdMolStandardize.TautomerEnumeratorStatus.Completed)
     self.assertEqual(len(res.tautomers), 8)
     best_taut = get_canonical_taut(res)
@@ -647,8 +650,10 @@ chlorine	[Cl]
 
     # as reassignStereo is false, the CIP code has not been recomputed
     # and therefore it is still S (incorrect)
-    te = rdMolStandardize.TautomerEnumerator()
-    res = te.Enumerate(mol, False)
+    params = rdMolStandardize.CleanupParameters()
+    params.tautomerReassignStereo = False
+    te = rdMolStandardize.TautomerEnumerator(params)
+    res = te.Enumerate(mol)
     self.assertEqual(res.status, rdMolStandardize.TautomerEnumeratorStatus.Completed)
     self.assertEqual(len(res.tautomers), 4)
     best_taut = get_canonical_taut(res)
@@ -677,8 +682,9 @@ chlorine	[Cl]
     # and therefore it is still S (incorrect)
     params = rdMolStandardize.CleanupParameters()
     params.tautomerRemoveSp3Stereo = False
+    params.tautomerReassignStereo = False
     te = rdMolStandardize.TautomerEnumerator(params)
-    res = te.Enumerate(mol, False)
+    res = te.Enumerate(mol)
     self.assertEqual(res.status, rdMolStandardize.TautomerEnumeratorStatus.Completed)
     self.assertEqual(len(res.tautomers), 4)
     best_taut = get_canonical_taut(res)
