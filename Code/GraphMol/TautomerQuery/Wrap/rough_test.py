@@ -2,7 +2,12 @@
 # Created by Gareth Jones on 5/30/2020.
 #
 # Copyright 2020 Schrodinger, Inc
-#
+#  @@ All Rights Reserved @@
+#  This file is part of the RDKit.
+#  The contents are covered by the terms of the BSD license
+#  which is included in the file license.txt, found at the root
+#  of the RDKit source tree.
+
 
 """ A rough test of Tautomer Queries 
 
