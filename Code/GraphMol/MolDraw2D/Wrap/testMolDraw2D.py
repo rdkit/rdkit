@@ -318,15 +318,15 @@ M  END""")
     d.DrawMolecule(dm)
     d.FinishDrawing()
     txt = d.GetDrawingText()
-    self.assertTrue(txt.find("stroke-width:2px") >= 0)
-    self.assertTrue(txt.find("stroke-width:4px") == -1)
+    self.assertTrue(txt.find("stroke-width:2.0px") >= 0)
+    self.assertTrue(txt.find("stroke-width:4.0px") == -1)
     d = Draw.MolDraw2DSVG(300, 300)
     d.SetLineWidth(4)
     d.DrawMolecule(dm)
     d.FinishDrawing()
     txt = d.GetDrawingText()
-    self.assertTrue(txt.find("stroke-width:2px") == -1)
-    self.assertTrue(txt.find("stroke-width:4px") >= 0)
+    self.assertTrue(txt.find("stroke-width:2.0px") == -1)
+    self.assertTrue(txt.find("stroke-width:4.0px") >= 0)
 
   def testPrepareAndDrawMolecule(self):
     m = Chem.MolFromSmiles("C1N[C@@H]2OCC12")
@@ -571,7 +571,7 @@ M  END
     smi = 'CO[C@@H](O)C1=C(O[C@H](F)Cl)C(C#N)=C1ONNC[NH3+]'
     smarts = ['CONN', 'N#CC~CO', 'C=CON', 'CONNCN']
     txt = do_a_picture(smi, smarts, 'pyTest2')
-    self.assertGreater(txt.find('stroke:#FF8C00;stroke-width:5.4'), -1)
+    self.assertGreater(txt.find('stroke:#FF8C00;stroke-width:5.5'), -1)
     self.assertEqual(
       txt.find("ellipse cx='244.253' cy='386.518'"
                " rx='11.9872' ry='12.8346'"
