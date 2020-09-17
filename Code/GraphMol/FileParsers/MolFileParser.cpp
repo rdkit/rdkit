@@ -2761,9 +2761,6 @@ bool ParseV3000CTAB(std::istream *inStream, unsigned int &line, RWMol *mol,
 
   nAtoms = FileParserUtils::toUnsigned(splitLine[0]);
   nBonds = FileParserUtils::toUnsigned(splitLine[1]);
-  if (!nAtoms) {
-    throw FileParseException("molecule has no atoms");
-  }
   conf = new Conformer(nAtoms);
 
   unsigned int nSgroups = 0, n3DConstraints = 0, chiralFlag = 0;
@@ -2778,7 +2775,9 @@ bool ParseV3000CTAB(std::istream *inStream, unsigned int &line, RWMol *mol,
     chiralFlag = FileParserUtils::toUnsigned(splitLine[4]);
   }
 
-  ParseV3000AtomBlock(inStream, line, nAtoms, mol, conf);
+  if (nAtoms) {
+    ParseV3000AtomBlock(inStream, line, nAtoms, mol, conf);
+  }
   if (nBonds) {
     ParseV3000BondBlock(inStream, line, nBonds, mol, chiralityPossible);
   }
