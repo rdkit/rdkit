@@ -261,7 +261,7 @@ class RDKIT_MOLSTANDARDIZE_EXPORT TautomerEnumerator {
    */
   TautomerEnumeratorCallback *getCallback() const { return d_callback.get(); }
 
-  //! returns a TautomerEnumeratorResult structure for the input molecule
+  //! returns a \c TautomerEnumeratorResult structure for the input molecule
   /*!
     The enumeration rules are inspired by the publication:
     M. Sitzmann et al., “Tautomerism in Large Databases.”, JCAMD 24:521 (2010)
@@ -270,8 +270,6 @@ class RDKIT_MOLSTANDARDIZE_EXPORT TautomerEnumerator {
     \param mol: the molecule to be enumerated
     \param reassignStereo: whether AssignStereochemistry should be called
     on each generated tautomer (not required for canonicalization)
-    \param modifiedBonds: if provided this is used to return which bonds are
-    modified during the tautomerization
 
     Note: the definitions used here are that the atoms modified during
     tautomerization are the atoms at the beginning and end of each tautomer
@@ -284,7 +282,13 @@ class RDKIT_MOLSTANDARDIZE_EXPORT TautomerEnumerator {
   TautomerEnumeratorResult enumerate(const ROMol &mol,
                                      bool reassignStereo = true) const;
 
-  //! returns the canonical tautomer from a TautomerEnumeratorResult
+  //! Deprecated, please use the form returning a \c TautomerEnumeratorResult
+  //! instead
+  std::vector<ROMOL_SPTR> enumerate(
+      const ROMol &mol, boost::dynamic_bitset<> *modifiedAtoms,
+      boost::dynamic_bitset<> *modifiedBonds = nullptr) const;
+
+  //! returns the canonical tautomer from a \c TautomerEnumeratorResult
   ROMol *pickCanonical(const TautomerEnumeratorResult &tautRes,
                        boost::function<int(const ROMol &mol)> scoreFunc =
                            TautomerScoringFunctions::scoreTautomer) const;

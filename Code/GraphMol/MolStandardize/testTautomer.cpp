@@ -895,6 +895,24 @@ void testEnumerateDetails() {
     TEST_ASSERT(tautRes.modifiedBonds().test(8));
     TEST_ASSERT(tautRes.modifiedBonds().test(14));
   }
+  {
+    // test the deprecated form
+    auto mol = "c1ccccc1CN=c1[nH]cccc1"_smiles;
+    TEST_ASSERT(mol);
+    boost::dynamic_bitset<> atomsModified(mol->getNumAtoms());
+    boost::dynamic_bitset<> bondsModified(mol->getNumBonds());
+
+    auto tauts = te.enumerate(*mol, &atomsModified, &bondsModified);
+    TEST_ASSERT(tauts.size() == 2);
+    TEST_ASSERT(atomsModified.count() == 2);
+    TEST_ASSERT(bondsModified.count() == 7);
+    TEST_ASSERT(atomsModified[7]);
+    TEST_ASSERT(atomsModified[9]);
+    TEST_ASSERT(!bondsModified[0]);
+    TEST_ASSERT(bondsModified[7]);
+    TEST_ASSERT(bondsModified[8]);
+    TEST_ASSERT(bondsModified[14]);
+  }
   BOOST_LOG(rdInfoLog) << "Finished" << std::endl;
 }
 

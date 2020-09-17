@@ -10,6 +10,13 @@
 - The Open3DAlign functionality is now in its own separate library - `O3AAlign`
   in cmake. If you are working in C++ and using O3A functionality, you'll need
   to link against this library as well now.
+- Due to improvements in the tautomer enumeration code, the method
+  `TautomerEnumerator::enumerate` now returns a `TautomerEnumeratorResult`
+  object instead of a vector of molecules. Note that if you are iterating over
+  the results of a call to `enumerate()` you shouldn't need to change your code.
+  If you want to invoke the old (and deprecated, see below) form from C++, call
+  `TautomerNumerator::enumerate(mol,nullptr)` or explicitly pass a
+  `boost::dynamic_bitset` to capture the modified atoms. 
 
 ## Code removed in this release:
 - To improve API consistency of the exceptions in RDKit with the default ones in
@@ -23,6 +30,10 @@
   the namespace QueryOps. Please use `QueryOps::replaceAtomWithQueryAtom()`
   instead. The version in the `FileParserUtils` namespace will be removed in the
   next release.
+- The method `std::vector<ROMOL_SPTR> TautomerEnumerator::enumerate(const ROMol &mol, boost::dynamic_bitset<> *modifiedAtoms, boost::dynamic_bitset<> *modifiedBonds = nullptr)` 
+  is deprecated and will be removed in a future release. 
+  Please use `TautomerEnumeratorResult TautomerEnumerator::enumerate(const ROMol &mol,bool reassignStereo = true)` 
+  instead.
 
 
 
