@@ -7715,7 +7715,7 @@ void testRemoveAndTrackIsotopes() {
   TEST_ASSERT(mNoH->getAtomWithIdx(0)->getAtomicNum() == 6);
   TEST_ASSERT(mNoH->getAtomWithIdx(0)->hasProp(common_properties::_isotopicHs));
   TEST_ASSERT(mNoH->getAtomWithIdx(0)->getProp<std::string>(
-                  common_properties::_isotopicHs) == "(2,)");
+                  common_properties::_isotopicHs) == "2");
   TEST_ASSERT(mNoH->getAtomWithIdx(30)->getAtomicNum() == 6);
   TEST_ASSERT(
       !mNoH->getAtomWithIdx(30)->hasProp(common_properties::_isotopicHs));

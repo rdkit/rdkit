@@ -424,15 +424,17 @@ void AssignHsResidueInfo(RWMol &mol) {
   }
 }
 
-std::string isoHsToStringTuple(const std::deque<unsigned int> &isoHs) {
+std::string isoHsToString(const std::vector<unsigned int> &isoHs) {
   std::stringstream ss;
   std::copy(isoHs.begin(), isoHs.end(),
-            std::ostream_iterator<unsigned int>(ss, ","));
-  return "(" + ss.str() + ")";
+            std::ostream_iterator<unsigned int>(ss, " "));
+  std::string res(std::move(ss.str()));
+  boost::trim(res);
+  return res;
 }
 
-std::map<unsigned int, std::deque<unsigned int>> getIsoMap(const ROMol &mol) {
-  std::map<unsigned int, std::deque<unsigned int>> isoMap;
+std::map<unsigned int, std::vector<unsigned int>> getIsoMap(const ROMol &mol) {
+  std::map<unsigned int, std::vector<unsigned int>> isoMap;
   for (auto atom : mol.atoms()) {
     if (atom->hasProp(common_properties::_isotopicHs)) {
       atom->clearProp(common_properties::_isotopicHs);
@@ -467,7 +469,6 @@ namespace MolOps {
 
 void addHs(RWMol &mol, bool explicitOnly, bool addCoords,
            const UINT_VECT *onlyOnAtoms, bool addResidueInfo) {
-  unsigned int numAtomsBeforeAddHs = mol.getNumAtoms();
   // when we hit each atom, clear its computed properties
   // NOTE: it is essential that we not clear the ring info in the
   // molecule's computed properties.  We don't want to have to
@@ -510,6 +511,8 @@ void addHs(RWMol &mol, bool explicitOnly, bool addCoords,
     if (newAt->getPropIfPresent(common_properties::_isotopicHs,
                                 isotopicHsProp)) {
       newAt->clearProp(common_properties::_isotopicHs);
+      // be lenient on input, even if we write only space-separated
+      // strings of indices
       boost::trim_if(isotopicHsProp, boost::is_any_of(" \t\r\n,()[]{}"));
       boost::tokenizer<> tokens(isotopicHsProp);
       std::transform(tokens.begin(), tokens.end(), std::back_inserter(isoHs),
@@ -773,11 +776,8 @@ void removeHs(RWMol &mol, const RemoveHsParameters &ps, bool sanitize) {
   }
   if (ps.removeAndTrackIsotopes) {
     for (const auto &pair : getIsoMap(mol)) {
-      if (!pair.second.empty()) {
-        mol.getAtomWithIdx(pair.first)
-            ->setProp(common_properties::_isotopicHs,
-                      isoHsToStringTuple(pair.second));
-      }
+      mol.getAtomWithIdx(pair.first)
+          ->setProp(common_properties::_isotopicHs, isoHsToString(pair.second));
     }
   }
   boost::dynamic_bitset<> atomsToRemove{mol.getNumAtoms(), 0};
