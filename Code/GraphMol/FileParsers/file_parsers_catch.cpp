@@ -1589,3 +1589,21 @@ M  END
     CHECK(molb.find("LINKNODE 1 4 2 4 3 4 5") != std::string::npos);
   }
 }
+
+TEST_CASE("github #3413: V3K mol blocks with no atoms fail to parse", "[bug]") {
+  SECTION("basics") {
+    auto m = R"CTAB(6065
+     RDKit          2D
+
+  0  0  0  0  0  0  0  0  0  0999 V3000
+M  V30 BEGIN CTAB
+M  V30 COUNTS 0 0 0 0 0
+M  V30 BEGIN ATOM
+M  V30 END ATOM
+M  V30 END CTAB
+M  END)CTAB"_ctab;
+    REQUIRE(m);
+    CHECK(m->getNumAtoms() == 0);
+    CHECK(m->getNumBonds() == 0);
+  }
+}
