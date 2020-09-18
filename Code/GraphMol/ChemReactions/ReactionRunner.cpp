@@ -1074,17 +1074,19 @@ void checkAndCorrectChiralityOfMatchingAtomsInProduct(
         if (unmatchedBond >= 0 && bPos != pOrder.end()) {
           *bPos = unmatchedBond;
         }
-        if (std::find(pOrder.begin(), pOrder.end(), -1) == pOrder.end()) {
-          nUnknown = 0;
-        }
+        nUnknown = 0;
+        CHECK_INVARIANT(
+            std::find(pOrder.begin(), pOrder.end(), -1) == pOrder.end(),
+            "extra unmapped atom");
       } else if (productAtom->getDegree() > reactantAtom.getDegree()) {
         // the product has an extra bond. we can just remove the -1 from the
         // list:
         auto bPos = std::find(pOrder.begin(), pOrder.end(), -1);
         pOrder.erase(bPos);
-        if (std::find(pOrder.begin(), pOrder.end(), -1) == pOrder.end()) {
-          nUnknown = 0;
-        }
+        nUnknown = 0;
+        CHECK_INVARIANT(
+            std::find(pOrder.begin(), pOrder.end(), -1) == pOrder.end(),
+            "extra unmapped atom");
       }
     }
     if (!nUnknown) {
@@ -1092,7 +1094,7 @@ void checkAndCorrectChiralityOfMatchingAtomsInProduct(
         // we lost a bond from the reactant.
         // we can just remove the unmatched reactant bond from the list
         INT_LIST::iterator rOrderIter = rOrder.begin();
-        while (rOrderIter != rOrder.end()) {
+        while (rOrderIter != rOrder.end() && rOrder.size() > pOrder.size()) {
           // we may invalidate the iterator so keep track of what comes next:
           auto thisOne = rOrderIter++;
           if (std::find(pOrder.begin(), pOrder.end(), *thisOne) ==
