@@ -54,7 +54,7 @@ FILE(TO_NATIVE_PATH ${CMAKE_CURRENT_SOURCE_DIR}/src/org/RDKit COPY_DEST)
 
 # Setup a few variables for environment-specific things
 if(WIN32)
-  ADD_DEFINITIONS("/W3 /wd4716 /wd4101 /bigobj")
+  ADD_COMPILE_OPTIONS(/W3 /wd4716 /wd4101 /bigobj)
   SET(PATH_SEP ";")
   SET(COPY_CMD xcopy ${COPY_SOURCE} ${COPY_DEST} /Y /I)
 else()
@@ -67,7 +67,7 @@ if(APPLE)
   SET(CMAKE_SIZEOF_VOID_P 4)
 endif(APPLE)
 
-if(CMAKE_SIZEOF_VOID_P MATCHES 4)
+if(CMAKE_SIZEOF_VOID_P EQUAL 4)
   SET(CMAKE_SWIG_FLAGS -package "org.RDKit")
 else()
   if (WIN32)
