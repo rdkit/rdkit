@@ -1,3 +1,33 @@
+# Release_2020.03.6
+(Changes relative to Release_2020.03.5)
+
+## Acknowledgements:
+Brian Kelley, Kenneth Lum, Paolo Tosco
+
+## Bug Fixes:
+  - unspecified branch bonds in SMARTS don't have aromaticity set
+ (github #3342 from greglandrum)
+  - Converting atoms with high radical counts to InChI generates incorrect results
+ (github #3365 from greglandrum)
+  - Replace fill-opacity= with fill-opacity: in MolDraw2DSVG and tests
+ (github #3368 from lummyk)
+  - Fixes a bug in AddHs() involving sp2 centers with degree 1
+ (github #3383 from ptosco)
+  - Information about charges and isotopes lost when calling AdjustQueryProperties
+ (github #3388 from greglandrum)
+  - prepareMolForDrawing() incorrectly adds chiral Hs if no ring info is present
+ (github #3392 from greglandrum)
+  - CXSMILES parser should not set atom maps for attachment points
+ (github #3393 from greglandrum)
+  - Doing a match of a recursive smarts leaves traces of the previous match
+ (github #3403 from bp-kelley)
+  - Recursive smarts cannot be used in the core for rgroup decomposition
+ (github #3404 from bp-kelley)
+  - V3K mol blocks with no atoms fail to parse
+ (github #3413 from greglandrum)
+  - Problem parsing SGroup data comtaining `""`
+ (github #3415 from greglandrum)
+
 # Release_2020.03.5
 (Changes relative to Release_2020.03.5)
 
