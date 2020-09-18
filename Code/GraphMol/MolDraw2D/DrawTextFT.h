@@ -82,7 +82,7 @@ class DrawTextFT : public DrawText {
 };
 
 // Callbacks for FT_Outline_Decompose.  user should be a pointer to
-// an instance of RDFreeType.
+// an instance of DrawTextFT.
 int moveToFunction(const FT_Vector *to, void *user);
 int lineToFunction(const FT_Vector *to, void *user);
 int conicToFunction(const FT_Vector *control, const FT_Vector *to,

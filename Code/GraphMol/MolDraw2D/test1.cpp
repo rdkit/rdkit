@@ -211,6 +211,7 @@ void test2() {}
 
 void test3() {
   std::cout << " ----------------- Test 3" << std::endl;
+#if 0
   {
     std::string smiles = "C1CC1CC1ON1";
     std::string nameBase = "test3_1";
@@ -458,7 +459,7 @@ void test3() {
     }
     delete m;
   }
-
+#endif
   std::cout << " Done" << std::endl;
 }
 
@@ -1085,9 +1086,7 @@ void testGithub774() {
 void test9MolLegends() {
   std::cout << " ----------------- Test 9 (molecule legends)" << std::endl;
   {
-    std::string smiles = "CC[13CH2][CH2:7][CH-]C[15NH2+]C";
-    std::string nameBase = "test5_1";
-    ROMol *m = SmilesToMol(smiles);
+    auto m = "CC[13CH2][CH2:7][CH-]C[15NH2+]C"_smiles;
     TEST_ASSERT(m);
     RDDepict::compute2DCoords(*m);
     WedgeMolBonds(*m, &(m->getConformer()));
@@ -1098,7 +1097,6 @@ void test9MolLegends() {
     std::ofstream outs("test9_1.svg");
     outs << txt;
     // TEST_ASSERT(txt.find("<svg")!=std::string::npos);
-    delete m;
   }
   std::cerr << " Done" << std::endl;
 }
@@ -1940,7 +1938,7 @@ void test13JSONConfig() {
 #endif
     // these days the bond line width scales with the rest of the
     // drawing, and at this size this comes out as 6px.
-    TEST_ASSERT(text.find("stroke-width:5px") != std::string::npos);
+    TEST_ASSERT(text.find("stroke-width:5.0px") != std::string::npos);
   }
   std::cerr << " Done" << std::endl;
 }
@@ -2217,60 +2215,6 @@ void testGithub1322() {
   std::cerr << " Done" << std::endl;
 }
 
-void testGithub565() {
-  std::cout << " ----------------- Testing github 565: support a fixed bond "
-               "length in the MolDraw2D code"
-            << std::endl;
-  {
-    std::string smiles = "CCCCC";
-    RWMol *m1 = SmilesToMol(smiles);
-    TEST_ASSERT(m1);
-    MolDraw2DUtils::prepareMolForDrawing(*m1);
-
-    Point2D minV, maxV;
-    const Conformer &cnf = m1->getConformer();
-    minV.x = maxV.x = cnf.getAtomPos(0).x;
-    minV.y = maxV.y = cnf.getAtomPos(0).y;
-    for (unsigned int i = 1; i < m1->getNumAtoms(); i++) {
-      minV.x = std::min(minV.x, cnf.getAtomPos(i).x);
-      minV.y = std::min(minV.y, cnf.getAtomPos(i).y);
-      maxV.x = std::max(maxV.x, cnf.getAtomPos(i).x);
-      maxV.y = std::max(maxV.y, cnf.getAtomPos(i).y);
-    }
-
-    {
-      unsigned int dpa = 100;
-      unsigned int w = dpa * (maxV.x - minV.x);
-      unsigned int h = dpa * (maxV.y - minV.y);
-
-      MolDraw2DSVG drawer(w, h);
-      drawer.setScale(w, h, minV, maxV);
-      drawer.drawMolecule(*m1, "m1");
-      drawer.finishDrawing();
-      std::string text = drawer.getDrawingText();
-      std::ofstream outs("test565_1.svg");
-      outs << text;
-      outs.flush();
-    }
-    {
-      unsigned int dpa = 50;
-      unsigned int w = dpa * (maxV.x - minV.x);
-      unsigned int h = dpa * (maxV.y - minV.y);
-
-      MolDraw2DSVG drawer(w, h);
-      drawer.setScale(w, h, minV, maxV);
-      drawer.drawMolecule(*m1, "m1");
-      drawer.finishDrawing();
-      std::string text = drawer.getDrawingText();
-      std::ofstream outs("test565_2.svg");
-      outs << text;
-      outs.flush();
-    }
-    delete m1;
-  }
-  std::cerr << " Done" << std::endl;
-}
-
 void test14BWPalette() {
   std::cout << " ----------------- Testing use of a black & white palette"
             << std::endl;
@@ -2346,7 +2290,7 @@ void test15ContinuousHighlightingWithGrid() {
       std::ofstream outs("test15_1.svg");
       outs << text;
       outs.flush();
-      TEST_ASSERT(text.find("stroke:#FF7F7F;stroke-width:4px;") ==
+      TEST_ASSERT(text.find("stroke:#FF7F7F;stroke-width:4.0px;") ==
                   std::string::npos);
     }
 
@@ -2359,7 +2303,7 @@ void test15ContinuousHighlightingWithGrid() {
       std::ofstream outs("test15_2.svg");
       outs << text;
       outs.flush();
-      TEST_ASSERT(text.find("stroke:#FF7F7F;stroke-width:4px;") !=
+      TEST_ASSERT(text.find("stroke:#FF7F7F;stroke-width:4.3px") !=
                   std::string::npos);
     }
     for (auto &&mol : mols) {
@@ -2767,23 +2711,23 @@ void testGithub2151() {
       std::ofstream outs("testGithub2151_1.svg");
       outs << text;
       outs.flush();
-      TEST_ASSERT(text.find("stroke-width:2px") != std::string::npos);
-      TEST_ASSERT(text.find("stroke-width:3px") == std::string::npos);
+      TEST_ASSERT(text.find("stroke-width:2.0px") != std::string::npos);
+      TEST_ASSERT(text.find("stroke-width:3.0px") == std::string::npos);
     }
     {
       MolDraw2DSVG drawer(200, 200);
       drawer.drawOptions().bondLineWidth = 8;
-      drawer.drawMolecule(*m1);
+      // add legend so anyone testing knows it is supposed to look really
+      // horrible.
+      drawer.drawMolecule(*m1, "should look nasty");
       drawer.addMoleculeMetadata(*m1);
       drawer.finishDrawing();
       std::string text = drawer.getDrawingText();
       std::ofstream outs("testGithub2151_2.svg");
       outs << text;
       outs.flush();
-      // the bonds are scaled in thickness, so it won't be 8 pixels.
-      // Experiment finds 3 on my machine.
-      TEST_ASSERT(text.find("stroke-width:2px") == std::string::npos);
-      TEST_ASSERT(text.find("stroke-width:3px") != std::string::npos);
+      TEST_ASSERT(text.find("stroke-width:2.0px") == std::string::npos);
+      TEST_ASSERT(text.find("stroke-width:8.0px") != std::string::npos);
     }
   }
   std::cerr << " Done" << std::endl;
@@ -2899,18 +2843,18 @@ void testGithub2931() {
       std::ofstream outs("testGithub2931_1.svg");
       outs << text;
       outs.flush();
-      TEST_ASSERT(text.find("stroke:#FF8C00;stroke-width:5px") !=
+      TEST_ASSERT(text.find("stroke:#FF8C00;stroke-width:5.6px") !=
                   std::string::npos);
 #ifdef RDK_BUILD_FREETYPE_SUPPORT
-      TEST_ASSERT(text.find("<ellipse cx='242.681' cy='368.766'"
-                            " rx='13.3446' ry='14.9254'"
-                            " style='fill:none;stroke:#00FF00;")
-                  != std::string::npos);
+      TEST_ASSERT(text.find("<ellipse cx='242.185' cy='367.491'"
+                            " rx='10.4207' ry='10.7138'"
+                            " style='fill:none;stroke:#00FF00;") !=
+                  std::string::npos);
 #else
-      TEST_ASSERT(text.find("<ellipse cx='243.376' cy='315.326'"
-                            " rx='10.1913' ry='10.1913'"
-                            " style='fill:none;stroke:#00FF00;")
-                  != std::string::npos);
+      TEST_ASSERT(text.find("<ellipse cx='242.228' cy='313.005'"
+                            " rx='10.3633' ry='10.3633'"
+                            " style='fill:none;stroke:#00FF00;") !=
+                  std::string::npos);
 #endif
     }
     {
@@ -2925,7 +2869,7 @@ void testGithub2931() {
       std::ofstream outs("testGithub2931_2.svg");
       outs << text;
       outs.flush();
-      TEST_ASSERT(text.find("stroke:#FF8C00;stroke-width:5px") !=
+      TEST_ASSERT(text.find("stroke:#FF8C00;stroke-width:5.6px") !=
                   std::string::npos);
 #ifdef RDK_BUILD_FREETYPE_SUPPORT
       TEST_ASSERT(text.find("<ellipse cx='242.154' cy='367.046'"
@@ -3268,6 +3212,193 @@ void test22ExplicitMethyl() {
     outs.flush();
     TEST_ASSERT(text.find("class='atom-") != std::string::npos);
   }
+  std::cerr << "Done" << std::endl;
+}
+
+void testGithub3305() {
+  std::cout
+      << " ----------------- Test Github 3305 - change and scale line widths."
+      << std::endl;
+  auto m = "CCC(C#C)C=C"_smiles;
+  TEST_ASSERT(m);
+  RDDepict::compute2DCoords(*m);
+  std::string nameBase = "testGithub3305_";
+
+  {
+    MolDraw2DSVG drawer(300, 300);
+    drawer.drawMolecule(*m);
+    drawer.finishDrawing();
+    std::string text = drawer.getDrawingText();
+    std::ofstream outs(nameBase + "1.svg");
+    outs << text;
+    outs.flush();
+    TEST_ASSERT(text.find("stroke-width:2.0px") != std::string::npos);
+  }
+  {
+    MolDraw2DSVG drawer(600, 600);
+    drawer.drawOptions().bondLineWidth = 2;
+    drawer.drawMolecule(*m);
+    drawer.finishDrawing();
+    std::string text = drawer.getDrawingText();
+    std::ofstream outs(nameBase + "2.svg");
+    outs << text;
+    outs.flush();
+    TEST_ASSERT(text.find("stroke-width:2.0px") != std::string::npos);
+  }
+  {
+    MolDraw2DSVG drawer(600, 600);
+    drawer.drawOptions().bondLineWidth = 2;
+    drawer.drawOptions().scaleBondWidth = true;
+    drawer.drawMolecule(*m);
+    drawer.finishDrawing();
+    std::string text = drawer.getDrawingText();
+    std::ofstream outs(nameBase + "3.svg");
+    outs << text;
+    outs.flush();
+    TEST_ASSERT(text.find("stroke-width:4.2px") != std::string::npos);
+  }
+#ifdef RDK_BUILD_CAIRO_SUPPORT
+  {
+    MolDraw2DCairo drawer(300, 300);
+    drawer.drawMolecule(*m);
+    drawer.finishDrawing();
+    drawer.writeDrawingText(nameBase + "1.png");
+  }
+  {
+    MolDraw2DCairo drawer(600, 600);
+    drawer.drawOptions().bondLineWidth = 2;
+    drawer.drawMolecule(*m);
+    drawer.finishDrawing();
+    drawer.writeDrawingText(nameBase + "2.png");
+  }
+  {
+    MolDraw2DCairo drawer(600, 600);
+    drawer.drawOptions().bondLineWidth = 2;
+    drawer.drawOptions().scaleBondWidth = true;
+    drawer.drawMolecule(*m);
+    drawer.finishDrawing();
+    drawer.writeDrawingText(nameBase + "3.png");
+  }
+#endif
+  {
+    auto m = "CCOC(=O)Nc1ccc(SCC2COC(Cn3ccnc3)(c3ccc(Cl)cc3Cl)O2)cc1"_smiles;
+    TEST_ASSERT(m);
+    RDDepict::compute2DCoords(*m);
+    WedgeMolBonds(*m, &(m->getConformer()));
+
+    static const int ha[] = {17, 18, 19, 20, 21, 6, 7, 8, 9, 31, 32};
+    std::vector<int> highlight_atoms(ha, ha + sizeof(ha) / sizeof(int));
+    std::map<int, DrawColour> highlight_colors;
+    MolDrawOptions options;
+    options.circleAtoms = true;
+    options.highlightColour = DrawColour(1, .5, .5);
+    options.continuousHighlight = true;
+
+#ifdef RDK_BUILD_CAIRO_SUPPORT
+    {
+      MolDraw2DCairo drawer(200, 200);
+      options.scaleHighlightBondWidth = true;
+      drawer.drawOptions() = options;
+      drawer.drawMolecule(*m, &highlight_atoms, &highlight_colors);
+      drawer.finishDrawing();
+      drawer.writeDrawingText(nameBase + "4.png");
+    }
+#endif
+    {
+      MolDraw2DSVG drawer(200, 200);
+      options.scaleHighlightBondWidth = true;
+      drawer.drawOptions() = options;
+      drawer.drawMolecule(*m, &highlight_atoms, &highlight_colors);
+      drawer.finishDrawing();
+      std::string text = drawer.getDrawingText();
+      std::ofstream outs(nameBase + "4.svg");
+      outs << text;
+      outs.flush();
+      TEST_ASSERT(text.find("stroke:#FF7F7F;stroke-width:2.7px") !=
+                  std::string::npos);
+      TEST_ASSERT(text.find("stroke:#FF7F7F;stroke-width:16.0px") ==
+                  std::string::npos);
+    }
+#ifdef RDK_BUILD_CAIRO_SUPPORT
+    {
+      MolDraw2DCairo drawer(200, 200);
+      options.scaleHighlightBondWidth = false;
+      drawer.drawOptions() = options;
+      drawer.drawMolecule(*m, &highlight_atoms, &highlight_colors);
+      drawer.finishDrawing();
+      drawer.writeDrawingText(nameBase + "5.png");
+    }
+#endif
+    {
+      // this picture will have very thick highlights which will look
+      // bad - don't be surprised when you see it.
+      MolDraw2DSVG drawer(200, 200);
+      options.scaleHighlightBondWidth = false;
+      drawer.drawOptions() = options;
+      drawer.drawMolecule(*m, &highlight_atoms, &highlight_colors);
+      drawer.finishDrawing();
+      std::string text = drawer.getDrawingText();
+      std::ofstream outs((nameBase + "5.svg").c_str());
+      outs << text;
+      outs.flush();
+      TEST_ASSERT(text.find("stroke:#FF7F7F;stroke-width:2.7px") ==
+                  std::string::npos);
+      TEST_ASSERT(text.find("stroke:#FF7F7F;stroke-width:16.0px") !=
+                  std::string::npos);
+    }
+    options.continuousHighlight = false;
+#ifdef RDK_BUILD_CAIRO_SUPPORT
+    {
+      MolDraw2DCairo drawer(200, 200);
+      options.scaleHighlightBondWidth = true;
+      drawer.drawOptions() = options;
+      drawer.drawMolecule(*m, &highlight_atoms, &highlight_colors);
+      drawer.finishDrawing();
+      drawer.writeDrawingText(nameBase + "6.png");
+    }
+#endif
+    {
+      MolDraw2DSVG drawer(200, 200);
+      options.scaleHighlightBondWidth = true;
+      drawer.drawOptions() = options;
+      drawer.drawMolecule(*m, &highlight_atoms, &highlight_colors);
+      drawer.finishDrawing();
+      std::ofstream outs((nameBase + "6.svg").c_str());
+      std::string text = drawer.getDrawingText();
+      outs << text;
+      outs.flush();
+      TEST_ASSERT(text.find("stroke:#FF7F7F;stroke-width:0.7px") !=
+                  std::string::npos);
+      TEST_ASSERT(text.find("stroke:#FF7F7F;stroke-width:4.0px") ==
+                  std::string::npos);
+    }
+#ifdef RDK_BUILD_CAIRO_SUPPORT
+    {
+      MolDraw2DCairo drawer(200, 200);
+      options.scaleHighlightBondWidth = false;
+      drawer.drawOptions() = options;
+      drawer.drawMolecule(*m, &highlight_atoms, &highlight_colors);
+      drawer.finishDrawing();
+      drawer.writeDrawingText(nameBase + "7.png");
+    }
+#endif
+    {
+      MolDraw2DSVG drawer(200, 200);
+      options.scaleHighlightBondWidth = false;
+      drawer.drawOptions() = options;
+      drawer.drawMolecule(*m, &highlight_atoms, &highlight_colors);
+      drawer.finishDrawing();
+      std::ofstream outs((nameBase + "7.svg").c_str());
+      std::string text = drawer.getDrawingText();
+      outs << text;
+      outs.flush();
+      TEST_ASSERT(text.find("stroke:#FF7F7F;stroke-width:0.7px") ==
+                  std::string::npos);
+      TEST_ASSERT(text.find("stroke:#FF7F7F;stroke-width:4.0px") !=
+                  std::string::npos);
+    }
+  }
+  std::cerr << "Done" << std::endl;
 }
 
 int main() {
@@ -3306,7 +3437,6 @@ int main() {
   testGithub1035();
   testGithub1271();
   testGithub1322();
-  testGithub565();
   test14BWPalette();
   test15ContinuousHighlightingWithGrid();
   test17MaxMinFontSize();
@@ -3322,6 +3452,7 @@ int main() {
   test21FontFile();
   test22ExplicitMethyl();
   testGithub3112();
+  testGithub3305();
 #endif
 
 }
