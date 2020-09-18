@@ -1974,3 +1974,86 @@ M  END)CTAB"_ctab;
     CHECK(m->getNumBonds() == 0);
   }
 }
+
+TEST_CASE("github #3415: problem parsing SGroup data containing \" ", "[bug]") {
+  SECTION("basics") {
+    auto m = R"CTAB(
+  Mrv2014 09172018222D          
+
+  0  0  0     0  0            999 V3000
+M  V30 BEGIN CTAB
+M  V30 COUNTS 6 6 1 0 0
+M  V30 BEGIN ATOM
+M  V30 1 C 1.3337 2.31 0 0
+M  V30 2 C 2.6674 1.54 0 0
+M  V30 3 C 2.6674 -0 0 0
+M  V30 4 C 1.3337 -0.77 0 0
+M  V30 5 C 0 0 0 0
+M  V30 6 C 0 1.54 0 0
+M  V30 END ATOM
+M  V30 BEGIN BOND
+M  V30 1 2 1 2
+M  V30 2 1 2 3
+M  V30 3 2 3 4
+M  V30 4 1 4 5
+M  V30 5 2 5 6
+M  V30 6 1 1 6
+M  V30 END BOND
+M  V30 BEGIN SGROUP
+M  V30 1 DAT 0 ATOMS=(1 1) FIELDNAME=Tempstruct FIELDINFO="""" -
+M  V30 FIELDDISP="    2.1037    1.5400    DA    ALL  0       0" QUERYOP="""" -
+M  V30 FIELDDATA=Foo1
+M  V30 END SGROUP
+M  V30 END CTAB
+M  END
+)CTAB"_ctab;
+    REQUIRE(m);
+    CHECK(m->getNumAtoms() == 6);
+    CHECK(m->getNumBonds() == 6);
+    auto sgs = getSubstanceGroups(*m);
+    REQUIRE(sgs.size() == 1);
+    CHECK(sgs[0].getProp<std::string>("TYPE") == "DAT");
+    CHECK(sgs[0].getProp<std::string>("FIELDINFO") == "\"");
+    CHECK(sgs[0].getProp<std::string>("QUERYOP") == "\"");
+  }
+  SECTION("empty string") {
+    auto m = R"CTAB(
+  Mrv2014 09172018222D          
+
+  0  0  0     0  0            999 V3000
+M  V30 BEGIN CTAB
+M  V30 COUNTS 6 6 1 0 0
+M  V30 BEGIN ATOM
+M  V30 1 C 1.3337 2.31 0 0
+M  V30 2 C 2.6674 1.54 0 0
+M  V30 3 C 2.6674 -0 0 0
+M  V30 4 C 1.3337 -0.77 0 0
+M  V30 5 C 0 0 0 0
+M  V30 6 C 0 1.54 0 0
+M  V30 END ATOM
+M  V30 BEGIN BOND
+M  V30 1 2 1 2
+M  V30 2 1 2 3
+M  V30 3 2 3 4
+M  V30 4 1 4 5
+M  V30 5 2 5 6
+M  V30 6 1 1 6
+M  V30 END BOND
+M  V30 BEGIN SGROUP
+M  V30 1 DAT 0 ATOMS=(1 1) FIELDNAME=Tempstruct FIELDINFO="" -
+M  V30 FIELDDISP="    2.1037    1.5400    DA    ALL  0       0" QUERYOP="""" -
+M  V30 FIELDDATA=Foo1
+M  V30 END SGROUP
+M  V30 END CTAB
+M  END
+)CTAB"_ctab;
+    REQUIRE(m);
+    CHECK(m->getNumAtoms() == 6);
+    CHECK(m->getNumBonds() == 6);
+    auto sgs = getSubstanceGroups(*m);
+    REQUIRE(sgs.size() == 1);
+    CHECK(sgs[0].getProp<std::string>("TYPE") == "DAT");
+    CHECK(sgs[0].getProp<std::string>("FIELDINFO").empty());
+    CHECK(sgs[0].getProp<std::string>("QUERYOP") == "\"");
+  }
+}
