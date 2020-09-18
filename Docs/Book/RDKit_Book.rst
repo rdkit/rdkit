@@ -738,7 +738,7 @@ chirality:
   >>> Chem.MolToSmiles(ps[0][0],True)
   'CC(=O)O[C@H](C)CCN'
 
-Note that this doesn't make sense without including a bit more
+This doesn't make sense without including a bit more
 context around the stereocenter in the reaction definition:
 
 .. doctest::
@@ -784,9 +784,47 @@ In this case, there's just not sufficient information present to allow
 the information to be preserved. You can help by providing mapping
 information:
 
+**Some caveats** We made this code as robust as we can, but this is a
+non-trivial problem and it's certainly possible to get surprising results.
 
-Rules and caveats
------------------
+Things get tricky if atom ordering around a chiral center changes in the reaction SMARTS. 
+Here are some of the situations that are currently handled correctly.
+
+Reordering of the neighbors, but the number and atom mappings of neighbors
+remains constant. In this case there is no inversion of chirality even though
+the chiral tag on the chiral atom changes between the reactants and products:
+
+.. doctest::
+
+  >>> rxn = AllChem.ReactionFromSmarts('[C:1][C@:2]([F:3])[Br:4]>>[C:1][C@@:2]([S:4])[F:3]')
+  >>> mol = Chem.MolFromSmiles('C[C@@H](F)Br')
+  >>> ps=rxn.RunReactants((mol,))
+  >>> Chem.MolToSmiles(ps[0][0],True)
+  'C[C@@H](F)S'
+
+Adding a neighbor to a chiral atom.
+
+.. doctest::
+
+  >>> rxn = AllChem.ReactionFromSmarts('[C:1][C@H:2]([F:3])[Br:4]>>[C:1][C@@:2](O)([F:3])[Br:4]')
+  >>> mol = Chem.MolFromSmiles('C[C@@H](F)Br')
+  >>> ps=rxn.RunReactants((mol,))
+  >>> Chem.MolToSmiles(ps[0][0],True)
+  'C[C@](O)(F)Br'
+
+Removing a neighbor from a chiral atom.
+
+.. doctest::
+
+  >>> rxn = AllChem.ReactionFromSmarts('[C:1][C@:2](O)([F:3])[Br:4]>>[C:1][C@@H:2]([F:3])[Br:4]')
+  >>> mol = Chem.MolFromSmiles('C[C@@](O)(F)Br')
+  >>> ps=rxn.RunReactants((mol,))
+  >>> Chem.MolToSmiles(ps[0][0],True)
+  'C[C@H](F)Br'
+
+
+Rules and warnings
+------------------
 
 1. Include atom map information at the end of an atom query.
    So do [C,N,O:1] or [C;R:1].
