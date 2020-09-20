@@ -8,7 +8,7 @@ bool serialize(const T& data, std::ofstream& ofs) {
   if (!ofs.is_open()) {
     return false;
   }
-  {
+  { // create enclosing scope
     portable_binary_oarchive oa(ofs);
     oa << data;
   }
@@ -27,7 +27,7 @@ bool deserialize(T& data, std::ifstream& ifs) {
   if (!ifs.is_open()) {
     return false;
   }
-  {
+  { // create enclosing scope
     portable_binary_iarchive ia(ifs);
     ia >> data;
   }
@@ -54,18 +54,19 @@ bool deserializeAll(std::vector<T>& data, std::vector<std::string>& labels,
   if (!ifs.is_open()) {
     return false;
   }
-  portable_binary_iarchive ia(ifs);
-
-  std::streampos archiveOffset = ifs.tellg();
-  std::streampos streamEnd = ifs.seekg(0, std::ios_base::end).tellg();
-  ifs.seekg(archiveOffset);
-  while (ifs.tellg() < streamEnd) {
-    std::string next_label;
-    T next_data;
-    ia >> next_label;
-    ia >> next_data;
-    labels.push_back(next_label);
-    data.push_back(next_data);
+  { // create enclosing scope
+    portable_binary_iarchive ia(ifs);
+    std::streampos archiveOffset = ifs.tellg();
+    std::streampos streamEnd = ifs.seekg(0, std::ios_base::end).tellg();
+    ifs.seekg(archiveOffset);
+    while (ifs.tellg() < streamEnd) {
+      std::string next_label;
+      T next_data;
+      ia >> next_label;
+      ia >> next_data;
+      labels.push_back(next_label);
+      data.push_back(next_data);
+    }
   }
   ifs.close();
   return true;
@@ -77,10 +78,12 @@ bool serializeAll(const std::vector<T>& data,
   if (!ofs.is_open()) {
     return false;
   }
-  portable_binary_oarchive oa(ofs);
-  for (size_t i = 0; i < labels.size(); i++) {
-    oa << labels[i];
-    oa << data[i];
+  { // create enclosing scope
+    portable_binary_oarchive oa(ofs);
+    for (size_t i = 0; i < labels.size(); i++) {
+      oa << labels[i];
+      oa << data[i];
+    }
   }
   return true;
 }
@@ -111,7 +114,8 @@ template bool deserialize<Eigen::MatrixXd>(Eigen::MatrixXd&,
                                            const std::string&);
 template bool deserialize<Eigen::ArrayXXf>(Eigen::ArrayXXf&,
                                            const std::string&);
-template bool deserialize<Eigen::ArrayXd>(Eigen::ArrayXd&, const std::string&);
+template bool deserialize<Eigen::ArrayXd>(Eigen::ArrayXd&,
+                                          const std::string&);
 template bool deserialize<Eigen::MatrixXf>(Eigen::MatrixXf&,
                                            const std::string&);
 
@@ -132,7 +136,8 @@ template bool deserialize<Eigen::MatrixXd>(Eigen::MatrixXd&,
                                            std::ifstream& ifs);
 template bool deserialize<Eigen::ArrayXXf>(Eigen::ArrayXXf&,
                                            std::ifstream& ifs);
-template bool deserialize<Eigen::ArrayXd>(Eigen::ArrayXd&, std::ifstream& ifs);
+template bool deserialize<Eigen::ArrayXd>(Eigen::ArrayXd&,
+                                          std::ifstream& ifs);
 template bool deserialize<Eigen::MatrixXf>(Eigen::MatrixXf&,
                                            std::ifstream& ifs);
 
@@ -187,6 +192,5 @@ template bool serializeAll(const std::vector<Eigen::MatrixXf>& data,
 template bool serializeAll(const std::vector<Eigen::MatrixXf>& data,
                            const std::vector<std::string>& labels,
                            std::ofstream& ofs);
-
 }  // namespace EigenSerializer
 }  // namespace RDNumeric

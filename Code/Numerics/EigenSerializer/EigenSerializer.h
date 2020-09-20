@@ -53,6 +53,7 @@ bool serializeAll(const std::vector<T>& data,
 
 template <typename T>
 bool serializeAll(const std::vector<T>& data,
-                  const std::vector<std::string>& labels, std::ofstream& ofs);
+                  const std::vector<std::string>& labels,
+                  std::ofstream& ofs);
 }  // namespace EigenSerializer
 }  // namespace RDNumeric
