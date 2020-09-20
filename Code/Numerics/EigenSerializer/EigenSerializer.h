@@ -11,10 +11,10 @@
 #ifndef EIGEN_CONFIG_H_
 #define EIGEN_CONFIG_H_
 
-#include <boost/serialization/array.hpp>
-
 #include <boost/archive/binary_iarchive.hpp>
 #include <boost/archive/binary_oarchive.hpp>
+#include <boost/serialization/array.hpp>
+
 #include "portable_binary_iarchive.hpp"
 #include "portable_binary_oarchive.hpp"
 #define EIGEN_DENSEBASE_PLUGIN "Numerics/EigenSerializer/EigenBaseAddons.h"
@@ -30,49 +30,29 @@ template <typename T>
 bool serialize(const T& data, const std::string& filename);
 
 template <typename T>
-bool serialize(const T& data, const std::ofstream& ofs);
+bool serialize(const T& data, std::ofstream& ofs);
 
 template <typename T>
 bool deserialize(T& data, const std::string& filename);
 
 template <typename T>
-bool deserialize(T& data, const std::ifstream& ifs);
+bool deserialize(T& data, std::ifstream& ifs);
 
 template <typename T>
-bool deserializeAll(std::vector<T>* weights, std::vector<T>* biases,
-                    std::string& filename, std::string atomType);
+bool deserializeAll(std::vector<T>& data, std::vector<std::string>& labels,
+                    const std::string& filename);
 
 template <typename T>
-bool deserializeAll(std::vector<T>* weights, std::vector<T>* biases,
-                    std::ifstream& ifs, std::string atomType);
+bool deserializeAll(std::vector<T>& data, std::vector<std::string>& labels,
+                    std::ifstream& ifs);
 
 template <typename T>
-bool serializeAll(
-    std::vector<std::pair<std::string, std::vector<std::pair<std::string, T>>>>*
-        weightsAndBiasesForEachAtomType,
-    std::ofstream& ofs);
-
-/*!
-    Stores boost serialized eigen matrix in "fileName"
-    \param weightsAndBiasesForEachAtomType formatted as follows
-        H : "weight"    -> ArrayXXd/ArrayXXf
-            "bias"      -> ArrayXXd/ArrayXXf
-            "weight"    -> ArrayXXd/ArrayXXf
-            "bias"      -> ArrayXXd/ArrayXXf
-                            (in order of layers of NN)
-        O : "weight"    -> ArrayXXd/ArrayXXf
-            "bias"      -> ArrayXXd/ArrayXXf
-            "weight"    -> ArrayXXd/ArrayXXf
-            "bias"      -> ArrayXXd/ArrayXXf
-        and so on for different atom types
-    \param fileName     File in which the the first argument is stored
-    \return true/false if values were stored or not
-*/
+bool serializeAll(const std::vector<T>& data,
+                  const std::vector<std::string>& labels,
+                  const std::string& filename);
 
 template <typename T>
-bool serializeAll(
-    std::vector<std::pair<std::string, std::vector<std::pair<std::string, T>>>>*
-        weightsAndBiasesForEachAtomType,
-    const std::string& fileName);
+bool serializeAll(const std::vector<T>& data,
+                  const std::vector<std::string>& labels, std::ofstream& ofs);
 }  // namespace EigenSerializer
 }  // namespace RDNumeric

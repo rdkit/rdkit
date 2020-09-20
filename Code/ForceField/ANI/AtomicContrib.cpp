@@ -50,7 +50,7 @@ ANIAtomContrib::ANIAtomContrib(ForceField *owner, VectorXi &speciesVec,
   PRECONDITION(owner, "This ForceField contrib needs an owner")
   dp_forceField = owner;
   // load element mapping and atomic self-energies
-  this->paramDir = model; // first try opening as a param dir
+  this->paramDir = model;  // first try opening as a param dir
   std::ifstream selfEnergyFile(paramDir + "/selfEnergies");
   if (!selfEnergyFile.is_open()) {  // next, try default location
     std::string rdbase = getenv("RDBASE");
@@ -99,26 +99,25 @@ ANIAtomContrib::ANIAtomContrib(ForceField *owner, VectorXi &speciesVec,
     // get ensembleSize by counting files in param dir
     std::string paramFile =
         paramDir + "/model" + std::to_string(model_i) + ".bin";
-    FILE *fp = fopen(paramFile.c_str(), "rb");  // check that file exists
-    if (!fp) {
+    std::vector<MatrixXf> data;
+    std::vector<std::string> labels;
+    if (!RDNumeric::EigenSerializer::deserializeAll(data, labels, paramFile)) {
       break;  // stop at first file that doesn't exist
     }
-    fclose(fp);  // if file did exist, close it (deserializeAll reopens it)
+    // labels = [H_0_weight, H_0_bias, H_1_weight, ...]
+    // data = MatrixXf in same order as labels
     this->d_weights.resize(model_i + 1);
     this->d_biases.resize(model_i + 1);
     this->d_weights[model_i].resize(n_elements);
     this->d_biases[model_i].resize(n_elements);
+    size_t n_layers = (data.size() / n_elements) / 2;
     for (int element_i = 0; element_i < n_elements; element_i++) {
-      std::string element = elements_by_index[element_i];
-      std::vector<MatrixXf> floatWeights, floatBiases;
-      // note, deserializeAll is not efficient - should get all elements at once
-      RDNumeric::EigenSerializer::deserializeAll(&floatWeights, &floatBiases,
-                                                 paramFile, element);
-      for (size_t i = 0; i < floatWeights.size(); i++) {
+      // std::string element = elements_by_index[element_i];
+      for (size_t i = 0; i < n_layers * 2; i += 2) {
         this->d_weights[model_i][element_i].push_back(
-            floatWeights[i].cast<double>());
+            data[element_i * n_layers * 2 + i].cast<double>());
         this->d_biases[model_i][element_i].push_back(
-            floatBiases[i].cast<double>());
+            data[element_i * n_layers * 2 + i + 1].cast<double>());
       }
     }
     model_i++;
