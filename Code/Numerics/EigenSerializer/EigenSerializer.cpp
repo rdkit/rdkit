@@ -18,7 +18,7 @@ bool serialize(const T& data, std::ofstream& ofs) {
 
 template <typename T>
 bool serialize(const T& data, const std::string& filename) {
-  std::ofstream ofs(filename.c_str(), std::ios::out);
+  std::ofstream ofs(filename.c_str(), std::ios::out | std::ios::binary);
   return serialize(data, ofs);
 }
 
@@ -37,14 +37,14 @@ bool deserialize(T& data, std::ifstream& ifs) {
 
 template <typename T>
 bool deserialize(T& data, const std::string& filename) {
-  std::ifstream ifs(filename.c_str(), std::ios::in);
+  std::ifstream ifs(filename.c_str(), std::ios::in | std::ios::binary);
   return deserialize(data, ifs);
 }
 
 template <typename T>
 bool deserializeAll(std::vector<T>& data, std::vector<std::string>& labels,
                     const std::string& filename) {
-  std::ifstream ifs(filename.c_str(), std::ios::in);
+  std::ifstream ifs(filename.c_str(), std::ios::in | std::ios::binary);
   return deserializeAll(data, labels, ifs);
 }
 
@@ -92,7 +92,7 @@ template <typename T>
 bool serializeAll(const std::vector<T>& data,
                   const std::vector<std::string>& labels,
                   const std::string& filename) {
-  std::ofstream ofs(filename.c_str(), std::ios::out);
+  std::ofstream ofs(filename.c_str(), std::ios::out | std::ios::binary);
   return serializeAll(data, labels, ofs);
 }
 
