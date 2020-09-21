@@ -106,18 +106,34 @@ ANIAtomContrib::ANIAtomContrib(ForceField *owner, VectorXi &speciesVec,
     }
     // labels = [H_0_weight, H_0_bias, H_1_weight, ...]
     // data = MatrixXf in same order as labels
+    PRECONDITION(data.size() == labels.size(), "Bad file " + paramFile)
     this->d_weights.resize(model_i + 1);
     this->d_biases.resize(model_i + 1);
     this->d_weights[model_i].resize(n_elements);
     this->d_biases[model_i].resize(n_elements);
     size_t n_layers = (data.size() / n_elements) / 2;
+    PRECONDITION(n_layers == 4, "Bad file " + paramFile + ": " + std::to_string(n_layers))
     for (int element_i = 0; element_i < n_elements; element_i++) {
       // std::string element = elements_by_index[element_i];
       for (size_t i = 0; i < n_layers * 2; i += 2) {
+        if(element_i * n_layers * 2 + i + 1 >= data.size()) {
+          throw ValueErrorException("Bad layer number: " +
+            std::to_string(element_i * n_layers * 2 + i + 1) + " >= " +
+            std::to_string(data.size()));
+        }
         this->d_weights[model_i][element_i].push_back(
             data[element_i * n_layers * 2 + i].cast<double>());
         this->d_biases[model_i][element_i].push_back(
             data[element_i * n_layers * 2 + i + 1].cast<double>());
+        int n_weights = data[element_i * n_layers * 2 + i].size();
+        int n_biases = data[element_i * n_layers * 2 + i + 1].size();
+        PRECONDITION(n_weights % n_biases == 0, std::to_string(n_weights) + " % " + std::to_string(n_biases))
+        if(i == 0) {
+          PRECONDITION(n_weights / n_biases == n_features, "Bad weights: " + std::to_string(n_weights / n_biases))
+        } else {
+          int old_n_biases = data[element_i * n_layers * 2 + (i-2) + 1].size();
+          PRECONDITION(n_weights == n_biases * old_n_biases, std::to_string(n_weights) + " = " + std::to_string(n_biases) + " * " + std::to_string(old_n_biases))
+        }
       }
     }
     model_i++;
@@ -157,7 +173,7 @@ ANIAtomContrib::ANIAtomContrib(ForceField *owner, VectorXi &speciesVec,
 
 // Forward propagation for one atom and one model
 // Puts all outputs into layer_values
-double ANIAtomContrib::forwardPropOneAtom(MatrixXd &layer_values,
+void ANIAtomContrib::forwardPropOneAtom(MatrixXd &layer_values,
                                           const int modelNo,
                                           const int element_i) const {
   int n_layers = this->d_weights[0][0].size();  // note, assumes fixed n_layers

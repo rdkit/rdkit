@@ -49,7 +49,7 @@ class RDKIT_FORCEFIELD_EXPORT ANIAtomContrib : public ForceFieldContrib {
     \return         Molecule energy, not including atomic self-energy
   */
   double forwardProp(MatrixXd &aev) const;
-  double forwardPropOneAtom(MatrixXd &layer_values, const int modelNo,
+  void forwardPropOneAtom(MatrixXd &layer_values, const int modelNo,
                             const int element_i) const;
 
   virtual ANIAtomContrib *copy() const { return new ANIAtomContrib(*this); };
