@@ -177,19 +177,10 @@ void MolDraw2D::drawMolecule(const ROMol &mol,
                              const map<int, DrawColour> *highlight_bond_map,
                              const std::map<int, double> *highlight_radii,
                              int confId) {
-
   int origWidth = lineWidth();
   pushDrawDetails();
-  text_drawer_->setMaxFontSize(drawOptions().maxFontSize);
-  text_drawer_->setMinFontSize(drawOptions().minFontSize);
-  try {
-    text_drawer_->setFontFile(drawOptions().fontFile);
-  } catch (std::runtime_error &e) {
-    BOOST_LOG(rdWarningLog) << e.what() << std::endl;
-    text_drawer_->setFontFile("");
-    BOOST_LOG(rdWarningLog) << "Falling back to original font file "
-                            << text_drawer_->getFontFile() << "." << std::endl;
-  }
+  setupTextDrawer();
+
   unique_ptr<RWMol> rwmol =
       setupMoleculeDraw(mol, highlight_atoms, highlight_radii, confId);
   ROMol const &draw_mol = rwmol ? *(rwmol) : mol;
@@ -732,6 +723,7 @@ void MolDraw2D::drawMolecules(
     return;
   }
 
+  setupTextDrawer();
   vector<unique_ptr<RWMol>> tmols;
   calculateScale(panelWidth(), drawHeight(), mols, highlight_atoms,
                  highlight_radii, confIds, tmols);
@@ -1350,6 +1342,20 @@ unique_ptr<RWMol> MolDraw2D::setupMoleculeDraw(
   }
 
   return rwmol;
+}
+
+// ****************************************************************************
+void MolDraw2D::setupTextDrawer() {
+  text_drawer_->setMaxFontSize(drawOptions().maxFontSize);
+  text_drawer_->setMinFontSize(drawOptions().minFontSize);
+  try {
+    text_drawer_->setFontFile(drawOptions().fontFile);
+  } catch (std::runtime_error &e) {
+    BOOST_LOG(rdWarningLog) << e.what() << std::endl;
+    text_drawer_->setFontFile("");
+    BOOST_LOG(rdWarningLog) << "Falling back to original font file "
+                            << text_drawer_->getFontFile() << "." << std::endl;
+  }
 }
 
 // ****************************************************************************
@@ -2308,7 +2314,7 @@ void MolDraw2D::drawAtomLabel(int atom_num, const DrawColour &draw_colour) {
                            atom_syms_[activeMolIdx_][atom_num].second);
   // this is useful for debugging the drawings.
   //  int olw = lineWidth();
-  //  setLineWidth(0);
+  //  setLineWidth(1);
   //  text_drawer_->drawStringRects(atom_syms_[activeMolIdx_][atom_num].first,
   //                                atom_syms_[activeMolIdx_][atom_num].second,
   //                                draw_cds, *this);

@@ -211,7 +211,6 @@ void test2() {}
 
 void test3() {
   std::cout << " ----------------- Test 3" << std::endl;
-#if 0
   {
     std::string smiles = "C1CC1CC1ON1";
     std::string nameBase = "test3_1";
@@ -459,7 +458,7 @@ void test3() {
     }
     delete m;
   }
-#endif
+
   std::cout << " Done" << std::endl;
 }
 
@@ -2506,10 +2505,10 @@ void test18FixedScales() {
       outs.flush();
 #ifdef RDK_BUILD_FREETYPE_SUPPORT
       // where it starts drawing the l.
-      TEST_ASSERT(text.find("<path  class='atom-0' d='M 179.263 150.221")
-                  != std::string::npos);
+      TEST_ASSERT(text.find("<path  class='atom-0' d='M 184.952 146.585") !=
+                  std::string::npos);
 #else
-      TEST_ASSERT(text.find("font-size:9px") != std::string::npos);
+      TEST_ASSERT(text.find("font-size:12px") != std::string::npos);
 #endif
     }
   }
@@ -2529,10 +2528,10 @@ void test18FixedScales() {
       outs << text;
       outs.flush();
 #ifdef RDK_BUILD_FREETYPE_SUPPORT
-      TEST_ASSERT(text.find("<path  class='atom-2' d='M 73.3085 183.882")
-                  != std::string::npos);
+      TEST_ASSERT(text.find("<path  class='atom-2' d='M 72.102 191.68") !=
+                  std::string::npos);
 #else
-      TEST_ASSERT(text.find("font-size:10px") != std::string::npos);
+      TEST_ASSERT(text.find("font-size:12px") != std::string::npos);
 #endif
     }
     {
@@ -2549,7 +2548,7 @@ void test18FixedScales() {
             TEST_ASSERT(text.find("<path  class='atom-2' d='M 104.042 170.304")
                   != std::string::npos);
 #else
-      TEST_ASSERT(text.find("font-size:6px") != std::string::npos);
+      TEST_ASSERT(text.find("font-size:12px") != std::string::npos);
 #endif
     }
     {
@@ -2567,7 +2566,7 @@ void test18FixedScales() {
       TEST_ASSERT(text.find("<path  class='atom-2' d='M 73.3085 183.882") !=
                   std::string::npos);
 #else
-      TEST_ASSERT(text.find("font-size:10px") != std::string::npos);
+      TEST_ASSERT(text.find("font-size:12px") != std::string::npos);
 #endif
     }
   }
@@ -2711,15 +2710,13 @@ void testGithub2151() {
       std::ofstream outs("testGithub2151_1.svg");
       outs << text;
       outs.flush();
-      TEST_ASSERT(text.find("stroke-width:2.0px") != std::string::npos);
-      TEST_ASSERT(text.find("stroke-width:3.0px") == std::string::npos);
+      TEST_ASSERT(text.find("stroke-width:2px") != std::string::npos);
+      TEST_ASSERT(text.find("stroke-width:3px") == std::string::npos);
     }
     {
       MolDraw2DSVG drawer(200, 200);
       drawer.drawOptions().bondLineWidth = 8;
-      // add legend so anyone testing knows it is supposed to look really
-      // horrible.
-      drawer.drawMolecule(*m1, "should look nasty");
+      drawer.drawMolecule(*m1);
       drawer.addMoleculeMetadata(*m1);
       drawer.finishDrawing();
       std::string text = drawer.getDrawingText();
@@ -3139,8 +3136,8 @@ void test20Annotate() {
                 std::string::npos);
 #else
     // first one of atom note 11
-    TEST_ASSERT(text.find("<text x='165.624' y='101.391'"
-                          " class='note' style='font-size:4px;"
+    TEST_ASSERT(text.find("<text x='164.595' y='101.936'"
+                          " class='note' style='font-size:6px;"
                           "font-style:normal;font-weight:normal;"
                           "fill-opacity:1;stroke:none;"
                           "font-family:sans-serif;text-anchor:start;"
@@ -3314,7 +3311,7 @@ void testGithub3305() {
       std::ofstream outs(nameBase + "4.svg");
       outs << text;
       outs.flush();
-      TEST_ASSERT(text.find("stroke:#FF7F7F;stroke-width:2.7px") !=
+      TEST_ASSERT(text.find("stroke:#FF7F7F;stroke-width:2.7") !=
                   std::string::npos);
       TEST_ASSERT(text.find("stroke:#FF7F7F;stroke-width:16.0px") ==
                   std::string::npos);
@@ -3330,8 +3327,10 @@ void testGithub3305() {
     }
 #endif
     {
-      // this picture will have very thick highlights which will look
-      // bad - don't be surprised when you see it.
+      // This picture has very wide bond highlights as a test - it
+      // looks pretty unsavoury.  I mention it so that when you flick
+      // through the test images you don't panic and start searching
+      // for the bug.  Been there, done that!
       MolDraw2DSVG drawer(200, 200);
       options.scaleHighlightBondWidth = false;
       drawer.drawOptions() = options;
@@ -3341,7 +3340,7 @@ void testGithub3305() {
       std::ofstream outs((nameBase + "5.svg").c_str());
       outs << text;
       outs.flush();
-      TEST_ASSERT(text.find("stroke:#FF7F7F;stroke-width:2.7px") ==
+      TEST_ASSERT(text.find("stroke:#FF7F7F;stroke-width:2.7") ==
                   std::string::npos);
       TEST_ASSERT(text.find("stroke:#FF7F7F;stroke-width:16.0px") !=
                   std::string::npos);
@@ -3367,7 +3366,7 @@ void testGithub3305() {
       std::string text = drawer.getDrawingText();
       outs << text;
       outs.flush();
-      TEST_ASSERT(text.find("stroke:#FF7F7F;stroke-width:0.7px") !=
+      TEST_ASSERT(text.find("stroke:#FF7F7F;stroke-width:0.7") !=
                   std::string::npos);
       TEST_ASSERT(text.find("stroke:#FF7F7F;stroke-width:4.0px") ==
                   std::string::npos);
@@ -3392,11 +3391,33 @@ void testGithub3305() {
       std::string text = drawer.getDrawingText();
       outs << text;
       outs.flush();
-      TEST_ASSERT(text.find("stroke:#FF7F7F;stroke-width:0.7px") ==
+      TEST_ASSERT(text.find("stroke:#FF7F7F;stroke-width:0.7") ==
                   std::string::npos);
       TEST_ASSERT(text.find("stroke:#FF7F7F;stroke-width:4.0px") !=
                   std::string::npos);
     }
+  }
+  std::cerr << "Done" << std::endl;
+}
+
+void testGithub3391() {
+  std::cout
+      << " ----------------- Test Github 3391 - maxFontSize interacting badly"
+         " with DrawMolecules."
+      << std::endl;
+  auto m = "C"_smiles;
+  {
+    MolDraw2DSVG drawer(400, 200, 200, 200);
+    drawer.drawOptions().maxFontSize = 14;
+    std::vector<ROMol *> mols;
+    mols.push_back(m.get());
+    mols.push_back(m.get());
+    drawer.drawMolecules(mols);
+    drawer.finishDrawing();
+    std::string text = drawer.getDrawingText();
+    std::ofstream outs("testGithub3391_1.svg");
+    outs << text;
+    outs.flush();
   }
   std::cerr << "Done" << std::endl;
 }
@@ -3453,6 +3474,7 @@ int main() {
   test22ExplicitMethyl();
   testGithub3112();
   testGithub3305();
+  testGithub3391();
 #endif
 
 }
