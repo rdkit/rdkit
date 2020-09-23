@@ -72,7 +72,6 @@ MolDraw2D::MolDraw2D(int width, int height, int panelWidth, int panelHeight)
       y_trans_(0.0),
       x_offset_(0),
       y_offset_(0),
-      curr_width_(2),
       fill_polys_(true),
       activeMolIdx_(-1) {}
 
@@ -114,6 +113,10 @@ void MolDraw2D::doContinuousHighlighting(
 
   int orig_lw = lineWidth();
   int tgt_lw = getHighlightBondWidth(-1, nullptr);
+  if(tgt_lw < 2) {
+    tgt_lw = 2;
+  }
+
   bool orig_fp = fillPolys();
   if (highlight_bonds) {
     for (auto this_at : mol.atoms()) {
@@ -134,7 +137,10 @@ void MolDraw2D::doContinuousHighlighting(
             setLineWidth(tgt_lw);
             Point2D at1_cds = at_cds_[activeMolIdx_][this_idx];
             Point2D at2_cds = at_cds_[activeMolIdx_][nbr_idx];
+            bool orig_slw = drawOptions().scaleBondWidth;
+            drawOptions().scaleBondWidth = drawOptions().scaleHighlightBondWidth;
             drawLine(at1_cds, at2_cds, col, col);
+            drawOptions().scaleBondWidth = orig_slw;
           }
         }
       }
@@ -171,7 +177,8 @@ void MolDraw2D::drawMolecule(const ROMol &mol,
                              const map<int, DrawColour> *highlight_bond_map,
                              const std::map<int, double> *highlight_radii,
                              int confId) {
-  int origWidth = curr_width_;
+
+  int origWidth = lineWidth();
   pushDrawDetails();
   text_drawer_->setMaxFontSize(drawOptions().maxFontSize);
   text_drawer_->setMinFontSize(drawOptions().minFontSize);
@@ -239,7 +246,7 @@ void MolDraw2D::drawMolecule(const ROMol &mol,
 
   finishMoleculeDraw(draw_mol, atom_colours);
   // popDrawDetails();
-  curr_width_ = origWidth;
+  setLineWidth(origWidth);
 
   if (drawOptions().includeMetadata) {
     this->updateMetadata(draw_mol, confId);
@@ -279,7 +286,7 @@ void MolDraw2D::drawMoleculeWithHighlights(
     const map<int, vector<DrawColour>> &highlight_bond_map,
     const map<int, double> &highlight_radii,
     const map<int, int> &highlight_linewidth_multipliers, int confId) {
-  int origWidth = curr_width_;
+  int origWidth = lineWidth();
   vector<int> highlight_atoms;
   for (auto ha : highlight_atom_map) {
     highlight_atoms.emplace_back(ha.first);
@@ -354,7 +361,7 @@ void MolDraw2D::drawMoleculeWithHighlights(
 
   // this puts on atom labels and such
   finishMoleculeDraw(draw_mol, atom_colours);
-  curr_width_ = origWidth;
+  setLineWidth(origWidth);
 
   drawLegend(legend);
   legend_height_ = 0;
@@ -1092,8 +1099,7 @@ void MolDraw2D::drawLine(const Point2D &cds1, const Point2D &cds2,
     setColour(col1);
     drawLine(cds1, cds2);
   } else {
-    Point2D mid = (cds1 + cds2);
-    mid *= .5;
+    Point2D mid = (cds1 + cds2) * 0.5;
 
     setColour(col1);
     drawLine(cds1, mid);
@@ -1234,7 +1240,6 @@ unique_ptr<RWMol> MolDraw2D::setupDrawMolecule(
     rwmol.reset(new RWMol(mol));
     MolDraw2DUtils::prepareMolForDrawing(*rwmol);
   }
-  bool computed = true;
   if (drawOptions().centreMoleculesBeforeDrawing) {
     if (!rwmol) rwmol.reset(new RWMol(mol));
     if (rwmol->getNumConformers()) {
@@ -1252,9 +1257,6 @@ unique_ptr<RWMol> MolDraw2D::setupDrawMolecule(
     return rwmol;
   }
 
-  if (drawOptions().bondLineWidth >= 0) {
-    curr_width_ = drawOptions().bondLineWidth;
-  }
   if (drawOptions().addStereoAnnotation) {
     MolDraw2D_detail::addStereoAnnotation(draw_mol);
   }
@@ -1564,8 +1566,9 @@ void MolDraw2D::calcLabelEllipse(int atom_idx,
   double x_min, y_min, x_max, y_max;
   getStringExtremes(atsym, orient, centre, x_min, y_min, x_max, y_max);
 
-  xradius = max(xradius, x_max - x_min);
-  yradius = max(yradius, y_max - y_min);
+  static const double root_2 = sqrt(2.0);
+  xradius = max(xradius, root_2 * 0.5 * (x_max - x_min));
+  yradius = max(yradius, root_2 * 0.5 * (y_max - y_min));
   centre.x = 0.5 * (x_max + x_min);
   centre.y = 0.5 * (y_max + y_min);
 }
@@ -1741,11 +1744,13 @@ void MolDraw2D::drawHighlightedBonds(
     Point2D at2_cds = at_cds_[activeMolIdx_][at2_idx];
     Point2D perp = calcPerpendicular(at1_cds, at2_cds);
     double rad = 0.7 * drawOptions().highlightRadius;
-
     auto draw_adjusted_line = [&](Point2D p1, Point2D p2) {
       adjustLineEndForHighlight(at1_idx, highlight_radii, p2, p1);
       adjustLineEndForHighlight(at2_idx, highlight_radii, p1, p2);
+      bool orig_lws = drawOptions().scaleBondWidth;
+      drawOptions().scaleBondWidth = drawOptions().scaleHighlightBondWidth;
       drawLine(p1, p2);
+      drawOptions().scaleBondWidth = orig_lws;
     };
 
     if (hb.second.size() < 2) {
@@ -1823,7 +1828,6 @@ int MolDraw2D::getHighlightBondWidth(
     }
   }
   int tgt_lw = lineWidth() * bwm;
-
   return tgt_lw;
 }
 
@@ -2109,7 +2113,12 @@ void MolDraw2D::drawBond(
     }
     if (isComplex) {
       setDash(dots);
+      bool orig_slw = drawOptions().scaleBondWidth;
+      if(highlight_bond) {
+        drawOptions().scaleBondWidth = drawOptions().scaleHighlightBondWidth;
+      }
       drawLine(at1_cds, at2_cds, col1, col2);
+      drawOptions().scaleBondWidth = orig_slw;
       setDash(noDash);
     } else {
       bt = static_cast<Bond::BondType>(
@@ -2124,6 +2133,10 @@ void MolDraw2D::drawBond(
       Point2D l1s, l1f, l2s, l2f;
       calcDoubleBondLines(mol, double_bond_offset, bond, at1_cds, at2_cds, l1s,
                           l1f, l2s, l2f);
+      bool orig_slw = drawOptions().scaleBondWidth;
+      if(highlight_bond) {
+        drawOptions().scaleBondWidth = drawOptions().scaleHighlightBondWidth;
+      }
       drawLine(l1s, l1f, col1, col2);
       if (bt == Bond::AROMATIC) {
         setDash(dashes);
@@ -2132,6 +2145,7 @@ void MolDraw2D::drawBond(
       if (bt == Bond::AROMATIC) {
         setDash(noDash);
       }
+      drawOptions().scaleBondWidth = orig_slw;
     } else if (Bond::SINGLE == bt && (Bond::BEGINWEDGE == bond->getBondDir() ||
                                       Bond::BEGINDASH == bond->getBondDir())) {
       // std::cerr << "WEDGE: from " << at1->getIdx() << " | "
@@ -2148,6 +2162,7 @@ void MolDraw2D::drawBond(
         swap(at1_cds, at2_cds);
         swap(col1, col2);
       }
+      // deliberately not scaling highlighted bond width
       if (Bond::BEGINWEDGE == bond->getBondDir()) {
         drawWedgedBond(at1_cds, at2_cds, false, col1, col2);
       } else {
@@ -2155,9 +2170,12 @@ void MolDraw2D::drawBond(
       }
     } else if (Bond::SINGLE == bt && Bond::UNKNOWN == bond->getBondDir()) {
       // unspecified stereo
+      // deliberately not scaling highlighted bond width
       drawWavyLine(at1_cds, at2_cds, col1, col2);
     } else if (Bond::DATIVE == bt || Bond::DATIVEL == bt ||
                Bond::DATIVER == bt) {
+      // deliberately not scaling highlighted bond width as I think
+      // the arrowhead will look ugly.
       if (static_cast<unsigned int>(at1_idx) == bond->getBeginAtomIdx()) {
         drawDativeBond(at1_cds, at2_cds, col1, col2);
       } else {
@@ -2165,11 +2183,20 @@ void MolDraw2D::drawBond(
       }
     } else if (Bond::ZERO == bt) {
       setDash(shortDashes);
+      bool orig_slw = drawOptions().scaleBondWidth;
+      if(highlight_bond) {
+        drawOptions().scaleBondWidth = drawOptions().scaleHighlightBondWidth;
+      }
       drawLine(at1_cds, at2_cds, col1, col2);
+      drawOptions().scaleBondWidth = orig_slw;
       setDash(noDash);
     } else {
       // in all other cases, we will definitely want to draw a line between
       // the two atoms
+      bool orig_slw = drawOptions().scaleBondWidth;
+      if(highlight_bond) {
+        drawOptions().scaleBondWidth = drawOptions().scaleHighlightBondWidth;
+      }
       drawLine(at1_cds, at2_cds, col1, col2);
       if (Bond::TRIPLE == bt) {
         Point2D l1s, l1f, l2s, l2f;
@@ -2178,6 +2205,7 @@ void MolDraw2D::drawBond(
         drawLine(l1s, l1f, col1, col2);
         drawLine(l2s, l2f, col1, col2);
       }
+      drawOptions().scaleBondWidth = orig_slw;
     }
   }
   if (highlight_bond) {
@@ -2818,11 +2846,14 @@ void MolDraw2D::calcTripleBondLines(double offset, const Bond *bond,
 }
 
 // ****************************************************************************
-unsigned int MolDraw2D::getDrawLineWidth() const {
+double MolDraw2D::getDrawLineWidth() const {
+  double width = lineWidth();
   // This works fairly well for SVG and Cairo. 0.02 is picked by eye
-  unsigned int width = lineWidth() * scale() * 0.02;
-  if (width < 2) {
-    width = 2;
+  if(drawOptions().scaleBondWidth) {
+    width *= scale() * 0.02;
+    if (width < 0.0) {
+      width = 0.0;
+    }
   }
   return width;
 }
@@ -3309,7 +3340,6 @@ void MolDraw2D::tabulaRasa() {
   scale_ = 1.0;
   x_trans_ = y_trans_ = 0.0;
   x_offset_ = y_offset_ = 0;
-  curr_width_ = 2;
   d_metadata.clear();
   d_numMetadataEntries = 0;
 }

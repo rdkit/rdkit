@@ -129,7 +129,7 @@ void MolDraw2DSVG::drawWavyLine(const Point2D &cds1, const Point2D &cds2,
   Point2D c1 = getDrawCoords(cds1);
 
   std::string col = DrawColourToSVG(colour());
-  unsigned int width = getDrawLineWidth();
+  double width = getDrawLineWidth();
   d_os << "<path ";
   if (d_activeClass != "") {
     d_os << "class='" << d_activeClass << "' ";
@@ -147,7 +147,8 @@ void MolDraw2DSVG::drawWavyLine(const Point2D &cds1, const Point2D &cds2,
   }
   d_os << "' ";
 
-  d_os << "style='fill:none;stroke:" << col << ";stroke-width:" << width
+  d_os << "style='fill:none;stroke:"
+       << col << ";stroke-width:" << boost::format("%.1f") % width
        << "px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1"
        << "'";
   d_os << " />\n";
@@ -205,7 +206,7 @@ void MolDraw2DSVG::drawLine(const Point2D &cds1, const Point2D &cds2) {
   Point2D c1 = getDrawCoords(cds1);
   Point2D c2 = getDrawCoords(cds2);
   std::string col = DrawColourToSVG(colour());
-  unsigned int width = getDrawLineWidth();
+  double width = getDrawLineWidth();
   std::string dashString = "";
   const DashPattern &dashes = dash();
   if (dashes.size()) {
@@ -222,8 +223,8 @@ void MolDraw2DSVG::drawLine(const Point2D &cds1, const Point2D &cds2) {
   }
   d_os << "d='M " << c1.x << "," << c1.y << " L " << c2.x << "," << c2.y
        << "' ";
-  d_os << "style='fill:none;fill-rule:evenodd;stroke:" << col
-       << ";stroke-width:" << width
+  d_os << "style='fill:none;fill-rule:evenodd;stroke:" << col << ";stroke-width:"
+       << boost::format("%.1f") % width
        << "px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1"
        << dashString << "'";
   d_os << " />\n";
@@ -255,7 +256,8 @@ void MolDraw2DSVG::drawPolygon(const std::vector<Point2D> &cds) {
     d_os << "' style='fill:none;";
   }
 
-  d_os << "stroke:" << col << ";stroke-width:" << width
+  d_os << "stroke:" << col << ";stroke-width:"
+       << boost::format("%.1f") % width
        << "px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:"
        << colour().a << ";" << dashString << "'";
   d_os << " />\n";
@@ -292,7 +294,8 @@ void MolDraw2DSVG::drawEllipse(const Point2D &cds1, const Point2D &cds2) {
     d_os << "fill:none;";
   }
 
-  d_os << "stroke:" << col << ";stroke-width:" << width
+  d_os << "stroke:" << col << ";stroke-width:"
+       << boost::format("%.1f") % width
        << "px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1"
        << dashString << "'";
   d_os << " />\n";
@@ -384,7 +387,8 @@ void MolDraw2DSVG::tagAtoms(const ROMol &mol, double radius,
       d_os << " " << d_activeClass;
     }
     d_os << "'";
-    d_os << " style='fill:#fff;stroke:#fff;stroke-width:" << width
+    d_os << " style='fill:#fff;stroke:#fff;stroke-width:"
+         << boost::format("%.1f") % width
          << "px;fill-opacity:0;"
             "stroke-opacity:0' ";
     d_os << "/>\n";
