@@ -10,6 +10,7 @@
 #ifndef RGROUP_DECOMP_DATA
 #define RGROUP_DECOMP_DATA
 
+#include "RGroupCore.h"
 #include "RGroupDecomp.h"
 #include "RGroupMatch.h"
 #include "RGroupScore.h"
@@ -20,7 +21,7 @@ namespace RDKit
 {
 struct RGroupDecompData {
   // matches[mol_idx] == vector of potential matches
-  std::map<int, RWMol> cores;
+  std::map<int, RCore> cores;
   std::map<std::string, int> newCores;  // new "cores" found along the way
   int newCoreLabel;
   RGroupDecompositionParameters params;
@@ -31,7 +32,6 @@ struct RGroupDecompData {
   std::map<int, std::vector<int>> userLabels;
 
   std::vector<int> processedRlabels;
-  std::map<int, boost::shared_ptr<RWMol>> labelledCores;
 
   std::map<int, int> finalRlabelMapping;
 
@@ -41,7 +41,7 @@ struct RGroupDecompData {
         newCores(),
         newCoreLabel(EMPTY_CORE_LABEL),
         params(std::move(inputParams)) {
-    cores[0] = inputCore;
+    cores[0] = RCore(inputCore);
     prepareCores();
   }
 
@@ -52,20 +52,21 @@ struct RGroupDecompData {
         newCoreLabel(EMPTY_CORE_LABEL),
         params(std::move(inputParams)) {
     for (size_t i = 0; i < inputCores.size(); ++i) {
-      cores[i] = *inputCores[i].get();
+      cores[i] = RCore(*inputCores[i]);
     }
 
     prepareCores();
   }
 
   void prepareCores() {
-    size_t idx = 0;
-    for (auto coreIt = cores.begin(); coreIt != cores.end(); ++coreIt, ++idx) {
-      RWMol *alignCore = coreIt->first ? &cores[0] : nullptr;
-      CHECK_INVARIANT(params.prepareCore(coreIt->second, alignCore),
+    for (auto &core : cores) {
+      RWMol *alignCore = core.first ? cores[0].core.get() : nullptr;
+      CHECK_INVARIANT(params.prepareCore(*core.second.core, alignCore),
                       "Could not prepare at least one core");
-      labelledCores[coreIt->first] =
-          boost::shared_ptr<RWMol>(new RWMol(coreIt->second));
+      if (params.onlyMatchAtRGroups) {
+        core.second.findIndicesWithRLabel();
+      }
+      core.second.labelledCore.reset(new RWMol(*core.second.core));
     }
   }
 
@@ -122,7 +123,7 @@ struct RGroupDecompData {
         if (labelCores.find(core_idx) == labelCores.end()) {
           auto core = cores.find(core_idx);
           if (core != cores.end()) {
-            for (auto rlabels : getRlabels(core->second)) {
+            for (auto rlabels : getRlabels(*core->second.core)) {
               int rlabel = rlabels.first;
               labelCores[rlabel].insert(core_idx);
             }
@@ -365,12 +366,9 @@ struct RGroupDecompData {
     finalRlabelMapping.clear();
 
     UsedLabels used_labels;
-    for (std::map<int, RWMol>::const_iterator coreIt = cores.begin();
-         coreIt != cores.end(); ++coreIt) {
-      boost::shared_ptr<RWMol> labelledCore(new RWMol(coreIt->second));
-      labelledCores[coreIt->first] = labelledCore;
-
-      relabelCore(*labelledCore.get(), finalRlabelMapping, used_labels,
+    for (auto &core : cores) {
+      core.second.labelledCore.reset(new RWMol(*core.second.core));
+      relabelCore(*core.second.labelledCore, finalRlabelMapping, used_labels,
                   indexLabels, extraAtomRLabels);
     }
 
@@ -383,21 +381,29 @@ struct RGroupDecompData {
 
   // compute the number of rgroups that would be added if we
   //  accepted this permutation
-  int compute_num_added_rgroups(std::vector<size_t> &tied_permutation) {
-    int num_added_rgroups = 0;
+  size_t compute_heavy_rgroup_counts(
+      const std::vector<size_t> &tied_permutation,
+      std::vector<int> &heavy_counts) {
+    size_t i = 0;
+    size_t num_added_rgroups = 0;
+    heavy_counts.resize(labels.size(), 0);
     for (int label : labels) {
-      if (label <= 0) {  // label is not user supplied
-        for (size_t m = 0; m < tied_permutation.size();
-             ++m) {  // for each molecule
-          auto rg = matches[m][tied_permutation[m]].rgroups.find(label);
-          if (rg != matches[m][tied_permutation[m]].rgroups.end()) {
-            if (!rg->second->is_hydrogen) {
-              num_added_rgroups += 1;  //= label;
-              break;
-            }
+      int incr = (label > 0) ? -1 : 1;
+      // int incr = 1;
+      bool incremented = false;
+      for (size_t m = 0; m < tied_permutation.size();
+           ++m) {  // for each molecule
+        auto rg = matches[m][tied_permutation[m]].rgroups.find(label);
+        if (rg != matches[m][tied_permutation[m]].rgroups.end() &&
+            !rg->second->is_hydrogen) {
+          if (label <= 0 && !incremented) {
+            incremented = true;
+            ++num_added_rgroups;
           }
+          heavy_counts[i] += incr;
         }
       }
+      ++i;
     }
     return num_added_rgroups;
   }
@@ -408,16 +414,13 @@ struct RGroupDecompData {
     }
     auto t0 = std::chrono::steady_clock::now();
     // Exhaustive search, get the MxN matrix
-    size_t M = matches.size();  // Number of molecules
+    // (M = matches.size(): number of molecules
+    //  N = iterator.maxPermutations)
     std::vector<size_t> permutations;
-    size_t N = 1;
 
-    for (size_t m = 0; m < M; ++m) {
-      size_t sz = matches[m].size();  // # permutations for molecule m
-      permutations.push_back(sz);
-      N *= sz;
-    }
-
+    std::transform(matches.begin(), matches.end(),
+                   std::back_inserter(permutations),
+                   [](const std::vector<RGroupMatch> &m) { return m.size(); });
     permutation = std::vector<size_t>(permutations.size(), 0);
 
     // run through all possible matches and score each
@@ -435,8 +438,8 @@ struct RGroupDecompData {
     //  [m1_permutation_idx,  m2_permutation_idx, m3_permutation_idx]
 
     while (iterator.next()) {
-      if (count > N) {
-        throw ValueErrorException("Next did not finish");
+      if (count++ > iterator.maxPermutations) {
+        throw ValueErrorException("next() did not finish");
       }
 #ifdef DEBUG
       std::cerr << "**************************************************"
@@ -457,26 +460,35 @@ struct RGroupDecompData {
         best_score = newscore;
         best_permutation = iterator.permutation;
       }
-      count++;
-    }
-
-    if (ties.size() > 1) {
-      // choose one that doesn't add rgroups inappropriately
-      //  an rgroup is added when
-      //  (1) the label is <=0
-      //  (2) the group has any substituent with heavy atoms
-      //   XXX Might be more efficient to add this comp to the score function
-      int smallest_added_rgroups = 100000000;
-      for (auto tied_permutation : ties) {
-        int num_added_rgroups = compute_num_added_rgroups(tied_permutation);
-        if (num_added_rgroups < smallest_added_rgroups) {
-          smallest_added_rgroups = num_added_rgroups;
-          best_permutation = tied_permutation;
-        }
-      }
       checkForTimeout(t0, params.timeout);
     }
 
+    if (ties.size() > 1) {
+      size_t min_perm_value = 0;
+      size_t smallest_added_rgroups = labels.size();
+      for (const auto &tied_permutation : ties) {
+        std::vector<int> heavy_counts;
+        std::vector<int> largest_heavy_counts(labels.size(), 0);
+        size_t num_added_rgroups =
+            compute_heavy_rgroup_counts(tied_permutation, heavy_counts);
+        if (num_added_rgroups < smallest_added_rgroups) {
+          smallest_added_rgroups = num_added_rgroups;
+          best_permutation = tied_permutation;
+        } else if (num_added_rgroups == smallest_added_rgroups) {
+          if (heavy_counts < largest_heavy_counts) {
+            largest_heavy_counts = heavy_counts;
+            best_permutation = tied_permutation;
+          } else if (heavy_counts == largest_heavy_counts) {
+            size_t perm_value = iterator.value();
+            if (perm_value < min_perm_value) {
+              min_perm_value = perm_value;
+              best_permutation = tied_permutation;
+            }
+          }
+        }
+        checkForTimeout(t0, params.timeout);
+      }
+    }
     permutation = best_permutation;
     if (pruneMatches || finalize) {
       prune();
