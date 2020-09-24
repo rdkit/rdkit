@@ -96,7 +96,7 @@ class RDKIT_MOLSTANDARDIZE_EXPORT TautomerEnumeratorResult {
     }
     const_iterator operator++(int) {
       const_iterator copy(d_it);
-      ++*this;
+      operator++();
       return copy;
     }
     const_iterator &operator++() {
@@ -105,7 +105,7 @@ class RDKIT_MOLSTANDARDIZE_EXPORT TautomerEnumeratorResult {
     }
     const_iterator operator--(int) {
       const_iterator copy(d_it);
-      --*this;
+      operator--();
       return copy;
     }
     const_iterator &operator--() {
