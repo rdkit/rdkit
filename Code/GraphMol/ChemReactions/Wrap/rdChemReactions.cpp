@@ -774,12 +774,18 @@ of the replacements argument.",
               (python::arg("reaction"), python::arg("canonical") = true),
               "construct a reaction SMILES string for a ChemicalReaction");
 
-  python::def("ReactionFromRxnFile", RDKit::RxnFileToChemicalReaction,
-              "construct a ChemicalReaction from an MDL rxn file",
-              python::return_value_policy<python::manage_new_object>());
-  python::def("ReactionFromRxnBlock", RDKit::RxnBlockToChemicalReaction,
-              "construct a ChemicalReaction from an string in MDL rxn format",
-              python::return_value_policy<python::manage_new_object>());
+  python::def(
+      "ReactionFromRxnFile", RDKit::RxnFileToChemicalReaction,
+      (python::arg("filename"), python::arg("sanitize") = false,
+       python::arg("removeHs") = false, python::arg("strictParsing") = true),
+      "construct a ChemicalReaction from an MDL rxn file",
+      python::return_value_policy<python::manage_new_object>());
+  python::def(
+      "ReactionFromRxnBlock", RDKit::RxnBlockToChemicalReaction,
+      (python::arg("rxnblock"), python::arg("sanitize") = false,
+       python::arg("removeHs") = false, python::arg("strictParsing") = true),
+      "construct a ChemicalReaction from a string in MDL rxn format",
+      python::return_value_policy<python::manage_new_object>());
   python::def("ReactionToRxnBlock", RDKit::ChemicalReactionToRxnBlock,
               (python::arg("reaction"), python::arg("separateAgents") = false),
               "construct a string in MDL rxn format for a ChemicalReaction");

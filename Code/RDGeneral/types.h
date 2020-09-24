@@ -239,6 +239,7 @@ RDKIT_RDGENERAL_EXPORT extern const std::string
 RDKIT_RDGENERAL_EXPORT extern const std::string internalRgroupSmiles;
 RDKIT_RDGENERAL_EXPORT extern const std::string atomNote;
 RDKIT_RDGENERAL_EXPORT extern const std::string bondNote;
+RDKIT_RDGENERAL_EXPORT extern const std::string _isotopicHs;
 
 }  // namespace common_properties
 #ifndef WIN32
