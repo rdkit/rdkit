@@ -38,6 +38,9 @@ class RDKIT_MOLSTANDARDIZE_EXPORT TautomerCatalogParams
 
   ~TautomerCatalogParams() override;
 
+  // DEPRECATED: remove in release 2021.01
+  // the function name is misleading and getTransforms().size()
+  // yields the same information
   unsigned int getNumTautomers() const {
     return static_cast<unsigned int>(d_transforms.size());
   }
