@@ -693,6 +693,32 @@ chlorine	[Cl]
     self.assertEqual(best_taut.GetAtomWithIdx(5).GetProp("_CIPCode"), "S")
     self.assertEqual(Chem.MolToSmiles(best_taut), "CCCC(=O)[C@](C)(CC)C(C)=O")
 
+  def test18TautomerEnumeratorResultIter(self):
+    smi = "Cc1nnc(NC(=O)N2CCN(Cc3ccc(F)cc3)C(=O)C2)s1"
+    mol = Chem.MolFromSmiles(smi)
+    self.assertIsNotNone(mol)
+    te = rdMolStandardize.TautomerEnumerator()
+    res = te.Enumerate(mol)
+    res_it = iter(res)
+    i = 0
+    while 1:
+        try:
+            t = next(res_it)
+        except StopIteration:
+            break
+        self.assertEqual(Chem.MolToSmiles(t), Chem.MolToSmiles(res[i]))
+        i += 1
+    self.assertEqual(i, len(res))
+    res_it = iter(res)
+    i = -len(res)
+    while 1:
+        try:
+            t = next(res_it)
+        except StopIteration:
+            break
+        self.assertEqual(Chem.MolToSmiles(t), Chem.MolToSmiles(res[i]))
+        i += 1
+    self.assertEqual(i, 0)
 
 if __name__ == "__main__":
   unittest.main()

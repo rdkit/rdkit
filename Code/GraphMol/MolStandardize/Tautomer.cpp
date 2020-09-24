@@ -326,13 +326,13 @@ TautomerEnumeratorResult TautomerEnumerator::enumerate(const ROMol &mol) const {
           // loop over transform matches
           for (const auto &match : matches) {
             if (nTransforms >= d_maxTransforms) {
-              res.d_status = MaxTransformsReached;
+              res.d_status = TautomerEnumeratorStatus::MaxTransformsReached;
               bailOut = true;
             } else if (res.d_tautomers.size() >= d_maxTautomers) {
-              res.d_status = MaxTautomersReached;
+              res.d_status = TautomerEnumeratorStatus::MaxTautomersReached;
               bailOut = true;
             } else if (d_callback.get() && !(*d_callback)(mol, res)) {
-              res.d_status = Canceled;
+              res.d_status = TautomerEnumeratorStatus::Canceled;
               bailOut = true;
             }
             if (bailOut) {
@@ -480,8 +480,8 @@ TautomerEnumeratorResult TautomerEnumerator::enumerate(const ROMol &mol) const {
       }
     }
     if (bailOut && res.d_tautomers.size() < d_maxTautomers &&
-        res.d_status == MaxTautomersReached) {
-      res.d_status = Completed;
+        res.d_status == TautomerEnumeratorStatus::MaxTautomersReached) {
+      res.d_status = TautomerEnumeratorStatus::Completed;
       bailOut = false;
     }
   }  // while
@@ -489,7 +489,8 @@ TautomerEnumeratorResult TautomerEnumerator::enumerate(const ROMol &mol) const {
   if (!completed) {
     BOOST_LOG(rdWarningLog)
         << "Tautomer enumeration stopped at " << res.d_tautomers.size()
-        << " tautomers: " << statusMsg.at(res.d_status) << std::endl;
+        << " tautomers: " << statusMsg.at(static_cast<size_t>(res.d_status))
+        << std::endl;
   }
 
   return res;

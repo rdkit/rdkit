@@ -43,7 +43,7 @@ inline int scoreTautomer(const ROMol &mol) {
 }
 }  // namespace TautomerScoringFunctions
 
-enum TautomerEnumeratorStatus {
+enum class TautomerEnumeratorStatus {
   Completed = 0,
   MaxTautomersReached,
   MaxTransformsReached,
@@ -79,14 +79,15 @@ class RDKIT_MOLSTANDARDIZE_EXPORT TautomerEnumeratorResult {
   class const_iterator {
    public:
     typedef ROMOL_SPTR value_type;
-    typedef std::ptrdiff_t difference_type;
-    typedef const ROMOL_SPTR *pointer;
+    typedef void difference_type;
+    typedef const ROMol *pointer;
     typedef const ROMOL_SPTR &reference;
-    typedef std::input_iterator_tag iterator_category;
+    typedef std::bidirectional_iterator_tag iterator_category;
 
     explicit const_iterator(const SmilesTautomerMap::const_iterator &it)
         : d_it(it) {}
     reference operator*() const { return d_it->second.tautomer; }
+    pointer operator->() const { return d_it->second.tautomer.get(); }
     bool operator==(const const_iterator &other) const {
       return (d_it == other.d_it);
     }
@@ -102,11 +103,20 @@ class RDKIT_MOLSTANDARDIZE_EXPORT TautomerEnumeratorResult {
       ++d_it;
       return *this;
     }
+    const_iterator operator--(int) {
+      const_iterator copy(d_it);
+      --*this;
+      return copy;
+    }
+    const_iterator &operator--() {
+      --d_it;
+      return *this;
+    }
 
    private:
     SmilesTautomerMap::const_iterator d_it;
   };
-  TautomerEnumeratorResult() : d_status(Completed) {}
+  TautomerEnumeratorResult() : d_status(TautomerEnumeratorStatus::Completed) {}
   TautomerEnumeratorResult(const TautomerEnumeratorResult &other)
       : d_tautomers(other.d_tautomers),
         d_status(other.d_status),

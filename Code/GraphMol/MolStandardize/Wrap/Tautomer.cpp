@@ -268,10 +268,12 @@ struct tautomer_wrapper {
   static void wrap() {
     python::enum_<MolStandardize::TautomerEnumeratorStatus>(
         "TautomerEnumeratorStatus")
-        .value("Completed", MolStandardize::Completed)
-        .value("MaxTautomersReached", MolStandardize::MaxTautomersReached)
-        .value("MaxTransformsReached", MolStandardize::MaxTransformsReached)
-        .value("Canceled", MolStandardize::Canceled);
+        .value("Completed", MolStandardize::TautomerEnumeratorStatus::Completed)
+        .value("MaxTautomersReached",
+               MolStandardize::TautomerEnumeratorStatus::MaxTautomersReached)
+        .value("MaxTransformsReached",
+               MolStandardize::TautomerEnumeratorStatus::MaxTransformsReached)
+        .value("Canceled", MolStandardize::TautomerEnumeratorStatus::Canceled);
 
     python::class_<PyTautomerEnumeratorCallback, boost::noncopyable>(
         "TautomerEnumeratorCallback",

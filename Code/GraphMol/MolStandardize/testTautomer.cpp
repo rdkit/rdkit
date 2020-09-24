@@ -44,7 +44,7 @@ void testEnumerator() {
                     const std::vector<std::string> &ans) {
         ROMOL_SPTR m(SmilesToMol(smi));
         TautomerEnumeratorResult res = te.enumerate(*m);
-        TEST_ASSERT(res.status() == Completed);
+        TEST_ASSERT(res.status() == TautomerEnumeratorStatus::Completed);
         size_t sz = std::max(res.size(), ans.size());
         bool exceedingTautomer = false;
         bool missingTautomer = false;
@@ -330,7 +330,7 @@ void testEnumerator() {
   std::vector<std::string> ans66 = {"C=C(O)C=CC", "C=CC=C(C)O", "C=CCC(=C)O",
                                     "C=CCC(C)=O", "CC=CC(C)=O"};
   TEST_ASSERT(res66.size() == ans66.size());
-  TEST_ASSERT(res66.status() == Completed);
+  TEST_ASSERT(res66.status() == TautomerEnumeratorStatus::Completed);
 
   std::vector<std::string> sm66;
   for (const auto &r : res66) {
@@ -355,7 +355,7 @@ void testEnumerator() {
       "Nc1nc2[nH]cnc2c(=O)[nH]1",     "Nc1nc2nc[nH]c2c(=O)[nH]1",
       "Nc1nc2ncnc-2c(O)[nH]1"};
   TEST_ASSERT(res67.size() == ans67.size());
-  TEST_ASSERT(res67.status() == Completed);
+  TEST_ASSERT(res67.status() == TautomerEnumeratorStatus::Completed);
   std::vector<std::string> sm67;
   for (const auto &r : res67) {
     sm67.push_back(MolToSmiles(*r));
@@ -371,7 +371,7 @@ void testEnumerator() {
   TautomerEnumeratorResult res68 = te.enumerate(*m68);
   // the maxTransforms limit is hit before the maxTautomers one
   TEST_ASSERT(res68.size() == 292);
-  TEST_ASSERT(res68.status() == MaxTransformsReached);
+  TEST_ASSERT(res68.status() == TautomerEnumeratorStatus::MaxTransformsReached);
   BOOST_LOG(rdInfoLog) << "Finished" << std::endl;
 }
 
@@ -388,7 +388,8 @@ void testEnumeratorParams() {
     TautomerEnumerator te;
     TautomerEnumeratorResult res68 = te.enumerate(*m68);
     TEST_ASSERT(res68.size() == 292);
-    TEST_ASSERT(res68.status() == MaxTransformsReached);
+    TEST_ASSERT(res68.status() ==
+                TautomerEnumeratorStatus::MaxTransformsReached);
   }
   {
     CleanupParameters params;
@@ -396,7 +397,8 @@ void testEnumeratorParams() {
     TautomerEnumerator te(params);
     TautomerEnumeratorResult res68 = te.enumerate(*m68);
     TEST_ASSERT(res68.size() == 50);
-    TEST_ASSERT(res68.status() == MaxTautomersReached);
+    TEST_ASSERT(res68.status() ==
+                TautomerEnumeratorStatus::MaxTautomersReached);
   }
   std::string sAlaSmi = "C[C@H](N)C(=O)O";
   ROMOL_SPTR sAla(SmilesToMol(sAlaSmi));
@@ -528,8 +530,11 @@ void testEnumeratorCallback() {
     TautomerEnumeratorResult res68 = te.enumerate(*m68);
     // either the enumeration was canceled due to timeout
     // or it has completed very quickly
-    bool hasReachedTimeout = (res68.size() < 375 && res68.status() == Canceled);
-    bool hasCompleted = (res68.size() == 375 && res68.status() == Completed);
+    bool hasReachedTimeout =
+        (res68.size() < 375 &&
+         res68.status() == TautomerEnumeratorStatus::Canceled);
+    bool hasCompleted = (res68.size() == 375 &&
+                         res68.status() == TautomerEnumeratorStatus::Completed);
     if (hasReachedTimeout) {
       std::cerr << "Enumeration was canceled due to timeout (50 ms)"
                 << std::endl;
@@ -546,8 +551,11 @@ void testEnumeratorCallback() {
     TautomerEnumeratorResult res68 = te.enumerate(*m68);
     // either the enumeration completed
     // or it ran very slowly and was canceled due to timeout
-    bool hasReachedTimeout = (res68.size() < 375 && res68.status() == Canceled);
-    bool hasCompleted = (res68.size() == 375 && res68.status() == Completed);
+    bool hasReachedTimeout =
+        (res68.size() < 375 &&
+         res68.status() == TautomerEnumeratorStatus::Canceled);
+    bool hasCompleted = (res68.size() == 375 &&
+                         res68.status() == TautomerEnumeratorStatus::Completed);
     if (hasReachedTimeout) {
       std::cerr << "Enumeration was canceled due to timeout (10 s)"
                 << std::endl;
@@ -1060,10 +1068,10 @@ void testPickCanonicalCIPChangeOnChiralCenter() {
   }
   {
     // here the chirality disappears as the chiral center is itself involved in
-    // tautomerism the reassignStereo setting has no influence
+    // tautomerism; the reassignStereo setting has no influence
     TautomerEnumerator te;
     auto res = te.enumerate(*mol);
-    TEST_ASSERT(res.status() == Completed);
+    TEST_ASSERT(res.status() == TautomerEnumeratorStatus::Completed);
     TEST_ASSERT(res.size() == 8);
     ROMOL_SPTR bestTaut = CanonicalTaut::get(res);
     TEST_ASSERT(bestTaut.get());
@@ -1075,12 +1083,12 @@ void testPickCanonicalCIPChangeOnChiralCenter() {
   }
   {
     // here the chirality disappears as the chiral center is itself involved in
-    // tautomerism the reassignStereo setting has no influence
+    // tautomerism; the reassignStereo setting has no influence
     CleanupParameters params;
     params.tautomerReassignStereo = false;
     TautomerEnumerator te(params);
     auto res = te.enumerate(*mol);
-    TEST_ASSERT(res.status() == Completed);
+    TEST_ASSERT(res.status() == TautomerEnumeratorStatus::Completed);
     TEST_ASSERT(res.size() == 8);
     ROMOL_SPTR bestTaut = CanonicalTaut::get(res);
     TEST_ASSERT(bestTaut.get());
@@ -1093,13 +1101,13 @@ void testPickCanonicalCIPChangeOnChiralCenter() {
   {
     // here the chirality stays even if the chiral center is itself involved in
     // tautomerism because of the tautomerRemoveSp3Stereo parameter being set to
-    // false as reassignStereo by default is true, the CIP code has  been
+    // false. As reassignStereo by default is true, the CIP code has  been
     // recomputed and therefore it is now S (correct)
     CleanupParameters params;
     params.tautomerRemoveSp3Stereo = false;
     TautomerEnumerator te(params);
     auto res = te.enumerate(*mol);
-    TEST_ASSERT(res.status() == Completed);
+    TEST_ASSERT(res.status() == TautomerEnumeratorStatus::Completed);
     TEST_ASSERT(res.size() == 8);
     ROMOL_SPTR bestTaut = CanonicalTaut::get(res);
     TEST_ASSERT(bestTaut.get());
@@ -1112,14 +1120,14 @@ void testPickCanonicalCIPChangeOnChiralCenter() {
   {
     // here the chirality stays even if the chiral center is itself involved in
     // tautomerism because of the tautomerRemoveSp3Stereo parameter being set to
-    // false as reassignStereo is false, the CIP code has not been recomputed
+    // false. As reassignStereo is false, the CIP code has not been recomputed
     // and therefore it is still R (incorrect)
     CleanupParameters params;
     params.tautomerRemoveSp3Stereo = false;
     params.tautomerReassignStereo = false;
     TautomerEnumerator te(params);
     auto res = te.enumerate(*mol);
-    TEST_ASSERT(res.status() == Completed);
+    TEST_ASSERT(res.status() == TautomerEnumeratorStatus::Completed);
     TEST_ASSERT(res.size() == 8);
     ROMOL_SPTR bestTaut = CanonicalTaut::get(res);
     TEST_ASSERT(bestTaut.get());
@@ -1165,7 +1173,7 @@ void testPickCanonicalCIPChangeOnChiralCenter() {
     // and therefore it is now R (correct)
     TautomerEnumerator te;
     auto res = te.enumerate(*mol);
-    TEST_ASSERT(res.status() == Completed);
+    TEST_ASSERT(res.status() == TautomerEnumeratorStatus::Completed);
     TEST_ASSERT(res.size() == 4);
     ROMOL_SPTR bestTaut = CanonicalTaut::get(res);
     TEST_ASSERT(bestTaut.get());
@@ -1182,7 +1190,7 @@ void testPickCanonicalCIPChangeOnChiralCenter() {
     params.tautomerReassignStereo = false;
     TautomerEnumerator te(params);
     auto res = te.enumerate(*mol);
-    TEST_ASSERT(res.status() == Completed);
+    TEST_ASSERT(res.status() == TautomerEnumeratorStatus::Completed);
     TEST_ASSERT(res.size() == 4);
     ROMOL_SPTR bestTaut = CanonicalTaut::get(res);
     TEST_ASSERT(bestTaut.get());
@@ -1199,7 +1207,7 @@ void testPickCanonicalCIPChangeOnChiralCenter() {
     params.tautomerRemoveSp3Stereo = false;
     TautomerEnumerator te(params);
     auto res = te.enumerate(*mol);
-    TEST_ASSERT(res.status() == Completed);
+    TEST_ASSERT(res.status() == TautomerEnumeratorStatus::Completed);
     TEST_ASSERT(res.size() == 4);
     ROMOL_SPTR bestTaut = CanonicalTaut::get(res);
     TEST_ASSERT(bestTaut.get());
@@ -1211,15 +1219,15 @@ void testPickCanonicalCIPChangeOnChiralCenter() {
   }
   {
     // here the chirality stays even if the tautomerRemoveSp3Stereo parameter
-    // is set to false as the chiral center is not involved in tautomerism
-    // as reassignStereo is false, the CIP code has not been recomputed
+    // is set to false as the chiral center is not involved in tautomerism.
+    // As reassignStereo is false, the CIP code has not been recomputed
     // and therefore it is still S (incorrect)
     CleanupParameters params;
     params.tautomerRemoveSp3Stereo = false;
     params.tautomerReassignStereo = false;
     TautomerEnumerator te(params);
     auto res = te.enumerate(*mol);
-    TEST_ASSERT(res.status() == Completed);
+    TEST_ASSERT(res.status() == TautomerEnumeratorStatus::Completed);
     TEST_ASSERT(res.size() == 4);
     ROMOL_SPTR bestTaut = CanonicalTaut::get(res);
     TEST_ASSERT(bestTaut.get());
@@ -1231,6 +1239,85 @@ void testPickCanonicalCIPChangeOnChiralCenter() {
   }
 
   BOOST_LOG(rdInfoLog) << "Finished" << std::endl;
+}
+
+void testTautomerEnumeratorResult_const_iterator() {
+  BOOST_LOG(rdInfoLog)
+      << "-----------------------\n testTautomerEnumeratorResult_const_iterator"
+      << std::endl;
+  // CHEMBL3480964
+  RWMOL_SPTR mol = "Cc1nnc(NC(=O)N2CCN(Cc3ccc(F)cc3)C(=O)C2)s1"_smiles;
+  TautomerEnumerator te;
+  auto res = te.enumerate(*mol);
+  TEST_ASSERT(res.status() == TautomerEnumeratorStatus::Completed);
+  TEST_ASSERT(res.size() == 12);
+  auto it = res.begin();
+  auto it2 = res.begin();
+  // Test semantic requirements of bidirectional_iterator
+  // https://en.cppreference.com/w/cpp/iterator/bidirectional_iterator
+  TEST_ASSERT(it == it2);
+  TEST_ASSERT(it++ == it2);
+  TEST_ASSERT(it == ++it2);
+  TEST_ASSERT(it == it2);
+  TEST_ASSERT(it-- == it2);
+  TEST_ASSERT(it == --it2);
+  TEST_ASSERT(it == it2);
+  ++it;
+  ++it2;
+  TEST_ASSERT(++(--it) == it2);
+  TEST_ASSERT(--(++it) == it2);
+  TEST_ASSERT(std::addressof(--it) == std::addressof(it));
+  ++it;
+  TEST_ASSERT(it == it2);
+  it--;
+  --it2;
+  TEST_ASSERT(it == it2);
+  TEST_ASSERT(*it == res[0]);
+  TEST_ASSERT(*it++ == res.at(0));
+  TEST_ASSERT(*it == res[1]);
+  TEST_ASSERT(*++it == res.at(2));
+  TEST_ASSERT(*it == res[2]);
+  ++it;
+  TEST_ASSERT(*it == res[3]);
+  ++it;
+  TEST_ASSERT(*it == res[4]);
+  it++;
+  TEST_ASSERT(*it == res[5]);
+  TEST_ASSERT(*it-- == res.at(5));
+  TEST_ASSERT(*it == res[4]);
+  TEST_ASSERT(*--it == res.at(3));
+  TEST_ASSERT(*it == res[3]);
+  --it;
+  TEST_ASSERT(*it == res[2]);
+  --it;
+  TEST_ASSERT(*it == res[1]);
+  it--;
+  TEST_ASSERT(*it == res[0]);
+  size_t i = 0;
+  for (auto t : res) {
+    TEST_ASSERT(t == res[i++]);
+  }
+  i = 0;
+  for (auto it = res.begin(); it != res.end(); ++it) {
+    TEST_ASSERT(*it == res[i]);
+    TEST_ASSERT(it->getNumAtoms() == res[i++]->getNumAtoms());
+  }
+  i = res.size();
+  for (auto it = res.end(); it != res.begin();) {
+    TEST_ASSERT(*--it == res[--i]);
+    TEST_ASSERT(it->getNumAtoms() == res[i]->getNumAtoms());
+  }
+  i = 0;
+  for (const auto &pair : res.smilesTautomerMap()) {
+    TEST_ASSERT(pair.first == MolToSmiles(*res[i]));
+    TEST_ASSERT(pair.second.tautomer == res[i++]);
+  }
+  i = 0;
+  for (auto it = res.smilesTautomerMap().begin();
+       it != res.smilesTautomerMap().end(); ++it) {
+    TEST_ASSERT(it->first == MolToSmiles(*res[i]));
+    TEST_ASSERT(it->second.tautomer == res[i++]);
+  }
 }
 
 int main() {
@@ -1248,5 +1335,6 @@ int main() {
   testEnumerateDetails();
   testGithub2990();
   testPickCanonicalCIPChangeOnChiralCenter();
+  testTautomerEnumeratorResult_const_iterator();
   return 0;
 }
