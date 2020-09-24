@@ -79,7 +79,7 @@ class RDKIT_MOLSTANDARDIZE_EXPORT TautomerEnumeratorResult {
   class const_iterator {
    public:
     typedef ROMOL_SPTR value_type;
-    typedef void difference_type;
+    typedef std::ptrdiff_t difference_type;
     typedef const ROMol *pointer;
     typedef const ROMOL_SPTR &reference;
     typedef std::bidirectional_iterator_tag iterator_category;

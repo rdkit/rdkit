@@ -1293,17 +1293,19 @@ void testTautomerEnumeratorResult_const_iterator() {
   TEST_ASSERT(*it == res[1]);
   it--;
   TEST_ASSERT(*it == res[0]);
-  size_t i = 0;
+  std::ptrdiff_t i = 0;
   for (auto t : res) {
     TEST_ASSERT(t == res[i++]);
   }
   i = 0;
   for (auto it = res.begin(); it != res.end(); ++it) {
+    TEST_ASSERT(std::distance(res.begin(), it) == i);
     TEST_ASSERT(*it == res[i]);
     TEST_ASSERT(it->getNumAtoms() == res[i++]->getNumAtoms());
   }
   i = res.size();
   for (auto it = res.end(); it != res.begin();) {
+    TEST_ASSERT(std::distance(res.begin(), it) == i);
     TEST_ASSERT(*--it == res[--i]);
     TEST_ASSERT(it->getNumAtoms() == res[i]->getNumAtoms());
   }
@@ -1315,8 +1317,16 @@ void testTautomerEnumeratorResult_const_iterator() {
   i = 0;
   for (auto it = res.smilesTautomerMap().begin();
        it != res.smilesTautomerMap().end(); ++it) {
+    TEST_ASSERT(std::distance(res.smilesTautomerMap().begin(), it) == i);
     TEST_ASSERT(it->first == MolToSmiles(*res[i]));
     TEST_ASSERT(it->second.tautomer == res[i++]);
+  }
+  i = res.smilesTautomerMap().size();
+  for (auto it = res.smilesTautomerMap().end();
+       it != res.smilesTautomerMap().begin();) {
+    TEST_ASSERT(std::distance(res.smilesTautomerMap().begin(), it) == i);
+    TEST_ASSERT((--it)->first == MolToSmiles(*res[--i]));
+    TEST_ASSERT(it->second.tautomer == res[i]);
   }
 }
 
