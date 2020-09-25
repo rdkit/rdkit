@@ -84,17 +84,17 @@ BOOST_PYTHON_MODULE(rdAbbreviations) {
       (python::arg("mol"), python::arg("abbrevs"),
        python::arg("maxCoverage") = 0.4, python::arg("sanitize") = true),
       python::return_value_policy<python::manage_new_object>(),
-      "finds and replaces abbreviations in a molecule.");
+      "Finds and replaces abbreviations in a molecule. The result is not sanitized.");
   python::def("LabelMolAbbreviations", &labelMolAbbreviationsHelper,
               (python::arg("mol"), python::arg("abbrevs"),
                python::arg("maxCoverage") = 0.4),
               python::return_value_policy<python::manage_new_object>(),
-              "finds abbreviations and adds to them to a molecule as \"SUP\" "
+              "Finds abbreviations and adds to them to a molecule as \"SUP\" "
               "SubstanceGroups");
   python::def(
       "CondenseAbbreviationSubstanceGroups", &condenseAbbreviationSGroupHelper,
       (python::arg("mol")),
       python::return_value_policy<python::manage_new_object>(),
-      "finds and replaces abbrevation (i.e. \"SUP\") substance groups in a "
-      "molecule.");
+      "Finds and replaces abbrevation (i.e. \"SUP\") substance groups in a "
+      "molecule. The result is not sanitized.");
 }

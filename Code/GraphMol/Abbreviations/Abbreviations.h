@@ -106,12 +106,14 @@ findApplicableAbbreviationMatches(
     const ROMol& mol, const std::vector<AbbreviationDefinition>& abbrevs,
     double maxCoverage = 0.4);
 //! applies the abbreviation matches to a molecule, modifying it in place.
+//! the modified molecule is not sanitized
 RDKIT_ABBREVIATIONS_EXPORT void applyMatches(
     RWMol& mol, const std::vector<AbbreviationMatch>& matches);
 //! creates "SUP" SubstanceGroups on the molecule describing the abbreviation
 RDKIT_ABBREVIATIONS_EXPORT void labelMatches(
     RWMol& mol, const std::vector<AbbreviationMatch>& matches);
 //! convenience function for finding and applying abbreviations
+//! the modified molecule is not sanitized
 RDKIT_ABBREVIATIONS_EXPORT void condenseMolAbbreviations(
     RWMol& mol, const std::vector<AbbreviationDefinition>& abbrevs,
     double maxCoverage = 0.4, bool sanitize = true);
@@ -121,6 +123,7 @@ RDKIT_ABBREVIATIONS_EXPORT void labelMolAbbreviations(
     RWMol& mol, const std::vector<AbbreviationDefinition>& abbrevs,
     double maxCoverage = 0.4);
 //! collapses abbreviation (i.e. "SUP") substance groups
+//! the modified molecule is not sanitized
 RDKIT_ABBREVIATIONS_EXPORT void condenseAbbreviationSubstanceGroups(RWMol& mol);
 
 }  // namespace Abbreviations
