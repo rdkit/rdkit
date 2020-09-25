@@ -111,7 +111,10 @@ std::vector<AbbreviationMatch> findApplicableAbbreviationMatches(
     return res;
   }
 
-  MolOps::fastFindRings(mol);
+  bool hasRings = mol.getRingInfo()->isInitialized();
+  if(!hasRings) {
+    MolOps::fastFindRings(mol);
+  }
 
   std::vector<AbbreviationMatch> tres;
   boost::dynamic_bitset<> dummies(mol.getNumAtoms());
@@ -165,6 +168,11 @@ std::vector<AbbreviationMatch> findApplicableAbbreviationMatches(
     }
   }
 
+  // if we added ring info, go ahead and remove it
+  if(!hasRings){
+    mol.getRingInfo()->reset();
+  }
+  
   return res;
 }
 
