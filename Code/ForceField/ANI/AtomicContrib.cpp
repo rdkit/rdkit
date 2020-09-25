@@ -50,7 +50,7 @@ ANIAtomContrib::ANIAtomContrib(ForceField *owner, VectorXi &speciesVec,
   PRECONDITION(owner, "This ForceField contrib needs an owner")
   dp_forceField = owner;
   // load element mapping and atomic self-energies
-  this->paramDir = model;  // first try opening as a param dir
+  std::string paramDir = model;  // first try opening as a param dir
   std::ifstream selfEnergyFile(paramDir + "/selfEnergies");
   if (!selfEnergyFile.is_open()) {  // next, try default location
     std::string rdbase = getenv("RDBASE");
@@ -76,8 +76,8 @@ ANIAtomContrib::ANIAtomContrib(ForceField *owner, VectorXi &speciesVec,
     this->d_selfEnergies.push_back(E);
   }
   selfEnergyFile.close();
-  n_elements = elements_by_index.size();
-  n_features =
+  int n_elements = elements_by_index.size();
+  d_aev_size =
       n_elements * ((n_elements - 1) / 2.0 + 1) * len_A_Rs * len_A_thetas +
       n_elements * len_R_Rs;
 
@@ -96,7 +96,6 @@ ANIAtomContrib::ANIAtomContrib(ForceField *owner, VectorXi &speciesVec,
   // load parameters by model number in ensemble, by element, and by layer
   int model_i = 0;
   while (true) {
-    // get ensembleSize by counting files in param dir
     std::string paramFile =
         paramDir + "/model" + std::to_string(model_i) + ".bin";
     std::vector<MatrixXf> data;
@@ -129,7 +128,7 @@ ANIAtomContrib::ANIAtomContrib(ForceField *owner, VectorXi &speciesVec,
         int n_biases = data[element_i * n_layers * 2 + i + 1].size();
         PRECONDITION(n_weights % n_biases == 0, std::to_string(n_weights) + " % " + std::to_string(n_biases))
         if(i == 0) {
-          PRECONDITION(n_weights / n_biases == n_features, "Bad weights: " + std::to_string(n_weights / n_biases))
+          PRECONDITION(n_weights / n_biases == d_aev_size, "Bad weights: " + std::to_string(n_weights / n_biases))
         } else {
           int old_n_biases = data[element_i * n_layers * 2 + (i-2) + 1].size();
           PRECONDITION(n_weights == n_biases * old_n_biases, std::to_string(n_weights) + " = " + std::to_string(n_biases) + " * " + std::to_string(old_n_biases))
@@ -138,8 +137,7 @@ ANIAtomContrib::ANIAtomContrib(ForceField *owner, VectorXi &speciesVec,
     }
     model_i++;
   }
-  this->d_ensembleSize = model_i;
-  PRECONDITION(this->d_ensembleSize, "No ANI model files found in " + paramDir)
+  PRECONDITION(this->d_weights.size(), "No ANI model files found in " + paramDir)
 
   /*
   TODO: load AEV metaparameters from files?
@@ -204,13 +202,13 @@ void ANIAtomContrib::forwardPropOneAtom(MatrixXd &layer_values,
 double ANIAtomContrib::forwardProp(MatrixXd &aev) const {
   double E_total = 0.0;
   int n_layers = this->d_weights[0][0].size();  // note, assumes fixed n_layers
-  MatrixXd layer_values = MatrixXd::Zero(n_layers * 2, n_features);
+  MatrixXd layer_values = MatrixXd::Zero(n_layers * 2, d_aev_size);
   // Run forward and backprop for each atom and each model
   // Save layer values from forward prop for use in backprop
   // Output: mean across ensemble of dE_dAEV
   for (int atom_i = 0; atom_i < this->d_atomTypes.size(); atom_i++) {
     auto element_i = this->d_atomTypes[atom_i];
-    for (int feature_i = 0; feature_i < n_features; feature_i++) {
+    for (int feature_i = 0; feature_i < d_aev_size; feature_i++) {
       // layer_0 = features
       layer_values(0, feature_i) = aev(atom_i, feature_i);
     }
@@ -234,9 +232,9 @@ void calcAEV(
     const double *pos,            // inputs: x y z. shape=(n_atoms,3).
     VectorXi const &atomTypes,    // type index for each atom, shape=(n_atoms)
     Eigen::MatrixXd &out_buffer,  // output: forces dE/dxyz shape=(n_atoms,3)
-                                  // or AEVs, shape=(n_atoms,n_features)
+                                  // or AEVs, shape=(n_atoms,d_aev_size)
     Eigen::MatrixXd const &dE_dAEV,  // Input dE/AEV_i, needed to make dE/dx.
-                                     // shape=(n_atoms,n_features).
+                                     // shape=(n_atoms,d_aev_size).
     const bool output_grad,  // whether to fill out_buffer with AEVs or dE/dx
     const int n_elements     // number of allowed elements (H, C, N, O, etc)
 ) {
@@ -300,11 +298,9 @@ void calcAEV(
         int element1 = std::min(atomTypes(i1), atomTypes(i2));
         int element2 = std::max(atomTypes(i1), atomTypes(i2));
         int element_slot =
-            (n_elements * (n_elements - 1) / 2 -
-             (n_elements - element1) * (n_elements - element1 - 1) / 2 +
-             element2) *
-                len_A_Rs * len_A_thetas +
-            n_elements * len_R_Rs;
+            (n_elements * (n_elements - 1) / 2.0 -
+             (n_elements - element1) * (n_elements - element1 - 1) / 2.0 +
+             element2) * len_A_Rs * len_A_thetas + n_elements * len_R_Rs;
         for (int A_i = 0; A_i < len_A_thetas; A_i++) {
           double cos_A_theta = cos(A_thetas[A_i]);
           double sin_A_theta = sin(A_thetas[A_i]);
@@ -400,9 +396,9 @@ void calcAEV(
 }
 
 double ANIAtomContrib::getEnergy(double *pos) const {
-  MatrixXd aev = MatrixXd::Zero(this->d_atomTypes.size(), n_features);
+  MatrixXd aev = MatrixXd::Zero(this->d_atomTypes.size(), d_aev_size);
   MatrixXd dummy;
-  calcAEV(pos, this->d_atomTypes, aev, dummy, false, n_elements);
+  calcAEV(pos, this->d_atomTypes, aev, dummy, false, this->d_selfEnergies.size());
   double E_pred = this->ANIAtomContrib::forwardProp(aev);
   for (int atom_i = 0; atom_i < this->d_atomTypes.size(); atom_i++) {
     E_pred += this->d_selfEnergies[this->d_atomTypes[atom_i]];
@@ -411,23 +407,23 @@ double ANIAtomContrib::getEnergy(double *pos) const {
 }
 
 void ANIAtomContrib::getGrad(double *pos, double *grad) const {
-  MatrixXd aev = MatrixXd::Zero(this->d_atomTypes.size(), n_features);
+  MatrixXd aev = MatrixXd::Zero(this->d_atomTypes.size(), d_aev_size);
   MatrixXd dummy;
-  calcAEV(pos, this->d_atomTypes, aev, dummy, false, n_elements);
+  calcAEV(pos, this->d_atomTypes, aev, dummy, false, this->d_selfEnergies.size());
   // iterate across all atoms, running each AEV row individually
   // (note: might be faster to sort by element and run in blocks)
-  // dE_dAEV size = (n_atoms, n_features), same size as AEV
-  MatrixXd dE_dAEV = MatrixXd::Zero(this->d_atomTypes.size(), n_features);
+  // dE_dAEV size = (n_atoms, d_aev_size), same size as AEV
+  MatrixXd dE_dAEV = MatrixXd::Zero(this->d_atomTypes.size(), d_aev_size);
   int n_layers = this->d_weights[0][0].size();  // note, assumes fixed n_layers
-  MatrixXd layer_values = MatrixXd::Zero(n_layers * 2, n_features);
-  VectorXd grad_in = VectorXd::Zero(n_features);
-  VectorXd grad_out = VectorXd::Zero(n_features);
+  MatrixXd layer_values = MatrixXd::Zero(n_layers * 2, d_aev_size);
+  VectorXd grad_in = VectorXd::Zero(d_aev_size);
+  VectorXd grad_out = VectorXd::Zero(d_aev_size);
   // Run forward and backprop for each atom and each model
   // Save layer values from forward prop for use in backprop
   // Output: mean across ensemble of dE_dAEV
   for (int atom_i = 0; atom_i < this->d_atomTypes.size(); atom_i++) {
     auto element_i = this->d_atomTypes[atom_i];
-    for (int feature_i = 0; feature_i < n_features; feature_i++) {
+    for (int feature_i = 0; feature_i < d_aev_size; feature_i++) {
       // layer_0 = features
       layer_values(0, feature_i) = aev(atom_i, feature_i);
     }
@@ -460,7 +456,7 @@ void ANIAtomContrib::getGrad(double *pos, double *grad) const {
         }
       }
       // assemble mean dE_dAEV
-      for (int feature_i = 0; feature_i < n_features; feature_i++) {
+      for (int feature_i = 0; feature_i < d_aev_size; feature_i++) {
         dE_dAEV(atom_i, feature_i) +=
             grad_out(feature_i) / this->d_weights.size();
       }
@@ -471,7 +467,7 @@ void ANIAtomContrib::getGrad(double *pos, double *grad) const {
   // Multiplies dE_dAEV by sparse Jacobian dAEV_i/dx_j
   //   and returns result without putting the Jacobian in memory.
   MatrixXd grad_buffer = MatrixXd::Zero(this->d_atomTypes.size(), 3);  // output
-  calcAEV(pos, this->d_atomTypes, grad_buffer, dE_dAEV, true, n_elements);
+  calcAEV(pos, this->d_atomTypes, grad_buffer, dE_dAEV, true, this->d_selfEnergies.size());
   // copy from buffer back into float* for output
   for (int atom_i = 0; atom_i < this->d_atomTypes.size(); atom_i++) {
     grad[3 * atom_i] = grad_buffer(atom_i, 0);

@@ -55,14 +55,11 @@ class RDKIT_FORCEFIELD_EXPORT ANIAtomContrib : public ForceFieldContrib {
   virtual ANIAtomContrib *copy() const { return new ANIAtomContrib(*this); };
 
  private:
-  int n_elements, n_features;
+  int d_aev_size; // AEV size, scales as n_elements^2
   // nested lists of parameters, in order: <ensemble<element<network>>>
   std::vector<std::vector<std::vector<MatrixXd>>> d_weights;
   std::vector<std::vector<std::vector<MatrixXd>>> d_biases;
   std::vector<double> d_selfEnergies;  // in element order
-  unsigned int d_ensembleSize;         // number of models averaged together
-  std::string d_modelType;             // name of the model, such as "ANI-1x"
-  std::string paramDir;                // dir from which params are loaded
   VectorXi d_atomTypes;  // atom type for each atom (this, along with
                          // double *pos, represents the input molecule)
 };

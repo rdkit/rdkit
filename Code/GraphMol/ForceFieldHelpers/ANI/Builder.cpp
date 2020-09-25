@@ -21,7 +21,6 @@ namespace Tools {
 void addANIContribs(const ROMol &mol, ForceFields::ForceField *field,
                     std::string model, int confId) {
   PRECONDITION(field, "bad ForceField");
-  auto conf = mol.getConformer(confId);
   // get atomic number for each atom (speciesVec)
   auto numAtoms = mol.getNumAtoms();
   VectorXi speciesVec(numAtoms);
