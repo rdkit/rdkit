@@ -592,7 +592,7 @@ std::vector<std::pair<std::string, std::string>> canonTautomerData{
     {"CNC(C)=O", "CNC(C)=O"},
     {"S=C(N)N", "NC(N)=S"},
     {"SC(N)=N", "NC(N)=S"},
-    {"N=c1[nH]ccn(C)1", "Cn1cc[nH]c1=N"},
+    {"N=c1[nH]ccn(C)1", "Cn1ccnc1N"},
     {"CN=c1[nH]cncc1", "CNc1ccncn1"},
     {"Oc1cccc2ccncc12", "Oc1cccc2ccncc12"},
     {"O=c1cccc2cc[nH]cc1-2", "Oc1cccc2ccncc12"},
@@ -1330,6 +1330,30 @@ void testTautomerEnumeratorResult_const_iterator() {
   }
 }
 
+void testGithub3430() {
+  BOOST_LOG(rdInfoLog) << "-----------------------\n testGithub3430"
+                       << std::endl;
+  // The "guanidine terminal=N" rule should not apply to aromatic C
+  // as this balances the "aromatic C = exocyclic N" rule with no net
+  // effect on the score
+  std::vector<ROMOL_SPTR> mols{"Cc1ccc(NC(=O)N=c2[nH]c(C)cn2C)nc1"_smiles,
+                               "CCCCC(=O)N=c1nc(C)c2ncn(C)c2[nH]1"_smiles,
+                               "c12ccccc1[nH]c(=N)[nH]2"_smiles};
+  for (auto mol : mols) {
+    TEST_ASSERT(mol);
+    TautomerEnumerator te;
+    auto res = te.enumerate(*mol);
+    std::vector<int> scores;
+    scores.reserve(res.size());
+    std::transform(res.begin(), res.end(), std::back_inserter(scores),
+                   [](const ROMOL_SPTR &m) {
+                     return TautomerScoringFunctions::scoreTautomer(*m);
+                   });
+    std::sort(scores.begin(), scores.end(), std::greater<int>());
+    TEST_ASSERT(scores[1] < scores[0]);
+  }
+}
+
 int main() {
   RDLog::InitLogs();
 #if 1
@@ -1346,5 +1370,6 @@ int main() {
   testGithub2990();
   testPickCanonicalCIPChangeOnChiralCenter();
   testTautomerEnumeratorResult_const_iterator();
+  testGithub3430();
   return 0;
 }
