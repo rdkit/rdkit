@@ -23,7 +23,7 @@ struct RGroupDecompData {
   // matches[mol_idx] == vector of potential matches
   std::map<int, RCore> cores;
   std::map<std::string, int> newCores;  // new "cores" found along the way
-  int newCoreLabel;
+  int newCoreLabel = EMPTY_CORE_LABEL;
   RGroupDecompositionParameters params;
 
   std::vector<std::vector<RGroupMatch>> matches;
@@ -37,20 +37,14 @@ struct RGroupDecompData {
 
   RGroupDecompData(const RWMol &inputCore,
                    RGroupDecompositionParameters inputParams)
-      : cores(),
-        newCores(),
-        newCoreLabel(EMPTY_CORE_LABEL),
-        params(std::move(inputParams)) {
+      : params(std::move(inputParams)) {
     cores[0] = RCore(inputCore);
     prepareCores();
   }
 
   RGroupDecompData(const std::vector<ROMOL_SPTR> &inputCores,
                    RGroupDecompositionParameters inputParams)
-      : cores(),
-        newCores(),
-        newCoreLabel(EMPTY_CORE_LABEL),
-        params(std::move(inputParams)) {
+      : params(std::move(inputParams)) {
     for (size_t i = 0; i < inputCores.size(); ++i) {
       cores[i] = RCore(*inputCores[i]);
     }
