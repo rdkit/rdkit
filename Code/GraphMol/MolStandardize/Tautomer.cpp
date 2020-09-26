@@ -115,7 +115,7 @@ int scoreSubstructs(const ROMol &mol) {
       {"C=hetero", "[C]=[!#1;!#6]", 1},
       {"aromatic C = exocyclic N", "[c]=!@[N]", -1},
       {"methyl", "[CX4H3]", 1},
-      {"guanidine terminal=N", "[#7][#6](=[NR0])[#7H0]", 1},
+      {"guanidine terminal=N", "[#7]C(=[NR0])[#7H0]", 1},
       {"guanidine endocyclic=N", "[#7;R][#6;R]([N])=[#7;R]", 2},
       {"aci-nitro", "[#6]=[N+]([O-])[OH]", -4}};
   int score = 0;
@@ -131,7 +131,7 @@ int scoreSubstructs(const ROMol &mol) {
     //   std::cerr << " " << matches.size() << " matches to " << term.name
     //             << std::endl;
     // }
-    score += matches.size() * term.score;
+    score += static_cast<int>(matches.size()) * term.score;
   }
   return score;
 }
