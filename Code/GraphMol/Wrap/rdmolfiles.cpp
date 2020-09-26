@@ -451,6 +451,45 @@ python::object addMolToPNGStringHelper(const ROMol &mol, python::object png,
   return retval;
 }
 
+python::object addMetadataToPNGFileHelper(python::dict pymetadata, python::object fname) {
+  std::string cstr = python::extract<std::string>(fname);
+
+  std::vector<std::pair<std::string, std::string>> metadata;
+  for (unsigned int i = 0;
+       i < python::extract<unsigned int>(pymetadata.keys().attr("__len__")());
+       ++i) {
+    std::string key = python::extract<std::string>(pymetadata.keys()[i]); 
+    std::string val = python::extract<std::string>(pymetadata.values()[i]);
+    metadata.push_back(std::make_pair(key,val));
+  }
+
+  auto res = addMetadataToPNGFile(cstr, metadata);
+
+  python::object retval = python::object(
+      python::handle<>(PyBytes_FromStringAndSize(res.c_str(), res.length())));
+  return retval;
+}
+
+python::object addMetadataToPNGStringHelper(python::dict pymetadata, python::object png) {
+  std::string cstr = python::extract<std::string>(png);
+
+  std::vector<std::pair<std::string, std::string>> metadata;
+  for (unsigned int i = 0;
+       i < python::extract<unsigned int>(pymetadata.keys().attr("__len__")());
+       ++i) {
+    std::string key = python::extract<std::string>(pymetadata.keys()[i]); 
+    std::string val = python::extract<std::string>(pymetadata.values()[i]);
+    metadata.push_back(std::make_pair(key,val));
+  }
+
+  auto res = addMetadataToPNGString(cstr, metadata);
+
+  python::object retval = python::object(
+      python::handle<>(PyBytes_FromStringAndSize(res.c_str(), res.length())));
+  return retval;
+}
+
+
 python::object MolsFromPNGFile(const char *filename, const std::string &tag,
                                python::object pyParams) {
   SmilesParserParams params;
@@ -491,6 +530,28 @@ python::tuple MolsFromPNGString(python::object png, const std::string &tag,
   }
   return python::tuple(res);
 }
+
+python::dict MetadataFromPNGFile(python::object fname){
+  std::string cstr = python::extract<std::string>(fname);
+  auto metadata = PNGFileToMetadata(cstr);
+  python::dict res;
+  for(const auto &pr : metadata ){
+    res[pr.first] =pr.second;
+  }
+  return res;
+}
+
+python::dict MetadataFromPNGString(python::object png){
+  std::string cstr = python::extract<std::string>(png);
+  auto metadata = PNGStringToMetadata(cstr);
+  python::dict res;
+  for(const auto &pr : metadata ){
+    res[pr.first] =pr.second;
+  }
+  return res;
+}
+
+
 
 }  // namespace RDKit
 
@@ -1594,7 +1655,7 @@ BOOST_PYTHON_MODULE(rdmolfiles) {
               "returns a tuple of molecules constructed from the PNG file");
 
   docString =
-      R"DOC(Writes molecular metadata to a PNG file.
+      R"DOC(Adds molecular metadata to PNG data read from a file.
 
      ARGUMENTS:
 
@@ -1609,7 +1670,7 @@ BOOST_PYTHON_MODULE(rdmolfiles) {
        - includeMol: include CTAB (Mol) in the output
 
      RETURNS:
-       a Mol object, None on failure.)DOC";
+       the updated PNG data)DOC";
   python::def(
       "MolMetadataToPNGFile", addMolToPNGFileHelper,
       (python::arg("mol"), python::arg("filename"),
@@ -1633,12 +1694,58 @@ BOOST_PYTHON_MODULE(rdmolfiles) {
        - includeMol: include CTAB (Mol) in the output
 
      RETURNS:
-       a Mol object, None on failure.)DOC";
+       the updated PNG data)DOC";
   python::def(
       "MolMetadataToPNGString", addMolToPNGStringHelper,
       (python::arg("mol"), python::arg("png"), python::arg("includePkl") = true,
        python::arg("includeSmiles") = true, python::arg("includeMol") = false),
       docString.c_str());
+
+  docString =
+      R"DOC(Adds metadata to PNG data read from a file.
+
+     ARGUMENTS:
+
+       - metadata: dict with the metadata to be written 
+                   (keys and values should be strings)
+
+       - filename: the PNG filename
+
+     RETURNS:
+       a string with the updated PNG data)DOC";
+  python::def(
+      "AddMetadataToPNGFile", addMetadataToPNGFileHelper,
+      (python::arg("metadata"), python::arg("filename")),
+      docString.c_str());
+
+  docString =
+      R"DOC(Adds metadata to a PNG string.
+
+     ARGUMENTS:
+
+       - metadata: dict with the metadata to be written 
+                   (keys and values should be strings)
+
+       - png: the PNG string
+
+     RETURNS:
+       a string with the updated PNG data)DOC";
+  python::def(
+      "AddMetadataToPNGString", addMetadataToPNGStringHelper,
+      (python::arg("metadata"), python::arg("png")),
+      docString.c_str());
+
+  python::def(
+      "MetadataFromPNGFile", MetadataFromPNGFile,
+      (python::arg("filename")),
+      "Returns a dict with all metadata from the PNG file");
+
+  python::def(
+      "MetadataFromPNGString", MetadataFromPNGString,
+      (python::arg("png")),
+      "Returns a dict with all metadata from the PNG string");
+
+
 
 /********************************************************
  * MolSupplier stuff
