@@ -910,7 +910,16 @@ void testEnumerateDetails() {
     boost::dynamic_bitset<> atomsModified(mol->getNumAtoms());
     boost::dynamic_bitset<> bondsModified(mol->getNumBonds());
 
+#if defined(_MSC_VER)
+#pragma warning(suppress : 4996)
+#elif defined (__GNUC__)
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wdeprecated-declarations"
+#endif
     auto tauts = te.enumerate(*mol, &atomsModified, &bondsModified);
+#if defined (__GNUC__)
+#pragma GCC diagnostic pop
+#endif
     TEST_ASSERT(tauts.size() == 2);
     TEST_ASSERT(atomsModified.count() == 2);
     TEST_ASSERT(bondsModified.count() == 7);
