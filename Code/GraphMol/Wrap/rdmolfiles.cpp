@@ -531,24 +531,31 @@ python::tuple MolsFromPNGString(python::object png, const std::string &tag,
   return python::tuple(res);
 }
 
+namespace {
+python::dict translateMetadata(const std::vector<std::pair<std::string,std::string>> &metadata){
+  python::dict res;
+  for(const auto &pr : metadata ){
+    // keys are safe to extract:
+    std::string key = pr.first;
+    // but values may include binary, so we convert them directly to bytes:
+    python::object val = python::object(
+        python::handle<>(PyBytes_FromStringAndSize(pr.second.c_str(), pr.second.length())));
+    res[key] = val;
+  }
+  return res;
+}
+
+}
 python::dict MetadataFromPNGFile(python::object fname){
   std::string cstr = python::extract<std::string>(fname);
   auto metadata = PNGFileToMetadata(cstr);
-  python::dict res;
-  for(const auto &pr : metadata ){
-    res[pr.first] =pr.second;
-  }
-  return res;
+  return translateMetadata(metadata);
 }
 
 python::dict MetadataFromPNGString(python::object png){
   std::string cstr = python::extract<std::string>(png);
   auto metadata = PNGStringToMetadata(cstr);
-  python::dict res;
-  for(const auto &pr : metadata ){
-    res[pr.first] =pr.second;
-  }
-  return res;
+  return translateMetadata(metadata);
 }
 
 
@@ -1738,12 +1745,12 @@ BOOST_PYTHON_MODULE(rdmolfiles) {
   python::def(
       "MetadataFromPNGFile", MetadataFromPNGFile,
       (python::arg("filename")),
-      "Returns a dict with all metadata from the PNG file");
+      "Returns a dict with all metadata from the PNG file. Keys are strings, values are bytes.");
 
   python::def(
       "MetadataFromPNGString", MetadataFromPNGString,
       (python::arg("png")),
-      "Returns a dict with all metadata from the PNG string");
+      "Returns a dict with all metadata from the PNG string. Keys are strings, values are bytes.");
 
 
 
