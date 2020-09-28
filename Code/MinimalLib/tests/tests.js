@@ -82,11 +82,23 @@ function test_sketcher_services2(){
     assert(molb2.search(" H ")<0); 
 }
 
+
+function test_abbreviations(){
+    var bmol = Module.get_mol("C1CCC1C(F)(F)F");
+    assert.equal(bmol.is_valid(),1);
+    bmol.condense_abbreviations();
+    assert.equal(bmol.get_cxsmiles(),"FC(F)(F)C1CCC1");
+    bmol.condense_abbreviations(1.0,false);
+    assert.equal(bmol.get_cxsmiles(),"*C1CCC1 |$CF3;;;;$|");
+}
+
+
 Module.onRuntimeInitialized = () => {
     console.log(Module.version());
     test_basics();
     test_sketcher_services();
     test_sketcher_services2();
+    test_abbreviations();
     console.log("Tests finished successfully");
 };
 

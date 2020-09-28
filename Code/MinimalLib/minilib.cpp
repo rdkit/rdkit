@@ -27,6 +27,7 @@
 #include <GraphMol/Fingerprints/MorganFingerprints.h>
 #include <GraphMol/Depictor/RDDepictor.h>
 #include <GraphMol/CIPLabeler/CIPLabeler.h>
+#include <GraphMol/Abbreviations/Abbreviations.h>
 #include <DataStructs/BitOps.h>
 
 #include <INCHI-API/inchi.h>
@@ -105,7 +106,7 @@ std::string process_details(const std::string &details, unsigned int &width,
 }
 
 namespace {
-ROMol *mol_from_input(const std::string &input) {
+RWMol *mol_from_input(const std::string &input) {
   RWMol *res = nullptr;
   if (input.find("M  END") != std::string::npos) {
     bool sanitize = false;
@@ -127,7 +128,7 @@ ROMol *mol_from_input(const std::string &input) {
   return res;
 }
 
-ROMol *qmol_from_input(const std::string &input) {
+RWMol *qmol_from_input(const std::string &input) {
   RWMol *res = nullptr;
   if (input.find("M  END") != std::string::npos) {
     bool sanitize = false;
@@ -169,6 +170,10 @@ std::string JSMol::get_smiles() const {
   if (!d_mol) return "";
   return MolToSmiles(*d_mol);
 }
+std::string JSMol::get_cxsmiles() const {
+  if (!d_mol) return "";
+  return MolToCXSmiles(*d_mol);
+}
 std::string JSMol::get_svg(unsigned int w, unsigned int h) const {
   if (!d_mol) return "";
   return svg_(*d_mol, w, h);
@@ -189,6 +194,10 @@ std::string JSMol::get_inchi() const {
 std::string JSMol::get_molblock() const {
   if (!d_mol) return "";
   return MolToMolBlock(*d_mol);
+}
+std::string JSMol::get_v3Kmolblock() const {
+  if (!d_mol) return "";
+  return MolToV3KMolBlock(*d_mol);
 }
 
 namespace {
@@ -413,17 +422,49 @@ std::string JSMol::add_hs() const {
   return MolToMolBlock(molCopy, includeStereo, confId, kekulize);
 }
 
+std::string JSMol::condense_abbreviations(double maxCoverage, bool useLinkers) {
+  if (!d_mol) return "";
+  if (!useLinkers) {
+    Abbreviations::condenseMolAbbreviations(
+        *d_mol, Abbreviations::Utils::getDefaultAbbreviations(), maxCoverage);
+  } else {
+    Abbreviations::condenseMolAbbreviations(
+        *d_mol, Abbreviations::Utils::getDefaultLinkers(), maxCoverage);
+  }
+  return "";
+}
+
+std::string JSMol::condense_abbreviations_from_defs(
+    const std::string &definitions, double maxCoverage, bool areLinkers) {
+  static std::string lastDefs = "";
+  static std::vector<Abbreviations::AbbreviationDefinition> abbrevs;
+  if (definitions != lastDefs) {
+    // yes, we are making the assumption that the "areLinkers" argument remains
+    // the same if the definitions are the same
+    bool removeExtraDummies = areLinkers;
+    bool allowConnectionToDummies = areLinkers;
+    lastDefs = definitions;
+    try {
+      abbrevs = Abbreviations::Utils::parseAbbreviations(
+          definitions, removeExtraDummies, allowConnectionToDummies);
+    } catch (...) {
+      return "cannot parse abbreviations";
+    }
+  }
+  Abbreviations::condenseMolAbbreviations(*d_mol, abbrevs, maxCoverage);
+}
+
 std::string get_inchikey_for_inchi(const std::string &input) {
   return InchiToInchiKey(input);
 }
 
 JSMol *get_mol(const std::string &input) {
-  ROMol *mol = mol_from_input(input);
+  RWMol *mol = mol_from_input(input);
   return new JSMol(mol);
 }
 
 JSMol *get_qmol(const std::string &input) {
-  ROMol *mol = qmol_from_input(input);
+  RWMol *mol = qmol_from_input(input);
   return new JSMol(mol);
 }
 

@@ -222,6 +222,10 @@ RDKIT_RDGENERAL_EXPORT extern const std::string
     _TriposAtomType;  // string Mol2FileParser
 // missing defs for _TriposAtomName//_TriposPartialCharge...
 
+// molecule drawing
+RDKIT_RDGENERAL_EXPORT extern const std::string _displayLabel;   // string
+RDKIT_RDGENERAL_EXPORT extern const std::string _displayLabelW;  // string
+
 ///////////////////////////////////////////////////////////////
 // misc props
 RDKIT_RDGENERAL_EXPORT extern const std::string
