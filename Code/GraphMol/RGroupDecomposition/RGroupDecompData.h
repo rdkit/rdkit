@@ -10,6 +10,7 @@
 #ifndef RGROUP_DECOMP_DATA
 #define RGROUP_DECOMP_DATA
 
+#include "RGroupCore.h"
 #include "RGroupDecomp.h"
 #include "RGroupMatch.h"
 #include "RGroupScore.h"
@@ -20,9 +21,9 @@ namespace RDKit
 {
 struct RGroupDecompData {
   // matches[mol_idx] == vector of potential matches
-  std::map<int, RWMol> cores;
+  std::map<int, RCore> cores;
   std::map<std::string, int> newCores;  // new "cores" found along the way
-  int newCoreLabel;
+  int newCoreLabel = EMPTY_CORE_LABEL;
   RGroupDecompositionParameters params;
 
   std::vector<std::vector<RGroupMatch>> matches;
@@ -31,41 +32,35 @@ struct RGroupDecompData {
   std::map<int, std::vector<int>> userLabels;
 
   std::vector<int> processedRlabels;
-  std::map<int, boost::shared_ptr<RWMol>> labelledCores;
 
   std::map<int, int> finalRlabelMapping;
 
   RGroupDecompData(const RWMol &inputCore,
                    RGroupDecompositionParameters inputParams)
-      : cores(),
-        newCores(),
-        newCoreLabel(EMPTY_CORE_LABEL),
-        params(std::move(inputParams)) {
-    cores[0] = inputCore;
+      : params(std::move(inputParams)) {
+    cores[0] = RCore(inputCore);
     prepareCores();
   }
 
   RGroupDecompData(const std::vector<ROMOL_SPTR> &inputCores,
                    RGroupDecompositionParameters inputParams)
-      : cores(),
-        newCores(),
-        newCoreLabel(EMPTY_CORE_LABEL),
-        params(std::move(inputParams)) {
+      : params(std::move(inputParams)) {
     for (size_t i = 0; i < inputCores.size(); ++i) {
-      cores[i] = *inputCores[i].get();
+      cores[i] = RCore(*inputCores[i]);
     }
 
     prepareCores();
   }
 
   void prepareCores() {
-    size_t idx = 0;
-    for (auto coreIt = cores.begin(); coreIt != cores.end(); ++coreIt, ++idx) {
-      RWMol *alignCore = coreIt->first ? &cores[0] : nullptr;
-      CHECK_INVARIANT(params.prepareCore(coreIt->second, alignCore),
+    for (auto &core : cores) {
+      RWMol *alignCore = core.first ? cores[0].core.get() : nullptr;
+      CHECK_INVARIANT(params.prepareCore(*core.second.core, alignCore),
                       "Could not prepare at least one core");
-      labelledCores[coreIt->first] =
-          boost::shared_ptr<RWMol>(new RWMol(coreIt->second));
+      if (params.onlyMatchAtRGroups) {
+        core.second.findIndicesWithRLabel();
+      }
+      core.second.labelledCore.reset(new RWMol(*core.second.core));
     }
   }
 
@@ -122,7 +117,7 @@ struct RGroupDecompData {
         if (labelCores.find(core_idx) == labelCores.end()) {
           auto core = cores.find(core_idx);
           if (core != cores.end()) {
-            for (auto rlabels : getRlabels(core->second)) {
+            for (auto rlabels : getRlabels(*core->second.core)) {
               int rlabel = rlabels.first;
               labelCores[rlabel].insert(core_idx);
             }
@@ -365,12 +360,9 @@ struct RGroupDecompData {
     finalRlabelMapping.clear();
 
     UsedLabels used_labels;
-    for (std::map<int, RWMol>::const_iterator coreIt = cores.begin();
-         coreIt != cores.end(); ++coreIt) {
-      boost::shared_ptr<RWMol> labelledCore(new RWMol(coreIt->second));
-      labelledCores[coreIt->first] = labelledCore;
-
-      relabelCore(*labelledCore.get(), finalRlabelMapping, used_labels,
+    for (auto &core : cores) {
+      core.second.labelledCore.reset(new RWMol(*core.second.core));
+      relabelCore(*core.second.labelledCore, finalRlabelMapping, used_labels,
                   indexLabels, extraAtomRLabels);
     }
 
@@ -408,16 +400,13 @@ struct RGroupDecompData {
     }
     auto t0 = std::chrono::steady_clock::now();
     // Exhaustive search, get the MxN matrix
-    size_t M = matches.size();  // Number of molecules
+    // (M = matches.size(): number of molecules
+    //  N = iterator.maxPermutations)
     std::vector<size_t> permutations;
-    size_t N = 1;
 
-    for (size_t m = 0; m < M; ++m) {
-      size_t sz = matches[m].size();  // # permutations for molecule m
-      permutations.push_back(sz);
-      N *= sz;
-    }
-
+    std::transform(matches.begin(), matches.end(),
+                   std::back_inserter(permutations),
+                   [](const std::vector<RGroupMatch> &m) { return m.size(); });
     permutation = std::vector<size_t>(permutations.size(), 0);
 
     // run through all possible matches and score each
@@ -435,8 +424,8 @@ struct RGroupDecompData {
     //  [m1_permutation_idx,  m2_permutation_idx, m3_permutation_idx]
 
     while (iterator.next()) {
-      if (count > N) {
-        throw ValueErrorException("Next did not finish");
+      if (count > iterator.maxPermutations) {
+        throw ValueErrorException("next() did not finish");
       }
 #ifdef DEBUG
       std::cerr << "**************************************************"
@@ -457,7 +446,7 @@ struct RGroupDecompData {
         best_score = newscore;
         best_permutation = iterator.permutation;
       }
-      count++;
+      ++count;
     }
 
     if (ties.size() > 1) {

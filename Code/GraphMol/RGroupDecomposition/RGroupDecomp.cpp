@@ -83,31 +83,20 @@ int RGroupDecomposition::add(const ROMol &inmol) {
   MolOps::addHs(mol, explicitOnly, addCoords);
 
   int core_idx = 0;
-  const RWMol *core = nullptr;
+  const RCore *rcore = nullptr;
   std::vector<MatchVectType> tmatches;
 
   // Find the first matching core.
-  for (std::map<int, RWMol>::const_iterator coreIt = data->cores.begin();
-       coreIt != data->cores.end(); ++coreIt) {
+  for (const auto &core : data->cores) {
     {
       const bool uniquify = false;
       const bool recursionPossible = true;
       const bool useChirality = true;
-      SubstructMatch(mol, coreIt->second, tmatches, uniquify, recursionPossible,
-                     useChirality);
+      SubstructMatch(mol, *core.second.core, tmatches, uniquify,
+                     recursionPossible, useChirality);
     }
 
     if (data->params.onlyMatchAtRGroups) {
-      // First find all the core atoms that have user
-      //  label and but their indices into core_atoms_with_user_labels
-      std::set<int> core_atoms_with_user_labels;
-
-      for (auto atom : coreIt->second.atoms()) {
-        if (atom->hasProp(RLABEL)) {
-          core_atoms_with_user_labels.insert(atom->getIdx());
-        }
-      }
-
       std::vector<MatchVectType> tmatches_filtered;
       for (auto &mv : tmatches) {
         bool passes_filter = true;
@@ -119,8 +108,8 @@ int RGroupDecomposition::add(const ROMol &inmol) {
         for (auto &match : mv) {
           const Atom *atm = mol.getAtomWithIdx(match.second);
           // is this a labelled rgroup or not?
-          if (core_atoms_with_user_labels.find(match.first) ==
-              core_atoms_with_user_labels.end()) {
+          if (core.second.core_atoms_with_user_labels.find(match.first) ==
+              core.second.core_atoms_with_user_labels.end()) {
             // nope... if any neighbor is not part of the substructure
             //  make sure we are a hydrogen, otherwise, skip the match
             for (const auto &nbri :
@@ -159,13 +148,13 @@ int RGroupDecomposition::add(const ROMol &inmol) {
           }
         }
       }
-      core = &coreIt->second;
-      core_idx = coreIt->first;
+      rcore = &core.second;
+      core_idx = core.first;
       break;
     }
   }
 
-  if (core == nullptr) {
+  if (rcore == nullptr) {
     return -1;
   }
 
@@ -188,8 +177,8 @@ int RGroupDecomposition::add(const ROMol &inmol) {
       const bool replaceDummies = false;
       const bool labelByIndex = true;
       const bool requireDummyMatch = false;
-      tMol.reset(replaceCore(mol, *core, tmatche, replaceDummies, labelByIndex,
-                             requireDummyMatch));
+      tMol.reset(replaceCore(mol, *rcore->core, tmatche, replaceDummies,
+                             labelByIndex, requireDummyMatch));
     }
 
     if (tMol) {
@@ -203,20 +192,19 @@ int RGroupDecomposition::add(const ROMol &inmol) {
         newMol->setProp<int>("idx", size);
         newMol->setProp<int>("frag_idx", i);
 
-        for (ROMol::AtomIterator atIt = newMol->beginAtoms();
-             atIt != newMol->endAtoms(); ++atIt) {
-          Atom *tmp = *atIt;
-          unsigned int elno = tmp->getAtomicNum();
+        for (auto at : newMol->atoms()) {
+          unsigned int elno = at->getAtomicNum();
           if (elno == 0) {
             unsigned int index =
-                tmp->getIsotope();  // this is the index into the core
+                at->getIsotope();  // this is the index into the core
             // it messes up when there are multiple ?
             int rlabel;
-            if (core->getAtomWithIdx(index)->getPropIfPresent(RLABEL, rlabel)) {
+            if (rcore->core->getAtomWithIdx(index)->getPropIfPresent(RLABEL,
+                                                                     rlabel)) {
               std::vector<int> rlabelsOnSideChain;
-              tmp->getPropIfPresent(SIDECHAIN_RLABELS, rlabelsOnSideChain);
+              at->getPropIfPresent(SIDECHAIN_RLABELS, rlabelsOnSideChain);
               rlabelsOnSideChain.push_back(rlabel);
-              tmp->setProp(SIDECHAIN_RLABELS, rlabelsOnSideChain);
+              at->setProp(SIDECHAIN_RLABELS, rlabelsOnSideChain);
 
               data->labels.insert(rlabel);  // keep track of all labels used
               attachments.push_back(rlabel);
@@ -241,10 +229,9 @@ int RGroupDecomposition::add(const ROMol &inmol) {
             // remove the sidechains
             RWMol newCore(mol);
 
-            for (MatchVectType::const_iterator mvit = tmatche.begin();
-                 mvit != tmatche.end(); ++mvit) {
-              const Atom *coreAtm = core->getAtomWithIdx(mvit->first);
-              Atom *newCoreAtm = newCore.getAtomWithIdx(mvit->second);
+            for (const auto &mvpair : tmatche) {
+              const Atom *coreAtm = rcore->core->getAtomWithIdx(mvpair.first);
+              Atom *newCoreAtm = newCore.getAtomWithIdx(mvpair.second);
               int rlabel;
               if (coreAtm->getPropIfPresent(RLABEL, rlabel)) {
                 newCoreAtm->setProp<int>(RLABEL, rlabel);
@@ -265,7 +252,8 @@ int RGroupDecomposition::add(const ROMol &inmol) {
               int core_idx = 0;
               if (newcore == data->newCores.end()) {
                 core_idx = data->newCores[newCoreSmi] = data->newCoreLabel--;
-                data->cores[core_idx] = newCore;
+                data->cores[core_idx] =
+                    RCore(newCore, data->params.onlyMatchAtRGroups);
                 return add(inmol);
               }
             }
@@ -340,18 +328,16 @@ RGroupRows RGroupDecomposition::getRGroupsAsRows() const {
     // make a new rgroup entry
     groups.push_back(RGroupRow());
     RGroupRow &out_rgroups = groups.back();
-    out_rgroups["Core"] = data->labelledCores[it->core_idx];
+    out_rgroups["Core"] = data->cores[it->core_idx].labelledCore;
 
     R_DECOMP &in_rgroups = it->rgroups;
 
-    for (R_DECOMP::const_iterator rgroup = in_rgroups.begin();
-         rgroup != in_rgroups.end(); ++rgroup) {
-      std::map<int, int>::const_iterator realLabel =
-          data->finalRlabelMapping.find(rgroup->first);
+    for (const auto &rgroup : in_rgroups) {
+      const auto realLabel = data->finalRlabelMapping.find(rgroup.first);
       CHECK_INVARIANT(realLabel != data->finalRlabelMapping.end(),
                       "unprocessed rlabel, please call process() first.");
       out_rgroups[std::string("R") + std::to_string(realLabel->second)] =
-          rgroup->second->combinedMol;
+          rgroup.second->combinedMol;
     }
   }
   return groups;
@@ -373,15 +359,13 @@ RGroupColumns RGroupDecomposition::getRGroupsAsColumns() const {
   for (auto it = permutation.begin(); it != permutation.end(); ++it, ++molidx) {
     boost::dynamic_bitset<> Rs_seen(rgrp_pos_map.size());
     R_DECOMP &in_rgroups = it->rgroups;
-    groups["Core"].push_back(data->labelledCores[it->core_idx]);
+    groups["Core"].push_back(data->cores[it->core_idx].labelledCore);
 
-    for (R_DECOMP::const_iterator rgroup = in_rgroups.begin();
-         rgroup != in_rgroups.end(); ++rgroup) {
-      std::map<int, int>::const_iterator realLabel =
-          data->finalRlabelMapping.find(rgroup->first);
+    for (const auto &rgroup : in_rgroups) {
+      const auto realLabel = data->finalRlabelMapping.find(rgroup.first);
       CHECK_INVARIANT(realLabel != data->finalRlabelMapping.end(),
                       "unprocessed rlabel, please call process() first.");
-      CHECK_INVARIANT(rgroup->second->combinedMol->hasProp(done),
+      CHECK_INVARIANT(rgroup.second->combinedMol->hasProp(done),
                       "Not done! Call process()");
 
       Rs_seen.set(rgrp_pos_map[realLabel->second]);
@@ -390,7 +374,7 @@ RGroupColumns RGroupDecomposition::getRGroupsAsColumns() const {
       if (molidx && col.size() < (size_t)(molidx - 1)) {
         col.resize(molidx - 1);
       }
-      col.push_back(rgroup->second->combinedMol);
+      col.push_back(rgroup.second->combinedMol);
     }
     // add empty entries to columns where this molecule didn't appear
     for (const auto rpr : rgrp_pos_map) {
