@@ -129,7 +129,7 @@ void testChargeParent() {
   smi9 = "[N+](=O)([O-])[O-]";
   std::unique_ptr<RWMol> m9(SmilesToMol(smi9));
   std::unique_ptr<RWMol> res9(MolStandardize::chargeParent(*m9, params));
-  TEST_ASSERT(MolToSmiles(*res9) == "O=[N+]([O-])[O-]");
+  TEST_ASSERT(MolToSmiles(*res9) == "O=[N+]([O-])O");
 
   // TODO switch prefer_organic=true
   // No organic fragments.
@@ -137,13 +137,13 @@ void testChargeParent() {
   std::unique_ptr<RWMol> m10(SmilesToMol(smi10));
   std::unique_ptr<RWMol> res10(
       MolStandardize::chargeParent(*m10, params_preferorg));
-  TEST_ASSERT(MolToSmiles(*res10) == "O=[N+]([O-])[O-]");
+  TEST_ASSERT(MolToSmiles(*res10) == "O=[N+]([O-])O");
 
   // Larger inorganic fragment should be chosen.
   smi11 = "[N+](=O)([O-])[O-].[CH2]";
   std::unique_ptr<RWMol> m11(SmilesToMol(smi11));
   std::unique_ptr<RWMol> res11(MolStandardize::chargeParent(*m11, params));
-  TEST_ASSERT(MolToSmiles(*res11) == "O=[N+]([O-])[O-]");
+  TEST_ASSERT(MolToSmiles(*res11) == "O=[N+]([O-])O");
 
   // TODO prefer_organic=true
   // Smaller organic fragment should be chosen over larger inorganic fragment.
@@ -221,11 +221,143 @@ void testGithub2346() {
   BOOST_LOG(rdInfoLog) << "Finished" << std::endl;
 }
 
+void testChargedAromatics() {
+  BOOST_LOG(rdInfoLog)
+      << "-----------------------\n Testing charged aromatics: "
+         "need to sanitize after using uncharger"
+      << std::endl;
+
+  {
+    auto cyclopentadienyl = "[cH-]1cccc1"_smiles;
+    TEST_ASSERT(cyclopentadienyl);
+    MolStandardize::Uncharger uncharger;
+
+    std::unique_ptr<ROMol> res(uncharger.uncharge(*cyclopentadienyl));
+    TEST_ASSERT(res.get());
+    TEST_ASSERT(MolToSmiles(*res) == "c1cccc1");
+    MolOps::sanitizeMol(*static_cast<RWMol *>(res.get()));
+    TEST_ASSERT(MolToSmiles(*res) == "C1=CCC=C1");
+  }
+  {
+    auto tropylium = "[cH+]1cccccc1"_smiles;
+    TEST_ASSERT(tropylium);
+    MolStandardize::Uncharger uncharger;
+
+    std::unique_ptr<ROMol> res(uncharger.uncharge(*tropylium));
+    TEST_ASSERT(res.get());
+    TEST_ASSERT(MolToSmiles(*res) == "c1cccccc1");
+    MolOps::sanitizeMol(*static_cast<RWMol *>(res.get()));
+    TEST_ASSERT(MolToSmiles(*res) == "C1=CC=CCC=C1");
+  }
+  {
+    auto azolium = "[NH2+]1C=CC=C1"_smiles;
+    TEST_ASSERT(azolium);
+    MolStandardize::Uncharger uncharger;
+
+    std::unique_ptr<ROMol> res(uncharger.uncharge(*azolium));
+    TEST_ASSERT(res.get());
+    TEST_ASSERT(MolToSmiles(*res) == "C1=CNC=C1");
+    MolOps::sanitizeMol(*static_cast<RWMol *>(res.get()));
+    TEST_ASSERT(MolToSmiles(*res) == "c1cc[nH]c1");
+  }
+
+  BOOST_LOG(rdInfoLog) << "Finished" << std::endl;
+}
+
+void testInorganicAcids() {
+  BOOST_LOG(rdInfoLog) << "-----------------------\n Testing inorganic acids"
+                       << std::endl;
+  MolStandardize::Uncharger uncharger;
+  std::vector<std::string> halogens{"Cl", "Br", "I"};
+  std::unique_ptr<ROMol> res;
+  for (const auto &halogen : halogens) {
+    std::unique_ptr<ROMol> hypohalite(SmilesToMol("[" + halogen + "][O-]"));
+    TEST_ASSERT(hypohalite);
+    res.reset(uncharger.uncharge(*hypohalite));
+    TEST_ASSERT(MolToSmiles(*res) == "O" + halogen);
+    std::unique_ptr<ROMol> halite(SmilesToMol("[" + halogen + "](=O)[O-]"));
+    TEST_ASSERT(halite);
+    res.reset(uncharger.uncharge(*halite));
+    TEST_ASSERT(MolToSmiles(*res) == "[O-][" + halogen + "+]O");
+    std::unique_ptr<ROMol> halate(SmilesToMol("[" + halogen + "](=O)(=O)[O-]"));
+    TEST_ASSERT(halate);
+    res.reset(uncharger.uncharge(*halate));
+    TEST_ASSERT(MolToSmiles(*res) == "[O-][" + halogen + "+2]([O-])O");
+    std::unique_ptr<ROMol> perhalate(
+        SmilesToMol("[" + halogen + "](=O)(=O)(=O)[O-]"));
+    TEST_ASSERT(perhalate);
+    res.reset(uncharger.uncharge(*perhalate));
+    TEST_ASSERT(MolToSmiles(*res) == "[O-][" + halogen + "+3]([O-])([O-])O");
+  }
+  {
+    auto hyponitrite = "[O-]N=N[O-]"_smiles;
+    TEST_ASSERT(hyponitrite);
+    res.reset(uncharger.uncharge(*hyponitrite));
+    TEST_ASSERT(MolToSmiles(*res) == "ON=NO");
+  }
+  {
+    auto nitrite = "N(=O)[O-]"_smiles;
+    TEST_ASSERT(nitrite);
+    res.reset(uncharger.uncharge(*nitrite));
+    TEST_ASSERT(MolToSmiles(*res) == "O=NO");
+  }
+  {
+    auto nitrate = "N(=O)(=O)[O-]"_smiles;
+    TEST_ASSERT(nitrate);
+    res.reset(uncharger.uncharge(*nitrate));
+    TEST_ASSERT(MolToSmiles(*res) == "O=[N+]([O-])O");
+  }
+  {
+    auto hyposulfite = "S([O-])[O-]"_smiles;
+    TEST_ASSERT(hyposulfite);
+    res.reset(uncharger.uncharge(*hyposulfite));
+    TEST_ASSERT(MolToSmiles(*res) == "OSO");
+  }
+  {
+    auto sulfite = "S(=O)([O-])[O-]"_smiles;
+    TEST_ASSERT(sulfite);
+    res.reset(uncharger.uncharge(*sulfite));
+    TEST_ASSERT(MolToSmiles(*res) == "O=S(O)O");
+  }
+  {
+    auto sulfate = "S(=O)(=O)([O-])[O-]"_smiles;
+    TEST_ASSERT(sulfate);
+    res.reset(uncharger.uncharge(*sulfate));
+    TEST_ASSERT(MolToSmiles(*res) == "O=S(=O)(O)O");
+  }
+  {
+    auto persulfate = "S(=O)(=O)([O-])OOS(=O)(=O)[O-]"_smiles;
+    TEST_ASSERT(persulfate);
+    res.reset(uncharger.uncharge(*persulfate));
+    TEST_ASSERT(MolToSmiles(*res) == "O=S(=O)(O)OOS(=O)(=O)O");
+  }
+  {
+    auto hypophosphite = "P(=O)[O-]"_smiles;
+    TEST_ASSERT(hypophosphite);
+    res.reset(uncharger.uncharge(*hypophosphite));
+    TEST_ASSERT(MolToSmiles(*res) == "O=PO");
+  }
+  {
+    auto phosphite = "P(=O)([O-])[O-]"_smiles;
+    TEST_ASSERT(phosphite);
+    res.reset(uncharger.uncharge(*phosphite));
+    TEST_ASSERT(MolToSmiles(*res) == "O=[PH](O)O");
+  }
+  {
+    auto phosphate = "P(=O)([O-])([O-])[O-]"_smiles;
+    TEST_ASSERT(phosphate);
+    res.reset(uncharger.uncharge(*phosphate));
+    TEST_ASSERT(MolToSmiles(*res) == "O=P(O)(O)O");
+  }
+}
+
 int main() {
   RDLog::InitLogs();
   testReionizer();
   testChargeParent();
   testGithub2144();
   testGithub2346();
+  testChargedAromatics();
+  testInorganicAcids();
   return 0;
 }
