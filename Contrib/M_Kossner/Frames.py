@@ -34,7 +34,7 @@ def flatten(x):
     [1, 2, 3, 42, None, 4, 5, 6, 7, 8, 9, 10]"""
   result = []
   for el in x:
-    if hasattr(el, "__iter__") and not isinstance(el, basestring):
+    if hasattr(el, "__iter__") and not isinstance(el, str):
       result.extend(flatten(el))
     else:
       result.append(el)
