@@ -90,7 +90,9 @@ EMSCRIPTEN_BINDINGS(RDKit_minimal) {
   class_<JSMol>("Mol")
       .function("is_valid", &JSMol::is_valid)
       .function("get_smiles", &JSMol::get_smiles)
+      .function("get_cxsmiles", &JSMol::get_cxsmiles)
       .function("get_molblock", &JSMol::get_molblock)
+      .function("get_v3Kmolblock", &JSMol::get_v3Kmolblock)
       .function("get_inchi", &JSMol::get_inchi)
       .function("get_svg",
                 select_overload<std::string() const>(&JSMol::get_svg))
@@ -122,6 +124,11 @@ EMSCRIPTEN_BINDINGS(RDKit_minimal) {
                 select_overload<std::string() const>(&JSMol::get_new_coords))
       .function("get_new_coords", select_overload<std::string(bool) const>(
                                       &JSMol::get_new_coords))
+      .function("condense_abbreviations",
+                select_overload<std::string()>(&JSMol::condense_abbreviations))
+      .function("condense_abbreviations",
+                select_overload<std::string(double, bool)>(
+                    &JSMol::condense_abbreviations))
       .function("add_hs", &JSMol::add_hs)
       .function("remove_hs", &JSMol::remove_hs);
 

@@ -177,7 +177,7 @@ int RGroupDecomposition::add(const ROMol &inmol) {
       const bool replaceDummies = false;
       const bool labelByIndex = true;
       const bool requireDummyMatch = false;
-      tMol.reset(replaceCore(mol, *rcore->core, tmatch, replaceDummies,
+      tMol.reset(replaceCore(mol, *rcore->core, tmatche, replaceDummies,
                              labelByIndex, requireDummyMatch));
     }
 
@@ -229,7 +229,7 @@ int RGroupDecomposition::add(const ROMol &inmol) {
             // remove the sidechains
             RWMol newCore(mol);
 
-            for (const auto &mvpair : tmatch) {
+            for (const auto &mvpair : tmatche) {
               const Atom *coreAtm = rcore->core->getAtomWithIdx(mvpair.first);
               Atom *newCoreAtm = newCore.getAtomWithIdx(mvpair.second);
               int rlabel;

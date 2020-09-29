@@ -151,7 +151,7 @@ typedef std::vector<unsigned int> DashPattern;
 inline void assignDefaultPalette(ColourPalette &palette) {
   palette.clear();
   palette[-1] = DrawColour(0, 0, 0);
-  palette[0] = DrawColour(0.5, 0.5, 0.5);
+  palette[0] = DrawColour(0.1, 0.1, 0.1);
   palette[1] = palette[6] = DrawColour(0.0, 0.0, 0.0);
   palette[7] = DrawColour(0.0, 0.0, 1.0);
   palette[8] = DrawColour(1.0, 0.0, 0.0);
@@ -782,7 +782,7 @@ class RDKIT_MOLDRAW2D_EXPORT MolDraw2D {
   // adds LaTeX-like annotation for super- and sub-script.
   std::pair<std::string, OrientType> getAtomSymbolAndOrientation(
       const Atom &atom) const;
-  std::string getAtomSymbol(const Atom &atom) const;
+  std::string getAtomSymbol(const Atom &atom, OrientType orientation) const;
   OrientType getAtomOrientation(const Atom &atom) const;
 
   // things used by calculateScale.

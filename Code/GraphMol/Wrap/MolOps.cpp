@@ -1072,6 +1072,12 @@ struct molops_wrapper {
         .def_readwrite("removeIsotopes",
                        &MolOps::RemoveHsParameters::removeIsotopes,
                        "hydrogens with non-default isotopes")
+        .def_readwrite("removeAndTrackIsotopes",
+                       &MolOps::RemoveHsParameters::removeAndTrackIsotopes,
+                       "hydrogens with non-default isotopes and store "
+                       "them in the _isotopicHs atom property such "
+                       "that AddHs() can add the same isotope at "
+                       "a later stage")
         .def_readwrite("removeDummyNeighbors",
                        &MolOps::RemoveHsParameters::removeDummyNeighbors,
                        "hydrogens with at least one dummy-atom neighbor")

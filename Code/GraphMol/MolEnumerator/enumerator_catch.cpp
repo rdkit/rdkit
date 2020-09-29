@@ -134,6 +134,10 @@ M  END
         new MolEnumerator::PositionVariationOp());
     auto bundle = MolEnumerator::enumerate(*mol1, ps);
     CHECK(bundle.size() == 3);
+
+    CHECK(bundle.getMols()[0]->getAtomWithIdx(0)->getDegree()==3);
+    CHECK(bundle.getMols()[0]->getAtomWithIdx(0)->getImplicitValence()==0);    
+
     std::vector<std::string> tsmis = {"COc1ccncc1", "COc1ccccn1", "COc1cccnc1"};
     std::vector<std::string> smis;
     for (const auto molp : bundle.getMols()) {

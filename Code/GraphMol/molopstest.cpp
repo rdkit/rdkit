@@ -7655,6 +7655,302 @@ void testGithub1990() {
   }
   BOOST_LOG(rdInfoLog) << "Finished" << std::endl;
 }
+
+void testRemoveAndTrackIsotopes() {
+  BOOST_LOG(rdInfoLog)
+      << "-----------------------\n Testing removeAndTrackIsotopes parameter. "
+      << std::endl;
+  struct IsotopicHsCount {
+    IsotopicHsCount(const ROMol &mol) {
+      for (auto b : mol.bonds()) {
+        const auto ba = b->getBeginAtom();
+        const auto ea = b->getEndAtom();
+        if (ba->getAtomicNum() == 1 && ba->getIsotope()) {
+          ++d_map[ea->getIdx()];
+        } else if (ea->getAtomicNum() == 1 && ea->getIsotope()) {
+          ++d_map[ba->getIdx()];
+        }
+      }
+    }
+    // get the number of isotopic Hs attached to atom idx
+    unsigned int at(unsigned int idx) {
+      auto it = d_map.find(idx);
+      return (it == d_map.end() ? 0 : it->second);
+    }
+    // count total number of isotopes in the molecule
+    unsigned int total() {
+      return std::accumulate(
+          d_map.begin(), d_map.end(), 0U,
+          [](unsigned int s, const std::pair<unsigned int, unsigned int> &p) {
+            return s + p.second;
+          });
+    }
+    static void countExplicitImplicitHs(const ROMol &m, unsigned int &expl,
+                                        unsigned int &impl) {
+      expl = 0;
+      impl = 0;
+      for (auto a : m.atoms()) {
+        expl += a->getNumExplicitHs();
+        impl += a->getNumImplicitHs();
+      }
+    }
+    std::map<unsigned int, unsigned int> d_map;
+  };
+  // CHEMBL2024142
+  auto m =
+      "[2H]C1=C(C(=C2C(=C1[2H])C(=O)C(=C(C2=O)C([2H])([2H])[2H])C/C=C(\\C)/CC([2H])([2H])/C=C(/CC/C=C(\\C)/CCC=C(C)C)\\C([2H])([2H])[2H])[2H])[2H]"_smiles;
+  TEST_ASSERT(m.get());
+  std::unique_ptr<IsotopicHsCount> m_isotopicHsPerHeavy(
+      new IsotopicHsCount(*m));
+  unsigned int m_numExplicitHs;
+  unsigned int m_numImplicitHs;
+  IsotopicHsCount::countExplicitImplicitHs(*m, m_numExplicitHs,
+                                           m_numImplicitHs);
+  TEST_ASSERT(m_numExplicitHs == 0);
+  TEST_ASSERT(m_numImplicitHs == 28);
+  TEST_ASSERT(m_isotopicHsPerHeavy->total() == 12);
+  MolOps::RemoveHsParameters ps;
+  ps.removeAndTrackIsotopes = true;
+  std::unique_ptr<ROMol> mNoH(removeHs(*static_cast<ROMol *>(m.get()), ps));
+  TEST_ASSERT(mNoH->getAtomWithIdx(0)->getAtomicNum() == 6);
+  TEST_ASSERT(mNoH->getAtomWithIdx(0)->hasProp(common_properties::_isotopicHs));
+  TEST_ASSERT(mNoH->getAtomWithIdx(0)->getProp<std::string>(
+                  common_properties::_isotopicHs) == "2");
+  TEST_ASSERT(mNoH->getAtomWithIdx(30)->getAtomicNum() == 6);
+  TEST_ASSERT(
+      !mNoH->getAtomWithIdx(30)->hasProp(common_properties::_isotopicHs));
+
+  IsotopicHsCount mNoH_isotopicHsPerHeavy(*mNoH);
+  unsigned int mNoH_numExplicitHs;
+  unsigned int mNoH_numImplicitHs;
+  IsotopicHsCount::countExplicitImplicitHs(*mNoH, mNoH_numExplicitHs,
+                                           mNoH_numImplicitHs);
+  TEST_ASSERT(mNoH_numExplicitHs == 0);
+  TEST_ASSERT(mNoH_numImplicitHs == 40);
+  TEST_ASSERT(mNoH_isotopicHsPerHeavy.total() == 0);
+  std::unique_ptr<ROMol> mH(MolOps::addHs(*mNoH));
+  std::unique_ptr<IsotopicHsCount> mH_isotopicHsPerHeavy(
+      new IsotopicHsCount(*mH));
+  unsigned int mH_numExplicitHs;
+  unsigned int mH_numImplicitHs;
+  IsotopicHsCount::countExplicitImplicitHs(*mH, mH_numExplicitHs,
+                                           mH_numImplicitHs);
+  TEST_ASSERT(mH_numExplicitHs == 0);
+  TEST_ASSERT(mH_numImplicitHs == 0);
+  MatchVectType match;
+  TEST_ASSERT(SubstructMatch(*mH, *m, match));
+  TEST_ASSERT(match.size() == m->getNumAtoms());
+  TEST_ASSERT(mH_isotopicHsPerHeavy->total() == 12);
+  std::unique_ptr<ROMol> mH2(MolOps::removeHs(*mH));
+  TEST_ASSERT(m->getNumAtoms() == mH2->getNumAtoms());
+  std::unique_ptr<IsotopicHsCount> mH2_isotopicHsPerHeavy(
+      new IsotopicHsCount(*mH2));
+  unsigned int mH2_numExplicitHs;
+  unsigned int mH2_numImplicitHs;
+  IsotopicHsCount::countExplicitImplicitHs(*mH2, mH2_numExplicitHs,
+                                           mH2_numImplicitHs);
+  MatchVectType matchH2;
+  TEST_ASSERT(SubstructMatch(*m, *mH2, matchH2));
+  TEST_ASSERT(matchH2.size() == m->getNumAtoms());
+  TEST_ASSERT(mH2_isotopicHsPerHeavy->total() == 12);
+  TEST_ASSERT(mH2_numExplicitHs == 28);
+  TEST_ASSERT(mH2_numImplicitHs == 0);
+  for (auto p : matchH2) {
+    TEST_ASSERT(mH2_isotopicHsPerHeavy->at(p.first) ==
+                m_isotopicHsPerHeavy->at(p.second));
+  }
+
+  // shuffle atoms before adding Hs; result should not change
+  std::vector<unsigned int> randomOrder(mNoH->getNumAtoms());
+  std::iota(randomOrder.begin(), randomOrder.end(), 0U);
+  std::random_shuffle(randomOrder.begin(), randomOrder.end());
+  std::unique_ptr<ROMol> mNoHRen(MolOps::renumberAtoms(*mNoH, randomOrder));
+  mH.reset(MolOps::addHs(*mNoHRen));
+  mH_isotopicHsPerHeavy.reset(new IsotopicHsCount(*mH));
+  IsotopicHsCount::countExplicitImplicitHs(*mH, mH_numExplicitHs,
+                                           mH_numImplicitHs);
+  TEST_ASSERT(mH_numExplicitHs == 0);
+  TEST_ASSERT(mH_numImplicitHs == 0);
+  MatchVectType matchRen;
+  TEST_ASSERT(SubstructMatch(*mH, *m, matchRen));
+  TEST_ASSERT(match != matchRen);
+  TEST_ASSERT(match.size() == matchRen.size());
+  TEST_ASSERT(mH_isotopicHsPerHeavy->total() == 12);
+  mH2.reset(MolOps::removeHs(*mH));
+  TEST_ASSERT(m->getNumAtoms() == mH2->getNumAtoms());
+  mH2_isotopicHsPerHeavy.reset(new IsotopicHsCount(*mH2));
+  IsotopicHsCount::countExplicitImplicitHs(*mH2, mH2_numExplicitHs,
+                                           mH2_numImplicitHs);
+  MatchVectType matchH2Ren;
+  TEST_ASSERT(SubstructMatch(*m, *mH2, matchH2Ren));
+  TEST_ASSERT(matchH2 != matchH2Ren);
+  TEST_ASSERT(matchH2.size() == matchH2Ren.size());
+  TEST_ASSERT(mH2_isotopicHsPerHeavy->total() == 12);
+  TEST_ASSERT(mH2_numExplicitHs == 28);
+  TEST_ASSERT(mH2_numImplicitHs == 0);
+  for (auto p : matchH2Ren) {
+    TEST_ASSERT(mH2_isotopicHsPerHeavy->at(p.first) ==
+                m_isotopicHsPerHeavy->at(p.second));
+  }
+
+  // Add isotopes incrementally only on some atoms at a time
+  // This should add 4 isotopes
+  UINT_VECT onlyOnAtoms{0, 12};
+  mH.reset(MolOps::addHs(*mNoH, false, false, &onlyOnAtoms));
+  mH_isotopicHsPerHeavy.reset(new IsotopicHsCount(*mH));
+  TEST_ASSERT(mH_isotopicHsPerHeavy->total() == 4);
+  TEST_ASSERT(mH_isotopicHsPerHeavy->at(0) == 1);
+  TEST_ASSERT(mH_isotopicHsPerHeavy->at(12) == 3);
+  // This should add 4 more isotopes
+  onlyOnAtoms = UINT_VECT{1, 2, 18};
+  mH.reset(MolOps::addHs(*mH, false, false, &onlyOnAtoms));
+  mH_isotopicHsPerHeavy.reset(new IsotopicHsCount(*mH));
+  TEST_ASSERT(mH_isotopicHsPerHeavy->total() == 8);
+  TEST_ASSERT(mH_isotopicHsPerHeavy->at(0) == 1);
+  TEST_ASSERT(mH_isotopicHsPerHeavy->at(1) == 1);
+  TEST_ASSERT(mH_isotopicHsPerHeavy->at(2) == 1);
+  TEST_ASSERT(mH_isotopicHsPerHeavy->at(12) == 3);
+  TEST_ASSERT(mH_isotopicHsPerHeavy->at(18) == 2);
+  // This should add the last 4 isotopes
+  onlyOnAtoms = UINT_VECT{5, 32};
+  mH.reset(MolOps::addHs(*mH, false, false, &onlyOnAtoms));
+  mH_isotopicHsPerHeavy.reset(new IsotopicHsCount(*mH));
+  TEST_ASSERT(mH_isotopicHsPerHeavy->total() == 12);
+  TEST_ASSERT(mH_isotopicHsPerHeavy->at(0) == 1);
+  TEST_ASSERT(mH_isotopicHsPerHeavy->at(1) == 1);
+  TEST_ASSERT(mH_isotopicHsPerHeavy->at(2) == 1);
+  TEST_ASSERT(mH_isotopicHsPerHeavy->at(5) == 1);
+  TEST_ASSERT(mH_isotopicHsPerHeavy->at(12) == 3);
+  TEST_ASSERT(mH_isotopicHsPerHeavy->at(18) == 2);
+  TEST_ASSERT(mH_isotopicHsPerHeavy->at(32) == 3);
+  match.clear();
+  TEST_ASSERT(SubstructMatch(*mH, *m, match));
+  TEST_ASSERT(match.size() == mH->getNumAtoms());
+  for (auto p : match) {
+    auto m_nIso = m_isotopicHsPerHeavy->at(p.first);
+    if (!m_nIso) {
+      continue;
+    }
+    auto mH_nIso = mH_isotopicHsPerHeavy->at(p.second);
+    TEST_ASSERT(m_nIso == mH_nIso);
+  }
+
+  // Check that chirality on centers which bear both non-isotopic
+  // and isotopic Hs is preserved after...
+  std::set<Atom::ChiralType> chiralTypeSet;
+  std::set<Atom::ChiralType> chiralTypeSetAfterAddHs;
+  std::set<Atom::ChiralType> chiralTypeSetAfterRemoveAllHsAddHs;
+  std::set<Atom::ChiralType> chiralTypeSetAfterRemoveAllHsAddHsRemoveHs;
+  for (unsigned int i : {0, 1}) {
+    unsigned int hIdx = i + 24;
+    std::string expectedCipCode(1, 'R' + i);
+    std::unique_ptr<ROMol> mChiral(new ROMol(*m));
+    mChiral->getAtomWithIdx(23)->setChiralTag(Atom::CHI_TETRAHEDRAL_CW);
+    mChiral->getAtomWithIdx(hIdx)->setIsotope(0);
+    MolOps::assignStereochemistry(*mChiral, true, true);
+    TEST_ASSERT(mChiral->getAtomWithIdx(23)->getProp<std::string>(
+                    common_properties::_CIPCode) == expectedCipCode);
+    chiralTypeSet.insert(mChiral->getAtomWithIdx(23)->getChiralTag());
+    // 1) ...Adding Hs
+    mH.reset(MolOps::addHs(*mChiral));
+    MolOps::assignStereochemistry(*mH, true, true);
+    match.clear();
+    TEST_ASSERT(mH->getAtomWithIdx(23)->getProp<std::string>(
+                    common_properties::_CIPCode) == expectedCipCode);
+    chiralTypeSetAfterAddHs.insert(mH->getAtomWithIdx(23)->getChiralTag());
+    // 2) ...Removing all Hs including isotopes and then putting them back
+    mNoH.reset(MolOps::removeHs(*static_cast<ROMol *>(mChiral.get()), ps));
+    mH.reset(MolOps::addHs(*mNoH));
+    MolOps::assignStereochemistry(*mH, true, true);
+    match.clear();
+    TEST_ASSERT(SubstructMatch(*mH, *mChiral, match));
+    TEST_ASSERT(match.size() == mChiral->getNumAtoms());
+    TEST_ASSERT(mH->getAtomWithIdx(match[23].second)
+                    ->getProp<std::string>(common_properties::_CIPCode) ==
+                expectedCipCode);
+    chiralTypeSetAfterRemoveAllHsAddHs.insert(
+        mH->getAtomWithIdx(match[23].second)->getChiralTag());
+    // 3) ...Removing non-isotopic Hs
+    mNoH.reset(MolOps::removeHs(*mH));
+    MolOps::assignStereochemistry(*mNoH, true, true);
+    TEST_ASSERT(mNoH->getAtomWithIdx(match[23].second)
+                    ->getProp<std::string>(common_properties::_CIPCode) ==
+                expectedCipCode);
+    chiralTypeSetAfterRemoveAllHsAddHsRemoveHs.insert(
+        mNoH->getAtomWithIdx(match[23].second)->getChiralTag());
+  }
+  // CIP chirality is preserved because when all Hs are removed
+  // the parity is inverted on one of the enantiomers such that
+  // chirality is preserved also when Hs are implicit.
+  // So we must find a single parity before calling removeHs,
+  // and two afterwards.
+  TEST_ASSERT(chiralTypeSet.size() == 1 &&
+              *chiralTypeSet.begin() == Atom::CHI_TETRAHEDRAL_CW);
+  TEST_ASSERT(chiralTypeSetAfterAddHs.size() == 1 &&
+              *chiralTypeSetAfterAddHs.begin() == Atom::CHI_TETRAHEDRAL_CW);
+  TEST_ASSERT(chiralTypeSetAfterRemoveAllHsAddHs.size() == 2);
+  TEST_ASSERT(chiralTypeSetAfterRemoveAllHsAddHsRemoveHs.size() == 2);
+
+  // Check that chirality on centers which bear different
+  // H isotopes is preserved after...
+  chiralTypeSet.clear();
+  chiralTypeSetAfterAddHs.clear();
+  chiralTypeSetAfterRemoveAllHsAddHs.clear();
+  chiralTypeSetAfterRemoveAllHsAddHsRemoveHs.clear();
+  for (unsigned int i : {0, 1}) {
+    unsigned int hIdx = i + 24;
+    std::string expectedCipCode(1, 'R' + i);
+    std::unique_ptr<ROMol> mChiral(new ROMol(*m));
+    mChiral->getAtomWithIdx(23)->setChiralTag(Atom::CHI_TETRAHEDRAL_CCW);
+    mChiral->getAtomWithIdx(hIdx)->setIsotope(3);
+    MolOps::assignStereochemistry(*mChiral, true, true);
+    TEST_ASSERT(mChiral->getAtomWithIdx(23)->getProp<std::string>(
+                    common_properties::_CIPCode) == expectedCipCode);
+    chiralTypeSet.insert(mChiral->getAtomWithIdx(23)->getChiralTag());
+    // 1) ...Adding Hs
+    mH.reset(MolOps::addHs(*mChiral));
+    MolOps::assignStereochemistry(*mH, true, true);
+    match.clear();
+    TEST_ASSERT(mH->getAtomWithIdx(23)->getProp<std::string>(
+                    common_properties::_CIPCode) == expectedCipCode);
+    chiralTypeSetAfterAddHs.insert(mH->getAtomWithIdx(23)->getChiralTag());
+    // 2) ...Removing all Hs including isotopes and then putting them back
+    mNoH.reset(MolOps::removeHs(*static_cast<ROMol *>(mChiral.get()), ps));
+    mH.reset(MolOps::addHs(*mNoH));
+    MolOps::assignStereochemistry(*mH, true, true);
+    match.clear();
+    TEST_ASSERT(SubstructMatch(*mH, *mChiral, match));
+    TEST_ASSERT(match.size() == mChiral->getNumAtoms());
+    TEST_ASSERT(mH->getAtomWithIdx(match[23].second)
+                    ->getProp<std::string>(common_properties::_CIPCode) ==
+                expectedCipCode);
+    chiralTypeSetAfterRemoveAllHsAddHs.insert(
+        mH->getAtomWithIdx(match[23].second)->getChiralTag());
+    // 3) ...Removing non-isotopic Hs
+    mNoH.reset(MolOps::removeHs(*mH));
+    MolOps::assignStereochemistry(*mNoH, true, true);
+    TEST_ASSERT(mNoH->getAtomWithIdx(match[23].second)
+                    ->getProp<std::string>(common_properties::_CIPCode) ==
+                expectedCipCode);
+    chiralTypeSetAfterRemoveAllHsAddHsRemoveHs.insert(
+        mNoH->getAtomWithIdx(match[23].second)->getChiralTag());
+  }
+  // In this case we should find a single parity throughout
+  // as inverting the positions of 2H and 3H will trigger
+  // an inversion in CIP chirality without need for parity change
+  TEST_ASSERT(chiralTypeSet.size() == 1 &&
+              *chiralTypeSet.begin() == Atom::CHI_TETRAHEDRAL_CCW);
+  TEST_ASSERT(chiralTypeSetAfterAddHs.size() == 1 &&
+              *chiralTypeSetAfterAddHs.begin() == Atom::CHI_TETRAHEDRAL_CCW);
+  TEST_ASSERT(chiralTypeSetAfterRemoveAllHsAddHs.size() == 1 &&
+              *chiralTypeSetAfterRemoveAllHsAddHs.begin() ==
+                  Atom::CHI_TETRAHEDRAL_CCW);
+  TEST_ASSERT(chiralTypeSetAfterRemoveAllHsAddHsRemoveHs.size() == 1 &&
+              *chiralTypeSetAfterRemoveAllHsAddHsRemoveHs.begin() ==
+                  Atom::CHI_TETRAHEDRAL_CCW);
+  BOOST_LOG(rdInfoLog) << "Finished" << std::endl;
+}
+
 #ifdef RDK_USE_URF
 void testRingFamilies() {
   BOOST_LOG(rdInfoLog)
@@ -7818,8 +8114,9 @@ int main() {
   testGithub1928();
   testGithub1990();
   testPotentialStereoBonds();
-#endif
   testRingFamilies();
+#endif
+  testRemoveAndTrackIsotopes();
 
   return 0;
 }

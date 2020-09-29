@@ -928,7 +928,8 @@ std::string get_coords_block(const ROMol &mol,
 std::string get_atom_props_block(const ROMol &mol,
                                  const std::vector<unsigned int> &atomOrder) {
   std::vector<std::string> skip = {common_properties::atomLabel,
-                                   common_properties::molFileValue};
+                                   common_properties::molFileValue,
+                                   common_properties::molParity};
   std::string res = "";
   unsigned int which = 0;
   for (auto idx : atomOrder) {

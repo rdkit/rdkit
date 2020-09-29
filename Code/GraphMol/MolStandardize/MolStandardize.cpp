@@ -155,18 +155,11 @@ std::vector<std::string> enumerateTautomerSmiles(
   cleanup(*mol, params);
   MolOps::sanitizeMol(*mol);
 
-  auto *tautparams = new TautomerCatalogParams(params.tautomerTransforms);
-  //	unsigned int ntautomers = tautparams->getNumTautomers();
-  TautomerEnumerator te(new TautomerCatalog(tautparams));
+  TautomerEnumerator te(params);
 
-  std::vector<ROMOL_SPTR> res = te.enumerate(*mol);
+  auto res = te.enumerate(*mol);
 
-  std::vector<std::string> tsmiles;
-  for (const auto &r : res) {
-    tsmiles.push_back(MolToSmiles(*r));
-  }
-
-  return tsmiles;
+  return res.smiles();
 }
 
 }  // end of namespace MolStandardize
