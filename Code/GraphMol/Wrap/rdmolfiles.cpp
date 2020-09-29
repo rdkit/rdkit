@@ -1719,7 +1719,7 @@ BOOST_PYTHON_MODULE(rdmolfiles) {
        - filename: the PNG filename
 
      RETURNS:
-       a string with the updated PNG data)DOC";
+       the updated PNG data)DOC";
   python::def(
       "AddMetadataToPNGFile", addMetadataToPNGFileHelper,
       (python::arg("metadata"), python::arg("filename")),
@@ -1736,7 +1736,7 @@ BOOST_PYTHON_MODULE(rdmolfiles) {
        - png: the PNG string
 
      RETURNS:
-       a string with the updated PNG data)DOC";
+       the updated PNG data)DOC";
   python::def(
       "AddMetadataToPNGString", addMetadataToPNGStringHelper,
       (python::arg("metadata"), python::arg("png")),
