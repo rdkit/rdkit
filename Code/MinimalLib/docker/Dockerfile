@@ -5,7 +5,7 @@ RUN apt-get update && apt-get upgrade -y && apt install -y \
   curl \
   wget \
   cmake \
-  python \
+  python3 \
   g++ \
   libeigen3-dev \
   git \
