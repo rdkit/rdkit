@@ -171,7 +171,7 @@ int RGroupDecomposition::add(const ROMol &inmol) {
 
   std::vector<RGroupMatch> potentialMatches;
 
-  for (auto &tmatch : tmatches) {
+  for (auto &tmatche : tmatches) {
     boost::scoped_ptr<ROMol> tMol;
     {
       const bool replaceDummies = false;

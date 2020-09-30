@@ -71,8 +71,7 @@ double score(const std::vector<size_t> &permutation,
 
     double tempScore = 0.;
     // score the sets from the largest to the smallest
-    //  each smaller set gets penalized (i+1) below
-    //  1.0 is the perfect score
+    // each smaller set gets penalized (i+1) below
     for (size_t i = 0; i < equivalentRGroupCount.size(); ++i) {
       auto lscore = static_cast<double>(equivalentRGroupCount[i]) /
                     static_cast<double>(((i + 1) * matches.size()));

@@ -383,7 +383,6 @@ struct RGroupDecompData {
     heavy_counts.resize(labels.size(), 0);
     for (int label : labels) {
       int incr = (label > 0) ? -1 : 1;
-      // int incr = 1;
       bool incremented = false;
       for (size_t m = 0; m < tied_permutation.size();
            ++m) {  // for each molecule
