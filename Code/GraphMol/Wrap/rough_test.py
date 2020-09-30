@@ -6124,7 +6124,8 @@ M  END
     self.assertIsNotNone(mol)
     self.assertEqual(mol.GetNumAtoms(), 29)
 
-    d = open(fileN, 'rb').read()
+    with open(fileN, 'rb') as inf:
+      d = inf.read()
     mol = Chem.MolFromPNGString(d)
     self.assertIsNotNone(mol)
     self.assertEqual(mol.GetNumAtoms(), 29)
@@ -6133,7 +6134,8 @@ M  END
     fileN = os.path.join(RDConfig.RDBaseDir, 'Code', 'GraphMol', 'FileParsers', 'test_data',
                          'colchicine.no_metadata.png')
 
-    d = open(fileN, 'rb').read()
+    with open(fileN, 'rb') as inf:
+      d = inf.read()
     mol = Chem.MolFromSmiles("COc1cc2c(c(OC)c1OC)-c1ccc(OC)c(=O)cc1[C@@H](NC(C)=O)CC2")
     self.assertIsNotNone(mol)
     self.assertEqual(mol.GetNumAtoms(), 29)
@@ -6156,6 +6158,33 @@ M  END
     self.assertEqual(len(mols), len(refMols))
     for mol, refMol in zip(mols, refMols):
       self.assertEqual(Chem.MolToSmiles(mol), Chem.MolToSmiles(refMol))
+
+  def testMetadataToPNG(self):
+    fileN = os.path.join(RDConfig.RDBaseDir, 'Code', 'GraphMol', 'FileParsers', 'test_data',
+                         'colchicine.png')
+
+    with open(fileN, 'rb') as inf:
+      d = inf.read()
+    mol = Chem.MolFromPNGString(d)
+    nd = Chem.MolMetadataToPNGString(mol,d)
+    vals = {'foo':'1','bar':'2'}
+    nd = Chem.AddMetadataToPNGString(vals, nd)
+    nvals = Chem.MetadataFromPNGString(nd)
+    self.assertTrue('foo' in nvals)
+    self.assertEqual(nvals['foo'],b'1')
+    self.assertTrue('bar' in nvals)
+    self.assertEqual(nvals['bar'],b'2')
+
+    nd = Chem.AddMetadataToPNGFile(vals, fileN)
+    nvals = Chem.MetadataFromPNGString(nd)
+    self.assertTrue('foo' in nvals)
+    self.assertEqual(nvals['foo'],b'1')
+    self.assertTrue('bar' in nvals)
+    self.assertEqual(nvals['bar'],b'2')
+
+    vals = {'foo':1,'bar':'2'}
+    with self.assertRaises(TypeError):
+      nd = Chem.AddMetadataToPNGString(vals,d)
 
   def test_github3403(self):
     core1 = "[$(C-!@[a])](=O)(Cl)"
