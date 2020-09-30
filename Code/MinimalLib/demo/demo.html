@@ -89,6 +89,18 @@
     mol.delete();
     qmol.delete();
   }
+  function template_callback(text) {
+    var qmol = Module.get_mol(text);
+    var mol = Module.get_mol(document.getElementById("smiles_input").value);
+    if (mol.is_valid() && qmol.is_valid()) {
+      var mdetails = mol.get_substruct_match(qmol);
+      var match = JSON.parse(mdetails);
+      mol.generate_aligned_coords(qmol);
+      if (match.atoms && match.atoms.length) draw_with_highlights(mol, match);
+    }
+    mol.delete();
+    qmol.delete();
+  }
   function option_changed(cb) {
     var smi = document.getElementById('smiles_input').value;
     var sma = document.getElementById('smarts_input').value;
@@ -138,6 +150,8 @@
         for="bondLineWidth">bondLineWidth</label>
 
     </div>
+    <br><hr>
+    Template molblock: <textarea id="template_input" cols="80" rows="20" value="" onkeyup="template_callback(this.value)"></textarea>
 
   </div>
 
