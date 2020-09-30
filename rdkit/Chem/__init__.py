@@ -159,6 +159,7 @@ def FindMolChiralCenters(mol, force=True, includeUnassigned=False, includeCIP=Tr
             code = str(si.descriptor)
           else:
             code = '?'
+            atm.SetIntProp('_ChiralityPossible',1)
         centers.append((idx, code))
   return centers
 
