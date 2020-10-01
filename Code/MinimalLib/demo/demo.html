@@ -90,12 +90,16 @@
     qmol.delete();
   }
   function template_callback(text) {
+    if(text==""){
+      text = document.getElementById("template_input").value;
+    }
     var qmol = Module.get_mol(text);
     var mol = Module.get_mol(document.getElementById("smiles_input").value);
     if (mol.is_valid() && qmol.is_valid()) {
       var mdetails = mol.get_substruct_match(qmol);
       var match = JSON.parse(mdetails);
-      mol.generate_aligned_coords(qmol);
+      var useCoordgen = document.getElementById("useCoordgen").checked;
+      mol.generate_aligned_coords(qmol,useCoordgen);
       if (match.atoms && match.atoms.length) draw_with_highlights(mol, match);
     }
     mol.delete();
@@ -133,6 +137,7 @@
     <br>
     SMILES: <input id="smiles_input" type="text" value="CC(=O)Oc1ccccc1C(=O)O" onkeyup="callback(this.value,true)">
     SMARTS: <input id="smarts_input" type="text" value="" onkeyup="sma_callback(this.value)">
+
     <br>
     <h2>Computed values</h2>
 
@@ -171,6 +176,9 @@
       </div>
       <div id="template-div">
     <h1>Template Mol Block</h1>
+    <input type="checkbox" id="useCoordgen" name="use_coordgen" onclick="template_callback('');">
+    <label for="useCoordgen">useCoordgen</label>
+    <br>
     <textarea id="template_input" cols="80" rows="20" value="" onkeyup="template_callback(this.value)"></textarea>
     </div>
   </div>
