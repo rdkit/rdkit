@@ -424,6 +424,35 @@ Alkaline oxide to ions	[Li,Na,K;+0:1]-[O+0:2]>>([*+1:1].[O-:2])
   TEST_ASSERT(SubstructMatch(*m2, *p).size() == 0);
   BOOST_LOG(rdInfoLog) << "Finished" << std::endl;
 }
+
+void testNormalizeMultipleAltSmarts() {
+  BOOST_LOG(rdInfoLog)
+      << "-----------------------\n Testing that multiple SMARTS "
+         "matching the same group work"
+      << std::endl;
+  std::string azideNormalizations = R"DATA(// Name	SMARTS
+Azide to N=N+=N-	[N:2]=[N:3]#[N:4]>>[N:2]=[N+:3]=[N-:4]
+Broken azide to N=N+=N-	[N:2]=[N:3]=[N:4]>>[NH0:2]=[NH0+:3]=[NH0-:4])DATA";
+  std::stringstream azideNormalizationsStream(azideNormalizations);
+  std::stringstream captureLog;
+  rdInfoLog->SetTee(captureLog);
+  Normalizer nn(azideNormalizationsStream, 200);
+  const std::string brokenAzideSmi = "CN=[N+]=[NH-]";
+  const int debugParse = 0;
+  const bool sanitize = false;
+  ROMOL_SPTR brokenAzide(SmilesToMol(brokenAzideSmi, debugParse, sanitize));
+  ROMOL_SPTR normalizedAzide(nn.normalize(*brokenAzide));
+  rdInfoLog->ClearTee();
+  std::string line;
+  unsigned int count = 0;
+  while (std::getline(captureLog, line)) {
+    if (line.find("Rule applied: BrokenazidetoN=N+=N-") != std::string::npos) {
+      ++count;
+    }
+  }
+  TEST_ASSERT(count == 1);
+}
+
 int main() {
   RDLog::InitLogs();
 #if 1
@@ -431,5 +460,6 @@ int main() {
   test2();
 #endif
   testGithub2414();
+  testNormalizeMultipleAltSmarts();
   return 0;
 }
