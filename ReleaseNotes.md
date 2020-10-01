@@ -17,6 +17,12 @@
   If you want to invoke the old (and deprecated, see below) form from C++, call
   `TautomerNumerator::enumerate(mol, nullptr)` or explicitly pass a
   `boost::dynamic_bitset*` to capture the modified atoms.
+- Uncharger::uncharge() will now neutralize [Cl,Br,I][O-], [Cl,Br,I](=O)[O-],
+  [Cl,Br,I](=O)(=O)[O-], [Cl,Br,I](=O)(=O)(=O)[O-], [O-]N=N[O-], [N,P](=O)[O-],
+  [N+](=O)([O-])[O-], P(=O)([O-])[O-], P(=O)([O-])([O-])[O-], S([O-])[O-],
+  S(=O)([O-])[O-], S(=O)(=O)([O-])[O-], S(=O)(=O)([O-])OOS(=O)(=O)[O-].
+  Previously not all of these inorganic acid counterions were consistently
+  neutralized.
 
 ## Code removed in this release:
 - To improve API consistency of the exceptions in RDKit with the default ones in
