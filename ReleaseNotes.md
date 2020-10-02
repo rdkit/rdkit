@@ -20,7 +20,8 @@
 - The default precision setting for coordgen has been changed. The new default
   was selected to greatly reduce the number of molecules for which it takes a
   very long time to generate coordinates while still producing nice looking
-  structures. If you would like to go back to the previous setting, set 
+  structures. We may continue to tweak this default value if/when problems
+  with it are reported. If you would like to go back to the previous setting, set 
   CoordgenParams.minimizerPrecision to CoordgenParams.sketcherStandardPrecision 
   when you invoke rdCoordGen.AddCoords()
 
