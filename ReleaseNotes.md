@@ -17,6 +17,13 @@
   If you want to invoke the old (and deprecated, see below) form from C++, call
   `TautomerNumerator::enumerate(mol, nullptr)` or explicitly pass a
   `boost::dynamic_bitset*` to capture the modified atoms.
+- The default precision setting for coordgen has been changed. The new default
+  was selected to greatly reduce the number of molecules for which it takes a
+  very long time to generate coordinates while still producing nice looking
+  structures. We may continue to tweak this default value if/when problems
+  with it are reported. If you would like to go back to the previous setting, set 
+  CoordgenParams.minimizerPrecision to CoordgenParams.sketcherStandardPrecision 
+  when you invoke rdCoordGen.AddCoords()
 
 ## Code removed in this release:
 - To improve API consistency of the exceptions in RDKit with the default ones in
