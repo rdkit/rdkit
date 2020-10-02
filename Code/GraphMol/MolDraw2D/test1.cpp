@@ -3406,6 +3406,8 @@ void testGithub3391() {
          " with DrawMolecules."
       << std::endl;
   auto m = "C"_smiles;
+  auto m2 = "CCOC(=O)Nc1ccc(SCC2COC(Cn3ccnc3)(c3ccc(Cl)cc3Cl)O2)cc1"_smiles;
+  auto m3 = "CCl"_smiles;
   {
     MolDraw2DSVG drawer(400, 200, 200, 200);
     drawer.drawOptions().maxFontSize = 14;
@@ -3419,6 +3421,51 @@ void testGithub3391() {
     outs << text;
     outs.flush();
   }
+  {
+    MolDraw2DSVG drawer(400, 200, 200, 200);
+    drawer.drawOptions().maxFontSize = 14;
+    std::vector<ROMol *> mols;
+    mols.push_back(m.get());
+    mols.push_back(m2.get());
+    drawer.drawMolecules(mols);
+    drawer.finishDrawing();
+    std::string text = drawer.getDrawingText();
+    std::ofstream outs("testGithub3391_2.svg");
+    outs << text;
+    outs.flush();
+  }
+  {
+    MolDraw2DSVG drawer(400, 200, 200, 200);
+    drawer.drawOptions().maxFontSize = 14;
+    std::vector<ROMol *> mols;
+    mols.push_back(m2.get());
+    mols.push_back(m.get());
+    drawer.drawMolecules(mols);
+    drawer.finishDrawing();
+    std::string text = drawer.getDrawingText();
+    std::ofstream outs("testGithub3391_3.svg");
+    outs << text;
+    outs.flush();
+  }
+  {
+    MolDraw2DSVG drawer(600, 200, 200, 200);
+    drawer.drawOptions().maxFontSize = 14;
+    drawer.drawOptions().minFontSize = 8;
+    std::vector<ROMol *> mols;
+    auto m1 = "CO"_smiles;
+    auto m2 = "CCCCCCCCCCO"_smiles;
+    auto m3 = "CCCCCCCCCCCCCCCCCCCCCCO"_smiles;
+    mols.push_back(m3.get());
+    mols.push_back(m2.get());
+    mols.push_back(m1.get());
+    drawer.drawMolecules(mols);
+    drawer.finishDrawing();
+    std::string text = drawer.getDrawingText();
+    std::ofstream outs("testGithub3391_4.svg");
+    outs << text;
+    outs.flush();
+  }
+
   std::cerr << "Done" << std::endl;
 }
 

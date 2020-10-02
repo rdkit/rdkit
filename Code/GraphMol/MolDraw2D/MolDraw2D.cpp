@@ -1058,6 +1058,7 @@ void MolDraw2D::calculateScale(int width, int height,
   x_range_ = global_x_max - global_x_min;
   y_range_ = global_y_max - global_y_min;
   scale_ = std::min(double(width) / x_range_, double(height) / y_range_);
+  text_drawer_->setFontScale(scale_);
   centrePicture(width, height);
 }
 
