@@ -11,14 +11,16 @@
 #define GENERAL_FILE_READER_H
 #include <RDGeneral/BadFileException.h>
 #include <RDStreams/streams.h>
+
 #include <boost/algorithm/string.hpp>
 #include <iostream>
+#include <memory>
 #include <string>
 #include <vector>
 
 #include "MolSupplier.h"
-#include "MultithreadedSmilesMolSupplier.h"
 #include "MultithreadedSDMolSupplier.h"
+#include "MultithreadedSmilesMolSupplier.h"
 
 namespace RDKit {
 namespace GeneralMolSupplier {
@@ -37,59 +39,69 @@ struct SupplierOptions {
   int confId2D = -1;
   int confId3D = 0;
 
-	unsigned int numWriterThreads = 0;
+  unsigned int numWriterThreads = 0;
 };
 //! current supported file formats
-std::vector<std::string> supportedFileFormats{"sdf", "mae", "maegz", "smi",
-                                              "csv", "txt", "tsv",   "tdt"};
+const std::vector<std::string> supportedFileFormats{
+    "sdf", "mae", "maegz", "sdfgz", "smi", "csv", "txt", "tsv", "tdt"};
 //! current supported compression formats
-std::vector<std::string> supportedCompressionFormats{"gz"};
+const std::vector<std::string> supportedCompressionFormats{"gz"};
 
 //! given file path determines the file and compression format
+//! returns true on success, otherwise false
+//! Note: Error handeling is done in the getSupplier method
+
 void determineFormat(const std::string path, std::string& fileFormat,
                      std::string& compressionFormat) {
-	//! filename without compression format
-	std::string basename;  
-	//! Special case maegz.
-	//! NOTE: also supporting case-insensitive filesystems
-	if(boost::algorithm::iends_with(path, ".maegz")){
-		fileFormat = "mae";
-		compressionFormat = "gz";
-		return;
-	}
-	else if(boost::algorithm::iends_with(path, ".gz")){
-		compressionFormat = "gz";
-		basename = path.substr(0, path.size() - 3);
-	} else if( boost::algorithm::iends_with(path, ".zst") ||
-      boost::algorithm::iends_with(path, ".bz2") ||
-      boost::algorithm::iends_with(path, ".7z")){
-		throw std::invalid_argument("Unsupported compression extension");	
-	} else {
- 		basename = path;
-		compressionFormat = "";
-	}
-	for (auto const& suffix: supportedFileFormats) {
-		 if (boost::algorithm::iends_with(basename, "." + suffix)) {
-				 fileFormat = suffix;
-				 return;
-		 }
-	}
-	throw std::invalid_argument("Unsupported structure or compression extension");
+  //! filename without compression format
+  std::string basename;
+  //! Special case maegz.
+  //! NOTE: also supporting case-insensitive filesystems
+  if (boost::algorithm::iends_with(path, ".maegz")) {
+    fileFormat = "mae";
+    compressionFormat = "gz";
+    return;
+  } else if (boost::algorithm::iends_with(path, ".sdfgz")) {
+    fileFormat = "sdf";
+    compressionFormat = "gz";
+    return;
+  } else if (boost::algorithm::iends_with(path, ".gz")) {
+    compressionFormat = "gz";
+    basename = path.substr(0, path.size() - 3);
+  } else if (boost::algorithm::iends_with(path, ".zst") ||
+             boost::algorithm::iends_with(path, ".bz2") ||
+             boost::algorithm::iends_with(path, ".7z")) {
+    throw BadFileException(
+        "Unsupported compression extension (.zst, .bz2, .7z) given path: " +
+        path);
+  } else {
+    basename = path;
+    compressionFormat = "";
+  }
+  for (auto const& suffix : supportedFileFormats) {
+    if (boost::algorithm::iends_with(basename, "." + suffix)) {
+      fileFormat = suffix;
+      return;
+    }
+  }
+  throw BadFileException(
+      "Unsupported structure or compression extension given path: " + path);
 }
 
-//! returns a MolSupplier object based on the file name instantiated
+//! returns a new MolSupplier object based on the file name instantiated
 //! with the relevant options provided in the SupplierOptions struct
 /*!
     <b>Note:</b>
       - the caller owns the memory and therefore the pointer must be deleted
 */
 
-MolSupplier* getSupplier(const std::string& path,
-                         const struct SupplierOptions& opt) {
+std::unique_ptr<MolSupplier> getSupplier(const std::string& path,
+                                         const struct SupplierOptions& opt) {
   std::string fileFormat = "";
   std::string compressionFormat = "";
   //! get the file and compression format form the path
   determineFormat(path, fileFormat, compressionFormat);
+
   std::istream* strm;
   if (compressionFormat.empty()) {
     strm = new std::ifstream(path.c_str());
@@ -99,40 +111,48 @@ MolSupplier* getSupplier(const std::string& path,
 
   //! Dispatch to the appropriate supplier
   if (fileFormat == "sdf") {
-		if(opt.numWriterThreads > 0){
-			MultithreadedSDMolSupplier* sdsup = new MultithreadedSDMolSupplier(
-				strm, true, opt.sanitize, opt.removeHs, opt.strictParsing, opt.numWriterThreads);
-			return sdsup;			
-		} 
+    if (opt.numWriterThreads > 0) {
+      MultithreadedSDMolSupplier* sdsup = new MultithreadedSDMolSupplier(
+          strm, true, opt.sanitize, opt.removeHs, opt.strictParsing,
+          opt.numWriterThreads);
+      std::unique_ptr<MolSupplier> p(sdsup);
+      return p;
+    }
     ForwardSDMolSupplier* sdsup = new ForwardSDMolSupplier(
         strm, true, opt.sanitize, opt.removeHs, opt.strictParsing);
-    return sdsup;
+    std::unique_ptr<MolSupplier> p(sdsup);
+    return p;
   }
 
   else if (fileFormat == "smi" || fileFormat == "csv" || fileFormat == "txt" ||
-					 fileFormat == "tsv") {
-		if(opt.numWriterThreads > 0){
-			MultithreadedSmilesMolSupplier* smsup = new MultithreadedSmilesMolSupplier(
-				strm, true, opt.delimiter, opt.smilesColumn,  opt.nameColumn, opt.titleLine,
-				opt.sanitize, opt.numWriterThreads);
-			return smsup;
-		}
+           fileFormat == "tsv") {
+    if (opt.numWriterThreads > 0) {
+      MultithreadedSmilesMolSupplier* smsup =
+          new MultithreadedSmilesMolSupplier(
+              strm, true, opt.delimiter, opt.smilesColumn, opt.nameColumn,
+              opt.titleLine, opt.sanitize, opt.numWriterThreads);
+      std::unique_ptr<MolSupplier> p(smsup);
+      return p;
+    }
     SmilesMolSupplier* smsup =
         new SmilesMolSupplier(strm, true, opt.delimiter, opt.smilesColumn,
                               opt.nameColumn, opt.titleLine, opt.sanitize);
-    return smsup;
+    std::unique_ptr<MolSupplier> p(smsup);
+    return p;
   }
 
   else if (fileFormat == "mae") {
     MaeMolSupplier* maesup =
         new MaeMolSupplier(strm, true, opt.sanitize, opt.removeHs);
-    return maesup;
+    std::unique_ptr<MolSupplier> p(maesup);
+    return p;
   }
 
   else if (fileFormat == "tdt") {
     TDTMolSupplier* tdtsup = new TDTMolSupplier(
         strm, true, opt.nameRecord, opt.confId2D, opt.confId3D, opt.sanitize);
-    return tdtsup;
+    std::unique_ptr<MolSupplier> p(tdtsup);
+    return p;
   }
 }
 
