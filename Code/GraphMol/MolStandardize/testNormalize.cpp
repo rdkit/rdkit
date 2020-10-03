@@ -451,6 +451,24 @@ Broken azide to N=N+=N-	[N:2]=[N:3]=[N:4]>>[NH0:2]=[NH0+:3]=[NH0-:4])DATA";
     }
   }
   TEST_ASSERT(count == 1);
+  BOOST_LOG(rdInfoLog) << "Finished" << std::endl;
+}
+
+void testGithub3460() {
+  BOOST_LOG(rdInfoLog) << "-----------------------\n Testing Github #3460: "
+                          "Normalization rule incorrectly matches sulfones"
+                       << std::endl;
+  std::stringstream captureLog;
+  rdInfoLog->SetTee(captureLog);
+  Normalizer nn;
+  auto mol = "[O-][S+]1Nc2c(Cl)cc(Cl)c3c(Cl)cc(Cl)c(c23)N1"_smiles;
+  TEST_ASSERT(mol);
+  ROMOL_SPTR normalized(nn.normalize(*mol));
+  rdInfoLog->ClearTee();
+  auto logged = captureLog.str();
+  TEST_ASSERT(logged.find("Running Normalizer") != std::string::npos);
+  TEST_ASSERT(logged.find("Rule applied: C/S+NtoC/S=N+") == std::string::npos);
+  BOOST_LOG(rdInfoLog) << "Finished" << std::endl;
 }
 
 int main() {
@@ -461,5 +479,6 @@ int main() {
 #endif
   testGithub2414();
   testNormalizeMultipleAltSmarts();
+  testGithub3460();
   return 0;
 }
