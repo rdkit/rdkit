@@ -29,6 +29,13 @@ Reading and Writing Molecules
 Reading single molecules
 ========================
 
+.. testsetup::
+  
+  # clean up in case these tests are running in a python process that has already
+  # imported the IPythonConsole code
+  from rdkit.Chem.Draw import IPythonConsole
+  IPythonConsole.UninstallIPythonRenderer()
+
 The majority of the basic molecular functionality is found in module :py:mod:`rdkit.Chem`:
 
 .. doctest::
@@ -585,10 +592,11 @@ like to align them to that template, you can do so as follows:
   >>> template = Chem.MolFromSmiles('c1nccc2n1ccc2')
   >>> AllChem.Compute2DCoords(template)
   0
-  >>> AllChem.GenerateDepictionMatching2DStructure(m,template)
+  >>> ms = [Chem.MolFromSmiles(smi) for smi in ('OCCc1ccn2cnccc12','C1CC1Oc1cc2ccncn2c1','CNC(=O)c1nccc2cccn12')]
+  >>> for m in ms:
+  ...     AllChem.GenerateDepictionMatching2DStructure(m,template)
 
-Running this process for a couple of other molecules gives the
-following depictions:
+Running this process for the molecules above gives:
 
 +---------------+---------------+---------------+
 | |picture_1|   | |picture_0|   | |picture_3|   |
@@ -697,7 +705,7 @@ The flag prealigned lets the user specify if the conformers are already aligned
 
 .. doctest::
 
->>> rms = AllChem.GetConformerRMS(m2, 1, 9, prealigned=True)
+  >>> rms = AllChem.GetConformerRMS(m2, 1, 9, prealigned=True)
 
 If you are interested in running MMFF94 on a molecule's conformers (note that
 this is often not necessary when using ETKDG), there's a convenience
@@ -728,7 +736,7 @@ of threads allowed on your computer.
 The original 2D->3D conversion provided with the RDKit was not intended
 to be a replacement for a “real” conformational analysis tool; it
 merely provides quick 3D structures for cases when they are
-required. We believe, however, that the newer ETKDG method[#riniker2]_ should be
+required. We believe, however, that the newer ETKDG method [#riniker2]_ should be
 adequate for most purposes.
 
 
@@ -827,7 +835,7 @@ aligned. This is easy enough to do:
   0
   >>> for m in subms: AllChem.GenerateDepictionMatching2DStructure(m,p)
   >>> img=Draw.MolsToGridImage(subms,molsPerRow=4,subImgSize=(200,200),legends=[x.GetProp("_Name") for x in subms])    # doctest: +SKIP
-  >>> img.save('images/cdk2_molgrid.aligned.o.png'))    # doctest: +SKIP
+  >>> img.save('images/cdk2_molgrid.aligned.o.png')    # doctest: +SKIP
 
 
 The result looks like this:
@@ -891,12 +899,12 @@ data/test_multi_colours.py, which produces the somewhat garish
 
 As of version 2020.03, it is possible to add arbitrary small strings
 to annotate atoms and bonds in the drawing.  The strings are added as
-properties 'atomNote' and
-'bondNote' and they will be placed automatically
+properties ``atomNote`` and
+``bondNote`` and they will be placed automatically
 close to the atom or bond in question in a manner intended to minimise
 their clash with the rest of the drawing.  For convenience, here are 3
 flags in 
-`MolDraw2DOptions` that will add stereo information (R/S to atoms, E/Z
+``MolDraw2DOptions`` that will add stereo information (R/S to atoms, E/Z
 to bonds) and atom and bond sequence numbers.
 
 .. doctest::
@@ -909,13 +917,113 @@ to bonds) and atom and bond sequence numbers.
    >>> d.drawOptions().addAtomIndices = True
    >>> d.DrawMolecule(mol)
    >>> d.FinishDrawing()
-   >>> with open('atom_annotation_1.png', 'wb') as f:   # doctest: +SKIP
-   ...     f.write(d.GetDrawingText())
+   >>> d.WriteDrawingText('atom_annotation_1.png')   # doctest: +SKIP
 
 will produce
 
 .. image:: images/atom_annotation_1.png
 
+If atoms have an ``atomLabel`` property set, this will be used when drawing them:
+
+.. doctest::
+   
+   >>> smi = 'c1nc(*)ccc1* |$;;;R1;;;;R2$|'
+   >>> mol = Chem.MolFromSmiles(smi)
+   >>> mol.GetAtomWithIdx(3).GetProp("atomLabel")
+   'R1'
+   >>> mol.GetAtomWithIdx(7).GetProp("atomLabel")
+   'R2'
+   >>> d = rdMolDraw2D.MolDraw2DCairo(250, 250)
+   >>> rdMolDraw2D.PrepareAndDrawMolecule(d,mol)
+   >>> d.WriteDrawingText("./images/atom_labels_1.png")   # doctest: +SKIP
+
+gives:
+
+.. image:: images/atom_labels_1.png
+
+Since the ``atomLabel`` property is also used for other things (for example in CXSMILES as demonstrated),
+if you want to provide your own atom labels, it's better to use the ``_displayLabel`` property:
+
+   >>> smi = 'c1nc(*)ccc1* |$;;;R1;;;;R2$|'
+   >>> mol = Chem.MolFromSmiles(smi)
+   >>> mol.GetAtomWithIdx(3).SetProp("_displayLabel","R<sub>1</sub>")
+   >>> mol.GetAtomWithIdx(7).SetProp("_displayLabel","R<sub>2</sub>")
+   >>> d = rdMolDraw2D.MolDraw2DCairo(250, 250)
+   >>> rdMolDraw2D.PrepareAndDrawMolecule(d,mol)
+   >>> d.WriteDrawingText("./images/atom_labels_2.png")   # doctest: +SKIP
+
+this gives:
+
+.. image:: images/atom_labels_2.png
+
+Note that you can use ``<sup>`` and ``<sub>`` in these labels to provide super- and subscripts.
+
+Finally, if you have atom labels which should be displayed differently when the bond comes 
+into them from the right (the West), you can also set the ``_displayLabelW`` property:
+
+
+.. doctest::
+
+   >>> smi = 'c1nc(*)ccc1* |$;;;R1;;;;R2$|'
+   >>> mol = Chem.MolFromSmiles(smi)
+   >>> mol.GetAtomWithIdx(3).SetProp("_displayLabel","CO<sub>2</sub>H")
+   >>> mol.GetAtomWithIdx(3).SetProp("_displayLabelW","HO<sub>2</sub>C")
+   >>> mol.GetAtomWithIdx(7).SetProp("_displayLabel","CO<sub>2</sub><sup>-</sup>")
+   >>> mol.GetAtomWithIdx(7).SetProp("_displayLabelW","<sup>-</sup>OOC")
+   >>> d = rdMolDraw2D.MolDraw2DCairo(250, 250)
+   >>> rdMolDraw2D.PrepareAndDrawMolecule(d,mol)
+   >>> d.WriteDrawingText("./images/atom_labels_3.png")   # doctest: +SKIP
+
+this gives:
+
+.. image:: images/atom_labels_3.png
+
+
+
+
+Metadata in Molecule Images
+===========================
+
+*New in 2020.09 release*
+
+The PNG files generated by the `MolDraw2DCairo` class by default include
+metadata about the molecule(s) or chemical reaction included in the drawing.
+This metadata can be used later to reconstruct the molecule(s) or reaction.
+
+.. doctest::
+
+  >>> template = Chem.MolFromSmiles('c1nccc2n1ccc2')
+  >>> AllChem.Compute2DCoords(template)
+  0
+  >>> ms = [Chem.MolFromSmiles(smi) for smi in ('OCCc1ccn2cnccc12','C1CC1Oc1cc2ccncn2c1','CNC(=O)c1nccc2cccn12')]
+  >>> _ = [AllChem.GenerateDepictionMatching2DStructure(m,template) for m in ms]
+  >>> d = rdMolDraw2D.MolDraw2DCairo(250, 200) 
+  >>> d.DrawMolecule(ms[0])
+  >>> d.FinishDrawing()
+  >>> png = d.GetDrawingText()
+  >>> mol = Chem.MolFromPNGString(png)
+  >>> Chem.MolToSmiles(mol)      
+  'OCCc1c2ccncn2cc1'
+
+The molecular metadata is stored using standard metadata tags in the PNG and is,
+of course, not visible when you look at the PNG:
+
+.. image:: images/mol_metadata1.png
+
+If the PNG contains multiple molecules we can retrieve them all at once using
+`Chem.MolsFromPNGString()`:
+
+.. doctest::
+
+  >>> from rdkit.Chem import Draw
+  >>> png = Draw.MolsToGridImage(ms,returnPNG=True)
+  >>> mols = Chem.MolsFromPNGString(png)
+  >>> for mol in mols:
+  ...     print(Chem.MolToSmiles(mol))
+  ...  
+  OCCc1c2ccncn2cc1
+  c1cc2cc(OC3CC3)cn2cn1
+  CNC(=O)c1nccc2cccn12
 
 Substructure Searching
 **********************
@@ -2041,6 +2149,45 @@ demonstrates:
   rdkit.Chem.rdmolops.SanitizeFlags.SANITIZE_NONE
   >>> Chem.MolToSmiles(p0)
   'c1ccccc1'
+
+Drawing Chemical Reactions
+==========================
+
+The RDKit's MolDraw2D-based rendering can also handle chemical reactions.
+
+.. doctest::
+
+  >>> from rdkit.Chem import Draw
+  >>> rxn = AllChem.ReactionFromSmarts('[cH:5]1[cH:6][c:7]2[cH:8][n:9][cH:10][cH:11][c:12]2[c:3]([cH:4]1)[C:2](=[O:1])O.[N-:13]=[N+:14]=[N-:15]>C(Cl)Cl.C(=O)(C(=O)Cl)Cl>[cH:5]1[cH:6][c:7]2[cH:8][n:9][cH:10][cH:11][c:12]2[c:3]([cH:4]1)[C:2](=[O:1])[N:13]=[N+:14]=[N-:15]',useSmiles=True)
+  >>> d2d = Draw.MolDraw2DCairo(800,300)
+  >>> d2d.DrawReaction(rxn)
+  >>> png = d2d.GetDrawingText()
+  >>> open('./images/reaction1.o.png','wb+').write(png)     # doctest: +SKIP
+
+the result looks like this:
+
+.. image:: images/reaction1.png
+
+There's another drawing mode which leaves out the atom map information but which
+highlights which of the reactants atoms in the products come from:
+
+.. doctest::
+
+  >>> d2d = Draw.MolDraw2DCairo(800,300)
+  >>> d2d.DrawReaction(rxn,highlightByReactant=True)
+  >>> png = d2d.GetDrawingText()
+  >>> open('./images/reaction1_highlight.o.png','wb+').write(png)    # doctest: +SKIP
+
+.. image:: images/reaction1_highlight.png
+
+As of the 2020.09 release, PNG images of reactions include metadata allowing the
+reaction to be reconstructed:
+
+.. doctest::
+
+  >>> newRxn = AllChem.ReactionFromPNGString(png)
+  >>> AllChem.ReactionToSmarts(newRxn)
+  '[#6H:5]1:[#6H:6]:[#6:7]2:[#6H:8]:[#7:9]:[#6H:10]:[#6H:11]:[#6:12]:2:[#6:3](:[#6H:4]:1)-[#6:2](=[#8:1])-[#8].[#7-:13]=[#7+:14]=[#7-:15]>[#6](-[#17])-[#17].[#6](=[#8])(-[#6](=[#8])-[#17])-[#17]>[#6H:5]1:[#6H:6]:[#6:7]2:[#6H:8]:[#7:9]:[#6H:10]:[#6H:11]:[#6:12]:2:[#6:3](:[#6H:4]:1)-[#6:2](=[#8:1])-[#7:13]=[#7+:14]=[#7-:15]'
 
 Advanced Reaction Functionality
 ===============================

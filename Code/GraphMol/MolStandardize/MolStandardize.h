@@ -50,15 +50,25 @@ struct RDKIT_MOLSTANDARDIZE_EXPORT CleanupParameters {
   // std::vector<std::string> chargeCorrections;
   std::string tautomerTransforms;
   // std::vector<std::string> TautomerScores;
-  int maxRestarts{200};     // The maximum number of times to attempt to apply the
-                       // series of normalizations (default 200).
-  int maxTautomers{1000};    // The maximum number of tautomers to enumerate (default
-                       // 1000).
-  bool preferOrganic{false};  // Whether to prioritize organic fragments when choosing
-                       // fragment parent (default False).
-  bool doCanonical{true};    // whether or not to apply normalizations in a canonical
-                       // order
-
+  int maxRestarts{200};  //! The maximum number of times to attempt to apply the
+                         //! series of normalizations (default 200).
+  bool preferOrganic{false};  //! Whether to prioritize organic fragments when
+                              //! choosing fragment parent (default False).
+  bool doCanonical{true};  //! Whether to apply normalizations in a
+                           //! canonical order
+  int maxTautomers{1000};  //! The maximum number of tautomers to enumerate
+                           //! (default 1000).
+  int maxTransforms{1000};  //! The maximum number of tautomer transformations
+                            //! to apply (default 1000).
+  bool tautomerRemoveSp3Stereo{
+      true};  //! Whether to remove stereochemistry from sp3
+              //! centers involved in tautomerism (defaults to true)
+  bool tautomerRemoveBondStereo{
+      true};  //! Whether to remove stereochemistry from double
+              //! bonds involved in tautomerism (defaults to true)
+  bool tautomerReassignStereo{
+      true};  //! Whether enumerate() should call assignStereochemistry
+              //! on all generated tautomers (defaults to true)
   CleanupParameters()
       :  // TODO
          //			normalizations(""),//this->DEFAULT_TRANSFORMS),

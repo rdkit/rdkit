@@ -17,7 +17,13 @@
 #include <GraphMol/MolDraw2D/MolDraw2D.h>
 #include <GraphMol/MolDraw2D/MolDraw2DSVG.h>
 #include <GraphMol/MolDraw2D/MolDraw2DUtils.h>
+#include <GraphMol/MolDraw2D/MolDraw2DDetails.h>
+#include <GraphMol/FileParsers/FileParsers.h>
+#include <GraphMol/FileParsers/PNGParser.h>
 #include <boost/algorithm/string/split.hpp>
+#include <GraphMol/ChemReactions/Reaction.h>
+#include <GraphMol/ChemReactions/ReactionParser.h>
+#include <GraphMol/CIPLabeler/CIPLabeler.h>
 
 #ifdef RDK_BUILD_CAIRO_SUPPORT
 #include <cairo.h>
@@ -554,5 +560,186 @@ TEST_CASE("github #3258: ", "[drawing][bug]") {
     CHECK(text.find(">,</text>") == std::string::npos);
     CHECK(!dm1.hasProp("_atomIndicesAdded"));
     CHECK(!dm1.hasProp("_bondIndicesAdded"));
+  }
+}
+
+#ifdef RDK_BUILD_CAIRO_SUPPORT
+TEST_CASE("adding png metadata", "[drawing][png]") {
+  SECTION("molecule") {
+    auto m1 = R"CTAB(
+  Mrv2014 08172015242D          
+
+  0  0  0     0  0            999 V3000
+M  V30 BEGIN CTAB
+M  V30 COUNTS 3 2 0 0 0
+M  V30 BEGIN ATOM
+M  V30 1 C 2.31 -1.3337 0 0
+M  V30 2 C 3.6437 -2.1037 0 0
+M  V30 3 O 4.9774 -1.3337 0 0
+M  V30 END ATOM
+M  V30 BEGIN BOND
+M  V30 1 1 1 2
+M  V30 2 1 2 3
+M  V30 END BOND
+M  V30 END CTAB
+M  END
+)CTAB"_ctab;
+    REQUIRE(m1);
+    {
+      MolDraw2DCairo drawer(250, 200);
+      drawer.drawMolecule(*m1);
+      drawer.finishDrawing();
+      auto png = drawer.getDrawingText();
+      drawer.writeDrawingText("testPNGMetadata_1.png");
+      CHECK(png.find(PNGData::smilesTag) != std::string::npos);
+      CHECK(png.find(PNGData::molTag) != std::string::npos);
+      CHECK(png.find(PNGData::pklTag) != std::string::npos);
+      std::unique_ptr<ROMol> newmol(PNGStringToMol(png));
+      REQUIRE(newmol);
+      CHECK(MolToCXSmiles(*m1) == MolToCXSmiles(*newmol));
+    }
+    {  // disable metadata output
+      MolDraw2DCairo drawer(250, 200);
+      drawer.drawOptions().includeMetadata = false;
+      drawer.drawMolecule(*m1);
+      drawer.finishDrawing();
+      auto png = drawer.getDrawingText();
+      CHECK(png.find(PNGData::smilesTag) == std::string::npos);
+      CHECK(png.find(PNGData::molTag) == std::string::npos);
+      CHECK(png.find(PNGData::pklTag) == std::string::npos);
+    }
+    {  // draw multiple molecules
+      MolDraw2DCairo drawer(250, 200);
+      drawer.drawMolecule(*m1);
+      drawer.drawMolecule(*m1);
+      drawer.finishDrawing();
+      auto png = drawer.getDrawingText();
+      CHECK(png.find(PNGData::smilesTag) != std::string::npos);
+      CHECK(png.find(PNGData::molTag) != std::string::npos);
+      CHECK(png.find(PNGData::pklTag) != std::string::npos);
+      CHECK(png.find(PNGData::smilesTag + "1") != std::string::npos);
+      CHECK(png.find(PNGData::molTag + "1") != std::string::npos);
+      CHECK(png.find(PNGData::pklTag + "1") != std::string::npos);
+    }
+  }
+  SECTION("reaction") {
+    std::unique_ptr<ChemicalReaction> rxn(RxnSmartsToChemicalReaction(
+        "[N:1][C:2][C:3](=[O:4])[O:5].[N:6][C:7][C:8](=[O:9])[O:10]>>[N:1]1[C:"
+        "2][C:3](=[O:4])[N:6][C:7][C:8]1=[O:9].[O:5][O:10]"));
+    REQUIRE(rxn);
+    {
+      MolDraw2DCairo drawer(600, 200);
+      drawer.drawReaction(*rxn);
+      drawer.finishDrawing();
+      auto png = drawer.getDrawingText();
+      drawer.writeDrawingText("testPNGMetadata_2.png");
+      CHECK(png.find(PNGData::smilesTag) == std::string::npos);
+      CHECK(png.find(PNGData::molTag) == std::string::npos);
+      CHECK(png.find(PNGData::pklTag) == std::string::npos);
+      CHECK(png.find(PNGData::rxnPklTag) != std::string::npos);
+      CHECK(png.find(PNGData::rxnSmartsTag) != std::string::npos);
+      std::unique_ptr<ChemicalReaction> rxn2(PNGStringToChemicalReaction(png));
+      REQUIRE(rxn2);
+      CHECK(ChemicalReactionToRxnSmarts(*rxn) ==
+            ChemicalReactionToRxnSmarts(*rxn2));
+    }
+    {  // disable metadata
+      MolDraw2DCairo drawer(600, 200);
+      drawer.drawOptions().includeMetadata = false;
+      drawer.drawReaction(*rxn);
+      drawer.finishDrawing();
+      auto png = drawer.getDrawingText();
+      CHECK(png.find(PNGData::smilesTag) == std::string::npos);
+      CHECK(png.find(PNGData::molTag) == std::string::npos);
+      CHECK(png.find(PNGData::pklTag) == std::string::npos);
+      CHECK(png.find(PNGData::rxnPklTag) == std::string::npos);
+      CHECK(png.find(PNGData::rxnSmartsTag) == std::string::npos);
+    }
+  }
+}
+
+#endif
+
+TEST_CASE(
+    "github #3392: prepareMolForDrawing() incorrectly adds chiral Hs if no "
+    "ring info is present",
+    "[bug]") {
+  SECTION("foundations") {
+    SmilesParserParams ps;
+    ps.sanitize = false;
+    ps.removeHs = false;
+    std::unique_ptr<RWMol> m1(SmilesToMol("C[C@H](F)Cl", ps));
+    REQUIRE(m1);
+    m1->updatePropertyCache();
+    CHECK(m1->getNumAtoms() == 4);
+    const bool kekulize = false;
+    const bool addChiralHs = true;
+    MolDraw2DUtils::prepareMolForDrawing(*m1, kekulize, addChiralHs);
+    CHECK(m1->getNumAtoms() == 4);
+  }
+}
+
+TEST_CASE(
+    "github #3369: support new CIP code and StereoGroups in "
+    "addStereoAnnotation()",
+    "[chirality]") {
+  auto m1 =
+      "C[C@@H]1N[C@H](C)[C@@H]([C@H](C)[C@@H]1C)C1[C@@H](C)O[C@@H](C)[C@@H](C)[C@H]1C/C=C/C |a:5,o1:1,8,o2:14,16,&1:11,18,&2:3,6,r|"_smiles;
+  REQUIRE(m1);
+  SECTION("defaults") {
+    ROMol m2(*m1);
+    MolDraw2D_detail::addStereoAnnotation(m2);
+
+    std::string txt;
+    CHECK(m2.getAtomWithIdx(5)->getPropIfPresent(common_properties::atomNote,
+                                                 txt));
+    CHECK(txt == "abs (S)");
+    CHECK(m2.getAtomWithIdx(3)->getPropIfPresent(common_properties::atomNote,
+                                                 txt));
+    CHECK(txt == "and4");
+  }
+  SECTION("including CIP with relative stereo") {
+    ROMol m2(*m1);
+    bool includeRelativeCIP = true;
+    MolDraw2D_detail::addStereoAnnotation(m2, includeRelativeCIP);
+
+    std::string txt;
+    CHECK(m2.getAtomWithIdx(5)->getPropIfPresent(common_properties::atomNote,
+                                                 txt));
+    CHECK(txt == "abs (S)");
+    CHECK(m2.getAtomWithIdx(3)->getPropIfPresent(common_properties::atomNote,
+                                                 txt));
+    CHECK(txt == "and4 (R)");
+  }
+  SECTION("new CIP labels") {
+    ROMol m2(*m1);
+    REQUIRE(m2.getBondBetweenAtoms(20, 21));
+    m2.getBondBetweenAtoms(20, 21)->setStereo(Bond::BondStereo::STEREOTRANS);
+    // initially no label is assigned since we have TRANS
+    MolDraw2D_detail::addStereoAnnotation(m2);
+    CHECK(
+        !m2.getBondBetweenAtoms(20, 21)->hasProp(common_properties::bondNote));
+
+    CIPLabeler::assignCIPLabels(m2);
+    std::string txt;
+    CHECK(m2.getBondBetweenAtoms(20, 21)->getPropIfPresent(
+        common_properties::_CIPCode, txt));
+    CHECK(txt == "E");
+    MolDraw2D_detail::addStereoAnnotation(m2);
+    CHECK(m2.getBondBetweenAtoms(20, 21)->getPropIfPresent(
+        common_properties::bondNote, txt));
+    CHECK(txt == "(E)");
+  }
+  SECTION("works with the drawing code") {
+    MolDraw2DSVG drawer(300, 250);
+    RWMol dm1(*m1);
+    bool includeRelativeCIP = true;
+    MolDraw2D_detail::addStereoAnnotation(dm1, includeRelativeCIP);
+    drawer.drawMolecule(dm1);
+    drawer.finishDrawing();
+    std::string text = drawer.getDrawingText();
+    std::ofstream outs("testGithub3369_1.svg");
+    outs << text;
+    outs.flush();
   }
 }

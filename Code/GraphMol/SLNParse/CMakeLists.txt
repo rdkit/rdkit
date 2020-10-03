@@ -39,12 +39,11 @@ endif(BISON_EXECUTABLE)
 
 
 
-remove_definitions(-DRDKIT_GRAPHMOL_BUILD)
-add_definitions(-DRDKIT_SLNPARSE_BUILD)
 rdkit_library(SLNParse
               SLNParse.cpp SLNAttribs.cpp
               ${BISON_OUTPUT_FILES} ${FLEX_OUTPUT_FILES}
               LINK_LIBRARIES GraphMol RDGeneral )
+target_compile_definitions(SLNParse PRIVATE RDKIT_SLNPARSE_BUILD)
 
 rdkit_headers(SLNAttribs.h
               SLNParse.h

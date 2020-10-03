@@ -6,6 +6,7 @@ from rdkit import RDConfig
 import os
 import sys
 import math
+from datetime import datetime, timedelta
 import unittest
 from rdkit import DataStructs
 from rdkit import Chem
@@ -228,10 +229,21 @@ chlorine	[Cl]
     ctaut = enumerator.Canonicalize(m)
     self.assertEqual(Chem.MolToSmiles(ctaut), "O=C1CCCCC1")
 
-    tauts = enumerator.Enumerate(m)
-    self.assertEqual(len(tauts), 2)
-    ctauts = list(sorted(Chem.MolToSmiles(x) for x in tauts))
+    taut_res = enumerator.Enumerate(m)
+    self.assertEqual(len(taut_res), 2)
+    ctauts = list(sorted(Chem.MolToSmiles(x) for x in taut_res))
     self.assertEqual(ctauts, ['O=C1CCCCC1', 'OC1=CCCCC1'])
+    self.assertEqual(list(taut_res.smiles), ['O=C1CCCCC1', 'OC1=CCCCC1'])
+    # this tests the non-templated overload
+    self.assertEqual(Chem.MolToSmiles(enumerator.PickCanonical(taut_res)), "O=C1CCCCC1")
+    # this tests the templated overload
+    self.assertEqual(Chem.MolToSmiles(enumerator.PickCanonical(set(taut_res()))), "O=C1CCCCC1")
+    with self.assertRaises(TypeError):
+      enumerator.PickCanonical(1)
+    with self.assertRaises(TypeError):
+      enumerator.PickCanonical([0, 1])
+    self.assertEqual(Chem.MolToSmiles(enumerator.PickCanonical(
+                     Chem.MolFromSmiles(x) for x in ['O=C1CCCCC1', 'OC1=CCCCC1'])), "O=C1CCCCC1")
 
     def scorefunc1(mol):
       ' stupid tautomer scoring function '
@@ -260,32 +272,453 @@ chlorine	[Cl]
     self.assertEqual(enumerator.ScoreTautomer(Chem.MolFromSmiles('N=c1[nH]cccc1')), 99)
     self.assertEqual(enumerator.ScoreTautomer(Chem.MolFromSmiles('Nc1ncccc1')), 100)
 
+    def scorefunc2(mol):
+      ' stupid tautomer scoring function '
+      p = Chem.MolFromSmarts('O=C')
+      return len(mol.GetSubstructMatches(p))
+
+    m = Chem.MolFromSmiles("C1(=CCCCC1)O")
+    ctaut = enumerator.Canonicalize(m, scorefunc1)
+    self.assertEqual(Chem.MolToSmiles(ctaut), "OC1=CCCCC1")
+    ctaut = enumerator.Canonicalize(m, scorefunc2)
+    self.assertEqual(Chem.MolToSmiles(ctaut), "O=C1CCCCC1")
+    # make sure lambdas work
+    ctaut = enumerator.Canonicalize(
+      m, lambda x: len(x.GetSubstructMatches(Chem.MolFromSmarts('C=O'))))
+    self.assertEqual(Chem.MolToSmiles(ctaut), "O=C1CCCCC1")
+
+    # make sure we behave if we return something bogus from the scoring function
+    with self.assertRaises(TypeError):
+      ctaut = enumerator.Canonicalize(m, lambda x: 'fail')
+
+    self.assertEqual(enumerator.ScoreTautomer(Chem.MolFromSmiles('N=c1[nH]cccc1')), 99)
+    self.assertEqual(enumerator.ScoreTautomer(Chem.MolFromSmiles('Nc1ncccc1')), 100)
+
+    res = enumerator.Enumerate(m)
+    # this test the specialized overload
+    ctaut = enumerator.PickCanonical(res, scorefunc1)
+    self.assertEqual(Chem.MolToSmiles(ctaut), "OC1=CCCCC1")
+    ctaut = enumerator.PickCanonical(res, scorefunc2)
+    self.assertEqual(Chem.MolToSmiles(ctaut), "O=C1CCCCC1")
+    # make sure lambdas work
+    ctaut = enumerator.PickCanonical(
+      res, lambda x: len(x.GetSubstructMatches(Chem.MolFromSmarts('C=O'))))
+    self.assertEqual(Chem.MolToSmiles(ctaut), "O=C1CCCCC1")
+    # make sure we behave if we return something bogus from the scoring function
+    with self.assertRaises(TypeError):
+      ctaut = enumerator.PickCanonical(res, lambda x: 'fail')
+    # this test the non-specialized overload
+    ctaut = enumerator.PickCanonical(set(res()), scorefunc1)
+    self.assertEqual(Chem.MolToSmiles(ctaut), "OC1=CCCCC1")
+    ctaut = enumerator.PickCanonical(set(res()), scorefunc2)
+    self.assertEqual(Chem.MolToSmiles(ctaut), "O=C1CCCCC1")
+    # make sure lambdas work
+    ctaut = enumerator.PickCanonical(
+      set(res()), lambda x: len(x.GetSubstructMatches(Chem.MolFromSmarts('C=O'))))
+    self.assertEqual(Chem.MolToSmiles(ctaut), "O=C1CCCCC1")
+    # make sure we behave if we return something bogus from the scoring function
+    with self.assertRaises(TypeError):
+      ctaut = enumerator.PickCanonical(set(res()), lambda x: 'fail')
+
   def test14TautomerDetails(self):
     enumerator = rdMolStandardize.TautomerEnumerator()
     m = Chem.MolFromSmiles("c1ccccc1CN=c1[nH]cccc1")
-    modatoms = []
-    modbonds = []
-    tauts = enumerator.Enumerate(m,modifiedAtoms=modatoms,modifiedBonds=modbonds)
-    self.assertEqual(len(tauts),2)
-    self.assertEqual(modatoms,[7,9])
-    self.assertEqual(len(modbonds),7)
-    self.assertEqual(modbonds,[7,8,9,10,11,12,14])
+    taut_res = enumerator.Enumerate(m)
+    self.assertEqual(len(taut_res.tautomers),2)
+    self.assertEqual(taut_res.modifiedAtoms,(7,9))
+    self.assertEqual(len(taut_res.modifiedBonds),7)
+    self.assertEqual(taut_res.modifiedBonds,(7,8,9,10,11,12,14))
     
-    modatoms = []
-    tauts = enumerator.Enumerate(m,modifiedAtoms=modatoms)
-    self.assertEqual(len(tauts),2)
-    self.assertEqual(modatoms,[7,9])
+    taut_res = enumerator.Enumerate(m)
+    self.assertEqual(len(taut_res.tautomers),2)
+    self.assertEqual(taut_res.modifiedAtoms,(7,9))
     
-    modbonds = []
-    tauts = enumerator.Enumerate(m,modifiedBonds=modbonds)
-    self.assertEqual(len(tauts),2)
-    self.assertEqual(len(modbonds),7)
-    self.assertEqual(modbonds,[7,8,9,10,11,12,14])
+    taut_res = enumerator.Enumerate(m)
+    self.assertEqual(len(taut_res.tautomers),2)
+    self.assertEqual(len(taut_res.modifiedBonds),7)
+    self.assertEqual(taut_res.modifiedBonds,(7,8,9,10,11,12,14))
     
-    
-    
+  def test15EnumeratorParams(self):
+    # Test a structure with hundreds of tautomers.
+    smi68 = "[H][C](CO)(NC(=O)C1=C(O)C(O)=CC=C1)C(O)=O"
+    m68 = Chem.MolFromSmiles(smi68)
 
+    enumerator = rdMolStandardize.TautomerEnumerator()
+    res68 = enumerator.Enumerate(m68)
+    self.assertEqual(len(res68), 292)
+    self.assertEqual(len(res68.tautomers), len(res68))
+    self.assertEqual(res68.status, rdMolStandardize.TautomerEnumeratorStatus.MaxTransformsReached)
 
+    params = rdMolStandardize.CleanupParameters()
+    params.maxTautomers = 50;
+    enumerator = rdMolStandardize.TautomerEnumerator(params)
+    res68 = enumerator.Enumerate(m68)
+    self.assertEqual(len(res68), 50)
+    self.assertEqual(res68.status, rdMolStandardize.TautomerEnumeratorStatus.MaxTautomersReached)
+
+    sAlaSmi = "C[C@H](N)C(=O)O"
+    sAla = Chem.MolFromSmiles(sAlaSmi)
+    # test remove (S)-Ala stereochemistry
+    self.assertEqual(sAla.GetAtomWithIdx(1).GetChiralTag(), Chem.ChiralType.CHI_TETRAHEDRAL_CCW)
+    self.assertEqual(sAla.GetAtomWithIdx(1).GetProp("_CIPCode"), "S")
+    params = rdMolStandardize.CleanupParameters()
+    params.tautomerRemoveSp3Stereo = True
+    enumerator = rdMolStandardize.TautomerEnumerator(params)
+    res = enumerator.Enumerate(sAla)
+    for taut in res:
+      self.assertEqual(taut.GetAtomWithIdx(1).GetChiralTag(), Chem.ChiralType.CHI_UNSPECIFIED)
+      self.assertFalse(taut.GetAtomWithIdx(1).HasProp("_CIPCode"))
+    for taut in res.tautomers:
+      self.assertEqual(taut.GetAtomWithIdx(1).GetChiralTag(), Chem.ChiralType.CHI_UNSPECIFIED)
+      self.assertFalse(taut.GetAtomWithIdx(1).HasProp("_CIPCode"))
+    for i, taut in enumerate(res):
+      self.assertEqual(Chem.MolToSmiles(taut), Chem.MolToSmiles(res.tautomers[i]))
+    self.assertEqual(len(res), len(res.smiles))
+    self.assertEqual(len(res), len(res.tautomers))
+    self.assertEqual(len(res), len(res()))
+    self.assertEqual(len(res), len(res.smilesTautomerMap))
+    for i, taut in enumerate(res.tautomers):
+      self.assertEqual(Chem.MolToSmiles(taut), Chem.MolToSmiles(res[i]))
+      self.assertEqual(Chem.MolToSmiles(taut), res.smiles[i])
+      self.assertEqual(Chem.MolToSmiles(taut), Chem.MolToSmiles(res.smilesTautomerMap.values()[i].tautomer))
+    for i, k in enumerate(res.smilesTautomerMap.keys()):
+      self.assertEqual(k, res.smiles[i])
+    for i, v in enumerate(res.smilesTautomerMap.values()):
+      self.assertEqual(Chem.MolToSmiles(v.tautomer), Chem.MolToSmiles(res[i]))
+    for i, (k, v) in enumerate(res.smilesTautomerMap.items()):
+      self.assertEqual(k, res.smiles[i])
+      self.assertEqual(Chem.MolToSmiles(v.tautomer), Chem.MolToSmiles(res[i]))
+    for i, smiles in enumerate(res.smiles):
+      self.assertEqual(smiles, Chem.MolToSmiles(res[i]))
+      self.assertEqual(smiles, res.smilesTautomerMap.keys()[i])
+    self.assertEqual(Chem.MolToSmiles(res.tautomers[-1]), Chem.MolToSmiles(res[-1]))
+    self.assertEqual(Chem.MolToSmiles(res[-1]), Chem.MolToSmiles(res[len(res)-1]))
+    self.assertEqual(Chem.MolToSmiles(res.tautomers[-1]), Chem.MolToSmiles(res.tautomers[len(res)-1]))
+    with self.assertRaises(IndexError):
+      res[len(res)]
+    with self.assertRaises(IndexError):
+      res[-len(res)-1]
+    with self.assertRaises(IndexError):
+      res.tautomers[len(res)]
+    with self.assertRaises(IndexError):
+      res.tautomers[-len(res.tautomers)-1]
+
+    # test retain (S)-Ala stereochemistry
+    self.assertEqual(sAla.GetAtomWithIdx(1).GetChiralTag(), Chem.ChiralType.CHI_TETRAHEDRAL_CCW)
+    self.assertEqual(sAla.GetAtomWithIdx(1).GetProp("_CIPCode"), "S")
+    params = rdMolStandardize.CleanupParameters()
+    params.tautomerRemoveSp3Stereo = False
+    enumerator = rdMolStandardize.TautomerEnumerator(params)
+    res = enumerator.Enumerate(sAla)
+    for taut in res:
+      tautAtom = taut.GetAtomWithIdx(1)
+      if (tautAtom.GetHybridization() == Chem.HybridizationType.SP3):
+        self.assertEqual(tautAtom.GetChiralTag(), Chem.ChiralType.CHI_TETRAHEDRAL_CCW)
+        self.assertTrue(tautAtom.HasProp("_CIPCode"))
+        self.assertEqual(tautAtom.GetProp("_CIPCode"), "S")
+      else:
+        self.assertFalse(tautAtom.HasProp("_CIPCode"))
+        self.assertEqual(tautAtom.GetChiralTag(), Chem.ChiralType.CHI_UNSPECIFIED)
+
+    eEnolSmi = "C/C=C/O"
+    eEnol = Chem.MolFromSmiles(eEnolSmi)
+    self.assertEqual(eEnol.GetBondWithIdx(1).GetStereo(), Chem.BondStereo.STEREOE)
+    # test remove enol E stereochemistry
+    params = rdMolStandardize.CleanupParameters()
+    params.tautomerRemoveBondStereo = True
+    enumerator = rdMolStandardize.TautomerEnumerator(params)
+    res = enumerator.Enumerate(eEnol)
+    for taut in res.tautomers:
+      self.assertEqual(taut.GetBondWithIdx(1).GetStereo(), Chem.BondStereo.STEREONONE)
+    # test retain enol E stereochemistry
+    params = rdMolStandardize.CleanupParameters()
+    params.tautomerRemoveBondStereo = False
+    enumerator = rdMolStandardize.TautomerEnumerator(params)
+    res = enumerator.Enumerate(eEnol)
+    for taut in res.tautomers:
+      if (taut.GetBondWithIdx(1).GetBondType() == Chem.BondType.DOUBLE):
+        self.assertEqual(taut.GetBondWithIdx(1).GetStereo(), Chem.BondStereo.STEREOE)
+
+    zEnolSmi = "C/C=C\\O"
+    zEnol = Chem.MolFromSmiles(zEnolSmi)
+    self.assertEqual(zEnol.GetBondWithIdx(1).GetStereo(), Chem.BondStereo.STEREOZ)
+    # test remove enol Z stereochemistry
+    params = rdMolStandardize.CleanupParameters()
+    params.tautomerRemoveBondStereo = True
+    enumerator = rdMolStandardize.TautomerEnumerator(params)
+    res = enumerator.Enumerate(zEnol)
+    for taut in res:
+      self.assertEqual(taut.GetBondWithIdx(1).GetStereo(), Chem.BondStereo.STEREONONE)
+    # test retain enol Z stereochemistry
+    params = rdMolStandardize.CleanupParameters()
+    params.tautomerRemoveBondStereo = False
+    enumerator = rdMolStandardize.TautomerEnumerator(params)
+    res = enumerator.Enumerate(zEnol)
+    for taut in res:
+      if (taut.GetBondWithIdx(1).GetBondType() == Chem.BondType.DOUBLE):
+        self.assertEqual(taut.GetBondWithIdx(1).GetStereo(), Chem.BondStereo.STEREOZ)
+
+  def test16EnumeratorCallback(self):
+    class MyTautomerEnumeratorCallback(rdMolStandardize.TautomerEnumeratorCallback):
+      def __init__(self, parent, timeout_ms):
+        super().__init__()
+        self._parent = parent
+        self._timeout = timedelta(milliseconds=timeout_ms)
+        self._start_time = datetime.now()
+
+      def __call__(self, mol, res):
+        self._parent.assertTrue(isinstance(mol, Chem.Mol))
+        self._parent.assertTrue(isinstance(res, rdMolStandardize.TautomerEnumeratorResult))
+        return (datetime.now() - self._start_time < self._timeout)
+
+    class MyBrokenCallback(rdMolStandardize.TautomerEnumeratorCallback):
+      pass
+
+    class MyBrokenCallback2(rdMolStandardize.TautomerEnumeratorCallback):
+      __call__ = 1
+
+    # Test a structure with hundreds of tautomers.
+    smi68 = "[H][C](CO)(NC(=O)C1=C(O)C(O)=CC=C1)C(O)=O"
+    m68 = Chem.MolFromSmiles(smi68)
+
+    params = rdMolStandardize.CleanupParameters()
+    params.maxTransforms = 10000
+    params.maxTautomers = 10000
+    enumerator = rdMolStandardize.TautomerEnumerator(params)
+    enumerator.SetCallback(MyTautomerEnumeratorCallback(self, 50.0))
+    res68 = enumerator.Enumerate(m68)
+    # either the enumeration was canceled due to timeout
+    # or it has completed very quickly
+    hasReachedTimeout = (len(res68.tautomers) < 375 and
+        res68.status == rdMolStandardize.TautomerEnumeratorStatus.Canceled)
+    hasCompleted = (len(res68.tautomers) == 375 and
+        res68.status == rdMolStandardize.TautomerEnumeratorStatus.Completed)
+    if hasReachedTimeout:
+      print("Enumeration was canceled due to timeout (50 ms)", file=sys.stderr)
+    if hasCompleted:
+      print("Enumeration has completed", file=sys.stderr)
+    self.assertTrue(hasReachedTimeout or hasCompleted)
+    self.assertTrue(hasReachedTimeout ^ hasCompleted)
+
+    enumerator = rdMolStandardize.TautomerEnumerator(params)
+    enumerator.SetCallback(MyTautomerEnumeratorCallback(self, 10000.0))
+    res68 = enumerator.Enumerate(m68)
+    # either the enumeration completed
+    # or it ran very slowly and was canceled due to timeout
+    hasReachedTimeout = (len(res68.tautomers) < 375 and
+        res68.status == rdMolStandardize.TautomerEnumeratorStatus.Canceled)
+    hasCompleted = (len(res68.tautomers) == 375 and
+        res68.status == rdMolStandardize.TautomerEnumeratorStatus.Completed)
+    if hasReachedTimeout:
+      print("Enumeration was canceled due to timeout (10 s)", file=sys.stderr)
+    if hasCompleted:
+      print("Enumeration has completed", file=sys.stderr)
+    self.assertTrue(hasReachedTimeout or hasCompleted)
+    self.assertTrue(hasReachedTimeout ^ hasCompleted)
+
+    enumerator = rdMolStandardize.TautomerEnumerator(params)
+    with self.assertRaises(AttributeError):
+      enumerator.SetCallback(MyBrokenCallback())
+    with self.assertRaises(AttributeError):
+      enumerator.SetCallback(MyBrokenCallback2())
+
+  def test17PickCanonicalCIPChangeOnChiralCenter(self):
+    def get_canonical_taut(res):
+      best_idx = max([(rdMolStandardize.TautomerEnumerator.ScoreTautomer(t), i)
+                      for i, t in enumerate(res.tautomers)])[1]
+      return res.tautomers[best_idx]
+
+    smi = "CC\\C=C(/O)[C@@H](C)C(C)=O"
+    mol = Chem.MolFromSmiles(smi)
+    self.assertIsNotNone(mol)
+    self.assertEqual(mol.GetAtomWithIdx(5).GetChiralTag(), Chem.ChiralType.CHI_TETRAHEDRAL_CW)
+    self.assertEqual(mol.GetAtomWithIdx(5).GetProp("_CIPCode"), "R")
+
+    # here the chirality disappears as the chiral center is itself involved in tautomerism
+    te = rdMolStandardize.TautomerEnumerator()
+    can_taut = te.Canonicalize(mol)
+    self.assertIsNotNone(can_taut)
+    self.assertEqual(can_taut.GetAtomWithIdx(5).GetChiralTag(), Chem.ChiralType.CHI_UNSPECIFIED)
+    self.assertFalse(can_taut.GetAtomWithIdx(5).HasProp("_CIPCode"))
+    self.assertEqual(Chem.MolToSmiles(can_taut), "CCCC(=O)C(C)C(C)=O")
+
+    # here the chirality stays even if the chiral center is itself involved in tautomerism
+    # because of the tautomerRemoveSp3Stereo parameter being set to false
+    params = rdMolStandardize.CleanupParameters()
+    params.tautomerRemoveSp3Stereo = False
+    te = rdMolStandardize.TautomerEnumerator(params)
+    can_taut = te.Canonicalize(mol)
+    self.assertIsNotNone(can_taut)
+    self.assertEqual(can_taut.GetAtomWithIdx(5).GetChiralTag(), Chem.ChiralType.CHI_TETRAHEDRAL_CW)
+    self.assertEqual(can_taut.GetAtomWithIdx(5).GetProp("_CIPCode"), "S")
+    self.assertEqual(Chem.MolToSmiles(can_taut), "CCCC(=O)[C@@H](C)C(C)=O")
+
+    # here the chirality disappears as the chiral center is itself involved in tautomerism
+    # the reassignStereo setting has no influence
+    te = rdMolStandardize.TautomerEnumerator()
+    res = te.Enumerate(mol)
+    self.assertEqual(res.status, rdMolStandardize.TautomerEnumeratorStatus.Completed)
+    self.assertEqual(len(res.tautomers), 8)
+    best_taut = get_canonical_taut(res)
+    self.assertIsNotNone(best_taut)
+    self.assertEqual(best_taut.GetAtomWithIdx(5).GetChiralTag(), Chem.ChiralType.CHI_UNSPECIFIED)
+    self.assertFalse(best_taut.GetAtomWithIdx(5).HasProp("_CIPCode"))
+    self.assertEqual(Chem.MolToSmiles(best_taut), "CCCC(=O)C(C)C(C)=O")
+
+    # here the chirality disappears as the chiral center is itself involved in tautomerism
+    # the reassignStereo setting has no influence
+    params = rdMolStandardize.CleanupParameters()
+    params.tautomerReassignStereo = False
+    te = rdMolStandardize.TautomerEnumerator(params)
+    res = te.Enumerate(mol)
+    self.assertEqual(res.status, rdMolStandardize.TautomerEnumeratorStatus.Completed)
+    self.assertEqual(len(res.tautomers), 8)
+    best_taut = get_canonical_taut(res)
+    self.assertIsNotNone(best_taut)
+    self.assertEqual(best_taut.GetAtomWithIdx(5).GetChiralTag(), Chem.ChiralType.CHI_UNSPECIFIED)
+    self.assertFalse(best_taut.GetAtomWithIdx(5).HasProp("_CIPCode"))
+    self.assertEqual(Chem.MolToSmiles(best_taut), "CCCC(=O)C(C)C(C)=O")
+
+    # here the chirality stays even if the chiral center is itself involved in tautomerism
+    # because of the tautomerRemoveSp3Stereo parameter being set to false
+    # as reassignStereo by default is true, the CIP code has  been recomputed
+    # and therefore it is now S (correct)
+    params = rdMolStandardize.CleanupParameters()
+    params.tautomerRemoveSp3Stereo = False
+    te = rdMolStandardize.TautomerEnumerator(params)
+    res = te.Enumerate(mol)
+    self.assertEqual(res.status, rdMolStandardize.TautomerEnumeratorStatus.Completed)
+    self.assertEqual(len(res.tautomers), 8)
+    best_taut = get_canonical_taut(res)
+    self.assertIsNotNone(best_taut)
+    self.assertEqual(best_taut.GetAtomWithIdx(5).GetChiralTag(), Chem.ChiralType.CHI_TETRAHEDRAL_CW)
+    self.assertEqual(best_taut.GetAtomWithIdx(5).GetProp("_CIPCode"), "S")
+    self.assertEqual(Chem.MolToSmiles(best_taut), "CCCC(=O)[C@@H](C)C(C)=O")
+
+    # here the chirality stays even if the chiral center is itself involved in tautomerism
+    # because of the tautomerRemoveSp3Stereo parameter being set to false
+    # as reassignStereo is false, the CIP code has not been recomputed
+    # and therefore it is still R (incorrect)
+    params = rdMolStandardize.CleanupParameters()
+    params.tautomerRemoveSp3Stereo = False
+    params.tautomerReassignStereo = False
+    te = rdMolStandardize.TautomerEnumerator(params)
+    res = te.Enumerate(mol)
+    self.assertEqual(res.status, rdMolStandardize.TautomerEnumeratorStatus.Completed)
+    self.assertEqual(len(res.tautomers), 8)
+    best_taut = get_canonical_taut(res)
+    self.assertIsNotNone(best_taut)
+    self.assertEqual(best_taut.GetAtomWithIdx(5).GetChiralTag(), Chem.ChiralType.CHI_TETRAHEDRAL_CW)
+    self.assertEqual(best_taut.GetAtomWithIdx(5).GetProp("_CIPCode"), "R")
+    self.assertEqual(Chem.MolToSmiles(best_taut), "CCCC(=O)[C@@H](C)C(C)=O")
+
+    smi = "CC\\C=C(/O)[C@@](CC)(C)C(C)=O"
+    mol = Chem.MolFromSmiles(smi)
+    self.assertIsNotNone(mol)
+    self.assertEqual(mol.GetAtomWithIdx(5).GetProp("_CIPCode"), "S")
+    self.assertEqual(mol.GetAtomWithIdx(5).GetChiralTag(), Chem.ChiralType.CHI_TETRAHEDRAL_CW)
+
+    # here the chirality stays no matter how tautomerRemoveSp3Stereo
+    # is set as the chiral center is not involved in tautomerism
+    te = rdMolStandardize.TautomerEnumerator()
+    can_taut = te.Canonicalize(mol)
+    self.assertIsNotNone(can_taut)
+    self.assertEqual(can_taut.GetAtomWithIdx(5).GetChiralTag(), Chem.ChiralType.CHI_TETRAHEDRAL_CW)
+    self.assertEqual(can_taut.GetAtomWithIdx(5).GetProp("_CIPCode"), "R")
+    self.assertEqual(Chem.MolToSmiles(can_taut), "CCCC(=O)[C@](C)(CC)C(C)=O")
+
+    params = rdMolStandardize.CleanupParameters()
+    params.tautomerRemoveSp3Stereo = False
+    te = rdMolStandardize.TautomerEnumerator(params)
+    can_taut = te.Canonicalize(mol)
+    self.assertIsNotNone(can_taut)
+    self.assertEqual(can_taut.GetAtomWithIdx(5).GetChiralTag(), Chem.ChiralType.CHI_TETRAHEDRAL_CW)
+    self.assertEqual(can_taut.GetAtomWithIdx(5).GetProp("_CIPCode"), "R")
+    self.assertEqual(Chem.MolToSmiles(can_taut), "CCCC(=O)[C@](C)(CC)C(C)=O")
+
+    # as reassignStereo by default is true, the CIP code has been recomputed
+    # and therefore it is now R (correct)
+    te = rdMolStandardize.TautomerEnumerator()
+    res = te.Enumerate(mol)
+    self.assertEqual(res.status, rdMolStandardize.TautomerEnumeratorStatus.Completed)
+    self.assertEqual(len(res.tautomers), 4)
+    best_taut = get_canonical_taut(res)
+    self.assertIsNotNone(best_taut)
+    self.assertEqual(best_taut.GetAtomWithIdx(5).GetChiralTag(), Chem.ChiralType.CHI_TETRAHEDRAL_CW)
+    self.assertEqual(best_taut.GetAtomWithIdx(5).GetProp("_CIPCode"), "R")
+    self.assertEqual(Chem.MolToSmiles(best_taut), "CCCC(=O)[C@](C)(CC)C(C)=O")
+
+    # as reassignStereo is false, the CIP code has not been recomputed
+    # and therefore it is still S (incorrect)
+    params = rdMolStandardize.CleanupParameters()
+    params.tautomerReassignStereo = False
+    te = rdMolStandardize.TautomerEnumerator(params)
+    res = te.Enumerate(mol)
+    self.assertEqual(res.status, rdMolStandardize.TautomerEnumeratorStatus.Completed)
+    self.assertEqual(len(res.tautomers), 4)
+    best_taut = get_canonical_taut(res)
+    self.assertIsNotNone(best_taut)
+    self.assertEqual(best_taut.GetAtomWithIdx(5).GetChiralTag(), Chem.ChiralType.CHI_TETRAHEDRAL_CW)
+    self.assertEqual(best_taut.GetAtomWithIdx(5).GetProp("_CIPCode"), "S")
+    self.assertEqual(Chem.MolToSmiles(best_taut), "CCCC(=O)[C@](C)(CC)C(C)=O")
+
+    # as reassignStereo by default is true, the CIP code has  been recomputed
+    # and therefore it is now R (correct)
+    params = rdMolStandardize.CleanupParameters()
+    params.tautomerRemoveSp3Stereo = False
+    te = rdMolStandardize.TautomerEnumerator(params)
+    res = te.Enumerate(mol)
+    self.assertEqual(res.status, rdMolStandardize.TautomerEnumeratorStatus.Completed)
+    self.assertEqual(len(res.tautomers), 4)
+    best_taut = get_canonical_taut(res)
+    self.assertIsNotNone(best_taut)
+    self.assertEqual(best_taut.GetAtomWithIdx(5).GetChiralTag(), Chem.ChiralType.CHI_TETRAHEDRAL_CW)
+    self.assertEqual(best_taut.GetAtomWithIdx(5).GetProp("_CIPCode"), "R")
+    self.assertEqual(Chem.MolToSmiles(best_taut), "CCCC(=O)[C@](C)(CC)C(C)=O")
+
+    # here the chirality stays even if the tautomerRemoveSp3Stereo parameter
+    # is set to false as the chiral center is not involved in tautomerism
+    # as reassignStereo is false, the CIP code has not been recomputed
+    # and therefore it is still S (incorrect)
+    params = rdMolStandardize.CleanupParameters()
+    params.tautomerRemoveSp3Stereo = False
+    params.tautomerReassignStereo = False
+    te = rdMolStandardize.TautomerEnumerator(params)
+    res = te.Enumerate(mol)
+    self.assertEqual(res.status, rdMolStandardize.TautomerEnumeratorStatus.Completed)
+    self.assertEqual(len(res.tautomers), 4)
+    best_taut = get_canonical_taut(res)
+    self.assertIsNotNone(best_taut)
+    self.assertEqual(best_taut.GetAtomWithIdx(5).GetChiralTag(), Chem.ChiralType.CHI_TETRAHEDRAL_CW)
+    self.assertEqual(best_taut.GetAtomWithIdx(5).GetProp("_CIPCode"), "S")
+    self.assertEqual(Chem.MolToSmiles(best_taut), "CCCC(=O)[C@](C)(CC)C(C)=O")
+
+  def test18TautomerEnumeratorResultIter(self):
+    smi = "Cc1nnc(NC(=O)N2CCN(Cc3ccc(F)cc3)C(=O)C2)s1"
+    mol = Chem.MolFromSmiles(smi)
+    self.assertIsNotNone(mol)
+    te = rdMolStandardize.TautomerEnumerator()
+    res = te.Enumerate(mol)
+    res_it = iter(res)
+    i = 0
+    while 1:
+        try:
+            t = next(res_it)
+        except StopIteration:
+            break
+        self.assertEqual(Chem.MolToSmiles(t), Chem.MolToSmiles(res[i]))
+        i += 1
+    self.assertEqual(i, len(res))
+    res_it = iter(res)
+    i = -len(res)
+    while 1:
+        try:
+            t = next(res_it)
+        except StopIteration:
+            break
+        self.assertEqual(Chem.MolToSmiles(t), Chem.MolToSmiles(res[i]))
+        i += 1
+    self.assertEqual(i, 0)
 
 if __name__ == "__main__":
   unittest.main()

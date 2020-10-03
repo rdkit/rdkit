@@ -1,9 +1,8 @@
 
-remove_definitions(-DRDKIT_GRAPHMOL_BUILD)
-add_definitions(-DRDKIT_DISTGEOMHELPERS_BUILD)
 rdkit_library(DistGeomHelpers BoundsMatrixBuilder.cpp Embedder.cpp
               LINK_LIBRARIES ForceFieldHelpers GraphMol DistGeometry Alignment
                 )
+target_compile_definitions(DistGeomHelpers PRIVATE RDKIT_DISTGEOMHELPERS_BUILD)
 
 rdkit_headers(BoundsMatrixBuilder.h
               Embedder.h DEST GraphMol/DistGeomHelpers)

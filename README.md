@@ -1,5 +1,4 @@
 # RDKit
-[![Travis build status](https://travis-ci.com/rdkit/rdkit.svg)](https://travis-ci.com/rdkit/rdkit)
 [![Azure build Status](https://dev.azure.com/rdkit-org/RDKit-main-build/_apis/build/status/rdkit.rdkit?branchName=master)](https://dev.azure.com/rdkit-org/RDKit-main-build/_build/latest?definitionId=1&branchName=master)
 [![Documentation Status](https://readthedocs.org/projects/rdkit/badge/?version=latest)](http://rdkit.readthedocs.org/en/latest/)
 [![DOI](https://zenodo.org/badge/10009991.svg)](https://zenodo.org/badge/latestdoi/10009991)
@@ -58,6 +57,7 @@ Installation instructions are available in [Docs/Book/Install.md](https://github
   * [debs](https://blends.debian.org/debichem/tasks/cheminformatics) for Ubuntu and other Debian-derived Linux distros. Contributed by the Debichem team.
   * [homebrew](https://github.com/rdkit/homebrew-rdkit) formula for building on the Mac. Contributed by Eddie Cao.
   * [recipes](https://github.com/rdkit/conda-rdkit) for building using the excellent conda package manager. Contributed by Riccardo Vianello.
+  * [APKs](https://github.com/daverona/alpine-rdkit) for Alpine Linux. Contributed by da Verona
 
 ## Projects using RDKit
 

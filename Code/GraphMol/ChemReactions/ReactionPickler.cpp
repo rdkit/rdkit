@@ -98,11 +98,11 @@ void ReactionPickler::reactionFromPickle(std::istream &ss,
   streamRead(ss, patchVersion);
   if (majorVersion > versionMajor ||
       (majorVersion == versionMajor && minorVersion > versionMinor)) {
-    BOOST_LOG(rdWarningLog) << "Depickling from a version number ("
-                            << majorVersion << "." << minorVersion << ")"
-                            << "that is higher than our version ("
-                            << versionMajor << "." << versionMinor
-                            << ").\nThis probably won't work." << std::endl;
+    BOOST_LOG(rdWarningLog)
+        << "Depickling from a version number (" << majorVersion << "."
+        << minorVersion << ")"
+        << "that is higher than our version (" << versionMajor << "."
+        << versionMinor << ").\nThis probably won't work." << std::endl;
   }
   majorVersion = 1000 * majorVersion + minorVersion * 10 + patchVersion;
 
@@ -153,7 +153,8 @@ void ReactionPickler::_pickle(const ChemicalReaction *rxn, std::ostream &ss,
   streamWrite(ss, BEGINPRODUCTS);
   for (auto tmpl = rxn->beginProductTemplates();
        tmpl != rxn->endProductTemplates(); ++tmpl) {
-    MolPickler::pickleMol(tmpl->get(), ss, PicklerOps::AllProps);
+    MolPickler::pickleMol(tmpl->get(), ss,
+                          PicklerOps::PropertyPickleOptions::AtomProps);
   }
   streamWrite(ss, ENDPRODUCTS);
 
@@ -274,4 +275,4 @@ void ReactionPickler::_depickle(std::istream &ss, ChemicalReaction *rxn,
   rxn->df_needsInit = flag & 0x2;
 
 }  // end of _depickle
-};  // end of RDKit namespace
+};  // namespace RDKit

@@ -735,3 +735,17 @@ TEST_CASE("d primitive in SMARTS", "[smarts][extension]") {
     CHECK(SubstructMatch(*m, *q).size() == 3);
   }
 }
+
+TEST_CASE(
+    "github #3342: unspecified branch bonds in SMARTS don't have aromaticity "
+    "set",
+    "[smarts][bug]") {
+  SECTION("as reported") {
+    auto m = "c1(ccccc1)"_smarts;
+    REQUIRE(m);
+    REQUIRE(m->getBondBetweenAtoms(0, 1));
+    CHECK(m->getBondBetweenAtoms(0, 1)->getBondType() ==
+          Bond::BondType::AROMATIC);
+    CHECK(m->getBondBetweenAtoms(0, 1)->getIsAromatic());
+  }
+}

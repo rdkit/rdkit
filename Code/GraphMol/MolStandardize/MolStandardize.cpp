@@ -89,16 +89,7 @@ RWMol *chargeParent(const RWMol &mol, const CleanupParameters &params,
   // Return the charge parent of a given molecule.
   // The charge parent is the uncharged version of the fragment parent.
 
-  const RWMol *m = nullptr;
-
-  if (!skip_standardize) {
-    m = cleanup(mol, params);
-  } else {
-    m = &mol;
-  }
-
-
-  RWMOL_SPTR fragparent(fragmentParent(*m, params, skip_standardize));
+  RWMOL_SPTR fragparent(fragmentParent(mol, params, skip_standardize));
 
   // if fragment...
   ROMol nm(*fragparent);
@@ -106,9 +97,6 @@ RWMol *chargeParent(const RWMol &mol, const CleanupParameters &params,
   Uncharger uncharger(params.doCanonical);
   ROMOL_SPTR uncharged(uncharger.uncharge(nm));
   RWMol *omol = cleanup(static_cast<RWMol>(*uncharged), params);
-  if (!skip_standardize) {
-    delete m;
-  }
   return omol;
 }
 
@@ -128,8 +116,7 @@ RWMol *normalize(const RWMol *mol, const CleanupParameters &params) {
 }
 
 RWMol *reionize(const RWMol *mol, const CleanupParameters &params) {
-  RDUNUSED_PARAM(params);
-  Reionizer reionizer;
+  Reionizer reionizer(params.acidbaseFile);
   ROMol m(*mol);
   ROMol *reionized = reionizer.reionize(m);
 
@@ -155,18 +142,11 @@ std::vector<std::string> enumerateTautomerSmiles(
   cleanup(*mol, params);
   MolOps::sanitizeMol(*mol);
 
-  auto *tautparams = new TautomerCatalogParams(params.tautomerTransforms);
-  //	unsigned int ntautomers = tautparams->getNumTautomers();
-  TautomerEnumerator te(new TautomerCatalog(tautparams));
+  TautomerEnumerator te(params);
 
-  std::vector<ROMOL_SPTR> res = te.enumerate(*mol);
+  auto res = te.enumerate(*mol);
 
-  std::vector<std::string> tsmiles;
-  for (const auto &r : res) {
-    tsmiles.push_back(MolToSmiles(*r));
-  }
-
-  return tsmiles;
+  return res.smiles();
 }
 
 }  // end of namespace MolStandardize

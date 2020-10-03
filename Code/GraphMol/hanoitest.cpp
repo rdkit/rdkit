@@ -46,7 +46,7 @@ class int_compare_ftor {
   const int *dp_ints{nullptr};
 
  public:
-  int_compare_ftor()  {};
+  int_compare_ftor(){};
   int_compare_ftor(const int *ints) : dp_ints(ints){};
   int operator()(int i, int j) const {
     PRECONDITION(dp_ints, "no ints");
@@ -133,7 +133,7 @@ class atomcomparefunctor {
   Canon::canon_atom *d_atoms{nullptr};
 
  public:
-  atomcomparefunctor()  {};
+  atomcomparefunctor(){};
   atomcomparefunctor(Canon::canon_atom *atoms) : d_atoms(atoms){};
   int operator()(int i, int j) const {
     PRECONDITION(d_atoms, "no atoms");
@@ -163,7 +163,7 @@ class atomcomparefunctor2 {
   Canon::canon_atom *d_atoms{nullptr};
 
  public:
-  atomcomparefunctor2()  {};
+  atomcomparefunctor2(){};
   atomcomparefunctor2(Canon::canon_atom *atoms) : d_atoms(atoms){};
   int operator()(int i, int j) const {
     PRECONDITION(d_atoms, "no atoms");
@@ -420,8 +420,7 @@ class atomcomparefunctor3 {
 
  public:
   bool df_useNbrs{false};
-  atomcomparefunctor3()
-       {};
+  atomcomparefunctor3(){};
   atomcomparefunctor3(Canon::canon_atom *atoms, const ROMol &m)
       : dp_atoms(atoms), dp_mol(&m), df_useNbrs(false){};
   int operator()(int i, int j) const {
@@ -871,23 +870,23 @@ ROMol *_renumber(const ROMol *m, std::vector<unsigned int> &nVect,
   TEST_ASSERT(nm);
   TEST_ASSERT(nm->getNumAtoms() == m->getNumAtoms());
   TEST_ASSERT(nm->getNumBonds() == m->getNumBonds());
-  MolOps::assignStereochemistry(*nm, true, true);
-  for (unsigned int ii = 0; ii < nm->getNumAtoms(); ++ii) {
-    if (nm->getAtomWithIdx(ii)->hasProp("_CIPCode")) {
-      TEST_ASSERT(m->getAtomWithIdx(nVect[ii])->hasProp("_CIPCode"));
-      std::string ocip =
-          m->getAtomWithIdx(nVect[ii])->getProp<std::string>("_CIPCode");
-      std::string ncip =
-          nm->getAtomWithIdx(ii)->getProp<std::string>("_CIPCode");
-      if (ocip != ncip) {
-        std::cerr << "  cip mismatch: " << inSmiles << std::endl;
-        std::cerr << "      " << nVect[ii] << ": " << ocip << " -> " << ii
-                  << ": " << ncip << std::endl;
-        std::cerr << "      " << MolToSmiles(*nm, true) << std::endl;
-      }
-      TEST_ASSERT(ocip == ncip);
-    }
-  }
+  // MolOps::assignStereochemistry(*nm, true, true);
+  // for (unsigned int ii = 0; ii < nm->getNumAtoms(); ++ii) {
+  //   if (nm->getAtomWithIdx(ii)->hasProp("_CIPCode")) {
+  //     TEST_ASSERT(m->getAtomWithIdx(nVect[ii])->hasProp("_CIPCode"));
+  //     std::string ocip =
+  //         m->getAtomWithIdx(nVect[ii])->getProp<std::string>("_CIPCode");
+  //     std::string ncip =
+  //         nm->getAtomWithIdx(ii)->getProp<std::string>("_CIPCode");
+  //     if (ocip != ncip) {
+  //       std::cerr << "  cip mismatch: " << inSmiles << std::endl;
+  //       std::cerr << "      " << nVect[ii] << ": " << ocip << " -> " << ii
+  //                 << ": " << ncip << std::endl;
+  //       std::cerr << "      " << MolToSmiles(*nm, true) << std::endl;
+  //     }
+  //     TEST_ASSERT(ocip == ncip);
+  //   }
+  // }
   return nm;
 }
 
@@ -909,6 +908,7 @@ void _renumberTest(const ROMol *m, std::string inSmiles,
     //        std::cerr<<"Renumber: "<<nVect[j]<<"->"<<j<<std::endl;
     //      }
     ROMol *nm = _renumber(m, nVect, inSmiles);
+    nm->setProp(common_properties::_StereochemDone, 1);
 
     std::string smi = MolToSmiles(*nm, true);
     if (smi != osmi) {
@@ -1560,6 +1560,45 @@ void testGithub1567() {
   BOOST_LOG(rdInfoLog) << "Finished" << std::endl;
 }
 
+void testCanonicalDiastereomers() {
+  // FIX: this is another one that we dno't currently handle properly
+#if 0
+  BOOST_LOG(rdInfoLog) << "testing diastereomer problem." << std::endl;
+
+  auto m1 = "F[C@@H](Cl)[C@H](F)Cl"_smiles;
+  auto m2 = "F[C@H](Cl)[C@@H](F)Cl"_smiles;
+  auto smi1 = MolToSmiles(*m1);
+  auto smi2 = MolToSmiles(*m2);
+  TEST_ASSERT(smi1 != smi2);
+  BOOST_LOG(rdInfoLog) << "Finished" << std::endl;
+#endif
+}
+
+void testRingsAndDoubleBonds() {
+// FIX: we don't currently handle this case properly
+#if 0
+  BOOST_LOG(rdInfoLog)
+      << "testing some particular ugly para-stereochemistry examples."
+      << std::endl;
+  std::vector<std::string> smis = {"C/C=C/C=C/C=C/C=C/C", "C/C=C1/C[C@H](O)C1",
+                                   "C/C=C1/CC[C@H](O)CC1"};
+  for (const auto smi : smis) {
+    SmilesParserParams ps;
+    ps.sanitize = false;
+    ps.removeHs = false;
+    std::unique_ptr<ROMol> mol(SmilesToMol(smi, ps));
+    TEST_ASSERT(mol);
+    mol->setProp(common_properties::_StereochemDone, 1);
+    mol->updatePropertyCache();
+    MolOps::setBondStereoFromDirections(*mol);
+    std::cerr << "   " << MolToSmiles(*mol) << std::endl;
+    _renumberTest(mol.get(), smi, 500);
+    std::cerr << "   " << MolToSmiles(*mol) << std::endl;
+  }
+  BOOST_LOG(rdInfoLog) << "Finished" << std::endl;
+#endif
+}
+
 int main() {
   RDLog::InitLogs();
 #if 1
@@ -1576,8 +1615,9 @@ int main() {
   test12();
   test7();
   test8();
-#endif
   testGithub1567();
-
+#endif
+  testRingsAndDoubleBonds();
+  testCanonicalDiastereomers();
   return 0;
 }

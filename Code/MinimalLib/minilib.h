@@ -14,9 +14,11 @@
 class JSMol {
  public:
   JSMol() : d_mol(nullptr){};
-  JSMol(RDKit::ROMol *mol) : d_mol(mol){};
+  JSMol(RDKit::RWMol *mol) : d_mol(mol){};
   std::string get_smiles() const;
+  std::string get_cxsmiles() const;
   std::string get_molblock() const;
+  std::string get_v3Kmolblock() const;
   std::string get_inchi() const;
   std::string get_svg(unsigned int width, unsigned int height) const;
   std::string get_svg() const {
@@ -28,6 +30,16 @@ class JSMol {
   std::string get_descriptors() const;
   std::string get_morgan_fp(unsigned int radius, unsigned int len) const;
   std::string get_morgan_fp() const { return get_morgan_fp(2, 2048); };
+  std::string condense_abbreviations(double maxCoverage, bool useLinkers);
+  std::string condense_abbreviations() {
+    return condense_abbreviations(0.4, false);
+  };
+  std::string condense_abbreviations_from_defs(const std::string &definitions,
+                                               double maxCoverage,
+                                               bool areLinkers);
+  std::string generate_aligned_coords(const JSMol &templateMol,bool useCoordGen);
+  std::string generate_aligned_coords(const JSMol &templateMol) { return generate_aligned_coords(templateMol,false);};
+  
 
   bool is_valid() const { return d_mol.get() != nullptr; };
 
@@ -40,8 +52,7 @@ class JSMol {
   std::string remove_hs() const;
   std::string add_hs() const;
 
- private:
-  std::unique_ptr<RDKit::ROMol> d_mol;
+  std::unique_ptr<RDKit::RWMol> d_mol;
   static constexpr unsigned int d_defaultWidth = 250;
   static constexpr unsigned int d_defaultHeight = 200;
 };
@@ -50,3 +61,4 @@ std::string get_inchikey_for_inchi(const std::string &input);
 JSMol *get_mol(const std::string &input);
 JSMol *get_qmol(const std::string &input);
 std::string version();
+void prefer_coordgen(bool prefer);

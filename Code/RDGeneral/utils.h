@@ -1,5 +1,5 @@
 //
-//  Copyright (C) 2002-2008 Greg Landrum and Rational Discovery LLC
+//  Copyright (C) 2002-2020 Greg Landrum and Rational Discovery LLC
 //
 //  @@ All Rights Reserved @@
 //  This file is part of the RDKit.
@@ -9,8 +9,8 @@
 //
 //
 #include <RDGeneral/export.h>
-#ifndef __RD_UTILS_H__
-#define __RD_UTILS_H__
+#ifndef RD_UTILS_H
+#define RD_UTILS_H
 
 #include "types.h"
 #include <RDGeneral/Invariant.h>
@@ -80,6 +80,8 @@ unsigned int countSwapsToInterconvert(const T &ref, T probe) {
   }
   return nSwaps;
 }
+
+RDKIT_RDGENERAL_EXPORT std::string augmentTagName(const std::string &tag);
 }  // namespace RDKit
 
 // contribution from dkoes

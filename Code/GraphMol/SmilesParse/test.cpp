@@ -157,7 +157,9 @@ void testFail() {
       "C-0",  // part of sf.net issue 2525792
       "C1CC1",
       "C+0",  // part of sf.net issue 2525792
-      "C1CC1",       "[H2H]",    "C1CC1", "[HH2]", "C1CC1", "EOS"};
+      "C1CC1",       "[H2H]",    "C1CC1", "[HH2]", "C1CC1", 
+      "[555555555555555555C]", "C1CC1",
+      "EOS"};
 
   // turn off the error log temporarily:
   while (smis[i] != "EOS") {

@@ -129,6 +129,11 @@ class TestCase(unittest.TestCase):
         ref_inchi = inchi_db[m.GetProp('PUBCHEM_COMPOUND_CID')]
         x, y = MolToInchi(m), ref_inchi
         if x != y:
+          # print("---------------")
+          # print(m.GetProp('PUBCHEM_COMPOUND_CID'))
+          # print(MolToSmiles(m))
+          # print(y)
+          # print(x)
           if re.search(r'.[1-9]?ClO4', x) is not None:
             reasonable += 1
             continue
@@ -162,9 +167,9 @@ class TestCase(unittest.TestCase):
 
       fmt = "\n{0}InChI write Summary: {1} identical, {2} suffix variance, {3} reasonable{4}"
       print(fmt.format(COLOR_GREEN, same, diff, reasonable, COLOR_RESET))
-      self.assertEqual(same, 1164)
+      self.assertEqual(same, 1162)
       self.assertEqual(diff, 0)
-      self.assertEqual(reasonable, 17)
+      self.assertEqual(reasonable, 19)
 
   def test1InchiReadPubChem(self):
     for f in self.dataset.values():
@@ -250,9 +255,9 @@ class TestCase(unittest.TestCase):
           same += 1
       fmt = "\n{0}InChI read Summary: {1} identical, {2} variance, {3} reasonable variance{4}"
       print(fmt.format(COLOR_GREEN, same, diff, reasonable, COLOR_RESET))
-      self.assertEqual(same, 628)
+      self.assertEqual(same, 684)
       self.assertEqual(diff, 0)
-      self.assertEqual(reasonable, 553)
+      self.assertEqual(reasonable, 497)
 
   def test2InchiOptions(self):
     m = MolFromSmiles("CC=C(N)C")

@@ -19,6 +19,7 @@
 #include <GraphMol/FileParsers/MolWriters.h>
 #include <GraphMol/SmilesParse/SmilesParse.h>
 #include <GraphMol/SmilesParse/SmilesWrite.h>
+#include <GraphMol/SmilesParse/SmartsWrite.h>
 #include <sstream>
 #include <iostream>
 #include <boost/range/iterator_range.hpp>
@@ -1228,6 +1229,80 @@ void testAtomListLineRoundTrip() {
   BOOST_LOG(rdInfoLog) << "Finished" << std::endl;
 }
 
+void testAtomListLineWithOtherQueries() {
+  BOOST_LOG(rdInfoLog) << "-----------------------\n";
+  BOOST_LOG(rdInfoLog) << "Test AtomListLine with other queries" << std::endl;
+  const std::list<std::string> molblocks{R"MOL(
+  SciTegic06022014352D
+
+  4  3  0  0  0  0            999 V2000
+   14.8926   -7.5485    0.0000 N   0  3  0  0  0  0  0  0  0  1  0  0
+   13.8697   -6.9579    0.0000 L   0  0  0  0  0  0  0  0  0  4  0  0
+   15.9154   -6.9579    0.0000 A   0  0  0  0  0  0  0  0  0  3  0  0
+   14.8926   -8.7296    0.0000 L   0  5  0  0  0  0  0  0  0  2  0  0
+  2  1  5  0  0  0  2
+  1  3  1  0  0  0  2
+  4  1  1  0  0  0  8
+M  CHG  2   1   1   4  -1
+M  SUB  1   4   1
+M  ALS   2  2 F O   S   
+M  ALS   4  2 F O   S   
+M  END
+)MOL",
+                                         R"MOL(
+  SciTegic06022014352D
+
+  4  3  0  0  0  0            999 V2000
+   14.8926   -7.5485    0.0000 N   0  3  0  0  0  0  0  0  0  1  0  0
+   13.8697   -6.9579    0.0000 L   0  0  0  0  0  0  0  0  0  4  0  0
+   15.9154   -6.9579    0.0000 A   0  0  0  0  0  0  0  0  0  3  0  0
+   14.8926   -8.7296    0.0000 L   0  5  0  0  0  0  0  0  0  2  0  0
+  2  1  5  0  0  0  2
+  1  3  1  0  0  0  2
+  4  1  1  0  0  0  8
+M  CHG  2   1   1   4  -1
+M  ALS   2  2 F O   S   
+M  ALS   4  2 F O   S   
+M  SUB  1   4   1
+M  END
+  )MOL"};
+  const bool sanitize = false;
+  const bool removeHs = true;
+  const bool strictParsing = true;
+
+  for (const auto &molblock : molblocks) {
+    RWMOL_SPTR m(MolBlockToMol(molblock, sanitize, removeHs, strictParsing));
+    TEST_ASSERT(m->getNumAtoms() == 4);
+    const Atom *a = m->getAtomWithIdx(3);
+    TEST_ASSERT(a->hasQuery());
+    const QueryAtom *qa = dynamic_cast<const QueryAtom *>(a);
+    TEST_ASSERT(qa);
+    TEST_ASSERT(describeQuery(a) == R"MOL(AtomAnd
+  AtomAnd
+    AtomOr
+      AtomAtomicNum 8 = val
+      AtomAtomicNum 16 = val
+    AtomFormalCharge -1 = val
+  AtomExplicitDegree 1 = val
+)MOL");
+    TEST_ASSERT(SmartsWrite::GetAtomSmarts(qa) == "[#8,#16;-;D1:2]");
+  }
+}
+
+void testReplaceChargedAtomWithQueryAtom() {
+  BOOST_LOG(rdInfoLog) << "-----------------------\n";
+  BOOST_LOG(rdInfoLog) << "Test replaceAtomWithQueryAtom on a charged atom"
+                       << std::endl;
+  auto mol = "[NH3+]C"_smiles;
+  TEST_ASSERT(mol.get());
+  auto a = mol->getAtomWithIdx(0);
+  TEST_ASSERT(a);
+  const QueryAtom *qa = dynamic_cast<const QueryAtom *>(
+      QueryOps::replaceAtomWithQueryAtom(mol.get(), a));
+  TEST_ASSERT(qa);
+  TEST_ASSERT(SmartsWrite::GetAtomSmarts(qa) == "[#7&+]");
+}
+
 void testGithub608() {
   BOOST_LOG(rdInfoLog) << "-----------------------\n";
   BOOST_LOG(rdInfoLog) << "Test github 608: stereo bonds wrong after insertMol"
@@ -1531,6 +1606,8 @@ int main() {
   testGithub1843();
 #endif
   testAtomListLineRoundTrip();
+  testAtomListLineWithOtherQueries();
+  testReplaceChargedAtomWithQueryAtom();
 
   return 0;
 }

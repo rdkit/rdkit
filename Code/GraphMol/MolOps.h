@@ -239,6 +239,10 @@ struct RDKIT_GRAPHMOL_EXPORT RemoveHsParameters {
   bool removeOnlyHNeighbors =
       false; /**< hydrogens with bonds only to other hydrogens */
   bool removeIsotopes = false; /**< hydrogens with non-default isotopes */
+  bool removeAndTrackIsotopes = false; /**< removes hydrogens with non-default
+   isotopes and keeps track of the heavy atom the isotopes were attached to in
+   the private _isotopicHs atom property, so they are re-added by AddHs() as the
+   original isotopes if possible*/
   bool removeDummyNeighbors =
       false; /**< hydrogens with at least one dummy-atom neighbor */
   bool removeDefiningBondStereo =

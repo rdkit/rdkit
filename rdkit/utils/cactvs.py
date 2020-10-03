@@ -8,7 +8,7 @@ from PIL import Image
 
 
 def SmilesToGif(smiles, fileNames, size=(200, 200), cmd=None, dblSize=0, frame=0):
-  if isinstance(smiles, basestring):
+  if isinstance(smiles, str):
     smiles = [smiles]
     fileNames = [fileNames]
   if cmd is None:

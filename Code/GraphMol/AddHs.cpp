@@ -16,6 +16,9 @@
 #include <Geometry/point.h>
 #include <boost/foreach.hpp>
 #include <boost/lexical_cast.hpp>
+#include <boost/tokenizer.hpp>
+#include <boost/algorithm/string/trim.hpp>
+#include <boost/algorithm/string/classification.hpp>
 #include <boost/dynamic_bitset.hpp>
 
 namespace RDKit {
@@ -124,13 +127,19 @@ void setHydrogenCoords(ROMol *mol, unsigned int hydIdx, unsigned int heavyIdx) {
             (*cfi)->setAtomPos(hydIdx, hydPos);
             break;
           case Atom::SP2:
-            // default position is to just take an arbitrary perpendicular:
-            perpVect = nbr1Vect.getPerpendicular();
+            // default 3D position is to just take an arbitrary perpendicular
+            // for 2D we take the normal to the xy plane
+            if ((*cfi)->is3D()) {
+              perpVect = nbr1Vect.getPerpendicular();
+            } else {
+              perpVect.z = 1.0;
+            }
             if (nbr1->getDegree() > 1) {
               // can we use the neighboring atom to establish a perpendicular?
               nbrBond = mol->getBondBetweenAtoms(heavyIdx, nbr1->getIdx());
               if (nbrBond->getIsAromatic() ||
-                  nbrBond->getBondType() == Bond::DOUBLE) {
+                  nbrBond->getBondType() == Bond::DOUBLE ||
+                  nbrBond->getIsConjugated()) {
                 nbr2 = getAtomNeighborNot(mol, nbr1, heavyAtom);
                 nbr2Vect =
                     nbr1Pos.directionVector((*cfi)->getAtomPos(nbr2->getIdx()));
@@ -415,6 +424,45 @@ void AssignHsResidueInfo(RWMol &mol) {
   }
 }
 
+std::string isoHsToString(const std::vector<unsigned int> &isoHs) {
+  std::stringstream ss;
+  std::copy(isoHs.begin(), isoHs.end(),
+            std::ostream_iterator<unsigned int>(ss, " "));
+  std::string res(std::move(ss.str()));
+  boost::trim(res);
+  return res;
+}
+
+std::map<unsigned int, std::vector<unsigned int>> getIsoMap(const ROMol &mol) {
+  std::map<unsigned int, std::vector<unsigned int>> isoMap;
+  for (auto atom : mol.atoms()) {
+    if (atom->hasProp(common_properties::_isotopicHs)) {
+      atom->clearProp(common_properties::_isotopicHs);
+    }
+  }
+  for (auto bond : mol.bonds()) {
+    auto ba = bond->getBeginAtom();
+    auto ea = bond->getEndAtom();
+    int ha = -1;
+    unsigned int iso;
+    if (ba->getAtomicNum() == 1 && ba->getIsotope() &&
+        ea->getAtomicNum() != 1) {
+      ha = ea->getIdx();
+      iso = ba->getIsotope();
+    } else if (ea->getAtomicNum() == 1 && ea->getIsotope() &&
+               ba->getAtomicNum() != 1) {
+      ha = ba->getIdx();
+      iso = ea->getIsotope();
+    }
+    if (ha == -1) {
+      continue;
+    }
+    auto &v = isoMap[ha];
+    v.push_back(iso);
+  }
+  return isoMap;
+}
+
 }  // end of unnamed namespace
 
 namespace MolOps {
@@ -457,6 +505,22 @@ void addHs(RWMol &mol, bool explicitOnly, bool addCoords,
     }
 
     Atom *newAt = mol.getAtomWithIdx(aidx);
+
+    std::vector<unsigned int> isoHs;
+    std::string isotopicHsProp;
+    if (newAt->getPropIfPresent(common_properties::_isotopicHs,
+                                isotopicHsProp)) {
+      newAt->clearProp(common_properties::_isotopicHs);
+      // be lenient on input, even if we write only space-separated
+      // strings of indices
+      boost::trim_if(isotopicHsProp, boost::is_any_of(" \t\r\n,()[]{}"));
+      boost::tokenizer<> tokens(isotopicHsProp);
+      std::transform(tokens.begin(), tokens.end(), std::back_inserter(isoHs),
+                     [](const std::string &t) {
+                       return boost::lexical_cast<unsigned int>(t);
+                     });
+    }
+    std::vector<unsigned int>::const_iterator isoH = isoHs.begin();
     unsigned int newIdx;
     newAt->clearComputedProps();
     // always convert explicit Hs
@@ -464,9 +528,14 @@ void addHs(RWMol &mol, bool explicitOnly, bool addCoords,
     for (unsigned int i = 0; i < onumexpl; i++) {
       newIdx = mol.addAtom(new Atom(1), false, true);
       mol.addBond(aidx, newIdx, Bond::SINGLE);
-      mol.getAtomWithIdx(newIdx)->updatePropertyCache();
+      auto hAtom = mol.getAtomWithIdx(newIdx);
+      hAtom->updatePropertyCache();
       if (addCoords) {
         setHydrogenCoords(&mol, newIdx, aidx);
+      }
+      if (isoH != isoHs.end()) {
+        hAtom->setIsotope(*isoH);
+        ++isoH;
       }
     }
     // clear the local property
@@ -480,13 +549,19 @@ void addHs(RWMol &mol, bool explicitOnly, bool addCoords,
         mol.addBond(aidx, newIdx, Bond::SINGLE);
         // set the isImplicit label so that we can strip these back
         // off later if need be.
-        mol.getAtomWithIdx(newIdx)->setProp(common_properties::isImplicit, 1);
-        mol.getAtomWithIdx(newIdx)->updatePropertyCache();
+        auto hAtom = mol.getAtomWithIdx(newIdx);
+        hAtom->setProp(common_properties::isImplicit, 1);
+        hAtom->updatePropertyCache();
         if (addCoords) {
           setHydrogenCoords(&mol, newIdx, aidx);
         }
+        if (isoH != isoHs.end()) {
+          hAtom->setIsotope(*isoH);
+          ++isoH;
+        }
       }
-      // be very clear about implicits not being allowed in this representation
+      // be very clear about implicits not being allowed in this
+      // representation
       newAt->setProp(common_properties::origNoImplicit, newAt->getNoImplicit(),
                      true);
       newAt->setNoImplicit(true);
@@ -494,6 +569,10 @@ void addHs(RWMol &mol, bool explicitOnly, bool addCoords,
     // update the atom's derived properties (valence count, etc.)
     // no sense in being strict here (was github #2782)
     newAt->updatePropertyCache(false);
+    if (isoH != isoHs.end()) {
+      BOOST_LOG(rdWarningLog) << "extra H isotope information found on atom "
+                              << newAt->getIdx() << std::endl;
+    }
   }
   // take care of AtomPDBResidueInfo for Hs if root atom has it
   if (addResidueInfo) {
@@ -675,8 +754,31 @@ void molRemoveH(RWMol &mol, unsigned int idx, bool updateExplicitCount) {
 }  // end of anonymous namespace
 
 void removeHs(RWMol &mol, const RemoveHsParameters &ps, bool sanitize) {
+  if (ps.removeAndTrackIsotopes) {
+    // if there are any non-isotopic Hs remove them first
+    // to make sure chirality is preserved
+    bool needRemoveHs = false;
+    for (auto atom : mol.atoms()) {
+      if (atom->getAtomicNum() == 1 && atom->getIsotope() == 0) {
+        needRemoveHs = true;
+        break;
+      }
+    }
+    if (needRemoveHs) {
+      RemoveHsParameters psCopy(ps);
+      psCopy.removeAndTrackIsotopes = false;
+      psCopy.removeIsotopes = false;
+      removeHs(mol, psCopy, false);
+    }
+  }
   for (auto atom : mol.atoms()) {
     atom->updatePropertyCache(false);
+  }
+  if (ps.removeAndTrackIsotopes) {
+    for (const auto &pair : getIsoMap(mol)) {
+      mol.getAtomWithIdx(pair.first)
+          ->setProp(common_properties::_isotopicHs, isoHsToString(pair.second));
+    }
   }
   boost::dynamic_bitset<> atomsToRemove{mol.getNumAtoms(), 0};
   for (auto atom : mol.atoms()) {
@@ -697,7 +799,8 @@ void removeHs(RWMol &mol, const RemoveHsParameters &ps, bool sanitize) {
     if (!ps.removeHigherDegrees && atom->getDegree() > 1) {
       continue;
     }
-    if (!ps.removeIsotopes && atom->getIsotope()) {
+    if (!ps.removeIsotopes && !ps.removeAndTrackIsotopes &&
+        atom->getIsotope()) {
       continue;
     }
     if (!ps.removeNonimplicit &&
@@ -1037,4 +1140,4 @@ ROMol *mergeQueryHs(const ROMol &mol, bool mergeUnmappedOnly) {
 };
 
 };  // end of namespace MolOps
-};  // end of namespace RDKit
+};  // namespace RDKit

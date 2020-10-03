@@ -2,7 +2,11 @@
 // Created by Gareth Jones on 5/7/2020.
 //
 // Copyright 2020 Schrodinger, Inc
-//
+//  @@ All Rights Reserved @@
+//  This file is part of the RDKit.
+//  The contents are covered by the terms of the BSD license
+//  which is included in the file license.txt, found at the root
+//  of the RDKit source tree.
 
 #include "TautomerQuery.h"
 #include <boost/smart_ptr.hpp>
@@ -128,22 +132,19 @@ TautomerQuery *TautomerQuery::fromMol(
       new MolStandardize::TautomerCatalogParams(tautomerFile));
   MolStandardize::TautomerEnumerator tautomerEnumerator(
       new MolStandardize::TautomerCatalog(tautomerParams.get()));
-  boost::dynamic_bitset<> modifiedAtomsBitSet(query.getNumAtoms());
-  boost::dynamic_bitset<> modifiedBondsBitSet(query.getNumBonds());
-  const auto tautomers = tautomerEnumerator.enumerate(
-      query, &modifiedAtomsBitSet, &modifiedBondsBitSet);
+  const auto res = tautomerEnumerator.enumerate(query);
 
   std::vector<size_t> modifiedAtoms;
-  modifiedAtoms.reserve(modifiedAtomsBitSet.count());
+  modifiedAtoms.reserve(res.modifiedAtoms().count());
   for (size_t i = 0; i < query.getNumAtoms(); i++) {
-    if (modifiedAtomsBitSet[i]) {
+    if (res.modifiedAtoms().test(i)) {
       modifiedAtoms.push_back(i);
     }
   }
   std::vector<size_t> modifiedBonds;
-  modifiedBonds.reserve(modifiedBondsBitSet.count());
+  modifiedBonds.reserve(res.modifiedBonds().count());
   for (size_t i = 0; i < query.getNumBonds(); i++) {
-    if (modifiedBondsBitSet[i]) {
+    if (res.modifiedBonds().test(i)) {
       modifiedBonds.push_back(i);
     }
   }
@@ -165,8 +166,9 @@ TautomerQuery *TautomerQuery::fromMol(
     delete queryBond;
   }
 
-  return new TautomerQuery(tautomers, (ROMol *)templateMolecule, modifiedAtoms,
-                           modifiedBonds);
+  return new TautomerQuery(res.tautomers(),
+                           static_cast<ROMol *>(templateMolecule),
+                           modifiedAtoms, modifiedBonds);
 }
 
 bool TautomerQuery::matchTautomer(
