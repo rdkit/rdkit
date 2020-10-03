@@ -79,9 +79,8 @@ ROMol *Normalizer::normalize(const ROMol &mol) {
   const std::vector<std::shared_ptr<ChemicalReaction>> &transforms =
       tparams->getTransformations();
   bool sanitizeFrags = false;
-  std::vector<boost::shared_ptr<ROMol>> frags =
-      MolOps::getMolFrags(mol, sanitizeFrags);
-  std::vector<ROMOL_SPTR> nfrags;  //( frags.size() );
+  MOL_SPTR_VECT frags = MolOps::getMolFrags(mol, sanitizeFrags);
+  MOL_SPTR_VECT nfrags;  //( frags.size() );
   for (const auto &frag : frags) {
     frag->updatePropertyCache(false);
     ROMOL_SPTR nfrag(this->normalizeFragment(*frag, transforms));
@@ -98,30 +97,31 @@ ROMol *Normalizer::normalize(const ROMol &mol) {
   return outmol;
 }
 
-boost::shared_ptr<ROMol> Normalizer::normalizeFragment(
+ROMOL_SPTR Normalizer::normalizeFragment(
     const ROMol &mol,
-    const std::vector<std::shared_ptr<ChemicalReaction>> &transforms) {
-  boost::shared_ptr<ROMol> nfrag(new ROMol(mol));
+    const std::vector<std::shared_ptr<ChemicalReaction>> &transforms) const {
+  ROMOL_SPTR nfrag(new ROMol(mol));
   MolOps::fastFindRings(
       *nfrag);  // this doesn't do anything if rings are already there
+  std::set<std::string> seenProductSmiles;
   for (unsigned int i = 0; i < MAX_RESTARTS; ++i) {
-    bool loop_brake = false;
+    bool loop_break = false;
     // Iterate through Normalization transforms and apply each in order
     for (auto &transform : transforms) {
-      boost::shared_ptr<ROMol> product =
-          this->applyTransform(nfrag, *transform);
-      if (product != nullptr) {
+      SmilesMolPair product = applyTransform(nfrag, *transform);
+      if (!product.first.empty() && !seenProductSmiles.count(product.first)) {
+        seenProductSmiles.insert(product.first);
         BOOST_LOG(rdInfoLog)
             << "Rule applied: "
             << transform->getProp<std::string>(common_properties::_Name)
             << "\n";
-        nfrag = product;
-        loop_brake = true;
+        nfrag = product.second;
+        loop_break = true;
         break;
       }
     }
     // For loop finishes normally, all applicable transforms have been applied
-    if (!loop_brake) {
+    if (!loop_break) {
       return nfrag;
     }
   }
@@ -130,8 +130,8 @@ boost::shared_ptr<ROMol> Normalizer::normalizeFragment(
   return nfrag;
 }
 
-boost::shared_ptr<ROMol> Normalizer::applyTransform(
-    const boost::shared_ptr<ROMol> mol, ChemicalReaction &transform) {
+SmilesMolPair Normalizer::applyTransform(const ROMOL_SPTR &mol,
+                                         ChemicalReaction &transform) const {
   // Repeatedly apply normalization transform to molecule until no changes
   // occur.
   //
@@ -142,56 +142,45 @@ boost::shared_ptr<ROMol> Normalizer::applyTransform(
   // If there are multiple unique products after the final application, the
   // first product (sorted alphabetically by SMILES) is chosen.
 
-  MOL_SPTR_VECT mols;
-  mols.push_back(mol);
+  SmilesMolPair smilesMolPair{std::string(), mol};
 
   if (!transform.isInitialized()) {
     transform.initReactantMatchers();
   }
   // REVIEW: what's the source of the 20 in the next line?
   for (unsigned int i = 0; i < 20; ++i) {
-    std::vector<Normalizer::Product> pdts;
-    for (auto &m : mols) {
-      std::vector<MOL_SPTR_VECT> products = transform.runReactants({m});
-      for (auto &pdt : products) {
-        // shared_ptr<ROMol> p0( new RWMol(*pdt[0]) );
-        //				std::cout << MolToSmiles(*p0) <<
-        // std::endl;
-        unsigned int failed;
-        try {
-          auto *tmol = static_cast<RWMol *>(pdt[0].get());
-          // we'll allow atoms with a valence that's too high to make it
-          // through, but we should fail if we just created something that
-          // can't, for example, be kekulized.
-          unsigned int sanitizeOps = MolOps::SANITIZE_ALL ^
-                                     MolOps::SANITIZE_CLEANUP ^
-                                     MolOps::SANITIZE_PROPERTIES;
-          MolOps::sanitizeMol(*tmol, failed, sanitizeOps);
-          // REVIEW: is it actually important that we use canonical SMILES here?
-          Normalizer::Product np(MolToSmiles(*tmol), pdt[0]);
-          pdts.push_back(np);
-        } catch (MolSanitizeException &) {
-          BOOST_LOG(rdInfoLog) << "FAILED sanitizeMol.\n";
-        }
+    std::map<std::string, ROMOL_SPTR> pdts;
+    std::vector<MOL_SPTR_VECT> products =
+        transform.runReactants({smilesMolPair.second});
+    for (auto &pdt : products) {
+      // shared_ptr<ROMol> p0( new RWMol(*pdt[0]) );
+      //				std::cout << MolToSmiles(*p0) <<
+      // std::endl;
+      unsigned int failed;
+      try {
+        auto *tmol = static_cast<RWMol *>(pdt.front().get());
+        // we'll allow atoms with a valence that's too high to make it
+        // through, but we should fail if we just created something that
+        // can't, for example, be kekulized.
+        unsigned int sanitizeOps = MolOps::SANITIZE_ALL ^
+                                   MolOps::SANITIZE_CLEANUP ^
+                                   MolOps::SANITIZE_PROPERTIES;
+        MolOps::sanitizeMol(*tmol, failed, sanitizeOps);
+        pdts[MolToSmiles(*tmol)] = pdt.front();
+      } catch (MolSanitizeException &) {
+        BOOST_LOG(rdInfoLog) << "FAILED sanitizeMol.\n";
       }
     }
-    if (pdts.size() != 0) {
-      std::sort(pdts.begin(), pdts.end());
-      mols.clear();
-      mols.push_back(pdts[0].Mol);
+    if (!pdts.empty()) {
+      smilesMolPair = std::move(*pdts.begin());
     } else {
-      if (i > 0) {
-        return mols[0];
-      } else {
-        return nullptr;
+      if (i) {
+        return smilesMolPair;
       }
+      return std::make_pair(std::string(), nullptr);
     }
   }
-  if (mols.size()) {
-    return mols[0];
-  } else {
-    return nullptr;
-  }
+  return smilesMolPair;
 }
 
 }  // namespace MolStandardize

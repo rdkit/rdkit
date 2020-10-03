@@ -173,7 +173,7 @@ class TestCase(unittest.TestCase):
     self.assertEqual
     ("""INFO: [FragmentValidation] 1,2-dichloroethane is present""", msg6[0])
 
-  def test10NormalizeParams(self):
+  def test10NormalizeFromData(self):
     data = """//	Name	SMIRKS
 Nitro to N+(O-)=O	[N,P,As,Sb;X3:1](=[O,S,Se,Te:2])=[O,S,Se,Te:3]>>[*+1:1]([*-1:2])=[*:3]
 Sulfone to S(=O)(=O)	[S+2:1]([O-:2])([O-:3])>>[S+0:1](=[O-0:2])(=[O-0:3])
@@ -719,6 +719,12 @@ chlorine	[Cl]
         self.assertEqual(Chem.MolToSmiles(t), Chem.MolToSmiles(res[i]))
         i += 1
     self.assertEqual(i, 0)
+
+  def test19NormalizeFromParams(self):
+    params = rdMolStandardize.CleanupParameters()
+    params.normalizationsFile = "ThisFileDoesNotExist.txt"
+    with self.assertRaises(OSError):
+        rdMolStandardize.NormalizerFromParams(params)
 
 if __name__ == "__main__":
   unittest.main()
