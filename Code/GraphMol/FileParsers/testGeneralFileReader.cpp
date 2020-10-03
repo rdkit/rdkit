@@ -30,10 +30,11 @@ using namespace GeneralMolSupplier;
 void testDetermineFormat() {
   std::string fname1 = "1kv1.maegz";
   std::string fname2 = "first_200.tpsa.csv";
-	std::string fname3 = "esters.prop_name_trunc.sdf";
+  std::string fname3 = "esters.prop_name_trunc.sdf";
   std::string fname4 = "NCI_aids_few.sdf.gz";
   std::string fname5 = "t.o.o.m.a.n.y.dots.mae";
-	std::string fname6 = "checkCaseSensitiveFormat.sDf.Gz";
+  std::string fname6 = "checkCaseSensitiveFormat.sDf.Gz";
+  std::string fname7 = "something.sdfgz";
 
   std::string fileFormat, compressionFormat;
 
@@ -60,6 +61,10 @@ void testDetermineFormat() {
   determineFormat(fname6, fileFormat, compressionFormat);
   TEST_ASSERT(fileFormat == "sdf");
   TEST_ASSERT(compressionFormat == "gz");
+
+  determineFormat(fname7, fileFormat, compressionFormat);
+  TEST_ASSERT(fileFormat == "sdf");
+  TEST_ASSERT(compressionFormat == "gz");
 }
 
 void testSdf() {
@@ -68,7 +73,7 @@ void testSdf() {
   std::string fname =
       rdbase + "/Code/GraphMol/FileParsers/test_data/NCI_aids_few.sdf";
   struct SupplierOptions opt;
-  MolSupplier* sdsup = getSupplier(fname, opt);
+  auto sdsup = getSupplier(fname, opt);
   unsigned int i = 0;
   while (!sdsup->atEnd()) {
     ROMol* nmol = sdsup->next();
@@ -82,11 +87,11 @@ void testSdf() {
   }
   TEST_ASSERT(i == 16);
 
-	//! Use Multithreaded Supplier
+  //! Use Multithreaded Supplier
   struct SupplierOptions optConcurrent;
-	optConcurrent.sanitize = false;
-	optConcurrent.numWriterThreads = 2; 
-  MolSupplier* sdsupMulti = getSupplier(fname, optConcurrent);
+  optConcurrent.sanitize = false;
+  optConcurrent.numWriterThreads = 2;
+  auto sdsupMulti = getSupplier(fname, optConcurrent);
   i = 0;
   while (!sdsupMulti->atEnd()) {
     ROMol* nmol = sdsupMulti->next();
@@ -99,11 +104,10 @@ void testSdf() {
   }
   TEST_ASSERT(i == 16);
 
-
   //! Open compressed SDF file format
   fname = rdbase + "/Code/GraphMol/FileParsers/test_data/NCI_aids_few.sdf.gz";
   opt.takeOwnership = false;
-  MolSupplier* sdsup2 = getSupplier(fname, opt);
+  auto sdsup2 = getSupplier(fname, opt);
   i = 0;
   while (!sdsup2->atEnd()) {
     ROMol* nmol = sdsup2->next();
@@ -115,10 +119,6 @@ void testSdf() {
     }
   }
   TEST_ASSERT(i == 16);
-
-  delete sdsup;
-	delete sdsupMulti;
-  delete sdsup2;
 }
 
 void testSmi() {
@@ -133,7 +133,7 @@ void testSmi() {
   opt_smi.smilesColumn = 1;
   opt_smi.nameColumn = 0;
   opt_smi.titleLine = true;
-  MolSupplier* sup = getSupplier(fname, opt_smi);
+  auto sup = getSupplier(fname, opt_smi);
   unsigned int i = 0;
   while (!sup->atEnd()) {
     ROMol* mol = sup->next();
@@ -148,22 +148,18 @@ void testSmi() {
   }
   TEST_ASSERT(i == 10);
 
-	//! Use Multithreaded Supplier  
+  //! Use Multithreaded Supplier
   opt_smi.numWriterThreads = 2;
-  MolSupplier* supMulti = getSupplier(fname, opt_smi);
+  auto supMulti = getSupplier(fname, opt_smi);
   i = 0;
   while (!supMulti->atEnd()) {
     ROMol* mol = supMulti->next();
-   	if(mol){
-			delete mol;
-  	  i++;
-		}
+    if (mol) {
+      delete mol;
+      i++;
+    }
   }
   TEST_ASSERT(i == 10);
-
-  delete sup;
-	delete supMulti;
-
 }
 
 void testMae() {
@@ -172,7 +168,7 @@ void testMae() {
   std::string fname =
       rdbase + "/Code/GraphMol/FileParsers/test_data/props_test.mae";
   struct SupplierOptions opt;
-  MolSupplier* maesup = getSupplier(fname, opt);
+  auto maesup = getSupplier(fname, opt);
   std::unique_ptr<ROMol> nmol(maesup->next());
   TEST_ASSERT(nmol);
 
@@ -222,7 +218,7 @@ void testMae() {
 
   //! Open compressed MAE file, .maegz format
   fname = rdbase + "/Code/GraphMol/FileParsers/test_data/1kv1.maegz";
-  MolSupplier* cmaesup = getSupplier(fname, opt);
+  auto cmaesup = getSupplier(fname, opt);
 
   std::shared_ptr<ROMol> nmol2;
   nmol2.reset(cmaesup->next());
@@ -231,9 +227,6 @@ void testMae() {
   TEST_ASSERT(info->getResidueName() == "ARG ");
   TEST_ASSERT(info->getChainId() == "A");
   TEST_ASSERT(info->getResidueNumber() == 5);
-
-  delete maesup;
-  delete cmaesup;
 }
 
 void testTdt() {
@@ -243,7 +236,7 @@ void testTdt() {
       rdbase + "/Code/GraphMol/FileParsers/test_data/acd_few.tdt";
   struct SupplierOptions opt;
   opt.nameRecord = "PN";
-  MolSupplier* suppl = getSupplier(fname, opt);
+  auto suppl = getSupplier(fname, opt);
 
   unsigned int i = 0;
   while (!suppl->atEnd()) {
@@ -269,7 +262,6 @@ void testTdt() {
     }
   }
   TEST_ASSERT(i == 10);
-  delete suppl;
 }
 
 int main() {
