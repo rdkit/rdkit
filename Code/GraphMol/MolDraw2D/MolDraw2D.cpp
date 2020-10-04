@@ -2292,8 +2292,8 @@ void MolDraw2D::drawDativeBond(const Point2D &cds1, const Point2D &cds2,
 
   setColour(col2);
   bool asPolygon = true;
-  double frac = 0.1;
-  double angle = M_PI / 8;
+  double frac = 0.2;
+  double angle = M_PI / 6;
   // the polygon triangle at the end extends past cds2, so step back a bit
   // so as not to trample on anything else.
   Point2D delta = mid - cds2;

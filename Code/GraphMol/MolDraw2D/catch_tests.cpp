@@ -285,6 +285,50 @@ TEST_CASE("dative bonds", "[drawing][organometallics]") {
                     " L 81.0244,149.68' style='fill:none;"
                     "fill-rule:evenodd;stroke:#0000FF;") != std::string::npos);
   }
+  SECTION("dative series") {
+    auto m1 = "N->1[C@@H]2CCCC[C@H]2N->[Pt]11OC(=O)C(=O)O1"_smiles;
+    REQUIRE(m1);
+    {
+      MolDraw2DSVG drawer(150, 150, -1, -1, NO_FREETYPE);
+      MolDraw2DUtils::prepareMolForDrawing(*m1);
+      drawer.drawMolecule(*m1);
+      drawer.finishDrawing();
+      std::string text = drawer.getDrawingText();
+      std::ofstream outs("testDativeBonds_2a.svg");
+      outs << text;
+      outs.flush();
+    }
+    {
+      MolDraw2DSVG drawer(250, 250, -1, -1, NO_FREETYPE);
+      MolDraw2DUtils::prepareMolForDrawing(*m1);
+      drawer.drawMolecule(*m1);
+      drawer.finishDrawing();
+      std::string text = drawer.getDrawingText();
+      std::ofstream outs("testDativeBonds_2b.svg");
+      outs << text;
+      outs.flush();
+    }
+    {
+      MolDraw2DSVG drawer(350, 350, -1, -1, NO_FREETYPE);
+      MolDraw2DUtils::prepareMolForDrawing(*m1);
+      drawer.drawMolecule(*m1);
+      drawer.finishDrawing();
+      std::string text = drawer.getDrawingText();
+      std::ofstream outs("testDativeBonds_2c.svg");
+      outs << text;
+      outs.flush();
+    }
+    {
+      MolDraw2DSVG drawer(450, 450, -1, -1, NO_FREETYPE);
+      MolDraw2DUtils::prepareMolForDrawing(*m1);
+      drawer.drawMolecule(*m1);
+      drawer.finishDrawing();
+      std::string text = drawer.getDrawingText();
+      std::ofstream outs("testDativeBonds_2d.svg");
+      outs << text;
+      outs.flush();
+    }
+  }
 }
 
 TEST_CASE("zero-order bonds", "[drawing][organometallics]") {
