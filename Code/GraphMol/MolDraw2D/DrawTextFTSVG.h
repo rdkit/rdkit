@@ -19,11 +19,10 @@ namespace RDKit {
 
 // ****************************************************************************
 class DrawTextFTSVG : public DrawTextFT {
-
  public:
   DrawTextFTSVG(double max_fnt_sz, double min_fnt_sz,
-                const std::string &font_file,
-		std::ostream &oss, std::string &d_act_class);
+                const std::string &font_file, std::ostream &oss,
+                std::string &d_act_class);
 
   int MoveToFunctionImpl(const FT_Vector *to) override;
   int LineToFunctionImpl(const FT_Vector *to) override;
@@ -40,9 +39,8 @@ class DrawTextFTSVG : public DrawTextFT {
  private:
   std::ostream &oss_;
   std::string &d_active_class_;
-
 };
 
-} // namespace RDKit
+}  // namespace RDKit
 
 #endif  // RDKIT_DRAWTEXTFTSVG_H

@@ -22,12 +22,11 @@ namespace RDKit {
 // ****************************************************************************
 
 class DrawTextSVG : public DrawText {
-
  public:
   DrawTextSVG(double max_fnt_sz, double min_fnt_sz, std::ostream &oss,
               std::string &d_act_class);
 
-   void drawChar(char c, const Point2D &cds) override;
+  void drawChar(char c, const Point2D &cds) override;
 
  private:
   std::ostream &oss_;
@@ -40,9 +39,8 @@ class DrawTextSVG : public DrawText {
                       std::vector<std::shared_ptr<StringRect>> &rects,
                       std::vector<TextDrawType> &draw_modes,
                       std::vector<char> &draw_chars) const override;
-
 };
 
-} // namespace RDKit
+}  // namespace RDKit
 
 #endif  // RDKIT_DRAWTEXTSVG_H
