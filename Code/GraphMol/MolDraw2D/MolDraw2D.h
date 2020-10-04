@@ -249,6 +249,9 @@ struct RDKIT_MOLDRAW2D_EXPORT MolDrawOptions {
   bool centreMoleculesBeforeDrawing = false;  // moves the centre of the drawn
                                               // molecule to (0,0)
   bool explicitMethyl = false;  // draw terminal methyl and related as CH3
+  bool includeRadicals =
+      true;  // include radicals in the drawing (it can be useful to turn this
+             // off for reactions and queries)
   bool includeMetadata =
       true;  // when possible include metadata about molecules and reactions in
              // the output to allow them to be reconstructed

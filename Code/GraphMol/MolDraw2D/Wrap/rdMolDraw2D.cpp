@@ -671,7 +671,11 @@ BOOST_PYTHON_MODULE(rdMolDraw2D) {
       .def_readwrite(
           "includeMetadata", &RDKit::MolDrawOptions::includeMetadata,
           "When possible, include metadata about molecules and reactions to "
-          "allow them to be reconstructed. Default is true.");
+          "allow them to be reconstructed. Default is true.")
+      .def_readwrite(
+          "includeRadicals", &RDKit::MolDrawOptions::includeRadicals,
+          "include radicals in the drawing (it can be useful to turn this off "
+          "for reactions and queries). Default is true.");
   docString = "Drawer abstract base class";
   python::class_<RDKit::MolDraw2D, boost::noncopyable>(
       "MolDraw2D", docString.c_str(), python::no_init)

@@ -1430,7 +1430,9 @@ void MolDraw2D::finishMoleculeDraw(const RDKit::ROMol &draw_mol,
     }
   }
 
-  drawRadicals(draw_mol);
+  if (drawOptions().includeRadicals) {
+    drawRadicals(draw_mol);
+  }
 
   if (drawOptions().flagCloseContactsDist >= 0) {
     highlightCloseContacts();

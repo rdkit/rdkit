@@ -787,3 +787,34 @@ TEST_CASE(
     outs.flush();
   }
 }
+
+TEST_CASE("includeRadicals", "[options]") {
+  SECTION("basics") {
+    auto m = "[O][C]"_smiles;
+    REQUIRE(m);
+    int panelHeight = -1;
+    int panelWidth = -1;
+    bool noFreeType = true;
+    {
+      MolDraw2DSVG drawer(250, 200, panelWidth, panelHeight, noFreeType);
+      drawer.drawMolecule(*m);
+      drawer.finishDrawing();
+      auto text = drawer.getDrawingText();
+      std::ofstream outs("testIncludeRadicals_1a.svg");
+      outs << text;
+      outs.flush();
+      CHECK(text.find("<path d='M") != std::string::npos);
+    }
+    {
+      MolDraw2DSVG drawer(250, 200, panelWidth, panelHeight, noFreeType);
+      drawer.drawOptions().includeRadicals = false;
+      drawer.drawMolecule(*m);
+      drawer.finishDrawing();
+      auto text = drawer.getDrawingText();
+      std::ofstream outs("testIncludeRadicals_1b.svg");
+      outs << text;
+      outs.flush();
+      CHECK(text.find("<path d='M") == std::string::npos);
+    }
+  }
+}
