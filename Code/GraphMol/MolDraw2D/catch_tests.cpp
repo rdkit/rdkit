@@ -505,7 +505,7 @@ TEST_CASE("Github #3226: Lines in wedge bonds being drawn too closely together",
       outs.flush();
       std::vector<std::string> tkns;
       boost::algorithm::find_all(tkns, text, "bond-0");
-      CHECK(tkns.size() == 3);
+      CHECK(tkns.size() == 4);
     }
   }
 #ifdef RDK_BUILD_CAIRO_SUPPORT
@@ -529,7 +529,7 @@ TEST_CASE("Github #3226: Lines in wedge bonds being drawn too closely together",
       outs.flush();
       std::vector<std::string> tkns;
       boost::algorithm::find_all(tkns, text, "bond-0");
-      CHECK(tkns.size() == 3);
+      CHECK(tkns.size() == 4);
     }
   }
 #ifdef RDK_BUILD_CAIRO_SUPPORT

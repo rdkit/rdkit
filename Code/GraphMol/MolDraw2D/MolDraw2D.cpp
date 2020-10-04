@@ -2243,9 +2243,9 @@ void MolDraw2D::drawWedgedBond(const Point2D &cds1, const Point2D &cds2,
     // empirical cutoff to make sure we don't have too many dashes in the
     // wedge:
     auto factor = scale_ * (cds1 - cds2).lengthSq();
-    if (factor < 35) {
+    if (factor < 20) {
       nDashes = 3;
-    } else if (factor < 40) {
+    } else if (factor < 30) {
       nDashes = 4;
     } else if (factor < 45) {
       nDashes = 5;
