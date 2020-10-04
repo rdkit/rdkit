@@ -113,7 +113,7 @@ void MolDraw2D::doContinuousHighlighting(
 
   int orig_lw = lineWidth();
   int tgt_lw = getHighlightBondWidth(-1, nullptr);
-  if(tgt_lw < 2) {
+  if (tgt_lw < 2) {
     tgt_lw = 2;
   }
 
@@ -138,7 +138,8 @@ void MolDraw2D::doContinuousHighlighting(
             Point2D at1_cds = at_cds_[activeMolIdx_][this_idx];
             Point2D at2_cds = at_cds_[activeMolIdx_][nbr_idx];
             bool orig_slw = drawOptions().scaleBondWidth;
-            drawOptions().scaleBondWidth = drawOptions().scaleHighlightBondWidth;
+            drawOptions().scaleBondWidth =
+                drawOptions().scaleHighlightBondWidth;
             drawLine(at1_cds, at2_cds, col, col);
             drawOptions().scaleBondWidth = orig_slw;
           }
@@ -2121,7 +2122,7 @@ void MolDraw2D::drawBond(
     if (isComplex) {
       setDash(dots);
       bool orig_slw = drawOptions().scaleBondWidth;
-      if(highlight_bond) {
+      if (highlight_bond) {
         drawOptions().scaleBondWidth = drawOptions().scaleHighlightBondWidth;
       }
       drawLine(at1_cds, at2_cds, col1, col2);
@@ -2141,7 +2142,7 @@ void MolDraw2D::drawBond(
       calcDoubleBondLines(mol, double_bond_offset, bond, at1_cds, at2_cds, l1s,
                           l1f, l2s, l2f);
       bool orig_slw = drawOptions().scaleBondWidth;
-      if(highlight_bond) {
+      if (highlight_bond) {
         drawOptions().scaleBondWidth = drawOptions().scaleHighlightBondWidth;
       }
       drawLine(l1s, l1f, col1, col2);
@@ -2191,7 +2192,7 @@ void MolDraw2D::drawBond(
     } else if (Bond::ZERO == bt) {
       setDash(shortDashes);
       bool orig_slw = drawOptions().scaleBondWidth;
-      if(highlight_bond) {
+      if (highlight_bond) {
         drawOptions().scaleBondWidth = drawOptions().scaleHighlightBondWidth;
       }
       drawLine(at1_cds, at2_cds, col1, col2);
@@ -2201,7 +2202,7 @@ void MolDraw2D::drawBond(
       // in all other cases, we will definitely want to draw a line between
       // the two atoms
       bool orig_slw = drawOptions().scaleBondWidth;
-      if(highlight_bond) {
+      if (highlight_bond) {
         drawOptions().scaleBondWidth = drawOptions().scaleHighlightBondWidth;
       }
       drawLine(at1_cds, at2_cds, col1, col2);
@@ -2856,7 +2857,7 @@ void MolDraw2D::calcTripleBondLines(double offset, const Bond *bond,
 double MolDraw2D::getDrawLineWidth() const {
   double width = lineWidth();
   // This works fairly well for SVG and Cairo. 0.02 is picked by eye
-  if(drawOptions().scaleBondWidth) {
+  if (drawOptions().scaleBondWidth) {
     width *= scale() * 0.02;
     if (width < 0.0) {
       width = 0.0;

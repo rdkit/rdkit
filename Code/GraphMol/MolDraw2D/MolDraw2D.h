@@ -211,9 +211,9 @@ struct RDKIT_MOLDRAW2D_EXPORT MolDrawOptions {
   std::vector<std::vector<int>> atomRegions;  // regions
   DrawColour symbolColour{
       0, 0, 0};  // color to be used for the symbols and arrows in reactions
-  int bondLineWidth = 2;  // default line width when drawing bonds
-  bool scaleBondWidth = false; // whether to apply scale() to the bond width
-  bool scaleHighlightBondWidth = true; // likewise with bond highlights.
+  int bondLineWidth = 2;        // default line width when drawing bonds
+  bool scaleBondWidth = false;  // whether to apply scale() to the bond width
+  bool scaleHighlightBondWidth = true;   // likewise with bond highlights.
   int highlightBondWidthMultiplier = 8;  // what to multiply standard bond width
                                          // by for highlighting.
   bool prepareMolsBeforeDrawing = true;  // call prepareMolForDrawing() on each
