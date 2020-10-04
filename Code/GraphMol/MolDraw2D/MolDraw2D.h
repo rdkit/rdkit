@@ -657,6 +657,8 @@ class RDKIT_MOLDRAW2D_EXPORT MolDraw2D {
   std::unique_ptr<RWMol> setupMoleculeDraw(
       const ROMol &mol, const std::vector<int> *highlight_atoms,
       const std::map<int, double> *highlight_radii, int confId = -1);
+  void setupTextDrawer();
+
   // if bond_colours is given, it must have an entry for every bond, and it
   // trumps everything else.  First in pair is bonds begin atom, second is
   // end atom.
