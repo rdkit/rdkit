@@ -71,7 +71,7 @@ void testChargeParent() {
   BOOST_LOG(rdInfoLog) << "-----------------------\n test charge parent"
                        << std::endl;
   std::string smi1, smi2, smi3, smi4, smi5, smi6, smi7, smi8, smi9, smi10,
-      smi11, smi12;
+      smi11, smi12, smi13;
   MolStandardize::CleanupParameters params;
   // initialize CleanupParameters with preferOrganic=true
   MolStandardize::CleanupParameters params_preferorg;
@@ -152,7 +152,11 @@ void testChargeParent() {
   std::unique_ptr<RWMol> res12(
       MolStandardize::chargeParent(*m12, params_preferorg));
   TEST_ASSERT(MolToSmiles(*res12) == "[CH2]");
-  BOOST_LOG(rdInfoLog) << "Finished" << std::endl;
+
+  smi13 = "[Cu+2]";
+  std::unique_ptr<RWMol> m13(SmilesToMol(smi13));
+  std::unique_ptr<RWMol> res13(MolStandardize::chargeParent(*m13));
+  TEST_ASSERT(MolToSmiles(*res13) == "[Cu+2]");
 }
 
 void testGithub2144() {

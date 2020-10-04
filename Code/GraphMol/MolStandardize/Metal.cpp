@@ -29,7 +29,7 @@ MetalDisconnector::MetalDisconnector()
     : metal_nof(
           SmartsToMol("[Li,Na,K,Rb,Cs,Fr,Be,Mg,Ca,Sr,Ba,Ra,Sc,Ti,V,Cr,Mn,Fe,Co,"
                       "Ni,Cu,Zn,Al,Ga,Y,Zr,Nb,Mo,Tc,Ru,Rh,Pd,Ag,Cd,In,Sn,Hf,Ta,"
-                      "W,Re,Os,Ir,Pt,Au,Hg,Tl,Pb,Bi]~[N,O,F]")),
+                      "W,Re,Os,Ir,Pt,Au,Hg,Tl,Pb,Bi]~[#7,#8,F]")),
       metal_non(SmartsToMol(
           "[Al,Sc,Ti,V,Cr,Mn,Fe,Co,Ni,Cu,Zn,Y,Zr,Nb,Mo,Tc,Ru,Rh,Pd,Ag,Cd,Hf,Ta,"
           "W,Re,Os,Ir,Pt,Au]~[B,C,Si,P,As,Sb,S,Se,Te,Cl,Br,I,At]")) {
@@ -64,32 +64,141 @@ ROMol *MetalDisconnector::disconnect(const ROMol &mol) {
 void MetalDisconnector::disconnect(RWMol &mol) {
   BOOST_LOG(rdInfoLog) << "Running MetalDisconnector\n";
   std::list<ROMOL_SPTR> metalList = {metal_nof, metal_non};
+  std::map<int, NonMetal> nonMetals;
+  std::map<int, int> metalChargeExcess;
   for (auto &query : metalList) {
     std::vector<MatchVectType> matches;
-    unsigned int matched;
+    SubstructMatch(mol, *query, matches);
 
-    matched = SubstructMatch(mol, *query, matches);
+    for (const auto &match : matches) {
+      int metal_idx = match[0].second;
+      metalChargeExcess[metal_idx] = 0;
+      auto metal = mol.getAtomWithIdx(metal_idx);
+      int non_idx = match[1].second;
+      auto nonMetal = mol.getAtomWithIdx(non_idx);
 
-    for (size_t i = 0; i < matched; ++i) {
-      // disconnecting metal-R bond
-      int metal_idx = matches[i][0].second;
-      int non_idx = matches[i][1].second;
       Bond *b = mol.getBondBetweenAtoms(metal_idx, non_idx);
-      double order = b->getBondTypeAsDouble();
+      int order = static_cast<int>(b->getBondTypeAsDouble());
+      // disconnecting metal-R bond
       mol.removeBond(metal_idx, non_idx);
+      // increment the cut bond count for this non-metal atom
+      // and store the metal it was bonded to. We will need this
+      // later to adjust the metal charge
+      auto &value = nonMetals[non_idx];
+      value.cutBonds += order;
+      auto it = std::lower_bound(value.boundMetalIndices.begin(),
+                                 value.boundMetalIndices.end(), metal_idx);
+      if (it == value.boundMetalIndices.end() || *it != metal_idx) {
+        value.boundMetalIndices.insert(it, metal_idx);
+      }
 
-      // adjusting neighbouring charges
-      Atom *a1 = mol.getAtomWithIdx(metal_idx);
-      a1->setFormalCharge(a1->getFormalCharge() + int(order));
-      Atom *a2 = mol.getAtomWithIdx(non_idx);
-      a2->setFormalCharge(a2->getFormalCharge() - int(order));
       BOOST_LOG(rdInfoLog) << "Removed covalent bond between "
-                           << a1->getSymbol() << " and " << a2->getSymbol()
-                           << "\n";
+                           << metal->getSymbol() << " and "
+                           << nonMetal->getSymbol() << "\n";
     }
     //	std::cout << "After removing bond and charge adjustment: " <<
     // MolToSmiles(mol) << std::endl;
   }
+
+  for (auto it = nonMetals.begin(); it != nonMetals.end(); ++it) {
+    auto a = mol.getAtomWithIdx(it->first);
+    // do not blindly trust the original formal charge as it is often wrong
+    // instead, find out the most appropriate formal charge based
+    // on the allowed element valences and on its current valence/lone electrons
+    // if there are no standard valences we assume the original
+    // valence was correct and the non-metal element was neutral
+    int valenceBeforeCut = a->getTotalValence();
+    int radBeforeCut = a->getNumRadicalElectrons();
+    int fcAfterCut = -it->second.cutBonds;
+    int valenceAfterCut = 0;
+    const auto &valens =
+        PeriodicTable::getTable()->getValenceList(a->getAtomicNum());
+    if (!valens.empty() && valens.front() != -1) {
+      for (auto v = valens.begin(); v != valens.end(); ++v) {
+        valenceAfterCut = valenceBeforeCut - it->second.cutBonds;
+        if (valenceAfterCut > *v) {
+          auto next = v + 1;
+          if (next != valens.end() && valenceAfterCut >= *v) {
+            continue;
+          }
+          valenceAfterCut = *v;
+          break;
+        }
+        fcAfterCut = valenceAfterCut - *v;
+        // if there was a radical before and now we have
+        // a very negative formal charge, then it's a carbene-like
+        // system
+        if (radBeforeCut && fcAfterCut < 0) {
+          ++fcAfterCut;
+          a->setNumRadicalElectrons(radBeforeCut + 1);
+        }
+        break;
+      }
+    }
+    // do not put a negative charge on sp2 carbon
+    if (fcAfterCut == -1 && a->getAtomicNum() == 6 &&
+        valenceAfterCut == static_cast<int>(a->getTotalDegree()) + 1) {
+      fcAfterCut = 0;
+    }
+    a->setFormalCharge(fcAfterCut);
+    if (fcAfterCut == -1 && a->getAtomicNum() == 6 &&
+        valenceAfterCut == static_cast<int>(a->getTotalDegree()) + 2) {
+      // do not take electrons from the metal if it was a dative bond
+      // (e.g., [C-]#[O+] coordinated to metal)
+      fcAfterCut = 0;
+    }
+    std::sort(it->second.boundMetalIndices.begin(),
+              it->second.boundMetalIndices.end(),
+              [metalChargeExcess](int a, int b) {
+                return (metalChargeExcess.at(a) < metalChargeExcess.at(b));
+              });
+    while (fcAfterCut < 0) {
+      for (auto i : it->second.boundMetalIndices) {
+        // if the bond was not dative, the non-metal stole electrons
+        // from the metal(s), so we need to take electrons from
+        // once-bonded metal(s)
+        if (fcAfterCut++ >= 0) {
+          break;
+        }
+        ++metalChargeExcess[i];
+      }
+    }
+    a->updatePropertyCache();
+  }
+  // adjust formal charges of metal atoms
+  for (auto it = metalChargeExcess.begin(); it != metalChargeExcess.end();
+       ++it) {
+    auto a = mol.getAtomWithIdx(it->first);
+    const auto &valens =
+        PeriodicTable::getTable()->getValenceList(a->getAtomicNum());
+    int fcAfterCut = it->second;
+    if (!valens.empty() && valens.front() != -1) {
+      for (auto v = valens.begin(); v != valens.end(); ++v) {
+        if (fcAfterCut > *v) {
+          auto next = v + 1;
+          if (next != valens.end() && fcAfterCut >= *v) {
+            continue;
+          }
+          fcAfterCut = *v;
+          break;
+        }
+      }
+    }
+    // on the metal, we trust the original formal charge if it was
+    // greater than the value we computed, otherwise we assume it was
+    // wrong and we set it to the value we computed
+    if (fcAfterCut > a->getFormalCharge()) {
+      a->setFormalCharge(fcAfterCut);
+    }
+    // make sure that radical electrons on metals are 0
+    // and are not added to metals by sanitization
+    // by setting NoImplicit to false
+    a->setNumRadicalElectrons(0);
+    a->setNumExplicitHs(0);
+    a->setNoImplicit(false);
+    a->updatePropertyCache();
+  }
 }
+
 }  // namespace MolStandardize
 }  // namespace RDKit
