@@ -265,12 +265,12 @@ std::pair<unsigned int, std::vector<unsigned int>> *Reionizer::weakestIonized(
 
 Uncharger::Uncharger()
     : pos_h(SmartsToMol("[+,+2,+3,+4;!H0!$(*~[-])]")),
-      pos_noh(
-          SmartsToMol("[+,+2,+3,+4;H0;!$(*~[-]),$(*(~[-])~[-]),$(*(=O)~[-])]")),
+      pos_noh(SmartsToMol("[+,+2,+3,+4;H0;!$(*~[-])]")),
       neg(SmartsToMol("[-!$(*~[+,+2,+3,+4])]")),
       neg_acid(SmartsToMol(
           // carboxylate, carbonate, sulfi(a)te,
           // and their thio-analogues
+          // (among other less likely structures)
           "[$([O,S;-][C,S]=[O,S]),"
           // phosphi(a)te, nitrate
           // and their thio-analogues
@@ -281,7 +281,7 @@ Uncharger::Uncharger()
           // perchlorate, perbromate, periodate
           "$([O-][Cl,Br,I;+3]([O-])([O-])[O-]),"
           // tetrazole
-          "$([n-]1nnnc1),$(n1[n-]nnc1)]")){};
+          "$([n-]1nnnc1),$([n-]1ncnn1)]")){};
 
 Uncharger::Uncharger(const Uncharger &other) {
   pos_h = other.pos_h;
@@ -332,49 +332,62 @@ ROMol *Uncharger::uncharge(const ROMol &mol) {
   for (const auto &match : q_matches) {
     q_matched += omol->getAtomWithIdx(match[0].second)->getFormalCharge();
   }
-  unsigned int n_matched = SubstructMatch(*omol, *(this->neg), n_matches);
-  unsigned int a_matched = SubstructMatch(*omol, *(this->neg_acid), a_matches);
+  SubstructMatch(*omol, *(this->neg), n_matches);
+  SubstructMatch(*omol, *(this->neg_acid), a_matches);
   std::vector<int> n_matches_mol;
-  for (const auto &n_match : n_matches) {
-    std::transform(n_match.begin(), n_match.end(),
-                   std::back_inserter(n_matches_mol),
-                   [](const std::pair<int, int> &p) { return p.second; });
-  }
+  std::transform(n_matches.begin(), n_matches.end(),
+                 std::back_inserter(n_matches_mol),
+                 [](const MatchVectType &mv) { return mv.front().second; });
+  unsigned int n_matched = n_matches_mol.size();
+  // a_matches may containe multiple degenerate matches
+  // (e.g., both [O-] in NO3-). We only want to keep the one with
+  // the lowest atom index
   std::vector<int> a_matches_mol;
+  std::sort(a_matches.begin(), a_matches.end(),
+            [](const MatchVectType &a, const MatchVectType &b) {
+              return (a.front().second < b.front().second);
+            });
+  std::vector<unsigned int> atomRanks(omol->getNumAtoms());
+  std::unordered_set<int> a_ranks;
+  Canon::rankMolAtoms(*omol, atomRanks, false, false, false);
   for (const auto &a_match : a_matches) {
-    std::transform(a_match.begin(), a_match.end(),
-                   std::back_inserter(a_matches_mol),
-                   [](const std::pair<int, int> &p) { return p.second; });
+    int aidx = a_match.front().second;
+    if (!a_ranks.count(atomRanks[aidx])) {
+      a_matches_mol.push_back(aidx);
+      a_ranks.insert(atomRanks[aidx]);
+    }
   }
-  std::set<int> a_n_matches_union;
+  unsigned int a_matched = a_matches_mol.size();
+  std::vector<int> a_n_matches_union;
   std::set_union(n_matches_mol.begin(), n_matches_mol.end(),
                  a_matches_mol.begin(), a_matches_mol.end(),
                  std::inserter(a_n_matches_union, a_n_matches_union.begin()));
   unsigned int a_n_matched = a_n_matches_union.size();
 
-  bool needsNeutralization = (q_matched > 0 && a_n_matched > 0);
-  std::vector<std::pair<int, int>> a_atoms(a_matches.size());
-  std::vector<std::pair<int, int>> n_atoms(n_matches.size());
-  std::vector<unsigned int> atomRanks(omol->getNumAtoms());
+  bool needsNeutralization = (q_matched > 0 || a_n_matched > 0);
+  std::vector<std::pair<int, int>> a_atoms;
+  a_atoms.reserve(a_matched);
+  std::vector<std::pair<int, int>> n_atoms;
+  n_atoms.reserve(n_matches_mol.size());
   if (df_canonicalOrdering && needsNeutralization) {
     Canon::rankMolAtoms(*omol, atomRanks);
   } else {
     std::iota(atomRanks.begin(), atomRanks.end(), 0);
   }
-  for (unsigned int i = 0; i < n_matches.size(); ++i) {
-    int aidx = n_matches[i][0].second;
-    n_atoms[i] = std::make_pair(atomRanks[aidx], aidx);
-  }
-  for (unsigned int i = 0; i < a_matches.size(); ++i) {
-    int aidx = a_matches[i][0].second;
-    a_atoms[i] = std::make_pair(atomRanks[aidx], aidx);
-  }
+  auto makeRankIdxPair = [&atomRanks](int aidx) {
+    return std::make_pair(atomRanks[aidx], aidx);
+  };
+  std::transform(n_matches_mol.begin(), n_matches_mol.end(),
+                 std::back_inserter(n_atoms), makeRankIdxPair);
+  std::transform(a_matches_mol.begin(), a_matches_mol.end(),
+                 std::back_inserter(a_atoms), makeRankIdxPair);
   if (df_canonicalOrdering) {
     std::sort(n_atoms.begin(), n_atoms.end());
     std::sort(a_atoms.begin(), a_atoms.end());
   }
 
   // Neutralize negative charges
+
   if (needsNeutralization) {
     // Surplus negative charges more than non-neutralizable positive charges
     int neg_surplus = a_n_matched - q_matched;
@@ -413,13 +426,6 @@ ROMol *Uncharger::uncharge(const ROMol &mol) {
         neutralizeNeg(atom);
         --neg_surplus;
       }
-    }
-
-  } else {
-    for (const auto &pair : n_atoms) {
-      auto idx = pair.second;
-      Atom *atom = omol->getAtomWithIdx(idx);
-      neutralizeNegIfPossible(atom);
     }
   }
 

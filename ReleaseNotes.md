@@ -17,6 +17,13 @@
   If you want to invoke the old (and deprecated, see below) form from C++, call
   `TautomerNumerator::enumerate(mol, nullptr)` or explicitly pass a
   `boost::dynamic_bitset*` to capture the modified atoms.
+- The default precision setting for coordgen has been changed. The new default
+  was selected to greatly reduce the number of molecules for which it takes a
+  very long time to generate coordinates while still producing nice looking
+  structures. We may continue to tweak this default value if/when problems
+  with it are reported. If you would like to go back to the previous setting, set 
+  CoordgenParams.minimizerPrecision to CoordgenParams.sketcherStandardPrecision 
+  when you invoke rdCoordGen.AddCoords()
 - Uncharger::uncharge() will now neutralize [Cl,Br,I][O-], [Cl,Br,I](=O)[O-],
   [Cl,Br,I](=O)(=O)[O-], [Cl,Br,I](=O)(=O)(=O)[O-], [O-]N=N[O-], [N,P](=O)[O-],
   [N+](=O)([O-])[O-], P(=O)([O-])[O-], P(=O)([O-])([O-])[O-], S([O-])[O-],

@@ -21,7 +21,6 @@ namespace RDKit {
 
 // ****************************************************************************
 class DrawTextCairo : public DrawText {
-
  public:
   DrawTextCairo(double max_fnt_sz, double min_fnt_sz, cairo_t *dp_cr);
 
@@ -41,9 +40,8 @@ class DrawTextCairo : public DrawText {
                       std::vector<std::shared_ptr<StringRect>> &rects,
                       std::vector<TextDrawType> &draw_modes,
                       std::vector<char> &draw_chars) const override;
-
 };
 
-} // namespace RDKit
+}  // namespace RDKit
 
 #endif  // RDKIT_DRAWTEXTCAIRO_H

@@ -22,6 +22,10 @@ namespace RDKit {
 namespace CoordGen {
 
 struct CoordGenParams {
+  const float sketcherCoarsePrecision = 0.01;
+  const float sketcherStandardPrecision = SKETCHER_STANDARD_PRECISION;
+  const float sketcherBestPrecision = SKETCHER_BEST_PRECISION;
+  const float sketcherQuickPrecision = SKETCHER_QUICK_PRECISION;
   RDGeom::INT_POINT2D_MAP
       coordMap;  // coordinates for fixing particular atoms of a template
   const ROMol* templateMol = nullptr;  // a molecule to use as a template
@@ -30,7 +34,7 @@ struct CoordGenParams {
   // length of 50.
   std::string templateFileDir = "";
   float minimizerPrecision =
-      SKETCHER_STANDARD_PRECISION;  // controls sketch precision
+      sketcherCoarsePrecision;  // controls sketch precision
   bool dbg_useConstrained = true;   // debugging
   bool dbg_useFixed = false;        // debugging
   bool minimizeOnly = false;        // don't actually generate full coords
