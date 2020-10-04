@@ -1430,7 +1430,9 @@ void MolDraw2D::finishMoleculeDraw(const RDKit::ROMol &draw_mol,
     }
   }
 
-  drawRadicals(draw_mol);
+  if (drawOptions().includeRadicals) {
+    drawRadicals(draw_mol);
+  }
 
   if (drawOptions().flagCloseContactsDist >= 0) {
     highlightCloseContacts();
@@ -2243,9 +2245,9 @@ void MolDraw2D::drawWedgedBond(const Point2D &cds1, const Point2D &cds2,
     // empirical cutoff to make sure we don't have too many dashes in the
     // wedge:
     auto factor = scale_ * (cds1 - cds2).lengthSq();
-    if (factor < 35) {
+    if (factor < 20) {
       nDashes = 3;
-    } else if (factor < 40) {
+    } else if (factor < 30) {
       nDashes = 4;
     } else if (factor < 45) {
       nDashes = 5;
@@ -2292,8 +2294,8 @@ void MolDraw2D::drawDativeBond(const Point2D &cds1, const Point2D &cds2,
 
   setColour(col2);
   bool asPolygon = true;
-  double frac = 0.1;
-  double angle = M_PI / 8;
+  double frac = 0.2;
+  double angle = M_PI / 6;
   // the polygon triangle at the end extends past cds2, so step back a bit
   // so as not to trample on anything else.
   Point2D delta = mid - cds2;
