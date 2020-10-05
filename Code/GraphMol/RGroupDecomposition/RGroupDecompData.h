@@ -306,6 +306,7 @@ struct RGroupDecompData {
     }
 
     if (params.removeHydrogensPostMatch) {
+      RDLog::BlockLogs blocker;
       bool implicitOnly = false;
       bool updateExplicitCount = false;
       bool sanitize = false;
