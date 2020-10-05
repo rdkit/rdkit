@@ -375,7 +375,7 @@ struct RGroupDecompData {
 
   // compute the number of rgroups that would be added if we
   //  accepted this permutation
-  size_t compute_heavy_rgroup_counts(
+  size_t compute_num_added_rgroups(
       const std::vector<size_t> &tied_permutation,
       std::vector<int> &heavy_counts) {
     size_t i = 0;
@@ -463,7 +463,7 @@ struct RGroupDecompData {
         std::vector<int> heavy_counts;
         std::vector<int> largest_heavy_counts(labels.size(), 0);
         size_t num_added_rgroups =
-            compute_heavy_rgroup_counts(tied_permutation, heavy_counts);
+            compute_num_added_rgroups(tied_permutation, heavy_counts);
         if (num_added_rgroups < smallest_added_rgroups) {
           smallest_added_rgroups = num_added_rgroups;
           best_permutation = tied_permutation;
