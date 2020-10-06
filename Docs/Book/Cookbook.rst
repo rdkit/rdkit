@@ -39,7 +39,7 @@ Alternatively, you can also send Cookbook revisions and addition requests to the
 
    The Index ID# (e.g., **RDKitCB_##**) is simply a way to track Cookbook entries and image file names. 
    New Cookbook additions are sequentially index numbered, regardless of where they are placed 
-   within the document. As such, for reference, the next Cookbook entry is **RDKitCB_30**.
+   within the document. As such, for reference, the next Cookbook entry is **RDKitCB_33**.
 
 Drawing Molecules (Jupyter)
 *******************************
@@ -114,6 +114,51 @@ Include a Calculation
 
 .. image:: images/RDKitCB_23_im1.png
    :scale: 75%
+
+Include Stereo Annotations
+===========================
+
+| **Author:** Valery Polyakov and Greg Landrum
+| **Source:** `<https://github.com/rdkit/rdkit/issues/3103>`_ and `<https://gist.github.com/greglandrum/33d8bd8149ec35999b2c70af9e4a0811>`_
+| **Index ID#:** RDKitCB_32
+| **Summary:** Draw a molecule with stereochemistry annotations displayed.
+
+.. testcode::
+
+   from rdkit import Chem
+   from rdkit.Chem import rdDepictor
+   from rdkit.Chem.Draw import rdMolDraw2D
+   from IPython.display import SVG
+
+.. testcode::
+
+   def mol_with_stereo(mol,molSize=(300,300), kekulize=True, fontSize = 0.8, LineWidth = 1):
+       # check for defective molecule 
+       if mol is None:
+           return None
+
+       mol = rdMolDraw2D.PrepareMolForDrawing(mol, kekulize)
+       drawer = rdMolDraw2D.MolDraw2DSVG(molSize[0], molSize[1])
+       drawer.SetFontSize(fontSize)
+       drawer.drawOptions().addStereoAnnotation = True
+       # drawer.drawOptions().addAtomIndices = True
+
+       try:
+           drawer.SetLineWidth(LineWidth)
+       except:
+           pass
+
+       drawer.DrawMolecule(mol)
+       drawer.FinishDrawing()
+       svg = drawer.GetDrawingText()
+       return svg
+
+.. testcode::
+
+   m = Chem.MolFromSmiles('C[C@H](F)C\C=C/O')
+   SVG(mol_with_stereo(m))
+
+.. image:: images/RDKitCB_32_im0.png
 
 Black and White Molecules
 ==========================
@@ -476,6 +521,43 @@ Identifying Chiral Centers
 
    []
 
+
+Identifying E/Z Stereo
+===========================
+
+| **Author:** Vincent Scalfani
+| **Source:** Direct Contribution to Cookbook
+| **Index ID#:** RDKitCB_30
+| **Summary:** Identify double bond E/Z stereochemistry.
+
+.. testcode::
+
+   from rdkit import Chem
+   m = Chem.MolFromSmiles('C\C(F)=C\C=C(/F)\C(=C\F)\C=C')
+   m # see RDKitCB_0 for atom index display
+
+.. image:: images/RDKitCB_30_im0.png
+
+.. testcode::
+
+   for b in m.GetBonds():
+       print(b.GetBeginAtomIdx(),b.GetEndAtomIdx(),
+             b.GetBondType(),b.GetStereo())
+
+.. testoutput::
+
+   0 1 SINGLE STEREONONE
+   1 2 SINGLE STEREONONE
+   1 3 DOUBLE STEREOZ
+   3 4 SINGLE STEREONONE
+   4 5 DOUBLE STEREOZ
+   5 6 SINGLE STEREONONE
+   5 7 SINGLE STEREONONE
+   7 8 DOUBLE STEREOE
+   8 9 SINGLE STEREONONE
+   7 10 SINGLE STEREONONE
+   10 11 DOUBLE STEREONONE
+
 Manipulating Molecules
 ************************
 
@@ -557,6 +639,50 @@ Create Fragments
 .. image:: images/RDKitCB_7_im6.png
    :scale: 75%
 
+
+Largest Fragment
+=================
+
+| **Author:** Andrew Dalke and Susan Leung
+| **Source:** `<https://sourceforge.net/p/rdkit/mailman/message/36355644/>`_ and `<https://github.com/susanhleung/rdkit/blob/dev/GSOC2018_MolVS_Integration/rdkit/Chem/MolStandardize/tutorial/MolStandardize.ipynb>`_
+| **Index ID#:** RDKitCB_31
+| **Summary:** Select largest fragment from a molecule
+
+.. testcode::
+
+   from rdkit import Chem
+   from rdkit.Chem import rdmolops
+   mol = Chem.MolFromSmiles('CCOC(=O)C(C)(C)OC1=CC=C(C=C1)Cl.CO.C1=CC(=CC=C1C(=O)N[C@@H](CCC(=O)O)C(=O)O)NCC2=CN=C3C(=N2)C(=O)NC(=N3)N')
+
+.. testcode::
+
+   mol_frags = rdmolops.GetMolFrags(mol, asMols = True)
+   largest_mol = max(mol_frags, default=mol, key=lambda m: m.GetNumAtoms())
+   print(Chem.MolToSmiles(largest_mol))
+
+.. testoutput::
+
+   Nc1nc2ncc(CNc3ccc(C(=O)N[C@@H](CCC(=O)O)C(=O)O)cc3)nc2c(=O)[nH]1
+
+
+The same result can also be achieved with MolStandardize:
+
+.. testcode::
+
+   from rdkit import Chem
+   from rdkit.Chem.MolStandardize import rdMolStandardize
+   mol = Chem.MolFromSmiles('CCOC(=O)C(C)(C)OC1=CC=C(C=C1)Cl.CO.C1=CC(=CC=C1C(=O)N[C@@H](CCC(=O)O)C(=O)O)NCC2=CN=C3C(=N2)C(=O)NC(=N3)N')
+
+.. testcode::
+
+   # setup standardization module
+   largest_Fragment = rdMolStandardize.LargestFragmentChooser()
+   largest_mol = largest_Fragment.choose(mol)
+   print(Chem.MolToSmiles(largest_mol))
+
+.. testoutput::
+
+   Nc1nc2ncc(CNc3ccc(C(=O)N[C@@H](CCC(=O)O)C(=O)O)cc3)nc2c(=O)[nH]1
 
 Sidechain-Core Enumeration 
 ===========================

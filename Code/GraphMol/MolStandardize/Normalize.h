@@ -32,6 +32,7 @@ RDKIT_MOLSTANDARDIZE_EXPORT extern const CleanupParameters
 typedef RDCatalog::HierarchCatalog<TransformCatalogEntry,
                                    TransformCatalogParams, int>
     TransformCatalog;
+typedef std::pair<std::string, ROMOL_SPTR> SmilesMolPair;
 
 //! The Normalizer class for applying Normalization transforms.
 /*!
@@ -71,25 +72,16 @@ class RDKIT_MOLSTANDARDIZE_EXPORT Normalizer {
     reached.
   */
   ROMol *normalize(const ROMol &mol);
-  struct Product {
-    std::string Smiles;
-    boost::shared_ptr<ROMol> Mol;
-    Product(std::string smiles, boost::shared_ptr<ROMol> &mol)
-        : Smiles(smiles), Mol(mol) {}
-
-    // sorting products alphabetically by SMILES
-    bool operator<(const Product &pdt) const { return (Smiles < pdt.Smiles); }
-  };
 
  private:
   const TransformCatalog *d_tcat;
   unsigned int MAX_RESTARTS;
 
-  boost::shared_ptr<ROMol> normalizeFragment(
+  ROMOL_SPTR normalizeFragment(
       const ROMol &mol,
-      const std::vector<std::shared_ptr<ChemicalReaction>> &transforms);
-  boost::shared_ptr<ROMol> applyTransform(const boost::shared_ptr<ROMol> mol,
-                                          ChemicalReaction &rule);
+      const std::vector<std::shared_ptr<ChemicalReaction>> &transforms) const;
+  SmilesMolPair applyTransform(const ROMOL_SPTR &mol,
+                               ChemicalReaction &rule) const;
 
 };  // Normalizer class
 }  // namespace MolStandardize

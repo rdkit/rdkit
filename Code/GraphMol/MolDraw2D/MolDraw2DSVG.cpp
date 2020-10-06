@@ -72,22 +72,21 @@ void MolDraw2DSVG::initDrawing() {
 
 // ****************************************************************************
 void MolDraw2DSVG::initTextDrawer(bool noFreetype) {
-
   double max_fnt_sz = drawOptions().maxFontSize;
   double min_fnt_sz = drawOptions().minFontSize;
 
-  if(noFreetype) {
-    text_drawer_.reset(new DrawTextSVG(max_fnt_sz, min_fnt_sz,
-                                       d_os, d_activeClass));
+  if (noFreetype) {
+    text_drawer_.reset(
+        new DrawTextSVG(max_fnt_sz, min_fnt_sz, d_os, d_activeClass));
   } else {
 #ifdef RDK_BUILD_FREETYPE_SUPPORT
     try {
       text_drawer_.reset(new DrawTextFTSVG(
           max_fnt_sz, min_fnt_sz, drawOptions().fontFile, d_os, d_activeClass));
     } catch (std::runtime_error &e) {
-      BOOST_LOG(rdWarningLog) << e.what() << std::endl
-                              << "Falling back to native SVG text handling."
-                              << std::endl;
+      BOOST_LOG(rdWarningLog)
+          << e.what() << std::endl
+          << "Falling back to native SVG text handling." << std::endl;
       text_drawer_.reset(
           new DrawTextSVG(max_fnt_sz, min_fnt_sz, d_os, d_activeClass));
     }
@@ -96,7 +95,6 @@ void MolDraw2DSVG::initTextDrawer(bool noFreetype) {
         new DrawTextSVG(max_fnt_sz, min_fnt_sz, d_os, d_activeClass));
 #endif
   }
-
 }
 
 // ****************************************************************************
@@ -147,8 +145,8 @@ void MolDraw2DSVG::drawWavyLine(const Point2D &cds1, const Point2D &cds2,
   }
   d_os << "' ";
 
-  d_os << "style='fill:none;stroke:"
-       << col << ";stroke-width:" << boost::format("%.1f") % width
+  d_os << "style='fill:none;stroke:" << col
+       << ";stroke-width:" << boost::format("%.1f") % width
        << "px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1"
        << "'";
   d_os << " />\n";
@@ -161,7 +159,7 @@ void MolDraw2DSVG::drawBond(
     const std::map<int, DrawColour> *highlight_atom_map,
     const std::vector<int> *highlight_bonds,
     const std::map<int, DrawColour> *highlight_bond_map,
-    const std::vector<std::pair<DrawColour, DrawColour> > *bond_colours) {
+    const std::vector<std::pair<DrawColour, DrawColour>> *bond_colours) {
   PRECONDITION(bond, "bad bond");
   std::string o_class = d_activeClass;
   if (!d_activeClass.empty()) {
@@ -176,7 +174,6 @@ void MolDraw2DSVG::drawBond(
 
 // ****************************************************************************
 void MolDraw2DSVG::drawAtomLabel(int atom_num, const DrawColour &draw_colour) {
-
   std::string o_class = d_activeClass;
   if (!d_activeClass.empty()) {
     d_activeClass += " ";
@@ -184,13 +181,11 @@ void MolDraw2DSVG::drawAtomLabel(int atom_num, const DrawColour &draw_colour) {
   d_activeClass += boost::str(boost::format("atom-%d") % atom_num);
   MolDraw2D::drawAtomLabel(atom_num, draw_colour);
   d_activeClass = o_class;
-
 }
 
 // ****************************************************************************
-void MolDraw2DSVG::drawAnnotation(const std::string &note,
-                                  const std::shared_ptr<StringRect> &note_rect) {
-
+void MolDraw2DSVG::drawAnnotation(
+    const std::string &note, const std::shared_ptr<StringRect> &note_rect) {
   std::string o_class = d_activeClass;
   if (!d_activeClass.empty()) {
     d_activeClass += " ";
@@ -198,7 +193,6 @@ void MolDraw2DSVG::drawAnnotation(const std::string &note,
   d_activeClass += "note";
   MolDraw2D::drawAnnotation(note, note_rect);
   d_activeClass = o_class;
-
 }
 
 // ****************************************************************************
@@ -223,8 +217,8 @@ void MolDraw2DSVG::drawLine(const Point2D &cds1, const Point2D &cds2) {
   }
   d_os << "d='M " << c1.x << "," << c1.y << " L " << c2.x << "," << c2.y
        << "' ";
-  d_os << "style='fill:none;fill-rule:evenodd;stroke:" << col << ";stroke-width:"
-       << boost::format("%.1f") % width
+  d_os << "style='fill:none;fill-rule:evenodd;stroke:" << col
+       << ";stroke-width:" << boost::format("%.1f") % width
        << "px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1"
        << dashString << "'";
   d_os << " />\n";
@@ -250,14 +244,13 @@ void MolDraw2DSVG::drawPolygon(const std::vector<Point2D> &cds) {
   }
   if (fillPolys()) {
     // the Z closes the path which we don't want for unfilled polygons
-    d_os << " Z' style='fill:" << col << ";fill-rule:evenodd;fill-opacity:" << colour().a
-         << ";";
+    d_os << " Z' style='fill:" << col
+         << ";fill-rule:evenodd;fill-opacity:" << colour().a << ";";
   } else {
     d_os << "' style='fill:none;";
   }
 
-  d_os << "stroke:" << col << ";stroke-width:"
-       << boost::format("%.1f") % width
+  d_os << "stroke:" << col << ";stroke-width:" << boost::format("%.1f") % width
        << "px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:"
        << colour().a << ";" << dashString << "'";
   d_os << " />\n";
@@ -265,7 +258,6 @@ void MolDraw2DSVG::drawPolygon(const std::vector<Point2D> &cds) {
 
 // ****************************************************************************
 void MolDraw2DSVG::drawEllipse(const Point2D &cds1, const Point2D &cds2) {
-
   Point2D c1 = getDrawCoords(cds1);
   Point2D c2 = getDrawCoords(cds2);
   double w = c2.x - c1.x;
@@ -294,8 +286,7 @@ void MolDraw2DSVG::drawEllipse(const Point2D &cds1, const Point2D &cds2) {
     d_os << "fill:none;";
   }
 
-  d_os << "stroke:" << col << ";stroke-width:"
-       << boost::format("%.1f") % width
+  d_os << "stroke:" << col << ";stroke-width:" << boost::format("%.1f") % width
        << "px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1"
        << dashString << "'";
   d_os << " />\n";

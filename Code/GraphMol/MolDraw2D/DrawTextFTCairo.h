@@ -20,7 +20,6 @@ namespace RDKit {
 // ****************************************************************************
 
 class DrawTextFTCairo : public DrawTextFT {
-
  public:
   DrawTextFTCairo(double max_fnt_sz, double min_fnt_sz,
                   const std::string &font_file, cairo_t *dp_cr);
@@ -39,9 +38,8 @@ class DrawTextFTCairo : public DrawTextFT {
 
  private:
   cairo_t *dp_cr_;
-
 };
 
-} // namespace RDKit
+}  // namespace RDKit
 
 #endif  // RDKIT_DRAWTEXTFTCAIRO_H

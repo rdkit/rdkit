@@ -22,10 +22,16 @@ ROMol *normalizeHelper(MolStandardize::Normalizer &self, const ROMol &mol) {
   return self.normalize(mol);
 }
 
-MolStandardize::Normalizer *normalizerFromParams(
+MolStandardize::Normalizer *normalizerFromDataAndParams(
     const std::string &data, const MolStandardize::CleanupParameters &params) {
   std::istringstream sstr(data);
   return new MolStandardize::Normalizer(sstr, params.maxRestarts);
+}
+
+MolStandardize::Normalizer *normalizerFromParams(
+    const MolStandardize::CleanupParameters &params) {
+  return new MolStandardize::Normalizer(params.normalizations,
+                                        params.maxRestarts);
 }
 }  // namespace
 
@@ -43,9 +49,14 @@ struct normalize_wrapper {
         .def("normalize", &normalizeHelper,
              (python::arg("self"), python::arg("mol")), "",
              python::return_value_policy<python::manage_new_object>());
-    python::def("NormalizerFromData", &normalizerFromParams,
-                (python::arg("paramData")),
-                "creates a normalizer from a string containing parameter data",
+    python::def(
+        "NormalizerFromData", &normalizerFromDataAndParams,
+        (python::arg("paramData"), python::arg("params")),
+        "creates a Normalizer from a string containing normalization SMARTS",
+        python::return_value_policy<python::manage_new_object>());
+    python::def("NormalizerFromParams", &normalizerFromParams,
+                (python::arg("params")),
+                "creates a Normalizer from CleanupParameters",
                 python::return_value_policy<python::manage_new_object>());
   }
 };

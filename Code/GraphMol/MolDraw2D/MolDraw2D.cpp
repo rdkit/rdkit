@@ -113,7 +113,7 @@ void MolDraw2D::doContinuousHighlighting(
 
   int orig_lw = lineWidth();
   int tgt_lw = getHighlightBondWidth(-1, nullptr);
-  if(tgt_lw < 2) {
+  if (tgt_lw < 2) {
     tgt_lw = 2;
   }
 
@@ -138,7 +138,8 @@ void MolDraw2D::doContinuousHighlighting(
             Point2D at1_cds = at_cds_[activeMolIdx_][this_idx];
             Point2D at2_cds = at_cds_[activeMolIdx_][nbr_idx];
             bool orig_slw = drawOptions().scaleBondWidth;
-            drawOptions().scaleBondWidth = drawOptions().scaleHighlightBondWidth;
+            drawOptions().scaleBondWidth =
+                drawOptions().scaleHighlightBondWidth;
             drawLine(at1_cds, at2_cds, col, col);
             drawOptions().scaleBondWidth = orig_slw;
           }
@@ -177,19 +178,10 @@ void MolDraw2D::drawMolecule(const ROMol &mol,
                              const map<int, DrawColour> *highlight_bond_map,
                              const std::map<int, double> *highlight_radii,
                              int confId) {
-
   int origWidth = lineWidth();
   pushDrawDetails();
-  text_drawer_->setMaxFontSize(drawOptions().maxFontSize);
-  text_drawer_->setMinFontSize(drawOptions().minFontSize);
-  try {
-    text_drawer_->setFontFile(drawOptions().fontFile);
-  } catch (std::runtime_error &e) {
-    BOOST_LOG(rdWarningLog) << e.what() << std::endl;
-    text_drawer_->setFontFile("");
-    BOOST_LOG(rdWarningLog) << "Falling back to original font file "
-                            << text_drawer_->getFontFile() << "." << std::endl;
-  }
+  setupTextDrawer();
+
   unique_ptr<RWMol> rwmol =
       setupMoleculeDraw(mol, highlight_atoms, highlight_radii, confId);
   ROMol const &draw_mol = rwmol ? *(rwmol) : mol;
@@ -732,6 +724,7 @@ void MolDraw2D::drawMolecules(
     return;
   }
 
+  setupTextDrawer();
   vector<unique_ptr<RWMol>> tmols;
   calculateScale(panelWidth(), drawHeight(), mols, highlight_atoms,
                  highlight_radii, confIds, tmols);
@@ -1066,6 +1059,7 @@ void MolDraw2D::calculateScale(int width, int height,
   x_range_ = global_x_max - global_x_min;
   y_range_ = global_y_max - global_y_min;
   scale_ = std::min(double(width) / x_range_, double(height) / y_range_);
+  text_drawer_->setFontScale(scale_);
   centrePicture(width, height);
 }
 
@@ -1353,6 +1347,20 @@ unique_ptr<RWMol> MolDraw2D::setupMoleculeDraw(
 }
 
 // ****************************************************************************
+void MolDraw2D::setupTextDrawer() {
+  text_drawer_->setMaxFontSize(drawOptions().maxFontSize);
+  text_drawer_->setMinFontSize(drawOptions().minFontSize);
+  try {
+    text_drawer_->setFontFile(drawOptions().fontFile);
+  } catch (std::runtime_error &e) {
+    BOOST_LOG(rdWarningLog) << e.what() << std::endl;
+    text_drawer_->setFontFile("");
+    BOOST_LOG(rdWarningLog) << "Falling back to original font file "
+                            << text_drawer_->getFontFile() << "." << std::endl;
+  }
+}
+
+// ****************************************************************************
 void MolDraw2D::drawBonds(
     const ROMol &draw_mol, const vector<int> *highlight_atoms,
     const map<int, DrawColour> *highlight_atom_map,
@@ -1422,7 +1430,9 @@ void MolDraw2D::finishMoleculeDraw(const RDKit::ROMol &draw_mol,
     }
   }
 
-  drawRadicals(draw_mol);
+  if (drawOptions().includeRadicals) {
+    drawRadicals(draw_mol);
+  }
 
   if (drawOptions().flagCloseContactsDist >= 0) {
     highlightCloseContacts();
@@ -2114,7 +2124,7 @@ void MolDraw2D::drawBond(
     if (isComplex) {
       setDash(dots);
       bool orig_slw = drawOptions().scaleBondWidth;
-      if(highlight_bond) {
+      if (highlight_bond) {
         drawOptions().scaleBondWidth = drawOptions().scaleHighlightBondWidth;
       }
       drawLine(at1_cds, at2_cds, col1, col2);
@@ -2134,7 +2144,7 @@ void MolDraw2D::drawBond(
       calcDoubleBondLines(mol, double_bond_offset, bond, at1_cds, at2_cds, l1s,
                           l1f, l2s, l2f);
       bool orig_slw = drawOptions().scaleBondWidth;
-      if(highlight_bond) {
+      if (highlight_bond) {
         drawOptions().scaleBondWidth = drawOptions().scaleHighlightBondWidth;
       }
       drawLine(l1s, l1f, col1, col2);
@@ -2184,7 +2194,7 @@ void MolDraw2D::drawBond(
     } else if (Bond::ZERO == bt) {
       setDash(shortDashes);
       bool orig_slw = drawOptions().scaleBondWidth;
-      if(highlight_bond) {
+      if (highlight_bond) {
         drawOptions().scaleBondWidth = drawOptions().scaleHighlightBondWidth;
       }
       drawLine(at1_cds, at2_cds, col1, col2);
@@ -2194,7 +2204,7 @@ void MolDraw2D::drawBond(
       // in all other cases, we will definitely want to draw a line between
       // the two atoms
       bool orig_slw = drawOptions().scaleBondWidth;
-      if(highlight_bond) {
+      if (highlight_bond) {
         drawOptions().scaleBondWidth = drawOptions().scaleHighlightBondWidth;
       }
       drawLine(at1_cds, at2_cds, col1, col2);
@@ -2235,9 +2245,9 @@ void MolDraw2D::drawWedgedBond(const Point2D &cds1, const Point2D &cds2,
     // empirical cutoff to make sure we don't have too many dashes in the
     // wedge:
     auto factor = scale_ * (cds1 - cds2).lengthSq();
-    if (factor < 35) {
+    if (factor < 20) {
       nDashes = 3;
-    } else if (factor < 40) {
+    } else if (factor < 30) {
       nDashes = 4;
     } else if (factor < 45) {
       nDashes = 5;
@@ -2284,8 +2294,8 @@ void MolDraw2D::drawDativeBond(const Point2D &cds1, const Point2D &cds2,
 
   setColour(col2);
   bool asPolygon = true;
-  double frac = 0.1;
-  double angle = M_PI / 8;
+  double frac = 0.2;
+  double angle = M_PI / 6;
   // the polygon triangle at the end extends past cds2, so step back a bit
   // so as not to trample on anything else.
   Point2D delta = mid - cds2;
@@ -2308,7 +2318,7 @@ void MolDraw2D::drawAtomLabel(int atom_num, const DrawColour &draw_colour) {
                            atom_syms_[activeMolIdx_][atom_num].second);
   // this is useful for debugging the drawings.
   //  int olw = lineWidth();
-  //  setLineWidth(0);
+  //  setLineWidth(1);
   //  text_drawer_->drawStringRects(atom_syms_[activeMolIdx_][atom_num].first,
   //                                atom_syms_[activeMolIdx_][atom_num].second,
   //                                draw_cds, *this);
@@ -2849,7 +2859,7 @@ void MolDraw2D::calcTripleBondLines(double offset, const Bond *bond,
 double MolDraw2D::getDrawLineWidth() const {
   double width = lineWidth();
   // This works fairly well for SVG and Cairo. 0.02 is picked by eye
-  if(drawOptions().scaleBondWidth) {
+  if (drawOptions().scaleBondWidth) {
     width *= scale() * 0.02;
     if (width < 0.0) {
       width = 0.0;
