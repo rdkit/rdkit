@@ -60,6 +60,7 @@ MolBundle enumerate(const ROMol &mol, const MolEnumeratorParams &params) {
   enumerateVariations(variations, variationCounts, params);
   for (const auto &variation : variations) {
     auto newMol = (*op)(variation);
+    newMol->updatePropertyCache(false);
     res.addMol(ROMOL_SPTR(newMol.release()));
   }
   return res;

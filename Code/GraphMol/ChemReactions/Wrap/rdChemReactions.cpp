@@ -396,6 +396,35 @@ RxnOps::SanitizeRxnFlags sanitizeReaction(
   }
   return static_cast<RxnOps::SanitizeRxnFlags>(operationsThatFailed);
 }
+
+python::object addReactionToPNGStringHelper(const ChemicalReaction &rxn,
+                                            python::object png, bool includePkl,
+                                            bool includeSmiles,
+                                            bool includeSmarts,
+                                            bool includeRxn) {
+  std::string cstr = python::extract<std::string>(png);
+
+  auto res = addChemicalReactionToPNGString(
+      rxn, cstr, includePkl, includeSmiles, includeSmarts, includeRxn);
+
+  python::object retval = python::object(
+      python::handle<>(PyBytes_FromStringAndSize(res.c_str(), res.length())));
+  return retval;
+}
+python::object addReactionToPNGFileHelper(const ChemicalReaction &rxn,
+                                          python::object fname, bool includePkl,
+                                          bool includeSmiles,
+                                          bool includeSmarts, bool includeRxn) {
+  std::string cstr = python::extract<std::string>(fname);
+
+  auto res = addChemicalReactionToPNGFile(rxn, cstr, includePkl, includeSmiles,
+                                          includeSmarts, includeRxn);
+
+  python::object retval = python::object(
+      python::handle<>(PyBytes_FromStringAndSize(res.c_str(), res.length())));
+  return retval;
+}
+
 }  // namespace RDKit
 
 void wrap_enumeration();
@@ -738,26 +767,54 @@ Sample Usage:
 see the documentation for rdkit.Chem.MolFromSmiles for an explanation\n\
 of the replacements argument.",
       python::return_value_policy<python::manage_new_object>());
-  python::def("ReactionFromRxnFile", RDKit::RxnFileToChemicalReaction,
-              "construct a ChemicalReaction from an MDL rxn file",
-              python::return_value_policy<python::manage_new_object>());
-  python::def("ReactionFromRxnBlock", RDKit::RxnBlockToChemicalReaction,
-              "construct a ChemicalReaction from an string in MDL rxn format",
-              python::return_value_policy<python::manage_new_object>());
-  python::def("ReactionFromMolecule", RDKit::RxnMolToChemicalReaction,
-              "construct a ChemicalReaction from an molecule if the RXN role "
-              "property of the molecule is set",
-              python::return_value_policy<python::manage_new_object>());
-
   python::def("ReactionToSmarts", RDKit::ChemicalReactionToRxnSmarts,
               (python::arg("reaction")),
               "construct a reaction SMARTS string for a ChemicalReaction");
   python::def("ReactionToSmiles", RDKit::ChemicalReactionToRxnSmiles,
               (python::arg("reaction"), python::arg("canonical") = true),
               "construct a reaction SMILES string for a ChemicalReaction");
+
+  python::def(
+      "ReactionFromRxnFile", RDKit::RxnFileToChemicalReaction,
+      (python::arg("filename"), python::arg("sanitize") = false,
+       python::arg("removeHs") = false, python::arg("strictParsing") = true),
+      "construct a ChemicalReaction from an MDL rxn file",
+      python::return_value_policy<python::manage_new_object>());
+  python::def(
+      "ReactionFromRxnBlock", RDKit::RxnBlockToChemicalReaction,
+      (python::arg("rxnblock"), python::arg("sanitize") = false,
+       python::arg("removeHs") = false, python::arg("strictParsing") = true),
+      "construct a ChemicalReaction from a string in MDL rxn format",
+      python::return_value_policy<python::manage_new_object>());
   python::def("ReactionToRxnBlock", RDKit::ChemicalReactionToRxnBlock,
               (python::arg("reaction"), python::arg("separateAgents") = false),
               "construct a string in MDL rxn format for a ChemicalReaction");
+
+  python::def("ReactionFromPNGFile", RDKit::PNGFileToChemicalReaction,
+              "construct a ChemicalReaction from metadata in a PNG file",
+              python::return_value_policy<python::manage_new_object>());
+  python::def("ReactionFromPNGString", RDKit::PNGStringToChemicalReaction,
+              "construct a ChemicalReaction from an string with PNG data",
+              python::return_value_policy<python::manage_new_object>());
+  python::def(
+      "ReactionMetadataToPNGFile", RDKit::addReactionToPNGFileHelper,
+      (python::arg("mol"), python::arg("filename"),
+       python::arg("includePkl") = true, python::arg("includeSmiles") = true,
+       python::arg("includeSmarts") = false, python::arg("includeMol") = false),
+      "Reads the contents of a PNG file and adds metadata about a reaction to "
+      "it. The modified file contents are returned.");
+  python::def(
+      "ReactionMetadataToPNGString", RDKit::addReactionToPNGStringHelper,
+      (python::arg("mol"), python::arg("pngdata"),
+       python::arg("includePkl") = true, python::arg("includeSmiles") = true,
+       python::arg("includeSmarts") = false, python::arg("includeRxn") = false),
+      "Adds metadata about a reaction to the PNG string passed in."
+      "The modified string is returned.");
+
+  python::def("ReactionFromMolecule", RDKit::RxnMolToChemicalReaction,
+              "construct a ChemicalReaction from an molecule if the RXN role "
+              "property of the molecule is set",
+              python::return_value_policy<python::manage_new_object>());
   python::def(
       "ReactionToMolecule", RDKit::ChemicalReactionToRxnMol,
       (python::arg("reaction")),

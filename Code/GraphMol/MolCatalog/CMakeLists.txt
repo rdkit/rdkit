@@ -1,8 +1,7 @@
 
-remove_definitions(-DRDKIT_GRAPHMOL_BUILD)
-add_definitions(-DRDKIT_MOLCATALOG_BUILD)
 rdkit_library(MolCatalog MolCatalogEntry.cpp MolCatalogParams.cpp
               LINK_LIBRARIES GraphMol Catalogs)
+target_compile_definitions(MolCatalog PRIVATE RDKIT_MOLCATALOG_BUILD)
 
 rdkit_headers(MolCatalogEntry.h
               MolCatalog.h

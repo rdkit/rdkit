@@ -7,6 +7,23 @@
   So the MCS between molecules `CC` and `CO` is now `[#6]` rather than being null.
 - The fontSize()/setFontSize() (FontSize()/SetFontSize()) methods in MolDraw2D
   now work in units of pixels (more or less) instead of the molecule units.
+- The Open3DAlign functionality is now in its own separate library - `O3AAlign`
+  in cmake. If you are working in C++ and using O3A functionality, you'll need
+  to link against this library as well now.
+- Due to improvements in the tautomer enumeration code, the method
+  `TautomerEnumerator::enumerate` now returns a `TautomerEnumeratorResult`
+  object instead of a vector of molecules. Note that if you are iterating over
+  the results of a call to `enumerate()` you shouldn't need to change your code.
+  If you want to invoke the old (and deprecated, see below) form from C++, call
+  `TautomerNumerator::enumerate(mol, nullptr)` or explicitly pass a
+  `boost::dynamic_bitset*` to capture the modified atoms.
+- The default precision setting for coordgen has been changed. The new default
+  was selected to greatly reduce the number of molecules for which it takes a
+  very long time to generate coordinates while still producing nice looking
+  structures. We may continue to tweak this default value if/when problems
+  with it are reported. If you would like to go back to the previous setting, set 
+  CoordgenParams.minimizerPrecision to CoordgenParams.sketcherStandardPrecision 
+  when you invoke rdCoordGen.AddCoords()
 
 ## Code removed in this release:
 - To improve API consistency of the exceptions in RDKit with the default ones in
@@ -20,6 +37,10 @@
   the namespace QueryOps. Please use `QueryOps::replaceAtomWithQueryAtom()`
   instead. The version in the `FileParserUtils` namespace will be removed in the
   next release.
+- The method `std::vector<ROMOL_SPTR> TautomerEnumerator::enumerate(const ROMol &mol, boost::dynamic_bitset<> *modifiedAtoms, boost::dynamic_bitset<> *modifiedBonds = nullptr)` 
+  is deprecated and will be removed in a future release. 
+  Please use `TautomerEnumeratorResult TautomerEnumerator::enumerate(const ROMol &mol,bool reassignStereo = true)` 
+  instead.
 
 
 

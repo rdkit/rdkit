@@ -1,5 +1,5 @@
 //
-//  Copyright (C) 2015 Greg Landrum
+//  Copyright (C) 2015-2020 Greg Landrum
 //
 //   @@ All Rights Reserved @@
 //  This file is part of the RDKit.
@@ -18,6 +18,7 @@
 #include <GraphMol/RDKitBase.h>
 
 #include <boost/tuple/tuple.hpp>
+#include <boost/format.hpp>
 
 // ****************************************************************************
 using RDGeom::Point2D;
@@ -52,22 +53,9 @@ RDKIT_MOLDRAW2D_EXPORT void arcPoints(const Point2D &cds1, const Point2D &cds2,
                                       std::vector<Point2D> &res,
                                       float startAng = 0, float extent = 360);
 
-//! add R/S and E/Z annotation to atoms and bonds respectively.
-RDKIT_MOLDRAW2D_EXPORT inline void addStereoAnnotation(const ROMol &mol) {
-  for (auto atom : mol.atoms()) {
-    if (atom->hasProp("_CIPCode")) {
-      std::string lab = "(" + atom->getProp<std::string>("_CIPCode") + ")";
-      atom->setProp(common_properties::atomNote, lab);
-    }
-  }
-  for (auto bond : mol.bonds()) {
-    if (bond->getStereo() == Bond::STEREOE) {
-      bond->setProp(common_properties::bondNote, "(E)");
-    } else if (bond->getStereo() == Bond::STEREOZ) {
-      bond->setProp(common_properties::bondNote, "(Z)");
-    }
-  }
-};
+//! add R/S, relative stereo, and E/Z annotations to atoms and bonds
+RDKIT_MOLDRAW2D_EXPORT void addStereoAnnotation(
+    const ROMol &mol, bool includeRelativeCIP = false);
 
 //! add annotations with atom indices.
 RDKIT_MOLDRAW2D_EXPORT inline void addAtomIndices(const ROMol &mol) {

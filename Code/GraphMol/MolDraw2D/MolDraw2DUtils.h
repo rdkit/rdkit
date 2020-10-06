@@ -122,8 +122,7 @@ RDKIT_MOLDRAW2D_EXPORT void contourAndDrawGrid(
 RDKIT_MOLDRAW2D_EXPORT inline void contourAndDrawGrid(
     MolDraw2D &drawer, const double *grid, const std::vector<double> &xcoords,
     const std::vector<double> &ycoords, size_t nContours = 10,
-    const ContourParams &ps = ContourParams(),
-    const ROMol *mol = nullptr) {
+    const ContourParams &ps = ContourParams(), const ROMol *mol = nullptr) {
   std::vector<double> levels;
   contourAndDrawGrid(drawer, grid, xcoords, ycoords, nContours, levels, ps,
                      mol);

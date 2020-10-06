@@ -13,11 +13,10 @@ endif()
 include_directories(${CMAKE_SOURCE_DIR}/External/rapidjson-1.1.0/include)
 
 
-remove_definitions(-DRDKIT_GRAPHMOL_BUILD)
-add_definitions(-DRDKIT_MOLINTERCHANGE_BUILD)
 rdkit_library(MolInterchange
               Parser.cpp Writer.cpp
               LINK_LIBRARIES GraphMol)
+target_compile_definitions(MolInterchange PRIVATE RDKIT_MOLINTERCHANGE_BUILD)
 
 rdkit_headers(MolInterchange.h details.h
               DEST GraphMol/MolInterchange)

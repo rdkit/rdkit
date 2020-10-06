@@ -426,11 +426,6 @@ void setAtomPalette(RDKit::MolDrawOptions &self, python::object cmap) {
   updateAtomPalette(self, cmap);
 }
 
-void addMoleculeMetadata(const RDKit::MolDraw2DSVG &self, const RDKit::ROMol &m,
-                         int confId) {
-  self.addMoleculeMetadata(m, confId);
-}
-
 void contourAndDrawGaussiansHelper(
     RDKit::MolDraw2D &drawer, python::object pylocs, python::object pyheights,
     python::object pywidths, unsigned int nContours, python::object pylevels,
@@ -624,6 +619,12 @@ BOOST_PYTHON_MODULE(rdMolDraw2D) {
       .def_readwrite(
           "bondLineWidth", &RDKit::MolDrawOptions::bondLineWidth,
           "if positive, this overrides the default line width for bonds")
+      .def_readwrite("scaleBondWidth", &RDKit::MolDrawOptions::scaleBondWidth,
+                     "Scales the width of drawn bonds using image scaling.")
+      .def_readwrite("scaleHighlightBondWidth",
+                     &RDKit::MolDrawOptions::scaleHighlightBondWidth,
+                     "Scales the width of drawn highlighted bonds using"
+                     " image scaling.")
       .def_readwrite("highlightBondWidthMultiplier",
                      &RDKit::MolDrawOptions::highlightBondWidthMultiplier,
                      "What to multiply default bond width by for highlighting "
@@ -666,7 +667,15 @@ BOOST_PYTHON_MODULE(rdMolDraw2D) {
                      "additional padding to leave around atom labels. "
                      "Expressed as a fraction of the font size.")
       .def_readwrite("explicitMethyl", &RDKit::MolDrawOptions::explicitMethyl,
-                     "Draw terminal methyls explictly.  Default is false.");
+                     "Draw terminal methyls explictly.  Default is false.")
+      .def_readwrite(
+          "includeMetadata", &RDKit::MolDrawOptions::includeMetadata,
+          "When possible, include metadata about molecules and reactions to "
+          "allow them to be reconstructed. Default is true.")
+      .def_readwrite(
+          "includeRadicals", &RDKit::MolDrawOptions::includeRadicals,
+          "include radicals in the drawing (it can be useful to turn this off "
+          "for reactions and queries). Default is true.");
   docString = "Drawer abstract base class";
   python::class_<RDKit::MolDraw2D, boost::noncopyable>(
       "MolDraw2D", docString.c_str(), python::no_init)
@@ -823,7 +832,9 @@ BOOST_PYTHON_MODULE(rdMolDraw2D) {
       .def(python::init<int, int, int, int, bool>())
       .def("FinishDrawing", &RDKit::MolDraw2DSVG::finishDrawing,
            "add the last bits of SVG to finish the drawing")
-      .def("AddMoleculeMetadata", RDKit::addMoleculeMetadata,
+      .def("AddMoleculeMetadata",
+           (void (RDKit::MolDraw2DSVG::*)(const RDKit::ROMol &, int) const) &
+               RDKit::MolDraw2DSVG::addMoleculeMetadata,
            (python::arg("mol"), python::arg("confId") = -1),
            "add RDKit-specific information to the bottom of the drawing")
       .def("TagAtoms", RDKit::tagAtomHelper,

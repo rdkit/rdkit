@@ -22,27 +22,25 @@ namespace RDKit {
 // ****************************************************************************
 
 class DrawTextSVG : public DrawText {
-
  public:
   DrawTextSVG(double max_fnt_sz, double min_fnt_sz, std::ostream &oss,
               std::string &d_act_class);
 
-   void drawChar(char c, const Point2D &cds) override;
+  void drawChar(char c, const Point2D &cds) override;
 
  private:
   std::ostream &oss_;
   std::string &d_active_class_;
 
-  // return a vector of StringRects, one for each char in text, with
+  // fills a vector of StringRects, one for each char in text, with
   // super- and subscripts taken into account.  Sizes in pixel coords,
   // i.e. scaled by fontScale().
   void getStringRects(const std::string &text,
                       std::vector<std::shared_ptr<StringRect>> &rects,
                       std::vector<TextDrawType> &draw_modes,
                       std::vector<char> &draw_chars) const override;
-
 };
 
-} // namespace RDKit
+}  // namespace RDKit
 
 #endif  // RDKIT_DRAWTEXTSVG_H

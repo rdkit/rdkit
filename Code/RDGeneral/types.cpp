@@ -125,6 +125,11 @@ const std::string molReactStatus = "molReactStatus";
 
 const std::string atomNote = "atomNote";
 const std::string bondNote = "bondNote";
+const std::string _isotopicHs = "_isotopicHs";
+
+// molecule drawing
+const std::string _displayLabel = "_displayLabel";
+const std::string _displayLabelW = "_displayLabelW";
 
 }  // namespace common_properties
 

@@ -31,6 +31,7 @@
 #include <RDGeneral/BoostEndInclude.h>
 #include <GraphMol/RDKitBase.h>
 #include <GraphMol/QueryOps.h>
+#include <GraphMol/Chirality.h>
 
 #include "SmilesParseOps.h"
 #include <RDGeneral/RDLog.h>
@@ -368,7 +369,7 @@ RWMol *SmilesToMol(const std::string &smiles,
     std::string::const_iterator pos = cxPart.cbegin();
     try {
       SmilesParseOps::parseCXExtensions(*res, cxPart, pos);
-    } catch (const SmilesParseException &) {
+    } catch (...) {
       if (params.strictCXSMILES) {
         delete res;
         throw;
@@ -394,8 +395,13 @@ RWMol *SmilesToMol(const std::string &smiles,
       throw;
     }
     // figure out stereochemistry:
-    bool cleanIt = true, force = true, flagPossible = true;
-    MolOps::assignStereochemistry(*res, cleanIt, force, flagPossible);
+    if (params.useLegacyStereo) {
+      bool cleanIt = true, force = true, flagPossible = true;
+      MolOps::assignStereochemistry(*res, cleanIt, force, flagPossible);
+    } else {
+      bool cleanIt = true, flagPossible = false;
+      Chirality::findPotentialStereo(*res, cleanIt, flagPossible);
+    }
   }
   if (res && res->hasProp(common_properties::_NeedsQueryScan)) {
     res->clearProp(common_properties::_NeedsQueryScan);

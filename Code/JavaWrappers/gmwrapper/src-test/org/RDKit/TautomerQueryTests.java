@@ -3,7 +3,13 @@
 // Created by Gareth Jones on 6/1/2020.
 //
 // Copyright 2020 Schrodinger, Inc
-//
+//  @@ All Rights Reserved @@
+//  This file is part of the RDKit.
+//  The contents are covered by the terms of the BSD license
+//  which is included in the file license.txt, found at the root
+//  of the RDKit source tree.
+
+
 package org.RDKit;
 
 import static org.junit.Assert.*;
