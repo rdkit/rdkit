@@ -39,7 +39,7 @@ Alternatively, you can also send Cookbook revisions and addition requests to the
 
    The Index ID# (e.g., **RDKitCB_##**) is simply a way to track Cookbook entries and image file names. 
    New Cookbook additions are sequentially index numbered, regardless of where they are placed 
-   within the document. As such, for reference, the next Cookbook entry is **RDKitCB_33**.
+   within the document. As such, for reference, the next Cookbook entry is **RDKitCB_34**.
 
 Drawing Molecules (Jupyter)
 *******************************
@@ -768,6 +768,114 @@ Sidechain-Core Enumeration
    Draw.MolsToGridImage([Chem.MolFromSmiles(smi) for smi in product_smi])
 
 .. image:: images/RDKitCB_29_im0.png
+
+
+Neutralizing Molecules
+========================
+
+| **Author:** Noel O'Boyle (Vincent Scalfani adapted code for RDKit)
+| **Source:** `<https://baoilleach.blogspot.com/2019/12/no-charge-simple-approach-to.html>`_
+| **Index ID#:** RDKitCB_33
+| **Summary:** Neutralize charged molecules by atom.
+
+This algorithm is adapted from Noel O'Boyle's nocharge code. It is a neutralization by atom approach
+and neutralizes atoms with a +1 or -1 charge by removing or adding hydrogen. The SMARTS pattern checks for a hydrogen in +1 charged atoms and checks for no neighbors with a negative charge (for +1 atoms) and no neighbors with a positive charge (for -1 atoms), this is to avoid altering molecules with charge separation (e.g., nitro groups).
+
+.. testcode::
+
+   from rdkit import Chem
+   from rdkit.Chem import AllChem
+   from rdkit.Chem import Draw
+
+.. testcode::
+
+   # list of SMILES
+   smiList = ['CC(CNC[O-])[N+]([O-])=O',
+          'C[N+](C)(C)CCC([O-])=O',
+          '[O-]C1=CC=[N+]([O-])C=C1',
+          '[O-]CCCN=[N+]=[N-]',
+          'C[NH+](C)CC[S-]',
+          'CP([O-])(=O)OC[NH3+]']
+
+   # Create RDKit molecular objects
+   mols = [Chem.MolFromSmiles(m) for m in smiList]
+
+   # display
+   Draw.MolsToGridImage(mols,molsPerRow=3,subImgSize=(200,200))
+
+.. image:: images/RDKitCB_33_im0.png
+
+.. testcode::
+
+   def neutralize_atoms(mol):
+       pattern = Chem.MolFromSmarts("[+1!h0!$([*]~[-1,-2,-3,-4]),-1!$([*]~[+1,+2,+3,+4])]")
+       at_matches = mol.GetSubstructMatches(pattern)
+       at_matches_list = [y[0] for y in at_matches]      
+       if len(at_matches_list) > 0:
+           for at_idx in at_matches_list:
+               atom = mol.GetAtomWithIdx(at_idx)
+               chg = atom.GetFormalCharge()
+               hcount = atom.GetTotalNumHs()
+               atom.SetFormalCharge(0)
+               atom.SetNumExplicitHs(hcount - chg)
+               atom.UpdatePropertyCache()
+       return mol
+
+.. testcode::
+
+   # Neutralize molecules by atom
+   for mol in mols:
+       neutralize_atoms(mol)
+       print(Chem.MolToSmiles(mol))
+   
+.. testoutput::
+
+   CC(CNCO)[N+](=O)[O-]
+   C[N+](C)(C)CCC(=O)O
+   [O-][n+]1ccc(O)cc1
+   [N-]=[N+]=NCCCO
+   CN(C)CCS
+   CP(=O)(O)OCN
+
+.. testcode::
+
+   Draw.MolsToGridImage(mols,molsPerRow=3, subImgSize=(200,200))
+
+.. image:: images/RDKitCB_33_im1.png
+
+Compare to MolStandardizer uncharger:
+
+`<https://molvs.readthedocs.io/en/latest/api.html#molvs-charge>`_
+
+"This class uncharges molecules by adding and/or removing hydrogens. 
+In cases where there is a positive charge that is not neutralizable, 
+any corresponding negative charge is also preserved."
+
+.. testcode::
+
+   from rdkit.Chem.MolStandardize import rdMolStandardize
+   neutralize = rdMolStandardize.Uncharger()
+   mols2 = [Chem.MolFromSmiles(m) for m in smiList]
+
+   for mol2 in mols2:
+       neutralize.uncharge(mol2)
+       print(Chem.MolToSmiles(mol2))
+
+.. testoutput::
+
+   CC(CNC[O-])[N+](=O)[O-]
+   C[N+](C)(C)CCC(=O)[O-]
+   [O-]c1cc[n+]([O-])cc1
+   [N-]=[N+]=NCCC[O-]
+   C[NH+](C)CC[S-]
+   CP(=O)([O-])OC[NH3+]
+
+
+.. testcode::
+
+   Draw.MolsToGridImage(mols2,molsPerRow=3,subImgSize=(200,200))
+
+.. image:: images/RDKitCB_33_im2.png
 
 Substructure Matching
 ***********************
