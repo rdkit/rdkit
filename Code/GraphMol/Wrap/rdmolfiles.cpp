@@ -1663,9 +1663,11 @@ BOOST_PYTHON_MODULE(rdmolfiles) {
   wrap_tdtwriter();
   wrap_pdbwriter();
 
+#ifdef RDK_THREADSAFE_SSS
   /********************************************************
    * MultithreadedMolWriter stuff
    *******************************************************/
- 	wrap_multiSmiSupplier();
-	wrap_multiSDSupplier();
+  wrap_multiSmiSupplier();
+  wrap_multiSDSupplier();
+#endif
 }

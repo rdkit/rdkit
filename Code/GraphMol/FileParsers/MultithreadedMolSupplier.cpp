@@ -1,3 +1,4 @@
+#ifdef RDK_THREADSAFE_SSS
 //
 //  Copyright (C) 2020 Shrey Aryan
 //
@@ -105,3 +106,4 @@ void MultithreadedMolSupplier::reset() {
 }
 
 }  // namespace RDKit
+#endif

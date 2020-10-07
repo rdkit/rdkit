@@ -7,6 +7,7 @@
 //  which is included in the file license.txt, found at the root
 //  of the RDKit source tree.
 //
+#ifdef RDK_THREADSAFE_SSS
 
 #define NO_IMPORT_ARRAY
 #include <RDBoost/python.h>
@@ -79,7 +80,6 @@ MultithreadedSDMolSupplier* MTMolSupplCompressedStream(
 
 struct multiSDMolSup_wrap {
   static void wrap() {
-
     python::def(
         "openWithCompressedStream", MTMolSupplCompressedStream,
         "Returns MultithreadedSDMolSupplier object with compressed stream",
@@ -132,3 +132,4 @@ struct multiSDMolSup_wrap {
 }  // namespace RDKit
 
 void wrap_multiSDSupplier() { RDKit::multiSDMolSup_wrap::wrap(); }
+#endif
