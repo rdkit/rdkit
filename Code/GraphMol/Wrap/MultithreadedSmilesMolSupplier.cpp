@@ -7,6 +7,8 @@
 //  which is included in the file license.txt, found at the root
 //  of the RDKit source tree.
 //
+#ifdef RDK_THREADSAFE_SSS
+
 #define NO_IMPORT_ARRAY
 #include <RDBoost/python.h>
 
@@ -109,3 +111,4 @@ struct multiSmiMolSup_wrap {
 }  // namespace RDKit
 
 void wrap_multiSmiSupplier() { RDKit::multiSmiMolSup_wrap::wrap(); }
+#endif

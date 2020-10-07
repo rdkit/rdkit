@@ -83,8 +83,10 @@ rdkit_test(testMolSupplier testMolSupplier.cpp
 rdkit_test(testGeneralFileReader testGeneralFileReader.cpp
 					LINK_LIBRARIES FileParsers RDStreams)
 
+if(RDK_TEST_MULTITHREADED)
 rdkit_test(testMultithreadedMolSupplier testMultithreadedMolSupplier.cpp
 					LINK_LIBRARIES FileParsers Fingerprints RDStreams)
+endif(RDK_TEST_MULTITHREADED)
 
 rdkit_test(testMolWriter testMolWriter.cpp LINK_LIBRARIES FileParsers )
 

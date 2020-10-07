@@ -111,6 +111,7 @@ std::unique_ptr<MolSupplier> getSupplier(const std::string& path,
 
   //! Dispatch to the appropriate supplier
   if (fileFormat == "sdf") {
+#ifdef RDK_THREADSAFE_SSS
     if (opt.numWriterThreads > 0) {
       MultithreadedSDMolSupplier* sdsup = new MultithreadedSDMolSupplier(
           strm, true, opt.sanitize, opt.removeHs, opt.strictParsing,
@@ -118,6 +119,7 @@ std::unique_ptr<MolSupplier> getSupplier(const std::string& path,
       std::unique_ptr<MolSupplier> p(sdsup);
       return p;
     }
+#endif
     ForwardSDMolSupplier* sdsup = new ForwardSDMolSupplier(
         strm, true, opt.sanitize, opt.removeHs, opt.strictParsing);
     std::unique_ptr<MolSupplier> p(sdsup);
@@ -126,6 +128,7 @@ std::unique_ptr<MolSupplier> getSupplier(const std::string& path,
 
   else if (fileFormat == "smi" || fileFormat == "csv" || fileFormat == "txt" ||
            fileFormat == "tsv") {
+#ifdef RDK_THREADSAFE_SSS
     if (opt.numWriterThreads > 0) {
       MultithreadedSmilesMolSupplier* smsup =
           new MultithreadedSmilesMolSupplier(
@@ -134,6 +137,7 @@ std::unique_ptr<MolSupplier> getSupplier(const std::string& path,
       std::unique_ptr<MolSupplier> p(smsup);
       return p;
     }
+#endif
     SmilesMolSupplier* smsup =
         new SmilesMolSupplier(strm, true, opt.delimiter, opt.smilesColumn,
                               opt.nameColumn, opt.titleLine, opt.sanitize);

@@ -1,3 +1,4 @@
+#ifdef RDK_THREADSAFE_SSS
 //
 //  Copyright (C) 2020 Shrey Aryan
 //
@@ -216,3 +217,4 @@ ROMol *MultithreadedSmilesMolSupplier::processMoleculeRecord(
 }
 
 }  // namespace RDKit
+#endif
