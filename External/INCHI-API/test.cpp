@@ -29,7 +29,7 @@ using namespace RDKit;
 #ifdef RDK_TEST_MULTITHREADED
 namespace {
 void runblock(const std::vector<ROMol *> &mols, unsigned int count,
-              unsigned int idx, std::vector<std::string> &inchis,
+              unsigned int idx, const std::vector<std::string> &inchis,
               const std::vector<std::string> &keys) {
   for (unsigned int j = 0; j < 200; j++) {
     for (unsigned int i = 0; i < mols.size(); ++i) {
@@ -44,12 +44,18 @@ void runblock(const std::vector<ROMol *> &mols, unsigned int count,
       TEST_ASSERT(key == keys[i]);
       std::string key2 = MolToInchiKey(*mol);
       TEST_ASSERT(key2 == keys[i]);
+
       ROMol *mol2 = InchiToMol(inchi, tmp);
       TEST_ASSERT(mol2);
       ExtraInchiReturnValues tmp2;
       std::string inchi2 = MolToInchi(*mol2, tmp2);
       TEST_ASSERT(inchi == inchi2);
       delete mol2;
+
+      std::string mol_block = MolToMolBlock(*mol);
+      ExtraInchiReturnValues tmp3;
+      std::string inchi3 = MolBlockToInchi(mol_block, tmp3);
+      TEST_ASSERT(inchi == inchi3);
     }
   }
 };
@@ -67,17 +73,12 @@ void testMultiThread() {
   std::cerr << "reading molecules" << std::endl;
   std::vector<ROMol *> mols;
   while (!suppl.atEnd() && mols.size() < 100) {
-    ROMol *mol = nullptr;
-    try {
-      mol = suppl.next();
-    } catch (...) {
-      continue;
-    }
-    if (!mol) {
-      continue;
-    }
+    ROMol *mol = suppl.next();
+    TEST_ASSERT(mol != nullptr);
     mols.push_back(mol);
   }
+  TEST_ASSERT(mols.size() == 100);
+
   std::cerr << "generating reference data" << std::endl;
   std::vector<std::string> inchis;
   std::vector<std::string> keys;

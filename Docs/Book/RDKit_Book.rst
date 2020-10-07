@@ -1265,16 +1265,11 @@ What has been tested
   - The chemical reactions code
   - The Open3DAlign code
   - The MolDraw2D drawing code
+  - The InChI code, with InChI IUPAC v1.05
 
 Known Problems
 --------------
 
-  - InChI generation and (probably) parsing. This seems to be a
-    limitation of the IUPAC InChI code. In order to allow the code to
-    be used in a multi-threaded environment, a mutex is used to ensure
-    that only one thread is using the IUPAC code at a time. This is
-    only enabled if the RDKit is built with the ``RDK_TEST_MULTITHREADED``
-    option enabled.
   - The MolSuppliers (e.g. SDMolSupplier, SmilesMolSupplier?) change
     their internal state when a molecule is read. It is not safe to
     use one supplier on more than one thread.

@@ -846,14 +846,11 @@ RDKitを書いている間、コードがマルチスレッド環境でも作動
 -  chemical reactionsコード
 -  Open3DAlignコード
 -  MolDraw2D 描画コード
+-  InChIコード(v1.05)
 
 把握済みの問題
 ---------------------------------------------
 [`Known problems <https://www.rdkit.org/docs/RDKit_Book.html#known-problems>`__]
-
--  InChiの生成と（おそらく）解析。これはIUPACInChiコードの限界である様に見えます。
-   コードをマルチスレッド環境で使える様にするため、確実に一度にスレッド一つだけがIUPACコードを使うことを保証するようミューテックスが使われます。
-   これはRDKitが``RDK_TEST_MULTITHREADED`` オプションを有効にしてビルドされている場合のみ利用可能です。
 
 -  MolSuppliers(例えばSDMolSupplierやSmilesMolSupplier？)は分子が読み込まれたときに内部の状態を変えます。２つ以上のスレッドで一つのsupplierを使うのは安全ではありません。
 

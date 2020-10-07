@@ -73,9 +73,6 @@
 #include <boost/foreach.hpp>
 #include <boost/tuple/tuple.hpp>
 #include <RDGeneral/BoostEndInclude.h>
-#if RDK_TEST_MULTITHREADED
-#include <mutex>
-#endif
 
 //#define DEBUG 1
 namespace RDKit {
@@ -1254,10 +1251,6 @@ void cleanUp(RWMol& mol) {
 }  // end cleanUp
 }  // namespace
 
-#if RDK_TEST_MULTITHREADED
-std::mutex inchiMutex;
-#endif
-
 RWMol* InchiToMol(const std::string& inchi, ExtraInchiReturnValues& rv,
                   bool sanitize, bool removeHs) {
   // input
@@ -1273,9 +1266,6 @@ RWMol* InchiToMol(const std::string& inchi, ExtraInchiReturnValues& rv,
   {
     // output structure
     inchi_OutputStruct inchiOutput;
-#if RDK_TEST_MULTITHREADED
-    std::lock_guard<std::mutex> lock(inchiMutex);
-#endif
     // DLL call
     int retcode = GetStructFromINCHI(&inchiInput, &inchiOutput);
 
@@ -2076,9 +2066,6 @@ std::string MolToInchi(const ROMol& mol, ExtraInchiReturnValues& rv,
   // call DLL
   std::string inchi;
   {
-#if RDK_TEST_MULTITHREADED
-    std::lock_guard<std::mutex> lock(inchiMutex);
-#endif
     int retcode = GetINCHI(&input, &output);
 
     // generate output
@@ -2119,9 +2106,6 @@ std::string MolBlockToInchi(const std::string& molBlock,
   // call DLL
   std::string inchi;
   {
-#if RDK_TEST_MULTITHREADED
-    std::lock_guard<std::mutex> lock(inchiMutex);
-#endif
     char* _options = nullptr;
     if (options) {
       _options = new char[strlen(options) + 1];
@@ -2158,9 +2142,6 @@ std::string InchiToInchiKey(const std::string& inchi) {
   char xtra1[65], xtra2[65];
   int ret = 0;
   {
-#if RDK_TEST_MULTITHREADED
-    std::lock_guard<std::mutex> lock(inchiMutex);
-#endif
     ret = GetINCHIKeyFromINCHI(inchi.c_str(), 0, 0, inchiKey, xtra1, xtra2);
   }
   std::string error;
