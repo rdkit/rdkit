@@ -66,7 +66,7 @@ std::string multiSdsDocStr =
     - sizeOutputQueue: (optional) size of output/writer queue. Defaults to 5.\n\
 \n";
 
-MultithreadedSDMolSupplier* MTMolSupplCompressedStream(
+MultithreadedSDMolSupplier* MTMolSupplStream(
     python::object& input, bool sanitize = true, bool removeHs = true,
     bool strictParsing = true, unsigned int numWriterThreads = 1,
     size_t sizeInputQueue = 5, size_t sizeOutputQueue = 5) {
@@ -81,8 +81,8 @@ MultithreadedSDMolSupplier* MTMolSupplCompressedStream(
 struct multiSDMolSup_wrap {
   static void wrap() {
     python::def(
-        "openWithCompressedStream", MTMolSupplCompressedStream,
-        "Returns MultithreadedSDMolSupplier object with compressed stream",
+        "SDMolSupplierFromStream", MTMolSupplStream,
+        "Returns MultithreadedSDMolSupplier object constructed from a file object or stream",
         (python::arg("fileobj"), python::arg("sanitize") = true,
          python::arg("removeHs") = true, python::arg("strictParsing") = true,
          python::arg("numWriterThreads") = 1, python::arg("sizeInputQueue") = 5,
