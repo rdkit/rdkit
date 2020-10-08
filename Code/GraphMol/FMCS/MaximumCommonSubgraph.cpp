@@ -727,7 +727,7 @@ MaximumCommonSubgraph::generateResultSMARTSAndQueryMol(
 
   // create molecule from MCS for MolToSmarts()
   auto* mol = new RWMol();
-  const RingInfo* ri = QueryMolecule->getRingInfo();
+  const RingInfo* ri = mcsIdx.QueryMolecule->getRingInfo();
   unsigned ai = 0;  // SeedAtomIdx
   for (auto atom = mcsIdx.Atoms.begin(); atom != mcsIdx.Atoms.end();
        atom++, ai++) {
@@ -793,7 +793,7 @@ MaximumCommonSubgraph::generateResultSMARTSAndQueryMol(
 
 bool MaximumCommonSubgraph::addFusedBondQueries(const MCS& mcsIdx,
                                                 RWMol* rwMol) const {
-  const RingInfo* ri = QueryMolecule->getRingInfo();
+  const RingInfo* ri = mcsIdx.QueryMolecule->getRingInfo();
   unsigned bi = 0;  // Seed Idx
   bool haveFusedBondQuery = false;
   std::map<int, std::set<size_t>> bondRingMembership;
