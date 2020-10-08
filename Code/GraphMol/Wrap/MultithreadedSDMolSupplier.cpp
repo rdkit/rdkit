@@ -65,7 +65,8 @@ std::string multiSdsDocStr =
 \n\
     - sizeOutputQueue: (optional) size of output/writer queue. Defaults to 5.\n\
 \n";
-
+#if 0
+// FIX: disabled until we figure out how to make this stable
 MultithreadedSDMolSupplier* MTMolSupplStream(
     python::object& input, bool sanitize = true, bool removeHs = true,
     bool strictParsing = true, unsigned int numWriterThreads = 1,
@@ -77,9 +78,11 @@ MultithreadedSDMolSupplier* MTMolSupplStream(
       sizeInputQueue, sizeOutputQueue);
   return sup;
 }
-
+#endif
 struct multiSDMolSup_wrap {
   static void wrap() {
+#if 0
+    // FIX: disabled until we make it stable and figure out an API that we're happy with
     python::def(
         "SDMolSupplierFromStream", MTMolSupplStream,
         "Returns MultithreadedSDMolSupplier object constructed from a file object or stream",
@@ -89,6 +92,7 @@ struct multiSDMolSup_wrap {
          python::arg("sizeOutputQueue") = 5),
         python::with_custodian_and_ward_postcall<
             0, 1, python::return_value_policy<python::manage_new_object>>());
+#endif
 
     python::class_<MultithreadedSDMolSupplier, boost::noncopyable>(
         "MultithreadedSDMolSupplier", multiSDMolSupplierClassDoc.c_str(),
