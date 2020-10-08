@@ -3,7 +3,7 @@ import gzip
 from rdkit import RDConfig, rdBase
 from rdkit import Chem
 from rdkit import __version__
-
+import sys
 
 class TestCase(unittest.TestCase):
     def testMultiSmiMolSupplier(self):
@@ -58,15 +58,30 @@ class TestCase(unittest.TestCase):
         self.assertTrue(sorted(confusedMolNames) == sorted(molNames))
 
         # try opening with streambuf
-        fileN = os.path.join(RDConfig.RDBaseDir, 'Code', 'GraphMol', 'FileParsers', 'test_data',
-                         'NCI_aids_few.sdf.gz') 
-       # try opening with gzip
-        inf = gzip.open(fileN)
+        inf = open(fileN,'rb')
         if(inf):
-          gSup = Chem.openWithCompressedStream(inf)
+          gSup = Chem.SDMolSupplierFromStream(inf)
           confusedMolNames = []
           i = 0
           for mol in gSup:
+            # print("!!",i,file=sys.stderr);sys.stderr.flush()
+            if(mol):
+              confusedMolNames.append(mol.GetProp("_Name"))
+              i += 1
+          self.assertTrue(len(molNames) == i)
+          self.assertTrue(sorted(confusedMolNames) == sorted(molNames))
+        #   print("done!",file=sys.stderr);sys.stderr.flush()
+        # try opening with streambuf
+        fileN = os.path.join(RDConfig.RDBaseDir, 'Code', 'GraphMol', 'FileParsers', 'test_data',
+                         'NCI_aids_few.sdf.gz') 
+        # try opening with gzip
+        inf = gzip.open(fileN)
+        if(inf):
+          gSup = Chem.SDMolSupplierFromStream(inf)
+          confusedMolNames = []
+          i = 0
+          for mol in gSup:
+            # print("!",i,file=sys.stderr);sys.stderr.flush()
             if(mol):
               confusedMolNames.append(mol.GetProp("_Name"))
               i += 1
