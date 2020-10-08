@@ -12,6 +12,8 @@
 #define MULTITHREADED_SMILES_MOL_SUPPLIER
 #include "MultithreadedMolSupplier.h"
 namespace RDKit {
+//! This class is still a bit experimental and the public API may change
+//! in future releases.    
 class RDKIT_FILEPARSERS_EXPORT MultithreadedSmilesMolSupplier
     : public MultithreadedMolSupplier {
  public:

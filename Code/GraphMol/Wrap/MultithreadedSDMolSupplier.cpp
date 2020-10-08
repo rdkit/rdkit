@@ -29,6 +29,8 @@ namespace RDKit {
 
 std::string multiSDMolSupplierClassDoc =
     "A class which concurrently supplies molecules from a text file.\n\
+  Please note that this class is still a bit experimental and the API may\n\
+  change in future releases.\n\
 \n\
   Usage examples:\n\
 \n\

@@ -13,6 +13,8 @@
 #include "MultithreadedMolSupplier.h"
 namespace RDKit {
 
+//! This class is still a bit experimental and the public API may change
+//! in future releases.
 class RDKIT_FILEPARSERS_EXPORT MultithreadedSDMolSupplier
     : public MultithreadedMolSupplier {
  public:
