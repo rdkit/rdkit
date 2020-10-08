@@ -29,6 +29,8 @@ namespace RDKit {
 
 std::string multiSDMolSupplierClassDoc =
     "A class which concurrently supplies molecules from a text file.\n\
+  Please note that this class is still a bit experimental and the API may\n\
+  change in future releases.\n\
 \n\
   Usage examples:\n\
 \n\
@@ -65,8 +67,9 @@ std::string multiSdsDocStr =
 \n\
     - sizeOutputQueue: (optional) size of output/writer queue. Defaults to 5.\n\
 \n";
-
-MultithreadedSDMolSupplier* MTMolSupplCompressedStream(
+#if 0
+// FIX: disabled until we figure out how to make this stable
+MultithreadedSDMolSupplier* MTMolSupplStream(
     python::object& input, bool sanitize = true, bool removeHs = true,
     bool strictParsing = true, unsigned int numWriterThreads = 1,
     size_t sizeInputQueue = 5, size_t sizeOutputQueue = 5) {
@@ -77,18 +80,21 @@ MultithreadedSDMolSupplier* MTMolSupplCompressedStream(
       sizeInputQueue, sizeOutputQueue);
   return sup;
 }
-
+#endif
 struct multiSDMolSup_wrap {
   static void wrap() {
+#if 0
+    // FIX: disabled until we make it stable and figure out an API that we're happy with
     python::def(
-        "openWithCompressedStream", MTMolSupplCompressedStream,
-        "Returns MultithreadedSDMolSupplier object with compressed stream",
+        "SDMolSupplierFromStream", MTMolSupplStream,
+        "Returns MultithreadedSDMolSupplier object constructed from a file object or stream",
         (python::arg("fileobj"), python::arg("sanitize") = true,
          python::arg("removeHs") = true, python::arg("strictParsing") = true,
          python::arg("numWriterThreads") = 1, python::arg("sizeInputQueue") = 5,
          python::arg("sizeOutputQueue") = 5),
         python::with_custodian_and_ward_postcall<
             0, 1, python::return_value_policy<python::manage_new_object>>());
+#endif
 
     python::class_<MultithreadedSDMolSupplier, boost::noncopyable>(
         "MultithreadedSDMolSupplier", multiSDMolSupplierClassDoc.c_str(),

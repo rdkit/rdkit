@@ -82,7 +82,7 @@ add_pytest(pyTestSGroups
 if (RDK_TEST_MULTITHREADED)
   add_pytest(pyTestThreads
            ${CMAKE_CURRENT_SOURCE_DIR}/testThreads.py)
-	add_pytest(pyTestSGroups
+	add_pytest(pyTestMultithreadedMolSupplier
          ${CMAKE_CURRENT_SOURCE_DIR}/testMultithreadedMolSupplier.py)
 endif (RDK_TEST_MULTITHREADED)
 
