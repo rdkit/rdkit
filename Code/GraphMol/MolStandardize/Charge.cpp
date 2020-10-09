@@ -271,7 +271,7 @@ Uncharger::Uncharger()
           // carboxylate, carbonate, sulfi(a)te,
           // and their thio-analogues
           // (among other less likely structures)
-          "[$([O,S;-][C,S]=[O,S]),"
+          "[$([O,S;-][C,S;+0]=[O,S]),"
           // phosphi(a)te, nitrate
           // and their thio-analogues
           "$([O,S;-][N,P;+](=[O,S])[O,S;-]),"

@@ -70,88 +70,80 @@ void testReionizer() {
 void testChargeParent() {
   BOOST_LOG(rdInfoLog) << "-----------------------\n test charge parent"
                        << std::endl;
-  std::string smi1, smi2, smi3, smi4, smi5, smi6, smi7, smi8, smi9, smi10,
-      smi11, smi12;
   MolStandardize::CleanupParameters params;
   // initialize CleanupParameters with preferOrganic=true
   MolStandardize::CleanupParameters params_preferorg;
   params_preferorg.preferOrganic = true;
 
   // Test neutralization of ionized acids and bases.
-  smi1 = "C(C(=O)[O-])(Cc1n[n-]nn1)(C[NH3+])(C[N+](=O)[O-])";
-  std::unique_ptr<RWMol> m1(SmilesToMol(smi1));
+  auto m1 = "C(C(=O)[O-])(Cc1n[n-]nn1)(C[NH3+])(C[N+](=O)[O-])"_smiles;
   std::unique_ptr<RWMol> res1(MolStandardize::chargeParent(*m1, params));
   TEST_ASSERT(MolToSmiles(*res1) == "NCC(Cc1nn[nH]n1)(C[N+](=O)[O-])C(=O)O");
 
   // Test preservation of zwitterion.
-  smi2 = "n(C)1cc[n+]2cccc([O-])c12";
-  std::unique_ptr<RWMol> m2(SmilesToMol(smi2));
+  auto m2 = "n(C)1cc[n+]2cccc([O-])c12"_smiles;
   std::unique_ptr<RWMol> res2(MolStandardize::chargeParent(*m2, params));
   TEST_ASSERT(MolToSmiles(*res2) == "Cn1cc[n+]2cccc([O-])c12");
 
   // Choline should be left with a positive charge.
-  smi3 = "C[N+](C)(C)CCO";
-  std::unique_ptr<RWMol> m3(SmilesToMol(smi3));
+  auto m3 = "C[N+](C)(C)CCO"_smiles;
   std::unique_ptr<RWMol> res3(MolStandardize::chargeParent(*m3, params));
   TEST_ASSERT(MolToSmiles(*res3) == "C[N+](C)(C)CCO");
 
   // Hydrogen should be removed to give deanol as a charge parent.
-  smi4 = "C[NH+](C)CCO";
-  std::unique_ptr<RWMol> m4(SmilesToMol(smi4));
+  auto m4 = "C[NH+](C)CCO"_smiles;
   std::unique_ptr<RWMol> res4(MolStandardize::chargeParent(*m4, params));
   TEST_ASSERT(MolToSmiles(*res4) == "CN(C)CCO");
 
   // Sodium benzoate to benzoic acid.
-  smi5 = "[Na+].O=C([O-])c1ccccc1";
-  std::unique_ptr<RWMol> m5(SmilesToMol(smi5));
+  auto m5 = "[Na+].O=C([O-])c1ccccc1"_smiles;
   std::unique_ptr<RWMol> res5(MolStandardize::chargeParent(*m5, params));
   TEST_ASSERT(MolToSmiles(*res5) == "O=C(O)c1ccccc1");
 
   // Benzoate ion to benzoic acid.
-  smi6 = "O=C([O-])c1ccccc1";
-  std::unique_ptr<RWMol> m6(SmilesToMol(smi6));
+  auto m6 = "O=C([O-])c1ccccc1"_smiles;
   std::unique_ptr<RWMol> res6(MolStandardize::chargeParent(*m6, params));
   TEST_ASSERT(MolToSmiles(*res6) == "O=C(O)c1ccccc1");
 
   // Charges in histidine should be neutralized.
-  smi7 = "[NH3+]C(Cc1cnc[nH]1)C(=O)[O-]";
-  std::unique_ptr<RWMol> m7(SmilesToMol(smi7));
+  auto m7 = "[NH3+]C(Cc1cnc[nH]1)C(=O)[O-]"_smiles;
   std::unique_ptr<RWMol> res7(MolStandardize::chargeParent(*m7, params));
   TEST_ASSERT(MolToSmiles(*res7) == "NC(Cc1cnc[nH]1)C(=O)O");
 
   //
-  smi8 = "C[NH+](C)(C).[Cl-]";
-  std::unique_ptr<RWMol> m8(SmilesToMol(smi8));
+  auto m8 = "C[NH+](C)(C).[Cl-]"_smiles;
   std::unique_ptr<RWMol> res8(MolStandardize::chargeParent(*m8, params));
   TEST_ASSERT(MolToSmiles(*res8) == "CN(C)C");
 
   // No organic fragments.
-  smi9 = "[N+](=O)([O-])[O-]";
-  std::unique_ptr<RWMol> m9(SmilesToMol(smi9));
+  auto m9 = "[N+](=O)([O-])[O-]"_smiles;
   std::unique_ptr<RWMol> res9(MolStandardize::chargeParent(*m9, params));
   TEST_ASSERT(MolToSmiles(*res9) == "O=[N+]([O-])O");
 
   // TODO switch prefer_organic=true
   // No organic fragments.
-  smi10 = "[N+](=O)([O-])[O-]";
-  std::unique_ptr<RWMol> m10(SmilesToMol(smi10));
+  auto m10 = "[N+](=O)([O-])[O-]"_smiles;
   std::unique_ptr<RWMol> res10(
       MolStandardize::chargeParent(*m10, params_preferorg));
   TEST_ASSERT(MolToSmiles(*res10) == "O=[N+]([O-])O");
 
   // Larger inorganic fragment should be chosen.
-  smi11 = "[N+](=O)([O-])[O-].[CH2]";
-  std::unique_ptr<RWMol> m11(SmilesToMol(smi11));
+  auto m11 = "[N+](=O)([O-])[O-].[CH2]"_smiles;
   std::unique_ptr<RWMol> res11(MolStandardize::chargeParent(*m11, params));
   TEST_ASSERT(MolToSmiles(*res11) == "O=[N+]([O-])O");
 
   // TODO prefer_organic=true
   // Smaller organic fragment should be chosen over larger inorganic fragment.
-  smi12 = "[N+](=O)([O-])[O-].[CH2]";
-  std::unique_ptr<RWMol> m12(SmilesToMol(smi12));
+  auto m12 = "[N+](=O)([O-])[O-].[CH2]"_smiles;
   std::unique_ptr<RWMol> res12(
       MolStandardize::chargeParent(*m12, params_preferorg));
   TEST_ASSERT(MolToSmiles(*res12) == "[CH2]");
+
+  // do not completely neutralize zwitterions
+  auto m13 = "C[S+](=O)([O-])NC"_smiles;
+  std::unique_ptr<RWMol> res13(MolStandardize::chargeParent(*m13, params));
+  TEST_ASSERT(MolToSmiles(*res13) == "CN[S+](C)(=O)[O-]");
+
   BOOST_LOG(rdInfoLog) << "Finished" << std::endl;
 }
 
@@ -353,6 +345,7 @@ void testInorganicAcids() {
 
 int main() {
   RDLog::InitLogs();
+  boost::logging::disable_logs("rdApp.info");
   testReionizer();
   testChargeParent();
   testGithub2144();
