@@ -10,6 +10,7 @@
 //
 
 #include "MolDraw2DQt.h"
+#include <GraphMol/MolDraw2D/DrawText.h>
 
 #include <QPainter>
 #include <QString>
@@ -140,11 +141,11 @@ void MolDraw2DQt::getStringSize(const string &label, double &label_width,
   label_height = 0.0;
 
   TextDrawType draw_mode =
-      TextDrawNormal;  // 0 for normal, 1 for superscript, 2 for subscript
+      TextDrawType::TextDrawNormal;  // 0 for normal, 1 for superscript, 2 for subscript
   QString next_char(" ");
   bool had_a_super = false;
 
-  for (int i = 0, is = label.length(); i < is; ++i) {
+  for (size_t i = 0, is = label.length(); i < is; ++i) {
     // setStringDrawMode moves i along to the end of any <sub> or <sup>
     // markup
     if ('<' == label[i] && setStringDrawMode(label, draw_mode, i)) {
@@ -156,9 +157,9 @@ void MolDraw2DQt::getStringSize(const string &label, double &label_width,
                                  Qt::AlignBottom | Qt::AlignLeft, next_char);
     label_height = br.height() / scale();
     double char_width = br.width() / scale();
-    if (TextDrawSubscript == draw_mode) {
+    if (TextDrawType::TextDrawSubscript == draw_mode) {
       char_width *= 0.5;
-    } else if (TextDrawSuperscript == draw_mode) {
+    } else if (TextDrawType::TextDrawSuperscript == draw_mode) {
       char_width *= 0.5;
       had_a_super = true;
     }
