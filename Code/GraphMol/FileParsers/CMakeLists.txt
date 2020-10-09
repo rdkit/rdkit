@@ -67,7 +67,7 @@ rdkit_headers(FileParsers.h
               SequenceParsers.h SequenceWriters.h
               GeneralFileReader.h
 							MultithreadedMolSupplier.h
-							MulithreadedSmilesMolSupplier.h
+							MultithreadedSmilesMolSupplier.h
 							MultithreadedSDMolSupplier.h
               PNGParser.h
               DEST GraphMol/FileParsers)
