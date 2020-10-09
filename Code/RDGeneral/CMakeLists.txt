@@ -64,6 +64,7 @@ rdkit_headers(Exceptions.h
               hanoiSort.h
               export.h
               test.h
+              ConcurrentQueue.h
               DEST RDGeneral)
 
 if (NOT RDK_INSTALL_INTREE)
@@ -72,3 +73,8 @@ endif (NOT RDK_INSTALL_INTREE)
 
 rdkit_test(testDict testDict.cpp LINK_LIBRARIES RDGeneral)
 rdkit_test(testRDValue testRDValue.cpp LINK_LIBRARIES RDGeneral)
+
+if(RDK_BUILD_THREADSAFE_SSS)
+rdkit_test(testConcurrentQueue testConcurrentQueue.cpp LINK_LIBRARIES RDGeneral)
+endif(RDK_BUILD_THREADSAFE_SSS)
+

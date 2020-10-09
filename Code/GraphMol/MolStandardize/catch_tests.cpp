@@ -613,3 +613,4 @@ TEST_CASE("github #2970: chargeParent() segmentation fault when standardization 
     REQUIRE(outm);
     CHECK(MolToSmiles(*outm) == "COc1ccc(Nc2ncnc3[nH]cnc23)cc1");
 }
+
