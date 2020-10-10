@@ -193,7 +193,7 @@ struct RDKIT_MOLDRAW2D_EXPORT MolDrawOptions {
                             // (if present)
   int maxFontSize = 40;  // maximum size in pixels for font in drawn molecule.
                          // -1 means no max.
-  int minFontSize = 4;   // likewise for -1.
+  int minFontSize = 6;   // likewise for -1.
   double annotationFontScale = 0.5;  // scales font relative to atom labels for
                                      // atom and bond annotation.
   std::string fontFile = "";  // name of font for freetype rendering.  If given,
@@ -249,6 +249,9 @@ struct RDKIT_MOLDRAW2D_EXPORT MolDrawOptions {
   bool centreMoleculesBeforeDrawing = false;  // moves the centre of the drawn
                                               // molecule to (0,0)
   bool explicitMethyl = false;  // draw terminal methyl and related as CH3
+  bool includeRadicals =
+      true;  // include radicals in the drawing (it can be useful to turn this
+             // off for reactions and queries)
   bool includeMetadata =
       true;  // when possible include metadata about molecules and reactions in
              // the output to allow them to be reconstructed

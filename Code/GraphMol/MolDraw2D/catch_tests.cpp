@@ -285,6 +285,50 @@ TEST_CASE("dative bonds", "[drawing][organometallics]") {
                     " L 81.0244,149.68' style='fill:none;"
                     "fill-rule:evenodd;stroke:#0000FF;") != std::string::npos);
   }
+  SECTION("dative series") {
+    auto m1 = "N->1[C@@H]2CCCC[C@H]2N->[Pt]11OC(=O)C(=O)O1"_smiles;
+    REQUIRE(m1);
+    {
+      MolDraw2DSVG drawer(150, 150, -1, -1, NO_FREETYPE);
+      MolDraw2DUtils::prepareMolForDrawing(*m1);
+      drawer.drawMolecule(*m1);
+      drawer.finishDrawing();
+      std::string text = drawer.getDrawingText();
+      std::ofstream outs("testDativeBonds_2a.svg");
+      outs << text;
+      outs.flush();
+    }
+    {
+      MolDraw2DSVG drawer(250, 250, -1, -1, NO_FREETYPE);
+      MolDraw2DUtils::prepareMolForDrawing(*m1);
+      drawer.drawMolecule(*m1);
+      drawer.finishDrawing();
+      std::string text = drawer.getDrawingText();
+      std::ofstream outs("testDativeBonds_2b.svg");
+      outs << text;
+      outs.flush();
+    }
+    {
+      MolDraw2DSVG drawer(350, 350, -1, -1, NO_FREETYPE);
+      MolDraw2DUtils::prepareMolForDrawing(*m1);
+      drawer.drawMolecule(*m1);
+      drawer.finishDrawing();
+      std::string text = drawer.getDrawingText();
+      std::ofstream outs("testDativeBonds_2c.svg");
+      outs << text;
+      outs.flush();
+    }
+    {
+      MolDraw2DSVG drawer(450, 450, -1, -1, NO_FREETYPE);
+      MolDraw2DUtils::prepareMolForDrawing(*m1);
+      drawer.drawMolecule(*m1);
+      drawer.finishDrawing();
+      std::string text = drawer.getDrawingText();
+      std::ofstream outs("testDativeBonds_2d.svg");
+      outs << text;
+      outs.flush();
+    }
+  }
 }
 
 TEST_CASE("zero-order bonds", "[drawing][organometallics]") {
@@ -505,7 +549,7 @@ TEST_CASE("Github #3226: Lines in wedge bonds being drawn too closely together",
       outs.flush();
       std::vector<std::string> tkns;
       boost::algorithm::find_all(tkns, text, "bond-0");
-      CHECK(tkns.size() == 3);
+      CHECK(tkns.size() == 4);
     }
   }
 #ifdef RDK_BUILD_CAIRO_SUPPORT
@@ -529,7 +573,7 @@ TEST_CASE("Github #3226: Lines in wedge bonds being drawn too closely together",
       outs.flush();
       std::vector<std::string> tkns;
       boost::algorithm::find_all(tkns, text, "bond-0");
-      CHECK(tkns.size() == 3);
+      CHECK(tkns.size() == 4);
     }
   }
 #ifdef RDK_BUILD_CAIRO_SUPPORT
@@ -741,5 +785,36 @@ TEST_CASE(
     std::ofstream outs("testGithub3369_1.svg");
     outs << text;
     outs.flush();
+  }
+}
+
+TEST_CASE("includeRadicals", "[options]") {
+  SECTION("basics") {
+    auto m = "[O][C]"_smiles;
+    REQUIRE(m);
+    int panelHeight = -1;
+    int panelWidth = -1;
+    bool noFreeType = true;
+    {
+      MolDraw2DSVG drawer(250, 200, panelWidth, panelHeight, noFreeType);
+      drawer.drawMolecule(*m);
+      drawer.finishDrawing();
+      auto text = drawer.getDrawingText();
+      std::ofstream outs("testIncludeRadicals_1a.svg");
+      outs << text;
+      outs.flush();
+      CHECK(text.find("<path d='M") != std::string::npos);
+    }
+    {
+      MolDraw2DSVG drawer(250, 200, panelWidth, panelHeight, noFreeType);
+      drawer.drawOptions().includeRadicals = false;
+      drawer.drawMolecule(*m);
+      drawer.finishDrawing();
+      auto text = drawer.getDrawingText();
+      std::ofstream outs("testIncludeRadicals_1b.svg");
+      outs << text;
+      outs.flush();
+      CHECK(text.find("<path d='M") == std::string::npos);
+    }
   }
 }

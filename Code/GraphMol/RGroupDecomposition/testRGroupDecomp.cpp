@@ -396,7 +396,7 @@ void testGitHubIssue1705() {
   BOOST_LOG(rdInfoLog)
       << "********************************************************\n";
   BOOST_LOG(rdInfoLog)
-      << "test preferring grouping non hydrogens over hydrogens if possible"
+      << "test grouping substituents in chunks as large as possible"
       << std::endl;
 #if 1
   {
@@ -469,21 +469,6 @@ N[*:2]
     }
     delete core;
     TEST_ASSERT(ss.str() == R"RES(Rgroup===Core
-Cc1c([*:1])cccc1[*:2]
-Cc1c([*:1])cccc1[*:2]
-Cc1c([*:1])cccc1[*:2]
-Cc1c([*:1])cccc1[*:2]
-Rgroup===R1
-[H][*:1]
-F[*:1]
-F[*:1]
-F[*:1]
-Rgroup===R2
-[H][*:2]
-[H][*:2]
-[H][*:2]
-F[*:2]
-)RES" || ss.str() == R"RES(Rgroup===Core
 Cc1c([*:1])cccc1[*:2]
 Cc1c([*:1])cccc1[*:2]
 Cc1c([*:1])cccc1[*:2]
@@ -1207,6 +1192,169 @@ Cn1cnc2cc(Oc3cc(N4CCN(Cc5ccccc5-c5ccc(Cl)cc5)CC4)ccc3C(=O)NS(=O)(=O)c3ccc(NCCCN4
   boost::logging::enable_logs("rdApp.warning");
 }
 
+void testScorePermutations() {
+  BOOST_LOG(rdInfoLog)
+      << "********************************************************\n";
+  BOOST_LOG(rdInfoLog) << "Testing permutation scoring function \n";
+
+  {
+    auto core = "Cc1ccccc1"_smiles;
+    std::vector<RWMOL_SPTR> mols{"c1ccccc1C"_smiles, "Fc1ccccc1C"_smiles,
+                                 "c1cccc(F)c1C"_smiles, "Fc1cccc(F)c1C"_smiles};
+    RGroupDecomposition decomp(*core);
+    for (auto &m : mols) {
+      decomp.add(*m);
+    }
+    decomp.process();
+    std::stringstream ss;
+    auto groups = decomp.getRGroupsAsColumns();
+    std::set<std::string> r_labels;
+    for (auto &column : groups) {
+      r_labels.insert(column.first);
+      ss << "Rgroup===" << column.first << std::endl;
+      for (auto &rgroup : column.second) {
+        ss << MolToSmiles(*rgroup) << std::endl;
+      }
+    }
+    TEST_ASSERT(r_labels == std::set<std::string>({"Core", "R1", "R2"}));
+    TEST_ASSERT(groups.size() == 3);
+    TEST_ASSERT(ss.str() == R"RES(Rgroup===Core
+Cc1c([*:1])cccc1[*:2]
+Cc1c([*:1])cccc1[*:2]
+Cc1c([*:1])cccc1[*:2]
+Cc1c([*:1])cccc1[*:2]
+Rgroup===R1
+[H][*:1]
+[H][*:1]
+[H][*:1]
+F[*:1]
+Rgroup===R2
+[H][*:2]
+F[*:2]
+F[*:2]
+F[*:2]
+)RES");
+  }
+  {
+    auto core = "Cc1ccccc1"_smiles;
+    std::vector<RWMOL_SPTR> mols{
+        "c1(Cl)cccc(Cl)c1C"_smiles, "Fc1cccc(Cl)c1C"_smiles,
+        "Clc1cccc(F)c1C"_smiles, "Fc1cccc(F)c1C"_smiles};
+    RGroupDecomposition decomp(*core);
+    for (auto &m : mols) {
+      decomp.add(*m);
+    }
+    decomp.process();
+    std::stringstream ss;
+    auto groups = decomp.getRGroupsAsColumns();
+    std::set<std::string> r_labels;
+    for (auto &column : groups) {
+      r_labels.insert(column.first);
+      ss << "Rgroup===" << column.first << std::endl;
+      for (auto &rgroup : column.second) {
+        ss << MolToSmiles(*rgroup) << std::endl;
+      }
+    }
+    TEST_ASSERT(r_labels == std::set<std::string>({"Core", "R1", "R2"}));
+    TEST_ASSERT(groups.size() == 3);
+    TEST_ASSERT(ss.str() == R"RES(Rgroup===Core
+Cc1c([*:1])cccc1[*:2]
+Cc1c([*:1])cccc1[*:2]
+Cc1c([*:1])cccc1[*:2]
+Cc1c([*:1])cccc1[*:2]
+Rgroup===R1
+Cl[*:1]
+Cl[*:1]
+Cl[*:1]
+F[*:1]
+Rgroup===R2
+Cl[*:2]
+F[*:2]
+F[*:2]
+F[*:2]
+)RES");
+  }
+  {
+    auto core = "O1C([*:1])([*:2])CCC1"_smiles;
+    std::vector<RWMOL_SPTR> mols{"NC1CCCO1"_smiles,
+                                 "OC1CCCO1"_smiles,
+                                 "SC1CCCO1"_smiles,
+                                 "O1C2(CN2)CCC1"_smiles,
+                                 "OC1(P)CCCO1"_smiles,
+                                 "NC1(O)CCCO1"_smiles,
+                                 "CC1(N)CCCO1"_smiles,
+                                 "CCC1(C)CCCO1"_smiles,
+                                 "CCC1(C(C)C)CCCO1"_smiles,
+                                 "CCC1(Cc2ccccc2)CCCO1"_smiles,
+                                 "OCC1(Cc2ccccc2)CCCO1"_smiles,
+                                 "CCCC1(CO)CCCO1"_smiles,
+                                 "CCCCC1(CC(C)C)CCCO1"_smiles};
+    RGroupDecompositionParameters params;
+    params.removeHydrogensPostMatch = true;
+    params.onlyMatchAtRGroups = true;
+    RGroupDecomposition decomp(*core, params);
+    for (auto &m : mols) {
+      decomp.add(*m);
+    }
+    decomp.process();
+    std::stringstream ss;
+    auto groups = decomp.getRGroupsAsColumns();
+    std::set<std::string> r_labels;
+    for (auto &column : groups) {
+      r_labels.insert(column.first);
+      ss << "Rgroup===" << column.first << std::endl;
+      for (auto &rgroup : column.second) {
+        ss << MolToSmiles(*rgroup) << std::endl;
+      }
+    }
+    TEST_ASSERT(r_labels == std::set<std::string>({"Core", "R1", "R2"}));
+    TEST_ASSERT(groups.size() == 3);
+    TEST_ASSERT(ss.str() == R"RES(Rgroup===Core
+C1COC([*:1])([*:2])C1
+C1COC([*:1])([*:2])C1
+C1COC([*:1])([*:2])C1
+C1COC([*:1])([*:2])C1
+C1COC([*:1])([*:2])C1
+C1COC([*:1])([*:2])C1
+C1COC([*:1])([*:2])C1
+C1COC([*:1])([*:2])C1
+C1COC([*:1])([*:2])C1
+C1COC([*:1])([*:2])C1
+C1COC([*:1])([*:2])C1
+C1COC([*:1])([*:2])C1
+C1COC([*:1])([*:2])C1
+Rgroup===R1
+N[*:1]
+O[*:1]
+S[*:1]
+C(N[*:1])[*:2]
+O[*:1]
+O[*:1]
+C[*:1]
+C[*:1]
+CC(C)[*:1]
+c1ccc(C[*:1])cc1
+c1ccc(C[*:1])cc1
+CCC[*:1]
+CC(C)C[*:1]
+Rgroup===R2
+[H][*:2]
+[H][*:2]
+[H][*:2]
+C(N[*:1])[*:2]
+P[*:2]
+N[*:2]
+N[*:2]
+CC[*:2]
+CC[*:2]
+CC[*:2]
+OC[*:2]
+OC[*:2]
+CCCC[*:2]
+)RES");
+  }
+}
+
 int main() {
   RDLog::InitLogs();
 
@@ -1232,6 +1380,7 @@ int main() {
   testSymmetryIssues();
 #endif
   testSymmetryPerformance();
+  testScorePermutations();
   BOOST_LOG(rdInfoLog)
       << "********************************************************\n";
   return 0;

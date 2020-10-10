@@ -782,7 +782,7 @@ void testGithub3365() {
 //-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*
 int main() {
   RDLog::InitLogs();
-#if 0
+#if 1
   testGithubIssue3();
   testGithubIssue8();
   testGithubIssue40();

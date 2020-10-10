@@ -2148,6 +2148,58 @@ void testGitHub3095() {
   BOOST_LOG(rdInfoLog) << "\tdone" << std::endl;
 }
 
+void testGitHub3458() {
+  BOOST_LOG(rdInfoLog) << "-------------------------------------" << std::endl;
+  BOOST_LOG(rdInfoLog) << "testGitHub3458" << std::endl;
+
+  {
+    std::vector<ROMOL_SPTR> mols;
+    const char* smi[] = {
+      "Brc1cccc(Nc2ncnc3cc4ccccc4cc23)c1",
+      "CCOc1cc2ncnc(Nc3cccc(Br)c3)c2cc1OCC",
+      "CN(C)c1cc2c(Nc3cccc(Br)c3)ncnc2cn1",
+      "CNc1cc2c(Nc3cccc(Br)c3)ncnc2cn1",
+      "Brc1cccc(Nc2ncnc3cc4[nH]cnc4cc23)c1",
+      "Cn1cnc2cc3ncnc(Nc4cccc(Br)c4)c3cc21",
+      "Cn1cnc2cc3c(Nc4cccc(Br)c4)ncnc3cc21",
+      "COc1cc2ncnc(Nc3cccc(Br)c3)c2cc1OC",
+      "C#CCNC/C=C/C(=O)Nc1cc2c(Nc3ccc(F)c(Cl)c3)c(C#N)cnc2cc1OCC",
+      "C=CC(=O)Nc1ccc2ncnc(Nc3cc(Cl)c(Cl)cc3F)c2c1"
+    };
+
+    for (auto& i : smi) {
+      auto m = SmilesToMol(getSmilesOnly(i));
+      TEST_ASSERT(m);
+
+      mols.emplace_back(m);
+    }
+    {
+      MCSParameters p;
+      p.AtomCompareParameters.RingMatchesRingOnly = true;
+      p.BondCompareParameters.RingMatchesRingOnly = true;
+      p.Threshold = 0.8;
+      MCSResult res = findMCS(mols, &p);
+      TEST_ASSERT(res.NumAtoms == 17);
+      TEST_ASSERT(res.NumBonds == 18);
+      TEST_ASSERT(res.SmartsString == "[#6&R]:&@[#6&R]:&@[#6&R]1:&@[#6&R](-&!@[#7&!R]-&!@[#6&R]2:&@[#6&R]:&@[#6&R]:&@[#6&R]:&@[#6&R](:&@[#6&R]:&@2)-&!@[#35&!R]):&@[#7&R]:&@[#6&R]:&@[#7&R]:&@[#6&R]:&@1:&@[#6&R]");
+    }
+    {
+      MCSParameters p;
+      p.AtomCompareParameters.RingMatchesRingOnly = true;
+      p.BondCompareParameters.RingMatchesRingOnly = true;
+      p.Threshold = 1.0;
+      MCSResult res = findMCS(mols, &p);
+      TEST_ASSERT(res.NumAtoms == 15);
+      TEST_ASSERT(res.NumBonds == 15);
+      TEST_ASSERT(res.SmartsString == "[#6&R]:&@[#6&R]:&@[#6&R](:&@[#6&R]-&!@[#7&!R]-&!@[#6&R]1:&@[#6&R]:&@[#6&R]:&@[#6&R]:&@[#6&R]:&@[#6&R]:&@1):&@[#6&R](:&@[#7&R]:&@[#6&R]):&@[#6&R]");
+    }
+  }
+
+  BOOST_LOG(rdInfoLog) << "============================================"
+                       << std::endl;
+  BOOST_LOG(rdInfoLog) << "\tdone" << std::endl;
+}
+
 //====================================================================================================
 //====================================================================================================
 
@@ -2224,6 +2276,7 @@ int main(int argc, const char* argv[]) {
   testQueryMolVsSmarts();
   testCompareNonExistent();
   testGitHub3095();
+  testGitHub3458();
 
   unsigned long long t1 = nanoClock();
   double sec = double(t1 - T0) / 1000000.;
