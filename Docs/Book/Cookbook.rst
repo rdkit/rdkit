@@ -778,8 +778,14 @@ Neutralizing Molecules
 | **Index ID#:** RDKitCB_33
 | **Summary:** Neutralize charged molecules by atom.
 
-This algorithm is adapted from Noel O'Boyle's nocharge code. It is a neutralization by atom approach
-and neutralizes atoms with a +1 or -1 charge by removing or adding hydrogen. The SMARTS pattern checks for a hydrogen in +1 charged atoms and checks for no neighbors with a negative charge (for +1 atoms) and no neighbors with a positive charge (for -1 atoms), this is to avoid altering molecules with charge separation (e.g., nitro groups).
+This :code:`neutralize_atoms()` algorithm is adapted from Noel O'Boyle's nocharge code. It is a
+neutralization by atom approach and neutralizes atoms with a +1 or -1 charge by removing or
+adding hydrogen where possible. The SMARTS pattern checks for a hydrogen in +1 charged atoms and checks for no neighbors with a negative charge (for +1 atoms) and no neighbors with a positive charge (for -1 atoms), this is to avoid altering molecules with charge separation (e.g., nitro groups).
+
+The :code:`neutralize_atoms()` function differs from the :code:`rdMolStandardize.Uncharger` behavior. :code:`rdMolStandardize.Uncharger` will not change charges on a zwitterion such as :code:`C[N+](C)(C)CCC([O-])=O`, whereas the :code:`neutralize_atoms()` version will attempt to neutralize any
+atoms it can. That is, :code:`neutralize_atoms()` ignores the overall charge on the molecule, and
+neutralizes charges even if the neutralization introduces an overall formal charge on the
+molecule. See below for a comparison.
 
 .. testcode::
 
@@ -843,7 +849,7 @@ and neutralizes atoms with a +1 or -1 charge by removing or adding hydrogen. The
 
 .. image:: images/RDKitCB_33_im1.png
 
-Compare to MolStandardizer uncharger:
+Compare to :code:`rdMolStandardize.Uncharger` results:
 
 `<https://molvs.readthedocs.io/en/latest/api.html#molvs-charge>`_
 
@@ -854,11 +860,11 @@ any corresponding negative charge is also preserved."
 .. testcode::
 
    from rdkit.Chem.MolStandardize import rdMolStandardize
-   neutralize = rdMolStandardize.Uncharger()
+   un = rdMolStandardize.Uncharger()
    mols2 = [Chem.MolFromSmiles(m) for m in smiList]
 
    for mol2 in mols2:
-       neutralize.uncharge(mol2)
+       un.uncharge(mol2)
        print(Chem.MolToSmiles(mol2))
 
 .. testoutput::
@@ -869,7 +875,6 @@ any corresponding negative charge is also preserved."
    [N-]=[N+]=NCCC[O-]
    C[NH+](C)CC[S-]
    CP(=O)([O-])OC[NH3+]
-
 
 .. testcode::
 
