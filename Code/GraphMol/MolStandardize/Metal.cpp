@@ -111,32 +111,36 @@ void MetalDisconnector::disconnect(RWMol &mol) {
     int radBeforeCut = a->getNumRadicalElectrons();
     int fcAfterCut = -it->second.cutBonds;
     int valenceAfterCut = 0;
+    int loneElectrons = 0;
     const auto &valens =
         PeriodicTable::getTable()->getValenceList(a->getAtomicNum());
     if (!valens.empty() && valens.front() != -1) {
       for (auto v = valens.begin(); v != valens.end(); ++v) {
-        valenceAfterCut = valenceBeforeCut - it->second.cutBonds;
+        valenceAfterCut = valenceBeforeCut + radBeforeCut - it->second.cutBonds;
         if (valenceAfterCut > *v) {
-          auto next = v + 1;
-          if (next != valens.end() && valenceAfterCut >= *v) {
+          if (v + 1 != valens.end()) {
             continue;
           }
           valenceAfterCut = *v;
           break;
         }
         fcAfterCut = valenceAfterCut - *v;
-        // if there was a radical before and now we have
-        // a very negative formal charge, then it's a carbene-like
-        // system
-        if (radBeforeCut && fcAfterCut < 0) {
+        // if there were radicals before and now we have
+        // a negative formal charge, then it's a carbene-like
+        // system (e.g., [Me]-[C]=O), or there was something silly
+        // such as [Me]-[S]=X or [Me]-[P](X)(X)X
+        if ((radBeforeCut % 2) && fcAfterCut < 0) {
           ++fcAfterCut;
-          a->setNumRadicalElectrons(radBeforeCut + 1);
+          ++loneElectrons;
+          // no radical doublets on N and higher
+          a->setNumRadicalElectrons(a->getAtomicNum() < 7 ? radBeforeCut + 1
+                                                          : 0);
         }
         break;
       }
     }
     // do not put a negative charge on sp2 carbon
-    if (fcAfterCut == -1 && a->getAtomicNum() == 6 &&
+    if (fcAfterCut == -1 &&
         valenceAfterCut == static_cast<int>(a->getTotalDegree()) + 1) {
       fcAfterCut = 0;
     }
@@ -152,6 +156,7 @@ void MetalDisconnector::disconnect(RWMol &mol) {
               [metalChargeExcess](int a, int b) {
                 return (metalChargeExcess.at(a) < metalChargeExcess.at(b));
               });
+    fcAfterCut += loneElectrons;
     while (fcAfterCut < 0) {
       for (auto i : it->second.boundMetalIndices) {
         // if the bond was not dative, the non-metal stole electrons

@@ -96,42 +96,83 @@ void testMetalDisconnector() {
   MolStandardize::MetalDisconnector md;
 
   // testing overloaded function
-  string smi1 = "CCC(=O)O[Na]";
-  unique_ptr<ROMol> m1(SmilesToMol(smi1));
+  ROMOL_SPTR m1("CCC(=O)O[Na]"_smiles);
   TEST_ASSERT(m1);
-  unique_ptr<ROMol> nm(md.disconnect(*m1));
+  ROMOL_SPTR nm(md.disconnect(*m1));
   TEST_ASSERT(MolToSmiles(*nm) == "CCC(=O)[O-].[Na+]");
 
-  string smi2 = "[Na]OC(=O)CCC(=O)O[Na]";
-  unique_ptr<RWMol> m2(SmilesToMol(smi2));
+  RWMOL_SPTR m2("[Na]OC(=O)CCC(=O)O[Na]"_smiles);
   TEST_ASSERT(m2);
   md.disconnect(*m2);
   TEST_ASSERT(MolToSmiles(*m2) == "O=C([O-])CCC(=O)[O-].[Na+].[Na+]");
 
-  string smi3 = "c1ccccc1[Mg]Br";
-  unique_ptr<RWMol> m3(SmilesToMol(smi3));
+  RWMOL_SPTR m3("c1ccccc1[Mg]Br"_smiles);
   TEST_ASSERT(m3);
   md.disconnect(*m3);
   TEST_ASSERT(MolToSmiles(*m3) == "Br[Mg]c1ccccc1");
 
-  string smi4 = "Br[Mg]c1ccccc1CCC(=O)O[Na]";
-  unique_ptr<RWMol> m4(SmilesToMol(smi4));
+  RWMOL_SPTR m4("Br[Mg]c1ccccc1CCC(=O)O[Na]"_smiles);
   TEST_ASSERT(m4);
   md.disconnect(*m4);
   TEST_ASSERT(MolToSmiles(*m4) == "O=C([O-])CCc1ccccc1[Mg]Br.[Na+]");
 
   // test input own metal_non, metal_nof
   // missing out Na
-  unique_ptr<ROMol> metal_nof(
-      SmartsToMol("[Li,K,Rb,Cs,Fr,Be,Mg,Ca,Sr,Ba,Ra,Sc,Ti,V,Cr,Mn,Fe,Co,"
-                  "Ni,Cu,Zn,Al,Ga,Y,Zr,Nb,Mo,Tc,Ru,Rh,Pd,Ag,Cd,In,Sn,Hf,Ta,"
-                  "W,Re,Os,Ir,Pt,Au,Hg,Tl,Pb,Bi]~[N,O,F]"));
-  md.setMetalNof(*metal_nof);
-  string smi5 = "CCC(=O)O[Na]";
-  unique_ptr<ROMol> m5(SmilesToMol(smi5));
-  TEST_ASSERT(m5);
-  unique_ptr<ROMol> nm5(md.disconnect(*m5));
-  TEST_ASSERT(MolToSmiles(*nm5) == "CCC(=O)O[Na]");  // not disconnected
+  {
+    MolStandardize::MetalDisconnector md2;
+    ROMOL_SPTR metal_nof(
+        SmartsToMol("[Li,K,Rb,Cs,Fr,Be,Mg,Ca,Sr,Ba,Ra,Sc,Ti,V,Cr,Mn,Fe,Co,"
+                    "Ni,Cu,Zn,Al,Ga,Y,Zr,Nb,Mo,Tc,Ru,Rh,Pd,Ag,Cd,In,Sn,Hf,Ta,"
+                    "W,Re,Os,Ir,Pt,Au,Hg,Tl,Pb,Bi]~[#7,#8,F]"));
+    md2.setMetalNof(*metal_nof);
+    ROMOL_SPTR m5("CCC(=O)O[Na]"_smiles);
+    TEST_ASSERT(m5);
+    ROMOL_SPTR nm5(md2.disconnect(*m5));
+    TEST_ASSERT(MolToSmiles(*nm5) == "CCC(=O)O[Na]");  // not disconnected
+  }
+
+  // test that metals are not assigned excess positive charge
+  RWMOL_SPTR m6(SmilesToMol("[Be](F)(F)(F)OC", 0, false));
+  unsigned int failedOp;
+  MolOps::sanitizeMol(*m6, failedOp, MolOps::SANITIZE_CLEANUP);
+  TEST_ASSERT(m6);
+  md.disconnect(*m6);
+  TEST_ASSERT(MolToSmiles(*m6) == "C[O-].[Be+2].[F-].[F-].[F-]");
+
+  // test that badly written complexes with 4ary nitrogen
+  // are not assigned a negative charge nor the metal is
+  // stolen electrons from
+  RWMOL_SPTR m7(SmilesToMol("[Ru](SC)(SC)(SC)N(C)(C)C", 0, false));
+  MolOps::sanitizeMol(*m7, failedOp, MolOps::SANITIZE_CLEANUP);
+  TEST_ASSERT(m7);
+  md.disconnect(*m7);
+  TEST_ASSERT(MolToSmiles(*m7) == "CN(C)C.C[S-].C[S-].C[S-].[Ru+3]");
+
+  // test that badly written salts are not assigned excess formal charges
+  RWMOL_SPTR m8(SmilesToMol("[Na+][O-]C(=O)C", 0, false));
+  MolOps::sanitizeMol(*m8, failedOp, MolOps::SANITIZE_CLEANUP);
+  TEST_ASSERT(m8);
+  md.disconnect(*m8);
+  TEST_ASSERT(MolToSmiles(*m8) == "CC(=O)[O-].[Na+]");
+
+  // test that badly specified dative bonds are perceived as such
+  RWMOL_SPTR m9(
+      SmilesToMol("CC1=CC=CC2=[N]1[Cu+2]3[N](=C2)NC(=[S]3)N(C)C", 0, false));
+  MolOps::sanitizeMol(*m9, failedOp, MolOps::SANITIZE_CLEANUP);
+  TEST_ASSERT(m9);
+  md.disconnect(*m9);
+  TEST_ASSERT(MolToSmiles(*m9) == "CC1=CC=CC(C=NNC(=S)N(C)C)=N1.[Cu+2]");
+
+  // test that carbonyl complexes are not assigned excess formal charges
+  RWMOL_SPTR m10(
+      SmilesToMol("[Ni+2]([C]=O)([C]=O)([C]=O)([C]=O)([C]=O)[C]=O", 0, false));
+  MolOps::sanitizeMol(*m10, failedOp,
+                      MolOps::SANITIZE_CLEANUP | MolOps::SANITIZE_FINDRADICALS);
+  TEST_ASSERT(m10);
+  md.disconnect(*m10);
+  TEST_ASSERT(MolToSmiles(*m10) ==
+              "[C]=O.[C]=O.[C]=O.[C]=O.[C]=O.[C]=O.[Ni+2]");
+
   BOOST_LOG(rdInfoLog) << "Finished" << std::endl;
 }
 
@@ -448,7 +489,7 @@ void testMetalDisconnectorLigandExpo() {
        "O",
        "O=C1NC(=O)c2cc(-c3ccccn3)c([Ru])cc21"},
       {"c1c2c(cc3c1C4=[N]([Ru]356([S]7CC[S]5CC[S]6CC7)N=C=S)C=CC=C4)C(=O)NC2=O",
-       "O=C1NC(=O)c2cc(-c3ccccn3)c([Ru+])cc21"},
+       "O=C1NC(=O)c2cc(-c3ccccn3)c([Ru])cc21"},
       {"C1=C2C(=C(C3=[N]2[Fe]45n6c1c(c(c6C=C7[N]4=C(C=C8N5C(=C3)C(=C8CCC(=O)O)"
        "CC(=O)O)C(=C7CC(=O)O)CCC(=O)O)CC(=O)O)CCC(=O)O)CCC(=O)O)CC(=O)O",
        "O=C(O)CCC1=C(CC(=O)O)c2cc3[nH]c(cc4nc(cc5[nH]c(cc1n2)c(CC(=O)O)c5CCC(="
@@ -581,7 +622,7 @@ void testMetalDisconnectorLigandExpo() {
        "NCCNS(=O)(=O)c1ccc(NC(=O)CCCC[C@@H]2SC[C@@H]3NC(=O)N[C@H]23)cc1"},
       {"C1CCC(CC1)[NH2][Pt+2][NH3]", "NC1CCCCC1"},
       {"c1ccc(cc1)[P](c2ccccc2)(c3ccccc3)[Pt+2]4(c5ccccc5C6=CC=CC=[N]64)Cl",
-       "c1ccc([P](c2ccccc2)c2ccccc2)cc1"},
+       "c1ccc(P(c2ccccc2)c2ccccc2)cc1"},
       {"C1CC[C@@H]2[C@@H](C1)[N]34CC5=[N]([Fe]367([N]2(CC8=CC=CC=[N]68)CC(=O)"
        "O7)OC(=O)C4)C=CC=C5",
        "O=C(O)CN(Cc1ccccn1)[C@@H]1CCCC[C@H]1N(CC(=O)O)Cc1ccccn1"},
@@ -916,9 +957,9 @@ void testMetalDisconnectorLigandExpo() {
        "Nc1c9c2c(cc1)N=CC=[N]72)[N]1=CC=Nc2c1c1c(cc2)N=CC=[N]81",
        "Cc1cccc2nc3c4cccnc4c4ncccc4c3nc12"},
       {"CC1=CC=CC2=[N]1[Cu]3[N](=C2)NC(=[S]3)N(C)C",
-       "Cc1cccc(C=NNC(=[S])N(C)C)n1"},
+       "Cc1cccc(C=NNC(=S)N(C)C)n1"},
       {"Cc1ccc(cc1)C(C)C.c1ccc(cc1)NC2=[S][Os]([N]3=C2C=CC=C3)Cl",
-       "[S]=C(Nc1ccccc1)c1ccccn1"},
+       "S=C(Nc1ccccc1)c1ccccn1"},
       {"Cc1cccc(c1)[Fe]234n5c6c(c(c5C=C7[N]2=C(C=C8N3C(=CC9=[N]4C(=C6)C(=C9C)C="
        "C)C(=C8CCC(=O)O)C)C(=C7C)CCC(=O)O)C=C)C",
        "C=CC1=C(C)c2cc3[nH]c(cc4nc(cc5[nH]c(cc1n2)c(C)c5C=C)C(C)=C4CCC(=O)O)c("
@@ -1126,7 +1167,7 @@ void testMetalDisconnectorLigandExpo() {
        "OC)([S](C1)CC3)[N]CS",
        "COc1ccc2[nH]c3c4ncc(F)cc4c4c(c3c2c1)C(=O)NC4=O"},
       {"CNC(=[S][Pt+2]1[NH2]CC[NH2]1)N(C)CCNc2c3ccccc3[nH+]c4c2cccc4",
-       "CNC(=[S])N(C)CCNc1c2ccccc2nc2ccccc12"},
+       "CNC(=S)N(C)CCNc1c2ccccc2nc2ccccc12"},
       {"COc1cc(cc(c1O)OC)[C@@H]2c3cc4c(cc3[C@@H]([C@@H]5[C@@H]2C(=O)OC5)NC(=O)"
        "CC[C@@H]6C[NH2][Pt]([NH2]6)(Cl)Cl)OCO4",
        "COc1cc([C@@H]2c3cc4c(cc3[C@H](NC(=O)CC[C@@H](N)CN)[C@H]3COC(=O)[C@@H]"
@@ -1249,7 +1290,10 @@ Positively charged tetravalent B	[B;v4;+1:1]>>[*;-1:1])DATA";
     mol.reset(uncharger.uncharge(*mol));
     rwmol.reset(new RWMol(*mol));
     MolOps::sanitizeMol(*rwmol);
-    TEST_ASSERT(MolToSmiles(static_cast<const ROMol &>(*rwmol)) == pair.second);
+    std::unique_ptr<ROMol> refmol(SmilesToMol(pair.second));
+    auto refsmi = MolToSmiles(*refmol);
+    auto prodsmi = MolToSmiles(static_cast<const ROMol &>(*rwmol));
+    TEST_ASSERT(prodsmi == refsmi);
   }
   BOOST_LOG(rdInfoLog) << "Finished" << std::endl;
 }
