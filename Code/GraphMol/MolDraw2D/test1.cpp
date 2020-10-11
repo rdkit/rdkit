@@ -1157,6 +1157,51 @@ void testGithub852() {
     }
     delete m;
   }
+  {
+    std::string smiles =
+        "C[C@]12CC[C@@H]3c4ccc(cc4CC[C@H]3[C@@H]1CC[C@@H]2O)O";  // estradiol
+    RWMol *m = SmilesToMol(smiles);
+    TEST_ASSERT(m);
+    MolDraw2DUtils::prepareMolForDrawing(*m);
+    {
+      std::cerr << "----------------" << std::endl;
+      std::string nameBase = "test852_2a";
+      std::ofstream outs((nameBase + ".svg").c_str());
+      MolDraw2DSVG drawer(200, 200, outs);
+      drawer.drawMolecule(*m);
+      drawer.finishDrawing();
+      outs.flush();
+    }
+    {
+      std::cerr << "----------------" << std::endl;
+      std::string nameBase = "test852_2b";
+      std::ofstream outs((nameBase + ".svg").c_str());
+      MolDraw2DSVG drawer(250, 250, outs);
+      drawer.drawMolecule(*m);
+      drawer.finishDrawing();
+      outs.flush();
+    }
+    {
+      std::cerr << "----------------" << std::endl;
+      std::string nameBase = "test852_2c";
+      std::ofstream outs((nameBase + ".svg").c_str());
+      MolDraw2DSVG drawer(400, 400, outs);
+      drawer.drawMolecule(*m);
+      drawer.finishDrawing();
+      outs.flush();
+    }
+    {
+      std::cerr << "----------------" << std::endl;
+      std::string nameBase = "test852_2d";
+      std::ofstream outs((nameBase + ".svg").c_str());
+      MolDraw2DSVG drawer(500, 500, outs);
+      drawer.drawMolecule(*m);
+      drawer.finishDrawing();
+      outs.flush();
+    }
+
+    delete m;
+  }
   std::cerr << " Done" << std::endl;
 }
 

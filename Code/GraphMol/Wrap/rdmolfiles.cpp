@@ -580,6 +580,10 @@ void wrap_sdwriter();
 void wrap_tdtwriter();
 void wrap_pdbwriter();
 
+// MultithreadedMolSupplier stuff
+void wrap_multiSmiSupplier();
+void wrap_multiSDSupplier();
+
 BOOST_PYTHON_MODULE(rdmolfiles) {
   std::string docString;
 
@@ -1776,4 +1780,12 @@ BOOST_PYTHON_MODULE(rdmolfiles) {
   wrap_sdwriter();
   wrap_tdtwriter();
   wrap_pdbwriter();
+
+#ifdef RDK_THREADSAFE_SSS
+  /********************************************************
+   * MultithreadedMolWriter stuff
+   *******************************************************/
+  wrap_multiSmiSupplier();
+  wrap_multiSDSupplier();
+#endif
 }

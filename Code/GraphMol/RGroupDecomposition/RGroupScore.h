@@ -19,6 +19,7 @@ namespace RDKit {
 struct CartesianProduct {
   std::vector<size_t> permutation;
   std::vector<size_t> sizes;
+  std::deque<size_t> bases;
   size_t maxPermutations;
   size_t permutationCount;
   CartesianProduct(const std::vector<size_t> &inputSizes)
@@ -27,6 +28,7 @@ struct CartesianProduct {
         permutationCount(0) {
     maxPermutations = 1;
     for (unsigned long size : sizes) {
+      bases.push_front(maxPermutations);
       maxPermutations *= size;  // may overflow....
     }
   }
@@ -38,6 +40,14 @@ struct CartesianProduct {
     }
 
     return increment(0);
+  }
+
+  size_t value() {
+    size_t v = 0;
+    for (size_t i = 0; i < permutation.size(); ++i) {
+      v += bases[i] * permutation[i];
+    }
+    return v;
   }
 
   bool increment(size_t rowToIncrement) {

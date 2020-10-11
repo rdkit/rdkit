@@ -204,9 +204,10 @@ namespace RDLog {
 BlockLogs::BlockLogs() {
   auto logs = {rdDebugLog, rdInfoLog, rdWarningLog, rdErrorLog};
   for(auto log: logs) {
-    if(log != nullptr && is_log_enabled(log))
+    if(log != nullptr && is_log_enabled(log)) {
       log->df_enabled = false;
-    logs_to_reenable.push_back(log);
+      logs_to_reenable.push_back(log);
+    }
   }
 }
 

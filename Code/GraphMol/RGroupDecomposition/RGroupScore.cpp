@@ -14,11 +14,6 @@ namespace RDKit {
 // stupid total score
 // This has to handle all permutations and doesn't do anything terribly smart
 //  For r-groups with large symmetries, this can take way too long.
-struct rgroup_column {
-  unsigned int count;
-  bool onlyH;
-};
-  
 double score(const std::vector<size_t> &permutation,
              const std::vector<std::vector<RGroupMatch>> &matches,
              const std::set<int> &labels) {
@@ -36,7 +31,7 @@ double score(const std::vector<size_t> &permutation,
 #ifdef DEBUG
     std::cerr << "Label: " << l << std::endl;
 #endif
-    std::map<std::string, rgroup_column> matchSet;
+    std::map<std::string, unsigned int> matchSet;
     std::map<std::set<int>, int> linkerMatchSet;
 
     for (size_t m = 0; m < permutation.size(); ++m) {  // for each molecule
@@ -48,64 +43,39 @@ double score(const std::vector<size_t> &permutation,
         std::cerr << " RGroup: " << rg->second->smiles << " "
                   << rg->second->is_hydrogen << std::endl;;
 #endif
-	rgroup_column &col = matchSet[rg->second->smiles];
-	col.count += 1;
-        // detect whether or not this is an H
-        if (rg->second->is_hydrogen) {
-	  col.onlyH = true;
-        } else {
-	  col.onlyH = false;
-        }
+        unsigned int &count = matchSet[rg->second->smiles];
+        ++count;
 #ifdef DEBUG
         std::cerr << " " << rg->second->combinedMol->getNumAtoms(false)
-                  << " isH: " << onlyH[rg->second->smiles]
-                  << " score: " << matchSet[rg->second->smiles] << std::endl;
+                  << " score: " << count << std::endl;
 #endif
         if (rg->second->is_linker) {
-          linkerMatchSet[rg->second->attachments]++;
+          ++linkerMatchSet[rg->second->attachments];
 #ifdef DEBUG
           std::cerr << " Linker Score: "
-                    << linkerMatchSet[rg->second->attachments]++ << std::endl;
+                    << linkerMatchSet[rg->second->attachments] << std::endl;
 #endif
         }
       }
     }
     
     // get the counts for each rgroup found and sort in reverse order
-    std::vector<float> equivalentRGroupCount;
+    std::vector<unsigned int> equivalentRGroupCount;
 
-    for (const auto &kv :  matchSet) {
-#ifdef DEBUG
-      std::cerr << " equiv: " << it->first << " " << it->second << " "
-                << permutation.size() << std::endl;
-#endif
-
-      // if the rgroup is hydrogens, only consider if the group is all
-      //  hydrogen, otherwise score based on the non hydrogens
-      if (kv.second.onlyH) {
-        if (static_cast<size_t>(kv.second.count) == permutation.size()) {
-          equivalentRGroupCount.push_back(static_cast<float>(kv.second.count));
-        } else {
-          // hydrogens in a mixed group don't contribute to the score
-          equivalentRGroupCount.push_back(0.0);
-        }
-      } else {
-        equivalentRGroupCount.push_back(static_cast<float>(kv.second.count));
-      }
-    }
+    std::transform(
+        matchSet.begin(), matchSet.end(),
+        std::back_inserter(equivalentRGroupCount),
+        [](const std::pair<std::string, unsigned int> &p) { return p.second; });
     std::sort(equivalentRGroupCount.begin(), equivalentRGroupCount.end(),
-              std::greater<float>());
+              std::greater<unsigned int>());
 
-    double tempScore = 1.;
+    double tempScore = 0.;
     // score the sets from the largest to the smallest
-    //  each smaller set gets penalized (i+1) below
-    //  1.0 is the perfect score
+    // each smaller set gets penalized (i+1) below
     for (size_t i = 0; i < equivalentRGroupCount.size(); ++i) {
-      auto lscore =
-          equivalentRGroupCount[i] / ((i + 1) * (double)matches.size());
-      if (lscore > 0) {
-        tempScore *= lscore * lscore;
-      }
+      auto lscore = static_cast<double>(equivalentRGroupCount[i]) /
+                    static_cast<double>(((i + 1) * matches.size()));
+      tempScore += lscore * lscore;
 #ifdef DEBUG
       std::cerr << "    lscore^2 " << i << ": " << lscore * lscore << std::endl;
 #endif
@@ -128,7 +98,8 @@ double score(const std::vector<size_t> &permutation,
     double increment = 1.0;        // no change in score
     double linkerIncrement = 1.0;  // no change in score
     if (maxLinkerMatches) {
-      linkerIncrement = (double)(maxLinkerMatches) / (double)matches.size();
+      linkerIncrement = static_cast<double>(maxLinkerMatches) /
+                        static_cast<double>(matches.size());
     } else {
       increment = tempScore;
     }

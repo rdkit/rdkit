@@ -18,6 +18,9 @@ namespace python = boost::python;
 
 namespace {
 RDKit::ROMol *cleanupHelper(const RDKit::ROMol *mol, python::object params) {
+  if (!mol) {
+    throw_value_error("Molecule is None");
+  }
   const RDKit::MolStandardize::CleanupParameters *ps =
       &RDKit::MolStandardize::defaultCleanupParameters;
   if (params) {
@@ -30,6 +33,9 @@ RDKit::ROMol *cleanupHelper(const RDKit::ROMol *mol, python::object params) {
 RDKit::ROMol *fragmentParentHelper(const RDKit::ROMol *mol,
                                    python::object params,
                                    bool skip_standardize) {
+  if (!mol) {
+    throw_value_error("Molecule is None");
+  }
   const RDKit::MolStandardize::CleanupParameters *ps =
       &RDKit::MolStandardize::defaultCleanupParameters;
   if (params) {
@@ -41,6 +47,9 @@ RDKit::ROMol *fragmentParentHelper(const RDKit::ROMol *mol,
 
 RDKit::ROMol *chargeParentHelper(const RDKit::ROMol *mol, python::object params,
                                  bool skip_standardize) {
+  if (!mol) {
+    throw_value_error("Molecule is None");
+  }
   const RDKit::MolStandardize::CleanupParameters *ps =
       &RDKit::MolStandardize::defaultCleanupParameters;
   if (params) {
@@ -51,6 +60,9 @@ RDKit::ROMol *chargeParentHelper(const RDKit::ROMol *mol, python::object params,
 }
 
 RDKit::ROMol *normalizeHelper(const RDKit::ROMol *mol, python::object params) {
+  if (!mol) {
+    throw_value_error("Molecule is None");
+  }
   const RDKit::MolStandardize::CleanupParameters *ps =
       &RDKit::MolStandardize::defaultCleanupParameters;
   if (params) {
@@ -61,6 +73,9 @@ RDKit::ROMol *normalizeHelper(const RDKit::ROMol *mol, python::object params) {
 }
 
 RDKit::ROMol *reionizeHelper(const RDKit::ROMol *mol, python::object params) {
+  if (!mol) {
+    throw_value_error("Molecule is None");
+  }
   const RDKit::MolStandardize::CleanupParameters *ps =
       &RDKit::MolStandardize::defaultCleanupParameters;
   if (params) {

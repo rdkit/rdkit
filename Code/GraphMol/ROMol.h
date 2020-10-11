@@ -296,7 +296,10 @@ class RDKIT_GRAPHMOL_EXPORT ROMol : public RDProps {
   //@{
 
   //! returns our number of atoms
-  unsigned int getNumAtoms(bool onlyExplicit = 1) const;
+  inline unsigned int getNumAtoms() const {
+    return rdcast<unsigned int>(boost::num_vertices(d_graph));
+  };
+  unsigned int getNumAtoms(bool onlyExplicit) const;
   //! returns our number of heavy atoms (atomic number > 1)
   unsigned int getNumHeavyAtoms() const;
   //! returns a pointer to a particular Atom

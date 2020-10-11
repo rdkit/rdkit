@@ -306,6 +306,7 @@ struct RGroupDecompData {
     }
 
     if (params.removeHydrogensPostMatch) {
+      RDLog::BlockLogs blocker;
       bool implicitOnly = false;
       bool updateExplicitCount = false;
       bool sanitize = false;
@@ -375,21 +376,28 @@ struct RGroupDecompData {
 
   // compute the number of rgroups that would be added if we
   //  accepted this permutation
-  int compute_num_added_rgroups(std::vector<size_t> &tied_permutation) {
-    int num_added_rgroups = 0;
+  size_t compute_num_added_rgroups(
+      const std::vector<size_t> &tied_permutation,
+      std::vector<int> &heavy_counts) {
+    size_t i = 0;
+    size_t num_added_rgroups = 0;
+    heavy_counts.resize(labels.size(), 0);
     for (int label : labels) {
-      if (label <= 0) {  // label is not user supplied
-        for (size_t m = 0; m < tied_permutation.size();
-             ++m) {  // for each molecule
-          auto rg = matches[m][tied_permutation[m]].rgroups.find(label);
-          if (rg != matches[m][tied_permutation[m]].rgroups.end()) {
-            if (!rg->second->is_hydrogen) {
-              num_added_rgroups += 1;  //= label;
-              break;
-            }
+      int incr = (label > 0) ? -1 : 1;
+      bool incremented = false;
+      for (size_t m = 0; m < tied_permutation.size();
+           ++m) {  // for each molecule
+        auto rg = matches[m][tied_permutation[m]].rgroups.find(label);
+        if (rg != matches[m][tied_permutation[m]].rgroups.end() &&
+            !rg->second->is_hydrogen) {
+          if (label <= 0 && !incremented) {
+            incremented = true;
+            ++num_added_rgroups;
           }
+          heavy_counts[i] += incr;
         }
       }
+      ++i;
     }
     return num_added_rgroups;
   }
@@ -450,22 +458,31 @@ struct RGroupDecompData {
     }
 
     if (ties.size() > 1) {
-      // choose one that doesn't add rgroups inappropriately
-      //  an rgroup is added when
-      //  (1) the label is <=0
-      //  (2) the group has any substituent with heavy atoms
-      //   XXX Might be more efficient to add this comp to the score function
-      int smallest_added_rgroups = 100000000;
-      for (auto tied_permutation : ties) {
-        int num_added_rgroups = compute_num_added_rgroups(tied_permutation);
+      size_t min_perm_value = 0;
+      size_t smallest_added_rgroups = labels.size();
+      for (const auto &tied_permutation : ties) {
+        std::vector<int> heavy_counts;
+        std::vector<int> largest_heavy_counts(labels.size(), 0);
+        size_t num_added_rgroups =
+            compute_num_added_rgroups(tied_permutation, heavy_counts);
         if (num_added_rgroups < smallest_added_rgroups) {
           smallest_added_rgroups = num_added_rgroups;
           best_permutation = tied_permutation;
+        } else if (num_added_rgroups == smallest_added_rgroups) {
+          if (heavy_counts < largest_heavy_counts) {
+            largest_heavy_counts = heavy_counts;
+            best_permutation = tied_permutation;
+          } else if (heavy_counts == largest_heavy_counts) {
+            size_t perm_value = iterator.value();
+            if (perm_value < min_perm_value) {
+              min_perm_value = perm_value;
+              best_permutation = tied_permutation;
+            }
+          }
         }
+        checkForTimeout(t0, params.timeout);
       }
-      checkForTimeout(t0, params.timeout);
     }
-
     permutation = best_permutation;
     if (pruneMatches || finalize) {
       prune();
