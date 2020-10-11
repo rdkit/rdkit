@@ -177,6 +177,60 @@ double Bond::getBondTypeAsDouble() const {
   }
 }
 
+uint8_t Bond::getTwiceBondType() const {
+  switch (getBondType()) {
+    case UNSPECIFIED:
+    case IONIC:
+    case ZERO:
+      return 0;
+      break;
+    case SINGLE:
+      return 2;
+      break;
+    case DOUBLE:
+      return 4;
+      break;
+    case TRIPLE:
+      return 6;
+      break;
+    case QUADRUPLE:
+      return 8;
+      break;
+    case QUINTUPLE:
+      return 10;
+      break;
+    case HEXTUPLE:
+      return 12;
+      break;
+    case ONEANDAHALF:
+      return 3;
+      break;
+    case TWOANDAHALF:
+      return 5;
+      break;
+    case THREEANDAHALF:
+      return 7;
+      break;
+    case FOURANDAHALF:
+      return 9;
+      break;
+    case FIVEANDAHALF:
+      return 11;
+      break;
+    case AROMATIC:
+      return 3;
+      break;
+    case DATIVEONE:
+      return 2;
+      break;  // FIX: this should probably be different
+    case DATIVE:
+      return 2;
+      break;  // FIX: again probably wrong
+    default:
+      UNDER_CONSTRUCTION("Bad bond type");
+  }
+}
+
 double Bond::getValenceContrib(const Atom *atom) const {
   switch (getBondType()) {
     case UNSPECIFIED:

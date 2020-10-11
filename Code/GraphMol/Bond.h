@@ -124,6 +124,9 @@ class RDKIT_GRAPHMOL_EXPORT Bond : public RDProps {
   //! \brief returns our \c bondType as a double
   //!   (e.g. SINGLE->1.0, AROMATIC->1.5, etc.)
   double getBondTypeAsDouble() const;
+  //! \brief returns twice our \c bondType
+  //!   (e.g. SINGLE->2, AROMATIC->3, etc.)
+  uint8_t getTwiceBondType() const;
 
   //! returns our contribution to the explicit valence of an Atom
   /*!
