@@ -264,8 +264,8 @@ std::pair<unsigned int, std::vector<unsigned int>> *Reionizer::weakestIonized(
 }
 
 Uncharger::Uncharger()
-    : pos_h(SmartsToMol("[+,+2,+3,+4;!H0!$(*~[-])]")),
-      pos_noh(SmartsToMol("[+,+2,+3,+4;H0;!$(*~[-])]")),
+    : pos_h(SmartsToMol("[+,+2,+3,+4;!H0;!$(*~[-]),$(*(~[-])~[-])]")),
+      pos_noh(SmartsToMol("[+,+2,+3,+4;H0;!$(*~[-]),$(*(~[-])~[-])]")),
       neg(SmartsToMol("[-!$(*~[+,+2,+3,+4])]")),
       neg_acid(SmartsToMol(
           // carboxylate, carbonate, sulfi(a)te,
@@ -275,11 +275,8 @@ Uncharger::Uncharger()
           // phosphi(a)te, nitrate
           // and their thio-analogues
           "$([O,S;-][N,P;+](=[O,S])[O,S;-]),"
-          // chlori(a)te, bromi(a)te, iodi(a)te
-          "$([O-][Cl,Br,I;+][O-]),"
-          "$([O-][Cl,Br,I;+2]([O-])[O-]),"
-          // perchlorate, perbromate, periodate
-          "$([O-][Cl,Br,I;+3]([O-])([O-])[O-]),"
+          // hali(a)te, perhalate
+          "$([O-][Cl,Br,I;+,+2,+3][O-]),"
           // tetrazole
           "$([n-]1nnnc1),$([n-]1ncnn1)]")){};
 
@@ -332,100 +329,103 @@ ROMol *Uncharger::uncharge(const ROMol &mol) {
   for (const auto &match : q_matches) {
     q_matched += omol->getAtomWithIdx(match[0].second)->getFormalCharge();
   }
-  SubstructMatch(*omol, *(this->neg), n_matches);
-  SubstructMatch(*omol, *(this->neg_acid), a_matches);
-  std::vector<int> n_matches_mol;
-  std::transform(n_matches.begin(), n_matches.end(),
-                 std::back_inserter(n_matches_mol),
-                 [](const MatchVectType &mv) { return mv.front().second; });
-  unsigned int n_matched = n_matches_mol.size();
-  // a_matches may containe multiple degenerate matches
-  // (e.g., both [O-] in NO3-). We only want to keep the one with
-  // the lowest atom index
-  std::vector<int> a_matches_mol;
-  std::sort(a_matches.begin(), a_matches.end(),
-            [](const MatchVectType &a, const MatchVectType &b) {
-              return (a.front().second < b.front().second);
-            });
-  std::vector<unsigned int> atomRanks(omol->getNumAtoms());
-  std::unordered_set<int> a_ranks;
-  Canon::rankMolAtoms(*omol, atomRanks, false, false, false);
-  for (const auto &a_match : a_matches) {
-    int aidx = a_match.front().second;
-    if (!a_ranks.count(atomRanks[aidx])) {
-      a_matches_mol.push_back(aidx);
-      a_ranks.insert(atomRanks[aidx]);
-    }
-  }
-  unsigned int a_matched = a_matches_mol.size();
-  std::vector<int> a_n_matches_union;
-  std::set_union(n_matches_mol.begin(), n_matches_mol.end(),
-                 a_matches_mol.begin(), a_matches_mol.end(),
-                 std::inserter(a_n_matches_union, a_n_matches_union.begin()));
-  unsigned int a_n_matched = a_n_matches_union.size();
+  unsigned int n_matched = SubstructMatch(*omol, *(this->neg), n_matches);
+  unsigned int a_matched = SubstructMatch(*omol, *(this->neg_acid), a_matches);
 
-  bool needsNeutralization = (q_matched > 0 || a_n_matched > 0);
-  std::vector<std::pair<int, int>> a_atoms;
-  a_atoms.reserve(a_matched);
-  std::vector<std::pair<int, int>> n_atoms;
-  n_atoms.reserve(n_matches_mol.size());
+  bool needsNeutralization =
+      (q_matched > 0 && (n_matched > 0 || a_matched > 0));
+  std::vector<unsigned int> atomRanks(omol->getNumAtoms());
   if (df_canonicalOrdering && needsNeutralization) {
     Canon::rankMolAtoms(*omol, atomRanks);
   } else {
     std::iota(atomRanks.begin(), atomRanks.end(), 0);
   }
-  auto makeRankIdxPair = [&atomRanks](int aidx) {
+  auto getRankIdxPair = [&atomRanks](const MatchVectType &mv) {
+    int aidx = mv.front().second;
     return std::make_pair(atomRanks[aidx], aidx);
   };
-  std::transform(n_matches_mol.begin(), n_matches_mol.end(),
-                 std::back_inserter(n_atoms), makeRankIdxPair);
-  std::transform(a_matches_mol.begin(), a_matches_mol.end(),
-                 std::back_inserter(a_atoms), makeRankIdxPair);
+  std::vector<std::pair<int, int>> n_atoms;
+  n_atoms.reserve(n_matches.size());
+  std::transform(n_matches.begin(), n_matches.end(), std::back_inserter(n_atoms),
+    getRankIdxPair);
+  std::vector<std::pair<int, int>> a_atoms;
+  a_atoms.reserve(a_matches.size());
+  std::transform(a_matches.begin(), a_matches.end(), std::back_inserter(a_atoms),
+    getRankIdxPair);
   if (df_canonicalOrdering) {
     std::sort(n_atoms.begin(), n_atoms.end());
     std::sort(a_atoms.begin(), a_atoms.end());
   }
 
-  // Neutralize negative charges
 
+  // Neutralize negative charges
   if (needsNeutralization) {
     // Surplus negative charges more than non-neutralizable positive charges
-    int neg_surplus = a_n_matched - q_matched;
-    if (n_matched > 0 && neg_surplus > 0) {
+    int neg_surplus = n_matched - q_matched;
+    if (neg_surplus > 0) {
       boost::dynamic_bitset<> nonAcids(omol->getNumAtoms());
       nonAcids.set();
-      for (const auto &pr : a_atoms) {
-        nonAcids.reset(pr.second);
+      for (const auto &pair : a_atoms) {
+        nonAcids.reset(pair.second);
       }
-      unsigned int midx = 0;
       // zwitterion with more negative charges than quaternary positive centres
-      while (neg_surplus > 0 && midx < n_atoms.size()) {
-        unsigned int idx = n_atoms[midx++].second;
+      for (const auto &pair : n_atoms) {
+        unsigned int idx = pair.second;
         if (!nonAcids[idx]) {
           continue;
         }
         Atom *atom = omol->getAtomWithIdx(idx);
-        if (neutralizeNegIfPossible(atom)) {
-          --neg_surplus;
+        if (neutralizeNegIfPossible(atom) && !--neg_surplus) {
+          break;
         }
       }
     }
 
     // now do the other negative groups if we still have charges left:
-    if (a_matched > 0 && neg_surplus > 0) {
-      unsigned int midx = 0;
+    neg_surplus = a_matched - q_matched;
+    if (neg_surplus > 0) {
+      boost::dynamic_bitset<> skipChargeSep(omol->getNumAtoms());
+      for (const auto &pair : n_atoms) {
+        unsigned int idx = pair.second;
+        Atom *atom = omol->getAtomWithIdx(idx);
+        for (const auto &nbri :
+             boost::make_iterator_range(omol->getAtomNeighbors(atom))) {
+          const auto &nbr = (*omol)[nbri];
+          auto nbrIdx = nbr->getIdx();
+          // if the neighbor has a positive charge,
+          // neutralize only once (e.g., NO3-)
+          if (nbr->getFormalCharge() > 0) {
+            if (!skipChargeSep.test(nbrIdx)) {
+              skipChargeSep.set(nbrIdx);
+            } else {
+              skipChargeSep.set(idx);
+            }
+            break;
+          }
+        }
+      }
       // zwitterion with more negative charges than quaternary positive centres
-      while (neg_surplus > 0 && midx < a_atoms.size()) {
+      for (const auto &pair : a_atoms) {
         // Add hydrogen to first negative acidic atom, increase formal charge
         // Until quaternary positive == negative total or no more negative atoms
-        Atom *atom = omol->getAtomWithIdx(a_atoms[midx++].second);
-        // skip ahead if we already neutralized this
-        if (atom->getFormalCharge() >= 0) {
+        unsigned int idx = pair.second;
+        Atom *atom = omol->getAtomWithIdx(idx);
+        // skip ahead if we already neutralized this or if it is part of a zwitterion
+        if (atom->getFormalCharge() >= 0 || skipChargeSep.test(idx)) {
           continue;
         }
         neutralizeNeg(atom);
-        --neg_surplus;
+        if (!--neg_surplus) {
+          break;
+        }
       }
+    }
+
+  } else {
+    for (const auto &pair : n_atoms) {
+      auto idx = pair.second;
+      Atom *atom = omol->getAtomWithIdx(idx);
+      neutralizeNegIfPossible(atom);
     }
   }
 
