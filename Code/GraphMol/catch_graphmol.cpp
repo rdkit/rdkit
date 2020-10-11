@@ -1375,3 +1375,14 @@ TEST_CASE("hybridization of unknown atom types", "[bug][molops]") {
     }
   }
 }
+
+
+TEST_CASE("Github #3470: Hydrogen is incorrectly identified as an early atom", "[bug][chemistry]") {
+  SECTION("Basics") {
+    RWMol m;
+    m.addAtom(new Atom(1));
+    m.getAtomWithIdx(0)->setFormalCharge(-1);
+    m.updatePropertyCache();
+    CHECK(m.getAtomWithIdx(0)->getNumImplicitHs()==0);
+  }
+}
