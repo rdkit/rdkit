@@ -328,16 +328,16 @@ chlorine	[Cl]
     self.assertEqual(taut_res.modifiedAtoms,(7,9))
     self.assertEqual(len(taut_res.modifiedBonds),7)
     self.assertEqual(taut_res.modifiedBonds,(7,8,9,10,11,12,14))
-    
+
     taut_res = enumerator.Enumerate(m)
     self.assertEqual(len(taut_res.tautomers),2)
     self.assertEqual(taut_res.modifiedAtoms,(7,9))
-    
+
     taut_res = enumerator.Enumerate(m)
     self.assertEqual(len(taut_res.tautomers),2)
     self.assertEqual(len(taut_res.modifiedBonds),7)
     self.assertEqual(taut_res.modifiedBonds,(7,8,9,10,11,12,14))
-    
+
   def test15EnumeratorParams(self):
     # Test a structure with hundreds of tautomers.
     smi68 = "[H][C](CO)(NC(=O)C1=C(O)C(O)=CC=C1)C(O)=O"
@@ -702,29 +702,41 @@ chlorine	[Cl]
     res_it = iter(res)
     i = 0
     while 1:
-        try:
-            t = next(res_it)
-        except StopIteration:
-            break
-        self.assertEqual(Chem.MolToSmiles(t), Chem.MolToSmiles(res[i]))
-        i += 1
+      try:
+        t = next(res_it)
+      except StopIteration:
+        break
+      self.assertEqual(Chem.MolToSmiles(t), Chem.MolToSmiles(res[i]))
+      i += 1
     self.assertEqual(i, len(res))
     res_it = iter(res)
     i = -len(res)
     while 1:
-        try:
-            t = next(res_it)
-        except StopIteration:
-            break
-        self.assertEqual(Chem.MolToSmiles(t), Chem.MolToSmiles(res[i]))
-        i += 1
+      try:
+        t = next(res_it)
+      except StopIteration:
+        break
+      self.assertEqual(Chem.MolToSmiles(t), Chem.MolToSmiles(res[i]))
+      i += 1
     self.assertEqual(i, 0)
 
   def test19NormalizeFromParams(self):
     params = rdMolStandardize.CleanupParameters()
     params.normalizationsFile = "ThisFileDoesNotExist.txt"
     with self.assertRaises(OSError):
-        rdMolStandardize.NormalizerFromParams(params)
+      rdMolStandardize.NormalizerFromParams(params)
+
+  def test20NoneHandling(self):
+    with self.assertRaises(ValueError):
+      rdMolStandardize.ChargeParent(None)
+    with self.assertRaises(ValueError):
+      rdMolStandardize.Cleanup(None)
+    with self.assertRaises(ValueError):
+      rdMolStandardize.FragmentParent(None)
+    with self.assertRaises(ValueError):
+      rdMolStandardize.Normalize(None)
+    with self.assertRaises(ValueError):
+      rdMolStandardize.Reionize(None)
 
 if __name__ == "__main__":
   unittest.main()
