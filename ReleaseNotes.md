@@ -24,6 +24,12 @@
   with it are reported. If you would like to go back to the previous setting, set 
   CoordgenParams.minimizerPrecision to CoordgenParams.sketcherStandardPrecision 
   when you invoke rdCoordGen.AddCoords()
+- Uncharger::uncharge() will now neutralize [Cl,Br,I][O-], [Cl,Br,I](=O)[O-],
+  [Cl,Br,I](=O)(=O)[O-], [Cl,Br,I](=O)(=O)(=O)[O-], [O-]N=N[O-], [N,P](=O)[O-],
+  [N+](=O)([O-])[O-], P(=O)([O-])[O-], P(=O)([O-])([O-])[O-], S([O-])[O-],
+  S(=O)([O-])[O-], S(=O)(=O)([O-])[O-], S(=O)(=O)([O-])OOS(=O)(=O)[O-].
+  Previously not all of these inorganic acid counterions were consistently
+  neutralized.
 
 ## Code removed in this release:
 - To improve API consistency of the exceptions in RDKit with the default ones in

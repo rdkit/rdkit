@@ -360,7 +360,7 @@ void testNormalizeMultiFrags() {
 void testCharge() {
   BOOST_LOG(rdInfoLog) << "-----------------------\n test charges" << std::endl;
 
-  std::string smi1, smi2, smi3, smi4;
+  std::string smi1, smi2, smi3, smi4, smi5, smi6;
 
   // Reionization should not infinitely loop forever on these molecules.
   smi1 = "CCCCCCCCCCCCCCCCCC(=O)CC(=C)C(=O)O[Ti](=O)(OC(C)C)C(C)C";
@@ -389,6 +389,18 @@ void testCharge() {
   smi4 = "[Na].[Na].O[Se](O)=O";
   std::string ss4 = MolStandardize::standardizeSmiles(smi4);
   TEST_ASSERT(ss4 == "O=[Se](O)O.[Na+].[Na+]");
+  BOOST_LOG(rdInfoLog) << "Finished" << std::endl;
+
+  // Test that tetrazolate salts are not neutralised
+  smi5 = "c1nn[n-]n1.[Na+]";
+  std::string ss5 = MolStandardize::standardizeSmiles(smi5);
+  TEST_ASSERT(ss5 == "[Na+].c1nn[n-]n1");
+  BOOST_LOG(rdInfoLog) << "Finished" << std::endl;
+
+  // Test that tetrazolate zwitterions are not neutralised
+  smi6 = "CCCc1cc(-c2ccccc2)cc(CCC)[n+]1-c1nn[n-]n1";
+  std::string ss6 = MolStandardize::standardizeSmiles(smi6);
+  TEST_ASSERT(ss6 == "CCCc1cc(-c2ccccc2)cc(CCC)[n+]1-c1nn[n-]n1");
   BOOST_LOG(rdInfoLog) << "Finished" << std::endl;
 }
 
