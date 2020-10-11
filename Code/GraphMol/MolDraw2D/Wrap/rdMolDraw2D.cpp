@@ -539,6 +539,10 @@ void setDrawOptions(RDKit::MolDraw2D &self, const MolDrawOptions &opts) {
   self.drawOptions() = opts;
 }
 
+void setDrawerColour(RDKit::MolDraw2D &self, python::tuple tpl) {
+  self.setColour(pyTupleToDrawColour(tpl));
+}
+
 }  // namespace RDKit
 
 BOOST_PYTHON_MODULE(rdMolDraw2D) {
@@ -736,6 +740,8 @@ BOOST_PYTHON_MODULE(rdMolDraw2D) {
            "uses the values provided to set the drawing scaling")
       .def("SetLineWidth", &RDKit::MolDraw2D::setLineWidth,
            "set the line width being used")
+      .def("SetColour", &RDKit::setDrawerColour,
+           "set the color being used fr drawing and filling")
       .def("LineWidth", &RDKit::MolDraw2D::lineWidth,
            "returns the line width being used")
       .def("SetFillPolys", &RDKit::MolDraw2D::setFillPolys,
