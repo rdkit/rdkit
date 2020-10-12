@@ -14,7 +14,6 @@
 #include <sstream>
 #include <set>
 #include <algorithm>
-#include <numeric>
 #include <RDGeneral/utils.h>
 #include <RDGeneral/Invariant.h>
 #include <RDGeneral/RDLog.h>
@@ -892,8 +891,6 @@ void iterateCIPRanks(const ROMol &mol, const DOUBLE_VECT &invars,
   for (auto& vec : cipEntries) {
     vec.reserve(16);
   }
-  INT_LIST allIndices(numAtoms);
-  std::iota(allIndices.begin(), allIndices.end(), 0);
 #ifdef VERBOSE_CANON
   BOOST_LOG(rdDebugLog) << "invariants:" << std::endl;
   for (unsigned int i = 0; i < numAtoms; i++) {
@@ -946,7 +943,7 @@ void iterateCIPRanks(const ROMol &mol, const DOUBLE_VECT &invars,
     //
     // for each atom, get a sorted list of its neighbors' ranks:
     //
-    for (int &index : allIndices) {
+    for (unsigned int index = 0; index < numAtoms; ++index) {
       // Note: counts is cleaned up when we drain into cipEntries.
       updatedNbrIdxs.clear();
 
@@ -1020,7 +1017,7 @@ void iterateCIPRanks(const ROMol &mol, const DOUBLE_VECT &invars,
     //
     // pad the entries so that we compare rounds to themselves:
     //
-    for (int &index : allIndices) {
+    for (unsigned int index = 0; index < numAtoms; ++index) {
       auto sz = rdcast<unsigned int>(cipEntries[index].size());
       if (sz < longestEntry) {
         cipEntries[index].insert(cipEntries[index].end(), longestEntry - sz,
