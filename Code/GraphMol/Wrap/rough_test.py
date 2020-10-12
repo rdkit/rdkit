@@ -5672,7 +5672,7 @@ H      0.635000    0.635000    0.635000
       Chem.SanitizeMol(Chem.MolFromSmiles('c1cc1', sanitize=False))
 
   def testDetectChemistryProblems(self):
-    m = Chem.MolFromSmiles('CFCc1cc1ClC', sanitize=False)
+    m = Chem.MolFromSmiles('CFCc1cc1FC', sanitize=False)
     ps = Chem.DetectChemistryProblems(m)
     self.assertEqual(len(ps), 3)
     self.assertEqual([x.GetType() for x in ps],
