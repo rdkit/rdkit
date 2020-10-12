@@ -3149,13 +3149,13 @@ List of Available Descriptors
 +-----------------------------------------------------+------------------------------------------------------------+----------+
 |FractionCSP3                                         |                                                            | C++      |
 +-----------------------------------------------------+------------------------------------------------------------+----------+
-|NumSpiroAtoms                                        |  Number of spiro atoms                                     | C++      |
-|                                                     | (atoms shared between rings that share                     |          |
-|                                                     | exactly one atom)                                          |          |
+|NumSpiroAtoms                                        |Number of spiro atoms                                       | C++      |
+|                                                     |(atoms shared between rings that share                      |          |
+|                                                     |exactly one atom)                                           |          |
 +-----------------------------------------------------+------------------------------------------------------------+----------+
-|NumBridgeheadAtoms                                   | Number of bridgehead atoms                                 | C++      |
-|                                                     | (atoms shared between rings that share                     |          |
-|                                                     | at least two bonds)                                        |          |
+|NumBridgeheadAtoms                                   |Number of bridgehead atoms                                  | C++      |
+|                                                     |(atoms shared between rings that share                      |          |
+|                                                     |at least two bonds)                                         |          |
 +-----------------------------------------------------+------------------------------------------------------------+----------+
 |TPSA                                                 |*J. Med. Chem.*                                             | C++      |
 |                                                     |**43**:3714\-7,                                             |          |
@@ -3198,6 +3198,9 @@ List of Available Descriptors
 |Autocorr2D                                           |New in 2017.09 release. Todeschini and Consoni "Descriptors | C++      |
 |                                                     |from Molecular Geometry" Handbook of Chemoinformatics       |          |
 |                                                     |https://doi.org/10.1002/9783527618279.ch37                  |          |
++-----------------------------------------------------+------------------------------------------------------------+----------+
+|BCUT2D                                               |New in 2020.09 release. Pearlman and Smith in "3D-QSAR and  | C++      |
+|                                                     |Drug design: Recent Advances" (1997)                        |          |
 +-----------------------------------------------------+------------------------------------------------------------+----------+
 
 
@@ -3294,6 +3297,10 @@ List of Available Fingerprints
 | Extended Reduced     | Derived from the ErG fingerprint published by Stiefl et al. in                                            | C++      |
 | Graphs               | *JCIM* **46**:208\–20 (2006).                                                                             |          |
 |                      | NOTE: these functions return an array of floats, not the usual fingerprint types                          |          |
++----------------------+-----------------------------------------------------------------------------------------------------------+----------+
+| MHFP and SECFP       | Derived from the ErG fingerprint published by Probst et al. in                                            | C++      |
+|                      | *J Cheminformatics* **10** (2018).                                                                        |          |
+|                      | NOTE: these functions return different types of values                                                    |          |
 +----------------------+-----------------------------------------------------------------------------------------------------------+----------+
 
 

@@ -1585,12 +1585,12 @@ Substructure search using molecules with enhanced stereochemistry follows these 
 * chiral < AND, because AND includes both the chiral molecule and another one
 * chiral < OR, because OR includes either the chiral molecule or another one
 * OR < AND, because AND includes both molecules that OR could actually mean.
-* one group of two atoms < two groups of one atom, because the latter is 4 different
-diastereomers, and the former only two of the four.
+* one group of two atoms < two groups of one atom, because the latter is 4 different diastereomers, and the former only two of the four.
 
 Some concrete examples of this:
 
 .. doctest ::
+
   >>> ps = Chem.SubstructMatchParameters()
   >>> ps.useChirality = True
   >>> ps.useEnhancedStereo = True
