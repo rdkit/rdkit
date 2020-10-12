@@ -25,6 +25,9 @@ namespace RDKit {
 
 // Determine whether or not a molecule is to the left of Carbon
 bool isEarlyAtom(int atomicNum) {
+  if ( atomicNum <= 1 ) {
+    return false;
+  }
   switch (PeriodicTable::getTable()->getNouterElecs(atomicNum)) {
     case 1:
     case 2:

@@ -1154,7 +1154,7 @@ TEST_CASE("github #3256: fused ring aromaticity perception",
   SECTION("nitrogen only central ring") {
     auto mol = "C1=CN2C3=CC=CN3C3=CC=CN3C2=C1"_smiles;
     REQUIRE(mol);
-    for (const auto b: mol->bonds()) {
+    for (const auto b : mol->bonds()) {
       CHECK(b->getBondType() == Bond::AROMATIC);
     }
     auto smi = MolToSmiles(*mol);
@@ -1372,6 +1372,32 @@ TEST_CASE("hybridization of unknown atom types", "[bug][molops]") {
     REQUIRE(m);
     for (const auto atom : m->atoms()) {
       CHECK(atom->getHybridization() == Atom::HybridizationType::S);
+    }
+  }
+}
+
+TEST_CASE("Github #3470: Hydrogen is incorrectly identified as an early atom",
+          "[bug][chemistry]") {
+  SECTION("Basics") {
+    RWMol m;
+    m.addAtom(new Atom(1));
+    m.getAtomWithIdx(0)->setFormalCharge(-1);
+    m.updatePropertyCache();
+    CHECK(m.getAtomWithIdx(0)->getNumImplicitHs() == 0);
+  }
+}
+
+TEST_CASE("Additional oxidation states", "[chemistry]") {
+  SECTION("Basics") {
+    std::vector<std::string> smiles = {
+        "F[Po](F)(F)(F)",     "F[Po](F)(F)(F)(F)F", "F[Xe](F)(F)(F)",
+        "F[Xe](F)(F)(F)(F)F", "F[Cl](F)F",          "F[Cl](F)(F)(F)F",
+        "F[Br](F)F",          "F[Br](F)(F)(F)F",    "F[I](F)F",
+        "F[I](F)(F)(F)F",     "F[At](F)F",          "F[At](F)(F)(F)F"};
+    for (const auto &smi : smiles) {
+      std::unique_ptr<ROMol> m(SmilesToMol(smi));
+      REQUIRE(m);
+      CHECK(m->getAtomWithIdx(1)->getNumRadicalElectrons() == 0);
     }
   }
 }
