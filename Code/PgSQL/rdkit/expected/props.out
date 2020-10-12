@@ -274,68 +274,27 @@ SELECT mol_murckoscaffold('CSC(C)=O'::mol) is NULL;
  t
 (1 row)
 
-SELECT mol_to_svg('CCO'::mol) svg;
-                                                                                                                svg                                                                                                                 
-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
- <?xml version='1.0' encoding='iso-8859-1'?>                                                                                                                                                                                       +
- <svg version='1.1' baseProfile='full'                                                                                                                                                                                             +
-               xmlns='http://www.w3.org/2000/svg'                                                                                                                                                                                  +
-                       xmlns:rdkit='http://www.rdkit.org/xml'                                                                                                                                                                      +
-                       xmlns:xlink='http://www.w3.org/1999/xlink'                                                                                                                                                                  +
-                   xml:space='preserve'                                                                                                                                                                                            +
- width='250px' height='200px' viewBox='0 0 250 200'>                                                                                                                                                                               +
- <!-- END OF HEADER -->                                                                                                                                                                                                            +
- <rect style='opacity:1.0;fill:#FFFFFF;stroke:none' width='250' height='200' x='0' y='0'> </rect>                                                                                                                                  +
- <path class='bond-0' d='M 11.3636,117.403 L 101.79,65.195' style='fill:none;fill-rule:evenodd;stroke:#000000;stroke-width:2px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1' />                                      +
- <path class='bond-1' d='M 101.79,65.195 L 138.876,86.6068' style='fill:none;fill-rule:evenodd;stroke:#000000;stroke-width:2px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1' />                                      +
- <path class='bond-1' d='M 138.876,86.6068 L 175.962,108.019' style='fill:none;fill-rule:evenodd;stroke:#FF0000;stroke-width:2px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1' />                                    +
- <text dominant-baseline="central" text-anchor="start" x='179.443' y='122.623' style='font-size:34px;font-style:normal;font-weight:normal;fill-opacity:1;stroke:none;font-family:sans-serif;fill:#FF0000' ><tspan>OH</tspan></text>+
- </svg>                                                                                                                                                                                                                            +
- 
+SELECT substring(mol_to_svg('CCO'::mol)::text,1,120) svg;
+                     svg                     
+---------------------------------------------
+ <?xml version='1.0' encoding='iso-8859-1'?>+
+ <svg version='1.1' baseProfile='full'      +
+               xmlns='http://www.w3.org
 (1 row)
 
-SELECT mol_to_svg('CCO'::mol,'legend') svg;
-                                                                                                                svg                                                                                                                 
-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
- <?xml version='1.0' encoding='iso-8859-1'?>                                                                                                                                                                                       +
- <svg version='1.1' baseProfile='full'                                                                                                                                                                                             +
-               xmlns='http://www.w3.org/2000/svg'                                                                                                                                                                                  +
-                       xmlns:rdkit='http://www.rdkit.org/xml'                                                                                                                                                                      +
-                       xmlns:xlink='http://www.w3.org/1999/xlink'                                                                                                                                                                  +
-                   xml:space='preserve'                                                                                                                                                                                            +
- width='250px' height='200px' viewBox='0 0 250 200'>                                                                                                                                                                               +
- <!-- END OF HEADER -->                                                                                                                                                                                                            +
- <rect style='opacity:1.0;fill:#FFFFFF;stroke:none' width='250' height='200' x='0' y='0'> </rect>                                                                                                                                  +
- <path class='bond-0' d='M 11.3636,117.403 L 101.79,65.195' style='fill:none;fill-rule:evenodd;stroke:#000000;stroke-width:2px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1' />                                      +
- <path class='bond-1' d='M 101.79,65.195 L 138.876,86.6068' style='fill:none;fill-rule:evenodd;stroke:#000000;stroke-width:2px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1' />                                      +
- <path class='bond-1' d='M 138.876,86.6068 L 175.962,108.019' style='fill:none;fill-rule:evenodd;stroke:#FF0000;stroke-width:2px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1' />                                    +
- <text dominant-baseline="central" text-anchor="start" x='179.443' y='122.623' style='font-size:34px;font-style:normal;font-weight:normal;fill-opacity:1;stroke:none;font-family:sans-serif;fill:#FF0000' ><tspan>OH</tspan></text>+
- <text dominant-baseline="central" text-anchor="middle" x='125' y='189.8' style='font-size:12px;font-style:normal;font-weight:normal;fill-opacity:1;stroke:none;font-family:sans-serif;fill:#000000' ><tspan>legend</tspan></text> +
- </svg>                                                                                                                                                                                                                            +
- 
+SELECT substring(mol_to_svg('CCO'::mol,'legend')::text,1,120) svg;
+                     svg                     
+---------------------------------------------
+ <?xml version='1.0' encoding='iso-8859-1'?>+
+ <svg version='1.1' baseProfile='full'      +
+               xmlns='http://www.w3.org
 (1 row)
 
 SELECT mol_to_svg('CCO'::mol,'legend',250,200,
-  '{"atomLabels":{"1":"foo"},"legendColour":[0.5,0.5,0.5]}') svg;
-                                                                                                                svg                                                                                                                 
-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
- <?xml version='1.0' encoding='iso-8859-1'?>                                                                                                                                                                                       +
- <svg version='1.1' baseProfile='full'                                                                                                                                                                                             +
-               xmlns='http://www.w3.org/2000/svg'                                                                                                                                                                                  +
-                       xmlns:rdkit='http://www.rdkit.org/xml'                                                                                                                                                                      +
-                       xmlns:xlink='http://www.w3.org/1999/xlink'                                                                                                                                                                  +
-                   xml:space='preserve'                                                                                                                                                                                            +
- width='250px' height='200px' viewBox='0 0 250 200'>                                                                                                                                                                               +
- <!-- END OF HEADER -->                                                                                                                                                                                                            +
- <rect style='opacity:1.0;fill:#FFFFFF;stroke:none' width='250' height='200' x='0' y='0'> </rect>                                                                                                                                  +
- <path class='bond-0' d='M 11.3636,126.104 L 72.7507,90.6619' style='fill:none;fill-rule:evenodd;stroke:#000000;stroke-width:2px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1' />                                    +
- <path class='bond-1' d='M 130.829,90.6619 L 153.395,103.691' style='fill:none;fill-rule:evenodd;stroke:#000000;stroke-width:2px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1' />                                    +
- <path class='bond-1' d='M 153.395,103.691 L 175.962,116.72' style='fill:none;fill-rule:evenodd;stroke:#FF0000;stroke-width:2px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1' />                                     +
- <text dominant-baseline="central" text-anchor="middle" x='101.79' y='79.117' style='font-size:34px;font-style:normal;font-weight:normal;fill-opacity:1;stroke:none;font-family:sans-serif;fill:#000000' ><tspan>foo</tspan></text>+
- <text dominant-baseline="central" text-anchor="start" x='179.443' y='131.325' style='font-size:34px;font-style:normal;font-weight:normal;fill-opacity:1;stroke:none;font-family:sans-serif;fill:#FF0000' ><tspan>OH</tspan></text>+
- <text dominant-baseline="central" text-anchor="middle" x='125' y='189.8' style='font-size:12px;font-style:normal;font-weight:normal;fill-opacity:1;stroke:none;font-family:sans-serif;fill:#7F7F7F' ><tspan>legend</tspan></text> +
- </svg>                                                                                                                                                                                                                            +
- 
+  '{"atomLabels":{"1":"foo"},"legendColour":[0.5,0.5,0.5]}')::text like '%fill=''#7F7F7F''%' svg;
+ svg 
+-----
+ t
 (1 row)
 
 -- GitHub Issue 2174 - mol_to_svg() should not change input mol.
