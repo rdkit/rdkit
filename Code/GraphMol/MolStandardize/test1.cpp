@@ -173,6 +173,18 @@ void testMetalDisconnector() {
   TEST_ASSERT(MolToSmiles(*m10) ==
               "[C]=O.[C]=O.[C]=O.[C]=O.[C]=O.[C]=O.[Ni+2]");
 
+  // test that dative bonds are handled appropriately
+  RWMOL_SPTR m11("O->[Fe](<-O)(O)O"_smiles);
+  TEST_ASSERT(m11);
+  md.disconnect(*m11);
+  TEST_ASSERT(MolToSmiles(*m11) == "O.O.[Fe+2].[OH-].[OH-]");
+
+  // test that dative bonds are handled appropriately
+  RWMOL_SPTR m12("[OH-]->[Co+3](<-[OH-])(<-O)<-O"_smiles);
+  TEST_ASSERT(m12);
+  md.disconnect(*m12);
+  TEST_ASSERT(MolToSmiles(*m12) == "O.O.[Co+3].[OH-].[OH-]");
+
   BOOST_LOG(rdInfoLog) << "Finished" << std::endl;
 }
 
@@ -1155,7 +1167,6 @@ void testMetalDisconnectorLigandExpo() {
       {"[CH]12=[CH]3[Ru]1456[CH]2=[CH]4[CH]5=[CH]63", "c1ccccc1"},
       {"[CH]12=[CH]3[Ru]1456([CH]2=[CH]4[CH]5=[CH]63)(Cl)Cl", "c1ccccc1"},
       {"[CH2]1=[CH2][Pt+2]1([Cl-])([Cl-])[Cl-]", "C=C"},
-      {"Cl([Cu])[Cu]", "[Cu]"},
       {"C[N@]12CC3=CC=CC=[N]3[Fe+2]145[N]6=CC=CC=C6C[N@@]4(CC(=O)O5)[C@@H]7[C@@"
        "H]2CCCC7",
        "CN(Cc1ccccn1)[C@H]1CCCC[C@@H]1N(CC(=O)O)Cc1ccccn1"},

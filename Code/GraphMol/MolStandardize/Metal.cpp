@@ -78,7 +78,10 @@ void MetalDisconnector::disconnect(RWMol &mol) {
       auto nonMetal = mol.getAtomWithIdx(non_idx);
 
       Bond *b = mol.getBondBetweenAtoms(metal_idx, non_idx);
-      int order = static_cast<int>(b->getBondTypeAsDouble());
+      int order = (b->getBondType() >= Bond::DATIVEONE &&
+                   b->getBondType() <= Bond::DATIVER)
+                      ? 0
+                      : static_cast<int>(b->getBondTypeAsDouble());
       // disconnecting metal-R bond
       mol.removeBond(metal_idx, non_idx);
       // increment the cut bond count for this non-metal atom
