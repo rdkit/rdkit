@@ -102,6 +102,8 @@ Submodules
    rdkit.Chem.rdFingerprintGenerator
    rdkit.Chem.rdMHFPFingerprint
    rdkit.Chem.rdSLNParse
+   rdkit.Chem.rdAbbreviations
+   rdkit.Chem.rdDeprotect
 
 Module contents
 ---------------
