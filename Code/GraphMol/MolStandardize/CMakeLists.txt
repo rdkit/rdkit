@@ -1,6 +1,4 @@
 
-remove_definitions(-DRDKIT_GRAPHMOL_BUILD)
-add_definitions(-DRDKIT_MOLSTANDARDIZE_BUILD)
 rdkit_library(MolStandardize
               MolStandardize.cpp
 	      Metal.cpp
@@ -21,7 +19,8 @@ rdkit_library(MolStandardize
         TautomerCatalog/TautomerCatalogEntry.cpp
         TautomerCatalog/TautomerCatalogParams.cpp
         TautomerCatalog/TautomerCatalogUtils.cpp
-	      LINK_LIBRARIES ChemReactions ChemTransforms GraphMol RDGeneral )
+	      LINK_LIBRARIES ChemReactions ChemTransforms SmilesParse SubstructMatch Descriptors GraphMol )
+target_compile_definitions(MolStandardize PRIVATE RDKIT_MOLSTANDARDIZE_BUILD)
 
 rdkit_headers(MolStandardize.h
 	      Metal.h
@@ -56,28 +55,13 @@ if(RDK_BUILD_PYTHON_WRAPPERS)
 add_subdirectory(Wrap)
 endif()
 
-rdkit_test(molStandardizeTest test1.cpp LINK_LIBRARIES MolStandardize
-	SmilesParse RDGeneral GraphMol SubstructMatch )
-rdkit_test(molNormalizeTest testNormalize.cpp LINK_LIBRARIES MolStandardize
-	SmilesParse RDGeneral GraphMol SubstructMatch )
-rdkit_test(molValidateTest testValidate.cpp LINK_LIBRARIES MolStandardize
-	SmilesParse RDGeneral GraphMol SubstructMatch FileParsers )
-rdkit_test(molChargeTest testCharge.cpp LINK_LIBRARIES MolStandardize
-	SmilesParse RDGeneral GraphMol SubstructMatch FileParsers )
-rdkit_test(molTautomerTest testTautomer.cpp LINK_LIBRARIES MolStandardize
-	SmilesParse RDGeneral GraphMol SubstructMatch FileParsers )
-rdkit_test(molStandardizeSmallTest test2.cpp LINK_LIBRARIES MolStandardize
-	SmilesParse RDGeneral GraphMol SubstructMatch)
-rdkit_test(molFragmentTest testFragment.cpp LINK_LIBRARIES MolStandardize
-	Catalogs SmilesParse RDGeneral GraphMol SubstructMatch FileParsers
-	ChemTransforms Descriptors)
-rdkit_catch_test(molStandardizeCatchTest catch_tests.cpp LINK_LIBRARIES MolStandardize
-	Catalogs SmilesParse RDGeneral GraphMol SubstructMatch FileParsers
-	ChemTransforms Descriptors)
+rdkit_test(molStandardizeTest test1.cpp LINK_LIBRARIES MolStandardize )
+rdkit_test(molNormalizeTest testNormalize.cpp LINK_LIBRARIES MolStandardize )
+rdkit_test(molValidateTest testValidate.cpp LINK_LIBRARIES MolStandardize )
+rdkit_test(molChargeTest testCharge.cpp LINK_LIBRARIES MolStandardize )
+rdkit_test(molTautomerTest testTautomer.cpp LINK_LIBRARIES MolStandardize )
+rdkit_test(molStandardizeSmallTest test2.cpp LINK_LIBRARIES MolStandardize )
+rdkit_test(molFragmentTest testFragment.cpp LINK_LIBRARIES MolStandardize )
+rdkit_catch_test(molStandardizeCatchTest catch_tests.cpp LINK_LIBRARIES MolStandardize )
 
-#find_package(Boost 1.56.0 COMPONENTS system iostreams REQUIRED)
-#if (NOT Boost_USE_STATIC_LIBS)
-#  add_definitions("-DBOOST_IOSTREAMS_DYN_LINK")
-#endif()
 
-# rdkit_test(compareMolVSTest testPCS.cpp LINK_LIBRARIES RDGeneral SmilesParse RDGeneral GraphMol MolStandardize  ${Boost_LIBRARIES})

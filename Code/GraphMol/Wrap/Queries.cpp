@@ -83,6 +83,15 @@ QAFUNC2(IsInRingQueryAtom, makeAtomInRingQuery, int);
 QAFUNC2(HasChiralTagQueryAtom, makeAtomHasChiralTagQuery, int);
 QAFUNC2(MissingChiralTagQueryAtom, makeAtomMissingChiralTagQuery, int);
 
+QAFUNC2(AAtomQueryAtom, makeAAtomQuery, int);
+QAFUNC2(AHAtomQueryAtom, makeAHAtomQuery, int);
+QAFUNC2(QAtomQueryAtom, makeQAtomQuery, int);
+QAFUNC2(QHAtomQueryAtom, makeQHAtomQuery, int);
+QAFUNC2(XAtomQueryAtom, makeXAtomQuery, int);
+QAFUNC2(XHAtomQueryAtom, makeXHAtomQuery, int);
+QAFUNC2(MAtomQueryAtom, makeMAtomQuery, int);
+QAFUNC2(MHAtomQueryAtom, makeMHAtomQuery, int);
+
 QueryAtom *HasPropQueryAtom(const std::string &propname, bool negate) {
   auto *res = new QueryAtom();
   res->setQuery(makeHasPropQuery<Atom>(propname));
@@ -186,6 +195,15 @@ struct queries_wrapper {
     QADEF2(HasChiralTag);
     QADEF2(MissingChiralTag);
 
+    QADEF2(AAtom);
+    QADEF2(AHAtom);
+    QADEF2(XAtom);
+    QADEF2(XHAtom);
+    QADEF2(QAtom);
+    QADEF2(QHAtom);
+    QADEF2(MAtom);
+    QADEF2(MHAtom);
+
     python::def("HasPropQueryAtom", HasPropQueryAtom,
                 (python::arg("propname"), python::arg("negate") = false),
                 "Returns a QueryAtom that matches when the propery 'propname' "
@@ -242,7 +260,6 @@ struct queries_wrapper {
                 " value.  The Tolerance is the allowed Tanimoto difference",
                 python::return_value_policy<python::manage_new_object>());
 
-    
     /////////////////////////////////////////////////////////////////////////////////////
     //  Bond Queries
     python::def("HasPropQueryBond", HasPropQueryBond,
@@ -293,6 +310,6 @@ struct queries_wrapper {
                 python::return_value_policy<python::manage_new_object>());
   };
 };
-}  // end of namespace
+}  // namespace RDKit
 
 void wrap_queries() { RDKit::queries_wrapper::wrap(); }

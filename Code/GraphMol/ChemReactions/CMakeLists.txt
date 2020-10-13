@@ -11,19 +11,18 @@ if(CMAKE_CXX_COMPILER_VERSION VERSION_GREATER 5)
   endif()
 endif()
 
-
-remove_definitions(-DRDKIT_GRAPHMOL_BUILD)
-add_definitions(-DRDKIT_CHEMREACTIONS_BUILD)
 rdkit_library(ChemReactions
               Reaction.cpp MDLParser.cpp DaylightParser.cpp ReactionPickler.cpp
-	            ReactionWriter.cpp ReactionDepict.cpp ReactionFingerprints.cpp ReactionUtils.cpp MoleculeParser.cpp ReactionRunner.cpp PreprocessRxn.cpp SanitizeRxn.cpp
+	            ReactionWriter.cpp ReactionDepict.cpp ReactionFingerprints.cpp ReactionUtils.cpp 
+              MoleculeParser.cpp ReactionRunner.cpp PreprocessRxn.cpp SanitizeRxn.cpp
+              PNGParser.cpp
                     Enumerate/Enumerate.cpp
                     Enumerate/EnumerationPickler.cpp
                     Enumerate/EvenSamplePairs.cpp
-
               LINK_LIBRARIES
               FilterCatalog Descriptors Fingerprints DataStructs Depictor
-              FileParsers SubstructMatch ChemTransforms ${RDKit_SERIALIZATION_LIBS})
+              FileParsers SubstructMatch ChemTransforms GraphMol ${RDKit_SERIALIZATION_LIBS})
+target_compile_definitions(ChemReactions PRIVATE RDKIT_CHEMREACTIONS_BUILD)
 
 rdkit_headers(Reaction.h
               ReactionParser.h
@@ -46,21 +45,15 @@ rdkit_headers(Enumerate/Enumerate.h
               DEST GraphMol/ChemReactions/Enumerate)
 
 rdkit_test(testReaction testReaction.cpp LINK_LIBRARIES
- ChemReactions ChemTransforms Descriptors Fingerprints
-Subgraphs DataStructs  FileParsers SmilesParse SubstructMatch
-GraphMol RDGeneral RDGeometryLib ${RDKit_SERIALIZATION_LIBS})
+ ChemReactions )
 
 rdkit_test(testReactionFingerprints testReactionFingerprints.cpp LINK_LIBRARIES
-ChemReactions Descriptors Fingerprints Subgraphs DataStructs ChemTransforms FileParsers SmilesParse SubstructMatch
-GraphMol RDGeneral RDGeometryLib ${RDKit_SERIALIZATION_LIBS})
+ChemReactions )
 
 rdkit_test(testEnumeration Enumerate/testEnumerate.cpp LINK_LIBRARIES
-ChemReactions ChemTransforms Descriptors Fingerprints Subgraphs DataStructs FileParsers SmilesParse SubstructMatch
-GraphMol RDGeneral RDGeometryLib ${RDKit_SERIALIZATION_LIBS} )
+ChemReactions  )
 
-rdkit_catch_test(rxnTestCatch catch_tests.cpp LINK_LIBRARIES ChemReactions ChemTransforms Descriptors Fingerprints
-Subgraphs DataStructs  FileParsers SmilesParse SubstructMatch
-GraphMol RDGeneral RDGeometryLib ${RDKit_SERIALIZATION_LIBS} )
+rdkit_catch_test(rxnTestCatch catch_tests.cpp LINK_LIBRARIES ChemReactions )
 
 if(RDK_BUILD_PYTHON_WRAPPERS)
 add_subdirectory(Wrap)

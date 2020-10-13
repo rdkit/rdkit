@@ -61,7 +61,7 @@ void MolDraw2D::drawMolecule(const ROMol &mol, const std::string &legend,
     }
   }
   drawMolecule(mol, legend, highlight_atoms, &highlight_bonds,
-               highlight_atom_map, NULL, highlight_radii, confId);
+               highlight_atom_map, nullptr, highlight_radii, confId);
 }
 
 void MolDraw2D::doContinuousHighlighting(
@@ -86,7 +86,7 @@ void MolDraw2D::doContinuousHighlighting(
       ROMol::OEDGE_ITER nbr, end_nbr;
       boost::tie(nbr, end_nbr) = mol.getAtomBonds(mol[*this_at].get());
       while (nbr != end_nbr) {
-        const Bond* bond = mol[*nbr];
+        const Bond *bond = mol[*nbr];
         ++nbr;
         int nbr_idx = bond->getOtherAtomIdx(this_idx);
         if (nbr_idx < static_cast<int>(at_cds_.size()) && nbr_idx > this_idx) {
@@ -143,13 +143,13 @@ void MolDraw2D::doContinuousHighlighting(
 
 void drawMolecules(
     const std::vector<ROMOL_SPTR> &mols,
-    const std::vector<std::string> *legends = NULL,
-    const std::vector<std::vector<int> > *highlight_atoms = NULL,
-    const std::vector<std::vector<int> > *highlight_bonds = NULL,
-    const std::vector<std::map<int, DrawColour> > *highlight_atom_maps = NULL,
-    const std::vector<std::map<int, DrawColour> > *highlight_bond_maps = NULL,
-    const std::vector<std::map<int, double> > *highlight_radii = NULL,
-    const std::vector<int> *confIds = NULL){};
+    const std::vector<std::string> *legends = nullptr,
+    const std::vector<std::vector<int>> *highlight_atoms = nullptr,
+    const std::vector<std::vector<int>> *highlight_bonds = nullptr,
+    const std::vector<std::map<int, DrawColour>> *highlight_atom_maps = nullptr,
+    const std::vector<std::map<int, DrawColour>> *highlight_bond_maps = nullptr,
+    const std::vector<std::map<int, double>> *highlight_radii = nullptr,
+    const std::vector<int> *confIds = nullptr){};
 
 void MolDraw2D::drawMolecule(const ROMol &mol,
                              const vector<int> *highlight_atoms,
@@ -206,8 +206,8 @@ void MolDraw2D::drawMolecule(const ROMol &mol,
                              highlight_radii);
     // at this point we shouldn't be doing any more highlighting, so blow out
     // those variables:
-    highlight_bonds = NULL;
-    highlight_atoms = NULL;
+    highlight_bonds = nullptr;
+    highlight_atoms = nullptr;
   } else if (drawOptions().circleAtoms && highlight_atoms) {
     ROMol::VERTEX_ITER this_at, end_at;
     boost::tie(this_at, end_at) = mol.getVertices();
@@ -246,7 +246,7 @@ void MolDraw2D::drawMolecule(const ROMol &mol,
     ROMol::OEDGE_ITER nbr, end_nbr;
     boost::tie(nbr, end_nbr) = mol.getAtomBonds(mol[*this_at].get());
     while (nbr != end_nbr) {
-      const Bond* bond = mol[*nbr];
+      const Bond *bond = mol[*nbr];
       ++nbr;
       int nbr_idx = bond->getOtherAtomIdx(this_idx);
       if (nbr_idx < static_cast<int>(at_cds_.size()) && nbr_idx > this_idx) {
@@ -272,7 +272,7 @@ void MolDraw2D::drawMolecule(const ROMol &mol,
         Point2D &at1_cds = at_cds_[at1->getIdx()];
         ROMol::ADJ_ITER nbrIdx, endNbrs;
         boost::tie(nbrIdx, endNbrs) = mol.getAtomNeighbors(at1);
-        const Atom* at2 = mol[*nbrIdx];
+        const Atom *at2 = mol[*nbrIdx];
         Point2D &at2_cds = at_cds_[at2->getIdx()];
         drawAttachmentLine(at2_cds, at1_cds, DrawColour(.5, .5, .5));
       }
@@ -663,7 +663,7 @@ void MolDraw2D::extractAtomSymbols(const ROMol &mol) {
     Point2D &at1_cds = at_cds_[at1->getIdx()];
     Point2D nbr_sum(0.0, 0.0);
     while (nbr != end_nbrs) {
-      const Bond* bond = mol[*nbr];
+      const Bond *bond = mol[*nbr];
       ++nbr;
       Point2D &at2_cds = at_cds_[bond->getOtherAtomIdx(at1->getIdx())];
       nbr_sum += at2_cds - at1_cds;
@@ -675,7 +675,7 @@ void MolDraw2D::extractAtomSymbols(const ROMol &mol) {
 }
 
 // ****************************************************************************
-void MolDraw2D::drawBond(const ROMol &mol, const Bond* &bond, int at1_idx,
+void MolDraw2D::drawBond(const ROMol &mol, const Bond *&bond, int at1_idx,
                          int at2_idx, const vector<int> *highlight_atoms,
                          const map<int, DrawColour> *highlight_atom_map,
                          const vector<int> *highlight_bonds,
@@ -900,13 +900,13 @@ Point2D MolDraw2D::calcPerpendicular(const Point2D &cds1, const Point2D &cds2) {
 // ****************************************************************************
 // cds1 and cds2 are 2 atoms in a ring.  Returns the perpendicular pointing into
 // the ring
-Point2D MolDraw2D::bondInsideRing(const ROMol &mol, const Bond* &bond,
+Point2D MolDraw2D::bondInsideRing(const ROMol &mol, const Bond *&bond,
                                   const Point2D &cds1, const Point2D &cds2) {
   Atom *bgn_atom = bond->getBeginAtom();
   ROMol::OEDGE_ITER nbr2, end_nbrs2;
   boost::tie(nbr2, end_nbrs2) = mol.getAtomBonds(bgn_atom);
   while (nbr2 != end_nbrs2) {
-    const Bond* bond2 = mol[*nbr2];
+    const Bond *bond2 = mol[*nbr2];
     ++nbr2;
     if (bond2->getIdx() == bond->getIdx() ||
         !mol.getRingInfo()->numBondRings(bond2->getIdx())) {
@@ -934,8 +934,7 @@ Point2D MolDraw2D::bondInsideRing(const ROMol &mol, const Bond* &bond,
 // ****************************************************************************
 // cds1 and cds2 are 2 atoms in a chain double bond.  Returns the perpendicular
 // pointing into the inside of the bond
-Point2D MolDraw2D::bondInsideDoubleBond(const ROMol &mol,
-                                        const Bond* &bond) {
+Point2D MolDraw2D::bondInsideDoubleBond(const ROMol &mol, const Bond *&bond) {
   // a chain double bond, were it looks nicer IMO if the 2nd line is inside
   // the angle of outgoing bond. Unless it's an allene, where nothing
   // looks great.
@@ -953,7 +952,7 @@ Point2D MolDraw2D::bondInsideDoubleBond(const ROMol &mol,
   ROMol::OEDGE_ITER nbr2, end_nbrs2;
   boost::tie(nbr2, end_nbrs2) = mol.getAtomBonds(bond_atom);
   while (nbr2 != end_nbrs2) {
-    const Bond* bond2 = mol[*nbr2];
+    const Bond *bond2 = mol[*nbr2];
     ++nbr2;
     if (bond != bond2) {
       at3 = bond2->getOtherAtomIdx(bond_atom->getIdx());
@@ -1184,4 +1183,4 @@ void MolDraw2D::drawAttachmentLine(const Point2D &cds1, const Point2D &cds2,
   drawWavyLine(p1, p2, col, col, nSegments);
 }
 
-}  // EO namespace RDKit
+}  // namespace RDKit

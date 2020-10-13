@@ -6,7 +6,7 @@ rdkit_python_extension(cDataStructs
                        wrap_Utils.cpp
                        DEST DataStructs
                        LINK_LIBRARIES
-                       RDGeneral DataStructs RDBoost)
+                       DataStructs)
 
 add_pytest(pyBV
          ${CMAKE_CURRENT_SOURCE_DIR}/testBV.py)

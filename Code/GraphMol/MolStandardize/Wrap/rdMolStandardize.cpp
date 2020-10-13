@@ -18,6 +18,9 @@ namespace python = boost::python;
 
 namespace {
 RDKit::ROMol *cleanupHelper(const RDKit::ROMol *mol, python::object params) {
+  if (!mol) {
+    throw_value_error("Molecule is None");
+  }
   const RDKit::MolStandardize::CleanupParameters *ps =
       &RDKit::MolStandardize::defaultCleanupParameters;
   if (params) {
@@ -30,6 +33,9 @@ RDKit::ROMol *cleanupHelper(const RDKit::ROMol *mol, python::object params) {
 RDKit::ROMol *fragmentParentHelper(const RDKit::ROMol *mol,
                                    python::object params,
                                    bool skip_standardize) {
+  if (!mol) {
+    throw_value_error("Molecule is None");
+  }
   const RDKit::MolStandardize::CleanupParameters *ps =
       &RDKit::MolStandardize::defaultCleanupParameters;
   if (params) {
@@ -41,6 +47,9 @@ RDKit::ROMol *fragmentParentHelper(const RDKit::ROMol *mol,
 
 RDKit::ROMol *chargeParentHelper(const RDKit::ROMol *mol, python::object params,
                                  bool skip_standardize) {
+  if (!mol) {
+    throw_value_error("Molecule is None");
+  }
   const RDKit::MolStandardize::CleanupParameters *ps =
       &RDKit::MolStandardize::defaultCleanupParameters;
   if (params) {
@@ -51,6 +60,9 @@ RDKit::ROMol *chargeParentHelper(const RDKit::ROMol *mol, python::object params,
 }
 
 RDKit::ROMol *normalizeHelper(const RDKit::ROMol *mol, python::object params) {
+  if (!mol) {
+    throw_value_error("Molecule is None");
+  }
   const RDKit::MolStandardize::CleanupParameters *ps =
       &RDKit::MolStandardize::defaultCleanupParameters;
   if (params) {
@@ -61,6 +73,9 @@ RDKit::ROMol *normalizeHelper(const RDKit::ROMol *mol, python::object params) {
 }
 
 RDKit::ROMol *reionizeHelper(const RDKit::ROMol *mol, python::object params) {
+  if (!mol) {
+    throw_value_error("Molecule is None");
+  }
   const RDKit::MolStandardize::CleanupParameters *ps =
       &RDKit::MolStandardize::defaultCleanupParameters;
   if (params) {
@@ -103,9 +118,6 @@ BOOST_PYTHON_MODULE(rdMolStandardize) {
       .def_readwrite("maxRestarts",
                      &RDKit::MolStandardize::CleanupParameters::maxRestarts,
                      "maximum number of restarts")
-      .def_readwrite("maxTautomers",
-                     &RDKit::MolStandardize::CleanupParameters::maxTautomers,
-                     "maximum number of tautomers to generate")
       .def_readwrite("preferOrganic",
                      &RDKit::MolStandardize::CleanupParameters::preferOrganic,
                      "prefer organic fragments to inorganic ones when deciding "
@@ -114,8 +126,29 @@ BOOST_PYTHON_MODULE(rdMolStandardize) {
                      &RDKit::MolStandardize::CleanupParameters::doCanonical,
                      "apply atom-order dependent normalizations (like "
                      "uncharging) in a canonical order")
-
-      ;
+      .def_readwrite("maxTautomers",
+                     &RDKit::MolStandardize::CleanupParameters::maxTautomers,
+                     "maximum number of tautomers to generate (defaults to "
+                     "1000)")
+      .def_readwrite("maxTransforms",
+                     &RDKit::MolStandardize::CleanupParameters::maxTransforms,
+                     "maximum number of transforms to apply during tautomer "
+                     "enumeration (defaults to 1000)")
+      .def_readwrite(
+          "tautomerRemoveSp3Stereo",
+          &RDKit::MolStandardize::CleanupParameters::tautomerRemoveSp3Stereo,
+          "remove stereochemistry from sp3 centers involved in "
+          "tautomerism (defaults to True)")
+      .def_readwrite(
+          "tautomerRemoveBondStereo",
+          &RDKit::MolStandardize::CleanupParameters::tautomerRemoveBondStereo,
+          "remove stereochemistry from double bonds involved in "
+          "tautomerism (defaults to True)")
+      .def_readwrite(
+          "tautomerReassignStereo",
+          &RDKit::MolStandardize::CleanupParameters::tautomerReassignStereo,
+          "call AssignStereochemistry on all generated tautomers "
+          "(defaults to True)");
 
   docString = "Standardizes a molecule";
   python::def("Cleanup", cleanupHelper,

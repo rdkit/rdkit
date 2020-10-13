@@ -3,8 +3,8 @@
 # inside a conda environment. Used relevant software was:
 #
 # - valgrind: v3.14.0 final, built from git sources under the same env.
-# - Boost libs: conda package, v1.67.0 (py36_4)
-# - Compiler: conda package, gxx_linux-64 7.2.0 (h550dcbe_27)
+# - Boost libs: v1.68.0 (py36)
+# - Compiler: gxx_linux-64 6.4.0
 #
 # CMake command/options was:
 # cmake .. \
@@ -27,61 +27,21 @@
 {
    Avalon #1
    Memcheck:Cond
-   fun:SmilesBranch
+   ...
    fun:SmilesBranch
    fun:MOLToSMIExt
    fun:CanSmilesStep
    fun:CanSmiles
-   fun:_ZN11AvalonTools14getCanonSmilesERKNSt7__cxx1112basic_stringIcSt11char_traitsIcESaIcEEEbi
+   fun:_ZN11AvalonTools14getCanonSmiles*
 }
 {
    Avalon #2
    Memcheck:Cond
-   fun:SmilesBranch
-   fun:MOLToSMIExt
-   fun:CanSmilesStep
-   fun:CanSmiles
-   fun:_ZN11AvalonTools14getCanonSmilesERKNSt7__cxx1112basic_stringIcSt11char_traitsIcESaIcEEEbi
-}
-{
-   Avalon #3
-   Memcheck:Cond
-   fun:SmilesBranch
+   ...
    fun:SmilesBranch
    fun:MOLToSMIExt
    fun:MOLToSMI
-   fun:_ZN11AvalonTools14getCanonSmilesERKNSt7__cxx1112basic_stringIcSt11char_traitsIcESaIcEEEbi
-}
-{
-   Avalon #4
-   Memcheck:Cond
-   fun:SmilesBranch
-   fun:MOLToSMIExt
-   fun:MOLToSMI
-   fun:_ZN11AvalonTools14getCanonSmilesERKNSt7__cxx1112basic_stringIcSt11char_traitsIcESaIcEEEbi
-}
-{
-   Avalon #5
-   Memcheck:Cond
-   fun:SmilesBranch
-   fun:SmilesBranch
-   fun:SmilesBranch
-   fun:SmilesBranch
-   fun:MOLToSMIExt
-   fun:MOLToSMI
-   fun:_ZN11AvalonTools14getCanonSmilesERKNSt7__cxx1112basic_stringIcSt11char_traitsIcESaIcEEEbi
-}
-{
-   Avalon #6
-   Memcheck:Cond
-   fun:SmilesBranch
-   fun:SmilesBranch
-   fun:SmilesBranch
-   fun:SmilesBranch
-   fun:MOLToSMIExt
-   fun:CanSmilesStep
-   fun:CanSmiles
-   fun:_ZN11AvalonTools14getCanonSmilesERKNSt7__cxx1112basic_stringIcSt11char_traitsIcESaIcEEEbi
+   fun:_ZN11AvalonTools14getCanonSmiles*
 }
 {
    boost::singleton #1

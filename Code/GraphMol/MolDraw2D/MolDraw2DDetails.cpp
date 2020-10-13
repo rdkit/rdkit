@@ -1,5 +1,5 @@
 //
-//  Copyright (C) 2015 Greg Landrum
+//  Copyright (C) 2015-2020 Greg Landrum
 //
 //   @@ All Rights Reserved @@
 //  This file is part of the RDKit.
@@ -43,5 +43,73 @@ void arcPoints(const Point2D &cds1, const Point2D &cds2,
     angle += step;
   }
 }
+
+void addStereoAnnotation(const ROMol &mol, bool includeRelativeCIP) {
+  const auto &sgs = mol.getStereoGroups();
+  std::vector<unsigned int> doneAts(mol.getNumAtoms(), 0);
+  unsigned int grpid = 1;
+  for (const auto &sg : sgs) {
+    for (const auto atom : sg.getAtoms()) {
+      if (doneAts[atom->getIdx()]) {
+        BOOST_LOG(rdWarningLog) << "Warning: atom " << atom->getIdx()
+                                << " is in more than one stereogroup. Only the "
+                                   "label from the first group will be used."
+                                << std::endl;
+        continue;
+      }
+      std::string lab;
+      std::string cip;
+      if (includeRelativeCIP ||
+          sg.getGroupType() == StereoGroupType::STEREO_ABSOLUTE) {
+        atom->getPropIfPresent(common_properties::_CIPCode, cip);
+      }
+      switch (sg.getGroupType()) {
+        case StereoGroupType::STEREO_ABSOLUTE:
+          lab = "abs";
+          break;
+        case StereoGroupType::STEREO_OR:
+          lab = (boost::format("or%d") % grpid).str();
+          break;
+        case StereoGroupType::STEREO_AND:
+          lab = (boost::format("and%d") % grpid).str();
+          break;
+        default:
+          break;
+      }
+      if (!lab.empty()) {
+        doneAts[atom->getIdx()] = 1;
+        if (!cip.empty()) {
+          lab += " (" + cip + ")";
+        }
+        atom->setProp(common_properties::atomNote, lab);
+      }
+    }
+    if (sg.getGroupType() != StereoGroupType::STEREO_ABSOLUTE) {
+      ++grpid;
+    }
+  }
+  for (auto atom : mol.atoms()) {
+    std::string cip;
+    if (!doneAts[atom->getIdx()] &&
+        atom->getPropIfPresent(common_properties::_CIPCode, cip)) {
+      std::string lab = "(" + cip + ")";
+      atom->setProp(common_properties::atomNote, lab);
+    }
+  }
+  for (auto bond : mol.bonds()) {
+    std::string cip;
+    if (!bond->getPropIfPresent(common_properties::_CIPCode, cip)) {
+      if (bond->getStereo() == Bond::STEREOE) {
+        cip = "E";
+      } else if (bond->getStereo() == Bond::STEREOZ) {
+        cip = "Z";
+      }
+    }
+    if (!cip.empty()) {
+      std::string lab = "(" + cip + ")";
+      bond->setProp(common_properties::bondNote, lab);
+    }
+  }
 }
-}
+}  // namespace MolDraw2D_detail
+}  // namespace RDKit

@@ -128,7 +128,7 @@ const std::string morganConnectivityInvariantVersion = "1.0.0";
 */
 RDKIT_FINGERPRINTS_EXPORT void getFeatureInvariants(
     const ROMol &mol, std::vector<std::uint32_t> &invars,
-    std::vector<const ROMol *> *patterns = 0);
+    std::vector<const ROMol *> *patterns = nullptr);
 const std::string morganFeatureInvariantVersion = "0.1.0";
 
 }  // namespace MorganFingerprints

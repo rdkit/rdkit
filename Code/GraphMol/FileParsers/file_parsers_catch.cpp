@@ -12,14 +12,18 @@
 
 #include <GraphMol/RDKitBase.h>
 #include <GraphMol/QueryAtom.h>
+#include <GraphMol/MolPickler.h>
 #include <GraphMol/FileParsers/FileParsers.h>
 #include <GraphMol/SmilesParse/SmilesWrite.h>
 #include <GraphMol/SmilesParse/SmilesParse.h>
 #include <GraphMol/SmilesParse/SmartsWrite.h>
+#include <GraphMol/FileParsers/PNGParser.h>
+#include <RDGeneral/FileParseException.h>
+#include <boost/algorithm/string.hpp>
 
 using namespace RDKit;
 
-TEST_CASE("Basic SVG Parsing", "[SVG,parser]") {
+TEST_CASE("Basic SVG Parsing", "[SVG][reader]") {
   SECTION("basics") {
     std::string svg = R"SVG(<?xml version='1.0' encoding='iso-8859-1'?>
 <svg version='1.1' baseProfile='full'
@@ -79,7 +83,7 @@ width='200px' height='200px' >
 TEST_CASE(
     "Github #2040: Failure to parse V3K mol file with bonds to multi-center "
     "linkage points",
-    "[bug,parser]") {
+    "[bug][reader]") {
   std::string rdbase = getenv("RDBASE");
   SECTION("basics") {
     std::string fName =
@@ -101,7 +105,7 @@ TEST_CASE(
 }
 
 TEST_CASE("Github #2225: failure round-tripping mol block with Q atoms",
-          "[bug,writer]") {
+          "[bug][writer]") {
   std::string rdbase = getenv("RDBASE");
   SECTION("basics") {
     std::string fName =
@@ -182,7 +186,7 @@ TEST_CASE("Github #2225: failure round-tripping mol block with Q atoms",
 }
 TEST_CASE(
     "Github #2229: problem round-tripping mol files with bond topology info",
-    "[bug,writer]") {
+    "[bug][writer]") {
   std::string rdbase = getenv("RDBASE");
   std::string fName =
       rdbase + "/Code/GraphMol/FileParsers/test_data/github2229_1.mol";
@@ -215,7 +219,7 @@ TEST_CASE(
     REQUIRE(mol2->getBondWithIdx(7)->hasQuery());
   }
 }
-TEST_CASE("preserve mol file properties on bonds", "[parser,ctab]") {
+TEST_CASE("preserve mol file properties on bonds", "[reader][ctab]") {
   SECTION("basics") {
     std::string molblock = R"CTAB(
   Mrv1810 02111915042D          
@@ -272,7 +276,7 @@ M  END
 }
 
 TEST_CASE("github #2277 : Failure when parsing mol block with M PXA",
-          "[parser,ctab]") {
+          "[reader][ctab]") {
   std::string molblock = R"CTAB(
   Mrv1810 02151911552D          
 
@@ -425,7 +429,7 @@ M  END)CTAB";
   }
 }
 
-TEST_CASE("parsing of SCN lines", "[bug, sgroups]") {
+TEST_CASE("parsing of SCN lines", "[bug][sgroups]") {
   SECTION("basics") {
     std::string molblock = R"CTAB(
   MJ171200
@@ -613,7 +617,7 @@ M  END
   }
 }
 
-TEST_CASE("A couple more S group problems", "[bug, sgroups]") {
+TEST_CASE("A couple more S group problems", "[bug][sgroups]") {
   std::string molblock = R"CTAB(CHEMBL3666739
       SciTegic05171617282D
 
@@ -738,7 +742,7 @@ M  END
   }
 }
 
-TEST_CASE("XYZ", "[XYZ,writer]") {
+TEST_CASE("XYZ", "[XYZ][writer]") {
   SECTION("basics") {
     std::unique_ptr<RWMol> mol{new RWMol{}};
     mol->setProp(common_properties::_Name,
@@ -771,7 +775,7 @@ H      0.635000    0.635000    0.635000
   }
 }
 
-TEST_CASE("valence writing 1", "[bug,writer]") {
+TEST_CASE("valence writing 1", "[bug][writer]") {
   SECTION("carbon") {
     std::string molblock = R"CTAB(carbon atom
 
@@ -815,7 +819,7 @@ M  END)CTAB";
 }
 
 TEST_CASE("Github #2695: Error when a squiggle bond is in an aromatic ring",
-          "[bug,reader]") {
+          "[bug][reader]") {
   SECTION("reported") {
     auto ctab = R"CTAB(
   -ISIS-  -- StrEd -- 
@@ -868,7 +872,7 @@ M  END)CTAB";
   }
 }
 
-TEST_CASE("Github #2917: _ctab _mol2 and _pdb support", "[feature,reader]") {
+TEST_CASE("Github #2917: _ctab _mol2 and _pdb support", "[feature][reader]") {
   SECTION("_ctab") {
     auto mol = R"CTAB(
   Mrv1810 01292008292D          
@@ -1000,7 +1004,7 @@ GASTEIGER
   }
 }
 
-TEST_CASE("handling STBOX properties from v3k ctabs", "[feature,v3k]") {
+TEST_CASE("handling STBOX properties from v3k ctabs", "[feature][v3k]") {
   SECTION("atoms and bonds") {
     auto mol = R"CTAB(basic test
   Mrv1810 01292006422D          
@@ -1144,7 +1148,7 @@ M  END
   }
 }
 
-TEST_CASE("github #2829: support MRV_IMPLICIT_H", "[feature,sgroups]") {
+TEST_CASE("github #2829: support MRV_IMPLICIT_H", "[feature][sgroups]") {
   SECTION("basics v2k") {
     auto mol = R"CTAB(
   Mrv1810 01302015262D          
@@ -1291,7 +1295,7 @@ M  END
   }
 }
 
-TEST_CASE("extra v3k mol file properties", "[ctab,v3k]") {
+TEST_CASE("extra v3k mol file properties", "[ctab][v3k]") {
   SECTION("ATTCHPT") {
     auto mol = R"CTAB(
   Mrv2007 03132014352D          
@@ -1427,5 +1431,629 @@ M  END)CTAB"_ctab;
     auto molb = MolToV3KMolBlock(*mol);
     CHECK(molb.find("ENDPTS=(3 1 2 3) ATTACH=ANY") != std::string::npos);
     CHECK(molb.find("RXCTR=1") != std::string::npos);
+  }
+}
+
+TEST_CASE(
+    "Problems parsing SGroup abbreviations with multiple attachment points",
+    "[bug][parser]") {
+  std::string rdbase = getenv("RDBASE");
+  SECTION("basics") {
+    std::string fName =
+        rdbase + "/Code/GraphMol/FileParsers/test_data/sgroup_ap_bug.mol";
+    std::unique_ptr<RWMol> mol(MolFileToMol(fName));
+    REQUIRE(mol);
+
+    const auto &sgroups = getSubstanceGroups(*mol);
+    CHECK(sgroups.size() == 3);
+    CHECK(sgroups[0].hasProp("TYPE"));
+    CHECK(sgroups[0].getProp<std::string>("TYPE") == "SUP");
+    CHECK(sgroups[0].getAttachPoints().size() == 1);
+    CHECK(sgroups[1].hasProp("TYPE"));
+    CHECK(sgroups[1].getProp<std::string>("TYPE") == "SUP");
+    CHECK(sgroups[1].getAttachPoints().size() == 1);
+    CHECK(sgroups[2].hasProp("TYPE"));
+    CHECK(sgroups[2].getProp<std::string>("TYPE") == "SUP");
+    CHECK(sgroups[2].getAttachPoints().size() == 2);
+  }
+}
+
+TEST_CASE(
+    "github #3207: Attachment point info not being read from V2000 mol blocks",
+    "[ctab][bug]") {
+  SECTION("ATTCHPT") {
+    auto mol = R"CTAB(
+  Mrv1824 06092009122D          
+
+  3  2  0  0  0  0            999 V2000
+   -8.9061    3.8393    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -8.1917    4.2518    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -7.4772    3.8393    0.0000 N   0  0  0  0  0  0  0  0  0  0  0  0
+  1  2  1  0  0  0  0
+  2  3  1  0  0  0  0
+M  APO  2   1   2   2   1
+M  END
+)CTAB"_ctab;
+    REQUIRE(mol);
+    CHECK(mol->getAtomWithIdx(0)->getProp<int>(
+              common_properties::molAttachPoint) == 2);
+    CHECK(mol->getAtomWithIdx(1)->getProp<int>(
+              common_properties::molAttachPoint) == 1);
+    auto molb = MolToV3KMolBlock(*mol);
+    CHECK(molb.find("ATTCHPT=1") != std::string::npos);
+    CHECK(molb.find("ATTCHPT=2") != std::string::npos);
+  }
+  SECTION("Val=-1") {
+    auto mol = R"CTAB(
+  Mrv1824 06092009122D          
+
+  3  2  0  0  0  0            999 V2000
+   -8.9061    3.8393    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -8.1917    4.2518    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -7.4772    3.8393    0.0000 N   0  0  0  0  0  0  0  0  0  0  0  0
+  1  2  1  0  0  0  0
+  2  3  1  0  0  0  0
+M  APO  2   1   3   2   1
+M  END
+)CTAB"_ctab;
+    REQUIRE(mol);
+    CHECK(mol->getAtomWithIdx(0)->getProp<int>(
+              common_properties::molAttachPoint) == -1);
+    CHECK(mol->getAtomWithIdx(1)->getProp<int>(
+              common_properties::molAttachPoint) == 1);
+    auto molb = MolToV3KMolBlock(*mol);
+    CHECK(molb.find("ATTCHPT=1") != std::string::npos);
+    CHECK(molb.find("ATTCHPT=-1") != std::string::npos);
+  }
+}
+
+TEST_CASE("XBHEAD and XBCORR causing parser failures", "[bug][reader]") {
+  std::string rdbase = getenv("RDBASE");
+  SECTION("basics") {
+    std::string fName =
+        rdbase +
+        "/Code/GraphMol/FileParsers/sgroup_test_data/repeat_groups_query1.mol";
+    std::unique_ptr<RWMol> mol(MolFileToMol(fName));
+    REQUIRE(mol);
+    const auto &sgroups = getSubstanceGroups(*mol);
+    CHECK(sgroups.size() == 1);
+    CHECK(sgroups[0].hasProp("TYPE"));
+    CHECK(sgroups[0].getProp<std::string>("TYPE") == "SRU");
+    CHECK(sgroups[0].hasProp("XBHEAD"));
+    auto v = sgroups[0].getProp<std::vector<unsigned int>>("XBHEAD");
+    CHECK(v.size() == 2);
+    CHECK(v[0] == 5);
+    CHECK(v[1] == 0);
+
+    CHECK(sgroups[0].hasProp("XBCORR"));
+    CHECK(sgroups[0].getProp<std::vector<unsigned int>>("XBCORR").size() == 4);
+
+    auto mb = MolToV3KMolBlock(*mol);
+    CHECK(mb.find("XBHEAD=(2 6 1)") != std::string::npos);
+    CHECK(mb.find("XBCORR=(4 6 6 1 1)") != std::string::npos);
+  }
+}
+TEST_CASE("LINKNODE information being ignored", "[ctab][bug]") {
+  SECTION("v3000") {
+    auto mol = R"CTAB(
+  Mrv2007 06212005162D          
+
+  0  0  0     0  0            999 V3000
+M  V30 BEGIN CTAB
+M  V30 COUNTS 5 5 0 0 0
+M  V30 BEGIN ATOM
+M  V30 1 C -3.25 12.2683 0 0
+M  V30 2 C -4.4959 11.3631 0 0
+M  V30 3 C -4.02 9.8986 0 0
+M  V30 4 C -2.48 9.8986 0 0
+M  V30 5 C -2.0041 11.3631 0 0
+M  V30 END ATOM
+M  V30 BEGIN BOND
+M  V30 1 1 1 2
+M  V30 2 1 2 3
+M  V30 3 1 3 4
+M  V30 4 1 4 5
+M  V30 5 1 1 5
+M  V30 END BOND
+M  V30 LINKNODE 1 3 2 1 2 1 5
+M  V30 LINKNODE 1 4 2 4 3 4 5
+M  V30 END CTAB
+M  END
+)CTAB"_ctab;
+    REQUIRE(mol);
+    CHECK(mol->getProp<std::string>(common_properties::molFileLinkNodes) ==
+          "1 3 2 1 2 1 5|1 4 2 4 3 4 5");
+    auto molb = MolToV3KMolBlock(*mol);
+    CHECK(molb.find("LINKNODE 1 3 2 1 2 1 5") != std::string::npos);
+    CHECK(molb.find("LINKNODE 1 4 2 4 3 4 5") != std::string::npos);
+  }
+  SECTION("v2000") {
+    auto mol = R"CTAB(
+  Mrv2007 06222015182D          
+
+  5  5  0  0  0  0            999 V2000
+   -1.7411    6.5723    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -2.4085    6.0874    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -2.1536    5.3028    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -1.3286    5.3028    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -1.0736    6.0874    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+  1  2  1  0  0  0  0
+  2  3  1  0  0  0  0
+  3  4  1  0  0  0  0
+  4  5  1  0  0  0  0
+  1  5  1  0  0  0  0
+M  LIN  2   1   3   2   5   4   4   3   5
+M  END
+)CTAB"_ctab;
+    REQUIRE(mol);
+    CHECK(mol->getProp<std::string>(common_properties::molFileLinkNodes) ==
+          "1 3 2 1 2 1 5|1 4 2 4 3 4 5");
+    auto molb = MolToV3KMolBlock(*mol);
+    CHECK(molb.find("LINKNODE 1 3 2 1 2 1 5") != std::string::npos);
+    CHECK(molb.find("LINKNODE 1 4 2 4 3 4 5") != std::string::npos);
+  }
+}
+TEST_CASE("more complex queries in CTAB parsers", "[ctab]") {
+  SECTION("v3000") {
+    auto mol = R"CTAB(*.*.*.*.*.*.*.* |$;Q_e;M_p;X_p;AH_p;QH_p;MH_p;XH_p$|
+  manual  06272007272D          
+
+  0  0  0     0  0            999 V3000
+M  V30 BEGIN CTAB
+M  V30 COUNTS 8 0 0 0 0
+M  V30 BEGIN ATOM
+M  V30 1 A -3.2083 5.25 0 0
+M  V30 2 Q -0.25 6 0 0
+M  V30 3 M 4.5417 6.0417 0 0
+M  V30 4 X 1.2917 4.2083 0 0
+M  V30 5 AH -4.2083 5.25 0 0
+M  V30 6 QH -1.25 6 0 0
+M  V30 7 MH 3.5417 6.0417 0 0
+M  V30 8 XH 0.2917 4.2083 0 0
+M  V30 END ATOM
+M  V30 END CTAB
+M  END
+)CTAB"_ctab;
+    REQUIRE(mol);
+    for (const auto atom : mol->atoms()) {
+      REQUIRE(atom->hasQuery());
+      CHECK(!atom->getQuery()->getTypeLabel().empty());
+    }
+    std::string pkl;
+    MolPickler::pickleMol(*mol, pkl);
+    ROMol cp(pkl);
+    for (const auto atom : cp.atoms()) {
+      REQUIRE(atom->hasQuery());
+      CHECK(!atom->getQuery()->getTypeLabel().empty());
+      CHECK(atom->getQuery()->getTypeLabel() ==
+            mol->getAtomWithIdx(atom->getIdx())->getQuery()->getTypeLabel());
+    }
+    auto molb = MolToV3KMolBlock(*mol);
+    CHECK(molb.find(" A ") != std::string::npos);
+    CHECK(molb.find(" AH ") != std::string::npos);
+    CHECK(molb.find(" Q ") != std::string::npos);
+    CHECK(molb.find(" QH ") != std::string::npos);
+    CHECK(molb.find(" M ") != std::string::npos);
+    CHECK(molb.find(" MH ") != std::string::npos);
+    CHECK(molb.find(" X ") != std::string::npos);
+    CHECK(molb.find(" XH ") != std::string::npos);
+  }
+  SECTION("v2000") {
+    auto mol = R"CTAB(*.*.*.*.*.*.*.* |$;Q_e;M_p;X_p;AH_p;QH_p;MH_p;XH_p$|
+  manual  06272007272D          
+
+  8  0  0  0  0  0            999 V2000
+   -3.2083    5.2500    0.0000 A   0  0  0  0  0  0  0  0  0  0  0  0
+   -0.2500    6.0000    0.0000 Q   0  0  0  0  0  0  0  0  0  0  0  0
+    4.5417    6.0417    0.0000 M   0  0  0  0  0  0  0  0  0  0  0  0
+    1.2917    4.2083    0.0000 X   0  0  0  0  0  0  0  0  0  0  0  0
+   -4.2083    5.2500    0.0000 AH  0  0  0  0  0  0  0  0  0  0  0  0
+   -1.2500    6.0000    0.0000 QH  0  0  0  0  0  0  0  0  0  0  0  0
+    3.5417    6.0417    0.0000 MH  0  0  0  0  0  0  0  0  0  0  0  0
+    0.2917    4.2083    0.0000 XH  0  0  0  0  0  0  0  0  0  0  0  0
+M  END
+)CTAB"_ctab;
+    REQUIRE(mol);
+    for (const auto atom : mol->atoms()) {
+      REQUIRE(atom->hasQuery());
+      CHECK(!atom->getQuery()->getTypeLabel().empty());
+    }
+    std::string pkl;
+    MolPickler::pickleMol(*mol, pkl);
+    ROMol cp(pkl);
+    for (const auto atom : cp.atoms()) {
+      REQUIRE(atom->hasQuery());
+      CHECK(!atom->getQuery()->getTypeLabel().empty());
+      CHECK(atom->getQuery()->getTypeLabel() ==
+            mol->getAtomWithIdx(atom->getIdx())->getQuery()->getTypeLabel());
+    }
+    auto molb = MolToMolBlock(*mol);
+    CHECK(molb.find(" A ") != std::string::npos);
+    CHECK(molb.find(" AH ") != std::string::npos);
+    CHECK(molb.find(" Q ") != std::string::npos);
+    CHECK(molb.find(" QH ") != std::string::npos);
+    CHECK(molb.find(" M ") != std::string::npos);
+    CHECK(molb.find(" MH ") != std::string::npos);
+    CHECK(molb.find(" X ") != std::string::npos);
+    CHECK(molb.find(" XH ") != std::string::npos);
+    /// SMARTS-based queries are not written for these:
+    CHECK(molb.find("V    ") == std::string::npos);
+  }
+}
+
+TEST_CASE("read metadata from PNG", "[reader][PNG]") {
+  std::string rdbase = getenv("RDBASE");
+  SECTION("basics") {
+    std::string fname =
+        rdbase + "/Code/GraphMol/FileParsers/test_data/colchicine.png";
+    auto metadata = PNGFileToMetadata(fname);
+
+    auto iter =
+        std::find_if(metadata.begin(), metadata.end(),
+                     [](const std::pair<std::string, std::string> &val) {
+                       return boost::starts_with(val.first, PNGData::smilesTag);
+                     });
+    REQUIRE(iter != metadata.end());
+    CHECK(
+        iter->second ==
+        "COc1cc2c(-c3ccc(OC)c(=O)cc3[C@@H](NC(C)=O)CC2)c(OC)c1OC "
+        "|(6.46024,1.03002,;5.30621,1.98825,;3.89934,1.46795,;2.74531,2.42618,;"
+        "1.33844,1.90588,;1.0856,0.427343,;-0.228013,-0.296833,;0.1857,-1."
+        "73865,;-0.683614,-2.96106,;-2.18134,-3.04357,;-2.75685,-4.42878,;-4."
+        "24422,-4.62298,;-3.17967,-1.92404,;-4.62149,-2.33775,;-2.92683,-0."
+        "445502,;-1.61322,0.278673,;-2.02693,1.72049,;-3.50547,1.97333,;-4."
+        "02577,3.3802,;-5.50431,3.63304,;-3.06754,4.53423,;-1.15762,2.9429,;0."
+        "340111,3.02541,;2.23963,-0.530891,;1.98679,-2.00943,;3.14082,-2.96766,"
+        ";3.6465,-0.0105878,;4.80053,-0.968822,;4.54769,-2.44736,)|");
+  }
+  SECTION("no metadata") {
+    std::string fname =
+        rdbase +
+        "/Code/GraphMol/FileParsers/test_data/colchicine.no_metadata.png";
+    auto metadata = PNGFileToMetadata(fname);
+    REQUIRE(metadata.empty());
+  }
+  SECTION("bad PNG") {
+    std::string text = "NOT A PNG";
+    REQUIRE_THROWS_AS(PNGStringToMetadata(text), FileParseException);
+  }
+
+  SECTION("truncated PNG") {
+    std::string fname =
+        rdbase + "/Code/GraphMol/FileParsers/test_data/colchicine.png";
+    auto istr = std::ifstream(fname, std::ios_base::binary);
+    istr.seekg(0, istr.end);
+    auto sz = istr.tellg();
+    istr.seekg(0, istr.beg);
+    char *buff = new char[sz];
+    istr.read(buff, sz);
+    std::string data(buff, sz);
+    delete[] buff;
+    auto metadata = PNGStringToMetadata(data);
+    REQUIRE(!metadata.empty());
+    REQUIRE_THROWS_AS(PNGStringToMetadata(data.substr(1000)),
+                      FileParseException);
+  }
+#ifdef RDK_USE_BOOST_IOSTREAMS
+  SECTION("compressed metadata") {
+    std::string fname =
+        rdbase + "/Code/GraphMol/FileParsers/test_data/colchicine.mrv.png";
+    auto metadata = PNGFileToMetadata(fname);
+    auto iter =
+        std::find_if(metadata.begin(), metadata.end(),
+                     [](const std::pair<std::string, std::string> &val) {
+                       return val.first == "molSource";
+                     });
+    REQUIRE(iter != metadata.end());
+    CHECK(iter->second.find("<MChemicalStruct>") != std::string::npos);
+  }
+#endif
+}
+
+TEST_CASE("write metadata to PNG", "[writer][PNG]") {
+  std::string rdbase = getenv("RDBASE");
+  SECTION("basics") {
+    std::string fname =
+        rdbase +
+        "/Code/GraphMol/FileParsers/test_data/colchicine.no_metadata.png";
+    std::vector<std::pair<std::string, std::string>> metadata;
+    metadata.push_back(std::make_pair(
+        PNGData::smilesTag,
+        std::string(
+            "COc1cc2c(-c3ccc(OC)c(=O)cc3[C@@H](NC(C)=O)CC2)c(OC)c1OC "
+            "|(6.46024,1.03002,;5.30621,1.98825,;3.89934,1.46795,;2.74531,2."
+            "42618,;1.33844,1.90588,;1.0856,0.427343,;-0.228013,-0.296833,;0."
+            "1857,-1.73865,;-0.683614,-2.96106,;-2.18134,-3.04357,;-2.75685,-4."
+            "42878,;-4.24422,-4.62298,;-3.17967,-1.92404,;-4.62149,-2.33775,;-"
+            "2.92683,-0.445502,;-1.61322,0.278673,;-2.02693,1.72049,;-3.50547,"
+            "1.97333,;-4.02577,3.3802,;-5.50431,3.63304,;-3.06754,4.53423,;-1."
+            "15762,2.9429,;0.340111,3.02541,;2.23963,-0.530891,;1.98679,-2."
+            "00943,;3.14082,-2.96766,;3.6465,-0.0105878,;4.80053,-0.968822,;4."
+            "54769,-2.44736,)|")));
+    auto pngData = addMetadataToPNGFile(fname, metadata);
+    std::ofstream ofs("write_metadata.png");
+    ofs.write(pngData.c_str(), pngData.size());
+    ofs.flush();
+    auto ometadata = PNGStringToMetadata(pngData);
+    REQUIRE(ometadata.size() == metadata.size());
+    for (unsigned int i = 0; i < ometadata.size(); ++i) {
+      CHECK(ometadata[i].first == metadata[i].first);
+      CHECK(ometadata[i].second == metadata[i].second);
+    }
+  }
+}
+
+TEST_CASE("read molecule from PNG", "[reader][PNG]") {
+  std::string rdbase = getenv("RDBASE");
+  SECTION("smiles") {
+    std::string fname =
+        rdbase + "/Code/GraphMol/FileParsers/test_data/colchicine.png";
+    std::unique_ptr<ROMol> mol(PNGFileToMol(fname));
+    REQUIRE(mol);
+    CHECK(mol->getNumAtoms() == 29);
+    CHECK(mol->getNumConformers() == 1);
+  }
+  SECTION("mol") {
+    std::string fname =
+        rdbase + "/Code/GraphMol/FileParsers/test_data/colchicine.mol.png";
+    std::unique_ptr<ROMol> mol(PNGFileToMol(fname));
+    REQUIRE(mol);
+    CHECK(mol->getNumAtoms() == 29);
+    CHECK(mol->getNumConformers() == 1);
+  }
+  SECTION("no metadata") {
+    std::string fname =
+        rdbase +
+        "/Code/GraphMol/FileParsers/test_data/colchicine.no_metadata.png";
+    REQUIRE_THROWS_AS(PNGFileToMol(fname), FileParseException);
+  }
+}
+
+TEST_CASE("write molecule to PNG", "[writer][PNG]") {
+  std::string rdbase = getenv("RDBASE");
+  SECTION("basics") {
+    std::string fname =
+        rdbase +
+        "/Code/GraphMol/FileParsers/test_data/colchicine.no_metadata.png";
+    std::ifstream strm(fname, std::ios::in | std::ios::binary);
+    auto colchicine =
+        "COc1cc2c(c(OC)c1OC)-c1ccc(OC)c(=O)cc1[C@@H](NC(C)=O)CC2"_smiles;
+    REQUIRE(colchicine);
+    auto pngString = addMolToPNGStream(*colchicine, strm);
+    // read it back out
+    std::unique_ptr<ROMol> mol(PNGStringToMol(pngString));
+    REQUIRE(mol);
+    CHECK(mol->getNumAtoms() == 29);
+    CHECK(mol->getNumConformers() == 0);
+  }
+  SECTION("use SMILES") {
+    std::string fname =
+        rdbase +
+        "/Code/GraphMol/FileParsers/test_data/colchicine.no_metadata.png";
+    std::ifstream strm(fname, std::ios::in | std::ios::binary);
+    auto colchicine =
+        "COc1cc2c(c(OC)c1OC)-c1ccc(OC)c(=O)cc1[C@@H](NC(C)=O)CC2"_smiles;
+    REQUIRE(colchicine);
+    bool includePkl = false;
+    auto pngString = addMolToPNGStream(*colchicine, strm, includePkl);
+    // read it back out
+    std::unique_ptr<ROMol> mol(PNGStringToMol(pngString));
+    REQUIRE(mol);
+    CHECK(mol->getNumAtoms() == 29);
+    CHECK(mol->getNumConformers() == 0);
+  }
+  SECTION("use MOL") {
+    std::string fname =
+        rdbase +
+        "/Code/GraphMol/FileParsers/test_data/colchicine.no_metadata.png";
+    std::ifstream strm(fname, std::ios::in | std::ios::binary);
+    auto colchicine =
+        "COc1cc2c(c(OC)c1OC)-c1ccc(OC)c(=O)cc1[C@@H](NC(C)=O)CC2"_smiles;
+    REQUIRE(colchicine);
+    bool includePkl = false;
+    bool includeSmiles = false;
+    bool includeMol = true;
+    auto pngString = addMolToPNGStream(*colchicine, strm, includePkl,
+                                       includeSmiles, includeMol);
+    // read it back out
+    std::unique_ptr<ROMol> mol(PNGStringToMol(pngString));
+    REQUIRE(mol);
+    CHECK(mol->getNumAtoms() == 29);
+    CHECK(mol->getNumConformers() == 1);
+  }
+}
+TEST_CASE("multiple molecules in the PNG", "[writer][PNG]") {
+  std::string rdbase = getenv("RDBASE");
+
+  std::vector<std::string> smiles = {"c1ccccc1", "CCCOC", "c1ncccc1"};
+  std::vector<std::unique_ptr<ROMol>> mols;
+  for (const auto smi : smiles) {
+    mols.emplace_back(SmilesToMol(smi));
+  }
+  SECTION("pickles") {
+    std::vector<std::pair<std::string, std::string>> metadata;
+    for (const auto &mol : mols) {
+      std::string pkl;
+      MolPickler::pickleMol(*mol, pkl);
+      metadata.push_back(std::make_pair(PNGData::pklTag, pkl));
+    }
+    // for the purposes of this test we'll add the metadata to an unrelated
+    // PNG
+    std::string fname =
+        rdbase +
+        "/Code/GraphMol/FileParsers/test_data/colchicine.no_metadata.png";
+    std::ifstream strm(fname, std::ios::in | std::ios::binary);
+    auto png = addMetadataToPNGStream(strm, metadata);
+    std::stringstream pngstrm(png);
+    auto molsRead = PNGStreamToMols(pngstrm);
+    REQUIRE(molsRead.size() == mols.size());
+    for (unsigned i = 0; i < molsRead.size(); ++i) {
+      CHECK(MolToSmiles(*molsRead[i]) == MolToSmiles(*mols[i]));
+    }
+  }
+  SECTION("SMILES") {
+    std::vector<std::pair<std::string, std::string>> metadata;
+    for (const auto &mol : mols) {
+      std::string pkl = "BOGUS";
+      // add bogus pickle data so we know that's not being read
+      metadata.push_back(std::make_pair(PNGData::pklTag, pkl));
+      metadata.push_back(std::make_pair(PNGData::smilesTag, MolToSmiles(*mol)));
+    }
+    // for the purposes of this test we'll add the metadata to an unrelated
+    // PNG
+    std::string fname =
+        rdbase +
+        "/Code/GraphMol/FileParsers/test_data/colchicine.no_metadata.png";
+    std::ifstream strm(fname, std::ios::in | std::ios::binary);
+    auto png = addMetadataToPNGStream(strm, metadata);
+    std::stringstream pngstrm(png);
+    auto molsRead = PNGStreamToMols(pngstrm, PNGData::smilesTag);
+    REQUIRE(molsRead.size() == mols.size());
+    for (unsigned i = 0; i < molsRead.size(); ++i) {
+      CHECK(MolToSmiles(*molsRead[i]) == MolToSmiles(*mols[i]));
+    }
+  }
+}
+
+TEST_CASE("multiple molecules in the PNG, second example", "[writer][PNG]") {
+  std::string rdbase = getenv("RDBASE");
+
+  std::vector<std::string> smiles = {"c1ccccc1", "CCO", "CC(=O)O", "c1ccccn1"};
+  std::vector<std::unique_ptr<ROMol>> mols;
+  for (const auto smi : smiles) {
+    mols.emplace_back(SmilesToMol(smi));
+  }
+  SECTION("pickles") {
+    std::string fname =
+        rdbase + "/Code/GraphMol/FileParsers/test_data/multiple_mols.png";
+    std::ifstream strm(fname, std::ios::in | std::ios::binary);
+    auto molsRead = PNGStreamToMols(strm);
+    REQUIRE(molsRead.size() == mols.size());
+    for (unsigned i = 0; i < molsRead.size(); ++i) {
+      CHECK(MolToSmiles(*molsRead[i]) == MolToSmiles(*mols[i]));
+    }
+  }
+  SECTION("SMILES") {
+    std::vector<std::pair<std::string, std::string>> metadata;
+    for (const auto &mol : mols) {
+      std::string pkl = "BOGUS";
+      // add bogus pickle data so we know that's not being read
+      metadata.push_back(std::make_pair(PNGData::pklTag, pkl));
+      metadata.push_back(std::make_pair(PNGData::smilesTag, MolToSmiles(*mol)));
+    }
+    // for the purposes of this test we'll add the metadata to an unrelated
+    // PNG
+    std::string fname =
+        rdbase +
+        "/Code/GraphMol/FileParsers/test_data/colchicine.no_metadata.png";
+    std::ifstream strm(fname, std::ios::in | std::ios::binary);
+    auto png = addMetadataToPNGStream(strm, metadata);
+    std::stringstream pngstrm(png);
+    auto molsRead = PNGStreamToMols(pngstrm, PNGData::smilesTag);
+    REQUIRE(molsRead.size() == mols.size());
+    for (unsigned i = 0; i < molsRead.size(); ++i) {
+      CHECK(MolToSmiles(*molsRead[i]) == MolToSmiles(*mols[i]));
+    }
+  }
+}
+
+TEST_CASE("github #3413: V3K mol blocks with no atoms fail to parse", "[bug]") {
+  SECTION("basics") {
+    auto m = R"CTAB(6065
+     RDKit          2D
+
+  0  0  0  0  0  0  0  0  0  0999 V3000
+M  V30 BEGIN CTAB
+M  V30 COUNTS 0 0 0 0 0
+M  V30 BEGIN ATOM
+M  V30 END ATOM
+M  V30 END CTAB
+M  END)CTAB"_ctab;
+    REQUIRE(m);
+    CHECK(m->getNumAtoms() == 0);
+    CHECK(m->getNumBonds() == 0);
+  }
+}
+
+TEST_CASE("github #3415: problem parsing SGroup data containing \" ", "[bug]") {
+  SECTION("basics") {
+    auto m = R"CTAB(
+  Mrv2014 09172018222D          
+
+  0  0  0     0  0            999 V3000
+M  V30 BEGIN CTAB
+M  V30 COUNTS 6 6 1 0 0
+M  V30 BEGIN ATOM
+M  V30 1 C 1.3337 2.31 0 0
+M  V30 2 C 2.6674 1.54 0 0
+M  V30 3 C 2.6674 -0 0 0
+M  V30 4 C 1.3337 -0.77 0 0
+M  V30 5 C 0 0 0 0
+M  V30 6 C 0 1.54 0 0
+M  V30 END ATOM
+M  V30 BEGIN BOND
+M  V30 1 2 1 2
+M  V30 2 1 2 3
+M  V30 3 2 3 4
+M  V30 4 1 4 5
+M  V30 5 2 5 6
+M  V30 6 1 1 6
+M  V30 END BOND
+M  V30 BEGIN SGROUP
+M  V30 1 DAT 0 ATOMS=(1 1) FIELDNAME=Tempstruct FIELDINFO="""" -
+M  V30 FIELDDISP="    2.1037    1.5400    DA    ALL  0       0" QUERYOP="""" -
+M  V30 FIELDDATA=Foo1
+M  V30 END SGROUP
+M  V30 END CTAB
+M  END
+)CTAB"_ctab;
+    REQUIRE(m);
+    CHECK(m->getNumAtoms() == 6);
+    CHECK(m->getNumBonds() == 6);
+    auto sgs = getSubstanceGroups(*m);
+    REQUIRE(sgs.size() == 1);
+    CHECK(sgs[0].getProp<std::string>("TYPE") == "DAT");
+    CHECK(sgs[0].getProp<std::string>("FIELDINFO") == "\"");
+    CHECK(sgs[0].getProp<std::string>("QUERYOP") == "\"");
+  }
+  SECTION("empty string") {
+    auto m = R"CTAB(
+  Mrv2014 09172018222D          
+
+  0  0  0     0  0            999 V3000
+M  V30 BEGIN CTAB
+M  V30 COUNTS 6 6 1 0 0
+M  V30 BEGIN ATOM
+M  V30 1 C 1.3337 2.31 0 0
+M  V30 2 C 2.6674 1.54 0 0
+M  V30 3 C 2.6674 -0 0 0
+M  V30 4 C 1.3337 -0.77 0 0
+M  V30 5 C 0 0 0 0
+M  V30 6 C 0 1.54 0 0
+M  V30 END ATOM
+M  V30 BEGIN BOND
+M  V30 1 2 1 2
+M  V30 2 1 2 3
+M  V30 3 2 3 4
+M  V30 4 1 4 5
+M  V30 5 2 5 6
+M  V30 6 1 1 6
+M  V30 END BOND
+M  V30 BEGIN SGROUP
+M  V30 1 DAT 0 ATOMS=(1 1) FIELDNAME=Tempstruct FIELDINFO="" -
+M  V30 FIELDDISP="    2.1037    1.5400    DA    ALL  0       0" QUERYOP="""" -
+M  V30 FIELDDATA=Foo1
+M  V30 END SGROUP
+M  V30 END CTAB
+M  END
+)CTAB"_ctab;
+    REQUIRE(m);
+    CHECK(m->getNumAtoms() == 6);
+    CHECK(m->getNumBonds() == 6);
+    auto sgs = getSubstanceGroups(*m);
+    REQUIRE(sgs.size() == 1);
+    CHECK(sgs[0].getProp<std::string>("TYPE") == "DAT");
+    CHECK(sgs[0].getProp<std::string>("FIELDINFO").empty());
+    CHECK(sgs[0].getProp<std::string>("QUERYOP") == "\"");
   }
 }

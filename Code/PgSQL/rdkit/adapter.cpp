@@ -132,7 +132,7 @@ extern "C" CROMol constructROMol(Mol *data) {
     ByteA b(data);
     MolPickler::molFromPickle(b, mol);
   } catch (MolPicklerException &e) {
-    elog(ERROR, "molFromPickle: %s", e.message());
+    elog(ERROR, "molFromPickle: %s", e.what());
   } catch (...) {
     elog(ERROR, "constructROMol: Unknown exception");
   }
@@ -147,7 +147,7 @@ extern "C" Mol *deconstructROMol(CROMol data) {
   try {
     MolPickler::pickleMol(mol, b);
   } catch (MolPicklerException &e) {
-    elog(ERROR, "pickleMol: %s", e.message());
+    elog(ERROR, "pickleMol: %s", e.what());
   } catch (...) {
     elog(ERROR, "deconstructROMol: Unknown exception");
   }
@@ -646,7 +646,7 @@ extern "C" CROMol MolAdjustQueryProperties(CROMol i, const char *params) {
     try {
       MolOps::parseAdjustQueryParametersFromJSON(p, pstring);
     } catch (const ValueErrorException &e) {
-      elog(ERROR, e.message());
+      elog(ERROR, e.what());
     } catch (...) {
       elog(WARNING,
            "adjustQueryProperties: Invalid argument \'params\' ignored");
@@ -950,7 +950,7 @@ extern "C" double calcSparseTanimotoSml(CSfp a, CSfp b) {
   try {
     res = TanimotoSimilarity(*(SparseFP *)a, *(SparseFP *)b);
   } catch (ValueErrorException &e) {
-    elog(ERROR, "TanimotoSimilarity: %s", e.message());
+    elog(ERROR, "TanimotoSimilarity: %s", e.what());
   } catch (...) {
     elog(ERROR, "calcSparseTanimotoSml: Unknown exception");
   }
@@ -968,7 +968,7 @@ extern "C" double calcSparseDiceSml(CSfp a, CSfp b) {
   try {
     res = DiceSimilarity(*(SparseFP *)a, *(SparseFP *)b);
   } catch (ValueErrorException &e) {
-    elog(ERROR, "DiceSimilarity: %s", e.message());
+    elog(ERROR, "DiceSimilarity: %s", e.what());
   } catch (...) {
     elog(ERROR, "calcSparseDiceSml: Unknown exception");
   }
@@ -1476,7 +1476,7 @@ extern "C" CChemicalReaction constructChemReact(Reaction *data) {
     ByteA b(data);
     ReactionPickler::reactionFromPickle(b, rxn);
   } catch (ReactionPicklerException &e) {
-    elog(ERROR, "reactionFromPickle: %s", e.message());
+    elog(ERROR, "reactionFromPickle: %s", e.what());
   } catch (...) {
     elog(ERROR, "constructChemReact: Unknown exception");
   }
@@ -1491,7 +1491,7 @@ extern "C" Reaction *deconstructChemReact(CChemicalReaction data) {
   try {
     ReactionPickler::pickleReaction(rxn, b);
   } catch (ReactionPicklerException &e) {
-    elog(ERROR, "pickleReaction: %s", e.message());
+    elog(ERROR, "pickleReaction: %s", e.what());
   } catch (...) {
     elog(ERROR, "deconstructChemReact: Unknown exception");
   }
@@ -1757,11 +1757,11 @@ extern "C" int ReactionSubstructFP(CChemicalReaction rxn,
 namespace {
 
 struct MoleculeDescriptors {
-  MoleculeDescriptors() : nAtoms(0), nBonds(0), nRings(0), MW(0.0) {}
-  unsigned nAtoms;
-  unsigned nBonds;
-  unsigned nRings;
-  double MW;
+  MoleculeDescriptors()  {}
+  unsigned nAtoms{0};
+  unsigned nBonds{0};
+  unsigned nRings{0};
+  double MW{0.0};
 };
 
 MoleculeDescriptors *calcMolecularDescriptorsReaction(
@@ -1923,24 +1923,6 @@ extern "C" CBfp makeReactionBFP(CChemicalReaction data, int size, int fpType) {
   } else {
     return nullptr;
   }
-}
-
-extern "C" char *computeMolHash(CROMol data, int *len) {
-  ROMol &mol = *(ROMol *)data;
-  static string text;
-  text.clear();
-  try {
-    // FIX: once R/S values are stored on the atoms, this will no longer be
-    // needed
-    MolOps::assignStereochemistry(mol);
-    text = RDKit::MolHash::generateMoleculeHashSet(mol);
-  } catch (...) {
-    ereport(WARNING,
-            (errcode(ERRCODE_WARNING), errmsg("computeMolHash: failed")));
-    text.clear();
-  }
-  *len = text.length();
-  return strdup(text.c_str());
 }
 
 extern "C" char *computeNMMolHash(CROMol data, const char *which) {

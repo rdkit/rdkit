@@ -470,7 +470,7 @@ void tanimotoNeighbors(const FPBReader_impl *dp_impl, const boost::uint8_t *bv,
           CalcBitmapTanimoto(dbv + j * dp_impl->numBytesStoredPerFingerprint,
                              bv, dp_impl->numBytesStoredPerFingerprint);
       if (tani >= threshold) {
-        res.push_back(std::make_pair(tani, i + j));
+        res.emplace_back(tani, i + j);
       }
     }
   }
@@ -524,7 +524,7 @@ void tverskyNeighbors(const FPBReader_impl *dp_impl, const boost::uint8_t *bv,
     // std::cerr << "  i:" << i << " " << tani << " ? " << threshold <<
     // std::endl;
     if (sim >= threshold) {
-      res.push_back(std::make_pair(sim, i));
+      res.emplace_back(sim, i);
     }
   }
   if (dp_impl->df_lazy) {

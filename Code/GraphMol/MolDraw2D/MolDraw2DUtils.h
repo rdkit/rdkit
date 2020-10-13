@@ -100,7 +100,7 @@ struct ContourParams {
   \param nContours: the number of contours to draw
   \param levels: the contours to use
   \param ps: additional parameters controlling the contouring.
-
+  \param mol: molecule to be used to adjust the scale of the drawing.
   If the \c levels argument is empty, the contour levels will be determined
   automatically from the max and min values on the grid and \c levels will
   be updated to include the contour levels.
@@ -108,18 +108,24 @@ struct ContourParams {
   If \c ps.fillGrid is set, the data on the grid will also be drawn using
   the color scheme in \c ps.colourMap
 
+  if the \c mol argument is given, it will be used to adjust the scale of
+  drawing.  This is because a common use is to draw the molecule onto
+  the contour, and it makes sense if it fits.
+
 */
 RDKIT_MOLDRAW2D_EXPORT void contourAndDrawGrid(
     MolDraw2D &drawer, const double *grid, const std::vector<double> &xcoords,
     const std::vector<double> &ycoords, size_t nContours,
-    std::vector<double> &levels, const ContourParams &ps = ContourParams());
+    std::vector<double> &levels, const ContourParams &ps = ContourParams(),
+    const ROMol *mol = nullptr);
 //! \overload
 RDKIT_MOLDRAW2D_EXPORT inline void contourAndDrawGrid(
     MolDraw2D &drawer, const double *grid, const std::vector<double> &xcoords,
     const std::vector<double> &ycoords, size_t nContours = 10,
-    const ContourParams &ps = ContourParams()) {
+    const ContourParams &ps = ContourParams(), const ROMol *mol = nullptr) {
   std::vector<double> levels;
-  contourAndDrawGrid(drawer, grid, xcoords, ycoords, nContours, levels, ps);
+  contourAndDrawGrid(drawer, grid, xcoords, ycoords, nContours, levels, ps,
+                     mol);
 };
 
 //! Generates and draws contours for a set of gaussians
@@ -131,6 +137,7 @@ RDKIT_MOLDRAW2D_EXPORT inline void contourAndDrawGrid(
   \param nContours: the number of contours to draw
   \param levels: the contours to use
   \param ps: additional parameters controlling the contouring.
+  \param mol: molecule to be used to adjust the scale of the drawing.
 
   The values are calculated on a grid with spacing \c ps.gridResolution.
   If \c ps.setScale  is set, the grid size will be calculated based on the
@@ -144,19 +151,25 @@ RDKIT_MOLDRAW2D_EXPORT inline void contourAndDrawGrid(
   If \c ps.fillGrid is set, the data on the grid will also be drawn using
   the color scheme in \c ps.colourMap
 
+   if the \c mol argument is given, it will be used to adjust the scale of
+  drawing.  This is because a common use is to draw the molecule onto
+  the contour, and it makes sense if it fits.
+
 */
 RDKIT_MOLDRAW2D_EXPORT void contourAndDrawGaussians(
     MolDraw2D &drawer, const std::vector<Point2D> &locs,
     const std::vector<double> &heights, const std::vector<double> &widths,
     size_t nContours, std::vector<double> &levels,
-    const ContourParams &ps = ContourParams());
+    const ContourParams &ps = ContourParams(), const ROMol *mol = nullptr);
 //! \overload
 RDKIT_MOLDRAW2D_EXPORT inline void contourAndDrawGaussians(
     MolDraw2D &drawer, const std::vector<Point2D> &locs,
     const std::vector<double> &heights, const std::vector<double> &widths,
-    size_t nContours = 10, const ContourParams &ps = ContourParams()) {
+    size_t nContours = 10, const ContourParams &ps = ContourParams(),
+    const ROMol *mol = nullptr) {
   std::vector<double> levels;
-  contourAndDrawGaussians(drawer, locs, heights, widths, nContours, levels, ps);
+  contourAndDrawGaussians(drawer, locs, heights, widths, nContours, levels, ps,
+                          mol);
 };
 
 }  // namespace MolDraw2DUtils

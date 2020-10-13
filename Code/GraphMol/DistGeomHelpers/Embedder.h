@@ -90,56 +90,35 @@ namespace DGeomHelpers {
   CPCI	custom columbic interactions between atom pairs
 */
 struct RDKIT_DISTGEOMHELPERS_EXPORT EmbedParameters {
-  unsigned int maxIterations;
-  int numThreads;
-  int randomSeed;
-  bool clearConfs;
-  bool useRandomCoords;
-  double boxSizeMult;
-  bool randNegEig;
-  unsigned int numZeroFail;
-  const std::map<int, RDGeom::Point3D> *coordMap;
-  double optimizerForceTol;
-  bool ignoreSmoothingFailures;
-  bool enforceChirality;
-  bool useExpTorsionAnglePrefs;
-  bool useBasicKnowledge;
-  bool verbose;
-  double basinThresh;
-  double pruneRmsThresh;
-  bool onlyHeavyAtomsForRMS;
-  unsigned int ETversion;
+  unsigned int maxIterations{0};
+  int numThreads{1};
+  int randomSeed{-1};
+  bool clearConfs{true};
+  bool useRandomCoords{false};
+  double boxSizeMult{2.0};
+  bool randNegEig{true};
+  unsigned int numZeroFail{1};
+  const std::map<int, RDGeom::Point3D> *coordMap{nullptr};
+  double optimizerForceTol{1e-3};
+  bool ignoreSmoothingFailures{false};
+  bool enforceChirality{true};
+  bool useExpTorsionAnglePrefs{false};
+  bool useBasicKnowledge{false};
+  bool verbose{false};
+  double basinThresh{5.0};
+  double pruneRmsThresh{-1.0};
+  bool onlyHeavyAtomsForRMS{false};
+  unsigned int ETversion{1};
   boost::shared_ptr<const DistGeom::BoundsMatrix> boundsMat;
-  bool embedFragmentsSeparately;
-  bool useSmallRingTorsions;
-  bool useMacrocycleTorsions;
-  bool useMacrocycle14config;
+  bool embedFragmentsSeparately{true};
+  bool useSmallRingTorsions{false};
+  bool useMacrocycleTorsions{false};
+  bool useMacrocycle14config{false};
   std::shared_ptr<std::map<std::pair<unsigned int, unsigned int>, double>> CPCI;
   EmbedParameters()
-      : maxIterations(0),
-        numThreads(1),
-        randomSeed(-1),
-        clearConfs(true),
-        useRandomCoords(false),
-        boxSizeMult(2.0),
-        randNegEig(true),
-        numZeroFail(1),
-        coordMap(NULL),
-        optimizerForceTol(1e-3),
-        ignoreSmoothingFailures(false),
-        enforceChirality(true),
-        useExpTorsionAnglePrefs(false),
-        useBasicKnowledge(false),
-        verbose(false),
-        basinThresh(5.0),
-        pruneRmsThresh(-1.0),
-        onlyHeavyAtomsForRMS(false),
-        ETversion(1),
+      : 
         boundsMat(nullptr),
-        embedFragmentsSeparately(true),
-        useSmallRingTorsions(false),
-        useMacrocycleTorsions(false),
-        useMacrocycle14config(false),
+        
         CPCI(nullptr){};
   EmbedParameters(
       unsigned int maxIterations, int numThreads, int randomSeed,
@@ -282,7 +261,7 @@ inline int EmbedMolecule(
     bool clearConfs = true, bool useRandomCoords = false,
     double boxSizeMult = 2.0, bool randNegEig = true,
     unsigned int numZeroFail = 1,
-    const std::map<int, RDGeom::Point3D> *coordMap = 0,
+    const std::map<int, RDGeom::Point3D> *coordMap = nullptr,
     double optimizerForceTol = 1e-3, bool ignoreSmoothingFailures = false,
     bool enforceChirality = true, bool useExpTorsionAnglePrefs = false,
     bool useBasicKnowledge = false, bool verbose = false,
@@ -381,7 +360,7 @@ inline void EmbedMultipleConfs(
     bool useRandomCoords = false, double boxSizeMult = 2.0,
     bool randNegEig = true, unsigned int numZeroFail = 1,
     double pruneRmsThresh = -1.0,
-    const std::map<int, RDGeom::Point3D> *coordMap = 0,
+    const std::map<int, RDGeom::Point3D> *coordMap = nullptr,
     double optimizerForceTol = 1e-3, bool ignoreSmoothingFailures = false,
     bool enforceChirality = true, bool useExpTorsionAnglePrefs = false,
     bool useBasicKnowledge = false, bool verbose = false,
@@ -403,7 +382,7 @@ inline INT_VECT EmbedMultipleConfs(
     int seed = -1, bool clearConfs = true, bool useRandomCoords = false,
     double boxSizeMult = 2.0, bool randNegEig = true,
     unsigned int numZeroFail = 1, double pruneRmsThresh = -1.0,
-    const std::map<int, RDGeom::Point3D> *coordMap = 0,
+    const std::map<int, RDGeom::Point3D> *coordMap = nullptr,
     double optimizerForceTol = 1e-3, bool ignoreSmoothingFailures = false,
     bool enforceChirality = true, bool useExpTorsionAnglePrefs = false,
     bool useBasicKnowledge = false, bool verbose = false,

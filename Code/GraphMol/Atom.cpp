@@ -7,7 +7,7 @@
 //  which is included in the file license.txt, found at the root
 //  of the RDKit source tree.
 //
-#include <math.h>
+#include <cmath>
 
 #include "ROMol.h"
 #include "Atom.h"
@@ -25,6 +25,9 @@ namespace RDKit {
 
 // Determine whether or not a molecule is to the left of Carbon
 bool isEarlyAtom(int atomicNum) {
+  if ( atomicNum <= 1 ) {
+    return false;
+  }
   switch (PeriodicTable::getTable()->getNouterElecs(atomicNum)) {
     case 1:
     case 2:

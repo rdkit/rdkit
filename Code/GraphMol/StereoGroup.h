@@ -40,11 +40,11 @@ enum class StereoGroupType {
  */
 class RDKIT_GRAPHMOL_EXPORT StereoGroup {
  private:
-  StereoGroupType d_grouptype;
+  StereoGroupType d_grouptype{StereoGroupType::STEREO_ABSOLUTE};
   std::vector<Atom*> d_atoms;
 
  public:
-  StereoGroup() : d_grouptype(StereoGroupType::STEREO_ABSOLUTE), d_atoms(0u){};
+  StereoGroup() :  d_atoms(0u){};
   // Takes control of atoms if possible.
   StereoGroup(StereoGroupType grouptype, std::vector<Atom*>&& atoms);
   StereoGroup(StereoGroupType grouptype, const std::vector<Atom*>& atoms);

@@ -107,6 +107,7 @@ const std::string molStereoCare = "molStereoCare";
 const std::string molRxnComponent = "molRxnComponent";
 const std::string molRxnRole = "molRxnRole";
 const std::string molTotValence = "molTotValence";
+const std::string molFileLinkNodes = "molLinkNodes";
 const std::string numArom = "numArom";
 const std::string origNoImplicit = "origNoImplicit";
 const std::string ringMembership = "ringMembership";
@@ -124,6 +125,11 @@ const std::string molReactStatus = "molReactStatus";
 
 const std::string atomNote = "atomNote";
 const std::string bondNote = "bondNote";
+const std::string _isotopicHs = "_isotopicHs";
+
+// molecule drawing
+const std::string _displayLabel = "_displayLabel";
+const std::string _displayLabelW = "_displayLabelW";
 
 }  // namespace common_properties
 

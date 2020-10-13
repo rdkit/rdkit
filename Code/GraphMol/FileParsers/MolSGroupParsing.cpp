@@ -512,15 +512,7 @@ void ParseSGroupV2000SPLLine(IDX_TO_SGROUP_MAP &sGroupMap, RWMol *mol,
     }
     unsigned int parentIdx = ParseSGroupIntField(text, line, pos);
 
-    // both parentIdx and size are offset by +1, so it's fine
-    if (parentIdx > sGroupMap.size()) {
-      std::ostringstream errout;
-      errout << "SGroup SPL line contains wrong parent SGroup (" << parentIdx
-             << ") for SGroup " << sgIdx << "on line " << line;
-      throw FileParseException(errout.str());
-    }
-
-    sGroupMap.at(sgIdx).setProp<unsigned int>("PARENT", parentIdx - 1);
+    sGroupMap.at(sgIdx).setProp<unsigned int>("PARENT", parentIdx);
   }
 }
 
@@ -574,7 +566,7 @@ void ParseSGroupV2000SAPLine(IDX_TO_SGROUP_MAP &sGroupMap, RWMol *mol,
   unsigned int nent = ParseSGroupIntField(text, line, pos, true);
 
   for (unsigned int ie = 0; ie < nent; ++ie) {
-    if (text.size() < pos + 8) {
+    if (text.size() < pos + 11) {
       std::ostringstream errout;
       errout << "SGroup SAP line too short: '" << text << "' on line " << line;
       throw FileParseException(errout.str());
@@ -590,7 +582,8 @@ void ParseSGroupV2000SAPLine(IDX_TO_SGROUP_MAP &sGroupMap, RWMol *mol,
       lvIdx = mol->getAtomWithBookmark(lvIdxMark)->getIdx();
     }
 
-    sGroupMap.at(sgIdx).addAttachPoint(aIdx, lvIdx, text.substr(++pos, 2));
+    sGroupMap.at(sgIdx).addAttachPoint(aIdx, lvIdx, text.substr(pos + 1, 2));
+    pos += 3;
   }
 }
 
@@ -658,7 +651,11 @@ void ParseSGroupV2000SBTLine(IDX_TO_SGROUP_MAP &sGroupMap, RWMol *mol,
 
 template <class T>
 std::vector<T> ParseV3000Array(std::stringstream &stream) {
-  stream.get();  // discard parentheses
+  auto paren = stream.get();  // discard parentheses
+  if (paren != '(') {
+    BOOST_LOG(rdWarningLog)
+        << "WARNING: first character of V3000 array is not '('" << std::endl;
+  }
 
   unsigned int count;
   stream >> count;
@@ -669,9 +666,17 @@ std::vector<T> ParseV3000Array(std::stringstream &stream) {
     stream >> value;
     values.push_back(value);
   }
-  stream.get();  // discard parentheses
+  paren = stream.get();  // discard parentheses
+  if (paren != ')') {
+    BOOST_LOG(rdWarningLog)
+        << "WARNING: final character of V3000 array is not ')'" << std::endl;
+  }
   return values;
 }
+
+// force instantiation of the versions of this that we use
+template std::vector<unsigned int> ParseV3000Array(std::stringstream &stream);
+template std::vector<int> ParseV3000Array(std::stringstream &stream);
 
 void ParseV3000CStateLabel(RWMol *mol, SubstanceGroup &sgroup,
                            std::stringstream &stream, unsigned int line) {
@@ -732,12 +737,31 @@ void ParseV3000SAPLabel(RWMol *mol, SubstanceGroup &sgroup,
 std::string ParseV3000StringPropLabel(std::stringstream &stream) {
   std::string strValue;
 
-  // TODO: this should be improved to be able to handle escaped quotes
-
   auto nextChar = stream.peek();
   if (nextChar == '"') {
+    // skip the opening quote:
     stream.get();
-    std::getline(stream, strValue, '"');
+
+    // this is a bit gross because it's legal to include a \" in a value,
+    // but the way that's done is by doubling it. So
+    // FIELDINFO=""""
+    // should assign the value \" to FIELDINFO
+    char chr;
+    while (stream.get(chr)) {
+      if (chr == '"') {
+        nextChar = stream.peek();
+
+        // if the next element in the stream is a \" then we have a quoted \".
+        // Otherwise we're done
+        if (nextChar != '"') {
+          break;
+        } else {
+          // skip the second \"
+          stream.get();
+        }
+      }
+      strValue += chr;
+    }
   } else if (nextChar == '\'') {
     std::getline(stream, strValue, '\'');
   } else {
@@ -752,15 +776,14 @@ void ParseV3000ParseLabel(const std::string &label,
                           std::stringstream &lineStream, STR_VECT &dataFields,
                           unsigned int &line, SubstanceGroup &sgroup,
                           size_t nSgroups, RWMol *mol, bool &strictParsing) {
-  // TODO: remove this once we find out how to handle XBHEAD & XBCORR
+  RDUNUSED_PARAM(nSgroups);
+  // TODO: we could handle these in a more structured way
   if (label == "XBHEAD" || label == "XBCORR") {
-    std::ostringstream errout;
-    errout << "XBHEAD or XBCORR labels (found on line " << line
-           << ") are not yet supported";
-    throw FileParseException(errout.str());
-  }
-
-  if (label == "ATOMS") {
+    std::vector<unsigned int> bvect = ParseV3000Array<unsigned int>(lineStream);
+    std::transform(bvect.begin(), bvect.end(), bvect.begin(),
+                   [](unsigned int v) -> unsigned int { return v - 1; });
+    sgroup.setProp(label, bvect);
+  } else if (label == "ATOMS") {
     for (auto atomIdx : ParseV3000Array<unsigned int>(lineStream)) {
       sgroup.addAtomWithBookmark(atomIdx);
     }
@@ -795,15 +818,7 @@ void ParseV3000ParseLabel(const std::string &label,
     // Store relationship until all SGroups have been read
     unsigned int parentIdx;
     lineStream >> parentIdx;
-
-    // both parentIdx and nSGroups are offset by +1, so it's fine
-    if (parentIdx > nSgroups) {
-      std::ostringstream errout;
-      errout << "Wrong parent SGroup '" << parentIdx << "' on line " << line;
-      throw FileParseException(errout.str());
-    }
-
-    sgroup.setProp<unsigned int>("PARENT", parentIdx - 1);
+    sgroup.setProp<unsigned int>("PARENT", parentIdx);
   } else if (label == "COMPNO") {
     unsigned int compno;
     lineStream >> compno;
@@ -894,6 +909,7 @@ void ParseV3000SGroupsBlock(std::istream *inStream, unsigned int &line,
     SubstanceGroup sgroup(mol, type);
     STR_VECT dataFields;
 
+    sgroup.setProp<unsigned int>("index", sequenceId);
     if (externalId > 0) {
       if (!SubstanceGroupChecks::isSubstanceGroupIdFree(*mol, externalId)) {
         std::ostringstream errout;
@@ -981,7 +997,7 @@ void ParseV3000SGroupsBlock(std::istream *inStream, unsigned int &line,
     throw FileParseException(errout.str());
   }
 
-  // SGroups successfully parsed, now add them to the molecule sorted by index
+  // SGroups successfully parsed, now add them to the molecule
   for (const auto &sg : sGroupMap) {
     addSubstanceGroup(*mol, sg.second);
   }

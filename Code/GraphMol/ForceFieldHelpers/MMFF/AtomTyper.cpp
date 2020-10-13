@@ -106,7 +106,7 @@ const MMFFVdWCollection *getMMFFVdW() {
 }  // namespace DefaultParameters
 class RingMembership {
  public:
-  RingMembership() : d_isInAromaticRing(false){};
+  RingMembership()  {};
   bool getIsInAromaticRing() const { return d_isInAromaticRing; }
   void setIsInAromaticRing(bool isInAromaticRing) {
     d_isInAromaticRing = isInAromaticRing;
@@ -115,7 +115,7 @@ class RingMembership {
   std::set<std::uint32_t> &getRingIdxSet() { return d_ringIdxSet; }
 
  private:
-  bool d_isInAromaticRing;
+  bool d_isInAromaticRing{false};
   std::set<std::uint32_t> d_ringIdxSet;
 };
 
@@ -3243,7 +3243,6 @@ void MMFFMolProperties::computeMMFFCharges(const ROMol &mol) {
   unsigned int nbrAtomType;
   unsigned int nConj = 0;
   unsigned int old_nConj = 0;
-  std::pair<int, double> bci;
   double pChg = 0.0;
   double fChg = 0.0;
   boost::dynamic_bitset<> conjNBitVect(mol.getNumAtoms());

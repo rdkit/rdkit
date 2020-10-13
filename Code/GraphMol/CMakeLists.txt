@@ -1,5 +1,4 @@
 
-add_definitions(-DRDKIT_GRAPHMOL_BUILD)
 rdkit_library(GraphMol
               Atom.cpp QueryAtom.cpp QueryBond.cpp Bond.cpp
               MolOps.cpp FindRings.cpp ROMol.cpp RWMol.cpp PeriodicTable.cpp
@@ -8,13 +7,10 @@ rdkit_library(GraphMol
               MolDiscriminators.cpp ConjugHybrid.cpp AddHs.cpp
               Matrices.cpp Chirality.cpp RingInfo.cpp Conformer.cpp
               Renumber.cpp AdjustQuery.cpp Resonance.cpp StereoGroup.cpp
-              new_canon.cpp SubstanceGroup.cpp
+              new_canon.cpp SubstanceGroup.cpp FindStereo.cpp
               SHARED
-              LINK_LIBRARIES RDGeometryLib RDGeneral  
-                 ${RDKit_THREAD_LIBS} )
-
-target_link_libraries(GraphMol PUBLIC ${RDKit_THREAD_LIBS})
-
+              LINK_LIBRARIES RDGeometryLib RDGeneral  )
+target_compile_definitions(GraphMol PRIVATE RDKIT_GRAPHMOL_BUILD)
 if(RDK_USE_URF)
   target_link_libraries(GraphMol PUBLIC ${RDK_URF_LIBS})
 endif()
@@ -56,6 +52,7 @@ add_subdirectory(FileParsers)
 add_subdirectory(Substruct)
 add_subdirectory(ChemReactions)
 add_subdirectory(ChemTransforms)
+add_subdirectory(TautomerQuery)
 
 add_subdirectory(Subgraphs)
 add_subdirectory(FilterCatalog)
@@ -79,6 +76,9 @@ add_subdirectory(MolDraw2D)
 add_subdirectory(FMCS)
 add_subdirectory(MolHash)
 add_subdirectory(MMPA)
+
+add_subdirectory(CIPLabeler)
+add_subdirectory(Deprotect)
 
 if(RDK_BUILD_STRUCTCHECKER_SUPPORT)
 add_subdirectory(StructChecker)
@@ -108,49 +108,58 @@ endif()
 
 add_subdirectory(MolStandardize)
 add_subdirectory(ScaffoldNetwork)
+add_subdirectory(MolEnumerator)
+add_subdirectory(Abbreviations)
 
 
 rdkit_test(graphmolTest1 test1.cpp LINK_LIBRARIES FileParsers SmilesParse GraphMol
-RDGeometryLib RDGeneral SubstructMatch ForceFieldHelpers ForceField)
+ SubstructMatch ForceFieldHelpers ForceField)
 
-rdkit_test(graphmolcpTest cptest.cpp LINK_LIBRARIES  SmilesParse GraphMol RDGeometryLib RDGeneral)
+rdkit_test(graphmolcpTest cptest.cpp LINK_LIBRARIES  SmilesParse GraphMol)
 
-rdkit_test(graphmolqueryTest querytest.cpp LINK_LIBRARIES SubstructMatch SmilesParse GraphMol RDGeometryLib RDGeneral)
+rdkit_test(graphmolqueryTest querytest.cpp LINK_LIBRARIES SubstructMatch SmilesParse GraphMol)
 
 rdkit_test(graphmolMolOpsTest molopstest.cpp
            LINK_LIBRARIES SubstructMatch FileParsers
-	   SmilesParse GraphMol RDGeometryLib RDGeneral)
+	   SmilesParse GraphMol )
 
 rdkit_test(graphmoltestChirality testChirality.cpp
            LINK_LIBRARIES SmilesParse FileParsers
-	   GraphMol RDGeometryLib RDGeneral)
+	   GraphMol )
 
 rdkit_test(graphmoltestPickler testPickler.cpp
-           LINK_LIBRARIES SmilesParse SubstructMatch FileParsers GraphMol RDGeometryLib RDGeneral)
+           LINK_LIBRARIES SmilesParse SubstructMatch FileParsers GraphMol )
 
 rdkit_test(graphmoltestPicklerGlobalSetting testPicklerGlobalSettings.cpp
-           LINK_LIBRARIES SmilesParse SubstructMatch FileParsers GraphMol RDGeometryLib RDGeneral)
+           LINK_LIBRARIES SmilesParse SubstructMatch FileParsers GraphMol )
 
-rdkit_test(graphmolIterTest itertest.cpp LINK_LIBRARIES SmilesParse GraphMol RDGeometryLib RDGeneral)
+rdkit_test(graphmolIterTest itertest.cpp LINK_LIBRARIES SmilesParse GraphMol )
 
 rdkit_test(hanoiTest hanoitest.cpp LINK_LIBRARIES
      SubstructMatch SmilesParse FileParsers GraphMol
-     RDGeometryLib RDGeneral ${RDKit_THREAD_LIBS} )
+      )
 
-rdkit_test(graphmolMemTest1 memtest1.cpp LINK_LIBRARIES SmilesParse GraphMol RDGeometryLib RDGeneral)
+rdkit_test(graphmolMemTest1 memtest1.cpp LINK_LIBRARIES SmilesParse GraphMol )
 
 rdkit_test(resMolSupplierTest resMolSupplierTest.cpp
-           LINK_LIBRARIES SmilesParse GraphMol RDGeometryLib RDGeneral SubstructMatch FileParsers)
+           LINK_LIBRARIES SmilesParse GraphMol SubstructMatch FileParsers)
 
 rdkit_test(molBundleTest testMolBundle.cpp
-          LINK_LIBRARIES SmilesParse GraphMol RDGeometryLib RDGeneral SubstructMatch FileParsers)
+          LINK_LIBRARIES SmilesParse GraphMol SubstructMatch FileParsers)
 
 rdkit_test(testSGroup testSGroup.cpp LINK_LIBRARIES FileParsers GraphMol)
 
-rdkit_test(test-valgrind test-valgrind.cpp LINK_LIBRARIES SmilesParse GraphMol RDGeneral)
+rdkit_test(test-valgrind test-valgrind.cpp LINK_LIBRARIES SmilesParse GraphMol )
 
 rdkit_catch_test(graphmolTestsCatch catch_graphmol.cpp catch_main.cpp
-           LINK_LIBRARIES SubstructMatch FileParsers SmilesParse GraphMol RDGeometryLib RDGeneral)
+           LINK_LIBRARIES SubstructMatch FileParsers SmilesParse GraphMol )
 
 rdkit_catch_test(graphmolSGroupCatch catch_sgroups.cpp  catch_main.cpp
-           LINK_LIBRARIES SmilesParse GraphMol RDGeometryLib RDGeneral)
+           LINK_LIBRARIES SmilesParse FileParsers GraphMol )
+
+rdkit_catch_test(graphmolAdjustQueryCatch catch_adjustquery.cpp catch_main.cpp
+           LINK_LIBRARIES SubstructMatch FileParsers SmilesParse GraphMol )
+           
+rdkit_catch_test(chiralityTestsCatch catch_chirality.cpp catch_main.cpp
+           LINK_LIBRARIES FileParsers SmilesParse GraphMol )
+

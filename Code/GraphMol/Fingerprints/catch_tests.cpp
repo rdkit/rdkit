@@ -26,7 +26,7 @@
 
 using namespace RDKit;
 
-TEST_CASE("Github 2051", "[patternfp,bug]") {
+TEST_CASE("Github 2051", "[patternfp][bug]") {
   auto mol = "CCC1CC1"_smiles;
   std::unique_ptr<ExplicitBitVect> mfp(PatternFingerprintMol(*mol));
 
@@ -46,7 +46,7 @@ TEST_CASE("Github 2051", "[patternfp,bug]") {
   }
 }
 
-TEST_CASE("Github 2614", "[patternfp,bug]") {
+TEST_CASE("Github 2614", "[patternfp][bug]") {
   SECTION("basics") {
     auto mol =
         "F[P-](F)(F)(F)(F)F.F[P-](F)(F)(F)(F)F.F[P-](F)(F)(F)(F)F.F[P-](F)(F)(F)(F)F.F[P-](F)(F)(F)(F)F.F[P-](F)(F)(F)(F)F.F[P-](F)(F)(F)(F)F.F[P-](F)(F)(F)(F)F.F[P-](F)(F)(F)(F)F.c1ccc2ccccc2c1"_smiles;
@@ -61,7 +61,7 @@ TEST_CASE("Github 2614", "[patternfp,bug]") {
   }
 }
 
-TEST_CASE("RDKit bits per feature", "[fpgenerator,rdkit]") {
+TEST_CASE("RDKit bits per feature", "[fpgenerator][rdkit]") {
   auto m1 = "CCCO"_smiles;
   REQUIRE(m1);
   SECTION("defaults") {

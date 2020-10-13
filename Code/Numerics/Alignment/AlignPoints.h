@@ -41,7 +41,7 @@ namespace Alignments {
 double RDKIT_ALIGNMENT_EXPORT
 AlignPoints(const RDGeom::Point3DConstPtrVect &refPoints,
             const RDGeom::Point3DConstPtrVect &probePoints,
-            RDGeom::Transform3D &trans, const DoubleVector *weights = 0,
+            RDGeom::Transform3D &trans, const DoubleVector *weights = nullptr,
             bool reflect = false, unsigned int maxIterations = 50);
 }  // namespace Alignments
 }  // namespace RDNumeric

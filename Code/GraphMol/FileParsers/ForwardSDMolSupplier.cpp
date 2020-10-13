@@ -225,7 +225,7 @@ ROMol *ForwardSDMolSupplier::_next() {
     // advance forward in the stream until we hit the next record and then
     // rethrow
     // the exception. This should allow us to read the next molecule.
-    BOOST_LOG(rdErrorLog) << "ERROR: " << fe.message() << std::endl;
+    BOOST_LOG(rdErrorLog) << "ERROR: " << fe.what() << std::endl;
     BOOST_LOG(rdErrorLog)
         << "ERROR: moving to the beginning of the next molecule\n";
 
@@ -247,7 +247,7 @@ ROMol *ForwardSDMolSupplier::_next() {
     BOOST_LOG(rdErrorLog)
         << "ERROR: Could not sanitize molecule ending on line " << d_line
         << std::endl;
-    BOOST_LOG(rdErrorLog) << "ERROR: " << se.message() << "\n";
+    BOOST_LOG(rdErrorLog) << "ERROR: " << se.what() << "\n";
 
     d_line++;
     std::getline(*dp_inStream, tempStr);

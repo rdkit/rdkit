@@ -1,5 +1,5 @@
 //
-//  Copyright (C) 2017 Greg Landrum
+//  Copyright (C) 2017-2020 Greg Landrum
 //
 //   @@ All Rights Reserved @@
 //  This file is part of the RDKit.
@@ -15,6 +15,8 @@
 #include <GraphMol/FileParsers/FileParsers.h>
 #include <GraphMol/Substruct/SubstructMatch.h>
 #include <GraphMol/MolAlign/AlignMolecules.h>
+#include <GraphMol/MolTransforms/MolTransforms.h>
+#include <GraphMol/ChemTransforms/ChemTransforms.h>
 
 #include <RDGeneral/RDLog.h>
 
@@ -416,11 +418,156 @@ void testGithub1929() {
   BOOST_LOG(rdInfoLog) << "done" << std::endl;
 }
 
+void testGithub3131() {
+  BOOST_LOG(rdInfoLog) << "-------------------------------------" << std::endl;
+  BOOST_LOG(rdInfoLog)
+      << "testing github3131: results from coordgen are sometimes not centered"
+      << std::endl;
+  {
+    auto m1 =
+        "CC1=C(C=C(C=C1)NC(=O)C2=CC=C(C=C2)CN3CCN(CC3)C)NC4=NC=CC(=N4)C5=CN=CC="
+        "C5"_smiles;
+    TEST_ASSERT(m1);
+    TEST_ASSERT(CoordGen::addCoords(*m1) == 0);
+    TEST_ASSERT(m1->getNumConformers() == 1);
+    auto center = MolTransforms::computeCentroid(m1->getConformer());
+    TEST_ASSERT(feq(center.x, 0.0));
+    TEST_ASSERT(feq(center.y, 0.0));
+  }
+
+  {
+    auto m1 =
+        "CCC1=C2N=C(C=C(N2N=C1)NCC3=C[N+](=CC=C3)[O-])N4CCCC[C@H]4CCO"_smiles;
+    TEST_ASSERT(m1);
+    TEST_ASSERT(CoordGen::addCoords(*m1) == 0);
+    TEST_ASSERT(m1->getNumConformers() == 1);
+    auto center = MolTransforms::computeCentroid(m1->getConformer());
+    TEST_ASSERT(feq(center.x, 0.0));
+    TEST_ASSERT(feq(center.y, 0.0));
+  }
+
+  {
+    // make sure that it's not recentered if we provide a coordmap:
+    auto m1 =
+        "CCC1=C2N=C(C=C(N2N=C1)NCC3=C[N+](=CC=C3)[O-])N4CCCC[C@H]4CCO"_smiles;
+    TEST_ASSERT(m1);
+    CoordGen::CoordGenParams params;
+    params.coordMap[0] = {10.0, 10.0};
+    params.coordMap[1] = {11.0, 10.0};
+    TEST_ASSERT(CoordGen::addCoords(*m1, &params) == 0);
+    TEST_ASSERT(m1->getNumConformers() == 1);
+    auto center = MolTransforms::computeCentroid(m1->getConformer());
+    TEST_ASSERT(!feq(center.x, 0.0));
+    TEST_ASSERT(!feq(center.y, 0.0));
+  }
+
+  {
+    // make sure that it's not recentered if we provide a template:
+    auto templateMol =
+        "C1=C2N=C(C=C(N2N=C1)NCC3=C[N+](=CC=C3))N4CCCC[C@H]4"_smiles;
+    TEST_ASSERT(templateMol);
+    TEST_ASSERT(CoordGen::addCoords(*templateMol) == 0);
+    TEST_ASSERT(templateMol->getNumConformers() == 1);
+
+    auto center = MolTransforms::computeCentroid(templateMol->getConformer());
+    TEST_ASSERT(feq(center.x, 0.0));
+    TEST_ASSERT(feq(center.y, 0.0));
+
+    auto m1 =
+        "CCC1=C2N=C(C=C(N2N=C1)NCC3=C[N+](=CC=C3)[O-])N4CCCC[C@H]4CCO"_smiles;
+    TEST_ASSERT(m1);
+    CoordGen::CoordGenParams params;
+    params.templateMol = templateMol.get();
+    TEST_ASSERT(CoordGen::addCoords(*m1, &params) == 0);
+    TEST_ASSERT(m1->getNumConformers() == 1);
+    center = MolTransforms::computeCentroid(m1->getConformer());
+    TEST_ASSERT(!feq(center.x, 0.0));
+    TEST_ASSERT(!feq(center.y, 0.0));
+  }
+
+  BOOST_LOG(rdInfoLog) << "done" << std::endl;
+}
+
+void testCoordgenMinimize() {
+  BOOST_LOG(rdInfoLog) << "-------------------------------------" << std::endl;
+  BOOST_LOG(rdInfoLog) << "testing coordgen minimize" << std::endl;
+  {
+    auto m1 =
+        R"CTAB(
+  Mrv2014 08052005142D          
+
+  0  0  0     0  0            999 V3000
+M  V30 BEGIN CTAB
+M  V30 COUNTS 8 8 0 0 0
+M  V30 BEGIN ATOM
+M  V30 1 C -2.1121 -0.3399 0 0
+M  V30 2 C -3.3708 0.5474 0 0
+M  V30 3 C -1.9835 0.9311 0 0
+M  V30 4 C -0.7248 0.0437 0 0
+M  V30 5 C 0.7926 0.3064 0 0
+M  V30 6 O 1.3239 1.7518 0 0
+M  V30 7 O 0.612 -1.2514 0 0
+M  V30 8 C 1.3429 -0.2989 0 0
+M  V30 END ATOM
+M  V30 BEGIN BOND
+M  V30 1 1 1 2
+M  V30 2 1 2 3
+M  V30 3 1 3 4
+M  V30 4 1 4 5
+M  V30 5 2 5 6
+M  V30 6 1 5 7
+M  V30 7 1 7 8
+M  V30 8 1 4 1
+M  V30 END BOND
+M  V30 END CTAB
+M  END
+)CTAB"_ctab;
+    TEST_ASSERT(m1);
+    TEST_ASSERT(m1->getNumConformers() == 1);
+    auto ref = R"CTAB(
+     RDKit          2D
+
+  8  8  0  0  0  0  0  0  0  0999 V2000
+   -1.5738   -1.1409    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -2.7946   -0.3071    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -1.9122    0.8790    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -0.6914    0.0452    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    0.7517    0.2885    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    1.2665    1.6721    0.0000 O   0  0  0  0  0  0  0  0  0  0  0  0
+    1.6941   -0.8483    0.0000 O   0  0  0  0  0  0  0  0  0  0  0  0
+    3.1500   -0.6002    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+  1  2  1  0
+  2  3  1  0
+  3  4  1  0
+  4  5  1  0
+  5  6  2  0
+  5  7  1  0
+  7  8  1  0
+  4  1  1  0
+M  END
+)CTAB"_ctab;
+    TEST_ASSERT(ref);
+    TEST_ASSERT(ref->getNumConformers() == 1);
+
+    CoordGen::CoordGenParams ps;
+    ps.minimizeOnly = true;
+    CoordGen::addCoords(*m1, &ps);
+    ROMol m2(*m1);
+    double rmsd = MolAlign::alignMol(m2, *ref);
+    TEST_ASSERT(rmsd < 0.1);
+  }
+  BOOST_LOG(rdInfoLog) << "done" << std::endl;
+}
+
 int main(int argc, char* argv[]) {
   (void)argc;
   (void)argv;
   RDLog::InitLogs();
+#if 1
   test2();
   test1();
   testGithub1929();
+  testGithub3131();
+#endif
+  testCoordgenMinimize();
 }

@@ -16,7 +16,7 @@
 #include <GraphMol/SmilesParse/SmilesParse.h>
 #include <GraphMol/FileParsers/FileParsers.h>
 #include <Geometry/point.h>
-#include "MolTransforms.h"
+#include <GraphMol/MolTransforms/MolTransforms.h>
 
 using namespace RDKit;
 using namespace MolTransforms;

@@ -33,6 +33,27 @@ DiscreteValueVect::DiscreteValueVect(const DiscreteValueVect &other) {
   d_data.reset(data);
 }
 
+DiscreteValueVect &DiscreteValueVect::operator=(
+    const DiscreteValueVect &other) {
+  if (this == &other) {
+    return *this;
+  }
+
+  d_type = other.getValueType();
+  d_bitsPerVal = other.getNumBitsPerVal();
+  d_numInts = other.getNumInts();
+  d_length = other.getLength();
+  d_valsPerInt = other.d_valsPerInt;
+  d_mask = other.d_mask;
+  const std::uint32_t *odata = other.getData();
+  auto *data = new std::uint32_t[d_numInts];
+  memcpy(static_cast<void *>(data), static_cast<const void *>(odata),
+         d_numInts * sizeof(std::uint32_t));
+  d_data.reset(data);
+
+  return *this;
+}
+
 unsigned int DiscreteValueVect::getVal(unsigned int i) const {
   if (i >= d_length) {
     throw IndexErrorException(i);
@@ -69,9 +90,7 @@ unsigned int DiscreteValueVect::getTotalVal() const {
 
 unsigned int DiscreteValueVect::getLength() const { return d_length; }
 
-const std::uint32_t *DiscreteValueVect::getData() const {
-  return d_data.get();
-}
+const std::uint32_t *DiscreteValueVect::getData() const { return d_data.get(); }
 
 unsigned int computeL1Norm(const DiscreteValueVect &v1,
                            const DiscreteValueVect &v2) {

@@ -1,5 +1,5 @@
 //
-// Copyright (c) 2003-2006 Greg Landrum and Rational Discovery LLC
+// Copyright (c) 2003-2020 Greg Landrum and Rational Discovery LLC
 //
 //   @@ All Rights Reserved @@
 //  This file is part of the RDKit.
@@ -8,8 +8,8 @@
 //  of the RDKit source tree.
 //
 #include <RDGeneral/export.h>
-#ifndef __RD_RANGEQUERY_H__
-#define __RD_RANGEQUERY_H__
+#ifndef RD_RANGEQUERY_H
+#define RD_RANGEQUERY_H
 #include "Query.h"
 #include <utility>
 
@@ -27,10 +27,7 @@ template <class MatchFuncArgType, class DataFuncArgType = MatchFuncArgType,
 class RangeQuery
     : public Query<MatchFuncArgType, DataFuncArgType, needsConversion> {
  public:
-  RangeQuery()
-      : d_upper(0), d_lower(0), df_upperOpen(true), df_lowerOpen(true) {
-    this->df_negate = false;
-  };
+  RangeQuery() : d_upper(0), d_lower(0) { this->df_negate = false; };
   //! construct and set the lower and upper bounds
   RangeQuery(MatchFuncArgType lower, MatchFuncArgType upper)
       : d_upper(upper), d_lower(lower), df_upperOpen(true), df_lowerOpen(true) {
@@ -93,6 +90,7 @@ class RangeQuery
     res->setEndsOpen(this->df_lowerOpen, this->df_upperOpen);
     res->setDataFunc(this->d_dataFunc);
     res->d_description = this->d_description;
+    res->d_queryType = this->d_queryType;
     return res;
   };
 
@@ -106,7 +104,7 @@ class RangeQuery
 
  protected:
   MatchFuncArgType d_upper, d_lower;
-  bool df_upperOpen, df_lowerOpen;
+  bool df_upperOpen{true}, df_lowerOpen{true};
 };
 }  // namespace Queries
 #endif

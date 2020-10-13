@@ -1,4 +1,4 @@
-cmake_minimum_required (VERSION 2.6)
+cmake_minimum_required (VERSION 3.5)
 project (GettingStartedDemo)
 
 find_package (RDKit 1.2011.09 REQUIRED)

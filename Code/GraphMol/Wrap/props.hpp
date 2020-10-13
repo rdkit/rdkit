@@ -104,7 +104,7 @@ T GetProp(RDOb *ob, const char *key) {
       throw python::error_already_set();
     }
     return res;
-  } catch (const boost::bad_any_cast &e) {
+  } catch (const boost::bad_any_cast &) {
     throw ValueErrorException(std::string("key `") + key +
                               "` exists but does not result in " +
                               GetTypeName<T>());
@@ -137,6 +137,6 @@ template <class RDOb>
 void MolClearComputedProps(const RDOb &mol) {
   mol.clearComputedProps();
 }
-}
+}  // namespace RDKit
 
 #endif

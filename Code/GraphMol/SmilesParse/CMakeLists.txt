@@ -51,14 +51,13 @@ else(BISON_EXECUTABLE)
 endif(BISON_EXECUTABLE)
 
 
-remove_definitions(-DRDKIT_GRAPHMOL_BUILD)
-add_definitions(-DRDKIT_SMILESPARSE_BUILD)
 rdkit_library(SmilesParse
               SmilesParse.cpp SmilesParseOps.cpp
               SmilesWrite.cpp SmartsWrite.cpp CXSmilesOps.cpp
               ${BISON_OUTPUT_FILES}
               ${FLEX_OUTPUT_FILES}
-              LINK_LIBRARIES GraphMol)
+              LINK_LIBRARIES GraphMol RDGeneral)
+target_compile_definitions(SmilesParse PRIVATE RDKIT_SMILESPARSE_BUILD)
 
 rdkit_headers(primes.h
               SmartsWrite.h
@@ -66,9 +65,9 @@ rdkit_headers(primes.h
               SmilesParseOps.h
               SmilesWrite.h DEST GraphMol/SmilesParse)
 
-rdkit_test(smiTest1 test.cpp LINK_LIBRARIES FileParsers SmilesParse GraphMol RDGeneral RDGeometryLib )
-rdkit_test(smiTest2 test2.cpp LINK_LIBRARIES SmilesParse GraphMol RDGeneral RDGeometryLib )
-rdkit_test(cxsmilesTest cxsmiles_test.cpp LINK_LIBRARIES FileParsers SmilesParse GraphMol RDGeneral RDGeometryLib )
+rdkit_test(smiTest1 test.cpp LINK_LIBRARIES FileParsers SmilesParse )
+rdkit_test(smiTest2 test2.cpp LINK_LIBRARIES SmilesParse )
+rdkit_test(cxsmilesTest cxsmiles_test.cpp LINK_LIBRARIES FileParsers SmilesParse )
 
-rdkit_test(smaTest1 smatest.cpp LINK_LIBRARIES SmilesParse SubstructMatch GraphMol RDGeneral RDGeometryLib )
-rdkit_catch_test(smiTestCatch catch_tests.cpp LINK_LIBRARIES FileParsers SmilesParse GraphMol RDGeneral RDGeometryLib )
+rdkit_test(smaTest1 smatest.cpp LINK_LIBRARIES SmilesParse SubstructMatch  )
+rdkit_catch_test(smiTestCatch catch_tests.cpp LINK_LIBRARIES FileParsers SmilesParse )

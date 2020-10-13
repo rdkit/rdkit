@@ -670,11 +670,6 @@ RETURNS mol
 AS 'MODULE_PATHNAME'
 LANGUAGE C STRICT IMMUTABLE;
 
-CREATE OR REPLACE FUNCTION mol_hash(mol)
-    RETURNS cstring
-    AS 'MODULE_PATHNAME', 'mol_hash'
-    LANGUAGE C STRICT IMMUTABLE;
-
 CREATE OR REPLACE FUNCTION mol_nm_hash(mol, cstring default 'AnonymousGraph')
     RETURNS cstring
     AS 'MODULE_PATHNAME', 'mol_nm_hash'

@@ -783,11 +783,12 @@ void testChiralityCleanup() {
   TEST_ASSERT(mol->getBondWithIdx(10)->getBondType() == Bond::DOUBLE);
   mol->getBondWithIdx(10)->setStereoAtoms(4, 12);
   mol->getBondWithIdx(10)->setStereo(Bond::STEREOCIS);
-  std::cerr << "3>>>--------------------------" << std::endl;
+  // std::cerr << "3>>>--------------------------" << std::endl;
   MolOps::setDoubleBondNeighborDirections(*mol);
-  std::cerr << "<<<--------------------------" << std::endl;
+  // std::cerr << "<<<--------------------------" << std::endl;
+  // mol->debugMol(std::cerr);
   MolOps::assignStereochemistry(*mol, true, true);
-  BOOST_LOG(rdInfoLog) << MolToSmiles(*mol, true) << std::endl;
+  // BOOST_LOG(rdInfoLog) << MolToSmiles(*mol, true) << std::endl;
   TEST_ASSERT(MolToSmiles(*mol, true) == "CC/C=C\\C(/C=C\\CC)=C(CC)CO");
   delete mol;
 
@@ -3059,6 +3060,74 @@ void testIncorrectBondDirsOnWedging() {
   BOOST_LOG(rdInfoLog) << "done" << std::endl;
 }
 
+void testGithub3314() {
+  BOOST_LOG(rdInfoLog) << "-------------------------------------" << std::endl;
+  BOOST_LOG(rdInfoLog) << "Github #3314: Stereochemistry perception getting "
+                          "confused by a bad drawing."
+                       << std::endl;
+
+  {  // this one was working
+    auto m = R"CTAB(
+  Mrv2014 07312010092D          
+ 
+  0  0  0     0  0            999 V3000
+M  V30 BEGIN CTAB
+M  V30 COUNTS 7 6 0 0 1
+M  V30 BEGIN ATOM
+M  V30 1 C 0.048 0.9844 0 0
+M  V30 2 C 1.2558 -0.2156 0 0
+M  V30 3 C 0.1363 -1.5482 0 0 CFG=2
+M  V30 4 C -0.575 -2.9644 0 0
+M  V30 5 O -2.0662 -3.0513 0 0
+M  V30 6 N 1.1803 -2.6742 0 0
+M  V30 7 O 2.5583 -0.3464 0 0
+M  V30 END ATOM
+M  V30 BEGIN BOND
+M  V30 1 1 2 1
+M  V30 2 1 3 4 CFG=1
+M  V30 3 1 4 5
+M  V30 4 1 3 6 CFG=3
+M  V30 5 1 2 7
+M  V30 6 1 2 3
+M  V30 END BOND
+M  V30 END CTAB
+M  END)CTAB"_ctab;
+    TEST_ASSERT(m);
+    TEST_ASSERT(m->getAtomWithIdx(2)->getChiralTag() != Atom::CHI_UNSPECIFIED);
+  }
+  {
+    std::cerr << "--------------------------------------------------"
+              << std::endl;
+    auto m = R"CTAB(
+  Mrv2014 07312010092D          
+ 
+  0  0  0     0  0            999 V3000
+M  V30 BEGIN CTAB
+M  V30 COUNTS 7 6 0 0 1
+M  V30 BEGIN ATOM
+M  V30 1 C 0.048 0.9844 0 0
+M  V30 2 C 1.2558 -0.2156 0 0 CFG=2
+M  V30 3 C 0.1363 -1.5482 0 0 CFG=2
+M  V30 4 C -0.575 -2.9644 0 0
+M  V30 5 O -2.0662 -3.0513 0 0
+M  V30 6 N 1.1803 -2.6742 0 0
+M  V30 7 O 2.5583 -0.3464 0 0
+M  V30 END ATOM
+M  V30 BEGIN BOND
+M  V30 1 1 2 1
+M  V30 2 1 2 3 CFG=1
+M  V30 3 1 3 4 CFG=1
+M  V30 4 1 4 5
+M  V30 5 1 3 6 CFG=3
+M  V30 6 1 2 7
+M  V30 END BOND
+M  V30 END CTAB
+M  END)CTAB"_ctab;
+    TEST_ASSERT(m);
+    TEST_ASSERT(m->getAtomWithIdx(1)->getChiralTag() != Atom::CHI_UNSPECIFIED);
+    TEST_ASSERT(m->getAtomWithIdx(2)->getChiralTag() != Atom::CHI_UNSPECIFIED);
+  }
+}
 int main() {
   RDLog::InitLogs();
   // boost::logging::enable_logs("rdApp.debug");
@@ -3093,5 +3162,6 @@ int main() {
   testClearDirsOnDoubleBondsWithoutStereo();
   testAssignChiralTypesFromMolParity();
   testIncorrectBondDirsOnWedging();
+  testGithub3314();
   return 0;
 }

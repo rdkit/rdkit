@@ -93,8 +93,8 @@ std::vector<std::pair<ROMOL_SPTR, ROMOL_SPTR>> readPairs(std::istream& inStream,
     // parse the molpair on this line (if there is one)
     std::shared_ptr<std::pair<ROMol*, ROMol*>> mol_pair(getPair(tmpstr));
     if (mol_pair != nullptr) {
-      pairs.push_back(std::pair<ROMOL_SPTR, ROMOL_SPTR>(
-          ROMOL_SPTR(mol_pair->first), ROMOL_SPTR(mol_pair->second)));
+      pairs.emplace_back(
+          ROMOL_SPTR(mol_pair->first), ROMOL_SPTR(mol_pair->second));
       nRead++;
     }
   }

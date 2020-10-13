@@ -1,11 +1,11 @@
 # moved back library build directives here
 
-remove_definitions(-DRDKIT_GRAPHMOL_BUILD)
-add_definitions(-DRDKIT_FORCEFIELDHELPERS_BUILD)
 rdkit_library(ForceFieldHelpers UFF/AtomTyper.cpp UFF/Builder.cpp
               MMFF/AtomTyper.cpp MMFF/Builder.cpp CrystalFF/TorsionAngleM6.cpp
               CrystalFF/TorsionPreferences.cpp
               LINK_LIBRARIES SmilesParse SubstructMatch ForceField)
+target_compile_definitions(ForceFieldHelpers PRIVATE RDKIT_FORCEFIELDHELPERS_BUILD)
+
 rdkit_headers(FFConvenience.h DEST GraphMol/ForceFieldHelpers)
 rdkit_headers(UFF/AtomTyper.h
               UFF/Builder.h UFF/UFF.h DEST GraphMol/ForceFieldHelpers/UFF)

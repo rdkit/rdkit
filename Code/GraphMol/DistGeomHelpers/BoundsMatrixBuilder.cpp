@@ -828,50 +828,46 @@ bool _checkMacrocycleAmideEster14(const ROMol &mol, const Bond *bnd1,
                                   const Bond *bnd3, const Atom *atm1,
                                   const Atom *atm2, const Atom *atm3,
                                   const Atom *atm4) {
+  RDUNUSED_PARAM(bnd1);
+  RDUNUSED_PARAM(bnd3);
+
   //   This is a re-write of `_checkAmideEster14` with more explicit logic on
   //   the checks It is interesting that we find with this function we get
   //   better macrocycle sampling than `_checkAmideEster14`
-  unsigned int a1Num = atm1->getAtomicNum();
   unsigned int a2Num = atm2->getAtomicNum();
   unsigned int a3Num = atm3->getAtomicNum();
-  unsigned int a4Num = atm4->getAtomicNum();
 
   if (a3Num != 6) return false;
 
   ROMol::ADJ_ITER nbrIdx, endNbrs;
   if (a2Num == 7 || a2Num == 8) {
     if (mol.getAtomDegree(atm2) == 3 && mol.getAtomDegree(atm3) == 3) {
-      {
-        const Atom *res;
-        const Bond *resbnd;
-        boost::tie(nbrIdx, endNbrs) = mol.getAtomNeighbors(atm2);
-        while (nbrIdx != endNbrs) {
-          if (*nbrIdx != atm1->getIdx() && *nbrIdx != atm3->getIdx()) {
-            res = mol.getAtomWithIdx(*nbrIdx);
-            resbnd = mol.getBondBetweenAtoms(atm2->getIdx(), *nbrIdx);
-            break;
+      boost::tie(nbrIdx, endNbrs) = mol.getAtomNeighbors(atm2);
+      while (nbrIdx != endNbrs) {
+        if (*nbrIdx != atm1->getIdx() && *nbrIdx != atm3->getIdx()) {
+          const auto &res = mol.getAtomWithIdx(*nbrIdx);
+          const auto &resbnd = mol.getBondBetweenAtoms(atm2->getIdx(), *nbrIdx);
+          if ((res->getAtomicNum() != 6 && res->getAtomicNum() != 1) ||
+              resbnd->getBondType() != Bond::SINGLE) {
+            return false;
           }
-          ++nbrIdx;
+          break;
         }
-        if ((res->getAtomicNum() != 6 && res->getAtomicNum() != 1) ||
-            resbnd->getBondType() != Bond::SINGLE)
-          return false;
+        ++nbrIdx;
       }
 
-      {
-        const Atom *res;
-        const Bond *resbnd;
-        boost::tie(nbrIdx, endNbrs) = mol.getAtomNeighbors(atm3);
-        while (nbrIdx != endNbrs) {
-          if (*nbrIdx != atm2->getIdx() && *nbrIdx != atm4->getIdx()) {
-            res = mol.getAtomWithIdx(*nbrIdx);
-            resbnd = mol.getBondBetweenAtoms(atm3->getIdx(), *nbrIdx);
-            break;
+      boost::tie(nbrIdx, endNbrs) = mol.getAtomNeighbors(atm3);
+      while (nbrIdx != endNbrs) {
+        if (*nbrIdx != atm2->getIdx() && *nbrIdx != atm4->getIdx()) {
+          const auto &res = mol.getAtomWithIdx(*nbrIdx);
+          const auto &resbnd = mol.getBondBetweenAtoms(atm3->getIdx(), *nbrIdx);
+          if (res->getAtomicNum() != 8 ||
+              resbnd->getBondType() != Bond::DOUBLE) {
+            return false;
           }
-          ++nbrIdx;
+          break;
         }
-        if (res->getAtomicNum() != 8 || resbnd->getBondType() != Bond::DOUBLE)
-          return false;
+        ++nbrIdx;
       }
 
       return true;
@@ -1565,8 +1561,7 @@ void collectBondsAndAngles(const ROMol &mol,
   angles.resize(0);
   bonds.reserve(mol.getNumBonds());
   for (const auto bondi : mol.bonds()) {
-    bonds.push_back(
-        std::make_pair(bondi->getBeginAtomIdx(), bondi->getEndAtomIdx()));
+    bonds.emplace_back(bondi->getBeginAtomIdx(), bondi->getEndAtomIdx());
 
     for (unsigned int j = bondi->getIdx() + 1; j < mol.getNumBonds(); ++j) {
       const Bond *bondj = mol.getBondWithIdx(j);

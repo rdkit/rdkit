@@ -62,7 +62,7 @@ void drawit(ChemicalReaction *rxn, std::string nameBase,
     outs.flush();
   }
 }
-}
+}  // namespace
 
 void test1() {
   std::cout << " ----------------- Test 1" << std::endl;

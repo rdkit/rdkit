@@ -26,7 +26,7 @@
 #include <future>
 #endif
 
-#define square(x) ((x) * (x))
+double square(double x) { return x * x; }
 
 namespace RDKit {
 namespace MolAlign {
@@ -663,7 +663,7 @@ void LAP::computeCostMatrix(const ROMol &prbMol, const MolHistogram &prbHist,
           if ((!rhyk) && (!phxk)) {
             continue;
           }
-          hSum += (double)square(rhyk - phxk) / (double)(rhyk + phxk);
+          hSum += square(rhyk - phxk) / (rhyk + phxk);
         }
         d_cost[y][x] = (*costFunc)(j, i, hSum, data);
       }
@@ -1242,8 +1242,6 @@ O3A::O3A(int (*costFunc)(const unsigned int, const unsigned int, double,
   const Conformer &refConf = refMol.getConformer(refCid);
   unsigned int accuracy = options & O3_ACCURACY_MASK;
   bool local = options & O3_LOCAL_ONLY;
-  unsigned int refNAtoms = refMol.getNumAtoms();
-  unsigned int prbNAtoms = prbMol.getNumAtoms();
   unsigned int refNHeavyAtoms = refMol.getNumHeavyAtoms();
   unsigned int prbNHeavyAtoms = prbMol.getNumHeavyAtoms();
   unsigned int largestNHeavyAtoms = std::max(refNHeavyAtoms, prbNHeavyAtoms);

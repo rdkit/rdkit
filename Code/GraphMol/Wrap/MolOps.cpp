@@ -14,7 +14,7 @@
 #include <numpy/arrayobject.h>
 
 #include <string>
-#include <math.h>
+#include <cmath>
 
 #include <DataStructs/ExplicitBitVect.h>
 #include <GraphMol/RDKitBase.h>
@@ -37,14 +37,13 @@ using boost_adaptbx::python::streambuf;
 namespace RDKit {
 std::string molToSVG(const ROMol &mol, unsigned int width, unsigned int height,
                      python::object pyHighlightAtoms, bool kekulize,
-                     unsigned int lineWidthMult, unsigned int fontSize,
+                     unsigned int lineWidthMult,
                      bool includeAtomCircles, int confId) {
   RDUNUSED_PARAM(kekulize);
   std::unique_ptr<std::vector<int>> highlightAtoms =
       pythonObjectToVect(pyHighlightAtoms, static_cast<int>(mol.getNumAtoms()));
   std::stringstream outs;
   MolDraw2DSVG drawer(width, height, outs);
-  drawer.setFontSize(fontSize / 24.);
   drawer.setLineWidth(drawer.lineWidth() * lineWidthMult);
   drawer.drawOptions().circleAtoms = includeAtomCircles;
   drawer.drawMolecule(mol, highlightAtoms.get(), nullptr, nullptr, confId);
@@ -365,7 +364,7 @@ MolOps::SanitizeFlags sanitizeMol(ROMol &mol, boost::uint64_t sanitizeOps,
   if (catchErrors) {
     try {
       MolOps::sanitizeMol(wmol, operationThatFailed, sanitizeOps);
-    } catch (const MolSanitizeException &e) {
+    } catch (const MolSanitizeException &) {
       // this really should not be necessary, but at some point it
       // started to be required with VC++17. Doesn't seem like it does
       // any harm.
@@ -584,7 +583,8 @@ ExplicitBitVect *wrapLayeredFingerprint(
 }
 ExplicitBitVect *wrapPatternFingerprint(const ROMol &mol, unsigned int fpSize,
                                         python::list atomCounts,
-                                        ExplicitBitVect *includeOnlyBits) {
+                                        ExplicitBitVect *includeOnlyBits,
+                                        bool tautomerFingerprints) {
   std::vector<unsigned int> *atomCountsV = nullptr;
   if (atomCounts) {
     atomCountsV = new std::vector<unsigned int>;
@@ -600,7 +600,7 @@ ExplicitBitVect *wrapPatternFingerprint(const ROMol &mol, unsigned int fpSize,
   }
 
   ExplicitBitVect *res;
-  res = RDKit::PatternFingerprintMol(mol, fpSize, atomCountsV, includeOnlyBits);
+  res = RDKit::PatternFingerprintMol(mol, fpSize, atomCountsV, includeOnlyBits, tautomerFingerprints);
 
   if (atomCountsV) {
     for (unsigned int i = 0; i < atomCountsV->size(); ++i) {
@@ -1072,6 +1072,12 @@ struct molops_wrapper {
         .def_readwrite("removeIsotopes",
                        &MolOps::RemoveHsParameters::removeIsotopes,
                        "hydrogens with non-default isotopes")
+        .def_readwrite("removeAndTrackIsotopes",
+                       &MolOps::RemoveHsParameters::removeAndTrackIsotopes,
+                       "hydrogens with non-default isotopes and store "
+                       "them in the _isotopicHs atom property such "
+                       "that AddHs() can add the same isotope at "
+                       "a later stage")
         .def_readwrite("removeDummyNeighbors",
                        &MolOps::RemoveHsParameters::removeDummyNeighbors,
                        "hydrogens with at least one dummy-atom neighbor")
@@ -1087,9 +1093,15 @@ struct molops_wrapper {
         .def_readwrite("removeMapped",
                        &MolOps::RemoveHsParameters::removeMapped,
                        "mapped hydrogens")
+        .def_readwrite("removeInSGroups",
+                       &MolOps::RemoveHsParameters::removeInSGroups,
+                       "hydrogens involved in SubstanceGroups")
         .def_readwrite("removeNonimplicit",
                        &MolOps::RemoveHsParameters::removeNonimplicit,
                        "DEPRECATED")
+        .def_readwrite("removeHydrides",
+                       &MolOps::RemoveHsParameters::removeHydrides,
+                       "hydrogens with formal charge -1")
         .def_readwrite(
             "showWarnings", &MolOps::RemoveHsParameters::showWarnings,
             "display warning messages for some classes of removed Hs")
@@ -1659,24 +1671,25 @@ struct molops_wrapper {
 
     // ------------------------------------------------------------------------
     docString =
-        "Does the CIP stereochemistry assignment \n\
-  for the molecule's atoms (R/S) and double bond (Z/E).\n\
-  Chiral atoms will have a property '_CIPCode' indicating\n\
-  their chiral code.\n\
-\n\
-  ARGUMENTS:\n\
-\n\
-    - mol: the molecule to use\n\
-    - cleanIt: (optional) if provided, atoms with a chiral specifier that aren't\n\
-      actually chiral (e.g. atoms with duplicate substituents or only 2 substituents,\n\
-      etc.) will have their chiral code set to CHI_UNSPECIFIED. Bonds with \n\
-      STEREOCIS/STEREOTRANS specified that have duplicate substituents based upon the CIP \n\
-      atom ranks will be marked STEREONONE. \n\
-    - force: (optional) causes the calculation to be repeated, even if it has already\n\
-      been done\n\
-    - flagPossibleStereoCenters (optional)   set the _ChiralityPossible property on\n\
-      atoms that are possible stereocenters\n\
-\n";
+        R"DOC(Does the CIP stereochemistry assignment 
+  for the molecule's atoms (R/S) and double bond (Z/E).
+  Chiral atoms will have a property '_CIPCode' indicating
+  their chiral code.
+
+  ARGUMENTS:
+
+    - mol: the molecule to use
+    - cleanIt: (optional) if provided, any existing values of the property `_CIPCode`
+        will be cleared, atoms with a chiral specifier that aren't
+      actually chiral (e.g. atoms with duplicate substituents or only 2 substituents,
+      etc.) will have their chiral code set to CHI_UNSPECIFIED. Bonds with 
+      STEREOCIS/STEREOTRANS specified that have duplicate substituents based upon the CIP 
+      atom ranks will be marked STEREONONE. 
+    - force: (optional) causes the calculation to be repeated, even if it has already
+      been done
+    - flagPossibleStereoCenters (optional)   set the _ChiralityPossible property on
+      atoms that are possible stereocenters
+)DOC";
     python::def("AssignStereochemistry", MolOps::assignStereochemistry,
                 (python::arg("mol"), python::arg("cleanIt") = false,
                  python::arg("force") = false,
@@ -1992,7 +2005,8 @@ ARGUMENTS:\n\
     python::def("PatternFingerprint", wrapPatternFingerprint,
                 (python::arg("mol"), python::arg("fpSize") = 2048,
                  python::arg("atomCounts") = python::list(),
-                 python::arg("setOnlyBits") = (ExplicitBitVect *)nullptr),
+                 python::arg("setOnlyBits") = (ExplicitBitVect *)nullptr,
+                 python::arg("tautomerFingerprints") = false),
                 docString.c_str(),
                 python::return_value_policy<python::manage_new_object>());
 
@@ -2293,6 +2307,15 @@ EXAMPLES:\n\n\
                  python::arg("includeAtomCircles") = true),
                 docString.c_str());
 
+    docString =
+        R"DOC(Possible values:
+  - ADJUST_IGNORENONE: nothing will be ignored
+  - ADJUST_IGNORECHAINS: non-ring atoms/bonds will be ignored
+  - ADJUST_IGNORERINGS: ring atoms/bonds will be ignored
+  - ADJUST_IGNOREDUMMIES: dummy atoms will be ignored
+  - ADJUST_IGNORENONDUMMIES: non-dummy atoms will be ignored
+  - ADJUST_IGNOREALL: everything will be ignored
+)DOC";
     python::enum_<MolOps::AdjustQueryWhichFlags>("AdjustQueryWhichFlags")
         .value("ADJUST_IGNORENONE", MolOps::ADJUST_IGNORENONE)
         .value("ADJUST_IGNORECHAINS", MolOps::ADJUST_IGNORECHAINS)
@@ -2303,74 +2326,96 @@ EXAMPLES:\n\n\
         .export_values();
 
     docString =
-        "Parameters controlling which components of the query atoms are adjusted.\n\
-\n\
-Attributes:\n\
-  - adjustDegree: \n\
-    modified atoms have an explicit-degree query added based on their degree in the query \n\
-  - adjustHeavyDegree: \n\
-    modified atoms have a heavy-atom-degree query added based on their degree in the query \n\
-  - adjustDegreeFlags: \n\
-    controls which atoms have a degree query added \n\
-  - adjustRingCount: \n\
-    modified atoms have a ring-count query added based on their ring count in the query \n\
-  - adjustRingCountFlags: \n\
-    controls which atoms have a ring-count query added \n\
-  - makeDummiesQueries: \n\
-    dummy atoms that do not have a specified isotope are converted to any-atom queries \n\
-  - aromatizeIfPossible: \n\
-    attempts aromaticity perception on the molecule \n\
-  - makeBondsGeneric: \n\
-    convert bonds to generic (any) bonds \n\
-  - makeBondsGenericFlags: \n\
-    controls which bonds are made generic \n\
-  - makeAtomsGeneric: \n\
-    convert atoms to generic (any) atoms \n\
-  - makeAtomsGenericFlags: \n\
-    controls which atoms are made generic \n\
-  - adjustRingChain: \n\
-    modified atoms have a ring-chain query added based on whether or not they are in a ring \n\
-  - adjustRingChainFlags: \n\
-    controls which atoms have a ring-chain query added \n\
-\n\
-A note on the flags controlling which atoms/bonds are modified: \n\
-   These generally limit the set of atoms/bonds to be modified.\n\
-   For example:\n\
-       - ADJUST_IGNORERINGS atoms/bonds in rings will not be modified.\n\
-       - ADJUST_IGNORENONE causes all atoms/bonds to be modified\n\
-       - ADJUST_IGNOREALL no atoms/bonds will be modified\n\
-   Some of the options obviously make no sense for bonds\n\
-";
+        R"DOC(Parameters controlling which components of the query atoms/bonds are adjusted.
+
+Note that some of the options here are either directly contradictory or make
+  no sense when combined with each other. We generally assume that client code
+  is doing something sensible and don't attempt to detect possible conflicts or
+  problems.
+
+A note on the flags controlling which atoms/bonds are modified: 
+   These generally limit the set of atoms/bonds to be modified.
+   For example:
+       - ADJUST_IGNORERINGS atoms/bonds in rings will not be modified.
+       - ADJUST_IGNORENONE causes all atoms/bonds to be modified
+       - ADJUST_IGNOREALL no atoms/bonds will be modified
+   Some of the options obviously make no sense for bonds
+)DOC";
     python::class_<MolOps::AdjustQueryParameters>("AdjustQueryParameters",
                                                   docString.c_str())
         .def_readwrite("adjustDegree",
-                       &MolOps::AdjustQueryParameters::adjustDegree)
+                       &MolOps::AdjustQueryParameters::adjustDegree,
+                       "add degree queries")
         .def_readwrite("adjustDegreeFlags",
-                       &MolOps::AdjustQueryParameters::adjustDegreeFlags)
+                       &MolOps::AdjustQueryParameters::adjustDegreeFlags,
+                       "controls which atoms have their degree queries changed")
         .def_readwrite("adjustHeavyDegree",
-                       &MolOps::AdjustQueryParameters::adjustHeavyDegree)
-        .def_readwrite("adjustHeavyDegreeFlags",
-                       &MolOps::AdjustQueryParameters::adjustHeavyDegreeFlags)
+                       &MolOps::AdjustQueryParameters::adjustHeavyDegree,
+                       "adjust the heavy-atom degree")
+        .def_readwrite(
+            "adjustHeavyDegreeFlags",
+            &MolOps::AdjustQueryParameters::adjustHeavyDegreeFlags,
+            "controls which atoms have their heavy-atom degree queries changed")
         .def_readwrite("adjustRingCount",
-                       &MolOps::AdjustQueryParameters::adjustRingCount)
+                       &MolOps::AdjustQueryParameters::adjustRingCount,
+                       "add ring-count queries")
         .def_readwrite("adjustRingCountFlags",
-                       &MolOps::AdjustQueryParameters::adjustRingCountFlags)
-        .def_readwrite("makeDummiesQueries",
-                       &MolOps::AdjustQueryParameters::makeDummiesQueries)
+                       &MolOps::AdjustQueryParameters::adjustRingCountFlags,
+                       "controls which atoms have ring-count queries added")
+        .def_readwrite(
+            "makeDummiesQueries",
+            &MolOps::AdjustQueryParameters::makeDummiesQueries,
+            "convert dummy atoms without isotope labels to any-atom queries")
         .def_readwrite("aromatizeIfPossible",
-                       &MolOps::AdjustQueryParameters::aromatizeIfPossible)
+                       &MolOps::AdjustQueryParameters::aromatizeIfPossible,
+                       "perceive and set aromaticity")
         .def_readwrite("makeBondsGeneric",
-                       &MolOps::AdjustQueryParameters::makeBondsGeneric)
+                       &MolOps::AdjustQueryParameters::makeBondsGeneric,
+                       "converts bonds to generic queries (any bonds)")
         .def_readwrite("makeBondsGenericFlags",
-                       &MolOps::AdjustQueryParameters::makeBondsGenericFlags)
+                       &MolOps::AdjustQueryParameters::makeBondsGenericFlags,
+                       "controls which bonds are converted to generic queries")
         .def_readwrite("makeAtomsGeneric",
-                       &MolOps::AdjustQueryParameters::makeAtomsGeneric)
+                       &MolOps::AdjustQueryParameters::makeAtomsGeneric,
+                       "convert atoms to generic queries (any atoms)")
         .def_readwrite("makeAtomsGenericFlags",
-                       &MolOps::AdjustQueryParameters::makeAtomsGenericFlags)
+                       &MolOps::AdjustQueryParameters::makeAtomsGenericFlags,
+                       "controls which atoms are converted to generic queries")
         .def_readwrite("adjustRingChain",
-                       &MolOps::AdjustQueryParameters::adjustRingChain)
+                       &MolOps::AdjustQueryParameters::adjustRingChain,
+                       "add ring-chain queries to atoms")
         .def_readwrite("adjustRingChainFlags",
-                       &MolOps::AdjustQueryParameters::adjustRingChainFlags);
+                       &MolOps::AdjustQueryParameters::adjustRingChainFlags,
+                       "controls which atoms have ring-chain queries added")
+        .def_readwrite(
+            "useStereoCareForBonds",
+            &MolOps::AdjustQueryParameters::useStereoCareForBonds,
+            "if this is set sterochemistry information will be removed from "
+            "double bonds that do not have the stereoCare property set")
+        .def_readwrite(
+            "adjustConjugatedFiveRings",
+            &MolOps::AdjustQueryParameters::adjustConjugatedFiveRings,
+            "set bond queries in conjugated five-rings to "
+            "SINGLE|DOUBLE|AROMATIC")
+        .def_readwrite(
+            "setMDLFiveRingAromaticity",
+            &MolOps::AdjustQueryParameters::setMDLFiveRingAromaticity,
+            "uses the 5-ring aromaticity behavior of the (former) MDL software "
+            "as documented in the Chemical Representation Guide")
+        .def_readwrite("adjustSingleBondsToDegreeOneNeighbors",
+                       &MolOps::AdjustQueryParameters::
+                           adjustSingleBondsToDegreeOneNeighbors,
+                       "set single bonds bewteen aromatic atoms and degree-one "
+                       "neighbors to SINGLE|AROMATIC")
+        .def_readwrite("adjustSingleBondsBetweenAromaticAtoms",
+                       &MolOps::AdjustQueryParameters::
+                           adjustSingleBondsBetweenAromaticAtoms,
+                       "sets non-ring single bonds between two aromatic atoms "
+                       "to SINGLE|AROMATIC")
+        .def("NoAdjustments", &MolOps::AdjustQueryParameters::noAdjustments,
+             "Returns an AdjustQueryParameters object with all parameters set "
+             "to false")
+        .staticmethod("NoAdjustments");
 
     docString =
         "Returns a new molecule where the query properties of atoms have been "

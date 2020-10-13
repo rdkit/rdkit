@@ -28,7 +28,7 @@ class RDKIT_GRAPHMOL_EXPORT AtomMonomerInfo {
 
   virtual ~AtomMonomerInfo(){};
 
-  AtomMonomerInfo() : d_monomerType(UNKNOWN), d_name(""){};
+  AtomMonomerInfo() :  d_name(""){};
   AtomMonomerInfo(AtomMonomerType typ, const std::string &nm = "")
       : d_monomerType(typ), d_name(nm){};
   AtomMonomerInfo(const AtomMonomerInfo &other)
@@ -42,7 +42,7 @@ class RDKIT_GRAPHMOL_EXPORT AtomMonomerInfo {
   virtual AtomMonomerInfo *copy() const { return new AtomMonomerInfo(*this); }
 
  private:
-  AtomMonomerType d_monomerType;
+  AtomMonomerType d_monomerType{UNKNOWN};
   std::string d_name;
 };
 

@@ -10,6 +10,7 @@
 #include "QueryOps.h"
 #include <algorithm>
 #include <RDGeneral/types.h>
+#include <GraphMol/QueryAtom.h>
 
 namespace RDKit {
 
@@ -344,9 +345,8 @@ ATOM_EQUALS_QUERY *makeAtomInRingQuery() {
 
 ATOM_OR_QUERY *makeQAtomQuery() {
   auto *res = new ATOM_OR_QUERY;
-  res->setDescription("AtomOr");  // FIX: we really should label this more
-                                  // descriptively so that it can be output more
-                                  // cleanly
+  res->setDescription("AtomOr");
+  res->setTypeLabel("Q");
   res->setNegation(true);
   res->addChild(
       Queries::Query<int, Atom const *, true>::CHILD_TYPE(makeAtomNumQuery(6)));
@@ -357,15 +357,18 @@ ATOM_OR_QUERY *makeQAtomQuery() {
 ATOM_EQUALS_QUERY *makeQHAtomQuery() {
   ATOM_EQUALS_QUERY *res = makeAtomNumQuery(6);
   res->setNegation(true);
+  res->setTypeLabel("QH");
   return res;
 }
 ATOM_EQUALS_QUERY *makeAAtomQuery() {
   ATOM_EQUALS_QUERY *res = makeAtomNumQuery(1);
   res->setNegation(true);
+  res->setTypeLabel("A");
   return res;
 }
-ATOM_EQUALS_QUERY *makeAHAtomQuery() {
-  auto *res = rdcast<ATOM_EQUALS_QUERY *>(makeAtomNullQuery());
+ATOM_NULL_QUERY *makeAHAtomQuery() {
+  auto *res = makeAtomNullQuery();
+  res->setTypeLabel("AH");
   return res;
 }
 
@@ -382,12 +385,15 @@ ATOM_OR_QUERY *makeXAtomQuery() {
       makeAtomNumQuery(53)));
   res->addChild(Queries::Query<int, Atom const *, true>::CHILD_TYPE(
       makeAtomNumQuery(85)));
+  res->setTypeLabel("X");
+
   return res;
 }
 ATOM_OR_QUERY *makeXHAtomQuery() {
   ATOM_OR_QUERY *res = makeXAtomQuery();
   res->addChild(
       Queries::Query<int, Atom const *, true>::CHILD_TYPE(makeAtomNumQuery(1)));
+  res->setTypeLabel("XH");
   return res;
 }
 
@@ -399,6 +405,8 @@ ATOM_OR_QUERY *makeMAtomQuery() {
   ATOM_OR_QUERY *res = makeMHAtomQuery();
   res->addChild(
       Queries::Query<int, Atom const *, true>::CHILD_TYPE(makeAtomNumQuery(1)));
+  res->setTypeLabel("M");
+
   return res;
 }
 ATOM_OR_QUERY *makeMHAtomQuery() {
@@ -451,6 +459,7 @@ ATOM_OR_QUERY *makeMHAtomQuery() {
       makeAtomNumQuery(85)));
   res->addChild(Queries::Query<int, Atom const *, true>::CHILD_TYPE(
       makeAtomNumQuery(86)));
+  res->setTypeLabel("MH");
   return res;
 }
 
@@ -495,6 +504,13 @@ ATOM_EQUALS_QUERY *makeAtomHasAliphaticHeteroatomNbrsQuery() {
   return res;
 }
 
+ATOM_EQUALS_QUERY *makeAtomNonHydrogenDegreeQuery(int what) {
+  auto *res =
+      makeAtomSimpleQuery<ATOM_EQUALS_QUERY>(what, queryAtomNonHydrogenDegree);
+  res->setDescription("AtomNonHydrogenDegree");
+  return res;
+}
+
 BOND_EQUALS_QUERY *makeBondOrderEqualsQuery(Bond::BondType what) {
   auto *res = new BOND_EQUALS_QUERY;
   res->setVal(what);
@@ -508,6 +524,15 @@ RDKIT_GRAPHMOL_EXPORT BOND_EQUALS_QUERY *makeSingleOrAromaticBondQuery() {
   res->setVal(true);
   res->setDataFunc(queryBondIsSingleOrAromatic);
   res->setDescription("SingleOrAromaticBond");
+  return res;
+};
+
+RDKIT_GRAPHMOL_EXPORT BOND_EQUALS_QUERY *
+makeSingleOrDoubleOrAromaticBondQuery() {
+  auto *res = new BOND_EQUALS_QUERY;
+  res->setVal(true);
+  res->setDataFunc(queryBondIsSingleOrDoubleOrAromatic);
+  res->setDescription("SingleOrDoubleOrAromaticBond");
   return res;
 };
 
@@ -694,4 +719,49 @@ bool isAtomAromatic(const Atom *a) {
   }
   return res;
 }
+
+namespace QueryOps {
+namespace {
+void completeQueryAndChildren(ATOM_EQUALS_QUERY *query, Atom *tgt,
+                              unsigned int magicVal) {
+  PRECONDITION(query, "no query");
+  PRECONDITION(tgt, "no atom");
+  if (static_cast<unsigned int>(query->getVal()) == magicVal) {
+    int tgtVal = query->getDataFunc()(tgt);
+    query->setVal(tgtVal);
+  }
+  for (auto childIt = query->beginChildren(); childIt != query->endChildren();
+       ++childIt) {
+    completeQueryAndChildren((ATOM_EQUALS_QUERY *)(childIt->get()), tgt,
+                             magicVal);
+  }
+}
+}  // namespace
+void completeMolQueries(RWMol *mol, unsigned int magicVal) {
+  PRECONDITION(mol, "bad molecule");
+  for (auto atom : mol->atoms()) {
+    if (atom->hasQuery()) {
+      auto *query = static_cast<ATOM_EQUALS_QUERY *>(atom->getQuery());
+      completeQueryAndChildren(query, atom, magicVal);
+    }
+  }
+}
+
+Atom *replaceAtomWithQueryAtom(RWMol *mol, Atom *atom) {
+  PRECONDITION(mol, "bad molecule");
+  PRECONDITION(atom, "bad atom");
+  if (atom->hasQuery()) {
+    return atom;
+  }
+
+  QueryAtom qa(*atom);
+  unsigned int idx = atom->getIdx();
+
+  if (atom->hasProp(common_properties::_hasMassQuery)) {
+    qa.expandQuery(makeAtomMassQuery(static_cast<int>(atom->getMass())));
+  }
+  mol->replaceAtom(idx, &qa);
+  return mol->getAtomWithIdx(idx);
+}
+}  // namespace QueryOps
 };  // namespace RDKit

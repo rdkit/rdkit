@@ -1,0 +1,75 @@
+steps:
+- bash: |
+    source ${CONDA}/etc/profile.d/conda.sh
+    sudo chown -R ${USER} ${CONDA}
+    conda config --set always_yes yes --set changeps1 no
+    conda update -q conda
+    conda info -a
+    conda create --name rdkit_build $(compiler) cmake \
+        boost-cpp=$(boost_version) boost=$(boost_version) \
+        py-boost=$(boost_version) libboost=$(boost_version) \
+        numpy matplotlib pillow eigen pandas \
+        sphinx=3.1.2 recommonmark jupyter
+    conda activate rdkit_build
+    conda install -c rdkit nox cairo=1.14.6
+  displayName: Setup build environment
+- bash: |
+    source ${CONDA}/etc/profile.d/conda.sh
+    conda activate rdkit_build
+    mkdir build && cd build && \
+    cmake .. \
+    -DCMAKE_BUILD_TYPE=Release \
+    -DRDK_INSTALL_INTREE=ON \
+    -DRDK_INSTALL_STATIC_LIBS=OFF \
+    -DRDK_BUILD_CPP_TESTS=ON \
+    -DRDK_BUILD_PYTHON_WRAPPERS=ON \
+    -DRDK_USE_BOOST_REGEX=ON \
+    -DRDK_BUILD_COORDGEN_SUPPORT=ON \
+    -DRDK_BUILD_MAEPARSER_SUPPORT=ON \
+    -DRDK_OPTIMIZE_POPCNT=ON \
+    -DRDK_BUILD_TEST_GZIP=ON \
+    -DRDK_BUILD_FREESASA_SUPPORT=ON \
+    -DRDK_BUILD_AVALON_SUPPORT=ON \
+    -DRDK_BUILD_INCHI_SUPPORT=ON \
+    -DRDK_BUILD_CAIRO_SUPPORT=ON \
+    -DRDK_BUILD_SWIG_WRAPPERS=OFF \
+    -DRDK_SWIG_STATIC=OFF \
+    -DRDK_BUILD_THREADSAFE_SSS=ON \
+    -DRDK_TEST_MULTITHREADED=ON \
+    -DBoost_NO_SYSTEM_PATHS=ON \
+    -DRDK_BOOST_PYTHON3_NAME=$(python_name) \
+    -DPYTHON_EXECUTABLE=${CONDA_PREFIX}/bin/python3 \
+    -DCMAKE_INCLUDE_PATH="${CONDA_PREFIX}/include" \
+    -DCMAKE_LIBRARY_PATH="${CONDA_PREFIX}/lib"
+  displayName: Configure build (Run CMake)
+- bash: |
+    source ${CONDA}/etc/profile.d/conda.sh
+    conda activate rdkit_build
+    cd build
+    make -j $( $(number_of_cores) ) install
+  displayName: Build
+- bash: |
+    source ${CONDA}/etc/profile.d/conda.sh
+    conda activate rdkit_build
+    export RDBASE=`pwd`
+    export PYTHONPATH=${RDBASE}:${PYTHONPATH}
+    export LD_LIBRARY_PATH=${RDBASE}/lib:${LD_LIBRARY_PATH}
+    export QT_QPA_PLATFORM='offscreen'
+    cd build
+    ctest -j $( $(number_of_cores) ) --output-on-failure -T Test
+  displayName: Run tests
+- bash: |
+    source ${CONDA}/etc/profile.d/conda.sh
+    conda activate rdkit_build
+    export RDBASE=`pwd`
+    export PYTHONPATH=${RDBASE}:${PYTHONPATH}
+    export LD_LIBRARY_PATH=${RDBASE}/lib:${LD_LIBRARY_PATH}
+    export QT_QPA_PLATFORM='offscreen'
+    cd Docs/Book
+    make doctest
+  displayName: Run documentation tests
+- task: PublishTestResults@2
+  inputs:
+    testResultsFormat: 'CTest'
+    testResultsFiles: 'build/Testing/*/Test.xml'
+    testRunTitle: $(system.phasedisplayname) CTest Test Run

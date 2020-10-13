@@ -169,11 +169,12 @@ static void applyHuckelToFused(
     const VECT_EDON_TYPE &edon,  // electron donor state for each atom
     INT_INT_VECT_MAP &ringNeighs,
     int &narom,  // number of aromatic ring so far
-    unsigned int maxNumFusedRings, unsigned int minRingSize);
+    unsigned int maxNumFusedRings, const std::vector<Bond*>& bondsByIdx, unsigned int minRingSize= 0);
 
 void markAtomsBondsArom(ROMol &mol, const VECT_INT_VECT &srings,
                         const VECT_INT_VECT &brings, const INT_VECT &ringIds,
-                        std::set<unsigned int> &doneAtms) {
+                        std::set<unsigned int> &doneBonds,
+                        const std::vector<Bond*>& bondsByIdx) {
   INT_VECT aring, bring;
   INT_VECT_CI ri, ai, bi;
 
@@ -182,13 +183,9 @@ void markAtomsBondsArom(ROMol &mol, const VECT_INT_VECT &srings,
     aring = srings[*ri];
 
     // first mark the atoms in the ring
-    // std::cerr << "aring:";
     for (ai = aring.begin(); ai != aring.end(); ai++) {
-      // std::cerr << " " << *ai;
       mol.getAtomWithIdx(*ai)->setIsAromatic(true);
-      doneAtms.insert(*ai);
     }
-    // std::cerr << std::endl;
   }
 
   // mark the bonds
@@ -212,10 +209,11 @@ void markAtomsBondsArom(ROMol &mol, const VECT_INT_VECT &srings,
   }
   // now mark bonds that have a count of 1 to be aromatic;
   // std::cerr << "bring:";
-  for (bci = bndCntr.begin(); bci != bndCntr.end(); bci++) {
+  for (bci = bndCntr.begin(); bci != bndCntr.end(); ++bci) {
     // std::cerr << " " << bci->first << "(" << bci->second << ")";
-    if ((*bci).second == 1) {
-      Bond *bond = mol.getBondWithIdx(bci->first);
+    if (bci->second == 1) {
+      auto bond = bondsByIdx[bci->first];
+      // Bond *bond = mol.get BondWithIdx(bci->first);
       bond->setIsAromatic(true);
       switch (bond->getBondType()) {
         case Bond::SINGLE:
@@ -225,6 +223,7 @@ void markAtomsBondsArom(ROMol &mol, const VECT_INT_VECT &srings,
         default:
           break;
       }
+      doneBonds.insert(bond->getIdx());
     }
   }
   // std::cerr << std::endl;
@@ -346,9 +345,11 @@ void applyHuckelToFused(
     const VECT_INT_VECT &brings,  // list of all rings as bond ids
     const INT_VECT &fused,       // list of ring ids in the current fused system
     const VECT_EDON_TYPE &edon,  // electron donor state for each atom
-    INT_INT_VECT_MAP &ringNeighs,  // list of neighbors for eac candidate ring
+    INT_INT_VECT_MAP &ringNeighs,  // list of neighbors for each candidate ring
     int &narom,                    // number of aromatic ring so far
-    unsigned int maxNumFusedRings, unsigned int minRingSize = 0) {
+    unsigned int maxNumFusedRings,
+    const std::vector<Bond*>& bondsByIdx,
+    unsigned int minRingSize) {
   // this function check huckel rule on a fused system it starts
   // with the individual rings in the system and then proceeds to
   // check for larger system i.e. if we have a 3 ring fused system,
@@ -365,13 +366,21 @@ void applyHuckelToFused(
   unsigned int i, curSize = 0;
   INT_VECT comb;
   pos = -1;
-  INT_VECT unionAtms;
-  Union(srings, unionAtms);
-  auto nAtms = rdcast<unsigned int>(unionAtms.size());
-  std::set<unsigned int> doneAtoms;
+
+  size_t nRingBonds;
+  {
+    boost::dynamic_bitset<> fusedBonds(mol.getNumBonds());
+    for (auto ridx: fused) {
+      for (auto bidx: brings[ridx]) {
+        fusedBonds[bidx] = true;
+      }
+    }
+    nRingBonds = rdcast<unsigned int>(fusedBonds.count());
+  }
+  std::set<unsigned int> doneBonds;
   while (1) {
     if (pos == -1) {
-      curSize++;
+      ++curSize;
       // check is we are done with all the atoms in the fused
       // system, if so quit. This is a fix for Issue252 REVIEW: is
       // this check sufficient or should we add an additional
@@ -379,8 +388,7 @@ void applyHuckelToFused(
       // fused system that we will try. The number of combinations
       // can obviously be quite large when the number of rings in
       // the fused system is large
-      if ((doneAtoms.size() == nAtms) ||
-          (curSize > std::min(nrings, maxNumFusedRings))) {
+      if (curSize > std::min(nrings, maxNumFusedRings) || doneBonds.size() >= nRingBonds) {
         break;
       }
       comb.resize(curSize);
@@ -427,7 +435,7 @@ void applyHuckelToFused(
 
     if (applyHuckel(mol, unon, edon, minRingSize)) {
       // mark the atoms and bonds in these rings to be aromatic
-      markAtomsBondsArom(mol, srings, brings, curRs, doneAtoms);
+      markAtomsBondsArom(mol, srings, brings, curRs, doneBonds, bondsByIdx);
 
       // add the ring IDs to the aromatic rings found so far
       // avoid duplicates
@@ -758,13 +766,20 @@ int mdlAromaticityHelper(RWMol &mol, const VECT_INT_VECT &srings) {
   int cnrs = rdcast<int>(cRings.size());
   boost::dynamic_bitset<> fusDone(cnrs);
   INT_VECT fused;
+
+  std::vector<Bond*> bondsByIdx;
+  bondsByIdx.reserve(mol.getNumBonds());
+  for (auto b: mol.bonds()) {
+    bondsByIdx.push_back(b);
+  }
+
   while (curr < cnrs) {
     fused.resize(0);
     RingUtils::pickFusedRings(curr, neighMap, fused, fusDone);
     const unsigned int maxFused = 6;
     const unsigned int minRingSize = 6;
     applyHuckelToFused(mol, cRings, brings, fused, edon, neighMap, narom,
-                       maxFused, minRingSize);
+                       maxFused, bondsByIdx, minRingSize);
 
     int rix;
     for (rix = 0; rix < cnrs; rix++) {
@@ -843,6 +858,13 @@ int aromaticityHelper(RWMol &mol, const VECT_INT_VECT &srings,
   VECT_INT_VECT brings;
   RingUtils::convertToBonds(cRings, brings, mol);
 
+
+  std::vector<Bond*> bondsByIdx;
+  bondsByIdx.reserve(mol.getNumBonds());
+  for (auto b: mol.bonds()) {
+    bondsByIdx.push_back(b);
+  }
+
   if (!includeFused) {
     // now loop over all the candidate rings and check the
     // huckel rule - skipping fused systems
@@ -853,7 +875,7 @@ int aromaticityHelper(RWMol &mol, const VECT_INT_VECT &srings,
       const unsigned int maxFused = 6;
       const unsigned int minRingSize = 0;
       applyHuckelToFused(mol, cRings, brings, fused, edon, neighMap, narom,
-                         maxFused, minRingSize);
+                         maxFused, bondsByIdx, minRingSize);
     }
   } else {
     // make the neighbor map for the rings
@@ -873,7 +895,7 @@ int aromaticityHelper(RWMol &mol, const VECT_INT_VECT &srings,
     while (curr < cnrs) {
       fused.resize(0);
       RingUtils::pickFusedRings(curr, neighMap, fused, fusDone);
-      applyHuckelToFused(mol, cRings, brings, fused, edon, neighMap, narom, 6);
+      applyHuckelToFused(mol, cRings, brings, fused, edon, neighMap, narom, 6, bondsByIdx);
 
       int rix;
       for (rix = 0; rix < cnrs; rix++) {

@@ -38,7 +38,6 @@ if(needDownload)
   file(WRITE "${fileToPatch}" "${buffer}")
 endif()
 
-add_definitions(-DRDK_BUILD_AVALON_SUPPORT)
 if (MSVC)
   add_definitions( "/D_CRT_SECURE_NO_WARNINGS /wd4224 /wd4101 /wd4018 /wd4996 /wd4244 /wd4305 /wd4013 /wd4146 /wd4334 /wd4715 /wd4715  /nologo" )
 endif(MSVC)
@@ -86,6 +85,7 @@ endif()
 
 
 rdkit_library(avalon_clib ${avalon_clib_srcs})
+target_compile_definitions(avalon_clib PRIVATE RDKIT_AVALONLIB_BUILD)
 if((MSVC AND RDK_INSTALL_DLLS_MSVC) OR ((NOT MSVC) AND WIN32))
   set_target_properties(avalon_clib PROPERTIES WINDOWS_EXPORT_ALL_SYMBOLS TRUE)
 endif()
@@ -93,13 +93,12 @@ endif()
 include_directories(${CMAKE_CURRENT_SOURCE_DIR})
 include_directories(${AVALON_SRC_PATH})
 
-add_definitions(-DRDKIT_AVALONLIB_BUILD)
-rdkit_library(AvalonLib AvalonTools.cpp SHARED LINK_LIBRARIES avalon_clib FileParsers SmilesParse GraphMol DataStructs RDGeometryLib RDGeneral )
+rdkit_library(AvalonLib AvalonTools.cpp SHARED 
+     LINK_LIBRARIES avalon_clib FileParsers SmilesParse GraphMol DataStructs  )
+target_compile_definitions(AvalonLib PRIVATE RDKIT_AVALONLIB_BUILD)
 rdkit_headers(AvalonTools.h DEST GraphMol)
 rdkit_test(testAvalonLib1 test1.cpp
-           LINK_LIBRARIES AvalonLib avalon_clib
-	   SubstructMatch
-	   FileParsers SmilesParse GraphMol DataStructs RDGeometryLib RDGeneral)
+           LINK_LIBRARIES AvalonLib SubstructMatch )
 
 if(RDK_BUILD_PYTHON_WRAPPERS)
 add_subdirectory(Wrap)

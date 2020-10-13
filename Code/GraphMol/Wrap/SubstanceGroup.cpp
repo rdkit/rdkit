@@ -45,6 +45,11 @@ SubstanceGroup *createMolSubstanceGroup(ROMol &mol, std::string type) {
   return &(getSubstanceGroups(mol).back());
 }
 
+SubstanceGroup *addMolSubstanceGroup(ROMol &mol, const SubstanceGroup &sgroup) {
+  addSubstanceGroup(mol, sgroup);
+  return &(getSubstanceGroups(mol).back());
+}
+
 void addBracketHelper(SubstanceGroup &self, python::object pts) {
   unsigned int sz = python::extract<unsigned int>(pts.attr("__len__")());
   if (sz != 2 && sz != 3) {
@@ -53,7 +58,6 @@ void addBracketHelper(SubstanceGroup &self, python::object pts) {
 
   SubstanceGroup::Bracket bkt;
   python::stl_input_iterator<RDGeom::Point3D> beg(pts);
-  unsigned int i = 0;
   for (unsigned int i = 0; i < sz; ++i) {
     bkt[i] = *beg;
     ++beg;
@@ -61,6 +65,29 @@ void addBracketHelper(SubstanceGroup &self, python::object pts) {
   self.addBracket(bkt);
 }
 
+python::tuple getCStatesHelper(const SubstanceGroup &self) {
+  python::list res;
+  for (const auto cs : self.getCStates()) {
+    res.append(cs);
+  }
+  return python::tuple(res);
+}
+
+python::tuple getBracketsHelper(const SubstanceGroup &self) {
+  python::list res;
+  for (const auto brk : self.getBrackets()) {
+    res.append(python::make_tuple(brk[0], brk[1], brk[2]));
+  }
+  return python::tuple(res);
+}
+
+python::tuple getAttachPointsHelper(const SubstanceGroup &self) {
+  python::list res;
+  for (const auto ap : self.getAttachPoints()) {
+    res.append(ap);
+  }
+  return python::tuple(res);
+}
 }  // namespace
 
 std::string sGroupClassDoc =
@@ -68,18 +95,23 @@ std::string sGroupClassDoc =
 
 struct sgroup_wrap {
   static void wrap() {
-    // register the vector_indexing_suite for SubstanceGroups
-    // if it hasn't already been done.
-    // logic from https://stackoverflow.com/a/13017303
-    boost::python::type_info info =
-        boost::python::type_id<std::vector<RDKit::SubstanceGroup>>();
-    const boost::python::converter::registration *reg =
-        boost::python::converter::registry::query(info);
-    if (reg == nullptr || (*reg).m_to_python == nullptr) {
-      python::class_<std::vector<RDKit::SubstanceGroup>>("SubstanceGroup_VECT")
-          .def(python::vector_indexing_suite<
-               std::vector<RDKit::SubstanceGroup>>());
-    }
+    RegisterVectorConverter<SubstanceGroup>("SubstanceGroup_VECT");
+
+    python::class_<SubstanceGroup::CState,
+                   boost::shared_ptr<SubstanceGroup::CState>>(
+        "SubstanceGroupCState", "CSTATE for a SubstanceGroup", python::init<>())
+        .def_readonly("bondIdx", &SubstanceGroup::CState::bondIdx)
+        .def_readonly("vector", &SubstanceGroup::CState::vector);
+
+    python::class_<SubstanceGroup::AttachPoint,
+                   boost::shared_ptr<SubstanceGroup::AttachPoint>>(
+        "SubstanceGroupAttach", "AttachPoint for a SubstanceGroup",
+        python::init<>())
+        .def_readonly("aIdx", &SubstanceGroup::AttachPoint::aIdx,
+                      "attachment index")
+        .def_readonly("lvIdx", &SubstanceGroup::AttachPoint::lvIdx,
+                      "leaving atom or index (0 for implied)")
+        .def_readonly("id", &SubstanceGroup::AttachPoint::id, "attachment id");
 
     python::class_<SubstanceGroup, boost::shared_ptr<SubstanceGroup>>(
         "SubstanceGroup", sGroupClassDoc.c_str(), python::no_init)
@@ -89,18 +121,18 @@ struct sgroup_wrap {
         .def("GetIndexInMol", &SubstanceGroup::getIndexInMol,
              "returns the index of this SubstanceGroup in the owning "
              "molecule's list.")
-        .def(
-            "GetAtoms", &SubstanceGroup::getAtoms,
-            "returns a list of the indices of the atoms in this SubstanceGroup",
-            python::return_value_policy<python::copy_const_reference>())
+        .def("GetAtoms", &SubstanceGroup::getAtoms,
+             "returns a list of the indices of the atoms in this "
+             "SubstanceGroup",
+             python::return_value_policy<python::copy_const_reference>())
         .def("GetParentAtoms", &SubstanceGroup::getParentAtoms,
              "returns a list of the indices of the parent atoms in this "
              "SubstanceGroup",
              python::return_value_policy<python::copy_const_reference>())
-        .def(
-            "GetBonds", &SubstanceGroup::getBonds,
-            "returns a list of the indices of the bonds in this SubstanceGroup",
-            python::return_value_policy<python::copy_const_reference>())
+        .def("GetBonds", &SubstanceGroup::getBonds,
+             "returns a list of the indices of the bonds in this "
+             "SubstanceGroup",
+             python::return_value_policy<python::copy_const_reference>())
         .def("AddAtomWithIdx", &SubstanceGroup::addAtomWithIdx)
         .def("AddBondWithIdx", &SubstanceGroup::addBondWithIdx)
         .def("AddParentAtomWithIdx", &SubstanceGroup::addParentAtomWithIdx)
@@ -108,9 +140,12 @@ struct sgroup_wrap {
         .def("AddParentAtomWithBookmark",
              &SubstanceGroup::addParentAtomWithBookmark)
         .def("AddCState", &SubstanceGroup::addCState)
+        .def("GetCStates", getCStatesHelper)
         .def("AddBondWithBookmark", &SubstanceGroup::addBondWithBookmark)
         .def("AddAttachPoint", &SubstanceGroup::addAttachPoint)
+        .def("GetAttachPoints", getAttachPointsHelper)
         .def("AddBracket", addBracketHelper)
+        .def("GetBrackets", getBracketsHelper)
 
         .def("SetProp",
              (void (RDProps::*)(const std::string &, std::string, bool) const) &
@@ -167,16 +202,27 @@ struct sgroup_wrap {
              (bool (RDProps::*)(const std::string &) const) &
                  SubstanceGroup::getProp<bool>,
              "returns the value of a particular property")
+        .def(
+            "GetUnsignedVectProp",
+            (std::vector<unsigned int>(RDProps::*)(const std::string &) const) &
+                SubstanceGroup::getProp<std::vector<unsigned int>>,
+            "returns the value of a particular property")
+        .def("GetStringVectProp",
+             (std::vector<std::string>(RDProps::*)(const std::string &) const) &
+                 SubstanceGroup::getProp<std::vector<std::string>>,
+             "returns the value of a particular property")
         .def("GetPropNames", &SubstanceGroup::getPropList,
              (python::arg("self"), python::arg("includePrivate") = false,
               python::arg("includeComputed") = false),
-             "Returns a list of the properties set on the SubstanceGroup.\n\n")
+             "Returns a list of the properties set on the "
+             "SubstanceGroup.\n\n")
         .def("GetPropsAsDict", GetPropsAsDict<SubstanceGroup>,
              (python::arg("self"), python::arg("includePrivate") = true,
               python::arg("includeComputed") = true),
              "Returns a dictionary of the properties set on the "
              "SubstanceGroup.\n"
              " n.b. some properties cannot be converted to python types.\n");
+
     python::def("GetMolSubstanceGroups", &getMolSubstanceGroups,
                 "returns a copy of the molecule's SubstanceGroups (if any)",
                 python::with_custodian_and_ward_postcall<0, 1>());
@@ -188,7 +234,15 @@ struct sgroup_wrap {
                 "removes all SubstanceGroups from a molecule (if any)");
     python::def("CreateMolSubstanceGroup", &createMolSubstanceGroup,
                 (python::arg("mol"), python::arg("type")),
-                "creates a new SubstanceGroup associated with a molecule",
+                "creates a new SubstanceGroup associated with a molecule, "
+                "returns the new SubstanceGroup",
+                python::return_value_policy<
+                    python::reference_existing_object,
+                    python::with_custodian_and_ward_postcall<0, 1>>());
+    python::def("AddMolSubstanceGroup", &addMolSubstanceGroup,
+                (python::arg("mol"), python::arg("sgroup")),
+                "adds a copy of a SubstanceGroup to a molecule, returns the "
+                "new SubstanceGroup",
                 python::return_value_policy<
                     python::reference_existing_object,
                     python::with_custodian_and_ward_postcall<0, 1>>());

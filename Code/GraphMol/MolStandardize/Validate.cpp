@@ -37,8 +37,7 @@ std::vector<ValidationErrorInfo> RDKitValidation::validate(
   unsigned int na = mol.getNumAtoms();
 
   if (!na) {
-    errors.push_back(
-        ValidationErrorInfo("ERROR: [NoAtomValidation] Molecule has no atoms"));
+    errors.emplace_back("ERROR: [NoAtomValidation] Molecule has no atoms");
   }
 
   // loop over atoms
@@ -52,8 +51,7 @@ std::vector<ValidationErrorInfo> RDKitValidation::validate(
     try {
       atom->calcExplicitValence();
     } catch (const MolSanitizeException &e) {
-      errors.push_back(ValidationErrorInfo("INFO: [ValenceValidation] " +
-                                           std::string(e.message())));
+      errors.emplace_back("INFO: [ValenceValidation] " + std::string(e.what()));
     }
   }
   return errors;
@@ -65,8 +63,7 @@ void NoAtomValidation::run(const ROMol &mol, bool reportAllFailures,
   unsigned int na = mol.getNumAtoms();
 
   if (!na) {
-    errors.push_back(
-        ValidationErrorInfo("ERROR: [NoAtomValidation] Molecule has no atoms"));
+    errors.emplace_back("ERROR: [NoAtomValidation] Molecule has no atoms");
   }
 }
 
@@ -125,8 +122,7 @@ void FragmentValidation::run(const ROMol &mol, bool reportAllFailures,
           //					//
           if ((molfragidx == substructidx) && !fpresent) {
             std::string msg = fname + " is present";
-            errors.push_back(
-                ValidationErrorInfo("INFO: [FragmentValidation] " + msg));
+            errors.emplace_back("INFO: [FragmentValidation] " + msg);
             fpresent = true;
           }
         }
@@ -147,7 +143,7 @@ void NeutralValidation::run(const ROMol &mol, bool reportAllFailures,
       charge_str = std::to_string(charge);
     }
     std::string msg = "Not an overall neutral system (" + charge_str + ')';
-    errors.push_back(ValidationErrorInfo("INFO: [NeutralValidation] " + msg));
+    errors.emplace_back("INFO: [NeutralValidation] " + msg);
   }
 }
 
@@ -172,8 +168,8 @@ void IsotopeValidation::run(const ROMol &mol, bool reportAllFailures,
   }
 
   for (auto &isotope : isotopes) {
-    errors.push_back(ValidationErrorInfo(
-        "INFO: [IsotopeValidation] Molecule contains isotope " + isotope));
+    errors.emplace_back("INFO: [IsotopeValidation] Molecule contains isotope " +
+                        isotope);
   }
 }
 
@@ -204,7 +200,7 @@ std::vector<ValidationErrorInfo> MolVSValidation::validate(
     const ROMol &mol, bool reportAllFailures) const {
   std::vector<ValidationErrorInfo> errors;
 
-  for (const auto method : this->d_validations) {
+  for (const auto &method : this->d_validations) {
     method->run(mol, reportAllFailures, errors);
   }
 
@@ -234,9 +230,8 @@ std::vector<ValidationErrorInfo> AllowedAtomsValidation::validate(
     // if no match, append to list of errors.
     if (!match) {
       std::string symbol = qatom->getSymbol();
-      errors.push_back(
-          ValidationErrorInfo("INFO: [AllowedAtomsValidation] Atom " + symbol +
-                              " is not in allowedAtoms list"));
+      errors.emplace_back("INFO: [AllowedAtomsValidation] Atom " + symbol +
+                          " is not in allowedAtoms list");
     }
   }
   return errors;
@@ -264,9 +259,8 @@ std::vector<ValidationErrorInfo> DisallowedAtomsValidation::validate(
     // if no match, append to list of errors.
     if (match) {
       std::string symbol = qatom->getSymbol();
-      errors.push_back(
-          ValidationErrorInfo("INFO: [DisallowedAtomsValidation] Atom " +
-                              symbol + " is in disallowedAtoms list"));
+      errors.emplace_back("INFO: [DisallowedAtomsValidation] Atom " + symbol +
+                          " is in disallowedAtoms list");
     }
   }
   return errors;

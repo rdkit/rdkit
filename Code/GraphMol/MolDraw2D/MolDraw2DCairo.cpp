@@ -1,5 +1,5 @@
 //
-//  Copyright (C) 2015 Greg Landrum
+//  Copyright (C) 2015-2020 Greg Landrum
 //
 //   @@ All Rights Reserved @@
 //  This file is part of the RDKit.
@@ -10,16 +10,51 @@
 // derived from Dave Cosgrove's MolDraw2D
 //
 
-#include "MolDraw2DCairo.h"
 #include <cairo.h>
+#include <fstream>
+#include <GraphMol/MolDraw2D/MolDraw2DCairo.h>
+#ifdef RDK_BUILD_FREETYPE_SUPPORT
+#include <GraphMol/MolDraw2D/DrawTextFTCairo.h>
+#else
+#include <GraphMol/MolDraw2D/DrawTextCairo.h>
+#endif
+#include <GraphMol/FileParsers/PNGParser.h>
+#include <GraphMol/FileParsers/FileParsers.h>
+#include <GraphMol/ChemReactions/Reaction.h>
+#include <GraphMol/ChemReactions/ReactionParser.h>
+#include <GraphMol/ChemReactions/ReactionPickler.h>
+
+#include <GraphMol/SmilesParse/SmilesWrite.h>
+#include <boost/format.hpp>
 
 namespace RDKit {
 void MolDraw2DCairo::initDrawing() {
   PRECONDITION(dp_cr, "no draw context");
-  cairo_select_font_face(dp_cr, "sans", CAIRO_FONT_SLANT_NORMAL,
-                         CAIRO_FONT_WEIGHT_NORMAL);
-  cairo_set_font_size(dp_cr, fontSize());
   cairo_set_line_cap(dp_cr, CAIRO_LINE_CAP_BUTT);
+  //  drawOptions().backgroundColour = DrawColour(0.9, 0.9, 0.0);
+}
+
+void MolDraw2DCairo::initTextDrawer(bool noFreetype) {
+  double max_fnt_sz = drawOptions().maxFontSize;
+  double min_fnt_sz = drawOptions().minFontSize;
+
+  if (noFreetype) {
+    text_drawer_.reset(new DrawTextCairo(max_fnt_sz, min_fnt_sz, dp_cr));
+  } else {
+#ifdef RDK_BUILD_FREETYPE_SUPPORT
+    try {
+      text_drawer_.reset(new DrawTextFTCairo(max_fnt_sz, min_fnt_sz,
+                                             drawOptions().fontFile, dp_cr));
+    } catch (std::runtime_error &e) {
+      BOOST_LOG(rdWarningLog)
+          << e.what() << std::endl
+          << "Falling back to native Cairo text handling." << std::endl;
+      text_drawer_.reset(new DrawTextCairo(max_fnt_sz, min_fnt_sz, dp_cr));
+    }
+#else
+    text_drawer_.reset(new DrawTextCairo(max_fnt_sz, min_fnt_sz, dp_cr));
+#endif
+  }
 }
 
 // ****************************************************************************
@@ -38,8 +73,7 @@ void MolDraw2DCairo::drawLine(const Point2D &cds1, const Point2D &cds2) {
   Point2D c1 = getDrawCoords(cds1);
   Point2D c2 = getDrawCoords(cds2);
 
-  unsigned int width = getDrawLineWidth();
-
+  double width = getDrawLineWidth();
   std::string dashString = "";
 
   cairo_set_line_width(dp_cr, width);
@@ -78,7 +112,7 @@ void MolDraw2DCairo::drawWavyLine(const Point2D &cds1, const Point2D &cds2,
 
   Point2D c1 = getDrawCoords(cds1);
 
-  unsigned int width = getDrawLineWidth();
+  double width = getDrawLineWidth();
   cairo_set_line_width(dp_cr, width);
   cairo_set_dash(dp_cr, nullptr, 0, 0);
   setColour(col1);
@@ -97,23 +131,6 @@ void MolDraw2DCairo::drawWavyLine(const Point2D &cds1, const Point2D &cds2,
 }
 
 // ****************************************************************************
-// draw the char, with the bottom left hand corner at cds
-void MolDraw2DCairo::drawChar(char c, const Point2D &cds) {
-  PRECONDITION(dp_cr, "no draw context");
-  char txt[2];
-  txt[0] = c;
-  txt[1] = 0;
-  cairo_set_font_size(dp_cr, drawFontSize());
-  Point2D c1 = cds;
-  cairo_move_to(dp_cr, c1.x, c1.y);
-  cairo_show_text(dp_cr, txt);
-  cairo_stroke(dp_cr);
-  // set the font size back to molecule units so getStringSize
-  // still works properly.
-  cairo_set_font_size(dp_cr, fontSize());
-}
-
-// ****************************************************************************
 void MolDraw2DCairo::drawPolygon(const std::vector<Point2D> &cds) {
   PRECONDITION(dp_cr, "no draw context");
   PRECONDITION(cds.size() >= 3, "must have at least three points");
@@ -128,7 +145,7 @@ void MolDraw2DCairo::drawPolygon(const std::vector<Point2D> &cds) {
   cairo_set_dash(dp_cr, nullptr, 0, 0);
   cairo_set_line_width(dp_cr, width);
 
-  if(!cds.empty()) {
+  if (!cds.empty()) {
     Point2D lc = getDrawCoords(cds.front());
     cairo_move_to(dp_cr, lc.x, lc.y);
     for (unsigned int i = 1; i < cds.size(); ++i) {
@@ -155,60 +172,6 @@ void MolDraw2DCairo::clearDrawing() {
 }
 
 // ****************************************************************************
-// using the current scale, work out the size of the label in molecule
-// coordinates
-void MolDraw2DCairo::getStringSize(const std::string &label,
-                                   double &label_width,
-                                   double &label_height) const {
-  PRECONDITION(dp_cr, "no draw context");
-  label_width = 0.0;
-  label_height = 0.0;
-
-  TextDrawType draw_mode = TextDrawNormal;
-  // we have seen different behaviour on different OSes if the font is sized to
-  // drawFontSize() / scale() which is what we really want.  Adjust at the end.
-  cairo_set_font_size(dp_cr, drawFontSize());
-
-  bool had_a_super = false;
-
-  char txt[2];
-  txt[1] = 0;
-  for (int i = 0, is = label.length(); i < is; ++i) {
-    // setStringDrawMode moves i along to the end of any <sub> or <sup>
-    // markup
-    if ('<' == label[i] && setStringDrawMode(label, draw_mode, i)) {
-      continue;
-    }
-
-    txt[0] = label[i];
-    cairo_text_extents_t extents;
-    cairo_text_extents(dp_cr, txt, &extents);
-    double twidth = extents.x_advance, theight = extents.height;
-    label_height = std::max(label_height, theight);
-    double char_width = twidth;
-    if (TextDrawSubscript == draw_mode) {
-      char_width *= 0.75;
-    } else if (TextDrawSuperscript == draw_mode) {
-      char_width *= 0.75;
-      had_a_super = true;
-    }
-    label_width += char_width;
-  }
-
-  // convert back to molecule coords.
-  label_width /= scale();
-  label_height /= scale();
-  
-  // subscript keeps its bottom in line with the bottom of the bit chars,
-  // superscript goes above the original char top by a quarter
-  if (had_a_super) {
-    label_height *= 1.25;
-  }
-  label_height *= 1.2;  // empirical
-
-}
-  
-// ****************************************************************************
 namespace {
 cairo_status_t grab_str(void *closure, const unsigned char *data,
                         unsigned int len) {
@@ -222,15 +185,73 @@ std::string MolDraw2DCairo::getDrawingText() const {
   std::string res = "";
   cairo_surface_t *surf = cairo_get_target(dp_cr);
   cairo_surface_write_to_png_stream(surf, &grab_str, (void *)&res);
+  res = addMetadataToPNG(res);
   return res;
 };
 
 void MolDraw2DCairo::writeDrawingText(const std::string &fName) const {
   PRECONDITION(dp_cr, "no draw context");
-  cairo_surface_t *surf = cairo_get_target(dp_cr);
-  if(cairo_surface_write_to_png(surf, fName.c_str()) != CAIRO_STATUS_SUCCESS) {
-    std::cerr << "Failed to write PNG file " << fName << std::endl;
+  auto png = getDrawingText();
+  std::ofstream outs(fName.c_str(), std::ios_base::binary | std::ios_base::out);
+  if (!outs || outs.bad()) {
+    BOOST_LOG(rdErrorLog) << "Failed to write PNG file " << fName << std::endl;
+    return;
   }
+  outs.write(png.c_str(), png.size());
 };
+
+std::string MolDraw2DCairo::addMetadataToPNG(const std::string &png) const {
+  if (d_metadata.empty()) {
+    return png;
+  }
+
+  return RDKit::addMetadataToPNGString(png, d_metadata);
+}
+
+// ****************************************************************************
+namespace {
+void addMoleculeMetadata(
+    const ROMol &mol, int confId,
+    std::vector<std::pair<std::string, std::string>> &metadata, unsigned idx) {
+  // it's legal to repeat a tag, but a lot of software doesn't show all values
+  // so we append a suffix to disambiguate when necessary
+  std::string suffix = "";
+  if (idx) {
+    suffix = (boost::format("%d") % idx).str();
+  }
+  std::string pkl;
+  MolPickler::pickleMol(mol, pkl);
+  metadata.push_back(
+      std::make_pair(augmentTagName(PNGData::pklTag + suffix), pkl));
+
+  bool includeStereo = true;
+  if (mol.getNumConformers()) {
+    auto molb = MolToMolBlock(mol, includeStereo, confId);
+    metadata.push_back(
+        std::make_pair(augmentTagName(PNGData::molTag + suffix), molb));
+  }
+  // MolToCXSmiles() is missing the feature that lets us specify confIds
+  auto smiles = MolToCXSmiles(mol);
+  metadata.push_back(
+      std::make_pair(augmentTagName(PNGData::smilesTag + suffix), smiles));
+}
+void addReactionMetadata(
+    const ChemicalReaction &rxn,
+    std::vector<std::pair<std::string, std::string>> &metadata) {
+  std::string pkl;
+  ReactionPickler::pickleReaction(rxn, pkl);
+  metadata.push_back(std::make_pair(augmentTagName(PNGData::rxnPklTag), pkl));
+  metadata.push_back(std::make_pair(augmentTagName(PNGData::rxnSmartsTag),
+                                    ChemicalReactionToRxnSmarts(rxn)));
+}
+}  // namespace
+
+void MolDraw2DCairo::updateMetadata(const ROMol &mol, int confId) {
+  addMoleculeMetadata(mol, confId, d_metadata, d_numMetadataEntries);
+  ++d_numMetadataEntries;
+}
+void MolDraw2DCairo::updateMetadata(const ChemicalReaction &rxn) {
+  addReactionMetadata(rxn, d_metadata);
+}
 
 }  // namespace RDKit

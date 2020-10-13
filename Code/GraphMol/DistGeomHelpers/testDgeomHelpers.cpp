@@ -23,7 +23,7 @@
 #include <iostream>
 #include "BoundsMatrixBuilder.h"
 #include "Embedder.h"
-#include <stdlib.h>
+#include <cstdlib>
 #include <GraphMol/FileParsers/MolWriters.h>
 #include <GraphMol/FileParsers/MolSupplier.h>
 #include <GraphMol/ROMol.h>
@@ -32,7 +32,7 @@
 #include <RDGeneral/FileParseException.h>
 #include <ForceField/ForceField.h>
 #include <GraphMol/MolAlign/AlignMolecules.h>
-#include <math.h>
+#include <cmath>
 #include <RDGeneral/Exceptions.h>
 
 #include <boost/tokenizer.hpp>

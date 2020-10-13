@@ -267,7 +267,7 @@ class RDKIT_GRAPHMOL_EXPORT ROMol : public RDProps {
     return {&d_graph};
   }
 
-  ROMol() : RDProps(), numBonds(0) { initMol(); }
+  ROMol() : RDProps() { initMol(); }
 
   //! copy constructor with a twist
   /*!
@@ -282,7 +282,7 @@ class RDKIT_GRAPHMOL_EXPORT ROMol : public RDProps {
   */
   ROMol(const ROMol &other, bool quickCopy = false, int confId = -1)
       : RDProps() {
-    dp_ringInfo = 0;
+    dp_ringInfo = nullptr;
     initFromOther(other, quickCopy, confId);
     numBonds = rdcast<unsigned int>(boost::num_edges(d_graph));
   };
@@ -296,7 +296,10 @@ class RDKIT_GRAPHMOL_EXPORT ROMol : public RDProps {
   //@{
 
   //! returns our number of atoms
-  unsigned int getNumAtoms(bool onlyExplicit = 1) const;
+  inline unsigned int getNumAtoms() const {
+    return rdcast<unsigned int>(boost::num_vertices(d_graph));
+  };
+  unsigned int getNumAtoms(bool onlyExplicit) const;
   //! returns our number of heavy atoms (atomic number > 1)
   unsigned int getNumHeavyAtoms() const;
   //! returns a pointer to a particular Atom
@@ -681,7 +684,7 @@ class RDKIT_GRAPHMOL_EXPORT ROMol : public RDProps {
       const ROMol &);  // disable assignment, RWMol's support assignment
 
  protected:
-  unsigned int numBonds;
+  unsigned int numBonds{0};
 #ifndef WIN32
  private:
 #endif

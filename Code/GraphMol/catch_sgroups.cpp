@@ -144,7 +144,7 @@ RWMol buildSampleMolecule() {
 
   // Set a parent with higher index
   const auto &sgroups = getSubstanceGroups(mol);
-  sgroups.at(0).setProp<unsigned int>("PARENT", 2);
+  sgroups.at(0).setProp<unsigned int>("PARENT", 3);
 
   return mol;
 }
@@ -204,10 +204,10 @@ TEST_CASE("Build and test sample molecule", "[Sgroups]") {
     CHECK(sg.getProp<unsigned int>("COMPNO") == 7u);
     CHECK(sg.getProp<std::string>("ESTATE") == "E");
 
-    std::vector<std::array<std::array<double, 3>, 3>> brackets_reference = {{
+    std::vector<std::array<std::array<double, 3>, 3>> brackets_reference = {
         {{{{1., 3., 0.}}, {{5., 7., 0.}}, {{0., 0., 0.}}}},
         {{{{2., 4., 0.}}, {{6., 8., 0.}}, {{0., 0., 0.}}}},
-    }};
+    };
     testBrackets(sg.getBrackets(), brackets_reference);
 
     auto cstates = sg.getCStates();
@@ -227,7 +227,7 @@ TEST_CASE("Build and test sample molecule", "[Sgroups]") {
 
     CHECK(sg.getProp<std::string>("BRKTYP") == "PAREN");
 
-    CHECK(sg.getProp<unsigned int>("PARENT") == 2u);
+    CHECK(sg.getProp<unsigned int>("PARENT") == 3u);
   }
 
   SECTION("second sgroup") {
@@ -284,5 +284,85 @@ TEST_CASE("Build and test sample molecule", "[Sgroups]") {
     CHECK(dataFields[0] == "SAMPLE DATA FIELD 1");
     CHECK(dataFields[1] == "SAMPLE DATA FIELD 2");
     CHECK(dataFields[2] == "SAMPLE DATA FIELD 3");
+  }
+}
+
+TEST_CASE("Removing sgroups", "[Sgroups]") {
+  SECTION("basics") {
+    auto m1 = R"CTAB(
+  Mrv2014 07312005252D          
+ 
+  0  0  0     0  0            999 V3000
+M  V30 BEGIN CTAB
+M  V30 COUNTS 7 6 3 0 0
+M  V30 BEGIN ATOM
+M  V30 1 * -12.75 11.5 0 0
+M  V30 2 O -11.4163 12.27 0 0
+M  V30 3 C -10.0826 11.5 0 0
+M  V30 4 C -8.749 12.27 0 0
+M  V30 5 O -10.0826 9.96 0 0
+M  V30 6 N -7.4153 11.5 0 0
+M  V30 7 C -6.0816 12.27 0 0
+M  V30 END ATOM
+M  V30 BEGIN BOND
+M  V30 1 1 1 2
+M  V30 2 1 2 3
+M  V30 3 1 3 4
+M  V30 4 2 3 5
+M  V30 5 1 4 6
+M  V30 6 1 6 7
+M  V30 END BOND
+M  V30 BEGIN SGROUP
+M  V30 1 SRU 0 ATOMS=(3 2 3 5) XBONDS=(2 1 3) BRKXYZ=(9 -9.9955 12.6173 0 -
+M  V30 -9.0715 11.0169 0 0 0 0) BRKXYZ=(9 -11.5035 11.1527 0 -12.4275 12.7531 -
+M  V30 0 0 0 0) CONNECT=HT LABEL=n
+M  V30 2 DAT 0 ATOMS=(1 6) FIELDNAME=foo_data -
+M  V30 FIELDDISP="   -7.4153   11.5000    DAU   ALL  0       0" -
+M  V30 MRV_FIELDDISP=0 FIELDDATA=bar
+M  V30 3 DAT 0 ATOMS=(1 7) FIELDNAME=bar_data -
+M  V30 FIELDDISP="   -6.0816   12.2700    DAU   ALL  0       0" -
+M  V30 MRV_FIELDDISP=0 FIELDDATA=baz
+M  V30 END SGROUP
+M  V30 END CTAB
+M  END
+)CTAB"_ctab;
+    REQUIRE(m1);
+    auto &sgs = getSubstanceGroups(*m1);
+    CHECK(sgs.size() == 3);
+    sgs.erase(++sgs.begin());
+    CHECK(sgs.size() == 2);
+    CHECK(getSubstanceGroups(*m1).size() == 2);
+    auto molb = MolToV3KMolBlock(*m1);
+    CHECK(molb.find("foo_data") == std::string::npos);
+    CHECK(molb.find("M  V30 2 DAT 0 ATOMS=(1 7) FIELDNAME=bar_data") !=
+          std::string::npos);
+  }
+}
+
+TEST_CASE(
+    "Github #3315: SubstanceGroups should not be written with quotes around "
+    "missing fields",
+    "[Sgroups][bug]") {
+  SECTION("basics") {
+    auto m1 = R"CTAB(
+  Mrv2014 07312012022D          
+
+  2  1  0  0  0  0            999 V2000
+    1.4295    0.1449    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    1.4266   -0.6801    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+  2  1  1  0  0  0  0
+M  STY  1   1 DAT
+M  SAL   1  1   1
+M  SDT   1 test sgroup                                           
+M  SDD   1     0.5348   -0.3403    DRU   ALL  0       0  
+M  SED   1 sgroupval
+M  END
+)CTAB"_ctab;
+    REQUIRE(m1);
+    auto molb = MolToV3KMolBlock(*m1);
+    CHECK(molb.find("FIELDINFO") == std::string::npos);
+    CHECK(molb.find("QUERYTYPE") == std::string::npos);
+    CHECK(molb.find("QUERYOP") == std::string::npos);
+    CHECK(molb.find("FIELDNAME") != std::string::npos);
   }
 }

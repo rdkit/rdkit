@@ -1,6 +1,7 @@
 from rdkit import RDConfig
 import unittest
 import random
+from os import environ
 from rdkit import Chem
 from rdkit.Chem import Draw, AllChem, rdDepictor
 from rdkit.Chem.Draw import rdMolDraw2D
@@ -26,17 +27,19 @@ class TestCase(unittest.TestCase):
   def test2(self):
     m = Chem.MolFromSmiles('c1ccc(C)c(C)c1C')
     AllChem.Compute2DCoords(m)
-    d = Draw.MolDraw2DSVG(300, 300)
+    d = Draw.MolDraw2DSVG(300, 300, -1, -1, True)
     do = d.drawOptions()
     do.atomLabels[3] = 'foolabel'
     d.DrawMolecule(m)
     d.FinishDrawing()
     txt = d.GetDrawingText()
-    self.assertTrue(txt.find("foolabel") != -1)
+    self.assertTrue(txt.find(">f</text>") != -1)
+    self.assertTrue(txt.find(">o</text>") != -1)
+    self.assertTrue(txt.find(">l</text>") != -1)
+    self.assertTrue(txt.find(">a</text>") != -1)
 
+  @unittest.skipUnless(hasattr(Draw, 'MolDraw2DCairo'), 'Cairo support not enabled')
   def testGithubIssue571(self):
-    if not hasattr(Draw, 'MolDraw2DCairo'):
-      return
     m = Chem.MolFromSmiles('c1ccc(C)c(C)c1C')
     AllChem.Compute2DCoords(m)
     d = Draw.MolDraw2DCairo(300, 300)
@@ -315,24 +318,23 @@ M  END""")
     d.DrawMolecule(dm)
     d.FinishDrawing()
     txt = d.GetDrawingText()
-    self.assertTrue(txt.find("stroke-width:7px") >= 0)
-    self.assertTrue(txt.find("stroke-width:21px") == -1)
+    self.assertTrue(txt.find("stroke-width:2.0px") >= 0)
+    self.assertTrue(txt.find("stroke-width:4.0px") == -1)
     d = Draw.MolDraw2DSVG(300, 300)
     d.SetLineWidth(4)
     d.DrawMolecule(dm)
     d.FinishDrawing()
     txt = d.GetDrawingText()
-    # the line width is scaled, so 4 is drawn as 21 pixels wide.
-    self.assertTrue(txt.find("stroke-width:7px") == -1)
-    self.assertTrue(txt.find("stroke-width:14px") >= 0)
+    self.assertTrue(txt.find("stroke-width:2.0px") == -1)
+    self.assertTrue(txt.find("stroke-width:4.0px") >= 0)
 
   def testPrepareAndDrawMolecule(self):
     m = Chem.MolFromSmiles("C1N[C@@H]2OCC12")
-    d = Draw.MolDraw2DSVG(300, 300)
+    d = Draw.MolDraw2DSVG(300, 300, -1, -1, True)
     rdMolDraw2D.PrepareAndDrawMolecule(d, m)
     d.FinishDrawing()
     txt = d.GetDrawingText()
-    self.assertTrue(txt.find("<tspan>H</tspan>") > 0)
+    self.assertTrue(txt.find(">H</text>") > 0)
 
   def testAtomTagging(self):
     m = Chem.MolFromSmiles("C1N[C@@H]2OCC12")
@@ -365,7 +367,7 @@ M  END""")
 
     d = Draw.MolDraw2DSVG(300, 300)
     d.ClearDrawing()
-    Draw.ContourAndDrawGaussians(d, gs, hs, ws)
+    Draw.ContourAndDrawGaussians(d, gs, hs, ws, mol=dm)
     d.drawOptions().clearBackground = False
     d.DrawMolecule(dm)
     d.FinishDrawing()
@@ -377,7 +379,7 @@ M  END""")
     d.ClearDrawing()
     ps = Draw.ContourParams()
     ps.fillGrid = True
-    Draw.ContourAndDrawGaussians(d, gs, hs, ws, params=ps)
+    Draw.ContourAndDrawGaussians(d, gs, hs, ws, params=ps, mol=dm)
     d.drawOptions().clearBackground = False
     d.DrawMolecule(dm)
     d.FinishDrawing()
@@ -386,10 +388,6 @@ M  END""")
       print(txt, file=outf)
 
   def testGridContours(self):
-    m = Chem.MolFromSmiles("C1N[C@@H]2OCC12")
-    dm = Draw.PrepareMolForDrawing(m)
-
-    conf = dm.GetConformer()
     grid = np.zeros((50, 100), np.double)
     ycoords = list(np.arange(0, 5, 0.1))
     xcoords = list(np.arange(0, 10, 0.1))
@@ -412,6 +410,7 @@ M  END""")
     d = Draw.MolDraw2DSVG(300, 300)
     d.ClearDrawing()
     Draw.ContourAndDrawGrid(d, np.transpose(grid), xcoords, ycoords)
+    d.drawOptions().clearBackground = False
     d.FinishDrawing()
     txt = d.GetDrawingText()
     with open("contour_from_py_3.svg", 'w+') as outf:
@@ -459,22 +458,63 @@ M  END
 
   def testSetDrawOptions(self):
     m = Chem.MolFromSmiles('CCNC(=O)O')
-    d = rdMolDraw2D.MolDraw2DSVG(250, 200)
+    d = rdMolDraw2D.MolDraw2DSVG(250, 200, -1, -1, True)
     rdMolDraw2D.PrepareAndDrawMolecule(d, m)
     d.FinishDrawing()
     txt = d.GetDrawingText()
-    self.assertNotEqual(txt.find("fill:#0000FF' ><tspan>N"), -1)
-    self.assertEqual(txt.find("fill:#000000' ><tspan>N"), -1)
+    self.assertNotEqual(txt.find("fill:#0000FF' >N</text>"), -1)
+    self.assertEqual(txt.find("fill:#000000' >N</text>"), -1)
 
-    d = rdMolDraw2D.MolDraw2DSVG(250, 200)
+    d = rdMolDraw2D.MolDraw2DSVG(250, 200, -1, -1, True)
     do = rdMolDraw2D.MolDrawOptions()
     do.useBWAtomPalette()
     d.SetDrawOptions(do)
     rdMolDraw2D.PrepareAndDrawMolecule(d, m)
     d.FinishDrawing()
     txt = d.GetDrawingText()
-    self.assertEqual(txt.find("fill:#0000FF' ><tspan>N"), -1)
-    self.assertNotEqual(txt.find("fill:#000000' ><tspan>N"), -1)
+    self.assertEqual(txt.find("fill:#0000FF' >N</text>"), -1)
+    self.assertNotEqual(txt.find("fill:#000000' >N</text>"), -1)
+
+  def testAlternativeFreetypeFont(self):
+    # this one, you have to look at the pictures
+    m = Chem.MolFromSmiles('S(=O)(=O)(O)c1c(Cl)c(Br)c(I)c(F)c(N)1')
+    d = rdMolDraw2D.MolDraw2DSVG(250, 200)
+    rdMolDraw2D.PrepareAndDrawMolecule(d, m)
+    d.FinishDrawing()
+    txt = d.GetDrawingText()
+    with open('test_ff.svg', 'w') as f:
+      f.write(txt)
+
+    d = rdMolDraw2D.MolDraw2DSVG(250, 200)
+    do = rdMolDraw2D.MolDrawOptions()
+    rdbase = environ['RDBASE']
+    if rdbase:
+      do.fontFile = '{}/Code/GraphMol/MolDraw2D/Amadeus.ttf'.format(rdbase)
+      d.SetDrawOptions(do)
+      rdMolDraw2D.PrepareAndDrawMolecule(d, m)
+      d.FinishDrawing()
+      txt = d.GetDrawingText()
+      with open('test_aff.svg', 'w') as f:
+        f.write(txt)
+    else:
+      pass
+
+  def testExplictMethyl(self):
+    m = Chem.MolFromSmiles('CC')
+    d = rdMolDraw2D.MolDraw2DSVG(250, 200)
+    rdMolDraw2D.PrepareAndDrawMolecule(d, m)
+    d.FinishDrawing()
+    txt = d.GetDrawingText()
+    self.assertEqual(txt.find("class='atom-"), -1)
+
+    d = rdMolDraw2D.MolDraw2DSVG(250, 200)
+    do = rdMolDraw2D.MolDrawOptions()
+    do.explicitMethyl = True
+    d.SetDrawOptions(do)
+    rdMolDraw2D.PrepareAndDrawMolecule(d, m)
+    d.FinishDrawing()
+    txt = d.GetDrawingText()
+    self.assertNotEqual(txt.find("class='atom-"), -1)
 
   def testDrawMoleculeWithHighlights(self):
     COLS = [(1.0, 0.0, 0.0), (0.0, 1.0, 0.0), (0.0, 0.0, 1.0), (1.0, 0.55, 0.0)]
@@ -531,7 +571,7 @@ M  END
     smi = 'CO[C@@H](O)C1=C(O[C@H](F)Cl)C(C#N)=C1ONNC[NH3+]'
     smarts = ['CONN', 'N#CC~CO', 'C=CON', 'CONNCN']
     txt = do_a_picture(smi, smarts, 'pyTest2')
-    self.assertGreater(txt.find('stroke:#FF8C00;stroke-width:5px'), -1)
+    self.assertGreater(txt.find('stroke:#FF8C00;stroke-width:5.5'), -1)
     self.assertEqual(
       txt.find("ellipse cx='244.253' cy='386.518'"
                " rx='11.9872' ry='12.8346'"
@@ -541,6 +581,31 @@ M  END
     smi = 'c1ccccc1Cl'
     smarts = []
     do_a_picture(smi, smarts, 'pyTest3')
+
+  @unittest.skipUnless(hasattr(Draw, 'MolDraw2DCairo'), 'Cairo support not enabled')
+  def testPNGMetadata(self):
+    m = Chem.MolFromMolBlock('''
+  Mrv2014 08172015242D          
+
+  0  0  0     0  0            999 V3000
+M  V30 BEGIN CTAB
+M  V30 COUNTS 3 2 0 0 0
+M  V30 BEGIN ATOM
+M  V30 1 C 2.31 -1.3337 0 0
+M  V30 2 C 3.6437 -2.1037 0 0
+M  V30 3 O 4.9774 -1.3337 0 0
+M  V30 END ATOM
+M  V30 BEGIN BOND
+M  V30 1 1 1 2
+M  V30 2 1 2 3
+M  V30 END BOND
+M  V30 END CTAB
+M  END''')
+    d = Draw.MolDraw2DCairo(200, 200)
+    d.DrawMolecule(m)
+    txt = d.GetDrawingText()
+    nm = Chem.MolFromPNGString(txt)
+    self.assertEqual(Chem.MolToSmiles(m), Chem.MolToSmiles(nm))
 
 
 if __name__ == "__main__":

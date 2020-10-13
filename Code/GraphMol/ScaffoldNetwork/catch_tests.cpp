@@ -22,7 +22,7 @@
 using namespace RDKit;
 
 #if 1
-TEST_CASE("flattenMol", "[unittest, scaffolds]") {
+TEST_CASE("flattenMol", "[unittest][scaffolds]") {
   auto m = "Cl.[13CH3][C@H](F)/C=C/C"_smiles;
   REQUIRE(m);
   SECTION("defaults") {
@@ -77,7 +77,7 @@ TEST_CASE("flattenMol", "[unittest, scaffolds]") {
   }
 }
 
-TEST_CASE("pruneMol", "[unittest, scaffolds]") {
+TEST_CASE("pruneMol", "[unittest][scaffolds]") {
   auto m = "O=C(O)C1C(=O)CC1"_smiles;
   REQUIRE(m);
   SECTION("defaults") {
@@ -89,7 +89,7 @@ TEST_CASE("pruneMol", "[unittest, scaffolds]") {
   }
 }
 
-TEST_CASE("removeAttachmentPoints", "[unittest, scaffolds]") {
+TEST_CASE("removeAttachmentPoints", "[unittest][scaffolds]") {
   auto m = "*c1ccc(*)c*1"_smiles;
   REQUIRE(m);
   SECTION("defaults") {
@@ -102,7 +102,7 @@ TEST_CASE("removeAttachmentPoints", "[unittest, scaffolds]") {
   }
 }
 
-TEST_CASE("makeScaffoldGeneric", "[unittest, scaffolds]") {
+TEST_CASE("makeScaffoldGeneric", "[unittest][scaffolds]") {
   auto m = "c1[nH]ccc1"_smiles;
   REQUIRE(m);
   SECTION("atoms") {
@@ -128,7 +128,7 @@ TEST_CASE("makeScaffoldGeneric", "[unittest, scaffolds]") {
   }
 }
 
-TEST_CASE("getMolFragments", "[unittest, scaffolds]") {
+TEST_CASE("getMolFragments", "[unittest][scaffolds]") {
   auto m = "c1ccccc1CC1NC(=O)CCC1"_smiles;
   REQUIRE(m);
   SECTION("defaults") {
@@ -153,7 +153,7 @@ TEST_CASE("getMolFragments", "[unittest, scaffolds]") {
 
     std::vector<std::pair<std::string, std::string>> res;
     res.reserve(frags.size());
-    for (const auto frag : frags) {
+    for (const auto &frag : frags) {
       res.push_back(std::make_pair(frag.first, MolToSmiles(*frag.second)));
     }
     std::sort(res.begin(), res.end());
@@ -181,7 +181,7 @@ TEST_CASE("getMolFragments", "[unittest, scaffolds]") {
   }
 }
 
-TEST_CASE("addMolToNetwork", "[unittest, scaffolds]") {
+TEST_CASE("addMolToNetwork", "[unittest][scaffolds]") {
   SECTION("defaults") {
     auto m = "c1ccccc1CC1NC(=O)CCC1"_smiles;
     REQUIRE(m);
@@ -204,7 +204,7 @@ TEST_CASE("addMolToNetwork", "[unittest, scaffolds]") {
                           return e.type ==
                                  ScaffoldNetwork::EdgeType::RemoveAttachment;
                         }) == 2);
-    CHECK(std::count(net.counts.begin(), net.counts.end(), 1) ==
+    CHECK(rdcast<size_t>(std::count(net.counts.begin(), net.counts.end(), 1)) ==
           net.counts.size());
 
     // make sure adding the same molecule again doesn't do anything except
@@ -213,7 +213,7 @@ TEST_CASE("addMolToNetwork", "[unittest, scaffolds]") {
     CHECK(net.nodes.size() == 9);
     CHECK(net.counts.size() == net.nodes.size());
     CHECK(net.edges.size() == 8);
-    CHECK(std::count(net.counts.begin(), net.counts.end(), 2) ==
+    CHECK(rdcast<size_t>(std::count(net.counts.begin(), net.counts.end(), 2)) ==
           net.counts.size());
   }
   SECTION("flucloxacillin") {
@@ -363,7 +363,7 @@ TEST_CASE("ostream integration", "[scaffolds]") {
   }
 }
 
-TEST_CASE("no attachment points", "[unittest, scaffolds]") {
+TEST_CASE("no attachment points", "[unittest][scaffolds]") {
   auto m = "c1ccccc1CC1NC(=O)CCC1"_smiles;
   REQUIRE(m);
   SECTION("others default") {
@@ -382,7 +382,7 @@ TEST_CASE("no attachment points", "[unittest, scaffolds]") {
                         [](ScaffoldNetwork::NetworkEdge e) {
                           return e.type == ScaffoldNetwork::EdgeType::Generic;
                         }) == 2);
-    CHECK(std::count(net.counts.begin(), net.counts.end(), 1) ==
+    CHECK(rdcast<size_t>(std::count(net.counts.begin(), net.counts.end(), 1)) ==
           net.counts.size());
   }
   SECTION("no generic") {
@@ -398,7 +398,7 @@ TEST_CASE("no attachment points", "[unittest, scaffolds]") {
                         [](ScaffoldNetwork::NetworkEdge e) {
                           return e.type == ScaffoldNetwork::EdgeType::Fragment;
                         }) == 2);
-    CHECK(std::count(net.counts.begin(), net.counts.end(), 1) ==
+    CHECK(rdcast<size_t>(std::count(net.counts.begin(), net.counts.end(), 1)) ==
           net.counts.size());
   }
   SECTION("generic bonds") {
@@ -513,7 +513,7 @@ TEST_CASE("no attachment points", "[unittest, scaffolds]") {
   }
 }
 
-TEST_CASE("BRICS Fragmenter", "[unittest, scaffolds]") {
+TEST_CASE("BRICS Fragmenter", "[unittest][scaffolds]") {
   auto m = "c1ccccc1C(=O)NC1NC(=O)CCC1"_smiles;
   REQUIRE(m);
   SECTION("original behavior default") {
@@ -555,7 +555,7 @@ TEST_CASE("BRICS Fragmenter", "[unittest, scaffolds]") {
 }
 
 TEST_CASE("Implicit Hs on aromatic atoms with attachments",
-          "[bug, scaffolds]") {
+          "[bug][scaffolds]") {
   auto m = "c1cn(C3CCC3)nc1"_smiles;
   REQUIRE(m);
   SECTION("original behavior default") {
@@ -585,7 +585,7 @@ TEST_CASE("Implicit Hs on aromatic atoms with attachments",
 }
 
 TEST_CASE("scaffold with attachment when attachments are disabled",
-          "[bug, scaffolds]") {
+          "[bug][scaffolds]") {
   auto m = "C1CCC1C1CCCC1C1CCCCC1"_smiles;
   REQUIRE(m);
   SECTION("bug report") {
@@ -613,7 +613,7 @@ TEST_CASE("scaffold with attachment when attachments are disabled",
   }
 }
 
-TEST_CASE("larger multi-mol test", "[regression, scaffold]") {
+TEST_CASE("larger multi-mol test", "[regression][scaffold]") {
   std::vector<std::string> smiles{
       "Cc1onc(-c2c(F)cccc2Cl)c1C(=O)N[C@@H]1C(=O)N2[C@@H](C(=O)O)C(C)(C)S[C@H]"
       "12",
@@ -745,6 +745,82 @@ TEST_CASE("BRICS performance problems", "[bug]") {
   }
 }
 
+TEST_CASE("Github #3177: seg fault with null molecules", "[bug]") {
+  SECTION("basics") {
+    std::vector<ROMOL_SPTR> mols;
+    mols.emplace_back(nullptr);
+    ScaffoldNetwork::ScaffoldNetworkParams ps =
+        ScaffoldNetwork::getBRICSNetworkParams();
+    REQUIRE_THROWS_AS(ScaffoldNetwork::createScaffoldNetwork(mols, ps),
+                      ValueErrorException);
+  }
+  SECTION("including one valid molecule") {
+    std::vector<ROMOL_SPTR> mols;
+    mols.emplace_back(SmilesToMol("Cc1ccccc1"));
+    mols.emplace_back(nullptr);
+    ScaffoldNetwork::ScaffoldNetworkParams ps =
+        ScaffoldNetwork::getBRICSNetworkParams();
+    REQUIRE_THROWS_AS(ScaffoldNetwork::createScaffoldNetwork(mols, ps),
+                      ValueErrorException);
+  }
+}
+
+TEST_CASE("GitHub #3153: Kekulization error in molecules with aromatic C+",
+          "[bug]") {
+  SECTION("Standard Representation") {
+    auto smis = {"O=C1C=CC(CC2=CC=CC2)=CC=C1"};
+    std::vector<ROMOL_SPTR> ms;
+    for (const auto smi : smis) {
+      auto m = SmilesToMol(smi);
+      REQUIRE(m);
+      ms.push_back(ROMOL_SPTR(m));
+    }
+    ScaffoldNetwork::ScaffoldNetworkParams ps;
+    ScaffoldNetwork::ScaffoldNetwork net =
+        ScaffoldNetwork::createScaffoldNetwork(ms, ps);
+    CHECK(net.nodes.size() == 9);
+    CHECK(std::find(net.nodes.begin(), net.nodes.end(), "O=c1cccccc1") !=
+          net.nodes.end());
+    CHECK(net.counts.size() == net.nodes.size());
+    CHECK(net.edges.size() == 8);
+  }
+  SECTION("Heteroatom inside ring") {
+    auto smis = {"c1cccn1CC"};
+    std::vector<ROMOL_SPTR> ms;
+    for (const auto smi : smis) {
+      auto m = SmilesToMol(smi);
+      REQUIRE(m);
+      ms.push_back(ROMOL_SPTR(m));
+    }
+    ScaffoldNetwork::ScaffoldNetworkParams ps;
+    ScaffoldNetwork::ScaffoldNetwork net =
+        ScaffoldNetwork::createScaffoldNetwork(ms, ps);
+
+    CHECK(net.nodes.size() == 3);
+    CHECK(std::find(net.nodes.begin(), net.nodes.end(), "c1cc[nH]c1") !=
+          net.nodes.end());
+    CHECK(net.counts.size() == net.nodes.size());
+    CHECK(net.edges.size() == 2);
+  }
+  SECTION("Aromatic Carbocation") {
+    auto smis = {"[O-][C+]1C=CC(CC2=CC=CC2)=CC=C1"};
+    std::vector<ROMOL_SPTR> ms;
+    for (const auto smi : smis) {
+      auto m = SmilesToMol(smi);
+      REQUIRE(m);
+      ms.push_back(ROMOL_SPTR(m));
+    }
+    ScaffoldNetwork::ScaffoldNetworkParams ps;
+    ScaffoldNetwork::ScaffoldNetwork net =
+        ScaffoldNetwork::createScaffoldNetwork(ms, ps);
+    CHECK(std::find(net.nodes.begin(), net.nodes.end(),
+                    "C1=CCC(Cc2ccc[cH+]cc2)=C1") != net.nodes.end());
+    CHECK(net.nodes.size() == 11);
+    CHECK(net.counts.size() == net.nodes.size());
+    CHECK(net.edges.size() == 10);
+  }
+}
+
 #ifdef RDK_USE_BOOST_SERIALIZATION
 
 TEST_CASE("Serialization", "[serialization]") {
@@ -793,3 +869,36 @@ TEST_CASE("Serialization", "[serialization]") {
   }
 }
 #endif
+
+TEST_CASE("molCounts", "[scaffolds]") {
+  SECTION("basics") {
+    auto smis = {"C1CC(C1)C1C(C1C1NCCCC1)C1OCCC1",
+                 "C1CC(C1)C1C(C1C1NCCCC1)C1CCCC1"};
+    std::vector<ROMOL_SPTR> ms;
+    for (const auto smi : smis) {
+      auto m = SmilesToMol(smi);
+      REQUIRE(m);
+      ms.push_back(ROMOL_SPTR(m));
+    }
+    ScaffoldNetwork::ScaffoldNetworkParams ps;
+    ps.includeGenericScaffolds = false;
+    ps.includeScaffoldsWithoutAttachments = false;
+    ScaffoldNetwork::ScaffoldNetwork net =
+        ScaffoldNetwork::createScaffoldNetwork(ms, ps);
+    CHECK(net.nodes.size() == 16);
+    CHECK(net.counts.size() == net.nodes.size());
+    CHECK(net.edges.size() == 40);
+    std::vector<std::pair<std::string, unsigned int>> endps = {
+        {"*C1CCC1", 2u},
+        {"*C1CCCCN1", 2u},
+        {"*C1CCCO1", 1u},
+        {"*C1CCCC1", 1u},
+        {"*C1C(*)C1*", 2u}};
+    for (const auto endp : endps) {
+      auto loc = std::find(net.nodes.begin(), net.nodes.end(), endp.first);
+      CHECK(loc != net.nodes.end());
+      auto idx = loc - net.nodes.begin();
+      CHECK(net.molCounts[idx] == endp.second);
+    }
+  }
+}

@@ -39,13 +39,12 @@ install(FILES ${EHT_PARAM_FILE}
 message("YAeHMOP include_dirs: ${PROJECT_BINARY_DIR}/include")
 message("YAeHMOP link_dirs: ${PROJECT_BINARY_DIR}/lib ${CMAKE_CURRENT_SOURCE_DIR}/src/yaehmop_project-build")
 
-add_definitions(-DRDKIT_EHTLIB_BUILD)
-rdkit_library(EHTLib EHTTools.cpp SHARED LINK_LIBRARIES yaehmop_eht GraphMol DataStructs RDGeometryLib RDGeneral )
+rdkit_library(EHTLib EHTTools.cpp SHARED LINK_LIBRARIES yaehmop_eht GraphMol )
+target_compile_definitions(EHTLib PRIVATE RDKIT_EHTLIB_BUILD)
 add_dependencies(EHTLib yaehmop_project)
 rdkit_headers(EHTTools.h DEST GraphMol)
 rdkit_catch_test(testEHTLib1 test1.cpp
-           LINK_LIBRARIES EHTLib yaehmop_eht 
-	   FileParsers SmilesParse GraphMol DataStructs RDGeometryLib RDGeneral)
+           LINK_LIBRARIES EHTLib FileParsers SmilesParse )
 
 if(RDK_BUILD_PYTHON_WRAPPERS)
 add_subdirectory(Wrap)

@@ -110,45 +110,58 @@ void testExceptions() {
                        << "    testExceptions" << std::endl;
   ROMOL_SPTR mol(SmilesToMol("C1CCC1"));
 
-  MolBundle bundle;
-  TEST_ASSERT(bundle.size() == 0);
-  TEST_ASSERT(bundle.addMol(mol) == 1);
-  TEST_ASSERT(bundle.size() == 1);
   {
-    bool ok = false;
-    try {
-      bundle.addMol(ROMOL_SPTR(SmilesToMol("C1CC1")));
-    } catch (const ValueErrorException &) {
-      ok = true;
+    // FixedMolSizeMolBundle requires all molecules to have the same size
+    FixedMolSizeMolBundle bundle;
+    TEST_ASSERT(bundle.size() == 0);
+    TEST_ASSERT(bundle.addMol(mol) == 1);
+    TEST_ASSERT(bundle.size() == 1);
+    {
+      bool ok = false;
+      try {
+        bundle.addMol(ROMOL_SPTR(SmilesToMol("C1CC1")));
+      } catch (const ValueErrorException &) {
+        ok = true;
+      }
+      TEST_ASSERT(ok);
     }
-    TEST_ASSERT(ok);
+    {
+      bool ok = false;
+      try {
+        bundle.addMol(ROMOL_SPTR(SmilesToMol("CCCC")));
+      } catch (const ValueErrorException &) {
+        ok = true;
+      }
+      TEST_ASSERT(ok);
+    }
+    {
+      bool ok = false;
+      try {
+        bundle.getMol(1);
+      } catch (const IndexErrorException &) {
+        ok = true;
+      }
+      TEST_ASSERT(ok);
+    }
+    {
+      bool ok = false;
+      try {
+        bundle[1];
+      } catch (const IndexErrorException &) {
+        ok = true;
+      }
+      TEST_ASSERT(ok);
+    }
   }
   {
-    bool ok = false;
-    try {
-      bundle.addMol(ROMOL_SPTR(SmilesToMol("CCCC")));
-    } catch (const ValueErrorException &) {
-      ok = true;
-    }
-    TEST_ASSERT(ok);
-  }
-  {
-    bool ok = false;
-    try {
-      bundle.getMol(1);
-    } catch (const IndexErrorException &) {
-      ok = true;
-    }
-    TEST_ASSERT(ok);
-  }
-  {
-    bool ok = false;
-    try {
-      bundle[1];
-    } catch (const IndexErrorException &) {
-      ok = true;
-    }
-    TEST_ASSERT(ok);
+    // MolBundle requires supports different size molecules
+    MolBundle bundle;
+    TEST_ASSERT(bundle.size() == 0);
+    TEST_ASSERT(bundle.addMol(mol) == 1);
+    TEST_ASSERT(bundle.size() == 1);
+    bundle.addMol(ROMOL_SPTR(SmilesToMol("C1CC1")));
+    bundle.addMol(ROMOL_SPTR(SmilesToMol("CCCC")));
+    TEST_ASSERT(bundle.size() == 3);
   }
   BOOST_LOG(rdInfoLog) << "  Done." << std::endl;
 }

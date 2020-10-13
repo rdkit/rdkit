@@ -1,5 +1,5 @@
 //
-//  Copyright (C) 2014 Novartis Institutes for BioMedical Research
+//  Copyright (C) 2020 Greg Landrum
 //
 //   @@ All Rights Reserved @@
 //  This file is part of the RDKit.
@@ -8,7 +8,7 @@
 //  of the RDKit source tree.
 //
 #include <RDBoost/python.h>
-#include <GraphMol/ROMol.h>
+#include <GraphMol/RDKitBase.h>
 #include <GraphMol/MolHash/MolHash.h>
 #include <RDBoost/Wrap.h>
 
@@ -16,22 +16,6 @@ namespace python = boost::python;
 using namespace RDKit;
 
 namespace {
-std::string GenMolHashString(const ROMol &mol, python::object atomsToUse,
-                             python::object bondsToUse) {
-  std::unique_ptr<std::vector<unsigned>> avect;
-  if (atomsToUse) {
-    avect = pythonObjectToVect(atomsToUse,
-                               static_cast<unsigned>(mol.getNumAtoms()));
-  }
-  std::unique_ptr<std::vector<unsigned>> bvect;
-  if (bondsToUse) {
-    bvect = pythonObjectToVect(bondsToUse,
-                               static_cast<unsigned>(mol.getNumBonds()));
-  }
-  std::string res =
-      MolHash::generateMoleculeHashSet(mol, avect.get(), bvect.get());
-  return res;
-}
 
 std::string MolHashHelper(const ROMol &mol, MolHash::HashFunction func) {
   RWMol cpy(mol);
@@ -63,11 +47,6 @@ BOOST_PYTHON_MODULE(rdMolHash) {
       .value("ArthorSubstructureOrder",
              MolHash::HashFunction::ArthorSubstructureOrder);
 
-  std::string docString = "DEPRECATED: please use MolHash() instead";
-  python::def("GenerateMoleculeHashString", GenMolHashString,
-              (python::arg("mol"), python::arg("atomsToUse") = python::list(),
-               python::arg("bondsToUse") = python::list()),
-              docString.c_str());
   python::def("MolHash", MolHashHelper,
               (python::arg("mol"), python::arg("func")),
               "Generate a hash for a molecule. The func argument determines "

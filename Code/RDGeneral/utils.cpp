@@ -1,6 +1,5 @@
-// $Id$
 //
-//  Copyright (C) 2002-2006 Greg Landrum and Rational Discovery LLC
+//  Copyright (C) 2002-2020 Greg Landrum and Rational Discovery LLC
 //
 //  @@ All Rights Reserved @@
 //  This file is part of the RDKit.
@@ -9,9 +8,11 @@
 //  of the RDKit source tree.
 //
 #include "utils.h"
-#include <math.h>
+#include <cmath>
 #include <string>
 #include <boost/random.hpp>
+#include <boost/format.hpp>
+#include "versions.h"
 
 namespace RDKit {
 static rng_type generator(42u);
@@ -133,4 +134,8 @@ int firstThousandPrimes[NUM_PRIMES_AVAIL] = {
     7759, 7789, 7793, 7817, 7823, 7829, 7841, 7853, 7867, 7873, 7877, 7879,
     7883, 7901, 7907, 7919,
 };
+
+std::string augmentTagName(const std::string &tag) {
+  return (boost::format("%s rdkit %s") % tag % rdkitVersion).str();
 }
+}  // namespace RDKit

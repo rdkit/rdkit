@@ -3,32 +3,33 @@ rdkit_python_extension(rdchem
                        rdchem.cpp Table.cpp Atom.cpp Bond.cpp Mol.cpp
                        Conformer.cpp RingInfo.cpp EditableMol.cpp MonomerInfo.cpp
                        ResonanceMolSupplier.cpp MolBundle.cpp StereoGroup.cpp SubstanceGroup.cpp
+                       Chirality.cpp
                        DEST Chem
                        LINK_LIBRARIES
-                       SmilesParse ChemTransforms SubstructMatch GraphMol RDGeometryLib RDGeneral RDBoost)
+                       SmilesParse ChemTransforms SubstructMatch GraphMol)
 
 rdkit_python_extension(rdmolops
-                       rdmolops.cpp MolOps.cpp
+                       rdmolops.cpp MolOps.cpp 
+                       ChiralityOps.cpp
                        DEST Chem
                        LINK_LIBRARIES
                        ChemReactions MolDraw2D Depictor
                        FileParsers SubstructMatch Fingerprints ChemTransforms
-                       Catalogs Subgraphs SmilesParse MolTransforms GraphMol EigenSolvers
-RDGeometryLib DataStructs RDGeneral RDBoost  )
+                       Subgraphs SmilesParse MolTransforms GraphMol )
 
 rdkit_python_extension(rdqueries
                        rdqueries.cpp Queries.cpp
                        DEST Chem
                        LINK_LIBRARIES
-                       GraphMol RDGeometryLib DataStructs RDGeneral RDBoost  )
+                       GraphMol  )
 
-if(RDK_BUILD_COORDGEN_SUPPORT)
+if(RDK_BUILD_MAEPARSER_SUPPORT)
     set (maesupplier MaeMolSupplier.cpp)
     include_directories(${maeparser_INCLUDE_DIRS})
 endif()
 
 if(RDK_BUILD_COMPRESSED_SUPPLIERS)
-find_package(Boost 1.56.0 COMPONENTS iostreams REQUIRED)
+find_package(Boost ${RDK_BOOST_VERSION} COMPONENTS iostreams REQUIRED)
 if (NOT Boost_USE_STATIC_LIBS)
    add_definitions("-DBOOST_IOSTREAMS_DYN_LINK")
 endif()
@@ -37,14 +38,19 @@ set(rdmolfiles_sources rdmolfiles.cpp
                        SDMolSupplier.cpp TDTMolSupplier.cpp
                        SmilesMolSupplier.cpp SmilesWriter.cpp SDWriter.cpp
                        TDTWriter.cpp CompressedSDMolSupplier.cpp
-                       PDBWriter.cpp )
+                       PDBWriter.cpp
+											 MultithreadedSmilesMolSupplier.cpp
+											 MultithreadedSDMolSupplier.cpp)
 else(RDK_BUILD_COMPRESSED_SUPPLIERS)
 set(rdmolfiles_sources rdmolfiles.cpp
                        ForwardSDMolSupplier.cpp ${maesupplier}
                        SDMolSupplier.cpp TDTMolSupplier.cpp
                        SmilesMolSupplier.cpp SmilesWriter.cpp SDWriter.cpp
                        TDTWriter.cpp
-                       PDBWriter.cpp )
+                       PDBWriter.cpp 
+											 MultithreadedSmilesMolSupplier.cpp
+											 MultithreadedSDMolSupplier.cpp)
+
 endif(RDK_BUILD_COMPRESSED_SUPPLIERS)
 
 rdkit_python_extension(rdmolfiles
@@ -78,6 +84,8 @@ add_pytest(pyTestSGroups
 if (RDK_TEST_MULTITHREADED)
   add_pytest(pyTestThreads
            ${CMAKE_CURRENT_SOURCE_DIR}/testThreads.py)
+	add_pytest(pyTestMultithreadedMolSupplier
+         ${CMAKE_CURRENT_SOURCE_DIR}/testMultithreadedMolSupplier.py)
 endif (RDK_TEST_MULTITHREADED)
 
 add_pytest(pyTestPropertyLists

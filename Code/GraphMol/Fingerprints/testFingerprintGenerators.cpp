@@ -2381,19 +2381,19 @@ void testBulkFP() {
 
   BOOST_FOREACH (std::string sm, smis) { molVect.push_back(SmilesToMol(sm)); }
 
-  testPairs.push_back(std::pair<FingerprintGenerator<std::uint64_t> *, FPType>(
-      AtomPair::getAtomPairGenerator<std::uint64_t>(), FPType::AtomPairFP));
+  testPairs.emplace_back(
+      AtomPair::getAtomPairGenerator<std::uint64_t>(), FPType::AtomPairFP);
 
-  testPairs.push_back(std::pair<FingerprintGenerator<std::uint64_t> *, FPType>(
+  testPairs.emplace_back(
       MorganFingerprint::getMorganGenerator<std::uint64_t>(2),
-      FPType::MorganFP));
+      FPType::MorganFP);
 
-  testPairs.push_back(std::pair<FingerprintGenerator<std::uint64_t> *, FPType>(
-      RDKitFP::getRDKitFPGenerator<std::uint64_t>(), FPType::RDKitFP));
+  testPairs.emplace_back(
+      RDKitFP::getRDKitFPGenerator<std::uint64_t>(), FPType::RDKitFP);
 
-  testPairs.push_back(std::pair<FingerprintGenerator<std::uint64_t> *, FPType>(
+  testPairs.emplace_back(
       TopologicalTorsion::getTopologicalTorsionGenerator<std::uint64_t>(),
-      FPType::TopologicalTorsionFP));
+      FPType::TopologicalTorsionFP);
 
   BOOST_FOREACH (auto it, testPairs) {
     std::vector<SparseIntVect<std::uint64_t> *> *results =

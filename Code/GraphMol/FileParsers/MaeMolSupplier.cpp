@@ -297,8 +297,6 @@ void addAtoms(const mae::IndexedBlock &atom_block, RWMol &mol) {
   const auto ys = atom_block.getRealProperty(mae::ATOM_Y_COORD);
   const auto zs = atom_block.getRealProperty(mae::ATOM_Z_COORD);
 
-  std::shared_ptr<mae::IndexedIntProperty> atomic_charges;
-
   // atomic numbers, and x, y, and z coordinates
   const auto size = atomic_numbers->size();
   auto conf = new RDKit::Conformer(size);
@@ -346,6 +344,42 @@ void addBonds(const mae::IndexedBlock &bond_block, RWMol &mol) {
     mol.addBond(bond, true);
   }
 }
+
+void build_mol(RWMol &mol, mae::Block &structure_block, bool sanitize,
+               bool removeHs) {
+  const auto &atom_block = structure_block.getIndexedBlock(mae::ATOM_BLOCK);
+  addAtoms(*atom_block, mol);
+
+  const auto &bond_block = structure_block.getIndexedBlock(mae::BOND_BLOCK);
+  addBonds(*bond_block, mol);
+
+  // These properties need to be set last, as stereochemistry is defined here,
+  // and it requires atoms and bonds to be available.
+  set_mol_properties(mol, structure_block);
+
+  if (sanitize) {
+    if (removeHs) {
+      MolOps::removeHs(mol, false, false);
+    } else {
+      MolOps::sanitizeMol(mol);
+    }
+  } else {
+    // we need some properties for the chiral setup
+    mol.updatePropertyCache(false);
+  }
+
+  // If there are 3D coordinates, try to read more chiralities from them, but do
+  // not override the ones that were read from properties
+  bool replaceExistingTags = false;
+  if (mol.getNumConformers() && mol.getConformer().is3D()) {
+    MolOps::assignChiralTypesFrom3D(mol, -1, replaceExistingTags);
+  }
+
+  // Find more stereo bonds, assign labels, but don't replace the existing ones
+  MolOps::detectBondStereochemistry(mol, replaceExistingTags);
+  MolOps::assignStereochemistry(mol, replaceExistingTags);
+}
+
 }  // namespace
 
 MaeMolSupplier::MaeMolSupplier(std::shared_ptr<std::istream> inStream,
@@ -415,39 +449,14 @@ ROMol *MaeMolSupplier::next() {
     throw FileParseException("All structures read from Maestro file");
   }
 
-  auto *mol = new RWMol();
+  auto mol = new RWMol;
 
-  const auto atom_block = d_next_struct->getIndexedBlock(mae::ATOM_BLOCK);
-  addAtoms(*atom_block, *mol);
-
-  const auto bond_block = d_next_struct->getIndexedBlock(mae::BOND_BLOCK);
-  addBonds(*bond_block, *mol);
-
-  // These properties need to be set last, as stereochemistry is defined here,
-  // and it requires atoms and bonds to be available.
-  set_mol_properties(*mol, *d_next_struct);
-
-  if (df_sanitize) {
-    if (df_removeHs) {
-      MolOps::removeHs(*mol, false, false);
-    } else {
-      MolOps::sanitizeMol(*mol);
-    }
-  } else {
-    // we need some properties for the chiral setup
-    mol->updatePropertyCache(false);
+  try {
+    build_mol(*mol, *d_next_struct, df_sanitize, df_removeHs);
+  } catch (...) {
+    delete mol;
+    throw;
   }
-
-  // If there are 3D coordinates, try to read more chiralities from them, but do
-  // not override the ones that were read from properties
-  bool replaceExistingTags = false;
-  if (mol->getNumConformers() && mol->getConformer().is3D()) {
-    MolOps::assignChiralTypesFrom3D(*mol, -1, replaceExistingTags);
-  }
-
-  // Find more stereo bonds, assign labels, but don't replace the existing ones
-  MolOps::detectBondStereochemistry(*mol, replaceExistingTags);
-  MolOps::assignStereochemistry(*mol, replaceExistingTags);
 
   try {
     d_next_struct = d_reader->next(mae::CT_BLOCK);

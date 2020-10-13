@@ -141,9 +141,9 @@ BOOST_PYTHON_MODULE(rdinchi) {
     - options: the InChI generation options.\n\
       Options should be prefixed with either a - or a /\n\
       Available options are explained in the InChI technical FAQ:\n\
-      http://www.inchi-trust.org/fileadmin/user_upload/html/inchifaq/inchi-faq.html#15.14\n\
-      and the User Guide:\n\
-      http://www.inchi-trust.org/fileadmin/user_upload/software/inchi-v1.04/InChI_UserGuide.pdf\n\
+      https://www.inchi-trust.org/technical-faq-2/#15.14\n\
+      and the User Guide available from:\n\
+      https://www.inchi-trust.org/downloads/\n\
   Returns: the InChI key\n";
   boost::python::def("MolToInchiKey", RDKit::MolToInchiKey,
                      (boost::python::arg("mol"),

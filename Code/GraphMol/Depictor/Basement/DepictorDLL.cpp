@@ -12,7 +12,7 @@
 #include "Depictor.h"
 #include <GraphMol/Substruct/SubstructMatch.h>
 #include <RDGeneral/RDLog.h>
-#include <stdlib.h>
+#include <cstdlib>
 namespace RDKit {
 #ifdef WIN32_DLLBUILD
 //*************************************************************************************
