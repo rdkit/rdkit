@@ -47,14 +47,15 @@
   before putting them into reactions
 
 ## Acknowledgements
-Shrey Aryan, Jinserk Baik, Francois Berenger, David Cosgrove, Ivan Chernyshov,
-Guillaume Godin, Manan Goel, Jan H. Jensen, Gareth Jones, Maria Kadukova, Eisuke
-Kawashima, Steven Kearnes, Brian Kelley, Joos Kiener, Kenneth Lum, Joshua
-Meyers, Paul R Moses, Dan Nealschneider, Jin Pan, Joann Prescott-Roy, Matthew
-Robinson, Jaime Rodríguez-Guerra, Ricardo Rodriguez-Schmidt, Jeff van Santen,
-Roger Sayle Vincent F. Scalfani Eric Taw, Ansgar Schuffenhauer, Paolo Tosco,
-Ivan Tubert-Brohman, Riccardo Vianello, Rachel Walker, Maciej Wójcikowski,
-Christopher Zou, daverona, hjuinj, intrigus-lgtm, autodataming, paconius
+Shrey Aryan, Jinserk Baik, Francois Berenger, Cédric Bouysset, David Cosgrove,
+Ivan Chernyshov, Guillaume Godin, Manan Goel, Jan H. Jensen, Gareth Jones, Maria
+Kadukova, Eisuke Kawashima, Steven Kearnes, Brian Kelley, Joos Kiener, Kenneth
+Lum, Joshua Meyers, Paul R Moses, Dan Nealschneider, Jin Pan, Joann
+Prescott-Roy, Matthew Robinson, Jaime Rodríguez-Guerra, Ricardo
+Rodriguez-Schmidt, Jeff van Santen, Roger Sayle Vincent F. Scalfani Eric Taw,
+Ansgar Schuffenhauer, Paolo Tosco, Ivan Tubert-Brohman, Riccardo Vianello,
+Rachel Walker, Maciej Wójcikowski, Christopher Zou, daverona, hjuinj,
+intrigus-lgtm, autodataming, paconius
 
 ## Bug Fixes:
   - Python tests fail when RDK_BUILD_COMPRESSED_SUPPLIERS is enabled
@@ -393,6 +394,8 @@ Christopher Zou, daverona, hjuinj, intrigus-lgtm, autodataming, paconius
  (github pull #3467 from vfscalfani)
   - ROMol: add inline impl for common getNumAtoms call
  (github pull #3469 from jinpan)
+  - Improve sphinx formatting in rdSubstructLibrary
+ (github issue #3471 from cbouy)
   - Cmake config improvements
  (github pull #3478 from rvianello)
   - allow fillColour to be changed from python
