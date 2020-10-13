@@ -302,8 +302,8 @@ PyO3A *getMMFFO3A(ROMol &prbMol, ROMol &refMol, python::object prbProps,
           (i.second < 0) || (i.second >= rdcast<int>(refMol.getNumAtoms()))) {
         throw_value_error("Constrained atom idx out of range");
       }
-      if ((prbMol[i.first]->getAtomicNum() == 1) ||
-          (refMol[i.second]->getAtomicNum() == 1)) {
+      if ((prbMol.atoms()[i.first]->getAtomicNum() == 1) ||
+          (refMol.atoms()[i.second]->getAtomicNum() == 1)) {
         throw_value_error("Constrained atoms must be heavy atoms");
       }
     }
@@ -380,8 +380,8 @@ python::tuple getMMFFO3AForConfs(
           (i.second < 0) || (i.second >= rdcast<int>(refMol.getNumAtoms()))) {
         throw_value_error("Constrained atom idx out of range");
       }
-      if ((prbMol[i.first]->getAtomicNum() == 1) ||
-          (refMol[i.second]->getAtomicNum() == 1)) {
+      if ((prbMol.atoms()[i.first]->getAtomicNum() == 1) ||
+          (refMol.atoms()[i.second]->getAtomicNum() == 1)) {
         throw_value_error("Constrained atoms must be heavy atoms");
       }
     }
@@ -463,8 +463,8 @@ PyO3A *getCrippenO3A(ROMol &prbMol, ROMol &refMol,
           (i.second < 0) || (i.second >= rdcast<int>(refMol.getNumAtoms()))) {
         throw_value_error("Constrained atom idx out of range");
       }
-      if ((prbMol[i.first]->getAtomicNum() == 1) ||
-          (refMol[i.second]->getAtomicNum() == 1)) {
+      if ((prbMol.atoms()[i.first]->getAtomicNum() == 1) ||
+          (refMol.atoms()[i.second]->getAtomicNum() == 1)) {
         throw_value_error("Constrained atoms must be heavy atoms");
       }
     }
@@ -544,8 +544,8 @@ python::tuple getCrippenO3AForConfs(
           (i.second < 0) || (i.second >= rdcast<int>(refMol.getNumAtoms()))) {
         throw_value_error("Constrained atom idx out of range");
       }
-      if ((prbMol[i.first]->getAtomicNum() == 1) ||
-          (refMol[i.second]->getAtomicNum() == 1)) {
+      if ((prbMol.atoms()[i.first]->getAtomicNum() == 1) ||
+          (refMol.atoms()[i.second]->getAtomicNum() == 1)) {
         throw_value_error("Constrained atoms must be heavy atoms");
       }
     }

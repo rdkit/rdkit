@@ -238,7 +238,7 @@ void AdjustAtomChiralityFlags(RWMol *mol) {
         if (std::find(ringClosures.begin(), ringClosures.end(),
                       static_cast<int>(nbrBond->getIdx())) ==
             ringClosures.end()) {
-          neighbors.emplace_back(nbrIdx, nbrBond->getIdx());
+          neighbors.emplace_back(nbrIdx->getIdx(), nbrBond->getIdx());
         }
       }
       // sort the list of non-ring-closure bonds:

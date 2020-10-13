@@ -216,13 +216,13 @@ void computeGasteigerCharges(const ROMol &mol, std::vector<double> &charges,
       boost::tie(nbrIdx, endIdx) =
           mol.getAtomNeighbors(mol.getAtomWithIdx(aix));
       while (nbrIdx != endIdx) {
-        dx = energ[*nbrIdx] - energ[aix];
+        dx = energ[(*nbrIdx)->getIdx()] - energ[aix];
         if (dx < 0.0) {
           sgn = 0;
         } else {
           sgn = 1;
         }
-        dq += dx / ((sgn * (ionX[aix] - ionX[*nbrIdx])) + ionX[*nbrIdx]);
+        dq += dx / ((sgn * (ionX[aix] - ionX[(*nbrIdx)->getIdx()])) + ionX[(*nbrIdx)->getIdx()]);
         nbrIdx++;
       }
       // now loop over the implicit hydrogens and get their contributions

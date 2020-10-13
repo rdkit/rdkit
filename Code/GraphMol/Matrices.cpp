@@ -348,13 +348,13 @@ INT_LIST getShortestPath(const ROMol &mol, int aid1, int aid2) {
     boost::tie(nbrIdx, endNbrs) =
         mol.getAtomNeighbors(mol.getAtomWithIdx(curAid));
     while (!done && nbrIdx != endNbrs) {
-      switch (pred[*nbrIdx]) {
+      switch (pred[(*nbrIdx)->getIdx()]) {
         case -1:
-          pred[*nbrIdx] = curAid;
-          bfsQ.push_back(rdcast<int>(*nbrIdx));
+          pred[(*nbrIdx)->getIdx()] = curAid;
+          bfsQ.push_back(rdcast<int>((*nbrIdx)->getIdx()));
           break;
         case -3:  // end found
-          pred[*nbrIdx] = curAid;
+          pred[(*nbrIdx)->getIdx()] = curAid;
           done = true;
           break;
         default:  // already processed (or begin)

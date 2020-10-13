@@ -193,10 +193,11 @@ std::vector<ROMOL_SPTR> replaceSubstructs(
     while (nbrIdx != endNbrs) {
       // we don't want to duplicate any "intra-match" bonds:
       if (!std::binary_search(sortMatch.begin(), sortMatch.end(),
-                              int(*nbrIdx))) {
-        Bond *oBond = newMol->getBondBetweenAtoms(match[0], *nbrIdx);
+                              int((*nbrIdx)->getIdx()))) {
+        Bond *oBond = newMol->getBondBetweenAtoms((unsigned int)match[0], *nbrIdx);
         CHECK_INVARIANT(oBond, "required bond not found");
-        newMol->addBond(numOrigAtoms + replacementConnectionPoint, *nbrIdx,
+        newMol->addBond(numOrigAtoms + replacementConnectionPoint,
+                        (*nbrIdx)->getIdx(),
                         oBond->getBondType());
       }
       nbrIdx++;
@@ -273,7 +274,7 @@ ROMol *replaceSidechains(const ROMol &mol, const ROMol &coreQuery,
       boost::tie(nbrIdx, endNbrs) =
           newMol->getAtomNeighbors(newMol->getAtomWithIdx(mvit->second));
       while (nbrIdx != endNbrs) {
-        if (!matchingIndices[*nbrIdx]) {
+        if (!matchingIndices[(*nbrIdx)->getIdx()]) {
           // this neighbor isn't in the match, convert it to a dummy atom and
           // save it
           Atom *at = newMol->getAtomWithIdx(*nbrIdx);
@@ -384,11 +385,11 @@ ROMol *replaceCore(const ROMol &mol, const ROMol &core,
       std::list<unsigned int> nbrList;
       ROMol::ADJ_ITER nbrIter, endNbrs;
       boost::tie(nbrIter, endNbrs) = newMol->getAtomNeighbors(sidechainAtom);
-      while (nbrIter != endNbrs && (*nbrIter) < origNumAtoms) {
+      while (nbrIter != endNbrs && (*nbrIter)->getIdx() < origNumAtoms) {
         // we need to add bonds and atoms to the molecule while looping
         // over neighbors. This invalidates iterators, so collect a list
         // of our neighbors now:
-        nbrList.push_back(*nbrIter);
+        nbrList.push_back((*nbrIter)->getIdx());
         ++nbrIter;
       }
       unsigned int whichNbr = 0;

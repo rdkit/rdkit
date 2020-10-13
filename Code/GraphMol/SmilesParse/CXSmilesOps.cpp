@@ -389,9 +389,9 @@ bool parse_linknodes(Iterator &first, Iterator last, RDKit::RWMol &mol) {
       }
     } else if (mol.getAtomWithIdx(atidx)->getDegree() == 2) {
       auto nbrs = mol.getAtomNeighbors(mol.getAtomWithIdx(atidx));
-      idx1 = *nbrs.first;
+      idx1 = (*nbrs.first)->getIdx();
       nbrs.first++;
-      idx2 = *nbrs.first;
+      idx2 = (*nbrs.first)->getIdx();
     } else {
       return false;
     }

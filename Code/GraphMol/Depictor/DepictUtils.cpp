@@ -132,9 +132,9 @@ RDKit::INT_VECT setNbrOrder(unsigned int aid, const RDKit::INT_VECT &nbrs,
   // and the store the pair <degree, aid> in the order of increasing degree
   while (nbrIdx != endNbrs) {
     // We used to use degree here instead we will start using the CIP rank here
-    if (std::find(nbrs.begin(), nbrs.end(), static_cast<int>(*nbrIdx)) ==
+    if (std::find(nbrs.begin(), nbrs.end(), (*nbrIdx)->getIdx()) ==
         nbrs.end()) {
-      ref = (*nbrIdx);
+      ref = (*nbrIdx)->getIdx();
     }
     nbrIdx++;
   }
@@ -369,7 +369,7 @@ void getNbrAtomAndBondIds(unsigned int aid, const RDKit::ROMol *mol,
 
   unsigned int ai, bi;
   while (nbrIdx != endNbrs) {
-    ai = (*nbrIdx);
+    ai = (*nbrIdx)->getIdx();
     bi = mol->getBondBetweenAtoms(aid, ai)->getIdx();
     aids.push_back(ai);
     bids.push_back(bi);

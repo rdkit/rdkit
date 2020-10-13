@@ -20,9 +20,9 @@
 
 #include <RDGeneral/BoostStartInclude.h>
 
-#include <boost/graph/connected_components.hpp>
-#include <boost/graph/kruskal_min_spanning_tree.hpp>
-#include <boost/graph/johnson_all_pairs_shortest.hpp>
+//#include <boost/graph/connected_components.hpp>
+//#include <boost/graph/kruskal_min_spanning_tree.hpp>
+//#include <boost/graph/johnson_all_pairs_shortest.hpp>
 #include <boost/version.hpp>
 #if BOOST_VERSION >= 104000
 #include <boost/property_map/property_map.hpp>
@@ -79,20 +79,20 @@ void nitrogenCleanup(RWMol &mol, Atom *atom) {
     while (nid1 != end1) {
       if ((mol.getAtomWithIdx(*nid1)->getAtomicNum() == 8) &&
           (mol.getAtomWithIdx(*nid1)->getFormalCharge() == 0) &&
-          (mol.getBondBetweenAtoms(aid, *nid1)->getBondType() ==
+          (mol.getBondBetweenAtoms(aid, (*nid1)->getIdx())->getBondType() ==
            Bond::DOUBLE)) {
         // here's the double bonded oxygen
-        Bond *b = mol.getBondBetweenAtoms(aid, *nid1);
+        Bond *b = mol.getBondBetweenAtoms(aid, (*nid1)->getIdx());
         b->setBondType(Bond::SINGLE);
         atom->setFormalCharge(1);
         mol.getAtomWithIdx(*nid1)->setFormalCharge(-1);
         break;
       } else if ((mol.getAtomWithIdx(*nid1)->getAtomicNum() == 7) &&
                  (mol.getAtomWithIdx(*nid1)->getFormalCharge() == 0) &&
-                 (mol.getBondBetweenAtoms(aid, *nid1)->getBondType() ==
+                 (mol.getBondBetweenAtoms(aid, (*nid1)->getIdx())->getBondType() ==
                   Bond::TRIPLE)) {
         // here's the triple bonded nitrogen
-        Bond *b = mol.getBondBetweenAtoms(aid, *nid1);
+        Bond *b = mol.getBondBetweenAtoms(aid, (*nid1)->getIdx());
         b->setBondType(Bond::DOUBLE);
         atom->setFormalCharge(1);
         mol.getAtomWithIdx(*nid1)->setFormalCharge(-1);
@@ -130,16 +130,16 @@ void phosphorusCleanup(RWMol &mol, Atom *atom) {
     RWMol::ADJ_ITER nid1, end1;
     boost::tie(nid1, end1) = mol.getAtomNeighbors(atom);
     while (nid1 != end1) {
-      if ((mol.getAtomWithIdx(*nid1)->getAtomicNum() == 8) &&
-          (mol.getAtomWithIdx(*nid1)->getFormalCharge() == 0) &&
-          (mol.getBondBetweenAtoms(aid, *nid1)->getBondType() ==
+      if (((*nid1)->getAtomicNum() == 8) &&
+          ((*nid1)->getFormalCharge() == 0) &&
+          (mol.getBondBetweenAtoms(aid, (*nid1)->getIdx())->getBondType() ==
            Bond::DOUBLE)) {
         // here's the double bonded oxygen
         dbl_to_O = mol.getBondBetweenAtoms(aid, *nid1);
         O_atom = mol.getAtomWithIdx(*nid1);
-      } else if ((mol.getAtomWithIdx(*nid1)->getAtomicNum() == 6 ||
-                  mol.getAtomWithIdx(*nid1)->getAtomicNum() == 7) &&
-                 (mol.getAtomWithIdx(*nid1)->getDegree() >= 2) &&
+      } else if (((*nid1)->getAtomicNum() == 6 ||
+                  (*nid1)->getAtomicNum() == 7) &&
+                 ((*nid1)->getDegree() >= 2) &&
                  (mol.getBondBetweenAtoms(aid, *nid1)->getBondType() ==
                   Bond::DOUBLE)) {
         hasDoubleToCorN = true;
@@ -484,7 +484,7 @@ std::vector<ROMOL_SPTR> getMolFrags(const ROMol &mol, bool sanitizeFrags,
       ROMol::ADJ_ITER nbrIdx, endNbrs;
       boost::tie(nbrIdx, endNbrs) = mol.getAtomNeighbors(oAtm);
       while (nbrIdx != endNbrs) {
-        if (copiedAtoms[*nbrIdx]) {
+        if (copiedAtoms[(*nbrIdx)->getIdx()]) {
           copiedBonds[mol.getBondBetweenAtoms(idx, *nbrIdx)->getIdx()] = 1;
         }
         ++nbrIdx;
@@ -606,11 +606,27 @@ std::vector<ROMOL_SPTR> getMolFrags(const ROMol &mol, bool sanitizeFrags,
   return res;
 }
 
+namespace {
+    void dfs(Atom *atm, int component, INT_VECT &mapping) {
+        mapping[atm->getIdx()] = component;
+        for(auto *nbr : atm->nbrs()) {
+            if(mapping[nbr->getIdx()] == -1) {
+                dfs(nbr, component, mapping);
+            }
+        }
+    }
+}
 unsigned int getMolFrags(const ROMol &mol, INT_VECT &mapping) {
   unsigned int natms = mol.getNumAtoms();
-  mapping.resize(natms);
-  return natms ? boost::connected_components(mol.getTopology(), &mapping[0])
-               : 0;
+  mapping.resize(natms, -1);
+    int current_mapping = 0;
+    for(auto *atom : mol.atoms()) {
+        if(mapping[atom->getIdx()] == -1) { // not visited
+            dfs(atom, current_mapping++, mapping);
+        }
+        
+    }
+    return current_mapping;
 };
 
 unsigned int getMolFrags(const ROMol &mol, VECT_INT_VECT &frags) {
@@ -665,7 +681,7 @@ std::map<T, boost::shared_ptr<ROMol>> getMolFragsWithQuery(
     ROMol::ADJ_ITER nbrIdx, endNbrs;
     boost::tie(nbrIdx, endNbrs) = mol.getAtomNeighbors(mol.getAtomWithIdx(i));
     while (nbrIdx != endNbrs) {
-      if (*nbrIdx < i && assignments[*nbrIdx] == where) {
+      if ((*nbrIdx)->getIdx() < i && assignments[(*nbrIdx)->getIdx()] == where) {
         Bond *nBond = mol.getBondBetweenAtoms(i, *nbrIdx)->copy();
         nBond->setOwningMol(static_cast<ROMol *>(frag));
         nBond->setBeginAtomIdx(ids[nBond->getBeginAtomIdx()]);

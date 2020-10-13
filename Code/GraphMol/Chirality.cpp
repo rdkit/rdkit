@@ -912,7 +912,7 @@ void iterateCIPRanks(const ROMol &mol, DOUBLE_VECT &invars, UINT_VECT &ranks,
   //  use invariants here, those lead to incorrect answers
   for (unsigned int i = 0; i < numAtoms; i++) {
     if (!seedWithInvars) {
-      cipEntries[i].push_back(mol[i]->getAtomicNum());
+      cipEntries[i].push_back(mol.atoms()[i]->getAtomicNum());
       cipEntries[i].push_back(static_cast<int>(ranks[i]));
     } else {
       cipEntries[i].push_back(static_cast<int>(invars[i]));
@@ -947,13 +947,12 @@ void iterateCIPRanks(const ROMol &mol, DOUBLE_VECT &invars, UINT_VECT &ranks,
 
       // start by pushing on our neighbors' ranks:
       ROMol::OEDGE_ITER beg, end;
-      boost::tie(beg, end) = mol.getAtomBonds(mol[index]);
+      boost::tie(beg, end) = mol.getAtomBonds(mol.atoms()[index]);
       while (beg != end) {
         const Bond *bond = mol[*beg];
         ++beg;
         unsigned int nbrIdx = bond->getOtherAtomIdx(index);
-        const Atom *nbr = mol[nbrIdx];
-
+        const Atom *nbr = mol.getAtomWithIdx(nbrIdx);
         int rank = ranks[nbrIdx] + 1;
         // put the neighbor in 2N times where N is the bond order as a double.
         // this is to treat aromatic linkages on fair footing. i.e. at least in
@@ -987,8 +986,8 @@ void iterateCIPRanks(const ROMol &mol, DOUBLE_VECT &invars, UINT_VECT &ranks,
       }
       // add a zero for each coordinated H:
       // (as long as we're not a query atom)
-      if (!mol[index]->hasQuery()) {
-        localEntry.insert(localEntry.begin(), mol[index]->getTotalNumHs(), 0);
+      if (!mol.getAtomWithIdx(index)->hasQuery()) {
+        localEntry.insert(localEntry.begin(), mol.getAtomWithIdx(index)->getTotalNumHs(), 0);
       }
 
       // we now have a sorted list of our neighbors' ranks,
@@ -1055,7 +1054,7 @@ void assignAtomCIPRanks(const ROMol &mol, UINT_VECT &ranks) {
 
   // copy the ranks onto the atoms:
   for (unsigned int i = 0; i < numAtoms; ++i) {
-    mol[i]->setProp(common_properties::_CIPRank, ranks[i], 1);
+    mol.atoms()[i]->setProp(common_properties::_CIPRank, ranks[i], 1);
   }
 }
 
@@ -2242,11 +2241,11 @@ void assignChiralTypesFrom3D(ROMol &mol, int confId, bool replaceExistingTags) {
     const RDGeom::Point3D &p0 = conf.getAtomPos(atom->getIdx());
     ROMol::ADJ_ITER nbrIdx, endNbrs;
     boost::tie(nbrIdx, endNbrs) = mol.getAtomNeighbors(atom);
-    const RDGeom::Point3D &p1 = conf.getAtomPos(*nbrIdx);
+    const RDGeom::Point3D &p1 = conf.getAtomPos((*nbrIdx)->getIdx());
     ++nbrIdx;
-    const RDGeom::Point3D &p2 = conf.getAtomPos(*nbrIdx);
+    const RDGeom::Point3D &p2 = conf.getAtomPos((*nbrIdx)->getIdx());
     ++nbrIdx;
-    const RDGeom::Point3D &p3 = conf.getAtomPos(*nbrIdx);
+    const RDGeom::Point3D &p3 = conf.getAtomPos((*nbrIdx)->getIdx());
 
     RDGeom::Point3D v1 = p1 - p0;
     RDGeom::Point3D v2 = p2 - p0;

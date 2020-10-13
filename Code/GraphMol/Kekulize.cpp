@@ -263,22 +263,22 @@ bool kekulizeWorker(RWMol &mol, const INT_VECT &allAtms,
           mol.getAtomNeighbors(mol.getAtomWithIdx(curr));
       while (nbrIdx != endNbrs) {
         // ignore if the neighbor has already been dealt with before
-        if (std::find(done.begin(), done.end(), static_cast<int>(*nbrIdx)) !=
+        if (std::find(done.begin(), done.end(), static_cast<int>((*nbrIdx)->getIdx())) !=
             done.end()) {
           ++nbrIdx;
           continue;
         }
         // ignore if the neighbor is not part of the fused system
         if (std::find(allAtms.begin(), allAtms.end(),
-                      static_cast<int>(*nbrIdx)) == allAtms.end()) {
+                      static_cast<int>((*nbrIdx)->getIdx())) == allAtms.end()) {
           ++nbrIdx;
           continue;
         }
 
         // if the neighbor is not on the stack add it
         if (std::find(astack.begin(), astack.end(),
-                      static_cast<int>(*nbrIdx)) == astack.end()) {
-          astack.push_back(rdcast<int>(*nbrIdx));
+                      static_cast<int>((*nbrIdx)->getIdx())) == astack.end()) {
+          astack.push_back(rdcast<int>((*nbrIdx)->getIdx()));
         }
 
         // check if the neighbor is also a candidate for a double bond
@@ -290,11 +290,11 @@ bool kekulizeWorker(RWMol &mol, const INT_VECT &allAtms,
         // could lead to the same failure. The full fix would require
         // a fairly detailed analysis of all bonds in the molecule to determine
         // which of them is eligible to be converted.
-        if (cCand && dBndCands[*nbrIdx] &&
-            (mol.getBondBetweenAtoms(curr, *nbrIdx)->getIsAromatic() ||
+        if (cCand && dBndCands[(*nbrIdx)->getIdx()] &&
+            (mol.getBondBetweenAtoms(curr, (*nbrIdx)->getIdx())->getIsAromatic() ||
              mol.getAtomWithIdx(curr)->getAtomicNum() == 0 ||
-             mol.getAtomWithIdx(*nbrIdx)->getAtomicNum() == 0)) {
-          opts.push_back(rdcast<int>(*nbrIdx));
+             mol.getAtomWithIdx((*nbrIdx)->getIdx())->getAtomicNum() == 0)) {
+          opts.push_back(rdcast<int>((*nbrIdx)->getIdx()));
         }  // end of curr atoms can have a double bond
         ++nbrIdx;
       }  // end of looping over neighbors

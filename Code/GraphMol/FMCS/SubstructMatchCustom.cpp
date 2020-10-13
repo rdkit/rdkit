@@ -13,8 +13,8 @@
 #include <GraphMol/RDKitBase.h>
 #include <GraphMol/RDKitQueries.h>
 #include "SubstructMatchCustom.h"
-
-#include "../Substruct/vf2.hpp"
+#include <boost/graph/adjacency_list.hpp>
+#include "vf2-orig.hpp"
 
 namespace RDKit {
 namespace FMCS {

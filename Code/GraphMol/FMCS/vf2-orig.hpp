@@ -10,55 +10,17 @@
  *  http://amalfi.dis.unina.it/graph/db/vflib-2.0/doc/vflib.html
  *
  */
-//#include <boost/graph/adjacency_list.hpp>
+#include <boost/graph/adjacency_list.hpp>
 #include <vector>
 #include <algorithm>
 #include <cstring>
-#include <GraphMol/ROMol.h>
 
 #ifndef __BGL_VF2_SUB_STATE_H__
 #define __BGL_VF2_SUB_STATE_H__
 //#define RDK_VF2_PRUNING
-#define RDK_ADJ_ITER typename Graph::ADJ_ITER
+#define RDK_ADJ_ITER typename Graph::adjacency_iterator
 
 namespace boost {
-
-unsigned int num_vertices(const RDKit::ROMol& g) { return g.atoms().size(); }
-
-template<class T>
-std::pair<std::vector<RDKit::Atom*>::const_iterator, std::vector<RDKit::Atom*>::const_iterator>
-  adjacent_vertices(T t, const RDKit::ROMol& g) {
-      const RDKit::Atom * at = g.atoms()[t];
-      std::vector<RDKit::Atom*>::const_iterator sit = at->nbrs().begin();
-      std::vector<RDKit::Atom*>::const_iterator bit = at->nbrs().end();
-      
-      return std::make_pair(sit, bit);
-}
-
-template<class T>
-std::pair<std::vector<RDKit::Bond*>::const_iterator, std::vector<RDKit::Bond*>::const_iterator>
-  out_edges(T t, const RDKit::ROMol& g ) {
-      const RDKit::Atom * at = g.atoms()[t];
-      std::vector<RDKit::Bond*>::const_iterator sit = at->bonds().begin();
-      std::vector<RDKit::Bond*>::const_iterator bit = at->bonds().end();
-      
-      return std::make_pair(sit, bit);
-}
-
-template<class N>
-unsigned int out_degree(N node1, const RDKit::ROMol &g) {
-    return g.atoms()[node1]->nbrs().size();
-}
-
-template<class N>
-std::pair<const RDKit::Bond*, bool> edge(N n1, N n2, const RDKit::ROMol& g) {
-    const RDKit::Bond* bond = g.getBondBetweenAtoms(n1, n2);
-    if(bond) {
-        return std::make_pair(bond, true);
-    }
-    return std::make_pair(nullptr, false);
-}
-
 namespace detail {
 typedef std::uint32_t node_id;
 const node_id NULL_NODE = 0xFFFF;
@@ -103,13 +65,13 @@ static int nodeInfoComp2(const NodeInfo &a, const NodeInfo &b) {
 }
 
 template <class Graph, class VertexDescr, class EdgeDescr>
-VertexDescr getOtherIdx(const Graph &, const EdgeDescr &edge,
+VertexDescr getOtherIdx(const Graph &g, const EdgeDescr &edge,
                         const VertexDescr &vertex) {
-    const RDKit::Bond *bnd = edge;
-    if(bnd->getBeginAtomIdx() == vertex) {
-        return bnd->getEndAtomIdx();
-    }
-    return bnd->getBeginAtomIdx();
+  VertexDescr tmp = boost::source(edge, g);
+  if (tmp == vertex) {
+    tmp = boost::target(edge, g);
+  }
+  return tmp;
 }
 
 /*----------------------------------------------------
@@ -128,16 +90,15 @@ template <class Graph>
 node_id *SortNodesByFrequency(const Graph *g) {
   std::vector<NodeInfo> vect;
   vect.reserve(boost::num_vertices(*g));
-  //typename Graph::vertex_iterator bNode, eNode;
-  //boost::tie(bNode, eNode) = boost::vertices(*g);
-  for(auto *atom : g->atoms()) {
-  //while (bNode != eNode) {
+  typename Graph::vertex_iterator bNode, eNode;
+  boost::tie(bNode, eNode) = boost::vertices(*g);
+  while (bNode != eNode) {
     NodeInfo t;
     t.id = vect.size();
-      t.in = t.out == atom->nbrs().size();//boost::out_degree(*bNode, *g);  // <- assuming undirected graph
-      //t.out = atom->nbrs.size(); //boost::out_degree(*bNode, *g);
+    t.in = boost::out_degree(*bNode, *g);  // <- assuming undirected graph
+    t.out = boost::out_degree(*bNode, *g);
     vect.push_back(t);
-    //++bNode;
+    ++bNode;
   }
   std::sort(vect.begin(), vect.end(), nodeInfoComp1);
 
@@ -314,15 +275,16 @@ class VF2SubState {
        */
       if (!pair.hasiter) {
         RDK_ADJ_ITER n1iter_beg, n1iter_end;
-        boost::tie(n1iter_beg, n1iter_end) = boost::adjacent_vertices(pair.n1, *g1);
+        boost::tie(n1iter_beg, n1iter_end) =
+            boost::adjacent_vertices(pair.n1, *g1);
 
-        while (n1iter_beg != n1iter_end && core_1[(*n1iter_beg)->getIdx()] == NULL_NODE)
+        while (n1iter_beg != n1iter_end && core_1[*n1iter_beg] == NULL_NODE)
           ++n1iter_beg;
 
         assert(n1iter_beg != n1iter_end);
 
         boost::tie(pair.nbrbeg, pair.nbrend) =
-            boost::adjacent_vertices(core_1[(*n1iter_beg)->getIdx()], *g2);
+            boost::adjacent_vertices(core_1[*n1iter_beg], *g2);
         pair.hasiter = true;
       }
     } else if (pair.n1 == 0 && order != nullptr) {
@@ -342,12 +304,12 @@ class VF2SubState {
 
     /* VF2 Plus iterator available? */
     if (pair.hasiter) {
-      while (pair.nbrbeg < pair.nbrend && core_2[(*pair.nbrbeg)->getIdx()] != NULL_NODE) {
+      while (pair.nbrbeg < pair.nbrend && core_2[*pair.nbrbeg] != NULL_NODE) {
         ++pair.nbrbeg;
       }
 
       if (pair.nbrbeg < pair.nbrend) {
-        pair.n2 = (*pair.nbrbeg)->getIdx();
+        pair.n2 = *pair.nbrbeg;
         ++pair.nbrbeg;
       } else {
         pair.n2 = n2;
@@ -402,7 +364,7 @@ class VF2SubState {
         typename Graph::edge_descriptor oEdge;
         bool found;
         boost::tie(oEdge, found) = boost::edge(node2, other2, *g2);
-        if (!found || !ec((*bNbrs), oEdge)) {
+        if (!found || !ec(*bNbrs, oEdge)) {
           // std::cerr<<"  short2"<<std::endl;
           return false;
         }
@@ -647,7 +609,6 @@ bool vf2(const Graph &g1, const Graph &g2, VertexLabeling &vertex_labeling,
 
   return !F.empty();
 };
-
 template <class Graph, class VertexLabeling  // binary predicate
           ,
           class EdgeLabeling  // binary predicate

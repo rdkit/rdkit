@@ -77,7 +77,7 @@ public:
 
   Atom *getAtom(int idx) const;
 
-  CXXAtomIterator<MolGraph, Atom *> atoms() const;
+  const std::vector<Atom*> & atoms() const { return d_mol.atoms(); }
 
   Bond *getBond(int idx) const;
 

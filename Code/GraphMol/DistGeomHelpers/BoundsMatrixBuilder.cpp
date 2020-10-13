@@ -844,7 +844,7 @@ bool _checkMacrocycleAmideEster14(const ROMol &mol, const Bond *bnd1,
     if (mol.getAtomDegree(atm2) == 3 && mol.getAtomDegree(atm3) == 3) {
       boost::tie(nbrIdx, endNbrs) = mol.getAtomNeighbors(atm2);
       while (nbrIdx != endNbrs) {
-        if (*nbrIdx != atm1->getIdx() && *nbrIdx != atm3->getIdx()) {
+        if ((*nbrIdx)->getIdx() != atm1->getIdx() && (*nbrIdx)->getIdx() != atm3->getIdx()) {
           const auto &res = mol.getAtomWithIdx(*nbrIdx);
           const auto &resbnd = mol.getBondBetweenAtoms(atm2->getIdx(), *nbrIdx);
           if ((res->getAtomicNum() != 6 && res->getAtomicNum() != 1) ||
@@ -858,7 +858,7 @@ bool _checkMacrocycleAmideEster14(const ROMol &mol, const Bond *bnd1,
 
       boost::tie(nbrIdx, endNbrs) = mol.getAtomNeighbors(atm3);
       while (nbrIdx != endNbrs) {
-        if (*nbrIdx != atm2->getIdx() && *nbrIdx != atm4->getIdx()) {
+        if ((*nbrIdx)->getIdx() != atm2->getIdx() && (*nbrIdx)->getIdx() != atm4->getIdx()) {
           const auto &res = mol.getAtomWithIdx(*nbrIdx);
           const auto &resbnd = mol.getBondBetweenAtoms(atm3->getIdx(), *nbrIdx);
           if (res->getAtomicNum() != 8 ||

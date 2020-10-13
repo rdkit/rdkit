@@ -789,11 +789,11 @@ bool _atomSearchBFS(const ROMol &tMol, unsigned int startAtomIdx,
     boost::tie(nbrIdx, endNbrs) =
         tMol.getAtomNeighbors(tMol.getAtomWithIdx(currAtomIdx));
     while (nbrIdx != endNbrs) {
-      if (*nbrIdx == endAtomIdx) {
+      if ((*nbrIdx)->getIdx() == endAtomIdx) {
         if (currAtomIdx != startAtomIdx) {
           INT_VECT nv(tv);
 
-          nv.push_back(rdcast<unsigned int>(*nbrIdx));
+          nv.push_back(rdcast<unsigned int>((*nbrIdx)->getIdx()));
           // make sure the ring we just found isn't already in our set
           // of rings (this was an extension of sf.net issue 249)
           std::uint32_t invr =
@@ -807,11 +807,11 @@ bool _atomSearchBFS(const ROMol &tMol, unsigned int startAtomIdx,
         } else {
           // ignore this one
         }
-      } else if (ringAtoms[*nbrIdx] &&
-                 std::find(tv.begin(), tv.end(), *nbrIdx) == tv.end()) {
+      } else if (ringAtoms[(*nbrIdx)->getIdx()] &&
+                 std::find(tv.begin(), tv.end(), (*nbrIdx)->getIdx()) == tv.end()) {
         //} else if(ringAtoms[*nbrIdx]){
         INT_VECT nv(tv);
-        nv.push_back(rdcast<unsigned int>(*nbrIdx));
+        nv.push_back(rdcast<unsigned int>((*nbrIdx)->getIdx()));
 
         bfsq.push_back(nv);
       }

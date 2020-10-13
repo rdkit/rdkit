@@ -111,10 +111,10 @@ EmbeddedFrag::EmbeddedFrag(const RDKit::ROMol *mol,
     RDKit::INT_VECT doneNbrs;
     const RDKit::INT_VECT &enbrs = d_eatoms[*dai].neighs;
     while (nbrIdx != endNbrs) {
-      if (std::find(enbrs.begin(), enbrs.end(), static_cast<int>(*nbrIdx)) ==
+      if (std::find(enbrs.begin(), enbrs.end(), static_cast<int>((*nbrIdx)->getIdx())) ==
           enbrs.end()) {
         // we found a neighbor that is part of this embedded system
-        doneNbrs.push_back(*nbrIdx);
+        doneNbrs.push_back((*nbrIdx)->getIdx());
       }
       nbrIdx++;
     }
@@ -313,11 +313,11 @@ void EmbeddedFrag::updateNewNeighs(
   boost::tie(nbrIdx, endNbrs) =
       dp_mol->getAtomNeighbors(dp_mol->getAtomWithIdx(aid));
   while (nbrIdx != endNbrs) {
-    if (d_eatoms.find(*nbrIdx) == d_eatoms.end()) {
-      if ((*dp_mol)[*nbrIdx]->getAtomicNum() != 1) {
-        d_eatoms[aid].neighs.push_back(*nbrIdx);
+    if (d_eatoms.find((*nbrIdx)->getIdx()) == d_eatoms.end()) {
+      if ((*nbrIdx)->getAtomicNum() != 1) {
+        d_eatoms[aid].neighs.push_back((*nbrIdx)->getIdx());
       } else {
-        hIndices.push_back(*nbrIdx);
+        hIndices.push_back((*nbrIdx)->getIdx());
       }
     }
     ++nbrIdx;
@@ -368,8 +368,8 @@ int EmbeddedFrag::findNeighbor(
   const RDKit::Atom *atm = dp_mol->getAtomWithIdx(aid);
   boost::tie(nbrIdx, endNbrs) = dp_mol->getAtomNeighbors(atm);
   while (nbrIdx != endNbrs) {
-    if (d_eatoms.find(*nbrIdx) != d_eatoms.end()) {
-      return (*nbrIdx);
+    if (d_eatoms.find((*nbrIdx)->getIdx()) != d_eatoms.end()) {
+      return (*nbrIdx)->getIdx();
     }
     nbrIdx++;
   }
@@ -1228,10 +1228,10 @@ void _recurseAtomOneSide(unsigned int endAid, unsigned int begAid,
   boost::tie(nbrIdx, endNbrs) =
       mol->getAtomNeighbors(mol->getAtomWithIdx(endAid));
   while (nbrIdx != endNbrs) {
-    if (((*nbrIdx) != begAid) &&
+    if (((*nbrIdx)->getIdx() != begAid) &&
         (std::find(flipAids.begin(), flipAids.end(),
-                   static_cast<int>(*nbrIdx)) == flipAids.end())) {
-      _recurseAtomOneSide(*nbrIdx, begAid, mol, flipAids);
+                   static_cast<int>((*nbrIdx)->getIdx())) == flipAids.end())) {
+      _recurseAtomOneSide((*nbrIdx)->getIdx(), begAid, mol, flipAids);
     }
     nbrIdx++;
   }
@@ -1715,7 +1715,7 @@ unsigned int _findDeg1Neighbor(const RDKit::ROMol *mol, unsigned int aid) {
   unsigned int res = 0;
   RDKit::ROMol::ADJ_ITER nbrIdx, endNbrs;
   boost::tie(nbrIdx, endNbrs) = mol->getAtomNeighbors(mol->getAtomWithIdx(aid));
-  res = (*nbrIdx);
+  res = (*nbrIdx)->getIdx();
 #if 0
     while (nbrIdx != endNbrs) {
       if(mol->getAtomWithIdx(*nbrIdx)->getDegree()==1){
@@ -1738,10 +1738,10 @@ unsigned int _findClosestNeighbor(const RDKit::ROMol *mol, const double *dmat,
   double d, mdist = 1.e8;
   unsigned int naid = aid1 * (mol->getNumAtoms());
   while (nbrIdx != endNbrs) {
-    d = dmat[naid + (*nbrIdx)];
+    d = dmat[naid + (*nbrIdx)->getIdx()];
     if (d < mdist) {
       mdist = d;
-      res = (*nbrIdx);
+      res = (*nbrIdx)->getIdx();
     }
     nbrIdx++;
   }

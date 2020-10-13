@@ -106,14 +106,14 @@ class StereoBondEndCap {
     const auto nbrIdxItr = mol.getAtomNeighbors(atom);
     const unsigned otherIdx = otherDblBndAtom->getIdx();
 
-    auto isNonAnchor = [&otherIdx, &stereoAtomIdx](const unsigned &nbrIdx) {
-      return nbrIdx != otherIdx && nbrIdx != stereoAtomIdx;
+    auto isNonAnchor = [&otherIdx, &stereoAtomIdx](const Atom *nbrIdx) {
+      return nbrIdx->getIdx() != otherIdx && nbrIdx->getIdx() != stereoAtomIdx;
     };
 
     auto nonAnchorItr =
         std::find_if(nbrIdxItr.first, nbrIdxItr.second, isNonAnchor);
     if (nonAnchorItr != nbrIdxItr.second) {
-      mp_nonAnchor = mol.getAtomWithIdx(*nonAnchorItr);
+      mp_nonAnchor = mol.getAtomWithIdx((*nonAnchorItr)->getIdx());
     }
   }
 
@@ -918,19 +918,19 @@ void addReactantNeighborsToProduct(
       //           << " mapped: " << mapping->mappedAtoms[*nbrIdx]
       //           << " mappedO: " << mapping->mappedAtoms[lreactIdx] <<
       //           std::endl;
-      if (!visitedAtoms[*nbrIdx] && !mapping->skippedAtoms[*nbrIdx]) {
-        if (mapping->mappedAtoms[*nbrIdx]) {
+      if (!visitedAtoms[(*nbrIdx)->getIdx()] && !mapping->skippedAtoms[(*nbrIdx)->getIdx()]) {
+        if (mapping->mappedAtoms[(*nbrIdx)->getIdx()]) {
           // this is case 1 (neighbor in match); set a bond to the neighbor if
           // this atom
           // is not also in the match (match-match bonds were set when the
           // product template was
           // copied in to start things off).;
           if (!mapping->mappedAtoms[lreactIdx]) {
-            CHECK_INVARIANT(mapping->reactProdAtomMap.find(*nbrIdx) !=
+            CHECK_INVARIANT(mapping->reactProdAtomMap.find((*nbrIdx)->getIdx()) !=
                                 mapping->reactProdAtomMap.end(),
                             "reactant atom not present in product.");
             const Bond *origB =
-                reactant.getBondBetweenAtoms(lreactIdx, *nbrIdx);
+                reactant.getBondBetweenAtoms(lreactIdx, (*nbrIdx)->getIdx());
             addMissingProductBonds(*origB, product, mapping);
           } else {
             // both mapped atoms are in the match.
@@ -944,7 +944,7 @@ void addReactantNeighborsToProduct(
             //
             // this was github #1387
             unsigned prodBeginIdx = mapping->reactProdAtomMap[lreactIdx][0];
-            unsigned prodEndIdx = mapping->reactProdAtomMap[*nbrIdx][0];
+            unsigned prodEndIdx = mapping->reactProdAtomMap[(*nbrIdx)->getIdx()][0];
             if (!product->getBondBetweenAtoms(prodBeginIdx, prodEndIdx)) {
               // They must be mapped
               CHECK_INVARIANT(
@@ -971,7 +971,7 @@ void addReactantNeighborsToProduct(
               }
             }
           }
-        } else if (mapping->reactProdAtomMap.find(*nbrIdx) !=
+        } else if (mapping->reactProdAtomMap.find((*nbrIdx)->getIdx()) !=
                    mapping->reactProdAtomMap.end()) {
           // case 2, the neighbor has been added and we just need to set a bond
           // to it:
@@ -1033,10 +1033,10 @@ void checkAndCorrectChiralityOfMatchingAtomsInProduct(
     INT_LIST pOrder;
     for (const auto &nbri :
          boost::make_iterator_range(product->getAtomNeighbors(productAtom))) {
-      if (mapping->prodReactAtomMap.find(nbri) ==
+      if (mapping->prodReactAtomMap.find(nbri->getIdx()) ==
               mapping->prodReactAtomMap.end() ||
           !reactant.getBondBetweenAtoms(reactantAtom.getIdx(),
-                                        mapping->prodReactAtomMap[nbri])) {
+                                        mapping->prodReactAtomMap[nbri->getIdx()])) {
         ++nUnknown;
         // if there's more than one bond in the product that doesn't
         // correspond to anything in the reactant, we're also doomed
@@ -1047,7 +1047,7 @@ void checkAndCorrectChiralityOfMatchingAtomsInProduct(
         pOrder.push_back(-1);
       } else {
         const Bond *rBond = reactant.getBondBetweenAtoms(
-            reactantAtom.getIdx(), mapping->prodReactAtomMap[nbri]);
+            reactantAtom.getIdx(), mapping->prodReactAtomMap[nbri->getIdx()]);
         CHECK_INVARIANT(rBond, "expected reactant bond not found");
         pOrder.push_back(rBond->getIdx());
       }

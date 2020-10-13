@@ -227,25 +227,25 @@ static void ConnectTheDots_Large(RWMol *mol, unsigned int flags) {
       float best = 10000;
       unsigned int best_idx = mol->getNumAtoms() + 1;
       while (nbr != end_nbr) {
-        RDGeom::Point3D pn = conf->getAtomPos(*nbr);
+        RDGeom::Point3D pn = conf->getAtomPos((*nbr)->getIdx());
         float d = (p - pn).length();
         auto *n_info =
             (AtomPDBResidueInfo *)(mol->getAtomWithIdx(*nbr)->getMonomerInfo());
         if (d < best &&
             atom_info->getResidueNumber() == n_info->getResidueNumber()) {
           best = d;
-          best_idx = *nbr;
+          best_idx = (*nbr)->getIdx();
         }
         ++nbr;
       }
       // iterate again and remove all but closest
       boost::tie(nbr, end_nbr) = mol->getAtomNeighbors(atom);
       while (nbr != end_nbr) {
-        if (*nbr == best_idx) {
+        if ((*nbr)->getIdx() == best_idx) {
           Bond *bond = mol->getBondBetweenAtoms(i, *nbr);
           bond->setBondType(Bond::SINGLE);  // make sure this one is single
         } else {
-          mol->removeBond(i, *nbr);
+          mol->removeBond(i, (*nbr)->getIdx());
         }
         ++nbr;
       }

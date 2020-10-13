@@ -26,7 +26,7 @@
 #include <RDGeneral/types.h>
 #include <RDGeneral/RDProps.h>
 #include <GraphMol/details.h>
-
+#include "Bond.h"
 namespace RDKit {
 class ROMol;
 class RWMol;
@@ -74,7 +74,9 @@ class RDKIT_GRAPHMOL_EXPORT Atom : public RDProps {
  public:
   // FIX: grn...
   typedef Queries::Query<int, Atom const *, true> QUERYATOM_QUERY;
-
+  std::vector<Bond*> _bonds;
+  std::vector<Atom*> _oatoms;
+    
   //! store hybridization
   typedef enum {
     UNSPECIFIED = 0,  //!< hybridization that hasn't been specified
@@ -104,14 +106,48 @@ class RDKIT_GRAPHMOL_EXPORT Atom : public RDProps {
   explicit Atom(const std::string &what);
   Atom(const Atom &other);
   Atom &operator=(const Atom &other);
+
   virtual ~Atom();
 
   //! makes a copy of this Atom and returns a pointer to it.
   /*!
     <b>Note:</b> the caller is responsible for <tt>delete</tt>ing the result
   */
+  
   virtual Atom *copy() const;
-
+    std::vector<Bond*> & bonds() { return _bonds; }
+    const std::vector<Bond*> & bonds() const { return _bonds; }
+    std::vector<Atom*> & nbrs() { return _oatoms; }
+    const std::vector<Atom*> & nbrs() const { return _oatoms; }
+    bool hasNbr(const Atom *atm) const {
+        return std::find(_oatoms.begin(), _oatoms.end(), atm) != _oatoms.end();
+    }
+    bool hasNbr(unsigned int idx) const {
+        for(auto *atom : _oatoms) {
+            if(atom->getIdx() == idx) return true;
+        }
+        return false;
+    }
+    bool removeNbr(const Atom *atom) {
+        auto idx = std::find(_oatoms.begin(), _oatoms.end(), atom);
+        if(idx != _oatoms.end()) {
+            _oatoms.erase(idx);
+            _bonds.erase(_bonds.begin() + (idx - _oatoms.begin()));
+            return true;
+        }
+        return false;
+    }
+    /*
+    bool removeNbr(const Bond *bond) {
+        auto idx = std::find(_bonds.begin(), _bonds.end(), bond);
+        if(idx != _bonds.end()) {
+            _bonds.erase(idx);
+            _oatoms.erase(_oatoms.begin() + (idx - _bonds.begin()));
+            return true;
+        }
+        return false;
+    }*/
+    operator unsigned int() const { return d_index; }
   //! returns our atomic number
   int getAtomicNum() const { return d_atomicNum; };
   //! sets our atomic number

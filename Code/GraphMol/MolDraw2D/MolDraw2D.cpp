@@ -2544,7 +2544,7 @@ double MolDraw2D::getNoteStartAngle(const ROMol &mol, const Atom *atom) const {
   Point2D at_cds = at_cds_[activeMolIdx_][atom->getIdx()];
   vector<Point2D> bond_vecs;
   for (const auto &nbr : make_iterator_range(mol.getAtomNeighbors(atom))) {
-    Point2D bond_vec = at_cds.directionVector(at_cds_[activeMolIdx_][nbr]);
+    Point2D bond_vec = at_cds.directionVector(at_cds_[activeMolIdx_][nbr->getIdx()]);
     bond_vec.normalize();
     bond_vecs.emplace_back(bond_vec);
   }
@@ -2655,7 +2655,7 @@ bool MolDraw2D::doesNoteClashNbourBonds(
 
   double line_width = lineWidth() * scale() * 0.02;
   for (const auto &nbr : make_iterator_range(mol.getAtomNeighbors(atom))) {
-    Point2D const &at1_dcds = getDrawCoords(at_cds_[activeMolIdx_][nbr]);
+    Point2D const &at1_dcds = getDrawCoords(at_cds_[activeMolIdx_][nbr->getIdx()]);
     if (text_drawer_->doesLineIntersect(rects, note_rect.trans_, at1_dcds,
                                         at2_dcds, line_width)) {
       return true;
@@ -2682,11 +2682,11 @@ bool MolDraw2D::doesNoteClashNbourBonds(
         // use the atom coords for this ot make sure the perp goes the
         // correct way (y coordinate issue).
         calcDoubleBondLines(
-            mol, double_bond_offset, bond, at_cds_[activeMolIdx_][nbr],
+            mol, double_bond_offset, bond, at_cds_[activeMolIdx_][nbr->getIdx()],
             at_cds_[activeMolIdx_][atom->getIdx()], l1s, l1f, l2s, l2f);
       } else {
         calcTripleBondLines(
-            double_bond_offset, bond, at_cds_[activeMolIdx_][nbr],
+            double_bond_offset, bond, at_cds_[activeMolIdx_][nbr->getIdx()],
             at_cds_[activeMolIdx_][atom->getIdx()], l1s, l1f, l2s, l2f);
       }
       l1s = getDrawCoords(l1s);
@@ -2820,7 +2820,7 @@ bool MolDraw2D::isLinearAtom(const Atom &atom) const {
     ROMol const &mol = atom.getOwningMol();
     int i = 0;
     for (const auto &nbr : make_iterator_range(mol.getAtomNeighbors(&atom))) {
-      Point2D bond_vec = at_cds.directionVector(at_cds_[activeMolIdx_][nbr]);
+      Point2D bond_vec = at_cds.directionVector(at_cds_[activeMolIdx_][nbr->getIdx()]);
       bond_vec.normalize();
       bond_vecs[i] = bond_vec;
       bts[i] = mol.getBondBetweenAtoms(atom.getIdx(), nbr)->getBondType();

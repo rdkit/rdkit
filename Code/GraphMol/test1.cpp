@@ -501,7 +501,7 @@ void testMisc() {
   TEST_ASSERT(atBegin != atEnd);
   while (atBegin != atEnd) {
     const Atom *at2 = m2[*atBegin];
-    TEST_ASSERT(at2->getIdx() == *atBegin);
+    TEST_ASSERT(at2->getIdx() == (*atBegin)->getIdx());
     atBegin++;
   }
 

@@ -640,11 +640,11 @@ void LAP::computeCostMatrix(const ROMol &prbMol, const MolHistogram &prbHist,
     }
   }
   for (i = 0, y = 0; i < refMol.getNumAtoms(); ++i) {
-    if (refMol[i]->getAtomicNum() == 1) {
+    if (refMol.atoms()[i]->getAtomicNum() == 1) {
       continue;
     }
     for (j = 0, x = 0; j < prbMol.getNumAtoms(); ++j) {
-      if (prbMol[j]->getAtomicNum() == 1) {
+      if (prbMol.atoms()[j]->getAtomicNum() == 1) {
         continue;
       }
       // if this pair is constrained, make sure that it is
@@ -1419,12 +1419,12 @@ O3A::O3A(ROMol &prbMol, const ROMol &refMol, void *prbProp, void *refProp,
   boost::dynamic_bitset<> prbHvyAtoms(prbNAtoms);
 
   for (int i = 0; i < refNAtoms; ++i) {
-    if (refMol[i]->getAtomicNum() != 1) {
+    if (refMol.atoms()[i]->getAtomicNum() != 1) {
       refHvyAtoms.set(i);
     }
   }
   for (int i = 0; i < prbNAtoms; ++i) {
-    if (prbMol[i]->getAtomicNum() != 1) {
+    if (prbMol.atoms()[i]->getAtomicNum() != 1) {
       prbHvyAtoms.set(i);
     }
   }

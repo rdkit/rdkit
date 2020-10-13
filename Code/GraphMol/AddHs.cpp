@@ -35,7 +35,7 @@ Atom *getAtomNeighborNot(ROMol *mol, const Atom *atom, const Atom *other) {
   ROMol::ADJ_ITER nbrIdx, endNbrs;
   boost::tie(nbrIdx, endNbrs) = mol->getAtomNeighbors(atom);
   while (nbrIdx != endNbrs) {
-    if (*nbrIdx != other->getIdx()) {
+    if ((*nbrIdx)->getIdx() != other->getIdx()) {
       res = mol->getAtomWithIdx(*nbrIdx);
       break;
     }
@@ -174,7 +174,7 @@ void setHydrogenCoords(ROMol *mol, unsigned int hydIdx, unsigned int heavyIdx) {
       // --------------------------------------------------------------------------
       boost::tie(nbrIdx, endNbrs) = mol->getAtomNeighbors(heavyAtom);
       while (nbrIdx != endNbrs) {
-        if (*nbrIdx != hydIdx) {
+        if ((*nbrIdx)->getIdx() != hydIdx) {
           if (!nbr1) {
             nbr1 = mol->getAtomWithIdx(*nbrIdx);
           } else {
@@ -249,12 +249,12 @@ void setHydrogenCoords(ROMol *mol, unsigned int hydIdx, unsigned int heavyIdx) {
         // by CIP rank:
         std::vector<std::pair<unsigned int, int>> nbrs;
         while (nbrIdx != endNbrs) {
-          if (*nbrIdx != hydIdx) {
+          if ((*nbrIdx)->getIdx() != hydIdx) {
             const Atom *tAtom = mol->getAtomWithIdx(*nbrIdx);
             unsigned int cip = 0;
             tAtom->getPropIfPresent<unsigned int>(common_properties::_CIPRank,
                                                   cip);
-            nbrs.emplace_back(cip, rdcast<int>(*nbrIdx));
+            nbrs.emplace_back(cip, rdcast<int>((*nbrIdx)->getIdx()));
           }
           ++nbrIdx;
         }
@@ -265,7 +265,7 @@ void setHydrogenCoords(ROMol *mol, unsigned int hydIdx, unsigned int heavyIdx) {
       } else {
         // central atom isn't chiral, so the neighbor ordering isn't important:
         while (nbrIdx != endNbrs) {
-          if (*nbrIdx != hydIdx) {
+          if ((*nbrIdx)->getIdx() != hydIdx) {
             if (!nbr1) {
               nbr1 = mol->getAtomWithIdx(*nbrIdx);
             } else if (!nbr2) {
@@ -1050,11 +1050,11 @@ void mergeQueryHs(RWMol &mol, bool mergeUnmappedOnly) {
       boost::tie(begin, end) = mol.getAtomNeighbors(atom);
 
       while (begin != end) {
-        if (hatoms[*begin]) {
+        if (hatoms[(*begin)->getIdx()]) {
           Atom &bgn = *mol.getAtomWithIdx(*begin);
           if (!mergeUnmappedOnly ||
               !bgn.hasProp(common_properties::molAtomMapNumber)) {
-            atomsToRemove.push_back(rdcast<unsigned int>(*begin));
+            atomsToRemove.push_back(rdcast<unsigned int>((*begin)->getIdx()));
             ++numHsToRemove;
           }
         }
