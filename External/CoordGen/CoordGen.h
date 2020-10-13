@@ -96,7 +96,9 @@ unsigned int addCoords(T& mol, const CoordGenParams* params = nullptr) {
             break;
           }
         }
-        coords = params->coordMap.find(oatom->getIdx())->second;
+        if ( params->coordMap.find(oatom->getIdx()) != params->coordMap.end() ) {
+          coords = params->coordMap.find(oatom->getIdx())->second;
+        }
       } else {
         const RDGeom::Point2D& coords =
             params->coordMap.find(oatom->getIdx())->second;
