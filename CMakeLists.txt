@@ -58,6 +58,10 @@ option(RDK_INSTALL_DEV_COMPONENT "install libraries and headers" ON)
 option(RDK_USE_BOOST_REGEX "use boost::regex instead of std::regex (needed for systems with g++-4.8)" OFF)
 option(RDK_USE_BOOST_IOSTREAMS "use boost::iostreams" ON)
 option(RDK_BUILD_MINIMAL_LIB "build the minimal RDKit wrapper (for the JS bindings)" OFF)
+option(RDK_BUILD_UBSAN "Build with the compiler's Undefined Behavior Sanitizer debugger enabled" OFF)
+option(RDK_BUILD_ASAN "Build with the compiler's Address Sanitizer debugger enabled" OFF)
+option(RDK_BUILD_TSAN "Build with the compiler's Thread Sanitizer debugger enabled" OFF)
+
 if(NOT MSVC)
   if(RDK_OPTIMIZE_POPCNT)
       set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -mpopcnt")
@@ -425,6 +429,21 @@ else(RDK_TEST_COVERAGE)
    endif()
  endif()
 endif(RDK_TEST_COVERAGE)
+
+if(RDK_BUILD_UBSAN)
+    SET(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -g -fsanitize=undefined")
+    SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -g -fsanitize=undefined")
+endif(RDK_BUILD_UBSAN)
+
+if(RDK_BUILD_ASAN)
+    SET(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -g -fsanitize=address")
+    SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -g -fsanitize=address")
+endif(RDK_BUILD_UBSAN)
+
+if(RDK_BUILD_TSAN)
+    SET(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -g -fsanitize=thread")
+    SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -g -fsanitize=thread")
+endif(RDK_BUILD_UBSAN)
 
 if(NOT RDK_INSTALL_INTREE)
   install(DIRECTORY Data DESTINATION
