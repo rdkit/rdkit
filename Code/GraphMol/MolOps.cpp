@@ -442,10 +442,10 @@ std::vector<ROMOL_SPTR> getMolFrags(const ROMol &mol, bool sanitizeFrags,
     ownIt = true;
   }
   unsigned int nFrags = getMolFrags(mol, *mapping);
-  std::vector<ROMOL_SPTR> res;
+  std::vector<RWMOL_SPTR> res;
   if (nFrags == 1) {
-    auto *tmp = new ROMol(mol);
-    ROMOL_SPTR sptr(tmp);
+    auto *tmp = new RWMol(mol);
+    RWMOL_SPTR sptr(tmp);
     res.push_back(sptr);
     if (fragsMolAtomMapping) {
       INT_VECT comp;
@@ -460,17 +460,16 @@ std::vector<ROMOL_SPTR> getMolFrags(const ROMol &mol, bool sanitizeFrags,
     boost::dynamic_bitset<> copiedBonds(mol.getNumBonds(), 0);
     res.reserve(nFrags);
     for (unsigned int frag = 0; frag < nFrags; ++frag) {
-      auto *tmp = new ROMol();
-      ROMOL_SPTR sptr(tmp);
+      auto *tmp = new RWMol();
+      RWMOL_SPTR sptr(tmp);
       res.push_back(sptr);
     }
 
     // copy atoms
     INT_INT_VECT_MAP comMap;
     for (unsigned int idx = 0; idx < mol.getNumAtoms(); ++idx) {
-      auto *tmp = static_cast<RWMol *>(res[(*mapping)[idx]].get());
       const Atom *oAtm = mol.getAtomWithIdx(idx);
-      ids[idx] = tmp->addAtom(oAtm->copy(), false, true);
+      ids[idx] = res[(*mapping)[idx]]->addAtom(oAtm->copy(), false, true);
       copiedAtoms[idx] = 1;
       if (fragsMolAtomMapping) {
         if (comMap.find((*mapping)[idx]) == comMap.end()) {
@@ -505,8 +504,7 @@ std::vector<ROMOL_SPTR> getMolFrags(const ROMol &mol, bool sanitizeFrags,
           }
           ringStereoAtomsCopied.push_back(ridx);
         }
-        auto *tmp = static_cast<RWMol *>(res[(*mapping)[idx]].get());
-        tmp->getAtomWithIdx(ids[idx])->setProp(
+        res[(*mapping)[idx]]->getAtomWithIdx(ids[idx])->setProp(
             common_properties::_ringStereoAtoms, ringStereoAtomsCopied);
       }
     }
@@ -521,9 +519,8 @@ std::vector<ROMOL_SPTR> getMolFrags(const ROMol &mol, bool sanitizeFrags,
         continue;
       }
       Bond *nBond = bond->copy();
-      auto *tmp =
-          static_cast<RWMol *>(res[(*mapping)[nBond->getBeginAtomIdx()]].get());
-      nBond->setOwningMol(static_cast<ROMol *>(tmp));
+      RWMol *tmp = res[(*mapping)[nBond->getBeginAtomIdx()]].get();
+      nBond->setOwningMol( tmp );
       nBond->setBeginAtomIdx(ids[nBond->getBeginAtomIdx()]);
       nBond->setEndAtomIdx(ids[nBond->getEndAtomIdx()]);
       nBond->getStereoAtoms().clear();
@@ -538,7 +535,7 @@ std::vector<ROMOL_SPTR> getMolFrags(const ROMol &mol, bool sanitizeFrags,
     if (mol.getRingInfo()->isInitialized()) {
       for (const auto &i : mol.getRingInfo()->atomRings()) {
         INT_VECT aids;
-        auto *tmp = static_cast<RWMol *>(res[(*mapping)[i[0]]].get());
+        auto tmp = res[(*mapping)[i[0]]].get();
         if (!tmp->getRingInfo()->isInitialized()) {
           tmp->getRingInfo()->initialize();
         }
@@ -596,14 +593,14 @@ std::vector<ROMOL_SPTR> getMolFrags(const ROMol &mol, bool sanitizeFrags,
 
   if (sanitizeFrags) {
     for (auto &re : res) {
-      sanitizeMol(*static_cast<RWMol *>(re.get()));
+      sanitizeMol( *re );
     }
   }
 
   if (ownIt) {
     delete mapping;
   }
-  return res;
+  return std::vector<ROMOL_SPTR>( res.begin(), res.end() );
 }
 
 unsigned int getMolFrags(const ROMol &mol, INT_VECT &mapping) {
