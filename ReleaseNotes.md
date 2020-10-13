@@ -45,9 +45,6 @@
   atoms and bonds.
 - There's a new rdDeprotect module to allow automatically deprotecting molecules
   before putting them into reactions
-- The RDKit      
-
-
 
 ## Acknowledgements
 Shrey Aryan, Jinserk Baik, Francois Berenger, David Cosgrove, Ivan Chernyshov,
@@ -58,7 +55,6 @@ Robinson, Jaime Rodríguez-Guerra, Ricardo Rodriguez-Schmidt, Jeff van Santen,
 Roger Sayle Vincent F. Scalfani Eric Taw, Ansgar Schuffenhauer, Paolo Tosco,
 Ivan Tubert-Brohman, Riccardo Vianello, Rachel Walker, Maciej Wójcikowski,
 Christopher Zou, daverona, hjuinj, intrigus-lgtm, autodataming, paconius
-
 
 ## Bug Fixes:
   - Python tests fail when RDK_BUILD_COMPRESSED_SUPPLIERS is enabled
@@ -402,7 +398,6 @@ Christopher Zou, daverona, hjuinj, intrigus-lgtm, autodataming, paconius
   - allow fillColour to be changed from python
  (github pull #3480 from greglandrum)
 
-
 ## Code removed in this release:
 - To improve API consistency of the exceptions in RDKit with the default ones in
   the STL, the several `message()` methods and `Invariant::getMessage()` in RDKit's
@@ -421,7 +416,6 @@ Christopher Zou, daverona, hjuinj, intrigus-lgtm, autodataming, paconius
   instead.
 - The `MolDraw2DQt` class is no longer supported since we don't think anyone is
   using it. It will be removed in the 2021.03 release unless we learn otherwise.
-
 
 
 
