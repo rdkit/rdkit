@@ -59,6 +59,11 @@ accordingly.
   void disconnect(RWMol &mol);
 
  private:
+  struct NonMetal {
+    int cutBonds{0};
+    std::vector<int> boundMetalIndices;
+  };
+  int chargeAdjustment(const Atom *a, int order);
   ROMOL_SPTR metal_nof;
   ROMOL_SPTR metal_non;
 
