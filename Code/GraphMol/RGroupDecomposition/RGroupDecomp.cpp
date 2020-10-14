@@ -54,6 +54,8 @@ namespace RDKit {
 const std::string RLABEL = "tempRlabel";
 const std::string SIDECHAIN_RLABELS = "sideChainRlabels";
 const std::string done = "RLABEL_PROCESSED";
+const std::string CORE = "Core";
+const std::string RPREFIX = "R";
 
 namespace {
 void ADD_MATCH(R_DECOMP &match, int rlabel) {                                                                                     
@@ -328,7 +330,7 @@ RGroupRows RGroupDecomposition::getRGroupsAsRows() const {
     // make a new rgroup entry
     groups.push_back(RGroupRow());
     RGroupRow &out_rgroups = groups.back();
-    out_rgroups["Core"] = data->cores[it->core_idx].labelledCore;
+    out_rgroups[CORE] = data->cores[it->core_idx].labelledCore;
 
     R_DECOMP &in_rgroups = it->rgroups;
 
@@ -336,7 +338,7 @@ RGroupRows RGroupDecomposition::getRGroupsAsRows() const {
       const auto realLabel = data->finalRlabelMapping.find(rgroup.first);
       CHECK_INVARIANT(realLabel != data->finalRlabelMapping.end(),
                       "unprocessed rlabel, please call process() first.");
-      out_rgroups[std::string("R") + std::to_string(realLabel->second)] =
+      out_rgroups[RPREFIX + std::to_string(realLabel->second)] =
           rgroup.second->combinedMol;
     }
   }
@@ -347,6 +349,7 @@ RGroupColumns RGroupDecomposition::getRGroupsAsColumns() const {
   std::vector<RGroupMatch> permutation = data->GetCurrentBestPermutation();
 
   RGroupColumns groups;
+  std::unordered_set<std::string> rGroupWithRealMol{CORE};
 
   // collect the list of all possible RGroups:
   std::map<int, size_t> rgrp_pos_map;
@@ -359,7 +362,7 @@ RGroupColumns RGroupDecomposition::getRGroupsAsColumns() const {
   for (auto it = permutation.begin(); it != permutation.end(); ++it, ++molidx) {
     boost::dynamic_bitset<> Rs_seen(rgrp_pos_map.size());
     R_DECOMP &in_rgroups = it->rgroups;
-    groups["Core"].push_back(data->cores[it->core_idx].labelledCore);
+    groups[CORE].push_back(data->cores[it->core_idx].labelledCore);
 
     for (const auto &rgroup : in_rgroups) {
       const auto realLabel = data->finalRlabelMapping.find(rgroup.first);
@@ -369,19 +372,26 @@ RGroupColumns RGroupDecomposition::getRGroupsAsColumns() const {
                       "Not done! Call process()");
 
       Rs_seen.set(rgrp_pos_map[realLabel->second]);
-      std::string r = std::string("R") + std::to_string(realLabel->second);
+      std::string r = RPREFIX + std::to_string(realLabel->second);
       RGroupColumn &col = groups[r];
       if (molidx && col.size() < (size_t)(molidx - 1)) {
         col.resize(molidx - 1);
       }
       col.push_back(rgroup.second->combinedMol);
+      rGroupWithRealMol.insert(r);
     }
     // add empty entries to columns where this molecule didn't appear
     for (const auto rpr : rgrp_pos_map) {
       if (!Rs_seen[rpr.second]) {
-        std::string r = std::string("R") + std::to_string(rpr.first);
+        std::string r = RPREFIX + std::to_string(rpr.first);
         groups[r].push_back(boost::make_shared<RWMol>());
       }
+    }
+  }
+  // purge R-group entries that have no mols
+  for (auto it = groups.begin(); it != groups.end(); ++it) {
+    if (!rGroupWithRealMol.count(it->first)) {
+      groups.erase(it);
     }
   }
   return groups;
