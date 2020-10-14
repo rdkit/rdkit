@@ -618,15 +618,16 @@ namespace {
 }
 unsigned int getMolFrags(const ROMol &mol, INT_VECT &mapping) {
   unsigned int natms = mol.getNumAtoms();
-  mapping.resize(natms, -1);
-    int current_mapping = 0;
+    INT_VECT _mappings(natms, -1);
+    mapping.swap(_mappings);
+    int current_mapping = -1;
     for(auto *atom : mol.atoms()) {
         if(mapping[atom->getIdx()] == -1) { // not visited
-            dfs(atom, current_mapping++, mapping);
+            dfs(atom, ++current_mapping, mapping);
         }
         
     }
-    return current_mapping;
+    return current_mapping+1;
 };
 
 unsigned int getMolFrags(const ROMol &mol, VECT_INT_VECT &frags) {

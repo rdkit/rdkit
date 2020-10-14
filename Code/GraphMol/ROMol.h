@@ -632,7 +632,6 @@ class RDKIT_GRAPHMOL_EXPORT ROMol : public RDProps {
       const ROMol &);  // disable assignment, RWMol's support assignment
 
  protected:
-  unsigned int numBonds{0};
 #ifndef WIN32
  private:
 #endif

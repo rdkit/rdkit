@@ -208,7 +208,6 @@ class RDKIT_GRAPHMOL_EXPORT RWMol : public ROMol {
     destroy();
     d_confs.clear();
     ROMol::initMol();  // make sure we have a "fresh" ready to go copy
-    numBonds = 0;
   };
 
  private:

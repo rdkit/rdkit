@@ -34,13 +34,14 @@ const int ci_ATOM_HOLDER = -0xDEADD06;
 void ROMol::destroy() {
   d_atomBookmarks.clear();
   d_bondBookmarks.clear();
-    for(auto &atom : _atoms) {
-        delete &atom;
+    for(auto *atom : _atoms) {
+        delete atom;
     }
-  for(auto &bond : _bonds) {
-      delete &bond;
+  for(auto *bond : _bonds) {
+      delete bond;
   }
-
+    _atoms.clear();
+    _bonds.clear();
   if (dp_ringInfo) {
     delete dp_ringInfo;
     dp_ringInfo = nullptr;
@@ -52,7 +53,6 @@ void ROMol::destroy() {
 
 ROMol::ROMol(const std::string &pickle) : RDProps() {
   initMol();
-  numBonds = 0;
   MolPickler::molFromPickle(pickle, *this);
 }
 
@@ -60,16 +60,23 @@ void ROMol::initFromOther(const ROMol &other, bool quickCopy, int confId) {
   if (this == &other) {
     return;
   }
-  numBonds = 0;
   // std::cerr<<"    init from other: "<<this<<" "<<&other<<std::endl;
   // copy over the atoms
     
     // this is tricky?
+    unsigned int idx = 0;
     for(auto *atom : other._atoms) {
-        _atoms.push_back(atom->copy());
+        auto a = atom->copy();
+        a->setOwningMol(this);
+        a->setIdx(idx++);
+        _atoms.push_back(a);
     }
+    idx = 0;
     for(auto *bond : other._bonds) {
-        _bonds.push_back(bond->copy());
+        auto b = bond->copy();
+        b->setOwningMol(this);
+        b->setIdx(idx++);
+        _bonds.push_back(b);
     }
     
     // Copy over the internal graph structure
@@ -322,7 +329,7 @@ unsigned int ROMol::addAtom(Atom *atom_pin, bool updateLabel,
 
   atom_p->setOwningMol(this);
   auto which = _atoms.size();
- _atoms.push_back(atom_p);
+  _atoms.push_back(atom_p);
   atom_p->setIdx(which);
   if (updateLabel) {
     replaceAtomBookmark(atom_p, ci_RIGHTMOST_ATOM);
@@ -350,6 +357,9 @@ unsigned int ROMol::addBond(Bond *bond_pin, bool takeOwnership) {
   } else {
     bond_p = bond_pin;
   }
+    auto which = _bonds.size();
+    bond_p->setIdx(which);
+    bond_p->setOwningMol(this);
   // check to see if bond has been added???
     auto a1 = _atoms[bond_p->getBeginAtomIdx()];
     auto a2 = _atoms[bond_p->getEndAtomIdx()];
@@ -357,10 +367,8 @@ unsigned int ROMol::addBond(Bond *bond_pin, bool takeOwnership) {
     a2->_bonds.push_back(bond_p);
     a1->_oatoms.push_back(a2);
     a2->_oatoms.push_back(a1);
-    
-  auto which = _bonds.size();
     _bonds.push_back(bond_p);
-    bond_p->setIdx(which);
+    
   return which+1;
 }
 
@@ -369,18 +377,15 @@ void ROMol::setStereoGroups(std::vector<StereoGroup> stereo_groups) {
 }
 
 void ROMol::debugMol(std::ostream &str) const {
-  ATOM_ITER_PAIR atItP = getVertices();
-  BOND_ITER_PAIR bondItP = getEdges();
-
-  str << "Atoms:" << std::endl;
-  while (atItP.first != atItP.second) {
-    str << "\t" << **(atItP.first++) << std::endl;
-  }
-
-  str << "Bonds:" << std::endl;
-  while (bondItP.first != bondItP.second) {
-    str << "\t" << **(bondItP.first++) << std::endl;
-  }
+    str << "Atoms:" << std::endl;
+    for(auto *atom : _atoms) {
+       str << "\t" << *atom << " " << &atom->getOwningMol() << std::endl;
+    }
+    
+    str << "Bonds:" << std::endl;
+    for(auto *bond: _bonds) {
+       str << "\t" << *bond << " " << &bond->getOwningMol() << std::endl;
+    }
 }
 
 // --------------------------------------------
@@ -485,14 +490,8 @@ void ROMol::clearComputedProps(bool includeRings) const {
 }
 
 void ROMol::updatePropertyCache(bool strict) {
-  for (AtomIterator atomIt = this->beginAtoms(); atomIt != this->endAtoms();
-       ++atomIt) {
-    (*atomIt)->updatePropertyCache(strict);
-  }
-  for (BondIterator bondIt = this->beginBonds(); bondIt != this->endBonds();
-       ++bondIt) {
-    (*bondIt)->updatePropertyCache(strict);
-  }
+    for(auto atom : _atoms) { atom->updatePropertyCache(strict); }
+    for(auto bond: _bonds) { bond->updatePropertyCache(strict); }
 }
 
 bool ROMol::needsUpdatePropertyCache() const {
