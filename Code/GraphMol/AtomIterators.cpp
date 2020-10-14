@@ -246,7 +246,7 @@ HeteroatomIterator_<Atom_, Mol_> HeteroatomIterator_<Atom_, Mol_>::operator--(
 template <class Atom_, class Mol_>
 int HeteroatomIterator_<Atom_, Mol_>::_findNext(int from) {
   while (from < _end) {
-    if (_qA->Match((*_mol).atoms()[_pos])) {
+    if (_qA->Match((*_mol).atoms()[from])) {
       break;
     } else {
       from++;
@@ -258,7 +258,7 @@ int HeteroatomIterator_<Atom_, Mol_>::_findNext(int from) {
 template <class Atom_, class Mol_>
 int HeteroatomIterator_<Atom_, Mol_>::_findPrev(int from) {
   while (from > 0) {
-    if (_qA->Match((*_mol).atoms()[_pos])) {
+    if (_qA->Match((*_mol).atoms()[from])) {
       break;
     } else {
       from--;
@@ -355,7 +355,7 @@ operator--(int) {
 template <class Atom_, class Mol_>
 int AromaticAtomIterator_<Atom_, Mol_>::_findNext(int from) {
   while (from < _end) {
-    if ((*_mol).atoms()[_pos]->getIsAromatic()) {
+    if ((*_mol).atoms()[from]->getIsAromatic()) {
       break;
     } else {
       from++;
