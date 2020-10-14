@@ -354,7 +354,7 @@ unsigned int RWMol::addBond(unsigned int atomIdx1, unsigned int atomIdx2,
     dp_ringInfo->reset();
   }
     _bonds.push_back(b);
-    return idx;  // res;
+    return idx+1;  // doesn't return the bond idx, returns num bonds
 }
 
 unsigned int RWMol::addBond(Atom *atom1, Atom *atom2, Bond::BondType bondType) {
