@@ -323,14 +323,22 @@ std::vector<StereoInfo> findPotentialStereo(ROMol &mol, bool cleanIt,
         atomSymbols[aidx] =
             (boost::format("%s-%d") % atom->getSymbol() % atom->getIdx()).str();
       } else {
-        atomSymbols[aidx] = atom->getSymbol();
+        atomSymbols[aidx] = (boost::format("%s%d") % atom->getSymbol() %
+                             atom->getFormalCharge())
+                                .str();
       }
     } else {
-      atomSymbols[aidx] = atom->getSymbol();
+      atomSymbols[aidx] =
+          (boost::format("%s%d") % atom->getSymbol() % atom->getFormalCharge())
+              .str();
     }
   }
 
-  // flag possible ring stereo cases
+  // flag possible ring stereo cases. The relevant cases here are:
+  //    1) even-sized rings with possible (or specified) atoms opposite each
+  //       other, like CC1CC(C)C1 or CC1CCC(C)CC1
+  //    2) atoms sharing a bond which fuses two or more rings, like the central
+  //       bond in C1CCC2CCCCC2C1
 
   // tracks the number of rings with possible ring stereo that the atom is in
   //  (only set for potential stereoatoms)
@@ -338,28 +346,55 @@ std::vector<StereoInfo> findPotentialStereo(ROMol &mol, bool cleanIt,
   // tracks the number of rings with possible ring stereo that the bond is in
   //  (set for all bonds)
   std::vector<unsigned int> possibleRingStereoBonds(mol.getNumBonds());
-  // tracks the atom rings that might have stereo:
-  std::vector<INT_VECT> stereoRings;
   if (flagPossible) {
     for (unsigned int ridx = 0; ridx < mol.getRingInfo()->atomRings().size();
          ++ridx) {
       const auto &aring = mol.getRingInfo()->atomRings()[ridx];
       unsigned int nHere = 0;
-      for (const auto aidx : aring) {
-        if (possibleAtoms[aidx] || knownAtoms[aidx]) {
-          ++nHere;
+      auto sz = aring.size();
+      int possibleNbrIdx = -1;
+      for (unsigned int ai = 0; ai < aring.size(); ++ai) {
+        auto aidx = aring[ai];
+        if (!(aring.size() % 2)) {
+          // find the index of the atom on the opposite side of the even-sized
+          // ring
+          auto oppositeidx = aring[(ai + sz / 2) % sz];
+          if ((possibleAtoms[aidx] || knownAtoms[aidx]) &&
+              (possibleAtoms[oppositeidx] || knownAtoms[oppositeidx])) {
+            ++nHere;
+          }
+        }
+        // if the atom is in more than one bond, see if there's
+        // a possible neighbor on a fusion bond
+        if (mol.getRingInfo()->numAtomRings(aidx) > 1) {
+          auto otheridx = aring[(ai + 1) % aring.size()];
+          if (possibleAtoms[otheridx] || knownAtoms[otheridx]) {
+            auto bnd = mol.getBondBetweenAtoms(aidx, otheridx);
+            CHECK_INVARIANT(bnd, "expected ring bond not found");
+            std::cerr << "  ringbondconsider " << aidx << "-" << otheridx
+                      << std::endl;
+            if (mol.getRingInfo()->numBondRings(bnd->getIdx()) > 1) {
+              std::cerr << "    yes" << std::endl;
+              ++nHere;
+            }
+          }
         }
       }
       // if the ring contains at least two atoms with possible stereo,
-      // then each possibleAtom should be included for ring stereo
+      // then each of those possibleAtoms should be included for ring stereo
       if (nHere > 1) {
-        stereoRings.push_back(aring);
-        for (const auto aidx : aring) {
-          if (possibleAtoms[aidx]) {
-            ++possibleRingStereoAtoms[aidx];
+        if (!(aring.size() % 2)) {
+          for (unsigned int ai = 0; ai < aring.size(); ++ai) {
+            auto aidx = aring[ai];
+            auto oppositeidx = aring[(ai + sz / 2) % sz];
+            if (possibleAtoms[aidx] && !possibleRingStereoAtoms[aidx] &&
+                (possibleAtoms[oppositeidx] || knownAtoms[oppositeidx])) {
+              ++possibleRingStereoAtoms[aidx];
+            }
           }
         }
-        for (const auto bidx : mol.getRingInfo()->bondRings()[ridx]) {
+
+        for (auto bidx : mol.getRingInfo()->bondRings()[ridx]) {
           ++possibleRingStereoBonds[bidx];
         }
       }
@@ -432,15 +467,18 @@ std::vector<StereoInfo> findPotentialStereo(ROMol &mol, bool cleanIt,
           if (std::find(nbrs.begin(), nbrs.end(), rnk) != nbrs.end()) {
             // ok, we just hit a duplicate rank. If the atom we're concerned
             // about is a candidate for ring stereo and the bond to the atom
-            // with the duplicate rank is a ring bond, we can ignore the
-            // duplicate
+            // with the duplicate rank is a ring bond that's not fused between
+            // rings, we can ignore the duplicate
             if (possibleRingStereoAtoms[aidx]) {
               auto bnd = mol.getBondBetweenAtoms(aidx, nbrIdx);
-              if (!bnd || !possibleRingStereoBonds[bnd->getIdx()]) {
+              if (!bnd || !possibleRingStereoBonds[bnd->getIdx()] ||
+                  possibleRingStereoBonds[bnd->getIdx()] > 1) {
+                std::cerr << "  removal 1 " << aidx << std::endl;
                 haveADupe = true;
                 break;
               }
             } else {
+              std::cerr << "  removal 2 " << aidx << std::endl;
               haveADupe = true;
               break;
             }
@@ -449,6 +487,7 @@ std::vector<StereoInfo> findPotentialStereo(ROMol &mol, bool cleanIt,
           }
         }
         if (!haveADupe) {
+          std::cerr << "    keep: " << aidx << std::endl;
           res.push_back(std::move(sinfo));
         } else {
           removedStereo = true;
@@ -468,7 +507,7 @@ std::vector<StereoInfo> findPotentialStereo(ROMol &mol, bool cleanIt,
                    ridx < mol.getRingInfo()->atomRings().size(); ++ridx) {
                 const auto &aring = mol.getRingInfo()->atomRings()[ridx];
                 unsigned int nHere = 0;
-                for (const auto raidx : aring) {
+                for (auto raidx : aring) {
                   if (possibleRingStereoAtoms[raidx]) {
                     --possibleRingStereoAtoms[raidx];
                     if (possibleRingStereoAtoms[raidx]) {
@@ -478,8 +517,7 @@ std::vector<StereoInfo> findPotentialStereo(ROMol &mol, bool cleanIt,
                 }
                 if (nHere <= 1) {
                   // update the bondstereo counts too
-                  for (const auto rbidx :
-                       mol.getRingInfo()->bondRings()[ridx]) {
+                  for (auto rbidx : mol.getRingInfo()->bondRings()[ridx]) {
                     if (possibleRingStereoBonds[rbidx]) {
                       --possibleRingStereoBonds[rbidx];
                     }

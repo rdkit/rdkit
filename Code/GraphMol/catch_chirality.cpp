@@ -299,6 +299,12 @@ TEST_CASE("isAtomPotentialTetrahedralCenter", "[unittest]") {
       CHECK(!Chirality::detail::isAtomPotentialTetrahedralCenter(
           mol->getAtomWithIdx(6)));
     }
+    {
+      auto mol = "O[P]([O-])(=O)OC"_smiles;
+      REQUIRE(mol);
+      CHECK(Chirality::detail::isAtomPotentialTetrahedralCenter(
+          mol->getAtomWithIdx(1)));
+    }
   }
 }
 TEST_CASE("isAtomPotentialStereoAtom", "[unittest]") {
@@ -398,7 +404,7 @@ TEST_CASE("possible stereochemistry on atoms", "[chirality]") {
     REQUIRE(mol);
     mol->getBondBetweenAtoms(0, 1)->setBondDir(Bond::BondDir::UNKNOWN);
     auto stereoInfo = Chirality::findPotentialStereo(*mol);
-    CHECK(stereoInfo.size() == 1);
+    REQUIRE(stereoInfo.size() == 1);
     CHECK(stereoInfo[0].type == Chirality::StereoType::Atom_Tetrahedral);
     CHECK(stereoInfo[0].specified == Chirality::StereoSpecified::Unknown);
     CHECK(stereoInfo[0].centeredOn == 1);
@@ -409,6 +415,22 @@ TEST_CASE("possible stereochemistry on atoms", "[chirality]") {
     mol->getBondBetweenAtoms(0, 1)->setBondDir(Bond::BondDir::UNKNOWN);
     auto stereoInfo = Chirality::findPotentialStereo(*mol);
     CHECK(stereoInfo.size() == 0);
+  }
+  SECTION("chiral phosphorous") {
+    {
+      auto mol = "O[P@]([O-])(=O)OC"_smiles;
+      REQUIRE(mol);
+      mol->debugMol(std::cerr);
+      std::cerr << "------------------" << std::endl;
+      auto stereoInfo = Chirality::findPotentialStereo(*mol);
+      std::cerr << "------------------" << std::endl;
+      REQUIRE(stereoInfo.size() == 1);
+      CHECK(stereoInfo[0].type == Chirality::StereoType::Atom_Tetrahedral);
+      CHECK(stereoInfo[0].specified == Chirality::StereoSpecified::Specified);
+      CHECK(stereoInfo[0].centeredOn == 1);
+      std::vector<unsigned> catoms = {0, 2, 3, 4};
+      CHECK(stereoInfo[0].controllingAtoms == catoms);
+    }
   }
 }
 
@@ -921,7 +943,6 @@ TEST_CASE("findPotentialStereo problems related to #3490", "[chirality][bug]") {
   }
 }
 TEST_CASE("ring stereo finding is overly aggressive", "[chirality][bug]") {
-#if 1
   SECTION("Finding too much 1a") {
     auto mol = "CC1CCCCC1"_smiles;
     REQUIRE(mol);
@@ -1013,7 +1034,6 @@ TEST_CASE("ring stereo finding is overly aggressive", "[chirality][bug]") {
         Chirality::findPotentialStereo(*mol, cleanIt, flagPossible);
     CHECK(stereoInfo.size() == 0);
   }
-#endif
   SECTION("Finding too much 3a") {
     auto mol = "CC1CCC1"_smiles;
     REQUIRE(mol);
@@ -1039,8 +1059,51 @@ TEST_CASE("ring stereo finding is overly aggressive", "[chirality][bug]") {
     REQUIRE(mol);
     bool cleanIt = true;
     bool flagPossible = true;
+    std::cerr << "----------------" << std::endl;
     auto stereoInfo =
         Chirality::findPotentialStereo(*mol, cleanIt, flagPossible);
+    std::cerr << "----------------" << std::endl;
     CHECK(stereoInfo.size() == 2);
+  }
+
+  SECTION("fused rings 2") {
+    auto mol = "C1CC2CCCC2C1"_smiles;
+    REQUIRE(mol);
+    bool cleanIt = true;
+    bool flagPossible = true;
+    std::cerr << "----------------" << std::endl;
+    auto stereoInfo =
+        Chirality::findPotentialStereo(*mol, cleanIt, flagPossible);
+    std::cerr << "----------------" << std::endl;
+    CHECK(stereoInfo.size() == 2);
+  }
+
+  SECTION("cages 1") {
+    auto mol = "CC1CN2CCC1CC2"_smiles;
+    REQUIRE(mol);
+    bool cleanIt = true;
+    bool flagPossible = true;
+    auto stereoInfo =
+        Chirality::findPotentialStereo(*mol, cleanIt, flagPossible);
+    CHECK(stereoInfo.size() == 1);
+    CHECK(stereoInfo[0].centeredOn == 1);
+  }
+  SECTION("cages 2") {
+    auto mol = "C1CC2(O)CCC1(C)CC2"_smiles;
+    REQUIRE(mol);
+    bool cleanIt = true;
+    bool flagPossible = true;
+    auto stereoInfo =
+        Chirality::findPotentialStereo(*mol, cleanIt, flagPossible);
+    CHECK(stereoInfo.size() == 0);
+  }
+  SECTION("cages 3") {
+    auto mol = "C1CC2(O)CCC1CC2"_smiles;
+    REQUIRE(mol);
+    bool cleanIt = true;
+    bool flagPossible = true;
+    auto stereoInfo =
+        Chirality::findPotentialStereo(*mol, cleanIt, flagPossible);
+    CHECK(stereoInfo.size() == 0);
   }
 }
