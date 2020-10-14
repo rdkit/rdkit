@@ -919,6 +919,9 @@ TEST_CASE("findPotentialStereo problems related to #3490", "[chirality][bug]") {
     CHECK(stereoInfo[2].centeredOn == 12);
     CHECK(stereoInfo[2].specified == Chirality::StereoSpecified::Unspecified);
   }
+}
+TEST_CASE("ring stereo finding is overly aggressive", "[chirality][bug]") {
+#if 1
   SECTION("Finding too much 1a") {
     auto mol = "CC1CCCCC1"_smiles;
     REQUIRE(mol);
@@ -929,13 +932,67 @@ TEST_CASE("findPotentialStereo problems related to #3490", "[chirality][bug]") {
     CHECK(stereoInfo.size() == 0);
   }
   SECTION("Finding too much 1b") {
-    auto mol = "CC1CC(C)CCC1"_smiles;
+    auto mol = "CC1CCC(C)CC1"_smiles;
     REQUIRE(mol);
     bool cleanIt = true;
     bool flagPossible = true;
     auto stereoInfo =
         Chirality::findPotentialStereo(*mol, cleanIt, flagPossible);
     CHECK(stereoInfo.size() == 2);
+  }
+  SECTION("Finding too much 1c") {
+    auto mol = "C[C@H]1CCC(C)CC1"_smiles;
+    REQUIRE(mol);
+    bool cleanIt = true;
+    bool flagPossible = true;
+    auto stereoInfo =
+        Chirality::findPotentialStereo(*mol, cleanIt, flagPossible);
+    CHECK(stereoInfo.size() == 2);
+  }
+  SECTION("Finding too much 1d") {
+    auto mol = "CC1(C)CCCCC1"_smiles;
+    REQUIRE(mol);
+    bool cleanIt = true;
+    bool flagPossible = true;
+    auto stereoInfo =
+        Chirality::findPotentialStereo(*mol, cleanIt, flagPossible);
+    CHECK(stereoInfo.size() == 0);
+  }
+  SECTION("Finding too much 1e") {
+    auto mol = "CC1(C)CCC(C)CC1"_smiles;
+    REQUIRE(mol);
+    bool cleanIt = true;
+    bool flagPossible = true;
+    auto stereoInfo =
+        Chirality::findPotentialStereo(*mol, cleanIt, flagPossible);
+    CHECK(stereoInfo.size() == 0);
+  }
+  SECTION("Finding too much 1f") {
+    auto mol = "C2CC2C1(C2CC2)CCCCC1"_smiles;
+    REQUIRE(mol);
+    bool cleanIt = true;
+    bool flagPossible = true;
+    auto stereoInfo =
+        Chirality::findPotentialStereo(*mol, cleanIt, flagPossible);
+    CHECK(stereoInfo.size() == 0);
+  }
+  SECTION("Finding too much 1g") {
+    auto mol = "CC1CC2(CCC2)C1"_smiles;
+    REQUIRE(mol);
+    bool cleanIt = true;
+    bool flagPossible = true;
+    auto stereoInfo =
+        Chirality::findPotentialStereo(*mol, cleanIt, flagPossible);
+    CHECK(stereoInfo.size() == 0);
+  }
+  SECTION("Finding too much 1h") {
+    auto mol = "CC1CC2(CC(C)C2)C1"_smiles;
+    REQUIRE(mol);
+    bool cleanIt = true;
+    bool flagPossible = true;
+    auto stereoInfo =
+        Chirality::findPotentialStereo(*mol, cleanIt, flagPossible);
+    CHECK(stereoInfo.size() == 3);
   }
 
   SECTION("Finding too much 2a") {
@@ -955,5 +1012,35 @@ TEST_CASE("findPotentialStereo problems related to #3490", "[chirality][bug]") {
     auto stereoInfo =
         Chirality::findPotentialStereo(*mol, cleanIt, flagPossible);
     CHECK(stereoInfo.size() == 0);
+  }
+#endif
+  SECTION("Finding too much 3a") {
+    auto mol = "CC1CCC1"_smiles;
+    REQUIRE(mol);
+    bool cleanIt = true;
+    bool flagPossible = true;
+    auto stereoInfo =
+        Chirality::findPotentialStereo(*mol, cleanIt, flagPossible);
+    CHECK(stereoInfo.size() == 0);
+  }
+
+  SECTION("Finding too much 3b") {
+    auto mol = "CC1CC(C)C1"_smiles;
+    REQUIRE(mol);
+    bool cleanIt = true;
+    bool flagPossible = true;
+    auto stereoInfo =
+        Chirality::findPotentialStereo(*mol, cleanIt, flagPossible);
+    CHECK(stereoInfo.size() == 2);
+  }
+
+  SECTION("fused rings 1") {
+    auto mol = "C1CCC2CCCCC2C1"_smiles;
+    REQUIRE(mol);
+    bool cleanIt = true;
+    bool flagPossible = true;
+    auto stereoInfo =
+        Chirality::findPotentialStereo(*mol, cleanIt, flagPossible);
+    CHECK(stereoInfo.size() == 2);
   }
 }
