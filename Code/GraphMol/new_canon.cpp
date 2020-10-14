@@ -572,7 +572,6 @@ void updateAtomNeighborNumSwaps(
     unsigned nbrIdx = nbr.nbrIdx;
 
     if (isRingAtom && atoms[nbrIdx].atom->getChiralTag() != 0) {
-#if 1
       std::vector<int> ref, probe;
       for (unsigned i = 0; i < atoms[nbrIdx].degree; ++i) {
         ref.push_back(atoms[nbrIdx].nbrIds[i]);
@@ -583,35 +582,6 @@ void updateAtomNeighborNumSwaps(
           probe.push_back(bond.nbrIdx);
         }
       }
-#else
-      std::vector<int> ref(atoms[nbrIdx].degree);
-      for (unsigned i = 0; i < atoms[nbrIdx].degree; ++i) {
-        ref[i] = atoms[nbrIdx].nbrIds[i];
-      }
-      std::vector<int> probe;
-      probe.reserve(ref.size());
-      probe.push_back(atomIdx);
-      std::vector<std::pair<int, int>> orderedNbrs;
-      for (unsigned i = 0; i < atoms[nbrIdx].degree; ++i) {
-        unsigned int nbrId = atoms[nbrIdx].nbrIds[i];
-        if (nbrId != atomIdx) {
-          orderedNbrs.emplace_back(std::make_pair(atoms[nbrId].index, nbrId));
-        }
-      }
-      std::sort(orderedNbrs.begin(), orderedNbrs.end());
-      for (const auto &onbr : orderedNbrs) {
-        probe.push_back(onbr.second);
-      }
-
-#endif
-      // std::cerr << "      " << atomIdx << " " << nbrIdx << " | ";
-      // std::copy(ref.begin(), ref.end(),
-      //           std::ostream_iterator<int>(std::cerr, " "));
-      // std::cerr << " | ";
-      // std::copy(probe.begin(), probe.end(),
-      //           std::ostream_iterator<int>(std::cerr, " "));
-      // std::cerr << std::endl;
-
       int nSwaps = static_cast<int>(countSwapsToInterconvert(ref, probe));
       if (atoms[nbrIdx].atom->getChiralTag() == Atom::CHI_TETRAHEDRAL_CW) {
         if (nSwaps % 2) {
