@@ -63,8 +63,14 @@ struct RDKIT_GRAPHMOL_EXPORT bondholder {
 
   static int compare(const bondholder &x, const bondholder &y,
                      unsigned int div = 1) {
-    if (x.p_symbol && y.p_symbol && (*x.p_symbol) < (*y.p_symbol)) return -1;
-    if (x.bondType < y.bondType)
+    if (x.p_symbol && y.p_symbol) {
+      if ((*x.p_symbol) < (*y.p_symbol)) {
+        return -1;
+      } else if ((*x.p_symbol) > (*y.p_symbol)) {
+        return 1;
+      }
+    }
+    if (x.bondType < y.bondType) {
       return -1;
     else if (x.bondType > y.bondType)
       return 1;
