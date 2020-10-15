@@ -336,8 +336,6 @@ std::vector<StereoInfo> findPotentialStereo(ROMol &mol, bool cleanIt,
       }
     } else {
       atomSymbols[aidx] = getAtomCompareSymbol(*atom);
-      (boost::format("%s%d") % atom->getSymbol() % atom->getFormalCharge())
-          .str();
     }
   }
 
@@ -354,12 +352,13 @@ std::vector<StereoInfo> findPotentialStereo(ROMol &mol, bool cleanIt,
   //  (set for all bonds)
   std::vector<unsigned int> possibleRingStereoBonds(mol.getNumBonds());
   if (flagPossible) {
+    boost::dynamic_bitset<> possibleAtomsInRing(mol.getNumAtoms());
     for (unsigned int ridx = 0; ridx < mol.getRingInfo()->atomRings().size();
          ++ridx) {
       const auto &aring = mol.getRingInfo()->atomRings()[ridx];
       unsigned int nHere = 0;
       auto sz = aring.size();
-      int possibleNbrIdx = -1;
+      possibleAtomsInRing.reset();
       for (unsigned int ai = 0; ai < aring.size(); ++ai) {
         auto aidx = aring[ai];
         if (!(aring.size() % 2)) {
@@ -369,6 +368,8 @@ std::vector<StereoInfo> findPotentialStereo(ROMol &mol, bool cleanIt,
           if ((possibleAtoms[aidx] || knownAtoms[aidx]) &&
               (possibleAtoms[oppositeidx] || knownAtoms[oppositeidx])) {
             ++nHere;
+            possibleAtomsInRing.set(aidx);
+            continue;
           }
         }
         // if the atom is in more than one bond, see if there's
@@ -378,11 +379,10 @@ std::vector<StereoInfo> findPotentialStereo(ROMol &mol, bool cleanIt,
           if (possibleAtoms[otheridx] || knownAtoms[otheridx]) {
             auto bnd = mol.getBondBetweenAtoms(aidx, otheridx);
             CHECK_INVARIANT(bnd, "expected ring bond not found");
-            std::cerr << "  ringbondconsider " << aidx << "-" << otheridx
-                      << std::endl;
             if (mol.getRingInfo()->numBondRings(bnd->getIdx()) > 1) {
-              std::cerr << "    yes" << std::endl;
-              ++nHere;
+              nHere += 2;
+              possibleAtomsInRing.set(aidx);
+              possibleAtomsInRing.set(otheridx);
             }
           }
         }
@@ -390,17 +390,11 @@ std::vector<StereoInfo> findPotentialStereo(ROMol &mol, bool cleanIt,
       // if the ring contains at least two atoms with possible stereo,
       // then each of those possibleAtoms should be included for ring stereo
       if (nHere > 1) {
-        if (!(aring.size() % 2)) {
-          for (unsigned int ai = 0; ai < aring.size(); ++ai) {
-            auto aidx = aring[ai];
-            auto oppositeidx = aring[(ai + sz / 2) % sz];
-            if (possibleAtoms[aidx] && !possibleRingStereoAtoms[aidx] &&
-                (possibleAtoms[oppositeidx] || knownAtoms[oppositeidx])) {
-              ++possibleRingStereoAtoms[aidx];
-            }
+        for (auto aidx : aring) {
+          if (possibleAtomsInRing[aidx]) {
+            ++possibleRingStereoAtoms[aidx];
           }
         }
-
         for (auto bidx : mol.getRingInfo()->bondRings()[ridx]) {
           ++possibleRingStereoBonds[bidx];
         }
@@ -480,12 +474,10 @@ std::vector<StereoInfo> findPotentialStereo(ROMol &mol, bool cleanIt,
               auto bnd = mol.getBondBetweenAtoms(aidx, nbrIdx);
               if (!bnd || !possibleRingStereoBonds[bnd->getIdx()] ||
                   possibleRingStereoBonds[bnd->getIdx()] > 1) {
-                std::cerr << "  removal 1 " << aidx << std::endl;
                 haveADupe = true;
                 break;
               }
             } else {
-              std::cerr << "  removal 2 " << aidx << std::endl;
               haveADupe = true;
               break;
             }
@@ -494,7 +486,6 @@ std::vector<StereoInfo> findPotentialStereo(ROMol &mol, bool cleanIt,
           }
         }
         if (!haveADupe) {
-          std::cerr << "    keep: " << aidx << std::endl;
           res.push_back(std::move(sinfo));
         } else {
           removedStereo = true;

@@ -1063,16 +1063,13 @@ TEST_CASE("ring stereo finding is overly aggressive", "[chirality][bug]") {
         Chirality::findPotentialStereo(*mol, cleanIt, flagPossible);
     CHECK(stereoInfo.size() == 2);
   }
-
   SECTION("fused rings 1") {
     auto mol = "C1CCC2CCCCC2C1"_smiles;
     REQUIRE(mol);
     bool cleanIt = true;
     bool flagPossible = true;
-    std::cerr << "----------------" << std::endl;
     auto stereoInfo =
         Chirality::findPotentialStereo(*mol, cleanIt, flagPossible);
-    std::cerr << "----------------" << std::endl;
     CHECK(stereoInfo.size() == 2);
   }
 
@@ -1081,10 +1078,8 @@ TEST_CASE("ring stereo finding is overly aggressive", "[chirality][bug]") {
     REQUIRE(mol);
     bool cleanIt = true;
     bool flagPossible = true;
-    std::cerr << "----------------" << std::endl;
     auto stereoInfo =
         Chirality::findPotentialStereo(*mol, cleanIt, flagPossible);
-    std::cerr << "----------------" << std::endl;
     CHECK(stereoInfo.size() == 2);
   }
 
