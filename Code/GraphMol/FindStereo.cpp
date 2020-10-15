@@ -87,17 +87,17 @@ StereoInfo getStereoInfo(const Bond *bond) {
         throw ValueErrorException("only can support 2 stereo neighbors");
       }
       bool firstAtBegin;
-      if (satoms[0] == sinfo.controllingAtoms[0]) {
+      if (satoms[0] == static_cast<int>(sinfo.controllingAtoms[0])) {
         firstAtBegin = true;
-      } else if (satoms[0] == sinfo.controllingAtoms[1]) {
+      } else if (satoms[0] == static_cast<int>(sinfo.controllingAtoms[1])) {
         firstAtBegin = false;
       } else {
         throw ValueErrorException("controlling atom mismatch at begin");
       }
       bool firstAtEnd;
-      if (satoms[1] == sinfo.controllingAtoms[2]) {
+      if (satoms[1] == static_cast<int>(sinfo.controllingAtoms[2])) {
         firstAtEnd = true;
-      } else if (satoms[1] == sinfo.controllingAtoms[3]) {
+      } else if (satoms[1] == static_cast<int>(sinfo.controllingAtoms[3])) {
         firstAtEnd = false;
       } else {
         throw ValueErrorException("controlling atom mismatch at end");
