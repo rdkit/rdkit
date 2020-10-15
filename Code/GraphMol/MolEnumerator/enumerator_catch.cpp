@@ -140,7 +140,7 @@ M  END
 
     std::vector<std::string> tsmis = {"COc1ccncc1", "COc1ccccn1", "COc1cccnc1"};
     std::vector<std::string> smis;
-    for (const auto molp : bundle.getMols()) {
+    for (const auto &molp : bundle.getMols()) {
       smis.push_back(MolToSmiles(*molp));
     }
     CHECK(smis == tsmis);
@@ -154,7 +154,7 @@ M  END
     std::vector<std::string> tsmis = {"Fc1cnccc1Cl", "Fc1cncc(Cl)c1",
                                       "Fc1cc(Cl)ccn1", "Fc1ccc(Cl)cn1"};
     std::vector<std::string> smis;
-    for (const auto molp : bundle.getMols()) {
+    for (const auto &molp : bundle.getMols()) {
       smis.push_back(MolToSmiles(*molp));
     }
     CHECK(smis == tsmis);
@@ -394,7 +394,7 @@ M  END)CTAB"_ctab;
                                       "OC1CCCCC(O)C1O", "OC1CCCCC(O)C(O)C1O"};
     CHECK(bundle.size() == tsmis.size());
     std::vector<std::string> smis;
-    for (const auto molp : bundle.getMols()) {
+    for (const auto &molp : bundle.getMols()) {
       smis.push_back(MolToSmiles(*molp));
     }
     CHECK(smis == tsmis);

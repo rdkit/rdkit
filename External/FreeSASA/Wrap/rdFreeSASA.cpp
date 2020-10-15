@@ -56,9 +56,9 @@ python::object classifyAtomsHelper(RDKit::ROMol &mol,
     for (double &i : radii) {
       l.append(i);
     }
-    return l;
+    return std::move(l);
   }
-  return l;
+  return std::move(l);
 }
 
 double calcSASAHelper(const RDKit::ROMol &mol, python::object radii,

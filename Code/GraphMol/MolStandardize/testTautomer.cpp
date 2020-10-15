@@ -412,7 +412,7 @@ void testEnumeratorParams() {
     params.tautomerRemoveSp3Stereo = true;
     TautomerEnumerator te(params);
     TautomerEnumeratorResult res = te.enumerate(*sAla);
-    for (const auto taut : res) {
+    for (const auto &taut : res) {
       TEST_ASSERT(taut->getAtomWithIdx(1)->getChiralTag() ==
                   Atom::CHI_UNSPECIFIED);
       TEST_ASSERT(
@@ -429,7 +429,7 @@ void testEnumeratorParams() {
     params.tautomerRemoveSp3Stereo = false;
     TautomerEnumerator te(params);
     TautomerEnumeratorResult res = te.enumerate(*sAla);
-    for (const auto taut : res) {
+    for (const auto &taut : res) {
       const auto tautAtom = taut->getAtomWithIdx(1);
       if (tautAtom->getHybridization() == Atom::SP3) {
         TEST_ASSERT(tautAtom->hasProp(common_properties::_CIPCode));
@@ -451,7 +451,7 @@ void testEnumeratorParams() {
     params.tautomerRemoveBondStereo = true;
     TautomerEnumerator te(params);
     TautomerEnumeratorResult res = te.enumerate(*eEnol);
-    for (const auto taut : res) {
+    for (const auto &taut : res) {
       TEST_ASSERT(taut->getBondWithIdx(1)->getStereo() == Bond::STEREONONE);
     }
   }
@@ -461,7 +461,7 @@ void testEnumeratorParams() {
     params.tautomerRemoveBondStereo = false;
     TautomerEnumerator te(params);
     TautomerEnumeratorResult res = te.enumerate(*eEnol);
-    for (const auto taut : res) {
+    for (const auto &taut : res) {
       if (taut->getBondWithIdx(1)->getBondType() == Bond::DOUBLE) {
         TEST_ASSERT(taut->getBondWithIdx(1)->getStereo() == Bond::STEREOE);
       }
@@ -476,7 +476,7 @@ void testEnumeratorParams() {
     params.tautomerRemoveBondStereo = true;
     TautomerEnumerator te(params);
     TautomerEnumeratorResult res = te.enumerate(*zEnol);
-    for (const auto taut : res) {
+    for (const auto &taut : res) {
       TEST_ASSERT(taut->getBondWithIdx(1)->getStereo() == Bond::STEREONONE);
     }
   }
@@ -486,7 +486,7 @@ void testEnumeratorParams() {
     params.tautomerRemoveBondStereo = false;
     TautomerEnumerator te(params);
     TautomerEnumeratorResult res = te.enumerate(*zEnol);
-    for (const auto taut : res) {
+    for (const auto &taut : res) {
       if (taut->getBondWithIdx(1)->getBondType() == Bond::DOUBLE) {
         TEST_ASSERT(taut->getBondWithIdx(1)->getStereo() == Bond::STEREOZ);
       }
