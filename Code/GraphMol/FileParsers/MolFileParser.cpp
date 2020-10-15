@@ -810,7 +810,6 @@ void ParseMarvinSmartsLine(RWMol *mol, const std::string &text,
                            unsigned int line) {
   const unsigned int atomNumStart = 10;
   const unsigned int smartsStart = 15;
-  //const unsigned int SMA = 7;
   // M  MRV SMA   1 [*;A]
   // 01234567890123456789
   //           1111111111
