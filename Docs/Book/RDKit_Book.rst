@@ -518,7 +518,8 @@ The definitions of potential stereogenic atoms or bonds is inspired by the InChI
 Stereogenic bonds
 ^^^^^^^^^^^^^^^^^
 
-A double bond is potentially stereogenic if both atoms have at least two heavy atom neighbors.
+A double bond is potentially stereogenic if both atoms have at least two heavy
+atom neighbors and it's not present in a ring with less than eight atoms.
 
 .. |psdb1| image:: images/potential_stereo_double_bond1.png
    :align: middle

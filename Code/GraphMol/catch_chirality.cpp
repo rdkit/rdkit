@@ -160,6 +160,26 @@ TEST_CASE("isBondPotentialStereoBond", "[unittest]") {
           mol->getBondWithIdx(3)));
     }
   }
+  SECTION("ring size") {
+    {
+      auto m = "C1=CCCCC1"_smiles;
+      REQUIRE(m);
+      CHECK(
+          !Chirality::detail::isBondPotentialStereoBond(m->getBondWithIdx(0)));
+    }
+    {
+      auto m = "C1=CCCCCC1"_smiles;
+      REQUIRE(m);
+      CHECK(
+          !Chirality::detail::isBondPotentialStereoBond(m->getBondWithIdx(0)));
+    }
+    {
+      auto m = "C12=C(CCCC2)CCCCCC1"_smiles;
+      REQUIRE(m);
+      CHECK(
+          !Chirality::detail::isBondPotentialStereoBond(m->getBondWithIdx(0)));
+    }
+  }
 }
 
 TEST_CASE("atom StereoInfo", "[unittest]") {

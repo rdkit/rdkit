@@ -189,6 +189,8 @@ bool isBondPotentialStereoBond(const Bond *bond) {
   // each of the beginning and end neighbors must have at least 2 heavy atom
   // neighbors i.e. C/C=N/[H] is not a possible stereo bond but no more than 3
   // total neighbors.
+  // if it's a ring bond, the smallest ring it's in must have at least 8 members
+  //  (this is common with InChI)
   const auto beginAtom = bond->getBeginAtom();
   auto begHeavyDegree =
       beginAtom->getTotalDegree() - beginAtom->getTotalNumHs(true);
@@ -197,6 +199,14 @@ bool isBondPotentialStereoBond(const Bond *bond) {
       endAtom->getTotalDegree() - endAtom->getTotalNumHs(true);
   if (begHeavyDegree > 1 && beginAtom->getDegree() < 4 && endHeavyDegree > 1 &&
       endAtom->getDegree() < 4) {
+    // check rings
+    const auto ri = bond->getOwningMol().getRingInfo();
+    for (const auto &bring : ri->bondRings()) {
+      if (bring.size() < 8 && std::find(bring.begin(), bring.end(),
+                                        bond->getIdx()) != bring.end()) {
+        return false;
+      }
+    }
     return true;
   } else {
     return false;
