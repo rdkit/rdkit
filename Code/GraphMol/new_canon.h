@@ -24,7 +24,7 @@
 #include <cstring>
 #include <vector>
 
-//#define VERBOSE_CANON 1
+// #define VERBOSE_CANON 1
 
 namespace RDKit {
 namespace Canon {
@@ -47,17 +47,27 @@ struct RDKIT_GRAPHMOL_EXPORT bondholder {
              unsigned int nsc)
       : bondType(bt), bondStereo(bs), nbrSymClass(nsc), nbrIdx(ni){};
   bool operator<(const bondholder &o) const {
-    if (p_symbol && o.p_symbol) return (*p_symbol) < (*o.p_symbol);
-    if (bondType != o.bondType) return bondType < o.bondType;
-    if (bondStereo != o.bondStereo) return bondStereo < o.bondStereo;
+    if (p_symbol && o.p_symbol) {
+      return (*p_symbol) < (*o.p_symbol);
+    }
+    if (bondType != o.bondType) {
+      return bondType < o.bondType;
+    }
+    if (bondStereo != o.bondStereo) {
+      return bondStereo < o.bondStereo;
+    }
     return nbrSymClass < o.nbrSymClass;
   }
   static bool greater(const bondholder &lhs, const bondholder &rhs) {
-    if (lhs.p_symbol && rhs.p_symbol && (*lhs.p_symbol) != (*rhs.p_symbol))
+    if (lhs.p_symbol && rhs.p_symbol && (*lhs.p_symbol) != (*rhs.p_symbol)) {
       return (*lhs.p_symbol) > (*rhs.p_symbol);
-    if (lhs.bondType != rhs.bondType) return lhs.bondType > rhs.bondType;
-    if (lhs.bondStereo != rhs.bondStereo)
+    }
+    if (lhs.bondType != rhs.bondType) {
+      return lhs.bondType > rhs.bondType;
+    }
+    if (lhs.bondStereo != rhs.bondStereo) {
       return lhs.bondStereo > rhs.bondStereo;
+    }
     return lhs.nbrSymClass > rhs.nbrSymClass;
   }
 
@@ -72,16 +82,17 @@ struct RDKIT_GRAPHMOL_EXPORT bondholder {
     }
     if (x.bondType < y.bondType) {
       return -1;
-    else if (x.bondType > y.bondType)
+    } else if (x.bondType > y.bondType) {
       return 1;
-    if (x.bondStereo < y.bondStereo)
+    }
+    if (x.bondStereo < y.bondStereo) {
       return -1;
-    else if (x.bondStereo > y.bondStereo)
+    } else if (x.bondStereo > y.bondStereo) {
       return 1;
+    }
     return x.nbrSymClass / div - y.nbrSymClass / div;
   }
 };
-
 class RDKIT_GRAPHMOL_EXPORT canon_atom {
  public:
   const Atom *atom{nullptr};
@@ -97,9 +108,7 @@ class RDKIT_GRAPHMOL_EXPORT canon_atom {
   std::vector<int> revistedNeighbors;
   std::vector<bondholder> bonds;
 
-  canon_atom()
-
-      {};
+  canon_atom(){};
 
   ~canon_atom() { free(nbrIds); }
 };
@@ -258,11 +267,11 @@ class RDKIT_GRAPHMOL_EXPORT AtomCompareFunctor {
     // always start with the current class:
     ivi = dp_atoms[i].index;
     ivj = dp_atoms[j].index;
-    if (ivi < ivj)
+    if (ivi < ivj) {
       return -1;
-    else if (ivi > ivj)
+    } else if (ivi > ivj) {
       return 1;
-
+    }
     // use the atom-mapping numbers if they were assigned
     /* boost::any_cast FILED here:
             std::string molAtomMapNumber_i="";
@@ -274,62 +283,64 @@ class RDKIT_GRAPHMOL_EXPORT AtomCompareFunctor {
                                        molAtomMapNumber_i);
     dp_atoms[j].atom->getPropIfPresent(common_properties::molAtomMapNumber,
                                        molAtomMapNumber_j);
-    if (molAtomMapNumber_i < molAtomMapNumber_j)
+    if (molAtomMapNumber_i < molAtomMapNumber_j) {
       return -1;
-    else if (molAtomMapNumber_i > molAtomMapNumber_j)
+    } else if (molAtomMapNumber_i > molAtomMapNumber_j) {
       return 1;
-
+    }
     // start by comparing degree
     ivi = dp_atoms[i].degree;
     ivj = dp_atoms[j].degree;
-    if (ivi < ivj)
+    if (ivi < ivj) {
       return -1;
-    else if (ivi > ivj)
+    } else if (ivi > ivj) {
       return 1;
-
+    }
     if (dp_atoms[i].p_symbol && dp_atoms[j].p_symbol) {
-      if (*(dp_atoms[i].p_symbol) < *(dp_atoms[j].p_symbol))
+      if (*(dp_atoms[i].p_symbol) < *(dp_atoms[j].p_symbol)) {
         return -1;
-      else if (*(dp_atoms[i].p_symbol) > *(dp_atoms[j].p_symbol))
+      } else if (*(dp_atoms[i].p_symbol) > *(dp_atoms[j].p_symbol)) {
         return 1;
-      else
+      } else {
         return 0;
+      }
     }
 
     // move onto atomic number
     ivi = dp_atoms[i].atom->getAtomicNum();
     ivj = dp_atoms[j].atom->getAtomicNum();
-    if (ivi < ivj)
+    if (ivi < ivj) {
       return -1;
-    else if (ivi > ivj)
+    } else if (ivi > ivj) {
       return 1;
-
+    }
     // isotopes if we're using them
     if (df_useIsotopes) {
       ivi = dp_atoms[i].atom->getIsotope();
       ivj = dp_atoms[j].atom->getIsotope();
-      if (ivi < ivj)
+      if (ivi < ivj) {
         return -1;
-      else if (ivi > ivj)
+      } else if (ivi > ivj) {
         return 1;
+      }
     }
 
     // nHs
     ivi = dp_atoms[i].totalNumHs;
     ivj = dp_atoms[j].totalNumHs;
-    if (ivi < ivj)
+    if (ivi < ivj) {
       return -1;
-    else if (ivi > ivj)
+    } else if (ivi > ivj) {
       return 1;
-
+    }
     // charge
     ivi = dp_atoms[i].atom->getFormalCharge();
     ivj = dp_atoms[j].atom->getFormalCharge();
-    if (ivi < ivj)
+    if (ivi < ivj) {
       return -1;
-    else if (ivi > ivj)
+    } else if (ivi > ivj) {
       return 1;
-
+    }
     // chirality if we're using it
     if (df_useChirality) {
       // first atom stereochem:
@@ -344,29 +355,30 @@ class RDKIT_GRAPHMOL_EXPORT AtomCompareFunctor {
                                              cipCode)) {
         ivj = cipCode == "R" ? 2 : 1;
       }
-      if (ivi < ivj)
+      if (ivi < ivj) {
         return -1;
-      else if (ivi > ivj)
+      } else if (ivi > ivj) {
         return 1;
-
+      }
       // can't actually use values here, because they are arbitrary
       ivi = dp_atoms[i].atom->getChiralTag() != 0;
       ivj = dp_atoms[j].atom->getChiralTag() != 0;
-      if (ivi < ivj)
+      if (ivi < ivj) {
         return -1;
-      else if (ivi > ivj)
+      } else if (ivi > ivj) {
         return 1;
+      }
     }
 
     if (df_useChiralityRings) {
       // ring stereochemistry
       ivi = getAtomRingNbrCode(i);
       ivj = getAtomRingNbrCode(j);
-      if (ivi < ivj)
+      if (ivi < ivj) {
         return -1;
-      else if (ivi > ivj)
+      } else if (ivi > ivj) {
         return 1;
-      // bond stereo is taken care of in the neighborhood comparison
+      }  // bond stereo is taken care of in the neighborhood comparison
     }
     return 0;
   }
@@ -402,7 +414,6 @@ class RDKIT_GRAPHMOL_EXPORT AtomCompareFunctor {
     if (dp_atomsInPlay && !((*dp_atomsInPlay)[i] || (*dp_atomsInPlay)[j])) {
       return 0;
     }
-
     int v = basecomp(i, j);
     if (v) {
       return v;
@@ -421,7 +432,9 @@ class RDKIT_GRAPHMOL_EXPORT AtomCompareFunctor {
            ++ii) {
         int cmp =
             bondholder::compare(dp_atoms[i].bonds[ii], dp_atoms[j].bonds[ii]);
-        if (cmp) return cmp;
+        if (cmp) {
+          return cmp;
+        }
       }
 
       if (dp_atoms[i].bonds.size() < dp_atoms[j].bonds.size()) {
