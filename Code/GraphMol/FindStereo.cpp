@@ -289,6 +289,14 @@ std::string getBondSymbol(const Bond *bond) {
   return res;
 }
 
+namespace {
+std::string getAtomCompareSymbol(const Atom &atom) {
+  auto fmt = boost::format("%d%sH%d%d") % atom.getIsotope() % atom.getSymbol() %
+             atom.getTotalNumHs() % atom.getFormalCharge();
+  return fmt.str();
+}
+}  // namespace
+
 std::vector<StereoInfo> findPotentialStereo(ROMol &mol, bool cleanIt,
                                             bool flagPossible) {
   std::map<int, Atom::ChiralType> ochiralTypes;
@@ -320,17 +328,16 @@ std::vector<StereoInfo> findPotentialStereo(ROMol &mol, bool cleanIt,
         // set "fake stereo"
         ochiralTypes[atom->getIdx()] = atom->getChiralTag();
         atom->setChiralTag(Atom::CHI_TETRAHEDRAL_CW);
-        atomSymbols[aidx] =
-            (boost::format("%s-%d") % atom->getSymbol() % atom->getIdx()).str();
-      } else {
-        atomSymbols[aidx] = (boost::format("%s%d") % atom->getSymbol() %
-                             atom->getFormalCharge())
+        atomSymbols[aidx] = (boost::format("%d%s-%d") % atom->getIsotope() %
+                             atom->getSymbol() % atom->getIdx())
                                 .str();
+      } else {
+        atomSymbols[aidx] = getAtomCompareSymbol(*atom);
       }
     } else {
-      atomSymbols[aidx] =
-          (boost::format("%s%d") % atom->getSymbol() % atom->getFormalCharge())
-              .str();
+      atomSymbols[aidx] = getAtomCompareSymbol(*atom);
+      (boost::format("%s%d") % atom->getSymbol() % atom->getFormalCharge())
+          .str();
     }
   }
 
