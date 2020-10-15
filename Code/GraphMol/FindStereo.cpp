@@ -336,10 +336,10 @@ std::vector<StereoInfo> findPotentialStereo(ROMol &mol, bool cleanIt,
           sinfo.specified != Chirality::StereoSpecified::Unspecified) {
         possibleAtoms.set(aidx);
         // set "fake stereo"
-        ochiralTypes[atom->getIdx()] = atom->getChiralTag();
+        ochiralTypes[aidx] = atom->getChiralTag();
         atom->setChiralTag(Atom::CHI_TETRAHEDRAL_CW);
-        atomSymbols[aidx] = (boost::format("%d%s-%d") % atom->getIsotope() %
-                             atom->getSymbol() % atom->getIdx())
+        atomSymbols[aidx] = (boost::format("%d%s_%d") % atom->getIsotope() %
+                             atom->getSymbol() % aidx)
                                 .str();
       } else {
         atomSymbols[aidx] = getAtomCompareSymbol(*atom);
@@ -442,7 +442,6 @@ std::vector<StereoInfo> findPotentialStereo(ROMol &mol, bool cleanIt,
       bondSymbols[bidx] = getBondSymbol(bond);
     }
   }
-
   std::vector<StereoInfo> res;
   while (possibleAtoms.count() || possibleBonds.count()) {
     res.clear();
@@ -463,6 +462,7 @@ std::vector<StereoInfo> findPotentialStereo(ROMol &mol, bool cleanIt,
     Canon::rankFragmentAtoms(mol, aranks, atomsInPlay, bondsInPlay,
                              &atomSymbols, &bondSymbols, breakTies,
                              includeChirality, includeIsotopes);
+
     for (const auto atom : mol.atoms()) {
       auto aidx = atom->getIdx();
       if (ochiralTypes.find(aidx) != ochiralTypes.end()) {
@@ -499,7 +499,7 @@ std::vector<StereoInfo> findPotentialStereo(ROMol &mol, bool cleanIt,
           res.push_back(std::move(sinfo));
         } else {
           removedStereo = true;
-          atomSymbols[aidx] = atom->getSymbol();
+          atomSymbols[aidx] = getAtomCompareSymbol(*atom);
           possibleAtoms[aidx] = 0;
           if (cleanIt &&
               sinfo.specified != Chirality::StereoSpecified::Unspecified) {

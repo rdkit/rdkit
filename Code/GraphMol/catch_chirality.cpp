@@ -1131,4 +1131,88 @@ TEST_CASE("ring stereo finding is overly aggressive", "[chirality][bug]") {
         Chirality::findPotentialStereo(*mol, cleanIt, flagPossible);
     CHECK(stereoInfo.size() == 0);
   }
+  SECTION("adamantyl") {
+    // the fact that we find four possible stereocenters here isn't nice, but
+    // it's not technically wrong and is more or less unavoidable with the
+    // current algorithm
+    auto mol = "CC12CC3CC(CC(C3)C1)C2"_smiles;
+    REQUIRE(mol);
+    bool cleanIt = true;
+    bool flagPossible = true;
+    auto stereoInfo =
+        Chirality::findPotentialStereo(*mol, cleanIt, flagPossible);
+    CHECK(stereoInfo.size() == 4);
+  }
+  SECTION("bug 1a") {
+    // example that came up during testing
+    auto mol = "C(=O)C(C(C)N2C=C2)C(=O)"_smiles;
+    REQUIRE(mol);
+    bool cleanIt = true;
+    bool flagPossible = true;
+    auto stereoInfo =
+        Chirality::findPotentialStereo(*mol, cleanIt, flagPossible);
+    REQUIRE(stereoInfo.size() == 1);
+    CHECK(stereoInfo[0].centeredOn == 3);
+  }
+  SECTION("bug 1b") {
+    // example that came up during testing
+    auto mol = "C(=O)C(C(CC)c2ccc(Cl)cc2)C(=O)"_smiles;
+    REQUIRE(mol);
+    bool cleanIt = true;
+    bool flagPossible = true;
+    auto stereoInfo =
+        Chirality::findPotentialStereo(*mol, cleanIt, flagPossible);
+    REQUIRE(stereoInfo.size() == 1);
+    CHECK(stereoInfo[0].centeredOn == 3);
+  }
+
+  SECTION("bug 1c") {
+    // example that came up during testing
+    auto mol = "O=CC(C=O)C(C)n2cccc2"_smiles;
+    REQUIRE(mol);
+    bool cleanIt = true;
+    bool flagPossible = true;
+    auto stereoInfo =
+        Chirality::findPotentialStereo(*mol, cleanIt, flagPossible);
+    REQUIRE(stereoInfo.size() == 1);
+    CHECK(stereoInfo[0].centeredOn == 5);
+  }
+
+  SECTION("bug 1c") {
+    // example that came up during testing
+    auto mol = "C(=O)C(C(C)n2cccc2)C(=O)"_smiles;
+    REQUIRE(mol);
+    bool cleanIt = true;
+    bool flagPossible = true;
+    auto stereoInfo =
+        Chirality::findPotentialStereo(*mol, cleanIt, flagPossible);
+    REQUIRE(stereoInfo.size() == 1);
+    CHECK(stereoInfo[0].centeredOn == 3);
+  }
+
+  SECTION("bug 1d") {
+    // example that came up during testing
+    auto mol = "C(O)C(C(C)n2cccc2)C(O)"_smiles;
+    REQUIRE(mol);
+    bool cleanIt = true;
+    bool flagPossible = true;
+    auto stereoInfo =
+        Chirality::findPotentialStereo(*mol, cleanIt, flagPossible);
+    REQUIRE(stereoInfo.size() == 1);
+    CHECK(stereoInfo[0].centeredOn == 3);
+  }
+  // known problem that came up during testing. This seems to be something
+  // in the canonical ranking code, not in FindStereo; capturing this
+  // here just so it doesn't get lost
+  SECTION("just a bug") {
+    // example that came up during testing
+
+    auto mol = "CC1=CN(C2OC(CNC(=O)C3c4ccccc4Sc4ccccc43)CC2)C(=O)NC1=O"_smiles;
+    REQUIRE(mol);
+    bool cleanIt = true;
+    bool flagPossible = true;
+    auto stereoInfo =
+        Chirality::findPotentialStereo(*mol, cleanIt, flagPossible);
+    CHECK(stereoInfo.size() == 2);
+  }
 }
