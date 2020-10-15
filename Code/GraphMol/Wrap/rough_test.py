@@ -2229,7 +2229,6 @@ CAS<~>
       self.assertTrue(Chem.MolToSmiles(rwmol.GetMol()) == 'CCCON')
       rwmol.AddBond(4, 1, order=Chem.BondType.SINGLE)
       self.assertTrue(Chem.MolToSmiles(rwmol.GetMol()) == 'C1CNOC1')
-
       rwmol.RemoveAtom(3)
       self.assertTrue(Chem.MolToSmiles(rwmol.GetMol()) == 'CCNO')
 
@@ -2258,8 +2257,7 @@ CAS<~>
       # removing non-existent atoms:
       m = Chem.MolFromSmiles('c1ccccc1')
       em = Chem.EditableMol(m)
-      self.assertRaises(RuntimeError, lambda: em.RemoveAtom(12))
-
+      self.assertRaises(IndexError, lambda: em.RemoveAtom(12))
       # confirm that an RWMol can be constructed without arguments
       m = Chem.RWMol()
 
@@ -2443,7 +2441,9 @@ CAS<~>
 
     mol = Chem.MolFromSmiles("CO")
     em = Chem.EditableMol(mol)
+    print("remove bond 0,1")
     em.RemoveBond(0, 1)
+    print("done")
     nm = em.GetMol()
     fs = Chem.GetMolFrags(nm, asMols=True)
     self.assertEqual([x.GetNumAtoms(onlyExplicit=False) for x in fs], [5, 3])
@@ -4417,15 +4417,17 @@ $$$$
     m = Chem.MolFromSmiles("C")
     try:
       m.GetAtomWithIdx(3)
-    except RuntimeError as e:
+    except IndexError as e:
       import platform
       details = str(e)
-      if platform.system() == 'Windows':
-        details = details.replace('\\', '/')
-      self.assertTrue("Code/GraphMol/ROMol.cpp".lower() in details.lower())
-      self.assertTrue("Failed Expression: 3 < 1" in details)
-      self.assertTrue("RDKIT:" in details)
-      self.assertTrue(__version__ in details)
+      # not the best error message in the world...
+      self.assertEqual("vector", details)
+      #if platform.system() == 'Windows':
+      #  details = details.replace('\\', '/')
+      #self.assertTrue("Code/GraphMol/ROMol.cpp".lower() in details.lower())
+      #self.assertTrue("Failed Expression: 3 < 1" in details)
+      #self.assertTrue("RDKIT:" in details)
+      #self.assertTrue(__version__ in details)
 
   # this test should probably always be last since it wraps
   #  the logging stream

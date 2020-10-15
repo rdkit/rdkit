@@ -231,11 +231,11 @@ class RDKIT_GRAPHMOL_EXPORT ROMol : public RDProps {
   //! returns our number of heavy atoms (atomic number > 1)
   unsigned int getNumHeavyAtoms() const;
   //! returns a pointer to a particular Atom
-    inline Atom *getAtomWithIdx(unsigned int idx) { return _atoms[idx]; }
-    inline Atom *getAtomWithIdx(const Atom * atm )  { return _atoms[atm->getIdx()]; } // hacky hacky for now
+  inline Atom *getAtomWithIdx(unsigned int idx) { return _atoms.at(idx); }
+  inline Atom *getAtomWithIdx(const Atom * atm )  { return _atoms[atm->getIdx()]; } //hack hack for now (vertex_descriptor}
   //! \overload
-    inline const Atom *getAtomWithIdx(unsigned int idx) const { return _atoms[idx]; }
-    inline const Atom *getAtomWithIdx(const Atom * atm ) const { return atm; }
+  inline const Atom *getAtomWithIdx(unsigned int idx) const { return _atoms.at(idx); }
+  inline const Atom *getAtomWithIdx(const Atom * atm ) const { return atm; } // hacky hack
   //! \overload
   template <class U, class = typename std::enable_if<std::is_integral<U>::value>::type>
   Atom *getAtomWithIdx(const U idx) {
