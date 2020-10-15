@@ -2009,6 +2009,8 @@ ARGUMENTS:\n\
                  python::arg("tautomerFingerprints") = false),
                 docString.c_str(),
                 python::return_value_policy<python::manage_new_object>());
+    python::scope().attr("_PatternFingerprint_version") =
+        RDKit::PatternFingerprintMolVersion;
 
     docString =
         "Set the wedging on single bonds in a molecule.\n\
