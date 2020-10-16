@@ -514,10 +514,17 @@ $$$$
 
     # test pre-labelled with MDL R-group labels, autodetect
     params.labels = RGroupLabels.AutoDetect
+    params.alignment = RGroupCoreAlignment.MCS
     multicorergd_test(cores, params, expected_rows_autodetect,
                       expected_items_autodetect)
     # test pre-labelled with MDL R-group labels, no autodetect
     params.labels = RGroupLabels.MDLRGroupLabels | RGroupLabels.RelabelDuplicateLabels
+    params.alignment = RGroupCoreAlignment.MCS
+    multicorergd_test(cores, params, expected_rows_no_autodetect,
+                      expected_items_no_autodetect)
+    # test pre-labelled with MDL R-group labels, autodetect, no MCS alignment
+    params.labels = RGroupLabels.AutoDetect
+    params.alignment = RGroupCoreAlignment.NoAlignment
     multicorergd_test(cores, params, expected_rows_no_autodetect,
                       expected_items_no_autodetect)
 
@@ -529,10 +536,17 @@ $$$$
           a.ClearProp("_MolFileRLabel")
     # test pre-labelled with isotopic labels, autodetect
     params.labels = RGroupLabels.AutoDetect
+    params.alignment = RGroupCoreAlignment.MCS
     multicorergd_test(cores, params, expected_rows_autodetect,
                       expected_items_autodetect)
     # test pre-labelled with isotopic labels, no autodetect
     params.labels = RGroupLabels.IsotopeLabels | RGroupLabels.RelabelDuplicateLabels
+    params.alignment = RGroupCoreAlignment.MCS
+    multicorergd_test(cores, params, expected_rows_no_autodetect,
+                      expected_items_no_autodetect)
+    # test pre-labelled with isotopic labels, autodetect, no MCS alignment
+    params.labels = RGroupLabels.AutoDetect
+    params.alignment = RGroupCoreAlignment.NoAlignment
     multicorergd_test(cores, params, expected_rows_no_autodetect,
                       expected_items_no_autodetect)
 
@@ -544,10 +558,17 @@ $$$$
           a.SetIsotope(0)
     # test pre-labelled with atom map labels, autodetect
     params.labels = RGroupLabels.AutoDetect
+    params.alignment = RGroupCoreAlignment.MCS
     multicorergd_test(cores, params, expected_rows_autodetect,
                       expected_items_autodetect)
     # test pre-labelled with atom map labels, no autodetect
     params.labels = RGroupLabels.AtomMapLabels | RGroupLabels.RelabelDuplicateLabels
+    params.alignment = RGroupCoreAlignment.MCS
+    multicorergd_test(cores, params, expected_rows_no_autodetect,
+                      expected_items_no_autodetect)
+    # test pre-labelled with atom map labels, autodetect, no MCS alignment
+    params.labels = RGroupLabels.AutoDetect
+    params.alignment = RGroupCoreAlignment.NoAlignment
     multicorergd_test(cores, params, expected_rows_no_autodetect,
                       expected_items_no_autodetect)
 
@@ -568,22 +589,16 @@ $$$$
       "R1": ["CN[*:1]", "c(:[*:1]):[*:1]"],
       "R2": ["CC[*:2]", "Br[*:2]"]}
     params.labels = RGroupLabels.AutoDetect
+    params.alignment = RGroupCoreAlignment.MCS
     multicorergd_test(cores, params, expected_rows_autodetect,
                       expected_items_autodetect)
     # test pre-labelled with dummy atom labels, no autodetect
     # in this case there is no difference from autodetect as the RGD code
     # cannot tell the difference between query atoms and dummy R-groups
     params.labels = RGroupLabels.DummyAtomLabels | RGroupLabels.RelabelDuplicateLabels
+    params.alignment = RGroupCoreAlignment.MCS
     multicorergd_test(cores, params, expected_rows_autodetect,
                       expected_items_autodetect)
-
-  def test_none_syntax_error(self):
-    with self.assertRaises(SyntaxError):
-      eval("RGroupCoreAlignment.None")
-    res = getattr(RGroupCoreAlignment, "None")
-    self.assertTrue(isinstance(res, RGroupCoreAlignment))
-    res = eval("RGroupCoreAlignment.None_")
-    self.assertTrue(isinstance(res, RGroupCoreAlignment))
 
 if __name__ == '__main__':
   unittest.main()

@@ -40,6 +40,9 @@
   S(=O)([O-])[O-], S(=O)(=O)([O-])[O-], S(=O)(=O)([O-])OOS(=O)(=O)[O-]`.
   Previously not all of these inorganic acid counterions were consistently
   neutralized.
+- The `None` value in the `RGroupCoreAlignment` enum was renamed to `NoAlignment`
+  in both C++ and Python, in order to avoid issues when attempting to access it
+  from Python.
 
 ## Highlights
 - There's been another big improvement in the quality of molecule drawings: character

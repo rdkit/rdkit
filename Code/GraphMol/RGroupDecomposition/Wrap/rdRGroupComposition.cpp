@@ -201,8 +201,9 @@ struct rgroupdecomp_wrapper {
         .export_values();
 
     python::enum_<RDKit::RGroupCoreAlignment>("RGroupCoreAlignment")
-        .value("None", RDKit::None)
-        .value("None_", RDKit::None)
+        // DEPRECATED, remove the folowing line in release 2021.03
+        .value("None", RDKit::NoAlignment)
+        .value("NoAlignment", RDKit::NoAlignment)
         .value("MCS", RDKit::MCS)
         .export_values();
 

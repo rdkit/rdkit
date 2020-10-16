@@ -1382,7 +1382,7 @@ void testMultiCorePreLabelled() {
       i = 0;
       for (RGroupRows::const_iterator it = rows.begin(); it != rows.end();
            ++it, ++i) {
-        CHECK_RGROUP(it, expectedRows[i], false);
+        CHECK_RGROUP(it, expectedRows[i] /*, false*/);
       }
       RGroupColumns groups = decomp.getRGroupsAsColumns();
       i = 0;
@@ -1402,9 +1402,9 @@ void testMultiCorePreLabelled() {
             std::cerr << "ERROR: Expected " << expectedItems[i][j] << ", got "
                       << MolToSmiles(*item) << std::endl;
           }
-          ++j;
           */
-          TEST_ASSERT(expectedItems[i][j++] == MolToSmiles(*item));
+          TEST_ASSERT(expectedItems[i][j] == MolToSmiles(*item));
+          ++j;
         }
         ++i;
       }
@@ -1498,10 +1498,17 @@ $$$$
 
   // test pre-labelled with MDL R-group labels, autodetect
   params.labels = AutoDetect;
+  params.alignment = MCS;
   MultiCoreRGD::test(cores, params, expectedLabels, expectedRowsAutodetect,
                      expectedItemsAutodetect);
   // test pre-labelled with MDL R-group labels, no autodetect
   params.labels = MDLRGroupLabels | RelabelDuplicateLabels;
+  params.alignment = MCS;
+  MultiCoreRGD::test(cores, params, expectedLabels, expectedRowsNoAutodetect,
+                     expectedItemsNoAutodetect);
+  // test pre-labelled with MDL R-group labels, autodetect, no MCS alignment
+  params.labels = AutoDetect;
+  params.alignment = NoAlignment;
   MultiCoreRGD::test(cores, params, expectedLabels, expectedRowsNoAutodetect,
                      expectedItemsNoAutodetect);
 
@@ -1516,10 +1523,17 @@ $$$$
   }
   // test pre-labelled with isotopic labels, autodetect
   params.labels = AutoDetect;
+  params.alignment = MCS;
   MultiCoreRGD::test(cores, params, expectedLabels, expectedRowsAutodetect,
                      expectedItemsAutodetect);
   // test pre-labelled with isotopic labels, no autodetect
   params.labels = IsotopeLabels | RelabelDuplicateLabels;
+  params.alignment = MCS;
+  MultiCoreRGD::test(cores, params, expectedLabels, expectedRowsNoAutodetect,
+                     expectedItemsNoAutodetect);
+  // test pre-labelled with isotopic labels, autodetect, no MCS alignment
+  params.labels = AutoDetect;
+  params.alignment = NoAlignment;
   MultiCoreRGD::test(cores, params, expectedLabels, expectedRowsNoAutodetect,
                      expectedItemsNoAutodetect);
 
@@ -1534,10 +1548,17 @@ $$$$
   }
   // test pre-labelled with atom map labels, autodetect
   params.labels = AutoDetect;
+  params.alignment = MCS;
   MultiCoreRGD::test(cores, params, expectedLabels, expectedRowsAutodetect,
                      expectedItemsAutodetect);
   // test pre-labelled with atom map labels, no autodetect
   params.labels = AtomMapLabels | RelabelDuplicateLabels;
+  params.alignment = MCS;
+  MultiCoreRGD::test(cores, params, expectedLabels, expectedRowsNoAutodetect,
+                     expectedItemsNoAutodetect);
+  // test pre-labelled with atom map labels, autodetect, no MCS alignment
+  params.labels = AutoDetect;
+  params.alignment = NoAlignment;
   MultiCoreRGD::test(cores, params, expectedLabels, expectedRowsNoAutodetect,
                      expectedItemsNoAutodetect);
 
@@ -1559,12 +1580,14 @@ $$$$
       {"CN[*:1]", "c(:[*:1]):[*:1]"},
       {"CC[*:2]", "Br[*:2]"}};
   params.labels = AutoDetect;
+  params.alignment = MCS;
   MultiCoreRGD::test(cores, params, expectedLabels, expectedRowsAutodetect,
                      expectedItemsAutodetect);
   // test pre-labelled with dummy atom labels, no autodetect
   // in this case there is no difference from autodetect as the RGD code
   // cannot tell the difference between query atoms and dummy R-groups
   params.labels = DummyAtomLabels | RelabelDuplicateLabels;
+  params.alignment = MCS;
   MultiCoreRGD::test(cores, params, expectedLabels, expectedRowsAutodetect,
                      expectedItemsAutodetect);
 }
