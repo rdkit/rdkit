@@ -422,6 +422,16 @@ class TestCase(unittest.TestCase):
                                     (14, 'S')], [(1, 'S'), (12, 'S'),
                                                  (14, 'R')], [(1, 'S'), (12, 'S'), (14, 'S')]])
 
+  def testIssue3505(self):
+    m = Chem.MolFromSmiles('CCC(C)Br')
+    mols = list(AllChem.EnumerateStereoisomers(m))
+    self.assertEqual(len(mols), 2)
+    for mol in mols:
+      at = mol.GetAtomWithIdx(2)
+      self.assertIn(at.GetChiralTag(),
+                    [Chem.ChiralType.CHI_TETRAHEDRAL_CW, Chem.ChiralType.CHI_TETRAHEDRAL_CCW])
+      self.assertTrue(at.HasProp("_ChiralityPossible"))
+
 
 if __name__ == '__main__':
   unittest.main()
