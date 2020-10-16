@@ -153,12 +153,13 @@ TautomerEnumerator::TautomerEnumerator(const CleanupParameters &params)
       d_maxTransforms(params.maxTransforms),
       d_removeSp3Stereo(params.tautomerRemoveSp3Stereo),
       d_removeBondStereo(params.tautomerRemoveBondStereo),
+      d_removeIsotopicHs(params.tautomerRemoveIsotopicHs),
       d_reassignStereo(params.tautomerReassignStereo) {
   TautomerCatalogParams tautParams(params.tautomerTransforms);
   dp_catalog.reset(new TautomerCatalog(&tautParams));
 }
 
-bool TautomerEnumerator::setTautomerStereo(
+bool TautomerEnumerator::setTautomerStereoAndIsoHs(
     const ROMol &mol, ROMol &taut, const TautomerEnumeratorResult &res) const {
   bool modified = false;
   for (auto atom : mol.atoms()) {
@@ -167,7 +168,7 @@ bool TautomerEnumerator::setTautomerStereo(
       continue;
     }
     auto tautAtom = taut.getAtomWithIdx(atomIdx);
-    // clear chiral tag on sp2 atoms
+    // clear chiral tag on sp2 atoms (also sp3 if d_removeSp3Stereo is true)
     if (tautAtom->getHybridization() == Atom::SP2 || d_removeSp3Stereo) {
       modified |= (tautAtom->getChiralTag() != Atom::CHI_UNSPECIFIED);
       tautAtom->setChiralTag(Atom::CHI_UNSPECIFIED);
@@ -182,6 +183,11 @@ bool TautomerEnumerator::setTautomerStereo(
             common_properties::_CIPCode,
             atom->getProp<std::string>(common_properties::_CIPCode));
       }
+    }
+    // remove isotopic Hs if present (and if d_removeIsotopicHs is true)
+    if (tautAtom->hasProp(common_properties::_isotopicHs) &&
+        d_removeIsotopicHs) {
+      tautAtom->clearProp(common_properties::_isotopicHs);
     }
   }
   // remove stereochemistry on bonds that are part of a tautomeric path
@@ -410,7 +416,7 @@ TautomerEnumeratorResult TautomerEnumerator::enumerate(const ROMol &mol) const {
                                     MolOps::SANITIZE_SETCONJUGATION |
                                     MolOps::SANITIZE_SETHYBRIDIZATION |
                                     MolOps::SANITIZE_ADJUSTHS);
-            setTautomerStereo(mol, *wproduct, res);
+            setTautomerStereoAndIsoHs(mol, *wproduct, res);
             tsmiles = MolToSmiles(*wproduct, true);
 #ifdef VERBOSE_ENUMERATION
             std::string name;
@@ -465,7 +471,7 @@ TautomerEnumeratorResult TautomerEnumerator::enumerate(const ROMol &mol) const {
       auto &taut = it->second;
       if ((taut.d_numModifiedAtoms < maxNumModifiedAtoms ||
            taut.d_numModifiedBonds < maxNumModifiedBonds) &&
-          setTautomerStereo(mol, *taut.tautomer, res)) {
+          setTautomerStereoAndIsoHs(mol, *taut.tautomer, res)) {
         Tautomer tautStored = std::move(taut);
         it = res.d_tautomers.erase(it);
         tautStored.d_numModifiedAtoms = maxNumModifiedAtoms;

@@ -467,8 +467,7 @@ void testEnumeratorParams() {
       }
     }
   }
-  std::string zEnolSmi = "C/C=C\\O";
-  ROMOL_SPTR zEnol(SmilesToMol(zEnolSmi));
+  ROMOL_SPTR zEnol = "C/C=C\\O"_smiles;
   TEST_ASSERT(zEnol->getBondWithIdx(1)->getStereo() == Bond::STEREOZ);
   {
     // test remove enol Z stereochemistry
@@ -490,6 +489,35 @@ void testEnumeratorParams() {
       if (taut->getBondWithIdx(1)->getBondType() == Bond::DOUBLE) {
         TEST_ASSERT(taut->getBondWithIdx(1)->getStereo() == Bond::STEREOZ);
       }
+    }
+  }
+  ROMOL_SPTR chembl2024142 =
+      "[2H]C1=C(C(=C2C(=C1[2H])C(=O)C(=C(C2=O)C([2H])([2H])[2H])C/C=C(\C)/CC([2H])([2H])/C=C(/CC/C=C(\C)/CCC=C(C)C)\C([2H])([2H])[2H])[2H])[2H]"_smiles;
+  MolOps::RemoveHsParameters params;
+  params.removeAndTrackIsotopes = true;
+  chembl2024142.reset(MolOps::removeHs(*chembl2024142, params));
+  TEST_ASSERT(chembl2024142->getAtomWithIdx(12)->hasProp(
+      common_properties::_isotopicHs));
+  {
+    // test remove isotopic Hs involved in tautomerism
+    CleanupParameters params;
+    params.tautomerRemoveIsotopicHs = true;
+    TautomerEnumerator te(params);
+    TautomerEnumeratorResult res = te.enumerate(*chembl2024142);
+    for (const auto &taut : res) {
+      const auto tautAtom = taut->getAtomWithIdx(12);
+      TEST_ASSERT(!tautAtom->hasProp(common_properties::_isotopicHs));
+    }
+  }
+  {
+    // test retain isotopic Hs involved in tautomerism
+    CleanupParameters params;
+    params.tautomerRemoveIsotopicHs = false;
+    TautomerEnumerator te(params);
+    TautomerEnumeratorResult res = te.enumerate(*chembl2024142);
+    for (const auto &taut : res) {
+      const auto tautAtom = taut->getAtomWithIdx(12);
+      TEST_ASSERT(tautAtom->hasProp(common_properties::_isotopicHs));
     }
   }
 
