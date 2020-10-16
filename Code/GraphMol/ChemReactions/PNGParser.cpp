@@ -55,7 +55,7 @@ ChemicalReaction *PNGStreamToChemicalReaction(std::istream &inStream) {
   ChemicalReaction *res = nullptr;
   auto metadata = PNGStreamToMetadata(inStream);
   bool formatFound = false;
-  for (const auto pr : metadata) {
+  for (const auto &pr : metadata) {
     if (boost::starts_with(pr.first, PNGData::rxnPklTag)) {
       res = new ChemicalReaction(pr.second);
       formatFound = true;

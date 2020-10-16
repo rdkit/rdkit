@@ -633,7 +633,7 @@ std::vector<std::string> atomLabelToPieces(const std::string &label,
   std::vector<std::string> final_pieces;
   std::string curr_piece;
   bool had_symbol = false;
-  for (const auto p : label_pieces) {
+  for (const auto &p : label_pieces) {
     if (p.empty()) {
       continue;
     }

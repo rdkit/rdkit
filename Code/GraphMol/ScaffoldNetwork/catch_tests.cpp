@@ -894,7 +894,7 @@ TEST_CASE("molCounts", "[scaffolds]") {
         {"*C1CCCO1", 1u},
         {"*C1CCCC1", 1u},
         {"*C1C(*)C1*", 2u}};
-    for (const auto endp : endps) {
+    for (const auto &endp : endps) {
       auto loc = std::find(net.nodes.begin(), net.nodes.end(), endp.first);
       CHECK(loc != net.nodes.end());
       auto idx = loc - net.nodes.begin();

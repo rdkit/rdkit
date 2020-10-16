@@ -425,7 +425,7 @@ TEST_CASE("conjugated five-rings") {
     matchCase{"C1=COC=C1","adjustqueryprops_fivering_5.mol",false,false},
     matchCase{"C1=COC=C1","adjustqueryprops_fivering_6.mol",false,false},
     };
-    for( const auto tpl : examples){
+    for( const auto &tpl : examples){
       auto fname = std::get<1>(tpl);
       std::string pathName = getenv("RDBASE");
       pathName += "/Code/GraphMol/test_data/";
@@ -508,7 +508,7 @@ TEST_CASE("single bonds to degree-one neighbors") {
       matchCase{"c2cccc1[nH]ccc12","CCc1[nH]ccc1",false,false},
 
     };
-    for( const auto tpl : examples){
+    for( const auto &tpl : examples){
       auto smi = std::get<1>(tpl);
       std::unique_ptr<RWMol> qry(SmilesToMol(smi));
       REQUIRE(qry);
@@ -541,7 +541,7 @@ TEST_CASE("single bonds to aromatic neighbors") {
       matchCase{"C1CC2=C(C=CC=N2)C2=C1C=NN=C2","C1CC2=C(C=CC=N2)C2=C1C=NN=C2",true,true},
       matchCase{"C1CC2=C3C(C=CC4=NN=CC1=C34)=CC=N2","C1CC2=C(C=CC=N2)C2=C1C=NN=C2",false,true}, // was github #3325
     };
-    for( const auto tpl : examples){
+    for( const auto &tpl : examples){
       auto smi = std::get<1>(tpl);
       std::unique_ptr<RWMol> qry(SmilesToMol(smi));
       REQUIRE(qry);
