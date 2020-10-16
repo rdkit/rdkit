@@ -25,7 +25,7 @@ namespace RDKit {
 
 // Determine whether or not a molecule is to the left of Carbon
 bool isEarlyAtom(int atomicNum) {
-  if ( atomicNum <= 1 ) {
+  if (atomicNum <= 1) {
     return false;
   }
   switch (PeriodicTable::getTable()->getNouterElecs(atomicNum)) {
@@ -329,6 +329,21 @@ int Atom::calcImplicitValence(bool strict) {
   if (d_explicitValence == -1) {
     this->calcExplicitValence(strict);
   }
+  // special cases
+  if (d_atomicNum == 0) {
+    d_implicitValence = 0;
+    return 0;
+  }
+  if (d_atomicNum == 1 && d_numRadicalElectrons == 0) {
+    if (d_formalCharge == 1 || d_formalCharge == -1) {
+      d_implicitValence = 0;
+      return 0;
+    } else if (d_formalCharge == 0) {
+      d_implicitValence = 1;
+      return 1;
+    }
+  }
+
   // this is basically the difference between the allowed valence of
   // the atom and the explicit valence already specified - tells how
   // many Hs to add
