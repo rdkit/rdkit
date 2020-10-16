@@ -436,19 +436,6 @@ TEST_CASE("possible stereochemistry on atoms", "[chirality]") {
     auto stereoInfo = Chirality::findPotentialStereo(*mol);
     CHECK(stereoInfo.size() == 0);
   }
-  SECTION("charges") {
-    {
-      auto mol = "O[P@]([O-])(=O)OC"_smiles;
-      REQUIRE(mol);
-      auto stereoInfo = Chirality::findPotentialStereo(*mol);
-      REQUIRE(stereoInfo.size() == 1);
-      CHECK(stereoInfo[0].type == Chirality::StereoType::Atom_Tetrahedral);
-      CHECK(stereoInfo[0].specified == Chirality::StereoSpecified::Specified);
-      CHECK(stereoInfo[0].centeredOn == 1);
-      std::vector<unsigned> catoms = {0, 2, 3, 4};
-      CHECK(stereoInfo[0].controllingAtoms == catoms);
-    }
-  }
   SECTION("Isotopes") {
     {
       auto mol = "O[C@H](F)[18OH]"_smiles;

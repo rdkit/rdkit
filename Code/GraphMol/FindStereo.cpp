@@ -301,8 +301,7 @@ std::string getBondSymbol(const Bond *bond) {
 
 namespace {
 std::string getAtomCompareSymbol(const Atom &atom) {
-  auto fmt = boost::format("%d%sH%d%d") % atom.getIsotope() % atom.getSymbol() %
-             atom.getTotalNumHs() % atom.getFormalCharge();
+  auto fmt = boost::format("%d%s") % atom.getIsotope() % atom.getSymbol();
   return fmt.str();
 }
 }  // namespace
