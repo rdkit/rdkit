@@ -3,6 +3,15 @@
 
 
 ## Backwards incompatible changes
+- We've added additional allowed valences for Cl (now 1, 3, 5), Br (now 1, 3,
+  5), I (now 1, 3, 5), At (now 1, 3, 5), Xe (now 0, 2, 4, 6), and Po (now 2, 4,
+  6). Molecules with atoms in the new valence states will no longer generate
+  sanitization errors. Note that this has an impact on the chemistry of
+  molecules containing 3-valent I (present 21 times in ChEMBL 26): previously
+  this was incorrectly assigned two implicit Hs, now it has no implicit Hs. 
+- Aromaticity perception of molecules like `Cc1nnc2n1c1ccccc1n1c(C)nnc12` now
+  correctly recognizes the full outer envelope, i.e. the bonds joining the rings
+  are now also aromatic.
 - FindMCS() may return single atom MCSs, whereas previously it returned an empty
   MCS unless there was at least one commond bond across the input structures.
   So the MCS between molecules `CC` and `CO` is now `[#6]` rather than being null.
@@ -31,10 +40,6 @@
   S(=O)([O-])[O-], S(=O)(=O)([O-])[O-], S(=O)(=O)([O-])OOS(=O)(=O)[O-]`.
   Previously not all of these inorganic acid counterions were consistently
   neutralized.
-- We've added additional allowed valences for Cl (now 1, 3, 5), Br (now 1, 3,
-  5), I (now 1, 3, 5), At (now 1, 3, 5), Xe (now 0, 2, 4, 6), and Po (now 2, 4,
-  6). Molecules with atoms in the new valence states will no longer generate
-  sanitization errors
 
 ## Highlights
 - There's been another big improvement in the quality of molecule drawings: character
