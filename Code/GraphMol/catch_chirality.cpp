@@ -1201,9 +1201,6 @@ TEST_CASE("ring stereo finding is overly aggressive", "[chirality][bug]") {
     REQUIRE(stereoInfo.size() == 1);
     CHECK(stereoInfo[0].centeredOn == 3);
   }
-  // known problem that came up during testing. This seems to be something
-  // in the canonical ranking code, not in FindStereo; capturing this
-  // here just so it doesn't get lost
   SECTION("just a bug") {
     // example that came up during testing
 

@@ -558,10 +558,6 @@ void updateAtomNeighborIndex(canon_atom *atoms, std::vector<bondholder> &nbrs) {
     nbr.nbrSymClass = newSymClass;
   }
   std::sort(nbrs.begin(), nbrs.end(), bondholder::greater);
-  // for (auto nbr : nbrs) {
-  //   std::cerr << "  " << nbr.nbrIdx << " " << nbr.nbrSymClass;
-  // }
-  // std::cerr << std::endl;
 }
 
 void updateAtomNeighborNumSwaps(
