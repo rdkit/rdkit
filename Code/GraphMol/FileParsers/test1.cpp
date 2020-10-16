@@ -2064,7 +2064,7 @@ void testMolFileAtomQueries() {
         rdbase + "/Code/GraphMol/FileParsers/test_data/query_A.mol",
         rdbase + "/Code/GraphMol/FileParsers/test_data/query_A.v3k.mol",
     };
-    for (const auto fName : fNames) {
+    for (const auto &fName : fNames) {
       std::unique_ptr<RWMol> m(MolFileToMol(fName));
       TEST_ASSERT(m);
       TEST_ASSERT(m->getAtomWithIdx(6)->hasQuery());
@@ -2098,7 +2098,7 @@ void testMolFileAtomQueries() {
         rdbase + "/Code/GraphMol/FileParsers/test_data/query_Q.mol",
         rdbase + "/Code/GraphMol/FileParsers/test_data/query_Q.v3k.mol",
     };
-    for (const auto fName : fNames) {
+    for (const auto &fName : fNames) {
       std::unique_ptr<RWMol> m(MolFileToMol(fName));
       TEST_ASSERT(m);
 

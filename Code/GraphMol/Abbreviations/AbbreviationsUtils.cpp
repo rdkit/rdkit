@@ -183,7 +183,7 @@ std::vector<AbbreviationDefinition> parseAbbreviations(
   boost::char_separator<char> lineSep("\n");
   tokenizer lines(text, lineSep);
   boost::char_separator<char> fieldSep(" \t");
-  for (const auto line : lines) {
+  for (const auto &line : lines) {
     AbbreviationDefinition defn;
     tokenizer fields(line, fieldSep);
     tokenizer::iterator field = fields.begin();

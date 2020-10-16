@@ -40,10 +40,10 @@ class PyTautomerEnumeratorResult {
     d_bndTuple = python::tuple(bndList);
   }
   inline const std::vector<ROMOL_SPTR> *tautomers() const {
-    return new std::vector<ROMOL_SPTR>(std::move(d_tr->tautomers()));
+    return new std::vector<ROMOL_SPTR>(d_tr->tautomers());
   }
   inline const std::vector<std::string> *smiles() const {
-    return new std::vector<std::string>(std::move(d_tr->smiles()));
+    return new std::vector<std::string>(d_tr->smiles());
   }
   inline const MolStandardize::SmilesTautomerMap &smilesTautomerMap() const {
     return d_tr->smilesTautomerMap();

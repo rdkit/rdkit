@@ -158,6 +158,7 @@ std::unique_ptr<MolSupplier> getSupplier(const std::string& path,
     std::unique_ptr<MolSupplier> p(tdtsup);
     return p;
   }
+  throw BadFileException("Unsupported fileFormat: " + fileFormat);
 }
 
 }  // namespace GeneralMolSupplier

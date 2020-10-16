@@ -146,6 +146,7 @@ RDKIT_FINGERPRINTS_EXPORT ExplicitBitVect *PatternFingerprintMol(
     std::vector<unsigned int> *atomCounts = nullptr,
     ExplicitBitVect *setOnlyBits = nullptr,
     bool tautomericFingerprint = false);
+const std::string PatternFingerprintMolVersion = "1.0.0";
 
 RDKIT_FINGERPRINTS_EXPORT SparseIntVect<boost::uint64_t>
     *getUnfoldedRDKFingerprintMol(
