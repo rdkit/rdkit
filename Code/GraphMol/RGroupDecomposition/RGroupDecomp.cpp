@@ -389,9 +389,14 @@ RGroupColumns RGroupDecomposition::getRGroupsAsColumns() const {
     }
   }
   // purge R-group entries that have no mols
-  for (auto it = groups.begin(); it != groups.end(); ++it) {
+  for (auto it = groups.begin(); it != groups.end();) {
+    auto itToErase = groups.end();
     if (!rGroupWithRealMol.count(it->first)) {
-      groups.erase(it);
+      itToErase = it;
+    }
+    ++it;
+    if (itToErase != groups.end()) {
+      groups.erase(itToErase);
     }
   }
   return groups;
