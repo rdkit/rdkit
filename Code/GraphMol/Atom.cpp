@@ -334,13 +334,26 @@ int Atom::calcImplicitValence(bool strict) {
     d_implicitValence = 0;
     return 0;
   }
-  if (d_atomicNum == 1 && d_numRadicalElectrons == 0) {
+  if (d_explicitValence == 0 && d_atomicNum == 1 &&
+      d_numRadicalElectrons == 0) {
     if (d_formalCharge == 1 || d_formalCharge == -1) {
       d_implicitValence = 0;
       return 0;
     } else if (d_formalCharge == 0) {
       d_implicitValence = 1;
       return 1;
+    } else {
+      if (strict) {
+        std::ostringstream errout;
+        errout << "Unreasonable formal charge on hydrogen # " << getIdx()
+               << ".";
+        std::string msg = errout.str();
+        BOOST_LOG(rdErrorLog) << msg << std::endl;
+        throw AtomValenceException(msg, getIdx());
+      } else {
+        d_implicitValence = 0;
+        return 0;
+      }
     }
   }
 
