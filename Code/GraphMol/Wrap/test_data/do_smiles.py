@@ -1,6 +1,6 @@
 
 import re
-splitExpr = re.compile('[\t\ ]')
+splitExpr = re.compile('[\t ]')
 
 from rdkit import Chem
 

@@ -7,33 +7,33 @@ within the string. Therefore, the interface for the StringFormat module
 consists of wrapper functions for the SPING string interface and
 various XML tags and characters.
 
-StringFormat functions 
+StringFormat functions
 
-       drawString(canvas, s, x, y, [font], [color], [angle]) 
-       stringWidth(canvas, s, [font]) 
-       fontHeight(canvas, [font]) 
-       fontAscent(canvas, [font]) 
-       fontDescent(canvas, [font]) 
-StringFormat XML tags 
+       drawString(canvas, s, x, y, [font], [color], [angle])
+       stringWidth(canvas, s, [font])
+       fontHeight(canvas, [font])
+       fontAscent(canvas, [font])
+       fontDescent(canvas, [font])
+StringFormat XML tags
 
-       <b> </b> - bold 
-       <i> </i> - italics 
-       <u> </u> - underline 
-       <super> </super> - superscript 
-       <sub> </sub> - subscript 
+       <b> </b> - bold
+       <i> </i> - italics
+       <u> </u> - underline
+       <super> </super> - superscript
+       <sub> </sub> - subscript
 
-StringFormat XML characters 
+StringFormat XML characters
 
-       Greek Letter Symbols as specified in MathML 
+       Greek Letter Symbols as specified in MathML
 """
 
 
-#       How it works: Each tag grouping <b></b> sets a flag upon entry and 
-#       clears the flag upon exit.  Each call to handle_data creates a 
+#       How it works: Each tag grouping <b></b> sets a flag upon entry and
+#       clears the flag upon exit.  Each call to handle_data creates a
 #       StringSegment which takes on all of the characteristics specified
 #       by flags currently set.  The greek letters can be specified as either
 #       &alpha; or <alpha/>.  The are essentially transformed into <alpha/>
-#       no matter what and then there is a handler for each greek letter.  
+#       no matter what and then there is a handler for each greek letter.
 #       To add or change greek letter to symbol font mappings only
 #       the greekchars map needs to change.
 
@@ -97,7 +97,7 @@ greekchars = {
 #------------------------------------------------------------------------
 class StringSegment:
   """class StringSegment contains the intermediate representation of string
-        segments as they are being parsed by the XMLParser. 
+        segments as they are being parsed by the XMLParser.
         """
 
   def __init__(self):
@@ -149,18 +149,18 @@ class StringSegment:
     print("\tgreek = ", self.greek)
 
 
-#------------------------------------------------------------------     
+#------------------------------------------------------------------
 # The StringFormatter will be able to format the following xml
 # tags:
-#      < b > < /b > - bold 
-#      < i > < /i > - italics 
-#      < u > < /u > - underline 
-#      < super > < /super > - superscript 
-#      < sub > < /sub > - subscript 
+#      < b > < /b > - bold
+#      < i > < /i > - italics
+#      < u > < /u > - underline
+#      < super > < /super > - superscript
+#      < sub > < /sub > - subscript
 #
 # It will also be able to handle any MathML specified Greek characters.
 #
-# Possible future additions: changing color and font 
+# Possible future additions: changing color and font
 #       character-by-character
 #------------------------------------------------------------------
 class StringFormatter(xmllib.XMLParser):
@@ -171,7 +171,7 @@ class StringFormatter(xmllib.XMLParser):
   # start_<tag>(attributes)
   # end_<tag>()
   #
-  # While parsing the xml StringFormatter will call these 
+  # While parsing the xml StringFormatter will call these
   # functions to handle the string formatting tags.
   # At the start of each tag the corresponding field will
   # be set to 1 and at the end tag the corresponding field will
@@ -294,7 +294,7 @@ class StringFormatter(xmllib.XMLParser):
                 StringSegment objects with their calculated widths."
 
     # the xmlparser requires that all text be surrounded by xml
-    # tags, therefore we must throw some unused flags around the 
+    # tags, therefore we must throw some unused flags around the
     # given string
     self.feed("<formattedstring>" + s + "</formattedstring>")
     self.close()  # force parsing to complete
@@ -373,8 +373,8 @@ def drawString(canvas, s, x, y, font=None, color=None, angle=0):
   startpos = x
   for seg in segmentlist:
     # calculate x and y for this segment based on the angle
-    # if the string wasn't at an angle then 
-    # (draw_x,draw_y) = (startpos, seg.calcNewY(font, y)) want to 
+    # if the string wasn't at an angle then
+    # (draw_x,draw_y) = (startpos, seg.calcNewY(font, y)) want to
     # rotate around original x and y
     (delta_x, delta_y) = rotateXY(startpos - x, seg.calcNewY(font, y) - y, angle)
 
@@ -418,13 +418,13 @@ def test2():
   #       drawString(canvas, "a", 10, 50, Font(face="symbol"))
   #       drawString(canvas, "hello there!", 30, 90, angle= -90)
   #       drawString(canvas, "<b>goodbye!</b> <u>yall</u>", 100, 90, angle= 45)
-  #       drawString(canvas, "there is a <u>time</u> and a <b>place</b><super>2</super>", 
+  #       drawString(canvas, "there is a <u>time</u> and a <b>place</b><super>2</super>",
   #               100, 90, angle= -75)
   canvas.flush()
 
 
 def allTagCombos(canvas, x, y, font=None, color=None, angle=0):
-  """Try out all tags and various combinations of them. \ 
+  """Try out all tags and various combinations of them.
         Starts at given x,y and returns possible next (x,y)."""
 
   oldDefault = canvas.defaultFont
@@ -470,10 +470,10 @@ def stringformatTest():
   canvas = PDFCanvas('bigtest1.pdf')
 
   ################################################### testing drawString tags
-  #      < b > < /b > - bold 
-  #      < i > < /i > - italics 
-  #      < u > < /u > - underline 
-  #      < super > < /super > - superscript 
+  #      < b > < /b > - bold
+  #      < i > < /i > - italics
+  #      < u > < /u > - underline
+  #      < super > < /super > - superscript
   #      < sub > < /sub > - subscript
 
   x = 10

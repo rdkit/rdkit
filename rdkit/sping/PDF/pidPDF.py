@@ -84,7 +84,7 @@ ps_font_map = {
 
 
 class PDFCanvas(Canvas):
-    """This works by accumulating a list of strings containing 
+    """This works by accumulating a list of strings containing
       PDF page marking operators, as you call its methods.  We could
       use a big string but this is more efficient - only concatenate
       it once, with control over line ends.  When
@@ -230,8 +230,8 @@ class PDFCanvas(Canvas):
         """PDF escapes are like Python ones, but brackets need slashes before them too.
             Use Python's repr function and chop off the quotes first"""
         s = repr(s)[1:-1]
-        s = s.replace('(', '\(')
-        s = s.replace(')', '\)')
+        s = s.replace('(', r'\(')
+        s = s.replace(')', r'\)')
         return s
 
     def resetDefaults(self):

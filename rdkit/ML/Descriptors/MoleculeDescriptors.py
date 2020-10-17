@@ -106,7 +106,7 @@ class MolecularDescriptorCalculator(Descriptors.DescriptorCalculator):
       fn = getattr(DescriptorsMod, nm, lambda x: 777)
       if hasattr(fn, '__doc__') and fn.__doc__:
         doc = fn.__doc__.split('\n\n')[0].strip()
-        doc = re.sub('\ *\n\ *', ' ', doc)
+        doc = re.sub(' *\n *', ' ', doc)
       else:
         doc = 'N/A'
       res.append(doc)

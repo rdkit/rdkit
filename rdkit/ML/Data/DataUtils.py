@@ -153,7 +153,7 @@ def ReadQuantExamples(inFile):
 
     """
     expr1 = re.compile(r'^#')
-    expr2 = re.compile(r'[\ ]+|[\t]+')
+    expr2 = re.compile(r'[ ]+|[\t]+')
     examples = []
     names = []
     inLine = inFile.readline()
@@ -189,7 +189,7 @@ def ReadGeneralExamples(inFile):
 
     """
     expr1 = re.compile(r'^#')
-    expr2 = re.compile(r'[\ ]+|[\t]+')
+    expr2 = re.compile(r'[ ]+|[\t]+')
     examples = []
     names = []
     inLine = inFile.readline()

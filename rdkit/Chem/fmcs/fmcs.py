@@ -238,7 +238,7 @@ import sys
 
 try:
   from rdkit import Chem
-  
+
 except ImportError:
   sys.stderr.write("Please install RDKit from http://www.rdkit.org/\n")
   raise
@@ -2450,7 +2450,7 @@ class starting_from(object):
 
 
 range_pat = re.compile(r"(\d+)-(\d*)")
-value_pat = re.compile("(\d+)")
+value_pat = re.compile(r"(\d+)")
 
 
 def parse_select(s):
