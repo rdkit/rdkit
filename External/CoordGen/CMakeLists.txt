@@ -33,8 +33,8 @@ if(RDK_BUILD_MAEPARSER_SUPPORT)
     endif()
 
     if(NOT EXISTS "${MAEPARSER_DIR}/MaeParser.hpp")
-        set(RELEASE_NO "1.2.3")
-        set(MD5 "4ead02a0bf87110d1caae79ab42a5747")
+        set(RELEASE_NO "1.2.4")
+        set(MD5 "42a0765f9ddac81d588f1dc5afc87ed4")
         downloadAndCheckMD5("https://github.com/schrodinger/maeparser/archive/v${RELEASE_NO}.tar.gz"
               "${CMAKE_CURRENT_SOURCE_DIR}/maeparser-v${RELEASE_NO}.tar.gz" ${MD5})
         execute_process(COMMAND ${CMAKE_COMMAND} -E tar zxf
