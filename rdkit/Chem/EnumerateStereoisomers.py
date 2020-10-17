@@ -326,7 +326,7 @@ def EnumerateStereoisomers(m, options=StereoEnumerationOptions(), verbose=False)
     Chem.SetDoubleBondNeighborDirections(isomer)
     isomer.ClearComputedProps()
 
-    Chem.AssignStereochemistry(isomer, cleanIt=True, force=True)
+    Chem.AssignStereochemistry(isomer, cleanIt=True, force=True, flagPossibleStereoCenters=True)
     if options.unique:
       cansmi = Chem.MolToSmiles(isomer, isomericSmiles=True)
       if cansmi in isomersSeen:
