@@ -62,14 +62,14 @@ reconnected_re = re.compile('(.*?)/r(.*)')  # reconnected layer?
 fixed_h_re = re.compile('(.*?)/f(.*)')  # fixed-H layer?
 isotope_re = re.compile('(.*?)/i(.*)')  # isotope layer?
 
-stereo_re = re.compile('.*\/t(.*?)\/.*')
-stereo_all_re = re.compile('.*\/t([^\/]+)')
-undef_stereo_re = re.compile('(\d+)\?')
-all_stereo_re = re.compile('(\d+)[?+-]')
-defined_stereo_re = re.compile('(\d+)[+-]')
-h_layer_re = re.compile('.*\/h(.*)\/?')
-mobile_h_group_re = re.compile('(\(H.+?\))')
-mobile_h_atoms_re = re.compile(',(\d+)')
+stereo_re = re.compile(r'.*/t(.*?)/.*')
+stereo_all_re = re.compile(r'.*/t([^/]+)')
+undef_stereo_re = re.compile(r'(\d+)\?')
+all_stereo_re = re.compile(r'(\d+)[?+-]')
+defined_stereo_re = re.compile(r'(\d+)[+-]')
+h_layer_re = re.compile(r'.*/h(.*)/?')
+mobile_h_group_re = re.compile(r'(\(H.+?\))')
+mobile_h_atoms_re = re.compile(r',(\d+)')
 
 
 class InchiInfo(object):
