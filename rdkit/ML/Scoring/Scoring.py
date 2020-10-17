@@ -1,4 +1,4 @@
-"""
+r"""
 $Id$
 
 Scoring - Calculate rank statistics
