@@ -24,8 +24,11 @@ struct chiralityops_wrapper {
     python::def("FindPotentialStereo",
                 (std::vector<Chirality::StereoInfo>(*)(ROMol &, bool, bool)) &
                     Chirality::findPotentialStereo,
-                (python::arg("mol"), python::arg("cleanIt") = false, python::arg("flagPossible") = true),
-                "find potential stereo elements in a molecule",
+                (python::arg("mol"), python::arg("cleanIt") = false,
+                 python::arg("flagPossible") = true),
+                "find potential stereo elements in a molecule\n\
+Note that this function is still somewhat experimental and the API\n\
+and results may change in a future release.",
                 python::with_custodian_and_ward_postcall<0, 1>());
   };
 };

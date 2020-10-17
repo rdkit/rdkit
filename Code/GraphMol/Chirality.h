@@ -96,6 +96,8 @@ struct RDKIT_GRAPHMOL_EXPORT StereoInfo {
 
 //! identifies potential stereoatoms and stereobonds in a molecule
 /*!
+  Note that this function is still somewhat experimental and the API
+  and results may change in a future release.
 
   \param mol the molecule to look for stereo in
   \param cleanIt remove chirality/stereo specifications from atoms/bonds that

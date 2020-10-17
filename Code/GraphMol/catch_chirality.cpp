@@ -160,6 +160,26 @@ TEST_CASE("isBondPotentialStereoBond", "[unittest]") {
           mol->getBondWithIdx(3)));
     }
   }
+  SECTION("ring size") {
+    {
+      auto m = "C1=CCCCC1"_smiles;
+      REQUIRE(m);
+      CHECK(
+          !Chirality::detail::isBondPotentialStereoBond(m->getBondWithIdx(0)));
+    }
+    {
+      auto m = "C1=CCCCCC1"_smiles;
+      REQUIRE(m);
+      CHECK(
+          !Chirality::detail::isBondPotentialStereoBond(m->getBondWithIdx(0)));
+    }
+    {
+      auto m = "C12=C(CCCC2)CCCCCC1"_smiles;
+      REQUIRE(m);
+      CHECK(
+          !Chirality::detail::isBondPotentialStereoBond(m->getBondWithIdx(0)));
+    }
+  }
 }
 
 TEST_CASE("atom StereoInfo", "[unittest]") {
@@ -299,6 +319,12 @@ TEST_CASE("isAtomPotentialTetrahedralCenter", "[unittest]") {
       CHECK(!Chirality::detail::isAtomPotentialTetrahedralCenter(
           mol->getAtomWithIdx(6)));
     }
+    {
+      auto mol = "O[P]([O-])(=O)OC"_smiles;
+      REQUIRE(mol);
+      CHECK(Chirality::detail::isAtomPotentialTetrahedralCenter(
+          mol->getAtomWithIdx(1)));
+    }
   }
 }
 TEST_CASE("isAtomPotentialStereoAtom", "[unittest]") {
@@ -398,7 +424,7 @@ TEST_CASE("possible stereochemistry on atoms", "[chirality]") {
     REQUIRE(mol);
     mol->getBondBetweenAtoms(0, 1)->setBondDir(Bond::BondDir::UNKNOWN);
     auto stereoInfo = Chirality::findPotentialStereo(*mol);
-    CHECK(stereoInfo.size() == 1);
+    REQUIRE(stereoInfo.size() == 1);
     CHECK(stereoInfo[0].type == Chirality::StereoType::Atom_Tetrahedral);
     CHECK(stereoInfo[0].specified == Chirality::StereoSpecified::Unknown);
     CHECK(stereoInfo[0].centeredOn == 1);
@@ -409,6 +435,19 @@ TEST_CASE("possible stereochemistry on atoms", "[chirality]") {
     mol->getBondBetweenAtoms(0, 1)->setBondDir(Bond::BondDir::UNKNOWN);
     auto stereoInfo = Chirality::findPotentialStereo(*mol);
     CHECK(stereoInfo.size() == 0);
+  }
+  SECTION("Isotopes") {
+    {
+      auto mol = "O[C@H](F)[18OH]"_smiles;
+      REQUIRE(mol);
+      auto stereoInfo = Chirality::findPotentialStereo(*mol);
+      REQUIRE(stereoInfo.size() == 1);
+      CHECK(stereoInfo[0].type == Chirality::StereoType::Atom_Tetrahedral);
+      CHECK(stereoInfo[0].specified == Chirality::StereoSpecified::Specified);
+      CHECK(stereoInfo[0].centeredOn == 1);
+      std::vector<unsigned> catoms = {0, 2, 3};
+      CHECK(stereoInfo[0].controllingAtoms == catoms);
+    }
   }
 }
 
@@ -846,5 +885,318 @@ TEST_CASE("cleanup after removing possible centers", "[chirality]") {
     REQUIRE(mol);
     auto stereoInfo = Chirality::findPotentialStereo(*mol);
     CHECK(stereoInfo.empty());
+  }
+}
+
+TEST_CASE("findPotentialStereo problems related to #3490", "[chirality][bug]") {
+  SECTION("example 1") {
+    auto mol = "CC1CC(O)C1"_smiles;
+    REQUIRE(mol);
+    bool cleanIt = true;
+    bool flagPossible = true;
+    auto stereoInfo =
+        Chirality::findPotentialStereo(*mol, cleanIt, flagPossible);
+    CHECK(stereoInfo.size() == 2);
+    CHECK(stereoInfo[0].type == Chirality::StereoType::Atom_Tetrahedral);
+    CHECK(stereoInfo[0].centeredOn == 1);
+    CHECK(stereoInfo[0].specified == Chirality::StereoSpecified::Unspecified);
+    CHECK(stereoInfo[1].type == Chirality::StereoType::Atom_Tetrahedral);
+    CHECK(stereoInfo[1].centeredOn == 3);
+    CHECK(stereoInfo[1].specified == Chirality::StereoSpecified::Unspecified);
+  }
+  SECTION("example 2a") {
+    auto mol = "C(C(C)C1)C12CCN2"_smiles;
+    REQUIRE(mol);
+    bool cleanIt = true;
+    bool flagPossible = true;
+    auto stereoInfo =
+        Chirality::findPotentialStereo(*mol, cleanIt, flagPossible);
+    CHECK(stereoInfo.size() == 2);
+  }
+  SECTION("example 2b") {
+    auto mol = "CC(C1)CC12CCN2"_smiles;
+    REQUIRE(mol);
+    bool cleanIt = true;
+    bool flagPossible = true;
+    auto stereoInfo =
+        Chirality::findPotentialStereo(*mol, cleanIt, flagPossible);
+    CHECK(stereoInfo.size() == 2);
+  }
+  SECTION("example 2c") {
+    auto mol = "C([C@H](C)C1)[C@]12CCN2"_smiles;
+    REQUIRE(mol);
+    bool cleanIt = true;
+    bool flagPossible = true;
+    auto stereoInfo =
+        Chirality::findPotentialStereo(*mol, cleanIt, flagPossible);
+    CHECK(stereoInfo.size() == 2);
+  }
+  SECTION("example 2d") {
+    auto mol = "C[C@H](C1)C[C@]12CCN2"_smiles;
+    REQUIRE(mol);
+    bool cleanIt = true;
+    bool flagPossible = true;
+    auto stereoInfo =
+        Chirality::findPotentialStereo(*mol, cleanIt, flagPossible);
+    CHECK(stereoInfo.size() == 2);
+  }
+  SECTION("example 3") {
+    auto mol = "C(C(C)C1)C12CN(C3)CCCCC23"_smiles;
+    REQUIRE(mol);
+    bool cleanIt = true;
+    bool flagPossible = true;
+    auto stereoInfo =
+        Chirality::findPotentialStereo(*mol, cleanIt, flagPossible);
+    CHECK(stereoInfo.size() == 3);  // [1, 4, 12]
+    CHECK(stereoInfo[0].type == Chirality::StereoType::Atom_Tetrahedral);
+    CHECK(stereoInfo[0].centeredOn == 1);
+    CHECK(stereoInfo[0].specified == Chirality::StereoSpecified::Unspecified);
+    CHECK(stereoInfo[1].type == Chirality::StereoType::Atom_Tetrahedral);
+    CHECK(stereoInfo[1].centeredOn == 4);
+    CHECK(stereoInfo[1].specified == Chirality::StereoSpecified::Unspecified);
+    CHECK(stereoInfo[2].type == Chirality::StereoType::Atom_Tetrahedral);
+    CHECK(stereoInfo[2].centeredOn == 12);
+    CHECK(stereoInfo[2].specified == Chirality::StereoSpecified::Unspecified);
+  }
+}
+TEST_CASE("ring stereo finding is overly aggressive", "[chirality][bug]") {
+  SECTION("Finding too much 1a") {
+    auto mol = "CC1CCCCC1"_smiles;
+    REQUIRE(mol);
+    bool cleanIt = true;
+    bool flagPossible = true;
+    auto stereoInfo =
+        Chirality::findPotentialStereo(*mol, cleanIt, flagPossible);
+    CHECK(stereoInfo.size() == 0);
+  }
+  SECTION("Finding too much 1b") {
+    auto mol = "CC1CCC(C)CC1"_smiles;
+    REQUIRE(mol);
+    bool cleanIt = true;
+    bool flagPossible = true;
+    auto stereoInfo =
+        Chirality::findPotentialStereo(*mol, cleanIt, flagPossible);
+    CHECK(stereoInfo.size() == 2);
+  }
+  SECTION("Finding too much 1c") {
+    auto mol = "C[C@H]1CCC(C)CC1"_smiles;
+    REQUIRE(mol);
+    bool cleanIt = true;
+    bool flagPossible = true;
+    auto stereoInfo =
+        Chirality::findPotentialStereo(*mol, cleanIt, flagPossible);
+    CHECK(stereoInfo.size() == 2);
+  }
+  SECTION("Finding too much 1d") {
+    auto mol = "CC1(C)CCCCC1"_smiles;
+    REQUIRE(mol);
+    bool cleanIt = true;
+    bool flagPossible = true;
+    auto stereoInfo =
+        Chirality::findPotentialStereo(*mol, cleanIt, flagPossible);
+    CHECK(stereoInfo.size() == 0);
+  }
+  SECTION("Finding too much 1e") {
+    auto mol = "CC1(C)CCC(C)CC1"_smiles;
+    REQUIRE(mol);
+    bool cleanIt = true;
+    bool flagPossible = true;
+    auto stereoInfo =
+        Chirality::findPotentialStereo(*mol, cleanIt, flagPossible);
+    CHECK(stereoInfo.size() == 0);
+  }
+  SECTION("Finding too much 1f") {
+    auto mol = "C2CC2C1(C2CC2)CCCCC1"_smiles;
+    REQUIRE(mol);
+    bool cleanIt = true;
+    bool flagPossible = true;
+    auto stereoInfo =
+        Chirality::findPotentialStereo(*mol, cleanIt, flagPossible);
+    CHECK(stereoInfo.size() == 0);
+  }
+  SECTION("Finding too much 1g") {
+    auto mol = "CC1CC2(CCC2)C1"_smiles;
+    REQUIRE(mol);
+    bool cleanIt = true;
+    bool flagPossible = true;
+    auto stereoInfo =
+        Chirality::findPotentialStereo(*mol, cleanIt, flagPossible);
+    CHECK(stereoInfo.size() == 0);
+  }
+  SECTION("Finding too much 1h") {
+    auto mol = "CC1CC2(CC(C)C2)C1"_smiles;
+    REQUIRE(mol);
+    bool cleanIt = true;
+    bool flagPossible = true;
+    auto stereoInfo =
+        Chirality::findPotentialStereo(*mol, cleanIt, flagPossible);
+    CHECK(stereoInfo.size() == 3);
+  }
+
+  SECTION("Finding too much 2a") {
+    auto mol = "CC1CCNCC1"_smiles;
+    REQUIRE(mol);
+    bool cleanIt = true;
+    bool flagPossible = true;
+    auto stereoInfo =
+        Chirality::findPotentialStereo(*mol, cleanIt, flagPossible);
+    CHECK(stereoInfo.size() == 0);
+  }
+  SECTION("Finding too much 2b") {
+    auto mol = "CC1CCN(C)CC1"_smiles;  // 3-coordinate N is not stereogenic
+    REQUIRE(mol);
+    bool cleanIt = true;
+    bool flagPossible = true;
+    auto stereoInfo =
+        Chirality::findPotentialStereo(*mol, cleanIt, flagPossible);
+    CHECK(stereoInfo.size() == 0);
+  }
+  SECTION("Finding too much 3a") {
+    auto mol = "CC1CCC1"_smiles;
+    REQUIRE(mol);
+    bool cleanIt = true;
+    bool flagPossible = true;
+    auto stereoInfo =
+        Chirality::findPotentialStereo(*mol, cleanIt, flagPossible);
+    CHECK(stereoInfo.size() == 0);
+  }
+
+  SECTION("Finding too much 3b") {
+    auto mol = "CC1CC(C)C1"_smiles;
+    REQUIRE(mol);
+    bool cleanIt = true;
+    bool flagPossible = true;
+    auto stereoInfo =
+        Chirality::findPotentialStereo(*mol, cleanIt, flagPossible);
+    CHECK(stereoInfo.size() == 2);
+  }
+  SECTION("fused rings 1") {
+    auto mol = "C1CCC2CCCCC2C1"_smiles;
+    REQUIRE(mol);
+    bool cleanIt = true;
+    bool flagPossible = true;
+    auto stereoInfo =
+        Chirality::findPotentialStereo(*mol, cleanIt, flagPossible);
+    CHECK(stereoInfo.size() == 2);
+  }
+
+  SECTION("fused rings 2") {
+    auto mol = "C1CC2CCCC2C1"_smiles;
+    REQUIRE(mol);
+    bool cleanIt = true;
+    bool flagPossible = true;
+    auto stereoInfo =
+        Chirality::findPotentialStereo(*mol, cleanIt, flagPossible);
+    CHECK(stereoInfo.size() == 2);
+  }
+
+  SECTION("cages 1") {
+    auto mol = "CC1CN2CCC1CC2"_smiles;
+    REQUIRE(mol);
+    bool cleanIt = true;
+    bool flagPossible = true;
+    auto stereoInfo =
+        Chirality::findPotentialStereo(*mol, cleanIt, flagPossible);
+    CHECK(stereoInfo.size() == 1);
+    CHECK(stereoInfo[0].centeredOn == 1);
+  }
+  SECTION("cages 2") {
+    auto mol = "C1CC2(O)CCC1(C)CC2"_smiles;
+    REQUIRE(mol);
+    bool cleanIt = true;
+    bool flagPossible = true;
+    auto stereoInfo =
+        Chirality::findPotentialStereo(*mol, cleanIt, flagPossible);
+    CHECK(stereoInfo.size() == 0);
+  }
+  SECTION("cages 3") {
+    auto mol = "C1CC2(O)CCC1CC2"_smiles;
+    REQUIRE(mol);
+    bool cleanIt = true;
+    bool flagPossible = true;
+    auto stereoInfo =
+        Chirality::findPotentialStereo(*mol, cleanIt, flagPossible);
+    CHECK(stereoInfo.size() == 0);
+  }
+  SECTION("adamantyl") {
+    // the fact that we find four possible stereocenters here isn't nice, but
+    // it's not technically wrong and is more or less unavoidable with the
+    // current algorithm
+    auto mol = "CC12CC3CC(CC(C3)C1)C2"_smiles;
+    REQUIRE(mol);
+    bool cleanIt = true;
+    bool flagPossible = true;
+    auto stereoInfo =
+        Chirality::findPotentialStereo(*mol, cleanIt, flagPossible);
+    CHECK(stereoInfo.size() == 4);
+  }
+  SECTION("bug 1a") {
+    // example that came up during testing
+    auto mol = "C(=O)C(C(C)N2C=C2)C(=O)"_smiles;
+    REQUIRE(mol);
+    bool cleanIt = true;
+    bool flagPossible = true;
+    auto stereoInfo =
+        Chirality::findPotentialStereo(*mol, cleanIt, flagPossible);
+    REQUIRE(stereoInfo.size() == 1);
+    CHECK(stereoInfo[0].centeredOn == 3);
+  }
+  SECTION("bug 1b") {
+    // example that came up during testing
+    auto mol = "C(=O)C(C(CC)c2ccc(Cl)cc2)C(=O)"_smiles;
+    REQUIRE(mol);
+    bool cleanIt = true;
+    bool flagPossible = true;
+    auto stereoInfo =
+        Chirality::findPotentialStereo(*mol, cleanIt, flagPossible);
+    REQUIRE(stereoInfo.size() == 1);
+    CHECK(stereoInfo[0].centeredOn == 3);
+  }
+
+  SECTION("bug 1c") {
+    // example that came up during testing
+    auto mol = "O=CC(C=O)C(C)n2cccc2"_smiles;
+    REQUIRE(mol);
+    bool cleanIt = true;
+    bool flagPossible = true;
+    auto stereoInfo =
+        Chirality::findPotentialStereo(*mol, cleanIt, flagPossible);
+    REQUIRE(stereoInfo.size() == 1);
+    CHECK(stereoInfo[0].centeredOn == 5);
+  }
+
+  SECTION("bug 1c") {
+    // example that came up during testing
+    auto mol = "C(=O)C(C(C)n2cccc2)C(=O)"_smiles;
+    REQUIRE(mol);
+    bool cleanIt = true;
+    bool flagPossible = true;
+    auto stereoInfo =
+        Chirality::findPotentialStereo(*mol, cleanIt, flagPossible);
+    REQUIRE(stereoInfo.size() == 1);
+    CHECK(stereoInfo[0].centeredOn == 3);
+  }
+
+  SECTION("bug 1d") {
+    // example that came up during testing
+    auto mol = "C(O)C(C(C)n2cccc2)C(O)"_smiles;
+    REQUIRE(mol);
+    bool cleanIt = true;
+    bool flagPossible = true;
+    auto stereoInfo =
+        Chirality::findPotentialStereo(*mol, cleanIt, flagPossible);
+    REQUIRE(stereoInfo.size() == 1);
+    CHECK(stereoInfo[0].centeredOn == 3);
+  }
+  SECTION("just a bug") {
+    // example that came up during testing
+
+    auto mol = "CC1=CN(C2OC(CNC(=O)C3c4ccccc4Sc4ccccc43)CC2)C(=O)NC1=O"_smiles;
+    REQUIRE(mol);
+    bool cleanIt = true;
+    bool flagPossible = true;
+    auto stereoInfo =
+        Chirality::findPotentialStereo(*mol, cleanIt, flagPossible);
+    CHECK(stereoInfo.size() == 2);
   }
 }
