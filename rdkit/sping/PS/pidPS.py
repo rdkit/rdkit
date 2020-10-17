@@ -564,8 +564,8 @@ translate
     # Have not handled characters that are converted normally in python strings
     # i.e. \n -> newline
     str = s.replace(chr(0x5C), r'\\')
-    str = str.replace('(', '\(')
-    str = str.replace(')', '\)')
+    str = str.replace('(', r'\(')
+    str = str.replace(')', r'\)')
     return str
 
   # ??? check to see if \n response is handled correctly (should move cursor down)
