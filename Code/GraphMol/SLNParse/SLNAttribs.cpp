@@ -496,11 +496,11 @@ void adjustAtomChiralities(RWMol *mol) {
         (*atomIt)->setChiralTag(Atom::CHI_TETRAHEDRAL_CCW);
       }
       std::list<std::pair<int, int> > neighbors;
-      RWMol::ADJ_ITER nbrIdx, endNbrs;
+      RWMol::CONST_ADJ_ITER nbrIdx, endNbrs;
       boost::tie(nbrIdx, endNbrs) = mol->getAtomNeighbors(*atomIt);
       while (nbrIdx != endNbrs) {
         Bond *nbrBond = mol->getBondBetweenAtoms((*atomIt)->getIdx(), *nbrIdx);
-        neighbors.emplace_back(*nbrIdx, nbrBond->getIdx());
+        neighbors.emplace_back((*nbrIdx)->getIdx(), nbrBond->getIdx());
         ++nbrIdx;
       }
 

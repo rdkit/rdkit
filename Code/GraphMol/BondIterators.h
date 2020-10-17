@@ -53,7 +53,7 @@ class RDKIT_GRAPHMOL_EXPORT ConstBondIterator_ {
  public:
   ConstBondIterator_()  {};
   ConstBondIterator_(ROMol const *mol);
-  ConstBondIterator_(ROMol const *mol, ROMol::EDGE_ITER pos);
+  ConstBondIterator_(ROMol const *mol, ROMol::CONST_EDGE_ITER pos);
   ConstBondIterator_(const ConstBondIterator_ &other);
   ConstBondIterator_ &operator=(const ConstBondIterator_ &other);
   bool operator==(const ConstBondIterator_ &other) const;
@@ -67,7 +67,7 @@ class RDKIT_GRAPHMOL_EXPORT ConstBondIterator_ {
   ConstBondIterator_ operator--(int);
 
  private:
-  ROMol::EDGE_ITER _beg, _end, _pos;
+  ROMol::CONST_EDGE_ITER _beg, _end, _pos;
   ROMol const *_mol{nullptr};
 };
 }  // namespace RDKit

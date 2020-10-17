@@ -283,7 +283,7 @@ ExplicitBitVect *PatternFingerprintMol(const ROMol &mol, unsigned int fpSize,
       }
       auto tautomerBitId = bitId;
       auto tautomerQuery = false;
-      ROMol::EDGE_ITER firstB, lastB;
+      ROMol::CONST_EDGE_ITER firstB, lastB;
       boost::tie(firstB, lastB) = patt->getEdges();
 #ifdef VERBOSE_FINGERPRINTING
       std::cerr << " bs:|| ";

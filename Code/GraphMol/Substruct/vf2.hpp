@@ -399,7 +399,7 @@ class VF2SubState {
       other1 = getOtherIdx(*g1, *bNbrs, node1);
       if (core_1[other1] != NULL_NODE) {
         other2 = core_1[other1];
-        typename Graph::edge_descriptor oEdge;
+        typename Graph::const_edge_descriptor oEdge;
         bool found;
         boost::tie(oEdge, found) = boost::edge(node2, other2, *g2);
         if (!found || !ec((*bNbrs), oEdge)) {

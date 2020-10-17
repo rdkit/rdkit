@@ -404,7 +404,7 @@ struct mol_wrapper {
         .def("RemoveConformer", &ROMol::removeConformer,
              "Remove the conformer with the specified ID")
         .def("GetBondBetweenAtoms",
-             (Bond * (ROMol::*)(unsigned int, unsigned int)) &
+             (Bond * (ROMol::*)(int,  int)) &
                  ROMol::getBondBetweenAtoms,
              python::return_internal_reference<
                  1, python::with_custodian_and_ward_postcall<0, 1>>(),

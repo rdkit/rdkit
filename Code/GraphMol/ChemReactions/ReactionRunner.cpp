@@ -341,7 +341,7 @@ RWMOL_SPTR convertTemplateToMol(const ROMOL_SPTR prodTemplateSptr) {
     }
   }
   // and the bonds:
-  ROMol::BOND_ITER_PAIR bondItP = prodTemplate->getEdges();
+  ROMol::CONST_BOND_ITER_PAIR bondItP = prodTemplate->getEdges();
   while (bondItP.first != bondItP.second) {
     const Bond *oldB = (*prodTemplate)[*(bondItP.first++)];
     unsigned int bondIdx;
@@ -409,7 +409,7 @@ ReactantProductAtomMapping *getAtomMappingsReactantProduct(
   // each other.
   // This is part of the fix for #1387
   {
-    ROMol::EDGE_ITER firstB, lastB;
+    ROMol::CONST_EDGE_ITER firstB, lastB;
     boost::tie(firstB, lastB) = reactantTemplate.getEdges();
     while (firstB != lastB) {
       const Bond *bond = reactantTemplate[*firstB];

@@ -785,7 +785,7 @@ bool _atomSearchBFS(const ROMol &tMol, unsigned int startAtomIdx,
     bfsq.pop_front();
 
     unsigned int currAtomIdx = tv.back();
-    ROMol::ADJ_ITER nbrIdx, endNbrs;
+    ROMol::CONST_ADJ_ITER nbrIdx, endNbrs;
     boost::tie(nbrIdx, endNbrs) =
         tMol.getAtomNeighbors(tMol.getAtomWithIdx(currAtomIdx));
     while (nbrIdx != endNbrs) {
@@ -892,7 +892,7 @@ int findSSSR(const ROMol &mol, VECT_INT_VECT &res) {
   activeBonds.set();
 
   // Zero-order bonds are not candidates for rings
-  ROMol::EDGE_ITER firstB, lastB;
+  ROMol::CONST_EDGE_ITER firstB, lastB;
   boost::tie(firstB, lastB) = mol.getEdges();
   while (firstB != lastB) {
     const Bond *bond = mol[*firstB];
@@ -1244,7 +1244,7 @@ void _DFS(const ROMol &mol, const Atom *atom, INT_VECT &atomColors,
   atomColors[atom->getIdx()] = 1;
   traversalOrder.push_back(atom);
 
-  ROMol::ADJ_ITER nbrIter, endNbrs;
+  ROMol::CONST_ADJ_ITER nbrIter, endNbrs;
   boost::tie(nbrIter, endNbrs) = mol.getAtomNeighbors(atom);
   while (nbrIter != endNbrs) {
     const Atom *nbr = mol[*nbrIter];

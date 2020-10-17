@@ -75,7 +75,7 @@ double computeBalabanJ(const ROMol &mol, bool useBO, bool force,
       std::vector<int> atomsInPath;
       atomsInPath.reserve(bondPath->size() + 1);
 
-      ROMol::EDGE_ITER beg, end;
+      ROMol::CONST_EDGE_ITER beg, end;
       boost::tie(beg, end) = mol.getEdges();
       while (beg != end) {
         const Bond *bond = mol[*beg];

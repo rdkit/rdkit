@@ -83,7 +83,7 @@ ConstBondIterator_::ConstBondIterator_(ROMol const *mol) {
   boost::tie(_beg, _end) = mol->getEdges();
   _pos = _beg;
 };
-ConstBondIterator_::ConstBondIterator_(ROMol const *mol, ROMol::EDGE_ITER pos) {
+ConstBondIterator_::ConstBondIterator_(ROMol const *mol, ROMol::CONST_EDGE_ITER pos) {
   _mol = mol;
   boost::tie(_beg, _end) = mol->getEdges();
 

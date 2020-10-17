@@ -140,7 +140,7 @@ std::vector<unsigned int> calcMQNs(const ROMol& mol, bool force) {
   // ---------------------------------------------------
   // bond counts:
   unsigned int nAromatic = 0;
-  ROMol::EDGE_ITER firstB, lastB;
+  ROMol::CONST_EDGE_ITER firstB, lastB;
   boost::tie(firstB, lastB) = mol.getEdges();
   while (firstB != lastB) {
     const Bond* bond = mol[*firstB];

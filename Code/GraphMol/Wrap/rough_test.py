@@ -4420,8 +4420,12 @@ $$$$
     except IndexError as e:
       import platform
       details = str(e)
+      print("**", details)
       # not the best error message in the world...
-      self.assertEqual("vector", details)
+      # clang "vector"
+      # gnu "'vector' != 'vector::_M_range_check: __n (which is 3) >= this->size() (which is 1)'"
+      self.assertTrue("vector" in details)
+      #self.assertEqual("vector", details)
       #if platform.system() == 'Windows':
       #  details = details.replace('\\', '/')
       #self.assertTrue("Code/GraphMol/ROMol.cpp".lower() in details.lower())

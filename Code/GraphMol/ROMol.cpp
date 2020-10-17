@@ -280,36 +280,48 @@ unsigned int ROMol::getNumBonds(bool onlyHeavy) const {
   return res;
 }
 
-Bond *ROMol::getBondBetweenAtoms(unsigned int idx1, unsigned int idx2) {
+Bond *ROMol::getBondBetweenAtoms(int idx1, int idx2) {
   URANGE_CHECK(idx1, getNumAtoms());
   URANGE_CHECK(idx2, getNumAtoms());
+  unsigned int uidx1 = rdcast<unsigned int>(idx1);
+  unsigned int uidx2 = rdcast<unsigned int>(idx2);
+  
     for (auto *bond : _bonds) {
-        if ((bond->getBeginAtomIdx() == idx1 and bond->getEndAtomIdx() == idx2) ||
-            (bond->getBeginAtomIdx() == idx2 and bond->getEndAtomIdx() == idx1)) {
+        if ((bond->getBeginAtomIdx() == uidx1 and bond->getEndAtomIdx() == uidx2) ||
+            (bond->getBeginAtomIdx() == uidx2 and bond->getEndAtomIdx() == uidx1)) {
             return bond;
         }
     }
     return nullptr;
 }
 
-const Bond *ROMol::getBondBetweenAtoms(unsigned int idx1,
-                                       unsigned int idx2) const {
+const Bond *ROMol::getBondBetweenAtoms(int idx1,
+                                       int idx2) const {
     
   URANGE_CHECK(idx1, getNumAtoms());
   URANGE_CHECK(idx2, getNumAtoms());
-    
+  unsigned int uidx1 = rdcast<unsigned int>(idx1);
+  unsigned int uidx2 = rdcast<unsigned int>(idx2);
+  
     for (auto *bond : _bonds) {
-        if ((bond->getBeginAtomIdx() == idx1 and bond->getEndAtomIdx() == idx2) ||
-            (bond->getBeginAtomIdx() == idx2 and bond->getEndAtomIdx() == idx1)) {
+        if ((bond->getBeginAtomIdx() == uidx1 and bond->getEndAtomIdx() == uidx2) ||
+            (bond->getBeginAtomIdx() == uidx2 and bond->getEndAtomIdx() == uidx1)) {
             return bond;
         }
     }
     return nullptr;
 }
 
-
-ROMol::ADJ_ITER_PAIR ROMol::getAtomNeighbors(Atom const *at) const {
-    return std::make_pair(at->nbrs().begin(), at->nbrs().end());
+ROMol::ADJ_ITER_PAIR ROMol::getAtomNeighbors(Atom const *at) {
+  ADJ_ITER begin = at->nbrs().begin();
+  ADJ_ITER end = at->nbrs().end();
+  return std::make_pair(begin, end);
+};
+  
+ROMol::CONST_ADJ_ITER_PAIR ROMol::getAtomNeighbors(Atom const *at) const {
+  CONST_ADJ_ITER begin = at->nbrs().begin();
+  CONST_ADJ_ITER end = at->nbrs().end();
+  return std::make_pair(begin, end);
 };
 
 ROMol::OBOND_ITER_PAIR ROMol::getAtomBonds(Atom const *at) const {
@@ -467,7 +479,7 @@ ROMol::BondIterator ROMol::endBonds() {
   return BondIterator(this, end);
 }
 ROMol::ConstBondIterator ROMol::endBonds() const {
-  EDGE_ITER beg, end;
+  CONST_EDGE_ITER beg, end;
   boost::tie(beg, end) = getEdges();
   return ConstBondIterator(this, end);
 }

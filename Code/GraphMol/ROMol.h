@@ -112,19 +112,25 @@ class RDKIT_GRAPHMOL_EXPORT ROMol : public RDProps {
   //! \name typedefs
   //@{
     
-  typedef const Atom* vertex_descriptor;
-  typedef const Bond* edge_descriptor;
+  typedef Atom* vertex_descriptor;
+  typedef Bond* edge_descriptor;
+  typedef const Bond* const_edge_descriptor;
     
     typedef std::vector<RDKit::Bond*>::const_iterator out_edge_iterator;
 
-    typedef std::vector<edge_descriptor>::const_iterator EDGE_ITER;
-    typedef std::vector<edge_descriptor>::const_iterator OEDGE_ITER;
-    typedef std::vector<vertex_descriptor>::const_iterator VERTEX_ITER;
-    typedef std::vector<vertex_descriptor>::const_iterator ADJ_ITER;
+    typedef std::vector<Bond*>::iterator EDGE_ITER;    
+    typedef std::vector<Bond*>::const_iterator CONST_EDGE_ITER;
+    typedef std::vector<Bond*>::const_iterator OEDGE_ITER;
+    typedef std::vector<Atom*>::const_iterator VERTEX_ITER;
+    typedef std::vector<Atom*>::const_iterator ADJ_ITER;
+    typedef std::vector<Atom*>::const_iterator CONST_ADJ_ITER;
+
   typedef std::pair<EDGE_ITER, EDGE_ITER> BOND_ITER_PAIR;
+  typedef std::pair<CONST_EDGE_ITER, CONST_EDGE_ITER> CONST_BOND_ITER_PAIR;
   typedef std::pair<OEDGE_ITER, OEDGE_ITER> OBOND_ITER_PAIR;
   typedef std::pair<VERTEX_ITER, VERTEX_ITER> ATOM_ITER_PAIR;
   typedef std::pair<ADJ_ITER, ADJ_ITER> ADJ_ITER_PAIR;
+  typedef std::pair<CONST_ADJ_ITER, CONST_ADJ_ITER> CONST_ADJ_ITER_PAIR;
     
   typedef std::vector<Atom *> ATOM_PTR_VECT;
   typedef ATOM_PTR_VECT::iterator ATOM_PTR_VECT_I;
@@ -243,7 +249,7 @@ class RDKIT_GRAPHMOL_EXPORT ROMol : public RDProps {
   }
    
   //! \overload
-  template <class U>
+  template <class U, class = typename std::enable_if<std::is_integral<U>::value>::type>
   const Atom *getAtomWithIdx(const U idx) const {
     return getAtomWithIdx(rdcast<unsigned int>(idx));
   }
@@ -271,30 +277,58 @@ class RDKIT_GRAPHMOL_EXPORT ROMol : public RDProps {
     return getBondWithIdx(rdcast<unsigned int>(idx));
   }
   //! returns a pointer to the bond between two atoms, Null on failure
-  Bond *getBondBetweenAtoms(unsigned int idx1, unsigned int idx2);
+  Bond *getBondBetweenAtoms(int idx1, int idx2);
   //! \overload
-  const Bond *getBondBetweenAtoms(unsigned int idx1, unsigned int idx2) const;
-    
-  //! \overload
-  Bond *getBondBetweenAtoms(const Atom *atm, unsigned int idx2) { return getBondBetweenAtoms(atm->getIdx(), idx2); }
-  //! \overload
-  Bond *getBondBetweenAtoms(unsigned int idx1, const Atom *atm) { return getBondBetweenAtoms(idx1, atm->getIdx()); }
-  //! \overload
-  const Bond *getBondBetweenAtoms(const Atom *atm, unsigned int idx2) const { return getBondBetweenAtoms(atm->getIdx(), idx2); }
-  //! \overload
-  const Bond *getBondBetweenAtoms(unsigned int idx1, const Atom *atm) const { return getBondBetweenAtoms(idx1, atm->getIdx()); }
+  const Bond *getBondBetweenAtoms(int idx1, int idx2) const;
 
-  //! \overload
-  template <class U, class V>
-  Bond *getBondBetweenAtoms(const U idx1, const V idx2) {
-    return getBondBetweenAtoms(rdcast<unsigned int>(idx1),
-                               rdcast<unsigned int>(idx2));
+  /*
+  //! returns a pointer to the bond between two atoms, Null on failure
+  Bond *getBondBetweenAtoms(int idx1, unsigned int idx2) {
+    return getBondBetweenAtoms(rdcast<unsigned int>(idx1), idx2);
   }
   //! \overload
-  template <class U, class V>
+  const Bond *getBondBetweenAtoms(unsigned int idx1, int idx2) const {
+    return getBondBetweenAtoms(idx1, rdcast<unsigned int>(idx2));
+  }
+  //! \overload
+  const Bond *getBondBetweenAtoms(int idx1, int idx2) const {
+    return getBondBetweenAtoms(rdcast<unsigned int>(idx1), rdcast<unsigned int>(idx2));
+  }      
+  */
+  
+  //! \overload
+  Bond *getBondBetweenAtoms(const Atom *atm, int idx2) { return getBondBetweenAtoms(atm->getIdx(), idx2); }
+  //! \overload
+  Bond *getBondBetweenAtoms(int idx1, const Atom *atm) { return getBondBetweenAtoms(idx1, atm->getIdx()); }
+  //! \overload
+  const Bond *getBondBetweenAtoms(const Atom *atm, int idx2) const { return getBondBetweenAtoms(atm->getIdx(), idx2); }
+  //! \overload
+  const Bond *getBondBetweenAtoms(int idx1, const Atom *atm) const { return getBondBetweenAtoms(idx1, atm->getIdx()); }
+  /*
+  //! \overload
+  template <class U, class = typename std::enable_if<std::is_integral<U>::value>::type>
+    Bond *getBondBetweenAtoms(const Atom *atm, U u) { return getBondBetweenAtoms(atm->getIdx(), u); }
+  //! \overload
+  template <class U, class = typename std::enable_if<std::is_integral<U>::value>::type>
+    Bond *getBondBetweenAtoms(U u, const Atom *atm) { return getBondBetweenAtoms(u, atm->getIdx()); }
+  //! \overload
+  template <class U, class = typename std::enable_if<std::is_integral<U>::value>::type>
+    const Bond *getBondBetweenAtoms(const Atom *atm, U u) const { return getBondBetweenAtoms(atm->getIdx(), u); }
+  //! \overload
+  template <class U, class = typename std::enable_if<std::is_integral<U>::value>::type>
+    const Bond *getBondBetweenAtoms(U u, const Atom *atm) const { return getBondBetweenAtoms(u, atm->getIdx()); }						      
+  */
+  //! \overload
+  template <class U, class V, class = typename std::enable_if<std::is_integral<U>::value>::type, class = typename std::enable_if<std::is_integral<V>::value>::typeo >
+  Bond *getBondBetweenAtoms(const U idx1, const V idx2) {
+    return getBondBetweenAtoms(rdcast<int>(idx1),
+                               rdcast<int>(idx2));
+  }
+  //! \overload
+  template <class U, class V, class = typename std::enable_if<std::is_integral<U>::value>::type, class = typename std::enable_if<std::is_integral<V>::value>::typeo >
   const Bond *getBondBetweenAtoms(const U idx1, const V idx2) const {
-    return getBondBetweenAtoms(rdcast<unsigned int>(idx1),
-                               rdcast<unsigned int>(idx2));
+    return getBondBetweenAtoms(rdcast<int>(idx1),
+                               rdcast<int>(idx2));
   }
 
   //@}
@@ -413,7 +447,26 @@ class RDKIT_GRAPHMOL_EXPORT ROMol : public RDProps {
     \endcode
 
   */
-  ADJ_ITER_PAIR getAtomNeighbors(Atom const *at) const;
+  ADJ_ITER_PAIR getAtomNeighbors(Atom const *at);
+  //! provides access to all neighbors around an Atom
+  /*!
+    \param at the atom whose neighbors we are looking for
+
+    <b>Usage</b>
+    \code
+      ... mol is a const ROMol & ...
+      ... atomPtr is a const Atom * ...
+      ... requires #include <boost/range/iterator_range.hpp>
+      for (const auto &nbri :
+           boost::make_iterator_range(m.getAtomNeighbors(atomPtr))) {
+        const auto &nbr = (*m)[nbri];
+        // nbr is an atom pointer
+      }
+
+    \endcode
+
+  */
+  CONST_ADJ_ITER_PAIR getAtomNeighbors(Atom const *at) const;
 
   //! provides access to all Bond objects connected to an Atom
   /*!
@@ -478,16 +531,32 @@ class RDKIT_GRAPHMOL_EXPORT ROMol : public RDProps {
       }
     \endcode
   */
-  std::pair<std::vector<Bond*>::iterator, std::vector<Bond*>::iterator>
-    getEdges() {return std::make_pair(_bonds.begin(), _bonds.end());}
+   //  std::pair<std::vector<Bond*>::iterator, std::vector<Bond*>::iterator>
+   std::pair<EDGE_ITER, EDGE_ITER>
+    getEdges() {
+        EDGE_ITER begin = _bonds.begin();
+	EDGE_ITER  end = _bonds.end();
+	return std::make_pair(begin, end);
+  }
     
   //! \overload
   std::pair<std::vector<Atom*>::const_iterator, std::vector<Atom*>::const_iterator>
-  getVertices() const {return std::make_pair(_atoms.begin(), _atoms.end());}
+  getVertices() const {
+    std::vector<Atom*>::const_iterator begin = _atoms.begin();
+    std::vector<Atom*>::const_iterator end = _atoms.end();
+    return std::make_pair(begin, end);
+  }
     
   //! \overload
-  std::pair<std::vector<Bond*>::const_iterator, std::vector<Bond*>::const_iterator>
-  getEdges() const {return std::make_pair(_bonds.begin(), _bonds.end());}
+  //  std::pair<std::vector<Bond*>::const_iterator,
+  //            std::vector<Bond*>::const_iterator>
+  std::pair<CONST_EDGE_ITER, CONST_EDGE_ITER>
+  getEdges() const {
+    CONST_EDGE_ITER begin = _bonds.begin();
+    CONST_EDGE_ITER end = _bonds.end();    
+    return std::make_pair(begin, end);
+  }
+    
 
   //! brief returns a pointer to our underlying BGL object
   /*!

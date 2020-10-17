@@ -335,7 +335,7 @@ void enumerateAllPaths(const ROMol &mol, INT_PATH_LIST_MAP &allPaths,
 void identifyQueryBonds(const ROMol &mol, std::vector<const Bond *> &bondCache,
                         std::vector<short> &isQueryBond) {
   bondCache.resize(mol.getNumBonds());
-  ROMol::EDGE_ITER firstB, lastB;
+  ROMol::CONST_EDGE_ITER firstB, lastB;
   boost::tie(firstB, lastB) = mol.getEdges();
   while (firstB != lastB) {
     const Bond *bond = mol[*firstB];

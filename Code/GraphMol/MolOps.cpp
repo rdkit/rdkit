@@ -77,8 +77,8 @@ void nitrogenCleanup(RWMol &mol, Atom *atom) {
     RWMol::ADJ_ITER nid1, end1;
     boost::tie(nid1, end1) = mol.getAtomNeighbors(atom);
     while (nid1 != end1) {
-      if ((mol.getAtomWithIdx(*nid1)->getAtomicNum() == 8) &&
-          (mol.getAtomWithIdx(*nid1)->getFormalCharge() == 0) &&
+      if ((mol.getAtomWithIdx((const Atom*)*nid1)->getAtomicNum() == 8) &&
+          (mol.getAtomWithIdx((const Atom*)*nid1)->getFormalCharge() == 0) &&
           (mol.getBondBetweenAtoms(aid, (*nid1)->getIdx())->getBondType() ==
            Bond::DOUBLE)) {
         // here's the double bonded oxygen
@@ -481,7 +481,7 @@ std::vector<ROMOL_SPTR> getMolFrags(const ROMol &mol, bool sanitizeFrags,
       }
       // loop over neighbors and add bonds in the fragment to all atoms
       // that are already in the same fragment
-      ROMol::ADJ_ITER nbrIdx, endNbrs;
+      ROMol::CONST_ADJ_ITER nbrIdx, endNbrs;
       boost::tie(nbrIdx, endNbrs) = mol.getAtomNeighbors(oAtm);
       while (nbrIdx != endNbrs) {
         if (copiedAtoms[(*nbrIdx)->getIdx()]) {
@@ -512,7 +512,7 @@ std::vector<ROMOL_SPTR> getMolFrags(const ROMol &mol, bool sanitizeFrags,
     }
 
     // copy bonds and bond stereochemistry information
-    ROMol::EDGE_ITER beg, end;
+    ROMol::CONST_EDGE_ITER beg, end;
     boost::tie(beg, end) = mol.getEdges();
     while (beg != end) {
       const Bond *bond = (mol)[*beg];
@@ -679,7 +679,7 @@ std::map<T, boost::shared_ptr<ROMol>> getMolFragsWithQuery(
     ids[i] = frag->addAtom(mol.getAtomWithIdx(i)->copy(), false, true);
     // loop over neighbors and add bonds in the fragment to all atoms
     // that are already in the same fragment
-    ROMol::ADJ_ITER nbrIdx, endNbrs;
+    ROMol::CONST_ADJ_ITER nbrIdx, endNbrs;
     boost::tie(nbrIdx, endNbrs) = mol.getAtomNeighbors(mol.getAtomWithIdx(i));
     while (nbrIdx != endNbrs) {
       if ((*nbrIdx)->getIdx() < i && assignments[(*nbrIdx)->getIdx()] == where) {
