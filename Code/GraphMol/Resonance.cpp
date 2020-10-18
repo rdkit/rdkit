@@ -132,7 +132,7 @@ class ConjElectrons {
   bool checkChargesAndBondOrders();
   void computeMetrics();
   bool checkMetrics(CEStats &ceStats, bool &ok) const;
-  void purgeMaps(CEMap &ceMap, CEDegCount &ceDegCount, CEStats &ceStats) const;
+  bool purgeMaps(CEMap &ceMap, CEDegCount &ceDegCount, CEStats &ceStats) const;
   void updateDegCount(CEDegCount &ceDegCount);
   std::size_t computeFP(unsigned int flags);
   inline bool haveFP(CESet &ceSet, unsigned int flags);
@@ -833,23 +833,28 @@ bool ConjElectrons::checkMetrics(CEStats &ceStats, bool &changed) const {
   return ok;
 }
 
-void ConjElectrons::purgeMaps(CEMap &ceMap, CEDegCount &ceDegCount,
+bool ConjElectrons::purgeMaps(CEMap &ceMap, CEDegCount &ceDegCount,
                               CEStats &ceStats) const {
+  bool ok  = true;
   bool changed = true;
   while (changed) {
-    for (CEMap::iterator it = ceMap.begin(); it != ceMap.end();) {
+    for (auto it = ceMap.begin(); it != ceMap.end();) {
       if (!it->second->checkMetrics(ceStats, changed)) {
-        CEMap::iterator toBeDeleted = it;
-        ++it;
-        auto it2 = ceDegCount.find(toBeDeleted->second->hash());
+        auto it2 = ceDegCount.find(it->second->hash());
         if (it2 != ceDegCount.end()) {
           --it2->second;
           if (!it2->second) {
             ceDegCount.erase(it2);
           }
         }
-        delete toBeDeleted->second;
-        ceMap.erase(toBeDeleted);
+        if (it->second == this) {
+          // postpone slef deletion
+          ok = false;
+        } else {
+            delete it->second;
+        }
+        it = ceMap.erase(it);
+        changed = true;
       } else {
         ++it;
       }
@@ -858,6 +863,7 @@ void ConjElectrons::purgeMaps(CEMap &ceMap, CEDegCount &ceDegCount,
       }
     }
   }
+  return ok;
 }
 
 // assign formal charges and, if they are acceptable, store
@@ -877,7 +883,7 @@ bool ConjElectrons::assignFormalChargesAndStore(CEMap &ceMap,
     ok = storeFP(ceMap, fpFlags);
   }
   if (changed) {
-    purgeMaps(ceMap, ceDegCount, ceStats);
+    ok = purgeMaps(ceMap, ceDegCount, ceStats);
   }
   if (ok) {
     updateDegCount(ceDegCount);
