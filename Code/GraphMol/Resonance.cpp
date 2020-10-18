@@ -1711,6 +1711,10 @@ void ResonanceMolSupplier::buildCEMap(CEMap &ceMap, unsigned int conjGrpIdx) {
       }
     }
   }
+  while (!ceStack.empty()) {
+    delete ceStack.top();
+    ceStack.pop();
+  }
 }
 
 // getter function which returns the bondConjGrpIdx for a given
