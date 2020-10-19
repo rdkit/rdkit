@@ -75,9 +75,9 @@ bool setLabel(Atom *atom, int label, std::set<int> &labels, int &maxLabel,
     if (labels.find(label) != labels.end()) {
       if (relabel) {
         if (type == Labelling::INTERNAL_LABELS) {
-          std::cerr << "WARNING:  relabelling existing label" << std::endl;
+          BOOST_LOG(rdWarningLog) << "Relabelling existing label" << std::endl;
         }
-        label = maxLabel + 1;
+        label = maxLabel;
       } else {
         // XXX FIX me - get label id
         throw ValueErrorException(
@@ -88,7 +88,7 @@ bool setLabel(Atom *atom, int label, std::set<int> &labels, int &maxLabel,
 
     atom->setProp<int>(RLABEL, label);
     labels.insert(label);
-    maxLabel = label + 1;
+    maxLabel = (std::max)(maxLabel, label + 1);
     return true;
   }
   return false;

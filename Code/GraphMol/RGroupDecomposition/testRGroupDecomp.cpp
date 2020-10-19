@@ -45,7 +45,7 @@ typedef boost::tokenizer<boost::char_separator<char>> tokenizer;
 
 using namespace RDKit;
 
-void CHECK_RGROUP(RGroupRows::const_iterator &it, std::string expected,
+void CHECK_RGROUP(RGroupRows::const_iterator &it, const std::string &expected,
                   bool doassert = true) {
   std::ostringstream str;
   int i = 0;
@@ -1355,6 +1355,243 @@ CCCC[*:2]
   }
 }
 
+void testMultiCorePreLabelled() {
+  BOOST_LOG(rdInfoLog)
+      << "********************************************************\n";
+  BOOST_LOG(rdInfoLog) << "test multi core pre-labelled" << std::endl;
+
+  struct MultiCoreRGD {
+    static void test(
+        const std::vector<ROMOL_SPTR> &cores,
+        RGroupDecompositionParameters &params,
+        const std::vector<std::string> &expectedLabels,
+        const std::vector<std::string> &expectedRows,
+        const std::vector<std::vector<std::string>> &expectedItems) {
+      std::vector<ROMOL_SPTR> mols{"CNC(=O)C1=CN=CN1CC"_smiles,
+                                   "Fc1ccc2ccc(Br)nc2n1"_smiles};
+      params.removeHydrogensPostMatch = true;
+      params.onlyMatchAtRGroups = true;
+      RGroupDecomposition decomp(cores, params);
+      unsigned int i = 0;
+      for (const auto &m : mols) {
+        unsigned int res = decomp.add(*m);
+        TEST_ASSERT(res == i++);
+      }
+      decomp.process();
+      RGroupRows rows = decomp.getRGroupsAsRows();
+      i = 0;
+      for (RGroupRows::const_iterator it = rows.begin(); it != rows.end();
+           ++it, ++i) {
+        CHECK_RGROUP(it, expectedRows[i] /*, false*/);
+      }
+      RGroupColumns groups = decomp.getRGroupsAsColumns();
+      i = 0;
+      TEST_ASSERT(groups.size() == 3);
+      for (const auto &pair : groups) {
+        /*
+        if (pair.first != expectedLabels[i]) {
+          std::cerr << "ERROR: Expected " << expectedLabels[i] << ", got "
+                    << pair.first << std::endl;
+        }
+        */
+        TEST_ASSERT(pair.first == expectedLabels[i]);
+        unsigned int j = 0;
+        for (const auto &item : pair.second) {
+          /*
+          if (expectedItems[i][j] != MolToSmiles(*item)) {
+            std::cerr << "ERROR: Expected " << expectedItems[i][j] << ", got "
+                      << MolToSmiles(*item) << std::endl;
+          }
+          */
+          TEST_ASSERT(expectedItems[i][j] == MolToSmiles(*item));
+          ++j;
+        }
+        ++i;
+      }
+    }
+  };
+
+  std::string sdcores = R"CTAB(
+     RDKit          2D
+
+  9  9  0  0  0  0  0  0  0  0999 V2000
+    1.1100   -1.3431    0.0000 N   0  0  0  0  0  0  0  0  0  0  0  0
+    1.5225   -0.6286    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    0.9705   -0.0156    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    0.2168   -0.3511    0.0000 N   0  0  0  0  0  0  0  0  0  0  0  0
+    0.3029   -1.1716    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    1.1419    0.7914    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    0.5289    1.3431    0.0000 O   0  0  0  0  0  0  0  0  0  0  0  0
+    1.9266    1.0463    0.0000 R#  0  0  0  0  0  0  0  0  0  0  0  0
+   -0.4976    0.0613    0.0000 R#  0  0  0  0  0  0  0  0  0  0  0  0
+  1  2  1  0
+  2  3  2  0
+  3  4  1  0
+  4  5  1  0
+  1  5  2  0
+  3  6  1  0
+  6  7  2  0
+  6  8  1  0
+  4  9  1  0
+M  RGP  2   8   1   9   2
+V    8 *
+V    9 *
+M  END
+$$$$
+
+     RDKit          2D
+
+ 12 13  0  0  0  0  0  0  0  0999 V2000
+   -6.5623    0.3977    0.0000 R#  0  0  0  0  0  0  0  0  0  0  0  0
+   -5.8478   -0.0147    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -5.1333    0.3977    0.0000 A   0  0  0  0  0  0  0  0  0  0  0  0
+   -4.4188   -0.0147    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -4.4188   -0.8397    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -5.1333   -1.2522    0.0000 A   0  0  0  0  0  0  0  0  0  0  0  0
+   -5.8478   -0.8397    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -3.7044   -1.2522    0.0000 A   0  0  0  0  0  0  0  0  0  0  0  0
+   -3.7044    0.3977    0.0000 N   0  0  0  0  0  0  0  0  0  0  0  0
+   -2.9899   -0.0147    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -2.9899   -0.8397    0.0000 A   0  0  0  0  0  0  0  0  0  0  0  0
+   -2.2754    0.3978    0.0000 R#  0  0  0  0  0  0  0  0  0  0  0  0
+  3  4  1  0
+  4  5  2  0
+  5  6  1  0
+  6  7  2  0
+  2  3  2  0
+  2  7  1  0
+  9 10  2  0
+ 10 11  1  0
+  8 11  2  0
+  8  5  1  0
+  4  9  1  0
+ 10 12  1  0
+  1  2  1  0
+M  RGP  2   1   2  12   1
+V    1 *
+V   12 *
+M  END
+$$$$
+)CTAB";
+  std::vector<ROMOL_SPTR> cores;
+  SDMolSupplier sdsup;
+  sdsup.setData(sdcores);
+  while (!sdsup.atEnd()) {
+    cores.emplace_back(sdsup.next());
+  }
+  std::vector<std::string> expectedRowsAutodetect{
+      "Core:O=C(c1cncn1[*:2])[*:1] R1:CN[*:1] R2:CC[*:2]",
+      "Core:*1:*c2c(*c([*:2])c[*:1]2)nc1[*:3] R1:c(:[*:1]):[*:1] R2:Br[*:2]"};
+  std::vector<std::vector<std::string>> expectedItemsAutodetect{
+      {"O=C(c1cncn1[*:2])[*:1]", "*1:*c2c(*c([*:2])c[*:1]2)nc1[*:3]"},
+      {"CN[*:1]", "c(:[*:1]):[*:1]"},
+      {"CC[*:2]", "Br[*:2]"}};
+  std::vector<std::string> expectedRowsNoAutodetect{
+      "Core:O=C(c1cncn1[*:2])[*:1] R1:CN[*:1] R2:CC[*:2]",
+      "Core:*1:*c2*cc([*:2])*c2nc1[*:1] R1:F[*:1] R2:Br[*:2]"};
+  std::vector<std::vector<std::string>> expectedItemsNoAutodetect{
+      {"O=C(c1cncn1[*:2])[*:1]", "*1:*c2*cc([*:2])*c2nc1[*:1]"},
+      {"CN[*:1]", "F[*:1]"},
+      {"CC[*:2]", "Br[*:2]"}};
+  std::vector<std::string> expectedLabels{"Core", "R1", "R2"};
+  RGroupDecompositionParameters params;
+
+  // test pre-labelled with MDL R-group labels, autodetect
+  params.labels = AutoDetect;
+  params.alignment = MCS;
+  MultiCoreRGD::test(cores, params, expectedLabels, expectedRowsAutodetect,
+                     expectedItemsAutodetect);
+  // test pre-labelled with MDL R-group labels, no autodetect
+  params.labels = MDLRGroupLabels | RelabelDuplicateLabels;
+  params.alignment = MCS;
+  MultiCoreRGD::test(cores, params, expectedLabels, expectedRowsNoAutodetect,
+                     expectedItemsNoAutodetect);
+  // test pre-labelled with MDL R-group labels, autodetect, no MCS alignment
+  params.labels = AutoDetect;
+  params.alignment = NoAlignment;
+  MultiCoreRGD::test(cores, params, expectedLabels, expectedRowsNoAutodetect,
+                     expectedItemsNoAutodetect);
+
+  // Reading from a MDL molblock also sets isotopic labels, so no need
+  // to set them again; we only clear MDL R-group labels
+  for (auto &core : cores) {
+    for (auto a : core->atoms()) {
+      if (a->hasProp(common_properties::_MolFileRLabel)) {
+        a->clearProp(common_properties::_MolFileRLabel);
+      }
+    }
+  }
+  // test pre-labelled with isotopic labels, autodetect
+  params.labels = AutoDetect;
+  params.alignment = MCS;
+  MultiCoreRGD::test(cores, params, expectedLabels, expectedRowsAutodetect,
+                     expectedItemsAutodetect);
+  // test pre-labelled with isotopic labels, no autodetect
+  params.labels = IsotopeLabels | RelabelDuplicateLabels;
+  params.alignment = MCS;
+  MultiCoreRGD::test(cores, params, expectedLabels, expectedRowsNoAutodetect,
+                     expectedItemsNoAutodetect);
+  // test pre-labelled with isotopic labels, autodetect, no MCS alignment
+  params.labels = AutoDetect;
+  params.alignment = NoAlignment;
+  MultiCoreRGD::test(cores, params, expectedLabels, expectedRowsNoAutodetect,
+                     expectedItemsNoAutodetect);
+
+  for (auto &core : cores) {
+    for (auto a : core->atoms()) {
+      auto iso = a->getIsotope();
+      if (iso) {
+        a->setAtomMapNum(iso);
+        a->setIsotope(0);
+      }
+    }
+  }
+  // test pre-labelled with atom map labels, autodetect
+  params.labels = AutoDetect;
+  params.alignment = MCS;
+  MultiCoreRGD::test(cores, params, expectedLabels, expectedRowsAutodetect,
+                     expectedItemsAutodetect);
+  // test pre-labelled with atom map labels, no autodetect
+  params.labels = AtomMapLabels | RelabelDuplicateLabels;
+  params.alignment = MCS;
+  MultiCoreRGD::test(cores, params, expectedLabels, expectedRowsNoAutodetect,
+                     expectedItemsNoAutodetect);
+  // test pre-labelled with atom map labels, autodetect, no MCS alignment
+  params.labels = AutoDetect;
+  params.alignment = NoAlignment;
+  MultiCoreRGD::test(cores, params, expectedLabels, expectedRowsNoAutodetect,
+                     expectedItemsNoAutodetect);
+
+  for (auto &core : cores) {
+    for (auto a : core->atoms()) {
+      if (a->getAtomMapNum()) {
+        a->setAtomMapNum(0);
+      }
+    }
+  }
+  // test pre-labelled with dummy atom labels, autodetect
+  expectedRowsAutodetect = std::vector<std::string>{
+      "Core:O=C(c1cncn1[*:2])[*:1] R1:CN[*:1] R2:CC[*:2]",
+      "Core:c1c([*:2])[*:3]c2nc([*:6])[*:5]:[*:4]c2[*:1]1 R1:c(:[*:1]):[*:1] "
+      "R2:Br[*:2]"};
+  expectedItemsAutodetect = std::vector<std::vector<std::string>>{
+      {"O=C(c1cncn1[*:2])[*:1]",
+       "c1c([*:2])[*:3]c2nc([*:6])[*:5]:[*:4]c2[*:1]1"},
+      {"CN[*:1]", "c(:[*:1]):[*:1]"},
+      {"CC[*:2]", "Br[*:2]"}};
+  params.labels = AutoDetect;
+  params.alignment = MCS;
+  MultiCoreRGD::test(cores, params, expectedLabels, expectedRowsAutodetect,
+                     expectedItemsAutodetect);
+  // test pre-labelled with dummy atom labels, no autodetect
+  // in this case there is no difference from autodetect as the RGD code
+  // cannot tell the difference between query atoms and dummy R-groups
+  params.labels = DummyAtomLabels | RelabelDuplicateLabels;
+  params.alignment = MCS;
+  MultiCoreRGD::test(cores, params, expectedLabels, expectedRowsAutodetect,
+                     expectedItemsAutodetect);
+}
+
 int main() {
   RDLog::InitLogs();
 
@@ -1381,6 +1618,7 @@ int main() {
 #endif
   testSymmetryPerformance();
   testScorePermutations();
+  testMultiCorePreLabelled();
   BOOST_LOG(rdInfoLog)
       << "********************************************************\n";
   return 0;
