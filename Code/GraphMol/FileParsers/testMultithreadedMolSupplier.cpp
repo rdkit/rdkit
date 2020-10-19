@@ -235,7 +235,7 @@ void testSDProperties() {
   }
 
   while (!sup.atEnd()) {
-    std::unique_ptr<ROMol> mol{multiSup.next()};
+    std::unique_ptr<ROMol> mol{sup.next()};
     if (mol != nullptr) {
       mol->getProp(common_properties::_Name, tempStr);
       TEST_ASSERT(std::find(nameVector.begin(), nameVector.end(), tempStr) !=
