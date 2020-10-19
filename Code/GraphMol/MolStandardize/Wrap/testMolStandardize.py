@@ -458,6 +458,27 @@ chlorine	[Cl]
       if (taut.GetBondWithIdx(1).GetBondType() == Chem.BondType.DOUBLE):
         self.assertEqual(taut.GetBondWithIdx(1).GetStereo(), Chem.BondStereo.STEREOZ)
 
+    chembl2024142Smi = "[2H]C1=C(C(=C2C(=C1[2H])C(=O)C(=C(C2=O)C([2H])([2H])[2H])C/C=C(\\C)/CC([2H])([2H])/C=C(/CC/C=C(\\C)/CCC=C(C)C)\\C([2H])([2H])[2H])[2H])[2H]"
+    chembl2024142 = Chem.MolFromSmiles(chembl2024142Smi)
+    params = Chem.RemoveHsParameters()
+    params.removeAndTrackIsotopes = True
+    chembl2024142 = Chem.RemoveHs(chembl2024142, params)
+    self.assertTrue(chembl2024142.GetAtomWithIdx(12).HasProp("_isotopicHs"))
+    # test remove isotopic Hs involved in tautomerism
+    params = rdMolStandardize.CleanupParameters()
+    params.tautomerRemoveIsotopicHs = True
+    enumerator = rdMolStandardize.TautomerEnumerator(params)
+    res = enumerator.Enumerate(chembl2024142)
+    for taut in res:
+      self.assertFalse(taut.GetAtomWithIdx(12).HasProp("_isotopicHs"))
+    # test retain isotopic Hs involved in tautomerism
+    params = rdMolStandardize.CleanupParameters()
+    params.tautomerRemoveIsotopicHs = False
+    enumerator = rdMolStandardize.TautomerEnumerator(params)
+    res = enumerator.Enumerate(chembl2024142)
+    for taut in res:
+      self.assertTrue(taut.GetAtomWithIdx(12).HasProp("_isotopicHs"))
+
   def test16EnumeratorCallback(self):
     class MyTautomerEnumeratorCallback(rdMolStandardize.TautomerEnumeratorCallback):
       def __init__(self, parent, timeout_ms):
