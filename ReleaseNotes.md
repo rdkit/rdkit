@@ -45,12 +45,13 @@
   from Python.
 
 ## Highlights
-- There's been another big improvement in the quality of molecule drawings: character
-  and font handling is greatly improved thanks to the use of the FreeType library
+- There's been another big improvement in the quality of molecule drawings:
+  character and font handling is greatly improved thanks to the use of the
+  FreeType library
 - A new feature has been added to efficiently allow tautomer-insensitive
   substructure search.
-- A new, much more accurate, algorithm is available for calculating CIP labels on
-  atoms and bonds.
+- A new, much more accurate, algorithm is available for calculating CIP labels
+  on atoms and bonds.
 - There's a new rdDeprotect module to allow automatically deprotecting molecules
   before putting them into reactions
 
@@ -58,12 +59,12 @@
 Shrey Aryan, Jinserk Baik, Francois Berenger, Cédric Bouysset, David Cosgrove,
 Ivan Chernyshov, Guillaume Godin, Manan Goel, Jan H. Jensen, Gareth Jones, Maria
 Kadukova, Eisuke Kawashima, Steven Kearnes, Brian Kelley, Joos Kiener, Kenneth
-Lum, Joshua Meyers, Paul R Moses, Dan Nealschneider, Jin Pan, Joann
-Prescott-Roy, Matthew Robinson, Jaime Rodríguez-Guerra, Ricardo
+Lum, Joshua Meyers, Rocco Moretti, Paul R Moses, Dan Nealschneider, Jin Pan,
+Joann Prescott-Roy, Matthew Robinson, Jaime Rodríguez-Guerra, Ricardo
 Rodriguez-Schmidt, Jeff van Santen, Roger Sayle Vincent F. Scalfani Eric Taw,
 Ansgar Schuffenhauer, Paolo Tosco, Ivan Tubert-Brohman, Riccardo Vianello,
 Rachel Walker, Maciej Wójcikowski, Christopher Zou, daverona, hjuinj,
-intrigus-lgtm, autodataming, paconius
+intrigus-lgtm, autodataming, paconius, sailfish009
 
 ## Bug Fixes:
   - Python tests fail when RDK_BUILD_COMPRESSED_SUPPLIERS is enabled
@@ -248,6 +249,10 @@ intrigus-lgtm, autodataming, paconius
  (github pull #3477 from ptosco)
   - Fix a crashing bug with None in rdMolStandardize
  (github pull #3481 from greglandrum)
+  - zlib.h not found if not in system directories
+ (github issue #3493 from ricrogz)
+  - fix paths in ConformerParser tests
+ (github pull #3504 from ricrogz)
 
 ## New Features and Enhancements:
   - Add GetBestRMS function
@@ -408,6 +413,16 @@ intrigus-lgtm, autodataming, paconius
  (github pull #3478 from rvianello)
   - allow fillColour to be changed from python
  (github pull #3480 from greglandrum)
+  - Fix undefined behavior in testCoordGen test
+ (github pull #3495 from roccomoretti)
+  - Add a version for the pattern fingerprint
+ (github pull #3496 from greglandrum)
+  - Fixes a number of issues flagged by clang
+ (github pull #3498 from ptosco)
+  - Update to maeparser v1.2.4
+ (github pull #3506 from sailfish009)
+  - Fix python invalid escape sequences
+ (github pull #3508 from ricrogz)
 
 ## Code removed in this release:
 - To improve API consistency of the exceptions in RDKit with the default ones in
