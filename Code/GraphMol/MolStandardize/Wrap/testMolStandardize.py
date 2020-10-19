@@ -458,7 +458,7 @@ chlorine	[Cl]
       if (taut.GetBondWithIdx(1).GetBondType() == Chem.BondType.DOUBLE):
         self.assertEqual(taut.GetBondWithIdx(1).GetStereo(), Chem.BondStereo.STEREOZ)
 
-    chembl2024142Smi = "[2H]C1=C(C(=C2C(=C1[2H])C(=O)C(=C(C2=O)C([2H])([2H])[2H])C/C=C(\C)/CC([2H])([2H])/C=C(/CC/C=C(\C)/CCC=C(C)C)\C([2H])([2H])[2H])[2H])[2H]"
+    chembl2024142Smi = "[2H]C1=C(C(=C2C(=C1[2H])C(=O)C(=C(C2=O)C([2H])([2H])[2H])C/C=C(\\C)/CC([2H])([2H])/C=C(/CC/C=C(\\C)/CCC=C(C)C)\\C([2H])([2H])[2H])[2H])[2H]"
     chembl2024142 = Chem.MolFromSmiles(chembl2024142Smi)
     params = Chem.RemoveHsParameters()
     params.removeAndTrackIsotopes = True

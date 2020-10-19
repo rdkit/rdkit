@@ -186,7 +186,7 @@ bool TautomerEnumerator::setTautomerStereoAndIsoHs(
     }
     // remove isotopic Hs if present (and if d_removeIsotopicHs is true)
     if (tautAtom->hasProp(common_properties::_isotopicHs) &&
-        d_removeIsotopicHs) {
+        (d_removeIsotopicHs || !tautAtom->getTotalNumHs())) {
       tautAtom->clearProp(common_properties::_isotopicHs);
     }
   }
@@ -356,7 +356,8 @@ TautomerEnumeratorResult TautomerEnumerator::enumerate(const ROMol &mol) const {
             Atom *last = product->getAtomWithIdx(lastIdx);
             res.d_modifiedAtoms.set(firstIdx);
             res.d_modifiedAtoms.set(lastIdx);
-            first->setNumExplicitHs(std::max(0, static_cast<int>(first->getTotalNumHs()) - 1));
+            first->setNumExplicitHs(
+                std::max(0, static_cast<int>(first->getTotalNumHs()) - 1));
             last->setNumExplicitHs(last->getTotalNumHs() + 1);
             // Remove any implicit hydrogens from the first and last atoms
             // now we have set the count explicitly
