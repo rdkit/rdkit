@@ -1384,6 +1384,30 @@ TEST_CASE("Github #3470: Hydrogen is incorrectly identified as an early atom",
     m.getAtomWithIdx(0)->setFormalCharge(-1);
     m.updatePropertyCache();
     CHECK(m.getAtomWithIdx(0)->getNumImplicitHs() == 0);
+    m.getAtomWithIdx(0)->setFormalCharge(1);
+    m.updatePropertyCache();
+    CHECK(m.getAtomWithIdx(0)->getNumImplicitHs() == 0);
+    m.getAtomWithIdx(0)->setFormalCharge(0);
+    m.updatePropertyCache();
+    CHECK(m.getAtomWithIdx(0)->getNumImplicitHs() == 1);
+
+    // make sure we still generate errors for stupid stuff
+    m.getAtomWithIdx(0)->setFormalCharge(-2);
+    CHECK_THROWS_AS(m.updatePropertyCache(), AtomValenceException);
+    CHECK(m.getAtomWithIdx(0)->getNumImplicitHs() == 1);
+  }
+  SECTION("confirm with SMILES") {
+    RWMol m;
+    m.addAtom(new Atom(1));
+    m.getAtomWithIdx(0)->setFormalCharge(-1);
+    m.updatePropertyCache();
+    CHECK(MolToSmiles(m) == "[H-]");
+    m.getAtomWithIdx(0)->setFormalCharge(+1);
+    m.updatePropertyCache();
+    CHECK(MolToSmiles(m) == "[H+]");
+    m.getAtomWithIdx(0)->setFormalCharge(0);
+    m.updatePropertyCache();
+    CHECK(MolToSmiles(m) == "[HH]");  // ugly, but I think [H] would be worse
   }
 }
 
