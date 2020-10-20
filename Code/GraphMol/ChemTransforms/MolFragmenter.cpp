@@ -382,11 +382,7 @@ void checkChiralityPostMove(const ROMol &mol, const Atom *oAt, Atom *nAt,
       }
     }
   } else {
-    ROMol::OEDGE_ITER beg, end;
-    boost::tie(beg, end) = mol.getAtomBonds(oAt);
-    while (beg != end) {
-      const Bond *obond = mol[*beg];
-      ++beg;
+    for(auto *obond : oAt->bonds()) {
       if (obond == bond) {
         continue;
       }

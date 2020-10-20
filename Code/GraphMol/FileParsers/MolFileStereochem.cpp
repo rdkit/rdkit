@@ -105,11 +105,7 @@ INT_MAP_INT pickBondsToWedge(const ROMol &mol) {
     }
     nChiralNbrs[at->getIdx()] = 0;
     chiNbrs = true;
-    ROMol::ADJ_ITER nbrIdx, endNbrs;
-    boost::tie(nbrIdx, endNbrs) = mol.getAtomNeighbors(at);
-    while (nbrIdx != endNbrs) {
-      const Atom *nat = mol[*nbrIdx];
-      ++nbrIdx;
+    for(auto *nat : at->nbrs()) {
       if (nat->getAtomicNum() == 1) {
         // special case: it's an H... we weight these especially high:
         nChiralNbrs[at->getIdx()] -= 10;
@@ -163,12 +159,8 @@ INT_MAP_INT pickBondsToWedge(const ROMol &mol) {
     if (type != Atom::CHI_TETRAHEDRAL_CW && type != Atom::CHI_TETRAHEDRAL_CCW) {
       break;
     }
-    RDKit::ROMol::OBOND_ITER_PAIR atomBonds = mol.getAtomBonds(atom);
     std::vector<std::pair<int, int>> nbrScores;
-    while (atomBonds.first != atomBonds.second) {
-      const Bond *bond = mol[*atomBonds.first];
-      ++atomBonds.first;
-
+    for(auto *bond : atom->bonds()) {
       // can only wedge single bonds:
       if (bond->getBondType() != Bond::SINGLE) {
         continue;
@@ -264,10 +256,7 @@ Bond::BondDir DetermineBondWedgeState(const Bond *bond,
   neighborBondIndices.push_back(bond->getIdx());
   neighborBondAngles.push_back(0.0);
 
-  ROMol::OEDGE_ITER beg, end;
-  boost::tie(beg, end) = mol->getAtomBonds(atom);
-  while (beg != end) {
-    const Bond *nbrBond = (*mol)[*beg];
+  for(auto *nbrBond : atom->bonds()) {
     Atom *otherAtom = nbrBond->getOtherAtom(atom);
     if (nbrBond != bond) {
       tmpPt = conf->getAtomPos(otherAtom->getIdx());
@@ -288,7 +277,6 @@ Bond::BondDir DetermineBondWedgeState(const Bond *bond,
       neighborBondAngles.insert(angleIt, angle);
       neighborBondIndices.insert(nbrIt, nbrBond->getIdx());
     }
-    ++beg;
   }
 
   // at this point, neighborBondIndices contains a list of bond

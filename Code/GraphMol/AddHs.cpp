@@ -32,14 +32,11 @@ Atom *getAtomNeighborNot(ROMol *mol, const Atom *atom, const Atom *other) {
   PRECONDITION(other, "bad atom");
   Atom *res = nullptr;
 
-  ROMol::ADJ_ITER nbrIdx, endNbrs;
-  boost::tie(nbrIdx, endNbrs) = mol->getAtomNeighbors(atom);
-  while (nbrIdx != endNbrs) {
-    if ((*nbrIdx)->getIdx() != other->getIdx()) {
-      res = mol->getAtomWithIdx(*nbrIdx);
+  for(auto *nbr : atom->nbrs()) {
+    if (nbr->getIdx() != other->getIdx()) {
+      res = nbr;
       break;
     }
-    ++nbrIdx;
   }
 
   POSTCONDITION(res, "no neighbor found");
@@ -69,7 +66,6 @@ void setHydrogenCoords(ROMol *mol, unsigned int hydIdx, unsigned int heavyIdx) {
 
   const Atom *nbr1 = nullptr, *nbr2 = nullptr, *nbr3 = nullptr;
   const Bond *nbrBond;
-  ROMol::ADJ_ITER nbrIdx, endNbrs;
 
   switch (heavyAtom->getDegree()) {
     case 1:
@@ -172,16 +168,14 @@ void setHydrogenCoords(ROMol *mol, unsigned int hydIdx, unsigned int heavyIdx) {
       // --------------------------------------------------------------------------
       // Two other neighbors:
       // --------------------------------------------------------------------------
-      boost::tie(nbrIdx, endNbrs) = mol->getAtomNeighbors(heavyAtom);
-      while (nbrIdx != endNbrs) {
-        if ((*nbrIdx)->getIdx() != hydIdx) {
+      for(auto *nbr : heavyAtom->nbrs()) {
+        if (nbr->getIdx() != hydIdx) {
           if (!nbr1) {
-            nbr1 = mol->getAtomWithIdx(*nbrIdx);
+              nbr1 = nbr;
           } else {
-            nbr2 = mol->getAtomWithIdx(*nbrIdx);
+              nbr2 = nbr;
           }
         }
-        ++nbrIdx;
       }
       TEST_ASSERT(nbr1);
       TEST_ASSERT(nbr2);
@@ -242,21 +236,17 @@ void setHydrogenCoords(ROMol *mol, unsigned int hydIdx, unsigned int heavyIdx) {
       // --------------------------------------------------------------------------
       // Three other neighbors:
       // --------------------------------------------------------------------------
-      boost::tie(nbrIdx, endNbrs) = mol->getAtomNeighbors(heavyAtom);
-
       if (heavyAtom->hasProp(common_properties::_CIPCode)) {
         // if the central atom is chiral, we'll order the neighbors
         // by CIP rank:
         std::vector<std::pair<unsigned int, int>> nbrs;
-        while (nbrIdx != endNbrs) {
-          if ((*nbrIdx)->getIdx() != hydIdx) {
-            const Atom *tAtom = mol->getAtomWithIdx(*nbrIdx);
+        for(auto *tAtom : heavyAtom->nbrs()) {
+          if (tAtom->getIdx() != hydIdx) {
             unsigned int cip = 0;
             tAtom->getPropIfPresent<unsigned int>(common_properties::_CIPRank,
                                                   cip);
-            nbrs.emplace_back(cip, rdcast<int>((*nbrIdx)->getIdx()));
+            nbrs.emplace_back(cip, rdcast<int>(tAtom->getIdx()));
           }
-          ++nbrIdx;
         }
         std::sort(nbrs.begin(), nbrs.end());
         nbr1 = mol->getAtomWithIdx(nbrs[0].second);
@@ -264,17 +254,16 @@ void setHydrogenCoords(ROMol *mol, unsigned int hydIdx, unsigned int heavyIdx) {
         nbr3 = mol->getAtomWithIdx(nbrs[2].second);
       } else {
         // central atom isn't chiral, so the neighbor ordering isn't important:
-        while (nbrIdx != endNbrs) {
-          if ((*nbrIdx)->getIdx() != hydIdx) {
+        for(auto *nbr : heavyAtom->nbrs()) {
+          if (nbr->getIdx() != hydIdx) {
             if (!nbr1) {
-              nbr1 = mol->getAtomWithIdx(*nbrIdx);
+                nbr1 = nbr;
             } else if (!nbr2) {
-              nbr2 = mol->getAtomWithIdx(*nbrIdx);
+                nbr2 = nbr;
             } else {
-              nbr3 = mol->getAtomWithIdx(*nbrIdx);
+                nbr3 = nbr;
             }
           }
-          ++nbrIdx;
         }
       }
       TEST_ASSERT(nbr1);
@@ -380,14 +369,12 @@ void AssignHsResidueInfo(RWMol &mol) {
     Atom *newAt = mol.getAtomWithIdx(aidx);
     auto *info = (AtomPDBResidueInfo *)(newAt->getMonomerInfo());
     if (info && info->getMonomerType() == AtomMonomerInfo::PDBRESIDUE) {
-      ROMol::ADJ_ITER begin, end;
-      boost::tie(begin, end) = mol.getAtomNeighbors(newAt);
-      while (begin != end) {
-        if (mol.getAtomWithIdx(*begin)->getAtomicNum() == 1) {
+      for(auto *nbr : newAt->nbrs()) {
+        if (nbr->getAtomicNum() == 1) {
           // Make all Hs unique - increment id even for existing
           ++current_h_id;
           // skip if hydrogen already has PDB info
-          auto *h_info = (AtomPDBResidueInfo *)mol.getAtomWithIdx(*begin)
+          auto *h_info = (AtomPDBResidueInfo *)nbr
                              ->getMonomerInfo();
           if (h_info &&
               h_info->getMonomerType() == AtomMonomerInfo::PDBRESIDUE) {
@@ -414,11 +401,10 @@ void AssignHsResidueInfo(RWMol &mol) {
               h_label, max_serial, "", info->getResidueName(),
               info->getResidueNumber(), info->getChainId(), "", 1.0, 0.0,
               info->getIsHeteroAtom());
-          mol.getAtomWithIdx(*begin)->setMonomerInfo(newInfo);
+          nbr->setMonomerInfo(newInfo);
 
           ++max_serial;
         }
-        ++begin;
       }
     }
   }
@@ -603,9 +589,7 @@ bool adjustStereoAtomsIfRequired(RWMol &mol, const Atom *atom,
   if (!cbnd) {
     return false;
   }
-  for (const auto &nbri :
-       boost::make_iterator_range(mol.getAtomBonds(heavyAtom))) {
-    Bond *bnd = mol[nbri];
+ for (const auto &bnd : heavyAtom->bonds() ) {
     if (bnd->getBondType() == Bond::DOUBLE &&
         bnd->getStereo() > Bond::STEREOANY) {
       auto sAtomIt = std::find(bnd->getStereoAtoms().begin(),
@@ -615,9 +599,7 @@ bool adjustStereoAtomsIfRequired(RWMol &mol, const Atom *atom,
         // find the index of another atom attached to the heavy atom and
         // use it to update sAtomIt
         unsigned int dblNbrIdx = bnd->getOtherAtomIdx(heavyAtom->getIdx());
-        for (const auto &nbri :
-             boost::make_iterator_range(mol.getAtomNeighbors(heavyAtom))) {
-          const auto &nbr = mol[nbri];
+        for ( auto &nbr : heavyAtom->nbrs()) {
           if (nbr->getIdx() == dblNbrIdx || nbr->getIdx() == atom->getIdx()) {
             continue;
           }
@@ -646,8 +628,7 @@ bool adjustStereoAtomsIfRequired(RWMol &mol, const Atom *atom,
 void molRemoveH(RWMol &mol, unsigned int idx, bool updateExplicitCount) {
   auto atom = mol.getAtomWithIdx(idx);
   PRECONDITION(atom->getAtomicNum() == 1, "idx corresponds to a non-Hydrogen");
-  for (const auto &nbri : boost::make_iterator_range(mol.getAtomBonds(atom))) {
-    const Bond *bond = mol[nbri];
+  for (auto *bond : atom->bonds()) {
     Atom *heavyAtom = bond->getOtherAtom(atom);
     int heavyAtomNum = heavyAtom->getAtomicNum();
 
@@ -682,9 +663,7 @@ void molRemoveH(RWMol &mol, unsigned int idx, bool updateExplicitCount) {
     // atom.  We deal with that by explicitly checking here:
     if (heavyAtom->getChiralTag() != Atom::CHI_UNSPECIFIED) {
       INT_LIST neighborIndices;
-      for (const auto &nbri :
-           boost::make_iterator_range(mol.getAtomBonds(heavyAtom))) {
-        Bond *nbnd = mol[nbri];
+      for ( auto *nbnd : heavyAtom->bonds() ) {
         if (nbnd->getIdx() != bond->getIdx()) {
           neighborIndices.push_back(nbnd->getIdx());
         }
@@ -714,9 +693,7 @@ void molRemoveH(RWMol &mol, unsigned int idx, bool updateExplicitCount) {
       // bond stereochemistry possibly being lost. This was github #754
       bool foundADir = false;
       Bond *oBond = nullptr;
-      for (const auto &nbri :
-           boost::make_iterator_range(mol.getAtomBonds(heavyAtom))) {
-        Bond *nbnd = mol[nbri];
+      for (const auto &nbnd : heavyAtom->bonds()) {
         if (nbnd->getIdx() != bond->getIdx() &&
             nbnd->getBondType() == Bond::SINGLE) {
           if (nbnd->getBondDir() == Bond::NONE) {
@@ -830,10 +807,7 @@ void removeHs(RWMol &mol, const RemoveHsParameters &ps, bool sanitize) {
         (!ps.removeDummyNeighbors || !ps.removeDefiningBondStereo ||
          !ps.removeOnlyHNeighbors)) {
       bool onlyHNeighbors = true;
-      ROMol::ADJ_ITER begin, end;
-      boost::tie(begin, end) = mol.getAtomNeighbors(atom);
-      while (begin != end && removeIt) {
-        auto nbr = mol.getAtomWithIdx(*begin);
+      for(auto *nbr : atom->nbrs()) {
         // is it a dummy?
         if (!ps.removeDummyNeighbors && nbr->getAtomicNum() < 1) {
           removeIt = false;
@@ -862,9 +836,7 @@ void removeHs(RWMol &mol, const RemoveHsParameters &ps, bool sanitize) {
         // Check to see if the neighbor has a double bond and we're the only
         // neighbor at this end.  This was part of github #1810
         if (!ps.removeDefiningBondStereo && nbr->getDegree() == 2) {
-          for (const auto &nbri :
-               boost::make_iterator_range(mol.getAtomBonds(nbr))) {
-            const Bond *bnd = mol[nbri];
+           for (const auto &bnd : nbr->bonds()) {
             if (bnd->getBondType() == Bond::DOUBLE &&
                 (bnd->getStereo() > Bond::STEREOANY ||
                  mol.getBondBetweenAtoms(atom->getIdx(), nbr->getIdx())
@@ -874,7 +846,6 @@ void removeHs(RWMol &mol, const RemoveHsParameters &ps, bool sanitize) {
             }
           }
         }
-        ++begin;
       }
       if (removeIt && (!ps.removeOnlyHNeighbors && onlyHNeighbors)) {
         removeIt = false;
@@ -1046,19 +1017,15 @@ void mergeQueryHs(RWMol &mol, bool mergeUnmappedOnly) {
     Atom *atom = mol.getAtomWithIdx(currIdx);
     if (!hatoms[currIdx]) {
       unsigned int numHsToRemove = 0;
-      ROMol::ADJ_ITER begin, end;
-      boost::tie(begin, end) = mol.getAtomNeighbors(atom);
-
-      while (begin != end) {
-        if (hatoms[(*begin)->getIdx()]) {
-          Atom &bgn = *mol.getAtomWithIdx(*begin);
+     
+      for(auto *bgn : atom->nbrs()) {
+        if (hatoms[bgn->getIdx()]) {
           if (!mergeUnmappedOnly ||
-              !bgn.hasProp(common_properties::molAtomMapNumber)) {
-            atomsToRemove.push_back(rdcast<unsigned int>((*begin)->getIdx()));
+              !bgn->hasProp(common_properties::molAtomMapNumber)) {
+            atomsToRemove.push_back(rdcast<unsigned int>(bgn->getIdx()));
             ++numHsToRemove;
           }
         }
-        ++begin;
       }
       if (numHsToRemove) {
         //

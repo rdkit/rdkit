@@ -273,15 +273,14 @@ ROMol *replaceSidechains(const ROMol &mol, const ROMol &coreQuery,
       ROMol::ADJ_ITER nbrIdx, endNbrs;
       boost::tie(nbrIdx, endNbrs) =
           newMol->getAtomNeighbors(newMol->getAtomWithIdx(mvit->second));
-      while (nbrIdx != endNbrs) {
-        if (!matchingIndices[(*nbrIdx)->getIdx()]) {
+       for(auto *nbr: newMol->getAtomWithIdx(mvit->second)->nbrs()) {
+        if (!matchingIndices[nbr->getIdx()]) {
           // this neighbor isn't in the match, convert it to a dummy atom and
           // save it
-          Atom *at = newMol->getAtomWithIdx(*nbrIdx);
-          at->setAtomicNum(0);
+          nbr->setAtomicNum(0);
           ++nDummies;
-          at->setIsotope(nDummies);
-          keepList.push_back(at);
+          nbr->setIsotope(nDummies);
+          keepList.push_back(nbr);
         }
         nbrIdx++;
       }
@@ -576,10 +575,7 @@ ROMol *MurckoDecompose(const ROMol &mol) {
       bool removeIt = true;
 
       // check if the atom has a neighboring keeper:
-      ROMol::ADJ_ITER nbrIdx, endNbrs;
-      boost::tie(nbrIdx, endNbrs) = res->getAtomNeighbors(atom);
-      while (nbrIdx != endNbrs) {
-        Atom *nbr = (*res)[*nbrIdx];
+      for(auto *nbr : atom->nbrs()) {
         if (keepAtoms[nbr->getIdx()]) {
           if (res->getBondBetweenAtoms(atom->getIdx(), nbr->getIdx())
                   ->getBondType() == Bond::DOUBLE) {
@@ -599,7 +595,6 @@ ROMol *MurckoDecompose(const ROMol &mol) {
             nbr->setChiralTag(Atom::CHI_UNSPECIFIED);
           }
         }
-        ++nbrIdx;
       }
 
       if (removeIt) {
@@ -660,11 +655,7 @@ void addRecursiveQueries(
     (*reactantLabels).resize(0);
   }
 
-  ROMol::VERTEX_ITER atBegin, atEnd;
-  boost::tie(atBegin, atEnd) = mol.getVertices();
-  while (atBegin != atEnd) {
-    Atom *at = mol[*atBegin];
-    ++atBegin;
+  for(auto *at : mol.atoms()) {
     if (!at->hasProp(propName)) {
       continue;
     }

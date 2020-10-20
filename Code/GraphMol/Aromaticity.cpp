@@ -259,16 +259,13 @@ bool incidentNonCyclicMultipleBond(const Atom *at, int &who) {
   // if yes check which atom this bond goes to
   // and record the atomID in who
   const ROMol &mol = at->getOwningMol();
-  ROMol::OEDGE_ITER beg, end;
-  boost::tie(beg, end) = mol.getAtomBonds(at);
-  while (beg != end) {
-    if (!mol.getRingInfo()->numBondRings(mol[*beg]->getIdx())) {
-      if (mol[*beg]->getValenceContrib(at) >= 2.0) {
-        who = mol[*beg]->getOtherAtomIdx(at->getIdx());
+  for(auto *bond : at->bonds()) {
+    if (!mol.getRingInfo()->numBondRings(bond->getIdx())) {
+      if (bond->getValenceContrib(at) >= 2.0) {
+        who = bond->getOtherAtomIdx(at->getIdx());
         return true;
       }
     }
-    ++beg;
   }
   return false;
 }
@@ -276,15 +273,12 @@ bool incidentNonCyclicMultipleBond(const Atom *at, int &who) {
 bool incidentCyclicMultipleBond(const Atom *at) {
   PRECONDITION(at, "bad atom");
   const ROMol &mol = at->getOwningMol();
-  ROMol::OEDGE_ITER beg, end;
-  boost::tie(beg, end) = mol.getAtomBonds(at);
-  while (beg != end) {
-    if (mol.getRingInfo()->numBondRings(mol[*beg]->getIdx())) {
-      if (mol[*beg]->getValenceContrib(at) >= 2.0) {
+  for(auto *bond : at->bonds()) {
+    if (mol.getRingInfo()->numBondRings(bond->getIdx())) {
+      if (bond->getValenceContrib(at) >= 2.0) {
         return true;
       }
     }
-    beg++;
   }
   return false;
 }
@@ -292,14 +286,10 @@ bool incidentCyclicMultipleBond(const Atom *at) {
 bool incidentMultipleBond(const Atom *at) {
   PRECONDITION(at, "bad atom");
   int deg = at->getDegree() + at->getNumExplicitHs();
-  ROMol::OEDGE_ITER beg, end;
-  boost::tie(beg, end) = at->getOwningMol().getAtomBonds(at);
-  while (beg != end) {
-    Bond *bond = at->getOwningMol()[*beg];
+  for(auto *bond : at->bonds()) {
     if (!std::lround(bond->getValenceContrib(at))) {
       --deg;
     }
-    ++beg;
   }
   return at->getExplicitValence() != static_cast<int>(deg);
 }
@@ -504,11 +494,8 @@ bool isAtomCandForArom(const Atom *at, const ElectronDonorType edon,
   int nUnsaturations = at->getExplicitValence() - at->getDegree();
   if (nUnsaturations > 1) {
     unsigned int nMult = 0;
-    const ROMol &mol = at->getOwningMol();
-    ROMol::OEDGE_ITER beg, end;
-    boost::tie(beg, end) = mol.getAtomBonds(at);
-    while (beg != end) {
-      switch (mol[*beg]->getBondType()) {
+    for(auto *bond : at->bonds()) {
+      switch (bond->getBondType()) {
         case Bond::SINGLE:
         case Bond::AROMATIC:
           break;
@@ -530,7 +517,6 @@ bool isAtomCandForArom(const Atom *at, const ElectronDonorType edon,
       if (nMult > 1) {
         break;
       }
-      ++beg;
     }
     if (nMult > 1) {
       return (false);
@@ -538,17 +524,12 @@ bool isAtomCandForArom(const Atom *at, const ElectronDonorType edon,
   }
 
   if (!allowExocyclicMultipleBonds) {
-    const ROMol &mol = at->getOwningMol();
-    ROMol::OEDGE_ITER beg, end;
-    boost::tie(beg, end) = mol.getAtomBonds(at);
-    while (beg != end) {
-      const Bond *bnd = mol[*beg];
+    for(auto *bnd : at->bonds()) {
       if ((bnd->getBondType() == Bond::DOUBLE ||
            bnd->getBondType() == Bond::TRIPLE) &&
           !queryIsBondInRing(bnd)) {
         return false;
       }
-      ++beg;
     }
   }
 
@@ -646,15 +627,11 @@ int countAtomElec(const Atom *at) {
   // total atom degree:
   int degree = at->getDegree() + at->getTotalNumHs();
 
-  ROMol::OEDGE_ITER beg, end;
-  boost::tie(beg, end) = at->getOwningMol().getAtomBonds(at);
-  while (beg != end) {
-    Bond *bond = at->getOwningMol()[*beg];
+  for(auto *bond : at->bonds()) {
     // don't count bonds that aren't actually contributing to the valence here:
     if (!std::lround(bond->getValenceContrib(at))) {
       --degree;
     }
-    ++beg;
   }
 
   // if we are more than 3 coordinated we should not be aromatic

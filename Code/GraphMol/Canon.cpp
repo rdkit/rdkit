@@ -19,12 +19,11 @@
 namespace RDKit {
 namespace Canon {
 namespace {
-bool isUnsaturated(const Atom *atom, const ROMol &mol) {
-  for (const auto &bndItr :
-       boost::make_iterator_range(mol.getAtomBonds(atom))) {
+bool isUnsaturated(const Atom *atom) {
+  for (const auto *bond: atom->bonds()) {
     // can't just check for single bonds, because dative bonds also have an
     // order of 1
-    if (mol[bndItr]->getBondTypeAsDouble() > 1) {
+    if (bond->getBondTypeAsDouble() > 1) {
       return true;
     }
   }
@@ -77,7 +76,7 @@ bool chiralAtomNeedsTagInversion(const RDKit::ROMol &mol,
   return atom->getDegree() == 3 &&
          ((isAtomFirst && atom->getNumExplicitHs() == 1) ||
           (!atomHasFourthValence(atom) && numClosures == 1 &&
-           !isUnsaturated(atom, mol)));
+           !isUnsaturated(atom)));
 }
 
 struct _possibleCompare
@@ -178,9 +177,7 @@ void canonicalizeDoubleBond(Bond *dblBond, UINT_VECT &bondVisitOrders,
   // find the lowest visit order bonds from each end and determine
   // if anything is already constraining our choice of directions:
   bool dir1Set = false, dir2Set = false;
-  for (const auto &bndItr :
-       boost::make_iterator_range(mol.getAtomBonds(atom1))) {
-    auto bond = mol[bndItr];
+  for (auto *bond : atom1->bonds() ){
     if (bond != dblBond) {
       auto bondIdx = bond->getIdx();
       if (bondDirCounts[bondIdx] > 0) {
@@ -198,9 +195,7 @@ void canonicalizeDoubleBond(Bond *dblBond, UINT_VECT &bondVisitOrders,
     }
   }
   firstVisitOrder = mol.getNumBonds() + 1;
-  for (const auto &bndItr :
-       boost::make_iterator_range(mol.getAtomBonds(atom2))) {
-    auto bond = mol[bndItr];
+  for (auto *bond : atom2->bonds()) {
     if (bond != dblBond) {
       auto bondIdx = bond->getIdx();
       if (bondDirCounts[bondIdx] > 0) {
@@ -525,7 +520,7 @@ void canonicalizeDoubleBond(Bond *dblBond, UINT_VECT &bondVisitOrders,
     bool dblBondPresent = false;
     atomBonds = mol.getAtomBonds(atom3);
     while (atomBonds.first != atomBonds.second) {
-      Bond *tbond = mol[*atomBonds.first];
+      Bond *tbond = *atomBonds.first;
       if (tbond->getBondType() == Bond::DOUBLE &&
           tbond->getStereo() > Bond::STEREOANY) {
         dblBondPresent = true;
@@ -563,12 +558,8 @@ void dfsFindCycles(ROMol &mol, int atomIdx, int inBondIdx,
   // ---------------------
   std::vector<PossibleType> possibles;
   possibles.resize(0);
-  ROMol::OBOND_ITER_PAIR bondsPair = mol.getAtomBonds(atom);
-  possibles.reserve(bondsPair.second - bondsPair.first);
-
-  while (bondsPair.first != bondsPair.second) {
-    Bond *theBond = mol[*(bondsPair.first)];
-    bondsPair.first++;
+  possibles.reserve(atom->bonds().size());
+  for(auto *theBond : atom->bonds()) {
     if (bondsInPlay && !(*bondsInPlay)[theBond->getIdx()]) {
       continue;
     }
@@ -754,12 +745,8 @@ void dfsBuildStack(ROMol &mol, int atomIdx, int inBondIdx,
   // ---------------------
   std::vector<PossibleType> possibles;
   possibles.resize(0);
-  ROMol::OBOND_ITER_PAIR bondsPair = mol.getAtomBonds(atom);
-  possibles.reserve(bondsPair.second - bondsPair.first);
-
-  while (bondsPair.first != bondsPair.second) {
-    Bond *theBond = mol[*(bondsPair.first)];
-    bondsPair.first++;
+  possibles.reserve(atom->bonds().size());
+  for(auto *theBond : atom->bonds()) {
     if (bondsInPlay && !(*bondsInPlay)[theBond->getIdx()]) {
       continue;
     }
@@ -909,11 +896,8 @@ void clearBondDirs(ROMol &mol, Bond *refBond, const Atom *fromAtom,
     std::cerr<<"\n";
     std::cerr<<"cBD: bond: "<<refBond->getIdx()<<" atom: "<<fromAtom->getIdx()<<": ";
 #endif
-  ROMol::OEDGE_ITER beg, end;
-  boost::tie(beg, end) = mol.getAtomBonds(fromAtom);
   bool nbrPossible = false, adjusted = false;
-  while (beg != end) {
-    Bond *oBond = mol[*beg];
+  for(auto *oBond : fromAtom->bonds()) {
     // std::cerr<<"  >>"<<oBond->getIdx()<<" "<<canHaveDirection(oBond)<<"
     // "<<bondDirCounts[oBond->getIdx()]<<"-"<<bondDirCounts[refBond->getIdx()]<<"
     // "<<atomDirCounts[oBond->getBeginAtomIdx()]<<"-"<<atomDirCounts[oBond->getEndAtomIdx()]<<std::endl;
@@ -934,7 +918,6 @@ void clearBondDirs(ROMol &mol, Bond *refBond, const Atom *fromAtom,
         }
       }
     }
-    beg++;
   }
   if (nbrPossible && !adjusted &&
       atomDirCounts[refBond->getBeginAtomIdx()] != 1 &&
@@ -974,30 +957,25 @@ void removeRedundantBondDirSpecs(ROMol &mol, MolStack &molStack,
       if (canHaveDirection(tBond) && bondDirCounts[tBond->getIdx()] >= 1) {
         // start by finding the double bond that sets tBond's direction:
         const Atom *dblBondAtom = nullptr;
-        ROMol::OEDGE_ITER beg, end;
-        boost::tie(beg, end) = mol.getAtomBonds(canonBeginAtom);
-        while (beg != end) {
-          if (mol[*beg] != tBond && mol[*beg]->getBondType() == Bond::DOUBLE &&
-              mol[*beg]->getStereo() > Bond::STEREOANY) {
+        for(auto *bond : canonBeginAtom->bonds()) {
+          if (bond != tBond && bond->getBondType() == Bond::DOUBLE &&
+             bond->getStereo() > Bond::STEREOANY) {
             dblBondAtom =
                 canonBeginAtom;  // tBond->getOtherAtom(canonBeginAtom);
             break;
           }
-          beg++;
         }
         if (dblBondAtom != nullptr) {
           clearBondDirs(mol, tBond, dblBondAtom, bondDirCounts, atomDirCounts,
                         bondVisitOrders);
         }
         dblBondAtom = nullptr;
-        boost::tie(beg, end) = mol.getAtomBonds(canonEndAtom);
-        while (beg != end) {
-          if (mol[*beg] != tBond && mol[*beg]->getBondType() == Bond::DOUBLE &&
-              mol[*beg]->getStereo() > Bond::STEREOANY) {
+        for(auto *bond : canonEndAtom->bonds()) {
+          if (bond != tBond && bond->getBondType() == Bond::DOUBLE &&
+              bond->getStereo() > Bond::STEREOANY) {
             dblBondAtom = canonEndAtom;  // tBond->getOtherAtom(canonEndAtom);
             break;
           }
-          beg++;
         }
         if (dblBondAtom != nullptr) {
           clearBondDirs(mol, tBond, dblBondAtom, bondDirCounts, atomDirCounts,
@@ -1064,9 +1042,8 @@ void canonicalizeFragment(ROMol &mol, int atomIdx,
     for (const auto atom : mol.atoms()) {
       if (atom->getChiralTag() != Atom::CHI_UNSPECIFIED) {
         // check if all of this atom's bonds are in play
-        for (const auto &bndItr :
-             boost::make_iterator_range(mol.getAtomBonds(atom))) {
-          if (bondsInPlay && !(*bondsInPlay)[mol[bndItr]->getIdx()]) {
+        for (const auto &bond : atom->bonds()) {
+          if (bondsInPlay && !(*bondsInPlay)[bond->getIdx()]) {
             atom->setProp(common_properties::_brokenChirality, true);
             break;
           }
@@ -1083,9 +1060,8 @@ void canonicalizeFragment(ROMol &mol, int atomIdx,
           // bonds, even if they won't be written to the SMARTS
           if (trueOrder.size() < atom->getDegree()) {
             INT_LIST tOrder = trueOrder;
-            for (const auto &bndItr :
-                 boost::make_iterator_range(mol.getAtomBonds(atom))) {
-              int bndIdx = mol[bndItr]->getIdx();
+            for ( auto *bond : atom->bonds() ) {
+              int bndIdx = bond->getIdx();
               if (std::find(trueOrder.begin(), trueOrder.end(), bndIdx) ==
                   trueOrder.end()) {
                 tOrder.push_back(bndIdx);

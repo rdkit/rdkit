@@ -40,10 +40,7 @@ void getNbrsList(const ROMol &mol, bool useHs, INT_INT_VECT_MAP &nbrs) {
     // them
     // move on
     if (useHs || atom->getAtomicNum() != 1) {
-      ROMol::OEDGE_ITER bIt1, end;
-      boost::tie(bIt1, end) = mol.getAtomBonds(atom);
-      while (bIt1 != end) {
-        const Bond* bond1 = mol[*bIt1];
+      for(auto *bond1 : atom->bonds()) {
         // if this bond connect to a hydrogen and we are not interested
         // in it ignore
         if (useHs || bond1->getOtherAtom(atom)->getAtomicNum() != 1) {
@@ -52,19 +49,15 @@ void getNbrsList(const ROMol &mol, bool useHs, INT_INT_VECT_MAP &nbrs) {
             INT_VECT nlst;
             nbrs[bid1] = nlst;
           }
-          ROMol::OEDGE_ITER bIt2 = mol.getAtomBonds(atom).first;
-          while (bIt2 != end) {
-            const Bond* bond2 = mol[*bIt2];
+          for(auto *bond2 : atom->bonds()) {
             int bid2 = bond2->getIdx();
             if (bid1 != bid2 &&
                 (useHs || bond2->getOtherAtom(atom)->getAtomicNum() != 1)) {
               nbrs[bid1].push_back(bid2);  // FIX: pathListType should probably
                                            // be container of pointers ??
             }
-            ++bIt2;
           }
         }
-        ++bIt1;
       }
     }
   }
@@ -548,16 +541,12 @@ PATH_TYPE findAtomEnvironmentOfRadiusN(const ROMol &mol, unsigned int radius,
 
   PATH_TYPE res;
   std::list<std::pair<int, int> > nbrStack;
-  ROMol::OEDGE_ITER beg, end;
-  boost::tie(beg, end) = mol.getAtomBonds(mol.getAtomWithIdx(rootedAtAtom));
-  while (beg != end) {
-    const Bond* bond = mol[*beg];
+  for(auto *bond : mol.getAtomWithIdx(rootedAtAtom)->bonds()) {
     if (useHs ||
         mol.getAtomWithIdx(bond->getOtherAtomIdx(rootedAtAtom))
                 ->getAtomicNum() != 1) {
       nbrStack.emplace_back(rootedAtAtom, bond->getIdx());
     }
-    ++beg;
   }
   boost::dynamic_bitset<> bondsIn(mol.getNumBonds());
   unsigned int i;
@@ -577,9 +566,7 @@ PATH_TYPE findAtomEnvironmentOfRadiusN(const ROMol &mol, unsigned int radius,
 
         // add the next set of neighbors:
         int oAtom = mol.getBondWithIdx(bondIdx)->getOtherAtomIdx(startAtom);
-        boost::tie(beg, end) = mol.getAtomBonds(mol.getAtomWithIdx(oAtom));
-        while (beg != end) {
-          const Bond* bond = mol[*beg];
+        for(auto *bond : mol.getAtomWithIdx(oAtom)->bonds()) {
           if (!bondsIn.test(bond->getIdx())) {
             if (useHs ||
                 mol.getAtomWithIdx(bond->getOtherAtomIdx(oAtom))
@@ -587,7 +574,6 @@ PATH_TYPE findAtomEnvironmentOfRadiusN(const ROMol &mol, unsigned int radius,
               nextLayer.emplace_back(oAtom, bond->getIdx());
             }
           }
-          ++beg;
         }
       }
     }

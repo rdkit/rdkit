@@ -102,11 +102,7 @@ void markUselessD2s(unsigned int root, const ROMol &tMol,
                     const boost::dynamic_bitset<> &activeBonds) {
   // recursive function to mark any degree 2 nodes that are already represented
   // by root for the purpose of finding smallest rings.
-  ROMol::OEDGE_ITER beg, end;
-  boost::tie(beg, end) = tMol.getAtomBonds(tMol.getAtomWithIdx(root));
-  while (beg != end) {
-    const Bond *bond = tMol[*beg];
-    ++beg;
+  for(auto *bond : tMol.getAtomWithIdx(root)->bonds()) {
     if (!activeBonds[bond->getIdx()]) {
       continue;
     }
@@ -462,25 +458,25 @@ void findRingsD3Node(const ROMol &tMol, VECT_INT_VECT &res,
 
     ROMol::OEDGE_ITER beg, end;
     boost::tie(beg, end) = tMol.getAtomBonds(tMol.getAtomWithIdx(cand));
-    while (beg != end && !activeBonds[tMol[*beg]->getIdx()]) {
+    while (beg != end && !activeBonds[(*beg)->getIdx()]) {
       ++beg;
     }
     CHECK_INVARIANT(beg != end, "neighbor not found");
-    n1 = tMol[*beg]->getOtherAtomIdx(cand);
+    n1 = (*beg)->getOtherAtomIdx(cand);
 
     ++beg;
-    while (beg != end && !activeBonds[tMol[*beg]->getIdx()]) {
+    while (beg != end && !activeBonds[(*beg)->getIdx()]) {
       ++beg;
     }
     CHECK_INVARIANT(beg != end, "neighbor not found");
-    n2 = tMol[*beg]->getOtherAtomIdx(cand);
+    n2 = (*beg)->getOtherAtomIdx(cand);
 
     ++beg;
-    while (beg != end && !activeBonds[tMol[*beg]->getIdx()]) {
+    while (beg != end && !activeBonds[(*beg)->getIdx()]) {
       ++beg;
     }
     CHECK_INVARIANT(beg != end, "neighbor not found");
-    n3 = tMol[*beg]->getOtherAtomIdx(cand);
+    n3 = (*beg)->getOtherAtomIdx(cand);
 
     if (nsmall == 2) {
       // we found two rings find the third one
@@ -616,11 +612,7 @@ int greatestComFac(long curfac, long nfac) {
  ******************************************************************************/
 void trimBonds(unsigned int cand, const ROMol &tMol, INT_SET &changed,
                INT_VECT &atomDegrees, boost::dynamic_bitset<> &activeBonds) {
-  ROMol::OEDGE_ITER beg, end;
-  boost::tie(beg, end) = tMol.getAtomBonds(tMol.getAtomWithIdx(cand));
-  while (beg != end) {
-    const Bond *bond = tMol[*beg];
-    ++beg;
+  for(auto *bond : tMol.getAtomWithIdx(cand)->bonds()) {
     if (!activeBonds[bond->getIdx()]) {
       continue;
     }
@@ -702,11 +694,7 @@ int BFSWorkspace::smallestRingsBfs(const ROMol &mol, int root,
       break;
     }
 
-    ROMol::OEDGE_ITER beg, end;
-    boost::tie(beg, end) = mol.getAtomBonds(mol.getAtomWithIdx(curr));
-    while (beg != end) {
-      const Bond *bond = mol[*beg];
-      ++beg;
+    for(auto *bond : mol.getAtomWithIdx(curr)->bonds()) {
       if (!activeBonds[bond->getIdx()]) {
         continue;
       }
@@ -892,14 +880,10 @@ int findSSSR(const ROMol &mol, VECT_INT_VECT &res) {
   activeBonds.set();
 
   // Zero-order bonds are not candidates for rings
-  ROMol::CONST_EDGE_ITER firstB, lastB;
-  boost::tie(firstB, lastB) = mol.getEdges();
-  while (firstB != lastB) {
-    const Bond *bond = mol[*firstB];
+  for(auto *bond : mol.bonds()) {
     if (bond->getBondType() == Bond::ZERO) {
       activeBonds[bond->getIdx()] = 0;
     }
-    ++firstB;
   }
 
   boost::dynamic_bitset<> ringBonds(nbnds);
@@ -912,14 +896,10 @@ int findSSSR(const ROMol &mol, VECT_INT_VECT &res) {
     int deg = atom->getDegree();
     atomDegrees[i] = deg;
     atomDegreesWithZeroOrderBonds[i] = deg;
-    ROMol::OEDGE_ITER beg, end;
-    boost::tie(beg, end) = mol.getAtomBonds(atom);
-    while (beg != end) {
-      const Bond *bond = mol[*beg];
+    for(auto *bond : atom->bonds()) {
       if (bond->getBondType() == Bond::ZERO) {
         atomDegrees[i]--;
       }
-      ++beg;
     }
   }
 
@@ -1244,10 +1224,7 @@ void _DFS(const ROMol &mol, const Atom *atom, INT_VECT &atomColors,
   atomColors[atom->getIdx()] = 1;
   traversalOrder.push_back(atom);
 
-  ROMol::CONST_ADJ_ITER nbrIter, endNbrs;
-  boost::tie(nbrIter, endNbrs) = mol.getAtomNeighbors(atom);
-  while (nbrIter != endNbrs) {
-    const Atom *nbr = mol[*nbrIter];
+  for(auto nbr : atom->nbrs()) {
     unsigned int nbrIdx = nbr->getIdx();
     // std::cerr<<"   "<<atom->getIdx()<<"       consider: "<<nbrIdx<<"
     // "<<atomColors[nbrIdx]<<std::endl;
@@ -1275,7 +1252,6 @@ void _DFS(const ROMol &mol, const Atom *atom, INT_VECT &atomColors,
         // std::cerr<<std::endl;
       }
     }
-    ++nbrIter;
   }
   atomColors[atom->getIdx()] = 2;
   traversalOrder.pop_back();

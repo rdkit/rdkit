@@ -175,10 +175,7 @@ void calcFingerprint(const ROMol &mol, unsigned int radius,
           continue;
         }
         std::vector<std::pair<int32_t, uint32_t>> nbrs;
-        ROMol::OEDGE_ITER beg, end;
-        boost::tie(beg, end) = lmol->getAtomBonds(tAtom);
-        while (beg != end) {
-          const Bond *bond = mol[*beg];
+        for(auto *bond : tAtom->bonds()) {
           roundAtomNeighborhoods[atomIdx][bond->getIdx()] = 1;
 
           unsigned int oIdx = bond->getOtherAtomIdx(atomIdx);
@@ -198,8 +195,6 @@ void calcFingerprint(const ROMol &mol, unsigned int radius,
             }
           }
           nbrs.emplace_back(bt, (*invariants)[oIdx]);
-
-          ++beg;
         }
 
         // sort the neighbor list:

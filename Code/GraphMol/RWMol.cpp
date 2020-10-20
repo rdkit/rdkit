@@ -410,14 +410,10 @@ void RWMol::removeBond(unsigned int aid1, unsigned int aid2) {
   removeSubstanceGroupsReferencingBond(*this, idx);
 
   // loop over all bonds with higher indices and update their indices
-  ROMol::EDGE_ITER firstB, lastB;
-  boost::tie(firstB, lastB) = this->getEdges();
-  while (firstB != lastB) {
-    Bond *bond = (*this)[*firstB];
+  for(auto *bond : bonds()) {
     if (bond->getIdx() > idx) {
       bond->setIdx(bond->getIdx() - 1);
     }
-    ++firstB;
   }
   bnd->setOwningMol(nullptr);
     _atoms[aid1]->removeNbr(_atoms[aid2]);

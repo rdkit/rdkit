@@ -335,10 +335,7 @@ void enumerateAllPaths(const ROMol &mol, INT_PATH_LIST_MAP &allPaths,
 void identifyQueryBonds(const ROMol &mol, std::vector<const Bond *> &bondCache,
                         std::vector<short> &isQueryBond) {
   bondCache.resize(mol.getNumBonds());
-  ROMol::CONST_EDGE_ITER firstB, lastB;
-  boost::tie(firstB, lastB) = mol.getEdges();
-  while (firstB != lastB) {
-    const Bond *bond = mol[*firstB];
+  for(auto *bond : mol.bonds()) {
     isQueryBond[bond->getIdx()] = 0x0;
     bondCache[bond->getIdx()] = bond;
     if (isComplexQuery(bond)) {
@@ -350,7 +347,6 @@ void identifyQueryBonds(const ROMol &mol, std::vector<const Bond *> &bondCache,
     if (isComplexQuery(bond->getEndAtom())) {
       isQueryBond[bond->getIdx()] |= 0x4;
     }
-    ++firstB;
   }
 }
 

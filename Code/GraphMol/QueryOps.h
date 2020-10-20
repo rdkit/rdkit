@@ -83,9 +83,7 @@ static inline int queryAtomTotalDegree(Atom const *at) {
 //! D and T are treated as "non-hydrogen" here
 static inline int queryAtomNonHydrogenDegree(Atom const *at) {
   int res = 0;
-  for (const auto &nbri :
-       boost::make_iterator_range(at->getOwningMol().getAtomNeighbors(at))) {
-    const auto nbr = at->getOwningMol()[nbri];
+    for (const auto *nbr : at->nbrs() ) {
     if (nbr->getAtomicNum() != 1 || nbr->getIsotope() > 1) {
       res++;
     }
@@ -96,9 +94,7 @@ static inline int queryAtomNonHydrogenDegree(Atom const *at) {
 //! D and T are not treated as heavy atoms here
 static inline int queryAtomHeavyAtomDegree(Atom const *at) {
   int heavyDegree = 0;
-  for (const auto &nbri :
-       boost::make_iterator_range(at->getOwningMol().getAtomNeighbors(at))) {
-    const auto nbr = at->getOwningMol()[nbri];
+  for (const auto *nbr : at->nbrs()) {
     if (nbr->getAtomicNum() > 1) {
       heavyDegree++;
     }
@@ -181,57 +177,41 @@ static inline int queryAtomMissingChiralTag(Atom const *at) {
 };
 
 static inline int queryAtomHasHeteroatomNbrs(Atom const *at) {
-  ROMol::ADJ_ITER nbrIdx, endNbrs;
-  boost::tie(nbrIdx, endNbrs) = at->getOwningMol().getAtomNeighbors(at);
-  while (nbrIdx != endNbrs) {
-    const Atom *nbr = at->getOwningMol()[*nbrIdx];
+  for(auto *nbr : at->nbrs()) {
     if (nbr->getAtomicNum() != 6 && nbr->getAtomicNum() != 1) {
       return 1;
     }
-    ++nbrIdx;
   }
   return 0;
 };
 
 static inline int queryAtomNumHeteroatomNbrs(Atom const *at) {
   int res = 0;
-  ROMol::ADJ_ITER nbrIdx, endNbrs;
-  boost::tie(nbrIdx, endNbrs) = at->getOwningMol().getAtomNeighbors(at);
-  while (nbrIdx != endNbrs) {
-    const Atom *nbr = at->getOwningMol()[*nbrIdx];
+  for(auto *nbr : at->nbrs()) {
     if (nbr->getAtomicNum() != 6 && nbr->getAtomicNum() != 1) {
       ++res;
     }
-    ++nbrIdx;
   }
   return res;
 };
 
 static inline int queryAtomHasAliphaticHeteroatomNbrs(Atom const *at) {
-  ROMol::ADJ_ITER nbrIdx, endNbrs;
-  boost::tie(nbrIdx, endNbrs) = at->getOwningMol().getAtomNeighbors(at);
-  while (nbrIdx != endNbrs) {
-    const Atom *nbr = at->getOwningMol()[*nbrIdx];
+  for(auto *nbr : at->nbrs()) {
     if ((!nbr->getIsAromatic()) && nbr->getAtomicNum() != 6 &&
         nbr->getAtomicNum() != 1) {
       return 1;
     }
-    ++nbrIdx;
   }
   return 0;
 };
 
 static inline int queryAtomNumAliphaticHeteroatomNbrs(Atom const *at) {
   int res = 0;
-  ROMol::ADJ_ITER nbrIdx, endNbrs;
-  boost::tie(nbrIdx, endNbrs) = at->getOwningMol().getAtomNeighbors(at);
-  while (nbrIdx != endNbrs) {
-    const Atom *nbr = at->getOwningMol()[*nbrIdx];
+  for(auto *nbr : at->nbrs()) {
     if ((!nbr->getIsAromatic()) && nbr->getAtomicNum() != 6 &&
         nbr->getAtomicNum() != 1) {
       ++res;
     }
-    ++nbrIdx;
   }
   return res;
 };
@@ -269,43 +249,37 @@ static inline int queryBondHasStereo(Bond const *bnd) {
 
 static inline int queryIsAtomInNRings(Atom const *at) {
   return at->getOwningMol().getRingInfo()->numAtomRings(at->getIdx());
-};
+}
 static inline int queryIsAtomInRing(Atom const *at) {
   return at->getOwningMol().getRingInfo()->numAtomRings(at->getIdx()) != 0;
-};
+}
 static inline int queryAtomHasRingBond(Atom const *at) {
-  ROMol::OBOND_ITER_PAIR atomBonds = at->getOwningMol().getAtomBonds(at);
-  while (atomBonds.first != atomBonds.second) {
-    unsigned int bondIdx =
-        at->getOwningMol().getTopology()[*atomBonds.first]->getIdx();
+  for(auto *bond : at->bonds()) {
+    unsigned int bondIdx = bond->getIdx();
     if (at->getOwningMol().getRingInfo()->numBondRings(bondIdx)) {
       return 1;
     }
-    ++atomBonds.first;
   }
   return 0;
-};
+}
 static inline int queryIsBondInRing(Bond const *bond) {
   return bond->getOwningMol().getRingInfo()->numBondRings(bond->getIdx()) != 0;
-};
+}
 static inline int queryAtomMinRingSize(Atom const *at) {
   return at->getOwningMol().getRingInfo()->minAtomRingSize(at->getIdx());
-};
+}
 static inline int queryBondMinRingSize(Bond const *bond) {
   return bond->getOwningMol().getRingInfo()->minBondRingSize(bond->getIdx());
-};
+}
 
 static inline int queryAtomRingBondCount(Atom const *at) {
   // EFF: cache this result
   int res = 0;
-  ROMol::OBOND_ITER_PAIR atomBonds = at->getOwningMol().getAtomBonds(at);
-  while (atomBonds.first != atomBonds.second) {
-    unsigned int bondIdx =
-        at->getOwningMol().getTopology()[*atomBonds.first]->getIdx();
+  for(auto *bond : at->bonds()) {
+    unsigned int bondIdx = bond->getIdx();
     if (at->getOwningMol().getRingInfo()->numBondRings(bondIdx)) {
       res++;
     }
-    ++atomBonds.first;
   }
   return res;
 }
@@ -317,16 +291,15 @@ int queryAtomIsInRingOfSize(Atom const *at) {
   } else {
     return 0;
   }
-};
+}
 template <int tgt>
 int queryBondIsInRingOfSize(Bond const *bond) {
-  if (bond->getOwningMol().getRingInfo()->isBondInRingOfSize(bond->getIdx(),
-                                                             tgt)) {
+  if (bond->getOwningMol().getRingInfo()->isBondInRingOfSize(bond->getIdx(), tgt)) {
     return tgt;
   } else {
     return 0;
   }
-};
+}
 
 template <class T>
 T *makeAtomSimpleQuery(int what, int func(Atom const *),

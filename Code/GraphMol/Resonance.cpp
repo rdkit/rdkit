@@ -303,10 +303,8 @@ AtomElectrons::AtomElectrons(ConjElectrons *parent, const Atom *a)
       d_parent(parent) {
   PRECONDITION(d_atom, "d_atom cannot be NULL");
   d_tv = static_cast<std::uint8_t>(a->getTotalDegree());
-  const ROMol &mol = d_atom->getOwningMol();
-  for (const auto &bNbri :
-       boost::make_iterator_range(mol.getAtomBonds(d_atom))) {
-    if (d_tv && mol[bNbri]->getBondType() >= Bond::DATIVEONE) {
+  for (const auto &bNbr : d_atom->bonds()) {
+    if (d_tv && bNbr->getBondType() >= Bond::DATIVEONE) {
       --d_tv;
     }
   }
@@ -354,11 +352,7 @@ std::uint8_t AtomElectrons::findAllowedBonds(unsigned int bi) {
 // has oe() == oeConstraint, if the latter is non-zero)
 bool AtomElectrons::isNbrCharged(unsigned int bo, unsigned int oeConstraint) {
   bool res = false;
-  const ROMol &mol = d_parent->parent()->mol();
-  ROMol::OEDGE_ITER nbrIdx, endNbrs;
-  boost::tie(nbrIdx, endNbrs) = mol.getAtomBonds(d_atom);
-  for (; !res && (nbrIdx != endNbrs); ++nbrIdx) {
-    const Bond *bondNbr = mol[*nbrIdx];
+  for(auto *bondNbr : d_atom->bonds()) {
     unsigned int biNbr = bondNbr->getIdx();
     if (d_parent->parent()->getBondConjGrpIdx(biNbr) != conjGrpIdx()) {
       continue;
@@ -435,14 +429,14 @@ std::uint8_t AtomElectrons::canAddBondWithOrder(unsigned int bo) {
 // non-definitive bond left
 void AtomElectrons::allConjBondsDefinitiveBut(unsigned int bi) {
   bool allDefinitive = true;
-  ROMol &mol = d_atom->getOwningMol();
-  ROMol::OEDGE_ITER nbrIdx, endNbrs;
-  boost::tie(nbrIdx, endNbrs) = mol.getAtomBonds(d_atom);
-  for (; allDefinitive && (nbrIdx != endNbrs); ++nbrIdx) {
-    unsigned int nbi = mol[*nbrIdx]->getIdx();
+  for(auto *bond : d_atom->bonds()) {
+    unsigned int nbi = bond->getIdx();
     if ((nbi != bi) &&
         (d_parent->parent()->getBondConjGrpIdx(nbi) == conjGrpIdx())) {
       allDefinitive = d_parent->getBondElectronsWithIdx(nbi)->isDefinitive();
+      if(!allDefinitive) {
+        break;
+      }
     }
   }
   if (allDefinitive) {
@@ -1472,9 +1466,7 @@ void ResonanceMolSupplier::assignConjGrpIdx() {
       const Bond *bi = d_mol->getBondWithIdx(i);
       for (const Atom *bondAtom : {bi->getBeginAtom(), bi->getEndAtom()}) {
         // loop over bonds sprouting from bondAtom
-        for (const auto &bNbri :
-             boost::make_iterator_range(d_mol->getAtomBonds(bondAtom))) {
-          const auto &bNbr = (*d_mol)[bNbri];
+        for (const auto &bNbr : bondAtom->bonds()) {
           unsigned int biNbr = bNbr->getIdx();
           if (bNbr->getIsConjugated() && (d_bondConjGrpIdx[biNbr] == -1)) {
             d_bondConjGrpIdx[biNbr] = d_nConjGrp;
@@ -1577,11 +1569,8 @@ void ResonanceMolSupplier::buildCEMap(CEMap &ceMap, unsigned int conjGrpIdx) {
       BondElectrons *be = nullptr;
       // loop over neighbors of the atom popped from the
       // atom index stack
-      ROMol::ADJ_ITER nbrIdx, endNbrs;
-      boost::tie(nbrIdx, endNbrs) =
-          d_mol->getAtomNeighbors(ae[BEGIN_POS]->atom());
-      for (; nbrIdx != endNbrs; ++nbrIdx) {
-        unsigned int aiNbr = (*d_mol)[*nbrIdx]->getIdx();
+      for(auto *nbr : ae[BEGIN_POS]->atom()->nbrs()) {
+        unsigned int aiNbr = nbr->getIdx();
         // if this neighbor is not part of the conjugated group,
         // ignore it
         if (ce->parent()->getAtomConjGrpIdx(aiNbr) !=

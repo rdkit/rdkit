@@ -74,31 +74,28 @@ void nitrogenCleanup(RWMol &mol, Atom *atom) {
   // the sanitization process):
   if (atom->calcExplicitValence(false) == 5) {
     unsigned int aid = atom->getIdx();
-    RWMol::ADJ_ITER nid1, end1;
-    boost::tie(nid1, end1) = mol.getAtomNeighbors(atom);
-    while (nid1 != end1) {
-      if ((mol.getAtomWithIdx((const Atom*)*nid1)->getAtomicNum() == 8) &&
-          (mol.getAtomWithIdx((const Atom*)*nid1)->getFormalCharge() == 0) &&
-          (mol.getBondBetweenAtoms(aid, (*nid1)->getIdx())->getBondType() ==
+    for(auto *nbr: atom->nbrs()) {
+      if ((nbr->getAtomicNum() == 8) &&
+          (nbr->getFormalCharge() == 0) &&
+          (mol.getBondBetweenAtoms(aid, nbr->getIdx())->getBondType() ==
            Bond::DOUBLE)) {
         // here's the double bonded oxygen
-        Bond *b = mol.getBondBetweenAtoms(aid, (*nid1)->getIdx());
+        Bond *b = mol.getBondBetweenAtoms(aid, nbr->getIdx());
         b->setBondType(Bond::SINGLE);
         atom->setFormalCharge(1);
-        mol.getAtomWithIdx(*nid1)->setFormalCharge(-1);
+        nbr->setFormalCharge(-1);
         break;
-      } else if ((mol.getAtomWithIdx(*nid1)->getAtomicNum() == 7) &&
-                 (mol.getAtomWithIdx(*nid1)->getFormalCharge() == 0) &&
-                 (mol.getBondBetweenAtoms(aid, (*nid1)->getIdx())->getBondType() ==
+      } else if ((nbr->getAtomicNum() == 7) &&
+                 (nbr->getFormalCharge() == 0) &&
+                 (mol.getBondBetweenAtoms(aid, nbr->getIdx())->getBondType() ==
                   Bond::TRIPLE)) {
         // here's the triple bonded nitrogen
-        Bond *b = mol.getBondBetweenAtoms(aid, (*nid1)->getIdx());
+        Bond *b = mol.getBondBetweenAtoms(aid, nbr->getIdx());
         b->setBondType(Bond::DOUBLE);
         atom->setFormalCharge(1);
-        mol.getAtomWithIdx(*nid1)->setFormalCharge(-1);
+        nbr->setFormalCharge(-1);
         break;
       }
-      ++nid1;
     }  // end of loop over the first neigh
   }    // if this atom is 5 coordinate nitrogen
   // force a recalculation of the explicit valence here
@@ -127,24 +124,21 @@ void phosphorusCleanup(RWMol &mol, Atom *atom) {
     Bond *dbl_to_O = nullptr;
     Atom *O_atom = nullptr;
     bool hasDoubleToCorN = false;
-    RWMol::ADJ_ITER nid1, end1;
-    boost::tie(nid1, end1) = mol.getAtomNeighbors(atom);
-    while (nid1 != end1) {
-      if (((*nid1)->getAtomicNum() == 8) &&
-          ((*nid1)->getFormalCharge() == 0) &&
-          (mol.getBondBetweenAtoms(aid, (*nid1)->getIdx())->getBondType() ==
+    for(auto *nbr : atom->nbrs()) {
+      if ((nbr->getAtomicNum() == 8) &&
+          (nbr->getFormalCharge() == 0) &&
+          (mol.getBondBetweenAtoms(aid, nbr->getIdx())->getBondType() ==
            Bond::DOUBLE)) {
         // here's the double bonded oxygen
-        dbl_to_O = mol.getBondBetweenAtoms(aid, *nid1);
-        O_atom = mol.getAtomWithIdx(*nid1);
-      } else if (((*nid1)->getAtomicNum() == 6 ||
-                  (*nid1)->getAtomicNum() == 7) &&
-                 ((*nid1)->getDegree() >= 2) &&
-                 (mol.getBondBetweenAtoms(aid, *nid1)->getBondType() ==
+        dbl_to_O = mol.getBondBetweenAtoms(aid, nbr->getIdx());
+        O_atom = nbr;
+      } else if ((nbr->getAtomicNum() == 6 ||
+                  nbr->getAtomicNum() == 7) &&
+                 (nbr->getDegree() >= 2) &&
+                 (mol.getBondBetweenAtoms(aid, nbr->getIdx())->getBondType() ==
                   Bond::DOUBLE)) {
         hasDoubleToCorN = true;
       }
-      ++nid1;
     }  // end of loop over the first neigh
     if (hasDoubleToCorN && dbl_to_O != nullptr) {
       TEST_ASSERT(O_atom != nullptr);
@@ -167,28 +161,22 @@ void halogenCleanup(RWMol &mol, Atom *atom) {
   if (atom->getFormalCharge() == 0 && (ev == 7 || ev == 5 || ev == 3)) {
     unsigned int aid = atom->getIdx();
     bool neighborsAllO = true;
-    RWMol::ADJ_ITER nid1, end1;
-    boost::tie(nid1, end1) = mol.getAtomNeighbors(atom);
-    while (nid1 != end1) {
-      if (mol.getAtomWithIdx(*nid1)->getAtomicNum() != 8) {
+    for(auto *nbr : atom->nbrs()) {
+      if (nbr->getAtomicNum() != 8) {
         neighborsAllO = false;
         break;
       }
-      ++nid1;
     }
     if (neighborsAllO) {
       int formalCharge = 0;
-      boost::tie(nid1, end1) = mol.getAtomNeighbors(atom);
-      while (nid1 != end1) {
-        Bond *b = mol.getBondBetweenAtoms(aid, *nid1);
+      for(auto *nbr : atom->nbrs()) {
+        Bond *b = mol.getBondBetweenAtoms(aid, nbr->getIdx());
         if (b->getBondType() == Bond::DOUBLE) {
           b->setBondType(Bond::SINGLE);
-          Atom *otherAtom = mol.getAtomWithIdx(*nid1);
           formalCharge++;
-          otherAtom->setFormalCharge(-1);
-          otherAtom->calcExplicitValence(false);
+          nbr->setFormalCharge(-1);
+          nbr->calcExplicitValence(false);
         }
-        ++nid1;
       }
       atom->setFormalCharge(formalCharge);
       atom->calcExplicitValence(false);
@@ -265,11 +253,8 @@ void assignRadicals(RWMol &mol) {
       continue;
     }
     double accum = 0.0;
-    RWMol::OEDGE_ITER beg, end;
-    boost::tie(beg, end) = mol.getAtomBonds(*ai);
-    while (beg != end) {
-      accum += mol[*beg]->getValenceContrib(*ai);
-      ++beg;
+    for(auto *bond : (*ai)->bonds()) {
+      accum += bond->getValenceContrib(*ai);
     }
     accum += (*ai)->getNumExplicitHs();
     int totalValence = static_cast<int>(accum + 0.1);
@@ -512,11 +497,7 @@ std::vector<ROMOL_SPTR> getMolFrags(const ROMol &mol, bool sanitizeFrags,
     }
 
     // copy bonds and bond stereochemistry information
-    ROMol::CONST_EDGE_ITER beg, end;
-    boost::tie(beg, end) = mol.getEdges();
-    while (beg != end) {
-      const Bond *bond = (mol)[*beg];
-      ++beg;
+    for(auto *bond: mol.bonds()) {
       if (!copiedBonds[bond->getIdx()]) {
         continue;
       }

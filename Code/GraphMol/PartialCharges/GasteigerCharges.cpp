@@ -45,17 +45,14 @@ void splitChargeConjugated(const ROMol &mol, DOUBLE_VECT &charges) {
     marker.resize(0);
     if ((fabs(formal) > EPS_DOUBLE) && (fabs(charges[aix]) < EPS_DOUBLE)) {
       marker.push_back(aix);
-      ROMol::OEDGE_ITER bnd1, end1, bnd2, end2;
-      boost::tie(bnd1, end1) = mol.getAtomBonds(at);
-      while (bnd1 != end1) {
-        if (mol[*bnd1]->getIsConjugated()) {
-          aax = mol[*bnd1]->getOtherAtomIdx(aix);
+      for(auto *bond1 : at->bonds()) {
+        if (bond1->getIsConjugated()) {
+          aax = bond1->getOtherAtomIdx(aix);
           aat = mol.getAtomWithIdx(aax);
-          boost::tie(bnd2, end2) = mol.getAtomBonds(aat);
-          while (bnd2 != end2) {
-            if ((*bnd1) != (*bnd2)) {
-              if (mol[*bnd2]->getIsConjugated()) {
-                yax = mol[*bnd2]->getOtherAtomIdx(aax);
+          for(auto *bond2 : aat->bonds()) {
+            if (bond1 != bond2 ) {
+              if (bond2->getIsConjugated()) {
+                yax = bond2->getOtherAtomIdx(aax);
                 yat = mol.getAtomWithIdx(yax);
                 if (at->getAtomicNum() == yat->getAtomicNum()) {
                   formal += yat->getFormalCharge();
@@ -63,10 +60,8 @@ void splitChargeConjugated(const ROMol &mol, DOUBLE_VECT &charges) {
                 }
               }
             }
-            bnd2++;
           }
         }
-        bnd1++;
       }
 
       for (mci = marker.begin(); mci != marker.end(); mci++) {
@@ -156,13 +151,11 @@ void computeGasteigerCharges(const ROMol &mol, std::vector<double> &charges,
         } else if ((*ai)->getAtomicNum() == 16) {
           // we have a sulfur atom with no hybridization information
           // check how many oxygens we have on the sulfur
-          boost::tie(nbrIdx, endIdx) = mol.getAtomNeighbors(*ai);
           int no = 0;
-          while (nbrIdx != endIdx) {
-            if (mol.getAtomWithIdx(*nbrIdx)->getAtomicNum() == 8) {
+          for(auto *nbr : (*ai)->nbrs()) {
+            if (nbr->getAtomicNum() == 8) {
               no++;
             }
-            nbrIdx++;
           }
           if (no == 2) {
             mode = "so2";

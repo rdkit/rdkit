@@ -634,9 +634,7 @@ std::string MolFragmentToSmiles(const ROMol &mol,
     }
   } else {
     for (auto aidx : atomsToUse) {
-      for (const auto &bndi : boost::make_iterator_range(
-               mol.getAtomBonds(mol.getAtomWithIdx(aidx)))) {
-        const Bond *bond = mol[bndi];
+      for (const auto *bond : mol.getAtomWithIdx(aidx)->bonds()) {
         if (atomsInPlay[bond->getOtherAtomIdx(aidx)]) {
           bondsInPlay.set(bond->getIdx());
         }

@@ -546,10 +546,7 @@ unsigned int getAtomParityFlag(const Atom *atom, const Conformer *conf) {
   const ROMol &mol = atom->getOwningMol();
   RDGeom::Point3D pos = conf->getAtomPos(atom->getIdx());
   std::vector<std::pair<unsigned int, RDGeom::Point3D>> vs;
-  ROMol::ADJ_ITER nbrIdx, endNbrs;
-  boost::tie(nbrIdx, endNbrs) = mol.getAtomNeighbors(atom);
-  while (nbrIdx != endNbrs) {
-    const Atom *at = mol.getAtomWithIdx(*nbrIdx);
+  for(auto *at : atom->nbrs()) {
     unsigned int idx = at->getIdx();
     RDGeom::Point3D v = conf->getAtomPos(idx);
     v -= pos;
@@ -557,7 +554,6 @@ unsigned int getAtomParityFlag(const Atom *atom, const Conformer *conf) {
       idx += mol.getNumAtoms();
     }
     vs.emplace_back(idx, v);
-    ++nbrIdx;
   }
   std::sort(vs.begin(), vs.end(),
             Rankers::pairLess<unsigned int, RDGeom::Point3D>());
@@ -848,28 +844,19 @@ void GetMolFileBondStereoInfo(const Bond *bond, const INT_MAP_INT &wedgeBonds,
 
             bool nbrHasDir = false;
 
-            ROMol::OEDGE_ITER beg, end;
-            boost::tie(beg, end) =
-                bond->getOwningMol().getAtomBonds(bond->getBeginAtom());
-            while (beg != end && !nbrHasDir) {
-              const Bond *nbrBond = bond->getOwningMol()[*beg];
+            for(auto *nbrBond : bond->getBeginAtom()->bonds()) {
               if (nbrBond->getBondType() == Bond::SINGLE &&
                   (nbrBond->getBondDir() == Bond::ENDUPRIGHT ||
                    nbrBond->getBondDir() == Bond::ENDDOWNRIGHT)) {
                 nbrHasDir = true;
               }
-              ++beg;
             }
-            boost::tie(beg, end) =
-                bond->getOwningMol().getAtomBonds(bond->getEndAtom());
-            while (beg != end && !nbrHasDir) {
-              const Bond *nbrBond = bond->getOwningMol()[*beg];
+            for(auto *nbrBond: bond->getEndAtom()->bonds()) {
               if (nbrBond->getBondType() == Bond::SINGLE &&
                   (nbrBond->getBondDir() == Bond::ENDUPRIGHT ||
                    nbrBond->getBondDir() == Bond::ENDDOWNRIGHT)) {
                 nbrHasDir = true;
               }
-              ++beg;
             }
             if (!nbrHasDir) {
               dirCode = 3;

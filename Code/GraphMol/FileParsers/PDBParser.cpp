@@ -530,10 +530,7 @@ void StandardPDBResidueChirality(RWMol *mol) {
 }
 
 void BasicPDBCleanup(RWMol &mol) {
-  ROMol::VERTEX_ITER atBegin, atEnd;
-  boost::tie(atBegin, atEnd) = mol.getVertices();
-  while (atBegin != atEnd) {
-    Atom *atom = mol[*atBegin];
+  for(auto *atom : mol.atoms()) {
     atom->calcExplicitValence(false);
 
     // correct four-valent neutral N -> N+
@@ -542,7 +539,6 @@ void BasicPDBCleanup(RWMol &mol) {
         atom->getExplicitValence() == 4) {
       atom->setFormalCharge(1);
     }
-    ++atBegin;
   }
 }
 

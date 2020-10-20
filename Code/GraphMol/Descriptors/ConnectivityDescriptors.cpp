@@ -26,10 +26,7 @@ void hkDeltas(const ROMol &mol, std::vector<double> &deltas, bool force) {
     return;
   }
   const PeriodicTable *tbl = PeriodicTable::getTable();
-  ROMol::VERTEX_ITER atBegin, atEnd;
-  boost::tie(atBegin, atEnd) = mol.getVertices();
-  while (atBegin != atEnd) {
-    const Atom* at = mol[*atBegin];
+  for(auto *at : mol.atoms()) {
     unsigned int n = at->getAtomicNum();
     if (n <= 1) {
       deltas[at->getIdx()] = 0;
@@ -43,7 +40,6 @@ void hkDeltas(const ROMol &mol, std::vector<double> &deltas, bool force) {
     if (deltas[at->getIdx()] != 0.0) {
       deltas[at->getIdx()] = 1. / sqrt(deltas[at->getIdx()]);
     }
-    ++atBegin;
   }
   mol.setProp(common_properties::_connectivityHKDeltas, deltas, true);
 }
@@ -55,16 +51,12 @@ void nVals(const ROMol &mol, std::vector<double> &nVs, bool force) {
     return;
   }
   const PeriodicTable *tbl = PeriodicTable::getTable();
-  ROMol::VERTEX_ITER atBegin, atEnd;
-  boost::tie(atBegin, atEnd) = mol.getVertices();
-  while (atBegin != atEnd) {
-    const Atom* at = mol[*atBegin];
+  for(auto *at : mol.atoms()) {
     double v = tbl->getNouterElecs(at->getAtomicNum()) - at->getTotalNumHs();
     if (v != 0.0) {
       v = 1. / sqrt(v);
     }
     nVs[at->getIdx()] = v;
-    ++atBegin;
   }
   mol.setProp(common_properties::_connectivityNVals, nVs, true);
 }
@@ -217,12 +209,8 @@ double calcChi1v(const ROMol &mol, bool force) {
   detail::hkDeltas(mol, hkDs, force);
 
   double res = 0.0;
-  ROMol::CONST_EDGE_ITER firstB, lastB;
-  boost::tie(firstB, lastB) = mol.getEdges();
-  while (firstB != lastB) {
-    const Bond* bond = mol[*firstB];
+  for(auto *bond : mol.bonds()) {
     res += hkDs[bond->getBeginAtomIdx()] * hkDs[bond->getEndAtomIdx()];
-    ++firstB;
   }
   return res;
 };
@@ -246,12 +234,8 @@ double calcChi1n(const ROMol &mol, bool force) {
   detail::nVals(mol, nVs, force);
 
   double res = 0.0;
-  ROMol::CONST_EDGE_ITER firstB, lastB;
-  boost::tie(firstB, lastB) = mol.getEdges();
-  while (firstB != lastB) {
-    const Bond* bond = mol[*firstB];
+  for(auto *bond : mol.bonds()) {
     res += nVs[bond->getBeginAtomIdx()] * nVs[bond->getEndAtomIdx()];
-    ++firstB;
   }
   return res;
 };
@@ -271,11 +255,7 @@ double calcHallKierAlpha(const ROMol &mol, std::vector<double> *atomContribs) {
   const PeriodicTable *tbl = PeriodicTable::getTable();
   double alphaSum = 0.0;
   double rC = tbl->getRb0(6);
-  ROMol::VERTEX_ITER atBegin, atEnd;
-  boost::tie(atBegin, atEnd) = mol.getVertices();
-  while (atBegin != atEnd) {
-    const Atom* at = mol[*atBegin];
-    ++atBegin;
+  for(auto *at : mol.atoms()) {
     unsigned int n = at->getAtomicNum();
     if (!n) {
       continue;

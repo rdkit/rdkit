@@ -238,10 +238,10 @@ class RDKIT_GRAPHMOL_EXPORT ROMol : public RDProps {
   unsigned int getNumHeavyAtoms() const;
   //! returns a pointer to a particular Atom
   inline Atom *getAtomWithIdx(unsigned int idx) { return _atoms.at(idx); }
-  inline Atom *getAtomWithIdx(const Atom * atm )  { return _atoms[atm->getIdx()]; } //hack hack for now (vertex_descriptor}
+  //inline Atom *getAtomWithIdx(const Atom * atm )  { return _atoms[atm->getIdx()]; } //hack hack for now (vertex_descriptor}
   //! \overload
   inline const Atom *getAtomWithIdx(unsigned int idx) const { return _atoms.at(idx); }
-  inline const Atom *getAtomWithIdx(const Atom * atm ) const { return atm; } // hacky hack
+  //inline const Atom *getAtomWithIdx(const Atom * atm ) const { return atm; } // hacky hack
   //! \overload
   template <class U, class = typename std::enable_if<std::is_integral<U>::value>::type>
   Atom *getAtomWithIdx(const U idx) {
@@ -280,22 +280,6 @@ class RDKIT_GRAPHMOL_EXPORT ROMol : public RDProps {
   Bond *getBondBetweenAtoms(int idx1, int idx2);
   //! \overload
   const Bond *getBondBetweenAtoms(int idx1, int idx2) const;
-
-  /*
-  //! returns a pointer to the bond between two atoms, Null on failure
-  Bond *getBondBetweenAtoms(int idx1, unsigned int idx2) {
-    return getBondBetweenAtoms(rdcast<unsigned int>(idx1), idx2);
-  }
-  //! \overload
-  const Bond *getBondBetweenAtoms(unsigned int idx1, int idx2) const {
-    return getBondBetweenAtoms(idx1, rdcast<unsigned int>(idx2));
-  }
-  //! \overload
-  const Bond *getBondBetweenAtoms(int idx1, int idx2) const {
-    return getBondBetweenAtoms(rdcast<unsigned int>(idx1), rdcast<unsigned int>(idx2));
-  }      
-  */
-  
   //! \overload
   Bond *getBondBetweenAtoms(const Atom *atm, int idx2) { return getBondBetweenAtoms(atm->getIdx(), idx2); }
   //! \overload
@@ -304,20 +288,6 @@ class RDKIT_GRAPHMOL_EXPORT ROMol : public RDProps {
   const Bond *getBondBetweenAtoms(const Atom *atm, int idx2) const { return getBondBetweenAtoms(atm->getIdx(), idx2); }
   //! \overload
   const Bond *getBondBetweenAtoms(int idx1, const Atom *atm) const { return getBondBetweenAtoms(idx1, atm->getIdx()); }
-  /*
-  //! \overload
-  template <class U, class = typename std::enable_if<std::is_integral<U>::value>::type>
-    Bond *getBondBetweenAtoms(const Atom *atm, U u) { return getBondBetweenAtoms(atm->getIdx(), u); }
-  //! \overload
-  template <class U, class = typename std::enable_if<std::is_integral<U>::value>::type>
-    Bond *getBondBetweenAtoms(U u, const Atom *atm) { return getBondBetweenAtoms(u, atm->getIdx()); }
-  //! \overload
-  template <class U, class = typename std::enable_if<std::is_integral<U>::value>::type>
-    const Bond *getBondBetweenAtoms(const Atom *atm, U u) const { return getBondBetweenAtoms(atm->getIdx(), u); }
-  //! \overload
-  template <class U, class = typename std::enable_if<std::is_integral<U>::value>::type>
-    const Bond *getBondBetweenAtoms(U u, const Atom *atm) const { return getBondBetweenAtoms(u, atm->getIdx()); }						      
-  */
   //! \overload
   template <class U, class V, class = typename std::enable_if<std::is_integral<U>::value>::type, class = typename std::enable_if<std::is_integral<V>::value>::typeo >
   Bond *getBondBetweenAtoms(const U idx1, const V idx2) {
@@ -665,14 +635,6 @@ class RDKIT_GRAPHMOL_EXPORT ROMol : public RDProps {
   //! sends some debugging info to a stream
   void debugMol(std::ostream &str) const;
   //@}
-
-  Atom *operator[](const vertex_descriptor &v) { return _atoms[v->getIdx()]; };
-  const Atom *operator[](const vertex_descriptor &v) const {
-    return _atoms[v->getIdx()];
-  };
-
-  Bond *operator[](const edge_descriptor &e) { return _bonds[e->getIdx()]; };
-  const Bond *operator[](const edge_descriptor &e) const { return _bonds[e->getIdx()]; };
 
   //! Gets a reference to the groups of atoms with relative stereochemistry
   /*!

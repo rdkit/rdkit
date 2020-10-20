@@ -107,16 +107,12 @@ const float B3[] =
 unsigned int getAtomtype(const ROMol &mol, const RDKit::Atom *atom) {
   PRECONDITION(atom != nullptr, "bad atom argument")
   unsigned int t = 1;
-  RDKit::ROMol::OEDGE_ITER beg, end;
-  boost::tie(beg, end) = mol.getAtomBonds(atom);
-  while (beg != end) {
-    const Bond *bond = mol[*beg];
+  for(auto *bond : atom->bonds()) {
     double a = bond->getBondTypeAsDouble();
     if (a == 1.5) {
       a = 2.0;
     }
     t = std::max(t, (unsigned int)a);
-    ++beg;
   }
   return t;
 }

@@ -2623,9 +2623,7 @@ void processSGroups(RWMol *mol) {
                   // value, otherwise skip it.
                   auto atom = mol->getAtomWithIdx(atIdx);
                   bool hasAromaticBonds = false;
-                  for (auto bndI :
-                       boost::make_iterator_range(mol->getAtomBonds(atom))) {
-                    auto bnd = (*mol)[bndI];
+                  for (auto bnd  : atom->bonds()) {
                     if (bnd->getIsAromatic() ||
                         bnd->getBondType() == Bond::AROMATIC) {
                       hasAromaticBonds = true;

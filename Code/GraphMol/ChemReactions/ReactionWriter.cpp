@@ -42,9 +42,7 @@
 namespace {
 
 void setRXNRoleOfAllMoleculeAtoms(RDKit::ROMol &mol, int role) {
-  RDKit::ROMol::ATOM_ITER_PAIR atItP = mol.getVertices();
-  while (atItP.first != atItP.second) {
-    RDKit::Atom *oAtom = mol[*(atItP.first++)];
+  for(auto *oAtom : mol.atoms()) {
     oAtom->setProp(RDKit::common_properties::molRxnRole, role);
   }
 }

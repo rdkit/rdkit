@@ -251,16 +251,12 @@ MorganEnvGenerator<OutputType>::getEnvironments(
           continue;
         }
 
-        ROMol::OEDGE_ITER beg, end;
-        boost::tie(beg, end) = mol.getAtomBonds(tAtom);
-
         // will hold up to date invariants of neighboring atoms with bond types,
         // these invariants hold information from atoms around radius as big as
         // current layer around the current atom
         std::vector<std::pair<int32_t, uint32_t>> neighborhoodInvariants;
         // add up to date invariants of neighbors
-        while (beg != end) {
-          const Bond *bond = mol[*beg];
+        for(auto *bond : tAtom->bonds()) {
           roundAtomNeighborhoods[atomIdx][bond->getIdx()] = 1;
 
           unsigned int oIdx = bond->getOtherAtomIdx(atomIdx);
@@ -269,8 +265,6 @@ MorganEnvGenerator<OutputType>::getEnvironments(
           auto bt = static_cast<int32_t>((*bondInvariants)[bond->getIdx()]);
           neighborhoodInvariants.push_back(
               std::make_pair(bt, currentInvariants[oIdx]));
-
-          ++beg;
         }
 
         // sort the neighbor list:

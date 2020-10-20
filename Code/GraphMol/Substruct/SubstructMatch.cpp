@@ -218,8 +218,8 @@ class MolMatchFinalCheckFunctor {
       mOrder.insert(mOrder.end(), unmatchedNeighbors, -1);
 
       INT_LIST moOrder;
-      for (const auto &bond : make_iterator_range(d_mol.getAtomBonds(mAt))) {
-        int dbidx = d_mol[bond]->getIdx();
+      for (const auto *bond : mAt->bonds()) {//make_iterator_range(d_mol.getAtomBonds(mAt))) {
+        int dbidx = bond->getIdx();
         if (std::find(mOrder.begin(), mOrder.end(), dbidx) != mOrder.end()) {
           moOrder.push_back(dbidx);
         } else {

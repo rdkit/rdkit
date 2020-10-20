@@ -222,32 +222,27 @@ static void ConnectTheDots_Large(RWMol *mol, unsigned int flags) {
       auto *atom_info = (AtomPDBResidueInfo *)(atom->getMonomerInfo());
       // cut all but shortest Bond
       RDGeom::Point3D p = conf->getAtomPos(i);
-      RDKit::RWMol::ADJ_ITER nbr, end_nbr;
-      boost::tie(nbr, end_nbr) = mol->getAtomNeighbors(atom);
       float best = 10000;
       unsigned int best_idx = mol->getNumAtoms() + 1;
-      while (nbr != end_nbr) {
-        RDGeom::Point3D pn = conf->getAtomPos((*nbr)->getIdx());
+      for(auto *nbr : atom->nbrs()) {
+        RDGeom::Point3D pn = conf->getAtomPos(nbr->getIdx());
         float d = (p - pn).length();
         auto *n_info =
-            (AtomPDBResidueInfo *)(mol->getAtomWithIdx(*nbr)->getMonomerInfo());
+            (AtomPDBResidueInfo *)(nbr->getMonomerInfo());
         if (d < best &&
             atom_info->getResidueNumber() == n_info->getResidueNumber()) {
           best = d;
-          best_idx = (*nbr)->getIdx();
+          best_idx = nbr->getIdx();
         }
-        ++nbr;
       }
       // iterate again and remove all but closest
-      boost::tie(nbr, end_nbr) = mol->getAtomNeighbors(atom);
-      while (nbr != end_nbr) {
-        if ((*nbr)->getIdx() == best_idx) {
-          Bond *bond = mol->getBondBetweenAtoms(i, *nbr);
+      for(auto *nbr : atom->nbrs()) {
+        if (nbr->getIdx() == best_idx) {
+          Bond *bond = mol->getBondBetweenAtoms(i, nbr->getIdx());
           bond->setBondType(Bond::SINGLE);  // make sure this one is single
         } else {
-          mol->removeBond(i, (*nbr)->getIdx());
+          mol->removeBond(i, nbr->getIdx());
         }
-        ++nbr;
       }
     }
   }
@@ -498,14 +493,13 @@ static bool StandardPDBDoubleBond(RWMol *mol, Atom *beg, Atom *end) {
   }
 
   // Check that neither end already has a double bond
-  ROMol::OBOND_ITER_PAIR bp;
-  for (bp = mol->getAtomBonds(beg); bp.first != bp.second; ++bp.first) {
-    if ((*mol)[*bp.first]->getBondType() == Bond::DOUBLE) {
+  for(auto *bond : beg->bonds()) {
+    if (bond->getBondType() == Bond::DOUBLE) {
       return false;
     }
   }
-  for (bp = mol->getAtomBonds(end); bp.first != bp.second; ++bp.first) {
-    if ((*mol)[*bp.first]->getBondType() == Bond::DOUBLE) {
+  for(auto *bond : end->bonds()) {
+    if (bond->getBondType() == Bond::DOUBLE) {
       return false;
     }
   }

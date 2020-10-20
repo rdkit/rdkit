@@ -39,9 +39,7 @@
 namespace {
 
 bool testForSameRXNRoleOfAllMoleculeAtoms(const RDKit::ROMol &mol, int role) {
-  RDKit::ROMol::ATOM_ITER_PAIR atItP = mol.getVertices();
-  while (atItP.first != atItP.second) {
-    const RDKit::Atom *oAtom = mol[*(atItP.first++)];
+  for(auto *oAtom : mol.atoms()) {
     int current_role;
     if (oAtom->getPropIfPresent(RDKit::common_properties::molRxnRole,
                                 current_role) &&
@@ -53,9 +51,7 @@ bool testForSameRXNRoleOfAllMoleculeAtoms(const RDKit::ROMol &mol, int role) {
 }
 
 int getRXNRoleOfMolecule(const RDKit::ROMol &mol) {
-  RDKit::ROMol::ATOM_ITER_PAIR atItP = mol.getVertices();
-  while (atItP.first != atItP.second) {
-    const RDKit::Atom *oAtom = mol[*(atItP.first++)];
+  for(auto *oAtom : mol.atoms()) {
     int molRxnRole;
     if (oAtom->getPropIfPresent(RDKit::common_properties::molRxnRole,
                                 molRxnRole)) {

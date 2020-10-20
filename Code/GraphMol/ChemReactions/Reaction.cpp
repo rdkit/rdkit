@@ -488,9 +488,7 @@ bool isChangedAtom(const Atom &rAtom, const Atom &pAtom, int mapNum,
 
   // now check bond layout:
   std::map<unsigned int, const Bond *> reactantBonds;
-  for (const auto &nbrIdx : boost::make_iterator_range(
-           rAtom.getOwningMol().getAtomNeighbors(&rAtom))) {
-    const Atom *nbr = rAtom.getOwningMol()[nbrIdx];
+  for (const auto *nbr : rAtom.nbrs()) {
     int mapNum;
     if (nbr->getPropIfPresent(common_properties::molAtomMapNumber, mapNum)) {
       reactantBonds[mapNum] = rAtom.getOwningMol().getBondBetweenAtoms(
@@ -501,9 +499,7 @@ bool isChangedAtom(const Atom &rAtom, const Atom &pAtom, int mapNum,
       return true;
     }
   }
-  for (const auto &nbrIdx : boost::make_iterator_range(
-           pAtom.getOwningMol().getAtomNeighbors(&pAtom))) {
-    const Atom *nbr = pAtom.getOwningMol()[nbrIdx];
+  for (const auto nbr : pAtom.nbrs()) {
     int mapNum;
     if (nbr->getPropIfPresent(common_properties::molAtomMapNumber, mapNum)) {
       // if we don't have a bond to a similarly mapped atom in the reactant,

@@ -166,15 +166,10 @@ unsigned int Atom::getTotalNumHs(bool includeNeighbors) const {
                "valence not defined for atoms not associated with molecules")
   int res = getNumExplicitHs() + getNumImplicitHs();
   if (includeNeighbors) {
-    ROMol::CONST_ADJ_ITER begin, end;
-    const ROMol *parent = &getOwningMol();
-    boost::tie(begin, end) = parent->getAtomNeighbors(this);
-    while (begin != end) {
-      const Atom *at = parent->getAtomWithIdx((const Atom*)*begin);
+    for(auto *at : nbrs()) {
       if (at->getAtomicNum() == 1) {
         res++;
       }
-      ++begin;
     }
   }
   return res;
@@ -213,11 +208,8 @@ int Atom::calcExplicitValence(bool strict) {
   // FIX: contributions of bonds to valence are being done at best
   // approximately
   double accum = 0;
-  ROMol::OEDGE_ITER beg, end;
-  boost::tie(beg, end) = getOwningMol().getAtomBonds(this);
-  while (beg != end) {
-    accum += getOwningMol()[*beg]->getValenceContrib(this);
-    ++beg;
+  for(auto *bond : bonds()) {
+    accum += bond->getValenceContrib(this);
   }
   accum += getNumExplicitHs();
 
@@ -549,11 +541,8 @@ int Atom::getPerturbationOrder(const INT_LIST &probe) const {
       dp_mol,
       "perturbation order not defined for atoms not associated with molecules")
   INT_LIST ref;
-  ROMol::OEDGE_ITER beg, end;
-  boost::tie(beg, end) = getOwningMol().getAtomBonds(this);
-  while (beg != end) {
-    ref.push_back(getOwningMol()[*beg]->getIdx());
-    ++beg;
+  for(auto *bond: bonds()) {
+    ref.push_back(bond->getIdx());
   }
   int nSwaps = static_cast<int>(countSwapsToInterconvert(probe, ref));
   return nSwaps;

@@ -1593,17 +1593,13 @@ void _recurseDegTwoRingAtoms(unsigned int aid, const RDKit::ROMol *mol,
   PRECONDITION(mol, "");
   // find all atoms along a path that have two ring atoms on them
   // aid is where will start looking and then we will recurse
-  RDKit::ROMol::OBOND_ITER_PAIR atomBonds;
-  atomBonds = mol->getAtomBonds(mol->getAtomWithIdx(aid));
   int bondId;
   RDKit::INT_VECT nbrs;
-  while (atomBonds.first != atomBonds.second) {
-    const RDKit::Bond *bnd = (*mol)[*atomBonds.first];
+  for(auto *bnd : mol->getAtomWithIdx(aid)->bonds()) {
     bondId = bnd->getIdx();
     if (mol->getRingInfo()->numBondRings(bondId)) {
       nbrs.push_back(bnd->getOtherAtomIdx(aid));
     }
-    atomBonds.first++;
   }
   if (nbrs.size() != 2) {
     return;

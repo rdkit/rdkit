@@ -96,18 +96,14 @@ void markDbondCands(RWMol &mol, const INT_VECT &allAtms,
       done.push_back(allAtm);
       // make sure all the bonds on this atom are also non aromatic
       // i.e. can't have aromatic bond onto a non-aromatic atom
-      RWMol::OEDGE_ITER beg, end;
-      boost::tie(beg, end) = mol.getAtomBonds(at);
-      while (beg != end) {
-        // ok we can't have an aromatic atom
-        if (mol[*beg]->getIsAromatic()) {
+      for(auto *bond : at->bonds()) {
+        if (bond->getIsAromatic()) {
           std::ostringstream errout;
           errout << "Aromatic bonds on non aromatic atom " << at->getIdx();
           std::string msg = errout.str();
           BOOST_LOG(rdErrorLog) << msg << std::endl;
           throw AtomKekulizeException(msg, at->getIdx());
         }
-        ++beg;
       }
       continue;
     }
@@ -117,10 +113,7 @@ void markDbondCands(RWMol &mol, const INT_VECT &allAtms,
     // bonds that we will later mark as being single:
     int sbo = 0;
     unsigned nToIgnore = 0;
-    RWMol::OEDGE_ITER beg, end;
-    boost::tie(beg, end) = mol.getAtomBonds(at);
-    while (beg != end) {
-      Bond *bond = mol[*beg];
+    for(auto *bond : at->bonds()) {
       if (bond->getIsAromatic() && (bond->getBondType() == Bond::SINGLE ||
                                     bond->getBondType() == Bond::DOUBLE ||
                                     bond->getBondType() == Bond::AROMATIC)) {
@@ -136,7 +129,6 @@ void markDbondCands(RWMol &mol, const INT_VECT &allAtms,
           ++nToIgnore;
         }
       }
-      ++beg;
     }
 
     if (!at->getAtomicNum()) {

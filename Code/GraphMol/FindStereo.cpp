@@ -43,10 +43,7 @@ StereoInfo getStereoInfo(const Bond *bond) {
     sinfo.controllingAtoms.reserve(4);
 
     bool seenSquiggleBond = false;
-    const auto &mol = bond->getOwningMol();
-    for (const auto &nbri :
-         boost::make_iterator_range(mol.getAtomBonds(beginAtom))) {
-      const auto &nbr = mol[nbri];
+    for(auto *nbr : beginAtom->bonds()) {
       if (nbr->getIdx() != bond->getIdx()) {
         if (nbr->getBondDir() == Bond::BondDir::UNKNOWN) {
           seenSquiggleBond = true;
@@ -58,9 +55,7 @@ StereoInfo getStereoInfo(const Bond *bond) {
     if (beginAtom->getDegree() == 2) {
       sinfo.controllingAtoms.push_back(StereoInfo::NOATOM);
     }
-    for (const auto &nbri :
-         boost::make_iterator_range(mol.getAtomBonds(endAtom))) {
-      const auto &nbr = mol[nbri];
+    for (const auto *nbr : endAtom->bonds() ) {
       if (nbr->getIdx() != bond->getIdx()) {
         if (nbr->getBondDir() == Bond::BondDir::UNKNOWN) {
           seenSquiggleBond = true;
@@ -134,10 +129,8 @@ StereoInfo getStereoInfo(const Atom *atom) {
   sinfo.centeredOn = atom->getIdx();
   sinfo.controllingAtoms.reserve(atom->getDegree());
 
-  const auto &mol = atom->getOwningMol();
   int explicitUnknownStereo = 0;
-  for (const auto &nbri : boost::make_iterator_range(mol.getAtomBonds(atom))) {
-    const auto &bnd = mol[nbri];
+  for (auto *bnd : atom->bonds()) {
     if (bnd->getBondDir() == Bond::UNKNOWN) {
       explicitUnknownStereo = 1;
     } else if (!explicitUnknownStereo) {
