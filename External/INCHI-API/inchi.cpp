@@ -273,7 +273,7 @@ Atom* findAlternatingBonds(
         nextBondType = Bond::DOUBLE;
       }
       if ((temp = findAlternatingBonds(
-               mol, mol.getAtomWithIdx(*nid), desiredAtomicNumber,
+               mol, *nid, desiredAtomicNumber,
                desiredAtomCharge, nextBondType, desiredEndingBondType,
                currentPathLength + 1, maxPathLength, bond, path, _visited)) !=
           nullptr) {
@@ -286,7 +286,7 @@ Atom* findAlternatingBonds(
       // this can serve as the last leg of the path. This is done only if
       // the desiredEndingBondType is not part of the alternating bonds
       if ((temp = findAlternatingBonds(
-               mol, mol.getAtomWithIdx(*nid), desiredAtomicNumber,
+               mol, *nid, desiredAtomicNumber,
                desiredAtomCharge, Bond::UNSPECIFIED, /* no next */
                desiredEndingBondType, currentPathLength + 1,
                0, /* this limits the recursion */
@@ -312,7 +312,7 @@ int getNumDoubleBondedNegativelyChargedNeighboringSi(ROMol& mol, Atom* a) {
   int nSi = 0;
   int thisId = a->getIdx();
   while (nid1 != end1) {
-    Atom* nbr = mol.getAtomWithIdx(*nid1);
+    Atom* nbr = *nid1;
     Bond* bond = mol.getBondBetweenAtoms((*nid1)->getIdx(), thisId);
     if (nbr->getAtomicNum() == 14 && nbr->getFormalCharge() == -1 &&
         bond->getBondType() == Bond::DOUBLE) {
@@ -486,7 +486,7 @@ bool _Valence5NCleanUp4(RWMol& mol, Atom* atom) {
   Bond* bonds[2];
   boost::tie(nid1, end1) = mol.getAtomNeighbors(atom);
   while (nid1 != end1) {
-    Atom* nbr = mol.getAtomWithIdx(*nid1);
+    Atom* nbr = *nid1;
     Bond* bond = mol.getBondBetweenAtoms((*nid1)->getIdx(), thisId);
     if (nbr->getAtomicNum() == 14 && nbr->getFormalCharge() == -1 &&
         bond->getBondType() == Bond::DOUBLE) {
@@ -953,7 +953,7 @@ bool _Valence7SCleanUp1(RWMol& mol, Atom* atom) {
   RWMol::ADJ_ITER nid, nid1, end1;
   boost::tie(nid1, end1) = mol.getAtomNeighbors(atom);
   while (nid1 != end1) {
-    Atom* otherAtom = mol.getAtomWithIdx(*nid1);
+    Atom* otherAtom = *nid1;
     if (otherAtom->getAtomicNum() == 8) {
       if (mol.getBondBetweenAtoms((*nid1)->getIdx(), aid)->getBondType() != Bond::DOUBLE) {
         neighborsO = 100;
@@ -977,7 +977,7 @@ bool _Valence7SCleanUp1(RWMol& mol, Atom* atom) {
   }
   if (neighborsC == 1 || neighborsO == 3) {
     mol.getBondBetweenAtoms((*nid)->getIdx(), aid)->setBondType(Bond::SINGLE);
-    Atom* otherAtom = mol.getAtomWithIdx(*nid);
+    Atom* otherAtom = *nid;
     otherAtom->setFormalCharge(-1);
     atom->setFormalCharge(0);
     otherAtom->calcExplicitValence(false);
@@ -1088,7 +1088,7 @@ bool _Valence8ClCleanUp1(RWMol& mol, Atom* atom) {
   RWMol::ADJ_ITER nid1, end1;
   boost::tie(nid1, end1) = mol.getAtomNeighbors(atom);
   while (nid1 != end1) {
-    if (mol.getAtomWithIdx(*nid1)->getAtomicNum() != 8) {
+    if ((*nid1)->getAtomicNum() != 8) {
       neighborsAllO = false;
       break;
     }
@@ -1101,7 +1101,7 @@ bool _Valence8ClCleanUp1(RWMol& mol, Atom* atom) {
       Bond* b = mol.getBondBetweenAtoms(aid, (*nid1)->getIdx());
       if (b->getBondType() == Bond::DOUBLE) {
         b->setBondType(Bond::SINGLE);
-        Atom* otherAtom = mol.getAtomWithIdx(*nid1);
+        Atom* otherAtom = *nid1;
         otherAtom->setFormalCharge(-1);
         otherAtom->calcExplicitValence(false);
       }
@@ -1241,7 +1241,7 @@ void cleanUp(RWMol& mol) {
           if ((*ai)->getDegree() == 1) {
             RWMol::ADJ_ITER nid, end;
             boost::tie(nid, end) = mol.getAtomNeighbors(*ai);
-            if (mol.getAtomWithIdx(*nid)->getAtomicNum() == 34) {
+            if ((*nid)->getAtomicNum() == 34) {
               mol.getBondBetweenAtoms((*ai)->getIdx(), *nid)
                   ->setBondType(Bond::SINGLE);
             }
