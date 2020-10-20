@@ -371,6 +371,9 @@ bool AtomElectrons::isNbrCharged(unsigned int bo, unsigned int oeConstraint) {
             (!beNbr->isDefinitive() && aeNbr->isDefinitive() &&
              (aeNbr->oe() < (5 - bo)))) &&
            (!oeConstraint || (aeNbr->oe() == oeConstraint)));
+    if(res) {
+      break;
+    }
   }
   return res;
 }
