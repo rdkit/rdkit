@@ -16,8 +16,9 @@ We've added additional allowed valences for Cl (now 1, 3, 5), Br (now 1, 3, 5),
 I (now 1, 3, 5), At (now 1, 3, 5), Xe (now 0, 2, 4, 6), and Po (now 2, 4, 6).
 Molecules with atoms in the new valence states will no longer generate
 sanitization errors. Note that this has an impact on the chemistry of molecules
-containing 3-valent I (present 21 times in ChEMBL 26): previously this was
-incorrectly assigned two implicit Hs, now it has no implicit Hs. 
+containing 3-valent I and at least one  implicit H (present 24 times in ChEMBL
+27): previously this was incorrectly assigned two implicit Hs, now it has no
+implicit Hs. 
 
 Aromaticity perception of molecules like `Cc1nnc2n1c1ccccc1n1c(C)nnc12` now
 correctly recognizes the full outer envelope, i.e. the bonds joining the rings
