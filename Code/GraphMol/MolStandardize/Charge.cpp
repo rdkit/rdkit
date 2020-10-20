@@ -388,9 +388,7 @@ ROMol *Uncharger::uncharge(const ROMol &mol) {
       for (const auto &pair : n_atoms) {
         unsigned int idx = pair.second;
         Atom *atom = omol->getAtomWithIdx(idx);
-        for (const auto &nbri :
-             boost::make_iterator_range(omol->getAtomNeighbors(atom))) {
-          const auto &nbr = (*omol)[nbri];
+        for (const auto *nbr : atom->nbrs() ) {
           auto nbrIdx = nbr->getIdx();
           // if the neighbor has a positive charge,
           // neutralize only once (e.g., NO3-)

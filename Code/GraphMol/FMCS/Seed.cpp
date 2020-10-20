@@ -55,10 +55,7 @@ void Seed::fillNewBonds(const ROMol& qmol) {
   for (unsigned srcAtomIdx = LastAddedAtomsBeginIdx; srcAtomIdx < getNumAtoms();
        srcAtomIdx++) {  // all atoms added on previous growing only
     const Atom* atom = MoleculeFragment.Atoms[srcAtomIdx];
-    ROMol::OEDGE_ITER beg, end;
-    for (boost::tie(beg, end) = qmol.getAtomBonds(atom); beg != end;
-         beg++) {  // all bonds from MoleculeFragment.Atoms[srcAtomIdx]
-      const Bond* bond = &*(qmol[*beg]);
+    for(auto *bond : atom->bonds()) {
       if (!excludedBonds[bond->getIdx()]) {
         // already in the seed or NewBonds list from another atom in a RING
         excludedBonds[bond->getIdx()] = true;
@@ -330,17 +327,14 @@ void Seed::computeRemainingSize(const ROMol& qmol) {
        seedAtomIdx++) {  // just now added new border vertices (candidates for
                          // future growing)
     const Atom* atom = MoleculeFragment.Atoms[seedAtomIdx];
-    ROMol::OEDGE_ITER beg, end;
-    for (boost::tie(beg, end) = qmol.getAtomBonds(atom); beg != end;
-         beg++) {  // all bonds from MoleculeFragment.Atoms[srcAtomIdx]
-      const Bond& bond = *(qmol[*beg]);
-      if (!visitedBonds[bond.getIdx()]) {
+    for(auto *bond : atom->bonds()) {
+      if (!visitedBonds[bond->getIdx()]) {
         ++RemainingBonds;
-        visitedBonds[bond.getIdx()] = true;
+        visitedBonds[bond->getIdx()] = true;
         unsigned end_atom_idx =
-            (MoleculeFragment.AtomsIdx[seedAtomIdx] == bond.getBeginAtomIdx())
-                ? bond.getEndAtomIdx()
-                : bond.getBeginAtomIdx();
+            (MoleculeFragment.AtomsIdx[seedAtomIdx] == bond->getBeginAtomIdx())
+                ? bond->getEndAtomIdx()
+                : bond->getBeginAtomIdx();
         if (!visitedAtoms[end_atom_idx]) {  // check RING/CYCLE
           ++RemainingAtoms;
           visitedAtoms[end_atom_idx] = true;
@@ -354,16 +348,13 @@ void Seed::computeRemainingSize(const ROMol& qmol) {
     unsigned ai = end_atom_stack.back();
     end_atom_stack.pop_back();
     const Atom* atom = qmol.getAtomWithIdx(ai);
-    ROMol::OEDGE_ITER beg, end;
-    for (boost::tie(beg, end) = qmol.getAtomBonds(atom); beg != end;
-         beg++) {  // all bonds from end_atom
-      const Bond& bond = *(qmol[*beg]);
-      if (!visitedBonds[bond.getIdx()]) {
+    for(auto *bond : atom->bonds()) {
+      if (!visitedBonds[bond->getIdx()]) {
         ++RemainingBonds;
-        visitedBonds[bond.getIdx()] = true;
-        unsigned end_atom_idx = (ai == bond.getBeginAtomIdx())
-                                    ? bond.getEndAtomIdx()
-                                    : bond.getBeginAtomIdx();
+        visitedBonds[bond->getIdx()] = true;
+        unsigned end_atom_idx = (ai == bond->getBeginAtomIdx())
+                                    ? bond->getEndAtomIdx()
+                                    : bond->getBeginAtomIdx();
         if (!visitedAtoms[end_atom_idx]) {  // check RING/CYCLE
           ++RemainingAtoms;
           visitedAtoms[end_atom_idx] = true;

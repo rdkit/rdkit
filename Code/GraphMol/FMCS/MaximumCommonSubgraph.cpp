@@ -365,15 +365,12 @@ void MaximumCommonSubgraph::makeInitialSeeds() {
       // atoms in query
       for (const auto& msb : *ms) {
         const Atom* atom = initialSeedMolecule->getAtomWithIdx(msb.first);
-        ROMol::OEDGE_ITER beg, end;
-        for (boost::tie(beg, end) = initialSeedMolecule->getAtomBonds(atom);
-             beg != end; beg++) {
-          const Bond& initialBond = *((*initialSeedMolecule)[*beg]);
+	for(auto *initialBond: atom->bonds()) {
           unsigned qai1 =
-              initialSeedToQueryAtom.find(initialBond.getBeginAtomIdx())
+              initialSeedToQueryAtom.find(initialBond->getBeginAtomIdx())
                   ->second;
           unsigned qai2 =
-              initialSeedToQueryAtom.find(initialBond.getEndAtomIdx())->second;
+              initialSeedToQueryAtom.find(initialBond->getEndAtomIdx())->second;
 
           const Bond* b = QueryMolecule->getBondBetweenAtoms(qai1, qai2);
           if (!seed.ExcludedBonds[b->getIdx()]) {
@@ -1333,7 +1330,7 @@ bool MaximumCommonSubgraph::matchIncrementalFast(Seed& seed, unsigned itarget) {
       ROMol::OEDGE_ITER beg, end;
       for (boost::tie(beg, end) = target.Molecule->getAtomBonds(atom);
            beg != end; beg++) {
-        tb = &*((*target.Molecule)[*beg]);
+        tb = *beg;
         if (!match.VisitedTargetBonds[tb->getIdx()]) {
           newBondAnotherAtomTargetIdx = tb->getBeginAtomIdx();
           if (newBondSourceAtomTargetIdx == newBondAnotherAtomTargetIdx) {

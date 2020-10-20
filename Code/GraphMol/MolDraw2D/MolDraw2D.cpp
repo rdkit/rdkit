@@ -121,8 +121,7 @@ void MolDraw2D::doContinuousHighlighting(
   if (highlight_bonds) {
     for (auto this_at : mol.atoms()) {
       int this_idx = this_at->getIdx();
-      for (const auto &nbri : make_iterator_range(mol.getAtomBonds(this_at))) {
-        const Bond *bond = mol[nbri];
+      for (auto *bond : this_at->bonds()) {
         int nbr_idx = bond->getOtherAtomIdx(this_idx);
         if (nbr_idx < static_cast<int>(at_cds_[activeMolIdx_].size()) &&
             nbr_idx > this_idx) {
@@ -617,9 +616,7 @@ void MolDraw2D::drawReaction(
         atom->setAtomMapNum(0);
         // add highlighted bonds to lower-numbered
         // (and thus already covered) neighbors
-        for (const auto &nbri :
-             make_iterator_range(tmol->getAtomNeighbors(atom))) {
-          const Atom *nbr = (*tmol)[nbri];
+        for (const auto *nbr : atom->nbrs() ) {
           if (nbr->getIdx() < aidx &&
               atomfragmap[nbr->getIdx()] == atomfragmap[aidx]) {
             int bondIdx =
@@ -644,9 +641,7 @@ void MolDraw2D::drawReaction(
         atom->setAtomMapNum(0);
         // add highlighted bonds to lower-numbered
         // (and thus already covered) neighbors
-        for (const auto &nbri :
-             make_iterator_range(tmol->getAtomNeighbors(atom))) {
-          const Atom *nbr = (*tmol)[nbri];
+        for (auto *nbr : atom->nbrs()) {
           if (nbr->getIdx() < aidx && (*atom_highlight_colors)[nbr->getIdx()] ==
                                           (*atom_highlight_colors)[aidx]) {
             int bondIdx =
@@ -1369,9 +1364,7 @@ void MolDraw2D::drawBonds(
     const std::vector<std::pair<DrawColour, DrawColour>> *bond_colours) {
   for (auto this_at : draw_mol.atoms()) {
     int this_idx = this_at->getIdx();
-    for (const auto &nbri :
-         make_iterator_range(draw_mol.getAtomBonds(this_at))) {
-      const Bond *bond = draw_mol[nbri];
+    for (auto *bond : this_at->bonds()) {
       int nbr_idx = bond->getOtherAtomIdx(this_idx);
       if (nbr_idx < static_cast<int>(at_cds_[activeMolIdx_].size()) &&
           nbr_idx > this_idx) {
@@ -1397,7 +1390,7 @@ void MolDraw2D::finishMoleculeDraw(const RDKit::ROMol &draw_mol,
       if (at1->getAtomicNum() == 0 && at1->getDegree() == 1) {
         Point2D &at1_cds = at_cds_[activeMolIdx_][at1->getIdx()];
         const auto &iter_pair = draw_mol.getAtomNeighbors(at1);
-        const Atom *at2 = draw_mol[*iter_pair.first];
+        const Atom *at2 = *iter_pair.first;
         Point2D &at2_cds = at_cds_[activeMolIdx_][at2->getIdx()];
         drawAttachmentLine(at2_cds, at1_cds, DrawColour(.5, .5, .5));
       }
@@ -2887,8 +2880,7 @@ Point2D MolDraw2D::bondInsideRing(const ROMol &mol, const Bond *bond,
   // other end of it as the 3rd atom.
   auto calc_perp = [&](const Bond *bond, const INT_VECT &ring) -> Point2D * {
     Atom *bgn_atom = bond->getBeginAtom();
-    for (const auto &nbri2 : make_iterator_range(mol.getAtomBonds(bgn_atom))) {
-      const Bond *bond2 = mol[nbri2];
+    for (auto *bond2 : bgn_atom->bonds()) {
       if (bond2 == bond) {
         continue;
       }
@@ -2964,8 +2956,7 @@ Point2D MolDraw2D::bondInsideDoubleBond(const ROMol &mol,
     end_atom = at1;
   }
   int at3 = -1;  // to stop the compiler whinging.
-  for (const auto &nbri2 : make_iterator_range(mol.getAtomBonds(bond_atom))) {
-    const Bond *bond2 = mol[nbri2];
+  for (auto *bond2 : bond_atom->bonds()) {
     if (bond != bond2) {
       at3 = bond2->getOtherAtomIdx(bond_atom->getIdx());
       break;
@@ -3166,8 +3157,7 @@ OrientType MolDraw2D::getAtomOrientation(const RDKit::Atom &atom) const {
   const Point2D &at1_cds = at_cds_[activeMolIdx_][atom.getIdx()];
   Point2D nbr_sum(0.0, 0.0);
   // cout << "Nbours for atom : " << at1->getIdx() << endl;
-  for (const auto &nbri : make_iterator_range(mol.getAtomBonds(&atom))) {
-    const Bond *bond = mol[nbri];
+  for (auto *bond : atom.bonds()) {
     const Point2D &at2_cds =
         at_cds_[activeMolIdx_][bond->getOtherAtomIdx(atom.getIdx())];
     nbr_sum += at2_cds - at1_cds;
@@ -3209,10 +3199,8 @@ OrientType MolDraw2D::getAtomOrientation(const RDKit::Atom &atom) const {
       } else if (atom.getDegree() == 3) {
         // Atoms of degree 3 can sometimes have a bond pointing down with S
         // orientation or up with N orientation, which puts the H on the bond.
-        auto mol = atom.getOwningMol();
         const Point2D &at1_cds = at_cds_[activeMolIdx_][atom.getIdx()];
-        for (const auto &nbri : make_iterator_range(mol.getAtomBonds(&atom))) {
-          const Bond *bond = mol[nbri];
+        for (auto *bond : atom.bonds()) {
           const Point2D &at2_cds =
               at_cds_[activeMolIdx_][bond->getOtherAtomIdx(atom.getIdx())];
           Point2D bond_vec = at2_cds - at1_cds;

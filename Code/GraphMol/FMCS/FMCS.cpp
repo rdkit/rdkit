@@ -662,7 +662,7 @@ bool FinalChiralityCheckFunction(const std::uint32_t c1[],
       ROMol::OEDGE_ITER dbeg, dend;
       boost::tie(dbeg, dend) = mol1.getAtomBonds(&a1);
       for (; dbeg != dend; dbeg++) {
-        int dbidx = mol1[*dbeg]->getIdx();
+        int dbidx = (*dbeg)->getIdx();
         if (std::find(qOrder.begin(), qOrder.end(), dbidx) != qOrder.end()) {
           qmoOrder.push_back(dbidx);
         }
@@ -689,7 +689,7 @@ bool FinalChiralityCheckFunction(const std::uint32_t c1[],
     ROMol::OEDGE_ITER dbeg, dend;
     boost::tie(dbeg, dend) = mol2.getAtomBonds(&a2);
     for (; dbeg != dend; dbeg++) {
-      int dbidx = mol2[*dbeg]->getIdx();
+      int dbidx = (*dbeg)->getIdx();
       if (std::find(mOrder.begin(), mOrder.end(), dbidx) != mOrder.end()) {
         moOrder.push_back(dbidx);
       } else {

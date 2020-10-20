@@ -491,7 +491,7 @@ void testMisc() {
   ROMol::OEDGE_ITER begin, end;
   boost::tie(begin, end) = m2.getAtomBonds(at);
   while (begin != end) {
-    const Atom *at2 = m2[*begin]->getOtherAtom(at);
+    const Atom *at2 = (*begin)->getOtherAtom(at);
     TEST_ASSERT(at2);
     begin++;
   }
@@ -500,7 +500,7 @@ void testMisc() {
   boost::tie(atBegin, atEnd) = m2.getVertices();
   TEST_ASSERT(atBegin != atEnd);
   while (atBegin != atEnd) {
-    const Atom *at2 = m2[*atBegin];
+    const Atom *at2 = (*atBegin);
     TEST_ASSERT(at2->getIdx() == (*atBegin)->getIdx());
     atBegin++;
   }
@@ -817,7 +817,7 @@ void test1() {
     m.updatePropertyCache();
     boost::logging::disable_logs("rdApp.info");
     while (ai1 != ai2) {
-      BOOST_LOG(rdInfoLog) << *m.getAtomWithIdx(*ai1) << endl;
+      BOOST_LOG(rdInfoLog) << *(*ai1) << endl;
       ai1++;
     }
 
@@ -1494,17 +1494,14 @@ void testRanges() {
 
   const auto atom = m->getAtomWithIdx(0);
   i = 0;
-  for (const auto &nbri :
-       boost::make_iterator_range(m->getAtomNeighbors(atom))) {
-    const auto &nbr = (*m)[nbri];
+  for (const auto *nbr : atom->nbrs()) {
     TEST_ASSERT(nbr->getAtomicNum() == 6);
     i++;
   }
   TEST_ASSERT(i == 2);
 
   i = 0;
-  for (const auto &nbri : boost::make_iterator_range(m->getAtomBonds(atom))) {
-    const auto &bnd = (*m)[nbri];
+  for (const auto *bnd : atom->bonds()) {
     TEST_ASSERT(bnd->getBondType() == Bond::SINGLE);
     i++;
   }
@@ -1512,9 +1509,7 @@ void testRanges() {
 
   // non-const versions of the same things
   i = 0;
-  for (const auto &nbri :
-       boost::make_iterator_range(m->getAtomNeighbors(atom))) {
-    auto nbr = (*m)[nbri];
+  for (auto *nbr : atom->nbrs()) {
     TEST_ASSERT(nbr->getAtomicNum() == 6);
     nbr->setAtomicNum(7);
     nbr->setAtomicNum(6);
@@ -1523,8 +1518,7 @@ void testRanges() {
   TEST_ASSERT(i == 2);
 
   i = 0;
-  for (const auto &nbri : boost::make_iterator_range(m->getAtomBonds(atom))) {
-    auto bnd = (*m)[nbri];
+  for (auto *bnd : atom->bonds()) {
     TEST_ASSERT(bnd->getBondType() == Bond::SINGLE);
     bnd->setBondType(Bond::DOUBLE);
     bnd->setBondType(Bond::SINGLE);

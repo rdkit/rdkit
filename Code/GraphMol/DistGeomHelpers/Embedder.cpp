@@ -780,7 +780,7 @@ void findChiralSets(const ROMol &mol, DistGeom::VECT_CHIRALSET &chiralCenters,
         ROMol::OEDGE_ITER beg, end;
         boost::tie(beg, end) = mol.getAtomBonds(atom);
         while (beg != end) {
-          nbrs.push_back(mol[*beg]->getOtherAtom(atom)->getIdx());
+          nbrs.push_back((*beg)->getOtherAtom(atom)->getIdx());
           ++beg;
         }
         // if we have less than 4 heavy atoms as neighbors,

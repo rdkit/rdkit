@@ -130,9 +130,7 @@ static unsigned int NMDetermineComponents(RWMol *mol, unsigned int *parts,
       while (!todo.empty()) {
         aptr = todo.back();
         todo.pop_back();
-        for (auto nbri :
-             boost::make_iterator_range(mol->getAtomNeighbors(aptr))) {
-          auto nptr = (*mol)[nbri];
+        for (auto nptr : aptr->nbrs()) {
           idx = nptr->getIdx();
           if (parts[idx] == 0) {
             parts[idx] = result;
@@ -376,9 +374,7 @@ static bool TraverseForRing(Atom *atom, unsigned char *visit) {
   PRECONDITION(atom, "bad atom pointer");
   PRECONDITION(visit, "bad pointer");
   visit[atom->getIdx()] = 1;
-  for (auto nbri : boost::make_iterator_range(
-           atom->getOwningMol().getAtomNeighbors(atom))) {
-    auto nptr = atom->getOwningMol()[nbri];
+  for (auto nptr : atom->nbrs()) { 
     if (visit[nptr->getIdx()] == 0) {
       if (RDKit::queryIsAtomInRing(nptr)) {
         return true;
@@ -412,9 +408,7 @@ bool IsInScaffold(Atom *atom, unsigned int maxatomidx) {
   }
 
   unsigned int count = 0;
-  for (auto nbri : boost::make_iterator_range(
-           atom->getOwningMol().getAtomNeighbors(atom))) {
-    auto nptr = atom->getOwningMol()[nbri];
+  for (auto nptr : atom->nbrs()) {
     if (DepthFirstSearchForRing(atom, nptr, maxatomidx)) {
       ++count;
     }
@@ -425,9 +419,7 @@ bool IsInScaffold(Atom *atom, unsigned int maxatomidx) {
 static bool HasNbrInScaffold(Atom *aptr, unsigned char *is_in_scaffold) {
   PRECONDITION(aptr, "bad atom pointer");
   PRECONDITION(is_in_scaffold, "bad pointer");
-  for (auto nbri : boost::make_iterator_range(
-           aptr->getOwningMol().getAtomNeighbors(aptr))) {
-    auto nptr = aptr->getOwningMol()[nbri];
+  for (auto nptr : aptr->nbrs()) {
     if (is_in_scaffold[nptr->getIdx()]) {
       return true;
     }
@@ -480,9 +472,7 @@ static std::string MurckoScaffoldHash(RWMol *mol) {
       unsigned int deg = aptr->getDegree();
       if (deg < 2) {
         if (deg == 1) {  // i.e. not 0 and the last atom in the molecule
-          for (const auto &nbri : boost::make_iterator_range(
-                   aptr->getOwningMol().getAtomBonds(aptr))) {
-            auto bptr = (aptr->getOwningMol())[nbri];
+          for (auto *bptr : aptr->bonds()) {
             Atom *nbr = bptr->getOtherAtom(aptr);
             unsigned int hcount = nbr->getTotalNumHs(false);
             nbr->setNumExplicitHs(hcount + NMRDKitBondGetOrder(bptr));
@@ -559,9 +549,7 @@ static void DegreeVector(RWMol *mol, unsigned int *v) {
 
 static bool HasDoubleBond(Atom *atom) {
   PRECONDITION(atom, "bad atom");
-  for (const auto &nbri :
-       boost::make_iterator_range(atom->getOwningMol().getAtomBonds(atom))) {
-    auto bptr = (atom->getOwningMol())[nbri];
+  for (auto *bptr : atom->bonds()) {
     if (NMRDKitBondGetOrder(bptr) == 2) {
       return true;
     }
@@ -616,9 +604,7 @@ static int RegioisomerBond(Bond *bnd) {
 
 static void ClearEZStereo(Atom *atm) {
   PRECONDITION(atm, "bad atom");
-  for (const auto &nbri :
-       boost::make_iterator_range(atm->getOwningMol().getAtomBonds(atm))) {
-    auto bptr = (atm->getOwningMol())[nbri];
+  for (auto *bptr : atm->bonds()) {
     if (bptr->getStereo() > RDKit::Bond::STEREOANY) {
       bptr->setStereo(RDKit::Bond::STEREOANY);
     }

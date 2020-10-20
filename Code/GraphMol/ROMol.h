@@ -243,13 +243,15 @@ class RDKIT_GRAPHMOL_EXPORT ROMol : public RDProps {
   inline const Atom *getAtomWithIdx(unsigned int idx) const { return _atoms.at(idx); }
   //inline const Atom *getAtomWithIdx(const Atom * atm ) const { return atm; } // hacky hack
   //! \overload
-  template <class U, class = typename std::enable_if<std::is_integral<U>::value>::type>
+  template<class U, typename std::enable_if<
+    std::is_integral<U>::value>::type* = nullptr>
   Atom *getAtomWithIdx(const U idx) {
     return getAtomWithIdx(rdcast<unsigned int>(idx));
   }
    
   //! \overload
-  template <class U, class = typename std::enable_if<std::is_integral<U>::value>::type>
+  template<class U, typename std::enable_if<
+    std::is_integral<U>::value>::type* = nullptr>  
   const Atom *getAtomWithIdx(const U idx) const {
     return getAtomWithIdx(rdcast<unsigned int>(idx));
   }

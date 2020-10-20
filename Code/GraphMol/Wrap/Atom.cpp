@@ -66,7 +66,7 @@ python::tuple AtomGetNeighbors(Atom *atom) {
   ROMol::ADJ_ITER begin, end;
   boost::tie(begin, end) = parent->getAtomNeighbors(atom);
   while (begin != end) {
-    res.append(python::ptr(parent->getAtomWithIdx(*begin)));
+    res.append(python::ptr(*begin));
     begin++;
   }
   return python::tuple(res);
@@ -78,7 +78,7 @@ python::tuple AtomGetBonds(Atom *atom) {
   ROMol::OEDGE_ITER begin, end;
   boost::tie(begin, end) = parent->getAtomBonds(atom);
   while (begin != end) {
-    const Bond *tmpB = (*parent)[*begin];
+    const Bond *tmpB = *begin;
     res.append(python::ptr(tmpB));
     begin++;
   }

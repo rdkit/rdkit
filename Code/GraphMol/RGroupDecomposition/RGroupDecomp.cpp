@@ -112,9 +112,7 @@ int RGroupDecomposition::add(const ROMol &inmol) {
               core.second.core_atoms_with_user_labels.end()) {
             // nope... if any neighbor is not part of the substructure
             //  make sure we are a hydrogen, otherwise, skip the match
-            for (const auto &nbri :
-                 boost::make_iterator_range(mol.getAtomNeighbors(atm))) {
-              const auto &nbr = mol[nbri];
+            for (auto *nbr : atm->nbrs()) {
               if (nbr->getAtomicNum() != 1 &&
                   !target_match_indices[nbr->getIdx()]) {
                 passes_filter = false;

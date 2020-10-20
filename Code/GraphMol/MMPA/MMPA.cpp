@@ -215,9 +215,7 @@ static void addResult(std::vector<std::pair<ROMOL_SPTR, ROMOL_SPTR>>&
         // add all bonds from this fragment
         for (int ai : frags[i]) {
           Atom* a = em.getAtomWithIdx(ai);
-          ROMol::OEDGE_ITER beg, end;
-          for (boost::tie(beg, end) = em.getAtomBonds(a); beg != end; ++beg) {
-            const Bond* bond = em[*beg];
+	  for(auto *bond : a->bonds()) {
             if (newAtomMap.end() == newAtomMap.find(bond->getBeginAtomIdx()) ||
                 newAtomMap.end() == newAtomMap.find(bond->getEndAtomIdx()) ||
                 visitedBonds.end() != visitedBonds.find(bond->getIdx())) {
@@ -256,9 +254,7 @@ static void addResult(std::vector<std::pair<ROMOL_SPTR, ROMOL_SPTR>>&
       // add all bonds from this fragment
       for (int ai : frags[iCore]) {
         Atom* a = em.getAtomWithIdx(ai);
-        ROMol::OEDGE_ITER beg, end;
-        for (boost::tie(beg, end) = em.getAtomBonds(a); beg != end; ++beg) {
-          const Bond* bond = em[*beg];
+	for(auto *bond : a->bonds()) {
           if (newAtomMap.end() == newAtomMap.find(bond->getBeginAtomIdx()) ||
               newAtomMap.end() == newAtomMap.find(bond->getEndAtomIdx()) ||
               visitedBonds.end() != visitedBonds.find(bond->getIdx())) {
