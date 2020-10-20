@@ -157,7 +157,7 @@ void addAngles(const ROMol &mol, const AtomicParamVect &params,
     }
     boost::tie(nbr1Idx, end1Nbrs) = mol.getAtomNeighbors(atomJ);
     for (; nbr1Idx != end1Nbrs; nbr1Idx++) {
-      const Atom *atomI = mol[*nbr1Idx];
+      const Atom *atomI = *nbr1Idx;
       unsigned int i = atomI->getIdx();
       if (!params[i]) {
         continue;
@@ -167,7 +167,7 @@ void addAngles(const ROMol &mol, const AtomicParamVect &params,
         if (nbr2Idx < (nbr1Idx + 1)) {
           continue;
         }
-        const Atom *atomK = mol[*nbr2Idx];
+        const Atom *atomK = *nbr2Idx;
         unsigned int k = atomK->getIdx();
         if (!params[k]) {
           continue;
@@ -266,7 +266,7 @@ void addTrigonalBipyramidAngles(const Atom *atom, const ROMol &mol, int confId,
   boost::tie(beg1, end1) = mol.getAtomBonds(atom);
   unsigned int aid = atom->getIdx();
   while (beg1 != end1) {
-    const Bond *bond1 = mol[*beg1];
+    const Bond *bond1 = *beg1;
     unsigned int oaid = bond1->getOtherAtomIdx(aid);
     RDGeom::Point3D v1 =
         conf.getAtomPos(aid).directionVector(conf.getAtomPos(oaid));
@@ -274,7 +274,7 @@ void addTrigonalBipyramidAngles(const Atom *atom, const ROMol &mol, int confId,
     ROMol::OEDGE_ITER beg2, end2;
     boost::tie(beg2, end2) = mol.getAtomBonds(atom);
     while (beg2 != end2) {
-      const Bond *bond2 = mol[*beg2];
+      const Bond *bond2 = *beg2;
       if (bond2->getIdx() > bond1->getIdx()) {
         unsigned int oaid2 = bond2->getOtherAtomIdx(aid);
         RDGeom::Point3D v2 =
@@ -295,7 +295,7 @@ void addTrigonalBipyramidAngles(const Atom *atom, const ROMol &mol, int confId,
 
   boost::tie(beg1, end1) = mol.getAtomBonds(atom);
   while (beg1 != end1) {
-    const Bond *bond = mol[*beg1];
+    const Bond *bond = *beg1;
     ++beg1;
     if (bond == ax1 || bond == ax2) {
       continue;
@@ -557,13 +557,13 @@ void addTorsions(const ROMol &mol, const AtomicParamVect &params,
       ROMol::OEDGE_ITER beg1, end1;
       boost::tie(beg1, end1) = mol.getAtomBonds(atom1);
       while (beg1 != end1) {
-        const Bond *tBond1 = mol[*beg1];
+        const Bond *tBond1 = *beg1;
         if (tBond1 != bond) {
           int bIdx = tBond1->getOtherAtomIdx(idx1);
           ROMol::OEDGE_ITER beg2, end2;
           boost::tie(beg2, end2) = mol.getAtomBonds(atom2);
           while (beg2 != end2) {
-            const Bond *tBond2 = mol[*beg2];
+            const Bond *tBond2 = *beg2;
             if (tBond2 != bond && tBond2 != tBond1) {
               int eIdx = tBond2->getOtherAtomIdx(idx2);
               // make sure this isn't a three-membered ring:
@@ -644,7 +644,7 @@ void addInversions(const ROMol &mol, const AtomicParamVect &params,
     unsigned int i = 0;
     bool isBoundToSP2O = false;
     for (; nbrIdx != endNbrs; ++nbrIdx) {
-      atom[i] = mol[*nbrIdx];
+      atom[i] = *nbrIdx;
       idx[i] = atom[i]->getIdx();
       // if the central atom is sp2 carbon and is
       // bound to sp2 oxygen, set a flag
