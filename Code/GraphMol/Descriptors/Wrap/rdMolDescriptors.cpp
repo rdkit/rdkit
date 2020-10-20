@@ -415,6 +415,10 @@ RDKit::SparseIntVect<std::uint32_t> *MorganFingerprintHelper(
 }
 
 #ifdef RDK_HAS_EIGEN3
+python::list BCUT(const RDKit::ROMol &mol) {
+  return python::list(RDKit::Descriptors::BCUT2D(mol));
+}
+
 std::pair<double, double> BCUT2D_list(const RDKit::ROMol &m,
                                       python::list atomprops) {
   std::vector<double> dvec;
@@ -1706,8 +1710,6 @@ BOOST_PYTHON_MODULE(rdMolDescriptors) {
 
 #ifdef RDK_HAS_EIGEN3
   python::scope().attr("_BCUT2D_version") = RDKit::Descriptors::BCUT2DVersion;
-  std::vector<double> (*BCUT)(const RDKit::ROMol &) =
-      &RDKit::Descriptors::BCUT2D;
   std::pair<double, double> (*BCUT_atomprops)(
       const RDKit::ROMol &, const std::string &) = &RDKit::Descriptors::BCUT2D;
   docString =
