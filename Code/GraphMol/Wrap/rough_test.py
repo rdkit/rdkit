@@ -6199,7 +6199,26 @@ M  END
     m = Chem.MolFromSmiles("c1ccccc1C(=O)Cl")
     self.assertFalse(m.HasSubstructMatch(sma, recursionPossible=False))
 
-    
+  def test_github3492(self):
+    def read_smile(s):
+        m = Chem.MolFromSmiles(s)
+        rdkit.Chem.rdDepictor.Compute2DCoords(m)
+        return m
+
+    def sq_dist(a, b):
+      ab = [a[i] - b[i] for i, _ in enumerate(a)]
+      return sum([d * d for d in ab])
+
+    self.assertIsNotNone(Chem.MolFromSmiles("OCCN").GetAtoms()[0].GetOwningMol())
+    self.assertEqual([Chem.MolFromSmiles("OCCN").GetAtoms()[i].GetAtomicNum() for i in range(4)], [8, 6, 6, 7])
+    self.assertIsNotNone(Chem.MolFromSmiles("O=CCC=N").GetBonds()[0].GetOwningMol())
+    self.assertEqual([Chem.MolFromSmiles("O=CCC=N").GetBonds()[i].GetBondType() for i in range(4)],
+                     [Chem.BondType.DOUBLE, Chem.BondType.SINGLE, Chem.BondType.SINGLE, Chem.BondType.DOUBLE])
+    self.assertIsNotNone(read_smile("CCC").GetConformers()[0].GetOwningMol())
+    pos = read_smile("CCC").GetConformers()[0].GetPositions()
+    self.assertAlmostEqual(sq_dist(pos[0], pos[1]), sq_dist(pos[1], pos[2]))
+
+
 if __name__ == '__main__':
   if "RDTESTCASE" in os.environ:
     suite = unittest.TestSuite()
