@@ -5,16 +5,15 @@
 
 """
 import os.path
+import pickle
 import unittest
+from io import BytesIO, StringIO
 
 import numpy
 
-from rdkit import Chem
-from rdkit import RDConfig
-from rdkit.ML.Descriptors import MoleculeDescriptors, Descriptors
+from rdkit import Chem, RDConfig
+from rdkit.ML.Descriptors import Descriptors, MoleculeDescriptors
 from rdkit.TestRunner import redirect_stdout
-from io import BytesIO, StringIO
-import pickle
 
 
 class TestCase(unittest.TestCase):
@@ -85,6 +84,17 @@ class TestDescriptors(unittest.TestCase):
             self.assertIn(name, s)
         for name in calc.compoundList:
             self.assertIn(name, s)
+
+    def test_github3511(self):
+        mol = Chem.MolFromSmiles('C')
+        descriptors = [name for name, _ in Chem.Descriptors.descList]
+        calculator = MoleculeDescriptors.MolecularDescriptorCalculator(descriptors)
+        calculator.CalcDescriptors(mol)
+
+        # This should not raise a pickling exception
+        pickle.dumps(mol)
+
+
 
 
 if __name__ == '__main__':  # pragma: nocover
