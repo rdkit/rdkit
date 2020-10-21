@@ -8,7 +8,7 @@ CONFIGURE_FILE(${CMAKE_CURRENT_SOURCE_DIR}/RDConfig.h.cmake
 
 rdkit_library(RDGeneral
               Invariant.cpp types.cpp utils.cpp RDLog.cpp 
-              LocaleSwitcher.cpp versions.cpp SHARED)
+              RDParentChild.cpp LocaleSwitcher.cpp versions.cpp SHARED)
 target_compile_definitions(RDGeneral PRIVATE RDKIT_RDGENERAL_BUILD)
 
 if(MINGW)
@@ -52,6 +52,7 @@ rdkit_headers(Exceptions.h
               RDValue-doublemagic.h
               RDValue-taggedunion.h
               RDLog.h
+              RDParentChild.h
               RDProps.h
               RDThreads.h
               StreamOps.h

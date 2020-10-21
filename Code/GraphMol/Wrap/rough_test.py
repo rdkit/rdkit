@@ -3009,16 +3009,18 @@ CAS<~>
     mol = Chem.MolFromSmiles("CCC1CNCC1CC")
     atoms = mol.GetAtoms()
     mol = None
-    for atom in atoms:
-      idx = atom.GetIdx()
-      p = atom.GetOwningMol().GetNumAtoms()
+    with self.assertRaises(RuntimeError):
+      for atom in atoms:
+        idx = atom.GetIdx()
+        p = atom.GetOwningMol().GetNumAtoms()
 
     mol = Chem.MolFromSmiles("CCC1CNCC1CC")
     bonds = mol.GetBonds()
     mol = None
-    for bond in bonds:
-      idx = bond.GetIdx()
-      p = atom.GetOwningMol().GetNumAtoms()
+    with self.assertRaises(RuntimeError):
+      for bond in bonds:
+        idx = bond.GetIdx()
+        p = atom.GetOwningMol().GetNumAtoms()
 
     mol = Chem.MolFromSmiles("CCC1CNCC1CC")
     bond = mol.GetBondBetweenAtoms(0, 1)
@@ -6199,7 +6201,76 @@ M  END
     m = Chem.MolFromSmiles("c1ccccc1C(=O)Cl")
     self.assertFalse(m.HasSubstructMatch(sma, recursionPossible=False))
 
-    
+  def test_github3492(self):
+    def read_smile(s):
+        m = Chem.MolFromSmiles(s)
+        rdkit.Chem.rdDepictor.Compute2DCoords(m)
+        m.AddConformer(m.GetConformer())
+        return m
+
+    with self.assertRaises(RuntimeError):
+      len(Chem.MolFromSmiles("OCCN").GetAtoms())
+    with self.assertRaises(RuntimeError):
+      Chem.MolFromSmiles("OCCN").GetAtoms()[0]
+    with self.assertRaises(RuntimeError):
+      Chem.MolFromSmiles("OCCN").GetAtoms()[1]
+    with self.assertRaises(RuntimeError):
+      next(Chem.MolFromSmiles("OCCN").GetAtoms())
+
+    with self.assertRaises(RuntimeError):
+      len(Chem.MolFromSmiles("OCCN").GetBonds())
+    with self.assertRaises(RuntimeError):
+      Chem.MolFromSmiles("O=CCC=N").GetBonds()[0]
+    with self.assertRaises(RuntimeError):
+      Chem.MolFromSmiles("O=CCC=N").GetBonds()[1]
+    with self.assertRaises(RuntimeError):
+      next(Chem.MolFromSmiles("O=CCC=N").GetBonds())
+
+    with self.assertRaises(RuntimeError):
+      len(Chem.MolFromSmiles("OCCN").GetConformers())
+    with self.assertRaises(RuntimeError):
+      read_smile("CCC").GetConformers()[0]
+    with self.assertRaises(RuntimeError):
+      read_smile("CCC").GetConformers()[1]
+    with self.assertRaises(RuntimeError):
+      next(read_smile("CCC").GetConformers())
+
+    mol = read_smile("CCC")
+    atoms = mol.GetAtoms()
+    self.assertEqual(len(atoms), 3)
+    del mol
+    self.assertEqual(len(atoms), 3)
+    with self.assertRaises(RuntimeError):
+      atoms[0]
+    with self.assertRaises(RuntimeError):
+      atoms[1]
+    with self.assertRaises(RuntimeError):
+      next(atoms)
+
+    mol = read_smile("CCC")
+    bonds = mol.GetBonds()
+    self.assertEqual(len(bonds), 2)
+    del mol
+    self.assertEqual(len(bonds), 2)
+    with self.assertRaises(RuntimeError):
+      bonds[0]
+    with self.assertRaises(RuntimeError):
+      bonds[1]
+    with self.assertRaises(RuntimeError):
+      next(bonds)
+
+    mol = read_smile("CCC")
+    conformers = mol.GetConformers()
+    self.assertEqual(len(conformers), 2)
+    del mol
+    self.assertEqual(len(conformers), 2)
+    with self.assertRaises(RuntimeError):
+      conformers[0]
+    with self.assertRaises(RuntimeError):
+      conformers[1]
+    with self.assertRaises(RuntimeError):
+      next(conformers)
+
 if __name__ == '__main__':
   if "RDTESTCASE" in os.environ:
     suite = unittest.TestSuite()

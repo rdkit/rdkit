@@ -56,7 +56,7 @@ void ROMol::destroy() {
   d_stereo_groups.clear();
 };
 
-ROMol::ROMol(const std::string &pickle) : RDProps() {
+ROMol::ROMol(const std::string &pickle) : RDProps(), RDParent() {
   initMol();
   numBonds = 0;
   MolPickler::molFromPickle(pickle, *this);
