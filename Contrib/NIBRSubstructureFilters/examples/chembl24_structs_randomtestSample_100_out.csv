@@ -1,0 +1,101 @@
+molregno,smiles,chemblid,SubstructureMatches,Min_N_O_filter,Frac_N_O,Covalent,SpecialMol,SeverityScore
+349069,Fc1ccc(c(Cl)c1Cl)n2nnnc2Cc3cccnc3,CHEMBL207525,NIBR_Screeningdeck_2019_halogen_aromatic_count_3_min(3) | NIBR_Screeningdeck_2019_polyhalogenated_aromate_min(1),no match,0.23809523809523808,0,0,1
+701361,Cc1cc(C)cc(\C=C(\SCc2ccc(Cl)cc2)/C(=O)c3ccc(Cl)cc3)c1,CHEMBL1242135,no match,no match,0.03571428571428571,0,0,0
+2126106,CC1N(CCc2c1nnn2c3cc(C)cc(C)n3)C(=O)c4cccc(c4Cl)C(F)(F)F,CHEMBL3916735,no match,no match,0.1935483870967742,0,0,0
+1416012,C[C@@H](CO)N1C[C@@H](C)[C@@H](CN(C)S(=O)(=O)c2ccc(C)cc2)Oc3c(NC(=O)Nc4ccc(cc4)C(F)(F)F)cccc3C1=O,CHEMBL2144061,NIBR_Screeningdeck_2019_acetal_aminal_acyclic_min(1),no match,0.2222222222222222,0,0,0
+430789,N#CC(Nc1ccccc1)c2occc2,CHEMBL261444,no match,no match,0.2,0,0,0
+2183198,Clc1cccc(c1)c2ccc(OCC(=O)Cn3nnc4ccccc34)cc2,CHEMBL3973827,no match,no match,0.18518518518518517,0,0,0
+232022,CC(=O)N(O)CCCCCCCC(=O)Nc1ccccc1,CHEMBL138626,NIBR_Screeningdeck_2019_hydroxamic_acid_min(1) | NIBR_Screeningdeck_2019_long_chain_aliphatic_min(1) | NIBR_Screeningdeck_2019_long_chain_flexible_C_min(1),no match,0.23809523809523808,0,0,2
+50051,Nc1nc(N)c(CCCN(Cc2ccc(NC(CCC(=O)O)C(=O)O)cc2)c3ccc(c(F)c3[N+](=O)[O-])[N+](=O)[O-])c(O)n1,CHEMBL286425,NIBR_Screeningdeck_2019_nitro_count_1_min(1) | NIBR_Screeningdeck_2019_nitro_count_2_min(2) | NIBR_Screeningdeck_2019_para_nitro_arylamines_min(1),no match,0.3953488372093023,0,0,2
+123826,Clc1cccc(Cl)c1CC(=O)NC2CCN(Cc3ccccc3)CC2,CHEMBL77352,no match,no match,0.12,0,0,0
+885773,COCCN(C(C(=O)NC1CCCC1)c2ccc(C)cc2)C(=O)CCCC(=O)Nc3ccccn3,CHEMBL1461889,NIBR_Screeningdeck_2019_amide_acyclic_count_2_min(2),no match,0.22857142857142856,0,0,0
+1522451,COc1ccccc1\C=N\OC2CN3CCC2CC3,CHEMBL2332818,no match,no match,0.21052631578947367,0,0,0
+447134,Nc1nc(Sc2cccc(Cl)c2)c(C#N)c(c3ccc4OCCOc4c3)c1C#N,CHEMBL486229,NIBR_Screeningdeck_2019_dicyano_vinyl_min(1),no match,0.20689655172413793,1,0,10
+2048828,COc1ccc(C[C@H](N)COc2nc(nc3sc4CCCCc4c23)c5ccncc5)cc1,CHEMBL3729318,no match,no match,0.1875,0,0,0
+1978003,COc1ccc(Cn2c(nnc2[C@@H](Cc3c[nH]c4ccccc34)NC(=O)c5ccccn5)[C@@H](Cc6ccccc6)NC=O)cc1,CHEMBL3645256,no match,no match,0.2222222222222222,0,0,0
+854370,CC(NS(=O)(=O)c1cc(C)ccc1C)C(=O)Nc2ccc(cc2)c3nc4ccccc4s3,CHEMBL1430486,NIBR_Screeningdeck_2019_element_S_count_2_min(2),no match,0.1875,0,0,0
+850197,COc1ccc2c(CC(=O)OCC(=O)NC(=O)N)coc2c1,CHEMBL1426313,NIBR_Screeningdeck_2019_acetal_aminal_acyclic_min(1) | NIBR_Screeningdeck_2019_acetyl_urea_min(1),no match,0.36363636363636365,0,0,1
+1490076,CCOC(=O)C1C(CC(=CC1=O)c2ccc(Cl)cc2)c3ccc(OC)cc3,CHEMBL2272750,no match,no match,0.14814814814814814,0,0,0
+685632,[Br-].CC\C(=C(/c1ccccc1)\c2ccc(OCC[N+](C)(C)C(C)C)cc2)\c3ccccc3,CHEMBL1213785,NIBR_Screeningdeck_2019_permanent_positive_charge_min(1) | NIBR_Screeningdeck_2019_stilbene_analogs_min(1),no match,0.0625,0,0,1
+1347106,CCSc1nc(NCc2ccc(OC)cc2)c3ncn([C@@H]4O[C@H](CO)[C@@H](O)[C@H]4O)c3n1,CHEMBL2037560,NIBR_Screeningdeck_2019_nucleoside_2_min(1),no match,0.3225806451612903,0,1,10
+709044,Fc1cccc(c1)C(=O)c2c[nH]c(n2)c3ccccc3,CHEMBL1269808,no match,no match,0.15,0,0,0
+1968265,CC(C)[C@H]1NC(=O)C[C@@H]2OC(=O)Cc3cc(Br)ccc3CNC(=O)[C@@H](CSSCC\C=C\2)NC1=O,CHEMBL3628313,NIBR_Screeningdeck_2019_alpha_peptide_min(1) | NIBR_Screeningdeck_2019_element_S_count_2_min(2) | NIBR_Screeningdeck_2019_S_S_single_bond_min(1),no match,0.22857142857142856,0,1,10
+2042649,CNC(=O)c1ccc(cc1)c2nc(COc3cc(OC)cc4oc(cc34)c5cn6nc(OC)sc6n5)c(C)s2,CHEMBL3715215,NIBR_Screeningdeck_2019_element_S_count_2_min(2),no match,0.2564102564102564,0,0,0
+60634,Fc1ccc(CN2CCC(CNCC(c3ccccc3)c4ccccc4)CC2)cc1,CHEMBL39262,no match,no match,0.06666666666666667,0,0,0
+1015911,O=C(CN1C(=O)N(CC2CCC(CC2)C(=O)NCCc3ccccc3)C(=O)c4ccccc14)Nc5ccccc5,CHEMBL1592027,NIBR_Screeningdeck_2019_amide_acyclic_count_2_min(2),no match,0.2,0,0,0
+790120,OC(=O)\C=C\C(=O)Nc1ccc2C(=O)c3ccccc3C(=O)c2c1,CHEMBL1366236,NIBR_Screeningdeck_2019_quinone_1_4_min(1),no match,0.25,1,0,10
+115690,CC1=C(N2CC2)C(=O)C(=C(N3CC3)C1=O)C,CHEMBL311910,NIBR_Screeningdeck_2019_aziridine_like_N_in_3_membered_ring_min(1) | NIBR_Screeningdeck_2019_quinone_1_4_min(1),no match,0.25,2,0,10
+606211,CC(=O)NCCNC(=O)[C@H]1OC([C@H](O)[C@@H]1O)n2cnc3c(N)ncnc23,CHEMBL609775,NIBR_Screeningdeck_2019_amide_acyclic_count_2_min(2),no match,0.46153846153846156,0,0,0
+391634,Oc1ccc(cc1NC(=O)Cc2ccc(F)cc2)[N+](=O)[O-],CHEMBL242088,NIBR_Screeningdeck_2019_nitro_count_1_min(1),no match,0.2857142857142857,0,0,0
+255381,NCNC[C@@H](N)CCC\N=C(\N)/N[N+](=O)[O-],CHEMBL152583,NIBR_Screeningdeck_2019_acetal_aminal_acyclic_min(1) | NIBR_Screeningdeck_2019_acyclic_N-C-N_min(1) | NIBR_Screeningdeck_2019_acyclic_nitroamino_min(1) | NIBR_Screeningdeck_2019_guanidines_min(1) | NIBR_Screeningdeck_2019_hydrazine_min(1),no match,0.5625,0,0,10
+1582607,COc1ccc(cc1)S(=O)(=O)N2CCc3nc4ccccc4c(C(=O)O)c3C2,CHEMBL2430559,no match,no match,0.25,0,0,0
+2189829,CO[C@@H]1CC[C@@]2(CC1)Cc3ccc(Br)cc3[C@@]24NC(=N)N(CC(C)(C)O)C4=O,CHEMBL3980458,NIBR_Screeningdeck_2019_guanidines_min(1),no match,0.21428571428571427,0,0,0
+884361,N(c1ccccc1)c2[nH]cnc3nncc23,CHEMBL1460477,no match,no match,0.3125,0,0,0
+857539,CCOC(=O)c1ccc2c(c1)N(Cc3cccc(OC)c3)C(=O)c4ccccc4S2(=O)=O,CHEMBL1433655,no match,no match,0.21875,0,0,0
+1430386,CCOC(=O)C1=C(Nc2cc(SC)ccc2C1=O)c3cccc(OC)c3,CHEMBL2170898,no match,no match,0.19230769230769232,0,0,0
+2089327,Nc1ncnc(Oc2ccc(NC(=O)C3(CC3)C(=O)Nc4ccc(F)cc4)cc2F)c1\C=N\O,CHEMBL3814311,NIBR_Screeningdeck_2019_amide_acyclic_count_2_min(2) | NIBR_Screeningdeck_2019_oxim_min(1),no match,0.29411764705882354,0,0,0
+548687,Cl.Cl.NC(=O)NC(=N)CCSCc1ccccn1,CHEMBL537835,NIBR_Screeningdeck_2019_acetal_aminal_acyclic_min(1) | NIBR_Screeningdeck_2019_amidines_min(1),no match,0.2777777777777778,0,0,0
+1536884,CC(=O)Nc1ccc(\C=C\c2ccnc3ccccc23)cc1[N+](=O)[O-],CHEMBL2359695,NIBR_Screeningdeck_2019_nitro_count_1_min(1) | NIBR_Screeningdeck_2019_stilbene_analogs_min(1),no match,0.24,0,0,0
+2138003,CC1=C(CN=C(O)c2cnn(Cc3ccc(NC(=NC4CC4)O)cc3)c2)C(=CC(=N)N1)C,CHEMBL3928632,no match,no match,0.28125,0,0,0
+2022140,C[C@H]1COCCN1c2nc(nc3nc(ccc23)c4ccc(N)nc4)N5CCC(CC5)c6ccncc6,CHEMBL3688952,no match,no match,0.25,0,0,0
+277539,Cc1cc(SCC2=C(N3[C@H](SC2)[C@H](NC(=O)CSc4cc(Cl)ccc4Cl)C3=O)C(=O)O)cc(CCC(=O)O)[n+]1CCCN.OC(=O)C(F)(F)F.[O-]C(=O)C(F)(F)F,CHEMBL354536,NIBR_Screeningdeck_2019_beta_lactame_min(1) | NIBR_Screeningdeck_2019_carboxylic_acid_count_3_min(3) | NIBR_Screeningdeck_2019_element_S_count_2_min(2) | NIBR_Screeningdeck_2019_permanent_positive_charge_min(1) | NIBR_Screeningdeck_2019_thioether_count_2_min(2) | NIBR_Screeningdeck_2019_trifluoro_trichloro_acetic_aci_min(1),no match,0.24561403508771928,0,0,10
+1020957,COc1cc(Cl)ccc1N=C(S)N(CCN2CCOCC2)C3CCN(CC3)C(=O)C,CHEMBL1597073,no match,no match,0.23333333333333334,0,0,0
+1755227,CN(C)CC(Br)c1cccc(Br)c1,CHEMBL3277177,NIBR_Screeningdeck_2019_halo_ether_min(1) | NIBR_Screeningdeck_2019_halogen_alkyl_min(1),no match,0.07692307692307693,1,0,10
+232125,Nc1c(C#N)[n+]([O-])c2cc(Cl)ccc2[n+]1[O-],CHEMBL138165,NIBR_Screeningdeck_2019_N_oxide_sp2_min(1) | NIBR_Screeningdeck_2019_N_oxide_sp2_count_2_min(2),no match,0.375,0,0,10
+1165940,COc1cc2CCN([C@H]3Cc4cc5OCOc5cc4c(c1OC)c23)S(=O)(=O)C,CHEMBL1808247,no match,no match,0.25,0,0,0
+1035377,CC(C)[C@H](NC(=O)[C@H](C)N)C(=O)N[C@@H](C)C(=O)NC1CCc2ccccc2C1.OC=O,CHEMBL1611493,NIBR_Screeningdeck_2019_alpha_peptide_min(1) | NIBR_Screeningdeck_2019_amide_acyclic_count_2_min(2),no match,0.2903225806451613,0,1,10
+1173481,CC(=O)N(O)CCCc1nnn[nH]1,CHEMBL1823391,NIBR_Screeningdeck_2019_hydroxamic_acid_min(1),no match,0.5384615384615384,0,0,1
+657965,NN1CCC[C@H]1C(=O)N2C(C[C@@H]3C[C@H]23)C#N,CHEMBL1184015,NIBR_Screeningdeck_2019_hydrazine_min(1),no match,0.3125,0,0,0
+1364817,CC(C)(O)CC[C@@H](O)[C@](C)(O)[C@H]1CC[C@@]2(O)C3=CC(=O)[C@@H]4C[C@H](O)[C@@H](O)C[C@]4(C)[C@H]3CC[C@]12C,CHEMBL2087157,NIBR_Screeningdeck_2019_hydroxyl_count_6_min(6) | NIBR_Screeningdeck_2019_steroid_non_arom_min(1),no match,0.20588235294117646,0,1,10
+706917,CC(=O)Nc1ccc2Nc3n[nH]cc3N=C(c4ccccc4Cl)c2c1,CHEMBL1257912,no match,no match,0.24,0,0,0
+1972343,COCCCOc1cc(C[C@@H](C[C@H](N)[C@@H](O)C[C@@H](C(C)C)C(=O)NCC(C)(C)Cn2cc(nn2)c3ccccc3)C(C)C)ccc1OC,CHEMBL3635069,no match,no match,0.20833333333333334,0,0,0
+327512,CN(C)CCc1c(C)[nH]c2ccc(Cl)cc12,CHEMBL365751,NIBR_Screeningdeck_2019_indol_3yl_alkyl_min(1),no match,0.125,0,0,0
+1430213,CC(CNCc1ccc2OCOc2c1)[C@H]3CCC4=CC5=C(O[C@H]4C3)C=C(C)OC5=O,CHEMBL2170726,no match,no match,0.2,0,0,0
+351355,Cc1ccc(c2cc(Br)ccc2OCc3c(F)cccc3F)n1c4cccc(c4)C(=O)O,CHEMBL211534,NIBR_Screeningdeck_2019_halogen_aromatic_count_3_min(3) | NIBR_Screeningdeck_2019_pyrrole_2_min(1),no match,0.125,0,0,0
+1001563,Fc1ccc(C(=O)NNC(=O)c2ccc(cc2)n3cnnn3)c(F)c1,CHEMBL1577679,NIBR_Screeningdeck_2019_hydrazine_min(1) | NIBR_Screeningdeck_2019_hydrazine_1_2_diacyl_acyclic_min(1),no match,0.32,0,0,0
+824601,CCC1(C)N=C(N)Nc2nc3cc(C)c(C)cc3n12,CHEMBL1400717,NIBR_Screeningdeck_2019_guanidines_min(1),no match,0.2631578947368421,0,0,0
+987058,CC1=CC=CN2C(=O)c3cc(C(=O)NCCN4CCOCC4)n(C)c3N=C12,CHEMBL1563174,no match,no match,0.2962962962962963,0,0,0
+156014,OCc1cc(NC(=O)CN2CCCCC2)cc(Nc3ccnc4cc(Cl)ccc34)c1,CHEMBL98566,no match,no match,0.2,0,0,0
+1334254,CCCCCCCCCCCCCNC(=O)[C@H](CO)\N=C\c1ccccc1,CHEMBL2013187,NIBR_Screeningdeck_2019_aldimin_acyclic_min(1) | NIBR_Screeningdeck_2019_long_chain_aliphatic_min(1) | NIBR_Screeningdeck_2019_long_chain_flexible_C_min(1),no match,0.14814814814814814,0,0,2
+2052651,COc1cc(cc2c1nc(C)c3c(C)nc(c4cccnc4F)n23)C#N,CHEMBL3741518,no match,no match,0.23076923076923078,0,0,0
+708291,Cc1ccc(cc1)C(=O)c2c[nH]c(n2)c3ccccc3,CHEMBL1269063,no match,no match,0.15,0,0,0
+2036497,NC1(CCC1)c2ccc(cc2)c3nc4ccc(OC[N+]#[C-])cn4c3c5ccccc5,CHEMBL3703166,NIBR_Screeningdeck_2019_acetal_aminal_acyclic_min(1) | NIBR_Screeningdeck_2019_isontrile_min(1),no match,0.16666666666666666,1,0,10
+644042,CC(C)C[C@@H]1CN2[C@@H](C)CN=C2N1CCC34CC5CC(CC(C5)C3)C4,CHEMBL1162503,NIBR_Screeningdeck_2019_guanidines_min(1),no match,0.12,0,0,0
+1441858,CN(C)c1ccc(\C=C\c2cnc(\C=C\c3ccc(cc3)N(C)C)cn2)cc1,CHEMBL2181037,NIBR_Screeningdeck_2019_stilbene_analogs_min(1),no match,0.14285714285714285,0,0,0
+943947,Cc1cc(C)n2c(SCc3ccc(Cl)cc3Cl)nnc2n1,CHEMBL1520063,no match,no match,0.19047619047619047,0,0,0
+2130916,Cc1ccc2c(c1)nc(NC(=O)c3cccc(c3)C(F)(F)F)n2C4CN(C4)C(=O)C=C,CHEMBL3921545,NIBR_Screeningdeck_2019_michael_acceptor_CH2_terminal_min(1),no match,0.1935483870967742,1,0,0
+1232783,CC(=O)NCCNC(=O)c1ccc(NC2=NC3CS(=O)(=O)CC3S2)cc1,CHEMBL1892212,NIBR_Screeningdeck_2019_amide_acyclic_count_2_min(2) | NIBR_Screeningdeck_2019_element_S_count_2_min(2) | NIBR_Screeningdeck_2019_thiocarbamate_5_ring_min(1) | NIBR_Screeningdeck_2019_thioester_thiolactone_min(1) | NIBR_Screeningdeck_2019_thiourea_thioester_cyclic_min(1),no match,0.3076923076923077,0,0,3
+401630,OC(=O)[C@H](CNC(=O)NCc1ccccc1)NC(=O)[C@@H]2CCCN2S(=O)(=O)c3c(Cl)cccc3Cl,CHEMBL238567,NIBR_Screeningdeck_2019_acetal_aminal_acyclic_min(1),no match,0.2857142857142857,0,0,0
+1575181,[O-][N+](=O)c1ccc(cc1)C(=O)Oc2cccc3oc(cc23)c4ccccc4,CHEMBL2413951,NIBR_Screeningdeck_2019_nitro_count_1_min(1) | NIBR_Screeningdeck_2019_phenol_ester_min(1),no match,0.2222222222222222,0,0,0
+1299483,CC(=O)c1cccc(c1)c2ccnc3OC(Cc23)C(=O)NCC4CCOCC4,CHEMBL1978192,no match,no match,0.21428571428571427,0,0,0
+997584,CCOC(=O)NC1(NCc2ccccc2)Oc3ccccc3O1,CHEMBL1573700,NIBR_Screeningdeck_2019_acetal_aminal_acyclic_min(1) | NIBR_Screeningdeck_2019_acetal_aminal_cyclic_min(1) | NIBR_Screeningdeck_2019_acyclic_N-C-N_min(1) | NIBR_Screeningdeck_2019_sp3_carbon_with_4_het_substit_min(1),no match,0.2608695652173913,0,0,10
+1529157,COC(=O)N[C@@H](C(C)C)C(=O)N1CCC[C@H]1c2ncc([nH]2)c3ccc(cc3)c4cccc(c4)C(F)(F)F,CHEMBL2347330,NIBR_Screeningdeck_2019_acetal_aminal_acyclic_min(1),no match,0.1891891891891892,0,0,0
+989456,[Br-].CC(C(=O)c1ccc(cc1)c2ccccc2)[n+]3cccc(Br)c3,CHEMBL1565572,NIBR_Screeningdeck_2019_beta_carbonyl_quaternary_nitrogen_min(1) | NIBR_Screeningdeck_2019_permanent_positive_charge_min(1),no match,0.08333333333333333,0,0,10
+1821052,COc1ccc(cc1)c2ccnc(NCCc3ccc(OC)c(OC)c3)n2,CHEMBL3356909,no match,no match,0.2222222222222222,0,0,0
+1235898,CCOC(=O)c1cccc(NC(=O)N2CC(CC)Oc3ccccc23)c1,CHEMBL1895327,NIBR_Screeningdeck_2019_acetal_aminal_acyclic_min(1),no match,0.23076923076923078,0,0,0
+1005471,O=C(C1C2N(CCc3ccccc23)C(=O)c4ccccc14)N5CCN(Cc6ccccc6)CC5,CHEMBL1581587,no match,no match,0.14705882352941177,0,0,0
+1628060,CN[C@H]1C[C@@H](N)[C@H](O)[C@@H](O[C@@H]2O[C@H](CO)[C@H](O)[C@H]3O[C@]4(O[C@H]([C@H](N)CO)[C@H](O)[C@H](O)[C@H]4O)O[C@H]23)[C@@H]1O,CHEMBL3138729,NIBR_Screeningdeck_2019_acetal_aminal_cyclic_min(1) | NIBR_Screeningdeck_2019_ether_bond_count_5_min(5) | NIBR_Screeningdeck_2019_hydroxyl_count_6_min(6),no match,0.4444444444444444,0,0,10
+1281561,COc1ccc(cc1)C(CC(=O)CCc2ccc3cc(OC)ccc3c2)Nc4ccc(cc4)S(=O)(=O)Nc5cc(C)on5,CHEMBL1956044,no match,no match,0.20930232558139536,0,0,0
+937409,CN(CC(=O)Nc1ccc(F)c(F)c1F)C(=O)c2ccc3N4CCCCCC4=NS(=O)(=O)c3c2,CHEMBL1513525,NIBR_Screeningdeck_2019_amidines_min(1) | NIBR_Screeningdeck_2019_halogen_aromatic_count_3_min(3) | NIBR_Screeningdeck_2019_polyhalogenated_aromate_min(1),no match,0.23529411764705882,0,0,1
+977577,CC(=O)Nc1ccc(S[C@@H](CCN2CC[C@@H](CCC2=O)C(C)(C)C)c3ccccc3)cc1,CHEMBL1553693,no match,no match,0.125,0,0,0
+794356,Oc1nc(CN2CCN(Cc3ccccc3)CC2)nc4sc5CCCc5c14,CHEMBL1370472,no match,no match,0.18518518518518517,0,0,0
+300587,CCOC(=O)N(O)CCC#Cc1ccc(OCCCCN2CCN(CC2)C(c3ccc(F)cc3)c4ccc(F)cc4)cc1,CHEMBL179590,NIBR_Screeningdeck_2019_acetal_aminal_acyclic_min(1) | NIBR_Screeningdeck_2019_hydroxamic_acid_min(1),no match,0.16279069767441862,0,0,1
+89103,CCN(CC)CCCC(C)N[C@@H]1[C@@H](OC(=O)c2ccc(C)cc2)[C@H](C)Nc3ccccc13,CHEMBL61366,no match,no match,0.15625,0,0,0
+1699118,C\C(=C/C(=[NH+]c1ccccc1)C)\Nc2ccccc2.[O-]Cl(=O)(=O)=O,CHEMBL3209827,NIBR_Screeningdeck_2019_chlorates_min(1) | NIBR_Screeningdeck_2019_halogen_heteroatom_bond_min(1) | NIBR_Screeningdeck_2019_halogen_hypervalent_min(1) | NIBR_Screeningdeck_2019_imine_nonterminal_min(1) | NIBR_Screeningdeck_2019_ketimines_acyclic_min(1) | NIBR_Screeningdeck_2019_perchlorates_min(1),no match,0.25,0,0,10
+1244807,Oc1nnc(SCC(=O)N2CCOCC2)n1c3ccccc3,CHEMBL1904236,NIBR_Screeningdeck_2019_thiourea_thioester_cyclic_min(1),no match,0.3181818181818182,0,0,1
+1902657,CC(C)c1nccn1CCCNC(=O)c2ccc(nc2)N(C)C,CHEMBL3486583,no match,no match,0.2608695652173913,0,0,0
+1431029,CNc1ccc2[nH]c3cnc(NCc4ccccc4)cc3c2c1,CHEMBL2171534,no match,no match,0.17391304347826086,0,0,0
+401811,CC1CN(CCN1S(=O)(=O)c2c[nH]c3ncccc23)C(=O)c4ccc5[nH]ccc5c4,CHEMBL240477,no match,no match,0.26666666666666666,0,0,0
+912713,CC(OC(=O)C1CCC1)C(=O)Nc2cccc(c2)C(=O)C,CHEMBL1488829,no match,no match,0.23809523809523808,0,0,0
+1885070,CSC(C)(C)CNC(=O)NC1CCSCC1,CHEMBL3468996,NIBR_Screeningdeck_2019_acetal_aminal_acyclic_min(1) | NIBR_Screeningdeck_2019_element_S_count_2_min(2) | NIBR_Screeningdeck_2019_thioether_count_2_min(2),no match,0.1875,0,0,10
+1352649,CCOC(=O)CCCCCOc1cccc(CN(C(C)C)C(=O)c2ccc(cc2)c3cccc(CC(=O)O)c3)c1,CHEMBL2049209,NIBR_Screeningdeck_2019_long_chain_flexible_C_min(1),no match,0.175,0,0,0
+2134975,Nc1ncnc2c1nc(Sc3cc4OCOc4cc3Br)n2CCCCCC(=O)NO,CHEMBL3925604,NIBR_Screeningdeck_2019_hydroxamic_acid_min(1),no match,0.3333333333333333,0,0,1
+1683028,Cc1cc([nH]n1)c2nnc(S)n2\N=C\c3ccc(Br)s3,CHEMBL3193737,NIBR_Screeningdeck_2019_element_S_count_2_min(2) | NIBR_Screeningdeck_2019_thiophene_simple_min(1) | NIBR_Screeningdeck_2019_thiourea_thioester_cyclic_min(1),no match,0.3,0,0,1
+2181596,COCCCOc1cc(cc2cnn(C)c12)[C@H](C)N(C3CC3)C(=O)[C@@H]4CNCCO4,CHEMBL3972225,no match,no match,0.26666666666666666,0,0,0
+419093,CONC(=O)c1ccc(C)c(Nc2ncnn3cc(C(=O)NCc4ccccc4)c(C)c23)c1,CHEMBL437971,no match,no match,0.2727272727272727,0,0,0
+169917,CN1CCOCCn2cc(C3=C(C(=O)NC3=O)c4cn(CCN(C)CC1)c5ccccc45)c6ccccc26,CHEMBL106384,NIBR_Screeningdeck_2019_crown_ether_min(1),no match,0.21052631578947367,0,0,10
+461886,o1c2ccccc2c3nc4ccccc4cc13,CHEMBL490142,NIBR_Screeningdeck_2019_polycyclic_systems_14_atoms_min(1) | NIBR_Screeningdeck_2019_polycyclic_systems_16_atoms_min(1),no match,0.11764705882352941,0,0,1
+257167,OC(=O)C1=C(CCC1)C(=O)Nc2c(F)cc(cc2F)c3ccccc3Cl,CHEMBL345147,NIBR_Screeningdeck_2019_halogen_aromatic_count_3_min(3),no match,0.15384615384615385,0,0,0
+288982,Cn1nnnc1SCC2=C(N3C(OC2)C(NC(=O)C(O)c4ccccc4)C3=O)C(=O)O,CHEMBL368062,NIBR_Screeningdeck_2019_beta_lactame_min(1),no match,0.3870967741935484,0,0,0
+1487143,CCC(C(O)(Cn1cncn1)c2ccc(F)cc2)[Si](C)(C)C,CHEMBL2269846,NIBR_Screeningdeck_2019_elements_penalized_min(1),no match,0.18181818181818182,0,0,1
+602230,CCCNC(=O)[C@H](Cc1ccccc1)NC(=O)CN2C(=O)C(=Nc3ccccc23)C,CHEMBL603452,NIBR_Screeningdeck_2019_amide_acyclic_count_2_min(2),no match,0.23333333333333334,0,0,0
