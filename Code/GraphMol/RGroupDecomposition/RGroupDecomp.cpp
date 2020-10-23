@@ -154,7 +154,7 @@ int RGroupDecomposition::add(const ROMol &inmol) {
     }
   }
 
-  if (core == nullptr) {
+  if (rcore == nullptr) {
 #ifdef VERBOSE
     std::cout << "No core matches" << std::endl;
 #endif
@@ -279,15 +279,17 @@ int RGroupDecomposition::add(const ROMol &inmol) {
     return -1;
   }
 
-  size_t N = 1;
-  for (auto &matche : data->matches) {
-    size_t sz = matche.size();
-    N *= sz;
-  }
-  // oops, exponential is a pain
-  if (N * potentialMatches.size() > 100000) {
-    data->permutation = std::vector<size_t>(data->matches.size(), 0);
-    data->process(true);
+  if (data->params.matchingStrategy != GA) {
+    size_t N = 1;
+    for (auto &matche : data->matches) {
+      size_t sz = matche.size();
+      N *= sz;
+    }
+    // oops, exponential is a pain
+    if (N * potentialMatches.size() > 100000) {
+      data->permutation = std::vector<size_t>(data->matches.size(), 0);
+      data->process(true);
+    }
   }
 
   data->matches.push_back(potentialMatches);

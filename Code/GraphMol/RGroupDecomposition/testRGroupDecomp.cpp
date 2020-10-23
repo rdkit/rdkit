@@ -65,7 +65,7 @@ void CHECK_RGROUP(RGroupRows::const_iterator &it, std::string expected,
   }
 
   if (doassert) {
-    TEST_ASSERT(result == expected);
+    TEST_ASSERT(result == expected)
   }
 }
 
@@ -81,7 +81,7 @@ void DUMP_RGROUP(RGroupRows::const_iterator &it, std::string &result) {
   result = str.str();
 }
 
-const char *symdata[5] = {"c1(Cl)ccccc1", "c1c(Cl)cccc1", "c1c(Cl)cccc1",
+const char *symdata[5] = {"c1(Cl)ccccc1", "c1c(Cl)cccc1", "c1cccc(Cl)c1",
                           "c1cc(Cl)ccc1", "c1ccc(Cl)cc1"};
 
 void testSymmetryMatching() {
@@ -109,6 +109,35 @@ void testSymmetryMatching() {
   }
   delete core;
 }
+
+void testGaSymmetryMatching() {
+  BOOST_LOG(rdInfoLog)
+      << "********************************************************\n";
+  BOOST_LOG(rdInfoLog) << "test rgroup decomp symmetry matching using GA" << std::endl;
+
+  RWMol *core = SmilesToMol("c1ccccc1");
+  RGroupDecompositionParameters params;
+  params.matchingStrategy = GA;
+  RGroupDecomposition decomp(*core, params);
+  for (int i = 0; i < 5; ++i) {
+    ROMol *mol = SmilesToMol(symdata[i]);
+    int res = decomp.add(*mol);
+    TEST_ASSERT(res == i);
+    delete mol;
+  }
+
+  decomp.process();
+  RGroupRows rows = decomp.getRGroupsAsRows();
+
+  std::ostringstream str;
+
+  // All Cl's should be labeled with the same rgroup
+  for (RGroupRows::const_iterator it = rows.begin(); it != rows.end(); ++it) {
+    CHECK_RGROUP(it, "Core:c1ccc([*:1])cc1 R1:Cl[*:1]");
+  }
+  delete core;
+}
+
 
 const char *matchRGroupOnlyData[5] = {
     "c1(Cl)ccccc1", "c1c(Cl)cccc1",    "c1cc(Cl)ccc1",
@@ -1363,6 +1392,7 @@ int main() {
   BOOST_LOG(rdInfoLog) << "Testing R-Group Decomposition \n";
 
 #if 1
+  testGaSymmetryMatching();
   testSymmetryMatching();
   testRGroupOnlyMatching();
   testRingMatching();

@@ -1,9 +1,9 @@
 
 rdkit_library(RGroupDecomposition RGroupDecomp.cpp RGroupUtils.cpp
-				  RGroupDecompParams.cpp RGroupScore.cpp
+				  RGroupDecompParams.cpp RGroupScore.cpp RGroupGa.cpp
   LINK_LIBRARIES
   FMCS ChemTransforms SubstructMatch SmilesParse 
- GraphMol RDGeneral)
+ GraphMol RDGeneral ga)
 target_compile_definitions(RGroupDecomposition PRIVATE RDKIT_RGROUPDECOMPOSITION_BUILD)
 
 rdkit_headers(

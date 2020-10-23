@@ -41,6 +41,7 @@ typedef enum {
   GreedyChunks = 0x02,
   Exhaustive = 0x04,  // not really useful for large sets
   NoSymmetrization = 0x08,
+  GA = 0x10,
 } RGroupMatching;
 
 typedef enum {

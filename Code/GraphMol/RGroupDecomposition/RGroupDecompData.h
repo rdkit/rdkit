@@ -14,11 +14,11 @@
 #include "RGroupDecomp.h"
 #include "RGroupMatch.h"
 #include "RGroupScore.h"
+#include "RGroupGa.h"
 #include <vector>
 #include <map>
 
-namespace RDKit
-{
+namespace RDKit {
 struct RGroupDecompData {
   // matches[mol_idx] == vector of potential matches
   std::map<int, RCore> cores;
@@ -376,9 +376,8 @@ struct RGroupDecompData {
 
   // compute the number of rgroups that would be added if we
   //  accepted this permutation
-  size_t compute_num_added_rgroups(
-      const std::vector<size_t> &tied_permutation,
-      std::vector<int> &heavy_counts) {
+  size_t compute_num_added_rgroups(const std::vector<size_t> &tied_permutation,
+                                   std::vector<int> &heavy_counts) {
     size_t i = 0;
     size_t num_added_rgroups = 0;
     heavy_counts.resize(labels.size(), 0);
@@ -407,58 +406,71 @@ struct RGroupDecompData {
       return false;
     }
     auto t0 = std::chrono::steady_clock::now();
-    // Exhaustive search, get the MxN matrix
-    // (M = matches.size(): number of molecules
-    //  N = iterator.maxPermutations)
-    std::vector<size_t> permutations;
-
-    std::transform(matches.begin(), matches.end(),
-                   std::back_inserter(permutations),
-                   [](const std::vector<RGroupMatch> &m) { return m.size(); });
-    permutation = std::vector<size_t>(permutations.size(), 0);
-
-    // run through all possible matches and score each
-    //  set
-    double best_score = 0;
-    std::vector<size_t> best_permutation = permutation;
+    std::vector<size_t> best_permutation;
     std::vector<std::vector<size_t>> ties;
 
-    size_t count = 0;
-#ifdef DEBUG
-    std::cerr << "Processing" << std::endl;
-#endif
-    CartesianProduct iterator(permutations);
-    // Iterates through the permutation idx, i.e.
-    //  [m1_permutation_idx,  m2_permutation_idx, m3_permutation_idx]
+    if (params.matchingStrategy == GA) {
 
-    while (iterator.next()) {
-      if (count > iterator.maxPermutations) {
-        throw ValueErrorException("next() did not finish");
-      }
-#ifdef DEBUG
-      std::cerr << "**************************************************"
-                << std::endl;
-#endif
-      double newscore = score(iterator.permutation, matches, labels);
+      // TODO- check for timeout in GA
+      // TODO- check for small search space and revert to Exhaustive, if
+      // we can't create population.
+      RGroupGa ga(*this);
+      ties = ga.run();
+      best_permutation = ties[0];
 
-      if (fabs(newscore - best_score) <
-          1e-6) {  // heuristic to overcome floating point comparison issues
-        ties.push_back(iterator.permutation);
-      } else if (newscore > best_score) {
+    } else {
+      // Exhaustive search, get the MxN matrix
+      // (M = matches.size(): number of molecules
+      //  N = iterator.maxPermutations)
+      std::vector<size_t> permutations;
+
+      std::transform(
+          matches.begin(), matches.end(), std::back_inserter(permutations),
+          [](const std::vector<RGroupMatch> &m) { return m.size(); });
+      permutation = std::vector<size_t>(permutations.size(), 0);
+
+      // run through all possible matches and score each
+      //  set
+      double best_score = 0;
+      best_permutation = permutation;
+
+      size_t count = 0;
 #ifdef DEBUG
-        std::cerr << " ===> current best:" << newscore << ">" << best_score
+      std::cerr << "Processing" << std::endl;
+#endif
+      CartesianProduct iterator(permutations);
+      // Iterates through the permutation idx, i.e.
+      //  [m1_permutation_idx,  m2_permutation_idx, m3_permutation_idx]
+
+      while (iterator.next()) {
+        if (count > iterator.maxPermutations) {
+          throw ValueErrorException("next() did not finish");
+        }
+#ifdef DEBUG
+        std::cerr << "**************************************************"
                   << std::endl;
 #endif
-        ties.clear();
-        ties.push_back(iterator.permutation);
-        best_score = newscore;
-        best_permutation = iterator.permutation;
+        double newscore = score(iterator.permutation, matches, labels);
+
+        if (fabs(newscore - best_score) <
+            1e-6) {  // heuristic to overcome floating point comparison issues
+          ties.push_back(iterator.permutation);
+        } else if (newscore > best_score) {
+#ifdef DEBUG
+          std::cerr << " ===> current best:" << newscore << ">" << best_score
+                    << std::endl;
+#endif
+          ties.clear();
+          ties.push_back(iterator.permutation);
+          best_score = newscore;
+          best_permutation = iterator.permutation;
+        }
+        ++count;
       }
-      ++count;
     }
 
     if (ties.size() > 1) {
-      size_t min_perm_value = 0;
+      // size_t min_perm_value = 0;
       size_t smallest_added_rgroups = labels.size();
       for (const auto &tied_permutation : ties) {
         std::vector<int> heavy_counts;
@@ -472,13 +484,19 @@ struct RGroupDecompData {
           if (heavy_counts < largest_heavy_counts) {
             largest_heavy_counts = heavy_counts;
             best_permutation = tied_permutation;
-          } else if (heavy_counts == largest_heavy_counts) {
-            size_t perm_value = iterator.value();
-            if (perm_value < min_perm_value) {
-              min_perm_value = perm_value;
-              best_permutation = tied_permutation;
-            }
           }
+          // commented out as min_perm_value and perm_value are unsigned
+          // so the if statement is never true.
+          // Which is good as the GA does not use iterator
+          /*
+            else if (heavy_counts == largest_heavy_counts) {
+              size_t perm_value = iterator.value();
+              if (perm_value < min_perm_value) {
+                min_perm_value = perm_value;
+                best_permutation = tied_permutation;
+              }
+            }
+          */
         }
         checkForTimeout(t0, params.timeout);
       }
@@ -495,6 +513,6 @@ struct RGroupDecompData {
     return true;
   }
 };
-}  
+}  // namespace RDKit
 
 #endif
