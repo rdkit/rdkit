@@ -8,6 +8,7 @@
 //  of the RDKit source tree.
 //
 #include "RGroupScore.h"
+//#define DEBUG 1
 
 namespace RDKit {
   
