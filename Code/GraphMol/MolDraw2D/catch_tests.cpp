@@ -818,3 +818,32 @@ TEST_CASE("includeRadicals", "[options]") {
     }
   }
 }
+
+TEST_CASE("including legend in drawing results in offset drawing later",
+          "[bug]") {
+  SECTION("basics") {
+    auto m = "c1ccccc1"_smiles;
+    REQUIRE(m);
+    MolDraw2DUtils::prepareMolForDrawing(*m);
+    auto &conf = m->getConformer();
+    std::vector<Point2D> polyg;
+    for (const auto &pt : conf.getPositions()) {
+      polyg.emplace_back(pt);
+    }
+    MolDraw2DSVG drawer(350, 300);
+    drawer.drawMolecule(*m, "molecule legend");
+    drawer.setFillPolys(true);
+    drawer.setColour(DrawColour(1.0, 0.3, 1.0));
+    drawer.drawPolygon(polyg);
+    drawer.finishDrawing();
+    auto text = drawer.getDrawingText();
+    std::ofstream outs("testLegendsAndDrawing-1.svg");
+    outs << text;
+    outs.flush();
+
+    // make sure the polygon starts at a bond
+    CHECK(text.find("<path class='bond-0' d='M 321.962,140") !=
+          std::string::npos);
+    CHECK(text.find("<path d='M 321.962,140") != std::string::npos);
+  }
+}
