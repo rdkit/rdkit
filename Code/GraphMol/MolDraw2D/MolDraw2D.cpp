@@ -264,11 +264,12 @@ void MolDraw2D::drawMolecule(const ROMol &mol, const std::string &legend,
     if (legend_height_ < 20) {
       legend_height_ = 20;
     }
+  } else {
+    legend_height_ = 0;
   }
   drawMolecule(mol, highlight_atoms, highlight_bonds, highlight_atom_map,
                highlight_bond_map, highlight_radii, confId);
   drawLegend(legend);
-  legend_height_ = 0;
 }
 
 // ****************************************************************************
@@ -286,6 +287,8 @@ void MolDraw2D::drawMoleculeWithHighlights(
 
   if (!legend.empty()) {
     legend_height_ = int(0.05 * double(panelHeight()));
+  } else {
+    legend_height_ = 0;
   }
   pushDrawDetails();
   unique_ptr<RWMol> rwmol =
@@ -356,7 +359,6 @@ void MolDraw2D::drawMoleculeWithHighlights(
   setLineWidth(origWidth);
 
   drawLegend(legend);
-  legend_height_ = 0;
   popDrawDetails();
 }
 
