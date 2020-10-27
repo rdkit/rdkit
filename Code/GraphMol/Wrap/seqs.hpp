@@ -47,7 +47,7 @@ class ReadOnlySeq {
   int _size;
   T3 _lenFunc;
   size_t _origLen;
-  ROMOL_SPTR _mol;
+  const ROMOL_SPTR _mol;
 
  public:
   ~ReadOnlySeq() {}
