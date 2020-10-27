@@ -165,8 +165,10 @@ class TestCase(unittest.TestCase):
   def testVectorDescriptorsInDescList(self):
     # First try only bcuts should exist
     descriptors = set([n for n,_ in Descriptors.descList])
-    names = set(["BCUT2D_%s"%i for i in ('MWHI',"MWLOW","CHGHI","CHGLO",
-                                 "LOGPHI","LOGPLOW","MRHI","MRLOW")])
+    names = set([
+      "BCUT2D_%s" % i
+      for i in ('MWHI', "MWLOW", "CHGHI", "CHGLO", "LOGPHI", "LOGPLOW", "MRHI", "MRLOW")
+    ])
     self.assertEqual(descriptors.intersection(names), names)
 
     Descriptors.setupAUTOCorrDescriptors()
