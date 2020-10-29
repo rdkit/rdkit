@@ -137,6 +137,34 @@ class RDKIT_GRAPHMOL_EXPORT Atom : public RDProps {
         }
         return false;
     }
+    Bond *getBondTo(unsigned int aidx) {
+        for(auto idx = 0u; idx<_oatoms.size(); ++idx) {
+            if (_oatoms[idx]->getIdx() == aidx)
+                return _bonds[idx];
+        }
+        return nullptr;
+    }
+    const Bond *getBondTo(unsigned int aidx) const {
+        for(auto idx = 0u; idx<_oatoms.size(); ++idx) {
+            if (_oatoms[idx]->getIdx() == aidx)
+                return _bonds[idx];
+        }
+        return nullptr;
+    }
+    Bond *getBondTo(const Atom *atom) {
+        for(auto idx = 0u; idx<_oatoms.size(); ++idx) {
+            if (_oatoms[idx] == atom)
+                return _bonds[idx];
+        }
+        return nullptr;
+    }
+    const Bond *getBondTo(const Atom *atom) const {
+        for(auto idx = 0u; idx<_oatoms.size(); ++idx) {
+            if (_oatoms[idx] == atom)
+                return _bonds[idx];
+        }
+        return nullptr;
+    }
     /*
     bool removeNbr(const Bond *bond) {
         auto idx = std::find(_bonds.begin(), _bonds.end(), bond);
