@@ -25,16 +25,6 @@ namespace boost {
 
 unsigned int num_vertices(const RDKit::ROMol& g) { return g.atoms().size(); }
 
-template<class T>
-std::pair<std::vector<RDKit::Atom*>::const_iterator, std::vector<RDKit::Atom*>::const_iterator>
-  adjacent_vertices(T t, const RDKit::ROMol& g) {
-      const RDKit::Atom * at = g.atoms()[t];
-      std::vector<RDKit::Atom*>::const_iterator sit = at->nbrs().begin();
-      std::vector<RDKit::Atom*>::const_iterator bit = at->nbrs().end();
-      
-      return std::make_pair(sit, bit);
-}
-
 template<class N>
 unsigned int out_degree(N node1, const RDKit::ROMol &g) {
     return g.atoms()[node1]->nbrs().size();
@@ -294,16 +284,18 @@ class VF2SubState {
        * since it must also be adajcent to this mapped atom!
        */
       if (!pair.hasiter) {
-        RDK_ADJ_ITER n1iter_beg, n1iter_end;
-        boost::tie(n1iter_beg, n1iter_end) = boost::adjacent_vertices(pair.n1, *g1);
-
+        const auto &nbrs = g1->atoms()[pair.n1]->nbrs();
+        auto n1iter_beg = nbrs.begin();
+        auto n1iter_end = nbrs.end();
         while (n1iter_beg != n1iter_end && core_1[(*n1iter_beg)->getIdx()] == NULL_NODE)
           ++n1iter_beg;
 
         assert(n1iter_beg != n1iter_end);
-
-        boost::tie(pair.nbrbeg, pair.nbrend) =
-            boost::adjacent_vertices(core_1[(*n1iter_beg)->getIdx()], *g2);
+        const auto other = core_1[(*n1iter_beg)->getIdx()];
+        const auto &nbrs2 = g2->atoms()[other]->nbrs();
+          
+        pair.nbrbeg = nbrs2.begin();
+        pair.nbrend = nbrs2.end();
         pair.hasiter = true;
       }
     } else if (pair.n1 == 0 && order != nullptr) {
