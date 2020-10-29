@@ -40,15 +40,6 @@ unsigned int out_degree(N node1, const RDKit::ROMol &g) {
     return g.atoms()[node1]->nbrs().size();
 }
 
-template<class N>
-std::pair<const RDKit::Bond*, bool> edge(N n1, N n2, const RDKit::ROMol& g) {
-    const RDKit::Bond* bond = g.getBondBetweenAtoms(n1, n2);
-    if(bond) {
-        return std::make_pair(bond, true);
-    }
-    return std::make_pair(nullptr, false);
-}
-
 namespace detail {
 typedef std::uint32_t node_id;
 const node_id NULL_NODE = 0xFFFF;
@@ -385,13 +376,10 @@ class VF2SubState {
     // Check the out edges of node1
     for(auto *bNbr : g1->atoms()[node1]->bonds()) {
       other1 = bNbr->getOtherAtomIdx(node1);
-      //other1 = getOtherIdx(*g1, *bNbrs, node1);
       if (core_1[other1] != NULL_NODE) {
         other2 = core_1[other1];
-        typename Graph::const_edge_descriptor oEdge;
-        bool found;
-        boost::tie(oEdge, found) = boost::edge(node2, other2, *g2);
-        if (!found || !ec(bNbr, oEdge)) {
+        auto *oEdge = g2->getBondBetweenAtoms(node2, other2);
+        if (oEdge == nullptr || !ec(bNbr, oEdge)) {
           // std::cerr<<"  short2"<<std::endl;
           return false;
         }
