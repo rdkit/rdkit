@@ -333,27 +333,27 @@ class AtomLabelFunctor {
  public:
   AtomLabelFunctor(const ROMol &query, const ROMol &mol,
                    const SubstructMatchParameters &ps)
-      : d_query(query), d_mol(mol), d_params(ps){};
+      : d_query(query.atoms()), d_mol(mol.atoms()), d_params(ps){};
   bool operator()(unsigned int i, unsigned int j) const {
     bool res = false;
+    const Atom *qAt = d_query[i];
+    const Atom *mAt = d_mol[j];
     if (d_params.useChirality) {
-      const Atom *qAt = d_query.getAtomWithIdx(i);
       if (qAt->getChiralTag() == Atom::CHI_TETRAHEDRAL_CW ||
           qAt->getChiralTag() == Atom::CHI_TETRAHEDRAL_CCW) {
-        const Atom *mAt = d_mol.getAtomWithIdx(j);
         if (mAt->getChiralTag() != Atom::CHI_TETRAHEDRAL_CW &&
             mAt->getChiralTag() != Atom::CHI_TETRAHEDRAL_CCW) {
           return false;
         }
       }
     }
-    res = atomCompat(d_query.atoms()[i], d_mol.atoms()[j], d_params);
+    res = atomCompat(qAt, mAt, d_params);
     return res;
   }
 
  private:
-  const ROMol &d_query;
-  const ROMol &d_mol;
+  const std::vector<Atom*> &d_query;
+  const std::vector<Atom*> &d_mol;
   const SubstructMatchParameters &d_params;
 };
 class BondLabelFunctor {
