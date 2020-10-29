@@ -7,6 +7,11 @@
 #include <RDGeneral/RDParentChild.h>
 
 #ifdef RDK_THREADSAFE_SSS
+#undef RDK_THREADSAFE_SSS
+#define RESTORE_RDK_THREADSAFE_SSS
+#endif
+
+#ifdef RDK_THREADSAFE_SSS
 #include <mutex>
 #endif
 
@@ -28,7 +33,7 @@ std::mutex &GetPropMutex() {
   std::call_once(flag, propmutex_create);
   return propmutex_get();
 }
-}  // namespace
+}
 #endif
 
 namespace RDKit {
