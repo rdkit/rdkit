@@ -572,7 +572,7 @@ unsigned int RecursiveMatcher(const ROMol &mol, const ROMol &query,
   matches.clear();
   matches.resize(0);
   std::vector<detail::ssPairType> pms;
-    pms.reserve(1000);
+    pms.reserve(query.getNumAtoms());
 #if 0
       bool found=boost::ullmann_all(query.getTopology(),mol.getTopology(),
 				    atomLabeler,bondLabeler,pms);
