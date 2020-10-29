@@ -35,10 +35,13 @@ struct NodeInfo {
 template <class Graph>
 struct Pair {
   node_id n1, n2;
-  bool hasiter{false};
-  RDK_ADJ_ITER nbrbeg, nbrend;
+  //bool hasiter{false};
+    RDKit::Atom * const *nbrbeg;
+    RDKit::Atom * const *nbrend;
+    //unsigned short nbrbeg, nbrend; # null node is 0xFFFF
+ // RDK_ADJ_ITER nbrbeg, nbrend;
 
-  Pair() : n1(NULL_NODE), n2(NULL_NODE) {}
+  Pair() : n1(NULL_NODE), n2(NULL_NODE), nbrbeg(0x0), nbrend(0x0) {}
 };
 
 /**
@@ -238,7 +241,9 @@ class VF2SubState {
   Graph *GetGraph2() { return g2; }
 
   bool NextPair(Pair<Graph> &pair) {
-    if (pair.n1 == NULL_NODE) pair.n1 = 0;
+      if (pair.n1 == NULL_NODE) {
+        pair.n1 = 0;
+      }
     if (pair.n2 == NULL_NODE)
       pair.n2 = 0;
     else
@@ -271,7 +276,7 @@ class VF2SubState {
        * select it from the neighbors of this mapped atom (0...deg(nbor))
        * since it must also be adajcent to this mapped atom!
        */
-      if (!pair.hasiter) {
+      if (!pair.nbrbeg) {
         const auto &nbrs = g1[pair.n1]->nbrs();
         auto n1iter_beg = nbrs.begin();
         auto n1iter_end = nbrs.end();
@@ -281,10 +286,13 @@ class VF2SubState {
         assert(n1iter_beg != n1iter_end);
         const auto other = core_1[(*n1iter_beg)->getIdx()];
         const auto &nbrs2 = g2[other]->nbrs();
+          //pair.hasiter = &g2[other]->nbrs()[0];//other;
+          pair.nbrbeg = &nbrs2[0];
+          pair.nbrend = &nbrs2[0] + nbrs2.size();
           
-        pair.nbrbeg = nbrs2.begin();
-        pair.nbrend = nbrs2.end();
-        pair.hasiter = true;
+        //pair.nbrbeg = nbrs2.begin();
+        //pair.nbrend = nbrs2.end();
+        //pair.hasiter = true;
       }
     } else if (pair.n1 == 0 && order != nullptr) {
       // Optimisation: if the order vector is laid out in a DFS/BFS then this
@@ -302,7 +310,7 @@ class VF2SubState {
     }
 
     /* VF2 Plus iterator available? */
-    if (pair.hasiter) {
+    if (pair.nbrbeg) {
       while (pair.nbrbeg < pair.nbrend && core_2[(*pair.nbrbeg)->getIdx()] != NULL_NODE) {
         ++pair.nbrbeg;
       }
