@@ -23,13 +23,6 @@
 
 namespace boost {
 
-unsigned int num_vertices(const RDKit::ROMol& g) { return g.atoms().size(); }
-
-template<class N>
-unsigned int out_degree(N node1, const RDKit::ROMol &g) {
-    return g.atoms()[node1]->nbrs().size();
-}
-
 namespace detail {
 typedef std::uint32_t node_id;
 const node_id NULL_NODE = 0xFFFF;
@@ -98,7 +91,7 @@ VertexDescr getOtherIdx(const Graph &, const EdgeDescr &edge,
 template <class Graph>
 node_id *SortNodesByFrequency(const Graph *g) {
   std::vector<NodeInfo> vect;
-  vect.reserve(boost::num_vertices(*g));
+    vect.reserve(g->getNumAtoms());
   //typename Graph::vertex_iterator bNode, eNode;
   //boost::tie(bNode, eNode) = boost::vertices(*g);
   for(auto *atom : g->atoms()) {
@@ -168,8 +161,8 @@ class VF2SubState {
         vc(avc),
         ec(aec),
         mc(amc),
-        n1(num_vertices(*ag1)),
-        n2(num_vertices(*ag2)) {
+        n1(ag1->getNumAtoms()),
+        n2(ag2->getNumAtoms()) {
     if (sortNodes) {
       order = SortNodesByFrequency(ag1);
     } else {
@@ -355,8 +348,9 @@ class VF2SubState {
     // }
 
     // O(1) check for adjacency list
-    if (boost::out_degree(node1, *g1) > boost::out_degree(node2, *g2))
+    if (g1->atoms()[node1]->nbrs().size() > g2->atoms()[node2]->nbrs().size() ) {
       return false;
+    }
     if (!vc(node1, node2)) return false;
 
     unsigned int other1, other2;
@@ -622,8 +616,8 @@ bool vf2_all(const Graph &g1, const Graph &g2, VertexLabeling &vertex_labeling,
              DoubleBackInsertionSequence &F, unsigned int max_results = 1000) {
   detail::VF2SubState<const Graph, VertexLabeling, EdgeLabeling, MatchChecking>
       s0(&g1, &g2, vertex_labeling, edge_labeling, match_checking, false);
-  detail::node_id *ni1 = new detail::node_id[num_vertices(g1)];
-  detail::node_id *ni2 = new detail::node_id[num_vertices(g2)];
+    detail::node_id *ni1 = new detail::node_id[g1.getNumAtoms()];
+    detail::node_id *ni2 = new detail::node_id[g2.getNumAtoms()];
 
   F.clear();
   F.resize(0);
