@@ -591,7 +591,7 @@ unsigned int RecursiveMatcher(const ROMol &mol, const ROMol &query,
         query.getProp(common_properties::_queryRootAtom, rootIdx);
         bool found = false;
         for (const auto &pairIter : *iter1) {
-          if (pairIter.first== static_cast<unsigned int>(rootIdx)) {
+          if (pairIter.first == rootIdx) {
             matches.push_back(pairIter.second);
             found = true;
             break;
