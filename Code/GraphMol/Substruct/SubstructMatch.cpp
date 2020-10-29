@@ -358,30 +358,25 @@ class AtomLabelFunctor {
 };
 class BondLabelFunctor {
  public:
-  BondLabelFunctor(const ROMol &query, const ROMol &mol,
-                   const SubstructMatchParameters &ps)
-      : d_query(query), d_mol(mol), d_params(ps){};
+  BondLabelFunctor(const SubstructMatchParameters &ps)
+      : d_params(ps){};
   bool operator()(const Bond * qBnd,
                   const Bond * mBnd) const {
     if (d_params.useChirality) {
-      //const Bond *qBnd = d_query[i];
       if (qBnd->getBondType() == Bond::DOUBLE &&
           qBnd->getStereo() > Bond::STEREOANY) {
-        //const Bond *mBnd = d_mol[j];
         if (mBnd->getBondType() == Bond::DOUBLE &&
             mBnd->getStereo() <= Bond::STEREOANY) {
           return false;
         }
       }
     }
-      bool res = bondCompat(qBnd, mBnd, d_params);
+    bool res = bondCompat(qBnd, mBnd, d_params);
     return res;
   }
 
  private:
-  const ROMol &d_query;
-  const ROMol &d_mol;
-  const SubstructMatchParameters &d_params;
+    const SubstructMatchParameters &d_params;
 };
 void mergeMatchVect(std::vector<MatchVectType> &matches,
                     const std::vector<MatchVectType> &matchesTmp,
@@ -432,7 +427,7 @@ std::vector<MatchVectType> SubstructMatch(
   }
 
   detail::AtomLabelFunctor atomLabeler(query, mol, params);
-  detail::BondLabelFunctor bondLabeler(query, mol, params);
+  detail::BondLabelFunctor bondLabeler(params);
   detail::MolMatchFinalCheckFunctor matchChecker(query, mol, params);
 
   std::list<detail::ssPairType> pms;
@@ -571,7 +566,7 @@ unsigned int RecursiveMatcher(const ROMol &mol, const ROMol &query,
   }
 
   detail::AtomLabelFunctor atomLabeler(query, mol, params);
-  detail::BondLabelFunctor bondLabeler(query, mol, params);
+  detail::BondLabelFunctor bondLabeler(params);
   detail::MolMatchFinalCheckFunctor matchChecker(query, mol, params);
 
   matches.clear();
