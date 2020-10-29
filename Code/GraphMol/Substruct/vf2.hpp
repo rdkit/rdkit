@@ -91,17 +91,12 @@ VertexDescr getOtherIdx(const Graph &, const EdgeDescr &edge,
 template <class Graph>
 node_id *SortNodesByFrequency(const Graph *g) {
   std::vector<NodeInfo> vect;
-    vect.reserve(g->getNumAtoms());
-  //typename Graph::vertex_iterator bNode, eNode;
-  //boost::tie(bNode, eNode) = boost::vertices(*g);
+  vect.reserve(g->getNumAtoms());
   for(auto *atom : g->atoms()) {
-  //while (bNode != eNode) {
     NodeInfo t;
     t.id = vect.size();
-      t.in = t.out == atom->nbrs().size();//boost::out_degree(*bNode, *g);  // <- assuming undirected graph
-      //t.out = atom->nbrs.size(); //boost::out_degree(*bNode, *g);
+    t.in = t.out == atom->nbrs().size(); // <- assuming undirected graph
     vect.push_back(t);
-    //++bNode;
   }
   std::sort(vect.begin(), vect.end(), nodeInfoComp1);
 
@@ -135,6 +130,7 @@ template <class Graph, class VertexCompatible, class EdgeCompatible,
 class VF2SubState {
  private:
   Graph *g1, *g2;
+  const std::vector<RDKit::Atom*> &atoms1, &atoms2;
   VertexCompatible &vc;
   EdgeCompatible &ec;
   MatchChecking &mc;
@@ -158,6 +154,8 @@ class VF2SubState {
               EdgeCompatible &aec, MatchChecking &amc, bool sortNodes = false)
       : g1(ag1),
         g2(ag2),
+        atoms1(ag1->atoms()),
+        atoms2(ag2->atoms()),
         vc(avc),
         ec(aec),
         mc(amc),
@@ -198,6 +196,8 @@ class VF2SubState {
   VF2SubState(const VF2SubState &state)
       : g1(state.g1),
         g2(state.g2),
+        atoms1(state.atoms1),
+        atoms2(state.atoms2),
         vc(state.vc),
         ec(state.ec),
         mc(state.mc),
@@ -277,7 +277,7 @@ class VF2SubState {
        * since it must also be adajcent to this mapped atom!
        */
       if (!pair.hasiter) {
-        const auto &nbrs = g1->atoms()[pair.n1]->nbrs();
+        const auto &nbrs = atoms1[pair.n1]->nbrs();
         auto n1iter_beg = nbrs.begin();
         auto n1iter_end = nbrs.end();
         while (n1iter_beg != n1iter_end && core_1[(*n1iter_beg)->getIdx()] == NULL_NODE)
@@ -285,7 +285,7 @@ class VF2SubState {
 
         assert(n1iter_beg != n1iter_end);
         const auto other = core_1[(*n1iter_beg)->getIdx()];
-        const auto &nbrs2 = g2->atoms()[other]->nbrs();
+        const auto &nbrs2 = atoms2[other]->nbrs();
           
         pair.nbrbeg = nbrs2.begin();
         pair.nbrend = nbrs2.end();
@@ -348,7 +348,7 @@ class VF2SubState {
     // }
 
     // O(1) check for adjacency list
-    if (g1->atoms()[node1]->nbrs().size() > g2->atoms()[node2]->nbrs().size() ) {
+    if (atoms1[node1]->nbrs().size() > atoms2[node2]->nbrs().size() ) {
       return false;
     }
     if (!vc(node1, node2)) return false;
@@ -360,7 +360,7 @@ class VF2SubState {
 #endif
 
     // Check the out edges of node1
-    for(auto *bNbr : g1->atoms()[node1]->bonds()) {
+    for(auto *bNbr : atoms1[node1]->bonds()) {
       other1 = bNbr->getOtherAtomIdx(node1);
       if (core_1[other1] != NULL_NODE) {
         other2 = core_1[other1];
@@ -422,7 +422,7 @@ class VF2SubState {
     core_2[node2] = node1;
 
     // FIX: this is explicitly ignoring directionality
-    for(auto *bNbrs : g1->atoms()[node1]->bonds()) {
+    for(auto *bNbrs : atoms1[node1]->bonds()) {
       auto other = bNbrs->getOtherAtomIdx(node1);
       //unsigned int other = getOtherIdx(*g1, *bNbrs, node1);
       if (!term_1[other]) {
@@ -432,7 +432,7 @@ class VF2SubState {
     }
 
     // FIX: this is explicitly ignoring directionality
-    for(auto *bNbrs : g2->atoms()[node2]->bonds()) {
+    for(auto *bNbrs : atoms2[node2]->bonds()) {
       auto other = bNbrs->getOtherAtomIdx(node2);
       //unsigned int other = getOtherIdx(*g2, *bNbrs, node2);
       if (!term_2[other]) {
@@ -458,7 +458,7 @@ class VF2SubState {
       --t1_len;
     }
 
-    for(auto *bNbrs : g1->atoms()[node1]->bonds()) {
+    for(auto *bNbrs : atoms1[node1]->bonds()) {
       auto other = bNbrs->getOtherAtomIdx(node1);
       if (term_1[other] == core_len) {
         term_1[other] = 0;
@@ -471,7 +471,7 @@ class VF2SubState {
       --t2_len;
     }
 
-    for(auto *bNbrs : g2->atoms()[node2]->bonds()) {
+    for(auto *bNbrs : atoms2[node2]->bonds()) {
       auto other = bNbrs->getOtherAtomIdx(node2);
       if (term_2[other] == core_len) {
         term_2[other] = 0;
