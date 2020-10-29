@@ -35,16 +35,6 @@ std::pair<std::vector<RDKit::Atom*>::const_iterator, std::vector<RDKit::Atom*>::
       return std::make_pair(sit, bit);
 }
 
-template<class T>
-std::pair<std::vector<RDKit::Bond*>::const_iterator, std::vector<RDKit::Bond*>::const_iterator>
-  out_edges(T t, const RDKit::ROMol& g ) {
-      const RDKit::Atom * at = g.atoms()[t];
-      std::vector<RDKit::Bond*>::const_iterator sit = at->bonds().begin();
-      std::vector<RDKit::Bond*>::const_iterator bit = at->bonds().end();
-      
-      return std::make_pair(sit, bit);
-}
-
 template<class N>
 unsigned int out_degree(N node1, const RDKit::ROMol &g) {
     return g.atoms()[node1]->nbrs().size();
@@ -393,16 +383,15 @@ class VF2SubState {
 #endif
 
     // Check the out edges of node1
-    typename Graph::out_edge_iterator bNbrs, eNbrs;
-    boost::tie(bNbrs, eNbrs) = boost::out_edges(node1, *g1);
-    while (bNbrs != eNbrs) {
-      other1 = getOtherIdx(*g1, *bNbrs, node1);
+    for(auto *bNbr : g1->atoms()[node1]->bonds()) {
+      other1 = bNbr->getOtherAtomIdx(node1);
+      //other1 = getOtherIdx(*g1, *bNbrs, node1);
       if (core_1[other1] != NULL_NODE) {
         other2 = core_1[other1];
         typename Graph::const_edge_descriptor oEdge;
         bool found;
         boost::tie(oEdge, found) = boost::edge(node2, other2, *g2);
-        if (!found || !ec((*bNbrs), oEdge)) {
+        if (!found || !ec(bNbr, oEdge)) {
           // std::cerr<<"  short2"<<std::endl;
           return false;
         }
@@ -413,7 +402,6 @@ class VF2SubState {
         if (!term_1[other1]) ++new1;
       }
 #endif
-      ++bNbrs;
     }
 
 #ifdef RDK_VF2_PRUNING
@@ -459,27 +447,24 @@ class VF2SubState {
     core_1[node1] = node2;
     core_2[node2] = node1;
 
-    typename Graph::out_edge_iterator bNbrs, eNbrs;
     // FIX: this is explicitly ignoring directionality
-    boost::tie(bNbrs, eNbrs) = boost::out_edges(node1, *g1);
-    while (bNbrs != eNbrs) {
-      unsigned int other = getOtherIdx(*g1, *bNbrs, node1);
+    for(auto *bNbrs : g1->atoms()[node1]->bonds()) {
+      auto other = bNbrs->getOtherAtomIdx(node1);
+      //unsigned int other = getOtherIdx(*g1, *bNbrs, node1);
       if (!term_1[other]) {
         term_1[other] = core_len;
         ++t1_len;
       }
-      ++bNbrs;
     }
 
     // FIX: this is explicitly ignoring directionality
-    boost::tie(bNbrs, eNbrs) = boost::out_edges(node2, *g2);
-    while (bNbrs != eNbrs) {
-      unsigned int other = getOtherIdx(*g2, *bNbrs, node2);
+    for(auto *bNbrs : g2->atoms()[node2]->bonds()) {
+      auto other = bNbrs->getOtherAtomIdx(node2);
+      //unsigned int other = getOtherIdx(*g2, *bNbrs, node2);
       if (!term_2[other]) {
         term_2[other] = core_len;
         ++t2_len;
       }
-      ++bNbrs;
     }
   };
   void GetCoreSet(node_id c1[], node_id c2[]) {
@@ -499,15 +484,12 @@ class VF2SubState {
       --t1_len;
     }
 
-    typename Graph::out_edge_iterator bNbrs, eNbrs;
-    boost::tie(bNbrs, eNbrs) = boost::out_edges(node1, *g1);
-    while (bNbrs != eNbrs) {
-      unsigned int other = getOtherIdx(*g1, *bNbrs, node1);
+    for(auto *bNbrs : g1->atoms()[node1]->bonds()) {
+      auto other = bNbrs->getOtherAtomIdx(node1);
       if (term_1[other] == core_len) {
         term_1[other] = 0;
         --t1_len;
       }
-      ++bNbrs;
     }
 
     if (term_2[node2] == core_len) {
@@ -515,14 +497,12 @@ class VF2SubState {
       --t2_len;
     }
 
-    boost::tie(bNbrs, eNbrs) = boost::out_edges(node2, *g2);
-    while (bNbrs != eNbrs) {
-      unsigned int other = getOtherIdx(*g2, *bNbrs, node2);
+    for(auto *bNbrs : g2->atoms()[node2]->bonds()) {
+      auto other = bNbrs->getOtherAtomIdx(node2);
       if (term_2[other] == core_len) {
         term_2[other] = 0;
         --t2_len;
       }
-      ++bNbrs;
     }
 
     core_1[node1] = NULL_NODE;
