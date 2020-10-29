@@ -571,7 +571,8 @@ unsigned int RecursiveMatcher(const ROMol &mol, const ROMol &query,
 
   matches.clear();
   matches.resize(0);
-  std::list<detail::ssPairType> pms;
+  std::vector<detail::ssPairType> pms;
+    pms.reserve(1000);
 #if 0
       bool found=boost::ullmann_all(query.getTopology(),mol.getTopology(),
 				    atomLabeler,bondLabeler,pms);
@@ -582,7 +583,7 @@ unsigned int RecursiveMatcher(const ROMol &mol, const ROMol &query,
   unsigned int res = 0;
   if (found) {
     matches.reserve(pms.size());
-    for (std::list<detail::ssPairType>::const_iterator iter1 = pms.begin();
+    for (std::vector<detail::ssPairType>::const_iterator iter1 = pms.begin();
          iter1 != pms.end(); ++iter1) {
       if (!query.hasProp(common_properties::_queryRootAtom)) {
         matches.push_back(iter1->begin()->second);
