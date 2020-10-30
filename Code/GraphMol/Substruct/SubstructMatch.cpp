@@ -181,15 +181,18 @@ class MolMatchFinalCheckFunctor {
     std::unordered_map<unsigned int, bool> matches;
 
     // check chiral atoms:
+    auto d_query_atoms = &d_query.atoms()[0];
+    auto d_mol_atoms = &d_mol.atoms()[0];
     for (unsigned int i = 0; i < d_query.getNumAtoms(); ++i) {
-      const Atom *qAt = d_query.getAtomWithIdx(q_c[i]);
+      const Atom *qAt = d_query_atoms[q_c[i]];
+      //const Atom *qAt = d_query.getAtomWithIdx(q_c[i]);
 
       // With less than 3 neighbors we can't establish CW/CCW parity,
       // so query will be a match if it has any kind of chirality.
       if (qAt->getDegree() < 3 || !hasChiralLabel(qAt)) {
         continue;
       }
-      const Atom *mAt = d_mol.getAtomWithIdx(m_c[i]);
+      const Atom *mAt = d_mol_atoms[m_c[i]];
       if (!hasChiralLabel(mAt)) {
         return false;
       }
@@ -200,8 +203,8 @@ class MolMatchFinalCheckFunctor {
       INT_LIST qOrder;
       INT_LIST mOrder;
       for (unsigned int j = 0; j < d_query.getNumAtoms(); ++j) {
-        const Bond *qB = d_query.getBondBetweenAtoms(q_c[i], q_c[j]);
-        const Bond *mB = d_mol.getBondBetweenAtoms(m_c[i], m_c[j]);
+        const Bond *qB = d_query_atoms[q_c[i]]->getBondTo(q_c[j]);//d_query.getBondBetweenAtoms(q_c[i], q_c[j]);
+        const Bond *mB = d_mol_atoms[m_c[i]]->getBondTo(m_c[j]);//d_mol.getBondBetweenAtoms(m_c[i], m_c[j]);
         if (qB && mB) {
           mOrder.push_back(mB->getIdx());
           qOrder.push_back(qB->getIdx());
@@ -218,7 +221,7 @@ class MolMatchFinalCheckFunctor {
       mOrder.insert(mOrder.end(), unmatchedNeighbors, -1);
 
       INT_LIST moOrder;
-      for (const auto *bond : mAt->bonds()) {//make_iterator_range(d_mol.getAtomBonds(mAt))) {
+      for (const auto *bond : mAt->bonds()) {
         int dbidx = bond->getIdx();
         if (std::find(mOrder.begin(), mOrder.end(), dbidx) != mOrder.end()) {
           moOrder.push_back(dbidx);
@@ -268,9 +271,9 @@ class MolMatchFinalCheckFunctor {
       if (qBnd->getStereoAtoms().size() != 2) {
         continue;
       }
-
-      const Bond *mBnd = d_mol.getBondBetweenAtoms(
-          q_to_mol[qBnd->getBeginAtomIdx()], q_to_mol[qBnd->getEndAtomIdx()]);
+      const Bond *mBnd = d_mol_atoms[q_to_mol[qBnd->getBeginAtomIdx()]]->getBondTo(q_to_mol[qBnd->getEndAtomIdx()]);
+      //const Bond *mBnd = d_mol.getBondBetweenAtoms(
+      //  q_to_mol[qBnd->getBeginAtomIdx()], q_to_mol[qBnd->getEndAtomIdx()]);
       CHECK_INVARIANT(mBnd, "Matching bond not found");
       if (mBnd->getBondType() != Bond::DOUBLE ||
           qBnd->getStereo() <= Bond::STEREOANY) {
