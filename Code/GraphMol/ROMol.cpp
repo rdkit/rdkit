@@ -287,8 +287,8 @@ Bond *ROMol::getBondBetweenAtoms(int idx1, int idx2) {
   unsigned int uidx2 = rdcast<unsigned int>(idx2);
   
     for (auto *bond : _bonds) {
-        if ((bond->getBeginAtomIdx() == uidx1 and bond->getEndAtomIdx() == uidx2) ||
-            (bond->getBeginAtomIdx() == uidx2 and bond->getEndAtomIdx() == uidx1)) {
+        if ((bond->getBeginAtomIdx() == uidx1 && bond->getEndAtomIdx() == uidx2) ||
+            (bond->getBeginAtomIdx() == uidx2 && bond->getEndAtomIdx() == uidx1)) {
             return bond;
         }
     }
@@ -304,8 +304,8 @@ const Bond *ROMol::getBondBetweenAtoms(int idx1,
   unsigned int uidx2 = rdcast<unsigned int>(idx2);
   
     for (auto *bond : _bonds) {
-        if ((bond->getBeginAtomIdx() == uidx1 and bond->getEndAtomIdx() == uidx2) ||
-            (bond->getBeginAtomIdx() == uidx2 and bond->getEndAtomIdx() == uidx1)) {
+        if ((bond->getBeginAtomIdx() == uidx1 && bond->getEndAtomIdx() == uidx2) ||
+            (bond->getBeginAtomIdx() == uidx2 && bond->getEndAtomIdx() == uidx1)) {
             return bond;
         }
     }
