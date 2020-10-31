@@ -83,7 +83,7 @@ ROMol *removeAttachmentPoints(const ROMol &mol,
       // if we're removing a neighbor from an aromatic heteroatom,
       // don't forget to set the H count on that atom:
       auto nbri = res->getAtomNeighbors(atom);
-      auto nbr = (*res)[*nbri.first];
+      auto nbr = *nbri.first;
       if (nbr->getIsAromatic() && nbr->getAtomicNum() > 0 &&
           nbr->getAtomicNum() != 6) {
         nbr->setNoImplicit(true);
