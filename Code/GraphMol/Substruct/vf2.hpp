@@ -98,7 +98,7 @@ node_id *SortNodesByFrequency(const Graph *g) {
   for(auto *atom : g->atoms()) {
     NodeInfo t;
     t.id = vect.size();
-    t.in = t.out == atom->nbrs().size(); // <- assuming undirected graph
+    t.in = t.out = atom->nbrs().size(); // <- assuming undirected graph
     vect.push_back(t);
   }
   std::sort(vect.begin(), vect.end(), nodeInfoComp1);
