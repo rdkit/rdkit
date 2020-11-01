@@ -12,7 +12,6 @@
 
 """
 
-
 import os.path
 import unittest
 
@@ -70,8 +69,9 @@ class TestCase(unittest.TestCase):
         val = func(mol)
       except Exception:
         val = 666
-      assert feq(val, expected, 1e-4), 'line %d, mol %s (calc = %f) should have val = %f' % (
-        lineNum, smi, val, expected)
+      assert feq(
+        val, expected,
+        1e-4), 'line %d, mol %s (calc = %f) should have val = %f' % (lineNum, smi, val, expected)
 
   def test_FullRegression(self):
     if not doLong:
@@ -86,9 +86,9 @@ class TestCase(unittest.TestCase):
     for smi, expected in data:
       m = Chem.MolFromSmiles(smi)
       newCT = GraphDescriptors.BertzCT(m, forceDMat=1)
-      self.assertAlmostEqual(newCT, expected, delta=1e-3,
-                             msg='mol %s (CT calc = %f) should have CT = %f' %
-                             (smi, newCT, expected))
+      self.assertAlmostEqual(
+        newCT, expected, delta=1e-3,
+        msg='mol %s (CT calc = %f) should have CT = %f' % (smi, newCT, expected))
 
     if doLong:
       # We need to skip molecules with aromatic rings, due to changes in the
@@ -111,17 +111,17 @@ class TestCase(unittest.TestCase):
       m = Chem.MolFromSmiles(smi)
       Ipc = GraphDescriptors.Ipc(m, forceDMat=1)
       Ipc_avg = GraphDescriptors.Ipc(m, avg=1, forceDMat=1)
-      self.assertAlmostEqual(Ipc_avg, res1, delta=1e-3,
-                             msg='mol %s (Ipc_avg=%f) should have Ipc_avg=%f' % (smi, Ipc_avg,
-                                                                                 res1))
+      self.assertAlmostEqual(
+        Ipc_avg, res1, delta=1e-3,
+        msg='mol %s (Ipc_avg=%f) should have Ipc_avg=%f' % (smi, Ipc_avg, res1))
       self.assertAlmostEqual(Ipc, res2, delta=1e-3,
                              msg='mol %s (Ipc=%f) should have Ipc=%f' % (smi, Ipc, res2))
 
       Ipc = GraphDescriptors.Ipc(m)
       Ipc_avg = GraphDescriptors.Ipc(m, avg=1)
-      self.assertAlmostEqual(Ipc_avg, res1, delta=1e-3,
-                             msg='2nd pass: mol %s (Ipc_avg=%f) should have Ipc_avg=%f' % (
-                               smi, Ipc_avg, res1))
+      self.assertAlmostEqual(
+        Ipc_avg, res1, delta=1e-3,
+        msg='2nd pass: mol %s (Ipc_avg=%f) should have Ipc_avg=%f' % (smi, Ipc_avg, res1))
       self.assertAlmostEqual(Ipc, res2, delta=1e-3,
                              msg='2nd pass: mol %s (Ipc=%f) should have Ipc=%f' % (smi, Ipc, res2))
 
@@ -151,15 +151,13 @@ class TestCase(unittest.TestCase):
      corrected data from Tables 5 and 6 of Rev. Comp. Chem. vol 2, 367-422, (1991)
 
     """
-    data = [
-      ('[C+2](C)(C)(C)(C)(C)C', 0.667), ('[C+](C)(C)(C)(C)(CC)', 1.240),
-      ('C(C)(C)(C)(CCC)', 2.3444), ('CC(C)CCCC', 4.167), ('CCCCCCC', 6.000), ('CCCCCC', 5.000),
-      ('CCCCCCC', 6.000), ('C1CCCC1', 1.440), ('C1CCCC1C', 1.633), ('C1CCCCC1', 2.222),
-      ('C1CCCCCC1', 3.061), ('CCCCC', 4.00), ('CC=CCCC', 4.740), ('C1=CN=CN1', 0.884),
-      ('c1ccccc1', 1.606), ('c1cnccc1', 1.552), ('n1ccncc1', 1.500), ('CCCCF', 3.930),
-      ('CCCCCl', 4.290), ('CCCCBr', 4.480), ('CCC(C)C1CCC(C)CC1', 4.133),
-      ('CC(C)CC1CCC(C)CC1', 4.133), ('CC(C)C1CCC(C)CCC1', 4.133)
-    ]
+    data = [('[S](C)(C)(C)(C)(C)C', 0.771), ('[P](C)(C)(C)(C)(CC)', 1.451),
+            ('C(C)(C)(C)(CCC)', 2.3444), ('CC(C)CCCC', 4.167), ('CCCCCCC', 6.000),
+            ('CCCCCC', 5.000), ('CCCCCCC', 6.000), ('C1CCCC1', 1.440), ('C1CCCC1C', 1.633),
+            ('C1CCCCC1', 2.222), ('C1CCCCCC1', 3.061), ('CCCCC', 4.00), ('CC=CCCC', 4.740),
+            ('C1=CN=CN1', 0.884), ('c1ccccc1', 1.606), ('c1cnccc1', 1.552), ('n1ccncc1', 1.500),
+            ('CCCCF', 3.930), ('CCCCCl', 4.290), ('CCCCBr', 4.480), ('CCC(C)C1CCC(C)CC1', 4.133),
+            ('CC(C)CC1CCC(C)CC1', 4.133), ('CC(C)C1CCC(C)CCC1', 4.133)]
     for smi, res in data:
       m = Chem.MolFromSmiles(smi)
       kappa = GraphDescriptors.Kappa2(m)
@@ -174,11 +172,9 @@ class TestCase(unittest.TestCase):
      corrected data from Tables 3 and 6 of Rev. Comp. Chem. vol 2, 367-422, (1991)
 
     """
-    data = [
-      ('C[C+](C)(C)(C)C(C)(C)C', 2.000), ('CCC(C)C(C)(C)(CC)', 2.380), ('CCC(C)CC(C)CC', 4.500),
-      ('CC(C)CCC(C)CC', 5.878), ('CC(C)CCCC(C)C', 8.000), ('CCC(C)C1CCC(C)CC1', 2.500),
-      ('CC(C)CC1CCC(C)CC1', 3.265), ('CC(C)C1CCC(C)CCC1', 2.844)
-    ]
+    data = [('CS(C)(C)(C)C(C)(C)C', 2.208), ('CCC(C)C(C)(C)(CC)', 2.380), ('CCC(C)CC(C)CC', 4.500),
+            ('CC(C)CCC(C)CC', 5.878), ('CC(C)CCCC(C)C', 8.000), ('CCC(C)C1CCC(C)CC1', 2.500),
+            ('CC(C)CC1CCC(C)CC1', 3.265), ('CC(C)C1CCC(C)CCC1', 2.844)]
     for smi, res in data:
       m = Chem.MolFromSmiles(smi)
       kappa = GraphDescriptors.Kappa3(m)
@@ -285,15 +281,17 @@ class TestCase(unittest.TestCase):
       self.__testDesc('PP_descrs_regress.rest.2.csv', 10, GraphDescriptors.Chi1v)
 
   def testChi2v(self):
-    data = [('CCCCCC', 1.707),
-            ('CCC(C)CC', 1.922),
-            ('CC(C)CCC', 2.183),
-            ('CC(C)C(C)C', 2.488),
-            ('CC(C)(C)CC', 2.914),
-            ('CCCCCO', 1.431),
-            ('CCC(O)CC', 1.470),
-            ('CC(O)(C)CC', 2.166),
-            ('c1ccccc1O', 1.336), ]
+    data = [
+      ('CCCCCC', 1.707),
+      ('CCC(C)CC', 1.922),
+      ('CC(C)CCC', 2.183),
+      ('CC(C)C(C)C', 2.488),
+      ('CC(C)(C)CC', 2.914),
+      ('CCCCCO', 1.431),
+      ('CCC(O)CC', 1.470),
+      ('CC(O)(C)CC', 2.166),
+      ('c1ccccc1O', 1.336),
+    ]
     for smi, res in data:
       m = Chem.MolFromSmiles(smi)
       chi = GraphDescriptors.Chi2v(m)
@@ -334,18 +332,20 @@ class TestCase(unittest.TestCase):
       assert feq(chi, res, 1e-3), 'mol %s (Chi5v=%f) should have Chi5V=%f' % (smi, chi, res)
 
   def testChi0n(self):
-    data = [('CCCCCC', 4.828),
-            ('CCC(C)CC', 4.992),
-            ('CC(C)CCC', 4.992),
-            ('CC(C)C(C)C', 5.155),
-            ('CC(C)(C)CC', 5.207),
-            ('CCCCCO', 4.276),
-            ('CCC(O)CC', 4.439),
-            ('CC(O)(C)CC', 4.654),
-            ('c1ccccc1O', 3.834),
-            ('CCCl', 2.085),
-            ('CCBr', 2.085),
-            ('CCI', 2.085), ]
+    data = [
+      ('CCCCCC', 4.828),
+      ('CCC(C)CC', 4.992),
+      ('CC(C)CCC', 4.992),
+      ('CC(C)C(C)C', 5.155),
+      ('CC(C)(C)CC', 5.207),
+      ('CCCCCO', 4.276),
+      ('CCC(O)CC', 4.439),
+      ('CC(O)(C)CC', 4.654),
+      ('c1ccccc1O', 3.834),
+      ('CCCl', 2.085),
+      ('CCBr', 2.085),
+      ('CCI', 2.085),
+    ]
     for smi, res in data:
       m = Chem.MolFromSmiles(smi)
       chi = GraphDescriptors.Chi0n(m)
@@ -442,23 +442,25 @@ class TestCase(unittest.TestCase):
     """ FIX: this should be in some other file
 
     """
-    data = [('CCCCCC', (6, 5, 4, 3, 2, 1)),
-            ('CCC(C)CC', (6, 5, 5, 4, 1, 0)),
-            ('CC(C)CCC', (6, 5, 5, 3, 2, 0)),
-            ('CC(C)C(C)C', (6, 5, 6, 4, 0, 0)),
-            ('CC(C)(C)CC', (6, 5, 7, 3, 0, 0)),
-            ('CCCCCO', (6, 5, 4, 3, 2, 1)),
-            ('CCC(O)CC', (6, 5, 5, 4, 1, 0)),
-            ('CC(O)(C)CC', (6, 5, 7, 3, 0, 0)),
-            ('c1ccccc1O', (7, 7, 8, 8, 8, 8)), ]
+    data = [
+      ('CCCCCC', (6, 5, 4, 3, 2, 1)),
+      ('CCC(C)CC', (6, 5, 5, 4, 1, 0)),
+      ('CC(C)CCC', (6, 5, 5, 3, 2, 0)),
+      ('CC(C)C(C)C', (6, 5, 6, 4, 0, 0)),
+      ('CC(C)(C)CC', (6, 5, 7, 3, 0, 0)),
+      ('CCCCCO', (6, 5, 4, 3, 2, 1)),
+      ('CCC(O)CC', (6, 5, 5, 4, 1, 0)),
+      ('CC(O)(C)CC', (6, 5, 7, 3, 0, 0)),
+      ('c1ccccc1O', (7, 7, 8, 8, 8, 8)),
+    ]
     for smi, res in data:
       m = Chem.MolFromSmiles(smi)
       for i in range(1, 6):
         cnt = len(Chem.FindAllPathsOfLengthN(m, i, useBonds=1))
         assert cnt == res[i], (smi, i, cnt, res[i], Chem.FindAllPathsOfLengthN(m, i, useBonds=1))
         cnt = len(Chem.FindAllPathsOfLengthN(m, i + 1, useBonds=0))
-        assert cnt == res[i], (smi, i, cnt, res[i], Chem.FindAllPathsOfLengthN(m, i + 1,
-                                                                               useBonds=1))
+        assert cnt == res[i], (smi, i, cnt, res[i],
+                               Chem.FindAllPathsOfLengthN(m, i + 1, useBonds=1))
 
 
 class TestCase_python(unittest.TestCase):
@@ -506,8 +508,8 @@ class TestCase_python(unittest.TestCase):
         continue
       cVal = cFunc(mol)
       pyVal = pyFunc(mol)
-      assert feq(cVal, pyVal, 1e-4), 'line %d, mol %s (c = %f, py = %f)' % (lineNum, smi, cVal,
-                                                                            pyVal)
+      assert feq(cVal, pyVal,
+                 1e-4), 'line %d, mol %s (c = %f, py = %f)' % (lineNum, smi, cVal, pyVal)
 
 
 if __name__ == '__main__':

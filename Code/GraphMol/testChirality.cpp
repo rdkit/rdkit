@@ -614,7 +614,7 @@ void testChiralityCleanup() {
 
   smi = "F[C@H+](Cl)(Br)I";
   mol = SmilesToMol(smi, false, false);
-  mol2 = MolOps::removeHs(*mol, false, false);
+  mol2 = MolOps::removeHs(*mol, false, false, false);
   delete mol;
   mol = mol2;
   TEST_ASSERT(mol->getAtomWithIdx(1)->getChiralTag() ==
@@ -626,7 +626,7 @@ void testChiralityCleanup() {
 
   smi = "F[C@+](C)(Cl)(Br)I";
   mol = SmilesToMol(smi, false, false);
-  mol2 = MolOps::removeHs(*mol, false, false);
+  mol2 = MolOps::removeHs(*mol, false, false, false);
   delete mol;
   mol = mol2;
   TEST_ASSERT(mol->getAtomWithIdx(1)->getChiralTag() ==
@@ -2791,31 +2791,29 @@ void testStereoGroupUpdating() {
 
 class TestAssignChiralTypesFromMolParity {
  public:
-  TestAssignChiralTypesFromMolParity(const ROMol &mol) :
-    d_rwMol(new RWMol(mol)) {
+  TestAssignChiralTypesFromMolParity(const ROMol &mol)
+      : d_rwMol(new RWMol(mol)) {
     assignMolParity();
     fillBondDefVect();
     MolOps::assignChiralTypesFromMolParity(*d_rwMol);
     d_refSmiles = MolToSmiles(*d_rwMol);
     heapPermutation();
   }
+
  private:
   struct BondDef {
-    BondDef(unsigned int bi, unsigned int ei, Bond::BondType t) :
-      beginIdx(bi),
-      endIdx(ei),
-      type(t) {};
+    BondDef(unsigned int bi, unsigned int ei, Bond::BondType t)
+        : beginIdx(bi), endIdx(ei), type(t){};
     unsigned int beginIdx;
     unsigned int endIdx;
     Bond::BondType type;
   };
   void assignMolParity() {
-    static const std::map<Atom::ChiralType, int> parityMap {
-      { Atom::CHI_TETRAHEDRAL_CW, 1 },
-      { Atom::CHI_TETRAHEDRAL_CCW, 2 },
-      { Atom::CHI_UNSPECIFIED, 0 },
-      { Atom::CHI_OTHER, 0 }
-    };
+    static const std::map<Atom::ChiralType, int> parityMap{
+        {Atom::CHI_TETRAHEDRAL_CW, 1},
+        {Atom::CHI_TETRAHEDRAL_CCW, 2},
+        {Atom::CHI_UNSPECIFIED, 0},
+        {Atom::CHI_OTHER, 0}};
     MolOps::assignChiralTypesFrom3D(*d_rwMol);
     for (auto ai = d_rwMol->beginAtoms(); ai != d_rwMol->endAtoms(); ++ai) {
       int parity = parityMap.at((*ai)->getChiralTag());
@@ -2826,7 +2824,8 @@ class TestAssignChiralTypesFromMolParity {
   void fillBondDefVect() {
     for (auto bi = d_rwMol->beginBonds(); bi != d_rwMol->endBonds(); ++bi) {
       d_bondDefVect.emplace_back(BondDef((*bi)->getBeginAtomIdx(),
-        (*bi)->getEndAtomIdx(), (*bi)->getBondType()));
+                                         (*bi)->getEndAtomIdx(),
+                                         (*bi)->getBondType()));
     }
   }
   void stripBonds() {
@@ -2872,8 +2871,7 @@ void testAssignChiralTypesFromMolParity() {
   BOOST_LOG(rdInfoLog)
       << "-----------------------------------------------------------"
       << std::endl;
-  BOOST_LOG(rdInfoLog) << "testAssignChiralTypesFromMolParity"
-                       << std::endl;
+  BOOST_LOG(rdInfoLog) << "testAssignChiralTypesFromMolParity" << std::endl;
   {
     std::string molb = R"CTAB(
      RDKit          3D

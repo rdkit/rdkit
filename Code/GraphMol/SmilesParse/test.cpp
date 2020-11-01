@@ -145,7 +145,8 @@ void testFail() {
   // parsing
   // on good input:
   string smis[] = {
-      "CC=(CO)C",    "CC(=CO)C", "C1CC",  "C1CC1", "Ccc",   "CCC",
+      "CC=(CO)C",    "CC(=CO)C", "C1CC",
+      "C1CC1",       "Ccc",      "CCC",
       "fff",  // tests the situation where the parser cannot do anything at all
       "CCC",
       "N(=O)(=O)=O",  // bad sanitization failure
@@ -157,9 +158,9 @@ void testFail() {
       "C-0",  // part of sf.net issue 2525792
       "C1CC1",
       "C+0",  // part of sf.net issue 2525792
-      "C1CC1",       "[H2H]",    "C1CC1", "[HH2]", "C1CC1", 
-      "[555555555555555555C]", "C1CC1",
-      "EOS"};
+      "C1CC1",       "[H2H]",    "C1CC1",
+      "[HH2]",       "C1CC1",    "[555555555555555555C]",
+      "C1CC1",       "EOS"};
 
   // turn off the error log temporarily:
   while (smis[i] != "EOS") {
@@ -1589,7 +1590,7 @@ void testIssue256() {
   BOOST_LOG(rdInfoLog) << "Testing Issue 256: SMILES yields incorrect structure"
                        << std::endl;
 
-  smi = "C1CC[C+]1=1CCC1";
+  smi = "C1CC[Si+]1=1CCC1";
   mol = SmilesToMol(smi);
   TEST_ASSERT(mol);
   bond = mol->getBondBetweenAtoms(3, 0);
@@ -1600,7 +1601,7 @@ void testIssue256() {
   TEST_ASSERT(bond->getBondType() == Bond::DOUBLE);
   delete mol;
 
-  smi = "C1CC[C+]=11CCC1";
+  smi = "C1CC[Si+]=11CCC1";
   mol = SmilesToMol(smi);
   TEST_ASSERT(mol);
   bond = mol->getBondBetweenAtoms(3, 0);

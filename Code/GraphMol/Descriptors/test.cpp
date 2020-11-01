@@ -1392,8 +1392,8 @@ void testKappa2() {
   BOOST_LOG(rdErrorLog) << "    Test calculation of Kappa2." << std::endl;
 
   {
-    std::string sdata[] = {"[C+2](C)(C)(C)(C)(C)C",
-                           "[C+](C)(C)(C)(C)(CC)",
+    std::string sdata[] = {"[S](C)(C)(C)(C)(C)C",
+                           "[P](C)(C)(C)(C)(CC)",
                            "C(C)(C)(C)(CCC)",
                            "CC(C)CCCC",
                            "CCCCCCC",
@@ -1416,11 +1416,11 @@ void testKappa2() {
                            "CC(C)CC1CCC(C)CC1",
                            "CC(C)C1CCC(C)CCC1",
                            "EOS"};
-    double ddata[] = {0.667000, 1.240000, 2.344400, 4.167000, 6.000000,
-                      5.000000, 6.000000, 1.440000, 1.633000, 2.222000,
-                      3.061000, 4.000000, 4.740000, 0.884000, 1.606000,
-                      1.552000, 1.500000, 3.930000, 4.290000, 4.480000,
-                      4.133000, 4.133000, 4.133000};
+    double ddata[] = {0.771000, 1.4510000, 2.344400, 4.167000, 6.000000,
+                      5.000000, 6.000000,  1.440000, 1.633000, 2.222000,
+                      3.061000, 4.000000,  4.740000, 0.884000, 1.606000,
+                      1.552000, 1.500000,  3.930000, 4.290000, 4.480000,
+                      4.133000, 4.133000,  4.133000};
     unsigned int idx = 0;
     while (sdata[idx] != "EOS") {
       ROMol *mol;
@@ -1440,10 +1440,10 @@ void testKappa3() {
 
   {
     std::string sdata[] = {
-        "C[C+](C)(C)(C)C(C)(C)C", "CCC(C)C(C)(C)(CC)", "CCC(C)CC(C)CC",
-        "CC(C)CCC(C)CC",          "CC(C)CCCC(C)C",     "CCC(C)C1CCC(C)CC1",
-        "CC(C)CC1CCC(C)CC1",      "CC(C)C1CCC(C)CCC1", "EOS"};
-    double ddata[] = {2.000000, 2.380000, 4.500000, 5.878000,
+        "C[S](C)(C)(C)C(C)(C)C", "CCC(C)C(C)(C)(CC)", "CCC(C)CC(C)CC",
+        "CC(C)CCC(C)CC",         "CC(C)CCCC(C)C",     "CCC(C)C1CCC(C)CC1",
+        "CC(C)CC1CCC(C)CC1",     "CC(C)C1CCC(C)CCC1", "EOS"};
+    double ddata[] = {2.208000, 2.380000, 4.500000, 5.878000,
                       8.000000, 2.500000, 3.265000, 2.844000};
     unsigned int idx = 0;
     while (sdata[idx] != "EOS") {

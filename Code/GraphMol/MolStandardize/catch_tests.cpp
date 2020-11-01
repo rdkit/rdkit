@@ -216,7 +216,7 @@ TEST_CASE(
     CHECK(MolToSmiles(*outm) == "F[B-](F)(F)F.NCC=C[NH3+]");
   }
   SECTION("make sure we don't go too far") {
-    auto m = "F[B-](F)(F)F.[NH4+2]CCC"_smiles;  // totally bogus structure
+    auto m = "F[B-](F)(F)F.[OH3+2]CCC"_smiles;  // totally bogus structure
     REQUIRE(m);
     bool canonicalOrdering = true;
     MolStandardize::Uncharger uncharger(canonicalOrdering);
@@ -224,7 +224,7 @@ TEST_CASE(
     REQUIRE(outm);
     CHECK(outm->getAtomWithIdx(1)->getFormalCharge() == -1);
     CHECK(outm->getAtomWithIdx(5)->getFormalCharge() == 1);
-    CHECK(MolToSmiles(*outm) == "CCC[NH3+].F[B-](F)(F)F");
+    CHECK(MolToSmiles(*outm) == "CCC[OH2+].F[B-](F)(F)F");
   }
 }
 
@@ -589,27 +589,30 @@ TEST_CASE("github #2792: carbon in the uncharger", "[uncharger][bug]") {
   }
 }
 
-TEST_CASE("github #2965: molecules properties not retained after cleanup", "[cleanup][bug]") {
+TEST_CASE("github #2965: molecules properties not retained after cleanup",
+          "[cleanup][bug]") {
   SECTION("example 1") {
-	MolStandardize::CleanupParameters params;
-	std::unique_ptr<RWMol> m(SmilesToMol("Cl.c1cnc(OCCCC2CCNCC2)cn1"));
-	REQUIRE(m);
-	m->setProp("testing_prop", "1234");
-	std::unique_ptr<RWMol> res(MolStandardize::cleanup(*m, params));
-        REQUIRE(res);
-	auto x = res->getDict(); 
-	CHECK(x.getVal<std::string>("testing_prop") == "1234");
-  }
-} 
-
-TEST_CASE("github #2970: chargeParent() segmentation fault when standardization is skipped i.e. skip_standardize is set to true") {
-    auto m = "COC=1C=CC(NC=2N=CN=C3NC=NC23)=CC1"_smiles;
-    REQUIRE(m);
     MolStandardize::CleanupParameters params;
+    std::unique_ptr<RWMol> m(SmilesToMol("Cl.c1cnc(OCCCC2CCNCC2)cn1"));
+    REQUIRE(m);
+    m->setProp("testing_prop", "1234");
     std::unique_ptr<RWMol> res(MolStandardize::cleanup(*m, params));
+    REQUIRE(res);
+    auto x = res->getDict();
+    CHECK(x.getVal<std::string>("testing_prop") == "1234");
+  }
+}
 
-    std::unique_ptr<ROMol> outm(MolStandardize::chargeParent(*res, params, true));
+TEST_CASE(
+    "github #2970: chargeParent() segmentation fault when standardization is "
+    "skipped i.e. skip_standardize is set to true") {
+  auto m = "COC=1C=CC(NC=2N=CN=C3NC=NC23)=CC1"_smiles;
+  REQUIRE(m);
+  MolStandardize::CleanupParameters params;
+  std::unique_ptr<RWMol> res(MolStandardize::cleanup(*m, params));
 
-    REQUIRE(outm);
-    CHECK(MolToSmiles(*outm) == "COc1ccc(Nc2ncnc3[nH]cnc23)cc1");
+  std::unique_ptr<ROMol> outm(MolStandardize::chargeParent(*res, params, true));
+
+  REQUIRE(outm);
+  CHECK(MolToSmiles(*outm) == "COc1ccc(Nc2ncnc3[nH]cnc23)cc1");
 }

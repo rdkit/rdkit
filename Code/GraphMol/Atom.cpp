@@ -221,17 +221,15 @@ int Atom::calcExplicitValence(bool strict) {
   }
   accum += getNumExplicitHs();
 
+  unsigned int effectiveAtomicNum = 0;
+  if (d_formalCharge < d_atomicNum) {
+    effectiveAtomicNum = d_atomicNum - getFormalCharge();
+  }
+
   // check accum is greater than the default valence
-  unsigned int dv = PeriodicTable::getTable()->getDefaultValence(d_atomicNum);
-  int chr = getFormalCharge();
-  if (isEarlyAtom(d_atomicNum)) {
-    chr *= -1;  // <- the usual correction for early atoms
-  }
-  // special case for carbon - see GitHub #539
-  if (d_atomicNum == 6 && chr > 0) {
-    chr = -chr;
-  }
-  if (accum > (dv + chr) && this->getIsAromatic()) {
+  unsigned int dv =
+      PeriodicTable::getTable()->getDefaultValence(effectiveAtomicNum);
+  if (accum > dv && this->getIsAromatic()) {
     // this needs some explanation : if the atom is aromatic and
     // accum > (dv + chr) we assume that no hydrogen can be added
     // to this atom.  We set x = (v + chr) such that x is the
@@ -242,15 +240,17 @@ int Atom::calcExplicitValence(bool strict) {
     //    sulfur here : O=c1ccs(=O)cc1
     //    nitrogen here : c1cccn1C
 
-    int pval = dv + chr;
+    int pval = dv;
     const INT_VECT &valens =
-        PeriodicTable::getTable()->getValenceList(d_atomicNum);
-    for (auto vi = valens.begin(); vi != valens.end() && *vi != -1; ++vi) {
-      int val = (*vi) + chr;
-      if (val > accum) {
+        PeriodicTable::getTable()->getValenceList(effectiveAtomicNum);
+    for (auto vi : valens) {
+      if (vi == -1) {
+        break;
+      }
+      if (vi > accum) {
         break;
       } else {
-        pval = val;
+        pval = vi;
       }
     }
     // if we're within 1.5 of the allowed valence, go ahead and take it.
@@ -280,17 +280,10 @@ int Atom::calcExplicitValence(bool strict) {
   res = static_cast<int>(std::round(accum));
 
   if (strict) {
-    int effectiveValence;
-    if (PeriodicTable::getTable()->getNouterElecs(d_atomicNum) >= 4) {
-      effectiveValence = res - getFormalCharge();
-    } else {
-      // for boron and co, we move to the right in the PT, so adding
-      // extra valences means adding negative charge
-      effectiveValence = res + getFormalCharge();
-    }
+    int effectiveValence = res;
     const INT_VECT &valens =
-        PeriodicTable::getTable()->getValenceList(d_atomicNum);
-    int maxValence = *(valens.rbegin());
+        PeriodicTable::getTable()->getValenceList(effectiveAtomicNum);
+    int maxValence = valens.back();
     // maxValence == -1 signifies that we'll take anything at the high end
     if (maxValence > 0 && effectiveValence > maxValence) {
       // the explicit valence is greater than any
