@@ -5190,7 +5190,7 @@ void testGithubIssue447() {
     delete m;
   }
   {
-    std::string smiles = "C[SH4+]C";
+    std::string smiles = "C[SH2+]C";
     RWMol *m = SmilesToMol(smiles);
     TEST_ASSERT(m);
     TEST_ASSERT(m->getAtomWithIdx(1)->getNoImplicit());

@@ -356,9 +356,19 @@ int Atom::calcImplicitValence(bool strict) {
   //
   int res;
 
+  unsigned int effectiveAtomicNum = 0;
+  if (d_formalCharge < d_atomicNum) {
+    effectiveAtomicNum = d_atomicNum - getFormalCharge();
+  }
+
   // The d-block and f-block of the periodic table (i.e. transition metals,
   // lanthanoids and actinoids) have no default valence.
-  int dv = PeriodicTable::getTable()->getDefaultValence(d_atomicNum);
+  if (PeriodicTable::getTable()->getDefaultValence(d_atomicNum) == -1) {
+    d_implicitValence = 0;
+    return 0;
+  }
+  // otherwise we use the effective atomic number
+  int dv = PeriodicTable::getTable()->getDefaultValence(effectiveAtomicNum);
   if (dv == -1) {
     d_implicitValence = 0;
     return 0;
@@ -376,51 +386,15 @@ int Atom::calcImplicitValence(bool strict) {
   // finally aromatic cases are dealt with differently - these atoms are allowed
   // only default valences
   const INT_VECT &valens =
-      PeriodicTable::getTable()->getValenceList(d_atomicNum);
+      PeriodicTable::getTable()->getValenceList(effectiveAtomicNum);
   int explicitPlusRadV = getExplicitValence() + getNumRadicalElectrons();
-  int chg = getFormalCharge();
 
   // NOTE: this is here to take care of the difference in element on
-  // the right side of the carbon vs left side of carbon
-  // For elements on the right side of the periodic table
-  // (electronegative elements):
-  //     NHYD = V - SBO + CHG
-  // For elements on the left side of the periodic table
-  // (electropositive elements):
-  //      NHYD = V - SBO - CHG
-  // This reflects that hydrogen adds to, for example, O as H+ while
-  // it adds to Na as H-.
-
-  // V = valence
-  // SBO = Sum of bond orders
-  // CHG = Formal charge
-
-  //  It seems reasonable that the line is drawn at Carbon (in Group
-  //  IV), but we must assume on which side of the line C
-  //  falls... an assumption which will not always be correct.  For
-  //  example:
-  //  - Electropositive Carbon: a C with three singly-bonded
-  //    neighbors (DV = 4, SBO = 3, CHG = 1) and a positive charge (a
-  //    'stable' carbocation) should not have any hydrogens added.
-  //  - Electronegative Carbon: C in isonitrile, R[N+]#[C-] (DV = 4, SBO = 3,
-  //    CHG = -1), also should not have any hydrogens added.
-  //  Because isonitrile seems more relevant to pharma problems, we'll be
-  //  making the second assumption:  *Carbon is electronegative*.
-  //
-  // So assuming you read all the above stuff - you know why we are
-  // changing signs for "chg" here
-  if (isEarlyAtom(d_atomicNum)) {
-    chg *= -1;
-  }
-  // special case for carbon - see GitHub #539
-  if (d_atomicNum == 6 && chg > 0) {
-    chg = -chg;
-  }
 
   // if we have an aromatic case treat it differently
   if (getIsAromatic()) {
-    if (explicitPlusRadV <= (static_cast<int>(dv) + chg)) {
-      res = dv + chg - explicitPlusRadV;
+    if (explicitPlusRadV <= dv) {
+      res = dv - explicitPlusRadV;
     } else {
       // As we assume when finding the explicitPlusRadValence if we are
       // aromatic we should not be adding any hydrogen and already
@@ -433,7 +407,7 @@ int Atom::calcImplicitValence(bool strict) {
       // formal charge here vs the explicit valence function.
       bool satis = false;
       for (auto vi = valens.begin(); vi != valens.end() && *vi > 0; ++vi) {
-        if (explicitPlusRadV == ((*vi) + chg)) {
+        if (explicitPlusRadV == (*vi)) {
           satis = true;
           break;
         }
@@ -453,7 +427,7 @@ int Atom::calcImplicitValence(bool strict) {
     // and be able to add hydrogens
     res = -1;
     for (auto vi = valens.begin(); vi != valens.end() && *vi >= 0; ++vi) {
-      int tot = (*vi) + chg;
+      int tot = (*vi);
       if (explicitPlusRadV <= tot) {
         res = tot - explicitPlusRadV;
         break;

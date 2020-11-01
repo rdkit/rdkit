@@ -1425,3 +1425,35 @@ TEST_CASE("Additional oxidation states", "[chemistry]") {
     }
   }
 }
+
+TEST_CASE("hexafluorophosphate", "[chemistry]") {
+  SECTION("smiles") {
+    auto m = "F[P-](F)(F)(F)(F)F"_smiles;
+    REQUIRE(m);
+    CHECK(m->getAtomWithIdx(1)->getExplicitValence() == 6);
+  }
+  SECTION("ctab") {
+    std::string ctab = R"CTAB(Hexafluorophosphate
+  -ISIS-  02071100022D
+
+  7  6  0  0  0  0  0  0  0  0999 V2000
+    5.1554   -4.4022    0.0000 P   0  5  0  0  0  0  0  0  0  0  0  0
+    4.9440   -3.6054    0.0000 F   0  0  0  0  0  0  0  0  0  0  0  0
+    4.9221   -5.2050    0.0000 F   0  0  0  0  0  0  0  0  0  0  0  0
+    4.3886   -4.4022    0.0000 F   0  0  0  0  0  0  0  0  0  0  0  0
+    5.9657   -4.4073    0.0000 F   0  0  0  0  0  0  0  0  0  0  0  0
+    5.6886   -3.8303    0.0000 F   0  0  0  0  0  0  0  0  0  0  0  0
+    5.7360   -5.1252    0.0000 F   0  0  0  0  0  0  0  0  0  0  0  0
+  1  2  1  0  0  0  0
+  1  3  1  0  0  0  0
+  1  4  1  0  0  0  0
+  1  5  1  0  0  0  0
+  1  7  1  0  0  0  0
+  6  1  1  0  0  0  0
+M  CHG  1   1  -1
+M  END)CTAB";
+    std::unique_ptr<ROMol> m(MolBlockToMol(ctab));
+    REQUIRE(m);
+    CHECK(m->getAtomWithIdx(0)->getExplicitValence() == 6);
+  }
+}
