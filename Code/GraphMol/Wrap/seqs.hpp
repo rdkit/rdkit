@@ -15,19 +15,27 @@ namespace RDKit {
 
 class AtomCountFunctor {
  private:
-  const ROMol &_mol;
+  const ROMOL_SPTR _mol;
 
  public:
-  AtomCountFunctor(const ROMol &mol) : _mol(mol){};
-  unsigned int operator()() const { return _mol.getNumAtoms(); };
+  AtomCountFunctor(const ROMOL_SPTR &mol) : _mol(mol){};
+  unsigned int operator()() const { return _mol->getNumAtoms(); };
 };
 class BondCountFunctor {
  private:
-  const ROMol &_mol;
+  const ROMOL_SPTR _mol;
 
  public:
-  BondCountFunctor(const ROMol &mol) : _mol(mol){};
-  unsigned int operator()() const { return _mol.getNumBonds(); };
+  BondCountFunctor(const ROMOL_SPTR &mol) : _mol(mol){};
+  unsigned int operator()() const { return _mol->getNumBonds(); };
+};
+class ConformerCountFunctor {
+ private:
+  const ROMOL_SPTR _mol;
+
+ public:
+  ConformerCountFunctor(const ROMOL_SPTR &mol) : _mol(mol){};
+  unsigned int operator()() const { return _mol->getNumConformers(); };
 };
 
 // Note: T1 should be some iterator type,
@@ -39,23 +47,26 @@ class ReadOnlySeq {
   int _size;
   T3 _lenFunc;
   size_t _origLen;
+  const ROMOL_SPTR _mol;
 
  public:
   ~ReadOnlySeq() {}
-  ReadOnlySeq(T1 start, T1 end, T3 lenFunc)
+  ReadOnlySeq(const ROMOL_SPTR &mol, T1 start, T1 end, T3 lenFunc)
       : _start(start),
         _end(end),
         _pos(start),
         _size(-1),
         _lenFunc(lenFunc),
-        _origLen(lenFunc()){};
+        _origLen(lenFunc()),
+        _mol(mol) {}
   ReadOnlySeq(const ReadOnlySeq<T1, T2, T3> &other)
       : _start(other._start),
         _end(other._end),
         _pos(other._pos),
         _size(other._size),
         _lenFunc(other._lenFunc),
-        _origLen(other._origLen){};
+        _origLen(other._origLen),
+        _mol(other._mol) {}
   void reset() {
     // std::cerr << "**** reset ****" << this<< std::endl;
     _pos = _start;
@@ -65,7 +76,7 @@ class ReadOnlySeq {
     reset();
     // std::cerr << "  finish ****" << this << std::endl;
     return this;
-  };
+  }
   T2 next() {
     // std::cerr << "\tnext: " << _pos._pos << " " << _end._pos << std::endl;
     if (_pos == _end) {
@@ -114,5 +125,6 @@ typedef ReadOnlySeq<ROMol::AtomIterator, Atom *, AtomCountFunctor> AtomIterSeq;
 typedef ReadOnlySeq<ROMol::QueryAtomIterator, Atom *, AtomCountFunctor>
     QueryAtomIterSeq;
 typedef ReadOnlySeq<ROMol::BondIterator, Bond *, BondCountFunctor> BondIterSeq;
+typedef ReadOnlySeq<ROMol::ConformerIterator, CONFORMER_SPTR &, ConformerCountFunctor> ConformerIterSeq;
 }
 #endif
