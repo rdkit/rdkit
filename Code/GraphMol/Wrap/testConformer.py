@@ -120,7 +120,7 @@ class TestCase(unittest.TestCase):
     m.RemoveAllConformers()
     self.assertTrue(m.GetNumConformers() == 0)
     confs = m.GetConformers()
-    self.assertTrue(confs == ())
+    self.assertEqual(len(confs), 0)
 
   def test5PositionsArray(self):
     smi = 'c1ccccc1'
@@ -137,7 +137,7 @@ class TestCase(unittest.TestCase):
     m.RemoveAllConformers()
     self.assertTrue(m.GetNumConformers() == 0)
     confs = m.GetConformers()
-    self.assertTrue(confs == ())
+    self.assertEqual(len(confs), 0)
 
 
 if __name__ == '__main__':
