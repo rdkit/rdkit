@@ -146,6 +146,9 @@ struct sgroup_wrap {
         .def("GetAttachPoints", getAttachPointsHelper)
         .def("AddBracket", addBracketHelper)
         .def("GetBrackets", getBracketsHelper)
+        .def("ClearBrackets", &SubstanceGroup::clearBrackets)
+        .def("ClearCStates", &SubstanceGroup::clearCStates)
+        .def("ClearAttachPoints", &SubstanceGroup::clearAttachPoints)
 
         .def("SetProp",
              (void (RDProps::*)(const std::string &, std::string, bool) const) &
