@@ -33,7 +33,6 @@
 #include <fmgr.h>
 #include <access/gist.h>
 #include <access/skey.h>
-#include <access/tuptoaster.h>
 #include <utils/memutils.h>
 
 #include <math.h>
