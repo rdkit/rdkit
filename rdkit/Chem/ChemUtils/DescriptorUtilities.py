@@ -22,10 +22,10 @@ def setDescriptorVersion(version='1.0.0'):
     return func
   return wrapper
 
-class VectorDescriptorNamespace:
+class VectorDescriptorNamespace(dict):
     def __init__(self, **kwargs):
-        self.__dict__.update(kwargs)
-        
+        self.update(kwargs)
+
 class VectorDescriptorWrapper:
     """Wrap a function that returns a vector and make it seem like there
     is one function for each entry.  These functions are added to the global
@@ -42,18 +42,19 @@ class VectorDescriptorWrapper:
             f.__qualname__ = n
             f.version = version
             function_namespace[n] = f
-        self.namespace = VectorDescriptorNamespace(**function_namespace)            
+        self.namespace = VectorDescriptorNamespace(**function_namespace)
+        self.namespace.update(namespace)
         namespace.update(function_namespace)
 
     def _get_key(self, index):
         return "%s%s"%(self.func_key, index)
-    
+
     def call_desc(self, mol, index):
         if hasattr(mol, self.func_key):
           results = getattr(mol, self.func_key, None)
           if results is not None:
             return results[index]
-        
+
         try:
           results = self.func(mol)
         except:
