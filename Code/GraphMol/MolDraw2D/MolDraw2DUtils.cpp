@@ -1,5 +1,5 @@
 //
-//  Copyright (C) 2016-2019 Greg Landrum
+//  Copyright (C) 2016-2021 Greg Landrum
 //
 //   @@ All Rights Reserved @@
 //  This file is part of the RDKit.
@@ -26,6 +26,31 @@
 
 namespace RDKit {
 namespace MolDraw2DUtils {
+
+namespace {
+  void drawBracketsForSGroup(MolDraw2D &drawer, const ROMol &mol, const SubstanceGroup &sg, bool regenerateCoords, 
+    const Conformer &conf){
+      for(const auto &brk : sg.getBrackets()){
+        const RDGeom::Point2D p1{brk[0]};
+        const RDGeom::Point2D p2{brk[1]};
+        drawer.setColour({0,0,0});
+        drawer.setLineWidth(2);
+        drawer.drawLine(p1,p2);
+      }
+  }
+}
+
+void drawMoleculeBrackets(
+    MolDraw2D &drawer, const ROMol &mol, bool regenerateCoords, int confId){
+      const auto conf = mol.getConformer(confId);
+      const auto &sgs = getSubstanceGroups(mol);
+      for(const auto &sg : sgs){
+        if(!sg.getBrackets().empty()){
+          drawBracketsForSGroup(drawer,mol,sg,regenerateCoords,conf);
+        }
+      }
+    };
+
 
 namespace {
 bool isAtomCandForChiralH(const RWMol &mol, const Atom *atom) {
