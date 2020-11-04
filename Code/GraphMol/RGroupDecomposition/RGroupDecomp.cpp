@@ -174,18 +174,12 @@ int RGroupDecomposition::add(const ROMol &inmol) {
   std::vector<RGroupMatch> potentialMatches;
 
   std::unique_ptr<ROMol> tMol;
-  std::unique_ptr<ROMol> coreCopy;
   for (auto &tmatche : tmatches) {
     const bool replaceDummies = false;
     const bool labelByIndex = true;
     const bool requireDummyMatch = false;
-    coreCopy.reset(new ROMol(*rcore->core));
-    for (const auto &p : tmatche) {
-      auto a = coreCopy->getAtomWithIdx(p.first);
-      if (!a->getAtomicNum() && !a->hasProp(RLABEL)) {
-        a->setAtomicNum(mol.getAtomWithIdx(p.second)->getAtomicNum());
-      }
-    }
+    std::unique_ptr<ROMol> coreCopy =
+        rcore->replaceCoreDummiesWithMolMatches(mol, tmatche);
     tMol.reset(replaceCore(mol, *coreCopy, tmatche, replaceDummies,
                            labelByIndex, requireDummyMatch));
 
