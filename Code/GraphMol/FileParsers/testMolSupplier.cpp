@@ -2795,6 +2795,17 @@ void testGitHub2881() {
 void testGitHub2881() {}
 #endif
 
+void testGitHub3517() {
+  std::string rdbase = getenv("RDBASE");
+  std::string fname =
+      rdbase + "/Code/GraphMol/FileParsers/test_data/NCI_aids_few.sdf";
+
+  SDMolSupplier sdsup(fname);
+  TEST_ASSERT(!sdsup.atEnd());
+  size_t l = sdsup.length();
+  TEST_ASSERT(!sdsup.atEnd());
+}
+
 int main() {
   RDLog::InitLogs();
 
@@ -2982,6 +2993,11 @@ int main() {
   BOOST_LOG(rdErrorLog) << "-----------------------------------------\n";
   testGitHub2881();
   BOOST_LOG(rdErrorLog) << "Finished: testGitHub2881()\n";
+  BOOST_LOG(rdErrorLog) << "-----------------------------------------\n\n";
+
+  BOOST_LOG(rdErrorLog) << "-----------------------------------------\n";
+  testGitHub3517();
+  BOOST_LOG(rdErrorLog) << "Finished: testGitHub3517()\n";
   BOOST_LOG(rdErrorLog) << "-----------------------------------------\n\n";
 
   return 0;

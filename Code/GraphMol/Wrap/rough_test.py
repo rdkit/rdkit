@@ -6199,6 +6199,14 @@ M  END
     m = Chem.MolFromSmiles("c1ccccc1C(=O)Cl")
     self.assertFalse(m.HasSubstructMatch(sma, recursionPossible=False))
 
+  def test_github3517(self):
+    fileN = os.path.join(RDConfig.RDBaseDir, 'Code', 'GraphMol', 'FileParsers', 'test_data',
+                         'NCI_aids_few.sdf')
+    sdSup = Chem.SDMolSupplier(fileN)
+    mols_list = list(sdSup)
+    mols_list_compr = [m for m in sdSup]
+    self.assertEqual(len(mols_list), len(mols_list_compr))
+
   def test_github3492(self):
     def read_smile(s):
         m = Chem.MolFromSmiles(s)
@@ -6217,7 +6225,6 @@ M  END
     self.assertIsNotNone(read_smile("CCC").GetConformers()[0].GetOwningMol())
     pos = read_smile("CCC").GetConformers()[0].GetPositions()
     self.assertAlmostEqual(sq_dist(pos[0], pos[1]), sq_dist(pos[1], pos[2]))
-
 
 if __name__ == '__main__':
   if "RDTESTCASE" in os.environ:
