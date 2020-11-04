@@ -267,6 +267,7 @@ unsigned int SDMolSupplier::length() {
     // now remember to set the stream to the last position we want to read
     dp_inStream->clear();
     dp_inStream->seekg(d_molpos[d_last]);
+    df_end = false;
     return d_len;
   }
 }
