@@ -867,8 +867,7 @@ TEST_CASE("Github #3577", "[bug]") {
   }
 }
 
-TEST_CASE("drawMoleculeBrackets",
-          "[extras]") {
+TEST_CASE("drawMoleculeBrackets", "[extras]") {
   SECTION("basics") {
     auto m = R"CTAB(
   ACCLDraw11042015112D
@@ -900,10 +899,55 @@ M  END
     REQUIRE(m);
     MolDraw2DSVG drawer(350, 300);
     drawer.drawMolecule(*m);
-    MolDraw2DUtils::drawMoleculeBrackets(drawer,*m);
+    MolDraw2DUtils::drawMoleculeBrackets(drawer, *m);
     drawer.finishDrawing();
     auto text = drawer.getDrawingText();
     std::ofstream outs("testBrackets-1.svg");
+    outs << text;
+    outs.flush();
+
+    // make sure the polygon starts at a bond
+    // CHECK(text.find("<path class='bond-0' d='M 321.962,140") !=
+    //       std::string::npos);
+    // CHECK(text.find("<path d='M 321.962,140") != std::string::npos);
+  }
+  SECTION("three brackets") {
+    auto m = R"CTAB(three brackets
+  Mrv2014 11052006542D          
+
+  0  0  0     0  0            999 V3000
+M  V30 BEGIN CTAB
+M  V30 COUNTS 6 5 1 0 0
+M  V30 BEGIN ATOM
+M  V30 1 * -1.375 3.1667 0 0
+M  V30 2 C -0.0413 3.9367 0 0
+M  V30 3 C 1.2924 3.1667 0 0
+M  V30 4 * 2.626 3.9367 0 0
+M  V30 5 C 0.0003 5.6017 0 0
+M  V30 6 * 1.334 6.3717 0 0
+M  V30 END ATOM
+M  V30 BEGIN BOND
+M  V30 1 1 1 2
+M  V30 2 1 2 3
+M  V30 3 1 3 4
+M  V30 4 1 2 5
+M  V30 5 1 5 6
+M  V30 END BOND
+M  V30 BEGIN SGROUP
+M  V30 1 SRU 0 ATOMS=(3 2 3 5) XBONDS=(3 1 3 5) BRKXYZ=(9 0.0875 6.7189 0 -
+M  V30 1.0115 5.1185 0 0 0 0) BRKXYZ=(9 1.3795 4.2839 0 2.3035 2.6835 0 0 0 -
+M  V30 0) BRKXYZ=(9 -0.1285 2.8194 0 -1.0525 4.4198 0 0 0 0) CONNECT=HT -
+M  V30 LABEL=n
+M  V30 END SGROUP
+M  V30 END CTAB
+M  END)CTAB"_ctab;
+    REQUIRE(m);
+    MolDraw2DSVG drawer(350, 300);
+    drawer.drawMolecule(*m);
+    MolDraw2DUtils::drawMoleculeBrackets(drawer, *m);
+    drawer.finishDrawing();
+    auto text = drawer.getDrawingText();
+    std::ofstream outs("testBrackets-2.svg");
     outs << text;
     outs.flush();
 
