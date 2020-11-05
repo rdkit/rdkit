@@ -83,7 +83,12 @@ class RGroupDecompositionHelper {
   }
   bool Process() {
     NOGIL gil;
-    return decomp->process();
+    return decomp->process().success;
+  }
+  python::tuple ProcessAndScore() {
+    NOGIL gil;
+    auto result = decomp->process();
+    return python::make_tuple(result.success, result.score);
   }
 
   python::list GetRGroupLabels() {
@@ -208,6 +213,12 @@ struct rgroupdecomp_wrapper {
         .value("MCS", RDKit::MCS)
         .export_values();
 
+    python::enum_<RDKit::RGroupScore>("RGroupScore")
+        .value("Linkage", RDKit::Linker)
+        .value("FingerprintDistance", RDKit::FingerprintDistance)
+        .value("FingerprintVariance", RDKit::FingerprintVariance)
+        .export_values();
+
     docString =
         "RGroupDecompositionParameters controls how the RGroupDecomposition "
         "sets labelling and matches structures\n"
@@ -259,6 +270,8 @@ struct rgroupdecomp_wrapper {
         .def_readwrite("labels", &RDKit::RGroupDecompositionParameters::labels)
         .def_readwrite("matchingStrategy",
                        &RDKit::RGroupDecompositionParameters::matchingStrategy)
+        .def_readwrite("scoreMethod",
+                       &RDKit::RGroupDecompositionParameters::scoreMethod)
         .def_readwrite("rgroupLabelling",
                        &RDKit::RGroupDecompositionParameters::rgroupLabelling)
         .def_readwrite("alignment",
@@ -288,6 +301,9 @@ struct rgroupdecomp_wrapper {
         .def("Add", &RGroupDecompositionHelper::Add)
         .def("Process", &RGroupDecompositionHelper::Process,
              "Process the rgroups (must be done prior to "
+             "GetRGroupsAsRows/Columns and GetRGroupLabels)")
+        .def("ProcessAndScore", &RGroupDecompositionHelper::ProcessAndScore,
+             "Process the rgroups and returns the score (must be done prior to "
              "GetRGroupsAsRows/Columns and GetRGroupLabels)")
         .def("GetRGroupLabels", &RGroupDecompositionHelper::GetRGroupLabels,
              "Return the current list of found rgroups.\n"

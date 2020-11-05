@@ -14,6 +14,7 @@
 #include "RGroupDecomp.h"
 #include "RGroupMatch.h"
 #include "RGroupScore.h"
+#include "RGroupFingerprintScore.h"
 #include "RGroupGa.h"
 #include <vector>
 #include <map>
@@ -401,22 +402,43 @@ struct RGroupDecompData {
     return num_added_rgroups;
   }
 
-  bool process(bool pruneMatches, bool finalize = false) {
+  double score(const std::vector<size_t> &permutation,
+               std::map<int, std::shared_ptr<VarianceDataForLabel>>
+                   *labelsToVarianceData = nullptr) const {
+    RGroupScore scoreMethod = static_cast<RGroupScore>(params.scoreMethod);
+    switch (scoreMethod) {
+      case Linker:
+        return linkerScore(permutation, matches, labels);
+        break;
+      case FingerprintDistance:
+        return fingerprintDistanceScore(permutation, matches, labels);
+        break;
+      case FingerprintVariance:
+        return fingerprintVarianceScore(permutation, matches, labels, labelsToVarianceData);
+        break;
+      default:;
+    }
+    return NAN;
+  }
+
+  RGroupDecompositionProcessResult process(bool pruneMatches,
+                                           bool finalize = false) {
     if (matches.size() == 0) {
-      return false;
+      return RGroupDecompositionProcessResult(false, -1);
     }
     auto t0 = std::chrono::steady_clock::now();
     std::vector<size_t> best_permutation;
     std::vector<std::vector<size_t>> ties;
+    double best_score = -std::numeric_limits<double>::max();
 
     if (params.matchingStrategy == GA) {
-
       // TODO- check for timeout in GA
-      // TODO- check for small search space and revert to Exhaustive, if
-      // we can't create population.
+      // TODO- check for small search space and revert to Exhaustive, if we
+      // can't create population.
       RGroupGa ga(*this);
       ties = ga.run();
       best_permutation = ties[0];
+      best_score = ga.getBestScore();
 
     } else {
       // Exhaustive search, get the MxN matrix
@@ -431,7 +453,6 @@ struct RGroupDecompData {
 
       // run through all possible matches and score each
       //  set
-      double best_score = 0;
       best_permutation = permutation;
 
       size_t count = 0;
@@ -450,7 +471,7 @@ struct RGroupDecompData {
         std::cerr << "**************************************************"
                   << std::endl;
 #endif
-        double newscore = score(iterator.permutation, matches, labels);
+        double newscore = score(iterator.permutation);
 
         if (fabs(newscore - best_score) <
             1e-6) {  // heuristic to overcome floating point comparison issues
@@ -467,6 +488,9 @@ struct RGroupDecompData {
         }
         ++count;
       }
+
+      std::cerr << " Exhaustive or GreedyChunks process, best score "
+                << best_score << std::endl;
     }
 
     if (ties.size() > 1) {
@@ -510,7 +534,7 @@ struct RGroupDecompData {
       relabel();
     }
 
-    return true;
+    return RGroupDecompositionProcessResult(true, best_score);
   }
 };
 }  // namespace RDKit

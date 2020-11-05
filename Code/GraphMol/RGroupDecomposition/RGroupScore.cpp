@@ -7,17 +7,22 @@
 //  which is included in the file license.txt, found at the root
 //  of the RDKit source tree.
 //
+
 #include "RGroupScore.h"
-//#define DEBUG 1
+#include "GraphMol/Fingerprints/MorganFingerprints.h"
+#include <vector>
+#include <map>
+
+
 
 namespace RDKit {
-  
+
 // stupid total score
 // This has to handle all permutations and doesn't do anything terribly smart
 //  For r-groups with large symmetries, this can take way too long.
-double score(const std::vector<size_t> &permutation,
-             const std::vector<std::vector<RGroupMatch>> &matches,
-             const std::set<int> &labels) {
+double linkerScore(const std::vector<size_t> &permutation,
+                   const std::vector<std::vector<RGroupMatch>> &matches,
+                   const std::set<int> &labels) {
   double score = 1.;
 
 #ifdef DEBUG
@@ -42,7 +47,8 @@ double score(const std::vector<size_t> &permutation,
         std::cerr << "  combined: " << MolToSmiles(*rg->second->combinedMol)
                   << std::endl;
         std::cerr << " RGroup: " << rg->second->smiles << " "
-                  << rg->second->is_hydrogen << std::endl;;
+                  << rg->second->is_hydrogen << std::endl;
+        ;
 #endif
         unsigned int &count = matchSet[rg->second->smiles];
         ++count;
@@ -59,7 +65,7 @@ double score(const std::vector<size_t> &permutation,
         }
       }
     }
-    
+
     // get the counts for each rgroup found and sort in reverse order
     std::vector<unsigned int> equivalentRGroupCount;
 
@@ -86,7 +92,7 @@ double score(const std::vector<size_t> &permutation,
     //  because these belong to 2 rgroups we really want these to stay
     //  ** this heuristic really should be taken care of above **
     int maxLinkerMatches = 0;
-    for (const auto &it : linkerMatchSet ) {
+    for (const auto &it : linkerMatchSet) {
       if (it.second > 1) {
         if (it.second > maxLinkerMatches) {
           maxLinkerMatches = it.second;
@@ -116,5 +122,6 @@ double score(const std::vector<size_t> &permutation,
   }
 
   return score;
-}  
 }
+
+}  // namespace RDKit

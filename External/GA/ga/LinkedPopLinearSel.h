@@ -20,6 +20,7 @@
 #include <stdexcept>
 #include <cmath>
 #include <boost/format.hpp>
+#include <limits>
 
 #include "GaOperation.h"
 #include "../util/RandomUtil.h"
@@ -61,7 +62,7 @@ class LinkedPopLinearSel {
   const typename std::multimap<double,
                                std::shared_ptr<Chromosome>>::const_iterator
   findExactMatch(Chromosome& c) const;
-  double bestScore;
+  double bestScore = -std::numeric_limits<double>::max();
 
  public:
   LinkedPopLinearSel(PopulationPolicy& populationPolicy_);
@@ -94,13 +95,7 @@ LinkedPopLinearSel<Chromosome, PopulationPolicy>::LinkedPopLinearSel(
       operations(populationPolicy.getOperations()),
       selectionPressure(populationPolicy.getSelectionPressure()),
       population(),
-      freeChromosomes(),
-      nOperations(0),
-      nNiche(0),
-      nFail(0),
-      nDuplicates(0),
-      nAdded(0),
-      bestScore(0) {
+      freeChromosomes() {
   totalOperatorWeights = 0;
   for (auto& operation : operations) {
     totalOperatorWeights += operation->getWeight();
@@ -329,7 +324,7 @@ bool LinkedPopLinearSel<Chromosome, PopulationPolicy>::addToPopulation(
 template <typename Chromosome, typename PopulationPolicy>
 std::string LinkedPopLinearSel<Chromosome, PopulationPolicy>::info() const {
   boost::format format =
-      boost::format("Op %5d Fit %7.1f Added %5d Dups %5d Niche %5d Fail %4d") %
+      boost::format("Op %5d Fit %7.3f Added %5d Dups %5d Niche %5d Fail %4d") %
       nOperations % bestScore % nAdded % nDuplicates % nNiche % nFail;
   return format.str();
 }

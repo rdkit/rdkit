@@ -57,9 +57,23 @@ typedef enum {
   MCS = 0x01,
 } RGroupCoreAlignment;
 
+typedef enum {
+  Linker = 0x1,
+  FingerprintDistance = 0x2,
+  FingerprintVariance = 0x4,
+} RGroupScore;
+
+struct RDKIT_RGROUPDECOMPOSITION_EXPORT RGroupDecompositionProcessResult {
+  const bool success;
+  const double score;
+  RGroupDecompositionProcessResult(const bool success, const double score)
+      : success(success), score(score) {}
+};
+
 struct RDKIT_RGROUPDECOMPOSITION_EXPORT RGroupDecompositionParameters {
   unsigned int labels = AutoDetect;
   unsigned int matchingStrategy = GreedyChunks;
+  unsigned int scoreMethod = Linker;
   unsigned int rgroupLabelling = AtomMap | MDLRGroup;
   unsigned int alignment = MCS;
 
@@ -103,7 +117,7 @@ class RDKIT_RGROUPDECOMPOSITION_EXPORT RGroupDecomposition {
   ~RGroupDecomposition();
 
   int add(const ROMol &mol);
-  bool process();
+  RGroupDecompositionProcessResult process();
 
   const RGroupDecompositionParameters &params() const;
   //! return the current group labels
