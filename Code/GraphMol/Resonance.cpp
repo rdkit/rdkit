@@ -844,7 +844,7 @@ bool ConjElectrons::purgeMaps(CEMap &ceMap, CEDegCount &ceDegCount,
           }
         }
         if (it->second == this) {
-          // postpone slef deletion
+          // postpone self deletion
           ok = false;
         } else {
           delete it->second;
