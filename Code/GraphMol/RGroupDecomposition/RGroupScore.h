@@ -13,6 +13,7 @@
 #include "RGroupMatch.h"
 #include <vector>
 #include <set>
+#include <boost/serialization/vector.hpp>
 namespace RDKit {
 
 //! iterate through all possible permutations of the rgroups
@@ -64,9 +65,10 @@ struct CartesianProduct {
     return true;
   }
 };
-  
-double score(const std::vector<size_t> &permutation,
-             const std::vector<std::vector<RGroupMatch>> &matches,
-             const std::set<int> &labels);
-}
+
+double linkerScore(const std::vector<size_t> &permutation,
+                   const std::vector<std::vector<RGroupMatch>> &matches,
+                   const std::set<int> &labels);
+
+}  // namespace RDKit
 #endif

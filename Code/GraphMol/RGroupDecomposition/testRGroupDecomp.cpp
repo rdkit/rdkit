@@ -41,6 +41,7 @@
 #include <GraphMol/FileParsers/MolSupplier.h>
 #include <RDGeneral/Exceptions.h>
 #include <boost/tokenizer.hpp>
+
 typedef boost::tokenizer<boost::char_separator<char>> tokenizer;
 
 using namespace RDKit;
@@ -110,14 +111,17 @@ void testSymmetryMatching() {
   delete core;
 }
 
-void testGaSymmetryMatching() {
+void testGaSymmetryMatching(RGroupScore scoreMethod) {
   BOOST_LOG(rdInfoLog)
       << "********************************************************\n";
-  BOOST_LOG(rdInfoLog) << "test rgroup decomp symmetry matching using GA" << std::endl;
+  BOOST_LOG(rdInfoLog)
+      << "test rgroup decomp symmetry matching using GA using scoring method "
+      << scoreMethod << std::endl;
 
   RWMol *core = SmilesToMol("c1ccccc1");
   RGroupDecompositionParameters params;
   params.matchingStrategy = GA;
+  params.scoreMethod = scoreMethod;
   RGroupDecomposition decomp(*core, params);
   for (int i = 0; i < 5; ++i) {
     ROMol *mol = SmilesToMol(symdata[i]);
@@ -137,7 +141,6 @@ void testGaSymmetryMatching() {
   }
   delete core;
 }
-
 
 const char *matchRGroupOnlyData[5] = {
     "c1(Cl)ccccc1", "c1c(Cl)cccc1",    "c1cc(Cl)ccc1",
@@ -1392,7 +1395,9 @@ int main() {
   BOOST_LOG(rdInfoLog) << "Testing R-Group Decomposition \n";
 
 #if 1
-  testGaSymmetryMatching();
+  testGaSymmetryMatching(FingerprintVariance);
+  testGaSymmetryMatching(Linker);
+  testGaSymmetryMatching(FingerprintDistance);
   testSymmetryMatching();
   testRGroupOnlyMatching();
   testRingMatching();
