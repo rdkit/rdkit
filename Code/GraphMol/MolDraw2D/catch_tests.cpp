@@ -899,7 +899,6 @@ M  END
     REQUIRE(m);
     MolDraw2DSVG drawer(350, 300);
     drawer.drawMolecule(*m);
-    MolDraw2DUtils::drawMoleculeBrackets(drawer, *m);
     drawer.finishDrawing();
     auto text = drawer.getDrawingText();
     std::ofstream outs("testBrackets-1.svg");
@@ -944,7 +943,6 @@ M  END)CTAB"_ctab;
     REQUIRE(m);
     MolDraw2DSVG drawer(350, 300);
     drawer.drawMolecule(*m);
-    MolDraw2DUtils::drawMoleculeBrackets(drawer, *m);
     drawer.finishDrawing();
     auto text = drawer.getDrawingText();
     std::ofstream outs("testBrackets-2.svg");

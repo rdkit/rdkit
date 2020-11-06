@@ -737,6 +737,7 @@ class RDKIT_MOLDRAW2D_EXPORT MolDraw2D {
   OrientType calcRadicalRect(const ROMol &mol, const Atom *atom,
                              StringRect &rad_rect);
   void drawRadicals(const ROMol &mol);
+  void drawBrackets(const ROMol &mol, int confId);
   // find a good starting point for scanning round the annotation
   // atom.  If we choose well, the first angle should be the one.
   // Returns angle in radians.

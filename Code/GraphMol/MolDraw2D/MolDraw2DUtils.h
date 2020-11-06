@@ -23,19 +23,6 @@ class MolDraw2DColour;
 
 namespace MolDraw2DUtils {
 
-//! adds the brackets from a molecule's SubstanceGroups to the drawing
-/*
-  \param drawer: the MolDraw2D object to use
-  \param mol: the molecule to draw
-  \param regenerateCoords: (optional) forces new coordinates to be regenerated for
-            all brackets
-  \param confId: (optional) conformer ID to be used for atomic coordinates
-
-*/
-RDKIT_MOLDRAW2D_EXPORT void drawMoleculeBrackets(
-    MolDraw2D &drawer, const ROMol &mol, bool regenerateCoords=false, int confId = -1);
-
-
 //! Does some cleanup operations on the molecule to prepare it to draw nicely
 /*
 The operations include: kekulization, addition of chiral Hs (so that we can draw

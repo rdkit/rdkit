@@ -16,6 +16,7 @@
 
 #include <Geometry/point.h>
 #include <GraphMol/RDKitBase.h>
+#include <GraphMol/MolDraw2D/MolDraw2D.h>
 
 #include <boost/tuple/tuple.hpp>
 #include <boost/format.hpp>
@@ -88,6 +89,12 @@ RDKIT_MOLDRAW2D_EXPORT inline void addBondIndices(const ROMol &mol) {
     bond->setProp(common_properties::bondNote, lab);
   }
 };
+
+RDKIT_MOLDRAW2D_EXPORT void drawBracketsForSGroup(MolDraw2D &drawer,
+                                                  const ROMol &mol,
+                                                  const SubstanceGroup &sg,
+                                                  const Conformer &conf);
+
 }  // namespace MolDraw2D_detail
 }  // namespace RDKit
 

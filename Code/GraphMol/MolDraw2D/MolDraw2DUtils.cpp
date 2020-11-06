@@ -28,66 +28,6 @@ namespace RDKit {
 namespace MolDraw2DUtils {
 
 namespace {
-void drawBracketsForSGroup(MolDraw2D &drawer, const ROMol &mol,
-                           const SubstanceGroup &sg, bool regenerateCoords,
-                           const Conformer &conf) {
-  std::vector<SubstanceGroup::Bracket> brackets;
-  if (!regenerateCoords && !sg.getBrackets().empty()) {
-    brackets = sg.getBrackets();
-  } else {
-    // we're generating our own coordinates/brackets
-    for (auto bidx : sg.getBonds()) {
-      const auto bond = mol.getBondWithIdx(bidx);
-    }
-  }
-  RDGeom::Point2D center{0, 0};
-  double avgLength = 0;
-  for (const auto &brk : brackets) {
-    const RDGeom::Point2D p1{brk[0]};
-    const RDGeom::Point2D p2{brk[1]};
-    auto v = p2 - p1;
-    center += p1 + v / 2;
-    avgLength += v.length();
-  }
-  center /= brackets.size();
-  avgLength /= brackets.size();
-
-  const auto ocolor = drawer.colour();
-  const auto olw = drawer.lineWidth();
-  drawer.setColour({0.4, 0.4, 0.4});
-  drawer.setLineWidth(2);
-  for (const auto &brk : brackets) {
-    const RDGeom::Point2D p1{brk[0]};
-    const RDGeom::Point2D p2{brk[1]};
-    drawer.drawLine(p1, p2);
-    auto v = p2 - p1;
-    auto centerv = center - (p1 + v / 2);
-    RDGeom::Point2D perp{v.y, -v.x};
-    perp.normalize();
-    if (perp.dotProduct(centerv) < 0) {
-      perp *= -1;
-    }
-    perp *= avgLength / 10;
-    drawer.drawLine(p1, p1 + perp);
-    drawer.drawLine(p2, p2 + perp);
-  }
-  drawer.setColour(ocolor);
-  drawer.setLineWidth(olw);
-}
-}  // namespace
-
-void drawMoleculeBrackets(MolDraw2D &drawer, const ROMol &mol,
-                          bool regenerateCoords, int confId) {
-  const auto conf = mol.getConformer(confId);
-  const auto &sgs = getSubstanceGroups(mol);
-  for (const auto &sg : sgs) {
-    if (!sg.getBrackets().empty() || regenerateCoords) {
-      drawBracketsForSGroup(drawer, mol, sg, regenerateCoords, conf);
-    }
-  }
-};
-
-namespace {
 bool isAtomCandForChiralH(const RWMol &mol, const Atom *atom) {
   // conditions for needing a chiral H:
   //   - stereochem specified

@@ -1432,6 +1432,8 @@ void MolDraw2D::finishMoleculeDraw(const RDKit::ROMol &draw_mol,
     }
   }
 
+  drawBrackets(draw_mol, -1);
+
   if (drawOptions().includeRadicals) {
     drawRadicals(draw_mol);
   }
@@ -2449,6 +2451,19 @@ OrientType MolDraw2D::calcRadicalRect(const ROMol &mol, const Atom *atom,
   try_north();
   return OrientType::N;
 }
+
+namespace {}  // namespace
+
+// ****************************************************************************
+void MolDraw2D::drawBrackets(const ROMol &mol, int confId) {
+  const auto &conf = mol.getConformer(confId);
+  const auto &sgs = getSubstanceGroups(mol);
+  for (const auto &sg : sgs) {
+    if (!sg.getBrackets().empty()) {
+      MolDraw2D_detail::drawBracketsForSGroup(*this, mol, sg, conf);
+    }
+  }
+};
 
 // ****************************************************************************
 void MolDraw2D::drawRadicals(const ROMol &mol) {
