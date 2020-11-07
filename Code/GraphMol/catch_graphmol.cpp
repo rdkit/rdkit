@@ -1415,7 +1415,6 @@ TEST_CASE("Additional oxidation states", "[chemistry]") {
   SECTION("Basics") {
     std::vector<std::string> smiles = {"F[Po](F)(F)(F)", "F[Po](F)(F)(F)(F)F",
                                        "F[Xe](F)(F)(F)", "F[Xe](F)(F)(F)(F)F",
-                                       "F[Br](F)F",      "F[Br](F)(F)(F)F",
                                        "F[I](F)F",       "F[I](F)(F)(F)F",
                                        "F[At](F)F",      "F[At](F)(F)(F)F"};
     for (const auto &smi : smiles) {
