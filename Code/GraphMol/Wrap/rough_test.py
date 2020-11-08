@@ -6238,12 +6238,15 @@ M  END
                          'github3553.sdf')
     sdSup = Chem.SDMolSupplier(fileN)
     for mol in sdSup:
+      pval = mol.GetProp('boiling.point.predicted')
       sio = StringIO()
       w = Chem.SDWriter(sio)
       w.SetKekulize(True)
       w.SetForceV3000(True)
       w.write(mol)
       w.flush()
+      txt = sio.getvalue()
+      self.assertTrue(pval in txt)
 
 
 if __name__ == '__main__':
