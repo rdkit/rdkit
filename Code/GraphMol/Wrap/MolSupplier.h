@@ -67,24 +67,6 @@ ROMol *MolSupplNext(T *suppl) {
 }  // namespace RDKit
 
 template <typename T>
-ROMol *MolSupplNextAcceptNullLastMolecule(T *suppl) {
-  ROMol *res = nullptr;
-  if (!suppl->atEnd()) {
-    try {
-      res = suppl->next();
-    } catch (const FileParseException&) {
-      throw;
-    } catch (...) {
-      res = nullptr;
-    }
-  } else {
-    PyErr_SetString(PyExc_StopIteration, "End of supplier hit");
-    throw boost::python::error_already_set();
-  }
-  return res;
-}
-
-template <typename T>
 ROMol *MolSupplGetItem(T *suppl, int idx) {
   ROMol *res = nullptr;
   if (idx < 0) {
