@@ -192,4 +192,5 @@ struct version<RDKit::ScaffoldNetwork::ScaffoldNetwork> {
 }  // namespace serialization
 }  // namespace boost
 #endif
+
 #endif

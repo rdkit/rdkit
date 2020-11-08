@@ -367,9 +367,9 @@ if(RDK_BUILD_DESCRIPTORS3D)
 endif(RDK_BUILD_DESCRIPTORS3D)
 
 
-find_package (Threads)
-set(RDKit_THREAD_LIBS Threads::Threads)
 if(RDK_BUILD_THREADSAFE_SSS)
+  find_package (Threads)
+  set(RDKit_THREAD_LIBS Threads::Threads)
   target_compile_definitions(rdkit_base INTERFACE -DRDK_THREADSAFE_SSS)
   if(RDK_TEST_MULTITHREADED)
     target_compile_definitions(rdkit_base INTERFACE "-DRDK_TEST_MULTITHREADED")
