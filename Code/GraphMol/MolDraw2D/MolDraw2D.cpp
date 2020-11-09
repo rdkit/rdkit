@@ -974,10 +974,9 @@ void MolDraw2D::calculateScale(int width, int height, const ROMol &mol,
     text_drawer_->setFontScale(scale_);
     adjustScaleForAtomLabels(highlight_atoms, highlight_radii);
     adjustScaleForRadicals(mol);
-    if ((!atom_notes_.empty() || !bond_notes_.empty()) &&
-        supportsAnnotations()) {
-      adjustScaleForAnnotation(atom_notes_[activeMolIdx_]);
-      adjustScaleForAnnotation(bond_notes_[activeMolIdx_]);
+    if (supportsAnnotations() && !annotations_.empty() &&
+        !annotations_[activeMolIdx_].empty()) {
+      adjustScaleForAnnotation(annotations_[activeMolIdx_]);
     }
     double old_scale = scale_;
     scale_ = std::min(double(width) / x_range_, double(height) / y_range_);
@@ -1291,8 +1290,7 @@ void MolDraw2D::pushDrawDetails() {
   at_cds_.push_back(std::vector<Point2D>());
   atomic_nums_.push_back(std::vector<int>());
   atom_syms_.push_back(std::vector<std::pair<std::string, OrientType>>());
-  atom_notes_.push_back(std::vector<std::shared_ptr<StringRect>>());
-  bond_notes_.push_back(std::vector<std::shared_ptr<StringRect>>());
+  annotations_.push_back(std::vector<std::pair<std::string, StringRect>>());
   radicals_.push_back(
       std::vector<std::pair<std::shared_ptr<StringRect>, OrientType>>());
   activeMolIdx_++;
@@ -1301,8 +1299,7 @@ void MolDraw2D::pushDrawDetails() {
 // ****************************************************************************
 void MolDraw2D::popDrawDetails() {
   activeMolIdx_--;
-  bond_notes_.pop_back();
-  atom_notes_.pop_back();
+  annotations_.pop_back();
   atom_syms_.pop_back();
   atomic_nums_.pop_back();
   radicals_.pop_back();
@@ -1412,23 +1409,13 @@ void MolDraw2D::finishMoleculeDraw(const RDKit::ROMol &draw_mol,
     }
   }
   text_drawer_->setColour(DrawColour(0.0, 0.0, 0.0));
-  if (!supportsAnnotations() &&
-      (!atom_notes_.empty() || !bond_notes_.empty())) {
+  if (!supportsAnnotations() && !annotations_.empty()) {
     BOOST_LOG(rdWarningLog) << "annotations not currently supported for this "
                                "MolDraw2D class, they will be ignored."
                             << std::endl;
-  }
-  for (auto atom : draw_mol.atoms()) {
-    if (supportsAnnotations() && atom_notes_[activeMolIdx_][atom->getIdx()]) {
-      drawAnnotation(atom->getProp<string>(common_properties::atomNote),
-                     atom_notes_[activeMolIdx_][atom->getIdx()]);
-    }
-  }
-
-  for (auto bond : draw_mol.bonds()) {
-    if (supportsAnnotations() && bond_notes_[activeMolIdx_][bond->getIdx()]) {
-      drawAnnotation(bond->getProp<string>(common_properties::bondNote),
-                     bond_notes_[activeMolIdx_][bond->getIdx()]);
+  } else {
+    for (const auto &annotation : annotations_[activeMolIdx_]) {
+      drawAnnotation(annotation.first, annotation.second);
     }
   }
 
@@ -1984,58 +1971,46 @@ void MolDraw2D::extractAtomSymbols(const ROMol &mol) {
 // ****************************************************************************
 void MolDraw2D::extractAtomNotes(const ROMol &mol) {
   PRECONDITION(activeMolIdx_ >= 0, "no mol id");
-  PRECONDITION(static_cast<int>(atom_notes_.size()) > activeMolIdx_,
+  PRECONDITION(static_cast<int>(annotations_.size()) > activeMolIdx_,
                "no space");
 
-  StringRect *note_rect;
   for (auto atom : mol.atoms()) {
-    if (!atom->hasProp(common_properties::atomNote)) {
-      note_rect = nullptr;
-    } else {
-      string note = atom->getProp<string>(common_properties::atomNote);
-      if (note.empty()) {
-        note_rect = nullptr;
-      } else {
-        note_rect = new StringRect(calcAnnotationPosition(mol, atom));
-        if (note_rect->width_ < 0.0) {
+    std::string note;
+    if (atom->getPropIfPresent(common_properties::atomNote, note)) {
+      if (!note.empty()) {
+        auto note_rect = calcAnnotationPosition(mol, atom);
+        if (note_rect.width_ < 0.0) {
           cerr << "Couldn't find good place for note " << note << " for atom "
                << atom->getIdx() << endl;
-          delete note_rect;
-          note_rect = nullptr;
+        } else {
+          annotations_[activeMolIdx_].push_back(
+              std::make_pair(note, note_rect));
         }
       }
     }
-    atom_notes_[activeMolIdx_].push_back(
-        std::shared_ptr<StringRect>(note_rect));
   }
 }
 
 // ****************************************************************************
 void MolDraw2D::extractBondNotes(const ROMol &mol) {
   PRECONDITION(activeMolIdx_ >= 0, "no mol id");
-  PRECONDITION(static_cast<int>(bond_notes_.size()) > activeMolIdx_,
+  PRECONDITION(static_cast<int>(annotations_.size()) > activeMolIdx_,
                "no space");
 
-  StringRect *note_rect;
   for (auto bond : mol.bonds()) {
-    if (!bond->hasProp(common_properties::bondNote)) {
-      note_rect = nullptr;
-    } else {
-      string note = bond->getProp<string>(common_properties::bondNote);
-      if (note.empty()) {
-        note_rect = nullptr;
-      } else {
-        note_rect = new StringRect(calcAnnotationPosition(mol, bond));
-        if (note_rect->width_ < 0.0) {
+    std::string note;
+    if (bond->getPropIfPresent(common_properties::bondNote, note)) {
+      if (!note.empty()) {
+        auto note_rect = calcAnnotationPosition(mol, bond);
+        if (note_rect.width_ < 0.0) {
           cerr << "Couldn't find good place for note " << note << " for bond "
                << bond->getIdx() << endl;
-          delete note_rect;
-          note_rect = nullptr;
+        } else {
+          annotations_[activeMolIdx_].push_back(
+              std::make_pair(note, note_rect));
         }
       }
     }
-    bond_notes_[activeMolIdx_].push_back(
-        std::shared_ptr<StringRect>(note_rect));
   }
 }
 
@@ -2331,7 +2306,7 @@ void MolDraw2D::drawAtomLabel(int atom_num, const DrawColour &draw_colour) {
 
 // ****************************************************************************
 void MolDraw2D::drawAnnotation(const string &note,
-                               const std::shared_ptr<StringRect> &note_rect) {
+                               const StringRect &note_rect) {
   double full_font_scale = text_drawer_->fontScale();
   // turn off minFontSize for the annotation, as we do want it to be smaller
   // than the letters, even if that makes it tiny.  The annotation positions
@@ -2760,15 +2735,8 @@ bool MolDraw2D::doesNoteClashAtomLabels(
 bool MolDraw2D::doesNoteClashOtherNotes(
     const StringRect &note_rect,
     const vector<std::shared_ptr<StringRect>> &rects) const {
-  for (auto const &rect : atom_notes_[activeMolIdx_]) {
-    if (rect && &note_rect != rect.get() &&
-        text_drawer_->doesRectIntersect(rects, note_rect.trans_, *rect)) {
-      return true;
-    }
-  }
-  for (auto const &rect : bond_notes_[activeMolIdx_]) {
-    if (rect && &note_rect != rect.get() &&
-        text_drawer_->doesRectIntersect(rects, note_rect.trans_, *rect)) {
+  for (auto const &rect : annotations_[activeMolIdx_]) {
+    if (text_drawer_->doesRectIntersect(rects, note_rect.trans_, rect.second)) {
       return true;
     }
   }
@@ -3328,20 +3296,19 @@ void MolDraw2D::adjustScaleForRadicals(const ROMol &mol) {
 
 // ****************************************************************************
 void MolDraw2D::adjustScaleForAnnotation(
-    const vector<std::shared_ptr<StringRect>> &notes) {
+    const vector<std::pair<std::string, StringRect>> &notes) {
   double x_max(x_min_ + x_range_), y_max(y_min_ + y_range_);
 
-  for (auto const &note_rect : notes) {
-    if (note_rect) {
-      double this_x_max = note_rect->trans_.x + note_rect->width_ / 2.0;
-      double this_x_min = note_rect->trans_.x - note_rect->width_ / 2.0;
-      double this_y_max = note_rect->trans_.y + note_rect->height_ / 2.0;
-      double this_y_min = note_rect->trans_.y - note_rect->height_ / 2.0;
-      x_max = std::max(x_max, this_x_max);
-      x_min_ = std::min(x_min_, this_x_min);
-      y_max = std::max(y_max, this_y_max);
-      y_min_ = std::min(y_min_, this_y_min);
-    }
+  for (auto const &pr : notes) {
+    const auto &note_rect = pr.second;
+    double this_x_max = note_rect.trans_.x + note_rect.width_ / 2.0;
+    double this_x_min = note_rect.trans_.x - note_rect.width_ / 2.0;
+    double this_y_max = note_rect.trans_.y + note_rect.height_ / 2.0;
+    double this_y_min = note_rect.trans_.y - note_rect.height_ / 2.0;
+    x_max = std::max(x_max, this_x_max);
+    x_min_ = std::min(x_min_, this_x_min);
+    y_max = std::max(y_max, this_y_max);
+    y_min_ = std::min(y_min_, this_y_min);
   }
   x_range_ = max(x_max - x_min_, x_range_);
   y_range_ = max(y_max - y_min_, y_range_);

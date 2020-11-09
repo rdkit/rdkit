@@ -627,16 +627,14 @@ class RDKIT_MOLDRAW2D_EXPORT MolDraw2D {
   std::vector<std::vector<Point2D>> at_cds_;  // from mol
   std::vector<std::vector<int>> atomic_nums_;
   std::vector<std::vector<std::pair<std::string, OrientType>>> atom_syms_;
-  // by the time atom_notes_ and bonds_notes_ are drawn, we're only ever
-  // using the trans_ member of the StringRect, but it is convenient to
-  // keep the whole thing rather than just a StringPos for the position
-  // for calculating the scale of the drawing.  Went a long way down
-  // the rabbit hole before realising this, hence this note.
-  std::vector<std::vector<std::shared_ptr<StringRect>>> atom_notes_;
-  std::vector<std::vector<std::shared_ptr<StringRect>>> bond_notes_;
+  // by the time annotations_ are drawn, we're only ever using the trans_ member
+  // of the StringRect, but it is convenient to keep the whole thing rather than
+  // just a StringPos for the position for calculating the scale of the drawing.
+  // Went a long way down the rabbit hole before realising this, hence this
+  // note.
+  std::vector<std::vector<std::pair<std::string, StringRect>>> annotations_;
   std::vector<std::vector<std::pair<std::shared_ptr<StringRect>, OrientType>>>
       radicals_;
-
   Point2D bbox_[2];
 
   // return a DrawColour based on the contents of highlight_atoms or
@@ -796,7 +794,7 @@ class RDKIT_MOLDRAW2D_EXPORT MolDraw2D {
                                 const std::map<int, double> *highlight_radii);
   void adjustScaleForRadicals(const ROMol &mol);
   void adjustScaleForAnnotation(
-      const std::vector<std::shared_ptr<StringRect>> &notes);
+      const std::vector<std::pair<std::string, StringRect>> &notes);
 
  private:
   virtual void updateMetadata(const ROMol &mol, int confId) {
@@ -832,7 +830,7 @@ class RDKIT_MOLDRAW2D_EXPORT MolDraw2D {
           nullptr);
   virtual void drawAtomLabel(int atom_num, const DrawColour &draw_colour);
   virtual void drawAnnotation(const std::string &note,
-                              const std::shared_ptr<StringRect> &note_rect);
+                              const StringRect &note_rect);
 
   // calculate normalised perpendicular to vector between two coords
   Point2D calcPerpendicular(const Point2D &cds1, const Point2D &cds2) const;

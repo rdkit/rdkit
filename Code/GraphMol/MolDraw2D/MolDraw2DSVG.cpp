@@ -184,8 +184,8 @@ void MolDraw2DSVG::drawAtomLabel(int atom_num, const DrawColour &draw_colour) {
 }
 
 // ****************************************************************************
-void MolDraw2DSVG::drawAnnotation(
-    const std::string &note, const std::shared_ptr<StringRect> &note_rect) {
+void MolDraw2DSVG::drawAnnotation(const std::string &note,
+                                  const StringRect &note_rect) {
   std::string o_class = d_activeClass;
   if (!d_activeClass.empty()) {
     d_activeClass += " ";
