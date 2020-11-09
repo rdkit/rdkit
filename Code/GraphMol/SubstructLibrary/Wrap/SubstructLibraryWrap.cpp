@@ -311,16 +311,17 @@ struct substructlibrary_wrapper {
         .def(python::init<boost::shared_ptr<MolHolderBase>,
                           boost::shared_ptr<FPHolderBase>>())
         .def(python::init<std::string>())
-      
+
         .def("GetMolHolder", &GetMolHolder)
-        .def("GetFpHolder", &GetFpHolder)      
-      
+        .def("GetFpHolder", &GetFpHolder)
+
         .def("AddMol", &SubstructLibrary::addMol, (python::arg("mol")),
              "Adds a molecule to the substruct library")
 
-        .def("GetMatches", (std::vector<unsigned int>(SubstructLibrary::*)(
-			       const ROMol &, bool, bool, bool, int, int)) &
-                               SubstructLibrary::getMatches,
+        .def("GetMatches",
+             (std::vector<unsigned int>(SubstructLibrary::*)(
+                 const ROMol &, bool, bool, bool, int, int)) &
+                 SubstructLibrary::getMatches,
              (python::arg("query"), python::arg("recursionPossible") = true,
               python::arg("useChirality") = true,
               python::arg("useQueryQueryMatches") = false,
@@ -331,10 +332,11 @@ struct substructlibrary_wrapper {
              "  - numThreads: number of threads to use, -1 means all threads\n"
              "  - maxResults: maximum number of results to return")
 
-        .def("GetMatches", (std::vector<unsigned int>(SubstructLibrary::*)(
-                               const ROMol &, unsigned int, unsigned int, bool,
-                               bool, bool, int, int)) &
-                               SubstructLibrary::getMatches,
+        .def("GetMatches",
+             (std::vector<unsigned int>(SubstructLibrary::*)(
+                 const ROMol &, unsigned int, unsigned int, bool, bool, bool,
+                 int, int)) &
+                 SubstructLibrary::getMatches,
              (python::arg("query"), python::arg("startIdx"),
               python::arg("endIdx"), python::arg("recursionPossible") = true,
               python::arg("useChirality") = true,
@@ -348,22 +350,24 @@ struct substructlibrary_wrapper {
              "  - numThreads: number of threads to use, -1 means all threads\n"
              "  - maxResults: maximum number of results to return")
 
-        .def("CountMatches", (unsigned int (SubstructLibrary::*)(
-                                 const ROMol &, bool, bool, bool, int)) &
-                                 SubstructLibrary::countMatches,
+        .def("CountMatches",
+             (unsigned int (SubstructLibrary::*)(const ROMol &, bool, bool,
+                                                 bool, int)) &
+                 SubstructLibrary::countMatches,
              (python::arg("query"), python::arg("recursionPossible") = true,
               python::arg("useChirality") = true,
               python::arg("useQueryQueryMatches") = false,
-              python::arg("numThreads") = -1, python::arg("maxResults") = 1000),
+              python::arg("numThreads") = -1),
              "Get the matches for the query.\n\n"
              " Arguments:\n"
              "  - query:      substructure query\n"
              "  - numThreads: number of threads to use, -1 means all threads\n")
 
-        .def("CountMatches", (unsigned int (SubstructLibrary::*)(
-                                 const ROMol &, unsigned int, unsigned int,
-                                 bool, bool, bool, int)) &
-                                 SubstructLibrary::countMatches,
+        .def("CountMatches",
+             (unsigned int (SubstructLibrary::*)(const ROMol &, unsigned int,
+                                                 unsigned int, bool, bool, bool,
+                                                 int)) &
+                 SubstructLibrary::countMatches,
              (python::arg("query"), python::arg("startIdx"),
               python::arg("endIdx"), python::arg("recursionPossible") = true,
               python::arg("useChirality") = true,
@@ -376,17 +380,18 @@ struct substructlibrary_wrapper {
              "  - endIdx:     index (non-inclusize) to search to\n"
              "  - numThreads: number of threads to use, -1 means all threads\n")
 
-        .def("HasMatch", (bool (SubstructLibrary::*)(const ROMol &, bool, bool,
-                                                     bool, int)) &
-                             SubstructLibrary::hasMatch,
-             (python::arg("query"), python::arg("recursionPossible") = true,
-              python::arg("useChirality") = true,
-              python::arg("useQueryQueryMatches") = false,
-              python::arg("numThreads") = -1),
-             "Get the matches for the query.\n\n"
-             " Arguments:\n"
-             "  - query:      substructure query\n"
-             "  - numThreads: number of threads to use, -1 means all threads\n")
+        .def(
+            "HasMatch",
+            (bool (SubstructLibrary::*)(const ROMol &, bool, bool, bool, int)) &
+                SubstructLibrary::hasMatch,
+            (python::arg("query"), python::arg("recursionPossible") = true,
+             python::arg("useChirality") = true,
+             python::arg("useQueryQueryMatches") = false,
+             python::arg("numThreads") = -1),
+            "Get the matches for the query.\n\n"
+            " Arguments:\n"
+            "  - query:      substructure query\n"
+            "  - numThreads: number of threads to use, -1 means all threads\n")
 
         .def("HasMatch",
              (bool (SubstructLibrary::*)(const ROMol &, unsigned int,
@@ -412,44 +417,43 @@ struct substructlibrary_wrapper {
 
         .def("__len__", &SubstructLibrary::size)
 
-        .def("ToStream", &toStream,
-	     python::arg("stream"),
-	     "Serialize a substructure library to a python text stream.\n"
-	     "The stream can be a file in text mode or an io.StringIO type object\n\n"
+        .def("ToStream", &toStream, python::arg("stream"),
+             "Serialize a substructure library to a python text stream.\n"
+             "The stream can be a file in text mode or an io.StringIO type "
+             "object\n\n"
              "  ARGUMENTS:\n"
-	     "    - stream: a text or text stream like object\n\n"
-	     "  >>> from rdkit.Chem import rdSubstructLibrary\n"
-	     "  >>> import io\n"
-	     "  >>> lib = rdSubstructLibrary.SubstructLibrary()\n"
-	     "  >>> stream = io.StringIO()\n"
-	     "  >>> lib.ToStream(stream)\n\n"
-	     "   or\n"
-	     "  >>> with open('rdkit.sslib', 'w') as stream:\n"
-	     "  ...  lib.ToStream(stream)\n"
-	     )
+             "    - stream: a text or text stream like object\n\n"
+             "  >>> from rdkit.Chem import rdSubstructLibrary\n"
+             "  >>> import io\n"
+             "  >>> lib = rdSubstructLibrary.SubstructLibrary()\n"
+             "  >>> stream = io.StringIO()\n"
+             "  >>> lib.ToStream(stream)\n\n"
+             "   or\n"
+             "  >>> with open('rdkit.sslib', 'w') as stream:\n"
+             "  ...  lib.ToStream(stream)\n")
 
-        .def("InitFromStream", &initFromStream,
-	   python::arg("stream"),
-	   "Deserialize a substructure library from a python bytes stream.\n"
-	   "Python doesn't allow seeking operations inside a unicode or string stream anymore\n"
-	   "so this requires opening a file in binary mode or using an io.ByteIO type object\n\n"
-	   "  ARGUMENTS:\n"
-	   "    - stream: a binary stream like object\n\n"
-	   "  SubstructLibrary.Serialize already writes a binary stream\n\n"
-	   "  >>> from rdkit.Chem import rdSubstructLibrary\n"
-	   "  >>> import io\n"
-	   "  >>> lib = rdSubstructLibrary.SubstructLibrary()\n"
-	   "  >>> stream = io.BytesIO( lib.Serialize() )\n"
-	   "  >>> lib.InitFromStream(stream)\n\n"
-           "   remember to write to text and read from a binary stream\n"
-	   "  >>> with open('rdkit.sslib', 'w') as f: lib.ToStream(f)\n"
-	   "  >>> with open('rdkit.sslib', 'rb') as f: lib.InitFromStream(f)\n"
-	)
-      
+        .def("InitFromStream", &initFromStream, python::arg("stream"),
+             "Deserialize a substructure library from a python bytes stream.\n"
+             "Python doesn't allow seeking operations inside a unicode or "
+             "string stream anymore\n"
+             "so this requires opening a file in binary mode or using an "
+             "io.ByteIO type object\n\n"
+             "  ARGUMENTS:\n"
+             "    - stream: a binary stream like object\n\n"
+             "  SubstructLibrary.Serialize already writes a binary stream\n\n"
+             "  >>> from rdkit.Chem import rdSubstructLibrary\n"
+             "  >>> import io\n"
+             "  >>> lib = rdSubstructLibrary.SubstructLibrary()\n"
+             "  >>> stream = io.BytesIO( lib.Serialize() )\n"
+             "  >>> lib.InitFromStream(stream)\n\n"
+             "   remember to write to text and read from a binary stream\n"
+             "  >>> with open('rdkit.sslib', 'w') as f: lib.ToStream(f)\n"
+             "  >>> with open('rdkit.sslib', 'rb') as f: "
+             "lib.InitFromStream(f)\n")
+
         .def("Serialize", &SubstructLibrary_Serialize)
         // enable pickle support
-        .def_pickle(substructlibrary_pickle_suite())
-        ;
+        .def_pickle(substructlibrary_pickle_suite());
 
     python::def("SubstructLibraryCanSerialize", SubstructLibraryCanSerialize,
                 "Returns True if the SubstructLibrary is serializable "
