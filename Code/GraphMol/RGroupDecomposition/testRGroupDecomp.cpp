@@ -41,6 +41,8 @@
 #include <GraphMol/FileParsers/MolSupplier.h>
 #include <RDGeneral/Exceptions.h>
 #include <boost/tokenizer.hpp>
+#include <regex>
+
 typedef boost::tokenizer<boost::char_separator<char>> tokenizer;
 
 using namespace RDKit;
@@ -1596,6 +1598,61 @@ $$$$
                      expectedItemsAutodetect);
 }
 
+void testCoreWithRGroupAdjQuery() {
+  BOOST_LOG(rdInfoLog)
+      << "********************************************************\n";
+  BOOST_LOG(rdInfoLog) << "test core with query atom adjacent to R-group"
+                       << std::endl;
+  std::string sdcore_query = R"CTAB(
+     RDKit          2D
+
+ 10 10  0  0  0  0  0  0  0  0999 V2000
+   -3.6689   -0.8582    0.0000 R#  0  0  0  0  0  1  0  0  0  0  0  0
+   -2.2421   -1.3211    0.0000 N   0  0  0  0  0  0  0  0  0  0  0  0
+   -1.1279   -0.3169    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -1.4403    1.1502    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -0.3261    2.1543    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    1.1007    1.6914    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    1.4132    0.2243    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    0.2989   -0.7798    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    2.8400   -0.2386    0.0000 Q   0  0  0  0  0  0  0  0  0  0  0  0
+    3.1525   -1.7057    0.0000 R#  0  0  0  0  0  1  0  0  0  0  0  0
+  1  2  1  0
+  2  3  1  0
+  3  4  2  0
+  4  5  1  0
+  5  6  2  0
+  6  7  1  0
+  7  8  2  0
+  7  9  1  0
+  9 10  1  0
+  8  3  1  0
+M  RGP  2   1   1  10   2
+M  END
+$$$$
+)CTAB";
+  std::string sdcore_noquery =
+      std::regex_replace(sdcore_query, std::regex("Q  "), "O  ");
+  auto mol = "CNc1cccc(c1)OC1CCC1"_smiles;
+  for (const auto &sdcore : {sdcore_query, sdcore_noquery}) {
+    SDMolSupplier sdsup;
+    sdsup.setData(sdcore);
+    ROMOL_SPTR core(sdsup.next());
+    RGroupDecompositionParameters params;
+    params.removeHydrogensPostMatch = true;
+    params.onlyMatchAtRGroups = true;
+    RGroupDecomposition decomp(*core, params);
+    TEST_ASSERT(decomp.add(*mol) == 0);
+    TEST_ASSERT(decomp.process());
+    RGroupColumns groups = decomp.getRGroupsAsColumns();
+    TEST_ASSERT(groups.size() == 3);
+    TEST_ASSERT(groups.find("R1") != groups.end());
+    TEST_ASSERT(groups.find("R2") != groups.end());
+    TEST_ASSERT(MolToSmiles(*groups.at("R1")[0]) == "C[*:1]");
+    TEST_ASSERT(MolToSmiles(*groups.at("R2")[0]) == "C1CC([*:2])C1");
+  }
+}
+
 int main() {
   RDLog::InitLogs();
 
@@ -1623,6 +1680,7 @@ int main() {
   testSymmetryPerformance();
   testScorePermutations();
   testMultiCorePreLabelled();
+  testCoreWithRGroupAdjQuery();
   BOOST_LOG(rdInfoLog)
       << "********************************************************\n";
   return 0;

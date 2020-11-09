@@ -173,15 +173,15 @@ int RGroupDecomposition::add(const ROMol &inmol) {
 
   std::vector<RGroupMatch> potentialMatches;
 
+  std::unique_ptr<ROMol> tMol;
   for (auto &tmatche : tmatches) {
-    boost::scoped_ptr<ROMol> tMol;
-    {
-      const bool replaceDummies = false;
-      const bool labelByIndex = true;
-      const bool requireDummyMatch = false;
-      tMol.reset(replaceCore(mol, *rcore->core, tmatche, replaceDummies,
-                             labelByIndex, requireDummyMatch));
-    }
+    const bool replaceDummies = false;
+    const bool labelByIndex = true;
+    const bool requireDummyMatch = false;
+    std::unique_ptr<ROMol> coreCopy =
+        rcore->replaceCoreDummiesWithMolMatches(mol, tmatche);
+    tMol.reset(replaceCore(mol, *coreCopy, tmatche, replaceDummies,
+                           labelByIndex, requireDummyMatch));
 
     if (tMol) {
       R_DECOMP match;
