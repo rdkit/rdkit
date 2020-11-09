@@ -5917,11 +5917,14 @@ M  END
     self.assertEqual(m_noh.GetNumAtoms(), m.GetNumAtoms() - 2)
     self.assertTrue(m_noh.GetAtomWithIdx(2).HasProp("_isotopicHs"))
     self.assertEqual(tuple(map(int,
-        m_noh.GetAtomWithIdx(2).GetProp("_isotopicHs").split())), (2,2))
+                               m_noh.GetAtomWithIdx(2).GetProp("_isotopicHs").split())), (2, 2))
     m_h = Chem.AddHs(m_noh)
     self.assertFalse(m_h.GetAtomWithIdx(2).HasProp("_isotopicHs"))
-    self.assertEqual(sum([1 for nbr in m_h.GetAtomWithIdx(2).GetNeighbors()
-                     if (nbr.GetAtomicNum() == 1 and nbr.GetIsotope())]), 2)
+    self.assertEqual(
+      sum([
+        1 for nbr in m_h.GetAtomWithIdx(2).GetNeighbors()
+        if (nbr.GetAtomicNum() == 1 and nbr.GetIsotope())
+      ]), 2)
 
     m = Chem.MolFromSmiles('*[H]', smips)
     ps = Chem.RemoveHsParameters()
@@ -6166,36 +6169,36 @@ M  END
     with open(fileN, 'rb') as inf:
       d = inf.read()
     mol = Chem.MolFromPNGString(d)
-    nd = Chem.MolMetadataToPNGString(mol,d)
-    vals = {'foo':'1','bar':'2'}
+    nd = Chem.MolMetadataToPNGString(mol, d)
+    vals = {'foo': '1', 'bar': '2'}
     nd = Chem.AddMetadataToPNGString(vals, nd)
     nvals = Chem.MetadataFromPNGString(nd)
     self.assertTrue('foo' in nvals)
-    self.assertEqual(nvals['foo'],b'1')
+    self.assertEqual(nvals['foo'], b'1')
     self.assertTrue('bar' in nvals)
-    self.assertEqual(nvals['bar'],b'2')
+    self.assertEqual(nvals['bar'], b'2')
 
     nd = Chem.AddMetadataToPNGFile(vals, fileN)
     nvals = Chem.MetadataFromPNGString(nd)
     self.assertTrue('foo' in nvals)
-    self.assertEqual(nvals['foo'],b'1')
+    self.assertEqual(nvals['foo'], b'1')
     self.assertTrue('bar' in nvals)
-    self.assertEqual(nvals['bar'],b'2')
+    self.assertEqual(nvals['bar'], b'2')
 
-    vals = {'foo':1,'bar':'2'}
+    vals = {'foo': 1, 'bar': '2'}
     with self.assertRaises(TypeError):
-      nd = Chem.AddMetadataToPNGString(vals,d)
+      nd = Chem.AddMetadataToPNGString(vals, d)
 
   def test_github3403(self):
     core1 = "[$(C-!@[a])](=O)(Cl)"
     sma = Chem.MolFromSmarts(core1)
-    
+
     m = Chem.MolFromSmiles("c1ccccc1C(=O)Cl")
     self.assertFalse(m.HasSubstructMatch(sma, recursionPossible=False))
-    
+
     m = Chem.MolFromSmiles("c1ccccc1C(=O)Cl")
     self.assertTrue(m.HasSubstructMatch(sma))
-    
+
     m = Chem.MolFromSmiles("c1ccccc1C(=O)Cl")
     self.assertFalse(m.HasSubstructMatch(sma, recursionPossible=False))
 
@@ -6208,23 +6211,43 @@ M  END
     self.assertEqual(len(mols_list), len(mols_list_compr))
 
   def test_github3492(self):
+
     def read_smile(s):
-        m = Chem.MolFromSmiles(s)
-        rdkit.Chem.rdDepictor.Compute2DCoords(m)
-        return m
+      m = Chem.MolFromSmiles(s)
+      rdkit.Chem.rdDepictor.Compute2DCoords(m)
+      return m
 
     def sq_dist(a, b):
       ab = [a[i] - b[i] for i, _ in enumerate(a)]
       return sum([d * d for d in ab])
 
     self.assertIsNotNone(Chem.MolFromSmiles("OCCN").GetAtoms()[0].GetOwningMol())
-    self.assertEqual([Chem.MolFromSmiles("OCCN").GetAtoms()[i].GetAtomicNum() for i in range(4)], [8, 6, 6, 7])
+    self.assertEqual([Chem.MolFromSmiles("OCCN").GetAtoms()[i].GetAtomicNum() for i in range(4)],
+                     [8, 6, 6, 7])
     self.assertIsNotNone(Chem.MolFromSmiles("O=CCC=N").GetBonds()[0].GetOwningMol())
-    self.assertEqual([Chem.MolFromSmiles("O=CCC=N").GetBonds()[i].GetBondType() for i in range(4)],
-                     [Chem.BondType.DOUBLE, Chem.BondType.SINGLE, Chem.BondType.SINGLE, Chem.BondType.DOUBLE])
+    self.assertEqual(
+      [Chem.MolFromSmiles("O=CCC=N").GetBonds()[i].GetBondType() for i in range(4)],
+      [Chem.BondType.DOUBLE, Chem.BondType.SINGLE, Chem.BondType.SINGLE, Chem.BondType.DOUBLE])
     self.assertIsNotNone(read_smile("CCC").GetConformers()[0].GetOwningMol())
     pos = read_smile("CCC").GetConformers()[0].GetPositions()
     self.assertAlmostEqual(sq_dist(pos[0], pos[1]), sq_dist(pos[1], pos[2]))
+
+  def test_github3553(self):
+    from io import StringIO
+    fileN = os.path.join(RDConfig.RDBaseDir, 'Code', 'GraphMol', 'Wrap', 'test_data',
+                         'github3553.sdf')
+    sdSup = Chem.SDMolSupplier(fileN)
+    for mol in sdSup:
+      pval = mol.GetProp('boiling.point.predicted')
+      sio = StringIO()
+      w = Chem.SDWriter(sio)
+      w.SetKekulize(True)
+      w.SetForceV3000(True)
+      w.write(mol)
+      w.flush()
+      txt = sio.getvalue()
+      self.assertTrue(pval in txt)
+
 
 if __name__ == '__main__':
   if "RDTESTCASE" in os.environ:
