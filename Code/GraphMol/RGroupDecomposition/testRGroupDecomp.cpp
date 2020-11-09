@@ -89,7 +89,7 @@ const char *symdata[5] = {"c1(Cl)ccccc1", "c1c(Cl)cccc1", "c1cccc(Cl)c1",
 void testSymmetryMatching(RGroupScore scoreMethod = Match) {
   BOOST_LOG(rdInfoLog)
       << "********************************************************\n";
-  BOOST_LOG(rdInfoLog) << "test rgroup decomp symmetry matchingi with score method " << scoreMethod << std::endl;
+  BOOST_LOG(rdInfoLog) << "test rgroup decomp symmetry matching with score method " << scoreMethod << std::endl;
 
   RWMol *core = SmilesToMol("c1ccccc1");
   RGroupDecompositionParameters params;
@@ -118,7 +118,7 @@ void testGaSymmetryMatching(RGroupScore scoreMethod) {
   BOOST_LOG(rdInfoLog)
       << "********************************************************\n";
   BOOST_LOG(rdInfoLog)
-      << "test rgroup decomp symmetry matching using GA using scoring method "
+      << "test rgroup decomp symmetry matching using GA with scoring method "
       << scoreMethod << std::endl;
 
   RWMol *core = SmilesToMol("c1ccccc1");
