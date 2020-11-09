@@ -7,6 +7,10 @@
 //  which is included in the file license.txt, found at the root
 //  of the RDKit source tree.
 //
+
+#include <chrono>
+#include <memory>
+
 #include <GraphMol/Fingerprints/MorganFingerprints.h>
 #include <GraphMol/SmilesParse/SmilesWrite.h>
 #include <RDGeneral/test.h>
@@ -15,7 +19,6 @@
 #include <boost/dynamic_bitset.hpp>
 #include <boost/iostreams/device/file.hpp>
 #include <boost/iostreams/filtering_stream.hpp>
-#include <chrono>
 
 #include "MultithreadedSDMolSupplier.h"
 #include "MultithreadedSmilesMolSupplier.h"
@@ -34,7 +37,7 @@ struct PrintThread : public std::stringstream {
   }
 };
 
-void testSmiConcurrent(std::istream* strm, bool takeOwnership,
+void testSmiConcurrent(std::istream *strm, bool takeOwnership,
                        std::string delimiter, int smilesColumn, int nameColumn,
                        bool titleLine, bool sanitize,
                        unsigned int numWriterThreads, size_t sizeInputQueue,
@@ -51,7 +54,7 @@ void testSmiConcurrent(std::istream* strm, bool takeOwnership,
   TEST_ASSERT(!bitVector.any());
 
   while (!sup.atEnd()) {
-    ROMol* mol = sup.next();
+    ROMol *mol = sup.next();
     if (mol) {
       unsigned int id = sup.getLastRecordId();
       bitVector[id - 1] = 1;
@@ -75,7 +78,7 @@ void testSmiConcurrent(std::string path, std::string delimiter,
                        unsigned int expectedResult, bool extras = false) {
   std::string rdbase = getenv("RDBASE");
   std::string fname = rdbase + path;
-  std::istream* strm = new std::ifstream(fname.c_str());
+  std::istream *strm = new std::ifstream(fname.c_str());
   testSmiConcurrent(strm, true, delimiter, smilesColumn, nameColumn, titleLine,
                     sanitize, numWriterThreads, sizeInputQueue, sizeOutputQueue,
                     expectedResult, extras);
@@ -88,7 +91,7 @@ void testSmiOld(std::string path, std::string delimiter, int smilesColumn,
   SmilesMolSupplier sup(path, delimiter, smilesColumn, nameColumn, titleLine,
                         sanitize);
   while (!sup.atEnd()) {
-    ROMol* mol = sup.next();
+    ROMol *mol = sup.next();
     if (mol) {
       if (extras) {
         std::unique_ptr<ExplicitBitVect> fp(
@@ -110,7 +113,7 @@ void testSmiProperties() {
   SmilesMolSupplier sup(fname, ",", 1, 0, true);
   MultithreadedSmilesMolSupplier multiSup(fname, ",", 1, 0, true);
   while (!multiSup.atEnd()) {
-    ROMol* mol = multiSup.next();
+    std::unique_ptr<ROMol> mol{multiSup.next()};
     if (mol != nullptr) {
       mol->getProp(common_properties::_Name, tempStr);
       nameVector.push_back(tempStr);
@@ -120,7 +123,7 @@ void testSmiProperties() {
   }
 
   while (!sup.atEnd()) {
-    ROMol* mol = sup.next();
+    std::unique_ptr<ROMol> mol{sup.next()};
     if (mol != nullptr) {
       mol->getProp(common_properties::_Name, tempStr);
       TEST_ASSERT(std::find(nameVector.begin(), nameVector.end(), tempStr) !=
@@ -153,7 +156,7 @@ void testSmiCorrectness() {
 #ifdef RDK_USE_BOOST_IOSTREAMS
 
   path = rdbase + "/Regress/Data/znp.50k.smi.gz";
-  std::istream* strm = new gzstream(path);
+  std::istream *strm = new gzstream(path);
   expectedResult = 50000;
   testSmiConcurrent(strm, true, " \t", 0, 1, false, false, 3, 1000, 100,
                     expectedResult);
@@ -166,7 +169,7 @@ void testSmiCorrectness() {
   testSmiProperties();
 }
 
-void testSDConcurrent(std::istream* strm, bool takeOwnership, bool sanitize,
+void testSDConcurrent(std::istream *strm, bool takeOwnership, bool sanitize,
                       bool removeHs, bool strictParsing,
                       unsigned int numWriterThreads, size_t sizeInputQueue,
                       size_t sizeOutputQueue, unsigned int expectedResult,
@@ -181,7 +184,7 @@ void testSDConcurrent(std::istream* strm, bool takeOwnership, bool sanitize,
   // initially no bit is set in the bitVector, sanity check
   TEST_ASSERT(!bitVector.any());
   while (!sup.atEnd()) {
-    ROMol* mol = sup.next();
+    ROMol *mol = sup.next();
     if (mol) {
       unsigned int id = sup.getLastRecordId();
       bitVector[id - 1] = 1;
@@ -204,7 +207,7 @@ void testSDConcurrent(std::string path, bool sanitize, bool removeHs,
                       unsigned int expectedResult, bool extras = false) {
   std::string rdbase = getenv("RDBASE");
   std::string fname = rdbase + path;
-  std::istream* strm = new std::ifstream(fname.c_str());
+  std::istream *strm = new std::ifstream(fname.c_str());
   testSDConcurrent(strm, true, sanitize, removeHs, strictParsing,
                    numWriterThreads, sizeInputQueue, sizeOutputQueue,
                    expectedResult, extras);
@@ -220,7 +223,7 @@ void testSDProperties() {
   MultithreadedSDMolSupplier multiSup(fname, false);
 
   while (!multiSup.atEnd()) {
-    ROMol* mol = multiSup.next();
+    std::unique_ptr<ROMol> mol{multiSup.next()};
     if (mol != nullptr) {
       TEST_ASSERT(mol->hasProp(common_properties::_Name));
       mol->getProp(common_properties::_Name, tempStr);
@@ -232,7 +235,7 @@ void testSDProperties() {
   }
 
   while (!sup.atEnd()) {
-    ROMol* mol = sup.next();
+    std::unique_ptr<ROMol> mol{sup.next()};
     if (mol != nullptr) {
       mol->getProp(common_properties::_Name, tempStr);
       TEST_ASSERT(std::find(nameVector.begin(), nameVector.end(), tempStr) !=
@@ -247,7 +250,7 @@ void testSDOld(std::string path, bool sanitize, bool removeHs,
   unsigned int numMols = 0;
   SDMolSupplier sup(path, sanitize, removeHs, strictParsing);
   while (!sup.atEnd()) {
-    ROMol* mol = sup.next();
+    ROMol *mol = sup.next();
     if (mol) {
       ++numMols;
       if (extras) {
@@ -290,7 +293,7 @@ void testSDCorrectness() {
 #ifdef RDK_USE_BOOST_IOSTREAMS
 
   path = rdbase + "/Regress/Data/mols.1000.sdf.gz";
-  std::istream* strm = new gzstream(path);
+  std::istream *strm = new gzstream(path);
   expectedResult = 1000;
   testSDConcurrent(strm, true, false, true, true, 2, 5, 5, expectedResult);
 
@@ -337,7 +340,7 @@ void testPerformance() {
               << " (milliseconds) \n";
 
     for (unsigned int i = maxThreadCount; i >= 1; --i) {
-      std::istream* strm = new gzstream(rdbase + gzpath);
+      std::istream *strm = new gzstream(rdbase + gzpath);
       start = high_resolution_clock::now();
       bool takeOwnership = true;
       testSmiConcurrent(strm, takeOwnership, delim, smilesColumn, nameColumn,
@@ -374,7 +377,7 @@ void testPerformance() {
               << " (milliseconds) \n";
 
     for (unsigned int i = maxThreadCount; i >= 1; --i) {
-      std::istream* strm = new gzstream(rdbase + gzpath);
+      std::istream *strm = new gzstream(rdbase + gzpath);
       bool takeOwnership = true;
       start = high_resolution_clock::now();
       testSDConcurrent(strm, takeOwnership, sanitize, removeHs, strictParsing,
