@@ -30,6 +30,8 @@ struct RGroupDecompData {
   std::vector<std::vector<RGroupMatch>> matches;
   std::set<int> labels;
   std::vector<size_t> permutation;
+  unsigned int pruneLength = 0U;
+  std::map<int, std::shared_ptr<VarianceDataForLabel>> prunedVarianceData;
   std::map<int, std::vector<int>> userLabels;
 
   std::vector<int> processedRlabels;
@@ -82,6 +84,41 @@ struct RGroupDecompData {
     }
   }
 
+  double scoreFromPrunedData(const std::vector<size_t> &permutation,
+                             bool reset = true) {
+    assert(static_cast<RGroupScore>(params.scoreMethod) == FingerprintVariance);
+
+    assert(permutation.size() >= pruneLength);
+    if (permutation.size() < pruneLength * 1.5) {
+      for (unsigned int pos = pruneLength; pos < permutation.size(); pos++) {
+        addVarianceData(pos, permutation[pos], matches, labels,
+                        prunedVarianceData);
+      }
+      double score = fingerprintVarianceGroupScore(prunedVarianceData);
+      std::map<int, std::shared_ptr<VarianceDataForLabel>> vd;
+      // assert(score == fingerprintVarianceScore(permutation, matches,
+      // labels));
+      if (reset) {
+        for (unsigned int pos = pruneLength; pos < permutation.size(); pos++) {
+          removeVarianceData(pos, permutation[pos], matches, labels,
+                             prunedVarianceData);
+        }
+      } else {
+        pruneLength = permutation.size();
+      }
+      return score;
+    } else {
+      if (reset) {
+        return fingerprintVarianceScore(permutation, matches, labels);
+      } else {
+        prunedVarianceData.clear();
+        pruneLength = permutation.size();
+        return fingerprintVarianceScore(permutation, matches, labels,
+                                        &prunedVarianceData);
+      }
+    }
+  }
+
   void prune() {  // prune all but the current "best" permutation of matches
     for (size_t mol_idx = 0; mol_idx < permutation.size(); ++mol_idx) {
       std::vector<RGroupMatch> keepVector;
@@ -89,6 +126,10 @@ struct RGroupDecompData {
       matches[mol_idx] = keepVector;
     }
     permutation = std::vector<size_t>(matches.size(), 0);
+    if (params.scoreMethod == FingerprintVariance &&
+        params.matchingStrategy != GA) {
+      scoreFromPrunedData(permutation, false);
+    }
   }
 
   // Return the RGroups with the current "best" permutation
@@ -407,14 +448,15 @@ struct RGroupDecompData {
                    *labelsToVarianceData = nullptr) const {
     RGroupScore scoreMethod = static_cast<RGroupScore>(params.scoreMethod);
     switch (scoreMethod) {
-      case Linker:
+      case Match:
         return linkerScore(permutation, matches, labels);
         break;
       case FingerprintDistance:
         return fingerprintDistanceScore(permutation, matches, labels);
         break;
       case FingerprintVariance:
-        return fingerprintVarianceScore(permutation, matches, labels, labelsToVarianceData);
+        return fingerprintVarianceScore(permutation, matches, labels,
+                                        labelsToVarianceData);
         break;
       default:;
     }
@@ -471,7 +513,9 @@ struct RGroupDecompData {
         std::cerr << "**************************************************"
                   << std::endl;
 #endif
-        double newscore = score(iterator.permutation);
+        double newscore = params.scoreMethod == FingerprintVariance
+                              ? scoreFromPrunedData(iterator.permutation)
+                              : score(iterator.permutation);
 
         if (fabs(newscore - best_score) <
             1e-6) {  // heuristic to overcome floating point comparison issues
@@ -490,7 +534,7 @@ struct RGroupDecompData {
       }
 
       std::cerr << " Exhaustive or GreedyChunks process, best score "
-                << best_score << std::endl;
+                << best_score << " permutation size " << best_permutation.size() << std::endl;
     }
 
     if (ties.size() > 1) {

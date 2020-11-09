@@ -86,13 +86,15 @@ void DUMP_RGROUP(RGroupRows::const_iterator &it, std::string &result) {
 const char *symdata[5] = {"c1(Cl)ccccc1", "c1c(Cl)cccc1", "c1cccc(Cl)c1",
                           "c1cc(Cl)ccc1", "c1ccc(Cl)cc1"};
 
-void testSymmetryMatching() {
+void testSymmetryMatching(RGroupScore scoreMethod = Match) {
   BOOST_LOG(rdInfoLog)
       << "********************************************************\n";
-  BOOST_LOG(rdInfoLog) << "test rgroup decomp symmetry matching" << std::endl;
+  BOOST_LOG(rdInfoLog) << "test rgroup decomp symmetry matchingi with score method " << scoreMethod << std::endl;
 
   RWMol *core = SmilesToMol("c1ccccc1");
-  RGroupDecomposition decomp(*core);
+  RGroupDecompositionParameters params;
+  params.scoreMethod = scoreMethod;
+  RGroupDecomposition decomp(*core, params);
   for (int i = 0; i < 5; ++i) {
     ROMol *mol = SmilesToMol(symdata[i]);
     int res = decomp.add(*mol);
@@ -1692,8 +1694,9 @@ int main() {
   BOOST_LOG(rdInfoLog) << "Testing R-Group Decomposition \n";
 
 #if 1
+  testSymmetryMatching(FingerprintVariance);
   testGaSymmetryMatching(FingerprintVariance);
-  testGaSymmetryMatching(Linker);
+  testGaSymmetryMatching(Match);
   testGaSymmetryMatching(FingerprintDistance);
   testSymmetryMatching();
   testRGroupOnlyMatching();

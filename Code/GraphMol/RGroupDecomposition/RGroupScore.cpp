@@ -9,7 +9,6 @@
 //
 
 #include "RGroupScore.h"
-#include "GraphMol/Fingerprints/MorganFingerprints.h"
 #include <vector>
 #include <map>
 

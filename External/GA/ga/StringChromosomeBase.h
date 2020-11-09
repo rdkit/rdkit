@@ -51,7 +51,7 @@ class StringChromosomeBase {
   void initialize();
   bool equals(const StringChromosomeBase &other) const;
   virtual void copyGene(const StringChromosomeBase &other);
-  void mutate();
+  void mutate(double pMutate = -1);
   void twoPointCrossover(const StringChromosomeBase &parent2,
                          StringChromosomeBase &child1,
                          StringChromosomeBase &child2) const;
@@ -67,8 +67,7 @@ class StringChromosomeBase {
   std::string geneInfo() const;
   const T getValue(int pos) const;
   T *const getString() const;
-  int getLength() const {return length;}
-
+  int getLength() const { return length; }
 };
 
 /**
@@ -122,8 +121,8 @@ void StringChromosomeBase<T, ChromosomePolicy>::copyGene(
  * Randomly mutates at least one position in the string
  */
 template <typename T, typename ChromosomePolicy>
-void StringChromosomeBase<T, ChromosomePolicy>::mutate() {
-  double pMutate = 1.0 / (length);
+void StringChromosomeBase<T, ChromosomePolicy>::mutate(double pMutate) {
+  if (pMutate < 0.0) pMutate = 1.0 / (length);
   bool mutated = false;
 
   T *ptr = string.get();
@@ -165,10 +164,10 @@ void StringChromosomeBase<T, ChromosomePolicy>::twoPointCrossover(
   bool switchFlag = false;
   if (chromosomePolicy.isAllowSwitch()) switchFlag = rng.randomBoolean();
 
-  T *c1 = switchFlag ? child2.string : child1.string;
-  T *c2 = switchFlag ? child1.string : child2.string;
-  T *p1 = string;
-  T *p2 = parent2.string;
+  T *c1 = switchFlag ? child2.string.get() : child1.string.get();
+  T *c2 = switchFlag ? child1.string.get() : child2.string.get();
+  T *p1 = string.get();
+  T *p2 = parent2.string.get();
 
   // create children before 1st cross point
   int pos = 0;
