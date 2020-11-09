@@ -3,32 +3,39 @@
 //
 
 #include "RGroupFingerprintScore.h"
-#include "GraphMol/Fingerprints/MorganFingerprints.h"
+#include "GraphMol/Fingerprints/Fingerprints.h"
+#include "GraphMol//Fingerprints/MorganFingerprints.h"
 #include "../../../External/GA/util/Util.h"
 #include <memory>
 #include <vector>
 #include <map>
 
+// #define DEBUG
+
 namespace RDKit {
 
 static const int fingerprintSize = 512;
+static const bool useTopologicalFingerprints = false;
 
 void addFingerprintToRGroupData(RGroupData *rgroupData) {
   if (rgroupData->fingerprint == nullptr) {
     RWMol mol(*rgroupData->combinedMol);
     for (auto atom : mol.atoms()) {
       // replace attachment atom by Boron
-      // TODO- check if we have multiple attachment atoms
+      // TODO- Handle multiple attachments differently?
       if (atom->getAtomicNum() == 0) {
         atom->setAtomicNum(5);
+        if (atom->getIsotope() > 0) atom->setIsotope(0);
       }
     }
     MolOps::sanitizeMol(mol);
 #ifdef DEBUG
     std::cerr << "Fingerprint mol smiles " << MolToSmiles(mol) << std::endl;
 #endif
-    auto fingerprint =
-        MorganFingerprints::getFingerprintAsBitVect(mol, 2, fingerprintSize);
+    auto fingerprint = useTopologicalFingerprints
+                           ? RDKFingerprintMol(mol, 1, 7, fingerprintSize)
+                           : MorganFingerprints::getFingerprintAsBitVect(
+                                 mol, 2, fingerprintSize);
     fingerprint->getOnBits(rgroupData->fingerprintOnBits);
     rgroupData->fingerprint = std::unique_ptr<ExplicitBitVect>(fingerprint);
 
@@ -79,6 +86,7 @@ static double euclideanDistance(const std::vector<double> &center,
   return distance;
 }
 
+// TODO Profile fingerprintDistanceScore
 // fingerprint  total score
 double fingerprintDistanceScore(
     const std::vector<size_t> &permutation,
@@ -175,7 +183,7 @@ void addVarianceData(int matchNumber, int permutationNumber,
                      const std::vector<std::vector<RGroupMatch>> &matches,
                      const std::set<int> &labels,
                      std::map<int, std::shared_ptr<VarianceDataForLabel>>
-                     &labelsToVarianceData) {
+                         &labelsToVarianceData) {
   modifyVarianceData(matchNumber, permutationNumber, matches, labels,
                      labelsToVarianceData, true);
 }
@@ -184,7 +192,7 @@ void removeVarianceData(int matchNumber, int permutationNumber,
                         const std::vector<std::vector<RGroupMatch>> &matches,
                         const std::set<int> &labels,
                         std::map<int, std::shared_ptr<VarianceDataForLabel>>
-                        &labelsToVarianceData) {
+                            &labelsToVarianceData) {
   modifyVarianceData(matchNumber, permutationNumber, matches, labels,
                      labelsToVarianceData, false);
 }
@@ -195,7 +203,7 @@ double fingerprintVarianceScore(
     const std::vector<std::vector<RGroupMatch>> &matches,
     const std::set<int> &labels,
     std::map<int, std::shared_ptr<VarianceDataForLabel>>
-    *labelsToVarianceData) {
+        *labelsToVarianceData) {
 #ifdef DEBUG
   std::cerr << "---------------------------------------------------"
             << std::endl;
@@ -239,7 +247,7 @@ double fingerprintVarianceScore(
 
 double fingerprintVarianceGroupScore(
     const std::map<int, std::shared_ptr<VarianceDataForLabel>>
-    &bitCountsByLabel) {
+        &bitCountsByLabel) {
   // arithmetic mean of scores for each label
 #ifdef DEBUG
   std::cerr << "fingerprint variance score: ";
@@ -332,4 +340,4 @@ double VarianceDataForLabel::variance() const {
   return rmsVariance;
 }
 
-}
+}  // namespace RDKit

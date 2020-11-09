@@ -81,9 +81,10 @@ RGroupGa::RGroupGa(const RGroupDecompData& rGroupData)
 
   // TODO refine these settings
   auto popsize = 100 + chromLength / 10;
-  if (popsize > 1000) popsize = 1000;
+  if (popsize > 200) popsize = 200;
   noIterations = 5000 + chromLength * 100;
   if (noIterations > 100000) noIterations = 100000;
+  noIterations = 1000000;
 
   // profiler settings
   // if (popsize > 100) popsize = 100;
@@ -98,6 +99,7 @@ void RGroupGa::rGroupMutateOperation(
   auto parent = parents[0];
   auto child = children[0];
   child->copyGene(*parent);
+  // double pMutate = parent->getLength() > 100 ? .01 : -1.0;
   child->mutate();
   child->setOperationName(RgroupMutate);
   child->decode();
@@ -155,17 +157,17 @@ void RGroupGa::rGroupCrossoverOperation(
   clearVarianceData(child1->getLabelsToVarianceData());
   clearVarianceData(child2->getLabelsToVarianceData());
 
-  parent1->onePointCrossover(*parent2, *child1, *child2);
+  parent1->twoPointCrossover(*parent2, *child1, *child2);
 }
 
 void RGroupGa::createOperations() {
   // bias to mutation as that operator is so efficient
   auto mutationOperation =
       make_shared<GaOperation<RGroupDecompositionChromosome>>(
-          1, 1, 80.0, &rGroupMutateOperation);
+          1, 1, 75.0, &rGroupMutateOperation);
   auto crossoverOperation =
       make_shared<GaOperation<RGroupDecompositionChromosome>>(
-          2, 2, 20.0, &rGroupCrossoverOperation);
+          2, 2, 25.0, &rGroupCrossoverOperation);
   operations.reserve(2);
   operations.push_back(mutationOperation);
   operations.push_back(crossoverOperation);
@@ -233,8 +235,6 @@ vector<vector<size_t>> RGroupGa::run() {
 shared_ptr<RGroupDecompositionChromosome> RGroupGa::createChromosome() {
   return make_shared<RGroupDecompositionChromosome>(*this);
 }
-
-// TODO - move next 2 methods to class
 
 void copyVarianceData(const map<int, shared_ptr<VarianceDataForLabel>>& from,
                       map<int, shared_ptr<VarianceDataForLabel>>& to) {
