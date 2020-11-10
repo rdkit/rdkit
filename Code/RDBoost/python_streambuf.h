@@ -211,17 +211,17 @@ class streambuf : public std::basic_streambuf<char> {
     CHECK_INVARIANT(iobase, "base class not found");
 #endif
 
-    bool isTextMode = PyObject_IsInstance(python_file_obj.ptr(), iobase.ptr());
+    df_isTextMode = PyObject_IsInstance(python_file_obj.ptr(), iobase.ptr());
     switch (mode) {
       case 's':  /// yeah, is redundant, but it is somehow natural to do "s"
       case 't':
-        if (!isTextMode)
+        if (!df_isTextMode)
           throw ValueErrorException(
               "Need a text mode file object like StringIO or a file opened "
               "with mode 't'");
         break;
       case 'b':
-        if (isTextMode)
+        if (df_isTextMode)
           throw ValueErrorException(
               "Need a binary mode file object like BytesIO or a file opened "
               "with mode 'b'");
@@ -280,17 +280,42 @@ class streambuf : public std::basic_streambuf<char> {
     }
     farthest_pptr = std::max(farthest_pptr, pptr());
     off_type n_written = (off_type)(farthest_pptr - pbase());
-    bp::str chunk(pbase(), farthest_pptr);
+    off_type orig_n_written = n_written;
+    const unsigned int STD_ASCII = 0x7F;
+    if (df_isTextMode && c > STD_ASCII) {
+      // we're somewhere in the middle of a utf8 block. If we
+      // only write part of it we'll end up with an exception,
+      // so push everything that could be utf8 into the next block
+      while (n_written > 0 &&
+             static_cast<unsigned int>(write_buffer[n_written - 1]) > STD_ASCII) {
+        --n_written;
+      }
+    }
+    bp::str chunk(pbase(), pbase() + n_written);
     py_write(chunk);
-    if (!traits_type::eq_int_type(c, traits_type::eof())) {
+
+    if ((!df_isTextMode || c <= STD_ASCII) &&
+        !traits_type::eq_int_type(c, traits_type::eof())) {
       py_write(traits_type::to_char_type(c));
       n_written++;
     }
+
+    setp(pbase(), epptr());
+    // ^^^ 27.5.2.4.5 (5)
+    farthest_pptr = pptr();
     if (n_written) {
       pos_of_write_buffer_end_in_py_file += n_written;
-      setp(pbase(), epptr());
-      // ^^^ 27.5.2.4.5 (5)
-      farthest_pptr = pptr();
+      if (df_isTextMode && c > STD_ASCII &&
+          !traits_type::eq_int_type(c, traits_type::eof())) {
+        size_t n_to_copy = orig_n_written - n_written;
+
+        for (size_t i = 0; i < n_to_copy; ++i) {
+          sputc(write_buffer[n_written + i]);
+          ++farthest_pptr;
+        }
+        sputc(c);
+        ++farthest_pptr;
+      }
     }
     return traits_type::eq_int_type(c, traits_type::eof())
                ? traits_type::not_eof(c)
@@ -405,6 +430,7 @@ class streambuf : public std::basic_streambuf<char> {
      de-allocated only at destruction time.
   */
   char* write_buffer;
+  bool df_isTextMode;
 
   off_type pos_of_read_buffer_end_in_py_file,
       pos_of_write_buffer_end_in_py_file;
