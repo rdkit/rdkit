@@ -12,6 +12,7 @@
 
 #include "../RDKitBase.h"
 #include "RGroupUtils.h"
+// Why do I need this include when master does not?
 #include "GraphMol/Substruct/SubstructMatch.h"
 
 namespace RDKit {
