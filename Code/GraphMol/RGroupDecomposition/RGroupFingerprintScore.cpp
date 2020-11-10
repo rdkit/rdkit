@@ -17,6 +17,7 @@ namespace RDKit {
 static const int fingerprintSize = 512;
 static const bool useTopologicalFingerprints = false;
 
+// Add fingerprint information to RGroupData
 void addFingerprintToRGroupData(RGroupData *rgroupData) {
   if (rgroupData->fingerprint == nullptr) {
     RWMol mol(*rgroupData->combinedMol);
@@ -87,7 +88,8 @@ static double euclideanDistance(const std::vector<double> &center,
 }
 
 // TODO Profile fingerprintDistanceScore
-// fingerprint  total score
+// Fingerprint score based on distance to fingerprint centroid for rgroups at each label
+// Quite slow
 double fingerprintDistanceScore(
     const std::vector<size_t> &permutation,
     const std::vector<std::vector<RGroupMatch>> &matches,
@@ -150,6 +152,8 @@ double fingerprintDistanceScore(
   return -score;
 }
 
+// Adds or subtracts a molecule match to the rgroup fingerprint bit counts
+// vectors
 void modifyVarianceData(
     int matchNumber, int permutationNumber,
     const std::vector<std::vector<RGroupMatch>> &matches,
@@ -179,6 +183,9 @@ void modifyVarianceData(
   }
 }
 
+
+// Adds a molecule match to the rgroup fingerprint bit counts
+// vectors
 void addVarianceData(int matchNumber, int permutationNumber,
                      const std::vector<std::vector<RGroupMatch>> &matches,
                      const std::set<int> &labels,
@@ -188,6 +195,8 @@ void addVarianceData(int matchNumber, int permutationNumber,
                      labelsToVarianceData, true);
 }
 
+// Subtracts a molecule match from the rgroup fingerprint bit counts
+// vectors
 void removeVarianceData(int matchNumber, int permutationNumber,
                         const std::vector<std::vector<RGroupMatch>> &matches,
                         const std::set<int> &labels,
@@ -198,6 +207,8 @@ void removeVarianceData(int matchNumber, int permutationNumber,
 }
 
 // fingerprint variance score
+// The arithmetic mean of the mean fingerprint bit variances for the fingerprints
+// at each rgroup position.
 double fingerprintVarianceScore(
     const std::vector<size_t> &permutation,
     const std::vector<std::vector<RGroupMatch>> &matches,
@@ -222,8 +233,6 @@ double fingerprintVarianceScore(
     std::cerr << "Label: " << l << std::endl;
 #endif
 
-    std::vector<int> bitCounts(fingerprintSize);
-    std::fill(bitCounts.begin(), bitCounts.end(), 0);
     std::shared_ptr<VarianceDataForLabel> variableDataForLabel;
     auto d = labelsToVarianceData->find(l);
     if (d == labelsToVarianceData->end()) {
@@ -245,6 +254,7 @@ double fingerprintVarianceScore(
   return fingerprintVarianceGroupScore(*labelsToVarianceData);
 }
 
+// calculates fingerprint variance score from rgroup bit counts
 double fingerprintVarianceGroupScore(
     const std::map<int, std::shared_ptr<VarianceDataForLabel>>
         &bitCountsByLabel) {
@@ -267,9 +277,6 @@ double fingerprintVarianceGroupScore(
   std::cerr << " sum " << sum << " score " << score << std::endl;
 #endif
   // want to minimize this score
-#ifdef DEBUG
-  std::cerr << "Fingerprint score " << score << std::endl;
-#endif
   return -score;
 }
 
@@ -285,6 +292,7 @@ VarianceDataForLabel::VarianceDataForLabel(const int &label) : label(label) {
   bitCounts = std::vector<int>(fingerprintSize, 0.0);
 }
 
+// add an rgroup structure to a bit counts array
 void VarianceDataForLabel::addRgroupData(RGroupData *rgroupData) {
   if (rgroupData->fingerprint == nullptr) {
     addFingerprintToRGroupData(rgroupData);
@@ -296,6 +304,7 @@ void VarianceDataForLabel::addRgroupData(RGroupData *rgroupData) {
   }
 }
 
+// remove an rgroup structure to a bit counts array
 void VarianceDataForLabel::removeRgroupData(RGroupData *rgroupData) {
   if (rgroupData->fingerprint == nullptr) {
     addFingerprintToRGroupData(rgroupData);
@@ -307,6 +316,7 @@ void VarianceDataForLabel::removeRgroupData(RGroupData *rgroupData) {
   }
 }
 
+// calculate the mean variance for a bit counts array
 double VarianceDataForLabel::variance() const {
   auto lambda = [this](double sum, int bitCount) {
     if (bitCount == 0) return sum;

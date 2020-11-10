@@ -21,19 +21,20 @@ using namespace RDKit;
 int main() {
   RDLog::InitLogs();
 
-  fstream fh;
-  std::string rdBase(getenv("RDBASE"));
-  fh.open(rdBase + "/Docs/Notebooks/compounds.txt", ios::in);
-  string line;
-  getline(fh, line);
-
   vector<shared_ptr<ROMol>> molecules;
+  {
+    fstream fh;
+    std::string rdBase(getenv("RDBASE"));
+    fh.open(rdBase + "/Docs/Notebooks/compounds.txt", ios::in);
+    string line;
+    getline(fh, line);
 
-  while (getline(fh, line)) {
-    int pos = line.find_last_of("\t");
-    auto smiles = line.substr(pos + 1);
-    shared_ptr<ROMol> mol(SmilesToMol(smiles));
-    molecules.push_back(mol);
+    while (getline(fh, line)) {
+      int pos = line.find_last_of("\t");
+      auto smiles = line.substr(pos + 1);
+      shared_ptr<ROMol> mol(SmilesToMol(smiles));
+      molecules.push_back(mol);
+    }
   }
   cerr << "Read " << molecules.size() << endl;
 

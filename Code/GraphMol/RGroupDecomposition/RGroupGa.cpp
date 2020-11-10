@@ -87,8 +87,8 @@ RGroupGa::RGroupGa(const RGroupDecompData& rGroupData)
   noIterations = 1000000;
 
   // profiler settings
-  // if (popsize > 100) popsize = 100;
-  // if (noIterations > 200) noIterations = 2000;
+  // popsize = 100;
+  // noIterations = 10000;
 
   setPopsize(popsize);
 }
