@@ -249,10 +249,15 @@ class RDKIT_SUBSTRUCTLIBRARY_EXPORT FPHolderBase {
     return rdcast<unsigned int>(fps.size() - 1);
   }
 
+  //! Adds a raw bit vector pointer to the fingerprinter (which takes ownership)
+  unsigned int addFingerprint(ExplicitBitVect *v) {
+    fps.push_back(v);
+    return rdcast<unsigned int>(fps.size() - 1);
+  }
+
   //! Adds a raw bit vector to the fingerprinter
   unsigned int addFingerprint(const ExplicitBitVect &v) {
-    fps.push_back(new ExplicitBitVect(v));
-    return rdcast<unsigned int>(fps.size() - 1);
+    return addFingerprint(new ExplicitBitVect(v));
   }
 
   //! Return false if a substructure search can never match the molecule
@@ -456,7 +461,7 @@ class RDKIT_SUBSTRUCTLIBRARY_EXPORT SubstructLibrary {
                                        bool useChirality = true,
                                        bool useQueryQueryMatches = false,
                                        int numThreads = -1,
-                                       int maxResults = -1);
+                                       int maxResults = -1) const;
   //! Get the matching indices for the query between the given indices
   /*!
     \param query       Query to match against molecules
@@ -477,7 +482,7 @@ class RDKIT_SUBSTRUCTLIBRARY_EXPORT SubstructLibrary {
       const ROMol &query, unsigned int startIdx, unsigned int endIdx,
       bool recursionPossible = true, bool useChirality = true,
       bool useQueryQueryMatches = false, int numThreads = -1,
-      int maxResults = -1);
+      int maxResults = -1) const;
 
   //! Return the number of matches for the query
   /*!
@@ -494,7 +499,7 @@ class RDKIT_SUBSTRUCTLIBRARY_EXPORT SubstructLibrary {
   unsigned int countMatches(const ROMol &query, bool recursionPossible = true,
                             bool useChirality = true,
                             bool useQueryQueryMatches = false,
-                            int numThreads = -1);
+                            int numThreads = -1) const;
   //! Return the number of matches for the query between the given indices
   /*!
     \param query       Query to match against molecules
@@ -513,7 +518,7 @@ class RDKIT_SUBSTRUCTLIBRARY_EXPORT SubstructLibrary {
                             unsigned int endIdx, bool recursionPossible = true,
                             bool useChirality = true,
                             bool useQueryQueryMatches = false,
-                            int numThreads = -1);
+                            int numThreads = -1) const;
 
   //! Returns true if any match exists for the query
   /*!
@@ -529,7 +534,7 @@ class RDKIT_SUBSTRUCTLIBRARY_EXPORT SubstructLibrary {
   */
   bool hasMatch(const ROMol &query, bool recursionPossible = true,
                 bool useChirality = true, bool useQueryQueryMatches = false,
-                int numThreads = -1);
+                int numThreads = -1) const;
   //! Returns true if any match exists for the query between the specified
   //! indices
   /*!
@@ -547,7 +552,7 @@ class RDKIT_SUBSTRUCTLIBRARY_EXPORT SubstructLibrary {
   */
   bool hasMatch(const ROMol &query, unsigned int startIdx, unsigned int endIdx,
                 bool recursionPossible = true, bool useChirality = true,
-                bool useQueryQueryMatches = false, int numThreads = -1);
+                bool useQueryQueryMatches = false, int numThreads = -1) const;
 
   //! Returns the molecule at the given index
   /*!
