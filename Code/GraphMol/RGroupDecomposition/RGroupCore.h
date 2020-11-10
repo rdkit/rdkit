@@ -12,6 +12,7 @@
 
 #include "../RDKitBase.h"
 #include "RGroupUtils.h"
+#include "GraphMol/Substruct/SubstructMatch.h"
 
 namespace RDKit {
 

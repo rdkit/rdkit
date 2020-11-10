@@ -1676,7 +1676,7 @@ $$$$
     params.onlyMatchAtRGroups = true;
     RGroupDecomposition decomp(*core, params);
     TEST_ASSERT(decomp.add(*mol) == 0);
-    TEST_ASSERT(decomp.process());
+    TEST_ASSERT(decomp.process().success);
     RGroupColumns groups = decomp.getRGroupsAsColumns();
     TEST_ASSERT(groups.size() == 3);
     TEST_ASSERT(groups.find("R1") != groups.end());

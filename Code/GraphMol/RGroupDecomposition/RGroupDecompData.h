@@ -534,7 +534,8 @@ struct RGroupDecompData {
       }
 
       std::cerr << " Exhaustive or GreedyChunks process, best score "
-                << best_score << " permutation size " << best_permutation.size() << std::endl;
+                << best_score << " permutation size " << best_permutation.size()
+                << std::endl;
     }
 
     if (ties.size() > 1) {
