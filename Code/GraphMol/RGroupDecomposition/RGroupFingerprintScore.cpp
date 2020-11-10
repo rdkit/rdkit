@@ -88,8 +88,8 @@ static double euclideanDistance(const std::vector<double> &center,
 }
 
 // TODO Profile fingerprintDistanceScore
-// Fingerprint score based on distance to fingerprint centroid for rgroups at each label
-// Quite slow
+// Fingerprint score based on distance to fingerprint centroid for rgroups at
+// each label Quite slow
 double fingerprintDistanceScore(
     const std::vector<size_t> &permutation,
     const std::vector<std::vector<RGroupMatch>> &matches,
@@ -183,7 +183,6 @@ void modifyVarianceData(
   }
 }
 
-
 // Adds a molecule match to the rgroup fingerprint bit counts
 // vectors
 void addVarianceData(int matchNumber, int permutationNumber,
@@ -207,8 +206,8 @@ void removeVarianceData(int matchNumber, int permutationNumber,
 }
 
 // fingerprint variance score
-// The arithmetic mean of the mean fingerprint bit variances for the fingerprints
-// at each rgroup position.
+// The arithmetic mean of the mean fingerprint bit variances for the
+// fingerprints at each rgroup position.
 double fingerprintVarianceScore(
     const std::vector<size_t> &permutation,
     const std::vector<std::vector<RGroupMatch>> &matches,
@@ -323,7 +322,7 @@ double VarianceDataForLabel::variance() const {
     // variance calculation because fingerprint is binary:
     // sum  == squared sum == bit count
     // ss = sqrSum - (sum * sum) / cnt;
-    auto ss = bitCount - (bitCount * bitCount) / numberFingerprints;
+    auto ss = bitCount - (bitCount * bitCount) / (double)numberFingerprints;
     double variancePerBit = ss / (double)numberFingerprints;
 #ifdef DEBUG
     std::cerr << variancePerBit << ',';
