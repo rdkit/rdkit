@@ -66,7 +66,7 @@ struct CartesianProduct {
   }
 };
 
-double linkerScore(const std::vector<size_t> &permutation,
+double matchScore(const std::vector<size_t> &permutation,
                    const std::vector<std::vector<RGroupMatch>> &matches,
                    const std::set<int> &labels);
 

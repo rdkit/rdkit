@@ -19,7 +19,7 @@ namespace RDKit {
 // stupid total score
 // This has to handle all permutations and doesn't do anything terribly smart
 //  For r-groups with large symmetries, this can take way too long.
-double linkerScore(const std::vector<size_t> &permutation,
+double matchScore(const std::vector<size_t> &permutation,
                    const std::vector<std::vector<RGroupMatch>> &matches,
                    const std::set<int> &labels) {
   double score = 1.;

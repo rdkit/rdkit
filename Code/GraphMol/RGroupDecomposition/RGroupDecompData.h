@@ -449,7 +449,7 @@ struct RGroupDecompData {
     RGroupScore scoreMethod = static_cast<RGroupScore>(params.scoreMethod);
     switch (scoreMethod) {
       case Match:
-        return linkerScore(permutation, matches, labels);
+        return matchScore(permutation, matches, labels);
         break;
       case FingerprintDistance:
         return fingerprintDistanceScore(permutation, matches, labels);
