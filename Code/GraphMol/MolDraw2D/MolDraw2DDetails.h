@@ -90,10 +90,9 @@ RDKIT_MOLDRAW2D_EXPORT inline void addBondIndices(const ROMol &mol) {
   }
 };
 
-RDKIT_MOLDRAW2D_EXPORT void drawBracketsForSGroup(MolDraw2D &drawer,
-                                                  const ROMol &mol,
-                                                  const SubstanceGroup &sg,
-                                                  const Conformer &conf);
+RDKIT_MOLDRAW2D_EXPORT void drawBracketsForSGroup(
+    MolDraw2D &drawer, const ROMol &mol, const SubstanceGroup &sg,
+    const std::vector<Point2D> &atomPs, const RDGeom::Transform2D &tform);
 
 }  // namespace MolDraw2D_detail
 }  // namespace RDKit

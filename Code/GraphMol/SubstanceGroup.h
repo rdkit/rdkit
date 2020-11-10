@@ -138,6 +138,10 @@ class RDKIT_GRAPHMOL_EXPORT SubstanceGroup : public RDProps {
   const std::vector<CState> &getCStates() const { return d_cstates; }
   const std::vector<AttachPoint> &getAttachPoints() const { return d_saps; }
 
+  std::vector<Bracket> &getBrackets() { return d_brackets; }
+  std::vector<CState> &getCStates() { return d_cstates; }
+  std::vector<AttachPoint> &getAttachPoints() { return d_saps; }
+
   void clearBrackets() { d_brackets.clear(); };
   void clearCStates() { d_cstates.clear(); };
   void clearAttachPoints() { d_saps.clear(); };

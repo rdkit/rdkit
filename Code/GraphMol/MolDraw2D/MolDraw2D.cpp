@@ -20,6 +20,9 @@
 #include <GraphMol/Depictor/RDDepictor.h>
 #include <Geometry/point.h>
 #include <Geometry/Transform2D.h>
+#include <Numerics/SquareMatrix.h>
+#include <Numerics/Matrix.h>
+
 #include <GraphMol/MolTransforms/MolTransforms.h>
 #include <Geometry/Transform3D.h>
 
@@ -943,13 +946,29 @@ void MolDraw2D::calculateScale(int width, int height, const ROMol &mol,
   x_min_ = y_min_ = numeric_limits<double>::max();
   double x_max(-x_min_), y_max(-y_min_);
 
-  for (auto &pt : at_cds_[activeMolIdx_]) {
+  // first find the bounding box defined by the atoms
+  for (const auto &pt : at_cds_[activeMolIdx_]) {
     x_min_ = std::min(pt.x, x_min_);
     y_min_ = std::min(pt.y, y_min_);
     x_max = std::max(pt.x, x_max);
     y_max = std::max(pt.y, y_max);
   }
 
+  // adjust based on SubstanceGroup brackets (if there are any)
+  const auto &tform = mol_transforms_[activeMolIdx_];
+  for (const auto &sg : getSubstanceGroups(mol)) {
+    for (const auto &brk : sg.getBrackets()) {
+      for (Point2D pt : brk) {
+        tform.TransformPoint(pt);
+        x_min_ = std::min(pt.x, x_min_);
+        y_min_ = std::min(pt.y, y_min_);
+        x_max = std::max(pt.x, x_max);
+        y_max = std::max(pt.y, y_max);
+      }
+    }
+  }
+
+  // calculate the x and y spans
   x_range_ = x_max - x_min_;
   y_range_ = y_max - y_min_;
   if (x_range_ < 1e-4) {
@@ -1243,6 +1262,8 @@ unique_ptr<RWMol> MolDraw2D::setupDrawMolecule(
       auto centroid = MolTransforms::computeCentroid(conf);
       centroid *= -1;
       tf.SetTranslation(centroid);
+      mol_transforms_[activeMolIdx_].SetTranslation(Point2D(centroid));
+      std::cerr << "centroid: " << centroid << std::endl;
       MolTransforms::transformConformer(conf, tf);
     }
   }
@@ -1261,25 +1282,22 @@ unique_ptr<RWMol> MolDraw2D::setupDrawMolecule(
   if (drawOptions().addBondIndices) {
     MolDraw2D_detail::addBondIndices(draw_mol);
   }
-  if (!activeMolIdx_) {  // on the first pass we need to do some work
+  if (!activeMolIdx_) {
     if (drawOptions().clearBackground) {
       clearDrawing();
     }
-    extractAtomCoords(draw_mol, confId, true);
-    extractAtomSymbols(draw_mol);
-    extractAtomNotes(draw_mol);
-    extractBondNotes(draw_mol);
-    extractRadicals(draw_mol);
-    if (needs_scale_) {
-      calculateScale(width, height, draw_mol, highlight_atoms, highlight_radii);
-      needs_scale_ = false;
-    }
-  } else {
-    extractAtomCoords(draw_mol, confId, false);
-    extractAtomSymbols(draw_mol);
-    extractAtomNotes(draw_mol);
-    extractBondNotes(draw_mol);
-    extractRadicals(draw_mol);
+  }
+  bool updateBBox = !activeMolIdx_;
+  extractAtomCoords(draw_mol, confId, updateBBox);
+  extractAtomSymbols(draw_mol);
+  extractAtomNotes(draw_mol);
+  extractBondNotes(draw_mol);
+  extractRadicals(draw_mol);
+  extractBracketAnnotations(draw_mol);
+
+  if (!activeMolIdx_ && needs_scale_) {
+    calculateScale(width, height, draw_mol, highlight_atoms, highlight_radii);
+    needs_scale_ = false;
   }
 
   return rwmol;
@@ -1288,6 +1306,7 @@ unique_ptr<RWMol> MolDraw2D::setupDrawMolecule(
 // ****************************************************************************
 void MolDraw2D::pushDrawDetails() {
   at_cds_.push_back(std::vector<Point2D>());
+  mol_transforms_.push_back(RDGeom::Transform2D());
   atomic_nums_.push_back(std::vector<int>());
   atom_syms_.push_back(std::vector<std::pair<std::string, OrientType>>());
   annotations_.push_back(std::vector<std::pair<std::string, StringRect>>());
@@ -1304,6 +1323,7 @@ void MolDraw2D::popDrawDetails() {
   atomic_nums_.pop_back();
   radicals_.pop_back();
   at_cds_.pop_back();
+  mol_transforms_.pop_back();
 }
 
 // ****************************************************************************
@@ -1419,7 +1439,7 @@ void MolDraw2D::finishMoleculeDraw(const RDKit::ROMol &draw_mol,
     }
   }
 
-  drawBrackets(draw_mol, -1);
+  drawBrackets(draw_mol);
 
   if (drawOptions().includeRadicals) {
     drawRadicals(draw_mol);
@@ -1952,6 +1972,8 @@ void MolDraw2D::extractAtomCoords(const ROMol &mol, int confId,
       bbox_[1].y = std::max(bbox_[1].y, pt.y);
     }
   }
+
+  mol_transforms_[activeMolIdx_] *= trans;
 }
 
 // ****************************************************************************
@@ -2027,6 +2049,15 @@ void MolDraw2D::extractRadicals(const ROMol &mol) {
     OrientType orient = calcRadicalRect(mol, atom, *rad_rect);
     radicals_[activeMolIdx_].push_back(make_pair(rad_rect, orient));
   }
+}
+
+// ****************************************************************************
+void MolDraw2D::extractBracketAnnotations(const ROMol &mol) {
+  PRECONDITION(activeMolIdx_ >= 0, "no mol id");
+  PRECONDITION(static_cast<int>(annotations_.size()) > activeMolIdx_,
+               "no space");
+
+  // FIX: extract the locations of the bracket annotations
 }
 
 // ****************************************************************************
@@ -2430,12 +2461,23 @@ OrientType MolDraw2D::calcRadicalRect(const ROMol &mol, const Atom *atom,
 namespace {}  // namespace
 
 // ****************************************************************************
-void MolDraw2D::drawBrackets(const ROMol &mol, int confId) {
-  const auto &conf = mol.getConformer(confId);
+void MolDraw2D::drawBrackets(const ROMol &mol) {
   const auto &sgs = getSubstanceGroups(mol);
+  if (!sgs.empty()) {
+    std::cerr << "\n--------------" << std::endl;
+    const auto &tf = mol_transforms_[activeMolIdx_];
+    for (auto i = 0; i < 3; ++i) {
+      for (auto j = 0; j < 3; ++j) {
+        std::cerr << std::setw(6) << tf.getVal(i, j) << " ";
+      }
+      std::cerr << std::endl;
+    }
+  }
   for (const auto &sg : sgs) {
     if (!sg.getBrackets().empty()) {
-      MolDraw2D_detail::drawBracketsForSGroup(*this, mol, sg, conf);
+      MolDraw2D_detail::drawBracketsForSGroup(*this, mol, sg,
+                                              at_cds_[activeMolIdx_],
+                                              mol_transforms_[activeMolIdx_]);
     }
   }
 };

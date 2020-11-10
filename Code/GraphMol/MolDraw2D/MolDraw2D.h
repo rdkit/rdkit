@@ -26,6 +26,7 @@
 #include <vector>
 
 #include <Geometry/point.h>
+#include <Geometry/Transform2D.h>
 #include <GraphMol/RDKitBase.h>
 #include <GraphMol/ChemReactions/Reaction.h>
 
@@ -636,6 +637,7 @@ class RDKIT_MOLDRAW2D_EXPORT MolDraw2D {
   std::vector<std::vector<std::pair<std::shared_ptr<StringRect>, OrientType>>>
       radicals_;
   Point2D bbox_[2];
+  std::vector<RDGeom::Transform2D> mol_transforms_;
 
   // return a DrawColour based on the contents of highlight_atoms or
   // highlight_map, falling back to atomic number by default
@@ -719,6 +721,7 @@ class RDKIT_MOLDRAW2D_EXPORT MolDraw2D {
   void extractAtomNotes(const ROMol &mol);
   void extractBondNotes(const ROMol &mol);
   void extractRadicals(const ROMol &mol);
+  void extractBracketAnnotations(const ROMol &mol);
 
   // coords in atom coords
   virtual void drawLine(const Point2D &cds1, const Point2D &cds2,
@@ -735,7 +738,7 @@ class RDKIT_MOLDRAW2D_EXPORT MolDraw2D {
   OrientType calcRadicalRect(const ROMol &mol, const Atom *atom,
                              StringRect &rad_rect);
   void drawRadicals(const ROMol &mol);
-  void drawBrackets(const ROMol &mol, int confId);
+  void drawBrackets(const ROMol &mol);
   // find a good starting point for scanning round the annotation
   // atom.  If we choose well, the first angle should be the one.
   // Returns angle in radians.

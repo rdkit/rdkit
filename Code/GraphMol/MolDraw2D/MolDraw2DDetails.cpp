@@ -116,16 +116,20 @@ void addStereoAnnotation(const ROMol &mol, bool includeRelativeCIP) {
 }
 
 void drawBracketsForSGroup(MolDraw2D &drawer, const ROMol &mol,
-                           const SubstanceGroup &sg, const Conformer &conf) {
+                           const SubstanceGroup &sg,
+                           const std::vector<Point2D> &atomPs,
+                           const RDGeom::Transform2D &tform) {
   std::vector<SubstanceGroup::Bracket> brackets = sg.getBrackets();
   if (brackets.empty()) {
     return;
   }
   RDGeom::Point2D center{0, 0};
   double avgLength = 0;
-  for (const auto &brk : brackets) {
-    const RDGeom::Point2D p1{brk[0]};
-    const RDGeom::Point2D p2{brk[1]};
+  for (auto &brk : brackets) {
+    RDGeom::Point2D p1{brk[0]};
+    RDGeom::Point2D p2{brk[1]};
+    tform.TransformPoint(p1);
+    tform.TransformPoint(p2);
     auto v = p2 - p1;
     center += p1 + v / 2;
     avgLength += v.length();
@@ -140,8 +144,11 @@ void drawBracketsForSGroup(MolDraw2D &drawer, const ROMol &mol,
   drawer.setLineWidth(2);
   unsigned int whichBrk = 0;
   for (const auto &brk : brackets) {
-    const RDGeom::Point2D p1{brk[0]};
-    const RDGeom::Point2D p2{brk[1]};
+    RDGeom::Point2D p1{brk[0]};
+    RDGeom::Point2D p2{brk[1]};
+    tform.TransformPoint(p1);
+    tform.TransformPoint(p2);
+
     drawer.drawLine(p1, p2);
     auto v = p2 - p1;
     auto centerv = center - (p1 + v / 2);

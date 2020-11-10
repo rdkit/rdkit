@@ -897,18 +897,46 @@ M  V30 END CTAB
 M  END
 )CTAB"_ctab;
     REQUIRE(m);
-    MolDraw2DSVG drawer(350, 300);
-    drawer.drawMolecule(*m);
-    drawer.finishDrawing();
-    auto text = drawer.getDrawingText();
-    std::ofstream outs("testBrackets-1.svg");
-    outs << text;
-    outs.flush();
-
-    // make sure the polygon starts at a bond
-    // CHECK(text.find("<path class='bond-0' d='M 321.962,140") !=
-    //       std::string::npos);
-    // CHECK(text.find("<path d='M 321.962,140") != std::string::npos);
+    {
+      MolDraw2DSVG drawer(350, 300);
+      drawer.drawMolecule(*m);
+      drawer.finishDrawing();
+      auto text = drawer.getDrawingText();
+      std::ofstream outs("testBrackets-1a.svg");
+      outs << text;
+      outs.flush();
+    }
+    {  // rotation
+      MolDraw2DSVG drawer(350, 300);
+      drawer.drawOptions().rotate = 90;
+      drawer.drawMolecule(*m);
+      drawer.finishDrawing();
+      auto text = drawer.getDrawingText();
+      std::ofstream outs("testBrackets-1b.svg");
+      outs << text;
+      outs.flush();
+    }
+    {  // centering
+      MolDraw2DSVG drawer(350, 300);
+      drawer.drawOptions().centreMoleculesBeforeDrawing = true;
+      drawer.drawMolecule(*m);
+      drawer.finishDrawing();
+      auto text = drawer.getDrawingText();
+      std::ofstream outs("testBrackets-1c.svg");
+      outs << text;
+      outs.flush();
+    }
+    {  // rotation + centering
+      MolDraw2DSVG drawer(350, 300);
+      drawer.drawOptions().centreMoleculesBeforeDrawing = true;
+      drawer.drawOptions().rotate = 90;
+      drawer.drawMolecule(*m);
+      drawer.finishDrawing();
+      auto text = drawer.getDrawingText();
+      std::ofstream outs("testBrackets-1d.svg");
+      outs << text;
+      outs.flush();
+    }
   }
   SECTION("three brackets") {
     auto m = R"CTAB(three brackets
@@ -941,17 +969,45 @@ M  V30 END SGROUP
 M  V30 END CTAB
 M  END)CTAB"_ctab;
     REQUIRE(m);
-    MolDraw2DSVG drawer(350, 300);
-    drawer.drawMolecule(*m);
-    drawer.finishDrawing();
-    auto text = drawer.getDrawingText();
-    std::ofstream outs("testBrackets-2.svg");
-    outs << text;
-    outs.flush();
-
-    // make sure the polygon starts at a bond
-    // CHECK(text.find("<path class='bond-0' d='M 321.962,140") !=
-    //       std::string::npos);
-    // CHECK(text.find("<path d='M 321.962,140") != std::string::npos);
+    {
+      MolDraw2DSVG drawer(350, 300);
+      drawer.drawMolecule(*m);
+      drawer.finishDrawing();
+      auto text = drawer.getDrawingText();
+      std::ofstream outs("testBrackets-2a.svg");
+      outs << text;
+      outs.flush();
+    }
+    {  // rotation
+      MolDraw2DSVG drawer(350, 300);
+      drawer.drawOptions().rotate = 90;
+      drawer.drawMolecule(*m);
+      drawer.finishDrawing();
+      auto text = drawer.getDrawingText();
+      std::ofstream outs("testBrackets-2b.svg");
+      outs << text;
+      outs.flush();
+    }
+    {  // centering
+      MolDraw2DSVG drawer(350, 300);
+      drawer.drawOptions().centreMoleculesBeforeDrawing = true;
+      drawer.drawMolecule(*m);
+      drawer.finishDrawing();
+      auto text = drawer.getDrawingText();
+      std::ofstream outs("testBrackets-2c.svg");
+      outs << text;
+      outs.flush();
+    }
+    {  // rotation + centering
+      MolDraw2DSVG drawer(350, 300);
+      drawer.drawOptions().centreMoleculesBeforeDrawing = true;
+      drawer.drawOptions().rotate = 90;
+      drawer.drawMolecule(*m);
+      drawer.finishDrawing();
+      auto text = drawer.getDrawingText();
+      std::ofstream outs("testBrackets-2d.svg");
+      outs << text;
+      outs.flush();
+    }
   }
 }
