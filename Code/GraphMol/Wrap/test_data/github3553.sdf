@@ -1,0 +1,208 @@
+some padding that is just the ri
+     RDKit          2D
+
+  0  0  0  0  0  0  0  0  0  0999 V3000
+M  V30 BEGIN CTAB
+M  V30 COUNTS 12 12 0 0 0
+M  V30 BEGIN ATOM
+M  V30 1 C -1.08313 -0.7909 0 0
+M  V30 2 O -1.08393 -1.7909 0 0
+M  V30 3 O -1.94873 -0.2901 0 0
+M  V30 4 Cl -1.08153 1.2091 0 0
+M  V30 5 Cl 0.648067 -1.7921 0 0
+M  V30 6 N 0.651267 2.2079 0 0
+M  V30 7 C -0.216733 -0.2915 0 0
+M  V30 8 C -0.215933 0.7085 0 0
+M  V30 9 C 0.648867 -0.7921 0 0
+M  V30 10 C 0.650467 1.2079 0 0
+M  V30 11 C 1.51527 -0.2929 0 0
+M  V30 12 C 1.51607 0.7071 0 0
+M  V30 END ATOM
+M  V30 BEGIN BOND
+M  V30 1 1 1 2
+M  V30 2 2 1 3
+M  V30 3 1 1 7
+M  V30 4 1 4 8
+M  V30 5 1 5 9
+M  V30 6 1 6 10
+M  V30 7 2 7 8
+M  V30 8 1 7 9
+M  V30 9 1 8 10
+M  V30 10 2 9 11
+M  V30 11 2 10 12
+M  V30 12 1 11 12
+M  V30 END BOND
+M  V30 END CTAB
+M  END
+>  <cas.rn>  (1) 
+paddingpad
+
+>  <cas.index.name>  (1) 
+paddingpaddingpaddingpaddingpadding
+
+>  <molecular.formula>  (1) 
+C7H5Cl2NO2
+
+>  <molecular.weight>  (1) 
+206.03
+
+>  <boiling.point.predicted>  (1) 
+123.4±56.7 𐍈C    paddingpaddingp
+
+$$$$
+some padding that is just the ri
+     RDKit          2D
+
+  0  0  0  0  0  0  0  0  0  0999 V3000
+M  V30 BEGIN CTAB
+M  V30 COUNTS 12 12 0 0 0
+M  V30 BEGIN ATOM
+M  V30 1 C -1.08313 -0.7909 0 0
+M  V30 2 O -1.08393 -1.7909 0 0
+M  V30 3 O -1.94873 -0.2901 0 0
+M  V30 4 Cl -1.08153 1.2091 0 0
+M  V30 5 Cl 0.648067 -1.7921 0 0
+M  V30 6 N 0.651267 2.2079 0 0
+M  V30 7 C -0.216733 -0.2915 0 0
+M  V30 8 C -0.215933 0.7085 0 0
+M  V30 9 C 0.648867 -0.7921 0 0
+M  V30 10 C 0.650467 1.2079 0 0
+M  V30 11 C 1.51527 -0.2929 0 0
+M  V30 12 C 1.51607 0.7071 0 0
+M  V30 END ATOM
+M  V30 BEGIN BOND
+M  V30 1 1 1 2
+M  V30 2 2 1 3
+M  V30 3 1 1 7
+M  V30 4 1 4 8
+M  V30 5 1 5 9
+M  V30 6 1 6 10
+M  V30 7 2 7 8
+M  V30 8 1 7 9
+M  V30 9 1 8 10
+M  V30 10 2 9 11
+M  V30 11 2 10 12
+M  V30 12 1 11 12
+M  V30 END BOND
+M  V30 END CTAB
+M  END
+>  <cas.rn>  (1) 
+paddingpad
+
+>  <cas.index.name>  (1) 
+paddingpaddingpaddingpaddingpadding
+
+>  <molecular.formula>  (1) 
+C7H5Cl2NO2
+
+>  <molecular.weight>  (1) 
+206.03
+
+>  <boiling.point.predicted>  (1) 
+123.4±56.7 €C    paddingpaddingp
+
+$$$$
+some padding that is just the ri
+     RDKit          2D
+
+  0  0  0  0  0  0  0  0  0  0999 V3000
+M  V30 BEGIN CTAB
+M  V30 COUNTS 12 12 0 0 0
+M  V30 BEGIN ATOM
+M  V30 1 C -1.08313 -0.7909 0 0
+M  V30 2 O -1.08393 -1.7909 0 0
+M  V30 3 O -1.94873 -0.2901 0 0
+M  V30 4 Cl -1.08153 1.2091 0 0
+M  V30 5 Cl 0.648067 -1.7921 0 0
+M  V30 6 N 0.651267 2.2079 0 0
+M  V30 7 C -0.216733 -0.2915 0 0
+M  V30 8 C -0.215933 0.7085 0 0
+M  V30 9 C 0.648867 -0.7921 0 0
+M  V30 10 C 0.650467 1.2079 0 0
+M  V30 11 C 1.51527 -0.2929 0 0
+M  V30 12 C 1.51607 0.7071 0 0
+M  V30 END ATOM
+M  V30 BEGIN BOND
+M  V30 1 1 1 2
+M  V30 2 2 1 3
+M  V30 3 1 1 7
+M  V30 4 1 4 8
+M  V30 5 1 5 9
+M  V30 6 1 6 10
+M  V30 7 2 7 8
+M  V30 8 1 7 9
+M  V30 9 1 8 10
+M  V30 10 2 9 11
+M  V30 11 2 10 12
+M  V30 12 1 11 12
+M  V30 END BOND
+M  V30 END CTAB
+M  END
+>  <cas.rn>  (1) 
+paddingpad
+
+>  <cas.index.name>  (1) 
+paddingpaddingpaddingpaddingpadding
+
+>  <molecular.formula>  (1) 
+C7H5Cl2NO2
+
+>  <molecular.weight>  (1) 
+206.03
+
+>  <boiling.point.predicted>  (1) 
+123.4±56.7 °C    paddingpaddingp
+
+$$$$
+some padding that is just the ri
+     RDKit          2D
+
+  0  0  0  0  0  0  0  0  0  0999 V3000
+M  V30 BEGIN CTAB
+M  V30 COUNTS 12 12 0 0 0
+M  V30 BEGIN ATOM
+M  V30 1 C -1.08313 -0.7909 0 0
+M  V30 2 O -1.08393 -1.7909 0 0
+M  V30 3 O -1.94873 -0.2901 0 0
+M  V30 4 Cl -1.08153 1.2091 0 0
+M  V30 5 Cl 0.648067 -1.7921 0 0
+M  V30 6 N 0.651267 2.2079 0 0
+M  V30 7 C -0.216733 -0.2915 0 0
+M  V30 8 C -0.215933 0.7085 0 0
+M  V30 9 C 0.648867 -0.7921 0 0
+M  V30 10 C 0.650467 1.2079 0 0
+M  V30 11 C 1.51527 -0.2929 0 0
+M  V30 12 C 1.51607 0.7071 0 0
+M  V30 END ATOM
+M  V30 BEGIN BOND
+M  V30 1 1 1 2
+M  V30 2 2 1 3
+M  V30 3 1 1 7
+M  V30 4 1 4 8
+M  V30 5 1 5 9
+M  V30 6 1 6 10
+M  V30 7 2 7 8
+M  V30 8 1 7 9
+M  V30 9 1 8 10
+M  V30 10 2 9 11
+M  V30 11 2 10 12
+M  V30 12 1 11 12
+M  V30 END BOND
+M  V30 END CTAB
+M  END
+>  <cas.rn>  (1) 
+paddingpad
+
+>  <cas.index.name>  (1) 
+paddingpaddingpaddingpaddingpadding
+
+>  <molecular.formula>  (1) 
+C7H5Cl2NO2
+
+>  <molecular.weight>  (1) 
+206.03
+
+>  <boiling.point.predicted>  (1) 
+123.4±5°°°°°C    paddingpaddingp
+
+$$$$

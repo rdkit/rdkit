@@ -83,7 +83,7 @@ struct sdmolsup_wrap {
              python::return_internal_reference<1>())
         .def(
             "__next__",
-            (ROMol * (*)(SDMolSupplier *)) & MolSupplNextAcceptNullLastMolecule,
+            (ROMol * (*)(SDMolSupplier *)) & MolSupplNext,
             "Returns the next molecule in the file.  Raises _StopIteration_ "
             "on EOF.\n",
             python::return_value_policy<python::manage_new_object>())

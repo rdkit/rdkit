@@ -33,6 +33,7 @@
 
 #include <iostream>
 #include <fstream>
+#include <memory>
 
 #include <RDGeneral/Invariant.h>
 #include <RDGeneral/RDLog.h>
@@ -57,7 +58,7 @@ void test1() {
   BOOST_LOG(rdErrorLog) << "-------------------------------------" << std::endl;
   BOOST_LOG(rdErrorLog) << "    Test ConformerParser." << std::endl;
 
-  ROMol *mol = SmilesToMol("CCC");
+  std::unique_ptr<ROMol> mol{SmilesToMol("CCC")};
   std::vector<std::vector<double>> coords;
   std::string rdbase = getenv("RDBASE");
   std::string fName = rdbase + "/Code/GraphMol/test_data/water_coords_bad.trx";

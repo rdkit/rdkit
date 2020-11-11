@@ -1380,7 +1380,7 @@ TEST_CASE("Github #3470: Hydrogen is incorrectly identified as an early atom",
           "[bug][chemistry]") {
   SECTION("Basics") {
     RWMol m;
-    m.addAtom(new Atom(1));
+    m.addAtom(new Atom(1), true, true);
     m.getAtomWithIdx(0)->setFormalCharge(-1);
     m.updatePropertyCache();
     CHECK(m.getAtomWithIdx(0)->getNumImplicitHs() == 0);
@@ -1413,11 +1413,10 @@ TEST_CASE("Github #3470: Hydrogen is incorrectly identified as an early atom",
 
 TEST_CASE("Additional oxidation states", "[chemistry]") {
   SECTION("Basics") {
-    std::vector<std::string> smiles = {
-        "F[Po](F)(F)(F)",     "F[Po](F)(F)(F)(F)F", "F[Xe](F)(F)(F)",
-        "F[Xe](F)(F)(F)(F)F", "F[Cl](F)F",          "F[Cl](F)(F)(F)F",
-        "F[Br](F)F",          "F[Br](F)(F)(F)F",    "F[I](F)F",
-        "F[I](F)(F)(F)F",     "F[At](F)F",          "F[At](F)(F)(F)F"};
+    std::vector<std::string> smiles = {"F[Po](F)(F)(F)", "F[Po](F)(F)(F)(F)F",
+                                       "F[Xe](F)(F)(F)", "F[Xe](F)(F)(F)(F)F",
+                                       "F[I](F)F",       "F[I](F)(F)(F)F",
+                                       "F[At](F)F",      "F[At](F)(F)(F)F"};
     for (const auto &smi : smiles) {
       std::unique_ptr<ROMol> m(SmilesToMol(smi));
       REQUIRE(m);

@@ -132,7 +132,7 @@ class ConjElectrons {
   bool checkChargesAndBondOrders();
   void computeMetrics();
   bool checkMetrics(CEStats &ceStats, bool &ok) const;
-  void purgeMaps(CEMap &ceMap, CEDegCount &ceDegCount, CEStats &ceStats) const;
+  bool purgeMaps(CEMap &ceMap, CEDegCount &ceDegCount, CEStats &ceStats) const;
   void updateDegCount(CEDegCount &ceDegCount);
   std::size_t computeFP(unsigned int flags);
   inline bool haveFP(CESet &ceSet, unsigned int flags);
@@ -296,11 +296,7 @@ void fixExplicitImplicitHs(ROMol &mol) {
 
 // object constructor
 AtomElectrons::AtomElectrons(ConjElectrons *parent, const Atom *a)
-    : d_nb(0),
-      d_fc(0),
-      d_flags(0),
-      d_atom(a),
-      d_parent(parent) {
+    : d_nb(0), d_fc(0), d_flags(0), d_atom(a), d_parent(parent) {
   PRECONDITION(d_atom, "d_atom cannot be NULL");
   d_tv = static_cast<std::uint8_t>(a->getTotalDegree());
   const ROMol &mol = d_atom->getOwningMol();
@@ -833,23 +829,28 @@ bool ConjElectrons::checkMetrics(CEStats &ceStats, bool &changed) const {
   return ok;
 }
 
-void ConjElectrons::purgeMaps(CEMap &ceMap, CEDegCount &ceDegCount,
+bool ConjElectrons::purgeMaps(CEMap &ceMap, CEDegCount &ceDegCount,
                               CEStats &ceStats) const {
+  bool ok = true;
   bool changed = true;
   while (changed) {
-    for (CEMap::iterator it = ceMap.begin(); it != ceMap.end();) {
+    for (auto it = ceMap.begin(); it != ceMap.end();) {
       if (!it->second->checkMetrics(ceStats, changed)) {
-        CEMap::iterator toBeDeleted = it;
-        ++it;
-        auto it2 = ceDegCount.find(toBeDeleted->second->hash());
+        auto it2 = ceDegCount.find(it->second->hash());
         if (it2 != ceDegCount.end()) {
           --it2->second;
           if (!it2->second) {
             ceDegCount.erase(it2);
           }
         }
-        delete toBeDeleted->second;
-        ceMap.erase(toBeDeleted);
+        if (it->second == this) {
+          // postpone self deletion
+          ok = false;
+        } else {
+          delete it->second;
+        }
+        it = ceMap.erase(it);
+        changed = true;
       } else {
         ++it;
       }
@@ -858,6 +859,7 @@ void ConjElectrons::purgeMaps(CEMap &ceMap, CEDegCount &ceDegCount,
       }
     }
   }
+  return ok;
 }
 
 // assign formal charges and, if they are acceptable, store
@@ -877,7 +879,7 @@ bool ConjElectrons::assignFormalChargesAndStore(CEMap &ceMap,
     ok = storeFP(ceMap, fpFlags);
   }
   if (changed) {
-    purgeMaps(ceMap, ceDegCount, ceStats);
+    ok = purgeMaps(ceMap, ceDegCount, ceStats) && ok;
   }
   if (ok) {
     updateDegCount(ceDegCount);
@@ -888,7 +890,6 @@ bool ConjElectrons::assignFormalChargesAndStore(CEMap &ceMap,
 // enumerate all possible permutations of non-bonded electrons
 void ConjElectrons::enumerateNonBonded(CEMap &ceMap, CEDegCount &ceDegCount,
                                        CEStats &ceStats) {
-  ConjElectrons *ce = this;
   // the way we compute FPs for a resonance structure depends
   // on whether we want to enumerate all Kekule structures
   // or not; in the first case, we also include bond orders
@@ -926,12 +927,10 @@ void ConjElectrons::enumerateNonBonded(CEMap &ceMap, CEDegCount &ceDegCount,
     ResonanceUtils::getNumCombStartV(numCand, aiVec.size(), numComb, v);
     // if there are multiple permutations, make a copy of the original
     // ConjElectrons object, since the latter will be modified
-    ConjElectrons *ceCopy = ((numComb > 1) ? new ConjElectrons(*ce) : nullptr);
+    ConjElectrons *ceCopy = new ConjElectrons(*this);
     // enumerate all permutations
     for (unsigned int c = 0; c < numComb; ++c) {
-      if (c) {
-        ce = new ConjElectrons(*ceCopy);
-      }
+      ConjElectrons *ce = new ConjElectrons(*ceCopy);
       unsigned int vc = v;
       for (unsigned int i : aiVec) {
         AtomElectrons *ae = ce->getAtomElectronsWithIdx(i);
@@ -951,11 +950,13 @@ void ConjElectrons::enumerateNonBonded(CEMap &ceMap, CEDegCount &ceDegCount,
                                            fpFlags)) {
         delete ce;
       }
+
       // get the next binary code
       ResonanceUtils::updateV(v);
     }
     delete ceCopy;
   } else if (nbTotal == currElectrons()) {
+    ConjElectrons *ce = new ConjElectrons(*this);
     // if the electrons required to satisfy all octets
     // are as many as those currently available, assignment
     // is univocal
@@ -964,12 +965,10 @@ void ConjElectrons::enumerateNonBonded(CEMap &ceMap, CEDegCount &ceDegCount,
     if (!ce->assignFormalChargesAndStore(ceMap, ceDegCount, ceStats, fpFlags)) {
       delete ce;
     }
-  } else {
-    // if the electrons required to satisfy all octets are less
-    // than those currently available, we must have failed the bond
-    // assignment, so the candidate must be deleted
-    delete ce;
   }
+  // if the electrons required to satisfy all octets are less
+  // than those currently available, we must have failed the bond
+  // assignment
 }
 
 void ConjElectrons::computeMetrics() {
@@ -1694,6 +1693,7 @@ void ResonanceMolSupplier::buildCEMap(CEMap &ceMap, unsigned int conjGrpIdx) {
         // enumerate possible non-bonded electron
         // arrangements, and store them in ceMap
         ce->enumerateNonBonded(ceMap, ceDegCount, ceStats);
+        delete ce;
         // quit the loop early if the number of non-degenerate
         // structures already exceeds d_maxStructs
         if (d_callback.get()) {
@@ -1710,6 +1710,10 @@ void ResonanceMolSupplier::buildCEMap(CEMap &ceMap, unsigned int conjGrpIdx) {
         }
       }
     }
+  }
+  while (!ceStack.empty()) {
+    delete ceStack.top();
+    ceStack.pop();
   }
 }
 
