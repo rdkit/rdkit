@@ -470,7 +470,6 @@ class TestCase(unittest.TestCase):
 
   def test_PatternNumBitsHolder(self):
     fname = os.path.join(os.environ["RDBASE"], "Data", "NCI", "first_5K.smi")
-    print(fname)
     suppl = Chem.SmilesMolSupplier(fname, delimiter="\t", titleLine=False)
     mols1 = rdSubstructLibrary.CachedTrustedSmilesMolHolder()
     fps1 = rdSubstructLibrary.PatternNumBitsHolder(2048)
