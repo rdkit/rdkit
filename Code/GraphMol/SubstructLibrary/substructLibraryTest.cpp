@@ -460,16 +460,16 @@ void testAddPatterns() {
 
 }
 
-void testAddFingerprint() {
+void testPatternNumBitsHolder() {
   BOOST_LOG(rdErrorLog) << "-------------------------------------" << std::endl;
-  BOOST_LOG(rdErrorLog) << "   testAddFingerprint" << std::endl;
+  BOOST_LOG(rdErrorLog) << "   testPatternNumBits" << std::endl;
 
   std::string fName = getenv("RDBASE");
   fName += "/Data/NCI/first_5K.smi";
   SmilesMolSupplier suppl(fName, "\t", 0, 1, false);
   boost::shared_ptr<CachedTrustedSmilesMolHolder> mols1(
       new CachedTrustedSmilesMolHolder());
-  boost::shared_ptr<PatternHolder> fps1(new PatternHolder());
+  boost::shared_ptr<PatternNumBitsHolder> fps1(new PatternNumBitsHolder());
   SubstructLibrary ssslib1(mols1, fps1);
   boost::shared_ptr<CachedTrustedSmilesMolHolder> mols2(
       new CachedTrustedSmilesMolHolder());
@@ -487,12 +487,12 @@ void testAddFingerprint() {
     if (!mol) {
       continue;
     }
-    ExplicitBitVect *bv = PatternFingerprintMol(*mol, 2048);
     mols1->addSmiles(MolToSmiles(*mol));
-    fps1->addFingerprint(bv);
+    fps1->addFingerprint(fps1->makeFingerprint(*mol));
     ssslib2.addMol(*mol);
     delete mol;
   }
+  boost::logging::enable_logs("rdApp.error");
   ROMOL_SPTR query(SmartsToMol("N"));
   TEST_ASSERT(query);
   auto matches1 = ssslib1.getMatches(*query);
@@ -515,7 +515,7 @@ int main() {
   docTest();
   ringTest();
   testAddPatterns();
-  testAddFingerprint();
+  testPatternNumBitsHolder();
 #endif
   return 0;
 }
