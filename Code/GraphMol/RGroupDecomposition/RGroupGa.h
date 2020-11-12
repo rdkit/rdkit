@@ -1,3 +1,13 @@
+//
+//  Copyright (C) 2020 Gareth Jones, Glysade LLC
+//
+//   @@ All Rights Reserved @@
+//  This file is part of the RDKit.
+//  The contents are covered by the terms of the BSD license
+//  which is included in the file license.txt, found at the root
+//  of the RDKit source tree.
+//
+
 #ifndef RGROUPDECOMPGA_H_
 #define RGROUPDECOMPGA_H_
 

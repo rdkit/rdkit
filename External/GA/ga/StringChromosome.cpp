@@ -1,9 +1,12 @@
-/*
- * StringChromosome.cpp
- *
- *  Created on: May 4, 2013
- *      Author: gjones
- */
+//
+//  Copyright (C) 2020 Gareth Jones, Glysade LLC
+//
+//   @@ All Rights Reserved @@
+//  This file is part of the RDKit.
+//  The contents are covered by the terms of the BSD license
+//  which is included in the file license.txt, found at the root
+//  of the RDKit source tree.
+//
 
 #include "StringChromosome.h"
 

@@ -1,5 +1,14 @@
+//
+//  Copyright (C) 2020 Gareth Jones, Glysade LLC
+//
+//   @@ All Rights Reserved @@
+//  This file is part of the RDKit.
+//  The contents are covered by the terms of the BSD license
+//  which is included in the file license.txt, found at the root
+//  of the RDKit source tree.
+//
 
-#include <chrono>
+#include <ctime>
 #include "RGroupGa.h"
 #include "RGroupDecompData.h"
 
@@ -20,13 +29,14 @@ std::string RGroupDecompositionChromosome::info() const {
 }
 
 double RGroupDecompositionChromosome::score() {
-  auto &rGroupData = rGroupGa.getRGroupData();
+  auto& rGroupData = rGroupGa.getRGroupData();
   RGroupScore scoreMethod =
       static_cast<RGroupScore>(rGroupData.params.scoreMethod);
   if (operationName != RgroupMutate) {
     decode();
   }
-  if (scoreMethod == FingerprintVariance && labelsToVarianceData.size() > 0 && operationName == RgroupMutate) {
+  if (scoreMethod == FingerprintVariance && labelsToVarianceData.size() > 0 &&
+      operationName == RgroupMutate) {
     fitness = fingerprintVarianceGroupScore(labelsToVarianceData);
     // assert(fitness == recalculateScore());
   } else {
@@ -37,16 +47,16 @@ double RGroupDecompositionChromosome::score() {
 
 double RGroupDecompositionChromosome::recalculateScore() {
   std::cerr << "Recalculating score" << std::endl;
-  auto &rGroupData = rGroupGa.getRGroupData();
+  auto& rGroupData = rGroupGa.getRGroupData();
   return rGroupData.score(permutation);
 }
 
 void RGroupDecompositionChromosome::decode() {
   auto values = getString();
   permutation.clear();
-  auto &matches = rGroupGa.getRGroupData().matches;
+  auto& matches = rGroupGa.getRGroupData().matches;
   auto pos = 0;
-  for (const auto &m : matches) {
+  for (const auto& m : matches) {
     if (m.size() == 1) {
       permutation.push_back(0);
     } else {
@@ -69,7 +79,7 @@ RGroupGa::RGroupGa(const RGroupDecompData& rGroupData)
   setSelectionPressure(1.0001);
   // setSelectionPressure(1.001);
 
-  const auto &matches = rGroupData.matches;
+  const auto& matches = rGroupData.matches;
   auto pos = 0;
   for (auto m : matches) {
     if (m.size() == 1) continue;
@@ -87,8 +97,8 @@ RGroupGa::RGroupGa(const RGroupDecompData& rGroupData)
   noIterations = 1000000;
 
   // profiler settings
-  // popsize = 100;
-  // noIterations = 10000;
+  popsize = 100;
+  noIterations = 10000;
 
   setPopsize(popsize);
 }
@@ -114,8 +124,8 @@ void RGroupGa::rGroupMutateOperation(
   fingerprintVarianceScore(labelsToVarianceData);
 #endif
 
-  auto &parentPermutation = parent->getPermutation();
-  auto &childPermutation = child->getPermutation();
+  auto& parentPermutation = parent->getPermutation();
+  auto& childPermutation = child->getPermutation();
   const auto& rgroupData = parent->getRGroupGA().getRGroupData();
   const auto& matches = rgroupData.matches;
   const auto& labels = rgroupData.labels;
@@ -173,27 +183,26 @@ void RGroupGa::createOperations() {
   operations.push_back(crossoverOperation);
 }
 
-std::string timeInfo(const chrono::system_clock::time_point start) {
-  auto now = chrono::high_resolution_clock::now();
-  chrono::duration<double, milli> milliseconds = now - start;
-  auto seconds = milliseconds.count() / 1000.0;
+std::string timeInfo(const std::clock_t start) {
+  auto now = std::clock();
+  auto seconds = (now - start) /(double) CLOCKS_PER_SEC;
   auto format = boost::format("Time %7.2f") % seconds;
   return format.str();
 }
 
 vector<vector<size_t>> RGroupGa::run() {
-  auto startTime = std::chrono::high_resolution_clock::now();
+  auto startTime = clock();
   createOperations();
   population = unique_ptr<RGroupGaPopulation>(new RGroupGaPopulation(*this));
   auto format = boost::format(
                     "Running GA number operations %5d population size %5d "
-                    "chromosome length %5d %s") %
+                    "chromosome length %5d %s\n") %
                 noIterations % getPopsize() % chromLength % timeInfo(startTime);
-  REPORT(Reporter::INFO) << format.str();
+  BOOST_LOG(rdInfoLog) << format.str();
   population->create();
   double bestScore = population->getBestScore();
-  REPORT(Reporter::INFO) << population->info();
-  REPORT(Reporter::DEBUG) << population->populationInfo();
+  BOOST_LOG(rdInfoLog) << population->info() << endl;
+  BOOST_LOG(rdDebugLog) << population->populationInfo();
 
   int nOps = 0;
   int lastImprovementOp = 0;
@@ -201,25 +210,24 @@ vector<vector<size_t>> RGroupGa::run() {
     population->iterate();
     nOps++;
     if (nOps % 1000 == 0) {
-      REPORT(Reporter::INFO)
-          << population->info() << " " << timeInfo(startTime);
+      BOOST_LOG(rdInfoLog) << population->info() << " " << timeInfo(startTime) << endl;
     }
     if (population->getBestScore() > bestScore) {
       bestScore = population->getBestScore();
       lastImprovementOp = nOps;
-      auto format = boost::format("OP %5d Fit %7.3f %s") % nOps % bestScore %
+      auto format = boost::format("OP %5d Fit %7.3f %s\n") % nOps % bestScore %
                     timeInfo(startTime);
-      REPORT(Reporter::INFO) << format.str();
+      BOOST_LOG(rdInfoLog) << format.str() ;
     }
     if (nOps - lastImprovementOp > 5000) {
-      REPORT(Reporter::INFO) << "Op " << nOps << " No improvement since "
-                             << lastImprovementOp << " finishing..";
+      BOOST_LOG(rdInfoLog) << "Op " << nOps << " No improvement since "
+                           << lastImprovementOp << " finishing.." << endl;
       break;
     }
   }
   const shared_ptr<RGroupDecompositionChromosome> best = population->getBest();
-  REPORT(Reporter::DETAIL) << "Best solution " << best->info() << endl;
-  REPORT(Reporter::DETAIL) << population->populationInfo();
+  BOOST_LOG(rdDebugLog) << "Best solution " << best->info() << endl;
+  BOOST_LOG(rdDebugLog) << population->populationInfo() ;
 
   auto ties = population->getTiedBest();
   auto permutations =
@@ -228,7 +236,7 @@ vector<vector<size_t>> RGroupGa::run() {
           ties, [](const shared_ptr<RGroupDecompositionChromosome> c) {
             return c->getPermutation();
           });
-  REPORT(Reporter::INFO) << "Execution " << timeInfo(startTime);
+  BOOST_LOG(rdInfoLog) << "Execution " << timeInfo(startTime) << std::endl;
   return permutations;
 }
 

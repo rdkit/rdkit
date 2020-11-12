@@ -1,9 +1,12 @@
-/*
- * Util.h
- *
- *  Created on: Apr 5, 2013
- *      Author: gjones
- */
+//
+//  Copyright (C) 2020 Gareth Jones, Glysade LLC
+//
+//   @@ All Rights Reserved @@
+//  This file is part of the RDKit.
+//  The contents are covered by the terms of the BSD license
+//  which is included in the file license.txt, found at the root
+//  of the RDKit source tree.
+
 
 #ifndef UTIL_H_
 #define UTIL_H_
@@ -23,20 +26,17 @@
 #include <algorithm>
 #include <boost/optional.hpp>
 
-#include <Eigen/Dense>
-
-
 /*
  * Utility methods
  */
 namespace GarethUtil {
 
-using namespace std;
+    using namespace std;
 
 /*
  * Return current time as string
  */
-string currentTime();
+    string currentTime();
 
 /**
  *
@@ -44,13 +44,13 @@ string currentTime();
  * @param prefix
  * @return true id str starts with prefix
  */
-bool startsWith(string str, string prefix);
+    bool startsWith(string str, string prefix);
 
 /**
  *
  * @return current user name
  */
-string getUserName();
+    string getUserName();
 
 /**
  * Template function to convert a string to a type.  Can optionally process a substring
@@ -61,26 +61,27 @@ string getUserName();
  * @param end optional end position
  * @return
  */
-template<typename T> T convertString(const string & str, bool * const ok =
-        nullptr, size_t start = 0, size_t noChars = 0) {
-    if (ok != nullptr)
-        *ok = false;
-    T rtn;
-    if (str.empty())
-        return rtn;
-    if (start >= str.length())
-        return rtn;
-    if (noChars == 0)
-        noChars = str.length() - start;
-    string field = str.substr(start, noChars);
-    stringstream ss(field);
-    ss >> rtn;
-    if (!ss.fail()) {
+    template<typename T>
+    T convertString(const string &str, bool *const ok =
+    nullptr, size_t start = 0, size_t noChars = 0) {
         if (ok != nullptr)
-            *ok = true;
+            *ok = false;
+        T rtn;
+        if (str.empty())
+            return rtn;
+        if (start >= str.length())
+            return rtn;
+        if (noChars == 0)
+            noChars = str.length() - start;
+        string field = str.substr(start, noChars);
+        stringstream ss(field);
+        ss >> rtn;
+        if (!ss.fail()) {
+            if (ok != nullptr)
+                *ok = true;
+        }
+        return rtn;
     }
-    return rtn;
-}
 
 /**
  * Template function to write all elements of a vector to a string
@@ -89,24 +90,25 @@ template<typename T> T convertString(const string & str, bool * const ok =
  * @param seperator
  * @return
  */
-template<typename T> string collectionToString(const T & vec,
-        const string & seperator = ", ") {
-    stringstream ss;
-    std::copy(vec.begin(), vec.end(),
-            ostream_iterator<typename T::value_type>(ss, seperator.c_str()));
-    // erase trailing separator
-    string rtn = ss.str();
-    if (!rtn.empty())
-        rtn.erase(rtn.length() - seperator.length(), seperator.length());
-    return rtn;
-}
+    template<typename T>
+    string collectionToString(const T &vec,
+                              const string &seperator = ", ") {
+        stringstream ss;
+        std::copy(vec.begin(), vec.end(),
+                  ostream_iterator<typename T::value_type>(ss, seperator.c_str()));
+        // erase trailing separator
+        string rtn = ss.str();
+        if (!rtn.empty())
+            rtn.erase(rtn.length() - seperator.length(), seperator.length());
+        return rtn;
+    }
 
 /**
  * Removes any trailing linefeed (\r) from a string
  * @param line
  * @return
  */
-string & removeTrailingLF(string & line);
+    string &removeTrailingLF(string &line);
 
 /**
  * Determines if a key is present in a map
@@ -116,52 +118,52 @@ string & removeTrailingLF(string & line);
  * @param value  optionally set the value for the key
  * @return
  */
-template<typename K, typename V>
-bool isKeyPresent(const K key, const map<K, V> & map,
-        V * const value = nullptr) {
-    auto iter = map.find(key);
-    if (iter != map.end()) {
-        if (value != nullptr)
-            *value = iter->second;
-        return true;
+    template<typename K, typename V>
+    bool isKeyPresent(const K key, const map<K, V> &map,
+                      V *const value = nullptr) {
+        auto iter = map.find(key);
+        if (iter != map.end()) {
+            if (value != nullptr)
+                *value = iter->second;
+            return true;
+        }
+        return false;
     }
-    return false;
-}
 
 /**
  * Bs whitespace from beginning and end of string.  Original argument is modified and returned.
  * @param str
  * @return
  */
-string & trim(string & str);
+    string &trim(string &str);
 
 /**
  * Converts string to upper case.  Original argument is modified and returned.
  * @param str
  * @return
  */
-string & toUpperCase(string & str);
+    string &toUpperCase(string &str);
 
 /**
  * Converts string to lower case.  Original argument is modified and returned.
  * @param str
  * @return
  */
-string & toLowerCase(string & str);
+    string &toLowerCase(string &str);
 
 /**
  * @param str1
  * @param str2
  * @return true if the two strings are equal
  */
-bool equals(const string & str1, const string & str2);
+    bool equals(const string &str1, const string &str2);
 
 /**
  * @param str1
  * @param str2
  * @return true if the two strings are equal (case insensitive)
  */
-bool equalsIgnoreCase(const string & str1, const string & str2);
+    bool equalsIgnoreCase(const string &str1, const string &str2);
 
 /**
  *
@@ -169,7 +171,7 @@ bool equalsIgnoreCase(const string & str1, const string & str2);
  * @param suffix
  * @return true if str ends with suffix
  */
-bool endsWith(const string & str, const string & suffix);
+    bool endsWith(const string &str, const string &suffix);
 
 /**
  *
@@ -177,10 +179,11 @@ bool endsWith(const string & str, const string & suffix);
  * @param value
  * @return true if vector contains value
  */
-template<typename T>
-bool contains(std::vector<T> vector, T value) {
-    return std::find(vector.begin(), vector.end(), value) != vector.end();
-}
+    template<typename T>
+    bool contains(std::vector<T> vector, T value) {
+        return std::find(vector.begin(), vector.end(), value) != vector.end();
+    }
+
 /**
  * Determines if two double numbers are equal within multiples of machine precision
  *
@@ -189,7 +192,7 @@ bool contains(std::vector<T> vector, T value) {
  * @param ulp machine precision (units in the last place)
  * @return
  */
-bool equals(const double d1, const double d2, const int ulp);
+    bool equals(const double d1, const double d2, const int ulp);
 
 /**
  * Returns true if the two numbers are within epsilon of each other
@@ -199,7 +202,7 @@ bool equals(const double d1, const double d2, const int ulp);
  * @param epsilon
  * @return
  */
-bool equals(const double d1, const double d2, const double epsilon);
+    bool equals(const double d1, const double d2, const double epsilon);
 
 /**
  * Determines if two double numbers are within one unit of the last place.
@@ -208,7 +211,7 @@ bool equals(const double d1, const double d2, const double epsilon);
  * @param d2
  * @return
  */
-bool equals(const double d1, const double d2);
+    bool equals(const double d1, const double d2);
 
 /**
  * Finds the first occurrence of an matching item in a list
@@ -217,15 +220,15 @@ bool equals(const double d1, const double d2);
  * @param matcher
  * @return
  */
-template<typename T>
-boost::optional<T> findFirstInList(const std::vector<T> & values,
-        const function<bool(T)> & matcher) {
-    auto iter = std::find_if(values.cbegin(), values.cend(), matcher);
-    if (iter != values.cend()) {
-        return *iter;
+    template<typename T>
+    boost::optional<T> findFirstInList(const std::vector<T> &values,
+                                       const function<bool(T)> &matcher) {
+        auto iter = std::find_if(values.cbegin(), values.cend(), matcher);
+        if (iter != values.cend()) {
+            return *iter;
+        }
+        return boost::none;
     }
-    return boost::none;
-}
 
 /**
  * Finds the first occurrence of an matching item in a list of unique pointers
@@ -234,16 +237,16 @@ boost::optional<T> findFirstInList(const std::vector<T> & values,
  * @param matcher
  * @return
  */
-template<typename T>
-boost::optional<T *> findFirstInUniquePtrList(
-        const std::vector<unique_ptr<T>> & values,
-        const function<bool(const unique_ptr<T> &)> & matcher) {
-    auto iter = std::find_if(values.cbegin(), values.cend(), matcher);
-    if (iter != values.cend()) {
-        return iter->get();
+    template<typename T>
+    boost::optional<T *> findFirstInUniquePtrList(
+            const std::vector<unique_ptr<T>> &values,
+            const function<bool(const unique_ptr<T> &)> &matcher) {
+        auto iter = std::find_if(values.cbegin(), values.cend(), matcher);
+        if (iter != values.cend()) {
+            return iter->get();
+        }
+        return boost::none;
     }
-    return boost::none;
-}
 
 /**
  * Removes all items from a list that DON'T match the filter.  Alters and returns the original list.
@@ -252,13 +255,13 @@ boost::optional<T *> findFirstInUniquePtrList(
  * @param filter
  * @return
  */
-template<typename T>
-std::vector<T> & filterList(std::vector<T> & values,
-        const function<bool(T &)> & filter) {
-    auto iter = remove_if(values.begin(), values.end(), not1(filter));
-    values.erase(iter, values.end());
-    return values;
-}
+    template<typename T>
+    std::vector<T> &filterList(std::vector<T> &values,
+                               const function<bool(T &)> &filter) {
+        auto iter = remove_if(values.begin(), values.end(), not1(filter));
+        values.erase(iter, values.end());
+        return values;
+    }
 
 /**
  * Creates a new vector of items in the input vector that match the filter
@@ -266,14 +269,14 @@ std::vector<T> & filterList(std::vector<T> & values,
  * @param filter
  * @return
  */
-template<typename T>
-std::vector<T> filterListToNewList(const std::vector<T> & values,
-        const function<bool(const T &)> & filter) {
-    std::vector<T> newValues;
-    newValues.reserve(values.size());
-    copy_if(values.begin(), values.end(), back_inserter(newValues), filter);
-    return newValues;
-}
+    template<typename T>
+    std::vector<T> filterListToNewList(const std::vector<T> &values,
+                                       const function<bool(const T &)> &filter) {
+        std::vector<T> newValues;
+        newValues.reserve(values.size());
+        copy_if(values.begin(), values.end(), back_inserter(newValues), filter);
+        return newValues;
+    }
 
 /**
  * Creates a new vector of items in the input vector that match the filter.
@@ -285,19 +288,19 @@ std::vector<T> filterListToNewList(const std::vector<T> & values,
  * @param filter
  * @return
  */
-template<typename T>
-std::vector<T *> filterUniquePtrListToRawPtrList(
-        const std::vector<unique_ptr<T>> & values,
-        const function<bool(T &)> & filter) {
-    std::vector<T *> newValues;
-    newValues.reserve(values.size());
-    for (const auto & value : values) {
-        if (filter(*value)) {
-            newValues.push_back(value.get());
+    template<typename T>
+    std::vector<T *> filterUniquePtrListToRawPtrList(
+            const std::vector<unique_ptr<T>> &values,
+            const function<bool(T &)> &filter) {
+        std::vector<T *> newValues;
+        newValues.reserve(values.size());
+        for (const auto &value : values) {
+            if (filter(*value)) {
+                newValues.push_back(value.get());
+            }
         }
+        return newValues;
     }
-    return newValues;
-}
 
 /**
  * Specialization of the above for filtering non-const unique_ptrs to const raw pointer filtered list
@@ -305,19 +308,19 @@ std::vector<T *> filterUniquePtrListToRawPtrList(
  * @param filter
  * @return
  */
-template<typename T>
-std::vector<const T *> filterUniquePtrListToConstRawPtrList(
-        const std::vector<unique_ptr<T>> & values,
-        const function<bool(T &)> & filter) {
-    std::vector<const T *> newValues;
-    newValues.reserve(values.size());
-    for (const auto & value : values) {
-        if (filter(*value)) {
-            newValues.push_back(value.get());
+    template<typename T>
+    std::vector<const T *> filterUniquePtrListToConstRawPtrList(
+            const std::vector<unique_ptr<T>> &values,
+            const function<bool(T &)> &filter) {
+        std::vector<const T *> newValues;
+        newValues.reserve(values.size());
+        for (const auto &value : values) {
+            if (filter(*value)) {
+                newValues.push_back(value.get());
+            }
         }
+        return newValues;
     }
-    return newValues;
-}
 
 /**
  * Creates a new list from an existing list by applying the mapping function.
@@ -326,15 +329,15 @@ std::vector<const T *> filterUniquePtrListToConstRawPtrList(
  * @param map
  * @return
  */
-template<typename T, typename V>
-std::vector<V> mapToNewList(const std::vector<T> & values,
-        const function<V(const T &)> & map) {
-    std::vector<V> mappedValues;
-    mappedValues.reserve(values.size());
-    std::transform(values.cbegin(), values.cend(), back_inserter(mappedValues),
-            map);
-    return mappedValues;
-}
+    template<typename T, typename V>
+    std::vector<V> mapToNewList(const std::vector<T> &values,
+                                const function<V(const T &)> &map) {
+        std::vector<V> mappedValues;
+        mappedValues.reserve(values.size());
+        std::transform(values.cbegin(), values.cend(), back_inserter(mappedValues),
+                       map);
+        return mappedValues;
+    }
 
 /**
  * Creates a new list from an existing list by applying the mapping function.
@@ -343,11 +346,11 @@ std::vector<V> mapToNewList(const std::vector<T> & values,
  * @param map
  * @return
  */
-template<typename T>
-std::vector<T> mapToNewList(const std::vector<T> & values,
-        const function<T(const T &)> & map) {
-    return mapToNewList<T, T>(values, map);
-}
+    template<typename T>
+    std::vector<T> mapToNewList(const std::vector<T> &values,
+                                const function<T(const T &)> &map) {
+        return mapToNewList<T, T>(values, map);
+    }
 
 /**
  * Applies a function to every value in a list.
@@ -355,12 +358,12 @@ std::vector<T> mapToNewList(const std::vector<T> & values,
  * @param values
  * @param func
  */
-template<typename T>
-void forEach(const std::vector<T> & values, const function<void(T &)> &func) {
-    for (const auto & v : values) {
-        func(v);
+    template<typename T>
+    void forEach(const std::vector<T> &values, const function<void(T &)> &func) {
+        for (const auto &v : values) {
+            func(v);
+        }
     }
-}
 
 /**
  * Reduces a vector to a single value of a different type using the accumulator function.
@@ -369,15 +372,15 @@ void forEach(const std::vector<T> & values, const function<void(T &)> &func) {
  * @param accumulator function takes accumulating value as first argument and current list value as second.
  * @return
  */
-template<typename T, typename R>
-R reduce(const std::vector<T> & values, const R & startingValue,
-        const function<R(R &, const T &)> accumulator) {
-    R currentValue = startingValue;
-    for (auto iter = values.cbegin(); iter != values.cend(); ++iter) {
-        currentValue = accumulator(currentValue, *iter);
+    template<typename T, typename R>
+    R reduce(const std::vector<T> &values, const R &startingValue,
+             const function<R(R &, const T &)> accumulator) {
+        R currentValue = startingValue;
+        for (auto iter = values.cbegin(); iter != values.cend(); ++iter) {
+            currentValue = accumulator(currentValue, *iter);
+        }
+        return currentValue;
     }
-    return currentValue;
-}
 
 /**
  * Writes an object to a string using the stream << operator.
@@ -385,12 +388,12 @@ R reduce(const std::vector<T> & values, const R & startingValue,
  * @param obj
  * @return
  */
-template<typename T>
-string printToString(T obj) {
-    stringstream ss;
-    ss << obj;
-    return ss.str();
-}
+    template<typename T>
+    string printToString(T obj) {
+        stringstream ss;
+        ss << obj;
+        return ss.str();
+    }
 
 /**
  * Retrieve an environment variable value, or none if it is not set.
@@ -398,7 +401,7 @@ string printToString(T obj) {
  * @param name
  * @return
  */
-boost::optional<string> getEnv(const string &name);
+    boost::optional<string> getEnv(const string &name);
 
 /**
  * Performs filesystem glob and returns the result as a vector of paths
@@ -406,21 +409,8 @@ boost::optional<string> getEnv(const string &name);
  * @param pattern
  * @return
  */
-std::vector<string> glob(const string & pattern);
+    std::vector<string> glob(const string &pattern);
 
-/**
- * Prints an Eigen matrix to stdout (useful for debugging)
- *
- * @param m
- */
-void printMatrix(const Eigen::MatrixXd & m);
-
-/**
- * Prints an Eigen vector to stdout
- *
- * @param v
- */
-void printVector(const Eigen::VectorXd & v);
 }
 
 #endif /* UTIL_H_ */

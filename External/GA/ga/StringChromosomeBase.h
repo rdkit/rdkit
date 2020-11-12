@@ -1,13 +1,18 @@
+//
+//  Copyright (C) 2020 Gareth Jones, Glysade LLC
+//
+//   @@ All Rights Reserved @@
+//  This file is part of the RDKit.
+//  The contents are covered by the terms of the BSD license
+//  which is included in the file license.txt, found at the root
+//  of the RDKit source tree.
+//
+
 /**
- *
- * StringChromosome.h
- *
  * A template class for GA array based (e.g. bool, int) chromosomes.
  *
  * A ChromosomePolicy is required.  It's contract includes a initialization,
  * mutate and allowSwitch methods.
- *
- * 4/13 Gareth Jones
  */
 
 #ifndef STRINGCHROMOSOME_H_

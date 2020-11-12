@@ -1,6 +1,13 @@
 //
-// Created by gareth on 11/4/20.
+//  Copyright (C) 2020 Gareth Jones, Glysade LLC
 //
+//   @@ All Rights Reserved @@
+//  This file is part of the RDKit.
+//  The contents are covered by the terms of the BSD license
+//  which is included in the file license.txt, found at the root
+//  of the RDKit source tree.
+//
+
 #include <RDGeneral/RDLog.h>
 #include <iostream>
 #include <fstream>
@@ -20,6 +27,7 @@ using namespace RDKit;
 // Example system based on Brian's MultipleCores notebook for profiling
 int main() {
   RDLog::InitLogs();
+  boost::logging::disable_logs("rdApp.debug");
 
   vector<shared_ptr<ROMol>> molecules;
   {
@@ -70,5 +78,5 @@ int main() {
   }
   cerr << "Added " << numberAdded << " compounds to decomposition" << endl;
   auto result = decomposition.process();
-  cerr << "Results success " << result.success << " score " << result.score;
+  cerr << "Results success " << result.success << " score " << result.score << endl;
 }

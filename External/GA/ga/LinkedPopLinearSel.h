@@ -1,13 +1,18 @@
+//
+//  Copyright (C) 2020 Gareth Jones, Glysade LLC
+//
+//   @@ All Rights Reserved @@
+//  This file is part of the RDKit.
+//  The contents are covered by the terms of the BSD license
+//  which is included in the file license.txt, found at the root
+//  of the RDKit source tree.
+//
+
 /*
- * LinkedPopLinearSel.h
- *
  * A template for providing a steady state no-dupliates GA with
  * linear-normalized parent selection.
  *
  * Requires valid Chromosome and PopulationPolicy classes.
- *
- *  Created on: Apr 15, 2013
- *      Author: gjones
  */
 
 #ifndef LINKEDPOPLINEARSEL_H_
