@@ -77,6 +77,6 @@ int main() {
     numberAdded = decomposition.add(*molecule);
   }
   cerr << "Added " << numberAdded << " compounds to decomposition" << endl;
-  auto result = decomposition.process();
+  auto result = decomposition.processAndScore();
   cerr << "Results success " << result.success << " score " << result.score << endl;
 }

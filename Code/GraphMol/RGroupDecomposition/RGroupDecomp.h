@@ -117,7 +117,8 @@ class RDKIT_RGROUPDECOMPOSITION_EXPORT RGroupDecomposition {
   ~RGroupDecomposition();
 
   int add(const ROMol &mol);
-  RGroupDecompositionProcessResult process();
+  RGroupDecompositionProcessResult processAndScore();
+  bool process();
 
   const RGroupDecompositionParameters &params() const;
   //! return the current group labels

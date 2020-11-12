@@ -403,14 +403,6 @@ namespace GarethUtil {
  */
     boost::optional<string> getEnv(const string &name);
 
-/**
- * Performs filesystem glob and returns the result as a vector of paths
- *
- * @param pattern
- * @return
- */
-    std::vector<string> glob(const string &pattern);
-
 }
 
 #endif /* UTIL_H_ */

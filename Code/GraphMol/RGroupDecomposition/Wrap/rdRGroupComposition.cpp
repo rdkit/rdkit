@@ -83,11 +83,11 @@ class RGroupDecompositionHelper {
   }
   bool Process() {
     NOGIL gil;
-    return decomp->process().success;
+    return decomp->process();
   }
   python::tuple ProcessAndScore() {
     NOGIL gil;
-    auto result = decomp->process();
+    auto result = decomp->processAndScore();
     return python::make_tuple(result.success, result.score);
   }
 

@@ -19,4 +19,4 @@ rdkit_test(testRGroupDecomp testRGroupDecomp.cpp
 		LINK_LIBRARIES RGroupDecomposition )
 
 add_executable(gaExample GaExample.cpp)
-target_link_libraries(gaExample RGroupDecomposition ${Boost_SYSTEM_LIBRARY})
+target_link_libraries(gaExample RGroupDecomposition ${LIB_FUZZING_ENGINE})

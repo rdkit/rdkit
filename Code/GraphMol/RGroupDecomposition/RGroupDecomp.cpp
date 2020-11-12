@@ -307,7 +307,11 @@ int RGroupDecomposition::add(const ROMol &inmol) {
   return data->matches.size() - 1;
 }
 
-RGroupDecompositionProcessResult RGroupDecomposition::process() {
+bool RGroupDecomposition::process() {
+  return processAndScore().success;
+}
+
+RGroupDecompositionProcessResult RGroupDecomposition::processAndScore() {
   try {
     const bool prune = true;
     const bool finalize = true;
