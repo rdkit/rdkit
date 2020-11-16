@@ -305,6 +305,8 @@ class RDKIT_SUBSTRUCTLIBRARY_EXPORT PatternNumBitsHolder : public FPHolderBase {
   virtual ExplicitBitVect *makeFingerprint(const ROMol &m) const {
     return PatternFingerprintMol(m, numBits);
   }
+  const unsigned int &getNumBits() const { return numBits; };
+  unsigned int &getNumBits() { return numBits; };
 };
 
 //! Substructure Search a library of molecules

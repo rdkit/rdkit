@@ -113,7 +113,7 @@ void test1() {
   std::vector<SubstructLibrary*> libs;
   libs.push_back(&ssslib);
 
-#ifdef RDK_USE_BOOST_SERIALIZATION  
+#ifdef RDK_USE_BOOST_SERIALIZATION
   std::string pickle = ssslib.Serialize();
   SubstructLibrary serialized;
   serialized.initFromString(pickle);
@@ -188,7 +188,7 @@ void test2() {
   std::vector<SubstructLibrary*> libs;
   libs.push_back(&ssslib);
 
-#ifdef RDK_USE_BOOST_SERIALIZATION  
+#ifdef RDK_USE_BOOST_SERIALIZATION
   std::string pickle = ssslib.Serialize();
   SubstructLibrary serialized;
   serialized.initFromString(pickle);
@@ -239,7 +239,7 @@ void test3() {
   std::vector<SubstructLibrary*> libs;
   libs.push_back(&ssslib);
 
-#ifdef RDK_USE_BOOST_SERIALIZATION  
+#ifdef RDK_USE_BOOST_SERIALIZATION
   std::string pickle = ssslib.Serialize();
   SubstructLibrary serialized;
   serialized.initFromString(pickle);
@@ -289,7 +289,7 @@ void test4() {
   std::vector<SubstructLibrary*> libs;
   libs.push_back(&ssslib);
 
-#ifdef RDK_USE_BOOST_SERIALIZATION  
+#ifdef RDK_USE_BOOST_SERIALIZATION
   std::string pickle = ssslib.Serialize();
   SubstructLibrary serialized;
   serialized.initFromString(pickle);
@@ -503,6 +503,20 @@ void testPatternNumBitsHolder() {
   for (size_t i = 0; i < matches1.size(); ++i) {
     TEST_ASSERT(matches1.at(i) == matches2.at(i));
   }
+#ifdef RDK_USE_BOOST_SERIALIZATION
+  for (unsigned int i = 0; i < 2; ++i) {
+    std::string pickle = ssslib1.Serialize();
+    SubstructLibrary serialized;
+    serialized.initFromString(pickle);
+    TEST_ASSERT(serialized.size() == ssslib1.size());
+    auto seriailzed_pattern_holder = dynamic_cast<PatternNumBitsHolder *>(serialized.getFpHolder().get());
+    TEST_ASSERT(seriailzed_pattern_holder);
+    auto orig_pattern_holder = dynamic_cast<PatternNumBitsHolder *>(ssslib1.getFpHolder().get());
+    TEST_ASSERT(orig_pattern_holder);
+    TEST_ASSERT(seriailzed_pattern_holder->getNumBits() == orig_pattern_holder->getNumBits());
+    orig_pattern_holder->getNumBits() = 1024;
+  }
+#endif
 }
 
 int main() {
