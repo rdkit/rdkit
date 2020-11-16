@@ -9,6 +9,7 @@
 //
 
 #include "MolFragmenter.h"
+#include "ChemTransforms.h"
 #include <RDGeneral/utils.h>
 #include <RDGeneral/Invariant.h>
 #include <RDGeneral/RDLog.h>
@@ -32,6 +33,7 @@
 #include <RDGeneral/BoostEndInclude.h>
 
 #include <sstream>
+#include <map>
 
 namespace RDKit {
 namespace MolFragmenter {
@@ -591,6 +593,231 @@ ROMol *fragmentOnBRICSBonds(const ROMol &mol) {
   }
   return fragmentOnBonds(mol, bondPatterns, &(atomEnvs.get()));
 }
+} // End of MolFragmenter
 
-}  // end of namespace MolFragmenter
+namespace {
+// Get the atom label - this might be useful as a util class
+unsigned int get_label(const Atom *a, const MolzipParams &p) {
+  unsigned int idx = 0; // 0 is no label?
+  switch(p.label) {
+  case AtomLabel::AtomMapNumber:
+    return a->getAtomMapNum();
+  case AtomLabel::Isotope:
+    return a->getIsotope();
+  case AtomLabel::AtomType: {
+    idx = std::distance(p.atomSymbols.begin(),
+                        std::find(p.atomSymbols.begin(), p.atomSymbols.end(),
+                                  a->getSymbol()));
+    if(idx == p.atomSymbols.size()) {
+      idx = 0; // not found since iterator == end()
+    }
+    break;
+  }
+  }
+  return idx;
+}
+ 
+// Map the atoms based no the current label settings
+//  label_id -> atom
+// no two atoms int the same molecule can have the same label
+std::map<unsigned int, const Atom*> get_mappings(const ROMol &a, const MolzipParams &p,
+                                                 int mol) {
+  std::map<unsigned int, const Atom*> mappings;
+  for(auto *atom : a.atoms()) {
+      atom->setProp<int>("mol", mol);
+    unsigned int idx = get_label(atom, p);
+    if(idx) {
+        PRECONDITION(mappings.find(idx) == mappings.end(),
+             "duplicate label in molecule, can't molzip");
+        mappings[idx] = atom;
+    }
+  }
+  return mappings;
+}
+
+// Return the connected atom
+//  n.b. There can be only one connection from a mapped atom
+const Atom *get_other_atom(const Atom *a) {
+  auto &m = a->getOwningMol();
+  if(m.getAtomDegree(a) != 1)
+    return nullptr;
+  
+  for(const auto &nbrIdx : boost::make_iterator_range(m.getAtomNeighbors(a))) {
+    return m[nbrIdx];
+  }
+  return nullptr; // can't get here
+}
+
+// Are two vectors simple rotations of each other
+bool is_rotation(std::vector<unsigned int> orders1, const std::vector<unsigned int> &orders2) {
+  assert(orders1.size() == orders2.size());//, "Order vectors aren't the same length");
+  for(size_t i=0; i<orders1.size(); ++i) {
+    std::rotate(orders1.begin(), orders1.begin()+1, orders1.end());
+    if (orders1 == orders2)
+      return true;
+  }
+  return false;
+}
+
+const std::string CHIRAL_TAG = "chiral_tag";
+const std::string BOND_ME = "BOND_ME";
+const std::string DELETE_ME = "DELETE_ME";
+
+std::vector<unsigned int> get_marked_chiral_orders(const Atom *atom) {
+    std::vector<unsigned int> orders;
+    const std::string tag = atom->getProp<std::string>(CHIRAL_TAG);
+    auto &mol = atom->getOwningMol();
+    for(const auto &nbrIdx : boost::make_iterator_range(mol.getAtomNeighbors(atom))) {
+        orders.push_back(mol[nbrIdx]->getProp<unsigned int>(tag));
+    }
+    return orders;
+}
+
+// mark the original orders of chirality around the atom with a tag unique to
+//  the original atom
+void mark_original_chiral_orders(const Atom *atom) {
+  std::string tag = "chirality_around_atom_" + std::to_string(atom->getIdx());
+  atom->setProp<std::string>(CHIRAL_TAG, tag);
+  int order = 0;
+  auto &mol = atom->getOwningMol();
+  for(const auto &nbrIdx : boost::make_iterator_range(mol.getAtomNeighbors(atom))) {
+    mol[nbrIdx]->setProp<unsigned int>(tag, order++);
+  }
+}
+  
+//  Save the original atom chiral orderings
+struct ChiralBookmark {
+  Atom *atom;
+  std::vector<unsigned int> orders;
+  ChiralBookmark() : atom(nullptr), orders() {
+    
+  }
+
+  ChiralBookmark(Atom *atom) : atom(atom), orders(get_marked_chiral_orders(atom)) {
+  }
+
+  ChiralBookmark(const ChiralBookmark &rhs) : atom(rhs.atom), orders(rhs.orders) {
+  }
+
+  ChiralBookmark& operator=(const ChiralBookmark&rhs) {
+        if(this != &rhs) {
+            atom = rhs.atom;
+            orders = rhs.orders;
+        }
+            return *this;
+  }
+  void restore_chirality() {
+    // if our ordering is not a rotation of the orignial orders
+    //  (with the dummy now a real atom) our chirality must have flipped.
+    auto orders2 = get_marked_chiral_orders(atom);
+    if (!is_rotation(orders, orders2))
+      atom->invertChirality();
+  }
+};
+
+
+// copy the chiral order from an atom being replaced (i.e. dummy -> C)
+//  and return the bookmarked original chiralities prior to any reordering
+void copy_chirality(Atom *chiral_atom, Atom *future_bond_atom,
+			std::map<const Atom *, ChiralBookmark> &remap_chiral,
+			std::vector<const Atom*> &deletions) {
+  std::string tag;
+  PRECONDITION(chiral_atom && chiral_atom->getPropIfPresent(CHIRAL_TAG, tag), "Atom is not chiral");
+  
+  remap_chiral[chiral_atom] = ChiralBookmark(chiral_atom);
+  auto &m = chiral_atom->getOwningMol();
+  for(const auto &nbrIdx : boost::make_iterator_range(m.getAtomNeighbors(chiral_atom))) {
+    Atom *oatom = m[nbrIdx];
+      int count = 0;
+    if (std::find(deletions.begin(), deletions.end(), oatom) != deletions.end()) {
+      auto order = oatom->getProp<unsigned int>(tag);
+      future_bond_atom->setProp<unsigned int>(tag, order);
+      count++;
+    }
+      if (count > 1) {
+          BOOST_LOG(rdWarningLog) <<  "Can't handle more than one deletion around a chiral atom, chirality will be suspect." << std::endl;
+      }
+  }
+}
+}
+
+std::unique_ptr<ROMol> molzip(
+        const ROMol &a, const ROMol &b, const MolzipParams &params) {
+  auto mapsa = get_mappings(a, params, 1);
+  auto mapsb = get_mappings(b, params, 2);
+
+  // mark the ations we need to perform to combine the molecules, basically we need
+  //  to combine the mols, and bond the mapped atoms connected to the dummies and delete the dummies.
+  //  i.e. C[*:1] + N[*:1] ==> CN  
+  int count = 0;
+  for(auto &kv : mapsa) {
+    auto it = mapsb.find(kv.first);
+    if(it != mapsb.end()) {
+      auto atom_a = kv.second;
+      auto anchor_a = get_other_atom(atom_a);
+      auto atom_b = it->second;
+      auto anchor_b = get_other_atom(atom_b);
+      PRECONDITION(anchor_a, "Molzip Labelled atom in molecule a must only have one connection");
+      PRECONDITION(anchor_b, "Molzip Labelled atom in molecule b must only have one connection");
+      if(params.preserveChirality) {
+        if(anchor_a->getChiralTag()) {
+          mark_original_chiral_orders(anchor_a);
+        }
+        if(anchor_b->getChiralTag()) {
+          mark_original_chiral_orders(anchor_b);
+        }
+      }
+
+      count++;
+      anchor_a->setProp<int>(BOND_ME, count);
+      anchor_b->setProp<int>(BOND_ME, count);
+      atom_a->setProp<int>(DELETE_ME, count);
+      atom_b->setProp<int>(DELETE_ME, count);
+    }
+  }
+
+  auto actions = dynamic_cast<RWMol*>(combineMols(a, b));
+  assert (actions);
+
+  if(count) {
+    std::map<unsigned int, std::vector<Atom*>> bonds;
+    std::vector<const Atom*> deletions;
+    for(auto *atom : actions->atoms()) {
+      if(atom->hasProp(BOND_ME)) {
+	     bonds[atom->getProp<int>(BOND_ME)].push_back(atom);
+      } else if ( atom->hasProp(DELETE_ME) ) {
+          deletions.push_back(atom);
+      }
+    }
+    
+    std::map<const Atom *, ChiralBookmark> remap_chiral;
+    // add the bonds and mark original chirality where appropriate
+    for(auto &kv : bonds) {
+      assert(kv.second.size() == 2);
+      // PRECONODITION?
+      Atom *a = kv.second[0];
+      Atom *b = kv.second[1];
+      if (a->hasProp(CHIRAL_TAG)) {
+          copy_chirality(a, b, remap_chiral, deletions);
+      }
+      if(b->hasProp(CHIRAL_TAG)) {
+          copy_chirality(b, a, remap_chiral, deletions);
+      }
+      actions->addBond(a->getIdx(), b->getIdx(), Bond::SINGLE);
+    }
+
+    for(auto &kv : deletions) {
+      actions->removeAtom(kv->getIdx());
+    }
+
+    for(auto &kv : remap_chiral) {
+      kv.second.restore_chirality();
+    }
+    actions->updatePropertyCache();
+  }
+
+  ROMol *m = dynamic_cast<ROMol*>(actions);
+  return std::unique_ptr<ROMol>(m);
+}
+  
 }  // end of namespace RDKit

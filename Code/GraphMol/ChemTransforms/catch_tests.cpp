@@ -55,3 +55,43 @@ TEST_CASE("Github #1039", "[]") {
     CHECK(MolToSmiles(*pieces) == "*C.[1*]C(O)(F)Cl");
   }
 }
+
+TEST_CASE("molzip", "[]") {
+    SECTION("basic tests") {
+        auto a = "C[*:1]"_smiles;
+        auto b = "N[*:1]"_smiles;
+        auto mol = molzip(*a,*b);
+        CHECK(MolToSmiles(*mol) == "CN");
+    }
+    {
+        auto a = "[C@H](Br)([*:1])F"_smiles;
+        auto b = "[*:1]N"_smiles;
+        auto mol = molzip(*a,*b);
+        CHECK(MolToSmiles(*mol) == "N[C@H](F)Br");
+        MolzipParams p;
+        p.preserveChirality = true;
+        mol = molzip(*a, *b, p);
+        CHECK(MolToSmiles(*mol) == "N[C@@H](F)Br");
+    }
+    {
+        auto a = "[C@H]([*:1])(Br)F"_smiles;
+        auto b = "[*:1]N"_smiles;
+        auto mol = molzip(*a,*b);
+        CHECK(MolToSmiles(*mol) == "N[C@H](F)Br");
+        MolzipParams p;
+        p.preserveChirality = true;
+        mol = molzip(*a, *b, p);
+        CHECK(MolToSmiles(*mol) == "N[C@H](F)Br");
+    }
+    
+    {
+           auto a = "[C@H]([*:1])(Br)([*:2])"_smiles;
+           auto b = "[*:1]N.[*:2]Br"_smiles;
+           auto mol = molzip(*a,*b);
+           CHECK(MolToSmiles(*mol) == "N[C@H](F)Br");
+           MolzipParams p;
+           p.preserveChirality = true;
+           mol = molzip(*a, *b, p);
+           CHECK(MolToSmiles(*mol) == "N[C@H](F)Br");
+       }
+}
