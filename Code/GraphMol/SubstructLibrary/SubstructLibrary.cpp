@@ -131,7 +131,7 @@ void SubSearcher(const ROMol &in_query, const Bits &bits,
       ++counter;
       if (idxs) {
         idxs->push_back(idx);
-        if (maxResults != -1 && counter == maxResults) {
+        if (maxResults > 0 && counter == maxResults) {
           // if we reached maxResults, record the last idx we processed and bail
           // out
           end = idx;
@@ -169,12 +169,12 @@ int internalGetMatches(
   if (numThreads > 1) {
     std::vector<int> counterVect(numThreads, 0);
     int maxResultsPerThread = maxResults;
-    if (maxResults != -1) {
+    if (maxResults > 0) {
       maxResultsPerThread /= numThreads;
     }
     std::vector<int> maxResultsVect(numThreads, maxResultsPerThread);
     std::vector<unsigned int> endIdxVect(numThreads, endIdx);
-    if (maxResults != -1) {
+    if (maxResults > 0) {
       int excess = maxResults % numThreads;
       for (int i = 0; i < excess; ++i) {
         ++maxResultsVect[i];
@@ -197,7 +197,7 @@ int internalGetMatches(
                      maxResultsVect[thread_group_idx],
                      idxs ? &internal_results[thread_group_idx] : nullptr));
     }
-    if (maxResults != -1) {
+    if (maxResults > 0) {
       // If we are running with maxResults in a multi-threaded settings,
       // some threads may have screened more molecules than others.
       // If maxResults was close to the theoretical maximum, some threads
@@ -237,14 +237,12 @@ int internalGetMatches(
     for (thread_group_idx = 0; thread_group_idx < numThreads;
          ++thread_group_idx) {
       if (idxs) {
-        idxs->insert(
-            idxs->end(),
-            std::make_move_iterator(internal_results[thread_group_idx].begin()),
-            std::make_move_iterator(internal_results[thread_group_idx].end()));
+        idxs->insert(idxs->end(), internal_results[thread_group_idx].begin(),
+                     internal_results[thread_group_idx].end());
       }
       // If there was no maxResults, we still need to count, otherwise
       // this has already been done previously
-      if (maxResults == -1) {
+      if (maxResults < 0) {
         counter += counterVect[thread_group_idx];
       }
     }
@@ -260,7 +258,8 @@ int internalGetMatches(
     std::sort(idxs->begin(), idxs->end());
     // we may have actually accumulated more results than maxResults due
     // to the top up above, so trim the results down if that's the case
-    if (maxResults != -1 && idxs->size() > maxResults) {
+    if (maxResults > 0 &&
+        idxs->size() > static_cast<unsigned int>(maxResults)) {
       idxs->resize(maxResults);
     }
   }
