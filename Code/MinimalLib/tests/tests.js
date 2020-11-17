@@ -98,7 +98,7 @@ function test_generate_aligned_coords(){
     var mol = Module.get_mol(smiles);
     var template = "CC";
     var qmol = Module.get_mol(template);
-    assert.equal(mol.generate_aligned_coords(qmol, true), false);
+    assert.equal(mol.generate_aligned_coords(qmol, true), "");
 }
 
 
