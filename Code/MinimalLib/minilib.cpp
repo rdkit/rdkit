@@ -454,8 +454,8 @@ std::string JSMol::condense_abbreviations_from_defs(
   Abbreviations::condenseMolAbbreviations(*d_mol, abbrevs, maxCoverage);
 }
 
-std::string JSMol::generate_aligned_coords(const JSMol &templateMol,bool useCoordGen){
-  if (!d_mol || !templateMol.d_mol) return "";
+bool JSMol::generate_aligned_coords(const JSMol &templateMol,bool useCoordGen){
+  if (!d_mol || !templateMol.d_mol || !templateMol.d_mol->getNumConformers()) return false;
 
 #ifdef RDK_BUILD_COORDGEN_SUPPORT
   bool oprefer = RDDepict::preferCoordGen;
@@ -469,7 +469,7 @@ std::string JSMol::generate_aligned_coords(const JSMol &templateMol,bool useCoor
 #ifdef RDK_BUILD_COORDGEN_SUPPORT
   RDDepict::preferCoordGen = oprefer;
 #endif
-  return "";
+  return true;
 };
 
 
