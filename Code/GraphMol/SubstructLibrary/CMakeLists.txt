@@ -5,8 +5,6 @@ else()
     set(RDKit_SERIALIZATION_LIBS )
 endif()
 
-if(RDK_BUILD_THREADSAFE_SSS)
-
 rdkit_library(SubstructLibrary
               SubstructLibrary.cpp
 	      PatternFactory.cpp
@@ -25,5 +23,3 @@ endif()
 
 rdkit_test(substructLibraryTest substructLibraryTest.cpp
            LINK_LIBRARIES SubstructLibrary FileParsers )
-
-endif(RDK_BUILD_THREADSAFE_SSS)
