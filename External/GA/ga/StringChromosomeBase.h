@@ -63,16 +63,12 @@ class StringChromosomeBase {
   void onePointCrossover(const StringChromosomeBase &parent2,
                          StringChromosomeBase &child1,
                          StringChromosomeBase &child2) const;
-  void fullMixing(const StringChromosomeBase &parent2,
-                  StringChromosomeBase &child1,
-                  StringChromosomeBase &child2) const;
-  void fullMixingAndCrossover(const StringChromosomeBase &parent2,
-                              StringChromosomeBase &child1,
-                              StringChromosomeBase &child2) const;
-  std::string geneInfo() const;
+ std::string geneInfo() const;
   const T getValue(int pos) const;
   T *const getString() const;
   int getLength() const { return length; }
+  RandomUtil &getRng() const { return rng; }
+  ChromosomePolicy &getChromosomePolicy() const { return chromosomePolicy; }
 };
 
 /**
@@ -228,89 +224,6 @@ void StringChromosomeBase<T, ChromosomePolicy>::onePointCrossover(
     *c2 = *p1;
   }
 }
-
-/**
- * Performs full mixing.  Assumes that the strings primarily comprise dummy
- * values. The children then comprise all non dummy values from the parents.
- * Where both parents have non-dummy values set at the same position child1
- * takes the value from parent1 and child2 takes the value from parent2.
- * @param parent2
- * @param child1
- * @param child2
- */
-template <typename T, typename ChromosomePolicy>
-void StringChromosomeBase<T, ChromosomePolicy>::fullMixing(
-    const StringChromosomeBase &parent2, StringChromosomeBase &child1,
-    StringChromosomeBase &child2) const {
-  T *c1 = child1.string;
-  T *c2 = child2.string;
-  T *p1 = string;
-  T *p2 = parent2.string;
-
-  for (int i = 0; i < length; i++, c1++, c2++, p1++, p2++) {
-    if (*p1 == -1 && *p2 == -1)
-      *c1 = *c2 = -1;
-    else if (*p1 != -1 && *p2 == -1)
-      *c1 = *c2 = *p1;
-    else if (*p1 == -1 && *p2 != -1)
-      *c1 = *c2 = *p2;
-    else {
-      *c1 = *p1;
-      *c2 = *p2;
-    }
-  }
-}
-
-/**
- * Assumes that the strings primarily comprise dummy values. Proceed as for
- * 1 point crossover on integer strings. However if the child is given a
- * dummy value when the other parent has a non-dummy value at a position,
- * then that value is copied to the child.
- * @param parent2
- * @param child1
- * @param child2
- */
-template <typename T, typename ChromosomePolicy>
-void StringChromosomeBase<T, ChromosomePolicy>::fullMixingAndCrossover(
-    const StringChromosomeBase &parent2, StringChromosomeBase &child1,
-    StringChromosomeBase &child2) const {
-  // select crossover site
-  int site = rng.randomInt(0, length);
-
-  bool switchFlag = false;
-  if (chromosomePolicy.isAllowSwitch()) switchFlag = rng.randomBoolean();
-
-  T *c1 = switchFlag ? child2.string.get() : child1.string.get();
-  T *c2 = switchFlag ? child1.string.get() : child2.string.get();
-  T *p1 = string.get();
-  T *p2 = parent2.string.get();
-
-  // create child before cross point
-  int i = 0;
-  for (; i < site; i++, p1++, p2++, c1++, c2++) {
-    if (*p1 == -1 && *p2 != -1)
-      *c1 = *c2 = *p2;
-    else if (*p1 != -1 && *p2 == -1)
-      *c1 = *c2 = *p1;
-    else {
-      *c2 = *p2;
-      *c1 = *p1;
-    }
-  }
-
-  // child after cross point
-  for (; i < length; i++, p1++, p2++, c1++, c2++) {
-    if (*p1 == -1 && *p2 != -1)
-      *c1 = *c2 = *p2;
-    else if (*p1 != -1 && *p2 == -1)
-      *c1 = *c2 = *p1;
-    else {
-      *c2 = *p1;
-      *c1 = *p2;
-    }
-  }
-}
-
 /**
  *
  * @return  a string representation of the chromosome

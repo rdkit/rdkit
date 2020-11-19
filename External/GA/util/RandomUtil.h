@@ -13,6 +13,7 @@
 
 #include <cstdint>
 #include <random>
+#include "export.h"
 
 namespace GarethUtil {
 
@@ -20,7 +21,7 @@ namespace GarethUtil {
  * Singleton class to hold a random number generator
  *
  */
-class RandomUtil {
+class GA_EXPORT RandomUtil {
 public:
 
 	RandomUtil(const RandomUtil & rhs) = delete;

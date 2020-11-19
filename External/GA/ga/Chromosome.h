@@ -11,7 +11,8 @@
 #ifndef CHROMOSOME_H_
 #define CHROMOSOME_H_
 
-#include "string"
+#include <string>
+#include "../util/export.h"
 
 namespace GapeGa {
 
@@ -19,7 +20,7 @@ namespace GapeGa {
  * Base class for all GA chromosomes
  *
  */
-class Chromosome {
+class GA_EXPORT Chromosome {
 private:
 	static int idCounter;
 	int chromosomeId;

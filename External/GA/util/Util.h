@@ -25,6 +25,7 @@
 #include <map>
 #include <algorithm>
 #include <boost/optional.hpp>
+#include "export.h"
 
 /*
  * Utility methods
@@ -44,13 +45,13 @@ namespace GarethUtil {
  * @param prefix
  * @return true id str starts with prefix
  */
-    bool startsWith(string str, string prefix);
+    GA_EXPORT bool startsWith(string str, string prefix);
 
 /**
  *
  * @return current user name
  */
-    string getUserName();
+    GA_EXPORT string getUserName();
 
 /**
  * Template function to convert a string to a type.  Can optionally process a substring
@@ -108,7 +109,7 @@ namespace GarethUtil {
  * @param line
  * @return
  */
-    string &removeTrailingLF(string &line);
+    GA_EXPORT string &removeTrailingLF(string &line);
 
 /**
  * Determines if a key is present in a map
@@ -135,35 +136,35 @@ namespace GarethUtil {
  * @param str
  * @return
  */
-    string &trim(string &str);
+    GA_EXPORT string &trim(string &str);
 
 /**
  * Converts string to upper case.  Original argument is modified and returned.
  * @param str
  * @return
  */
-    string &toUpperCase(string &str);
+    GA_EXPORT string &toUpperCase(string &str);
 
 /**
  * Converts string to lower case.  Original argument is modified and returned.
  * @param str
  * @return
  */
-    string &toLowerCase(string &str);
+    GA_EXPORT string &toLowerCase(string &str);
 
 /**
  * @param str1
  * @param str2
  * @return true if the two strings are equal
  */
-    bool equals(const string &str1, const string &str2);
+    GA_EXPORT bool equals(const string &str1, const string &str2);
 
 /**
  * @param str1
  * @param str2
  * @return true if the two strings are equal (case insensitive)
  */
-    bool equalsIgnoreCase(const string &str1, const string &str2);
+    GA_EXPORT bool equalsIgnoreCase(const string &str1, const string &str2);
 
 /**
  *
@@ -171,7 +172,7 @@ namespace GarethUtil {
  * @param suffix
  * @return true if str ends with suffix
  */
-    bool endsWith(const string &str, const string &suffix);
+    GA_EXPORT bool endsWith(const string &str, const string &suffix);
 
 /**
  *
@@ -192,7 +193,7 @@ namespace GarethUtil {
  * @param ulp machine precision (units in the last place)
  * @return
  */
-    bool equals(const double d1, const double d2, const int ulp);
+    GA_EXPORT bool equals(const double d1, const double d2, const int ulp);
 
 /**
  * Returns true if the two numbers are within epsilon of each other
@@ -202,7 +203,7 @@ namespace GarethUtil {
  * @param epsilon
  * @return
  */
-    bool equals(const double d1, const double d2, const double epsilon);
+    GA_EXPORT bool equals(const double d1, const double d2, const double epsilon);
 
 /**
  * Determines if two double numbers are within one unit of the last place.
@@ -211,7 +212,7 @@ namespace GarethUtil {
  * @param d2
  * @return
  */
-    bool equals(const double d1, const double d2);
+    GA_EXPORT bool equals(const double d1, const double d2);
 
 /**
  * Finds the first occurrence of an matching item in a list
@@ -401,7 +402,7 @@ namespace GarethUtil {
  * @param name
  * @return
  */
-    boost::optional<string> getEnv(const string &name);
+    GA_EXPORT boost::optional<string> getEnv(const string &name);
 
 }
 

@@ -29,7 +29,12 @@
 
 #include "GaOperation.h"
 #include "../util/RandomUtil.h"
+
+// Don't include Reporter for RDKit build as it does not play well with Windows
+// dynamic DLL
+#ifdef INCLUDE_REPORTER
 #include "../util/Reporter.h"
+#endif
 
 namespace GapeGa {
 
@@ -128,14 +133,18 @@ LinkedPopLinearSel<Chromosome, PopulationPolicy>::LinkedPopLinearSel(
     predictTotalScaledFitness += currentFitness;
     currentFitness += scaledFitnessStep;
   }
+#ifdef INCLUDE_REPORTER
   REPORT(Reporter::TRACE) << "totalScaledFitness " << totalScaledFitness
                           << " predictTotalScaledFitness "
                           << predictTotalScaledFitness;
+#endif
   assert(abs(totalScaledFitness - predictTotalScaledFitness) < 1.0e-5);
 
   double predictEndFitness = SELECT_START + (popsize - 1.0) * scaledFitnessStep;
+#ifdef INCLUDE_REPORTER
   REPORT(Reporter::TRACE) << "endFitness " << endFitness
                           << " predictEndFitness " << predictEndFitness;
+#endif
   assert(abs(endFitness - predictEndFitness) < 1.0e-10);
 
   freeChromosomes.reserve(10);
@@ -154,7 +163,9 @@ void LinkedPopLinearSel<Chromosome, PopulationPolicy>::create() {
     addToPopulation(chromosome);
   }
 
+#ifdef INCLUDE_REPORTER
   REPORT(Reporter::DETAIL) << "Created population: " << info();
+#endif
 }
 
 /**
@@ -170,7 +181,9 @@ void LinkedPopLinearSel<Chromosome, PopulationPolicy>::rebuild() {
   }
 
   population.swap(newPopulation);
+#ifdef INCLUDE_REPORTER
   REPORT(Reporter::DETAIL) << "Rebuilt population: " << info();
+#endif
 }
 
 /**
@@ -236,7 +249,9 @@ void LinkedPopLinearSel<Chromosome, PopulationPolicy>::iterate() {
 
   for (size_t i = 0; i < selectedOperation->getnParents(); i++) {
     std::shared_ptr<Chromosome> parent = selectParent();
+#ifdef INCLUDE_REPORTER
     REPORT(Reporter::TRACE) << "Parent " << i << ": " << parent->info();
+#endif
     parents.push_back(parent);
   }
 
@@ -244,14 +259,18 @@ void LinkedPopLinearSel<Chromosome, PopulationPolicy>::iterate() {
 
   int i = 0;
   for (auto& child : children) {
+#ifdef INCLUDE_REPORTER
     REPORT(Reporter::TRACE) << "Child  " << i << ": " << child->info();
+#endif
     child->score();
     addToPopulation(child);
     i++;
   }
 
   nOperations++;
+#ifdef INCLUDE_REPORTER
   REPORT(Reporter::TRACE) << "Finished iteration " << nOperations;
+#endif
 }
 
 /**
@@ -279,7 +298,9 @@ bool LinkedPopLinearSel<Chromosome, PopulationPolicy>::addToPopulation(
     std::multimap<double, std::shared_ptr<Chromosome>>& pop,
     std::shared_ptr<Chromosome>& chromosome) {
   if (!chromosome->isOk()) {
+#ifdef INCLUDE_REPORTER
     REPORT(Reporter::TRACE) << "Bad chromosome not adding to population";
+#endif
     nFail++;
     freeChromosomes.push_back(chromosome);
     return false;
@@ -289,7 +310,9 @@ bool LinkedPopLinearSel<Chromosome, PopulationPolicy>::addToPopulation(
       findExactMatch(*chromosome);
   // don't add if we have an exact match
   if (match != population.end()) {
+#ifdef INCLUDE_REPORTER
     REPORT(Reporter::TRACE) << "Found exact match not adding to population";
+#endif
     nDuplicates++;
     freeChromosomes.push_back(chromosome);
     return false;
@@ -301,7 +324,9 @@ bool LinkedPopLinearSel<Chromosome, PopulationPolicy>::addToPopulation(
     // remove the worst individual- this is at the head of the list
     auto worst = pop.begin()->second;
     pop.erase(pop.begin());
+#ifdef INCLUDE_REPORTER
     REPORT(Reporter::TRACE) << "Removing the worst individual";
+#endif
     freeChromosomes.push_back(worst);
   }
 
@@ -309,16 +334,20 @@ bool LinkedPopLinearSel<Chromosome, PopulationPolicy>::addToPopulation(
   double fitness = chromosome->getFitness();
   std::pair<double, std::shared_ptr<Chromosome>> pair(fitness, chromosome);
   pop.insert(pair);
+#ifdef INCLUDE_REPORTER
   REPORT(Reporter::TRACE) << "Inserted a new chromosome, fitness " << fitness
                           << " popsize " << pop.size() << " "
                           << chromosome->info();
+#endif
 
   nAdded++;
 
   if (fitness > bestScore) {
     boost::format format = boost::format("Op %5d new best: ") % nOperations;
     bestScore = fitness;
+#ifdef INCLUDE_REPORTER
     REPORT(Reporter::DETAIL) << format << getBest()->info();
+#endif
   }
   return true;
 }
@@ -348,7 +377,7 @@ LinkedPopLinearSel<Chromosome, PopulationPolicy>::getBest() const {
 }
 
 template <typename Chromosome, typename PopulationPolicy>
-const vector<std::shared_ptr<Chromosome>>
+const std::vector<std::shared_ptr<Chromosome>>
 LinkedPopLinearSel<Chromosome, PopulationPolicy>::getTiedBest(
     double tolerance) const {
   std::vector<std::shared_ptr<Chromosome>> ties;

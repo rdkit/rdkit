@@ -11,6 +11,7 @@
 #include <ctime>
 #include "RGroupGa.h"
 #include "RGroupDecompData.h"
+#include "../../../External/GA/util/Util.h"
 
 namespace RDKit {
 

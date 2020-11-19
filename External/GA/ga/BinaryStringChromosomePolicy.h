@@ -11,12 +11,12 @@
 #ifndef BINARYSTRINGCHROMOSOMEPOLICY_H
 #define	BINARYSTRINGCHROMOSOMEPOLICY_H
 
-#include "StringChromosomeBase.h"
+#include "../util/export.h"
 #include "../util/RandomUtil.h"
 
 namespace GapeGa {
 
-class BinaryStringChromosomePolicy {
+class GA_EXPORT BinaryStringChromosomePolicy {
 public:
     BinaryStringChromosomePolicy(GarethUtil::RandomUtil & rng_);
     virtual ~BinaryStringChromosomePolicy();
@@ -27,7 +27,7 @@ public:
 private:
     GarethUtil::RandomUtil & rng;
     BinaryStringChromosomePolicy(const BinaryStringChromosomePolicy& orig);
-    BinaryStringChromosomePolicy & operator =(const BinaryStringChromosomePolicy & other);
+    BinaryStringChromosomePolicy & operator=(const BinaryStringChromosomePolicy & other);
 };
 
 }

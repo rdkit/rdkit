@@ -12,11 +12,12 @@
 #define INTEGERSTRINGCHROMOSOMEPOLICY_H_
 
 #include "../util/RandomUtil.h"
+#include "../util/export.h"
 #include "StringChromosomeBase.h"
 
 namespace GapeGa {
 
-class IntegerStringChromosomePolicy {
+class GA_EXPORT IntegerStringChromosomePolicy {
 public:
 	IntegerStringChromosomePolicy(GarethUtil::RandomUtil & rng_, int s);
 	virtual ~IntegerStringChromosomePolicy();

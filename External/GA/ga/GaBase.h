@@ -13,6 +13,7 @@
 
 #include <memory>
 #include "../util/RandomUtil.h"
+#include "../util/export.h"
 
 namespace GapeGa {
 
@@ -23,7 +24,7 @@ using namespace GarethUtil;
  * case an exception should be thrown.
  *
  */
-class GaBase {
+class GA_EXPORT GaBase {
  private:
   std::string fileName;
   GarethUtil::RandomUtil& rng = RandomUtil::getInstance();

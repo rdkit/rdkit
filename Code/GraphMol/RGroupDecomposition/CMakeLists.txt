@@ -18,5 +18,7 @@ endif()
 rdkit_test(testRGroupDecomp testRGroupDecomp.cpp
 		LINK_LIBRARIES RGroupDecomposition )
 
-add_executable(gaExample GaExample.cpp)
+if(RDK_BUILD_CPP_TESTS) 
+	add_executable(gaExample GaExample.cpp)
+endif()
 target_link_libraries(gaExample RGroupDecomposition ${LIB_FUZZING_ENGINE})
