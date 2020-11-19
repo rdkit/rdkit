@@ -87,7 +87,7 @@ class TestCase(unittest.TestCase):
         nbits = 10
         bv1 = DataStructs.ExplicitBitVect(nbits)
         bv1[0]
-        with self.assertRaisesRegexp(IndexError, ""):
+        with self.assertRaisesRegex(IndexError, ""):
             bv1[11]
 
     def test4OnBitsInCommon(self):
@@ -312,6 +312,34 @@ class TestCase(unittest.TestCase):
             self.assertTrue(feq(sim, sims[i]))
             sim = DataStructs.DiceSimilarity(bvs[0], bvs[i])
             self.assertTrue(feq(sim, sims[i]))
+
+
+    def test11BulkNeighbors(self):
+        nbits = 2048
+        bvs = []
+        for bvi in range(1000):
+            bv = DataStructs.ExplicitBitVect(nbits)
+            for j in range(nbits):
+                x = random.randrange(0, nbits)
+                bv.SetBit(x)
+            bvs.append(bv)
+        qs = bvs[:10]
+        db = bvs[10:]
+        tgts = []
+        for q in qs:
+            sims = DataStructs.BulkTanimotoSimilarity(q,db)
+            sim, idx = max((sim, -idx) for idx, sim in enumerate(sims))
+            tgts.append((-idx,sim))
+        nbrs = DataStructs.TanimotoSimilarityNeighbors(qs,db)
+        self.assertEqual(tgts,nbrs)
+
+        tgts = []
+        for q in qs:
+            sims = DataStructs.BulkSokalSimilarity(q,db)
+            sim, idx = max((sim, -idx) for idx, sim in enumerate(sims))
+            tgts.append((-idx,sim))
+        nbrs = DataStructs.SokalSimilarityNeighbors(qs,db)
+        self.assertEqual(tgts,nbrs)
 
 
 if __name__ == '__main__':
