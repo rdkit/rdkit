@@ -93,12 +93,22 @@ function test_abbreviations(){
 }
 
 
+function test_generate_aligned_coords(){
+    var smiles = "CCC";
+    var mol = Module.get_mol(smiles);
+    var template = "CC";
+    var qmol = Module.get_mol(template);
+    assert.equal(mol.generate_aligned_coords(qmol, true), "");
+}
+
+
 Module.onRuntimeInitialized = () => {
     console.log(Module.version());
     test_basics();
     test_sketcher_services();
     test_sketcher_services2();
     test_abbreviations();
+    test_generate_aligned_coords();
     console.log("Tests finished successfully");
 };
 
