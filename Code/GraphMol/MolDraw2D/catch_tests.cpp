@@ -897,6 +897,7 @@ M  V30 END CTAB
 M  END
 )CTAB"_ctab;
     REQUIRE(m);
+    m->getAtomWithIdx(2)->setProp("atomNote", "foo");
     {
       MolDraw2DSVG drawer(350, 300);
       drawer.drawMolecule(*m);

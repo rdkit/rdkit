@@ -2097,7 +2097,7 @@ void MolDraw2D::extractBrackets(const ROMol &mol) {
                            at_cds_[activeMolIdx_][bnd->getBeginAtomIdx()]));
       }
     }
-    for (auto &brk : sg.getBrackets()) {
+    for (const auto &brk : sg.getBrackets()) {
       Point2D p1{brk[0]};
       Point2D p2{brk[1]};
       trans.TransformPoint(p1);
@@ -2108,7 +2108,21 @@ void MolDraw2D::extractBrackets(const ROMol &mol) {
       shp.shapeType = MolDrawShapeType::Polyline;
       shapes_[activeMolIdx_].emplace_back(std::move(shp));
     }
-    // FIX: extract the locations of the bracket annotations
+    if (supportsAnnotations()) {
+      std::string connect;
+      if (sg.getPropIfPresent("CONNECT", connect)) {
+        // annotations go on the last bracket of an sgroup
+        const auto &brkShp = shapes_[activeMolIdx_].back();
+        StringRect rect;
+        // CONNECT goes at the top
+        auto topPt = brkShp.points[1];
+        if (brkShp.points[2].y > topPt.y) {
+          topPt = brkShp.points[2];
+        }
+        rect.trans_ = topPt;
+        annotations_[activeMolIdx_].push_back(std::make_pair(connect, rect));
+      }
+    }
   }
 }  // namespace RDKit
 
