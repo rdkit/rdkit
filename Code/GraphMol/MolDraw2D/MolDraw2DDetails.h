@@ -90,9 +90,15 @@ RDKIT_MOLDRAW2D_EXPORT inline void addBondIndices(const ROMol &mol) {
   }
 };
 
-RDKIT_MOLDRAW2D_EXPORT void drawBracketsForSGroup(
+RDKIT_MOLDRAW2D_EXPORT void drawBracketsPForSGroup(
     MolDraw2D &drawer, const ROMol &mol, const SubstanceGroup &sg,
     const std::vector<Point2D> &atomPs, const RDGeom::Transform2D &tform);
+RDKIT_MOLDRAW2D_EXPORT std::vector<Point2D> getBracketPoints(
+    const Point2D &p1, const Point2D &p2, const Point2D &refPt,
+    const std::vector<std::pair<Point2D, Point2D>> &bondSegments,
+    double bracketFrac = 0.1);
+RDKIT_MOLDRAW2D_EXPORT void drawShapes(MolDraw2D &drawer,
+                                       const std::vector<MolDrawShape> &shapes);
 
 }  // namespace MolDraw2D_detail
 }  // namespace RDKit

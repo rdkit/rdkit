@@ -1,4 +1,6 @@
 //
+//  Copyright (C) 2014-2020 David Cosgrove and Greg Landrum
+//
 //   @@ All Rights Reserved @@
 //  This file is part of the RDKit.
 //  The contents are covered by the terms of the BSD license
@@ -64,6 +66,21 @@ struct DrawColour {
     return {r / v, g / v, b / v, a / v};
   }
   DrawColour operator*(double v) const { return {r * v, g * v, b * v, a * v}; }
+};
+
+//! for annotating the type of the extra shapes
+enum class MolDrawShapeType {
+  Arrow,  // ordering of points is: start, end, p1, p2
+  Polyline,
+};
+
+//! extra shape to add to canvas
+struct MolDrawShape {
+  MolDrawShapeType shapeType = MolDrawShapeType::Polyline;
+  std::vector<Point2D> points;
+  DrawColour lineColour{0, 0, 0};
+  int lineWidth = 2;
+  bool fill = false;
 };
 
 // for holding dimensions of the rectangle round a string.
@@ -637,7 +654,7 @@ class RDKIT_MOLDRAW2D_EXPORT MolDraw2D {
   std::vector<std::vector<std::pair<std::shared_ptr<StringRect>, OrientType>>>
       radicals_;
   Point2D bbox_[2];
-  std::vector<RDGeom::Transform2D> mol_transforms_;
+  std::vector<std::vector<MolDrawShape>> shapes_;
 
   // return a DrawColour based on the contents of highlight_atoms or
   // highlight_map, falling back to atomic number by default
@@ -721,7 +738,7 @@ class RDKIT_MOLDRAW2D_EXPORT MolDraw2D {
   void extractAtomNotes(const ROMol &mol);
   void extractBondNotes(const ROMol &mol);
   void extractRadicals(const ROMol &mol);
-  void extractBracketAnnotations(const ROMol &mol);
+  void extractBrackets(const ROMol &mol);
 
   // coords in atom coords
   virtual void drawLine(const Point2D &cds1, const Point2D &cds2,
@@ -738,7 +755,6 @@ class RDKIT_MOLDRAW2D_EXPORT MolDraw2D {
   OrientType calcRadicalRect(const ROMol &mol, const Atom *atom,
                              StringRect &rad_rect);
   void drawRadicals(const ROMol &mol);
-  void drawBrackets(const ROMol &mol);
   // find a good starting point for scanning round the annotation
   // atom.  If we choose well, the first angle should be the one.
   // Returns angle in radians.

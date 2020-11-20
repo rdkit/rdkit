@@ -113,7 +113,7 @@ class RDKIT_GRAPHMOL_EXPORT SubstanceGroup : public RDProps {
   }
 
   //! get the index of this sgroup in dp_mol's sgroups vector
-  //! (do not mistake this by the ID!)00
+  //! (do not mistake this by the ID!)
   unsigned int getIndexInMol() const;
 
   /* Atom and Bond methods */

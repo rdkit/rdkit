@@ -1,4 +1,6 @@
 //
+//  Copyright (C) 2014-2020 David Cosgrove and Greg Landrum
+//
 //   @@ All Rights Reserved @@
 //  This file is part of the RDKit.
 //  The contents are covered by the terms of the BSD license
@@ -954,17 +956,13 @@ void MolDraw2D::calculateScale(int width, int height, const ROMol &mol,
     y_max = std::max(pt.y, y_max);
   }
 
-  // adjust based on SubstanceGroup brackets (if there are any)
-  const auto &tform = mol_transforms_[activeMolIdx_];
-  for (const auto &sg : getSubstanceGroups(mol)) {
-    for (const auto &brk : sg.getBrackets()) {
-      for (Point2D pt : brk) {
-        tform.TransformPoint(pt);
-        x_min_ = std::min(pt.x, x_min_);
-        y_min_ = std::min(pt.y, y_min_);
-        x_max = std::max(pt.x, x_max);
-        y_max = std::max(pt.y, y_max);
-      }
+  // adjust based on the shapes (if any)
+  for (const auto &shp : shapes_[activeMolIdx_]) {
+    for (const auto &pt : shp.points) {
+      x_min_ = std::min(pt.x, x_min_);
+      y_min_ = std::min(pt.y, y_min_);
+      x_max = std::max(pt.x, x_max);
+      y_max = std::max(pt.y, y_max);
     }
   }
 
@@ -1262,9 +1260,8 @@ unique_ptr<RWMol> MolDraw2D::setupDrawMolecule(
       auto centroid = MolTransforms::computeCentroid(conf);
       centroid *= -1;
       tf.SetTranslation(centroid);
-      mol_transforms_[activeMolIdx_].SetTranslation(Point2D(centroid));
-      std::cerr << "centroid: " << centroid << std::endl;
       MolTransforms::transformConformer(conf, tf);
+      MolTransforms::transformMolSubstanceGroups(*rwmol, tf);
     }
   }
   ROMol const &draw_mol = rwmol ? *(rwmol) : mol;
@@ -1293,7 +1290,7 @@ unique_ptr<RWMol> MolDraw2D::setupDrawMolecule(
   extractAtomNotes(draw_mol);
   extractBondNotes(draw_mol);
   extractRadicals(draw_mol);
-  extractBracketAnnotations(draw_mol);
+  extractBrackets(draw_mol);
 
   if (!activeMolIdx_ && needs_scale_) {
     calculateScale(width, height, draw_mol, highlight_atoms, highlight_radii);
@@ -1306,10 +1303,10 @@ unique_ptr<RWMol> MolDraw2D::setupDrawMolecule(
 // ****************************************************************************
 void MolDraw2D::pushDrawDetails() {
   at_cds_.push_back(std::vector<Point2D>());
-  mol_transforms_.push_back(RDGeom::Transform2D());
   atomic_nums_.push_back(std::vector<int>());
   atom_syms_.push_back(std::vector<std::pair<std::string, OrientType>>());
   annotations_.push_back(std::vector<std::pair<std::string, StringRect>>());
+  shapes_.push_back(std::vector<MolDrawShape>());
   radicals_.push_back(
       std::vector<std::pair<std::shared_ptr<StringRect>, OrientType>>());
   activeMolIdx_++;
@@ -1319,11 +1316,11 @@ void MolDraw2D::pushDrawDetails() {
 void MolDraw2D::popDrawDetails() {
   activeMolIdx_--;
   annotations_.pop_back();
+  shapes_.pop_back();
   atom_syms_.pop_back();
   atomic_nums_.pop_back();
   radicals_.pop_back();
   at_cds_.pop_back();
-  mol_transforms_.pop_back();
 }
 
 // ****************************************************************************
@@ -1439,10 +1436,12 @@ void MolDraw2D::finishMoleculeDraw(const RDKit::ROMol &draw_mol,
     }
   }
 
-  drawBrackets(draw_mol);
-
   if (drawOptions().includeRadicals) {
     drawRadicals(draw_mol);
+  }
+
+  if (!shapes_[activeMolIdx_].empty()) {
+    MolDraw2D_detail::drawShapes(*this, shapes_[activeMolIdx_]);
   }
 
   if (drawOptions().flagCloseContactsDist >= 0) {
@@ -1972,8 +1971,6 @@ void MolDraw2D::extractAtomCoords(const ROMol &mol, int confId,
       bbox_[1].y = std::max(bbox_[1].y, pt.y);
     }
   }
-
-  mol_transforms_[activeMolIdx_] *= trans;
 }
 
 // ****************************************************************************
@@ -2052,13 +2049,68 @@ void MolDraw2D::extractRadicals(const ROMol &mol) {
 }
 
 // ****************************************************************************
-void MolDraw2D::extractBracketAnnotations(const ROMol &mol) {
+void MolDraw2D::extractBrackets(const ROMol &mol) {
   PRECONDITION(activeMolIdx_ >= 0, "no mol id");
+  PRECONDITION(static_cast<int>(shapes_.size()) > activeMolIdx_, "no space");
   PRECONDITION(static_cast<int>(annotations_.size()) > activeMolIdx_,
                "no space");
+  shapes_[activeMolIdx_].clear();
 
-  // FIX: extract the locations of the bracket annotations
-}
+  auto &sgs = getSubstanceGroups(mol);
+  if (sgs.empty()) {
+    return;
+  }
+  // details of this transformation are in extractAtomCoords
+  double rot = -drawOptions().rotate * M_PI / 180.0;
+  RDGeom::Transform2D trans;
+  trans.SetTransform(Point2D(0.0, 0.0), rot);
+  for (auto &sg : sgs) {
+    if (sg.getBrackets().empty()) {
+      continue;
+    }
+    // figure out the location of the reference point we'll use to figure out
+    // which direction the bracket points
+    // Thanks to John Mayfield for the thoughts on the best way to do this:
+    //   http://efficientbits.blogspot.com/2015/11/bringing-molfile-sgroups-to-cdk.html
+    Point2D refPt{0., 0.};
+    if (!sg.getAtoms().empty()) {
+      // use the average position of the atoms in the sgroup
+      for (auto aidx : sg.getAtoms()) {
+        refPt += at_cds_[activeMolIdx_][aidx];
+      }
+      refPt /= sg.getAtoms().size();
+    }
+
+    std::vector<std::pair<Point2D, Point2D>> sgBondSegments;
+    for (auto bndIdx : sg.getBonds()) {
+      const auto bnd = mol.getBondWithIdx(bndIdx);
+      if (std::find(sg.getAtoms().begin(), sg.getAtoms().end(),
+                    bnd->getBeginAtomIdx()) != sg.getAtoms().end()) {
+        sgBondSegments.push_back(
+            std::make_pair(at_cds_[activeMolIdx_][bnd->getBeginAtomIdx()],
+                           at_cds_[activeMolIdx_][bnd->getEndAtomIdx()]));
+
+      } else if (std::find(sg.getAtoms().begin(), sg.getAtoms().end(),
+                           bnd->getEndAtomIdx()) != sg.getAtoms().end()) {
+        sgBondSegments.push_back(
+            std::make_pair(at_cds_[activeMolIdx_][bnd->getEndAtomIdx()],
+                           at_cds_[activeMolIdx_][bnd->getBeginAtomIdx()]));
+      }
+    }
+    for (auto &brk : sg.getBrackets()) {
+      Point2D p1{brk[0]};
+      Point2D p2{brk[1]};
+      trans.TransformPoint(p1);
+      trans.TransformPoint(p2);
+      MolDrawShape shp;
+      shp.points =
+          MolDraw2D_detail::getBracketPoints(p1, p2, refPt, sgBondSegments);
+      shp.shapeType = MolDrawShapeType::Polyline;
+      shapes_[activeMolIdx_].emplace_back(std::move(shp));
+    }
+    // FIX: extract the locations of the bracket annotations
+  }
+}  // namespace RDKit
 
 // ****************************************************************************
 void MolDraw2D::drawBond(
@@ -2459,28 +2511,6 @@ OrientType MolDraw2D::calcRadicalRect(const ROMol &mol, const Atom *atom,
 }
 
 namespace {}  // namespace
-
-// ****************************************************************************
-void MolDraw2D::drawBrackets(const ROMol &mol) {
-  const auto &sgs = getSubstanceGroups(mol);
-  if (!sgs.empty()) {
-    std::cerr << "\n--------------" << std::endl;
-    const auto &tf = mol_transforms_[activeMolIdx_];
-    for (auto i = 0; i < 3; ++i) {
-      for (auto j = 0; j < 3; ++j) {
-        std::cerr << std::setw(6) << tf.getVal(i, j) << " ";
-      }
-      std::cerr << std::endl;
-    }
-  }
-  for (const auto &sg : sgs) {
-    if (!sg.getBrackets().empty()) {
-      MolDraw2D_detail::drawBracketsForSGroup(*this, mol, sg,
-                                              at_cds_[activeMolIdx_],
-                                              mol_transforms_[activeMolIdx_]);
-    }
-  }
-};
 
 // ****************************************************************************
 void MolDraw2D::drawRadicals(const ROMol &mol) {

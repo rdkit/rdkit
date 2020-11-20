@@ -1010,4 +1010,183 @@ M  END)CTAB"_ctab;
       outs.flush();
     }
   }
+  SECTION("ChEBI 59342") {
+    // thanks to John Mayfield for pointing out the example
+    auto m = R"CTAB(ChEBI59342 
+Marvin  05041012302D          
+
+ 29 30  0  0  1  0            999 V2000
+   10.1615   -7.7974    0.0000 O   0  0  0  0  0  0  0  0  0  0  0  0
+    8.7305   -6.9763    0.0000 O   0  0  0  0  0  0  0  0  0  0  0  0
+    8.7309   -7.8004    0.0000 C   0  0  2  0  0  0  0  0  0  0  0  0
+    9.4464   -8.2109    0.0000 C   0  0  2  0  0  0  0  0  0  0  0  0
+    8.0153   -8.2225    0.0000 O   0  0  0  0  0  0  0  0  0  0  0  0
+    9.4464   -9.0437    0.0000 C   0  0  2  0  0  0  0  0  0  0  0  0
+    8.0138   -9.0500    0.0000 C   0  0  1  0  0  0  0  0  0  0  0  0
+    8.7293   -9.4606    0.0000 C   0  0  1  0  0  0  0  0  0  0  0  0
+   10.1669   -9.4529    0.0000 O   0  0  0  0  0  0  0  0  0  0  0  0
+    7.3058   -9.4590    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    8.7368  -10.2801    0.0000 N   0  0  0  0  0  0  0  0  0  0  0  0
+    8.0263  -10.6992    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    8.0339  -11.5241    0.0000 H   0  0  0  0  0  0  0  0  0  0  0  0
+    7.3081  -10.2933    0.0000 O   0  0  0  0  0  0  0  0  0  0  0  0
+    8.7305   -5.3264    0.0000 O   0  0  0  0  0  0  0  0  0  0  0  0
+    8.0159   -5.7369    0.0000 C   0  0  2  0  0  0  0  0  0  0  0  0
+    8.0159   -6.5618    0.0000 C   0  0  2  0  0  0  0  0  0  0  0  0
+    7.2936   -5.3263    0.0000 O   0  0  0  0  0  0  0  0  0  0  0  0
+    7.2936   -6.9762    0.0000 C   0  0  2  0  0  0  0  0  0  0  0  0
+    6.5751   -5.7368    0.0000 C   0  0  1  0  0  0  0  0  0  0  0  0
+    6.5751   -6.5618    0.0000 C   0  0  1  0  0  0  0  0  0  0  0  0
+    7.2973   -7.8049    0.0000 O   0  0  0  0  0  0  0  0  0  0  0  0
+    5.8681   -5.3263    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    5.8680   -6.9762    0.0000 N   0  0  0  0  0  0  0  0  0  0  0  0
+    5.1510   -6.5684    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    4.4392   -6.9856    0.0000 H   0  0  0  0  0  0  0  0  0  0  0  0
+    5.1455   -5.7435    0.0000 O   0  0  0  0  0  0  0  0  0  0  0  0
+   10.4142   -5.3560    0.0000 *   0  0  0  0  0  0  0  0  0  0  0  0
+   11.5590   -7.8297    0.0000 *   0  0  0  0  0  0  0  0  0  0  0  0
+  3  2  1  6  0  0  0
+  3  4  1  0  0  0  0
+  3  5  1  0  0  0  0
+  4  6  1  0  0  0  0
+  4  1  1  1  0  0  0
+  5  7  1  0  0  0  0
+  6  8  1  0  0  0  0
+  6  9  1  1  0  0  0
+  7 10  1  1  0  0  0
+  8 11  1  6  0  0  0
+  7  8  1  0  0  0  0
+ 13 12  1  0  0  0  0
+ 14 12  2  0  0  0  0
+ 11 12  1  0  0  0  0
+ 16 15  1  6  0  0  0
+ 16 17  1  0  0  0  0
+ 16 18  1  0  0  0  0
+ 17 19  1  0  0  0  0
+ 17  2  1  1  0  0  0
+ 18 20  1  0  0  0  0
+ 19 21  1  0  0  0  0
+ 19 22  1  1  0  0  0
+ 20 23  1  1  0  0  0
+ 21 24  1  6  0  0  0
+ 20 21  1  0  0  0  0
+ 26 25  1  0  0  0  0
+ 27 25  2  0  0  0  0
+ 24 25  1  0  0  0  0
+ 15 28  1  0  0  0  0
+  1 29  1  0  0  0  0
+M  STY  1   1 SRU
+M  SCN  1   1 HT 
+M  SAL   1 15   1   2   3   4   5   6   7   8   9  10  11  12  13  14  15
+M  SAL   1 12  16  17  18  19  20  21  22  23  24  25  26  27
+M  SDI   1  4    9.4310   -4.9261    9.4165   -5.7510
+M  SDI   1  4   10.7464   -7.3983   10.7274   -8.2231
+M  SBL   1  2  30  29
+M  SMT   1 n
+M  END)CTAB"_ctab;
+    REQUIRE(m);
+    {
+      MolDraw2DSVG drawer(350, 300);
+      drawer.drawMolecule(*m);
+      drawer.finishDrawing();
+      auto text = drawer.getDrawingText();
+      std::ofstream outs("testBrackets-3a.svg");
+      outs << text;
+      outs.flush();
+    }
+  }
+  SECTION("pathological bracket orientation") {
+    {  // including the bonds
+      auto m = R"CTAB(bogus
+  Mrv2014 11202009512D          
+
+  0  0  0     0  0            999 V3000
+M  V30 BEGIN CTAB
+M  V30 COUNTS 9 8 1 0 1
+M  V30 BEGIN ATOM
+M  V30 1 C 23.5462 -14.464 0 0
+M  V30 2 C 20.8231 -13.0254 0 0
+M  V30 3 C 20.8776 -14.5628 0 0
+M  V30 4 C 22.2391 -15.2819 0 0
+M  V30 5 C 16.2969 -9.9426 0 0
+M  V30 6 C 14.963 -10.7089 0 0
+M  V30 7 C 19.463 -12.2987 0 0
+M  V30 8 * 19.4398 -9.9979 0 0
+M  V30 9 * 26.1554 -14.4332 0 0
+M  V30 END ATOM
+M  V30 BEGIN BOND
+M  V30 1 1 3 4
+M  V30 2 1 6 7
+M  V30 3 1 5 8
+M  V30 4 1 1 9
+M  V30 5 1 7 2
+M  V30 6 1 6 5
+M  V30 7 1 4 1
+M  V30 8 1 3 2
+M  V30 END BOND
+M  V30 BEGIN SGROUP
+M  V30 1 SRU 0 ATOMS=(7 4 3 7 6 5 2 1) XBONDS=(2 3 4) BRKXYZ=(9 17.6045 -
+M  V30 -9.1954 0 17.5775 -10.7352 0 0 0 0) BRKXYZ=(9 24.6113 -13.6813 0 -
+M  V30 24.6296 -15.2213 0 0 0 0) CONNECT=HT LABEL=n
+M  V30 END SGROUP
+M  V30 END CTAB
+M  END
+)CTAB"_ctab;
+      REQUIRE(m);
+      MolDraw2DSVG drawer(350, 300);
+      drawer.drawMolecule(*m);
+      drawer.finishDrawing();
+      auto text = drawer.getDrawingText();
+      std::ofstream outs("testBrackets-4a.svg");
+      outs << text;
+      outs.flush();
+    }
+
+    {  // no bonds in the sgroup, the bracket should point the other way
+       // (towards the majority of the atoms in the sgroup)
+      auto m = R"CTAB(bogus
+  Mrv2014 11202009512D          
+
+  0  0  0     0  0            999 V3000
+M  V30 BEGIN CTAB
+M  V30 COUNTS 9 8 1 0 1
+M  V30 BEGIN ATOM
+M  V30 1 C 23.5462 -14.464 0 0
+M  V30 2 C 20.8231 -13.0254 0 0
+M  V30 3 C 20.8776 -14.5628 0 0
+M  V30 4 C 22.2391 -15.2819 0 0
+M  V30 5 C 16.2969 -9.9426 0 0
+M  V30 6 C 14.963 -10.7089 0 0
+M  V30 7 C 19.463 -12.2987 0 0
+M  V30 8 * 19.4398 -9.9979 0 0
+M  V30 9 * 26.1554 -14.4332 0 0
+M  V30 END ATOM
+M  V30 BEGIN BOND
+M  V30 1 1 3 4
+M  V30 2 1 6 7
+M  V30 3 1 5 8
+M  V30 4 1 1 9
+M  V30 5 1 7 2
+M  V30 6 1 6 5
+M  V30 7 1 4 1
+M  V30 8 1 3 2
+M  V30 END BOND
+M  V30 BEGIN SGROUP
+M  V30 1 SRU 0 ATOMS=(7 4 3 7 6 5 2 1) BRKXYZ=(9 17.6045 -
+M  V30 -9.1954 0 17.5775 -10.7352 0 0 0 0) BRKXYZ=(9 24.6113 -13.6813 0 -
+M  V30 24.6296 -15.2213 0 0 0 0) CONNECT=HT LABEL=n
+M  V30 END SGROUP
+M  V30 END CTAB
+M  END
+)CTAB"_ctab;
+      REQUIRE(m);
+      MolDraw2DSVG drawer(350, 300);
+      drawer.drawMolecule(*m);
+      drawer.finishDrawing();
+      auto text = drawer.getDrawingText();
+      std::ofstream outs("testBrackets-4b.svg");
+      outs << text;
+      outs.flush();
+    }
+  }
 }

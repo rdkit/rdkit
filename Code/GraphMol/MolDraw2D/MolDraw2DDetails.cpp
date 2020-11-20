@@ -167,5 +167,112 @@ void drawBracketsForSGroup(MolDraw2D &drawer, const ROMol &mol,
   drawer.setFontSize(ffs);
 }
 
+namespace {
+// note, this is approximate since we're just using it for drawing
+bool lineSegmentsIntersect(const Point2D &s1, const Point2D &s2,
+                           const Point2D &s3, const Point2D &s4) {
+  auto d1x = (s1.x - s2.x);
+  auto d1y = (s1.y - s2.y);
+  auto d2x = (s3.x - s4.x);
+  auto d2y = (s3.y - s4.y);
+
+  if (fabs(d1x) < 1e-4) {
+    // fudge factor, since this isn't super critical
+    d1x = 1e-4;
+  }
+  if (fabs(d2x) < 1e-4) {
+    // fudge factor, since this isn't super critical
+    d2x = 1e-4;
+  }
+
+  auto m1 = d1y / d1x;
+  auto m2 = d2y / d2x;
+  if (m1 == m2 || m1 == -m2) {
+    // parallel
+    return false;
+  }
+  auto b1 = (s1.x * s2.y - s2.x * s1.y) / d1x;
+  auto b2 = (s3.x * s4.y - s4.x * s3.y) / d2x;
+
+  auto intersectX = (b2 - b1) / (m1 - m2);
+  return ((intersectX < s1.x) ^ (intersectX < s2.x)) &&
+         ((intersectX < s3.x) ^ (intersectX < s4.x));
+}
+}  // namespace
+
+std::vector<Point2D> getBracketPoints(
+    const Point2D &p1, const Point2D &p2, const Point2D &refPt,
+    const std::vector<std::pair<Point2D, Point2D>> &bondSegments,
+    double bracketFrac) {
+  std::vector<Point2D> res;
+  auto v = p2 - p1;
+  Point2D bracketDir{v.y, -v.x};
+  bracketDir *= bracketFrac;
+
+  // we'll default to use the refPt
+  auto refVect = p2 - refPt;
+  // but check if we intersect any of the bonds:
+  for (const auto &seg : bondSegments) {
+    if (lineSegmentsIntersect(p1, p2, seg.first, seg.second)) {
+      refVect = p2 - seg.first;
+    }
+  }
+  if (bracketDir.dotProduct(refVect) > 0) {
+    bracketDir *= -1;
+  }
+  auto p0 = p1 + bracketDir;
+  auto p3 = p2 + bracketDir;
+  return {p0, p1, p2, p3};
+}
+
+namespace {
+void drawArrow(MolDraw2D &drawer, const MolDrawShape &shape) {
+  PRECONDITION(shape.shapeType == MolDrawShapeType::Arrow, "bad shape type");
+  PRECONDITION(shape.points.size() == 4, "bad points size");
+  drawer.setColour(shape.lineColour);
+  drawer.setLineWidth(shape.lineWidth);
+  drawer.drawLine(shape.points[0], shape.points[1]);
+  if (!shape.fill) {
+    drawer.drawLine(shape.points[1], shape.points[2]);
+    drawer.drawLine(shape.points[1], shape.points[3]);
+  } else {
+    drawer.setFillPolys(true);
+    std::vector<Point2D> head(shape.points.begin() + 1, shape.points.end());
+    drawer.drawPolygon(head);
+  }
+}
+void drawPolyline(MolDraw2D &drawer, const MolDrawShape &shape) {
+  PRECONDITION(shape.shapeType == MolDrawShapeType::Polyline, "bad shape type");
+  drawer.setColour(shape.lineColour);
+  drawer.setLineWidth(shape.lineWidth);
+  drawer.setFillPolys(shape.fill);
+  if (shape.points.size() > 2) {
+    drawer.drawPolygon(shape.points);
+  } else {
+    drawer.drawLine(shape.points[0], shape.points[1]);
+  }
+}
+}  // namespace
+void drawShapes(MolDraw2D &drawer, const std::vector<MolDrawShape> &shapes) {
+  const auto ocolour = drawer.colour();
+  const auto olw = drawer.lineWidth();
+  const auto ofill = drawer.fillPolys();
+  for (const auto &shape : shapes) {
+    switch (shape.shapeType) {
+      case MolDrawShapeType::Polyline:
+        drawPolyline(drawer, shape);
+        break;
+      case MolDrawShapeType::Arrow:
+        drawArrow(drawer, shape);
+        break;
+      default:
+        ASSERT_INVARIANT(false, "unrecognized shape type");
+    }
+  }
+  drawer.setColour(ocolour);
+  drawer.setLineWidth(olw);
+  drawer.setFillPolys(ofill);
+};
+
 }  // namespace MolDraw2D_detail
 }  // namespace RDKit
