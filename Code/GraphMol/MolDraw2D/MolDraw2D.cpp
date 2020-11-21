@@ -2109,18 +2109,42 @@ void MolDraw2D::extractBrackets(const ROMol &mol) {
       shapes_[activeMolIdx_].emplace_back(std::move(shp));
     }
     if (supportsAnnotations()) {
+      // FIX: we could imagine changing this to always show the annotations on
+      // the right-most (or bottom-most) bracket
+
       std::string connect;
       if (sg.getPropIfPresent("CONNECT", connect)) {
+        // FIX: this is a workaround for #3577 and should not be merged as-is
+        if (connect == "HT") {
+          connect = "ht";
+        }
         // annotations go on the last bracket of an sgroup
         const auto &brkShp = shapes_[activeMolIdx_].back();
         StringRect rect;
         // CONNECT goes at the top
         auto topPt = brkShp.points[1];
+        auto brkPt = brkShp.points[0];
         if (brkShp.points[2].y > topPt.y) {
           topPt = brkShp.points[2];
+          brkPt = brkShp.points[3];
         }
-        rect.trans_ = topPt;
+        rect.trans_ = topPt + (topPt - brkPt);
         annotations_[activeMolIdx_].push_back(std::make_pair(connect, rect));
+      }
+      std::string label;
+      if (sg.getPropIfPresent("LABEL", label)) {
+        // annotations go on the last bracket of an sgroup
+        const auto &brkShp = shapes_[activeMolIdx_].back();
+        StringRect rect;
+        // LABEL goes at the bottom
+        auto botPt = brkShp.points[2];
+        auto brkPt = brkShp.points[3];
+        if (brkShp.points[1].y < botPt.y) {
+          botPt = brkShp.points[1];
+          brkPt = brkShp.points[0];
+        }
+        rect.trans_ = botPt + (botPt - brkPt);
+        annotations_[activeMolIdx_].push_back(std::make_pair(label, rect));
       }
     }
   }
