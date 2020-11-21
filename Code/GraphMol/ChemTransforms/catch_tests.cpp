@@ -67,31 +67,42 @@ TEST_CASE("molzip", "[]") {
         auto a = "[C@H](Br)([*:1])F"_smiles;
         auto b = "[*:1]N"_smiles;
         auto mol = molzip(*a,*b);
-        CHECK(MolToSmiles(*mol) == "N[C@H](F)Br");
-        MolzipParams p;
-        p.preserveChirality = true;
-        mol = molzip(*a, *b, p);
         CHECK(MolToSmiles(*mol) == "N[C@@H](F)Br");
     }
+    
     {
         auto a = "[C@H]([*:1])(Br)F"_smiles;
         auto b = "[*:1]N"_smiles;
         auto mol = molzip(*a,*b);
         CHECK(MolToSmiles(*mol) == "N[C@H](F)Br");
-        MolzipParams p;
-        p.preserveChirality = true;
-        mol = molzip(*a, *b, p);
-        CHECK(MolToSmiles(*mol) == "N[C@H](F)Br");
     }
     
     {
-           auto a = "[C@H]([*:1])(Br)([*:2])"_smiles;
-           auto b = "[*:1]N.[*:2]Br"_smiles;
+           auto a = "[C@H]([*:1])(F)([*:2])"_smiles;
+           auto b = "[*:1]N.[*:2]I"_smiles;
            auto mol = molzip(*a,*b);
-           CHECK(MolToSmiles(*mol) == "N[C@H](F)Br");
+           CHECK(MolToSmiles(*mol) == "N[C@@H](F)I");
            MolzipParams p;
            p.preserveChirality = true;
            mol = molzip(*a, *b, p);
-           CHECK(MolToSmiles(*mol) == "N[C@H](F)Br");
        }
+    
+    {
+        auto m =  "OOO[C@](F)(I)N"_smiles;
+        std::vector<std::pair<unsigned int, unsigned int>> dummyLabels{{1,1}, {2,2}};
+        for(unsigned int i=0;i<m->getNumBonds();++i) {
+            for(unsigned int j=0;j<m->getNumBonds();++j) {
+                if(i!=j) {
+                    std::vector<unsigned int> bonds{i,j};
+                    auto res = RDKit::MolFragmenter::fragmentOnBonds(*m, bonds, true, &dummyLabels);
+                    for(auto *atom : res->atoms()) {
+                        if(atom->getIsotope()) {
+                            atom->setAtomMapNum(atom->getIsotope());
+                        }
+                    }
+                    CHECK(MolToSmiles(*molzip(*res)) == MolToSmiles(*m));
+                }
+            }
+        }
+    }
 }
