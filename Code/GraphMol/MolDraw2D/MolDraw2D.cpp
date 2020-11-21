@@ -2339,7 +2339,9 @@ void MolDraw2D::drawAnnotation(const string &note,
   text_drawer_->setMinFontSize(-1);
   text_drawer_->setFontScale(drawOptions().annotationFontScale *
                              full_font_scale);
-  drawString(note, note_rect->trans_);
+  Point2D draw_cds = getDrawCoords(note_rect->trans_);
+  text_drawer_->drawString(note, draw_cds, TextAlignType::MIDDLE);
+
   text_drawer_->setMinFontSize(omfs);
   text_drawer_->setFontScale(full_font_scale);
 }

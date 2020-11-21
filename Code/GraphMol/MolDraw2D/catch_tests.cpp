@@ -847,3 +847,22 @@ TEST_CASE("including legend in drawing results in offset drawing later",
     CHECK(text.find("<path d='M 321.962,140") != std::string::npos);
   }
 }
+
+TEST_CASE("Github #3577", "[bug]") {
+  SECTION("basics") {
+    auto m = "CCC"_smiles;
+    REQUIRE(m);
+    MolDraw2DUtils::prepareMolForDrawing(*m);
+    m->getAtomWithIdx(1)->setProp("atomNote", "CCC");
+    m->getAtomWithIdx(2)->setProp("atomNote", "ccc");
+    m->getBondWithIdx(0)->setProp("bondNote", "CCC");
+
+    MolDraw2DSVG drawer(350, 300);
+    drawer.drawMolecule(*m);
+    drawer.finishDrawing();
+    auto text = drawer.getDrawingText();
+    std::ofstream outs("testGithub3577-1.svg");
+    outs << text;
+    outs.flush();
+  }
+}
