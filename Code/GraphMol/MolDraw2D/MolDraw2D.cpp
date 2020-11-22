@@ -1088,19 +1088,82 @@ void MolDraw2D::centrePicture(int width, int height) {
   y_trans_ = (mid.y - height / 2) / scale_;
 };
 
+namespace {
+void handdrawnLine1(MolDraw2D &d2d, const Point2D &cds1, const Point2D &cds2) {
+  unsigned nSteps = 50;
+  double deviation = 0.04;
+  Point2D step = (cds2 - cds1) / nSteps;
+  auto lastPos = cds1;
+  for (unsigned int i = 1; i < nSteps; ++i) {
+    auto tgt = cds1 + step * i;
+    tgt.x += deviation * (std::rand() % 20 - 10) / 10.0;
+    tgt.y += deviation * (std::rand() % 20 - 10) / 10.0;
+    d2d.drawLine(lastPos, tgt);
+    lastPos = tgt;
+  }
+}
+void handdrawnLine2(MolDraw2D &d2d, const Point2D &cds1, const Point2D &cds2) {
+  unsigned nSteps = 5;
+  double deviation = 0.03;
+  Point2D step = (cds2 - cds1) / nSteps;
+  std::vector<Point2D> pts;
+  pts.push_back(cds1);
+  for (unsigned int i = 1; i < nSteps; ++i) {
+    auto tgt = cds1 + step * i;
+    tgt.x += deviation * (std::rand() % 20 - 10) / 10.0;
+    tgt.y += deviation * (std::rand() % 20 - 10) / 10.0;
+    pts.push_back(tgt);
+  }
+  pts.push_back(cds2);
+  d2d.drawPolygon(pts);
+}
+std::vector<Point2D> handdrawnLine(const Point2D &cds1, const Point2D &cds2,
+                                   unsigned nSteps = 4,
+                                   double deviation = 0.03) {
+  Point2D step = (cds2 - cds1) / nSteps;
+  Point2D perp{step.y, -step.x};
+  perp.normalize();
+  std::vector<Point2D> pts;
+  pts.push_back(cds1);
+  for (unsigned int i = 1; i < nSteps; ++i) {
+    auto tgt = cds1 + step * i;
+    tgt += perp * deviation * (std::rand() % 20 - 10) / 10.0;
+    pts.push_back(tgt);
+  }
+  pts.push_back(cds2);
+  return pts;
+}
+}  // namespace
+
 // ****************************************************************************
 void MolDraw2D::drawLine(const Point2D &cds1, const Point2D &cds2,
                          const DrawColour &col1, const DrawColour &col2) {
-  if (col1 == col2) {
-    setColour(col1);
-    drawLine(cds1, cds2);
+  if (drawOptions().comicMode) {
+    setFillPolys(false);
+    if (col1 == col2) {
+      setColour(col1);
+      auto pts = handdrawnLine(cds1, cds2);
+      drawPolygon(pts);
+    } else {
+      Point2D mid = (cds1 + cds2) * 0.5;
+      setColour(col1);
+      auto pts = handdrawnLine(cds1, mid);
+      drawPolygon(pts);
+      setColour(col2);
+      auto pts2 = handdrawnLine(mid, cds2);
+      drawPolygon(pts2);
+    }
   } else {
-    Point2D mid = (cds1 + cds2) * 0.5;
-
-    setColour(col1);
-    drawLine(cds1, mid);
-    setColour(col2);
-    drawLine(mid, cds2);
+    if (col1 == col2) {
+      setColour(col1);
+      drawLine(cds1, cds2);
+    } else {
+      Point2D mid = (cds1 + cds2) * 0.5;
+      setColour(col1);
+      drawLine(cds1, mid);
+      setColour(col2);
+      drawLine(mid, cds2);
+    }
   }
 }
 
@@ -2243,6 +2306,8 @@ void MolDraw2D::drawWedgedBond(const Point2D &cds1, const Point2D &cds2,
 
   setColour(col1);
   if (draw_dashed) {
+    setFillPolys(false);
+
     unsigned int nDashes;
     // empirical cutoff to make sure we don't have too many dashes in the
     // wedge:
@@ -2269,10 +2334,16 @@ void MolDraw2D::drawWedgedBond(const Point2D &cds1, const Point2D &cds2,
       }
       Point2D e11 = cds1 + e1 * (rdcast<double>(i) / nDashes);
       Point2D e22 = cds1 + e2 * (rdcast<double>(i) / nDashes);
-      drawLine(e11, e22);
+      if (drawOptions().comicMode) {
+        auto pts = handdrawnLine(e11, e22);
+        drawPolygon(pts);
+      } else {
+        drawLine(e11, e22);
+      }
     }
     setLineWidth(orig_lw);
   } else {
+    setFillPolys(true);
     if (col1 == col2) {
       drawTriangle(cds1, end1, end2);
     } else {
@@ -3335,10 +3406,17 @@ void MolDraw2D::adjustScaleForAnnotation(
 // ****************************************************************************
 void MolDraw2D::drawTriangle(const Point2D &cds1, const Point2D &cds2,
                              const Point2D &cds3) {
-  std::vector<Point2D> pts(3);
-  pts[0] = cds1;
-  pts[1] = cds2;
-  pts[2] = cds3;
+  std::vector<Point2D> pts;
+  if (!drawOptions().comicMode) {
+    pts = {cds1, cds2, cds3};
+  } else {
+    auto lpts = handdrawnLine(cds1, cds2);
+    std::move(lpts.begin(), lpts.end(), std::back_inserter(pts));
+    lpts = handdrawnLine(cds2, cds3);
+    std::move(lpts.begin(), lpts.end(), std::back_inserter(pts));
+    lpts = handdrawnLine(cds3, cds1);
+    std::move(lpts.begin(), lpts.end(), std::back_inserter(pts));
+  }
   drawPolygon(pts);
 };
 

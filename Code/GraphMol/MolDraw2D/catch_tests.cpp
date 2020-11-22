@@ -24,6 +24,7 @@
 #include <GraphMol/ChemReactions/Reaction.h>
 #include <GraphMol/ChemReactions/ReactionParser.h>
 #include <GraphMol/CIPLabeler/CIPLabeler.h>
+#include <GraphMol/Depictor/RDDepictor.h>
 
 #ifdef RDK_BUILD_CAIRO_SUPPORT
 #include <cairo.h>
@@ -864,5 +865,72 @@ TEST_CASE("Github #3577", "[bug]") {
     std::ofstream outs("testGithub3577-1.svg");
     outs << text;
     outs.flush();
+  }
+}
+
+TEST_CASE("hand drawn", "[play]") {
+  SECTION("basics") {
+    auto m =
+        "CC[CH](C)[CH]1NC(=O)[CH](Cc2ccc(O)cc2)NC(=O)[CH](N)CSSC[CH](C(=O)N2CCC[CH]2C(=O)N[CH](CC(C)C)C(=O)NCC(N)=O)NC(=O)[CH](CC(N)=O)NC(=O)[CH](CCC(N)=O)NC1=O"_smiles;
+    REQUIRE(m);
+    RDDepict::preferCoordGen = true;
+    MolDraw2DUtils::prepareMolForDrawing(*m);
+
+    std::string fName = getenv("RDBASE");
+    fName += "/Data/Fonts/ComicNeue-Regular.ttf";
+
+    {
+      MolDraw2DSVG drawer(450, 400);
+      drawer.drawOptions().fontFile = fName;
+      drawer.drawOptions().comicMode = true;
+      drawer.drawMolecule(*m, "Oxytocin (flat)");
+      drawer.finishDrawing();
+      auto text = drawer.getDrawingText();
+      std::ofstream outs("testHandDrawn-1.svg");
+      outs << text;
+      outs.flush();
+    }
+#ifdef RDK_BUILD_CAIRO_SUPPORT
+    {
+      MolDraw2DCairo drawer(450, 400);
+      drawer.drawOptions().fontFile = fName;
+      drawer.drawOptions().comicMode = true;
+      drawer.drawMolecule(*m, "Oxytocin (flat)");
+      drawer.finishDrawing();
+      drawer.writeDrawingText("testHandDrawn-1.png");
+    }
+#endif
+  }
+  SECTION("with chirality") {
+    auto m =
+        "CC[C@H](C)[C@@H]1NC(=O)[C@H](Cc2ccc(O)cc2)NC(=O)[C@@H](N)CSSC[C@@H](C(=O)N2CCC[C@H]2C(=O)N[C@@H](CC(C)C)C(=O)NCC(N)=O)NC(=O)[C@H](CC(N)=O)NC(=O)[C@H](CCC(N)=O)NC1=O"_smiles;
+    REQUIRE(m);
+    RDDepict::preferCoordGen = true;
+    MolDraw2DUtils::prepareMolForDrawing(*m);
+
+    std::string fName = getenv("RDBASE");
+    fName += "/Data/Fonts/ComicNeue-Regular.ttf";
+
+    {
+      MolDraw2DSVG drawer(450, 400);
+      drawer.drawOptions().fontFile = fName;
+      drawer.drawOptions().comicMode = true;
+      drawer.drawMolecule(*m, "Oxytocin");
+      drawer.finishDrawing();
+      auto text = drawer.getDrawingText();
+      std::ofstream outs("testHandDrawn-2.svg");
+      outs << text;
+      outs.flush();
+    }
+#ifdef RDK_BUILD_CAIRO_SUPPORT
+    {
+      MolDraw2DCairo drawer(450, 400);
+      drawer.drawOptions().fontFile = fName;
+      drawer.drawOptions().comicMode = true;
+      drawer.drawMolecule(*m, "Oxytocin");
+      drawer.finishDrawing();
+      drawer.writeDrawingText("testHandDrawn-2.png");
+    }
+#endif
   }
 }

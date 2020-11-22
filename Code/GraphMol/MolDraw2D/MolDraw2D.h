@@ -255,6 +255,7 @@ struct RDKIT_MOLDRAW2D_EXPORT MolDrawOptions {
   bool includeMetadata =
       true;  // when possible include metadata about molecules and reactions in
              // the output to allow them to be reconstructed
+  bool comicMode = false;
 
   MolDrawOptions() {
     highlightColourPalette.emplace_back(
