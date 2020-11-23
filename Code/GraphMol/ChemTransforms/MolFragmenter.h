@@ -102,14 +102,14 @@ RDKIT_CHEMTRANSFORMS_EXPORT void constructBRICSBondTypes(
 }  // namespace MolFragmenter
 
 
-enum class AtomLabel {
+enum class MolzipLabel {
     AtomMapNumber,
     Isotope,
-    FragmentBonds,
+    FragmentOnBonds,
     AtomType };
 
 struct MolzipParams {
-  AtomLabel label = AtomLabel::AtomMapNumber;
+  MolzipLabel label = MolzipLabel::AtomMapNumber;
   std::vector<std::string> atomSymbols = {};
 };
 

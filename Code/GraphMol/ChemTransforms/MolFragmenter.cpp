@@ -599,13 +599,13 @@ ROMol *fragmentOnBRICSBonds(const ROMol &mol) {
 namespace {
 // Get the atom label - this might be useful as a util class
 unsigned int get_label(const Atom *a, const MolzipParams &p) {
-  unsigned int idx = 0; // 0 is no label?
+  unsigned int idx = std::numeric_limits<unsigned int>::max(); // 0 is no label?
   switch(p.label) {
-  case AtomLabel::AtomMapNumber:
+  case MolzipLabel::AtomMapNumber:
     return a->getAtomMapNum();
-  case AtomLabel::Isotope:
+  case MolzipLabel::Isotope:
     return a->getIsotope();
-  case AtomLabel::AtomType: {
+  case MolzipLabel::AtomType: {
     idx = std::distance(p.atomSymbols.begin(),
                         std::find(p.atomSymbols.begin(), p.atomSymbols.end(),
                                   a->getSymbol()));
@@ -613,6 +613,11 @@ unsigned int get_label(const Atom *a, const MolzipParams &p) {
       idx = 0; // not found since iterator == end()
     }
     break;
+  case MolzipLabel::FragmentOnBonds:
+      // shouldn't ever get here
+      assert(0);
+      idx = 0;
+      break;
   }
   }
   return idx;
@@ -648,27 +653,12 @@ int num_swaps_to_interconvert(std::vector<unsigned int> &orders) {
     return nswaps;
 }
 
-// Are two vectors simple rotations of each other
-bool is_rotation(std::vector<unsigned int> orders1, const std::vector<unsigned int> &orders2) {
-    if(orders1 == orders2) {
-        return false;
-    }
-  assert(orders1.size() == orders2.size());//, "Order vectors aren't the same length");
-  for(size_t i=0; i<orders1.size(); ++i) {
-    std::rotate(orders1.begin(), orders1.begin()+1, orders1.end());
-    if (orders1 == orders2)
-      return true;
-  }
-  return false;
-}
-
 // Simple bookkeeping class to bond attachments and handle stereo
 struct ZipBond {
     Atom *a;       // atom being bonded
     Atom *a_dummy; // Labelled atom, i.e. [*:1]-C  will bond the C to something
     Atom *b;       // atom being bonded
     Atom *b_dummy; // Labelled atom, i.e. [*:1]-O will bond the O to something
-    bool bonded = false; // Has the bond been performed?
     
     // Mark the original order of the nbr atoms including the dummy
     //  The goal is to copy the dummy chiral order over to the
@@ -682,7 +672,6 @@ struct ZipBond {
         auto &m = chiral_atom->getOwningMol();
         for(auto nbrIdx : boost::make_iterator_range(m.getAtomNeighbors(chiral_atom))) {
             m[nbrIdx]->setProp<int>(mark, order);
-            std::cerr << "mark " << nbrIdx << " " << order << std::endl;
             ++order;
         }
         new_atom->setProp<int>(mark, dummy_atom->getProp<int>(mark));
@@ -696,12 +685,16 @@ struct ZipBond {
     
     // bond a<->b for now only use single bonds
     //  XXX FIX ME take the highest bond order.
-    void bond(RWMol &newmol) {
-        if (!bonded) {
+    bool bond(RWMol &newmol) const {
+        if (!a || !b) {
+            BOOST_LOG(rdWarningLog) << "Incomplete atom labelling, cannot make bond" << std::endl;
+            return false;
+        }
+        if (!a->getOwningMol().getBondBetweenAtoms(a->getIdx(), b->getIdx())) {
             assert (&a->getOwningMol() == &newmol);
             newmol.addBond(a, b, Bond::BondType::SINGLE);
-            bonded = true;
         }
+        return true;
     }
     
     // Restore the atom's chirality by comparing the original order
@@ -715,13 +708,9 @@ struct ZipBond {
         std::vector<unsigned int> orders2;
         auto &m = chiral_atom->getOwningMol();
         for(auto nbrIdx : boost::make_iterator_range(m.getAtomNeighbors(chiral_atom))) {
-            //orders1.push_back(order++);
-            auto order =m[nbrIdx]->getProp<int>(mark);
-            std::cerr << nbrIdx << " " << order << std::endl;
             orders2.push_back(m[nbrIdx]->getProp<int>(mark));
         }
         if(num_swaps_to_interconvert(orders2) % 2 == 1) {
-            std::cerr << "inverting chirality:" << chiral_atom->getIdx() << std::endl;
             chiral_atom->invertChirality();
         }
     }
@@ -742,7 +731,6 @@ struct ZipBond {
 
 std::unique_ptr<ROMol> molzip(
         const ROMol &a, const ROMol &b, const MolzipParams &params) {
-    std::cerr << "******************************" << std::endl;
     RWMol *newmol;
     if (b.getNumAtoms()) {
         newmol = static_cast<RWMol*>(combineMols(a,b));
@@ -754,27 +742,53 @@ std::unique_ptr<ROMol> molzip(
     std::map<unsigned int, ZipBond> mappings;
     std::map<Atom *, std::vector<const ZipBond*>> mappings_by_atom;
     std::vector<Atom *> deletions;
-    for(auto *atom : newmol->atoms()) {
-        auto molno = get_label(atom, params);
-        if(!molno) {
-            continue;
+    if(params.label == MolzipLabel::FragmentOnBonds) {
+        for(auto *atom : newmol->atoms()) {
+            if(atom->getAtomicNum() == 0) {
+                auto molno = atom->getIsotope();
+                auto attached_atom = get_other_atom(atom);
+                auto &bond = mappings[molno];
+                bond.a = attached_atom;
+                bond.a_dummy = atom;
+                bond.b = newmol->getAtomWithIdx(molno);
+                for(auto nbrIdx : boost::make_iterator_range(newmol->getAtomNeighbors(bond.b))) {
+                    auto *nbr = (*newmol)[nbrIdx];
+                    if(nbr->getAtomicNum() == 0 && nbr->getIsotope() == attached_atom->getIdx()) {
+                        bond.b_dummy = nbr;
+                        break;
+                    }
+                }
+                if(!bond.b_dummy) {
+                    BOOST_LOG(rdErrorLog) << "Cannot find atom to bond using FragmentOnBond labelling" << std::endl;
+                    return std::unique_ptr<ROMol>();
+                }
+                mappings_by_atom[atom].push_back(&bond);
+                deletions.push_back(atom);
+            }
         }
-        
-        auto attached_atom = get_other_atom(atom);
-        if(mappings.find(molno) == mappings.end()) {
-            auto &bond = mappings[molno];
-            assert(!bond.a);
-            bond.a = attached_atom;
-            bond.a_dummy = atom;
-        } else {
-            auto &bond = mappings[molno];
-            assert(bond.a);
-            assert(!bond.b);
-            bond.b = attached_atom;
-            bond.b_dummy = atom;
-            mappings_by_atom[bond.a].push_back(&bond);
+    } else {
+        for(auto *atom : newmol->atoms()) {
+            if (atom->getAtomicNum() == 0) {
+                auto molno = get_label(atom, params);
+                if(molno != std::numeric_limits<unsigned int>::max()) {
+                    auto attached_atom = get_other_atom(atom);
+                    if(mappings.find(molno) == mappings.end()) {
+                        auto &bond = mappings[molno];
+                        assert(!bond.a);
+                        bond.a = attached_atom;
+                        bond.a_dummy = atom;
+                    } else {
+                        auto &bond = mappings[molno];
+                        assert(bond.a);
+                        assert(!bond.b);
+                        bond.b = attached_atom;
+                        bond.b_dummy = atom;
+                        mappings_by_atom[bond.a].push_back(&bond);
+                    }
+                    deletions.push_back(atom);
+                }
+            }
         }
-        deletions.push_back(atom);
     }
     for(auto &kv : mappings_by_atom) {
         for(auto &bond : kv.second) {
@@ -782,7 +796,9 @@ std::unique_ptr<ROMol> molzip(
         }
     }
     for(auto &kv : mappings) {
-        kv.second.bond(*newmol);
+        if (!kv.second.bond(*newmol)) {
+            return std::unique_ptr<ROMol>(nullptr);
+        }
     }
     for(auto &atom :deletions) {
         newmol->removeAtom(atom);

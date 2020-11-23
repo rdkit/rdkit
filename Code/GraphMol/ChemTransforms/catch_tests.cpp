@@ -63,6 +63,16 @@ TEST_CASE("molzip", "[]") {
         auto mol = molzip(*a,*b);
         CHECK(MolToSmiles(*mol) == "CN");
     }
+    
+    {
+        auto a = "C[*]"_smiles;
+        auto b = "N[*]"_smiles;
+        MolzipParams p;
+        p.label = MolzipLabel::Isotope;
+        auto mol = molzip(*a,*b,p);
+        CHECK(MolToSmiles(*mol) == "CN");
+    }
+    
     {
         auto a = "[C@H](Br)([*:1])F"_smiles;
         auto b = "[*:1]N"_smiles;
@@ -82,9 +92,6 @@ TEST_CASE("molzip", "[]") {
            auto b = "[*:1]N.[*:2]I"_smiles;
            auto mol = molzip(*a,*b);
            CHECK(MolToSmiles(*mol) == "N[C@@H](F)I");
-           MolzipParams p;
-           p.preserveChirality = true;
-           mol = molzip(*a, *b, p);
        }
     
     {
@@ -94,6 +101,12 @@ TEST_CASE("molzip", "[]") {
             for(unsigned int j=0;j<m->getNumBonds();++j) {
                 if(i!=j) {
                     std::vector<unsigned int> bonds{i,j};
+                    auto resa = RDKit::MolFragmenter::fragmentOnBonds(*m, bonds);
+                    MolzipParams p;
+                    p.label = MolzipLabel::FragmentOnBonds;
+                     CHECK(MolToSmiles(*molzip(*resa,p)) == MolToSmiles(*m));
+                    
+                    // Now try using atom labels
                     auto res = RDKit::MolFragmenter::fragmentOnBonds(*m, bonds, true, &dummyLabels);
                     for(auto *atom : res->atoms()) {
                         if(atom->getIsotope()) {
