@@ -100,5 +100,28 @@ RDKIT_CHEMTRANSFORMS_EXPORT void constructFragmenterBondTypes(
 RDKIT_CHEMTRANSFORMS_EXPORT void constructBRICSBondTypes(
     std::vector<FragmenterBondType> &defs);
 }  // namespace MolFragmenter
+
+
+enum class MolzipLabel {
+    AtomMapNumber,
+    Isotope,
+    FragmentOnBonds,
+    AtomType };
+
+struct MolzipParams {
+  MolzipLabel label = MolzipLabel::AtomMapNumber;
+  std::vector<std::string> atomSymbols = {};
+};
+
+
+
+std::unique_ptr<ROMol> molzip(
+    const ROMol &a, const ROMol &b,
+    const MolzipParams &params=MolzipParams());
+
+std::unique_ptr<ROMol> molzip(const ROMol &a,
+                              const MolzipParams &params=MolzipParams());
+
+
 }  // namespace RDKit
 #endif
