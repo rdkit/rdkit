@@ -824,7 +824,17 @@ bool _checkAmideEster14(const Bond *bnd1, const Bond *bnd3, const Atom *atm1,
   return false;
 }
 
-bool _checkMacrocycleAmideEster14(const ROMol &mol, const Bond *bnd1,
+// checking for amide/ester when all three bonds are
+// part of the macrocycle ring
+// here we look for something like this:
+// It's an amide or ester:
+//
+//        5    <- 5 is the O
+//        |    <- That's the double bond
+//    1   3
+//     \ / \                                         T.S.I.Left Blank
+//      2   4  <- 2 is an oxygen/nitrogen
+bool _checkMacrocycleAllInSameRingAmideEster14(const ROMol &mol, const Bond *bnd1,
                                   const Bond *bnd3, const Atom *atm1,
                                   const Atom *atm2, const Atom *atm3,
                                   const Atom *atm4) {
@@ -847,7 +857,7 @@ bool _checkMacrocycleAmideEster14(const ROMol &mol, const Bond *bnd1,
         if (*nbrIdx != atm1->getIdx() && *nbrIdx != atm3->getIdx()) {
           const auto &res = mol.getAtomWithIdx(*nbrIdx);
           const auto &resbnd = mol.getBondBetweenAtoms(atm2->getIdx(), *nbrIdx);
-          if ((res->getAtomicNum() != 6 && res->getAtomicNum() != 1) ||
+          if ((res->getAtomicNum() != 6 && res->getAtomicNum() != 1) || //check is (methylated)amide
               resbnd->getBondType() != Bond::SINGLE) {
             return false;
           }
@@ -861,7 +871,7 @@ bool _checkMacrocycleAmideEster14(const ROMol &mol, const Bond *bnd1,
         if (*nbrIdx != atm2->getIdx() && *nbrIdx != atm4->getIdx()) {
           const auto &res = mol.getAtomWithIdx(*nbrIdx);
           const auto &resbnd = mol.getBondBetweenAtoms(atm3->getIdx(), *nbrIdx);
-          if (res->getAtomicNum() != 8 ||
+          if (res->getAtomicNum() != 8 || //check for the carbonyl oxygen
               resbnd->getBondType() != Bond::DOUBLE) {
             return false;
           }
@@ -1183,7 +1193,136 @@ void _record14Path(const ROMol &mol, unsigned int bid1, unsigned int bid2,
   accumData.paths14.push_back(path14);
 }
 
-void _setMacrocycle14Bounds(const ROMol &mol, const Bond *bnd1,
+// this is adapted from `_checkAmideEster14`, with only changing 
+// (a2Num == 7 && atm2->getTotalNumHs() == 1) into
+// (a2Num == 7).
+// This is necessary as the original function does not detect attached
+// hydrogen even when is present (possibly due to explict/implicit H-count?),
+// a new function is used (currently only for macrocycle treatment with ETKDGv3)
+// in order to not break backward compatibility (also allow recognising methylated amide)
+// here we look for something like this:
+// It's an amide or ester:
+//
+//        4    <- 4 is the O
+//        |    <- That's the double bond
+//    1   3
+//     \ / \                                         T.S.I.Left Blank
+//      2   5  <- 2 is an oxygen/nitrogen
+bool _checkMacrocycleTwoInSameRingAmideEster14(const Bond *bnd1, const Bond *bnd3, const Atom *atm1,
+                        const Atom *atm2, const Atom *atm3, const Atom *atm4) {
+  unsigned int a1Num = atm1->getAtomicNum();
+  unsigned int a2Num = atm2->getAtomicNum();
+  unsigned int a3Num = atm3->getAtomicNum();
+  unsigned int a4Num = atm4->getAtomicNum();
+
+  if (a1Num != 1 && a3Num == 6 && bnd3->getBondType() == Bond::DOUBLE &&
+      (a4Num == 8 || a4Num == 7) && bnd1->getBondType() == Bond::SINGLE &&
+      (a2Num == 8 || (a2Num == 7 ))) {
+    return true;
+  }
+  return false;
+}
+
+void _setMacrocycleTwoInSameRing14Bounds(const ROMol &mol, const Bond *bnd1,
+                               const Bond *bnd2, const Bond *bnd3,
+                               ComputedData &accumData,
+                               DistGeom::BoundsMatPtr mmat, double *dmat) {
+  PRECONDITION(bnd1, "");
+  PRECONDITION(bnd2, "");
+  PRECONDITION(bnd3, "");
+  unsigned int bid1, bid2, bid3;
+  bid1 = bnd1->getIdx();
+  bid2 = bnd2->getIdx();
+  bid3 = bnd3->getIdx();
+  const Atom *atm2 = mol.getAtomWithIdx(accumData.bondAdj->getVal(bid1, bid2));
+  PRECONDITION(atm2, "");
+  const Atom *atm3 = mol.getAtomWithIdx(accumData.bondAdj->getVal(bid2, bid3));
+  PRECONDITION(atm3, "");
+
+  unsigned int aid1 = bnd1->getOtherAtomIdx(atm2->getIdx());
+  unsigned int aid4 = bnd3->getOtherAtomIdx(atm3->getIdx());
+  const Atom *atm1 = mol.getAtomWithIdx(aid1);
+  const Atom *atm4 = mol.getAtomWithIdx(aid4);
+
+
+  // check that this actually is a 1-4 contact:
+  if (dmat[std::max(aid1, aid4) * mmat->numRows() + std::min(aid1, aid4)] <
+      2.9) {
+    // std::cerr<<"skip: "<<aid1<<"-"<<aid4<<" because
+    // d="<<dmat[std::max(aid1,aid4)*mmat->numRows()+std::min(aid1,aid4)]<<std::endl;
+    return;
+  }
+
+  // when we have fused rings, it can happen that this isn't actually a 1-4
+  // contact,
+  // (this was the cause of sf.net bug 2835784) check that now:
+  if (mol.getBondBetweenAtoms(aid1, atm3->getIdx()) ||
+      mol.getBondBetweenAtoms(aid4, atm2->getIdx())) {
+    return;
+  }
+
+  Atom::HybridizationType ahyb3 = atm3->getHybridization();
+  Atom::HybridizationType ahyb2 = atm2->getHybridization();
+
+  double bl1 = accumData.bondLengths[bid1];
+  double bl2 = accumData.bondLengths[bid2];
+  double bl3 = accumData.bondLengths[bid3];
+
+  double ba12 = accumData.bondAngles->getVal(bid1, bid2);
+  double ba23 = accumData.bondAngles->getVal(bid2, bid3);
+  CHECK_INVARIANT(ba12 > 0.0, "");
+  CHECK_INVARIANT(ba23 > 0.0, "");
+  double dl, du;
+  Path14Configuration path14;
+  unsigned int nb = mol.getNumBonds();
+
+  path14.bid1 = bid1;
+  path14.bid2 = bid2;
+  path14.bid3 = bid3;
+  if ((_checkMacrocycleTwoInSameRingAmideEster14(bnd1, bnd3, atm1, atm2, atm3, atm4)) ||
+      (_checkMacrocycleTwoInSameRingAmideEster14(bnd3, bnd1, atm4, atm3, atm2, atm1))) {
+    dl = RDGeom::compute14DistCis(bl1, bl2, bl3, ba12, ba23);
+    path14.type = Path14Configuration::CIS;
+    accumData.cisPaths[bid1 * nb * nb + bid2 * nb + bid3] = 1;
+    accumData.cisPaths[bid3 * nb * nb + bid2 * nb + bid1] = 1;
+    du = dl;
+    dl -= GEN_DIST_TOL;
+    du += GEN_DIST_TOL;
+  } else if ((ahyb2 == Atom::SP2) && (ahyb3 == Atom::SP2)) {  // FIX: check for trans
+    // here we will assume 180 degrees: basically flat ring with an external
+    // substituent
+    dl = RDGeom::compute14DistTrans(bl1, bl2, bl3, ba12, ba23);
+    du = dl;
+    dl -= GEN_DIST_TOL;
+    du += GEN_DIST_TOL;
+    path14.type = Path14Configuration::TRANS;
+    accumData.transPaths[bid1 * nb * nb + bid2 * nb + bid3] = 1;
+    accumData.transPaths[bid3 * nb * nb + bid2 * nb + bid1] = 1;
+
+  } else {
+    // here we will assume anything is possible
+    dl = RDGeom::compute14DistCis(bl1, bl2, bl3, ba12, ba23);
+    du = RDGeom::compute14DistTrans(bl1, bl2, bl3, ba12, ba23);
+
+    // in highly-strained situations these can get mixed up:
+    if (du < dl) {
+      double tmpD = dl;
+      dl = du;
+      du = tmpD;
+    }
+    if (fabs(du - dl) < DIST12_DELTA) {
+      dl -= GEN_DIST_TOL;
+      du += GEN_DIST_TOL;
+    }
+    path14.type = Path14Configuration::OTHER;
+  }
+  // std::cerr << "1: " << aid1 << "-" << aid4 << ": " << dl << " -> " << du
+  //           << std::endl;
+  _checkAndSetBounds(aid1, aid4, dl, du, mmat);
+  accumData.paths14.push_back(path14);
+}
+
+void _setMacrocycleAllInSameRing14Bounds(const ROMol &mol, const Bond *bnd1,
                             const Bond *bnd2, const Bond *bnd3,
                             ComputedData &accumData,
                             DistGeom::BoundsMatPtr mmat, double *dmat) {
@@ -1309,9 +1448,9 @@ void _setMacrocycle14Bounds(const ROMol &mol, const Bond *bnd1,
         path14.type = Path14Configuration::OTHER;
         // BOOST_LOG(rdDebugLog) << "Special 9 " << aid1 << " " << aid4 <<
         // "\n";
-      } else if ((_checkMacrocycleAmideEster14(mol, bnd1, bnd3, atm1, atm2,
+      } else if ((_checkMacrocycleAllInSameRingAmideEster14(mol, bnd1, bnd3, atm1, atm2,
                                                atm3, atm4)) ||
-                 (_checkMacrocycleAmideEster14(mol, bnd3, bnd1, atm4, atm3,
+                 (_checkMacrocycleAllInSameRingAmideEster14(mol, bnd3, bnd1, atm4, atm3,
                                                atm2, atm1))) {
         dl =
             RDGeom::compute14DistTrans(bl1, bl2, bl3, ba12, ba23) +
@@ -1403,6 +1542,7 @@ void set14Bounds(const ROMol &mol, DistGeom::BoundsMatPtr mmat,
   ROMol::OEDGE_ITER beg1, beg2, end1, end2;
   ROMol::ConstBondIterator bi;
 
+  std::set<unsigned int> bidIsMacrocycle;
   unsigned int nb = mol.getNumBonds();
   BIT_SET ringBondPairs(nb * nb), donePaths(nb * nb * nb);
   unsigned int id1, id2, pid1, pid2, pid3, pid4;
@@ -1431,9 +1571,10 @@ void set14Bounds(const ROMol &mol, DistGeom::BoundsMatPtr mmat,
 
       if (rSize > 5) {
         if (useMacrocycle14config && rSize >= minMacrocycleRingSize) {
-          _setMacrocycle14Bounds(
+          _setMacrocycleAllInSameRing14Bounds(
               mol, mol.getBondWithIdx(bid1), mol.getBondWithIdx(bid2),
               mol.getBondWithIdx(bid3), accumData, mmat, distMatrix);
+          bidIsMacrocycle.insert(bid2);
         } else {
           _setInRing14Bounds(mol, mol.getBondWithIdx(bid1),
                              mol.getBondWithIdx(bid2), mol.getBondWithIdx(bid3),
@@ -1474,9 +1615,14 @@ void set14Bounds(const ROMol &mol, DistGeom::BoundsMatPtr mmat,
                 // either (bid1, bid2) or (bid2, bid3) are in the
                 // same ring (note all three cannot be in the same
                 // ring; we dealt with that before)
-
-                _setTwoInSameRing14Bounds(mol, bnd1, (*bi), bnd3, accumData,
+                if (useMacrocycle14config && bidIsMacrocycle.find(bid2) != bidIsMacrocycle.end()) {		
+                  _setMacrocycleTwoInSameRing14Bounds(mol, bnd1, (*bi), bnd3, accumData,
+                                            mmat, distMatrix);
+                }
+		else{
+                  _setTwoInSameRing14Bounds(mol, bnd1, (*bi), bnd3, accumData,
                                           mmat, distMatrix);
+		}
               } else if (((rinfo->numBondRings(bid1) > 0) &&
                           (rinfo->numBondRings(bid2) > 0)) ||
                          ((rinfo->numBondRings(bid2) > 0) &&
