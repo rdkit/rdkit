@@ -933,4 +933,35 @@ TEST_CASE("hand drawn", "[play]") {
     }
 #endif
   }
+  SECTION("smaller") {
+    auto m = "N=c1nc([C@H]2NCCCC2)cc(N)n1O"_smiles;
+    REQUIRE(m);
+    RDDepict::preferCoordGen = true;
+    MolDraw2DUtils::prepareMolForDrawing(*m);
+
+    std::string fName = getenv("RDBASE");
+    fName += "/Data/Fonts/ComicNeue-Regular.ttf";
+
+    {
+      MolDraw2DSVG drawer(350, 300);
+      drawer.drawOptions().fontFile = fName;
+      drawer.drawOptions().comicMode = true;
+      drawer.drawMolecule(*m);
+      drawer.finishDrawing();
+      auto text = drawer.getDrawingText();
+      std::ofstream outs("testHandDrawn-3.svg");
+      outs << text;
+      outs.flush();
+    }
+#ifdef RDK_BUILD_CAIRO_SUPPORT
+    {
+      MolDraw2DCairo drawer(350, 300);
+      drawer.drawOptions().fontFile = fName;
+      drawer.drawOptions().comicMode = true;
+      drawer.drawMolecule(*m);
+      drawer.finishDrawing();
+      drawer.writeDrawingText("testHandDrawn-3.png");
+    }
+#endif
+  }
 }

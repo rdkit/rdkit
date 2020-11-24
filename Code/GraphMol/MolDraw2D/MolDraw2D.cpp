@@ -1089,38 +1089,20 @@ void MolDraw2D::centrePicture(int width, int height) {
 };
 
 namespace {
-void handdrawnLine1(MolDraw2D &d2d, const Point2D &cds1, const Point2D &cds2) {
-  unsigned nSteps = 50;
-  double deviation = 0.04;
-  Point2D step = (cds2 - cds1) / nSteps;
-  auto lastPos = cds1;
-  for (unsigned int i = 1; i < nSteps; ++i) {
-    auto tgt = cds1 + step * i;
-    tgt.x += deviation * (std::rand() % 20 - 10) / 10.0;
-    tgt.y += deviation * (std::rand() % 20 - 10) / 10.0;
-    d2d.drawLine(lastPos, tgt);
-    lastPos = tgt;
-  }
-}
-void handdrawnLine2(MolDraw2D &d2d, const Point2D &cds1, const Point2D &cds2) {
-  unsigned nSteps = 5;
-  double deviation = 0.03;
-  Point2D step = (cds2 - cds1) / nSteps;
-  std::vector<Point2D> pts;
-  pts.push_back(cds1);
-  for (unsigned int i = 1; i < nSteps; ++i) {
-    auto tgt = cds1 + step * i;
-    tgt.x += deviation * (std::rand() % 20 - 10) / 10.0;
-    tgt.y += deviation * (std::rand() % 20 - 10) / 10.0;
-    pts.push_back(tgt);
-  }
-  pts.push_back(cds2);
-  d2d.drawPolygon(pts);
-}
+// there are a several empirically determined constants here.
 std::vector<Point2D> handdrawnLine(const Point2D &cds1, const Point2D &cds2,
                                    unsigned nSteps = 4,
                                    double deviation = 0.03) {
   Point2D step = (cds2 - cds1) / nSteps;
+  // make sure we aren't adding loads of wiggles to short lines
+  while (step.length() < 0.1 && nSteps > 2) {
+    --nSteps;
+    step = (cds2 - cds1) / nSteps;
+  }
+  // make sure the wiggles aren't too big
+  while (deviation / step.length() > 0.15) {
+    deviation *= 0.75;
+  }
   Point2D perp{step.y, -step.x};
   perp.normalize();
   std::vector<Point2D> pts;
