@@ -136,7 +136,7 @@ int RGroupDecomposition::add(const ROMol &inmol) {
       tmatches = tmatches_filtered;
     }
 
-    if (!tmatches.size()) {
+    if (tmatches.empty()) {
       continue;
     } else {
       if (tmatches.size() > 1) {
@@ -169,8 +169,6 @@ int RGroupDecomposition::add(const ROMol &inmol) {
 
   //  Should probably scan all mols first to find match with
   //  smallest number of matches...
-  size_t size = data->matches.size();
-
   std::vector<RGroupMatch> potentialMatches;
 
   std::unique_ptr<ROMol> tMol;
@@ -191,7 +189,7 @@ int RGroupDecomposition::add(const ROMol &inmol) {
         std::vector<int> attachments;
         boost::shared_ptr<ROMol> &newMol = fragments[i];
         newMol->setProp<int>("core", core_idx);
-        newMol->setProp<int>("idx", size);
+        newMol->setProp<int>("idx", data->matches.size());
         newMol->setProp<int>("frag_idx", i);
 
         for (auto at : newMol->atoms()) {
@@ -289,10 +287,11 @@ int RGroupDecomposition::add(const ROMol &inmol) {
   data->matches.push_back(potentialMatches);
   data->permutation = std::vector<size_t>(data->matches.size(), 0);
 
-  if (size) {
+  if (data->matches.size()) {
     if (data->params.matchingStrategy & Greedy ||
-        (data->params.matchingStrategy & GreedyChunks && size > 1 &&
-         size % data->params.chunkSize == 0)) {
+        (data->params.matchingStrategy & GreedyChunks &&
+         data->matches.size() > 1 &&
+         data->matches.size() % data->params.chunkSize == 0)) {
       data->process(true);
     }
   }

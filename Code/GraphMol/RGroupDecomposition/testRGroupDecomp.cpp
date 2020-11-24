@@ -43,12 +43,18 @@
 #include <boost/tokenizer.hpp>
 #include <regex>
 
+//#define DEBUG
+
 typedef boost::tokenizer<boost::char_separator<char>> tokenizer;
 
 using namespace RDKit;
 
 void CHECK_RGROUP(RGroupRows::const_iterator &it, const std::string &expected,
+#ifdef DEBUG
+                  bool doassert = false) {
+#else
                   bool doassert = true) {
+#endif
   std::ostringstream str;
   int i = 0;
 
@@ -425,7 +431,7 @@ void testGitHubIssue1705() {
       }
     }
     delete core;
-    TEST_ASSERT(ss.str() == R"RES(Rgroup===Core
+    std::string expected = R"RES(Rgroup===Core
 Oc1ccc([*:2])cc1[*:1]
 Oc1ccc([*:2])cc1[*:1]
 Oc1ccc([*:2])cc1[*:1]
@@ -443,7 +449,16 @@ Rgroup===R2
 [H][*:2]
 N[*:2]
 [H][*:2]
-)RES");
+)RES";
+#ifdef DEBUG
+    if (ss.str() != expected) {
+      std::cerr << __LINE__ << " ERROR got\n"
+                << ss.str() << "\nexpected\n"
+                << expected << std::endl;
+    }
+#else
+    TEST_ASSERT(ss.str() == expected);
+#endif
   }
 #endif
   // std::cerr<<"n\n\n\n\n\n--------------------------------------------------------------\n\n\n\n\n";
@@ -470,22 +485,31 @@ N[*:2]
       }
     }
     delete core;
-    TEST_ASSERT(ss.str() == R"RES(Rgroup===Core
+    std::string expected = R"RES(Rgroup===Core
 Cc1c([*:1])cccc1[*:2]
 Cc1c([*:1])cccc1[*:2]
 Cc1c([*:1])cccc1[*:2]
 Cc1c([*:1])cccc1[*:2]
 Rgroup===R1
 [H][*:1]
-[H][*:1]
-[H][*:1]
+F[*:1]
+F[*:1]
 F[*:1]
 Rgroup===R2
 [H][*:2]
+[H][*:2]
+[H][*:2]
 F[*:2]
-F[*:2]
-F[*:2]
-)RES");
+)RES";
+#ifdef DEBUG
+    if (ss.str() != expected) {
+      std::cerr << __LINE__ << " ERROR got\n"
+                << ss.str() << "\nexpected\n"
+                << expected << std::endl;
+    }
+#else
+    TEST_ASSERT(ss.str() == expected);
+#endif
   }
 }
 
@@ -575,6 +599,9 @@ M  END
 }
 
 void testSDFGRoupMultiCoreNoneShouldMatch() {
+  BOOST_LOG(rdInfoLog)
+      << "********************************************************\n";
+  BOOST_LOG(rdInfoLog) << "testSDFGRoupMultiCoreNoneShouldMatch" << std::endl;
   std::string sdcores = R"CTAB(
   Mrv1813 05061918272D          
 
@@ -930,7 +957,7 @@ void testRowColumnAlignmentProblem() {
 void testSymmetryIssues() {
   BOOST_LOG(rdInfoLog)
       << "********************************************************\n";
-  BOOST_LOG(rdInfoLog) << "Testing R-Group symmetry issues \n";
+  BOOST_LOG(rdInfoLog) << "Testing R-Group symmetry issues\n";
 
   auto m1 = "c1c(F)cccn1"_smiles;
   auto m2 = "c1c(Cl)c(C)ccn1"_smiles;
@@ -1025,7 +1052,7 @@ F[*:3]
 void testSymmetryPerformance() {
   BOOST_LOG(rdInfoLog)
       << "********************************************************\n";
-  BOOST_LOG(rdInfoLog) << "Testing R-Group symmetry issues \n";
+  BOOST_LOG(rdInfoLog) << "Testing R-Group symmetry performance\n";
   boost::logging::disable_logs("rdApp.warning");
 
   std::string smis =
@@ -1201,7 +1228,7 @@ Cn1cnc2cc(Oc3cc(N4CCN(Cc5ccccc5-c5ccc(Cl)cc5)CC4)ccc3C(=O)NS(=O)(=O)c3ccc(NCCCN4
 void testScorePermutations() {
   BOOST_LOG(rdInfoLog)
       << "********************************************************\n";
-  BOOST_LOG(rdInfoLog) << "Testing permutation scoring function \n";
+  BOOST_LOG(rdInfoLog) << "Testing permutation scoring function\n";
 
   {
     auto core = "Cc1ccccc1"_smiles;
@@ -1224,22 +1251,31 @@ void testScorePermutations() {
     }
     TEST_ASSERT(r_labels == std::set<std::string>({"Core", "R1", "R2"}));
     TEST_ASSERT(groups.size() == 3);
-    TEST_ASSERT(ss.str() == R"RES(Rgroup===Core
+    std::string expected = R"RES(Rgroup===Core
 Cc1c([*:1])cccc1[*:2]
 Cc1c([*:1])cccc1[*:2]
 Cc1c([*:1])cccc1[*:2]
 Cc1c([*:1])cccc1[*:2]
 Rgroup===R1
 [H][*:1]
-[H][*:1]
-[H][*:1]
+F[*:1]
+F[*:1]
 F[*:1]
 Rgroup===R2
 [H][*:2]
+[H][*:2]
+[H][*:2]
 F[*:2]
-F[*:2]
-F[*:2]
-)RES");
+)RES";
+#ifdef DEBUG
+    if (ss.str() != expected) {
+      std::cerr << __LINE__ << " ERROR got\n"
+                << ss.str() << "\nexpected\n"
+                << expected << std::endl;
+    }
+#else
+    TEST_ASSERT(ss.str() == expected);
+#endif
   }
   {
     auto core = "Cc1ccccc1"_smiles;
@@ -1263,7 +1299,7 @@ F[*:2]
     }
     TEST_ASSERT(r_labels == std::set<std::string>({"Core", "R1", "R2"}));
     TEST_ASSERT(groups.size() == 3);
-    TEST_ASSERT(ss.str() == R"RES(Rgroup===Core
+    std::string expected = R"RES(Rgroup===Core
 Cc1c([*:1])cccc1[*:2]
 Cc1c([*:1])cccc1[*:2]
 Cc1c([*:1])cccc1[*:2]
@@ -1278,7 +1314,16 @@ Cl[*:2]
 F[*:2]
 F[*:2]
 F[*:2]
-)RES");
+)RES";
+#ifdef DEBUG
+    if (ss.str() != expected) {
+      std::cerr << __LINE__ << " ERROR got\n"
+                << ss.str() << "\nexpected\n"
+                << expected << std::endl;
+    }
+#else
+    TEST_ASSERT(ss.str() == expected);
+#endif
   }
   {
     auto core = "O1C([*:1])([*:2])CCC1"_smiles;
@@ -1315,7 +1360,7 @@ F[*:2]
     }
     TEST_ASSERT(r_labels == std::set<std::string>({"Core", "R1", "R2"}));
     TEST_ASSERT(groups.size() == 3);
-    TEST_ASSERT(ss.str() == R"RES(Rgroup===Core
+    std::string expected = R"RES(Rgroup===Core
 C1COC([*:1])([*:2])C1
 C1COC([*:1])([*:2])C1
 C1COC([*:1])([*:2])C1
@@ -1357,7 +1402,16 @@ CC[*:2]
 OC[*:2]
 OC[*:2]
 CCCC[*:2]
-)RES");
+)RES";
+#ifdef DEBUG
+    if (ss.str() != expected) {
+      std::cerr << __LINE__ << " ERROR got\n"
+                << ss.str() << "\nexpected\n"
+                << expected << std::endl;
+    }
+#else
+    TEST_ASSERT(ss.str() == expected);
+#endif
   }
 }
 
@@ -1388,28 +1442,30 @@ void testMultiCorePreLabelled() {
       i = 0;
       for (RGroupRows::const_iterator it = rows.begin(); it != rows.end();
            ++it, ++i) {
-        CHECK_RGROUP(it, expectedRows[i] /*, false*/);
+        CHECK_RGROUP(it, expectedRows[i]);
       }
       RGroupColumns groups = decomp.getRGroupsAsColumns();
       i = 0;
       TEST_ASSERT(groups.size() == 3);
       for (const auto &pair : groups) {
-        /*
+#ifdef DEBUG
         if (pair.first != expectedLabels[i]) {
-          std::cerr << "ERROR: Expected " << expectedLabels[i] << ", got "
-                    << pair.first << std::endl;
+          std::cerr << __LINE__ << " ERROR: Expected " << expectedLabels[i]
+                    << ", got " << pair.first << std::endl;
         }
-        */
+#else
         TEST_ASSERT(pair.first == expectedLabels[i]);
+#endif
         unsigned int j = 0;
         for (const auto &item : pair.second) {
-          /*
+#ifdef DEBUG
           if (expectedItems[i][j] != MolToSmiles(*item)) {
-            std::cerr << "ERROR: Expected " << expectedItems[i][j] << ", got "
-                      << MolToSmiles(*item) << std::endl;
+            std::cerr << __LINE__ << " ERROR: Expected " << expectedItems[i][j]
+                      << ", got " << MolToSmiles(*item) << std::endl;
           }
-          */
+#else
           TEST_ASSERT(expectedItems[i][j] == MolToSmiles(*item));
+#endif
           ++j;
         }
         ++i;
@@ -1653,6 +1709,70 @@ $$$$
   }
 }
 
+void testGeminalRGroups() {
+  BOOST_LOG(rdInfoLog)
+      << "********************************************************\n";
+  BOOST_LOG(rdInfoLog) << "test core with geminal R-groups" << std::endl;
+  std::string core_ctab = R"CTAB(
+     RDKit          2D
+
+  8  8  0  0  0  0  0  0  0  0999 V2000
+   -0.6026    1.2267    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -1.3171    0.8142    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -1.3171   -0.0108    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -0.6026   -0.4232    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    0.1118   -0.0108    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    0.1118    0.8142    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -1.0714    1.7839    0.0000 R#  0  0  0  0  0  0  0  0  0  0  0  0
+   -0.0506    1.8398    0.0000 R#  0  0  0  0  0  0  0  0  0  0  0  0
+  2  3  1  0  0  0  0
+  3  4  1  0  0  0  0
+  4  5  1  0  0  0  0
+  5  6  1  0  0  0  0
+  1  2  1  0  0  0  0
+  1  6  1  0  0  0  0
+  1  7  1  0  0  0  0
+  1  8  1  0  0  0  0
+M  RGP  2   7   5   8   6
+M  END
+)CTAB";
+  ROMOL_SPTR core(MolBlockToMol(core_ctab));
+  const std::vector<const char *> smilesData{"C1CCCCC12CC2", "C1CCCCC1(C)C",
+                                             "C1CCCCC1(Cl)Br"};
+
+  // the test should yield the same results irrespective of the permutations
+  // across the two parameters
+  for (auto matchAtRGroup = 0; matchAtRGroup < 2; ++matchAtRGroup) {
+    for (auto mdlRGroupLabels = 0; mdlRGroupLabels < 2; ++mdlRGroupLabels) {
+      RGroupDecompositionParameters params;
+      if (matchAtRGroup) {
+        params.labels = MDLRGroupLabels;
+      }
+      if (mdlRGroupLabels) {
+        params.labels = MDLRGroupLabels;
+      }
+      RGroupDecomposition decomp(*core, params);
+      for (const auto &smi : smilesData) {
+        ROMol *mol = SmilesToMol(smi);
+        TEST_ASSERT(decomp.add(*mol) != -1);
+        delete mol;
+      }
+      TEST_ASSERT(decomp.process());
+      auto rows = decomp.getRGroupsAsRows();
+      const std::vector<const char *> res{
+          "Core:C1CCC([*:5])([*:6])CC1 R5:C(C[*:6])[*:5] R6:C(C[*:6])[*:5]",
+          "Core:C1CCC([*:5])([*:6])CC1 R5:C[*:5] R6:C[*:6]",
+          "Core:C1CCC([*:5])([*:6])CC1 R5:Br[*:5] R6:Cl[*:6]"};
+      TEST_ASSERT(rows.size() == res.size());
+      size_t i = 0;
+      for (RGroupRows::const_iterator it = rows.begin(); it != rows.end();
+           ++it) {
+        CHECK_RGROUP(it, res.at(i++));
+      }
+    }
+  }
+}
+
 int main() {
   RDLog::InitLogs();
 
@@ -1681,6 +1801,7 @@ int main() {
   testScorePermutations();
   testMultiCorePreLabelled();
   testCoreWithRGroupAdjQuery();
+  testGeminalRGroups();
   BOOST_LOG(rdInfoLog)
       << "********************************************************\n";
   return 0;
