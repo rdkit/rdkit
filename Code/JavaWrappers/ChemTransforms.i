@@ -55,6 +55,21 @@ RDKit::ROMol *fragmentMolOnBonds(
         return RDKit::MolFragmenter::fragmentOnBonds(mol, uBondIndices, addDummies, dummyLabels, nullptr, cutsPerAtomPtr);
  }
 
+// Fix std::unique_ptr issue
+ROMol * new_molzip(
+	       const RDKit::ROMol &a, const RDKit::ROMol &b,
+	       const RDKit::MolzipParams &params=MolzipParams()) {
+  std::unique_ptr<ROMol> res = RDKit::molzip(a, b, params);
+  return res.release();
+}
+
+ROMol * new_molzip(
+	       const RDKit::ROMol &a,
+	       const RDKit::MolzipParams &params=MolzipParams()) {
+  std::unique_ptr<ROMol> res = RDKit::molzip(a, params);
+  return res.release();
+}
+
 %}
 
 %newobject deleteSubstructs;
@@ -67,7 +82,9 @@ RDKit::ROMol *fragmentMolOnBonds(
 
 %newobject fragmentMolOnBonds;
 %ignore fragmentOnBonds;
+%ignore molzip
 %rename("fragmentOnBonds") fragmentMolOnBonds;
+%rename("molzip") new_molzip;
 
 RDKit::ROMol *fragmentMolOnBonds(
     const RDKit::ROMol &mol, const std::vector<int> &bondIndices,
