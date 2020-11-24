@@ -133,9 +133,9 @@ void MolDraw2DJS::drawEllipse(const Point2D &cds1, const Point2D &cds2) {
 // ****************************************************************************
 void MolDraw2DJS::clearDrawing() {
   std::string col = DrawColourToSVG(drawOptions().backgroundColour);
-  d_context.call<void>("clearRect", 0, 0, width(), height());
+  d_context.call<void>("clearRect", offset().x, offset().y, width(), height());
   d_context.set("fillStyle", col);
-  d_context.call<void>("fillRect", 0, 0, width(), height());
+  d_context.call<void>("fillRect", offset().x, offset().y, width(), height());
 }
 
 }  // namespace RDKit
