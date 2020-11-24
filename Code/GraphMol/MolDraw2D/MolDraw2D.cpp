@@ -1305,7 +1305,7 @@ void MolDraw2D::pushDrawDetails() {
   at_cds_.push_back(std::vector<Point2D>());
   atomic_nums_.push_back(std::vector<int>());
   atom_syms_.push_back(std::vector<std::pair<std::string, OrientType>>());
-  annotations_.push_back(std::vector<std::pair<std::string, StringRect>>());
+  annotations_.push_back(std::vector<AnnotationType>());
   shapes_.push_back(std::vector<MolDrawShape>());
   radicals_.push_back(
       std::vector<std::pair<std::shared_ptr<StringRect>, OrientType>>());
@@ -1432,7 +1432,7 @@ void MolDraw2D::finishMoleculeDraw(const RDKit::ROMol &draw_mol,
                             << std::endl;
   } else {
     for (const auto &annotation : annotations_[activeMolIdx_]) {
-      drawAnnotation(annotation.first, annotation.second);
+      drawAnnotation(annotation);
     }
   }
 
@@ -2002,8 +2002,10 @@ void MolDraw2D::extractAtomNotes(const ROMol &mol) {
           cerr << "Couldn't find good place for note " << note << " for atom "
                << atom->getIdx() << endl;
         } else {
-          annotations_[activeMolIdx_].push_back(
-              std::make_pair(note, note_rect));
+          AnnotationType annot;
+          annot.text_ = note;
+          annot.rect_ = note_rect;
+          annotations_[activeMolIdx_].push_back(annot);
         }
       }
     }
@@ -2025,8 +2027,10 @@ void MolDraw2D::extractBondNotes(const ROMol &mol) {
           cerr << "Couldn't find good place for note " << note << " for bond "
                << bond->getIdx() << endl;
         } else {
-          annotations_[activeMolIdx_].push_back(
-              std::make_pair(note, note_rect));
+          AnnotationType annot;
+          annot.text_ = note;
+          annot.rect_ = note_rect;
+          annotations_[activeMolIdx_].push_back(annot);
         }
       }
     }
@@ -2114,10 +2118,6 @@ void MolDraw2D::extractBrackets(const ROMol &mol) {
 
       std::string connect;
       if (sg.getPropIfPresent("CONNECT", connect)) {
-        // FIX: this is a workaround for #3577 and should not be merged as-is
-        if (connect == "HT") {
-          connect = "ht";
-        }
         // annotations go on the last bracket of an sgroup
         const auto &brkShp = shapes_[activeMolIdx_].back();
         StringRect rect;
@@ -2129,7 +2129,15 @@ void MolDraw2D::extractBrackets(const ROMol &mol) {
           brkPt = brkShp.points[3];
         }
         rect.trans_ = topPt + (topPt - brkPt);
-        annotations_[activeMolIdx_].push_back(std::make_pair(connect, rect));
+        AnnotationType annot;
+        annot.text_ = connect;
+        annot.rect_ = rect;
+        // if we're to the right of the bracket, we need to left justify,
+        // otherwise things seem to work as is
+        if (brkPt.x < topPt.x) {
+          annot.align_ = TextAlignType::START;
+        }
+        annotations_[activeMolIdx_].push_back(annot);
       }
       std::string label;
       if (sg.getPropIfPresent("LABEL", label)) {
@@ -2144,7 +2152,10 @@ void MolDraw2D::extractBrackets(const ROMol &mol) {
           brkPt = brkShp.points[0];
         }
         rect.trans_ = botPt + (botPt - brkPt);
-        annotations_[activeMolIdx_].push_back(std::make_pair(label, rect));
+        AnnotationType annot;
+        annot.text_ = label;
+        annot.rect_ = rect;
+        annotations_[activeMolIdx_].push_back(annot);
       }
     }
   }
@@ -2426,8 +2437,7 @@ void MolDraw2D::drawAtomLabel(int atom_num, const DrawColour &draw_colour) {
 }
 
 // ****************************************************************************
-void MolDraw2D::drawAnnotation(const string &note,
-                               const StringRect &note_rect) {
+void MolDraw2D::drawAnnotation(const AnnotationType &annot) {
   double full_font_scale = text_drawer_->fontScale();
   // turn off minFontSize for the annotation, as we do want it to be smaller
   // than the letters, even if that makes it tiny.  The annotation positions
@@ -2437,8 +2447,8 @@ void MolDraw2D::drawAnnotation(const string &note,
   text_drawer_->setMinFontSize(-1);
   text_drawer_->setFontScale(drawOptions().annotationFontScale *
                              full_font_scale);
-  Point2D draw_cds = getDrawCoords(note_rect->trans_);
-  text_drawer_->drawString(note, draw_cds, TextAlignType::MIDDLE);
+  Point2D draw_cds = getDrawCoords(annot.rect_.trans_);
+  text_drawer_->drawString(annot.text_, draw_cds, annot.align_);
 
   text_drawer_->setMinFontSize(omfs);
   text_drawer_->setFontScale(full_font_scale);
@@ -2845,8 +2855,8 @@ bool MolDraw2D::doesNoteClashAtomLabels(
 bool MolDraw2D::doesNoteClashOtherNotes(
     const StringRect &note_rect,
     const vector<std::shared_ptr<StringRect>> &rects) const {
-  for (auto const &rect : annotations_[activeMolIdx_]) {
-    if (text_drawer_->doesRectIntersect(rects, note_rect.trans_, rect.second)) {
+  for (auto const &annot : annotations_[activeMolIdx_]) {
+    if (text_drawer_->doesRectIntersect(rects, note_rect.trans_, annot.rect_)) {
       return true;
     }
   }
@@ -3405,12 +3415,11 @@ void MolDraw2D::adjustScaleForRadicals(const ROMol &mol) {
 }
 
 // ****************************************************************************
-void MolDraw2D::adjustScaleForAnnotation(
-    const vector<std::pair<std::string, StringRect>> &notes) {
+void MolDraw2D::adjustScaleForAnnotation(const vector<AnnotationType> &notes) {
   double x_max(x_min_ + x_range_), y_max(y_min_ + y_range_);
 
   for (auto const &pr : notes) {
-    const auto &note_rect = pr.second;
+    const auto &note_rect = pr.rect_;
     double this_x_max = note_rect.trans_.x + note_rect.width_ / 2.0;
     double this_x_min = note_rect.trans_.x - note_rect.width_ / 2.0;
     double this_y_max = note_rect.trans_.y + note_rect.height_ / 2.0;

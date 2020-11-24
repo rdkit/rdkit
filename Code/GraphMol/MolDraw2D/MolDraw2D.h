@@ -38,8 +38,9 @@ using RDGeom::Point2D;
 namespace RDKit {
 
 class DrawText;
-enum class TextAlignType : unsigned char;
-enum class OrientType : unsigned char;
+// for aligning the drawing of text to the passed in coords.
+enum class OrientType : unsigned char { C = 0, N, E, S, W };
+enum class TextAlignType : unsigned char { MIDDLE = 0, START, END };
 
 struct DrawColour {
   double r = 0.0, g = 0.0, b = 0.0, a = 1.0;
@@ -94,6 +95,7 @@ struct StringRect {
                       // rectangle the other.
   int clash_score_;   // rough measure of how badly it clashed with other things
                       // lower is better, 0 is no clash.
+
   StringRect()
       : trans_(0.0, 0.0),
         offset_(0.0, 0.0),
@@ -161,6 +163,12 @@ struct StringRect {
     }
     return false;
   }
+};
+struct AnnotationType {
+  std::string text_;
+  StringRect rect_;
+  OrientType orient_ = OrientType::C;
+  TextAlignType align_ = TextAlignType::MIDDLE;
 };
 
 typedef std::map<int, DrawColour> ColourPalette;
@@ -650,7 +658,7 @@ class RDKIT_MOLDRAW2D_EXPORT MolDraw2D {
   // just a StringPos for the position for calculating the scale of the drawing.
   // Went a long way down the rabbit hole before realising this, hence this
   // note.
-  std::vector<std::vector<std::pair<std::string, StringRect>>> annotations_;
+  std::vector<std::vector<AnnotationType>> annotations_;
   std::vector<std::vector<std::pair<std::shared_ptr<StringRect>, OrientType>>>
       radicals_;
   Point2D bbox_[2];
@@ -812,8 +820,7 @@ class RDKIT_MOLDRAW2D_EXPORT MolDraw2D {
   void adjustScaleForAtomLabels(const std::vector<int> *highlight_atoms,
                                 const std::map<int, double> *highlight_radii);
   void adjustScaleForRadicals(const ROMol &mol);
-  void adjustScaleForAnnotation(
-      const std::vector<std::pair<std::string, StringRect>> &notes);
+  void adjustScaleForAnnotation(const std::vector<AnnotationType> &notes);
 
  private:
   virtual void updateMetadata(const ROMol &mol, int confId) {
@@ -848,8 +855,15 @@ class RDKIT_MOLDRAW2D_EXPORT MolDraw2D {
       const std::vector<std::pair<DrawColour, DrawColour>> *bond_colours =
           nullptr);
   virtual void drawAtomLabel(int atom_num, const DrawColour &draw_colour);
+  virtual void drawAnnotation(const AnnotationType &annotation);
+  //! DEPRECATED
   virtual void drawAnnotation(const std::string &note,
-                              const StringRect &note_rect);
+                              const StringRect &note_rect) {
+    AnnotationType annot;
+    annot.text_ = note;
+    annot.rect_ = note_rect;
+    drawAnnotation(annot);
+  }
 
   // calculate normalised perpendicular to vector between two coords
   Point2D calcPerpendicular(const Point2D &cds1, const Point2D &cds2) const;

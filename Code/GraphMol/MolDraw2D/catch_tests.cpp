@@ -937,6 +937,16 @@ M  END
       outs << text;
       outs.flush();
     }
+    {  // rotation
+      MolDraw2DSVG drawer(350, 300);
+      drawer.drawOptions().rotate = 180;
+      drawer.drawMolecule(*m);
+      drawer.finishDrawing();
+      auto text = drawer.getDrawingText();
+      std::ofstream outs("testBrackets-1e.svg");
+      outs << text;
+      outs.flush();
+    }
   }
   SECTION("three brackets") {
     auto m = R"CTAB(three brackets

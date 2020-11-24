@@ -11,7 +11,7 @@
 //
 
 #include <GraphMol/MolDraw2D/MolDraw2DSVG.h>
-
+#include <GraphMol/MolDraw2D/DrawText.h>
 #include <GraphMol/SmilesParse/SmilesWrite.h>
 #include <Geometry/point.h>
 #ifdef RDK_BUILD_FREETYPE_SUPPORT
@@ -184,14 +184,13 @@ void MolDraw2DSVG::drawAtomLabel(int atom_num, const DrawColour &draw_colour) {
 }
 
 // ****************************************************************************
-void MolDraw2DSVG::drawAnnotation(const std::string &note,
-                                  const StringRect &note_rect) {
+void MolDraw2DSVG::drawAnnotation(const AnnotationType &annot) {
   std::string o_class = d_activeClass;
   if (!d_activeClass.empty()) {
     d_activeClass += " ";
   }
   d_activeClass += "note";
-  MolDraw2D::drawAnnotation(note, note_rect);
+  MolDraw2D::drawAnnotation(annot);
   d_activeClass = o_class;
 }
 
