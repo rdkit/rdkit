@@ -13,6 +13,7 @@ from rdkit.Chem import rdDistGeom, ChemicalForceFields, rdMolAlign
 import rdkit.DistanceGeometry as DG
 from rdkit import RDConfig, rdBase
 from rdkit.Geometry import rdGeometry as geom
+from rdkit.Geometry import ComputeSignedDihedralAngle
 from rdkit.RDLogger import logger
 logger = logger()
 
@@ -583,6 +584,34 @@ class TestCase(unittest.TestCase):
             self.assertTrue((conf2.GetAtomPosition(3)-conf2.GetAtomPosition(0)).Length() > (conf1.GetAtomPosition(3)-conf1.GetAtomPosition(0)).Length())
 
         
+    def testETKDGv3amide(self):
+        """
+        test for a macrocycle molecule, ETKDGv3 samples trans amide
+        """
+        def get_atom_mapping(mol, smirks = "[O:1]=[C:2]@;-[NX3:3]-[H:4]"):
+            qmol = Chem.MolFromSmarts(smirks)
+            ind_map = {}
+            for atom in qmol.GetAtoms():
+                map_num = atom.GetAtomMapNum()
+                if map_num:
+                    ind_map[map_num - 1] = atom.GetIdx()
+            map_list = [ind_map[x] for x in sorted(ind_map)]
+            matches = list()
+            for match in mol.GetSubstructMatches(qmol, uniquify = False) :
+                mas = [match[x] for x in map_list]
+                matches.append(tuple(mas))
+            return matches
+
+        smiles = "C1CCC(=O)NCCCCCC(=O)NC1"
+        smiles_mol = Chem.MolFromSmiles(smiles)
+        mol = Chem.AddHs(smiles_mol)
+        params = AllChem.ETKDGv3()
+        params.seed = 42
+        AllChem.EmbedMolecule(mol, params)
+        conf = mol.GetConformer(0)
+        for torsion in get_atom_mapping(mol):
+            a1,a2,a3,a4 = [conf.GetAtomPosition(i) for i in torsion]
+            self.assertAlmostEqual(abs(ComputeSignedDihedralAngle(a1,a2,a3,a4)), 3.14, delta = 0.1)
 
 
 if __name__ == '__main__':
