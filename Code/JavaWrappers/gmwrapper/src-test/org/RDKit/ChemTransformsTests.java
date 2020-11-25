@@ -70,6 +70,14 @@ public class ChemTransformsTests extends GraphMolTest {
 
 	}
 
+        @Test
+	public void testMolZip() {
+	    ROMol a =  RWMol.MolFromSmiles("[C@H]([*:1])(Br)F");
+	    ROMol b =  RWMol.MolFromSmiles("[*:1]N");
+	    ROMol mol = RDKFuncs.molzip(a,b);
+	    assertEquals(mol.MolToSmiles(), "N[C@H](F)Br");     
+	}
+    
 	public static void main(String args[]) {
 		org.junit.runner.JUnitCore.main("org.RDKit.ChemTransformsTests");
 	}
