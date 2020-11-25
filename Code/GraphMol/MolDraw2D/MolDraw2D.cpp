@@ -1090,12 +1090,27 @@ void MolDraw2D::centrePicture(int width, int height) {
 
 namespace {
 // there are a several empirically determined constants here.
-std::vector<Point2D> handdrawnLine(const Point2D &cds1, const Point2D &cds2,
-                                   double scale, unsigned nSteps = 4,
-                                   double deviation = 0.03) {
+std::vector<Point2D> handdrawnLine(Point2D cds1, Point2D cds2, double scale,
+                                   bool shiftBegin = false,
+                                   bool shiftEnd = false, unsigned nSteps = 4,
+                                   double deviation = 0.03,
+                                   double endShift = 0.5) {
+  // std::cerr << "   " << scale << " " << endShift / scale << endl;
+  while (endShift / scale > 0.02) {
+    endShift *= 0.75;
+  }
+  if (shiftBegin) {
+    cds1.x += (std::rand() % 10 >= 5 ? endShift : -endShift) / scale;
+    cds1.y += (std::rand() % 10 >= 5 ? endShift : -endShift) / scale;
+  }
+  if (shiftEnd) {
+    cds2.x += (std::rand() % 10 >= 5 ? endShift : -endShift) / scale;
+    cds2.y += (std::rand() % 10 >= 5 ? endShift : -endShift) / scale;
+  }
+
   Point2D step = (cds2 - cds1) / nSteps;
   // make sure we aren't adding loads of wiggles to short lines
-  while (step.length() < 0.15 && nSteps > 2) {
+  while (step.length() < 0.2 && nSteps > 2) {
     --nSteps;
     step = (cds2 - cds1) / nSteps;
   }
@@ -1124,15 +1139,15 @@ void MolDraw2D::drawLine(const Point2D &cds1, const Point2D &cds2,
     setFillPolys(false);
     if (col1 == col2) {
       setColour(col1);
-      auto pts = handdrawnLine(cds1, cds2, scale_);
+      auto pts = handdrawnLine(cds1, cds2, scale_, true, true);
       drawPolygon(pts);
     } else {
       Point2D mid = (cds1 + cds2) * 0.5;
       setColour(col1);
-      auto pts = handdrawnLine(cds1, mid, scale_);
+      auto pts = handdrawnLine(cds1, mid, scale_, true, false);
       drawPolygon(pts);
       setColour(col2);
-      auto pts2 = handdrawnLine(mid, cds2, scale_);
+      auto pts2 = handdrawnLine(mid, cds2, scale_, false, true);
       drawPolygon(pts2);
     }
   } else {

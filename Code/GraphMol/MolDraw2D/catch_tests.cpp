@@ -964,4 +964,77 @@ TEST_CASE("hand drawn", "[play]") {
     }
 #endif
   }
+  SECTION("another one") {
+    auto m =
+        "CCCc1nn(C)c2c(=O)nc(-c3cc(S(=O)(=O)N4CCN(C)CC4)ccc3OCC)[nH]c12"_smiles;
+    REQUIRE(m);
+    RDDepict::preferCoordGen = true;
+    MolDraw2DUtils::prepareMolForDrawing(*m);
+
+    std::string fName = getenv("RDBASE");
+    fName += "/Data/Fonts/ComicNeue-Regular.ttf";
+
+    {
+      MolDraw2DSVG drawer(350, 300);
+      drawer.drawOptions().fontFile = fName;
+      drawer.drawOptions().comicMode = true;
+      drawer.drawMolecule(*m);
+      drawer.finishDrawing();
+      auto text = drawer.getDrawingText();
+      std::ofstream outs("testHandDrawn-4.svg");
+      outs << text;
+      outs.flush();
+    }
+#ifdef RDK_BUILD_CAIRO_SUPPORT
+    {
+      MolDraw2DCairo drawer(350, 300);
+      drawer.drawOptions().fontFile = fName;
+      drawer.drawOptions().comicMode = true;
+      drawer.drawMolecule(*m);
+      drawer.finishDrawing();
+      drawer.writeDrawingText("testHandDrawn-4.png");
+    }
+#endif
+  }
+  SECTION("large") {
+    auto m =
+        "CC[C@H](C)[C@@H](C(=O)N[C@@H]([C@@H](C)CC)C(=O)N[C@@H](CCCCN)C(=O)N[C@@H](CC(=O)N)C(=O)N[C@@H](C)C(=O)N[C@@H](Cc1ccc(cc1)O)C(=O)N[C@@H](CCCCN)C(=O)N[C@@H](CCCCN)C(=O)NCC(=O)N[C@@H](CCC(=O)N)C(=O)O)NC(=O)[C@H](C)NC(=O)[C@H](CC(=O)N)NC(=O)[C@H](CCCCN)NC(=O)[C@H](Cc2ccccc2)NC(=O)[C@H](CC(C)C)NC(=O)[C@H]([C@@H](C)O)NC(=O)[C@H](C(C)C)NC(=O)[C@H](CC(C)C)NC(=O)[C@@H]3CCCN3C(=O)[C@H]([C@@H](C)O)NC(=O)[C@H](CCC(=O)N)NC(=O)[C@H](CO)NC(=O)[C@H](CCCCN)NC(=O)[C@H](CCC(=O)N)NC(=O)[C@H](CO)NC(=O)[C@H]([C@@H](C)O)NC(=O)[C@H](CCSC)NC(=O)[C@H](Cc4ccccc4)NC(=O)CNC(=O)CNC(=O)[C@H](Cc5ccc(cc5)O)N"_smiles;
+    REQUIRE(m);
+    RDDepict::preferCoordGen = true;
+    MolDraw2DUtils::prepareMolForDrawing(*m);
+
+    std::string fName = getenv("RDBASE");
+    fName += "/Data/Fonts/ComicNeue-Regular.ttf";
+
+    {
+      MolDraw2DSVG drawer(900, 450);
+      drawer.drawMolecule(*m);
+      drawer.finishDrawing();
+      auto text = drawer.getDrawingText();
+      std::ofstream outs("testHandDrawn-5a.svg");
+      outs << text;
+      outs.flush();
+    }
+    {
+      MolDraw2DSVG drawer(900, 450);
+      drawer.drawOptions().fontFile = fName;
+      drawer.drawOptions().comicMode = true;
+      drawer.drawMolecule(*m);
+      drawer.finishDrawing();
+      auto text = drawer.getDrawingText();
+      std::ofstream outs("testHandDrawn-5b.svg");
+      outs << text;
+      outs.flush();
+    }
+#ifdef RDK_BUILD_CAIRO_SUPPORT
+    {
+      MolDraw2DCairo drawer(900, 450);
+      drawer.drawOptions().fontFile = fName;
+      drawer.drawOptions().comicMode = true;
+      drawer.drawMolecule(*m);
+      drawer.finishDrawing();
+      drawer.writeDrawingText("testHandDrawn-5.png");
+    }
+#endif
+  }
 }

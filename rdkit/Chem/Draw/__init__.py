@@ -973,7 +973,6 @@ def DrawRDKitEnv(mol, bondPath, molSize=(150, 150), baseRad=0.3, useSVG=True,
   return drawer.GetDrawingText()
 
 
-def setComicMode(drawer):
-  opts = drawer.drawOptions()
+def SetComicMode(opts):
   opts.fontFile = os.path.join(RDConfig.RDDataDir, "Fonts", "ComicNeue-Regular.ttf")
   opts.comicMode = True
