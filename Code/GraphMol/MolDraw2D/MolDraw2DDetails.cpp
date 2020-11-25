@@ -115,58 +115,6 @@ void addStereoAnnotation(const ROMol &mol, bool includeRelativeCIP) {
   }
 }
 
-void drawBracketsForSGroup(MolDraw2D &drawer, const ROMol &mol,
-                           const SubstanceGroup &sg,
-                           const std::vector<Point2D> &atomPs,
-                           const RDGeom::Transform2D &tform) {
-  std::vector<SubstanceGroup::Bracket> brackets = sg.getBrackets();
-  if (brackets.empty()) {
-    return;
-  }
-  RDGeom::Point2D center{0, 0};
-  double avgLength = 0;
-  for (auto &brk : brackets) {
-    RDGeom::Point2D p1{brk[0]};
-    RDGeom::Point2D p2{brk[1]};
-    tform.TransformPoint(p1);
-    tform.TransformPoint(p2);
-    auto v = p2 - p1;
-    center += p1 + v / 2;
-    avgLength += v.length();
-  }
-  center /= brackets.size();
-  avgLength /= brackets.size();
-
-  const auto ocolor = drawer.colour();
-  const auto olw = drawer.lineWidth();
-  const auto ffs = drawer.fontSize();
-  drawer.setColour({0.4, 0.4, 0.4});
-  drawer.setLineWidth(2);
-  unsigned int whichBrk = 0;
-  for (const auto &brk : brackets) {
-    RDGeom::Point2D p1{brk[0]};
-    RDGeom::Point2D p2{brk[1]};
-    tform.TransformPoint(p1);
-    tform.TransformPoint(p2);
-
-    drawer.drawLine(p1, p2);
-    auto v = p2 - p1;
-    auto centerv = center - (p1 + v / 2);
-    RDGeom::Point2D perp{v.y, -v.x};
-    perp.normalize();
-    if (perp.dotProduct(centerv) < 0) {
-      perp *= -1;
-    }
-    perp *= avgLength / 10;
-    drawer.drawLine(p1, p1 + perp);
-    drawer.drawLine(p2, p2 + perp);
-    ++whichBrk;
-  }
-  drawer.setColour(ocolor);
-  drawer.setLineWidth(olw);
-  drawer.setFontSize(ffs);
-}
-
 namespace {
 // note, this is approximate since we're just using it for drawing
 bool lineSegmentsIntersect(const Point2D &s1, const Point2D &s2,
