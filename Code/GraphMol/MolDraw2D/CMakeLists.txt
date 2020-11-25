@@ -3,6 +3,24 @@ option(RDK_BUILD_QT_SUPPORT "build support for QT drawing" OFF )
 option(RDK_BUILD_QT_DEMO "build the QT drawing demo" OFF )
 option(RDK_BUILD_CAIRO_SUPPORT "build support for Cairo drawing" OFF )
 option(RDK_BUILD_FREETYPE_SUPPORT "build support for FreeType font handling" ON)
+option(RDK_INSTALL_COMIC_FONTS "download and install comic-neue to maximize the \"utility\" of the comic mode in MolDraw2D" ON)
+
+if(RDK_BUILD_FREETYPE_SUPPORT AND RDK_INSTALL_COMIC_FONTS)
+  set(needDownload "TRUE")
+  if(EXISTS "${RDKit_DataDir}/Fonts/ComicNeue-Regular.ttf")
+    message("${RDKit_DataDir}/Fonts/ComicNeue-Regular.ttf already there, skipping the download")
+    set(needDownload "FALSE")
+  endif()
+  if(needDownload)
+    set(MD5Sum "23ed3f833c1ae0adb141a26b4a30d73e")
+    downloadAndCheckMD5("https://fonts.google.com/download?family=Comic%20Neue"
+          "${CMAKE_CURRENT_SOURCE_DIR}/Comic_Neue.zip"
+          ${MD5Sum})
+    execute_process(COMMAND ${CMAKE_COMMAND} -E tar x
+      ${CMAKE_CURRENT_SOURCE_DIR}/Comic_Neue.zip --format=zip
+      WORKING_DIRECTORY ${RDKit_DataDir}/Fonts)
+  endif(needDownload)
+endif()
 
 rdkit_headers(MolDraw2D.h
   MolDraw2DSVG.h

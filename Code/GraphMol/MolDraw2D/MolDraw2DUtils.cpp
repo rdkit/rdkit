@@ -159,6 +159,7 @@ void updateDrawerParamsFromJSON(MolDraw2D &drawer, const std::string &json) {
   PT_OPT_GET(explicitMethyl);
   PT_OPT_GET(includeMetadata);
   PT_OPT_GET(includeRadicals);
+  PT_OPT_GET(comicMode);
 
   get_colour_option(&pt, "highlightColour", opts.highlightColour);
   get_colour_option(&pt, "backgroundColour", opts.backgroundColour);

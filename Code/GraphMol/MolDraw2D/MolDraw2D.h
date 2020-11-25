@@ -281,6 +281,9 @@ struct RDKIT_MOLDRAW2D_EXPORT MolDrawOptions {
   bool includeMetadata =
       true;  // when possible include metadata about molecules and reactions in
              // the output to allow them to be reconstructed
+  bool comicMode = false;  // simulate hand-drawn lines for bonds. When combined
+                           // with a font like Comic-Sans or Comic-Neue, this
+                           // gives xkcd-like drawings.
 
   MolDrawOptions() {
     highlightColourPalette.emplace_back(
