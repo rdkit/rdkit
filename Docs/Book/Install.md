@@ -173,13 +173,14 @@ If you are trying to use multiple installations of PostgreSQL in different envir
 
 ### Installation from repositories
 
-#### Ubuntu 12.04 and later
+#### Ubuntu 12.04 and later, Debian
 
-Thanks to the efforts of the Debichem team, RDKit is available via the Ubuntu repositories. To install:
+Thanks to the efforts of the Debichem team, RDKit is available via the Ubuntu and Debian repositories. To install:
 
 ```shellsession
 $ sudo apt-get install python-rdkit librdkit1 rdkit-data
 ```
+The current status of packaging RDKit for the branches of Debian is published on https://tracker.debian.org/pkg/rdkit
 
 #### Fedora, CentOS, and RHEL
 
