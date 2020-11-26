@@ -17,7 +17,7 @@ The easiest way to get Conda is having it installed as part of the [Anaconda Pyt
 Creating a new conda environment with the RDKit installed requires one single command similar to the following::
 
 ```shellsession
-$ conda create -c rdkit -n my-rdkit-env rdkit
+$ conda create -c conda-forge -n my-rdkit-env rdkit
 ```
 
 Finally, the new environment must be activated so that the corresponding python interpreter becomes available in the same shell:
@@ -37,14 +37,6 @@ Windows users will use a slightly different command:
 
 ```
 C:\> activate my-rdkit-env
-```
-
-#### conda-forge package
-
-A [conda-forge](https://conda-forge.org/#about) RDKit package is also available, which may offer an easier installation for users already using other conda-forge packages. This package can be installed with:
-
-```shellsession
-$ conda install -c conda-forge rdkit
 ```
 
 ### How to build from source with Conda
@@ -135,7 +127,7 @@ Due to the conda python distribution being a different version to the system pyt
 With your environment activated, this is done simply by:
 
 ```
-conda install -c rdkit rdkit-postgresql
+conda install -c conda-forge rdkit-postgresql
 ```
 
 The conda packages PostgreSQL version needs to be initialized by running the initdb command found in `[conda folder]/envs/my-rdkit-env/bin`
