@@ -842,7 +842,16 @@ void setDoubleBondNeighborDirectionsHelper(ROMol &mol, python::object confObj) {
   MolOps::setDoubleBondNeighborDirections(mol, conf);
 }
 
+ROMol* molzip_new(const ROMol&a, const ROMol&b, const MolzipParams &p) {
+  return molzip(a,b,p).release();
+}
+  
+ROMol* molzip_new(const ROMol&a, const MolzipParams &p) {
+  return molzip(a,p).release();
+}
+  
 struct molops_wrapper {
+  
   static void wrap() {
     std::string docString;
     python::enum_<MolOps::SanitizeFlags>("SanitizeFlags")
@@ -2263,7 +2272,6 @@ EXAMPLES:\n\n\
       .value("Isotope", MolzipLabel::Isotope)
       .value("FragmentOnBonds", MolzipLabel::FragmentOnBonds)
       .value("AtomType", MolzipLabel::AtomType)      
-      .export_values()
       ;
 
     docString =
@@ -2289,18 +2297,21 @@ EXAMPLES:\n\n\
 				 docString.c_str(), python::init<>())
 	      .def_readwrite("label", &MolzipParams::label,
 			     "Set the atom labelling system to zip together");
-    
-    python::def("molzip",
-		(std::unique_ptr<ROMol> (*)(const ROMol&, const ROMol&, const MolzipParams &))
-		& molzip,
-		(python::arg("a"), python::arg("b"), python::arg("params")=MolzipParams()),
-		"zip together two molecules using the given matching parameters");
+
 
     python::def("molzip",
-		(std::unique_ptr<ROMol> (*)(const ROMol&, const MolzipParams &))
-		& molzip,
+		(ROMol* (*)(const ROMol&, const ROMol&, const MolzipParams &))
+			     & molzip_new,
+		(python::arg("a"), python::arg("b"), python::arg("params")=MolzipParams()),
+		"zip together two molecules using the given matching parameters",
+		python::return_value_policy<python::manage_new_object>());
+
+    python::def("molzip",
+		(ROMol* (*)(const ROMol&, const MolzipParams &))
+			     & molzip_new,
 		(python::arg("a"), python::arg("params")=MolzipParams()),
-		"zip together two molecules using the given matching parameters");
+		"zip together two molecules using the given matching parameters",
+		python::return_value_policy<python::manage_new_object>());
     
     // ------------------------------------------------------------------------
     docString =

@@ -6254,7 +6254,7 @@ M  END
       ]
     for a, b, res, params in tests:
       self.assertEqual(Chem.CanonSmiles(res), Chem.MolToSmiles(
-        molzip(Chem.MolFromSmiles(a), Chem.MolFromSmiles(b), params)))
+        Chem.molzip(Chem.MolFromSmiles(a), Chem.MolFromSmiles(b), params)))
       
 if __name__ == '__main__':
   if "RDTESTCASE" in os.environ:
