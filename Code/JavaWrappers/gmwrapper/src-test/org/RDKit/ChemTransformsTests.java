@@ -75,7 +75,7 @@ public class ChemTransformsTests extends GraphMolTest {
 	    ROMol a =  RWMol.MolFromSmiles("[C@H]([*:1])(Br)F");
 	    ROMol b =  RWMol.MolFromSmiles("[*:1]N");
 	    ROMol mol = RDKFuncs.molzip(a,b);
-	    assertEquals(mol.MolToSmiles(), "N[C@H](F)Br");     
+	    assertEquals(mol.MolToSmiles(true), "N[C@H](F)Br");     
 	}
     
 	public static void main(String args[]) {
