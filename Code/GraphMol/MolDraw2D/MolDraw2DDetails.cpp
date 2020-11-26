@@ -191,13 +191,29 @@ void drawArrow(MolDraw2D &drawer, const MolDrawShape &shape) {
 }
 void drawPolyline(MolDraw2D &drawer, const MolDrawShape &shape) {
   PRECONDITION(shape.shapeType == MolDrawShapeType::Polyline, "bad shape type");
+  PRECONDITION(shape.points.size() > 1, "not enough points");
   drawer.setColour(shape.lineColour);
   drawer.setLineWidth(shape.lineWidth);
-  drawer.setFillPolys(shape.fill);
-  if (shape.points.size() > 2) {
-    drawer.drawPolygon(shape.points);
+  if (shape.points.size() > 2 && shape.fill) {
+    drawer.setFillPolys(true);
   } else {
-    drawer.drawLine(shape.points[0], shape.points[1]);
+    drawer.setFillPolys(false);
+  }
+  if (drawer.drawOptions().comicMode) {
+    auto drawPoints =
+        handdrawnLine(shape.points[0], shape.points[1], drawer.scale());
+    for (unsigned int i = 2; i < shape.points.size(); ++i) {
+      auto lpts = MolDraw2D_detail::handdrawnLine(
+          shape.points[i - 1], shape.points[i], drawer.scale());
+      std::move(lpts.begin(), lpts.end(), std::back_inserter(drawPoints));
+    }
+    drawer.drawPolygon(drawPoints);
+  } else {
+    if (shape.points.size() > 2) {
+      drawer.drawPolygon(shape.points);
+    } else {
+      drawer.drawLine(shape.points[0], shape.points[1]);
+    }
   }
 }
 }  // namespace
@@ -222,5 +238,45 @@ void drawShapes(MolDraw2D &drawer, const std::vector<MolDrawShape> &shapes) {
   drawer.setFillPolys(ofill);
 };
 
+// there are a several empirically determined constants here.
+std::vector<Point2D> handdrawnLine(Point2D cds1, Point2D cds2, double scale,
+                                   bool shiftBegin, bool shiftEnd,
+                                   unsigned nSteps, double deviation,
+                                   double endShift) {
+  // std::cerr << "   " << scale << " " << endShift / scale << endl;
+  while (endShift / scale > 0.02) {
+    endShift *= 0.75;
+  }
+  if (shiftBegin) {
+    cds1.x += (std::rand() % 10 >= 5 ? endShift : -endShift) / scale;
+    cds1.y += (std::rand() % 10 >= 5 ? endShift : -endShift) / scale;
+  }
+  if (shiftEnd) {
+    cds2.x += (std::rand() % 10 >= 5 ? endShift : -endShift) / scale;
+    cds2.y += (std::rand() % 10 >= 5 ? endShift : -endShift) / scale;
+  }
+
+  Point2D step = (cds2 - cds1) / nSteps;
+  // make sure we aren't adding loads of wiggles to short lines
+  while (step.length() < 0.2 && nSteps > 2) {
+    --nSteps;
+    step = (cds2 - cds1) / nSteps;
+  }
+  // make sure the wiggles aren't too big
+  while (deviation / step.length() > 0.15 || deviation * scale > 0.70) {
+    deviation *= 0.75;
+  }
+  Point2D perp{step.y, -step.x};
+  perp.normalize();
+  std::vector<Point2D> pts;
+  pts.push_back(cds1);
+  for (unsigned int i = 1; i < nSteps; ++i) {
+    auto tgt = cds1 + step * i;
+    tgt += perp * deviation * (std::rand() % 20 - 10) / 10.0;
+    pts.push_back(tgt);
+  }
+  pts.push_back(cds2);
+  return pts;
+}
 }  // namespace MolDraw2D_detail
 }  // namespace RDKit

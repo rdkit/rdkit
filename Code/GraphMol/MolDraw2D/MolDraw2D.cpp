@@ -1104,49 +1104,7 @@ void MolDraw2D::centrePicture(int width, int height) {
   y_trans_ = (mid.y - height / 2) / scale_;
 };
 
-namespace {
-// there are a several empirically determined constants here.
-std::vector<Point2D> handdrawnLine(Point2D cds1, Point2D cds2, double scale,
-                                   bool shiftBegin = false,
-                                   bool shiftEnd = false, unsigned nSteps = 4,
-                                   double deviation = 0.03,
-                                   double endShift = 0.5) {
-  // std::cerr << "   " << scale << " " << endShift / scale << endl;
-  while (endShift / scale > 0.02) {
-    endShift *= 0.75;
-  }
-  if (shiftBegin) {
-    cds1.x += (std::rand() % 10 >= 5 ? endShift : -endShift) / scale;
-    cds1.y += (std::rand() % 10 >= 5 ? endShift : -endShift) / scale;
-  }
-  if (shiftEnd) {
-    cds2.x += (std::rand() % 10 >= 5 ? endShift : -endShift) / scale;
-    cds2.y += (std::rand() % 10 >= 5 ? endShift : -endShift) / scale;
-  }
-
-  Point2D step = (cds2 - cds1) / nSteps;
-  // make sure we aren't adding loads of wiggles to short lines
-  while (step.length() < 0.2 && nSteps > 2) {
-    --nSteps;
-    step = (cds2 - cds1) / nSteps;
-  }
-  // make sure the wiggles aren't too big
-  while (deviation / step.length() > 0.15 || deviation * scale > 0.70) {
-    deviation *= 0.75;
-  }
-  Point2D perp{step.y, -step.x};
-  perp.normalize();
-  std::vector<Point2D> pts;
-  pts.push_back(cds1);
-  for (unsigned int i = 1; i < nSteps; ++i) {
-    auto tgt = cds1 + step * i;
-    tgt += perp * deviation * (std::rand() % 20 - 10) / 10.0;
-    pts.push_back(tgt);
-  }
-  pts.push_back(cds2);
-  return pts;
-}
-}  // namespace
+namespace {}  // namespace
 
 // ****************************************************************************
 void MolDraw2D::drawLine(const Point2D &cds1, const Point2D &cds2,
@@ -1155,15 +1113,18 @@ void MolDraw2D::drawLine(const Point2D &cds1, const Point2D &cds2,
     setFillPolys(false);
     if (col1 == col2) {
       setColour(col1);
-      auto pts = handdrawnLine(cds1, cds2, scale_, true, true);
+      auto pts =
+          MolDraw2D_detail::handdrawnLine(cds1, cds2, scale_, true, true);
       drawPolygon(pts);
     } else {
       Point2D mid = (cds1 + cds2) * 0.5;
       setColour(col1);
-      auto pts = handdrawnLine(cds1, mid, scale_, true, false);
+      auto pts =
+          MolDraw2D_detail::handdrawnLine(cds1, mid, scale_, true, false);
       drawPolygon(pts);
       setColour(col2);
-      auto pts2 = handdrawnLine(mid, cds2, scale_, false, true);
+      auto pts2 =
+          MolDraw2D_detail::handdrawnLine(mid, cds2, scale_, false, true);
       drawPolygon(pts2);
     }
   } else {
@@ -2441,7 +2402,7 @@ void MolDraw2D::drawWedgedBond(const Point2D &cds1, const Point2D &cds2,
       Point2D e11 = cds1 + e1 * (rdcast<double>(i) / nDashes);
       Point2D e22 = cds1 + e2 * (rdcast<double>(i) / nDashes);
       if (drawOptions().comicMode) {
-        auto pts = handdrawnLine(e11, e22, scale_);
+        auto pts = MolDraw2D_detail::handdrawnLine(e11, e22, scale_);
         drawPolygon(pts);
       } else {
         drawLine(e11, e22);
@@ -3508,11 +3469,11 @@ void MolDraw2D::drawTriangle(const Point2D &cds1, const Point2D &cds2,
   if (!drawOptions().comicMode) {
     pts = {cds1, cds2, cds3};
   } else {
-    auto lpts = handdrawnLine(cds1, cds2, scale_);
+    auto lpts = MolDraw2D_detail::handdrawnLine(cds1, cds2, scale_);
     std::move(lpts.begin(), lpts.end(), std::back_inserter(pts));
-    lpts = handdrawnLine(cds2, cds3, scale_);
+    lpts = MolDraw2D_detail::handdrawnLine(cds2, cds3, scale_);
     std::move(lpts.begin(), lpts.end(), std::back_inserter(pts));
-    lpts = handdrawnLine(cds3, cds1, scale_);
+    lpts = MolDraw2D_detail::handdrawnLine(cds3, cds1, scale_);
     std::move(lpts.begin(), lpts.end(), std::back_inserter(pts));
   }
   drawPolygon(pts);
