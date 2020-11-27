@@ -47,6 +47,17 @@ A [conda-forge](https://conda-forge.org/#about) RDKit package is also available,
 $ conda install -c conda-forge rdkit
 ```
 
+#### create a fresh conda environment using the conda-forge channel
+
+This is supposed to work out of the box.
+Install rdkit and all its dependencies with python3.8 under a new conda
+environment named py38_rdkit, then jump into that environment.
+
+```shellsession
+$ conda create -c conda-forge -n py38_rdkit rdkit python=3.8
+$ conda activate py38_rdkit
+```
+
 ### How to build from source with Conda
 
 For more details on building from source with Conda, see the [conda-rdkit repository](https://github.com/rdkit/conda-rdkit).
