@@ -127,7 +127,7 @@ Due to the conda python distribution being a different version to the system pyt
 With your environment activated, this is done simply by:
 
 ```
-conda install -c conda-forge rdkit-postgresql
+conda install -c rdkit rdkit-postgresql
 ```
 
 The conda packages PostgreSQL version needs to be initialized by running the initdb command found in `[conda folder]/envs/my-rdkit-env/bin`
