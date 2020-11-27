@@ -22,9 +22,7 @@ DrawTextFTQt::DrawTextFTQt(double max_fnt_sz, double min_fnt_sz,
 // ****************************************************************************
 double DrawTextFTQt::extractOutline() {
   dp_qpp.reset(new QPainterPath());
-  // cairo_set_source_rgb(dp_cr_, colour().r, colour().g, colour().b);
   double adv = DrawTextFT::extractOutline();
-  // cairo_fill(dp_cr_);
   const auto &col = colour();
   QColor this_col(int(255.0 * col.r), int(255.0 * col.g), int(255.0 * col.b),
                   int(255.0 * col.a));
@@ -74,8 +72,6 @@ int DrawTextFTQt::ConicToFunctionImpl(const FT_Vector *control,
   auto currp = dp_qpp->currentPosition();
   x0 = currp.x();
   y0 = currp.y();
-
-  // cairo_get_current_point(dp_cr_, &x0, &y0);
 
   double x1, y1;
   fontPosToDrawPos(control->x, control->y, x1, y1);
