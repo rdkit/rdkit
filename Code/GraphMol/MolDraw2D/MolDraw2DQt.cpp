@@ -32,7 +32,9 @@ MolDraw2DQt::MolDraw2DQt(int width, int height, QPainter &qp, int panelWidth,
   initTextDrawer(noFreetype);
 }
 
-void MolDraw2DQt::initDrawing() {}
+void MolDraw2DQt::initDrawing() {
+  d_qp.setRenderHint(QPainter::RenderHint::Antialiasing);
+}
 void MolDraw2DQt::initTextDrawer(bool noFreetype) {
   double max_fnt_sz = drawOptions().maxFontSize;
   double min_fnt_sz = drawOptions().minFontSize;
