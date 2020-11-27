@@ -8,9 +8,11 @@
 //
 //
 
-#include <GraphMol/MolDraw2D/DrawTextQt.h>
 #include <GraphMol/MolDraw2D/MolDraw2D.h>
+#include <GraphMol/MolDraw2D/DrawTextQt.h>
+#include <GraphMol/MolDraw2D/MolDraw2DDetails.h>
 #include <QPainter>
+#include <QCoreApplication>
 
 using namespace std;
 
@@ -19,26 +21,27 @@ namespace RDKit {
 // ****************************************************************************
 DrawTextQt::DrawTextQt(double max_fnt_sz, double min_fnt_sz, QPainter &qp)
     : DrawText(max_fnt_sz, min_fnt_sz), d_qp(qp) {
-  // cairo_select_font_face(dp_cr, "sans", CAIRO_FONT_SLANT_NORMAL,
-  //                        CAIRO_FONT_WEIGHT_NORMAL);
-  // cairo_set_font_size(dp_cr, fontSize());
+  PRECONDITION(
+      QCoreApplication::instance(),
+      "need a global QGuiApplication instance to use the Qt font system");
+  QFont font("Sans Serif", fontSize());
+  d_qp.setFont(font);
 }
 
 // ****************************************************************************
 // draw the char, with the bottom left hand corner at cds
 void DrawTextQt::drawChar(char c, const Point2D &cds) {
-  // PRECONDITION(dp_cr_, "no draw context");
-
-  // cairo_set_font_size(dp_cr_, fontSize());
-  // DrawColour col = colour();
-  // cairo_set_source_rgb(dp_cr_, col.r, col.g, col.b);
-
-  // char txt[2];
-  // txt[0] = c;
-  // txt[1] = 0;
-  // cairo_move_to(dp_cr_, cds.x, cds.y);
-  // cairo_show_text(dp_cr_, txt);
-  // cairo_stroke(dp_cr_);
+  auto font = d_qp.font();
+  font.setPixelSize(fontSize());
+  d_qp.setFont(font);
+  QPointF loc(cds.x, cds.y);
+  QString text;
+  text.append(QChar(c));
+  const auto col = colour();
+  QColor qcol(int(255.0 * col.r), int(255.0 * col.g), int(255.0 * col.b),
+              int(255.0 * col.a));
+  d_qp.setPen(qcol);
+  d_qp.drawText(loc, text);
 }
 
 // ****************************************************************************
@@ -46,43 +49,63 @@ void DrawTextQt::getStringRects(const string &text,
                                 vector<shared_ptr<StringRect>> &rects,
                                 vector<TextDrawType> &draw_modes,
                                 vector<char> &draw_chars) const {
-  // TextDrawType draw_mode = TextDrawType::TextDrawNormal;
-  // double running_x = 0.0;
-  // char char_str[2];
-  // char_str[1] = 0;
-  // double max_y = 0.0;
-  // double full_fs = fontSize();
-  // for (size_t i = 0; i < text.length(); ++i) {
-  //   // setStringDrawMode moves i along to the end of any <sub> or <sup>
-  //   // markup
-  //   if ('<' == text[i] && setStringDrawMode(text, draw_mode, i)) {
-  //     continue;
-  //   }
-  //   draw_chars.push_back(text[i]);
+  double running_x = 0.0;
+  double act_font_size = fontSize();
+  double char_height;
+  double max_width = 0.0;
+  TextDrawType draw_mode = TextDrawType::TextDrawNormal;
+  for (size_t i = 0; i < text.length(); ++i) {
+    // setStringDrawMode moves i along to the end of any <sub> or <sup>
+    // markup
+    if ('<' == text[i] && setStringDrawMode(text, draw_mode, i)) {
+      continue;
+    }
+    draw_modes.push_back(draw_mode);
+    draw_chars.push_back(text[i]);
 
-  //   char_str[0] = text[i];
-  //   cairo_text_extents_t extents;
-  //   cairo_set_font_size(dp_cr_,
-  //                       selectScaleFactor(text[i], draw_mode) * full_fs);
-  //   cairo_text_extents(dp_cr_, char_str, &extents);
-  //   cairo_set_font_size(dp_cr_, full_fs);
-  //   double twidth = extents.width;
-  //   double theight = extents.height;
-  //   Point2D offset(extents.x_bearing + twidth / 2.0, -extents.y_bearing
-  //   / 2.0); Point2D g_centre(offset.x, -extents.y_bearing - theight / 2.0);
-  //   rects.push_back(shared_ptr<StringRect>(
-  //       new StringRect(offset, g_centre, twidth, theight)));
-  //   rects.back()->trans_.x = running_x;
-  //   draw_modes.push_back(draw_mode);
-  //   running_x += extents.x_advance;
-  //   max_y = max(max_y, -extents.y_bearing);
-  // }
-  // for (auto r : rects) {
-  //   r->g_centre_.y = max_y - r->g_centre_.y;
-  //   r->offset_.y = max_y / 2.0;
-  // }
+    max_width = std::max(
+        max_width,
+        static_cast<double>(MolDraw2D_detail::char_widths[(int)text[i]]));
+  }
 
-  // adjustStringRectsForSuperSubScript(draw_modes, rects);
+  for (size_t i = 0; i < draw_chars.size(); ++i) {
+    double char_width =
+        0.6 * act_font_size *
+        static_cast<double>(MolDraw2D_detail::char_widths[(int)draw_chars[i]]) /
+        max_width;
+    // Absent a proper set of font metrics (we don't know what font we'll be
+    // using, for starters) this is something of an empirical bodge.
+    if (draw_chars[i] == '+') {
+      char_height = 0.6 * act_font_size;
+    } else if (draw_chars[i] == '-') {
+      char_height = 0.4 * act_font_size;
+    } else {
+      char_height = 0.8 * act_font_size;
+    }
+    double cscale = selectScaleFactor(draw_chars[i], draw_modes[i]);
+    char_height *= cscale;
+    char_width *= cscale;
+    Point2D offset(char_width / 2, char_height / 2);
+    if (draw_chars[i] == '+' || draw_chars[i] == '-') {
+      offset.y /= 2.0;
+    }
+    Point2D g_centre(char_width / 2, char_height / 2);
+    rects.push_back(std::shared_ptr<StringRect>(
+        new StringRect(offset, g_centre, char_width, char_height)));
+    rects.back()->trans_.x += running_x;
+    // empirical spacing.
+    if (draw_modes[i] != TextDrawType::TextDrawNormal) {
+      running_x += char_width * 1.05;
+    } else {
+      running_x += char_width * 1.15;
+    }
+  }
+  for (auto r : rects) {
+    r->g_centre_.y = act_font_size - r->g_centre_.y;
+    r->offset_.y = act_font_size / 2.0;
+  }
+
+  adjustStringRectsForSuperSubScript(draw_modes, rects);
 }
 
 }  // namespace RDKit

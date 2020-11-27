@@ -112,7 +112,7 @@ rdkit_catch_test(moldraw2DTestCatch catch_main.cpp catch_tests.cpp LINK_LIBRARIE
   MolDraw2D CIPLabeler )
 
 if(RDK_BUILD_QT_SUPPORT)
-rdkit_catch_test(moldraw2DTestQt catch_main.cpp catch_qt.cpp LINK_LIBRARIES
+rdkit_catch_test(moldraw2DTestQt catch_qt.cpp LINK_LIBRARIES
   MolDraw2D )
 endif(RDK_BUILD_QT_SUPPORT)
 
