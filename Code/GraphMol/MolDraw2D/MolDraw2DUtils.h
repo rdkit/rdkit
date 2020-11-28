@@ -1,5 +1,5 @@
 //
-//  Copyright (C) 2016-2019 Greg Landrum
+//  Copyright (C) 2016-2020 Greg Landrum
 //
 //   @@ All Rights Reserved @@
 //  This file is part of the RDKit.
@@ -22,6 +22,7 @@ class MolDraw2D;
 class MolDraw2DColour;
 
 namespace MolDraw2DUtils {
+
 //! Does some cleanup operations on the molecule to prepare it to draw nicely
 /*
 The operations include: kekulization, addition of chiral Hs (so that we can draw
