@@ -1,5 +1,5 @@
 //
-//  Copyright (C) 2019-2021 Greg Landrum
+//  Copyright (C) 2019-2020 Greg Landrum
 //
 //   @@ All Rights Reserved @@
 //  This file is part of the RDKit.
