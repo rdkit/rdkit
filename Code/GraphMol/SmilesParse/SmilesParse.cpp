@@ -108,12 +108,14 @@ int smiles_parse_helper(const std::string &inp,
   std::list<unsigned int> branchPoints;
   void *scanner;
   int res = 1;  // initialize with fail code
-
+  unsigned numAtomsParsed = 0;
+  unsigned numBondsParsed = 0;
   TEST_ASSERT(!yysmiles_lex_init(&scanner));
   try {
     size_t ltrim = setup_smiles_string(inp, scanner);
     res = yysmiles_parse(inp.c_str() + ltrim, &molVect, atom, bond,
-                         &branchPoints, scanner, start_tok);
+                         numAtomsParsed, numBondsParsed, &branchPoints, scanner,
+                         start_tok);
   } catch (...) {
     yysmiles_lex_destroy(scanner);
     throw;
@@ -225,7 +227,6 @@ RWMol *toMol(const std::string &inp,
       if (res->hasAtomBookmark(ci_RIGHTMOST_ATOM)) {
         res->clearAtomBookmark(ci_RIGHTMOST_ATOM);
       }
-      SmilesParseOps::CleanupAfterParsing(res);
       molVect[0] = nullptr;  // NOTE: to avoid leaks on failures, this should
                              // occur last in this if.
     }
@@ -413,8 +414,11 @@ RWMol *SmilesToMol(const std::string &smiles,
     QueryOps::completeMolQueries(res, 0xDEADBEEF);
   }
 
-  if (res && !name.empty()) {
-    res->setProp(common_properties::_Name, name);
+  if (res) {
+    SmilesParseOps::CleanupAfterParsing(res);
+    if (!name.empty()) {
+      res->setProp(common_properties::_Name, name);
+    }
   }
   return res;
 };
@@ -478,6 +482,7 @@ RWMol *SmartsToMol(const std::string &smarts, int debugParse, bool mergeHs,
       }
     }
     MolOps::setBondStereoFromDirections(*res);
+    SmilesParseOps::CleanupAfterParsing(res);
   }
   return res;
 };
