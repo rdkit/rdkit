@@ -602,6 +602,9 @@ class RDKIT_MOLDRAW2D_EXPORT MolDraw2D {
                             const DrawColour &col1, const DrawColour &col2,
                             unsigned int nSegments = 16,
                             double vertOffset = 0.05);
+  //! draw a line where the ends are different colours
+  virtual void drawLine(const Point2D &cds1, const Point2D &cds2,
+                        const DrawColour &col1, const DrawColour &col2);
   //! adds additional information about the atoms to the output. Does not make
   //! sense for all renderers.
   virtual void tagAtoms(const ROMol &mol) { RDUNUSED_PARAM(mol); };
@@ -751,9 +754,6 @@ class RDKIT_MOLDRAW2D_EXPORT MolDraw2D {
   void extractRadicals(const ROMol &mol);
   void extractBrackets(const ROMol &mol);
 
-  // coords in atom coords
-  virtual void drawLine(const Point2D &cds1, const Point2D &cds2,
-                        const DrawColour &col1, const DrawColour &col2);
   void drawWedgedBond(const Point2D &cds1, const Point2D &cds2,
                       bool draw_dashed, const DrawColour &col1,
                       const DrawColour &col2);

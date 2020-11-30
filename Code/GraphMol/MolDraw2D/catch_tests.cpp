@@ -1410,6 +1410,53 @@ M  END
   }
 }
 
+TEST_CASE("drawing query bonds", "[queries]") {
+  SECTION("basics") {
+    auto m = R"CTAB(
+  Mrv2014 11302008472D          
+  
+  0  0  0     0  0            999 V3000
+M  V30 BEGIN CTAB
+M  V30 COUNTS 10 10 0 0 0
+M  V30 BEGIN ATOM
+M  V30 1 C 3.7917 -2.96 0 0
+M  V30 2 C 2.458 -3.73 0 0
+M  V30 3 C 2.458 -5.27 0 0
+M  V30 4 C 3.7917 -6.04 0 0
+M  V30 5 C 5.1253 -5.27 0 0
+M  V30 6 C 5.1253 -3.73 0 0
+M  V30 7 C 6.459 -2.96 0 0
+M  V30 8 C 3.7917 -7.58 0 0
+M  V30 9 C 4.8806 -8.669 0 0
+M  V30 10 C 4.482 -10.1565 0 0
+M  V30 END ATOM
+M  V30 BEGIN BOND
+M  V30 1 1 2 3
+M  V30 2 1 4 5
+M  V30 3 1 1 6
+M  V30 4 5 1 2
+M  V30 5 6 5 6
+M  V30 6 7 3 4
+M  V30 7 8 6 7
+M  V30 8 1 4 8
+M  V30 9 1 8 9 TOPO=1
+M  V30 10 1 9 10 TOPO=2
+M  V30 END BOND
+M  V30 END CTAB
+M  END
+)CTAB"_ctab;
+    REQUIRE(m);
+    {
+      MolDraw2DSVG drawer(350, 300);
+      drawer.drawMolecule(*m);
+      drawer.finishDrawing();
+      auto text = drawer.getDrawingText();
+      std::ofstream outs("testQueryBonds-1.svg");
+      outs << text;
+      outs.flush();
+    }
+  }
+}
 #ifdef RDK_BUILD_CAIRO_SUPPORT
 TEST_CASE("github #3543: Error adding PNG metadata when kekulize=False",
           "[bug][metadata][png]") {

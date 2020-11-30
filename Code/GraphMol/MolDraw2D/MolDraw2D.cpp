@@ -2183,6 +2183,27 @@ void MolDraw2D::extractBrackets(const ROMol &mol) {
   }
 }  // namespace RDKit
 
+namespace {
+const DashPattern noDash;
+const DashPattern dots = assign::list_of(2)(6);
+const DashPattern dashes = assign::list_of(6)(6);
+const DashPattern shortDashes = assign::list_of(2)(2);
+
+void drawQueryBond(MolDraw2D &d2d, const Bond &bond, bool highlight_bond,
+                   const Point2D &at1_cds, const Point2D &at2_cds,
+                   const DrawColour &col1, const DrawColour &col2) {
+  d2d.setDash(dots);
+  bool orig_slw = d2d.drawOptions().scaleBondWidth;
+  if (highlight_bond) {
+    d2d.drawOptions().scaleBondWidth =
+        d2d.drawOptions().scaleHighlightBondWidth;
+  }
+  d2d.drawLine(at1_cds, at2_cds, col1, col2);
+  d2d.drawOptions().scaleBondWidth = orig_slw;
+  d2d.setDash(noDash);
+}
+}  // namespace
+
 // ****************************************************************************
 void MolDraw2D::drawBond(
     const ROMol &mol, const Bond *bond, int at1_idx, int at2_idx,
@@ -2195,10 +2216,6 @@ void MolDraw2D::drawBond(
   PRECONDITION(activeMolIdx_ >= 0, "bad mol idx");
   RDUNUSED_PARAM(highlight_atoms);
   RDUNUSED_PARAM(highlight_atom_map);
-  static const DashPattern noDash;
-  static const DashPattern dots = assign::list_of(2)(6);
-  static const DashPattern dashes = assign::list_of(6)(6);
-  static const DashPattern shortDashes = assign::list_of(2)(2);
 
   const Atom *at1 = mol.getAtomWithIdx(at1_idx);
   const Atom *at2 = mol.getAtomWithIdx(at2_idx);
@@ -2255,14 +2272,7 @@ void MolDraw2D::drawBond(
       isComplex = true;
     }
     if (isComplex) {
-      setDash(dots);
-      bool orig_slw = drawOptions().scaleBondWidth;
-      if (highlight_bond) {
-        drawOptions().scaleBondWidth = drawOptions().scaleHighlightBondWidth;
-      }
-      drawLine(at1_cds, at2_cds, col1, col2);
-      drawOptions().scaleBondWidth = orig_slw;
-      setDash(noDash);
+      drawQueryBond(*this, *bond, highlight_bond, at1_cds, at2_cds, col1, col2);
     } else {
       bt = static_cast<Bond::BondType>(
           static_cast<BOND_EQUALS_QUERY *>(bond->getQuery())->getVal());
