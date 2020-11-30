@@ -530,7 +530,7 @@ RDKIT_GRAPHMOL_EXPORT BOND_EQUALS_QUERY *makeSingleOrAromaticBondQuery() {
 RDKIT_GRAPHMOL_EXPORT BOND_EQUALS_QUERY *makeDoubleOrAromaticBondQuery() {
   auto *res = new BOND_EQUALS_QUERY;
   res->setVal(true);
-  res->setDataFunc(queryBondIsSingleOrAromatic);
+  res->setDataFunc(queryBondIsDoubleOrAromatic);
   res->setDescription("DoubleOrAromaticBond");
   return res;
 };

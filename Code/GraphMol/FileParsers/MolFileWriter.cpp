@@ -64,10 +64,7 @@ int getQueryBondTopology(const Bond *bond) {
       if ((*child1)->getDescription() != "BondInRing") {
         std::swap(child1, child2);
       }
-      if ((*child2)->getDescription() == "BondOr" ||
-          (*child2)->getDescription() == "BondOrder") {
-        qry = child1->get();
-      }
+      qry = child1->get();
     }
   }
   if (qry->getDescription() == "BondInRing") {
@@ -96,11 +93,9 @@ int getQueryBondSymbol(const Bond *bond) {
         qry->endChildren() - qry->beginChildren() == 2) {
       auto child1 = qry->beginChildren();
       auto child2 = child1 + 1;
-      if ((*child1)->getDescription() == "BondOr" &&
-          (*child2)->getDescription() == "BondInRing") {
+      if ((*child2)->getDescription() == "BondInRing") {
         qry = child1->get();
-      } else if ((*child1)->getDescription() == "BondInRing" &&
-                 (*child2)->getDescription() == "BondOr") {
+      } else if ((*child1)->getDescription() == "BondInRing") {
         qry = child2->get();
       }
     }

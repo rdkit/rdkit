@@ -1345,9 +1345,7 @@ void testGithub268() {
     TEST_ASSERT(m->getBondWithIdx(1)->hasQuery());
     TEST_ASSERT(m->getBondWithIdx(1)->getQuery()->getDescription() ==
                 "BondAnd");
-
     std::string mb = MolToMolBlock(*m);
-    std::cerr << "  >>>" << mb << std::endl;
     RWMol *m2 = MolBlockToMol(mb);
     TEST_ASSERT(m2->getNumBonds() == 4);
     TEST_ASSERT(m2->getBondWithIdx(1)->hasQuery());
