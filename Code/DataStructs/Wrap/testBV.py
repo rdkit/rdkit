@@ -325,21 +325,18 @@ class TestCase(unittest.TestCase):
             bvs.append(bv)
         qs = bvs[:10]
         db = bvs[10:]
-        tgts = []
-        for q in qs:
-            sims = DataStructs.BulkTanimotoSimilarity(q,db)
-            sim, idx = max((sim, -idx) for idx, sim in enumerate(sims))
-            tgts.append((-idx,sim))
-        nbrs = DataStructs.TanimotoSimilarityNeighbors(qs,db)
-        self.assertEqual(tgts,nbrs)
-
-        tgts = []
-        for q in qs:
-            sims = DataStructs.BulkSokalSimilarity(q,db)
-            sim, idx = max((sim, -idx) for idx, sim in enumerate(sims))
-            tgts.append((-idx,sim))
-        nbrs = DataStructs.SokalSimilarityNeighbors(qs,db)
-        self.assertEqual(tgts,nbrs)
+        for metric in ['Tanimoto','Cosine', 'Kulczynski', 'Dice', 'Sokal', 
+                       'McConnaughey', 'Asymmetric', 'BraunBlanquet', 'Russel', 
+                       'RogotGoldberg']:
+            bulkSim = getattr(DataStructs,f'Bulk{metric}Similarity')
+            nbrSim = getattr(DataStructs,f'{metric}SimilarityNeighbors')
+            tgts = []
+            for q in qs:
+                sims = bulkSim(q,db)
+                sim, idx = max((sim, -idx) for idx, sim in enumerate(sims))
+                tgts.append((-idx,sim))
+            nbrs = nbrSim(qs,db)
+            self.assertEqual(tgts,nbrs)
 
 
 if __name__ == '__main__':
