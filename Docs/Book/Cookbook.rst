@@ -479,47 +479,44 @@ Identifying Stereochemistry
 .. testcode::
 
    # Identifying Double Bond Stereochemistry
-   IPythonConsole.molSize = 300,300
-   m = Chem.MolFromSmiles("C\C(F)=C\C=C(/F)\C(=C\F)\C=C")
-   m
+   IPythonConsole.molSize = 250,250
+   mol = Chem.MolFromSmiles("C\C=C(/F)\C(=C\F)\C=C")
+   mol
 
 .. image:: images/RDKitCB_30_im1.png
 
 .. testcode::
 
    # Using GetStereo()
-   for b in m.GetBonds():
+   for b in mol.GetBonds():
        print(b.GetBeginAtomIdx(),b.GetEndAtomIdx(),
              b.GetBondType(),b.GetStereo())
 
 .. testoutput::
 
    0 1 SINGLE STEREONONE
-   1 2 SINGLE STEREONONE
-   1 3 DOUBLE STEREOZ
-   3 4 SINGLE STEREONONE
-   4 5 DOUBLE STEREOZ
+   1 2 DOUBLE STEREOZ
+   2 3 SINGLE STEREONONE
+   2 4 SINGLE STEREONONE
+   4 5 DOUBLE STEREOE
    5 6 SINGLE STEREONONE
-   5 7 SINGLE STEREONONE
-   7 8 DOUBLE STEREOE
-   8 9 SINGLE STEREONONE
-   7 10 SINGLE STEREONONE
-   10 11 DOUBLE STEREONONE
+   4 7 SINGLE STEREONONE
+   7 8 DOUBLE STEREONONE
 
 .. testcode::
 
    # Double bond configuration can also be identified with new
    # stereochemistry code using Chem.FindPotentialStereo()
-   si = Chem.FindPotentialStereo(m)
+   si = Chem.FindPotentialStereo(mol)
    for element in si:
-       print(f'  Type: {element.type}, Index: {element.centeredOn}, Specified: {element.specified}, Descriptor: {element.descriptor} ')
+       print(f'  Type: {element.type}, Which: {element.centeredOn}, Specified: {element.specified}, Descriptor: {element.descriptor} ')
 
 .. testoutput::
    :options: -ELLIPSIS, +NORMALIZE_WHITESPACE
 
-   Type: Bond_Double, Index: 2, Specified: Specified, Descriptor: Bond_Trans 
-   Type: Bond_Double, Index: 4, Specified: Specified, Descriptor: Bond_Cis 
-   Type: Bond_Double, Index: 7, Specified: Specified, Descriptor: Bond_Trans
+   Type: Bond_Double, Which: 1, Specified: Specified, Descriptor: Bond_Cis 
+   Type: Bond_Double, Which: 4, Specified: Specified, Descriptor: Bond_Trans
+  
 
 Manipulating Molecules
 ************************
