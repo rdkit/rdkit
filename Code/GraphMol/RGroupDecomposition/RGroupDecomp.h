@@ -89,6 +89,17 @@ struct RDKIT_RGROUPDECOMPOSITION_EXPORT RGroupDecompositionParameters {
   // Prepare the core for substructure searching and rgroup assignment
   bool prepareCore(RWMol &, const RWMol *alignCore);
 
+  // Parameters specific to GA
+
+  // GA population size or -1 to use best guess
+  int gaPopulationSize = -1;
+  // GA maximum number of operations or -1 to use best guess
+  int gaMaximumOperations = -1;
+  // GA number of operations permitted without improvement before exiting (-1 for best guess)
+  int gaNumberOperationsWithoutImprovement = -1;
+  // GA random number seed (-1 for default, -2 for random seed)
+  int gaRandomSeed = -1;
+
  private:
   int indexOffset{-1};
 };

@@ -32,9 +32,20 @@ int main(int argc, char* argv[]) {
   boost::logging::disable_logs("rdApp.debug");
 
   options_description desc("Allowed options");
-  desc.add_options()("help", "produce help message")(
+  desc.add_options()("help", "Help message")(
       "dataset", options::value<std::string>()->default_value("rg-easy"),
-      "built-in dataset rg-easy, rg-stereo");
+      "Built-in dataset rg-easy, rg-stereo")(
+      "maximumOperations", options::value<int>()->default_value(-1),
+      "Maximum number of GA operations")(
+      "populationSize", options::value<int>()->default_value(-1),
+      "GA population size")(
+      "numberOperationsWithoutImprovement",
+      options::value<int>()->default_value(-1),
+      "number of operations without improvement before exiting")(
+      "randomSeed", options::value<int>()->default_value(-1),
+      "Random number seed (-1 for default, -2 for random)")(
+      "matchingStrategy", options::value<std::string>()->default_value("GA"),
+      "Matching strategy- GA or GreedyChunks");
   options::variables_map vm;
   options::store(options::parse_command_line(argc, argv, desc), vm);
   options::notify(vm);
@@ -97,7 +108,22 @@ int main(int argc, char* argv[]) {
 
   RGroupDecompositionParameters parameters;
   parameters.scoreMethod = FingerprintVariance;
-  parameters.matchingStrategy = GA;
+  parameters.gaMaximumOperations = vm["maximumOperations"].as<int>();
+  parameters.gaNumberOperationsWithoutImprovement =
+      vm["numberOperationsWithoutImprovement"].as<int>();
+  parameters.gaPopulationSize = vm["populationSize"].as<int>();
+  parameters.gaRandomSeed = vm["randomSeed"].as<int>();
+  auto strategyString = vm["matchingStrategy"].as<string>();
+  if (strategyString == "GA") {
+    parameters.matchingStrategy = GA;
+  }
+  else if (strategyString == "GreedyChunks") {
+    parameters.matchingStrategy = GreedyChunks;
+  }
+  else {
+    cerr << "Unknown matching strategy " << strategyString << endl;
+    return 0;
+  }
   RGroupDecomposition decomposition(cores, parameters);
 
   int numberAdded(0);

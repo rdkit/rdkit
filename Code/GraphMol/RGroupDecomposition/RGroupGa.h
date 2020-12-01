@@ -121,7 +121,8 @@ class RGroupGa : public GaBase {
   IntegerStringChromosomePolicy chromosomePolicy;
   vector<shared_ptr<GaOperation<RGroupDecompositionChromosome>>> operations;
   unique_ptr<RGroupGaPopulation> population;
-  int noIterations;
+  int numberOperations;
+  int numberOperationsWithoutImprovement;
   int chromLength;
   unsigned int numPermutations;
   int numberDecomps;

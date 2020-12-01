@@ -101,15 +101,47 @@ RGroupGa::RGroupGa(const RGroupDecompData& rGroupData,
   // TODO refine these settings
   auto popsize = 100 + chromLength / 10;
   if (popsize > 200) popsize = 200;
-  noIterations = 5000 + chromLength * 100;
-  if (noIterations > 100000) noIterations = 100000;
-  noIterations = 1000000;
+  const auto& params = rGroupData.params;
+  if (params.gaPopulationSize > 0) {
+    popsize = params.gaPopulationSize;
+  }
+  // numberOperations = 5000 + chromLength * 100;
+  // if (numberOperations > 100000) numberOperations = 100000;
+
+  // For now run the GA a long time and exit early if no improvement in the
+  // score is seen
+  numberOperations = 1000000;
+  if (params.gaMaximumOperations > 0) {
+    numberOperations = params.gaMaximumOperations;
+  }
+
+  numberOperationsWithoutImprovement = 7500;
+  if (params.gaNumberOperationsWithoutImprovement > 0) {
+    numberOperationsWithoutImprovement =
+        params.gaNumberOperationsWithoutImprovement;
+  }
 
   // profiler settings
   // popsize = 100;
-  // noIterations = 10000;
+  // numberOperations = 10000;
 
   setPopsize(popsize);
+
+  uint32_t rngSeed;
+
+  if (params.gaRandomSeed >= 0) {
+    rngSeed = params.gaRandomSeed;
+    getRng().seed(rngSeed);
+  } else if (params.gaRandomSeed == -2) {
+    random_device rd;
+    auto seed = rd();
+    rngSeed = seed;
+    getRng().seed(rngSeed);
+  } else {
+    rngSeed = mt19937::default_seed;
+  }
+
+  BOOST_LOG(rdInfoLog) << "GA RNG seed " << rngSeed << endl;
 }
 
 void RGroupGa::rGroupMutateOperation(
@@ -118,7 +150,6 @@ void RGroupGa::rGroupMutateOperation(
   auto parent = parents[0];
   auto child = children[0];
   child->copyGene(*parent);
-  // double pMutate = parent->getLength() > 100 ? .01 : -1.0;
   child->mutate();
   child->setOperationName(RgroupMutate);
   child->decode();
@@ -205,8 +236,11 @@ vector<vector<size_t>> RGroupGa::run() {
   population = unique_ptr<RGroupGaPopulation>(new RGroupGaPopulation(*this));
   auto format = boost::format(
                     "Running GA number operations %5d population size %5d "
+                    "number operations without improvement %5d "
                     "chromosome length %5d %s\n") %
-                noIterations % getPopsize() % chromLength % timeInfo(startTime);
+                numberOperations % getPopsize() %
+                numberOperationsWithoutImprovement % chromLength %
+                timeInfo(startTime);
   BOOST_LOG(rdInfoLog) << format.str();
   population->create();
   double bestScore = population->getBestScore();
@@ -215,7 +249,7 @@ vector<vector<size_t>> RGroupGa::run() {
 
   int nOps = 0;
   int lastImprovementOp = 0;
-  while (nOps < noIterations) {
+  while (nOps < numberOperations) {
     population->iterate();
     nOps++;
     if (nOps % 1000 == 0) {
@@ -229,7 +263,7 @@ vector<vector<size_t>> RGroupGa::run() {
                     timeInfo(startTime);
       BOOST_LOG(rdInfoLog) << format.str();
     }
-    if (nOps - lastImprovementOp > 5000) {
+    if (nOps - lastImprovementOp > numberOperationsWithoutImprovement) {
       BOOST_LOG(rdInfoLog) << "Op " << nOps << " No improvement since "
                            << lastImprovementOp << " finishing.." << endl;
       break;

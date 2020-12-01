@@ -22,39 +22,38 @@ namespace GarethUtil {
  *
  */
 class GA_EXPORT RandomUtil {
-public:
+ public:
+  RandomUtil(const RandomUtil &rhs) = delete;
+  RandomUtil &operator=(const RandomUtil &rhs) = delete;
+  RandomUtil(RandomUtil &&rhs) = delete;
+  RandomUtil &operator=(RandomUtil &&rhs) = delete;
 
-	RandomUtil(const RandomUtil & rhs) = delete;
-	RandomUtil & operator =(const RandomUtil & rhs) = delete;
-	RandomUtil(RandomUtil && rhs) = delete;
-	RandomUtil & operator =(RandomUtil && rhs) = delete;
+  /*
+   * return a random number between 0 and 1
+   */
+  double normalRand();
 
-	/*
-	 * return a random number between 0 and 1
-	 */
-	double normalRand();
+  /*
+   * return a random integer between top and bottom
+   */
+  int randomInt(int bottom, int top);
 
-	/*
-	 * return a random integer between top and bottom
-	 */
-	int randomInt(int bottom, int top);
+  bool randomBoolean();
 
-	bool randomBoolean();
+  void seed(uint32_t seed);
 
-	void seed(uint32_t seed);
+  /**
+   * Get singleton
+   */
+  static RandomUtil &getInstance();
 
-	/**
-	 * Get singleton
-	 */
-	static RandomUtil &getInstance();
-private:
-	RandomUtil();
-	virtual ~RandomUtil();
+ private:
+  RandomUtil();
+  virtual ~RandomUtil();
 
-	std::mt19937 rng;
-	std::uniform_real_distribution<double> realDistribution;
-
+  std::mt19937 rng;
+  std::uniform_real_distribution<double> realDistribution;
 };
 
-}
+}  // namespace GarethUtil
 #endif /* UTILS_H_ */
