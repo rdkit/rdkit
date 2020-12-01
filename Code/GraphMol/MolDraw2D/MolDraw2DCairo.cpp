@@ -105,8 +105,9 @@ void MolDraw2DCairo::drawWavyLine(const Point2D &cds1, const Point2D &cds2,
     ++nSegments;  // we're going to assume an even number of segments
   }
 
-  Point2D perp = calcPerpendicular(cds1, cds2);
   Point2D delta = (cds2 - cds1);
+  Point2D perp(delta.y, -delta.x);
+  perp.normalize();
   perp *= vertOffset;
   delta /= nSegments;
 

@@ -172,7 +172,7 @@ struct AnnotationType {
 };
 
 typedef std::map<int, DrawColour> ColourPalette;
-typedef std::vector<unsigned int> DashPattern;
+typedef std::vector<double> DashPattern;
 
 inline void assignDefaultPalette(ColourPalette &palette) {
   palette.clear();
@@ -794,24 +794,11 @@ class RDKIT_MOLDRAW2D_EXPORT MolDraw2D {
       const StringRect &note_rect,
       const std::vector<std::shared_ptr<StringRect>> &rects) const;
 
-  // cds1 and cds2 are 2 atoms in a ring.  Returns the perpendicular pointing
-  // into the ring.
-  Point2D bondInsideRing(const ROMol &mol, const Bond *bond,
-                         const Point2D &cds1, const Point2D &cds2) const;
-  // cds1 and cds2 are 2 atoms in a chain double bond.  Returns the
-  // perpendicular pointing into the inside of the bond
-  Point2D bondInsideDoubleBond(const ROMol &mol, const Bond *bond) const;
-  // calculate normalised perpendicular to vector between two coords, such
-  // that
-  // it's inside the angle made between (1 and 2) and (2 and 3).
-  Point2D calcInnerPerpendicular(const Point2D &cds1, const Point2D &cds2,
-                                 const Point2D &cds3) const;
-
   // take the coords for atnum, with neighbour nbr_cds, and move cds out to
   // accommodate
   // the label associated with it.
-  void adjustBondEndForLabel(int atnum, const Point2D &nbr_cds,
-                             Point2D &cds) const;
+  void adjustBondEndForLabel(const std::pair<std::string, OrientType> &lbl,
+                             const Point2D &nbr_cds, Point2D &cds) const;
 
   // adds LaTeX-like annotation for super- and sub-script.
   std::pair<std::string, OrientType> getAtomSymbolAndOrientation(
@@ -868,18 +855,6 @@ class RDKIT_MOLDRAW2D_EXPORT MolDraw2D {
     drawAnnotation(annot);
   }
 
-  // calculate normalised perpendicular to vector between two coords
-  Point2D calcPerpendicular(const Point2D &cds1, const Point2D &cds2) const;
-  // assuming there's a double bond between atom1 and atom2, calculate
-  // the ends of the 2 lines that should be used to draw it, distance
-  // offset apart.  Includes bonds of type AROMATIC.
-  void calcDoubleBondLines(const ROMol &mol, double offset, const Bond *bond,
-                           const Point2D &at1_cds, const Point2D &at2_cds,
-                           Point2D &l1s, Point2D &l1f, Point2D &l2s,
-                           Point2D &l2f) const;
-  // returns true if atom has degree 2 and both bonds are close to
-  // linear.
-  bool isLinearAtom(const Atom &atom) const;
   // and the same for triple bonds.  One line is from atom to atom,
   // so it doesn't need a separate return.
   void calcTripleBondLines(double offset, const Bond *bond,
