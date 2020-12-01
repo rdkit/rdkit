@@ -73,7 +73,7 @@ void rankVect(const std::vector<T1> &vect, T2 &res) {
 
   int currRank = 0;
   unsigned int lastIdx = indices[0];
-  BOOST_FOREACH (unsigned int idx, indices) {
+  for (auto idx : indices) {
     if (vect[idx] == vect[lastIdx]) {
       res[idx] = currRank;
     } else {

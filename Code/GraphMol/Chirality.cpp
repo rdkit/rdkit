@@ -963,14 +963,10 @@ void iterateCIPRanks(const ROMol &mol, const DOUBLE_VECT &invars,
 
         // a special case for chiral phosphorus compounds
         // (this was leading to incorrect assignment of R/S labels ):
-        bool isChiralPhosphorusSpecialCase;
-        if (bond->getBondType() != Bond::DOUBLE) {
-          isChiralPhosphorusSpecialCase = false;
-        } else {  // double bond
+        bool isChiralPhosphorusSpecialCase = false;
+        if (bond->getBondType() == Bond::DOUBLE) {
           const Atom *nbr = mol[nbrIdx];
-          if (nbr->getAtomicNum() != 15) {
-            isChiralPhosphorusSpecialCase = false;
-          } else {
+          if (nbr->getAtomicNum() == 15) {
             unsigned int nbrDeg = nbr->getDegree();
             isChiralPhosphorusSpecialCase = nbrDeg == 3 || nbrDeg == 4;
           }
@@ -986,12 +982,12 @@ void iterateCIPRanks(const ROMol &mol, const DOUBLE_VECT &invars,
         if (isChiralPhosphorusSpecialCase) {
           counts[nbrIdx] += 1;
         } else {
-          counts[nbrIdx] += bond->getTwiceBondType();
+          counts[nbrIdx] += getTwiceBondType(*bond);
         }
       }
 
-      // we now have a sorted list of our neighbors' ranks,
-      // copy it on in reversed order:
+      // For each of our neighbors' ranks weighted by bond type, copy it N times
+      // to our cipEntry in reverse rank order, where N is the weight.
       if (updatedNbrIdxs.size() > 1) {  // compare vs 1 for performance.
         std::sort(std::begin(updatedNbrIdxs), std::end(updatedNbrIdxs),
                   [&ranks](unsigned int idx1, unsigned int idx2) {
