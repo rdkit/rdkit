@@ -43,8 +43,6 @@
 #include <utility>
 #include <vector>
 
-#define VERBOSE
-
 namespace RDKit {
 
 // Attachment Points
@@ -157,9 +155,7 @@ int RGroupDecomposition::add(const ROMol &inmol) {
   }
 
   if (rcore == nullptr) {
-#ifdef VERBOSE
-    std::cout << "No core matches" << std::endl;
-#endif
+    BOOST_LOG(rdDebugLog) << "No core matches" << std::endl;
     return -1;
   }
 
@@ -274,10 +270,6 @@ int RGroupDecomposition::add(const ROMol &inmol) {
   if (potentialMatches.size() == 0) {
     BOOST_LOG(rdWarningLog)
         << "No attachment points in side chains" << std::endl;
-
-#ifdef VERBOSE
-    std::cout << "No attachment points in side chains" << std::endl;
-#endif
     return -1;
   }
 
@@ -383,6 +375,7 @@ RGroupColumns RGroupDecomposition::getRGroupsAsColumns() const {
       CHECK_INVARIANT(rgroup.second->combinedMol->hasProp(done),
                       "Not done! Call process()");
 
+      CHECK_INVARIANT(!Rs_seen[rgrp_pos_map[realLabel->second]], "R group label appears multiple times!");
       Rs_seen.set(rgrp_pos_map[realLabel->second]);
       std::string r = RPREFIX + std::to_string(realLabel->second);
       RGroupColumn &col = groups[r];

@@ -89,7 +89,9 @@ const char *symdata[5] = {"c1(Cl)ccccc1", "c1c(Cl)cccc1", "c1cccc(Cl)c1",
 void testSymmetryMatching(RGroupScore scoreMethod = Match) {
   BOOST_LOG(rdInfoLog)
       << "********************************************************\n";
-  BOOST_LOG(rdInfoLog) << "test rgroup decomp symmetry matching with score method " << scoreMethod << std::endl;
+  BOOST_LOG(rdInfoLog)
+      << "test rgroup decomp symmetry matching with score method "
+      << scoreMethod << std::endl;
 
   RWMol *core = SmilesToMol("c1ccccc1");
   RGroupDecompositionParameters params;
@@ -1686,6 +1688,64 @@ $$$$
   }
 }
 
+void testMutipleCoreRelabellingIssues() {
+  // This test fixes 2 issues with relabelling groups
+  // Firstly, a new R group which appeared in a later core could have it's label
+  // assigned to an unindexed group in a previous core
+  // Secondly, a user defined r group which is not part of the decomposition
+  // could have it's index assigned to an unindexed group.
+
+  BOOST_LOG(rdInfoLog)
+      << "********************************************************\n";
+  BOOST_LOG(rdInfoLog) << "Test relabelling issues in multiple core decomp"
+                       << std::endl;
+
+  std::vector<std::shared_ptr<ROMol>> molecules;
+  {
+    std::fstream fh;
+    std::string rdBase(getenv("RDBASE"));
+    fh.open(rdBase + "/Docs/Notebooks/compounds.txt", std::ios::in);
+    std::string line;
+    getline(fh, line);
+
+    while (getline(fh, line)) {
+      int pos = line.find_last_of("\t");
+      auto smiles = line.substr(pos + 1);
+      std::shared_ptr<ROMol> mol(SmilesToMol(smiles));
+      molecules.push_back(mol);
+      if (molecules.size() == 30) break;
+    }
+  }
+
+  std::vector<std::string> smi{ "O=C1C([*:2])([*:1])[C@@H]2N1C(C(O)=O)=C([*:3])CS2",
+                                "O=C1C([*:2])([*:1])[C@@H]2N1C(C(O)=O)=C([*:3])CC2",
+                                "O=C1C([*:2])([*:1])[C@@H]2N1C(C(O)=O)=C([*:3])CO2",
+                                "O=C1C([*:2])([*:1])[C@@H]2N1C(C(O)=O)=C([*:3])C2",
+                               "O=C1C([*:2])([*:1])[C@@H]2N1C(C(O)=O)C([*:3])([*:4])C2",
+                                "O=C1C([*:2])([*:1])[C@@H]2N1C(C(O)=O)=C([*:3])S2",
+                                "O=C1C([*:2])([*:1])[C@@H]2N1C(C(O)=O)C([*:3])([*:4])S2",
+                                "O=C1C([*:2])([*:1])[C@@H]2N1C(C(O)=O)C([*:3])([*:4])O2",
+                                "O=C1C([*:2])([*:1])C([*:6])([*:5])N1" };
+  std::vector<ROMOL_SPTR> cores;
+  for (const auto &s: smi) {
+    cores.emplace_back(SmartsToMol(s));
+  }
+
+  RGroupDecompositionParameters params;
+  params.scoreMethod = FingerprintVariance;
+  RGroupDecomposition decomposition(cores, params);
+  for (auto &mol : molecules) {
+    decomposition.add(*mol);
+  }
+
+  decomposition.process();
+  const auto &columns = decomposition.getRGroupsAsColumns();
+  TEST_ASSERT(columns.size() == 8u);
+  for (auto &col : columns) {
+    TEST_ASSERT(30U == col.second.size());
+  }
+}
+
 int main() {
   RDLog::InitLogs();
 
@@ -1713,6 +1773,7 @@ int main() {
   testSDFGRoupMultiCoreNoneShouldMatch();
   testRowColumnAlignmentProblem();
   testSymmetryIssues();
+  testMutipleCoreRelabellingIssues();
 #endif
   testSymmetryPerformance();
   testScorePermutations();

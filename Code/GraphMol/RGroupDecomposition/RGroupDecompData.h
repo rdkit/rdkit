@@ -211,6 +211,15 @@ struct RGroupDecompData {
     }
   };
 
+  void addCoreUserLabels(const RWMol &core, std::set<int> &userLabels) {
+    auto atoms = getRlabels(core);
+    for (const auto &p : atoms) {
+      if (p.first > 0) {
+        userLabels.insert(p.first);
+      }
+    }
+  }
+
   void relabelCore(RWMol &core, std::map<int, int> &mappings,
                    UsedLabels &used_labels, const std::set<int> &indexLabels,
                    std::map<int, std::vector<int>> extraAtomRLabels) {
@@ -398,13 +407,24 @@ struct RGroupDecompData {
       }
     }
 
+    // find user labels that are not present in the decomposition
+    for (auto &core : cores) {
+      core.second.labelledCore.reset(new RWMol(*core.second.core));
+      addCoreUserLabels(*core.second.labelledCore, userLabels);
+    }
+
     // Assign final RGroup labels to the cores and propagate these to
     //  the scaffold
     finalRlabelMapping.clear();
 
     UsedLabels used_labels;
+    // Add all the user labels now to prevent an index label being assigned to a
+    // user label when multiple cores are present (e.g. the user label is
+    // present in the second core, but not the first).
+    for (auto userLabel : userLabels) {
+      used_labels.add(userLabel);
+    }
     for (auto &core : cores) {
-      core.second.labelledCore.reset(new RWMol(*core.second.core));
       relabelCore(*core.second.labelledCore, finalRlabelMapping, used_labels,
                   indexLabels, extraAtomRLabels);
     }
@@ -414,6 +434,16 @@ struct RGroupDecompData {
         relabelRGroup(*rgroup.second, finalRlabelMapping);
       }
     }
+
+    std::set<int> uniqueMappedValues;
+    std::transform(finalRlabelMapping.cbegin(), finalRlabelMapping.cend(),
+                   std::inserter(uniqueMappedValues, uniqueMappedValues.end()),
+                   [](const std::pair<int, int> &p) { return p.second; });
+    CHECK_INVARIANT(finalRlabelMapping.size() == uniqueMappedValues.size(),
+                    "Error in uniqueness of final RLabel mapping");
+    CHECK_INVARIANT(
+        uniqueMappedValues.size() == userLabels.size() + indexLabels.size(),
+        "Error in final RMapping size");
   }
 
   // compute the number of rgroups that would be added if we
@@ -474,15 +504,16 @@ struct RGroupDecompData {
     double best_score = -std::numeric_limits<double>::max();
 
     if (params.matchingStrategy == GA) {
-      // TODO- check for timeout in GA
-      // TODO- check for small search space and revert to Exhaustive, if we
-      // can't create population.
-      RGroupGa ga(*this);
-      ties = ga.run();
-      best_permutation = ties[0];
-      best_score = ga.getBestScore();
-
-    } else {
+      RGroupGa ga(*this, params.timeout >= 0 ? &t0 : nullptr);
+      if (ga.numberPermutations() < 10000) {
+        params.matchingStrategy = Exhaustive;
+      } else {
+        ties = ga.run();
+        best_permutation = ties[0];
+        best_score = ga.getBestScore();
+      }
+    }
+    if (params.matchingStrategy != GA) {
       // Exhaustive search, get the MxN matrix
       // (M = matches.size(): number of molecules
       //  N = iterator.maxPermutations)
@@ -533,9 +564,9 @@ struct RGroupDecompData {
         ++count;
       }
 
-      std::cerr << " Exhaustive or GreedyChunks process, best score "
-                << best_score << " permutation size " << best_permutation.size()
-                << std::endl;
+      BOOST_LOG(rdDebugLog) << " Exhaustive or GreedyChunks process, best score "
+                           << best_score << " permutation size "
+                           << best_permutation.size() << std::endl;
     }
 
     if (ties.size() > 1) {
@@ -554,19 +585,19 @@ struct RGroupDecompData {
             largest_heavy_counts = heavy_counts;
             best_permutation = tied_permutation;
           }
-          // commented out as min_perm_value and perm_value are unsigned
-          // so the if statement is never true.
-          // Which is good as the GA does not use iterator
-          /*
-            else if (heavy_counts == largest_heavy_counts) {
-              size_t perm_value = iterator.value();
-              if (perm_value < min_perm_value) {
-                min_perm_value = perm_value;
-                best_permutation = tied_permutation;
-              }
-            }
-          */
         }
+        // commented out as min_perm_value and perm_value are unsigned
+        // so the if statement is never true.
+        // Which is good as the GA does not use iterator
+        /*
+          else if (heavy_counts == largest_heavy_counts) {
+            size_t perm_value = iterator.value();
+            if (perm_value < min_perm_value) {
+              min_perm_value = perm_value;
+              best_permutation = tied_permutation;
+            }
+          }
+        */
         checkForTimeout(t0, params.timeout);
       }
     }

@@ -19,21 +19,65 @@
 #include <GraphMol/FileParsers/MolWriters.h>
 #include <GraphMol/RGroupDecomposition/RGroupDecomp.h>
 
-#include <boost/shared_ptr.hpp>
+#include <boost/program_options.hpp>
 
 using namespace std;
 using namespace RDKit;
+using namespace boost::program_options;
+namespace options = boost::program_options;
 
-// Example system based on Brian's MultipleCores notebook for profiling
-int main() {
+// Example systems based on Brian's MultipleCores notebook for profiling
+int main(int argc, char* argv[]) {
   RDLog::InitLogs();
   boost::logging::disable_logs("rdApp.debug");
+
+  options_description desc("Allowed options");
+  desc.add_options()("help", "produce help message")(
+      "dataset", options::value<std::string>()->default_value("rg-easy"),
+      "built-in dataset rg-easy, rg-stereo");
+  options::variables_map vm;
+  options::store(options::parse_command_line(argc, argv, desc), vm);
+  options::notify(vm);
+
+  if (vm.count("help")) {
+    cerr << desc << endl;
+    return 0;
+  }
+
+  auto dataset = vm["dataset"].as<std::string>();
+  std::string rdBase(getenv("RDBASE"));
+  std::string file;
+  std::vector<std::string> coreSmiles;
+  if (dataset == "rg-easy") {
+    cerr << "Using dataset rg-easy" << endl;
+    file = rdBase + "/Docs/Notebooks/compounds.txt";
+    coreSmiles = {"O=C1C([*:1])C2N1C(C(O)=O)=C([*:3])CS2",
+                  "O=C1C([*:1])C2N1C(C(O)=O)=C([*:3])CC2",
+                  "O=C1C([*:1])C2N1C(C(O)=O)=C([*:3])CO2",
+                  "O=C1C([*:1])C2N1C(C(O)=O)=C([*:3])C2",
+                  "O=C1C([*:1])C2N1C(C(O)=O)C([*:3])([*:4])C2",
+                  "O=C1C([*:1])C2N1C(C(O)=O)=C([*:3])S2",
+                  "O=C1C([*:1])C2N1C(C(O)=O)C([*:3])([*:4])S2",
+                  "O=C1C([*:1])C2N1C(C(O)=O)C([*:3])([*:4])O2",
+                  "O=C1C([*:1])C([*:5])N1"};
+  } else if (dataset == "rg-stereo") {
+    cerr << "Using dataset rg-stereo" << endl;
+    file = rdBase + "/Docs/Notebooks/compounds.txt";
+    coreSmiles = {"O=C1C([*:2])([*:1])[C@@H]2N1C(C(O)=O)=C([*:3])CS2",
+                  "O=C1C([*:2])([*:1])[C@@H]2N1C(C(O)=O)=C([*:3])CC2",
+                  "O=C1C([*:2])([*:1])[C@@H]2N1C(C(O)=O)=C([*:3])CO2",
+                  "O=C1C([*:2])([*:1])[C@@H]2N1C(C(O)=O)=C([*:3])C2",
+                  "O=C1C([*:2])([*:1])[C@@H]2N1C(C(O)=O)C([*:3])([*:4])C2",
+                  "O=C1C([*:2])([*:1])[C@@H]2N1C(C(O)=O)=C([*:3])S2",
+                  "O=C1C([*:2])([*:1])[C@@H]2N1C(C(O)=O)C([*:3])([*:4])S2",
+                  "O=C1C([*:2])([*:1])[C@@H]2N1C(C(O)=O)C([*:3])([*:4])O2",
+                  "O=C1C([*:2])([*:1])C([*:6])([*:5])N1"};
+  }
 
   vector<shared_ptr<ROMol>> molecules;
   {
     fstream fh;
-    std::string rdBase(getenv("RDBASE"));
-    fh.open(rdBase + "/Docs/Notebooks/compounds.txt", ios::in);
+    fh.open(file, ios::in);
     string line;
     getline(fh, line);
 
@@ -46,37 +90,22 @@ int main() {
   }
   cerr << "Read " << molecules.size() << endl;
 
-  boost::shared_ptr<ROMol> cephem(
-      SmilesToMol("O=C1C([*:1])C2N1C(C(O)=O)=C([*:3])CS2"));
-  boost::shared_ptr<ROMol> carbacephem(
-      SmilesToMol("O=C1C([*:1])C2N1C(C(O)=O)=C([*:3])CC2"));
-  boost::shared_ptr<ROMol> oxacephem(
-      SmilesToMol("O=C1C([*:1])C2N1C(C(O)=O)=C([*:3])CO2"));
-  boost::shared_ptr<ROMol> carbapenem(
-      SmilesToMol("O=C1C([*:1])C2N1C(C(O)=O)=C([*:3])C2"));
-  boost::shared_ptr<ROMol> carbapenam(
-      SmilesToMol("O=C1C([*:1])C2N1C(C(O)=O)C([*:3])([*:4])C2"));
-  boost::shared_ptr<ROMol> penem(
-      SmilesToMol("O=C1C([*:1])C2N1C(C(O)=O)=C([*:3])S2"));
-  boost::shared_ptr<ROMol> penam(
-      SmilesToMol("O=C1C([*:1])C2N1C(C(O)=O)C([*:3])([*:4])S2"));
-  boost::shared_ptr<ROMol> oxapenam(
-      SmilesToMol("O=C1C([*:1])C2N1C(C(O)=O)C([*:3])([*:4])O2"));
-  boost::shared_ptr<ROMol> monobactam(SmilesToMol("O=C1C([*:1])C([*:5])N1"));
+  std::vector<ROMOL_SPTR> cores;
+  for (const auto& s : coreSmiles) {
+    cores.emplace_back(SmartsToMol(s));
+  }
 
-  vector<boost::shared_ptr<ROMol>> cores{cephem,     carbacephem, oxacephem,
-                                         carbapenem, carbapenam,  penem,
-                                         penam,      oxapenam,    monobactam};
   RGroupDecompositionParameters parameters;
   parameters.scoreMethod = FingerprintVariance;
   parameters.matchingStrategy = GA;
   RGroupDecomposition decomposition(cores, parameters);
 
   int numberAdded(0);
-  for (auto &molecule : molecules) {
+  for (auto& molecule : molecules) {
     numberAdded = decomposition.add(*molecule);
   }
   cerr << "Added " << numberAdded << " compounds to decomposition" << endl;
   auto result = decomposition.processAndScore();
-  cerr << "Results success " << result.success << " score " << result.score << endl;
+  cerr << "Results success " << result.success << " score " << result.score
+       << endl;
 }

@@ -65,7 +65,7 @@ class StringChromosomeBase {
                          StringChromosomeBase &child2) const;
  std::string geneInfo() const;
   const T getValue(int pos) const;
-  T *const getString() const;
+  T *getString() const;
   int getLength() const { return length; }
   RandomUtil &getRng() const { return rng; }
   ChromosomePolicy &getChromosomePolicy() const { return chromosomePolicy; }
@@ -250,7 +250,7 @@ const T StringChromosomeBase<T, ChromosomePolicy>::getValue(int pos) const {
 }
 
 template <typename T, typename ChromosomePolicy>
-T *const StringChromosomeBase<T, ChromosomePolicy>::getString() const {
+T *StringChromosomeBase<T, ChromosomePolicy>::getString() const {
   return string.get();
 }
 

@@ -18,7 +18,9 @@ endif()
 rdkit_test(testRGroupDecomp testRGroupDecomp.cpp
 		LINK_LIBRARIES RGroupDecomposition )
 
-if(RDK_BUILD_CPP_TESTS) 
+find_package(Boost ${RDK_BOOST_VERSION} COMPONENTS program_options)
+#if(RDK_BUILD_CPP_TESTS AND Boost_PROGRAM_OPTIONS_FOUND)
+if(RDK_BUILD_CPP_TESTS AND Boost_FOUND)
 	add_executable(gaExample GaExample.cpp)
-	target_link_libraries(gaExample RGroupDecomposition ${LIB_FUZZING_ENGINE})
+	target_link_libraries(gaExample RGroupDecomposition ${Boost_PROGRAM_OPTIONS_LIBRARY})
 endif()

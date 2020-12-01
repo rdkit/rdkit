@@ -35,7 +35,13 @@ void addFingerprintToRGroupData(RGroupData *rgroupData) {
         if (atom->getIsotope() > 0) atom->setIsotope(0);
       }
     }
-    MolOps::sanitizeMol(mol);
+    try {
+      MolOps::sanitizeMol(mol);
+    } catch (MolSanitizeException &) {
+      BOOST_LOG(rdWarningLog)
+          << "Failed to sanitize RGroup fingerprint mol for "
+          << rgroupData->smiles << std::endl;
+    }
 #ifdef DEBUG
     std::cerr << "Fingerprint mol smiles " << MolToSmiles(mol) << std::endl;
 #endif

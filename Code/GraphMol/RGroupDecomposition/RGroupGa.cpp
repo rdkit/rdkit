@@ -9,8 +9,10 @@
 //
 
 #include <ctime>
+#include <limits>
 #include "RGroupGa.h"
 #include "RGroupDecompData.h"
+#include "RGroupDecomp.h"
 #include "../../../External/GA/util/Util.h"
 
 namespace RDKit {
@@ -74,17 +76,23 @@ void RGroupDecompositionChromosome::copyGene(
   copyVarianceData(parent.labelsToVarianceData, labelsToVarianceData);
 }
 
-RGroupGa::RGroupGa(const RGroupDecompData& rGroupData)
+RGroupGa::RGroupGa(const RGroupDecompData& rGroupData,
+                   const chrono::steady_clock::time_point* const t0)
     : rGroupData(rGroupData),
-      chromosomePolicy(getRng(), rGroupData.matches.size()) {
+      chromosomePolicy(getRng(), rGroupData.matches.size()),
+      t0(t0) {
   setSelectionPressure(1.0001);
-  // setSelectionPressure(1.001);
 
   const auto& matches = rGroupData.matches;
+  numPermutations = 0L;
   auto pos = 0;
   for (auto m : matches) {
     if (m.size() == 1) continue;
     chromosomePolicy.setMax(pos, m.size());
+    unsigned long count = numPermutations = m.size();
+    numPermutations = count / m.size() == numPermutations
+                          ? count
+                          : numeric_limits<unsigned int>::max();
     pos++;
   }
   chromLength = pos;
@@ -98,8 +106,8 @@ RGroupGa::RGroupGa(const RGroupDecompData& rGroupData)
   noIterations = 1000000;
 
   // profiler settings
-  popsize = 100;
-  noIterations = 10000;
+  // popsize = 100;
+  // noIterations = 10000;
 
   setPopsize(popsize);
 }
@@ -186,7 +194,7 @@ void RGroupGa::createOperations() {
 
 std::string timeInfo(const std::clock_t start) {
   auto now = std::clock();
-  auto seconds = (now - start) /(double) CLOCKS_PER_SEC;
+  auto seconds = (now - start) / (double)CLOCKS_PER_SEC;
   auto format = boost::format("Time %7.2f") % seconds;
   return format.str();
 }
@@ -211,24 +219,28 @@ vector<vector<size_t>> RGroupGa::run() {
     population->iterate();
     nOps++;
     if (nOps % 1000 == 0) {
-      BOOST_LOG(rdInfoLog) << population->info() << " " << timeInfo(startTime) << endl;
+      BOOST_LOG(rdInfoLog) << population->info() << " " << timeInfo(startTime)
+                           << endl;
     }
     if (population->getBestScore() > bestScore) {
       bestScore = population->getBestScore();
       lastImprovementOp = nOps;
       auto format = boost::format("OP %5d Fit %7.3f %s\n") % nOps % bestScore %
                     timeInfo(startTime);
-      BOOST_LOG(rdInfoLog) << format.str() ;
+      BOOST_LOG(rdInfoLog) << format.str();
     }
     if (nOps - lastImprovementOp > 5000) {
       BOOST_LOG(rdInfoLog) << "Op " << nOps << " No improvement since "
                            << lastImprovementOp << " finishing.." << endl;
       break;
     }
+    if (t0 && checkForTimeout(*t0, rGroupData.params.timeout)) {
+      break;
+    }
   }
   const shared_ptr<RGroupDecompositionChromosome> best = population->getBest();
   BOOST_LOG(rdDebugLog) << "Best solution " << best->info() << endl;
-  BOOST_LOG(rdDebugLog) << population->populationInfo() ;
+  BOOST_LOG(rdDebugLog) << population->populationInfo();
 
   auto ties = population->getTiedBest();
   auto permutations =

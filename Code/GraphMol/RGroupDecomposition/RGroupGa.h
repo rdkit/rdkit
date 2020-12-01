@@ -14,6 +14,7 @@
 #include <vector>
 #include <memory>
 #include <map>
+#include <chrono>
 
 #include "../../../External/GA/ga/StringChromosome.h"
 #include "../../../External/GA/ga/GaBase.h"
@@ -87,7 +88,8 @@ class RGroupDecompositionChromosome : public IntegerStringChromosome {
 
 class RGroupGa : public GaBase {
  public:
-  RGroupGa(const RGroupDecompData& rGroupData);
+  RGroupGa(const RGroupDecompData& rGroupData,
+           const chrono::steady_clock::time_point* const t0 = nullptr);
 
   IntegerStringChromosomePolicy& getChromosomePolicy() {
     return chromosomePolicy;
@@ -108,7 +110,9 @@ class RGroupGa : public GaBase {
     return operations;
   }
 
-  double getBestScore() const { return population->getBest()->getFitness(); };
+  double getBestScore() const { return population->getBest()->getFitness(); }
+
+  unsigned int numberPermutations() const { return numPermutations; }
 
  private:
   RGroupGa(const RGroupGa& other) = delete;
@@ -119,7 +123,9 @@ class RGroupGa : public GaBase {
   unique_ptr<RGroupGaPopulation> population;
   int noIterations;
   int chromLength;
+  unsigned int numPermutations;
   int numberDecomps;
+  const chrono::steady_clock::time_point* const t0;
 
   void createOperations();
 
