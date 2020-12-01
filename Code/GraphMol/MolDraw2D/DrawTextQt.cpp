@@ -35,8 +35,8 @@ void DrawTextQt::drawChar(char c, const Point2D &cds) {
   font.setPixelSize(fontSize());
   d_qp.setFont(font);
   QPointF loc(cds.x, cds.y);
-  QString text;
-  text.append(QChar(c));
+  QChar qc(c);
+  QString text(qc);
   const auto col = colour();
   QColor qcol(int(255.0 * col.r), int(255.0 * col.g), int(255.0 * col.b),
               int(255.0 * col.a));
@@ -54,6 +54,7 @@ void DrawTextQt::getStringRects(const string &text,
   double char_height;
   double max_width = 0.0;
   TextDrawType draw_mode = TextDrawType::TextDrawNormal;
+  QFontMetrics qfm(d_qp.font());
   for (size_t i = 0; i < text.length(); ++i) {
     // setStringDrawMode moves i along to the end of any <sub> or <sup>
     // markup
@@ -65,16 +66,13 @@ void DrawTextQt::getStringRects(const string &text,
 
     max_width = std::max(
         max_width,
-        static_cast<double>(MolDraw2D_detail::char_widths[(int)text[i]]));
+        static_cast<double>(qfm.boundingRect(QChar(draw_chars[i])).width()));
   }
-
   for (size_t i = 0; i < draw_chars.size(); ++i) {
-    double char_width =
-        0.6 * act_font_size *
-        static_cast<double>(MolDraw2D_detail::char_widths[(int)draw_chars[i]]) /
-        max_width;
-    // Absent a proper set of font metrics (we don't know what font we'll be
-    // using, for starters) this is something of an empirical bodge.
+    auto br = qfm.boundingRect(QChar(draw_chars[i]));
+    double char_width = 0.6 * act_font_size * br.width() / max_width;
+    // Absent real formatted string handling this is something of an empirical
+    // bodge.
     if (draw_chars[i] == '+') {
       char_height = 0.6 * act_font_size;
     } else if (draw_chars[i] == '-') {

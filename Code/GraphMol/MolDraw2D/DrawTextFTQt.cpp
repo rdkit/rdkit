@@ -29,7 +29,6 @@ double DrawTextFTQt::extractOutline() {
 
   QPen pen(this_col);
   pen.setJoinStyle(Qt::RoundJoin);
-  pen.setColor(this_col);
   d_qp.setPen(pen);
 
   QBrush brush(this_col);
