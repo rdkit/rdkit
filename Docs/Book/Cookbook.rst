@@ -118,47 +118,37 @@ Include a Calculation
 Include Stereo Annotations
 ===========================
 
-| **Author:** Valery Polyakov and Greg Landrum
-| **Source:** `<https://github.com/rdkit/rdkit/issues/3103>`_ and `<https://gist.github.com/greglandrum/33d8bd8149ec35999b2c70af9e4a0811>`_
+| **Author:** Greg Landrum
+| **Source:** `<https://github.com/rdkit/UGM_2020/blob/master/Notebooks/Landrum_WhatsNew.ipynb>`_
 | **Index ID#:** RDKitCB_32
 | **Summary:** Draw a molecule with stereochemistry annotations displayed.
 
 .. testcode::
 
    from rdkit import Chem
-   from rdkit.Chem import rdDepictor
-   from rdkit.Chem.Draw import rdMolDraw2D
-   from IPython.display import SVG
+   from rdkit.Chem import Draw
+   from rdkit.Chem.Draw import IPythonConsole
+   IPythonConsole.drawOptions.addAtomIndices = False
+   IPythonConsole.drawOptions.addStereoAnnotation = True
 
 .. testcode::
 
-   def mol_with_stereo(mol,molSize=(300,300), kekulize=True, fontSize = 0.8, LineWidth = 1):
-       # check for defective molecule 
-       if mol is None:
-           return None
-
-       mol = rdMolDraw2D.PrepareMolForDrawing(mol, kekulize)
-       drawer = rdMolDraw2D.MolDraw2DSVG(molSize[0], molSize[1])
-       drawer.SetFontSize(fontSize)
-       drawer.drawOptions().addStereoAnnotation = True
-       # drawer.drawOptions().addAtomIndices = True
-
-       try:
-           drawer.SetLineWidth(LineWidth)
-       except:
-           pass
-
-       drawer.DrawMolecule(mol)
-       drawer.FinishDrawing()
-       svg = drawer.GetDrawingText()
-       return svg
-
-.. testcode::
-
-   m = Chem.MolFromSmiles('C[C@H](F)C\C=C/O')
-   SVG(mol_with_stereo(m))
+   # Default Representation uses legacy FindMolChiralCenters() code
+   m1 = Chem.MolFromSmiles('C1CC1[C@H](F)C1CCC1')
+   m2 = Chem.MolFromSmiles('F[C@H]1CC[C@H](O)CC1')
+   Draw.MolsToGridImage((m1,m2), subImgSize=(250,250))
 
 .. image:: images/RDKitCB_32_im0.png
+
+.. testcode::
+
+   # new stereochemistry code with more accurate CIP labels, 2020.09 release
+   from rdkit.Chem import rdCIPLabeler
+   rdCIPLabeler.AssignCIPLabels(m1)
+   rdCIPLabeler.AssignCIPLabels(m2)
+   Draw.MolsToGridImage((m1,m2), subImgSize=(250,250))
+
+.. image:: images/RDKitCB_32_im1.png
 
 Black and White Molecules
 ==========================
@@ -444,119 +434,89 @@ Identify Aromatic Atoms
 Stereochemistry
 ****************
 
-Identifying Chiral Centers
-===========================
-
-| **Author:** Jan Holst Jensen
-| **Source:** `<https://sourceforge.net/p/rdkit/mailman/message/36762171/>`_
-| **Index ID#:** RDKitCB_16
-| **Summary:** Identify chiral centers from molfile with coordinates and isomeric SMILES.
-
-.. testcode::
-
-   from rdkit import Chem
-   # Create a mol object from L-alanine molfile with coordinates
-   mol1 = Chem.MolFromMolBlock("""
-        RDKit          2D
-
-     6  5  0  0  0  0  0  0  0  0999 V2000
-       0.0000    0.0000    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
-       1.2990    0.7500    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
-       1.2990    2.2500    0.0000 N   0  0  0  0  0  0  0  0  0  0  0  0
-       2.5981   -0.0000    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
-       2.5981   -1.5000    0.0000 O   0  0  0  0  0  0  0  0  0  0  0  0
-       3.8971    0.7500    0.0000 O   0  0  0  0  0  0  0  0  0  0  0  0
-     2  1  1  6
-     2  3  1  0
-     2  4  1  0
-     4  5  2  0
-     4  6  1  0
-   M  END""")
-
-.. testcode::
-   
-   Chem.AssignAtomChiralTagsFromStructure(mol1)
-   print(Chem.FindMolChiralCenters(mol1))
-
-.. testoutput::
-
-   [(1, 'S')]
-
-.. testcode::
-   
-   # This also shows up in the SMILES
-   print(Chem.MolToSmiles(mol1))
-
-.. testoutput::
-
-   C[C@H](N)C(=O)O
-
-.. testcode::
-
-   mol2 = Chem.MolFromSmiles("C[C@H](N)C(=O)O")
-   Chem.AssignAtomChiralTagsFromStructure(mol2)
-   print(Chem.FindMolChiralCenters(mol2))
-
-.. testoutput::
-
-   [(1, 'S')]
-
-.. testcode::
-
-   # When you output as non-isomeric SMILES and read it back in, the chiral information is lost because the 
-   # molecule no longer has a conformation:
-   print(Chem.MolToSmiles(mol1, isomericSmiles = False))
-
-.. testoutput::
-
-   CC(N)C(=O)O
-
-.. testcode::
-
-   mol3 = Chem.MolFromSmiles("CC(N)C(=O)O")
-   Chem.AssignAtomChiralTagsFromStructure(mol3)
-   print(Chem.FindMolChiralCenters(mol3))
-
-.. testoutput::
-
-   []
-
-
-Identifying E/Z Stereo
+Identifying Stereochemistry
 ===========================
 
 | **Author:** Vincent Scalfani
-| **Source:** Direct Contribution to Cookbook
+| **Source:** `<https://github.com/rdkit/UGM_2020/blob/master/Notebooks/Landrum_WhatsNew.ipynb>`_
 | **Index ID#:** RDKitCB_30
-| **Summary:** Identify double bond E/Z stereochemistry.
+| **Summary:** Find chiral centers and double bond stereochemistry.
 
 .. testcode::
 
    from rdkit import Chem
-   m = Chem.MolFromSmiles('C\C(F)=C\C=C(/F)\C(=C\F)\C=C')
-   m # see RDKitCB_0 for atom index display
+   from rdkit.Chem import Draw
+   from rdkit.Chem.Draw import IPythonConsole
+   IPythonConsole.drawOptions.addAtomIndices = True
+   IPythonConsole.drawOptions.addStereoAnnotation = False
+   IPythonConsole.molSize = 200,200
+
+.. testcode::
+
+   m = Chem.MolFromSmiles("C[C@H]1CCC[C@@H](C)[C@@H]1Cl")
+   m
 
 .. image:: images/RDKitCB_30_im0.png
 
 .. testcode::
 
-   for b in m.GetBonds():
+   # legacy FindMolChiralCenters()
+   print(Chem.FindMolChiralCenters(m,force=True,includeUnassigned=True,useLegacyImplementation=True))
+
+.. testoutput::
+
+   [(1, 'S'), (5, 'R'), (7, 'R')]
+
+.. testcode::
+
+   # new stereochemistry code
+   print(Chem.FindMolChiralCenters(m,force=True,includeUnassigned=True,useLegacyImplementation=False))
+
+.. testoutput::
+
+   [(1, 'S'), (5, 'R'), (7, 'r')]
+
+.. testcode::
+
+   # Identifying Double Bond Stereochemistry
+   IPythonConsole.molSize = 250,250
+   mol = Chem.MolFromSmiles("C\C=C(/F)\C(=C\F)\C=C")
+   mol
+
+.. image:: images/RDKitCB_30_im1.png
+
+.. testcode::
+
+   # Using GetStereo()
+   for b in mol.GetBonds():
        print(b.GetBeginAtomIdx(),b.GetEndAtomIdx(),
              b.GetBondType(),b.GetStereo())
 
 .. testoutput::
 
    0 1 SINGLE STEREONONE
-   1 2 SINGLE STEREONONE
-   1 3 DOUBLE STEREOZ
-   3 4 SINGLE STEREONONE
-   4 5 DOUBLE STEREOZ
+   1 2 DOUBLE STEREOZ
+   2 3 SINGLE STEREONONE
+   2 4 SINGLE STEREONONE
+   4 5 DOUBLE STEREOE
    5 6 SINGLE STEREONONE
-   5 7 SINGLE STEREONONE
-   7 8 DOUBLE STEREOE
-   8 9 SINGLE STEREONONE
-   7 10 SINGLE STEREONONE
-   10 11 DOUBLE STEREONONE
+   4 7 SINGLE STEREONONE
+   7 8 DOUBLE STEREONONE
+
+.. testcode::
+
+   # Double bond configuration can also be identified with new
+   # stereochemistry code using Chem.FindPotentialStereo()
+   si = Chem.FindPotentialStereo(mol)
+   for element in si:
+       print(f'  Type: {element.type}, Which: {element.centeredOn}, Specified: {element.specified}, Descriptor: {element.descriptor} ')
+
+.. testoutput::
+   :options: -ELLIPSIS, +NORMALIZE_WHITESPACE
+
+   Type: Bond_Double, Which: 1, Specified: Specified, Descriptor: Bond_Cis 
+   Type: Bond_Double, Which: 4, Specified: Specified, Descriptor: Bond_Trans
+  
 
 Manipulating Molecules
 ************************
@@ -576,6 +536,7 @@ Create Fragments
    # I have put explicit bonds in the SMILES definition to facilitate comprehension:
    mol = Chem.MolFromSmiles("O-C-C-C-C-N")
    mol1 = Chem.Mol(mol)
+   mol2 = Chem.Mol(mol)
    mol1
 
 .. image:: images/RDKitCB_7_im0.png
