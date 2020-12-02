@@ -564,16 +564,16 @@ void testMaxResultsAllSameNumThreads() {
   }
 }
 
-void testPatternNumBitsHolder() {
+void testPatternHolder() {
   BOOST_LOG(rdErrorLog) << "-------------------------------------" << std::endl;
-  BOOST_LOG(rdErrorLog) << "   testPatternNumBits" << std::endl;
+  BOOST_LOG(rdErrorLog) << "   testPatternHolder" << std::endl;
 
   std::string fName = getenv("RDBASE");
   fName += "/Data/NCI/first_5K.smi";
   SmilesMolSupplier suppl(fName, "\t", 0, 1, false);
   boost::shared_ptr<CachedTrustedSmilesMolHolder> mols1(
       new CachedTrustedSmilesMolHolder());
-  boost::shared_ptr<PatternNumBitsHolder> fps1(new PatternNumBitsHolder());
+  boost::shared_ptr<PatternHolder> fps1(new PatternHolder());
   SubstructLibrary ssslib1(mols1, fps1);
   boost::shared_ptr<CachedTrustedSmilesMolHolder> mols2(
       new CachedTrustedSmilesMolHolder());
@@ -599,26 +599,54 @@ void testPatternNumBitsHolder() {
   boost::logging::enable_logs("rdApp.error");
   ROMOL_SPTR query(SmartsToMol("N"));
   TEST_ASSERT(query);
-  auto matches1 = ssslib1.getMatches(*query);
-  std::sort(matches1.begin(), matches1.end());
-  auto matches2 = ssslib2.getMatches(*query);
-  std::sort(matches2.begin(), matches2.end());
-  TEST_ASSERT(matches1.size() == matches2.size());
-  for (size_t i = 0; i < matches1.size(); ++i) {
-    TEST_ASSERT(matches1.at(i) == matches2.at(i));
+  {
+    auto matches1 = ssslib1.getMatches(*query);
+    std::sort(matches1.begin(), matches1.end());
+    auto matches2 = ssslib2.getMatches(*query);
+    std::sort(matches2.begin(), matches2.end());
+    TEST_ASSERT(matches1.size() == matches2.size());
+    for (size_t i = 0; i < matches1.size(); ++i) {
+      TEST_ASSERT(matches1.at(i) == matches2.at(i));
+    }
   }
 #ifdef RDK_USE_BOOST_SERIALIZATION
-  for (unsigned int i = 0; i < 2; ++i) {
-    std::string pickle = ssslib1.Serialize();
-    SubstructLibrary serialized;
-    serialized.initFromString(pickle);
-    TEST_ASSERT(serialized.size() == ssslib1.size());
-    auto seriailzed_pattern_holder = dynamic_cast<PatternNumBitsHolder *>(serialized.getFpHolder().get());
-    TEST_ASSERT(seriailzed_pattern_holder);
-    auto orig_pattern_holder = dynamic_cast<PatternNumBitsHolder *>(ssslib1.getFpHolder().get());
+  std::string pickle = ssslib1.Serialize();
+  SubstructLibrary serializedV2;
+  serializedV2.initFromString(pickle);
+  TEST_ASSERT(serializedV2.size() == ssslib1.size());
+  SubstructLibrary serializedV1;
+  std::string pklName = getenv("RDBASE");
+  TEST_ASSERT(!pklName.empty());
+  pklName += "/Code/GraphMol/test_data/substructLibV1.pkl";
+  std::ifstream pickle_istream(pklName.c_str(), std::ios_base::binary);
+  serializedV1.initFromStream(pickle_istream);
+  pickle_istream.close();
+  TEST_ASSERT(serializedV1.size() == serializedV2.size());
+  {
+    auto matches1 = serializedV1.getMatches(*query);
+    std::sort(matches1.begin(), matches1.end());
+    auto matches2 = serializedV2.getMatches(*query);
+    std::sort(matches2.begin(), matches2.end());
+    TEST_ASSERT(matches1.size() == matches2.size());
+    for (size_t i = 0; i < matches1.size(); ++i) {
+      TEST_ASSERT(matches1.at(i) == matches2.at(i));
+    }
+  }
+  for (size_t i = 0; i < 2; ++i) {
+    auto serialized_pattern_holder =
+        dynamic_cast<PatternHolder *>(serializedV1.getFpHolder().get());
+    TEST_ASSERT(serialized_pattern_holder);
+    auto orig_pattern_holder =
+        dynamic_cast<PatternHolder *>(ssslib1.getFpHolder().get());
     TEST_ASSERT(orig_pattern_holder);
-    TEST_ASSERT(seriailzed_pattern_holder->getNumBits() == orig_pattern_holder->getNumBits());
+    TEST_ASSERT(serialized_pattern_holder->getNumBits() ==
+                orig_pattern_holder->getNumBits());
+    if (i) {
+      break;
+    }
     orig_pattern_holder->getNumBits() = 1024;
+    pickle = ssslib1.Serialize();
+    serializedV1.initFromString(pickle);
   }
 #endif
 }
@@ -633,7 +661,7 @@ int main() {
   docTest();
   ringTest();
   testAddPatterns();
-  testPatternNumBitsHolder();
+  testPatternHolder();
 #ifdef RDK_TEST_MULTITHREADED
   testMaxResultsNumThreads();
   testMaxResultsAllSameNumThreads();

@@ -468,11 +468,11 @@ class TestCase(unittest.TestCase):
       for smi in pdb_ligands:
         self.assertTrue( lib.CountMatches(Chem.MolFromSmiles(smi)) )
 
-  def test_PatternNumBitsHolder(self):
+  def test_PatternHolder(self):
     fname = os.path.join(os.environ["RDBASE"], "Data", "NCI", "first_5K.smi")
     suppl = Chem.SmilesMolSupplier(fname, delimiter="\t", titleLine=False)
     mols1 = rdSubstructLibrary.CachedTrustedSmilesMolHolder()
-    fps1 = rdSubstructLibrary.PatternNumBitsHolder(2048)
+    fps1 = rdSubstructLibrary.PatternHolder(2048)
     ssslib1 = rdSubstructLibrary.SubstructLibrary(mols1, fps1)
     mols2 = rdSubstructLibrary.CachedTrustedSmilesMolHolder()
     fps2 = rdSubstructLibrary.PatternHolder()

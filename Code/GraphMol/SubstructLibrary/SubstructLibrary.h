@@ -286,21 +286,13 @@ class RDKIT_SUBSTRUCTLIBRARY_EXPORT FPHolderBase {
   const std::vector<ExplicitBitVect *> &getFingerprints() const { return fps; }
 };
 
-//! Uses the pattern fingerprinter to rule out matches
+//! Uses the pattern fingerprinter with a user-defined number of bits (default:
+//! 2048) to rule out matches
 class RDKIT_SUBSTRUCTLIBRARY_EXPORT PatternHolder : public FPHolderBase {
- public:
-  //! Caller owns the vector!
-  virtual ExplicitBitVect *makeFingerprint(const ROMol &m) const {
-    return PatternFingerprintMol(m, 2048);
-  }
-};
-
-//! Uses the pattern fingerprinter with a user-defined number of bits to rule out matches
-class RDKIT_SUBSTRUCTLIBRARY_EXPORT PatternNumBitsHolder : public FPHolderBase {
   unsigned int numBits;
  public:
-  PatternNumBitsHolder() : numBits(2048) {}
-  PatternNumBitsHolder(unsigned int numBits) : numBits(numBits) {}
+  PatternHolder() : numBits(2048) {}
+  PatternHolder(unsigned int numBits) : numBits(numBits) {}
   //! Caller owns the vector!
   virtual ExplicitBitVect *makeFingerprint(const ROMol &m) const {
     return PatternFingerprintMol(m, numBits);

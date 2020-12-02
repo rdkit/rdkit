@@ -43,7 +43,6 @@
 %shared_ptr(RDKit::CachedTrustedSmilesMolHolder)
 %shared_ptr(RDKit::FPHolderBase)
 %shared_ptr(RDKit::PatternHolder)
-%shared_ptr(RDKit::PatternNumBitsHolder)
 
 %template(UChar_Vect) std::vector<unsigned char>;
 

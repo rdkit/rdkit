@@ -95,9 +95,8 @@ const char *CachedTrustedSmilesMolHolderDoc =
     "              the molecules RingInfo is not initialized\n";
 
 const char *PatternHolderDoc =
-    "Holds fingerprints used for filtering of molecules.";
-const char *PatternNumBitsHolderDoc =
-    "Holds fingerprints with user-defined number of bits used for filtering of molecules.";
+    "Holds fingerprints with optional, user-defined number of bits (default: "
+    "2048) used for filtering of molecules.";
 const char *SubstructLibraryDoc =
     "SubstructLibrary: This provides a simple API for substructure searching "
     "large datasets\n"
@@ -306,11 +305,7 @@ struct substructlibrary_wrapper {
 
     python::class_<PatternHolder, boost::shared_ptr<PatternHolder>,
                    python::bases<FPHolderBase>>(
-        "PatternHolder", PatternHolderDoc, python::init<>());
-
-    python::class_<PatternNumBitsHolder, boost::shared_ptr<PatternNumBitsHolder>,
-                   python::bases<FPHolderBase>>(
-        "PatternNumBitsHolder", PatternNumBitsHolderDoc, python::init<>())
+        "PatternHolder", PatternHolderDoc, python::init<>())
         .def(python::init<unsigned int>());
 
     python::class_<SubstructLibrary, SubstructLibrary *,
