@@ -38,18 +38,20 @@
 # ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 FIND_PACKAGE(PkgConfig)
-PKG_CHECK_MODULES(PC_CAIRO cairo) # FIXME: After we require CMake 2.8.2 we can pass QUIET to this call.
+PKG_CHECK_MODULES(PC_CAIRO cairo QUIET)
 
 FIND_PATH(CAIRO_INCLUDE_DIRS
     NAMES cairo.h
-    HINTS ${PC_CAIRO_INCLUDEDIR}
+    HINTS ${CAIRO_INCLUDE_DIR}
+          ${PC_CAIRO_INCLUDEDIR}
           ${PC_CAIRO_INCLUDE_DIRS}
     PATH_SUFFIXES cairo
 )
 
 FIND_LIBRARY(CAIRO_LIBRARIES
     NAMES cairo
-    HINTS ${PC_CAIRO_LIBDIR}
+    HINTS ${CAIRO_LIBRARY_DIR}
+          ${PC_CAIRO_LIBDIR}
           ${PC_CAIRO_LIBRARY_DIRS}
 )
 
@@ -70,13 +72,10 @@ IF (CAIRO_INCLUDE_DIRS)
     ENDIF ()
 ENDIF ()
 
-# FIXME: Should not be needed anymore once we start depending on CMake 2.8.3
 SET(VERSION_OK TRUE)
 IF (Cairo_FIND_VERSION)
     IF (Cairo_FIND_VERSION_EXACT)
-        IF ("${Cairo_FIND_VERSION}" VERSION_EQUAL "${CAIRO_VERSION}")
-            # FIXME: Use IF (NOT ...) with CMake 2.8.2+ to get rid of the ELSE block
-        ELSE ()
+        IF (NOT "${Cairo_FIND_VERSION}" VERSION_EQUAL "${CAIRO_VERSION}")
             SET(VERSION_OK FALSE)
         ENDIF ()
     ELSE ()

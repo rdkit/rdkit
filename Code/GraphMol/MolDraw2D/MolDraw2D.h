@@ -1,4 +1,6 @@
 //
+//  Copyright (C) 2014-2020 David Cosgrove and Greg Landrum
+//
 //   @@ All Rights Reserved @@
 //  This file is part of the RDKit.
 //  The contents are covered by the terms of the BSD license
@@ -26,6 +28,7 @@
 #include <vector>
 
 #include <Geometry/point.h>
+#include <Geometry/Transform2D.h>
 #include <GraphMol/RDKitBase.h>
 #include <GraphMol/ChemReactions/Reaction.h>
 
@@ -35,8 +38,9 @@ using RDGeom::Point2D;
 namespace RDKit {
 
 class DrawText;
-enum class TextAlignType : unsigned char;
-enum class OrientType : unsigned char;
+// for aligning the drawing of text to the passed in coords.
+enum class OrientType : unsigned char { C = 0, N, E, S, W };
+enum class TextAlignType : unsigned char { MIDDLE = 0, START, END };
 
 struct DrawColour {
   double r = 0.0, g = 0.0, b = 0.0, a = 1.0;
@@ -65,6 +69,21 @@ struct DrawColour {
   DrawColour operator*(double v) const { return {r * v, g * v, b * v, a * v}; }
 };
 
+//! for annotating the type of the extra shapes
+enum class MolDrawShapeType {
+  Arrow,  // ordering of points is: start, end, p1, p2
+  Polyline,
+};
+
+//! extra shape to add to canvas
+struct MolDrawShape {
+  MolDrawShapeType shapeType = MolDrawShapeType::Polyline;
+  std::vector<Point2D> points;
+  DrawColour lineColour{0, 0, 0};
+  int lineWidth = 2;
+  bool fill = false;
+};
+
 // for holding dimensions of the rectangle round a string.
 struct StringRect {
   Point2D trans_;     // Where to draw char relative to other chars in string
@@ -76,6 +95,7 @@ struct StringRect {
                       // rectangle the other.
   int clash_score_;   // rough measure of how badly it clashed with other things
                       // lower is better, 0 is no clash.
+
   StringRect()
       : trans_(0.0, 0.0),
         offset_(0.0, 0.0),
@@ -143,6 +163,12 @@ struct StringRect {
     }
     return false;
   }
+};
+struct AnnotationType {
+  std::string text_;
+  StringRect rect_;
+  OrientType orient_ = OrientType::C;
+  TextAlignType align_ = TextAlignType::MIDDLE;
 };
 
 typedef std::map<int, DrawColour> ColourPalette;
@@ -255,6 +281,9 @@ struct RDKIT_MOLDRAW2D_EXPORT MolDrawOptions {
   bool includeMetadata =
       true;  // when possible include metadata about molecules and reactions in
              // the output to allow them to be reconstructed
+  bool comicMode = false;  // simulate hand-drawn lines for bonds. When combined
+                           // with a font like Comic-Sans or Comic-Neue, this
+                           // gives xkcd-like drawings.
 
   MolDrawOptions() {
     highlightColourPalette.emplace_back(
@@ -627,17 +656,16 @@ class RDKIT_MOLDRAW2D_EXPORT MolDraw2D {
   std::vector<std::vector<Point2D>> at_cds_;  // from mol
   std::vector<std::vector<int>> atomic_nums_;
   std::vector<std::vector<std::pair<std::string, OrientType>>> atom_syms_;
-  // by the time atom_notes_ and bonds_notes_ are drawn, we're only ever
-  // using the trans_ member of the StringRect, but it is convenient to
-  // keep the whole thing rather than just a StringPos for the position
-  // for calculating the scale of the drawing.  Went a long way down
-  // the rabbit hole before realising this, hence this note.
-  std::vector<std::vector<std::shared_ptr<StringRect>>> atom_notes_;
-  std::vector<std::vector<std::shared_ptr<StringRect>>> bond_notes_;
+  // by the time annotations_ are drawn, we're only ever using the trans_ member
+  // of the StringRect, but it is convenient to keep the whole thing rather than
+  // just a StringPos for the position for calculating the scale of the drawing.
+  // Went a long way down the rabbit hole before realising this, hence this
+  // note.
+  std::vector<std::vector<AnnotationType>> annotations_;
   std::vector<std::vector<std::pair<std::shared_ptr<StringRect>, OrientType>>>
       radicals_;
-
   Point2D bbox_[2];
+  std::vector<std::vector<MolDrawShape>> shapes_;
 
   // return a DrawColour based on the contents of highlight_atoms or
   // highlight_map, falling back to atomic number by default
@@ -721,6 +749,7 @@ class RDKIT_MOLDRAW2D_EXPORT MolDraw2D {
   void extractAtomNotes(const ROMol &mol);
   void extractBondNotes(const ROMol &mol);
   void extractRadicals(const ROMol &mol);
+  void extractBrackets(const ROMol &mol);
 
   // coords in atom coords
   virtual void drawLine(const Point2D &cds1, const Point2D &cds2,
@@ -794,8 +823,7 @@ class RDKIT_MOLDRAW2D_EXPORT MolDraw2D {
   void adjustScaleForAtomLabels(const std::vector<int> *highlight_atoms,
                                 const std::map<int, double> *highlight_radii);
   void adjustScaleForRadicals(const ROMol &mol);
-  void adjustScaleForAnnotation(
-      const std::vector<std::shared_ptr<StringRect>> &notes);
+  void adjustScaleForAnnotation(const std::vector<AnnotationType> &notes);
 
  private:
   virtual void updateMetadata(const ROMol &mol, int confId) {
@@ -830,8 +858,15 @@ class RDKIT_MOLDRAW2D_EXPORT MolDraw2D {
       const std::vector<std::pair<DrawColour, DrawColour>> *bond_colours =
           nullptr);
   virtual void drawAtomLabel(int atom_num, const DrawColour &draw_colour);
+  virtual void drawAnnotation(const AnnotationType &annotation);
+  //! DEPRECATED
   virtual void drawAnnotation(const std::string &note,
-                              const std::shared_ptr<StringRect> &note_rect);
+                              const StringRect &note_rect) {
+    AnnotationType annot;
+    annot.text_ = note;
+    annot.rect_ = note_rect;
+    drawAnnotation(annot);
+  }
 
   // calculate normalised perpendicular to vector between two coords
   Point2D calcPerpendicular(const Point2D &cds1, const Point2D &cds2) const;

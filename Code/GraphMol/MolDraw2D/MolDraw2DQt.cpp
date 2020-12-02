@@ -103,7 +103,7 @@ void MolDraw2DQt::clearDrawing() {
                   int(255.0 * drawOptions().backgroundColour.a));
 
   qp_.setBackground(QBrush(this_col));
-  qp_.fillRect(0, 0, width(), height(), this_col);
+  qp_.fillRect(offset().x, offset().y, width(), height(), this_col);
 }
 
 // ****************************************************************************

@@ -70,7 +70,7 @@ if(RDK_BUILD_INCHI_SUPPORT)
     ADD_DEFINITIONS("-DTARGET_API_LIB")
   endif()
 
-     if (CMAKE_CXX_COMPILER_ID MATCHES "Clang")
+     if(CMAKE_CXX_COMPILER_ID STREQUAL "Clang")
       set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -Wno-parentheses -Wno-logical-op-parentheses")
      endif()
   rdkit_library(RDInchiLib inchi.cpp SHARED LINK_LIBRARIES ${INCHI_LIBRARIES}

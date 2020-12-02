@@ -228,8 +228,17 @@ bool parse_coordinate_bonds(Iterator &first, Iterator last, RDKit::RWMol &mol) {
     unsigned int aidx;
     unsigned int bidx;
     if (read_int_pair(first, last, aidx, bidx)) {
-      Bond *bnd = mol.getBondWithIdx(bidx);
-      if (bnd->getBeginAtomIdx() != aidx && bnd->getEndAtomIdx() != aidx) {
+      Bond *bnd = nullptr;
+      for (auto bond : mol.bonds()) {
+        unsigned int smilesIdx;
+        if (bond->getPropIfPresent("_cxsmilesBondIdx", smilesIdx) &&
+            smilesIdx == bidx) {
+          bnd = bond;
+          break;
+        }
+      }
+      if (!bnd ||
+          (bnd->getBeginAtomIdx() != aidx && bnd->getEndAtomIdx() != aidx)) {
         BOOST_LOG(rdWarningLog) << "BOND NOT FOUND! " << bidx
                                 << " involving atom " << aidx << std::endl;
         return false;

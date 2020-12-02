@@ -24,9 +24,6 @@ using RDGeom::Point2D;
 
 namespace RDKit {
 
-// for aligning the drawing of text to the passed in coords.
-enum class OrientType : unsigned char { C = 0, N, E, S, W };
-enum class TextAlignType : unsigned char { START, MIDDLE, END };
 enum class TextDrawType : unsigned char {
   TextDrawNormal = 0,
   TextDrawSuperscript,

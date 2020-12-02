@@ -16,7 +16,7 @@ SET_SOURCE_FILES_PROPERTIES(GraphMolCSharp.i PROPERTIES CPLUSPLUS ON )
 
 # Setup a few variables for environment-specific things
 if(WIN32)
-  ADD_DEFINITIONS("/W3 /wd4716 /bigobj")
+  ADD_COMPILE_OPTIONS(/W3 /wd4716 /bigobj)
   SET(PATH_SEP ";")
   SET(COPY_CMD xcopy ${COPY_SOURCE} ${COPY_DEST} /Y /I)
 else()
@@ -29,7 +29,7 @@ if(APPLE)
   SET(CMAKE_SIZEOF_VOID_P 4)
 endif(APPLE)
 
-if(CMAKE_SIZEOF_VOID_P MATCHES 4)
+if(CMAKE_SIZEOF_VOID_P EQUAL 4)
   SET(CMAKE_SWIG_FLAGS -namespace "GraphMolWrap")
 else()
   if (WIN32)

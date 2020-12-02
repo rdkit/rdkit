@@ -1,5 +1,5 @@
 //
-//  Copyright (C) 2019 Greg Landrum
+//  Copyright (C) 2019-2020 Greg Landrum
 //
 //   @@ All Rights Reserved @@
 //  This file is part of the RDKit.
@@ -24,6 +24,7 @@
 #include <GraphMol/ChemReactions/Reaction.h>
 #include <GraphMol/ChemReactions/ReactionParser.h>
 #include <GraphMol/CIPLabeler/CIPLabeler.h>
+#include <GraphMol/Depictor/RDDepictor.h>
 
 #ifdef RDK_BUILD_CAIRO_SUPPORT
 #include <cairo.h>
@@ -845,5 +846,568 @@ TEST_CASE("including legend in drawing results in offset drawing later",
     CHECK(text.find("<path class='bond-0' d='M 321.962,140") !=
           std::string::npos);
     CHECK(text.find("<path d='M 321.962,140") != std::string::npos);
+  }
+}
+
+TEST_CASE("Github #3577", "[bug]") {
+  SECTION("basics") {
+    auto m = "CCC"_smiles;
+    REQUIRE(m);
+    MolDraw2DUtils::prepareMolForDrawing(*m);
+    m->getAtomWithIdx(1)->setProp("atomNote", "CCC");
+    m->getAtomWithIdx(2)->setProp("atomNote", "ccc");
+    m->getBondWithIdx(0)->setProp("bondNote", "CCC");
+
+    MolDraw2DSVG drawer(350, 300);
+    drawer.drawMolecule(*m);
+    drawer.finishDrawing();
+    auto text = drawer.getDrawingText();
+    std::ofstream outs("testGithub3577-1.svg");
+    outs << text;
+    outs.flush();
+  }
+}
+TEST_CASE("hand drawn", "[play]") {
+  SECTION("basics") {
+    auto m =
+        "CC[CH](C)[CH]1NC(=O)[CH](Cc2ccc(O)cc2)NC(=O)[CH](N)CSSC[CH](C(=O)N2CCC[CH]2C(=O)N[CH](CC(C)C)C(=O)NCC(N)=O)NC(=O)[CH](CC(N)=O)NC(=O)[CH](CCC(N)=O)NC1=O"_smiles;
+    REQUIRE(m);
+    RDDepict::preferCoordGen = true;
+    MolDraw2DUtils::prepareMolForDrawing(*m);
+
+    std::string fName = getenv("RDBASE");
+    fName += "/Data/Fonts/ComicNeue-Regular.ttf";
+
+    {
+      MolDraw2DSVG drawer(450, 400);
+      drawer.drawOptions().fontFile = fName;
+      drawer.drawOptions().comicMode = true;
+      drawer.drawMolecule(*m, "Oxytocin (flat)");
+      drawer.finishDrawing();
+      auto text = drawer.getDrawingText();
+      std::ofstream outs("testHandDrawn-1.svg");
+      outs << text;
+      outs.flush();
+    }
+#ifdef RDK_BUILD_CAIRO_SUPPORT
+    {
+      MolDraw2DCairo drawer(450, 400);
+      drawer.drawOptions().fontFile = fName;
+      drawer.drawOptions().comicMode = true;
+      drawer.drawMolecule(*m, "Oxytocin (flat)");
+      drawer.finishDrawing();
+      drawer.writeDrawingText("testHandDrawn-1.png");
+    }
+#endif
+  }
+  SECTION("with chirality") {
+    auto m =
+        "CC[C@H](C)[C@@H]1NC(=O)[C@H](Cc2ccc(O)cc2)NC(=O)[C@@H](N)CSSC[C@@H](C(=O)N2CCC[C@H]2C(=O)N[C@@H](CC(C)C)C(=O)NCC(N)=O)NC(=O)[C@H](CC(N)=O)NC(=O)[C@H](CCC(N)=O)NC1=O"_smiles;
+    REQUIRE(m);
+    RDDepict::preferCoordGen = true;
+    MolDraw2DUtils::prepareMolForDrawing(*m);
+
+    std::string fName = getenv("RDBASE");
+    fName += "/Data/Fonts/ComicNeue-Regular.ttf";
+
+    {
+      MolDraw2DSVG drawer(450, 400);
+      drawer.drawOptions().fontFile = fName;
+      drawer.drawOptions().comicMode = true;
+      drawer.drawMolecule(*m, "Oxytocin");
+      drawer.finishDrawing();
+      auto text = drawer.getDrawingText();
+      std::ofstream outs("testHandDrawn-2.svg");
+      outs << text;
+      outs.flush();
+    }
+#ifdef RDK_BUILD_CAIRO_SUPPORT
+    {
+      MolDraw2DCairo drawer(450, 400);
+      drawer.drawOptions().fontFile = fName;
+      drawer.drawOptions().comicMode = true;
+      drawer.drawMolecule(*m, "Oxytocin");
+      drawer.finishDrawing();
+      drawer.writeDrawingText("testHandDrawn-2.png");
+    }
+#endif
+  }
+  SECTION("smaller") {
+    auto m = "N=c1nc([C@H]2NCCCC2)cc(N)n1O"_smiles;
+    REQUIRE(m);
+    RDDepict::preferCoordGen = true;
+    MolDraw2DUtils::prepareMolForDrawing(*m);
+
+    std::string fName = getenv("RDBASE");
+    fName += "/Data/Fonts/ComicNeue-Regular.ttf";
+
+    {
+      MolDraw2DSVG drawer(350, 300);
+      drawer.drawOptions().fontFile = fName;
+      drawer.drawOptions().comicMode = true;
+      drawer.drawMolecule(*m);
+      drawer.finishDrawing();
+      auto text = drawer.getDrawingText();
+      std::ofstream outs("testHandDrawn-3.svg");
+      outs << text;
+      outs.flush();
+    }
+#ifdef RDK_BUILD_CAIRO_SUPPORT
+    {
+      MolDraw2DCairo drawer(350, 300);
+      drawer.drawOptions().fontFile = fName;
+      drawer.drawOptions().comicMode = true;
+      drawer.drawMolecule(*m);
+      drawer.finishDrawing();
+      drawer.writeDrawingText("testHandDrawn-3.png");
+    }
+#endif
+  }
+  SECTION("another one") {
+    auto m =
+        "CCCc1nn(C)c2c(=O)nc(-c3cc(S(=O)(=O)N4CCN(C)CC4)ccc3OCC)[nH]c12"_smiles;
+    REQUIRE(m);
+    RDDepict::preferCoordGen = true;
+    MolDraw2DUtils::prepareMolForDrawing(*m);
+
+    std::string fName = getenv("RDBASE");
+    fName += "/Data/Fonts/ComicNeue-Regular.ttf";
+
+    {
+      MolDraw2DSVG drawer(350, 300);
+      drawer.drawOptions().fontFile = fName;
+      drawer.drawOptions().comicMode = true;
+      drawer.drawMolecule(*m);
+      drawer.finishDrawing();
+      auto text = drawer.getDrawingText();
+      std::ofstream outs("testHandDrawn-4.svg");
+      outs << text;
+      outs.flush();
+    }
+#ifdef RDK_BUILD_CAIRO_SUPPORT
+    {
+      MolDraw2DCairo drawer(350, 300);
+      drawer.drawOptions().fontFile = fName;
+      drawer.drawOptions().comicMode = true;
+      drawer.drawMolecule(*m);
+      drawer.finishDrawing();
+      drawer.writeDrawingText("testHandDrawn-4.png");
+    }
+#endif
+  }
+  SECTION("large") {
+    auto m =
+        "CC[C@H](C)[C@@H](C(=O)N[C@@H]([C@@H](C)CC)C(=O)N[C@@H](CCCCN)C(=O)N[C@@H](CC(=O)N)C(=O)N[C@@H](C)C(=O)N[C@@H](Cc1ccc(cc1)O)C(=O)N[C@@H](CCCCN)C(=O)N[C@@H](CCCCN)C(=O)NCC(=O)N[C@@H](CCC(=O)N)C(=O)O)NC(=O)[C@H](C)NC(=O)[C@H](CC(=O)N)NC(=O)[C@H](CCCCN)NC(=O)[C@H](Cc2ccccc2)NC(=O)[C@H](CC(C)C)NC(=O)[C@H]([C@@H](C)O)NC(=O)[C@H](C(C)C)NC(=O)[C@H](CC(C)C)NC(=O)[C@@H]3CCCN3C(=O)[C@H]([C@@H](C)O)NC(=O)[C@H](CCC(=O)N)NC(=O)[C@H](CO)NC(=O)[C@H](CCCCN)NC(=O)[C@H](CCC(=O)N)NC(=O)[C@H](CO)NC(=O)[C@H]([C@@H](C)O)NC(=O)[C@H](CCSC)NC(=O)[C@H](Cc4ccccc4)NC(=O)CNC(=O)CNC(=O)[C@H](Cc5ccc(cc5)O)N"_smiles;
+    REQUIRE(m);
+    RDDepict::preferCoordGen = true;
+    MolDraw2DUtils::prepareMolForDrawing(*m);
+
+    std::string fName = getenv("RDBASE");
+    fName += "/Data/Fonts/ComicNeue-Regular.ttf";
+
+    {
+      MolDraw2DSVG drawer(900, 450);
+      drawer.drawMolecule(*m);
+      drawer.finishDrawing();
+      auto text = drawer.getDrawingText();
+      std::ofstream outs("testHandDrawn-5a.svg");
+      outs << text;
+      outs.flush();
+    }
+    {
+      MolDraw2DSVG drawer(900, 450);
+      drawer.drawOptions().fontFile = fName;
+      drawer.drawOptions().comicMode = true;
+      drawer.drawMolecule(*m);
+      drawer.finishDrawing();
+      auto text = drawer.getDrawingText();
+      std::ofstream outs("testHandDrawn-5b.svg");
+      outs << text;
+      outs.flush();
+    }
+#ifdef RDK_BUILD_CAIRO_SUPPORT
+    {
+      MolDraw2DCairo drawer(900, 450);
+      drawer.drawOptions().fontFile = fName;
+      drawer.drawOptions().comicMode = true;
+      drawer.drawMolecule(*m);
+      drawer.finishDrawing();
+      drawer.writeDrawingText("testHandDrawn-5.png");
+    }
+#endif
+  }
+}
+
+TEST_CASE("drawMoleculeBrackets", "[extras]") {
+  SECTION("basics") {
+    auto m = R"CTAB(
+  ACCLDraw11042015112D
+
+  0  0  0     0  0            999 V3000
+M  V30 BEGIN CTAB
+M  V30 COUNTS 5 4 1 0 0
+M  V30 BEGIN ATOM
+M  V30 1 C 7 -6.7813 0 0 
+M  V30 2 C 8.0229 -6.1907 0 0 CFG=3 
+M  V30 3 C 8.0229 -5.0092 0 0 
+M  V30 4 C 9.046 -6.7814 0 0 
+M  V30 5 C 10.0692 -6.1907 0 0 
+M  V30 END ATOM
+M  V30 BEGIN BOND
+M  V30 1 1 1 2 
+M  V30 2 1 2 3 
+M  V30 3 1 2 4 
+M  V30 4 1 4 5 
+M  V30 END BOND
+M  V30 BEGIN SGROUP
+M  V30 1 SRU 1 ATOMS=(3 3 2 4) XBONDS=(2 1 4) BRKXYZ=(9 7.51 -7.08 0 7.51 -
+M  V30 -5.9 0 0 0 0) BRKXYZ=(9 9.56 -5.9 0 9.56 -7.08 0 0 0 0) -
+M  V30 CONNECT=HT LABEL=n 
+M  V30 END SGROUP
+M  V30 END CTAB
+M  END
+)CTAB"_ctab;
+    REQUIRE(m);
+    {
+      MolDraw2DSVG drawer(350, 300);
+      drawer.drawMolecule(*m);
+      drawer.finishDrawing();
+      auto text = drawer.getDrawingText();
+      std::ofstream outs("testBrackets-1a.svg");
+      outs << text;
+      outs.flush();
+    }
+    {  // rotation
+      MolDraw2DSVG drawer(350, 300);
+      drawer.drawOptions().rotate = 90;
+      drawer.drawMolecule(*m);
+      drawer.finishDrawing();
+      auto text = drawer.getDrawingText();
+      std::ofstream outs("testBrackets-1b.svg");
+      outs << text;
+      outs.flush();
+    }
+    {  // centering
+      MolDraw2DSVG drawer(350, 300);
+      drawer.drawOptions().centreMoleculesBeforeDrawing = true;
+      drawer.drawMolecule(*m);
+      drawer.finishDrawing();
+      auto text = drawer.getDrawingText();
+      std::ofstream outs("testBrackets-1c.svg");
+      outs << text;
+      outs.flush();
+    }
+    {  // rotation + centering
+      MolDraw2DSVG drawer(350, 300);
+      drawer.drawOptions().centreMoleculesBeforeDrawing = true;
+      drawer.drawOptions().rotate = 90;
+      drawer.drawMolecule(*m);
+      drawer.finishDrawing();
+      auto text = drawer.getDrawingText();
+      std::ofstream outs("testBrackets-1d.svg");
+      outs << text;
+      outs.flush();
+    }
+    {  // rotation
+      MolDraw2DSVG drawer(350, 300);
+      drawer.drawOptions().rotate = 180;
+      drawer.drawMolecule(*m);
+      drawer.finishDrawing();
+      auto text = drawer.getDrawingText();
+      std::ofstream outs("testBrackets-1e.svg");
+      outs << text;
+      outs.flush();
+    }
+  }
+  SECTION("three brackets") {
+    auto m = R"CTAB(three brackets
+  Mrv2014 11052006542D          
+
+  0  0  0     0  0            999 V3000
+M  V30 BEGIN CTAB
+M  V30 COUNTS 6 5 1 0 0
+M  V30 BEGIN ATOM
+M  V30 1 * -1.375 3.1667 0 0
+M  V30 2 C -0.0413 3.9367 0 0
+M  V30 3 C 1.2924 3.1667 0 0
+M  V30 4 * 2.626 3.9367 0 0
+M  V30 5 C 0.0003 5.6017 0 0
+M  V30 6 * 1.334 6.3717 0 0
+M  V30 END ATOM
+M  V30 BEGIN BOND
+M  V30 1 1 1 2
+M  V30 2 1 2 3
+M  V30 3 1 3 4
+M  V30 4 1 2 5
+M  V30 5 1 5 6
+M  V30 END BOND
+M  V30 BEGIN SGROUP
+M  V30 1 SRU 0 ATOMS=(3 2 3 5) XBONDS=(3 1 3 5) BRKXYZ=(9 0.0875 6.7189 0 -
+M  V30 1.0115 5.1185 0 0 0 0) BRKXYZ=(9 1.3795 4.2839 0 2.3035 2.6835 0 0 0 -
+M  V30 0) BRKXYZ=(9 -0.1285 2.8194 0 -1.0525 4.4198 0 0 0 0) CONNECT=HT -
+M  V30 LABEL=n
+M  V30 END SGROUP
+M  V30 END CTAB
+M  END)CTAB"_ctab;
+    REQUIRE(m);
+    {
+      MolDraw2DSVG drawer(350, 300);
+      drawer.drawMolecule(*m);
+      drawer.finishDrawing();
+      auto text = drawer.getDrawingText();
+      std::ofstream outs("testBrackets-2a.svg");
+      outs << text;
+      outs.flush();
+    }
+    {  // rotation
+      MolDraw2DSVG drawer(350, 300);
+      drawer.drawOptions().rotate = 90;
+      drawer.drawMolecule(*m);
+      drawer.finishDrawing();
+      auto text = drawer.getDrawingText();
+      std::ofstream outs("testBrackets-2b.svg");
+      outs << text;
+      outs.flush();
+    }
+    {  // centering
+      MolDraw2DSVG drawer(350, 300);
+      drawer.drawOptions().centreMoleculesBeforeDrawing = true;
+      drawer.drawMolecule(*m);
+      drawer.finishDrawing();
+      auto text = drawer.getDrawingText();
+      std::ofstream outs("testBrackets-2c.svg");
+      outs << text;
+      outs.flush();
+    }
+    {  // rotation + centering
+      MolDraw2DSVG drawer(350, 300);
+      drawer.drawOptions().centreMoleculesBeforeDrawing = true;
+      drawer.drawOptions().rotate = 90;
+      drawer.drawMolecule(*m);
+      drawer.finishDrawing();
+      auto text = drawer.getDrawingText();
+      std::ofstream outs("testBrackets-2d.svg");
+      outs << text;
+      outs.flush();
+    }
+  }
+  SECTION("ChEBI 59342") {
+    // thanks to John Mayfield for pointing out the example
+    auto m = R"CTAB(ChEBI59342 
+Marvin  05041012302D          
+
+ 29 30  0  0  1  0            999 V2000
+   10.1615   -7.7974    0.0000 O   0  0  0  0  0  0  0  0  0  0  0  0
+    8.7305   -6.9763    0.0000 O   0  0  0  0  0  0  0  0  0  0  0  0
+    8.7309   -7.8004    0.0000 C   0  0  2  0  0  0  0  0  0  0  0  0
+    9.4464   -8.2109    0.0000 C   0  0  2  0  0  0  0  0  0  0  0  0
+    8.0153   -8.2225    0.0000 O   0  0  0  0  0  0  0  0  0  0  0  0
+    9.4464   -9.0437    0.0000 C   0  0  2  0  0  0  0  0  0  0  0  0
+    8.0138   -9.0500    0.0000 C   0  0  1  0  0  0  0  0  0  0  0  0
+    8.7293   -9.4606    0.0000 C   0  0  1  0  0  0  0  0  0  0  0  0
+   10.1669   -9.4529    0.0000 O   0  0  0  0  0  0  0  0  0  0  0  0
+    7.3058   -9.4590    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    8.7368  -10.2801    0.0000 N   0  0  0  0  0  0  0  0  0  0  0  0
+    8.0263  -10.6992    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    8.0339  -11.5241    0.0000 H   0  0  0  0  0  0  0  0  0  0  0  0
+    7.3081  -10.2933    0.0000 O   0  0  0  0  0  0  0  0  0  0  0  0
+    8.7305   -5.3264    0.0000 O   0  0  0  0  0  0  0  0  0  0  0  0
+    8.0159   -5.7369    0.0000 C   0  0  2  0  0  0  0  0  0  0  0  0
+    8.0159   -6.5618    0.0000 C   0  0  2  0  0  0  0  0  0  0  0  0
+    7.2936   -5.3263    0.0000 O   0  0  0  0  0  0  0  0  0  0  0  0
+    7.2936   -6.9762    0.0000 C   0  0  2  0  0  0  0  0  0  0  0  0
+    6.5751   -5.7368    0.0000 C   0  0  1  0  0  0  0  0  0  0  0  0
+    6.5751   -6.5618    0.0000 C   0  0  1  0  0  0  0  0  0  0  0  0
+    7.2973   -7.8049    0.0000 O   0  0  0  0  0  0  0  0  0  0  0  0
+    5.8681   -5.3263    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    5.8680   -6.9762    0.0000 N   0  0  0  0  0  0  0  0  0  0  0  0
+    5.1510   -6.5684    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    4.4392   -6.9856    0.0000 H   0  0  0  0  0  0  0  0  0  0  0  0
+    5.1455   -5.7435    0.0000 O   0  0  0  0  0  0  0  0  0  0  0  0
+   10.4142   -5.3560    0.0000 *   0  0  0  0  0  0  0  0  0  0  0  0
+   11.5590   -7.8297    0.0000 *   0  0  0  0  0  0  0  0  0  0  0  0
+  3  2  1  6  0  0  0
+  3  4  1  0  0  0  0
+  3  5  1  0  0  0  0
+  4  6  1  0  0  0  0
+  4  1  1  1  0  0  0
+  5  7  1  0  0  0  0
+  6  8  1  0  0  0  0
+  6  9  1  1  0  0  0
+  7 10  1  1  0  0  0
+  8 11  1  6  0  0  0
+  7  8  1  0  0  0  0
+ 13 12  1  0  0  0  0
+ 14 12  2  0  0  0  0
+ 11 12  1  0  0  0  0
+ 16 15  1  6  0  0  0
+ 16 17  1  0  0  0  0
+ 16 18  1  0  0  0  0
+ 17 19  1  0  0  0  0
+ 17  2  1  1  0  0  0
+ 18 20  1  0  0  0  0
+ 19 21  1  0  0  0  0
+ 19 22  1  1  0  0  0
+ 20 23  1  1  0  0  0
+ 21 24  1  6  0  0  0
+ 20 21  1  0  0  0  0
+ 26 25  1  0  0  0  0
+ 27 25  2  0  0  0  0
+ 24 25  1  0  0  0  0
+ 15 28  1  0  0  0  0
+  1 29  1  0  0  0  0
+M  STY  1   1 SRU
+M  SCN  1   1 HT 
+M  SAL   1 15   1   2   3   4   5   6   7   8   9  10  11  12  13  14  15
+M  SAL   1 12  16  17  18  19  20  21  22  23  24  25  26  27
+M  SDI   1  4    9.4310   -4.9261    9.4165   -5.7510
+M  SDI   1  4   10.7464   -7.3983   10.7274   -8.2231
+M  SBL   1  2  30  29
+M  SMT   1 n
+M  END)CTAB"_ctab;
+    REQUIRE(m);
+    {
+      MolDraw2DSVG drawer(350, 300);
+      drawer.drawMolecule(*m);
+      drawer.finishDrawing();
+      auto text = drawer.getDrawingText();
+      std::ofstream outs("testBrackets-3a.svg");
+      outs << text;
+      outs.flush();
+    }
+  }
+  SECTION("pathological bracket orientation") {
+    {  // including the bonds
+      auto m = R"CTAB(bogus
+  Mrv2014 11202009512D          
+
+  0  0  0     0  0            999 V3000
+M  V30 BEGIN CTAB
+M  V30 COUNTS 9 8 1 0 1
+M  V30 BEGIN ATOM
+M  V30 1 C 23.5462 -14.464 0 0
+M  V30 2 C 20.8231 -13.0254 0 0
+M  V30 3 C 20.8776 -14.5628 0 0
+M  V30 4 C 22.2391 -15.2819 0 0
+M  V30 5 C 16.2969 -9.9426 0 0
+M  V30 6 C 14.963 -10.7089 0 0
+M  V30 7 C 19.463 -12.2987 0 0
+M  V30 8 * 19.4398 -9.9979 0 0
+M  V30 9 * 26.1554 -14.4332 0 0
+M  V30 END ATOM
+M  V30 BEGIN BOND
+M  V30 1 1 3 4
+M  V30 2 1 6 7
+M  V30 3 1 5 8
+M  V30 4 1 1 9
+M  V30 5 1 7 2
+M  V30 6 1 6 5
+M  V30 7 1 4 1
+M  V30 8 1 3 2
+M  V30 END BOND
+M  V30 BEGIN SGROUP
+M  V30 1 SRU 0 ATOMS=(7 4 3 7 6 5 2 1) XBONDS=(2 3 4) BRKXYZ=(9 17.6045 -
+M  V30 -9.1954 0 17.5775 -10.7352 0 0 0 0) BRKXYZ=(9 24.6113 -13.6813 0 -
+M  V30 24.6296 -15.2213 0 0 0 0) CONNECT=HT LABEL=n
+M  V30 END SGROUP
+M  V30 END CTAB
+M  END
+)CTAB"_ctab;
+      REQUIRE(m);
+      MolDraw2DSVG drawer(350, 300);
+      drawer.drawMolecule(*m);
+      drawer.finishDrawing();
+      auto text = drawer.getDrawingText();
+      std::ofstream outs("testBrackets-4a.svg");
+      outs << text;
+      outs.flush();
+    }
+
+    {  // no bonds in the sgroup, the bracket should point the other way
+       // (towards the majority of the atoms in the sgroup)
+      auto m = R"CTAB(bogus
+  Mrv2014 11202009512D          
+
+  0  0  0     0  0            999 V3000
+M  V30 BEGIN CTAB
+M  V30 COUNTS 9 8 1 0 1
+M  V30 BEGIN ATOM
+M  V30 1 C 23.5462 -14.464 0 0
+M  V30 2 C 20.8231 -13.0254 0 0
+M  V30 3 C 20.8776 -14.5628 0 0
+M  V30 4 C 22.2391 -15.2819 0 0
+M  V30 5 C 16.2969 -9.9426 0 0
+M  V30 6 C 14.963 -10.7089 0 0
+M  V30 7 C 19.463 -12.2987 0 0
+M  V30 8 * 19.4398 -9.9979 0 0
+M  V30 9 * 26.1554 -14.4332 0 0
+M  V30 END ATOM
+M  V30 BEGIN BOND
+M  V30 1 1 3 4
+M  V30 2 1 6 7
+M  V30 3 1 5 8
+M  V30 4 1 1 9
+M  V30 5 1 7 2
+M  V30 6 1 6 5
+M  V30 7 1 4 1
+M  V30 8 1 3 2
+M  V30 END BOND
+M  V30 BEGIN SGROUP
+M  V30 1 SRU 0 ATOMS=(7 4 3 7 6 5 2 1) BRKXYZ=(9 17.6045 -
+M  V30 -9.1954 0 17.5775 -10.7352 0 0 0 0) BRKXYZ=(9 24.6113 -13.6813 0 -
+M  V30 24.6296 -15.2213 0 0 0 0) CONNECT=HT LABEL=n
+M  V30 END SGROUP
+M  V30 END CTAB
+M  END
+)CTAB"_ctab;
+      REQUIRE(m);
+      MolDraw2DSVG drawer(350, 300);
+      drawer.drawMolecule(*m);
+      drawer.finishDrawing();
+      auto text = drawer.getDrawingText();
+      std::ofstream outs("testBrackets-4b.svg");
+      outs << text;
+      outs.flush();
+    }
+  }
+  SECTION("comic brackets (no font though)") {
+    auto m = R"CTAB(
+  ACCLDraw11042015112D
+
+  0  0  0     0  0            999 V3000
+M  V30 BEGIN CTAB
+M  V30 COUNTS 5 4 1 0 0
+M  V30 BEGIN ATOM
+M  V30 1 C 7 -6.7813 0 0 
+M  V30 2 C 8.0229 -6.1907 0 0 CFG=3 
+M  V30 3 C 8.0229 -5.0092 0 0 
+M  V30 4 C 9.046 -6.7814 0 0 
+M  V30 5 C 10.0692 -6.1907 0 0 
+M  V30 END ATOM
+M  V30 BEGIN BOND
+M  V30 1 1 1 2 
+M  V30 2 1 2 3 
+M  V30 3 1 2 4 
+M  V30 4 1 4 5 
+M  V30 END BOND
+M  V30 BEGIN SGROUP
+M  V30 1 SRU 1 ATOMS=(3 3 2 4) XBONDS=(2 1 4) BRKXYZ=(9 7.51 -7.08 0 7.51 -
+M  V30 -5.9 0 0 0 0) BRKXYZ=(9 9.56 -5.9 0 9.56 -7.08 0 0 0 0) -
+M  V30 CONNECT=HT LABEL=n 
+M  V30 END SGROUP
+M  V30 END CTAB
+M  END
+)CTAB"_ctab;
+    REQUIRE(m);
+    {
+      MolDraw2DSVG drawer(350, 300);
+      drawer.drawOptions().comicMode = true;
+      drawer.drawMolecule(*m);
+      drawer.finishDrawing();
+      auto text = drawer.getDrawingText();
+      std::ofstream outs("testBrackets-5a.svg");
+      outs << text;
+      outs.flush();
+    }
   }
 }

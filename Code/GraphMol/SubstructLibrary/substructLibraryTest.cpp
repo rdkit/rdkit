@@ -454,10 +454,114 @@ void testAddPatterns() {
 		   ssslib_with_patterns.countMatches( *ssslib.getMol(i).get() ) );
     }
   }
+}
 
-  
+void testMaxResultsNumThreads() {
+  BOOST_LOG(rdErrorLog) << "-------------------------------------" << std::endl;
+  BOOST_LOG(rdErrorLog) << "   Results do not depend on numThreads "
+                        << std::endl;
 
+  std::string fName = getenv("RDBASE");
+  fName += "/Data/NCI/first_5K.smi";
+  SmilesMolSupplier suppl(fName, "\t", 0, 1, false);
+  auto *mols = new MolHolder();
+  auto *fps = new PatternHolder();
+  boost::shared_ptr<MolHolder> mols_ptr(mols);
+  boost::shared_ptr<PatternHolder> fps_ptr(fps);
 
+  SubstructLibrary ssslib(mols_ptr, fps_ptr);
+  boost::logging::disable_logs("rdApp.error");
+  while (!suppl.atEnd()) {
+    ROMol *mol = nullptr;
+    try {
+      mol = suppl.next();
+    } catch (...) {
+      continue;
+    }
+    if (!mol) {
+      continue;
+    }
+    ssslib.addMol(*mol);
+    delete mol;
+  }
+  boost::logging::enable_logs("rdApp.error");
+  std::vector<std::vector<unsigned int>> resVect;
+  ROMOL_SPTR query(SmartsToMol("N"));
+  TEST_ASSERT(query);
+  for (auto numThreads : {1, 2, 4, 8}) {
+    resVect.emplace_back(
+        ssslib.getMatches(*query, true, false, false, numThreads));
+  }
+  for (auto it = resVect.begin() + 1; it != resVect.end(); ++it) {
+    TEST_ASSERT(resVect.front().size() == it->size());
+    for (size_t i = 0; i < resVect.front().size(); ++i) {
+      TEST_ASSERT(resVect.front().at(i) == it->at(i));
+    }
+  }
+  size_t results60 = resVect.front().size() * 0.6;
+  size_t results99 = resVect.front().size() * 0.99;
+  for (auto maxRes : {results60, results99}) {
+    std::vector<std::vector<unsigned int>> resVectPartial;
+    for (auto numThreads : {1, 2, 4, 8}) {
+      resVectPartial.emplace_back(
+          ssslib.getMatches(*query, true, false, false, numThreads, maxRes));
+    }
+    for (auto it = resVectPartial.begin(); it != resVectPartial.end(); ++it) {
+      TEST_ASSERT(it->size() == maxRes);
+      for (size_t i = 0; i < maxRes; ++i) {
+        TEST_ASSERT(resVect.front().at(i) == it->at(i));
+      }
+    }
+  }
+}
+
+void testMaxResultsAllSameNumThreads() {
+  BOOST_LOG(rdErrorLog) << "-------------------------------------" << std::endl;
+  BOOST_LOG(rdErrorLog) << "   Results do not depend on numThreads (all same) "
+                        << std::endl;
+
+  auto *mols = new MolHolder();
+  auto *fps = new PatternHolder();
+  boost::shared_ptr<MolHolder> mols_ptr(mols);
+  boost::shared_ptr<PatternHolder> fps_ptr(fps);
+
+  SubstructLibrary ssslib(mols_ptr, fps_ptr);
+  boost::logging::disable_logs("rdApp.error");
+  auto mol = "N"_smiles;
+  for (int i = 0; i < 999; ++i) {
+    ssslib.addMol(*mol);
+  }
+
+  boost::logging::enable_logs("rdApp.error");
+  std::vector<std::vector<unsigned int>> resVect;
+  ROMOL_SPTR query(SmartsToMol("N"));
+  TEST_ASSERT(query);
+  for (auto numThreads : {1, 2, 4, 8}) {
+    resVect.emplace_back(
+        ssslib.getMatches(*query, true, false, false, numThreads));
+    TEST_ASSERT(resVect.back().size() == 999);
+  }
+  for (auto it = resVect.begin() + 1; it != resVect.end(); ++it) {
+    TEST_ASSERT(resVect.front().size() == it->size());
+    for (size_t i = 0; i < resVect.front().size(); ++i) {
+      TEST_ASSERT(resVect.front().at(i) == it->at(i));
+    }
+  }
+  size_t results60 = resVect.front().size() * 0.6;
+  size_t results99 = resVect.front().size() * 0.99;
+  for (auto maxRes : {results60, results99}) {
+    std::vector<std::vector<unsigned int>> resVectPartial;
+    for (auto numThreads : {1, 2, 4, 8}) {
+      resVectPartial.emplace_back(
+          ssslib.getMatches(*query, true, false, false, numThreads, maxRes));
+    }
+    for (auto it = resVectPartial.begin(); it != resVectPartial.end(); ++it) {
+      TEST_ASSERT(it->size() == maxRes);
+      for (size_t i = 0; i < maxRes; ++i) {
+        TEST_ASSERT(resVect.front().at(i) == it->at(i));
+      }
+    }
+  }
 }
 
 void testPatternNumBitsHolder() {
@@ -530,6 +634,10 @@ int main() {
   ringTest();
   testAddPatterns();
   testPatternNumBitsHolder();
+#ifdef RDK_TEST_MULTITHREADED
+  testMaxResultsNumThreads();
+  testMaxResultsAllSameNumThreads();
+#endif
 #endif
   return 0;
 }
