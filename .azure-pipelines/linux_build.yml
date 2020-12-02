@@ -1,5 +1,6 @@
 steps:
 - bash: |
+    sudo apt-get install libgl1-mesa-dev
     source ${CONDA}/etc/profile.d/conda.sh
     sudo chown -R ${USER} ${CONDA}
     conda config --set always_yes yes --set changeps1 no
