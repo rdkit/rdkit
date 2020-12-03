@@ -24,7 +24,7 @@ steps:
     -DRDK_INSTALL_STATIC_LIBS=OFF \
     -DRDK_BUILD_CPP_TESTS=ON \
     -DRDK_BUILD_PYTHON_WRAPPERS=ON \
-    -DRDK_USE_BOOST_REGEX=OFF \
+    -DRDK_USE_BOOST_REGEX=ON \
     -DRDK_BUILD_COORDGEN_SUPPORT=ON \
     -DRDK_BUILD_MAEPARSER_SUPPORT=ON \
     -DRDK_OPTIMIZE_POPCNT=ON \
@@ -57,7 +57,8 @@ steps:
     conda activate rdkit_build
     export RDBASE=`pwd`
     export PYTHONPATH=${RDBASE}:${PYTHONPATH}
-    export LD_LIBRARY_PATH=${RDBASE}/lib:${LD_LIBRARY_PATH}
+    export LD_LIBRARY_PATH=${RDBASE}/lib:${CONDA_PREFIX}/lib:${LD_LIBRARY_PATH}
+    echo "LD_LIBRARY_PATH: " $LD_LIBRARY_PATH
     export QT_QPA_PLATFORM='offscreen'
     cd build
     ctest -j $( $(number_of_cores) ) --output-on-failure -T Test
