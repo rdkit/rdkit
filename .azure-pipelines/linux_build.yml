@@ -1,15 +1,14 @@
 steps:
 - bash: |
-    sudo apt-get install libgl1-mesa-dev mesa-common-dev
+    sudo apt-get install g++ libgl1-mesa-dev mesa-common-dev qtbase5-dev qt5-default
     source ${CONDA}/etc/profile.d/conda.sh
     sudo chown -R ${USER} ${CONDA}
     conda config --set always_yes yes --set changeps1 no
     conda update -q conda
     conda info -a
-    conda create --name rdkit_build $(python) $(compiler) cmake \
+    conda create --name rdkit_build $(python) cmake \
         boost-cpp=$(boost_version) boost=$(boost_version) \
         py-boost=$(boost_version) \
-        qt \
         numpy matplotlib pillow eigen pandas \
         sphinx=3.1.2 recommonmark jupyter
     conda activate rdkit_build
@@ -25,7 +24,7 @@ steps:
     -DRDK_INSTALL_STATIC_LIBS=OFF \
     -DRDK_BUILD_CPP_TESTS=ON \
     -DRDK_BUILD_PYTHON_WRAPPERS=ON \
-    -DRDK_USE_BOOST_REGEX=ON \
+    -DRDK_USE_BOOST_REGEX=OFF \
     -DRDK_BUILD_COORDGEN_SUPPORT=ON \
     -DRDK_BUILD_MAEPARSER_SUPPORT=ON \
     -DRDK_OPTIMIZE_POPCNT=ON \
@@ -35,6 +34,7 @@ steps:
     -DRDK_BUILD_INCHI_SUPPORT=ON \
     -DRDK_BUILD_CAIRO_SUPPORT=ON \
     -DRDK_BUILD_QT_SUPPORT=ON \
+    -DQt5_DIR=/usr/lib/x86_64-linux-gnu/cmake/Qt5 \
     -DRDK_BUILD_SWIG_WRAPPERS=OFF \
     -DRDK_SWIG_STATIC=OFF \
     -DRDK_BUILD_THREADSAFE_SSS=ON \
