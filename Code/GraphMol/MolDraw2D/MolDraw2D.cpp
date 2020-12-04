@@ -388,7 +388,6 @@ void MolDraw2D::get2DCoordsMol(RWMol &mol, double &offset, double spacing,
   const bool canonOrient = true;
   const bool kekulize = false;  // don't kekulize, we just did that
   RDDepict::compute2DCoords(mol, nullptr, canonOrient);
-      std::cerr<<" prepare prepare2"<<std::endl;
 
   MolDraw2DUtils::prepareMolForDrawing(mol, kekulize);
   double minX = 1e8;
@@ -1273,7 +1272,6 @@ unique_ptr<RWMol> MolDraw2D::setupDrawMolecule(
   unique_ptr<RWMol> rwmol;
   if (drawOptions().prepareMolsBeforeDrawing || !mol.getNumConformers()) {
     rwmol.reset(new RWMol(mol));
-    std::cerr<<" prepare prepare"<<std::endl;
     MolDraw2DUtils::prepareMolForDrawing(*rwmol);
   }
   if (drawOptions().centreMoleculesBeforeDrawing) {

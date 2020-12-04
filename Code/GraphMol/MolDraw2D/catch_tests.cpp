@@ -1411,31 +1411,25 @@ M  END
 }
 
 #ifdef RDK_BUILD_CAIRO_SUPPORT
-TEST_CASE("github #3543: Error adding PNG metadata when kekulize=False", "[bug][metadata][png]") {
+TEST_CASE("github #3543: Error adding PNG metadata when kekulize=False",
+          "[bug][metadata][png]") {
   SECTION("basics") {
-    auto m="n1cccc1"_smarts;
+    auto m = "n1cccc1"_smarts;
     m->updatePropertyCache(false);
     MolDraw2DCairo drawer(350, 300);
-    bool kekulize=false;
-    std::cerr<<"prepare"<<std::endl;
-    MolDraw2DUtils::prepareMolForDrawing(*m,kekulize);
-    std::cerr<<"draw"<<std::endl;
+    bool kekulize = false;
+    MolDraw2DUtils::prepareMolForDrawing(*m, kekulize);
     drawer.drawOptions().prepareMolsBeforeDrawing = false;
     drawer.drawMolecule(*m);
-        std::cerr<<"done"<<std::endl;
-
     drawer.finishDrawing();
-        std::cerr<<"text"<<std::endl;
-
     auto png = drawer.getDrawingText();
-    std::cerr <<" finish"<<std::endl;
   }
   SECTION("as reported") {
-    auto m="n1cnc2c(n)ncnc12"_smarts;
+    auto m = "n1cnc2c(n)ncnc12"_smarts;
     m->updatePropertyCache(false);
     MolDraw2DCairo drawer(350, 300);
-    bool kekulize=false;
-    MolDraw2DUtils::prepareMolForDrawing(*m,kekulize);
+    bool kekulize = false;
+    MolDraw2DUtils::prepareMolForDrawing(*m, kekulize);
     drawer.drawOptions().prepareMolsBeforeDrawing = false;
     drawer.drawMolecule(*m);
     drawer.finishDrawing();
