@@ -19,7 +19,7 @@ namespace RDKit {
 // ****************************************************************************
 class DrawTextQt : public DrawText {
  public:
-  DrawTextQt(double max_fnt_sz, double min_fnt_sz, QPainter &qp);
+  DrawTextQt(double max_fnt_sz, double min_fnt_sz, QPainter *qp);
 
 #if 0
   void getStringSize(const std::string &label, double &label_width,
@@ -28,7 +28,7 @@ class DrawTextQt : public DrawText {
   void drawChar(char c, const Point2D &cds) override;
 
  private:
-  QPainter &d_qp;
+  QPainter *d_qp;
 
   // return a vector of StringRects, one for each char in text, with
   // super- and subscripts taken into account.  Sizes in pixel coords,

@@ -25,6 +25,10 @@
 #include <cairo.h>
 #include <GraphMol/MolDraw2D/MolDraw2DCairo.h>
 #endif
+#ifdef RDK_BUILD_QT_SUPPORT
+#include <GraphMol/MolDraw2D/MolDraw2DQt.h>
+#include <QPainter>
+#endif
 
 namespace python = boost::python;
 
@@ -543,6 +547,16 @@ void setDrawerColour(RDKit::MolDraw2D &self, python::tuple tpl) {
   self.setColour(pyTupleToDrawColour(tpl));
 }
 
+#ifdef RDK_BUILD_QT_SUPPORT
+MolDraw2DQt *moldrawFromQPainter(int width, int height, unsigned long ptr,
+                                 int panelWidth, int panelHeight) {
+  QPainter *qptr = reinterpret_cast<QPainter *>(ptr);
+  // QImage *img = new QImage(width, height, QImage::Format_RGB32);
+  // QPainter *qptr = new QPainter(img);
+  return new MolDraw2DQt(width, height, qptr, panelWidth, panelHeight);
+}
+#endif
+
 }  // namespace RDKit
 
 BOOST_PYTHON_MODULE(rdMolDraw2D) {
@@ -867,12 +881,22 @@ BOOST_PYTHON_MODULE(rdMolDraw2D) {
       .def("WriteDrawingText", &RDKit::MolDraw2DCairo::writeDrawingText,
            "write the PNG data to the named file");
 #endif
+#ifdef RDK_BUILD_QT_SUPPORT
+  docString = "Qt molecule drawer";
+  python::class_<RDKit::MolDraw2DQt, python::bases<RDKit::MolDraw2D>,
+                 boost::noncopyable>("MolDraw2DQt", docString.c_str(),
+                                     python::no_init);
+  python::def("MolDraw2DFromQPainter", RDKit::moldrawFromQPainter, "something",
+              python::return_value_policy<python::manage_new_object>());
+#endif
   docString =
       "Does some cleanup operations on the molecule to prepare it to draw "
       "nicely.\n"
-      "The operations include: kekulization, addition of chiral Hs (so that we "
+      "The operations include: kekulization, addition of chiral Hs (so "
+      "that we "
       "can draw\n"
-      "wedges to them), wedging of bonds at chiral centers, and generation of "
+      "wedges to them), wedging of bonds at chiral centers, and generation "
+      "of "
       "a 2D\n"
       "conformation if the molecule does not already have a conformation\n"
       "\nReturns a modified copy of the molecule.\n";
