@@ -32,7 +32,7 @@ TEST_CASE("basic generate PNGs", "[drawing][Qt]") {
     REQUIRE(m1);
     QImage qimg(250, 200, QImage::Format_RGB32);
     QPainter qpt(&qimg);
-    MolDraw2DQt drawer(qimg.width(), qimg.height(), &qpt);
+    MolDraw2DQt drawer(qimg.width(), qimg.height(), qpt);
     MolDraw2DUtils::prepareAndDrawMolecule(drawer, *m1);
     qimg.save("qttest-1a.png");
   }
@@ -42,7 +42,7 @@ TEST_CASE("basic generate PNGs", "[drawing][Qt]") {
     QImage qimg(250, 200, QImage::Format_RGB32);
     QPainter qpt(&qimg);
     bool no_freetype = true;
-    MolDraw2DQt drawer(qimg.width(), qimg.height(), &qpt, -1, -1, no_freetype);
+    MolDraw2DQt drawer(qimg.width(), qimg.height(), qpt, -1, -1, no_freetype);
     MolDraw2DUtils::prepareAndDrawMolecule(drawer, *m1);
     qimg.save("qttest-1b.png");
   }

@@ -24,7 +24,7 @@ namespace RDKit {
 class DrawTextFTQt : public DrawTextFT {
  public:
   DrawTextFTQt(double max_fnt_sz, double min_fnt_sz,
-               const std::string &font_file, QPainter *qp);
+               const std::string &font_file, QPainter &qp);
 
   int MoveToFunctionImpl(const FT_Vector *to) override;
   int LineToFunctionImpl(const FT_Vector *to) override;
@@ -39,7 +39,7 @@ class DrawTextFTQt : public DrawTextFT {
   virtual double extractOutline() override;
 
  private:
-  QPainter *d_qp;
+  QPainter &d_qp;
   std::unique_ptr<QPainterPath> dp_qpp;
 };
 

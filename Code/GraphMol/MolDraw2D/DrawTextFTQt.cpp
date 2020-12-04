@@ -16,7 +16,7 @@ namespace RDKit {
 
 // ****************************************************************************
 DrawTextFTQt::DrawTextFTQt(double max_fnt_sz, double min_fnt_sz,
-                           const std::string &font_file, QPainter *qp)
+                           const std::string &font_file, QPainter &qp)
     : DrawTextFT(max_fnt_sz, min_fnt_sz, font_file), d_qp(qp) {}
 
 // ****************************************************************************
@@ -29,13 +29,13 @@ double DrawTextFTQt::extractOutline() {
 
   QPen pen(this_col);
   pen.setJoinStyle(Qt::RoundJoin);
-  d_qp->setPen(pen);
+  d_qp.setPen(pen);
 
   QBrush brush(this_col);
   brush.setStyle(Qt::SolidPattern);
-  d_qp->setBrush(brush);
+  d_qp.setBrush(brush);
 
-  d_qp->fillPath(*dp_qpp, brush);
+  d_qp.fillPath(*dp_qpp, brush);
   return adv;
 }
 
