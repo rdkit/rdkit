@@ -5,3 +5,6 @@ rdkit_python_extension(rdMolDraw2D
                        LINK_LIBRARIES MolDraw2D )
 
 add_pytest(pyMolDraw2D ${CMAKE_CURRENT_SOURCE_DIR}/testMolDraw2D.py)
+if(RDK_BUILD_QT_SUPPORT)
+  add_pytest(pyMolDraw2DQt ${CMAKE_CURRENT_SOURCE_DIR}/testMolDraw2DQt.py)
+endif(RDK_BUILD_QT_SUPPORT)
