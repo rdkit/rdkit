@@ -550,9 +550,10 @@ void setDrawerColour(RDKit::MolDraw2D &self, python::tuple tpl) {
 #ifdef RDK_BUILD_QT_SUPPORT
 MolDraw2DQt *moldrawFromQPainter(int width, int height, unsigned long ptr,
                                  int panelWidth, int panelHeight) {
+  if(!ptr){
+    throw_value_error("QPainter pointer is null");
+  }
   QPainter *qptr = reinterpret_cast<QPainter *>(ptr);
-  // QImage *img = new QImage(width, height, QImage::Format_RGB32);
-  // QPainter *qptr = new QPainter(img);
   return new MolDraw2DQt(width, height, *qptr, panelWidth, panelHeight);
 }
 #endif
