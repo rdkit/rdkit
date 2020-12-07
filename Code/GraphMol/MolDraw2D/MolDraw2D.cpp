@@ -2717,7 +2717,6 @@ void drawQueryBond(MolDraw2D &d2d, const Bond &bond, bool highlight_bond,
   DrawColour queryColour{0.5, 0.5, 0.5};
   d2d.setColour(queryColour);
 
-  std::cerr << " QUERY: " << qry->getDescription() << std::endl;
   bool drawGenericQuery = false;
   if (qry->getDescription() == "SingleOrDoubleBond") {
     d2d.drawLine(at1_cds, midp);
@@ -2803,20 +2802,6 @@ void drawQueryBond(MolDraw2D &d2d, const Bond &bond, bool highlight_bond,
       }
       d2d.drawOptions().scaleBondWidth = slw;
       d2d.setLineWidth(lw);
-      // // segment.normalize();
-      // Point2D p1(0.8660 * segment.x - 0.5 * segment.y,
-      //            0.5 * segment.x + 0.8660 * segment.y);
-      // Point2D p2(-0.5 * p1.x - 0.8660 * p1.y, 0.8660 * p1.x - 0.5 * p1.y);
-
-      // std::vector<Point2D> poly = {midp + segment, midp + p1, midp + p2,
-      //                              midp - segment, midp - p1, midp - p2,
-      //                              // midp + Point2D(0.8660 * l, -0.5 * l),
-      //                              // midp + Point2D(0.8660 * l, 0.5 * l),
-      //                              midp + segment};
-      // d2d.drawPolygon(poly);
-      // if (!q2->getNegation()) {
-      //   d2d.drawEllipse()
-      // }
     } else {
       drawGenericQuery = true;
     }

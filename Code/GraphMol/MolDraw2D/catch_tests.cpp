@@ -1452,7 +1452,6 @@ M  V30 14 2 13 14 TOPO=2
 M  V30 END BOND
 M  V30 END CTAB
 M  END
-
 )CTAB"_ctab;
     REQUIRE(m);
     {
@@ -1460,7 +1459,7 @@ M  END
       drawer.drawMolecule(*m);
       drawer.finishDrawing();
       auto text = drawer.getDrawingText();
-      std::ofstream outs("testQueryBonds-1.svg");
+      std::ofstream outs("testQueryBonds-1a.svg");
       outs << text;
       outs.flush();
     }
@@ -1474,6 +1473,18 @@ M  END
       drawer.finishDrawing();
       auto text = drawer.getDrawingText();
       std::ofstream outs("testQueryBonds-1b.svg");
+      outs << text;
+      outs.flush();
+    }
+    {
+      MolDraw2DSVG drawer(350, 300);
+      std::vector<int> highlightAtoms = {0, 1, 2, 3, 4, 5, 7, 8, 9};
+      std::vector<int> highlightBonds = {0, 3, 2, 4, 1, 5, 8, 9};
+
+      drawer.drawMolecule(*m, "", &highlightAtoms, &highlightBonds);
+      drawer.finishDrawing();
+      auto text = drawer.getDrawingText();
+      std::ofstream outs("testQueryBonds-1c.svg");
       outs << text;
       outs.flush();
     }
