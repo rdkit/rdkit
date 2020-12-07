@@ -2612,7 +2612,6 @@ void drawQueryBond1(MolDraw2D &d2d, const Bond &bond, bool highlight_bond,
       d2d.drawLine(l2s, l2f);
     }
     d2d.drawLine(p1, p2, col1, col2);
-
     {
       Point2D l1s, l1f, l2s, l2f;
       calcDoubleBondLines(bond.getOwningMol(), double_bond_offset, bond, p2,
@@ -2783,10 +2782,15 @@ void drawQueryBond(MolDraw2D &d2d, const Bond &bond, bool highlight_bond,
       d2d.setLineWidth(1);
       if (!q2->getNegation()) {
         segment /= segment.length() * 6;
-        auto l = segment.length();
-        Point2D p1 = midp + Point2D(l, l);
-        Point2D p2 = midp - Point2D(l, l);
-        d2d.drawEllipse(p1, p2);
+        Point2D r1 = Point2D(0.5 * segment.x - 0.866 * segment.y,
+                             0.866 * segment.x + 0.5 * segment.y);
+        Point2D r2 =
+            Point2D(0.5 * r1.x - 0.866 * r1.y, 0.866 * r1.x + 0.5 * r1.y);
+        std::vector<Point2D> pts = {midp + segment, midp + r1, midp + r2,
+                                    midp - segment, midp - r1, midp - r2,
+                                    midp + segment};
+        d2d.drawPolygon(pts);
+
       } else {
         segment /= segment.length() * 10;
         auto l = segment.length();

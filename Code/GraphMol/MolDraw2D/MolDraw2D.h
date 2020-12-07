@@ -638,6 +638,7 @@ class RDKIT_MOLDRAW2D_EXPORT MolDraw2D {
   void tabulaRasa();
 
   virtual bool supportsAnnotations() { return true; }
+  virtual void drawAnnotation(const AnnotationType &annotation);
 
  protected:
   std::unique_ptr<DrawText> text_drawer_;
@@ -839,7 +840,6 @@ class RDKIT_MOLDRAW2D_EXPORT MolDraw2D {
       const std::vector<std::pair<DrawColour, DrawColour>> *bond_colours =
           nullptr);
   virtual void drawAtomLabel(int atom_num, const DrawColour &draw_colour);
-  virtual void drawAnnotation(const AnnotationType &annotation);
   //! DEPRECATED
   virtual void drawAnnotation(const std::string &note,
                               const StringRect &note_rect) {
