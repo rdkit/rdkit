@@ -182,6 +182,8 @@ struct rgroupdecomp_wrapper {
         .value("AtomMapLabels", RDKit::AtomMapLabels)
         .value("AtomIndexLabels", RDKit::AtomIndexLabels)
         .value("RelabelDuplicateLabels", RDKit::RelabelDuplicateLabels)
+        .value("MDLRGroupLabels", RDKit::MDLRGroupLabels)
+        .value("DummyAtomLabels", RDKit::DummyAtomLabels)
         .value("AutoDetect", RDKit::AutoDetect)
         .export_values();
 
@@ -199,7 +201,9 @@ struct rgroupdecomp_wrapper {
         .export_values();
 
     python::enum_<RDKit::RGroupCoreAlignment>("RGroupCoreAlignment")
-        .value("None", RDKit::None)
+        // DEPRECATED, remove the folowing line in release 2021.03
+        .value("None", RDKit::NoAlignment)
+        .value("NoAlignment", RDKit::NoAlignment)
         .value("MCS", RDKit::MCS)
         .export_values();
 
@@ -207,18 +211,23 @@ struct rgroupdecomp_wrapper {
         "RGroupDecompositionParameters controls how the RGroupDecomposition "
         "sets labelling and matches structures\n"
         "  OPTIONS:\n"
-        "    - RGroupCoreAlignment: can be one of RGroupCoreAlignment.None or "
+        "    - RGroupCoreAlignment: can be one of RGroupCoreAlignment.None_ or "
         "RGroupCoreAlignment.MCS\n"
         "                           If set to MCS, cores labels are mapped to "
         "each other using their\n"
         "                           Maximum common substructure overlap.\n"
         "    - RGroupLabels: optionally set where the rgroup labels to use are "
         "encoded.\n"
-        "                     RroupLabels.IsotopeLabels - labels are stored on "
-        "isotopes\n"
-        "                     RroupLabels.AtomMapLabels - labels are stored on "
-        "atommaps\n"
-        "                     RroupLabels.AtomIndexLabels - use the atom index "
+        "                     RGroupLabels.IsotopeLabels - labels are stored "
+        "on isotopes\n"
+        "                     RGroupLabels.AtomMapLabels - labels are stored "
+        "on atommaps\n"
+        "                     RGroupLabels.MDLRGroupLabels - labels are stored "
+        "on MDL R-groups\n"
+        "                     RGroupLabels.DummyAtomLabels - labels are stored "
+        "on dummy atoms\n"
+        "                     RGroupLabels.AtomIndexLabels - use the atom "
+        "index "
         "as the label\n"
         "                     RGroupLabels.RelabelDuplicateLabels - fix any "
         "duplicate labels\n"

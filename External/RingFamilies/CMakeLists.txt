@@ -1,6 +1,8 @@
 add_custom_target(ringdecomposerlib_support ALL)
 
-if(RDK_USE_URF)
+if(NOT RDK_USE_URF)
+  return()
+endif(NOT RDK_USE_URF)
 
 if(NOT DEFINED URFLIB_DIR)
     set(URFLIB_DIR "${CMAKE_CURRENT_SOURCE_DIR}/RingDecomposerLib/src/RingDecomposerLib")
@@ -26,7 +28,7 @@ file(GLOB URFSOURCES "${URFLIB_DIR}/*.c")
 if((MSVC AND RDK_INSTALL_DLLS_MSVC) OR ((NOT MSVC) AND WIN32))
     set (ringdecomposerlib_h ${URFLIB_DIR}/RingDecomposerLib.h)
     file(READ ${ringdecomposerlib_h} ringdecomposerlib_h_data)
-    if (NOT "${ringdecomposerlib_h_data}" MATCHES "RDKIT_URFLIB_BUILD")
+    if (NOT "${ringdecomposerlib_h_data}" STREQUAL "RDKIT_URFLIB_BUILD")
         string(REGEX REPLACE "([ ]*)(#define[ ]+RDL_API[ ]+__declspec)(\\([ ]*dllexport[ ]*\\))" "\\1#ifdef RDKIT_URFLIB_BUILD\n\\1\\2\\3\n\\1#else\n\\1\\2(dllimport)\n\\1#endif" ringdecomposerlib_h_data "${ringdecomposerlib_h_data}")
         file(WRITE ${ringdecomposerlib_h} "${ringdecomposerlib_h_data}")
     endif()
@@ -39,5 +41,3 @@ rdkit_headers(${URFLIB_DIR}/RingDecomposerLib.h DEST "")
 
 set(RDK_URF_LIBS RingDecomposerLib
     CACHE STRING "the libraries for the URF calculation" FORCE)
-
-endif(RDK_USE_URF)

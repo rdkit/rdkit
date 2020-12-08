@@ -8,6 +8,53 @@ generally include changes in results that arise due to bug fixes; we try to call
 those out in the release notes. The release notes, in general, contain a more
 comprehensive version of this list.
 
+## Release 2020.09
+
+### Changes in the chemistry model
+
+We've added additional allowed valences for Cl (now 1, 3, 5), Br (now 1, 3, 5),
+I (now 1, 3, 5), At (now 1, 3, 5), Xe (now 0, 2, 4, 6), and Po (now 2, 4, 6).
+Molecules with atoms in the new valence states will no longer generate
+sanitization errors. Note that this has an impact on the chemistry of molecules
+containing 3-valent I and at least one  implicit H (present 24 times in ChEMBL
+27): previously this was incorrectly assigned two implicit Hs, now it has no
+implicit Hs. 
+
+Aromaticity perception of molecules like `Cc1nnc2n1c1ccccc1n1c(C)nnc12` now
+correctly recognizes the full outer envelope, i.e. the bonds joining the rings
+are now also aromatic. In 2020.03 the three rings were connected by single bonds.
+
+### FindMCS can now return single atom MCSs
+FindMCS() may return single atom MCSs, whereas previously it returned an empty
+MCS unless there was at least one commond bond across the input structures.
+So the MCS between molecules `CC` and `CO` is now `[#6]` rather than being null.
+
+### New return type for tautomer enumeration
+Due to improvements in the tautomer enumeration code, the method
+`TautomerEnumerator::enumerate` now returns a `TautomerEnumeratorResult`
+object instead of a vector of molecules. Note that if you are iterating over
+the results of a call to `enumerate()` you shouldn't need to change your code.
+If you want to invoke the old (and deprecated, see below) form from C++, call
+`TautomerNumerator::enumerate(mol, nullptr)` or explicitly pass a
+`boost::dynamic_bitset*` to capture the modified atoms.
+
+### Default precision for coordgen
+The default precision setting for coordgen has been changed. The new default
+was selected to greatly reduce the number of molecules for which it takes a
+very long time to generate coordinates while still producing nice looking
+structures. We may continue to tweak this default value if/when problems
+with it are reported. If you would like to go back to the previous setting, set 
+`CoordgenParams.minimizerPrecision` to `CoordgenParams.sketcherStandardPrecision` 
+when you invoke `rdCoordGen.AddCoords()`
+
+### Change in uncharge() behavior for inorganic acids
+Uncharger::uncharge() will now neutralize `[Cl,Br,I][O-], [Cl,Br,I](=O)[O-],
+[Cl,Br,I](=O)(=O)[O-], [Cl,Br,I](=O)(=O)(=O)[O-], [O-]N=N[O-], [N,P](=O)[O-],
+[N+](=O)([O-])[O-], P(=O)([O-])[O-], P(=O)([O-])([O-])[O-], S([O-])[O-],
+S(=O)([O-])[O-], S(=O)(=O)([O-])[O-], S(=O)(=O)([O-])OOS(=O)(=O)[O-]`.
+Previously not all of these inorganic acid counterions were consistently
+neutralized.
+
 ## Release 2020.03
 
 ### Use of chirality with `@=` in PostgreSQL cartridge

@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 3.5)
+cmake_minimum_required(VERSION 3.7)
 
 project (RDKit)
 
@@ -18,7 +18,6 @@ set(CMAKE_MODULE_PATH
     ${CMAKE_MODULE_PATH} "${CMAKE_CURRENT_SOURCE_DIR}/Code/cmake/Modules/")
 
 add_library(rdkit_base INTERFACE)
-add_dependencies(rdkit_base catch)
 
 option(RDK_BUILD_SWIG_WRAPPERS "build the SWIG wrappers" OFF )
 option(RDK_BUILD_PYTHON_WRAPPERS "build the standard python wrappers" ON )
@@ -83,16 +82,16 @@ if(NOT UNIX OR APPLE)
   endif(RDK_USE_BOOST_STACKTRACE)
 endif()
 
-if(RDK_BUILD_SWIG_WRAPPERS!=ON)
+if(NOT RDK_BUILD_SWIG_WRAPPERS)
   set(RDK_BUILD_SWIG_JAVA_WRAPPER OFF)
   set(RDK_BUILD_SWIG_CSHARP_WRAPPER OFF)
 endif()
 
 if(RDK_SWIG_STATIC AND RDK_BUILD_SWIG_WRAPPERS)
-  if(NOT RDK_INSTALL_STATIC_LIBS)
+  if(NOT MSVC AND NOT RDK_INSTALL_STATIC_LIBS)
     message("Enabling RDK_INSTALL_STATIC_LIBS because RDK_SWIG_STATIC is set.")
     set(RDK_INSTALL_STATIC_LIBS ON CACHE BOOL "install the rdkit static libraries" FORCE)
-  endif(NOT RDK_INSTALL_STATIC_LIBS)
+  endif(NOT MSVC AND NOT RDK_INSTALL_STATIC_LIBS)
 endif()
 
 if(NOT (MSVC AND (NOT RDK_INSTALL_DLLS_MSVC)))
@@ -100,10 +99,10 @@ if(NOT (MSVC AND (NOT RDK_INSTALL_DLLS_MSVC)))
 endif()
 
 if(RDK_PGSQL_STATIC AND RDK_BUILD_PGSQL)
-  if(NOT RDK_INSTALL_STATIC_LIBS)
+  if(NOT MSVC AND NOT RDK_INSTALL_STATIC_LIBS)
     message("Enabling RDK_INSTALL_STATIC_LIBS because RDK_PGSQL_STATIC is set.")
     set(RDK_INSTALL_STATIC_LIBS ON CACHE BOOL "install the rdkit static libraries" FORCE)
-  endif(NOT RDK_INSTALL_STATIC_LIBS)
+  endif(NOT MSVC AND NOT RDK_INSTALL_STATIC_LIBS)
 endif()
 
 
@@ -119,8 +118,8 @@ set(RDK_PYTHON_OUTPUT_DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}/rdkit")
 
 #-------
 # Config variables:
-set(RDKit_Year "2020")
-set(RDKit_Month "09")
+set(RDKit_Year "2021")
+set(RDKit_Month "03")
 set(RDKit_Revision "1")
 set(RDKit_RevisionModifier "dev1")
 set(RDKit_ABI "1")
@@ -131,10 +130,10 @@ string(REGEX REPLACE "^0" "" RDKit_intMonth ${RDKit_Month} )
 
 set(RDKit_CodeDir "${CMAKE_CURRENT_SOURCE_DIR}/Code")
 set(RDKit_ExternalDir "${CMAKE_CURRENT_SOURCE_DIR}/External")
+set(RDKit_DataDir "${CMAKE_CURRENT_SOURCE_DIR}/Data")
 
 #include catch
 add_subdirectory(${RDKit_ExternalDir}/catch)
-include_directories(${CATCH_INCLUDE_DIR})
 message("CATCH: ${CATCH_INCLUDE_DIR}")
 
 if(RDK_INSTALL_INTREE)
@@ -196,7 +195,7 @@ if(RDK_USE_URF)
 endif()
 
 
-if(CMAKE_SIZEOF_VOID_P MATCHES 4)
+if(CMAKE_SIZEOF_VOID_P EQUAL 4)
   target_compile_definitions(rdkit_base INTERFACE "-DRDK_32BIT_BUILD")
 else()
   target_compile_definitions(rdkit_base INTERFACE "-DRDK_64BIT_BUILD")
@@ -367,9 +366,9 @@ if(RDK_BUILD_DESCRIPTORS3D)
 endif(RDK_BUILD_DESCRIPTORS3D)
 
 
-find_package (Threads)
-set(RDKit_THREAD_LIBS Threads::Threads)
 if(RDK_BUILD_THREADSAFE_SSS)
+  find_package (Threads)
+  set(RDKit_THREAD_LIBS Threads::Threads)
   target_compile_definitions(rdkit_base INTERFACE -DRDK_THREADSAFE_SSS)
   if(RDK_TEST_MULTITHREADED)
     target_compile_definitions(rdkit_base INTERFACE "-DRDK_TEST_MULTITHREADED")
@@ -390,7 +389,10 @@ if(RDK_USE_BOOST_SERIALIZATION)
     else()
       set(Boost_LIBRARIES ${T_LIBS})
     endif()
-  target_compile_definitions(rdkit_base INTERFACE -DRDK_USE_BOOST_SERIALIZATION -DBOOST_SERIALIZATION_DYN_LINK)
+    target_compile_definitions(rdkit_base INTERFACE -DRDK_USE_BOOST_SERIALIZATION)
+    if(NOT Boost_USE_STATIC_LIBS)
+      target_compile_definitions(rdkit_base INTERFACE -DBOOST_SERIALIZATION_DYN_LINK)
+    endif()
 endif()
 
 
@@ -440,7 +442,7 @@ else(RDK_TEST_COVERAGE)
     SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fPIC")
   endif()
  endif()
- if(CMAKE_CXX_COMPILER_ID MATCHES "Clang")
+ if(CMAKE_CXX_COMPILER_ID STREQUAL "Clang")
    # We don't on C_FLAGS warnings to keep Avalon compiling quiet
    SET(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -Wno-array-bounds -fPIC -Wno-parentheses -Wno-logical-op-parentheses -Wno-format")
    SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -Wextra -Wno-deprecated -Wno-unused-function -fno-strict-aliasing -Wno-format -Wno-logical-op-parentheses -fPIC")

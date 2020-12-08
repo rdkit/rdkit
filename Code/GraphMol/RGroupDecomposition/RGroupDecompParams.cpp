@@ -11,8 +11,8 @@
 #include "RGroupUtils.h"
 #include <GraphMol/RDKitBase.h>
 #include <GraphMol/Substruct/SubstructMatch.h>
-#include <GraphMol/SmilesParse/SmilesParse.h> 
-#include <GraphMol/FMCS/FMCS.h> 
+#include <GraphMol/SmilesParse/SmilesParse.h>
+#include <GraphMol/FMCS/FMCS.h>
 
 namespace RDKit
 {
@@ -53,6 +53,38 @@ unsigned int RGroupDecompositionParameters::autoGetLabels(const RWMol &core) {
   return autoLabels;
 }
 
+bool rgdAtomCompare(const MCSAtomCompareParameters &p, const ROMol &mol1,
+                    unsigned int atom1, const ROMol &mol2, unsigned int atom2,
+                    void *userData) {
+  if (!MCSAtomCompareElements(p, mol1, atom1, mol2, atom2, nullptr)) {
+    return false;
+  }
+  unsigned int autoLabels = *reinterpret_cast<unsigned int *>(userData);
+  bool atom1HasLabel = false;
+  bool atom2HasLabel = false;
+  const auto a1 = mol1.getAtomWithIdx(atom1);
+  const auto a2 = mol2.getAtomWithIdx(atom2);
+  if (autoLabels & MDLRGroupLabels) {
+    atom1HasLabel |= a1->hasProp(common_properties::_MolFileRLabel);
+    atom2HasLabel |= a2->hasProp(common_properties::_MolFileRLabel);
+  }
+  if (autoLabels & IsotopeLabels) {
+    atom2HasLabel |= (a1->getIsotope() > 0);
+    atom2HasLabel |= (a2->getIsotope() > 0);
+  }
+  if (autoLabels & AtomMapLabels) {
+    atom1HasLabel |= (a1->getAtomMapNum() > 0);
+    atom2HasLabel |= (a2->getAtomMapNum() > 0);
+  }
+  if (autoLabels & DummyAtomLabels) {
+    atom1HasLabel |= (a1->getAtomicNum() == 0);
+    atom2HasLabel |= (a2->getAtomicNum() == 0);
+  }
+  atom1HasLabel |= a1->hasProp(RLABEL);
+  atom2HasLabel |= a2->hasProp(RLABEL);
+  return !(atom1HasLabel ^ atom2HasLabel);
+}
+
 bool RGroupDecompositionParameters::prepareCore(RWMol &core,
                                                 const RWMol *alignCore) {
   const bool relabel = labels & RelabelDuplicateLabels;
@@ -67,11 +99,17 @@ bool RGroupDecompositionParameters::prepareCore(RWMol &core,
     }
   }
 
+  int maxLabel = 1;
   if (alignCore && (alignment & MCS)) {
     std::vector<ROMOL_SPTR> mols;
     mols.push_back(ROMOL_SPTR(new ROMol(core)));
     mols.push_back(ROMOL_SPTR(new ROMol(*alignCore)));
-    MCSResult res = findMCS(mols);
+    MCSParameters mcsParams;
+    if (labels != AutoDetect) {
+      mcsParams.AtomTyper = rgdAtomCompare;
+      mcsParams.CompareFunctionsUserData = &autoLabels;
+    }
+    MCSResult res = findMCS(mols, &mcsParams);
     if (res.isCompleted()) {
       RWMol *m = SmartsToMol(res.SmartsString);
       if (m) {
@@ -103,6 +141,7 @@ bool RGroupDecompositionParameters::prepareCore(RWMol &core,
             }
             if (alignCoreAtm->hasProp(RLABEL)) {
               int rlabel = alignCoreAtm->getProp<int>(RLABEL);
+              maxLabel = (std::max)(maxLabel, rlabel + 1);
               coreAtm->setProp(RLABEL, rlabel);
             }
           }
@@ -113,7 +152,6 @@ bool RGroupDecompositionParameters::prepareCore(RWMol &core,
   }
   std::set<int> foundLabels;
 
-  int maxLabel = 0;
   int nextOffset = 0;
   std::map<int, int> atomToLabel;
 
@@ -154,7 +192,7 @@ bool RGroupDecompositionParameters::prepareCore(RWMol &core,
 
     if (!found && (autoLabels & DummyAtomLabels) && atom->getAtomicNum() == 0) {
       const bool forceRelabellingWithDummies = true;
-      int defaultDummyStartLabel = 1;
+      int defaultDummyStartLabel = maxLabel;
       if (setLabel(atom, defaultDummyStartLabel, foundLabels, maxLabel,
                    forceRelabellingWithDummies, Labelling::DUMMY_LABELS)) {
         found = true;

@@ -51,7 +51,6 @@ class RDKIT_FILEPARSERS_EXPORT MultithreadedSmilesMolSupplier
 
  private:
   bool df_end = false;      //! have we reached the end of the file?
-  int d_len = 0;            //! total number of smiles in the file
   int d_line = 0;           //! line number we are currently on
   std::string d_delim;      //! the delimiter string
   bool df_sanitize = true;  //! sanitize molecules before returning them?

@@ -67,7 +67,7 @@ void addBracketHelper(SubstanceGroup &self, python::object pts) {
 
 python::tuple getCStatesHelper(const SubstanceGroup &self) {
   python::list res;
-  for (const auto cs : self.getCStates()) {
+  for (const auto &cs : self.getCStates()) {
     res.append(cs);
   }
   return python::tuple(res);
@@ -75,7 +75,7 @@ python::tuple getCStatesHelper(const SubstanceGroup &self) {
 
 python::tuple getBracketsHelper(const SubstanceGroup &self) {
   python::list res;
-  for (const auto brk : self.getBrackets()) {
+  for (const auto &brk : self.getBrackets()) {
     res.append(python::make_tuple(brk[0], brk[1], brk[2]));
   }
   return python::tuple(res);
@@ -83,7 +83,7 @@ python::tuple getBracketsHelper(const SubstanceGroup &self) {
 
 python::tuple getAttachPointsHelper(const SubstanceGroup &self) {
   python::list res;
-  for (const auto ap : self.getAttachPoints()) {
+  for (const auto &ap : self.getAttachPoints()) {
     res.append(ap);
   }
   return python::tuple(res);
@@ -146,6 +146,9 @@ struct sgroup_wrap {
         .def("GetAttachPoints", getAttachPointsHelper)
         .def("AddBracket", addBracketHelper)
         .def("GetBrackets", getBracketsHelper)
+        .def("ClearBrackets", &SubstanceGroup::clearBrackets)
+        .def("ClearCStates", &SubstanceGroup::clearCStates)
+        .def("ClearAttachPoints", &SubstanceGroup::clearAttachPoints)
 
         .def("SetProp",
              (void (RDProps::*)(const std::string &, std::string, bool) const) &

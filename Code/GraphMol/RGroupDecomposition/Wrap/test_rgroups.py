@@ -36,7 +36,9 @@ import pickle
 
 from rdkit import rdBase
 from rdkit import Chem
-from rdkit.Chem.rdRGroupDecomposition import RGroupDecompose, RGroupDecomposition, RGroupDecompositionParameters
+from rdkit.Chem.rdRGroupDecomposition import (RGroupDecompose,
+    RGroupDecomposition, RGroupDecompositionParameters, RGroupLabels,
+    RGroupCoreAlignment)
 from collections import OrderedDict
 
 # the RGD code can generate a lot of warnings. disable them
@@ -404,6 +406,199 @@ Cn1cnc2cc(Oc3cc(N4CCN(Cc5ccccc5-c5ccc(Cl)cc5)CC4)ccc3C(=O)NS(=O)(=O)c3ccc(NCCCN4
     self.assertEqual(RGroupDecompose(sma, [m], asSmiles=True),
                      ([{'Core': 'O=[*:1]Cl', 'R1': 'c1ccc(C([*:1])=[*:1])cc1'}], []))
     
-    
+  def test_multicore_prelabelled(self):
+    def multicorergd_test(cores, params, expected_rows, expected_items):
+      mols = [Chem.MolFromSmiles(smi) for smi in ("CNC(=O)C1=CN=CN1CC", "Fc1ccc2ccc(Br)nc2n1")]
+      params.removeHydrogensPostMatch = True
+      params.onlyMatchAtRGroups = True
+      decomp = RGroupDecomposition(cores, params)
+      i = 0
+      for i, m in enumerate(mols):
+        res = decomp.Add(m)
+        self.assertEqual(res, i)
+      self.assertTrue(decomp.Process())
+      rows = decomp.GetRGroupsAsRows(asSmiles=True)
+      self.assertEqual(rows, expected_rows)
+      items = decomp.GetRGroupsAsColumns(asSmiles=True)
+      self.assertEqual(items, expected_items)
+
+    sdcores = """
+     RDKit          2D
+
+  9  9  0  0  0  0  0  0  0  0999 V2000
+    1.1100   -1.3431    0.0000 N   0  0  0  0  0  0  0  0  0  0  0  0
+    1.5225   -0.6286    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    0.9705   -0.0156    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    0.2168   -0.3511    0.0000 N   0  0  0  0  0  0  0  0  0  0  0  0
+    0.3029   -1.1716    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    1.1419    0.7914    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    0.5289    1.3431    0.0000 O   0  0  0  0  0  0  0  0  0  0  0  0
+    1.9266    1.0463    0.0000 R#  0  0  0  0  0  0  0  0  0  0  0  0
+   -0.4976    0.0613    0.0000 R#  0  0  0  0  0  0  0  0  0  0  0  0
+  1  2  1  0
+  2  3  2  0
+  3  4  1  0
+  4  5  1  0
+  1  5  2  0
+  3  6  1  0
+  6  7  2  0
+  6  8  1  0
+  4  9  1  0
+M  RGP  2   8   1   9   2
+V    8 *
+V    9 *
+M  END
+$$$$
+
+     RDKit          2D
+
+ 12 13  0  0  0  0  0  0  0  0999 V2000
+   -6.5623    0.3977    0.0000 R#  0  0  0  0  0  0  0  0  0  0  0  0
+   -5.8478   -0.0147    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -5.1333    0.3977    0.0000 A   0  0  0  0  0  0  0  0  0  0  0  0
+   -4.4188   -0.0147    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -4.4188   -0.8397    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -5.1333   -1.2522    0.0000 A   0  0  0  0  0  0  0  0  0  0  0  0
+   -5.8478   -0.8397    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -3.7044   -1.2522    0.0000 A   0  0  0  0  0  0  0  0  0  0  0  0
+   -3.7044    0.3977    0.0000 N   0  0  0  0  0  0  0  0  0  0  0  0
+   -2.9899   -0.0147    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -2.9899   -0.8397    0.0000 A   0  0  0  0  0  0  0  0  0  0  0  0
+   -2.2754    0.3978    0.0000 R#  0  0  0  0  0  0  0  0  0  0  0  0
+  3  4  1  0
+  4  5  2  0
+  5  6  1  0
+  6  7  2  0
+  2  3  2  0
+  2  7  1  0
+  9 10  2  0
+ 10 11  1  0
+  8 11  2  0
+  8  5  1  0
+  4  9  1  0
+ 10 12  1  0
+  1  2  1  0
+M  RGP  2   1   2  12   1
+V    1 *
+V   12 *
+M  END
+$$$$
+"""
+    sdsup = Chem.SDMolSupplier()
+    sdsup.SetData(sdcores)
+    cores = [c for c in sdsup]
+    expected_rows_autodetect = [{
+      "Core": "O=C(c1cncn1[*:2])[*:1]",
+      "R1": "CN[*:1]",
+      "R2": "CC[*:2]"}, {
+      "Core": "*1:*c2c(*c([*:2])c[*:1]2)nc1[*:3]",
+      "R1": "c(:[*:1]):[*:1]",
+      "R2": "Br[*:2]"}]
+    expected_items_autodetect = {
+      "Core": ["O=C(c1cncn1[*:2])[*:1]", "*1:*c2c(*c([*:2])c[*:1]2)nc1[*:3]"],
+      "R1": ["CN[*:1]", "c(:[*:1]):[*:1]"],
+      "R2": ["CC[*:2]", "Br[*:2]"]}
+    expected_rows_no_autodetect = [{
+      "Core": "O=C(c1cncn1[*:2])[*:1]",
+      "R1": "CN[*:1]",
+      "R2": "CC[*:2]"}, {
+      "Core": "*1:*c2*cc([*:2])*c2nc1[*:1]",
+      "R1": "F[*:1]",
+      "R2": "Br[*:2]"}]
+    expected_items_no_autodetect = {
+        "Core": ["O=C(c1cncn1[*:2])[*:1]", "*1:*c2*cc([*:2])*c2nc1[*:1]"],
+        "R1": ["CN[*:1]", "F[*:1]"],
+        "R2": ["CC[*:2]", "Br[*:2]"]}
+    expectedLabels = ["Core", "R1", "R2"]
+    params = RGroupDecompositionParameters()
+
+    # test pre-labelled with MDL R-group labels, autodetect
+    params.labels = RGroupLabels.AutoDetect
+    params.alignment = RGroupCoreAlignment.MCS
+    multicorergd_test(cores, params, expected_rows_autodetect,
+                      expected_items_autodetect)
+    # test pre-labelled with MDL R-group labels, no autodetect
+    params.labels = RGroupLabels.MDLRGroupLabels | RGroupLabels.RelabelDuplicateLabels
+    params.alignment = RGroupCoreAlignment.MCS
+    multicorergd_test(cores, params, expected_rows_no_autodetect,
+                      expected_items_no_autodetect)
+    # test pre-labelled with MDL R-group labels, autodetect, no MCS alignment
+    params.labels = RGroupLabels.AutoDetect
+    params.alignment = RGroupCoreAlignment.NoAlignment
+    multicorergd_test(cores, params, expected_rows_no_autodetect,
+                      expected_items_no_autodetect)
+
+    # Reading from a MDL molblock also sets isotopic labels, so no need
+    # to set them again; we only clear MDL R-group labels
+    for core in cores:
+      for a in core.GetAtoms():
+        if a.HasProp("_MolFileRLabel"):
+          a.ClearProp("_MolFileRLabel")
+    # test pre-labelled with isotopic labels, autodetect
+    params.labels = RGroupLabels.AutoDetect
+    params.alignment = RGroupCoreAlignment.MCS
+    multicorergd_test(cores, params, expected_rows_autodetect,
+                      expected_items_autodetect)
+    # test pre-labelled with isotopic labels, no autodetect
+    params.labels = RGroupLabels.IsotopeLabels | RGroupLabels.RelabelDuplicateLabels
+    params.alignment = RGroupCoreAlignment.MCS
+    multicorergd_test(cores, params, expected_rows_no_autodetect,
+                      expected_items_no_autodetect)
+    # test pre-labelled with isotopic labels, autodetect, no MCS alignment
+    params.labels = RGroupLabels.AutoDetect
+    params.alignment = RGroupCoreAlignment.NoAlignment
+    multicorergd_test(cores, params, expected_rows_no_autodetect,
+                      expected_items_no_autodetect)
+
+    for core in cores:
+      for a in core.GetAtoms():
+        iso = a.GetIsotope()
+        if iso:
+          a.SetAtomMapNum(iso)
+          a.SetIsotope(0)
+    # test pre-labelled with atom map labels, autodetect
+    params.labels = RGroupLabels.AutoDetect
+    params.alignment = RGroupCoreAlignment.MCS
+    multicorergd_test(cores, params, expected_rows_autodetect,
+                      expected_items_autodetect)
+    # test pre-labelled with atom map labels, no autodetect
+    params.labels = RGroupLabels.AtomMapLabels | RGroupLabels.RelabelDuplicateLabels
+    params.alignment = RGroupCoreAlignment.MCS
+    multicorergd_test(cores, params, expected_rows_no_autodetect,
+                      expected_items_no_autodetect)
+    # test pre-labelled with atom map labels, autodetect, no MCS alignment
+    params.labels = RGroupLabels.AutoDetect
+    params.alignment = RGroupCoreAlignment.NoAlignment
+    multicorergd_test(cores, params, expected_rows_no_autodetect,
+                      expected_items_no_autodetect)
+
+    for core in cores:
+      for a in core.GetAtoms():
+        if a.GetAtomMapNum():
+          a.SetAtomMapNum(0)
+    # test pre-labelled with dummy atom labels, autodetect
+    expected_rows_autodetect = [{
+      "Core": "O=C(c1cncn1[*:2])[*:1]",
+      "R1": "CN[*:1]",
+      "R2": "CC[*:2]"}, {
+      "Core": "c1c([*:2])[*:3]c2nc([*:6])[*:5]:[*:4]c2[*:1]1",
+      "R1": "c(:[*:1]):[*:1]",
+      "R2": "Br[*:2]"}]
+    expected_items_autodetect = {
+      "Core": ["O=C(c1cncn1[*:2])[*:1]", "c1c([*:2])[*:3]c2nc([*:6])[*:5]:[*:4]c2[*:1]1"],
+      "R1": ["CN[*:1]", "c(:[*:1]):[*:1]"],
+      "R2": ["CC[*:2]", "Br[*:2]"]}
+    params.labels = RGroupLabels.AutoDetect
+    params.alignment = RGroupCoreAlignment.MCS
+    multicorergd_test(cores, params, expected_rows_autodetect,
+                      expected_items_autodetect)
+    # test pre-labelled with dummy atom labels, no autodetect
+    # in this case there is no difference from autodetect as the RGD code
+    # cannot tell the difference between query atoms and dummy R-groups
+    params.labels = RGroupLabels.DummyAtomLabels | RGroupLabels.RelabelDuplicateLabels
+    params.alignment = RGroupCoreAlignment.MCS
+    multicorergd_test(cores, params, expected_rows_autodetect,
+                      expected_items_autodetect)
+
 if __name__ == '__main__':
   unittest.main()

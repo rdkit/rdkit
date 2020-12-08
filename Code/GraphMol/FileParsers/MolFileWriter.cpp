@@ -949,7 +949,7 @@ const std::string GetV3000MolFileAtomLine(
     }
   }
 
-  ss << " " << x << " " << y << " " << z;
+  ss << std::fixed << " " << x << " " << y << " " << z << std::defaultfloat;
   ss << " " << atomMapNumber;
 
   // Extra atom properties.
@@ -1377,8 +1377,7 @@ std::string MolToMolBlock(const ROMol &mol, bool includeStereo, int confId,
                           bool kekulize, bool forceV3000) {
   RDUNUSED_PARAM(includeStereo);
   RDKit::Utils::LocaleSwitcher switcher;
-  ROMol tromol(mol);
-  auto &trwmol = static_cast<RWMol &>(tromol);
+  RWMol trwmol(mol);
   // NOTE: kekulize the molecule before writing it out
   // because of the way mol files handle aromaticity
   if (trwmol.needsUpdatePropertyCache()) {

@@ -198,7 +198,7 @@ std::string addMetadataToPNGStream(
   }
 
   // write out the metadata:
-  for (const auto pr : metadata) {
+  for (const auto &pr : metadata) {
     std::stringstream blk;
     if (!compressed) {
       blk.write("tEXt", 4);
@@ -261,7 +261,10 @@ std::string addMolToPNGStream(const ROMol &mol, std::istream &iStream,
     metadata.push_back(std::make_pair(augmentTagName(PNGData::smilesTag), smi));
   }
   if (includeMol) {
-    std::string mb = MolToMolBlock(mol);
+    bool includeStereo = true;
+    int confId = -1;
+    bool kekulize = false;
+    std::string mb = MolToMolBlock(mol, includeStereo, confId, kekulize);
     metadata.push_back(std::make_pair(augmentTagName(PNGData::molTag), mb));
   }
   return addMetadataToPNGStream(iStream, metadata);
@@ -272,7 +275,7 @@ ROMol *PNGStreamToMol(std::istream &inStream,
   ROMol *res = nullptr;
   auto metadata = PNGStreamToMetadata(inStream);
   bool formatFound = false;
-  for (const auto pr : metadata) {
+  for (const auto &pr : metadata) {
     if (boost::starts_with(pr.first, PNGData::pklTag)) {
       res = new ROMol(pr.second);
       formatFound = true;
@@ -298,7 +301,7 @@ std::vector<std::unique_ptr<ROMol>> PNGStreamToMols(
     const SmilesParserParams &params) {
   std::vector<std::unique_ptr<ROMol>> res;
   auto metadata = PNGStreamToMetadata(inStream);
-  for (const auto pr : metadata) {
+  for (const auto &pr : metadata) {
     if (!boost::starts_with(pr.first, tagToUse)) {
       continue;
     }

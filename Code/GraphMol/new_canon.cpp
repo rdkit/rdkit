@@ -17,6 +17,7 @@
 #include <cstring>
 #include <iostream>
 #include <cassert>
+// #define VERBOSE_CANON 1
 
 namespace RDKit {
 namespace Canon {
@@ -571,14 +572,12 @@ void updateAtomNeighborNumSwaps(
       for (unsigned i = 0; i < atoms[nbrIdx].degree; ++i) {
         ref.push_back(atoms[nbrIdx].nbrIds[i]);
       }
-
       probe.push_back(atomIdx);
       for (auto &bond : atoms[nbrIdx].bonds) {
         if (bond.nbrIdx != atomIdx) {
           probe.push_back(bond.nbrIdx);
         }
       }
-
       int nSwaps = static_cast<int>(countSwapsToInterconvert(ref, probe));
       if (atoms[nbrIdx].atom->getChiralTag() == Atom::CHI_TETRAHEDRAL_CW) {
         if (nSwaps % 2) {

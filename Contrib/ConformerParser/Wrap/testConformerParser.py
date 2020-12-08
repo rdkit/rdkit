@@ -13,8 +13,7 @@ class TestCase(unittest.TestCase):
     pass
 
   def testReadAmberTraj(self):
-    fileN = os.path.join(RDConfig.RDBaseDir, 'Contrib', 'ConformerParser', 'test_data',
-                         'water_coords.trx')
+    fileN = os.path.join(RDConfig.RDBaseDir, 'Code', 'GraphMol', 'test_data', 'water_coords.trx')
     mol = Chem.MolFromSmiles('O')
     mol = Chem.AddHs(mol)
     ids = rdConformerParser.AddConformersFromAmberTrajectory(mol, fileN)
@@ -22,8 +21,7 @@ class TestCase(unittest.TestCase):
     self.failUnless(len(ids) == 1)
     self.failUnless(ids[0] == 0)
 
-    fileN = os.path.join(RDConfig.RDBaseDir, 'Contrib', 'ConformerParser', 'test_data',
-                         'water_coords2.trx')
+    fileN = os.path.join(RDConfig.RDBaseDir, 'Code', 'GraphMol', 'test_data', 'water_coords2.trx')
     ids = rdConformerParser.AddConformersFromAmberTrajectory(mol, fileN, clearConfs=True)
     self.failUnless(mol.GetNumConformers() == 2)
     ids = rdConformerParser.AddConformersFromAmberTrajectory(mol, fileN, clearConfs=False)

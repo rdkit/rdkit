@@ -121,7 +121,8 @@ INT_VECT EmbedMultipleConfs2(ROMol &mol, unsigned int numConfs,
 
 PyObject *getMolBoundsMatrix(ROMol &mol, bool set15bounds = true,
                              bool scaleVDW = false,
-                             bool doTriangleSmoothing = true) {
+                             bool doTriangleSmoothing = true,
+			     bool useMacrocycle14config = false) {
   unsigned int nats = mol.getNumAtoms();
   npy_intp dims[2];
   dims[0] = nats;
@@ -129,7 +130,7 @@ PyObject *getMolBoundsMatrix(ROMol &mol, bool set15bounds = true,
 
   DistGeom::BoundsMatPtr mat(new DistGeom::BoundsMatrix(nats));
   DGeomHelpers::initBoundsMat(mat);
-  DGeomHelpers::setTopolBounds(mol, mat, set15bounds, scaleVDW);
+  DGeomHelpers::setTopolBounds(mol, mat, set15bounds, scaleVDW, useMacrocycle14config);
   if (doTriangleSmoothing) {
     DistGeom::triangleSmoothBounds(mat);
   }
@@ -499,6 +500,7 @@ BOOST_PYTHON_MODULE(rdDistGeom) {
   python::def("GetMoleculeBoundsMatrix", RDKit::getMolBoundsMatrix,
               (python::arg("mol"), python::arg("set15bounds") = true,
                python::arg("scaleVDW") = false,
-               python::arg("doTriangleSmoothing") = true),
+               python::arg("doTriangleSmoothing") = true,
+               python::arg("useMacrocycle14config") = false),
               docString.c_str());
 }

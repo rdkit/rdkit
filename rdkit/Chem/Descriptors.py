@@ -31,7 +31,7 @@ def _setupDescriptors(namespace):
     from rdkit.Chem import GraphDescriptors, MolSurf, Lipinski, Fragments, Crippen, Descriptors3D
     from rdkit.Chem.EState import EState_VSA
     _descList.clear()
-    
+
     mods = [GraphDescriptors, MolSurf, EState_VSA, Lipinski, Crippen, Fragments]
 
     otherMods = [Chem]
@@ -224,13 +224,13 @@ _du.VectorDescriptorWrapper(_rdMolDescriptors.BCUT2D, names=names, version="1.0.
 _setupDescriptors(locals())
 
 names = ["AUTOCORR2D_%s"%str(i+1) for i in range(192)]
-autocorr = _du.VectorDescriptorWrapper(_rdMolDescriptors.CalcAUTOCORR2D, names=names, version="1.0.0", 
+autocorr = _du.VectorDescriptorWrapper(_rdMolDescriptors.CalcAUTOCORR2D, names=names, version="1.0.0",
                                        namespace=locals())
 
 def setupAUTOCorrDescriptors():
     """Adds AUTOCORR descriptors to the default descriptor lists"""
-    setupDescriptors(namespace=autocorr.namespace)
-    
+    _setupDescriptors(namespace=autocorr.namespace)
+
 class PropertyFunctor(rdMolDescriptors.PythonPropertyFunctor):
     """Creates a python based property function that can be added to the
     global property list.  To use, subclass this class and override the

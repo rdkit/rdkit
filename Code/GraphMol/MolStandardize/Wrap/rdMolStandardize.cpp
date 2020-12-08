@@ -145,6 +145,11 @@ BOOST_PYTHON_MODULE(rdMolStandardize) {
           "remove stereochemistry from double bonds involved in "
           "tautomerism (defaults to True)")
       .def_readwrite(
+          "tautomerRemoveIsotopicHs",
+          &RDKit::MolStandardize::CleanupParameters::tautomerRemoveIsotopicHs,
+          "remove isotopic Hs from centers involved in "
+          "tautomerism (defaults to True)")
+      .def_readwrite(
           "tautomerReassignStereo",
           &RDKit::MolStandardize::CleanupParameters::tautomerReassignStereo,
           "call AssignStereochemistry on all generated tautomers "

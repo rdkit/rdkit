@@ -428,7 +428,7 @@ std::string isoHsToString(const std::vector<unsigned int> &isoHs) {
   std::stringstream ss;
   std::copy(isoHs.begin(), isoHs.end(),
             std::ostream_iterator<unsigned int>(ss, " "));
-  std::string res(std::move(ss.str()));
+  std::string res(ss.str());
   boost::trim(res);
   return res;
 }

@@ -35,6 +35,19 @@ struct RCore {
       }
     }
   }
+  // Return a copy of core where dummy atoms are replaced by
+  // the atomic number of the respective matching atom in mol
+  std::unique_ptr<ROMol> replaceCoreDummiesWithMolMatches(
+      const ROMol &mol, const MatchVectType &match) const {
+    std::unique_ptr<ROMol> coreReplacedDummies(new ROMol(*core));
+    for (const auto &p : match) {
+      auto a = coreReplacedDummies->getAtomWithIdx(p.first);
+      if (!a->getAtomicNum() && !a->hasProp(RLABEL)) {
+        a->setAtomicNum(mol.getAtomWithIdx(p.second)->getAtomicNum());
+      }
+    }
+    return coreReplacedDummies;
+  }
 };
 
 }  // namespace RDKit

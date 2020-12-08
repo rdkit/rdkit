@@ -412,7 +412,7 @@ void testEnumeratorParams() {
     params.tautomerRemoveSp3Stereo = true;
     TautomerEnumerator te(params);
     TautomerEnumeratorResult res = te.enumerate(*sAla);
-    for (const auto taut : res) {
+    for (const auto &taut : res) {
       TEST_ASSERT(taut->getAtomWithIdx(1)->getChiralTag() ==
                   Atom::CHI_UNSPECIFIED);
       TEST_ASSERT(
@@ -429,7 +429,7 @@ void testEnumeratorParams() {
     params.tautomerRemoveSp3Stereo = false;
     TautomerEnumerator te(params);
     TautomerEnumeratorResult res = te.enumerate(*sAla);
-    for (const auto taut : res) {
+    for (const auto &taut : res) {
       const auto tautAtom = taut->getAtomWithIdx(1);
       if (tautAtom->getHybridization() == Atom::SP3) {
         TEST_ASSERT(tautAtom->hasProp(common_properties::_CIPCode));
@@ -451,7 +451,7 @@ void testEnumeratorParams() {
     params.tautomerRemoveBondStereo = true;
     TautomerEnumerator te(params);
     TautomerEnumeratorResult res = te.enumerate(*eEnol);
-    for (const auto taut : res) {
+    for (const auto &taut : res) {
       TEST_ASSERT(taut->getBondWithIdx(1)->getStereo() == Bond::STEREONONE);
     }
   }
@@ -461,14 +461,13 @@ void testEnumeratorParams() {
     params.tautomerRemoveBondStereo = false;
     TautomerEnumerator te(params);
     TautomerEnumeratorResult res = te.enumerate(*eEnol);
-    for (const auto taut : res) {
+    for (const auto &taut : res) {
       if (taut->getBondWithIdx(1)->getBondType() == Bond::DOUBLE) {
         TEST_ASSERT(taut->getBondWithIdx(1)->getStereo() == Bond::STEREOE);
       }
     }
   }
-  std::string zEnolSmi = "C/C=C\\O";
-  ROMOL_SPTR zEnol(SmilesToMol(zEnolSmi));
+  ROMOL_SPTR zEnol = "C/C=C\\O"_smiles;
   TEST_ASSERT(zEnol->getBondWithIdx(1)->getStereo() == Bond::STEREOZ);
   {
     // test remove enol Z stereochemistry
@@ -476,7 +475,7 @@ void testEnumeratorParams() {
     params.tautomerRemoveBondStereo = true;
     TautomerEnumerator te(params);
     TautomerEnumeratorResult res = te.enumerate(*zEnol);
-    for (const auto taut : res) {
+    for (const auto &taut : res) {
       TEST_ASSERT(taut->getBondWithIdx(1)->getStereo() == Bond::STEREONONE);
     }
   }
@@ -486,13 +485,67 @@ void testEnumeratorParams() {
     params.tautomerRemoveBondStereo = false;
     TautomerEnumerator te(params);
     TautomerEnumeratorResult res = te.enumerate(*zEnol);
-    for (const auto taut : res) {
+    for (const auto &taut : res) {
       if (taut->getBondWithIdx(1)->getBondType() == Bond::DOUBLE) {
         TEST_ASSERT(taut->getBondWithIdx(1)->getStereo() == Bond::STEREOZ);
       }
     }
   }
-
+  ROMOL_SPTR chembl2024142 =
+      "[2H]C1=C(C(=C2C(=C1[2H])C(=O)C(=C(C2=O)C([2H])([2H])[2H])C/C=C(\\C)/CC([2H])([2H])/C=C(/CC/C=C(\\C)/CCC=C(C)C)\\C([2H])([2H])[2H])[2H])[2H]"_smiles;
+  MolOps::RemoveHsParameters hparams;
+  hparams.removeAndTrackIsotopes = true;
+  chembl2024142.reset(MolOps::removeHs(*chembl2024142, hparams));
+  TEST_ASSERT(chembl2024142->getAtomWithIdx(12)->hasProp(
+      common_properties::_isotopicHs));
+  {
+    // test remove isotopic Hs involved in tautomerism
+    CleanupParameters params;
+    params.tautomerRemoveIsotopicHs = true;
+    TautomerEnumerator te(params);
+    TautomerEnumeratorResult res = te.enumerate(*chembl2024142);
+    for (const auto &taut : res) {
+      const auto tautAtom = taut->getAtomWithIdx(12);
+      TEST_ASSERT(!tautAtom->hasProp(common_properties::_isotopicHs));
+    }
+  }
+  {
+    // test retain isotopic Hs involved in tautomerism
+    CleanupParameters params;
+    params.tautomerRemoveIsotopicHs = false;
+    TautomerEnumerator te(params);
+    TautomerEnumeratorResult res = te.enumerate(*chembl2024142);
+    for (const auto &taut : res) {
+      const auto tautAtom = taut->getAtomWithIdx(12);
+      TEST_ASSERT(tautAtom->hasProp(common_properties::_isotopicHs));
+    }
+  }
+  ROMOL_SPTR enolexample = "[2H]OC=C"_smiles;
+  enolexample.reset(MolOps::removeHs(*enolexample, hparams));
+  TEST_ASSERT(
+      enolexample->getAtomWithIdx(0)->hasProp(common_properties::_isotopicHs));
+  {
+    CleanupParameters params;
+    params.tautomerRemoveIsotopicHs = true;
+    TautomerEnumerator te(params);
+    TautomerEnumeratorResult res = te.enumerate(*enolexample);
+    for (const auto &taut : res) {
+      const auto tautAtom = taut->getAtomWithIdx(0);
+      TEST_ASSERT(!(tautAtom->hasProp(common_properties::_isotopicHs) &&
+                    !tautAtom->getTotalNumHs()));
+    }
+  }
+  {
+    CleanupParameters params;
+    params.tautomerRemoveIsotopicHs = false;
+    TautomerEnumerator te(params);
+    TautomerEnumeratorResult res = te.enumerate(*enolexample);
+    for (const auto &taut : res) {
+      const auto tautAtom = taut->getAtomWithIdx(0);
+      TEST_ASSERT(!(tautAtom->hasProp(common_properties::_isotopicHs) &&
+                    !tautAtom->getTotalNumHs()));
+    }
+  }
   BOOST_LOG(rdInfoLog) << "Finished" << std::endl;
 }
 
@@ -912,12 +965,12 @@ void testEnumerateDetails() {
 
 #if defined(_MSC_VER)
 #pragma warning(suppress : 4996)
-#elif defined (__GNUC__)
+#elif defined(__GNUC__)
 #pragma GCC diagnostic push
 #pragma GCC diagnostic ignored "-Wdeprecated-declarations"
 #endif
     auto tauts = te.enumerate(*mol, &atomsModified, &bondsModified);
-#if defined (__GNUC__)
+#if defined(__GNUC__)
 #pragma GCC diagnostic pop
 #endif
     TEST_ASSERT(tauts.size() == 2);

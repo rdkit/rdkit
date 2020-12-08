@@ -346,17 +346,16 @@ ROMol *Uncharger::uncharge(const ROMol &mol) {
   };
   std::vector<std::pair<int, int>> n_atoms;
   n_atoms.reserve(n_matches.size());
-  std::transform(n_matches.begin(), n_matches.end(), std::back_inserter(n_atoms),
-    getRankIdxPair);
+  std::transform(n_matches.begin(), n_matches.end(),
+                 std::back_inserter(n_atoms), getRankIdxPair);
   std::vector<std::pair<int, int>> a_atoms;
   a_atoms.reserve(a_matches.size());
-  std::transform(a_matches.begin(), a_matches.end(), std::back_inserter(a_atoms),
-    getRankIdxPair);
+  std::transform(a_matches.begin(), a_matches.end(),
+                 std::back_inserter(a_atoms), getRankIdxPair);
   if (df_canonicalOrdering) {
     std::sort(n_atoms.begin(), n_atoms.end());
     std::sort(a_atoms.begin(), a_atoms.end());
   }
-
 
   // Neutralize negative charges
   if (needsNeutralization) {
@@ -410,7 +409,8 @@ ROMol *Uncharger::uncharge(const ROMol &mol) {
         // Until quaternary positive == negative total or no more negative atoms
         unsigned int idx = pair.second;
         Atom *atom = omol->getAtomWithIdx(idx);
-        // skip ahead if we already neutralized this or if it is part of a zwitterion
+        // skip ahead if we already neutralized this or if it is part of a
+        // zwitterion
         if (atom->getFormalCharge() >= 0 || skipChargeSep.test(idx)) {
           continue;
         }

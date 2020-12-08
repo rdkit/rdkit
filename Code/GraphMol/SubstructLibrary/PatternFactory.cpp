@@ -45,16 +45,15 @@ void addPatterns(SubstructLibrary &sslib, int numThreads) {
     for (int thread_group_idx = 0; thread_group_idx < numThreads;
        ++thread_group_idx) {
     // need to use std::ref otherwise things are passed by value
-    thread_group.emplace_back(
-	    std::async(std::launch::async, fillPatterns,
-		       std::ref(sslib), std::ref(*ptr.get()), std::ref(fps), 
-		       startIdx + thread_group_idx, endIdx, numThreads));
+    thread_group.emplace_back(std::async(
+        std::launch::async, fillPatterns, std::ref(sslib), std::ref(*ptr),
+        std::ref(fps), startIdx + thread_group_idx, endIdx, numThreads));
   }
   for (auto &fut : thread_group) {
     fut.get();
   }
 #else
-  fillPaterns(lib, fps, 0, sslib.size(), 1);
+  fillPatterns(sslib, *ptr, fps, 0, sslib.size(), 1);
 #endif
   if (ptr->size() != sslib.size()) {
     throw ValueErrorException("Number of fingerprints generated not equal to current number of molecules");

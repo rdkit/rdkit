@@ -1,5 +1,5 @@
 //
-//   Copyright (C) 2003-2016 Greg Landrum and Rational Discovery LLC
+//   Copyright (C) 2003-2020 Greg Landrum and Rational Discovery LLC
 //
 //   @@ All Rights Reserved @@
 //  This file is part of the RDKit.
@@ -142,7 +142,7 @@ void computeInertiaTerms(const Conformer &conf, const RDGeom::Point3D &center,
     yz -= w * loc.z * loc.y;
   }
 }
-}
+}  // namespace
 #ifdef RDK_HAS_EIGEN3
 #include <Eigen/Dense>
 
@@ -346,6 +346,20 @@ void transformConformer(Conformer &conf, const RDGeom::Transform3D &trans) {
   }
 }
 
+void transformMolSubstanceGroups(ROMol &mol, const RDGeom::Transform3D &trans) {
+  auto &sgs = getSubstanceGroups(mol);
+  for (auto &sg : sgs) {
+    for (auto &brk : sg.getBrackets()) {
+      trans.TransformPoint(brk[0]);
+      trans.TransformPoint(brk[1]);
+      trans.TransformPoint(brk[2]);
+    }
+    for (auto &cs : sg.getCStates()) {
+      trans.TransformPoint(cs.vector);
+    }
+  }
+}
+
 void canonicalizeConformer(Conformer &conf, const RDGeom::Point3D *center,
                            bool normalizeCovar, bool ignoreHs) {
   RDGeom::Transform3D *trans =
@@ -403,7 +417,7 @@ void _toBeMovedIdxList(const ROMol &mol, unsigned int iAtomId,
     }
   }
 }
-}
+}  // namespace
 double getBondLength(const Conformer &conf, unsigned int iAtomId,
                      unsigned int jAtomId) {
   const RDGeom::POINT3D_VECT &pos = conf.getPositions();
@@ -606,4 +620,4 @@ void setDihedralRad(Conformer &conf, unsigned int iAtomId, unsigned int jAtomId,
     pos[it] += rotAxisBegin;
   }
 }
-}
+}  // namespace MolTransforms

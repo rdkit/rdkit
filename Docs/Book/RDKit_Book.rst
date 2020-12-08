@@ -518,7 +518,8 @@ The definitions of potential stereogenic atoms or bonds is inspired by the InChI
 Stereogenic bonds
 ^^^^^^^^^^^^^^^^^
 
-A double bond is potentially stereogenic if both atoms have at least two heavy atom neighbors.
+A double bond is potentially stereogenic if both atoms have at least two heavy
+atom neighbors and it's not present in a ring with less than eight atoms.
 
 .. |psdb1| image:: images/potential_stereo_double_bond1.png
    :align: middle
@@ -1585,12 +1586,12 @@ Substructure search using molecules with enhanced stereochemistry follows these 
 * chiral < AND, because AND includes both the chiral molecule and another one
 * chiral < OR, because OR includes either the chiral molecule or another one
 * OR < AND, because AND includes both molecules that OR could actually mean.
-* one group of two atoms < two groups of one atom, because the latter is 4 different
-diastereomers, and the former only two of the four.
+* one group of two atoms < two groups of one atom, because the latter is 4 different diastereomers, and the former only two of the four.
 
 Some concrete examples of this:
 
 .. doctest ::
+
   >>> ps = Chem.SubstructMatchParameters()
   >>> ps.useChirality = True
   >>> ps.useEnhancedStereo = True

@@ -97,17 +97,6 @@ Conformer *GetMolConformer(ROMol &mol, int id = -1) {
   return &(mol.getConformer(id));
 }
 
-PyObject *GetMolConformers(ROMol &mol) {
-  PyObject *res = PyTuple_New(mol.getNumConformers());
-  ROMol::ConformerIterator ci;
-  unsigned int i = 0;
-  for (ci = mol.beginConformers(); ci != mol.endConformers(); ci++) {
-    PyTuple_SetItem(res, i, python::converter::shared_ptr_to_python(*ci));
-    i++;
-  }
-  return res;
-}
-
 void MolDebug(const ROMol &mol, bool useStdout) {
   if (useStdout) {
     mol.debugMol(std::cout);
@@ -125,21 +114,23 @@ void MolDebug(const ROMol &mol, bool useStdout) {
 }
 
 // FIX: we should eventually figure out how to do iterators properly
-AtomIterSeq *MolGetAtoms(ROMol *mol) {
-  AtomIterSeq *res = new AtomIterSeq(mol->beginAtoms(), mol->endAtoms(),
-                                     AtomCountFunctor(*mol));
+AtomIterSeq *MolGetAtoms(const ROMOL_SPTR &mol) {
+  AtomIterSeq *res = new AtomIterSeq(mol, mol->beginAtoms(), mol->endAtoms(),
+                                     AtomCountFunctor(mol));
   return res;
 }
-QueryAtomIterSeq *MolGetAromaticAtoms(ROMol *mol) {
+QueryAtomIterSeq *MolGetAromaticAtoms(const ROMOL_SPTR &mol) {
   auto *qa = new QueryAtom();
   qa->setQuery(makeAtomAromaticQuery());
-  QueryAtomIterSeq *res = new QueryAtomIterSeq(
-      mol->beginQueryAtoms(qa), mol->endQueryAtoms(), AtomCountFunctor(*mol));
+  QueryAtomIterSeq *res =
+      new QueryAtomIterSeq(mol, mol->beginQueryAtoms(qa), mol->endQueryAtoms(),
+                           AtomCountFunctor(mol));
   return res;
 }
-QueryAtomIterSeq *MolGetQueryAtoms(ROMol *mol, QueryAtom *qa) {
-  QueryAtomIterSeq *res = new QueryAtomIterSeq(
-      mol->beginQueryAtoms(qa), mol->endQueryAtoms(), AtomCountFunctor(*mol));
+QueryAtomIterSeq *MolGetQueryAtoms(const ROMOL_SPTR &mol, QueryAtom *qa) {
+  QueryAtomIterSeq *res =
+      new QueryAtomIterSeq(mol, mol->beginQueryAtoms(qa), mol->endQueryAtoms(),
+                           AtomCountFunctor(mol));
   return res;
 }
 
@@ -148,9 +139,15 @@ QueryAtomIterSeq *MolGetQueryAtoms(ROMol *mol, QueryAtom *qa) {
 //                                     mol->endHeteros());
 //  return res;
 //}
-BondIterSeq *MolGetBonds(ROMol *mol) {
-  BondIterSeq *res = new BondIterSeq(mol->beginBonds(), mol->endBonds(),
-                                     BondCountFunctor(*mol));
+BondIterSeq *MolGetBonds(const ROMOL_SPTR &mol) {
+  BondIterSeq *res = new BondIterSeq(mol, mol->beginBonds(), mol->endBonds(),
+                                     BondCountFunctor(mol));
+  return res;
+}
+ConformerIterSeq *GetMolConformers(const ROMOL_SPTR &mol) {
+  ConformerIterSeq *res =
+      new ConformerIterSeq(mol, mol->beginConformers(), mol->endConformers(),
+                           ConformerCountFunctor(mol));
   return res;
 }
 
@@ -396,7 +393,11 @@ struct mol_wrapper {
                  1, python::with_custodian_and_ward_postcall<0, 1>>())
 
         .def("GetConformers", GetMolConformers,
-             "Get all the conformers as a tuple")
+             python::return_value_policy<
+                 python::manage_new_object,
+                 python::with_custodian_and_ward_postcall<0, 1>>(),
+             "Returns a read-only sequence containing all of the molecule's "
+             "Conformers.")
 
         .def("RemoveAllConformers", &ROMol::clearConformers,
              "Remove all the conformations on the molecule")

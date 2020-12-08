@@ -144,6 +144,11 @@ void testChargeParent() {
   std::unique_ptr<RWMol> res13(MolStandardize::chargeParent(*m13, params));
   TEST_ASSERT(MolToSmiles(*res13) == "CN[S+](C)(=O)[O-]");
 
+  // standalone metal ion
+  auto m14 = "[Cu+2]"_smiles;
+  std::unique_ptr<RWMol> res14(MolStandardize::chargeParent(*m14));
+  TEST_ASSERT(MolToSmiles(*res14) == "[Cu+2]");
+
   BOOST_LOG(rdInfoLog) << "Finished" << std::endl;
 }
 
