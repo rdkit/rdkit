@@ -215,8 +215,7 @@ LinkedPopLinearSel<Chromosome, PopulationPolicy>::selectParent() {
  */
 template <typename Chromosome, typename PopulationPolicy>
 void LinkedPopLinearSel<Chromosome, PopulationPolicy>::iterate() {
-  // TODO update to thread_local
-  static std::vector<std::shared_ptr<Chromosome>> parents, children;
+  thread_local std::vector<std::shared_ptr<Chromosome>> parents, children;
   parents.clear();
   children.clear();
 

@@ -86,6 +86,14 @@ class RGroupDecompositionChromosome : public IntegerStringChromosome {
   RGroupGa& rGroupGa;
 };
 
+struct GaResult {
+  const double score;
+  const vector<vector<size_t>> permutations;
+
+  GaResult(const double score, const vector<vector<size_t>> permutations)
+      : score(score), permutations(permutations) {}
+};
+
 class RGroupGa : public GaBase {
  public:
   RGroupGa(const RGroupDecompData& rGroupData,
@@ -99,7 +107,9 @@ class RGroupGa : public GaBase {
 
   int numberDecompositions() const { return numberDecomps; }
 
-  vector<vector<size_t>> run();
+  GaResult run(int runNumber=1);
+
+  vector<GaResult> runBatch();
 
   shared_ptr<RGroupDecompositionChromosome> createChromosome();
 
@@ -110,8 +120,6 @@ class RGroupGa : public GaBase {
     return operations;
   }
 
-  double getBestScore() const { return population->getBest()->getFitness(); }
-
   unsigned int numberPermutations() const { return numPermutations; }
 
  private:
@@ -120,7 +128,6 @@ class RGroupGa : public GaBase {
   const RGroupDecompData& rGroupData;
   IntegerStringChromosomePolicy chromosomePolicy;
   vector<shared_ptr<GaOperation<RGroupDecompositionChromosome>>> operations;
-  unique_ptr<RGroupGaPopulation> population;
   int numberOperations;
   int numberOperationsWithoutImprovement;
   int chromLength;

@@ -15,6 +15,8 @@
 #include <memory>
 #include <vector>
 #include <map>
+#include <mutex>
+#include <thread>
 
 // #define DEBUG
 
@@ -303,10 +305,15 @@ VarianceDataForLabel::VarianceDataForLabel(const int &label) : label(label) {
   bitCounts = std::vector<int>(fingerprintSize, 0.0);
 }
 
+static std::mutex groupMutex;
+
 // add an rgroup structure to a bit counts array
 void VarianceDataForLabel::addRgroupData(RGroupData *rgroupData) {
   if (rgroupData->fingerprint == nullptr) {
-    addFingerprintToRGroupData(rgroupData);
+    const std::lock_guard<std::mutex> lock(groupMutex);
+    if (rgroupData->fingerprint == nullptr) {
+      addFingerprintToRGroupData(rgroupData);
+    }
   }
   ++numberFingerprints;
   const auto &onBits = rgroupData->fingerprintOnBits;

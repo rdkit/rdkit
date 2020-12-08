@@ -16,6 +16,7 @@
 #include <memory>
 
 #include <GraphMol/SmilesParse/SmilesParse.h>
+#include <GraphMol/SmilesParse/SmilesWrite.h>
 #include <GraphMol/FileParsers/MolWriters.h>
 #include <GraphMol/RGroupDecomposition/RGroupDecomp.h>
 
@@ -45,7 +46,11 @@ int main(int argc, char* argv[]) {
       "randomSeed", options::value<int>()->default_value(-1),
       "Random number seed (-1 for default, -2 for random)")(
       "matchingStrategy", options::value<std::string>()->default_value("GA"),
-      "Matching strategy- GA or GreedyChunks");
+      "Matching strategy- GA or GreedyChunks")(
+      "numberRuns", options::value<int>()->default_value(1),
+      "Number of GA runs")("start", options::value<int>()->default_value(0),
+                           "start")(
+      "batch", options::value<int>()->default_value(10000000), "batch size");
   options::variables_map vm;
   options::store(options::parse_command_line(argc, argv, desc), vm);
   options::notify(vm);
@@ -83,6 +88,14 @@ int main(int argc, char* argv[]) {
                   "O=C1C([*:2])([*:1])[C@@H]2N1C(C(O)=O)C([*:3])([*:4])S2",
                   "O=C1C([*:2])([*:1])[C@@H]2N1C(C(O)=O)C([*:3])([*:4])O2",
                   "O=C1C([*:2])([*:1])C([*:6])([*:5])N1"};
+  } else if (dataset == "beacon") {
+    cerr << "Using Beacon dataset" << endl;
+    file = rdBase + "/Docs/Notebooks/compounds2.txt";
+    coreSmiles = {"N1([*:1])CCN([*:2])CC1", "C1(O[*:1])CCC(O[*:2])CC1",
+                  "C1([*:1])CCC([*:2])CC1"};
+  } else {
+    cerr << "unknown dataset " << dataset;
+    return 1;
   }
 
   vector<shared_ptr<ROMol>> molecules;
@@ -92,7 +105,13 @@ int main(int argc, char* argv[]) {
     string line;
     getline(fh, line);
 
+    int count = 0;
+    int start = vm["start"].as<int>();
+    int batch = vm["batch"].as<int>();
     while (getline(fh, line)) {
+      count++;
+      if (count < start) continue;
+      if (count > start + batch) break;
       int pos = line.find_last_of("\t");
       auto smiles = line.substr(pos + 1);
       shared_ptr<ROMol> mol(SmilesToMol(smiles));
@@ -113,14 +132,13 @@ int main(int argc, char* argv[]) {
       vm["numberOperationsWithoutImprovement"].as<int>();
   parameters.gaPopulationSize = vm["populationSize"].as<int>();
   parameters.gaRandomSeed = vm["randomSeed"].as<int>();
+  parameters.gaNumberRuns = vm["numberRuns"].as<int>();
   auto strategyString = vm["matchingStrategy"].as<string>();
   if (strategyString == "GA") {
     parameters.matchingStrategy = GA;
-  }
-  else if (strategyString == "GreedyChunks") {
+  } else if (strategyString == "GreedyChunks") {
     parameters.matchingStrategy = GreedyChunks;
-  }
-  else {
+  } else {
     cerr << "Unknown matching strategy " << strategyString << endl;
     return 0;
   }
@@ -128,7 +146,12 @@ int main(int argc, char* argv[]) {
 
   int numberAdded(0);
   for (auto& molecule : molecules) {
-    numberAdded = decomposition.add(*molecule);
+    auto added = decomposition.add(*molecule);
+    if (added > -1) {
+      auto smiles = MolToSmiles(*molecule);
+      cerr << "\"" << smiles << "\", " << endl;
+    }
+    numberAdded = std::max(numberAdded, added);
   }
   cerr << "Added " << numberAdded << " compounds to decomposition" << endl;
   auto result = decomposition.processAndScore();

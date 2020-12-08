@@ -15,6 +15,8 @@
 #include <GraphMol/Substruct/SubstructMatch.h>
 #include <chrono>
 
+void testCoresLabelledProperly();
+
 namespace RDKit {
 
 //! Compute the isomorphic degenerative points in the
@@ -99,6 +101,10 @@ struct RDKIT_RGROUPDECOMPOSITION_EXPORT RGroupDecompositionParameters {
   int gaNumberOperationsWithoutImprovement = -1;
   // GA random number seed (-1 for default, -2 for random seed)
   int gaRandomSeed = -1;
+  // Number of runs
+  int gaNumberRuns = 1;
+  // Sequential or parallel runs?
+  bool gaParallelRuns = true;
 
  private:
   int indexOffset{-1};
@@ -110,12 +116,15 @@ typedef std::vector<boost::shared_ptr<ROMol>> RGroupColumn;
 typedef std::vector<RGroupRow> RGroupRows;
 typedef std::map<std::string, RGroupColumn> RGroupColumns;
 
+
 struct RGroupDecompData;
 class RDKIT_RGROUPDECOMPOSITION_EXPORT RGroupDecomposition {
   RGroupDecompData *data;                            // implementation details
   RGroupDecomposition(const RGroupDecomposition &);  // no copy construct
   RGroupDecomposition &operator=(
       const RGroupDecomposition &);  // Prevent assignment
+
+  friend void ::testCoresLabelledProperly();
 
  public:
   RGroupDecomposition(const ROMol &core,

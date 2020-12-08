@@ -58,6 +58,7 @@ struct RGroupDecompData {
   void prepareCores() {
     for (auto &core : cores) {
       RWMol *alignCore = core.first ? cores[0].core.get() : nullptr;
+      BOOST_LOG(rdDebugLog) << "Preparing core " << core.first << std::endl;
       CHECK_INVARIANT(params.prepareCore(*core.second.core, alignCore),
                       "Could not prepare at least one core");
       if (params.onlyMatchAtRGroups) {
@@ -154,9 +155,11 @@ struct RGroupDecompData {
       //  i.e. if core 1 doesn't have R1 then don't analyze it in when looking
       //  at label 1
       std::map<int, std::set<int>> labelCores;  // map from label->cores
+      std::set<int> coresVisited;
       for (auto &position : results) {
         int core_idx = position.core_idx;
-        if (labelCores.find(core_idx) == labelCores.end()) {
+        if (coresVisited.find(core_idx) == coresVisited.end()) {
+          coresVisited.insert(core_idx);
           auto core = cores.find(core_idx);
           if (core != cores.end()) {
             for (auto rlabels : getRlabels(*core->second.core)) {
@@ -508,9 +511,20 @@ struct RGroupDecompData {
       if (ga.numberPermutations() < 10000) {
         params.matchingStrategy = Exhaustive;
       } else {
-        ties = ga.run();
+        if (params.gaNumberRuns > 1) {
+          auto results = ga.runBatch();
+          auto best = max_element(results.begin(), results.end(),
+                                  [](const GaResult &a, const GaResult &b) {
+                                    return a.score < b.score;
+                                  });
+          ties = best->permutations;
+          best_score = best->score;
+        } else {
+          auto result = ga.run();
+          ties = result.permutations;
+          best_score = result.score;
+        }
         best_permutation = ties[0];
-        best_score = ga.getBestScore();
       }
     }
     if (params.matchingStrategy != GA) {
@@ -564,9 +578,9 @@ struct RGroupDecompData {
         ++count;
       }
 
-      BOOST_LOG(rdDebugLog) << " Exhaustive or GreedyChunks process, best score "
-                           << best_score << " permutation size "
-                           << best_permutation.size() << std::endl;
+      BOOST_LOG(rdDebugLog)
+          << "Exhaustive or GreedyChunks process, best score " << best_score
+          << " permutation size " << best_permutation.size() << std::endl;
     }
 
     if (ties.size() > 1) {

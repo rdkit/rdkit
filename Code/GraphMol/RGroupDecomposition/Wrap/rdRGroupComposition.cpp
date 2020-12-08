@@ -288,7 +288,21 @@ struct rgroupdecomp_wrapper {
             "removeHydrogensPostMatch",
             &RDKit::RGroupDecompositionParameters::removeHydrogensPostMatch)
         .def_readwrite("timeout",
-                       &RDKit::RGroupDecompositionParameters::timeout);
+                       &RDKit::RGroupDecompositionParameters::timeout)
+        .def_readwrite("gaPopulationSize",
+                       &RDKit::RGroupDecompositionParameters::gaPopulationSize)
+        .def_readwrite(
+            "gaMaximumOperations",
+            &RDKit::RGroupDecompositionParameters::gaMaximumOperations)
+        .def_readwrite("gaNumberOperationsWithoutImprovement",
+                       &RDKit::RGroupDecompositionParameters::
+                           gaNumberOperationsWithoutImprovement)
+        .def_readwrite("gaRandomSeed",
+                       &RDKit::RGroupDecompositionParameters::gaRandomSeed)
+        .def_readwrite("gaNumberRuns",
+                       &RDKit::RGroupDecompositionParameters::gaNumberRuns)
+        .def_readwrite("gaParallelRuns",
+                       &RDKit::RGroupDecompositionParameters::gaParallelRuns);
 
     python::class_<RDKit::RGroupDecompositionHelper, boost::noncopyable>(
         "RGroupDecomposition", docString.c_str(),

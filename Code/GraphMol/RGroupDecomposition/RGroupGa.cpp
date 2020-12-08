@@ -10,6 +10,7 @@
 
 #include <ctime>
 #include <limits>
+#include <future>
 #include "RGroupGa.h"
 #include "RGroupDecompData.h"
 #include "RGroupDecomp.h"
@@ -230,61 +231,88 @@ std::string timeInfo(const std::clock_t start) {
   return format.str();
 }
 
-vector<vector<size_t>> RGroupGa::run() {
+GaResult RGroupGa::run(int runNumber) {
   auto startTime = clock();
   createOperations();
-  population = unique_ptr<RGroupGaPopulation>(new RGroupGaPopulation(*this));
-  auto format = boost::format(
-                    "Running GA number operations %5d population size %5d "
-                    "number operations without improvement %5d "
-                    "chromosome length %5d %s\n") %
-                numberOperations % getPopsize() %
-                numberOperationsWithoutImprovement % chromLength %
-                timeInfo(startTime);
+  RGroupGaPopulation population{*this};
+  auto format =
+      boost::format(
+          "Running GA run %2d number operations %5d population size %5d "
+          "number operations without improvement %5d "
+          "chromosome length %5d %s\n") %
+      runNumber % numberOperations % getPopsize() %
+      numberOperationsWithoutImprovement % chromLength % timeInfo(startTime);
   BOOST_LOG(rdInfoLog) << format.str();
-  population->create();
-  double bestScore = population->getBestScore();
-  BOOST_LOG(rdInfoLog) << population->info() << endl;
-  BOOST_LOG(rdDebugLog) << population->populationInfo();
+  population.create();
+  double bestScore = population.getBestScore();
+  BOOST_LOG(rdInfoLog) << population.info() << endl;
+  BOOST_LOG(rdDebugLog) << population.populationInfo();
 
   int nOps = 0;
   int lastImprovementOp = 0;
   while (nOps < numberOperations) {
-    population->iterate();
+    population.iterate();
     nOps++;
     if (nOps % 1000 == 0) {
-      BOOST_LOG(rdInfoLog) << population->info() << " " << timeInfo(startTime)
-                           << endl;
+      BOOST_LOG(rdInfoLog) << "Run " << runNumber << " " << population.info() << " "
+                           << timeInfo(startTime) << endl;
     }
-    if (population->getBestScore() > bestScore) {
-      bestScore = population->getBestScore();
+    if (population.getBestScore() > bestScore) {
+      bestScore = population.getBestScore();
       lastImprovementOp = nOps;
-      auto format = boost::format("OP %5d Fit %7.3f %s\n") % nOps % bestScore %
-                    timeInfo(startTime);
+      auto format = boost::format("Run %2d OP %5d Fit %7.3f %s\n") % runNumber %
+                    nOps % bestScore % timeInfo(startTime);
       BOOST_LOG(rdInfoLog) << format.str();
     }
     if (nOps - lastImprovementOp > numberOperationsWithoutImprovement) {
-      BOOST_LOG(rdInfoLog) << "Op " << nOps << " No improvement since "
-                           << lastImprovementOp << " finishing.." << endl;
+      BOOST_LOG(rdInfoLog) << "Run " << runNumber << " Op " << nOps
+                           << " No improvement since " << lastImprovementOp
+                           << " finishing.." << endl;
       break;
     }
     if (t0 && checkForTimeout(*t0, rGroupData.params.timeout)) {
       break;
     }
   }
-  const shared_ptr<RGroupDecompositionChromosome> best = population->getBest();
-  BOOST_LOG(rdDebugLog) << "Best solution " << best->info() << endl;
-  BOOST_LOG(rdDebugLog) << population->populationInfo();
+  const shared_ptr<RGroupDecompositionChromosome> best = population.getBest();
+  BOOST_LOG(rdDebugLog) << "Run " << runNumber << " Best solution " << best->info() << endl;
+  BOOST_LOG(rdDebugLog) << "Run " << runNumber << " " << population.populationInfo();
 
-  auto ties = population->getTiedBest();
-  auto permutations =
-      GarethUtil::mapToNewList<shared_ptr<RGroupDecompositionChromosome>,
-                               vector<size_t>>(
-          ties, [](const shared_ptr<RGroupDecompositionChromosome> c) {
-            return c->getPermutation();
-          });
-  BOOST_LOG(rdInfoLog) << "Execution " << timeInfo(startTime) << std::endl;
-  return permutations;
+  auto ties = population.getTiedBest();
+  vector<vector<size_t>> permutations;
+  permutations.reserve(ties.size());
+  std::transform(ties.cbegin(), ties.cend(), back_inserter(permutations),
+                 [](const shared_ptr<RGroupDecompositionChromosome> c) {
+                   return c->getPermutation();
+                 });
+  BOOST_LOG(rdInfoLog) << "Run " << runNumber << " Execution " << timeInfo(startTime) << std::endl;
+  GaResult result{best->getFitness(), permutations};
+  return result;
+}
+
+vector<GaResult> RGroupGa::runBatch() {
+  int numberRuns = rGroupData.params.gaNumberRuns;
+  vector<GaResult> results;
+  results.reserve(numberRuns);
+
+  if (rGroupData.params.gaParallelRuns) {
+    vector<future<GaResult>> tasks;
+    tasks.reserve(numberRuns);
+    for (int n = 0; n < numberRuns; n++) {
+      auto future = async(launch::async, &RDKit::RGroupGa::run, this, n + 1);
+      tasks.push_back(move(future));
+    }
+
+    std::transform(tasks.begin(), tasks.end(), back_inserter(results),
+                   [](future<GaResult>& f) { return f.get(); });
+  } else {
+    for (int n = 0; n < numberRuns; n++) {
+      auto result = run(n + 1);
+      results.push_back(result);
+    }
+  }
+
+  return results;
 }
 
 shared_ptr<RGroupDecompositionChromosome> RGroupGa::createChromosome() {
