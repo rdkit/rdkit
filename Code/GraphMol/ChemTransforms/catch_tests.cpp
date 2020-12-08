@@ -57,7 +57,8 @@ TEST_CASE("Github #1039", "[]") {
 }
 
 TEST_CASE("molzip", "[]") {
-    SECTION("basic tests") {
+    SECTION("basic tests")
+    /*{
         auto a = "C[*:1]"_smiles;
         auto b = "N[*:1]"_smiles;
         auto mol = molzip(*a,*b);
@@ -79,6 +80,13 @@ TEST_CASE("molzip", "[]") {
         auto mol = molzip(*a,*b);
         CHECK(MolToSmiles(*mol) == "N[C@@H](F)Br");
     }
+    */
+    {
+        auto b = "[C@H](Br)([*:1])F"_smiles;
+        auto a = "[*:1]N"_smiles;
+        auto mol = molzip(*a,*b);
+        CHECK(MolToSmiles(*mol) == "N[C@@H](F)Br");
+    }
     
     {
         auto a = "[C@H]([*:1])(Br)F"_smiles;
@@ -88,11 +96,25 @@ TEST_CASE("molzip", "[]") {
     }
     
     {
+        auto b = "[C@H]([*:1])(Br)F"_smiles;
+        auto a = "[*:1]N"_smiles;
+        auto mol = molzip(*a,*b);
+        CHECK(MolToSmiles(*mol) == "N[C@H](F)Br");
+    }
+    
+    {
            auto a = "[C@H]([*:1])(F)([*:2])"_smiles;
            auto b = "[*:1]N.[*:2]I"_smiles;
            auto mol = molzip(*a,*b);
            CHECK(MolToSmiles(*mol) == "N[C@@H](F)I");
-       }
+    }
+    
+    {
+              auto b = "[C@H]([*:1])(F)([*:2])"_smiles;
+              auto a = "[*:1]N.[*:2]I"_smiles;
+              auto mol = molzip(*a,*b);
+              CHECK(MolToSmiles(*mol) == "N[C@@H](F)I");
+    }
     
     {
         auto m =  "OOO[C@](F)(I)N"_smiles;

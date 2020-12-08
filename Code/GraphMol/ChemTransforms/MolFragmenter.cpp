@@ -599,6 +599,7 @@ ROMol *fragmentOnBRICSBonds(const ROMol &mol) {
 namespace {
 // Get the atom label - this might be useful as a util class
 unsigned int get_label(const Atom *a, const MolzipParams &p) {
+  PRECONDITION(a, "bad atom in MolZip::get_label")
   unsigned int idx = std::numeric_limits<unsigned int>::max(); // 0 is no label?
   switch(p.label) {
   case MolzipLabel::AtomMapNumber:
@@ -626,6 +627,7 @@ unsigned int get_label(const Atom *a, const MolzipParams &p) {
 // Return the connected atom
 //  n.b. There can be only one connection from a mapped atom
 Atom *get_other_atom(Atom *a) {
+  PRECONDITION(a, "null atom in MolZip::get_other_atom");
   auto &m = a->getOwningMol();
   if(m.getAtomDegree(a) != 1)
     return nullptr;
@@ -667,7 +669,8 @@ struct ZipBond {
         if(!chiral_atom->getChiralTag()) {
             return;
         }
-        std::string mark = "mark_" + std::to_string(chiral_atom->getIdx());
+        std::string mark = "__molzip_mark_" + std::to_string(chiral_atom->getIdx());
+        chiral_atom->setProp("__molzip_chiral_mark", mark);
         int order = 0;
         auto &m = chiral_atom->getOwningMol();
         for(auto nbrIdx : boost::make_iterator_range(m.getAtomNeighbors(chiral_atom))) {
@@ -703,7 +706,7 @@ struct ZipBond {
         if(!chiral_atom->getChiralTag()) {
             return;
         }
-        std::string mark = "mark_" + std::to_string(chiral_atom->getIdx());
+        std::string mark = chiral_atom->getProp<std::string>("__molzip_chiral_mark");
         //std::vector<unsigned int> orders1;
         std::vector<unsigned int> orders2;
         auto &m = chiral_atom->getOwningMol();
@@ -808,6 +811,15 @@ std::unique_ptr<ROMol> molzip(
     for(auto &kv : mappings_by_atom) {
         for(auto &bond : kv.second) {
             bond->restore_chirality(already_checked);
+        }
+    }
+    // remove all molzip tags
+    for(auto *atom : newmol->atoms()) {
+        auto propnames = atom->getPropList();
+        for(auto &prop : propnames) {
+            if(prop.find("__molzip") == 0) {
+                atom->clearProp(prop);
+            }
         }
     }
     newmol->updatePropertyCache();
