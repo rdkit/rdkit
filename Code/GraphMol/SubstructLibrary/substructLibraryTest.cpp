@@ -611,21 +611,21 @@ void testPatternHolder() {
   }
 #ifdef RDK_USE_BOOST_SERIALIZATION
   std::string pickle = ssslib1.Serialize();
-  SubstructLibrary serializedV2;
-  serializedV2.initFromString(pickle);
-  TEST_ASSERT(serializedV2.size() == ssslib1.size());
-  SubstructLibrary serializedV1;
+  SubstructLibrary serialized;
+  serialized.initFromString(pickle);
+  TEST_ASSERT(serialized.size() == ssslib1.size());
+  SubstructLibrary serializedLegacy;
   std::string pklName = getenv("RDBASE");
   TEST_ASSERT(!pklName.empty());
   pklName += "/Code/GraphMol/test_data/substructLibV1.pkl";
   std::ifstream pickle_istream(pklName.c_str(), std::ios_base::binary);
-  serializedV1.initFromStream(pickle_istream);
+  serializedLegacy.initFromStream(pickle_istream);
   pickle_istream.close();
-  TEST_ASSERT(serializedV1.size() == serializedV2.size());
+  TEST_ASSERT(serializedLegacy.size() == serialized.size());
   {
-    auto matches1 = serializedV1.getMatches(*query);
+    auto matches1 = serializedLegacy.getMatches(*query);
     std::sort(matches1.begin(), matches1.end());
-    auto matches2 = serializedV2.getMatches(*query);
+    auto matches2 = serialized.getMatches(*query);
     std::sort(matches2.begin(), matches2.end());
     TEST_ASSERT(matches1.size() == matches2.size());
     for (size_t i = 0; i < matches1.size(); ++i) {
@@ -634,7 +634,7 @@ void testPatternHolder() {
   }
   for (size_t i = 0; i < 2; ++i) {
     auto serialized_pattern_holder =
-        dynamic_cast<PatternHolder *>(serializedV1.getFpHolder().get());
+        dynamic_cast<PatternHolder *>(serialized.getFpHolder().get());
     TEST_ASSERT(serialized_pattern_holder);
     auto orig_pattern_holder =
         dynamic_cast<PatternHolder *>(ssslib1.getFpHolder().get());
@@ -646,7 +646,7 @@ void testPatternHolder() {
     }
     orig_pattern_holder->getNumBits() = 1024;
     pickle = ssslib1.Serialize();
-    serializedV1.initFromString(pickle);
+    serialized.initFromString(pickle);
   }
 #endif
 }
