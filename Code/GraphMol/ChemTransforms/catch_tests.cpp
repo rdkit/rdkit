@@ -57,8 +57,7 @@ TEST_CASE("Github #1039", "[]") {
 }
 
 TEST_CASE("molzip", "[]") {
-    SECTION("basic tests")
-    /*{
+    SECTION("basic tests") {
         auto a = "C[*:1]"_smiles;
         auto b = "N[*:1]"_smiles;
         auto mol = molzip(*a,*b);
@@ -80,7 +79,6 @@ TEST_CASE("molzip", "[]") {
         auto mol = molzip(*a,*b);
         CHECK(MolToSmiles(*mol) == "N[C@@H](F)Br");
     }
-    */
     {
         auto b = "[C@H](Br)([*:1])F"_smiles;
         auto a = "[*:1]N"_smiles;
