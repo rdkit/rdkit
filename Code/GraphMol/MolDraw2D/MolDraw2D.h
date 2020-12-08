@@ -719,15 +719,16 @@ class RDKIT_MOLDRAW2D_EXPORT MolDraw2D {
                         const std::map<int, double> *highlight_radii,
                         Point2D &centre, double &xradius,
                         double &yradius) const;
-  // these both assume there is a note on the atom or bond.  That should
-  // have been checked by the calling function. StringRect will have a
-  // width of -1.0 if there's a problem.
-  StringRect calcAnnotationPosition(const ROMol &mol, const Atom *atom);
-  StringRect calcAnnotationPosition(const ROMol &mol, const Bond *bond);
+  // StringRect will have a width of -1.0 if there's a problem.
+  StringRect calcAnnotationPosition(const ROMol &mol, const Atom *atom,
+                                    const std::string &note);
+  StringRect calcAnnotationPosition(const ROMol &mol, const Bond *bond,
+                                    const std::string &note);
   // find where to put the given annotation around an atom.  Starting
   // search at angle start_ang, in degrees.
   void calcAtomAnnotationPosition(const ROMol &mol, const Atom *atom,
-                                  double start_ang, StringRect &rect);
+                                  double start_ang, StringRect &rect,
+                                  const std::string &note);
 
   // draw 1 or more coloured line along bonds
   void drawHighlightedBonds(
@@ -749,6 +750,7 @@ class RDKIT_MOLDRAW2D_EXPORT MolDraw2D {
   void extractAtomNotes(const ROMol &mol);
   void extractBondNotes(const ROMol &mol);
   void extractRadicals(const ROMol &mol);
+  void extractSGroupData(const ROMol &mol);
   void extractBrackets(const ROMol &mol);
 
   // coords in atom coords

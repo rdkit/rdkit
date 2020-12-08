@@ -26,6 +26,8 @@
 #include <Numerics/Matrix.h>
 
 #include <GraphMol/MolTransforms/MolTransforms.h>
+#include <GraphMol/FileParsers/FileParserUtils.h>
+
 #include <Geometry/Transform3D.h>
 
 #include <algorithm>
@@ -1283,6 +1285,8 @@ unique_ptr<RWMol> MolDraw2D::setupDrawMolecule(
       tf.SetTranslation(centroid);
       MolTransforms::transformConformer(conf, tf);
       MolTransforms::transformMolSubstanceGroups(*rwmol, tf);
+      rwmol->setProp("_centroidx", centroid.x);
+      rwmol->setProp("_centroidy", centroid.y);
     }
   }
   ROMol const &draw_mol = rwmol ? *(rwmol) : mol;
@@ -1311,6 +1315,7 @@ unique_ptr<RWMol> MolDraw2D::setupDrawMolecule(
   extractAtomNotes(draw_mol);
   extractBondNotes(draw_mol);
   extractRadicals(draw_mol);
+  extractSGroupData(draw_mol);
   extractBrackets(draw_mol);
 
   if (!activeMolIdx_ && needs_scale_) {
@@ -1615,10 +1620,10 @@ void MolDraw2D::calcLabelEllipse(int atom_idx,
 }
 
 // ****************************************************************************
-StringRect MolDraw2D::calcAnnotationPosition(const ROMol &mol,
-                                             const Atom *atom) {
+StringRect MolDraw2D::calcAnnotationPosition(const ROMol &mol, const Atom *atom,
+                                             const std::string &note) {
+  PRECONDITION(atom, "no atom");
   StringRect note_rect;
-  string note = atom->getProp<string>(common_properties::atomNote);
   if (note.empty()) {
     note_rect.width_ = -1.0;  // so we know it's not valid.
     return note_rect;
@@ -1628,16 +1633,16 @@ StringRect MolDraw2D::calcAnnotationPosition(const ROMol &mol,
   note_rect.trans_.x = at_cds.x;
   note_rect.trans_.y = at_cds.y;
   double start_ang = getNoteStartAngle(mol, atom);
-  calcAtomAnnotationPosition(mol, atom, start_ang, note_rect);
+  calcAtomAnnotationPosition(mol, atom, start_ang, note_rect, note);
 
   return note_rect;
 }
 
 // ****************************************************************************
-StringRect MolDraw2D::calcAnnotationPosition(const ROMol &mol,
-                                             const Bond *bond) {
+StringRect MolDraw2D::calcAnnotationPosition(const ROMol &mol, const Bond *bond,
+                                             const std::string &note) {
+  PRECONDITION(bond, "no bond");
   StringRect note_rect;
-  string note = bond->getProp<string>(common_properties::bondNote);
   if (note.empty()) {
     note_rect.width_ = -1.0;  // so we know it's not valid.
     return note_rect;
@@ -1707,11 +1712,11 @@ StringRect MolDraw2D::calcAnnotationPosition(const ROMol &mol,
 
 // ****************************************************************************
 void MolDraw2D::calcAtomAnnotationPosition(const ROMol &mol, const Atom *atom,
-                                           double start_ang, StringRect &rect) {
+                                           double start_ang, StringRect &rect,
+                                           const std::string &note) {
   Point2D const &at_cds = at_cds_[activeMolIdx_][atom->getIdx()];
   auto const &atsym = atom_syms_[activeMolIdx_][atom->getIdx()];
 
-  string note = atom->getProp<string>(common_properties::atomNote);
   vector<std::shared_ptr<StringRect>> rects;
   vector<TextDrawType> draw_modes;
   vector<char> draw_chars;
@@ -2018,7 +2023,7 @@ void MolDraw2D::extractAtomNotes(const ROMol &mol) {
     std::string note;
     if (atom->getPropIfPresent(common_properties::atomNote, note)) {
       if (!note.empty()) {
-        auto note_rect = calcAnnotationPosition(mol, atom);
+        auto note_rect = calcAnnotationPosition(mol, atom, note);
         if (note_rect.width_ < 0.0) {
           cerr << "Couldn't find good place for note " << note << " for atom "
                << atom->getIdx() << endl;
@@ -2043,7 +2048,7 @@ void MolDraw2D::extractBondNotes(const ROMol &mol) {
     std::string note;
     if (bond->getPropIfPresent(common_properties::bondNote, note)) {
       if (!note.empty()) {
-        auto note_rect = calcAnnotationPosition(mol, bond);
+        auto note_rect = calcAnnotationPosition(mol, bond, note);
         if (note_rect.width_ < 0.0) {
           cerr << "Couldn't find good place for note " << note << " for bond "
                << bond->getIdx() << endl;
@@ -2180,7 +2185,86 @@ void MolDraw2D::extractBrackets(const ROMol &mol) {
       }
     }
   }
-}  // namespace RDKit
+}
+
+// ****************************************************************************
+void MolDraw2D::extractSGroupData(const ROMol &mol) {
+  PRECONDITION(activeMolIdx_ >= 0, "no mol id");
+  PRECONDITION(static_cast<int>(annotations_.size()) > activeMolIdx_,
+               "no space");
+  if (!supportsAnnotations()) {
+    return;
+  }
+  auto &sgs = getSubstanceGroups(mol);
+  if (sgs.empty()) {
+    return;
+  }
+
+  // details of this transformation are in extractAtomCoords
+  double rot = -drawOptions().rotate * M_PI / 180.0;
+  RDGeom::Transform2D tform;
+  tform.SetTransform(Point2D(0.0, 0.0), rot);
+
+  for (const auto &sg : sgs) {
+    std::string typ;
+    if (sg.getPropIfPresent("TYPE", typ) && typ == "DAT") {
+      std::string text;
+      if (sg.getPropIfPresent("FIELDNAME", text)) {
+        text += "=";
+      };
+      if (sg.hasProp("DATAFIELDS")) {
+        STR_VECT dfs = sg.getProp<STR_VECT>("DATAFIELDS");
+        for (const auto &df : dfs) {
+          text += df + "|";
+        }
+        text.pop_back();
+      }
+      if (text.empty()) {
+        continue;
+      }
+      int atomIdx = -1;
+      if (!sg.getAtoms().empty()) {
+        atomIdx = sg.getAtoms()[0];
+      };
+      StringRect rect;
+      std::string fieldDisp;
+      if (sg.getPropIfPresent("FIELDDISP", fieldDisp)) {
+        double xp = FileParserUtils::stripSpacesAndCast<double>(
+            fieldDisp.substr(3, 10));
+        double yp = FileParserUtils::stripSpacesAndCast<double>(
+            fieldDisp.substr(13, 10));
+        Point2D origLoc{xp, yp};
+
+        if (fieldDisp[25] == 'R') {
+          origLoc += mol.getConformer().getAtomPos(atomIdx);
+        } else {
+          if (mol.hasProp("_centroidx")) {
+            Point2D centroid;
+            mol.getProp("_centroidx", centroid.x);
+            mol.getProp("_centroidy", centroid.y);
+            origLoc += centroid;
+          }
+        }
+        tform.TransformPoint(origLoc);
+        rect.trans_ = origLoc;
+      } else if (atomIdx >= 0) {
+        rect = calcAnnotationPosition(mol, mol.getAtomWithIdx(atomIdx), text);
+      } else {
+        BOOST_LOG(rdWarningLog)
+            << "FIELDDISP info not found for DAT SGroup which isn't associated "
+               "with an atom. SGroup will not be rendered."
+            << std::endl;
+        text = "";
+      }
+      if (!text.empty()) {
+        AnnotationType annot;
+        annot.text_ = text;
+        annot.rect_ = rect;
+        annotations_[activeMolIdx_].push_back(annot);
+      }
+    }
+  }
+}
 
 // ****************************************************************************
 void MolDraw2D::drawBond(
