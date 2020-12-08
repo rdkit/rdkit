@@ -619,6 +619,8 @@ unsigned int get_label(const Atom *a, const MolzipParams &p) {
       assert(0);
       idx = 0;
       break;
+  default:
+      CHECK_INVARIANT(0,"bogus MolZipLabel value");
   }
   }
   return idx;
