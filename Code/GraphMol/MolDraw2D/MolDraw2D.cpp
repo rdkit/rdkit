@@ -2209,9 +2209,11 @@ void MolDraw2D::extractSGroupData(const ROMol &mol) {
     std::string typ;
     if (sg.getPropIfPresent("TYPE", typ) && typ == "DAT") {
       std::string text;
-      if (sg.getPropIfPresent("FIELDNAME", text)) {
-        text += "=";
-      };
+      // it seems like we should be rendering FIELDNAME, but
+      // Marvin Sketch, Biovia Draw, and ChemDraw don't do it
+      // if (sg.getPropIfPresent("FIELDNAME", text)) {
+      //   text += "=";
+      // };
       if (sg.hasProp("DATAFIELDS")) {
         STR_VECT dfs = sg.getProp<STR_VECT>("DATAFIELDS");
         for (const auto &df : dfs) {
