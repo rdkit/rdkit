@@ -85,7 +85,6 @@ TEST_CASE("molzip", "[]") {
         auto mol = molzip(*a,*b);
         CHECK(MolToSmiles(*mol) == "N[C@@H](F)Br");
     }
-    
     {
         auto a = "[C@H]([*:1])(Br)F"_smiles;
         auto b = "[*:1]N"_smiles;
@@ -113,7 +112,6 @@ TEST_CASE("molzip", "[]") {
               auto mol = molzip(*a,*b);
               CHECK(MolToSmiles(*mol) == "N[C@@H](F)I");
     }
-    
     {
         auto m =  "OOO[C@](F)(I)N"_smiles;
         std::vector<std::pair<unsigned int, unsigned int>> dummyLabels{{1,1}, {2,2}};

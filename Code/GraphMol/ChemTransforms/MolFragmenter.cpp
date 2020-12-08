@@ -620,7 +620,7 @@ unsigned int get_label(const Atom *a, const MolzipParams &p) {
       idx = 0;
       break;
   default:
-      CHECK_INVARIANT(0,"bogus MolZipLabel value");
+      CHECK_INVARIANT(0,"bogus MolZipLabel value in MolZip::get_label");
   }
   }
   return idx;
@@ -642,8 +642,7 @@ Atom *get_other_atom(Atom *a) {
 
 int num_swaps_to_interconvert(std::vector<unsigned int> &orders) {
     int nswaps = 0;
-    bool seen[orders.size()];
-    memset(seen, 0, sizeof(bool)*orders.size());
+    std::vector<bool> seen(orders.size());
     for(size_t i=0;i<orders.size();++i) {
         if(!seen[i]) {
             auto j = i;

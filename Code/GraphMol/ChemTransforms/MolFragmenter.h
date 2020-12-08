@@ -108,13 +108,10 @@ enum class RDKIT_CHEMTRANSFORMS_EXPORT  MolzipLabel {
     FragmentOnBonds,
     AtomType };
 
-
 struct RDKIT_CHEMTRANSFORMS_EXPORT MolzipParams {
   MolzipLabel label = MolzipLabel::AtomMapNumber;
-  std::vector<std::string> atomSymbols = {};
+  std::vector<std::string> atomSymbols;
 };
-
-
 
 RDKIT_CHEMTRANSFORMS_EXPORT  std::unique_ptr<ROMol> molzip(
     const ROMol &a, const ROMol &b,
