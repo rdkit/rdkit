@@ -679,7 +679,11 @@ BOOST_PYTHON_MODULE(rdMolDraw2D) {
       .def_readwrite(
           "includeRadicals", &RDKit::MolDrawOptions::includeRadicals,
           "include radicals in the drawing (it can be useful to turn this off "
-          "for reactions and queries). Default is true.");
+          "for reactions and queries). Default is true.")
+      .def_readwrite("comicMode", &RDKit::MolDrawOptions::comicMode,
+                     "simulate hand-drawn lines for bonds. When combined with "
+                     "a font like Comic-Sans or Comic-Neue, this gives "
+                     "xkcd-like drawings. Default is false.");
   docString = "Drawer abstract base class";
   python::class_<RDKit::MolDraw2D, boost::noncopyable>(
       "MolDraw2D", docString.c_str(), python::no_init)

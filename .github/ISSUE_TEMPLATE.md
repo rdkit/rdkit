@@ -1,3 +1,7 @@
+<!-- If you have a question, please use either the discussions tab above or the rdkit-discuss mailing list: 
+https://sourceforge.net/p/rdkit/mailman/ -->
+
+
 <!-- Please help us help you: We normally need the information below in order to answer questions or understand bug reports. If you do not provide the information requested we may not be able to help you and will probably close the issue. --> 
 
 **Configuration:**
@@ -23,5 +27,3 @@ rdkit.__version__
 Your code sample here
 ```
 
-<!-- If you have a support question, please use the rdkit-discuss mailing list: 
-https://sourceforge.net/p/rdkit/mailman/ -->

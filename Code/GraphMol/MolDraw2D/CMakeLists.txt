@@ -3,6 +3,24 @@ option(RDK_BUILD_QT_SUPPORT "build support for QT drawing" OFF )
 option(RDK_BUILD_QT_DEMO "build the QT drawing demo" OFF )
 option(RDK_BUILD_CAIRO_SUPPORT "build support for Cairo drawing" OFF )
 option(RDK_BUILD_FREETYPE_SUPPORT "build support for FreeType font handling" ON)
+option(RDK_INSTALL_COMIC_FONTS "download and install comic-neue to maximize the \"utility\" of the comic mode in MolDraw2D" ON)
+
+if(RDK_BUILD_FREETYPE_SUPPORT AND RDK_INSTALL_COMIC_FONTS)
+  set(needDownload "TRUE")
+  if(EXISTS "${RDKit_DataDir}/Fonts/ComicNeue-Regular.ttf")
+    message("${RDKit_DataDir}/Fonts/ComicNeue-Regular.ttf already there, skipping the download")
+    set(needDownload "FALSE")
+  endif()
+  if(needDownload)
+    set(MD5Sum "23ed3f833c1ae0adb141a26b4a30d73e")
+    downloadAndCheckMD5("https://fonts.google.com/download?family=Comic%20Neue"
+          "${CMAKE_CURRENT_SOURCE_DIR}/Comic_Neue.zip"
+          ${MD5Sum})
+    execute_process(COMMAND ${CMAKE_COMMAND} -E tar x
+      ${CMAKE_CURRENT_SOURCE_DIR}/Comic_Neue.zip --format=zip
+      WORKING_DIRECTORY ${RDKit_DataDir}/Fonts)
+  endif(needDownload)
+endif()
 
 rdkit_headers(MolDraw2D.h
   MolDraw2DSVG.h
@@ -26,10 +44,13 @@ target_compile_definitions(MolDraw2D PRIVATE RDKIT_MOLDRAW2D_BUILD)
 
 if(RDK_BUILD_QT_SUPPORT)
   find_package(Qt5 COMPONENTS Widgets OpenGL REQUIRED)
-  target_sources(MolDraw2D PRIVATE MolDraw2DQt.cpp)
-  target_compile_options(MolDraw2D PRIVATE "-std=c++11")
+  target_sources(MolDraw2D PRIVATE MolDraw2DQt.cpp DrawTextQt.cpp)
   target_link_libraries(MolDraw2D PUBLIC Qt5::Widgets Qt5::OpenGL)
-  rdkit_headers(MolDraw2DQt.h DEST GraphMol/MolDraw2D)
+  rdkit_headers(MolDraw2DQt.h DrawTextQt.h DEST GraphMol/MolDraw2D)
+  if(RDK_INSTALL_STATIC_LIBS)
+     target_link_libraries(MolDraw2D_static PUBLIC Qt5::Widgets Qt5::OpenGL)
+     target_sources(MolDraw2D_static PRIVATE MolDraw2DQt.cpp DrawTextQt.cpp)
+  endif()
 endif(RDK_BUILD_QT_SUPPORT)
 
 if(RDK_BUILD_CAIRO_SUPPORT)
@@ -78,13 +99,25 @@ if(RDK_BUILD_FREETYPE_SUPPORT)
     endif()
     rdkit_headers(DrawTextFTCairo.h DEST GraphMol/MolDraw2D)
   endif()
+  if(RDK_BUILD_QT_SUPPORT)
+    target_sources(MolDraw2D PRIVATE DrawTextFTQt.cpp)
+    if(RDK_INSTALL_STATIC_LIBS)
+      target_sources(MolDraw2D_static PRIVATE DrawTextFTQt.cpp)
+    endif()
+    rdkit_headers(DrawTextFTQt.h DEST GraphMol/MolDraw2D)
+  endif()
 endif(RDK_BUILD_FREETYPE_SUPPORT)
 
 rdkit_test(moldraw2DTest1 test1.cpp LINK_LIBRARIES
   MolDraw2D )
 
-rdkit_catch_test(moldraw2DTestCatch catch_tests.cpp LINK_LIBRARIES
+rdkit_catch_test(moldraw2DTestCatch catch_main.cpp catch_tests.cpp LINK_LIBRARIES
   MolDraw2D CIPLabeler )
+
+if(RDK_BUILD_QT_SUPPORT)
+rdkit_catch_test(moldraw2DTestQt catch_qt.cpp LINK_LIBRARIES
+  MolDraw2D )
+endif(RDK_BUILD_QT_SUPPORT)
 
 rdkit_test(moldraw2DRxnTest1 rxn_test1.cpp LINK_LIBRARIES
   MolDraw2D )

@@ -949,7 +949,7 @@ const std::string GetV3000MolFileAtomLine(
     }
   }
 
-  ss << " " << x << " " << y << " " << z;
+  ss << std::fixed << " " << x << " " << y << " " << z << std::defaultfloat;
   ss << " " << atomMapNumber;
 
   // Extra atom properties.

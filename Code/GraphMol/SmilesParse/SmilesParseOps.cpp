@@ -442,6 +442,13 @@ void CloseMolRings(RWMol *mol, bool toleratePartials) {
           CHECK_INVARIANT(bond2->getBeginAtomIdx() == atom2->getIdx(),
                           "bad begin atom");
 
+          // we use the _cxsmilesBondIdx value from the second one, if it's
+          // there
+          if (bond2->hasProp("_cxsmilesBondIdx")) {
+            bond1->setProp("_cxsmilesBondIdx",
+                           bond2->getProp<unsigned int>("_cxsmilesBondIdx"));
+          }
+
           Bond *matchedBond;
 
           // figure out which (if either) bond has a specified type, we'll
@@ -550,6 +557,7 @@ void CleanupAfterParsing(RWMol *mol) {
   }
   for (auto bond : mol->bonds()) {
     bond->clearProp(common_properties::_unspecifiedOrder);
+    bond->clearProp("_cxsmilesBondIdx");
   }
 }
 

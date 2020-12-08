@@ -16,6 +16,7 @@
 
 #include <Geometry/point.h>
 #include <GraphMol/RDKitBase.h>
+#include <GraphMol/MolDraw2D/MolDraw2D.h>
 
 #include <boost/tuple/tuple.hpp>
 #include <boost/format.hpp>
@@ -88,6 +89,20 @@ RDKIT_MOLDRAW2D_EXPORT inline void addBondIndices(const ROMol &mol) {
     bond->setProp(common_properties::bondNote, lab);
   }
 };
+
+RDKIT_MOLDRAW2D_EXPORT std::vector<Point2D> getBracketPoints(
+    const Point2D &p1, const Point2D &p2, const Point2D &refPt,
+    const std::vector<std::pair<Point2D, Point2D>> &bondSegments,
+    double bracketFrac = 0.1);
+RDKIT_MOLDRAW2D_EXPORT void drawShapes(MolDraw2D &drawer,
+                                       const std::vector<MolDrawShape> &shapes);
+
+// there are a several empirically determined constants here.
+RDKIT_MOLDRAW2D_EXPORT std::vector<Point2D> handdrawnLine(
+    Point2D cds1, Point2D cds2, double scale, bool shiftBegin = false,
+    bool shiftEnd = false, unsigned nSteps = 4, double deviation = 0.03,
+    double endShift = 0.5);
+
 }  // namespace MolDraw2D_detail
 }  // namespace RDKit
 

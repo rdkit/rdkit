@@ -16,6 +16,7 @@ from rdkit.Chem.Draw.MolDrawing import MolDrawing, DrawingOptions
 from rdkit.Chem.Draw.rdMolDraw2D import *
 from rdkit.Chem import rdDepictor
 from rdkit import Chem, rdBase
+from rdkit import RDConfig
 
 
 def _getCanvas():
@@ -970,3 +971,8 @@ def DrawRDKitEnv(mol, bondPath, molSize=(150, 150), baseRad=0.3, useSVG=True,
                       **kwargs)
   drawer.FinishDrawing()
   return drawer.GetDrawingText()
+
+
+def SetComicMode(opts):
+  opts.fontFile = os.path.join(RDConfig.RDDataDir, "Fonts", "ComicNeue-Regular.ttf")
+  opts.comicMode = True

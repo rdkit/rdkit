@@ -117,6 +117,10 @@ RDKIT_MOLTRANSFORMS_EXPORT RDGeom::Transform3D *computeCanonicalTransform(
 RDKIT_MOLTRANSFORMS_EXPORT void transformConformer(
     RDKit::Conformer &conf, const RDGeom::Transform3D &trans);
 
+//! Transforms coordinates in a molecule's substance groups
+RDKIT_MOLTRANSFORMS_EXPORT void transformMolSubstanceGroups(
+    RDKit::ROMol &mol, const RDGeom::Transform3D &trans);
+
 //! Canonicalize the orientation of a conformer so that its principal axes
 //! around the specified center point coincide with the x, y, z axes
 /*!

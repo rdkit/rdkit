@@ -749,3 +749,31 @@ TEST_CASE(
     CHECK(m->getBondBetweenAtoms(0, 1)->getIsAromatic());
   }
 }
+
+TEST_CASE("github #3320: incorrect bond properties from CXSMILES",
+          "[cxsmiles][bug]") {
+  SECTION("as reported") {
+    auto m = "[Cl-][Pt++]1([Cl-])NCCN1C1CCCCC1 |C:6.6,3.2,0.0,2.1|"_smiles;
+    REQUIRE(m);
+    std::vector<std::pair<unsigned, unsigned>> bonds = {
+        {0, 1}, {3, 1}, {2, 1}, {6, 1}};
+    for (const auto &pr : bonds) {
+      auto bnd = m->getBondBetweenAtoms(pr.first, pr.second);
+      REQUIRE(bnd);
+      CHECK(bnd->getBondType() == Bond::BondType::DATIVE);
+      CHECK(bnd->getBeginAtomIdx() == pr.first);
+    }
+  }
+  SECTION("as reported") {
+    auto m = "[Cl-][Pt++]1([Cl-])NCC3C2CCCCC2.N13 |C:12.12,3.2,0.0,2.1|"_smiles;
+    REQUIRE(m);
+    std::vector<std::pair<unsigned, unsigned>> bonds = {
+        {0, 1}, {3, 1}, {2, 1}, {12, 1}};
+    for (const auto &pr : bonds) {
+      auto bnd = m->getBondBetweenAtoms(pr.first, pr.second);
+      REQUIRE(bnd);
+      CHECK(bnd->getBondType() == Bond::BondType::DATIVE);
+      CHECK(bnd->getBeginAtomIdx() == pr.first);
+    }
+  }
+}

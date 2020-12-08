@@ -2057,3 +2057,39 @@ M  END
     CHECK(sgs[0].getProp<std::string>("QUERYOP") == "\"");
   }
 }
+
+TEST_CASE("github #3597: Scientific notation in SDF V3000 files", "[bug]") {
+  SECTION("basics") {
+    auto m = R"CTAB(
+  Mrv2020 11302014062D          
+
+  2  1  0  0  0  0            999 V2000
+   -2.8125    1.9196    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -2.0980    2.3321    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+  1  2  1  0  0  0  0
+M  END
+)CTAB"_ctab;
+    REQUIRE(m);
+    m->getConformer().getAtomPos(0).z = 1e-6;
+    m->getConformer().getAtomPos(1).z = 1e-4;
+    auto mb = MolToV3KMolBlock(*m);
+    CHECK(mb.find("1e-06") == std::string::npos);
+  }
+  SECTION("toosmall") {
+    auto m = R"CTAB(
+  Mrv2020 11302014062D          
+
+  2  1  0  0  0  0            999 V2000
+   -2.8125    1.9196    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -2.0980    2.3321    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+  1  2  1  0  0  0  0
+M  END
+)CTAB"_ctab;
+    REQUIRE(m);
+    m->getConformer().getAtomPos(0).z = 1e-17;
+    m->getConformer().getAtomPos(1).z = 1e-4;
+    auto mb = MolToV3KMolBlock(*m);
+    //std::cerr<<mb<<std::endl;
+    CHECK(mb.find("M  V30 1 C -2.812500 1.919600 0.000000 0") != std::string::npos);
+  }
+  }
