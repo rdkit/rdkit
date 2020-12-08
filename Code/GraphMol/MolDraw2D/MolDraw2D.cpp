@@ -2262,6 +2262,8 @@ void MolDraw2D::extractSGroupData(const ROMol &mol) {
         AnnotationType annot;
         annot.text_ = text;
         annot.rect_ = rect;
+        // looks like everybody renders these left justified
+        annot.align_ = TextAlignType::START;
         annotations_[activeMolIdx_].push_back(annot);
       }
     }
