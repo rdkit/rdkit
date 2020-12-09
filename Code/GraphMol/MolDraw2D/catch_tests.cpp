@@ -1641,7 +1641,7 @@ M  END
     REQUIRE(m);
     {
       MolDraw2DSVG drawer(250, 200);
-      drawer.drawMolecule(*m, "smaller molecule");
+      drawer.drawMolecule(*m, "smaller");
       drawer.finishDrawing();
       auto text = drawer.getDrawingText();
       std::ofstream outs("testPositionVariation-4.svg");

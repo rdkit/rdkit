@@ -2235,14 +2235,13 @@ void MolDraw2D::extractVariableBonds(const ROMol &mol) {
         MolDrawShape shp;
         shp.shapeType = MolDrawShapeType::Ellipse;
         shp.lineWidth = 1;
-        shp.lineColour = DrawColour(0.8, 0.8, 0.8, 0.5);
+        shp.lineColour = drawOptions().variableAttachmentColour;
         shp.fill = true;
         auto center = at_cds_[activeMolIdx_][oat];
-        auto p1 = center + Point2D(0.4, 0.4);
-        auto p2 = center - Point2D(0.4, 0.4);
-        shp.points = {p1, p2};
+        Point2D offset{drawOptions().variableAtomRadius,
+                       drawOptions().variableAtomRadius};
+        shp.points = {center + offset, center - offset};
         pre_shapes_[activeMolIdx_].emplace_back(std::move(shp));
-        // shp.points.push_back(at_cds_[activeMolIdx_][oat]);
       }
 
       for (const auto bond : mol.bonds()) {
@@ -2251,14 +2250,20 @@ void MolDraw2D::extractVariableBonds(const ROMol &mol) {
           MolDrawShape shp;
           shp.shapeType = MolDrawShapeType::Polyline;
           shp.lineWidth =
-              lineWidth() * drawOptions().highlightBondWidthMultiplier * 2;
+              lineWidth() * drawOptions().variableBondWidthMultiplier;
           shp.scaleLineWidth = true;
-          shp.lineColour = DrawColour(0.8, 0.8, 0.8, 0.5);
+          shp.lineColour = drawOptions().variableAttachmentColour;
           shp.fill = false;
           shp.points = {at_cds_[activeMolIdx_][bond->getBeginAtomIdx()],
                         at_cds_[activeMolIdx_][bond->getEndAtomIdx()]};
           pre_shapes_[activeMolIdx_].emplace_back(std::move(shp));
         }
+      }
+      // correct the symbol of the end atom (remove it):
+      if (!bond->getBeginAtom()->getAtomicNum()) {
+        std::cerr << " ADJUST " << std::endl;
+        atom_syms_[activeMolIdx_][bond->getBeginAtomIdx()] =
+            std::make_pair("", OrientType::C);
       }
     }
   }

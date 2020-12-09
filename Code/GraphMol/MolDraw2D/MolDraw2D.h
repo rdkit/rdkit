@@ -201,9 +201,9 @@ struct RDKIT_MOLDRAW2D_EXPORT MolDrawOptions {
       false;  // toggles replacing 2H with D and 3H with T
   bool dummiesAreAttachments = false;  // draws "breaks" at dummy atoms
   bool circleAtoms = true;             // draws circles under highlighted atoms
-  DrawColour highlightColour{1, 0.5, 0.5};  // default highlight color
-  bool continuousHighlight = true;          // highlight by drawing an outline
-                                            // *underneath* the molecule
+  DrawColour highlightColour{1, 0.5, 0.5, 1.0};  // default highlight color
+  bool continuousHighlight = true;  // highlight by drawing an outline
+                                    // *underneath* the molecule
   bool fillHighlights = true;     // fill the areas used to highlight atoms and
                                   // atom regions
   double highlightRadius = 0.3;   // default if nothing given for a particular
@@ -216,7 +216,7 @@ struct RDKIT_MOLDRAW2D_EXPORT MolDrawOptions {
   bool clearBackground = true;  // toggles clearing the background before
                                 // drawing a molecule
   DrawColour backgroundColour{
-      1, 1, 1};             // color to be used while clearing the background
+      1, 1, 1, 1};          // color to be used while clearing the background
   int legendFontSize = 16;  // font size (in pixels) to be used for the legend
                             // (if present)
   int maxFontSize = 40;  // maximum size in pixels for font in drawn molecule.
@@ -238,7 +238,7 @@ struct RDKIT_MOLDRAW2D_EXPORT MolDrawOptions {
   std::map<int, std::string> atomLabels;    // replacement labels for atoms
   std::vector<std::vector<int>> atomRegions;  // regions
   DrawColour symbolColour{
-      0, 0, 0};  // color to be used for the symbols and arrows in reactions
+      0, 0, 0, 1};  // color to be used for the symbols and arrows in reactions
   int bondLineWidth = 2;        // default line width when drawing bonds
   bool scaleBondWidth = false;  // whether to apply scale() to the bond width
   bool scaleHighlightBondWidth = true;   // likewise with bond highlights.
@@ -286,6 +286,12 @@ struct RDKIT_MOLDRAW2D_EXPORT MolDrawOptions {
   bool comicMode = false;  // simulate hand-drawn lines for bonds. When combined
                            // with a font like Comic-Sans or Comic-Neue, this
                            // gives xkcd-like drawings.
+  int variableBondWidthMultiplier = 16;  // what to multiply standard bond width
+                                         // by for variable attachment points.
+  double variableAtomRadius = 0.4;  // radius value to use for atoms involved in
+                                    // variable attachment points.
+  DrawColour variableAttachmentColour = {
+      0.8, 0.8, 0.8, 0.5};  // colour to use for variable attachment points
 
   MolDrawOptions() {
     highlightColourPalette.emplace_back(
