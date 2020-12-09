@@ -73,6 +73,7 @@ struct DrawColour {
 enum class MolDrawShapeType {
   Arrow,  // ordering of points is: start, end, p1, p2
   Polyline,
+  Ellipse,
 };
 
 //! extra shape to add to canvas
@@ -82,6 +83,7 @@ struct MolDrawShape {
   DrawColour lineColour{0, 0, 0};
   int lineWidth = 2;
   bool fill = false;
+  bool scaleLineWidth = false;
 };
 
 // for holding dimensions of the rectangle round a string.
@@ -665,7 +667,8 @@ class RDKIT_MOLDRAW2D_EXPORT MolDraw2D {
   std::vector<std::vector<std::pair<std::shared_ptr<StringRect>, OrientType>>>
       radicals_;
   Point2D bbox_[2];
-  std::vector<std::vector<MolDrawShape>> shapes_;
+  std::vector<std::vector<MolDrawShape>> pre_shapes_;
+  std::vector<std::vector<MolDrawShape>> post_shapes_;
 
   // return a DrawColour based on the contents of highlight_atoms or
   // highlight_map, falling back to atomic number by default
@@ -749,6 +752,7 @@ class RDKIT_MOLDRAW2D_EXPORT MolDraw2D {
   void extractAtomNotes(const ROMol &mol);
   void extractBondNotes(const ROMol &mol);
   void extractRadicals(const ROMol &mol);
+  void extractVariableBonds(const ROMol &mol);
   void extractBrackets(const ROMol &mol);
 
   // coords in atom coords
