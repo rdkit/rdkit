@@ -597,27 +597,31 @@ ROMol *fragmentOnBRICSBonds(const ROMol &mol) {
 } // End of MolFragmenter
 
 namespace {
+const unsigned int NOLABEL = std::numeric_limits<unsigned int>::max();
 // Get the atom label - this might be useful as a util class
 unsigned int get_label(const Atom *a, const MolzipParams &p) {
   PRECONDITION(a, "bad atom in MolZip::get_label")
-  unsigned int idx = std::numeric_limits<unsigned int>::max(); // 0 is no label?
+  unsigned int idx = NOLABEL;
   switch(p.label) {
   case MolzipLabel::AtomMapNumber:
-    return a->getAtomMapNum();
+          if(a->getAtomicNum() == 0) {
+              return a->getAtomMapNum();
+          }
   case MolzipLabel::Isotope:
-    return a->getIsotope();
+          if(a->getAtomicNum() == 0) {
+              return a->getIsotope();
+          }
   case MolzipLabel::AtomType: {
     idx = std::distance(p.atomSymbols.begin(),
                         std::find(p.atomSymbols.begin(), p.atomSymbols.end(),
                                   a->getSymbol()));
     if(idx == p.atomSymbols.size()) {
-      idx = 0; // not found since iterator == end()
+        idx = NOLABEL;
     }
     break;
   case MolzipLabel::FragmentOnBonds:
       // shouldn't ever get here
       assert(0);
-      idx = 0;
       break;
   default:
       CHECK_INVARIANT(0,"bogus MolZipLabel value in MolZip::get_label");
@@ -772,25 +776,23 @@ std::unique_ptr<ROMol> molzip(
         }
     } else {
         for(auto *atom : newmol->atoms()) {
-            if (atom->getAtomicNum() == 0) {
-                auto molno = get_label(atom, params);
-                if(molno != std::numeric_limits<unsigned int>::max()) {
-                    auto attached_atom = get_other_atom(atom);
-                    if(mappings.find(molno) == mappings.end()) {
-                        auto &bond = mappings[molno];
-                        assert(!bond.a);
-                        bond.a = attached_atom;
-                        bond.a_dummy = atom;
-                    } else {
-                        auto &bond = mappings[molno];
-                        assert(bond.a);
-                        assert(!bond.b);
-                        bond.b = attached_atom;
-                        bond.b_dummy = atom;
-                        mappings_by_atom[bond.a].push_back(&bond);
-                    }
-                    deletions.push_back(atom);
+            auto molno = get_label(atom, params);
+            if(molno != NOLABEL) {
+                auto attached_atom = get_other_atom(atom);
+                if(mappings.find(molno) == mappings.end()) {
+                    auto &bond = mappings[molno];
+                    assert(!bond.a);
+                    bond.a = attached_atom;
+                    bond.a_dummy = atom;
+                } else {
+                    auto &bond = mappings[molno];
+                    assert(bond.a);
+                    assert(!bond.b);
+                    bond.b = attached_atom;
+                    bond.b_dummy = atom;
+                    mappings_by_atom[bond.a].push_back(&bond);
                 }
+                deletions.push_back(atom);
             }
         }
     }

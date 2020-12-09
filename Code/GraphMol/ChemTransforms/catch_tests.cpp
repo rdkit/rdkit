@@ -57,7 +57,8 @@ TEST_CASE("Github #1039", "[]") {
 }
 
 TEST_CASE("molzip", "[]") {
-    SECTION("basic tests") {
+    SECTION("basic tests")
+    {
         auto a = "C[*:1]"_smiles;
         auto b = "N[*:1]"_smiles;
         auto mol = molzip(*a,*b);
@@ -112,6 +113,17 @@ TEST_CASE("molzip", "[]") {
               auto mol = molzip(*a,*b);
               CHECK(MolToSmiles(*mol) == "N[C@@H](F)I");
     }
+     
+    {
+        auto a = "[C@H]([Xe])(F)([V])"_smiles;
+        auto b = "[Xe]N.[V]I"_smiles;
+        MolzipParams params;
+        params.label = MolzipLabel::AtomType;
+        params.atomSymbols = {"Xe", "V"};
+        auto mol = molzip(*a,*b, params);
+        CHECK(MolToSmiles(*mol) == "N[C@@H](F)I");
+    }
+    
     {
         auto m =  "OOO[C@](F)(I)N"_smiles;
         std::vector<std::pair<unsigned int, unsigned int>> dummyLabels{{1,1}, {2,2}};
@@ -136,4 +148,5 @@ TEST_CASE("molzip", "[]") {
             }
         }
     }
+     
 }
