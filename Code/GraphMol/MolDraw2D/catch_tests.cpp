@@ -1480,6 +1480,16 @@ M  END
       outs << text;
       outs.flush();
     }
+    {  // make sure comic mode doesn't screw this up
+      MolDraw2DSVG drawer(350, 300);
+      drawer.drawOptions().comicMode = true;
+      drawer.drawMolecule(*m, "comic variations");
+      drawer.finishDrawing();
+      auto text = drawer.getDrawingText();
+      std::ofstream outs("testPositionVariation-1b.svg");
+      outs << text;
+      outs.flush();
+    }
   }
   SECTION("multiple") {
     auto m = R"CTAB(

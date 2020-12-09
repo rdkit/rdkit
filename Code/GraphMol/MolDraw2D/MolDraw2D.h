@@ -291,7 +291,7 @@ struct RDKIT_MOLDRAW2D_EXPORT MolDrawOptions {
   double variableAtomRadius = 0.4;  // radius value to use for atoms involved in
                                     // variable attachment points.
   DrawColour variableAttachmentColour = {
-      0.8, 0.8, 0.8, 0.5};  // colour to use for variable attachment points
+      0.8, 0.8, 0.8, 1.0};  // colour to use for variable attachment points
 
   MolDrawOptions() {
     highlightColourPalette.emplace_back(

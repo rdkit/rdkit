@@ -1329,8 +1329,9 @@ unique_ptr<RWMol> MolDraw2D::setupDrawMolecule(
   extractAtomNotes(draw_mol);
   extractBondNotes(draw_mol);
   extractRadicals(draw_mol);
-  if (activeMolIdx_ >= 0 && post_shapes_.size() > activeMolIdx_ &&
-      pre_shapes_.size() > activeMolIdx_) {
+  if (activeMolIdx_ >= 0 &&
+      post_shapes_.size() > static_cast<size_t>(activeMolIdx_) &&
+      pre_shapes_.size() > static_cast<size_t>(activeMolIdx_)) {
     post_shapes_[activeMolIdx_].clear();
     pre_shapes_[activeMolIdx_].clear();
   }
@@ -2259,9 +2260,8 @@ void MolDraw2D::extractVariableBonds(const ROMol &mol) {
           pre_shapes_[activeMolIdx_].emplace_back(std::move(shp));
         }
       }
-      // correct the symbol of the end atom (remove it):
+      // correct the symbol of the end atom (remove the *):
       if (!bond->getBeginAtom()->getAtomicNum()) {
-        std::cerr << " ADJUST " << std::endl;
         atom_syms_[activeMolIdx_][bond->getBeginAtomIdx()] =
             std::make_pair("", OrientType::C);
       }
