@@ -66,8 +66,7 @@ steps:
 - bash: |
     source ${CONDA}/etc/profile.d/conda.sh
     conda activate rdkit_build
-    consta install matplotlib \
-        sphinx=3.1.2 recommonmark 
+    consta install matplotlib sphinx=3.1.2 recommonmark 
     export RDBASE=`pwd`
     export PYTHONPATH=${RDBASE}:${PYTHONPATH}
     export LD_LIBRARY_PATH=${RDBASE}/lib:${LD_LIBRARY_PATH}
