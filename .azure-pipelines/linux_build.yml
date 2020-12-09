@@ -9,8 +9,8 @@ steps:
     conda create --name rdkit_build $(python) cmake \
         boost-cpp=$(boost_version) \
         py-boost=$(boost_version) \
-        numpy matplotlib pillow eigen pandas \
-        sphinx=3.1.2 recommonmark jupyter
+        numpy pillow eigen pandas \
+        jupyter
     conda activate rdkit_build
     conda install -c rdkit nox cairo=1.14.6
   displayName: Setup build environment
@@ -66,6 +66,8 @@ steps:
 - bash: |
     source ${CONDA}/etc/profile.d/conda.sh
     conda activate rdkit_build
+    consta install matplotlib \
+        sphinx=3.1.2 recommonmark 
     export RDBASE=`pwd`
     export PYTHONPATH=${RDBASE}:${PYTHONPATH}
     export LD_LIBRARY_PATH=${RDBASE}/lib:${LD_LIBRARY_PATH}
