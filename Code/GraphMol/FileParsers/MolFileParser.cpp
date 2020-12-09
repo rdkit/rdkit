@@ -2763,7 +2763,7 @@ bool ParseV3000CTAB(std::istream *inStream, unsigned int &line, RWMol *mol,
   conf = new Conformer(nAtoms);
 
   unsigned int nSgroups = 0, n3DConstraints = 0, chiralFlag = 0;
-  (void)chiralFlag;  // needs to be read
+
   if (splitLine.size() > 2) {
     nSgroups = FileParserUtils::toUnsigned(splitLine[2]);
   }
@@ -2772,6 +2772,10 @@ bool ParseV3000CTAB(std::istream *inStream, unsigned int &line, RWMol *mol,
   }
   if (splitLine.size() > 4) {
     chiralFlag = FileParserUtils::toUnsigned(splitLine[4]);
+  }
+
+  if (chiralFlag) {
+    mol->setProp(common_properties::_MolFileChiralFlag, chiralFlag);
   }
 
   if (nAtoms) {
