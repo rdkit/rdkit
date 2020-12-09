@@ -70,5 +70,5 @@ class TestCase(unittest.TestCase):
 
 
 if __name__ == "__main__":
-  app = QApplication(sys.argv)
+  app = QGuiApplication(sys.argv)
   unittest.main()
