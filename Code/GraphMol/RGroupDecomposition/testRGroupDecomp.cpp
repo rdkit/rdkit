@@ -1835,7 +1835,7 @@ void testUnprocessedMapping() {
 
 void testCoresLabelledProperly() {
   // Tests for an error in RGroupDecompositionParameters::prepareCore where
-  // the same unindexed label could be mistakenly givin to multiple rgroups
+  // the same unindexed label could be mistakenly given to multiple rgroups
   // in different cores
 
   // See https://github.com/rdkit/rdkit/pull/3565
