@@ -5,10 +5,14 @@ from rdkit.Chem import Draw, AllChem, rdDepictor
 from rdkit.Chem.Draw import rdMolDraw2D
 
 import sys
-from PyQt5.Qt import *
-import sip
+try:
+  from PyQt5.Qt import *
+  import sip
+except ImportError:
+  sip = None
 
 
+@unittest.skipIf(sip is None, "skipping tests because pyqt is not installed")
 class TestCase(unittest.TestCase):
 
   def setUp(self):
@@ -70,5 +74,6 @@ class TestCase(unittest.TestCase):
 
 
 if __name__ == "__main__":
-  app = QGuiApplication(sys.argv)
+  if sip is not None:
+    app = QGuiApplication(sys.argv)
   unittest.main()

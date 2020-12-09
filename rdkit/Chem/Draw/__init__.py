@@ -150,21 +150,26 @@ def _legacyMolToImage(mol, size, kekulize, wedgeBonds, fitImage, options, canvas
 
 
 if hasattr(rdMolDraw2D, 'MolDraw2DQt'):
-  import sip
-  from PyQt5.Qt import *
+  try:
+    import sip
+    from PyQt5.Qt import *
+  except ImportError:
+    sip = None
 
-  def MolDraw2DFromQPainter(qpainter, width=-1, height=-1, panelWidth=-1, panelHeight=-1):
-    if not isinstance(qpainter, QPainter):
-      raise ValueError("argument must be a QPainter instance")
-    if width <= 0:
-      width = qpainter.viewport().width()
-    if height <= 0:
-      height = qpainter.viewport().height()
-    ptr = sip.unwrapinstance(qpainter)
-    d2d = rdMolDraw2D.MolDraw2DFromQPainter_(width, height, ptr, panelWidth, panelWidth)
-    # tie the lifetime of the QPainter to this MolDraw2D object
-    d2d._qptr = qpainter
-    return d2d
+  if sip is not None:
+
+    def MolDraw2DFromQPainter(qpainter, width=-1, height=-1, panelWidth=-1, panelHeight=-1):
+      if not isinstance(qpainter, QPainter):
+        raise ValueError("argument must be a QPainter instance")
+      if width <= 0:
+        width = qpainter.viewport().width()
+      if height <= 0:
+        height = qpainter.viewport().height()
+      ptr = sip.unwrapinstance(qpainter)
+      d2d = rdMolDraw2D.MolDraw2DFromQPainter_(width, height, ptr, panelWidth, panelWidth)
+      # tie the lifetime of the QPainter to this MolDraw2D object
+      d2d._qptr = qpainter
+      return d2d
 
 
 def MolToImage(mol, size=(300, 300), kekulize=True, wedgeBonds=True, fitImage=False, options=None,

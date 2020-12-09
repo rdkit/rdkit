@@ -550,7 +550,7 @@ void setDrawerColour(RDKit::MolDraw2D &self, python::tuple tpl) {
 #ifdef RDK_BUILD_QT_SUPPORT
 MolDraw2DQt *moldrawFromQPainter(int width, int height, unsigned long ptr,
                                  int panelWidth, int panelHeight) {
-  if(!ptr){
+  if (!ptr) {
     throw_value_error("QPainter pointer is null");
   }
   QPainter *qptr = reinterpret_cast<QPainter *>(ptr);
@@ -887,14 +887,14 @@ BOOST_PYTHON_MODULE(rdMolDraw2D) {
   python::class_<RDKit::MolDraw2DQt, python::bases<RDKit::MolDraw2D>,
                  boost::noncopyable>("MolDraw2DQt", docString.c_str(),
                                      python::no_init);
-  python::def(
-      "MolDraw2DFromQPainter_", RDKit::moldrawFromQPainter,
-      (python::arg("width"), python::arg("height"),
-       python::arg("pointer_to_QPainter"), python::arg("panelWidth") = -1,
-       python::arg("panelHeight") = -1),
-      "Returns a MolDraw2DQt instance set to use a QPainter.\nUse "
-      "sip.unwrapinstance(qptr) to get the required pointer information.",
-      python::return_value_policy<python::manage_new_object>());
+  python::def("MolDraw2DFromQPainter_", RDKit::moldrawFromQPainter,
+              (python::arg("width"), python::arg("height"),
+               python::arg("pointer_to_QPainter"),
+               python::arg("panelWidth") = -1, python::arg("panelHeight") = -1),
+              "Returns a MolDraw2DQt instance set to use a QPainter.\nUse "
+              "sip.unwrapinstance(qptr) to get the required pointer "
+              "information. Please note that this is somewhat fragile.",
+              python::return_value_policy<python::manage_new_object>());
 #endif
   docString =
       "Does some cleanup operations on the molecule to prepare it to draw "
