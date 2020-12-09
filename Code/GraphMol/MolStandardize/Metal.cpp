@@ -148,8 +148,9 @@ void MetalDisconnector::disconnect(RWMol &mol) {
       fcAfterCut = 0;
     }
     a->setFormalCharge(fcAfterCut);
-    if (fcAfterCut == -1 && a->getAtomicNum() == 6 &&
-        valenceAfterCut == static_cast<int>(a->getTotalDegree()) + 2) {
+    if (!it->second.cutBonds ||
+        (fcAfterCut == -1 && a->getAtomicNum() == 6 &&
+         valenceAfterCut == static_cast<int>(a->getTotalDegree()) + 2)) {
       // do not take electrons from the metal if it was a dative bond
       // (e.g., [C-]#[O+] coordinated to metal)
       fcAfterCut = 0;
@@ -177,9 +178,15 @@ void MetalDisconnector::disconnect(RWMol &mol) {
   for (auto it = metalChargeExcess.begin(); it != metalChargeExcess.end();
        ++it) {
     auto a = mol.getAtomWithIdx(it->first);
+    auto currentFc = a->getFormalCharge();
     const auto &valens =
         PeriodicTable::getTable()->getValenceList(a->getAtomicNum());
     int fcAfterCut = it->second;
+    if (currentFc > 0) {
+      // if the original formal charge on the metal was positive, we trust it
+      // and add it to the charge excess
+      fcAfterCut += currentFc;
+    }
     if (!valens.empty() && valens.front() != -1) {
       for (auto v = valens.begin(); v != valens.end(); ++v) {
         if (fcAfterCut > *v) {
@@ -192,10 +199,7 @@ void MetalDisconnector::disconnect(RWMol &mol) {
         }
       }
     }
-    // on the metal, we trust the original formal charge if it was
-    // greater than the value we computed, otherwise we assume it was
-    // wrong and we set it to the value we computed
-    if (fcAfterCut > a->getFormalCharge()) {
+    if (fcAfterCut > currentFc) {
       a->setFormalCharge(fcAfterCut);
     }
     // make sure that radical electrons on metals are 0

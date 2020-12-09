@@ -185,6 +185,27 @@ void testMetalDisconnector() {
   md.disconnect(*m12);
   TEST_ASSERT(MolToSmiles(*m12) == "O.O.[Co+3].[OH-].[OH-]");
 
+  // test that pre-existing formal charges on metals are honored (github #3625)
+  RWMOL_SPTR m13("[Pd+]Cl"_smiles);
+  TEST_ASSERT(m13);
+  md.disconnect(*m13);
+  TEST_ASSERT(MolToSmiles(*m13) == "[Cl-].[Pd+2]");
+
+  RWMOL_SPTR m14("[Al](Cl)(Cl)Cl"_smiles);
+  TEST_ASSERT(m14);
+  md.disconnect(*m14);
+  TEST_ASSERT(MolToSmiles(*m14) == "[Al+3].[Cl-].[Cl-].[Cl-]");
+
+  RWMOL_SPTR m15("[Al+](Cl)Cl"_smiles);
+  TEST_ASSERT(m15);
+  md.disconnect(*m15);
+  TEST_ASSERT(MolToSmiles(*m15) == "[Al+3].[Cl-].[Cl-]");
+
+  RWMOL_SPTR m16("[Al+2]Cl"_smiles);
+  TEST_ASSERT(m16);
+  md.disconnect(*m16);
+  TEST_ASSERT(MolToSmiles(*m16) == "[Al+3].[Cl-]");
+
   BOOST_LOG(rdInfoLog) << "Finished" << std::endl;
 }
 
