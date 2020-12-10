@@ -53,7 +53,7 @@ typedef enum {
 } RGroupLabelling;
 
 typedef enum {
-  // DEPRECATED, remove the folowing line in release 2021.03
+  // DEPRECATED, remove the following line in release 2021.03
   None = 0x0,
   NoAlignment = 0x0,
   MCS = 0x01,
