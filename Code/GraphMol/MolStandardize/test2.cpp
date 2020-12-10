@@ -31,10 +31,9 @@ void test1() {
   MolStandardize::CleanupParameters params;
 
   {
-    std::string smi = "C1=CC=CC=C1";
     //	std::shared_ptr<RWMol> m1( SmilesToMol(smi1) );
-    std::unique_ptr<RWMol> m(SmilesToMol(smi));
-    std::unique_ptr<RWMol> res(cleanup(*m, params));
+    RWMOL_SPTR m = "C1=CC=CC=C1"_smiles;
+    RWMOL_SPTR res(cleanup(*m, params));
     TEST_ASSERT(MolToSmiles(*res) == "c1ccccc1");
   }
 
@@ -50,8 +49,7 @@ void testMetal() {
   BOOST_LOG(rdInfoLog) << "-----------------------\n test metal" << std::endl;
   MetalDisconnector md;
 
-  std::string smi = "CCC(=O)O[Na]";
-  std::unique_ptr<RWMol> m(SmilesToMol(smi));
+  RWMOL_SPTR m = "CCC(=O)O[Na]"_smiles;
   TEST_ASSERT(m);
   md.disconnect(*m);
   TEST_ASSERT(MolToSmiles(*m) == "CCC(=O)[O-].[Na+]");
@@ -65,7 +63,7 @@ void testValidate() {
   {
     RDKitValidation vm;
     std::string smi = "CO(C)C";
-    std::unique_ptr<ROMol> m(SmilesToMol(smi, 0, false));
+    RWMOL_SPTR m(SmilesToMol(smi, 0, false));
     std::vector<ValidationErrorInfo> errout = vm.validate(*m, true);
     for (auto &query : errout) {
       std::string msg = query.what();
@@ -79,7 +77,7 @@ void testValidate() {
   {
     MolVSValidation vm;
     std::string smi = "O=C([O-])c1ccccc1";
-    std::unique_ptr<ROMol> m(SmilesToMol(smi, 0, false));
+    RWMOL_SPTR m(SmilesToMol(smi, 0, false));
     std::vector<ValidationErrorInfo> errout = vm.validate(*m, true);
     for (auto &query : errout) {
       std::string msg = query.what();
@@ -99,8 +97,7 @@ void testValidate() {
     }
 
     AllowedAtomsValidation vm(atomList);
-    std::string smi = "CC(=O)CF";
-    std::unique_ptr<ROMol> m(SmilesToMol(smi));
+    RWMOL_SPTR m = "CC(=O)CF"_smiles;
     std::vector<ValidationErrorInfo> errout = vm.validate(*m, true);
     for (auto &query : errout) {
       std::string msg = query.what();
@@ -120,8 +117,7 @@ void testValidate() {
     }
 
     DisallowedAtomsValidation vm(atomList);
-    std::string smi = "CC(=O)CF";
-    std::unique_ptr<ROMol> m(SmilesToMol(smi));
+    RWMOL_SPTR m = "CC(=O)CF"_smiles;
     std::vector<ValidationErrorInfo> errout = vm.validate(*m, true);
     for (auto &query : errout) {
       std::string msg = query.what();
@@ -136,7 +132,7 @@ void testValidate() {
   {
     MolVSValidation vm;
     std::string smi = "ClCCCl.c1ccccc1O";
-    std::unique_ptr<ROMol> m(SmilesToMol(smi, 0, false));
+    RWMOL_SPTR m(SmilesToMol(smi, 0, false));
     std::vector<ValidationErrorInfo> errout = vm.validate(*m, true);
     for (auto &query : errout) {
       std::string msg = query.what();
@@ -154,8 +150,7 @@ void testCharge() {
 
   // Test table salt.
   {
-    std::string smi = "[Na].[Cl]";
-    std::shared_ptr<ROMol> m(SmilesToMol(smi));
+    RWMOL_SPTR m = "[Na].[Cl]"_smiles;
     ROMOL_SPTR reionized(reionizer.reionize(*m));
     TEST_ASSERT(MolToSmiles(*reionized) == "[Cl-].[Na+]");
   }
@@ -167,17 +162,15 @@ void testCharge() {
 
   // Test neutralization of ionized acids and bases.
   {
-    std::string smi = "C(C(=O)[O-])(Cc1n[n-]nn1)(C[NH3+])(C[N+](=O)[O-])";
-    std::unique_ptr<RWMol> m(SmilesToMol(smi));
-    std::unique_ptr<RWMol> res(MolStandardize::chargeParent(*m, params));
+    RWMOL_SPTR m = "C(C(=O)[O-])(Cc1n[n-]nn1)(C[NH3+])(C[N+](=O)[O-])"_smiles;
+    RWMOL_SPTR res(MolStandardize::chargeParent(*m, params));
     TEST_ASSERT(MolToSmiles(*res) == "NCC(Cc1nn[nH]n1)(C[N+](=O)[O-])C(=O)O");
   }
   //**********************************
   // Testing MolStandardize::reionize
   {
-    std::string smi = "C1=C(C=CC(=C1)[S]([O-])=O)[S](O)(=O)=O";
-    std::unique_ptr<RWMol> m(SmilesToMol(smi));
-    std::unique_ptr<RWMol> res(MolStandardize::reionize(m.get(), params));
+    RWMOL_SPTR m = "C1=C(C=CC(=C1)[S]([O-])=O)[S](O)(=O)=O"_smiles;
+    RWMOL_SPTR res(MolStandardize::reionize(m.get(), params));
     TEST_ASSERT(MolToSmiles(*res) == "O=S(O)c1ccc(S(=O)(=O)[O-])cc1");
     BOOST_LOG(rdInfoLog) << "Finished" << std::endl;
   }
@@ -191,16 +184,14 @@ void testNormalize() {
 
   // Test sulfoxide normalization.
   {
-    std::string smi = "CS(C)=O";
-    std::shared_ptr<ROMol> m(SmilesToMol(smi));
+    RWMOL_SPTR m = "CS(C)=O"_smiles;
     ROMOL_SPTR normalized(normalizer.normalize(*m));
     TEST_ASSERT(MolToSmiles(*normalized) == "C[S+](C)[O-]");
   }
 
   // normalize sulfone.
   {
-    std::string smi = "C[S+2]([O-])([O-])C";
-    std::shared_ptr<ROMol> m(SmilesToMol(smi));
+    RWMOL_SPTR m = "C[S+2]([O-])([O-])C"_smiles;
     ROMOL_SPTR normalized(normalizer.normalize(*m));
     TEST_ASSERT(MolToSmiles(*normalized) == "CS(C)(=O)=O");
     BOOST_LOG(rdInfoLog) << "Finished" << std::endl;
