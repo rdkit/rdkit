@@ -113,7 +113,7 @@ void test1() {
   std::vector<SubstructLibrary*> libs;
   libs.push_back(&ssslib);
 
-#ifdef RDK_USE_BOOST_SERIALIZATION  
+#ifdef RDK_USE_BOOST_SERIALIZATION
   std::string pickle = ssslib.Serialize();
   SubstructLibrary serialized;
   serialized.initFromString(pickle);
@@ -188,7 +188,7 @@ void test2() {
   std::vector<SubstructLibrary*> libs;
   libs.push_back(&ssslib);
 
-#ifdef RDK_USE_BOOST_SERIALIZATION  
+#ifdef RDK_USE_BOOST_SERIALIZATION
   std::string pickle = ssslib.Serialize();
   SubstructLibrary serialized;
   serialized.initFromString(pickle);
@@ -239,7 +239,7 @@ void test3() {
   std::vector<SubstructLibrary*> libs;
   libs.push_back(&ssslib);
 
-#ifdef RDK_USE_BOOST_SERIALIZATION  
+#ifdef RDK_USE_BOOST_SERIALIZATION
   std::string pickle = ssslib.Serialize();
   SubstructLibrary serialized;
   serialized.initFromString(pickle);
@@ -289,7 +289,7 @@ void test4() {
   std::vector<SubstructLibrary*> libs;
   libs.push_back(&ssslib);
 
-#ifdef RDK_USE_BOOST_SERIALIZATION  
+#ifdef RDK_USE_BOOST_SERIALIZATION
   std::string pickle = ssslib.Serialize();
   SubstructLibrary serialized;
   serialized.initFromString(pickle);
@@ -564,6 +564,93 @@ void testMaxResultsAllSameNumThreads() {
   }
 }
 
+void testPatternHolder() {
+  BOOST_LOG(rdErrorLog) << "-------------------------------------" << std::endl;
+  BOOST_LOG(rdErrorLog) << "   testPatternHolder" << std::endl;
+
+  std::string fName = getenv("RDBASE");
+  fName += "/Data/NCI/first_5K.smi";
+  SmilesMolSupplier suppl(fName, "\t", 0, 1, false);
+  boost::shared_ptr<CachedTrustedSmilesMolHolder> mols1(
+      new CachedTrustedSmilesMolHolder());
+  boost::shared_ptr<PatternHolder> fps1(new PatternHolder());
+  SubstructLibrary ssslib1(mols1, fps1);
+  boost::shared_ptr<CachedTrustedSmilesMolHolder> mols2(
+      new CachedTrustedSmilesMolHolder());
+  boost::shared_ptr<PatternHolder> fps2(new PatternHolder());
+  SubstructLibrary ssslib2(mols2, fps2);
+
+  boost::logging::disable_logs("rdApp.error");
+  for (unsigned int i = 0; i < 1000; i += 10) {
+    ROMol *mol = nullptr;
+    try {
+      mol = suppl[i];
+    } catch (...) {
+      continue;
+    }
+    if (!mol) {
+      continue;
+    }
+    mols1->addSmiles(MolToSmiles(*mol));
+    fps1->addFingerprint(fps1->makeFingerprint(*mol));
+    ssslib2.addMol(*mol);
+    delete mol;
+  }
+  boost::logging::enable_logs("rdApp.error");
+  ROMOL_SPTR query(SmartsToMol("N"));
+  TEST_ASSERT(query);
+  {
+    auto matches1 = ssslib1.getMatches(*query);
+    std::sort(matches1.begin(), matches1.end());
+    auto matches2 = ssslib2.getMatches(*query);
+    std::sort(matches2.begin(), matches2.end());
+    TEST_ASSERT(matches1.size() == matches2.size());
+    for (size_t i = 0; i < matches1.size(); ++i) {
+      TEST_ASSERT(matches1.at(i) == matches2.at(i));
+    }
+  }
+#ifdef RDK_USE_BOOST_SERIALIZATION
+  std::string pickle = ssslib1.Serialize();
+  SubstructLibrary serialized;
+  serialized.initFromString(pickle);
+  TEST_ASSERT(serialized.size() == ssslib1.size());
+  SubstructLibrary serializedLegacy;
+  std::string pklName = getenv("RDBASE");
+  TEST_ASSERT(!pklName.empty());
+  pklName += "/Code/GraphMol/test_data/substructLibV1.pkl";
+  std::ifstream pickle_istream(pklName.c_str(), std::ios_base::binary);
+  serializedLegacy.initFromStream(pickle_istream);
+  pickle_istream.close();
+  TEST_ASSERT(serializedLegacy.size() == serialized.size());
+  {
+    auto matches1 = serializedLegacy.getMatches(*query);
+    std::sort(matches1.begin(), matches1.end());
+    auto matches2 = serialized.getMatches(*query);
+    std::sort(matches2.begin(), matches2.end());
+    TEST_ASSERT(matches1.size() == matches2.size());
+    for (size_t i = 0; i < matches1.size(); ++i) {
+      TEST_ASSERT(matches1.at(i) == matches2.at(i));
+    }
+  }
+  for (size_t i = 0; i < 2; ++i) {
+    auto serialized_pattern_holder =
+        dynamic_cast<PatternHolder *>(serialized.getFpHolder().get());
+    TEST_ASSERT(serialized_pattern_holder);
+    auto orig_pattern_holder =
+        dynamic_cast<PatternHolder *>(ssslib1.getFpHolder().get());
+    TEST_ASSERT(orig_pattern_holder);
+    TEST_ASSERT(serialized_pattern_holder->getNumBits() ==
+                orig_pattern_holder->getNumBits());
+    if (i) {
+      break;
+    }
+    orig_pattern_holder->getNumBits() = 1024;
+    pickle = ssslib1.Serialize();
+    serialized.initFromString(pickle);
+  }
+#endif
+}
+
 int main() {
   RDLog::InitLogs();
 #if 1
@@ -574,6 +661,7 @@ int main() {
   docTest();
   ringTest();
   testAddPatterns();
+  testPatternHolder();
 #ifdef RDK_TEST_MULTITHREADED
   testMaxResultsNumThreads();
   testMaxResultsAllSameNumThreads();

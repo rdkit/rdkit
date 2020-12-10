@@ -35,7 +35,7 @@ it is intended to be shallow but broad.
 
 import doctest, unittest, os, sys
 
-from rdkit import RDConfig
+from rdkit import RDConfig, RDLogger
 from rdkit.RDLogger import logger
 logger = logger()
 from rdkit import Chem
@@ -467,6 +467,35 @@ class TestCase(unittest.TestCase):
       self.assertEqual(len(lib.GetMolHolder()), len(lib.GetFpHolder()))
       for smi in pdb_ligands:
         self.assertTrue( lib.CountMatches(Chem.MolFromSmiles(smi)) )
+
+  def test_PatternHolder(self):
+    fname = os.path.join(os.environ["RDBASE"], "Data", "NCI", "first_5K.smi")
+    suppl = Chem.SmilesMolSupplier(fname, delimiter="\t", titleLine=False)
+    mols1 = rdSubstructLibrary.CachedTrustedSmilesMolHolder()
+    fps1 = rdSubstructLibrary.PatternHolder(2048)
+    ssslib1 = rdSubstructLibrary.SubstructLibrary(mols1, fps1)
+    mols2 = rdSubstructLibrary.CachedTrustedSmilesMolHolder()
+    fps2 = rdSubstructLibrary.PatternHolder()
+    ssslib2 = rdSubstructLibrary.SubstructLibrary(mols2, fps2)
+
+    RDLogger.DisableLog('rdApp.error')
+    for i in range(0, 1000, 10):
+      try:
+        mol = suppl[i]
+      except Exception:
+        continue
+      if (not mol):
+        continue
+      mols1.AddSmiles(Chem.MolToSmiles(mol))
+      fps1.AddFingerprint(fps1.MakeFingerprint(mol))
+      ssslib2.AddMol(mol)
+    RDLogger.EnableLog('rdApp.error')
+    query = Chem.MolFromSmarts("N")
+    self.assertIsNotNone(query)
+    matches1 = sorted(ssslib1.GetMatches(query))
+    matches2 = sorted(ssslib2.GetMatches(query))
+    self.assertEqual(len(matches1), len(matches2))
+    self.assertTrue(all([m1 == matches2[i] for i, m1 in enumerate(matches1)]))
 
 if __name__ == '__main__':
   unittest.main()

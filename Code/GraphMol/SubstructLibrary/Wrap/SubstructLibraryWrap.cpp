@@ -95,7 +95,8 @@ const char *CachedTrustedSmilesMolHolderDoc =
     "              the molecules RingInfo is not initialized\n";
 
 const char *PatternHolderDoc =
-    "Holds fingerprints used for filtering of molecules.";
+    "Holds fingerprints with optional, user-defined number of bits (default: "
+    "2048) used for filtering of molecules.";
 const char *SubstructLibraryDoc =
     "SubstructLibrary: This provides a simple API for substructure searching "
     "large datasets\n"
@@ -281,11 +282,13 @@ struct substructlibrary_wrapper {
     python::class_<FPHolderBase, boost::shared_ptr<FPHolderBase>,
                    boost::noncopyable>("FPHolderBase", "", python::no_init)
         .def("__len__", &FPHolderBase::size)
-      
+
         .def("AddMol", &FPHolderBase::addMol,
              "Adds a molecule to the fingerprint database, returns the index "
              "of the new pattern")
-        .def("AddFingerprint", &FPHolderBase::addFingerprint,
+        .def("AddFingerprint",
+             (unsigned int (FPHolderBase::*)(const ExplicitBitVect &)) &
+                 FPHolderBase::addFingerprint,
              "Adds a raw bit vector to the fingerprint database, returns the "
              "index of the supplied pattern")
         .def("GetFingerprint", &FPHolderBase::getFingerprint,
@@ -302,7 +305,8 @@ struct substructlibrary_wrapper {
 
     python::class_<PatternHolder, boost::shared_ptr<PatternHolder>,
                    python::bases<FPHolderBase>>(
-        "PatternHolder", PatternHolderDoc, python::init<>());
+        "PatternHolder", PatternHolderDoc, python::init<>())
+        .def(python::init<unsigned int>());
 
     python::class_<SubstructLibrary, SubstructLibrary *,
                    const SubstructLibrary *>(
@@ -320,7 +324,7 @@ struct substructlibrary_wrapper {
 
         .def("GetMatches",
              (std::vector<unsigned int>(SubstructLibrary::*)(
-                 const ROMol &, bool, bool, bool, int, int)) &
+                 const ROMol &, bool, bool, bool, int, int) const) &
                  SubstructLibrary::getMatches,
              (python::arg("query"), python::arg("recursionPossible") = true,
               python::arg("useChirality") = true,
@@ -335,7 +339,7 @@ struct substructlibrary_wrapper {
         .def("GetMatches",
              (std::vector<unsigned int>(SubstructLibrary::*)(
                  const ROMol &, unsigned int, unsigned int, bool, bool, bool,
-                 int, int)) &
+                 int, int) const) &
                  SubstructLibrary::getMatches,
              (python::arg("query"), python::arg("startIdx"),
               python::arg("endIdx"), python::arg("recursionPossible") = true,
@@ -352,7 +356,7 @@ struct substructlibrary_wrapper {
 
         .def("CountMatches",
              (unsigned int (SubstructLibrary::*)(const ROMol &, bool, bool,
-                                                 bool, int)) &
+                                                 bool, int) const) &
                  SubstructLibrary::countMatches,
              (python::arg("query"), python::arg("recursionPossible") = true,
               python::arg("useChirality") = true,
@@ -366,7 +370,7 @@ struct substructlibrary_wrapper {
         .def("CountMatches",
              (unsigned int (SubstructLibrary::*)(const ROMol &, unsigned int,
                                                  unsigned int, bool, bool, bool,
-                                                 int)) &
+                                                 int) const) &
                  SubstructLibrary::countMatches,
              (python::arg("query"), python::arg("startIdx"),
               python::arg("endIdx"), python::arg("recursionPossible") = true,
@@ -380,22 +384,23 @@ struct substructlibrary_wrapper {
              "  - endIdx:     index (non-inclusize) to search to\n"
              "  - numThreads: number of threads to use, -1 means all threads\n")
 
-        .def(
-            "HasMatch",
-            (bool (SubstructLibrary::*)(const ROMol &, bool, bool, bool, int)) &
-                SubstructLibrary::hasMatch,
-            (python::arg("query"), python::arg("recursionPossible") = true,
-             python::arg("useChirality") = true,
-             python::arg("useQueryQueryMatches") = false,
-             python::arg("numThreads") = -1),
-            "Get the matches for the query.\n\n"
-            " Arguments:\n"
-            "  - query:      substructure query\n"
-            "  - numThreads: number of threads to use, -1 means all threads\n")
+        .def("HasMatch",
+             (bool (SubstructLibrary::*)(const ROMol &, bool, bool, bool, int)
+                  const) &
+                 SubstructLibrary::hasMatch,
+             (python::arg("query"), python::arg("recursionPossible") = true,
+              python::arg("useChirality") = true,
+              python::arg("useQueryQueryMatches") = false,
+              python::arg("numThreads") = -1),
+             "Get the matches for the query.\n\n"
+             " Arguments:\n"
+             "  - query:      substructure query\n"
+             "  - numThreads: number of threads to use, -1 means all threads\n")
 
         .def("HasMatch",
              (bool (SubstructLibrary::*)(const ROMol &, unsigned int,
-                                         unsigned int, bool, bool, bool, int)) &
+                                         unsigned int, bool, bool, bool, int)
+                  const) &
                  SubstructLibrary::hasMatch,
              (python::arg("query"), python::arg("startIdx"),
               python::arg("endIdx"), python::arg("recursionPossible") = true,
