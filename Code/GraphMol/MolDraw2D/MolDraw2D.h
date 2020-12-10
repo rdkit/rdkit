@@ -234,6 +234,8 @@ struct RDKIT_MOLDRAW2D_EXPORT MolDrawOptions {
                                             // around atom labels. Expressed as
                                             // a fraction of the font size.
   std::map<int, std::string> atomLabels;    // replacement labels for atoms
+  bool noAtomLabels =
+      false;  // disables inclusion of atom labels in the rendering
   std::vector<std::vector<int>> atomRegions;  // regions
   DrawColour symbolColour{
       0, 0, 0};  // color to be used for the symbols and arrows in reactions
