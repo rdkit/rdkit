@@ -15,7 +15,9 @@
 #include <GraphMol/Substruct/SubstructMatch.h>
 #include <chrono>
 
+#ifdef RDK_BUILD_CPP_TESTS
 void testCoresLabelledProperly();
+#endif
 
 namespace RDKit {
 
@@ -124,7 +126,9 @@ class RDKIT_RGROUPDECOMPOSITION_EXPORT RGroupDecomposition {
   RGroupDecomposition &operator=(
       const RGroupDecomposition &);  // Prevent assignment
 
+#ifdef RDK_BUILD_CPP_TESTS
   friend void ::testCoresLabelledProperly();
+#endif
 
  public:
   RGroupDecomposition(const ROMol &core,

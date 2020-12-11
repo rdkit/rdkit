@@ -87,11 +87,17 @@ class RGroupDecompositionChromosome : public IntegerStringChromosome {
 };
 
 struct GaResult {
-  const double score;
-  const vector<vector<size_t>> permutations;
+  double score;
+  vector<vector<size_t>> permutations;
 
-  GaResult(const double score, const vector<vector<size_t>> permutations)
+  GaResult(const double score, const vector<vector<size_t>>& permutations)
       : score(score), permutations(permutations) {}
+
+  GaResult() {}
+
+  // Copy constructor required by MSVC for future<GaResult>
+  GaResult& operator=(const GaResult& other);
+
 };
 
 class RGroupGa : public GaBase {

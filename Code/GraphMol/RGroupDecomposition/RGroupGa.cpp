@@ -77,6 +77,15 @@ void RGroupDecompositionChromosome::copyGene(
   copyVarianceData(parent.labelsToVarianceData, labelsToVarianceData);
 }
 
+GaResult& GaResult::operator=(const GaResult& other) {
+  if (&other == this) {
+    return *this;
+  }
+  score = other.score;
+  permutations = other.permutations;
+  return *this;
+}
+
 RGroupGa::RGroupGa(const RGroupDecompData& rGroupData,
                    const chrono::steady_clock::time_point* const t0)
     : rGroupData(rGroupData),
