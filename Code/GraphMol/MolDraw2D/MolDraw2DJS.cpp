@@ -98,8 +98,8 @@ void MolDraw2DJS::drawPolygon(const std::vector<Point2D> &cds) {
     Point2D ci = getDrawCoords(cds[i]);
     d_context.call<void>("lineTo", std::round(ci.x), std::round(ci.y));
   }
-  d_context.call<void>("closePath");
   if (fillPolys()) {
+    d_context.call<void>("closePath");
     d_context.set("fillStyle", col);
     d_context.call<void>("fill");
   }
