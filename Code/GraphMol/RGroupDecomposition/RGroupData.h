@@ -56,8 +56,7 @@ struct RGroupData {
               std::inserter(attachments, attachments.end()));
 
     mols.push_back(newMol);
-    std::string smi = MolToSmiles(*newMol, true);
-    smilesVect.emplace_back(smi);
+    smilesVect.emplace_back(MolToSmiles(*newMol, true));
     if (!combinedMol.get()) {
       combinedMol = boost::shared_ptr<RWMol>(new RWMol(*mols[0].get()));
     } else {

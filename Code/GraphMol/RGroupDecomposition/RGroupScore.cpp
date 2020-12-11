@@ -53,25 +53,18 @@ double score(const std::vector<size_t> &permutation,
       std::cerr << " " << rg->second->combinedMol->getNumAtoms(false)
                 << " score: " << count << std::endl;
 #endif
-      for (size_t posStart = 0, i = 0; posStart < rg->second->smiles.size(); ++i) {
-        size_t posEnd = rg->second->smiles.find('.', posStart);
-        size_t posStartNext = 0;
-        if (posEnd != std::string::npos) {
-          posStartNext = posEnd + 1;
-          posEnd -= posStart;
-        } else {
-          posStartNext = rg->second->smiles.size();
-        }
+      size_t i = 0;
+      for (const auto &smiles : rg->second->smilesVect) {
         if (i == matchSetVect.size()) {
           matchSetVect.resize(i + 1);
         }
-        unsigned int &count = matchSetVect[i][rg->second->smiles.substr(posStart, posEnd)];
+        unsigned int &count = matchSetVect[i][smiles];
         ++count;
 #ifdef DEBUG
         std::cerr << " Linker Score: "
                   << linkerMatchSet[rg->second->attachments] << std::endl;
 #endif
-        posStart = posStartNext;
+        ++i;
       }
     }
     
