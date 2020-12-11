@@ -4275,24 +4275,29 @@ void testGithub1028() {
   BOOST_LOG(rdInfoLog) << "Testing github issue #1028: Alternating canonical "
                           "SMILES for ring with chiral N"
                        << std::endl;
-
+  // note that due to the changes made for #3631, the N's originally used in
+  // these tests are no longer considered to be chiral. I switched to using P
+  // (and verified that P was also a problem before #1028 was fixed)
   {
-    const std::string smi = "O[C@H]1CC2CCC(C1)[N@@]2C";
-    const std::string ref = "C[N@]1C2CCC1C[C@H](O)C2";
+    std::string smi = "O[C@H]1CC2CCC(C1)[P@@]2C";
+    const std::string ref = "C[P@]1C2CCC1C[C@H](O)C2";
     for (int i = 0; i < 3; ++i) {
       const auto mol = std::unique_ptr<ROMol>(SmilesToMol(smi));
       TEST_ASSERT(mol);
       const std::string out = MolToSmiles(*mol);
       TEST_ASSERT(out == ref);
+      smi = out;
     }
 
     {
-      const std::string smi = "C[N@]1C[C@@H](O)C1";
+      std::string smi = "C[P@]1C[C@@H](O)C1";
+      const std::string ref = smi;
       for (int i = 0; i < 3; ++i) {
         const auto mol = std::unique_ptr<ROMol>(SmilesToMol(smi));
         TEST_ASSERT(mol);
         const std::string out = MolToSmiles(*mol);
-        TEST_ASSERT(out == smi);
+        TEST_ASSERT(out == ref);
+        smi = out;
       }
     }
   }
