@@ -1220,15 +1220,17 @@ TEST_CASE(
     bool flagPossible = true;
     bool force = true;
     {
+      RWMol mol2(*mol);
       auto stereoInfo =
-          Chirality::findPotentialStereo(*mol, cleanIt, flagPossible);
+          Chirality::findPotentialStereo(mol2, cleanIt, flagPossible);
       CHECK(stereoInfo.size() == 0);
     }
     {
-      MolOps::assignStereochemistry(*mol, cleanIt, force, flagPossible);
-      CHECK(mol->getAtomWithIdx(1)->getChiralTag() ==
+      RWMol mol2(*mol);
+      MolOps::assignStereochemistry(mol2, cleanIt, force, flagPossible);
+      CHECK(mol2.getAtomWithIdx(1)->getChiralTag() ==
             Atom::ChiralType::CHI_UNSPECIFIED);
-      CHECK(mol->getAtomWithIdx(3)->getChiralTag() ==
+      CHECK(mol2.getAtomWithIdx(3)->getChiralTag() ==
             Atom::ChiralType::CHI_UNSPECIFIED);
     }
   }
@@ -1245,15 +1247,17 @@ TEST_CASE(
     CHECK(mol->getAtomWithIdx(3)->getChiralTag() ==
           Atom::ChiralType::CHI_UNSPECIFIED);
     {
+      RWMol mol2(*mol);
       auto stereoInfo =
-          Chirality::findPotentialStereo(*mol, cleanIt, flagPossible);
+          Chirality::findPotentialStereo(mol2, cleanIt, flagPossible);
       CHECK(stereoInfo.size() == 0);
     }
     {
-      MolOps::assignStereochemistry(*mol, cleanIt, force);
-      CHECK(mol->getAtomWithIdx(1)->getChiralTag() ==
+      RWMol mol2(*mol);
+      MolOps::assignStereochemistry(mol2, cleanIt, force, flagPossible);
+      CHECK(mol2.getAtomWithIdx(1)->getChiralTag() ==
             Atom::ChiralType::CHI_UNSPECIFIED);
-      CHECK(mol->getAtomWithIdx(3)->getChiralTag() ==
+      CHECK(mol2.getAtomWithIdx(3)->getChiralTag() ==
             Atom::ChiralType::CHI_UNSPECIFIED);
     }
   }
@@ -1264,16 +1268,18 @@ TEST_CASE(
     bool flagPossible = true;
     bool force = true;
     {
+      RWMol mol2(*mol);
       auto stereoInfo =
-          Chirality::findPotentialStereo(*mol, cleanIt, flagPossible);
+          Chirality::findPotentialStereo(mol2, cleanIt, flagPossible);
       CHECK(stereoInfo.size() == 1);
       CHECK(stereoInfo[0].centeredOn == 3);
     }
     {
-      MolOps::assignStereochemistry(*mol, cleanIt, force);
-      CHECK(mol->getAtomWithIdx(1)->getChiralTag() ==
+      RWMol mol2(*mol);
+      MolOps::assignStereochemistry(mol2, cleanIt, force, flagPossible);
+      CHECK(mol2.getAtomWithIdx(1)->getChiralTag() ==
             Atom::ChiralType::CHI_UNSPECIFIED);
-      CHECK(mol->getAtomWithIdx(3)->getChiralTag() !=
+      CHECK(mol2.getAtomWithIdx(3)->getChiralTag() !=
             Atom::ChiralType::CHI_UNSPECIFIED);
     }
   }

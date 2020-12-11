@@ -1402,10 +1402,37 @@ std::pair<bool, bool> isAtomPotentialChiralCenter(
     // ranks:
     if (atom->getTotalDegree() < 3) {
       legalCenter = false;
-    } else if (atom->getDegree() == 3 && atom->getAtomicNum() == 7 &&
-               !mol.getRingInfo()->isAtomInRingOfSize(atom->getIdx(), 3)) {
+    } else if (atom->getDegree() < 3 &&
+               (atom->getAtomicNum() != 15 && atom->getAtomicNum() != 33)) {
+      // less than three neighbors is never stereogenic
+      // unless it is a phosphine/arsine with implicit H (this is from InChI)
       legalCenter = false;
-    } else {
+    } else if (atom->getDegree() == 3 && atom->getTotalNumHs() != 1) {
+      // assume something that's really three coordinate isn't potentially
+      // chiral, then look for exceptions
+      legalCenter = false;
+      if (atom->getAtomicNum() == 7) {
+        if (mol.getRingInfo()->isAtomInRingOfSize(atom->getIdx(), 3)) {
+          // three-coordinate N is only stereogenic if it's in a 3-ring (this is
+          // from InChI)
+          legalCenter = true;
+        }
+      } else if (atom->getAtomicNum() == 15 || atom->getAtomicNum() == 33) {
+        // three-coordinate phosphines and arsines
+        // are always treated as stereogenic even with H atom neighbors.
+        // (this is from InChI)
+        legalCenter = true;
+      } else if (atom->getAtomicNum() == 16 || atom->getAtomicNum() == 34) {
+        if (atom->getExplicitValence() == 4 ||
+            (atom->getExplicitValence() == 3 && atom->getFormalCharge() == 1)) {
+          // we also accept sulfur or selenium with either a positive charge
+          // or a double bond:
+          legalCenter = true;
+        }
+      }
+    }
+
+    if (legalCenter) {
       boost::dynamic_bitset<> codesSeen(mol.getNumAtoms());
       ROMol::OEDGE_ITER beg, end;
       boost::tie(beg, end) = mol.getAtomBonds(atom);
@@ -1423,43 +1450,6 @@ std::pair<bool, bool> isAtomPotentialChiralCenter(
         codesSeen[ranks[otherIdx]] = 1;
         nbrs.push_back(std::make_pair(ranks[otherIdx], mol[*beg]->getIdx()));
         ++beg;
-      }
-
-      // figure out if this is a legal chiral center or not:
-      if (!hasDupes) {
-        if (nbrs.size() < 3 &&
-            (atom->getAtomicNum() != 15 && atom->getAtomicNum() != 33)) {
-          // less than three neighbors is never stereogenic
-          // unless it is a phosphine/arsine with implicit H
-          legalCenter = false;
-        } else if (atom->getAtomicNum() == 15 || atom->getAtomicNum() == 33) {
-          // from logical flow: nbrs.size is 3 or 4, or 2 (implicit H)
-          // Since InChI Software v. 1.02-standard (2009), phosphines and
-          // arsines are always treated as stereogenic even with H atom
-          // neighbors. Accept automatically.
-          legalCenter = true;
-        } else if (nbrs.size() == 3) {
-          // three-coordinate with a single H we'll accept automatically:
-          if (atom->getTotalNumHs() != 1) {
-            // otherwise we default to not being a legal center
-            legalCenter = false;
-            // but there are a few special cases we'll accept
-            // sulfur or selenium with either a positive charge or a double
-            // bond:
-            if ((atom->getAtomicNum() == 16 || atom->getAtomicNum() == 34) &&
-                (atom->getExplicitValence() == 4 ||
-                 (atom->getExplicitValence() == 3 &&
-                  atom->getFormalCharge() == 1))) {
-              legalCenter = true;
-            } else if (atom->getAtomicNum() == 7 &&
-                       mol.getRingInfo()->isAtomInRingOfSize(atom->getIdx(),
-                                                             3)) {
-              // N in a three-membered ring is another one of the InChI special
-              // cases
-              legalCenter = true;
-            }
-          }
-        }
       }
     }
   }
@@ -1498,6 +1488,7 @@ std::pair<bool, bool> assignAtomChiralCodes(ROMol &mol, UINT_VECT &ranks,
       }
       Chirality::INT_PAIR_VECT nbrs;
       bool legalCenter, hasDupes;
+      // note that hasDupes is only evaluated if legalCenter==true
       boost::tie(legalCenter, hasDupes) =
           isAtomPotentialChiralCenter(atom, mol, ranks, nbrs);
       if (legalCenter) {
