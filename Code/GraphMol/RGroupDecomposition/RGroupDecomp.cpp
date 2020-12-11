@@ -56,12 +56,12 @@ const std::string CORE = "Core";
 const std::string RPREFIX = "R";
 
 namespace {
-void ADD_MATCH(R_DECOMP &match, int rlabel) {                                                                                     
-  if (match.find(rlabel) == match.end()) {                                                                                        
-    match[rlabel] = boost::make_shared<RGroupData>();                                                                             
-  }                                                                                                                               
-} 
+void ADD_MATCH(R_DECOMP &match, int rlabel) {
+  if (match.find(rlabel) == match.end()) {
+    match[rlabel] = boost::make_shared<RGroupData>();
+  }
 }
+}  // namespace
 
 RGroupDecomposition::RGroupDecomposition(
     const ROMol &inputCore, const RGroupDecompositionParameters &params)
@@ -299,9 +299,7 @@ int RGroupDecomposition::add(const ROMol &inmol) {
   return data->matches.size() - 1;
 }
 
-bool RGroupDecomposition::process() {
-  return processAndScore().success;
-}
+bool RGroupDecomposition::process() { return processAndScore().success; }
 
 RGroupDecompositionProcessResult RGroupDecomposition::processAndScore() {
   try {
@@ -375,7 +373,8 @@ RGroupColumns RGroupDecomposition::getRGroupsAsColumns() const {
       CHECK_INVARIANT(rgroup.second->combinedMol->hasProp(done),
                       "Not done! Call process()");
 
-      CHECK_INVARIANT(!Rs_seen[rgrp_pos_map[realLabel->second]], "R group label appears multiple times!");
+      CHECK_INVARIANT(!Rs_seen[rgrp_pos_map[realLabel->second]],
+                      "R group label appears multiple times!");
       Rs_seen.set(rgrp_pos_map[realLabel->second]);
       std::string r = RPREFIX + std::to_string(realLabel->second);
       RGroupColumn &col = groups[r];

@@ -97,7 +97,6 @@ struct GaResult {
 
   // Copy constructor required by MSVC for future<GaResult>
   GaResult& operator=(const GaResult& other);
-
 };
 
 class RGroupGa : public GaBase {
@@ -113,7 +112,7 @@ class RGroupGa : public GaBase {
 
   int numberDecompositions() const { return numberDecomps; }
 
-  GaResult run(int runNumber=1);
+  GaResult run(int runNumber = 1);
 
   vector<GaResult> runBatch();
 

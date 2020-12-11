@@ -388,6 +388,9 @@ LinkedPopLinearSel<Chromosome, PopulationPolicy>::getTiedBest(
   --iter;
   while (std::fabs(iter->first - bestScore) < tolerance) {
     ties.push_back(iter->second);
+    if (iter == population.begin()) {
+      break;
+    }
     --iter;
   }
 
