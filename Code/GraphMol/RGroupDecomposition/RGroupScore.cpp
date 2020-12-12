@@ -17,7 +17,7 @@ namespace RDKit {
 double score(const std::vector<size_t> &permutation,
              const std::vector<std::vector<RGroupMatch>> &matches,
              const std::set<int> &labels) {
-  double score = 1.;
+  double score = 0.;
 
 #ifdef DEBUG
   std::cerr << "---------------------------------------------------"
@@ -31,54 +31,66 @@ double score(const std::vector<size_t> &permutation,
 #ifdef DEBUG
     std::cerr << "Label: " << l << std::endl;
 #endif
-    std::map<std::string, unsigned int> matchSet;
+    std::vector<std::map<std::string, unsigned int>> matchSetVect;
     std::map<std::set<int>, int> linkerMatchSet;
 
     for (size_t m = 0; m < permutation.size(); ++m) {  // for each molecule
       auto rg = matches[m][permutation[m]].rgroups.find(l);
-      if (rg != matches[m][permutation[m]].rgroups.end()) {
+      if (rg == matches[m][permutation[m]].rgroups.end()) {
+        continue;
+      }
+      if (rg->second->is_linker) {
+        ++linkerMatchSet[rg->second->attachments];
 #ifdef DEBUG
         std::cerr << "  combined: " << MolToSmiles(*rg->second->combinedMol)
                   << std::endl;
         std::cerr << " RGroup: " << rg->second->smiles << " "
-                  << rg->second->is_hydrogen << std::endl;;
+                  << rg->second->is_hydrogen << std::endl;
+        ;
 #endif
-        unsigned int &count = matchSet[rg->second->smiles];
+      }
+#ifdef DEBUG
+      std::cerr << " " << rg->second->combinedMol->getNumAtoms(false)
+                << " score: " << count << std::endl;
+#endif
+      size_t i = 0;
+      for (const auto &smiles : rg->second->smilesVect) {
+        if (i == matchSetVect.size()) {
+          matchSetVect.resize(i + 1);
+        }
+        unsigned int &count = matchSetVect[i][smiles];
         ++count;
 #ifdef DEBUG
-        std::cerr << " " << rg->second->combinedMol->getNumAtoms(false)
-                  << " score: " << count << std::endl;
+        std::cerr << " Linker Score: "
+                  << linkerMatchSet[rg->second->attachments] << std::endl;
 #endif
-        if (rg->second->is_linker) {
-          ++linkerMatchSet[rg->second->attachments];
-#ifdef DEBUG
-          std::cerr << " Linker Score: "
-                    << linkerMatchSet[rg->second->attachments] << std::endl;
-#endif
-        }
+        ++i;
       }
     }
     
-    // get the counts for each rgroup found and sort in reverse order
-    std::vector<unsigned int> equivalentRGroupCount;
-
-    std::transform(
-        matchSet.begin(), matchSet.end(),
-        std::back_inserter(equivalentRGroupCount),
-        [](const std::pair<std::string, unsigned int> &p) { return p.second; });
-    std::sort(equivalentRGroupCount.begin(), equivalentRGroupCount.end(),
-              std::greater<unsigned int>());
-
     double tempScore = 0.;
-    // score the sets from the largest to the smallest
-    // each smaller set gets penalized (i+1) below
-    for (size_t i = 0; i < equivalentRGroupCount.size(); ++i) {
-      auto lscore = static_cast<double>(equivalentRGroupCount[i]) /
-                    static_cast<double>(((i + 1) * matches.size()));
-      tempScore += lscore * lscore;
+    for (const auto &matchSet : matchSetVect) {
+      // get the counts for each rgroup found and sort in reverse order
+      std::vector<unsigned int> equivalentRGroupCount;
+
+      std::transform(
+          matchSet.begin(), matchSet.end(),
+          std::back_inserter(equivalentRGroupCount),
+          [](const std::pair<std::string, unsigned int> &p) { return p.second; });
+      std::sort(equivalentRGroupCount.begin(), equivalentRGroupCount.end(),
+                std::greater<unsigned int>());
+
+      // score the sets from the largest to the smallest
+      // each smaller set gets penalized (i+1) below
+      for (size_t i = 0; i < equivalentRGroupCount.size(); ++i) {
+        auto lscore = static_cast<double>(equivalentRGroupCount[i]) /
+                      static_cast<double>(((i + 1) * matches.size()));
+        tempScore += lscore * lscore;
 #ifdef DEBUG
-      std::cerr << "    lscore^2 " << i << ": " << lscore * lscore << std::endl;
+        std::cerr << "    lscore^2 " << i << ": " << lscore * lscore
+                  << std::endl;
 #endif
+      }
     }
 
     // overweight linkers with the same attachments points....

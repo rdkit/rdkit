@@ -93,10 +93,12 @@ bool RGroupDecompositionParameters::prepareCore(RWMol &core,
     autoLabels = autoGetLabels(core);
     if (!autoLabels) {
       BOOST_LOG(rdWarningLog) << "RGroupDecomposition auto detect found no "
-                                 "rgroups and onlyMatAtRgroups is set to true"
+                                 "rgroups and onlyMatchAtRgroups is set to true"
                               << std::endl;
       return false;
     }
+  } else if (!onlyMatchAtRGroups) {
+    autoLabels |= AtomIndexLabels;
   }
 
   int maxLabel = 1;

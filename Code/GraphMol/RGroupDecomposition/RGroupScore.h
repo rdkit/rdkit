@@ -42,13 +42,15 @@ struct CartesianProduct {
     return increment(0);
   }
 
-  size_t value() {
+  size_t value(const std::vector<size_t> &p) {
     size_t v = 0;
-    for (size_t i = 0; i < permutation.size(); ++i) {
-      v += bases[i] * permutation[i];
+    for (size_t i = 0; i < p.size(); ++i) {
+      v += bases[i] * p[i];
     }
     return v;
   }
+
+  size_t value() { return value(permutation); }
 
   bool increment(size_t rowToIncrement) {
     if (permutationCount > maxPermutations) {

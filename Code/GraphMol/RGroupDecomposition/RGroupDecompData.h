@@ -340,7 +340,7 @@ struct RGroupDecompData {
         if (rgroup.first >= 0) {
           userLabels.insert(rgroup.first);
         }
-        if (rgroup.first < 0) {
+        if (rgroup.first < 0 && !params.onlyMatchAtRGroups) {
           indexLabels.insert(rgroup.first);
         }
 
@@ -376,25 +376,33 @@ struct RGroupDecompData {
 
   // compute the number of rgroups that would be added if we
   //  accepted this permutation
-  size_t compute_num_added_rgroups(
-      const std::vector<size_t> &tied_permutation,
-      std::vector<int> &heavy_counts) {
+  size_t compute_num_added_rgroups(const std::vector<size_t> &tied_permutation,
+                                   const std::vector<int> &ordered_labels,
+                                   std::vector<int> &heavy_counts) {
+    // heavy_counts is a vector which has the same size of labels
+    // for each label we add an increment if a molecule
+    // bears an R-group at that label. The increment has opposite
+    // sign to the label
     size_t i = 0;
     size_t num_added_rgroups = 0;
     heavy_counts.resize(labels.size(), 0);
-    for (int label : labels) {
-      int incr = (label > 0) ? -1 : 1;
+
+    for (int label : ordered_labels) {
       bool incremented = false;
       for (size_t m = 0; m < tied_permutation.size();
            ++m) {  // for each molecule
+        // for each molecule, check if we add an R-group at this negative label
+        // if we do, count it once. So we know how many different negative labels
+        // we have filled: we prefer permutations which fill less, as it means we
+        // have added less groups on different positions
         auto rg = matches[m][tied_permutation[m]].rgroups.find(label);
         if (rg != matches[m][tied_permutation[m]].rgroups.end() &&
             !rg->second->is_hydrogen) {
-          if (label <= 0 && !incremented) {
+          if (label < 0 && !incremented) {
             incremented = true;
             ++num_added_rgroups;
           }
-          heavy_counts[i] += incr;
+          ++heavy_counts[i];
         }
       }
       ++i;
@@ -403,7 +411,7 @@ struct RGroupDecompData {
   }
 
   bool process(bool pruneMatches, bool finalize = false) {
-    if (matches.size() == 0) {
+    if (matches.empty()) {
       return false;
     }
     auto t0 = std::chrono::steady_clock::now();
@@ -458,24 +466,34 @@ struct RGroupDecompData {
     }
 
     if (ties.size() > 1) {
-      size_t min_perm_value = 0;
+      size_t max_perm_value = 0;
       size_t smallest_added_rgroups = labels.size();
+      std::vector<int> largest_heavy_counts(labels.size(), 0);
+      std::vector<int> ordered_labels;
+      std::copy_if(labels.begin(), labels.end(),
+                   std::back_inserter(ordered_labels),
+                   [](const int &i) { return !(i < 0); });
+      std::copy_if(labels.begin(), labels.end(),
+                   std::back_inserter(ordered_labels),
+                   [](const int &i) { return (i < 0); });
       for (const auto &tied_permutation : ties) {
         std::vector<int> heavy_counts;
-        std::vector<int> largest_heavy_counts(labels.size(), 0);
-        size_t num_added_rgroups =
-            compute_num_added_rgroups(tied_permutation, heavy_counts);
+        size_t num_added_rgroups = compute_num_added_rgroups(
+            tied_permutation, ordered_labels, heavy_counts);
+        size_t perm_value = iterator.value(tied_permutation);
         if (num_added_rgroups < smallest_added_rgroups) {
           smallest_added_rgroups = num_added_rgroups;
+          largest_heavy_counts = heavy_counts;
+          max_perm_value = perm_value;
           best_permutation = tied_permutation;
         } else if (num_added_rgroups == smallest_added_rgroups) {
-          if (heavy_counts < largest_heavy_counts) {
+          if (heavy_counts > largest_heavy_counts) {
             largest_heavy_counts = heavy_counts;
+            max_perm_value = perm_value;
             best_permutation = tied_permutation;
           } else if (heavy_counts == largest_heavy_counts) {
-            size_t perm_value = iterator.value();
-            if (perm_value < min_perm_value) {
-              min_perm_value = perm_value;
+            if (perm_value > max_perm_value) {
+              max_perm_value = perm_value;
               best_permutation = tied_permutation;
             }
           }
