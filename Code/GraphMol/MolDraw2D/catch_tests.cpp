@@ -1619,3 +1619,226 @@ M  END)CTAB"_ctab;
     }
   }
 }
+
+TEST_CASE("position variation bonds", "[extras]") {
+  SECTION("simple") {
+    auto m = R"CTAB(
+  Mrv2014 12092006072D          
+
+  0  0  0     0  0            999 V3000
+M  V30 BEGIN CTAB
+M  V30 COUNTS 9 8 0 0 0
+M  V30 BEGIN ATOM
+M  V30 1 C -4.7083 4.915 0 0
+M  V30 2 C -6.042 4.145 0 0
+M  V30 3 C -6.042 2.605 0 0
+M  V30 4 C -4.7083 1.835 0 0
+M  V30 5 C -3.3747 2.605 0 0
+M  V30 6 C -3.3747 4.145 0 0
+M  V30 7 * -3.8192 3.8883 0 0
+M  V30 8 O -3.8192 6.1983 0 0
+M  V30 9 C -2.4855 6.9683 0 0
+M  V30 END ATOM
+M  V30 BEGIN BOND
+M  V30 1 1 1 2
+M  V30 2 2 2 3
+M  V30 3 1 3 4
+M  V30 4 2 4 5
+M  V30 5 1 5 6
+M  V30 6 2 1 6
+M  V30 7 1 7 8 ENDPTS=(3 1 6 5) ATTACH=ANY
+M  V30 8 1 8 9
+M  V30 END BOND
+M  V30 END CTAB
+M  END
+)CTAB"_ctab;
+    REQUIRE(m);
+    {
+      MolDraw2DSVG drawer(350, 300);
+      drawer.drawMolecule(*m, "variations");
+      drawer.finishDrawing();
+      auto text = drawer.getDrawingText();
+      std::ofstream outs("testPositionVariation-1.svg");
+      outs << text;
+      outs.flush();
+    }
+    {  // make sure comic mode doesn't screw this up
+      MolDraw2DSVG drawer(350, 300);
+      drawer.drawOptions().comicMode = true;
+      drawer.drawMolecule(*m, "comic variations");
+      drawer.finishDrawing();
+      auto text = drawer.getDrawingText();
+      std::ofstream outs("testPositionVariation-1b.svg");
+      outs << text;
+      outs.flush();
+    }
+  }
+  SECTION("multiple") {
+    auto m = R"CTAB(
+  Mrv2014 12092006082D          
+
+  0  0  0     0  0            999 V3000
+M  V30 BEGIN CTAB
+M  V30 COUNTS 15 14 0 0 0
+M  V30 BEGIN ATOM
+M  V30 1 C -4.7083 4.915 0 0
+M  V30 2 C -6.042 4.145 0 0
+M  V30 3 C -6.042 2.605 0 0
+M  V30 4 C -4.7083 1.835 0 0
+M  V30 5 C -3.3747 2.605 0 0
+M  V30 6 C -3.3747 4.145 0 0
+M  V30 7 * -3.8192 3.8883 0 0
+M  V30 8 O -3.8192 6.1983 0 0
+M  V30 9 C -2.4855 6.9683 0 0
+M  V30 10 C -7.3757 4.915 0 0
+M  V30 11 C -8.7093 4.145 0 0
+M  V30 12 C -8.7093 2.605 0 0
+M  V30 13 C -7.3757 1.835 0 0
+M  V30 14 * -8.7093 3.375 0 0
+M  V30 15 O -10.2922 3.375 0 0
+M  V30 END ATOM
+M  V30 BEGIN BOND
+M  V30 1 1 1 2
+M  V30 2 1 2 3
+M  V30 3 1 3 4
+M  V30 4 2 4 5
+M  V30 5 1 5 6
+M  V30 6 2 1 6
+M  V30 7 1 7 8 ENDPTS=(3 1 6 5) ATTACH=ANY
+M  V30 8 1 8 9
+M  V30 9 1 10 11
+M  V30 10 2 11 12
+M  V30 11 1 12 13
+M  V30 12 2 10 2
+M  V30 13 2 13 3
+M  V30 14 1 14 15 ENDPTS=(2 11 12) ATTACH=ANY
+M  V30 END BOND
+M  V30 END CTAB
+M  END
+)CTAB"_ctab;
+    REQUIRE(m);
+    {
+      MolDraw2DSVG drawer(350, 300);
+      drawer.drawMolecule(*m, "multiple variations");
+      drawer.finishDrawing();
+      auto text = drawer.getDrawingText();
+      std::ofstream outs("testPositionVariation-2.svg");
+      outs << text;
+      outs.flush();
+    }
+  }
+  SECTION("non-contiguous") {
+    auto m = R"CTAB(
+  Mrv2014 12092006102D          
+
+  0  0  0     0  0            999 V3000
+M  V30 BEGIN CTAB
+M  V30 COUNTS 9 8 0 0 0
+M  V30 BEGIN ATOM
+M  V30 1 C -0.875 8.7484 0 0
+M  V30 2 C -2.2087 7.9784 0 0
+M  V30 3 C -2.2087 6.4383 0 0
+M  V30 4 C -0.875 5.6683 0 0
+M  V30 5 C 0.4587 6.4383 0 0
+M  V30 6 C 0.4587 7.9784 0 0
+M  V30 7 * -0.4304 6.9517 0 0
+M  V30 8 O -0.4304 4.6417 0 0
+M  V30 9 C -1.7641 3.8717 0 0
+M  V30 END ATOM
+M  V30 BEGIN BOND
+M  V30 1 1 1 2
+M  V30 2 2 2 3
+M  V30 3 1 3 4
+M  V30 4 2 4 5
+M  V30 5 1 5 6
+M  V30 6 2 1 6
+M  V30 7 1 7 8 ENDPTS=(3 1 5 4) ATTACH=ANY
+M  V30 8 1 8 9
+M  V30 END BOND
+M  V30 END CTAB
+M  END
+)CTAB"_ctab;
+    REQUIRE(m);
+    {
+      MolDraw2DSVG drawer(350, 300);
+      drawer.drawMolecule(*m, "non-contiguous atoms");
+      drawer.finishDrawing();
+      auto text = drawer.getDrawingText();
+      std::ofstream outs("testPositionVariation-3.svg");
+      outs << text;
+      outs.flush();
+    }
+  }
+  SECTION("larger mol") {
+    auto m = R"CTAB(
+  Mrv2014 12092009152D          
+
+  0  0  0     0  0            999 V3000
+M  V30 BEGIN CTAB
+M  V30 COUNTS 23 24 0 0 0
+M  V30 BEGIN ATOM
+M  V30 1 C -0.875 8.7484 0 0
+M  V30 2 C -2.2087 7.9784 0 0
+M  V30 3 C -2.2087 6.4383 0 0
+M  V30 4 C -0.875 5.6683 0 0
+M  V30 5 N 0.4587 6.4383 0 0
+M  V30 6 C 0.4587 7.9784 0 0
+M  V30 7 * -0.4304 6.9517 0 0
+M  V30 8 O -0.4304 4.6417 0 0
+M  V30 9 C -1.7641 3.8717 0 0
+M  V30 10 C -3.5423 8.7484 0 0
+M  V30 11 C -4.876 7.9784 0 0
+M  V30 12 C -4.876 6.4383 0 0
+M  V30 13 C -3.5423 5.6683 0 0
+M  V30 14 C -4.876 11.0584 0 0
+M  V30 15 C -6.2097 10.2884 0 0
+M  V30 16 C -6.2097 8.7484 0 0
+M  V30 17 C -3.5423 10.2884 0 0
+M  V30 18 C -6.2097 13.3685 0 0
+M  V30 19 C -7.5433 12.5985 0 0
+M  V30 20 C -7.5433 11.0584 0 0
+M  V30 21 C -4.876 12.5985 0 0
+M  V30 22 * -5.5428 9.1334 0 0
+M  V30 23 C -7.3712 7.7304 0 0
+M  V30 END ATOM
+M  V30 BEGIN BOND
+M  V30 1 1 1 2
+M  V30 2 2 2 3
+M  V30 3 1 3 4
+M  V30 4 2 4 5
+M  V30 5 1 5 6
+M  V30 6 2 1 6
+M  V30 7 1 7 8 ENDPTS=(3 1 4 5) ATTACH=ANY
+M  V30 8 1 8 9
+M  V30 9 2 10 11
+M  V30 10 1 11 12
+M  V30 11 2 12 13
+M  V30 12 1 10 2
+M  V30 13 1 13 3
+M  V30 14 1 14 15
+M  V30 15 2 15 16
+M  V30 16 2 14 17
+M  V30 17 1 10 17
+M  V30 18 1 16 11
+M  V30 19 1 18 19
+M  V30 20 2 19 20
+M  V30 21 2 18 21
+M  V30 22 1 14 21
+M  V30 23 1 20 15
+M  V30 24 1 22 23 ENDPTS=(2 15 11) ATTACH=ANY
+M  V30 END BOND
+M  V30 END CTAB
+M  END
+)CTAB"_ctab;
+    REQUIRE(m);
+    {
+      MolDraw2DSVG drawer(250, 200);
+      drawer.drawMolecule(*m, "smaller");
+      drawer.finishDrawing();
+      auto text = drawer.getDrawingText();
+      std::ofstream outs("testPositionVariation-4.svg");
+      outs << text;
+      outs.flush();
+    }
+  }
+}
