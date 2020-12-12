@@ -3347,10 +3347,12 @@ pair<string, OrientType> MolDraw2D::getAtomSymbolAndOrientation(
 // ****************************************************************************
 string MolDraw2D::getAtomSymbol(const RDKit::Atom &atom,
                                 OrientType orientation) const {
+  if (drawOptions().noAtomLabels) {
+    return "";
+  }
   // adds XML-like annotation for super- and sub-script, in the same manner
   // as MolDrawing.py. My first thought was for a LaTeX-like system,
   // obviously...
-
   string symbol;
   bool literal_symbol = true;
   unsigned int iso = atom.getIsotope();

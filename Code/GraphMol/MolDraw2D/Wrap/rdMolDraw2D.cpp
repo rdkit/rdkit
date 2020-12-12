@@ -692,6 +692,8 @@ BOOST_PYTHON_MODULE(rdMolDraw2D) {
                      &RDKit::MolDrawOptions::additionalAtomLabelPadding,
                      "additional padding to leave around atom labels. "
                      "Expressed as a fraction of the font size.")
+      .def_readwrite("noAtomLabels", &RDKit::MolDrawOptions::noAtomLabels,
+                     "disables inclusion of atom labels in the rendering")
       .def_readwrite("explicitMethyl", &RDKit::MolDrawOptions::explicitMethyl,
                      "Draw terminal methyls explictly.  Default is false.")
       .def_readwrite(

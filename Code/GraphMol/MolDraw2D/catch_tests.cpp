@@ -1842,3 +1842,20 @@ M  END
     }
   }
 }
+
+TEST_CASE("disable atom labels", "[feature]") {
+  SECTION("basics") {
+    auto m = "NCC(=O)O"_smiles;
+    MolDraw2DSVG drawer(350, 300);
+    MolDraw2DUtils::prepareMolForDrawing(*m);
+    drawer.drawOptions().noAtomLabels = true;
+    drawer.drawMolecule(*m);
+    drawer.finishDrawing();
+    auto text = drawer.getDrawingText();
+    std::ofstream outs("testNoAtomLabels-1.svg");
+    outs << text;
+    outs.flush();
+    CHECK(text.find("atom-0") == std::string::npos);
+    CHECK(text.find("atom-3") == std::string::npos);
+  }
+}
