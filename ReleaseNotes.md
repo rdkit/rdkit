@@ -1,3 +1,32 @@
+# Release_2020.09.3
+(Changes relative to Release_2020.09.2)
+
+## Acknowledgements
+Ivan Chernyshov, David Cosgrove, James Gayvert, Mark Mackey, Philippe Schwaller, 
+Ricardo Rodriguez-Schmidt, Paolo Tosco, Piotr Wawrzyniak, James Gayvert
+
+## Bug Fixes:
+  - Error in ChemAxon SMILES "parsing"
+ (github #3320 from IvanChernyshov)
+  - Error adding PNG metadata when kekulize=False
+ (github #3543 from gayverjr)
+  - rdMolDraw2D, problems during generation of pictures from SMARTS, differences between Cairo and SVG
+ (github #3572 from wopozka)
+  - Get MolDraw2DQt working again
+ (github #3592 from greglandrum)
+  - Scientific notation in SDF V3000 files
+ (github #3597 from mark-cresset)
+  - Fix: add missing python wrappers for MolDraw2DQt
+ (github #3613 from greglandrum)
+  - V3K mol block parser not saving the chiral flag
+ (github #3620 from greglandrum)
+  - Inconsistent metal disconnectors
+ (github #3625 from pschwllr)
+  - Ring stereochemistry not properly removed from N atoms
+ (github #3631 from greglandrum)
+  - moldraw2djs should not close all polygonal paths
+ (github #3634 from greglandrum)
+
 # Release_2020.09.2
 (Changes relative to Release_2020.09.1)
 
