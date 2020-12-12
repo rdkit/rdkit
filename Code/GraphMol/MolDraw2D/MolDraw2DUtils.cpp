@@ -147,6 +147,7 @@ void updateDrawerParamsFromJSON(MolDraw2D &drawer, const std::string &json) {
   PT_OPT_GET(multipleBondOffset);
   PT_OPT_GET(padding);
   PT_OPT_GET(additionalAtomLabelPadding);
+  PT_OPT_GET(noAtomLabels);
   PT_OPT_GET(bondLineWidth);
   PT_OPT_GET(scaleBondWidth);
   PT_OPT_GET(scaleHighlightBondWidth);
