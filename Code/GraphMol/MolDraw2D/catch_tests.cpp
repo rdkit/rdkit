@@ -1437,3 +1437,185 @@ TEST_CASE("github #3543: Error adding PNG metadata when kekulize=False",
   }
 }
 #endif
+
+TEST_CASE("SGroup Data") {
+  SECTION("ABS") {
+    auto m = R"CTAB(
+  Mrv2014 12072015352D          
+
+  0  0  0     0  0            999 V3000
+M  V30 BEGIN CTAB
+M  V30 COUNTS 9 9 1 0 0
+M  V30 BEGIN ATOM
+M  V30 1 C -6.5833 4.3317 0 0
+M  V30 2 C -7.917 3.5617 0 0
+M  V30 3 C -7.917 2.0216 0 0
+M  V30 4 C -6.5833 1.2516 0 0
+M  V30 5 C -5.2497 2.0216 0 0
+M  V30 6 C -5.2497 3.5617 0 0
+M  V30 7 C -3.916 4.3317 0 0
+M  V30 8 O -3.916 5.8717 0 0
+M  V30 9 O -2.5823 3.5617 0 0
+M  V30 END ATOM
+M  V30 BEGIN BOND
+M  V30 1 1 1 2
+M  V30 2 2 2 3
+M  V30 3 1 3 4
+M  V30 4 2 4 5
+M  V30 5 1 5 6
+M  V30 6 2 1 6
+M  V30 7 1 6 7
+M  V30 8 2 7 8
+M  V30 9 1 7 9
+M  V30 END BOND
+M  V30 BEGIN SGROUP
+M  V30 1 DAT 0 ATOMS=(1 9) FIELDNAME=pKa -
+M  V30 FIELDDISP="   -2.2073    2.3950    DAU   ALL  0       0" -
+M  V30 MRV_FIELDDISP=0 FIELDDATA=4.2
+M  V30 END SGROUP
+M  V30 END CTAB
+M  END
+)CTAB"_ctab;
+    REQUIRE(m);
+    {
+      MolDraw2DSVG drawer(350, 300);
+      drawer.drawMolecule(*m, "abs");
+      drawer.finishDrawing();
+      auto text = drawer.getDrawingText();
+      std::ofstream outs("testSGroupData-1a.svg");
+      outs << text;
+      outs.flush();
+    }
+    {
+      MolDraw2DSVG drawer(350, 300);
+      drawer.drawOptions().centreMoleculesBeforeDrawing = true;
+      drawer.drawOptions().rotate = 90;
+      drawer.drawMolecule(*m, "centered, rotated");
+      drawer.finishDrawing();
+      auto text = drawer.getDrawingText();
+      std::ofstream outs("testSGroupData-1b.svg");
+      outs << text;
+      outs.flush();
+    }
+  }
+  SECTION("REL") {
+    auto m = R"CTAB(
+  Mrv2014 12072015352D          
+
+  0  0  0     0  0            999 V3000
+M  V30 BEGIN CTAB
+M  V30 COUNTS 9 9 1 0 0
+M  V30 BEGIN ATOM
+M  V30 1 C -6.5833 4.3317 0 0
+M  V30 2 C -7.917 3.5617 0 0
+M  V30 3 C -7.917 2.0216 0 0
+M  V30 4 C -6.5833 1.2516 0 0
+M  V30 5 C -5.2497 2.0216 0 0
+M  V30 6 C -5.2497 3.5617 0 0
+M  V30 7 C -3.916 4.3317 0 0
+M  V30 8 O -3.916 5.8717 0 0
+M  V30 9 O -2.5823 3.5617 0 0
+M  V30 END ATOM
+M  V30 BEGIN BOND
+M  V30 1 1 1 2
+M  V30 2 2 2 3
+M  V30 3 1 3 4
+M  V30 4 2 4 5
+M  V30 5 1 5 6
+M  V30 6 2 1 6
+M  V30 7 1 6 7
+M  V30 8 2 7 8
+M  V30 9 1 7 9
+M  V30 END BOND
+M  V30 BEGIN SGROUP
+M  V30 1 DAT 0 ATOMS=(1 9) FIELDNAME=pKa -
+M  V30 FIELDDISP="    0.2000    0.2000    DRU   ALL  0       0" -
+M  V30 MRV_FIELDDISP=0 FIELDDATA=4.2
+M  V30 END SGROUP
+M  V30 END CTAB
+M  END
+)CTAB"_ctab;
+    REQUIRE(m);
+    {
+      MolDraw2DSVG drawer(350, 300);
+      drawer.drawMolecule(*m, "rel");
+      drawer.finishDrawing();
+      auto text = drawer.getDrawingText();
+      std::ofstream outs("testSGroupData-2a.svg");
+      outs << text;
+      outs.flush();
+    }
+    {
+      MolDraw2DSVG drawer(350, 300);
+      drawer.drawOptions().centreMoleculesBeforeDrawing = true;
+      drawer.drawOptions().rotate = 90;
+      drawer.drawMolecule(*m, "rel, centered, rotated");
+      drawer.finishDrawing();
+      auto text = drawer.getDrawingText();
+      std::ofstream outs("testSGroupData-2b.svg");
+      outs << text;
+      outs.flush();
+    }
+  }
+  {
+    auto m = R"CTAB(random example found on internet
+   JSDraw204221719232D
+
+ 20 21  0  0  0  0              0 V2000
+   10.1710   -5.6553    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   10.9428   -4.2996    0.0000 N   0  0  0  0  0  0  0  0  0  0  0  0
+    8.6110   -5.6647    0.0000 O   0  0  0  0  0  0  0  0  0  0  0  0
+   10.9591   -7.0015    0.0000 N   0  0  0  0  0  0  0  0  0  0  0  0
+   12.5190   -6.9921    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   13.3072   -8.3384    0.0000 O   0  0  0  0  0  0  0  0  0  0  0  0
+   13.2909   -5.6364    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   12.5028   -4.2902    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   13.2746   -2.9345    0.0000 O   0  0  0  0  0  0  0  0  0  0  0  0
+   14.8508   -5.6270    0.0000 N   0  0  0  0  0  0  0  0  0  0  0  0
+   15.6226   -4.2713    0.0000 N   0  0  0  0  0  0  0  0  0  0  0  0
+   20.3026   -4.2431    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   19.5307   -5.5987    0.0000 N   0  0  0  0  0  0  0  0  0  0  0  0
+   21.8625   -4.2336    0.0000 O   0  0  0  0  0  0  0  0  0  0  0  0
+   19.5144   -2.8968    0.0000 N   0  0  0  0  0  0  0  0  0  0  0  0
+   17.9544   -2.9062    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   17.1663   -1.5600    0.0000 O   0  0  0  0  0  0  0  0  0  0  0  0
+   17.1826   -4.2619    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   17.9708   -5.6082    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   17.1989   -6.9638    0.0000 O   0  0  0  0  0  0  0  0  0  0  0  0
+  1  2  1  0  0  0  0
+  1  3  2  0  0  0  0
+  1  4  1  0  0  0  0
+  4  5  2  0  0  0  0
+  5  6  1  0  0  0  0
+  5  7  1  0  0  0  0
+  7  8  1  0  0  0  0
+  8  9  2  0  0  0  0
+  8  2  1  0  0  0  0
+  7 10  1  0  0  0  0
+ 10 11  2  0  0  0  0
+ 12 13  1  0  0  0  0
+ 12 14  2  0  0  0  0
+ 12 15  1  0  0  0  0
+ 15 16  1  0  0  0  0
+ 16 17  2  0  0  0  0
+ 16 18  1  0  0  0  0
+ 18 19  1  0  0  0  0
+ 19 20  1  0  0  0  0
+ 19 13  2  0  0  0  0
+ 11 18  1  0  0  0  0
+M  STY  1   1 DAT
+M  SDT   1 UNKNOWN                        F
+M  SDD   1    16.0856   -8.1573    DA    ALL  1       5
+M  SED   1 Ni-complex
+M  END)CTAB"_ctab;
+    {
+      MolDraw2DSVG drawer(350, 300);
+      drawer.drawMolecule(*m);
+      drawer.finishDrawing();
+      auto text = drawer.getDrawingText();
+      std::ofstream outs("testSGroupData-3a.svg");
+      outs << text;
+      outs.flush();
+    }
+  }
+}

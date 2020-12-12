@@ -554,7 +554,7 @@ MolDraw2DQt *moldrawFromQPainter(int width, int height, unsigned long ptr,
     throw_value_error("QPainter pointer is null");
   }
   QPainter *qptr = reinterpret_cast<QPainter *>(ptr);
-  return new MolDraw2DQt(width, height, *qptr, panelWidth, panelHeight);
+  return new MolDraw2DQt(width, height, qptr, panelWidth, panelHeight);
 }
 #endif
 
