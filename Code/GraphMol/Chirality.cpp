@@ -888,7 +888,7 @@ void iterateCIPRanks(const ROMol &mol, const DOUBLE_VECT &invars,
 
   unsigned int numAtoms = mol.getNumAtoms();
   CIP_ENTRY_VECT cipEntries(numAtoms);
-  for (auto& vec : cipEntries) {
+  for (auto &vec : cipEntries) {
     vec.reserve(16);
   }
 #ifdef VERBOSE_CANON
@@ -994,7 +994,7 @@ void iterateCIPRanks(const ROMol &mol, const DOUBLE_VECT &invars,
                     return ranks[idx1] > ranks[idx2];
                   });
       }
-      auto& cipEntry = cipEntries[index];
+      auto &cipEntry = cipEntries[index];
       for (auto nbrIdx : updatedNbrIdxs) {
         unsigned int count = counts[nbrIdx];
         cipEntry.insert(cipEntry.end(), count, ranks[nbrIdx] + 1);
@@ -1182,6 +1182,7 @@ void findAtomNeighborsHelper(const ROMol &mol, const Atom *atom,
 //   3) four ring neighbors with three different ranks
 //   4) three ring neighbors with two different ranks
 //     example for this last one: C[C@H]1CC2CCCC3CCCC(C1)[C@@H]23
+// Note that N atoms are only candidates if they are in a 3-ring
 bool atomIsCandidateForRingStereochem(const ROMol &mol, const Atom *atom) {
   PRECONDITION(atom, "bad atom");
   bool res = false;
@@ -1189,6 +1190,10 @@ bool atomIsCandidateForRingStereochem(const ROMol &mol, const Atom *atom) {
   if (!atom->getPropIfPresent(common_properties::_ringStereochemCand, res)) {
     const RingInfo *ringInfo = mol.getRingInfo();
     if (ringInfo->isInitialized() && ringInfo->numAtomRings(atom->getIdx())) {
+      if (atom->getAtomicNum() == 7 &&
+          !ringInfo->isAtomInRingOfSize(atom->getIdx(), 3)) {
+        return false;
+      }
       ROMol::OEDGE_ITER beg, end;
       boost::tie(beg, end) = mol.getAtomBonds(atom);
       std::vector<const Atom *> nonRingNbrs;
@@ -1393,58 +1398,58 @@ std::pair<bool, bool> isAtomPotentialChiralCenter(
     // we only know tetrahedral chirality
     legalCenter = false;
   } else {
-    boost::dynamic_bitset<> codesSeen(mol.getNumAtoms());
-    ROMol::OEDGE_ITER beg, end;
-    boost::tie(beg, end) = mol.getAtomBonds(atom);
-    while (beg != end) {
-      unsigned int otherIdx = mol[*beg]->getOtherAtom(atom)->getIdx();
-      CHECK_INVARIANT(ranks[otherIdx] < mol.getNumAtoms(),
-                      "CIP rank higher than the number of atoms.");
-      // watch for neighbors with duplicate ranks, which would mean
-      // that we cannot be chiral:
-      if (codesSeen[ranks[otherIdx]]) {
-        // we've already seen this code, it's a dupe
-        hasDupes = true;
-        break;
+    // cases we can exclude immediately without having to look at neighbors
+    // ranks:
+    if (atom->getTotalDegree() < 3) {
+      legalCenter = false;
+    } else if (atom->getDegree() < 3 &&
+               (atom->getAtomicNum() != 15 && atom->getAtomicNum() != 33)) {
+      // less than three neighbors is never stereogenic
+      // unless it is a phosphine/arsine with implicit H (this is from InChI)
+      legalCenter = false;
+    } else if (atom->getDegree() == 3 && atom->getTotalNumHs() != 1) {
+      // assume something that's really three coordinate isn't potentially
+      // chiral, then look for exceptions
+      legalCenter = false;
+      if (atom->getAtomicNum() == 7) {
+        if (mol.getRingInfo()->isAtomInRingOfSize(atom->getIdx(), 3)) {
+          // three-coordinate N is only stereogenic if it's in a 3-ring (this is
+          // from InChI)
+          legalCenter = true;
+        }
+      } else if (atom->getAtomicNum() == 15 || atom->getAtomicNum() == 33) {
+        // three-coordinate phosphines and arsines
+        // are always treated as stereogenic even with H atom neighbors.
+        // (this is from InChI)
+        legalCenter = true;
+      } else if (atom->getAtomicNum() == 16 || atom->getAtomicNum() == 34) {
+        if (atom->getExplicitValence() == 4 ||
+            (atom->getExplicitValence() == 3 && atom->getFormalCharge() == 1)) {
+          // we also accept sulfur or selenium with either a positive charge
+          // or a double bond:
+          legalCenter = true;
+        }
       }
-      codesSeen[ranks[otherIdx]] = 1;
-      nbrs.push_back(std::make_pair(ranks[otherIdx], mol[*beg]->getIdx()));
-      ++beg;
     }
 
-    // figure out if this is a legal chiral center or not:
-    if (!hasDupes) {
-      if (nbrs.size() < 3 &&
-          (atom->getAtomicNum() != 15 && atom->getAtomicNum() != 33)) {
-        // less than three neighbors is never stereogenic
-        // unless it is a phosphine/arsine with implicit H
-        legalCenter = false;
-      } else if (atom->getAtomicNum() == 15 || atom->getAtomicNum() == 33) {
-        // from logical flow: nbrs.size is 3 or 4, or 2 (implicit H)
-        // Since InChI Software v. 1.02-standard (2009), phosphines and arsines
-        // are always treated as stereogenic even with H atom neighbors.
-        // Accept automatically.
-        legalCenter = true;
-      } else if (nbrs.size() == 3) {
-        // three-coordinate with a single H we'll accept automatically:
-        if (atom->getTotalNumHs() != 1) {
-          // otherwise we default to not being a legal center
-          legalCenter = false;
-          // but there are a few special cases we'll accept
-          // sulfur or selenium with either a positive charge or a double
-          // bond:
-          if ((atom->getAtomicNum() == 16 || atom->getAtomicNum() == 34) &&
-              (atom->getExplicitValence() == 4 ||
-               (atom->getExplicitValence() == 3 &&
-                atom->getFormalCharge() == 1))) {
-            legalCenter = true;
-          } else if (atom->getAtomicNum() == 7 &&
-                     mol.getRingInfo()->isAtomInRingOfSize(atom->getIdx(), 3)) {
-            // N in a three-membered ring is another one of the InChI special
-            // cases
-            legalCenter = true;
-          }
+    if (legalCenter) {
+      boost::dynamic_bitset<> codesSeen(mol.getNumAtoms());
+      ROMol::OEDGE_ITER beg, end;
+      boost::tie(beg, end) = mol.getAtomBonds(atom);
+      while (beg != end) {
+        unsigned int otherIdx = mol[*beg]->getOtherAtom(atom)->getIdx();
+        CHECK_INVARIANT(ranks[otherIdx] < mol.getNumAtoms(),
+                        "CIP rank higher than the number of atoms.");
+        // watch for neighbors with duplicate ranks, which would mean
+        // that we cannot be chiral:
+        if (codesSeen[ranks[otherIdx]]) {
+          // we've already seen this code, it's a dupe
+          hasDupes = true;
+          break;
         }
+        codesSeen[ranks[otherIdx]] = 1;
+        nbrs.push_back(std::make_pair(ranks[otherIdx], mol[*beg]->getIdx()));
+        ++beg;
       }
     }
   }
@@ -1483,6 +1488,7 @@ std::pair<bool, bool> assignAtomChiralCodes(ROMol &mol, UINT_VECT &ranks,
       }
       Chirality::INT_PAIR_VECT nbrs;
       bool legalCenter, hasDupes;
+      // note that hasDupes is only evaluated if legalCenter==true
       boost::tie(legalCenter, hasDupes) =
           isAtomPotentialChiralCenter(atom, mol, ranks, nbrs);
       if (legalCenter) {

@@ -1200,3 +1200,87 @@ TEST_CASE("ring stereo finding is overly aggressive", "[chirality][bug]") {
     CHECK(stereoInfo.size() == 2);
   }
 }
+
+TEST_CASE(
+    "github #3631: Ring stereochemistry not properly removed from N atoms",
+    "[chirality][bug]") {
+  SECTION("basics") {
+    SmilesParserParams ps;
+    ps.sanitize = false;
+    ps.removeHs = false;
+    std::unique_ptr<RWMol> mol{SmilesToMol("C[N@]1C[C@@](F)(Cl)C1", ps)};
+    REQUIRE(mol);
+    MolOps::sanitizeMol(*mol);
+
+    CHECK(mol->getAtomWithIdx(1)->getChiralTag() !=
+          Atom::ChiralType::CHI_UNSPECIFIED);
+    CHECK(mol->getAtomWithIdx(3)->getChiralTag() !=
+          Atom::ChiralType::CHI_UNSPECIFIED);
+    bool cleanIt = true;
+    bool flagPossible = true;
+    bool force = true;
+    {
+      RWMol mol2(*mol);
+      auto stereoInfo =
+          Chirality::findPotentialStereo(mol2, cleanIt, flagPossible);
+      CHECK(stereoInfo.size() == 0);
+    }
+    {
+      RWMol mol2(*mol);
+      MolOps::assignStereochemistry(mol2, cleanIt, force, flagPossible);
+      CHECK(mol2.getAtomWithIdx(1)->getChiralTag() ==
+            Atom::ChiralType::CHI_UNSPECIFIED);
+      CHECK(mol2.getAtomWithIdx(3)->getChiralTag() ==
+            Atom::ChiralType::CHI_UNSPECIFIED);
+    }
+  }
+  SECTION("default behavior") {
+    auto mol = "C[N@]1C[C@@](F)(Cl)C1"_smiles;
+    REQUIRE(mol);
+    auto smiles = MolToSmiles(*mol);
+    CHECK(smiles == "CN1CC(F)(Cl)C1");
+    bool cleanIt = true;
+    bool flagPossible = true;
+    bool force = true;
+    CHECK(mol->getAtomWithIdx(1)->getChiralTag() ==
+          Atom::ChiralType::CHI_UNSPECIFIED);
+    CHECK(mol->getAtomWithIdx(3)->getChiralTag() ==
+          Atom::ChiralType::CHI_UNSPECIFIED);
+    {
+      RWMol mol2(*mol);
+      auto stereoInfo =
+          Chirality::findPotentialStereo(mol2, cleanIt, flagPossible);
+      CHECK(stereoInfo.size() == 0);
+    }
+    {
+      RWMol mol2(*mol);
+      MolOps::assignStereochemistry(mol2, cleanIt, force, flagPossible);
+      CHECK(mol2.getAtomWithIdx(1)->getChiralTag() ==
+            Atom::ChiralType::CHI_UNSPECIFIED);
+      CHECK(mol2.getAtomWithIdx(3)->getChiralTag() ==
+            Atom::ChiralType::CHI_UNSPECIFIED);
+    }
+  }
+  SECTION("don't overcorrect") {
+    auto mol = "C[N@]1O[C@@](F)(Cl)C1"_smiles;
+    REQUIRE(mol);
+    bool cleanIt = true;
+    bool flagPossible = true;
+    bool force = true;
+    {
+      RWMol mol2(*mol);
+      auto stereoInfo =
+          Chirality::findPotentialStereo(mol2, cleanIt, flagPossible);
+      CHECK(stereoInfo.size() == 1);
+      CHECK(stereoInfo[0].centeredOn == 3);
+    }
+    {
+      RWMol mol2(*mol);
+      MolOps::assignStereochemistry(mol2, cleanIt, force, flagPossible);
+      CHECK(mol2.getAtomWithIdx(1)->getChiralTag() ==
+            Atom::ChiralType::CHI_UNSPECIFIED);
+      CHECK(mol2.getAtomWithIdx(3)->getChiralTag() !=
+            Atom::ChiralType::CHI_UNSPECIFIED);
+    }
+  }
+}
