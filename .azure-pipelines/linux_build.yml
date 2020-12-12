@@ -1,16 +1,16 @@
 steps:
 - bash: |
-    sudo apt-get install g++ libgl1-mesa-dev mesa-common-dev qtbase5-dev qt5-default
+    sudo apt-get install g++ wget make libgl1-mesa-dev mesa-common-dev
     source ${CONDA}/etc/profile.d/conda.sh
     sudo chown -R ${USER} ${CONDA}
     conda config --set always_yes yes --set changeps1 no
     conda update -q conda
     conda info -a
     conda create --name rdkit_build $(python) cmake \
-        boost-cpp=$(boost_version) boost=$(boost_version) \
+        boost-cpp=$(boost_version) \
         py-boost=$(boost_version) \
-        numpy matplotlib pillow eigen pandas \
-        sphinx=3.1.2 recommonmark jupyter
+        numpy pillow eigen pandas \
+        qt
     conda activate rdkit_build
     conda install -c rdkit nox cairo=1.14.6
   displayName: Setup build environment
@@ -66,6 +66,7 @@ steps:
 - bash: |
     source ${CONDA}/etc/profile.d/conda.sh
     conda activate rdkit_build
+    conda install ipython matplotlib-base sphinx=3.1.2 recommonmark 
     export RDBASE=`pwd`
     export PYTHONPATH=${RDBASE}:${PYTHONPATH}
     export LD_LIBRARY_PATH=${RDBASE}/lib:${LD_LIBRARY_PATH}
