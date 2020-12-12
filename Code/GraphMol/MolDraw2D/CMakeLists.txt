@@ -25,6 +25,7 @@ rdkit_library(MolDraw2D MolDraw2D.cpp MolDraw2DSVG.cpp
 target_compile_definitions(MolDraw2D PRIVATE RDKIT_MOLDRAW2D_BUILD)
 
 if(RDK_BUILD_QT_SUPPORT)
+  target_compile_definitions(MolDraw2D PUBLIC "-DRDK_BUILD_QT_SUPPORT")
   find_package(Qt5 COMPONENTS Widgets OpenGL REQUIRED)
   target_sources(MolDraw2D PRIVATE MolDraw2DQt.cpp DrawTextQt.cpp)
   target_link_libraries(MolDraw2D PUBLIC Qt5::Widgets Qt5::OpenGL)
