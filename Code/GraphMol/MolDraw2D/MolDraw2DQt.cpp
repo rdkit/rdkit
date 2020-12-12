@@ -25,7 +25,7 @@ using namespace std;
 namespace RDKit {
 
 // ****************************************************************************
-MolDraw2DQt::MolDraw2DQt(int width, int height, QPainter &qp, int panelWidth,
+MolDraw2DQt::MolDraw2DQt(int width, int height, QPainter *qp, int panelWidth,
                          int panelHeight, bool noFreetype)
     : MolDraw2D(width, height, panelWidth, panelHeight), d_qp(qp) {
   initDrawing();
@@ -33,7 +33,7 @@ MolDraw2DQt::MolDraw2DQt(int width, int height, QPainter &qp, int panelWidth,
 }
 
 void MolDraw2DQt::initDrawing() {
-  d_qp.setRenderHint(QPainter::RenderHint::Antialiasing);
+  d_qp->setRenderHint(QPainter::RenderHint::Antialiasing);
 }
 void MolDraw2DQt::initTextDrawer(bool noFreetype) {
   double max_fnt_sz = drawOptions().maxFontSize;
@@ -66,11 +66,11 @@ void MolDraw2DQt::setColour(const DrawColour &col) {
 
   QPen pen(this_col);
   pen.setJoinStyle(Qt::RoundJoin);
-  d_qp.setPen(pen);
+  d_qp->setPen(pen);
 
   QBrush brush(this_col);
   brush.setStyle(Qt::SolidPattern);
-  d_qp.setBrush(brush);
+  d_qp->setBrush(brush);
 }
 
 // ****************************************************************************
@@ -79,7 +79,7 @@ void MolDraw2DQt::drawLine(const Point2D &cds1, const Point2D &cds2) {
   Point2D c2 = getDrawCoords(cds2);
 
   const DashPattern &dashes = dash();
-  QPen pen = d_qp.pen();
+  QPen pen = d_qp->pen();
   if (dashes.size()) {
     QVector<qreal> dd;
     for (unsigned int di = 0; di < dashes.size(); ++di) dd << dashes[di];
@@ -88,37 +88,37 @@ void MolDraw2DQt::drawLine(const Point2D &cds1, const Point2D &cds2) {
     pen.setStyle(Qt::SolidLine);
   }
   pen.setWidth(lineWidth());
-  d_qp.setPen(pen);
-  d_qp.drawLine(QPointF(c1.x, c1.y), QPointF(c2.x, c2.y));
+  d_qp->setPen(pen);
+  d_qp->drawLine(QPointF(c1.x, c1.y), QPointF(c2.x, c2.y));
 }
 
 // ****************************************************************************
 // draw the char, with the bottom left hand corner at cds
 void MolDraw2DQt::drawChar(char c, const Point2D &cds) {
-  QRectF br = d_qp.boundingRect(0, 0, 100, 100, Qt::AlignLeft | Qt::AlignBottom,
-                                QString(c));
-  d_qp.drawText(QRectF(cds.x, cds.y - br.height(), br.width(), br.height()),
-                Qt::AlignLeft | Qt::AlignBottom, QString(c), &br);
+  QRectF br = d_qp->boundingRect(0, 0, 100, 100,
+                                 Qt::AlignLeft | Qt::AlignBottom, QString(c));
+  d_qp->drawText(QRectF(cds.x, cds.y - br.height(), br.width(), br.height()),
+                 Qt::AlignLeft | Qt::AlignBottom, QString(c), &br);
 }
 
 // ****************************************************************************
 void MolDraw2DQt::drawPolygon(const vector<Point2D> &cds) {
   PRECONDITION(cds.size() >= 3, "must have at least three points");
-  d_qp.save();
-  QBrush brush = d_qp.brush();
+  d_qp->save();
+  QBrush brush = d_qp->brush();
   if (fillPolys())
     brush.setStyle(Qt::SolidPattern);
   else
     brush.setStyle(Qt::NoBrush);
-  d_qp.setBrush(brush);
+  d_qp->setBrush(brush);
 
   QPointF *points = new QPointF[cds.size()];
   for (unsigned int i = 0; i < cds.size(); ++i) {
     Point2D lc = getDrawCoords(cds[i]);
     points[i] = QPointF(lc.x, lc.y);
   }
-  d_qp.drawConvexPolygon(points, cds.size());
-  d_qp.restore();
+  d_qp->drawConvexPolygon(points, cds.size());
+  d_qp->restore();
   delete[] points;
 }
 
@@ -129,8 +129,8 @@ void MolDraw2DQt::clearDrawing() {
                   int(255.0 * drawOptions().backgroundColour.b),
                   int(255.0 * drawOptions().backgroundColour.a));
 
-  d_qp.setBackground(QBrush(this_col));
-  d_qp.fillRect(offset().x, offset().y, width(), height(), this_col);
+  d_qp->setBackground(QBrush(this_col));
+  d_qp->fillRect(offset().x, offset().y, width(), height(), this_col);
 }
 
 }  // namespace RDKit

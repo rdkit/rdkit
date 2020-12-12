@@ -19,6 +19,7 @@
 #include <GraphMol/MolDraw2D/MolDraw2DDetails.h>
 #include <GraphMol/MolDraw2D/MolDraw2DUtils.h>
 #include <GraphMol/ChemReactions/ReactionParser.h>
+#include <GraphMol/FileParsers/MolSGroupParsing.h>
 #include <GraphMol/Depictor/RDDepictor.h>
 #include <Geometry/point.h>
 #include <Geometry/Transform2D.h>
@@ -26,6 +27,8 @@
 #include <Numerics/Matrix.h>
 
 #include <GraphMol/MolTransforms/MolTransforms.h>
+#include <GraphMol/FileParsers/FileParserUtils.h>
+
 #include <Geometry/Transform3D.h>
 
 #include <algorithm>
@@ -195,6 +198,10 @@ void MolDraw2D::drawMolecule(const ROMol &mol,
     return;
   }
 
+  if (!pre_shapes_[activeMolIdx_].empty()) {
+    MolDraw2D_detail::drawShapes(*this, pre_shapes_[activeMolIdx_]);
+  }
+
   if (drawOptions().continuousHighlight) {
     // if we're doing continuous highlighting, start by drawing the highlights
     doContinuousHighlighting(draw_mol, highlight_atoms, highlight_bonds,
@@ -304,6 +311,10 @@ void MolDraw2D::drawMoleculeWithHighlights(
     return;
   }
 
+  if (!pre_shapes_[activeMolIdx_].empty()) {
+    MolDraw2D_detail::drawShapes(*this, pre_shapes_[activeMolIdx_]);
+  }
+
   bool orig_fp = fillPolys();
   setFillPolys(drawOptions().fillHighlights);
 
@@ -388,6 +399,7 @@ void MolDraw2D::get2DCoordsMol(RWMol &mol, double &offset, double spacing,
   const bool canonOrient = true;
   const bool kekulize = false;  // don't kekulize, we just did that
   RDDepict::compute2DCoords(mol, nullptr, canonOrient);
+
   MolDraw2DUtils::prepareMolForDrawing(mol, kekulize);
   double minX = 1e8;
   double maxX = -1e8;
@@ -957,7 +969,15 @@ void MolDraw2D::calculateScale(int width, int height, const ROMol &mol,
   }
 
   // adjust based on the shapes (if any)
-  for (const auto &shp : shapes_[activeMolIdx_]) {
+  for (const auto &shp : pre_shapes_[activeMolIdx_]) {
+    for (const auto &pt : shp.points) {
+      x_min_ = std::min(pt.x, x_min_);
+      y_min_ = std::min(pt.y, y_min_);
+      x_max = std::max(pt.x, x_max);
+      y_max = std::max(pt.y, y_max);
+    }
+  }
+  for (const auto &shp : post_shapes_[activeMolIdx_]) {
     for (const auto &pt : shp.points) {
       x_min_ = std::min(pt.x, x_min_);
       y_min_ = std::min(pt.y, y_min_);
@@ -1283,6 +1303,8 @@ unique_ptr<RWMol> MolDraw2D::setupDrawMolecule(
       tf.SetTranslation(centroid);
       MolTransforms::transformConformer(conf, tf);
       MolTransforms::transformMolSubstanceGroups(*rwmol, tf);
+      rwmol->setProp("_centroidx", centroid.x);
+      rwmol->setProp("_centroidy", centroid.y);
     }
   }
   ROMol const &draw_mol = rwmol ? *(rwmol) : mol;
@@ -1311,6 +1333,14 @@ unique_ptr<RWMol> MolDraw2D::setupDrawMolecule(
   extractAtomNotes(draw_mol);
   extractBondNotes(draw_mol);
   extractRadicals(draw_mol);
+  if (activeMolIdx_ >= 0 &&
+      post_shapes_.size() > static_cast<size_t>(activeMolIdx_) &&
+      pre_shapes_.size() > static_cast<size_t>(activeMolIdx_)) {
+    post_shapes_[activeMolIdx_].clear();
+    pre_shapes_[activeMolIdx_].clear();
+  }
+  extractSGroupData(draw_mol);
+  extractVariableBonds(draw_mol);
   extractBrackets(draw_mol);
 
   if (!activeMolIdx_ && needs_scale_) {
@@ -1327,7 +1357,8 @@ void MolDraw2D::pushDrawDetails() {
   atomic_nums_.push_back(std::vector<int>());
   atom_syms_.push_back(std::vector<std::pair<std::string, OrientType>>());
   annotations_.push_back(std::vector<AnnotationType>());
-  shapes_.push_back(std::vector<MolDrawShape>());
+  pre_shapes_.push_back(std::vector<MolDrawShape>());
+  post_shapes_.push_back(std::vector<MolDrawShape>());
   radicals_.push_back(
       std::vector<std::pair<std::shared_ptr<StringRect>, OrientType>>());
   activeMolIdx_++;
@@ -1337,7 +1368,8 @@ void MolDraw2D::pushDrawDetails() {
 void MolDraw2D::popDrawDetails() {
   activeMolIdx_--;
   annotations_.pop_back();
-  shapes_.pop_back();
+  pre_shapes_.pop_back();
+  post_shapes_.pop_back();
   atom_syms_.pop_back();
   atomic_nums_.pop_back();
   radicals_.pop_back();
@@ -1461,8 +1493,8 @@ void MolDraw2D::finishMoleculeDraw(const RDKit::ROMol &draw_mol,
     drawRadicals(draw_mol);
   }
 
-  if (!shapes_[activeMolIdx_].empty()) {
-    MolDraw2D_detail::drawShapes(*this, shapes_[activeMolIdx_]);
+  if (!post_shapes_[activeMolIdx_].empty()) {
+    MolDraw2D_detail::drawShapes(*this, post_shapes_[activeMolIdx_]);
   }
 
   if (drawOptions().flagCloseContactsDist >= 0) {
@@ -1615,10 +1647,10 @@ void MolDraw2D::calcLabelEllipse(int atom_idx,
 }
 
 // ****************************************************************************
-StringRect MolDraw2D::calcAnnotationPosition(const ROMol &mol,
-                                             const Atom *atom) {
+StringRect MolDraw2D::calcAnnotationPosition(const ROMol &mol, const Atom *atom,
+                                             const std::string &note) {
+  PRECONDITION(atom, "no atom");
   StringRect note_rect;
-  string note = atom->getProp<string>(common_properties::atomNote);
   if (note.empty()) {
     note_rect.width_ = -1.0;  // so we know it's not valid.
     return note_rect;
@@ -1628,16 +1660,16 @@ StringRect MolDraw2D::calcAnnotationPosition(const ROMol &mol,
   note_rect.trans_.x = at_cds.x;
   note_rect.trans_.y = at_cds.y;
   double start_ang = getNoteStartAngle(mol, atom);
-  calcAtomAnnotationPosition(mol, atom, start_ang, note_rect);
+  calcAtomAnnotationPosition(mol, atom, start_ang, note_rect, note);
 
   return note_rect;
 }
 
 // ****************************************************************************
-StringRect MolDraw2D::calcAnnotationPosition(const ROMol &mol,
-                                             const Bond *bond) {
+StringRect MolDraw2D::calcAnnotationPosition(const ROMol &mol, const Bond *bond,
+                                             const std::string &note) {
+  PRECONDITION(bond, "no bond");
   StringRect note_rect;
-  string note = bond->getProp<string>(common_properties::bondNote);
   if (note.empty()) {
     note_rect.width_ = -1.0;  // so we know it's not valid.
     return note_rect;
@@ -1707,11 +1739,11 @@ StringRect MolDraw2D::calcAnnotationPosition(const ROMol &mol,
 
 // ****************************************************************************
 void MolDraw2D::calcAtomAnnotationPosition(const ROMol &mol, const Atom *atom,
-                                           double start_ang, StringRect &rect) {
+                                           double start_ang, StringRect &rect,
+                                           const std::string &note) {
   Point2D const &at_cds = at_cds_[activeMolIdx_][atom->getIdx()];
   auto const &atsym = atom_syms_[activeMolIdx_][atom->getIdx()];
 
-  string note = atom->getProp<string>(common_properties::atomNote);
   vector<std::shared_ptr<StringRect>> rects;
   vector<TextDrawType> draw_modes;
   vector<char> draw_chars;
@@ -2018,7 +2050,7 @@ void MolDraw2D::extractAtomNotes(const ROMol &mol) {
     std::string note;
     if (atom->getPropIfPresent(common_properties::atomNote, note)) {
       if (!note.empty()) {
-        auto note_rect = calcAnnotationPosition(mol, atom);
+        auto note_rect = calcAnnotationPosition(mol, atom, note);
         if (note_rect.width_ < 0.0) {
           cerr << "Couldn't find good place for note " << note << " for atom "
                << atom->getIdx() << endl;
@@ -2043,7 +2075,7 @@ void MolDraw2D::extractBondNotes(const ROMol &mol) {
     std::string note;
     if (bond->getPropIfPresent(common_properties::bondNote, note)) {
       if (!note.empty()) {
-        auto note_rect = calcAnnotationPosition(mol, bond);
+        auto note_rect = calcAnnotationPosition(mol, bond, note);
         if (note_rect.width_ < 0.0) {
           cerr << "Couldn't find good place for note " << note << " for bond "
                << bond->getIdx() << endl;
@@ -2076,11 +2108,10 @@ void MolDraw2D::extractRadicals(const ROMol &mol) {
 // ****************************************************************************
 void MolDraw2D::extractBrackets(const ROMol &mol) {
   PRECONDITION(activeMolIdx_ >= 0, "no mol id");
-  PRECONDITION(static_cast<int>(shapes_.size()) > activeMolIdx_, "no space");
+  PRECONDITION(static_cast<int>(post_shapes_.size()) > activeMolIdx_,
+               "no space");
   PRECONDITION(static_cast<int>(annotations_.size()) > activeMolIdx_,
                "no space");
-  shapes_[activeMolIdx_].clear();
-
   auto &sgs = getSubstanceGroups(mol);
   if (sgs.empty()) {
     return;
@@ -2131,7 +2162,7 @@ void MolDraw2D::extractBrackets(const ROMol &mol) {
       shp.points =
           MolDraw2D_detail::getBracketPoints(p1, p2, refPt, sgBondSegments);
       shp.shapeType = MolDrawShapeType::Polyline;
-      shapes_[activeMolIdx_].emplace_back(std::move(shp));
+      post_shapes_[activeMolIdx_].emplace_back(std::move(shp));
     }
     if (supportsAnnotations()) {
       // FIX: we could imagine changing this to always show the annotations on
@@ -2140,7 +2171,7 @@ void MolDraw2D::extractBrackets(const ROMol &mol) {
       std::string connect;
       if (sg.getPropIfPresent("CONNECT", connect)) {
         // annotations go on the last bracket of an sgroup
-        const auto &brkShp = shapes_[activeMolIdx_].back();
+        const auto &brkShp = post_shapes_[activeMolIdx_].back();
         StringRect rect;
         // CONNECT goes at the top
         auto topPt = brkShp.points[1];
@@ -2163,7 +2194,7 @@ void MolDraw2D::extractBrackets(const ROMol &mol) {
       std::string label;
       if (sg.getPropIfPresent("LABEL", label)) {
         // annotations go on the last bracket of an sgroup
-        const auto &brkShp = shapes_[activeMolIdx_].back();
+        const auto &brkShp = post_shapes_[activeMolIdx_].back();
         StringRect rect;
         // LABEL goes at the bottom
         auto botPt = brkShp.points[2];
@@ -2180,7 +2211,151 @@ void MolDraw2D::extractBrackets(const ROMol &mol) {
       }
     }
   }
-}  // namespace RDKit
+}
+
+// ****************************************************************************
+void MolDraw2D::extractSGroupData(const ROMol &mol) {
+  PRECONDITION(activeMolIdx_ >= 0, "no mol id");
+  PRECONDITION(static_cast<int>(annotations_.size()) > activeMolIdx_,
+               "no space");
+  if (!supportsAnnotations()) {
+    return;
+  }
+  auto &sgs = getSubstanceGroups(mol);
+  if (sgs.empty()) {
+    return;
+  }
+
+  // details of this transformation are in extractAtomCoords
+  double rot = -drawOptions().rotate * M_PI / 180.0;
+  RDGeom::Transform2D tform;
+  tform.SetTransform(Point2D(0.0, 0.0), rot);
+
+  for (const auto &sg : sgs) {
+    std::string typ;
+    if (sg.getPropIfPresent("TYPE", typ) && typ == "DAT") {
+      std::string text;
+      // it seems like we should be rendering FIELDNAME, but
+      // Marvin Sketch, Biovia Draw, and ChemDraw don't do it
+      // if (sg.getPropIfPresent("FIELDNAME", text)) {
+      //   text += "=";
+      // };
+      if (sg.hasProp("DATAFIELDS")) {
+        STR_VECT dfs = sg.getProp<STR_VECT>("DATAFIELDS");
+        for (const auto &df : dfs) {
+          text += df + "|";
+        }
+        text.pop_back();
+      }
+      if (text.empty()) {
+        continue;
+      }
+      int atomIdx = -1;
+      if (!sg.getAtoms().empty()) {
+        atomIdx = sg.getAtoms()[0];
+      };
+      StringRect rect;
+      std::string fieldDisp;
+      if (sg.getPropIfPresent("FIELDDISP", fieldDisp)) {
+        double xp = FileParserUtils::stripSpacesAndCast<double>(
+            fieldDisp.substr(3, 10));
+        double yp = FileParserUtils::stripSpacesAndCast<double>(
+            fieldDisp.substr(13, 10));
+        Point2D origLoc{xp, yp};
+
+        if (fieldDisp[25] == 'R') {
+          origLoc += mol.getConformer().getAtomPos(atomIdx);
+        } else {
+          if (mol.hasProp("_centroidx")) {
+            Point2D centroid;
+            mol.getProp("_centroidx", centroid.x);
+            mol.getProp("_centroidy", centroid.y);
+            origLoc += centroid;
+          }
+        }
+        tform.TransformPoint(origLoc);
+        rect.trans_ = origLoc;
+      } else if (atomIdx >= 0) {
+        rect = calcAnnotationPosition(mol, mol.getAtomWithIdx(atomIdx), text);
+      } else {
+        BOOST_LOG(rdWarningLog)
+            << "FIELDDISP info not found for DAT SGroup which isn't associated "
+               "with an atom. SGroup will not be rendered."
+            << std::endl;
+        text = "";
+      }
+      if (!text.empty()) {
+        AnnotationType annot;
+        annot.text_ = text;
+        annot.rect_ = rect;
+        // looks like everybody renders these left justified
+        annot.align_ = TextAlignType::START;
+        annotations_[activeMolIdx_].push_back(annot);
+      }
+    }
+  }
+}
+
+// ****************************************************************************
+void MolDraw2D::extractVariableBonds(const ROMol &mol) {
+  PRECONDITION(activeMolIdx_ >= 0, "no mol id");
+  PRECONDITION(static_cast<int>(pre_shapes_.size()) > activeMolIdx_,
+               "no space");
+  PRECONDITION(static_cast<int>(annotations_.size()) > activeMolIdx_,
+               "no space");
+
+  boost::dynamic_bitset<> atomsInvolved(mol.getNumAtoms());
+  for (const auto bond : mol.bonds()) {
+    std::string endpts;
+    std::string attach;
+    if (bond->getPropIfPresent(common_properties::_MolFileBondEndPts, endpts) &&
+        bond->getPropIfPresent(common_properties::_MolFileBondAttach, attach)) {
+      // FIX: maybe distinguish between "ANY" and "ALL" values of attach here?
+      std::vector<unsigned int> oats =
+          RDKit::SGroupParsing::ParseV3000Array<unsigned int>(endpts);
+      atomsInvolved.reset();
+      // decrement the indices and do error checking:
+      for (auto &oat : oats) {
+        if (oat == 0 || oat > mol.getNumAtoms()) {
+          throw ValueErrorException("Bad variation point index");
+        }
+        --oat;
+        atomsInvolved.set(oat);
+        MolDrawShape shp;
+        shp.shapeType = MolDrawShapeType::Ellipse;
+        shp.lineWidth = 1;
+        shp.lineColour = drawOptions().variableAttachmentColour;
+        shp.fill = true;
+        auto center = at_cds_[activeMolIdx_][oat];
+        Point2D offset{drawOptions().variableAtomRadius,
+                       drawOptions().variableAtomRadius};
+        shp.points = {center + offset, center - offset};
+        pre_shapes_[activeMolIdx_].emplace_back(std::move(shp));
+      }
+
+      for (const auto bond : mol.bonds()) {
+        if (atomsInvolved[bond->getBeginAtomIdx()] &&
+            atomsInvolved[bond->getEndAtomIdx()]) {
+          MolDrawShape shp;
+          shp.shapeType = MolDrawShapeType::Polyline;
+          shp.lineWidth =
+              lineWidth() * drawOptions().variableBondWidthMultiplier;
+          shp.scaleLineWidth = true;
+          shp.lineColour = drawOptions().variableAttachmentColour;
+          shp.fill = false;
+          shp.points = {at_cds_[activeMolIdx_][bond->getBeginAtomIdx()],
+                        at_cds_[activeMolIdx_][bond->getEndAtomIdx()]};
+          pre_shapes_[activeMolIdx_].emplace_back(std::move(shp));
+        }
+      }
+      // correct the symbol of the end atom (remove the *):
+      if (!bond->getBeginAtom()->getAtomicNum()) {
+        atom_syms_[activeMolIdx_][bond->getBeginAtomIdx()] =
+            std::make_pair("", OrientType::C);
+      }
+    }
+  }
+}
 
 // ****************************************************************************
 void MolDraw2D::drawBond(
@@ -3172,10 +3347,12 @@ pair<string, OrientType> MolDraw2D::getAtomSymbolAndOrientation(
 // ****************************************************************************
 string MolDraw2D::getAtomSymbol(const RDKit::Atom &atom,
                                 OrientType orientation) const {
+  if (drawOptions().noAtomLabels) {
+    return "";
+  }
   // adds XML-like annotation for super- and sub-script, in the same manner
   // as MolDrawing.py. My first thought was for a LaTeX-like system,
   // obviously...
-
   string symbol;
   bool literal_symbol = true;
   unsigned int iso = atom.getIsotope();

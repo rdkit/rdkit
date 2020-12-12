@@ -38,6 +38,7 @@
 #include <boost/archive/text_iarchive.hpp>
 #include <boost/serialization/vector.hpp>
 #include <boost/serialization/shared_ptr.hpp>
+#include <boost/archive/archive_exception.hpp>
 #include <RDGeneral/BoostEndInclude.h>
 
 BOOST_SERIALIZATION_ASSUME_ABSTRACT(RDKit::MolHolderBase)
@@ -146,6 +147,16 @@ void serialize(Archive &ar, RDKit::PatternHolder &pattern_holder,
                const unsigned int version) {
   RDUNUSED_PARAM(version);
   ar &boost::serialization::base_object<RDKit::FPHolderBase>(pattern_holder);
+  if (Archive::is_saving::value &&
+      pattern_holder.getNumBits() != RDKit::PatternHolder::defaultNumBits()) {
+    ar &pattern_holder.getNumBits();
+  } else if (Archive::is_loading::value) {
+    try { 
+      ar &pattern_holder.getNumBits();
+    } catch (boost::archive::archive_exception) {
+      pattern_holder.getNumBits() = RDKit::PatternHolder::defaultNumBits();
+    }
+  }
 }
 
 template <class Archive>

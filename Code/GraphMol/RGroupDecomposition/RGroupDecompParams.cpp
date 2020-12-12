@@ -104,6 +104,8 @@ bool RGroupDecompositionParameters::prepareCore(RWMol &core,
                               << std::endl;
       return false;
     }
+  } else if (!onlyMatchAtRGroups) {
+    autoLabels |= AtomIndexLabels;
   }
 
   int maxLabel = 1;

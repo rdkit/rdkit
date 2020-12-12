@@ -881,16 +881,15 @@ void buildCIPInvariants(const ROMol &mol, DOUBLE_VECT &res) {
   }
 }
 
-void iterateCIPRanks(const ROMol &mol, DOUBLE_VECT &invars, UINT_VECT &ranks,
-                     bool seedWithInvars) {
+void iterateCIPRanks(const ROMol &mol, const DOUBLE_VECT &invars,
+                     UINT_VECT &ranks, bool seedWithInvars) {
   PRECONDITION(invars.size() == mol.getNumAtoms(), "bad invars size");
   PRECONDITION(ranks.size() >= mol.getNumAtoms(), "bad ranks size");
 
   unsigned int numAtoms = mol.getNumAtoms();
   CIP_ENTRY_VECT cipEntries(numAtoms);
-  INT_LIST allIndices;
-  for (unsigned int i = 0; i < numAtoms; ++i) {
-    allIndices.push_back(i);
+  for (auto &vec : cipEntries) {
+    vec.reserve(16);
   }
 #ifdef VERBOSE_CANON
   BOOST_LOG(rdDebugLog) << "invariants:" << std::endl;
@@ -911,11 +910,11 @@ void iterateCIPRanks(const ROMol &mol, DOUBLE_VECT &invars, UINT_VECT &ranks,
   //  Note: in general one should avoid the temptation to
   //  use invariants here, those lead to incorrect answers
   for (unsigned int i = 0; i < numAtoms; i++) {
-    if (!seedWithInvars) {
+    if (seedWithInvars) {
+      cipEntries[i].push_back(static_cast<int>(invars[i]));
+    } else {
       cipEntries[i].push_back(mol[i]->getAtomicNum());
       cipEntries[i].push_back(static_cast<int>(ranks[i]));
-    } else {
-      cipEntries[i].push_back(static_cast<int>(invars[i]));
     }
   }
 
@@ -933,6 +932,9 @@ void iterateCIPRanks(const ROMol &mol, DOUBLE_VECT &invars, UINT_VECT &ranks,
   unsigned int numIts = 0;
   int lastNumRanks = -1;
   unsigned int numRanks = *std::max_element(ranks.begin(), ranks.end()) + 1;
+  std::vector<unsigned int> counts(ranks.size());
+  std::vector<unsigned int> updatedNbrIdxs;
+  updatedNbrIdxs.reserve(8);
   while (numRanks < numAtoms && numIts < maxIts &&
          (lastNumRanks < 0 ||
           static_cast<unsigned int>(lastNumRanks) < numRanks)) {
@@ -941,9 +943,9 @@ void iterateCIPRanks(const ROMol &mol, DOUBLE_VECT &invars, UINT_VECT &ranks,
     //
     // for each atom, get a sorted list of its neighbors' ranks:
     //
-    for (int &index : allIndices) {
-      CIP_ENTRY localEntry;
-      localEntry.reserve(16);
+    for (unsigned int index = 0; index < numAtoms; ++index) {
+      // Note: counts is cleaned up when we drain into cipEntries.
+      updatedNbrIdxs.clear();
 
       // start by pushing on our neighbors' ranks:
       ROMol::OEDGE_ITER beg, end;
@@ -952,58 +954,66 @@ void iterateCIPRanks(const ROMol &mol, DOUBLE_VECT &invars, UINT_VECT &ranks,
         const Bond *bond = mol[*beg];
         ++beg;
         unsigned int nbrIdx = bond->getOtherAtomIdx(index);
-        const Atom *nbr = mol[nbrIdx];
+        updatedNbrIdxs.push_back(nbrIdx);
 
-        int rank = ranks[nbrIdx] + 1;
         // put the neighbor in 2N times where N is the bond order as a double.
         // this is to treat aromatic linkages on fair footing. i.e. at least in
-        // the
-        // first iteration --c(:c):c and --C(=C)-C should look the same.
+        // the first iteration --c(:c):c and --C(=C)-C should look the same.
         // this was part of issue 3009911
 
-        unsigned int count;
-        if (bond->getBondType() == Bond::DOUBLE && nbr->getAtomicNum() == 15 &&
-            (nbr->getDegree() == 4 || nbr->getDegree() == 3)) {
-          // a special case for chiral phosphorous compounds
-          // (this was leading to incorrect assignment of
-          // R/S labels ):
-          count = 1;
+        // a special case for chiral phosphorus compounds
+        // (this was leading to incorrect assignment of R/S labels ):
+        bool isChiralPhosphorusSpecialCase = false;
+        if (bond->getBondType() == Bond::DOUBLE) {
+          const Atom *nbr = mol[nbrIdx];
+          if (nbr->getAtomicNum() == 15) {
+            unsigned int nbrDeg = nbr->getDegree();
+            isChiralPhosphorusSpecialCase = nbrDeg == 3 || nbrDeg == 4;
+          }
+        };
 
-          // general justification of this is:
-          // Paragraph 2.2. in the 1966 article is "Valence-Bond Conventions:
-          // Multiple-Bond Unsaturation and Aromaticity". It contains several
-          // conventions of which convention (b) is the one applying here:
-          // "(b) Contributions by d orbitals to bonds of quadriligant atoms are
-          // neglected."
-          // FIX: this applies to more than just P
+        // general justification of this is:
+        // Paragraph 2.2. in the 1966 article is "Valence-Bond Conventions:
+        // Multiple-Bond Unsaturation and Aromaticity". It contains several
+        // conventions of which convention (b) is the one applying here:
+        // "(b) Contributions by d orbitals to bonds of quadriligant atoms are
+        // neglected."
+        // FIX: this applies to more than just P
+        if (isChiralPhosphorusSpecialCase) {
+          counts[nbrIdx] += 1;
         } else {
-          count = static_cast<unsigned int>(
-              floor(2. * bond->getBondTypeAsDouble() + .1));
+          counts[nbrIdx] += getTwiceBondType(*bond);
         }
-        auto ePos =
-            std::lower_bound(localEntry.begin(), localEntry.end(), rank);
-        localEntry.insert(ePos, count, rank);
-        ++nbr;
-      }
-      // add a zero for each coordinated H:
-      // (as long as we're not a query atom)
-      if (!mol[index]->hasQuery()) {
-        localEntry.insert(localEntry.begin(), mol[index]->getTotalNumHs(), 0);
       }
 
-      // we now have a sorted list of our neighbors' ranks,
-      // copy it on in reversed order:
-      cipEntries[index].insert(cipEntries[index].end(), localEntry.rbegin(),
-                               localEntry.rend());
-      if (cipEntries[index].size() > longestEntry) {
-        longestEntry = rdcast<unsigned int>(cipEntries[index].size());
+      // For each of our neighbors' ranks weighted by bond type, copy it N times
+      // to our cipEntry in reverse rank order, where N is the weight.
+      if (updatedNbrIdxs.size() > 1) {  // compare vs 1 for performance.
+        std::sort(std::begin(updatedNbrIdxs), std::end(updatedNbrIdxs),
+                  [&ranks](unsigned int idx1, unsigned int idx2) {
+                    return ranks[idx1] > ranks[idx2];
+                  });
+      }
+      auto &cipEntry = cipEntries[index];
+      for (auto nbrIdx : updatedNbrIdxs) {
+        unsigned int count = counts[nbrIdx];
+        cipEntry.insert(cipEntry.end(), count, ranks[nbrIdx] + 1);
+        counts[nbrIdx] = 0;
+      }
+      // add a zero for each coordinated H as long as we're not a query atom
+      if (!mol[index]->hasQuery()) {
+        cipEntry.insert(cipEntry.end(), mol[index]->getTotalNumHs(), 0);
+      }
+
+      if (cipEntry.size() > longestEntry) {
+        longestEntry = rdcast<unsigned int>(cipEntry.size());
       }
     }
     // ----------------------------------------------------
     //
     // pad the entries so that we compare rounds to themselves:
     //
-    for (int &index : allIndices) {
+    for (unsigned int index = 0; index < numAtoms; ++index) {
       auto sz = rdcast<unsigned int>(cipEntries[index].size());
       if (sz < longestEntry) {
         cipEntries[index].insert(cipEntries[index].end(), longestEntry - sz,
@@ -1172,6 +1182,7 @@ void findAtomNeighborsHelper(const ROMol &mol, const Atom *atom,
 //   3) four ring neighbors with three different ranks
 //   4) three ring neighbors with two different ranks
 //     example for this last one: C[C@H]1CC2CCCC3CCCC(C1)[C@@H]23
+// Note that N atoms are only candidates if they are in a 3-ring
 bool atomIsCandidateForRingStereochem(const ROMol &mol, const Atom *atom) {
   PRECONDITION(atom, "bad atom");
   bool res = false;
@@ -1179,6 +1190,10 @@ bool atomIsCandidateForRingStereochem(const ROMol &mol, const Atom *atom) {
   if (!atom->getPropIfPresent(common_properties::_ringStereochemCand, res)) {
     const RingInfo *ringInfo = mol.getRingInfo();
     if (ringInfo->isInitialized() && ringInfo->numAtomRings(atom->getIdx())) {
+      if (atom->getAtomicNum() == 7 &&
+          !ringInfo->isAtomInRingOfSize(atom->getIdx(), 3)) {
+        return false;
+      }
       ROMol::OEDGE_ITER beg, end;
       boost::tie(beg, end) = mol.getAtomBonds(atom);
       std::vector<const Atom *> nonRingNbrs;
@@ -1383,58 +1398,58 @@ std::pair<bool, bool> isAtomPotentialChiralCenter(
     // we only know tetrahedral chirality
     legalCenter = false;
   } else {
-    boost::dynamic_bitset<> codesSeen(mol.getNumAtoms());
-    ROMol::OEDGE_ITER beg, end;
-    boost::tie(beg, end) = mol.getAtomBonds(atom);
-    while (beg != end) {
-      unsigned int otherIdx = mol[*beg]->getOtherAtom(atom)->getIdx();
-      CHECK_INVARIANT(ranks[otherIdx] < mol.getNumAtoms(),
-                      "CIP rank higher than the number of atoms.");
-      // watch for neighbors with duplicate ranks, which would mean
-      // that we cannot be chiral:
-      if (codesSeen[ranks[otherIdx]]) {
-        // we've already seen this code, it's a dupe
-        hasDupes = true;
-        break;
+    // cases we can exclude immediately without having to look at neighbors
+    // ranks:
+    if (atom->getTotalDegree() < 3) {
+      legalCenter = false;
+    } else if (atom->getDegree() < 3 &&
+               (atom->getAtomicNum() != 15 && atom->getAtomicNum() != 33)) {
+      // less than three neighbors is never stereogenic
+      // unless it is a phosphine/arsine with implicit H (this is from InChI)
+      legalCenter = false;
+    } else if (atom->getDegree() == 3 && atom->getTotalNumHs() != 1) {
+      // assume something that's really three coordinate isn't potentially
+      // chiral, then look for exceptions
+      legalCenter = false;
+      if (atom->getAtomicNum() == 7) {
+        if (mol.getRingInfo()->isAtomInRingOfSize(atom->getIdx(), 3)) {
+          // three-coordinate N is only stereogenic if it's in a 3-ring (this is
+          // from InChI)
+          legalCenter = true;
+        }
+      } else if (atom->getAtomicNum() == 15 || atom->getAtomicNum() == 33) {
+        // three-coordinate phosphines and arsines
+        // are always treated as stereogenic even with H atom neighbors.
+        // (this is from InChI)
+        legalCenter = true;
+      } else if (atom->getAtomicNum() == 16 || atom->getAtomicNum() == 34) {
+        if (atom->getExplicitValence() == 4 ||
+            (atom->getExplicitValence() == 3 && atom->getFormalCharge() == 1)) {
+          // we also accept sulfur or selenium with either a positive charge
+          // or a double bond:
+          legalCenter = true;
+        }
       }
-      codesSeen[ranks[otherIdx]] = 1;
-      nbrs.push_back(std::make_pair(ranks[otherIdx], mol[*beg]->getIdx()));
-      ++beg;
     }
 
-    // figure out if this is a legal chiral center or not:
-    if (!hasDupes) {
-      if (nbrs.size() < 3 &&
-          (atom->getAtomicNum() != 15 && atom->getAtomicNum() != 33)) {
-        // less than three neighbors is never stereogenic
-        // unless it is a phosphine/arsine with implicit H
-        legalCenter = false;
-      } else if (atom->getAtomicNum() == 15 || atom->getAtomicNum() == 33) {
-        // from logical flow: nbrs.size is 3 or 4, or 2 (implicit H)
-        // Since InChI Software v. 1.02-standard (2009), phosphines and arsines
-        // are always treated as stereogenic even with H atom neighbors.
-        // Accept automatically.
-        legalCenter = true;
-      } else if (nbrs.size() == 3) {
-        // three-coordinate with a single H we'll accept automatically:
-        if (atom->getTotalNumHs() != 1) {
-          // otherwise we default to not being a legal center
-          legalCenter = false;
-          // but there are a few special cases we'll accept
-          // sulfur or selenium with either a positive charge or a double
-          // bond:
-          if ((atom->getAtomicNum() == 16 || atom->getAtomicNum() == 34) &&
-              (atom->getExplicitValence() == 4 ||
-               (atom->getExplicitValence() == 3 &&
-                atom->getFormalCharge() == 1))) {
-            legalCenter = true;
-          } else if (atom->getAtomicNum() == 7 &&
-                     mol.getRingInfo()->isAtomInRingOfSize(atom->getIdx(), 3)) {
-            // N in a three-membered ring is another one of the InChI special
-            // cases
-            legalCenter = true;
-          }
+    if (legalCenter) {
+      boost::dynamic_bitset<> codesSeen(mol.getNumAtoms());
+      ROMol::OEDGE_ITER beg, end;
+      boost::tie(beg, end) = mol.getAtomBonds(atom);
+      while (beg != end) {
+        unsigned int otherIdx = mol[*beg]->getOtherAtom(atom)->getIdx();
+        CHECK_INVARIANT(ranks[otherIdx] < mol.getNumAtoms(),
+                        "CIP rank higher than the number of atoms.");
+        // watch for neighbors with duplicate ranks, which would mean
+        // that we cannot be chiral:
+        if (codesSeen[ranks[otherIdx]]) {
+          // we've already seen this code, it's a dupe
+          hasDupes = true;
+          break;
         }
+        codesSeen[ranks[otherIdx]] = 1;
+        nbrs.push_back(std::make_pair(ranks[otherIdx], mol[*beg]->getIdx()));
+        ++beg;
       }
     }
   }
@@ -1473,6 +1488,7 @@ std::pair<bool, bool> assignAtomChiralCodes(ROMol &mol, UINT_VECT &ranks,
       }
       Chirality::INT_PAIR_VECT nbrs;
       bool legalCenter, hasDupes;
+      // note that hasDupes is only evaluated if legalCenter==true
       boost::tie(legalCenter, hasDupes) =
           isAtomPotentialChiralCenter(atom, mol, ranks, nbrs);
       if (legalCenter) {

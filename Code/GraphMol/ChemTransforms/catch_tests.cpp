@@ -55,3 +55,4 @@ TEST_CASE("Github #1039", "[]") {
     CHECK(MolToSmiles(*pieces) == "*C.[1*]C(O)(F)Cl");
   }
 }
+

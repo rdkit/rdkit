@@ -19,29 +19,29 @@ using namespace std;
 namespace RDKit {
 
 // ****************************************************************************
-DrawTextQt::DrawTextQt(double max_fnt_sz, double min_fnt_sz, QPainter &qp)
+DrawTextQt::DrawTextQt(double max_fnt_sz, double min_fnt_sz, QPainter *qp)
     : DrawText(max_fnt_sz, min_fnt_sz), d_qp(qp) {
   PRECONDITION(
       QCoreApplication::instance(),
       "need a global QGuiApplication instance to use the Qt font system");
   QFont font("Sans Serif", fontSize());
-  d_qp.setFont(font);
+  d_qp->setFont(font);
 }
 
 // ****************************************************************************
 // draw the char, with the bottom left hand corner at cds
 void DrawTextQt::drawChar(char c, const Point2D &cds) {
-  auto font = d_qp.font();
+  auto font = d_qp->font();
   font.setPixelSize(fontSize());
-  d_qp.setFont(font);
+  d_qp->setFont(font);
   QPointF loc(cds.x, cds.y);
   QChar qc(c);
   QString text(qc);
   const auto col = colour();
   QColor qcol(int(255.0 * col.r), int(255.0 * col.g), int(255.0 * col.b),
               int(255.0 * col.a));
-  d_qp.setPen(qcol);
-  d_qp.drawText(loc, text);
+  d_qp->setPen(qcol);
+  d_qp->drawText(loc, text);
 }
 
 // ****************************************************************************
@@ -54,7 +54,7 @@ void DrawTextQt::getStringRects(const string &text,
   double char_height;
   double max_width = 0.0;
   TextDrawType draw_mode = TextDrawType::TextDrawNormal;
-  QFontMetrics qfm(d_qp.font());
+  QFontMetrics qfm(d_qp->font());
   for (size_t i = 0; i < text.length(); ++i) {
     // setStringDrawMode moves i along to the end of any <sub> or <sup>
     // markup

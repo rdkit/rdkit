@@ -9,6 +9,7 @@
 //
 
 #include "MolFragmenter.h"
+#include "ChemTransforms.h"
 #include <RDGeneral/utils.h>
 #include <RDGeneral/Invariant.h>
 #include <RDGeneral/RDLog.h>
@@ -22,6 +23,7 @@
 #include <vector>
 #include <algorithm>
 #include <GraphMol/SmilesParse/SmilesParse.h>
+#include <GraphMol/SmilesParse/SmilesWrite.h>
 #include <GraphMol/Substruct/SubstructMatch.h>
 #include <RDGeneral/StreamOps.h>
 
@@ -32,6 +34,7 @@
 #include <RDGeneral/BoostEndInclude.h>
 
 #include <sstream>
+#include <map>
 
 namespace RDKit {
 namespace MolFragmenter {
@@ -591,6 +594,5 @@ ROMol *fragmentOnBRICSBonds(const ROMol &mol) {
   }
   return fragmentOnBonds(mol, bondPatterns, &(atomEnvs.get()));
 }
-
-}  // end of namespace MolFragmenter
-}  // end of namespace RDKit
+} // End of MolFragmenter
+} // end of namespace RDKit

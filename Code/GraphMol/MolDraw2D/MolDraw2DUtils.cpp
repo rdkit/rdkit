@@ -115,6 +115,10 @@ void get_colour_option(boost::property_tree::ptree *pt, const char *pnm,
   ++itm;
   colour.b = itm->second.get_value<float>();
   ++itm;
+  if (itm != pt->get_child(pnm).end()) {
+    colour.a = itm->second.get_value<float>();
+    ++itm;
+  }
 }
 
 void updateDrawerParamsFromJSON(MolDraw2D &drawer, const std::string &json) {
@@ -143,6 +147,7 @@ void updateDrawerParamsFromJSON(MolDraw2D &drawer, const std::string &json) {
   PT_OPT_GET(multipleBondOffset);
   PT_OPT_GET(padding);
   PT_OPT_GET(additionalAtomLabelPadding);
+  PT_OPT_GET(noAtomLabels);
   PT_OPT_GET(bondLineWidth);
   PT_OPT_GET(scaleBondWidth);
   PT_OPT_GET(scaleHighlightBondWidth);
@@ -160,11 +165,15 @@ void updateDrawerParamsFromJSON(MolDraw2D &drawer, const std::string &json) {
   PT_OPT_GET(includeMetadata);
   PT_OPT_GET(includeRadicals);
   PT_OPT_GET(comicMode);
+  PT_OPT_GET(variableBondWidthMultiplier);
+  PT_OPT_GET(variableAtomRadius);
 
   get_colour_option(&pt, "highlightColour", opts.highlightColour);
   get_colour_option(&pt, "backgroundColour", opts.backgroundColour);
   get_colour_option(&pt, "legendColour", opts.legendColour);
   get_colour_option(&pt, "symbolColour", opts.symbolColour);
+  get_colour_option(&pt, "variableAttachmentColour",
+                    opts.variableAttachmentColour);
   if (pt.find("atomLabels") != pt.not_found()) {
     for (const auto &item : pt.get_child("atomLabels")) {
       opts.atomLabels[boost::lexical_cast<int>(item.first)] =

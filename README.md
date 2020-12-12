@@ -1,5 +1,5 @@
 # RDKit
-[![Azure build Status](https://dev.azure.com/rdkit-org/RDKit-main-build/_apis/build/status/rdkit.rdkit?branchName=master)](https://dev.azure.com/rdkit-org/RDKit-main-build/_build/latest?definitionId=1&branchName=master)
+[![Azure build Status](https://dev.azure.com/rdkit-builds/RDKit/_apis/build/status/rdkit.rdkit?branchName=master)](https://dev.azure.com/rdkit-org/RDKit-main-build/_build/latest?definitionId=1&branchName=master)
 [![Documentation Status](https://readthedocs.org/projects/rdkit/badge/?version=latest)](http://rdkit.readthedocs.org/en/latest/)
 [![DOI](https://zenodo.org/badge/10009991.svg)](https://zenodo.org/badge/latestdoi/10009991)
 
