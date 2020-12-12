@@ -151,10 +151,21 @@ def _legacyMolToImage(mol, size, kekulize, wedgeBonds, fitImage, options, canvas
 
 if hasattr(rdMolDraw2D, 'MolDraw2DQt'):
   try:
-    import sip
     from PyQt5.Qt import *
   except ImportError:
+    # If we can't find Qt, there's nothing we can do
     sip = None
+  else:
+    try:
+      # Prefer the PyQt5-bundled sip
+      from PyQt5 import sip
+    except ImportError:
+      # No bundled sip, try the standalone package
+      try:
+        import sip
+      except ImportError:
+        # No sip at all
+        sip = None
 
   if sip is not None:
 

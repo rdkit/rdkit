@@ -7,9 +7,20 @@ from rdkit.Chem.Draw import rdMolDraw2D
 import sys
 try:
   from PyQt5.Qt import *
-  import sip
 except ImportError:
+  # If we can't find Qt, there's nothing we can do
   sip = None
+else:
+  try:
+    # Prefer the PyQt5-bundled sip
+    from PyQt5 import sip
+  except ImportError:
+    # No bundled sip, try the standalone package
+    try:
+      import sip
+    except ImportError:
+      # No sip at all
+      sip = None
 
 
 @unittest.skipIf(sip is None, "skipping tests because pyqt is not installed")
