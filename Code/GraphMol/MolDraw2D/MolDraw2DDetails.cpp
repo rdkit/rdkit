@@ -193,7 +193,14 @@ void drawPolyline(MolDraw2D &drawer, const MolDrawShape &shape) {
   PRECONDITION(shape.shapeType == MolDrawShapeType::Polyline, "bad shape type");
   PRECONDITION(shape.points.size() > 1, "not enough points");
   drawer.setColour(shape.lineColour);
-  drawer.setLineWidth(shape.lineWidth);
+  auto lw = shape.lineWidth;
+  if (shape.scaleLineWidth) {
+    lw *= drawer.scale() * 0.02;
+    if (lw < 0.0) {
+      lw = 0.0;
+    }
+  }
+  drawer.setLineWidth(lw);
   if (shape.points.size() > 2 && shape.fill) {
     drawer.setFillPolys(true);
   } else {
@@ -216,6 +223,18 @@ void drawPolyline(MolDraw2D &drawer, const MolDrawShape &shape) {
     }
   }
 }
+void drawEllipse(MolDraw2D &drawer, const MolDrawShape &shape) {
+  PRECONDITION(shape.shapeType == MolDrawShapeType::Ellipse, "bad shape type");
+  PRECONDITION(shape.points.size() == 2, "wrong points");
+  drawer.setColour(shape.lineColour);
+  drawer.setLineWidth(shape.lineWidth);
+  if (shape.fill) {
+    drawer.setFillPolys(true);
+  } else {
+    drawer.setFillPolys(false);
+  }
+  drawer.drawEllipse(shape.points[0], shape.points[1]);
+}
 }  // namespace
 void drawShapes(MolDraw2D &drawer, const std::vector<MolDrawShape> &shapes) {
   const auto ocolour = drawer.colour();
@@ -228,6 +247,9 @@ void drawShapes(MolDraw2D &drawer, const std::vector<MolDrawShape> &shapes) {
         break;
       case MolDrawShapeType::Arrow:
         drawArrow(drawer, shape);
+        break;
+      case MolDrawShapeType::Ellipse:
+        drawEllipse(drawer, shape);
         break;
       default:
         ASSERT_INVARIANT(false, "unrecognized shape type");

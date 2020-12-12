@@ -416,6 +416,13 @@ python::object getSymbolColour(const RDKit::MolDrawOptions &self) {
 void setSymbolColour(RDKit::MolDrawOptions &self, python::tuple tpl) {
   self.symbolColour = pyTupleToDrawColour(tpl);
 }
+python::object getVariableAttachmentColour(const RDKit::MolDrawOptions &self) {
+  return colourToPyTuple(self.variableAttachmentColour);
+}
+void setVariableAttachmentColour(RDKit::MolDrawOptions &self,
+                                 python::tuple tpl) {
+  self.variableAttachmentColour = pyTupleToDrawColour(tpl);
+}
 void useDefaultAtomPalette(RDKit::MolDrawOptions &self) {
   assignDefaultPalette(self.atomColourPalette);
 }
@@ -698,7 +705,19 @@ BOOST_PYTHON_MODULE(rdMolDraw2D) {
       .def_readwrite("comicMode", &RDKit::MolDrawOptions::comicMode,
                      "simulate hand-drawn lines for bonds. When combined with "
                      "a font like Comic-Sans or Comic-Neue, this gives "
-                     "xkcd-like drawings. Default is false.");
+                     "xkcd-like drawings. Default is false.")
+      .def_readwrite("variableBondWidthMultiplier",
+                     &RDKit::MolDrawOptions::variableBondWidthMultiplier,
+                     "what to multiply standard bond width by for variable "
+                     "attachment points.")
+      .def_readwrite("variableAtomRadius",
+                     &RDKit::MolDrawOptions::variableAtomRadius,
+                     "radius value to use for atoms involved in variable "
+                     "attachment points.")
+      .def("getVariableAttachmentColour", &RDKit::getVariableAttachmentColour,
+           "method for getting the colour of variable attachment points")
+      .def("setVariableAttachmentColour", &RDKit::setVariableAttachmentColour,
+           "method for setting the colour of variable attachment points");
   docString = "Drawer abstract base class";
   python::class_<RDKit::MolDraw2D, boost::noncopyable>(
       "MolDraw2D", docString.c_str(), python::no_init)
