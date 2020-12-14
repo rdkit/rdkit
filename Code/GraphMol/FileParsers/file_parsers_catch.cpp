@@ -17,6 +17,8 @@
 #include <GraphMol/SmilesParse/SmilesWrite.h>
 #include <GraphMol/SmilesParse/SmilesParse.h>
 #include <GraphMol/SmilesParse/SmartsWrite.h>
+#include <GraphMol/FileParsers/SequenceParsers.h>
+#include <GraphMol/FileParsers/SequenceWriters.h>
 #include <GraphMol/FileParsers/PNGParser.h>
 #include <RDGeneral/FileParseException.h>
 #include <boost/algorithm/string.hpp>
@@ -2125,5 +2127,36 @@ M  END
     CHECK(chiralFlag == 1);
     auto mb = MolToV3KMolBlock(*m);
     CHECK(mb.find("4 3 0 0 1") != std::string::npos);
+  }
+}
+
+TEST_CASE("test bond flavors when writing PDBs", "[bug]") {
+  SECTION("basics") {
+    std::unique_ptr<RWMol> m{SequenceToMol("G")};
+    REQUIRE(m);
+    int confId = -1;
+    {
+      int flavor = 0;
+      auto pdb = MolToPDBBlock(*m, confId, flavor);
+      CHECK(pdb.find("CONECT    1    2\n") != std::string::npos);
+      CHECK(pdb.find("CONECT    3    4    4    5\n") != std::string::npos);
+    }
+    {
+      int flavor = 2;
+      auto pdb = MolToPDBBlock(*m, confId, flavor);
+      CHECK(pdb.find("CONECT    1    2\n") == std::string::npos);
+      CHECK(pdb.find("CONECT    3    4    4\n") != std::string::npos);
+    }
+    {
+      int flavor = 8;
+      auto pdb = MolToPDBBlock(*m, confId, flavor);
+      CHECK(pdb.find("CONECT    1    2\n") != std::string::npos);
+      CHECK(pdb.find("CONECT    3    4    5\n") != std::string::npos);
+    }
+    {
+      int flavor = 2 | 8;
+      auto pdb = MolToPDBBlock(*m, confId, flavor);
+      CHECK(pdb.find("CONECT") == std::string::npos);
+    }
   }
 }
