@@ -19,6 +19,8 @@
 #include <GraphMol/FileParsers/MolSupplier.h>
 #include <GraphMol/Substruct/SubstructMatch.h>
 
+#include <algorithm>
+
 using namespace RDKit;
 using std::unique_ptr;
 
@@ -148,5 +150,110 @@ TEST_CASE("molzip", "[]") {
             }
         }
     }
+    
+    SECTION("test bond stereo")
+    {
+       auto a = "F/C=C/[*:1]"_smiles;
+       auto b = "[*:1]F"_smiles;
+       auto mol = molzip(*a,*b);
+      CHECK(MolToSmiles(*mol) == "F/C=C/F");
+    }
+    {
+        auto b = "F/C=C/[*:1]"_smiles;
+        auto a = "[*:1]F"_smiles;
+        auto mol = molzip(*a,*b);
+       CHECK(MolToSmiles(*mol) == "F/C=C/F");
+     }
+    
+    {
+          auto a = "O/C=N/[*:1]"_smiles;
+          auto b = "[*:1]C=C"_smiles;
+          auto mol = molzip(*a,*b);
+         CHECK(MolToSmiles(*mol) == "C=C/N=C/O");
+       }
+    {
+       auto b = "O/C=N/[*:1]"_smiles;
+       auto a = "[*:1]C=C"_smiles;
+       auto mol = molzip(*a,*b);
+      CHECK(MolToSmiles(*mol) == "C=C/N=C/O");
+    }
+    
+    {
+        auto a = "C=C/N=C/[*:1]"_smiles;
+        auto b = "O[*:1]"_smiles;
+        auto mol = molzip(*a,*b);
+        CHECK(MolToSmiles(*mol) == "C=C/N=C/O");
+    }
+    
+    {
+        auto b = "C=C/N=C/[*:1]"_smiles;
+        auto a = "O[*:1]"_smiles;
+        auto mol = molzip(*a,*b);
+        CHECK(MolToSmiles(*mol) == "C=C/N=C/O");
+    }
+    {
+        auto a = "C=C[*:1]"_smiles;
+        auto b = "O/C=N/[*:1]"_smiles;
+        auto mol = molzip(*a,*b);
+        CHECK(MolToSmiles(*mol) == "C=C/N=C/O");
+    }
+    {
+        auto b = "C=C[*:1]"_smiles;
+        auto a = "O/C=N/[*:1]"_smiles;
+        auto mol = molzip(*a,*b);
+        CHECK(MolToSmiles(*mol) == "C=C/N=C/O");
+    }
+    
+    {
+        auto a = "C=C[*:1].O/C=N/[*:1]"_smiles;
+        auto mol = molzip(*a);
+        CHECK(MolToSmiles(*mol) == "C=C/N=C/O");
+    }
+    {
+        auto a = "C=C[1*:1].O/C=N/[1*:1]"_smiles;
+        auto mol = molzip(*a);
+        CHECK(MolToSmiles(*mol) == "C=C/N=C/O");
+    }
+    /* For some reason, the molzip and fragment on bonds is having issues with bond stereo in some cases
+     roundtripping through moltosmiles "fixes" it though */
+    {
+          // double bondd stereo not handled
+          //auto m =  "O/C=N/C=C/F"_smiles;
+          auto m =  "O/C=N/C=C"_smiles;
+          std::vector<std::pair<unsigned int, unsigned int>> dummyLabels{{1,1}};
+          for(unsigned int i=0;i<m->getNumBonds();++i) {
+                      std::vector<unsigned int> bonds{i};
+                    {
+                        // can't use this technique as it reorders the atoms...
+                        /*
+                      auto resa_ = RDKit::MolFragmenter::fragmentOnBonds(*m, bonds);
+                      auto resa = SmilesToMol(MolToSmiles(*resa_));
+                      auto smiles = MolToSmiles(*resa);
+                        
+                      if (std::count(smiles.begin(), smiles.end(), '/') != 2) continue;  // we removed bond stereo in fragment to bonds!
+                      MolzipParams p;
+                      p.label = MolzipLabel::FragmentOnBonds;
+                      CHECK(MolToSmiles(*molzip(*resa,p)) == MolToSmiles(*m));
+                         */
+                    }
+                    {
+                      // Now try using atom labels
+                      auto _res = RDKit::MolFragmenter::fragmentOnBonds(*m, bonds, true, &dummyLabels);
+                      // Stereo chem is being disrupted sometimes, no idea why
+                      std::unique_ptr<RWMol> res(SmilesToMol(MolToSmiles(*_res)));
+                      auto smiles = MolToSmiles(*res);
+                      
+                      if (std::count(smiles.begin(), smiles.end(), '/') != 2) continue;  // we removed bond stereo in fragment to bonds!
+                      for(auto *atom : res->atoms()) {
+                          if(atom->getIsotope()) {
+                              atom->setAtomMapNum(atom->getIsotope());
+                          }
+                      }
+                     
+                      CHECK(MolToSmiles(*molzip(*res)) == MolToSmiles(*m));
+                    }
+                  }
+    }
+     
      
 }

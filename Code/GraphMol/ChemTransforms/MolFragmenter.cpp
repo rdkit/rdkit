@@ -671,22 +671,50 @@ struct ZipBond {
     //  The goal is to copy the dummy chiral order over to the
     //  atom being bonded
     void mark(Atom *chiral_atom, Atom *dummy_atom, Atom *new_atom) const {
-        if(!chiral_atom->getChiralTag()) {
-            return;
+        if(chiral_atom->getChiralTag()) {
+            std::string mark = "__molzip_mark_" + std::to_string(chiral_atom->getIdx());
+            chiral_atom->setProp("__molzip_chiral_mark", mark);
+            int order = 0;
+            auto &m = chiral_atom->getOwningMol();
+            for(auto nbrIdx : boost::make_iterator_range(m.getAtomNeighbors(chiral_atom))) {
+                m[nbrIdx]->setProp<int>(mark, order);
+                ++order;
+            }
+            new_atom->setProp<int>(mark, dummy_atom->getProp<int>(mark));
         }
-        std::string mark = "__molzip_mark_" + std::to_string(chiral_atom->getIdx());
-        chiral_atom->setProp("__molzip_chiral_mark", mark);
-        int order = 0;
+        
+        // check bond stereo
         auto &m = chiral_atom->getOwningMol();
+        auto bond  = m.getBondBetweenAtoms(chiral_atom->getIdx(), dummy_atom->getIdx());
         for(auto nbrIdx : boost::make_iterator_range(m.getAtomNeighbors(chiral_atom))) {
-            m[nbrIdx]->setProp<int>(mark, order);
-            ++order;
+            auto bond  = m.getBondBetweenAtoms(chiral_atom->getIdx(), nbrIdx);
+            if(bond->getStereo()) {
+                std::string mark = "__molzip_bond_stereo_mark";
+                std::vector<Atom*> atoms;
+                bool has_dummy = false;
+                for(auto idx : bond->getStereoAtoms()) {
+                    if(idx == dummy_atom->getIdx()) {
+                        atoms.push_back(new_atom);
+                        has_dummy = true;
+                    } else {
+                        atoms.push_back(m[idx]);
+                    }
+                }
+                if(has_dummy) {
+                    bond->setProp<std::vector<Atom*>>(mark, atoms);
+                    bond->setProp<Bond::BondStereo>("__molzip_bond_stereo", bond->getStereo());
+                }
+            }
         }
-        new_atom->setProp<int>(mark, dummy_atom->getProp<int>(mark));
     }
     
     // Backup the original chirality
     void mark_chirality() const {
+        PRECONDITION(a, "Must have a begin atom to bond");
+        PRECONDITION(b, "Must have an end atom to bond");
+        PRECONDITION(a_dummy, "Must have a begin dummy atom");
+        PRECONDITION(b_dummy, "Must have an end dummy atom");
+        
         mark(a, a_dummy, b);
         mark(b, b_dummy, a);
     }
@@ -700,7 +728,16 @@ struct ZipBond {
         }
         if (!a->getOwningMol().getBondBetweenAtoms(a->getIdx(), b->getIdx())) {
             assert (&a->getOwningMol() == &newmol);
-            newmol.addBond(a, b, Bond::BondType::SINGLE);
+            auto bond_type_a = newmol.getBondBetweenAtoms(a->getIdx(), a_dummy->getIdx())->getBondType();
+            auto bond_type_b = newmol.getBondBetweenAtoms(b->getIdx(), b_dummy->getIdx())->getBondType();
+            if(bond_type_a != Bond::BondType::SINGLE) {
+                newmol.addBond(a, b, bond_type_a);
+            }
+            else if (bond_type_b != Bond::BondType::SINGLE) {
+                newmol.addBond(a, b, bond_type_b);
+            } else {
+                newmol.addBond(a, b, Bond::BondType::SINGLE);
+            }
         }
         return true;
     }
@@ -732,6 +769,19 @@ struct ZipBond {
         if(already_checked.find(b) == already_checked.end()) {
             restore(b);
             already_checked.insert(b);
+        }
+        
+        // now do bond stereo
+        std::string mark = "__molzip_bond_stereo_mark";
+        for(auto *bond : a->getOwningMol().bonds()) {
+            if(bond->hasProp(mark)) {
+                std::vector<int> atoms;
+                for(auto *atom : bond->getProp<std::vector<Atom*>>(mark)) {
+                    atoms.push_back(rdcast<int>(atom->getIdx()));
+                }
+                bond->getStereoAtoms().swap(atoms);
+                bond->setStereo(bond->getProp<Bond::BondStereo>("__molzip_bond_stereo"));
+            }
         }
     }
 };
@@ -825,7 +875,16 @@ std::unique_ptr<ROMol> molzip(
             }
         }
     }
+    for(auto *bond : newmol->bonds()) {
+        auto propnames = bond->getPropList();
+        for(auto &prop : propnames) {
+            if(prop.find("__molzip") == 0) {
+                bond->clearProp(prop);
+            }
+        }
+    }
     newmol->updatePropertyCache();
+    newmol->setProp(common_properties::_StereochemDone, true);
     return std::unique_ptr<ROMol>(newmol);
 }
 
