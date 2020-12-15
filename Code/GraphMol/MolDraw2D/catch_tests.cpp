@@ -1861,15 +1861,137 @@ TEST_CASE("disable atom labels", "[feature]") {
 }
 
 TEST_CASE("molecule annotations", "[extra]") {
+  int panelHeight = -1;
+  int panelWidth = -1;
+  bool noFreeType = false;
+
   SECTION("basics") {
     auto m = "NCC(=O)O"_smiles;
-    MolDraw2DSVG drawer(350, 300);
+    MolDraw2DSVG drawer(350, 300, panelHeight, panelWidth, noFreeType);
     MolDraw2DUtils::prepareMolForDrawing(*m);
     m->setProp(common_properties::molNote, "molecule note");
-    drawer.drawMolecule(*m);
+    drawer.drawMolecule(*m, "with note");
     drawer.finishDrawing();
     auto text = drawer.getDrawingText();
     std::ofstream outs("testMolAnnotations-1.svg");
+    outs << text;
+    outs.flush();
+    CHECK(text.find("class='note'") != std::string::npos);
+  }
+  SECTION("chiral flag") {
+    auto m = R"CTAB(
+  Mrv2014 12152012512D          
+ 
+  0  0  0     0  0            999 V3000
+M  V30 BEGIN CTAB
+M  V30 COUNTS 8 8 0 0 1
+M  V30 BEGIN ATOM
+M  V30 1 C -0.6317 0.6787 0 0 CFG=2
+M  V30 2 C -1.7207 1.7677 0 0
+M  V30 3 C 0.4571 1.7677 0 0
+M  V30 4 C -0.6317 2.8566 0 0 CFG=1
+M  V30 5 C 0.1729 4.1698 0 0
+M  V30 6 N -0.5619 5.5231 0 0
+M  V30 7 C -1.4364 4.1698 0 0
+M  V30 8 C -0.6316 -0.8613 0 0
+M  V30 END ATOM
+M  V30 BEGIN BOND
+M  V30 1 1 1 2 CFG=3
+M  V30 2 1 1 3
+M  V30 3 1 4 3
+M  V30 4 1 4 2
+M  V30 5 1 4 5
+M  V30 6 1 5 6
+M  V30 7 1 4 7 CFG=1
+M  V30 8 1 1 8
+M  V30 END BOND
+M  V30 END CTAB
+M  END
+)CTAB"_ctab;
+    {
+      MolDraw2DSVG drawer(350, 300, panelHeight, panelWidth, noFreeType);
+      drawer.drawMolecule(*m, "chiral flag set, option disabled");
+      drawer.finishDrawing();
+      auto text = drawer.getDrawingText();
+      std::ofstream outs("testMolAnnotations-2a.svg");
+      outs << text;
+      outs.flush();
+      CHECK(text.find("class='note'") == std::string::npos);
+    }
+    {
+      MolDraw2DSVG drawer(350, 300, panelHeight, panelWidth, noFreeType);
+      drawer.drawOptions().includeChiralFlagLabel = true;
+      drawer.drawMolecule(*m, "chiral flag set, option enabled");
+      drawer.finishDrawing();
+      auto text = drawer.getDrawingText();
+      std::ofstream outs("testMolAnnotations-2b.svg");
+      outs << text;
+      outs.flush();
+      CHECK(text.find("class='note'") != std::string::npos);
+    }
+    {
+      MolDraw2DSVG drawer(350, 300, panelHeight, panelWidth, noFreeType);
+      drawer.drawOptions().includeChiralFlagLabel = true;
+      m->clearProp(common_properties::_MolFileChiralFlag);
+      drawer.drawMolecule(*m, "chiral flag not set, option enabled");
+      drawer.finishDrawing();
+      auto text = drawer.getDrawingText();
+      std::ofstream outs("testMolAnnotations-2c.svg");
+      outs << text;
+      outs.flush();
+      CHECK(text.find("class='note'") == std::string::npos);
+    }
+  }
+  SECTION("simplified stereo 1") {
+    {
+      auto m = "C[C@H](F)[C@@H](F)[C@@H](C)Cl |o1:3,5,1|"_smiles;
+      MolDraw2DSVG drawer(350, 300, panelHeight, panelWidth, noFreeType);
+      MolDraw2DUtils::prepareMolForDrawing(*m);
+      drawer.drawOptions().addStereoAnnotation = true;
+      drawer.drawMolecule(*m, "enhanced no flag");
+      drawer.finishDrawing();
+      auto text = drawer.getDrawingText();
+      std::ofstream outs("testMolAnnotations-3a.svg");
+      outs << text;
+      outs.flush();
+    }
+    {
+      auto m = "C[C@H](F)[C@@H](F)[C@@H](C)Cl |o1:3,5,1|"_smiles;
+      MolDraw2DSVG drawer(350, 300, panelHeight, panelWidth, noFreeType);
+      MolDraw2DUtils::prepareMolForDrawing(*m);
+      drawer.drawOptions().addStereoAnnotation = true;
+      drawer.drawOptions().simplifiedStereoGroupLabel = true;
+      drawer.drawMolecule(*m, "enhanced with flag");
+      drawer.finishDrawing();
+      auto text = drawer.getDrawingText();
+      std::ofstream outs("testMolAnnotations-3b.svg");
+      outs << text;
+      outs.flush();
+    }
+    {
+      auto m = "C[C@H](F)[C@@H](F)[C@@H](C)Cl |&1:3,5,1|"_smiles;
+      MolDraw2DSVG drawer(350, 300, panelHeight, panelWidth, noFreeType);
+      MolDraw2DUtils::prepareMolForDrawing(*m);
+      drawer.drawOptions().addStereoAnnotation = true;
+      drawer.drawOptions().simplifiedStereoGroupLabel = true;
+      drawer.drawMolecule(*m, "enhanced & with flag");
+      drawer.finishDrawing();
+      auto text = drawer.getDrawingText();
+      std::ofstream outs("testMolAnnotations-3c.svg");
+      outs << text;
+      outs.flush();
+    }
+  }
+  SECTION("simplified stereo 2") {
+    auto m = "C[C@H](F)[C@@H](F)[C@@H](C)Cl |o1:3,5,o2:1|"_smiles;
+    MolDraw2DSVG drawer(350, 300, panelHeight, panelWidth, noFreeType);
+    drawer.drawOptions().addStereoAnnotation = true;
+    drawer.drawOptions().simplifiedStereoGroupLabel = true;
+    MolDraw2DUtils::prepareMolForDrawing(*m);
+    drawer.drawMolecule(*m, "multi-groups");
+    drawer.finishDrawing();
+    auto text = drawer.getDrawingText();
+    std::ofstream outs("testMolAnnotations-3d.svg");
     outs << text;
     outs.flush();
   }
