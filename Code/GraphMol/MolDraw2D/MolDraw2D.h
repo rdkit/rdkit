@@ -294,6 +294,12 @@ struct RDKIT_MOLDRAW2D_EXPORT MolDrawOptions {
                                     // variable attachment points.
   DrawColour variableAttachmentColour = {
       0.8, 0.8, 0.8, 1.0};  // colour to use for variable attachment points
+  bool includeChiralFlagLabel =
+      false;  // add a molecule annotation with "ABS" if the chiral flag is set
+  bool simplifiedStereoGroupLabel =
+      false;  // if all specified stereocenters are in a single StereoGroup,
+              // show a molecule-level annotation instead of the individual
+              // labels
 
   MolDrawOptions() {
     highlightColourPalette.emplace_back(

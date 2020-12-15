@@ -1307,6 +1307,42 @@ unique_ptr<RWMol> MolDraw2D::setupDrawMolecule(
       rwmol->setProp("_centroidy", centroid.y);
     }
   }
+  if (drawOptions().simplifiedStereoGroupLabel &&
+      !mol.hasProp(common_properties::molNote)) {
+    auto sgs = mol.getStereoGroups();
+    if (sgs.size() == 1) {
+      boost::dynamic_bitset<> chiralAts(mol.getNumAtoms());
+      for (const auto atom : mol.atoms()) {
+        if (atom->getChiralTag() > Atom::ChiralType::CHI_UNSPECIFIED &&
+            atom->getChiralTag() < Atom::ChiralType::CHI_OTHER) {
+          chiralAts.set(atom->getIdx(), 1);
+        }
+      }
+      for (const auto atm : sgs[0].getAtoms()) {
+        chiralAts.set(atm->getIdx(), 0);
+      }
+      if (chiralAts.none()) {
+        // all specified chiral centers are accounted for by this StereoGroup.
+        if (sgs[0].getGroupType() == StereoGroupType::STEREO_OR ||
+            sgs[0].getGroupType() == StereoGroupType::STEREO_AND) {
+          if (!rwmol) rwmol.reset(new RWMol(mol));
+          std::vector<StereoGroup> empty;
+          rwmol->setStereoGroups(std::move(empty));
+          std::string label =
+              sgs[0].getGroupType() == StereoGroupType::STEREO_OR
+                  ? "OR enantiomer"
+                  : "AND enantiomer";
+          rwmol->setProp(common_properties::molNote, label);
+        }
+        // clear the chiral codes on the atoms so that we don't
+        // inadvertently draw them later
+        for (const auto atm : sgs[0].getAtoms()) {
+          rwmol->getAtomWithIdx(atm->getIdx())
+              ->clearProp(common_properties::_CIPCode);
+        }
+      }
+    }
+  }
   ROMol const &draw_mol = rwmol ? *(rwmol) : mol;
   if (!draw_mol.getNumConformers()) {
     // clearly, the molecule is in a sorry state.
@@ -1675,10 +1711,8 @@ StringRect MolDraw2D::calcAnnotationPosition(const ROMol &mol,
   text_drawer_->setFontScale(full_font_scale);
   text_drawer_->setMinFontSize(min_fs);
   text_drawer_->setMaxFontSize(max_fs);
-  std::cerr << "NOTE: " << note << std::endl;
+  // accumulate the widths of the rectangles so that we have the overall width
   for (const auto &rect : rects) {
-    std::cerr << "   RECT: " << rect->width_ << " " << rect->height_
-              << std::endl;
     note_rect.width_ += rect->width_;
   }
 
@@ -1695,7 +1729,7 @@ StringRect MolDraw2D::calcAnnotationPosition(const ROMol &mol,
   centroid /= at_cds_[activeMolIdx_].size();
 
   auto vect = maxPt - centroid;
-  auto loc = centroid + vect * 0.666;
+  auto loc = centroid + vect * 0.9;
   note_rect.trans_ = loc;
 
   return note_rect;
@@ -2127,7 +2161,18 @@ void MolDraw2D::extractMolNotes(const ROMol &mol) {
                "no space");
 
   std::string note;
-  if (mol.getPropIfPresent(common_properties::molNote, note) && !note.empty()) {
+  // the molNote property takes priority
+  if (!mol.getPropIfPresent(common_properties::molNote, note)) {
+    unsigned int chiralFlag;
+    if (drawOptions().includeChiralFlagLabel &&
+        mol.getPropIfPresent(common_properties::_MolFileChiralFlag,
+                             chiralFlag) &&
+        chiralFlag) {
+      note = "ABS";
+    }
+  }
+
+  if (!note.empty()) {
     auto note_rect = calcAnnotationPosition(mol, note);
     if (note_rect.width_ < 0.0) {
       cerr << "Couldn't find good place for molecule note " << note << endl;
