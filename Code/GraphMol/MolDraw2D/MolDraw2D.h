@@ -777,6 +777,7 @@ class RDKIT_MOLDRAW2D_EXPORT MolDraw2D {
   void extractSGroupData(const ROMol &mol);
   void extractVariableBonds(const ROMol &mol);
   void extractBrackets(const ROMol &mol);
+  void extractLinkNodes(const ROMol &mol);
 
   void drawAtomLabel(int atom_num,
                      const std::vector<int> *highlight_atoms = nullptr,
