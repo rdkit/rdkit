@@ -735,6 +735,7 @@ class RDKIT_MOLDRAW2D_EXPORT MolDraw2D {
                                     const std::string &note);
   StringRect calcAnnotationPosition(const ROMol &mol, const Bond *bond,
                                     const std::string &note);
+  StringRect calcAnnotationPosition(const ROMol &mol, const std::string &note);
   // find where to put the given annotation around an atom.  Starting
   // search at angle start_ang, in degrees.
   void calcAtomAnnotationPosition(const ROMol &mol, const Atom *atom,
@@ -758,6 +759,7 @@ class RDKIT_MOLDRAW2D_EXPORT MolDraw2D {
 
   void extractAtomCoords(const ROMol &mol, int confId, bool updateBBox);
   void extractAtomSymbols(const ROMol &mol);
+  void extractMolNotes(const ROMol &mol);
   void extractAtomNotes(const ROMol &mol);
   void extractBondNotes(const ROMol &mol);
   void extractRadicals(const ROMol &mol);

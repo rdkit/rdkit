@@ -1330,6 +1330,7 @@ unique_ptr<RWMol> MolDraw2D::setupDrawMolecule(
   bool updateBBox = !activeMolIdx_;
   extractAtomCoords(draw_mol, confId, updateBBox);
   extractAtomSymbols(draw_mol);
+  extractMolNotes(draw_mol);
   extractAtomNotes(draw_mol);
   extractBondNotes(draw_mol);
   extractRadicals(draw_mol);
@@ -1644,6 +1645,60 @@ void MolDraw2D::calcLabelEllipse(int atom_idx,
   yradius = max(yradius, root_2 * 0.5 * (y_max - y_min));
   centre.x = 0.5 * (x_max + x_min);
   centre.y = 0.5 * (y_max + y_min);
+}
+
+// ****************************************************************************
+StringRect MolDraw2D::calcAnnotationPosition(const ROMol &mol,
+                                             const std::string &note) {
+  StringRect note_rect;
+  if (note.empty()) {
+    note_rect.width_ = -1.0;  // so we know it's not valid.
+    return note_rect;
+  }
+
+  vector<std::shared_ptr<StringRect>> rects;
+  vector<TextDrawType> draw_modes;
+  vector<char> draw_chars;
+
+  // at this point, the scale() should still be 1, so min and max font sizes
+  // don't make sense, as we're effectively operating on atom coords rather
+  // than draw.
+  double full_font_scale = text_drawer_->fontScale();
+  double min_fs = text_drawer_->minFontSize();
+  text_drawer_->setMinFontSize(-1);
+  double max_fs = text_drawer_->maxFontSize();
+  text_drawer_->setMaxFontSize(-1);
+  text_drawer_->setFontScale(drawOptions().annotationFontScale *
+                             full_font_scale);
+  text_drawer_->getStringRects(note, OrientType::N, rects, draw_modes,
+                               draw_chars);
+  text_drawer_->setFontScale(full_font_scale);
+  text_drawer_->setMinFontSize(min_fs);
+  text_drawer_->setMaxFontSize(max_fs);
+  std::cerr << "NOTE: " << note << std::endl;
+  for (const auto &rect : rects) {
+    std::cerr << "   RECT: " << rect->width_ << " " << rect->height_
+              << std::endl;
+    note_rect.width_ += rect->width_;
+  }
+
+  Point2D centroid{0., 0.};
+  Point2D minPt{100000., 100000.};
+  Point2D maxPt{-100000., -100000.};
+  for (const auto &pt : at_cds_[activeMolIdx_]) {
+    centroid += pt;
+    minPt.x = std::min(pt.x, minPt.x);
+    minPt.y = std::min(pt.y, minPt.y);
+    maxPt.x = std::max(pt.x, maxPt.x);
+    maxPt.y = std::max(pt.y, maxPt.y);
+  }
+  centroid /= at_cds_[activeMolIdx_].size();
+
+  auto vect = maxPt - centroid;
+  auto loc = centroid + vect * 0.666;
+  note_rect.trans_ = loc;
+
+  return note_rect;
 }
 
 // ****************************************************************************
@@ -2061,6 +2116,27 @@ void MolDraw2D::extractAtomNotes(const ROMol &mol) {
           annotations_[activeMolIdx_].push_back(annot);
         }
       }
+    }
+  }
+}
+
+// ****************************************************************************
+void MolDraw2D::extractMolNotes(const ROMol &mol) {
+  PRECONDITION(activeMolIdx_ >= 0, "no mol id");
+  PRECONDITION(static_cast<int>(annotations_.size()) > activeMolIdx_,
+               "no space");
+
+  std::string note;
+  if (mol.getPropIfPresent(common_properties::molNote, note) && !note.empty()) {
+    auto note_rect = calcAnnotationPosition(mol, note);
+    if (note_rect.width_ < 0.0) {
+      cerr << "Couldn't find good place for molecule note " << note << endl;
+    } else {
+      AnnotationType annot;
+      annot.text_ = note;
+      annot.rect_ = note_rect;
+      annot.align_ = TextAlignType::START;
+      annotations_[activeMolIdx_].push_back(annot);
     }
   }
 }
@@ -3626,10 +3702,21 @@ void MolDraw2D::adjustScaleForAnnotation(const vector<AnnotationType> &notes) {
 
   for (auto const &pr : notes) {
     const auto &note_rect = pr.rect_;
-    double this_x_max = note_rect.trans_.x + note_rect.width_ / 2.0;
-    double this_x_min = note_rect.trans_.x - note_rect.width_ / 2.0;
-    double this_y_max = note_rect.trans_.y + note_rect.height_ / 2.0;
-    double this_y_min = note_rect.trans_.y - note_rect.height_ / 2.0;
+    double this_x_max = note_rect.trans_.x;
+    double this_x_min = note_rect.trans_.x;
+    double this_y_max = note_rect.trans_.y;
+    double this_y_min = note_rect.trans_.y;
+    if (pr.align_ == TextAlignType::START) {
+      this_x_max += note_rect.width_;
+    } else if (pr.align_ == TextAlignType::END) {
+      this_x_min -= note_rect.width_;
+    } else {
+      this_x_max += note_rect.width_ / 2.0;
+      this_x_min -= note_rect.width_ / 2.0;
+    }
+    this_y_max += note_rect.height_ / 2.0;
+    this_y_min -= note_rect.height_ / 2.0;
+
     x_max = std::max(x_max, this_x_max);
     x_min_ = std::min(x_min_, this_x_min);
     y_max = std::max(y_max, this_y_max);
