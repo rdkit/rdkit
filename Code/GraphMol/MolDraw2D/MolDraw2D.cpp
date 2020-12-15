@@ -2494,6 +2494,10 @@ void MolDraw2D::extractLinkNodes(const ROMol &mol) {
         labelPt = p1;
         labelPerp = crossingPt - startLoc;
       }
+      if (p2.x > labelPt.x) {
+        labelPt = p2;
+        labelPerp = crossingPt - startLoc;
+      }
     }
 
     // the label
