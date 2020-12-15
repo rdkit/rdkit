@@ -409,6 +409,25 @@ void checkChiralityPostMove(const ROMol &mol, const Atom *oAt, Atom *nAt,
     nAt->invertChirality();
   }
 }
+
+std::vector<std::pair<Bond*, std::vector<int>>> getNbrBondStereo(RWMol &mol, const Bond *bnd) {
+    // loop over neighboring double bonds and remove their stereo atom
+    std::vector<std::pair<Bond*, std::vector<int>>> res;
+    Atom *bgn = bnd->getBeginAtom();
+    Atom *end = bnd->getEndAtom();
+    for(auto *atom : {bgn, end}) {
+        ROMol::OEDGE_ITER a1, a2;
+        for (boost::tie(a1, a2) = mol.getAtomBonds(atom); a1 != a2; a1++) {
+          Bond *obnd = mol[*a1];
+            if(obnd->getIdx() != bnd->getIdx()) {
+                if(obnd->getStereoAtoms().size()) {
+                    res.emplace_back(obnd, obnd->getStereoAtoms());
+                }
+            }
+        }
+    }
+    return res;
+}
 }  // namespace
 
 ROMol *fragmentOnBonds(
@@ -443,6 +462,7 @@ ROMol *fragmentOnBonds(
     Bond::BondType bT = bond->getBondType();
     Bond::BondDir bD = bond->getBondDir();
     unsigned int bondidx;
+    auto nbr_bond_stereo = getNbrBondStereo(*res, bond);
     res->removeBond(bidx, eidx);
     if (nCutsPerAtom) {
       (*nCutsPerAtom)[bidx] += 1;
@@ -476,7 +496,14 @@ ROMol *fragmentOnBonds(
       // this bond starts at the same atom, so its direction should always be
       // correct:
       res->getBondWithIdx(bondidx)->setBondDir(bD);
-
+        
+      // restore stereo atoms
+      for(auto &stereo_atoms : nbr_bond_stereo) {
+          std::replace(stereo_atoms.second.begin(), stereo_atoms.second.end(), bidx, idx1);
+          std::replace(stereo_atoms.second.begin(), stereo_atoms.second.end(), eidx, idx2);
+          stereo_atoms.first->getStereoAtoms().swap(stereo_atoms.second);
+      }
+        
       // figure out if we need to change the stereo tags on the atoms:
       if (mol.getAtomWithIdx(bidx)->getChiralTag() ==
               Atom::CHI_TETRAHEDRAL_CCW ||

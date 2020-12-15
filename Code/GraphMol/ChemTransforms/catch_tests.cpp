@@ -54,5 +54,25 @@ TEST_CASE("Github #1039", "[]") {
     // conformer to do that using wedging)
     CHECK(MolToSmiles(*pieces) == "*C.[1*]C(O)(F)Cl");
   }
+  SECTION("bond stereo") {
+      auto m =  "O/C=N/C=C"_smiles;
+      std::vector<std::pair<unsigned int, unsigned int>> dummyLabels{{1,1}};
+      std::vector<unsigned int> bonds{0};
+      auto resa = RDKit::MolFragmenter::fragmentOnBonds(*m, bonds);
+      CHECK(MolToSmiles(*resa) == "*/C=N/C=C.[1*]O");
+      // make sure we still have stereo atoms
+      std::vector<std::vector<int>> expected_stereo_atoms {
+          {5,3}, // 5 is the new dummy atom, it was 0 before
+          {},
+          {},
+          {},
+          {},
+      };
+      std::vector<std::vector<int>> received_stereo;
+      for(auto *bond: resa->bonds()) {
+          received_stereo.push_back(bond->getStereoAtoms());
+      }
+      CHECK(received_stereo==expected_stereo_atoms);
+  }
 }
 
