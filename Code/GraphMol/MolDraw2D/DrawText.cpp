@@ -76,7 +76,6 @@ void DrawText::drawString(const std::string &str, const Point2D &cds,
   std::vector<std::shared_ptr<StringRect>> rects;
   std::vector<TextDrawType> draw_modes;
   std::vector<char> draw_chars;
-
   getStringRects(str, rects, draw_modes, draw_chars);
   alignString(talign, draw_modes, rects);
   drawChars(cds, rects, draw_modes, draw_chars);

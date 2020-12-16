@@ -1995,4 +1995,62 @@ M  END
     outs << text;
     outs.flush();
   }
+  SECTION("label placement") {
+    auto m = R"CTAB(
+  Mrv2014 12162004412D          
+ 
+  0  0  0     0  0            999 V3000
+M  V30 BEGIN CTAB
+M  V30 COUNTS 16 15 0 0 0
+M  V30 BEGIN ATOM
+M  V30 1 C -9.2917 3.5833 0 0
+M  V30 2 C -7.958 4.3533 0 0 CFG=2
+M  V30 3 C -6.6243 3.5833 0 0 CFG=1
+M  V30 4 C -5.2906 4.3533 0 0 CFG=2
+M  V30 5 Cl -7.958 5.8933 0 0
+M  V30 6 F -6.6243 2.0433 0 0
+M  V30 7 F -3.957 3.5833 0 0
+M  V30 8 C -5.2906 5.8933 0 0
+M  V30 9 C -3.957 6.6633 0 0
+M  V30 10 C -3.957 8.2033 0 0
+M  V30 11 C -2.6233 8.9733 0 0
+M  V30 12 C -2.6233 5.8933 0 0
+M  V30 13 C -5.2906 8.9733 0 0
+M  V30 14 C -2.6233 10.5133 0 0
+M  V30 15 C -1.2896 8.2033 0 0
+M  V30 16 C -1.2896 6.6633 0 0
+M  V30 END ATOM
+M  V30 BEGIN BOND
+M  V30 1 1 1 2
+M  V30 2 1 2 3
+M  V30 3 1 3 4
+M  V30 4 1 2 5 CFG=1
+M  V30 5 1 3 6 CFG=1
+M  V30 6 1 4 7 CFG=1
+M  V30 7 1 4 8
+M  V30 8 1 8 9
+M  V30 9 1 9 10
+M  V30 10 1 10 11
+M  V30 11 1 9 12
+M  V30 12 1 10 13
+M  V30 13 1 11 14
+M  V30 14 1 11 15
+M  V30 15 1 12 16
+M  V30 END BOND
+M  V30 BEGIN COLLECTION
+M  V30 MDLV30/STEREL1 ATOMS=(3 2 3 4)
+M  V30 END COLLECTION
+M  V30 END CTAB
+M  END
+)CTAB"_ctab;
+    MolDraw2DSVG drawer(350, 300, panelHeight, panelWidth, noFreeType);
+    drawer.drawOptions().addStereoAnnotation = true;
+    drawer.drawOptions().simplifiedStereoGroupLabel = true;
+    drawer.drawMolecule(*m, "label crowding");
+    drawer.finishDrawing();
+    auto text = drawer.getDrawingText();
+    std::ofstream outs("testMolAnnotations-4a.svg");
+    outs << text;
+    outs.flush();
+  }
 }

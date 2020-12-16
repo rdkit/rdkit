@@ -1366,7 +1366,6 @@ unique_ptr<RWMol> MolDraw2D::setupDrawMolecule(
   bool updateBBox = !activeMolIdx_;
   extractAtomCoords(draw_mol, confId, updateBBox);
   extractAtomSymbols(draw_mol);
-  extractMolNotes(draw_mol);
   extractAtomNotes(draw_mol);
   extractBondNotes(draw_mol);
   extractRadicals(draw_mol);
@@ -1379,6 +1378,7 @@ unique_ptr<RWMol> MolDraw2D::setupDrawMolecule(
   extractSGroupData(draw_mol);
   extractVariableBonds(draw_mol);
   extractBrackets(draw_mol);
+  extractMolNotes(draw_mol);
 
   if (!activeMolIdx_ && needs_scale_) {
     calculateScale(width, height, draw_mol, highlight_atoms, highlight_radii);
@@ -1704,8 +1704,9 @@ StringRect MolDraw2D::calcAnnotationPosition(const ROMol &mol,
   text_drawer_->setMinFontSize(-1);
   double max_fs = text_drawer_->maxFontSize();
   text_drawer_->setMaxFontSize(-1);
-  text_drawer_->setFontScale(drawOptions().annotationFontScale *
-                             full_font_scale);
+  // text_drawer_->setFontScale(drawOptions().annotationFontScale *
+  //                           full_font_scale);
+  text_drawer_->setFontScale(1);
   text_drawer_->getStringRects(note, OrientType::N, rects, draw_modes,
                                draw_chars);
   text_drawer_->setFontScale(full_font_scale);
@@ -2181,6 +2182,7 @@ void MolDraw2D::extractMolNotes(const ROMol &mol) {
       annot.text_ = note;
       annot.rect_ = note_rect;
       annot.align_ = TextAlignType::START;
+      annot.scaleText_ = false;
       annotations_[activeMolIdx_].push_back(annot);
     }
   }
@@ -2769,16 +2771,19 @@ void MolDraw2D::drawAnnotation(const AnnotationType &annot) {
   // have been calculated on the assumption that this is the case, and if
   // minFontSize is applied, they may well clash with the atom symbols.
   double omfs = text_drawer_->minFontSize();
-  text_drawer_->setMinFontSize(-1);
-  text_drawer_->setFontScale(drawOptions().annotationFontScale *
-                             full_font_scale);
+  if (annot.scaleText_) {
+    text_drawer_->setMinFontSize(-1);
+    text_drawer_->setFontScale(drawOptions().annotationFontScale *
+                               full_font_scale);
+  }
   Point2D draw_cds = getDrawCoords(annot.rect_.trans_);
   text_drawer_->drawString(annot.text_, draw_cds, annot.align_);
 
-  text_drawer_->setMinFontSize(omfs);
-  text_drawer_->setFontScale(full_font_scale);
+  if (annot.scaleText_) {
+    text_drawer_->setMinFontSize(omfs);
+    text_drawer_->setFontScale(full_font_scale);
+  }
 }
-
 // ****************************************************************************
 OrientType MolDraw2D::calcRadicalRect(const ROMol &mol, const Atom *atom,
                                       StringRect &rad_rect) {
