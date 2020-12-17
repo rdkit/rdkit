@@ -743,12 +743,28 @@ class TestCase(unittest.TestCase):
             AtomTyper=CompareElements,
             BondTyper=CompareOrder)
 
+    def test2PythonImplAtomTyperOnly(self):
+        Common.test2(self,
+            AtomTyper=CompareElements)
+
+    def test2PythonImplBondTyperOnly(self):
+        Common.test2(self,
+            BondTyper=CompareOrder)
+
     def test3IsotopeMatch(self):
         Common.test3IsotopeMatch(self)
 
     def test3IsotopeMatchPythonImpl(self):
         Common.test3IsotopeMatch(self,
             AtomTyper=CompareElements,
+            BondTyper=CompareOrder)
+
+    def test3IsotopeMatchPythonImplAtomTyperOnly(self):
+        Common.test3IsotopeMatch(self,
+            AtomTyper=CompareElements)
+
+    def test3IsotopeMatchPythonImplBondTyperOnly(self):
+        Common.test3IsotopeMatch(self,
             BondTyper=CompareOrder)
 
     def test4RingMatches(self):
@@ -759,12 +775,28 @@ class TestCase(unittest.TestCase):
             AtomTyper=CompareElements,
             BondTyper=CompareOrder)
 
+    def test4RingMatchesPythonImplAtomTyperOnly(self):
+        Common.test4RingMatches(self,
+            AtomTyper=CompareElements)
+
+    def test4RingMatchesPythonImplBondTyperOnly(self):
+        Common.test4RingMatches(self,
+            BondTyper=CompareOrder)
+
     def test5AnyMatch(self):
         Common.test5AnyMatch(self)
 
     def test5AnyMatchPythonImpl(self):
         Common.test5AnyMatch(self,
             AtomTyper=CompareElements,
+            BondTyper=CompareOrder)
+
+    def test5AnyMatchPythonImplAtomTyperOnly(self):
+        Common.test5AnyMatch(self,
+            AtomTyper=CompareElements)
+
+    def test5AnyMatchPythonImplBondTyperOnly(self):
+        Common.test5AnyMatch(self,
             BondTyper=CompareOrder)
 
     def testAtomCompareAnyHeavyAtom(self):
@@ -775,12 +807,28 @@ class TestCase(unittest.TestCase):
             AtomTyper=CompareElements,
             BondTyper=CompareOrder)
 
+    def testAtomCompareAnyHeavyAtomPythonImplAtomTyperOnly(self):
+        Common.testAtomCompareAnyHeavyAtom(self,
+            AtomTyper=CompareElements)
+
+    def testAtomCompareAnyHeavyAtomPythonImplBondTyperOnly(self):
+        Common.testAtomCompareAnyHeavyAtom(self,
+            BondTyper=CompareOrder)
+
     def testAtomCompareAnyHeavyAtom1(self):
         Common.testAtomCompareAnyHeavyAtom1(self)
 
     def testAtomCompareAnyHeavyAtom1PythonImpl(self):
         Common.testAtomCompareAnyHeavyAtom1(self,
             AtomTyper=CompareElements,
+            BondTyper=CompareOrder)
+
+    def testAtomCompareAnyHeavyAtom1PythonImplAtomTyperOnly(self):
+        Common.testAtomCompareAnyHeavyAtom1(self,
+            AtomTyper=CompareElements)
+
+    def testAtomCompareAnyHeavyAtom1PythonImplBondTyperOnly(self):
+        Common.testAtomCompareAnyHeavyAtom1(self,
             BondTyper=CompareOrder)
 
     def test6MatchValences(self):
@@ -791,12 +839,28 @@ class TestCase(unittest.TestCase):
             AtomTyper=CompareElements,
             BondTyper=CompareOrder)
 
+    def test6MatchValencesPythonImplAtomTyperOnly(self):
+        Common.test6MatchValences(self,
+            AtomTyper=CompareElements)
+
+    def test6MatchValencesPythonImplBondTyperOnly(self):
+        Common.test6MatchValences(self,
+            BondTyper=CompareOrder)
+
     def test7Seed(self):
         Common.test7Seed(self)
 
     def test7SeedPythonImpl(self):
         Common.test7Seed(self,
             AtomTyper=CompareElements,
+            BondTyper=CompareOrder)
+
+    def test7SeedPythonImplAtomTyperOnly(self):
+        Common.test7Seed(self,
+            AtomTyper=CompareElements)
+
+    def test7SeedPythonImplBondTyperOnly(self):
+        Common.test7Seed(self,
             BondTyper=CompareOrder)
 
     def test8MatchParams(self):
@@ -807,12 +871,28 @@ class TestCase(unittest.TestCase):
             AtomTyper=CompareElements,
             BondTyper=CompareOrder)
 
+    def test8MatchParamsPythonImplAtomTyperOnly(self):
+        Common.test8MatchParams(self,
+            AtomTyper=CompareElements)
+
+    def test8MatchParamsPythonImplBondTyperOnly(self):
+        Common.test8MatchParams(self,
+            BondTyper=CompareOrder)
+
     def test9MatchCharge(self):
         Common.test9MatchCharge(self)
 
     def test9MatchChargePythonImpl(self):
         Common.test9MatchCharge(self,
             AtomTyper=CompareElements,
+            BondTyper=CompareOrder)
+
+    def test9MatchChargePythonImplAtomTyperOnly(self):
+        Common.test9MatchCharge(self,
+            AtomTyper=CompareElements)
+
+    def test9MatchChargePythonImplBondTyperOnly(self):
+        Common.test9MatchCharge(self,
             BondTyper=CompareOrder)
 
     def test10MatchChargeAndParams(self):
@@ -823,12 +903,28 @@ class TestCase(unittest.TestCase):
             AtomTyper=CompareElements,
             BondTyper=CompareOrder)
 
+    def test10MatchChargeAndParamsPythonImplAtomTyperOnly(self):
+        Common.test10MatchChargeAndParams(self,
+            AtomTyper=CompareElements)
+
+    def test10MatchChargeAndParamsPythonImplBondTyperOnly(self):
+        Common.test10MatchChargeAndParams(self,
+            BondTyper=CompareOrder)
+
     def test11Github2034(self):
         Common.test11Github2034(self)
 
     def test11Github2034PythonImpl(self):
         Common.test11Github2034(self,
             AtomTyper=CompareElements,
+            BondTyper=CompareOrder)
+
+    def test11Github2034PythonImplAtomTyperOnly(self):
+        Common.test11Github2034(self,
+            AtomTyper=CompareElements)
+
+    def test11Github2034PythonImplBondTyperOnly(self):
+        Common.test11Github2034(self,
             BondTyper=CompareOrder)
 
     def test12MCSAtomCompareExceptions(self):
