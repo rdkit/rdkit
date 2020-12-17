@@ -1,7 +1,7 @@
 from rdkit import DataStructs
 from rdkit import RDConfig
 from rdkit import Chem
-from rdkit.Chem import ChemicalFeatures, rdDistGeom
+from rdkit.Chem import ChemicalFeatures, rdDistGeom, AllChem
 from rdkit import Geometry
 import unittest, os
 
@@ -55,7 +55,7 @@ class TestCase(unittest.TestCase):
     targetAids = [[3], [1], [3]]
     for i, feat in enumerate(feats):
       self.assertEqual(feat.GetFamily(), fTypes[i])
-      pos = list(feat.GetPos())
+      pos = list(feat.GetPos(-1))
       aids = list(feat.GetAtomIds())
       self.assertEqual(aids, targetAids[i])
       self.assertTrue(lstFeq(pos, positions[i]))
@@ -181,10 +181,10 @@ EndFeature
     rdDistGeom.EmbedMolecule(m)
     feats = cfac.GetFeaturesForMol(m)
     for feat in feats:
-      feat.GetPos()
+      feat.GetPos(-1)
     m = None
     for feat in feats:
-      feat.GetPos()
+      feat.GetPos(-1)
 
   def testGithub2603(self):
     cfac = ChemicalFeatures.BuildFeatureFactory(
@@ -194,6 +194,28 @@ EndFeature
     self.assertEqual(feats[0].GetFamily(), 'Donor')
     cfac = None
     self.assertEqual(feats[0].GetFamily(), 'Donor')
+
+  def testGithub2530(self):
+    cfac = ChemicalFeatures.BuildFeatureFactory(
+      os.path.join(RDConfig.RDDataDir, "BaseFeatures.fdef"))
+    m = Chem.MolFromSmiles('C1CCC1OC')
+    rdDistGeom.EmbedMolecule(m)
+    feats = cfac.GetFeaturesForMol(m)
+    feat_pos = feats[0].GetPos(-1)
+    feat_pos_default = feats[0].GetPosDefault()
+    self.assertEqual(feat_pos[0], feat_pos_default[0])
+    self.assertEqual(feat_pos[1], feat_pos_default[1])
+    self.assertEqual(feat_pos[2], feat_pos_default[2])
+
+    # Conformers generation:
+    m2 = Chem.AddHs(m)
+    AllChem.EmbedMultipleConfs(m2, numConfs=10, params=AllChem.ETKDG())
+
+    feats_0 = cfac.GetFeaturesForMol(m2, confId=-1)
+    feats_5 = cfac.GetFeaturesForMol(m2, confId=5)
+    self.assertNotEqual(feats_5[0], feats_0[0])
+    self.assertNotEqual(feats_5[1], feats_0[1])
+    self.assertNotEqual(feats_5[2], feats_0[2])
 
 
 if __name__ == '__main__':
