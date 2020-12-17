@@ -952,6 +952,7 @@ bool _Valence7SCleanUp1(RWMol& mol, Atom* atom) {
   int neighborsO = 0;
   RWMol::ADJ_ITER nid, nid1, end1;
   boost::tie(nid1, end1) = mol.getAtomNeighbors(atom);
+  nid = end1;
   while (nid1 != end1) {
     Atom* otherAtom = mol.getAtomWithIdx(*nid1);
     if (otherAtom->getAtomicNum() == 8) {
@@ -975,7 +976,7 @@ bool _Valence7SCleanUp1(RWMol& mol, Atom* atom) {
     }
     nid1++;
   }
-  if (neighborsC == 1 || neighborsO == 3) {
+  if (nid != end1 && (neighborsC == 1 || neighborsO == 3)) {
     mol.getBondBetweenAtoms(*nid, aid)->setBondType(Bond::SINGLE);
     Atom* otherAtom = mol.getAtomWithIdx(*nid);
     otherAtom->setFormalCharge(-1);
@@ -1674,13 +1675,17 @@ RWMol* InchiToMol(const std::string& inchi, ExtraInchiReturnValues& rv,
   // clean up the molecule to be acceptable to RDKit
   if (m) {
     cleanUp(*m);
-
-    if (sanitize) {
-      if (removeHs) {
-        MolOps::removeHs(*m, false, false);
-      } else {
-        MolOps::sanitizeMol(*m);
+    try {
+      if (sanitize) {
+        if (removeHs) {
+          MolOps::removeHs(*m, false, false);
+        } else {
+          MolOps::sanitizeMol(*m);
+        }
       }
+    } catch (const MolSanitizeException&) {
+      delete m;
+      throw;
     }
     // call assignStereochemistry just to be safe; otherwise, MolToSmiles may
     // overwrite E/Z and/or bond direction on double bonds.
