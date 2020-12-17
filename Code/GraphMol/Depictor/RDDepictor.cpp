@@ -33,9 +33,9 @@
 #include <algorithm>
 
 namespace RDDepict {
-#ifdef RDK_BUILD_COORDGEN_SUPPORT
+
 bool preferCoordGen = false;
-#endif
+
 namespace DepictorLocal {
 // arings: indices of atoms in rings
 void embedFusedSystems(const RDKit::ROMol &mol,

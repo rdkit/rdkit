@@ -163,6 +163,7 @@ void testSmi() {
 }
 
 void testMae() {
+#ifdef RDK_BUILD_MAEPARSER_SUPPORT
   //! Open uncompressed MAE file format
   std::string rdbase = getenv("RDBASE");
   std::string fname =
@@ -227,6 +228,7 @@ void testMae() {
   TEST_ASSERT(info->getResidueName() == "ARG ");
   TEST_ASSERT(info->getChainId() == "A");
   TEST_ASSERT(info->getResidueNumber() == 5);
+#endif
 }
 
 void testTdt() {
