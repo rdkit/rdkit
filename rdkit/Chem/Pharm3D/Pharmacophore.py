@@ -30,7 +30,7 @@ class Pharmacophore:
     self._feats = []
     for feat in feats:
       if isinstance(feat, ChemicalFeatures.MolChemicalFeature):
-        pos = feat.GetPos()
+        pos = feat.GetPos(-1)
         newFeat = ChemicalFeatures.FreeChemicalFeature(feat.GetFamily(), feat.GetType(),
                                                        Geometry.Point3D(pos[0], pos[1], pos[2]))
         self._feats.append(newFeat)
@@ -41,9 +41,9 @@ class Pharmacophore:
     # initialize the bounds matrix with distances to start with
     nf = len(self._feats)
     for i in range(1, nf):
-      loci = self._feats[i].GetPos()
+      loci = self._feats[i].GetPos(-1)
       for j in range(i):
-        locj = self._feats[j].GetPos()
+        locj = self._feats[j].GetPos(-1)
         dist = loci.Distance(locj)
         self._boundsMat[i, j] = dist
         self._boundsMat[j, i] = dist
@@ -145,7 +145,7 @@ class ExplicitPharmacophore:
     self._radii = []
     for feat, rad in zip(feats, radii):
       if isinstance(feat, ChemicalFeatures.MolChemicalFeature):
-        pos = feat.GetPos()
+        pos = feat.GetPos(-1)
         newFeat = ChemicalFeatures.FreeChemicalFeature(feat.GetFamily(), feat.GetType(),
                                                        Geometry.Point3D(pos[0], pos[1], pos[2]))
       else:
@@ -207,7 +207,7 @@ class ExplicitPharmacophore:
     res = ''
     for feat, rad in zip(self._feats, self._radii):
       res += '% 12s ' % feat.GetFamily()
-      p = feat.GetPos()
+      p = feat.GetPos(-1)
       res += '   % 8.4f % 8.4f % 8.4f    ' % (p.x, p.y, p.z)
       res += '% 5.2f' % rad
       res += '\n'
