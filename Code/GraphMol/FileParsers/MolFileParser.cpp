@@ -1642,29 +1642,14 @@ Bond *ParseMolFileBondLine(const std::string &text, unsigned int line) {
         BOND_NULL_QUERY *q;
         q = makeBondNullQuery();
         res->setQuery(q);
+      } else if (bType == 5) {
+        res->setQuery(makeSingleOrDoubleBondQuery());
+        res->setProp(common_properties::_MolFileBondQuery, 1);
       } else if (bType == 6) {
         res->setQuery(makeSingleOrAromaticBondQuery());
         res->setProp(common_properties::_MolFileBondQuery, 1);
-      } else if (bType == 5 || bType == 7) {
-        BOND_OR_QUERY *q;
-        q = new BOND_OR_QUERY;
-        if (bType == 5) {
-          // single or double
-          q->addChild(QueryBond::QUERYBOND_QUERY::CHILD_TYPE(
-              makeBondOrderEqualsQuery(Bond::SINGLE)));
-          q->addChild(QueryBond::QUERYBOND_QUERY::CHILD_TYPE(
-              makeBondOrderEqualsQuery(Bond::DOUBLE)));
-          q->setDescription("BondOr");
-          res->setProp(common_properties::_MolFileBondQuery, 1);
-        } else if (bType == 7) {
-          // double or aromatic
-          q->addChild(QueryBond::QUERYBOND_QUERY::CHILD_TYPE(
-              makeBondOrderEqualsQuery(Bond::DOUBLE)));
-          q->addChild(QueryBond::QUERYBOND_QUERY::CHILD_TYPE(
-              makeBondOrderEqualsQuery(Bond::AROMATIC)));
-          q->setDescription("BondOr");
-        }
-        res->setQuery(q);
+      } else if (bType == 7) {
+        res->setQuery(makeDoubleOrAromaticBondQuery());
         res->setProp(common_properties::_MolFileBondQuery, 1);
       } else {
         BOND_NULL_QUERY *q;
@@ -1744,7 +1729,7 @@ Bond *ParseMolFileBondLine(const std::string &text, unsigned int line) {
     }
   }
   return res;
-}
+}  // namespace
 
 void ParseMolBlockAtoms(std::istream *inStream, unsigned int &line,
                         unsigned int nAtoms, RWMol *mol, Conformer *conf) {
@@ -2465,29 +2450,15 @@ void ParseV3000BondBlock(std::istream *inStream, unsigned int &line,
           BOND_NULL_QUERY *q;
           q = makeBondNullQuery();
           bond->setQuery(q);
+        } else if (bType == 5) {
+          bond->setQuery(makeSingleOrDoubleBondQuery());
+          bond->setProp(common_properties::_MolFileBondQuery, 1);
         } else if (bType == 6) {
           bond->setQuery(makeSingleOrAromaticBondQuery());
           bond->setProp(common_properties::_MolFileBondQuery, 1);
-        } else if (bType == 5 || bType == 7) {
-          BOND_OR_QUERY *q;
-          q = new BOND_OR_QUERY;
-          if (bType == 5) {
-            // single or double
-            q->addChild(QueryBond::QUERYBOND_QUERY::CHILD_TYPE(
-                makeBondOrderEqualsQuery(Bond::SINGLE)));
-            q->addChild(QueryBond::QUERYBOND_QUERY::CHILD_TYPE(
-                makeBondOrderEqualsQuery(Bond::DOUBLE)));
-            q->setDescription("BondOr");
-          } else if (bType == 7) {
-            // double or aromatic
-            q->addChild(QueryBond::QUERYBOND_QUERY::CHILD_TYPE(
-                makeBondOrderEqualsQuery(Bond::DOUBLE)));
-            q->addChild(QueryBond::QUERYBOND_QUERY::CHILD_TYPE(
-                makeBondOrderEqualsQuery(Bond::AROMATIC)));
-            q->setDescription("BondOr");
-          }
+        } else if (bType == 7) {
+          bond->setQuery(makeDoubleOrAromaticBondQuery());
           bond->setProp(common_properties::_MolFileBondQuery, 1);
-          bond->setQuery(q);
         } else {
           BOND_NULL_QUERY *q;
           q = makeBondNullQuery();

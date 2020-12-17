@@ -374,6 +374,10 @@ void finalizeQueryFromDescription(Query<int, Bond const *, true> *query,
     query->setDataFunc(queryIsBondInNRings);
   } else if (descr == "SingleOrAromaticBond") {
     query->setDataFunc(queryBondIsSingleOrAromatic);
+  } else if (descr == "SingleOrDoubleBond") {
+    query->setDataFunc(queryBondIsSingleOrDouble);
+  } else if (descr == "DoubleOrAromaticBond") {
+    query->setDataFunc(queryBondIsDoubleOrAromatic);
   } else if (descr == "SingleOrDoubleOrAromaticBond") {
     query->setDataFunc(queryBondIsSingleOrDoubleOrAromatic);
   } else if (descr == "BondNull") {
