@@ -41,9 +41,9 @@ class Pharmacophore:
     # initialize the bounds matrix with distances to start with
     nf = len(self._feats)
     for i in range(1, nf):
-      loci = self._feats[i].GetPos(-1)
+      loci = self._feats[i].GetPos()
       for j in range(i):
-        locj = self._feats[j].GetPos(-1)
+        locj = self._feats[j].GetPos()
         dist = loci.Distance(locj)
         self._boundsMat[i, j] = dist
         self._boundsMat[j, i] = dist
@@ -207,7 +207,7 @@ class ExplicitPharmacophore:
     res = ''
     for feat, rad in zip(self._feats, self._radii):
       res += '% 12s ' % feat.GetFamily()
-      p = feat.GetPos(-1)
+      p = feat.GetPos()
       res += '   % 8.4f % 8.4f % 8.4f    ' % (p.x, p.y, p.z)
       res += '% 5.2f' % rad
       res += '\n'
