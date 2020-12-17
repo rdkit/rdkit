@@ -411,18 +411,17 @@ void checkChiralityPostMove(const ROMol &mol, const Atom *oAt, Atom *nAt,
 }
 
 std::vector<std::pair<Bond*, std::vector<int>>> getNbrBondStereo(RWMol &mol, const Bond *bnd) {
+    PRECONDITION(bnd,"null bond");
     // loop over neighboring double bonds and remove their stereo atom
     std::vector<std::pair<Bond*, std::vector<int>>> res;
-    Atom *bgn = bnd->getBeginAtom();
-    Atom *end = bnd->getEndAtom();
-    for(auto *atom : {bgn, end}) {
+    const auto bgn = bnd->getBeginAtom();
+    const auto end = bnd->getEndAtom();
+    for(const auto *atom : {bgn, end}) {
         ROMol::OEDGE_ITER a1, a2;
-        for (boost::tie(a1, a2) = mol.getAtomBonds(atom); a1 != a2; a1++) {
+        for (boost::tie(a1, a2) = mol.getAtomBonds(atom); a1 != a2; ++a1) {
           Bond *obnd = mol[*a1];
-            if(obnd->getIdx() != bnd->getIdx()) {
-                if(obnd->getStereoAtoms().size()) {
-                    res.emplace_back(obnd, obnd->getStereoAtoms());
-                }
+            if(obnd->getIdx() != bnd->getIdx() && !obnd->getStereoAtoms().empty()) {
+                res.emplace_back(obnd, obnd->getStereoAtoms());
             }
         }
     }
