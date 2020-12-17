@@ -74,6 +74,46 @@ TEST_CASE("Github #1039", "[]") {
       }
       CHECK(received_stereo==expected_stereo_atoms);
   }
+  {
+      auto m =  "C/C(O)=N/C=C"_smiles;
+      std::vector<std::pair<unsigned int, unsigned int>> dummyLabels{{1,1}};
+      std::vector<unsigned int> bonds{2};
+      auto resa = RDKit::MolFragmenter::fragmentOnBonds(*m, bonds);
+      CHECK(MolToSmiles(*resa) == "*/C=N/C=C.[1*]O");
+      // make sure we still have stereo atoms
+      std::vector<std::vector<int>> expected_stereo_atoms {
+          {}, // 5 is the new dummy atom, it was 0 before
+          {},
+          {2,4},
+          {},
+          {},
+      };
+      std::vector<std::vector<int>> received_stereo;
+      for(auto *bond: resa->bonds()) {
+          received_stereo.push_back(bond->getStereoAtoms());
+      }
+      CHECK(received_stereo==expected_stereo_atoms);
+  }
+  { // break non stereo atom bond
+    auto m =  "C/C(O)=N/C=C"_smiles;
+    std::vector<std::pair<unsigned int, unsigned int>> dummyLabels{{1,1}};
+    std::vector<unsigned int> bonds{0};
+    auto resa = RDKit::MolFragmenter::fragmentOnBonds(*m, bonds);
+    CHECK(MolToSmiles(*resa) == "*/C(O)=N/C=C.[1*]C");
+    // make sure we still have stereo atoms
+    std::vector<std::vector<int>> expected_stereo_atoms {
+							 {},
+							 {2,4},
+							 {},
+							 {},
+							 {},
+    };
+    std::vector<std::vector<int>> received_stereo;
+    for(auto *bond: resa->bonds()) {
+      received_stereo.push_back(bond->getStereoAtoms());
+    }
+    CHECK(received_stereo==expected_stereo_atoms);
+  }  
   { // bond stereo should only be removed when deleting the double bond with E/Z
     auto m =  "O/C=N/C=C"_smiles;
     std::vector<std::pair<unsigned int, unsigned int>> dummyLabels{{1,1}};
