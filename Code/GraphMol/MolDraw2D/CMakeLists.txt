@@ -46,10 +46,10 @@ if(RDK_BUILD_QT_SUPPORT)
   target_compile_definitions(MolDraw2D PUBLIC "-DRDK_BUILD_QT_SUPPORT")
   find_package(Qt5 COMPONENTS Widgets OpenGL REQUIRED)
   target_sources(MolDraw2D PRIVATE MolDraw2DQt.cpp DrawTextQt.cpp)
-  target_link_libraries(MolDraw2D PUBLIC Qt5::Widgets Qt5::OpenGL)
+  target_link_libraries(MolDraw2D PRIVATE Qt5::Widgets Qt5::OpenGL)
   rdkit_headers(MolDraw2DQt.h DrawTextQt.h DEST GraphMol/MolDraw2D)
   if(RDK_INSTALL_STATIC_LIBS)
-     target_link_libraries(MolDraw2D_static PUBLIC Qt5::Widgets Qt5::OpenGL)
+     target_link_libraries(MolDraw2D_static PRIVATE Qt5::Widgets Qt5::OpenGL)
      target_sources(MolDraw2D_static PRIVATE MolDraw2DQt.cpp DrawTextQt.cpp)
   endif()
 endif(RDK_BUILD_QT_SUPPORT)
@@ -117,7 +117,7 @@ rdkit_catch_test(moldraw2DTestCatch catch_main.cpp catch_tests.cpp LINK_LIBRARIE
 
 if(RDK_BUILD_QT_SUPPORT)
 rdkit_catch_test(moldraw2DTestQt catch_qt.cpp LINK_LIBRARIES
-  MolDraw2D )
+  MolDraw2D Qt5::Widgets Qt5::OpenGL)
 endif(RDK_BUILD_QT_SUPPORT)
 
 rdkit_test(moldraw2DRxnTest1 rxn_test1.cpp LINK_LIBRARIES
