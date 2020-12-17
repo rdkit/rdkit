@@ -76,6 +76,8 @@ class RDKIT_MOLDRAW2D_EXPORT MolDraw2DSVG : public MolDraw2D {
   void addMoleculeMetadata(const std::vector<ROMol *> &mols,
                            const std::vector<int> confIds = {}) const;
 
+  void drawAnnotation(const AnnotationType &annot) override;
+
  private:
   std::ostream &d_os;
   std::stringstream d_ss;
@@ -93,7 +95,6 @@ class RDKIT_MOLDRAW2D_EXPORT MolDraw2DSVG : public MolDraw2D {
                 const std::vector<std::pair<DrawColour, DrawColour>>
                     *bond_colours = nullptr) override;
   void drawAtomLabel(int atom_num, const DrawColour &draw_colour) override;
-  void drawAnnotation(const AnnotationType &annot) override;
   //! DEPRECATED
   virtual void drawAnnotation(const std::string &note,
                               const StringRect &note_rect) override {

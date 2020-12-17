@@ -527,6 +527,22 @@ RDKIT_GRAPHMOL_EXPORT BOND_EQUALS_QUERY *makeSingleOrAromaticBondQuery() {
   return res;
 };
 
+RDKIT_GRAPHMOL_EXPORT BOND_EQUALS_QUERY *makeDoubleOrAromaticBondQuery() {
+  auto *res = new BOND_EQUALS_QUERY;
+  res->setVal(true);
+  res->setDataFunc(queryBondIsDoubleOrAromatic);
+  res->setDescription("DoubleOrAromaticBond");
+  return res;
+};
+
+RDKIT_GRAPHMOL_EXPORT BOND_EQUALS_QUERY *makeSingleOrDoubleBondQuery() {
+  auto *res = new BOND_EQUALS_QUERY;
+  res->setVal(true);
+  res->setDataFunc(queryBondIsSingleOrDouble);
+  res->setDescription("SingleOrDoubleBond");
+  return res;
+};
+
 RDKIT_GRAPHMOL_EXPORT BOND_EQUALS_QUERY *
 makeSingleOrDoubleOrAromaticBondQuery() {
   auto *res = new BOND_EQUALS_QUERY;
