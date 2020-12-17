@@ -74,5 +74,39 @@ TEST_CASE("Github #1039", "[]") {
       }
       CHECK(received_stereo==expected_stereo_atoms);
   }
+  { // bond stereo should only be removed when deleting the double bond with E/Z
+    auto m =  "O/C=N/C=C"_smiles;
+    std::vector<std::pair<unsigned int, unsigned int>> dummyLabels{{1,1}};
+    std::vector<std::string> expected = {
+					 "*/C=N/C=C.[1*]O",
+					 "[1*]=NC=C.[2*]=CO", // bond stereo gone
+					 "[2*]C=C.[3*]/N=C/O",
+					 "[3*]=C.[4*]=C/N=C/O"
+    };
+    for(unsigned int i=0;i<m->getNumBonds();++i) {
+      std::vector<unsigned int> bonds{i};
+      auto resa = RDKit::MolFragmenter::fragmentOnBonds(*m, bonds);
+      auto smiles = MolToSmiles(*resa);
+      CHECK(smiles == expected[i]);
+    }
+  }
+  { // bond stereo should only be removed when deleting the double bond with E/Z
+    // chiral stereo should stay
+    auto m =  "O/C=N/[C@H](I)F"_smiles;
+    std::vector<std::pair<unsigned int, unsigned int>> dummyLabels{{1,1}};
+    std::vector<std::string> expected = {
+					 "*/C=N/[C@@H](F)I.[1*]O",
+					 "[1*]=N[C@@H](F)I.[2*]=CO", // bond stereo gone
+					 "[2*][C@@H](F)I.[3*]/N=C/O",
+					 "[3*]I.[4*][C@H](F)/N=C/O",
+					 "[3*]F.[5*][C@@H](I)/N=C/O"
+    };
+    for(unsigned int i=0;i<m->getNumBonds();++i) {
+      std::vector<unsigned int> bonds{i};
+      auto resa = RDKit::MolFragmenter::fragmentOnBonds(*m, bonds);
+      auto smiles = MolToSmiles(*resa);
+      CHECK(smiles == expected[i]);
+    }
+  }
 }
 
