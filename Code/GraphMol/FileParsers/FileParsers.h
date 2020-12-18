@@ -304,7 +304,7 @@ RDKIT_FILEPARSERS_EXPORT RWMol *PDBFileToMol(const std::string &fname,
  *   \param confId        - selects the conformer to be used
  *   \param flavor        - controls what gets written:
  *         flavor & 1 : Write MODEL/ENDMDL lines around each record
- *         flavor & 2 : Don't write any CONECT records
+ *         flavor & 2 : Don't write single CONECT records
  *         flavor & 4 : Write CONECT records in both directions
  *         flavor & 8 : Don't use multiple CONECTs to encode bond order
  *         flavor & 16 : Write MASTER record
@@ -320,7 +320,7 @@ RDKIT_FILEPARSERS_EXPORT std::string MolToPDBBlock(const ROMol &mol,
  *   \param confId        - selects the conformer to be used
  *   \param flavor        - controls what gets written:
  *         flavor & 1 : Write MODEL/ENDMDL lines around each record
- *         flavor & 2 : Don't write any CONECT records
+ *         flavor & 2 : Don't write single CONECT records
  *         flavor & 4 : Write CONECT records in both directions
  *         flavor & 8 : Don't use multiple CONECTs to encode bond order
  *         flavor & 16 : Write MASTER record

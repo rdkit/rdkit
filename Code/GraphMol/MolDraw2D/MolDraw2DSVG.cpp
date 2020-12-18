@@ -119,8 +119,9 @@ void MolDraw2DSVG::drawWavyLine(const Point2D &cds1, const Point2D &cds2,
   }
   setColour(col1);
 
-  Point2D perp = calcPerpendicular(cds1, cds2);
   Point2D delta = (cds2 - cds1);
+  Point2D perp(delta.y, -delta.x);
+  perp.normalize();
   perp *= vertOffset;
   delta /= nSegments;
 
@@ -206,7 +207,7 @@ void MolDraw2DSVG::drawLine(const Point2D &cds1, const Point2D &cds2) {
     std::stringstream dss;
     dss << ";stroke-dasharray:";
     std::copy(dashes.begin(), dashes.end() - 1,
-              std::ostream_iterator<unsigned int>(dss, ","));
+              std::ostream_iterator<double>(dss, ","));
     dss << dashes.back();
     dashString = dss.str();
   }
