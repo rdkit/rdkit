@@ -55,7 +55,7 @@ class TestCase(unittest.TestCase):
     targetAids = [[3], [1], [3]]
     for i, feat in enumerate(feats):
       self.assertEqual(feat.GetFamily(), fTypes[i])
-      pos = list(feat.GetPos(-1))
+      pos = list(feat.GetPos())
       aids = list(feat.GetAtomIds())
       self.assertEqual(aids, targetAids[i])
       self.assertTrue(lstFeq(pos, positions[i]))
@@ -181,10 +181,10 @@ EndFeature
     rdDistGeom.EmbedMolecule(m)
     feats = cfac.GetFeaturesForMol(m)
     for feat in feats:
-      feat.GetPos(-1)
+      feat.GetPos()
     m = None
     for feat in feats:
-      feat.GetPos(-1)
+      feat.GetPos()
 
   def testGithub2603(self):
     cfac = ChemicalFeatures.BuildFeatureFactory(
@@ -202,7 +202,7 @@ EndFeature
     rdDistGeom.EmbedMolecule(m)
     feats = cfac.GetFeaturesForMol(m)
     feat_pos = feats[0].GetPos(-1)
-    feat_pos_default = feats[0].GetPosDefault()
+    feat_pos_default = feats[0].GetPos()
     self.assertEqual(feat_pos[0], feat_pos_default[0])
     self.assertEqual(feat_pos[1], feat_pos_default[1])
     self.assertEqual(feat_pos[2], feat_pos_default[2])

@@ -30,7 +30,7 @@ class Pharmacophore:
     self._feats = []
     for feat in feats:
       if isinstance(feat, ChemicalFeatures.MolChemicalFeature):
-        pos = feat.GetPos(-1)
+        pos = feat.GetPos()
         newFeat = ChemicalFeatures.FreeChemicalFeature(feat.GetFamily(), feat.GetType(),
                                                        Geometry.Point3D(pos[0], pos[1], pos[2]))
         self._feats.append(newFeat)
@@ -145,7 +145,7 @@ class ExplicitPharmacophore:
     self._radii = []
     for feat, rad in zip(feats, radii):
       if isinstance(feat, ChemicalFeatures.MolChemicalFeature):
-        pos = feat.GetPos(-1)
+        pos = feat.GetPos()
         newFeat = ChemicalFeatures.FreeChemicalFeature(feat.GetFamily(), feat.GetType(),
                                                        Geometry.Point3D(pos[0], pos[1], pos[2]))
       else:
