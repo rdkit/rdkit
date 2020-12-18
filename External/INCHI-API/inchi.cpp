@@ -73,7 +73,7 @@
 #include <boost/foreach.hpp>
 #include <boost/tuple/tuple.hpp>
 #include <RDGeneral/BoostEndInclude.h>
-#if RDK_TEST_MULTITHREADED
+#ifdef RDK_TEST_MULTITHREADED
 #include <mutex>
 #endif
 
@@ -952,6 +952,7 @@ bool _Valence7SCleanUp1(RWMol& mol, Atom* atom) {
   int neighborsO = 0;
   RWMol::ADJ_ITER nid, nid1, end1;
   boost::tie(nid1, end1) = mol.getAtomNeighbors(atom);
+  nid = end1;
   while (nid1 != end1) {
     Atom* otherAtom = mol.getAtomWithIdx(*nid1);
     if (otherAtom->getAtomicNum() == 8) {
@@ -975,7 +976,7 @@ bool _Valence7SCleanUp1(RWMol& mol, Atom* atom) {
     }
     nid1++;
   }
-  if (neighborsC == 1 || neighborsO == 3) {
+  if (nid != end1 && (neighborsC == 1 || neighborsO == 3)) {
     mol.getBondBetweenAtoms(*nid, aid)->setBondType(Bond::SINGLE);
     Atom* otherAtom = mol.getAtomWithIdx(*nid);
     otherAtom->setFormalCharge(-1);
@@ -1254,7 +1255,7 @@ void cleanUp(RWMol& mol) {
 }  // end cleanUp
 }  // namespace
 
-#if RDK_TEST_MULTITHREADED
+#ifdef RDK_TEST_MULTITHREADED
 std::mutex inchiMutex;
 #endif
 
@@ -1273,7 +1274,7 @@ RWMol* InchiToMol(const std::string& inchi, ExtraInchiReturnValues& rv,
   {
     // output structure
     inchi_OutputStruct inchiOutput;
-#if RDK_TEST_MULTITHREADED
+#ifdef RDK_TEST_MULTITHREADED
     std::lock_guard<std::mutex> lock(inchiMutex);
 #endif
     // DLL call
@@ -1674,13 +1675,17 @@ RWMol* InchiToMol(const std::string& inchi, ExtraInchiReturnValues& rv,
   // clean up the molecule to be acceptable to RDKit
   if (m) {
     cleanUp(*m);
-
-    if (sanitize) {
-      if (removeHs) {
-        MolOps::removeHs(*m, false, false);
-      } else {
-        MolOps::sanitizeMol(*m);
+    try {
+      if (sanitize) {
+        if (removeHs) {
+          MolOps::removeHs(*m, false, false);
+        } else {
+          MolOps::sanitizeMol(*m);
+        }
       }
+    } catch (const MolSanitizeException&) {
+      delete m;
+      throw;
     }
     // call assignStereochemistry just to be safe; otherwise, MolToSmiles may
     // overwrite E/Z and/or bond direction on double bonds.
@@ -2076,7 +2081,7 @@ std::string MolToInchi(const ROMol& mol, ExtraInchiReturnValues& rv,
   // call DLL
   std::string inchi;
   {
-#if RDK_TEST_MULTITHREADED
+#ifdef RDK_TEST_MULTITHREADED
     std::lock_guard<std::mutex> lock(inchiMutex);
 #endif
     int retcode = GetINCHI(&input, &output);
@@ -2119,7 +2124,7 @@ std::string MolBlockToInchi(const std::string& molBlock,
   // call DLL
   std::string inchi;
   {
-#if RDK_TEST_MULTITHREADED
+#ifdef RDK_TEST_MULTITHREADED
     std::lock_guard<std::mutex> lock(inchiMutex);
 #endif
     char* _options = nullptr;
@@ -2158,7 +2163,7 @@ std::string InchiToInchiKey(const std::string& inchi) {
   char xtra1[65], xtra2[65];
   int ret = 0;
   {
-#if RDK_TEST_MULTITHREADED
+#ifdef RDK_TEST_MULTITHREADED
     std::lock_guard<std::mutex> lock(inchiMutex);
 #endif
     ret = GetINCHIKeyFromINCHI(inchi.c_str(), 0, 0, inchiKey, xtra1, xtra2);

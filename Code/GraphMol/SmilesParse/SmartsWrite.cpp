@@ -375,6 +375,10 @@ std::string getBondSmartsSimple(const Bond *bond,
     res += "@";
   } else if (descrip == "SingleOrAromaticBond") {
     // don't need to do anything here... :-)
+  } else if (descrip == "SingleOrDoubleBond") {
+    res += "-,=";
+  } else if (descrip == "DoubleOrAromaticBond") {
+    res += "=,:";
   } else if (descrip == "SingleOrDoubleOrAromaticBond") {
     res += "-,=,:";
   } else if (descrip == "BondDir") {
