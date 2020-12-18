@@ -289,8 +289,6 @@ TEST_CASE("molzip", "[]") {
         auto mol = molzip(*a);
         CHECK(MolToSmiles(*mol) == "C=C/N=C/O");
     }
-    /* For some reason, the molzip and fragment on bonds is having issues with bond stereo in some cases
-     roundtripping through moltosmiles "fixes" it though */
     {
           // double bondd stereo not handled
           //auto m =  "O/C=N/C=C/F"_smiles;
@@ -299,23 +297,17 @@ TEST_CASE("molzip", "[]") {
           for(unsigned int i=0;i<m->getNumBonds();++i) {
                       std::vector<unsigned int> bonds{i};
                     {
-                        // can't use this technique as it reorders the atoms...
-                        /*
-                      auto resa_ = RDKit::MolFragmenter::fragmentOnBonds(*m, bonds);
-                      auto resa = SmilesToMol(MolToSmiles(*resa_));
+                      auto resa = RDKit::MolFragmenter::fragmentOnBonds(*m, bonds);
                       auto smiles = MolToSmiles(*resa);
                         
                       if (std::count(smiles.begin(), smiles.end(), '/') != 2) continue;  // we removed bond stereo in fragment to bonds!
                       MolzipParams p;
                       p.label = MolzipLabel::FragmentOnBonds;
                       CHECK(MolToSmiles(*molzip(*resa,p)) == MolToSmiles(*m));
-                         */
                     }
                     {
                       // Now try using atom labels
-                      auto _res = RDKit::MolFragmenter::fragmentOnBonds(*m, bonds, true, &dummyLabels);
-                      // Stereo chem is being disrupted sometimes, no idea why
-                      std::unique_ptr<RWMol> res(SmilesToMol(MolToSmiles(*_res)));
+                      auto res = RDKit::MolFragmenter::fragmentOnBonds(*m, bonds, true, &dummyLabels);
                       auto smiles = MolToSmiles(*res);
                       
                       if (std::count(smiles.begin(), smiles.end(), '/') != 2) continue;  // we removed bond stereo in fragment to bonds!
