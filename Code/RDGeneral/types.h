@@ -241,6 +241,7 @@ RDKIT_RDGENERAL_EXPORT extern const std::string
 //  - note, confusing creation of names in
 //  - getDistanceMat
 RDKIT_RDGENERAL_EXPORT extern const std::string internalRgroupSmiles;
+RDKIT_RDGENERAL_EXPORT extern const std::string molNote;
 RDKIT_RDGENERAL_EXPORT extern const std::string atomNote;
 RDKIT_RDGENERAL_EXPORT extern const std::string bondNote;
 RDKIT_RDGENERAL_EXPORT extern const std::string _isotopicHs;

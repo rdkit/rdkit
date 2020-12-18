@@ -716,6 +716,15 @@ BOOST_PYTHON_MODULE(rdMolDraw2D) {
                      &RDKit::MolDrawOptions::variableAtomRadius,
                      "radius value to use for atoms involved in variable "
                      "attachment points.")
+      .def_readwrite("includeChiralFlagLabel",
+                     &RDKit::MolDrawOptions::includeChiralFlagLabel,
+                     "add a molecule annotation with \"ABS\" if the chiral "
+                     "flag is set. Default is false.")
+      .def_readwrite("simplifiedStereoGroupLabel",
+                     &RDKit::MolDrawOptions::simplifiedStereoGroupLabel,
+                     "if all specified stereocenters are in a single "
+                     "StereoGroup, show a molecule-level annotation instead of "
+                     "the individual labels. Default is false.")
       .def("getVariableAttachmentColour", &RDKit::getVariableAttachmentColour,
            "method for getting the colour of variable attachment points")
       .def("setVariableAttachmentColour", &RDKit::setVariableAttachmentColour,
