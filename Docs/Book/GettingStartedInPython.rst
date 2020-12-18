@@ -2533,9 +2533,9 @@ If the molecule has coordinates, then the features will also have reasonable loc
   >>> from rdkit.Chem import AllChem
   >>> AllChem.Compute2DCoords(m)
   0
-  >>> feats[0].GetPos()
+  >>> feats[0].GetPos(-1)
   <rdkit.Geometry.rdGeometry.Point3D object at 0x...>
-  >>> list(feats[0].GetPos())
+  >>> list(feats[0].GetPos(-1))
   [2.07..., -2.335..., 0.0]
 
 
