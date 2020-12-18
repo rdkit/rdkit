@@ -647,7 +647,7 @@ unsigned int get_label(const Atom *a, const MolzipParams &p) {
     break;
   case MolzipLabel::FragmentOnBonds:
       // shouldn't ever get here
-      assert(0);
+      CHECK_INVARIANT(0, "FragmentOnBonds is not an atom label, it is an atom index");
       break;
   default:
       CHECK_INVARIANT(0,"bogus MolZipLabel value in MolZip::get_label");
@@ -723,7 +723,7 @@ struct ZipBond {
                         atoms.push_back(new_atom);
                         has_dummy = true;
                     } else {
-                        atoms.push_back(m[idx]);
+                        atoms.push_back(m.getAtomWithIdx(idx));
                     }
                 }
                 if(has_dummy) {
@@ -753,9 +753,13 @@ struct ZipBond {
             return false;
         }
         if (!a->getOwningMol().getBondBetweenAtoms(a->getIdx(), b->getIdx())) {
-            assert (&a->getOwningMol() == &newmol);
-            auto bond_type_a = newmol.getBondBetweenAtoms(a->getIdx(), a_dummy->getIdx())->getBondType();
-            auto bond_type_b = newmol.getBondBetweenAtoms(b->getIdx(), b_dummy->getIdx())->getBondType();
+            CHECK_INVARIANT (&a->getOwningMol() == &newmol, "Owning mol is not the combined molecule!!");
+            auto bnd = newmol.getBondBetweenAtoms(a->getIdx(), a_dummy->getIdx());
+            CHECK_INVARIANT(bnd!=nullptr, "molzip: begin atom and specified dummy atom connection are not bonded.")
+            auto bond_type_a = bnd->getBondType();
+            bnd = newmol.getBondBetweenAtoms(b->getIdx(), b_dummy->getIdx());
+            CHECK_INVARIANT(bnd!=nullptr, "molzip: end atom and specified dummy connection atom are not bonded.")
+            auto bond_type_b = bnd->getBondType();
             if(bond_type_a != Bond::BondType::SINGLE) {
                 newmol.addBond(a, b, bond_type_a);
             }
@@ -765,6 +769,9 @@ struct ZipBond {
                 newmol.addBond(a, b, Bond::BondType::SINGLE);
             }
         }
+        a_dummy->setProp<bool>("__molzip_used", true);
+        b_dummy->setProp<bool>("__molzip_used", true);
+
         return true;
     }
     
@@ -857,13 +864,15 @@ std::unique_ptr<ROMol> molzip(
                 auto attached_atom = get_other_atom(atom);
                 if(mappings.find(molno) == mappings.end()) {
                     auto &bond = mappings[molno];
-                    assert(!bond.a);
+                    CHECK_INVARIANT(!bond.a, "molzip: bond info already setup for bgn atom with label:" +
+                                    std::to_string(molno));
                     bond.a = attached_atom;
                     bond.a_dummy = atom;
                 } else {
                     auto &bond = mappings[molno];
-                    assert(bond.a);
-                    assert(!bond.b);
+                    CHECK_INVARIANT(bond.a, "molzip: bond info not properly setup for bgn atom with label:" +
+                                    std::to_string(molno));
+                    CHECK_INVARIANT(!bond.b, "molzip: bond info already exists for end atom with label:" + std::to_string(molno));
                     bond.b = attached_atom;
                     bond.b_dummy = atom;
                     mappings_by_atom[bond.a].push_back(&bond);
@@ -878,12 +887,12 @@ std::unique_ptr<ROMol> molzip(
         }
     }
     for(auto &kv : mappings) {
-        if (!kv.second.bond(*newmol)) {
-            return std::unique_ptr<ROMol>(nullptr);
-        }
+        kv.second.bond(*newmol);
     }
     for(auto &atom :deletions) {
-        newmol->removeAtom(atom);
+        if(atom->hasProp("__molzip_used")) {
+            newmol->removeAtom(atom);
+        }
     }
     
     std::set<Atom *> already_checked;

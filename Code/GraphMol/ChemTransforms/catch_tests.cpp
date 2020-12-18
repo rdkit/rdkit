@@ -178,17 +178,17 @@ TEST_CASE("molzip", "[]") {
     }
     
     {
-           auto a = "[C@H]([*:1])(F)([*:2])"_smiles;
-           auto b = "[*:1]N.[*:2]I"_smiles;
-           auto mol = molzip(*a,*b);
-           CHECK(MolToSmiles(*mol) == "N[C@@H](F)I");
+        auto a = "[C@H]([*:1])(F)([*:2])"_smiles;
+        auto b = "[*:1]N.[*:2]I"_smiles;
+        auto mol = molzip(*a,*b);
+        CHECK(MolToSmiles(*mol) == "N[C@@H](F)I");
     }
     
     {
-              auto b = "[C@H]([*:1])(F)([*:2])"_smiles;
-              auto a = "[*:1]N.[*:2]I"_smiles;
-              auto mol = molzip(*a,*b);
-              CHECK(MolToSmiles(*mol) == "N[C@@H](F)I");
+        auto b = "[C@H]([*:1])(F)([*:2])"_smiles;
+        auto a = "[*:1]N.[*:2]I"_smiles;
+        auto mol = molzip(*a,*b);
+        CHECK(MolToSmiles(*mol) == "N[C@@H](F)I");
     }
      
     {
@@ -295,32 +295,54 @@ TEST_CASE("molzip", "[]") {
           auto m =  "O/C=N/C=C"_smiles;
           std::vector<std::pair<unsigned int, unsigned int>> dummyLabels{{1,1}};
           for(unsigned int i=0;i<m->getNumBonds();++i) {
-                      std::vector<unsigned int> bonds{i};
-                    {
-                      auto resa = RDKit::MolFragmenter::fragmentOnBonds(*m, bonds);
-                      auto smiles = MolToSmiles(*resa);
-                        
-                      if (std::count(smiles.begin(), smiles.end(), '/') != 2) continue;  // we removed bond stereo in fragment to bonds!
-                      MolzipParams p;
-                      p.label = MolzipLabel::FragmentOnBonds;
-                      CHECK(MolToSmiles(*molzip(*resa,p)) == MolToSmiles(*m));
-                    }
-                    {
-                      // Now try using atom labels
-                      auto res = RDKit::MolFragmenter::fragmentOnBonds(*m, bonds, true, &dummyLabels);
-                      auto smiles = MolToSmiles(*res);
-                      
-                      if (std::count(smiles.begin(), smiles.end(), '/') != 2) continue;  // we removed bond stereo in fragment to bonds!
-                      for(auto *atom : res->atoms()) {
-                          if(atom->getIsotope()) {
-                              atom->setAtomMapNum(atom->getIsotope());
-                          }
-                      }
-                     
-                      CHECK(MolToSmiles(*molzip(*res)) == MolToSmiles(*m));
-                    }
+            std::vector<unsigned int> bonds{i};
+            {
+              auto resa = RDKit::MolFragmenter::fragmentOnBonds(*m, bonds);
+              auto smiles = MolToSmiles(*resa);
+                
+              if (std::count(smiles.begin(), smiles.end(), '/') != 2) continue;  // we removed bond stereo in fragment to bonds!
+              MolzipParams p;
+              p.label = MolzipLabel::FragmentOnBonds;
+              CHECK(MolToSmiles(*molzip(*resa,p)) == MolToSmiles(*m));
+            }
+            {
+              // Now try using atom labels
+              auto res = RDKit::MolFragmenter::fragmentOnBonds(*m, bonds, true, &dummyLabels);
+              auto smiles = MolToSmiles(*res);
+              
+              if (std::count(smiles.begin(), smiles.end(), '/') != 2) continue;  // we removed bond stereo in fragment to bonds!
+              for(auto *atom : res->atoms()) {
+                  if(atom->getIsotope()) {
+                      atom->setAtomMapNum(atom->getIsotope());
                   }
+              }
+             
+              CHECK(MolToSmiles(*molzip(*res)) == MolToSmiles(*m));
+            }
+          }
     }
-     
-     
+    SECTION("unzippable molecules") {
+        auto a = "C[*:1]"_smiles;
+        auto b = "N[*:2]"_smiles;
+        auto mol = molzip(*a,*b);
+        CHECK(MolToSmiles(*mol) == "C[*:1].N[*:2]");
+    }
+    {
+        auto a = "[*:2]OC[*:1]"_smiles;
+               auto b = "N[*:1]"_smiles;
+               auto mol = molzip(*a,*b);
+        CHECK(MolToSmiles(*mol) == "NCO[*:2]");
+    }
+    {
+        auto a = "[*:1]OC[*:1]"_smiles;
+               auto b = "N[*:1]"_smiles;
+        bool caught = false;
+        try {
+               auto mol = molzip(*a,*b);
+        } catch (Invar::Invariant &e) {
+            CHECK(e.toUserString().find("molzip: bond info already exists for end atom with label:1") != std::string::npos);
+            caught = true;
+        }
+        CHECK(caught==true);
+    }
 }
