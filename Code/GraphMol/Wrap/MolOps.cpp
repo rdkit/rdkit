@@ -2299,7 +2299,7 @@ EXAMPLES:\n\n\
 
     docString = "molzip: zip two molecules together preserving bond and atom stereochemistry.\n\
 \n\
-This is useful when dealing with results from fragmentOnBonds, RGroupDecomposition and MMPs.
+This is useful when dealing with results from fragmentOnBonds, RGroupDecomposition and MMPs.\n\
 \n\
 Example:\n\
     >>> from rdkit.Chem import MolFromSmiles,  MolToSmiles, molzip\n\
@@ -2310,7 +2310,7 @@ Example:\n\
     'C=C/N=C/O'\n\
 \n\
 The atoms to zip can be specified with the MolzipParams class.\n\
-    >>> from rdkit.Chem import MolzipParams, MolzipLabel
+    >>> from rdkit.Chem import MolzipParams, MolzipLabel\n\
     >>> a = MolFromSmiles('C=C[1*]')\n\
     >>> b = MolFromSmiles('O/C=N/[1*]')\n\
     >>> p = MolzipParams()\n\
