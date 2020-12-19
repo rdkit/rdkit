@@ -631,11 +631,13 @@ unsigned int get_label(const Atom *a, const MolzipParams &p) {
   switch(p.label) {
   case MolzipLabel::AtomMapNumber:
           if(a->getAtomicNum() == 0) {
-              return a->getAtomMapNum();
+              auto mapno = a->getAtomMapNum();
+              return mapno ? mapno : NOLABEL;
           }
   case MolzipLabel::Isotope:
           if(a->getAtomicNum() == 0) {
-              return a->getIsotope();
+              auto iso = a->getIsotope();
+              return iso ? iso : NOLABEL;
           }
   case MolzipLabel::AtomType: {
     idx = std::distance(p.atomSymbols.begin(),

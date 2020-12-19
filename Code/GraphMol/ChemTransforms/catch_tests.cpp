@@ -141,16 +141,32 @@ TEST_CASE("molzip", "[]") {
         auto mol = molzip(*a,*b);
         CHECK(MolToSmiles(*mol) == "CN");
     }
-    
     {
+        // 0 isotopes aren't mapped
+        auto a = "C[*]"_smiles;
+        auto b = "N[*]"_smiles;
+        MolzipParams p;
+        auto mol = molzip(*a,*b,p);
+        CHECK(MolToSmiles(*mol) == "*C.*N");
+    }
+    {
+        // 0 isotopes aren't mapped
         auto a = "C[*]"_smiles;
         auto b = "N[*]"_smiles;
         MolzipParams p;
         p.label = MolzipLabel::Isotope;
         auto mol = molzip(*a,*b,p);
-        CHECK(MolToSmiles(*mol) == "CN");
+        CHECK(MolToSmiles(*mol) == "*C.*N");
     }
-    
+    {
+           // 0 isotopes aren't mapped
+           auto a = "C[1*]"_smiles;
+           auto b = "N[1*]"_smiles;
+           MolzipParams p;
+           p.label = MolzipLabel::Isotope;
+           auto mol = molzip(*a,*b,p);
+           CHECK(MolToSmiles(*mol) == "CN");
+    }
     {
         auto a = "[C@H](Br)([*:1])F"_smiles;
         auto b = "[*:1]N"_smiles;
