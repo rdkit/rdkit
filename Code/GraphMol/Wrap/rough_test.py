@@ -6255,7 +6255,14 @@ M  END
     for a, b, res, params in tests:
       self.assertEqual(Chem.CanonSmiles(res), Chem.MolToSmiles(
         Chem.molzip(Chem.MolFromSmiles(a), Chem.MolFromSmiles(b), params)))
-      
+
+    a = Chem.MolFromSmiles('C=C[1*]')
+    b = Chem.MolFromSmiles('O/C=N/[1*]')
+    p = Chem.MolZipParams()
+    p.label = Chem.MolzipLabel.Isotope
+    c = molzip(a,b, p)
+    self.assertEqual(MolToSmiles(c), 'C=C/N=C/O')
+    
 if __name__ == '__main__':
   if "RDTESTCASE" in os.environ:
     suite = unittest.TestSuite()
