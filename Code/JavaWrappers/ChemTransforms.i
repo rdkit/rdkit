@@ -79,6 +79,7 @@ RDKit::ROMol * new_molzip(
 %include <GraphMol/ChemTransforms/ChemTransforms.h>
 
 %newobject fragmentMolOnBonds;
+%newobject new_molzip;
 %ignore fragmentOnBonds;
 %ignore molzip;
 %rename("fragmentOnBonds") fragmentMolOnBonds;
