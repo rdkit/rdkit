@@ -300,9 +300,11 @@ TEST_CASE("molzip", "[]") {
         auto mol = molzip(*a);
         CHECK(MolToSmiles(*mol) == "C=C/N=C/O");
     }
-    {
-        auto a = "C=C[1*:1].O/C=N/[1*:1]"_smiles;
-        auto mol = molzip(*a);
+    { // test single mol isotope labels
+        auto a = "C=C[1*].O/C=N/[1*]"_smiles;
+        MolzipParams p;
+        p.label = MolzipLabel::Isotope;
+        auto mol = molzip(*a,p);
         CHECK(MolToSmiles(*mol) == "C=C/N=C/O");
     }
     {
