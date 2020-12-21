@@ -135,8 +135,8 @@ M  END
     auto bundle = MolEnumerator::enumerate(*mol1, ps);
     CHECK(bundle.size() == 3);
 
-    CHECK(bundle.getMols()[0]->getAtomWithIdx(0)->getDegree()==3);
-    CHECK(bundle.getMols()[0]->getAtomWithIdx(0)->getImplicitValence()==0);    
+    CHECK(bundle.getMols()[0]->getAtomWithIdx(0)->getDegree() == 3);
+    CHECK(bundle.getMols()[0]->getAtomWithIdx(0)->getImplicitValence() == 0);
 
     std::vector<std::string> tsmis = {"COc1ccncc1", "COc1ccccn1", "COc1cccnc1"};
     std::vector<std::string> smis;
@@ -429,6 +429,101 @@ M  END)CTAB"_ctab;
     ps.dp_operation = std::shared_ptr<MolEnumerator::MolEnumeratorOp>(
         new MolEnumerator::LinkNodeOp());
     auto bundle = MolEnumerator::enumerate(*mol, ps);
+    CHECK(bundle.size() == 0);
+  }
+}
+
+TEST_CASE("multiple enumeration points", "[MolEnumerator]") {
+  auto mol1 = R"CTAB(
+  Mrv2014 12212013392D          
+
+  0  0  0     0  0            999 V3000
+M  V30 BEGIN CTAB
+M  V30 COUNTS 12 12 0 0 0
+M  V30 BEGIN ATOM
+M  V30 1 C -6 4.7484 0 0
+M  V30 2 C -7.3337 3.9784 0 0
+M  V30 3 N -7.3337 2.4383 0 0
+M  V30 4 C -6 1.6683 0 0
+M  V30 5 C -4.6663 2.4383 0 0
+M  V30 6 C -4.6663 3.9784 0 0
+M  V30 7 C -5.8773 0.0617 0 0
+M  V30 8 C -3.2136 0.2013 0 0
+M  V30 9 C -4.5052 -0.6374 0 0
+M  V30 10 O -4.4246 -2.1753 0 0
+M  V30 11 * -6 4.235 0 0
+M  V30 12 C -4.845 6.2355 0 0
+M  V30 END ATOM
+M  V30 BEGIN BOND
+M  V30 1 1 1 2
+M  V30 2 2 2 3
+M  V30 3 1 3 4
+M  V30 4 2 4 5
+M  V30 5 1 5 6
+M  V30 6 2 1 6
+M  V30 7 1 8 9
+M  V30 8 1 7 9
+M  V30 9 1 5 8
+M  V30 10 1 7 4
+M  V30 11 1 9 10
+M  V30 12 1 11 12 ENDPTS=(3 1 2 6) ATTACH=ANY
+M  V30 END BOND
+M  V30 LINKNODE 1 3 2 9 7 9 8
+M  V30 END CTAB
+M  END
+)CTAB"_ctab;
+  REQUIRE(mol1);
+  std::vector<std::string> tsmis = {
+      "Cc1cnc2c(c1)CC(O)C2",         "Cc1cnc2c(c1)CC(O)C(O)C2",
+      "Cc1cnc2c(c1)CC(O)C(O)C(O)C2", "Cc1ccc2c(n1)CC(O)C2",
+      "Cc1ccc2c(n1)CC(O)C(O)C2",     "Cc1ccc2c(n1)CC(O)C(O)C(O)C2",
+      "Cc1ccnc2c1CC(O)C2",           "Cc1ccnc2c1CC(O)C(O)C2",
+      "Cc1ccnc2c1CC(O)C(O)C(O)C2"};
+  SECTION("test1") {
+    std::vector<MolEnumerator::MolEnumeratorParams> paramsList;
+    MolEnumerator::MolEnumeratorParams posVariationParams;
+    posVariationParams.dp_operation =
+        std::shared_ptr<MolEnumerator::MolEnumeratorOp>(
+            new MolEnumerator::PositionVariationOp());
+    paramsList.push_back(posVariationParams);
+    MolEnumerator::MolEnumeratorParams linkParams;
+    linkParams.dp_operation = std::shared_ptr<MolEnumerator::MolEnumeratorOp>(
+        new MolEnumerator::LinkNodeOp());
+    paramsList.push_back(linkParams);
+    auto bundle = MolEnumerator::enumerate(*mol1, paramsList);
+    CHECK(bundle.size() == tsmis.size());
+    for (const auto &molp : bundle.getMols()) {
+      auto smi = MolToSmiles(*molp);
+      // std::cerr << smi << std::endl;
+      CHECK(std::find(tsmis.begin(), tsmis.end(), smi) != tsmis.end());
+    }
+  }
+  SECTION("test2") {
+    auto bundle = MolEnumerator::enumerate(*mol1);
+    CHECK(bundle.size() == tsmis.size());
+    for (const auto &molp : bundle.getMols()) {
+      auto smi = MolToSmiles(*molp);
+      CHECK(std::find(tsmis.begin(), tsmis.end(), smi) != tsmis.end());
+    }
+  }
+  SECTION("edges1") {
+    std::vector<MolEnumerator::MolEnumeratorParams> paramsList;
+    auto bundle = MolEnumerator::enumerate(*mol1, paramsList);
+    CHECK(bundle.size() == 0);
+  }
+  SECTION("edges2") {
+    std::vector<MolEnumerator::MolEnumeratorParams> paramsList;
+    MolEnumerator::MolEnumeratorParams posVariationParams;
+    posVariationParams.dp_operation =
+        std::shared_ptr<MolEnumerator::MolEnumeratorOp>(
+            new MolEnumerator::PositionVariationOp());
+    paramsList.push_back(posVariationParams);
+    MolEnumerator::MolEnumeratorParams linkParams;
+    linkParams.dp_operation = std::shared_ptr<MolEnumerator::MolEnumeratorOp>(
+        new MolEnumerator::LinkNodeOp());
+    paramsList.push_back(linkParams);
+    auto mol = "c1ccccc1"_smiles;
+    auto bundle = MolEnumerator::enumerate(*mol, paramsList);
     CHECK(bundle.size() == 0);
   }
 }
