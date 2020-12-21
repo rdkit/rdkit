@@ -27,7 +27,7 @@ struct LinkNode {
 };
 
 namespace utils {
-std::vector<LinkNode> getMolLinkNodes(const ROMol &mol, bool strict = true) {
+inline std::vector<LinkNode> getMolLinkNodes(const ROMol &mol, bool strict = true) {
   std::vector<LinkNode> res;
   std::string pval;
   if (!mol.getPropIfPresent(common_properties::molFileLinkNodes, pval)) {
