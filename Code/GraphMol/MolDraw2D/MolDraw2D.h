@@ -171,6 +171,7 @@ struct AnnotationType {
   StringRect rect_;
   OrientType orient_ = OrientType::C;
   TextAlignType align_ = TextAlignType::MIDDLE;
+  bool scaleText_ = true;
 };
 
 typedef std::map<int, DrawColour> ColourPalette;
@@ -294,6 +295,12 @@ struct RDKIT_MOLDRAW2D_EXPORT MolDrawOptions {
                                     // variable attachment points.
   DrawColour variableAttachmentColour = {
       0.8, 0.8, 0.8, 1.0};  // colour to use for variable attachment points
+  bool includeChiralFlagLabel =
+      false;  // add a molecule annotation with "ABS" if the chiral flag is set
+  bool simplifiedStereoGroupLabel =
+      false;  // if all specified stereocenters are in a single StereoGroup,
+              // show a molecule-level annotation instead of the individual
+              // labels
 
   MolDrawOptions() {
     highlightColourPalette.emplace_back(
@@ -739,6 +746,7 @@ class RDKIT_MOLDRAW2D_EXPORT MolDraw2D {
                                     const std::string &note);
   StringRect calcAnnotationPosition(const ROMol &mol, const Bond *bond,
                                     const std::string &note);
+  StringRect calcAnnotationPosition(const ROMol &mol, const std::string &note);
   // find where to put the given annotation around an atom.  Starting
   // search at angle start_ang, in degrees.
   void calcAtomAnnotationPosition(const ROMol &mol, const Atom *atom,
@@ -762,6 +770,7 @@ class RDKIT_MOLDRAW2D_EXPORT MolDraw2D {
 
   void extractAtomCoords(const ROMol &mol, int confId, bool updateBBox);
   void extractAtomSymbols(const ROMol &mol);
+  void extractMolNotes(const ROMol &mol);
   void extractAtomNotes(const ROMol &mol);
   void extractBondNotes(const ROMol &mol);
   void extractRadicals(const ROMol &mol);

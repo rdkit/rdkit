@@ -167,6 +167,8 @@ void updateDrawerParamsFromJSON(MolDraw2D &drawer, const std::string &json) {
   PT_OPT_GET(comicMode);
   PT_OPT_GET(variableBondWidthMultiplier);
   PT_OPT_GET(variableAtomRadius);
+  PT_OPT_GET(includeChiralFlagLabel);
+  PT_OPT_GET(simplifiedStereoGroupLabel);
 
   get_colour_option(&pt, "highlightColour", opts.highlightColour);
   get_colour_option(&pt, "backgroundColour", opts.backgroundColour);
