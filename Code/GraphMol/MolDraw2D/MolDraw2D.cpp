@@ -28,6 +28,7 @@
 
 #include <GraphMol/MolTransforms/MolTransforms.h>
 #include <GraphMol/FileParsers/FileParserUtils.h>
+#include <GraphMol/MolEnumerator/LinkNode.h>
 
 #include <Geometry/Transform3D.h>
 
@@ -1602,6 +1603,7 @@ unique_ptr<RWMol> MolDraw2D::setupDrawMolecule(
   extractVariableBonds(draw_mol);
   extractBrackets(draw_mol);
   extractMolNotes(draw_mol);
+  extractLinkNodes(draw_mol);
 
   if (!activeMolIdx_ && needs_scale_) {
     calculateScale(width, height, draw_mol, highlight_atoms, highlight_radii);
@@ -2448,6 +2450,70 @@ void MolDraw2D::extractRadicals(const ROMol &mol) {
     std::shared_ptr<StringRect> rad_rect(new StringRect);
     OrientType orient = calcRadicalRect(mol, atom, *rad_rect);
     radicals_[activeMolIdx_].push_back(make_pair(rad_rect, orient));
+  }
+}
+
+// ****************************************************************************
+void MolDraw2D::extractLinkNodes(const ROMol &mol) {
+  PRECONDITION(activeMolIdx_ >= 0, "no mol id");
+  PRECONDITION(static_cast<int>(post_shapes_.size()) > activeMolIdx_,
+               "no space");
+  PRECONDITION(static_cast<int>(annotations_.size()) > activeMolIdx_,
+               "no space");
+  if (!mol.hasProp(common_properties::molFileLinkNodes)) {
+    return;
+  }
+
+  bool strict = false;
+  auto linkNodes = MolEnumerator::utils::getMolLinkNodes(mol, strict);
+  for (const auto &node : linkNodes) {
+    const double crossingFrac = 0.333;
+    const double lengthFrac = 0.333;
+    Point2D labelPt{-1000, -1000};
+    Point2D labelPerp{0, 0};
+    for (const auto bAts : node.bondAtoms) {
+      // unlike brackets, we know how these point
+      Point2D startLoc = at_cds_[activeMolIdx_][bAts.first];
+      Point2D endLoc = at_cds_[activeMolIdx_][bAts.second];
+      auto vect = endLoc - startLoc;
+      auto offset = vect * crossingFrac;
+      auto crossingPt = startLoc + offset;
+      Point2D perp{vect.y, -vect.x};
+      perp *= lengthFrac;
+      Point2D p1 = crossingPt + perp / 2.;
+      Point2D p2 = crossingPt - perp / 2.;
+
+      std::vector<std::pair<Point2D, Point2D>> bondSegments;  // not needed here
+      MolDrawShape shp;
+      shp.points =
+          MolDraw2D_detail::getBracketPoints(p1, p2, startLoc, bondSegments);
+      shp.shapeType = MolDrawShapeType::Polyline;
+      post_shapes_[activeMolIdx_].emplace_back(std::move(shp));
+
+      if (p1.x > labelPt.x) {
+        labelPt = p1;
+        labelPerp = crossingPt - startLoc;
+      }
+      if (p2.x > labelPt.x) {
+        labelPt = p2;
+        labelPerp = crossingPt - startLoc;
+      }
+    }
+
+    // the label
+    if (supportsAnnotations()) {
+      std::string label =
+          (boost::format("(%d-%d)") % node.minRep % node.maxRep).str();
+      StringRect rect;
+      Point2D perp = labelPerp;
+      perp /= perp.length() * 5;
+      rect.trans_ = labelPt + perp;
+      AnnotationType annot;
+      annot.text_ = label;
+      annot.rect_ = rect;
+      annot.align_ = TextAlignType::START;
+      annotations_[activeMolIdx_].push_back(annot);
+    }
   }
 }
 
