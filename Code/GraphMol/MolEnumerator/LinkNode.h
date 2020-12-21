@@ -20,16 +20,14 @@ namespace RDKit {
 namespace MolEnumerator {
 
 struct LinkNode {
- unsigned int minRep=0;
- unsigned int maxRep=0;
- unsigned int nBonds=0;
- std::vector<std::pair<unsigned int,unsigned int>> bondAtoms;
+  unsigned int minRep = 0;
+  unsigned int maxRep = 0;
+  unsigned int nBonds = 0;
+  std::vector<std::pair<unsigned int, unsigned int>> bondAtoms;
 };
 
 namespace utils {
-
-
-std::vector<LinkNode> getMolLinkNodes(const ROMol &mol, bool strict=true) {
+std::vector<LinkNode> getMolLinkNodes(const ROMol &mol, bool strict = true) {
   std::vector<LinkNode> res;
   std::string pval;
   if (!mol.getPropIfPresent(common_properties::molFileLinkNodes, pval)) {
@@ -52,10 +50,10 @@ std::vector<LinkNode> getMolLinkNodes(const ROMol &mol, bool strict=true) {
       std::ostringstream errout;
       errout << "Cannot convert values in LINKNODE '" << linknodetext
              << "' to unsigned ints";
-      if(strict){
+      if (strict) {
         throw ValueErrorException(errout.str());
       } else {
-        BOOST_LOG(rdWarningLog)<<errout.str()<<std::endl;
+        BOOST_LOG(rdWarningLog) << errout.str() << std::endl;
         continue;
       }
     }
@@ -64,58 +62,61 @@ std::vector<LinkNode> getMolLinkNodes(const ROMol &mol, bool strict=true) {
     if (data.size() < 5 || data.size() < 3 + 2 * data[2]) {
       std::ostringstream errout;
       errout << "not enough values in LINKNODE '" << linknodetext << "'";
-      if(strict){
+      if (strict) {
         throw ValueErrorException(errout.str());
       } else {
-        BOOST_LOG(rdWarningLog)<<errout.str()<<std::endl;
+        BOOST_LOG(rdWarningLog) << errout.str() << std::endl;
         continue;
       }
     }
-    
+
     node.minRep = data[0];
     node.maxRep = data[1];
     if (node.minRep == 0 || node.maxRep < node.minRep) {
       std::ostringstream errout;
       errout << "bad counts in LINKNODE '" << linknodetext << "'";
-      if(strict){
+      if (strict) {
         throw ValueErrorException(errout.str());
       } else {
-        BOOST_LOG(rdWarningLog)<<errout.str()<<std::endl;
+        BOOST_LOG(rdWarningLog) << errout.str() << std::endl;
         continue;
       }
     }
     node.nBonds = data[2];
     if (node.nBonds != 2) {
-      if(strict){
+      if (strict) {
         UNDER_CONSTRUCTION(
-          "only link nodes with 2 bonds are currently supported");
+            "only link nodes with 2 bonds are currently supported");
       } else {
-        BOOST_LOG(rdWarningLog)<<"only link nodes with 2 bonds are currently supported"<<std::endl;
+        BOOST_LOG(rdWarningLog)
+            << "only link nodes with 2 bonds are currently supported"
+            << std::endl;
         continue;
       }
     }
     // both bonds must start from the same atom:
     if (data[3] != data[5]) {
       std::ostringstream errout;
-      errout << "bonds don't start at the same atom for LINKNODE '" << linknodetext
-             << "'";
-      if(strict){
+      errout << "bonds don't start at the same atom for LINKNODE '"
+             << linknodetext << "'";
+      if (strict) {
         throw ValueErrorException(errout.str());
       } else {
-        BOOST_LOG(rdWarningLog)<<errout.str()<<std::endl;
+        BOOST_LOG(rdWarningLog) << errout.str() << std::endl;
         continue;
       }
     }
-    node.bondAtoms.push_back(std::make_pair(data[3]-1,data[4]-1));
-    node.bondAtoms.push_back(std::make_pair(data[5]-1,data[6]-1));
+    node.bondAtoms.push_back(std::make_pair(data[3] - 1, data[4] - 1));
+    node.bondAtoms.push_back(std::make_pair(data[5] - 1, data[6] - 1));
     if (!mol.getBondBetweenAtoms(data[4] - 1, data[3] - 1) ||
         !mol.getBondBetweenAtoms(data[6] - 1, data[5] - 1)) {
       std::ostringstream errout;
-      errout << "bond not found between atoms in LINKNODE '" << linknodetext << "'";
-      if(strict){
+      errout << "bond not found between atoms in LINKNODE '" << linknodetext
+             << "'";
+      if (strict) {
         throw ValueErrorException(errout.str());
       } else {
-        BOOST_LOG(rdWarningLog)<<errout.str()<<std::endl;
+        BOOST_LOG(rdWarningLog) << errout.str() << std::endl;
         continue;
       }
     }
@@ -123,7 +124,6 @@ std::vector<LinkNode> getMolLinkNodes(const ROMol &mol, bool strict=true) {
   }
   return res;
 }
-
 
 }  // namespace utils
 }  // namespace MolEnumerator
