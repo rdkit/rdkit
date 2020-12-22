@@ -21,6 +21,7 @@
 namespace RDKit {
 namespace DGeomHelpers {
 
+
 //! Parameter object for controlling embedding
 /*!
   numConfs       Number of conformations to be generated
@@ -88,6 +89,7 @@ namespace DGeomHelpers {
   macrocycles is used
 
   CPCI	custom columbic interactions between atom pairs
+  callback	void pointer
 */
 struct RDKIT_DISTGEOMHELPERS_EXPORT EmbedParameters {
   unsigned int maxIterations{0};
@@ -115,11 +117,14 @@ struct RDKIT_DISTGEOMHELPERS_EXPORT EmbedParameters {
   bool useMacrocycleTorsions{false};
   bool useMacrocycle14config{false};
   std::shared_ptr<std::map<std::pair<unsigned int, unsigned int>, double>> CPCI;
+  void (* callback)();
   EmbedParameters()
       : 
         boundsMat(nullptr),
         
-        CPCI(nullptr){};
+        CPCI(nullptr),
+		
+		callback(nullptr) {};
   EmbedParameters(
       unsigned int maxIterations, int numThreads, int randomSeed,
       bool clearConfs, bool useRandomCoords, double boxSizeMult,
@@ -158,7 +163,8 @@ struct RDKIT_DISTGEOMHELPERS_EXPORT EmbedParameters {
         useSmallRingTorsions(useSmallRingTorsions),
         useMacrocycleTorsions(useMacrocycleTorsions),
         useMacrocycle14config(useMacrocycle14config),
-        CPCI(CPCI){};
+        CPCI(CPCI),
+		callback(nullptr) {};
 };
 
 //*! Embed multiple conformations for a molecule
