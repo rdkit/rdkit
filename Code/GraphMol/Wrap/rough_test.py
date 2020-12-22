@@ -6258,10 +6258,10 @@ M  END
 
     a = Chem.MolFromSmiles('C=C[1*]')
     b = Chem.MolFromSmiles('O/C=N/[1*]')
-    p = Chem.MolZipParams()
+    p = Chem.MolzipParams()
     p.label = Chem.MolzipLabel.Isotope
-    c = molzip(a,b, p)
-    self.assertEqual(MolToSmiles(c), 'C=C/N=C/O')
+    c = Chem.molzip(a,b, p)
+    self.assertEqual(Chem.MolToSmiles(c), 'C=C/N=C/O')
     
 if __name__ == '__main__':
   if "RDTESTCASE" in os.environ:
