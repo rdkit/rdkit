@@ -37,8 +37,8 @@ using boost_adaptbx::python::streambuf;
 namespace RDKit {
 std::string molToSVG(const ROMol &mol, unsigned int width, unsigned int height,
                      python::object pyHighlightAtoms, bool kekulize,
-                     unsigned int lineWidthMult,
-                     bool includeAtomCircles, int confId) {
+                     unsigned int lineWidthMult, bool includeAtomCircles,
+                     int confId) {
   RDUNUSED_PARAM(kekulize);
   std::unique_ptr<std::vector<int>> highlightAtoms =
       pythonObjectToVect(pyHighlightAtoms, static_cast<int>(mol.getNumAtoms()));
@@ -600,7 +600,8 @@ ExplicitBitVect *wrapPatternFingerprint(const ROMol &mol, unsigned int fpSize,
   }
 
   ExplicitBitVect *res;
-  res = RDKit::PatternFingerprintMol(mol, fpSize, atomCountsV, includeOnlyBits, tautomerFingerprints);
+  res = RDKit::PatternFingerprintMol(mol, fpSize, atomCountsV, includeOnlyBits,
+                                     tautomerFingerprints);
 
   if (atomCountsV) {
     for (unsigned int i = 0; i < atomCountsV->size(); ++i) {
@@ -609,6 +610,15 @@ ExplicitBitVect *wrapPatternFingerprint(const ROMol &mol, unsigned int fpSize,
     delete atomCountsV;
   }
 
+  return res;
+}
+ExplicitBitVect *wrapPatternFingerprintBundle(const MolBundle &bundle,
+                                              unsigned int fpSize,
+                                              ExplicitBitVect *includeOnlyBits,
+                                              bool tautomerFingerprints) {
+  ExplicitBitVect *res;
+  res = RDKit::PatternFingerprintMol(bundle, fpSize, includeOnlyBits,
+                                     tautomerFingerprints);
   return res;
 }
 
@@ -2011,6 +2021,17 @@ ARGUMENTS:\n\
                 python::return_value_policy<python::manage_new_object>());
     python::scope().attr("_PatternFingerprint_version") =
         RDKit::PatternFingerprintMolVersion;
+    docString =
+        "A fingerprint using SMARTS patterns \n\
+\n\
+  NOTE: This function is experimental. The API or results may change from\n\
+    release to release.\n";
+    python::def("PatternFingerprint", wrapPatternFingerprintBundle,
+                (python::arg("mol"), python::arg("fpSize") = 2048,
+                 python::arg("setOnlyBits") = (ExplicitBitVect *)nullptr,
+                 python::arg("tautomerFingerprints") = false),
+                docString.c_str(),
+                python::return_value_policy<python::manage_new_object>());
 
     docString =
         "Set the wedging on single bonds in a molecule.\n\
