@@ -21,7 +21,6 @@
 namespace RDKit {
 namespace DGeomHelpers {
 
-
 //! Parameter object for controlling embedding
 /*!
   numConfs       Number of conformations to be generated
@@ -123,7 +122,7 @@ struct RDKIT_DISTGEOMHELPERS_EXPORT EmbedParameters {
         boundsMat(nullptr),
         
         CPCI(nullptr),
-		
+
 		callback(nullptr) {};
   EmbedParameters(
       unsigned int maxIterations, int numThreads, int randomSeed,
