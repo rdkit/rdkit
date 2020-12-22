@@ -711,9 +711,9 @@ bool embedPoints(RDGeom::PointPtrVect *positions, detail::EmbedArgs eargs,
   unsigned int iter = 0;
   while ((gotCoords == false) && (iter < embedParams.maxIterations)) {
     ++iter;
-	if(embedParams.callback) {
-		embedParams.callback();
-	}
+    if(embedParams.callback) {
+      embedParams.callback();
+    }
     gotCoords = EmbeddingOps::generateInitialCoords(positions, eargs,
                                                     embedParams, distMat, rng);
 #ifdef DEBUG_EMBEDDING

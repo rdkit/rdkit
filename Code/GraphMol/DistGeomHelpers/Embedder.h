@@ -123,7 +123,7 @@ struct RDKIT_DISTGEOMHELPERS_EXPORT EmbedParameters {
         
         CPCI(nullptr),
 
-		callback(nullptr) {};
+        callback(nullptr) {};
   EmbedParameters(
       unsigned int maxIterations, int numThreads, int randomSeed,
       bool clearConfs, bool useRandomCoords, double boxSizeMult,
@@ -163,7 +163,7 @@ struct RDKIT_DISTGEOMHELPERS_EXPORT EmbedParameters {
         useMacrocycleTorsions(useMacrocycleTorsions),
         useMacrocycle14config(useMacrocycle14config),
         CPCI(CPCI),
-		callback(nullptr) {};
+        callback(nullptr) {};
 };
 
 //*! Embed multiple conformations for a molecule
