@@ -565,6 +565,10 @@ MolDraw2DQt *moldrawFromQPainter(int width, int height, unsigned long ptr,
 }
 #endif
 
+void updateParamsHelper(MolDraw2D *obj,std::string json){
+  MolDraw2DUtils::updateDrawerParamsFromJSON(*obj,json);
+}
+
 }  // namespace RDKit
 
 BOOST_PYTHON_MODULE(rdMolDraw2D) {
@@ -1048,4 +1052,12 @@ BOOST_PYTHON_MODULE(rdMolDraw2D) {
        python::arg("params") = RDKit::MolDraw2DUtils::ContourParams(),
        python::arg("mol") = python::object()),
       docString.c_str());
+
+  python::def(
+      "UpdateDrawerParamsFromJSON", 
+      RDKit::updateParamsHelper,
+      (python::arg("drawer"), python::arg("json")));
+
+
+
 }
