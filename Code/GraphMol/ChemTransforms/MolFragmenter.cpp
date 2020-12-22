@@ -663,8 +663,9 @@ unsigned int get_label(const Atom *a, const MolzipParams &p) {
 Atom *get_other_atom(Atom *a) {
   PRECONDITION(a, "null atom in MolZip::get_other_atom");
   auto &m = a->getOwningMol();
-  if(m.getAtomDegree(a) != 1)
+  if(m.getAtomDegree(a) != 1){
     return nullptr;
+  }
   
   for(const auto &nbrIdx : boost::make_iterator_range(m.getAtomNeighbors(a))) {
     return m[nbrIdx];
