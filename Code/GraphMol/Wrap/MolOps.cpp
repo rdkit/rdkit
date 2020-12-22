@@ -18,6 +18,7 @@
 
 #include <DataStructs/ExplicitBitVect.h>
 #include <GraphMol/RDKitBase.h>
+#include <GraphMol/MolBundle.h>
 #include <GraphMol/RDKitQueries.h>
 #include <GraphMol/MonomerInfo.h>
 #include <GraphMol/Substruct/SubstructMatch.h>
