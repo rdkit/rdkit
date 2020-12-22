@@ -6265,7 +6265,7 @@ M  END
     self.assertEqual(Chem.MolToSmiles(c), 'C=C/N=C/O')
 
     # single argument test
-    a = Chem.MolFromSmiles('C=C[1*],O/C=N/[1*]')
+    a = Chem.MolFromSmiles('C=C[1*].O/C=N/[1*]')
     p = Chem.MolzipParams()
     p.label = Chem.MolzipLabel.Isotope
     c = Chem.molzip(a,p)
