@@ -698,6 +698,78 @@ struct ZipBond {
     Atom *b;       // atom being bonded
     Atom *b_dummy; // Labelled atom, i.e. [*:1]-O will bond the O to something
     
+    // Backup the original chirality mark_chirality must be called first
+    //  as it checks the datastructure for validity;
+    void mark_chirality() const {
+        PRECONDITION(a, "Must have a begin atom to bond");
+        PRECONDITION(b, "Must have an end atom to bond");
+        PRECONDITION(a_dummy, "Must have a begin dummy atom");
+        PRECONDITION(b_dummy, "Must have an end dummy atom");
+        
+        mark(a, a_dummy, b);
+        mark(b, b_dummy, a);
+    }
+    
+    // bond a<->b for now only use single bonds
+    //  XXX FIX ME take the highest bond order.
+    bool bond(RWMol &newmol) const {
+        if (!a || !b || !a_dummy || !b_dummy) {
+            BOOST_LOG(rdWarningLog) << "Incomplete atom labelling, cannot make bond" << std::endl;
+            return false;
+        }
+        if (!a->getOwningMol().getBondBetweenAtoms(a->getIdx(), b->getIdx())) {
+            CHECK_INVARIANT (&a->getOwningMol() == &newmol, "Owning mol is not the combined molecule!!");
+            auto bnd = newmol.getBondBetweenAtoms(a->getIdx(), a_dummy->getIdx());
+            CHECK_INVARIANT(bnd!=nullptr, "molzip: begin atom and specified dummy atom connection are not bonded.")
+            auto bond_type_a = bnd->getBondType();
+            bnd = newmol.getBondBetweenAtoms(b->getIdx(), b_dummy->getIdx());
+            CHECK_INVARIANT(bnd!=nullptr, "molzip: end atom and specified dummy connection atom are not bonded.")
+            auto bond_type_b = bnd->getBondType();
+            if(bond_type_a != Bond::BondType::SINGLE) {
+                newmol.addBond(a, b, bond_type_a);
+            }
+            else if (bond_type_b != Bond::BondType::SINGLE) {
+                newmol.addBond(a, b, bond_type_b);
+            } else {
+                newmol.addBond(a, b, Bond::BondType::SINGLE);
+            }
+        }
+        a_dummy->setProp<bool>("__molzip_used", true);
+        b_dummy->setProp<bool>("__molzip_used", true);
+
+        return true;
+    }
+    
+    // Restore the marked chirality (mark_chirality must be called first)
+    void restore_chirality(std::set<Atom *> &already_checked) const {
+        PRECONDITION(a, "Must have a begin atom to bond");
+        PRECONDITION(b, "Must have an end atom to bond");
+        PRECONDITION(a_dummy, "Must have a begin dummy atom");
+        PRECONDITION(b_dummy, "Must have an end dummy atom");
+        if(already_checked.find(a) == already_checked.end()) {
+            restore(a);
+            already_checked.insert(a);
+        }
+        if(already_checked.find(b) == already_checked.end()) {
+            restore(b);
+            already_checked.insert(b);
+        }
+        
+        // now do bond stereo
+        std::string mark = "__molzip_bond_stereo_mark";
+        for(auto *bond : a->getOwningMol().bonds()) {
+            if(bond->hasProp(mark)) {
+                std::vector<int> atoms;
+                for(auto *atom : bond->getProp<std::vector<Atom*>>(mark)) {
+                    atoms.push_back(rdcast<int>(atom->getIdx()));
+                }
+                bond->getStereoAtoms().swap(atoms);
+                bond->setStereo(bond->getProp<Bond::BondStereo>("__molzip_bond_stereo"));
+            }
+        }
+    }
+    
+private:
     // Mark the original order of the nbr atoms including the dummy
     //  The goal is to copy the dummy chiral order over to the
     //  atom being bonded
@@ -739,47 +811,6 @@ struct ZipBond {
         }
     }
     
-    // Backup the original chirality
-    void mark_chirality() const {
-        PRECONDITION(a, "Must have a begin atom to bond");
-        PRECONDITION(b, "Must have an end atom to bond");
-        PRECONDITION(a_dummy, "Must have a begin dummy atom");
-        PRECONDITION(b_dummy, "Must have an end dummy atom");
-        
-        mark(a, a_dummy, b);
-        mark(b, b_dummy, a);
-    }
-    
-    // bond a<->b for now only use single bonds
-    //  XXX FIX ME take the highest bond order.
-    bool bond(RWMol &newmol) const {
-        if (!a || !b) {
-            BOOST_LOG(rdWarningLog) << "Incomplete atom labelling, cannot make bond" << std::endl;
-            return false;
-        }
-        if (!a->getOwningMol().getBondBetweenAtoms(a->getIdx(), b->getIdx())) {
-            CHECK_INVARIANT (&a->getOwningMol() == &newmol, "Owning mol is not the combined molecule!!");
-            auto bnd = newmol.getBondBetweenAtoms(a->getIdx(), a_dummy->getIdx());
-            CHECK_INVARIANT(bnd!=nullptr, "molzip: begin atom and specified dummy atom connection are not bonded.")
-            auto bond_type_a = bnd->getBondType();
-            bnd = newmol.getBondBetweenAtoms(b->getIdx(), b_dummy->getIdx());
-            CHECK_INVARIANT(bnd!=nullptr, "molzip: end atom and specified dummy connection atom are not bonded.")
-            auto bond_type_b = bnd->getBondType();
-            if(bond_type_a != Bond::BondType::SINGLE) {
-                newmol.addBond(a, b, bond_type_a);
-            }
-            else if (bond_type_b != Bond::BondType::SINGLE) {
-                newmol.addBond(a, b, bond_type_b);
-            } else {
-                newmol.addBond(a, b, Bond::BondType::SINGLE);
-            }
-        }
-        a_dummy->setProp<bool>("__molzip_used", true);
-        b_dummy->setProp<bool>("__molzip_used", true);
-
-        return true;
-    }
-    
     // Restore the atom's chirality by comparing the original order
     //  to the current
     void restore(Atom *chiral_atom) const {
@@ -798,30 +829,7 @@ struct ZipBond {
         }
     }
     
-    // Restore the marked chirality
-    void restore_chirality(std::set<Atom *> &already_checked) const {
-        if(already_checked.find(a) == already_checked.end()) {
-            restore(a);
-            already_checked.insert(a);
-        }
-        if(already_checked.find(b) == already_checked.end()) {
-            restore(b);
-            already_checked.insert(b);
-        }
-        
-        // now do bond stereo
-        std::string mark = "__molzip_bond_stereo_mark";
-        for(auto *bond : a->getOwningMol().bonds()) {
-            if(bond->hasProp(mark)) {
-                std::vector<int> atoms;
-                for(auto *atom : bond->getProp<std::vector<Atom*>>(mark)) {
-                    atoms.push_back(rdcast<int>(atom->getIdx()));
-                }
-                bond->getStereoAtoms().swap(atoms);
-                bond->setStereo(bond->getProp<Bond::BondStereo>("__molzip_bond_stereo"));
-            }
-        }
-    }
+
 };
 }
 
