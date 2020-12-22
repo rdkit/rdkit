@@ -669,10 +669,7 @@ Atom *get_other_atom(Atom *a) {
     return nullptr;
   }
   
-  for(const auto &nbrIdx : boost::make_iterator_range(m.getAtomNeighbors(a))) {
-    return m[nbrIdx];
-  }
-  return nullptr; // can't get here
+  return m[*m.getAtomNeighbors(a).first];
 }
 
 int num_swaps_to_interconvert(std::vector<unsigned int> &orders) {
