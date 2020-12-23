@@ -2279,7 +2279,7 @@ void testGithub3019() {
 }
 
 namespace {
-void throwerror() {
+void throwerror(unsigned int notUsedHere) {
   throw ValueErrorException("embedder is abortable");
 }
 }
