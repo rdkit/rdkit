@@ -1,5 +1,5 @@
 //
-//  Copyright (C) 2013-2017 Greg Landrum and Rational Discovery LLC
+//  Copyright (C) 2013-2020 Greg Landrum and Rational Discovery LLC
 //
 //   @@ All Rights Reserved @@
 //  This file is part of the RDKit.
@@ -9,6 +9,7 @@
 //
 
 #include <GraphMol/RDKitBase.h>
+#include <GraphMol/MolBundle.h>
 #include <GraphMol/QueryOps.h>
 #include <DataStructs/ExplicitBitVect.h>
 #include <DataStructs/BitOps.h>
@@ -177,16 +178,15 @@ bool isPatternComplexQuery(const Bond *b) {
 bool isTautomerBondQuery(const Bond *b) {
   // assumes we have already tested true for isPatternComplexQuery
   auto description = b->getQuery()->getDescription();
-  return description =="SingleOrDoubleOrAromaticBond" || description == "SingleOrAromaticBond";
+  return description == "SingleOrDoubleOrAromaticBond" ||
+         description == "SingleOrAromaticBond";
 }
 
-}  // namespace
-
-// caller owns the result, it must be deleted
-ExplicitBitVect *PatternFingerprintMol(const ROMol &mol, unsigned int fpSize,
-                                       std::vector<unsigned int> *atomCounts,
-                                       ExplicitBitVect *setOnlyBits,
-                                       bool tautomericFingerprint) {
+void updatePatternFingerprint(const ROMol &mol, ExplicitBitVect &fp,
+                              unsigned int fpSize,
+                              std::vector<unsigned int> *atomCounts,
+                              ExplicitBitVect *setOnlyBits,
+                              bool tautomericFingerprint) {
   PRECONDITION(fpSize != 0, "fpSize==0");
   PRECONDITION(!atomCounts || atomCounts->size() >= mol.getNumAtoms(),
                "bad atomCounts size");
@@ -232,7 +232,6 @@ ExplicitBitVect *PatternFingerprintMol(const ROMol &mol, unsigned int fpSize,
     }
   }
 
-  auto *res = new ExplicitBitVect(fpSize);
   unsigned int pIdx = 0;
   for (const auto patt : patts) {
     ++pIdx;
@@ -255,7 +254,7 @@ ExplicitBitVect *PatternFingerprintMol(const ROMol &mol, unsigned int fpSize,
 #endif
       // collect bits counting the number of occurrences of the pattern:
       gboost::hash_combine(mIdx, 0xBEEF);
-      res->setBit(mIdx % fpSize);
+      fp.setBit(mIdx % fpSize);
 #ifdef VERBOSE_FINGERPRINTING
       std::cerr << "count: " << mIdx % fpSize << " | ";
 #endif
@@ -306,7 +305,7 @@ ExplicitBitVect *PatternFingerprintMol(const ROMol &mol, unsigned int fpSize,
           }
           if (isQuery) {
 #ifdef VERBOSE_FINGERPRINTING
-          std::cerr << "bond query: " << mbond->getIdx();
+            std::cerr << "bond query: " << mbond->getIdx();
 #endif
             break;
           }
@@ -344,18 +343,58 @@ ExplicitBitVect *PatternFingerprintMol(const ROMol &mol, unsigned int fpSize,
 #ifdef VERBOSE_FINGERPRINTING
           std::cerr << " set: " << bitId << " " << bitId % fpSize;
 #endif
-          res->setBit(bitId % fpSize);
+          fp.setBit(bitId % fpSize);
         }
         if (tautomericFingerprint) {
 #ifdef VERBOSE_FINGERPRINTING
           std::cerr << " tset: " << tautomerBitId << " "
                     << tautomerBitId % fpSize;
 #endif
-          res->setBit(tautomerBitId % fpSize);
+          fp.setBit(tautomerBitId % fpSize);
         }
       }
     }
   }
+}
+
+}  // namespace
+
+// caller owns the result, it must be deleted
+ExplicitBitVect *PatternFingerprintMol(const ROMol &mol, unsigned int fpSize,
+                                       std::vector<unsigned int> *atomCounts,
+                                       ExplicitBitVect *setOnlyBits,
+                                       bool tautomericFingerprint) {
+  PRECONDITION(fpSize != 0, "fpSize==0");
+  PRECONDITION(!atomCounts || atomCounts->size() >= mol.getNumAtoms(),
+               "bad atomCounts size");
+  PRECONDITION(!setOnlyBits || setOnlyBits->getNumBits() == fpSize,
+               "bad setOnlyBits size");
+  auto *res = new ExplicitBitVect(fpSize);
+  updatePatternFingerprint(mol, *res, fpSize, atomCounts, setOnlyBits,
+                           tautomericFingerprint);
   return res;
 }
+
+// caller owns the result, it must be deleted
+ExplicitBitVect *PatternFingerprintMol(const MolBundle &bundle,
+                                       unsigned int fpSize,
+                                       ExplicitBitVect *setOnlyBits,
+                                       bool tautomericFingerprint) {
+  PRECONDITION(fpSize != 0, "fpSize==0");
+  PRECONDITION(!setOnlyBits || setOnlyBits->getNumBits() == fpSize,
+               "bad setOnlyBits size");
+  ExplicitBitVect *res = nullptr;
+  for (const auto molp : bundle.getMols()) {
+    ExplicitBitVect molfp(fpSize);
+    updatePatternFingerprint(*molp, molfp, fpSize, nullptr, setOnlyBits,
+                             tautomericFingerprint);
+    if (!res) {
+      res = new ExplicitBitVect(molfp);
+    } else {
+      (*res) &= molfp;
+    }
+  }
+  return res;
+}
+
 }  // namespace RDKit
