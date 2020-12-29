@@ -1889,48 +1889,6 @@ void testUnprocessedMapping() {
   TEST_ASSERT(result.score != -1.0);
 }
 
-void testCoresLabelledProperly() {
-  // Tests for an error in RGroupDecompositionParameters::prepareCore where
-  // the same unindexed label could be mistakenly given to multiple rgroups
-  // in different cores
-
-  // See https://github.com/rdkit/rdkit/pull/3565
-
-  BOOST_LOG(rdInfoLog)
-      << "********************************************************\n";
-  BOOST_LOG(rdInfoLog) << "Test cores labelled properly" << std::endl;
-
-  std::vector<std::string> coreSmi = {"N1([*:1])CCN([*:2])CC1",
-                                      "C1(O[*:1])CCC(O[*:2])CC1",
-                                      "C1([*:1])CCC([*:2])CC1"};
-
-  std::vector<ROMOL_SPTR> cores;
-  for (const auto &s : coreSmi) {
-    cores.emplace_back(SmartsToMol(s));
-  }
-
-  RGroupDecompositionParameters params;
-  params.alignment = RGroupCoreAlignment::None;
-  params.scoreMethod = FingerprintVariance;
-  RGroupDecomposition decomposition(cores, params);
-
-  auto data = decomposition.data;
-  std::set<int> rlabels;
-
-  for (const auto &core : data->cores) {
-    auto mol = core.second.core;
-    for (const auto atom : mol->atoms()) {
-      if (atom->hasProp(RLABEL)) {
-        int rlabel = atom->getProp<int>(RLABEL);
-        if (rlabel < 0) {
-          TEST_ASSERT(rlabels.find(rlabel) == rlabels.end());
-          rlabels.insert(rlabel);
-        }
-      }
-    }
-  }
-}
-
 void testGeminalRGroups() {
   BOOST_LOG(rdInfoLog)
       << "********************************************************\n";
@@ -2028,7 +1986,6 @@ int main() {
   testGaBatch();
 
   testUnprocessedMapping();
-  testCoresLabelledProperly();
 #endif
   testSymmetryPerformance();
   testScorePermutations();
