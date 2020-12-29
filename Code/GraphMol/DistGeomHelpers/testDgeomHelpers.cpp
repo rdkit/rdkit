@@ -2278,6 +2278,30 @@ void testGithub3019() {
   }
 }
 
+namespace {
+void throwerror(unsigned int notUsedHere) {
+  throw ValueErrorException("embedder is abortable");
+}
+}
+
+void testGithub3667() {
+  auto *mol = SmilesToMol("c12c3c4c5c6c1c1c7c8c9c%10c%11c(c28)c3c2c3c4c4c5c5c8c6c1c1c6c7c9c7c9c%10c%10c%11c2c2c3c3c4c4c5c5c%11c%12c(c1c85)c6c7c1c%12c5c%11c4c3c3c5c(c91)c%10c23");
+  TEST_ASSERT(mol);
+
+  bool ok = false;
+  try {
+    DGeomHelpers::EmbedParameters params;
+    params.callback = throwerror;
+    DGeomHelpers::EmbedMolecule(*mol, params);
+    ok = false;
+  } catch (const ValueErrorException &) {
+    ok = true;
+  }
+  TEST_ASSERT(ok);
+  delete mol;
+}
+
+
 int main() {
   RDLog::InitLogs();
   BOOST_LOG(rdInfoLog)
@@ -2407,6 +2431,13 @@ int main() {
   BOOST_LOG(rdInfoLog)
       << "\t test github issue 256: handling of zero-atom molecules\n\n";
   testGithub256();
+
+
+
+  BOOST_LOG(rdInfoLog) << "\t---------------------------------\n";
+  BOOST_LOG(rdInfoLog) << "\t test embedder callback function \n";
+  
+  testGithub3667();
 
 #ifdef RDK_TEST_MULTITHREADED
   BOOST_LOG(rdInfoLog) << "\t---------------------------------\n";

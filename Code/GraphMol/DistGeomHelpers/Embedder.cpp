@@ -80,7 +80,8 @@ const EmbedParameters KDG(0,        // maxIterations
                           false,    // useSmallRingTorsions
                           false,    // useMacrocycleTorsions
                           false,    // useMacrocycle14config
-                          nullptr   // CPCI
+                          nullptr,   // CPCI
+                          nullptr   // callback
 );
 
 //! Parameters corresponding to Sereina Riniker's ETDG approach
@@ -108,7 +109,8 @@ const EmbedParameters ETDG(0,        // maxIterations
                            false,    // useSmallRingTorsions
                            false,    // useMacrocycleTorsions
                            false,    // useMacrocycle14config
-                           nullptr   // CPCI
+                           nullptr,   // CPCI
+                           nullptr   // callback
 );
 //! Parameters corresponding to Sereina Riniker's ETKDG approach
 const EmbedParameters ETKDG(0,        // maxIterations
@@ -135,7 +137,8 @@ const EmbedParameters ETKDG(0,        // maxIterations
                             false,    // useSmallRingTorsions
                             false,    // useMacrocycleTorsions
                             false,    // useMacrocycle14config
-                            nullptr   // CPCI
+                            nullptr,   // CPCI
+                            nullptr   // callback
 );
 
 //! Parameters corresponding to Sereina Riniker's ETKDG approach - version 2
@@ -163,7 +166,8 @@ const EmbedParameters ETKDGv2(0,        // maxIterations
                               false,    // useSmallRingTorsions
                               false,    // useMacrocycleTorsions
                               false,    // useMacrocycle14config
-                              nullptr   // CPCI
+                              nullptr,   // CPCI
+                              nullptr   // callback
 );
 
 //! Parameters corresponding improved ETKDG by Wang, Witek, Landrum and Riniker
@@ -192,7 +196,8 @@ const EmbedParameters ETKDGv3(0,        // maxIterations
                               false,    // useSmallRingTorsions
                               true,     // useMacrocycleTorsions
                               true,     // useMacrocycle14config
-                              nullptr   // CPCI
+                              nullptr,   // CPCI
+                              nullptr   // callback
 );
 
 //! Parameters corresponding improved ETKDG by Wang, Witek, Landrum and Riniker
@@ -221,7 +226,8 @@ const EmbedParameters srETKDGv3(0,        // maxIterations
                                 true,     // useSmallRingTorsions
                                 false,    // useMacrocycleTorsions
                                 false,    // useMacrocycle14config
-                                nullptr   // CPCI
+                                nullptr,   // CPCI
+                                nullptr   // callback
 );
 
 namespace detail {
@@ -711,6 +717,9 @@ bool embedPoints(RDGeom::PointPtrVect *positions, detail::EmbedArgs eargs,
   unsigned int iter = 0;
   while ((gotCoords == false) && (iter < embedParams.maxIterations)) {
     ++iter;
+    if(embedParams.callback != nullptr) {
+      embedParams.callback(iter);
+    }
     gotCoords = EmbeddingOps::generateInitialCoords(positions, eargs,
                                                     embedParams, distMat, rng);
 #ifdef DEBUG_EMBEDDING
