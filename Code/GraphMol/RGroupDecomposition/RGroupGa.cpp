@@ -220,7 +220,8 @@ void RGroupGa::rGroupCrossoverOperation(
   parent1->twoPointCrossover(*parent2, *child1, *child2);
 }
 
-void RGroupGa::createOperations() {
+const vector<shared_ptr<GaOperation<RGroupDecompositionChromosome>>>
+RGroupGa::getOperations() const {
   // bias to mutation as that operator is so efficient
   auto mutationOperation =
       make_shared<GaOperation<RGroupDecompositionChromosome>>(
@@ -228,9 +229,11 @@ void RGroupGa::createOperations() {
   auto crossoverOperation =
       make_shared<GaOperation<RGroupDecompositionChromosome>>(
           2, 2, 25.0, &rGroupCrossoverOperation);
+  vector<shared_ptr<GaOperation<RGroupDecompositionChromosome>>> operations;
   operations.reserve(2);
   operations.push_back(mutationOperation);
   operations.push_back(crossoverOperation);
+  return operations;
 }
 
 std::string timeInfo(const std::clock_t start) {
@@ -242,7 +245,6 @@ std::string timeInfo(const std::clock_t start) {
 
 GaResult RGroupGa::run(int runNumber) {
   auto startTime = clock();
-  createOperations();
   RGroupGaPopulation population{*this};
   auto format =
       boost::format(

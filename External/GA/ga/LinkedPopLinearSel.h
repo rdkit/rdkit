@@ -46,7 +46,7 @@ class LinkedPopLinearSel {
   PopulationPolicy& populationPolicy;
   RandomUtil& rng;
   const size_t popsize;
-  const std::vector<std::shared_ptr<GaOperation<Chromosome>>>& operations;
+  const std::vector<std::shared_ptr<GaOperation<Chromosome>>> operations;
   const double selectionPressure;
 
   std::multimap<double, std::shared_ptr<Chromosome>> population;

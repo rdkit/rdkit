@@ -120,10 +120,8 @@ class RGroupGa : public GaBase {
 
   const RGroupDecompData& getRGroupData() const { return rGroupData; };
 
-  const vector<shared_ptr<GaOperation<RGroupDecompositionChromosome>>>&
-  getOperations() const {
-    return operations;
-  }
+  const vector<shared_ptr<GaOperation<RGroupDecompositionChromosome>>>
+  getOperations() const;
 
   unsigned int numberPermutations() const { return numPermutations; }
 
@@ -132,7 +130,6 @@ class RGroupGa : public GaBase {
   RGroupGa& operator=(const RGroupGa& other) = delete;
   const RGroupDecompData& rGroupData;
   IntegerStringChromosomePolicy chromosomePolicy;
-  vector<shared_ptr<GaOperation<RGroupDecompositionChromosome>>> operations;
   int numberOperations;
   int numberOperationsWithoutImprovement;
   int chromLength;
