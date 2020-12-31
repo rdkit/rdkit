@@ -46,6 +46,7 @@
 #include <algorithm>
 
 #include <GraphMol/Fingerprints/FingerprintUtil.h>
+#include <RDGeneral/Exceptions.h>
 
 namespace {
 class ss_matcher {
@@ -315,6 +316,9 @@ SparseIntVect<uint32_t> *getHashedFingerprint(
     std::vector<uint32_t> *invariants, const std::vector<uint32_t> *fromAtoms,
     bool useChirality, bool useBondTypes, bool onlyNonzeroInvariants,
     BitInfoMap *atomsSettingBits, bool includeRedundantEnvironments) {
+  if(nBits == 0) {
+    throw ValueErrorException("nBits can not be zero");
+  }
   SparseIntVect<uint32_t> *res;
   res = new SparseIntVect<uint32_t>(nBits);
   calcFingerprint(mol, radius, invariants, fromAtoms, useChirality,
