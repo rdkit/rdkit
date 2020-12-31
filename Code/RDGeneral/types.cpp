@@ -123,6 +123,7 @@ const std::string molAtomSeqId = "molSeqid";
 const std::string molRxnExactChange = "molRxnExachg";
 const std::string molReactStatus = "molReactStatus";
 
+const std::string molNote = "molNote";
 const std::string atomNote = "atomNote";
 const std::string bondNote = "bondNote";
 const std::string _isotopicHs = "_isotopicHs";

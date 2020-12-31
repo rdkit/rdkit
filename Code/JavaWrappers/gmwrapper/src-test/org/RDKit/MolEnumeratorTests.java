@@ -82,6 +82,72 @@ public class MolEnumeratorTests extends  GraphMolTest {
         mol.delete();
     }
 
+    @Test
+    public void enumerateMolecule() {
+        RWMol mol = RWMol.MolFromMolBlock("one linknode\n"+
+"  Mrv2007 06222005102D          \n"+
+"\n"+
+"  0  0  0     0  0            999 V3000\n"+
+"M  V30 BEGIN CTAB\n"+
+"M  V30 COUNTS 6 6 0 0 0\n"+
+"M  V30 BEGIN ATOM\n"+
+"M  V30 1 C 8.25 12.1847 0 0\n"+
+"M  V30 2 C 6.9164 12.9547 0 0\n"+
+"M  V30 3 C 6.9164 14.4947 0 0\n"+
+"M  V30 4 C 9.5836 14.4947 0 0\n"+
+"M  V30 5 C 9.5836 12.9547 0 0\n"+
+"M  V30 6 O 8.25 10.6447 0 0\n"+
+"M  V30 END ATOM\n"+
+"M  V30 BEGIN BOND\n"+
+"M  V30 1 1 1 2\n"+
+"M  V30 2 1 2 3\n"+
+"M  V30 3 1 4 5\n"+
+"M  V30 4 1 1 5\n"+
+"M  V30 5 1 3 4\n"+
+"M  V30 6 1 1 6\n"+
+"M  V30 END BOND\n"+
+"M  V30 LINKNODE 1 4 2 1 2 1 5\n"+
+"M  V30 END CTAB\n"+
+"M  END");
+        MolBundle bndl = RDKFuncs.enumerate(mol);
+        assertEquals(bndl.size(),4);
+        bndl.delete();        
+        mol.delete();
+    }
+
+    @Test
+    public void enumerateEmpty() {
+        RWMol mol = RWMol.MolFromMolBlock("no linknodes\n"+
+"  Mrv2007 06222005102D          \n"+
+"\n"+
+"  0  0  0     0  0            999 V3000\n"+
+"M  V30 BEGIN CTAB\n"+
+"M  V30 COUNTS 6 6 0 0 0\n"+
+"M  V30 BEGIN ATOM\n"+
+"M  V30 1 C 8.25 12.1847 0 0\n"+
+"M  V30 2 C 6.9164 12.9547 0 0\n"+
+"M  V30 3 C 6.9164 14.4947 0 0\n"+
+"M  V30 4 C 9.5836 14.4947 0 0\n"+
+"M  V30 5 C 9.5836 12.9547 0 0\n"+
+"M  V30 6 O 8.25 10.6447 0 0\n"+
+"M  V30 END ATOM\n"+
+"M  V30 BEGIN BOND\n"+
+"M  V30 1 1 1 2\n"+
+"M  V30 2 1 2 3\n"+
+"M  V30 3 1 4 5\n"+
+"M  V30 4 1 1 5\n"+
+"M  V30 5 1 3 4\n"+
+"M  V30 6 1 1 6\n"+
+"M  V30 END BOND\n"+
+"M  V30 END CTAB\n"+
+"M  END");
+        MolBundle bndl = RDKFuncs.enumerate(mol);
+        assertEquals(bndl.size(),0);
+        bndl.delete();        
+        mol.delete();
+    }
+
+
     public static void main(String args[]) {
         org.junit.runner.JUnitCore.main("org.RDKit.MolEnumeratorTests");
     }

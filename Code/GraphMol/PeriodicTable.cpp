@@ -15,8 +15,8 @@ typedef boost::tokenizer<boost::char_separator<char>> tokenizer;
 #include <sstream>
 #include <locale>
 
-#if RDK_BUILD_THREADSAFE_SSS
-#include <mutexp>
+#ifdef RDK_BUILD_THREADSAFE_SSS
+#include <mutex>
 #endif
 
 namespace RDKit {
@@ -41,9 +41,8 @@ PeriodicTable::PeriodicTable() {
       // atomic numbers in the atomic_data data structure. It's ok to have
       // multiple symbols map to the same atomic number (above), but we need to
       // be sure that we only store one entry per atomic number.
-      // Note that this only works because the first atom in the adata list is the
-      // dummy atom (atomic number 0).
-      // This was #2784
+      // Note that this only works because the first atom in the adata list is
+      // the dummy atom (atomic number 0). This was #2784
       if (rdcast<size_t>(adata.AtomicNum()) == byanum.size()) {
         byanum.push_back(adata);
       }
@@ -105,7 +104,7 @@ void PeriodicTable::initInstance() {
 }
 
 PeriodicTable *PeriodicTable::getTable() {
-#if RDK_BUILD_THREADSAFE_SSS
+#ifdef RDK_BUILD_THREADSAFE_SSS
   static std::once_flag pt_init_once;
   std::call_once(pt_init_once, initInstance);
 #else

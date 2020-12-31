@@ -156,9 +156,23 @@ struct RDKIT_MOLENUMERATOR_EXPORT MolEnumeratorParams {
 };
 
 //! Returns a MolBundle containing the molecules resulting from applying the
-//! operator contained in \c params to \c mol.
+//! operators contained in \c paramsLists to \c mol.
+//! the operators are applied in order
 RDKIT_MOLENUMERATOR_EXPORT MolBundle
-enumerate(const ROMol &mol, const MolEnumeratorParams &params);
+enumerate(const ROMol &mol, const std::vector<MolEnumeratorParams> &paramsList);
+
+//! Returns a MolBundle containing the molecules resulting from applying the
+//! operator contained in \c params to \c mol.
+inline MolBundle enumerate(const ROMol &mol,
+                           const MolEnumeratorParams &params) {
+  std::vector<MolEnumeratorParams> v = {params};
+  return enumerate(mol, v);
+};
+
+//! Returns a MolBundle containing the molecules resulting from applying the
+//! enumerable operators contained in \c mol.
+RDKIT_MOLENUMERATOR_EXPORT MolBundle enumerate(const ROMol &mol);
+
 }  // namespace MolEnumerator
 }  // namespace RDKit
 

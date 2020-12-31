@@ -8,6 +8,7 @@
 //  of the RDKit source tree.
 //
 #include "MolEnumerator.h"
+#include "LinkNode.h"
 #include <RDGeneral/Exceptions.h>
 #include <GraphMol/SmilesParse/SmilesWrite.h>
 #include <GraphMol/SmilesParse/SmartsWrite.h>
@@ -32,93 +33,47 @@ void LinkNodeOp::initFromMol() {
   if (!dp_mol) {
     return;
   }
-  std::string pval;
-  if (!dp_mol->getPropIfPresent(common_properties::molFileLinkNodes, pval)) {
-    return;
-  }
   std::vector<int> mapping;
   if (MolOps::getMolFrags(*dp_mol, mapping) > 1) {
     throw ValueErrorException(
         "LINKNODE enumeration only supported for molecules with a single "
         "fragment.");
   }
-
   dp_frame.reset(new RWMol(*dp_mol));
-  boost::char_separator<char> pipesep("|");
-  boost::char_separator<char> spacesep(" ");
+  auto nodes = utils::getMolLinkNodes(*dp_frame);
   std::string attachSmarts = "";
   std::vector<std::string> linkEnums;
   std::vector<std::string> molEnums;
   d_variations.clear();
   d_pointRanges.clear();
   d_isotopeMap.clear();
-  for (auto linknode : tokenizer(pval, pipesep)) {
-    std::string productSmarts = "";
-    tokenizer tokens(linknode, spacesep);
-    std::vector<unsigned int> data;
-    try {
-      std::transform(tokens.begin(), tokens.end(), std::back_inserter(data),
-                     [](const std::string &token) -> unsigned int {
-                       return boost::lexical_cast<unsigned int>(token);
-                     });
-    } catch (boost::bad_lexical_cast &) {
-      std::ostringstream errout;
-      errout << "Cannot convert values in LINKNODE '" << linknode
-             << "' to unsigned ints";
-      throw ValueErrorException(errout.str());
-    }
-    // the second test here is for the atom-pairs defining the bonds
-    // data[2] contains the number of bonds
-    if (data.size() < 5 || data.size() < 3 + 2 * data[2]) {
-      std::ostringstream errout;
-      errout << "not enough values in LINKNODE '" << linknode << "'";
-      throw ValueErrorException(errout.str());
-    }
-    unsigned int minRep = data[0];
-    unsigned int maxRep = data[1];
-    if (minRep == 0 || maxRep < minRep) {
-      std::ostringstream errout;
-      errout << "bad counts in LINKNODE '" << linknode << "'";
-      throw ValueErrorException(errout.str());
-    }
-    d_countAtEachPoint.push_back(maxRep - minRep + 1);
-    d_pointRanges.push_back(std::make_pair(minRep, maxRep));
-    unsigned int nBonds = data[2];
-    if (nBonds != 2) {
+  for (auto node : nodes) {
+    if (node.nBonds != 2) {
       UNDER_CONSTRUCTION(
-          "only link nodes with 2 bonds are currently supported");
+        "only link nodes with 2 bonds are currently supported");
     }
-    // both bonds must start from the same atom:
-    if (data[3] != data[5]) {
-      std::ostringstream errout;
-      errout << "bonds don't start at the same atom for LINKNODE '" << linknode
-             << "'";
-      throw ValueErrorException(errout.str());
-    }
-    auto varAtom = dp_frame->getAtomWithIdx(data[3] - 1);
-    auto attach1 = dp_frame->getAtomWithIdx(data[4] - 1);
-    auto attach2 = dp_frame->getAtomWithIdx(data[6] - 1);
-    if (!dp_frame->getBondBetweenAtoms(data[4] - 1, data[3] - 1) ||
-        !dp_frame->getBondBetweenAtoms(data[4] - 1, data[3] - 1)) {
-      std::ostringstream errout;
-      errout << "bond not found between atoms in LINKNODE '" << linknode << "'";
-      throw ValueErrorException(errout.str());
-    }
+    std::string productSmarts = "";
+    d_countAtEachPoint.push_back(node.maxRep - node.minRep + 1);
+    d_pointRanges.push_back(std::make_pair(node.minRep, node.maxRep));
+    auto varAtom = dp_frame->getAtomWithIdx(node.bondAtoms[0].first);
+    auto attach1 = dp_frame->getAtomWithIdx(node.bondAtoms[0].second);
+    auto attach2 = dp_frame->getAtomWithIdx(node.bondAtoms[1].second);
     // save the isotope values:
-    if (d_isotopeMap.find(1000 * data[3]) == d_isotopeMap.end()) {
-      d_isotopeMap[1000 * data[3]] = varAtom->getIsotope();
+    if (d_isotopeMap.find(1000 * (node.bondAtoms[0].first+1)) == d_isotopeMap.end()) {
+      d_isotopeMap[1000 * (node.bondAtoms[0].first+1)] = varAtom->getIsotope();
     }
-    if (d_isotopeMap.find(1000 * data[4]) == d_isotopeMap.end()) {
-      d_isotopeMap[1000 * data[4]] = attach1->getIsotope();
+    if (d_isotopeMap.find(1000 * (node.bondAtoms[0].second+1)) == d_isotopeMap.end()) {
+      d_isotopeMap[1000 * (node.bondAtoms[0].second+1)] = attach1->getIsotope();
     }
-    if (d_isotopeMap.find(1000 * data[6]) == d_isotopeMap.end()) {
-      d_isotopeMap[1000 * data[6]] = attach2->getIsotope();
+    if (d_isotopeMap.find(1000 * (node.bondAtoms[1].second+1)) == d_isotopeMap.end()) {
+      d_isotopeMap[1000 * (node.bondAtoms[1].second+1)] = attach2->getIsotope();
     }
-    varAtom->setIsotope(1000 * data[3]);
-    attach1->setIsotope(1000 * data[4]);
-    attach2->setIsotope(1000 * data[6]);
+    varAtom->setIsotope(1000 * (node.bondAtoms[0].first+1));
+    attach1->setIsotope(1000 * (node.bondAtoms[0].second+1));
+    attach2->setIsotope(1000 * (node.bondAtoms[1].second+1));
     d_variations.push_back(
-        std::make_tuple(1000 * data[3], 1000 * data[4], 1000 * data[6]));
+        std::make_tuple(1000 * (node.bondAtoms[0].first+1), 
+        1000 * (node.bondAtoms[0].second+1), 1000 * (node.bondAtoms[1].second+1)));
   }
 }
 

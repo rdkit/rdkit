@@ -96,8 +96,6 @@ void adjustConjugatedFiveRings(RWMol &mol) {
       continue;
     }
     // now make the adjustments
-    // FIX: replace this with the SingleOrDoubleOrAromatic query once the
-    // tautomer PR is merged
     QueryBond qb;
     qb.setQuery(makeSingleOrDoubleOrAromaticBondQuery());
     for (auto bi : ring) {

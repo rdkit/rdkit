@@ -6248,7 +6248,29 @@ M  END
       txt = sio.getvalue()
       self.assertTrue(pval in txt)
 
+  def testMolzip(self):
+    tests = [
+      ["C[*:1]", "N[*:1]", "CN", Chem.MolzipParams()]
+      ]
+    for a, b, res, params in tests:
+      self.assertEqual(Chem.CanonSmiles(res), Chem.MolToSmiles(
+        Chem.molzip(Chem.MolFromSmiles(a), Chem.MolFromSmiles(b), params)))
 
+    # multiple arg test
+    a = Chem.MolFromSmiles('C=C[1*]')
+    b = Chem.MolFromSmiles('O/C=N/[1*]')
+    p = Chem.MolzipParams()
+    p.label = Chem.MolzipLabel.Isotope
+    c = Chem.molzip(a,b, p)
+    self.assertEqual(Chem.MolToSmiles(c), 'C=C/N=C/O')
+
+    # single argument test
+    a = Chem.MolFromSmiles('C=C[1*].O/C=N/[1*]')
+    p = Chem.MolzipParams()
+    p.label = Chem.MolzipLabel.Isotope
+    c = Chem.molzip(a,p)
+    self.assertEqual(Chem.MolToSmiles(c), 'C=C/N=C/O')
+    
 if __name__ == '__main__':
   if "RDTESTCASE" in os.environ:
     suite = unittest.TestSuite()

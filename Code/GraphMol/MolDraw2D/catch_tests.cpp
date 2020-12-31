@@ -1859,3 +1859,442 @@ TEST_CASE("disable atom labels", "[feature]") {
     CHECK(text.find("atom-3") == std::string::npos);
   }
 }
+
+TEST_CASE("drawing query bonds", "[queries]") {
+  SECTION("basics") {
+    auto m = R"CTAB(
+  Mrv2014 12072005332D          
+  
+  0  0  0     0  0            999 V3000
+M  V30 BEGIN CTAB
+M  V30 COUNTS 14 14 0 0 0
+M  V30 BEGIN ATOM
+M  V30 1 C 3.7917 -2.96 0 0
+M  V30 2 C 2.458 -3.73 0 0
+M  V30 3 C 2.458 -5.27 0 0
+M  V30 4 C 3.7917 -6.04 0 0
+M  V30 5 C 5.1253 -5.27 0 0
+M  V30 6 C 5.1253 -3.73 0 0
+M  V30 7 C 6.459 -2.96 0 0
+M  V30 8 C 3.7917 -7.58 0 0
+M  V30 9 C 4.8806 -8.669 0 0
+M  V30 10 C 4.482 -10.1565 0 0
+M  V30 11 C 6.459 -6.04 0 0
+M  V30 12 C 7.7927 -5.27 0 0
+M  V30 13 C 9.1263 -6.0399 0 0
+M  V30 14 C 9.1263 -7.5799 0 0
+M  V30 END ATOM
+M  V30 BEGIN BOND
+M  V30 1 1 2 3
+M  V30 2 1 4 5
+M  V30 3 1 1 6
+M  V30 4 5 1 2
+M  V30 5 6 5 6
+M  V30 6 7 3 4
+M  V30 7 8 6 7
+M  V30 8 1 4 8
+M  V30 9 1 8 9 TOPO=1
+M  V30 10 1 9 10 TOPO=2
+M  V30 11 1 5 11
+M  V30 12 1 12 13
+M  V30 13 2 11 12 TOPO=1
+M  V30 14 2 13 14 TOPO=2
+M  V30 END BOND
+M  V30 END CTAB
+M  END
+)CTAB"_ctab;
+    REQUIRE(m);
+    {
+      MolDraw2DSVG drawer(350, 300);
+      drawer.drawMolecule(*m);
+      drawer.finishDrawing();
+      auto text = drawer.getDrawingText();
+      std::ofstream outs("testQueryBonds-1a.svg");
+      outs << text;
+      outs.flush();
+    }
+    {
+      MolDraw2DSVG drawer(350, 300);
+      m->getBondWithIdx(3)->setProp("bondNote", "S/D");
+      m->getBondWithIdx(4)->setProp("bondNote", "S/A");
+      m->getBondWithIdx(5)->setProp("bondNote", "D/A");
+      m->getBondWithIdx(6)->setProp("bondNote", "Any");
+      drawer.drawMolecule(*m);
+      drawer.finishDrawing();
+      auto text = drawer.getDrawingText();
+      std::ofstream outs("testQueryBonds-1b.svg");
+      outs << text;
+      outs.flush();
+    }
+    {
+      MolDraw2DSVG drawer(350, 300);
+      std::vector<int> highlightAtoms = {0, 1, 2, 3, 4, 5, 7, 8, 9};
+      std::vector<int> highlightBonds = {0, 3, 2, 4, 1, 5, 8, 9};
+
+      drawer.drawMolecule(*m, "", &highlightAtoms, &highlightBonds);
+      drawer.finishDrawing();
+      auto text = drawer.getDrawingText();
+      std::ofstream outs("testQueryBonds-1c.svg");
+      outs << text;
+      outs.flush();
+    }
+  }
+  SECTION("smaller drawing") {
+    auto m = R"CTAB(
+  Mrv2014 12012004302D          
+  
+  0  0  0     0  0            999 V3000
+M  V30 BEGIN CTAB
+M  V30 COUNTS 26 29 0 0 0
+M  V30 BEGIN ATOM
+M  V30 1 O 3.7917 -2.96 0 0
+M  V30 2 C 2.458 -3.73 0 0
+M  V30 3 C 2.458 -5.27 0 0
+M  V30 4 N 3.7917 -6.04 0 0
+M  V30 5 N 5.1253 -5.27 0 0
+M  V30 6 C 5.1253 -3.73 0 0
+M  V30 7 C 6.459 -2.96 0 0
+M  V30 8 C 3.7917 -7.58 0 0
+M  V30 9 C 4.8806 -8.669 0 0
+M  V30 10 C 4.482 -10.1565 0 0
+M  V30 11 C 1.1243 -2.9599 0 0
+M  V30 12 C -0.2093 -3.73 0 0
+M  V30 13 C -0.2093 -5.27 0 0
+M  V30 14 C 1.1243 -6.04 0 0
+M  V30 15 C -0.2093 -0.6499 0 0
+M  V30 16 C -1.543 -1.4199 0 0
+M  V30 17 C -1.543 -2.9599 0 0
+M  V30 18 C 1.1243 -1.4199 0 0
+M  V30 19 C -2.8767 -0.6499 0 0
+M  V30 20 C -4.2103 -1.4199 0 0
+M  V30 21 C -4.2103 -2.9599 0 0
+M  V30 22 C -2.8767 -3.73 0 0
+M  V30 23 C -5.544 -3.7299 0 0
+M  V30 24 C -6.8777 -2.9599 0 0
+M  V30 25 C -8.2114 -3.7299 0 0
+M  V30 26 C -9.5451 -2.9599 0 0
+M  V30 END ATOM
+M  V30 BEGIN BOND
+M  V30 1 1 2 3
+M  V30 2 1 4 5
+M  V30 3 1 1 6
+M  V30 4 5 1 2
+M  V30 5 6 5 6
+M  V30 6 7 3 4
+M  V30 7 8 6 7
+M  V30 8 1 4 8
+M  V30 9 1 8 9 TOPO=1
+M  V30 10 1 9 10 TOPO=2
+M  V30 11 1 12 13
+M  V30 12 1 13 14
+M  V30 13 1 14 3
+M  V30 14 1 11 2
+M  V30 15 1 15 16
+M  V30 16 1 16 17
+M  V30 17 2 15 18
+M  V30 18 1 11 18
+M  V30 19 1 17 12
+M  V30 20 2 12 11
+M  V30 21 1 19 20
+M  V30 22 2 20 21
+M  V30 23 1 21 22
+M  V30 24 2 19 16
+M  V30 25 2 22 17
+M  V30 26 1 21 23
+M  V30 27 1 23 24
+M  V30 28 1 24 25
+M  V30 29 1 25 26
+M  V30 END BOND
+M  V30 END CTAB
+M  END
+)CTAB"_ctab;
+    REQUIRE(m);
+    {
+      MolDraw2DSVG drawer(250, 200);
+      drawer.drawMolecule(*m);
+      drawer.finishDrawing();
+      auto text = drawer.getDrawingText();
+      std::ofstream outs("testQueryBonds-2.svg");
+      outs << text;
+      outs.flush();
+    }
+  }
+  SECTION("two linknodes") {
+    auto m = R"CTAB(two linknodes
+  Mrv2014 07072016412D          
+
+  0  0  0     0  0            999 V3000
+M  V30 BEGIN CTAB
+M  V30 COUNTS 7 7 0 0 0
+M  V30 BEGIN ATOM
+M  V30 1 C 8.25 12.1847 0 0
+M  V30 2 C 6.9164 12.9547 0 0
+M  V30 3 C 7.2366 14.4611 0 0
+M  V30 4 C 8.7681 14.622 0 0
+M  V30 5 C 9.3945 13.2151 0 0
+M  V30 6 O 8.25 10.6447 0 0
+M  V30 7 F 9.5382 15.9557 0 0
+M  V30 END ATOM
+M  V30 BEGIN BOND
+M  V30 1 1 1 2
+M  V30 2 1 2 3
+M  V30 3 1 4 5
+M  V30 4 1 1 5
+M  V30 5 1 3 4
+M  V30 6 1 1 6
+M  V30 7 1 4 7
+M  V30 END BOND
+M  V30 LINKNODE 1 3 2 1 2 1 5
+M  V30 LINKNODE 1 4 2 4 3 4 5
+M  V30 END CTAB
+M  END)CTAB"_ctab;
+    std::vector<int> rotns={0,30,60,90,120,150,180};
+    for(auto rotn : rotns){
+    MolDraw2DSVG drawer(350, 300);
+    drawer.drawOptions().rotate = (double)rotn;
+    drawer.drawMolecule(*m);
+    drawer.finishDrawing();
+    auto text = drawer.getDrawingText();
+    std::ofstream outs((boost::format("testLinkNodes-2-%d.svg")%rotn).str());
+    outs << text;
+    outs.flush();
+    }
+  }
+}
+
+TEST_CASE("molecule annotations", "[extra]") {
+  int panelHeight = -1;
+  int panelWidth = -1;
+  bool noFreeType = false;
+
+  SECTION("basics") {
+    auto m = "NCC(=O)O"_smiles;
+    MolDraw2DSVG drawer(350, 300, panelHeight, panelWidth, noFreeType);
+    MolDraw2DUtils::prepareMolForDrawing(*m);
+    m->setProp(common_properties::molNote, "molecule note");
+    drawer.drawMolecule(*m, "with note");
+    drawer.finishDrawing();
+    auto text = drawer.getDrawingText();
+    std::ofstream outs("testMolAnnotations-1.svg");
+    outs << text;
+    outs.flush();
+    CHECK(text.find("class='note'") != std::string::npos);
+  }
+  SECTION("chiral flag") {
+    auto m = R"CTAB(
+  Mrv2014 12152012512D          
+ 
+  0  0  0     0  0            999 V3000
+M  V30 BEGIN CTAB
+M  V30 COUNTS 8 8 0 0 1
+M  V30 BEGIN ATOM
+M  V30 1 C -0.6317 0.6787 0 0 CFG=2
+M  V30 2 C -1.7207 1.7677 0 0
+M  V30 3 C 0.4571 1.7677 0 0
+M  V30 4 C -0.6317 2.8566 0 0 CFG=1
+M  V30 5 C 0.1729 4.1698 0 0
+M  V30 6 N -0.5619 5.5231 0 0
+M  V30 7 C -1.4364 4.1698 0 0
+M  V30 8 C -0.6316 -0.8613 0 0
+M  V30 END ATOM
+M  V30 BEGIN BOND
+M  V30 1 1 1 2 CFG=3
+M  V30 2 1 1 3
+M  V30 3 1 4 3
+M  V30 4 1 4 2
+M  V30 5 1 4 5
+M  V30 6 1 5 6
+M  V30 7 1 4 7 CFG=1
+M  V30 8 1 1 8
+M  V30 END BOND
+M  V30 END CTAB
+M  END
+)CTAB"_ctab;
+    {
+      MolDraw2DSVG drawer(350, 300, panelHeight, panelWidth, noFreeType);
+      drawer.drawMolecule(*m, "chiral flag set, option disabled");
+      drawer.finishDrawing();
+      auto text = drawer.getDrawingText();
+      std::ofstream outs("testMolAnnotations-2a.svg");
+      outs << text;
+      outs.flush();
+      CHECK(text.find("class='note'") == std::string::npos);
+    }
+    {
+      MolDraw2DSVG drawer(350, 300, panelHeight, panelWidth, noFreeType);
+      drawer.drawOptions().includeChiralFlagLabel = true;
+      drawer.drawMolecule(*m, "chiral flag set, option enabled");
+      drawer.finishDrawing();
+      auto text = drawer.getDrawingText();
+      std::ofstream outs("testMolAnnotations-2b.svg");
+      outs << text;
+      outs.flush();
+      CHECK(text.find("class='note'") != std::string::npos);
+    }
+    {
+      MolDraw2DSVG drawer(350, 300, panelHeight, panelWidth, noFreeType);
+      drawer.drawOptions().includeChiralFlagLabel = true;
+      m->clearProp(common_properties::_MolFileChiralFlag);
+      drawer.drawMolecule(*m, "chiral flag not set, option enabled");
+      drawer.finishDrawing();
+      auto text = drawer.getDrawingText();
+      std::ofstream outs("testMolAnnotations-2c.svg");
+      outs << text;
+      outs.flush();
+      CHECK(text.find("class='note'") == std::string::npos);
+    }
+  }
+  SECTION("simplified stereo 1") {
+    {
+      auto m = "C[C@H](F)[C@@H](F)[C@@H](C)Cl |o1:3,5,1|"_smiles;
+      MolDraw2DSVG drawer(350, 300, panelHeight, panelWidth, noFreeType);
+      MolDraw2DUtils::prepareMolForDrawing(*m);
+      drawer.drawOptions().addStereoAnnotation = true;
+      drawer.drawMolecule(*m, "enhanced no flag");
+      drawer.finishDrawing();
+      auto text = drawer.getDrawingText();
+      std::ofstream outs("testMolAnnotations-3a.svg");
+      outs << text;
+      outs.flush();
+    }
+    {
+      auto m = "C[C@H](F)[C@@H](F)[C@@H](C)Cl |o1:3,5,1|"_smiles;
+      MolDraw2DSVG drawer(350, 300, panelHeight, panelWidth, noFreeType);
+      MolDraw2DUtils::prepareMolForDrawing(*m);
+      drawer.drawOptions().addStereoAnnotation = true;
+      drawer.drawOptions().simplifiedStereoGroupLabel = true;
+      drawer.drawMolecule(*m, "enhanced with flag");
+      drawer.finishDrawing();
+      auto text = drawer.getDrawingText();
+      std::ofstream outs("testMolAnnotations-3b.svg");
+      outs << text;
+      outs.flush();
+    }
+    {
+      auto m = "C[C@H](F)[C@@H](F)[C@@H](C)Cl |&1:3,5,1|"_smiles;
+      MolDraw2DSVG drawer(350, 300, panelHeight, panelWidth, noFreeType);
+      MolDraw2DUtils::prepareMolForDrawing(*m);
+      drawer.drawOptions().addStereoAnnotation = true;
+      drawer.drawOptions().simplifiedStereoGroupLabel = true;
+      drawer.drawMolecule(*m, "enhanced & with flag");
+      drawer.finishDrawing();
+      auto text = drawer.getDrawingText();
+      std::ofstream outs("testMolAnnotations-3c.svg");
+      outs << text;
+      outs.flush();
+    }
+  }
+  SECTION("simplified stereo 2") {
+    auto m = "C[C@H](F)[C@@H](F)[C@@H](C)Cl |o1:3,5,o2:1|"_smiles;
+    MolDraw2DSVG drawer(350, 300, panelHeight, panelWidth, noFreeType);
+    drawer.drawOptions().addStereoAnnotation = true;
+    drawer.drawOptions().simplifiedStereoGroupLabel = true;
+    MolDraw2DUtils::prepareMolForDrawing(*m);
+    drawer.drawMolecule(*m, "multi-groups");
+    drawer.finishDrawing();
+    auto text = drawer.getDrawingText();
+    std::ofstream outs("testMolAnnotations-3d.svg");
+    outs << text;
+    outs.flush();
+  }
+  SECTION("label placement") {
+    auto m = R"CTAB(
+  Mrv2014 12162004412D          
+ 
+  0  0  0     0  0            999 V3000
+M  V30 BEGIN CTAB
+M  V30 COUNTS 16 15 0 0 0
+M  V30 BEGIN ATOM
+M  V30 1 C -9.2917 3.5833 0 0
+M  V30 2 C -7.958 4.3533 0 0 CFG=2
+M  V30 3 C -6.6243 3.5833 0 0 CFG=1
+M  V30 4 C -5.2906 4.3533 0 0 CFG=2
+M  V30 5 Cl -7.958 5.8933 0 0
+M  V30 6 F -6.6243 2.0433 0 0
+M  V30 7 F -3.957 3.5833 0 0
+M  V30 8 C -5.2906 5.8933 0 0
+M  V30 9 C -3.957 6.6633 0 0
+M  V30 10 C -3.957 8.2033 0 0
+M  V30 11 C -2.6233 8.9733 0 0
+M  V30 12 C -2.6233 5.8933 0 0
+M  V30 13 C -5.2906 8.9733 0 0
+M  V30 14 C -2.6233 10.5133 0 0
+M  V30 15 C -1.2896 8.2033 0 0
+M  V30 16 C -1.2896 6.6633 0 0
+M  V30 END ATOM
+M  V30 BEGIN BOND
+M  V30 1 1 1 2
+M  V30 2 1 2 3
+M  V30 3 1 3 4
+M  V30 4 1 2 5 CFG=1
+M  V30 5 1 3 6 CFG=1
+M  V30 6 1 4 7 CFG=1
+M  V30 7 1 4 8
+M  V30 8 1 8 9
+M  V30 9 1 9 10
+M  V30 10 1 10 11
+M  V30 11 1 9 12
+M  V30 12 1 10 13
+M  V30 13 1 11 14
+M  V30 14 1 11 15
+M  V30 15 1 12 16
+M  V30 END BOND
+M  V30 BEGIN COLLECTION
+M  V30 MDLV30/STEREL1 ATOMS=(3 2 3 4)
+M  V30 END COLLECTION
+M  V30 END CTAB
+M  END
+)CTAB"_ctab;
+    MolDraw2DSVG drawer(350, 300, panelHeight, panelWidth, noFreeType);
+    drawer.drawOptions().addStereoAnnotation = true;
+    drawer.drawOptions().simplifiedStereoGroupLabel = true;
+    drawer.drawMolecule(*m, "label crowding");
+    drawer.finishDrawing();
+    auto text = drawer.getDrawingText();
+    std::ofstream outs("testMolAnnotations-4a.svg");
+    outs << text;
+    outs.flush();
+  }
+}
+
+TEST_CASE("draw link nodes", "[extras]") {
+  SECTION("one linknode") {
+    auto m = R"CTAB(one linknode
+  Mrv2007 06222005102D          
+
+  0  0  0     0  0            999 V3000
+M  V30 BEGIN CTAB
+M  V30 COUNTS 6 6 0 0 0
+M  V30 BEGIN ATOM
+M  V30 1 C 8.25 12.1847 0 0
+M  V30 2 C 6.9164 12.9547 0 0
+M  V30 3 C 6.9164 14.4947 0 0
+M  V30 4 C 9.5836 14.4947 0 0
+M  V30 5 C 9.5836 12.9547 0 0
+M  V30 6 O 8.25 10.6447 0 0
+M  V30 END ATOM
+M  V30 BEGIN BOND
+M  V30 1 1 1 2
+M  V30 2 1 2 3
+M  V30 3 1 4 5
+M  V30 4 1 1 5
+M  V30 5 1 3 4
+M  V30 6 1 1 6
+M  V30 END BOND
+M  V30 LINKNODE 1 4 2 1 2 1 5
+M  V30 END CTAB
+M  END)CTAB"_ctab;
+    std::vector<int> rotns = {0, 30, 60, 90, 120, 150, 180};
+    for (auto rotn : rotns) {
+      MolDraw2DSVG drawer(350, 300);
+      drawer.drawOptions().rotate = (double)rotn;
+      drawer.drawMolecule(*m);
+      drawer.finishDrawing();
+      auto text = drawer.getDrawingText();
+      std::ofstream outs(
+          (boost::format("testLinkNodes-1-%d.svg") % rotn).str());
+      outs << text;
+      outs.flush();
+    }
+  }
+}
