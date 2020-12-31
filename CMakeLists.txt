@@ -511,10 +511,6 @@ if(RDK_USE_STRICT_ROTOR_DEFINITION)
     target_compile_definitions(rdkit_base INTERFACE "-DRDK_USE_STRICT_ROTOR_DEFINITION")
 endif()
 
-if (RDK_BUILD_CPP_TESTS)
-  target_compile_definitions(rdkit_base INTERFACE "-DRDK_BUILD_CPP_TESTS")
-endif(RDK_BUILD_CPP_TESTS)
-
 if (MSVC)
   # disable warnings:
   #  - 4267: conversion from 'size_t' to 'unsigned int', possible loss of data
