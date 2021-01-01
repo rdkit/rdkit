@@ -86,7 +86,6 @@ bool setLabel(Atom *atom, int label, std::set<int> &labels, int &maxLabel,
       }
     }
 
-    BOOST_LOG(rdDebugLog) << "setting label on atom " << atom->getIdx() << " to " << label << std::endl;
     atom->setProp<int>(RLABEL, label);
     labels.insert(label);
     maxLabel = (std::max)(maxLabel, label + 1);
