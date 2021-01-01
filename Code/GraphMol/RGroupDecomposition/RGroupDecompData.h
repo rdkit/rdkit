@@ -87,9 +87,12 @@ struct RGroupDecompData {
 
   double scoreFromPrunedData(const std::vector<size_t> &permutation,
                              bool reset = true) {
-    assert(static_cast<RGroupScore>(params.scoreMethod) == FingerprintVariance);
+    PRECONDITION(
+        static_cast<RGroupScore>(params.scoreMethod) == FingerprintVariance,
+        "Scoring method is not fingerprint variance!");
 
-    assert(permutation.size() >= pruneLength);
+    PRECONDITION(permutation.size() >= pruneLength,
+                 "Illegal permutation prune length");
     if (permutation.size() < pruneLength * 1.5) {
       for (unsigned int pos = pruneLength; pos < permutation.size(); pos++) {
         addVarianceData(pos, permutation[pos], matches, labels,

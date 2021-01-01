@@ -18,8 +18,6 @@
 
 namespace RDKit {
 
-using namespace std;
-
 RGroupDecompositionChromosome::RGroupDecompositionChromosome(RGroupGa& rGroupGa)
     : IntegerStringChromosome(rGroupGa.chromosomeLength(), rGroupGa.getRng(),
                               rGroupGa.getChromosomePolicy()),
@@ -42,7 +40,9 @@ double RGroupDecompositionChromosome::score() {
   if (scoreMethod == FingerprintVariance && labelsToVarianceData.size() > 0 &&
       operationName == RgroupMutate) {
     fitness = fingerprintVarianceGroupScore(labelsToVarianceData);
-    // assert(fitness == recalculateScore());
+    // Uncomment the following line to check that the fingerprintVarianceGroupScore is giving
+    // the correct result.  Don't do this in production as it will be extremely slow.
+    // assert(fitness == recalculateScore(), "Error in variance score");
   } else {
     fitness = rGroupData.score(permutation, &labelsToVarianceData);
   }
@@ -50,7 +50,6 @@ double RGroupDecompositionChromosome::score() {
 }
 
 double RGroupDecompositionChromosome::recalculateScore() {
-  std::cerr << "Recalculating score" << std::endl;
   auto& rGroupData = rGroupGa.getRGroupData();
   return rGroupData.score(permutation);
 }
@@ -115,8 +114,6 @@ RGroupGa::RGroupGa(const RGroupDecompData& rGroupData,
   if (params.gaPopulationSize > 0) {
     popsize = params.gaPopulationSize;
   }
-  // numberOperations = 5000 + chromLength * 100;
-  // if (numberOperations > 100000) numberOperations = 100000;
 
   // For now run the GA a long time and exit early if no improvement in the
   // score is seen
@@ -130,10 +127,6 @@ RGroupGa::RGroupGa(const RGroupDecompData& rGroupData,
     numberOperationsWithoutImprovement =
         params.gaNumberOperationsWithoutImprovement;
   }
-
-  // profiler settings
-  // popsize = 100;
-  // numberOperations = 10000;
 
   setPopsize(popsize);
 
