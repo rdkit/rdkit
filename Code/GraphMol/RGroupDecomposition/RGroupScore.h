@@ -13,7 +13,6 @@
 #include "RGroupMatch.h"
 #include <vector>
 #include <set>
-#include <boost/serialization/vector.hpp>
 namespace RDKit {
 
 //! iterate through all possible permutations of the rgroups
