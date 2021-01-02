@@ -170,7 +170,7 @@ class TestCase(unittest.TestCase):
     self.assertTrue(list(fp.GetNonzeroElements().values())[0] == 2)
     fp = rdMD.GetMorganFingerprint(mol, 0, useCounts=False)
     self.assertTrue(len(fp.GetNonzeroElements()) == 1)
-    self.assertTrue(list(fp.GetNonzeroElements().values())[0] == 2)
+    self.assertTrue(list(fp.GetNonzeroElements().values())[0] == 1)
 
     mol = Chem.MolFromSmiles('CC(F)(Cl)C(F)(Cl)C')
     fp = rdMD.GetHashedMorganFingerprint(mol, 0)

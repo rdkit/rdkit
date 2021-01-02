@@ -340,7 +340,7 @@ double hkAlphaHelper(const RDKit::ROMol &mol, python::object atomContribs) {
 }
 
 RDKit::SparseIntVect<std::uint32_t> *MorganFingerprintHelper(
-    const RDKit::ROMol &mol, unsigned int radius, unsigned int nBits, python::object invariants,
+    const RDKit::ROMol &mol, unsigned int radius, int nBits, python::object invariants,
     python::object fromAtoms, bool useChirality, bool useBondTypes,
     bool useFeatures, bool useCounts, python::object bitInfo,
     bool includeRedundantEnvironments) {
