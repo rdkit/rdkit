@@ -600,5 +600,144 @@ $$$$
     multicorergd_test(cores, params, expected_rows_autodetect,
                       expected_items_autodetect)
 
+  def test_ignoreUnlabelledRGroups(self):
+    core_ctab = """
+     RDKit          2D
+
+  9  9  0  0  0  0  0  0  0  0999 V2000
+    2.5242   -1.5657    0.0000 R#  0  0  0  0  0  0  0  0  0  0  0  0
+    1.3515   -0.6304    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    1.6852    0.8320    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    0.7500    2.0047    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -0.7500    2.0047    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -1.6852    0.8320    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -1.3515   -0.6304    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -2.5242   -1.5657    0.0000 R#  0  0  0  0  0  0  0  0  0  0  0  0
+   -0.0000   -1.2812    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+  1  2  1  0
+  2  3  1  0
+  3  4  1  0
+  4  5  1  0
+  5  6  1  0
+  6  7  1  0
+  7  8  1  0
+  7  9  1  0
+  9  2  1  0
+M  RGP  2   1   1   8   3
+M  END
+"""
+    core = Chem.MolFromMolBlock(core_ctab)
+    params = RGroupDecompositionParameters()
+    params.onlyMatchAtRGroups = True
+    decomp = RGroupDecomposition(core, params)
+
+    mol1 = Chem.MolFromSmiles("FC1CCCCC(Br)C1")
+    self.assertNotEqual(decomp.Add(mol1), -1)
+    mol2 = Chem.MolFromSmiles("CC1CC(N)CCCC1")
+    self.assertNotEqual(decomp.Add(mol2), -1)
+    mol3 = Chem.MolFromSmiles("C2CCC1CCCC(N)CC12")
+    self.assertEqual(decomp.Add(mol3), -1)
+    mol4 = Chem.MolFromSmiles("CC1CCC(O)CCC1")
+    self.assertEqual(decomp.Add(mol4), -1)
+    mol5 = Chem.MolFromSmiles("CC1CC(N)C(O)CCC1")
+    self.assertEqual(decomp.Add(mol5), -1)
+    mol6 = Chem.MolFromSmiles("CC1CC(N)C2(OCCO2)CCC1")
+    self.assertEqual(decomp.Add(mol6), -1)
+    mol7 = Chem.MolFromSmiles("CC1CC(N)C(O2)CCC12")
+    self.assertEqual(decomp.Add(mol7), -1)
+
+    params = RGroupDecompositionParameters()
+    params.onlyMatchAtRGroups = True
+    params.ignoreUnlabelledRGroups = True
+    decomp = RGroupDecomposition(core, params)
+
+    mol1 = Chem.MolFromSmiles("FC1CCCCC(Br)C1")
+    self.assertNotEqual(decomp.Add(mol1), -1)
+    mol2 = Chem.MolFromSmiles("CC1CC(N)CCCC1")
+    self.assertNotEqual(decomp.Add(mol2), -1)
+    mol3 = Chem.MolFromSmiles("C2CCC1CCCC(N)CC12")
+    self.assertEqual(decomp.Add(mol3), -1)
+    mol4 = Chem.MolFromSmiles("CC1CCC(O)CCC1")
+    self.assertEqual(decomp.Add(mol4), -1)
+    mol5 = Chem.MolFromSmiles("CC1CC(N)C(O)CCC1")
+    self.assertNotEqual(decomp.Add(mol5), -1)
+    mol6 = Chem.MolFromSmiles("CC1CC(N)C2(OCCO2)CCC1")
+    self.assertNotEqual(decomp.Add(mol6), -1)
+    mol7 = Chem.MolFromSmiles("CC1CC(N)C(O2)CCC12")
+    self.assertNotEqual(decomp.Add(mol7), -1)
+    self.assertTrue(decomp.Process())
+    rows = decomp.GetRGroupsAsRows(asSmiles=True)
+    expected_rows = [
+      {'Core': 'C1CCC([*:3])CC([*:1])C1', 'R1': 'Br[*:1]', 'R3': 'F[*:3]'},
+      {'Core': 'C1CCC([*:3])CC([*:1])C1', 'R1': 'N[*:1]', 'R3': 'C[*:3]'},
+      {'Core': 'C1CCC([*:3])CC([*:1])C1', 'R1': 'N[*:1]', 'R3': 'C[*:3]'},
+      {'Core': 'C1CCC([*:3])CC([*:1])C1', 'R1': 'N[*:1]', 'R3': 'C[*:3]'},
+      {'Core': 'C1CCC([*:3])CC([*:1])C1', 'R1': 'N[*:1]', 'R3': 'C[*:3]'}]
+    self.assertEqual(len(rows), len(expected_rows))
+    for i, row in enumerate(rows):
+      for k in row.keys():
+        self.assertEqual(row[k], expected_rows[i][k])
+
+    core_ctab = """
+     RDKit          2D
+
+ 10 10  0  0  0  0  0  0  0  0999 V2000
+    2.5112   -1.7956    0.0000 R#  0  0  0  0  0  0  0  0  0  0  0  0
+    1.4716   -0.7143    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    1.9947    0.6915    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    1.2217    1.9770    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -0.2652    2.1742    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -1.3465    1.1346    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -1.2079   -0.3590    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -2.6949   -0.1618    0.0000 R#  0  0  0  0  0  0  0  0  0  0  0  0
+   -1.7310   -1.7648    0.0000 R#  0  0  0  0  0  0  0  0  0  0  0  0
+    0.0463   -1.1818    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+  1  2  1  0
+  2  3  1  0
+  3  4  1  0
+  4  5  1  0
+  5  6  1  0
+  6  7  1  0
+  7  8  1  0
+  7  9  1  0
+  7 10  1  0
+ 10  2  1  0
+M  RGP  3   1   1   8   2   9   3
+M  END
+"""
+    core = Chem.MolFromMolBlock(core_ctab)
+    params = RGroupDecompositionParameters()
+    params.onlyMatchAtRGroups = True
+    decomp = RGroupDecomposition(core, params)
+
+    mol1 = Chem.MolFromSmiles("FC1CCCCC(Br)(Cl)C1")
+    self.assertNotEqual(decomp.Add(mol1), -1)
+    mol2 = Chem.MolFromSmiles("C2CC12CC(N)CCCC2(OCCO2)1")
+    self.assertEqual(decomp.Add(mol2), -1)
+    mol3 = Chem.MolFromSmiles("C2CC12CC(N)CCC2(OCCO2)C1")
+    self.assertEqual(decomp.Add(mol3), -1)
+
+    params = RGroupDecompositionParameters()
+    params.onlyMatchAtRGroups = True
+    params.ignoreUnlabelledRGroups = True
+    decomp = RGroupDecomposition(core, params)
+
+    self.assertNotEqual(decomp.Add(mol1), -1)
+    mol2 = Chem.MolFromSmiles("C2CC12CC(N)CCCC2(OCCO2)1")
+    self.assertNotEqual(decomp.Add(mol2), -1)
+    mol3 = Chem.MolFromSmiles("C2CC12CC(N)CCC2(OCCO2)C1")
+    self.assertEqual(decomp.Add(mol3), -1)
+    self.assertTrue(decomp.Process())
+    rows = decomp.GetRGroupsAsRows(asSmiles=True)
+    expected_rows = [
+      {'Core': 'C1CCC([*:2])([*:3])CC([*:1])C1',
+       'R1': 'F[*:1]', 'R2': 'Cl[*:2]', 'R3': 'Br[*:3]'},
+      {'Core': 'C1CCC([*:2])([*:3])CC([*:1])C1',
+       'R1': 'N[*:1]', 'R2': 'C(C[*:3])[*:2]', 'R3': 'C(C[*:3])[*:2]'}]
+    self.assertEqual(len(rows), len(expected_rows))
+    for i, row in enumerate(rows):
+      for k in row.keys():
+        self.assertEqual(row[k], expected_rows[i][k])
+
 if __name__ == '__main__':
   unittest.main()

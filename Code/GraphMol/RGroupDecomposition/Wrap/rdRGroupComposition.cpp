@@ -268,6 +268,9 @@ struct rgroupdecomp_wrapper {
             "onlyMatchAtRGroups",
             &RDKit::RGroupDecompositionParameters::onlyMatchAtRGroups)
         .def_readwrite(
+            "ignoreUnlabelledRGroups",
+            &RDKit::RGroupDecompositionParameters::ignoreUnlabelledRGroups)
+        .def_readwrite(
             "removeAllHydrogenRGroups",
             &RDKit::RGroupDecompositionParameters::removeAllHydrogenRGroups)
         .def_readwrite(

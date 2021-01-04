@@ -129,23 +129,27 @@ int RGroupDecomposition::add(const ROMol &inmol) {
               if (nbr->getAtomicNum() == 1 || nbrMatchesTarget) {
                 continue;
               }
-              auto b = mol->getBondBetweenAtoms(match.second, nbrIdx);
-              if (b) {
-                tmpAtomsToKeep.set(match.second);
-                tmpNbrsToRemove.set(nbrIdx);
-                tmpBondsToBreak.set(b->getIdx());
+              if (!data->params.ignoreUnlabelledRGroups) {
+                passes_filter = false;
+                break;
               } else {
-                BOOST_LOG(rdErrorLog)
-                    << "Expected bond between atoms " << match.second << " and "
-                    << nbrIdx << std::endl;
-                return -1;
+                auto b = mol->getBondBetweenAtoms(match.second, nbrIdx);
+                if (b) {
+                  tmpAtomsToKeep.set(match.second);
+                  tmpNbrsToRemove.set(nbrIdx);
+                  tmpBondsToBreak.set(b->getIdx());
+                } else {
+                  BOOST_LOG(rdErrorLog)
+                      << "Expected bond between atoms " << match.second << " and "
+                      << nbrIdx << std::endl;
+                  return -1;
+                }
               }
             }
-          } else if (atm->getAtomicNum() != 1) {
+          } else if (data->params.ignoreUnlabelledRGroups && atm->getAtomicNum() != 1) {
             ++numUserLabelMatches;
           }
         }
-
         if (tmpBondsToBreak.any()) {
           passes_filter = (numUserLabelMatches ==
                            core.second.core_atoms_with_user_labels.size());

@@ -64,6 +64,7 @@ struct RDKIT_RGROUPDECOMPOSITION_EXPORT RGroupDecompositionParameters {
 
   unsigned int chunkSize = 5;
   bool onlyMatchAtRGroups = false;
+  bool ignoreUnlabelledRGroups = false;
   bool removeAllHydrogenRGroups = true;
   bool removeHydrogensPostMatch = true;
   double timeout = -1.0;  ///< timeout in seconds. <=0 indicates no timeout

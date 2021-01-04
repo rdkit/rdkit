@@ -1773,10 +1773,10 @@ M  END
   }
 }
 
-void testUnlabeledExtraRGroups() {
+void testIgnoreUnlabelledRGroups() {
   BOOST_LOG(rdInfoLog)
       << "********************************************************\n";
-  BOOST_LOG(rdInfoLog) << "test mols with unlabelled extra R groups"
+  BOOST_LOG(rdInfoLog) << "test the ignoreUnlabelledRGroups param"
                        << std::endl;
   {
     std::string core_ctab = R"CTAB(
@@ -1805,8 +1805,29 @@ M  RGP  2   1   1   8   3
 M  END
   )CTAB";
     ROMOL_SPTR core(MolBlockToMol(core_ctab));
+    {
+      RGroupDecompositionParameters params;
+      params.onlyMatchAtRGroups = true;
+      RGroupDecomposition decomp(*core, params);
+
+      ROMOL_SPTR mol1 = "FC1CCCCC(Br)C1"_smiles;
+      TEST_ASSERT(decomp.add(*mol1) != -1);
+      ROMOL_SPTR mol2 = "CC1CC(N)CCCC1"_smiles;
+      TEST_ASSERT(decomp.add(*mol2) != -1);
+      ROMOL_SPTR mol3 = "C2CCC1CCCC(N)CC12"_smiles;
+      TEST_ASSERT(decomp.add(*mol3) == -1);
+      ROMOL_SPTR mol4 = "CC1CCC(O)CCC1"_smiles;
+      TEST_ASSERT(decomp.add(*mol4) == -1);
+      ROMOL_SPTR mol5 = "CC1CC(N)C(O)CCC1"_smiles;
+      TEST_ASSERT(decomp.add(*mol5) == -1);
+      ROMOL_SPTR mol6 = "CC1CC(N)C2(OCCO2)CCC1"_smiles;
+      TEST_ASSERT(decomp.add(*mol6) == -1);
+      ROMOL_SPTR mol7 = "CC1CC(N)C(O2)CCC12"_smiles;
+      TEST_ASSERT(decomp.add(*mol7) == -1);
+    }
     RGroupDecompositionParameters params;
     params.onlyMatchAtRGroups = true;
+    params.ignoreUnlabelledRGroups = true;
     RGroupDecomposition decomp(*core, params);
 
     ROMOL_SPTR mol1 = "FC1CCCCC(Br)C1"_smiles;
@@ -1866,8 +1887,21 @@ M  RGP  3   1   1   8   2   9   3
 M  END
   )CTAB";
     ROMOL_SPTR core(MolBlockToMol(core_ctab));
+    {
+      RGroupDecompositionParameters params;
+      params.onlyMatchAtRGroups = true;
+      RGroupDecomposition decomp(*core, params);
+
+      ROMOL_SPTR mol1 = "FC1CCCCC(Br)(Cl)C1"_smiles;
+      TEST_ASSERT(decomp.add(*mol1) != -1);
+      ROMOL_SPTR mol2 = "C2CC12CC(N)CCCC2(OCCO2)1"_smiles;
+      TEST_ASSERT(decomp.add(*mol2) == -1);
+      ROMOL_SPTR mol3 = "C2CC12CC(N)CCC2(OCCO2)C1"_smiles;
+      TEST_ASSERT(decomp.add(*mol3) == -1);
+    }
     RGroupDecompositionParameters params;
     params.onlyMatchAtRGroups = true;
+    params.ignoreUnlabelledRGroups = true;
     RGroupDecomposition decomp(*core, params);
 
     ROMOL_SPTR mol1 = "FC1CCCCC(Br)(Cl)C1"_smiles;
@@ -1919,7 +1953,7 @@ int main() {
   testMultiCorePreLabelled();
   testCoreWithRGroupAdjQuery();
   testGeminalRGroups();
-  testUnlabeledExtraRGroups();
+  testIgnoreUnlabelledRGroups();
   BOOST_LOG(rdInfoLog)
       << "********************************************************\n";
   return 0;
