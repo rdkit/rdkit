@@ -9,11 +9,11 @@ rdkit_python_extension(rdchem
                        SmilesParse ChemTransforms SubstructMatch GraphMol)
 
 rdkit_python_extension(rdmolops
-                       rdmolops.cpp MolOps.cpp 
+                       rdmolops.cpp MolOps.cpp
                        ChiralityOps.cpp
                        DEST Chem
                        LINK_LIBRARIES
-                       ChemReactions MolDraw2D Depictor
+                       ChemReactions Depictor
                        FileParsers SubstructMatch Fingerprints ChemTransforms
                        Subgraphs SmilesParse MolTransforms GraphMol )
 
@@ -47,7 +47,7 @@ set(rdmolfiles_sources rdmolfiles.cpp
                        SDMolSupplier.cpp TDTMolSupplier.cpp
                        SmilesMolSupplier.cpp SmilesWriter.cpp SDWriter.cpp
                        TDTWriter.cpp
-                       PDBWriter.cpp 
+                       PDBWriter.cpp
 											 MultithreadedSmilesMolSupplier.cpp
 											 MultithreadedSDMolSupplier.cpp)
 
