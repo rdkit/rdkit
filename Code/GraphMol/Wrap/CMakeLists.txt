@@ -13,7 +13,7 @@ rdkit_python_extension(rdmolops
                        ChiralityOps.cpp
                        DEST Chem
                        LINK_LIBRARIES
-                       ChemReactions MolDraw2D Depictor
+                       ChemReactions Depictor
                        FileParsers SubstructMatch Fingerprints ChemTransforms
                        Subgraphs SmilesParse MolTransforms GraphMol )
 
