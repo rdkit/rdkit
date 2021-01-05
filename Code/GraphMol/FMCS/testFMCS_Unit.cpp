@@ -2200,6 +2200,65 @@ void testGitHub3458() {
   BOOST_LOG(rdInfoLog) << "\tdone" << std::endl;
 }
 
+void testGitHub3693() {
+  BOOST_LOG(rdInfoLog) << "-------------------------------------" << std::endl;
+  BOOST_LOG(rdInfoLog) << "testGitHub3693" << std::endl;
+
+  {
+    std::vector<ROMOL_SPTR> mols = {
+      "Nc1ccc(O)cc1c1ccc2ccccc2c1"_smiles,
+      "Oc1cnc(NC2CCC2)c(c1)c1ccc2ccccc2c1"_smiles
+    };
+
+    {
+      MCSParameters p;
+      MCSResult res = findMCS(mols, &p);
+      TEST_ASSERT(res.NumAtoms == 17);
+      TEST_ASSERT(res.NumBonds == 18);
+      TEST_ASSERT(res.SmartsString == "[#7]-,:[#6]:[#6](:[#6]:[#6](:[#6])-[#8])-[#6]1:[#6]:[#6]:[#6]2:[#6](:[#6]:1):[#6]:[#6]:[#6]:[#6]:2");
+    }
+    {
+      MCSParameters p;
+      p.BondCompareParameters.CompleteRingsOnly = true;
+      MCSResult res = findMCS(mols, &p);
+      TEST_ASSERT(res.NumAtoms == 11);
+      TEST_ASSERT(res.NumBonds == 12);
+      TEST_ASSERT(res.SmartsString == "[#6]-&!@[#6]1:&@[#6]:&@[#6]:&@[#6]2:&@[#6](:&@[#6]:&@1):&@[#6]:&@[#6]:&@[#6]:&@[#6]:&@2");
+    }
+    {
+      MCSParameters p;
+      p.AtomCompareParameters.CompleteRingsOnly = true;
+      MCSResult res = findMCS(mols, &p);
+      TEST_ASSERT(res.NumAtoms == 10);
+      TEST_ASSERT(res.NumBonds == 11);
+      TEST_ASSERT(res.SmartsString == "[#6]1:&@[#6]:&@[#6]:&@[#6]2:&@[#6](:&@[#6]:&@1):&@[#6]:&@[#6]:&@[#6]:&@[#6]:&@2");
+    }
+    {
+      MCSParameters p;
+      p.AtomCompareParameters.CompleteRingsOnly = true;
+      p.BondCompareParameters.CompleteRingsOnly = true;
+      MCSResult res = findMCS(mols, &p);
+      TEST_ASSERT(res.NumAtoms == 10);
+      TEST_ASSERT(res.NumBonds == 11);
+      TEST_ASSERT(res.SmartsString == "[#6]1:&@[#6]:&@[#6]:&@[#6]2:&@[#6](:&@[#6]:&@1):&@[#6]:&@[#6]:&@[#6]:&@[#6]:&@2");
+    }
+    {
+      MCSParameters p;
+      p.AtomCompareParameters.CompleteRingsOnly = true;
+      // this will automatically be set to true
+      p.BondCompareParameters.CompleteRingsOnly = false;
+      MCSResult res = findMCS(mols, &p);
+      TEST_ASSERT(res.NumAtoms == 10);
+      TEST_ASSERT(res.NumBonds == 11);
+      TEST_ASSERT(res.SmartsString == "[#6]1:&@[#6]:&@[#6]:&@[#6]2:&@[#6](:&@[#6]:&@1):&@[#6]:&@[#6]:&@[#6]:&@[#6]:&@2");
+    }
+  }
+
+  BOOST_LOG(rdInfoLog) << "============================================"
+                       << std::endl;
+  BOOST_LOG(rdInfoLog) << "\tdone" << std::endl;
+}
+
 //====================================================================================================
 //====================================================================================================
 
@@ -2277,6 +2336,7 @@ int main(int argc, const char* argv[]) {
   testCompareNonExistent();
   testGitHub3095();
   testGitHub3458();
+  testGitHub3693();
 
   unsigned long long t1 = nanoClock();
   double sec = double(t1 - T0) / 1000000.;
