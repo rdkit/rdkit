@@ -1076,7 +1076,7 @@ BOOST_PYTHON_MODULE(rdMolDraw2D) {
   // ------------------------------------------------------------------------
   docString = "Returns svg for a molecule";
   python::def(
-      "MolToSVG", molToSVG,
+      "MolToSVG", &RDKit::molToSVG,
       (python::arg("mol"), python::arg("width") = 300,
        python::arg("height") = 300,
        python::arg("highlightAtoms") = python::object(),
