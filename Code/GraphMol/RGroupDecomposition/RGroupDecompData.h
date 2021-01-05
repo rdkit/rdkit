@@ -14,11 +14,12 @@
 #include "RGroupDecomp.h"
 #include "RGroupMatch.h"
 #include "RGroupScore.h"
+#include "RGroupFingerprintScore.h"
+#include "RGroupGa.h"
 #include <vector>
 #include <map>
 
-namespace RDKit
-{
+namespace RDKit {
 struct RGroupDecompData {
   // matches[mol_idx] == vector of potential matches
   std::map<int, RCore> cores;
@@ -29,6 +30,8 @@ struct RGroupDecompData {
   std::vector<std::vector<RGroupMatch>> matches;
   std::set<int> labels;
   std::vector<size_t> permutation;
+  unsigned int pruneLength = 0U;
+  std::map<int, std::shared_ptr<VarianceDataForLabel>> prunedVarianceData;
   std::map<int, std::vector<int>> userLabels;
 
   std::vector<int> processedRlabels;
@@ -55,6 +58,7 @@ struct RGroupDecompData {
   void prepareCores() {
     for (auto &core : cores) {
       RWMol *alignCore = core.first ? cores[0].core.get() : nullptr;
+      BOOST_LOG(rdDebugLog) << "Preparing core " << core.first << std::endl;
       CHECK_INVARIANT(params.prepareCore(*core.second.core, alignCore),
                       "Could not prepare at least one core");
       if (params.onlyMatchAtRGroups) {
@@ -81,6 +85,44 @@ struct RGroupDecompData {
     }
   }
 
+  double scoreFromPrunedData(const std::vector<size_t> &permutation,
+                             bool reset = true) {
+    PRECONDITION(
+        static_cast<RGroupScore>(params.scoreMethod) == FingerprintVariance,
+        "Scoring method is not fingerprint variance!");
+
+    PRECONDITION(permutation.size() >= pruneLength,
+                 "Illegal permutation prune length");
+    if (permutation.size() < pruneLength * 1.5) {
+      for (unsigned int pos = pruneLength; pos < permutation.size(); pos++) {
+        addVarianceData(pos, permutation[pos], matches, labels,
+                        prunedVarianceData);
+      }
+      double score = fingerprintVarianceGroupScore(prunedVarianceData);
+      std::map<int, std::shared_ptr<VarianceDataForLabel>> vd;
+      // assert(score == fingerprintVarianceScore(permutation, matches,
+      // labels));
+      if (reset) {
+        for (unsigned int pos = pruneLength; pos < permutation.size(); pos++) {
+          removeVarianceData(pos, permutation[pos], matches, labels,
+                             prunedVarianceData);
+        }
+      } else {
+        pruneLength = permutation.size();
+      }
+      return score;
+    } else {
+      if (reset) {
+        return fingerprintVarianceScore(permutation, matches, labels);
+      } else {
+        prunedVarianceData.clear();
+        pruneLength = permutation.size();
+        return fingerprintVarianceScore(permutation, matches, labels,
+                                        &prunedVarianceData);
+      }
+    }
+  }
+
   void prune() {  // prune all but the current "best" permutation of matches
     for (size_t mol_idx = 0; mol_idx < permutation.size(); ++mol_idx) {
       std::vector<RGroupMatch> keepVector;
@@ -88,6 +130,10 @@ struct RGroupDecompData {
       matches[mol_idx] = keepVector;
     }
     permutation = std::vector<size_t>(matches.size(), 0);
+    if (params.scoreMethod == FingerprintVariance &&
+        params.matchingStrategy != GA) {
+      scoreFromPrunedData(permutation, false);
+    }
   }
 
   // Return the RGroups with the current "best" permutation
@@ -112,9 +158,11 @@ struct RGroupDecompData {
       //  i.e. if core 1 doesn't have R1 then don't analyze it in when looking
       //  at label 1
       std::map<int, std::set<int>> labelCores;  // map from label->cores
+      std::set<int> coresVisited;
       for (auto &position : results) {
         int core_idx = position.core_idx;
-        if (labelCores.find(core_idx) == labelCores.end()) {
+        if (coresVisited.find(core_idx) == coresVisited.end()) {
+          coresVisited.insert(core_idx);
           auto core = cores.find(core_idx);
           if (core != cores.end()) {
             for (auto rlabels : getRlabels(*core->second.core)) {
@@ -168,6 +216,15 @@ struct RGroupDecompData {
       return i;
     }
   };
+
+  void addCoreUserLabels(const RWMol &core, std::set<int> &userLabels) {
+    auto atoms = getRlabels(core);
+    for (const auto &p : atoms) {
+      if (p.first > 0) {
+        userLabels.insert(p.first);
+      }
+    }
+  }
 
   void relabelCore(RWMol &core, std::map<int, int> &mappings,
                    UsedLabels &used_labels, const std::set<int> &indexLabels,
@@ -356,13 +413,24 @@ struct RGroupDecompData {
       }
     }
 
+    // find user labels that are not present in the decomposition
+    for (auto &core : cores) {
+      core.second.labelledCore.reset(new RWMol(*core.second.core));
+      addCoreUserLabels(*core.second.labelledCore, userLabels);
+    }
+
     // Assign final RGroup labels to the cores and propagate these to
     //  the scaffold
     finalRlabelMapping.clear();
 
     UsedLabels used_labels;
+    // Add all the user labels now to prevent an index label being assigned to a
+    // user label when multiple cores are present (e.g. the user label is
+    // present in the second core, but not the first).
+    for (auto userLabel : userLabels) {
+      used_labels.add(userLabel);
+    }
     for (auto &core : cores) {
-      core.second.labelledCore.reset(new RWMol(*core.second.core));
       relabelCore(*core.second.labelledCore, finalRlabelMapping, used_labels,
                   indexLabels, extraAtomRLabels);
     }
@@ -372,6 +440,16 @@ struct RGroupDecompData {
         relabelRGroup(*rgroup.second, finalRlabelMapping);
       }
     }
+
+    std::set<int> uniqueMappedValues;
+    std::transform(finalRlabelMapping.cbegin(), finalRlabelMapping.cend(),
+                   std::inserter(uniqueMappedValues, uniqueMappedValues.end()),
+                   [](const std::pair<int, int> &p) { return p.second; });
+    CHECK_INVARIANT(finalRlabelMapping.size() == uniqueMappedValues.size(),
+                    "Error in uniqueness of final RLabel mapping");
+    CHECK_INVARIANT(
+        uniqueMappedValues.size() == userLabels.size() + indexLabels.size(),
+        "Error in final RMapping size");
   }
 
   // compute the number of rgroups that would be added if we
@@ -392,9 +470,9 @@ struct RGroupDecompData {
       for (size_t m = 0; m < tied_permutation.size();
            ++m) {  // for each molecule
         // for each molecule, check if we add an R-group at this negative label
-        // if we do, count it once. So we know how many different negative labels
-        // we have filled: we prefer permutations which fill less, as it means we
-        // have added less groups on different positions
+        // if we do, count it once. So we know how many different negative
+        // labels we have filled: we prefer permutations which fill less, as it
+        // means we have added less groups on different positions
         auto rg = matches[m][tied_permutation[m]].rgroups.find(label);
         if (rg != matches[m][tied_permutation[m]].rgroups.end() &&
             !rg->second->is_hydrogen) {
@@ -410,59 +488,114 @@ struct RGroupDecompData {
     return num_added_rgroups;
   }
 
-  bool process(bool pruneMatches, bool finalize = false) {
+  double score(const std::vector<size_t> &permutation,
+               std::map<int, std::shared_ptr<VarianceDataForLabel>>
+                   *labelsToVarianceData = nullptr) const {
+    RGroupScore scoreMethod = static_cast<RGroupScore>(params.scoreMethod);
+    switch (scoreMethod) {
+      case Match:
+        return matchScore(permutation, matches, labels);
+        break;
+      case FingerprintDistance:
+        return fingerprintDistanceScore(permutation, matches, labels);
+        break;
+      case FingerprintVariance:
+        return fingerprintVarianceScore(permutation, matches, labels,
+                                        labelsToVarianceData);
+        break;
+      default:;
+    }
+    return NAN;
+  }
+
+  RGroupDecompositionProcessResult process(bool pruneMatches,
+                                           bool finalize = false) {
     if (matches.empty()) {
-      return false;
+      return RGroupDecompositionProcessResult(false, -1);
     }
     auto t0 = std::chrono::steady_clock::now();
-    // Exhaustive search, get the MxN matrix
-    // (M = matches.size(): number of molecules
-    //  N = iterator.maxPermutations)
-    std::vector<size_t> permutations;
-
-    std::transform(matches.begin(), matches.end(),
-                   std::back_inserter(permutations),
-                   [](const std::vector<RGroupMatch> &m) { return m.size(); });
-    permutation = std::vector<size_t>(permutations.size(), 0);
-
-    // run through all possible matches and score each
-    //  set
-    double best_score = 0;
-    std::vector<size_t> best_permutation = permutation;
+    std::vector<size_t> best_permutation;
     std::vector<std::vector<size_t>> ties;
+    double best_score = -std::numeric_limits<double>::max();
+    std::unique_ptr<CartesianProduct> iterator;
 
-    size_t count = 0;
-#ifdef DEBUG
-    std::cerr << "Processing" << std::endl;
-#endif
-    CartesianProduct iterator(permutations);
-    // Iterates through the permutation idx, i.e.
-    //  [m1_permutation_idx,  m2_permutation_idx, m3_permutation_idx]
-
-    while (iterator.next()) {
-      if (count > iterator.maxPermutations) {
-        throw ValueErrorException("next() did not finish");
+    if (params.matchingStrategy == GA) {
+      RGroupGa ga(*this, params.timeout >= 0 ? &t0 : nullptr);
+      if (ga.numberPermutations() < 10000) {
+        params.matchingStrategy = Exhaustive;
+      } else {
+        if (params.gaNumberRuns > 1) {
+          auto results = ga.runBatch();
+          auto best = max_element(results.begin(), results.end(),
+                                  [](const GaResult &a, const GaResult &b) {
+                                    return a.score < b.score;
+                                  });
+          ties = best->permutations;
+          best_score = best->score;
+        } else {
+          auto result = ga.run();
+          ties = result.permutations;
+          best_score = result.score;
+        }
+        best_permutation = ties[0];
       }
-#ifdef DEBUG
-      std::cerr << "**************************************************"
-                << std::endl;
-#endif
-      double newscore = score(iterator.permutation, matches, labels);
+    }
+    if (params.matchingStrategy != GA) {
+      // Exhaustive search, get the MxN matrix
+      // (M = matches.size(): number of molecules
+      //  N = iterator.maxPermutations)
+      std::vector<size_t> permutations;
 
-      if (fabs(newscore - best_score) <
-          1e-6) {  // heuristic to overcome floating point comparison issues
-        ties.push_back(iterator.permutation);
-      } else if (newscore > best_score) {
+      std::transform(
+          matches.begin(), matches.end(), std::back_inserter(permutations),
+          [](const std::vector<RGroupMatch> &m) { return m.size(); });
+      permutation = std::vector<size_t>(permutations.size(), 0);
+
+      // run through all possible matches and score each
+      //  set
+      best_permutation = permutation;
+
+      size_t count = 0;
 #ifdef DEBUG
-        std::cerr << " ===> current best:" << newscore << ">" << best_score
+      std::cerr << "Processing" << std::endl;
+#endif
+      std::unique_ptr<CartesianProduct> it(new CartesianProduct(permutations));
+      iterator = std::move(it);
+      // Iterates through the permutation idx, i.e.
+      //  [m1_permutation_idx,  m2_permutation_idx, m3_permutation_idx]
+
+      while (iterator->next()) {
+        if (count > iterator->maxPermutations) {
+          throw ValueErrorException("next() did not finish");
+        }
+#ifdef DEBUG
+        std::cerr << "**************************************************"
                   << std::endl;
 #endif
-        ties.clear();
-        ties.push_back(iterator.permutation);
-        best_score = newscore;
-        best_permutation = iterator.permutation;
+        double newscore = params.scoreMethod == FingerprintVariance
+                              ? scoreFromPrunedData(iterator->permutation)
+                              : score(iterator->permutation);
+
+        if (fabs(newscore - best_score) <
+            1e-6) {  // heuristic to overcome floating point comparison issues
+          ties.push_back(iterator->permutation);
+        } else if (newscore > best_score) {
+#ifdef DEBUG
+          std::cerr << " ===> current best:" << newscore << ">" << best_score
+                    << std::endl;
+#endif
+          ties.clear();
+          ties.push_back(iterator->permutation);
+          best_score = newscore;
+          best_permutation = iterator->permutation;
+          iterator->value(best_permutation);
+        }
+        ++count;
       }
-      ++count;
+
+      BOOST_LOG(rdDebugLog)
+          << "Exhaustive or GreedyChunks process, best score " << best_score
+          << " permutation size " << best_permutation.size() << std::endl;
     }
 
     if (ties.size() > 1) {
@@ -480,7 +613,8 @@ struct RGroupDecompData {
         std::vector<int> heavy_counts;
         size_t num_added_rgroups = compute_num_added_rgroups(
             tied_permutation, ordered_labels, heavy_counts);
-        size_t perm_value = iterator.value(tied_permutation);
+        size_t perm_value =
+            iterator ? iterator->value(tied_permutation) : max_perm_value;
         if (num_added_rgroups < smallest_added_rgroups) {
           smallest_added_rgroups = num_added_rgroups;
           largest_heavy_counts = heavy_counts;
@@ -510,9 +644,9 @@ struct RGroupDecompData {
       relabel();
     }
 
-    return true;
+    return RGroupDecompositionProcessResult(true, best_score);
   }
 };
-}  
+}  // namespace RDKit
 
 #endif

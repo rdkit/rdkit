@@ -13,7 +13,8 @@
 #include <GraphMol/RDKitBase.h>
 #include <map>
 namespace RDKit {
-extern const std::string RLABEL;
+
+RDKIT_RGROUPDECOMPOSITION_EXPORT extern const std::string RLABEL;
 extern const std::string SIDECHAIN_RLABELS;
 extern const std::string done;
 
