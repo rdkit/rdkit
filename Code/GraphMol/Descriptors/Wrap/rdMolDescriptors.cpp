@@ -512,7 +512,7 @@ ExplicitBitVect *GetMorganFingerprintBV(
   }
   ExplicitBitVect *res;
   res = RDKit::MorganFingerprints::getFingerprintAsBitVect(
-      mol, static_cast<unsigned int>(radius), static_cast<unsigned int>(nBits),
+      mol, radius, nBits,
       invars, froms.get(), useChirality,
       useBondTypes, false, bitInfoMap,
       includeRedundantEnvironments);
