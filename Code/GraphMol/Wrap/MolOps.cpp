@@ -31,26 +31,10 @@
 #include <RDBoost/python_streambuf.h>
 
 #include <sstream>
-#include <GraphMol/MolDraw2D/MolDraw2DSVG.h>
 namespace python = boost::python;
 using boost_adaptbx::python::streambuf;
 
 namespace RDKit {
-std::string molToSVG(const ROMol &mol, unsigned int width, unsigned int height,
-                     python::object pyHighlightAtoms, bool kekulize,
-                     unsigned int lineWidthMult, bool includeAtomCircles,
-                     int confId) {
-  RDUNUSED_PARAM(kekulize);
-  std::unique_ptr<std::vector<int>> highlightAtoms =
-      pythonObjectToVect(pyHighlightAtoms, static_cast<int>(mol.getNumAtoms()));
-  std::stringstream outs;
-  MolDraw2DSVG drawer(width, height, outs);
-  drawer.setLineWidth(drawer.lineWidth() * lineWidthMult);
-  drawer.drawOptions().circleAtoms = includeAtomCircles;
-  drawer.drawMolecule(mol, highlightAtoms.get(), nullptr, nullptr, confId);
-  drawer.finishDrawing();
-  return outs.str();
-}
 python::tuple fragmentOnSomeBondsHelper(const ROMol &mol,
                                         python::object pyBondIndices,
                                         unsigned int nToBreak, bool addDummies,
@@ -853,14 +837,14 @@ void setDoubleBondNeighborDirectionsHelper(ROMol &mol, python::object confObj) {
   MolOps::setDoubleBondNeighborDirections(mol, conf);
 }
 
-ROMol* molzip_new(const ROMol&a, const ROMol&b, const MolzipParams &p) {
-  return molzip(a,b,p).release();
+ROMol *molzip_new(const ROMol &a, const ROMol &b, const MolzipParams &p) {
+  return molzip(a, b, p).release();
 }
-  
-ROMol* molzip_new(const ROMol&a, const MolzipParams &p) {
-  return molzip(a,p).release();
+
+ROMol *molzip_new(const ROMol &a, const MolzipParams &p) {
+  return molzip(a, p).release();
 }
-  
+
 struct molops_wrapper {
   static void wrap() {
     std::string docString;
@@ -2289,14 +2273,13 @@ EXAMPLES:\n\n\
         docString.c_str());
 
     python::enum_<MolzipLabel>("MolzipLabel")
-      .value("AtomMapNumber", MolzipLabel::AtomMapNumber)
-      .value("Isotope", MolzipLabel::Isotope)
-      .value("FragmentOnBonds", MolzipLabel::FragmentOnBonds)
-      .value("AtomType", MolzipLabel::AtomType)      
-      ;
+        .value("AtomMapNumber", MolzipLabel::AtomMapNumber)
+        .value("Isotope", MolzipLabel::Isotope)
+        .value("FragmentOnBonds", MolzipLabel::FragmentOnBonds)
+        .value("AtomType", MolzipLabel::AtomType);
 
     docString =
-      "Parameters controllnig how to zip molecules together\n\
+        "Parameters controllnig how to zip molecules together\n\
 \n\
   OPTIONS:\n\
       label : set the MolzipLabel option [default MolzipLabel.AtomMapNumber]\n\
@@ -2314,12 +2297,13 @@ EXAMPLES:\n\n\
     i.e.  'C[V]' and 'N[Xe]' with atoms pairs [('V', 'Xe')] results in 'CN'\n\
 ";
 
-    python::class_<MolzipParams>("MolzipParams",
-				 docString.c_str(), python::init<>())
-	      .def_readwrite("label", &MolzipParams::label,
-			     "Set the atom labelling system to zip together");
+    python::class_<MolzipParams>("MolzipParams", docString.c_str(),
+                                 python::init<>())
+        .def_readwrite("label", &MolzipParams::label,
+                       "Set the atom labelling system to zip together");
 
-    docString = "molzip: zip two molecules together preserving bond and atom stereochemistry.\n\
+    docString =
+        "molzip: zip two molecules together preserving bond and atom stereochemistry.\n\
 \n\
 This is useful when dealing with results from fragmentOnBonds, RGroupDecomposition and MMPs.\n\
 \n\
@@ -2341,20 +2325,22 @@ The atoms to zip can be specified with the MolzipParams class.\n\
     >>> MolToSmiles(c)\n\
     'C=C/N=C/O'\n\
 ";
-    python::def("molzip",
-		(ROMol* (*)(const ROMol&, const ROMol&, const MolzipParams &))
-			     & molzip_new,
-		(python::arg("a"), python::arg("b"), python::arg("params")=MolzipParams()),
-		"zip together two molecules using the given matching parameters",
-		python::return_value_policy<python::manage_new_object>());
+    python::def(
+        "molzip",
+        (ROMol * (*)(const ROMol &, const ROMol &, const MolzipParams &)) &
+            molzip_new,
+        (python::arg("a"), python::arg("b"),
+         python::arg("params") = MolzipParams()),
+        "zip together two molecules using the given matching parameters",
+        python::return_value_policy<python::manage_new_object>());
 
-    python::def("molzip",
-		(ROMol* (*)(const ROMol&, const MolzipParams &))
-			     & molzip_new,
-		(python::arg("a"), python::arg("params")=MolzipParams()),
-		"zip together two molecules using the given matching parameters",
-		python::return_value_policy<python::manage_new_object>());
-    
+    python::def(
+        "molzip",
+        (ROMol * (*)(const ROMol &, const MolzipParams &)) & molzip_new,
+        (python::arg("a"), python::arg("params") = MolzipParams()),
+        "zip together two molecules using the given matching parameters",
+        python::return_value_policy<python::manage_new_object>());
+
     // ------------------------------------------------------------------------
     docString =
         "Adds a recursive query to an atom\n\
@@ -2394,17 +2380,6 @@ The atoms to zip can be specified with the MolzipParams class.\n\
                 (python::arg("mol"), python::arg("newOrder")),
                 docString.c_str(),
                 python::return_value_policy<python::manage_new_object>());
-
-    // ------------------------------------------------------------------------
-    docString = "Returns svg for a molecule";
-    python::def("MolToSVG", molToSVG,
-                (python::arg("mol"), python::arg("width") = 300,
-                 python::arg("height") = 300,
-                 python::arg("highlightAtoms") = python::object(),
-                 python::arg("kekulize") = true,
-                 python::arg("lineWidthMult") = 1, python::arg("fontSize") = 12,
-                 python::arg("includeAtomCircles") = true),
-                docString.c_str());
 
     docString =
         R"DOC(Possible values:
