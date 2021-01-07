@@ -305,7 +305,7 @@ struct QueryRings {
 struct WeightedBond {
   const Bond* BondPtr{nullptr};
   unsigned Weight{0};
-  WeightedBond()  {}
+  WeightedBond() {}
   WeightedBond(const Bond* bond, const QueryRings& r)
       : BondPtr(bond), Weight(0) {
     // score ((bond.is_in_ring + atom1.is_in_ring + atom2.is_in_ring)
@@ -580,7 +580,9 @@ bool checkNoLoneRingAtoms(const Seed& fs) {
   for (const auto& ithRingAtomIndices : ri->atomRings()) {
     size_t count = 0;
     for (const auto atom : fs.MoleculeFragment.Atoms) {
-      if (std::find(ithRingAtomIndices.begin(), ithRingAtomIndices.end(), atom->getIdx()) != ithRingAtomIndices.end() && ++count > 1) {
+      if (std::find(ithRingAtomIndices.begin(), ithRingAtomIndices.end(),
+                    atom->getIdx()) != ithRingAtomIndices.end() &&
+          ++count > 1) {
         break;
       }
     }

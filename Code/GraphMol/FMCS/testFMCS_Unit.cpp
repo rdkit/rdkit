@@ -2155,17 +2155,16 @@ void testGitHub3458() {
   {
     std::vector<ROMOL_SPTR> mols;
     const char* smi[] = {
-      "Brc1cccc(Nc2ncnc3cc4ccccc4cc23)c1",
-      "CCOc1cc2ncnc(Nc3cccc(Br)c3)c2cc1OCC",
-      "CN(C)c1cc2c(Nc3cccc(Br)c3)ncnc2cn1",
-      "CNc1cc2c(Nc3cccc(Br)c3)ncnc2cn1",
-      "Brc1cccc(Nc2ncnc3cc4[nH]cnc4cc23)c1",
-      "Cn1cnc2cc3ncnc(Nc4cccc(Br)c4)c3cc21",
-      "Cn1cnc2cc3c(Nc4cccc(Br)c4)ncnc3cc21",
-      "COc1cc2ncnc(Nc3cccc(Br)c3)c2cc1OC",
-      "C#CCNC/C=C/C(=O)Nc1cc2c(Nc3ccc(F)c(Cl)c3)c(C#N)cnc2cc1OCC",
-      "C=CC(=O)Nc1ccc2ncnc(Nc3cc(Cl)c(Cl)cc3F)c2c1"
-    };
+        "Brc1cccc(Nc2ncnc3cc4ccccc4cc23)c1",
+        "CCOc1cc2ncnc(Nc3cccc(Br)c3)c2cc1OCC",
+        "CN(C)c1cc2c(Nc3cccc(Br)c3)ncnc2cn1",
+        "CNc1cc2c(Nc3cccc(Br)c3)ncnc2cn1",
+        "Brc1cccc(Nc2ncnc3cc4[nH]cnc4cc23)c1",
+        "Cn1cnc2cc3ncnc(Nc4cccc(Br)c4)c3cc21",
+        "Cn1cnc2cc3c(Nc4cccc(Br)c4)ncnc3cc21",
+        "COc1cc2ncnc(Nc3cccc(Br)c3)c2cc1OC",
+        "C#CCNC/C=C/C(=O)Nc1cc2c(Nc3ccc(F)c(Cl)c3)c(C#N)cnc2cc1OCC",
+        "C=CC(=O)Nc1ccc2ncnc(Nc3cc(Cl)c(Cl)cc3F)c2c1"};
 
     for (auto& i : smi) {
       auto m = SmilesToMol(getSmilesOnly(i));
@@ -2181,7 +2180,10 @@ void testGitHub3458() {
       MCSResult res = findMCS(mols, &p);
       TEST_ASSERT(res.NumAtoms == 17);
       TEST_ASSERT(res.NumBonds == 18);
-      TEST_ASSERT(res.SmartsString == "[#6&R]:&@[#6&R]:&@[#6&R]1:&@[#6&R](-&!@[#7&!R]-&!@[#6&R]2:&@[#6&R]:&@[#6&R]:&@[#6&R]:&@[#6&R](:&@[#6&R]:&@2)-&!@[#35&!R]):&@[#7&R]:&@[#6&R]:&@[#7&R]:&@[#6&R]:&@1:&@[#6&R]");
+      TEST_ASSERT(res.SmartsString ==
+                  "[#6&R]:&@[#6&R]:&@[#6&R]1:&@[#6&R](-&!@[#7&!R]-&!@[#6&R]2:&@"
+                  "[#6&R]:&@[#6&R]:&@[#6&R]:&@[#6&R](:&@[#6&R]:&@2)-&!@[#35&!R]"
+                  "):&@[#7&R]:&@[#6&R]:&@[#7&R]:&@[#6&R]:&@1:&@[#6&R]");
     }
     {
       MCSParameters p;
@@ -2191,7 +2193,10 @@ void testGitHub3458() {
       MCSResult res = findMCS(mols, &p);
       TEST_ASSERT(res.NumAtoms == 15);
       TEST_ASSERT(res.NumBonds == 15);
-      TEST_ASSERT(res.SmartsString == "[#6&R]:&@[#6&R]:&@[#6&R](:&@[#6&R]-&!@[#7&!R]-&!@[#6&R]1:&@[#6&R]:&@[#6&R]:&@[#6&R]:&@[#6&R]:&@[#6&R]:&@1):&@[#6&R](:&@[#7&R]:&@[#6&R]):&@[#6&R]");
+      TEST_ASSERT(res.SmartsString ==
+                  "[#6&R]:&@[#6&R]:&@[#6&R](:&@[#6&R]-&!@[#7&!R]-&!@[#6&R]1:&@["
+                  "#6&R]:&@[#6&R]:&@[#6&R]:&@[#6&R]:&@[#6&R]:&@1):&@[#6&R](:&@["
+                  "#7&R]:&@[#6&R]):&@[#6&R]");
     }
   }
 
@@ -2206,16 +2211,17 @@ void testGitHub3693() {
 
   {
     std::vector<ROMOL_SPTR> mols = {
-      "Nc1ccc(O)cc1c1ccc2ccccc2c1"_smiles,
-      "Oc1cnc(NC2CCC2)c(c1)c1ccc2ccccc2c1"_smiles
-    };
+        "Nc1ccc(O)cc1c1ccc2ccccc2c1"_smiles,
+        "Oc1cnc(NC2CCC2)c(c1)c1ccc2ccccc2c1"_smiles};
 
     {
       MCSParameters p;
       MCSResult res = findMCS(mols, &p);
       TEST_ASSERT(res.NumAtoms == 17);
       TEST_ASSERT(res.NumBonds == 18);
-      TEST_ASSERT(res.SmartsString == "[#7]-,:[#6]:[#6](:[#6]:[#6](:[#6])-[#8])-[#6]1:[#6]:[#6]:[#6]2:[#6](:[#6]:1):[#6]:[#6]:[#6]:[#6]:2");
+      TEST_ASSERT(res.SmartsString ==
+                  "[#7]-,:[#6]:[#6](:[#6]:[#6](:[#6])-[#8])-[#6]1:[#6]:[#6]:[#"
+                  "6]2:[#6](:[#6]:1):[#6]:[#6]:[#6]:[#6]:2");
     }
     {
       MCSParameters p;
@@ -2223,7 +2229,9 @@ void testGitHub3693() {
       MCSResult res = findMCS(mols, &p);
       TEST_ASSERT(res.NumAtoms == 11);
       TEST_ASSERT(res.NumBonds == 12);
-      TEST_ASSERT(res.SmartsString == "[#6]-&!@[#6]1:&@[#6]:&@[#6]:&@[#6]2:&@[#6](:&@[#6]:&@1):&@[#6]:&@[#6]:&@[#6]:&@[#6]:&@2");
+      TEST_ASSERT(res.SmartsString ==
+                  "[#6]-&!@[#6]1:&@[#6]:&@[#6]:&@[#6]2:&@[#6](:&@[#6]:&@1):&@[#"
+                  "6]:&@[#6]:&@[#6]:&@[#6]:&@2");
     }
     {
       MCSParameters p;
@@ -2231,7 +2239,9 @@ void testGitHub3693() {
       MCSResult res = findMCS(mols, &p);
       TEST_ASSERT(res.NumAtoms == 10);
       TEST_ASSERT(res.NumBonds == 11);
-      TEST_ASSERT(res.SmartsString == "[#6]1:&@[#6]:&@[#6]:&@[#6]2:&@[#6](:&@[#6]:&@1):&@[#6]:&@[#6]:&@[#6]:&@[#6]:&@2");
+      TEST_ASSERT(res.SmartsString ==
+                  "[#6]1:&@[#6]:&@[#6]:&@[#6]2:&@[#6](:&@[#6]:&@1):&@[#6]:&@[#"
+                  "6]:&@[#6]:&@[#6]:&@2");
     }
     {
       MCSParameters p;
@@ -2240,7 +2250,9 @@ void testGitHub3693() {
       MCSResult res = findMCS(mols, &p);
       TEST_ASSERT(res.NumAtoms == 10);
       TEST_ASSERT(res.NumBonds == 11);
-      TEST_ASSERT(res.SmartsString == "[#6]1:&@[#6]:&@[#6]:&@[#6]2:&@[#6](:&@[#6]:&@1):&@[#6]:&@[#6]:&@[#6]:&@[#6]:&@2");
+      TEST_ASSERT(res.SmartsString ==
+                  "[#6]1:&@[#6]:&@[#6]:&@[#6]2:&@[#6](:&@[#6]:&@1):&@[#6]:&@[#"
+                  "6]:&@[#6]:&@[#6]:&@2");
     }
     {
       MCSParameters p;
@@ -2250,7 +2262,9 @@ void testGitHub3693() {
       MCSResult res = findMCS(mols, &p);
       TEST_ASSERT(res.NumAtoms == 10);
       TEST_ASSERT(res.NumBonds == 11);
-      TEST_ASSERT(res.SmartsString == "[#6]1:&@[#6]:&@[#6]:&@[#6]2:&@[#6](:&@[#6]:&@1):&@[#6]:&@[#6]:&@[#6]:&@[#6]:&@2");
+      TEST_ASSERT(res.SmartsString ==
+                  "[#6]1:&@[#6]:&@[#6]:&@[#6]2:&@[#6](:&@[#6]:&@1):&@[#6]:&@[#"
+                  "6]:&@[#6]:&@[#6]:&@2");
     }
   }
 
