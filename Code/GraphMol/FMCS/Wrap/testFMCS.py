@@ -1007,5 +1007,38 @@ class TestCase(unittest.TestCase):
         delattr(ProgressCallback, "callbacx")
     # DEPRECATED: remove until here in release 2021.01
 
+    def test18GitHub3693(self):
+        mols = [Chem.MolFromSmiles(smi) for smi in [
+                "Nc1ccc(O)cc1c1ccc2ccccc2c1", "Oc1cnc(NC2CCC2)c(c1)c1ccc2ccccc2c1"]]
+        params = rdFMCS.MCSParameters()
+        res = rdFMCS.FindMCS(mols, params)
+        self.assertEqual(res.numAtoms, 17)
+        self.assertEqual(res.numBonds, 18)
+        self.assertEqual(res.smartsString, "[#7]-,:[#6]:[#6](:[#6]:[#6](:[#6])-[#8])-[#6]1:[#6]:[#6]:[#6]2:[#6](:[#6]:1):[#6]:[#6]:[#6]:[#6]:2")
+
+        params = rdFMCS.MCSParameters()
+        params.BondCompareParameters.CompleteRingsOnly = True
+        res = rdFMCS.FindMCS(mols, params)
+        self.assertEqual(res.numAtoms, 11)
+        self.assertEqual(res.numBonds, 12)
+        self.assertEqual(res.smartsString, "[#6]-&!@[#6]1:&@[#6]:&@[#6]:&@[#6]2:&@[#6](:&@[#6]:&@1):&@[#6]:&@[#6]:&@[#6]:&@[#6]:&@2")
+
+        params = rdFMCS.MCSParameters()
+        params.AtomCompareParameters.CompleteRingsOnly = True
+        params.BondCompareParameters.CompleteRingsOnly = True
+        res = rdFMCS.FindMCS(mols, params)
+        self.assertEqual(res.numAtoms, 10)
+        self.assertEqual(res.numBonds, 11)
+        self.assertEqual(res.smartsString, "[#6]1:&@[#6]:&@[#6]:&@[#6]2:&@[#6](:&@[#6]:&@1):&@[#6]:&@[#6]:&@[#6]:&@[#6]:&@2")
+
+        params = rdFMCS.MCSParameters()
+        params.AtomCompareParameters.CompleteRingsOnly = True
+        # this will automatically be set to True
+        params.BondCompareParameters.CompleteRingsOnly = False
+        res = rdFMCS.FindMCS(mols, params)
+        self.assertEqual(res.numAtoms, 10)
+        self.assertEqual(res.numBonds, 11)
+        self.assertEqual(res.smartsString, "[#6]1:&@[#6]:&@[#6]:&@[#6]2:&@[#6](:&@[#6]:&@1):&@[#6]:&@[#6]:&@[#6]:&@[#6]:&@2")
+
 if __name__ == "__main__":
     unittest.main()
