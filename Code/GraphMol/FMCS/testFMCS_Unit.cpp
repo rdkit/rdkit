@@ -922,27 +922,63 @@ void testJSONParameters() {
               pj.BondCompareParameters.MatchFusedRings == false &&
               pj.BondCompareParameters.MatchFusedRingsStrict == false);
 
-  pj = MCSParameters();
-  const char json[] =
-      "{\"MaximizeBonds\": false, \"Threshold\": 0.7, \"Timeout\": 3"
-      ", \"MatchValences\": true, \"MatchChiralTag\": true"
-      ", \"MatchStereo\": true, \"RingMatchesRingOnly\": true"
-      ", \"CompleteRingsOnly\": true"
-      ", \"MatchFusedRings\": true"
-      ", \"MatchFusedRingsStrict\": true"
-      ", \"InitialSeed\": \"CNC\""
-      "}";
-  parseMCSParametersJSON(json, &pj);
-  TEST_ASSERT(pj.MaximizeBonds == false && pj.Threshold == 0.7 &&
-              pj.Timeout == 3 &&
-              pj.AtomCompareParameters.MatchValences == true &&
-              pj.AtomCompareParameters.MatchChiralTag == true &&
-              pj.BondCompareParameters.MatchStereo == true &&
-              pj.BondCompareParameters.RingMatchesRingOnly == true &&
-              pj.BondCompareParameters.CompleteRingsOnly == true &&
-              pj.BondCompareParameters.MatchFusedRings == true &&
-              pj.BondCompareParameters.MatchFusedRingsStrict == true &&
-              0 == strcmp(pj.InitialSeed.c_str(), "CNC"));
+  {
+    pj = MCSParameters();
+    const char json[] =
+        "{\"MaximizeBonds\": false, \"Threshold\": 0.7, \"Timeout\": 3"
+        ", \"MatchValences\": true, \"MatchChiralTag\": true"
+        ", \"MatchStereo\": true, \"RingMatchesRingOnly\": true"
+        ", \"CompleteRingsOnly\": true"
+        ", \"MatchFusedRings\": true"
+        ", \"MatchFusedRingsStrict\": true"
+        ", \"InitialSeed\": \"CNC\""
+        "}";
+    parseMCSParametersJSON(json, &pj);
+    TEST_ASSERT(pj.MaximizeBonds == false && pj.Threshold == 0.7 &&
+                pj.Timeout == 3 &&
+                pj.AtomCompareParameters.MatchValences == true &&
+                pj.AtomCompareParameters.MatchChiralTag == true &&
+                pj.AtomCompareParameters.RingMatchesRingOnly == true &&
+                pj.AtomCompareParameters.CompleteRingsOnly == false &&
+                pj.BondCompareParameters.MatchStereo == true &&
+                pj.BondCompareParameters.RingMatchesRingOnly == true &&
+                pj.BondCompareParameters.CompleteRingsOnly == true &&
+                pj.BondCompareParameters.MatchFusedRings == true &&
+                pj.BondCompareParameters.MatchFusedRingsStrict == true &&
+                0 == strcmp(pj.InitialSeed.c_str(), "CNC"));
+  }
+  {
+    // Atom* and Bond* versions override simple
+    // RingMatchesRingOnly and CompleteRingsOnly
+    pj = MCSParameters();
+    const char json[] =
+        "{\"MaximizeBonds\": false, \"Threshold\": 0.7, \"Timeout\": 3"
+        ", \"MatchValences\": true, \"MatchChiralTag\": true"
+        ", \"MatchStereo\": true, \"RingMatchesRingOnly\": false"
+        ", \"AtomRingMatchesRingOnly\": true"
+        ", \"BondRingMatchesRingOnly\": true"
+        ", \"CompleteRingsOnly\": false"
+        ", \"AtomCompleteRingsOnly\": true"
+        ", \"BondCompleteRingsOnly\": true"
+        ", \"MatchFusedRings\": true"
+        ", \"MatchFusedRingsStrict\": true"
+        ", \"InitialSeed\": \"CNC\""
+        "}";
+    parseMCSParametersJSON(json, &pj);
+    TEST_ASSERT(pj.MaximizeBonds == false && pj.Threshold == 0.7 &&
+                pj.Timeout == 3 &&
+                pj.AtomCompareParameters.MatchValences == true &&
+                pj.AtomCompareParameters.MatchChiralTag == true &&
+                pj.AtomCompareParameters.RingMatchesRingOnly == true &&
+                pj.AtomCompareParameters.CompleteRingsOnly == true &&
+                pj.BondCompareParameters.MatchStereo == true &&
+                pj.BondCompareParameters.RingMatchesRingOnly == true &&
+                pj.BondCompareParameters.CompleteRingsOnly == true &&
+                pj.BondCompareParameters.MatchFusedRings == true &&
+                pj.BondCompareParameters.MatchFusedRingsStrict == true &&
+                0 == strcmp(pj.InitialSeed.c_str(), "CNC"));
+  }
+
   BOOST_LOG(rdInfoLog) << "\tdone" << std::endl;
 }
 
