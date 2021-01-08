@@ -1,4 +1,4 @@
-#set(CMAKE_BUILD_TYPE Debug)
+
 rdkit_library(FMCS
               FMCS.cpp Seed.cpp MaximumCommonSubgraph.cpp SubstructMatchCustom.cpp
               LINK_LIBRARIES Depictor SmilesParse FileParsers ChemTransforms SubstructMatch GraphMol )
