@@ -1,6 +1,5 @@
-// $Id$
 //
-//  Copyright (C) 2003-2011 Greg Landrum and Rational Discovery LLC
+//  Copyright (C) 2003-2021 Greg Landrum and Rational Discovery LLC
 //
 //   @@ All Rights Reserved @@
 //  This file is part of the RDKit.
@@ -17,6 +16,7 @@
 #include <GraphMol/FileParsers/MolWriters.h>
 #include <GraphMol/RDKitBase.h>
 #include "rdchem.h"
+#include "ContextManagers.h"
 #include <RDBoost/PySequenceHolder.h>
 #include <RDBoost/python_streambuf.h>
 
@@ -85,6 +85,12 @@ struct sdwriter_wrap {
                                        "output file.\n"
                                        "   If a file-like object is provided, "
                                        "output will be sent there.\n\n"))
+        //(ROMol * (*)(SDMolSupplier *, int)) &
+        .def("__enter__", (SDWriter * (*)(SDWriter *)) & MolIOEnter,
+             python::return_internal_reference<>())
+        .def("__exit__", (bool (*)(SDWriter *, python::object, python::object,
+                                   python::object)) &
+                             MolIOExit)
         .def("SetProps", SetSDWriterProps,
              "Sets the properties to be written to the output file\n\n"
              "  ARGUMENTS:\n\n"
