@@ -6264,9 +6264,8 @@ M  END
     from io import StringIO
     fileN = os.path.join(RDConfig.RDBaseDir, 'Code', 'GraphMol', 'Wrap', 'test_data',
                          'github3553.sdf')
-    # with Chem.SDMolSupplier(fileN) as suppl:
-    #  mols = [x for x in suppl if x is not None]
-    mols = [x for x in Chem.SDMolSupplier(fileN) if x is not None]
+    with Chem.SDMolSupplier(fileN) as suppl:
+      mols = [x for x in suppl if x is not None]
     sio = StringIO()
     with Chem.SDWriter(sio) as w:
       for m in mols:
@@ -6276,10 +6275,14 @@ M  END
     with self.assertRaises(RuntimeError):
       w.write(mols[0])
 
+    with Chem.ForwardSDMolSupplier(fileN) as suppl:
+      mols = [x for x in suppl if x is not None]
+
     fileN = os.path.join(RDConfig.RDBaseDir, 'Code', 'GraphMol', 'FileParsers', 'test_data',
                          'first_200.tpsa.csv')
-    suppl = Chem.SmilesMolSupplier(fileN, ",", 0, -1)
-    ms = [x for x in suppl if x is not None]
+    with Chem.SmilesMolSupplier(fileN, ",", 0, -1) as suppl:
+      ms = [x for x in suppl if x is not None]
+
     sio = StringIO()
     with Chem.SmilesWriter(sio) as w:
       for m in mols:
@@ -6301,9 +6304,9 @@ CAS<932-53-6>
 $SMI<Cc1nnc(NN)nc1O>
 CAS<~>
 |"""
-    suppl = Chem.TDTMolSupplier()
-    suppl.SetData(data, "CAS")
-    ms = [x for x in suppl if x is not None]
+    with Chem.TDTMolSupplier() as suppl:
+      suppl.SetData(data, "CAS")
+      ms = [x for x in suppl if x is not None]
     sio = StringIO()
     with Chem.TDTWriter(sio) as w:
       for m in mols:
@@ -6313,7 +6316,6 @@ CAS<~>
     with self.assertRaises(RuntimeError):
       w.write(mols[0])
 
-    RDLogger.EnableLog('rdApp.*')
     fileN = os.path.join(RDConfig.RDBaseDir, 'Code', 'GraphMol', 'FileParsers', 'test_data',
                          '1CRN.pdb')
     m = Chem.MolFromPDBFile(fileN)
@@ -6326,6 +6328,14 @@ CAS<~>
     self.assertEqual(txt.count('COMPND    CRAMBIN'), len(mols))
     with self.assertRaises(RuntimeError):
       w.write(mols[0])
+
+    if hasattr(Chem, 'MaeMolSupplier'):
+      fileN = os.path.join(RDConfig.RDBaseDir, 'Code', 'GraphMol', 'FileParsers', 'test_data',
+                           'NCI_aids_few.mae')
+      with Chem.MaeMolSupplier(fileN) as suppl:
+        ms = [x for x in suppl if x is not None]
+
+    RDLogger.EnableLog('rdApp.*')
 
 
 if __name__ == '__main__':

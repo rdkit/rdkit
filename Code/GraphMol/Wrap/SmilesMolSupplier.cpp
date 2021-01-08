@@ -1,6 +1,5 @@
-// $Id$
 //
-//  Copyright (C) 2003-2008  Greg Landrum and Rational Discovery LLC
+//  Copyright (C) 2003-2021  Greg Landrum and Rational Discovery LLC
 //
 //   @@ All Rights Reserved @@
 //  This file is part of the RDKit.
@@ -18,6 +17,7 @@
 #include <GraphMol/RDKitBase.h>
 #include <RDGeneral/FileParseException.h>
 #include "MolSupplier.h"
+#include "ContextManagers.h"
 
 namespace python = boost::python;
 
@@ -92,6 +92,12 @@ struct smimolsup_wrap {
              python::arg("titleLine") = true, python::arg("sanitize") = true),
             smsDocStr.c_str()))
         .def(python::init<>())
+        .def("__enter__",
+             (SmilesMolSupplier * (*)(SmilesMolSupplier *)) & MolIOEnter,
+             python::return_internal_reference<>())
+        .def("__exit__", (bool (*)(SmilesMolSupplier *, python::object,
+                                   python::object, python::object)) &
+                             MolIOExit)
         .def("__iter__",
              (SmilesMolSupplier * (*)(SmilesMolSupplier *)) & MolSupplIter,
              python::return_internal_reference<1>())

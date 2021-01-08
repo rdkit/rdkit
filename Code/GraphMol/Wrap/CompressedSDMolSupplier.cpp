@@ -109,6 +109,12 @@ struct compressedsdmolsup_wrap {
             "__iter__",
             (ForwardSDMolSupplier * (*)(ForwardSDMolSupplier *)) & MolSupplIter,
             python::return_internal_reference<1>())
+        .def("__enter__",
+             (ForwardSDMolSupplier * (*)(ForwardSDMolSupplier *)) & MolIOEnter,
+             python::return_internal_reference<>())
+        .def("__exit__", (bool (*)(ForwardSDMolSupplier *, python::object,
+                                   python::object, python::object)) &
+                             MolIOExit)
         .def("__next__", (ROMol * (*)(ForwardSDMolSupplier *)) & MolSupplNext,
              "Returns the next molecule in the file.  Raises _StopIteration_ "
              "on EOF.\n",

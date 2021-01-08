@@ -1,6 +1,5 @@
-// $Id$
 //
-//  Copyright (C) 2005-2008 Greg Landrum and Rational Discovery LLC
+//  Copyright (C) 2005-2021 Greg Landrum and Rational Discovery LLC
 //
 //   @@ All Rights Reserved @@
 //  This file is part of the RDKit.
@@ -16,6 +15,7 @@
 #include <GraphMol/FileParsers/MolSupplier.h>
 #include <GraphMol/RDKitBase.h>
 #include "MolSupplier.h"
+#include "ContextManagers.h"
 
 namespace python = boost::python;
 
@@ -58,6 +58,11 @@ struct tdtmolsup_wrap {
             (python::arg("fileName"), python::arg("nameRecord") = "",
              python::arg("confId2D") = -1, python::arg("confId3D") = -1,
              python::arg("sanitize") = true)))
+        .def("__enter__", (TDTMolSupplier * (*)(TDTMolSupplier *)) & MolIOEnter,
+             python::return_internal_reference<>())
+        .def("__exit__", (bool (*)(TDTMolSupplier *, python::object,
+                                   python::object, python::object)) &
+                             MolIOExit)
         .def("__iter__",
              (TDTMolSupplier * (*)(TDTMolSupplier *)) & MolSupplIter,
              python::return_internal_reference<1>())

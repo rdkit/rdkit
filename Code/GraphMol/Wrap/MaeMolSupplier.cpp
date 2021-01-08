@@ -25,6 +25,7 @@
 #include <maeparser/Reader.hpp>
 
 #include "MolSupplier.h"
+#include "ContextManagers.h"
 
 namespace python = boost::python;
 
@@ -116,6 +117,12 @@ struct maemolsup_wrap {
         .def(python::init<std::string, bool, bool>(
             (python::arg("filename"), python::arg("sanitize") = true,
              python::arg("removeHs") = true)))
+        .def("__enter__",
+             (LocalMaeMolSupplier * (*)(LocalMaeMolSupplier *)) & MolIOEnter,
+             python::return_internal_reference<>())
+        .def("__exit__", (bool (*)(LocalMaeMolSupplier *, python::object,
+                                   python::object, python::object)) &
+                             MolIOExit)
         .def("__next__", (ROMol * (*)(LocalMaeMolSupplier *)) & MolSupplNext,
              "Returns the next molecule in the file.  Raises _StopIteration_ "
              "on EOF.\n",
