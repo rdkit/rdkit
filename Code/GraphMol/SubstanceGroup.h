@@ -112,6 +112,13 @@ class RDKIT_GRAPHMOL_EXPORT SubstanceGroup : public RDProps {
     return *dp_mol;
   }
 
+  //! returns whether or not this group is valid; invalid groups must be
+  //! ignored.
+  bool getIsValid() const { return d_isValid; }
+
+  //! set whether or not this group is valid; invalid groups must be ignored.
+  void setIsValid(bool isValid) { d_isValid = isValid; }
+
   //! get the index of this sgroup in dp_mol's sgroups vector
   //! (do not mistake this by the ID!)
   unsigned int getIndexInMol() const;
@@ -185,6 +192,8 @@ class RDKIT_GRAPHMOL_EXPORT SubstanceGroup : public RDProps {
 
  private:
   ROMol *dp_mol = nullptr;  // owning molecule
+
+  bool d_isValid = true;
 
   std::vector<unsigned int> d_atoms;
   std::vector<unsigned int> d_patoms;

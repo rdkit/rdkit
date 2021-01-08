@@ -22,6 +22,7 @@
 #include <GraphMol/FileParsers/PNGParser.h>
 #include <RDGeneral/FileParseException.h>
 #include <boost/algorithm/string.hpp>
+#include <regex>
 
 using namespace RDKit;
 
@@ -428,6 +429,620 @@ M  END)CTAB";
       CHECK(mol->getAtomWithIdx(2)->getChiralTag() != Atom::CHI_UNSPECIFIED);
       CHECK(mol->getAtomWithIdx(5)->getChiralTag() != Atom::CHI_UNSPECIFIED);
     }
+  }
+}
+
+TEST_CASE("workaround for broken MJ2009-MJ2011 molblocks",
+          "[feature][sgroups]") {
+  std::string molblock1 = R"CTAB(
+  MJ201100                      
+
+ 10 10  0  0  0  0  0  0  0  0999 V2000
+   -1.2946    0.5348    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -2.0090    0.1223    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -2.0090   -0.7027    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -1.2946   -1.1152    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -0.5801   -0.7027    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -0.5801    0.1223    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    0.5467    1.2493    0.0000 F   0  0  0  0  0  0  0  0  0  0  0  0
+    0.1342    0.5348    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    0.5467   -0.1796    0.0000 F   0  0  0  0  0  0  0  0  0  0  0  0
+   -0.6907    0.5348    0.0000 F   0  0  0  0  0  0  0  0  0  0  0  0
+  1  2  2  0  0  0  0
+  2  3  1  0  0  0  0
+  3  4  2  0  0  0  0
+  4  5  1  0  0  0  0
+  5  6  2  0  0  0  0
+  6  1  1  0  0  0  0
+  6  8  1  0  0  0  0
+  7  8  1  0  0  0  0
+  8  9  1  0  0  0  0
+  8 10  1  0  0  0  0
+M  STY  1   1 SUP
+M  SAL   1  4   7   8   9  10
+M  SMT   1 CF3
+M  SBL   1  1   7
+M  SAP   1  1   8
+M  END
+)CTAB";
+  std::string molblock1NoSBL = R"CTAB(
+  MJ201100                      
+
+ 10 10  0  0  0  0  0  0  0  0999 V2000
+   -1.2946    0.5348    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -2.0090    0.1223    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -2.0090   -0.7027    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -1.2946   -1.1152    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -0.5801   -0.7027    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -0.5801    0.1223    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    0.5467    1.2493    0.0000 F   0  0  0  0  0  0  0  0  0  0  0  0
+    0.1342    0.5348    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    0.5467   -0.1796    0.0000 F   0  0  0  0  0  0  0  0  0  0  0  0
+   -0.6907    0.5348    0.0000 F   0  0  0  0  0  0  0  0  0  0  0  0
+  1  2  2  0  0  0  0
+  2  3  1  0  0  0  0
+  3  4  2  0  0  0  0
+  4  5  1  0  0  0  0
+  5  6  2  0  0  0  0
+  6  1  1  0  0  0  0
+  6  8  1  0  0  0  0
+  7  8  1  0  0  0  0
+  8  9  1  0  0  0  0
+  8 10  1  0  0  0  0
+M  STY  1   1 SUP
+M  SAL   1  4   7   8   9  10
+M  SMT   1 CF3
+M  SAP   1  1   8
+M  END
+)CTAB";
+  std::string molblock1BadSBL = R"CTAB(
+  MJ201100                      
+
+ 10 10  0  0  0  0  0  0  0  0999 V2000
+   -1.2946    0.5348    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -2.0090    0.1223    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -2.0090   -0.7027    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -1.2946   -1.1152    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -0.5801   -0.7027    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -0.5801    0.1223    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    0.5467    1.2493    0.0000 F   0  0  0  0  0  0  0  0  0  0  0  0
+    0.1342    0.5348    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    0.5467   -0.1796    0.0000 F   0  0  0  0  0  0  0  0  0  0  0  0
+   -0.6907    0.5348    0.0000 F   0  0  0  0  0  0  0  0  0  0  0  0
+  1  2  2  0  0  0  0
+  2  3  1  0  0  0  0
+  3  4  2  0  0  0  0
+  4  5  1  0  0  0  0
+  5  6  2  0  0  0  0
+  6  1  1  0  0  0  0
+  6  8  1  0  0  0  0
+  7  8  1  0  0  0  0
+  8  9  1  0  0  0  0
+  8 10  1  0  0  0  0
+M  STY  1   1 SUP
+M  SAL   1  4   7   8   9  10
+M  SMT   1 CF3
+M  SAP   1  1   8
+M  SBL   1  2   7   8
+M  END
+)CTAB";
+  std::string expectedMolblock1 = R"CTAB(
+     RDKit          2D
+
+ 10 10  0  1  0  0  0  0  0  0999 V2000
+   -1.2946    0.5348    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -2.0090    0.1223    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -2.0090   -0.7027    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -1.2946   -1.1152    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -0.5801   -0.7027    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -0.5801    0.1223    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    0.5467    1.2493    0.0000 F   0  0  0  0  0  0  0  0  0  0  0  0
+    0.1342    0.5348    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    0.5467   -0.1796    0.0000 F   0  0  0  0  0  0  0  0  0  0  0  0
+   -0.6907    0.5348    0.0000 F   0  0  0  0  0  0  0  0  0  0  0  0
+  1  2  2  0
+  2  3  1  0
+  3  4  2  0
+  4  5  1  0
+  5  6  2  0
+  6  1  1  0
+  6  8  1  0
+  7  8  1  0
+  8  9  1  0
+  8 10  1  0
+M  STY  1   1 SUP
+M  SAL   1  4   7   8   9  10
+M  SBL   1  1   7
+M  SMT   1 CF3
+M  SAP   1  1   8   6   
+M  END
+)CTAB";
+  std::string expectedMolblock1NoSGroups = R"CTAB(
+     RDKit          2D
+
+ 10 10  0  0  0  0  0  0  0  0999 V2000
+   -1.2946    0.5348    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -2.0090    0.1223    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -2.0090   -0.7027    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -1.2946   -1.1152    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -0.5801   -0.7027    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -0.5801    0.1223    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    0.5467    1.2493    0.0000 F   0  0  0  0  0  0  0  0  0  0  0  0
+    0.1342    0.5348    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    0.5467   -0.1796    0.0000 F   0  0  0  0  0  0  0  0  0  0  0  0
+   -0.6907    0.5348    0.0000 F   0  0  0  0  0  0  0  0  0  0  0  0
+  1  2  2  0
+  2  3  1  0
+  3  4  2  0
+  4  5  1  0
+  5  6  2  0
+  6  1  1  0
+  6  8  1  0
+  7  8  1  0
+  8  9  1  0
+  8 10  1  0
+M  END
+)CTAB";
+  std::string molblock2 = R"CTAB(
+  MJ201100                      
+
+ 13 13  0  0  0  0  0  0  0  0999 V2000
+   -1.2946    0.5348    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -2.0090    0.1223    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -2.0090   -0.7027    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -1.2946   -1.1152    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -0.5801   -0.7027    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -0.5801    0.1223    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    0.5467    1.2493    0.0000 F   0  0  0  0  0  0  0  0  0  0  0  0
+    0.1342    0.5348    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    0.5467   -0.1796    0.0000 F   0  0  0  0  0  0  0  0  0  0  0  0
+   -0.6907    0.5348    0.0000 F   0  0  0  0  0  0  0  0  0  0  0  0
+   -3.4380   -0.7027    0.0000 O   0  0  0  0  0  0  0  0  0  0  0  0
+   -2.7235   -1.1152    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -2.0091   -0.7027    0.0000 O   0  0  0  0  0  0  0  0  0  0  0  0
+  1  2  2  0  0  0  0
+  4  5  1  0  0  0  0
+  5  6  2  0  0  0  0
+  6  1  1  0  0  0  0
+  2  3  1  0  0  0  0
+  3  4  2  0  0  0  0
+  6  8  1  0  0  0  0
+  3 12  1  0  0  0  0
+  7  8  1  0  0  0  0
+  8  9  1  0  0  0  0
+  8 10  1  0  0  0  0
+ 11 12  1  0  0  0  0
+ 12 13  2  0  0  0  0
+M  STY  2   1 SUP   2 SUP
+M  SAL   1  4   7   8   9  10
+M  SMT   1 CF3
+M  SBL   1  1   7
+M  SAP   1  1   8
+M  SAL   2  3  11  12  13
+M  SMT   2 COOH
+M  SBL   2  1   8
+M  SAP   2  1  12
+M  END
+)CTAB";
+  std::string molblock2NoSBL = R"CTAB(
+  MJ201100                      
+
+ 13 13  0  0  0  0  0  0  0  0999 V2000
+   -1.2946    0.5348    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -2.0090    0.1223    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -2.0090   -0.7027    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -1.2946   -1.1152    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -0.5801   -0.7027    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -0.5801    0.1223    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    0.5467    1.2493    0.0000 F   0  0  0  0  0  0  0  0  0  0  0  0
+    0.1342    0.5348    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    0.5467   -0.1796    0.0000 F   0  0  0  0  0  0  0  0  0  0  0  0
+   -0.6907    0.5348    0.0000 F   0  0  0  0  0  0  0  0  0  0  0  0
+   -3.4380   -0.7027    0.0000 O   0  0  0  0  0  0  0  0  0  0  0  0
+   -2.7235   -1.1152    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -2.0091   -0.7027    0.0000 O   0  0  0  0  0  0  0  0  0  0  0  0
+  1  2  2  0  0  0  0
+  4  5  1  0  0  0  0
+  5  6  2  0  0  0  0
+  6  1  1  0  0  0  0
+  2  3  1  0  0  0  0
+  3  4  2  0  0  0  0
+  6  8  1  0  0  0  0
+  3 12  1  0  0  0  0
+  7  8  1  0  0  0  0
+  8  9  1  0  0  0  0
+  8 10  1  0  0  0  0
+ 11 12  1  0  0  0  0
+ 12 13  2  0  0  0  0
+M  STY  2   1 SUP   2 SUP
+M  SAL   1  4   7   8   9  10
+M  SMT   1 CF3
+M  SAP   1  1   8
+M  SAL   2  3  11  12  13
+M  SMT   2 COOH
+M  SBL   2  1   8
+M  SAP   2  1  12
+M  END
+)CTAB";
+  std::string molblock2BadSBL = R"CTAB(
+  MJ201100                      
+
+ 13 13  0  0  0  0  0  0  0  0999 V2000
+   -1.2946    0.5348    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -2.0090    0.1223    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -2.0090   -0.7027    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -1.2946   -1.1152    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -0.5801   -0.7027    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -0.5801    0.1223    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    0.5467    1.2493    0.0000 F   0  0  0  0  0  0  0  0  0  0  0  0
+    0.1342    0.5348    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    0.5467   -0.1796    0.0000 F   0  0  0  0  0  0  0  0  0  0  0  0
+   -0.6907    0.5348    0.0000 F   0  0  0  0  0  0  0  0  0  0  0  0
+   -3.4380   -0.7027    0.0000 O   0  0  0  0  0  0  0  0  0  0  0  0
+   -2.7235   -1.1152    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -2.0091   -0.7027    0.0000 O   0  0  0  0  0  0  0  0  0  0  0  0
+  1  2  2  0  0  0  0
+  4  5  1  0  0  0  0
+  5  6  2  0  0  0  0
+  6  1  1  0  0  0  0
+  2  3  1  0  0  0  0
+  3  4  2  0  0  0  0
+  6  8  1  0  0  0  0
+  3 12  1  0  0  0  0
+  7  8  1  0  0  0  0
+  8  9  1  0  0  0  0
+  8 10  1  0  0  0  0
+ 11 12  1  0  0  0  0
+ 12 13  2  0  0  0  0
+M  STY  2   1 SUP   2 SUP
+M  SAL   1  4   7   8   9  10
+M  SMT   1 CF3
+M  SAP   1  1   8
+M  SBL   1  2   7   8
+M  SAL   2  3  11  12  13
+M  SMT   2 COOH
+M  SBL   2  1   8
+M  SAP   2  1  12
+M  END
+)CTAB";
+  std::string expectedMolblock2 = R"CTAB(
+     RDKit          2D
+
+ 13 13  0  2  0  0  0  0  0  0999 V2000
+   -1.2946    0.5348    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -2.0090    0.1223    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -2.0090   -0.7027    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -1.2946   -1.1152    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -0.5801   -0.7027    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -0.5801    0.1223    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    0.5467    1.2493    0.0000 F   0  0  0  0  0  0  0  0  0  0  0  0
+    0.1342    0.5348    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    0.5467   -0.1796    0.0000 F   0  0  0  0  0  0  0  0  0  0  0  0
+   -0.6907    0.5348    0.0000 F   0  0  0  0  0  0  0  0  0  0  0  0
+   -3.4380   -0.7027    0.0000 O   0  0  0  0  0  0  0  0  0  0  0  0
+   -2.7235   -1.1152    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -2.0091   -0.7027    0.0000 O   0  0  0  0  0  0  0  0  0  0  0  0
+  1  2  2  0
+  4  5  1  0
+  5  6  2  0
+  6  1  1  0
+  2  3  1  0
+  3  4  2  0
+  6  8  1  0
+  3 12  1  0
+  7  8  1  0
+  8  9  1  0
+  8 10  1  0
+ 11 12  1  0
+ 12 13  2  0
+M  STY  2   1 SUP   2 SUP
+M  SAL   1  4   7   8   9  10
+M  SBL   1  1   7
+M  SMT   1 CF3
+M  SAP   1  1   8   6   
+M  SAL   2  3  11  12  13
+M  SBL   2  1   8
+M  SMT   2 COOH
+M  SAP   2  1  12   3   
+M  END
+)CTAB";
+  std::string expectedMolblock2NoSGroup1 = R"CTAB(
+     RDKit          2D
+
+ 13 13  0  1  0  0  0  0  0  0999 V2000
+   -1.2946    0.5348    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -2.0090    0.1223    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -2.0090   -0.7027    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -1.2946   -1.1152    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -0.5801   -0.7027    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -0.5801    0.1223    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    0.5467    1.2493    0.0000 F   0  0  0  0  0  0  0  0  0  0  0  0
+    0.1342    0.5348    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    0.5467   -0.1796    0.0000 F   0  0  0  0  0  0  0  0  0  0  0  0
+   -0.6907    0.5348    0.0000 F   0  0  0  0  0  0  0  0  0  0  0  0
+   -3.4380   -0.7027    0.0000 O   0  0  0  0  0  0  0  0  0  0  0  0
+   -2.7235   -1.1152    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -2.0091   -0.7027    0.0000 O   0  0  0  0  0  0  0  0  0  0  0  0
+  1  2  2  0
+  4  5  1  0
+  5  6  2  0
+  6  1  1  0
+  2  3  1  0
+  3  4  2  0
+  6  8  1  0
+  3 12  1  0
+  7  8  1  0
+  8  9  1  0
+  8 10  1  0
+ 11 12  1  0
+ 12 13  2  0
+M  STY  1   1 SUP
+M  SAL   1  3  11  12  13
+M  SBL   1  1   8
+M  SMT   1 COOH
+M  SAP   1  1  12   3   
+M  END
+)CTAB";
+  SECTION("molblock1 strictParsing true") {
+    std::unique_ptr<ROMol> mol;
+    REQUIRE_THROWS_AS(mol.reset(MolBlockToMol(molblock1)), FileParseException);
+  }
+  SECTION("molblock1 strictParsing false") {
+    std::unique_ptr<ROMol> mol(MolBlockToMol(molblock1, true, true, false));
+    REQUIRE(mol);
+    CHECK(MolToMolBlock(*mol) == expectedMolblock1);
+  }
+  SECTION("molblock1 strictParsing true no SBL group") {
+    std::unique_ptr<ROMol> mol;
+    REQUIRE_THROWS_AS(mol.reset(MolBlockToMol(molblock1NoSBL)),
+                      FileParseException);
+  }
+  SECTION("molblock1 strictParsing false no SBL group") {
+    std::unique_ptr<ROMol> mol(
+        MolBlockToMol(molblock1NoSBL, true, true, false));
+    REQUIRE(mol);
+    CHECK(MolToMolBlock(*mol) == expectedMolblock1NoSGroups);
+  }
+  SECTION("molblock1 strictParsing true SBL group with >1 bond") {
+    std::unique_ptr<ROMol> mol;
+    REQUIRE_THROWS_AS(mol.reset(MolBlockToMol(molblock1BadSBL)),
+                      FileParseException);
+  }
+  SECTION("molblock1 strictParsing false SBL group with >1 bond") {
+    std::unique_ptr<ROMol> mol(
+        MolBlockToMol(molblock1BadSBL, true, true, false));
+    REQUIRE(mol);
+    CHECK(MolToMolBlock(*mol) == expectedMolblock1NoSGroups);
+  }
+  SECTION("molblock2 strictParsing true") {
+    std::unique_ptr<ROMol> mol;
+    REQUIRE_THROWS_AS(mol.reset(MolBlockToMol(molblock2)), FileParseException);
+  }
+  SECTION("molblock2 strictParsing false") {
+    std::unique_ptr<ROMol> mol(MolBlockToMol(molblock2, true, true, false));
+    REQUIRE(mol);
+    CHECK(MolToMolBlock(*mol) == expectedMolblock2);
+  }
+  SECTION("molblock2 strictParsing true no SBL group1") {
+    std::unique_ptr<ROMol> mol;
+    REQUIRE_THROWS_AS(mol.reset(MolBlockToMol(molblock2NoSBL)),
+                      FileParseException);
+  }
+  SECTION("molblock2 strictParsing false no SBL group1") {
+    std::unique_ptr<ROMol> mol(
+        MolBlockToMol(molblock2NoSBL, true, true, false));
+    REQUIRE(mol);
+    CHECK(MolToMolBlock(*mol) == expectedMolblock2NoSGroup1);
+  }
+  SECTION("molblock2 strictParsing true SBL group1 with >1 bond") {
+    std::unique_ptr<ROMol> mol;
+    REQUIRE_THROWS_AS(mol.reset(MolBlockToMol(molblock2BadSBL)),
+                      FileParseException);
+  }
+  SECTION("molblock2 strictParsing false SBL group1 with >1 bond") {
+    std::unique_ptr<ROMol> mol(
+        MolBlockToMol(molblock2BadSBL, true, true, false));
+    REQUIRE(mol);
+    CHECK(MolToMolBlock(*mol) == expectedMolblock2NoSGroup1);
+  }
+}
+
+TEST_CASE(
+    "do not throw but remove malformed V2000 SGroups when strictParsing is "
+    "false",
+    "[feature][sgroups]") {
+  std::string molblock = R"CTAB(
+  ChemDraw01072117362D
+
+ 16 16  0  0  0  0  0  0  0  0999 V2000
+   -1.7862    0.7219    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -1.7862   -0.1031    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -1.0717   -0.5156    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -0.3572   -0.1031    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -0.3572    0.7219    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -1.0717    1.1344    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -0.3572    2.3719    0.0000 O   0  0  0  0  0  0  0  0  0  0  0  0
+    0.3572   -0.5156    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    1.0717   -0.1031    0.0000 O   0  0  0  0  0  0  0  0  0  0  0  0
+    0.3572   -1.3406    0.0000 O   0  0  0  0  0  0  0  0  0  0  0  0
+    1.0717   -1.7531    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    1.0717   -2.5781    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    1.7862   -1.3406    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -1.4289    1.3406    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -0.7145    1.7531    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -0.7145    2.5781    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+ 11 12  1  0      
+ 11 13  1  0      
+ 10 11  1  0      
+  8  9  2  0      
+  8 10  1  0      
+  4  8  1  0      
+ 15 16  1  0      
+ 14 15  1  0      
+  6 14  1  0      
+  7 16  1  0      
+  1  2  2  0      
+  2  3  1  0      
+  3  4  2  0      
+  4  5  1  0      
+  5  6  2  0      
+  6  1  1  0      
+M  STY  1   1 SUP
+M  SLB  1   1   1
+M  SAL   1  6   8   9  10  11  12  13
+M  SBL   1  1   6
+M  SMT   1 COOiPr
+M  SBV   1   6   -0.7145    0.4125
+M  STY  1   2 SUP
+M  SLB  1   2   2
+M  SAL   2  3  14  15  16
+M  SBL   2  2   9  10
+M  SMT   2 (CH2)3
+M  SBV   2   9    0.3572   -0.2062
+M  SBV   2  10    0.3572   -0.2062
+M  END
+)CTAB";
+  SECTION("molblock strictParsing true") {
+    std::unique_ptr<ROMol> mol(MolBlockToMol(molblock));
+    REQUIRE(mol);
+    CHECK(getSubstanceGroups(*mol).size() == 2);
+  }
+  SECTION("molblock bad sgroup idx") {
+    std::string molblockBad = std::regex_replace(
+        molblock, std::regex("M  SBL   1  1   6"), "M  SBL   3  1   6");
+    std::unique_ptr<ROMol> mol;
+    REQUIRE_THROWS(mol.reset(MolBlockToMol(molblockBad)));
+    REQUIRE_NOTHROW(mol.reset(MolBlockToMol(molblockBad, true, true, false)));
+    CHECK(getSubstanceGroups(*mol).size() == 1);
+  }
+  SECTION("molblock sgroup line too short (1)") {
+    std::string molblockBad = std::regex_replace(
+        molblock, std::regex("M  SBV   1   6   -0.7145    0.4125"),
+        "M  SBV   1   6");
+    std::unique_ptr<ROMol> mol;
+    REQUIRE_THROWS(mol.reset(MolBlockToMol(molblockBad)));
+    REQUIRE_NOTHROW(mol.reset(MolBlockToMol(molblockBad, true, true, false)));
+    CHECK(getSubstanceGroups(*mol).size() == 1);
+  }
+  SECTION("molblock sgroup line too short (2)") {
+    std::string molblockBad = std::regex_replace(
+        molblock, std::regex("M  SBL   2  2   9  10"), "M  SBL   2  3   9  10");
+    std::unique_ptr<ROMol> mol;
+    REQUIRE_THROWS(mol.reset(MolBlockToMol(molblockBad)));
+    REQUIRE_NOTHROW(mol.reset(MolBlockToMol(molblockBad, true, true, false)));
+    CHECK(getSubstanceGroups(*mol).size() == 1);
+  }
+  SECTION("molblock sgroup bad bond idx") {
+    std::string molblockBad = std::regex_replace(
+        molblock, std::regex("M  SBL   2  2   9  10"), "M  SBL   2  2   9  99");
+    std::unique_ptr<ROMol> mol;
+    REQUIRE_THROWS(mol.reset(MolBlockToMol(molblockBad)));
+    REQUIRE_NOTHROW(mol.reset(MolBlockToMol(molblockBad, true, true, false)));
+    CHECK(getSubstanceGroups(*mol).size() == 1);
+  }
+  SECTION("molblock sgroup bad atom idx") {
+    std::string molblockBad =
+        std::regex_replace(molblock, std::regex("M  SAL   2  3  14  15  16"),
+                           "M  SAL   2  3  14  15  99");
+    std::unique_ptr<ROMol> mol;
+    REQUIRE_THROWS(mol.reset(MolBlockToMol(molblockBad)));
+    REQUIRE_NOTHROW(mol.reset(MolBlockToMol(molblockBad, true, true, false)));
+    CHECK(getSubstanceGroups(*mol).size() == 1);
+  }
+}
+
+TEST_CASE(
+    "do not throw but remove malformed V3000 SGroups when strictParsing is "
+    "false",
+    "[feature][sgroups]") {
+  std::string molblock = R"CTAB(
+     RDKit          2D
+
+  0  0  0  0  0  0  0  0  0  0999 V3000
+M  V30 BEGIN CTAB
+M  V30 COUNTS 16 16 2 0 0
+M  V30 BEGIN ATOM
+M  V30 1 C -1.786200 0.721900 0.000000 0
+M  V30 2 C -1.786200 -0.103100 0.000000 0
+M  V30 3 C -1.071700 -0.515600 0.000000 0
+M  V30 4 C -0.357200 -0.103100 0.000000 0
+M  V30 5 C -0.357200 0.721900 0.000000 0
+M  V30 6 C -1.071700 1.134400 0.000000 0
+M  V30 7 O -0.357200 2.371900 0.000000 0
+M  V30 8 C 0.357200 -0.515600 0.000000 0
+M  V30 9 O 1.071700 -0.103100 0.000000 0
+M  V30 10 O 0.357200 -1.340600 0.000000 0
+M  V30 11 C 1.071700 -1.753100 0.000000 0
+M  V30 12 C 1.071700 -2.578100 0.000000 0
+M  V30 13 C 1.786200 -1.340600 0.000000 0
+M  V30 14 C -1.428900 1.340600 0.000000 0
+M  V30 15 C -0.714500 1.753100 0.000000 0
+M  V30 16 C -0.714500 2.578100 0.000000 0
+M  V30 END ATOM
+M  V30 BEGIN BOND
+M  V30 1 1 11 12
+M  V30 2 1 11 13
+M  V30 3 1 10 11
+M  V30 4 2 8 9
+M  V30 5 1 8 10
+M  V30 6 1 4 8
+M  V30 7 1 15 16
+M  V30 8 1 14 15
+M  V30 9 1 6 14
+M  V30 10 1 7 16
+M  V30 11 2 1 2
+M  V30 12 1 2 3
+M  V30 13 2 3 4
+M  V30 14 1 4 5
+M  V30 15 2 5 6
+M  V30 16 1 6 1
+M  V30 END BOND
+M  V30 BEGIN SGROUP
+M  V30 1 SUP 1 ATOMS=(6 8 9 10 11 12 13) XBONDS=(1 6) LABEL=COOiPr CSTATE=(4 6 -
+M  V30 -0.7145 0.4125 0)
+M  V30 2 SUP 2 ATOMS=(3 14 15 16) XBONDS=(2 9 10) LABEL=(CH2)3 CSTATE=(4 9 0.35-
+M  V30 72 -0.2062 0) CSTATE=(4 10 0.3572 -0.2062 0)
+M  V30 END SGROUP
+M  V30 END CTAB
+M  END
+)CTAB";
+  SECTION("molblock strictParsing true") {
+    std::unique_ptr<ROMol> mol(MolBlockToMol(molblock));
+    REQUIRE(mol);
+    CHECK(getSubstanceGroups(*mol).size() == 2);
+  }
+  SECTION("molblock sgroup line too short (1)") {
+    std::string molblockBad = std::regex_replace(
+        molblock, std::regex("XBONDS=\\(1 6\\)"), "XBONDS=(2 6)");
+    std::unique_ptr<ROMol> mol;
+    REQUIRE_THROWS(mol.reset(MolBlockToMol(molblockBad)));
+    REQUIRE_NOTHROW(mol.reset(MolBlockToMol(molblockBad, true, true, false)));
+    CHECK(getSubstanceGroups(*mol).size() == 1);
+  }
+  SECTION("molblock sgroup line too short (2)") {
+    std::string molblockBad = std::regex_replace(
+        molblock, std::regex("ATOMS=\\(6 8 9 10 11 12 13\\)"),
+        "ATOMS=(7 8 9 10 11 12 13)");
+    std::unique_ptr<ROMol> mol;
+    REQUIRE_THROWS(mol.reset(MolBlockToMol(molblockBad)));
+    REQUIRE_NOTHROW(mol.reset(MolBlockToMol(molblockBad, true, true, false)));
+    CHECK(getSubstanceGroups(*mol).size() == 1);
+  }
+  SECTION("molblock sgroup bad bond idx") {
+    std::string molblockBad = std::regex_replace(
+        molblock, std::regex("XBONDS=\\(2 9 10\\)"), "XBONDS=(2 9 99)");
+    std::unique_ptr<ROMol> mol;
+    REQUIRE_THROWS(mol.reset(MolBlockToMol(molblockBad)));
+    REQUIRE_NOTHROW(mol.reset(MolBlockToMol(molblockBad, true, true, false)));
+    CHECK(getSubstanceGroups(*mol).size() == 1);
+  }
+  SECTION("molblock sgroup bad atom idx") {
+    std::string molblockBad = std::regex_replace(
+        molblock, std::regex("ATOMS=\\(3 14 15 16\\)"), "ATOMS=(3 14 15 99)");
+    std::unique_ptr<ROMol> mol;
+    REQUIRE_THROWS(mol.reset(MolBlockToMol(molblockBad)));
+    REQUIRE_NOTHROW(mol.reset(MolBlockToMol(molblockBad, true, true, false)));
+    CHECK(getSubstanceGroups(*mol).size() == 1);
   }
 }
 

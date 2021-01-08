@@ -173,7 +173,7 @@ class RDKIT_FILEPARSERS_EXPORT SDMolSupplier : public ForwardSDMolSupplier {
    *   \param sanitize - if true sanitize the molecule before returning it
    *   \param removeHs - if true remove Hs from the molecule before returning it
    *                     (triggers sanitization)
-   *   \param strictParsing - if not set, the parser is more lax about
+   *   \param strictParsing - if set to false, the parser is more lax about
    * correctness
    *                          of the contents.
    */

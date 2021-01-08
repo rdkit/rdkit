@@ -1792,6 +1792,33 @@ void ParseMolBlockBonds(std::istream *inStream, unsigned int &line,
   }
 }
 
+bool checkAttachmentPointsAreValid(
+    const RWMol *mol, std::pair<const int, SubstanceGroup> &sgroup) {
+  bool res = true;
+  int nAtoms = static_cast<int>(mol->getNumAtoms());
+  std::vector<SubstanceGroup::AttachPoint> &attachPoints =
+      sgroup.second.getAttachPoints();
+  for (auto &attachPoint : attachPoints) {
+    if (attachPoint.lvIdx == nAtoms) {
+      const std::vector<unsigned int> &bonds = sgroup.second.getBonds();
+      if (bonds.size() == 1) {
+        const auto bond = mol->getBondWithIdx(bonds.front());
+        if (bond->getBeginAtomIdx() == attachPoint.aIdx ||
+            bond->getEndAtomIdx() == attachPoint.aIdx) {
+          attachPoint.lvIdx = bond->getOtherAtomIdx(attachPoint.aIdx);
+        }
+      }
+    }
+    if (attachPoint.lvIdx == nAtoms) {
+      BOOST_LOG(rdWarningLog)
+          << "Could not infer missing lvIdx on malformed SAP line for SGroup "
+          << sgroup.first << std::endl;
+      res = false;
+    }
+  }
+  return res;
+}
+
 bool ParseMolBlockProperties(std::istream *inStream, unsigned int &line,
                              RWMol *mol, bool strictParsing) {
   PRECONDITION(inStream, "bad stream");
@@ -1879,47 +1906,48 @@ bool ParseMolBlockProperties(std::istream *inStream, unsigned int &line,
 
       /* SGroup parsing start */
     } else if (lineBeg == "M  STY") {
-      ParseSGroupV2000STYLine(sGroupMap, mol, tempStr, line);
+      ParseSGroupV2000STYLine(sGroupMap, mol, tempStr, line, strictParsing);
     } else if (lineBeg == "M  SST") {
-      ParseSGroupV2000SSTLine(sGroupMap, mol, tempStr, line);
+      ParseSGroupV2000SSTLine(sGroupMap, mol, tempStr, line, strictParsing);
     } else if (lineBeg == "M  SLB") {
-      ParseSGroupV2000SLBLine(sGroupMap, mol, tempStr, line);
+      ParseSGroupV2000SLBLine(sGroupMap, mol, tempStr, line, strictParsing);
     } else if (lineBeg == "M  SCN") {
-      ParseSGroupV2000SCNLine(sGroupMap, mol, tempStr, line);
+      ParseSGroupV2000SCNLine(sGroupMap, mol, tempStr, line, strictParsing);
     } else if (lineBeg == "M  SDS") {
-      ParseSGroupV2000SDSLine(sGroupMap, mol, tempStr, line);
+      ParseSGroupV2000SDSLine(sGroupMap, mol, tempStr, line, strictParsing);
     } else if (lineBeg == "M  SAL" || lineBeg == "M  SBL" ||
                lineBeg == "M  SPA") {
-      ParseSGroupV2000VectorDataLine(sGroupMap, mol, tempStr, line);
+      ParseSGroupV2000VectorDataLine(sGroupMap, mol, tempStr, line,
+                                     strictParsing);
     } else if (lineBeg == "M  SMT") {
-      ParseSGroupV2000SMTLine(sGroupMap, mol, tempStr, line);
+      ParseSGroupV2000SMTLine(sGroupMap, mol, tempStr, line, strictParsing);
     } else if (lineBeg == "M  SDI") {
-      ParseSGroupV2000SDILine(sGroupMap, mol, tempStr, line);
+      ParseSGroupV2000SDILine(sGroupMap, mol, tempStr, line, strictParsing);
     } else if (lineBeg == "M  CRS") {
       std::ostringstream errout;
       errout << "Unsupported SGroup subtype '" << lineBeg << "' on line "
              << line;
       throw FileParseException(errout.str());
     } else if (lineBeg == "M  SBV") {
-      ParseSGroupV2000SBVLine(sGroupMap, mol, tempStr, line);
+      ParseSGroupV2000SBVLine(sGroupMap, mol, tempStr, line, strictParsing);
     } else if (lineBeg == "M  SDT") {
-      ParseSGroupV2000SDTLine(sGroupMap, mol, tempStr, line);
+      ParseSGroupV2000SDTLine(sGroupMap, mol, tempStr, line, strictParsing);
     } else if (lineBeg == "M  SDD") {
-      ParseSGroupV2000SDDLine(sGroupMap, mol, tempStr, line);
+      ParseSGroupV2000SDDLine(sGroupMap, mol, tempStr, line, strictParsing);
     } else if (lineBeg == "M  SCD" || lineBeg == "M  SED") {
       ParseSGroupV2000SCDSEDLine(sGroupMap, dataFieldsMap, mol, tempStr, line,
                                  strictParsing, SCDcounter, lastDataSGroup,
                                  currentDataField);
     } else if (lineBeg == "M  SPL") {
-      ParseSGroupV2000SPLLine(sGroupMap, mol, tempStr, line);
+      ParseSGroupV2000SPLLine(sGroupMap, mol, tempStr, line, strictParsing);
     } else if (lineBeg == "M  SNC") {
-      ParseSGroupV2000SNCLine(sGroupMap, mol, tempStr, line);
+      ParseSGroupV2000SNCLine(sGroupMap, mol, tempStr, line, strictParsing);
     } else if (lineBeg == "M  SAP") {
-      ParseSGroupV2000SAPLine(sGroupMap, mol, tempStr, line);
+      ParseSGroupV2000SAPLine(sGroupMap, mol, tempStr, line, strictParsing);
     } else if (lineBeg == "M  SCL") {
-      ParseSGroupV2000SCLLine(sGroupMap, mol, tempStr, line);
+      ParseSGroupV2000SCLLine(sGroupMap, mol, tempStr, line, strictParsing);
     } else if (lineBeg == "M  SBT") {
-      ParseSGroupV2000SBTLine(sGroupMap, mol, tempStr, line);
+      ParseSGroupV2000SBTLine(sGroupMap, mol, tempStr, line, strictParsing);
 
       /* SGroup parsing end */
     } else if (lineBeg == "M  ZBO") {
@@ -1941,9 +1969,23 @@ bool ParseMolBlockProperties(std::istream *inStream, unsigned int &line,
   }
   if (tempStr[0] == 'M' && tempStr.substr(0, 6) == "M  END") {
     // All went well, make final updates to SGroups, and add them to Mol
-    for (const auto &sgroup : sGroupMap) {
-      sgroup.second.setProp("DATAFIELDS", dataFieldsMap[sgroup.first]);
-      addSubstanceGroup(*mol, sgroup.second);
+    for (auto &sgroup : sGroupMap) {
+      if (sgroup.second.getIsValid()) {
+        sgroup.second.setProp("DATAFIELDS", dataFieldsMap[sgroup.first]);
+        sgroup.second.setIsValid(checkAttachmentPointsAreValid(mol, sgroup));
+      }
+      if (sgroup.second.getIsValid()) {
+        addSubstanceGroup(*mol, sgroup.second);
+      } else {
+        std::ostringstream errout;
+        errout << "SGroup " << sgroup.first << " is invalid";
+        if (strictParsing) {
+          throw FileParseException(errout.str());
+        } else {
+          BOOST_LOG(rdWarningLog)
+              << errout.str() << " and will be ignored" << std::endl;
+        }
+      }
     }
 
     fileComplete = true;
