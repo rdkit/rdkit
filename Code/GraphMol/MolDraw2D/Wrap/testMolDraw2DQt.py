@@ -33,24 +33,19 @@ class TestCase(unittest.TestCase):
     m = Chem.MolFromSmiles('c1ccccc1O')
     Draw.PrepareMolForDrawing(m)
     qimg = QImage(250, 200, QImage.Format_RGB32)
-    qptr = QPainter(qimg)
-    qptr._img = qimg
-    p = sip.unwrapinstance(qptr)
-    d2d = Draw.MolDraw2DFromQPainter_(250, 200, p)
-    d2d.DrawMolecule(m)
-    d2d._qptr = qptr
+    with QPainter(qimg) as qptr:
+      p = sip.unwrapinstance(qptr)
+      d2d = Draw.MolDraw2DFromQPainter_(250, 200, p)
+      d2d.DrawMolecule(m)
     qimg.save("testImageFromPyQt-1.png")
-    qptr = None
 
   def testBasics(self):
     m = Chem.MolFromSmiles('c1ccccc1O')
     Draw.PrepareMolForDrawing(m)
     qimg = QImage(250, 200, QImage.Format_RGB32)
-    qptr = QPainter(qimg)
-    qptr._img = qimg
-
-    d2d = Draw.MolDraw2DFromQPainter(qptr)
-    d2d.DrawMolecule(m)
+    with QPainter(qimg) as qptr:
+      d2d = Draw.MolDraw2DFromQPainter(qptr)
+      d2d.DrawMolecule(m)
     qimg.save("testImageFromPyQt-2.png")
 
   def testMemory1(self):
@@ -59,11 +54,9 @@ class TestCase(unittest.TestCase):
       m = Chem.MolFromSmiles('c1ccccc1O')
       Draw.PrepareMolForDrawing(m)
       qimg = QImage(250, 200, QImage.Format_RGB32)
-      qptr = QPainter(qimg)
-      qptr._img = qimg
-      p = sip.unwrapinstance(qptr)
-      d2d = Draw.MolDraw2DFromQPainter_(250, 200, p, -1, -1)
-      d2d._ptr = qptr
+      with QPainter(qimg) as qptr:
+        p = sip.unwrapinstance(qptr)
+        d2d = Draw.MolDraw2DFromQPainter_(250, 200, p, -1, -1)
       raise ValueError("expected")
 
     with self.assertRaises(ValueError):
@@ -75,9 +68,8 @@ class TestCase(unittest.TestCase):
       m = Chem.MolFromSmiles('c1ccccc1O')
       Draw.PrepareMolForDrawing(m)
       qimg = QImage(250, 200, QImage.Format_RGB32)
-      qptr = QPainter(qimg)
-      qptr._img = qimg
-      d2d = Draw.MolDraw2DFromQPainter(qptr)
+      with QPainter(qimg) as qptr:
+        d2d = Draw.MolDraw2DFromQPainter(qptr)
       raise ValueError("expected")
 
     with self.assertRaises(ValueError):

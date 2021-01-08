@@ -148,6 +148,7 @@ void pyDictToMapColourVec(python::object pyo,
     res[python::extract<int>(tDict.keys()[i])] = v;
   }
 }
+
 std::map<int, std::vector<DrawColour>> *pyDictToMapColourVec(
     python::object pyo) {
   std::map<int, std::vector<DrawColour>> *res = nullptr;
@@ -565,8 +566,24 @@ MolDraw2DQt *moldrawFromQPainter(int width, int height, unsigned long ptr,
 }
 #endif
 
-void updateParamsHelper(MolDraw2D *obj,std::string json){
-  MolDraw2DUtils::updateDrawerParamsFromJSON(*obj,json);
+void updateParamsHelper(MolDraw2D *obj, std::string json) {
+  MolDraw2DUtils::updateDrawerParamsFromJSON(*obj, json);
+}
+
+std::string molToSVG(const ROMol &mol, unsigned int width, unsigned int height,
+                     python::object pyHighlightAtoms, bool kekulize,
+                     unsigned int lineWidthMult, bool includeAtomCircles,
+                     int confId) {
+  RDUNUSED_PARAM(kekulize);
+  std::unique_ptr<std::vector<int>> highlightAtoms =
+      pythonObjectToVect(pyHighlightAtoms, static_cast<int>(mol.getNumAtoms()));
+  std::stringstream outs;
+  MolDraw2DSVG drawer(width, height, outs);
+  drawer.setLineWidth(drawer.lineWidth() * lineWidthMult);
+  drawer.drawOptions().circleAtoms = includeAtomCircles;
+  drawer.drawMolecule(mol, highlightAtoms.get(), nullptr, nullptr, confId);
+  drawer.finishDrawing();
+  return outs.str();
 }
 
 }  // namespace RDKit
@@ -1053,11 +1070,17 @@ BOOST_PYTHON_MODULE(rdMolDraw2D) {
        python::arg("mol") = python::object()),
       docString.c_str());
 
+  python::def("UpdateDrawerParamsFromJSON", RDKit::updateParamsHelper,
+              (python::arg("drawer"), python::arg("json")));
+
+  // ------------------------------------------------------------------------
+  docString = "Returns svg for a molecule";
   python::def(
-      "UpdateDrawerParamsFromJSON", 
-      RDKit::updateParamsHelper,
-      (python::arg("drawer"), python::arg("json")));
-
-
-
+      "MolToSVG", &RDKit::molToSVG,
+      (python::arg("mol"), python::arg("width") = 300,
+       python::arg("height") = 300,
+       python::arg("highlightAtoms") = python::object(),
+       python::arg("kekulize") = true, python::arg("lineWidthMult") = 1,
+       python::arg("fontSize") = 12, python::arg("includeAtomCircles") = true),
+      docString.c_str());
 }

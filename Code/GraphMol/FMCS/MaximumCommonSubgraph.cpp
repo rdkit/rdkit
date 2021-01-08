@@ -562,6 +562,31 @@ bool checkIfRingsAreClosed(const Seed& fs) {
   return res;
 }
 
+bool checkNoLoneRingAtoms(const Seed& fs) {
+  if (!fs.MoleculeFragment.Atoms.size()) {
+    return true;
+  }
+
+  bool res = true;
+  const auto& om = fs.MoleculeFragment.Atoms[0]->getOwningMol();
+  const auto ri = om.getRingInfo();
+  for (const auto& ithRingAtomIndices : ri->atomRings()) {
+    size_t count = 0;
+    for (const auto atom : fs.MoleculeFragment.Atoms) {
+      if (std::find(ithRingAtomIndices.begin(), ithRingAtomIndices.end(),
+                    atom->getIdx()) != ithRingAtomIndices.end() &&
+          ++count > 1) {
+        break;
+      }
+    }
+    if (count == 1) {
+      res = false;
+      break;
+    }
+  }
+  return res;
+}
+
 }  // namespace
 bool MaximumCommonSubgraph::growSeeds() {
   bool mcsFound = false;
@@ -601,6 +626,9 @@ bool MaximumCommonSubgraph::growSeeds() {
         // #945: test here to see if the MCS actually has all rings closed
         if (possibleMCS && Parameters.BondCompareParameters.CompleteRingsOnly) {
           possibleMCS = checkIfRingsAreClosed(fs);
+        }
+        if (possibleMCS && Parameters.AtomCompareParameters.CompleteRingsOnly) {
+          possibleMCS = checkNoLoneRingAtoms(fs);
         }
         if (possibleMCS) {
           mcsFound = true;
@@ -915,6 +943,12 @@ MCSResult MaximumCommonSubgraph::find(const std::vector<ROMOL_SPTR>& src_mols) {
   }
   if (ThresholdCount > src_mols.size() - 1) {  // max all targets
     ThresholdCount = src_mols.size() - 1;
+  }
+
+  // AtomCompareParameters.CompleteRingsOnly implies
+  // BondCompareParameters.CompleteRingsOnly
+  if (Parameters.AtomCompareParameters.CompleteRingsOnly) {
+    Parameters.BondCompareParameters.CompleteRingsOnly = true;
   }
 
   // Selecting CompleteRingsOnly option also enables

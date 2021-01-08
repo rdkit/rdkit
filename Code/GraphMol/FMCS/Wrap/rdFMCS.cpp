@@ -772,6 +772,9 @@ BOOST_PYTHON_MODULE(rdFMCS) {
       .def_readwrite("RingMatchesRingOnly",
                      &RDKit::MCSAtomCompareParameters::RingMatchesRingOnly,
                      "ring atoms are only allowed to match other ring atoms")
+      .def_readwrite("CompleteRingsOnly",
+                     &RDKit::MCSAtomCompareParameters::CompleteRingsOnly,
+                     "results cannot include lone ring atoms")
       .def_readwrite("MatchIsotope",
                      &RDKit::MCSAtomCompareParameters::MatchIsotope,
                      "use isotope atom queries in MCSResults");
