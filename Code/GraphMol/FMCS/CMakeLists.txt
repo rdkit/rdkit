@@ -1,4 +1,4 @@
-
+#set(CMAKE_BUILD_TYPE Debug)
 rdkit_library(FMCS
               FMCS.cpp Seed.cpp MaximumCommonSubgraph.cpp SubstructMatchCustom.cpp
               LINK_LIBRARIES Depictor SmilesParse FileParsers ChemTransforms SubstructMatch GraphMol )
@@ -8,7 +8,7 @@ rdkit_headers(FMCS.h
               Graph.h
               DEST GraphMol/FMCS)
 
-rdkit_test(testFMCS testFMCS_Unit.cpp LINK_LIBRARIES
+rdkit_test(testFMCS testFMCS_Unit.cpp LINK_LIBRARIES DistGeomHelpers
 FMCS )
 
 if(RDK_BUILD_PYTHON_WRAPPERS)

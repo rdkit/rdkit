@@ -133,7 +133,8 @@ class RDKIT_FMCS_EXPORT RingMatchTableSet {
 
   void computeRingMatchTable(
       const ROMol* query, const ROMol* targetMolecule,
-      const MCSParameters& parameters) {  // call it for all targets
+      const MCSParameters& parameters,
+      MCSCompareFunctionsData& compareFunctionsData) {  // call it for all targets
     const RingInfo::VECT_INT_VECT& rings1 = query->getRingInfo()->bondRings();
     const RingInfo::VECT_INT_VECT& rings2 =
         targetMolecule->getRingInfo()->bondRings();
@@ -171,7 +172,7 @@ class RDKIT_FMCS_EXPORT RingMatchTableSet {
             FMCS::SubstructMatchCustom(
                 graph2, *targetMolecule, graph1, *query, parameters.AtomTyper,
                 parameters.BondTyper, nullptr, parameters.AtomCompareParameters,
-                bp, parameters.CompareFunctionsUserData);
+                bp, compareFunctionsData);
 #endif
         if (match) m.setMatch(i, &*r2);
       }

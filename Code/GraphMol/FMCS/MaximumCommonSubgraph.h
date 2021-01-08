@@ -51,6 +51,7 @@ class RDKIT_FMCS_EXPORT MaximumCommonSubgraph {
   MCSParameters Parameters;
   unsigned ThresholdCount;  // min number of matching
   std::vector<const ROMol*> Molecules;
+  MCSCompareFunctionsData CompareFunctionsData;
 #ifdef FAST_SUBSTRUCT_CACHE
   std::vector<unsigned> QueryAtomLabels;  // for code Morgan. Value based on
                                           // current functor and parameters
@@ -77,7 +78,7 @@ class RDKIT_FMCS_EXPORT MaximumCommonSubgraph {
   ExecStatistics VerboseStatistics;
 #endif
 
-  MaximumCommonSubgraph(const MCSParameters* params);
+  MaximumCommonSubgraph(const MCSParameters* params, void* userData);
   ~MaximumCommonSubgraph() { clear(); }
   MCSResult find(const std::vector<ROMOL_SPTR>& mols);
   const ROMol& getQueryMolecule() const { return *QueryMolecule; }
@@ -91,16 +92,24 @@ class RDKIT_FMCS_EXPORT MaximumCommonSubgraph {
   void clear() {
     Targets.clear();
     Molecules.clear();
+    CompareFunctionsData.clear();
     To = nanoClock();
   }
+  std::pair<bool, bool> evaluateQueryMolecule(size_t i);
   void init();
+  void loadMatchTables(const ROMol* targetMolecule, MatchTable& atomMatchTable, MatchTable& bondMatchTable);
+  void loadBondLabels();
+  void buildTargetTopology(Target& target);
+  void printVerboseStatistics(const MCSResult& res) const;
   void makeInitialSeeds();
+  void loadInitialSeedParameter(std::vector<bool>& excludedBonds);
+  void loadSeedsFromQueryBonds(std::vector<bool>& excludedBonds);
   bool createSeedFromMCS(size_t newQueryTarget, Seed& seed);
   bool growSeeds();  // returns false if canceled
   std::pair<std::string, RWMol*> generateResultSMARTSAndQueryMol(
       const MCS& mcsIdx) const;
   bool addFusedBondQueries(const MCS& McsIdx, RWMol* rwMol) const;
-
+  void recordChosenConformerIdx(const ROMol *mol, std::vector<unsigned>::const_iterator *conformerIterPtr);
   bool match(Seed& seed);
   bool matchIncrementalFast(Seed& seed, unsigned itarget);
 };

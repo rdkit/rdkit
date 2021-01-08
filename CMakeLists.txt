@@ -260,7 +260,7 @@ if(RDK_BUILD_PYTHON_WRAPPERS)
   if(WIN32 OR "${Py_ENABLE_SHARED}" STREQUAL "1")
     target_link_libraries(rdkit_py_base INTERFACE ${PYTHON_LIBRARIES} )
   endif()
-  
+
   find_package(NumPy REQUIRED)
   target_include_directories(rdkit_base INTERFACE ${PYTHON_NUMPY_INCLUDE_PATH})
 
@@ -276,6 +276,7 @@ if(RDK_BUILD_PYTHON_WRAPPERS)
   # Try each potential boost-python name until one works
   foreach(Boost_Python_LibN ${Boost_Python_Names})
     find_package(Boost ${RDK_BOOST_VERSION} COMPONENTS "${Boost_Python_LibN}" QUIET)
+    message(" 333  ran find_package ${Boost_Python_LibN} ${Boost_FOUND}")
     if(Boost_FOUND)
       set(Boost_Python_Lib ${Boost_Python_LibN})
       break()
@@ -286,7 +287,7 @@ if(RDK_BUILD_PYTHON_WRAPPERS)
     find_package(Boost ${RDK_BOOST_VERSION} COMPONENTS python REQUIRED)
     set(Boost_Python_Lib "python")
   endif()
-
+  message(" 333 Boost_Python_Lib ${Boost_Python_Lib}")
   target_link_libraries(rdkit_py_base INTERFACE Boost::${Boost_Python_Lib})
 
   if(RDK_INSTALL_INTREE)
@@ -383,7 +384,7 @@ endif()
 
 if(RDK_USE_BOOST_SERIALIZATION)
     set(T_LIBS ${Boost_LIBRARIES})
-    find_package(Boost ${RDK_BOOST_VERSION} COMPONENTS serialization)
+    find_package(Boost ${RDK_BOOST_VERSION} COMPONENTS system  serialization iostreams)
     if (Boost_SERIALIZATION_LIBRARY)
       set(Boost_LIBRARIES ${T_LIBS} ${Boost_LIBRARIES})
     else()

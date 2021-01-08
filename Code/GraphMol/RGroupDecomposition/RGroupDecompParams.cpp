@@ -54,11 +54,11 @@ unsigned int RGroupDecompositionParameters::autoGetLabels(const RWMol &core) {
 
 bool rgdAtomCompare(const MCSAtomCompareParameters &p, const ROMol &mol1,
                     unsigned int atom1, const ROMol &mol2, unsigned int atom2,
-                    void *userData) {
-  if (!MCSAtomCompareElements(p, mol1, atom1, mol2, atom2, nullptr)) {
+                    MCSCompareFunctionsData& cfd) {
+  if (!MCSAtomCompareElements(p, mol1, atom1, mol2, atom2, cfd)) {
     return false;
   }
-  unsigned int autoLabels = *reinterpret_cast<unsigned int *>(userData);
+  unsigned int autoLabels = *reinterpret_cast<unsigned int *>(cfd.userData);
   bool atom1HasLabel = false;
   bool atom2HasLabel = false;
   const auto a1 = mol1.getAtomWithIdx(atom1);
@@ -114,11 +114,12 @@ bool RGroupDecompositionParameters::prepareCore(RWMol &core,
     mols.push_back(ROMOL_SPTR(new ROMol(core)));
     mols.push_back(ROMOL_SPTR(new ROMol(*alignCore)));
     MCSParameters mcsParams;
+    void* userData = nullptr;
     if (autoLabels != AutoDetect) {
       mcsParams.AtomTyper = rgdAtomCompare;
-      mcsParams.CompareFunctionsUserData = &autoLabels;
+      userData = &autoLabels;
     }
-    MCSResult res = findMCS(mols, &mcsParams);
+    MCSResult res = findMCS(mols, &mcsParams, userData);
     if (res.isCompleted()) {
       auto m = res.QueryMol;
       if (m) {
