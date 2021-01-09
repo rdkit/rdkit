@@ -66,7 +66,7 @@ class RDKIT_FILEPARSERS_EXPORT MolSupplier {
   virtual ROMol *next() = 0;
 
   virtual void close() {
-    if (df_owner && dp_inStream) {
+    if (df_owner) {
       delete dp_inStream;
       df_owner = false;
     }

@@ -240,7 +240,7 @@ class RDKIT_FILEPARSERS_EXPORT TDTWriter : public MolWriter {
   void close() {
     if (dp_ostream) {
       // if we've written any mols, finish with a "|" line
-      if (dp_ostream && d_molid > 0) {
+      if (d_molid > 0) {
         *dp_ostream << "|\n";
       }
       flush();
