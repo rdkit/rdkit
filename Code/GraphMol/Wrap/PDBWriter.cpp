@@ -48,11 +48,9 @@ struct pdbwriter_wrap {
         .def(python::init<std::string, unsigned int>(
             (python::arg("fileName"), python::arg("flavor") = 0),
             pdbwDocStr.c_str()))
-        .def("__enter__", (PDBWriter * (*)(PDBWriter *)) & MolIOEnter,
+        .def("__enter__", &MolIOEnter<PDBWriter>,
              python::return_internal_reference<>())
-        .def("__exit__", (bool (*)(PDBWriter *, python::object, python::object,
-                                   python::object)) &
-                             MolIOExit)
+        .def("__exit__", &MolIOExit<PDBWriter>)
 
         .def("write", &PDBWriter::write,
              (python::arg("self"), python::arg("mol"),

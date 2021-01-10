@@ -92,21 +92,16 @@ struct smimolsup_wrap {
              python::arg("titleLine") = true, python::arg("sanitize") = true),
             smsDocStr.c_str()))
         .def(python::init<>())
-        .def("__enter__",
-             (SmilesMolSupplier * (*)(SmilesMolSupplier *)) & MolIOEnter,
+        .def("__enter__", &MolIOEnter<SmilesMolSupplier>,
              python::return_internal_reference<>())
-        .def("__exit__", (bool (*)(SmilesMolSupplier *, python::object,
-                                   python::object, python::object)) &
-                             MolIOExit)
-        .def("__iter__",
-             (SmilesMolSupplier * (*)(SmilesMolSupplier *)) & MolSupplIter,
+        .def("__exit__", &MolIOExit<SmilesMolSupplier>)
+        .def("__iter__", &MolSupplIter<SmilesMolSupplier>,
              python::return_internal_reference<1>())
-        .def("__next__", (ROMol * (*)(SmilesMolSupplier *)) & MolSupplNext,
+        .def("__next__", &MolSupplNext<SmilesMolSupplier>,
              "Returns the next molecule in the file.  Raises _StopIteration_ "
              "on EOF.\n",
              python::return_value_policy<python::manage_new_object>())
-        .def("__getitem__",
-             (ROMol * (*)(SmilesMolSupplier *, int)) & MolSupplGetItem,
+        .def("__getitem__", &MolSupplGetItem<SmilesMolSupplier>,
              python::return_value_policy<python::manage_new_object>())
         .def("reset", &SmilesMolSupplier::reset,
              "Resets our position in the file to the beginning.\n")

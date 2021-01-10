@@ -53,11 +53,9 @@ struct tdtwriter_wrap {
         .def("__init__", python::make_constructor(&getTDTWriter))
         .def(
             python::init<std::string>(python::args("fileName"), docStr.c_str()))
-        .def("__enter__", (TDTWriter * (*)(TDTWriter *)) & MolIOEnter,
+        .def("__enter__", &MolIOEnter<TDTWriter>,
              python::return_internal_reference<>())
-        .def("__exit__", (bool (*)(TDTWriter *, python::object, python::object,
-                                   python::object)) &
-                             MolIOExit)
+        .def("__exit__", &MolIOExit<TDTWriter>)
         .def("SetProps", SetTDTWriterProps,
              "Sets the properties to be written to the output file\n\n"
              "  ARGUMENTS:\n\n"

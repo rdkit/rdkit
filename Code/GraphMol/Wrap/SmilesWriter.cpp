@@ -83,11 +83,9 @@ struct smiwriter_wrap {
              python::arg("isomericSmiles") = true,
              python::arg("kekuleSmiles") = false),
             swDocStr.c_str()))
-        .def("__enter__", (SmilesWriter * (*)(SmilesWriter *)) & MolIOEnter,
+        .def("__enter__", &MolIOEnter<SmilesWriter>,
              python::return_internal_reference<>())
-        .def("__exit__", (bool (*)(SmilesWriter *, python::object,
-                                   python::object, python::object)) &
-                             MolIOExit)
+        .def("__exit__", &MolIOExit<SmilesWriter>)
         .def("SetProps", SetSmiWriterProps,
              "Sets the properties to be written to the output file\n\n"
              "  ARGUMENTS:\n\n"
