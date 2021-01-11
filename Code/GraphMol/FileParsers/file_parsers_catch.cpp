@@ -9,11 +9,12 @@
 
 #include "RDGeneral/test.h"
 #include "catch.hpp"
-
+#include <RDGeneral/Invariant.h>
 #include <GraphMol/RDKitBase.h>
 #include <GraphMol/QueryAtom.h>
 #include <GraphMol/MolPickler.h>
 #include <GraphMol/FileParsers/FileParsers.h>
+#include <GraphMol/FileParsers/MolSupplier.h>
 #include <GraphMol/SmilesParse/SmilesWrite.h>
 #include <GraphMol/SmilesParse/SmilesParse.h>
 #include <GraphMol/SmilesParse/SmartsWrite.h>
@@ -32,7 +33,7 @@ TEST_CASE("Basic SVG Parsing", "[SVG][reader]") {
               xmlns='http://www.w3.org/2000/svg'
                       xmlns:rdkit='http://www.rdkit.org/xml'
                       xmlns:xlink='http://www.w3.org/1999/xlink'
-                  xml:space='preserve'
+         xml:space='preserve'
 width='200px' height='200px' >
 <rect style='opacity:1.0;fill:#FFFFFF;stroke:none' width='200' height='200' x='0' y='0'> </rect>
 <path d='M 9.09091,89.4974 24.2916,84.7462' style='fill:none;fill-rule:evenodd;stroke:#000000;stroke-width:2px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1' />
@@ -2268,4 +2269,73 @@ M  END
     CHECK(m->getBondWithIdx(5)->getQuery()->getDescription() ==
           "DoubleOrAromaticBond");
   }
+}
+
+TEST_CASE("supplier close methods") {
+  std::string rdbase = getenv("RDBASE");
+
+  SECTION("SDF") {
+    std::string fname =
+        rdbase + "/Code/GraphMol/FileParsers/test_data/NCI_aids_few.sdf";
+    {
+      SDMolSupplier suppl(fname);
+      std::unique_ptr<ROMol> mol{suppl.next()};
+      REQUIRE(mol);
+      suppl.close();
+#if INVARIANT_EXCEPTION_METHOD
+      REQUIRE_THROWS_AS(suppl.next(), Invar::Invariant);
+#endif
+    }
+    {
+      std::ifstream instr(fname);
+      ForwardSDMolSupplier suppl(&instr, false);
+      std::unique_ptr<ROMol> mol{suppl.next()};
+      REQUIRE(mol);
+      suppl.close();
+#if INVARIANT_EXCEPTION_METHOD
+      REQUIRE_THROWS_AS(suppl.next(), Invar::Invariant);
+#endif
+    }
+  }
+  SECTION("SMILES") {
+    std::string fname =
+        rdbase + "/Code/GraphMol/FileParsers/test_data/fewSmi.2.csv";
+    {
+      SmilesMolSupplier suppl(fname, ",", 1, 0, true);
+      std::unique_ptr<ROMol> mol{suppl.next()};
+      REQUIRE(mol);
+      suppl.close();
+#if INVARIANT_EXCEPTION_METHOD
+      REQUIRE_THROWS_AS(suppl.next(), Invar::Invariant);
+#endif
+    }
+  }
+  SECTION("TDT") {
+    std::string fname =
+        rdbase + "/Code/GraphMol/FileParsers/test_data/acd_few.tdt";
+    {
+      TDTMolSupplier suppl(fname, "PN");
+      std::unique_ptr<ROMol> mol{suppl.next()};
+      REQUIRE(mol);
+      suppl.close();
+#if INVARIANT_EXCEPTION_METHOD
+      REQUIRE_THROWS_AS(suppl.next(), Invar::Invariant);
+#endif
+    }
+  }
+#ifdef RDK_BUILD_MAEPARSER_SUPPORT
+  SECTION("MAE") {
+    std::string fname =
+        rdbase + "/Code/GraphMol/FileParsers/test_data/NCI_aids_few.mae";
+    {
+      MaeMolSupplier suppl(fname);
+      std::unique_ptr<ROMol> mol{suppl.next()};
+      REQUIRE(mol);
+      suppl.close();
+#if INVARIANT_EXCEPTION_METHOD
+      REQUIRE_THROWS_AS(suppl.next(), Invar::Invariant);
+#endif
+    }
+  }
+#endif
 }

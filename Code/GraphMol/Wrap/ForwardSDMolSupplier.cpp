@@ -20,6 +20,7 @@
 #include <GraphMol/FileParsers/MolSupplier.h>
 #include <GraphMol/RDKitBase.h>
 #include <RDBoost/python_streambuf.h>
+#include "ContextManagers.h"
 
 #include "MolSupplier.h"
 
@@ -114,6 +115,13 @@ struct forwardsdmolsup_wrap {
             (python::arg("filename"), python::arg("sanitize") = true,
              python::arg("removeHs") = true,
              python::arg("strictParsing") = true)))
+        .def("__enter__",
+             (LocalForwardSDMolSupplier * (*)(LocalForwardSDMolSupplier *)) &
+                 MolIOEnter,
+             python::return_internal_reference<>())
+        .def("__exit__", (bool (*)(LocalForwardSDMolSupplier *, python::object,
+                                   python::object, python::object)) &
+                             MolIOExit)
         .def("__next__",
              (ROMol * (*)(LocalForwardSDMolSupplier *)) & MolForwardSupplNext,
              "Returns the next molecule in the file.  Raises _StopIteration_ "
