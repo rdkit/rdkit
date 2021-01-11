@@ -922,27 +922,63 @@ void testJSONParameters() {
               pj.BondCompareParameters.MatchFusedRings == false &&
               pj.BondCompareParameters.MatchFusedRingsStrict == false);
 
-  pj = MCSParameters();
-  const char json[] =
-      "{\"MaximizeBonds\": false, \"Threshold\": 0.7, \"Timeout\": 3"
-      ", \"MatchValences\": true, \"MatchChiralTag\": true"
-      ", \"MatchStereo\": true, \"RingMatchesRingOnly\": true"
-      ", \"CompleteRingsOnly\": true"
-      ", \"MatchFusedRings\": true"
-      ", \"MatchFusedRingsStrict\": true"
-      ", \"InitialSeed\": \"CNC\""
-      "}";
-  parseMCSParametersJSON(json, &pj);
-  TEST_ASSERT(pj.MaximizeBonds == false && pj.Threshold == 0.7 &&
-              pj.Timeout == 3 &&
-              pj.AtomCompareParameters.MatchValences == true &&
-              pj.AtomCompareParameters.MatchChiralTag == true &&
-              pj.BondCompareParameters.MatchStereo == true &&
-              pj.BondCompareParameters.RingMatchesRingOnly == true &&
-              pj.BondCompareParameters.CompleteRingsOnly == true &&
-              pj.BondCompareParameters.MatchFusedRings == true &&
-              pj.BondCompareParameters.MatchFusedRingsStrict == true &&
-              0 == strcmp(pj.InitialSeed.c_str(), "CNC"));
+  {
+    pj = MCSParameters();
+    const char json[] =
+        "{\"MaximizeBonds\": false, \"Threshold\": 0.7, \"Timeout\": 3"
+        ", \"MatchValences\": true, \"MatchChiralTag\": true"
+        ", \"MatchStereo\": true, \"RingMatchesRingOnly\": true"
+        ", \"CompleteRingsOnly\": true"
+        ", \"MatchFusedRings\": true"
+        ", \"MatchFusedRingsStrict\": true"
+        ", \"InitialSeed\": \"CNC\""
+        "}";
+    parseMCSParametersJSON(json, &pj);
+    TEST_ASSERT(pj.MaximizeBonds == false && pj.Threshold == 0.7 &&
+                pj.Timeout == 3 &&
+                pj.AtomCompareParameters.MatchValences == true &&
+                pj.AtomCompareParameters.MatchChiralTag == true &&
+                pj.AtomCompareParameters.RingMatchesRingOnly == true &&
+                pj.AtomCompareParameters.CompleteRingsOnly == false &&
+                pj.BondCompareParameters.MatchStereo == true &&
+                pj.BondCompareParameters.RingMatchesRingOnly == true &&
+                pj.BondCompareParameters.CompleteRingsOnly == true &&
+                pj.BondCompareParameters.MatchFusedRings == true &&
+                pj.BondCompareParameters.MatchFusedRingsStrict == true &&
+                0 == strcmp(pj.InitialSeed.c_str(), "CNC"));
+  }
+  {
+    // Atom* and Bond* versions override simple
+    // RingMatchesRingOnly and CompleteRingsOnly
+    pj = MCSParameters();
+    const char json[] =
+        "{\"MaximizeBonds\": false, \"Threshold\": 0.7, \"Timeout\": 3"
+        ", \"MatchValences\": true, \"MatchChiralTag\": true"
+        ", \"MatchStereo\": true, \"RingMatchesRingOnly\": false"
+        ", \"AtomRingMatchesRingOnly\": true"
+        ", \"BondRingMatchesRingOnly\": true"
+        ", \"CompleteRingsOnly\": false"
+        ", \"AtomCompleteRingsOnly\": true"
+        ", \"BondCompleteRingsOnly\": true"
+        ", \"MatchFusedRings\": true"
+        ", \"MatchFusedRingsStrict\": true"
+        ", \"InitialSeed\": \"CNC\""
+        "}";
+    parseMCSParametersJSON(json, &pj);
+    TEST_ASSERT(pj.MaximizeBonds == false && pj.Threshold == 0.7 &&
+                pj.Timeout == 3 &&
+                pj.AtomCompareParameters.MatchValences == true &&
+                pj.AtomCompareParameters.MatchChiralTag == true &&
+                pj.AtomCompareParameters.RingMatchesRingOnly == true &&
+                pj.AtomCompareParameters.CompleteRingsOnly == true &&
+                pj.BondCompareParameters.MatchStereo == true &&
+                pj.BondCompareParameters.RingMatchesRingOnly == true &&
+                pj.BondCompareParameters.CompleteRingsOnly == true &&
+                pj.BondCompareParameters.MatchFusedRings == true &&
+                pj.BondCompareParameters.MatchFusedRingsStrict == true &&
+                0 == strcmp(pj.InitialSeed.c_str(), "CNC"));
+  }
+
   BOOST_LOG(rdInfoLog) << "\tdone" << std::endl;
 }
 
@@ -2155,17 +2191,16 @@ void testGitHub3458() {
   {
     std::vector<ROMOL_SPTR> mols;
     const char* smi[] = {
-      "Brc1cccc(Nc2ncnc3cc4ccccc4cc23)c1",
-      "CCOc1cc2ncnc(Nc3cccc(Br)c3)c2cc1OCC",
-      "CN(C)c1cc2c(Nc3cccc(Br)c3)ncnc2cn1",
-      "CNc1cc2c(Nc3cccc(Br)c3)ncnc2cn1",
-      "Brc1cccc(Nc2ncnc3cc4[nH]cnc4cc23)c1",
-      "Cn1cnc2cc3ncnc(Nc4cccc(Br)c4)c3cc21",
-      "Cn1cnc2cc3c(Nc4cccc(Br)c4)ncnc3cc21",
-      "COc1cc2ncnc(Nc3cccc(Br)c3)c2cc1OC",
-      "C#CCNC/C=C/C(=O)Nc1cc2c(Nc3ccc(F)c(Cl)c3)c(C#N)cnc2cc1OCC",
-      "C=CC(=O)Nc1ccc2ncnc(Nc3cc(Cl)c(Cl)cc3F)c2c1"
-    };
+        "Brc1cccc(Nc2ncnc3cc4ccccc4cc23)c1",
+        "CCOc1cc2ncnc(Nc3cccc(Br)c3)c2cc1OCC",
+        "CN(C)c1cc2c(Nc3cccc(Br)c3)ncnc2cn1",
+        "CNc1cc2c(Nc3cccc(Br)c3)ncnc2cn1",
+        "Brc1cccc(Nc2ncnc3cc4[nH]cnc4cc23)c1",
+        "Cn1cnc2cc3ncnc(Nc4cccc(Br)c4)c3cc21",
+        "Cn1cnc2cc3c(Nc4cccc(Br)c4)ncnc3cc21",
+        "COc1cc2ncnc(Nc3cccc(Br)c3)c2cc1OC",
+        "C#CCNC/C=C/C(=O)Nc1cc2c(Nc3ccc(F)c(Cl)c3)c(C#N)cnc2cc1OCC",
+        "C=CC(=O)Nc1ccc2ncnc(Nc3cc(Cl)c(Cl)cc3F)c2c1"};
 
     for (auto& i : smi) {
       auto m = SmilesToMol(getSmilesOnly(i));
@@ -2181,7 +2216,10 @@ void testGitHub3458() {
       MCSResult res = findMCS(mols, &p);
       TEST_ASSERT(res.NumAtoms == 17);
       TEST_ASSERT(res.NumBonds == 18);
-      TEST_ASSERT(res.SmartsString == "[#6&R]:&@[#6&R]:&@[#6&R]1:&@[#6&R](-&!@[#7&!R]-&!@[#6&R]2:&@[#6&R]:&@[#6&R]:&@[#6&R]:&@[#6&R](:&@[#6&R]:&@2)-&!@[#35&!R]):&@[#7&R]:&@[#6&R]:&@[#7&R]:&@[#6&R]:&@1:&@[#6&R]");
+      TEST_ASSERT(res.SmartsString ==
+                  "[#6&R]:&@[#6&R]:&@[#6&R]1:&@[#6&R](-&!@[#7&!R]-&!@[#6&R]2:&@"
+                  "[#6&R]:&@[#6&R]:&@[#6&R]:&@[#6&R](:&@[#6&R]:&@2)-&!@[#35&!R]"
+                  "):&@[#7&R]:&@[#6&R]:&@[#7&R]:&@[#6&R]:&@1:&@[#6&R]");
     }
     {
       MCSParameters p;
@@ -2191,7 +2229,78 @@ void testGitHub3458() {
       MCSResult res = findMCS(mols, &p);
       TEST_ASSERT(res.NumAtoms == 15);
       TEST_ASSERT(res.NumBonds == 15);
-      TEST_ASSERT(res.SmartsString == "[#6&R]:&@[#6&R]:&@[#6&R](:&@[#6&R]-&!@[#7&!R]-&!@[#6&R]1:&@[#6&R]:&@[#6&R]:&@[#6&R]:&@[#6&R]:&@[#6&R]:&@1):&@[#6&R](:&@[#7&R]:&@[#6&R]):&@[#6&R]");
+      TEST_ASSERT(res.SmartsString ==
+                  "[#6&R]:&@[#6&R]:&@[#6&R](:&@[#6&R]-&!@[#7&!R]-&!@[#6&R]1:&@["
+                  "#6&R]:&@[#6&R]:&@[#6&R]:&@[#6&R]:&@[#6&R]:&@1):&@[#6&R](:&@["
+                  "#7&R]:&@[#6&R]):&@[#6&R]");
+    }
+  }
+
+  BOOST_LOG(rdInfoLog) << "============================================"
+                       << std::endl;
+  BOOST_LOG(rdInfoLog) << "\tdone" << std::endl;
+}
+
+void testGitHub3693() {
+  BOOST_LOG(rdInfoLog) << "-------------------------------------" << std::endl;
+  BOOST_LOG(rdInfoLog) << "testGitHub3693" << std::endl;
+
+  {
+    std::vector<ROMOL_SPTR> mols = {
+        "Nc1ccc(O)cc1c1ccc2ccccc2c1"_smiles,
+        "Oc1cnc(NC2CCC2)c(c1)c1ccc2ccccc2c1"_smiles};
+
+    {
+      MCSParameters p;
+      MCSResult res = findMCS(mols, &p);
+      TEST_ASSERT(res.NumAtoms == 17);
+      TEST_ASSERT(res.NumBonds == 18);
+      TEST_ASSERT(res.SmartsString ==
+                  "[#7]-,:[#6]:[#6](:[#6]:[#6](:[#6])-[#8])-[#6]1:[#6]:[#6]:[#"
+                  "6]2:[#6](:[#6]:1):[#6]:[#6]:[#6]:[#6]:2");
+    }
+    {
+      MCSParameters p;
+      p.BondCompareParameters.CompleteRingsOnly = true;
+      MCSResult res = findMCS(mols, &p);
+      TEST_ASSERT(res.NumAtoms == 11);
+      TEST_ASSERT(res.NumBonds == 12);
+      TEST_ASSERT(res.SmartsString ==
+                  "[#6]-&!@[#6]1:&@[#6]:&@[#6]:&@[#6]2:&@[#6](:&@[#6]:&@1):&@[#"
+                  "6]:&@[#6]:&@[#6]:&@[#6]:&@2");
+    }
+    {
+      MCSParameters p;
+      p.AtomCompareParameters.CompleteRingsOnly = true;
+      MCSResult res = findMCS(mols, &p);
+      TEST_ASSERT(res.NumAtoms == 10);
+      TEST_ASSERT(res.NumBonds == 11);
+      TEST_ASSERT(res.SmartsString ==
+                  "[#6]1:&@[#6]:&@[#6]:&@[#6]2:&@[#6](:&@[#6]:&@1):&@[#6]:&@[#"
+                  "6]:&@[#6]:&@[#6]:&@2");
+    }
+    {
+      MCSParameters p;
+      p.AtomCompareParameters.CompleteRingsOnly = true;
+      p.BondCompareParameters.CompleteRingsOnly = true;
+      MCSResult res = findMCS(mols, &p);
+      TEST_ASSERT(res.NumAtoms == 10);
+      TEST_ASSERT(res.NumBonds == 11);
+      TEST_ASSERT(res.SmartsString ==
+                  "[#6]1:&@[#6]:&@[#6]:&@[#6]2:&@[#6](:&@[#6]:&@1):&@[#6]:&@[#"
+                  "6]:&@[#6]:&@[#6]:&@2");
+    }
+    {
+      MCSParameters p;
+      p.AtomCompareParameters.CompleteRingsOnly = true;
+      // this will automatically be set to true
+      p.BondCompareParameters.CompleteRingsOnly = false;
+      MCSResult res = findMCS(mols, &p);
+      TEST_ASSERT(res.NumAtoms == 10);
+      TEST_ASSERT(res.NumBonds == 11);
+      TEST_ASSERT(res.SmartsString ==
+                  "[#6]1:&@[#6]:&@[#6]:&@[#6]2:&@[#6](:&@[#6]:&@1):&@[#6]:&@[#"
+                  "6]:&@[#6]:&@[#6]:&@2");
     }
   }
 
@@ -2277,6 +2386,7 @@ int main(int argc, const char* argv[]) {
   testCompareNonExistent();
   testGitHub3095();
   testGitHub3458();
+  testGitHub3693();
 
   unsigned long long t1 = nanoClock();
   double sec = double(t1 - T0) / 1000000.;
