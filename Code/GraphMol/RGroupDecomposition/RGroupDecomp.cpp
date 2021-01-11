@@ -77,10 +77,10 @@ RGroupDecomposition::~RGroupDecomposition() { delete data; }
 int RGroupDecomposition::add(const ROMol &inmol) {
   // get the sidechains if possible
   //  Add hs for better symmetrization
-  RWMol mol(inmol);
+  RWMOL_SPTR mol(new RWMol(inmol));
   bool explicitOnly = false;
   bool addCoords = true;
-  MolOps::addHs(mol, explicitOnly, addCoords);
+  MolOps::addHs(*mol, explicitOnly, addCoords);
 
   int core_idx = 0;
   const RCore *rcore = nullptr;
@@ -92,43 +92,151 @@ int RGroupDecomposition::add(const ROMol &inmol) {
       const bool uniquify = false;
       const bool recursionPossible = true;
       const bool useChirality = true;
-      SubstructMatch(mol, *core.second.core, tmatches, uniquify,
+      SubstructMatch(*mol, *core.second.core, tmatches, uniquify,
                      recursionPossible, useChirality);
     }
 
     if (data->params.onlyMatchAtRGroups) {
       std::vector<MatchVectType> tmatches_filtered;
-      for (auto &mv : tmatches) {
+      boost::dynamic_bitset<> bondsToBreak(mol->getNumBonds());
+      boost::dynamic_bitset<> atomsToKeep(mol->getNumAtoms());
+      boost::dynamic_bitset<> nbrsToRemove(mol->getNumAtoms());
+      for (const auto &mv : tmatches) {
+        boost::dynamic_bitset<> tmpBondsToBreak(mol->getNumBonds());
+        boost::dynamic_bitset<> tmpAtomsToKeep(mol->getNumAtoms());
+        boost::dynamic_bitset<> tmpNbrsToRemove(mol->getNumAtoms());
         bool passes_filter = true;
-        boost::dynamic_bitset<> target_match_indices(mol.getNumAtoms());
+        boost::dynamic_bitset<> target_match_indices(mol->getNumAtoms());
+        std::for_each(mv.begin(), mv.end(),
+                      [&target_match_indices](const std::pair<int, int> &p) {
+                        target_match_indices.set(p.second);
+                      });
+        unsigned int numUserLabelMatches = 0;
         for (auto &match : mv) {
-          target_match_indices[match.second] = 1;
-        }
-
-        for (auto &match : mv) {
-          const Atom *atm = mol.getAtomWithIdx(match.second);
+          const Atom *atm = mol->getAtomWithIdx(match.second);
           // is this a labelled rgroup or not?
           if (core.second.core_atoms_with_user_labels.find(match.first) ==
               core.second.core_atoms_with_user_labels.end()) {
             // nope... if any neighbor is not part of the substructure
-            //  make sure we are a hydrogen, otherwise, skip the match
+            //  make sure it is a hydrogen, otherwise, skip the match
             for (const auto &nbri :
-                 boost::make_iterator_range(mol.getAtomNeighbors(atm))) {
-              const auto &nbr = mol[nbri];
-              if (nbr->getAtomicNum() != 1 &&
-                  !target_match_indices[nbr->getIdx()]) {
+                 boost::make_iterator_range(mol->getAtomNeighbors(atm))) {
+              const auto &nbr = (*mol)[nbri];
+              auto nbrIdx = nbr->getIdx();
+              bool nbrMatchesTarget = target_match_indices.test(nbrIdx);
+              if (nbr->getAtomicNum() == 1 || nbrMatchesTarget) {
+                continue;
+              }
+              if (!data->params.ignoreUnlabelledRGroups) {
                 passes_filter = false;
                 break;
+              } else {
+                auto b = mol->getBondBetweenAtoms(match.second, nbrIdx);
+                if (b) {
+                  tmpAtomsToKeep.set(match.second);
+                  tmpNbrsToRemove.set(nbrIdx);
+                  tmpBondsToBreak.set(b->getIdx());
+                } else {
+                  BOOST_LOG(rdErrorLog)
+                      << "Expected bond between atoms " << match.second << " and "
+                      << nbrIdx << std::endl;
+                  return -1;
+                }
               }
             }
-          }
-          if (!passes_filter) {
-            break;
+          } else if (data->params.ignoreUnlabelledRGroups && atm->getAtomicNum() != 1) {
+            ++numUserLabelMatches;
           }
         }
-
+        if (tmpBondsToBreak.any()) {
+          passes_filter = (numUserLabelMatches ==
+                           core.second.core_atoms_with_user_labels.size());
+          if (passes_filter) {
+            atomsToKeep |= tmpAtomsToKeep;
+            nbrsToRemove |= tmpNbrsToRemove;
+            bondsToBreak |= tmpBondsToBreak;
+          }
+        }
         if (passes_filter) {
           tmatches_filtered.push_back(mv);
+        }
+      }
+      if (bondsToBreak.any()) {
+        std::vector<unsigned int> bondIndicesVect;
+        for (size_t bi = 0; bi < bondsToBreak.size(); ++bi) {
+          if (bondsToBreak.test(bi)) {
+            bondIndicesVect.push_back(bi);
+          }
+        }
+        std::vector<unsigned int> nCutsPerAtom(mol->getNumAtoms());
+        ROMOL_SPTR prunedMol(MolFragmenter::fragmentOnBonds(
+            static_cast<const ROMol &>(*mol), bondIndicesVect, false, nullptr,
+            nullptr, &nCutsPerAtom));
+        for (size_t ai = 0; ai < nCutsPerAtom.size(); ++ai) {
+          if (!nCutsPerAtom.at(ai)) {
+            continue;
+          }
+          auto a = prunedMol->getAtomWithIdx(ai);
+          a->setNumExplicitHs(nCutsPerAtom.at(ai));
+          a->setNoImplicit(true);
+        }
+        prunedMol.reset(MolOps::addHs(*prunedMol, true, true));
+        std::vector<int> mapping;
+        auto numFrags = MolOps::getMolFrags(*prunedMol, mapping);
+        boost::dynamic_bitset<> fragsToKeep(numFrags);
+        for (size_t ai = 0; ai < atomsToKeep.size(); ++ai) {
+          if (atomsToKeep.test(ai)) {
+            fragsToKeep.set(mapping.at(ai));
+          }
+        }
+        boost::dynamic_bitset<> atomsToRemove(prunedMol->getNumAtoms());
+        for (size_t ai = 0; ai < mapping.size(); ++ai) {
+          if (!fragsToKeep.test(mapping.at(ai))) {
+            atomsToRemove.set(ai);
+          }
+        }
+        for (size_t ai = 0; ai < nbrsToRemove.size(); ++ai) {
+          // if the nbr that was due to be removed has not actually
+          // been removed, it means that it is still attached to the
+          // main substructure through a labelled R-group. This is
+          // not allowed as it would mean to transform a cyclic R-group
+          // into a linear one
+          if (nbrsToRemove.test(ai) && !atomsToRemove.test(ai)) {
+            return -1;
+          }
+        }
+        mol.reset(new RWMol(*prunedMol));
+        MolOps::sanitizeMol(*mol);
+        for (auto b : prunedMol->bonds()) {
+          if (atomsToRemove.test(b->getBeginAtomIdx()) ||
+              atomsToRemove.test(b->getEndAtomIdx())) {
+            mol->removeBond(b->getBeginAtomIdx(), b->getEndAtomIdx());
+          }
+        }
+        std::vector<int> atomIndices(mol->getNumAtoms(), 0);
+        for (auto ai = atomsToRemove.size(); ai;) {
+          if (atomsToRemove.test(--ai)) {
+            mol->removeAtom(ai);
+            atomIndices[ai] = -1;
+          }
+        }
+        int aiAfterPruning = 0;
+        for (auto &ai : atomIndices) {
+          if (!ai) {
+            ai = aiAfterPruning++;
+          }
+        }
+        for (auto &mv : tmatches_filtered) {
+          for (auto &match : mv) {
+            auto ai = atomIndices.at(match.second);
+            if (ai == -1) {
+              // The unlabelled R-group cannot be unambiguously
+              // ignored as there is a simmetry with a labelled
+              // R-group, so we have to reject the molecule
+              return -1;
+            }
+            match.second = ai;
+          }
         }
       }
       tmatches = tmatches_filtered;
@@ -176,8 +284,8 @@ int RGroupDecomposition::add(const ROMol &inmol) {
     const bool labelByIndex = true;
     const bool requireDummyMatch = false;
     std::unique_ptr<ROMol> coreCopy =
-        rcore->replaceCoreDummiesWithMolMatches(mol, tmatche);
-    tMol.reset(replaceCore(mol, *coreCopy, tmatche, replaceDummies,
+        rcore->replaceCoreDummiesWithMolMatches(*mol, tmatche);
+    tMol.reset(replaceCore(*mol, *coreCopy, tmatche, replaceDummies,
                            labelByIndex, requireDummyMatch));
 
     if (tMol) {
@@ -226,7 +334,7 @@ int RGroupDecomposition::add(const ROMol &inmol) {
           // special case, only one fragment
           if (fragments.size() == 1) {  // need to make a new core
             // remove the sidechains
-            RWMol newCore(mol);
+            RWMol newCore(*mol);
 
             for (const auto &mvpair : tmatche) {
               const Atom *coreAtm = rcore->core->getAtomWithIdx(mvpair.first);

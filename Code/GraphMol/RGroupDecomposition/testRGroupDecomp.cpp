@@ -1981,6 +1981,157 @@ M  END
   }
 }
 
+void testIgnoreUnlabelledRGroups() {
+  BOOST_LOG(rdInfoLog)
+      << "********************************************************\n";
+  BOOST_LOG(rdInfoLog) << "test the ignoreUnlabelledRGroups param"
+                       << std::endl;
+  {
+    std::string core_ctab = R"CTAB(
+     RDKit          2D
+
+  9  9  0  0  0  0  0  0  0  0999 V2000
+    2.5242   -1.5657    0.0000 R#  0  0  0  0  0  0  0  0  0  0  0  0
+    1.3515   -0.6304    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    1.6852    0.8320    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    0.7500    2.0047    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -0.7500    2.0047    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -1.6852    0.8320    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -1.3515   -0.6304    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -2.5242   -1.5657    0.0000 R#  0  0  0  0  0  0  0  0  0  0  0  0
+   -0.0000   -1.2812    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+  1  2  1  0
+  2  3  1  0
+  3  4  1  0
+  4  5  1  0
+  5  6  1  0
+  6  7  1  0
+  7  8  1  0
+  7  9  1  0
+  9  2  1  0
+M  RGP  2   1   1   8   3
+M  END
+  )CTAB";
+    ROMOL_SPTR core(MolBlockToMol(core_ctab));
+    {
+      RGroupDecompositionParameters params;
+      params.onlyMatchAtRGroups = true;
+      RGroupDecomposition decomp(*core, params);
+
+      ROMOL_SPTR mol1 = "FC1CCCCC(Br)C1"_smiles;
+      TEST_ASSERT(decomp.add(*mol1) != -1);
+      ROMOL_SPTR mol2 = "CC1CC(N)CCCC1"_smiles;
+      TEST_ASSERT(decomp.add(*mol2) != -1);
+      ROMOL_SPTR mol3 = "C2CCC1CCCC(N)CC12"_smiles;
+      TEST_ASSERT(decomp.add(*mol3) == -1);
+      ROMOL_SPTR mol4 = "CC1CCC(O)CCC1"_smiles;
+      TEST_ASSERT(decomp.add(*mol4) == -1);
+      ROMOL_SPTR mol5 = "CC1CC(N)C(O)CCC1"_smiles;
+      TEST_ASSERT(decomp.add(*mol5) == -1);
+      ROMOL_SPTR mol6 = "CC1CC(N)C2(OCCO2)CCC1"_smiles;
+      TEST_ASSERT(decomp.add(*mol6) == -1);
+      ROMOL_SPTR mol7 = "CC1CC(N)C(O2)CCC12"_smiles;
+      TEST_ASSERT(decomp.add(*mol7) == -1);
+    }
+    RGroupDecompositionParameters params;
+    params.onlyMatchAtRGroups = true;
+    params.ignoreUnlabelledRGroups = true;
+    RGroupDecomposition decomp(*core, params);
+
+    ROMOL_SPTR mol1 = "FC1CCCCC(Br)C1"_smiles;
+    TEST_ASSERT(decomp.add(*mol1) != -1);
+    ROMOL_SPTR mol2 = "CC1CC(N)CCCC1"_smiles;
+    TEST_ASSERT(decomp.add(*mol2) != -1);
+    ROMOL_SPTR mol3 = "C2CCC1CCCC(N)CC12"_smiles;
+    TEST_ASSERT(decomp.add(*mol3) == -1);
+    ROMOL_SPTR mol4 = "CC1CCC(O)CCC1"_smiles;
+    TEST_ASSERT(decomp.add(*mol4) == -1);
+    ROMOL_SPTR mol5 = "CC1CC(N)C(O)CCC1"_smiles;
+    TEST_ASSERT(decomp.add(*mol5) != -1);
+    ROMOL_SPTR mol6 = "CC1CC(N)C2(OCCO2)CCC1"_smiles;
+    TEST_ASSERT(decomp.add(*mol6) != -1);
+    ROMOL_SPTR mol7 = "CC1CC(N)C(O2)CCC12"_smiles;
+    TEST_ASSERT(decomp.add(*mol7) != -1);
+    TEST_ASSERT(decomp.process());
+    auto rows = decomp.getRGroupsAsRows();
+    const std::vector<const char *> res{
+        "Core:C1CCC([*:3])CC([*:1])C1 R1:Br[*:1] R3:F[*:3]",
+        "Core:C1CCC([*:3])CC([*:1])C1 R1:N[*:1] R3:C[*:3]",
+        "Core:C1CCC([*:3])CC([*:1])C1 R1:N[*:1] R3:C[*:3]",
+        "Core:C1CCC([*:3])CC([*:1])C1 R1:N[*:1] R3:C[*:3]",
+        "Core:C1CCC([*:3])CC([*:1])C1 R1:N[*:1] R3:C[*:3]"};
+    TEST_ASSERT(rows.size() == res.size());
+    size_t i = 0;
+    for (RGroupRows::const_iterator it = rows.begin(); it != rows.end(); ++it) {
+      CHECK_RGROUP(it, res.at(i++));
+    }
+  }
+  {
+    std::string core_ctab = R"CTAB(
+     RDKit          2D
+
+ 10 10  0  0  0  0  0  0  0  0999 V2000
+    2.5112   -1.7956    0.0000 R#  0  0  0  0  0  0  0  0  0  0  0  0
+    1.4716   -0.7143    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    1.9947    0.6915    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    1.2217    1.9770    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -0.2652    2.1742    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -1.3465    1.1346    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -1.2079   -0.3590    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -2.6949   -0.1618    0.0000 R#  0  0  0  0  0  0  0  0  0  0  0  0
+   -1.7310   -1.7648    0.0000 R#  0  0  0  0  0  0  0  0  0  0  0  0
+    0.0463   -1.1818    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+  1  2  1  0
+  2  3  1  0
+  3  4  1  0
+  4  5  1  0
+  5  6  1  0
+  6  7  1  0
+  7  8  1  0
+  7  9  1  0
+  7 10  1  0
+ 10  2  1  0
+M  RGP  3   1   1   8   2   9   3
+M  END
+  )CTAB";
+    ROMOL_SPTR core(MolBlockToMol(core_ctab));
+    {
+      RGroupDecompositionParameters params;
+      params.onlyMatchAtRGroups = true;
+      RGroupDecomposition decomp(*core, params);
+
+      ROMOL_SPTR mol1 = "FC1CCCCC(Br)(Cl)C1"_smiles;
+      TEST_ASSERT(decomp.add(*mol1) != -1);
+      ROMOL_SPTR mol2 = "C2CC12CC(N)CCCC2(OCCO2)1"_smiles;
+      TEST_ASSERT(decomp.add(*mol2) == -1);
+      ROMOL_SPTR mol3 = "C2CC12CC(N)CCC2(OCCO2)C1"_smiles;
+      TEST_ASSERT(decomp.add(*mol3) == -1);
+    }
+    RGroupDecompositionParameters params;
+    params.onlyMatchAtRGroups = true;
+    params.ignoreUnlabelledRGroups = true;
+    RGroupDecomposition decomp(*core, params);
+
+    ROMOL_SPTR mol1 = "FC1CCCCC(Br)(Cl)C1"_smiles;
+    TEST_ASSERT(decomp.add(*mol1) != -1);
+    ROMOL_SPTR mol2 = "C2CC12CC(N)CCCC2(OCCO2)1"_smiles;
+    TEST_ASSERT(decomp.add(*mol2) != -1);
+    ROMOL_SPTR mol3 = "C2CC12CC(N)CCC2(OCCO2)C1"_smiles;
+    TEST_ASSERT(decomp.add(*mol3) == -1);
+    TEST_ASSERT(decomp.process());
+    auto rows = decomp.getRGroupsAsRows();
+    const std::vector<const char *> res{
+        "Core:C1CCC([*:2])([*:3])CC([*:1])C1 R1:F[*:1] R2:Cl[*:2] R3:Br[*:3]",
+        "Core:C1CCC([*:2])([*:3])CC([*:1])C1 R1:N[*:1] R2:C(C[*:3])[*:2] "
+        "R3:C(C[*:3])[*:2]"};
+    TEST_ASSERT(rows.size() == res.size());
+    size_t i = 0;
+    for (RGroupRows::const_iterator it = rows.begin(); it != rows.end(); ++it) {
+      CHECK_RGROUP(it, res.at(i++));
+    }
+  }
+}
+
 int main() {
   RDLog::InitLogs();
   boost::logging::disable_logs("rdApp.debug");
@@ -2020,6 +2171,7 @@ int main() {
   testMultiCorePreLabelled();
   testCoreWithRGroupAdjQuery();
   testGeminalRGroups();
+  testIgnoreUnlabelledRGroups();
   BOOST_LOG(rdInfoLog)
       << "********************************************************\n";
   return 0;
