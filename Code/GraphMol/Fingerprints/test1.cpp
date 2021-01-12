@@ -1404,12 +1404,14 @@ void testAtomPairs() {
   c1 = AtomPairs::getAtomCode(mol->getAtomWithIdx(0));
   c2 = AtomPairs::getAtomCode(mol->getAtomWithIdx(1));
   c3 = AtomPairs::getAtomCode(mol->getAtomWithIdx(2));
-  tgt = 1 | (std::min(c1, c2) | std::max(c1, c2) << AtomPairs::codeSize)
-                << AtomPairs::numPathBits;
+  tgt = 1 |
+        (std::min(c1, c2) | std::max(c1, c2) << AtomPairs::codeSize)
+            << AtomPairs::numPathBits;
   TEST_ASSERT(AtomPairs::getAtomPairCode(c1, c2, 1) == tgt);
   TEST_ASSERT(AtomPairs::getAtomPairCode(c2, c1, 1) == tgt);
-  tgt = 2 | (std::min(c1, c3) | std::max(c1, c3) << AtomPairs::codeSize)
-                << AtomPairs::numPathBits;
+  tgt = 2 |
+        (std::min(c1, c3) | std::max(c1, c3) << AtomPairs::codeSize)
+            << AtomPairs::numPathBits;
   TEST_ASSERT(AtomPairs::getAtomPairCode(c1, c3, 2) == tgt);
   TEST_ASSERT(AtomPairs::getAtomPairCode(c3, c1, 2) == tgt);
 
@@ -1530,8 +1532,9 @@ void testTorsions() {
   c2 = AtomPairs::getAtomCode(mol->getAtomWithIdx(1)) - 2;
   c3 = AtomPairs::getAtomCode(mol->getAtomWithIdx(2)) - 2;
   c4 = AtomPairs::getAtomCode(mol->getAtomWithIdx(3)) - 1;
-  tgt = c1 | (c2 | (c3 | c4 << AtomPairs::codeSize) << AtomPairs::codeSize)
-                 << AtomPairs::codeSize;
+  tgt = c1 |
+        (c2 | (c3 | c4 << AtomPairs::codeSize) << AtomPairs::codeSize)
+            << AtomPairs::codeSize;
   codes.clear();
   codes.push_back(static_cast<unsigned int>(c1));
   codes.push_back(static_cast<unsigned int>(c2));
@@ -1955,7 +1958,8 @@ void testMorganAtomInfo() {
 
 void testMorganAtomInfoRedundantEnv() {
   BOOST_LOG(rdErrorLog) << "-------------------------------------" << std::endl;
-  BOOST_LOG(rdErrorLog) << "    Test atom info from morgan fingerprints including Info Redundant Environments."
+  BOOST_LOG(rdErrorLog) << "    Test atom info from morgan fingerprints "
+                           "including Info Redundant Environments."
                         << std::endl;
 
   {
@@ -1966,13 +1970,10 @@ void testMorganAtomInfoRedundantEnv() {
 
     mol = SmilesToMol("CCCC(N)(O)");
 
-
-
     fp = MorganFingerprints::getFingerprint(*mol, 2, nullptr, nullptr, false,
                                             true, true, false, &bitInfo, false);
-    
+
     TEST_ASSERT(bitInfo.size() == 14);
-    
 
     delete fp;
 
@@ -1980,12 +1981,11 @@ void testMorganAtomInfoRedundantEnv() {
     fp = MorganFingerprints::getFingerprint(*mol, 2, nullptr, nullptr, false,
                                             true, true, false, &bitInfo, true);
     TEST_ASSERT(bitInfo.size() == 17);
-    
+
     delete fp;
 
     delete mol;
   }
-
 
   BOOST_LOG(rdErrorLog) << "  done" << std::endl;
 }
@@ -3879,11 +3879,41 @@ void testGitHubIssue2115() {
   BOOST_LOG(rdErrorLog) << "  done" << std::endl;
 }
 
+void testGitHubIssue3723() {
+  BOOST_LOG(rdErrorLog) << "-------------------------------------" << std::endl;
+  BOOST_LOG(rdErrorLog)
+      << "Github #3723: Fingerprint crash for mols with Zero order bonds"
+      << std::endl;
+
+  auto molblock = R"CTAB(mol
+     RDKit          3D
+
+  7  6  0  0  0  0  0  0  0  0999 V2000
+   -0.0922   -0.0921   -0.0922 Al  0  0  0  0  0  3  0  0  0  0  0  0
+    0.0770   -0.1091   -2.0560 N   0  0  0  0  0  0  0  0  0  0  0  0
+    1.8576   -0.1093   -0.1207 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -2.0560    0.0769   -0.1091 N   0  0  0  0  0  0  0  0  0  0  0  0
+   -0.1207    1.8576   -0.1093 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -0.1091   -2.0561    0.0770 N   0  0  0  0  0  0  0  0  0  0  0  0
+   -0.1093   -0.1207    1.8576 C   0  0  0  0  0  0  0  0  0  0  0  0
+  2  1  1  0
+  3  1  1  0
+  4  1  1  0
+  5  1  1  0
+  6  1  1  0
+  7  1  1  0
+M  ZBO  3   1   0   3   0   5   0
+M  HYD  4   1   0   2   3   4   3   6   3
+M  END)CTAB";
+  std::unique_ptr<ROMol> mol{MolBlockToMol(molblock)};
+
+  TEST_ASSERT(AtomPairs::getAtomCode(mol->getAtomWithIdx(0), 0, false) == 486);
+}
+
 int main(int argc, char *argv[]) {
   (void)argc;
   (void)argv;
   RDLog::InitLogs();
-#if 1
   test1();
   test2();
   test3();
@@ -3935,9 +3965,9 @@ int main(int argc, char *argv[]) {
   testGitHubIssue879();
   testGitHubIssue1496();
   testGitHubIssue1793();
-#endif
   testGitHubIssue1993();
   testGitHubIssue2115();
+  testGitHubIssue3723();
 
   return 0;
 }
