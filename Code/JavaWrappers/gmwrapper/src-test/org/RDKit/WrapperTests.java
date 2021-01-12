@@ -332,7 +332,7 @@ public class WrapperTests extends GraphMolTest {
                 new KekulizeException(TEST_MESSAGE, uInt_Vect);
         assertEquals(TEST_MESSAGE, e.getMessage());
         uInt_Vect.delete();
-        ke.delete();
+        e.delete();
     }
     
     public static void main(String args[]) {
