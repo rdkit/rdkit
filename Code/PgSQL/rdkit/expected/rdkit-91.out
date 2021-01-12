@@ -977,3 +977,10 @@ WARNING:  could not create molecule from SMILES 'a'
  
 (1 row)
 
+select qmol_from_smiles('C1C'::cstring);
+WARNING:  could not create molecule from SMILES 'C1C'
+ qmol_from_smiles 
+------------------
+ 
+(1 row)
+
