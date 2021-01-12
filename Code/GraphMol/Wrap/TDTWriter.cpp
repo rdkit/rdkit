@@ -1,6 +1,5 @@
-// $Id$
 //
-//  Copyright (C) 2005-2010  Rational Discovery LLC
+//  Copyright (C) 2005-2021 Greg Landrum and Rational Discovery LLC
 //
 //   @@ All Rights Reserved @@
 //  This file is part of the RDKit.
@@ -17,6 +16,7 @@
 #include <GraphMol/FileParsers/MolWriters.h>
 #include <GraphMol/RDKitBase.h>
 #include "rdchem.h"
+#include "ContextManagers.h"
 #include <RDBoost/PySequenceHolder.h>
 #include <RDBoost/python_streambuf.h>
 
@@ -53,6 +53,9 @@ struct tdtwriter_wrap {
         .def("__init__", python::make_constructor(&getTDTWriter))
         .def(
             python::init<std::string>(python::args("fileName"), docStr.c_str()))
+        .def("__enter__", &MolIOEnter<TDTWriter>,
+             python::return_internal_reference<>())
+        .def("__exit__", &MolIOExit<TDTWriter>)
         .def("SetProps", SetTDTWriterProps,
              "Sets the properties to be written to the output file\n\n"
              "  ARGUMENTS:\n\n"

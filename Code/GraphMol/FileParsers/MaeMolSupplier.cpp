@@ -443,6 +443,7 @@ void MaeMolSupplier::init() {}
 void MaeMolSupplier::reset() {}
 
 ROMol *MaeMolSupplier::next() {
+  PRECONDITION(dp_sInStream != nullptr, "no stream");
   if (!d_stored_exc.empty()) {
     throw FileParseException(d_stored_exc);
   } else if (atEnd()) {

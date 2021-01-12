@@ -1,6 +1,5 @@
-// $Id$
 //
-//  Copyright (C) 2005-2008 Greg Landrum and Rational Discovery LLC
+//  Copyright (C) 2005-2021 Greg Landrum and Rational Discovery LLC
 //
 //   @@ All Rights Reserved @@
 //  This file is part of the RDKit.
@@ -16,6 +15,7 @@
 #include <GraphMol/FileParsers/MolSupplier.h>
 #include <GraphMol/RDKitBase.h>
 #include "MolSupplier.h"
+#include "ContextManagers.h"
 
 namespace python = boost::python;
 
@@ -58,15 +58,16 @@ struct tdtmolsup_wrap {
             (python::arg("fileName"), python::arg("nameRecord") = "",
              python::arg("confId2D") = -1, python::arg("confId3D") = -1,
              python::arg("sanitize") = true)))
-        .def("__iter__",
-             (TDTMolSupplier * (*)(TDTMolSupplier *)) & MolSupplIter,
+        .def("__enter__", &MolIOEnter<TDTMolSupplier>,
+             python::return_internal_reference<>())
+        .def("__exit__", &MolIOExit<TDTMolSupplier>)
+        .def("__iter__", &MolSupplIter<TDTMolSupplier>,
              python::return_internal_reference<1>())
-        .def("__next__", (ROMol * (*)(TDTMolSupplier *)) & MolSupplNext,
+        .def("__next__", &MolSupplNext<TDTMolSupplier>,
              "Returns the next molecule in the file.  Raises _StopIteration_ "
              "on EOF.\n",
              python::return_value_policy<python::manage_new_object>())
-        .def("__getitem__",
-             (ROMol * (*)(TDTMolSupplier *, int)) & MolSupplGetItem,
+        .def("__getitem__", &MolSupplGetItem<TDTMolSupplier>,
              python::return_value_policy<python::manage_new_object>())
         .def("reset", &TDTMolSupplier::reset,
              "Resets our position in the file to the beginning.\n")

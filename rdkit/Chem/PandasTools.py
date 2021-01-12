@@ -18,11 +18,11 @@ If the dataframe is containing a molecule format in a column (e.g. smiles), like
 ...   'Name':'Ampicilline'}, ignore_index=True)#Ampicilline
 >>> print([str(x) for x in  antibiotics.columns])
 ['Name', 'Smiles']
->>> print(antibiotics) # doctest: +ELLIPSIS
+>>> print(antibiotics)
             Name                                             Smiles
 0  Penicilline G    CC1(C(N2C(S1)C(C2=O)NC(=O)CC3=CC=CC=C3)C(=O)O)C
-1   Tetracycline  CC1(C2CC3C(C(=O)C(=C(C3(C(=O)C2=C(C4=C1C=CC=C4*...*
-2  Ampicilline  CC1(C(N2C(S1)C(C2=O)NC(=O)C(C3=CC=CC=C3)N)C(=O*...*
+1   Tetracycline  CC1(C2CC3C(C(=O)C(=C(C3(C(=O)C2=C(C4=C1C=CC=C4...
+2  Ampicilline  CC1(C(N2C(S1)C(C2=O)NC(=O)C(C3=CC=CC=C3)N)C(=O...
 
 a new column can be created holding the respective RDKit molecule objects. The fingerprint can be
 included to accelerate substructure searches on the dataframe.
@@ -37,10 +37,10 @@ Such the antibiotics containing the beta-lactam ring "C1C(=O)NC1" can be obtaine
 
 >>> beta_lactam = Chem.MolFromSmiles('C1C(=O)NC1')
 >>> beta_lactam_antibiotics = antibiotics[antibiotics['Molecule'] >= beta_lactam]
->>> print(beta_lactam_antibiotics[['Name','Smiles']]) # doctest: +ELLIPSIS
+>>> print(beta_lactam_antibiotics[['Name','Smiles']])
             Name                                             Smiles
 0  Penicilline G    CC1(C(N2C(S1)C(C2=O)NC(=O)CC3=CC=CC=C3)C(=O)O)C
-2  Ampicilline  CC1(C(N2C(S1)C(C2=O)NC(=O)C(C3=CC=CC=C3)N)C(=O*...*
+2  Ampicilline  CC1(C(N2C(S1)C(C2=O)NC(=O)C(C3=CC=CC=C3)N)C(=O...
 
 
 It is also possible to load an SDF file can be load into a dataframe.
@@ -82,8 +82,8 @@ The standard ForwardSDMolSupplier keywords are also available:
 
 Conversion to html is quite easy:
 
->>> htm = frame.to_html() # doctest: +ELLIPSIS
-*...*
+>>> htm = frame.to_html() # doctest:
+...
 >>> str(htm[:36])
 '<table border="1" class="dataframe">'
 
@@ -198,10 +198,19 @@ def patchPandasrepr(self, **kwargs):
   import pandas.io.formats.html  # necessary for loading HTMLFormatter
   defHTMLFormatter_write_cell = pandas.io.formats.html.HTMLFormatter._write_cell
   pandas.io.formats.html.HTMLFormatter._write_cell = _patched_HTMLFormatter_write_cell
-  defPandasGetAdjustment = pandas.io.formats.format._get_adjustment
-  pandas.io.formats.format._get_adjustment = _patched_get_adjustment
+  # Github #3701 was a problem with a private function being renamed (made public) in
+  # pandas v1.2. Rather than relying on version numbers we just use getattr:
+  if hasattr(pandas.io.formats.format, '_get_adjustment'):
+    attr = '_get_adjustment'
+  else:
+    # if this one doesn't work at some point in the future it's another bug
+    # and we'll add another patch for it. <sigh>
+    attr = 'get_adjustment'
+
+  defPandasGetAdjustment = getattr(pandas.io.formats.format, attr)
+  setattr(pandas.io.formats.format, attr, _patched_get_adjustment)
   res = defPandasRepr(self, **kwargs)
-  pandas.io.formats.format._get_adjustment = defPandasGetAdjustment
+  setattr(pandas.io.formats.format, attr, defPandasGetAdjustment)
   pandas.io.formats.html.HTMLFormatter._write_cell = defHTMLFormatter_write_cell
   return res
 
@@ -415,8 +424,8 @@ def AddMoleculeColumnToFrame(frame, smilesCol='Smiles', molCol='ROMol', includeF
   if not includeFingerprints:
     frame[molCol] = frame[smilesCol].map(Chem.MolFromSmiles)
   else:
-    frame[molCol] = frame[smilesCol].map(lambda smiles: _MolPlusFingerprint(
-      Chem.MolFromSmiles(smiles)))
+    frame[molCol] = frame[smilesCol].map(
+      lambda smiles: _MolPlusFingerprint(Chem.MolFromSmiles(smiles)))
   RenderImagesInAllDataFrames(images=True)
 
 
@@ -779,6 +788,12 @@ if __name__ == '__main__':  # pragma: nocover
       sdfFile = os.path.join(RDConfig.RDDataDir, 'NCI/first_200.props.sdf')
       frame = LoadSDF(sdfFile)
       SaveXlsxFromFrame(frame, 'foo.xlsx')
+
+    def testGithub3701(self):
+      ' problem with update to pandas v1.2.0 '
+      df = pd.DataFrame({"name": ["ethanol", "furan"], "smiles": ["CCO", "c1ccoc1"]})
+      AddMoleculeColumnToFrame(df, 'smiles', 'molecule')
+      self.assertEqual(len(df.molecule), 2)
 
   if pd is None:
     print("pandas installation not found, skipping tests", file=sys.stderr)

@@ -2755,12 +2755,8 @@ CAS<~>
       i += 1
     self.assertEqual(i, 16)
 
+  @unittest.skipIf(not hasattr(Chem, 'MaeMolSupplier'), "not build with MAEParser support")
   def testMaeStreamSupplier(self):
-    try:
-      MaeMolSupplier = Chem.MaeMolSupplier
-    except AttributeError:  # Built without Maestro support, return w/o testing
-      return
-
     fileN = os.path.join(RDConfig.RDBaseDir, 'Code', 'GraphMol', 'FileParsers', 'test_data',
                          'NCI_aids_few.maegz')
     molNames = [
@@ -2768,7 +2764,7 @@ CAS<~>
       "220", "229", "256"
     ]
     inf = gzip.open(fileN)
-    suppl = MaeMolSupplier(inf)
+    suppl = Chem.MaeMolSupplier(inf)
 
     i = 0
     while not suppl.atEnd():
@@ -2780,7 +2776,7 @@ CAS<~>
 
     # make sure we have object ownership preserved
     inf = gzip.open(fileN)
-    suppl = MaeMolSupplier(inf)
+    suppl = Chem.MaeMolSupplier(inf)
     inf = None
     i = 0
     while not suppl.atEnd():
@@ -2790,19 +2786,15 @@ CAS<~>
       i += 1
     self.assertEqual(i, 16)
 
+  @unittest.skipIf(not hasattr(Chem, 'MaeMolSupplier'), "not build with MAEParser support")
   def testMaeFileSupplier(self):
-    try:
-      MaeMolSupplier = Chem.MaeMolSupplier
-    except AttributeError:  # Built without Maestro support, return w/o testing
-      return
-
     fileN = os.path.join(RDConfig.RDBaseDir, 'Code', 'GraphMol', 'FileParsers', 'test_data',
                          'NCI_aids_few.mae')
     molNames = [
       "48", "78", "128", "163", "164", "170", "180", "186", "192", "203", "210", "211", "213",
       "220", "229", "256"
     ]
-    suppl = MaeMolSupplier(fileN)
+    suppl = Chem.MaeMolSupplier(fileN)
 
     i = 0
     while not suppl.atEnd():
@@ -2812,18 +2804,14 @@ CAS<~>
       i += 1
     self.assertEqual(i, 16)
 
+  @unittest.skipIf(not hasattr(Chem, 'MaeMolSupplier'), "not build with MAEParser support")
   def testMaeFileSupplierException(self):
-    try:
-      MaeMolSupplier = Chem.MaeMolSupplier
-    except AttributeError:  # Built without Maestro support, return w/o testing
-      return
-
     fileN = os.path.join(RDConfig.RDBaseDir, 'Code', 'GraphMol', 'FileParsers', 'test_data',
                          'bad_ppty.mae')
     err_msg_substr = "Bad format for property"
 
     ok = False
-    suppl = MaeMolSupplier(fileN)
+    suppl = Chem.MaeMolSupplier(fileN)
     for i in range(5):
       try:
         mol = next(suppl)
@@ -4037,8 +4025,8 @@ CAS<~>
         self.assertTrue(
           ((not resMolSuppl[i].GetBondWithIdx(bondIdx).GetIsAromatic()) and
            (not resMolSuppl[i + 1].GetBondWithIdx(bondIdx).GetIsAromatic()) and
-           (resMolSuppl[i].GetBondWithIdx(bondIdx).GetBondType() == resMolSuppl[
-             i + 1].GetBondWithIdx(bondIdx).GetBondType()))
+           (resMolSuppl[i].GetBondWithIdx(bondIdx).GetBondType()
+            == resMolSuppl[i + 1].GetBondWithIdx(bondIdx).GetBondType()))
           or (resMolSuppl[i].GetBondWithIdx(bondIdx).GetIsAromatic()
               and resMolSuppl[i + 1].GetBondWithIdx(bondIdx).GetIsAromatic() and (int(
                 round(resMolSuppl[i].GetBondWithIdx(bondIdx).GetBondTypeAsDouble() +
@@ -6249,28 +6237,107 @@ M  END
       self.assertTrue(pval in txt)
 
   def testMolzip(self):
-    tests = [
-      ["C[*:1]", "N[*:1]", "CN", Chem.MolzipParams()]
-      ]
+    tests = [["C[*:1]", "N[*:1]", "CN", Chem.MolzipParams()]]
     for a, b, res, params in tests:
-      self.assertEqual(Chem.CanonSmiles(res), Chem.MolToSmiles(
-        Chem.molzip(Chem.MolFromSmiles(a), Chem.MolFromSmiles(b), params)))
+      self.assertEqual(
+        Chem.CanonSmiles(res),
+        Chem.MolToSmiles(Chem.molzip(Chem.MolFromSmiles(a), Chem.MolFromSmiles(b), params)))
 
     # multiple arg test
     a = Chem.MolFromSmiles('C=C[1*]')
     b = Chem.MolFromSmiles('O/C=N/[1*]')
     p = Chem.MolzipParams()
     p.label = Chem.MolzipLabel.Isotope
-    c = Chem.molzip(a,b, p)
+    c = Chem.molzip(a, b, p)
     self.assertEqual(Chem.MolToSmiles(c), 'C=C/N=C/O')
 
     # single argument test
     a = Chem.MolFromSmiles('C=C[1*].O/C=N/[1*]')
     p = Chem.MolzipParams()
     p.label = Chem.MolzipLabel.Isotope
-    c = Chem.molzip(a,p)
+    c = Chem.molzip(a, p)
     self.assertEqual(Chem.MolToSmiles(c), 'C=C/N=C/O')
-    
+
+  def testContextManagers(self):
+    from rdkit import RDLogger
+    RDLogger.DisableLog('rdApp.*')
+    from io import StringIO
+    fileN = os.path.join(RDConfig.RDBaseDir, 'Code', 'GraphMol', 'Wrap', 'test_data',
+                         'github3553.sdf')
+    with Chem.SDMolSupplier(fileN) as suppl:
+      mols = [x for x in suppl if x is not None]
+    sio = StringIO()
+    with Chem.SDWriter(sio) as w:
+      for m in mols:
+        w.write(m)
+    txt = sio.getvalue()
+    self.assertEqual(txt.count('$$$$'), len(mols))
+    with self.assertRaises(RuntimeError):
+      w.write(mols[0])
+
+    with Chem.ForwardSDMolSupplier(fileN) as suppl:
+      mols = [x for x in suppl if x is not None]
+
+    fileN = os.path.join(RDConfig.RDBaseDir, 'Code', 'GraphMol', 'FileParsers', 'test_data',
+                         'first_200.tpsa.csv')
+    with Chem.SmilesMolSupplier(fileN, ",", 0, -1) as suppl:
+      ms = [x for x in suppl if x is not None]
+
+    sio = StringIO()
+    with Chem.SmilesWriter(sio) as w:
+      for m in mols:
+        w.write(m)
+    txt = sio.getvalue()
+    self.assertEqual(txt.count('\n'), len(mols) + 1)
+    with self.assertRaises(RuntimeError):
+      w.write(mols[0])
+
+    data = """$SMI<Cc1nnc(N)nc1C>
+CAS<17584-12-2>
+|
+$SMI<Cc1n[nH]c(=O)nc1N>
+CAS<~>
+|
+$SMI<Cc1n[nH]c(=O)[nH]c1=O>
+CAS<932-53-6>
+|
+$SMI<Cc1nnc(NN)nc1O>
+CAS<~>
+|"""
+    with Chem.TDTMolSupplier() as suppl:
+      suppl.SetData(data, "CAS")
+      ms = [x for x in suppl if x is not None]
+    sio = StringIO()
+    with Chem.TDTWriter(sio) as w:
+      for m in mols:
+        w.write(m)
+    txt = sio.getvalue()
+    self.assertEqual(txt.count('$SMI'), len(mols))
+    with self.assertRaises(RuntimeError):
+      w.write(mols[0])
+
+    fileN = os.path.join(RDConfig.RDBaseDir, 'Code', 'GraphMol', 'FileParsers', 'test_data',
+                         '1CRN.pdb')
+    m = Chem.MolFromPDBFile(fileN)
+    mols = [m, m]
+    sio = StringIO()
+    with Chem.PDBWriter(sio) as w:
+      for m in mols:
+        w.write(m)
+    txt = sio.getvalue()
+    self.assertEqual(txt.count('COMPND    CRAMBIN'), len(mols))
+    with self.assertRaises(RuntimeError):
+      w.write(mols[0])
+
+    if hasattr(Chem, 'MaeMolSupplier'):
+      fileN = os.path.join(RDConfig.RDBaseDir, 'Code', 'GraphMol', 'FileParsers', 'test_data',
+                           'NCI_aids_few.mae')
+      with Chem.MaeMolSupplier(fileN) as suppl:
+        ms = [x for x in suppl if x is not None]
+
+    RDLogger.EnableLog('rdApp.*')
+
+
 if __name__ == '__main__':
   if "RDTESTCASE" in os.environ:
     suite = unittest.TestSuite()
