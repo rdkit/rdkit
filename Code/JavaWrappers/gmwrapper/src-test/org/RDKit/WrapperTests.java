@@ -288,13 +288,6 @@ public class WrapperTests extends GraphMolTest {
     }
 
     @Test
-    public void testKeyErrorException() {
-        final KeyErrorException e = new KeyErrorException(TEST_MESSAGE);
-        assertEquals("Unknown key: " + TEST_MESSAGE, e.getMessage());
-
-    }
-
-    @Test
     public void testGenericRDKitException() {
         final GenericRDKitException e =
                 new GenericRDKitException(TEST_MESSAGE);
