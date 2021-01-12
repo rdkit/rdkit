@@ -105,6 +105,7 @@ python::object EnumerateLibraryBase_Serialize(const EnumerateLibraryBase &en) {
 
 class EnumerateLibraryWrap : public RDKit::EnumerateLibrary {
 public:
+  virtual ~EnumerateLibraryWrap() {}
   EnumerateLibraryWrap() : RDKit::EnumerateLibrary() {}
   EnumerateLibraryWrap(const RDKit::ChemicalReaction &rxn, python::list ob,
                        const EnumerationParams & params = EnumerationParams()
@@ -293,8 +294,7 @@ library2.InitFromString(s)\n\
 for result in itertools.islice(libary2, 1000):\n\
     # do something with the next 1000 samples\n\
 ";
-    python::class_<EnumerateLibraryWrap,
-                   EnumerateLibraryWrap*,EnumerateLibraryWrap&,
+    python::class_<EnumerateLibraryWrap, boost::noncopyable,
                    python::bases<RDKit::EnumerateLibraryBase> >(
                        "EnumerateLibrary", docString.c_str(),
                        python::init<>())
