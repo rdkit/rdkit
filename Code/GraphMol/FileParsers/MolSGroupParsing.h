@@ -11,6 +11,7 @@
 
 #pragma once
 #include <GraphMol/SubstanceGroup.h>
+#include <RDGeneral/FileParseException.h>
 #include <sstream>
 
 namespace RDKit {
@@ -25,21 +26,22 @@ unsigned int ParseSGroupIntField(const std::string &text, unsigned int line,
                                  unsigned int &pos,
                                  bool isFieldCounter = false);
 
-bool ParseSGroupIntField(unsigned int &var, bool strictParsing,
-                         const std::string &text, unsigned int line,
-                         unsigned int &pos, bool isFieldCounter = false);
+unsigned int ParseSGroupIntField(bool &ok, bool strictParsing,
+                                 const std::string &text, unsigned int line,
+                                 unsigned int &pos,
+                                 bool isFieldCounter = false);
 
 double ParseSGroupDoubleField(const std::string &text, unsigned int line,
                               unsigned int &pos);
 
-bool ParseSGroupDoubleField(double &var, bool strictParsing,
-                            const std::string &text, unsigned int line,
-                            unsigned int &pos);
+double ParseSGroupDoubleField(bool &ok, bool strictParsing,
+                              const std::string &text, unsigned int line,
+                              unsigned int &pos);
 
 SubstanceGroup *FindSgIdx(IDX_TO_SGROUP_MAP &sGroupMap, int sgIdx,
                           unsigned int line);
 
-template <class Exc>
+template <class Exc = FileParseException>
 void SGroupWarnOrThrow(bool strictParsing, const std::string &msg) {
   if (strictParsing) {
     throw Exc(msg);
