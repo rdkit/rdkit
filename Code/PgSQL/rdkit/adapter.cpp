@@ -216,7 +216,9 @@ extern "C" CROMol parseMolCTAB(char *data, bool keepConformer, bool warnOnFail,
       mol = MolBlockToMol(data);
     } else {
       mol = MolBlockToMol(data, true, false);
-      MolOps::mergeQueryHs(*mol);
+      if (mol != nullptr) {
+        MolOps::mergeQueryHs(*mol);
+      }
     }
   } catch (...) {
     mol = nullptr;
