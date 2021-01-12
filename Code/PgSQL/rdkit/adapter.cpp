@@ -1757,7 +1757,7 @@ extern "C" int ReactionSubstructFP(CChemicalReaction rxn,
 namespace {
 
 struct MoleculeDescriptors {
-  MoleculeDescriptors()  {}
+  MoleculeDescriptors() {}
   unsigned nAtoms{0};
   unsigned nBonds{0};
   unsigned nRings{0};
@@ -2003,7 +2003,20 @@ extern "C" char *findMCSsmiles(char *smiles, char *params) {
     if (0 == strlen(s)) {
       continue;
     }
-    molecules.push_back(RDKit::ROMOL_SPTR(RDKit::SmilesToMol(s)));
+    ROMol *molptr = nullptr;
+    try {
+      molptr = RDKit::SmilesToMol(s);
+    } catch (...) {
+      molptr = nullptr;
+    }
+    if (!molptr) {
+      ereport(
+          ERROR,
+          (errcode(ERRCODE_DATA_EXCEPTION),
+           errmsg("findMCS: could not create molecule from SMILES '%s'", s)));
+      return strdup("");
+    }
+    molecules.push_back(RDKit::ROMOL_SPTR(molptr));
     // elog(WARNING, s);
     s += len;
     s++;  // do s++; while(*s && *s <= ' ');
