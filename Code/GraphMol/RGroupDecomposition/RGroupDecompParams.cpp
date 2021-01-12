@@ -14,8 +14,7 @@
 #include <GraphMol/SmilesParse/SmilesParse.h>
 #include <GraphMol/FMCS/FMCS.h>
 
-namespace RDKit
-{
+namespace RDKit {
 unsigned int RGroupDecompositionParameters::autoGetLabels(const RWMol &core) {
   unsigned int autoLabels = 0;
   if (!onlyMatchAtRGroups) {
@@ -80,9 +79,17 @@ bool rgdAtomCompare(const MCSAtomCompareParameters &p, const ROMol &mol1,
     atom1HasLabel |= (a1->getAtomicNum() == 0);
     atom2HasLabel |= (a2->getAtomicNum() == 0);
   }
-  atom1HasLabel |= a1->hasProp(RLABEL);
-  atom2HasLabel |= a2->hasProp(RLABEL);
-  return !(atom1HasLabel ^ atom2HasLabel);
+  // don't match negative rgroups as these are used by AtomIndexRLabels which
+  // are set for the template core before the MCS and after the MCS for the other core
+  if (a1->hasProp(RLABEL)) {
+    auto label = a1->getProp<int>(RLABEL);
+    atom1HasLabel |= label > 0;
+  }
+  if (a2->hasProp(RLABEL)) {
+    auto label = a2->getProp<int>(RLABEL);
+    atom2HasLabel |= label > 0;
+  }
+  return !(atom1HasLabel != atom2HasLabel);
 }
 
 bool RGroupDecompositionParameters::prepareCore(RWMol &core,
@@ -107,13 +114,13 @@ bool RGroupDecompositionParameters::prepareCore(RWMol &core,
     mols.push_back(ROMOL_SPTR(new ROMol(core)));
     mols.push_back(ROMOL_SPTR(new ROMol(*alignCore)));
     MCSParameters mcsParams;
-    if (labels != AutoDetect) {
+    if (autoLabels != AutoDetect) {
       mcsParams.AtomTyper = rgdAtomCompare;
       mcsParams.CompareFunctionsUserData = &autoLabels;
     }
     MCSResult res = findMCS(mols, &mcsParams);
     if (res.isCompleted()) {
-      RWMol *m = SmartsToMol(res.SmartsString);
+      auto m = res.QueryMol;
       if (m) {
         MatchVectType match1;
         MatchVectType match2;
@@ -144,11 +151,13 @@ bool RGroupDecompositionParameters::prepareCore(RWMol &core,
             if (alignCoreAtm->hasProp(RLABEL)) {
               int rlabel = alignCoreAtm->getProp<int>(RLABEL);
               maxLabel = (std::max)(maxLabel, rlabel + 1);
+              BOOST_LOG(rdDebugLog)
+                  << "MCS match setting core atom " << coreAtm->getIdx()
+                  << " to rgroup " << rlabel << std::endl;
               coreAtm->setProp(RLABEL, rlabel);
             }
           }
         }
-        delete m;
       }
     }
   }
@@ -220,7 +229,7 @@ bool RGroupDecompositionParameters::prepareCore(RWMol &core,
       atomToLabel[atom->getIdx()] = rlabel;
     }
   }
-  indexOffset -= nextOffset;
+  indexOffset -= core.getNumAtoms();
 
   MolOps::AdjustQueryParameters adjustParams;
   adjustParams.makeDummiesQueries = true;
@@ -232,4 +241,4 @@ bool RGroupDecompositionParameters::prepareCore(RWMol &core,
   return true;
 }
 
-}
+}  // namespace RDKit

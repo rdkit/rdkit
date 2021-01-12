@@ -227,18 +227,16 @@ public class WrapperTests extends GraphMolTest {
 
     @Test
     public void testChemicalReactionException() {
-        final ChemicalReactionException cre =
+        final ChemicalReactionException e =
                 new ChemicalReactionException(TEST_MESSAGE);
-        RDKitRuntimeExceptionHandler e = new RDKitRuntimeExceptionHandler(cre);
         assertEquals(TEST_MESSAGE, e.getMessage());
 
     }
 
     @Test
     public void testChemicalReactionParserException() {
-        final ChemicalReactionParserException crpe =
+        final ChemicalReactionParserException e =
                 new ChemicalReactionParserException(TEST_MESSAGE);
-        RDKitRuntimeExceptionHandler e = new RDKitRuntimeExceptionHandler(crpe);
         assertEquals(TEST_MESSAGE, e.getMessage());
 
     }
@@ -250,10 +248,8 @@ public class WrapperTests extends GraphMolTest {
             mol = RWMol.MolFromSmiles("c1ccccc1");
             mol.getConformer();
         } catch (ConformerException e) {
-            RDKitRuntimeExceptionHandler e1 =
-                    new RDKitRuntimeExceptionHandler(e);
             assertEquals("No conformations available on the molecule",
-                    e1.getMessage());
+                    e.getMessage());
         } finally {
             if (mol != null) {
                 mol.delete();
@@ -264,8 +260,7 @@ public class WrapperTests extends GraphMolTest {
 
     @Test
     public void testMolPicklerException() {
-        final MolPicklerException mpe = new MolPicklerException(TEST_MESSAGE);
-        RDKitRuntimeExceptionHandler e = new RDKitRuntimeExceptionHandler(mpe);
+        final MolPicklerException e = new MolPicklerException(TEST_MESSAGE);
         assertEquals(TEST_MESSAGE, e.getMessage());
 
     }
@@ -277,10 +272,8 @@ public class WrapperTests extends GraphMolTest {
             mol = RWMol.MolFromSmiles("c1cccc1");
             mol.sanitizeMol();
         } catch (MolSanitizeException e) {
-            RDKitRuntimeExceptionHandler e1 =
-                    new RDKitRuntimeExceptionHandler(e);
             assertEquals("Can't kekulize mol.  Unkekulized atoms: 0 1 2 3 4\n",
-                    e1.getMessage());
+                    e.getMessage());
         } finally {
             if (mol != null) {
                 mol.delete();
@@ -290,68 +283,54 @@ public class WrapperTests extends GraphMolTest {
 
     @Test
     public void testSmilesParseException() {
-        SmilesParseException spe = new SmilesParseException(TEST_MESSAGE);
-        RDKitRuntimeExceptionHandler e = new RDKitRuntimeExceptionHandler(spe);
+        SmilesParseException e = new SmilesParseException(TEST_MESSAGE);
         assertEquals(TEST_MESSAGE, e.getMessage());
     }
 
     @Test
     public void testKeyErrorException() {
-        final KeyErrorException kee = new KeyErrorException(TEST_MESSAGE);
-        RDKitRuntimeExceptionHandler e = new RDKitRuntimeExceptionHandler(kee);
+        final KeyErrorException e = new KeyErrorException(TEST_MESSAGE);
         assertEquals("Unknown key: " + TEST_MESSAGE, e.getMessage());
 
     }
 
     @Test
     public void testGenericRDKitException() {
-        final GenericRDKitException grdke =
+        final GenericRDKitException e =
                 new GenericRDKitException(TEST_MESSAGE);
-        RDKitRuntimeExceptionHandler e =
-                new RDKitRuntimeExceptionHandler(grdke);
         assertEquals(TEST_MESSAGE, e.getMessage());
 
     }
 
     @Test
     public void testAtomSanitizeException() {
-        final AtomSanitizeException ase =
+        final AtomSanitizeException e =
                 new AtomSanitizeException(TEST_MESSAGE, 1L);
-        RDKitRuntimeExceptionHandler e = new RDKitRuntimeExceptionHandler(ase);
         assertEquals(TEST_MESSAGE, e.getMessage());
-        assertEquals(1L, ((AtomSanitizeException) e.getCause()).getAtomIdx());
 
     }
 
     @Test
     public void testAtomValenceException() {
-        final AtomValenceException ave =
+        final AtomValenceException e =
                 new AtomValenceException(TEST_MESSAGE, 1L);
-        RDKitRuntimeExceptionHandler e = new RDKitRuntimeExceptionHandler(ave);
         assertEquals(TEST_MESSAGE, e.getMessage());
-        assertEquals(1L, ((AtomValenceException) e.getCause()).getAtomIdx());
     }
 
     @Test
     public void testAtomKekulizeException() {
-        final AtomKekulizeException ake =
+        final AtomKekulizeException e =
                 new AtomKekulizeException(TEST_MESSAGE, 1L);
-        RDKitRuntimeExceptionHandler e = new RDKitRuntimeExceptionHandler(ake);
         assertEquals(TEST_MESSAGE, e.getMessage());
-        assertEquals(1L, ((AtomKekulizeException) e.getCause()).getAtomIdx());
-        ake.delete();
     }
 
     @Test
     public void testKekulizeException() {
         final UInt_Vect uInt_Vect = new UInt_Vect();
         uInt_Vect.add(1L);
-        final KekulizeException ke =
+        final KekulizeException e =
                 new KekulizeException(TEST_MESSAGE, uInt_Vect);
-        RDKitRuntimeExceptionHandler e = new RDKitRuntimeExceptionHandler(ke);
         assertEquals(TEST_MESSAGE, e.getMessage());
-        assertEquals(1L,
-                ((KekulizeException) e.getCause()).getAtomIndices().get(0));
         uInt_Vect.delete();
         ke.delete();
     }

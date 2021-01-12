@@ -42,6 +42,7 @@ struct RDKIT_FMCS_EXPORT MCSAtomCompareParameters {
   bool MatchChiralTag = false;
   bool MatchFormalCharge = false;
   bool RingMatchesRingOnly = false;
+  bool CompleteRingsOnly = false;
   bool MatchIsotope = false;
 };
 

@@ -7,14 +7,19 @@
 //  which is included in the file license.txt, found at the root
 //  of the RDKit source tree.
 //
+
 #include "RGroupScore.h"
+#include <vector>
+#include <map>
+
+
 
 namespace RDKit {
-  
+
 // stupid total score
 // This has to handle all permutations and doesn't do anything terribly smart
 //  For r-groups with large symmetries, this can take way too long.
-double score(const std::vector<size_t> &permutation,
+double matchScore(const std::vector<size_t> &permutation,
              const std::vector<std::vector<RGroupMatch>> &matches,
              const std::set<int> &labels) {
   double score = 0.;
@@ -97,7 +102,7 @@ double score(const std::vector<size_t> &permutation,
     //  because these belong to 2 rgroups we really want these to stay
     //  ** this heuristic really should be taken care of above **
     int maxLinkerMatches = 0;
-    for (const auto &it : linkerMatchSet ) {
+    for (const auto &it : linkerMatchSet) {
       if (it.second > 1) {
         if (it.second > maxLinkerMatches) {
           maxLinkerMatches = it.second;
@@ -127,5 +132,6 @@ double score(const std::vector<size_t> &permutation,
   }
 
   return score;
-}  
 }
+
+}  // namespace RDKit

@@ -68,12 +68,6 @@ SmilesMolSupplier::SmilesMolSupplier(std::istream *inStream, bool takeOwnership,
   POSTCONDITION(dp_inStream, "bad instream");
 }
 
-SmilesMolSupplier::~SmilesMolSupplier() {
-  if (df_owner && dp_inStream) {
-    delete dp_inStream;
-  }
-}
-
 void SmilesMolSupplier::init() {
   dp_inStream = nullptr;
   df_owner = true;

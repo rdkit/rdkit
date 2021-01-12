@@ -14,7 +14,8 @@
 #include "RGroupUtils.h"
 #include <GraphMol/SmilesParse/SmilesWrite.h>  
 #include <GraphMol/Substruct/SubstructMatch.h>
-#include <GraphMol/ChemTransforms/ChemTransforms.h> 
+#include <GraphMol/ChemTransforms/ChemTransforms.h>
+#include <DataStructs/ExplicitBitVect.h>
 #include <boost/scoped_ptr.hpp>
 #include <set>
 #include <vector>
@@ -30,6 +31,8 @@ struct RGroupData {
   std::vector<std::string> smilesVect;         // used for rgroup equivalence
   std::string smiles;                          // smiles for all the mols in the rgroup (with attachments)
   std::set<int> attachments;                   // core attachment points
+  std::unique_ptr<ExplicitBitVect> fingerprint;  // fingerprint for score calculations
+  std::vector<int> fingerprintOnBits;
   bool is_hydrogen = false;
   bool single_fragment = true;
   bool multiple_attachments = false;

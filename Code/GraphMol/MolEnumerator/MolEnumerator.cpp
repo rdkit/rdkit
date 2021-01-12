@@ -46,24 +46,58 @@ void enumerateVariations(std::vector<std::vector<size_t>> &variations,
 }
 }  // namespace
 
-MolBundle enumerate(const ROMol &mol, const MolEnumeratorParams &params) {
-  MolBundle res;
-  PRECONDITION(params.dp_operation, "no operation set");
-  // copy the op since we will modify it:
-  auto op = params.dp_operation->copy();
-  op->initFromMol(mol);
-  auto variationCounts = op->getVariationCounts();
-  if (variationCounts.empty()) {
-    return res;
+MolBundle enumerate(const ROMol &mol,
+                    const std::vector<MolEnumeratorParams> &paramLists) {
+  if (paramLists.empty()) {
+    return MolBundle();
   }
-  std::vector<std::vector<size_t>> variations;
-  enumerateVariations(variations, variationCounts, params);
-  for (const auto &variation : variations) {
-    auto newMol = (*op)(variation);
-    newMol->updatePropertyCache(false);
-    res.addMol(ROMOL_SPTR(newMol.release()));
+  std::unique_ptr<MolBundle> accum{new MolBundle()};
+  boost::shared_ptr<ROMol> molCpy{new ROMol(mol)};
+  accum->addMol(molCpy);
+  bool variationsFound = false;
+  for (const auto &params : paramLists) {
+    if (!params.dp_operation) {
+      throw ValueErrorException("MolEnumeratorParams has no operation set");
+    }
+    std::unique_ptr<MolBundle> thisRound{new MolBundle()};
+    for (const auto &tmol : accum->getMols()) {
+      // copy the op since we will modify it:
+      auto op = params.dp_operation->copy();
+      op->initFromMol(*tmol);
+      auto variationCounts = op->getVariationCounts();
+      if (variationCounts.empty()) {
+        thisRound->addMol(tmol);
+        continue;
+      }
+      std::vector<std::vector<size_t>> variations;
+      enumerateVariations(variations, variationCounts, params);
+      for (const auto &variation : variations) {
+        variationsFound = true;
+        auto newMol = (*op)(variation);
+        newMol->updatePropertyCache(false);
+        thisRound->addMol(ROMOL_SPTR(newMol.release()));
+      }
+    }
+    accum.swap(thisRound);
   }
-  return res;
+  if (!variationsFound) {
+    return MolBundle();
+  }
+  return *accum;
+}
+
+MolBundle enumerate(const ROMol &mol) {
+  std::vector<MolEnumeratorParams> paramsList;
+  MolEnumerator::MolEnumeratorParams posVariationParams;
+  posVariationParams.dp_operation =
+      std::shared_ptr<MolEnumerator::MolEnumeratorOp>(
+          new MolEnumerator::PositionVariationOp());
+  paramsList.push_back(posVariationParams);
+  MolEnumerator::MolEnumeratorParams linkParams;
+  linkParams.dp_operation = std::shared_ptr<MolEnumerator::MolEnumeratorOp>(
+      new MolEnumerator::LinkNodeOp());
+  paramsList.push_back(linkParams);
+  return enumerate(mol, paramsList);
 }
 
 }  // namespace MolEnumerator

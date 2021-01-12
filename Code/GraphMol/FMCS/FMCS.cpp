@@ -111,8 +111,16 @@ void parseMCSParametersJSON(const char* json, MCSParameters* params) {
         "RingMatchesRingOnly", p.AtomCompareParameters.RingMatchesRingOnly);
     p.BondCompareParameters.RingMatchesRingOnly = pt.get<bool>(
         "RingMatchesRingOnly", p.BondCompareParameters.RingMatchesRingOnly);
+    p.AtomCompareParameters.RingMatchesRingOnly = pt.get<bool>(
+        "AtomRingMatchesRingOnly", p.AtomCompareParameters.RingMatchesRingOnly);
+    p.BondCompareParameters.RingMatchesRingOnly = pt.get<bool>(
+        "BondRingMatchesRingOnly", p.BondCompareParameters.RingMatchesRingOnly);
     p.BondCompareParameters.CompleteRingsOnly = pt.get<bool>(
         "CompleteRingsOnly", p.BondCompareParameters.CompleteRingsOnly);
+    p.AtomCompareParameters.CompleteRingsOnly = pt.get<bool>(
+        "AtomCompleteRingsOnly", p.AtomCompareParameters.CompleteRingsOnly);
+    p.BondCompareParameters.CompleteRingsOnly = pt.get<bool>(
+        "BondCompleteRingsOnly", p.BondCompareParameters.CompleteRingsOnly);
     p.BondCompareParameters.MatchFusedRings = pt.get<bool>(
         "MatchFusedRings", p.BondCompareParameters.MatchFusedRings);
     p.BondCompareParameters.MatchFusedRingsStrict = pt.get<bool>(

@@ -55,6 +55,19 @@ RDKit::ROMol *fragmentMolOnBonds(
         return RDKit::MolFragmenter::fragmentOnBonds(mol, uBondIndices, addDummies, dummyLabels, nullptr, cutsPerAtomPtr);
  }
 
+// Fix std::unique_ptr issue
+RDKit::ROMol * new_molzip(
+	       const RDKit::ROMol &a, const RDKit::ROMol &b,
+	       const RDKit::MolzipParams &params=RDKit::MolzipParams()) {
+  return RDKit::molzip(a, b, params).release();;
+}
+
+RDKit::ROMol * new_molzip(
+	       const RDKit::ROMol &a,
+	       const RDKit::MolzipParams &params=RDKit::MolzipParams()) {
+  return RDKit::molzip(a, params).release();
+}
+
 %}
 
 %newobject deleteSubstructs;
@@ -66,8 +79,11 @@ RDKit::ROMol *fragmentMolOnBonds(
 %include <GraphMol/ChemTransforms/ChemTransforms.h>
 
 %newobject fragmentMolOnBonds;
+%newobject new_molzip;
 %ignore fragmentOnBonds;
+%ignore molzip;
 %rename("fragmentOnBonds") fragmentMolOnBonds;
+%rename("molzip") new_molzip;
 
 RDKit::ROMol *fragmentMolOnBonds(
     const RDKit::ROMol &mol, const std::vector<int> &bondIndices,
@@ -75,6 +91,15 @@ RDKit::ROMol *fragmentMolOnBonds(
     const std::vector<std::pair<unsigned int, unsigned int>> *dummyLabels = nullptr,
     std::vector<int> *nCutsPerAtom = nullptr);
 
+RDKit::ROMol * new_molzip(
+			  const RDKit::ROMol &a, const RDKit::ROMol &b,
+			  const RDKit::MolzipParams &params=RDKit::MolzipParams());
+
+RDKit::ROMol * new_molzip(
+			  const RDKit::ROMol &a,
+			  const RDKit::MolzipParams &params=RDKit::MolzipParams());
+
+          
 %ignore fragmentOnSomeBonds;
 %ignore constructFragmenterAtomTypes;
 %ignore constructBRICSAtomTypes;

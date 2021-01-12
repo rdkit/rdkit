@@ -41,6 +41,7 @@ typedef enum {
   GreedyChunks = 0x02,
   Exhaustive = 0x04,  // not really useful for large sets
   NoSymmetrization = 0x08,
+  GA = 0x10,
 } RGroupMatching;
 
 typedef enum {
@@ -50,15 +51,29 @@ typedef enum {
 } RGroupLabelling;
 
 typedef enum {
-  // DEPRECATED, remove the folowing line in release 2021.03
+  // DEPRECATED, remove the following line in release 2021.03
   None = 0x0,
   NoAlignment = 0x0,
   MCS = 0x01,
 } RGroupCoreAlignment;
 
+typedef enum {
+  Match = 0x1,
+  FingerprintDistance = 0x2,
+  FingerprintVariance = 0x4,
+} RGroupScore;
+
+struct RDKIT_RGROUPDECOMPOSITION_EXPORT RGroupDecompositionProcessResult {
+  const bool success;
+  const double score;
+  RGroupDecompositionProcessResult(const bool success, const double score)
+      : success(success), score(score) {}
+};
+
 struct RDKIT_RGROUPDECOMPOSITION_EXPORT RGroupDecompositionParameters {
   unsigned int labels = AutoDetect;
   unsigned int matchingStrategy = GreedyChunks;
+  unsigned int scoreMethod = Match;
   unsigned int rgroupLabelling = AtomMap | MDLRGroup;
   unsigned int alignment = MCS;
 
@@ -74,6 +89,22 @@ struct RDKIT_RGROUPDECOMPOSITION_EXPORT RGroupDecompositionParameters {
   // Prepare the core for substructure searching and rgroup assignment
   bool prepareCore(RWMol &, const RWMol *alignCore);
 
+  // Parameters specific to GA
+
+  // GA population size or -1 to use best guess
+  int gaPopulationSize = -1;
+  // GA maximum number of operations or -1 to use best guess
+  int gaMaximumOperations = -1;
+  // GA number of operations permitted without improvement before exiting (-1
+  // for best guess)
+  int gaNumberOperationsWithoutImprovement = -1;
+  // GA random number seed (-1 for default, -2 for random seed)
+  int gaRandomSeed = -1;
+  // Number of runs
+  int gaNumberRuns = 1;
+  // Sequential or parallel runs?
+  bool gaParallelRuns = true;
+
  private:
   int indexOffset{-1};
 };
@@ -86,6 +117,7 @@ typedef std::map<std::string, RGroupColumn> RGroupColumns;
 
 struct RGroupDecompData;
 class RDKIT_RGROUPDECOMPOSITION_EXPORT RGroupDecomposition {
+ private:
   RGroupDecompData *data;                            // implementation details
   RGroupDecomposition(const RGroupDecomposition &);  // no copy construct
   RGroupDecomposition &operator=(
@@ -102,6 +134,7 @@ class RDKIT_RGROUPDECOMPOSITION_EXPORT RGroupDecomposition {
   ~RGroupDecomposition();
 
   int add(const ROMol &mol);
+  RGroupDecompositionProcessResult processAndScore();
   bool process();
 
   const RGroupDecompositionParameters &params() const;

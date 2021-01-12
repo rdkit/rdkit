@@ -12,6 +12,7 @@
 
 #include "../RDKitBase.h"
 #include "RGroupUtils.h"
+#include "GraphMol/Substruct/SubstructMatch.h"
 
 namespace RDKit {
 
@@ -28,7 +29,7 @@ struct RCore {
   }
   void findIndicesWithRLabel() {
     // First find all the core atoms that have user
-    //  label and but their indices into core_atoms_with_user_labels
+    //  label and put their indices into core_atoms_with_user_labels
     for (const auto atom : core->atoms()) {
       if (atom->hasProp(RLABEL)) {
         core_atoms_with_user_labels.insert(atom->getIdx());

@@ -85,6 +85,11 @@ class RGroupDecompositionHelper {
     NOGIL gil;
     return decomp->process();
   }
+  python::tuple ProcessAndScore() {
+    NOGIL gil;
+    auto result = decomp->processAndScore();
+    return python::make_tuple(result.success, result.score);
+  }
 
   python::list GetRGroupLabels() {
     python::list result;
@@ -192,6 +197,7 @@ struct rgroupdecomp_wrapper {
         .value("GreedyChunks", RDKit::GreedyChunks)
         .value("Exhaustive", RDKit::Exhaustive)
         .value("NoSymmetrization", RDKit::NoSymmetrization)
+        .value("GA", RDKit::GA)
         .export_values();
 
     python::enum_<RDKit::RGroupLabelling>("RGroupLabelling")
@@ -205,6 +211,12 @@ struct rgroupdecomp_wrapper {
         .value("None", RDKit::NoAlignment)
         .value("NoAlignment", RDKit::NoAlignment)
         .value("MCS", RDKit::MCS)
+        .export_values();
+
+    python::enum_<RDKit::RGroupScore>("RGroupScore")
+        .value("Match", RDKit::Match)
+        .value("FingerprintDistance", RDKit::FingerprintDistance)
+        .value("FingerprintVariance", RDKit::FingerprintVariance)
         .export_values();
 
     docString =
@@ -258,6 +270,8 @@ struct rgroupdecomp_wrapper {
         .def_readwrite("labels", &RDKit::RGroupDecompositionParameters::labels)
         .def_readwrite("matchingStrategy",
                        &RDKit::RGroupDecompositionParameters::matchingStrategy)
+        .def_readwrite("scoreMethod",
+                       &RDKit::RGroupDecompositionParameters::scoreMethod)
         .def_readwrite("rgroupLabelling",
                        &RDKit::RGroupDecompositionParameters::rgroupLabelling)
         .def_readwrite("alignment",
@@ -274,7 +288,21 @@ struct rgroupdecomp_wrapper {
             "removeHydrogensPostMatch",
             &RDKit::RGroupDecompositionParameters::removeHydrogensPostMatch)
         .def_readwrite("timeout",
-                       &RDKit::RGroupDecompositionParameters::timeout);
+                       &RDKit::RGroupDecompositionParameters::timeout)
+        .def_readwrite("gaPopulationSize",
+                       &RDKit::RGroupDecompositionParameters::gaPopulationSize)
+        .def_readwrite(
+            "gaMaximumOperations",
+            &RDKit::RGroupDecompositionParameters::gaMaximumOperations)
+        .def_readwrite("gaNumberOperationsWithoutImprovement",
+                       &RDKit::RGroupDecompositionParameters::
+                           gaNumberOperationsWithoutImprovement)
+        .def_readwrite("gaRandomSeed",
+                       &RDKit::RGroupDecompositionParameters::gaRandomSeed)
+        .def_readwrite("gaNumberRuns",
+                       &RDKit::RGroupDecompositionParameters::gaNumberRuns)
+        .def_readwrite("gaParallelRuns",
+                       &RDKit::RGroupDecompositionParameters::gaParallelRuns);
 
     python::class_<RDKit::RGroupDecompositionHelper, boost::noncopyable>(
         "RGroupDecomposition", docString.c_str(),
@@ -287,6 +315,9 @@ struct rgroupdecomp_wrapper {
         .def("Add", &RGroupDecompositionHelper::Add)
         .def("Process", &RGroupDecompositionHelper::Process,
              "Process the rgroups (must be done prior to "
+             "GetRGroupsAsRows/Columns and GetRGroupLabels)")
+        .def("ProcessAndScore", &RGroupDecompositionHelper::ProcessAndScore,
+             "Process the rgroups and returns the score (must be done prior to "
              "GetRGroupsAsRows/Columns and GetRGroupLabels)")
         .def("GetRGroupLabels", &RGroupDecompositionHelper::GetRGroupLabels,
              "Return the current list of found rgroups.\n"
