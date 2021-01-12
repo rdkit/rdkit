@@ -354,3 +354,5 @@ SELECT mol_out(mol_from_smiles('C[C@H](F)[C@H](C)[C@@H](C)Br |a:1,o1:4,5|'));
 
 -- github #3688: bad input to qmol_from_ctab() crashes db
 select qmol_from_ctab('a'::cstring,false);
+-- github #3689: bad input to qmol_from_smiles() crashes db
+select qmol_from_smiles('a'::cstring);

@@ -969,3 +969,11 @@ WARNING:  could not create molecule from CTAB 'a'
  
 (1 row)
 
+-- github #3689: bad input to qmol_from_smiles() crashes db
+select qmol_from_smiles('a'::cstring);
+WARNING:  could not create molecule from SMILES 'a'
+ qmol_from_smiles 
+------------------
+ 
+(1 row)
+
