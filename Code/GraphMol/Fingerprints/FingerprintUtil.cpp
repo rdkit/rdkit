@@ -50,7 +50,7 @@ unsigned int numPiElectrons(const Atom *atom) {
     res = 1;
   } else if (atom->getHybridization() != Atom::SP3) {
     auto val = static_cast<unsigned int>(atom->getExplicitValence());
-    unsigned int physical_bonds = 0;
+    unsigned int physical_bonds = atom->getNumExplicitHs();
     const auto mol = atom->getOwningMol();
     for (const auto &bndi :
          boost::make_iterator_range(mol.getAtomBonds(atom))) {
