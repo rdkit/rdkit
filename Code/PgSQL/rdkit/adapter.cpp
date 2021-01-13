@@ -2013,7 +2013,7 @@ extern "C" char *findMCSsmiles(char *smiles, char *params) {
     } catch (...) {
       molptr = nullptr;
     }
-    if (!molptr) {
+    if (molptr == nullptr) {
       ereport(
           ERROR,
           (errcode(ERRCODE_DATA_EXCEPTION),
