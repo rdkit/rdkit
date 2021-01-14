@@ -62,6 +62,7 @@ rdkit_headers(Exceptions.h
               LocaleSwitcher.h
               Ranking.h
               hanoiSort.h
+              RDExportMacros.h
               export.h
               test.h
               ConcurrentQueue.h
