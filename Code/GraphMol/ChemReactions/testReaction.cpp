@@ -7174,12 +7174,15 @@ void testOtherBondStereo() {
     for (const auto &products : product_sets) {
       TEST_ASSERT(products.size() == 1);
       for (const Bond *bond : products[0]->bonds()) {
+        TEST_ASSERT(Bond::BondStereo::STEREONONE == bond->getStereo());
+
+        // Make sure the temporary mark set in the reaction has been removed.
+        TEST_ASSERT(!bond->hasProp("_UnknownStereoRxnBond"));
+
         if (bond->getIdx() == 1) {
           TEST_ASSERT(Bond::BondType::DOUBLE == bond->getBondType());
-          TEST_ASSERT(Bond::BondStereo::STEREOANY == bond->getStereo());
         } else {
           TEST_ASSERT(Bond::BondType::SINGLE == bond->getBondType());
-          TEST_ASSERT(Bond::BondStereo::STEREONONE == bond->getStereo());
         }
       }
     }
