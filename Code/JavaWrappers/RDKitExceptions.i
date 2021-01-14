@@ -46,6 +46,12 @@
     jenv->ThrowNew(excep, $1.what());
   return $null;
 }
+%typemap(javacode) RDKit::ChemicalReactionException %{
+  public String getMessage() {
+    return what();
+  }
+%}
+
 
 // ===== ChemicalReactionParserException =====
 %typemap(javabase) RDKit::ChemicalReactionParserException "java.lang.RuntimeException";
@@ -55,6 +61,11 @@
     jenv->ThrowNew(excep, $1.what());
   return $null;
 }
+%typemap(javacode) RDKit::ChemicalReactionParserException %{
+  public String getMessage() {
+    return what();
+  }
+%}
 
 // ===== ConformerException =====
 %typemap(javabase) RDKit::ConformerException "java.lang.RuntimeException";
@@ -64,6 +75,11 @@
     jenv->ThrowNew(excep, $1.what());
   return $null;
 }
+%typemap(javacode) RDKit::ConformerException %{
+  public String getMessage() {
+    return what();
+  }
+%}
 
 // ===== MolPicklerException =====
 %typemap(javabase) RDKit::MolPicklerException "java.lang.RuntimeException";
@@ -73,6 +89,11 @@
     jenv->ThrowNew(excep, $1.what());
   return $null;
 }
+%typemap(javacode) RDKit::MolPicklerException %{
+  public String getMessage() {
+    return what();
+  }
+%}
 
 // ===== MolSanitizeException =====
 %typemap(javabase) RDKit::MolSanitizeException "java.lang.RuntimeException";
@@ -82,6 +103,11 @@
     jenv->ThrowNew(excep, $1.what());
   return $null;
 }
+%typemap(javacode) RDKit::MolSanitizeException %{
+  public String getMessage() {
+    return what();
+  }
+%}
 
 // ===== SmilesParseException =====
 %typemap(javabase) RDKit::SmilesParseException "java.lang.RuntimeException";
@@ -91,6 +117,11 @@
     jenv->ThrowNew(excep, $1.what());
   return $null;
 }
+%typemap(javacode) RDKit::SmilesParseException %{
+  public String getMessage() {
+    return what();
+  }
+%}
 
 // ===== KeyErrorException =====
 %typemap(javabase) KeyErrorException "java.lang.RuntimeException";
@@ -100,6 +131,11 @@
     jenv->ThrowNew(excep, $1.what());
   return $null;
 }
+%typemap(javacode) RDKit::KeyErrorException %{
+  public String getMessage() {
+    return what();
+  }
+%}
 
 // ===== GenericRDKitException =====
 %typemap(javabase) RDKit::GenericRDKitException "java.lang.RuntimeException";
@@ -109,6 +145,11 @@
     jenv->ThrowNew(excep, $1.what());
   return $null;
 }
+%typemap(javacode) RDKit::GenericRDKitException %{
+  public String getMessage() {
+    return what();
+  }
+%}
 
 // Note that these files must follow the typemap declarations
 %include <RDGeneral/Exceptions.h>
