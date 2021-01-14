@@ -235,16 +235,9 @@ function(createExportTestHeaders)
   list(SORT exportLibs)
   set(exportPath "Code/RDGeneral/export.h")
   file(WRITE "${CMAKE_BINARY_DIR}/${exportPath}.tmp"
-    "// auto-generated __declspec definition header\n"
+    "// auto-generated export definition header\n"
     "#pragma once\n"
-    "#ifndef SWIG\n"
-    "#ifdef _MSC_VER\n"
-    "#pragma warning(disable:4251)\n"
-    "#pragma warning(disable:4275)\n"
-    "#endif\n"
-    "\n"
-    "#include <boost/config.hpp>\n"
-    "#endif\n")
+    "#include <RDGeneral/RDExportMacros.h>\n")
   set(testPath "Code/RDGeneral/test.h")
   file(WRITE "${CMAKE_BINARY_DIR}/${testPath}.tmp"
     "// auto-generated header to be imported in all cpp tests\n"
@@ -254,15 +247,10 @@ function(createExportTestHeaders)
     file(APPEND "${CMAKE_BINARY_DIR}/${exportPath}.tmp"
       "\n"
       "// RDKIT_${exportLib}_EXPORT definitions\n"
-      "#if defined(BOOST_HAS_DECLSPEC) && defined(RDKIT_DYN_LINK) && !defined(SWIG)\n"
       "#ifdef RDKIT_${exportLib}_BUILD\n"
-      "#define RDKIT_${exportLib}_EXPORT __declspec(dllexport)\n"
+      "#define RDKIT_${exportLib}_EXPORT RDKIT_EXPORT_API\n"
       "#else\n"
-      "#define RDKIT_${exportLib}_EXPORT __declspec(dllimport)\n"
-      "#endif\n"
-      "#endif\n"
-      "#ifndef RDKIT_${exportLib}_EXPORT\n"
-      "#define RDKIT_${exportLib}_EXPORT\n"
+      "#define RDKIT_${exportLib}_EXPORT RDKIT_IMPORT_API\n"
       "#endif\n"
       "// RDKIT_${exportLib}_EXPORT end definitions\n")
     file(APPEND "${CMAKE_BINARY_DIR}/${testPath}.tmp"
