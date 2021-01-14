@@ -165,8 +165,10 @@ extern "C" CROMol parseMolText(char *data, bool asSmarts, bool warnOnFail,
         mol = SmilesToMol(data);
       } else {
         mol = SmilesToMol(data, 0, false);
-        MolOps::sanitizeMol(*mol);
-        MolOps::mergeQueryHs(*mol);
+        if (mol != nullptr) {
+          MolOps::sanitizeMol(*mol);
+          MolOps::mergeQueryHs(*mol);
+        }
       }
     } else {
       mol = SmartsToMol(data, 0, false);
@@ -216,7 +218,9 @@ extern "C" CROMol parseMolCTAB(char *data, bool keepConformer, bool warnOnFail,
       mol = MolBlockToMol(data);
     } else {
       mol = MolBlockToMol(data, true, false);
-      MolOps::mergeQueryHs(*mol);
+      if (mol != nullptr) {
+        MolOps::mergeQueryHs(*mol);
+      }
     }
   } catch (...) {
     mol = nullptr;
@@ -1757,7 +1761,7 @@ extern "C" int ReactionSubstructFP(CChemicalReaction rxn,
 namespace {
 
 struct MoleculeDescriptors {
-  MoleculeDescriptors()  {}
+  MoleculeDescriptors() {}
   unsigned nAtoms{0};
   unsigned nBonds{0};
   unsigned nRings{0};
@@ -2003,7 +2007,20 @@ extern "C" char *findMCSsmiles(char *smiles, char *params) {
     if (0 == strlen(s)) {
       continue;
     }
-    molecules.push_back(RDKit::ROMOL_SPTR(RDKit::SmilesToMol(s)));
+    ROMol *molptr = nullptr;
+    try {
+      molptr = RDKit::SmilesToMol(s);
+    } catch (...) {
+      molptr = nullptr;
+    }
+    if (molptr == nullptr) {
+      ereport(
+          ERROR,
+          (errcode(ERRCODE_DATA_EXCEPTION),
+           errmsg("findMCS: could not create molecule from SMILES '%s'", s)));
+      return strdup("");
+    }
+    molecules.push_back(RDKit::ROMOL_SPTR(molptr));
     // elog(WARNING, s);
     s += len;
     s++;  // do s++; while(*s && *s <= ' ');
