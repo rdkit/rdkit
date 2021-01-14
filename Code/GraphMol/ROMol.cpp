@@ -237,7 +237,7 @@ ROMol::BOND_PTR_LIST &ROMol::getAllBondsWithBookmark(int mark) {
 // returns the unique bond with the given bookmark
 Bond *ROMol::getUniqueBondWithBookmark(int mark) {
   PRECONDITION(d_bondBookmarks.count(mark) == 1,
-               "multiple bons with same bookmark");
+               "multiple bonds with same bookmark");
   return getBondWithBookmark(mark);
 }
 

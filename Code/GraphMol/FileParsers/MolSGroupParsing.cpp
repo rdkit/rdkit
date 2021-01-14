@@ -12,8 +12,6 @@
 #include "FileParserUtils.h"
 #include "MolSGroupParsing.h"
 
-#include <RDGeneral/FileParseException.h>
-
 namespace RDKit {
 namespace SGroupParsing {
 
@@ -40,6 +38,24 @@ unsigned int ParseSGroupIntField(const std::string &text, unsigned int line,
   return fieldValue;
 }
 
+unsigned int ParseSGroupIntField(bool &ok, bool strictParsing,
+                                 const std::string &text, unsigned int line,
+                                 unsigned int &pos, bool isFieldCounter) {
+  ok = true;
+  unsigned int res = 0;
+  try {
+    res = ParseSGroupIntField(text, line, pos, isFieldCounter);
+  } catch (const std::exception &e) {
+    if (strictParsing) {
+      throw;
+    } else {
+      ok = false;
+      BOOST_LOG(rdWarningLog) << e.what() << std::endl;
+    }
+  }
+  return res;
+}
+
 double ParseSGroupDoubleField(const std::string &text, unsigned int line,
                               unsigned int &pos) {
   size_t len = 10;
@@ -60,22 +76,61 @@ double ParseSGroupDoubleField(const std::string &text, unsigned int line,
   return fieldValue;
 }
 
+double ParseSGroupDoubleField(bool &ok, bool strictParsing,
+                              const std::string &text, unsigned int line,
+                              unsigned int &pos) {
+  ok = true;
+  double res = 0.;
+  try {
+    res = ParseSGroupDoubleField(text, line, pos);
+  } catch (const std::exception &e) {
+    if (strictParsing) {
+      throw;
+    } else {
+      ok = false;
+      BOOST_LOG(rdWarningLog) << e.what() << std::endl;
+    }
+  }
+  return res;
+}
+
+SubstanceGroup *FindSgIdx(IDX_TO_SGROUP_MAP &sGroupMap, int sgIdx,
+                          unsigned int line) {
+  auto sgIt = sGroupMap.find(sgIdx);
+  if (sgIt == sGroupMap.end()) {
+    BOOST_LOG(rdWarningLog) << "SGroup " << sgIdx << " referenced on line "
+                            << line << " not found." << std::endl;
+    return nullptr;
+  }
+  return &sgIt->second;
+}
+
 void ParseSGroupV2000STYLine(IDX_TO_SGROUP_MAP &sGroupMap, RWMol *mol,
-                             const std::string &text, unsigned int line) {
+                             const std::string &text, unsigned int line,
+                             bool strictParsing) {
   PRECONDITION(mol, "bad mol");
   PRECONDITION(text.substr(0, 6) == "M  STY", "bad STY line");
 
   unsigned int pos = 6;
-  unsigned int nent = ParseSGroupIntField(text, line, pos, true);
+  bool ok;
+  unsigned int nent =
+      ParseSGroupIntField(ok, strictParsing, text, line, pos, true);
+  if (!ok) {
+    return;
+  }
 
   for (unsigned int ie = 0; ie < nent; ++ie) {
     if (text.size() < pos + 8) {
       std::ostringstream errout;
       errout << "SGroup STY line too short: '" << text << "' on line " << line;
-      throw FileParseException(errout.str());
+      SGroupWarnOrThrow<>(strictParsing, errout.str());
+      return;
     }
 
-    int nbr = ParseSGroupIntField(text, line, pos);
+    unsigned int nbr = ParseSGroupIntField(ok, strictParsing, text, line, pos);
+    if (!ok) {
+      return;
+    }
 
     std::string typ = text.substr(pos + 1, 3);
     if (SubstanceGroupChecks::isValidType(typ)) {
@@ -83,15 +138,16 @@ void ParseSGroupV2000STYLine(IDX_TO_SGROUP_MAP &sGroupMap, RWMol *mol,
     } else {
       std::ostringstream errout;
       errout << "S group " << typ << " on line " << line;
-      throw MolFileUnhandledFeatureException(errout.str());
+      SGroupWarnOrThrow<MolFileUnhandledFeatureException>(strictParsing,
+                                                          errout.str());
     }
     pos += 4;
   }
 }
 
 void ParseSGroupV2000VectorDataLine(IDX_TO_SGROUP_MAP &sGroupMap, RWMol *mol,
-                                    const std::string &text,
-                                    unsigned int line) {
+                                    const std::string &text, unsigned int line,
+                                    bool strictParsing) {
   PRECONDITION(mol, "bad mol");
 
   std::string typ = text.substr(3, 3);
@@ -112,78 +168,132 @@ void ParseSGroupV2000VectorDataLine(IDX_TO_SGROUP_MAP &sGroupMap, RWMol *mol,
   }
 
   unsigned int pos = 6;
-  unsigned int sgIdx = ParseSGroupIntField(text, line, pos);
-  if (sGroupMap.find(sgIdx) == sGroupMap.end()) {
-    BOOST_LOG(rdWarningLog) << "SGroup " << sgIdx << " referenced on line "
-                            << line << " not found." << std::endl;
+  bool ok;
+  unsigned int sgIdx = ParseSGroupIntField(ok, strictParsing, text, line, pos);
+  if (!ok) {
     return;
   }
-  unsigned int nent = ParseSGroupIntField(text, line, pos, true);
+  SubstanceGroup *sgroup = FindSgIdx(sGroupMap, sgIdx, line);
+  if (!sgroup) {
+    return;
+  }
+  unsigned int nent =
+      ParseSGroupIntField(ok, strictParsing, text, line, pos, true);
+  if (!ok) {
+    sgroup->setIsValid(false);
+    return;
+  }
 
   for (unsigned int i = 0; i < nent; ++i) {
     if (text.size() < pos + 4) {
       std::ostringstream errout;
       errout << "SGroup line too short: '" << text << "' on line " << line;
-      throw FileParseException(errout.str());
+      SGroupWarnOrThrow<>(strictParsing, errout.str());
+      sgroup->setIsValid(false);
+      return;
     }
-
-    int nbr = ParseSGroupIntField(text, line, pos);
-    (sGroupMap.at(sgIdx).*sGroupAddIndexedElement)(nbr);
+    unsigned int nbr = ParseSGroupIntField(ok, strictParsing, text, line, pos);
+    if (!ok) {
+      sgroup->setIsValid(false);
+      return;
+    }
+    try {
+      (sgroup->*sGroupAddIndexedElement)(nbr);
+    } catch (const std::exception &e) {
+      SGroupWarnOrThrow<>(strictParsing, e.what());
+      sgroup->setIsValid(false);
+      return;
+    }
   }
 }
 
 void ParseSGroupV2000SDILine(IDX_TO_SGROUP_MAP &sGroupMap, RWMol *mol,
-                             const std::string &text, unsigned int line) {
+                             const std::string &text, unsigned int line,
+                             bool strictParsing) {
   PRECONDITION(mol, "bad mol");
   PRECONDITION(text.substr(0, 6) == "M  SDI", "bad SDI line");
 
   unsigned int pos = 6;
-  unsigned int sgIdx = ParseSGroupIntField(text, line, pos);
-  if (sGroupMap.find(sgIdx) == sGroupMap.end()) {
-    BOOST_LOG(rdWarningLog) << "SGroup " << sgIdx << " referenced on line "
-                            << line << " not found." << std::endl;
+  bool ok;
+  unsigned int sgIdx = ParseSGroupIntField(ok, strictParsing, text, line, pos);
+  if (!ok) {
+    return;
+  }
+  SubstanceGroup *sgroup = FindSgIdx(sGroupMap, sgIdx, line);
+  if (!sgroup) {
     return;
   }
 
-  unsigned int nCoords = ParseSGroupIntField(text, line, pos, true);
+  unsigned int nCoords =
+      ParseSGroupIntField(ok, strictParsing, text, line, pos, true);
+  if (!ok) {
+    sgroup->setIsValid(false);
+    return;
+  }
   if (nCoords != 4) {
     std::ostringstream errout;
     errout << "Unexpected number of coordinates for SDI on line " << line;
-    throw FileParseException(errout.str());
+    SGroupWarnOrThrow<>(strictParsing, errout.str());
+    sgroup->setIsValid(false);
+    return;
   }
 
   SubstanceGroup::Bracket bracket;
   for (unsigned int i = 0; i < 2; ++i) {
-    double x = ParseSGroupDoubleField(text, line, pos);
-    double y = ParseSGroupDoubleField(text, line, pos);
+    double x = ParseSGroupDoubleField(ok, strictParsing, text, line, pos);
+    if (!ok) {
+      sgroup->setIsValid(false);
+      return;
+    }
+    double y = ParseSGroupDoubleField(ok, strictParsing, text, line, pos);
+    if (!ok) {
+      sgroup->setIsValid(false);
+      return;
+    }
     double z = 0.;
     bracket[i] = RDGeom::Point3D(x, y, z);
   }
   bracket[2] = RDGeom::Point3D(0., 0., 0.);
-  sGroupMap.at(sgIdx).addBracket(bracket);
+  try {
+    sgroup->addBracket(bracket);
+  } catch (const std::exception &e) {
+    SGroupWarnOrThrow<>(strictParsing, e.what());
+    sgroup->setIsValid(false);
+    return;
+  }
 }
 
 void ParseSGroupV2000SSTLine(IDX_TO_SGROUP_MAP &sGroupMap, RWMol *mol,
-                             const std::string &text, unsigned int line) {
+                             const std::string &text, unsigned int line,
+                             bool strictParsing) {
   PRECONDITION(mol, "bad mol");
   PRECONDITION(text.substr(0, 6) == "M  SST", "bad SST line");
 
   unsigned int pos = 6;
-  unsigned int nent = ParseSGroupIntField(text, line, pos, true);
+  bool ok;
+  unsigned int nent =
+      ParseSGroupIntField(ok, strictParsing, text, line, pos, true);
+  if (!ok) {
+    return;
+  }
 
   for (unsigned int ie = 0; ie < nent; ++ie) {
     if (text.size() < pos + 8) {
       std::ostringstream errout;
       errout << "SGroup SST line too short: '" << text << "' on line " << line;
-      throw FileParseException(errout.str());
-    }
-
-    unsigned int sgIdx = ParseSGroupIntField(text, line, pos);
-    if (sGroupMap.find(sgIdx) == sGroupMap.end()) {
-      BOOST_LOG(rdWarningLog) << "SGroup " << sgIdx << " referenced on line "
-                              << line << " not found." << std::endl;
+      SGroupWarnOrThrow<>(strictParsing, errout.str());
       return;
     }
+
+    unsigned int sgIdx =
+        ParseSGroupIntField(ok, strictParsing, text, line, pos);
+    if (!ok) {
+      return;
+    }
+    SubstanceGroup *sgroup = FindSgIdx(sGroupMap, sgIdx, line);
+    if (!sgroup) {
+      return;
+    };
 
     std::string subType = text.substr(++pos, 3);
 
@@ -191,100 +301,132 @@ void ParseSGroupV2000SSTLine(IDX_TO_SGROUP_MAP &sGroupMap, RWMol *mol,
       std::ostringstream errout;
       errout << "Unsupported SGroup subtype '" << subType << "' on line "
              << line;
-      throw FileParseException(errout.str());
+      SGroupWarnOrThrow<>(strictParsing, errout.str());
+      sgroup->setIsValid(false);
+      return;
     }
 
-    sGroupMap.at(sgIdx).setProp("SUBTYPE", subType);
+    sgroup->setProp("SUBTYPE", subType);
     pos += 3;
   }
 }
 
 void ParseSGroupV2000SMTLine(IDX_TO_SGROUP_MAP &sGroupMap, RWMol *mol,
-                             const std::string &text, unsigned int line) {
+                             const std::string &text, unsigned int line,
+                             bool strictParsing) {
   PRECONDITION(mol, "bad mol");
   PRECONDITION(text.substr(0, 6) == "M  SMT", "bad SMT line");
 
   unsigned int pos = 6;
-  unsigned int sgIdx = ParseSGroupIntField(text, line, pos);
-  if (sGroupMap.find(sgIdx) == sGroupMap.end()) {
-    BOOST_LOG(rdWarningLog) << "SGroup " << sgIdx << " referenced on line "
-                            << line << " not found." << std::endl;
+  bool ok;
+  unsigned int sgIdx = ParseSGroupIntField(ok, strictParsing, text, line, pos);
+  if (!ok) {
     return;
   }
-  auto &sgroup = sGroupMap.at(sgIdx);
+  SubstanceGroup *sgroup = FindSgIdx(sGroupMap, sgIdx, line);
+  if (!sgroup) {
+    return;
+  }
   ++pos;
 
   if (pos >= text.length()) {
     std::ostringstream errout;
     errout << "SGroup line too short: '" << text << "' on line " << line;
-    throw FileParseException(errout.str());
+    SGroupWarnOrThrow<>(strictParsing, errout.str());
+    sgroup->setIsValid(false);
+    return;
   }
   std::string label = text.substr(pos, text.length() - pos);
 
-  if (sgroup.getProp<std::string>("TYPE") ==
+  if (sgroup->getProp<std::string>("TYPE") ==
       "MUL") {  // Case of multiple groups
-    sgroup.setProp("MULT", label);
+    sgroup->setProp("MULT", label);
 
   } else {  // Case of abbreviation groups, but we might not have seen a SCL
             // line yet
-    sgroup.setProp("LABEL", label);
+    sgroup->setProp("LABEL", label);
   }
 }
 
 void ParseSGroupV2000SLBLine(IDX_TO_SGROUP_MAP &sGroupMap, RWMol *mol,
-                             const std::string &text, unsigned int line) {
+                             const std::string &text, unsigned int line,
+                             bool strictParsing) {
   PRECONDITION(mol, "bad mol");
   PRECONDITION(text.substr(0, 6) == "M  SLB", "bad SLB line");
 
   unsigned int pos = 6;
-  unsigned int nent = ParseSGroupIntField(text, line, pos, true);
+  bool ok;
+  unsigned int nent =
+      ParseSGroupIntField(ok, strictParsing, text, line, pos, true);
+  if (!ok) {
+    return;
+  }
 
   for (unsigned int ie = 0; ie < nent; ++ie) {
     if (text.size() < pos + 8) {
       std::ostringstream errout;
       errout << "SGroup SLB line too short: '" << text << "' on line " << line;
-      throw FileParseException(errout.str());
-    }
-
-    unsigned int sgIdx = ParseSGroupIntField(text, line, pos);
-    if (sGroupMap.find(sgIdx) == sGroupMap.end()) {
-      BOOST_LOG(rdWarningLog) << "SGroup " << sgIdx << " referenced on line "
-                              << line << " not found." << std::endl;
+      SGroupWarnOrThrow<>(strictParsing, errout.str());
       return;
     }
-    unsigned int id = ParseSGroupIntField(text, line, pos);
 
+    unsigned int sgIdx =
+        ParseSGroupIntField(ok, strictParsing, text, line, pos);
+    if (!ok) {
+      return;
+    }
+    SubstanceGroup *sgroup = FindSgIdx(sGroupMap, sgIdx, line);
+    if (!sgroup) {
+      return;
+    }
+    unsigned int id = ParseSGroupIntField(ok, strictParsing, text, line, pos);
+    if (!ok) {
+      sgroup->setIsValid(false);
+      return;
+    }
     if (id != 0 && !SubstanceGroupChecks::isSubstanceGroupIdFree(*mol, id)) {
       std::ostringstream errout;
       errout << "SGroup ID '" << id
-             << "' is assigned to more than onge SGroup, on line " << line;
-      throw FileParseException(errout.str());
+             << "' is assigned to more than one SGroup, on line " << line;
+      SGroupWarnOrThrow<>(strictParsing, errout.str());
+      sgroup->setIsValid(false);
+      return;
     }
 
-    sGroupMap.at(sgIdx).setProp<unsigned int>("ID", id);
+    sgroup->setProp<unsigned int>("ID", id);
   }
 }
 
 void ParseSGroupV2000SCNLine(IDX_TO_SGROUP_MAP &sGroupMap, RWMol *mol,
-                             const std::string &text, unsigned int line) {
+                             const std::string &text, unsigned int line,
+                             bool strictParsing) {
   PRECONDITION(mol, "bad mol");
   PRECONDITION(text.substr(0, 6) == "M  SCN", "bad SCN line");
 
   unsigned int pos = 6;
-  unsigned int nent = ParseSGroupIntField(text, line, pos, true);
+  bool ok;
+  unsigned int nent =
+      ParseSGroupIntField(ok, strictParsing, text, line, pos, true);
+  if (!ok) {
+    return;
+  }
 
   for (unsigned int ie = 0; ie < nent; ++ie) {
     if (text.size() < pos + 7) {
       std::ostringstream errout;
       errout << "SGroup SCN line too short: '" << text << "' on line " << line;
       errout << "\n needed: " << pos + 7 << " found: " << text.size();
-      throw FileParseException(errout.str());
+      SGroupWarnOrThrow<>(strictParsing, errout.str());
+      return;
     }
 
-    unsigned int sgIdx = ParseSGroupIntField(text, line, pos);
-    if (sGroupMap.find(sgIdx) == sGroupMap.end()) {
-      BOOST_LOG(rdWarningLog) << "SGroup " << sgIdx << " referenced on line "
-                              << line << " not found." << std::endl;
+    unsigned int sgIdx =
+        ParseSGroupIntField(ok, strictParsing, text, line, pos);
+    if (!ok) {
+      return;
+    }
+    SubstanceGroup *sgroup = FindSgIdx(sGroupMap, sgIdx, line);
+    if (!sgroup) {
       return;
     }
 
@@ -294,78 +436,114 @@ void ParseSGroupV2000SCNLine(IDX_TO_SGROUP_MAP &sGroupMap, RWMol *mol,
       std::ostringstream errout;
       errout << "Unsupported SGroup connection type '" << connect
              << "' on line " << line;
-      throw FileParseException(errout.str());
+      SGroupWarnOrThrow<>(strictParsing, errout.str());
+      sgroup->setIsValid(false);
+      return;
     }
 
-    sGroupMap.at(sgIdx).setProp("CONNECT", connect);
+    sgroup->setProp("CONNECT", connect);
     pos += 3;
   }
 }
 
 void ParseSGroupV2000SDSLine(IDX_TO_SGROUP_MAP &sGroupMap, RWMol *mol,
-                             const std::string &text, unsigned int line) {
+                             const std::string &text, unsigned int line,
+                             bool strictParsing) {
   PRECONDITION(mol, "bad mol");
   PRECONDITION(text.substr(0, 10) == "M  SDS EXP", "bad SDS line");
 
   unsigned int pos = 10;
-  unsigned int nent = ParseSGroupIntField(text, line, pos, true);
+  bool ok;
+  unsigned int nent =
+      ParseSGroupIntField(ok, strictParsing, text, line, pos, true);
+  if (!ok) {
+    return;
+  }
 
   for (unsigned int ie = 0; ie < nent; ++ie) {
     if (text.size() < pos + 4) {
       std::ostringstream errout;
       errout << "SGroup SDS line too short: '" << text << "' on line " << line;
-      throw FileParseException(errout.str());
+      SGroupWarnOrThrow<>(strictParsing, errout.str());
+      return;
     }
-    unsigned int sgIdx = ParseSGroupIntField(text, line, pos);
-    if (sGroupMap.find(sgIdx) == sGroupMap.end()) {
-      BOOST_LOG(rdWarningLog) << "SGroup " << sgIdx << " referenced on line "
-                              << line << " not found." << std::endl;
+    unsigned int sgIdx =
+        ParseSGroupIntField(ok, strictParsing, text, line, pos);
+    if (!ok) {
+      return;
+    }
+    SubstanceGroup *sgroup = FindSgIdx(sGroupMap, sgIdx, line);
+    if (!sgroup) {
       return;
     }
 
-    sGroupMap.at(sgIdx).setProp("ESTATE", "E");
+    sgroup->setProp("ESTATE", "E");
   }
 }
 
 void ParseSGroupV2000SBVLine(IDX_TO_SGROUP_MAP &sGroupMap, RWMol *mol,
-                             const std::string &text, unsigned int line) {
+                             const std::string &text, unsigned int line,
+                             bool strictParsing) {
   PRECONDITION(mol, "bad mol");
   PRECONDITION(text.substr(0, 6) == "M  SBV", "bad SBV line");
 
   unsigned int pos = 6;
-
-  unsigned int sgIdx = ParseSGroupIntField(text, line, pos);
-  if (sGroupMap.find(sgIdx) == sGroupMap.end()) {
-    BOOST_LOG(rdWarningLog) << "SGroup " << sgIdx << " referenced on line "
-                            << line << " not found." << std::endl;
+  bool ok;
+  unsigned int sgIdx = ParseSGroupIntField(ok, strictParsing, text, line, pos);
+  if (!ok) {
     return;
   }
-  auto &sgroup = sGroupMap.at(sgIdx);
+  SubstanceGroup *sgroup = FindSgIdx(sGroupMap, sgIdx, line);
+  if (!sgroup) {
+    return;
+  }
 
-  unsigned int bondMark = ParseSGroupIntField(text, line, pos);
+  unsigned int bondMark =
+      ParseSGroupIntField(ok, strictParsing, text, line, pos);
+  if (!ok) {
+    sgroup->setIsValid(false);
+    return;
+  }
   Bond *bond = mol->getUniqueBondWithBookmark(bondMark);
 
   RDGeom::Point3D vector;
-  if (sgroup.getProp<std::string>("TYPE") == "SUP") {
-    vector.x = ParseSGroupDoubleField(text, line, pos);
-    vector.y = ParseSGroupDoubleField(text, line, pos);
+  if (sgroup->getProp<std::string>("TYPE") == "SUP") {
+    vector.x = ParseSGroupDoubleField(ok, strictParsing, text, line, pos);
+    if (!ok) {
+      sgroup->setIsValid(false);
+      return;
+    }
+    vector.y = ParseSGroupDoubleField(ok, strictParsing, text, line, pos);
+    if (!ok) {
+      sgroup->setIsValid(false);
+      return;
+    }
     vector.z = 0.;
   }
 
-  sgroup.addCState(bond->getIdx(), vector);
+  try {
+    sgroup->addCState(bond->getIdx(), vector);
+  } catch (const std::exception &e) {
+    SGroupWarnOrThrow<>(strictParsing, e.what());
+    sgroup->setIsValid(false);
+    return;
+  }
 }
 
 void ParseSGroupV2000SDTLine(IDX_TO_SGROUP_MAP &sGroupMap, RWMol *mol,
-                             const std::string &text, unsigned int line) {
+                             const std::string &text, unsigned int line,
+                             bool strictParsing) {
   PRECONDITION(mol, "bad mol");
   PRECONDITION(text.substr(0, 6) == "M  SDT", "bad SDT line");
 
   unsigned int pos = 6;
-  unsigned int sgIdx = ParseSGroupIntField(text, line, pos);
-  auto &sgroup = sGroupMap.at(sgIdx);
-  if (sGroupMap.find(sgIdx) == sGroupMap.end()) {
-    BOOST_LOG(rdWarningLog) << "SGroup " << sgIdx << " referenced on line "
-                            << line << " not found." << std::endl;
+  bool ok;
+  unsigned int sgIdx = ParseSGroupIntField(ok, strictParsing, text, line, pos);
+  if (!ok) {
+    return;
+  }
+  SubstanceGroup *sgroup = FindSgIdx(sGroupMap, sgIdx, line);
+  if (!sgroup) {
     return;
   }
 
@@ -396,32 +574,35 @@ void ParseSGroupV2000SDTLine(IDX_TO_SGROUP_MAP &sGroupMap, RWMol *mol,
   }
 
   if (fieldName.size()) {
-    sgroup.setProp("FIELDNAME", fieldName);
-    sgroup.setProp("FIELDTYPE", fieldType);
-    sgroup.setProp("FIELDINFO", fieldInfo);
-    sgroup.setProp("QUERYTYPE", queryType);
-    sgroup.setProp("QUERYOP", queryOp);
+    sgroup->setProp("FIELDNAME", fieldName);
+    sgroup->setProp("FIELDTYPE", fieldType);
+    sgroup->setProp("FIELDINFO", fieldInfo);
+    sgroup->setProp("QUERYTYPE", queryType);
+    sgroup->setProp("QUERYOP", queryOp);
   }
 }
 
 void ParseSGroupV2000SDDLine(IDX_TO_SGROUP_MAP &sGroupMap, RWMol *mol,
-                             const std::string &text, unsigned int line) {
+                             const std::string &text, unsigned int line,
+                             bool strictParsing) {
   PRECONDITION(mol, "bad mol");
   PRECONDITION(text.substr(0, 6) == "M  SDD", "bad SDD line");
 
   unsigned int pos = 6;
-  unsigned int sgIdx = ParseSGroupIntField(text, line, pos);
-  if (sGroupMap.find(sgIdx) == sGroupMap.end()) {
-    BOOST_LOG(rdWarningLog) << "SGroup " << sgIdx << " referenced on line "
-                            << line << " not found." << std::endl;
+  bool ok;
+  unsigned int sgIdx = ParseSGroupIntField(ok, strictParsing, text, line, pos);
+  if (!ok) {
+    return;
+  }
+  SubstanceGroup *sgroup = FindSgIdx(sGroupMap, sgIdx, line);
+  if (!sgroup) {
     return;
   }
 
   // Store the rest of the line as is.
   ++pos;
   if (pos < text.length()) {
-    sGroupMap.at(sgIdx).setProp("FIELDDISP",
-                                text.substr(pos, text.length() - pos));
+    sgroup->setProp("FIELDDISP", text.substr(pos, text.length() - pos));
   }
 }
 
@@ -437,10 +618,13 @@ void ParseSGroupV2000SCDSEDLine(IDX_TO_SGROUP_MAP &sGroupMap,
   std::string type = text.substr(pos, 3);
   pos += 3;
 
-  unsigned int sgIdx = ParseSGroupIntField(text, line, pos);
-  if (sGroupMap.find(sgIdx) == sGroupMap.end()) {
-    BOOST_LOG(rdWarningLog) << "SGroup " << sgIdx << " referenced on line "
-                            << line << " not found." << std::endl;
+  bool ok;
+  unsigned int sgIdx = ParseSGroupIntField(ok, strictParsing, text, line, pos);
+  if (!ok) {
+    return;
+  }
+  SubstanceGroup *sgroup = FindSgIdx(sGroupMap, sgIdx, line);
+  if (!sgroup) {
     return;
   }
 
@@ -449,21 +633,23 @@ void ParseSGroupV2000SCDSEDLine(IDX_TO_SGROUP_MAP &sGroupMap,
     errout << "Found a Data Field not matching the SGroup of the last Data "
               "Field at line "
            << line;
-    throw FileParseException(errout.str());
+    SGroupWarnOrThrow<>(strictParsing, errout.str());
+    sgroup->setIsValid(false);
+    return;
   } else if (lastDataSGroup == 0 && type == "SCD") {
     lastDataSGroup = sgIdx;
   } else if (type == "SED") {
     lastDataSGroup = 0;
   }
 
-  auto &sgroup = sGroupMap.at(sgIdx);
-
   // this group must already have seen an SDT line
-  if (!sgroup.hasProp("FIELDNAME")) {
+  if (!sgroup->hasProp("FIELDNAME")) {
     std::ostringstream errout;
     errout << "Found a SCD line without a previous SDT specification at line "
            << line;
-    throw FileParseException(errout.str());
+    SGroupWarnOrThrow<>(strictParsing, errout.str());
+    sgroup->setIsValid(false);
+    return;
   }
 
   if (strictParsing) {
@@ -490,159 +676,244 @@ void ParseSGroupV2000SCDSEDLine(IDX_TO_SGROUP_MAP &sGroupMap,
 }
 
 void ParseSGroupV2000SPLLine(IDX_TO_SGROUP_MAP &sGroupMap, RWMol *mol,
-                             const std::string &text, unsigned int line) {
+                             const std::string &text, unsigned int line,
+                             bool strictParsing) {
   PRECONDITION(mol, "bad mol");
   PRECONDITION(text.substr(0, 6) == "M  SPL", "bad SPL line");
 
   unsigned int pos = 6;
-  unsigned int nent = ParseSGroupIntField(text, line, pos, true);
+  bool ok;
+  unsigned int nent =
+      ParseSGroupIntField(ok, strictParsing, text, line, pos, true);
+  if (!ok) {
+    return;
+  }
 
   for (unsigned int ie = 0; ie < nent; ++ie) {
     if (text.size() < pos + 8) {
       std::ostringstream errout;
       errout << "SGroup SPL line too short: '" << text << "' on line " << line;
-      throw FileParseException(errout.str());
+      SGroupWarnOrThrow<>(strictParsing, errout.str());
+      return;
     }
 
-    unsigned int sgIdx = ParseSGroupIntField(text, line, pos);
-    if (sGroupMap.find(sgIdx) == sGroupMap.end()) {
-      BOOST_LOG(rdWarningLog) << "SGroup " << sgIdx << " referenced on line "
-                              << line << " not found." << std::endl;
+    unsigned int sgIdx =
+        ParseSGroupIntField(ok, strictParsing, text, line, pos);
+    if (!ok) {
+      return;
+    }
+    SubstanceGroup *sgroup = FindSgIdx(sGroupMap, sgIdx, line);
+    if (!sgroup) {
       return;
     }
     unsigned int parentIdx = ParseSGroupIntField(text, line, pos);
 
-    sGroupMap.at(sgIdx).setProp<unsigned int>("PARENT", parentIdx);
+    sgroup->setProp<unsigned int>("PARENT", parentIdx);
   }
 }
 
 void ParseSGroupV2000SNCLine(IDX_TO_SGROUP_MAP &sGroupMap, RWMol *mol,
-                             const std::string &text, unsigned int line) {
+                             const std::string &text, unsigned int line,
+                             bool strictParsing) {
   PRECONDITION(mol, "bad mol");
   PRECONDITION(text.substr(0, 6) == "M  SNC", "bad SNC line");
 
   unsigned int pos = 6;
-  unsigned int nent = ParseSGroupIntField(text, line, pos, true);
+  bool ok;
+  unsigned int nent =
+      ParseSGroupIntField(ok, strictParsing, text, line, pos, true);
+  if (!ok) {
+    return;
+  }
 
   for (unsigned int ie = 0; ie < nent; ++ie) {
     if (text.size() < pos + 8) {
       std::ostringstream errout;
       errout << "SGroup SNC line too short: '" << text << "' on line " << line;
-      throw FileParseException(errout.str());
-    }
-
-    unsigned int sgIdx = ParseSGroupIntField(text, line, pos);
-    if (sGroupMap.find(sgIdx) == sGroupMap.end()) {
-      BOOST_LOG(rdWarningLog) << "SGroup " << sgIdx << " referenced on line "
-                              << line << " not found." << std::endl;
+      SGroupWarnOrThrow<>(strictParsing, errout.str());
       return;
     }
 
-    unsigned int compno = ParseSGroupIntField(text, line, pos);
+    unsigned int sgIdx =
+        ParseSGroupIntField(ok, strictParsing, text, line, pos);
+    if (!ok) {
+      return;
+    }
+    SubstanceGroup *sgroup = FindSgIdx(sGroupMap, sgIdx, line);
+    if (!sgroup) {
+      return;
+    }
+
+    unsigned int compno =
+        ParseSGroupIntField(ok, strictParsing, text, line, pos);
+    if (!ok) {
+      sgroup->setIsValid(false);
+      return;
+    }
     if (compno > 256u) {
       std::ostringstream errout;
       errout << "SGroup SNC value over 256: '" << compno << "' on line "
              << line;
-      throw FileParseException(errout.str());
+      SGroupWarnOrThrow<>(strictParsing, errout.str());
+      sgroup->setIsValid(false);
+      return;
     }
-    sGroupMap.at(sgIdx).setProp<unsigned int>("COMPNO", compno);
+    sgroup->setProp<unsigned int>("COMPNO", compno);
   }
 }
 
 void ParseSGroupV2000SAPLine(IDX_TO_SGROUP_MAP &sGroupMap, RWMol *mol,
-                             const std::string &text, unsigned int line) {
+                             const std::string &text, unsigned int line,
+                             bool strictParsing) {
   PRECONDITION(mol, "bad mol");
   PRECONDITION(text.substr(0, 6) == "M  SAP", "bad SAP line");
 
   unsigned int pos = 6;
-
-  unsigned int sgIdx = ParseSGroupIntField(text, line, pos);
-  if (sGroupMap.find(sgIdx) == sGroupMap.end()) {
-    BOOST_LOG(rdWarningLog) << "SGroup " << sgIdx << " referenced on line "
-                            << line << " not found." << std::endl;
+  bool ok;
+  unsigned int sgIdx = ParseSGroupIntField(ok, strictParsing, text, line, pos);
+  if (!ok) {
+    return;
+  }
+  SubstanceGroup *sgroup = FindSgIdx(sGroupMap, sgIdx, line);
+  if (!sgroup) {
     return;
   }
 
-  unsigned int nent = ParseSGroupIntField(text, line, pos, true);
+  unsigned int nent =
+      ParseSGroupIntField(ok, strictParsing, text, line, pos, true);
+  if (!ok) {
+    sgroup->setIsValid(false);
+    return;
+  }
 
   for (unsigned int ie = 0; ie < nent; ++ie) {
+    int lvIdx = -1;
     if (text.size() < pos + 11) {
       std::ostringstream errout;
       errout << "SGroup SAP line too short: '" << text << "' on line " << line;
-      throw FileParseException(errout.str());
+      if (strictParsing) {
+        throw FileParseException(errout.str());
+      } else {
+        BOOST_LOG(rdWarningLog) << errout.str() << std::endl;
+        if (text.size() < pos + 4) {
+          sgroup->setIsValid(false);
+          return;
+        }
+        lvIdx = mol->getNumAtoms();
+      }
     }
 
-    unsigned int aIdxMark = ParseSGroupIntField(text, line, pos);
-    unsigned int lvIdxMark = ParseSGroupIntField(text, line, pos);
-
+    std::string id = "  ";
+    unsigned int aIdxMark =
+        ParseSGroupIntField(ok, strictParsing, text, line, pos);
+    if (!ok) {
+      sgroup->setIsValid(false);
+      return;
+    }
     unsigned int aIdx = mol->getAtomWithBookmark(aIdxMark)->getIdx();
-    int lvIdx = -1;
 
-    if (lvIdxMark != 0) {
-      lvIdx = mol->getAtomWithBookmark(lvIdxMark)->getIdx();
+    if (lvIdx == -1) {
+      unsigned int lvIdxMark =
+          ParseSGroupIntField(ok, strictParsing, text, line, pos);
+      if (!ok) {
+        sgroup->setIsValid(false);
+        return;
+      }
+      if (lvIdxMark != 0) {
+        lvIdx = mol->getAtomWithBookmark(lvIdxMark)->getIdx();
+      }
+      if (text.size() >= pos + 3) {
+        id = text.substr(pos + 1, 2);
+        pos += 3;
+      }
     }
 
-    sGroupMap.at(sgIdx).addAttachPoint(aIdx, lvIdx, text.substr(pos + 1, 2));
-    pos += 3;
+    try {
+      sgroup->addAttachPoint(aIdx, lvIdx, id);
+    } catch (const std::exception &e) {
+      SGroupWarnOrThrow<>(strictParsing, e.what());
+      sgroup->setIsValid(false);
+      return;
+    }
   }
 }
 
 void ParseSGroupV2000SCLLine(IDX_TO_SGROUP_MAP &sGroupMap, RWMol *mol,
-                             const std::string &text, unsigned int line) {
+                             const std::string &text, unsigned int line,
+                             bool strictParsing) {
   PRECONDITION(mol, "bad mol");
   PRECONDITION(text.substr(0, 6) == "M  SCL", "bad SCL line");
 
   unsigned int pos = 6;
-
-  unsigned int sgIdx = ParseSGroupIntField(text, line, pos);
-  if (sGroupMap.find(sgIdx) == sGroupMap.end()) {
-    BOOST_LOG(rdWarningLog) << "SGroup " << sgIdx << " referenced on line "
-                            << line << " not found." << std::endl;
+  bool ok;
+  unsigned int sgIdx = ParseSGroupIntField(ok, strictParsing, text, line, pos);
+  if (!ok) {
+    return;
+  }
+  SubstanceGroup *sgroup = FindSgIdx(sGroupMap, sgIdx, line);
+  if (!sgroup) {
     return;
   }
   if (pos + 1 >= text.length()) {
     std::ostringstream errout;
     errout << "SGroup SCL line too short: '" << text << "' on line " << line;
-    throw FileParseException(errout.str());
+    SGroupWarnOrThrow<>(strictParsing, errout.str());
+    sgroup->setIsValid(false);
+    return;
   }
 
   ++pos;
-  sGroupMap.at(sgIdx).setProp("CLASS", text.substr(pos, text.length() - pos));
+  sgroup->setProp("CLASS", text.substr(pos, text.length() - pos));
 }
 
 void ParseSGroupV2000SBTLine(IDX_TO_SGROUP_MAP &sGroupMap, RWMol *mol,
-                             const std::string &text, unsigned int line) {
+                             const std::string &text, unsigned int line,
+                             bool strictParsing) {
   PRECONDITION(mol, "bad mol");
   PRECONDITION(text.substr(0, 6) == "M  SBT", "bad SBT line");
 
   unsigned int pos = 6;
-  unsigned int nent = ParseSGroupIntField(text, line, pos, true);
+  bool ok;
+  unsigned int nent =
+      ParseSGroupIntField(ok, strictParsing, text, line, pos, true);
+  if (!ok) {
+    return;
+  }
 
   for (unsigned int ie = 0; ie < nent; ++ie) {
     if (text.size() < pos + 8) {
       std::ostringstream errout;
       errout << "SGroup SBT line too short: '" << text << "' on line " << line;
-      throw FileParseException(errout.str());
-    }
-
-    unsigned int sgIdx = ParseSGroupIntField(text, line, pos);
-    if (sGroupMap.find(sgIdx) == sGroupMap.end()) {
-      BOOST_LOG(rdWarningLog) << "SGroup " << sgIdx << " referenced on line "
-                              << line << " not found." << std::endl;
+      SGroupWarnOrThrow<>(strictParsing, errout.str());
       return;
     }
-    unsigned int bracketType = ParseSGroupIntField(text, line, pos);
 
-    auto &sgroup = sGroupMap.at(sgIdx);
+    unsigned int sgIdx =
+        ParseSGroupIntField(ok, strictParsing, text, line, pos);
+    if (!ok) {
+      return;
+    }
+    SubstanceGroup *sgroup = FindSgIdx(sGroupMap, sgIdx, line);
+    if (!sgroup) {
+      return;
+    }
+    unsigned int bracketType =
+        ParseSGroupIntField(ok, strictParsing, text, line, pos);
+    if (!ok) {
+      sgroup->setIsValid(false);
+      return;
+    }
 
     if (bracketType == 0) {
-      sgroup.setProp("BRKTYP", "BRACKET");
+      sgroup->setProp("BRKTYP", "BRACKET");
     } else if (bracketType == 1) {
-      sgroup.setProp("BRKTYP", "PAREN");
+      sgroup->setProp("BRKTYP", "PAREN");
     } else {
       std::ostringstream errout;
       errout << "Invalid SBT value '" << bracketType << "' on line " << line;
-      throw FileParseException(errout.str());
+      SGroupWarnOrThrow<>(strictParsing, errout.str());
+      sgroup->setIsValid(false);
+      return;
     }
   }
 }
@@ -679,7 +950,8 @@ template std::vector<unsigned int> ParseV3000Array(std::stringstream &stream);
 template std::vector<int> ParseV3000Array(std::stringstream &stream);
 
 void ParseV3000CStateLabel(RWMol *mol, SubstanceGroup &sgroup,
-                           std::stringstream &stream, unsigned int line) {
+                           std::stringstream &stream, unsigned int line,
+                           bool strictParsing) {
   stream.get();  // discard parentheses
 
   unsigned int count;
@@ -691,7 +963,9 @@ void ParseV3000CStateLabel(RWMol *mol, SubstanceGroup &sgroup,
   if ((type != "SUP" && count != 1) || (type == "SUP" && count != 4)) {
     std::ostringstream errout;
     errout << "Unexpected number of fields for CSTATE field on line " << line;
-    throw FileParseException(errout.str());
+    SGroupWarnOrThrow<>(strictParsing, errout.str());
+    sgroup.setIsValid(false);
+    return;
   }
 
   Bond *bond = mol->getUniqueBondWithBookmark(bondMark);
@@ -700,13 +974,19 @@ void ParseV3000CStateLabel(RWMol *mol, SubstanceGroup &sgroup,
   if (type == "SUP") {
     stream >> vector.x >> vector.y >> vector.z;
   }
-  sgroup.addCState(bond->getIdx(), vector);
+  try {
+    sgroup.addCState(bond->getIdx(), vector);
+  } catch (const std::exception &e) {
+    SGroupWarnOrThrow<>(strictParsing, e.what());
+    sgroup.setIsValid(false);
+    return;
+  }
 
   stream.get();  // discard final parentheses
 }
 
 void ParseV3000SAPLabel(RWMol *mol, SubstanceGroup &sgroup,
-                        std::stringstream &stream) {
+                        std::stringstream &stream, bool strictParsing) {
   stream.get();  // discard parentheses
 
   unsigned int count;
@@ -731,7 +1011,13 @@ void ParseV3000SAPLabel(RWMol *mol, SubstanceGroup &sgroup,
     }
   }
 
-  sgroup.addAttachPoint(aIdx, lvIdx, sapIdStr);
+  try {
+    sgroup.addAttachPoint(aIdx, lvIdx, sapIdStr);
+  } catch (const std::exception &e) {
+    SGroupWarnOrThrow<>(strictParsing, e.what());
+    sgroup.setIsValid(false);
+    return;
+  }
 }
 
 std::string ParseV3000StringPropLabel(std::stringstream &stream) {
@@ -774,92 +1060,101 @@ std::string ParseV3000StringPropLabel(std::stringstream &stream) {
 
 void ParseV3000ParseLabel(const std::string &label,
                           std::stringstream &lineStream, STR_VECT &dataFields,
-                          unsigned int &line, SubstanceGroup &sgroup,
-                          size_t nSgroups, RWMol *mol, bool &strictParsing) {
+                          unsigned int line, SubstanceGroup &sgroup,
+                          size_t nSgroups, RWMol *mol, bool strictParsing) {
   RDUNUSED_PARAM(nSgroups);
   // TODO: we could handle these in a more structured way
-  if (label == "XBHEAD" || label == "XBCORR") {
-    std::vector<unsigned int> bvect = ParseV3000Array<unsigned int>(lineStream);
-    std::transform(bvect.begin(), bvect.end(), bvect.begin(),
-                   [](unsigned int v) -> unsigned int { return v - 1; });
-    sgroup.setProp(label, bvect);
-  } else if (label == "ATOMS") {
-    for (auto atomIdx : ParseV3000Array<unsigned int>(lineStream)) {
-      sgroup.addAtomWithBookmark(atomIdx);
-    }
-  } else if (label == "PATOMS") {
-    for (auto patomIdx : ParseV3000Array<unsigned int>(lineStream)) {
-      sgroup.addParentAtomWithBookmark(patomIdx);
-    }
-  } else if (label == "CBONDS" || label == "XBONDS") {
-    for (auto bondIdx : ParseV3000Array<unsigned int>(lineStream)) {
-      sgroup.addBondWithBookmark(bondIdx);
-    }
-  } else if (label == "BRKXYZ") {
-    auto coords = ParseV3000Array<double>(lineStream);
-    if (coords.size() != 9) {
-      std::ostringstream errout;
-      errout << "Unexpected number of coordinates for BRKXYZ on line " << line;
-      throw FileParseException(errout.str());
-    }
+  try {
+    if (label == "XBHEAD" || label == "XBCORR") {
+      std::vector<unsigned int> bvect =
+          ParseV3000Array<unsigned int>(lineStream);
+      std::transform(bvect.begin(), bvect.end(), bvect.begin(),
+                     [](unsigned int v) -> unsigned int { return v - 1; });
+      sgroup.setProp(label, bvect);
+    } else if (label == "ATOMS") {
+      for (auto atomIdx : ParseV3000Array<unsigned int>(lineStream)) {
+        sgroup.addAtomWithBookmark(atomIdx);
+      }
+    } else if (label == "PATOMS") {
+      for (auto patomIdx : ParseV3000Array<unsigned int>(lineStream)) {
+        sgroup.addParentAtomWithBookmark(patomIdx);
+      }
+    } else if (label == "CBONDS" || label == "XBONDS") {
+      for (auto bondIdx : ParseV3000Array<unsigned int>(lineStream)) {
+        sgroup.addBondWithBookmark(bondIdx);
+      }
+    } else if (label == "BRKXYZ") {
+      auto coords = ParseV3000Array<double>(lineStream);
+      if (coords.size() != 9) {
+        std::ostringstream errout;
+        errout << "Unexpected number of coordinates for BRKXYZ on line "
+               << line;
+        throw FileParseException(errout.str());
+      }
 
-    SubstanceGroup::Bracket bracket;
-    for (unsigned int i = 0; i < 3; ++i) {
-      bracket[i] = RDGeom::Point3D(*(coords.begin() + (3 * i)),
-                                   *(coords.begin() + (3 * i) + 1),
-                                   *(coords.begin() + (3 * i) + 2));
-    }
-    sgroup.addBracket(bracket);
-  } else if (label == "CSTATE") {
-    ParseV3000CStateLabel(mol, sgroup, lineStream, line);
-  } else if (label == "SAP") {
-    ParseV3000SAPLabel(mol, sgroup, lineStream);
-  } else if (label == "PARENT") {
-    // Store relationship until all SGroups have been read
-    unsigned int parentIdx;
-    lineStream >> parentIdx;
-    sgroup.setProp<unsigned int>("PARENT", parentIdx);
-  } else if (label == "COMPNO") {
-    unsigned int compno;
-    lineStream >> compno;
-    if (compno > 256u) {
-      std::ostringstream errout;
-      errout << "SGroup SNC value over 256: '" << compno << "' on line "
-             << line;
-      throw FileParseException(errout.str());
-    }
-    sgroup.setProp<unsigned int>("COMPNO", compno);
-  } else if (label == "FIELDDATA") {
-    auto strValue = ParseV3000StringPropLabel(lineStream);
-    if (strictParsing) {
-      strValue = strValue.substr(0, 200);
-    }
-    dataFields.push_back(strValue);
+      SubstanceGroup::Bracket bracket;
+      for (unsigned int i = 0; i < 3; ++i) {
+        bracket[i] = RDGeom::Point3D(*(coords.begin() + (3 * i)),
+                                     *(coords.begin() + (3 * i) + 1),
+                                     *(coords.begin() + (3 * i) + 2));
+      }
+      sgroup.addBracket(bracket);
+    } else if (label == "CSTATE") {
+      ParseV3000CStateLabel(mol, sgroup, lineStream, line, strictParsing);
+    } else if (label == "SAP") {
+      ParseV3000SAPLabel(mol, sgroup, lineStream, strictParsing);
+    } else if (label == "PARENT") {
+      // Store relationship until all SGroups have been read
+      unsigned int parentIdx;
+      lineStream >> parentIdx;
+      sgroup.setProp<unsigned int>("PARENT", parentIdx);
+    } else if (label == "COMPNO") {
+      unsigned int compno;
+      lineStream >> compno;
+      if (compno > 256u) {
+        std::ostringstream errout;
+        errout << "SGroup SNC value over 256: '" << compno << "' on line "
+               << line;
+        throw FileParseException(errout.str());
+      }
+      sgroup.setProp<unsigned int>("COMPNO", compno);
+    } else if (label == "FIELDDATA") {
+      auto strValue = ParseV3000StringPropLabel(lineStream);
+      if (strictParsing) {
+        strValue = strValue.substr(0, 200);
+      }
+      dataFields.push_back(strValue);
 
-  } else {
-    // Parse string props
-    auto strValue = ParseV3000StringPropLabel(lineStream);
+    } else {
+      // Parse string props
+      auto strValue = ParseV3000StringPropLabel(lineStream);
 
-    if (label == "SUBTYPE" && !SubstanceGroupChecks::isValidSubType(strValue)) {
-      std::ostringstream errout;
-      errout << "Unsupported SGroup subtype '" << strValue << "' on line "
-             << line;
-      throw FileParseException(errout.str());
-    } else if (label == "CONNECT" &&
-               !SubstanceGroupChecks::isValidConnectType(strValue)) {
-      std::ostringstream errout;
-      errout << "Unsupported SGroup connection type '" << strValue
-             << "' on line " << line;
-      throw FileParseException(errout.str());
+      if (label == "SUBTYPE" &&
+          !SubstanceGroupChecks::isValidSubType(strValue)) {
+        std::ostringstream errout;
+        errout << "Unsupported SGroup subtype '" << strValue << "' on line "
+               << line;
+        throw FileParseException(errout.str());
+      } else if (label == "CONNECT" &&
+                 !SubstanceGroupChecks::isValidConnectType(strValue)) {
+        std::ostringstream errout;
+        errout << "Unsupported SGroup connection type '" << strValue
+               << "' on line " << line;
+        throw FileParseException(errout.str());
+      }
+
+      sgroup.setProp(label, strValue);
     }
-
-    sgroup.setProp(label, strValue);
+  } catch (const std::exception &e) {
+    SGroupWarnOrThrow<>(strictParsing, e.what());
+    sgroup.setIsValid(false);
+    return;
   }
 }
 
-void ParseV3000SGroupsBlock(std::istream *inStream, unsigned int &line,
+void ParseV3000SGroupsBlock(std::istream *inStream, unsigned int line,
                             unsigned int nSgroups, RWMol *mol,
-                            bool &strictParsing) {
+                            bool strictParsing) {
   std::string tempStr = FileParserUtils::getV3000Line(inStream, line);
   boost::to_upper(tempStr);
   if (tempStr.length() < 12 || tempStr.substr(0, 12) != "BEGIN SGROUP") {
@@ -915,13 +1210,18 @@ void ParseV3000SGroupsBlock(std::istream *inStream, unsigned int &line,
         std::ostringstream errout;
         errout << "Existing SGroup ID '" << externalId
                << "' assigned to a second SGroup on line " << line;
-        throw FileParseException(errout.str());
+        if (strictParsing) {
+          throw FileParseException(errout.str());
+        } else {
+          BOOST_LOG(rdWarningLog) << errout.str() << std::endl;
+          sgroup.setIsValid(false);
+        }
       }
 
       sgroup.setProp<unsigned int>("ID", externalId);
     }
 
-    while (!lineStream.eof() && !lineStream.fail()) {
+    while (sgroup.getIsValid() && !lineStream.eof() && !lineStream.fail()) {
       char spacer;
       std::string label;
 
@@ -932,7 +1232,13 @@ void ParseV3000SGroupsBlock(std::istream *inStream, unsigned int &line,
         std::ostringstream errout;
         errout << "Found character '" << spacer
                << "' when expecting a separator (space) on line " << line;
-        throw FileParseException(errout.str());
+        if (strictParsing) {
+          throw FileParseException(errout.str());
+        } else {
+          BOOST_LOG(rdWarningLog) << errout.str() << std::endl;
+          sgroup.setIsValid(false);
+          continue;
+        }
       }
 
       std::getline(lineStream, label, '=');
@@ -944,7 +1250,7 @@ void ParseV3000SGroupsBlock(std::istream *inStream, unsigned int &line,
     // Process defaults
     lineStream.clear();
     lineStream.str(defaultString);
-    while (!lineStream.eof() && !lineStream.fail()) {
+    while (sgroup.getIsValid() && !lineStream.eof() && !lineStream.fail()) {
       char spacer;
       std::string label;
 
@@ -956,7 +1262,13 @@ void ParseV3000SGroupsBlock(std::istream *inStream, unsigned int &line,
         errout << "Found character '" << spacer
                << "' when expecting a separator (space) in DEFAULTS on line "
                << defaultLineNum;
-        throw FileParseException(errout.str());
+        if (strictParsing) {
+          throw FileParseException(errout.str());
+        } else {
+          BOOST_LOG(rdWarningLog) << errout.str() << std::endl;
+          sgroup.setIsValid(false);
+          continue;
+        }
       }
 
       std::getline(lineStream, label, '=');
@@ -969,7 +1281,13 @@ void ParseV3000SGroupsBlock(std::istream *inStream, unsigned int &line,
         if (spacer == ' ') {
           std::ostringstream errout;
           errout << "Found unexpected whitespace at DEFAULT label " << label;
-          throw FileParseException(errout.str());
+          if (strictParsing) {
+            throw FileParseException(errout.str());
+          } else {
+            BOOST_LOG(rdWarningLog) << errout.str() << std::endl;
+            sgroup.setIsValid(false);
+            continue;
+          }
         } else if (spacer == '(') {
           std::getline(lineStream, label, ')');
           lineStream.get(spacer);
@@ -999,7 +1317,12 @@ void ParseV3000SGroupsBlock(std::istream *inStream, unsigned int &line,
 
   // SGroups successfully parsed, now add them to the molecule
   for (const auto &sg : sGroupMap) {
-    addSubstanceGroup(*mol, sg.second);
+    if (sg.second.getIsValid()) {
+      addSubstanceGroup(*mol, sg.second);
+    } else {
+      BOOST_LOG(rdWarningLog) << "SGroup " << sg.first
+                              << " is invalid and will be ignored" << std::endl;
+    }
   }
 }
 
