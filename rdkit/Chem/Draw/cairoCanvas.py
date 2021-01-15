@@ -144,11 +144,17 @@ class Canvas(CanvasBase):
         self.imageType = imageType
         if image is not None:
             try:
-                imgd = getattr(image, 'tobytes', image.tostring)("raw", "BGRA")
+                tostring = getattr(image, 'tostring', None)
+                if tostring is None:
+                    tostring = getattr(image, 'tobytes')
+                imgd = tostring("raw", "BGRA")
             except SystemError:
                 r, g, b, a = image.split()
                 mrg = Image.merge("RGBA", (b, g, r, a))
-                imgd = getattr(mrg, 'tobytes', mrg.tostring)("raw", "RGBA")
+                tostring = getattr(mrg, 'tostring', None)
+                if tostring is None:
+                    tostring = getattr(mrg, 'tobytes')
+                imgd = tostring("raw", "RGBA")
 
             a = array.array('B', imgd)
             stride = image.size[0] * 4
@@ -189,13 +195,15 @@ class Canvas(CanvasBase):
         if self.fileName and self.imageType == 'png':
             self.surface.write_to_png(self.fileName)
         elif self.image is not None:
+            fromstring = getattr(self.image, 'fromstring', None)
+            if fromstring is None:
+                fromstring = getattr(self.image, 'frombytes')
+
             # on linux at least it seems like the PIL images are BGRA, not RGBA:
             if hasattr(self.surface, 'get_data'):
-                getattr(self.image, 'frombytes', self.image.fromstring)(bytes(self.surface.get_data()),
-                                                                        "raw", "BGRA", 0, 1)
+                fromstring(bytes(self.surface.get_data()), "raw", "BGRA", 0, 1)
             else:
-                getattr(self.image, 'frombytes', self.image.fromstring)(
-                  bytes(self.surface.get_data_as_rgba()), "raw", "RGBA", 0, 1)
+                fromstring(bytes(self.surface.get_data_as_rgba()), "raw", "RGBA", 0, 1)
             self.surface.finish()
         elif self.imageType == "png":
             if hasattr(self.surface, 'get_data'):
