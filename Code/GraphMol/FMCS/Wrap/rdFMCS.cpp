@@ -200,17 +200,6 @@ public:
   double getThreshold() const {
     return p->Threshold;
   }
-  PyMCSParameters(const MCSParameters &other,
-                  const PyProgressCallbackUserData &pcudOther)
-      : PyMCSParameters() {
-    *p = other;
-    pcud->pyMCSProgress = pcudOther.pyMCSProgress;
-    cfud->pyAtomBondCompData = pcudOther.pyAtomBondCompData;
-  }
-  const MCSParameters *get() const { return p.get(); }
-  bool getMaximizeBonds() const { return p->MaximizeBonds; }
-  void setMaximizeBonds(bool value) { p->MaximizeBonds = value; }
-  double getThreshold() const { return p->Threshold; }
   void setThreshold(double value) { p->Threshold = value; }
   unsigned int getTimeout() const { return p->Timeout; }
   void setTimeout(unsigned int value) { p->Timeout = value; }
