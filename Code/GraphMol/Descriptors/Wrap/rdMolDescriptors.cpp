@@ -340,7 +340,7 @@ double hkAlphaHelper(const RDKit::ROMol &mol, python::object atomContribs) {
 }
 
 RDKit::SparseIntVect<std::uint32_t> *MorganFingerprintHelper(
-    const RDKit::ROMol &mol, int radius, int nBits, python::object invariants,
+    const RDKit::ROMol &mol, unsigned int radius, int nBits, python::object invariants,
     python::object fromAtoms, bool useChirality, bool useBondTypes,
     bool useFeatures, bool useCounts, python::object bitInfo,
     bool includeRedundantEnvironments) {
@@ -461,7 +461,7 @@ struct std_pair_to_python_converter {
 #endif
 }  // namespace
 RDKit::SparseIntVect<std::uint32_t> *GetMorganFingerprint(
-    const RDKit::ROMol &mol, int radius, python::object invariants,
+    const RDKit::ROMol &mol, unsigned int radius, python::object invariants,
     python::object fromAtoms, bool useChirality, bool useBondTypes,
     bool useFeatures, bool useCounts, python::object bitInfo,
     bool includeRedundantEnvironments) {
@@ -470,7 +470,7 @@ RDKit::SparseIntVect<std::uint32_t> *GetMorganFingerprint(
       useFeatures, useCounts, bitInfo, includeRedundantEnvironments);
 }
 RDKit::SparseIntVect<std::uint32_t> *GetHashedMorganFingerprint(
-    const RDKit::ROMol &mol, int radius, int nBits, python::object invariants,
+    const RDKit::ROMol &mol, unsigned int radius, unsigned int nBits, python::object invariants,
     python::object fromAtoms, bool useChirality, bool useBondTypes,
     bool useFeatures, python::object bitInfo,
     bool includeRedundantEnvironments) {
@@ -480,7 +480,7 @@ RDKit::SparseIntVect<std::uint32_t> *GetHashedMorganFingerprint(
 }
 
 ExplicitBitVect *GetMorganFingerprintBV(
-    const RDKit::ROMol &mol, int radius, unsigned int nBits,
+    const RDKit::ROMol &mol, unsigned int radius, unsigned int nBits,
     python::object invariants, python::object fromAtoms, bool useChirality,
     bool useBondTypes, bool useFeatures, python::object bitInfo,
     bool includeRedundantEnvironments) {
@@ -512,8 +512,9 @@ ExplicitBitVect *GetMorganFingerprintBV(
   }
   ExplicitBitVect *res;
   res = RDKit::MorganFingerprints::getFingerprintAsBitVect(
-      mol, static_cast<unsigned int>(radius), nBits, invars, froms.get(),
-      useChirality, useBondTypes, false, bitInfoMap,
+      mol, radius, nBits,
+      invars, froms.get(), useChirality,
+      useBondTypes, false, bitInfoMap,
       includeRedundantEnvironments);
   if (bitInfoMap) {
     bitInfo.attr("clear")();
