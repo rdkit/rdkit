@@ -196,7 +196,7 @@ RDKIT_FMCS_EXPORT MCSResult findMCS(const std::vector<ROMOL_SPTR>& mols,
 RDKIT_FMCS_EXPORT MCSResult findMCS_P(const std::vector<ROMOL_SPTR>& mols,
                                       const char* params_json,
                                       void* userData = nullptr);
-
+// TODO: is it better to keep the signatures unchanged so client code doesn't have to change? We can restrict maxDistance and conformerIdxs arguments to the params object form.
 RDKIT_FMCS_EXPORT MCSResult findMCS(
     const std::vector<ROMOL_SPTR>& mols, bool maximizeBonds, double threshold,
     unsigned timeout, bool verbose, bool matchValences,

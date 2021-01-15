@@ -63,7 +63,7 @@ public class FMCSTests extends GraphMolTest {
 		mols.add(RWMol.MolFromSmiles("c1c(C)cccc1OC"));
 		mols.add(RWMol.MolFromSmiles("C1CCCCC1C"));
                 
-                MCSResult mcs=RDKFuncs.findMCS(mols,true,1,60,false,false,false,false,false,
+                MCSResult mcs=RDKFuncs.findMCS(mols,true,1,60,false,false,false,false,false,-1.0f,null,
                                                AtomComparator.AtomCompareElements,
                                                BondComparator.BondCompareAny);
                 assertEquals(6,mcs.getNumAtoms());
@@ -93,7 +93,7 @@ public class FMCSTests extends GraphMolTest {
 		mols.add(RWMol.MolFromSmiles("[H]c1ccccc1C",0, false));
 		mols.add(RWMol.MolFromSmiles("[H]c1ccccc1O",0, false));
 		        // H matches H, O matches C
-                MCSResult mcs=RDKFuncs.findMCS(mols,true,1,60,false,false,false,false,false,
+                MCSResult mcs=RDKFuncs.findMCS(mols,true,1,60,false,false,false,false,false,-1.0f, null,
                                                AtomComparator.AtomCompareAnyHeavyAtom,
                                                BondComparator.BondCompareAny);
                 assertEquals(8,mcs.getNumAtoms());
@@ -108,7 +108,7 @@ public class FMCSTests extends GraphMolTest {
 			mols.add(RWMol.MolFromSmiles("[H]c1ccccc1C",0, false));
 			mols.add(RWMol.MolFromSmiles("Oc1ccccc1O",0, false));
 					// O matches C, H does not match O
-					MCSResult mcs=RDKFuncs.findMCS(mols,true,1,60,false,false,false,false,false,
+                        MCSResult mcs=RDKFuncs.findMCS(mols,true,1,60,false,false,false,false,false,-1.0f, null,
 												   AtomComparator.AtomCompareAnyHeavyAtom,
 												   BondComparator.BondCompareAny);
 					assertEquals(7,mcs.getNumAtoms());

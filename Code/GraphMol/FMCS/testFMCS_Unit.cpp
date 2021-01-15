@@ -587,6 +587,8 @@ MCSResult checkMCS(const std::vector<ROMOL_SPTR> mols, const MCSParameters p,
   if (res.NumAtoms != expectedAtoms || res.NumBonds != expectedBonds){
     std::cerr << "testMaxDistance failed, expected "
               << expectedAtoms << " atoms, "<< expectedBonds << " bonds"
+              << " but got " << res.NumAtoms << " atoms and "
+              << res.NumBonds << " bonds"
               << std::endl;
     TEST_ASSERT(res.NumAtoms == expectedAtoms && res.NumBonds == expectedBonds);
   }
@@ -703,7 +705,6 @@ void testMaxDistanceFlip(){
   mol2->addBond(newIndex, otherIndex, Bond::BondType::SINGLE);
   mols.emplace_back(mol2);
   MCSParameters p;
-  //p.Verbose = true;
   // Should match the flipped N if we don't filter on max distance
   checkMCS(mols, p, 9, 9);
   p.AtomCompareParameters.MaxDistance = 1.0;
@@ -711,7 +712,7 @@ void testMaxDistanceFlip(){
   BOOST_LOG(rdInfoLog) << "\tdone" << std::endl;
 
 }
-// TODO: Add test for non-default conformer idx
+
 void testMaxDistance() {
   BOOST_LOG(rdInfoLog) << "-------------------------------------" << std::endl;
   BOOST_LOG(rdInfoLog) << "Testing FMCS testMaxDistance" << std::endl;
@@ -731,14 +732,36 @@ void testMaxDistance() {
   }
 
   MCSParameters p;
-  //p.Verbose = true;
   p.AtomCompareParameters.MaxDistance = 1.0;
   checkMCS(mols, p, 14, 14);
   // Now let's allow the non-ring O and N to match
   p.AtomTyper = MCSAtomCompareAnyHeavyAtom;
   checkMCS(mols, p, 17, 17);
+  // Now add and test extra conformations
+  for (auto& mol : mols){
+    TEST_ASSERT(mol->getNumConformers() == 1);
+    auto conformer = new Conformer(mol->getConformer(0));
+    for (unsigned idx=0; idx < mol->getNumAtoms(); idx++){
+      RDGeom::Point3D pt = conformer->getAtomPos(idx);
+      conformer->setAtomPos(idx, RDGeom::Point3D(pt.x - 100.0, pt.y - 100.0, pt.z));
+    }
+    mol->addConformer(conformer, true);
+  }
+  p.AtomCompareParameters.ConformerIdxs = {0, 0};
+  checkMCS(mols, p, 17, 17);
+  p.AtomCompareParameters.ConformerIdxs = {0, 1};
+  checkMCS(mols, p, 0, 0);
+  p.AtomCompareParameters.ConformerIdxs = {1, 0};
+  checkMCS(mols, p, 0, 0);
+  p.AtomCompareParameters.MaxDistance = 1000.0;
+  checkMCS(mols, p, 22, 22);
+  p.AtomCompareParameters.MaxDistance = 1.0;
+  p.AtomCompareParameters.ConformerIdxs = {1, 1};
+  checkMCS(mols, p, 17, 17);
+
   BOOST_LOG(rdInfoLog) << "\tdone" << std::endl;
 }
+
 
 void testSegFault() {
   BOOST_LOG(rdInfoLog) << "-------------------------------------" << std::endl;
@@ -2568,7 +2591,7 @@ int main(int argc, const char* argv[]) {
 
   testMaxDistance();
   testMaxDistanceFlip();
-  testJnk1LigandsDistance();
+  //testJnk1LigandsDistance();
 
   test18();
   test504();
