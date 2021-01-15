@@ -260,7 +260,7 @@ if(RDK_BUILD_PYTHON_WRAPPERS)
   if(WIN32 OR "${Py_ENABLE_SHARED}" STREQUAL "1")
     target_link_libraries(rdkit_py_base INTERFACE ${PYTHON_LIBRARIES} )
   endif()
-  
+
   find_package(NumPy REQUIRED)
   target_include_directories(rdkit_base INTERFACE ${PYTHON_NUMPY_INCLUDE_PATH})
 
@@ -383,7 +383,7 @@ endif()
 
 if(RDK_USE_BOOST_SERIALIZATION)
     set(T_LIBS ${Boost_LIBRARIES})
-    find_package(Boost ${RDK_BOOST_VERSION} COMPONENTS serialization)
+    find_package(Boost ${RDK_BOOST_VERSION} COMPONENTS system  serialization iostreams)
     if (Boost_SERIALIZATION_LIBRARY)
       set(Boost_LIBRARIES ${T_LIBS} ${Boost_LIBRARIES})
     else()

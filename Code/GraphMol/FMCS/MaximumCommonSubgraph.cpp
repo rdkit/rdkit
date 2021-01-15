@@ -30,7 +30,11 @@ struct LabelDefinition {
   LabelDefinition(unsigned i, unsigned value) : ItemIndex(i), Value(value) {}
 };
 
-MaximumCommonSubgraph::MaximumCommonSubgraph(const MCSParameters* params) {
+MaximumCommonSubgraph::MaximumCommonSubgraph(const MCSParameters* params,
+                                             void* userData) {
+  if (nullptr != userData) {
+    CompareFunctionsData.userData = userData;
+  }
   Parameters = (nullptr != params ? *params : MCSParameters());
   if (!Parameters.ProgressCallback) {
     Parameters.ProgressCallback = MCSProgressCallbackTimeout;
@@ -68,50 +72,49 @@ void MaximumCommonSubgraph::init() {
 #ifdef DUP_SUBSTRUCT_CACHE
   DuplicateCache.clear();
 #endif
-  void* userData = Parameters.CompareFunctionsUserData;
-
-  size_t nq = 0;
+  if (nullptr != Parameters.CompareFunctionsUserData){
+    CompareFunctionsData.userData = Parameters.CompareFunctionsUserData;
+  }
+  
 #ifdef FAST_SUBSTRUCT_CACHE
-  // fill out RingMatchTables to check cache Hash collision by checking match a
-  // part of Query to Query
-  if (!userData  // predefined functor - compute RingMatchTable for all targets
-      && (Parameters.BondCompareParameters.CompleteRingsOnly ||
-          Parameters.BondCompareParameters.RingMatchesRingOnly ||
-          Parameters.AtomCompareParameters.RingMatchesRingOnly)) {
-    RingMatchTables.init(QueryMolecule);
-    Parameters.CompareFunctionsUserData = &RingMatchTables;
-    RingMatchTables.computeRingMatchTable(QueryMolecule, QueryMolecule,
-                                          Parameters);
+  loadMatchTables(QueryMolecule, QueryAtomMatchTable, QueryBondMatchTable);
+  loadBondLabels();
+#endif
+  Targets.resize(Molecules.size() - 1);
+  size_t i = 0;
+  for (auto it = Molecules.begin() + 1; it != Molecules.end(); it++, i++) {
+    Target& target = Targets[i];
+    target.Molecule = *it;
+    buildTargetTopology(target);
+#ifdef FAST_SUBSTRUCT_CACHE
+    loadMatchTables(target.Molecule, target.AtomMatchTable,
+                    target.BondMatchTable);
+#endif
   }
+}
 
-  // fill out match tables
-  nq = QueryMolecule->getNumAtoms();
-  QueryAtomMatchTable.resize(nq, nq);
-  for (size_t aj = 0; aj < nq; aj++) {
-    for (size_t ai = 0; ai < nq; ai++) {
-      QueryAtomMatchTable.set(
-          ai, aj,
-          Parameters.AtomTyper(Parameters.AtomCompareParameters, *QueryMolecule,
-                               ai, *QueryMolecule, aj,
-                               Parameters.CompareFunctionsUserData));
-    }
+void MaximumCommonSubgraph::buildTargetTopology(Target& target) {
+  // build Target Topology ADD ATOMs
+  for (ROMol::ConstAtomIterator a = target.Molecule->beginAtoms();
+       a != target.Molecule->endAtoms(); a++) {
+    target.Topology.addAtom((*a)->getIdx());
   }
-  nq = QueryMolecule->getNumBonds();
-  QueryBondMatchTable.resize(nq, nq);
-  for (size_t aj = 0; aj < nq; aj++) {
-    for (size_t ai = 0; ai < nq; ai++) {
-      QueryBondMatchTable.set(
-          ai, aj,
-          Parameters.BondTyper(Parameters.BondCompareParameters, *QueryMolecule,
-                               ai, *QueryMolecule, aj,
-                               Parameters.CompareFunctionsUserData));
-    }
+  // build Target Topology ADD BONDs
+  for (ROMol::ConstBondIterator b = target.Molecule->beginBonds();
+       b != target.Molecule->endBonds(); b++) {
+    const Bond* bond = *b;
+    unsigned ii = bond->getBeginAtomIdx();
+    unsigned jj = bond->getEndAtomIdx();
+    target.Topology.addBond((*b)->getIdx(), ii, jj);
   }
+}
+
+void MaximumCommonSubgraph::loadBondLabels() {
   // Compute label values based on current functor and parameters for code
   // Morgan correct computation.
   unsigned currentLabelValue = 1;
   std::vector<LabelDefinition> labels;
-  nq = QueryMolecule->getNumAtoms();
+  size_t nq = QueryMolecule->getNumAtoms();
   QueryAtomLabels.resize(nq);
   for (size_t ai = 0; ai < nq; ai++) {
     if (MCSAtomCompareAny ==
@@ -139,8 +142,8 @@ void MaximumCommonSubgraph::init() {
         for (auto& label : labels) {
           if (Parameters.AtomTyper(Parameters.AtomCompareParameters,
                                    *QueryMolecule, label.ItemIndex,
-                                   *QueryMolecule, ai,
-                                   userData)) {  // equal items
+                                   *QueryMolecule, ai, CompareFunctionsData)) {
+            // equal items
             QueryAtomLabels[ai] = label.Value;
             break;
           }
@@ -154,13 +157,14 @@ void MaximumCommonSubgraph::init() {
   }
   labels.clear();
   currentLabelValue = 1;
+
   nq = QueryMolecule->getNumBonds();
   QueryBondLabels.resize(nq);
   for (size_t aj = 0; aj < nq; aj++) {
     const Bond* bond = QueryMolecule->getBondWithIdx(aj);
-    unsigned ring = 0;
-    if (!userData && (Parameters.BondCompareParameters.CompleteRingsOnly ||
-                      Parameters.BondCompareParameters.RingMatchesRingOnly)) {
+    unsigned ring = 0;    
+    if (Parameters.BondCompareParameters.CompleteRingsOnly ||
+        Parameters.BondCompareParameters.RingMatchesRingOnly) {
       ring = RingMatchTables.isQueryBondInRing(aj) ? 0 : 1;  // is bond in ring
     }
     if (MCSBondCompareAny ==
@@ -191,10 +195,10 @@ void MaximumCommonSubgraph::init() {
     } else {  // custom user defined functor
       QueryBondLabels[aj] = NotSet;
       for (auto& label : labels) {
-        if (Parameters.BondTyper(Parameters.BondCompareParameters,
-                                 *QueryMolecule, label.ItemIndex,
-                                 *QueryMolecule, aj,
-                                 userData)) {  // equal bonds + ring ...
+        if (Parameters.BondTyper(
+                Parameters.BondCompareParameters, *QueryMolecule,
+                label.ItemIndex, *QueryMolecule, aj,
+                CompareFunctionsData)) {  // equal bonds + ring ...
           QueryBondLabels[aj] = label.Value;
           break;
         }
@@ -205,66 +209,51 @@ void MaximumCommonSubgraph::init() {
       }
     }
   }
-#endif
-  Targets.resize(Molecules.size() - 1);
-  size_t i = 0;
-  for (auto it = Molecules.begin() + 1; it != Molecules.end(); it++, i++) {
-    Targets[i].Molecule = *it;
-    // build Target Topology ADD ATOMs
-    size_t j = 0;  // current item
-    for (ROMol::ConstAtomIterator a = Targets[i].Molecule->beginAtoms();
-         a != Targets[i].Molecule->endAtoms(); a++, j++) {
-      Targets[i].Topology.addAtom((*a)->getIdx());
-    }
-    // build Target Topology ADD BONDs
-    for (ROMol::ConstBondIterator b = Targets[i].Molecule->beginBonds();
-         b != Targets[i].Molecule->endBonds(); b++) {
-      const Bond* bond = *b;
-      unsigned ii = bond->getBeginAtomIdx();
-      unsigned jj = bond->getEndAtomIdx();
-      Targets[i].Topology.addBond((*b)->getIdx(), ii, jj);
-    }
+}
 
-#ifdef FAST_SUBSTRUCT_CACHE
-    // fill out RingMatchTables
-    if (!userData  // predefined functor - compute RingMatchTable for all
-                   // targets
-        && (Parameters.BondCompareParameters.CompleteRingsOnly ||
-            Parameters.BondCompareParameters.RingMatchesRingOnly)) {
-      RingMatchTables.addTargetBondRingsIndeces(Targets[i].Molecule);
-      RingMatchTables.computeRingMatchTable(QueryMolecule, Targets[i].Molecule,
-                                            Parameters);
+void MaximumCommonSubgraph::loadMatchTables(const ROMol* targetMolecule,
+                                            MatchTable& atomMatchTable,
+                                            MatchTable& bondMatchTable) {
+  // fill out RingMatchTables to check cache Hash collision by checking match a
+  // part of Query to Query
+  // predefined functor - compute RingMatchTable for all targets
+  if (Parameters.BondCompareParameters.CompleteRingsOnly ||
+      Parameters.BondCompareParameters.RingMatchesRingOnly ||
+      Parameters.AtomCompareParameters.RingMatchesRingOnly) {
+    if (QueryMolecule == targetMolecule) {
+      RingMatchTables.init(QueryMolecule);
+      CompareFunctionsData.ringMatchTables = &RingMatchTables;
+    } else {
+      RingMatchTables.addTargetBondRingsIndeces(targetMolecule);
     }
-#endif
+    RingMatchTables.computeRingMatchTable(QueryMolecule, targetMolecule,
+                                          Parameters, CompareFunctionsData);
+  }
 
-    // fill out match tables
-    size_t nq = QueryMolecule->getNumAtoms();
-    size_t nt = (*it)->getNumAtoms();
-    Targets[i].AtomMatchTable.resize(nq, nt);
+  // fill out match tables
+  size_t nq = QueryMolecule->getNumAtoms();
+  size_t nt = targetMolecule->getNumAtoms();
 
-    for (size_t aj = 0; aj < nt; aj++) {
-      for (size_t ai = 0; ai < nq; ai++) {
-        Targets[i].AtomMatchTable.set(
-            ai, aj,
-            Parameters.AtomTyper(Parameters.AtomCompareParameters,
-                                 *QueryMolecule, ai, *Targets[i].Molecule, aj,
-                                 Parameters.CompareFunctionsUserData));
-      }
-    }
-    nq = QueryMolecule->getNumBonds();
-    nt = (*it)->getNumBonds();
-    Targets[i].BondMatchTable.resize(nq, nt);
-    for (size_t aj = 0; aj < nt; aj++) {
-      for (size_t ai = 0; ai < nq; ai++) {
-        Targets[i].BondMatchTable.set(
-            ai, aj,
-            Parameters.BondTyper(Parameters.BondCompareParameters,
-                                 *QueryMolecule, ai, *Targets[i].Molecule, aj,
-                                 Parameters.CompareFunctionsUserData));
-      }
+  atomMatchTable.resize(nq, nt);
+  for (size_t aj = 0; aj < nt; aj++) {
+    for (size_t ai = 0; ai < nq; ai++) {
+      atomMatchTable.set(
+          ai, aj,
+          Parameters.AtomTyper(Parameters.AtomCompareParameters, *QueryMolecule,
+                               ai, *targetMolecule, aj, CompareFunctionsData));
     }
   }
-  Parameters.CompareFunctionsUserData = userData;  // restore
+  nq = QueryMolecule->getNumBonds();
+  nt = targetMolecule->getNumBonds();
+  bondMatchTable.resize(nq, nt);
+  for (size_t aj = 0; aj < nt; aj++) {
+    for (size_t ai = 0; ai < nq; ai++) {
+      bondMatchTable.set(
+          ai, aj,
+          Parameters.BondTyper(Parameters.BondCompareParameters, *QueryMolecule,
+                               ai, *targetMolecule, aj, CompareFunctionsData));
+    }
+  }
 }
 
 struct QueryRings {
@@ -324,6 +313,120 @@ struct WeightedBond {
   }
 };
 
+void MaximumCommonSubgraph::loadInitialSeedParameter(
+    std::vector<bool>& excludedBonds) {
+  std::unique_ptr<const ROMol> initialSeedMolecule(
+      (const ROMol*)SmartsToMol(Parameters.InitialSeed));
+  // make a set of of seed as indices and pointers to current query
+  // molecule items based on matching results
+  std::vector<MatchVectType> matching_substructs;
+  SubstructMatch(*QueryMolecule, *initialSeedMolecule, matching_substructs);
+  // loop throw all fragments of Query matched to initial seed
+  for (std::vector<MatchVectType>::const_iterator ms =
+           matching_substructs.begin();
+       ms != matching_substructs.end(); ms++) {
+    Seed seed;
+    seed.ExcludedBonds = excludedBonds;
+    seed.MatchResult.resize(Targets.size());
+#ifdef VERBOSE_STATISTICS_ON
+    {
+      ++VerboseStatistics.Seed;
+      ++VerboseStatistics.InitialSeed;
+    }
+#endif
+    // add all matched atoms of the matched query fragment
+    std::map<unsigned, unsigned> initialSeedToQueryAtom;
+    for (const auto& msb : *ms) {
+      unsigned qai = msb.second;
+      unsigned sai = msb.first;
+      seed.addAtom(QueryMolecule->getAtomWithIdx(qai));
+      initialSeedToQueryAtom[sai] = qai;
+    }
+    // add all bonds (existed in initial seed !!!) between all matched
+    // atoms in query
+    for (const auto& msb : *ms) {
+      const Atom* atom = initialSeedMolecule->getAtomWithIdx(msb.first);
+      ROMol::OEDGE_ITER beg, end;
+      for (boost::tie(beg, end) = initialSeedMolecule->getAtomBonds(atom);
+           beg != end; beg++) {
+        const Bond& initialBond = *((*initialSeedMolecule)[*beg]);
+        unsigned qai1 =
+            initialSeedToQueryAtom.find(initialBond.getBeginAtomIdx())->second;
+        unsigned qai2 =
+            initialSeedToQueryAtom.find(initialBond.getEndAtomIdx())->second;
+
+        const Bond* b = QueryMolecule->getBondBetweenAtoms(qai1, qai2);
+        if (!seed.ExcludedBonds[b->getIdx()]) {
+          seed.addBond(b);
+          seed.ExcludedBonds[b->getIdx()] = true;
+        }
+      }
+    }
+    seed.computeRemainingSize(*QueryMolecule);
+
+    if (checkIfMatchAndAppend(seed)) {
+      QueryMoleculeMatchedBonds = seed.getNumBonds();
+    }
+  }
+}
+
+void MaximumCommonSubgraph::loadSeedsFromQueryBonds(
+    std::vector<bool>& excludedBonds) {
+  // R1 additional performance OPTIMISATION
+  // if(Parameters.BondCompareParameters.CompleteRingsOnly)
+  // disable all mismatched rings, and do not generate initial seeds
+  // from such disabled bonds
+  //  for(  rings .....) for(i......)
+  //   if(mismatched) excludedBonds[i.......] = true;
+  QueryRings r(QueryMolecule);
+  std::vector<WeightedBond> wb;
+  wb.reserve(QueryMolecule->getNumBonds());
+  for (RWMol::ConstBondIterator bi = QueryMolecule->beginBonds();
+       bi != QueryMolecule->endBonds(); bi++) {
+    wb.emplace_back(*bi, r);
+  }
+
+  for (std::vector<WeightedBond>::const_iterator bi = wb.begin();
+       bi != wb.end(); bi++) {
+    // R1 additional performance OPTIMISATION
+    // if(excludedBonds[(*bi)->getIdx()])
+    //    continue;
+    Seed seed;
+    seed.MatchResult.resize(Targets.size());
+
+#ifdef VERBOSE_STATISTICS_ON
+    {
+      ++VerboseStatistics.Seed;
+      ++VerboseStatistics.InitialSeed;
+    }
+#endif
+    seed.addAtom(bi->BondPtr->getBeginAtom());
+    seed.addAtom(bi->BondPtr->getEndAtom());
+    seed.ExcludedBonds = excludedBonds;  // all bonds from first to current
+    seed.addBond(bi->BondPtr);
+    excludedBonds[bi->BondPtr->getIdx()] = true;
+
+    seed.computeRemainingSize(*QueryMolecule);
+
+    if (checkIfMatchAndAppend(seed)) {
+      ++QueryMoleculeMatchedBonds;
+    } else {
+      // optionally remove all such bonds from all targets TOPOLOGY
+      // where it exists.
+      //..........
+
+      // disable (mark as already processed) mismatched bond in all
+      // seeds
+      for (auto& Seed : Seeds) {
+        Seed.ExcludedBonds[bi->BondPtr->getIdx()] = true;
+      }
+
+#ifdef VERBOSE_STATISTICS_ON
+      ++VerboseStatistics.MismatchedInitialSeed;
+#endif
+    }
+  }
+}
 void MaximumCommonSubgraph::makeInitialSeeds() {
   // build a set of initial seeds as "all" single bonds from query
   // molecule
@@ -334,115 +437,9 @@ void MaximumCommonSubgraph::makeInitialSeeds() {
   QueryMoleculeMatchedAtoms = 0;
   QueryMoleculeSingleMatchedAtom = nullptr;
   if (!Parameters.InitialSeed.empty()) {  // make user defined seed
-    std::unique_ptr<const ROMol> initialSeedMolecule(
-        (const ROMol*)SmartsToMol(Parameters.InitialSeed));
-    // make a set of of seed as indices and pointers to current query
-    // molecule items based on matching results
-    std::vector<MatchVectType> matching_substructs;
-    SubstructMatch(*QueryMolecule, *initialSeedMolecule, matching_substructs);
-    // loop throw all fragments of Query matched to initial seed
-    for (std::vector<MatchVectType>::const_iterator ms =
-             matching_substructs.begin();
-         ms != matching_substructs.end(); ms++) {
-      Seed seed;
-      seed.ExcludedBonds = excludedBonds;
-      seed.MatchResult.resize(Targets.size());
-#ifdef VERBOSE_STATISTICS_ON
-      {
-        ++VerboseStatistics.Seed;
-        ++VerboseStatistics.InitialSeed;
-      }
-#endif
-      // add all matched atoms of the matched query fragment
-      std::map<unsigned, unsigned> initialSeedToQueryAtom;
-      for (const auto& msb : *ms) {
-        unsigned qai = msb.second;
-        unsigned sai = msb.first;
-        seed.addAtom(QueryMolecule->getAtomWithIdx(qai));
-        initialSeedToQueryAtom[sai] = qai;
-      }
-      // add all bonds (existed in initial seed !!!) between all matched
-      // atoms in query
-      for (const auto& msb : *ms) {
-        const Atom* atom = initialSeedMolecule->getAtomWithIdx(msb.first);
-        ROMol::OEDGE_ITER beg, end;
-        for (boost::tie(beg, end) = initialSeedMolecule->getAtomBonds(atom);
-             beg != end; beg++) {
-          const Bond& initialBond = *((*initialSeedMolecule)[*beg]);
-          unsigned qai1 =
-              initialSeedToQueryAtom.find(initialBond.getBeginAtomIdx())
-                  ->second;
-          unsigned qai2 =
-              initialSeedToQueryAtom.find(initialBond.getEndAtomIdx())->second;
-
-          const Bond* b = QueryMolecule->getBondBetweenAtoms(qai1, qai2);
-          if (!seed.ExcludedBonds[b->getIdx()]) {
-            seed.addBond(b);
-            seed.ExcludedBonds[b->getIdx()] = true;
-          }
-        }
-      }
-      seed.computeRemainingSize(*QueryMolecule);
-
-      if (checkIfMatchAndAppend(seed)) {
-        QueryMoleculeMatchedBonds = seed.getNumBonds();
-      }
-    }
+    loadInitialSeedParameter(excludedBonds);
   } else {  // create a set of seeds from each query bond
-    // R1 additional performance OPTIMISATION
-    // if(Parameters.BondCompareParameters.CompleteRingsOnly)
-    // disable all mismatched rings, and do not generate initial seeds
-    // from such disabled bonds
-    //  for(  rings .....) for(i......)
-    //   if(mismatched) excludedBonds[i.......] = true;
-    QueryRings r(QueryMolecule);
-    std::vector<WeightedBond> wb;
-    wb.reserve(QueryMolecule->getNumBonds());
-    for (RWMol::ConstBondIterator bi = QueryMolecule->beginBonds();
-         bi != QueryMolecule->endBonds(); bi++) {
-      wb.emplace_back(*bi, r);
-    }
-
-    for (std::vector<WeightedBond>::const_iterator bi = wb.begin();
-         bi != wb.end(); bi++) {
-      // R1 additional performance OPTIMISATION
-      // if(excludedBonds[(*bi)->getIdx()])
-      //    continue;
-      Seed seed;
-      seed.MatchResult.resize(Targets.size());
-
-#ifdef VERBOSE_STATISTICS_ON
-      {
-        ++VerboseStatistics.Seed;
-        ++VerboseStatistics.InitialSeed;
-      }
-#endif
-      seed.addAtom(bi->BondPtr->getBeginAtom());
-      seed.addAtom(bi->BondPtr->getEndAtom());
-      seed.ExcludedBonds = excludedBonds;  // all bonds from first to current
-      seed.addBond(bi->BondPtr);
-      excludedBonds[bi->BondPtr->getIdx()] = true;
-
-      seed.computeRemainingSize(*QueryMolecule);
-
-      if (checkIfMatchAndAppend(seed)) {
-        ++QueryMoleculeMatchedBonds;
-      } else {
-        // optionally remove all such bonds from all targets TOPOLOGY
-        // where it exists.
-        //..........
-
-        // disable (mark as already processed) mismatched bond in all
-        // seeds
-        for (auto& Seed : Seeds) {
-          Seed.ExcludedBonds[bi->BondPtr->getIdx()] = true;
-        }
-
-#ifdef VERBOSE_STATISTICS_ON
-        ++VerboseStatistics.MismatchedInitialSeed;
-#endif
-      }
-    }
+    loadSeedsFromQueryBonds(excludedBonds);
   }
   size_t nq = QueryMolecule->getNumAtoms();
   for (size_t i = 0; i < nq; i++) {  // all query's atoms
@@ -913,6 +910,22 @@ bool MaximumCommonSubgraph::createSeedFromMCS(size_t newQueryTarget,
   return true;
 }
 
+void MaximumCommonSubgraph::recordChosenConformerIdx(
+    const ROMol* mol, std::vector<unsigned>::const_iterator* conformerIterPtr) {
+  int conformerIdx = 0;
+  if (Parameters.AtomCompareParameters.ConformerIdxs.size() > 0) {
+    if (*conformerIterPtr ==
+        Parameters.AtomCompareParameters.ConformerIdxs.cend()) {
+      throw std::runtime_error(
+          "FMCS. Invalid argument. If conformerIdxs parameter is set, it must "
+          "be as long as mols");
+    }
+    conformerIdx = *(*conformerIterPtr);
+    ++(*conformerIterPtr);
+  }
+  CompareFunctionsData.conformerIdxMap[mol] = conformerIdx;
+}
+
 MCSResult MaximumCommonSubgraph::find(const std::vector<ROMOL_SPTR>& src_mols) {
   clear();
   MCSResult res;
@@ -949,10 +962,16 @@ MCSResult MaximumCommonSubgraph::find(const std::vector<ROMOL_SPTR>& src_mols) {
     Parameters.BondCompareParameters.RingMatchesRingOnly = true;
   }
 
+  std::vector<unsigned int>::const_iterator conformerIter;
+  conformerIter = Parameters.AtomCompareParameters.ConformerIdxs.cbegin();
+
   for (const auto& src_mol : src_mols) {
     Molecules.push_back(src_mol.get());
     if (!Molecules.back()->getRingInfo()->isInitialized()) {
       Molecules.back()->getRingInfo()->initialize();  // but do not fill out !!!
+    }
+    if (Parameters.AtomCompareParameters.MaxDistance > 0) {
+      recordChosenConformerIdx(Molecules.back(), &conformerIter);
     }
   }
 
@@ -960,67 +979,13 @@ MCSResult MaximumCommonSubgraph::find(const std::vector<ROMOL_SPTR>& src_mols) {
   // molecule as a query
   std::stable_sort(Molecules.begin(), Molecules.end(), molPtr_NumBondLess);
 
-  bool areSeedsEmpty = false;
-  for (size_t i = 0;
-       i < Molecules.size() - ThresholdCount && !areSeedsEmpty && !res.Canceled;
-       ++i) {
-    init();
-    if (Targets.empty()) {
+  for (size_t i = 0; i < Molecules.size() - ThresholdCount; ++i) {
+    auto seedsAndCanceled = evaluateQueryMolecule(i);
+    if (seedsAndCanceled.second) {
+      res.Canceled = true;
+    }
+    if (seedsAndCanceled.first || seedsAndCanceled.second) {
       break;
-    }
-    MCSFinalMatchCheckFunction tff = Parameters.FinalMatchChecker;
-    if (FinalMatchCheckFunction == Parameters.FinalMatchChecker) {
-      Parameters.FinalMatchChecker = nullptr;  // skip final match check for
-    }
-    // initial seed to allow future growing
-    // of it
-    makeInitialSeeds();
-    Parameters.FinalMatchChecker = tff;  // restore final functor
-
-    if (Parameters.Verbose) {
-      std::cout << "Query " << MolToSmiles(*QueryMolecule) << " "
-                << QueryMolecule->getNumAtoms() << "("
-                << QueryMoleculeMatchedAtoms << ") atoms, "
-                << QueryMolecule->getNumBonds() << "("
-                << QueryMoleculeMatchedBonds << ") bonds\n";
-    }
-
-    areSeedsEmpty = Seeds.empty();
-    res.Canceled = areSeedsEmpty || growSeeds() ? false : true;
-    // verify what MCS is equal to one of initial seed for chirality match
-    if ((FinalMatchCheckFunction == Parameters.FinalMatchChecker &&
-         1 == getMaxNumberBonds()) ||
-        0 == getMaxNumberBonds()) {
-      McsIdx = MCS();      // clear
-      makeInitialSeeds();  // check all possible initial seeds
-      if (!areSeedsEmpty) {
-        const Seed& fs = Seeds.front();
-        if (1 == getMaxNumberBonds() ||
-            !(Parameters.BondCompareParameters.CompleteRingsOnly &&
-              fs.MoleculeFragment.Bonds.size() == 1 &&
-              queryIsBondInRing(fs.MoleculeFragment.Bonds.front()))) {
-          McsIdx.QueryMolecule = QueryMolecule;
-          McsIdx.Atoms = fs.MoleculeFragment.Atoms;
-          McsIdx.Bonds = fs.MoleculeFragment.Bonds;
-          McsIdx.AtomsIdx = fs.MoleculeFragment.AtomsIdx;
-          McsIdx.BondsIdx = fs.MoleculeFragment.BondsIdx;
-        }
-      }
-      if (!McsIdx.QueryMolecule && QueryMoleculeSingleMatchedAtom) {
-        McsIdx.QueryMolecule = QueryMolecule;
-        McsIdx.Atoms = std::vector<const Atom*>{QueryMoleculeSingleMatchedAtom};
-        McsIdx.Bonds = std::vector<const Bond*>();
-        McsIdx.AtomsIdx = std::vector<unsigned>{0};
-        McsIdx.BondsIdx = std::vector<unsigned>();
-      }
-
-    } else if (i + 1 < Molecules.size() - ThresholdCount) {
-      Seed seed;
-      if (createSeedFromMCS(i, seed)) {  // MCS is matched with new query
-        Seeds.push_back(seed);
-      }
-      std::swap(Molecules[0],
-                Molecules[i + 1]);  // change query molecule for threshold < 1.
     }
   }
 
@@ -1042,85 +1007,77 @@ MCSResult MaximumCommonSubgraph::find(const std::vector<ROMOL_SPTR>& src_mols) {
 
 #ifdef VERBOSE_STATISTICS_ON
   if (Parameters.Verbose) {
-    unsigned itarget = 0;
-    for (std::vector<Target>::const_iterator tag = Targets.begin();
-         res.NumAtoms > 0 && tag != Targets.end(); tag++, itarget++) {
-      MatchVectType match;
-
-      bool target_matched =
-          SubstructMatch(*tag->Molecule, *res.QueryMol, match);
-      if (!target_matched) {
-        std::cout << "Target " << itarget + 1
-                  << (target_matched ? " matched " : " MISMATCHED ")
-                  << MolToSmiles(*tag->Molecule) << "\n";
-      }
-    }
-
-    std::cout << "STATISTICS:\n";
-    std::cout << "Total Growing Steps  = " << VerboseStatistics.TotalSteps
-              << ", MCS found on " << VerboseStatistics.MCSFoundStep << " step";
-    if (VerboseStatistics.MCSFoundTime - To > 0) {
-      printf(", for %.4lf seconds\n",
-             double(VerboseStatistics.MCSFoundTime - To) / 1000000.);
-    } else {
-      std::cout << ", for less than 1 second\n";
-    }
-    std::cout << "Initial   Seeds      = " << VerboseStatistics.InitialSeed
-              << ",  Mismatched " << VerboseStatistics.MismatchedInitialSeed
-              << "\n";
-    std::cout << "Inspected Seeds      = " << VerboseStatistics.Seed << "\n";
-    std::cout << "Rejected by BestSize = "
-              << VerboseStatistics.RemainingSizeRejected << "\n";
-    std::cout << "SingleBondExcluded   = "
-              << VerboseStatistics.SingleBondExcluded << "\n";
-#ifdef EXCLUDE_WRONG_COMPOSITION
-    std::cout << "Rejected by WrongComposition = "
-              << VerboseStatistics.WrongCompositionRejected << " [ "
-              << VerboseStatistics.WrongCompositionDetected << " Detected ]\n";
-#endif
-    std::cout << "MatchCheck Seeds     = " << VerboseStatistics.SeedCheck
-              << "\n";
-    std::cout  //<< "\n"
-        << "     MatchCalls = " << VerboseStatistics.MatchCall << "\n"
-        << "     MatchFound = " << VerboseStatistics.MatchCallTrue << "\n";
-    std::cout << " fastMatchCalls = " << VerboseStatistics.FastMatchCall << "\n"
-              << " fastMatchFound = " << VerboseStatistics.FastMatchCallTrue
-              << "\n";
-    std::cout << " slowMatchCalls = "
-              << VerboseStatistics.MatchCall -
-                     VerboseStatistics.FastMatchCallTrue
-              << "\n"
-              << " slowMatchFound = " << VerboseStatistics.SlowMatchCallTrue
-              << "\n";
-
-#ifdef VERBOSE_STATISTICS_FASTCALLS_ON
-    std::cout << "AtomFunctorCalls = " << VerboseStatistics.AtomFunctorCalls
-              << "\n";
-    std::cout << "BondCompareCalls = " << VerboseStatistics.BondCompareCalls
-              << "\n";
-#endif
-    std::cout << "  DupCacheFound = " << VerboseStatistics.DupCacheFound
-              << "   " << VerboseStatistics.DupCacheFoundMatch << " matched, "
-              << VerboseStatistics.DupCacheFound -
-                     VerboseStatistics.DupCacheFoundMatch
-              << " mismatched\n";
-#ifdef FAST_SUBSTRUCT_CACHE
-    std::cout << "HashCache size  = " << HashCache.keyssize() << " keys\n";
-    std::cout << "HashCache size  = " << HashCache.fullsize() << " entries\n";
-    std::cout << "FindHashInCache = " << VerboseStatistics.FindHashInCache
-              << "\n";
-    std::cout << "HashFoundInCache= " << VerboseStatistics.HashKeyFoundInCache
-              << "\n";
-    std::cout << "ExactMatchCalls = " << VerboseStatistics.ExactMatchCall
-              << "\n"
-              << "ExactMatchFound = " << VerboseStatistics.ExactMatchCallTrue
-              << "\n";
-#endif
+    printVerboseStatistics(res);
   }
 #endif
 
   clear();
   return res;
+}
+
+std::pair<bool, bool> MaximumCommonSubgraph::evaluateQueryMolecule(size_t i) {
+  bool areSeedsEmpty = false;
+  bool isCanceled;
+  init();
+  if (Targets.empty()) {
+    return std::make_pair(true, false);
+  }
+
+  MCSFinalMatchCheckFunction tff = Parameters.FinalMatchChecker;
+  if (FinalMatchCheckFunction == Parameters.FinalMatchChecker) {
+    Parameters.FinalMatchChecker = nullptr;
+    // skip final match check for
+    // initial seed to allow future growing of it
+  }
+  makeInitialSeeds();
+  Parameters.FinalMatchChecker = tff;  // restore final functor
+
+  if (Parameters.Verbose) {
+    std::cout << "Query " << MolToSmiles(*QueryMolecule) << " "
+              << QueryMolecule->getNumAtoms() << "("
+              << QueryMoleculeMatchedAtoms << ") atoms, "
+              << QueryMolecule->getNumBonds() << "("
+              << QueryMoleculeMatchedBonds << ") bonds\n";
+  }
+
+  areSeedsEmpty = Seeds.empty();
+  isCanceled = areSeedsEmpty || growSeeds() ? false : true;
+  // verify what MCS is equal to one of initial seed for chirality match
+  if ((FinalMatchCheckFunction == Parameters.FinalMatchChecker &&
+       1 == getMaxNumberBonds()) ||
+      0 == getMaxNumberBonds()) {
+    McsIdx = MCS();      // clear
+    makeInitialSeeds();  // check all possible initial seeds
+    if (!areSeedsEmpty) {
+      const Seed& fs = Seeds.front();
+      if (1 == getMaxNumberBonds() ||
+          !(Parameters.BondCompareParameters.CompleteRingsOnly &&
+            fs.MoleculeFragment.Bonds.size() == 1 &&
+            queryIsBondInRing(fs.MoleculeFragment.Bonds.front()))) {
+        McsIdx.QueryMolecule = QueryMolecule;
+        McsIdx.Atoms = fs.MoleculeFragment.Atoms;
+        McsIdx.Bonds = fs.MoleculeFragment.Bonds;
+        McsIdx.AtomsIdx = fs.MoleculeFragment.AtomsIdx;
+        McsIdx.BondsIdx = fs.MoleculeFragment.BondsIdx;
+      }
+    }
+    if (!McsIdx.QueryMolecule && QueryMoleculeSingleMatchedAtom) {
+      McsIdx.QueryMolecule = QueryMolecule;
+      McsIdx.Atoms = std::vector<const Atom*>{QueryMoleculeSingleMatchedAtom};
+      McsIdx.Bonds = std::vector<const Bond*>();
+      McsIdx.AtomsIdx = std::vector<unsigned>{0};
+      McsIdx.BondsIdx = std::vector<unsigned>();
+    }
+
+  } else if (i + 1 < Molecules.size() - ThresholdCount) {
+    Seed seed;
+    if (createSeedFromMCS(i, seed)) {  // MCS is matched with new query
+      Seeds.push_back(seed);
+    }
+    std::swap(Molecules[0],
+              Molecules[i + 1]);  // change query molecule for threshold < 1.
+  }
+  return std::make_pair(areSeedsEmpty, isCanceled);
 }
 
 bool MaximumCommonSubgraph::checkIfMatchAndAppend(Seed& seed) {
@@ -1458,6 +1415,79 @@ bool MaximumCommonSubgraph::matchIncrementalFast(Seed& seed, unsigned itarget) {
   }
 #endif
   return matched;
+}
+
+void MaximumCommonSubgraph::printVerboseStatistics(const MCSResult& res) const {
+  unsigned itarget = 0;
+  for (std::vector<Target>::const_iterator tag = Targets.begin();
+       res.NumAtoms > 0 && tag != Targets.end(); tag++, itarget++) {
+    MatchVectType match;
+
+    bool target_matched = SubstructMatch(*tag->Molecule, *res.QueryMol, match);
+    if (!target_matched) {
+      std::cout << "Target " << itarget + 1
+                << (target_matched ? " matched " : " MISMATCHED ")
+                << MolToSmiles(*tag->Molecule) << "\n";
+    }
+  }
+
+  std::cout << "STATISTICS:\n";
+  std::cout << "Total Growing Steps  = " << VerboseStatistics.TotalSteps
+            << ", MCS found on " << VerboseStatistics.MCSFoundStep << " step";
+  if (VerboseStatistics.MCSFoundTime - To > 0) {
+    printf(", for %.4lf seconds\n",
+           double(VerboseStatistics.MCSFoundTime - To) / 1000000.);
+  } else {
+    std::cout << ", for less than 1 second\n";
+  }
+  std::cout << "Initial   Seeds      = " << VerboseStatistics.InitialSeed
+            << ",  Mismatched " << VerboseStatistics.MismatchedInitialSeed
+            << "\n";
+  std::cout << "Inspected Seeds      = " << VerboseStatistics.Seed << "\n";
+  std::cout << "Rejected by BestSize = "
+            << VerboseStatistics.RemainingSizeRejected << "\n";
+  std::cout << "SingleBondExcluded   = " << VerboseStatistics.SingleBondExcluded
+            << "\n";
+#ifdef EXCLUDE_WRONG_COMPOSITION
+  std::cout << "Rejected by WrongComposition = "
+            << VerboseStatistics.WrongCompositionRejected << " [ "
+            << VerboseStatistics.WrongCompositionDetected << " Detected ]\n";
+#endif
+  std::cout << "MatchCheck Seeds     = " << VerboseStatistics.SeedCheck << "\n";
+  std::cout  //<< "\n"
+      << "     MatchCalls = " << VerboseStatistics.MatchCall << "\n"
+      << "     MatchFound = " << VerboseStatistics.MatchCallTrue << "\n";
+  std::cout << " fastMatchCalls = " << VerboseStatistics.FastMatchCall << "\n"
+            << " fastMatchFound = " << VerboseStatistics.FastMatchCallTrue
+            << "\n";
+  std::cout << " slowMatchCalls = "
+            << VerboseStatistics.MatchCall - VerboseStatistics.FastMatchCallTrue
+            << "\n"
+            << " slowMatchFound = " << VerboseStatistics.SlowMatchCallTrue
+            << "\n";
+
+#ifdef VERBOSE_STATISTICS_FASTCALLS_ON
+  std::cout << "AtomFunctorCalls = " << VerboseStatistics.AtomFunctorCalls
+            << "\n";
+  std::cout << "BondCompareCalls = " << VerboseStatistics.BondCompareCalls
+            << "\n";
+#endif
+  std::cout << "  DupCacheFound = " << VerboseStatistics.DupCacheFound << "   "
+            << VerboseStatistics.DupCacheFoundMatch << " matched, "
+            << VerboseStatistics.DupCacheFound -
+                   VerboseStatistics.DupCacheFoundMatch
+            << " mismatched\n";
+#ifdef FAST_SUBSTRUCT_CACHE
+  std::cout << "HashCache size  = " << HashCache.keyssize() << " keys\n";
+  std::cout << "HashCache size  = " << HashCache.fullsize() << " entries\n";
+  std::cout << "FindHashInCache = " << VerboseStatistics.FindHashInCache
+            << "\n";
+  std::cout << "HashFoundInCache= " << VerboseStatistics.HashKeyFoundInCache
+            << "\n";
+  std::cout << "ExactMatchCalls = " << VerboseStatistics.ExactMatchCall << "\n"
+            << "ExactMatchFound = " << VerboseStatistics.ExactMatchCallTrue
+            << "\n";
+#endif
 }
 }  // namespace FMCS
 }  // namespace RDKit

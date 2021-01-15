@@ -115,24 +115,25 @@ class AtomLabelFunctor {
   const ROMol& d_mol;
   MCSAtomCompareFunction AtomCompare;
   const MCSAtomCompareParameters& Parameters;
-  void* UserData;
+  MCSCompareFunctionsData& CompareFunctionsData;
 
  public:
   AtomLabelFunctor(const FMCS::Graph& query, const FMCS::Graph& target,
                    const ROMol& querySrc, const ROMol& mol  // target
                    ,
                    MCSAtomCompareFunction atomCompare,
-                   const MCSAtomCompareParameters& p, void* ud)
+                   const MCSAtomCompareParameters& p,
+                   MCSCompareFunctionsData& cfd)
       : QueryTopology(query),
         TargetTopology(target),
         d_query(querySrc),
         d_mol(mol),
         AtomCompare(atomCompare),
         Parameters(p),
-        UserData(ud){};
+        CompareFunctionsData(cfd){};
   bool operator()(unsigned int i, unsigned int j) const {
     return AtomCompare(Parameters, d_query, QueryTopology[i], d_mol,
-                       TargetTopology[j], UserData);
+                       TargetTopology[j], CompareFunctionsData);
   }
 };
 
@@ -143,27 +144,28 @@ class BondLabelFunctor {
   const ROMol& d_mol;
   MCSBondCompareFunction BondCompare;
   const MCSBondCompareParameters& Parameters;
-  void* UserData;
+  MCSCompareFunctionsData& CompareFunctionsData;
 
  public:
   BondLabelFunctor(const FMCS::Graph& query, const FMCS::Graph& target,
                    const ROMol& querySrc, const ROMol& mol,
                    MCSBondCompareFunction bondCompare,
-                   const MCSBondCompareParameters& p, void* ud)
+                   const MCSBondCompareParameters& p,
+                   MCSCompareFunctionsData& cfd)
       : QueryTopology(query),
         TargetTopology(target),
         d_query(querySrc),
         d_mol(mol),
         BondCompare(bondCompare),
         Parameters(p),
-        UserData(ud){};
+        CompareFunctionsData(cfd){};
 
   bool operator()(FMCS::Graph::edge_descriptor i,
                   FMCS::Graph::edge_descriptor j) const {
     unsigned ii = QueryTopology[i];   // take actual Idx value for full source
                                       // query molecule from index list
     unsigned jj = TargetTopology[j];  // the same Idx
-    return BondCompare(Parameters, d_query, ii, d_mol, jj, UserData);
+    return BondCompare(Parameters, d_query, ii, d_mol, jj, CompareFunctionsData);
   }
 };
 
@@ -174,13 +176,13 @@ bool SubstructMatchCustom(
     MCSAtomCompareFunction atomCompare, MCSBondCompareFunction bondCompare,
     MCSFinalMatchCheckFunction finalCompare,
     const MCSAtomCompareParameters& acp, const MCSBondCompareParameters& bcp,
-    void* ud, match_V_t* match) {
+    MCSCompareFunctionsData& compareFunctionsData, match_V_t* match) {
   RDUNUSED_PARAM(finalCompare);
   MolMatchFinalCheckFunctor matchChecker(query, target, querySrc, mol, nullptr);
   AtomLabelFunctor atomLabeler(query, target, querySrc, mol, atomCompare, acp,
-                               ud);
+                               compareFunctionsData);
   BondLabelFunctor bondLabeler(query, target, querySrc, mol, bondCompare, bcp,
-                               ud);
+                               compareFunctionsData);
 
   match_V_t dummy_match;
   if (!match) {

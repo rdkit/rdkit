@@ -85,7 +85,7 @@ class CompareIsotopes(rdFMCS.MCSAtomCompare):
 
 class CompareOrder(rdFMCS.MCSBondCompare):
     match = BondMatchOrderMatrix(True)  # ignore Aromatization
-    def __call__(self, p, mol1, bond1, mol2, bond2):
+    def __call__(self, p, mol1, bond1, mol2, bond2, cfd):
         b1 = mol1.GetBondWithIdx(bond1)
         b2 = mol2.GetBondWithIdx(bond2)
         t1 = b1.GetBondType()
@@ -94,7 +94,7 @@ class CompareOrder(rdFMCS.MCSBondCompare):
             if (p.MatchStereo and not self.CheckBondStereo(p, mol1, bond1, mol2, bond2)):
                 return False
             if p.RingMatchesRingOnly:
-                return self.CheckBondRingMatch(p, mol1, bond1, mol2, bond2)
+                return self.CheckBondRingMatch(p, mol1, bond1, mol2, bond2, cfd)
             return True
         return False
 
@@ -140,7 +140,7 @@ class BondCompareUserData(rdFMCS.MCSBondCompare):
         self.match = None
     def setIgnoreAromatization(self, v):
         self.match = BondMatchOrderMatrix(v)
-    def __call__(self, p, mol1, bond1, mol2, bond2):
+    def __call__(self, p, mol1, bond1, mol2, bond2, cfd):
         b1 = mol1.GetBondWithIdx(bond1)
         b2 = mol2.GetBondWithIdx(bond2)
         t1 = b1.GetBondType()
@@ -149,7 +149,7 @@ class BondCompareUserData(rdFMCS.MCSBondCompare):
             if (p.MatchStereo and not self.CheckBondStereo(p, mol1, bond1, mol2, bond2)):
                 return False
             if p.RingMatchesRingOnly:
-                return self.CheckBondRingMatch(p, mol1, bond1, mol2, bond2)
+                return self.CheckBondRingMatch(p, mol1, bond1, mol2, bond2, cfd)
             return True
         return False
 

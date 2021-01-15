@@ -47,6 +47,7 @@
 #include <RDGeneral/RDLog.h>
 #include <RDGeneral/utils.h>
 #include "../RDKitBase.h"
+#include "../DistGeomHelpers/Embedder.h"
 #include "../FileParsers/FileParsers.h"  //MOL single molecule !
 #include "../FileParsers/MolSupplier.h"  //SDF
 #include "../SmilesParse/SmilesParse.h"
@@ -525,6 +526,217 @@ void testTarget_no_10188_49064() {
             << res.NumBonds << " bonds\n";
   printTime();
   TEST_ASSERT(res.NumAtoms == 15 && res.NumBonds == 14);
+  BOOST_LOG(rdInfoLog) << "\tdone" << std::endl;
+}
+
+ROMol *embed3DFromSmiles(const char* smiString, const ROMol *scaffoldNoHs,
+                         const int seed){
+  int cid;
+  std::map< int, RDGeom::Point3D > coordMap;
+  std::vector<MatchVectType> matches;
+
+  const Conformer& scaffoldConf = scaffoldNoHs->getConformer(0);
+  ROMol *mol = SmilesToMol(smiString);
+  mol = MolOps::addHs(*mol);
+  int numMatches = RDKit::SubstructMatch(*mol, *scaffoldNoHs, matches);
+  TEST_ASSERT(numMatches > 0);
+
+  for (std::vector<MatchVectType>::const_iterator it = matches.begin();
+       it != matches.end(); ++it) {
+    MatchVectType matchVect = *it;
+    for (unsigned i = 0; i < matchVect.size(); i++){
+      unsigned scaffoldIdx = matchVect[i].first;
+      unsigned molIdx = matchVect[i].second;
+      coordMap[molIdx] = scaffoldConf.getAtomPos(scaffoldIdx);
+    }
+  }
+  RDKit::DGeomHelpers::EmbedParameters params(RDKit::DGeomHelpers::ETKDG);
+  params.coordMap = &coordMap;
+  params.useRandomCoords = true;
+  params.maxIterations = 10;
+  params.randomSeed = seed;
+  params.verbose = true;
+  cid = RDKit::DGeomHelpers::EmbedMolecule(*mol, params);
+  if (cid <= -1){
+    std::cerr << "cid was " << cid << " trying to embed: " <<std::endl;
+    for (std::map<int, RDGeom::Point3D>::const_iterator i=coordMap.begin();
+         i!=coordMap.end();i++){
+      std::cerr << i->first<<": "<<i->second<<std::endl;
+    }
+  }
+  TEST_ASSERT(cid > -1);
+  return mol;
+}
+#define MCSTESTREPEATS 0 // To run MCS repeatedly to measure performance
+MCSResult checkMCS(const std::vector<ROMOL_SPTR> mols, const MCSParameters p,
+              unsigned expectedAtoms, unsigned expectedBonds){
+  t0 = nanoClock();
+  MCSResult res = findMCS(mols, &p);
+  //std::shared_ptr<RWMol>
+  ROMol *mcsMol = SmartsToMol(res.SmartsString);
+  ROMol *cleanMCSMol = SmilesToMol(MolToSmiles(*mcsMol));
+  std::cout << "MCS: " << res.SmartsString << " " << MolToSmiles(*cleanMCSMol)
+            << " " << res.NumAtoms << " atoms, " << res.NumBonds << " bonds"
+            << std::endl;
+#ifdef MCSTESTREPEATS
+  for (int i=0; i<MCSTESTREPEATS; i++){
+    res = findMCS(mols, &p);
+  }
+#endif
+  printTime();
+  if (res.NumAtoms != expectedAtoms || res.NumBonds != expectedBonds){
+    std::cerr << "testMaxDistance failed, expected "
+              << expectedAtoms << " atoms, "<< expectedBonds << " bonds"
+              << std::endl;
+    TEST_ASSERT(res.NumAtoms == expectedAtoms && res.NumBonds == expectedBonds);
+  }
+  return res;
+}
+
+ROMol *scaffoldFromSmiles(const char *scaffoldSmiles, const int seed){
+  int cid;
+  const ROMol *scaffoldOrig = SmilesToMol(scaffoldSmiles);
+  ROMol *scaffold = MolOps::addHs(*scaffoldOrig);
+  cid = RDKit::DGeomHelpers::EmbedMolecule(*scaffold, 0, seed);
+  TEST_ASSERT(cid > -1);
+  return MolOps::removeHs(*scaffold);
+}
+/* TODO: best practice on where to put a test data file into the repo? */
+void testJnk1LigandsDistance(){
+  BOOST_LOG(rdInfoLog) << "-------------------------------------" << std::endl;
+  BOOST_LOG(rdInfoLog) << "Testing FMCS testJnk1LigandsDistance" << std::endl;
+  std::cout << "\ntestJnk1LigandsDistance()\n";
+  std::vector<ROMOL_SPTR> mols;
+  const char* path = "Test";
+  const char* jnk1sdf = "Jnk1_ligands.sdf";
+  std::string fn(std::string(path) + "/" + jnk1sdf);
+
+  RDKit::MolSupplier* suppl = nullptr;
+  try {
+    suppl = new RDKit::SDMolSupplier(fn);
+  } catch (...) {
+    std::cerr << "ERROR: RDKit could not load input file"
+              << "\n";
+    return;
+  }
+  ROMol* m1 = nullptr;
+  ROMol* m2 = nullptr;
+  while (!suppl->atEnd()) {
+    ROMol* m = suppl->next();
+    if (m) {
+      if(m->getProp<std::string>("_Name") == "17124-1"){
+        m1 = m;
+      } else if(m->getProp<std::string>("_Name") == "18629-1"){
+        m2 = m;
+      } else {
+        ROMOL_SPTR cleanupMol(m); // don't leak memory
+      }
+    }
+  }
+  mols.emplace_back(m1);
+  mols.emplace_back(m2);
+
+  MCSParameters p;
+  p.AtomTyper = MCSAtomCompareAnyHeavyAtom;
+  p.BondTyper = MCSBondCompareOrderExact;
+  p.AtomCompareParameters.MaxDistance = 3.0;
+  MCSResult res = checkMCS(mols, p, 22, 23);
+
+  SubstructMatchParameters smp;
+  smp.useChirality = true;
+  smp.uniquify = false;
+  std::vector<MatchVectType> mvt1 = SubstructMatch(*m1, *(res.QueryMol), smp);
+  std::vector<MatchVectType> mvt2 = SubstructMatch(*m2, *(res.QueryMol), smp);
+  if (mvt1.size() != 2 || mvt2.size() != 2){
+    std::cerr << "jnk match atoms expected 2, 2: " << mvt1.size() << "," <<
+      mvt2.size() << std::endl;
+    TEST_ASSERT(mvt1.size() == 2);
+    TEST_ASSERT(mvt2.size() == 2);
+  }
+
+  std::list<int> forbidden1 = {18, 19, 25, 26};
+  std::list<int> forbidden2 = {19};
+  for (auto& matchVect: mvt1){
+    for (auto& matchPair: matchVect){
+      auto isPresent = std::find(forbidden1.begin(), forbidden1.end(), matchPair.second);
+      if (isPresent != forbidden1.end()){
+        std::cerr << "mol1 index forbidden: " << matchPair.second << std::endl;
+        TEST_ASSERT(isPresent == forbidden1.end());
+      }
+    }
+  }
+  for (auto& matchVect: mvt2){
+    for (auto& matchPair: matchVect){
+      auto isPresent = std::find(forbidden2.begin(), forbidden2.end(), matchPair.second);
+      if (isPresent != forbidden2.end()){
+        std::cerr << "mol2 index forbidden: " << matchPair.second << std::endl;
+        TEST_ASSERT(isPresent == forbidden2.end());
+      }
+    }
+  }
+  p.AtomCompareParameters.MaxDistance = -1.0;
+  // Should match the flipped N if we don't filter on max distance
+  checkMCS(mols, p, 23, 24);
+  BOOST_LOG(rdInfoLog) << "\tdone" << std::endl;
+}
+
+void testMaxDistanceFlip(){
+  BOOST_LOG(rdInfoLog) << "-------------------------------------" << std::endl;
+  BOOST_LOG(rdInfoLog) << "Testing FMCS testMaxDistanceFlip" << std::endl;
+  std::cout << "\ntestMaxDistanceFlip()\n";
+
+  std::vector<ROMOL_SPTR> mols;
+  const int seed = 0xf00a;
+  const ROMol *scaffoldNoHs = scaffoldFromSmiles("O=CC1CCCCC1", seed);
+  const char * molSmiles = "O=CC1CC(N)CCC1";
+  ROMol *mol = embed3DFromSmiles(molSmiles, scaffoldNoHs, seed);
+  mols.emplace_back(mol);
+  RWMol *mol2 = new RWMol(*mol);
+  MolOps::removeHs(*mol2);
+
+  Atom *otherCarbon = mol2->getAtomWithIdx(7);
+  std::cout << "othercarbon: " << otherCarbon->getAtomicNum()<<std::endl;
+  mol2->removeAtom(5);
+  Atom *atom = new Atom(7);
+  int newIndex = mol2->addAtom(atom, true, true);
+  int otherIndex = otherCarbon->getIdx();
+  mol2->addBond(newIndex, otherIndex, Bond::BondType::SINGLE);
+  mols.emplace_back(mol2);
+  MCSParameters p;
+  //p.Verbose = true;
+  // Should match the flipped N if we don't filter on max distance
+  checkMCS(mols, p, 9, 9);
+  p.AtomCompareParameters.MaxDistance = 1.0;
+  checkMCS(mols, p, 8, 8);
+  BOOST_LOG(rdInfoLog) << "\tdone" << std::endl;
+
+}
+// TODO: Add test for non-default conformer idx
+void testMaxDistance() {
+  BOOST_LOG(rdInfoLog) << "-------------------------------------" << std::endl;
+  BOOST_LOG(rdInfoLog) << "Testing FMCS testMaxDistance" << std::endl;
+  std::cout << "\ntestMaxDistance()\n";
+
+  std::vector<ROMOL_SPTR> mols;
+
+  const char* smi[] = {
+      "C1CCOC[C@]1(NC)O",
+      "C1CCOC[C@@]1(NC)O",
+  };
+  // Generate overlapping 3D coordinates for the molecules
+  const int seed = 0xf00a;
+  const ROMol *scaffoldNoHs = scaffoldFromSmiles("C1CCOCC1", seed);
+  for (auto& smiString : smi) {
+    mols.emplace_back(embed3DFromSmiles(smiString, scaffoldNoHs, seed));
+  }
+
+  MCSParameters p;
+  //p.Verbose = true;
+  p.AtomCompareParameters.MaxDistance = 1.0;
+  checkMCS(mols, p, 14, 14);
+  // Now let's allow the non-ring O and N to match
+  p.AtomTyper = MCSAtomCompareAnyHeavyAtom;
+  checkMCS(mols, p, 17, 17);
   BOOST_LOG(rdInfoLog) << "\tdone" << std::endl;
 }
 
@@ -1563,7 +1775,7 @@ void testGithub2663() {
     MCSParameters p;
     p.BondCompareParameters.CompleteRingsOnly = true;
     MCSResult res = findMCS(mols, &p);
-    std::cerr << "MCS: " << res.SmartsString << " " << res.NumAtoms
+    std::cout << "MCS: " << res.SmartsString << " " << res.NumAtoms
               << " atoms, " << res.NumBonds << " bonds\n"
               << std::endl;
     TEST_ASSERT(res.NumAtoms == 7);
@@ -1596,7 +1808,7 @@ void testGithub2662() {
     MCSParameters p;
     p.BondCompareParameters.CompleteRingsOnly = true;
     MCSResult res = findMCS(mols, &p);
-    std::cerr << "MCS: " << res.SmartsString << " " << res.NumAtoms
+    std::cout << "MCS: " << res.SmartsString << " " << res.NumAtoms
               << " atoms, " << res.NumBonds << " bonds\n"
               << std::endl;
     TEST_ASSERT(res.NumAtoms == 2);
@@ -1845,8 +2057,8 @@ void test_p38() {
   }
   {
     MCSResult res =
-        findMCS(mols, true, 1.0, 3600, false, false, true, true, false,
-                AtomCompareElements, BondCompareOrder, PermissiveRingFusion);
+      findMCS(mols, true, 1.0, 3600, false, false, true, true, false, -1.0, {},
+              AtomCompareElements, BondCompareOrder, PermissiveRingFusion);
     // std::cerr << "MCS MatchFusedRings: "
     //           << res.SmartsString << " " << res.NumAtoms
     //           << " atoms, " << res.NumBonds << " bonds\n"
@@ -1856,8 +2068,8 @@ void test_p38() {
   }
   {
     MCSResult res =
-        findMCS(mols, true, 1.0, 3600, false, false, true, true, false,
-                AtomCompareElements, BondCompareOrder, StrictRingFusion);
+      findMCS(mols, true, 1.0, 3600, false, false, true, true, false, -1.0, {},
+              AtomCompareElements, BondCompareOrder, StrictRingFusion);
     // std::cerr << "MCS MatchFusedRings: "
     //           << res.SmartsString << " " << res.NumAtoms
     //           << " atoms, " << res.NumBonds << " bonds\n"
@@ -2353,6 +2565,10 @@ int main(int argc, const char* argv[]) {
   testAtomCompareAnyAtomBond();
   testAtomCompareAnyHeavyAtom();
   testAtomCompareAnyHeavyAtom1();
+
+  testMaxDistance();
+  testMaxDistanceFlip();
+  testJnk1LigandsDistance();
 
   test18();
   test504();
