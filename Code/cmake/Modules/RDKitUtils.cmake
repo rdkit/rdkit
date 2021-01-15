@@ -259,6 +259,19 @@ function(createExportTestHeaders)
       "#undef RDKIT_${exportLib}_BUILD\n"
       "#endif\n")
   endforeach()
+  file(APPEND "${CMAKE_BINARY_DIR}/${exportPath}.tmp"
+  "\n"
+  "/*\n"
+  " * Do not dll export/import to export queries (it will mess up with the\n"
+  " * templates), but make sure it is visible for *nix\n"
+  " */\n"
+  "// RDKIT_QUERY_EXPORT definitions\n"
+  "#if defined(RDKIT_DYN_LINK) && defined(WIN32) && defined(_MSC_VER) && defined(BOOST_HAS_DECLSPEC)\n"
+  "#define RDKIT_QUERY_EXPORT\n"
+  "#else\n"
+  "#define RDKIT_QUERY_EXPORT RDKIT_GRAPHMOL_EXPORT\n"
+  "#endif\n"
+  "// RDKIT_QUERY_EXPORT end definitions\n")
   execute_process(COMMAND ${CMAKE_COMMAND} -E copy_if_different
     "${CMAKE_BINARY_DIR}/${exportPath}.tmp" "${CMAKE_SOURCE_DIR}/${exportPath}")
   execute_process(COMMAND ${CMAKE_COMMAND} -E copy_if_different

@@ -18,7 +18,7 @@ namespace Queries {
 //! a Query implementing XOR: requires exactly one child to be \c true
 template <class MatchFuncArgType, class DataFuncArgType = MatchFuncArgType,
           bool needsConversion = false>
-class XOrQuery
+class RDKIT_QUERY_EXPORT XOrQuery
     : public Query<MatchFuncArgType, DataFuncArgType, needsConversion> {
  public:
   typedef Query<MatchFuncArgType, DataFuncArgType, needsConversion> BASE;
