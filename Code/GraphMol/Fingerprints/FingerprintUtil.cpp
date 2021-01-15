@@ -50,10 +50,17 @@ unsigned int numPiElectrons(const Atom *atom) {
     res = 1;
   } else if (atom->getHybridization() != Atom::SP3) {
     auto val = static_cast<unsigned int>(atom->getExplicitValence());
-    val -= atom->getNumExplicitHs();
-    CHECK_INVARIANT(val >= atom->getDegree(),
+    unsigned int physical_bonds = atom->getNumExplicitHs();
+    const auto mol = atom->getOwningMol();
+    for (const auto &bndi :
+         boost::make_iterator_range(mol.getAtomBonds(atom))) {
+      if (mol[bndi]->getValenceContrib(atom) != 0.0) {
+        ++physical_bonds;
+      }
+    }
+    CHECK_INVARIANT(val >= physical_bonds,
                     "explicit valence exceeds atom degree");
-    res = val - atom->getDegree();
+    res = val - physical_bonds;
   }
   return res;
 }
