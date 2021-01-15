@@ -19,6 +19,8 @@
 #include <GraphMol/SmilesParse/SmilesParse.h>
 #include <GraphMol/FileParsers/FileParsers.h>
 #include <GraphMol/Fingerprints/Fingerprints.h>
+#include <GraphMol/Fingerprints/MorganFingerprints.h>
+#include <RDGeneral/Exceptions.h>
 #include <GraphMol/Fingerprints/RDKitFPGenerator.h>
 #include <GraphMol/Substruct/SubstructMatch.h>
 #include <DataStructs/ExplicitBitVect.h>
@@ -60,6 +62,21 @@ TEST_CASE("Github 2614", "[patternfp][bug]") {
     REQUIRE(qfp);
     CHECK(AllProbeBitsMatch(*qfp, *mfp));
   }
+}
+
+TEST_CASE("Github 1761", "[patternfp][bug]") {
+    SECTION("throw ValueErrorException") {
+        auto mol = "CCC1CC1"_smiles;
+        try
+        {
+            RDKit::MorganFingerprints::getHashedFingerprint(*mol, 0, 0);
+            FAIL("Expected ValueErrorException");
+        }
+        catch (const ValueErrorException &e)
+        {
+            REQUIRE(std::string(e.what()) == "nBits can not be zero");
+        }
+    }
 }
 
 TEST_CASE("RDKit bits per feature", "[fpgenerator][rdkit]") {
