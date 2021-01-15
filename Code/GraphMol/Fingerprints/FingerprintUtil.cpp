@@ -54,16 +54,8 @@ unsigned int numPiElectrons(const Atom *atom) {
     const auto mol = atom->getOwningMol();
     for (const auto &bndi :
          boost::make_iterator_range(mol.getAtomBonds(atom))) {
-      switch (mol[bndi]->getBondType()) {
-        case Bond::DATIVEONE:
-        case Bond::DATIVE:
-        case Bond::DATIVEL:
-        case Bond::DATIVER:
-        case Bond::ZERO:
-          break;
-        default:
-          ++physical_bonds;
-          break;
+      if (mol[bndi]->getValenceContrib(atom) != 0.0) {
+        ++physical_bonds;
       }
     }
     CHECK_INVARIANT(val >= physical_bonds,
