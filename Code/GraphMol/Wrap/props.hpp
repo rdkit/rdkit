@@ -134,6 +134,11 @@ void MolClearProp(const RDOb &mol, const char *key) {
 }
 
 template <class RDOb>
+void MolClearProps(const RDOb &mol) {
+  mol.clearProps();
+}
+
+template <class RDOb>
 void MolClearComputedProps(const RDOb &mol) {
   mol.clearComputedProps();
 }

@@ -141,6 +141,11 @@ class RDProps {
     d_props.clearVal(key);
   };
 
+  //! clears all \c properties
+  void clearProps() const {
+    d_props.reset();
+  };
+
   //! clears all of our \c computed \c properties
   void clearComputedProps() const {
     STR_VECT compLst;

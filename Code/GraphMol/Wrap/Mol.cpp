@@ -687,7 +687,8 @@ struct mol_wrapper {
              "Removes a property from the molecule.\n\n"
              "  ARGUMENTS:\n"
              "    - key: the name of the property to clear (a string).\n")
-
+        .def("ClearProps", MolClearProps<ROMol>,
+             "Removes all properties from the molecule.\n\n")
         .def("ClearComputedProps", MolClearComputedProps<ROMol>,
              "Removes all computed properties from the molecule.\n\n")
 
