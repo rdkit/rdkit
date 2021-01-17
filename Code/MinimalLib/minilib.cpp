@@ -110,7 +110,9 @@ RWMol *mol_from_input(const std::string &input) {
   RWMol *res = nullptr;
   if (input.find("M  END") != std::string::npos) {
     bool sanitize = false;
-    res = MolBlockToMol(input, sanitize);
+    bool removeHs = true;
+    bool strictParsing = false;
+    res = MolBlockToMol(input, sanitize, removeHs, strictParsing);
   } else {
     SmilesParserParams ps;
     ps.sanitize = false;
@@ -132,7 +134,9 @@ RWMol *qmol_from_input(const std::string &input) {
   RWMol *res = nullptr;
   if (input.find("M  END") != std::string::npos) {
     bool sanitize = false;
-    res = MolBlockToMol(input, sanitize);
+    bool removeHs = true;
+    bool strictParsing = false;
+    res = MolBlockToMol(input, sanitize, removeHs, strictParsing);
   } else {
     res = SmartsToMol(input);
   }
