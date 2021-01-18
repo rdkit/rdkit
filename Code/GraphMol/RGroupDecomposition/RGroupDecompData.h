@@ -468,7 +468,8 @@ struct RGroupDecompData {
     size_t num_added_rgroups = 0;
     smiles_counts.resize(labels.size(), 0);
     heavy_atom_counts.resize(labels.size(), 0);
-    std::vector<std::unordered_map<std::string, unsigned int>> smiles_count_maps(labels.size());
+    std::vector<std::unordered_map<std::string, unsigned int>>
+        smiles_count_maps(labels.size());
     static const std::regex remove_isotopes_regex("\\[[0-9]*\\*\\]");
 
     for (int label : ordered_labels) {
@@ -485,17 +486,20 @@ struct RGroupDecompData {
             incremented = true;
             ++num_added_rgroups;
           }
-          std::string smiles_no_isotopes = std::regex_replace(rg->second->smiles, remove_isotopes_regex, "*");
+          std::string smiles_no_isotopes = std::regex_replace(
+              rg->second->smiles, remove_isotopes_regex, "*");
           ++smiles_count_maps[i][smiles_no_isotopes];
           heavy_atom_counts[i] += rg->second->combinedMol->getNumHeavyAtoms();
         }
       }
       ++i;
     }
-    std::transform(smiles_count_maps.begin(), smiles_count_maps.end(), smiles_counts.begin(),
-      [](const std::unordered_map<std::string, unsigned int> &map) {
-        return map.size();
-      });
+    std::transform(
+        smiles_count_maps.begin(), smiles_count_maps.end(),
+        smiles_counts.begin(),
+        [](const std::unordered_map<std::string, unsigned int> &map) {
+          return map.size();
+        });
 
     return num_added_rgroups;
   }
@@ -646,7 +650,8 @@ struct RGroupDecompData {
               smallest_smiles_counts = smiles_counts;
               max_perm_value = perm_value;
               best_permutation = tied_permutation;
-            } else if (smiles_counts == smallest_smiles_counts && perm_value > max_perm_value) {
+            } else if (smiles_counts == smallest_smiles_counts &&
+                       perm_value > max_perm_value) {
               max_perm_value = perm_value;
               best_permutation = tied_permutation;
             }
