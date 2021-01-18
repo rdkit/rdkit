@@ -18,6 +18,7 @@
 #include "RGroupGa.h"
 #include <vector>
 #include <map>
+#include <regex>
 
 namespace RDKit {
 struct RGroupDecompData {
@@ -456,14 +457,19 @@ struct RGroupDecompData {
   //  accepted this permutation
   size_t compute_num_added_rgroups(const std::vector<size_t> &tied_permutation,
                                    const std::vector<int> &ordered_labels,
-                                   std::vector<int> &heavy_counts) {
-    // heavy_counts is a vector which has the same size of labels
-    // for each label we add an increment if a molecule
-    // bears an R-group at that label. The increment has opposite
-    // sign to the label
+                                   std::vector<unsigned int> &heavy_atom_counts,
+                                   std::vector<unsigned int> &smiles_counts) {
+    // smiles_counts is a vector which has the same size of labels
+    // for each label we count how many different R-groups we have
+    // we try to keep this number as small as possible, as it means
+    // we have a more consistent R-group table with R-groups nicely
+    // aligned
     size_t i = 0;
     size_t num_added_rgroups = 0;
-    heavy_counts.resize(labels.size(), 0);
+    smiles_counts.resize(labels.size(), 0);
+    heavy_atom_counts.resize(labels.size(), 0);
+    std::vector<std::unordered_map<std::string, unsigned int>> smiles_count_maps(labels.size());
+    static const std::regex remove_isotopes_regex("\\[[0-9]*\\*\\]");
 
     for (int label : ordered_labels) {
       bool incremented = false;
@@ -474,17 +480,23 @@ struct RGroupDecompData {
         // labels we have filled: we prefer permutations which fill less, as it
         // means we have added less groups on different positions
         auto rg = matches[m][tied_permutation[m]].rgroups.find(label);
-        if (rg != matches[m][tied_permutation[m]].rgroups.end() &&
-            !rg->second->is_hydrogen) {
-          if (label < 0 && !incremented) {
+        if (rg != matches[m][tied_permutation[m]].rgroups.end()) {
+          if (label < 0 && !incremented && !rg->second->is_hydrogen) {
             incremented = true;
             ++num_added_rgroups;
           }
-          ++heavy_counts[i];
+          std::string smiles_no_isotopes = std::regex_replace(rg->second->smiles, remove_isotopes_regex, "*");
+          ++smiles_count_maps[i][smiles_no_isotopes];
+          heavy_atom_counts[i] += rg->second->combinedMol->getNumHeavyAtoms();
         }
       }
       ++i;
     }
+    std::transform(smiles_count_maps.begin(), smiles_count_maps.end(), smiles_counts.begin(),
+      [](const std::unordered_map<std::string, unsigned int> &map) {
+        return map.size();
+      });
+
     return num_added_rgroups;
   }
 
@@ -601,7 +613,8 @@ struct RGroupDecompData {
     if (ties.size() > 1) {
       size_t max_perm_value = 0;
       size_t smallest_added_rgroups = labels.size();
-      std::vector<int> largest_heavy_counts(labels.size(), 0);
+      std::vector<unsigned int> largest_heavy_atom_counts(labels.size(), 0);
+      std::vector<unsigned int> smallest_smiles_counts(labels.size(), 0);
       std::vector<int> ordered_labels;
       std::copy_if(labels.begin(), labels.end(),
                    std::back_inserter(ordered_labels),
@@ -610,23 +623,30 @@ struct RGroupDecompData {
                    std::back_inserter(ordered_labels),
                    [](const int &i) { return (i < 0); });
       for (const auto &tied_permutation : ties) {
-        std::vector<int> heavy_counts;
+        std::vector<unsigned int> heavy_atom_counts;
+        std::vector<unsigned int> smiles_counts;
         size_t num_added_rgroups = compute_num_added_rgroups(
-            tied_permutation, ordered_labels, heavy_counts);
+            tied_permutation, ordered_labels, heavy_atom_counts, smiles_counts);
         size_t perm_value =
             iterator ? iterator->value(tied_permutation) : max_perm_value;
         if (num_added_rgroups < smallest_added_rgroups) {
           smallest_added_rgroups = num_added_rgroups;
-          largest_heavy_counts = heavy_counts;
+          largest_heavy_atom_counts = heavy_atom_counts;
+          smallest_smiles_counts = smiles_counts;
           max_perm_value = perm_value;
           best_permutation = tied_permutation;
         } else if (num_added_rgroups == smallest_added_rgroups) {
-          if (heavy_counts > largest_heavy_counts) {
-            largest_heavy_counts = heavy_counts;
+          if (heavy_atom_counts > largest_heavy_atom_counts) {
+            largest_heavy_atom_counts = heavy_atom_counts;
+            smallest_smiles_counts = smiles_counts;
             max_perm_value = perm_value;
             best_permutation = tied_permutation;
-          } else if (heavy_counts == largest_heavy_counts) {
-            if (perm_value > max_perm_value) {
+          } else if (heavy_atom_counts == largest_heavy_atom_counts) {
+            if (smiles_counts < smallest_smiles_counts) {
+              smallest_smiles_counts = smiles_counts;
+              max_perm_value = perm_value;
+              best_permutation = tied_permutation;
+            } else if (smiles_counts == smallest_smiles_counts && perm_value > max_perm_value) {
               max_perm_value = perm_value;
               best_permutation = tied_permutation;
             }
