@@ -102,7 +102,7 @@ Point2D bondInsideRing(const ROMol &mol, const Bond &bond, const Point2D &cds1,
     Atom *bgn_atom = bond->getBeginAtom();
     for (const auto &nbri2 : make_iterator_range(mol.getAtomBonds(bgn_atom))) {
       const Bond *bond2 = mol[nbri2];
-      if (bond2 == bond) {
+      if (bond2->getIdx() == bond->getIdx()) {
         continue;
       }
       if (find(ring.begin(), ring.end(), bond2->getIdx()) != ring.end()) {
