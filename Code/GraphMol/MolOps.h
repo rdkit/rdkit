@@ -252,7 +252,7 @@ struct RDKIT_GRAPHMOL_EXPORT RemoveHsParameters {
   bool removeMapped = true;         /**< mapped hydrogens */
   bool removeInSGroups = false;     /**< part of a SubstanceGroup */
   bool showWarnings = true; /**< display warnings for Hs that are not removed */
-  bool removeNonimplicit = true; /**< DEPRECATED equivalent of implicitOnly */
+  bool removeNonimplicit = true; /**< DEPRECATED equivalent of !implicitOnly */
   bool updateExplicitCount =
       false; /**< DEPRECATED equivalent of updateExplicitCount */
   bool removeHydrides = true; /**< Removing Hydrides */
