@@ -494,7 +494,7 @@ RDKIT_GRAPHMOL_EXPORT void sanitizeMol(RWMol &mol);
      -# MolOps::Kekulize()  : Unkekulizable ring systems, aromatic atoms not
    in rings, aromatic bonds to non-aromatic atoms.
 
-   \param mol : the RWMol to be cleaned
+   \param mol : the ROMol to be cleaned
 
    \param sanitizeOps : the bits here are used to set which sanitization
                         operations are carried out. The elements of the \c
