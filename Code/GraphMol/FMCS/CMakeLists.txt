@@ -8,7 +8,7 @@ rdkit_headers(FMCS.h
               Graph.h
               DEST GraphMol/FMCS)
 
-rdkit_test(testFMCS testFMCS_Unit.cpp LINK_LIBRARIES
+rdkit_test(testFMCS testFMCS_Unit.cpp LINK_LIBRARIES DistGeomHelpers
 FMCS )
 
 if(RDK_BUILD_PYTHON_WRAPPERS)

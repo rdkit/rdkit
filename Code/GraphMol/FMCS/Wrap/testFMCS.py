@@ -1,6 +1,7 @@
 import unittest
 from rdkit import Chem
 from rdkit.Chem import rdFMCS
+from rdkit.Chem import AllChem
 
 
 class BondMatchOrderMatrix:
@@ -690,6 +691,33 @@ class Common:
         self.assertEqual(mcs.numAtoms, 3)
         self.assertEqual(mcs.numBonds, 3)
 
+    def test19MCS3d(self, **kwargs):
+        random_seed = 0xf00a
+        m1 = Chem.MolFromSmiles('C1CCOC[C@H]1O')
+        m2 = Chem.MolFromSmiles('C1CCOC[C@@H]1O')
+        scaffold = Chem.AddHs(Chem.MolFromSmiles('C1CCOCC1'))
+        AllChem.EmbedMolecule(scaffold, randomSeed=random_seed)
+        scaff_noh = Chem.RemoveHs(scaffold)
+        scaff_conf = scaff_noh.GetConformer()
+
+        def embed_mol(mol):
+            match_mol = mol.GetSubstructMatch(scaff_noh)
+            mol_map = {}
+            for i, idx in enumerate(match_mol):
+                mol_map[idx] = scaff_conf.GetAtomPosition(i)
+            mol_h = Chem.AddHs(mol)
+            AllChem.EmbedMolecule(mol_h, randomSeed=random_seed,
+                                  coordMap=mol_map, useRandomCoords=True)
+            return mol_h
+        m1_h = embed_mol(m1)
+        m2_h = embed_mol(m2)
+        ps = Common.getParams(**kwargs)
+        ps.AtomCompareParameters.MaxDistance = 1.0
+        mcs = rdFMCS.FindMCS([m1_h, m2_h], ps)
+        self.assertEqual(mcs.numAtoms, 14)
+        self.assertEqual(mcs.numBonds, 14)
+
+
 class TestCase(unittest.TestCase):
 
     def setUp(self):
@@ -1039,6 +1067,10 @@ class TestCase(unittest.TestCase):
         self.assertEqual(res.numAtoms, 10)
         self.assertEqual(res.numBonds, 11)
         self.assertEqual(res.smartsString, "[#6]1:&@[#6]:&@[#6]:&@[#6]2:&@[#6](:&@[#6]:&@1):&@[#6]:&@[#6]:&@[#6]:&@[#6]:&@2")
+
+    def test19MCS3d(self):
+        Common.test19MCS3d(self)
+
 
 if __name__ == "__main__":
     unittest.main()

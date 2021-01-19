@@ -109,6 +109,8 @@ void parseMCSParametersJSON(const char* json, MCSParameters* params) {
         "MatchFormalCharge", p.AtomCompareParameters.MatchFormalCharge);
     p.AtomCompareParameters.RingMatchesRingOnly = pt.get<bool>(
         "RingMatchesRingOnly", p.AtomCompareParameters.RingMatchesRingOnly);
+    p.AtomCompareParameters.MaxDistance = pt.get<float>(
+        "MaxDistance", p.AtomCompareParameters.MaxDistance);
     p.BondCompareParameters.RingMatchesRingOnly = pt.get<bool>(
         "RingMatchesRingOnly", p.BondCompareParameters.RingMatchesRingOnly);
     p.AtomCompareParameters.RingMatchesRingOnly = pt.get<bool>(
@@ -236,6 +238,24 @@ bool checkAtomChirality(const MCSAtomCompareParameters& p,
   return true;
 }
 
+bool checkAtomDistance(const MCSAtomCompareParameters& p,
+                       const ROMol& mol1, unsigned int atom1,
+                       const ROMol& mol2, unsigned int atom2){
+  unsigned int confId1 = 0;
+  unsigned int confId2 = 0;
+  if (mol1.getNumConformers() <= confId1 ||
+      mol2.getNumConformers() <= confId2){
+    throw std::runtime_error(
+        "FMCS. Invalid argument. requested conformer unavailable");
+  }
+  const Conformer &ci1 = mol1.getConformer(confId1);
+  const Conformer &ci2 = mol2.getConformer(confId2);
+  const RDGeom::Point3D &pos1 = ci1.getAtomPos(atom1);
+  const RDGeom::Point3D &pos2 = ci2.getAtomPos(atom2);
+  bool withinRange = (pos1 - pos2).length() <= p.MaxDistance;
+  return withinRange;
+}
+
 bool MCSAtomCompareAny(const MCSAtomCompareParameters& p, const ROMol& mol1,
                        unsigned int atom1, const ROMol& mol2,
                        unsigned int atom2, void*) {
@@ -243,6 +263,9 @@ bool MCSAtomCompareAny(const MCSAtomCompareParameters& p, const ROMol& mol1,
     return false;
   }
   if (p.MatchFormalCharge && !checkAtomCharge(p, mol1, atom1, mol2, atom2)) {
+    return false;
+  }
+  if (p.MaxDistance > 0 && !checkAtomDistance(p, mol1, atom1, mol2, atom2)){
     return false;
   }
   if (p.RingMatchesRingOnly) {
@@ -269,6 +292,9 @@ bool MCSAtomCompareElements(const MCSAtomCompareParameters& p,
   if (p.MatchFormalCharge && !checkAtomCharge(p, mol1, atom1, mol2, atom2)) {
     return false;
   }
+  if (p.MaxDistance > 0 && !checkAtomDistance(p, mol1, atom1, mol2, atom2)){
+    return false;
+  }
   if (p.RingMatchesRingOnly) {
     return checkAtomRingMatch(p, mol1, atom1, mol2, atom2);
   }
@@ -291,6 +317,9 @@ bool MCSAtomCompareIsotopes(const MCSAtomCompareParameters& p,
     return false;
   }
   if (p.MatchFormalCharge && !checkAtomCharge(p, mol1, atom1, mol2, atom2)) {
+    return false;
+  }
+  if (p.MaxDistance > 0 && !checkAtomDistance(p, mol1, atom1, mol2, atom2)){
     return false;
   }
   if (p.RingMatchesRingOnly) {
