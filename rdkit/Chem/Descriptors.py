@@ -216,20 +216,21 @@ _du.setDescriptorVersion('1.0.0')(FpDensityMorgan1)
 _du.setDescriptorVersion('1.0.0')(FpDensityMorgan2)
 _du.setDescriptorVersion('1.0.0')(FpDensityMorgan3)
 
+if hasattr(rdMolDescriptors, 'BCUT2D'):
+    names = ["BCUT2D_%s"%s for s in ('MWHI',"MWLOW","CHGHI","CHGLO",
+                                    "LOGPHI","LOGPLOW","MRHI","MRLOW")]
+    _du.VectorDescriptorWrapper(_rdMolDescriptors.BCUT2D, names=names, version="1.0.0", namespace=locals())
 
-names = ["BCUT2D_%s"%s for s in ('MWHI',"MWLOW","CHGHI","CHGLO",
-                                 "LOGPHI","LOGPLOW","MRHI","MRLOW")]
-_du.VectorDescriptorWrapper(_rdMolDescriptors.BCUT2D, names=names, version="1.0.0", namespace=locals())
+    _setupDescriptors(locals())
 
-_setupDescriptors(locals())
+if hasattr(rdMolDescriptors, 'CalcAUTOCORR2D'):
+    names = ["AUTOCORR2D_%s"%str(i+1) for i in range(192)]
+    autocorr = _du.VectorDescriptorWrapper(_rdMolDescriptors.CalcAUTOCORR2D, names=names, version="1.0.0",
+                                        namespace=locals())
 
-names = ["AUTOCORR2D_%s"%str(i+1) for i in range(192)]
-autocorr = _du.VectorDescriptorWrapper(_rdMolDescriptors.CalcAUTOCORR2D, names=names, version="1.0.0",
-                                       namespace=locals())
-
-def setupAUTOCorrDescriptors():
-    """Adds AUTOCORR descriptors to the default descriptor lists"""
-    _setupDescriptors(namespace=autocorr.namespace)
+    def setupAUTOCorrDescriptors():
+        """Adds AUTOCORR descriptors to the default descriptor lists"""
+        _setupDescriptors(namespace=autocorr.namespace)
 
 class PropertyFunctor(rdMolDescriptors.PythonPropertyFunctor):
     """Creates a python based property function that can be added to the
