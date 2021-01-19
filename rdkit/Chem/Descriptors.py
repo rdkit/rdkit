@@ -228,7 +228,7 @@ if hasattr(rdMolDescriptors, 'BCUT2D'):
   _du.VectorDescriptorWrapper(_rdMolDescriptors.BCUT2D, names=names, version="1.0.0",
                               namespace=locals())
 
-  _setupDescriptors(locals())
+_setupDescriptors(locals())
 
 if hasattr(rdMolDescriptors, 'CalcAUTOCORR2D'):
   names = ["AUTOCORR2D_%s" % str(i + 1) for i in range(192)]
