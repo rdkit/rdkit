@@ -147,6 +147,7 @@ class TestCase(unittest.TestCase):
     self.assertLess(fpd1, fpd2)
     self.assertLess(fpd2, fpd3)
 
+  @unittest.skipIf(not hasattr(rdMolDescriptors, 'BCUT2D'), "BCUT descriptor not available")
   def testVectorDescriptors(self):
     m = Chem.MolFromSmiles('CCCc1ccccc1')
     results = rdMolDescriptors.BCUT2D(m)
@@ -162,6 +163,7 @@ class TestCase(unittest.TestCase):
       f = getattr(Descriptors, n)
       self.assertEqual(results[i], f(m))
 
+  @unittest.skipIf(not hasattr(rdMolDescriptors, 'BCUT2D') or not hasattr(rdMolDescriptors, 'CalcAUTOCORR2D') , "BCUT or AUTOCORR descriptors not available")
   def testVectorDescriptorsInDescList(self):
     # First try only bcuts should exist
     descriptors = set([n for n,_ in Descriptors.descList])
