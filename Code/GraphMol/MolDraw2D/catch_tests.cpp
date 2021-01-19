@@ -23,6 +23,7 @@
 #include <GraphMol/ChemReactions/ReactionParser.h>
 #include <GraphMol/CIPLabeler/CIPLabeler.h>
 #include <GraphMol/Depictor/RDDepictor.h>
+#include <regex>
 
 #ifdef RDK_BUILD_CAIRO_SUPPORT
 #include <cairo.h>
@@ -2296,5 +2297,95 @@ M  END)CTAB"_ctab;
       outs << text;
       outs.flush();
     }
+  }
+}
+
+TEST_CASE("Github #3744: Double bonds incorrectly drawn outside the ring",
+          "[drawing]") {
+  SECTION("SVG") {
+    ROMOL_SPTR m1(MolBlockToMol(R"CTAB(
+     RDKit          2D
+
+  6  6  0  0  0  0  0  0  0  0999 V2000
+    0.0684   -1.2135    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    1.4949   -0.7500    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    1.4949    0.7500    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    0.0684    1.2135    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -0.8133    0.0000    0.0000 N   0  0  0  0  0  0  0  0  0  0  0  0
+   -2.3133   -0.0000    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+  1  2  2  0
+  2  3  1  0
+  3  4  2  0
+  4  5  1  0
+  5  6  1  0
+  5  1  1  0
+M  END)CTAB"));
+    REQUIRE(m1);
+    MolDraw2DSVG drawer(400, 300);
+    drawer.drawMolecule(*m1);
+    drawer.finishDrawing();
+    std::string text = drawer.getDrawingText();
+    std::ofstream outs("testGithub3744.svg");
+    outs << text;
+    outs.flush();
+    std::vector<std::string> bond0;
+    std::vector<std::string> bond2;
+    std::istringstream ss(text);
+    std::string line;
+    while (std::getline(ss, line)) {
+      if (line.find("bond-0") != std::string::npos) {
+        bond0.push_back(line);
+      } else if (line.find("bond-2") != std::string::npos) {
+        bond2.push_back(line);
+      }
+    }
+    CHECK(bond0.size() == 2);
+    CHECK(bond2.size() == 2);
+    std::regex regex(
+        "^.*d='M\\s+(\\d+\\.\\d+),(\\d+\\.\\d+)\\s+L\\s+(\\d+\\.\\d+),(\\d+\\."
+        "\\d+)'.*$");
+    std::smatch bond0OuterMatch;
+    REQUIRE(std::regex_match(bond0[0], bond0OuterMatch, regex));
+    REQUIRE(bond0OuterMatch.size() == 5);
+    std::smatch bond0InnerMatch;
+    REQUIRE(std::regex_match(bond0[1], bond0InnerMatch, regex));
+    REQUIRE(bond0InnerMatch.size() == 5);
+    std::smatch bond2OuterMatch;
+    REQUIRE(std::regex_match(bond2[0], bond2OuterMatch, regex));
+    REQUIRE(bond2OuterMatch.size() == 5);
+    std::smatch bond2InnerMatch;
+    REQUIRE(std::regex_match(bond2[1], bond2InnerMatch, regex));
+    REQUIRE(bond2InnerMatch.size() == 5);
+    RDGeom::Point2D bond0InnerCtd(
+        RDGeom::Point2D(std::stof(bond0InnerMatch[1]),
+                        std::stof(bond0InnerMatch[2])) +
+        RDGeom::Point2D(std::stof(bond0InnerMatch[3]),
+                        std::stof(bond0InnerMatch[4])) /
+            2.0);
+    RDGeom::Point2D bond0OuterCtd(
+        RDGeom::Point2D(std::stof(bond0OuterMatch[1]),
+                        std::stof(bond0OuterMatch[2])) +
+        RDGeom::Point2D(std::stof(bond0OuterMatch[3]),
+                        std::stof(bond0OuterMatch[4])) /
+            2.0);
+    RDGeom::Point2D bond2InnerCtd(
+        RDGeom::Point2D(std::stof(bond2InnerMatch[1]),
+                        std::stof(bond2InnerMatch[2])) +
+        RDGeom::Point2D(std::stof(bond2InnerMatch[3]),
+                        std::stof(bond2InnerMatch[4])) /
+            2.0);
+    RDGeom::Point2D bond2OuterCtd(
+        RDGeom::Point2D(std::stof(bond2OuterMatch[1]),
+                        std::stof(bond2OuterMatch[2])) +
+        RDGeom::Point2D(std::stof(bond2OuterMatch[3]),
+                        std::stof(bond2OuterMatch[4])) /
+            2.0);
+    // we look at the two double bonds of pyrrole
+    // we check that the ratio between the distance of the centroids of the
+    // outer bonds and the distance of the centroids of the inner bonds is at
+    // least 1.3, otherwise the inner bonds are not actually inside the ring.
+    float outerBondsDistance = (bond0OuterCtd - bond2OuterCtd).length();
+    float innerBondsDistance = (bond0InnerCtd - bond2InnerCtd).length();
+    CHECK(outerBondsDistance / innerBondsDistance > 1.3f);
   }
 }
