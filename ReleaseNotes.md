@@ -2,9 +2,10 @@
 (Changes relative to Release_2020.09.3)
 
 ## Acknowledgements
-Jason Biggs Patrick Buder, Andrew Dalke, Enrico Gandini, Brian Kelley, Luca
-Naef, António JM Ribeiro, Ricardo Rodriguez Schmidt, Pascal Soveaux, Paolo
-Tosco, Yutong Zhao, 'Robins', 'sirbiscuit', 'AnPallo', 'noncomputable' 
+Jason Biggs Patrick Buder, Andrew Dalke, Enrico Gandini, Maximilian Greil, Brian
+Kelley, Luca Naef, António JM Ribeiro, Ricardo Rodriguez Schmidt, Pascal
+Soveaux, Paolo Tosco, Yutong Zhao, 'Robins', 'sirbiscuit', 'AnPallo',
+'noncomputable' 
 
 ## Bug Fixes:
   - Casting int to uint in MorganFingerprintHelper leads to unexpected behaviour.
