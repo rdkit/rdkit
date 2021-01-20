@@ -610,9 +610,9 @@ void testJnk1LigandsDistance(){
   BOOST_LOG(rdInfoLog) << "Testing FMCS testJnk1LigandsDistance" << std::endl;
   std::cout << "\ntestJnk1LigandsDistance()\n";
   std::vector<ROMOL_SPTR> mols;
-  const char* path = "Test";
-  const char* jnk1sdf = "Jnk1_ligands.sdf";
-  std::string fn(std::string(path) + "/" + jnk1sdf);
+  std::string rdbase = getenv("RDBASE");
+  const char* jnk1sdf = "/Code/GraphMol/FMCS/testData/Jnk1_ligands.sdf";
+  std::string fn(rdbase + jnk1sdf);
 
   RDKit::MolSupplier* suppl = nullptr;
   try {
