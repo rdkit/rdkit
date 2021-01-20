@@ -1393,7 +1393,6 @@ std::pair<bool, bool> isAtomPotentialChiralCenter(
   // ranks:
   bool legalCenter = true;
   bool hasDupes = false;
-
   if (atom->getTotalDegree() > 4) {
     // we only know tetrahedral chirality
     legalCenter = false;
@@ -1402,10 +1401,12 @@ std::pair<bool, bool> isAtomPotentialChiralCenter(
     // ranks:
     if (atom->getTotalDegree() < 3) {
       legalCenter = false;
-    } else if (atom->getDegree() < 3 &&
-               (atom->getAtomicNum() != 15 && atom->getAtomicNum() != 33)) {
+    } else if (atom->getDegree() < 3 && atom->getAtomicNum() != 15 &&
+               atom->getAtomicNum() != 33 && atom->getAtomicNum() != 16 &&
+               atom->getAtomicNum() != 34 && atom->getAtomicNum() != 52) {
       // less than three neighbors is never stereogenic
-      // unless it is a phosphine/arsine with implicit H (this is from InChI)
+      // unless it is a trigonal pyramid with P/As/S/Se/Te as central atom
+      // with implicit H (P/As is from InChI)
       legalCenter = false;
     } else if (atom->getDegree() == 3 && atom->getTotalNumHs() != 1) {
       // assume something that's really three coordinate isn't potentially
@@ -1422,10 +1423,11 @@ std::pair<bool, bool> isAtomPotentialChiralCenter(
         // are always treated as stereogenic even with H atom neighbors.
         // (this is from InChI)
         legalCenter = true;
-      } else if (atom->getAtomicNum() == 16 || atom->getAtomicNum() == 34) {
+      } else if (atom->getAtomicNum() == 16 || atom->getAtomicNum() == 34 ||
+                 atom->getAtomicNum() == 52) {
         if (atom->getExplicitValence() == 4 ||
             (atom->getExplicitValence() == 3 && atom->getFormalCharge() == 1)) {
-          // we also accept sulfur or selenium with either a positive charge
+          // we also accept S, Se or Te with either a positive charge
           // or a double bond:
           legalCenter = true;
         }
