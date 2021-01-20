@@ -1225,6 +1225,97 @@ TEST_CASE("phosphine and arsine chirality", "[Chirality]") {
   }
 }
 
+TEST_CASE("S/Se/Te trigonal pyramid chirality", "[Chirality]") {
+  SECTION("chiral center recognized") {
+    auto mol1 = "C[S@](=C1CCCC1)C1=CC=CC=C1"_smiles;
+    auto mol2 = "C[Se@](=C1CCCC1)C1=CC=CC=C1"_smiles;
+    auto mol3 = "C[Te@](=C1CCCC1)C1=CC=CC=C1"_smiles;
+    REQUIRE(mol1);
+    REQUIRE(mol2);
+    REQUIRE(mol3);
+    CHECK(mol1->getAtomWithIdx(1)->getChiralTag() != Atom::CHI_UNSPECIFIED);
+    CHECK(mol2->getAtomWithIdx(1)->getChiralTag() != Atom::CHI_UNSPECIFIED);
+    CHECK(mol3->getAtomWithIdx(1)->getChiralTag() != Atom::CHI_UNSPECIFIED);
+  }
+  SECTION("chiral center selective") {
+    auto mol1 = "C[S@](C)=C1CCCCC1"_smiles;
+    auto mol2 = "C[Se@](C)=C1CCCCC1"_smiles;
+    auto mol3 = "C[Te@](C)=C1CCCCC1"_smiles;
+    REQUIRE(mol1);
+    REQUIRE(mol2);
+    REQUIRE(mol3);
+    CHECK(mol1->getAtomWithIdx(1)->getChiralTag() == Atom::CHI_UNSPECIFIED);
+    CHECK(mol2->getAtomWithIdx(1)->getChiralTag() == Atom::CHI_UNSPECIFIED);
+    CHECK(mol3->getAtomWithIdx(1)->getChiralTag() == Atom::CHI_UNSPECIFIED);
+  }
+  SECTION("chiral center specific: S") {
+    auto mol1 = "C[S@](=C1CCCC1)C1=CC=CC=C1"_smiles;
+    auto mol2 = "C[S@@](=C1CCCC1)C1=CC=CC=C1"_smiles;
+    REQUIRE(mol1);
+    REQUIRE(mol2);
+    CHECK(MolToSmiles(*mol1) != MolToSmiles(*mol2));
+  }
+  SECTION("chiral center specific: Se") {
+    auto mol1 = "C[Se@](=C1CCCC1)C1=CC=CC=C1"_smiles;
+    auto mol2 = "C[Se@@](=C1CCCC1)C1=CC=CC=C1"_smiles;
+    REQUIRE(mol1);
+    REQUIRE(mol2);
+    CHECK(MolToSmiles(*mol1) != MolToSmiles(*mol2));
+  }
+  SECTION("chiral center specific: Te") {
+    auto mol1 = "C[Te@](=C1CCCC1)C1=CC=CC=C1"_smiles;
+    auto mol2 = "C[Te@@](=C1CCCC1)C1=CC=CC=C1"_smiles;
+    REQUIRE(mol1);
+    REQUIRE(mol2);
+    CHECK(MolToSmiles(*mol1) != MolToSmiles(*mol2));
+  }
+  SECTION("chiral center, implicit H: S") {
+    auto mol1 = "C[S@H]=C1CCCCC1"_smiles;
+    auto mol2 = "C[S@@H]=C1CCCCC1"_smiles;
+    REQUIRE(mol1);
+    REQUIRE(mol2);
+    CHECK(mol1->getAtomWithIdx(1)->getChiralTag() != Atom::CHI_UNSPECIFIED);
+    CHECK(mol1->getAtomWithIdx(1)->getChiralTag() != Atom::CHI_UNSPECIFIED);
+  }
+  SECTION("chiral center, implicit H: Se") {
+    auto mol1 = "C[Se@H]=C1CCCCC1"_smiles;
+    auto mol2 = "C[Se@@H]=C1CCCCC1"_smiles;
+    REQUIRE(mol1);
+    REQUIRE(mol2);
+    CHECK(mol1->getAtomWithIdx(1)->getChiralTag() != Atom::CHI_UNSPECIFIED);
+    CHECK(mol1->getAtomWithIdx(1)->getChiralTag() != Atom::CHI_UNSPECIFIED);
+  }
+  SECTION("chiral center, implicit H: Te") {
+    auto mol1 = "C[Te@H]=C1CCCCC1"_smiles;
+    auto mol2 = "C[Te@@H]=C1CCCCC1"_smiles;
+    REQUIRE(mol1);
+    REQUIRE(mol2);
+    CHECK(mol1->getAtomWithIdx(1)->getChiralTag() != Atom::CHI_UNSPECIFIED);
+    CHECK(mol1->getAtomWithIdx(1)->getChiralTag() != Atom::CHI_UNSPECIFIED);
+  }
+  SECTION("chiral center specific, implicit H: S") {
+    auto mol1 = "C[S@H]=C1CCCCC1"_smiles;
+    auto mol2 = "C[S@@H]=C1CCCCC1"_smiles;
+    REQUIRE(mol1);
+    REQUIRE(mol2);
+    CHECK(MolToSmiles(*mol1) != MolToSmiles(*mol2));
+  }
+  SECTION("chiral center specific, implicit H: Se") {
+    auto mol1 = "C[Se@H]=C1CCCCC1"_smiles;
+    auto mol2 = "C[Se@@H]=C1CCCCC1"_smiles;
+    REQUIRE(mol1);
+    REQUIRE(mol2);
+    CHECK(MolToSmiles(*mol1) != MolToSmiles(*mol2));
+  }
+  SECTION("chiral center specific, implicit H: Te") {
+    auto mol1 = "C[Te@H]=C1CCCCC1"_smiles;
+    auto mol2 = "C[Te@@H]=C1CCCCC1"_smiles;
+    REQUIRE(mol1);
+    REQUIRE(mol2);
+    CHECK(MolToSmiles(*mol1) != MolToSmiles(*mol2));
+  }
+}
+
 TEST_CASE("github #2890", "[bug][molops][stereo]") {
   auto mol = "CC=CC"_smiles;
   REQUIRE(mol);
