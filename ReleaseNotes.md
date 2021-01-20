@@ -1,3 +1,53 @@
+# Release_2020.09.4
+(Changes relative to Release_2020.09.3)
+
+## Acknowledgements
+Jason Biggs Patrick Buder, Andrew Dalke, Enrico Gandini, Brian Kelley, Luca
+Naef, António JM Ribeiro, Ricardo Rodriguez Schmidt, Pascal Soveaux, Paolo
+Tosco, Yutong Zhao, 'Robins', 'sirbiscuit', 'AnPallo', 'noncomputable' 
+
+## Bug Fixes:
+  - Casting int to uint in MorganFingerprintHelper leads to unexpected behaviour.
+ (github #1761 from SiPa13)
+  - MolChemicalFeature.GetPos() returns value for molecule's default conformer
+ (github #2530 from greglandrum)
+  - PDB output flavor&2 documentation change
+ (github #3089 from adalke)
+  - Unidentifiable C++ Exception with FMCS
+ (github #3635 from proteneer)
+  - Bump catch2 version to allow builds on Apple M1
+ (github #3641 from naefl)
+  - Segmentation fault when parsing InChI
+ (github #3645 from AnPallo)
+  - RDK_BUILD_THREADSAFE_SSS does not work as expected
+ (github #3646 from pascal-soveaux)
+  - Disabling MaeParser and CoordGen Support Breaks the Build
+ (github #3648 from proteneer)
+  - BondStereo info lost in FragmentOnBonds()
+ (github #3649 from bp-kelley)
+  - memory leak when sanitization fails in InChIToMol() 
+ (github #3655 from greglandrum)
+  - Qt GUI libraries being linked into rdmolops.so when Qt support is enabled
+ (github #3658 from ricrogz)
+  - Documentation of Chem.rdmolops.GetMolFrags's frag argument is wrong
+ (github #3670 from noncomputable)
+  - fmcs() + bogus input causes engine crash
+ (github #3687 from robins)
+  - qmol_from_ctab() with NULL crashes engine
+ (github #3688 from robins)
+  - qmol_from_smiles() + bogus input causes engine crash
+ (github #3689 from robins)
+  - Check PIL support for tostring and fromstring
+ (github #3690 from sirbiscuit)
+  - Pandas AttributeError when rendering Molecule in DataFrame
+ (github #3701 from enricogandini)
+  - Memory leak in EnumerateLibrary
+ (github #3702 from jose-mr)
+  - Regression in depiction of double bonds in aromatic rings
+ (github #3744 from ptosco)
+  - Fix comment to match the code in RemoveHsParameters
+ (github #3747 from jasondbiggs)
+
 # Release_2020.09.3
 (Changes relative to Release_2020.09.2)
 
