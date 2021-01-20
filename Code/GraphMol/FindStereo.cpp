@@ -202,8 +202,9 @@ bool isBondPotentialStereoBond(const Bond *bond) {
     // check rings
     const auto ri = bond->getOwningMol().getRingInfo();
     for (const auto &bring : ri->bondRings()) {
-      if (bring.size() < 8 && std::find(bring.begin(), bring.end(),
-                                        bond->getIdx()) != bring.end()) {
+      if (bring.size() < 8 &&
+          std::find(bring.begin(), bring.end(), bond->getIdx()) !=
+              bring.end()) {
         return false;
       }
     }
@@ -227,10 +228,12 @@ bool isAtomPotentialTetrahedralCenter(const Atom *atom) {
     } else if (degree == 1) {
       // chirality is never possible with 1 nbr
       return false;
-    } else if (degree < 3 &&
-               (atom->getAtomicNum() != 15 && atom->getAtomicNum() != 33)) {
+    } else if (degree < 3 && atom->getAtomicNum() != 15 &&
+               atom->getAtomicNum() != 33 && atom->getAtomicNum() != 16 &&
+               atom->getAtomicNum() != 34 && atom->getAtomicNum() != 52) {
       // less than three neighbors is never stereogenic
-      // unless it is a phosphine/arsine with implicit H
+      // unless it is a trigonal pyramid with P/As/S/Se/Te as central atom
+      // with implicit H
       return false;
     } else if (atom->getAtomicNum() == 15 || atom->getAtomicNum() == 33) {
       // from logical flow: degree is 2 or 3 (implicit H)
@@ -246,9 +249,10 @@ bool isAtomPotentialTetrahedralCenter(const Atom *atom) {
         // otherwise we default to not being a legal center
         bool legalCenter = false;
         // but there are a few special cases we'll accept
-        // sulfur or selenium with either a positive charge or a double
+        // S, Se or Te with either a positive charge or a double
         // bond:
-        if ((atom->getAtomicNum() == 16 || atom->getAtomicNum() == 34) &&
+        if ((atom->getAtomicNum() == 16 || atom->getAtomicNum() == 34 ||
+             atom->getAtomicNum() == 52) &&
             (atom->getExplicitValence() == 4 ||
              (atom->getExplicitValence() == 3 &&
               atom->getFormalCharge() == 1))) {
