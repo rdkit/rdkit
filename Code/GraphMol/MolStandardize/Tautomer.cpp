@@ -113,6 +113,7 @@ int scoreSubstructs(const ROMol &mol) {
       {"N=O", "[#7]=,:[#8]", 2},
       {"P=O", "[#15]=,:[#8]", 2},
       {"C=hetero", "[C]=[!#1;!#6]", 1},
+      {"C(=hetero)-hetero", "[C](=[!#1;!#6])[!#1;!#6]", 2},
       {"aromatic C = exocyclic N", "[c]=!@[N]", -1},
       {"methyl", "[CX4H3]", 1},
       {"guanidine terminal=N", "[#7]C(=[NR0])[#7H0]", 1},
@@ -279,7 +280,6 @@ TautomerEnumeratorResult TautomerEnumerator::enumerate(const ROMol &mol) const {
   RWMOL_SPTR kekulized(new RWMol(mol));
   MolOps::Kekulize(*kekulized, false);
   res.d_tautomers = {{smi, Tautomer(taut, kekulized, 0, 0)}};
-  std::set<std::string> done;
   res.d_modifiedAtoms.resize(mol.getNumAtoms());
   res.d_modifiedBonds.resize(mol.getNumBonds());
   bool completed = false;
@@ -292,22 +292,26 @@ TautomerEnumeratorResult TautomerEnumerator::enumerate(const ROMol &mol) const {
   while (!completed && !bailOut) {
     // std::map automatically sorts res.d_tautomers into alphabetical order
     // (SMILES)
-    for (const auto &smilesTautomerPair : res.d_tautomers) {
+    for (auto &smilesTautomerPair : res.d_tautomers) {
 #ifdef VERBOSE_ENUMERATION
-      std::cout << "Done : " << std::endl;
-      for (const auto d : done) {
-        std::cout << d << std::endl;
+      std::cout << "Current tautomers: " << std::endl;
+      for (const auto &smilesTautomerPair : res.d_tautomers) {
+        std::cout << smilesTautomerPair.first << " done "
+                  << smilesTautomerPair.second.d_done << std::endl;
       }
-      std::cout << "Looking at tautomer: " << smilesTautomerPair.first << std::endl;
 #endif
       std::string tsmiles;
-      if (done.count(smilesTautomerPair.first)) {
+      if (smilesTautomerPair.second.d_done) {
 #ifdef VERBOSE_ENUMERATION
         std::cout << "Skipping " << smilesTautomerPair.first << " as already done" << std::endl;
 #endif
         continue;
       }
-      // done does not contain tautomer
+#ifdef VERBOSE_ENUMERATION
+      std::cout << "Looking at tautomer: " << smilesTautomerPair.first
+                << std::endl;
+#endif
+      // tautomer not yet done
       for (const auto &transform : transforms) {
         if (bailOut) {
           break;
@@ -407,10 +411,6 @@ TautomerEnumeratorResult TautomerEnumerator::enumerate(const ROMol &mol) const {
             }
           }
 
-#ifdef VERBOSE_ENUMERATION
-          std::cout << "pre-sanitization: "
-                    << MolToSmiles(*product, true, true) << std::endl;
-#endif
           unsigned int failedOp;
           MolOps::sanitizeMol(*product, failedOp,
                               MolOps::SANITIZE_KEKULIZE |
@@ -418,10 +418,13 @@ TautomerEnumeratorResult TautomerEnumerator::enumerate(const ROMol &mol) const {
                                   MolOps::SANITIZE_SETCONJUGATION |
                                   MolOps::SANITIZE_SETHYBRIDIZATION |
                                   MolOps::SANITIZE_ADJUSTHS);
+#ifdef VERBOSE_ENUMERATION
+          std::cout << "pre-setTautomerStereo: " << MolToSmiles(*product, true)
+                    << std::endl;
+#endif
           setTautomerStereoAndIsoHs(mol, *product, res);
           tsmiles = MolToSmiles(*product, true);
 #ifdef VERBOSE_ENUMERATION
-          std::string name;
           (transform.Mol)->getProp(common_properties::_Name, name);
           std::cout << "Applied rule: " << name << " to " << smilesTautomerPair.first
                     << std::endl;
@@ -433,10 +436,7 @@ TautomerEnumeratorResult TautomerEnumerator::enumerate(const ROMol &mol) const {
 #endif
             continue;
           }
-#ifdef VERBOSE_ENUMERATION
-          std::cout << "New tautomer produced: " << tsmiles << std::endl;
-#endif
-          // in addition to the above transformations, sanitzation may modify
+          // in addition to the above transformations, sanitization may modify
           // bonds, e.g. Cc1nc2ccccc2[nH]1
           for (size_t i = 0; i < mol.getNumBonds(); i++) {
             auto molBondType = mol.getBondWithIdx(i)->getBondType();
@@ -451,25 +451,32 @@ TautomerEnumeratorResult TautomerEnumerator::enumerate(const ROMol &mol) const {
           }
           RWMOL_SPTR kekulized_product(new RWMol(*product));
           MolOps::Kekulize(*kekulized_product, false);
+#ifdef VERBOSE_ENUMERATION
+          auto it = res.d_tautomers.find(tsmiles);
+          if (it == res.d_tautomers.end()) {
+            std::cout << "New tautomer added as ";
+          } else {
+            std::cout << "New tautomer replaced for ";
+          }
+          std::cout << tsmiles << ", taut: " << MolToSmiles(*product)
+                    << ", kek: " << MolToSmiles(*kekulized_product, true, true)
+                    << std::endl;
+#endif
           res.d_tautomers[tsmiles] = Tautomer(
               std::move(product), std::move(kekulized_product),
               res.d_modifiedAtoms.count(), res.d_modifiedBonds.count());
-
-#ifdef VERBOSE_ENUMERATION
-          std::cout << "Now completed: " << std::endl;
-          for (const auto &smilesTautomerPair : res.d_tautomers) {
-            std::cout << smilesTautomerPair.first << std::endl;
-          }
-#endif
         }
       }
-      done.insert(smilesTautomerPair.first);
+      smilesTautomerPair.second.d_done = true;
     }
-    completed = (res.d_tautomers.size() <= done.size());
+    completed = true;
     size_t maxNumModifiedAtoms = res.d_modifiedAtoms.count();
     size_t maxNumModifiedBonds = res.d_modifiedBonds.count();
     for (auto it = res.d_tautomers.begin(); it != res.d_tautomers.end();) {
       auto &taut = it->second;
+      if (!taut.d_done) {
+        completed = false;
+      }
       if ((taut.d_numModifiedAtoms < maxNumModifiedAtoms ||
            taut.d_numModifiedBonds < maxNumModifiedBonds) &&
           setTautomerStereoAndIsoHs(mol, *taut.tautomer, res)) {

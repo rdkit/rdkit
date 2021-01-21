@@ -715,9 +715,9 @@ void testCanonicalize() {
   TautomerEnumerator te(new TautomerCatalog(tautparams.get()));
 
   for (const auto &itm : canonTautomerData) {
-    std::unique_ptr<ROMol> mol{SmilesToMol(itm.first)};
+    ROMOL_SPTR mol{SmilesToMol(itm.first)};
     TEST_ASSERT(mol);
-    std::unique_ptr<ROMol> res{te.canonicalize(*mol)};
+    ROMOL_SPTR res{te.canonicalize(*mol)};
     TEST_ASSERT(res);
     TEST_ASSERT(MolToSmiles(*res) == itm.second);
   }
@@ -746,10 +746,10 @@ void testPickCanonical() {
   TautomerEnumerator te(new TautomerCatalog(tautparams.get()));
 
   for (const auto &itm : canonTautomerData) {
-    std::unique_ptr<ROMol> mol{SmilesToMol(itm.first)};
+    ROMOL_SPTR mol{SmilesToMol(itm.first)};
     TEST_ASSERT(mol);
     auto tautRes = te.enumerate(*mol);
-    std::unique_ptr<ROMol> res{te.pickCanonical(tautRes)};
+    ROMOL_SPTR res{te.pickCanonical(tautRes)};
     TEST_ASSERT(res);
     // std::cerr << itm.first<<" -> "<<MolToSmiles(*res)<<std::endl;
     TEST_ASSERT(MolToSmiles(*res) == itm.second);
@@ -788,31 +788,29 @@ void testCustomScoreFunc() {
       {"OC(C)=C(C)C", "C=C(O)C(C)C"},
   };
   for (const auto &itm : subsetTautomerData) {
-    std::unique_ptr<ROMol> mol{SmilesToMol(itm.first)};
+    ROMOL_SPTR mol{SmilesToMol(itm.first)};
     TEST_ASSERT(mol);
     {
       // this uses the non-templated pickCanonical() function
-      std::unique_ptr<ROMol> res{
-          te.canonicalize(*mol, [](const ROMol &m) -> int {
-            return MolStandardize::TautomerScoringFunctions::scoreRings(m);
-          })};
+      ROMOL_SPTR res{te.canonicalize(*mol, [](const ROMol &m) -> int {
+        return MolStandardize::TautomerScoringFunctions::scoreRings(m);
+      })};
       TEST_ASSERT(res);
       TEST_ASSERT(MolToSmiles(*res) == itm.second);
     }
     {
       // this uses the non-templated pickCanonical() overload
       auto tautRes = te.enumerate(*mol);
-      std::unique_ptr<ROMol> res{
-          te.pickCanonical(tautRes, [](const ROMol &m) -> int {
-            return MolStandardize::TautomerScoringFunctions::scoreRings(m);
-          })};
+      ROMOL_SPTR res{te.pickCanonical(tautRes, [](const ROMol &m) -> int {
+        return MolStandardize::TautomerScoringFunctions::scoreRings(m);
+      })};
       TEST_ASSERT(res);
       TEST_ASSERT(MolToSmiles(*res) == itm.second);
     }
     {
       // this tests the templated pickCanonical() overload on a std::vector
       auto tautRes = te.enumerate(*mol);
-      std::unique_ptr<ROMol> res{
+      ROMOL_SPTR res{
           te.pickCanonical(tautRes.tautomers(), [](const ROMol &m) -> int {
             return MolStandardize::TautomerScoringFunctions::scoreRings(m);
           })};
@@ -824,10 +822,9 @@ void testCustomScoreFunc() {
       // with a different iterable container
       auto tautRes = te.enumerate(*mol);
       std::set<ROMOL_SPTR> tautomerSet(tautRes.begin(), tautRes.end());
-      std::unique_ptr<ROMol> res{
-          te.pickCanonical(tautomerSet, [](const ROMol &m) -> int {
-            return MolStandardize::TautomerScoringFunctions::scoreRings(m);
-          })};
+      ROMOL_SPTR res{te.pickCanonical(tautomerSet, [](const ROMol &m) -> int {
+        return MolStandardize::TautomerScoringFunctions::scoreRings(m);
+      })};
       TEST_ASSERT(res);
       TEST_ASSERT(MolToSmiles(*res) == itm.second);
     }
@@ -905,7 +902,7 @@ void testPickCanonical2() {
     for (const auto &taut : tautRes) {
       std::cerr << MolToSmiles(*taut) << std::endl;
     }
-    std::unique_ptr<ROMol> canon{te.pickCanonical(tautRes)};
+    ROMOL_SPTR canon{te.pickCanonical(tautRes)};
     std::cerr << "res: " << MolToSmiles(*canon) << std::endl;
   }
   {
@@ -915,7 +912,7 @@ void testPickCanonical2() {
     for (const auto &taut : tautRes) {
       std::cerr << MolToSmiles(*taut) << std::endl;
     }
-    std::unique_ptr<ROMol> canon{te.pickCanonical(tautRes)};
+    ROMOL_SPTR canon{te.pickCanonical(tautRes)};
     std::cerr << "res: " << MolToSmiles(*canon) << std::endl;
   }
   BOOST_LOG(rdInfoLog) << "Finished" << std::endl;
@@ -1416,6 +1413,24 @@ void testGithub3430() {
   }
 }
 
+void testGithub3755() {
+  BOOST_LOG(rdInfoLog) << "-----------------------\n testGithub3755"
+                       << std::endl;
+  // hydrates, aminals and hemiaminals should be scored lower than
+  // carboxylic acids, amides, amidines, and guanidines
+  std::vector<std::pair<std::string, std::string>> orig_vs_expected{
+      {"OC(=O)C(N)CO", "NC(CO)C(=O)O"}, {"C([C@@H](C(=O)O)N)O", "NC(CO)C(=O)O"},
+      {"OC(=O)C(N)CN", "NCC(N)C(=O)O"}, {"NC(=O)C(N)CO", "NC(=O)C(N)CO"},
+      {"NC(=N)C(N)CO", "N=C(N)C(N)CO"}, {"NC(=N)NC(N)CO", "N=C(N)NC(N)CO"}};
+  TautomerEnumerator te;
+  for (const auto &pair : orig_vs_expected) {
+    ROMOL_SPTR orig(SmilesToMol(pair.first));
+    TEST_ASSERT(orig);
+    ROMOL_SPTR canonical(te.canonicalize(*orig));
+    TEST_ASSERT(MolToSmiles(*canonical) == pair.second);
+  }
+}
+
 int main() {
   RDLog::InitLogs();
 #if 1
@@ -1433,5 +1448,6 @@ int main() {
   testPickCanonicalCIPChangeOnChiralCenter();
   testTautomerEnumeratorResult_const_iterator();
   testGithub3430();
+  testGithub3755();
   return 0;
 }
