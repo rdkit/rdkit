@@ -1597,12 +1597,12 @@ struct molops_wrapper {
       will be returned as molecules instead of atom ids.\n\
     - sanitizeFrags: (optional) if this is provided and true, the fragments\n\
       molecules will be sanitized before returning them.\n\
-    - frags: (optional, defaults to None) if this is provided as an empty list,\n\
-      the result will be mol.GetNumAtoms() long on return and will contain the\n\
-      fragment assignment for each Atom\n\
-    - fragsMolAtomMapping: (optional, defaults to None) if this is provided as\n\
-      an empty list, the result will be a a numFrags long list on return, and\n\
-      each entry will contain the indices of the Atoms in that fragment:\n\
+    - frags: (optional, defaults to None) if asMols is true and this is provided\n\
+       as an empty list, the result will be mol.GetNumAtoms() long on return and\n\
+       will contain the fragment assignment for each Atom\n\
+    - fragsMolAtomMapping: (optional, defaults to None) if asMols is true and this\n\
+      is provided as an empty list, the result will be numFrags long on \n\
+      return, and each entry will contain the indices of the Atoms in that fragment:\n\
       [(0, 1, 2, 3), (4, 5)]\n\
 \n\
   RETURNS: a tuple of tuples with IDs for the atoms in each fragment\n\
