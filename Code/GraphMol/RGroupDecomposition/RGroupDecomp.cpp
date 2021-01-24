@@ -43,6 +43,8 @@
 #include <utility>
 #include <vector>
 
+#define VERBOSE 1
+
 namespace RDKit {
 
 // Attachment Points
@@ -50,6 +52,8 @@ namespace RDKit {
 //  atom mappings
 //  atom indices => use -1 - atom index, range is [-1, ...., -num_atoms]
 const std::string RLABEL = "tempRlabel";
+const std::string RLABEL_TYPE = "tempRlabelType";
+const std::string RLABEL_CORE_INDEX = "rLabelCoreIndex";
 const std::string SIDECHAIN_RLABELS = "sideChainRlabels";
 const std::string done = "RLABEL_PROCESSED";
 const std::string CORE = "Core";
@@ -175,12 +179,18 @@ int RGroupDecomposition::add(const ROMol &inmol) {
     const bool replaceDummies = false;
     const bool labelByIndex = true;
     const bool requireDummyMatch = false;
-    std::unique_ptr<ROMol> coreCopy =
-        rcore->replaceCoreDummiesWithMolMatches(mol, tmatche);
+    auto coreCopy = rcore->replaceCoreDummiesWithMolMatches(mol, tmatche);
     tMol.reset(replaceCore(mol, *coreCopy, tmatche, replaceDummies,
                            labelByIndex, requireDummyMatch));
-
+#ifdef VERBOSE
+    std::cerr << "Core Match core_idx " << core_idx << " idx "
+              << data->matches.size() << ": " << MolToSmarts(*coreCopy)
+              << std::endl;
+#endif
     if (tMol) {
+#ifdef VERBOSE
+      std::cerr << "All Fragments " << MolToSmiles(*tMol) << std::endl;
+#endif
       R_DECOMP match;
       // rlabel rgroups
       MOL_SPTR_VECT fragments = MolOps::getMolFrags(*tMol, false);
@@ -190,6 +200,10 @@ int RGroupDecomposition::add(const ROMol &inmol) {
         newMol->setProp<int>("core", core_idx);
         newMol->setProp<int>("idx", data->matches.size());
         newMol->setProp<int>("frag_idx", i);
+#ifdef VERBOSE
+        std::cerr << "Fragment " << i << " " << MolToSmiles(*newMol)
+                  << std::endl;
+#endif
 
         for (auto at : newMol->atoms()) {
           unsigned int elno = at->getAtomicNum();
@@ -198,8 +212,8 @@ int RGroupDecomposition::add(const ROMol &inmol) {
                 at->getIsotope();  // this is the index into the core
             // it messes up when there are multiple ?
             int rlabel;
-            if (rcore->core->getAtomWithIdx(index)->getPropIfPresent(RLABEL,
-                                                                     rlabel)) {
+            auto coreAtom = rcore->core->getAtomWithIdx(index);
+            if (coreAtom->getPropIfPresent(RLABEL, rlabel)) {
               std::vector<int> rlabelsOnSideChain;
               at->getPropIfPresent(SIDECHAIN_RLABELS, rlabelsOnSideChain);
               rlabelsOnSideChain.push_back(rlabel);
@@ -207,6 +221,14 @@ int RGroupDecomposition::add(const ROMol &inmol) {
 
               data->labels.insert(rlabel);  // keep track of all labels used
               attachments.push_back(rlabel);
+              if (isIndexAnyRLabelOrMultipleConnectedUserRlabel(*coreAtom)) {
+                auto matchedCoreAtom = coreCopy->getAtomWithIdx(index);
+                if (matchedCoreAtom->getAtomicNum()) {
+                  at->setAtomicNum(matchedCoreAtom->getAtomicNum());
+                  at->setIsAromatic(matchedCoreAtom->getIsAromatic());
+                  at->setProp<int>(RLABEL_CORE_INDEX, index);
+                }
+              }
             }
           }
         }
@@ -261,7 +283,7 @@ int RGroupDecomposition::add(const ROMol &inmol) {
       }
 
       if (match.size()) {
-        potentialMatches.emplace_back(core_idx, match);
+        potentialMatches.emplace_back(core_idx, match, coreCopy);
       }
     }
   }

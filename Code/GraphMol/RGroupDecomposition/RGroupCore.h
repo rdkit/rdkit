@@ -10,6 +10,7 @@
 #ifndef RGROUP_CORE
 #define RGROUP_CORE
 
+#include <GraphMol/SmilesParse/SmartsWrite.h>
 #include "../RDKitBase.h"
 #include "RGroupUtils.h"
 #include "GraphMol/Substruct/SubstructMatch.h"
@@ -36,9 +37,10 @@ struct RCore {
       }
     }
   }
+
   // Return a copy of core where dummy atoms are replaced by
   // the atomic number of the respective matching atom in mol
-  std::unique_ptr<ROMol> replaceCoreDummiesWithMolMatches(
+  std::unique_ptr<ROMol> replaceCoreDummiesWithMolMatchesOriginal(
       const ROMol &mol, const MatchVectType &match) const {
     std::unique_ptr<ROMol> coreReplacedDummies(new ROMol(*core));
     for (const auto &p : match) {
@@ -47,6 +49,42 @@ struct RCore {
         a->setAtomicNum(mol.getAtomWithIdx(p.second)->getAtomicNum());
       }
     }
+    return coreReplacedDummies;
+  }
+
+  // Return a copy of core where dummy atoms are replaced by
+  // the atomic number of the respective matching atom in mol
+  std::shared_ptr<ROMol> replaceCoreDummiesWithMolMatches(
+      const ROMol &mol, const MatchVectType &match) const {
+    auto coreReplacedDummies = std::make_shared<RWMol>(*core);
+    for (const auto &p : match) {
+      auto a = coreReplacedDummies->getAtomWithIdx(p.first);
+      if (isIndexAnyRLabelOrMultipleConnectedUserRlabel(*a)) {
+        if (a->hasQuery()) {
+          auto atomicNumber = mol.getAtomWithIdx(p.second)->getAtomicNum();
+          auto newAtom = new Atom(atomicNumber);
+          coreReplacedDummies->replaceAtom(p.first, newAtom, false, true);
+          delete newAtom;
+        } else {
+          a->setAtomicNum(mol.getAtomWithIdx(p.second)->getAtomicNum());
+        }
+      }
+    }
+
+    for (auto bond : coreReplacedDummies->bonds()) {
+      if (bond->hasQuery()) {
+        const auto molBond =
+            mol.getBondBetweenAtoms(match[bond->getBeginAtomIdx()].second,
+                                    match[bond->getEndAtomIdx()].second);
+        auto newBond = new Bond(molBond->getBondType());
+        coreReplacedDummies->replaceBond(bond->getIdx(), newBond, true);
+        delete newBond;
+      }
+    }
+
+    std::cerr << "Original core smarts  " << MolToSmarts(mol) << std::endl;
+    std::cerr << "Dummy replaced core smarts  "
+              << MolToSmarts(*coreReplacedDummies) << std::endl;
     return coreReplacedDummies;
   }
 };

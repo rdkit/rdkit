@@ -9,8 +9,7 @@
 //
 #include "RGroupUtils.h"
 
-namespace RDKit
-{
+namespace RDKit {
 std::string labellingToString(Labelling type) {
   switch (type) {
     case Labelling::RGROUP_LABELS:
@@ -87,11 +86,20 @@ bool setLabel(Atom *atom, int label, std::set<int> &labels, int &maxLabel,
     }
 
     atom->setProp<int>(RLABEL, label);
+    atom->setProp<int>(RLABEL_TYPE, static_cast<int>(type));
     labels.insert(label);
     maxLabel = (std::max)(maxLabel, label + 1);
     return true;
   }
   return false;
+}
+
+bool isIndexAnyRLabelOrMultipleConnectedUserRlabel(const Atom &atom) {
+  if (atom.getAtomicNum()) return false;
+  auto userRLabel = atom.hasProp(RLABEL) && atom.hasProp(RLABEL_TYPE) &&
+                    static_cast<Labelling>(atom.getProp<int>(RLABEL_TYPE)) !=
+                        Labelling::INDEX_LABELS;
+  return !userRLabel || atom.getDegree() > 1;
 }
 
 bool hasDummy(const RWMol &core) {
@@ -103,5 +111,4 @@ bool hasDummy(const RWMol &core) {
   }
   return false;
 }
-}  // namespace
-
+}  // namespace RDKit

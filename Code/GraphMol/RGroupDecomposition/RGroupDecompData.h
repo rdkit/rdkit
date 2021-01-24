@@ -129,6 +129,7 @@ struct RGroupDecompData {
       keepVector.push_back(matches[mol_idx][permutation[mol_idx]]);
       matches[mol_idx] = keepVector;
     }
+
     permutation = std::vector<size_t>(matches.size(), 0);
     if (params.scoreMethod == FingerprintVariance &&
         params.matchingStrategy != GA) {
@@ -348,7 +349,7 @@ struct RGroupDecompData {
 
           if (atom->getAtomicNum() == 0) {
             setRlabel(atom, label->second);
-          } else {
+          } else if (!atom->hasProp(RLABEL_CORE_INDEX)) {
             auto *newAt = new Atom(0);
             setRlabel(newAt, label->second);
             atomsToAdd.emplace_back(atom, newAt);

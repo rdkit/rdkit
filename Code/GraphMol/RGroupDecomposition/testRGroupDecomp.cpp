@@ -51,25 +51,24 @@ typedef boost::tokenizer<boost::char_separator<char>> tokenizer;
 using namespace RDKit;
 
 #ifdef DEBUG
-const bool DOASSERT=false;
+const bool DOASSERT = false;
 #else
-const bool DOASSERT=true;
+const bool DOASSERT = true;
 #endif
 
 typedef std::vector<std::unique_ptr<ROMol>> UMOLS;
 #define UPTR(m) std::unique_ptr<ROMol>(m)
 
 void CHECK_RGROUP(RGroupRows::const_iterator &it, const std::string &expected,
-		  ROMol *mol = nullptr,
-		  bool doassert = DOASSERT) {
+                  ROMol *mol = nullptr, bool doassert = DOASSERT) {
   std::ostringstream str;
   int i = 0;
   std::unique_ptr<ROMol> res;
   for (auto rgroups = it->begin(); rgroups != it->end(); ++rgroups, ++i) {
     if (i) {
       str << " ";
-      if(mol) {
-          res = molzip(*res, *rgroups->second.get());
+      if (mol) {
+        res = molzip(*res, *rgroups->second.get());
       }
     } else if (mol) {
       res = std::unique_ptr<ROMol>(new ROMol(*rgroups->second.get()));
@@ -86,11 +85,11 @@ void CHECK_RGROUP(RGroupRows::const_iterator &it, const std::string &expected,
 
   if (doassert) {
     TEST_ASSERT(result == expected)
-      if(mol) {
-	auto smi1 = MolToSmiles(*res);
-	auto smi2 = MolToSmiles(*mol);
-	TEST_ASSERT(smi1 == smi2)
-      }
+    if (mol) {
+      auto smi1 = MolToSmiles(*res);
+      auto smi2 = MolToSmiles(*mol);
+      TEST_ASSERT(smi1 == smi2)
+    }
   }
 }
 
@@ -135,7 +134,8 @@ void testSymmetryMatching(RGroupScore scoreMethod = Match) {
 
   // All Cl's should be labeled with the same rgroup
   int i = 0;
-  for (RGroupRows::const_iterator it = rows.begin(); it != rows.end(); ++it, ++i) {
+  for (RGroupRows::const_iterator it = rows.begin(); it != rows.end();
+       ++it, ++i) {
     CHECK_RGROUP(it, "Core:c1ccc([*:1])cc1 R1:Cl[*:1]", mols[i].get());
   }
   delete core;
@@ -168,7 +168,8 @@ void testGaSymmetryMatching(RGroupScore scoreMethod) {
 
   // All Cl's should be labeled with the same rgroup
   int i = 0;
-  for (RGroupRows::const_iterator it = rows.begin(); it != rows.end(); ++it, ++i) {
+  for (RGroupRows::const_iterator it = rows.begin(); it != rows.end();
+       ++it, ++i) {
     CHECK_RGROUP(it, "Core:c1ccc([*:1])cc1 R1:Cl[*:1]", mols[i].get());
   }
   delete core;
@@ -188,7 +189,7 @@ void testGaBatch() {
   params.scoreMethod = FingerprintVariance;
   params.gaNumberRuns = 3;
   params.gaParallelRuns = true;
-  
+
   RGroupDecomposition decomp(*core, params);
   for (int i = 0; i < 5; ++i) {
     ROMol *mol = SmilesToMol(symdata[i]);
@@ -986,7 +987,7 @@ $$$$)CTAB";
     for (RGroupRows::const_iterator it = rows.begin(); it != rows.end();
          ++it, ++i) {
       TEST_ASSERT(i < 4);
-        // molzip doesn't support double attachment points yet
+      // molzip doesn't support double attachment points yet
       CHECK_RGROUP(it, expected[i]);
     }
   }
@@ -1981,6 +1982,79 @@ M  END
   }
 }
 
+void testMatchOnAnyAtom() {
+  BOOST_LOG(rdInfoLog)
+      << "********************************************************\n";
+  BOOST_LOG(rdInfoLog) << "Test core with matching at any atom" << std::endl;
+  std::string core_ctab = R"CTAB(
+  Mrv2008 01192109352D
+
+ 12 12  0  0  0  0            999 V2000
+    3.7389   -3.2028    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    4.5640   -3.2028    0.0000 A   0  0  0  0  0  0  0  0  0  0  0  0
+    4.9764   -2.4884    0.0000 A   0  0  0  0  0  0  0  0  0  0  0  0
+    4.5640   -1.7739    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    3.7389   -1.7739    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    3.3265   -2.4884    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    2.5015   -2.4884    0.0000 A   0  0  0  0  0  0  0  0  0  0  0  0
+    3.3265   -3.9172    0.0000 R#  0  0  0  0  0  0  0  0  0  0  0  0
+    5.8014   -2.4884    0.0000 R#  0  0  0  0  0  0  0  0  0  0  0  0
+    2.0890   -1.7739    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    2.5015   -1.0595    0.0000 O   0  0  0  0  0  0  0  0  0  0  0  0
+    1.2640   -1.7739    0.0000 R#  0  0  0  0  0  0  0  0  0  0  0  0
+  5  6  8  0  0  0  0
+  4  5  8  0  0  0  0
+  3  4  8  0  0  0  0
+  2  3  8  0  0  0  0
+  1  2  8  0  0  0  0
+  1  6  8  0  0  0  0
+  6  7  1  0  0  0  0
+  1  8  1  0  0  0  0
+  3  9  1  0  0  0  0
+  7 10  1  0  0  0  0
+ 10 11  2  0  0  0  0
+ 10 12  1  0  0  0  0
+M  RGP  3   8   2   9   3  12   1
+M  END
+)CTAB";
+  ROMOL_SPTR core(MolBlockToMol(core_ctab));
+  const std::vector<const char *> smilesData{""};
+  RGroupDecompositionParameters params;
+  params.onlyMatchAtRGroups = false;
+
+  RGroupDecomposition decomp(*core, params);
+  auto mol = "O=C(NC1CCN(c2ncccc2[N+](=O)[O-])CC1)c1cc(Cl)c(Cl)[nH]1"_smiles;
+  int res = decomp.add(*mol);
+  TEST_ASSERT(res == 0);
+
+  decomp.process();
+  auto rows = decomp.getRGroupsAsRows();
+
+  auto row = rows[0];
+  std::cerr << "Core " <<  MolToSmiles(*row["Core"]) << std::endl;
+  for (auto it = row.cbegin(); it != row.cend(); ++it) {
+    std::cerr << it->first << ": " << MolToSmiles(*it->second) << std::endl;
+  }
+  /*
+  std::cerr << "R1 " <<  MolToSmiles(*row["R1"]) << std::endl;
+  std::cerr << "R3 " <<  MolToSmiles(*row["R3"]) << std::endl;
+   */
+
+  params.onlyMatchAtRGroups = true;
+  RGroupDecomposition decomp2(*core, params);
+  res = decomp2.add(*mol);
+
+  TEST_ASSERT(res == 0);
+
+  decomp2.process();
+  rows = decomp2.getRGroupsAsRows();
+  row = rows[0];
+  std::cerr << "Core " <<  MolToSmiles(*row["Core"]) << std::endl;
+  std::cerr << "R1 " <<  MolToSmiles(*row["R1"]) << std::endl;
+  std::cerr << "R3 " <<  MolToSmiles(*row["R3"]) << std::endl;
+  std::cerr << "hello" << std::endl;
+}
+
 int main() {
   RDLog::InitLogs();
   boost::logging::disable_logs("rdApp.debug");
@@ -1990,11 +2064,15 @@ int main() {
   BOOST_LOG(rdInfoLog) << "Testing R-Group Decomposition \n";
 
 #if 1
+  testRingMatching();
+  testRGroupOnlyMatching();
+  //testRingMatching3();
+  testMatchOnAnyAtom();
   testSymmetryMatching(FingerprintVariance);
   testSymmetryMatching();
   testRGroupOnlyMatching();
   testRingMatching();
-  testRingMatching3();
+  // testRingMatching3();
   testMultiCore();
   testGithub1550();
   testRemoveHs();
