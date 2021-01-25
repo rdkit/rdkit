@@ -194,16 +194,13 @@ int RGroupDecomposition::add(const ROMol &inmol) {
       R_DECOMP match;
       // rlabel rgroups
       MOL_SPTR_VECT fragments = MolOps::getMolFrags(*tMol, false);
+      std::set<int> coreAtomAnyMatched;
       for (size_t i = 0; i < fragments.size(); ++i) {
         std::vector<int> attachments;
         boost::shared_ptr<ROMol> &newMol = fragments[i];
         newMol->setProp<int>("core", core_idx);
         newMol->setProp<int>("idx", data->matches.size());
         newMol->setProp<int>("frag_idx", i);
-#ifdef VERBOSE
-        std::cerr << "Fragment " << i << " " << MolToSmiles(*newMol)
-                  << std::endl;
-#endif
 
         for (auto at : newMol->atoms()) {
           unsigned int elno = at->getAtomicNum();
@@ -213,6 +210,7 @@ int RGroupDecomposition::add(const ROMol &inmol) {
             // it messes up when there are multiple ?
             int rlabel;
             auto coreAtom = rcore->core->getAtomWithIdx(index);
+            coreAtomAnyMatched.insert(index);
             if (coreAtom->getPropIfPresent(RLABEL, rlabel)) {
               std::vector<int> rlabelsOnSideChain;
               at->getPropIfPresent(SIDECHAIN_RLABELS, rlabelsOnSideChain);
@@ -226,6 +224,7 @@ int RGroupDecomposition::add(const ROMol &inmol) {
                 if (matchedCoreAtom->getAtomicNum()) {
                   at->setAtomicNum(matchedCoreAtom->getAtomicNum());
                   at->setIsAromatic(matchedCoreAtom->getIsAromatic());
+                  at->setNumExplicitHs(0);
                   at->setProp<int>(RLABEL_CORE_INDEX, index);
                 }
               }
@@ -278,6 +277,36 @@ int RGroupDecomposition::add(const ROMol &inmol) {
                 return add(inmol);
               }
             }
+          }
+        }
+#ifdef VERBOSE
+        std::cerr << "Fragment " << i << " " << MolToSmiles(*newMol)
+                  << std::endl;
+#endif
+      }
+
+      // Find any missing single atom matches to any atom core atoms with RLabels
+      for (const auto & coreAtom: rcore->core->atoms()) {
+        auto coreIndex = coreAtom->getIdx();
+        if (isIndexAnyRLabelOrMultipleConnectedUserRlabel(*coreAtom) && coreAtomAnyMatched.find(coreIndex) == coreAtomAnyMatched.end()) {
+          auto matchingAtom = coreCopy->getAtomWithIdx(coreIndex);
+          if (matchingAtom->getAtomicNum() > 0) {
+            auto newMol = boost::make_shared<RWMol>();
+            auto newAtom = new Atom(matchingAtom->getAtomicNum());
+            int rLabel = coreAtom->getProp<int>(RLABEL);
+            std::vector<int> rLabels {rLabel};
+            newAtom->setIsAromatic(matchingAtom->getIsAromatic());
+            newAtom->setNumExplicitHs(0);
+            newAtom->setProp(SIDECHAIN_RLABELS, rLabels);
+            newAtom->setProp<int>(RLABEL_CORE_INDEX, coreIndex);
+            newMol->addAtom(newAtom, false, true);
+            data->labels.insert(rLabel);
+            ADD_MATCH(match, rLabel);
+            match[rLabel]->add(newMol, rLabels);
+#ifdef VERBOSE
+            std::cerr << "Fragment " << match.size() << " " << MolToSmiles(*newMol)
+                      << std::endl;
+#endif
           }
         }
       }

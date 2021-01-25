@@ -58,16 +58,19 @@ struct RCore {
       const ROMol &mol, const MatchVectType &match) const {
     auto coreReplacedDummies = std::make_shared<RWMol>(*core);
     for (const auto &p : match) {
-      auto a = coreReplacedDummies->getAtomWithIdx(p.first);
-      if (isIndexAnyRLabelOrMultipleConnectedUserRlabel(*a)) {
-        if (a->hasQuery()) {
-          auto atomicNumber = mol.getAtomWithIdx(p.second)->getAtomicNum();
+      auto atom = coreReplacedDummies->getAtomWithIdx(p.first);
+      if (isIndexAnyRLabelOrMultipleConnectedUserRlabel(*atom)) {
+        auto molAtom = mol.getAtomWithIdx(p.second);
+        if (atom->hasQuery()) {
+          auto atomicNumber = molAtom->getAtomicNum();
           auto newAtom = new Atom(atomicNumber);
           coreReplacedDummies->replaceAtom(p.first, newAtom, false, true);
           delete newAtom;
+          atom = coreReplacedDummies->getAtomWithIdx(p.first);
         } else {
-          a->setAtomicNum(mol.getAtomWithIdx(p.second)->getAtomicNum());
+          atom->setAtomicNum(mol.getAtomWithIdx(p.second)->getAtomicNum());
         }
+        atom->setIsAromatic(molAtom->getIsAromatic());
       }
     }
 
@@ -82,7 +85,7 @@ struct RCore {
       }
     }
 
-    std::cerr << "Original core smarts  " << MolToSmarts(mol) << std::endl;
+    std::cerr << "Original core smarts  " << MolToSmarts(*core) << std::endl;
     std::cerr << "Dummy replaced core smarts  "
               << MolToSmarts(*coreReplacedDummies) << std::endl;
     return coreReplacedDummies;

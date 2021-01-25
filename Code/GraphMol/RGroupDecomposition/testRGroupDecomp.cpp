@@ -2064,9 +2064,9 @@ int main() {
   BOOST_LOG(rdInfoLog) << "Testing R-Group Decomposition \n";
 
 #if 1
-  testRingMatching();
-  testRGroupOnlyMatching();
-  //testRingMatching3();
+  // testRingMatching();
+  // testRGroupOnlyMatching();
+  // testRingMatching3();
   testMatchOnAnyAtom();
   testSymmetryMatching(FingerprintVariance);
   testSymmetryMatching();

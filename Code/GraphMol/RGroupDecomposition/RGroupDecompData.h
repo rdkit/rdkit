@@ -349,7 +349,10 @@ struct RGroupDecompData {
 
           if (atom->getAtomicNum() == 0) {
             setRlabel(atom, label->second);
-          } else if (!atom->hasProp(RLABEL_CORE_INDEX)) {
+          }
+          else if (atom->hasProp(RLABEL_CORE_INDEX)) {
+            setRlabel(atom, label->second);
+          } else {
             auto *newAt = new Atom(0);
             setRlabel(newAt, label->second);
             atomsToAdd.emplace_back(atom, newAt);
