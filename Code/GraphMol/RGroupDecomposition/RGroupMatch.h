@@ -17,13 +17,12 @@ typedef std::map<int, RData> R_DECOMP;
 
 //! RGroupMatch is the decomposition for a single molecule
 struct RGroupMatch {
-  size_t   core_idx; // index of the matching core
+  size_t core_idx;   // index of the matching core
   R_DECOMP rgroups;  // rlabel->RGroupData mapping
-  std::shared_ptr<ROMol> core; // core match with any query atoms or bonds resolved
 
-  RGroupMatch(size_t core_index, R_DECOMP input_rgroups, std::shared_ptr<ROMol> & core)
-      : core_idx(core_index), rgroups(std::move(input_rgroups)), core(core) {}
-};  
+  RGroupMatch(size_t core_index, R_DECOMP input_rgroups)
+      : core_idx(core_index), rgroups(std::move(input_rgroups)) {}
+};
 
-}
+}  // namespace RDKit
 #endif

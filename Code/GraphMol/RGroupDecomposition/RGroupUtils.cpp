@@ -94,12 +94,13 @@ bool setLabel(Atom *atom, int label, std::set<int> &labels, int &maxLabel,
   return false;
 }
 
-bool isIndexAnyRLabelOrMultipleConnectedUserRlabel(const Atom &atom) {
+bool isAnyAtomWithMultipleNeighborsOrNotUserRLabel(const Atom &atom) {
   if (atom.getAtomicNum()) return false;
+  if (atom.getDegree() > 1) return true;
   auto userRLabel = atom.hasProp(RLABEL) && atom.hasProp(RLABEL_TYPE) &&
                     static_cast<Labelling>(atom.getProp<int>(RLABEL_TYPE)) !=
                         Labelling::INDEX_LABELS;
-  return !userRLabel || atom.getDegree() > 1;
+  return !userRLabel;
 }
 
 bool hasDummy(const RWMol &core) {

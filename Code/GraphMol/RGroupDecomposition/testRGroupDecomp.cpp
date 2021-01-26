@@ -44,7 +44,7 @@
 #include <boost/tokenizer.hpp>
 #include <regex>
 
-//#define DEBUG
+// #define DEBUG
 
 typedef boost::tokenizer<boost::char_separator<char>> tokenizer;
 
@@ -256,9 +256,9 @@ void testRGroupOnlyMatching() {
 
 const char *ringData[3] = {"c1cocc1", "c1c[nH]cc1", "c1cscc1"};
 
-const char *ringDataRes[3] = {"Core:c1cc:[*:1]:c1 R1:o(:[*:1]):[*:1]",
-                              "Core:c1cc:[*:1]:c1 R1:[nH](:[*:1]):[*:1]",
-                              "Core:c1cc:[*:1]:c1 R1:s(:[*:1]):[*:1]"};
+const char *ringDataRes[3] = {"Core:c1cc:[*:1]:c1 R1:[o:1]",
+                              "Core:c1cc:[*:1]:c1 R1:[H][n:1]",
+                              "Core:c1cc:[*:1]:c1 R1:[s:1]"};
 
 void testRingMatching() {
   BOOST_LOG(rdInfoLog)
@@ -295,10 +295,12 @@ void testRingMatching() {
 const char *ringData2[3] = {"c1cocc1CCl", "c1c[nH]cc1CI", "c1cscc1CF"};
 
 const char *ringDataRes2[3] = {
-    "Core:*1**[*:1](C[*:2])*1 R1:c1cc([*:1])co1 R2:Cl[*:2]",
-    "Core:*1**[*:1](C[*:2])*1 R1:c1cc([*:1])c[nH]1 "
-    "R2:I[*:2]",
-    "Core:*1**[*:1](C[*:2])*1 R1:c1cc([*:1])cs1 R2:F[*:2]"};
+    "Core:C([*:1]1[*:3][*:4][*:5][*:6]1)[*:2] R1:[c:1] R2:Cl[*:2] R3:[H][c:3] "
+    "R4:[H][c:4] R5:[o:5] R6:[H][c:6]",
+    "Core:C([*:1]1[*:3][*:4][*:5][*:6]1)[*:2] R1:[c:1] R2:I[*:2] R3:[H][c:3] "
+    "R4:[H][c:4] R5:[H][n:5] R6:[H][c:6]",
+    "Core:C([*:1]1[*:3][*:4][*:5][*:6]1)[*:2] R1:[c:1] R2:F[*:2] R3:[H][c:3] "
+    "R4:[H][c:4] R5:[s:5] R6:[H][c:6]"};
 
 void testRingMatching2() {
   BOOST_LOG(rdInfoLog)
@@ -332,10 +334,15 @@ void testRingMatching2() {
 
 const char *ringData3[3] = {"c1cocc1CCl", "c1c[nH]cc1CI", "c1cscc1CF"};
 
+// Ideally all the halogens should be in R1 (the user defined R Group, rather
+// than the atom index group R5).
 const char *ringDataRes3[3] = {
-    "Core:c1co([*:2])cc1[*:1] R1:ClC[*:1]",
-    "Core:c1cn([*:2])cc1[*:1] R1:IC[*:1] R2:[H][*:2]",
-    "Core:c1cs([*:2])cc1[*:1] R1:FC[*:1]"};
+    "Core:[*:1]1[*:2][*:3][*:4][*:5]1 R1:[H][c:1] R2:[o:2] R3:[H][c:3] "
+    "R4:[H][c:4] R5:ClC[c:5]",
+    "Core:[*:1]1[*:2][*:3][*:4][*:5]1 R1:[H][c:1] R2:[H][n:2] R3:[H][c:3] "
+    "R4:[H][c:4] R5:IC[c:5]",
+    "Core:[*:1]1[*:2][*:3][*:4][*:5]1 R1:[H][c:1] R2:[s:2] R3:[H][c:3] "
+    "R4:[H][c:4] R5:FC[c:5]"};
 
 void testRingMatching3() {
   BOOST_LOG(rdInfoLog)
@@ -974,15 +981,14 @@ $$$$)CTAB";
 
     const char *expected[4] = {
         "Core:N1C(N([*:2])[*:4])C2C(NC1[*:1])[*:5]C([*:3])[*:6]2 R1:[H][*:1] "
-        "R2:C(CC[*:2])CC[*:4] R4:C(CC[*:2])CC[*:4] R5:N([*:5])[*:5] "
-        "R6:C([*:6])[*:6]",
+        "R2:C(CC[*:2])CC[*:4] R4:C(CC[*:2])CC[*:4] R5:[H][N:5] "
+        "R6:[H][C:6].[H][C:6]",
         "Core:N1C(N([*:2])[*:4])C2C(NC1[*:1])[*:5]C([*:3])[*:6]2 R1:[H][*:1] "
-        "R2:C[*:2] R4:[H][*:4] R5:S([*:5])[*:5] R6:CC(C)C([*:6])[*:6]",
+        "R2:C[*:2] R4:[H][*:4] R5:[S:5] R6:CC(C)[C:6].[H][C:6]",
         "Core:C1C([*:1])NC(N([*:2])[*:4])C2C1[*:5]C([*:3])[*:6]2 R1:[H][*:1] "
-        "R2:C[*:2] R4:[H][*:4] R5:S([*:5])[*:5] R6:CC(C)C([*:6])[*:6]",
+        "R2:C[*:2] R4:[H][*:4] R5:[S:5] R6:CC(C)[C:6].[H][C:6]",
         "Core:C1C([*:1])NC(N([*:2])[*:4])C2C1[*:5]C([*:3])[*:6]2 R1:O[*:1] "
-        "R2:[H][*:2] R4:[H][*:4] R5:CN([*:5])[*:5] R6:N([*:6])[*:6]"};
-
+        "R2:[H][*:2] R4:[H][*:4] R5:C[N:5] R6:[H][N:6]"};
     int i = 0;
     for (RGroupRows::const_iterator it = rows.begin(); it != rows.end();
          ++it, ++i) {
@@ -1730,22 +1736,18 @@ $$$$
   }
   // test pre-labelled with dummy atom labels, autodetect
 
-  // Some of these patterns may merit further investigation
-  // such as c(:[*:1]):[*:1] may be better as c[*:1] and the first
-  // c(c:[*:5]):[*:4] should be c[*:4] and the second c[*:5]
   expectedRows = std::vector<std::string>{
       "Core:O=C(c1cncn1[*:2])[*:1] R1:CN[*:1] R2:CC[*:2]",
-      "Core:c1c([*:2])[*:3]c2nc([*:6])[*:5]:[*:4]c2[*:1]1 R1:c(:[*:1]):[*:1] "
-      "R2:Br[*:2] R3:n(:[*:3]):[*:3] R4:c(c:[*:5]):[*:4] R5:c(c:[*:5]):[*:4] "
-      "R6:F[*:6]"};
+      "Core:c1c([*:2])[*:3]c2nc([*:6])[*:5]:[*:4]c2[*:1]1 R1:[H][c:1] "
+      "R2:Br[*:2] R3:[n:3] R4:[H][c:4] R5:[H][c:5] R6:F[*:6]"};
   expectedItems = std::vector<std::vector<std::string>>{
       {"O=C(c1cncn1[*:2])[*:1]",
        "c1c([*:2])[*:3]c2nc([*:6])[*:5]:[*:4]c2[*:1]1"},
-      {"CN[*:1]", "c(:[*:1]):[*:1]"},
+      {"CN[*:1]", "[H][c:1]"},
       {"CC[*:2]", "Br[*:2]"},
-      {"", "n(:[*:3]):[*:3]"},
-      {"", "c(c:[*:5]):[*:4]"},
-      {"", "c(c:[*:5]):[*:4]"},
+      {"", "[n:3]"},
+      {"", "[H][c:4]"},
+      {"", "[H][c:5]"},
       {"", "F[*:6]"}};
   expectedLabels = {"Core", "R1", "R2", "R3", "R4", "R5", "R6"};
   params.labels = AutoDetect;
@@ -2029,30 +2031,25 @@ M  END
 
   decomp.process();
   auto rows = decomp.getRGroupsAsRows();
-
-  auto row = rows[0];
-  std::cerr << "Core " <<  MolToSmiles(*row["Core"]) << std::endl;
-  for (auto it = row.cbegin(); it != row.cend(); ++it) {
-    std::cerr << it->first << ": " << MolToSmiles(*it->second) << std::endl;
-  }
-  /*
-  std::cerr << "R1 " <<  MolToSmiles(*row["R1"]) << std::endl;
-  std::cerr << "R3 " <<  MolToSmiles(*row["R3"]) << std::endl;
-   */
+  TEST_ASSERT(rows.size() == 1)
+  RGroupRows::const_iterator it = rows.begin();
+  CHECK_RGROUP(it,
+               "Core:O=C([*:1])[*:4]C1~C~C~[*:5]([*:3])~[*:6]~C~1[*:2] "
+               "R1:Clc1cc([*:1])[nH]c1Cl R3:O=[N+]([O-])c1cccnc1[*:3] "
+               "R4:[H][N:4] R5:[N:5] R6:[H][C:6].[H][C:6]");
 
   params.onlyMatchAtRGroups = true;
   RGroupDecomposition decomp2(*core, params);
   res = decomp2.add(*mol);
-
   TEST_ASSERT(res == 0);
 
   decomp2.process();
   rows = decomp2.getRGroupsAsRows();
-  row = rows[0];
-  std::cerr << "Core " <<  MolToSmiles(*row["Core"]) << std::endl;
-  std::cerr << "R1 " <<  MolToSmiles(*row["R1"]) << std::endl;
-  std::cerr << "R3 " <<  MolToSmiles(*row["R3"]) << std::endl;
-  std::cerr << "hello" << std::endl;
+  TEST_ASSERT(rows.size() == 1)
+  it = rows.begin();
+  CHECK_RGROUP(it,
+               "Core:O=C(*C1~C~C~*([*:3])~*~C~1[*:2])[*:1] "
+               "R1:Clc1cc([*:1])[nH]c1Cl R3:O=[N+]([O-])c1cccnc1[*:3]");
 }
 
 int main() {
@@ -2064,15 +2061,11 @@ int main() {
   BOOST_LOG(rdInfoLog) << "Testing R-Group Decomposition \n";
 
 #if 1
-  // testRingMatching();
-  // testRGroupOnlyMatching();
-  // testRingMatching3();
-  testMatchOnAnyAtom();
   testSymmetryMatching(FingerprintVariance);
   testSymmetryMatching();
   testRGroupOnlyMatching();
   testRingMatching();
-  // testRingMatching3();
+  testRingMatching3();
   testMultiCore();
   testGithub1550();
   testRemoveHs();
@@ -2098,6 +2091,7 @@ int main() {
   testMultiCorePreLabelled();
   testCoreWithRGroupAdjQuery();
   testGeminalRGroups();
+  testMatchOnAnyAtom();
   BOOST_LOG(rdInfoLog)
       << "********************************************************\n";
   return 0;

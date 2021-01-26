@@ -52,7 +52,7 @@ bool hasDummy(const RWMol &core);
 
 //! Returns true if the core atom is a dummy atom with a single connection and a
 // user defined rgroup label
-bool isIndexAnyRLabelOrMultipleConnectedUserRlabel(const Atom &atom);
+bool isAnyAtomWithMultipleNeighborsOrNotUserRLabel(const Atom &atom);
 }
 
 #endif

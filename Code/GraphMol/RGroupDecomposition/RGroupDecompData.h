@@ -19,6 +19,8 @@
 #include <vector>
 #include <map>
 
+// #define VERBOSE 1
+
 namespace RDKit {
 struct RGroupDecompData {
   // matches[mol_idx] == vector of potential matches
@@ -326,6 +328,7 @@ struct RGroupDecompData {
     PRECONDITION(rgroup.combinedMol.get(), "Unprocessed rgroup");
 
     RWMol &mol = *rgroup.combinedMol.get();
+
     if (rgroup.combinedMol->hasProp(done)) {
       rgroup.labelled = true;
       return;
@@ -333,6 +336,7 @@ struct RGroupDecompData {
 
     mol.setProp(done, true);
     std::vector<std::pair<Atom *, Atom *>> atomsToAdd;  // adds -R if necessary
+    std::map<int, int> rLabelCoreIndexToAtomicWt;
 
     for (RWMol::AtomIterator atIt = mol.beginAtoms(); atIt != mol.endAtoms();
          ++atIt) {
@@ -359,6 +363,12 @@ struct RGroupDecompData {
           }
         }
       }
+      if (atom->hasProp(RLABEL_CORE_INDEX)) {
+        // convert to dummy as we don't want to collapse hydrogens onto the core match
+        auto rLabelCoreIndex = atom->getProp<int>(RLABEL_CORE_INDEX);
+        rLabelCoreIndexToAtomicWt[rLabelCoreIndex] = atom->getAtomicNum();
+        atom->setAtomicNum(0);
+      }
     }
 
     for (auto &i : atomsToAdd) {
@@ -376,6 +386,21 @@ struct RGroupDecompData {
 
     mol.updatePropertyCache(false);  // this was github #1550
     rgroup.labelled = true;
+
+    // Restore any core matches that we have set to dummy
+    for (RWMol::AtomIterator atIt = mol.beginAtoms(); atIt != mol.endAtoms();
+         ++atIt) {
+      Atom *atom = *atIt;
+      if (atom->hasProp(RLABEL_CORE_INDEX)) {
+        // don't need to set IsArormatic on atom - that seems to have been saved
+          atom->setAtomicNum(rLabelCoreIndexToAtomicWt[atom->getProp<int>(RLABEL_CORE_INDEX)]);
+          atom->setNoImplicit(true);
+      }
+    }
+
+#ifdef VERBOSE
+    std::cerr << "Relabel Rgroup smiles " << MolToSmiles(mol) << std::endl;
+#endif
   }
 
   // relabel the core and sidechains using the specified user labels

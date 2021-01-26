@@ -15,6 +15,8 @@
 #include "RGroupUtils.h"
 #include "GraphMol/Substruct/SubstructMatch.h"
 
+// #define VERBOSE 1
+
 namespace RDKit {
 
 //! RCore is the core common to a series of molecules
@@ -54,12 +56,12 @@ struct RCore {
 
   // Return a copy of core where dummy atoms are replaced by
   // the atomic number of the respective matching atom in mol
-  std::shared_ptr<ROMol> replaceCoreDummiesWithMolMatches(
+  std::unique_ptr<ROMol> replaceCoreDummiesWithMolMatches(
       const ROMol &mol, const MatchVectType &match) const {
-    auto coreReplacedDummies = std::make_shared<RWMol>(*core);
+    std::unique_ptr<RWMol> coreReplacedDummies(new RWMol(*core));
     for (const auto &p : match) {
       auto atom = coreReplacedDummies->getAtomWithIdx(p.first);
-      if (isIndexAnyRLabelOrMultipleConnectedUserRlabel(*atom)) {
+      if (isAnyAtomWithMultipleNeighborsOrNotUserRLabel(*atom)) {
         auto molAtom = mol.getAtomWithIdx(p.second);
         if (atom->hasQuery()) {
           auto atomicNumber = molAtom->getAtomicNum();
@@ -85,9 +87,11 @@ struct RCore {
       }
     }
 
+#ifdef VERBOSE
     std::cerr << "Original core smarts  " << MolToSmarts(*core) << std::endl;
     std::cerr << "Dummy replaced core smarts  "
               << MolToSmarts(*coreReplacedDummies) << std::endl;
+#endif
     return coreReplacedDummies;
   }
 };
