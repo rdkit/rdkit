@@ -251,6 +251,10 @@ int RGroupDecomposition::add(const ROMol &inmol) {
           // special case, only one fragment
           if (fragments.size() == 1) {  // need to make a new core
             // remove the sidechains
+            
+            // GJ I think if we ever get here that it's really an error and I believe
+            // that I've fixed the case where this code was called. Still, I'm too scared to
+            // delete the block.
             RWMol newCore(mol);
 
             for (const auto &mvpair : tmatche) {
