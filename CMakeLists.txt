@@ -383,7 +383,7 @@ endif()
 
 if(RDK_USE_BOOST_SERIALIZATION)
     set(T_LIBS ${Boost_LIBRARIES})
-    find_package(Boost ${RDK_BOOST_VERSION} COMPONENTS serialization)
+    find_package(Boost ${RDK_BOOST_VERSION} COMPONENTS system serialization iostreams)
     if (Boost_SERIALIZATION_LIBRARY)
       set(Boost_LIBRARIES ${T_LIBS} ${Boost_LIBRARIES})
     else()
