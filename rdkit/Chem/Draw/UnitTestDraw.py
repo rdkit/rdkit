@@ -162,7 +162,7 @@ class TestCase(unittest.TestCase):
     mol = Chem.MolFromSmiles('F[C@H](Cl)Br')
     for b in mol.GetBonds():
       self.assertEqual(b.GetBondDir(), Chem.BondDir.NONE)
-    
+
     rdDepictor.Compute2DCoords(mol)
     img = Draw.MolToImage(mol, kekulize=False)
     self.assertTrue(img)
@@ -215,7 +215,7 @@ class TestCase(unittest.TestCase):
     self.assertTrue("style='fill:#E5E533;" in svg1)
     self.assertFalse("style='fill:#9999E5;" in svg1)
     with self.assertRaises(KeyError):
-        Draw.DrawMorganBit(m,32,bi)
+      Draw.DrawMorganBit(m,32,bi)
 
   def testDrawRDKit(self):
     m = Chem.MolFromSmiles('c1ccccc1CC1CC1')
@@ -230,13 +230,21 @@ class TestCase(unittest.TestCase):
     self.assertFalse("style='fill:#CCCCCC;" in svg1)
     self.assertFalse("style='fill:#9999E5;" in svg1)
     with self.assertRaises(KeyError):
-        Draw.DrawRDKitBit(m,32,bi)
+      Draw.DrawRDKitBit(m,32,bi)
 
 
   def testDrawReaction(self):
     # this shouldn't throw an exception...
     rxn = AllChem.ReactionFromSmarts("[c;H1:3]1:[c:4]:[c:5]:[c;H1:6]:[c:7]2:[nH:8]:[c:9]:[c;H1:1]:[c:2]:1:2.O=[C:10]1[#6;H2:11][#6;H2:12][N:13][#6;H2:14][#6;H2:15]1>>[#6;H2:12]3[#6;H1:11]=[C:10]([c:1]1:[c:9]:[n:8]:[c:7]2:[c:6]:[c:5]:[c:4]:[c:3]:[c:2]:1:2)[#6;H2:15][#6;H2:14][N:13]3")
     img = Draw.ReactionToImage(rxn)
+
+  def testGithub3762(self):
+    m = Chem.MolFromSmiles('CC(=O)O')
+    ats = [1,2,3]
+    svg = Draw._moltoSVG(m,(250,200),ats,"",False)
+    self.assertIn('stroke:#FF7F7F;stroke-width:2',svg)
+    svg = Draw._moltoSVG(m, (250, 200), ats, "", False, highlightBonds=[])
+    self.assertNotIn('stroke:#FF7F7F;stroke-width:2', svg)
 
 
 if __name__ == '__main__':
