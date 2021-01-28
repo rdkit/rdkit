@@ -42,20 +42,6 @@ struct RCore {
 
   // Return a copy of core where dummy atoms are replaced by
   // the atomic number of the respective matching atom in mol
-  std::unique_ptr<ROMol> replaceCoreDummiesWithMolMatchesOriginal(
-      const ROMol &mol, const MatchVectType &match) const {
-    std::unique_ptr<ROMol> coreReplacedDummies(new ROMol(*core));
-    for (const auto &p : match) {
-      auto a = coreReplacedDummies->getAtomWithIdx(p.first);
-      if (!a->getAtomicNum() && !a->hasProp(RLABEL)) {
-        a->setAtomicNum(mol.getAtomWithIdx(p.second)->getAtomicNum());
-      }
-    }
-    return coreReplacedDummies;
-  }
-
-  // Return a copy of core where dummy atoms are replaced by
-  // the atomic number of the respective matching atom in mol
   std::unique_ptr<ROMol> replaceCoreDummiesWithMolMatches(
       const ROMol &mol, const MatchVectType &match) const {
     std::unique_ptr<RWMol> coreReplacedDummies(new RWMol(*core));
@@ -65,9 +51,8 @@ struct RCore {
         auto molAtom = mol.getAtomWithIdx(p.second);
         if (atom->hasQuery()) {
           auto atomicNumber = molAtom->getAtomicNum();
-          auto newAtom = new Atom(atomicNumber);
-          coreReplacedDummies->replaceAtom(p.first, newAtom, false, true);
-          delete newAtom;
+          Atom newAtom(atomicNumber);
+          coreReplacedDummies->replaceAtom(p.first, &newAtom, false, true);
           atom = coreReplacedDummies->getAtomWithIdx(p.first);
         } else {
           atom->setAtomicNum(mol.getAtomWithIdx(p.second)->getAtomicNum());
@@ -81,9 +66,8 @@ struct RCore {
         const auto molBond =
             mol.getBondBetweenAtoms(match[bond->getBeginAtomIdx()].second,
                                     match[bond->getEndAtomIdx()].second);
-        auto newBond = new Bond(molBond->getBondType());
-        coreReplacedDummies->replaceBond(bond->getIdx(), newBond, true);
-        delete newBond;
+        Bond newBond(molBond->getBondType());
+        coreReplacedDummies->replaceBond(bond->getIdx(), &newBond, true);
       }
     }
 

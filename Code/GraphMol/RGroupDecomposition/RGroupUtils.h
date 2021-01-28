@@ -50,9 +50,10 @@ bool setLabel(Atom *atom, int label, std::set<int> &labels, int &maxLabel,
 //! Returns true if the core has a dummy atom
 bool hasDummy(const RWMol &core);
 
-//! Returns true if the core atom is a dummy atom with a single connection and a
-// user defined rgroup label
+//! Returns true if the core atom is either a dummy atom with multiple
+// connections or a dummy atom with a single connection that has no user
+// defined rgroup label
 bool isAnyAtomWithMultipleNeighborsOrNotUserRLabel(const Atom &atom);
-}
+}  // namespace RDKit
 
 #endif
