@@ -559,6 +559,69 @@ M  END
   BOOST_LOG(rdInfoLog) << "done" << std::endl;
 }
 
+void testZOBs() {
+  BOOST_LOG(rdInfoLog) << "-------------------------------------" << std::endl;
+  BOOST_LOG(rdInfoLog) << "testing the zero-order bond setting with coordgen"
+                       << std::endl;
+  {
+    auto m1 =
+        R"CTAB(
+     RDKit          2D
+
+  0  0  0  0  0  0  0  0  0  0999 V3000
+M  V30 BEGIN CTAB
+M  V30 COUNTS 8 7 0 0 0
+M  V30 BEGIN ATOM
+M  V30 1 Al 0.108450 -0.062175 0.000000 0 VAL=3
+M  V30 2 C 0.976250 -0.558975 0.000000 0
+M  V30 3 C 0.104850 0.937825 0.000000 0
+M  V30 4 C -0.755750 -0.565175 0.000000 0
+M  V30 5 C 1.840650 -0.055775 0.000000 0
+M  V30 6 C -1.623550 -0.068375 0.000000 0
+M  V30 7 C -2.487750 -0.571375 0.000000 0
+M  V30 8 C 1.836850 0.944025 0.000000 0
+M  V30 END ATOM
+M  V30 BEGIN BOND
+M  V30 1 1 1 2
+M  V30 2 1 1 3
+M  V30 3 1 1 4
+M  V30 4 2 2 5
+M  V30 5 2 4 6
+M  V30 6 1 6 7
+M  V30 7 1 5 8
+M  V30 END BOND
+M  V30 END CTAB
+M  END
+)CTAB"_ctab;
+    TEST_ASSERT(m1);
+    TEST_ASSERT(m1->getNumConformers() == 1);
+    CoordGen::addCoords(*m1);
+    TEST_ASSERT(m1->getNumConformers() == 1);
+    {
+      std::unique_ptr<ROMol> nm{MolBlockToMol(MolToMolBlock(*m1))};
+      TEST_ASSERT(nm);
+      TEST_ASSERT(nm->getBondWithIdx(3)->getStereo() ==
+                  m1->getBondWithIdx(3)->getStereo());
+      TEST_ASSERT(nm->getBondWithIdx(4)->getStereo() ==
+                  m1->getBondWithIdx(4)->getStereo());
+    }
+
+    CoordGen::CoordGenParams ps;
+    ps.treatBondsToMetalAsZeroOrder = true;
+    CoordGen::addCoords(*m1, &ps);
+    {
+      // the ZOB behavior screws up the double bond stereo here... detect that
+      std::unique_ptr<ROMol> nm{MolBlockToMol(MolToMolBlock(*m1))};
+      TEST_ASSERT(nm);
+      TEST_ASSERT(nm->getBondWithIdx(3)->getStereo() !=
+                  m1->getBondWithIdx(3)->getStereo());
+      TEST_ASSERT(nm->getBondWithIdx(4)->getStereo() !=
+                  m1->getBondWithIdx(4)->getStereo());
+    }
+  }
+  BOOST_LOG(rdInfoLog) << "done" << std::endl;
+}
+
 int main(int argc, char* argv[]) {
   (void)argc;
   (void)argv;
@@ -570,4 +633,5 @@ int main(int argc, char* argv[]) {
   testGithub3131();
 #endif
   testCoordgenMinimize();
+  testZOBs();
 }

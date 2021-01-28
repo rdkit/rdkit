@@ -34,10 +34,12 @@ struct CoordGenParams {
   // length of 50.
   std::string templateFileDir = "";
   float minimizerPrecision =
-      sketcherCoarsePrecision;  // controls sketch precision
-  bool dbg_useConstrained = true;   // debugging
-  bool dbg_useFixed = false;        // debugging
-  bool minimizeOnly = false;        // don't actually generate full coords
+      sketcherCoarsePrecision;     // controls sketch precision
+  bool dbg_useConstrained = true;  // debugging
+  bool dbg_useFixed = false;       // debugging
+  bool minimizeOnly = false;       // don't actually generate full coords
+  bool treatBondsToMetalAsZeroOrder =
+      false;  // set all bonds to metal atoms to be zero-order bonds
 };
 
 static CoordGenParams defaultParams;
@@ -74,6 +76,8 @@ unsigned int addCoords(T& mol, const CoordGenParams* params = nullptr) {
 
   sketcherMinimizer minimizer(params->minimizerPrecision);
   auto min_mol = new sketcherMinimizerMolecule();
+
+  minimizer.setTreatAllBondsToMetalAsZOBs(params->treatBondsToMetalAsZeroOrder);
 
   // FIX: only do this check once.
   // std::cerr << "  TEMPLATES: " << templateFileDir << std::endl;
