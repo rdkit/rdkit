@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2006-2019 Greg Landrum
+# Copyright (C) 2006-2021 Greg Landrum
 #  All Rights Reserved
 #
 #  This file is part of the RDKit.
@@ -476,8 +476,11 @@ def _moltoimg(mol, sz, highlights, legend, returnPNG=False, drawOptions=None, **
     # we already prepared the molecule:
     d2d.drawOptions().prepareMolsBeforeDrawing = False
     bondHighlights = kwargs.get('highlightBonds', None)
-    d2d.DrawMolecule(mc, legend=legend or "", highlightAtoms=highlights or [],
-                     highlightBonds=bondHighlights or [])
+    if bondHighlights is not None:
+      d2d.DrawMolecule(mc, legend=legend or "", highlightAtoms=highlights or [],
+                       highlightBonds=bondHighlights)
+    else:
+      d2d.DrawMolecule(mc, legend=legend or "", highlightAtoms=highlights or [])
     d2d.FinishDrawing()
     if returnPNG:
       img = d2d.GetDrawingText()
@@ -505,8 +508,11 @@ def _moltoSVG(mol, sz, highlights, legend, kekulize, drawOptions=None, **kwargs)
     d2d.SetDrawOptions(drawOptions)
 
   bondHighlights = kwargs.get('highlightBonds', None)
-  d2d.DrawMolecule(mc, legend=legend or "", highlightAtoms=highlights or [],
-                   highlightBonds=bondHighlights or [])
+  if bondHighlights is not None:
+    d2d.DrawMolecule(mc, legend=legend or "", highlightAtoms=highlights or [],
+                     highlightBonds=bondHighlights)
+  else:
+    d2d.DrawMolecule(mc, legend=legend or "", highlightAtoms=highlights or [])
   d2d.FinishDrawing()
   svg = d2d.GetDrawingText()
   return svg

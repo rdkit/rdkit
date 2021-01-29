@@ -31,7 +31,6 @@
 //
 #ifdef _WIN32
 #include <RDGeneral/test.h>
-#include <Windows.h>
 #else
 #include <unistd.h>
 #include <fcntl.h>
@@ -527,6 +526,113 @@ void testTarget_no_10188_49064() {
   TEST_ASSERT(res.NumAtoms == 15 && res.NumBonds == 14);
   BOOST_LOG(rdInfoLog) << "\tdone" << std::endl;
 }
+
+#define MCSTESTREPEATS 0 // To run MCS repeatedly to measure performance
+MCSResult checkMCS(const std::vector<ROMOL_SPTR> mols, const MCSParameters p,
+              unsigned expectedAtoms, unsigned expectedBonds){
+  t0 = nanoClock();
+  MCSResult res = findMCS(mols, &p);
+  //std::shared_ptr<RWMol>
+  ROMol *mcsMol = SmartsToMol(res.SmartsString);
+  ROMol *cleanMCSMol = SmilesToMol(MolToSmiles(*mcsMol));
+  std::cout << "MCS: " << res.SmartsString << " " << MolToSmiles(*cleanMCSMol)
+            << " " << res.NumAtoms << " atoms, " << res.NumBonds << " bonds"
+            << std::endl;
+#ifdef MCSTESTREPEATS
+  for (int i=0; i<MCSTESTREPEATS; i++){
+    res = findMCS(mols, &p);
+  }
+#endif
+  printTime();
+  if (res.NumAtoms != expectedAtoms || res.NumBonds != expectedBonds){
+    std::cerr << "testMaxDistance failed, expected "
+              << expectedAtoms << " atoms, "<< expectedBonds << " bonds"
+              << " but got " << res.NumAtoms << " atoms and "
+              << res.NumBonds << " bonds"
+              << std::endl;
+    TEST_ASSERT(res.NumAtoms == expectedAtoms && res.NumBonds == expectedBonds);
+  }
+  return res;
+}
+
+/* TODO: best practice on where to put a test data file into the repo? */
+void testJnk1LigandsDistance(){
+  BOOST_LOG(rdInfoLog) << "-------------------------------------" << std::endl;
+  BOOST_LOG(rdInfoLog) << "Testing FMCS testJnk1LigandsDistance" << std::endl;
+  std::cout << "\ntestJnk1LigandsDistance()\n";
+  std::vector<ROMOL_SPTR> mols;
+  std::string rdbase = getenv("RDBASE");
+  const char* jnk1sdf = "/Code/GraphMol/FMCS/testData/Jnk1_ligands.sdf";
+  std::string fn(rdbase + jnk1sdf);
+
+  RDKit::MolSupplier* suppl = nullptr;
+  try {
+    suppl = new RDKit::SDMolSupplier(fn);
+  } catch (...) {
+    std::cerr << "ERROR: RDKit could not load input file" << std::endl;
+    TEST_ASSERT(false);
+  }
+  ROMol* m1 = nullptr;
+  ROMol* m2 = nullptr;
+  while (!suppl->atEnd()) {
+    ROMol* m = suppl->next();
+    if (m) {
+      if(m->getProp<std::string>("_Name") == "17124-1"){
+        m1 = m;
+      } else if(m->getProp<std::string>("_Name") == "18629-1"){
+        m2 = m;
+      } else {
+        ROMOL_SPTR cleanupMol(m); // don't leak memory
+      }
+    }
+  }
+  mols.emplace_back(m1);
+  mols.emplace_back(m2);
+
+  MCSParameters p;
+  p.AtomTyper = MCSAtomCompareAnyHeavyAtom;
+  p.BondTyper = MCSBondCompareOrderExact;
+  p.AtomCompareParameters.MaxDistance = 3.0;
+  MCSResult res = checkMCS(mols, p, 22, 23);
+
+  SubstructMatchParameters smp;
+  smp.useChirality = true;
+  smp.uniquify = false;
+  std::vector<MatchVectType> mvt1 = SubstructMatch(*m1, *(res.QueryMol), smp);
+  std::vector<MatchVectType> mvt2 = SubstructMatch(*m2, *(res.QueryMol), smp);
+  if (mvt1.size() != 2 || mvt2.size() != 2){
+    std::cerr << "jnk match atoms expected 2, 2: " << mvt1.size() << "," <<
+      mvt2.size() << std::endl;
+    TEST_ASSERT(mvt1.size() == 2);
+    TEST_ASSERT(mvt2.size() == 2);
+  }
+
+  std::list<int> forbidden1 = {18, 19, 25, 26};
+  std::list<int> forbidden2 = {19};
+  for (auto& matchVect: mvt1){
+    for (auto& matchPair: matchVect){
+      auto isPresent = std::find(forbidden1.begin(), forbidden1.end(), matchPair.second);
+      if (isPresent != forbidden1.end()){
+        std::cerr << "mol1 index forbidden: " << matchPair.second << std::endl;
+        TEST_ASSERT(isPresent == forbidden1.end());
+      }
+    }
+  }
+  for (auto& matchVect: mvt2){
+    for (auto& matchPair: matchVect){
+      auto isPresent = std::find(forbidden2.begin(), forbidden2.end(), matchPair.second);
+      if (isPresent != forbidden2.end()){
+        std::cerr << "mol2 index forbidden: " << matchPair.second << std::endl;
+        TEST_ASSERT(isPresent == forbidden2.end());
+      }
+    }
+  }
+  p.AtomCompareParameters.MaxDistance = -1.0;
+  // Should match the flipped N if we don't filter on max distance
+  checkMCS(mols, p, 23, 24);
+  BOOST_LOG(rdInfoLog) << "\tdone" << std::endl;
+}
+
 
 void testSegFault() {
   BOOST_LOG(rdInfoLog) << "-------------------------------------" << std::endl;
@@ -2354,6 +2460,8 @@ int main(int argc, const char* argv[]) {
   testAtomCompareAnyHeavyAtom();
   testAtomCompareAnyHeavyAtom1();
 
+  testJnk1LigandsDistance();
+  
   test18();
   test504();
   // very SLOW optional tests:

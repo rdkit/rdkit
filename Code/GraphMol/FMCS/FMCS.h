@@ -44,6 +44,7 @@ struct RDKIT_FMCS_EXPORT MCSAtomCompareParameters {
   bool RingMatchesRingOnly = false;
   bool CompleteRingsOnly = false;
   bool MatchIsotope = false;
+  double MaxDistance = -1.0;
 };
 
 struct RDKIT_FMCS_EXPORT MCSBondCompareParameters {
@@ -79,6 +80,9 @@ RDKIT_FMCS_EXPORT bool checkAtomChirality(const MCSAtomCompareParameters& p,
                                           const ROMol& mol1, unsigned int atom1,
                                           const ROMol& mol2,
                                           unsigned int atom2);
+RDKIT_FMCS_EXPORT bool checkAtomDistance(const MCSAtomCompareParameters& p,
+                                         const ROMol& mol1, unsigned int atom1,
+                                         const ROMol& mol2, unsigned int atom2);
 
 RDKIT_FMCS_EXPORT bool MCSAtomCompareAny(const MCSAtomCompareParameters& p,
                                          const ROMol& mol1, unsigned int atom1,

@@ -31,7 +31,6 @@ function test_basics(){
     assert.equal(mol2.is_valid(),1);
     assert.equal(mol2.get_smiles(),"Oc1ccccc1");
     
-    
     var descrs = JSON.parse(mol.get_descriptors());
     assert.equal(descrs.NumAromaticRings,1);
     assert.equal(descrs.NumRings,1);
@@ -57,6 +56,47 @@ function test_basics(){
     assert(svg2.search("svg")>0);
     assert(svg.search("#FF7F7F")<0);
     assert(svg2.search("#FF7F7F")>0);
+}
+
+function test_molblock_nostrict(){
+    var molblock = `
+  MJ201100                      
+
+ 10 10  0  0  0  0  0  0  0  0999 V2000
+   -1.2946    0.5348    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -2.0090    0.1223    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -2.0090   -0.7027    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -1.2946   -1.1152    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -0.5801   -0.7027    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -0.5801    0.1223    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    0.5467    1.2493    0.0000 F   0  0  0  0  0  0  0  0  0  0  0  0
+    0.1342    0.5348    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    0.5467   -0.1796    0.0000 F   0  0  0  0  0  0  0  0  0  0  0  0
+   -0.6907    0.5348    0.0000 F   0  0  0  0  0  0  0  0  0  0  0  0
+  1  2  2  0  0  0  0
+  2  3  1  0  0  0  0
+  3  4  2  0  0  0  0
+  4  5  1  0  0  0  0
+  5  6  2  0  0  0  0
+  6  1  1  0  0  0  0
+  6  8  1  0  0  0  0
+  7  8  1  0  0  0  0
+  8  9  1  0  0  0  0
+  8 10  1  0  0  0  0
+M  STY  1   1 SUP
+M  SAL   1  4   7   8   9  10
+M  SMT   1 CF3
+M  SBL   1  1   7
+M  SAP   1  1   8
+M  END`;
+    var mol = RDKitModule.get_mol(molblock);
+    assert.equal(mol.is_valid(),1);
+    var mb = mol.get_molblock();
+    assert.equal(mb.includes("M  SAP   1  1   8   6"), true);
+    var qmol = RDKitModule.get_qmol(molblock);
+    assert.equal(qmol.is_valid(),1);
+    var qmb = qmol.get_molblock();
+    assert.equal(qmb.includes("M  SAP   1  1   8   6"), true);
 }
 
 function test_sketcher_services(){
@@ -107,6 +147,7 @@ initRDKitModule().then(function(instance) {
     RDKitModule = instance;
     console.log(RDKitModule.version());
     test_basics();
+    test_molblock_nostrict();
     test_sketcher_services();
     test_sketcher_services2();
     test_abbreviations();

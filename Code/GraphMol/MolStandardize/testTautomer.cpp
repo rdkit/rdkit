@@ -1416,6 +1416,24 @@ void testGithub3430() {
   }
 }
 
+void testGithub3755() {
+  BOOST_LOG(rdInfoLog) << "-----------------------\n testGithub3755"
+                       << std::endl;
+  // hydrates, aminals and hemiaminals should be scored lower than
+  // carboxylic acids, amides, amidines, and guanidines
+  std::vector<std::pair<std::string, std::string>> orig_vs_expected{
+      {"OC(=O)C(N)CO", "NC(CO)C(=O)O"}, {"C([C@@H](C(=O)O)N)O", "NC(CO)C(=O)O"},
+      {"OC(=O)C(N)CN", "NCC(N)C(=O)O"}, {"NC(=O)C(N)CO", "NC(=O)C(N)CO"},
+      {"NC(=N)C(N)CO", "N=C(N)C(N)CO"}, {"NC(=N)NC(N)CO", "N=C(N)NC(N)CO"}};
+  TautomerEnumerator te;
+  for (const auto &pair : orig_vs_expected) {
+    ROMOL_SPTR orig(SmilesToMol(pair.first));
+    TEST_ASSERT(orig);
+    ROMOL_SPTR canonical(te.canonicalize(*orig));
+    TEST_ASSERT(MolToSmiles(*canonical) == pair.second);
+  }
+}
+
 int main() {
   RDLog::InitLogs();
 #if 1
@@ -1433,5 +1451,6 @@ int main() {
   testPickCanonicalCIPChangeOnChiralCenter();
   testTautomerEnumeratorResult_const_iterator();
   testGithub3430();
+  testGithub3755();
   return 0;
 }

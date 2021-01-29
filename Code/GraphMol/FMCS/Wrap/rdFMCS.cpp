@@ -750,6 +750,9 @@ BOOST_PYTHON_MODULE(rdFMCS) {
       .def_readwrite("MatchChiralTag",
                      &RDKit::MCSAtomCompareParameters::MatchChiralTag,
                      "include atom chirality in the match")
+      .def_readwrite("MaxDistance",
+                     &RDKit::MCSAtomCompareParameters::MaxDistance,
+                     "Require atoms to be within this many angstroms in 3D")
       .def_readwrite("MatchFormalCharge",
                      &RDKit::MCSAtomCompareParameters::MatchFormalCharge,
                      "include formal charge in the match")
