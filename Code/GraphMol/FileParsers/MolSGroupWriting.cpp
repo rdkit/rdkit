@@ -511,15 +511,22 @@ std::string FormatV3000StringPropertyBlock(const std::string &prop,
   if (sgroup.getPropIfPresent(prop, propValue)) {
     if (!propValue.empty()) {
       ret << ' ' << prop << '=';
-      bool hasSpaces = propValue.find(' ') != std::string::npos;
+      bool needsQuotes = propValue.find(' ') != std::string::npos ||
+                         propValue.find('"') != std::string::npos;
 
-      if (hasSpaces) {
+      if (needsQuotes) {
         ret << "\"";
       }
 
-      ret << propValue;
+      for (auto chr : propValue) {
+        ret << chr;
+        // double quotes need to be doubled on output:
+        if (chr == '"') {
+          ret << chr;
+        }
+      }
 
-      if (hasSpaces) {
+      if (needsQuotes) {
         ret << "\"";
       }
     }

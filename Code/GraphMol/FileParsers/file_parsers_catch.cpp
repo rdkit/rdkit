@@ -2932,3 +2932,41 @@ TEST_CASE("supplier close methods") {
   }
 #endif
 }
+
+TEST_CASE(
+    "github #3768: SubstanceGroup output doesn't properly quote double "
+    "quotes") {
+  SECTION("basics") {
+    auto m = R"CTAB(
+  Mrv2014 01292104542D          
+
+  0  0  0     0  0            999 V3000
+M  V30 BEGIN CTAB
+M  V30 COUNTS 2 1 1 0 0
+M  V30 BEGIN ATOM
+M  V30 1 C -1.3343 -0.7691 0 0
+M  V30 2 C -1.333 0.7709 0 0
+M  V30 END ATOM
+M  V30 BEGIN BOND
+M  V30 1 2 1 2
+M  V30 END BOND
+M  V30 BEGIN SGROUP
+M  V30 1 DAT 0 ATOMS=(1 1) FIELDNAME=[DUP]Tempstruct FIELDINFO="""" -
+M  V30 FIELDDISP="   -0.1770   -0.5034    DA    ALL  0       0" -
+M  V30 QUERYOP="""""" FIELDDATA=Foo1
+M  V30 END SGROUP
+M  V30 END CTAB
+M  END
+)CTAB"_ctab;
+    REQUIRE(m);
+    auto sgs = getSubstanceGroups(*m);
+    REQUIRE(sgs.size() == 1);
+    auto sg = sgs[0];
+    CHECK(sg.getProp<std::string>("FIELDINFO") == "\"");
+    CHECK(sg.getProp<std::string>("QUERYOP") == "\"\"");
+    auto mb = MolToV3KMolBlock(*m);
+    std::cerr << mb << std::endl;
+    CHECK(mb.find("FIELDINFO=\"\"\"\"") != std::string::npos);
+    CHECK(mb.find("QUERYOP=\"\"\"\"\"") != std::string::npos);
+  }
+}
