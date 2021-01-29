@@ -2390,7 +2390,7 @@ void test16MoleculeMetadata() {
       outs.flush();
       TEST_ASSERT(text.find("idx=\"2\" atom-smiles=\"[NH]\" drawing-x=\"55.") !=
                   std::string::npos);
-      TEST_ASSERT(text.find("idx=\"2\" begin-atom-idx=\"3\" end-atom-idx=\"2\" "
+      TEST_ASSERT(text.find("idx=\"2\" begin-atom-idx=\"2\" end-atom-idx=\"3\" "
                             "bond-smiles=\"-\"") != std::string::npos);
     }
 
