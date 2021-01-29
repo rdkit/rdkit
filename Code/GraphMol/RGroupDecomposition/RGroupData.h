@@ -59,7 +59,7 @@ struct RGroupData {
               std::inserter(attachments, attachments.end()));
 
     mols.push_back(newMol);
-    static const std::regex remove_isotopes_regex("\\[[0-9]*\\*\\]");
+    static const std::regex remove_isotopes_regex("\\[\\d*\\*\\]");
     std::string smiles_no_isotopes = std::regex_replace(
         MolToSmiles(*newMol, true), remove_isotopes_regex, "*");
     smilesVect.push_back(std::move(smiles_no_isotopes));
