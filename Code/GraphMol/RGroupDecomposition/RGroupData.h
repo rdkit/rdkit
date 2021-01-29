@@ -19,7 +19,7 @@
 #include <boost/scoped_ptr.hpp>
 #include <set>
 #include <vector>
-
+#include <regex>
 
 namespace RDKit
 {
@@ -59,7 +59,10 @@ struct RGroupData {
               std::inserter(attachments, attachments.end()));
 
     mols.push_back(newMol);
-    smilesVect.emplace_back(MolToSmiles(*newMol, true));
+    static const std::regex remove_isotopes_regex("\\[[0-9]*\\*\\]");
+    std::string smiles_no_isotopes = std::regex_replace(
+        MolToSmiles(*newMol, true), remove_isotopes_regex, "*");
+    smilesVect.push_back(std::move(smiles_no_isotopes));
     if (!combinedMol.get()) {
       combinedMol = boost::shared_ptr<RWMol>(new RWMol(*mols[0].get()));
     } else {
