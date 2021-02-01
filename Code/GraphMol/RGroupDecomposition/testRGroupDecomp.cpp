@@ -51,25 +51,24 @@ typedef boost::tokenizer<boost::char_separator<char>> tokenizer;
 using namespace RDKit;
 
 #ifdef DEBUG
-const bool DOASSERT=false;
+const bool DOASSERT = false;
 #else
-const bool DOASSERT=true;
+const bool DOASSERT = true;
 #endif
 
 typedef std::vector<std::unique_ptr<ROMol>> UMOLS;
 #define UPTR(m) std::unique_ptr<ROMol>(m)
 
 void CHECK_RGROUP(RGroupRows::const_iterator &it, const std::string &expected,
-		  ROMol *mol = nullptr,
-		  bool doassert = DOASSERT) {
+                  ROMol *mol = nullptr, bool doassert = DOASSERT) {
   std::ostringstream str;
   int i = 0;
   std::unique_ptr<ROMol> res;
   for (auto rgroups = it->begin(); rgroups != it->end(); ++rgroups, ++i) {
     if (i) {
       str << " ";
-      if(mol) {
-          res = molzip(*res, *rgroups->second.get());
+      if (mol) {
+        res = molzip(*res, *rgroups->second.get());
       }
     } else if (mol) {
       res = std::unique_ptr<ROMol>(new ROMol(*rgroups->second.get()));
@@ -86,11 +85,11 @@ void CHECK_RGROUP(RGroupRows::const_iterator &it, const std::string &expected,
 
   if (doassert) {
     TEST_ASSERT(result == expected)
-      if(mol) {
-	auto smi1 = MolToSmiles(*res);
-	auto smi2 = MolToSmiles(*mol);
-	TEST_ASSERT(smi1 == smi2)
-      }
+    if (mol) {
+      auto smi1 = MolToSmiles(*res);
+      auto smi2 = MolToSmiles(*mol);
+      TEST_ASSERT(smi1 == smi2)
+    }
   }
 }
 
@@ -135,7 +134,8 @@ void testSymmetryMatching(RGroupScore scoreMethod = Match) {
 
   // All Cl's should be labeled with the same rgroup
   int i = 0;
-  for (RGroupRows::const_iterator it = rows.begin(); it != rows.end(); ++it, ++i) {
+  for (RGroupRows::const_iterator it = rows.begin(); it != rows.end();
+       ++it, ++i) {
     CHECK_RGROUP(it, "Core:c1ccc([*:1])cc1 R1:Cl[*:1]", mols[i].get());
   }
   delete core;
@@ -168,7 +168,8 @@ void testGaSymmetryMatching(RGroupScore scoreMethod) {
 
   // All Cl's should be labeled with the same rgroup
   int i = 0;
-  for (RGroupRows::const_iterator it = rows.begin(); it != rows.end(); ++it, ++i) {
+  for (RGroupRows::const_iterator it = rows.begin(); it != rows.end();
+       ++it, ++i) {
     CHECK_RGROUP(it, "Core:c1ccc([*:1])cc1 R1:Cl[*:1]", mols[i].get());
   }
   delete core;
@@ -188,7 +189,7 @@ void testGaBatch() {
   params.scoreMethod = FingerprintVariance;
   params.gaNumberRuns = 3;
   params.gaParallelRuns = true;
-  
+
   RGroupDecomposition decomp(*core, params);
   for (int i = 0; i < 5; ++i) {
     ROMol *mol = SmilesToMol(symdata[i]);
@@ -986,7 +987,7 @@ $$$$)CTAB";
     for (RGroupRows::const_iterator it = rows.begin(); it != rows.end();
          ++it, ++i) {
       TEST_ASSERT(i < 4);
-        // molzip doesn't support double attachment points yet
+      // molzip doesn't support double attachment points yet
       CHECK_RGROUP(it, expected[i]);
     }
   }
@@ -1981,6 +1982,37 @@ M  END
   }
 }
 
+void testNoAlignmentAndSymmetry() {
+  BOOST_LOG(rdInfoLog)
+      << "********************************************************\n";
+  BOOST_LOG(rdInfoLog) << "test NoAlignment with symmetric groups" << std::endl;
+  const std::vector<ROMOL_SPTR> cores{"[cH:1]1[cH:2][cH:3]ccc1"_smiles,
+                                      "[cH:3]1[cH:2][cH:1]cnc1"_smiles};
+  const std::vector<const char *> smilesData{"c1(CO)c(F)c(CN)ccc1",
+                                             "c1(CO)c(Cl)c(CN)cnc1"};
+
+  RGroupDecompositionParameters params;
+  params.onlyMatchAtRGroups = true;
+  params.removeHydrogensPostMatch = true;
+  params.alignment = NoAlignment;
+  RGroupDecomposition decomp(cores, params);
+  size_t i = 0;
+  for (const auto &smi : smilesData) {
+    ROMOL_SPTR mol(static_cast<ROMol *>(SmilesToMol(smi)));
+    TEST_ASSERT(decomp.add(*mol) == i++);
+  }
+  TEST_ASSERT(decomp.process());
+  auto rows = decomp.getRGroupsAsRows();
+  const std::vector<const char *> res{
+      "Core:c1cc([*:1])c([*:2])c([*:3])c1 R1:NC[*:1] R2:F[*:2] R3:OC[*:3]",
+      "Core:c1ncc([*:3])c([*:2])c1[*:1] R1:NC[*:1] R2:Cl[*:2] R3:OC[*:3]"};
+  TEST_ASSERT(rows.size() == res.size());
+  i = 0;
+  for (RGroupRows::const_iterator it = rows.begin(); it != rows.end(); ++it) {
+    CHECK_RGROUP(it, res.at(i++));
+  }
+}
+
 int main() {
   RDLog::InitLogs();
   boost::logging::disable_logs("rdApp.debug");
@@ -2020,6 +2052,7 @@ int main() {
   testMultiCorePreLabelled();
   testCoreWithRGroupAdjQuery();
   testGeminalRGroups();
+  testNoAlignmentAndSymmetry();
   BOOST_LOG(rdInfoLog)
       << "********************************************************\n";
   return 0;
