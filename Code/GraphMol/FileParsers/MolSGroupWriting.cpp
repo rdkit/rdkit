@@ -511,15 +511,29 @@ std::string FormatV3000StringPropertyBlock(const std::string &prop,
   if (sgroup.getPropIfPresent(prop, propValue)) {
     if (!propValue.empty()) {
       ret << ' ' << prop << '=';
-      bool hasSpaces = propValue.find(' ') != std::string::npos;
-
-      if (hasSpaces) {
+      // CTAB spec says: "Strings that contain blank spaces or start with left
+      // parenthesis or double quote, must be surrounded by double quotes A
+      // double quote can be entered literally by doubling it."
+      // However, BIOVIA Draw 2020 doesn't correctly parse values like
+      // foo"" or foo(bar) but does fine with "foo""" and "foo(bar)"
+      // and both BIOVIA Draw and Marvin Sketch happily ignore the theoretically
+      // extra quotes.
+      bool needsQuotes = propValue.find(' ') != std::string::npos ||
+                         propValue.find('"') != std::string::npos ||
+                         propValue.find('(') != std::string::npos;
+      if (needsQuotes) {
         ret << "\"";
       }
 
-      ret << propValue;
+      for (auto chr : propValue) {
+        ret << chr;
+        // double quotes need to be doubled on output:
+        if (chr == '"') {
+          ret << chr;
+        }
+      }
 
-      if (hasSpaces) {
+      if (needsQuotes) {
         ret << "\"";
       }
     }
