@@ -420,7 +420,7 @@ struct atom_wrapper {
              "Returns the atom's MonomerInfo object, if there is one.\n\n")
         .def("SetMonomerInfo", SetAtomMonomerInfo,
              "Sets the atom's MonomerInfo object.\n\n")
-        .def("GetPDBResidueInfo", AtomSetPDBResidueInfo,
+        .def("SetPDBResidueInfo", AtomSetPDBResidueInfo,
              "Sets the atom's MonomerInfo object.\n\n")
         .def("GetAtomMapNum", &Atom::getAtomMapNum,
              "Gets the atoms map number, returns 0 if not set")
