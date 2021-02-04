@@ -51,6 +51,65 @@ std::string readReferenceData(const std::string &fname) {
              std::istreambuf_iterator<char>());
   return res;
 }
+TEST_CASE("toJSONTests", "[unittests]") {
+  std::string testDataDir =
+      std::string(getenv("RDBASE")) +
+      std::string("/Code/GraphMol/RGroupDecomposition/test_data/");
+  std::string fName = testDataDir + "simple1.sdf";
+  SDMolSupplier suppl(fName);
+  std::vector<ROMOL_SPTR> cores(1);
+  std::vector<ROMOL_SPTR> mols;
+  initDataset(suppl, cores.front(), mols);
+  SECTION("rows") {
+    RGroupRows rows;
+    auto n = RGroupDecompose(cores, mols, rows);
+    CHECK(n == mols.size());
+    CHECK(rows.size() == mols.size());
+    std::string expected = R"JSON([
+    {
+        "Core": "Cc1cccc([*:2])c1[*:1]",
+        "R1": "CO[*:1]",
+        "R2": "[H][*:2]"
+    },
+    {
+        "Core": "Cc1cccc([*:2])c1[*:1]",
+        "R1": "CO[*:1]",
+        "R2": "[H][*:2]"
+    },
+    {
+        "Core": "Cc1cccc([*:2])c1[*:1]",
+        "R1": "[H][*:1]",
+        "R2": "CO[*:2]"
+    }
+])JSON";
+    CHECK(flatten_whitespace(toJSON(rows)) == flatten_whitespace(expected));
+  }
+  SECTION("columns") {
+    RGroupColumns cols;
+    auto n = RGroupDecompose(cores, mols, cols);
+    CHECK(n == mols.size());
+    CHECK(cols.size() == mols.size());
+    std::string expected = R"JSON([
+  "Core": [
+    "Cc1cccc([*:2])c1[*:1]",
+    "Cc1cccc([*:2])c1[*:1]",
+    "Cc1cccc([*:2])c1[*:1]"
+  ],
+  "R1": [
+    "CO[*:1]",
+    "CO[*:1]",
+    "[H][*:1]"
+  ],
+  "R2": [
+    "[H][*:2]",
+    "[H][*:2]",
+    "CO[*:2]"
+  ]
+]
+)JSON";
+    CHECK(flatten_whitespace(toJSON(cols)) == flatten_whitespace(expected));
+  }
+}
 TEST_CASE("simple1") {
   std::string testDataDir =
       std::string(getenv("RDBASE")) +

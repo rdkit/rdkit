@@ -154,4 +154,28 @@ std::string toJSON(const RGroupRows &rows, const std::string &prefix) {
   return res;
 }
 
+std::string toJSON(const RGroupColumn &rgr, const std::string &prefix) {
+  std::string res = "[\n";
+  for (const auto &elem : rgr) {
+    auto fmt = boost::format{"  \"%1%\""} % (MolToText(*elem));
+    res += prefix + fmt.str() + ",\n";
+  }
+  res.erase(res.end() - 2, res.end());
+  res += "\n" + prefix + "]";
+  return res;
+}
+
+std::string toJSON(const RGroupColumns &cols, const std::string &prefix) {
+  std::string res = prefix + "[\n";
+  auto colPrefix = prefix + "  ";
+  for (const auto col : cols) {
+    auto fmt = boost::format{"  \"%1%\": %2%"} % (col.first) %
+               (toJSON(col.second, colPrefix));
+    res += prefix + fmt.str() + ",\n";
+  }
+  res.erase(res.end() - 2, res.end());
+  res += "\n" + prefix + "]";
+  return res;
+}
+
 }  // namespace RDKit
