@@ -42,7 +42,7 @@ BOOST_PYTHON_MODULE(rdCIPLabeler) {
       "of https://github.com/SiMolecule/centres, which was originally "
       "written by John Mayfield. The original algorithm is described in:\n\n"
       "Hanson, R. M., Musacchio, S., Mayfield, J. W., Vainio, M. J., Yerin, "
-      "A., Redkin, D.\nAlgorithmic Analysis of Cahn−Ingold−Prelog Rules of "
+      "A., Redkin, D.\nAlgorithmic Analysis of Cahn--Ingold--Prelog Rules of "
       "Stereochemistry:\nProposals for Revised Rules and a Guide for Machine "
       "Implementation.\nJ. Chem. Inf. Model. 2018, 58, 1755-1765.\n";
 

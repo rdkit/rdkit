@@ -29,7 +29,7 @@ namespace CIPLabeler {
  * described in:
  *
  * Hanson, R. M., Musacchio, S., Mayfield, J. W., Vainio, M. J., Yerin, A.,
- * Redkin, D. Algorithmic Analysis of Cahn−Ingold−Prelog Rules of
+ * Redkin, D. Algorithmic Analysis of Cahn--Ingold--Prelog Rules of
  * Stereochemistry: Proposals for Revised Rules and a Guide for Machine
  * Implementation. J. Chem. Inf. Model. 2018, 58, 1755-1765.
  *
