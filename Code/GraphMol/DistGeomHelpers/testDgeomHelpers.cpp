@@ -2282,10 +2282,13 @@ namespace {
 void throwerror(unsigned int notUsedHere) {
   throw ValueErrorException("embedder is abortable");
 }
-}
+}  // namespace
 
 void testGithub3667() {
-  auto *mol = SmilesToMol("c12c3c4c5c6c1c1c7c8c9c%10c%11c(c28)c3c2c3c4c4c5c5c8c6c1c1c6c7c9c7c9c%10c%10c%11c2c2c3c3c4c4c5c5c%11c%12c(c1c85)c6c7c1c%12c5c%11c4c3c3c5c(c91)c%10c23");
+  auto *mol = SmilesToMol(
+      "c12c3c4c5c6c1c1c7c8c9c%10c%11c(c28)c3c2c3c4c4c5c5c8c6c1c1c6c7c9c7c9c%"
+      "10c%10c%11c2c2c3c3c4c4c5c5c%11c%12c(c1c85)c6c7c1c%12c5c%11c4c3c3c5c(c91)"
+      "c%10c23");
   TEST_ASSERT(mol);
 
   bool ok = false;
@@ -2301,14 +2304,13 @@ void testGithub3667() {
   delete mol;
 }
 
-
 int main() {
   RDLog::InitLogs();
   BOOST_LOG(rdInfoLog)
       << "********************************************************\n";
   BOOST_LOG(rdInfoLog) << "Testing DistGeomHelpers\n";
 
-#if 1
+#if 0
   BOOST_LOG(rdInfoLog) << "\t---------------------------------\n";
   BOOST_LOG(rdInfoLog) << "\t test2 \n\n";
   test2();
@@ -2503,6 +2505,9 @@ int main() {
   BOOST_LOG(rdInfoLog) << "\t Disabling fragmentation.\n";
   testDisableFragmentation();
 #endif
+  BOOST_LOG(rdInfoLog) << "\t---------------------------------\n";
+  BOOST_LOG(rdInfoLog) << "\t Force trans amides.\n";
+  testForceTransAmides();
 
 #ifdef EXECUTE_LONG_TESTS
   BOOST_LOG(rdInfoLog) << "\t---------------------------------\n";

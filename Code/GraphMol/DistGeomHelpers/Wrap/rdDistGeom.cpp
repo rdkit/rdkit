@@ -122,7 +122,7 @@ INT_VECT EmbedMultipleConfs2(ROMol &mol, unsigned int numConfs,
 PyObject *getMolBoundsMatrix(ROMol &mol, bool set15bounds = true,
                              bool scaleVDW = false,
                              bool doTriangleSmoothing = true,
-			     bool useMacrocycle14config = false) {
+                             bool useMacrocycle14config = false) {
   unsigned int nats = mol.getNumAtoms();
   npy_intp dims[2];
   dims[0] = nats;
@@ -130,7 +130,8 @@ PyObject *getMolBoundsMatrix(ROMol &mol, bool set15bounds = true,
 
   DistGeom::BoundsMatPtr mat(new DistGeom::BoundsMatrix(nats));
   DGeomHelpers::initBoundsMat(mat);
-  DGeomHelpers::setTopolBounds(mol, mat, set15bounds, scaleVDW, useMacrocycle14config);
+  DGeomHelpers::setTopolBounds(mol, mat, set15bounds, scaleVDW,
+                               useMacrocycle14config);
   if (doTriangleSmoothing) {
     DistGeom::triangleSmoothBounds(mat);
   }
@@ -429,7 +430,10 @@ BOOST_PYTHON_MODULE(rdDistGeom) {
            "will be done on this) from a Numpy array")
       .def("SetCPCI", &RDKit::setCPCI,
            "set the customised pairwise Columb-like interaction to atom pairs."
-           "used during structural minimisation stage");
+           "used during structural minimisation stage")
+      .def_readwrite("forceTransAmides",
+                     &RDKit::DGeomHelpers::EmbedParameters::forceTransAmides,
+                     "constrain amide bonds to be trans");
   docString =
       "Use distance geometry to obtain multiple sets of \n\
  coordinates for a molecule\n\
