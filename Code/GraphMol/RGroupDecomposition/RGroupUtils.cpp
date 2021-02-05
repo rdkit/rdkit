@@ -8,9 +8,11 @@
 //  of the RDKit source tree.
 //
 #include "RGroupUtils.h"
+#include <boost/format.hpp>
+#include <GraphMol/SmilesParse/SmilesWrite.h>
+#include <GraphMol/SmilesParse/SmartsWrite.h>
 
-namespace RDKit
-{
+namespace RDKit {
 std::string labellingToString(Labelling type) {
   switch (type) {
     case Labelling::RGROUP_LABELS:
@@ -103,5 +105,77 @@ bool hasDummy(const RWMol &core) {
   }
   return false;
 }
+
+namespace {
+std::string MolToText(const ROMol &mol) {
+  bool hasQuery = false;
+  for (const auto atom : mol.atoms()) {
+    if (atom->hasQuery() && atom->getQuery()->getDescription() != "AtomNull") {
+      hasQuery = true;
+      break;
+    }
+  }
+  if (!hasQuery) {
+    for (const auto bond : mol.bonds()) {
+      if (bond->hasQuery()) {
+        hasQuery = true;
+        break;
+      }
+    }
+  }
+  if (!hasQuery) {
+    return MolToSmiles(mol);
+  } else {
+    return MolToSmarts(mol);
+  }
+}
 }  // namespace
 
+std::string toJSON(const RGroupRow &rgr, const std::string &prefix) {
+  std::string res = prefix + "{\n";
+  for (const auto &elem : rgr) {
+    auto fmt = boost::format{"  \"%1%\":\"%2%\""} % (elem.first) %
+               (MolToText(*elem.second));
+    res += prefix + fmt.str() + ",\n";
+  }
+  res.erase(res.end() - 2, res.end());
+  res += "\n" + prefix + "}";
+  return res;
+}
+
+std::string toJSON(const RGroupRows &rows, const std::string &prefix) {
+  std::string res = prefix + "[\n";
+  auto rowPrefix = prefix + "  ";
+  for (const auto row : rows) {
+    res += toJSON(row, rowPrefix) + ",\n";
+  }
+  res.erase(res.end() - 2, res.end());
+  res += "\n" + prefix + "]";
+  return res;
+}
+
+std::string toJSON(const RGroupColumn &rgr, const std::string &prefix) {
+  std::string res = "[\n";
+  for (const auto &elem : rgr) {
+    auto fmt = boost::format{"  \"%1%\""} % (MolToText(*elem));
+    res += prefix + fmt.str() + ",\n";
+  }
+  res.erase(res.end() - 2, res.end());
+  res += "\n" + prefix + "]";
+  return res;
+}
+
+std::string toJSON(const RGroupColumns &cols, const std::string &prefix) {
+  std::string res = prefix + "[\n";
+  auto colPrefix = prefix + "  ";
+  for (const auto col : cols) {
+    auto fmt = boost::format{"  \"%1%\": %2%"} % (col.first) %
+               (toJSON(col.second, colPrefix));
+    res += prefix + fmt.str() + ",\n";
+  }
+  res.erase(res.end() - 2, res.end());
+  res += "\n" + prefix + "]";
+  return res;
+}
+
+}  // namespace RDKit

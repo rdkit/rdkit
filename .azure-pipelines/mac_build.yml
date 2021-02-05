@@ -23,6 +23,8 @@ steps:
         qt \
         numpy matplotlib cairo pillow eigen pandas  \
         sphinx=3.1.2 recommonmark jupyter
+    conda activate rdkit_build
+    conda install -c conda-forge nbval
   displayName: Setup build environment
 - bash: |
     source ${CONDA}/etc/profile.d/conda.sh

@@ -182,6 +182,14 @@ macro(add_pytest)
   endif(RDK_BUILD_PYTHON_WRAPPERS)
 endmacro(add_pytest)
 
+function(add_jupytertest testname workingdir notebook)
+  if(RDK_BUILD_PYTHON_WRAPPERS AND RDK_NBVAL_AVAILABLE)
+    add_test(NAME ${testname}  COMMAND ${PYTHON_EXECUTABLE} -m py.test --nbval ${notebook}
+       WORKING_DIRECTORY ${workingdir} )
+    SET(RDKIT_JUPYTERTEST_CACHE "${testname};${RDKIT_JUPYTERTEST_CACHE}" CACHE INTERNAL "Global list of jupyter tests")
+  endif()
+endfunction(add_jupytertest)
+
 function(computeMD5 target md5chksum)
   execute_process(COMMAND ${CMAKE_COMMAND} -E md5sum ${target} OUTPUT_VARIABLE md5list)
   string(REGEX REPLACE "([a-z0-9]+)" "\\1;" md5list "${md5list}")

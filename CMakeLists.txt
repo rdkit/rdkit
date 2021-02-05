@@ -345,6 +345,18 @@ if(RDK_BUILD_PYTHON_WRAPPERS)
   install(TARGETS rdkit_py_base EXPORT ${RDKit_EXPORTED_TARGETS}
           COMPONENT dev )
 
+  # check to see if we can find nbval,
+  execute_process(
+    COMMAND
+    ${PYTHON_EXECUTABLE} -c "import nbval"
+    ERROR_VARIABLE nbvalERR
+    OUTPUT_STRIP_TRAILING_WHITESPACE)
+  if(NOT nbvalERR)
+    set(RDK_NBVAL_AVAILABLE ON)
+  else()
+    message("nbval not found, disabling the jupyter tests")
+  endif()
+
 else(RDK_BUILD_PYTHON_WRAPPERS)
   find_package(Boost ${RDK_BOOST_VERSION} REQUIRED)
 endif(RDK_BUILD_PYTHON_WRAPPERS)

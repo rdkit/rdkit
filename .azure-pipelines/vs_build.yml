@@ -9,6 +9,8 @@ steps:
         py-boost=$(boost_version) libboost=$(boost_version) ^
         numpy matplotlib cairo pillow eigen pandas  ^
         sphinx=3.1.2 recommonmark jupyter
+    conda activate rdkit_build
+    conda install -c conda-forge nbval
   displayName: Install dependencies
 - script: |
     set Boost_ROOT=
