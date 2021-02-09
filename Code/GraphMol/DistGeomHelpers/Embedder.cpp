@@ -80,7 +80,7 @@ const EmbedParameters KDG(0,        // maxIterations
                           false,    // useSmallRingTorsions
                           false,    // useMacrocycleTorsions
                           false,    // useMacrocycle14config
-                          nullptr,   // CPCI
+                          nullptr,  // CPCI
                           nullptr   // callback
 );
 
@@ -109,7 +109,7 @@ const EmbedParameters ETDG(0,        // maxIterations
                            false,    // useSmallRingTorsions
                            false,    // useMacrocycleTorsions
                            false,    // useMacrocycle14config
-                           nullptr,   // CPCI
+                           nullptr,  // CPCI
                            nullptr   // callback
 );
 //! Parameters corresponding to Sereina Riniker's ETKDG approach
@@ -137,7 +137,7 @@ const EmbedParameters ETKDG(0,        // maxIterations
                             false,    // useSmallRingTorsions
                             false,    // useMacrocycleTorsions
                             false,    // useMacrocycle14config
-                            nullptr,   // CPCI
+                            nullptr,  // CPCI
                             nullptr   // callback
 );
 
@@ -166,7 +166,7 @@ const EmbedParameters ETKDGv2(0,        // maxIterations
                               false,    // useSmallRingTorsions
                               false,    // useMacrocycleTorsions
                               false,    // useMacrocycle14config
-                              nullptr,   // CPCI
+                              nullptr,  // CPCI
                               nullptr   // callback
 );
 
@@ -196,7 +196,7 @@ const EmbedParameters ETKDGv3(0,        // maxIterations
                               false,    // useSmallRingTorsions
                               true,     // useMacrocycleTorsions
                               true,     // useMacrocycle14config
-                              nullptr,   // CPCI
+                              nullptr,  // CPCI
                               nullptr   // callback
 );
 
@@ -226,7 +226,7 @@ const EmbedParameters srETKDGv3(0,        // maxIterations
                                 true,     // useSmallRingTorsions
                                 false,    // useMacrocycleTorsions
                                 false,    // useMacrocycle14config
-                                nullptr,   // CPCI
+                                nullptr,  // CPCI
                                 nullptr   // callback
 );
 
@@ -717,7 +717,7 @@ bool embedPoints(RDGeom::PointPtrVect *positions, detail::EmbedArgs eargs,
   unsigned int iter = 0;
   while ((gotCoords == false) && (iter < embedParams.maxIterations)) {
     ++iter;
-    if(embedParams.callback != nullptr) {
+    if (embedParams.callback != nullptr) {
       embedParams.callback(iter);
     }
     gotCoords = EmbeddingOps::generateInitialCoords(positions, eargs,
@@ -880,10 +880,23 @@ bool setupInitialBoundsMatrix(
   unsigned int nAtoms = mol->getNumAtoms();
   if (params.useExpTorsionAnglePrefs || params.useBasicKnowledge) {
     setTopolBounds(*mol, mmat, etkdgDetails.bonds, etkdgDetails.angles, true,
-                   false, params.useMacrocycle14config);
+                   false, params.useMacrocycle14config,
+                   params.forceTransAmides);
   } else {
-    setTopolBounds(*mol, mmat, true, false, params.useMacrocycle14config);
+    setTopolBounds(*mol, mmat, true, false, params.useMacrocycle14config,
+                   params.forceTransAmides);
   }
+#if 0
+  std::cerr << "====================" << std::endl;
+  for (unsigned int i = 0; i < nAtoms; ++i) {
+    for (unsigned int j = 0; j < nAtoms; ++j) {
+      std::cerr << " " << std::setprecision(3) << std::setw(5)
+                << mmat->getVal(i, j);
+    }
+    std::cerr << std::endl;
+  }
+  std::cerr << "====================" << std::endl;
+#endif
   double tol = 0.0;
   if (coordMap) {
     adjustBoundsMatFromCoordMap(mmat, nAtoms, coordMap);
@@ -893,7 +906,8 @@ bool setupInitialBoundsMatrix(
     // ok this bound matrix failed to triangle smooth - re-compute the
     // bounds matrix without 15 bounds and with VDW scaling
     initBoundsMat(mmat);
-    setTopolBounds(*mol, mmat, false, true, params.useMacrocycle14config);
+    setTopolBounds(*mol, mmat, false, true, params.useMacrocycle14config,
+                   params.forceTransAmides);
 
     if (coordMap) {
       adjustBoundsMatFromCoordMap(mmat, nAtoms, coordMap);
@@ -905,7 +919,8 @@ bool setupInitialBoundsMatrix(
       if (params.ignoreSmoothingFailures) {
         // proceed anyway with the more relaxed bounds matrix
         initBoundsMat(mmat);
-        setTopolBounds(*mol, mmat, false, true, params.useMacrocycle14config);
+        setTopolBounds(*mol, mmat, false, true, params.useMacrocycle14config,
+                       params.forceTransAmides);
 
         if (coordMap) {
           adjustBoundsMatFromCoordMap(mmat, nAtoms, coordMap);

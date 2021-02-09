@@ -120,7 +120,7 @@ struct RDKIT_DISTGEOMHELPERS_EXPORT EmbedParameters {
   bool useMacrocycle14config{false};
   std::shared_ptr<std::map<std::pair<unsigned int, unsigned int>, double>> CPCI;
   void (*callback)(unsigned int);
-  bool forceTransAmides{false};
+  bool forceTransAmides{true};
   EmbedParameters()
       : boundsMat(nullptr),
 
