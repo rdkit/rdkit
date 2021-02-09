@@ -774,14 +774,14 @@ void _setShareRingBond14Bounds(const ROMol &mol, const Bond *bnd1,
 }
 
 bool _checkH2NX3H1OX2(const Atom *atm) {
-  if ((atm->getAtomicNum() == 6) && (atm->getTotalNumHs() == 2)) {
+  if ((atm->getAtomicNum() == 6) && (atm->getTotalNumHs(true) == 2)) {
     // CH2
     return true;
-  } else if ((atm->getAtomicNum() == 8) && (atm->getTotalNumHs() == 0)) {
+  } else if ((atm->getAtomicNum() == 8) && (atm->getTotalNumHs(true) == 0)) {
     // OX2
     return true;
   } else if ((atm->getAtomicNum() == 7) && (atm->getDegree() == 3) &&
-             (atm->getTotalNumHs() == 1)) {
+             (atm->getTotalNumHs(true) == 1)) {
     // FIX: assuming hydrogen is not in the graph
     // this is NX3H1 situation
     return true;
@@ -818,7 +818,7 @@ bool _checkAmideEster14(const Bond *bnd1, const Bond *bnd3, const Atom *atm1,
 
   if (a1Num != 1 && a3Num == 6 && bnd3->getBondType() == Bond::DOUBLE &&
       (a4Num == 8 || a4Num == 7) && bnd1->getBondType() == Bond::SINGLE &&
-      (a2Num == 8 || (a2Num == 7 && atm2->getTotalNumHs() == 1))) {
+      (a2Num == 8 || (a2Num == 7 && atm2->getTotalNumHs(true) == 1))) {
     return true;
   }
   return false;
@@ -909,7 +909,7 @@ bool _checkAmideEster15(const ROMol &mol, const Bond *bnd1, const Bond *bnd3,
                         const Atom *atm4) {
   RDUNUSED_PARAM(atm4);
   unsigned int a2Num = atm2->getAtomicNum();
-  if ((a2Num == 8) || ((a2Num == 7) && (atm2->getTotalNumHs() == 1))) {
+  if ((a2Num == 8) || ((a2Num == 7) && (atm2->getTotalNumHs(true) == 1))) {
     if ((atm1->getAtomicNum() != 1) && (bnd1->getBondType() == Bond::SINGLE)) {
       if ((atm3->getAtomicNum() == 6) &&
           (bnd3->getBondType() == Bond::SINGLE) && _isCarbonyl(mol, atm3)) {
