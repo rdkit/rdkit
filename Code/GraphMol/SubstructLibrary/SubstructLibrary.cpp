@@ -69,6 +69,21 @@ struct Bits {
     }
   }
 
+  Bits(const FPHolderBase *fps, const TautomerQuery &m, bool recursionPossible,
+       bool useChirality, bool useQueryQueryMatches)
+      : fps(fps),
+        recursionPossible(recursionPossible),
+        useChirality(useChirality),
+        useQueryQueryMatches(useQueryQueryMatches) {
+    if (fps) {
+        const TautomerPatternHolder *tp = dynamic_cast<const TautomerPatternHolder*>(fps);
+        PRECONDITION(tp, "TautomerQueries only support TautomerPatternHolders");
+        queryBits = m.patternFingerprintTemplate(tp->getNumBits());
+    } else {
+      queryBits = nullptr;
+    }
+  }
+    
   bool check(unsigned int idx) const {
     if (fps) {
       return fps->passesFilter(idx, *queryBits);
@@ -107,12 +122,17 @@ bool query_needs_rings(const ROMol &in_query) {
   return false;
 }
 
-void SubSearcher(const ROMol &in_query, const Bits &bits,
+bool query_needs_rings(const TautomerQuery &in_query) {
+    return query_needs_rings(in_query.getTemplateMolecule());
+}
+
+template<class Query>
+void SubSearcher(const Query &in_query, const Bits &bits,
                  const MolHolderBase &mols, unsigned int start,
                  unsigned int &end, unsigned int numThreads,
                  const bool needs_rings, int &counter, const int maxResults,
                  std::vector<unsigned int> *idxs) {
-  ROMol query(in_query);
+  Query query(in_query);
   MatchVectType matchVect;
   for (unsigned int idx = start; idx < end; idx += numThreads) {
     if (!bits.check(idx)) {
@@ -144,8 +164,9 @@ void SubSearcher(const ROMol &in_query, const Bits &bits,
   }
 }
 
+template<class Query>
 int internalGetMatches(
-    const ROMol &query, MolHolderBase &mols, const FPHolderBase *fps,
+    const Query &query, MolHolderBase &mols, const FPHolderBase *fps,
     unsigned int startIdx, unsigned int endIdx, bool recursionPossible,
     bool useChirality, bool useQueryQueryMatches,
     int numThreads = -1, int maxResults = 1000,
@@ -192,7 +213,7 @@ int internalGetMatches(
          ++thread_group_idx) {
       // need to use boost::ref otherwise things are passed by value
       thread_group.emplace_back(
-          std::async(std::launch::async, SubSearcher, std::ref(query), bits,
+          std::async(std::launch::async, SubSearcher<Query>, std::ref(query), bits,
                      std::ref(mols), startIdx + thread_group_idx,
                      std::ref(endIdxVect[thread_group_idx]), numThreads,
                      needs_rings, std::ref(counterVect[thread_group_idx]),
@@ -226,7 +247,7 @@ int internalGetMatches(
         }
         // need to use boost::ref otherwise things are passed by value
         thread_group.emplace_back(std::async(
-            std::launch::async, SubSearcher, std::ref(query), bits,
+            std::launch::async, SubSearcher<Query>, std::ref(query), bits,
             std::ref(mols), endIdxVect[thread_group_idx] + numThreads,
             std::ref(maxEndIdx), numThreads, needs_rings,
             std::ref(counterVect[thread_group_idx]), -1,
@@ -292,6 +313,17 @@ std::vector<unsigned int> SubstructLibrary::getMatches(
                      recursionPossible, useChirality,
                      useQueryQueryMatches, numThreads, maxResults, &idxs);
   return idxs;
+}
+
+std::vector<unsigned int> SubstructLibrary::getMatches(
+    const TautomerQuery &query, unsigned int startIdx, unsigned int endIdx,
+    bool recursionPossible, bool useChirality,
+    bool useQueryQueryMatches, int numThreads,
+    int maxResults) const {
+    std::vector<unsigned int> idxs;
+    internalGetMatches(query, *mols, fps, startIdx, endIdx,
+                       recursionPossible, useChirality,
+                       useQueryQueryMatches, numThreads, maxResults, &idxs);
 }
 
 unsigned int SubstructLibrary::countMatches(const ROMol &query,

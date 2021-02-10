@@ -39,6 +39,7 @@
 #include <DataStructs/ExplicitBitVect.h>
 #include <DataStructs/BitOps.h>
 #include <GraphMol/MolOps.h>
+#include <GraphMol/TautomerQuery/TautomerQuery.h>
 
 namespace RDKit {
 
@@ -307,6 +308,16 @@ class RDKIT_SUBSTRUCTLIBRARY_EXPORT PatternHolder : public FPHolderBase {
   };
 };
 
+class RDKIT_SUBSTRUCTLIBRARY_EXPORT TautomerPatternHolder : public PatternHolder {
+public:
+    virtual ExplicitBitVect *makeFingerprint(const ROMol &m) const {
+        std::vector<unsigned int> *atomCounts = nullptr;
+        ExplicitBitVect *setOnlyBits = nullptr;
+        const bool tautomericFingerprint = true;
+      return PatternFingerprintMol(m, getNumBits(), atomCounts, setOnlyBits, tautomericFingerprint);
+    }
+};
+
 //! Substructure Search a library of molecules
 /*!  This class allows for multithreaded substructure searches os
      large datasets.
@@ -500,6 +511,11 @@ class RDKIT_SUBSTRUCTLIBRARY_EXPORT SubstructLibrary {
       bool useQueryQueryMatches = false, int numThreads = -1,
       int maxResults = -1) const;
 
+  std::vector<unsigned int> getMatches(
+      const TautomerQuery &query, unsigned int startIdx, unsigned int endIdx,
+      bool recursionPossible = true, bool useChirality = true,
+      bool useQueryQueryMatches = false, int numThreads = -1,
+      int maxResults = -1) const;
   //! Return the number of matches for the query
   /*!
     \param query       Query to match against molecules

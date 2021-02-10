@@ -22,4 +22,4 @@ add_subdirectory(Wrap)
 endif()
 
 rdkit_test(substructLibraryTest substructLibraryTest.cpp
-           LINK_LIBRARIES SubstructLibrary FileParsers )
+           LINK_LIBRARIES TautomerQuery MolStandardize SubstructLibrary FileParsers )
