@@ -1064,6 +1064,208 @@ void testGithub2027() {
   BOOST_LOG(rdInfoLog) << "Finished" << std::endl;
 }
 
+void testGenerate2DDepictionRefPatternMatchVect() {
+  BOOST_LOG(rdInfoLog)
+      << "-----------------------\n Test "
+         "generateDepictionMatching2DStructure with refPattern and matchVect"
+      << std::endl;
+  std::string indazoleMolblock = R"RES(
+     RDKit          2D
+
+  9 10  0  0  0  0  0  0  0  0999 V2000
+   -6.0878    2.4335    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -7.3867    1.6835    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -7.3867    0.1833    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -6.0878   -0.5666    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -4.7887    0.1833    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -4.7887    1.6835    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -3.4897   -0.5664    0.0000 N   0  0  0  0  0  0  0  0  0  0  0  0
+   -2.1906    1.6833    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -2.1906    0.1835    0.0000 N   0  0  0  0  0  0  0  0  0  0  0  0
+  1  2  2  0
+  2  3  1  0
+  3  4  2  0
+  4  5  1  0
+  5  6  2  0
+  6  1  1  0
+  8  9  2  0
+  6  8  1  0
+  7  9  1  0
+  7  5  1  0
+M  END)RES";
+  std::unique_ptr<ROMol> indazoleRef(MolBlockToMol(indazoleMolblock));
+  auto cycloheptylPyrazole = "c1cc(C2CCCCCC2)[nH]n1"_smiles;
+  double msd;
+  bool raised;
+
+  // test using refPattern
+  auto refPatt = "a1aan[nH]1"_smarts;
+  RDDepict::generateDepictionMatching2DStructure(
+      *cycloheptylPyrazole, *indazoleRef, -1, refPatt.get());
+  TEST_ASSERT(cycloheptylPyrazole->getNumConformers() == 1);
+  MatchVectType molMatchVect;
+  TEST_ASSERT(SubstructMatch(*cycloheptylPyrazole, *refPatt, molMatchVect));
+  MatchVectType refMatchVect;
+  TEST_ASSERT(SubstructMatch(*indazoleRef, *refPatt, refMatchVect));
+  TEST_ASSERT(molMatchVect.size() == refMatchVect.size());
+  msd = 0.0;
+  for (size_t i = 0; i < molMatchVect.size(); ++i) {
+    msd += (indazoleRef->getConformer().getAtomPos(refMatchVect.at(i).second) -
+            cycloheptylPyrazole->getConformer().getAtomPos(
+                molMatchVect.at(i).second))
+               .lengthSq();
+  }
+  msd /= static_cast<double>(molMatchVect.size());
+  TEST_ASSERT(msd < 1.0e-4);
+  // try with a pattern larger than the reference molecule
+  auto hugePatt = "CCCCCCCCCCCCCCCCCCCCCCCCCCC"_smarts;
+  raised = false;
+  try {
+    RDDepict::generateDepictionMatching2DStructure(
+        *cycloheptylPyrazole, *indazoleRef, -1, hugePatt.get());
+  } catch (const RDDepict::DepictException &) {
+    raised = true;
+  }
+  TEST_ASSERT(raised);
+  // try with an out of range confId
+  raised = false;
+  try {
+    RDDepict::generateDepictionMatching2DStructure(
+        *cycloheptylPyrazole, *indazoleRef, 1, refPatt.get());
+  } catch (const RDKit::ConformerException &) {
+    raised = true;
+  }
+
+  // test using matchVect directly
+  cycloheptylPyrazole->removeConformer(0);
+  MatchVectType matchVect;
+  for (size_t i = 0; i < molMatchVect.size(); ++i) {
+    matchVect.emplace_back(
+        std::make_pair(refMatchVect.at(i).second, molMatchVect.at(i).second));
+  }
+  RDDepict::generateDepictionMatching2DStructure(*cycloheptylPyrazole,
+                                                 *indazoleRef, matchVect);
+  TEST_ASSERT(cycloheptylPyrazole->getNumConformers() == 1);
+  msd = 0.0;
+  for (const auto &pair : matchVect) {
+    msd += (indazoleRef->getConformer().getAtomPos(pair.first) -
+            cycloheptylPyrazole->getConformer().getAtomPos(pair.second))
+               .lengthSq();
+  }
+  msd /= static_cast<double>(matchVect.size());
+  TEST_ASSERT(msd < 1.0e-4);
+  // try with a matchVect larger than the reference molecule
+  MatchVectType matchVectHuge(matchVect);
+  for (size_t i = 0; i < indazoleRef->getNumAtoms(); ++i) {
+    matchVectHuge.emplace_back(std::make_pair(0, 0));
+  }
+  raised = false;
+  try {
+    RDDepict::generateDepictionMatching2DStructure(*cycloheptylPyrazole,
+                                                   *indazoleRef, matchVectHuge);
+  } catch (const RDDepict::DepictException &) {
+    raised = true;
+  }
+  // try with a matchVect with out of range indices
+  MatchVectType matchVectOutOfRange(matchVect);
+  matchVectOutOfRange.emplace_back(std::make_pair(100, 100));
+  raised = false;
+  try {
+    RDDepict::generateDepictionMatching2DStructure(
+        *cycloheptylPyrazole, *indazoleRef, matchVectOutOfRange);
+  } catch (const RDDepict::DepictException &) {
+    raised = true;
+  }
+  // try with an out of range confId
+  raised = false;
+  try {
+    RDDepict::generateDepictionMatching2DStructure(*cycloheptylPyrazole,
+                                                   *indazoleRef, matchVect, 1);
+  } catch (const RDKit::ConformerException &) {
+    raised = true;
+  }
+  BOOST_LOG(rdInfoLog) << "Finished" << std::endl;
+}
+
+void testGenerate2DDepictionAllowRGroups() {
+  BOOST_LOG(rdInfoLog)
+      << "-----------------------\n Test "
+         "generateDepictionMatching2DStructure with allowRGroups"
+      << std::endl;
+  std::string templateMolblock = R"RES(
+     RDKit          2D
+
+  9  9  0  0  0  0  0  0  0  0999 V2000
+   -0.8929    1.0942    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -2.1919    0.3442    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -2.1919   -1.1558    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -0.8929   -1.9059    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    0.4060   -1.1558    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    0.4060    0.3442    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -3.4910    1.0942    0.0000 R1  0  0  0  0  0  0  0  0  0  0  0  0
+    1.7051    1.0942    0.0000 R2  0  0  0  0  0  0  0  0  0  0  0  0
+   -3.4910   -1.9059    0.0000 R3  0  0  0  0  0  0  0  0  0  0  0  0
+  1  2  2  0
+  2  3  1  0
+  3  4  2  0
+  4  5  1  0
+  5  6  2  0
+  6  1  1  0
+  6  8  1  0
+  3  9  1  0
+  2  7  1  0
+M  RGP  3   7   1   8   2   9   3
+M  END)RES";
+  std::unique_ptr<ROMol> templateRef(MolBlockToMol(templateMolblock));
+  auto orthoMeta = "c1ccc(-c2ccc(-c3ccccc3)c(-c3ccccc3)c2)cc1"_smiles;
+  auto ortho = "c1ccc(-c2ccccc2-c2ccccc2)cc1"_smiles;
+  auto meta = "c1ccc(-c2cccc(-c3ccccc3)c2)cc1"_smiles;
+  auto biphenyl = "c1ccccc1-c1ccccc1"_smiles;
+  auto phenyl = "c1ccccc1"_smiles;
+
+  RDDepict::generateDepictionMatching2DStructure(*orthoMeta, *templateRef);
+  TEST_ASSERT(orthoMeta->getNumConformers() == 1);
+
+  for (auto mol : {ortho.get(), meta.get(), biphenyl.get(), phenyl.get()}) {
+    // fails as does not match template
+    bool raised = false;
+    try {
+      RDDepict::generateDepictionMatching2DStructure(*mol, *templateRef);
+    } catch (const RDDepict::DepictException &) {
+      raised = true;
+    }
+    TEST_ASSERT(raised);
+
+    // succeeds with allowRGroups = true
+    RDDepict::generateDepictionMatching2DStructure(*mol, *templateRef, -1,
+                                                   nullptr, false, false, true);
+    TEST_ASSERT(mol->getNumConformers() == 1);
+    std::unique_ptr<ROMol> molHs(MolOps::addHs(static_cast<ROMol &>(*mol)));
+    auto matchVectVect = SubstructMatch(*molHs, *templateRef);
+    bool matchFound = false;
+    for (const auto &matchVect : matchVectVect) {
+      double msd = 0.0;
+      size_t nMatches = 0;
+      for (const auto &pair : matchVect) {
+        if (molHs->getAtomWithIdx(pair.second)->getAtomicNum() == 1) {
+          continue;
+        }
+        ++nMatches;
+        msd += (templateRef->getConformer().getAtomPos(pair.first) -
+                mol->getConformer().getAtomPos(pair.second))
+                   .lengthSq();
+      }
+      msd /= static_cast<double>(nMatches);
+      if (msd < 1.0e-4) {
+        matchFound = true;
+        break;
+      }
+    }
+    TEST_ASSERT(matchFound);
+  }
+  BOOST_LOG(rdInfoLog) << "Finished" << std::endl;
+}
+
 int main() {
 #ifdef RDK_BUILD_COORDGEN_SUPPORT
   RDDepict::preferCoordGen = false;
@@ -1264,6 +1466,8 @@ int main() {
   testGithub1691();
 #endif
   testGithub2027();
+  testGenerate2DDepictionRefPatternMatchVect();
+  testGenerate2DDepictionAllowRGroups();
 
   return (0);
 }

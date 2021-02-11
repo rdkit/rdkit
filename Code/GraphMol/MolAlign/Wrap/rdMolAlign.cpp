@@ -28,37 +28,6 @@
 namespace python = boost::python;
 
 namespace RDKit {
-MatchVectType *_translateAtomMap(python::object atomMap) {
-  PySequenceHolder<python::object> aMapSeq(atomMap);
-  MatchVectType *aMap;
-  aMap = nullptr;
-  unsigned int i, nAtms = aMapSeq.size();
-  if (nAtms > 0) {
-    aMap = new MatchVectType;
-    for (i = 0; i < nAtms; ++i) {
-      PySequenceHolder<int> item(aMapSeq[i]);
-      if (item.size() != 2) {
-        delete aMap;
-        aMap = nullptr;
-        throw_value_error("Incorrect format for atomMap");
-      }
-      aMap->push_back(std::pair<int, int>(item[0], item[1]));
-    }
-  }
-  return aMap;
-}
-
-std::vector<MatchVectType> _translateAtomMapVector(python::object atomMapVec) {
-  std::vector<MatchVectType> aMapVec;
-  PySequenceHolder<python::object> aMapVecSeq(atomMapVec);
-  for (size_t i = 0; i < aMapVecSeq.size(); ++i) {
-    MatchVectType *aMap = _translateAtomMap(aMapVecSeq[i]);
-    aMapVec.push_back(*aMap);
-    delete aMap;
-  }
-  return aMapVec;
-}
-
 RDNumeric::DoubleVector *_translateWeights(python::object weights) {
   PySequenceHolder<double> wts(weights);
   unsigned int nwts = wts.size();
@@ -146,7 +115,7 @@ PyObject *getMolAlignTransform(const ROMol &prbMol, const ROMol &refMol,
                                python::object weights = python::list(),
                                bool reflect = false,
                                unsigned int maxIters = 50) {
-  MatchVectType *aMap = _translateAtomMap(atomMap);
+  MatchVectType *aMap = translateAtomMap(atomMap);
   unsigned int nAtms;
   if (aMap) {
     nAtms = aMap->size();
@@ -180,7 +149,7 @@ double AlignMolecule(ROMol &prbMol, const ROMol &refMol, int prbCid = -1,
                      int refCid = -1, python::object atomMap = python::list(),
                      python::object weights = python::list(),
                      bool reflect = false, unsigned int maxIters = 50) {
-  MatchVectType *aMap = _translateAtomMap(atomMap);
+  MatchVectType *aMap = translateAtomMap(atomMap);
   unsigned int nAtms;
   if (aMap) {
     nAtms = aMap->size();
@@ -213,7 +182,7 @@ double GetBestRMS(ROMol &prbMol, ROMol &refMol, int prbId, int refId,
                   python::object map, int maxMatches) {
   std::vector<MatchVectType> aMapVec;
   if (map != python::object()) {
-    aMapVec = _translateAtomMapVector(map);
+    aMapVec = translateAtomMapSeq(map);
   }
 
   double rmsd;
@@ -230,7 +199,7 @@ double CalcRMS(ROMol &prbMol, ROMol &refMol, int prbCid, int refCid,
                python::object weights = python::list()) {
   std::vector<MatchVectType> aMapVec;
   if (map != python::object()) {
-    aMapVec = _translateAtomMapVector(map);
+    aMapVec = translateAtomMapSeq(map);
   }
   RDNumeric::DoubleVector *wtsVec = _translateWeights(weights);
   double rmsd;
@@ -287,7 +256,7 @@ PyO3A *getMMFFO3A(ROMol &prbMol, ROMol &refMol, python::object prbProps,
                   python::list constraintMap = python::list(),
                   python::list constraintWeights = python::list()) {
   MatchVectType *cMap =
-      (python::len(constraintMap) ? _translateAtomMap(constraintMap) : nullptr);
+      (python::len(constraintMap) ? translateAtomMap(constraintMap) : nullptr);
   RDNumeric::DoubleVector *cWts = nullptr;
   if (cMap) {
     cWts = _translateWeights(constraintWeights);
@@ -365,7 +334,7 @@ python::tuple getMMFFO3AForConfs(
     python::list constraintMap = python::list(),
     python::list constraintWeights = python::list()) {
   MatchVectType *cMap =
-      (python::len(constraintMap) ? _translateAtomMap(constraintMap) : nullptr);
+      (python::len(constraintMap) ? translateAtomMap(constraintMap) : nullptr);
   RDNumeric::DoubleVector *cWts = nullptr;
   if (cMap) {
     cWts = _translateWeights(constraintWeights);
@@ -448,7 +417,7 @@ PyO3A *getCrippenO3A(ROMol &prbMol, ROMol &refMol,
                      python::list constraintMap = python::list(),
                      python::list constraintWeights = python::list()) {
   MatchVectType *cMap =
-      (python::len(constraintMap) ? _translateAtomMap(constraintMap) : nullptr);
+      (python::len(constraintMap) ? translateAtomMap(constraintMap) : nullptr);
   RDNumeric::DoubleVector *cWts = nullptr;
   if (cMap) {
     cWts = _translateWeights(constraintWeights);
@@ -529,7 +498,7 @@ python::tuple getCrippenO3AForConfs(
     unsigned int options = 0, python::list constraintMap = python::list(),
     python::list constraintWeights = python::list()) {
   MatchVectType *cMap =
-      (python::len(constraintMap) ? _translateAtomMap(constraintMap) : nullptr);
+      (python::len(constraintMap) ? translateAtomMap(constraintMap) : nullptr);
   RDNumeric::DoubleVector *cWts = nullptr;
   if (cMap) {
     cWts = _translateWeights(constraintWeights);

@@ -14,6 +14,7 @@
 //
 #include "Wrap.h"
 #include "pyint_api.h"
+#include <RDBoost/PySequenceHolder.h>
 #include <sstream>
 #include <iostream>
 
@@ -75,5 +76,37 @@ boost::dynamic_bitset<> pythonObjectToDynBitset(const python::object &obj,
   return res;
 }
 
+std::vector<std::pair<int, int>>* translateAtomMap(python::object atomMap) {
+  PySequenceHolder<python::object> pyAtomMap(atomMap);
+  std::vector<std::pair<int, int>>* res;
+  res = nullptr;
+  unsigned int i;
+  unsigned int n = pyAtomMap.size();
+  if (n > 0) {
+    res = new std::vector<std::pair<int, int>>;
+    for (i = 0; i < n; ++i) {
+      PySequenceHolder<int> item(pyAtomMap[i]);
+      if (item.size() != 2) {
+        delete res;
+        res = nullptr;
+        throw_value_error("Incorrect format for an atomMap");
+      }
+      res->push_back(std::pair<int, int>(item[0], item[1]));
+    }
+  }
+  return res;
+}
+
+std::vector<std::vector<std::pair<int, int>>> translateAtomMapSeq(
+    python::object atomMapSeq) {
+  std::vector<std::vector<std::pair<int, int>>> aMapVec;
+  PySequenceHolder<python::object> pyAtomMapSeq(atomMapSeq);
+  for (size_t i = 0; i < pyAtomMapSeq.size(); ++i) {
+    std::vector<std::pair<int, int>>* res = translateAtomMap(pyAtomMapSeq[i]);
+    aMapVec.push_back(*res);
+    delete res;
+  }
+  return aMapVec;
+}
 
 #endif

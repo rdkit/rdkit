@@ -139,6 +139,10 @@ void pythonObjectToVect(const python::object &obj, std::vector<T> &res) {
 RDKIT_RDBOOST_EXPORT boost::dynamic_bitset<> pythonObjectToDynBitset(const python::object &obj,
                                                    boost::dynamic_bitset<>::size_type maxV);
 
+RDKIT_RDBOOST_EXPORT std::vector<std::pair<int, int>> *translateAtomMap(
+    python::object atomMap);
+RDKIT_RDBOOST_EXPORT std::vector<std::vector<std::pair<int, int>>>
+translateAtomMapSeq(python::object atomMapSeq);
 
 // Quiet warnings on GCC
 #if defined(__GNUC__) || defined(__GNUG__)

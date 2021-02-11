@@ -458,18 +458,22 @@ std::string JSMol::condense_abbreviations_from_defs(
   Abbreviations::condenseMolAbbreviations(*d_mol, abbrevs, maxCoverage);
 }
 
-std::string JSMol::generate_aligned_coords(const JSMol &templateMol,bool useCoordGen){
-  if (!d_mol || !templateMol.d_mol || !templateMol.d_mol->getNumConformers()) return "";
+std::string JSMol::generate_aligned_coords(const JSMol &templateMol,
+                                           bool useCoordGen,
+                                           bool allowRGroups) {
+  if (!d_mol || !templateMol.d_mol || !templateMol.d_mol->getNumConformers())
+    return "";
 
 #ifdef RDK_BUILD_COORDGEN_SUPPORT
   bool oprefer = RDDepict::preferCoordGen;
   RDDepict::preferCoordGen = useCoordGen;
-#endif 
+#endif
   RDKit::ROMol *refPattern = nullptr;
   bool acceptFailure = true;
   int confId = -1;
-  RDDepict::generateDepictionMatching2DStructure(*d_mol, *templateMol.d_mol, confId,
-     refPattern, acceptFailure);
+  RDDepict::generateDepictionMatching2DStructure(
+      *d_mol, *(templateMol.d_mol), confId, refPattern, acceptFailure, false,
+      allowRGroups);
 #ifdef RDK_BUILD_COORDGEN_SUPPORT
   RDDepict::preferCoordGen = oprefer;
 #endif
