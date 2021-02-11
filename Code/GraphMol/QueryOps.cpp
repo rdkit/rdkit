@@ -11,6 +11,7 @@
 #include <algorithm>
 #include <RDGeneral/types.h>
 #include <GraphMol/QueryAtom.h>
+#include <boost/range/iterator_range.hpp> 
 
 namespace RDKit {
 
@@ -601,6 +602,7 @@ ATOM_NULL_QUERY *makeAtomNullQuery() {
 }
 
 bool isComplexQuery(const Bond *b) {
+  PRECONDITION(b,"bad bond");
   if (!b->hasQuery()) {
     return false;
   }
@@ -638,6 +640,7 @@ bool isComplexQuery(const Bond *b) {
   return true;
 }
 
+namespace {
 bool _complexQueryHelper(Atom::QUERYATOM_QUERY const *query, bool &hasAtNum) {
   if (!query) {
     return false;
@@ -665,7 +668,46 @@ bool _complexQueryHelper(Atom::QUERYATOM_QUERY const *query, bool &hasAtNum) {
   }
   return false;
 }
+
+template <typename T>
+bool _atomListQueryHelper(const T query) {
+  PRECONDITION(query, "no query");
+  if (query->getNegation()) {
+    return false;
+  }
+  if (query->getDescription() == "AtomAtomicNum") {
+    return true;
+  }
+  if (query->getDescription() == "AtomOr") {
+    for (const auto child : boost::make_iterator_range(query->beginChildren(),
+                                                       query->endChildren())) {
+      if (!_atomListQueryHelper(child)) {
+        return false;
+      }
+    }
+  }
+  return true;
+}
+}
+bool isAtomListQuery(const Atom *a) {
+  PRECONDITION(a, "bad atom");
+  if (!a->hasQuery()) {
+    return false;
+  }
+  if (a->getQuery()->getDescription() == "AtomOr") {
+    for (const auto child : boost::make_iterator_range(
+             a->getQuery()->beginChildren(), a->getQuery()->endChildren())) {
+      if (!_atomListQueryHelper(child)) {
+        return false;
+      }
+    }
+    return true;
+  }
+  return false;
+}
+
 bool isComplexQuery(const Atom *a) {
+  PRECONDITION(a,"bad atom");
   if (!a->hasQuery()) {
     return false;
   }
@@ -697,6 +739,7 @@ bool isComplexQuery(const Atom *a) {
   return true;
 }
 bool isAtomAromatic(const Atom *a) {
+  PRECONDITION(a,"bad atom");
   bool res = false;
   if (!a->hasQuery()) {
     res = a->getIsAromatic();

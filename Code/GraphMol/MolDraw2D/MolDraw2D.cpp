@@ -3776,6 +3776,49 @@ pair<string, OrientType> MolDraw2D::getAtomSymbolAndOrientation(
   return std::make_pair(symbol, orient);
 }
 
+namespace {
+template <typename T>
+std::string getAtomListHelper(const T query) {
+  PRECONDITION(query, "bad query");
+  std::string res = "";
+  if (query->getDescription() == "AtomOr") {
+    for (const auto child : boost::make_iterator_range(query->beginChildren(),
+                                                       query->endChildren())) {
+      res += getAtomListHelper(child);
+    }
+  } else if (query->getDescription() == "AtomAtomicNum") {
+    std::string symb = PeriodicTable::getTable()->getElementSymbol(
+        static_cast<ATOM_EQUALS_QUERY *>(query.get())->getVal());
+    res = symb + ",";
+  }
+  return res;
+}
+std::string getAtomListText(const Atom &atom) {
+  PRECONDITION(atom.hasQuery(), "no query");
+  PRECONDITION(atom.getQuery()->getDescription() == "AtomOr", "bad query type");
+
+  std::string res = "";
+  if (atom.getQuery()->getNegation()) {
+    res += "!";
+  }
+  res += "[";
+
+  if (atom.getQuery()->getDescription() == "AtomOr") {
+    for (const auto child :
+         boost::make_iterator_range(atom.getQuery()->beginChildren(),
+                                    atom.getQuery()->endChildren())) {
+      res += getAtomListHelper(child);
+    }
+  }
+
+  // remove the extra comma
+  if (res.back() == ',') {
+    res.pop_back();
+  }
+  return res + "]";
+}
+}  // namespace
+
 // ****************************************************************************
 string MolDraw2D::getAtomSymbol(const RDKit::Atom &atom,
                                 OrientType orientation) const {
@@ -3818,6 +3861,8 @@ string MolDraw2D::getAtomSymbol(const RDKit::Atom &atom,
              atom.getDegree() == 1) {
     symbol = "";
     literal_symbol = false;
+  } else if (isAtomListQuery(&atom)) {
+    symbol = getAtomListText(atom);
   } else if (isComplexQuery(&atom)) {
     symbol = "?";
   } else if (drawOptions().atomLabelDeuteriumTritium &&
