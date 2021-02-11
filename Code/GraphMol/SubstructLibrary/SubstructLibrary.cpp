@@ -305,6 +305,13 @@ std::vector<unsigned int> SubstructLibrary::getMatches(
 }
 
 std::vector<unsigned int> SubstructLibrary::getMatches(
+    const TautomerQuery &query, bool recursionPossible, bool useChirality,
+    bool useQueryQueryMatches, int numThreads, int maxResults) const {
+  return getMatches(query, 0, mols->size(), recursionPossible, useChirality,
+                    useQueryQueryMatches, numThreads, maxResults);
+}
+
+std::vector<unsigned int> SubstructLibrary::getMatches(
     const ROMol &query, unsigned int startIdx, unsigned int endIdx,
     bool recursionPossible, bool useChirality, bool useQueryQueryMatches,
     int numThreads, int maxResults) const {
@@ -335,8 +342,26 @@ unsigned int SubstructLibrary::countMatches(const ROMol &query,
                       useQueryQueryMatches, numThreads);
 }
 
+unsigned int SubstructLibrary::countMatches(const TautomerQuery &query,
+                                            bool recursionPossible,
+                                            bool useChirality,
+                                            bool useQueryQueryMatches,
+                                            int numThreads) const {
+  return countMatches(query, 0, mols->size(), recursionPossible, useChirality,
+                      useQueryQueryMatches, numThreads);
+}
+
 unsigned int SubstructLibrary::countMatches(
     const ROMol &query, unsigned int startIdx, unsigned int endIdx,
+    bool recursionPossible, bool useChirality, bool useQueryQueryMatches,
+    int numThreads) const {
+  return internalGetMatches(query, *mols, fps, startIdx, endIdx,
+                            recursionPossible, useChirality,
+                            useQueryQueryMatches, numThreads, -1);
+}
+
+unsigned int SubstructLibrary::countMatches(
+    const TautomerQuery &query, unsigned int startIdx, unsigned int endIdx,
     bool recursionPossible, bool useChirality, bool useQueryQueryMatches,
     int numThreads) const {
   return internalGetMatches(query, *mols, fps, startIdx, endIdx,
@@ -353,7 +378,27 @@ bool SubstructLibrary::hasMatch(const ROMol &query, bool recursionPossible,
              .size() > 0;
 }
 
+bool SubstructLibrary::hasMatch(const TautomerQuery &query, bool recursionPossible,
+                                bool useChirality, bool useQueryQueryMatches,
+                                int numThreads) const {
+  const int maxResults = 1;
+  return getMatches(query, recursionPossible, useChirality,
+                    useQueryQueryMatches, numThreads, maxResults)
+             .size() > 0;
+}
+
+
 bool SubstructLibrary::hasMatch(const ROMol &query, unsigned int startIdx,
+                                unsigned int endIdx, bool recursionPossible,
+                                bool useChirality, bool useQueryQueryMatches,
+                                int numThreads) const {
+  const int maxResults = 1;
+  return getMatches(query, startIdx, endIdx, recursionPossible, useChirality,
+                    useQueryQueryMatches, numThreads, maxResults)
+             .size() > 0;
+}
+
+bool SubstructLibrary::hasMatch(const TautomerQuery &query, unsigned int startIdx,
                                 unsigned int endIdx, bool recursionPossible,
                                 bool useChirality, bool useQueryQueryMatches,
                                 int numThreads) const {

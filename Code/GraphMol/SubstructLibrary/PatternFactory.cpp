@@ -19,7 +19,7 @@
 namespace RDKit {
 namespace {
 void fillPatterns(const SubstructLibrary &slib,
-		  const PatternHolder &fph,
+                  const FPHolderBase &fph,
 		  std::vector<ExplicitBitVect*> &fps,
 		  unsigned int start, unsigned int end, unsigned int numThreads) {
   for (unsigned int idx = start;
@@ -37,11 +37,11 @@ void fillPatterns(const SubstructLibrary &slib,
 }
 }		    
   
-void addPatterns(SubstructLibrary &sslib, int numThreads) {
+void addPatterns(SubstructLibrary &sslib, int numThreads, FPHolderBase *patterns) {
   PRECONDITION(sslib.getFpHolder().get() == nullptr, "Substruct library already has fingerprints");
   numThreads = (int)getNumThreadsToUse(numThreads);
   
-  boost::shared_ptr<PatternHolder> ptr(new PatternHolder);
+  boost::shared_ptr<FPHolderBase> ptr(patterns ? patterns : new PatternHolder);
   std::vector<ExplicitBitVect *> & fps = ptr->getFingerprints();
   unsigned int startIdx = 0;
   unsigned int endIdx = sslib.getMolecules().size();

@@ -379,9 +379,10 @@ void docTest() {
   BOOST_LOG(rdErrorLog) << "    Done (C++ doc tests)" << std::endl;
 }
 
-void ringTest() {
+template<class Holder>
+void ringTest(const std::string &name) {
   BOOST_LOG(rdErrorLog) << "-------------------------------------" << std::endl;
-  BOOST_LOG(rdErrorLog) << "    Testing C++ ring query" << std::endl;
+  BOOST_LOG(rdErrorLog) << "    Testing C++ ring query: " << name << std::endl;
 
   std::unique_ptr<ROMol> q(SmartsToMol("[C&R1]"));
   std::unique_ptr<ROMol> q2(SmartsToMol("C@C"));
@@ -390,8 +391,8 @@ void ringTest() {
 
   boost::shared_ptr<CachedTrustedSmilesMolHolder> molHolder =
     boost::make_shared<CachedTrustedSmilesMolHolder>();
-  boost::shared_ptr<PatternHolder> patternHolder =
-    boost::make_shared<PatternHolder>();
+  boost::shared_ptr<Holder> patternHolder =
+    boost::make_shared<Holder>();
   
   SubstructLibrary lib(molHolder, patternHolder);
   lib.addMol(*m.get());
@@ -448,10 +449,14 @@ void testAddPatterns() {
   std::vector<int> num_threads = { 1, 0 };
   for(auto nthreads : num_threads) {
     SubstructLibrary ssslib_with_patterns(holder);
+    SubstructLibrary ssslib_with_taut_patterns(holder);
     addPatterns(ssslib_with_patterns, nthreads);
+    addPatterns(ssslib_with_taut_patterns, nthreads, new TautomerPatternHolder);
     for(unsigned int i=0; i<ssslib.size(); ++i) {
       TEST_ASSERT( ssslib.countMatches( *ssslib.getMol(i).get() ) ==
 		   ssslib_with_patterns.countMatches( *ssslib.getMol(i).get() ) );
+      TEST_ASSERT( ssslib.countMatches( *ssslib.getMol(i).get() ) ==
+                  ssslib_with_taut_patterns.countMatches( *ssslib.getMol(i).get() ) );
     }
   }
 }
@@ -564,20 +569,21 @@ void testMaxResultsAllSameNumThreads() {
   }
 }
 
-void testPatternHolder() {
+template<class Holder>
+void testPatternHolder(const std::string &name) {
   BOOST_LOG(rdErrorLog) << "-------------------------------------" << std::endl;
-  BOOST_LOG(rdErrorLog) << "   testPatternHolder" << std::endl;
+  BOOST_LOG(rdErrorLog) << "   testing " << name << std::endl;
 
   std::string fName = getenv("RDBASE");
   fName += "/Data/NCI/first_5K.smi";
   SmilesMolSupplier suppl(fName, "\t", 0, 1, false);
   boost::shared_ptr<CachedTrustedSmilesMolHolder> mols1(
       new CachedTrustedSmilesMolHolder());
-  boost::shared_ptr<PatternHolder> fps1(new PatternHolder());
+  boost::shared_ptr<Holder> fps1(new Holder());
   SubstructLibrary ssslib1(mols1, fps1);
   boost::shared_ptr<CachedTrustedSmilesMolHolder> mols2(
       new CachedTrustedSmilesMolHolder());
-  boost::shared_ptr<PatternHolder> fps2(new PatternHolder());
+  boost::shared_ptr<Holder> fps2(new Holder());
   SubstructLibrary ssslib2(mols2, fps2);
 
   boost::logging::disable_logs("rdApp.error");
@@ -634,10 +640,10 @@ void testPatternHolder() {
   }
   for (size_t i = 0; i < 2; ++i) {
     auto serialized_pattern_holder =
-        dynamic_cast<PatternHolder *>(serialized.getFpHolder().get());
+        dynamic_cast<Holder *>(serialized.getFpHolder().get());
     TEST_ASSERT(serialized_pattern_holder);
     auto orig_pattern_holder =
-        dynamic_cast<PatternHolder *>(ssslib1.getFpHolder().get());
+        dynamic_cast<Holder *>(ssslib1.getFpHolder().get());
     TEST_ASSERT(orig_pattern_holder);
     TEST_ASSERT(serialized_pattern_holder->getNumBits() ==
                 orig_pattern_holder->getNumBits());
@@ -682,9 +688,11 @@ int main() {
   test3();
   test4();
   docTest();
-  ringTest();
+  ringTest<PatternHolder>("PatternHolder");
+  ringTest<TautomerPatternHolder>("TautomerPatternHolder");
   testAddPatterns();
-  testPatternHolder();
+  testPatternHolder<PatternHolder>("PatternHolder");
+  testPatternHolder<TautomerPatternHolder>("TautomerPatternHolder");
   testSegFaultInHolder();
 #ifdef RDK_TEST_MULTITHREADED
   testMaxResultsNumThreads();
