@@ -1969,6 +1969,7 @@ void testGithub1227() {
     TEST_ASSERT(cids.size() == 1);
 
     params.onlyHeavyAtomsForRMS = false;  // the old default behavior
+    params.useSymmetryForPruning = false;
     cids = DGeomHelpers::EmbedMultipleConfs(*m, 10, params);
     TEST_ASSERT(cids.size() == 6);
 
@@ -2282,10 +2283,13 @@ namespace {
 void throwerror(unsigned int notUsedHere) {
   throw ValueErrorException("embedder is abortable");
 }
-}
+}  // namespace
 
 void testGithub3667() {
-  auto *mol = SmilesToMol("c12c3c4c5c6c1c1c7c8c9c%10c%11c(c28)c3c2c3c4c4c5c5c8c6c1c1c6c7c9c7c9c%10c%10c%11c2c2c3c3c4c4c5c5c%11c%12c(c1c85)c6c7c1c%12c5c%11c4c3c3c5c(c91)c%10c23");
+  auto *mol = SmilesToMol(
+      "c12c3c4c5c6c1c1c7c8c9c%10c%11c(c28)c3c2c3c4c4c5c5c8c6c1c1c6c7c9c7c9c%"
+      "10c%10c%11c2c2c3c3c4c4c5c5c%11c%12c(c1c85)c6c7c1c%12c5c%11c4c3c3c5c(c91)"
+      "c%10c23");
   TEST_ASSERT(mol);
 
   bool ok = false;
@@ -2301,6 +2305,22 @@ void testGithub3667() {
   delete mol;
 }
 
+void testSymmetryPruning() {
+  auto mol = "CCOC(C)(C)C"_smiles;
+  TEST_ASSERT(mol);
+  MolOps::addHs(*mol);
+  DGeomHelpers::EmbedParameters params;
+  params.useSymmetryForPruning = true;
+  params.onlyHeavyAtomsForRMS = true;
+  params.pruneRmsThresh = 0.5;
+  params.randomSeed = 0xf00d;
+  auto cids = DGeomHelpers::EmbedMultipleConfs(*mol, 50, params);
+  TEST_ASSERT(cids.size() == 1);
+
+  params.useSymmetryForPruning = false;
+  cids = DGeomHelpers::EmbedMultipleConfs(*mol, 50, params);
+  TEST_ASSERT(cids.size() == 3);
+}
 
 int main() {
   RDLog::InitLogs();
@@ -2432,11 +2452,9 @@ int main() {
       << "\t test github issue 256: handling of zero-atom molecules\n\n";
   testGithub256();
 
-
-
   BOOST_LOG(rdInfoLog) << "\t---------------------------------\n";
   BOOST_LOG(rdInfoLog) << "\t test embedder callback function \n";
-  
+
   testGithub3667();
 
 #ifdef RDK_TEST_MULTITHREADED
@@ -2502,6 +2520,11 @@ int main() {
   BOOST_LOG(rdInfoLog) << "\t---------------------------------\n";
   BOOST_LOG(rdInfoLog) << "\t Disabling fragmentation.\n";
   testDisableFragmentation();
+
+  BOOST_LOG(rdInfoLog) << "\t---------------------------------\n";
+  BOOST_LOG(rdInfoLog) << "\t Using symmetry in conformation pruning.\n";
+  testSymmetryPruning();
+
 #endif
 
 #ifdef EXECUTE_LONG_TESTS

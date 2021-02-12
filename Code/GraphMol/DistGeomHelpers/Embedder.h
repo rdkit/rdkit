@@ -90,6 +90,11 @@ namespace DGeomHelpers {
   CPCI	custom columbic interactions between atom pairs
   callback	      void pointer to a function for reporting progress,
                   will be called with the current iteration number.
+  useSymmetryForPruning   use molecule symmetry when doing the RMSD pruning.
+                          NOTE that for reasons of computational efficiency,
+                          setting this will also set onlyHeavyAtomsForRMS to
+                          true.
+
 
 */
 struct RDKIT_DISTGEOMHELPERS_EXPORT EmbedParameters {
@@ -118,14 +123,14 @@ struct RDKIT_DISTGEOMHELPERS_EXPORT EmbedParameters {
   bool useMacrocycleTorsions{false};
   bool useMacrocycle14config{false};
   std::shared_ptr<std::map<std::pair<unsigned int, unsigned int>, double>> CPCI;
-  void (* callback)(unsigned int);
+  void (*callback)(unsigned int);
+  bool useSymmetryForPruning{true};
   EmbedParameters()
-      : 
-        boundsMat(nullptr),
-        
+      : boundsMat(nullptr),
+
         CPCI(nullptr),
 
-        callback(nullptr) {};
+        callback(nullptr){};
   EmbedParameters(
       unsigned int maxIterations, int numThreads, int randomSeed,
       bool clearConfs, bool useRandomCoords, double boxSizeMult,
@@ -139,7 +144,8 @@ struct RDKIT_DISTGEOMHELPERS_EXPORT EmbedParameters {
       bool embedFragmentsSeparately = true, bool useSmallRingTorsions = false,
       bool useMacrocycleTorsions = false, bool useMacrocycle14config = false,
       std::shared_ptr<std::map<std::pair<unsigned int, unsigned int>, double>>
-          CPCI = nullptr, void (* callback)(unsigned int) = nullptr)
+          CPCI = nullptr,
+      void (*callback)(unsigned int) = nullptr)
       : maxIterations(maxIterations),
         numThreads(numThreads),
         randomSeed(randomSeed),
@@ -165,7 +171,7 @@ struct RDKIT_DISTGEOMHELPERS_EXPORT EmbedParameters {
         useMacrocycleTorsions(useMacrocycleTorsions),
         useMacrocycle14config(useMacrocycle14config),
         CPCI(CPCI),
-        callback(callback) {};
+        callback(callback){};
 };
 
 //*! Embed multiple conformations for a molecule
