@@ -11,7 +11,7 @@
 #include <algorithm>
 #include <RDGeneral/types.h>
 #include <GraphMol/QueryAtom.h>
-#include <boost/range/iterator_range.hpp> 
+#include <boost/range/iterator_range.hpp>
 
 namespace RDKit {
 
@@ -602,7 +602,7 @@ ATOM_NULL_QUERY *makeAtomNullQuery() {
 }
 
 bool isComplexQuery(const Bond *b) {
-  PRECONDITION(b,"bad bond");
+  PRECONDITION(b, "bad bond");
   if (!b->hasQuery()) {
     return false;
   }
@@ -688,7 +688,7 @@ bool _atomListQueryHelper(const T query) {
   }
   return true;
 }
-}
+}  // namespace
 bool isAtomListQuery(const Atom *a) {
   PRECONDITION(a, "bad atom");
   if (!a->hasQuery()) {
@@ -706,8 +706,32 @@ bool isAtomListQuery(const Atom *a) {
   return false;
 }
 
+void getAtomListQueryVals(const Atom::QUERYATOM_QUERY *q,
+                          std::vector<int> &vals) {
+  // list queries are series of nested ors of AtomAtomicNum queries
+  PRECONDITION(q, "bad query");
+  auto descr = q->getDescription();
+  PRECONDITION(descr == "AtomOr", "bad query");
+  if (descr == "AtomOr") {
+    for (const auto child :
+         boost::make_iterator_range(q->beginChildren(), q->endChildren())) {
+      auto descr = child->getDescription();
+      if (child->getNegation() ||
+          (descr != "AtomOr" && descr != "AtomAtomicNum")) {
+        throw ValueErrorException("bad query type");
+      }
+      // we don't allow negation of any children of the query:
+      if (descr == "AtomOr") {
+        getAtomListQueryVals(child.get(), vals);
+      } else if (descr == "AtomAtomicNum") {
+        vals.push_back(static_cast<ATOM_EQUALS_QUERY *>(child.get())->getVal());
+      }
+    }
+  }
+}
+
 bool isComplexQuery(const Atom *a) {
-  PRECONDITION(a,"bad atom");
+  PRECONDITION(a, "bad atom");
   if (!a->hasQuery()) {
     return false;
   }
@@ -739,7 +763,7 @@ bool isComplexQuery(const Atom *a) {
   return true;
 }
 bool isAtomAromatic(const Atom *a) {
-  PRECONDITION(a,"bad atom");
+  PRECONDITION(a, "bad atom");
   bool res = false;
   if (!a->hasQuery()) {
     res = a->getIsAromatic();
