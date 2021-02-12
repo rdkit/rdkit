@@ -24,6 +24,6 @@ namespace RDKit {
 RDKIT_SUBSTRUCTLIBRARY_EXPORT void addPatterns(SubstructLibrary &sslib, int numThreads=1);
 
 
-RDKIT_SUBSTRUCTLIBRARY_EXPORT void addPatterns(SubstructLibrary &sslib, std::shared_ptr<FPHolderBase> patterns, int numThreads=1);
+RDKIT_SUBSTRUCTLIBRARY_EXPORT void addPatterns(SubstructLibrary &sslib, boost::shared_ptr<FPHolderBase> patterns, int numThreads=1);
 }
 #endif

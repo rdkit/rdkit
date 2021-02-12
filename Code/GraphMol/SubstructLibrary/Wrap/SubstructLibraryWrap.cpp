@@ -574,7 +574,7 @@ struct substructlibrary_wrapper {
 		(python::arg("sslib"), python::arg("numThreads")=1));
 
     python::def("AddPatterns",
-		(void (*)(SubstructLibrary&, std::shared_ptr<FPHolderBase>, int))&addPatterns,
+		(void (*)(SubstructLibrary&, boost::shared_ptr<FPHolderBase>, int))&addPatterns,
 		"Add pattern fingerprints to the given library, use numThreads=-1 to use all available cores",
 		(python::arg("sslib"), python::arg("patterns"), python::arg("numThreads")=1));
 

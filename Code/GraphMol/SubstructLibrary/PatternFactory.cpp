@@ -39,11 +39,17 @@ void fillPatterns(const SubstructLibrary &slib,
 
 
 namespace {  
-void internalAddPatterns(SubstructLibrary &sslib, int numThreads, FPHolderBase *patterns) {
+void internalAddPatterns(SubstructLibrary &sslib, int numThreads, boost::shared_ptr<FPHolderBase> *patterns) {
   PRECONDITION(sslib.getFpHolder().get() == nullptr, "Substruct library already has fingerprints");
   numThreads = (int)getNumThreadsToUse(numThreads);
   
-  boost::shared_ptr<FPHolderBase> ptr(patterns ? patterns : new PatternHolder);
+  boost::shared_ptr<FPHolderBase> ptr;
+  if(patterns) {
+    ptr = *patterns;
+  } else {
+    ptr = boost::shared_ptr<FPHolderBase>(new PatternHolder);
+  }
+
   std::vector<ExplicitBitVect *> & fps = ptr->getFingerprints();
   unsigned int startIdx = 0;
   unsigned int endIdx = sslib.getMolecules().size();
@@ -77,9 +83,9 @@ void addPatterns(SubstructLibrary &sslib, int numThreads) {
   internalAddPatterns(sslib, numThreads, nullptr);
 }
 
-void addPatterns(SubstructLibrary &sslib, std::shared_ptr<FPHolderBase> patterns, int numThreads) {
+void addPatterns(SubstructLibrary &sslib, boost::shared_ptr<FPHolderBase> patterns, int numThreads) {
   PRECONDITION(patterns.get() != nullptr, "Null PatternHolder");
-  internalAddPatterns(sslib, numThreads, patterns.get());
+  internalAddPatterns(sslib, numThreads, &patterns);
 }
 
 }
