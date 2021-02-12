@@ -36,8 +36,10 @@ void fillPatterns(const SubstructLibrary &slib,
   }
 }
 }		    
-  
-void addPatterns(SubstructLibrary &sslib, int numThreads, FPHolderBase *patterns) {
+
+
+namespace {  
+void internalAddPatterns(SubstructLibrary &sslib, int numThreads, FPHolderBase *patterns) {
   PRECONDITION(sslib.getFpHolder().get() == nullptr, "Substruct library already has fingerprints");
   numThreads = (int)getNumThreadsToUse(numThreads);
   
@@ -69,4 +71,15 @@ void addPatterns(SubstructLibrary &sslib, int numThreads, FPHolderBase *patterns
   sslib.getFpHolder() = ptr;
   sslib.resetHolders();
 }
+}
+
+void addPatterns(SubstructLibrary &sslib, int numThreads) {
+  internalAddPatterns(sslib, numThreads, nullptr);
+}
+
+void addPatterns(SubstructLibrary &sslib, std::shared_ptr<FPHolderBase> patterns, int numThreads) {
+  PRECONDITION(patterns.get() != nullptr, "Null PatternHolder");
+  internalAddPatterns(sslib, numThreads, patterns.get());
+}
+
 }

@@ -21,7 +21,9 @@ namespace RDKit {
      \param numThreads the number of threads to use, -1 for all threads [default 1]
      \param patterns if supplied, use this pattern holder and take ownership [default nullptr]
 */
-RDKIT_SUBSTRUCTLIBRARY_EXPORT void addPatterns(SubstructLibrary &sslib, int numThreads=1,
-                                               FPHolderBase *pattterns=nullptr);
+RDKIT_SUBSTRUCTLIBRARY_EXPORT void addPatterns(SubstructLibrary &sslib, int numThreads=1);
+
+
+RDKIT_SUBSTRUCTLIBRARY_EXPORT void addPatterns(SubstructLibrary &sslib, std::shared_ptr<FPHolderBase> patterns, int numThreads=1);
 }
 #endif

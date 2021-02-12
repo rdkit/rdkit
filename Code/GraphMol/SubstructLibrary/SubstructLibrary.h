@@ -294,8 +294,8 @@ class RDKIT_SUBSTRUCTLIBRARY_EXPORT FPHolderBase {
 class RDKIT_SUBSTRUCTLIBRARY_EXPORT PatternHolder : public FPHolderBase {
   unsigned int numBits;
  public:
-  PatternHolder() : numBits(defaultNumBits()) {}
-  PatternHolder(unsigned int numBits) : numBits(numBits) {}
+  PatternHolder() : FPHolderBase(), numBits(defaultNumBits()) {}
+  PatternHolder(unsigned int numBits) : FPHolderBase(), numBits(numBits) {}
   //! Caller owns the vector!
   virtual ExplicitBitVect *makeFingerprint(const ROMol &m) const {
     return PatternFingerprintMol(m, numBits);
@@ -310,12 +310,14 @@ class RDKIT_SUBSTRUCTLIBRARY_EXPORT PatternHolder : public FPHolderBase {
 
 class RDKIT_SUBSTRUCTLIBRARY_EXPORT TautomerPatternHolder : public PatternHolder {
 public:
-    virtual ExplicitBitVect *makeFingerprint(const ROMol &m) const {
-        std::vector<unsigned int> *atomCounts = nullptr;
-        ExplicitBitVect *setOnlyBits = nullptr;
-        const bool tautomericFingerprint = true;
-      return PatternFingerprintMol(m, getNumBits(), atomCounts, setOnlyBits, tautomericFingerprint);
-    }
+  TautomerPatternHolder() : PatternHolder() {}
+  TautomerPatternHolder(unsigned int numBits) : PatternHolder(numBits) {}
+  virtual ExplicitBitVect *makeFingerprint(const ROMol &m) const {
+    std::vector<unsigned int> *atomCounts = nullptr;
+    ExplicitBitVect *setOnlyBits = nullptr;
+    const bool tautomericFingerprint = true;
+    return PatternFingerprintMol(m, getNumBits(), atomCounts, setOnlyBits, tautomericFingerprint);
+  }
 };
 
 //! Substructure Search a library of molecules

@@ -451,7 +451,8 @@ void testAddPatterns() {
     SubstructLibrary ssslib_with_patterns(holder);
     SubstructLibrary ssslib_with_taut_patterns(holder);
     addPatterns(ssslib_with_patterns, nthreads);
-    addPatterns(ssslib_with_taut_patterns, nthreads, new TautomerPatternHolder);
+    std::shared_ptr<TautomerPatternHolder> patterns(new TautomerPatternHolder);
+    addPatterns(ssslib_with_taut_patterns, patterns, nthreads);
     for(unsigned int i=0; i<ssslib.size(); ++i) {
       TEST_ASSERT( ssslib.countMatches( *ssslib.getMol(i).get() ) ==
 		   ssslib_with_patterns.countMatches( *ssslib.getMol(i).get() ) );

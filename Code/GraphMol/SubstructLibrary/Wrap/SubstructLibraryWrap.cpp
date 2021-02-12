@@ -97,7 +97,7 @@ const char *CachedTrustedSmilesMolHolderDoc =
 const char *PatternHolderDoc =
     "Holds fingerprints with optional, user-defined number of bits (default: "
     "2048) used for filtering of molecules.";
-onst char *TautomerPatternHolderDoc =
+const char *TautomerPatternHolderDoc =
     "Holds tautomeric fingerprints with optional, user-defined number of bits (default: "
     "2048) used for filtering of molecules.\n"
     "These fingerprints are designed to be used with TautomerQueries.";
@@ -315,7 +315,7 @@ struct substructlibrary_wrapper {
 
     python::class_<TautomerPatternHolder, boost::shared_ptr<TautomerPatternHolder>,
                    python::bases<FPHolderBase>>(
-        "TautomerPatternHolder", TatuomerPatternHolderDoc, python::init<>())
+        "TautomerPatternHolder", TautomerPatternHolderDoc, python::init<>())
         .def(python::init<unsigned int>());
       
     python::class_<SubstructLibrary, SubstructLibrary *,
@@ -568,9 +568,15 @@ struct substructlibrary_wrapper {
                 "Returns True if the SubstructLibrary is serializable "
                 "(requires boost serialization");
 
-    python::def("AddPatterns", addPatterns,
+    python::def("AddPatterns",
+		(void (*)(SubstructLibrary&, int))&addPatterns,
 		"Add pattern fingerprints to the given library, use numThreads=-1 to use all available cores",
 		(python::arg("sslib"), python::arg("numThreads")=1));
+
+    python::def("AddPatterns",
+		(void (*)(SubstructLibrary&, std::shared_ptr<FPHolderBase>, int))&addPatterns,
+		"Add pattern fingerprints to the given library, use numThreads=-1 to use all available cores",
+		(python::arg("sslib"), python::arg("patterns"), python::arg("numThreads")=1));
 
   }
 };
