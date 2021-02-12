@@ -184,6 +184,7 @@ struct TautomerQuery_wrapper {
             tautomerGetSubstructMatchesWithTautomersWithParams,
             (python::arg("self"), python::arg("target"), python::arg("params")))
         .def("PatternFingerprintTemplate",
+	     (ExplicitBitVect *(TautomerQuery::*)(unsigned int))
              &TautomerQuery::patternFingerprintTemplate,
              (python::arg("fingerprintSize") = 2048),
              python::return_value_policy<python::manage_new_object>())
