@@ -1051,6 +1051,49 @@ void embedHelper_(int threadId, int numThreads, EmbedArgs *eargs,
     delete positions[i];
   }
 }
+
+std::vector<std::vector<unsigned int>> getMolSelfMatches(
+    const ROMol &mol, const EmbedParameters &params) {
+  std::vector<std::vector<unsigned int>> res;
+  if (params.pruneRmsThresh && params.useSymmetryForPruning) {
+    RWMol tmol(mol);
+    MolOps::RemoveHsParameters ps;
+    bool sanitize = false;
+    MolOps::removeHs(tmol, ps, sanitize);
+    SubstructMatchParameters sssps;
+    sssps.maxMatches = 1;
+    // provides the atom indices in the molecule corresponding
+    // to the indices in the H-stripped version
+    auto strippedMatch = SubstructMatch(mol, tmol, sssps);
+    CHECK_INVARIANT(strippedMatch.size() == 1, "expected match not found");
+
+    sssps.maxMatches = 1000;
+    sssps.uniquify = false;
+    auto heavyAtomMatches = SubstructMatch(tmol, tmol, sssps);
+    for (const auto &match : heavyAtomMatches) {
+      res.emplace_back(0);
+      res.back().reserve(match.size());
+      for (auto midx : match) {
+        res.back().push_back(strippedMatch[0][midx.second].second);
+      }
+    }
+  } else if (params.onlyHeavyAtomsForRMS) {
+    res.emplace_back(0);
+    for (const auto &at : mol.atoms()) {
+      if (at->getAtomicNum() != 1) {
+        res.back().push_back(at->getIdx());
+      }
+    }
+  } else {
+    res.emplace_back(0);
+    res.back().reserve(mol.getNumAtoms());
+    for (unsigned int i = 0; i < mol.getNumAtoms(); ++i) {
+      res.back().push_back(i);
+    }
+  }
+  return res;
+}
+
 }  // end of namespace detail
 
 void EmbedMultipleConfs(ROMol &mol, INT_VECT &res, unsigned int numConfs,
@@ -1174,43 +1217,7 @@ void EmbedMultipleConfs(ROMol &mol, INT_VECT &res, unsigned int numConfs,
     }
 #endif
   }
-  std::vector<std::vector<unsigned int>> selfMatches;
-  if (params.pruneRmsThresh && params.useSymmetryForPruning) {
-    RWMol tmol(mol);
-    MolOps::RemoveHsParameters ps;
-    bool sanitize = false;
-    MolOps::removeHs(tmol, ps, sanitize);
-    SubstructMatchParameters sssps;
-    sssps.maxMatches = 1;
-    // provides the atom indices in the molecule corresponding
-    // to the indices in the H-stripped version
-    auto strippedMatch = SubstructMatch(mol, tmol, sssps);
-    CHECK_INVARIANT(strippedMatch.size() == 1, "expected match not found");
-
-    sssps.maxMatches = 1000;
-    sssps.uniquify = false;
-    auto heavyAtomMatches = SubstructMatch(tmol, tmol, sssps);
-    for (const auto &match : heavyAtomMatches) {
-      selfMatches.emplace_back(0);
-      selfMatches.back().reserve(match.size());
-      for (auto midx : match) {
-        selfMatches.back().push_back(strippedMatch[0][midx.second].second);
-      }
-    }
-  } else if (params.onlyHeavyAtomsForRMS) {
-    selfMatches.emplace_back(0);
-    for (const auto &at : mol.atoms()) {
-      if (at->getAtomicNum() != 1) {
-        selfMatches.back().push_back(at->getIdx());
-      }
-    }
-  } else {
-    selfMatches.emplace_back(0);
-    selfMatches.back().reserve(mol.getNumAtoms());
-    for (unsigned int i = 0; i < mol.getNumAtoms(); ++i) {
-      selfMatches.back().push_back(i);
-    }
-  }
+  auto selfMatches = detail::getMolSelfMatches(mol, params);
   for (unsigned int ci = 0; ci < confs.size(); ++ci) {
     Conformer *conf = confs[ci];
     if (confsOk[ci]) {
