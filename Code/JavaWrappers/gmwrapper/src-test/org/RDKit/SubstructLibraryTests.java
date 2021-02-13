@@ -57,7 +57,7 @@ public class SubstructLibraryTests extends GraphMolTest {
 
             // fpholder - can we create it...
             PatternHolder ph = new PatternHolder();
-	    TautomerPatternHolder ph = new TautomerPatternHolder();
+	    TautomerPatternHolder tph = new TautomerPatternHolder();
 
             // Now lets make some molecules
             mol = RWMol.MolFromSmiles("c1ccccc1");
