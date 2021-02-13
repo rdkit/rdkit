@@ -35,7 +35,9 @@
 
 %{
 #include <GraphMol/SubstructLibrary/SubstructLibrary.h>
+#include <GraphMol/TautomerQuery/TautomerQuery.h>
 %}
+%shared_ptr(RDKit::TautomerQuery)
 %shared_ptr(RDKit::MolHolderBase)
 %shared_ptr(RDKit::MolHolder)
 %shared_ptr(RDKit::CachedMolHolder)
@@ -83,6 +85,7 @@
 }
 #endif
 
+%include <GraphMol/TautomerQuery/TautomerQuery.h>
 %include <GraphMol/SubstructLibrary/SubstructLibrary.h>
 
 %pragma(java) modulecode=%{
