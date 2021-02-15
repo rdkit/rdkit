@@ -1,5 +1,13 @@
+#
+# Copyright (C) 2021 Carmen Esposito 
+#
+#   @@ All Rights Reserved @@
+#  This file is part of the RDKit.
+#  The contents are covered by the terms of the BSD license
+#  which is included in the file license.txt, found at the root
+#  of the RDKit source tree.
+#
 from rdkit import Chem
-from rdkit.Chem import AllChem
 from rdkit.Chem import rdFMCS
 import numpy as np
 
@@ -63,6 +71,6 @@ def CalcLigRMSD(lig1, lig2, rename_lig2 = True, output_filename="tmp.pdb"):
             atom1.GetPDBResidueInfo().SetResidueName(lig1_ResName)
             if i in correspondence_key2_item1.keys():
                 atom1.GetPDBResidueInfo().SetName(atom_names_lig1[correspondence_key2_item1[i]])                
-        Chem.rdmolfiles.MolToPDBFile(lig2, output_filename)
+        Chem.MolToPDBFile(lig2, output_filename)
     return lig_rmsd
 
