@@ -19,7 +19,7 @@ class ROMol;
 class RWMol;
 
 namespace Abbreviations {
-RDKIT_ABBREVIATIONS_EXPORT struct AbbreviationDefinition {
+struct RDKIT_ABBREVIATIONS_EXPORT AbbreviationDefinition {
   std::string label;
   std::string displayLabel;
   std::string displayLabelW;
@@ -34,7 +34,7 @@ RDKIT_ABBREVIATIONS_EXPORT struct AbbreviationDefinition {
     return !(*this == other);
   }
 };
-RDKIT_ABBREVIATIONS_EXPORT struct AbbreviationMatch {
+struct RDKIT_ABBREVIATIONS_EXPORT AbbreviationMatch {
   std::vector<std::pair<int, int>> match;
   AbbreviationDefinition abbrev;
   AbbreviationMatch(const std::vector<std::pair<int, int>>& matchArg,
