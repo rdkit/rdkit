@@ -18,7 +18,7 @@ namespace Queries {
 //!  value (and an optional tolerance)
 template <class MatchFuncArgType, class DataFuncArgType = MatchFuncArgType,
           bool needsConversion = false>
-class GreaterQuery
+class RDKIT_QUERY_EXPORT GreaterQuery
     : public EqualityQuery<MatchFuncArgType, DataFuncArgType, needsConversion> {
  public:
   GreaterQuery() { this->d_tol = 0; };

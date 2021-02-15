@@ -24,7 +24,7 @@ namespace Queries {
 //!  There is also an optional tolerance to be used in comparisons
 template <class MatchFuncArgType, class DataFuncArgType = MatchFuncArgType,
           bool needsConversion = false>
-class RangeQuery
+class RDKIT_QUERY_EXPORT RangeQuery
     : public Query<MatchFuncArgType, DataFuncArgType, needsConversion> {
  public:
   RangeQuery() : d_upper(0), d_lower(0) { this->df_negate = false; };
