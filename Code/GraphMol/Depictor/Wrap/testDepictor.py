@@ -261,7 +261,7 @@ class TestCase(unittest.TestCase):
   6  8  1  0
   7  9  1  0
   7  5  1  0
-M  END)RES"""
+M  END"""
         indazoleRef = Chem.MolFromMolBlock(indazoleMolblock)
         cycloheptylPyrazole = Chem.MolFromSmiles("c1cc(C2CCCCCC2)[nH]n1")
 
@@ -351,7 +351,7 @@ M  END"""
         biphenyl = Chem.MolFromSmiles("c1ccccc1-c1ccccc1")
         phenyl = Chem.MolFromSmiles("c1ccccc1")
 
-        rdDepictor.GenerateDepictionMatching2DStructure(orthoMeta, templateRef)
+        atomMap = rdDepictor.GenerateDepictionMatching2DStructure(orthoMeta, templateRef)
         self.assertEqual(orthoMeta.GetNumConformers(), 1)
 
         for mol in (ortho, meta, biphenyl, phenyl):
@@ -360,25 +360,46 @@ M  END"""
                 rdDepictor.GenerateDepictionMatching2DStructure(mol, templateRef)
 
             # succeeds with allowRGroups=true
-            rdDepictor.GenerateDepictionMatching2DStructure(mol, templateRef, allowRGroups=True)
+            atomMap = rdDepictor.GenerateDepictionMatching2DStructure(mol, templateRef, allowRGroups=True)
             self.assertEqual(mol.GetNumConformers(), 1)
-            molHs = Chem.AddHs(mol)
-            matchVectVect = molHs.GetSubstructMatches(templateRef)
-            matchFound = False
-            for matchVect in matchVectVect:
-                msd = 0.0
-                nMatches = 0
-                for refIdx, molIdx in enumerate(matchVect):
-                    if (molHs.GetAtomWithIdx(molIdx).GetAtomicNum() == 1):
-                        continue
-                    nMatches += 1
-                    msd += (templateRef.GetConformer().GetAtomPosition(refIdx) -
-                            mol.GetConformer().GetAtomPosition(molIdx)).LengthSq()
-                msd /= nMatches
-                if (msd < 1.0e-4):
-                    matchFound = True
-                    break;
-            self.assertTrue(matchFound)
+            msd = 0.0
+            for refIdx, molIdx in atomMap:
+                msd += (templateRef.GetConformer().GetAtomPosition(refIdx) -
+                        mol.GetConformer().GetAtomPosition(molIdx)).LengthSq()
+            msd /= len(atomMap)
+            self.assertAlmostEqual(msd, 0.0)
+
+        # test that using a refPattern with R groups and a reference without works
+        pyridineRef = Chem.MolFromMolBlock("""
+     RDKit          2D
+
+  6  6  0  0  0  0  0  0  0  0999 V2000
+   -0.8929    1.0942    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -2.1919    0.3442    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -2.1919   -1.1558    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -0.8929   -1.9059    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    0.4060   -1.1558    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    0.4060    0.3442    0.0000 N   0  0  0  0  0  0  0  0  0  0  0  0
+  1  2  2  0
+  2  3  1  0
+  3  4  2  0
+  4  5  1  0
+  5  6  2  0
+  6  1  1  0
+M  END""")
+        genericRefPatternWithRGroups = Chem.MolFromSmarts("[*:3]a1a([*:1])aa([*:2])aa1")
+        pyridineRefHs = Chem.AddHs(pyridineRef)
+
+        for mol in (ortho, meta, biphenyl, phenyl):
+            atomMap = rdDepictor.GenerateDepictionMatching2DStructure(
+                mol, pyridineRef, refPatt=genericRefPatternWithRGroups, allowRGroups=True)
+            self.assertEqual(mol.GetNumConformers(), 1)
+            msd = 0.0
+            for refIdx, molIdx in atomMap:
+                msd += (pyridineRef.GetConformer().GetAtomPosition(refIdx) -
+                        mol.GetConformer().GetAtomPosition(molIdx)).LengthSq()
+            msd /= len(atomMap)
+            self.assertAlmostEqual(msd, 0.0)
 
 if __name__ == '__main__':
     rdDepictor.SetPreferCoordGen(False)

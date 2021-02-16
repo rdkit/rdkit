@@ -168,9 +168,10 @@ RDKIT_DEPICTOR_EXPORT unsigned int compute2DCoordsMimicDistMat(
                          depiction is still attempted
 
 */
-RDKIT_DEPICTOR_EXPORT void generateDepictionMatching2DStructure(
+RDKIT_DEPICTOR_EXPORT RDKit::MatchVectType generateDepictionMatching2DStructure(
     RDKit::ROMol &mol, const RDKit::ROMol &reference, int confId = -1,
-    RDKit::ROMol *referencePattern = static_cast<RDKit::ROMol *>(nullptr),
+    const RDKit::ROMol *referencePattern =
+        static_cast<const RDKit::ROMol *>(nullptr),
     bool acceptFailure = false, bool forceRDKit = false,
     bool allowRGroups = false);
 
@@ -198,6 +199,8 @@ RDKIT_DEPICTOR_EXPORT void generateDepictionMatching2DStructure(
   \param confId -       (optional) the id of the reference conformation to use
   \param forceRDKit - (optional) use RDKit to generate coordinates even if
                       preferCoordGen is set to true
+  \return MatchVectType with (queryAtomidx, molAtomIdx) pairs used for
+          the constrained depiction
 */
 RDKIT_DEPICTOR_EXPORT void generateDepictionMatching2DStructure(
     RDKit::ROMol &mol, const RDKit::ROMol &reference,

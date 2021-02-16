@@ -15,6 +15,53 @@
 
 namespace RDKit {
 
+namespace detail {
+// Helper class used by the sortMatchesByDegreeOfCoreSubstitution
+// and getMostSubstitutedCoreMatch
+class ScoreMatchesByDegreeOfCoreSubstitution {
+ public:
+  ScoreMatchesByDegreeOfCoreSubstitution(const RDKit::ROMol &mol,
+                                         const RDKit::ROMol &query)
+      : d_mol(mol), d_query(query) {
+    for (auto i = 0; i < d_mol.getNumAtoms(); ++i) {
+      d_sumIndices += static_cast<double>(i);
+    }
+  }
+  double score(const RDKit::MatchVectType &match) {
+    auto it = d_cache.find(&match);
+    if (it == d_cache.end()) {
+      it = computeAndCacheScore(match);
+    }
+    return it->second;
+  }
+  bool doesRGroupMatchHydrogen(const std::pair<int, int> &pair) {
+    const auto queryAtom = d_query.getAtomWithIdx(pair.first);
+    const auto molAtom = d_mol.getAtomWithIdx(pair.second);
+    return (queryAtom->getAtomicNum() == 0 && queryAtom->getDegree() == 1 &&
+            molAtom->getAtomicNum() == 1);
+  }
+
+ private:
+  std::unordered_map<const RDKit::MatchVectType *, double>::iterator
+  computeAndCacheScore(const RDKit::MatchVectType &match) {
+    double penalty = 0.0;
+    double i = 0.0;
+    for (const auto &pair : match) {
+      i += static_cast<double>(pair.second);
+      if (doesRGroupMatchHydrogen(pair)) {
+        penalty += 1.0;
+      }
+    }
+    penalty += i / d_sumIndices;
+    return d_cache.insert(std::make_pair(&match, penalty)).first;
+  }
+  std::unordered_map<const RDKit::MatchVectType *, double> d_cache;
+  const RDKit::ROMol &d_mol;
+  const RDKit::ROMol &d_query;
+  double d_sumIndices;
+};
+}  // namespace detail
+
 bool atomCompat(const Atom *a1, const Atom *a2,
                 const SubstructMatchParameters &ps) {
   PRECONDITION(a1, "bad atom");
@@ -109,4 +156,27 @@ void removeDuplicates(std::vector<MatchVectType> &v, unsigned int nAtoms) {
   }
   v = res;
 }
+
+std::vector<MatchVectType>::const_iterator getMostSubstitutedCoreMatch(
+    const ROMol &mol, const ROMol &core,
+    const std::vector<MatchVectType> &matches) {
+  detail::ScoreMatchesByDegreeOfCoreSubstitution matchScorer(mol, core);
+  return std::min_element(
+      matches.begin(), matches.end(),
+      [&matchScorer](const RDKit::MatchVectType &aMatch,
+                     const RDKit::MatchVectType &bMatch) {
+        return (matchScorer.score(aMatch) < matchScorer.score(bMatch));
+      });
+}
+
+void sortMatchesByDegreeOfCoreSubstitution(
+    const ROMol &mol, const ROMol &core, std::vector<MatchVectType> &matches) {
+  detail::ScoreMatchesByDegreeOfCoreSubstitution matchScorer(mol, core);
+  std::sort(matches.begin(), matches.end(),
+            [&matchScorer](const RDKit::MatchVectType &aMatch,
+                           const RDKit::MatchVectType &bMatch) {
+              return (matchScorer.score(aMatch) < matchScorer.score(bMatch));
+            });
+}
+
 }  // namespace RDKit

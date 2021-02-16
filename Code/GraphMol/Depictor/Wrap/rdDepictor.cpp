@@ -101,18 +101,25 @@ unsigned int Compute2DCoordsMimicDistmat(
   return res;
 }
 
-void GenerateDepictionMatching2DStructure(RDKit::ROMol &mol,
-                                          RDKit::ROMol &reference, int confId,
-                                          python::object refPatt,
-                                          bool acceptFailure, bool forceRDKit,
-                                          bool allowRGroups) {
+PyObject *GenerateDepictionMatching2DStructure(
+    RDKit::ROMol &mol, RDKit::ROMol &reference, int confId,
+    python::object refPatt, bool acceptFailure, bool forceRDKit,
+    bool allowRGroups) {
   RDKit::ROMol *referencePattern = nullptr;
   if (refPatt != python::object()) {
     referencePattern = python::extract<RDKit::ROMol *>(refPatt);
   }
-  RDDepict::generateDepictionMatching2DStructure(
+  auto matchVect = RDDepict::generateDepictionMatching2DStructure(
       mol, reference, confId, referencePattern, acceptFailure, forceRDKit,
       allowRGroups);
+  PyObject *atomMap = PyTuple_New(matchVect.size());
+  for (size_t i = 0; i < matchVect.size(); ++i) {
+    PyObject *pair = PyTuple_New(2);
+    PyTuple_SetItem(pair, 0, PyInt_FromLong(matchVect.at(i).first));
+    PyTuple_SetItem(pair, 1, PyInt_FromLong(matchVect.at(i).second));
+    PyTuple_SetItem(atomMap, i, pair);
+  }
+  return atomMap;
 }
 
 void GenerateDepictionMatching2DStructureAtomMap(RDKit::ROMol &mol,

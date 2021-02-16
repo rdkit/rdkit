@@ -27,6 +27,11 @@ RDKIT_SUBSTRUCTMATCH_EXPORT bool chiralAtomCompat(const Atom* a1,
                                                   const Atom* a2);
 RDKIT_SUBSTRUCTMATCH_EXPORT bool bondCompat(const Bond* b1, const Bond* b2,
                                             const SubstructMatchParameters& ps);
+RDKIT_SUBSTRUCTMATCH_EXPORT std::vector<MatchVectType>::const_iterator
+getMostSubstitutedCoreMatch(const ROMol& mol, const ROMol& core,
+                            const std::vector<MatchVectType>& matches);
+RDKIT_SUBSTRUCTMATCH_EXPORT void sortMatchesByDegreeOfCoreSubstitution(
+    const ROMol& mol, const ROMol& core, std::vector<MatchVectType>& matches);
 }  // namespace RDKit
 
 #endif

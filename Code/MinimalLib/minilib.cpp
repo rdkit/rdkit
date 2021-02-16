@@ -461,8 +461,9 @@ std::string JSMol::condense_abbreviations_from_defs(
 std::string JSMol::generate_aligned_coords(const JSMol &templateMol,
                                            bool useCoordGen,
                                            bool allowRGroups) {
+  std::string res;
   if (!d_mol || !templateMol.d_mol || !templateMol.d_mol->getNumConformers())
-    return "";
+    return res;
 
 #ifdef RDK_BUILD_COORDGEN_SUPPORT
   bool oprefer = RDDepict::preferCoordGen;
@@ -471,13 +472,22 @@ std::string JSMol::generate_aligned_coords(const JSMol &templateMol,
   RDKit::ROMol *refPattern = nullptr;
   bool acceptFailure = true;
   int confId = -1;
-  RDDepict::generateDepictionMatching2DStructure(
+  RDKit::MatchVectType match = RDDepict::generateDepictionMatching2DStructure(
       *d_mol, *(templateMol.d_mol), confId, refPattern, acceptFailure, false,
       allowRGroups);
+  if (!match.empty()) {
+    rj::Document doc;
+    doc.SetObject();
+    get_sss_json(d_mol.get(), templateMol.d_mol.get(), match, doc, doc);
+    rj::StringBuffer buffer;
+    rj::Writer<rj::StringBuffer> writer(buffer);
+    doc.Accept(writer);
+    res = buffer.GetString();
+  }
 #ifdef RDK_BUILD_COORDGEN_SUPPORT
   RDDepict::preferCoordGen = oprefer;
 #endif
-  return "";
+  return res;
 };
 
 

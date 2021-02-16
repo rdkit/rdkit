@@ -25,8 +25,14 @@ class JSMol {
     return get_svg(d_defaultWidth, d_defaultHeight);
   };
   std::string get_svg_with_highlights(const std::string &details) const;
-  std::string get_substruct_match(const JSMol &q) const;
-  std::string get_substruct_matches(const JSMol &q) const;
+  std::string get_substruct_match(const JSMol &q, bool allowRGroups) const;
+  std::string get_substruct_match(const JSMol &q) const {
+    return get_substruct_match(q, false);
+  };
+  std::string get_substruct_matches(const JSMol &q, bool allowRGroups) const {}
+  std::string get_substruct_matches(const JSMol &q) const {
+    return get_substruct_matches(q, false);
+  };
   std::string get_descriptors() const;
   std::string get_morgan_fp(unsigned int radius, unsigned int len) const;
   std::string get_morgan_fp() const { return get_morgan_fp(2, 2048); };

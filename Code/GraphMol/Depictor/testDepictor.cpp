@@ -1069,7 +1069,7 @@ void testGenerate2DDepictionRefPatternMatchVect() {
       << "-----------------------\n Test "
          "generateDepictionMatching2DStructure with refPattern and matchVect"
       << std::endl;
-  std::string indazoleMolblock = R"RES(
+  auto indazoleRef = R"RES(
      RDKit          2D
 
   9 10  0  0  0  0  0  0  0  0999 V2000
@@ -1092,8 +1092,7 @@ void testGenerate2DDepictionRefPatternMatchVect() {
   6  8  1  0
   7  9  1  0
   7  5  1  0
-M  END)RES";
-  std::unique_ptr<ROMol> indazoleRef(MolBlockToMol(indazoleMolblock));
+M  END)RES"_ctab;
   auto cycloheptylPyrazole = "c1cc(C2CCCCCC2)[nH]n1"_smiles;
   double msd;
   bool raised;
@@ -1192,7 +1191,7 @@ void testGenerate2DDepictionAllowRGroups() {
       << "-----------------------\n Test "
          "generateDepictionMatching2DStructure with allowRGroups"
       << std::endl;
-  std::string templateMolblock = R"RES(
+  auto templateRef = R"RES(
      RDKit          2D
 
   9  9  0  0  0  0  0  0  0  0999 V2000
@@ -1215,8 +1214,7 @@ void testGenerate2DDepictionAllowRGroups() {
   3  9  1  0
   2  7  1  0
 M  RGP  3   7   1   8   2   9   3
-M  END)RES";
-  std::unique_ptr<ROMol> templateRef(MolBlockToMol(templateMolblock));
+M  END)RES"_ctab;
   auto orthoMeta = "c1ccc(-c2ccc(-c3ccccc3)c(-c3ccccc3)c2)cc1"_smiles;
   auto ortho = "c1ccc(-c2ccccc2-c2ccccc2)cc1"_smiles;
   auto meta = "c1ccc(-c2cccc(-c3ccccc3)c2)cc1"_smiles;
@@ -1237,31 +1235,54 @@ M  END)RES";
     TEST_ASSERT(raised);
 
     // succeeds with allowRGroups = true
-    RDDepict::generateDepictionMatching2DStructure(*mol, *templateRef, -1,
-                                                   nullptr, false, false, true);
+    auto matchVect = RDDepict::generateDepictionMatching2DStructure(
+        *mol, *templateRef, -1, nullptr, false, false, true);
     TEST_ASSERT(mol->getNumConformers() == 1);
-    std::unique_ptr<ROMol> molHs(MolOps::addHs(static_cast<ROMol &>(*mol)));
-    auto matchVectVect = SubstructMatch(*molHs, *templateRef);
-    bool matchFound = false;
-    for (const auto &matchVect : matchVectVect) {
-      double msd = 0.0;
-      size_t nMatches = 0;
-      for (const auto &pair : matchVect) {
-        if (molHs->getAtomWithIdx(pair.second)->getAtomicNum() == 1) {
-          continue;
-        }
-        ++nMatches;
-        msd += (templateRef->getConformer().getAtomPos(pair.first) -
-                mol->getConformer().getAtomPos(pair.second))
-                   .lengthSq();
-      }
-      msd /= static_cast<double>(nMatches);
-      if (msd < 1.0e-4) {
-        matchFound = true;
-        break;
-      }
+    double msd = 0.0;
+    for (const auto &pair : matchVect) {
+      msd += (templateRef->getConformer().getAtomPos(pair.first) -
+              mol->getConformer().getAtomPos(pair.second))
+                 .lengthSq();
     }
-    TEST_ASSERT(matchFound);
+    msd /= static_cast<double>(matchVect.size());
+    TEST_ASSERT(msd < 1.0e-4);
+  }
+
+  // test that using a refPattern with R groups and a reference without works
+  auto pyridineRef = R"RES(
+     RDKit          2D
+
+  6  6  0  0  0  0  0  0  0  0999 V2000
+   -0.8929    1.0942    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -2.1919    0.3442    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -2.1919   -1.1558    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -0.8929   -1.9059    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    0.4060   -1.1558    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    0.4060    0.3442    0.0000 N   0  0  0  0  0  0  0  0  0  0  0  0
+  1  2  2  0
+  2  3  1  0
+  3  4  2  0
+  4  5  1  0
+  5  6  2  0
+  6  1  1  0
+M  END)RES"_ctab;
+  auto genericRefPatternWithRGroups = "[*:3]a1a([*:1])aa([*:2])aa1"_smarts;
+  std::unique_ptr<ROMol> pyridineRefHs(
+      MolOps::addHs(static_cast<const ROMol &>(*pyridineRef)));
+
+  for (auto mol : {ortho.get(), meta.get(), biphenyl.get(), phenyl.get()}) {
+    auto matchVect = RDDepict::generateDepictionMatching2DStructure(
+        *mol, *pyridineRef, -1, genericRefPatternWithRGroups.get(), false,
+        false, true);
+    TEST_ASSERT(mol->getNumConformers() == 1);
+    double msd = 0.0;
+    for (const auto &pair : matchVect) {
+      msd += (pyridineRef->getConformer().getAtomPos(pair.first) -
+              mol->getConformer().getAtomPos(pair.second))
+                 .lengthSq();
+    }
+    msd /= static_cast<double>(matchVect.size());
+    TEST_ASSERT(msd < 1.0e-4);
   }
   BOOST_LOG(rdInfoLog) << "Finished" << std::endl;
 }
