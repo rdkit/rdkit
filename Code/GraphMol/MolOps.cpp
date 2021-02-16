@@ -289,7 +289,7 @@ void assignRadicals(RWMol &mol) {
       const INT_VECT &valens =
           PeriodicTable::getTable()->getValenceList((*ai)->getAtomicNum());
       if (valens.size() > 1) {
-        BOOST_FOREACH (int val, valens) {
+        for (int val : valens) {
           if (val - totalValence + chg >= 0) {
             numRadicals = val - totalValence + chg;
             break;

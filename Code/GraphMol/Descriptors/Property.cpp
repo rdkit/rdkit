@@ -105,7 +105,7 @@ int Properties::registerProperty(PropertyFunctor *prop) {
 std::vector<std::string> Properties::getAvailableProperties() {
   registerDescriptors();
   std::vector<std::string> names;
-  BOOST_FOREACH (boost::shared_ptr<PropertyFunctor> prop,
+  for (boost::shared_ptr<PropertyFunctor> prop :
                  Properties::registry) {
     names.push_back(prop->getName());
   }
@@ -115,7 +115,7 @@ std::vector<std::string> Properties::getAvailableProperties() {
 boost::shared_ptr<PropertyFunctor> Properties::getProperty(
     const std::string &name) {
   registerDescriptors();
-  BOOST_FOREACH (boost::shared_ptr<PropertyFunctor> prop,
+  for (boost::shared_ptr<PropertyFunctor> prop :
                  Properties::registry) {
     if (prop.get() && prop->getName() == name) {
       return prop;
@@ -126,7 +126,7 @@ boost::shared_ptr<PropertyFunctor> Properties::getProperty(
 
 Properties::Properties() : m_properties() {
   registerDescriptors();
-  BOOST_FOREACH (boost::shared_ptr<PropertyFunctor> prop,
+  for (boost::shared_ptr<PropertyFunctor> prop :
                  Properties::registry) {
     m_properties.push_back(prop);
   }
@@ -134,14 +134,14 @@ Properties::Properties() : m_properties() {
 
 Properties::Properties(const std::vector<std::string> &propNames) {
   registerDescriptors();
-  BOOST_FOREACH (const std::string &name, propNames) {
+  for (const std::string &name : propNames) {
     m_properties.push_back(Properties::getProperty(name));
   }
 }
 
 std::vector<std::string> Properties::getPropertyNames() const {
   std::vector<std::string> names;
-  BOOST_FOREACH (boost::shared_ptr<PropertyFunctor> prop, m_properties) {
+  for (boost::shared_ptr<PropertyFunctor> prop : m_properties) {
     names.push_back(prop->getName());
   }
   return names;
@@ -151,7 +151,7 @@ std::vector<double> Properties::computeProperties(const RDKit::ROMol &mol,
                                                   bool annotate) const {
   std::vector<double> res;
   res.reserve(m_properties.size());
-  BOOST_FOREACH (boost::shared_ptr<PropertyFunctor> prop, m_properties) {
+  for (boost::shared_ptr<PropertyFunctor> prop : m_properties) {
     res.push_back((*prop)(mol));
     if (annotate) {
       mol.setProp<double>(prop->getName(), (*prop)(mol));
@@ -161,7 +161,7 @@ std::vector<double> Properties::computeProperties(const RDKit::ROMol &mol,
 }
 
 void Properties::annotateProperties(RDKit::ROMol &mol) const {
-  BOOST_FOREACH (boost::shared_ptr<PropertyFunctor> prop, m_properties) {
+  for (boost::shared_ptr<PropertyFunctor> prop : m_properties) {
     mol.setProp<double>(prop->getName(), (*prop)(mol));
   }
 }

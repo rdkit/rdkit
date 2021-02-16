@@ -19,6 +19,7 @@
 #include <boost/tokenizer.hpp>
 #include <boost/algorithm/string/trim.hpp>
 #include <boost/algorithm/string.hpp>
+#include <boost/range/adaptor/reversed.hpp>
 #include <cstdint>
 #include <vector>
 #include <algorithm>
@@ -442,7 +443,7 @@ ROMol *fragmentOnBonds(
   PRECONDITION((!nCutsPerAtom || nCutsPerAtom->size() == mol.getNumAtoms()),
                "bad nCutsPerAtom vector");
   if (nCutsPerAtom) {
-    BOOST_FOREACH (unsigned int &nCuts, *nCutsPerAtom) { nCuts = 0; }
+    for (unsigned int &nCuts : *nCutsPerAtom) { nCuts = 0; }
   }
   auto *res = new RWMol(mol);
   if (!mol.getNumAtoms()) {
@@ -451,7 +452,7 @@ ROMol *fragmentOnBonds(
 
   std::vector<Bond *> bondsToRemove;
   bondsToRemove.reserve(bondIndices.size());
-  BOOST_FOREACH (unsigned int bondIdx, bondIndices) {
+  for (unsigned int bondIdx : bondIndices) {
     bondsToRemove.push_back(res->getBondWithIdx(bondIdx));
   }
   for (unsigned int i = 0; i < bondsToRemove.size(); ++i) {
@@ -564,9 +565,8 @@ ROMol *fragmentOnBonds(const ROMol &mol,
 
   boost::dynamic_bitset<> bondsUsed(mol.getNumBonds(), 0);
   // the bond definitions are organized (more or less) general -> specific, so
-  // loop
-  // over them backwards
-  BOOST_REVERSE_FOREACH(const FragmenterBondType &fbt, bondPatterns) {
+  // loop over them backwards
+  for (const FragmenterBondType &fbt : boost::adaptors::reverse(bondPatterns)) {
     if (fbt.query->getNumAtoms() != 2 || fbt.query->getNumBonds() != 1) {
       BOOST_LOG(rdErrorLog)
           << "fragmentation queries must have 2 atoms and 1 bond" << std::endl;
@@ -579,7 +579,7 @@ ROMol *fragmentOnBonds(const ROMol &mol,
     // std::cerr<<"  >>> "<<fbt.atom1Label<<" "<<fbt.atom2Label<<std::endl;
     std::vector<MatchVectType> bondMatches;
     SubstructMatch(mol, *fbt.query.get(), bondMatches);
-    BOOST_FOREACH (const MatchVectType &mv, bondMatches) {
+    for (const MatchVectType &mv : bondMatches) {
       const Bond *bond = mol.getBondBetweenAtoms(mv[0].second, mv[1].second);
       // std::cerr<<"          "<<bond->getIdx()<<std::endl;
       TEST_ASSERT(bond);

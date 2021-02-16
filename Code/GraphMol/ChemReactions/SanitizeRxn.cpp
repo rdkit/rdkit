@@ -212,14 +212,14 @@ void fixRGroups(ChemicalReaction &rxn) {
       getMaxProp<unsigned int>(rxn, common_properties::_MolFileRLabel);
   int max_atom_map = getMaxProp<int>(rxn, common_properties::molAtomMapNumber);
 
-  BOOST_FOREACH (AtomInfo &rat, reactantAtomsToFix) {
+  for (AtomInfo &rat : reactantAtomsToFix) {
     bool found = false;
     unsigned int bestGuess = rat.bestGuessRLabel();
     if (!bestGuess) {
       continue;
     }
 
-    BOOST_FOREACH (AtomInfo &pat, productAtomsToFix) {
+    for (AtomInfo &pat : productAtomsToFix) {
       if (!pat.atom) {
         continue;
       }

@@ -172,7 +172,7 @@ double calcChiNv(const ROMol &mol, unsigned int n, bool force) {
   detail::hkDeltas(mol, hkDs, force);
   PATH_LIST ps = findAllPathsOfLengthN(mol, n + 1, false);
   double res = 0.0;
-  BOOST_FOREACH (PATH_TYPE p, ps) {
+  for (const PATH_TYPE& p : ps) {
     TEST_ASSERT(p.size() == n + 1);
     double accum = 1.0;
     for (unsigned int i = 0; i < n; ++i) {
@@ -191,7 +191,7 @@ double calcChiNn(const ROMol &mol, unsigned int n, bool force) {
   detail::nVals(mol, nVs, force);
   PATH_LIST ps = findAllPathsOfLengthN(mol, n + 1, false);
   double res = 0.0;
-  BOOST_FOREACH (PATH_TYPE p, ps) {
+  for (const PATH_TYPE& p : ps) {
     TEST_ASSERT(p.size() == n + 1);
     double accum = 1.0;
     for (unsigned int i = 0; i < n; ++i) {

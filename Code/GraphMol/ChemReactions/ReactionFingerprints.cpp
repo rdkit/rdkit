@@ -53,8 +53,8 @@ RDKit::SparseIntVect<std::uint32_t> *generateFingerprint(
       RDKit::SparseIntVect<std::int32_t> *tmp1 =
           RDKit::AtomPairs::getHashedAtomPairFingerprint(mol, fpSize);
       res = new RDKit::SparseIntVect<std::uint32_t>(fpSize);
-      BOOST_FOREACH (
-          RDKit::SparseIntVect<std::int32_t>::StorageType::value_type val,
+      for (
+          RDKit::SparseIntVect<std::int32_t>::StorageType::value_type val :
           tmp1->getNonzeroElements()) {
         res->setVal(static_cast<std::uint32_t>(val.first), val.second);
       }
@@ -64,8 +64,8 @@ RDKit::SparseIntVect<std::uint32_t> *generateFingerprint(
       RDKit::SparseIntVect<boost::int64_t> *tmp2 =
           RDKit::AtomPairs::getHashedTopologicalTorsionFingerprint(mol, fpSize);
       res = new RDKit::SparseIntVect<std::uint32_t>(fpSize);
-      BOOST_FOREACH (
-          RDKit::SparseIntVect<boost::int64_t>::StorageType::value_type val,
+      for (
+          RDKit::SparseIntVect<boost::int64_t>::StorageType::value_type val :
           tmp2->getNonzeroElements()) {
         res->setVal(static_cast<std::uint32_t>(val.first), val.second);
       }

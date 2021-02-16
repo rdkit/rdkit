@@ -619,7 +619,7 @@ void _setInRing14Bounds(const ROMol &mol, const Bond *bnd1, const Bond *bnd2,
     if (mol.getRingInfo()->numBondRings(bid2) > 1) {
       if (mol.getRingInfo()->numBondRings(bid1) == 1 &&
           mol.getRingInfo()->numBondRings(bid3) == 1) {
-        BOOST_FOREACH (const INT_VECT &br, mol.getRingInfo()->bondRings()) {
+        for (const INT_VECT &br : mol.getRingInfo()->bondRings()) {
           if (std::find(br.begin(), br.end(), bid1) != br.end()) {
             if (std::find(br.begin(), br.end(), bid3) != br.end()) {
               preferCis = true;

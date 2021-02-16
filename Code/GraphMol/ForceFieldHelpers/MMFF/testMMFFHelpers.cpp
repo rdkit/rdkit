@@ -948,7 +948,7 @@ void testMMFFMultiThread() {
     fut.get();
   }
 
-  BOOST_FOREACH (ROMol *mol, mols) { delete mol; }
+  for (ROMol *mol : mols) { delete mol; }
   BOOST_LOG(rdErrorLog) << "  done" << std::endl;
 }
 
