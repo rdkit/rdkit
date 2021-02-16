@@ -20,7 +20,6 @@
 #include <RDGeneral/types.h>
 #include <RDGeneral/RDProps.h>
 #include <GraphMol/details.h>
-#include <boost/foreach.hpp>
 
 namespace RDKit {
 class ROMol;
