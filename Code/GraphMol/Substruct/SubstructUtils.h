@@ -27,9 +27,14 @@ RDKIT_SUBSTRUCTMATCH_EXPORT bool chiralAtomCompat(const Atom* a1,
                                                   const Atom* a2);
 RDKIT_SUBSTRUCTMATCH_EXPORT bool bondCompat(const Bond* b1, const Bond* b2,
                                             const SubstructMatchParameters& ps);
+//! This postprocesses the passed substruct matches and returns
+//! the match that has the largest number of non-hydrogen atoms
+//! in correspondence of terminal dummy atoms
 RDKIT_SUBSTRUCTMATCH_EXPORT std::vector<MatchVectType>::const_iterator
 getMostSubstitutedCoreMatch(const ROMol& mol, const ROMol& core,
                             const std::vector<MatchVectType>& matches);
+//! This sorts in place the passed substruct matches by decreasing
+//! number of non-hydrogen atoms in correspondence of terminal dummy atoms
 RDKIT_SUBSTRUCTMATCH_EXPORT void sortMatchesByDegreeOfCoreSubstitution(
     const ROMol& mol, const ROMol& core, std::vector<MatchVectType>& matches);
 }  // namespace RDKit

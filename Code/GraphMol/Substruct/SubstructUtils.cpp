@@ -17,7 +17,10 @@ namespace RDKit {
 
 namespace detail {
 // Helper class used by the sortMatchesByDegreeOfCoreSubstitution
-// and getMostSubstitutedCoreMatch
+// and getMostSubstitutedCoreMatch functions. A penalty of 1.0 is assigned
+// to matches for each terminal dummy atom matching hydrogen.
+// To make the sort stable in case of ties, a fraction of 1.0
+// is added to each score based on match indices.
 class ScoreMatchesByDegreeOfCoreSubstitution {
  public:
   ScoreMatchesByDegreeOfCoreSubstitution(const RDKit::ROMol &mol,
