@@ -218,7 +218,9 @@ class RDKIT_SUBSTRUCTLIBRARY_EXPORT CachedTrustedSmilesMolHolder
     if (idx >= mols.size()) throw IndexErrorException(idx);
 
     RWMol *m = SmilesToMol(mols[idx], 0, false);
-    m->updatePropertyCache();
+    if(m) {
+      m->updatePropertyCache();
+    }
     return boost::shared_ptr<ROMol>(m);
   }
 
@@ -570,7 +572,7 @@ class RDKIT_SUBSTRUCTLIBRARY_EXPORT SubstructLibrary {
 
   //! Returns the molecule at the given index
   /*!
-    \param idx       Index of the molecule in the library
+    \param idx       Index of the molecule in the library (n.b. could contain null)
   */
   boost::shared_ptr<ROMol> getMol(unsigned int idx) const {
     // expects implementation to throw IndexError if out of range
@@ -580,7 +582,7 @@ class RDKIT_SUBSTRUCTLIBRARY_EXPORT SubstructLibrary {
 
   //! Returns the molecule at the given index
   /*!
-    \param idx       Index of the molecule in the library
+    \param idx       Index of the molecule in the library (n.b. could contain null)
   */
   boost::shared_ptr<ROMol> operator[](unsigned int idx) {
     // expects implementation to throw IndexError if out of range

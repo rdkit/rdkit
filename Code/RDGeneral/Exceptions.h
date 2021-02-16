@@ -16,7 +16,7 @@
 //! \brief Class to allow us to throw an \c IndexError from C++ and have
 //!         it make it back to Python
 //!
-class IndexErrorException : public std::runtime_error {
+class RDKIT_RDGENERAL_EXPORT IndexErrorException : public std::runtime_error {
  public:
   IndexErrorException(int i)
       : std::runtime_error("IndexErrorException"),
@@ -36,7 +36,7 @@ class IndexErrorException : public std::runtime_error {
 //! \brief Class to allow us to throw a \c ValueError from C++ and have
 //!         it make it back to Python
 //!
-class ValueErrorException : public std::runtime_error {
+class RDKIT_RDGENERAL_EXPORT ValueErrorException : public std::runtime_error {
  public:
   ValueErrorException(const std::string& i)
       : std::runtime_error("ValueErrorException"), _value(i){};
@@ -52,7 +52,7 @@ class ValueErrorException : public std::runtime_error {
 //! \brief Class to allow us to throw a \c KeyError from C++ and have
 //!         it make it back to Python
 //!
-class KeyErrorException : public std::runtime_error {
+class RDKIT_RDGENERAL_EXPORT KeyErrorException : public std::runtime_error {
  public:
   KeyErrorException(std::string key)
       : std::runtime_error("KeyErrorException"),

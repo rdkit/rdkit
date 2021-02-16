@@ -11,10 +11,11 @@
 
 #include <RDGeneral/export.h>
 #include <exception>
+#include <string>
 
 namespace RDKit {
 
-class GenericRDKitException : public std::exception {
+class RDKIT_RDGENERAL_EXPORT GenericRDKitException : public std::exception {
  public:
   GenericRDKitException(const std::string &i) : _value(i){};
   GenericRDKitException(const char *msg) : _value(msg){};
