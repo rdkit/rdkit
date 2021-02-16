@@ -428,6 +428,9 @@ class RDKIT_FILEPARSERS_EXPORT MaeMolSupplier : public MolSupplier {
 
   virtual void close() { dp_sInStream.reset(); }
 
+ private:
+  void moveToNextBlock();
+
  protected:
   bool df_sanitize, df_removeHs;
   std::shared_ptr<schrodinger::mae::Reader> d_reader;
