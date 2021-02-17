@@ -62,7 +62,7 @@ class RDKIT_TAUTOMERQUERY_EXPORT TautomerQuery {
 
   // Query fingerprint
   ExplicitBitVect *patternFingerprintTemplate(unsigned int fpSize = 2048U);
-  ExplicitBitVect *patternFingerprintTemplate(unsigned int fpSize = 2048U) const;
+
   // Static method to Fingerprint a target
   static ExplicitBitVect *patternFingerprintTarget(const ROMol &target,
                                                    unsigned int fpSize = 2048U);

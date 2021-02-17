@@ -271,12 +271,6 @@ ExplicitBitVect *TautomerQuery::patternFingerprintTemplate(
                                true);
 }
 
-ExplicitBitVect *TautomerQuery::patternFingerprintTemplate(
-    unsigned int fpSize) const {
-    return PatternFingerprintMol(*d_templateMolecule.get(), fpSize, nullptr, nullptr,
-                               true);
-}
-
 ExplicitBitVect *TautomerQuery::patternFingerprintTarget(const ROMol &target,
                                                          unsigned int fpSize) {
   return PatternFingerprintMol(target, fpSize, nullptr, nullptr, true);
