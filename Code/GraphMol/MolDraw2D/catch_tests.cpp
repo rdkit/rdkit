@@ -2389,3 +2389,65 @@ M  END)CTAB"));
     CHECK(outerBondsDistance / innerBondsDistance > 1.3f);
   }
 }
+
+TEST_CASE("draw atom list queries", "[extras]") {
+  SECTION("atom list") {
+    auto m = R"CTAB(
+  Mrv2102 02112115002D          
+
+  0  0  0     0  0            999 V3000
+M  V30 BEGIN CTAB
+M  V30 COUNTS 3 3 0 0 0
+M  V30 BEGIN ATOM
+M  V30 1 [N,O,S] 9.2083 12.8058 0 0
+M  V30 2 C 8.4383 11.4721 0 0
+M  V30 3 C 9.9783 11.4721 0 0
+M  V30 END ATOM
+M  V30 BEGIN BOND
+M  V30 1 1 1 2
+M  V30 2 1 3 1
+M  V30 3 1 2 3
+M  V30 END BOND
+M  V30 END CTAB
+M  END
+)CTAB"_ctab;
+    REQUIRE(m);
+    MolDraw2DSVG drawer(350, 300);
+    drawer.drawMolecule(*m, "atom list");
+    drawer.finishDrawing();
+    auto text = drawer.getDrawingText();
+    std::ofstream outs("testAtomLists-1.svg");
+    outs << text;
+    outs.flush();
+  }
+
+  SECTION("NOT atom list") {
+    auto m = R"CTAB(
+  Mrv2102 02112115032D          
+
+  0  0  0     0  0            999 V3000
+M  V30 BEGIN CTAB
+M  V30 COUNTS 3 3 0 0 0
+M  V30 BEGIN ATOM
+M  V30 1 "NOT [N,O,S]" 9.2083 12.8058 0 0
+M  V30 2 C 8.4383 11.4721 0 0
+M  V30 3 C 9.9783 11.4721 0 0
+M  V30 END ATOM
+M  V30 BEGIN BOND
+M  V30 1 1 1 2
+M  V30 2 1 3 1
+M  V30 3 1 2 3
+M  V30 END BOND
+M  V30 END CTAB
+M  END
+)CTAB"_ctab;
+    REQUIRE(m);
+    MolDraw2DSVG drawer(350, 300);
+    drawer.drawMolecule(*m, "NOT atom list");
+    drawer.finishDrawing();
+    auto text = drawer.getDrawingText();
+    std::ofstream outs("testAtomLists-2.svg");
+    outs << text;
+    outs.flush();
+  }
+}
