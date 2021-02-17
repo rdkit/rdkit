@@ -179,11 +179,16 @@ M  END`;
     var meta = RDKitModule.get_mol(meta_smiles);
     var biphenyl = RDKitModule.get_mol(biphenyl_smiles);
     var phenyl = RDKitModule.get_mol(phenyl_smiles);
-    ortho_meta.generate_aligned_coords(template_ref, false, true);
-    ortho.generate_aligned_coords(template_ref, false, true);
-    meta.generate_aligned_coords(template_ref, false, true);
-    biphenyl.generate_aligned_coords(template_ref, false, true);
-    phenyl.generate_aligned_coords(template_ref, false, true);
+    assert.equal(JSON.parse(ortho_meta.generate_aligned_coords(
+        template_ref, false, true)).atoms.length, 9);
+    assert.equal(JSON.parse(ortho.generate_aligned_coords(
+        template_ref, false, true)).atoms.length, 8);
+    assert.equal(JSON.parse(meta.generate_aligned_coords(
+        template_ref, false, true)).atoms.length, 8);
+    assert.equal(JSON.parse(biphenyl.generate_aligned_coords(
+        template_ref, false, true)).atoms.length, 7);
+    assert.equal(JSON.parse(phenyl.generate_aligned_coords(
+        template_ref, false, true)).atoms.length, 6);
 }
 
 

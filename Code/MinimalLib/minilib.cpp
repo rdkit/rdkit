@@ -216,8 +216,13 @@ void get_sss_json(const ROMol *d_mol, const ROMol *q_mol,
 
   rj::Value rjBonds(rj::kArrayType);
   for (const auto qbond : q_mol->bonds()) {
-    unsigned int idx1 = match[qbond->getBeginAtomIdx()].second;
-    unsigned int idx2 = match[qbond->getEndAtomIdx()].second;
+    unsigned int beginIdx = qbond->getBeginAtomIdx();
+    unsigned int endIdx = qbond->getEndAtomIdx();
+    if (beginIdx >= match.size() || endIdx >= match.size()) {
+      continue;
+    }
+    unsigned int idx1 = match[beginIdx].second;
+    unsigned int idx2 = match[endIdx].second;
     const auto bond = d_mol->getBondBetweenAtoms(idx1, idx2);
     if (bond != nullptr) {
       rjBonds.PushBack(bond->getIdx(), doc.GetAllocator());
