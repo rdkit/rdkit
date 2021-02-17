@@ -261,7 +261,10 @@ BOOST_PYTHON_MODULE(rdDepictor) {
   allowRGroups -  (optional) if True, terminal dummy atoms in the \n\
                   reference are ignored if they match an implicit \n\
                   hydrogen in the molecule, and a constrained \n\
-                  depiction is still attempted\n";
+                  depiction is still attempted\n\n\
+  RETURNS: a tuple of (refIdx, molIdx) tuples corresponding to the atom \n\
+           indices in mol constrained to have the same coordinates as atom \n\
+           indices in reference.\n";
   python::def(
       "GenerateDepictionMatching2DStructure",
       RDDepict::GenerateDepictionMatching2DStructure,
