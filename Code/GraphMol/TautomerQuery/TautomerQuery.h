@@ -28,7 +28,7 @@ class RDKIT_TAUTOMERQUERY_EXPORT TautomerQuery {
   // Tautomers of the query
   const std::vector<ROMOL_SPTR> d_tautomers;
   // Template query for substructure search
-  const ROMol *const d_templateMolecule;
+  const boost::shared_ptr<const ROMol> d_templateMolecule;
   // Tautomeric bonds and atoms
   const std::vector<size_t> d_modifiedAtoms;
   const std::vector<size_t> d_modifiedBonds;
@@ -62,7 +62,7 @@ class RDKIT_TAUTOMERQUERY_EXPORT TautomerQuery {
 
   // Query fingerprint
   ExplicitBitVect *patternFingerprintTemplate(unsigned int fpSize = 2048U);
-
+  ExplicitBitVect *patternFingerprintTemplate(unsigned int fpSize = 2048U) const;
   // Static method to Fingerprint a target
   static ExplicitBitVect *patternFingerprintTarget(const ROMol &target,
                                                    unsigned int fpSize = 2048U);
@@ -70,15 +70,13 @@ class RDKIT_TAUTOMERQUERY_EXPORT TautomerQuery {
   // accessors
 
   // pointer is owned by TautomerQuery
-  const ROMol & getTemplateMolecule() const { return *d_templateMolecule; }
+  const ROMol & getTemplateMolecule() const { return *d_templateMolecule.get(); }
 
   const std::vector<ROMOL_SPTR> getTautomers() const { return d_tautomers; }
 
   const std::vector<size_t> getModifiedAtoms() const { return d_modifiedAtoms; }
 
   const std::vector<size_t> getModifiedBonds() const { return d_modifiedBonds; }
-
-  ~TautomerQuery();
 
   friend class TautomerQueryMatcher;
 };
