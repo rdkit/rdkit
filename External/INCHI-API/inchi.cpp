@@ -70,7 +70,6 @@
 #include <algorithm>
 
 #include <RDGeneral/BoostStartInclude.h>
-#include <boost/foreach.hpp>
 #include <boost/tuple/tuple.hpp>
 #include <RDGeneral/BoostEndInclude.h>
 #ifdef RDK_TEST_MULTITHREADED
@@ -94,12 +93,11 @@ bool assignBondDirs(RWMol& mol, INT_PAIR_VECT& zBondPairs,
                     INT_PAIR_VECT& eBondPairs) {
   // bonds to assign
   std::set<int> pending;
-  INT_PAIR pair;
-  BOOST_FOREACH (pair, zBondPairs) {
+  for (const auto pair : zBondPairs) {
     pending.insert(pair.first);
     pending.insert(pair.second);
   }
-  BOOST_FOREACH (pair, eBondPairs) {
+  for (const auto pair : eBondPairs) {
     pending.insert(pair.first);
     pending.insert(pair.second);
   }
@@ -140,7 +138,7 @@ bool assignBondDirs(RWMol& mol, INT_PAIR_VECT& zBondPairs,
         for (int _ = 0; _ < 2; _++) {
           INT_PAIR_VECT* _rules = _ == 0 ? &zBondPairs : &eBondPairs;
           Bond::BondDir _dir = _ == 0 ? dir : otherDir;
-          BOOST_FOREACH (pair, *_rules) {
+          for (const auto pair : *_rules) {
             int other = -1;
             if (pair.first == curBondIdx) {
               other = pair.second;
@@ -162,7 +160,7 @@ bool assignBondDirs(RWMol& mol, INT_PAIR_VECT& zBondPairs,
                 queue.push(std::make_pair(otherBond->getIdx(), _dir));
               }  // end if otherBond's bond direction check
             }    // end if there is a match
-          }      // end boost_foreach
+          }      // end loop over pairs in _rules
         }        // end for _ to go thru rule sets
       }          // end if this bond is assigned
     }            // end if queue is empty
@@ -875,9 +873,8 @@ bool _Valence5NCleanUpA(RWMol& mol, Atom* atom) {
     return false;
   }
 
-  MatchVectType match;
   std::stack<Bond*> bestPath;
-  BOOST_FOREACH (match, fgpMatches) {
+  for (const auto& match : fgpMatches) {
     // does the match contains the current atom?
     if (match[0].second == static_cast<int>(atom->getIdx()) ||
         match[1].second == static_cast<int>(atom->getIdx())) {
@@ -1874,9 +1871,8 @@ std::string MolToInchi(const ROMol& mol, ExtraInchiReturnValues& rv,
       }
       // std::sort(neighbors.begin(), neighbors.end());
       unsigned char nid = 0;
-      std::pair<unsigned int, unsigned int> p;
       // std::cerr<<" at: "<<atom->getIdx();
-      BOOST_FOREACH (p, neighbors) {
+      for (const auto p : neighbors) {
         stereo0D.neighbor[nid++] = p.second;
         // std::cerr<<" "<<p.second;
       }

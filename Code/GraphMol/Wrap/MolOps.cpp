@@ -636,7 +636,9 @@ ExplicitBitVect *wrapRDKFingerprintMol(
     auto &pyl = static_cast<python::list &>(atomBits);
     for (unsigned int i = 0; i < mol.getNumAtoms(); ++i) {
       python::list tmp;
-      BOOST_FOREACH (std::uint32_t v, (*lAtomBits)[i]) { tmp.append(v); }
+      for (auto v : (*lAtomBits)[i]) {
+        tmp.append(v);
+      }
       pyl.append(tmp);
     }
     delete lAtomBits;
@@ -692,7 +694,9 @@ SparseIntVect<boost::uint64_t> *wrapUnfoldedRDKFingerprintMol(
     auto &pyl = static_cast<python::list &>(atomBits);
     for (unsigned int i = 0; i < mol.getNumAtoms(); ++i) {
       python::list tmp;
-      BOOST_FOREACH (boost::uint64_t v, (*lAtomBits)[i]) { tmp.append(v); }
+      for (auto v : (*lAtomBits)[i]) {
+        tmp.append(v);
+      }
       pyl.append(tmp);
     }
     delete lAtomBits;

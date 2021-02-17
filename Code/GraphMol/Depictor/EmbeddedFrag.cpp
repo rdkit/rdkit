@@ -1675,7 +1675,7 @@ void EmbeddedFrag::flipAboutBond(unsigned int bondId, bool flipEnd) {
   }
   // if there are fixed atoms, look at the atoms on the "end side"
   if (nAtomsFixed) {
-    BOOST_FOREACH (int endAtomId, endSideAids) {
+    for (auto endAtomId : endSideAids) {
       if (d_eatoms[endAtomId].df_fixed) {
         ++nEndAtomsFixed;
       }

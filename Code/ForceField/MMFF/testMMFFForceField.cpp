@@ -402,7 +402,7 @@ int mmffValidationSuite(int argc, char *argv[]) {
           }
           delete mmffMolProperties;
         }
-        BOOST_FOREACH (ROMol *m, molVec) { delete m; }
+        for (auto m : molVec) { delete m; }
         sdfWriter->close();
         delete sdfWriter;
         rdkFStream.close();

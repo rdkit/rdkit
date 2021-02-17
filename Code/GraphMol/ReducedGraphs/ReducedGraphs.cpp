@@ -172,8 +172,8 @@ RDNumeric::DoubleVector *generateErGFingerprintForReducedGraph(
       if (dist < rdcast<int>(minPath) || dist > rdcast<int>(maxPath)) {
         continue;
       }
-      BOOST_FOREACH (int ti, tvs[i]) {
-        BOOST_FOREACH (int tj, tvs[j]) {
+      for (auto ti : tvs[i]) {
+        for (auto tj : tvs[j]) {
           int ijMin = std::min(ti, tj);
           int ijMax = std::max(ti, tj);
           int block;
@@ -224,11 +224,11 @@ ROMol *generateMolExtendedReducedGraph(
   }
 
   // start by adding dummies at the ring centroids
-  BOOST_FOREACH (const INT_VECT &ring, mol.getRingInfo()->atomRings()) {
+  for (const auto &ring : mol.getRingInfo()->atomRings()) {
     if (ring.size() < 8) {
       int nIdx = res->addAtom(new Atom(0), false, true);
       int nAromatic = 0, nSP2 = 0;
-      BOOST_FOREACH (int idx, ring) {
+      for (auto idx : ring) {
         res->addBond(idx, nIdx, Bond::SINGLE);
         if (mol.getAtomWithIdx(idx)->getIsAromatic()) {
           ++nAromatic;

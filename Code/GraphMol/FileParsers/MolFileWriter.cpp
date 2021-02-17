@@ -313,7 +313,7 @@ const std::string GetMolFileQueryInfo(
       } else {
         ss << " F ";
       }
-      BOOST_FOREACH (int val, vals) {
+      for (auto val : vals) {
         ss << std::setw(4) << std::left
            << (PeriodicTable::getTable()->getElementSymbol(val));
       }

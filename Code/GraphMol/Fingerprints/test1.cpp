@@ -25,7 +25,6 @@
 #include <RDGeneral/RDLog.h>
 #include <string>
 #include <boost/version.hpp>
-#include <boost/foreach.hpp>
 
 using namespace RDKit;
 
@@ -1404,14 +1403,12 @@ void testAtomPairs() {
   c1 = AtomPairs::getAtomCode(mol->getAtomWithIdx(0));
   c2 = AtomPairs::getAtomCode(mol->getAtomWithIdx(1));
   c3 = AtomPairs::getAtomCode(mol->getAtomWithIdx(2));
-  tgt = 1 |
-        (std::min(c1, c2) | std::max(c1, c2) << AtomPairs::codeSize)
-            << AtomPairs::numPathBits;
+  tgt = 1 | (std::min(c1, c2) | std::max(c1, c2) << AtomPairs::codeSize)
+                << AtomPairs::numPathBits;
   TEST_ASSERT(AtomPairs::getAtomPairCode(c1, c2, 1) == tgt);
   TEST_ASSERT(AtomPairs::getAtomPairCode(c2, c1, 1) == tgt);
-  tgt = 2 |
-        (std::min(c1, c3) | std::max(c1, c3) << AtomPairs::codeSize)
-            << AtomPairs::numPathBits;
+  tgt = 2 | (std::min(c1, c3) | std::max(c1, c3) << AtomPairs::codeSize)
+                << AtomPairs::numPathBits;
   TEST_ASSERT(AtomPairs::getAtomPairCode(c1, c3, 2) == tgt);
   TEST_ASSERT(AtomPairs::getAtomPairCode(c3, c1, 2) == tgt);
 
@@ -1532,9 +1529,8 @@ void testTorsions() {
   c2 = AtomPairs::getAtomCode(mol->getAtomWithIdx(1)) - 2;
   c3 = AtomPairs::getAtomCode(mol->getAtomWithIdx(2)) - 2;
   c4 = AtomPairs::getAtomCode(mol->getAtomWithIdx(3)) - 1;
-  tgt = c1 |
-        (c2 | (c3 | c4 << AtomPairs::codeSize) << AtomPairs::codeSize)
-            << AtomPairs::codeSize;
+  tgt = c1 | (c2 | (c3 | c4 << AtomPairs::codeSize) << AtomPairs::codeSize)
+                 << AtomPairs::codeSize;
   codes.clear();
   codes.push_back(static_cast<unsigned int>(c1));
   codes.push_back(static_cast<unsigned int>(c2));
@@ -2322,7 +2318,9 @@ void testMACCS() {
                               131, 139, 151, 158, 160, 161, 164};
     std::vector<unsigned int> onBits(
         _onBits, _onBits + sizeof(_onBits) / sizeof(*_onBits));
-    BOOST_FOREACH (unsigned int ob, onBits) { TEST_ASSERT((*fp1)[ob]); }
+    for (auto ob : onBits) {
+      TEST_ASSERT((*fp1)[ob]);
+    }
     delete m1;
     delete fp1;
   }
@@ -2335,7 +2333,9 @@ void testMACCS() {
     unsigned int _onBits[] = {74, 114, 149, 155, 160};
     std::vector<unsigned int> onBits(
         _onBits, _onBits + sizeof(_onBits) / sizeof(*_onBits));
-    BOOST_FOREACH (unsigned int ob, onBits) { TEST_ASSERT((*fp1)[ob]); }
+    for (auto ob : onBits) {
+      TEST_ASSERT((*fp1)[ob]);
+    }
     delete m1;
     delete fp1;
   }
@@ -2348,7 +2348,9 @@ void testMACCS() {
     unsigned int _onBits[] = {93, 139, 141, 149, 157, 160, 164, 166};
     std::vector<unsigned int> onBits(
         _onBits, _onBits + sizeof(_onBits) / sizeof(*_onBits));
-    BOOST_FOREACH (unsigned int ob, onBits) { TEST_ASSERT((*fp1)[ob]); }
+    for (auto ob : onBits) {
+      TEST_ASSERT((*fp1)[ob]);
+    }
     delete m1;
     delete fp1;
   }
@@ -3035,7 +3037,7 @@ void testMultithreadedPatternFP() {
   }
   tg.clear();
 
-  BOOST_FOREACH (const ROMol *mol, mols) {
+  for (const auto *mol : mols) {
     ExplicitBitVect *bv = PatternFingerprintMol(*mol, 2048);
     referenceData.push_back(bv);
   }
