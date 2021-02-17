@@ -616,7 +616,7 @@ like to align them to that template, you can do so as follows:
   0
   >>> ms = [Chem.MolFromSmiles(smi) for smi in ('OCCc1ccn2cnccc12','C1CC1Oc1cc2ccncn2c1','CNC(=O)c1nccc2cccn12')]
   >>> for m in ms:
-  ...     AllChem.GenerateDepictionMatching2DStructure(m,template)
+  ...     _ = AllChem.GenerateDepictionMatching2DStructure(m,template)
 
 Running this process for the molecules above gives:
 
@@ -855,7 +855,7 @@ aligned. This is easy enough to do:
   14
   >>> AllChem.Compute2DCoords(p)
   0
-  >>> for m in subms: AllChem.GenerateDepictionMatching2DStructure(m,p)
+  >>> for m in subms: _ = AllChem.GenerateDepictionMatching2DStructure(m,p)
   >>> img=Draw.MolsToGridImage(subms,molsPerRow=4,subImgSize=(200,200),legends=[x.GetProp("_Name") for x in subms])    # doctest: +SKIP
   >>> img.save('images/cdk2_molgrid.aligned.o.png')    # doctest: +SKIP
 
