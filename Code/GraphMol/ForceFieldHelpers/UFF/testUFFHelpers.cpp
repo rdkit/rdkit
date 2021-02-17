@@ -1278,7 +1278,7 @@ void testUFFMultiThread() {
     fut.get();
   }
 
-  for (ROMol *mol : mols) { delete mol; }
+  for (auto *mol : mols) { delete mol; }
   BOOST_LOG(rdErrorLog) << "  done" << std::endl;
 }
 

@@ -458,7 +458,7 @@ std::vector<SparseIntVect<std::uint64_t> *> *getSparseCountFPBulk(
   }
   auto *res = new std::vector<SparseIntVect<std::uint64_t> *>();
 
-  for (const ROMol *mol : molVector) {
+  for (const auto *mol : molVector) {
     res->push_back(generator->getSparseCountFingerprint(*mol));
   }
 
@@ -494,7 +494,7 @@ std::vector<SparseBitVect *> *getSparseFPBulk(
   }
   auto *res = new std::vector<SparseBitVect *>();
 
-  for (const ROMol *mol : molVector) {
+  for (const auto *mol : molVector) {
     res->push_back(generator->getSparseFingerprint(*mol));
   }
 
@@ -530,7 +530,7 @@ std::vector<SparseIntVect<std::uint32_t> *> *getCountFPBulk(
   }
   auto *res = new std::vector<SparseIntVect<std::uint32_t> *>();
 
-  for (const ROMol *mol : molVector) {
+  for (const auto *mol : molVector) {
     res->push_back(generator->getCountFingerprint(*mol));
   }
 
@@ -566,7 +566,7 @@ std::vector<ExplicitBitVect *> *getFPBulk(
   }
   auto *res = new std::vector<ExplicitBitVect *>();
 
-  for (const ROMol *mol : molVector) {
+  for (const auto *mol : molVector) {
     res->push_back(generator->getFingerprint(*mol));
   }
 

@@ -46,7 +46,6 @@
 #include <Numerics/Matrix.h>
 #include <Numerics/SquareMatrix.h>
 #include <Numerics/SymmMatrix.h>
-#include <boost/foreach.hpp>
 #include <cmath>
 #include <Eigen/Dense>
 #include <Eigen/SVD>

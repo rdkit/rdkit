@@ -549,8 +549,8 @@ void Kekulize(RWMol &mol, bool markAtomsBonds, unsigned int maxBackTracks) {
       MolOps::findSSSR(mol, allrings);
     }
     arings.reserve(allrings.size());
-    for (INT_VECT &ring : allrings) {
-      for (int ai : ring) {
+    for (auto &ring : allrings) {
+      for (auto ai : ring) {
         if (!dummyAts[ai]) {
           arings.push_back(ring);
           break;
