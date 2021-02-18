@@ -3847,7 +3847,7 @@ string MolDraw2D::getAtomSymbol(const RDKit::Atom &atom,
     symbol = getAtomListText(atom);
   } else if (isComplexQuery(&atom)) {
     symbol = "?";
-  } else if (drawOptions().atomLabelDeuteriumTritium &&
+  } else if (drawOptions().atomLabelDeuteriumTritium && drawOptions().isotopeLabels &&
              atom.getAtomicNum() == 1 && (iso == 2 || iso == 3)) {
     symbol = ((iso == 2) ? "D" : "T");
     iso = 0;
@@ -3894,7 +3894,8 @@ string MolDraw2D::getAtomSymbol(const RDKit::Atom &atom,
       postText.push_back(h);
     }
 
-    if (0 != iso) {
+    if (0 != iso && ((drawOptions().isotopeLabels && atom.getAtomicNum() != 0) ||
+        (drawOptions().dummyIsotopeLabels && atom.getAtomicNum() == 0))) {
       // isotope always comes before the symbol
       preText.push_back(std::string("<sup>") + std::to_string(iso) +
                         std::string("</sup>"));

@@ -622,5 +622,41 @@ M  END''')
     txt = d2d.GetDrawingText()
     self.assertTrue('>8</text>' in txt)
 
+  def testIsotopeLabels(self):
+    m = Chem.MolFromSmiles("[1*:1]c1cc([2*:2])c([3*:3])c[14c]1")
+    self.assertIsNotNone(m)
+    d2d = Draw.MolDraw2DSVG(300, 300)
+    d2d.DrawMolecule(m)
+    d2d.FinishDrawing()
+    textIsoDummyIso = d2d.GetDrawingText()
+    nLinesIsoDummyIso = len(textIsoDummyIso.split("\n"))
+
+    d2d = Draw.MolDraw2DSVG(300, 300)
+    d2d.drawOptions().isotopeLabels = False
+    d2d.DrawMolecule(m)
+    d2d.FinishDrawing()
+    textNoIsoDummyIso = d2d.GetDrawingText()
+    nLinesNoIsoDummyIso = len(textNoIsoDummyIso.split("\n"))
+
+    d2d = Draw.MolDraw2DSVG(300, 300)
+    d2d.drawOptions().dummyIsotopeLabels = False
+    d2d.DrawMolecule(m)
+    d2d.FinishDrawing()
+    textIsoNoDummyIso = d2d.GetDrawingText()
+    nLinesIsoNoDummyIso = len(textIsoNoDummyIso.split("\n"))
+
+    d2d = Draw.MolDraw2DSVG(300, 300)
+    d2d.drawOptions().isotopeLabels = False
+    d2d.drawOptions().dummyIsotopeLabels = False
+    d2d.DrawMolecule(m)
+    d2d.FinishDrawing()
+    textNoIsoNoDummyIso = d2d.GetDrawingText()
+    nLinesNoIsoNoDummyIso = len(textNoIsoNoDummyIso.split("\n"))
+
+    res = [nLinesNoIsoNoDummyIso, nLinesIsoNoDummyIso, nLinesNoIsoDummyIso, nLinesIsoDummyIso]
+    resSorted = sorted(res)
+    print(resSorted)
+    self.assertTrue(all(resItem == resSorted[i] for i, resItem in enumerate(res)))
+
 if __name__ == "__main__":
   unittest.main()

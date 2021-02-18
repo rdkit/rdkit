@@ -2451,3 +2451,71 @@ M  END
     outs.flush();
   }
 }
+
+TEST_CASE("test the options that toggle isotope labels", "[drawing]") {
+  SECTION("test all permutations") {
+    auto m = "[1*:1]c1cc([2*:2])c([3*:3])c[14c]1"_smiles;
+    REQUIRE(m);
+    std::string line;
+    std::string textIsoDummyIso;
+    std::string textNoIsoDummyIso;
+    std::string textIsoNoDummyIso;
+    std::string textNoIsoNoDummyIso;
+    size_t nLinesIsoDummyIso;
+    size_t nLinesNoIsoDummyIso;
+    size_t nLinesIsoNoDummyIso;
+    size_t nLinesNoIsoNoDummyIso;
+    {
+      MolDraw2DSVG drawer(300, 300);
+      drawer.drawMolecule(*m);
+      drawer.finishDrawing();
+      textIsoDummyIso = drawer.getDrawingText();
+      std::ofstream outs("testIsoDummyIso.svg");
+      outs << textIsoDummyIso;
+      outs.flush();
+      std::istringstream ins(textIsoDummyIso);
+      for (nLinesIsoDummyIso = 0; std::getline(ins, line); ++nLinesIsoDummyIso);
+    }
+    {
+      MolDraw2DSVG drawer(300, 300);
+      drawer.drawMolecule(*m);
+      drawer.finishDrawing();
+      drawer.drawOptions().isotopeLabels = false;
+      textNoIsoDummyIso = drawer.getDrawingText();
+      std::ofstream outs("testNoIsoDummyIso.svg");
+      outs << textNoIsoDummyIso;
+      outs.flush();
+      std::istringstream ins(textIsoDummyIso);
+      for (nLinesNoIsoDummyIso = 0; std::getline(ins, line); ++nLinesNoIsoDummyIso);
+    }
+    {
+      MolDraw2DSVG drawer(300, 300);
+      drawer.drawMolecule(*m);
+      drawer.finishDrawing();
+      drawer.drawOptions().dummyIsotopeLabels = false;
+      textIsoNoDummyIso = drawer.getDrawingText();
+      std::ofstream outs("testIsoNoDummyIso.svg");
+      outs << textIsoNoDummyIso;
+      outs.flush();
+      std::istringstream ins(textIsoNoDummyIso);
+      for (nLinesIsoNoDummyIso = 0; std::getline(ins, line); ++nLinesIsoNoDummyIso);
+    }
+    {
+      MolDraw2DSVG drawer(300, 300);
+      drawer.drawMolecule(*m);
+      drawer.finishDrawing();
+      drawer.drawOptions().isotopeLabels = false;
+      drawer.drawOptions().dummyIsotopeLabels = false;
+      textNoIsoNoDummyIso = drawer.getDrawingText();
+      std::ofstream outs("testNoIsoNoDummyIso.svg");
+      outs << textNoIsoNoDummyIso;
+      outs.flush();
+      std::istringstream ins(textNoIsoNoDummyIso);
+      for (nLinesNoIsoNoDummyIso = 0; std::getline(ins, line); ++nLinesNoIsoNoDummyIso);
+    }
+    std::vector<size_t> res{nLinesNoIsoNoDummyIso, nLinesNoIsoDummyIso, nLinesIsoNoDummyIso, nLinesIsoDummyIso};
+    std::vector<size_t> resSorted(res);
+    std::sort(resSorted.begin(), resSorted.end());
+    CHECK(res == resSorted);
+  }
+}

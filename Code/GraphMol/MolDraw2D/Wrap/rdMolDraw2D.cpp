@@ -697,9 +697,13 @@ BOOST_PYTHON_MODULE(rdMolDraw2D) {
                      &RDKit::MolDrawOptions::addStereoAnnotation,
                      "adds R/S and E/Z to drawings. Default False.")
       .def_readwrite("addAtomIndices", &RDKit::MolDrawOptions::addAtomIndices,
-                     "adds atom indices drawings. Default False.")
+                     "adds atom indices to drawings. Default False.")
       .def_readwrite("addBondIndices", &RDKit::MolDrawOptions::addBondIndices,
-                     "adds bond indices drawings. Default False.")
+                     "adds bond indices to drawings. Default False.")
+      .def_readwrite("isotopeLabels", &RDKit::MolDrawOptions::isotopeLabels,
+                     "adds isotope labels on non-dummy atoms. Default True.")
+      .def_readwrite("dummyIsotopeLabels", &RDKit::MolDrawOptions::dummyIsotopeLabels,
+                     "adds isotope labels on dummy atoms. Default True.")
       .def_readwrite("atomHighlightsAreCircles",
                      &RDKit::MolDrawOptions::atomHighlightsAreCircles,
                      "forces atom highlights always to be circles."

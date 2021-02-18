@@ -272,6 +272,8 @@ struct RDKIT_MOLDRAW2D_EXPORT MolDrawOptions {
                         // before drawing.
   bool addAtomIndices = false;  // adds atom indices to drawings.
   bool addBondIndices = false;  // adds bond indices to drawings.
+  bool isotopeLabels = true;  // adds isotope to non-dummy atoms.
+  bool dummyIsotopeLabels = true;  // adds isotope labels to dummy atoms.
 
   bool addStereoAnnotation = false;       // adds E/Z and R/S to drawings.
   bool atomHighlightsAreCircles = false;  // forces atom highlights always to be
