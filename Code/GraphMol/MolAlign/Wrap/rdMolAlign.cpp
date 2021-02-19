@@ -28,39 +28,12 @@
 namespace python = boost::python;
 
 namespace RDKit {
-RDNumeric::DoubleVector *_translateWeights(python::object weights) {
-  PySequenceHolder<double> wts(weights);
-  unsigned int nwts = wts.size();
-  RDNumeric::DoubleVector *wtsVec;
-  wtsVec = nullptr;
-  unsigned int i;
-  if (nwts > 0) {
-    wtsVec = new RDNumeric::DoubleVector(nwts);
-    for (i = 0; i < nwts; i++) {
-      wtsVec->setVal(i, wts[i]);
-    }
-  }
-  return wtsVec;
-}
-
-std::vector<unsigned int> *_translateIds(python::object ids) {
-  PySequenceHolder<unsigned int> idsSeq(ids);
-  std::vector<unsigned int> *ivec = nullptr;
-  if (idsSeq.size() > 0) {
-    ivec = new std::vector<unsigned int>;
-    for (unsigned int i = 0; i < idsSeq.size(); ++i) {
-      ivec->push_back(idsSeq[i]);
-    }
-  }
-  return ivec;
-}
-
 void alignMolConfs(ROMol &mol, python::object atomIds, python::object confIds,
                    python::object weights, bool reflect, unsigned int maxIters,
                    python::object RMSlist) {
-  RDNumeric::DoubleVector *wtsVec = _translateWeights(weights);
-  std::vector<unsigned int> *aIds = _translateIds(atomIds);
-  std::vector<unsigned int> *cIds = _translateIds(confIds);
+  RDNumeric::DoubleVector *wtsVec = translateDoubleSeq(weights);
+  std::vector<unsigned int> *aIds = translateIntSeq(atomIds);
+  std::vector<unsigned int> *cIds = translateIntSeq(confIds);
   std::vector<double> *RMSvector = nullptr;
   if (RMSlist != python::object()) {
     RMSvector = new std::vector<double>();
@@ -122,7 +95,7 @@ PyObject *getMolAlignTransform(const ROMol &prbMol, const ROMol &refMol,
   } else {
     nAtms = prbMol.getNumAtoms();
   }
-  RDNumeric::DoubleVector *wtsVec = _translateWeights(weights);
+  RDNumeric::DoubleVector *wtsVec = translateDoubleSeq(weights);
   if (wtsVec) {
     if (wtsVec->size() != nAtms) {
       throw_value_error("Incorrect number of weights specified");
@@ -156,7 +129,7 @@ double AlignMolecule(ROMol &prbMol, const ROMol &refMol, int prbCid = -1,
   } else {
     nAtms = prbMol.getNumAtoms();
   }
-  RDNumeric::DoubleVector *wtsVec = _translateWeights(weights);
+  RDNumeric::DoubleVector *wtsVec = translateDoubleSeq(weights);
   if (wtsVec) {
     if (wtsVec->size() != nAtms) {
       throw_value_error("Incorrect number of weights specified");
@@ -201,7 +174,7 @@ double CalcRMS(ROMol &prbMol, ROMol &refMol, int prbCid, int refCid,
   if (map != python::object()) {
     aMapVec = translateAtomMapSeq(map);
   }
-  RDNumeric::DoubleVector *wtsVec = _translateWeights(weights);
+  RDNumeric::DoubleVector *wtsVec = translateDoubleSeq(weights);
   double rmsd;
   {
     NOGIL gil;
@@ -259,7 +232,7 @@ PyO3A *getMMFFO3A(ROMol &prbMol, ROMol &refMol, python::object prbProps,
       (python::len(constraintMap) ? translateAtomMap(constraintMap) : nullptr);
   RDNumeric::DoubleVector *cWts = nullptr;
   if (cMap) {
-    cWts = _translateWeights(constraintWeights);
+    cWts = translateDoubleSeq(constraintWeights);
     if (cWts) {
       if ((*cMap).size() != (*cWts).size()) {
         throw_value_error(
@@ -337,7 +310,7 @@ python::tuple getMMFFO3AForConfs(
       (python::len(constraintMap) ? translateAtomMap(constraintMap) : nullptr);
   RDNumeric::DoubleVector *cWts = nullptr;
   if (cMap) {
-    cWts = _translateWeights(constraintWeights);
+    cWts = translateDoubleSeq(constraintWeights);
     if (cWts) {
       if ((*cMap).size() != (*cWts).size()) {
         throw_value_error(
@@ -420,7 +393,7 @@ PyO3A *getCrippenO3A(ROMol &prbMol, ROMol &refMol,
       (python::len(constraintMap) ? translateAtomMap(constraintMap) : nullptr);
   RDNumeric::DoubleVector *cWts = nullptr;
   if (cMap) {
-    cWts = _translateWeights(constraintWeights);
+    cWts = translateDoubleSeq(constraintWeights);
     if (cWts) {
       if ((*cMap).size() != (*cWts).size()) {
         throw_value_error(
@@ -501,7 +474,7 @@ python::tuple getCrippenO3AForConfs(
       (python::len(constraintMap) ? translateAtomMap(constraintMap) : nullptr);
   RDNumeric::DoubleVector *cWts = nullptr;
   if (cMap) {
-    cWts = _translateWeights(constraintWeights);
+    cWts = translateDoubleSeq(constraintWeights);
     if (cWts) {
       if ((*cMap).size() != (*cWts).size()) {
         throw_value_error(

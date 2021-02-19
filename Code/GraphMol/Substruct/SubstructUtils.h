@@ -33,10 +33,12 @@ RDKIT_SUBSTRUCTMATCH_EXPORT bool bondCompat(const Bond* b1, const Bond* b2,
 RDKIT_SUBSTRUCTMATCH_EXPORT const MatchVectType& getMostSubstitutedCoreMatch(
     const ROMol& mol, const ROMol& core,
     const std::vector<MatchVectType>& matches);
-//! This sorts in place the passed substruct matches by decreasing
+//! This returns a copy of the passed substruct matches sorted by decreasing
 //! number of non-hydrogen atoms in correspondence of terminal dummy atoms
-RDKIT_SUBSTRUCTMATCH_EXPORT void sortMatchesByDegreeOfCoreSubstitution(
-    const ROMol& mol, const ROMol& core, std::vector<MatchVectType>& matches);
+RDKIT_SUBSTRUCTMATCH_EXPORT std::vector<MatchVectType>
+sortMatchesByDegreeOfCoreSubstitution(
+    const ROMol& mol, const ROMol& core,
+    const std::vector<MatchVectType>& matches);
 }  // namespace RDKit
 
 #endif

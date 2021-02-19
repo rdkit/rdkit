@@ -166,7 +166,10 @@ RDKIT_DEPICTOR_EXPORT unsigned int compute2DCoordsMimicDistMat(
                          reference are ignored if they match an implicit
                          hydrogen in the molecule, and a constrained
                          depiction is still attempted
+  RETURNS:
 
+  \return MatchVectType with (queryAtomidx, molAtomIdx) pairs used for
+          the constrained depiction
 */
 RDKIT_DEPICTOR_EXPORT RDKit::MatchVectType generateDepictionMatching2DStructure(
     RDKit::ROMol &mol, const RDKit::ROMol &reference, int confId = -1,
@@ -199,8 +202,6 @@ RDKIT_DEPICTOR_EXPORT RDKit::MatchVectType generateDepictionMatching2DStructure(
   \param confId -       (optional) the id of the reference conformation to use
   \param forceRDKit - (optional) use RDKit to generate coordinates even if
                       preferCoordGen is set to true
-  \return MatchVectType with (queryAtomidx, molAtomIdx) pairs used for
-          the constrained depiction
 */
 RDKIT_DEPICTOR_EXPORT void generateDepictionMatching2DStructure(
     RDKit::ROMol &mol, const RDKit::ROMol &reference,

@@ -22,11 +22,14 @@
 #include <GraphMol/RDKitQueries.h>
 #include <GraphMol/MonomerInfo.h>
 #include <GraphMol/Substruct/SubstructMatch.h>
+#include <GraphMol/Substruct/SubstructUtils.h>
+#include <GraphMol/Wrap/substructmethods.h>
 #include <GraphMol/Subgraphs/Subgraphs.h>
 #include <GraphMol/Subgraphs/SubgraphUtils.h>
 #include <GraphMol/Fingerprints/Fingerprints.h>
 #include <GraphMol/FileParsers/MolFileStereochem.h>
 #include <GraphMol/ChemTransforms/ChemTransforms.h>
+#include <RDBoost/PySequenceHolder.h>
 #include <RDBoost/Wrap.h>
 #include <RDBoost/python_streambuf.h>
 
@@ -317,6 +320,46 @@ PyObject *replaceSubstructures(const ROMol &orig, const ROMol &query,
   PyObject *res = PyTuple_New(v.size());
   for (unsigned int i = 0; i < v.size(); ++i) {
     PyTuple_SetItem(res, i, python::converter::shared_ptr_to_python(v[i]));
+  }
+  return res;
+}
+
+std::vector<MatchVectType> seqOfSeqsToMatchVectTypeVect(
+    const python::object &matches) {
+  PySequenceHolder<python::object> tupleTuples(matches);
+  if (!tupleTuples.size()) {
+    throw_value_error("matches must not be empty");
+  }
+  std::vector<MatchVectType> matchVectVect;
+  for (unsigned int matchNum = 0; matchNum < tupleTuples.size(); ++matchNum) {
+    std::unique_ptr<std::vector<unsigned int>> match(
+        translateIntSeq(tupleTuples[matchNum]));
+    if (!match) {
+      throw_value_error("tuples in matches must not be empty");
+    }
+    MatchVectType matchVect(match->size());
+    for (unsigned int i = 0; i < match->size(); ++i) {
+      matchVect[i] = std::make_pair(static_cast<int>(i), match->at(i));
+    }
+    matchVectVect.push_back(std::move(matchVect));
+  }
+  return matchVectVect;
+}
+
+PyObject *getMostSubstitutedCoreMatchHelper(const ROMol &mol, const ROMol &core,
+                                            const python::object &matches) {
+  auto matchVectVect = seqOfSeqsToMatchVectTypeVect(matches);
+  return convertMatches(getMostSubstitutedCoreMatch(mol, core, matchVectVect));
+}
+
+PyObject *sortMatchesByDegreeOfCoreSubstitutionHelper(
+    const ROMol &mol, const ROMol &core, const python::object &matches) {
+  auto matchVectVect = seqOfSeqsToMatchVectTypeVect(matches);
+  auto sortedMatches =
+      sortMatchesByDegreeOfCoreSubstitution(mol, core, matchVectVect);
+  PyObject *res = PyTuple_New(sortedMatches.size());
+  for (unsigned int i = 0; i < sortedMatches.size(); ++i) {
+    PyTuple_SetItem(res, i, convertMatches(sortedMatches.at(i)));
   }
   return res;
 }
@@ -1233,6 +1276,51 @@ struct molops_wrapper {
                  python::arg("replacementConnectionPoint") = 0,
                  python::arg("useChirality") = false),
                 docString.c_str());
+
+    // ------------------------------------------------------------------------
+    docString =
+        "Postprocesses the results of a mol.GetSubstructMatches(core) call \n\
+where mol has explicit Hs and core bears terminal dummy atoms (i.e., R groups). \n\
+It returns the match with the largest number of non-hydrogen matches to \n\
+the terminal dummy atoms.\n\
+\n\
+  ARGUMENTS:\n\
+\n\
+    - mol: the molecule GetSubstructMatches was run on\n\
+\n\
+    - core: the molecule used as a substructure query\n\
+\n\
+    - matches: the result returned by GetSubstructMatches\n\
+\n\
+  RETURNS: the tuple where terminal dummy atoms in the core match the largest \n\
+           number of non-hydrogen atoms in mol\n";
+    python::def(
+        "GetMostSubstitutedCoreMatch", getMostSubstitutedCoreMatchHelper,
+        (python::arg("mol"), python::arg("core"), python::arg("matches")),
+        docString.c_str());
+
+    // ------------------------------------------------------------------------
+    docString =
+        "Postprocesses the results of a mol.GetSubstructMatches(core) call \n\
+where mol has explicit Hs and core bears terminal dummy atoms (i.e., R groups). \n\
+It returns a copy of matches sorted by decreasing number of non-hydrogen matches \n\
+to the terminal dummy atoms.\n\
+\n\
+  ARGUMENTS:\n\
+\n\
+    - mol: the molecule GetSubstructMatches was run on\n\
+\n\
+    - core: the molecule used as a substructure query\n\
+\n\
+    - matches: the result returned by GetSubstructMatches\n\
+\n\
+  RETURNS: a copy of matches sorted by decreasing number of non-hydrogen matches \n\
+           to the terminal dummy atoms\n";
+    python::def(
+        "SortMatchesByDegreeOfCoreSubstitution",
+        sortMatchesByDegreeOfCoreSubstitutionHelper,
+        (python::arg("mol"), python::arg("core"), python::arg("matches")),
+        docString.c_str());
 
     // ------------------------------------------------------------------------
     docString = "Adds named recursive queries to atoms\n";

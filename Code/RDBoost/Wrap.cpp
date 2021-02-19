@@ -76,7 +76,8 @@ boost::dynamic_bitset<> pythonObjectToDynBitset(const python::object &obj,
   return res;
 }
 
-std::vector<std::pair<int, int>>* translateAtomMap(python::object atomMap) {
+std::vector<std::pair<int, int>> *translateAtomMap(
+    const python::object &atomMap) {
   PySequenceHolder<python::object> pyAtomMap(atomMap);
   std::vector<std::pair<int, int>>* res;
   res = nullptr;
@@ -98,7 +99,7 @@ std::vector<std::pair<int, int>>* translateAtomMap(python::object atomMap) {
 }
 
 std::vector<std::vector<std::pair<int, int>>> translateAtomMapSeq(
-    python::object atomMapSeq) {
+    const python::object &atomMapSeq) {
   std::vector<std::vector<std::pair<int, int>>> aMapVec;
   PySequenceHolder<python::object> pyAtomMapSeq(atomMapSeq);
   for (size_t i = 0; i < pyAtomMapSeq.size(); ++i) {
@@ -107,6 +108,33 @@ std::vector<std::vector<std::pair<int, int>>> translateAtomMapSeq(
     delete res;
   }
   return aMapVec;
+}
+
+RDNumeric::DoubleVector *translateDoubleSeq(const python::object &doubleSeq) {
+  PySequenceHolder<double> doubles(doubleSeq);
+  unsigned int nDoubles = doubles.size();
+  RDNumeric::DoubleVector *doubleVec;
+  doubleVec = nullptr;
+  unsigned int i;
+  if (nDoubles > 0) {
+    doubleVec = new RDNumeric::DoubleVector(nDoubles);
+    for (i = 0; i < nDoubles; ++i) {
+      doubleVec->setVal(i, doubles[i]);
+    }
+  }
+  return doubleVec;
+}
+
+std::vector<unsigned int> *translateIntSeq(const python::object &intSeq) {
+  PySequenceHolder<unsigned int> ints(intSeq);
+  std::vector<unsigned int> *intVec = nullptr;
+  if (ints.size() > 0) {
+    intVec = new std::vector<unsigned int>;
+    for (unsigned int i = 0; i < ints.size(); ++i) {
+      intVec->push_back(ints[i]);
+    }
+  }
+  return intVec;
 }
 
 #endif
