@@ -61,6 +61,8 @@ MolBundle enumerate(const ROMol &mol,
     }
     std::unique_ptr<MolBundle> thisRound{new MolBundle()};
     for (const auto &tmol : accum->getMols()) {
+      std::cerr << "---------------------------------------" << std::endl;
+      tmol->debugMol(std::cerr);
       // copy the op since we will modify it:
       auto op = params.dp_operation->copy();
       op->initFromMol(*tmol);
