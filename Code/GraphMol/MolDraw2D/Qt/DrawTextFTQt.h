@@ -13,7 +13,8 @@
 #define RDKIT_DRAWTEXTFTQT_H
 
 #include <GraphMol/MolDraw2D/DrawTextFT.h>
-#include <GraphMol/MolDraw2D/DrawTextQt.h>
+#include "DrawTextQt.h"
+
 class QPainter;
 class QPainterPath;
 

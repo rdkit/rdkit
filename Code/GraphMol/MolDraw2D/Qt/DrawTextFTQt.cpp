@@ -7,10 +7,11 @@
 //  of the RDKit source tree.
 //
 //
+#include "DrawTextFTQt.h"
+
 #include <QPainter>
 #include <QPainterPath>
 
-#include <GraphMol/MolDraw2D/DrawTextFTQt.h>
 
 namespace RDKit {
 
