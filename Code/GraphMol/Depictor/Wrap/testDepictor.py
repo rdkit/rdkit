@@ -202,7 +202,6 @@ class TestCase(unittest.TestCase):
         # ofile.write(mb)
         # ofile.close()
 
-    #@unittest.skip
     def test6ChangeBondLength(self):
         m = Chem.MolFromSmiles('CC')
         rdDepictor.Compute2DCoords(m)

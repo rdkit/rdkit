@@ -466,11 +466,11 @@ void generateDepictionMatching2DStructure(
   RDGeom::INT_POINT2D_MAP coordMap;
   const RDKit::Conformer &conf = reference.getConformer(confId);
   for (const auto &mv : refMatchVect) {
-    if (mv.first > reference.getNumAtoms()) {
+    if (mv.first > static_cast<int>(reference.getNumAtoms())) {
       throw RDDepict::DepictException(
           "Reference atom index in refMatchVect out of range");
     }
-    if (mv.second > mol.getNumAtoms()) {
+    if (mv.second > static_cast<int>(mol.getNumAtoms())) {
       throw RDDepict::DepictException(
           "Molecule atom index in refMatchVect out of range");
     }
@@ -515,7 +515,7 @@ RDKit::MatchVectType generateDepictionMatching2DStructure(
       multiRefMatchVect =
           RDKit::SubstructMatch(*referenceHs, *referencePattern);
       if (!multiRefMatchVect.empty()) {
-        refMatchVectRef = *RDKit::getMostSubstitutedCoreMatch(
+        refMatchVectRef = RDKit::getMostSubstitutedCoreMatch(
             *referenceHs, *referencePattern, multiRefMatchVect);
       }
     } else if (referencePattern->getNumAtoms() <= reference.getNumAtoms()) {
@@ -545,8 +545,8 @@ RDKit::MatchVectType generateDepictionMatching2DStructure(
     if (matches.empty()) {
       allowOptionalAttachments = false;
     } else {
-      auto matchVectIt = getMostSubstitutedCoreMatch(*molHs, query, matches);
-      for (const auto &pair : *matchVectIt) {
+      for (const auto &pair :
+           getMostSubstitutedCoreMatch(*molHs, query, matches)) {
         if (molHs->getAtomWithIdx(pair.second)->getAtomicNum() != 1 &&
             refMatch.at(pair.first) >= 0) {
           matchVect.push_back(pair);

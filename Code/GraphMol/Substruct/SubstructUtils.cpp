@@ -160,11 +160,12 @@ void removeDuplicates(std::vector<MatchVectType> &v, unsigned int nAtoms) {
   v = res;
 }
 
-std::vector<MatchVectType>::const_iterator getMostSubstitutedCoreMatch(
+const MatchVectType &getMostSubstitutedCoreMatch(
     const ROMol &mol, const ROMol &core,
     const std::vector<MatchVectType> &matches) {
+  PRECONDITION(!matches.empty(), "matches must not be empty");
   detail::ScoreMatchesByDegreeOfCoreSubstitution matchScorer(mol, core);
-  return std::min_element(
+  return *std::min_element(
       matches.begin(), matches.end(),
       [&matchScorer](const RDKit::MatchVectType &aMatch,
                      const RDKit::MatchVectType &bMatch) {
