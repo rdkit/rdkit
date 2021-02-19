@@ -469,8 +469,9 @@ def LoadSDF(filename, idName='ID', molColName='ROMol', includeFingerprints=False
     close = None  # don't close an open file that was passed in
   records = []
   indices = []
+  sanitize = bool(molColName is not None or smilesName is not None)
   for i, mol in enumerate(
-      Chem.ForwardSDMolSupplier(f, sanitize=(molColName is not None), removeHs=removeHs,
+      Chem.ForwardSDMolSupplier(f, sanitize=sanitize, removeHs=removeHs,
                                 strictParsing=strictParsing)):
     if mol is None:
       continue

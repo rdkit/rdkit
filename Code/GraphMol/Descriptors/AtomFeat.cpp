@@ -31,7 +31,6 @@
 #include <GraphMol/Atom.h>
 
 #include <GraphMol/MolOps.h>
-#include <boost/foreach.hpp>
 #include <cmath>
 #include <vector>
 

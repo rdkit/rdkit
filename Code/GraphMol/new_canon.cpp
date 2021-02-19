@@ -13,7 +13,6 @@
 #include <GraphMol/RDKitBase.h>
 #include <GraphMol/QueryOps.h>
 #include <cstdint>
-#include <boost/foreach.hpp>
 #include <cstring>
 #include <iostream>
 #include <cassert>

@@ -289,7 +289,7 @@ void assignRadicals(RWMol &mol) {
       const INT_VECT &valens =
           PeriodicTable::getTable()->getValenceList((*ai)->getAtomicNum());
       if (valens.size() > 1) {
-        BOOST_FOREACH (int val, valens) {
+        for (auto val : valens) {
           if (val - totalValence + chg >= 0) {
             numRadicals = val - totalValence + chg;
             break;
@@ -520,7 +520,7 @@ std::vector<ROMOL_SPTR> getMolFrags(const ROMol &mol, bool sanitizeFrags,
       }
       Bond *nBond = bond->copy();
       RWMol *tmp = res[(*mapping)[nBond->getBeginAtomIdx()]].get();
-      nBond->setOwningMol( tmp );
+      nBond->setOwningMol(tmp);
       nBond->setBeginAtomIdx(ids[nBond->getBeginAtomIdx()]);
       nBond->setEndAtomIdx(ids[nBond->getEndAtomIdx()]);
       nBond->getStereoAtoms().clear();
@@ -593,14 +593,14 @@ std::vector<ROMOL_SPTR> getMolFrags(const ROMol &mol, bool sanitizeFrags,
 
   if (sanitizeFrags) {
     for (auto &re : res) {
-      sanitizeMol( *re );
+      sanitizeMol(*re);
     }
   }
 
   if (ownIt) {
     delete mapping;
   }
-  return std::vector<ROMOL_SPTR>( res.begin(), res.end() );
+  return std::vector<ROMOL_SPTR>(res.begin(), res.end());
 }
 
 unsigned int getMolFrags(const ROMol &mol, INT_VECT &mapping) {

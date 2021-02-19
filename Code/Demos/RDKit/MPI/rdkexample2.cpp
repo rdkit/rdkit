@@ -17,7 +17,6 @@
 #include <vector>
 #include <algorithm>
 #include <boost/mpi.hpp>
-#include <boost/foreach.hpp>
 #include <iostream>
 #include <cstdlib>
 #include <string>
@@ -29,7 +28,7 @@ void broadcastMols(mpi::communicator &world,
   std::vector<std::string> data;
   if (world.rank() == 0) {
     data.reserve(mols.size());
-    BOOST_FOREACH (const RDKit::ROMOL_SPTR &ptr, mols) {
+    for (const auto &ptr : mols) {
       std::string pickle;
       RDKit::MolPickler::pickleMol(*ptr, pickle);
       data.push_back(pickle);
@@ -38,7 +37,7 @@ void broadcastMols(mpi::communicator &world,
   broadcast(world, data, 0);
   if (world.rank() != 0) {
     mols.reserve(data.size());
-    BOOST_FOREACH (const std::string &pickle, data) {
+    for (const std::string &pickle : data) {
       RDKit::ROMol *mol = new RDKit::ROMol;
       RDKit::MolPickler::molFromPickle(pickle, mol);
       mols.push_back(RDKit::ROMOL_SPTR(mol));
@@ -65,7 +64,7 @@ int main(int argc, char *argv[]) {
 
   // process it:
   std::vector<unsigned int> res;
-  std::vector<std::vector<unsigned int> > allRes;
+  std::vector<std::vector<unsigned int>> allRes;
   // start by finding our chunk:
   unsigned int nProcs = world.size();
   unsigned int chunkSize = data.size() / nProcs;
