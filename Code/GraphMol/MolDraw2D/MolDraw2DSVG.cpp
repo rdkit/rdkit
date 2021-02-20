@@ -311,6 +311,7 @@ void MolDraw2DSVG::addMoleculeMetadata(const ROMol &mol, int confId) const {
        << " xmlns:rdkit = \"http://www.rdkit.org/xml\""
        << " version=\"" << RDKIT_SVG_VERSION << "\""
        << ">" << std::endl;
+  std::string value;
   for (const auto atom : mol.atoms()) {
     d_os << "<rdkit:atom idx=\"" << atom->getIdx() + 1 << "\"";
     bool doKekule = false, allHsExplicit = true, isomericSmiles = true;
@@ -335,6 +336,12 @@ void MolDraw2DSVG::addMoleculeMetadata(const ROMol &mol, int confId) const {
          << " y=\"" << pos.y << "\""
          << " z=\"" << pos.z << "\"";
 
+    for (const auto &prop : atom->getPropList()) {
+      if (prop.length() < 11 || prop.rfind("_metaData-", 0) != 0) continue;
+      atom->getProp(prop, value);
+      d_os << " " << prop.substr(10) << "=\"" << value << "\"";
+    }
+
     d_os << " />" << std::endl;
   }
   for (const auto bond : mol.bonds()) {
@@ -345,6 +352,13 @@ void MolDraw2DSVG::addMoleculeMetadata(const ROMol &mol, int confId) const {
     d_os << " bond-smiles=\""
          << SmilesWrite::GetBondSmiles(bond, -1, doKekule, allBondsExplicit)
          << "\"";
+
+    for (const auto &prop : bond->getPropList()) {
+      if (prop.length() < 11 || prop.rfind("_metaData-", 0) != 0) continue;
+      bond->getProp(prop, value);
+      d_os << " " << prop.substr(10) << "=\"" << value << "\"";
+    }
+
     d_os << " />" << std::endl;
   }
   d_os << "</rdkit:mol></metadata>" << std::endl;
@@ -365,6 +379,7 @@ void MolDraw2DSVG::tagAtoms(const ROMol &mol, double radius,
                             const std::map<std::string, std::string> &events) {
   PRECONDITION(d_os, "no output stream");
   // first bonds so that they are under the atoms
+  std::string value;
   for (const auto &bond : mol.bonds()) {
     auto this_idx = bond->getIdx();
     auto a1pos = getDrawCoords(atomCoords()[bond->getBeginAtomIdx()]);
@@ -376,6 +391,10 @@ void MolDraw2DSVG::tagAtoms(const ROMol &mol, double radius,
     d_os << " class='bond-selector bond-" << this_idx;
     if (d_activeClass != "") {
       d_os << " " << d_activeClass;
+    }
+    if (bond->hasProp("_tagClass")) {
+      bond->getProp("_tagClass", value);
+      d_os << " " << value;
     }
     d_os << "'";
     d_os << " style='fill:#fff;stroke:#fff;stroke-width:"
@@ -394,6 +413,10 @@ void MolDraw2DSVG::tagAtoms(const ROMol &mol, double radius,
     d_os << " class='atom-selector atom-" << this_idx;
     if (d_activeClass != "") {
       d_os << " " << d_activeClass;
+    }
+    if (at->hasProp("_tagClass")) {
+      at->getProp("_tagClass", value);
+      d_os << " " << value;
     }
     d_os << "'";
     d_os << " style='fill:#fff;stroke:#fff;stroke-width:1px;fill-opacity:0;"
