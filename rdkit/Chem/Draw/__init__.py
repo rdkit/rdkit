@@ -9,7 +9,7 @@
 #
 import os
 import warnings
-import importlib
+import importlib.util
 
 from rdkit.Chem.Draw import rdMolDraw2D
 from rdkit.Chem.Draw.MolDrawing import MolDrawing, DrawingOptions
