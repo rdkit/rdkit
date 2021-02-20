@@ -21,6 +21,7 @@
 #include <GraphMol/FileParsers/SequenceParsers.h>
 #include <GraphMol/FileParsers/SequenceWriters.h>
 #include <GraphMol/FileParsers/PNGParser.h>
+#include <GraphMol/FileParsers/MolFileStereochem.h>
 #include <RDGeneral/FileParseException.h>
 #include <boost/algorithm/string.hpp>
 
@@ -2931,4 +2932,112 @@ TEST_CASE("supplier close methods") {
     }
   }
 #endif
+}
+
+TEST_CASE(
+    "github #3768: SubstanceGroup output doesn't properly quote double "
+    "quotes") {
+  SECTION("basics") {
+    auto m = R"CTAB(
+  Mrv2014 01292104542D
+
+  0  0  0     0  0            999 V3000
+M  V30 BEGIN CTAB
+M  V30 COUNTS 2 1 1 0 0
+M  V30 BEGIN ATOM
+M  V30 1 C -1.3343 -0.7691 0 0
+M  V30 2 C -1.333 0.7709 0 0
+M  V30 END ATOM
+M  V30 BEGIN BOND
+M  V30 1 2 1 2
+M  V30 END BOND
+M  V30 BEGIN SGROUP
+M  V30 1 DAT 0 ATOMS=(1 1) FIELDNAME=[DUP]Tempstruct FIELDINFO="""" -
+M  V30 FIELDDISP="   -0.1770   -0.5034    DA    ALL  0       0" -
+M  V30 QUERYOP="""""" FIELDDATA=Foo1
+M  V30 END SGROUP
+M  V30 END CTAB
+M  END
+)CTAB"_ctab;
+    REQUIRE(m);
+    auto sgs = getSubstanceGroups(*m);
+    REQUIRE(sgs.size() == 1);
+    auto sg = sgs[0];
+    CHECK(sg.getProp<std::string>("FIELDINFO") == "\"");
+    CHECK(sg.getProp<std::string>("QUERYOP") == "\"\"");
+    auto mb = MolToV3KMolBlock(*m);
+    CHECK(mb.find("FIELDINFO=\"\"\"\"") != std::string::npos);
+    CHECK(mb.find("QUERYOP=\"\"\"\"\"") != std::string::npos);
+  }
+  SECTION("parens and quote not at beginning") {
+    auto m = R"CTAB(
+  Mrv2014 01292104542D          
+
+  0  0  0     0  0            999 V3000
+M  V30 BEGIN CTAB
+M  V30 COUNTS 2 1 1 0 0
+M  V30 BEGIN ATOM
+M  V30 1 C -1.3343 -0.7691 0 0
+M  V30 2 C -1.333 0.7709 0 0
+M  V30 END ATOM
+M  V30 BEGIN BOND
+M  V30 1 2 1 2
+M  V30 END BOND
+M  V30 BEGIN SGROUP
+M  V30 1 DAT 0 ATOMS=(1 1) FIELDNAME=[DUP]Tempstruct FIELDINFO="foo""" -
+M  V30 FIELDDISP="   -0.1770   -0.5034    DA    ALL  0       0" -
+M  V30 QUERYOP="(bar)" FIELDDATA=Foo1
+M  V30 END SGROUP
+M  V30 END CTAB
+M  END
+)CTAB"_ctab;
+    REQUIRE(m);
+    auto sgs = getSubstanceGroups(*m);
+    REQUIRE(sgs.size() == 1);
+    auto sg = sgs[0];
+    CHECK(sg.getProp<std::string>("FIELDINFO") == "foo\"");
+    CHECK(sg.getProp<std::string>("QUERYOP") == "(bar)");
+    auto mb = MolToV3KMolBlock(*m);
+    CHECK(mb.find("FIELDINFO=\"foo\"\"\"") != std::string::npos);
+    CHECK(mb.find("QUERYOP=\"(bar)\"") != std::string::npos);
+  }
+}
+
+TEST_CASE("github #3216: WedgeMolBonds() should prefer degree-1 atoms") {
+  SECTION("basics") {
+    auto m = R"CTAB(
+  Mrv2007 06082008522D          
+ 
+  0  0  0     0  0            999 V3000
+M  V30 BEGIN CTAB
+M  V30 COUNTS 8 7 0 0 0
+M  V30 BEGIN ATOM
+M  V30 1 C -17.7571 16.6703 0 0
+M  V30 2 C -16.4234 17.4403 0 0
+M  V30 3 C -15.0897 16.6703 0 0 CFG=1
+M  V30 4 C -13.7561 17.4403 0 0 CFG=2
+M  V30 5 Br -15.0897 15.1303 0 0
+M  V30 6 C -12.4225 16.6703 0 0
+M  V30 7 Cl -13.7561 18.9803 0 0
+M  V30 8 C -11.0888 17.4403 0 0
+M  V30 END ATOM
+M  V30 BEGIN BOND
+M  V30 1 1 1 2
+M  V30 2 1 2 3
+M  V30 3 1 3 5 CFG=1
+M  V30 4 1 3 4
+M  V30 5 1 4 6
+M  V30 6 1 4 7 CFG=1
+M  V30 7 1 6 8
+M  V30 END BOND
+M  V30 END CTAB
+M  END)CTAB"_ctab;
+    REQUIRE(m);
+    WedgeMolBonds(*m, &m->getConformer());
+    CHECK(m->getBondBetweenAtoms(2, 4)->getBondDir() != Bond::BondDir::NONE);
+    CHECK(m->getBondBetweenAtoms(3, 6)->getBondDir() != Bond::BondDir::NONE);
+    CHECK(m->getBondBetweenAtoms(2, 1)->getBondDir() == Bond::BondDir::NONE);
+    CHECK(m->getBondBetweenAtoms(2, 3)->getBondDir() == Bond::BondDir::NONE);
+    CHECK(m->getBondBetweenAtoms(3, 5)->getBondDir() == Bond::BondDir::NONE);
+  }
 }

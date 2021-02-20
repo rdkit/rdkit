@@ -79,7 +79,7 @@ void testMMFFMultiThread() {
   std::cerr << "processing" << std::endl;
   for (unsigned int i = 0; i < count; ++i) {
     std::cerr << " launch :" << i << std::endl;
-    std::cerr.flush();    
+    std::cerr.flush();
     tg.emplace_back(std::async(std::launch::async, runblock_mmff, mols[i]));
   }
   for (auto &fut : tg) {
@@ -87,8 +87,8 @@ void testMMFFMultiThread() {
   }
   std::cerr << "done" << std::endl;
   for(unsigned int i=0; i<count; ++i)
-    BOOST_FOREACH (ROMol *mol, mols[i]) { delete mol; }
-  
+    for (auto *mol : mols[i]) { delete mol; }
+
   BOOST_LOG(rdErrorLog) << "  done" << std::endl;
 }
 

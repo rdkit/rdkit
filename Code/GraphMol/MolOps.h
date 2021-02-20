@@ -252,7 +252,7 @@ struct RDKIT_GRAPHMOL_EXPORT RemoveHsParameters {
   bool removeMapped = true;         /**< mapped hydrogens */
   bool removeInSGroups = false;     /**< part of a SubstanceGroup */
   bool showWarnings = true; /**< display warnings for Hs that are not removed */
-  bool removeNonimplicit = true; /**< DEPRECATED equivalent of implicitOnly */
+  bool removeNonimplicit = true; /**< DEPRECATED equivalent of !implicitOnly */
   bool updateExplicitCount =
       false; /**< DEPRECATED equivalent of updateExplicitCount */
   bool removeHydrides = true; /**< Removing Hydrides */
@@ -494,7 +494,7 @@ RDKIT_GRAPHMOL_EXPORT void sanitizeMol(RWMol &mol);
      -# MolOps::Kekulize()  : Unkekulizable ring systems, aromatic atoms not
    in rings, aromatic bonds to non-aromatic atoms.
 
-   \param mol : the RWMol to be cleaned
+   \param mol : the ROMol to be cleaned
 
    \param sanitizeOps : the bits here are used to set which sanitization
                         operations are carried out. The elements of the \c

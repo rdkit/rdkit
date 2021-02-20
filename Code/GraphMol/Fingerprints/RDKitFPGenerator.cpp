@@ -95,7 +95,7 @@ OutputType RDKitFPAtomEnv<OutputType>::getBitId(
     const std::vector<std::uint32_t> *,  // bondInvariants
     const AdditionalOutput *,            // additionalOutput
     const bool                           // hashResults
-    ) const {
+) const {
   // todo set additional outputs
   return d_bitId;
 }
@@ -121,7 +121,7 @@ RDKitFPEnvGenerator<OutputType>::getEnvironments(
     const std::vector<std::uint32_t> *atomInvariants,
     const std::vector<std::uint32_t> *,  // bondInvariants
     const bool                           // hashResults
-    ) const {
+) const {
   PRECONDITION(!atomInvariants || atomInvariants->size() >= mol.getNumAtoms(),
                "bad atomInvariants size");
 
@@ -145,7 +145,7 @@ RDKitFPEnvGenerator<OutputType>::getEnvironments(
   boost::dynamic_bitset<> atomsInPath(mol.getNumAtoms());
   for (INT_PATH_LIST_MAP_CI paths = allPaths.begin(); paths != allPaths.end();
        paths++) {
-    BOOST_FOREACH (const PATH_TYPE &path, paths->second) {
+    for (const auto &path : paths->second) {
       // the bond hashes of the path
       std::vector<std::uint32_t> bondHashes = RDKitFPUtils::generateBondHashes(
           mol, atomsInPath, bondCache, isQueryBond, path,

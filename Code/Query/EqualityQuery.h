@@ -20,7 +20,7 @@ namespace Queries {
 template <typename MatchFuncArgType,
           typename DataFuncArgType = MatchFuncArgType,
           bool needsConversion = false>
-class EqualityQuery
+class RDKIT_QUERY_EXPORT EqualityQuery
     : public Query<MatchFuncArgType, DataFuncArgType, needsConversion> {
  public:
   EqualityQuery() { this->df_negate = false; };

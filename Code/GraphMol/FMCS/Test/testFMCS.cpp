@@ -32,7 +32,6 @@
 //
 #ifdef _WIN32
 #include <RDGeneral/test.h>
-#include <Windows.h>
 #else
 #include <unistd.h>
 #include <fcntl.h>

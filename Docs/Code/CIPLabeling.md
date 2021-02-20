@@ -5,7 +5,7 @@ originally written by John Mayfield in Java. The original algorithm was
 described in:
 
 Hanson, R. M., Musacchio, S., Mayfield, J. W., Vainio, M. J., Yerin, A.,
-Redkin, D. Algorithmic Analysis of Cahn−Ingold−Prelog Rules of
+Redkin, D. Algorithmic Analysis of Cahn--Ingold--Prelog Rules of
 Stereochemistry: Proposals for Revised Rules and a Guide for Machine
 Implementation. J. Chem. Inf. Model. 2018, 58, 1755-1765.
 
@@ -16,7 +16,7 @@ The main function is C++ RDKit:: CIPLabeler::assignCIPLabels()/ Python:
 rdkit.Chem.rdCIPLabeler.AssignCIPLabels().
 
 `assignCIPLabels()` calculates E/Z bond stereochemistry, R/S tetrahedral
-chirality, and r/s pseudochirality according to the Cahn−Ingold−Prelog rules.
+chirality, and r/s pseudochirality according to the Cahn--Ingold--Prelog rules.
 Each is stored in the _CIPCode property - including for bonds.
 
 assignCIPLabels() relies on the caller to mark potential stereocenters.

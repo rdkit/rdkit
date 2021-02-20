@@ -1,0 +1,63 @@
+HETATM    1  PA  ACP B 501      -1.917  14.672  30.124  0.61 99.60           P  
+HETATM    2  PB  ACP B 501      -1.351  17.171  31.552  0.61112.78           P  
+HETATM    3  PG  ACP B 501      -4.103  17.610  30.303  0.61121.54           P  
+HETATM    4  C5' ACP B 501      -1.993  12.428  31.528  0.61 84.76           C  
+HETATM    5  O5' ACP B 501      -1.293  13.155  30.543  0.61 92.56           O  
+HETATM    6  C4' ACP B 501      -3.113  11.543  30.851  0.61 78.56           C  
+HETATM    7  O4' ACP B 501      -2.508  10.582  29.796  0.61 73.80           O  
+HETATM    8  C3' ACP B 501      -3.660  10.810  31.728  0.61 78.83           C  
+HETATM    9  O3' ACP B 501      -5.090  10.984  31.665  0.61 81.17           O  
+HETATM   10  C2' ACP B 501      -3.268   9.235  31.410  0.61 75.08           C  
+HETATM   11  O2' ACP B 501      -4.448   8.538  30.896  0.61 72.36           O  
+HETATM   12  C1' ACP B 501      -2.355   9.229  30.520  0.61 71.47           C  
+HETATM   13  N1  ACP B 501       0.623   5.609  32.304  0.61 59.40           N  
+HETATM   14  O1A ACP B 501      -3.330  14.485  29.601  0.61 98.77           O1-
+HETATM   15  O1B ACP B 501      -0.684  17.392  32.873  0.61113.51           O  
+HETATM   16  O1G ACP B 501      -4.693  16.435  31.012  0.61122.48           O  
+HETATM   17  C2  ACP B 501      -0.640   5.554  31.800  0.61 59.50           C  
+HETATM   18  O2A ACP B 501      -1.049  15.302  29.049  0.61 98.59           O1-
+HETATM   19  O2B ACP B 501      -0.355  17.393  30.452  0.61113.18           O  
+HETATM   20  O2G ACP B 501      -5.185  18.632  30.040  0.61120.26           O  
+HETATM   21  C3B ACP B 501      -2.760  18.370  31.369  0.61117.20           C  
+HETATM   22  N3  ACP B 501      -1.252   6.684  31.372  0.61 58.79           N  
+HETATM   23  O3A ACP B 501      -1.925  15.623  31.480  0.61106.78           O  
+HETATM   24  O3G ACP B 501      -3.502  17.172  28.980  0.61122.25           O  
+HETATM   25  C4  ACP B 501      -0.613   7.875  31.444  0.61 61.39           C  
+HETATM   26  C5  ACP B 501       0.630   7.925  31.942  0.61 62.33           C  
+HETATM   27  C6  ACP B 501       1.253   6.773  32.377  0.61 59.55           C  
+HETATM   28  N6  ACP B 501       2.523   6.345  32.962  0.61 61.00           N  
+HETATM   29  N7  ACP B 501       1.048   9.202  31.911  0.61 62.03           N  
+HETATM   30  C8  ACP B 501       0.069   9.937  31.395  0.61 62.14           C  
+HETATM   31  N9  ACP B 501      -0.970   9.128  31.107  0.61 62.79           N  
+CONECT    1    5   14   18   23
+CONECT    2   15   19   21   23
+CONECT    3   16   20   21   24
+CONECT    4    6    5
+CONECT    5    1    4
+CONECT    6    4    7    8
+CONECT    7    6   12
+CONECT    8    6    9   10
+CONECT    9    8
+CONECT   10    8   11   12
+CONECT   11   10
+CONECT   12    7   10   31
+CONECT   13   17   27
+CONECT   14    1
+CONECT   15    2
+CONECT   16    3
+CONECT   17   13   22
+CONECT   18    1
+CONECT   19    2
+CONECT   20    3
+CONECT   21    2    3
+CONECT   22   17   25
+CONECT   23    1    2
+CONECT   24    3
+CONECT   25   22   26   31
+CONECT   26   25   27   29
+CONECT   27   26   13   28
+CONECT   28   27
+CONECT   29   26   30
+CONECT   30   29   31
+CONECT   31   12   25   30
+END

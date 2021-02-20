@@ -1,5 +1,5 @@
 //
-//  Copyright (C) 2004-2017 Greg Landrum and Rational Discovery LLC
+//  Copyright (C) 2004-2021 Greg Landrum and Rational Discovery LLC
 //
 //   @@ All Rights Reserved @@
 //  This file is part of the RDKit.
@@ -36,10 +36,8 @@ void WedgeBond(Bond *bond, unsigned int fromAtomIdx, const Conformer *conf) {
 
 void WedgeMolBonds(ROMol &mol, const Conformer *conf) {
   PRECONDITION(conf, "no conformer");
-  INT_MAP_INT wedgeBonds = pickBondsToWedge(mol);
-  for (ROMol::BondIterator bondIt = mol.beginBonds(); bondIt != mol.endBonds();
-       ++bondIt) {
-    Bond *bond = *bondIt;
+  auto wedgeBonds = pickBondsToWedge(mol);
+  for (auto bond : mol.bonds()) {
     if (bond->getBondType() == Bond::SINGLE) {
       Bond::BondDir dir = DetermineBondWedgeState(bond, wedgeBonds, conf);
       if (dir == Bond::BEGINWEDGE || dir == Bond::BEGINDASH) {
@@ -72,9 +70,7 @@ INT_MAP_INT pickBondsToWedge(const ROMol &mol) {
   INT_VECT nChiralNbrs(mol.getNumAtoms(), noNbrs);
 
   // start by looking for bonds that are already wedged
-  for (ROMol::ConstBondIterator cbi = mol.beginBonds(); cbi != mol.endBonds();
-       ++cbi) {
-    const Bond *bond = *cbi;
+  for (const auto bond : mol.bonds()) {
     if (bond->getBondDir() == Bond::BEGINWEDGE ||
         bond->getBondDir() == Bond::BEGINDASH ||
         bond->getBondDir() == Bond::UNKNOWN) {
@@ -92,9 +88,7 @@ INT_MAP_INT pickBondsToWedge(const ROMol &mol) {
 
   // now rank atoms by the number of chiral neighbors or Hs they have:
   bool chiNbrs = false;
-  for (ROMol::ConstAtomIterator cai = mol.beginAtoms(); cai != mol.endAtoms();
-       ++cai) {
-    const Atom *at = *cai;
+  for (const auto at : mol.atoms()) {
     if (nChiralNbrs[at->getIdx()] > noNbrs) {
       // std::cerr << " SKIPPING1: " << at->getIdx() << std::endl;
       continue;
@@ -151,7 +145,7 @@ INT_MAP_INT pickBondsToWedge(const ROMol &mol) {
   // we use the orders calculated above to determine which order to do the
   // wedging
   INT_MAP_INT res;
-  BOOST_FOREACH (unsigned int idx, indices) {
+  for (auto idx : indices) {
     if (nChiralNbrs[idx] > noNbrs) {
       // std::cerr << " SKIPPING2: " << idx << std::endl;
       continue;  // already have a wedged bond here
@@ -178,26 +172,27 @@ INT_MAP_INT pickBondsToWedge(const ROMol &mol) {
       if (res.find(bid) == res.end()) {
         // very strong preference for Hs:
         if (bond->getOtherAtom(atom)->getAtomicNum() == 1) {
-          nbrScores.emplace_back(
-              -1000000, bid);  // lower than anything else can be
+          nbrScores.emplace_back(-1000000,
+                                 bid);  // lower than anything else can be
           continue;
         }
         // prefer lower atomic numbers with lower degrees and no specified
         // chirality:
         const Atom *oatom = bond->getOtherAtom(atom);
-        int nbrScore = oatom->getAtomicNum() + 10 * oatom->getDegree() +
-                       100 * ((oatom->getChiralTag() != Atom::CHI_UNSPECIFIED));
+        int nbrScore =
+            oatom->getAtomicNum() + 100 * oatom->getDegree() +
+            1000 * ((oatom->getChiralTag() != Atom::CHI_UNSPECIFIED));
         // prefer neighbors that are nonchiral or have as few chiral neighbors
         // as possible:
         int oIdx = oatom->getIdx();
         if (nChiralNbrs[oIdx] < noNbrs) {
           // the counts are negative, so we have to subtract them off
-          nbrScore -= 10000 * nChiralNbrs[oIdx];
+          nbrScore -= 100000 * nChiralNbrs[oIdx];
         }
         // prefer bonds to non-ring atoms:
-        nbrScore += 1000 * mol.getRingInfo()->numAtomRings(oIdx);
+        nbrScore += 10000 * mol.getRingInfo()->numAtomRings(oIdx);
         // prefer non-ring bonds;
-        nbrScore += 1000 * mol.getRingInfo()->numBondRings(bid);
+        nbrScore += 10000 * mol.getRingInfo()->numBondRings(bid);
         // std::cerr << "    nrbScore: " << idx << " - " << oIdx << " : "
         //           << nbrScore << " nChiralNbrs: " << nChiralNbrs[oIdx]
         //           << std::endl;

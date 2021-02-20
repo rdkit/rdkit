@@ -2351,7 +2351,11 @@ void MolDraw2D::extractAtomSymbols(const ROMol &mol) {
   atomic_nums_[activeMolIdx_].clear();
   for (auto at1 : mol.atoms()) {
     atom_syms_[activeMolIdx_].emplace_back(getAtomSymbolAndOrientation(*at1));
-    atomic_nums_[activeMolIdx_].emplace_back(at1->getAtomicNum());
+    if (!isComplexQuery(at1)) {
+      atomic_nums_[activeMolIdx_].emplace_back(at1->getAtomicNum());
+    } else {
+      atomic_nums_[activeMolIdx_].push_back(0);
+    }
   }
 }
 
@@ -2868,7 +2872,7 @@ void drawNormalBond(MolDraw2D &d2d, const Bond &bond, bool highlight_bond,
                     const std::vector<Point2D> &at_cds, DrawColour col1,
                     DrawColour col2, double double_bond_offset) {
   auto bt = bond.getBondType();
-  auto mol = bond.getOwningMol();
+  auto &mol = bond.getOwningMol();
   // it's a double bond and one end is 1-connected, do two lines parallel
   // to the atom-atom line.
   if (bt == Bond::DOUBLE || bt == Bond::AROMATIC) {
@@ -3776,6 +3780,27 @@ pair<string, OrientType> MolDraw2D::getAtomSymbolAndOrientation(
   return std::make_pair(symbol, orient);
 }
 
+std::string getAtomListText(const Atom &atom) {
+  PRECONDITION(atom.hasQuery(), "no query");
+  PRECONDITION(atom.getQuery()->getDescription() == "AtomOr", "bad query type");
+
+  std::string res = "";
+  if (atom.getQuery()->getNegation()) {
+    res += "!";
+  }
+  res += "[";
+  std::vector<int> vals;
+  getAtomListQueryVals(atom.getQuery(), vals);
+  for (unsigned int i = 0; i < vals.size(); ++i) {
+    if (i != 0) {
+      res += ",";
+    }
+    res += PeriodicTable::getTable()->getElementSymbol(vals[i]);
+  }
+
+  return res + "]";
+}
+
 // ****************************************************************************
 string MolDraw2D::getAtomSymbol(const RDKit::Atom &atom,
                                 OrientType orientation) const {
@@ -3818,6 +3843,8 @@ string MolDraw2D::getAtomSymbol(const RDKit::Atom &atom,
              atom.getDegree() == 1) {
     symbol = "";
     literal_symbol = false;
+  } else if (isAtomListQuery(&atom)) {
+    symbol = getAtomListText(atom);
   } else if (isComplexQuery(&atom)) {
     symbol = "?";
   } else if (drawOptions().atomLabelDeuteriumTritium &&
@@ -3907,7 +3934,7 @@ OrientType MolDraw2D::getAtomOrientation(const RDKit::Atom &atom) const {
   // when they are drawn at the bottom of the molecule.
   static const double VERT_SLOPE = tan(70.0 * M_PI / 180.0);
 
-  auto mol = atom.getOwningMol();
+  auto &mol = atom.getOwningMol();
   const Point2D &at1_cds = at_cds_[activeMolIdx_][atom.getIdx()];
   Point2D nbr_sum(0.0, 0.0);
   // cout << "Nbours for atom : " << at1->getIdx() << endl;
@@ -3954,7 +3981,7 @@ OrientType MolDraw2D::getAtomOrientation(const RDKit::Atom &atom) const {
       } else if (atom.getDegree() == 3) {
         // Atoms of degree 3 can sometimes have a bond pointing down with S
         // orientation or up with N orientation, which puts the H on the bond.
-        auto mol = atom.getOwningMol();
+        auto &mol = atom.getOwningMol();
         const Point2D &at1_cds = at_cds_[activeMolIdx_][atom.getIdx()];
         for (const auto &nbri : make_iterator_range(mol.getAtomBonds(&atom))) {
           const Bond *bond = mol[nbri];

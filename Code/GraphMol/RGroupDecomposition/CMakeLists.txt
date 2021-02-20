@@ -21,6 +21,11 @@ rdkit_test(testRGroupDecomp testRGroupDecomp.cpp
 rdkit_test(testRGroupDecompInternals testRGroupInternals.cpp
 		LINK_LIBRARIES RGroupDecomposition )
 
+rdkit_catch_test(rgroupCatchTests catch_rgd.cpp ../catch_main.cpp
+		LINK_LIBRARIES RGroupDecomposition )
+
+
+
 find_package(Boost ${RDK_BOOST_VERSION} COMPONENTS program_options)
 if(RDK_BUILD_CPP_TESTS AND Boost_FOUND)
 	add_executable(gaExample GaExample.cpp)

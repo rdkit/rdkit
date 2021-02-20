@@ -1,0 +1,81 @@
+HETATM    1  CAA AKI A   1      -4.318  10.286  31.606  1.00 49.28           C  
+HETATM    2  CAB AKI A   1      -3.574   9.160  31.940  1.00 50.62           C  
+HETATM    3  CAC AKI A   1      -2.383   8.892  31.275  1.00 50.85           C  
+HETATM    4  CAD AKI A   1      -1.936   9.749  30.277  1.00 50.53           C  
+HETATM    5  CAE AKI A   1      -2.681  10.875  29.942  1.00 48.75           C  
+HETATM    6  CAF AKI A   1      -3.872  11.143  30.608  1.00 48.39           C  
+HETATM    7  CAG AKI A   1      -1.639   7.766  31.609  1.00 51.06           C  
+HETATM    8  CAH AKI A   1      -2.089   6.458  31.592  1.00 50.47           C  
+HETATM    9  CAL AKI A   1      -3.368   6.048  31.236  1.00 50.37           C  
+HETATM   10  CAM AKI A   1      -4.245   6.945  30.639  1.00 48.95           C  
+HETATM   11  CAN AKI A   1      -5.525   6.533  30.284  1.00 47.24           C  
+HETATM   12  CAO AKI A   1      -5.926   5.226  30.526  1.00 46.94           C  
+HETATM   13  CAP AKI A   1      -5.049   4.328  31.122  1.00 44.98           C  
+HETATM   14  CAQ AKI A   1      -3.770   4.738  31.478  1.00 48.36           C  
+HETATM   15  CAV AKI A   1       1.373  11.051  32.209  1.00 53.10           C  
+HETATM   16  CAW AKI A   1       1.352  11.519  33.665  1.00 57.01           C  
+HETATM   17  CAX AKI A   1       2.362  12.646  33.894  1.00 59.68           C  
+HETATM   18  CAY AKI A   1       3.724  12.394  33.777  1.00 61.91           C  
+HETATM   19  CAZ AKI A   1       4.640  13.418  33.985  1.00 63.98           C  
+HETATM   20  OAI AKI A   1      -1.069   5.636  31.982  1.00 51.79           O  
+HETATM   21  CBA AKI A   1       4.196  14.693  34.309  1.00 64.22           C  
+HETATM   22  CBB AKI A   1       2.834  14.946  34.426  1.00 63.53           C  
+HETATM   23  CBC AKI A   1       1.917  13.923  34.219  1.00 61.40           C  
+HETATM   24  CBE AKI A   1       5.096  16.723  33.691  1.00 69.52           C  
+HETATM   25  CBG AKI A   1       6.081  18.740  33.178  1.00 74.91           C  
+HETATM   26  CBH AKI A   1       6.497  19.953  33.717  1.00 75.89           C  
+HETATM   27  CBI AKI A   1       6.582  21.080  32.908  1.00 75.73           C  
+HETATM   28  CBJ AKI A   1       6.251  20.995  31.560  1.00 75.71           C  
+HETATM   29  CBK AKI A   1       5.836  19.783  31.021  1.00 76.87           C  
+HETATM   30  CBL AKI A   1       5.752  18.656  31.831  1.00 76.42           C  
+HETATM   31  NBD AKI A   1       5.073  15.674  34.508  1.00 67.56           N  
+HETATM   32  NBF AKI A   1       6.000  17.663  33.953  1.00 72.60           N  
+HETATM   33  NBN AKI A   1       0.345  10.019  32.010  1.00 52.09           N  
+HETATM   34  OBM AKI A   1       4.319  16.820  32.742  1.00 69.50           O  
+HETATM   35  N1  AKI A   1       1.270   6.142  32.655  1.00 50.81           N  
+HETATM   36  C2  AKI A   1       2.158   7.106  32.839  1.00 50.39           C  
+HETATM   37  N3  AKI A   1       1.863   8.379  32.630  1.00 51.12           N  
+HETATM   38  C4  AKI A   1       0.639   8.739  32.220  1.00 51.03           C  
+HETATM   39  C5  AKI A   1      -0.315   7.754  32.017  1.00 51.11           C  
+HETATM   40  C6  AKI A   1       0.026   6.427  32.246  1.00 51.70           C  
+CONECT    1    2    6
+CONECT    2    1    3
+CONECT    3    2    4    7
+CONECT    4    3    5
+CONECT    5    4    6
+CONECT    6    1    5
+CONECT    7    3    8   39
+CONECT    8    7    9   20
+CONECT    9    8   10   14
+CONECT   10    9   11
+CONECT   11   10   12
+CONECT   12   11   13
+CONECT   13   12   14
+CONECT   14    9   13
+CONECT   15   16   33
+CONECT   16   15   17
+CONECT   17   16   18   23
+CONECT   18   17   19
+CONECT   19   18   21
+CONECT   20    8   40
+CONECT   21   19   22   31
+CONECT   22   21   23
+CONECT   23   17   22
+CONECT   24   32   34   31
+CONECT   25   26   30   32
+CONECT   26   25   27
+CONECT   27   26   28
+CONECT   28   27   29
+CONECT   29   28   30
+CONECT   30   25   29
+CONECT   31   21   24
+CONECT   32   24   25
+CONECT   33   15   38
+CONECT   34   24
+CONECT   35   36   40
+CONECT   36   35   37
+CONECT   37   36   38
+CONECT   38   37   33   39
+CONECT   39   38    7   40
+CONECT   40   35   39   20
+END

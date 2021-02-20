@@ -18,7 +18,6 @@
 
 // Std stuff
 #include <iostream>
-#include <boost/foreach.hpp>
 
 // ours
 #include <RDGeneral/Invariant.h>

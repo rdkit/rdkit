@@ -169,7 +169,7 @@ ForceField::ForceField(const ForceField &other)
       d_numPoints(other.d_numPoints),
       dp_distMat(nullptr) {
   d_contribs.clear();
-  BOOST_FOREACH (const ContribPtr &contrib, other.d_contribs) {
+  for (const auto &contrib : other.d_contribs) {
     ForceFieldContrib *ncontrib = contrib->copy();
     ncontrib->dp_forceField = this;
     d_contribs.push_back(ContribPtr(ncontrib));

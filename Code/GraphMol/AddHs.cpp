@@ -14,7 +14,6 @@
 #include "MonomerInfo.h"
 #include <Geometry/Transform3D.h>
 #include <Geometry/point.h>
-#include <boost/foreach.hpp>
 #include <boost/lexical_cast.hpp>
 #include <boost/tokenizer.hpp>
 #include <boost/algorithm/string/trim.hpp>

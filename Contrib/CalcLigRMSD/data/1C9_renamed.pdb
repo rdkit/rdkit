@@ -1,0 +1,48 @@
+HETATM    1  C7  LIG A 401       1.488   7.044  32.935  1.00 46.39           C  
+HETATM    2  N5  LIG A 401       2.835   7.154  33.072  1.00 41.54           N  
+HETATM    3  O2  LIG A 401      -6.931   4.694  29.366  1.00 63.10           O  
+HETATM    4  C8  LIG A 401      -0.389   6.180  32.539  1.00 46.08           C  
+HETATM    5  N1  LIG A 401       0.887   5.836  32.854  1.00 44.73           N  
+HETATM    6  O1  LIG A 401      -7.233   6.869  29.971  1.00 55.97           O  
+HETATM    7  C9  LIG A 401      -2.661   5.392  31.980  1.00 49.24           C  
+HETATM    8  N3  LIG A 401      -1.398   5.261  32.491  1.00 50.33           N  
+HETATM    9  O   LIG A 401       2.003   9.847  32.711  1.00 57.98           O  
+HETATM   10  C14 LIG A 401      -3.390   4.210  31.742  1.00 48.24           C  
+HETATM   11  N4  LIG A 401      -7.888   5.165  31.608  1.00 63.28           N  
+HETATM   12  C13 LIG A 401      -4.712   4.290  31.271  1.00 46.59           C  
+HETATM   13  N2  LIG A 401      -0.598   7.496  32.384  1.00 46.80           N  
+HETATM   14  C12 LIG A 401      -5.342   5.536  31.046  1.00 53.17           C  
+HETATM   15  N   LIG A 401       0.699   8.008  32.456  1.00 49.69           N  
+HETATM   16  C11 LIG A 401      -4.594   6.711  31.255  1.00 51.47           C  
+HETATM   17  C10 LIG A 401      -3.281   6.638  31.735  1.00 48.76           C  
+HETATM   18  C6  LIG A 401       0.892   9.376  32.550  1.00 52.86           C  
+HETATM   19  C3  LIG A 401      -0.295  10.306  32.501  1.00 51.73           C  
+HETATM   20  C4  LIG A 401      -1.140  10.319  31.383  1.00 50.46           C  
+HETATM   21  C5  LIG A 401      -2.272  11.129  31.323  1.00 50.35           C  
+HETATM   22  C   LIG A 401      -2.544  11.971  32.406  1.00 52.34           C  
+HETATM   23  C1  LIG A 401      -1.735  11.942  33.550  1.00 51.66           C  
+HETATM   24  C2  LIG A 401      -0.594  11.130  33.596  1.00 53.33           C  
+HETATM   25  F   LIG A 401      -0.852   9.565  30.327  1.00 51.73           F  
+HETATM   26  F1  LIG A 401       0.181  11.144  34.710  1.00 51.81           F  
+HETATM   27  S   LIG A 401      -6.870   5.596  30.471  1.00 59.71           S  
+CONECT    1    2    5   15
+CONECT    3   27
+CONECT    4    5    8   13
+CONECT    6   27
+CONECT    7    8   10   17
+CONECT    9   18
+CONECT   10   12
+CONECT   11   27
+CONECT   12   14
+CONECT   13   15
+CONECT   14   16   27
+CONECT   15   18
+CONECT   16   17
+CONECT   18   19
+CONECT   19   20   24
+CONECT   20   21   25
+CONECT   21   22
+CONECT   22   23
+CONECT   23   24
+CONECT   24   26
+END

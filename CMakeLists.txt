@@ -67,8 +67,8 @@ if(NOT MSVC)
   if(RDK_OPTIMIZE_POPCNT)
     if(CMAKE_HOST_SYSTEM_PROCESSOR STREQUAL "aarch64")
       message("RDK_OPTIMIZE_POPCNT is not available on aarch64")
-    elseif(CMAKE_HOST_SYSTEM_PROCESSOR STREQUAL "ppc64le")
-      set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -mpopcntb")
+    elseif(CMAKE_HOST_SYSTEM_PROCESSOR MATCHES "^(ppc64|powerpc64)")
+      set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -mpopcntd")
     else()
       set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -mpopcnt")
     endif()
@@ -345,6 +345,18 @@ if(RDK_BUILD_PYTHON_WRAPPERS)
   install(TARGETS rdkit_py_base EXPORT ${RDKit_EXPORTED_TARGETS}
           COMPONENT dev )
 
+  # check to see if we can find nbval,
+  execute_process(
+    COMMAND
+    ${PYTHON_EXECUTABLE} -c "import nbval"
+    ERROR_VARIABLE nbvalERR
+    OUTPUT_STRIP_TRAILING_WHITESPACE)
+  if(NOT nbvalERR)
+    set(RDK_NBVAL_AVAILABLE ON)
+  else()
+    message("nbval not found, disabling the jupyter tests")
+  endif()
+
 else(RDK_BUILD_PYTHON_WRAPPERS)
   find_package(Boost ${RDK_BOOST_VERSION} REQUIRED)
 endif(RDK_BUILD_PYTHON_WRAPPERS)
@@ -360,7 +372,7 @@ if(RDK_BUILD_DESCRIPTORS3D)
     target_link_libraries(rdkit_base INTERFACE Eigen3::Eigen)
     set(RDK_HAS_EIGEN ON)
   else(EIGEN3_FOUND)
-    message("Eigen3 not found, disabling the Descriptors3D build.")
+    message("Eigen3 not found, some Mol descriptors will not be built.")
     set(RDK_BUILD_DESCRIPTORS3D OFF)
   endif(EIGEN3_FOUND)
 endif(RDK_BUILD_DESCRIPTORS3D)
@@ -383,7 +395,7 @@ endif()
 
 if(RDK_USE_BOOST_SERIALIZATION)
     set(T_LIBS ${Boost_LIBRARIES})
-    find_package(Boost ${RDK_BOOST_VERSION} COMPONENTS serialization)
+    find_package(Boost ${RDK_BOOST_VERSION} COMPONENTS system serialization iostreams)
     if (Boost_SERIALIZATION_LIBRARY)
       set(Boost_LIBRARIES ${T_LIBS} ${Boost_LIBRARIES})
     else()

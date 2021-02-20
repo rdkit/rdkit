@@ -11,6 +11,7 @@
 #include <algorithm>
 #include <RDGeneral/types.h>
 #include <GraphMol/QueryAtom.h>
+#include <boost/range/iterator_range.hpp>
 
 namespace RDKit {
 
@@ -601,6 +602,7 @@ ATOM_NULL_QUERY *makeAtomNullQuery() {
 }
 
 bool isComplexQuery(const Bond *b) {
+  PRECONDITION(b, "bad bond");
   if (!b->hasQuery()) {
     return false;
   }
@@ -638,6 +640,7 @@ bool isComplexQuery(const Bond *b) {
   return true;
 }
 
+namespace {
 bool _complexQueryHelper(Atom::QUERYATOM_QUERY const *query, bool &hasAtNum) {
   if (!query) {
     return false;
@@ -665,7 +668,70 @@ bool _complexQueryHelper(Atom::QUERYATOM_QUERY const *query, bool &hasAtNum) {
   }
   return false;
 }
+
+template <typename T>
+bool _atomListQueryHelper(const T query) {
+  PRECONDITION(query, "no query");
+  if (query->getNegation()) {
+    return false;
+  }
+  if (query->getDescription() == "AtomAtomicNum") {
+    return true;
+  }
+  if (query->getDescription() == "AtomOr") {
+    for (const auto child : boost::make_iterator_range(query->beginChildren(),
+                                                       query->endChildren())) {
+      if (!_atomListQueryHelper(child)) {
+        return false;
+      }
+    }
+  }
+  return true;
+}
+}  // namespace
+bool isAtomListQuery(const Atom *a) {
+  PRECONDITION(a, "bad atom");
+  if (!a->hasQuery()) {
+    return false;
+  }
+  if (a->getQuery()->getDescription() == "AtomOr") {
+    for (const auto child : boost::make_iterator_range(
+             a->getQuery()->beginChildren(), a->getQuery()->endChildren())) {
+      if (!_atomListQueryHelper(child)) {
+        return false;
+      }
+    }
+    return true;
+  }
+  return false;
+}
+
+void getAtomListQueryVals(const Atom::QUERYATOM_QUERY *q,
+                          std::vector<int> &vals) {
+  // list queries are series of nested ors of AtomAtomicNum queries
+  PRECONDITION(q, "bad query");
+  auto descr = q->getDescription();
+  PRECONDITION(descr == "AtomOr", "bad query");
+  if (descr == "AtomOr") {
+    for (const auto child :
+         boost::make_iterator_range(q->beginChildren(), q->endChildren())) {
+      auto descr = child->getDescription();
+      if (child->getNegation() ||
+          (descr != "AtomOr" && descr != "AtomAtomicNum")) {
+        throw ValueErrorException("bad query type");
+      }
+      // we don't allow negation of any children of the query:
+      if (descr == "AtomOr") {
+        getAtomListQueryVals(child.get(), vals);
+      } else if (descr == "AtomAtomicNum") {
+        vals.push_back(static_cast<ATOM_EQUALS_QUERY *>(child.get())->getVal());
+      }
+    }
+  }
+}
+
 bool isComplexQuery(const Atom *a) {
+  PRECONDITION(a, "bad atom");
   if (!a->hasQuery()) {
     return false;
   }
@@ -697,6 +763,7 @@ bool isComplexQuery(const Atom *a) {
   return true;
 }
 bool isAtomAromatic(const Atom *a) {
+  PRECONDITION(a, "bad atom");
   bool res = false;
   if (!a->hasQuery()) {
     res = a->getIsAromatic();

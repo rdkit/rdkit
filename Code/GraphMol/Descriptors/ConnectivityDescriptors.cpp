@@ -29,7 +29,7 @@ void hkDeltas(const ROMol &mol, std::vector<double> &deltas, bool force) {
   ROMol::VERTEX_ITER atBegin, atEnd;
   boost::tie(atBegin, atEnd) = mol.getVertices();
   while (atBegin != atEnd) {
-    const Atom* at = mol[*atBegin];
+    const Atom *at = mol[*atBegin];
     unsigned int n = at->getAtomicNum();
     if (n <= 1) {
       deltas[at->getIdx()] = 0;
@@ -58,7 +58,7 @@ void nVals(const ROMol &mol, std::vector<double> &nVs, bool force) {
   ROMol::VERTEX_ITER atBegin, atEnd;
   boost::tie(atBegin, atEnd) = mol.getVertices();
   while (atBegin != atEnd) {
-    const Atom* at = mol[*atBegin];
+    const Atom *at = mol[*atBegin];
     double v = tbl->getNouterElecs(at->getAtomicNum()) - at->getTotalNumHs();
     if (v != 0.0) {
       v = 1. / sqrt(v);
@@ -165,14 +165,14 @@ double getAlpha(const Atom &atom, bool &found) {
   }
   return res;
 }
-}  // end of detail namespace
+}  // namespace detail
 
 double calcChiNv(const ROMol &mol, unsigned int n, bool force) {
   std::vector<double> hkDs(mol.getNumAtoms());
   detail::hkDeltas(mol, hkDs, force);
   PATH_LIST ps = findAllPathsOfLengthN(mol, n + 1, false);
   double res = 0.0;
-  BOOST_FOREACH (PATH_TYPE p, ps) {
+  for (const auto &p : ps) {
     TEST_ASSERT(p.size() == n + 1);
     double accum = 1.0;
     for (unsigned int i = 0; i < n; ++i) {
@@ -191,7 +191,7 @@ double calcChiNn(const ROMol &mol, unsigned int n, bool force) {
   detail::nVals(mol, nVs, force);
   PATH_LIST ps = findAllPathsOfLengthN(mol, n + 1, false);
   double res = 0.0;
-  BOOST_FOREACH (PATH_TYPE p, ps) {
+  for (const auto &p : ps) {
     TEST_ASSERT(p.size() == n + 1);
     double accum = 1.0;
     for (unsigned int i = 0; i < n; ++i) {
@@ -220,7 +220,7 @@ double calcChi1v(const ROMol &mol, bool force) {
   ROMol::EDGE_ITER firstB, lastB;
   boost::tie(firstB, lastB) = mol.getEdges();
   while (firstB != lastB) {
-    const Bond* bond = mol[*firstB];
+    const Bond *bond = mol[*firstB];
     res += hkDs[bond->getBeginAtomIdx()] * hkDs[bond->getEndAtomIdx()];
     ++firstB;
   }
@@ -249,7 +249,7 @@ double calcChi1n(const ROMol &mol, bool force) {
   ROMol::EDGE_ITER firstB, lastB;
   boost::tie(firstB, lastB) = mol.getEdges();
   while (firstB != lastB) {
-    const Bond* bond = mol[*firstB];
+    const Bond *bond = mol[*firstB];
     res += nVs[bond->getBeginAtomIdx()] * nVs[bond->getEndAtomIdx()];
     ++firstB;
   }
@@ -274,7 +274,7 @@ double calcHallKierAlpha(const ROMol &mol, std::vector<double> *atomContribs) {
   ROMol::VERTEX_ITER atBegin, atEnd;
   boost::tie(atBegin, atEnd) = mol.getVertices();
   while (atBegin != atEnd) {
-    const Atom* at = mol[*atBegin];
+    const Atom *at = mol[*atBegin];
     ++atBegin;
     unsigned int n = at->getAtomicNum();
     if (!n) {
@@ -348,4 +348,4 @@ double calcKappa3(const ROMol &mol) {
   return kappa;
 }
 }  // end of namespace Descriptors
-}
+}  // namespace RDKit

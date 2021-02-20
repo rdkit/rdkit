@@ -6236,6 +6236,24 @@ M  END
       txt = sio.getvalue()
       self.assertTrue(pval in txt)
 
+  def test_github1631(self):
+    fileN = os.path.join(RDConfig.RDBaseDir, 'Code', 'GraphMol', 'FileParsers', 'test_data',
+                         '1CRN.pdb')
+
+    m = Chem.MolFromPDBFile(fileN)
+    info = m.GetAtomWithIdx(0).GetPDBResidueInfo()
+    self.assertEqual(info.GetName(), " N  ")
+    self.assertEqual(info.GetResidueName(), "THR")
+    self.assertAlmostEqual(info.GetTempFactor(), 13.79, 2)
+
+    m2 = Chem.MolFromSmiles('CC(C(C(=O)O)N)O')
+    self.assertTrue(m2.GetAtomWithIdx(6).GetPDBResidueInfo() is None)
+    m2.GetAtomWithIdx(6).SetPDBResidueInfo(info)
+    info2 = m2.GetAtomWithIdx(6).GetPDBResidueInfo()
+    self.assertEqual(info2.GetName(), " N  ")
+    self.assertEqual(info2.GetResidueName(), "THR")
+    self.assertAlmostEqual(info2.GetTempFactor(), 13.79, 2)
+
   def testMolzip(self):
     tests = [["C[*:1]", "N[*:1]", "CN", Chem.MolzipParams()]]
     for a, b, res, params in tests:

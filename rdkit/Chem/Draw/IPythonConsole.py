@@ -164,7 +164,7 @@ def display_pil_image(img):
   """displayhook function for PIL Images, rendered as PNG"""
   # pull metadata from the image, if there
   metadata = PngInfo()
-  for k, v in img.text.items():
+  for k, v in img.info.items():
     metadata.add_text(k, v)
   bio = BytesIO()
   img.save(bio, format='PNG', pnginfo=metadata)
