@@ -2902,6 +2902,7 @@ void drawDativeBond(MolDraw2D &d2d, const Bond &bond, const Point2D &cds1,
   Point2D delta = mid - cds2;
   Point2D end = cds2 + delta * frac;
   d2d.drawArrow(mid, end, asPolygon, frac, angle);
+  d2d.setActiveAtmIdx();
 }
 
 void drawBondLine(MolDraw2D &d2d, const Bond &bond, const Point2D &cds1,
@@ -2910,6 +2911,7 @@ void drawBondLine(MolDraw2D &d2d, const Bond &bond, const Point2D &cds1,
   if (!d2d.drawOptions().splitBonds) {
     d2d.setActiveAtmIdx(bond.getBeginAtomIdx(), bond.getEndAtomIdx());
     d2d.drawLine(cds1, cds2, col1, col2);
+	  d2d.setActiveAtmIdx();
     return;
   }
   Point2D mid = (cds1 + cds2) * 0.5;
@@ -2917,6 +2919,7 @@ void drawBondLine(MolDraw2D &d2d, const Bond &bond, const Point2D &cds1,
   d2d.drawLine(cds1, mid, col1, col1);
   d2d.setActiveAtmIdx(bond.getEndAtomIdx());
   d2d.drawLine(mid, cds2, col2, col2);
+  d2d.setActiveAtmIdx();
 }
 
 void drawBondWavyLine(MolDraw2D &d2d, const Bond &bond, const Point2D &cds1,
@@ -2926,6 +2929,7 @@ void drawBondWavyLine(MolDraw2D &d2d, const Bond &bond, const Point2D &cds1,
   // do not split and flag wavy bond with both atoms
   d2d.setActiveAtmIdx(bond.getBeginAtomIdx(), bond.getEndAtomIdx());
   d2d.drawWavyLine(cds1, cds2, col1, col2);
+  d2d.setActiveAtmIdx();
 }
 
 void drawNormalBond(MolDraw2D &d2d, const Bond &bond, bool highlight_bond,

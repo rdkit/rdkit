@@ -247,7 +247,7 @@ TEST_CASE("dative bonds", "[drawing][organometallics]") {
     outs << text;
     outs.flush();
 
-    CHECK(text.find("<path class='bond-0' d='M 126.052,100 L 85.9675,100'"
+    CHECK(text.find("<path class='bond-0 atom-0 atom-1' d='M 126.052,100 L 85.9675,100'"
                     " style='fill:none;fill-rule:evenodd;"
                     "stroke:#0000FF;") != std::string::npos);
   }
@@ -263,7 +263,7 @@ TEST_CASE("dative bonds", "[drawing][organometallics]") {
     outs << text;
     outs.flush();
 
-    CHECK(text.find("<path class='bond-7' d='M 101.307,79.424 "
+    CHECK(text.find("<path class='bond-7 atom-7 atom-8' d='M 101.307,79.424 "
                     "L 95.669,87.1848' style='fill:none;"
                     "fill-rule:evenodd;stroke:#0000FF;") != std::string::npos);
   }
@@ -281,7 +281,7 @@ TEST_CASE("dative bonds", "[drawing][organometallics]") {
     outs << text;
     outs.flush();
 
-    CHECK(text.find("<path class='bond-2' d='M 53.289,140.668"
+    CHECK(text.find("<path class='bond-2 atom-3 atom-4' d='M 53.289,140.668"
                     " L 81.0244,149.68' style='fill:none;"
                     "fill-rule:evenodd;stroke:#0000FF;") != std::string::npos);
   }
@@ -842,7 +842,7 @@ TEST_CASE("including legend in drawing results in offset drawing later",
     outs.flush();
 
     // make sure the polygon starts at a bond
-    CHECK(text.find("<path class='bond-0' d='M 321.962,140") !=
+    CHECK(text.find("<path class='bond-0 atom-0 atom-1' d='M 321.962,140") !=
           std::string::npos);
     CHECK(text.find("<path d='M 321.962,140") != std::string::npos);
   }
@@ -1856,8 +1856,8 @@ TEST_CASE("disable atom labels", "[feature]") {
     std::ofstream outs("testNoAtomLabels-1.svg");
     outs << text;
     outs.flush();
-    CHECK(text.find("atom-0") == std::string::npos);
-    CHECK(text.find("atom-3") == std::string::npos);
+    CHECK(text.find("class='atom-0") == std::string::npos);
+    CHECK(text.find("class='atom-3") == std::string::npos);
   }
 }
 
