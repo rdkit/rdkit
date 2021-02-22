@@ -53,7 +53,7 @@ void testMMFFMultiThread() {
   pathName += "/Code/GraphMol/ForceFieldHelpers/MMFF/test_data";
   SDMolSupplier suppl(pathName + "/bulk.sdf");
   unsigned int count = 24;
-  std::vector<std::vector<ROMol*>> mols;
+  std::vector<std::vector<ROMol *>> mols;
   for (unsigned int i = 0; i < count; ++i) {
     mols.emplace_back();
   }
@@ -62,7 +62,7 @@ void testMMFFMultiThread() {
     ROMol *mol = nullptr;
     try {
       mol = suppl.next();
-      for(unsigned int i=0;i<count;++i) {
+      for (unsigned int i = 0; i < count; ++i) {
         if (i == 0) {
           mols[i].push_back(mol);
         } else {
@@ -86,8 +86,10 @@ void testMMFFMultiThread() {
     fut.get();
   }
   std::cerr << "done" << std::endl;
-  for(unsigned int i=0; i<count; ++i)
-    for (auto *mol : mols[i]) { delete mol; }
+  for (unsigned int i = 0; i < count; ++i)
+    for (auto *mol : mols[i]) {
+      delete mol;
+    }
 
   BOOST_LOG(rdErrorLog) << "  done" << std::endl;
 }
@@ -98,6 +100,9 @@ void testMMFFMultiThread() {
 //-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*
 int main() {
   RDLog::InitLogs();
+  // we get a ton of warnings here about missing Hs... disable them
+  boost::logging::disable_logs("rdApp.warning");
+
 #ifdef RDK_TEST_MULTITHREADED
   testMMFFMultiThread();
 #endif
