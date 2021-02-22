@@ -218,10 +218,11 @@ class TestCase(unittest.TestCase):
     with self.assertRaises(KeyError):
       Draw.DrawMorganBit(m, 32, bi)
 
-    # Github #3796: make sure we aren't trying to generate metadata:
-    png = Draw.DrawMorganBit(m, 872, bi, useSVG=False)
-    self.assertIn(b'PNG', png)
-    self.assertIsNone(Chem.MolFromPNGString(png))
+    if hasattr(Draw, 'MolDraw2DCairo'):
+      # Github #3796: make sure we aren't trying to generate metadata:
+      png = Draw.DrawMorganBit(m, 872, bi, useSVG=False)
+      self.assertIn(b'PNG', png)
+      self.assertIsNone(Chem.MolFromPNGString(png))
 
   def testDrawRDKit(self):
     m = Chem.MolFromSmiles('c1ccccc1CC1CC1')
@@ -238,10 +239,11 @@ class TestCase(unittest.TestCase):
     with self.assertRaises(KeyError):
       Draw.DrawRDKitBit(m, 32, bi)
 
-    # Github #3796: make sure we aren't trying to generate metadata:
-    png = Draw.DrawRDKitBit(m, 1553, bi, useSVG=False)
-    self.assertIn(b'PNG', png)
-    self.assertIsNone(Chem.MolFromPNGString(png))
+    if hasattr(Draw, 'MolDraw2DCairo'):
+      # Github #3796: make sure we aren't trying to generate metadata:
+      png = Draw.DrawRDKitBit(m, 1553, bi, useSVG=False)
+      self.assertIn(b'PNG', png)
+      self.assertIsNone(Chem.MolFromPNGString(png))
 
   def testDrawReaction(self):
     # this shouldn't throw an exception...
