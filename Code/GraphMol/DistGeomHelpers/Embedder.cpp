@@ -886,17 +886,6 @@ bool setupInitialBoundsMatrix(
     setTopolBounds(*mol, mmat, true, false, params.useMacrocycle14config,
                    params.forceTransAmides);
   }
-#if 0
-  std::cerr << "====================" << std::endl;
-  for (unsigned int i = 0; i < nAtoms; ++i) {
-    for (unsigned int j = 0; j < nAtoms; ++j) {
-      std::cerr << " " << std::setprecision(3) << std::setw(5)
-                << mmat->getVal(i, j);
-    }
-    std::cerr << std::endl;
-  }
-  std::cerr << "====================" << std::endl;
-#endif
   double tol = 0.0;
   if (coordMap) {
     adjustBoundsMatFromCoordMap(mmat, nAtoms, coordMap);
