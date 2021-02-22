@@ -783,11 +783,13 @@ TEST_CASE("github #3774: MolToSmarts inverts direction of dative bond",
       auto m = "N->[Cu+]"_smiles;
       REQUIRE(m);
       CHECK(MolToSmarts(*m) == "[#7]->[Cu+]");
+      CHECK(MolToSmiles(*m) == "N->[Cu+]");
     }
     {
       auto m = "N<-[Cu+]"_smiles;
       REQUIRE(m);
       CHECK(MolToSmarts(*m) == "[#7]<-[Cu+]");
+      CHECK(MolToSmiles(*m) == "N<-[Cu+]");
     }
   }
   SECTION("from smarts") {
