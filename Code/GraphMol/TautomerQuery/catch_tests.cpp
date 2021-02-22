@@ -314,4 +314,13 @@ TEST_CASE("TAUTOMERQUERY_COPY_CONSTRUCTOR") {
   auto tautomerQuery =
     std::unique_ptr<TautomerQuery>(TautomerQuery::fromMol(*mol));
   auto tautomerQueryCopyConstructed = std::unique_ptr<TautomerQuery>(new TautomerQuery(*tautomerQuery));
+  CHECK(&(tautomerQuery->getTemplateMolecule()) != &tautomerQueryCopyConstructed->getTemplateMolecule());
+}
+
+TEST_CASE("TAUTOMERQUERY_OPERATOR=") {
+  auto mol = "c1ccccc1"_smiles;
+  auto tautomerQuery =
+    std::unique_ptr<TautomerQuery>(TautomerQuery::fromMol(*mol));
+  auto tautomerQueryAssigned = *tautomerQuery;
+  CHECK(&(tautomerQuery->getTemplateMolecule()) != &tautomerQueryAssigned.getTemplateMolecule());
 }
