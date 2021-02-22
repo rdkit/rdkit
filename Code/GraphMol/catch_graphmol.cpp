@@ -1,6 +1,5 @@
 //
-//
-//  Copyright (C) 2018-2020 Greg Landrum and T5 Informatics GmbH
+//  Copyright (C) 2018-2021 Greg Landrum and T5 Informatics GmbH
 //
 //   @@ All Rights Reserved @@
 //  This file is part of the RDKit.
@@ -1422,5 +1421,33 @@ TEST_CASE("Additional oxidation states", "[chemistry]") {
       REQUIRE(m);
       CHECK(m->getAtomWithIdx(1)->getNumRadicalElectrons() == 0);
     }
+  }
+}
+
+TEST_CASE("needsHs function", "[chemistry]") {
+  SECTION("basics") {
+    const auto m = "CC"_smiles;
+    REQUIRE(m);
+    CHECK(MolOps::needsHs(*m));
+
+    // add a single H:
+    m->addAtom(new Atom(1));
+    m->addBond(0, 2, Bond::BondType::SINGLE);
+    MolOps::sanitizeMol(*m);
+    CHECK(MolOps::needsHs(*m));
+
+    // now add all the Hs:
+    MolOps::addHs(*m);
+    CHECK(!MolOps::needsHs(*m));
+  }
+  SECTION("radical") {
+    const auto m = "[O][O]"_smiles;
+    REQUIRE(m);
+    CHECK(!MolOps::needsHs(*m));
+  }
+  SECTION("none needed") {
+    const auto m = "FF"_smiles;
+    REQUIRE(m);
+    CHECK(!MolOps::needsHs(*m));
   }
 }

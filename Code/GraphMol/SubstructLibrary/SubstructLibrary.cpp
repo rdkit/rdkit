@@ -122,6 +122,9 @@ void SubSearcher(const ROMol &in_query, const Bits &bits,
     //  returned molecule!
     const boost::shared_ptr<ROMol> &m = mols.getMol(idx);
     ROMol *mol = m.get();
+    if(!mol){
+      continue;
+    }
     if (needs_rings && (!mol->getRingInfo() || !mol->getRingInfo()->isInitialized())) {
       MolOps::symmetrizeSSSR(*mol);
     }

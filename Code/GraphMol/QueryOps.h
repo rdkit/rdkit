@@ -1061,6 +1061,9 @@ Queries::EqualityQuery<int, const Target *, true> *makePropQuery(
 RDKIT_GRAPHMOL_EXPORT bool isComplexQuery(const Bond *b);
 RDKIT_GRAPHMOL_EXPORT bool isComplexQuery(const Atom *a);
 RDKIT_GRAPHMOL_EXPORT bool isAtomAromatic(const Atom *a);
+RDKIT_GRAPHMOL_EXPORT bool isAtomListQuery(const Atom *a);
+RDKIT_GRAPHMOL_EXPORT void getAtomListQueryVals(const Atom::QUERYATOM_QUERY *q,
+                                                std::vector<int> &vals);
 
 namespace QueryOps {
 RDKIT_GRAPHMOL_EXPORT void completeMolQueries(

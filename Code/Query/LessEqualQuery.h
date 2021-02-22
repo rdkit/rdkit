@@ -18,7 +18,7 @@ namespace Queries {
 //!  value (and an optional tolerance)
 template <class MatchFuncArgType, class DataFuncArgType = MatchFuncArgType,
           bool needsConversion = false>
-class LessEqualQuery
+class RDKIT_QUERY_EXPORT LessEqualQuery
     : public EqualityQuery<MatchFuncArgType, DataFuncArgType, needsConversion> {
  public:
   LessEqualQuery() { this->d_tol = 0; };

@@ -11,6 +11,8 @@
 #define RGROUP_UTILS
 
 #include <GraphMol/RDKitBase.h>
+#include "RGroupDecomp.h"
+
 #include <map>
 namespace RDKit {
 
@@ -47,6 +49,24 @@ bool setLabel(Atom *atom, int label, std::set<int> &labels, int &maxLabel,
 
 //! Returns true if the core has a dummy atom
 bool hasDummy(const RWMol &core);
-}
+
+//! Returns a JSON form
+//  The prefix argument is added to each line in the output
+RDKIT_RGROUPDECOMPOSITION_EXPORT std::string toJSON(
+    const RGroupRow &rgr, const std::string &prefix = "");
+//! Returns a JSON form
+//  The prefix argument is added to each line in the output
+RDKIT_RGROUPDECOMPOSITION_EXPORT std::string toJSON(
+    const RGroupRows &rgr, const std::string &prefix = "");
+//! Returns a JSON form
+//  The prefix argument is added to each line in the output
+RDKIT_RGROUPDECOMPOSITION_EXPORT std::string toJSON(
+    const RGroupColumn &rgr, const std::string &prefix = "");
+//! Returns a JSON form
+//  The prefix argument is added to each line in the output
+RDKIT_RGROUPDECOMPOSITION_EXPORT std::string toJSON(
+    const RGroupColumns &rgr, const std::string &prefix = "");
+
+}  // namespace RDKit
 
 #endif

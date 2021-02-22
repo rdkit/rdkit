@@ -9,20 +9,7 @@
 //
 
 #pragma once
-#ifndef SWIG
-#	ifdef _MSC_VER
-#		pragma warning(disable : 4251)
-#		pragma warning(disable : 4275)
-#	endif
 
-#	include <boost/config.hpp>
-#endif
+#include <RDGeneral/RDExportMacros.h>
 
-#if defined(BOOST_HAS_DECLSPEC) && defined(RDKIT_DYN_LINK) && !defined(SWIG)
-#	define  GA_EXPORT __declspec(dllexport)
-#endif
-#ifndef GA_EXPORT
-#	define GA_EXPORT
-#endif
-
-
+#define  GA_EXPORT RDKIT_EXPORT_API

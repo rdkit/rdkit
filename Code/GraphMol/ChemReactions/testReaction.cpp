@@ -7174,12 +7174,15 @@ void testOtherBondStereo() {
     for (const auto &products : product_sets) {
       TEST_ASSERT(products.size() == 1);
       for (const Bond *bond : products[0]->bonds()) {
+        TEST_ASSERT(Bond::BondStereo::STEREONONE == bond->getStereo());
+
+        // Make sure the temporary mark set in the reaction has been removed.
+        TEST_ASSERT(!bond->hasProp("_UnknownStereoRxnBond"));
+
         if (bond->getIdx() == 1) {
           TEST_ASSERT(Bond::BondType::DOUBLE == bond->getBondType());
-          TEST_ASSERT(Bond::BondStereo::STEREOANY == bond->getStereo());
         } else {
           TEST_ASSERT(Bond::BondType::SINGLE == bond->getBondType());
-          TEST_ASSERT(Bond::BondStereo::STEREONONE == bond->getStereo());
         }
       }
     }
@@ -7496,13 +7499,36 @@ M  END
   }
 }
 
+void testGithub3078() {
+  BOOST_LOG(rdInfoLog) << "--------------------------------------" << std::endl;
+  BOOST_LOG(rdInfoLog)
+      << "Reaction-edge stereo bonds should default to STEREONONE" << std::endl;
+
+  const std::string reaction(
+      R"([C:1][C:2]1[C:3][N:4]1>>[C:1][C:2]1=[C:3][N:4]1)");
+  std::unique_ptr<ChemicalReaction> rxn(RxnSmartsToChemicalReaction(reaction));
+  TEST_ASSERT(rxn);
+  rxn->initReactantMatchers();
+  std::vector<ROMOL_SPTR> reactant{"CC1CN1"_smiles};
+
+  auto prods = rxn->runReactants(reactant);
+  TEST_ASSERT(prods.size() == 1);
+  TEST_ASSERT(prods[0].size() == 1);
+
+  const auto bond = prods[0][0]->getBondWithIdx(1);
+  TEST_ASSERT(bond->getBondType() == Bond::DOUBLE);
+  TEST_ASSERT(bond->getStereo() == Bond::STEREONONE);
+
+  // Make sure the temporary mark set in the reaction has been removed.
+  TEST_ASSERT(!bond->hasProp("_UnknownStereoRxnBond"));
+}
+
 int main() {
   RDLog::InitLogs();
 
   BOOST_LOG(rdInfoLog)
       << "********************************************************\n";
   BOOST_LOG(rdInfoLog) << "Testing Chemical Reactions \n";
-#if 1
   test1Basics();
   test2SimpleReactions();
   test3RingFormation();
@@ -7587,9 +7613,9 @@ int main() {
   testOtherBondStereo();
   testGithub2547();
   testGithub3097();
-#endif
   testDblBondCrash();
   testRxnBlockRemoveHs();
+  testGithub3078();
 
   BOOST_LOG(rdInfoLog)
       << "*******************************************************\n";

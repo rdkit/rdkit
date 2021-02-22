@@ -12,6 +12,7 @@ steps:
         numpy pillow eigen pandas \
         qt
     conda activate rdkit_build
+    conda install -c conda-forge nbval
     conda install -c rdkit nox cairo=1.14.6
   displayName: Setup build environment
 - bash: |

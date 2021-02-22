@@ -34,7 +34,6 @@
 #include <GraphMol/Substruct/SubstructMatch.h>
 #include <GraphMol/QueryOps.h>
 #include <boost/dynamic_bitset.hpp>
-#include <boost/foreach.hpp>
 #include <map>
 #include <algorithm>
 #include <GraphMol/ChemTransforms/ChemTransforms.h>
@@ -52,6 +51,9 @@ typedef std::vector<VectMatchVectType> VectVectMatchVectType;
 namespace {
 const std::string WAS_DUMMY =
     "was_dummy";  // was the atom originally a dummy in product
+
+// Intended as a temporary mark, will be removed from final reaction products.
+const std::string _UnknownStereoRxnBond = "_UnknownStereoRxnBond";
 }  // namespace
 
 namespace ReactionRunnerUtils {
@@ -377,9 +379,9 @@ RWMOL_SPTR convertTemplateToMol(const ROMOL_SPTR prodTemplateSptr) {
     }
 
     // Double bond stereo: if a double bond has at least one bond on each side,
-    // and none of those has a direction, then we temporarily set STEREOANY.
-    // This has to be done before the reactant atoms are added, and will be
-    // reviewed later on.
+    // and none of those has a direction, then mark it as unknown stereo to have
+    // it reset later on. This has to be done before the reactant atoms are
+    // added,
     if (oldB->getBondType() == Bond::BondType::DOUBLE) {
       const Atom *startAtom = oldB->getBeginAtom();
       const Atom *endAtom = oldB->getEndAtom();
@@ -389,7 +391,7 @@ RWMOL_SPTR convertTemplateToMol(const ROMOL_SPTR prodTemplateSptr) {
                nullptr ||
            Chirality::getNeighboringDirectedBond(*prodTemplate, endAtom) ==
                nullptr)) {
-        newB->setStereo(Bond::BondStereo::STEREOANY);
+        newB->setProp(_UnknownStereoRxnBond, 1);
       }
     }
 
@@ -620,9 +622,9 @@ void translateProductStereoBondDirections(Bond *pBond, const Bond *start,
  * the one in the reactants.
  *
  * Each double bond will be checked against the following rules:
- * 1- if product bond is marked as STEREOANY, check if stereo is possible
- * on the bond, and eventually, keep the STEREOANY label or reset it to
- * STEREONONE if not.
+ * 1- if product bond is marked as unknown, set it to STEREONONE (it is either
+ * not a stereo bond, or we don't have information to determine whether it
+ * should be STEREOANY) and skip to the next one.
  * 2- if the product has bond directions set, deduce the final stereochemistry
  * from them.
  * 3- if there are no bond directions, check the atom mapping in the reaction to
@@ -635,21 +637,9 @@ void updateStereoBonds(RWMOL_SPTR product, const ROMol &reactant,
     // We are only interested in double bonds
     if (pBond->getBondType() != Bond::BondType::DOUBLE) {
       continue;
-    }
-    // If the product bond was previously marked as STEREOANY, check if it can
-    // actually sustain stereo (this could not be checked until we had all the
-    // atoms in the product)
-    if (Bond::BondStereo::STEREOANY == pBond->getStereo()) {
-      Atom *pStart = pBond->getBeginAtom();
-      Atom *pEnd = pBond->getEndAtom();
-
-      pStart->calcImplicitValence(false);
-      pEnd->calcImplicitValence(false);
-
-      if (pStart->getTotalDegree() < 3 || pEnd->getTotalDegree() < 3) {
-        pBond->setStereo(Bond::BondStereo::STEREONONE);
-      }
-
+    } else if (pBond->hasProp(_UnknownStereoRxnBond)) {
+      pBond->setStereo(Bond::BondStereo::STEREONONE);
+      pBond->clearProp(_UnknownStereoRxnBond);
       continue;
     }
 
@@ -1412,7 +1402,7 @@ std::vector<MOL_SPTR_VECT> run_Reactants(const ChemicalReaction &rxn,
         "Number of reactants provided does not match number of reactant "
         "templates.");
   }
-  BOOST_FOREACH (ROMOL_SPTR msptr, reactants) {
+  for (auto msptr : reactants) {
     CHECK_INVARIANT(msptr, "bad molecule in reactants");
     msptr->clearAllAtomBookmarks();  // we use this as scratch space
   }

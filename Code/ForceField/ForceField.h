@@ -13,7 +13,6 @@
 
 #include <vector>
 #include <boost/smart_ptr.hpp>
-#include <boost/foreach.hpp>
 #include <Geometry/point.h>
 #include <GraphMol/Trajectory/Snapshot.h>
 
