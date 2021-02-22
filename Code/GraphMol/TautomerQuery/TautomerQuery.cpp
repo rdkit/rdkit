@@ -241,7 +241,7 @@ std::vector<MatchVectType> TautomerQuery::substructOf(
   templateParams.extraFinalCheck = checker;
 
   auto matches =
-      RDKit::SubstructMatch(mol, *d_templateMolecule.get(), templateParams);
+      RDKit::SubstructMatch(mol, *d_templateMolecule, templateParams);
 
 #ifdef VERBOSE
   std::cout << "Found " << matches.size() << " matches " << std::endl;
@@ -267,7 +267,7 @@ bool TautomerQuery::isSubstructOf(const ROMol &mol,
 
 ExplicitBitVect *TautomerQuery::patternFingerprintTemplate(
     unsigned int fpSize) {
-  return PatternFingerprintMol(*d_templateMolecule.get(), fpSize, nullptr, nullptr,
+  return PatternFingerprintMol(*d_templateMolecule, fpSize, nullptr, nullptr,
                                true);
 }
 
