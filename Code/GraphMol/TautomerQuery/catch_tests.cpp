@@ -309,7 +309,7 @@ TEST_CASE("TEST_NOT_TAUTOMER") {
   CHECK(tautomerQuery->isSubstructOf(*target));
 }
 
-TEST_CASE("TAUTOMERQUERY_COPY_CONSTRUCTOR") {
+TEST_CASE("github #3821 TAUTOMERQUERY_COPY_CONSTRUCTOR") {
   auto mol = "c1ccccc1"_smiles;
   auto tautomerQuery =
     std::unique_ptr<TautomerQuery>(TautomerQuery::fromMol(*mol));
