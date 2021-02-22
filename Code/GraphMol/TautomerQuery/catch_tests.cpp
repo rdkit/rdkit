@@ -317,7 +317,7 @@ TEST_CASE("github #3821 TAUTOMERQUERY_COPY_CONSTRUCTOR") {
   CHECK(&(tautomerQuery->getTemplateMolecule()) != &tautomerQueryCopyConstructed->getTemplateMolecule());
 }
 
-TEST_CASE("TAUTOMERQUERY_OPERATOR=") {
+TEST_CASE("github #3821 check TAUTOMERQUERY_OPERATOR= does a deep copy") {
   auto mol = "c1ccccc1"_smiles;
   auto tautomerQuery =
     std::unique_ptr<TautomerQuery>(TautomerQuery::fromMol(*mol));
