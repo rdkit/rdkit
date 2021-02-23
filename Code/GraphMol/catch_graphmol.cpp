@@ -1424,3 +1424,35 @@ TEST_CASE("Additional oxidation states", "[chemistry]") {
     }
   }
 }
+
+TEST_CASE("Github #3805: radicals on [He]", "[chemistry]") {
+  SECTION("Basics") {
+    {
+      auto m = "[He]"_smiles;
+      REQUIRE(m);
+      CHECK(m->getAtomWithIdx(0)->getNumRadicalElectrons() == 0);
+      CHECK(m->getAtomWithIdx(0)->getTotalNumHs() == 0);
+    }
+    {
+      auto m = "[Ne]"_smiles;
+      REQUIRE(m);
+      CHECK(m->getAtomWithIdx(0)->getNumRadicalElectrons() == 0);
+      CHECK(m->getAtomWithIdx(0)->getTotalNumHs() == 0);
+    }
+  }
+  SECTION("Basics") {
+    {
+      auto m = "[He+]"_smiles;
+      REQUIRE(m);
+      CHECK(m->getAtomWithIdx(0)->getNumRadicalElectrons() == 1);
+      CHECK(m->getAtomWithIdx(0)->getTotalNumHs() == 0);
+    }
+    {
+      auto m = "[Ne+]"_smiles;
+      REQUIRE(m);
+      CHECK(m->getAtomWithIdx(0)->getNumRadicalElectrons() == 1);
+      CHECK(m->getAtomWithIdx(0)->getTotalNumHs() == 0);
+    }
+  }
+}
+
