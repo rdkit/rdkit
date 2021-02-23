@@ -666,7 +666,9 @@ class RDKIT_MOLDRAW2D_EXPORT MolDraw2D {
   void setActiveAtmIdx(int at_idx1 = -1, int at_idx2 = -1) {
     at_idx1 = (at_idx1 < 0 ? -1 : at_idx1);
     at_idx2 = (at_idx2 < 0 ? -1 : at_idx2);
-    if (at_idx2 >= 0 && at_idx1 < 0) std::swap(at_idx1, at_idx2);
+    if (at_idx2 >= 0 && at_idx1 < 0) {
+      std::swap(at_idx1, at_idx2);
+    }
     activeAtmIdx1_ = at_idx1;
 	activeAtmIdx2_ = at_idx2;
   }
