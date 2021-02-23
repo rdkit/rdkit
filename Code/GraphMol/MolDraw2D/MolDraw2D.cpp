@@ -2912,7 +2912,7 @@ void drawBondLine(MolDraw2D &d2d, const Bond &bond, const Point2D &cds1,
   if (!d2d.drawOptions().splitBonds) {
     d2d.setActiveAtmIdx(bond.getBeginAtomIdx(), bond.getEndAtomIdx());
     d2d.drawLine(cds1, cds2, col1, col2);
-	  d2d.setActiveAtmIdx();
+    d2d.setActiveAtmIdx();
     return;
   }
   Point2D mid = (cds1 + cds2) * 0.5;
