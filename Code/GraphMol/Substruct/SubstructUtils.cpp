@@ -30,6 +30,7 @@ class ScoreMatchesByDegreeOfCoreSubstitution {
       : d_mol(mol),
         d_query(query),
         d_matches(matches),
+        d_sumIndices(0.0),
         d_minIdx(-1),
         d_isSorted(false) {
     PRECONDITION(!matches.empty(), "matches must not be empty");
