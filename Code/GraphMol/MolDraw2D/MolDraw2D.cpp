@@ -3239,7 +3239,9 @@ void drawQueryBond(MolDraw2D &d2d, const Bond &bond, bool highlight_bond,
       d2d.setDash(noDash);
     }
   } else if (qry->getDescription() == "DoubleOrAromaticBond") {
-    if (split) d2d.setActiveAtmIdx(bond.getBeginAtomIdx());
+    if (split) {
+      d2d.setActiveAtmIdx(bond.getBeginAtomIdx());
+    }
     {
       Point2D l1s, l1f, l2s, l2f;
       calcDoubleBondLines(bond.getOwningMol(), double_bond_offset, bond,
