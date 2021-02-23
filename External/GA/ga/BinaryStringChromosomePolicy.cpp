@@ -12,18 +12,20 @@
 
 namespace GapeGa {
 
-BinaryStringChromosomePolicy::BinaryStringChromosomePolicy(GarethUtil::RandomUtil & rng_) : rng(rng_){
-}
+BinaryStringChromosomePolicy::BinaryStringChromosomePolicy(
+    GarethUtil::RandomUtil& rng_)
+    : rng(rng_) {}
 
-BinaryStringChromosomePolicy::~BinaryStringChromosomePolicy() {
-}
+BinaryStringChromosomePolicy::~BinaryStringChromosomePolicy() {}
 
 bool BinaryStringChromosomePolicy::mutate(int pos, bool currentValue) const {
-    return ! currentValue;
-}
-    
-bool BinaryStringChromosomePolicy::initialize(int pos) const {
-    return rng.randomBoolean();
+  (void)pos;  // not used
+  return !currentValue;
 }
 
+bool BinaryStringChromosomePolicy::initialize(int pos) const {
+  (void)pos;  // not used
+  return rng.randomBoolean();
 }
+
+}  // namespace GapeGa

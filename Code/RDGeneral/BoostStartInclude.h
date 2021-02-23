@@ -67,7 +67,9 @@
 #if (__GNUC__ > 4 || __GNUC_MINOR__ > 7)
 #pragma GCC diagnostic ignored "-Wunused-local-typedefs"
 #endif
+#if (__GNUC__ > 9)
 #pragma GCC diagnostic ignored "-Wdeprecated-copy"
+#endif
 #elif defined(__HP_cc) || defined(__HP_aCC)
 /* Hewlett-Packard C/aC++. ---------------------------------- */
 

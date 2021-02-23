@@ -2476,7 +2476,7 @@ void MolDraw2D::extractLinkNodes(const ROMol &mol) {
     const double lengthFrac = 0.333;
     Point2D labelPt{-1000, -1000};
     Point2D labelPerp{0, 0};
-    for (const auto bAts : node.bondAtoms) {
+    for (const auto &bAts : node.bondAtoms) {
       // unlike brackets, we know how these point
       Point2D startLoc = at_cds_[activeMolIdx_][bAts.first];
       Point2D endLoc = at_cds_[activeMolIdx_][bAts.second];
