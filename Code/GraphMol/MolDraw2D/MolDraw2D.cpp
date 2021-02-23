@@ -3249,7 +3249,9 @@ void drawQueryBond(MolDraw2D &d2d, const Bond &bond, bool highlight_bond,
       d2d.drawLine(l1s, l1f);
       d2d.drawLine(l2s, l2f);
     }
-    if (split) d2d.setActiveAtmIdx(bond.getEndAtomIdx());
+    if (split) {
+      d2d.setActiveAtmIdx(bond.getEndAtomIdx());
+    }
     {
       Point2D l1s, l1f, l2s, l2f;
       calcDoubleBondLines(bond.getOwningMol(), double_bond_offset, bond, midp,
