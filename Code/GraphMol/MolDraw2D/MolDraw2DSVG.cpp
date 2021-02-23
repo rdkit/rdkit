@@ -386,7 +386,7 @@ void MolDraw2DSVG::tagAtoms(const ROMol &mol, double radius,
            << " d='M " << midp.x << "," << midp.y << " L " << a2pos.x << ","
            << a2pos.y << "'";
       d_os << " class='bond-selector bond-" << this_idx << " atom-" << a_idx2;
-      if (d_activeClass != "") {
+      if (!d_activeClass.empty()) {
         d_os << " " << d_activeClass;
       }
       d_os << "'";
