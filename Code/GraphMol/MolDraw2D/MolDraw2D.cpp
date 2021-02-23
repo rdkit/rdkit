@@ -2891,7 +2891,9 @@ void drawDativeBond(MolDraw2D &d2d, const Bond &bond, const Point2D &cds1,
   Point2D mid = (cds1 + cds2) * 0.5;
   d2d.drawLine(cds1, mid, col1, col1);
 
-  if (split) d2d.setActiveAtmIdx(bond.getEndAtomIdx());
+  if (split) {
+    d2d.setActiveAtmIdx(bond.getEndAtomIdx());
+  }
   d2d.setColour(col2);
   bool asPolygon = true;
   double frac = 0.2;
