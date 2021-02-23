@@ -3218,9 +3218,13 @@ void drawQueryBond(MolDraw2D &d2d, const Bond &bond, bool highlight_bond,
       d2d.drawLine(l2s, l2f);
     }
   } else if (qry->getDescription() == "SingleOrAromaticBond") {
-    if (split) d2d.setActiveAtmIdx(bond.getBeginAtomIdx());
+    if (split) {
+      d2d.setActiveAtmIdx(bond.getBeginAtomIdx());
+    }
     d2d.drawLine(at1_cds, midp);
-    if (split) d2d.setActiveAtmIdx(bond.getEndAtomIdx());
+    if (split) 
+      d2d.setActiveAtmIdx(bond.getEndAtomIdx());
+    }
     {
       Point2D l1s, l1f, l2s, l2f;
       calcDoubleBondLines(bond.getOwningMol(), double_bond_offset, bond, midp,
