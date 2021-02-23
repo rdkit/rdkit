@@ -1,6 +1,6 @@
 //
 //
-//  Copyright (C) 2018-2019 Greg Landrum and T5 Informatics GmbH
+//  Copyright (C) 2018-2021 Greg Landrum and T5 Informatics GmbH
 //
 //   @@ All Rights Reserved @@
 //  This file is part of the RDKit.
@@ -9,8 +9,6 @@
 //  of the RDKit source tree.
 //
 
-#define CATCH_CONFIG_MAIN  // This tells Catch to provide a main() - only do
-                           // this in one cpp file
 #include "catch.hpp"
 
 #include <GraphMol/RDKitBase.h>
@@ -774,6 +772,36 @@ TEST_CASE("github #3320: incorrect bond properties from CXSMILES",
       REQUIRE(bnd);
       CHECK(bnd->getBondType() == Bond::BondType::DATIVE);
       CHECK(bnd->getBeginAtomIdx() == pr.first);
+    }
+  }
+}
+
+TEST_CASE("github #3774: MolToSmarts inverts direction of dative bond",
+          "[smarts][bug]") {
+  SECTION("as reported") {
+    {
+      auto m = "N->[Cu+]"_smiles;
+      REQUIRE(m);
+      CHECK(MolToSmarts(*m) == "[#7]->[Cu+]");
+      CHECK(MolToSmiles(*m) == "N->[Cu+]");
+    }
+    {
+      auto m = "N<-[Cu+]"_smiles;
+      REQUIRE(m);
+      CHECK(MolToSmarts(*m) == "[#7]<-[Cu+]");
+      CHECK(MolToSmiles(*m) == "N<-[Cu+]");
+    }
+  }
+  SECTION("from smarts") {
+    {
+      auto m = "N->[Cu+]"_smarts;
+      REQUIRE(m);
+      CHECK(MolToSmarts(*m) == "N->[#29&+]");
+    }
+    {
+      auto m = "N<-[Cu+]"_smarts;
+      REQUIRE(m);
+      CHECK(MolToSmarts(*m) == "N<-[#29&+]");
     }
   }
 }

@@ -389,7 +389,7 @@ std::string getBondSmartsSimple(const Bond *bond,
   } else if (descrip == "BondOrder") {
     bool reverseDative =
         (atomToLeftIdx >= 0 &&
-         bond->getBeginAtomIdx() == static_cast<unsigned int>(atomToLeftIdx));
+         bond->getBeginAtomIdx() != static_cast<unsigned int>(atomToLeftIdx));
     bool doIsoSmiles =
         !bond->hasOwningMol() ||
         bond->getOwningMol().hasProp(common_properties::_doIsoSmiles);
@@ -751,7 +751,7 @@ std::string getNonQueryBondSmarts(const QueryBond *qbond, int atomToLeftIdx) {
   } else {
     bool reverseDative =
         (atomToLeftIdx >= 0 &&
-         qbond->getBeginAtomIdx() == static_cast<unsigned int>(atomToLeftIdx));
+         qbond->getBeginAtomIdx() != static_cast<unsigned int>(atomToLeftIdx));
     bool doIsoSmiles =
         !qbond->hasOwningMol() ||
         qbond->getOwningMol().hasProp(common_properties::_doIsoSmiles);
