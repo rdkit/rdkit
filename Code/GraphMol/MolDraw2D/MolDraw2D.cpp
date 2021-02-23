@@ -1911,6 +1911,7 @@ void MolDraw2D::calcLabelEllipse(int atom_idx,
 // ****************************************************************************
 StringRect MolDraw2D::calcAnnotationPosition(const ROMol &mol,
                                              const std::string &note) {
+  RDUNUSED_PARAM(mol);
   StringRect note_rect;
   if (note.empty()) {
     note_rect.width_ = -1.0;  // so we know it's not valid.
@@ -3069,6 +3070,9 @@ void drawQueryBond(MolDraw2D &d2d, const Bond &bond, bool highlight_bond,
                    const Point2D &at1_cds, const Point2D &at2_cds,
                    const std::vector<Point2D> &at_cds, const DrawColour &col1,
                    const DrawColour &col2, double double_bond_offset) {
+  RDUNUSED_PARAM(col1);
+  RDUNUSED_PARAM(col2);
+
   PRECONDITION(bond.hasQuery(), "no query");
   const auto qry = bond.getQuery();
   auto dv = at2_cds - at1_cds;
@@ -3202,13 +3206,12 @@ void MolDraw2D::drawBond(
   PRECONDITION(activeMolIdx_ >= 0, "bad mol idx");
   RDUNUSED_PARAM(highlight_atoms);
   RDUNUSED_PARAM(highlight_atom_map);
+  RDUNUSED_PARAM(mol);
 
-  if (at1_idx != bond->getBeginAtomIdx()) {
+  if (static_cast<unsigned int>(at1_idx) != bond->getBeginAtomIdx()) {
     std::swap(at1_idx, at2_idx);
   }
 
-  const Atom *at1 = mol.getAtomWithIdx(at1_idx);
-  const Atom *at2 = mol.getAtomWithIdx(at2_idx);
   Point2D at1_cds = at_cds_[activeMolIdx_][at1_idx];
   Point2D at2_cds = at_cds_[activeMolIdx_][at2_idx];
 
@@ -3254,19 +3257,13 @@ void MolDraw2D::drawBond(
     }
   }
 
-  Bond::BondType bt = bond->getBondType();
   bool isComplex = false;
   if (bond->hasQuery()) {
     std::string descr = bond->getQuery()->getDescription();
     if (bond->getQuery()->getNegation() || descr != "BondOrder") {
       isComplex = true;
-    }
-    if (isComplex) {
       drawQueryBond(*this, *bond, highlight_bond, at1_cds, at2_cds,
                     at_cds_[activeMolIdx_], col1, col2, double_bond_offset);
-    } else {
-      bt = static_cast<Bond::BondType>(
-          static_cast<BOND_EQUALS_QUERY *>(bond->getQuery())->getVal());
     }
   }
 
