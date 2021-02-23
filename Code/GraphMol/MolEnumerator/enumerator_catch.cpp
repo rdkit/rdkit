@@ -573,19 +573,19 @@ M  V30 END CTAB
 M  END
 )CTAB"_ctab;
   std::vector<std::string> tsmis = {
-      "Cc1cnc2c(c1)CC(O)C2",         "Cc1cnc2c(c1)CC(O)C(O)C2",
-      "Cc1cnc2c(c1)CC(O)C(O)C(O)C2", "Cc1ccc2c(n1)CC(O)C2",
-      "Cc1ccc2c(n1)CC(O)C(O)C2",     "Cc1ccc2c(n1)CC(O)C(O)C(O)C2",
-      "Cc1ccnc2c1CC(O)C2",           "Cc1ccnc2c1CC(O)C(O)C2",
-      "Cc1ccnc2c1CC(O)C(O)C(O)C2"};
+      "Cc1cn(CO)c2cc(O)ccc12", "Cc1cn(CCO)c2cc(O)ccc12",
+      "Cc1cc2ccc(O)cc2n1CO",   "Cc1cc2ccc(O)cc2n1CCO",
+      "Cc1cn(CO)c2ccc(O)cc12", "Cc1cn(CCO)c2ccc(O)cc12",
+      "Cc1cc2cc(O)ccc2n1CO",   "Cc1cc2cc(O)ccc2n1CCO",
+      "Cc1cn(CO)c2c(O)cccc12", "Cc1cn(CCO)c2c(O)cccc12",
+      "Cc1cc2cccc(O)c2n1CO",   "Cc1cc2cccc(O)c2n1CCO"};
   SECTION("test2") {
-    mol1->debugMol(std::cerr);
     auto bundle = MolEnumerator::enumerate(*mol1);
-    // CHECK(bundle.size() == tsmis.size());
+    CHECK(bundle.size() == tsmis.size());
     for (const auto &molp : bundle.getMols()) {
       auto smi = MolToSmiles(*molp);
-      std::cerr << smi << std::endl;
-      // CHECK(std::find(tsmis.begin(), tsmis.end(), smi) != tsmis.end());
+      // std::cerr << "\"" << smi << "\"," << std::endl;
+      CHECK(std::find(tsmis.begin(), tsmis.end(), smi) != tsmis.end());
     }
   }
 }
