@@ -2785,8 +2785,7 @@ const DashPattern shortDashes = assign::list_of(2)(2);
 void drawWedgedBond(MolDraw2D &d2d, const Bond &bond, bool inverted,
                     const Point2D &cds1, const Point2D &cds2, bool draw_dashed,
                     const DrawColour &col1, const DrawColour &col2) {
-  const auto split = d2d.drawOptions().splitBonds;
-  if (!split) {
+  if (!d2d.drawOptions().splitBonds) {
     if (inverted) {
       d2d.setActiveAtmIdx(bond.getEndAtomIdx(), bond.getBeginAtomIdx());
     } else {
