@@ -148,10 +148,10 @@ TEST_CASE("MorganGenerator bit info", "[fpgenerator][morgan]") {
   unsigned radius = 1;
   std::unique_ptr<FingerprintGenerator<std::uint64_t>> fpGenerator(
       MorganFingerprint::getMorganGenerator<std::uint64_t>(radius));
+  REQUIRE(fpGenerator);
   const std::vector<std::uint32_t> *fromAtoms = nullptr;
   const std::vector<std::uint32_t> *ignoreAtoms = nullptr;
   const int confId = -1;
-  REQUIRE(fpGenerator);
 
   SECTION("folded bitInfoMap") {
     AdditionalOutput::bitInfoMapType expected = {
@@ -278,4 +278,141 @@ TEST_CASE("MorganGenerator bit info", "[fpgenerator][morgan]") {
   //     }
   //   }
   // }
+}
+
+TEST_CASE("RDKitGenerator bit info", "[fpgenerator][RDKit]") {
+  auto m1 = "CCCO"_smiles;
+  REQUIRE(m1);
+  unsigned int minPath = 1;
+  unsigned int maxPath = 3;
+  std::unique_ptr<FingerprintGenerator<std::uint64_t>> fpGenerator(
+      RDKitFP::getRDKitFPGenerator<std::uint64_t>(minPath, maxPath));
+  REQUIRE(fpGenerator);
+  const std::vector<std::uint32_t> *fromAtoms = nullptr;
+  const std::vector<std::uint32_t> *ignoreAtoms = nullptr;
+  const int confId = -1;
+
+  SECTION("folded bitInfo") {
+    AdditionalOutput::bitPathsType expected = {{1233,
+                                                {{
+                                                    0,
+                                                    1,
+                                                    2,
+                                                }}},
+                                               {1308, {{0}, {1}}},
+                                               {1339, {{2}}},
+                                               {1728, {{1, 2}}},
+                                               {1813,
+                                                {{
+                                                    0,
+                                                    1,
+                                                }}}};
+
+    {
+      AdditionalOutput ao;
+      ao.allocateBitPaths(m1->getNumAtoms());
+      std::unique_ptr<ExplicitBitVect> fp(fpGenerator->getFingerprint(
+          *m1, fromAtoms, ignoreAtoms, confId, &ao));
+      CHECK(*ao.bitPaths == expected);
+    }
+    {
+      AdditionalOutput ao;
+      ao.allocateBitPaths(m1->getNumAtoms());
+      std::unique_ptr<SparseIntVect<std::uint32_t>> fp(
+          fpGenerator->getCountFingerprint(*m1, fromAtoms, ignoreAtoms, confId,
+                                           &ao));
+      CHECK(*ao.bitPaths == expected);
+    }
+  }
+
+  SECTION("folded atomToBits atomCounts") {
+    AdditionalOutput::atomToBitsType expected1 = {
+        {1308, 1813, 1233},
+        {1308, 1308, 1813, 1728, 1233},
+        {1308, 1339, 1813, 1728, 1233},
+        {1339, 1728, 1233}};
+    AdditionalOutput::atomCountsType expected2 = {3, 5, 5, 3};
+
+    {
+      AdditionalOutput ao;
+      ao.allocateAtomCounts(m1->getNumAtoms());
+      ao.allocateAtomToBits(m1->getNumAtoms());
+      std::unique_ptr<ExplicitBitVect> fp(fpGenerator->getFingerprint(
+          *m1, fromAtoms, ignoreAtoms, confId, &ao));
+      CHECK(*ao.atomToBits == expected1);
+      CHECK(*ao.atomCounts == expected2);
+    }
+    {
+      AdditionalOutput ao;
+      ao.allocateAtomCounts(m1->getNumAtoms());
+      ao.allocateAtomToBits(m1->getNumAtoms());
+      std::unique_ptr<SparseIntVect<std::uint32_t>> fp(
+          fpGenerator->getCountFingerprint(*m1, fromAtoms, ignoreAtoms, confId,
+                                           &ao));
+      CHECK(*ao.atomToBits == expected1);
+      CHECK(*ao.atomCounts == expected2);
+    }
+  }
+
+  SECTION("unfolded bitInfo") {
+    AdditionalOutput::bitPathsType expected = {{3977409745,
+                                                {{
+                                                    0,
+                                                    1,
+                                                    2,
+                                                }}},
+                                               {4275705116, {{0}, {1}}},
+                                               {4274652475, {{2}}},
+                                               {1524090560, {{1, 2}}},
+                                               {1940446997,
+                                                {{
+                                                    0,
+                                                    1,
+                                                }}}};
+
+    {
+      AdditionalOutput ao;
+      ao.allocateBitPaths(m1->getNumAtoms());
+      std::unique_ptr<SparseBitVect> fp(fpGenerator->getSparseFingerprint(
+          *m1, fromAtoms, ignoreAtoms, confId, &ao));
+      CHECK(*ao.bitPaths == expected);
+    }
+    {
+      AdditionalOutput ao;
+      ao.allocateBitPaths(m1->getNumAtoms());
+      std::unique_ptr<SparseIntVect<std::uint64_t>> fp(
+          fpGenerator->getSparseCountFingerprint(*m1, fromAtoms, ignoreAtoms,
+                                                 confId, &ao));
+      CHECK(*ao.bitPaths == expected);
+    }
+  }
+
+  SECTION("unfolded atomToBits atomCounts") {
+    AdditionalOutput::atomToBitsType expected1 = {
+        {4275705116, 1940446997, 3977409745},
+        {4275705116, 4275705116, 1940446997, 1524090560, 3977409745},
+        {4275705116, 4274652475, 1940446997, 1524090560, 3977409745},
+        {4274652475, 1524090560, 3977409745}};
+    AdditionalOutput::atomCountsType expected2 = {3, 5, 5, 3};
+
+    {
+      AdditionalOutput ao;
+      ao.allocateAtomCounts(m1->getNumAtoms());
+      ao.allocateAtomToBits(m1->getNumAtoms());
+      std::unique_ptr<SparseBitVect> fp(fpGenerator->getSparseFingerprint(
+          *m1, fromAtoms, ignoreAtoms, confId, &ao));
+      CHECK(*ao.atomToBits == expected1);
+      CHECK(*ao.atomCounts == expected2);
+    }
+    {
+      AdditionalOutput ao;
+      ao.allocateAtomCounts(m1->getNumAtoms());
+      ao.allocateAtomToBits(m1->getNumAtoms());
+      std::unique_ptr<SparseIntVect<std::uint64_t>> fp(
+          fpGenerator->getSparseCountFingerprint(*m1, fromAtoms, ignoreAtoms,
+                                                 confId, &ao));
+      CHECK(*ao.atomToBits == expected1);
+      CHECK(*ao.atomCounts == expected2);
+    }
+  }
 }

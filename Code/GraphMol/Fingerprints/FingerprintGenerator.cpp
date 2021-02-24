@@ -134,11 +134,6 @@ SparseIntVect<OutputType>
       throw ValueErrorException(
           "size of atomToBits must equal mol.getNumAtoms()");
     }
-    if (additionalOutput->bitInfo &&
-        additionalOutput->bitInfo->first.size() != mol.getNumAtoms()) {
-      throw ValueErrorException(
-          "size of first element of bitInfo must equal mol.getNumAtoms()");
-    }
   }
   bool hashResults = false;
   if (fpSize != 0) {

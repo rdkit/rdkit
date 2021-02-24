@@ -27,9 +27,7 @@ struct RDKIT_FINGERPRINTS_EXPORT AdditionalOutput {
   using bitInfoMapType =
       std::map<std::uint64_t,
                std::vector<std::pair<std::uint32_t, std::uint32_t>>>;
-  using bitInfoType =
-      std::pair<std::vector<std::vector<std::uint64_t>>,
-                std::map<std::uint64_t, std::vector<std::vector<int>>>>;
+  using bitPathsType = std::map<std::uint64_t, std::vector<std::vector<int>>>;
   using atomCountsType = std::vector<unsigned int>;
 
   // numAtoms long
@@ -40,10 +38,8 @@ struct RDKIT_FINGERPRINTS_EXPORT AdditionalOutput {
   bitInfoMapType *bitInfoMap = nullptr;
 
   // rdkit fp
-  // first part, vector of bits set for each atom, must have the same size as
-  // atom count for molecule
-  // second part, maps bitId -> vector of paths
-  bitInfoType *bitInfo = nullptr;
+  // maps bitId -> vector of bond paths
+  bitPathsType *bitPaths = nullptr;
 
   // number of paths that set bits for each atom, must have the same size as
   // atom count for molecule
@@ -57,10 +53,9 @@ struct RDKIT_FINGERPRINTS_EXPORT AdditionalOutput {
     bitInfoMapHolder.reset(new bitInfoMapType);
     bitInfoMap = bitInfoMapHolder.get();
   }
-  void allocateBitInfo(unsigned int numAtoms) {
-    bitInfoHolder.reset(new bitInfoType);
-    bitInfoHolder->first.resize(numAtoms);
-    bitInfo = bitInfoHolder.get();
+  void allocateBitPaths(unsigned int) {
+    bitPathsHolder.reset(new bitPathsType);
+    bitPaths = bitPathsHolder.get();
   }
   void allocateAtomCounts(unsigned int numAtoms) {
     atomCountsHolder.reset(new atomCountsType(numAtoms));
@@ -70,7 +65,7 @@ struct RDKIT_FINGERPRINTS_EXPORT AdditionalOutput {
  private:
   std::unique_ptr<atomToBitsType> atomToBitsHolder;
   std::unique_ptr<bitInfoMapType> bitInfoMapHolder;
-  std::unique_ptr<bitInfoType> bitInfoHolder;
+  std::unique_ptr<bitPathsType> bitPathsHolder;
   std::unique_ptr<atomCountsType> atomCountsHolder;
 };
 

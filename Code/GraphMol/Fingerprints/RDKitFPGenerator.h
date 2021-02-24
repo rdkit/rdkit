@@ -71,6 +71,7 @@ class RDKIT_FINGERPRINTS_EXPORT RDKitFPAtomEnv
     : public AtomEnvironment<OutputType> {
   const OutputType d_bitId;
   const boost::dynamic_bitset<> d_atomsInPath;
+  const INT_VECT d_bondPath;
 
  public:
   OutputType getBitId(FingerprintArguments<OutputType> *arguments,
@@ -85,9 +86,14 @@ class RDKIT_FINGERPRINTS_EXPORT RDKitFPAtomEnv
 
   \param bitId bitId generated for this environment
   \param atomsInPath holds atoms in this environment to set additional output
+  \param bondPath the bond path defining the environment
 
   */
-  RDKitFPAtomEnv(const OutputType bitId, boost::dynamic_bitset<> atomsInPath);
+  RDKitFPAtomEnv(const OutputType bitId, boost::dynamic_bitset<> atomsInPath,
+                 INT_VECT bondPath)
+      : d_bitId(bitId),
+        d_atomsInPath(std::move(atomsInPath)),
+        d_bondPath(std::move(bondPath)){};
 };
 
 template <typename OutputType>

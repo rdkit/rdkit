@@ -134,9 +134,9 @@ std::string MorganArguments<OutputType>::infoString() const {
 template <typename OutputType>
 OutputType MorganAtomEnv<OutputType>::getBitId(
     FingerprintArguments<OutputType> *arguments,
-    const std::vector<std::uint32_t> *,  // atomInvariants
-    const std::vector<std::uint32_t> *,  // bondInvariants
-    const AdditionalOutput *additionalOutput, const bool hashResults,
+    const std::vector<std::uint32_t> *,                    // atomInvariants
+    const std::vector<std::uint32_t> *,                    // bondInvariants
+    const AdditionalOutput *additionalOutput, const bool,  // hashResults
     const std::uint64_t fpSize) const {
   PRECONDITION(arguments, "bad arguments");
   if (additionalOutput) {
