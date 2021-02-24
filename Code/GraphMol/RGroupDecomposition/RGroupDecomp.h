@@ -107,8 +107,8 @@ struct RDKIT_RGROUPDECOMPOSITION_EXPORT RGroupDecompositionParameters {
   // Sequential or parallel runs?
   bool gaParallelRuns = true;
 
-  bool queryMatchesOnSideChain = true;
-  bool queryMatchesOnCore = false;
+  bool queryMatchesOnSideChain = false;
+  bool queryMatchesOnCore = true;
 
  private:
   int indexOffset{-1};

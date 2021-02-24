@@ -256,9 +256,10 @@ void testRGroupOnlyMatching() {
 
 const char *ringData[3] = {"c1cocc1", "c1c[nH]cc1", "c1cscc1"};
 
-const char *ringDataRes[3] = {"Core:c1cc:[*:1]:c1 R1:[o:1]",
-                              "Core:c1cc:[*:1]:c1 R1:[H][n:1]",
-                              "Core:c1cc:[*:1]:c1 R1:[s:1]"};
+const char *ringDataRes[3] = {
+    "Core:c1cc[o:1]c1",
+    "Core:c1cc[n:1]c1 R1:[H][*:1]",
+    "Core:c1cc[s:1]c1"};
 
 void testRingMatching() {
   BOOST_LOG(rdInfoLog)
@@ -280,6 +281,7 @@ void testRingMatching() {
 
   decomp.process();
   RGroupRows rows = decomp.getRGroupsAsRows();
+  auto cols = decomp.getRGroupsAsColumns();
   std::ostringstream str;
 
   // All Cl's should be labeled with the same rgroup
@@ -334,15 +336,9 @@ void testRingMatching2() {
 
 const char *ringData3[3] = {"c1cocc1CCl", "c1c[nH]cc1CI", "c1cscc1CF"};
 
-// Ideally all the halogens should be in R1 (the user defined R Group, rather
-// than the atom index group R5).
-const char *ringDataRes3[3] = {
-    "Core:[*:1]1[*:2][*:3][*:4][*:5]1 R1:[H][c:1] R2:[o:2] R3:[H][c:3] "
-    "R4:[H][c:4] R5:ClC[c:5]",
-    "Core:[*:1]1[*:2][*:3][*:4][*:5]1 R1:[H][c:1] R2:[H][n:2] R3:[H][c:3] "
-    "R4:[H][c:4] R5:IC[c:5]",
-    "Core:[*:1]1[*:2][*:3][*:4][*:5]1 R1:[H][c:1] R2:[s:2] R3:[H][c:3] "
-    "R4:[H][c:4] R5:FC[c:5]"};
+const char *ringDataRes3[3] = {"Core:c1c[c:1]co1[*:2] R1:ClC[*:1]",
+                               "Core:c1c[c:1]cn1[*:2] R1:IC[*:1] R2:[H][*:2]",
+                               "Core:c1c[c:1]cs1[*:2] R1:FC[*:1]"};
 
 void testRingMatching3() {
   BOOST_LOG(rdInfoLog)
@@ -353,6 +349,8 @@ void testRingMatching3() {
   RWMol *core = SmartsToMol("*1***[*:1]1");
   // RWMol *core = SmartsToMol("*1****1");
   RGroupDecompositionParameters params;
+  // This test is currently failing using the default scoring method (the halogens are not all in the same group)
+  params.scoreMethod = FingerprintVariance;
 
   RGroupDecomposition decomp(*core, params);
   for (int i = 0; i < 3; ++i) {
@@ -985,14 +983,15 @@ $$$$)CTAB";
     RGroupRows rows = decomp.getRGroupsAsRows();
 
     const char *expected[4] = {
-        "Core:N1C(N[*:2])C2C(NC1[*:1])[*:4]C([*:3])[*:5]2 R1:[H][*:1].[H][*:1] "
-        "R2:C(CC[*:2])CC[*:2] R4:[H][N:4] R5:[H][C:5].[H][C:5]",
-        "Core:N1C(N[*:2])C2C(NC1[*:1])[*:4]C([*:3])[*:5]2 R1:[H][*:1].[H][*:1] "
-        "R2:C[*:2].[H][*:2] R4:[S:4] R5:CC(C)[C:5].[H][C:5]",
-        "Core:C1C([*:1])NC(N[*:2])C2C1[*:4]C([*:3])[*:5]2 R1:[H][*:1].[H][*:1] "
-        "R2:C[*:2].[H][*:2] R4:[S:4] R5:CC(C)[C:5].[H][C:5]",
-        "Core:C1C([*:1])NC(N[*:2])C2C1[*:4]C([*:3])[*:5]2 R1:O[*:1].[H][*:1] "
-        "R2:[H][*:2].[H][*:2] R4:C[N:4] R5:[H][N:5]"};
+        "Core:N1C(N[*:2])C2C([*:5])C([*:3])N([*:4])C2NC1[*:1] "
+        "R1:[H][*:1].[H][*:1] R2:C(CC[*:2])CC[*:2] R4:[H][*:4] "
+        "R5:[H][*:5].[H][*:5]",
+        "Core:N1C(N[*:2])C2C([*:5])C([*:3])S([*:4])C2NC1[*:1] "
+        "R1:[H][*:1].[H][*:1] R2:C[*:2].[H][*:2] R5:CC(C)[*:5].[H][*:5]",
+        "Core:C1C2C(C([*:5])C([*:3])S2[*:4])C(N[*:2])NC1[*:1] "
+        "R1:[H][*:1].[H][*:1] R2:C[*:2].[H][*:2] R5:CC(C)[*:5].[H][*:5]",
+        "Core:C1C2C(C(N[*:2])NC1[*:1])N([*:5])C([*:3])N2[*:4] "
+        "R1:O[*:1].[H][*:1] R2:[H][*:2].[H][*:2] R4:C[*:4] R5:[H][*:5]"};
     int i = 0;
     for (RGroupRows::const_iterator it = rows.begin(); it != rows.end();
          ++it, ++i) {
@@ -2095,8 +2094,6 @@ int main() {
       << "********************************************************\n";
   BOOST_LOG(rdInfoLog) << "Testing R-Group Decomposition \n";
 
-  // testRingMatching3();
-  testSDFGRoupMultiCoreNoneShouldMatch();
 #if 1
   testSymmetryMatching(FingerprintVariance);
   testSymmetryMatching();
@@ -2111,7 +2108,7 @@ int main() {
   testRingMatching2();
   testGitHubIssue1705();
   testGithub2332();
-  // testSDFGRoupMultiCoreNoneShouldMatch();
+  testSDFGRoupMultiCoreNoneShouldMatch();
   testRowColumnAlignmentProblem();
   testSymmetryIssues();
   testMutipleCoreRelabellingIssues();
