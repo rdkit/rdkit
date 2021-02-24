@@ -4035,7 +4035,8 @@ string MolDraw2D::getAtomSymbol(const RDKit::Atom &atom,
       postText.push_back(h);
     }
 
-    if (0 != iso) {
+    if (0 != iso && ((drawOptions().isotopeLabels && atom.getAtomicNum() != 0) ||
+        (drawOptions().dummyIsotopeLabels && atom.getAtomicNum() == 0))) {
       // isotope always comes before the symbol
       preText.push_back(std::string("<sup>") + std::to_string(iso) +
                         std::string("</sup>"));

@@ -143,6 +143,28 @@ function test_generate_aligned_coords(){
 }
 
 
+function test_isotope_labels(){
+    var mol = RDKitModule.get_mol("[1*]c1cc([2*])c([3*])c[14c]1");
+    assert.equal(mol.is_valid(), 1);
+
+    var textIsoDummyIso = mol.get_svg_with_highlights(JSON.stringify({}));
+    var nLinesIsoDummyIso = textIsoDummyIso.split("\n").length;
+
+    var textNoIsoDummyIso = mol.get_svg_with_highlights(JSON.stringify({ isotopeLabels: false }));
+    var nLinesNoIsoDummyIso = textNoIsoDummyIso.split("\n").length;
+
+    var textIsoNoDummyIso = mol.get_svg_with_highlights(JSON.stringify({ dummyIsotopeLabels: false }));
+    var nLinesIsoNoDummyIso = textIsoNoDummyIso.split("\n").length;
+
+    var textNoIsoNoDummyIso = mol.get_svg_with_highlights(JSON.stringify({ isotopeLabels: false, dummyIsotopeLabels: false }));
+    var nLinesNoIsoNoDummyIso = textNoIsoNoDummyIso.split("\n").length;
+
+    var res = [nLinesNoIsoNoDummyIso, nLinesIsoNoDummyIso, nLinesNoIsoDummyIso, nLinesIsoDummyIso];
+    var resSorted = [...res];
+    resSorted.sort((a, b) => (a - b));
+    assert.ok(res.every((resItem, i) => (resItem === resSorted[i])));
+}
+
 function test_generate_aligned_coords_allow_rgroups(){
     var template_molblock = `
      RDKit          2D
@@ -201,6 +223,7 @@ initRDKitModule().then(function(instance) {
     test_sketcher_services2();
     test_abbreviations();
     test_generate_aligned_coords();
+    test_isotope_labels();
     test_generate_aligned_coords_allow_rgroups();
     console.log("Tests finished successfully");
 });
