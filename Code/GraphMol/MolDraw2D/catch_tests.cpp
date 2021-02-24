@@ -2455,67 +2455,53 @@ M  END
 TEST_CASE("test the options that toggle isotope labels", "[drawing]") {
   SECTION("test all permutations") {
     auto m = "[1*]c1cc([2*])c([3*])c[14c]1"_smiles;
-    std::regex regex("^<text\\s+.*>\\d</text>$");
-    std::smatch match;
     REQUIRE(m);
+    std::regex regex(R"regex(<text\s+.*>\d</text>)regex");
+    std::smatch match;
     std::string line;
-    std::string textIsoDummyIso;
-    std::string textNoIsoDummyIso;
-    std::string textIsoNoDummyIso;
-    std::string textNoIsoNoDummyIso;
-    size_t nLinesIsoDummyIso;
-    size_t nLinesNoIsoDummyIso;
-    size_t nLinesIsoNoDummyIso;
-    size_t nLinesNoIsoNoDummyIso;
     {
       MolDraw2DSVG drawer(300, 300, -1, -1, true);
       drawer.drawMolecule(*m);
       drawer.finishDrawing();
-      textIsoDummyIso = drawer.getDrawingText();
+      std::string textIsoDummyIso = drawer.getDrawingText();
       std::ofstream outs("testIsoDummyIso.svg");
       outs << textIsoDummyIso;
       outs.flush();
-      std::istringstream ins(textIsoDummyIso);
-      for (nLinesIsoDummyIso = 0; std::getline(ins, line);) {
-        if (std::regex_match(line, match, regex)) {
-          ++nLinesIsoDummyIso;
-        }
-      }
-      CHECK(nLinesIsoDummyIso == 5);
+      size_t nIsoDummyIso = std::distance(
+          std::sregex_token_iterator(textIsoDummyIso.begin(),
+                                     textIsoDummyIso.end(), regex),
+          std::sregex_token_iterator());
+      CHECK(nIsoDummyIso == 5);
     }
     {
       MolDraw2DSVG drawer(300, 300, -1, -1, true);
       drawer.drawOptions().isotopeLabels = false;
       drawer.drawMolecule(*m);
       drawer.finishDrawing();
-      textNoIsoDummyIso = drawer.getDrawingText();
+      std::string textNoIsoDummyIso = drawer.getDrawingText();
       std::ofstream outs("testNoIsoDummyIso.svg");
       outs << textNoIsoDummyIso;
       outs.flush();
-      std::istringstream ins(textNoIsoDummyIso);
-      for (nLinesNoIsoDummyIso = 0; std::getline(ins, line);) {
-        if (std::regex_match(line, match, regex)) {
-          ++nLinesNoIsoDummyIso;
-        }
-      }
-      CHECK(nLinesNoIsoDummyIso == 3);
+      size_t nNoIsoDummyIso = std::distance(
+          std::sregex_token_iterator(textNoIsoDummyIso.begin(),
+                                     textNoIsoDummyIso.end(), regex, 1),
+          std::sregex_token_iterator());
+      CHECK(nNoIsoDummyIso == 3);
     }
     {
       MolDraw2DSVG drawer(300, 300, -1, -1, true);
       drawer.drawOptions().dummyIsotopeLabels = false;
       drawer.drawMolecule(*m);
       drawer.finishDrawing();
-      textIsoNoDummyIso = drawer.getDrawingText();
+      std::string textIsoNoDummyIso = drawer.getDrawingText();
       std::ofstream outs("testIsoNoDummyIso.svg");
       outs << textIsoNoDummyIso;
       outs.flush();
-      std::istringstream ins(textIsoNoDummyIso);
-      for (nLinesIsoNoDummyIso = 0; std::getline(ins, line);) {
-        if (std::regex_match(line, match, regex)) {
-          ++nLinesIsoNoDummyIso;
-        }
-      }
-      CHECK(nLinesIsoNoDummyIso == 2);
+      size_t nIsoNoDummyIso = std::distance(
+          std::sregex_token_iterator(textIsoNoDummyIso.begin(),
+                                     textIsoNoDummyIso.end(), regex, 1),
+          std::sregex_token_iterator());
+      CHECK(nIsoNoDummyIso == 2);
     }
     {
       MolDraw2DSVG drawer(300, 300, -1, -1, true);
@@ -2523,43 +2509,37 @@ TEST_CASE("test the options that toggle isotope labels", "[drawing]") {
       drawer.drawOptions().dummyIsotopeLabels = false;
       drawer.drawMolecule(*m);
       drawer.finishDrawing();
-      textNoIsoNoDummyIso = drawer.getDrawingText();
+      std::string textNoIsoNoDummyIso = drawer.getDrawingText();
       std::ofstream outs("testNoIsoNoDummyIso.svg");
       outs << textNoIsoNoDummyIso;
       outs.flush();
-      std::istringstream ins(textNoIsoNoDummyIso);
-      for (nLinesNoIsoNoDummyIso = 0; std::getline(ins, line);) {
-        if (std::regex_match(line, match, regex)) {
-          ++nLinesNoIsoNoDummyIso;
-        }
-      }
-      CHECK(nLinesNoIsoNoDummyIso == 0);
+      size_t nNoIsoNoDummyIso = std::distance(
+          std::sregex_token_iterator(textNoIsoNoDummyIso.begin(),
+                                     textNoIsoNoDummyIso.end(), regex, 1),
+          std::sregex_token_iterator());
+      CHECK(nNoIsoNoDummyIso == 0);
     }
   }
   SECTION("test that D/T show up even if isotope labels are hidden") {
     auto m = "C([1H])([2H])([3H])[H]"_smiles;
-    std::regex regex("^<text\\s+.*>[DT]</text>$");
+    std::regex regex(R"regex(<text\s+.*>[DT]</text>)regex");
     std::smatch match;
     REQUIRE(m);
     std::string line;
-    std::string textDeuteriumTritium;
-    size_t nDeuteriumTritium;
     MolDraw2DSVG drawer(300, 300, -1, -1, true);
     drawer.drawOptions().isotopeLabels = false;
     drawer.drawOptions().dummyIsotopeLabels = false;
     drawer.drawOptions().atomLabelDeuteriumTritium = true;
     drawer.drawMolecule(*m);
     drawer.finishDrawing();
-    textDeuteriumTritium = drawer.getDrawingText();
+    std::string textDeuteriumTritium = drawer.getDrawingText();
     std::ofstream outs("testDeuteriumTritium.svg");
     outs << textDeuteriumTritium;
     outs.flush();
-    std::istringstream ins(textDeuteriumTritium);
-    for (nDeuteriumTritium = 0; std::getline(ins, line);) {
-      if (std::regex_match(line, match, regex)) {
-        ++nDeuteriumTritium;
-      }
-    }
+    size_t nDeuteriumTritium = std::distance(
+        std::sregex_token_iterator(textDeuteriumTritium.begin(),
+                                   textDeuteriumTritium.end(), regex, 1),
+        std::sregex_token_iterator());
     CHECK(nDeuteriumTritium == 2);
   }
 }
