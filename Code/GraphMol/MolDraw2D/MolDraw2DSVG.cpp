@@ -108,6 +108,7 @@ void MolDraw2DSVG::setColour(const DrawColour &col) {
   MolDraw2D::setColour(col);
 }
 
+// ****************************************************************************
 void MolDraw2DSVG::drawWavyLine(const Point2D &cds1, const Point2D &cds2,
                                 const DrawColour &col1, const DrawColour &col2,
                                 unsigned int nSegments, double vertOffset) {
@@ -130,9 +131,7 @@ void MolDraw2DSVG::drawWavyLine(const Point2D &cds1, const Point2D &cds2,
   std::string col = DrawColourToSVG(colour());
   double width = getDrawLineWidth();
   d_os << "<path ";
-  if (d_activeClass != "") {
-    d_os << "class='" << d_activeClass << "' ";
-  }
+  outputClasses();
   d_os << "d='M" << c1.x << "," << c1.y;
   for (unsigned int i = 0; i < nSegments; ++i) {
     Point2D startpt = cds1 + delta * i;
@@ -212,9 +211,7 @@ void MolDraw2DSVG::drawLine(const Point2D &cds1, const Point2D &cds2) {
     dashString = dss.str();
   }
   d_os << "<path ";
-  if (!d_activeClass.empty()) {
-    d_os << "class='" << d_activeClass << "' ";
-  }
+  outputClasses();
   d_os << "d='M " << c1.x << "," << c1.y << " L " << c2.x << "," << c2.y
        << "' ";
   d_os << "style='fill:none;fill-rule:evenodd;stroke:" << col
@@ -232,9 +229,7 @@ void MolDraw2DSVG::drawPolygon(const std::vector<Point2D> &cds) {
   unsigned int width = getDrawLineWidth();
   std::string dashString = "";
   d_os << "<path ";
-  if (d_activeClass != "") {
-    d_os << "class='" << d_activeClass << "' ";
-  }
+  outputClasses();
   d_os << "d='M";
   Point2D c0 = getDrawCoords(cds[0]);
   d_os << " " << c0.x << "," << c0.y;
@@ -274,11 +269,8 @@ void MolDraw2DSVG::drawEllipse(const Point2D &cds1, const Point2D &cds2) {
        << " cx='" << cx << "'"
        << " cy='" << cy << "'"
        << " rx='" << w / 2 << "'"
-       << " ry='" << h / 2 << "'";
-
-  if (d_activeClass != "") {
-    d_os << " class='" << d_activeClass << "'";
-  }
+       << " ry='" << h / 2 << "' ";
+  outputClasses();
   d_os << " style='";
   if (fillPolys()) {
     d_os << "fill:" << col << ";fill-rule:evenodd;";
@@ -366,23 +358,58 @@ void MolDraw2DSVG::tagAtoms(const ROMol &mol, double radius,
   PRECONDITION(d_os, "no output stream");
   // first bonds so that they are under the atoms
   for (const auto &bond : mol.bonds()) {
-    auto this_idx = bond->getIdx();
-    auto a1pos = getDrawCoords(atomCoords()[bond->getBeginAtomIdx()]);
-    auto a2pos = getDrawCoords(atomCoords()[bond->getEndAtomIdx()]);
-    auto width = 2 + lineWidth();
-    d_os << "<path "
-         << " d='M " << a1pos.x << "," << a1pos.y << " L " << a2pos.x << ","
-         << a2pos.y << "'";
-    d_os << " class='bond-selector bond-" << this_idx;
-    if (d_activeClass != "") {
-      d_os << " " << d_activeClass;
+    const auto this_idx = bond->getIdx();
+    const auto a_idx1 = bond->getBeginAtomIdx();
+    const auto a_idx2 = bond->getEndAtomIdx();
+    const auto a1pos = getDrawCoords(atomCoords()[bond->getBeginAtomIdx()]);
+    const auto a2pos = getDrawCoords(atomCoords()[bond->getEndAtomIdx()]);
+    const auto width = 2 + lineWidth();
+    if (drawOptions().splitBonds) {
+      const auto midp = (a1pos + a2pos) / 2;
+	    // from begin to mid
+      d_os << "<path "
+           << " d='M " << a1pos.x << "," << a1pos.y << " L " << midp.x << ","
+           << midp.y << "'";
+      d_os << " class='bond-selector bond-" << this_idx << " atom-" << a_idx1;
+      if (!d_activeClass.empty()) {
+        d_os << " " << d_activeClass;
+      }
+      d_os << "'";
+      d_os << " style='fill:#fff;stroke:#fff;stroke-width:"
+           << boost::format("%.1f") % width
+           << "px;fill-opacity:0;"
+              "stroke-opacity:0' ";
+      d_os << "/>\n";
+	    // mid to end
+      d_os << "<path "
+           << " d='M " << midp.x << "," << midp.y << " L " << a2pos.x << ","
+           << a2pos.y << "'";
+      d_os << " class='bond-selector bond-" << this_idx << " atom-" << a_idx2;
+      if (!d_activeClass.empty()) {
+        d_os << " " << d_activeClass;
+      }
+      d_os << "'";
+      d_os << " style='fill:#fff;stroke:#fff;stroke-width:"
+           << boost::format("%.1f") % width
+           << "px;fill-opacity:0;"
+              "stroke-opacity:0' ";
+      d_os << "/>\n";
+    } else {
+      d_os << "<path "
+           << " d='M " << a1pos.x << "," << a1pos.y << " L " << a2pos.x << ","
+           << a2pos.y << "'";
+      d_os << " class='bond-selector bond-" << this_idx << " atom-" << a_idx1
+           << " atom-" << a_idx2;
+      if (!d_activeClass.empty()) {
+        d_os << " " << d_activeClass;
+      }
+      d_os << "'";
+      d_os << " style='fill:#fff;stroke:#fff;stroke-width:"
+           << boost::format("%.1f") % width
+           << "px;fill-opacity:0;"
+              "stroke-opacity:0' ";
+      d_os << "/>\n";
     }
-    d_os << "'";
-    d_os << " style='fill:#fff;stroke:#fff;stroke-width:"
-         << boost::format("%.1f") % width
-         << "px;fill-opacity:0;"
-            "stroke-opacity:0' ";
-    d_os << "/>\n";
   }
   for (const auto &at : mol.atoms()) {
     auto this_idx = at->getIdx();
@@ -405,5 +432,28 @@ void MolDraw2DSVG::tagAtoms(const ROMol &mol, double radius,
     }
     d_os << "/>\n";
   }
+}
+
+void MolDraw2DSVG::outputClasses() {
+  if (d_activeClass.empty() && !hasActiveAtmIdx()) return;
+
+  d_os << "class='";
+  if (!d_activeClass.empty()) {
+    d_os << d_activeClass;
+  }
+  if (!hasActiveAtmIdx()) {
+    d_os << "' ";
+    return;
+  }
+  d_os << (!d_activeClass.empty() ? " " : "");
+  const auto aidx1 = getActiveAtmIdx1();
+  if (aidx1 >= 0) {
+    d_os << "atom-" <<aidx1;
+  }
+  const auto aidx2 = getActiveAtmIdx2();
+  if (aidx2 >= 0 && aidx2 != aidx1) {
+    d_os << " atom-" <<aidx2;
+  }
+  d_os << "' ";
 }
 }  // namespace RDKit

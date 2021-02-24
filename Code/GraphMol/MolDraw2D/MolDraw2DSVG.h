@@ -103,6 +103,8 @@ class RDKIT_MOLDRAW2D_EXPORT MolDraw2DSVG : public MolDraw2D {
     annot.rect_ = note_rect;
     drawAnnotation(annot);
   }
+
+  virtual void outputClasses();
 };
 
 }  // namespace RDKit

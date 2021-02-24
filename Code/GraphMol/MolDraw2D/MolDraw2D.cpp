@@ -305,7 +305,9 @@ MolDraw2D::MolDraw2D(int width, int height, int panelWidth, int panelHeight)
       x_offset_(0),
       y_offset_(0),
       fill_polys_(true),
-      activeMolIdx_(-1) {}
+      activeMolIdx_(-1),
+      activeAtmIdx1_(-1),
+      activeAtmIdx2_(-1) {}
 
 // ****************************************************************************
 MolDraw2D::~MolDraw2D() {}
@@ -2780,9 +2782,17 @@ const DashPattern dashes = assign::list_of(6)(6);
 const DashPattern shortDashes = assign::list_of(2)(2);
 
 // ****************************************************************************
-void drawWedgedBond(MolDraw2D &d2d, const Point2D &cds1, const Point2D &cds2,
-                    bool draw_dashed, const DrawColour &col1,
-                    const DrawColour &col2) {
+void drawWedgedBond(MolDraw2D &d2d, const Bond &bond, bool inverted,
+                    const Point2D &cds1, const Point2D &cds2, bool draw_dashed,
+                    const DrawColour &col1, const DrawColour &col2) {
+  if (!d2d.drawOptions().splitBonds) {
+    if (inverted) {
+      d2d.setActiveAtmIdx(bond.getEndAtomIdx(), bond.getBeginAtomIdx());
+    } else {
+      d2d.setActiveAtmIdx(bond.getBeginAtomIdx(), bond.getEndAtomIdx());
+    }
+  }
+
   Point2D perp = calcPerpendicular(cds1, cds2);
   Point2D disp = perp * 0.15;
   // make sure the displacement isn't too large using the current scale factor
@@ -2817,11 +2827,19 @@ void drawWedgedBond(MolDraw2D &d2d, const Point2D &cds1, const Point2D &cds2,
     int tgt_lw = 1;  // use the minimum line width
     d2d.setLineWidth(tgt_lw);
 
+    if (d2d.drawOptions().splitBonds) {
+      d2d.setActiveAtmIdx(inverted ? bond.getEndAtomIdx()
+                                   : bond.getBeginAtomIdx());
+    }
     Point2D e1 = end1 - cds1;
     Point2D e2 = end2 - cds1;
     for (unsigned int i = 1; i < nDashes + 1; ++i) {
       if ((nDashes / 2 + 1) == i) {
         d2d.setColour(col2);
+        if (d2d.drawOptions().splitBonds) {
+          d2d.setActiveAtmIdx(inverted ? bond.getBeginAtomIdx()
+                                       : bond.getEndAtomIdx());
+        }
       }
       Point2D e11 = cds1 + e1 * (rdcast<double>(i) / nDashes);
       Point2D e22 = cds1 + e2 * (rdcast<double>(i) / nDashes);
@@ -2835,27 +2853,46 @@ void drawWedgedBond(MolDraw2D &d2d, const Point2D &cds1, const Point2D &cds2,
     d2d.setLineWidth(orig_lw);
   } else {
     d2d.setFillPolys(true);
-    if (col1 == col2) {
+    if (col1 == col2 && !d2d.drawOptions().splitBonds) {
       d2d.drawTriangle(cds1, end1, end2);
     } else {
+      if (d2d.drawOptions().splitBonds) {
+        d2d.setActiveAtmIdx(inverted ? bond.getEndAtomIdx()
+                                     : bond.getBeginAtomIdx());
+      }
       Point2D e1 = end1 - cds1;
       Point2D e2 = end2 - cds1;
       Point2D mid1 = cds1 + e1 * 0.5;
       Point2D mid2 = cds1 + e2 * 0.5;
       d2d.drawTriangle(cds1, mid1, mid2);
+      if (d2d.drawOptions().splitBonds) {
+        d2d.setActiveAtmIdx(inverted ? bond.getBeginAtomIdx()
+                                     : bond.getEndAtomIdx());
+      }
       d2d.setColour(col2);
       d2d.drawTriangle(mid1, end2, end1);
       d2d.drawTriangle(mid1, mid2, end2);
     }
   }
+  d2d.setActiveAtmIdx();
 }
 
 // ****************************************************************************
-void drawDativeBond(MolDraw2D &d2d, const Point2D &cds1, const Point2D &cds2,
-                    const DrawColour &col1, const DrawColour &col2) {
+void drawDativeBond(MolDraw2D &d2d, const Bond &bond, const Point2D &cds1,
+                    const Point2D &cds2, const DrawColour &col1,
+                    const DrawColour &col2) {
+  if (!d2d.drawOptions().splitBonds) {
+    d2d.setActiveAtmIdx(bond.getBeginAtomIdx(), bond.getEndAtomIdx());
+  } else {
+    d2d.setActiveAtmIdx(bond.getBeginAtomIdx());
+  }
+
   Point2D mid = (cds1 + cds2) * 0.5;
   d2d.drawLine(cds1, mid, col1, col1);
 
+  if (d2d.drawOptions().splitBonds) {
+    d2d.setActiveAtmIdx(bond.getEndAtomIdx());
+  }
   d2d.setColour(col2);
   bool asPolygon = true;
   double frac = 0.2;
@@ -2865,6 +2902,57 @@ void drawDativeBond(MolDraw2D &d2d, const Point2D &cds1, const Point2D &cds2,
   Point2D delta = mid - cds2;
   Point2D end = cds2 + delta * frac;
   d2d.drawArrow(mid, end, asPolygon, frac, angle);
+  d2d.setActiveAtmIdx();
+}
+
+void drawBondLine(MolDraw2D &d2d, const Bond &bond, const Point2D &cds1,
+                  const Point2D &cds2, const DrawColour &col1,
+                  const DrawColour &col2, bool clearAIdx=true) {
+  if (!d2d.drawOptions().splitBonds) {
+    d2d.setActiveAtmIdx(bond.getBeginAtomIdx(), bond.getEndAtomIdx());
+    d2d.drawLine(cds1, cds2, col1, col2);
+    if (clearAIdx) {
+      d2d.setActiveAtmIdx();
+    }
+    return;
+  }
+  Point2D mid = (cds1 + cds2) * 0.5;
+  d2d.setActiveAtmIdx(bond.getBeginAtomIdx());
+  d2d.drawLine(cds1, mid, col1, col1);
+  d2d.setActiveAtmIdx(bond.getEndAtomIdx());
+  d2d.drawLine(mid, cds2, col2, col2);
+    if (clearAIdx) {
+      d2d.setActiveAtmIdx();
+    }
+}
+
+void drawBondLine(MolDraw2D &d2d, const Bond &bond, const Point2D &cds1,
+                  const Point2D &cds2, bool clearAIdx=true) {
+  if (!d2d.drawOptions().splitBonds) {
+    d2d.drawLine(cds1, cds2);
+    if (clearAIdx) {
+      d2d.setActiveAtmIdx();
+    }
+    return;
+  }
+  const auto midp = (cds1 + cds2) / 2;
+  d2d.setActiveAtmIdx(bond.getBeginAtomIdx());
+  d2d.drawLine(cds1, midp);
+  d2d.setActiveAtmIdx(bond.getEndAtomIdx());
+  d2d.drawLine(midp, cds2);
+  if (clearAIdx) {
+    d2d.setActiveAtmIdx();
+  }
+}
+
+void drawBondWavyLine(MolDraw2D &d2d, const Bond &bond, const Point2D &cds1,
+                      const Point2D &cds2, const DrawColour &col1,
+                      const DrawColour &col2) {
+  // as splitting wavy line might cause rendering problems
+  // do not split and flag wavy bond with both atoms
+  d2d.setActiveAtmIdx(bond.getBeginAtomIdx(), bond.getEndAtomIdx());
+  d2d.drawWavyLine(cds1, cds2, col1, col2);
+  d2d.setActiveAtmIdx();
 }
 
 void drawNormalBond(MolDraw2D &d2d, const Bond &bond, bool highlight_bond,
@@ -2884,11 +2972,11 @@ void drawNormalBond(MolDraw2D &d2d, const Bond &bond, bool highlight_bond,
       d2d.drawOptions().scaleBondWidth =
           d2d.drawOptions().scaleHighlightBondWidth;
     }
-    d2d.drawLine(l1s, l1f, col1, col2);
+    drawBondLine(d2d, bond, l1s, l1f, col1, col2);
     if (bt == Bond::AROMATIC) {
       d2d.setDash(dashes);
     }
-    d2d.drawLine(l2s, l2f, col1, col2);
+    drawBondLine(d2d, bond, l2s, l2f, col1, col2);
     if (bt == Bond::AROMATIC) {
       d2d.setDash(noDash);
     }
@@ -2899,6 +2987,7 @@ void drawNormalBond(MolDraw2D &d2d, const Bond &bond, bool highlight_bond,
     // or if at2 does have stereochem set and the bond starts there
     auto at1 = bond.getBeginAtom();
     auto at2 = bond.getEndAtom();
+    auto inverted = false;
     if ((at1->getChiralTag() != Atom::CHI_TETRAHEDRAL_CW &&
          at1->getChiralTag() != Atom::CHI_TETRAHEDRAL_CCW) ||
         (at1->getIdx() != bond.getBeginAtomIdx() &&
@@ -2907,21 +2996,22 @@ void drawNormalBond(MolDraw2D &d2d, const Bond &bond, bool highlight_bond,
       // std::cerr << "  swap" << std::endl;
       swap(at1_cds, at2_cds);
       swap(col1, col2);
+      inverted = true;
     }
     // deliberately not scaling highlighted bond width
     if (Bond::BEGINWEDGE == bond.getBondDir()) {
-      drawWedgedBond(d2d, at1_cds, at2_cds, false, col1, col2);
+      drawWedgedBond(d2d, bond, inverted, at1_cds, at2_cds, false, col1, col2);
     } else {
-      drawWedgedBond(d2d, at1_cds, at2_cds, true, col1, col2);
+      drawWedgedBond(d2d, bond, inverted, at1_cds, at2_cds, true, col1, col2);
     }
   } else if (Bond::SINGLE == bt && Bond::UNKNOWN == bond.getBondDir()) {
     // unspecified stereo
     // deliberately not scaling highlighted bond width
-    d2d.drawWavyLine(at1_cds, at2_cds, col1, col2);
+    drawBondWavyLine(d2d, bond, at1_cds, at2_cds, col1, col2);
   } else if (Bond::DATIVE == bt || Bond::DATIVEL == bt || Bond::DATIVER == bt) {
     // deliberately not scaling highlighted bond width as I think
     // the arrowhead will look ugly.
-    drawDativeBond(d2d, at1_cds, at2_cds, col1, col2);
+    drawDativeBond(d2d, bond, at1_cds, at2_cds, col1, col2);
   } else if (Bond::ZERO == bt) {
     d2d.setDash(shortDashes);
     bool orig_slw = d2d.drawOptions().scaleBondWidth;
@@ -2929,7 +3019,7 @@ void drawNormalBond(MolDraw2D &d2d, const Bond &bond, bool highlight_bond,
       d2d.drawOptions().scaleBondWidth =
           d2d.drawOptions().scaleHighlightBondWidth;
     }
-    d2d.drawLine(at1_cds, at2_cds, col1, col2);
+    drawBondLine(d2d, bond, at1_cds, at2_cds, col1, col2);
     d2d.drawOptions().scaleBondWidth = orig_slw;
     d2d.setDash(noDash);
   } else {
@@ -2940,13 +3030,13 @@ void drawNormalBond(MolDraw2D &d2d, const Bond &bond, bool highlight_bond,
       d2d.drawOptions().scaleBondWidth =
           d2d.drawOptions().scaleHighlightBondWidth;
     }
-    d2d.drawLine(at1_cds, at2_cds, col1, col2);
+    drawBondLine(d2d, bond, at1_cds, at2_cds, col1, col2);
     if (Bond::TRIPLE == bt) {
       Point2D l1s, l1f, l2s, l2f;
       calcTripleBondLines(double_bond_offset, bond, at1_cds, at2_cds, l1s, l1f,
                           l2s, l2f);
-      d2d.drawLine(l1s, l1f, col1, col2);
-      d2d.drawLine(l2s, l2f, col1, col2);
+      drawBondLine(d2d, bond, l1s, l1f, col1, col2);
+      drawBondLine(d2d, bond, l2s, l2f, col1, col2);
     }
     d2d.drawOptions().scaleBondWidth = orig_slw;
   }
@@ -2958,6 +3048,10 @@ void drawQueryBond1(MolDraw2D &d2d, const Bond &bond, bool highlight_bond,
                     const DrawColour &col2, double double_bond_offset) {
   PRECONDITION(bond.hasQuery(), "no query");
   const auto qry = bond.getQuery();
+  if (!d2d.drawOptions().splitBonds) {
+    d2d.setActiveAtmIdx(bond.getBeginAtomIdx(), bond.getEndAtomIdx());
+  }
+  auto midp = (at2_cds + at1_cds) / 2.;
   auto dv = at2_cds - at1_cds;
   auto p1 = at1_cds + dv * (1. / 3.);
   auto p2 = at1_cds + dv * (2. / 3.);
@@ -2970,6 +3064,9 @@ void drawQueryBond1(MolDraw2D &d2d, const Bond &bond, bool highlight_bond,
     tdash[1] /= 1.5;
   }
   if (qry->getDescription() == "SingleOrDoubleBond") {
+    if (d2d.drawOptions().splitBonds) {
+      d2d.setActiveAtmIdx(bond.getBeginAtomIdx());
+    }
     {
       Point2D l1s, l1f, l2s, l2f;
       calcDoubleBondLines(bond.getOwningMol(), double_bond_offset, bond,
@@ -2978,7 +3075,7 @@ void drawQueryBond1(MolDraw2D &d2d, const Bond &bond, bool highlight_bond,
       d2d.drawLine(l1s, l1f);
       d2d.drawLine(l2s, l2f);
     }
-    d2d.drawLine(p1, p2, col1, col2);
+    drawBondLine(d2d, bond, p1, p2, col1, col2, false);
     {
       Point2D l1s, l1f, l2s, l2f;
       calcDoubleBondLines(bond.getOwningMol(), double_bond_offset, bond, p2,
@@ -2988,6 +3085,9 @@ void drawQueryBond1(MolDraw2D &d2d, const Bond &bond, bool highlight_bond,
       d2d.drawLine(l2s, l2f);
     }
   } else if (qry->getDescription() == "SingleOrAromaticBond") {
+    if (d2d.drawOptions().splitBonds) {
+      d2d.setActiveAtmIdx(bond.getBeginAtomIdx());
+    }
     {
       Point2D l1s, l1f, l2s, l2f;
       calcDoubleBondLines(bond.getOwningMol(), double_bond_offset, bond,
@@ -2998,8 +3098,7 @@ void drawQueryBond1(MolDraw2D &d2d, const Bond &bond, bool highlight_bond,
       d2d.drawLine(l2s, l2f);
       d2d.setDash(noDash);
     }
-    d2d.drawLine(p1, p2, col1, col2);
-
+    drawBondLine(d2d, bond, p1, p2, col1, col2, false);
     {
       Point2D l1s, l1f, l2s, l2f;
       calcDoubleBondLines(bond.getOwningMol(), double_bond_offset, bond, p2,
@@ -3011,6 +3110,9 @@ void drawQueryBond1(MolDraw2D &d2d, const Bond &bond, bool highlight_bond,
       d2d.setDash(noDash);
     }
   } else if (qry->getDescription() == "DoubleOrAromaticBond") {
+    if (d2d.drawOptions().splitBonds) {
+      d2d.setActiveAtmIdx(bond.getBeginAtomIdx());
+    }
     {
       Point2D l1s, l1f, l2s, l2f;
       calcDoubleBondLines(bond.getOwningMol(), double_bond_offset, bond,
@@ -3021,8 +3123,27 @@ void drawQueryBond1(MolDraw2D &d2d, const Bond &bond, bool highlight_bond,
       d2d.drawLine(l2s, l2f);
       d2d.setDash(noDash);
     }
-
-    {
+    if (d2d.drawOptions().splitBonds) {
+      {
+        Point2D l1s, l1f, l2s, l2f;
+        calcDoubleBondLines(bond.getOwningMol(), double_bond_offset, bond, p1,
+                            midp, at_cds, l1s, l1f, l2s, l2f);
+        d2d.setColour(col1);
+        d2d.drawLine(l1s, l1f, col1, col2);
+        d2d.drawLine(l2s, l2f, col1, col2);
+        d2d.setDash(noDash);
+      }
+      d2d.setActiveAtmIdx(bond.getEndAtomIdx());
+      {
+        Point2D l1s, l1f, l2s, l2f;
+        calcDoubleBondLines(bond.getOwningMol(), double_bond_offset, bond, midp,
+                            p2, at_cds, l1s, l1f, l2s, l2f);
+        d2d.setColour(col1);
+        d2d.drawLine(l1s, l1f, col1, col2);
+        d2d.drawLine(l2s, l2f, col1, col2);
+        d2d.setDash(noDash);
+      }
+    } else {
       Point2D l1s, l1f, l2s, l2f;
       calcDoubleBondLines(bond.getOwningMol(), double_bond_offset, bond, p1, p2,
                           at_cds, l1s, l1f, l2s, l2f);
@@ -3031,7 +3152,6 @@ void drawQueryBond1(MolDraw2D &d2d, const Bond &bond, bool highlight_bond,
       d2d.drawLine(l2s, l2f, col1, col2);
       d2d.setDash(noDash);
     }
-
     {
       Point2D l1s, l1f, l2s, l2f;
       calcDoubleBondLines(bond.getOwningMol(), double_bond_offset, bond, p2,
@@ -3049,7 +3169,7 @@ void drawQueryBond1(MolDraw2D &d2d, const Bond &bond, bool highlight_bond,
       d2d.drawOptions().scaleBondWidth =
           d2d.drawOptions().scaleHighlightBondWidth;
     }
-    d2d.drawLine(at1_cds, at2_cds, col1, col2);
+    drawBondLine(d2d, bond, at1_cds, at2_cds, col1, col2, false);
     d2d.drawOptions().scaleBondWidth = orig_slw;
     d2d.setDash(noDash);
   } else {
@@ -3059,10 +3179,11 @@ void drawQueryBond1(MolDraw2D &d2d, const Bond &bond, bool highlight_bond,
       d2d.drawOptions().scaleBondWidth =
           d2d.drawOptions().scaleHighlightBondWidth;
     }
-    d2d.drawLine(at1_cds, at2_cds, col1, col2);
+    drawBondLine(d2d, bond, at1_cds, at2_cds, col1, col2, false);
     d2d.drawOptions().scaleBondWidth = orig_slw;
     d2d.setDash(noDash);
   }
+  d2d.setActiveAtmIdx();
 }
 
 void drawQueryBond(MolDraw2D &d2d, const Bond &bond, bool highlight_bond,
@@ -3071,8 +3192,10 @@ void drawQueryBond(MolDraw2D &d2d, const Bond &bond, bool highlight_bond,
                    const DrawColour &col2, double double_bond_offset) {
   PRECONDITION(bond.hasQuery(), "no query");
   const auto qry = bond.getQuery();
-  auto dv = at2_cds - at1_cds;
-  auto midp = at1_cds + dv / 2.;
+  if (!d2d.drawOptions().splitBonds) {
+    d2d.setActiveAtmIdx(bond.getBeginAtomIdx(), bond.getEndAtomIdx());
+  }
+  auto midp = (at2_cds + at1_cds) / 2.;
   auto tdash = shortDashes;
   if (d2d.scale() < 10) {
     tdash[0] /= 4;
@@ -3086,7 +3209,13 @@ void drawQueryBond(MolDraw2D &d2d, const Bond &bond, bool highlight_bond,
 
   bool drawGenericQuery = false;
   if (qry->getDescription() == "SingleOrDoubleBond") {
+    if (d2d.drawOptions().splitBonds) {
+      d2d.setActiveAtmIdx(bond.getBeginAtomIdx());
+    }
     d2d.drawLine(at1_cds, midp);
+    if (d2d.drawOptions().splitBonds) {
+      d2d.setActiveAtmIdx(bond.getEndAtomIdx());
+    }
     {
       Point2D l1s, l1f, l2s, l2f;
       calcDoubleBondLines(bond.getOwningMol(), double_bond_offset, bond, midp,
@@ -3095,7 +3224,13 @@ void drawQueryBond(MolDraw2D &d2d, const Bond &bond, bool highlight_bond,
       d2d.drawLine(l2s, l2f);
     }
   } else if (qry->getDescription() == "SingleOrAromaticBond") {
+    if (d2d.drawOptions().splitBonds) {
+      d2d.setActiveAtmIdx(bond.getBeginAtomIdx());
+    }
     d2d.drawLine(at1_cds, midp);
+    if (d2d.drawOptions().splitBonds) {
+      d2d.setActiveAtmIdx(bond.getEndAtomIdx());
+    }
     {
       Point2D l1s, l1f, l2s, l2f;
       calcDoubleBondLines(bond.getOwningMol(), double_bond_offset, bond, midp,
@@ -3106,6 +3241,9 @@ void drawQueryBond(MolDraw2D &d2d, const Bond &bond, bool highlight_bond,
       d2d.setDash(noDash);
     }
   } else if (qry->getDescription() == "DoubleOrAromaticBond") {
+    if (d2d.drawOptions().splitBonds) {
+      d2d.setActiveAtmIdx(bond.getBeginAtomIdx());
+    }
     {
       Point2D l1s, l1f, l2s, l2f;
       calcDoubleBondLines(bond.getOwningMol(), double_bond_offset, bond,
@@ -3113,7 +3251,9 @@ void drawQueryBond(MolDraw2D &d2d, const Bond &bond, bool highlight_bond,
       d2d.drawLine(l1s, l1f);
       d2d.drawLine(l2s, l2f);
     }
-
+    if (d2d.drawOptions().splitBonds) {
+      d2d.setActiveAtmIdx(bond.getEndAtomIdx());
+    }
     {
       Point2D l1s, l1f, l2s, l2f;
       calcDoubleBondLines(bond.getOwningMol(), double_bond_offset, bond, midp,
@@ -3125,7 +3265,7 @@ void drawQueryBond(MolDraw2D &d2d, const Bond &bond, bool highlight_bond,
     }
   } else if (qry->getDescription() == "BondNull") {
     d2d.setDash(tdash);
-    d2d.drawLine(at1_cds, at2_cds);
+    drawBondLine(d2d, bond, at1_cds, at2_cds);
     d2d.setDash(noDash);
   } else if (qry->getDescription() == "BondAnd" &&
              qry->endChildren() - qry->beginChildren() == 2) {
@@ -3182,10 +3322,11 @@ void drawQueryBond(MolDraw2D &d2d, const Bond &bond, bool highlight_bond,
       d2d.drawOptions().scaleBondWidth =
           d2d.drawOptions().scaleHighlightBondWidth;
     }
-    d2d.drawLine(at1_cds, at2_cds);
+    drawBondLine(d2d, bond, at1_cds, at2_cds);
     d2d.drawOptions().scaleBondWidth = orig_slw;
     d2d.setDash(noDash);
   }
+  d2d.setActiveAtmIdx();
 }
 
 }  // namespace
@@ -4161,6 +4302,7 @@ void MolDraw2D::tabulaRasa() {
   x_offset_ = y_offset_ = 0;
   d_metadata.clear();
   d_numMetadataEntries = 0;
+  setActiveAtmIdx();
 }
 
 // ****************************************************************************
