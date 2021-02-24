@@ -18,7 +18,6 @@
 #include <boost/dynamic_bitset.hpp>
 #include <boost/tuple/tuple.hpp>
 #include <boost/tuple/tuple_comparison.hpp>
-#include <boost/foreach.hpp>
 
 #include <GraphMol/Fingerprints/FingerprintUtil.h>
 
@@ -134,11 +133,11 @@ std::string MorganArguments<OutputType>::infoString() const {
 
 template <typename OutputType>
 OutputType MorganAtomEnv<OutputType>::getBitId(
-    FingerprintArguments<OutputType> *, // arguments
-    const std::vector<std::uint32_t> *, // atomInvariants
-    const std::vector<std::uint32_t> *, // bondInvariants
+    FingerprintArguments<OutputType> *,  // arguments
+    const std::vector<std::uint32_t> *,  // atomInvariants
+    const std::vector<std::uint32_t> *,  // bondInvariants
     const AdditionalOutput *additionalOutput,
-    const bool // hashResults
+    const bool  // hashResults
 ) const {
   if (additionalOutput) {
     // todo: set additional outputs
@@ -158,12 +157,12 @@ std::vector<AtomEnvironment<OutputType> *>
 MorganEnvGenerator<OutputType>::getEnvironments(
     const ROMol &mol, FingerprintArguments<OutputType> *arguments,
     const std::vector<std::uint32_t> *fromAtoms,
-    const std::vector<std::uint32_t> *, //ignoreAtoms
-    const int, // confId
-    const AdditionalOutput *, // additionalOutput
+    const std::vector<std::uint32_t> *,  // ignoreAtoms
+    const int,                           // confId
+    const AdditionalOutput *,            // additionalOutput
     const std::vector<std::uint32_t> *atomInvariants,
     const std::vector<std::uint32_t> *bondInvariants,
-    const bool // hashResults
+    const bool  // hashResults
 ) const {
   PRECONDITION(atomInvariants && (atomInvariants->size() >= mol.getNumAtoms()),
                "bad atom invariants size");
@@ -181,7 +180,9 @@ MorganEnvGenerator<OutputType>::getEnvironments(
 
   boost::dynamic_bitset<> includeAtoms(nAtoms);
   if (fromAtoms) {
-    BOOST_FOREACH (uint32_t idx, *fromAtoms) { includeAtoms.set(idx, 1); }
+    for (auto idx : *fromAtoms) {
+      includeAtoms.set(idx, 1);
+    }
   } else {
     includeAtoms.set();
   }
@@ -241,7 +242,7 @@ MorganEnvGenerator<OutputType>::getEnvironments(
     std::vector<boost::dynamic_bitset<>> roundAtomNeighborhoods =
         atomNeighborhoods;
     std::vector<AccumTuple> allNeighborhoodsThisRound;
-    BOOST_FOREACH (unsigned int atomIdx, atomOrder) {
+    for (auto atomIdx : atomOrder) {
       // skip atoms which will not generate unique environments (neighborhoods)
       // anymore
       if (!deadAtoms[atomIdx]) {
@@ -378,7 +379,7 @@ FingerprintGenerator<OutputType> *getMorganGenerator(
     AtomInvariantsGenerator *atomInvariantsGenerator,
     BondInvariantsGenerator *bondInvariantsGenerator,
     const std::uint32_t fpSize, const std::vector<std::uint32_t> countBounds,
-    const bool ownsAtomInvGen, const bool // ownsBondInvGen
+    const bool ownsAtomInvGen, const bool  // ownsBondInvGen
 ) {
   AtomEnvironmentGenerator<OutputType> *morganEnvGenerator =
       new MorganEnvGenerator<OutputType>();
@@ -405,23 +406,25 @@ FingerprintGenerator<OutputType> *getMorganGenerator(
       bondInvariantsGenerator, ownsAtomInvGenerator, ownsBondInvGenerator);
 }
 
-template RDKIT_FINGERPRINTS_EXPORT FingerprintGenerator<std::uint32_t> *getMorganGenerator(
-    const unsigned int radius, const bool countSimulation,
-    const bool includeChirality, const bool useBondTypes,
-    const bool onlyNonzeroInvariants,
-    AtomInvariantsGenerator *atomInvariantsGenerator,
-    BondInvariantsGenerator *bondInvariantsGenerator,
-    const std::uint32_t fpSize, const std::vector<std::uint32_t> countBounds,
-    const bool ownsAtomInvGen, const bool ownsBondInvGen);
+template RDKIT_FINGERPRINTS_EXPORT FingerprintGenerator<std::uint32_t>
+    *getMorganGenerator(const unsigned int radius, const bool countSimulation,
+                        const bool includeChirality, const bool useBondTypes,
+                        const bool onlyNonzeroInvariants,
+                        AtomInvariantsGenerator *atomInvariantsGenerator,
+                        BondInvariantsGenerator *bondInvariantsGenerator,
+                        const std::uint32_t fpSize,
+                        const std::vector<std::uint32_t> countBounds,
+                        const bool ownsAtomInvGen, const bool ownsBondInvGen);
 
-template RDKIT_FINGERPRINTS_EXPORT FingerprintGenerator<std::uint64_t> *getMorganGenerator(
-    const unsigned int radius, const bool countSimulation,
-    const bool includeChirality, const bool useBondTypes,
-    const bool onlyNonzeroInvariants,
-    AtomInvariantsGenerator *atomInvariantsGenerator,
-    BondInvariantsGenerator *bondInvariantsGenerator,
-    const std::uint32_t fpSize, const std::vector<std::uint32_t> countBounds,
-    const bool ownsAtomInvGen, const bool ownsBondInvGen);
+template RDKIT_FINGERPRINTS_EXPORT FingerprintGenerator<std::uint64_t>
+    *getMorganGenerator(const unsigned int radius, const bool countSimulation,
+                        const bool includeChirality, const bool useBondTypes,
+                        const bool onlyNonzeroInvariants,
+                        AtomInvariantsGenerator *atomInvariantsGenerator,
+                        BondInvariantsGenerator *bondInvariantsGenerator,
+                        const std::uint32_t fpSize,
+                        const std::vector<std::uint32_t> countBounds,
+                        const bool ownsAtomInvGen, const bool ownsBondInvGen);
 
 }  // namespace MorganFingerprint
 }  // namespace RDKit

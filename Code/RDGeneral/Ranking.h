@@ -21,7 +21,6 @@
 #include <vector>
 #include <functional>
 #include <algorithm>
-#include <boost/foreach.hpp>
 #include <cstdint>
 
 namespace Rankers {

@@ -8,8 +8,6 @@
 //  of the RDKit source tree.
 //
 
-#include <boost/foreach.hpp>
-
 // our stuff
 #include <RDGeneral/Invariant.h>
 #include <RDGeneral/RDLog.h>
@@ -52,7 +50,7 @@ void RWMol::insertMol(const ROMol &other) {
     // take care of atom-numbering-dependent properties:
     INT_VECT nAtoms;
     if (newAt->getPropIfPresent(common_properties::_ringStereoAtoms, nAtoms)) {
-      BOOST_FOREACH (int &val, nAtoms) {
+      for (auto &val : nAtoms) {
         if (val < 0) {
           val = -1 * (newAtomIds[(-val - 1)] + 1);
         } else {
@@ -73,7 +71,9 @@ void RWMol::insertMol(const ROMol &other) {
     bond_p->setOwningMol(this);
     bond_p->setBeginAtomIdx(idx1);
     bond_p->setEndAtomIdx(idx2);
-    BOOST_FOREACH (int &v, bond_p->getStereoAtoms()) { v = newAtomIds[v]; }
+    for (auto &v : bond_p->getStereoAtoms()) {
+      v = newAtomIds[v];
+    }
     addBond(bond_p, true);
     ++firstB;
   }
@@ -235,7 +235,7 @@ void RWMol::removeAtom(Atom *atom) {
   }
 
   // do the same with the coordinates in the conformations
-  BOOST_FOREACH (CONFORMER_SPTR conf, d_confs) {
+  for (auto conf : d_confs) {
     RDGeom::POINT3D_VECT &positions = conf->getPositions();
     auto pi = positions.begin();
     for (unsigned int i = 0; i < getNumAtoms() - 1; i++) {

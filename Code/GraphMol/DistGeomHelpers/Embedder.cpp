@@ -1107,6 +1107,12 @@ void EmbedMultipleConfs(ROMol &mol, INT_VECT &res, unsigned int numConfs,
         "torsion-angle preferences (ETversion) supported");
   }
 
+  if (MolOps::needsHs(mol)) {
+    BOOST_LOG(rdWarningLog)
+        << "Molecule does not have explicit Hs. Consider calling AddHs()"
+        << std::endl;
+  }
+
   // initialize the conformers we're going to be creating:
   if (params.clearConfs) {
     res.clear();

@@ -26,7 +26,6 @@
 #include "SmilesParse.h"
 #include <RDGeneral/BoostStartInclude.h>
 #include <boost/algorithm/string.hpp>
-#include <boost/foreach.hpp>
 #include <boost/lexical_cast.hpp>
 #include <RDGeneral/BoostEndInclude.h>
 #include <GraphMol/RDKitBase.h>
@@ -239,7 +238,7 @@ RWMol *toMol(const std::string &inp,
                           << " for input: '" << origInp << "'" << std::endl;
     res = nullptr;
   }
-  BOOST_FOREACH (RDKit::RWMol *molPtr, molVect) {
+  for (auto *molPtr : molVect) {
     if (molPtr) {
       // Clean-up the bond bookmarks when not calling CloseMolRings
       SmilesParseOps::CleanupAfterParseError(molPtr);

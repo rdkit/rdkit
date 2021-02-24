@@ -13,7 +13,6 @@
 #include <GraphMol/Subgraphs/Subgraphs.h>
 #include <RDGeneral/hash/hash.hpp>
 #include <boost/dynamic_bitset.hpp>
-#include <boost/foreach.hpp>
 
 #include <GraphMol/RDKitBase.h>
 #include <GraphMol/SmilesParse/SmilesParse.h>
@@ -21,7 +20,6 @@
 #include <boost/dynamic_bitset.hpp>
 #include <boost/tuple/tuple.hpp>
 #include <boost/tuple/tuple_comparison.hpp>
-#include <boost/foreach.hpp>
 #include <algorithm>
 #include <RDGeneral/BoostStartInclude.h>
 #include <boost/flyweight.hpp>
@@ -310,7 +308,7 @@ void enumerateAllPaths(const ROMol &mol, INT_PATH_LIST_MAP &allPaths,
       allPaths = findAllPathsOfLengthsMtoN(mol, minPath, maxPath, true, useHs);
     }
   } else {
-    BOOST_FOREACH (std::uint32_t aidx, *fromAtoms) {
+    for (auto aidx : *fromAtoms) {
       INT_PATH_LIST_MAP tPaths;
       if (branchedPaths) {
         tPaths =
@@ -324,7 +322,7 @@ void enumerateAllPaths(const ROMol &mol, INT_PATH_LIST_MAP &allPaths,
 #ifdef VERBOSE_FINGERPRINTING
         std::cerr << "paths from " << aidx << " size: " << tpit->first
                   << std::endl;
-        BOOST_FOREACH (PATH_TYPE path, tpit->second) {
+        for (auto path : tpit->second) {
           std::cerr << " path: ";
           std::copy(path.begin(), path.end(),
                     std::ostream_iterator<int>(std::cerr, ", "));

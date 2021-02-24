@@ -3,7 +3,6 @@
 #include <boost/algorithm/string.hpp>
 #include <boost/algorithm/string/trim.hpp>
 #include <boost/lexical_cast.hpp>
-#include <boost/foreach.hpp>
 
 #include <RDGeneral/Invariant.h>
 #include <RDGeneral/RDLog.h>
@@ -81,7 +80,7 @@ void testMultiThread() {
   std::cerr << "generating reference data" << std::endl;
   std::vector<std::string> inchis;
   std::vector<std::string> keys;
-  BOOST_FOREACH (const ROMol *mol, mols) {
+  for (const auto *mol : mols) {
     ExtraInchiReturnValues tmp;
     std::string inchi = MolToInchi(*mol, tmp);
     std::string key = InchiToInchiKey(inchi);

@@ -18,7 +18,7 @@ namespace Queries {
 //! a Query implementing AND: requires all children to be \c true
 template <class MatchFuncArgType, class DataFuncArgType = MatchFuncArgType,
           bool needsConversion = false>
-class AndQuery
+class RDKIT_QUERY_EXPORT AndQuery
     : public Query<MatchFuncArgType, DataFuncArgType, needsConversion> {
  public:
   typedef Query<MatchFuncArgType, DataFuncArgType, needsConversion> BASE;
