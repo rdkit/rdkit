@@ -37,9 +37,15 @@ class JSMol {
   std::string condense_abbreviations_from_defs(const std::string &definitions,
                                                double maxCoverage,
                                                bool areLinkers);
-  std::string generate_aligned_coords(const JSMol &templateMol,bool useCoordGen);
-  std::string generate_aligned_coords(const JSMol &templateMol) { return generate_aligned_coords(templateMol,false);};
-  
+  std::string generate_aligned_coords(const JSMol &templateMol,
+                                      bool useCoordGen, bool allowRGroups);
+  std::string generate_aligned_coords(const JSMol &templateMol,
+                                      bool useCoordGen) {
+    return generate_aligned_coords(templateMol, useCoordGen, false);
+  };
+  std::string generate_aligned_coords(const JSMol &templateMol) {
+    return generate_aligned_coords(templateMol, false, false);
+  };
 
   bool is_valid() const { return d_mol.get() != nullptr; };
 

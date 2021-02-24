@@ -23,6 +23,12 @@ namespace RDKit {
 class ChemicalReaction;
 namespace MolEnumerator {
 
+namespace detail {
+extern const std::string idxPropName;
+void preserveOrigIndices(ROMol &mol);
+void removeOrigIndices(ROMol &mol);
+}  // namespace detail
+
 //! abstract base class for the a molecule enumeration operation
 class RDKIT_MOLENUMERATOR_EXPORT MolEnumeratorOp {
  public:
@@ -107,7 +113,8 @@ class RDKIT_MOLENUMERATOR_EXPORT LinkNodeOp : public MolEnumeratorOp {
         d_countAtEachPoint(other.d_countAtEachPoint),
         d_variations(other.d_variations),
         d_pointRanges(other.d_pointRanges),
-        d_isotopeMap(other.d_isotopeMap){};
+        d_isotopeMap(other.d_isotopeMap),
+        d_atomMap(other.d_atomMap){};
   LinkNodeOp &operator=(const LinkNodeOp &other) {
     if (&other == this) {
       return *this;
@@ -118,6 +125,7 @@ class RDKIT_MOLENUMERATOR_EXPORT LinkNodeOp : public MolEnumeratorOp {
     d_variations = other.d_variations;
     d_pointRanges = other.d_pointRanges;
     d_isotopeMap = other.d_isotopeMap;
+    d_atomMap = other.d_atomMap;
     return *this;
   };
   //! \override
@@ -142,6 +150,7 @@ class RDKIT_MOLENUMERATOR_EXPORT LinkNodeOp : public MolEnumeratorOp {
   std::vector<std::tuple<unsigned, unsigned, unsigned>> d_variations;
   std::vector<std::pair<unsigned, unsigned>> d_pointRanges;
   std::map<unsigned, unsigned> d_isotopeMap;
+  std::map<unsigned, Atom *> d_atomMap;
 
   void initFromMol();
 };

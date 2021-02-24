@@ -216,8 +216,13 @@ void get_sss_json(const ROMol *d_mol, const ROMol *q_mol,
 
   rj::Value rjBonds(rj::kArrayType);
   for (const auto qbond : q_mol->bonds()) {
-    unsigned int idx1 = match[qbond->getBeginAtomIdx()].second;
-    unsigned int idx2 = match[qbond->getEndAtomIdx()].second;
+    unsigned int beginIdx = qbond->getBeginAtomIdx();
+    unsigned int endIdx = qbond->getEndAtomIdx();
+    if (beginIdx >= match.size() || endIdx >= match.size()) {
+      continue;
+    }
+    unsigned int idx1 = match[beginIdx].second;
+    unsigned int idx2 = match[endIdx].second;
     const auto bond = d_mol->getBondBetweenAtoms(idx1, idx2);
     if (bond != nullptr) {
       rjBonds.PushBack(bond->getIdx(), doc.GetAllocator());
@@ -458,22 +463,36 @@ std::string JSMol::condense_abbreviations_from_defs(
   Abbreviations::condenseMolAbbreviations(*d_mol, abbrevs, maxCoverage);
 }
 
-std::string JSMol::generate_aligned_coords(const JSMol &templateMol,bool useCoordGen){
-  if (!d_mol || !templateMol.d_mol || !templateMol.d_mol->getNumConformers()) return "";
+std::string JSMol::generate_aligned_coords(const JSMol &templateMol,
+                                           bool useCoordGen,
+                                           bool allowRGroups) {
+  std::string res;
+  if (!d_mol || !templateMol.d_mol || !templateMol.d_mol->getNumConformers())
+    return res;
 
 #ifdef RDK_BUILD_COORDGEN_SUPPORT
   bool oprefer = RDDepict::preferCoordGen;
   RDDepict::preferCoordGen = useCoordGen;
-#endif 
+#endif
   RDKit::ROMol *refPattern = nullptr;
   bool acceptFailure = true;
   int confId = -1;
-  RDDepict::generateDepictionMatching2DStructure(*d_mol, *templateMol.d_mol, confId,
-     refPattern, acceptFailure);
+  RDKit::MatchVectType match = RDDepict::generateDepictionMatching2DStructure(
+      *d_mol, *(templateMol.d_mol), confId, refPattern, acceptFailure, false,
+      allowRGroups);
+  if (!match.empty()) {
+    rj::Document doc;
+    doc.SetObject();
+    get_sss_json(d_mol.get(), templateMol.d_mol.get(), match, doc, doc);
+    rj::StringBuffer buffer;
+    rj::Writer<rj::StringBuffer> writer(buffer);
+    doc.Accept(writer);
+    res = buffer.GetString();
+  }
 #ifdef RDK_BUILD_COORDGEN_SUPPORT
   RDDepict::preferCoordGen = oprefer;
 #endif
-  return "";
+  return res;
 };
 
 

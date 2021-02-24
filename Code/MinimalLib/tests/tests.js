@@ -144,25 +144,93 @@ function test_generate_aligned_coords(){
 
 
 function test_isotope_labels(){
-    var mol = RDKitModule.get_mol("[1*:1]c1cc([2*:2])c([3*:3])c[14c]1");
+    var mol = RDKitModule.get_mol("[1*]c1cc([2*])c([3*])c[14c]1");
     assert.equal(mol.is_valid(), 1);
+    var regex = new RegExp("^<text\\s+.*>[DT]</text>$");
 
     var textIsoDummyIso = mol.get_svg_with_highlights(JSON.stringify({}));
-    var nLinesIsoDummyIso = textIsoDummyIso.split("\n").length;
+    var nLinesIsoDummyIso = 0;
+    textIsoDummyIso.split("\n").forEach(line => {
+        if (line.match(regex)) {
+            ++nLinesIsoDummyIso;
+        };
+    });
+    assert.equal(nLinesIsoDummyIso, 5);
 
     var textNoIsoDummyIso = mol.get_svg_with_highlights(JSON.stringify({ isotopeLabels: false }));
-    var nLinesNoIsoDummyIso = textNoIsoDummyIso.split("\n").length;
+    var nLinesNoIsoDummyIso = 0;
+    textNoIsoDummyIso.split("\n").forEach(line => {
+        if (line.match(regex)) {
+            ++nLinesNoIsoDummyIso;
+        };
+    });
+    assert.equal(nLinesNoIsoDummyIso, 3);
 
     var textIsoNoDummyIso = mol.get_svg_with_highlights(JSON.stringify({ dummyIsotopeLabels: false }));
-    var nLinesIsoNoDummyIso = textIsoNoDummyIso.split("\n").length;
+    var nLinesIsoNoDummyIso = 0;
+    textIsoNoDummyIso.split("\n").forEach(line => {
+        if (line.match(regex)) {
+            ++nLinesIsoNoDummyIso;
+        };
+    });
+    assert.equal(nLinesIsoNoDummyIso, 2);
 
     var textNoIsoNoDummyIso = mol.get_svg_with_highlights(JSON.stringify({ isotopeLabels: false, dummyIsotopeLabels: false }));
-    var nLinesNoIsoNoDummyIso = textNoIsoNoDummyIso.split("\n").length;
+    var nLinesNoIsoNoDummyIso = 0;
+    textNoIsoNoDummyIso.split("\n").forEach(line => {
+        if (line.match(regex)) {
+            ++nLinesNoIsoNoDummyIso;
+        };
+    });
+    assert.equal(nLinesNoIsoNoDummyIso, 0);
+}
 
-    var res = [nLinesNoIsoNoDummyIso, nLinesIsoNoDummyIso, nLinesNoIsoDummyIso, nLinesIsoDummyIso];
-    var resSorted = [...res];
-    resSorted.sort();
-    assert.ok(res.every((resItem, i) => (resItem === resSorted[i])));
+function test_generate_aligned_coords_allow_rgroups(){
+    var template_molblock = `
+     RDKit          2D
+
+  9  9  0  0  0  0  0  0  0  0999 V2000
+   -0.8929    1.0942    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -2.1919    0.3442    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -2.1919   -1.1558    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -0.8929   -1.9059    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    0.4060   -1.1558    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    0.4060    0.3442    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -3.4910    1.0942    0.0000 R1  0  0  0  0  0  0  0  0  0  0  0  0
+    1.7051    1.0942    0.0000 R2  0  0  0  0  0  0  0  0  0  0  0  0
+   -3.4910   -1.9059    0.0000 R3  0  0  0  0  0  0  0  0  0  0  0  0
+  1  2  2  0
+  2  3  1  0
+  3  4  2  0
+  4  5  1  0
+  5  6  2  0
+  6  1  1  0
+  6  8  1  0
+  3  9  1  0
+  2  7  1  0
+M  RGP  3   7   1   8   2   9   3
+M  END`;
+    var ortho_meta_smiles = 'c1ccc(-c2ccc(-c3ccccc3)c(-c3ccccc3)c2)cc1';
+    var ortho_smiles = 'c1ccc(-c2ccccc2-c2ccccc2)cc1';
+    var meta_smiles = 'c1ccc(-c2cccc(-c3ccccc3)c2)cc1';
+    var biphenyl_smiles = 'c1ccccc1-c1ccccc1';
+    var phenyl_smiles = 'c1ccccc1';
+    var template_ref = RDKitModule.get_mol(template_molblock);
+    var ortho_meta = RDKitModule.get_mol(ortho_meta_smiles);
+    var ortho = RDKitModule.get_mol(ortho_smiles);
+    var meta = RDKitModule.get_mol(meta_smiles);
+    var biphenyl = RDKitModule.get_mol(biphenyl_smiles);
+    var phenyl = RDKitModule.get_mol(phenyl_smiles);
+    assert.equal(JSON.parse(ortho_meta.generate_aligned_coords(
+        template_ref, false, true)).atoms.length, 9);
+    assert.equal(JSON.parse(ortho.generate_aligned_coords(
+        template_ref, false, true)).atoms.length, 8);
+    assert.equal(JSON.parse(meta.generate_aligned_coords(
+        template_ref, false, true)).atoms.length, 8);
+    assert.equal(JSON.parse(biphenyl.generate_aligned_coords(
+        template_ref, false, true)).atoms.length, 7);
+    assert.equal(JSON.parse(phenyl.generate_aligned_coords(
+        template_ref, false, true)).atoms.length, 6);
 }
 
 
@@ -176,5 +244,6 @@ initRDKitModule().then(function(instance) {
     test_abbreviations();
     test_generate_aligned_coords();
     test_isotope_labels();
+    test_generate_aligned_coords_allow_rgroups();
     console.log("Tests finished successfully");
 });

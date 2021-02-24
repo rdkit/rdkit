@@ -122,7 +122,7 @@ INT_VECT EmbedMultipleConfs2(ROMol &mol, unsigned int numConfs,
 PyObject *getMolBoundsMatrix(ROMol &mol, bool set15bounds = true,
                              bool scaleVDW = false,
                              bool doTriangleSmoothing = true,
-			     bool useMacrocycle14config = false) {
+                             bool useMacrocycle14config = false) {
   unsigned int nats = mol.getNumAtoms();
   npy_intp dims[2];
   dims[0] = nats;
@@ -130,7 +130,8 @@ PyObject *getMolBoundsMatrix(ROMol &mol, bool set15bounds = true,
 
   DistGeom::BoundsMatPtr mat(new DistGeom::BoundsMatrix(nats));
   DGeomHelpers::initBoundsMat(mat);
-  DGeomHelpers::setTopolBounds(mol, mat, set15bounds, scaleVDW, useMacrocycle14config);
+  DGeomHelpers::setTopolBounds(mol, mat, set15bounds, scaleVDW,
+                               useMacrocycle14config);
   if (doTriangleSmoothing) {
     DistGeom::triangleSmoothBounds(mat);
   }
@@ -424,6 +425,11 @@ BOOST_PYTHON_MODULE(rdDistGeom) {
           "useMacrocycleTorsions",
           &RDKit::DGeomHelpers::EmbedParameters::useMacrocycleTorsions,
           "impose macrocycle torsion angle preferences")
+      .def_readwrite(
+          "useSymmetryForPruning",
+          &RDKit::DGeomHelpers::EmbedParameters::useSymmetryForPruning,
+          "use molecule symmetry when doing the RMSD pruning. Note that this "
+          "option automatically also sets onlyHeavyAtomsForRMS to true.")
       .def("SetBoundsMat", &RDKit::setBoundsMatrix,
            "set the distance-bounds matrix to be used (no triangle smoothing "
            "will be done on this) from a Numpy array")
