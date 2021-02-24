@@ -104,7 +104,8 @@ class RDKIT_FINGERPRINTS_EXPORT AtomPairAtomEnv
                       const std::vector<std::uint32_t> *atomInvariants,
                       const std::vector<std::uint32_t> *bondInvariants,
                       const AdditionalOutput *additionalOutput,
-                      const bool hashResults = false) const;
+                      const bool hashResults = false,
+                      const std::uint64_t fpSize = 0) const;
 
   /*!
     \brief construct a new AtomPairAtomEnv object

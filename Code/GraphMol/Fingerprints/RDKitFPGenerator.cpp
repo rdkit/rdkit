@@ -94,8 +94,7 @@ OutputType RDKitFPAtomEnv<OutputType>::getBitId(
     const std::vector<std::uint32_t> *,  // atomInvariants
     const std::vector<std::uint32_t> *,  // bondInvariants
     const AdditionalOutput *,            // additionalOutput
-    const bool                           // hashResults
-) const {
+    const bool hashResults, const std::uint64_t fpSize) const {
   // todo set additional outputs
   return d_bitId;
 }

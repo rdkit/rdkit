@@ -58,7 +58,8 @@ class RDKIT_FINGERPRINTS_EXPORT TopologicalTorsionAtomEnv
                       const std::vector<std::uint32_t> *atomInvariants,
                       const std::vector<std::uint32_t> *bondInvariants,
                       const AdditionalOutput *additionalOutput,
-                      const bool hashResults = false) const;
+                      const bool hashResults = false,
+                      const std::uint64_t fpSize = 0) const;
   /**
    \brief Construct a new Topological Torsion Atom Env object
 

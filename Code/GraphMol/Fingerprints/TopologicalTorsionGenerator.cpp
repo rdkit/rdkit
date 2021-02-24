@@ -45,8 +45,7 @@ OutputType TopologicalTorsionAtomEnv<OutputType>::getBitId(
     const std::vector<std::uint32_t> *,  // atomInvariants
     const std::vector<std::uint32_t> *,  // bondInvariants
     const AdditionalOutput *,            // additionalOutput
-    const bool                           // hashResults
-) const {
+    const bool hashResults, const std::uint64_t fpSize) const {
   return d_bitId;
 };
 

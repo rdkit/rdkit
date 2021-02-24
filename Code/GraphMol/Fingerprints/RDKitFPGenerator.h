@@ -77,7 +77,8 @@ class RDKIT_FINGERPRINTS_EXPORT RDKitFPAtomEnv
                       const std::vector<std::uint32_t> *atomInvariants,
                       const std::vector<std::uint32_t> *bondInvariants,
                       const AdditionalOutput *additionalOutput,
-                      bool hashResults = false) const;
+                      bool hashResults = false,
+                      const std::uint64_t fpSize = 0) const;
 
   /**
   \brief Construct a new RDKitFPAtomEnv object

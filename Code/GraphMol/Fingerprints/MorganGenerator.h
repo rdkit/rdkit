@@ -152,7 +152,8 @@ class RDKIT_FINGERPRINTS_EXPORT MorganAtomEnv
                       const std::vector<std::uint32_t> *atomInvariants,
                       const std::vector<std::uint32_t> *bondInvariants,
                       const AdditionalOutput *additionalOutput,
-                      const bool hashResults = false) const;
+                      const bool hashResults = false,
+                      const std::uint64_t fpSize = 0) const;
 
   /**
    \brief Construct a new MorganAtomEnv object
@@ -191,7 +192,7 @@ class RDKIT_FINGERPRINTS_EXPORT MorganEnvGenerator
  \param OutputType determines the size of the bitIds and the result, can be 32
  or 64 bit unsigned integer
 
- \param radiu the number of iterations to grow the fingerprint
+ \param radius the number of iterations to grow the fingerprint
 
  \param countSimulation if set, use count simulation while generating the
  fingerprint
