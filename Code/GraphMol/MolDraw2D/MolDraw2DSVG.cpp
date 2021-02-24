@@ -269,8 +269,7 @@ void MolDraw2DSVG::drawEllipse(const Point2D &cds1, const Point2D &cds2) {
        << " cx='" << cx << "'"
        << " cy='" << cy << "'"
        << " rx='" << w / 2 << "'"
-       << " ry='" << h / 2 << "'";
-
+       << " ry='" << h / 2 << "' ";
   outputClasses();
   d_os << " style='";
   if (fillPolys()) {
