@@ -146,43 +146,23 @@ function test_generate_aligned_coords(){
 function test_isotope_labels(){
     var mol = RDKitModule.get_mol("[1*]c1cc([2*])c([3*])c[14c]1");
     assert.equal(mol.is_valid(), 1);
-    var regex = new RegExp("^<text\\s+.*>[DT]</text>$");
 
     var textIsoDummyIso = mol.get_svg_with_highlights(JSON.stringify({}));
-    var nLinesIsoDummyIso = 0;
-    textIsoDummyIso.split("\n").forEach(line => {
-        if (line.match(regex)) {
-            ++nLinesIsoDummyIso;
-        };
-    });
-    assert.equal(nLinesIsoDummyIso, 5);
+    var nLinesIsoDummyIso = textIsoDummyIso.split("\n").length;
 
     var textNoIsoDummyIso = mol.get_svg_with_highlights(JSON.stringify({ isotopeLabels: false }));
-    var nLinesNoIsoDummyIso = 0;
-    textNoIsoDummyIso.split("\n").forEach(line => {
-        if (line.match(regex)) {
-            ++nLinesNoIsoDummyIso;
-        };
-    });
-    assert.equal(nLinesNoIsoDummyIso, 3);
+    var nLinesNoIsoDummyIso = textNoIsoDummyIso.split("\n").length;
 
     var textIsoNoDummyIso = mol.get_svg_with_highlights(JSON.stringify({ dummyIsotopeLabels: false }));
-    var nLinesIsoNoDummyIso = 0;
-    textIsoNoDummyIso.split("\n").forEach(line => {
-        if (line.match(regex)) {
-            ++nLinesIsoNoDummyIso;
-        };
-    });
-    assert.equal(nLinesIsoNoDummyIso, 2);
+    var nLinesIsoNoDummyIso = textIsoNoDummyIso.split("\n").length;
 
     var textNoIsoNoDummyIso = mol.get_svg_with_highlights(JSON.stringify({ isotopeLabels: false, dummyIsotopeLabels: false }));
-    var nLinesNoIsoNoDummyIso = 0;
-    textNoIsoNoDummyIso.split("\n").forEach(line => {
-        if (line.match(regex)) {
-            ++nLinesNoIsoNoDummyIso;
-        };
-    });
-    assert.equal(nLinesNoIsoNoDummyIso, 0);
+    var nLinesNoIsoNoDummyIso = textNoIsoNoDummyIso.split("\n").length;
+
+    var res = [nLinesNoIsoNoDummyIso, nLinesIsoNoDummyIso, nLinesNoIsoDummyIso, nLinesIsoDummyIso];
+    var resSorted = [...res];
+    resSorted.sort((a, b) => (a - b));
+    assert.ok(res.every((resItem, i) => (resItem === resSorted[i])));
 }
 
 function test_generate_aligned_coords_allow_rgroups(){

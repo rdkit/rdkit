@@ -3847,7 +3847,7 @@ string MolDraw2D::getAtomSymbol(const RDKit::Atom &atom,
     symbol = getAtomListText(atom);
   } else if (isComplexQuery(&atom)) {
     symbol = "?";
-  } else if (drawOptions().atomLabelDeuteriumTritium && drawOptions().isotopeLabels &&
+  } else if (drawOptions().atomLabelDeuteriumTritium &&
              atom.getAtomicNum() == 1 && (iso == 2 || iso == 3)) {
     symbol = ((iso == 2) ? "D" : "T");
     iso = 0;
