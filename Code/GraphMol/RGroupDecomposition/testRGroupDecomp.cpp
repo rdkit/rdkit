@@ -351,6 +351,7 @@ void testRingMatching3() {
                        << std::endl;
 
   RWMol *core = SmartsToMol("*1***[*:1]1");
+  // RWMol *core = SmartsToMol("*1****1");
   RGroupDecompositionParameters params;
 
   RGroupDecomposition decomp(*core, params);
@@ -940,7 +941,11 @@ $$$$)CTAB";
         ROMol *mol = sdsup.next();
         TEST_ASSERT(mol);
         int addedIndex = decomp.add(*mol);
-        TEST_ASSERT(addedIndex == -1);  // none should match
+        if (idx == 0) {
+          TEST_ASSERT(addedIndex == 0)
+        } else {
+          TEST_ASSERT(addedIndex == -1);  // none should match
+        }
         ++idx;
         delete mol;
       }
@@ -980,15 +985,14 @@ $$$$)CTAB";
     RGroupRows rows = decomp.getRGroupsAsRows();
 
     const char *expected[4] = {
-        "Core:N1C(N([*:2])[*:4])C2C(NC1[*:1])[*:5]C([*:3])[*:6]2 R1:[H][*:1] "
-        "R2:C(CC[*:2])CC[*:4] R4:C(CC[*:2])CC[*:4] R5:[H][N:5] "
-        "R6:[H][C:6].[H][C:6]",
-        "Core:N1C(N([*:2])[*:4])C2C(NC1[*:1])[*:5]C([*:3])[*:6]2 R1:[H][*:1] "
-        "R2:C[*:2] R4:[H][*:4] R5:[S:5] R6:CC(C)[C:6].[H][C:6]",
-        "Core:C1C([*:1])NC(N([*:2])[*:4])C2C1[*:5]C([*:3])[*:6]2 R1:[H][*:1] "
-        "R2:C[*:2] R4:[H][*:4] R5:[S:5] R6:CC(C)[C:6].[H][C:6]",
-        "Core:C1C([*:1])NC(N([*:2])[*:4])C2C1[*:5]C([*:3])[*:6]2 R1:O[*:1] "
-        "R2:[H][*:2] R4:[H][*:4] R5:C[N:5] R6:[H][N:6]"};
+        "Core:N1C(N[*:2])C2C(NC1[*:1])[*:4]C([*:3])[*:5]2 R1:[H][*:1].[H][*:1] "
+        "R2:C(CC[*:2])CC[*:2] R4:[H][N:4] R5:[H][C:5].[H][C:5]",
+        "Core:N1C(N[*:2])C2C(NC1[*:1])[*:4]C([*:3])[*:5]2 R1:[H][*:1].[H][*:1] "
+        "R2:C[*:2].[H][*:2] R4:[S:4] R5:CC(C)[C:5].[H][C:5]",
+        "Core:C1C([*:1])NC(N[*:2])C2C1[*:4]C([*:3])[*:5]2 R1:[H][*:1].[H][*:1] "
+        "R2:C[*:2].[H][*:2] R4:[S:4] R5:CC(C)[C:5].[H][C:5]",
+        "Core:C1C([*:1])NC(N[*:2])C2C1[*:4]C([*:3])[*:5]2 R1:O[*:1].[H][*:1] "
+        "R2:[H][*:2].[H][*:2] R4:C[N:4] R5:[H][N:5]"};
     int i = 0;
     for (RGroupRows::const_iterator it = rows.begin(); it != rows.end();
          ++it, ++i) {
@@ -2091,6 +2095,8 @@ int main() {
       << "********************************************************\n";
   BOOST_LOG(rdInfoLog) << "Testing R-Group Decomposition \n";
 
+  // testRingMatching3();
+  testSDFGRoupMultiCoreNoneShouldMatch();
 #if 1
   testSymmetryMatching(FingerprintVariance);
   testSymmetryMatching();
@@ -2105,7 +2111,7 @@ int main() {
   testRingMatching2();
   testGitHubIssue1705();
   testGithub2332();
-  testSDFGRoupMultiCoreNoneShouldMatch();
+  // testSDFGRoupMultiCoreNoneShouldMatch();
   testRowColumnAlignmentProblem();
   testSymmetryIssues();
   testMutipleCoreRelabellingIssues();

@@ -302,7 +302,13 @@ struct rgroupdecomp_wrapper {
         .def_readwrite("gaNumberRuns",
                        &RDKit::RGroupDecompositionParameters::gaNumberRuns)
         .def_readwrite("gaParallelRuns",
-                       &RDKit::RGroupDecompositionParameters::gaParallelRuns);
+                       &RDKit::RGroupDecompositionParameters::gaParallelRuns)
+        .def_readwrite(
+            "queryMatchesOnCore",
+            &RDKit::RGroupDecompositionParameters::queryMatchesOnCore)
+        .def_readwrite(
+            "queryMatchesOnSideChain",
+            &RDKit::RGroupDecompositionParameters::queryMatchesOnSideChain);
 
     python::class_<RDKit::RGroupDecompositionHelper, boost::noncopyable>(
         "RGroupDecomposition", docString.c_str(),

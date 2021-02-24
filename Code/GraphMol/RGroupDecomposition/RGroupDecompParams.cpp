@@ -34,7 +34,7 @@ unsigned int RGroupDecompositionParameters::autoGetLabels(const RWMol &core) {
     if (atm->hasProp(common_properties::_MolFileRLabel)) {
       hasMDLRGroup = true;
     }
-    if (atm->getAtomicNum() == 0) {
+    if (atm->getAtomicNum() == 0 && atm->getDegree() == 1) {
       hasDummies = true;
     }
   }
@@ -80,7 +80,8 @@ bool rgdAtomCompare(const MCSAtomCompareParameters &p, const ROMol &mol1,
     atom2HasLabel |= (a2->getAtomicNum() == 0);
   }
   // don't match negative rgroups as these are used by AtomIndexRLabels which
-  // are set for the template core before the MCS and after the MCS for the other core
+  // are set for the template core before the MCS and after the MCS for the
+  // other core
   if (a1->hasProp(RLABEL)) {
     auto label = a1->getProp<int>(RLABEL);
     atom1HasLabel |= label > 0;
@@ -201,7 +202,7 @@ bool RGroupDecompositionParameters::prepareCore(RWMol &core,
       }
     }
 
-    if (!found && (autoLabels & DummyAtomLabels) && atom->getAtomicNum() == 0) {
+    if (!found && (autoLabels & DummyAtomLabels) && atom->getAtomicNum() == 0 && atom->getDegree() == 1) {
       const bool forceRelabellingWithDummies = true;
       int defaultDummyStartLabel = maxLabel;
       if (setLabel(atom, defaultDummyStartLabel, foundLabels, maxLabel,
@@ -238,6 +239,35 @@ bool RGroupDecompositionParameters::prepareCore(RWMol &core,
   for (auto &it : atomToLabel) {
     core.getAtomWithIdx(it.first)->setProp(RLABEL, it.second);
   }
+
+  // Move user RLABELS on single connected dummy to adjacent atom
+  std::set<Atom *> atomsToRemove;
+  for (auto atom : core.atoms()) {
+    if (atom->getAtomicNum() == 0 && atom->getDegree() == 1 &&
+        atom->hasProp(RLABEL) &&
+        atom->hasProp(RLABEL_TYPE) &&
+        static_cast<Labelling>(atom->getProp<int>(RLABEL_TYPE)) !=
+            Labelling::INDEX_LABELS) {
+      auto neighborIdx = *core.getAtomNeighbors(atom).first;
+      auto neighbor = core.getAtomWithIdx(neighborIdx);
+      if (!neighbor->hasProp(RLABEL_TYPE) ||
+          static_cast<Labelling>(neighbor->getProp<int>(RLABEL_TYPE)) == Labelling::INDEX_LABELS) {
+          neighbor->setProp<int>(RLABEL, atom->getProp<int>(RLABEL));
+          neighbor->setProp<int>(RLABEL_TYPE, atom->getProp<int>(RLABEL_TYPE));
+          atomsToRemove.insert(atom);
+      }
+    }
+  }
+  // then delete those dummies
+  if (atomsToRemove.size() > 0) {
+    for (auto atom: atomsToRemove) {
+      // Perhaps here we should save any dummy coordinates, since the dummy atoms
+      // will be added back in when results are returned to the user.
+      core.removeAtom(atom);
+    }
+    core.updatePropertyCache(false);
+  }
+
   return true;
 }
 

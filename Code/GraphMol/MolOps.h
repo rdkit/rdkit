@@ -224,6 +224,10 @@ RDKIT_GRAPHMOL_EXPORT void addHs(RWMol &mol, bool explicitOnly = false,
        - the caller is responsible for <tt>delete</tt>ing the pointer this
    returns.
 */
+
+RDKIT_GRAPHMOL_EXPORT void setHydrogenCoords(ROMol *mol, unsigned int hydIdx,
+                                             unsigned int heavyIdx);
+
 RDKIT_GRAPHMOL_EXPORT ROMol *removeHs(const ROMol &mol,
                                       bool implicitOnly = false,
                                       bool updateExplicitCount = false,

@@ -70,6 +70,8 @@ struct RDKIT_RGROUPDECOMPOSITION_EXPORT RGroupDecompositionProcessResult {
       : success(success), score(score) {}
 };
 
+class RGroupMatch;
+
 struct RDKIT_RGROUPDECOMPOSITION_EXPORT RGroupDecompositionParameters {
   unsigned int labels = AutoDetect;
   unsigned int matchingStrategy = GreedyChunks;
@@ -105,6 +107,9 @@ struct RDKIT_RGROUPDECOMPOSITION_EXPORT RGroupDecompositionParameters {
   // Sequential or parallel runs?
   bool gaParallelRuns = true;
 
+  bool queryMatchesOnSideChain = true;
+  bool queryMatchesOnCore = false;
+
  private:
   int indexOffset{-1};
 };
@@ -122,6 +127,7 @@ class RDKIT_RGROUPDECOMPOSITION_EXPORT RGroupDecomposition {
   RGroupDecomposition(const RGroupDecomposition &);  // no copy construct
   RGroupDecomposition &operator=(
       const RGroupDecomposition &);  // Prevent assignment
+  ROMOL_SPTR outputCoreMolecule(const RGroupMatch & match) const;
 
  public:
   RGroupDecomposition(const ROMol &core,

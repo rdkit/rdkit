@@ -19,9 +19,10 @@ typedef std::map<int, RData> R_DECOMP;
 struct RGroupMatch {
   size_t core_idx;   // index of the matching core
   R_DECOMP rgroups;  // rlabel->RGroupData mapping
+  ROMOL_SPTR matchedCore; // Core with dummy or query atoms and bonds matched
 
-  RGroupMatch(size_t core_index, R_DECOMP input_rgroups)
-      : core_idx(core_index), rgroups(std::move(input_rgroups)) {}
+  RGroupMatch(size_t core_index, R_DECOMP input_rgroups, ROMOL_SPTR matchedCore)
+      : core_idx(core_index), rgroups(std::move(input_rgroups)), matchedCore(std::move(matchedCore)) {}
 };
 
 }  // namespace RDKit

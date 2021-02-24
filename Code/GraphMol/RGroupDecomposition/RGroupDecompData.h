@@ -287,7 +287,10 @@ struct RGroupDecompData {
         rlabel = mapping->second;
       }
 
-      if (atom->getAtomicNum() == 0) {  // add to dummy
+      if ((params.queryMatchesOnCore && atom->getAtomicNum() == 0 &&
+           !isAnyAtomWithMultipleNeighborsOrNotUserRLabel(*atom)) ||
+          (!params.queryMatchesOnCore &&
+           atom->getAtomicNum() == 0)) {  // add to dummy
         setRlabel(atom, rlabel);
       } else {
         auto *newAt = new Atom(0);
@@ -320,6 +323,7 @@ struct RGroupDecompData {
     for (auto &i : atomsToAdd) {
       core.addAtom(i.second, false, true);
       core.addBond(i.first, i.second, Bond::SINGLE);
+      MolOps::setHydrogenCoords(&core, i.second->getIdx(), i.first->getIdx());
     }
     core.updatePropertyCache(false);  // this was github #1550
   }
@@ -353,8 +357,10 @@ struct RGroupDecompData {
 
           if (atom->getAtomicNum() == 0) {
             setRlabel(atom, label->second);
-          }
-          else if (atom->hasProp(RLABEL_CORE_INDEX)) {
+          } else if (atom->hasProp(RLABEL_CORE_INDEX)) {
+            if (!params.queryMatchesOnSideChain) {
+              atom->setAtomicNum(0);
+            }
             setRlabel(atom, label->second);
           } else {
             auto *newAt = new Atom(0);
@@ -364,7 +370,8 @@ struct RGroupDecompData {
         }
       }
       if (atom->hasProp(RLABEL_CORE_INDEX)) {
-        // convert to dummy as we don't want to collapse hydrogens onto the core match
+        // convert to dummy as we don't want to collapse hydrogens onto the core
+        // match
         auto rLabelCoreIndex = atom->getProp<int>(RLABEL_CORE_INDEX);
         rLabelCoreIndexToAtomicWt[rLabelCoreIndex] = atom->getAtomicNum();
         atom->setAtomicNum(0);
@@ -374,6 +381,7 @@ struct RGroupDecompData {
     for (auto &i : atomsToAdd) {
       mol.addAtom(i.second, false, true);
       mol.addBond(i.first, i.second, Bond::SINGLE);
+      MolOps::setHydrogenCoords(&mol, i.second->getIdx(), i.first->getIdx());
     }
 
     if (params.removeHydrogensPostMatch) {
@@ -393,8 +401,9 @@ struct RGroupDecompData {
       Atom *atom = *atIt;
       if (atom->hasProp(RLABEL_CORE_INDEX)) {
         // don't need to set IsArormatic on atom - that seems to have been saved
-          atom->setAtomicNum(rLabelCoreIndexToAtomicWt[atom->getProp<int>(RLABEL_CORE_INDEX)]);
-          atom->setNoImplicit(true);
+        atom->setAtomicNum(
+            rLabelCoreIndexToAtomicWt[atom->getProp<int>(RLABEL_CORE_INDEX)]);
+        atom->setNoImplicit(true);
       }
     }
 

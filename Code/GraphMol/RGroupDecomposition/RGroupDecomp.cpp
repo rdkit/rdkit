@@ -179,7 +179,9 @@ int RGroupDecomposition::add(const ROMol &inmol) {
     const bool replaceDummies = false;
     const bool labelByIndex = true;
     const bool requireDummyMatch = false;
-    auto coreCopy = rcore->replaceCoreDummiesWithMolMatches(mol, tmatche);
+    bool hasCoreDummies = false;
+    auto coreCopy =
+        rcore->replaceCoreDummiesWithMolMatches(hasCoreDummies, mol, tmatche);
     tMol.reset(replaceCore(mol, *coreCopy, tmatche, replaceDummies,
                            labelByIndex, requireDummyMatch));
 #ifdef VERBOSE
@@ -219,7 +221,9 @@ int RGroupDecomposition::add(const ROMol &inmol) {
 
               data->labels.insert(rlabel);  // keep track of all labels used
               attachments.push_back(rlabel);
-              if (coreAtom->hasProp(RLABEL) && isAnyAtomWithMultipleNeighborsOrNotUserRLabel(*coreAtom)) {
+              if (params().queryMatchesOnSideChain &&
+                  coreAtom->hasProp(RLABEL) &&
+                  isAnyAtomWithMultipleNeighborsOrNotUserRLabel(*coreAtom)) {
                 auto matchedCoreAtom = coreCopy->getAtomWithIdx(index);
                 if (matchedCoreAtom->getAtomicNum()) {
                   at->setAtomicNum(matchedCoreAtom->getAtomicNum());
@@ -251,10 +255,10 @@ int RGroupDecomposition::add(const ROMol &inmol) {
           // special case, only one fragment
           if (fragments.size() == 1) {  // need to make a new core
             // remove the sidechains
-            
-            // GJ I think if we ever get here that it's really an error and I believe
-            // that I've fixed the case where this code was called. Still, I'm too scared to
-            // delete the block.
+
+            // GJ I think if we ever get here that it's really an error and I
+            // believe that I've fixed the case where this code was called.
+            // Still, I'm too scared to delete the block.
             RWMol newCore(mol);
 
             for (const auto &mvpair : tmatche) {
@@ -289,36 +293,39 @@ int RGroupDecomposition::add(const ROMol &inmol) {
         }
       }
 
-      // Find any missing single atom matches to any atom core atoms with
-      // RLabels
-      for (const auto &coreAtom : rcore->core->atoms()) {
-        auto coreIndex = coreAtom->getIdx();
-        if (coreAtom->hasProp(RLABEL) &&
-            isAnyAtomWithMultipleNeighborsOrNotUserRLabel(*coreAtom) &&
-            coreAtomAnyMatched.find(coreIndex) == coreAtomAnyMatched.end()) {
-          auto matchingAtom = coreCopy->getAtomWithIdx(coreIndex);
-          if (matchingAtom->getAtomicNum() > 0) {
-            auto newMol = boost::make_shared<RWMol>();
-            auto newAtom = new Atom(matchingAtom->getAtomicNum());
-            int rLabel = coreAtom->getProp<int>(RLABEL);
-            std::vector<int> rLabels{rLabel};
-            newAtom->setIsAromatic(matchingAtom->getIsAromatic());
-            newAtom->setProp(SIDECHAIN_RLABELS, rLabels);
-            newAtom->setProp<int>(RLABEL_CORE_INDEX, coreIndex);
-            newMol->addAtom(newAtom, false, true);
-            data->labels.insert(rLabel);
-            ADD_MATCH(match, rLabel);
-            match[rLabel]->add(newMol, rLabels);
+      if (params().queryMatchesOnSideChain) {
+        // Find any missing single atom matches to any atom core atoms with
+        // RLabels
+        for (const auto &coreAtom : rcore->core->atoms()) {
+          auto coreIndex = coreAtom->getIdx();
+          if (coreAtom->hasProp(RLABEL) &&
+              isAnyAtomWithMultipleNeighborsOrNotUserRLabel(*coreAtom) &&
+              coreAtomAnyMatched.find(coreIndex) == coreAtomAnyMatched.end()) {
+            auto matchingAtom = coreCopy->getAtomWithIdx(coreIndex);
+            if (matchingAtom->getAtomicNum() > 0) {
+              auto newMol = boost::make_shared<RWMol>();
+              auto newAtom = new Atom(matchingAtom->getAtomicNum());
+              int rLabel = coreAtom->getProp<int>(RLABEL);
+              std::vector<int> rLabels{rLabel};
+              newAtom->setIsAromatic(matchingAtom->getIsAromatic());
+              newAtom->setProp(SIDECHAIN_RLABELS, rLabels);
+              newAtom->setProp<int>(RLABEL_CORE_INDEX, coreIndex);
+              newMol->addAtom(newAtom, false, true);
+              data->labels.insert(rLabel);
+              ADD_MATCH(match, rLabel);
+              match[rLabel]->add(newMol, rLabels);
 #ifdef VERBOSE
-            std::cerr << "Fragment " << match.size() << " "
-                      << MolToSmiles(*newMol) << std::endl;
+              std::cerr << "Fragment " << match.size() << " "
+                        << MolToSmiles(*newMol) << std::endl;
 #endif
+            }
           }
         }
       }
 
       if (match.size()) {
-        potentialMatches.emplace_back(core_idx, match);
+        potentialMatches.emplace_back(core_idx, match,
+                                      hasCoreDummies ? coreCopy : nullptr);
       }
     }
   }
@@ -378,6 +385,14 @@ std::vector<std::string> RGroupDecomposition::getRGroupLabels() const {
   return labels;
 }
 
+ROMOL_SPTR RGroupDecomposition::outputCoreMolecule(
+    const RGroupMatch &match) const {
+  auto &core = data->cores[match.core_idx];
+  return params().queryMatchesOnCore && match.matchedCore
+             ? core.coreWithMatches(*match.matchedCore)
+             : core.labelledCore;
+}
+
 RGroupRows RGroupDecomposition::getRGroupsAsRows() const {
   std::vector<RGroupMatch> permutation = data->GetCurrentBestPermutation();
 
@@ -388,7 +403,8 @@ RGroupRows RGroupDecomposition::getRGroupsAsRows() const {
     // make a new rgroup entry
     groups.push_back(RGroupRow());
     RGroupRow &out_rgroups = groups.back();
-    out_rgroups[CORE] = data->cores[it->core_idx].labelledCore;
+
+    out_rgroups[CORE] = outputCoreMolecule(*it);
 
     R_DECOMP &in_rgroups = it->rgroups;
 
@@ -420,7 +436,7 @@ RGroupColumns RGroupDecomposition::getRGroupsAsColumns() const {
   for (auto it = permutation.begin(); it != permutation.end(); ++it, ++molidx) {
     boost::dynamic_bitset<> Rs_seen(rgrp_pos_map.size());
     R_DECOMP &in_rgroups = it->rgroups;
-    groups[CORE].push_back(data->cores[it->core_idx].labelledCore);
+    groups[CORE].push_back(outputCoreMolecule(*it));
 
     for (const auto &rgroup : in_rgroups) {
       const auto realLabel = data->finalRlabelMapping.find(rgroup.first);
