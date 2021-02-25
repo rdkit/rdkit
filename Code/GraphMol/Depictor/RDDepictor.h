@@ -162,8 +162,8 @@ RDKIT_DEPICTOR_EXPORT unsigned int compute2DCoordsMimicDistMat(
                          DepictException.
   \param forceRDKit - (optional) use RDKit to generate coordinates even if
                       preferCoordGen is set to true
-  \param allowRGroups -  (optional) if true, terminal dummy atoms in the
-                         reference are ignored if they match an implicit
+  \param allowOptionalAttachments -  (optional) if true, terminal dummy atoms in
+                         the reference are ignored if they match an implicit
                          hydrogen in the molecule, and a constrained
                          depiction is still attempted
   RETURNS:
@@ -176,7 +176,7 @@ RDKIT_DEPICTOR_EXPORT RDKit::MatchVectType generateDepictionMatching2DStructure(
     const RDKit::ROMol *referencePattern =
         static_cast<const RDKit::ROMol *>(nullptr),
     bool acceptFailure = false, bool forceRDKit = false,
-    bool allowRGroups = false);
+    bool allowOptionalAttachments = false);
 
 //! \brief Compute 2D coordinates where a piece of the molecule is
 //   constrained to have the same coordinates as a reference.
