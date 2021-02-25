@@ -7952,9 +7952,9 @@ void testRemoveAndTrackIsotopes() {
   BOOST_LOG(rdInfoLog) << "Finished" << std::endl;
 }
 
-void testGithub3584() {
+void testGithub3854() {
   BOOST_LOG(rdInfoLog)
-      << "-----------------------\n Testing github issue 3584: "
+      << "-----------------------\n Testing github issue 3854: "
          "AddHs creates H atom with nan coordinates on edge case 2D structure"
       << std::endl;
 
@@ -8163,7 +8163,7 @@ int main() {
   testPotentialStereoBonds();
   testRingFamilies();
   testRemoveAndTrackIsotopes();
-  testGithub3584();
+  testGithub3854();
 
   return 0;
 }
