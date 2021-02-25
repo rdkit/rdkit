@@ -86,6 +86,31 @@ class RDKIT_MOLDRAW2D_EXPORT MolDraw2DSVG : public MolDraw2D {
   void initDrawing() override;
   void initTextDrawer(bool noFreetype) override;
 
+  template <class t_obj>
+  void outputTagClasses(const t_obj *obj) const {
+    if (!d_activeClass.empty()) {
+      d_os << " " << d_activeClass;
+    }
+    if (obj->hasProp("_tagClass")) {
+      std::string value;
+      obj->getProp("_tagClass", value);
+      std::replace(value.begin(), value.end(), '\"', '_');
+      std::replace(value.begin(), value.end(), '\'', '_');
+      d_os << " " << value;
+    }
+  }
+
+  template <class t_obj>
+  void outputMetaData(const t_obj *obj) const {
+    std::string value;
+    for (const auto &prop : obj->getPropList()) {
+      if (prop.length() < 11 || prop.rfind("_metaData-", 0) != 0) continue;
+      obj->getProp(prop, value);
+      std::replace(value.begin(), value.end(), '\"', '_');
+      d_os << " " << prop.substr(10) << "=\"" << value << "\"";
+    }
+  }
+
  protected:
   void drawBond(const ROMol &mol, const Bond *bond, int at1_idx, int at2_idx,
                 const std::vector<int> *highlight_atoms = nullptr,
