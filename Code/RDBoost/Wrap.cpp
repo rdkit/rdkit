@@ -14,6 +14,7 @@
 //
 #include "Wrap.h"
 #include "pyint_api.h"
+#include <RDBoost/PySequenceHolder.h>
 #include <sstream>
 #include <iostream>
 
@@ -75,5 +76,65 @@ boost::dynamic_bitset<> pythonObjectToDynBitset(const python::object &obj,
   return res;
 }
 
+std::vector<std::pair<int, int>> *translateAtomMap(
+    const python::object &atomMap) {
+  PySequenceHolder<python::object> pyAtomMap(atomMap);
+  std::vector<std::pair<int, int>>* res;
+  res = nullptr;
+  unsigned int i;
+  unsigned int n = pyAtomMap.size();
+  if (n > 0) {
+    res = new std::vector<std::pair<int, int>>;
+    for (i = 0; i < n; ++i) {
+      PySequenceHolder<int> item(pyAtomMap[i]);
+      if (item.size() != 2) {
+        delete res;
+        res = nullptr;
+        throw_value_error("Incorrect format for an atomMap");
+      }
+      res->push_back(std::pair<int, int>(item[0], item[1]));
+    }
+  }
+  return res;
+}
+
+std::vector<std::vector<std::pair<int, int>>> translateAtomMapSeq(
+    const python::object &atomMapSeq) {
+  std::vector<std::vector<std::pair<int, int>>> aMapVec;
+  PySequenceHolder<python::object> pyAtomMapSeq(atomMapSeq);
+  for (size_t i = 0; i < pyAtomMapSeq.size(); ++i) {
+    std::vector<std::pair<int, int>>* res = translateAtomMap(pyAtomMapSeq[i]);
+    aMapVec.push_back(*res);
+    delete res;
+  }
+  return aMapVec;
+}
+
+RDNumeric::DoubleVector *translateDoubleSeq(const python::object &doubleSeq) {
+  PySequenceHolder<double> doubles(doubleSeq);
+  unsigned int nDoubles = doubles.size();
+  RDNumeric::DoubleVector *doubleVec;
+  doubleVec = nullptr;
+  unsigned int i;
+  if (nDoubles > 0) {
+    doubleVec = new RDNumeric::DoubleVector(nDoubles);
+    for (i = 0; i < nDoubles; ++i) {
+      doubleVec->setVal(i, doubles[i]);
+    }
+  }
+  return doubleVec;
+}
+
+std::vector<unsigned int> *translateIntSeq(const python::object &intSeq) {
+  PySequenceHolder<unsigned int> ints(intSeq);
+  std::vector<unsigned int> *intVec = nullptr;
+  if (ints.size() > 0) {
+    intVec = new std::vector<unsigned int>;
+    for (unsigned int i = 0; i < ints.size(); ++i) {
+      intVec->push_back(ints[i]);
+    }
+  }
+  return intVec;
+}
 
 #endif

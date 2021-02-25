@@ -699,6 +699,12 @@ ForceFields::ForceField *constructForceField(ROMol &mol,
                                              bool ignoreInterfragInteractions) {
   PRECONDITION(mol.getNumAtoms() == params.size(), "bad parameters");
 
+  if (MolOps::needsHs(mol)) {
+    BOOST_LOG(rdWarningLog)
+        << "Molecule does not have explicit Hs. Consider calling AddHs()"
+        << std::endl;
+  }
+
   auto *res = new ForceFields::ForceField();
 
   // add the atomic positions:
