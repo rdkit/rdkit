@@ -104,10 +104,10 @@ OutputType RDKitFPAtomEnv<OutputType>::getBitId(
       for (size_t i = 0; i < d_atomsInPath.size(); ++i) {
         if (d_atomsInPath[i]) {
           if (additionalOutput->atomToBits) {
-            (*additionalOutput->atomToBits)[i].push_back(bit_id);
+            additionalOutput->atomToBits->at(i).push_back(bit_id);
           }
           if (additionalOutput->atomCounts) {
-            (*additionalOutput->atomCounts)[i]++;
+            additionalOutput->atomCounts->at(i)++;
           }
         }
       }

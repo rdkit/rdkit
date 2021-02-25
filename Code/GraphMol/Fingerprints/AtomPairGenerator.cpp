@@ -114,9 +114,15 @@ OutputType AtomPairAtomEnv<OutputType>::getBitId(
                             atomPairArguments->df_includeChirality);
   }
 
-  if (additionalOutput && additionalOutput->atomToBits) {
-    additionalOutput->atomToBits->at(d_atomIdFirst).push_back(bitId);
-    additionalOutput->atomToBits->at(d_atomIdSecond).push_back(bitId);
+  if (additionalOutput) {
+    if (additionalOutput->atomToBits) {
+      additionalOutput->atomToBits->at(d_atomIdFirst).push_back(bitId);
+      additionalOutput->atomToBits->at(d_atomIdSecond).push_back(bitId);
+    }
+    if (additionalOutput->atomCounts) {
+      additionalOutput->atomCounts->at(d_atomIdFirst)++;
+      additionalOutput->atomCounts->at(d_atomIdSecond)++;
+    }
   }
   return bitId;
 }

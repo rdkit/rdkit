@@ -259,24 +259,20 @@ void testAtomPairNonSparseBitvector() {
 void testAtomPairOutput() {
   BOOST_LOG(rdErrorLog) << "-------------------------------------" << std::endl;
   BOOST_LOG(rdErrorLog) << "Test atom-pair additional output" << std::endl;
-
-  ROMol *mol;
-  SparseIntVect<std::uint32_t> *fp;
-  std::uint32_t c1, c2, c3;
+  auto mol = "CCC"_smiles;
+  TEST_ASSERT(mol);
   AdditionalOutput additionalOutput;
-  std::vector<std::uint64_t> v;
 
-  FingerprintGenerator<std::uint32_t> *atomPairGenerator =
-      AtomPair::getAtomPairGenerator<std::uint32_t>();
-  mol = SmilesToMol("CCC");
-  additionalOutput.atomToBits =
-      new std::vector<std::vector<std::uint64_t>>(mol->getNumAtoms());
-  fp = atomPairGenerator->getSparseCountFingerprint(*mol, nullptr, nullptr, -1,
-                                                    &additionalOutput);
-  c1 = AtomPair::getAtomCode(mol->getAtomWithIdx(0), 0, false);
-  c2 = AtomPair::getAtomCode(mol->getAtomWithIdx(1), 0, false);
-  c3 = AtomPair::getAtomCode(mol->getAtomWithIdx(2), 0, false);
-  v = additionalOutput.atomToBits->at(0);
+  auto atomPairGenerator = AtomPair::getAtomPairGenerator<std::uint32_t>();
+  additionalOutput.allocateAtomToBits(mol->getNumAtoms());
+  additionalOutput.allocateAtomCounts(mol->getNumAtoms());
+
+  auto fp = atomPairGenerator->getSparseCountFingerprint(*mol, nullptr, nullptr,
+                                                         -1, &additionalOutput);
+  auto c1 = AtomPair::getAtomCode(mol->getAtomWithIdx(0), 0, false);
+  auto c2 = AtomPair::getAtomCode(mol->getAtomWithIdx(1), 0, false);
+  auto c3 = AtomPair::getAtomCode(mol->getAtomWithIdx(2), 0, false);
+  auto v = additionalOutput.atomToBits->at(0);
   TEST_ASSERT(std::find(v.begin(), v.end(),
                         (AtomPair::getAtomPairCode(c1, c2, 1, false))) !=
               v.end());
@@ -297,10 +293,11 @@ void testAtomPairOutput() {
   TEST_ASSERT(std::find(v.begin(), v.end(),
                         (AtomPair::getAtomPairCode(c2, c3, 1, false))) !=
               v.end());
+  TEST_ASSERT(additionalOutput.atomCounts->at(0) == 2);
+  TEST_ASSERT(additionalOutput.atomCounts->at(1) == 2);
+  TEST_ASSERT(additionalOutput.atomCounts->at(2) == 2);
 
-  delete mol;
   delete fp;
-  delete additionalOutput.atomToBits;
   delete atomPairGenerator;
 
   BOOST_LOG(rdErrorLog) << "  done" << std::endl;
