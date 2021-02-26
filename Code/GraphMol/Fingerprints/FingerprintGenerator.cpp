@@ -124,15 +124,22 @@ SparseIntVect<OutputType>
         const std::vector<std::uint32_t> *customBondInvariants,
         const std::uint64_t fpSize) const {
   if (additionalOutput) {
-    if (additionalOutput->atomCounts &&
-        additionalOutput->atomCounts->size() != mol.getNumAtoms()) {
-      throw ValueErrorException(
-          "size of atomCounts must equal mol.getNumAtoms()");
+    if (additionalOutput->atomCounts) {
+      additionalOutput->atomCounts->resize(mol.getNumAtoms());
+      std::fill(additionalOutput->atomCounts->begin(),
+                additionalOutput->atomCounts->end(), 0);
     }
-    if (additionalOutput->atomToBits &&
-        additionalOutput->atomToBits->size() != mol.getNumAtoms()) {
-      throw ValueErrorException(
-          "size of atomToBits must equal mol.getNumAtoms()");
+    if (additionalOutput->atomToBits) {
+      additionalOutput->atomToBits->resize(mol.getNumAtoms());
+      std::fill(additionalOutput->atomToBits->begin(),
+                additionalOutput->atomToBits->end(),
+                std::vector<std::uint64_t>());
+    }
+    if (additionalOutput->bitInfoMap) {
+      additionalOutput->bitInfoMap->clear();
+    }
+    if (additionalOutput->bitPaths) {
+      additionalOutput->bitPaths->clear();
     }
   }
   bool hashResults = false;

@@ -264,8 +264,8 @@ void testAtomPairOutput() {
   AdditionalOutput additionalOutput;
 
   auto atomPairGenerator = AtomPair::getAtomPairGenerator<std::uint32_t>();
-  additionalOutput.allocateAtomToBits(mol->getNumAtoms());
-  additionalOutput.allocateAtomCounts(mol->getNumAtoms());
+  additionalOutput.allocateAtomToBits();
+  additionalOutput.allocateAtomCounts();
 
   auto fp = atomPairGenerator->getSparseCountFingerprint(*mol, nullptr, nullptr,
                                                          -1, &additionalOutput);

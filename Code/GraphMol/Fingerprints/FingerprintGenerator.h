@@ -45,20 +45,20 @@ struct RDKIT_FINGERPRINTS_EXPORT AdditionalOutput {
   // atom count for molecule
   atomCountsType *atomCounts = nullptr;
 
-  void allocateAtomToBits(unsigned int numAtoms) {
-    atomToBitsHolder.reset(new atomToBitsType(numAtoms));
+  void allocateAtomToBits() {
+    atomToBitsHolder.reset(new atomToBitsType);
     atomToBits = atomToBitsHolder.get();
   }
-  void allocateBitInfoMap(unsigned int) {
+  void allocateBitInfoMap() {
     bitInfoMapHolder.reset(new bitInfoMapType);
     bitInfoMap = bitInfoMapHolder.get();
   }
-  void allocateBitPaths(unsigned int) {
+  void allocateBitPaths() {
     bitPathsHolder.reset(new bitPathsType);
     bitPaths = bitPathsHolder.get();
   }
-  void allocateAtomCounts(unsigned int numAtoms) {
-    atomCountsHolder.reset(new atomCountsType(numAtoms));
+  void allocateAtomCounts() {
+    atomCountsHolder.reset(new atomCountsType);
     atomCounts = atomCountsHolder.get();
   }
 
