@@ -33,8 +33,8 @@ struct RDKIT_FINGERPRINTS_EXPORT AdditionalOutput {
   // numAtoms long
   atomToBitsType *atomToBits = nullptr;
 
-  // morgan fp
-  // maps bitId -> vector of (atomId, radius)
+  // bitId -> vector of (atomId, radius) for morgan
+  // bitId -> (atom1, atom2) for atom pairs
   bitInfoMapType *bitInfoMap = nullptr;
 
   // rdkit fp

@@ -115,9 +115,17 @@ OutputType AtomPairAtomEnv<OutputType>::getBitId(
   }
 
   if (additionalOutput) {
+    std::uint32_t tBitId = bitId;
+    if (fpSize) {
+      tBitId = tBitId % fpSize;
+    }
+    if (additionalOutput->bitInfoMap) {
+      (*additionalOutput->bitInfoMap)[tBitId].emplace_back(d_atomIdFirst,
+                                                           d_atomIdSecond);
+    }
     if (additionalOutput->atomToBits) {
-      additionalOutput->atomToBits->at(d_atomIdFirst).push_back(bitId);
-      additionalOutput->atomToBits->at(d_atomIdSecond).push_back(bitId);
+      additionalOutput->atomToBits->at(d_atomIdFirst).push_back(tBitId);
+      additionalOutput->atomToBits->at(d_atomIdSecond).push_back(tBitId);
     }
     if (additionalOutput->atomCounts) {
       additionalOutput->atomCounts->at(d_atomIdFirst)++;
