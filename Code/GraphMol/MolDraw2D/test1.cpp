@@ -2896,12 +2896,12 @@ void testGithub2931() {
                   std::string::npos);
 #ifdef RDK_BUILD_FREETYPE_SUPPORT
       TEST_ASSERT(text.find("<ellipse cx='242.185' cy='367.491'"
-                            " rx='10.4207' ry='10.7138'"
+                            " rx='10.4207' ry='10.7138' "
                             " style='fill:none;stroke:#00FF00;") !=
                   std::string::npos);
 #else
       TEST_ASSERT(text.find("<ellipse cx='242.228' cy='313.005'"
-                            " rx='10.3633' ry='10.3633'"
+                            " rx='10.3633' ry='10.3633' "
                             " style='fill:none;stroke:#00FF00;") !=
                   std::string::npos);
 #endif
@@ -2922,12 +2922,12 @@ void testGithub2931() {
                   std::string::npos);
 #ifdef RDK_BUILD_FREETYPE_SUPPORT
       TEST_ASSERT(text.find("<ellipse cx='242.154' cy='367.046'"
-                            " rx='10.4609' ry='10.4609'"
+                            " rx='10.4609' ry='10.4609' "
                             " style='fill:none;stroke:#00FF00;") !=
                   std::string::npos);
 #else
       TEST_ASSERT(text.find("<ellipse cx='242.209' cy='312.678'"
-                            " rx='10.3875' ry='10.3875'"
+                            " rx='10.3875' ry='10.3875' "
                             " style='fill:none;stroke:#00FF00;") !=
                   std::string::npos);
 #endif

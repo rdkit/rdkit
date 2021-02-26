@@ -16,7 +16,7 @@
 
 namespace RDKit {
 
-inline PyObject *convertMatches(MatchVectType &matches) {
+inline PyObject *convertMatches(const MatchVectType &matches) {
   PyObject *res = PyTuple_New(matches.size());
   MatchVectType::const_iterator i;
   for (i = matches.begin(); i != matches.end(); i++) {
