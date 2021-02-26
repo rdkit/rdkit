@@ -2829,6 +2829,7 @@ void testGitHub3517() {
   SDMolSupplier sdsup(fname);
   TEST_ASSERT(!sdsup.atEnd());
   size_t l = sdsup.length();
+  TEST_ASSERT(l > 0);
   TEST_ASSERT(!sdsup.atEnd());
 }
 

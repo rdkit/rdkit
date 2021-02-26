@@ -2319,6 +2319,7 @@ void testGithub3019() {
 
 namespace {
 void throwerror(unsigned int notUsedHere) {
+  RDUNUSED_PARAM(notUsedHere);
   throw ValueErrorException("embedder is abortable");
 }
 }  // namespace

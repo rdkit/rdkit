@@ -282,19 +282,19 @@ class streambuf : public std::basic_streambuf<char> {
     off_type n_written = (off_type)(farthest_pptr - pbase());
     off_type orig_n_written = n_written;
     const unsigned int STD_ASCII = 0x7F;
-    if (df_isTextMode && c > STD_ASCII) {
+    if (df_isTextMode && static_cast<unsigned int>(c) > STD_ASCII) {
       // we're somewhere in the middle of a utf8 block. If we
       // only write part of it we'll end up with an exception,
       // so push everything that could be utf8 into the next block
-      while (n_written > 0 &&
-             static_cast<unsigned int>(write_buffer[n_written - 1]) > STD_ASCII) {
+      while (n_written > 0 && static_cast<unsigned int>(
+                                  write_buffer[n_written - 1]) > STD_ASCII) {
         --n_written;
       }
     }
     bp::str chunk(pbase(), pbase() + n_written);
     py_write(chunk);
 
-    if ((!df_isTextMode || c <= STD_ASCII) &&
+    if ((!df_isTextMode || static_cast<unsigned int>(c) <= STD_ASCII) &&
         !traits_type::eq_int_type(c, traits_type::eof())) {
       py_write(traits_type::to_char_type(c));
       n_written++;
@@ -305,7 +305,7 @@ class streambuf : public std::basic_streambuf<char> {
     farthest_pptr = pptr();
     if (n_written) {
       pos_of_write_buffer_end_in_py_file += n_written;
-      if (df_isTextMode && c > STD_ASCII &&
+      if (df_isTextMode && static_cast<unsigned int>(c) > STD_ASCII &&
           !traits_type::eq_int_type(c, traits_type::eof())) {
         size_t n_to_copy = orig_n_written - n_written;
 

@@ -807,7 +807,7 @@ struct ZipBond {
         std::vector<Atom *> atoms;
         bool has_dummy = false;
         for (auto idx : bond->getStereoAtoms()) {
-          if (idx == dummy_atom->getIdx()) {
+          if (static_cast<unsigned>(idx) == dummy_atom->getIdx()) {
             atoms.push_back(new_atom);
             has_dummy = true;
           } else {
