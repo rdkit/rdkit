@@ -44,15 +44,28 @@ OutputType TopologicalTorsionAtomEnv<OutputType>::getBitId(
     FingerprintArguments<OutputType> *,  // arguments
     const std::vector<std::uint32_t> *,  // atomInvariants
     const std::vector<std::uint32_t> *,  // bondInvariants
-    const AdditionalOutput *,            // additionalOutput
-    const bool hashResults, const std::uint64_t fpSize) const {
+    const AdditionalOutput *additionalOutput,
+    const bool,  // hashResults
+    const std::uint64_t fpSize) const {
+  if (additionalOutput) {
+    auto bitId = fpSize ? (d_bitId % fpSize) : d_bitId;
+    if (additionalOutput->atomToBits || additionalOutput->atomCounts) {
+      for (auto aid : d_atomPath) {
+        if (additionalOutput->atomToBits) {
+          additionalOutput->atomToBits->at(aid).push_back(bitId);
+        }
+        if (additionalOutput->atomCounts) {
+          additionalOutput->atomCounts->at(aid)++;
+        }
+      }
+    }
+    if (additionalOutput->bitPaths) {
+      (*additionalOutput->bitPaths)[bitId].push_back(d_atomPath);
+    }
+  }
+
   return d_bitId;
 };
-
-template <typename OutputType>
-TopologicalTorsionAtomEnv<OutputType>::TopologicalTorsionAtomEnv(
-    OutputType bitId)
-    : d_bitId(bitId){};
 
 template <typename OutputType>
 std::vector<AtomEnvironment<OutputType> *>
@@ -68,8 +81,7 @@ TopologicalTorsionEnvGenerator<OutputType>::getEnvironments(
   auto *topologicalTorsionArguments =
       dynamic_cast<TopologicalTorsionArguments<OutputType> *>(arguments);
 
-  std::vector<AtomEnvironment<OutputType> *> result =
-      std::vector<AtomEnvironment<OutputType> *>();
+  std::vector<AtomEnvironment<OutputType> *> result;
 
   boost::dynamic_bitset<> *fromAtomsBV = nullptr;
   if (fromAtoms) {
@@ -136,8 +148,7 @@ TopologicalTorsionEnvGenerator<OutputType>::getEnvironments(
           code = getTopologicalTorsionCode(
               pathCodes, topologicalTorsionArguments->df_includeChirality);
         }
-
-        result.push_back(new TopologicalTorsionAtomEnv<OutputType>(code));
+        result.push_back(new TopologicalTorsionAtomEnv<OutputType>(code, path));
       }
     }
   }
