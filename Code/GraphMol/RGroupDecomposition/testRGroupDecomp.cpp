@@ -257,9 +257,7 @@ void testRGroupOnlyMatching() {
 const char *ringData[3] = {"c1cocc1", "c1c[nH]cc1", "c1cscc1"};
 
 const char *ringDataRes[3] = {
-    "Core:c1cc[o:1]c1",
-    "Core:c1cc[n:1]c1 R1:[H][*:1]",
-    "Core:c1cc[s:1]c1"};
+    "Core:c1cc[o:1]c1", "Core:c1cc[n:1]c1 R1:[H][*:1]", "Core:c1cc[s:1]c1"};
 
 void testRingMatching() {
   BOOST_LOG(rdInfoLog)
@@ -297,12 +295,9 @@ void testRingMatching() {
 const char *ringData2[3] = {"c1cocc1CCl", "c1c[nH]cc1CI", "c1cscc1CF"};
 
 const char *ringDataRes2[3] = {
-    "Core:C([*:1]1[*:3][*:4][*:5][*:6]1)[*:2] R1:[c:1] R2:Cl[*:2] R3:[H][c:3] "
-    "R4:[H][c:4] R5:[o:5] R6:[H][c:6]",
-    "Core:C([*:1]1[*:3][*:4][*:5][*:6]1)[*:2] R1:[c:1] R2:I[*:2] R3:[H][c:3] "
-    "R4:[H][c:4] R5:[H][n:5] R6:[H][c:6]",
-    "Core:C([*:1]1[*:3][*:4][*:5][*:6]1)[*:2] R1:[c:1] R2:F[*:2] R3:[H][c:3] "
-    "R4:[H][c:4] R5:[s:5] R6:[H][c:6]"};
+    "Core:c1c[c:1](C[*:2])co1[*:3] R2:Cl[*:2].[H][*:2].[H][*:2]",
+    "Core:c1c[c:1](C[*:2])cn1[*:3] R2:I[*:2].[H][*:2].[H][*:2] R3:[H][*:3]",
+    "Core:c1c[c:1](C[*:2])cs1[*:3] R2:F[*:2].[H][*:2].[H][*:2]"};
 
 void testRingMatching2() {
   BOOST_LOG(rdInfoLog)
@@ -349,7 +344,8 @@ void testRingMatching3() {
   RWMol *core = SmartsToMol("*1***[*:1]1");
   // RWMol *core = SmartsToMol("*1****1");
   RGroupDecompositionParameters params;
-  // This test is currently failing using the default scoring method (the halogens are not all in the same group)
+  // This test is currently failing using the default scoring method (the
+  // halogens are not all in the same group)
   params.scoreMethod = FingerprintVariance;
 
   RGroupDecomposition decomp(*core, params);
@@ -1652,10 +1648,10 @@ $$$$
 
   std::vector<std::string> expectedRows{
       "Core:O=C(c1cncn1[*:2])[*:1] R1:CN[*:1] R2:CC[*:2]",
-      "Core:*1:*c2*cc([*:2])*c2nc1[*:1] R1:F[*:1] R2:Br[*:2]"};
+      "Core:c1cc2ccc([*:2])nc2nc1[*:1] R1:F[*:1] R2:Br[*:2]"};
 
   std::vector<std::vector<std::string>> expectedItems{
-      {"O=C(c1cncn1[*:2])[*:1]", "*1:*c2*cc([*:2])*c2nc1[*:1]"},
+      {"O=C(c1cncn1[*:2])[*:1]", "c1cc2ccc([*:2])nc2nc1[*:1]"},
       {"CN[*:1]", "F[*:1]"},
       {"CC[*:2]", "Br[*:2]"},
   };
@@ -1739,20 +1735,13 @@ $$$$
   }
   // test pre-labelled with dummy atom labels, autodetect
 
-  expectedRows = std::vector<std::string>{
-      "Core:O=C(c1cncn1[*:2])[*:1] R1:CN[*:1] R2:CC[*:2]",
-      "Core:c1c([*:2])[*:3]c2nc([*:6])[*:5]:[*:4]c2[*:1]1 R1:[H][c:1] "
-      "R2:Br[*:2] R3:[n:3] R4:[H][c:4] R5:[H][c:5] R6:F[*:6]"};
-  expectedItems = std::vector<std::vector<std::string>>{
-      {"O=C(c1cncn1[*:2])[*:1]",
-       "c1c([*:2])[*:3]c2nc([*:6])[*:5]:[*:4]c2[*:1]1"},
-      {"CN[*:1]", "[H][c:1]"},
-      {"CC[*:2]", "Br[*:2]"},
-      {"", "[n:3]"},
-      {"", "[H][c:4]"},
-      {"", "[H][c:5]"},
-      {"", "F[*:6]"}};
-  expectedLabels = {"Core", "R1", "R2", "R3", "R4", "R5", "R6"};
+  expectedRows = {"Core:O=C(c1cncn1[*:2])[*:1] R1:CN[*:1] R2:CC[*:2]",
+                  "Core:c1cc2ccc([*:1])nc2nc1[*:2] R1:Br[*:1] R2:F[*:2]"};
+
+  expectedItems = {{"O=C(c1cncn1[*:2])[*:1]", "c1cc2ccc([*:1])nc2nc1[*:2]"},
+                   {"CN[*:1]", "Br[*:1]"},
+                   {"CC[*:2]", "F[*:2]"}};
+
   params.labels = AutoDetect;
   params.alignment = MCS;
   MultiCoreRGD::test(cores, params, expectedLabels, expectedRows,
@@ -1816,8 +1805,15 @@ $$$$
     TEST_ASSERT(groups.size() == 3);
     TEST_ASSERT(groups.find("R1") != groups.end());
     TEST_ASSERT(groups.find("R2") != groups.end());
-    TEST_ASSERT(MolToSmiles(*groups.at("R1")[0]) == "C[*:1]");
+    TEST_ASSERT(MolToSmiles(*groups.at("R1")[0]) == "C[*:1].[H][*:1]");
     TEST_ASSERT(MolToSmiles(*groups.at("R2")[0]) == "C1CC([*:2])C1");
+
+    auto rows = decomp.getRGroupsAsRows();
+    TEST_ASSERT(rows.size() == 1)
+    RGroupRows::const_iterator it = rows.begin();
+    std::string expected(
+        "Core:c1cc(N[*:1])cc(O[*:2])c1 R1:C[*:1].[H][*:1] R2:C1CC([*:2])C1");
+    CHECK_RGROUP(it, expected);
   }
 }
 
@@ -2036,10 +2032,10 @@ M  END
   auto rows = decomp.getRGroupsAsRows();
   TEST_ASSERT(rows.size() == 1)
   RGroupRows::const_iterator it = rows.begin();
-  CHECK_RGROUP(it,
-               "Core:O=C([*:1])[*:4]C1~C~C~[*:5]([*:3])~[*:6]~C~1[*:2] "
-               "R1:Clc1cc([*:1])[nH]c1Cl R3:O=[N+]([O-])c1cccnc1[*:3] "
-               "R4:[H][N:4] R5:[N:5] R6:[H][C:6].[H][C:6]");
+  std::string expected(
+      "Core:O=C(NC1CCN([*:3])CC1[*:2])[*:1] R1:Clc1cc([*:1])[nH]c1Cl "
+      "R3:O=[N+]([O-])c1cccnc1[*:3]");
+  CHECK_RGROUP(it, expected);
 
   params.onlyMatchAtRGroups = true;
   RGroupDecomposition decomp2(*core, params);
@@ -2050,9 +2046,7 @@ M  END
   rows = decomp2.getRGroupsAsRows();
   TEST_ASSERT(rows.size() == 1)
   it = rows.begin();
-  CHECK_RGROUP(it,
-               "Core:O=C(*C1~C~C~*([*:3])~*~C~1[*:2])[*:1] "
-               "R1:Clc1cc([*:1])[nH]c1Cl R3:O=[N+]([O-])c1cccnc1[*:3]");
+  CHECK_RGROUP(it, expected);
 }
 
 void testNoAlignmentAndSymmetry() {

@@ -15,6 +15,41 @@
 #include <GraphMol/FMCS/FMCS.h>
 
 namespace RDKit {
+
+namespace {
+
+bool isSingleUserDummy(Atom *atom) {
+  return  atom->getAtomicNum() == 0 && atom->getDegree() == 1 &&
+         atom->hasProp(RLABEL) && atom->hasProp(RLABEL_TYPE) &&
+         static_cast<Labelling>(atom->getProp<int>(RLABEL_TYPE)) !=
+             Labelling::INDEX_LABELS;
+}
+
+Atom *firstNeighbor(ROMol &mol, Atom *atom) {
+  auto otherAtomIdx = *mol.getAtomNeighbors(atom).first;
+  return mol.getAtomWithIdx(otherAtomIdx);
+}
+
+bool canMoveDummy(ROMol &mol, Atom *atom) {
+  if (!isSingleUserDummy(atom)) return false;
+  auto otherAtom = firstNeighbor(mol, atom);
+  if (otherAtom->hasProp(RLABEL_TYPE) &&
+      static_cast<Labelling>(otherAtom->getProp<int>(RLABEL_TYPE)) !=
+          Labelling::INDEX_LABELS)
+    return false;
+  RWMol::ADJ_ITER nbrIdx, endNbrs;
+  boost::tie(nbrIdx, endNbrs) = mol.getAtomNeighbors(otherAtom);
+  while (nbrIdx != endNbrs) {
+    if (!(*nbrIdx == atom->getIdx())) {
+      if (isSingleUserDummy(mol.getAtomWithIdx(*nbrIdx))) return false;
+    }
+    nbrIdx++;
+  }
+  return true;
+}
+
+}  // namespace
+
 unsigned int RGroupDecompositionParameters::autoGetLabels(const RWMol &core) {
   unsigned int autoLabels = 0;
   if (!onlyMatchAtRGroups) {
@@ -202,7 +237,8 @@ bool RGroupDecompositionParameters::prepareCore(RWMol &core,
       }
     }
 
-    if (!found && (autoLabels & DummyAtomLabels) && atom->getAtomicNum() == 0 && atom->getDegree() == 1) {
+    if (!found && (autoLabels & DummyAtomLabels) && atom->getAtomicNum() == 0 &&
+        atom->getDegree() == 1) {
       const bool forceRelabellingWithDummies = true;
       int defaultDummyStartLabel = maxLabel;
       if (setLabel(atom, defaultDummyStartLabel, foundLabels, maxLabel,
@@ -243,26 +279,20 @@ bool RGroupDecompositionParameters::prepareCore(RWMol &core,
   // Move user RLABELS on single connected dummy to adjacent atom
   std::set<Atom *> atomsToRemove;
   for (auto atom : core.atoms()) {
-    if (atom->getAtomicNum() == 0 && atom->getDegree() == 1 &&
-        atom->hasProp(RLABEL) &&
-        atom->hasProp(RLABEL_TYPE) &&
-        static_cast<Labelling>(atom->getProp<int>(RLABEL_TYPE)) !=
-            Labelling::INDEX_LABELS) {
-      auto neighborIdx = *core.getAtomNeighbors(atom).first;
-      auto neighbor = core.getAtomWithIdx(neighborIdx);
-      if (!neighbor->hasProp(RLABEL_TYPE) ||
-          static_cast<Labelling>(neighbor->getProp<int>(RLABEL_TYPE)) == Labelling::INDEX_LABELS) {
-          neighbor->setProp<int>(RLABEL, atom->getProp<int>(RLABEL));
-          neighbor->setProp<int>(RLABEL_TYPE, atom->getProp<int>(RLABEL_TYPE));
-          atomsToRemove.insert(atom);
-      }
+    if (canMoveDummy(core, atom)) {
+      auto neighbor = firstNeighbor(core, atom);
+      neighbor->setProp<int>(RLABEL, atom->getProp<int>(RLABEL));
+      neighbor->setProp<int>(RLABEL_TYPE, atom->getProp<int>(RLABEL_TYPE));
+      neighbor->setProp<bool>(RLABEL_MOVED, true);
+      atomsToRemove.insert(atom);
     }
   }
+
   // then delete those dummies
   if (atomsToRemove.size() > 0) {
-    for (auto atom: atomsToRemove) {
-      // Perhaps here we should save any dummy coordinates, since the dummy atoms
-      // will be added back in when results are returned to the user.
+    for (auto atom : atomsToRemove) {
+      // Perhaps here we should save any dummy coordinates, since the dummy
+      // atoms will be added back in when results are returned to the user.
       core.removeAtom(atom);
     }
     core.updatePropertyCache(false);

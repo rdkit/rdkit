@@ -54,6 +54,7 @@ namespace RDKit {
 const std::string RLABEL = "tempRlabel";
 const std::string RLABEL_TYPE = "tempRlabelType";
 const std::string RLABEL_CORE_INDEX = "rLabelCoreIndex";
+const std::string RLABEL_MOVED = "movedRlabel";
 const std::string SIDECHAIN_RLABELS = "sideChainRlabels";
 const std::string done = "RLABEL_PROCESSED";
 const std::string CORE = "Core";
