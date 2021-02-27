@@ -190,7 +190,7 @@ C1CCO[C@@](S)(P)1
         rg.Process()
         self.assertEqual(rg.GetRGroupsAsColumns(asSmiles=True), {
             'Core': ['C(N(O[*:6])[*:5])[*:1]'],
-            'R1': ['Cl[*:1]'],
+            'R1': ['Cl[*:1].[H][*:1].[H][*:1]'],
             'R5': ['N[*:5]'],
             'R6': ['O[*:6]']
         })
@@ -204,7 +204,7 @@ C1CCO[C@@](S)(P)1
         rg.Process()
         self.assertEqual(rg.GetRGroupsAsColumns(asSmiles=True), {
             'Core': ['C(N(O[*:6])[*:5])[*:4]'],
-            'R4': ['Cl[*:4]'],
+            'R4': ['Cl[*:4].[H][*:4].[H][*:4]'],
             'R5': ['N[*:5]'],
             'R6': ['O[*:6]']
         })
@@ -404,7 +404,7 @@ Cn1cnc2cc(Oc3cc(N4CCN(Cc5ccccc5-c5ccc(Cl)cc5)CC4)ccc3C(=O)NS(=O)(=O)c3ccc(NCCCN4
         sma = Chem.MolFromSmarts(core1)
         m = Chem.MolFromSmiles("c1ccccc1C(=O)Cl")
         self.assertEqual(RGroupDecompose(sma, [m], asSmiles=True),
-                         ([{'Core': 'O=[*:1]Cl', 'R1': 'c1ccc([C:1])cc1'}], []))
+                         ([{'Core': 'O=C(Cl)[*:1]', 'R1': 'c1ccc([*:1])cc1'}], []))
 
     def test_multicore_prelabelled(self):
         def multicorergd_test(cores, params, expected_rows, expected_items):
@@ -489,13 +489,14 @@ $$$$
         cores = [c for c in sdsup]
 
         expected_rows = [
-            {"Core": "O=C(c1cncn1[*:2])[*:1]", "R1": "CN[*:1]", "R2": "CC[*:2]"},
-            {"Core": "*1:*c2*cc([*:2])*c2nc1[*:1]", "R1": "F[*:1]", "R2": "Br[*:2]"}
+            {'Core': 'O=C(c1cncn1[*:2])[*:1]', 'R1': 'CN[*:1]', 'R2': 'CC[*:2]'},
+            {'Core': 'c1cc2ccc([*:2])nc2nc1[*:1]', 'R1': 'F[*:1]', 'R2': 'Br[*:2]'}
         ]
+
         expected_items = {
-            "Core": ["O=C(c1cncn1[*:2])[*:1]", "*1:*c2*cc([*:2])*c2nc1[*:1]"],
-            "R1": ["CN[*:1]", "F[*:1]"],
-            "R2": ["CC[*:2]", "Br[*:2]"]
+            'Core': ['O=C(c1cncn1[*:2])[*:1]', 'c1cc2ccc([*:2])nc2nc1[*:1]'],
+            'R1': ['CN[*:1]', 'F[*:1]'],
+            'R2': ['CC[*:2]', 'Br[*:2]']
         }
 
         params = RGroupDecompositionParameters()
@@ -565,21 +566,14 @@ $$$$
                 if a.GetAtomMapNum():
                     a.SetAtomMapNum(0)
         # test pre-labelled with dummy atom labels, autodetect
-        expected_rows = [
-            {"Core": "O=C(c1cncn1[*:2])[*:1]", "R1": "CN[*:1]", "R2": "CC[*:2]"},
-            {"Core": "c1c([*:2])[*:3]c2nc([*:6])[*:5]:[*:4]c2[*:1]1", "R1": "[H][c:1]",
-             "R2": "Br[*:2]", "R3": "[n:3]", "R4": "[H][c:4]", "R5": "[H][c:5]",
-             "R6": "F[*:6]"}
-        ]
-        expected_items = {
-            "Core": ["O=C(c1cncn1[*:2])[*:1]",
-                     "c1c([*:2])[*:3]c2nc([*:6])[*:5]:[*:4]c2[*:1]1"],
-            "R1": ["CN[*:1]", "[H][c:1]"],
-            "R2": ["CC[*:2]", "Br[*:2]"],
-            "R3": ["", "[n:3]"],
-            "R4": ["", "[H][c:4]"],
-            "R5": ["", "[H][c:5]"],
-            "R6": ["", "F[*:6]"]}
+
+        expected_rows = [{'Core': 'O=C(c1cncn1[*:2])[*:1]', 'R1': 'CN[*:1]', 'R2': 'CC[*:2]'},
+                         {'Core': 'c1cc2ccc([*:1])nc2nc1[*:2]', 'R1': 'Br[*:1]', 'R2': 'F[*:2]'}]
+
+        expected_items = {'Core': ['O=C(c1cncn1[*:2])[*:1]', 'c1cc2ccc([*:1])nc2nc1[*:2]'],
+                          'R1': ['CN[*:1]', 'Br[*:1]'],
+                          'R2': ['CC[*:2]', 'F[*:2]']}
+
         params.labels = RGroupLabels.AutoDetect
         params.alignment = RGroupCoreAlignment.MCS
         multicorergd_test(cores, params, expected_rows,
@@ -591,6 +585,7 @@ $$$$
         params.alignment = RGroupCoreAlignment.MCS
         multicorergd_test(cores, params, expected_rows,
                           expected_items)
+
 
 if __name__ == '__main__':
     rdBase.DisableLog("rdApp.debug")

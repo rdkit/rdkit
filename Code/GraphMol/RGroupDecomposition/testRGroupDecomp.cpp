@@ -2080,6 +2080,32 @@ void testNoAlignmentAndSymmetry() {
   }
 }
 
+void testSingleAtomBridge() {
+  auto core = "C1([*:1])C([*:2])CC1"_smiles;
+  RGroupDecompositionParameters params;
+  RGroupDecomposition decomp(*core, params);
+  auto mol = "C1CC2NC12"_smiles;
+  int res = decomp.add(*mol);
+  TEST_ASSERT(res == 0);
+  TEST_ASSERT(decomp.process());
+  auto rows = decomp.getRGroupsAsRows();
+  TEST_ASSERT(rows.size() == 1)
+  const std::string expected(
+      "Core:C1CC([*:2])C1[*:1] R1:N([*:1])[*:2].[H][*:1] R2:N([*:1])[*:2].[H][*:2]");
+  RGroupRows::const_iterator it = rows.begin();
+  CHECK_RGROUP(it, expected);
+
+  core = "C1([*:1])CCC1"_smiles;
+  RGroupDecomposition decomp2(*core, params);
+  res = decomp2.add(*mol);
+  TEST_ASSERT(res == 0);
+  TEST_ASSERT(decomp2.process());
+  rows = decomp2.getRGroupsAsRows();
+  TEST_ASSERT(rows.size() == 1)
+  it = rows.begin();
+  CHECK_RGROUP(it, expected);
+}
+
 int main() {
   RDLog::InitLogs();
   boost::logging::disable_logs("rdApp.debug");
@@ -2113,6 +2139,7 @@ int main() {
   testGaBatch();
 
   testUnprocessedMapping();
+  testSingleAtomBridge();
 #endif
   testSymmetryPerformance();
   testScorePermutations();
