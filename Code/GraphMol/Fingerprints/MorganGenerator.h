@@ -189,7 +189,7 @@ class RDKIT_FINGERPRINTS_EXPORT MorganEnvGenerator
 /**
  \brief Get a fingerprint generator for Morgan fingerprint
 
- \param OutputType determines the size of the bitIds and the result, can be 32
+ \tparam OutputType determines the size of the bitIds and the result, can be 32
  or 64 bit unsigned integer
 
  \param radius the number of iterations to grow the fingerprint
@@ -224,6 +224,12 @@ class RDKIT_FINGERPRINTS_EXPORT MorganEnvGenerator
  fingerprint generator
 
  \return FingerprintGenerator<OutputType>* that generates Morgan fingerprints
+
+This generator supports the following \c AdditionalOutput types:
+  - \c atomToBits : which bits each atom is the central atom for
+  - \c atomCounts : how many bits each atom sets
+  - \c bitInfoMap : map from bitId to (atomId, radius) pairs
+
  */
 template <typename OutputType>
 RDKIT_FINGERPRINTS_EXPORT FingerprintGenerator<OutputType> *getMorganGenerator(

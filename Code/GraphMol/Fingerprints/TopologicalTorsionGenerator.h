@@ -106,6 +106,12 @@ class RDKIT_FINGERPRINTS_EXPORT TopologicalTorsionEnvGenerator
 
  /return FingerprintGenerator<OutputType>* that generates topological-torsion
  fingerprints
+
+ This generator supports the following \c AdditionalOutput types:
+  - \c atomToBits : which bits each atom is involved in
+  - \c atomCounts : how many bits each atom sets
+  - \c bitPaths : map from bitId to vectors of atom indices
+
  */
 template <typename OutputType>
 RDKIT_FINGERPRINTS_EXPORT FingerprintGenerator<OutputType> *

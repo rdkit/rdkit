@@ -70,6 +70,10 @@ void exportTopologicalTorsion() {
       "sparse versions\n"
       "    - atomInvariantsGenerator: atom invariants to be used during "
       "fingerprint generation\n\n"
+      "This generator supports the following AdditionalOutput types:\n"
+      "    - atomToBits: which bits each atom is involved in\n"
+      "    - atomCounts: how many bits each atom sets\n"
+      "    - bitPaths: map from bitId to vectors of atom indices\n\n"
       "  RETURNS: FingerprintGenerator\n\n",
       python::return_value_policy<python::manage_new_object>());
 
