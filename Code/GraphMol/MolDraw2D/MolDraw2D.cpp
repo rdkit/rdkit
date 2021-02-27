@@ -2999,6 +2999,10 @@ void drawNormalBond(MolDraw2D &d2d, const Bond &bond, bool highlight_bond,
       swap(col1, col2);
       inverted = true;
     }
+    if(d2d.drawOptions().blackWedgeBonds) {
+      col1 = d2d.drawOptions().symbolColour;
+      col2 = d2d.drawOptions().symbolColour;
+    }
     // deliberately not scaling highlighted bond width
     if (Bond::BEGINWEDGE == bond.getBondDir()) {
       drawWedgedBond(d2d, bond, inverted, at1_cds, at2_cds, false, col1, col2);
