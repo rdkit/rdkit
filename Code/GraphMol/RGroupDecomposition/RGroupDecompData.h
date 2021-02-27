@@ -290,10 +290,9 @@ struct RGroupDecompData {
         rlabel = mapping->second;
       }
 
-      if ((params.queryMatchesOnCore && atom->getAtomicNum() == 0 &&
-           !isAnyAtomWithMultipleNeighborsOrNotUserRLabel(*atom)) ||
-          (!params.queryMatchesOnCore &&
-           atom->getAtomicNum() == 0)) {  // add to dummy
+      if (atom->getAtomicNum() == 0 &&
+          !isAnyAtomWithMultipleNeighborsOrNotUserRLabel(
+              *atom)) {  // add to dummy
         setRlabel(atom, rlabel);
       } else {
         auto *newAt = new Atom(0);
@@ -361,9 +360,7 @@ struct RGroupDecompData {
           if (atom->getAtomicNum() == 0) {
             setRlabel(atom, label->second);
           } else if (atom->hasProp(RLABEL_CORE_INDEX)) {
-            if (!params.queryMatchesOnSideChain) {
-              atom->setAtomicNum(0);
-            }
+            atom->setAtomicNum(0);
             setRlabel(atom, label->second);
           } else {
             auto *newAt = new Atom(0);
@@ -403,7 +400,7 @@ struct RGroupDecompData {
          ++atIt) {
       Atom *atom = *atIt;
       if (atom->hasProp(RLABEL_CORE_INDEX)) {
-        // don't need to set IsArormatic on atom - that seems to have been saved
+        // don't need to set IsAromatic on atom - that seems to have been saved
         atom->setAtomicNum(
             rLabelCoreIndexToAtomicWt[atom->getProp<int>(RLABEL_CORE_INDEX)]);
         atom->setNoImplicit(true);

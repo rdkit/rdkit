@@ -2081,6 +2081,10 @@ void testNoAlignmentAndSymmetry() {
 }
 
 void testSingleAtomBridge() {
+  BOOST_LOG(rdInfoLog)
+    << "********************************************************\n";
+  BOOST_LOG(rdInfoLog) << "test single atom bridge between 2 user r groups" << std::endl;
+
   auto core = "C1([*:1])C([*:2])CC1"_smiles;
   RGroupDecompositionParameters params;
   RGroupDecomposition decomp(*core, params);

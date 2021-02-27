@@ -222,17 +222,6 @@ int RGroupDecomposition::add(const ROMol &inmol) {
 
               data->labels.insert(rlabel);  // keep track of all labels used
               attachments.push_back(rlabel);
-              if (params().queryMatchesOnSideChain &&
-                  coreAtom->hasProp(RLABEL) &&
-                  isAnyAtomWithMultipleNeighborsOrNotUserRLabel(*coreAtom)) {
-                auto matchedCoreAtom = coreCopy->getAtomWithIdx(index);
-                if (matchedCoreAtom->getAtomicNum()) {
-                  at->setAtomicNum(matchedCoreAtom->getAtomicNum());
-                  at->setIsAromatic(matchedCoreAtom->getIsAromatic());
-                  at->setNoImplicit(true);
-                  at->setProp<int>(RLABEL_CORE_INDEX, index);
-                }
-              }
             }
           }
         }
@@ -289,36 +278,6 @@ int RGroupDecomposition::add(const ROMol &inmol) {
                     RCore(newCore, data->params.onlyMatchAtRGroups);
                 return add(inmol);
               }
-            }
-          }
-        }
-      }
-
-      if (params().queryMatchesOnSideChain) {
-        // Find any missing single atom matches to any atom core atoms with
-        // RLabels
-        for (const auto &coreAtom : rcore->core->atoms()) {
-          auto coreIndex = coreAtom->getIdx();
-          if (coreAtom->hasProp(RLABEL) &&
-              isAnyAtomWithMultipleNeighborsOrNotUserRLabel(*coreAtom) &&
-              coreAtomAnyMatched.find(coreIndex) == coreAtomAnyMatched.end()) {
-            auto matchingAtom = coreCopy->getAtomWithIdx(coreIndex);
-            if (matchingAtom->getAtomicNum() > 0) {
-              auto newMol = boost::make_shared<RWMol>();
-              auto newAtom = new Atom(matchingAtom->getAtomicNum());
-              int rLabel = coreAtom->getProp<int>(RLABEL);
-              std::vector<int> rLabels{rLabel};
-              newAtom->setIsAromatic(matchingAtom->getIsAromatic());
-              newAtom->setProp(SIDECHAIN_RLABELS, rLabels);
-              newAtom->setProp<int>(RLABEL_CORE_INDEX, coreIndex);
-              newMol->addAtom(newAtom, false, true);
-              data->labels.insert(rLabel);
-              ADD_MATCH(match, rLabel);
-              match[rLabel]->add(newMol, rLabels);
-#ifdef VERBOSE
-              std::cerr << "Fragment " << match.size() << " "
-                        << MolToSmiles(*newMol) << std::endl;
-#endif
             }
           }
         }
@@ -389,9 +348,8 @@ std::vector<std::string> RGroupDecomposition::getRGroupLabels() const {
 ROMOL_SPTR RGroupDecomposition::outputCoreMolecule(
     const RGroupMatch &match) const {
   auto &core = data->cores[match.core_idx];
-  return params().queryMatchesOnCore && match.matchedCore
-             ? core.coreWithMatches(*match.matchedCore)
-             : core.labelledCore;
+  return match.matchedCore ? core.coreWithMatches(*match.matchedCore)
+                           : core.labelledCore;
 }
 
 RGroupRows RGroupDecomposition::getRGroupsAsRows() const {
