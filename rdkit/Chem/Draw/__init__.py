@@ -9,7 +9,7 @@
 #
 import os
 import warnings
-import importlib.util
+from importlib.util import find_spec
 
 from rdkit.Chem.Draw import rdMolDraw2D
 from rdkit.Chem.Draw.MolDrawing import MolDrawing, DrawingOptions
@@ -149,7 +149,14 @@ def _legacyMolToImage(mol, size, kekulize, wedgeBonds, fitImage, options, canvas
     return img
 
 
-if importlib.util.find_spec('rdkit.Chem.Draw.rdMolDraw2DQt') and importlib.util.find_spec('PyQt5.sip') or importlib.util.find_spec('sip'):
+def _sip_available():
+  if find_spec('PyQt5') and find_spec('PyQt5.sip'):
+    return True
+  elif find_spec('sip'):
+    return True
+  return False
+
+if find_spec('rdkit.Chem.Draw.rdMolDraw2DQt') and _sip_available():
   def MolDraw2DFromQPainter(qpainter, width=-1, height=-1, panelWidth=-1, panelHeight=-1):
     from PyQt5.Qt import QPainter
     try:
