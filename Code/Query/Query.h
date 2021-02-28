@@ -42,7 +42,7 @@ class Int2Type {
 */
 template <class MatchFuncArgType, class DataFuncArgType = MatchFuncArgType,
           bool needsConversion = false>
-class Query {
+class RDKIT_QUERY_EXPORT Query {
  public:
   typedef std::shared_ptr<
       Query<MatchFuncArgType, DataFuncArgType, needsConversion>>

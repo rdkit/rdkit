@@ -9,7 +9,6 @@
 //
 
 #include <iostream>
-#include <boost/foreach.hpp>
 
 // our stuff
 #include <RDGeneral/Invariant.h>
@@ -120,13 +119,13 @@ void ROMol::initFromOther(const ROMol &other, bool quickCopy, int confId) {
     d_props = other.d_props;
 
     // Bookmarks should be copied as well:
-    BOOST_FOREACH (ATOM_BOOKMARK_MAP::value_type abmI, other.d_atomBookmarks) {
-      BOOST_FOREACH (const Atom *aptr, abmI.second) {
+    for (auto abmI : other.d_atomBookmarks) {
+      for (const auto *aptr : abmI.second) {
         setAtomBookmark(getAtomWithIdx(aptr->getIdx()), abmI.first);
       }
     }
-    BOOST_FOREACH (BOND_BOOKMARK_MAP::value_type bbmI, other.d_bondBookmarks) {
-      BOOST_FOREACH (const Bond *bptr, bbmI.second) {
+    for (auto bbmI : other.d_bondBookmarks) {
+      for (const auto *bptr : bbmI.second) {
         setBondBookmark(getBondWithIdx(bptr->getIdx()), bbmI.first);
       }
     }
@@ -617,7 +616,7 @@ unsigned int ROMol::addConformer(Conformer *conf, bool assignId) {
                "Number of atom mismatch");
   if (assignId) {
     int maxId = -1;
-    BOOST_FOREACH (CONFORMER_SPTR cptr, d_confs) {
+    for (auto cptr : d_confs) {
       maxId = std::max((int)(cptr->getId()), maxId);
     }
     maxId++;

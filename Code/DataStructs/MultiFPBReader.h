@@ -22,7 +22,6 @@
 #include <DataStructs/ExplicitBitVect.h>
 #include <DataStructs/FPBReader.h>
 #include <boost/tuple/tuple.hpp>
-#include <boost/foreach.hpp>
 
 namespace RDKit {
 
@@ -79,7 +78,7 @@ class RDKIT_DATASTRUCTS_EXPORT MultiFPBReader {
   ~MultiFPBReader() {
     df_init = false;
     if (df_takeOwnership) {
-      BOOST_FOREACH (FPBReader *rdr, d_readers) { delete rdr; };
+      for (auto& rdr : d_readers) { delete rdr; };
       d_readers.clear();
     }
   };

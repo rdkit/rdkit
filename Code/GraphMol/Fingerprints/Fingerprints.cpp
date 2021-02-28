@@ -252,7 +252,7 @@ ExplicitBitVect *RDKFingerprintMol(
   boost::dynamic_bitset<> atomsInPath(mol.getNumAtoms());
   for (INT_PATH_LIST_MAP_CI paths = allPaths.begin(); paths != allPaths.end();
        paths++) {
-    BOOST_FOREACH (const PATH_TYPE &path, paths->second) {
+    for (const auto &path : paths->second) {
 #ifdef REPORT_FP_STATS
       std::vector<int> atomsToUse;
 #endif
@@ -427,7 +427,7 @@ ExplicitBitVect *RDKFingerprintMol(
     for (unsigned int i = 0; i < fpSize; ++i) {
       if ((*res)[i] && (bitSmiles[i].size() > 1)) {
         std::cerr << i << "\t" << bitSmiles[i].size() << std::endl;
-        BOOST_FOREACH (std::string smi, bitSmiles[i]) {
+        for (const auto &smi : bitSmiles[i]) {
           std::cerr << "   " << smi << std::endl;
         }
       }
@@ -499,7 +499,7 @@ ExplicitBitVect *LayeredFingerprintMol(
       allPaths = findAllPathsOfLengthsMtoN(mol, minPath, maxPath, false);
     }
   } else {
-    BOOST_FOREACH (std::uint32_t aidx, *fromAtoms) {
+    for (auto aidx : *fromAtoms) {
       INT_PATH_LIST_MAP tPaths;
       if (branchedPaths) {
         tPaths =
@@ -753,7 +753,7 @@ SparseIntVect<boost::uint64_t> *getUnfoldedRDKFingerprintMol(
   boost::dynamic_bitset<> atomsInPath(mol.getNumAtoms());
   for (INT_PATH_LIST_MAP_CI paths = allPaths.begin(); paths != allPaths.end();
        paths++) {
-    BOOST_FOREACH (const PATH_TYPE &path, paths->second) {
+    for (const auto &path : paths->second) {
       // the bond hashes of the path
       std::vector<unsigned int> bondHashes = RDKitFPUtils::generateBondHashes(
           mol, atomsInPath, bondCache, isQueryBond, path, useBondOrder,

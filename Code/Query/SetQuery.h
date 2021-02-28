@@ -22,7 +22,7 @@ namespace Queries {
 //!
 template <class MatchFuncArgType, class DataFuncArgType = MatchFuncArgType,
           bool needsConversion = false>
-class SetQuery
+class RDKIT_QUERY_EXPORT SetQuery
     : public Query<MatchFuncArgType, DataFuncArgType, needsConversion> {
  public:
   typedef std::set<MatchFuncArgType> CONTAINER_TYPE;

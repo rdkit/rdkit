@@ -16,7 +16,7 @@
 
 namespace RDKit {
 //! used by various file parsing classes to indicate a parse error
-class FileParseException : public std::runtime_error {
+class RDKIT_RDGENERAL_EXPORT FileParseException : public std::runtime_error {
  public:
   //! construct with an error message
   explicit FileParseException(const char *msg)

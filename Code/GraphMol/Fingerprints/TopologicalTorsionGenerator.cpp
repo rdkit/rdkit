@@ -24,7 +24,7 @@ TopologicalTorsionArguments<OutputType>::TopologicalTorsionArguments(
     const std::uint32_t fpSize)
     : FingerprintArguments<OutputType>(countSimulation, countBounds, fpSize),
       df_includeChirality(includeChirality),
-      d_torsionAtomCount(torsionAtomCount) {};
+      d_torsionAtomCount(torsionAtomCount){};
 
 template <typename OutputType>
 OutputType TopologicalTorsionArguments<OutputType>::getResultSize() const {
@@ -41,11 +41,11 @@ std::string TopologicalTorsionArguments<OutputType>::infoString() const {
 };
 template <typename OutputType>
 OutputType TopologicalTorsionAtomEnv<OutputType>::getBitId(
-    FingerprintArguments<OutputType> *, // arguments
-    const std::vector<std::uint32_t> *, // atomInvariants
-    const std::vector<std::uint32_t> *, // bondInvariants
-    const AdditionalOutput *, // additionalOutput
-    const bool // hashResults
+    FingerprintArguments<OutputType> *,  // arguments
+    const std::vector<std::uint32_t> *,  // atomInvariants
+    const std::vector<std::uint32_t> *,  // bondInvariants
+    const AdditionalOutput *,            // additionalOutput
+    const bool                           // hashResults
 ) const {
   return d_bitId;
 };
@@ -61,10 +61,10 @@ TopologicalTorsionEnvGenerator<OutputType>::getEnvironments(
     const ROMol &mol, FingerprintArguments<OutputType> *arguments,
     const std::vector<std::uint32_t> *fromAtoms,
     const std::vector<std::uint32_t> *ignoreAtoms,
-    const int, // confId
-    const AdditionalOutput *, // additionalOutput
+    const int,                 // confId
+    const AdditionalOutput *,  // additionalOutput
     const std::vector<std::uint32_t> *atomInvariants,
-    const std::vector<std::uint32_t> *, // bondInvariants
+    const std::vector<std::uint32_t> *,  // bondInvariants
     const bool hashResults) const {
   auto *topologicalTorsionArguments =
       dynamic_cast<TopologicalTorsionArguments<OutputType> *>(arguments);
@@ -75,12 +75,14 @@ TopologicalTorsionEnvGenerator<OutputType>::getEnvironments(
   boost::dynamic_bitset<> *fromAtomsBV = nullptr;
   if (fromAtoms) {
     fromAtomsBV = new boost::dynamic_bitset<>(mol.getNumAtoms());
-    BOOST_FOREACH (std::uint32_t fAt, *fromAtoms) { fromAtomsBV->set(fAt); }
+    for (auto fAt : *fromAtoms) {
+      fromAtomsBV->set(fAt);
+    }
   }
   boost::dynamic_bitset<> *ignoreAtomsBV = nullptr;
   if (ignoreAtoms) {
     ignoreAtomsBV = new boost::dynamic_bitset<>(mol.getNumAtoms());
-    BOOST_FOREACH (std::uint32_t fAt, *ignoreAtoms) {
+    for (auto fAt : *ignoreAtoms) {
       ignoreAtomsBV->set(fAt);
     }
   }
@@ -102,7 +104,7 @@ TopologicalTorsionEnvGenerator<OutputType>::getEnvironments(
       }
     }
     if (keepIt && ignoreAtomsBV) {
-      BOOST_FOREACH (int pElem, path) {
+      for (int pElem : path) {
         if (ignoreAtomsBV->test(pElem)) {
           keepIt = false;
           break;
@@ -176,11 +178,14 @@ FingerprintGenerator<OutputType> *getTopologicalTorsionGenerator(
 
 // Topological torsion fingerprint does not support 32 bit output yet
 
-template RDKIT_FINGERPRINTS_EXPORT FingerprintGenerator<std::uint64_t> *getTopologicalTorsionGenerator(
-    const bool includeChirality, const uint32_t torsionAtomCount,
-    AtomInvariantsGenerator *atomInvariantsGenerator,
-    const bool countSimulation, const std::vector<std::uint32_t> countBounds,
-    const std::uint32_t fpSize, const bool ownsAtomInvGen);
+template RDKIT_FINGERPRINTS_EXPORT FingerprintGenerator<std::uint64_t> *
+getTopologicalTorsionGenerator(const bool includeChirality,
+                               const uint32_t torsionAtomCount,
+                               AtomInvariantsGenerator *atomInvariantsGenerator,
+                               const bool countSimulation,
+                               const std::vector<std::uint32_t> countBounds,
+                               const std::uint32_t fpSize,
+                               const bool ownsAtomInvGen);
 
 }  // namespace TopologicalTorsion
 }  // namespace RDKit

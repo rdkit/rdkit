@@ -655,7 +655,7 @@ void updateDoubleBondNeighbors(ROMol &mol, Bond *dblBond, const Conformer *conf,
 
   Atom *atom1 = dblBond->getBeginAtom(), *atom2 = dblBond->getEndAtom();
   if (needsDir[bond1->getIdx()]) {
-    BOOST_FOREACH (int bidx, singleBondNbrs[bond1->getIdx()]) {
+    for (auto bidx : singleBondNbrs[bond1->getIdx()]) {
       // std::cerr << "       neighbor from: " << bond1->getIdx() << " " << bidx
       //           << ": " << needsDir[bidx] << std::endl;
       if (needsDir[bidx]) {
@@ -664,7 +664,7 @@ void updateDoubleBondNeighbors(ROMol &mol, Bond *dblBond, const Conformer *conf,
     }
   }
   if (needsDir[bond2->getIdx()]) {
-    BOOST_FOREACH (int bidx, singleBondNbrs[bond2->getIdx()]) {
+    for (auto bidx : singleBondNbrs[bond2->getIdx()]) {
       // std::cerr << "       neighbor from: " << bond2->getIdx() << " " << bidx
       //           << ": " << needsDir[bidx] << std::endl;
       if (needsDir[bidx]) {
@@ -720,7 +720,7 @@ void updateDoubleBondNeighbors(ROMol &mol, Bond *dblBond, const Conformer *conf,
   std::cerr << "**********************\n";
   std::cerr << "**********************\n";
 #endif
-  BOOST_FOREACH (Bond *oDblBond, followupBonds) {
+  for (Bond *oDblBond : followupBonds) {
     // std::cerr << "FOLLOWUP: " << oDblBond->getIdx() << " "
     //           << needsDir[oDblBond->getIdx()] << std::endl;
     updateDoubleBondNeighbors(mol, oDblBond, conf, needsDir, singleBondCounts,
@@ -1344,7 +1344,7 @@ void findChiralAtomSpecialCases(ROMol &mol,
       // followed ring bonds, these things are all by definition in one ring
       // system. (Q: is this true if there's a spiro center in there?)
       INT_VECT same(mol.getNumAtoms(), 0);
-      BOOST_FOREACH (int ringAtomEntry, ringStereoAtoms) {
+      for (auto ringAtomEntry : ringStereoAtoms) {
         int ringAtomIdx =
             ringAtomEntry < 0 ? -ringAtomEntry - 1 : ringAtomEntry - 1;
         same[ringAtomIdx] = ringAtomEntry;

@@ -12,7 +12,6 @@
 #include <RDGeneral/Exceptions.h>
 #include <GraphMol/AtomIterators.h>
 #include <GraphMol/BondIterators.h>
-#include <boost/foreach.hpp>
 
 namespace RDKit {
 namespace MolOps {
@@ -46,7 +45,7 @@ ROMol *renumberAtoms(const ROMol &mol,
     INT_VECT nAtoms;
     if (nAtom->getPropIfPresent(common_properties::_ringStereoAtoms, nAtoms)) {
       // FIX: ought to be able to avoid this copy.
-      BOOST_FOREACH (int &val, nAtoms) {
+      for (auto &val : nAtoms) {
         if (val < 0) {
           val = -1 * (revOrder[(-val - 1)] + 1);
         } else {
@@ -66,7 +65,9 @@ ROMol *renumberAtoms(const ROMol &mol,
     nBond->setEndAtomIdx(revOrder[oBond->getEndAtomIdx()]);
     res->addBond(nBond, true);
     // take care of atom-numbering-dependent properties:
-    BOOST_FOREACH (int &idx, nBond->getStereoAtoms()) { idx = revOrder[idx]; }
+    for (auto &idx : nBond->getStereoAtoms()) {
+      idx = revOrder[idx];
+    }
   }
 
   // Conformers:
@@ -83,7 +84,7 @@ ROMol *renumberAtoms(const ROMol &mol,
 
   // update the ring info:
   const RingInfo *oRings = mol.getRingInfo();
-  if (oRings && oRings->isInitialized() ) {
+  if (oRings && oRings->isInitialized()) {
     RingInfo *nRings = res->getRingInfo();
     nRings->reset();
     nRings->initialize();

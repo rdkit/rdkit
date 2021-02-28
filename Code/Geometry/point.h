@@ -41,15 +41,21 @@ class RDKIT_RDGEOMETRYLIB_EXPORT Point {
 
   virtual Point *copy() const = 0;
 };
+// g++ (at least as of v9.3.0) generates some spurious warnings from here.
+// disable them
+#if !defined(__clang__) and defined(__GNUC__)
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wmaybe-uninitialized"
+#endif
 
 // typedef class Point3D Point;
 class RDKIT_RDGEOMETRYLIB_EXPORT Point3D : public Point {
  public:
-  double x{ 0.0 };
-  double y{ 0.0 }; 
-  double z{ 0.0 };
+  double x{0.0};
+  double y{0.0};
+  double z{0.0};
 
-  Point3D()  {};
+  Point3D(){};
   Point3D(double xv, double yv, double zv) : x(xv), y(yv), z(zv){};
 
   ~Point3D(){};
@@ -84,6 +90,9 @@ class RDKIT_RDGEOMETRYLIB_EXPORT Point3D : public Point {
   }
 
   Point3D &operator=(const Point3D &other) {
+    if (&other == this) {
+      return *this;
+    }
     x = other.x;
     y = other.y;
     z = other.z;
@@ -259,10 +268,10 @@ RDKIT_RDGEOMETRYLIB_EXPORT double computeSignedDihedralAngle(
 
 class RDKIT_RDGEOMETRYLIB_EXPORT Point2D : public Point {
  public:
-  double x{ 0.0 };
-  double y{ 0.0 };
+  double x{0.0};
+  double y{0.0};
 
-  Point2D()  {};
+  Point2D(){};
   Point2D(double xv, double yv) : x(xv), y(yv){};
   ~Point2D(){};
 
@@ -498,6 +507,9 @@ class RDKIT_RDGEOMETRYLIB_EXPORT PointND : public Point {
     return dp_storage.get();
   }
 };
+#if !defined(__clang__) and defined(__GNUC__)
+#pragma GCC diagnostic pop
+#endif
 
 typedef std::vector<RDGeom::Point *> PointPtrVect;
 typedef PointPtrVect::iterator PointPtrVect_I;

@@ -54,7 +54,7 @@ boost::dynamic_bitset<> runTest(SubstructLibrary &ssslib, const ROMol &pattern,
                                  int nThreads) {
   std::vector<unsigned int> libMatches = ssslib.getMatches(pattern, nThreads);
   boost::dynamic_bitset<> hasMatch(ssslib.size());
-  BOOST_FOREACH (unsigned int idx, libMatches) { hasMatch[idx] = 1; }
+  for (auto idx : libMatches) { hasMatch[idx] = 1; }
 
   for (unsigned int i = 0; i < ssslib.size(); ++i) {
     MatchVectType match;
@@ -73,7 +73,7 @@ void runTest(SubstructLibrary &ssslib,
              ) {
   std::vector<unsigned int> libMatches = ssslib.getMatches(pattern, nThreads);
   boost::dynamic_bitset<> hasMatch2(ssslib.size());
-  BOOST_FOREACH (unsigned int idx, libMatches) { hasMatch2[idx] = 1; }
+  for (auto idx : libMatches) { hasMatch2[idx] = 1; }
   TEST_ASSERT(hasMatch == hasMatch2);
   
   for (unsigned int i = 0; i < ssslib.size(); ++i) {
@@ -667,15 +667,22 @@ void testSegFaultInHolder() {
   boost::shared_ptr<CachedSmilesMolHolder> mols2(
       new CachedSmilesMolHolder());
   for(int i=0; i<100; ++i) {
-    mols1->addSmiles("dsafsdf");
-    mols2->addSmiles("dsafsdf");
+      if(i%2==0) {
+          mols1->addSmiles("dsafsdf");
+          mols2->addSmiles("dsafsdf");
+      } else {
+          mols1->addSmiles("c1ccccc1");
+          mols2->addSmiles("c1ccccc1");
+      }
   }
   SubstructLibrary sss(mols1);
   SubstructLibrary sss2(mols2);
-  ROMOL_SPTR query(SmartsToMol("N"));
+  ROMOL_SPTR query(SmartsToMol("c1ccccc1"));
   auto matches1 = sss.getMatches(*query);
+  TEST_ASSERT(matches1.size() == 50);
   matches1 = sss2.getMatches(*query);
-  
+  TEST_ASSERT(matches1.size() == 50);
+
   // Check that we don't segfault when adding patterns
   addPatterns(sss, 2);
   addPatterns(sss2, 2);

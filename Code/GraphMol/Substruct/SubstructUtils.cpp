@@ -15,6 +15,87 @@
 
 namespace RDKit {
 
+namespace detail {
+// Helper class used by the sortMatchesByDegreeOfCoreSubstitution
+// and getMostSubstitutedCoreMatch functions. A penalty of 1.0 is assigned
+// to matches for each terminal dummy atom matching hydrogen.
+// To make the sort stable in case of ties, a fraction of 1.0
+// is added to each score based on match indices.
+class ScoreMatchesByDegreeOfCoreSubstitution {
+ public:
+  typedef std::pair<unsigned int, double> IdxScorePair;
+  ScoreMatchesByDegreeOfCoreSubstitution(
+      const RDKit::ROMol &mol, const RDKit::ROMol &query,
+      const std::vector<RDKit::MatchVectType> &matches)
+      : d_mol(mol),
+        d_query(query),
+        d_matches(matches),
+        d_sumIndices(0.0),
+        d_minIdx(-1),
+        d_isSorted(false) {
+    PRECONDITION(!matches.empty(), "matches must not be empty");
+    for (unsigned int i = 0; i < d_mol.getNumAtoms(); ++i) {
+      d_sumIndices += static_cast<double>(i);
+    }
+    unsigned int i = 0;
+    d_matchIdxVsScore.reserve(d_matches.size());
+    for (const auto &match : d_matches) {
+      d_matchIdxVsScore.emplace_back(std::make_pair(i++, computeScore(match)));
+    }
+  }
+  const RDKit::MatchVectType &getMostSubstitutedCoreMatch() {
+    if (d_minIdx == -1) {
+      d_minIdx = std::min_element(d_matchIdxVsScore.begin(),
+                                  d_matchIdxVsScore.end(), compare)
+                     ->first;
+    }
+    return d_matches.at(d_minIdx);
+  }
+  std::vector<MatchVectType> sortMatchesByDegreeOfCoreSubstitution() {
+    if (!d_isSorted) {
+      std::sort(d_matchIdxVsScore.begin(), d_matchIdxVsScore.end(), compare);
+      d_isSorted = true;
+      d_minIdx = d_matchIdxVsScore.front().first;
+    }
+    std::vector<MatchVectType> res(d_matches.size());
+    std::transform(
+        d_matchIdxVsScore.begin(), d_matchIdxVsScore.end(), res.begin(),
+        [this](const IdxScorePair &pair) { return d_matches.at(pair.first); });
+    return res;
+  }
+
+ private:
+  static bool compare(const IdxScorePair &aPair, const IdxScorePair &bPair) {
+    return (aPair.second < bPair.second);
+  }
+  bool doesRGroupMatchHydrogen(const std::pair<int, int> &pair) const {
+    const auto queryAtom = d_query.getAtomWithIdx(pair.first);
+    const auto molAtom = d_mol.getAtomWithIdx(pair.second);
+    return (queryAtom->getAtomicNum() == 0 && queryAtom->getDegree() == 1 &&
+            molAtom->getAtomicNum() == 1);
+  }
+  double computeScore(const RDKit::MatchVectType &match) const {
+    double penalty = 0.0;
+    double i = 0.0;
+    for (const auto &pair : match) {
+      i += static_cast<double>(pair.second);
+      if (doesRGroupMatchHydrogen(pair)) {
+        penalty += 1.0;
+      }
+    }
+    penalty += i / d_sumIndices;
+    return penalty;
+  }
+  const RDKit::ROMol &d_mol;
+  const RDKit::ROMol &d_query;
+  const std::vector<RDKit::MatchVectType> &d_matches;
+  std::vector<IdxScorePair> d_matchIdxVsScore;
+  double d_sumIndices;
+  int d_minIdx;
+  bool d_isSorted;
+};
+}  // namespace detail
+
 bool atomCompat(const Atom *a1, const Atom *a2,
                 const SubstructMatchParameters &ps) {
   PRECONDITION(a1, "bad atom");
@@ -109,4 +190,21 @@ void removeDuplicates(std::vector<MatchVectType> &v, unsigned int nAtoms) {
   }
   v = res;
 }
+
+const MatchVectType &getMostSubstitutedCoreMatch(
+    const ROMol &mol, const ROMol &core,
+    const std::vector<MatchVectType> &matches) {
+  detail::ScoreMatchesByDegreeOfCoreSubstitution matchScorer(mol, core,
+                                                             matches);
+  return matchScorer.getMostSubstitutedCoreMatch();
+}
+
+std::vector<MatchVectType> sortMatchesByDegreeOfCoreSubstitution(
+    const ROMol &mol, const ROMol &core,
+    const std::vector<MatchVectType> &matches) {
+  detail::ScoreMatchesByDegreeOfCoreSubstitution matchScorer(mol, core,
+                                                             matches);
+  return matchScorer.sortMatchesByDegreeOfCoreSubstitution();
+}
+
 }  // namespace RDKit
