@@ -384,7 +384,7 @@ ExplicitBitVect *PatternFingerprintMol(const MolBundle &bundle,
   PRECONDITION(!setOnlyBits || setOnlyBits->getNumBits() == fpSize,
                "bad setOnlyBits size");
   ExplicitBitVect *res = nullptr;
-  for (const auto molp : bundle.getMols()) {
+  for (const auto &molp : bundle.getMols()) {
     ExplicitBitVect molfp(fpSize);
     updatePatternFingerprint(*molp, molfp, fpSize, nullptr, setOnlyBits,
                              tautomericFingerprint);

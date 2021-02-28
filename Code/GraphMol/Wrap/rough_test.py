@@ -5998,6 +5998,34 @@ M  END
     ps.setExtraFinalCheck(accept_large)
     self.assertEqual(len(m.GetSubstructMatches(p, ps)), 1)
 
+  def testMostSubstitutedCoreMatch(self):
+    core = Chem.MolFromSmarts("[*:1]c1cc([*:2])ccc1[*:3]")
+    orthoMeta = Chem.MolFromSmiles("c1ccc(-c2ccc(-c3ccccc3)c(-c3ccccc3)c2)cc1")
+    ortho = Chem.MolFromSmiles("c1ccc(-c2ccccc2-c2ccccc2)cc1")
+    meta = Chem.MolFromSmiles("c1ccc(-c2cccc(-c3ccccc3)c2)cc1")
+    biphenyl = Chem.MolFromSmiles("c1ccccc1-c1ccccc1")
+    phenyl = Chem.MolFromSmiles("c1ccccc1")
+
+    def numHsMatchingDummies(mol, core, match):
+      return sum([1 for qi, ai in enumerate(match)
+        if core.GetAtomWithIdx(qi).GetAtomicNum() == 0 and
+          mol.GetAtomWithIdx(ai).GetAtomicNum() == 1])
+
+    for mol, res in ((orthoMeta, 0), (ortho, 1), (meta, 1), (biphenyl, 2), (phenyl, 3)):
+      mol = Chem.AddHs(mol)
+      matches = mol.GetSubstructMatches(core)
+      bestMatch = Chem.GetMostSubstitutedCoreMatch(mol, core, matches)
+      self.assertEqual(numHsMatchingDummies(mol, core, bestMatch), res)
+      ctrlCounts = sorted([numHsMatchingDummies(mol, core, match) for match in matches])
+      sortedCounts = [numHsMatchingDummies(mol, core, match)
+        for match in Chem.SortMatchesByDegreeOfCoreSubstitution(mol, core, matches)]
+      self.assertEqual(len(ctrlCounts), len(sortedCounts))
+      self.assertTrue(all(ctrl == sortedCounts[i] for i, ctrl in enumerate(ctrlCounts)))
+    with self.assertRaises(ValueError):
+      Chem.GetMostSubstitutedCoreMatch(orthoMeta, core, [])
+    with self.assertRaises(ValueError):
+      Chem.SortMatchesByDegreeOfCoreSubstitution(orthoMeta, core, [])
+
   def testSuppliersReadingDirectories(self):
     # this is an odd one, basically we need to check that we don't hang
     #  which is pretty much a bad test in my opinion, but YMMV

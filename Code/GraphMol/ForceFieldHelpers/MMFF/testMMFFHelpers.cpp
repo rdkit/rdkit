@@ -948,7 +948,9 @@ void testMMFFMultiThread() {
     fut.get();
   }
 
-  BOOST_FOREACH (ROMol *mol, mols) { delete mol; }
+  for (auto *mol : mols) {
+    delete mol;
+  }
   BOOST_LOG(rdErrorLog) << "  done" << std::endl;
 }
 
@@ -1073,6 +1075,8 @@ void testGithub224() {
 //-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*
 int main() {
   RDLog::InitLogs();
+  // we get a ton of warnings here about missing Hs... disable them
+  boost::logging::disable_logs("rdApp.warning");
 #if 1
   testMMFFTyper1();
   testMMFFBuilder1();

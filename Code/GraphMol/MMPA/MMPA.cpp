@@ -524,7 +524,7 @@ bool fragmentMol(const ROMol& mol,
                  unsigned int minCuts, unsigned int maxCuts) {
   std::vector<BondVector_t> matching_bonds;  // List of matched query's bonds
 
-  BOOST_FOREACH (unsigned int i, bondsToCut) {
+  for (auto i : bondsToCut) {
     const Bond* bond = mol.getBondWithIdx(i);
     BondVector_t bonds;
     unsigned int a1 = bond->getBeginAtomIdx();

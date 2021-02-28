@@ -39,7 +39,7 @@ Alternatively, you can also send Cookbook revisions and addition requests to the
 
    The Index ID# (e.g., **RDKitCB_##**) is simply a way to track Cookbook entries and image file names. 
    New Cookbook additions are sequentially index numbered, regardless of where they are placed 
-   within the document. As such, for reference, the next Cookbook entry is **RDKitCB_34**.
+   within the document. As such, for reference, the next Cookbook entry is **RDKitCB_35**.
 
 Drawing Molecules (Jupyter)
 *******************************
@@ -241,6 +241,94 @@ Without Implicit Hydrogens
 
 .. image:: images/RDKitCB_17_im1.png
 
+With Abbreviations
+===========================
+
+| **Author:** Greg Landrum
+| **Source:** `<https://github.com/rdkit/UGM_2020/blob/master/Notebooks/Landrum_WhatsNew.ipynb>`_
+| **Index ID#:** RDKitCB_34
+| **Summary:** Draw a molecule with functional group abbreviations
+
+.. testcode::
+
+   from rdkit import Chem
+   from rdkit.Chem.Draw import IPythonConsole
+   from rdkit.Chem import Draw
+   from rdkit.Chem import rdAbbreviations
+
+.. testcode::
+
+   m = Chem.MolFromSmiles('COc1ccc(C(=O)[O-])cc1')
+   m
+
+.. image:: images/RDKitCB_34_im0.png
+   :scale: 75%
+
+.. testcode::
+
+   abbrevs = rdAbbreviations.GetDefaultAbbreviations()
+   nm = rdAbbreviations.CondenseMolAbbreviations(m,abbrevs)
+   nm
+
+.. image:: images/RDKitCB_34_im1.png
+   :scale: 75%
+
+.. testcode::
+
+   # abbreviations that cover more than 40% of the molecule won't be applied by default
+   m = Chem.MolFromSmiles('c1c[nH]cc1C(F)(F)F')
+   nm1 = rdAbbreviations.CondenseMolAbbreviations(m,abbrevs)
+   nm2 = rdAbbreviations.CondenseMolAbbreviations(m,abbrevs,maxCoverage=0.8)
+   Draw.MolsToGridImage((m,nm1,nm2),legends=('','default','maxCoverage=0.8'))
+
+.. image:: images/RDKitCB_34_im2.png
+
+.. testcode::
+
+   # See available abbreviations
+   abbrevs = rdAbbreviations.GetDefaultAbbreviations()
+   for a in abbrevs:
+       print(a.label)
+
+.. testoutput::
+
+   CO2Et
+   COOEt
+   OiBu
+   nDec
+   nNon
+   nOct
+   nHept
+   nHex
+   nPent
+   iPent
+   tBu
+   iBu
+   nBu
+   iPr
+   nPr
+   Et
+   NCF3
+   CF3
+   CCl3
+   CN
+   NC
+   N(OH)CH3
+   NO2
+   NO
+   SO3H
+   CO2H
+   COOH
+   OEt
+   OAc
+   NHAc
+   Ac
+   CHO
+   NMe
+   SMe
+   OMe
+   CO2-
+   COO-
 
 Bonds and Bonding
 *******************
@@ -1809,7 +1897,7 @@ Enumerate SMILES
 ==================
 
 | **Author:** Guillaume Godin and Greg Landrum
-| **Source:** `<https://sourceforge.net/p/rdkit/mailman/message/36591616/>`_
+| **Source:** `<https://sourceforge.net/p/rdkit/mailman/message/36591616/>`_ and `<https://github.com/rdkit/UGM_2020/blob/master/Notebooks/Landrum_WhatsNew.ipynb>`_
 | **Index ID#:** RDKitCB_24
 | **Summary:** Enumerate variations of SMILES strings for the same molecule.
 
@@ -1859,7 +1947,47 @@ Enumerate SMILES
     'CC(N)C1CC1',
     'C(C)(N)C1CC1']
 
+.. testcode::
 
+   # If you need the multiple random SMILES strings to be reproducible, 
+   # the 2020.09 release has an option for this:
+   m = Chem.MolFromSmiles('Oc1ncc(OC(CC)C)cc1')
+   print(Chem.MolToRandomSmilesVect(m,5))  # output order random; doctest skipped
+
+.. testoutput::
+   :options: +SKIP
+
+   ['c1c(cnc(O)c1)OC(CC)C', 'c1c(cnc(c1)O)OC(CC)C', 'c1cc(O)ncc1OC(CC)C', 'O(C(CC)C)c1ccc(nc1)O', 'O(C(C)CC)c1cnc(cc1)O']
+
+.. testcode::
+   
+   # by default the results are not reproducible:
+   print(Chem.MolToRandomSmilesVect(m,5)) # output order random; doctest skipped
+
+.. testoutput::
+   :options: +SKIP
+
+   ['c1nc(O)ccc1OC(CC)C', 'n1cc(OC(CC)C)ccc1O', 'c1c(OC(C)CC)ccc(O)n1', 'CCC(Oc1ccc(nc1)O)C', 'O(c1cnc(cc1)O)C(C)CC']
+
+.. testcode::
+
+   # But we can provide a random number seed:
+   m = Chem.MolFromSmiles('Oc1ncc(OC(CC)C)cc1')
+   s1 = Chem.MolToRandomSmilesVect(m,5,randomSeed=0xf00d)
+   print(s1)
+
+.. testoutput::
+
+   ['Oc1ccc(OC(CC)C)cn1', 'CC(CC)Oc1cnc(O)cc1', 'c1(O)ncc(cc1)OC(C)CC', 'c1cc(cnc1O)OC(CC)C', 'c1c(OC(CC)C)cnc(c1)O']
+
+.. testcode::
+
+   s2 = Chem.MolToRandomSmilesVect(m,5,randomSeed=0xf00d)
+   print(s2 == s1)
+
+.. testoutput::
+
+   True
 
 Reorder Atoms
 ==================================

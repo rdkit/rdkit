@@ -1999,7 +1999,7 @@ void testNoAlignmentAndSymmetry() {
   size_t i = 0;
   for (const auto &smi : smilesData) {
     ROMOL_SPTR mol(static_cast<ROMol *>(SmilesToMol(smi)));
-    TEST_ASSERT(decomp.add(*mol) == i++);
+    TEST_ASSERT(decomp.add(*mol) == static_cast<int>(i++));
   }
   TEST_ASSERT(decomp.process());
   auto rows = decomp.getRGroupsAsRows();

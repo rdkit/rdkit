@@ -54,7 +54,7 @@ boost::dynamic_bitset<> runTest(SubstructLibrary &ssslib, const ROMol &pattern,
                                  int nThreads) {
   std::vector<unsigned int> libMatches = ssslib.getMatches(pattern, nThreads);
   boost::dynamic_bitset<> hasMatch(ssslib.size());
-  BOOST_FOREACH (unsigned int idx, libMatches) { hasMatch[idx] = 1; }
+  for (auto idx : libMatches) { hasMatch[idx] = 1; }
 
   for (unsigned int i = 0; i < ssslib.size(); ++i) {
     MatchVectType match;
@@ -73,7 +73,7 @@ void runTest(SubstructLibrary &ssslib,
              ) {
   std::vector<unsigned int> libMatches = ssslib.getMatches(pattern, nThreads);
   boost::dynamic_bitset<> hasMatch2(ssslib.size());
-  BOOST_FOREACH (unsigned int idx, libMatches) { hasMatch2[idx] = 1; }
+  for (auto idx : libMatches) { hasMatch2[idx] = 1; }
   TEST_ASSERT(hasMatch == hasMatch2);
   
   for (unsigned int i = 0; i < ssslib.size(); ++i) {

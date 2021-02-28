@@ -463,7 +463,7 @@ std::vector<MatchVectType> SubstructMatch(
   }
 
   if (params.recursionPossible) {
-    BOOST_FOREACH (RecursiveStructureQuery *v, locked) {
+    for (auto *v : locked) {
       v->clear();
 #ifdef RDK_THREADSAFE_SSS
       v->d_mutex.unlock();

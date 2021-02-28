@@ -25,7 +25,6 @@
 #include <iostream>
 #include <map>
 #include <algorithm>
-#include <boost/foreach.hpp>
 #include <random>
 
 #ifndef M_PI

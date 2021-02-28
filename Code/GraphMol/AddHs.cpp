@@ -1,5 +1,5 @@
 //
-//  Copyright (C) 2003-2019 Greg Landrum and Rational Discovery LLC
+//  Copyright (C) 2003-2021 Greg Landrum and Rational Discovery LLC
 //
 //   @@ All Rights Reserved @@
 //  This file is part of the RDKit.
@@ -14,12 +14,12 @@
 #include "MonomerInfo.h"
 #include <Geometry/Transform3D.h>
 #include <Geometry/point.h>
-#include <boost/foreach.hpp>
 #include <boost/lexical_cast.hpp>
 #include <boost/tokenizer.hpp>
 #include <boost/algorithm/string/trim.hpp>
 #include <boost/algorithm/string/classification.hpp>
 #include <boost/dynamic_bitset.hpp>
+#include <boost/range/iterator_range.hpp>
 
 namespace RDKit {
 
@@ -1139,5 +1139,23 @@ ROMol *mergeQueryHs(const ROMol &mol, bool mergeUnmappedOnly) {
   return static_cast<ROMol *>(res);
 };
 
-};  // end of namespace MolOps
-};  // namespace RDKit
+bool needsHs(const ROMol &mol) {
+  for (const auto atom : mol.atoms()) {
+    unsigned int nHNbrs = 0;
+    for (const auto nbri :
+         boost::make_iterator_range(mol.getAtomNeighbors(atom))) {
+      const auto nbr = mol[nbri];
+      if (nbr->getAtomicNum() == 1) {
+        ++nHNbrs;
+      }
+    }
+    bool noNeighbors = false;
+    if (atom->getTotalNumHs(noNeighbors) > nHNbrs) {
+      return true;
+    }
+  }
+  return false;
+}
+
+}  // end of namespace MolOps
+}  // namespace RDKit

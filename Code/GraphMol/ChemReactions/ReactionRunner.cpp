@@ -34,7 +34,6 @@
 #include <GraphMol/Substruct/SubstructMatch.h>
 #include <GraphMol/QueryOps.h>
 #include <boost/dynamic_bitset.hpp>
-#include <boost/foreach.hpp>
 #include <map>
 #include <algorithm>
 #include <GraphMol/ChemTransforms/ChemTransforms.h>
@@ -1403,7 +1402,7 @@ std::vector<MOL_SPTR_VECT> run_Reactants(const ChemicalReaction &rxn,
         "Number of reactants provided does not match number of reactant "
         "templates.");
   }
-  BOOST_FOREACH (ROMOL_SPTR msptr, reactants) {
+  for (auto msptr : reactants) {
     CHECK_INVARIANT(msptr, "bad molecule in reactants");
     msptr->clearAllAtomBookmarks();  // we use this as scratch space
   }
@@ -1564,9 +1563,8 @@ ROMol *reduceProductToSideChains(const ROMOL_SPTR &product,
                 nbr->getProp<int>(common_properties::reactionMapNum));
           } else {
             bonds_to_product.emplace_back(
-                nbr,
-                mol->getBondBetweenAtoms(scaffold_atom->getIdx(), *nbrIdx)
-                    ->getBondType());
+                nbr, mol->getBondBetweenAtoms(scaffold_atom->getIdx(), *nbrIdx)
+                         ->getBondType());
           }
         }
 

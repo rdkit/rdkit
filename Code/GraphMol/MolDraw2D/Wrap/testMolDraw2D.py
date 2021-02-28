@@ -1,6 +1,7 @@
 from rdkit import RDConfig
 import unittest
 import random
+import re
 from os import environ
 from rdkit import Chem
 from rdkit.Chem import Draw, AllChem, rdDepictor
@@ -621,6 +622,55 @@ M  END''')
     d2d.FinishDrawing()
     txt = d2d.GetDrawingText()
     self.assertTrue('>8</text>' in txt)
+
+  def testIsotopeLabels(self):
+    m = Chem.MolFromSmiles("[1*]c1cc([2*])c([3*])c[14c]1")
+    regex = re.compile(r"<text\s+.*>\d</text>")
+    self.assertIsNotNone(m)
+
+    d2d = Draw.MolDraw2DSVG(300, 300, -1, -1, True)
+    d2d.DrawMolecule(m)
+    d2d.FinishDrawing()
+    textIsoDummyIso = d2d.GetDrawingText()
+    nIsoDummyIso = len(regex.findall(textIsoDummyIso))
+    self.assertEqual(nIsoDummyIso, 5)
+
+    d2d = Draw.MolDraw2DSVG(300, 300, -1, -1, True)
+    d2d.drawOptions().isotopeLabels = False
+    d2d.DrawMolecule(m)
+    d2d.FinishDrawing()
+    textNoIsoDummyIso = d2d.GetDrawingText()
+    nNoIsoDummyIso = len(regex.findall(textNoIsoDummyIso))
+    self.assertEqual(nNoIsoDummyIso, 3)
+
+    d2d = Draw.MolDraw2DSVG(300, 300, -1, -1, True)
+    d2d.drawOptions().dummyIsotopeLabels = False
+    d2d.DrawMolecule(m)
+    d2d.FinishDrawing()
+    textIsoNoDummyIso = d2d.GetDrawingText()
+    nIsoNoDummyIso = len(regex.findall(textIsoNoDummyIso))
+    self.assertEqual(nIsoNoDummyIso, 2)
+
+    d2d = Draw.MolDraw2DSVG(300, 300, -1, -1, True)
+    d2d.drawOptions().isotopeLabels = False
+    d2d.drawOptions().dummyIsotopeLabels = False
+    d2d.DrawMolecule(m)
+    d2d.FinishDrawing()
+    textNoIsoNoDummyIso = d2d.GetDrawingText()
+    nNoIsoNoDummyIso = len(regex.findall(textNoIsoNoDummyIso))
+    self.assertEqual(nNoIsoNoDummyIso, 0)
+
+    m = Chem.MolFromSmiles("C([1H])([2H])([3H])[H]")
+    deuteriumTritiumRegex = re.compile(r"<text\s+.*>[DT]</text>")
+    d2d = Draw.MolDraw2DSVG(300, 300, -1, -1, True)
+    d2d.drawOptions().isotopeLabels = False
+    d2d.drawOptions().dummyIsotopeLabels = False
+    d2d.drawOptions().atomLabelDeuteriumTritium = True
+    d2d.DrawMolecule(m)
+    d2d.FinishDrawing()
+    textDeuteriumTritium = d2d.GetDrawingText()
+    nDeuteriumTritium = len(deuteriumTritiumRegex.findall(textDeuteriumTritium))
+    self.assertEqual(nDeuteriumTritium, 2)
 
 if __name__ == "__main__":
   unittest.main()

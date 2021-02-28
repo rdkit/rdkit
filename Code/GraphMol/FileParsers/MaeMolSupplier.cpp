@@ -149,6 +149,8 @@ void parseChiralityLabel(RWMol &mol, const std::string &stereo_prop) {
     case 'S':  // S, ANS
       nSwaps = 1;
       break;
+    case '?':  // Undefined
+      return;
     default:
       break;
   }
@@ -456,16 +458,21 @@ ROMol *MaeMolSupplier::next() {
     build_mol(*mol, *d_next_struct, df_sanitize, df_removeHs);
   } catch (...) {
     delete mol;
+    moveToNextBlock();
     throw;
   }
 
+  moveToNextBlock();
+
+  return static_cast<ROMol *>(mol);
+}
+
+void MaeMolSupplier::moveToNextBlock() {
   try {
     d_next_struct = d_reader->next(mae::CT_BLOCK);
   } catch (const mae::read_exception &e) {
     d_stored_exc = e.what();
   }
-
-  return static_cast<ROMol *>(mol);
 }
 
 bool MaeMolSupplier::atEnd() { return d_next_struct == nullptr; }
