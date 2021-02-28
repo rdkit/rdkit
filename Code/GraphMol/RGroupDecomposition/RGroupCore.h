@@ -92,7 +92,7 @@ struct RCore {
   // match
   ROMOL_SPTR coreWithMatches(const ROMol &coreReplacedDummies) {
     auto finalCore = boost::make_shared<RWMol>(*labelledCore);
-    for (uint atomIdx = 0; atomIdx < coreReplacedDummies.getNumAtoms();
+    for (size_t atomIdx = 0; atomIdx < coreReplacedDummies.getNumAtoms();
          ++atomIdx) {
       auto coreAtom = finalCore->getAtomWithIdx(atomIdx);
       auto templateAtom = coreReplacedDummies.getAtomWithIdx(atomIdx);
@@ -104,7 +104,7 @@ struct RCore {
       }
     }
 
-    for (uint bondIdx = 0; bondIdx < coreReplacedDummies.getNumBonds();
+    for (size_t bondIdx = 0; bondIdx < coreReplacedDummies.getNumBonds();
          ++bondIdx) {
       auto coreBond = finalCore->getBondWithIdx(bondIdx);
       if (coreBond->hasQuery()) {
