@@ -226,7 +226,7 @@ void MolDraw2DSVG::drawPolygon(const std::vector<Point2D> &cds) {
   PRECONDITION(cds.size() >= 3, "must have at least three points");
 
   std::string col = DrawColourToSVG(colour());
-  unsigned int width = getDrawLineWidth();
+  double width = getDrawLineWidth();
   std::string dashString = "";
   d_os << "<path ";
   outputClasses();
@@ -263,7 +263,7 @@ void MolDraw2DSVG::drawEllipse(const Point2D &cds1, const Point2D &cds2) {
   h = h > 0 ? h : -1 * h;
 
   std::string col = DrawColourToSVG(colour());
-  unsigned int width = getDrawLineWidth();
+  double width = getDrawLineWidth();
   std::string dashString = "";
   d_os << "<ellipse"
        << " cx='" << cx << "'"

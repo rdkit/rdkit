@@ -60,7 +60,7 @@ void MolDraw2DJS::drawLine(const Point2D &cds1, const Point2D &cds2) {
   Point2D c1 = getDrawCoords(cds1);
   Point2D c2 = getDrawCoords(cds2);
   std::string col = DrawColourToSVG(colour());
-  unsigned int width = getDrawLineWidth();
+  double width = getDrawLineWidth();
   std::string dashString = "";
   const DashPattern &dashes = dash();
 
@@ -71,8 +71,8 @@ void MolDraw2DJS::drawLine(const Point2D &cds1, const Point2D &cds2) {
     d_context.call<void>("setLineDash", emscripten::typed_memory_view(
                                             dashes.size(), dashes.data()));
   }
-  d_context.call<void>("moveTo", std::round(c1.x), std::round(c1.y));
-  d_context.call<void>("lineTo", std::round(c2.x), std::round(c2.y));
+  d_context.call<void>("moveTo", c1.x, c1.y);
+  d_context.call<void>("lineTo", c2.x, c2.y);
   d_context.call<void>("stroke");
   if (dashes.size()) {
     static const DashPattern nodash;
@@ -85,7 +85,7 @@ void MolDraw2DJS::drawPolygon(const std::vector<Point2D> &cds) {
   PRECONDITION(cds.size() >= 3, "must have at least three points");
 
   std::string col = DrawColourToSVG(colour());
-  unsigned int width = getDrawLineWidth();
+  double width = getDrawLineWidth();
 
   d_context.call<void>("beginPath");
   d_context.set("lineWidth", width);
@@ -93,10 +93,10 @@ void MolDraw2DJS::drawPolygon(const std::vector<Point2D> &cds) {
   d_context.set("lineJoin", std::string("round"));
   d_context.set("strokeStyle", col);
   Point2D c0 = getDrawCoords(cds[0]);
-  d_context.call<void>("moveTo", std::round(c0.x), std::round(c0.y));
+  d_context.call<void>("moveTo", c0.x, c0.y);
   for (unsigned int i = 1; i < cds.size(); ++i) {
     Point2D ci = getDrawCoords(cds[i]);
-    d_context.call<void>("lineTo", std::round(ci.x), std::round(ci.y));
+    d_context.call<void>("lineTo", ci.x, ci.y);
   }
   if (fillPolys()) {
     d_context.call<void>("closePath");
@@ -118,7 +118,7 @@ void MolDraw2DJS::drawEllipse(const Point2D &cds1, const Point2D &cds2) {
   h = h > 0 ? h : -1 * h;
 
   std::string col = DrawColourToSVG(colour());
-  unsigned int width = getDrawLineWidth();
+  double width = getDrawLineWidth();
   d_context.call<void>("beginPath");
   d_context.set("lineWidth", width);
   d_context.set("strokeStyle", col);
