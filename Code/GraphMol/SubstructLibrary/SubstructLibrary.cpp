@@ -132,7 +132,6 @@ void SubSearcher(const Query &in_query, const Bits &bits,
                  const bool needs_rings, int &counter, const int maxResults,
                  std::vector<unsigned int> *idxs) {
   Query query(in_query);
-    return;
   MatchVectType matchVect;
   for (unsigned int idx = start; idx < end; idx += numThreads) {
     if (!bits.check(idx)) {
@@ -333,6 +332,7 @@ std::vector<unsigned int> SubstructLibrary::getMatches(
   internalGetMatches(query, *mols, fps, startIdx, endIdx, recursionPossible,
                      useChirality, useQueryQueryMatches, numThreads, maxResults,
                      &idxs);
+  return idxs;
 }
 
 unsigned int SubstructLibrary::countMatches(const ROMol &query,
