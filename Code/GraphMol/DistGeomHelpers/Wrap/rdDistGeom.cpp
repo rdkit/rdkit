@@ -435,7 +435,10 @@ BOOST_PYTHON_MODULE(rdDistGeom) {
            "will be done on this) from a Numpy array")
       .def("SetCPCI", &RDKit::setCPCI,
            "set the customised pairwise Columb-like interaction to atom pairs."
-           "used during structural minimisation stage");
+           "used during structural minimisation stage")
+      .def_readwrite("forceTransAmides",
+                     &RDKit::DGeomHelpers::EmbedParameters::forceTransAmides,
+                     "constrain amide bonds to be trans");
   docString =
       "Use distance geometry to obtain multiple sets of \n\
  coordinates for a molecule\n\

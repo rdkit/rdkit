@@ -32,6 +32,8 @@
 #include <RDGeneral/FileParseException.h>
 #include <ForceField/ForceField.h>
 #include <GraphMol/MolAlign/AlignMolecules.h>
+#include <GraphMol/MolTransforms/MolTransforms.h>
+
 #include <cmath>
 #include <RDGeneral/Exceptions.h>
 
@@ -2344,6 +2346,85 @@ void testGithub3667() {
   delete mol;
 }
 
+void testForceTransAmides() {
+  auto mol = "CC(=O)NC"_smiles;
+  TEST_ASSERT(mol);
+  mol->addAtom(new Atom(1));
+  mol->addBond(3, 5, Bond::BondType::SINGLE);
+  MolOps::sanitizeMol(*mol);
+  MolOps::addHs(*mol);
+#if 0
+  // worth leaving this here just to allow looking at the conformers if anything goes wrong later
+  {
+    DGeomHelpers::EmbedParameters params;
+    params.forceTransAmides = true;
+    params.randomSeed = 0xf00d;
+    params.useExpTorsionAnglePrefs = false;
+    params.useBasicKnowledge = true;
+    auto cids = DGeomHelpers::EmbedMultipleConfs(*mol, 10, params);
+    SDWriter w("amide.sdf");
+    for (auto cid : cids) {
+      TEST_ASSERT(cid >= 0);
+      auto conf = mol->getConformer(cid);
+      auto tors = MolTransforms::getDihedralDeg(conf, 0, 1, 3, 4);
+      if (fabs(fabs(tors) - 180) > 5) {
+        w.write(*mol, cid);
+        std::cerr << cid << " TORS: " << tors << std::endl;
+        if (fabs(fabs(tors) - 180) > 40) {
+          std::cerr << "---------- DM " << std::endl;
+          double *dm = MolOps::get3DDistanceMat(*mol, cid);
+          auto nAtoms = mol->getNumAtoms();
+          for (unsigned int i = 0; i < nAtoms; ++i) {
+            for (unsigned int j = 0; j < nAtoms; ++j) {
+              std::cerr << " " << std::setprecision(3) << std::setw(5)
+                        << dm[i * nAtoms + j];
+            }
+            std::cerr << std::endl;
+          }
+        }
+      }
+      // TEST_ASSERT(fabs(fabs(tors) - 180) < 5);
+    }
+    w.flush();
+  }
+#endif
+  {
+    DGeomHelpers::EmbedParameters params;
+    params.forceTransAmides = true;
+    params.randomSeed = 0xf00d;
+    params.useExpTorsionAnglePrefs = false;
+    params.useBasicKnowledge = true;
+    auto cids = DGeomHelpers::EmbedMultipleConfs(*mol, 10, params);
+    for (auto cid : cids) {
+      TEST_ASSERT(cid >= 0);
+      auto conf = mol->getConformer(cid);
+      auto tors = MolTransforms::getDihedralDeg(conf, 0, 1, 3, 4);
+      TEST_ASSERT(fabs(fabs(tors) - 180) < 30);
+      tors = MolTransforms::getDihedralDeg(conf, 2, 1, 3, 5);
+      TEST_ASSERT(fabs(fabs(tors) - 180) < 30);
+    }
+  }
+  {  // make sure we can find at least one non-trans
+    DGeomHelpers::EmbedParameters params;
+    params.forceTransAmides = false;
+    params.randomSeed = 0xf00d;
+    params.useExpTorsionAnglePrefs = false;
+    params.useBasicKnowledge = true;
+    auto cids = DGeomHelpers::EmbedMultipleConfs(*mol, 10, params);
+    bool foundOne = false;
+    for (auto cid : cids) {
+      TEST_ASSERT(cid >= 0);
+      auto conf = mol->getConformer(cid);
+      auto tors = MolTransforms::getDihedralDeg(conf, 0, 1, 3, 4);
+      if (fabs(fabs(tors) - 180) > 50) {
+        foundOne = true;
+        break;
+      }
+    }
+    TEST_ASSERT(foundOne);
+  }
+}
+
 void testSymmetryPruning() {
   auto mol = "CCOC(C)(C)C"_smiles;
   TEST_ASSERT(mol);
@@ -2578,6 +2659,9 @@ int main() {
   testSymmetryPruning();
 
 #endif
+  BOOST_LOG(rdInfoLog) << "\t---------------------------------\n";
+  BOOST_LOG(rdInfoLog) << "\t Force trans amides.\n";
+  testForceTransAmides();
 
   BOOST_LOG(rdInfoLog) << "\t---------------------------------\n";
   BOOST_LOG(rdInfoLog) << "\t test missing Hs warning.\n";

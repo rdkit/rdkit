@@ -78,18 +78,19 @@ namespace DGeomHelpers {
   basinThresh    set the basin threshold for the DGeom force field,
                  (this shouldn't normally be altered in client code).
   onlyHeavyAtomsForRMS  only use the heavy atoms when doing RMS filtering
-  boundsMat	custom bound matrix to specify upper and lower bounds of atom
-  pairs embedFragmentsSeparately	embed each fragment of molecule in turn
+  boundsMat      custom bound matrix to specify upper and lower bounds of atom
+                 pairs
+  embedFragmentsSeparately	embed each fragment of molecule in turn
   useSmallRingTorsions	optional torsions to improve small ring conformer
-  sampling
-
+                sampling
   useMacrocycleTorsions	optional torsions to improve macrocycle conformer
-  sampling useMacrocycle14config  If 1-4 distances bound heuristics for
-  macrocycles is used
-
+                sampling
+  useMacrocycle14config  If 1-4 distances bound heuristics for
+                macrocycles is used
   CPCI	custom columbic interactions between atom pairs
   callback	      void pointer to a function for reporting progress,
                   will be called with the current iteration number.
+  forceTransAmides   constrain amide bonds to be trans.
   useSymmetryForPruning   use molecule symmetry when doing the RMSD pruning.
                           NOTE that for reasons of computational efficiency,
                           setting this will also set onlyHeavyAtomsForRMS to
@@ -124,6 +125,7 @@ struct RDKIT_DISTGEOMHELPERS_EXPORT EmbedParameters {
   bool useMacrocycle14config{false};
   std::shared_ptr<std::map<std::pair<unsigned int, unsigned int>, double>> CPCI;
   void (*callback)(unsigned int);
+  bool forceTransAmides{true};
   bool useSymmetryForPruning{true};
   EmbedParameters()
       : boundsMat(nullptr),

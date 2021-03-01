@@ -55,7 +55,8 @@ RDKIT_DISTGEOMHELPERS_EXPORT void initBoundsMat(DistGeom::BoundsMatPtr mmat,
 */
 RDKIT_DISTGEOMHELPERS_EXPORT void setTopolBounds(
     const ROMol &mol, DistGeom::BoundsMatPtr mmat, bool set15bounds = true,
-    bool scaleVDW = false, bool useMacrocycle14config = false);
+    bool scaleVDW = false, bool useMacrocycle14config = false,
+    bool forceTransAmides = true);
 
 /*! \overload for experimental torsion angle preferences
  */
@@ -63,7 +64,8 @@ RDKIT_DISTGEOMHELPERS_EXPORT void setTopolBounds(
     const ROMol &mol, DistGeom::BoundsMatPtr mmat,
     std::vector<std::pair<int, int>> &bonds,
     std::vector<std::vector<int>> &angles, bool set15bounds = true,
-    bool scaleVDW = false, bool useMacrocycle14config = false);
+    bool scaleVDW = false, bool useMacrocycle14config = false,
+    bool forceTransAmides = true);
 
 //! generate the vectors of bonds and angles used by (ET)KDG
 RDKIT_DISTGEOMHELPERS_EXPORT void collectBondsAndAngles(
