@@ -1,3 +1,38 @@
+# Release_2020.09.5
+(Changes relative to Release_2020.09.4)
+
+## Acknowledgements
+Michael Banck, Jason Biggs, Ivan Chernyshov, Nicholas Firth, Eisuke Kawashima
+Steven Kearnes, Brian Kelley, Ricardo Rodriguez Schmidt, Edward Williams
+
+## Bug Fixes:
+  - Docs/Book: Unexpected unicode character makes pdflatex build fail
+ (github #3738 from mbanck)
+  - Test suite failures if eigen3 is not available
+ (github #3740 from mbanck)
+  - bonds no longer highlighted in substruct matches in jupyter
+ (github #3762 from greglandrum)
+  - SubstanceGroup output doesn't correctly quote " symbols
+ (github #3768 from greglandrum)
+  - MolToSmarts inverts direction of dative bond
+ (github #3774 from IvanChernyshov)
+  - Fix pillow error in IPythonConsole.py
+ (github #3783 from skearnes)
+  - lock swig version in MacOS CI builds
+ (github #3789 from greglandrum)
+  - DrawMorganBit errors when useSVG is False
+ (github #3796 from ncfirth)
+  - SubstructLibrary Cached Smiles Holders have bad behavior with bad smiles
+ (github #3797 from bp-kelley)
+  - MolFromSmiles('[He]') produces a diradical helium atom
+ (github #3805 from jasondbiggs)
+  - NaNs from AUTOCORR2D descriptor
+ (github #3806 from greglandrum)
+  - MaeMolSupplier throws an invariant exception on parsing an "undefined" chirality label
+ (github #3815 from ricrogz)
+  - AddHs creates H atom with nan coordinates on edge case 2D structure
+ (github #3854 from ricrogz)
+
 # Release_2020.09.4
 (Changes relative to Release_2020.09.3)
 
