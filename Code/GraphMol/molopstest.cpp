@@ -7,6 +7,12 @@
 //  which is included in the file license.txt, found at the root
 //  of the RDKit source tree.
 //
+#include <algorithm>
+#include <iostream>
+#include <map>
+#include <math.h>
+#include <random>
+
 #include <RDGeneral/test.h>
 #include <RDGeneral/utils.h>
 #include <RDGeneral/Invariant.h>
@@ -21,11 +27,6 @@
 #include <GraphMol/FileParsers/MolSupplier.h>
 #include <GraphMol/FileParsers/MolWriters.h>
 #include <GraphMol/Substruct/SubstructMatch.h>
-
-#include <iostream>
-#include <map>
-#include <algorithm>
-#include <random>
 
 #ifndef M_PI
 #define M_PI 3.14159265358979323846
@@ -7951,6 +7952,53 @@ void testRemoveAndTrackIsotopes() {
   BOOST_LOG(rdInfoLog) << "Finished" << std::endl;
 }
 
+void testGithub3854() {
+  BOOST_LOG(rdInfoLog)
+      << "-----------------------\n Testing github issue 3854: "
+         "AddHs creates H atom with nan coordinates on edge case 2D structure"
+      << std::endl;
+
+  std::string molb = R"CTAB(
+     RDKit          2D
+
+  7  8  0  0  1  0  0  0  0  0999 V2000
+    5.0014    0.4125    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    4.1764    0.4125    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    3.3514    0.4125    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    2.9389    1.1271    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    3.3514    1.8412    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    4.1764    1.8412    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    4.5889    1.1271    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+  2  1  1  1
+  7  1  1  1
+  2  3  1  0
+  2  7  1  0
+  3  4  1  0
+  4  5  1  0
+  5  6  1  0
+  7  6  1  0
+M  END)CTAB";
+  bool sanitize = true;
+  bool removeHs = false;
+  std::unique_ptr<ROMol> m(MolBlockToMol(molb, sanitize, removeHs));
+  TEST_ASSERT(m);
+  TEST_ASSERT(m->getNumAtoms() == 7);
+
+  bool explicitOnly = false;
+  bool addCoords = true;
+  std::vector<unsigned> onlyOnAtoms = {1, 6};
+  std::unique_ptr<ROMol> m2(
+      MolOps::addHs(*m, explicitOnly, addCoords, &onlyOnAtoms));
+  TEST_ASSERT(m2);
+  TEST_ASSERT(m2->getNumAtoms() == 9);
+
+  auto conf = m2->getConformer();
+  for (auto i = 7; i < 9; ++i) {
+    auto atom_pos = conf.getAtomPos(i);
+    TEST_ASSERT(!isnan(atom_pos.x) && !isnan(atom_pos.y) && !isnan(atom_pos.z));
+  }
+}
+
 #ifdef RDK_USE_URF
 void testRingFamilies() {
   BOOST_LOG(rdInfoLog)
@@ -8007,7 +8055,6 @@ int main() {
   RDLog::InitLogs();
   // boost::logging::enable_logs("rdApp.debug");
 
-#if 1
   test1();
   test2();
   test3();
@@ -8115,8 +8162,8 @@ int main() {
   testGithub1990();
   testPotentialStereoBonds();
   testRingFamilies();
-#endif
   testRemoveAndTrackIsotopes();
+  testGithub3854();
 
   return 0;
 }
