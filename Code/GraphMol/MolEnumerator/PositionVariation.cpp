@@ -23,6 +23,9 @@ void PositionVariationOp::initFromMol() {
   if (!dp_mol) {
     return;
   }
+  if (!dp_mol->hasProp(detail::idxPropName)) {
+    detail::preserveOrigIndices(*dp_mol);
+  }
   for (const auto bond : dp_mol->bonds()) {
     std::string endpts;
     std::string attach;

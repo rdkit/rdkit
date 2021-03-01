@@ -527,3 +527,65 @@ M  END
     CHECK(bundle.size() == 0);
   }
 }
+
+TEST_CASE("multiple enumeration points 2", "[MolEnumerator][bug]") {
+  auto mol1 = R"CTAB(
+  Mrv2014 02182116082D          
+
+  0  0  0     0  0            999 V3000
+M  V30 BEGIN CTAB
+M  V30 COUNTS 15 14 0 0 0
+M  V30 BEGIN ATOM
+M  V30 1 C -2.1474 10.0453 0 0
+M  V30 2 C -3.481 9.2753 0 0
+M  V30 3 C -3.481 7.7352 0 0
+M  V30 4 C -2.1474 6.9652 0 0
+M  V30 5 C -0.8137 7.7352 0 0
+M  V30 6 C -0.8137 9.2753 0 0
+M  V30 7 N 0.6334 9.802 0 0
+M  V30 8 C 0.7204 7.3118 0 0
+M  V30 9 C 1.5815 8.5885 0 0
+M  V30 10 * -3.0365 9.0186 0 0
+M  V30 11 O -3.0365 11.3286 0 0
+M  V30 12 C 1.0579 11.2824 0 0
+M  V30 13 O -0.0119 12.3901 0 0
+M  V30 14 * 1.151 7.9501 0 0
+M  V30 15 C 1.151 10.2601 0 0
+M  V30 END ATOM
+M  V30 BEGIN BOND
+M  V30 1 1 1 2
+M  V30 2 2 2 3
+M  V30 3 1 3 4
+M  V30 4 2 4 5
+M  V30 5 1 5 6
+M  V30 6 2 1 6
+M  V30 7 1 7 9
+M  V30 8 1 7 6
+M  V30 9 1 5 8
+M  V30 10 2 8 9
+M  V30 11 1 10 11 ENDPTS=(3 2 3 1) ATTACH=ANY
+M  V30 12 1 7 12
+M  V30 13 1 12 13
+M  V30 14 1 14 15 ENDPTS=(2 8 9) ATTACH=ANY
+M  V30 END BOND
+M  V30 LINKNODE 1 2 2 12 7 12 13
+M  V30 END CTAB
+M  END
+)CTAB"_ctab;
+  std::vector<std::string> tsmis = {
+      "Cc1cn(CO)c2cc(O)ccc12", "Cc1cn(CCO)c2cc(O)ccc12",
+      "Cc1cc2ccc(O)cc2n1CO",   "Cc1cc2ccc(O)cc2n1CCO",
+      "Cc1cn(CO)c2ccc(O)cc12", "Cc1cn(CCO)c2ccc(O)cc12",
+      "Cc1cc2cc(O)ccc2n1CO",   "Cc1cc2cc(O)ccc2n1CCO",
+      "Cc1cn(CO)c2c(O)cccc12", "Cc1cn(CCO)c2c(O)cccc12",
+      "Cc1cc2cccc(O)c2n1CO",   "Cc1cc2cccc(O)c2n1CCO"};
+  SECTION("test2") {
+    auto bundle = MolEnumerator::enumerate(*mol1);
+    CHECK(bundle.size() == tsmis.size());
+    for (const auto &molp : bundle.getMols()) {
+      auto smi = MolToSmiles(*molp);
+      // std::cerr << "\"" << smi << "\"," << std::endl;
+      CHECK(std::find(tsmis.begin(), tsmis.end(), smi) != tsmis.end());
+    }
+  }
+}

@@ -146,7 +146,7 @@ std::string toJSON(const RGroupRow &rgr, const std::string &prefix) {
 std::string toJSON(const RGroupRows &rows, const std::string &prefix) {
   std::string res = prefix + "[\n";
   auto rowPrefix = prefix + "  ";
-  for (const auto row : rows) {
+  for (const auto &row : rows) {
     res += toJSON(row, rowPrefix) + ",\n";
   }
   res.erase(res.end() - 2, res.end());
@@ -168,7 +168,7 @@ std::string toJSON(const RGroupColumn &rgr, const std::string &prefix) {
 std::string toJSON(const RGroupColumns &cols, const std::string &prefix) {
   std::string res = prefix + "[\n";
   auto colPrefix = prefix + "  ";
-  for (const auto col : cols) {
+  for (const auto &col : cols) {
     auto fmt = boost::format{"  \"%1%\": %2%"} % (col.first) %
                (toJSON(col.second, colPrefix));
     res += prefix + fmt.str() + ",\n";

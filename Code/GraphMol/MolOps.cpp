@@ -257,27 +257,27 @@ void adjustHs(RWMol &mol) {
 }
 
 void assignRadicals(RWMol &mol) {
-  for (ROMol::AtomIterator ai = mol.beginAtoms(); ai != mol.endAtoms(); ++ai) {
+  for (auto atom : mol.atoms()) {
     // we only put automatically assign radicals to things that
     // don't have them already and don't have implicit Hs:
-    if (!(*ai)->getNoImplicit() || (*ai)->getNumRadicalElectrons() ||
-        !(*ai)->getAtomicNum()) {
+    if (!atom->getNoImplicit() || atom->getNumRadicalElectrons() ||
+        !atom->getAtomicNum()) {
       continue;
     }
     double accum = 0.0;
     RWMol::OEDGE_ITER beg, end;
-    boost::tie(beg, end) = mol.getAtomBonds(*ai);
+    boost::tie(beg, end) = mol.getAtomBonds(atom);
     while (beg != end) {
-      accum += mol[*beg]->getValenceContrib(*ai);
+      accum += mol[*beg]->getValenceContrib(atom);
       ++beg;
     }
-    accum += (*ai)->getNumExplicitHs();
+    accum += atom->getNumExplicitHs();
     int totalValence = static_cast<int>(accum + 0.1);
-    int chg = (*ai)->getFormalCharge();
+    int chg = atom->getFormalCharge();
     int nOuter =
-        PeriodicTable::getTable()->getNouterElecs((*ai)->getAtomicNum());
+        PeriodicTable::getTable()->getNouterElecs(atom->getAtomicNum());
     int baseCount = 8;
-    if ((*ai)->getAtomicNum() == 1) {
+    if (atom->getAtomicNum() == 1 || atom->getAtomicNum() == 2) {
       baseCount = 2;
     }
 
@@ -287,7 +287,7 @@ void assignRadicals(RWMol &mol) {
       numRadicals = 0;
       // can the atom be "hypervalent"?  (was github #447)
       const INT_VECT &valens =
-          PeriodicTable::getTable()->getValenceList((*ai)->getAtomicNum());
+          PeriodicTable::getTable()->getValenceList(atom->getAtomicNum());
       if (valens.size() > 1) {
         for (auto val : valens) {
           if (val - totalValence + chg >= 0) {
@@ -302,7 +302,7 @@ void assignRadicals(RWMol &mol) {
     if (numRadicals2 >= 0) {
       numRadicals = std::min(numRadicals, numRadicals2);
     }
-    (*ai)->setNumRadicalElectrons(numRadicals);
+    atom->setNumRadicalElectrons(numRadicals);
   }
 }
 

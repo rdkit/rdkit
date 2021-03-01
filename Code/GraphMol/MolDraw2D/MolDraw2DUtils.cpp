@@ -133,6 +133,7 @@ void updateDrawerParamsFromJSON(MolDraw2D &drawer, const std::string &json) {
   PT_OPT_GET(atomLabelDeuteriumTritium);
   PT_OPT_GET(dummiesAreAttachments);
   PT_OPT_GET(circleAtoms);
+  PT_OPT_GET(splitBonds);
   PT_OPT_GET(continuousHighlight);
   PT_OPT_GET(fillHighlights);
   PT_OPT_GET(highlightRadius);
@@ -158,6 +159,8 @@ void updateDrawerParamsFromJSON(MolDraw2D &drawer, const std::string &json) {
   PT_OPT_GET(rotate);
   PT_OPT_GET(addAtomIndices);
   PT_OPT_GET(addBondIndices);
+  PT_OPT_GET(isotopeLabels);
+  PT_OPT_GET(dummyIsotopeLabels);
   PT_OPT_GET(addStereoAnnotation);
   PT_OPT_GET(atomHighlightsAreCircles);
   PT_OPT_GET(centreMoleculesBeforeDrawing);

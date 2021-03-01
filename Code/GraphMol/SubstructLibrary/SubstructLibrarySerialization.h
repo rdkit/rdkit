@@ -151,9 +151,9 @@ void serialize(Archive &ar, RDKit::PatternHolder &pattern_holder,
       pattern_holder.getNumBits() != RDKit::PatternHolder::defaultNumBits()) {
     ar &pattern_holder.getNumBits();
   } else if (Archive::is_loading::value) {
-    try { 
+    try {
       ar &pattern_holder.getNumBits();
-    } catch (boost::archive::archive_exception) {
+    } catch (boost::archive::archive_exception &) {
       pattern_holder.getNumBits() = RDKit::PatternHolder::defaultNumBits();
     }
   }

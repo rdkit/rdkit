@@ -15,9 +15,11 @@
 #include <GraphMol/SmilesParse/SmilesParse.h>
 #include <GraphMol/Substruct/SubstructMatch.h>
 
+#include <RDGeneral/BoostStartInclude.h>
 #include <boost/dynamic_bitset.hpp>
 #include <boost/tuple/tuple.hpp>
 #include <boost/tuple/tuple_comparison.hpp>
+#include <RDGeneral/BoostEndInclude.h>
 
 #include <GraphMol/Fingerprints/FingerprintUtil.h>
 

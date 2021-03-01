@@ -93,11 +93,11 @@ bool assignBondDirs(RWMol& mol, INT_PAIR_VECT& zBondPairs,
                     INT_PAIR_VECT& eBondPairs) {
   // bonds to assign
   std::set<int> pending;
-  for (const auto pair : zBondPairs) {
+  for (const auto& pair : zBondPairs) {
     pending.insert(pair.first);
     pending.insert(pair.second);
   }
-  for (const auto pair : eBondPairs) {
+  for (const auto& pair : eBondPairs) {
     pending.insert(pair.first);
     pending.insert(pair.second);
   }
@@ -138,7 +138,7 @@ bool assignBondDirs(RWMol& mol, INT_PAIR_VECT& zBondPairs,
         for (int _ = 0; _ < 2; _++) {
           INT_PAIR_VECT* _rules = _ == 0 ? &zBondPairs : &eBondPairs;
           Bond::BondDir _dir = _ == 0 ? dir : otherDir;
-          for (const auto pair : *_rules) {
+          for (const auto& pair : *_rules) {
             int other = -1;
             if (pair.first == curBondIdx) {
               other = pair.second;
@@ -1872,7 +1872,7 @@ std::string MolToInchi(const ROMol& mol, ExtraInchiReturnValues& rv,
       // std::sort(neighbors.begin(), neighbors.end());
       unsigned char nid = 0;
       // std::cerr<<" at: "<<atom->getIdx();
-      for (const auto p : neighbors) {
+      for (const auto& p : neighbors) {
         stereo0D.neighbor[nid++] = p.second;
         // std::cerr<<" "<<p.second;
       }

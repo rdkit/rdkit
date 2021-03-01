@@ -2002,6 +2002,7 @@ void testGithub1227() {
     TEST_ASSERT(cids.size() == 1);
 
     params.onlyHeavyAtomsForRMS = false;  // the old default behavior
+    params.useSymmetryForPruning = false;
     cids = DGeomHelpers::EmbedMultipleConfs(*m, 10, params);
     TEST_ASSERT(cids.size() == 6);
 
@@ -2320,6 +2321,7 @@ void testGithub3019() {
 
 namespace {
 void throwerror(unsigned int notUsedHere) {
+  RDUNUSED_PARAM(notUsedHere);
   throw ValueErrorException("embedder is abortable");
 }
 }  // namespace
@@ -2422,6 +2424,24 @@ void testForceTransAmides() {
     TEST_ASSERT(foundOne);
   }
 }
+
+void testSymmetryPruning() {
+  auto mol = "CCOC(C)(C)C"_smiles;
+  TEST_ASSERT(mol);
+  MolOps::addHs(*mol);
+  DGeomHelpers::EmbedParameters params;
+  params.useSymmetryForPruning = true;
+  params.onlyHeavyAtomsForRMS = true;
+  params.pruneRmsThresh = 0.5;
+  params.randomSeed = 0xf00d;
+  auto cids = DGeomHelpers::EmbedMultipleConfs(*mol, 50, params);
+  TEST_ASSERT(cids.size() == 1);
+
+  params.useSymmetryForPruning = false;
+  cids = DGeomHelpers::EmbedMultipleConfs(*mol, 50, params);
+  TEST_ASSERT(cids.size() == 3);
+}
+
 void testMissingHsWarning() {
   auto mol = "CC"_smiles;
   TEST_ASSERT(mol);
@@ -2633,6 +2653,11 @@ int main() {
   BOOST_LOG(rdInfoLog) << "\t---------------------------------\n";
   BOOST_LOG(rdInfoLog) << "\t Disabling fragmentation.\n";
   testDisableFragmentation();
+
+  BOOST_LOG(rdInfoLog) << "\t---------------------------------\n";
+  BOOST_LOG(rdInfoLog) << "\t Using symmetry in conformation pruning.\n";
+  testSymmetryPruning();
+
 #endif
   BOOST_LOG(rdInfoLog) << "\t---------------------------------\n";
   BOOST_LOG(rdInfoLog) << "\t Force trans amides.\n";

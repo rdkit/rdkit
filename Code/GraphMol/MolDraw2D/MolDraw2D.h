@@ -202,6 +202,9 @@ struct RDKIT_MOLDRAW2D_EXPORT MolDrawOptions {
       false;  // toggles replacing 2H with D and 3H with T
   bool dummiesAreAttachments = false;  // draws "breaks" at dummy atoms
   bool circleAtoms = true;             // draws circles under highlighted atoms
+  bool splitBonds = false;             // split bonds into per atom segments
+                                       // most useful for dynamic manipulation of drawing
+                                       // especially for svg
   DrawColour highlightColour{1, 0.5, 0.5, 1.0};  // default highlight color
   bool continuousHighlight = true;  // highlight by drawing an outline
                                     // *underneath* the molecule
@@ -272,6 +275,8 @@ struct RDKIT_MOLDRAW2D_EXPORT MolDrawOptions {
                         // before drawing.
   bool addAtomIndices = false;  // adds atom indices to drawings.
   bool addBondIndices = false;  // adds bond indices to drawings.
+  bool isotopeLabels = true;  // adds isotope to non-dummy atoms.
+  bool dummyIsotopeLabels = true;  // adds isotope labels to dummy atoms.
 
   bool addStereoAnnotation = false;       // adds E/Z and R/S to drawings.
   bool atomHighlightsAreCircles = false;  // forces atom highlights always to be
@@ -657,6 +662,19 @@ class RDKIT_MOLDRAW2D_EXPORT MolDraw2D {
   virtual bool supportsAnnotations() { return true; }
   virtual void drawAnnotation(const AnnotationType &annotation);
 
+  bool hasActiveAtmIdx() { return activeAtmIdx1_>=0; }
+  int getActiveAtmIdx1() { return activeAtmIdx1_; }
+  int getActiveAtmIdx2() { return activeAtmIdx2_; }
+  void setActiveAtmIdx(int at_idx1 = -1, int at_idx2 = -1) {
+    at_idx1 = (at_idx1 < 0 ? -1 : at_idx1);
+    at_idx2 = (at_idx2 < 0 ? -1 : at_idx2);
+    if (at_idx2 >= 0 && at_idx1 < 0) {
+      std::swap(at_idx1, at_idx2);
+    }
+    activeAtmIdx1_ = at_idx1;
+	activeAtmIdx2_ = at_idx2;
+  }
+
  protected:
   std::unique_ptr<DrawText> text_drawer_;
 
@@ -669,6 +687,8 @@ class RDKIT_MOLDRAW2D_EXPORT MolDraw2D {
   int x_offset_, y_offset_;  // translation in screen coordinates
   bool fill_polys_;
   int activeMolIdx_;
+  int activeAtmIdx1_;
+  int activeAtmIdx2_;
 
   DrawColour curr_colour_;
   DashPattern curr_dash_;

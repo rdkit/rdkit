@@ -425,6 +425,11 @@ BOOST_PYTHON_MODULE(rdDistGeom) {
           "useMacrocycleTorsions",
           &RDKit::DGeomHelpers::EmbedParameters::useMacrocycleTorsions,
           "impose macrocycle torsion angle preferences")
+      .def_readwrite(
+          "useSymmetryForPruning",
+          &RDKit::DGeomHelpers::EmbedParameters::useSymmetryForPruning,
+          "use molecule symmetry when doing the RMSD pruning. Note that this "
+          "option automatically also sets onlyHeavyAtomsForRMS to true.")
       .def("SetBoundsMat", &RDKit::setBoundsMatrix,
            "set the distance-bounds matrix to be used (no triangle smoothing "
            "will be done on this) from a Numpy array")
