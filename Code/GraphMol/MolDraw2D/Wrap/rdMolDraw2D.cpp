@@ -25,10 +25,6 @@
 #include <cairo.h>
 #include <GraphMol/MolDraw2D/MolDraw2DCairo.h>
 #endif
-#ifdef RDK_BUILD_QT_SUPPORT
-#include <GraphMol/MolDraw2D/MolDraw2DQt.h>
-#include <QPainter>
-#endif
 
 namespace python = boost::python;
 
@@ -555,17 +551,6 @@ void setDrawerColour(RDKit::MolDraw2D &self, python::tuple tpl) {
   self.setColour(pyTupleToDrawColour(tpl));
 }
 
-#ifdef RDK_BUILD_QT_SUPPORT
-MolDraw2DQt *moldrawFromQPainter(int width, int height, unsigned long ptr,
-                                 int panelWidth, int panelHeight) {
-  if (!ptr) {
-    throw_value_error("QPainter pointer is null");
-  }
-  QPainter *qptr = reinterpret_cast<QPainter *>(ptr);
-  return new MolDraw2DQt(width, height, qptr, panelWidth, panelHeight);
-}
-#endif
-
 void updateParamsHelper(MolDraw2D *obj, std::string json) {
   MolDraw2DUtils::updateDrawerParamsFromJSON(*obj, json);
 }
@@ -937,20 +922,6 @@ BOOST_PYTHON_MODULE(rdMolDraw2D) {
            "return the PNG data as a string")
       .def("WriteDrawingText", &RDKit::MolDraw2DCairo::writeDrawingText,
            "write the PNG data to the named file");
-#endif
-#ifdef RDK_BUILD_QT_SUPPORT
-  docString = "Qt molecule drawer";
-  python::class_<RDKit::MolDraw2DQt, python::bases<RDKit::MolDraw2D>,
-                 boost::noncopyable>("MolDraw2DQt", docString.c_str(),
-                                     python::no_init);
-  python::def("MolDraw2DFromQPainter_", RDKit::moldrawFromQPainter,
-              (python::arg("width"), python::arg("height"),
-               python::arg("pointer_to_QPainter"),
-               python::arg("panelWidth") = -1, python::arg("panelHeight") = -1),
-              "Returns a MolDraw2DQt instance set to use a QPainter.\nUse "
-              "sip.unwrapinstance(qptr) to get the required pointer "
-              "information. Please note that this is somewhat fragile.",
-              python::return_value_policy<python::manage_new_object>());
 #endif
   docString =
       "Does some cleanup operations on the molecule to prepare it to draw "
