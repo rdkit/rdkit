@@ -707,7 +707,6 @@ void testTautomerQueries() {
 
 int main() {
   RDLog::InitLogs();
-    /*
 #if 1
   test1();
   test2();
@@ -726,7 +725,5 @@ int main() {
   testTautomerQueries();
 #endif
 #endif
-     */
-    testTautomerQueries();
   return 0;
 }
