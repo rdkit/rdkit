@@ -331,16 +331,31 @@ void setHydrogenCoords(ROMol *mol, unsigned int hydIdx, unsigned int heavyIdx) {
           // we're in flatland
           // this was github #908
           // We're in a 2D conformation, put the H between the two neighbors
-          // that have the widest angle between them:
+          // that have the widest angle between them. Unless the two are
+          // opposite ends of a straight line through the heavy atom,
+          // which would make the H overlap with the heavy atom.
+          // In such case, set it on the opposite direction to the 3rd neighbor.
           double minDot = nbr1Vect.dotProduct(nbr2Vect);
-          dirVect = nbr1Vect + nbr2Vect;
+          if (fabs(minDot + 1) < 1e-4) {
+            dirVect = -nbr3Vect;
+          } else {
+            dirVect = nbr1Vect + nbr2Vect;
+          }
           if (nbr2Vect.dotProduct(nbr3Vect) < minDot) {
             minDot = nbr2Vect.dotProduct(nbr3Vect);
-            dirVect = nbr2Vect + nbr3Vect;
+            if (fabs(minDot + 1) < 1e-4) {
+              dirVect = -nbr1Vect;
+            } else {
+              dirVect = nbr2Vect + nbr3Vect;
+            }
           }
           if (nbr1Vect.dotProduct(nbr3Vect) < minDot) {
             minDot = nbr1Vect.dotProduct(nbr3Vect);
-            dirVect = nbr1Vect + nbr3Vect;
+            if (fabs(minDot + 1) < 1e-4) {
+              dirVect = -nbr2Vect;
+            } else {
+              dirVect = nbr1Vect + nbr3Vect;
+            }
           }
           dirVect *= -1;
         }
