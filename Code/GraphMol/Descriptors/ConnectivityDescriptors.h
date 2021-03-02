@@ -1,5 +1,5 @@
 //
-//  Copyright (C) 2012 Greg Landrum
+//  Copyright (C) 2012-2021 Greg Landrum
 //
 //   @@ All Rights Reserved @@
 //  This file is part of the RDKit.
@@ -171,6 +171,14 @@ const std::string kappa2Version = "1.1.0";
 */
 RDKIT_DESCRIPTORS_EXPORT double calcKappa3(const ROMol &mol);
 const std::string kappa3Version = "1.1.0";
+
+//! calculate the Kier Phi value for a molecule
+//! From Quantitative Structure-Activity Relationships 8, 221–224 (1989).
+/*!
+  \param mol           the molecule of interest
+*/
+RDKIT_DESCRIPTORS_EXPORT double calcPhi(const ROMol &mol);
+const std::string PhiVersion = "1.0.0";
 
 namespace detail {
 RDKIT_DESCRIPTORS_EXPORT void hkDeltas(const ROMol &mol,

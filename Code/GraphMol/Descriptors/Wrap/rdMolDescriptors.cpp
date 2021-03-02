@@ -1463,6 +1463,10 @@ BOOST_PYTHON_MODULE(rdMolDescriptors) {
               (python::arg("mol")));
   python::scope().attr("_CalcKappa3_version") =
       RDKit::Descriptors::kappa3Version;
+  docString =
+      "From Quantitative Structure-Activity Relationships 8, 221–224 (1989).";
+  python::def("CalcPhi", RDKit::Descriptors::calcPhi, (python::arg("mol")));
+  python::scope().attr("_CalcPhi_version") = RDKit::Descriptors::PhiVersion;
 
   docString = "Returns the MACCS keys for a molecule as an ExplicitBitVect";
   python::def("GetMACCSKeysFingerprint",
