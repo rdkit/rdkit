@@ -1482,3 +1482,19 @@ TEST_CASE("needsHs function", "[chemistry]") {
     CHECK(!MolOps::needsHs(*m));
   }
 }
+
+TEST_CASE(
+    "github #3330: incorrect number of radicals electrons calculated for "
+    "metals",
+    "[chemistry][metals]") {
+  SECTION("basics") {
+    std::vector<std::pair<std::string, unsigned int>> data = {
+        {"[Mn+2]", 1}, {"[Mn+1]", 0}, {"[Mn]", 1}, {"[Mn-1]", 0},
+        {"[C]", 4},    {"[C+1]", 3},  {"[C-1]", 3}};
+    for (const auto &pr : data) {
+      std::unique_ptr<ROMol> m(SmilesToMol(pr.first));
+      REQUIRE(m);
+      CHECK(m->getAtomWithIdx(0)->getNumRadicalElectrons() == pr.second);
+    }
+  }
+}
