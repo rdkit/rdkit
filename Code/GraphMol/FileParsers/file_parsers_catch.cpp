@@ -3041,3 +3041,46 @@ M  END)CTAB"_ctab;
     CHECK(m->getBondBetweenAtoms(3, 5)->getBondDir() == Bond::BondDir::NONE);
   }
 }
+
+TEST_CASE("Hydrogen bonds in CTABs") {
+  SECTION("basics") {
+    auto m = R"CTAB(
+  Mrv2014 03022114422D          
+
+  0  0  0     0  0            999 V3000
+M  V30 BEGIN CTAB
+M  V30 COUNTS 8 8 0 0 0
+M  V30 BEGIN ATOM
+M  V30 1 C -5.4583 -0.125 0 0
+M  V30 2 C -4.1247 0.645 0 0
+M  V30 3 C -2.791 -0.125 0 0
+M  V30 4 C -1.4573 0.645 0 0
+M  V30 5 O -2.791 -1.665 0 0
+M  V30 6 C -6.792 0.645 0 0
+M  V30 7 O -5.4583 -1.665 0 0
+M  V30 8 H -4.1247 -2.435 0 0
+M  V30 END ATOM
+M  V30 BEGIN BOND
+M  V30 1 1 1 2
+M  V30 2 1 2 3
+M  V30 3 1 3 4
+M  V30 4 2 3 5
+M  V30 5 1 1 6
+M  V30 6 1 1 7
+M  V30 7 1 7 8
+M  V30 8 10 5 8
+M  V30 END BOND
+M  V30 END CTAB
+M  END
+)CTAB"_ctab;
+    REQUIRE(m);
+    REQUIRE(m->getBondBetweenAtoms(4, 7));
+    CHECK(m->getBondBetweenAtoms(4, 7)->getBondType() ==
+          Bond::BondType::HYDROGEN);
+    auto mb = MolToV3KMolBlock(*m);
+    CHECK(mb.find("V30 8 10 5 8") != std::string::npos);
+    CHECK(MolToSmiles(*m) ==
+          "CC1=O~[H]OC(C)C1");  // the SMILES writer still doesn't know what to
+                                // do with it
+  }
+}

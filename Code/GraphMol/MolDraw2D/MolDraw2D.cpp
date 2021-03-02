@@ -2908,7 +2908,7 @@ void drawDativeBond(MolDraw2D &d2d, const Bond &bond, const Point2D &cds1,
 
 void drawBondLine(MolDraw2D &d2d, const Bond &bond, const Point2D &cds1,
                   const Point2D &cds2, const DrawColour &col1,
-                  const DrawColour &col2, bool clearAIdx=true) {
+                  const DrawColour &col2, bool clearAIdx = true) {
   if (!d2d.drawOptions().splitBonds) {
     d2d.setActiveAtmIdx(bond.getBeginAtomIdx(), bond.getEndAtomIdx());
     d2d.drawLine(cds1, cds2, col1, col2);
@@ -2922,13 +2922,13 @@ void drawBondLine(MolDraw2D &d2d, const Bond &bond, const Point2D &cds1,
   d2d.drawLine(cds1, mid, col1, col1);
   d2d.setActiveAtmIdx(bond.getEndAtomIdx());
   d2d.drawLine(mid, cds2, col2, col2);
-    if (clearAIdx) {
-      d2d.setActiveAtmIdx();
-    }
+  if (clearAIdx) {
+    d2d.setActiveAtmIdx();
+  }
 }
 
 void drawBondLine(MolDraw2D &d2d, const Bond &bond, const Point2D &cds1,
-                  const Point2D &cds2, bool clearAIdx=true) {
+                  const Point2D &cds2, bool clearAIdx = true) {
   if (!d2d.drawOptions().splitBonds) {
     d2d.drawLine(cds1, cds2);
     if (clearAIdx) {
@@ -3021,6 +3021,17 @@ void drawNormalBond(MolDraw2D &d2d, const Bond &bond, bool highlight_bond,
           d2d.drawOptions().scaleHighlightBondWidth;
     }
     drawBondLine(d2d, bond, at1_cds, at2_cds, col1, col2);
+    d2d.drawOptions().scaleBondWidth = orig_slw;
+    d2d.setDash(noDash);
+  } else if (Bond::HYDROGEN == bt) {
+    d2d.setDash(dots);
+    bool orig_slw = d2d.drawOptions().scaleBondWidth;
+    if (highlight_bond) {
+      d2d.drawOptions().scaleBondWidth =
+          d2d.drawOptions().scaleHighlightBondWidth;
+    }
+    drawBondLine(d2d, bond, at1_cds, at2_cds, DrawColour(0.2, 0.2, 0.2),
+                 DrawColour(0.2, 0.2, 0.2));
     d2d.drawOptions().scaleBondWidth = orig_slw;
     d2d.setDash(noDash);
   } else {
@@ -4032,8 +4043,9 @@ string MolDraw2D::getAtomSymbol(const RDKit::Atom &atom,
       postText.push_back(h);
     }
 
-    if (0 != iso && ((drawOptions().isotopeLabels && atom.getAtomicNum() != 0) ||
-        (drawOptions().dummyIsotopeLabels && atom.getAtomicNum() == 0))) {
+    if (0 != iso &&
+        ((drawOptions().isotopeLabels && atom.getAtomicNum() != 0) ||
+         (drawOptions().dummyIsotopeLabels && atom.getAtomicNum() == 0))) {
       // isotope always comes before the symbol
       preText.push_back(std::string("<sup>") + std::to_string(iso) +
                         std::string("</sup>"));

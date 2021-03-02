@@ -2455,6 +2455,27 @@ void testMissingHsWarning() {
               std::string::npos);
 }
 
+void testHydrogenBondBasics() {
+  auto mol = "CC1O[H]O=C(C)C1 |H:4.3|"_smiles;
+  TEST_ASSERT(mol);
+  MolOps::addHs(*mol);
+
+  DistGeom::BoundsMatPtr mat(new DistGeom::BoundsMatrix(mol->getNumAtoms()));
+  DGeomHelpers::initBoundsMat(mat.get());
+  DGeomHelpers::setTopolBounds(*mol, mat);
+  DistGeom::triangleSmoothBounds(mat.get());
+  TEST_ASSERT(mat->getVal(3, 4) > 1.8);
+  TEST_ASSERT(mat->getVal(3, 4) < 2.2);
+  TEST_ASSERT(mat->getVal(4, 3) > 1.0);
+  TEST_ASSERT(mat->getVal(4, 3) < 1.5);
+
+  DGeomHelpers::EmbedParameters params = DGeomHelpers::ETKDGv3;
+  params.randomSeed = 0xf00d;
+  TEST_ASSERT(DGeomHelpers::EmbedMolecule(*mol, params) == 0);
+  auto dist = MolTransforms::getBondLength(mol->getConformer(), 3, 4);
+  TEST_ASSERT(dist < 1.5);
+}
+
 int main() {
   RDLog::InitLogs();
   BOOST_LOG(rdInfoLog)
@@ -2666,6 +2687,10 @@ int main() {
   BOOST_LOG(rdInfoLog) << "\t---------------------------------\n";
   BOOST_LOG(rdInfoLog) << "\t test missing Hs warning.\n";
   testMissingHsWarning();
+
+  BOOST_LOG(rdInfoLog) << "\t---------------------------------\n";
+  BOOST_LOG(rdInfoLog) << "\t basic H bond support.\n";
+  testHydrogenBondBasics();
 
 #ifdef EXECUTE_LONG_TESTS
   BOOST_LOG(rdInfoLog) << "\t---------------------------------\n";

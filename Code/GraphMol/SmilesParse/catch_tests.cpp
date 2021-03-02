@@ -805,3 +805,13 @@ TEST_CASE("github #3774: MolToSmarts inverts direction of dative bond",
     }
   }
 }
+
+TEST_CASE("Hydrogen bonds", "[smiles]") {
+  SECTION("basics") {
+    auto m = "CC1O[H]O=C(C)C1 |H:4.3|"_smiles;
+    REQUIRE(m);
+    REQUIRE(m->getBondBetweenAtoms(3, 4));
+    CHECK(m->getBondBetweenAtoms(3, 4)->getBondType() ==
+          Bond::BondType::HYDROGEN);
+  }
+}
