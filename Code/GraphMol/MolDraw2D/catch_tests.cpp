@@ -78,11 +78,11 @@ TEST_CASE("tag atoms in SVG", "[drawing][SVG]") {
     auto m1 = "C1N[C@@H]2OCC12"_smiles;
     REQUIRE(m1);
 
-    for (auto &it = m1->beginAtoms(); it != m1->endAtoms(); it++) {
+    for (auto it = m1->beginAtoms(); it != m1->endAtoms(); it++) {
       auto prop = boost::format("__prop_class_atom_%d") % (*it)->getIdx();
       (*it)->setProp("_tagClass", prop.str());
     }
-    for (auto &it = m1->beginBonds(); it != m1->endBonds(); it++) {
+    for (auto it = m1->beginBonds(); it != m1->endBonds(); it++) {
       auto prop = boost::format("__prop_class_bond_%d") % (*it)->getIdx();
       (*it)->setProp("_tagClass", prop.str());
     }
@@ -124,11 +124,11 @@ TEST_CASE("metadata in SVG", "[drawing][SVG]") {
     auto m1 = "C1N[C@@H]2OCC12"_smiles;
     REQUIRE(m1);
 
-    for (auto &it = m1->beginAtoms(); it != m1->endAtoms(); it++) {
+    for (auto it = m1->beginAtoms(); it != m1->endAtoms(); it++) {
       auto prop = boost::format("__prop_metadata_atom_%d") % (*it)->getIdx();
       (*it)->setProp("_metaData-atom-inject-prop", prop.str());
     }
-    for (auto &it = m1->beginBonds(); it != m1->endBonds(); it++) {
+    for (auto it = m1->beginBonds(); it != m1->endBonds(); it++) {
       auto prop = boost::format("__prop_metadata_bond_%d") % (*it)->getIdx();
       (*it)->setProp("_metaData-bond-inject-prop", prop.str());
     }
