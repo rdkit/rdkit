@@ -111,14 +111,14 @@ unsigned int SubstructLibrary::addMol(const ROMol &m) {
 namespace {
 //  Return true if the pattern contains a ring query
 bool query_needs_rings(const ROMol &in_query) {
-  for (auto &atom : in_query.atoms()) {
+  for (const auto &atom : in_query.atoms()) {
     if (atom->hasQuery()) {
       if (describeQuery(atom).find("Ring") != std::string::npos) {
         return true;
       }
     }
   }
-  for (auto &bond : in_query.bonds()) {
+  for (const auto &bond : in_query.bonds()) {
     if (bond->hasQuery()) {
       if (describeQuery(bond).find("Ring") != std::string::npos) {
         return true;
@@ -307,20 +307,6 @@ int internalGetMatches(const Query &query, MolHolderBase &mols,
 }  // namespace
 
 std::vector<unsigned int> SubstructLibrary::getMatches(
-    const ROMol &query, bool recursionPossible, bool useChirality,
-    bool useQueryQueryMatches, int numThreads, int maxResults) const {
-  return getMatches(query, 0, mols->size(), recursionPossible, useChirality,
-                    useQueryQueryMatches, numThreads, maxResults);
-}
-
-std::vector<unsigned int> SubstructLibrary::getMatches(
-    const TautomerQuery &query, bool recursionPossible, bool useChirality,
-    bool useQueryQueryMatches, int numThreads, int maxResults) const {
-  return getMatches(query, 0, mols->size(), recursionPossible, useChirality,
-                    useQueryQueryMatches, numThreads, maxResults);
-}
-
-std::vector<unsigned int> SubstructLibrary::getMatches(
     const ROMol &query, unsigned int startIdx, unsigned int endIdx,
     bool recursionPossible, bool useChirality, bool useQueryQueryMatches,
     int numThreads, int maxResults) const {
@@ -342,24 +328,6 @@ std::vector<unsigned int> SubstructLibrary::getMatches(
   return idxs;
 }
 
-unsigned int SubstructLibrary::countMatches(const ROMol &query,
-                                            bool recursionPossible,
-                                            bool useChirality,
-                                            bool useQueryQueryMatches,
-                                            int numThreads) const {
-  return countMatches(query, 0, mols->size(), recursionPossible, useChirality,
-                      useQueryQueryMatches, numThreads);
-}
-
-unsigned int SubstructLibrary::countMatches(const TautomerQuery &query,
-                                            bool recursionPossible,
-                                            bool useChirality,
-                                            bool useQueryQueryMatches,
-                                            int numThreads) const {
-  return countMatches(query, 0, mols->size(), recursionPossible, useChirality,
-                      useQueryQueryMatches, numThreads);
-}
-
 unsigned int SubstructLibrary::countMatches(
     const ROMol &query, unsigned int startIdx, unsigned int endIdx,
     bool recursionPossible, bool useChirality, bool useQueryQueryMatches,
@@ -376,25 +344,6 @@ unsigned int SubstructLibrary::countMatches(
   return internalGetMatches(query, *mols, fps, startIdx, endIdx,
                             recursionPossible, useChirality,
                             useQueryQueryMatches, numThreads, -1);
-}
-
-bool SubstructLibrary::hasMatch(const ROMol &query, bool recursionPossible,
-                                bool useChirality, bool useQueryQueryMatches,
-                                int numThreads) const {
-  const int maxResults = 1;
-  return getMatches(query, recursionPossible, useChirality,
-                    useQueryQueryMatches, numThreads, maxResults)
-             .size() > 0;
-}
-
-bool SubstructLibrary::hasMatch(const TautomerQuery &query,
-                                bool recursionPossible, bool useChirality,
-                                bool useQueryQueryMatches,
-                                int numThreads) const {
-  const int maxResults = 1;
-  return getMatches(query, recursionPossible, useChirality,
-                    useQueryQueryMatches, numThreads, maxResults)
-             .size() > 0;
 }
 
 bool SubstructLibrary::hasMatch(const ROMol &query, unsigned int startIdx,
