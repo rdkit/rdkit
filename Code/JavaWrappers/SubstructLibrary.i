@@ -69,7 +69,54 @@
   bool canSerialize() const {
     return RDKit::SubstructLibraryCanSerialize();
   }
+
+  std::vector<unsigned int> getMatches(const ROMol &query,
+				       bool recursionPossible = true,
+				       bool useChirality = true,
+				       bool useQueryQueryMatches = false,
+				       int numThreads = -1,
+				       int maxResults = -1) const {
+    return ($self)->getMatches(query, 0, ($self)->size(), recursionPossible, useChirality, useQueryQueryMatches,
+			       numThreads, maxResults);
+  }
+
+  std::vector<unsigned int> getMatches(const TautomerQuery &query,
+				       bool recursionPossible = true,
+				       bool useChirality = true,
+				       bool useQueryQueryMatches = false,
+				       int numThreads = -1,
+				       int maxResults = -1) const {
+    return ($self)->getMatches(query, 0, ($self)->size(), recursionPossible, useChirality, useQueryQueryMatches,
+			       numThreads, maxResults);
+  }
+
+  unsigned int countMatches(const ROMol &query, bool recursionPossible = true,
+			    bool useChirality = true,
+			    bool useQueryQueryMatches = false,
+			    int numThreads = -1) const {
+    return ($self)->countMatches(query, 0, ($self)->size(), recursionPossible, useChirality, useQueryQueryMatches, numThreads);
+  }
+
+  unsigned int countMatches(const TautomerQuery &query, bool recursionPossible = true,
+			    bool useChirality = true,
+			    bool useQueryQueryMatches = false,
+			    int numThreads = -1) const {
+    return ($self)->countMatches(query, 0, ($self)->size(), recursionPossible, useChirality, useQueryQueryMatches, numThreads);
+  }
+
+  bool hasMatch(const ROMol &query, bool recursionPossible = true,
+		bool useChirality = true, bool useQueryQueryMatches = false,
+		int numThreads = -1) const {
+    return ($self)->hasMatch(query, 0, ($self)->size(), recursionPossible, useChirality, useQueryQueryMatches, numThreads);
+  }
+
+  bool hasMatch(const TautomerQuery &query, bool recursionPossible = true,
+		bool useChirality = true, bool useQueryQueryMatches = false,
+		int numThreads = -1) const {
+    return ($self)->hasMatch(query, 0, ($self)->size(), recursionPossible, useChirality, useQueryQueryMatches, numThreads);
+  }
 }
+
 
 
 #ifdef SWIGJAVA
