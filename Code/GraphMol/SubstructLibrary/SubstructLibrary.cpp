@@ -30,10 +30,10 @@
 //
 #include "SubstructLibrary.h"
 #include <RDGeneral/RDThreads.h>
-//#ifdef RDK_THREADSAFE_SSS
+#ifdef RDK_THREADSAFE_SSS
 #include <thread>
 #include <future>
-//#endif
+#endif
 
 #include <GraphMol/Substruct/SubstructMatch.h>
 
