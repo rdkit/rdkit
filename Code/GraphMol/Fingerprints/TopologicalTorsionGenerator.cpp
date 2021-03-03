@@ -48,7 +48,10 @@ OutputType TopologicalTorsionAtomEnv<OutputType>::getBitId(
     const bool,  // hashResults
     const std::uint64_t fpSize) const {
   if (additionalOutput) {
-    auto bitId = fpSize ? (d_bitId % fpSize) : d_bitId;
+    OutputType bitId = d_bitId;
+    if (fpSize) {
+      bitId %= fpSize;
+    }
     if (additionalOutput->atomToBits || additionalOutput->atomCounts) {
       for (auto aid : d_atomPath) {
         if (additionalOutput->atomToBits) {

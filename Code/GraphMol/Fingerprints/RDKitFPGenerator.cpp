@@ -96,7 +96,10 @@ OutputType RDKitFPAtomEnv<OutputType>::getBitId(
     const AdditionalOutput *additionalOutput, const bool,  // hashResults
     const std::uint64_t fpSize) const {
   if (additionalOutput) {
-    OutputType bit_id = fpSize ? (d_bitId % fpSize) : d_bitId;
+    OutputType bit_id = d_bitId;
+    if (fpSize) {
+      bit_id %= fpSize;
+    }
     if (additionalOutput->bitPaths) {
       (*additionalOutput->bitPaths)[bit_id].push_back(d_bondPath);
     }

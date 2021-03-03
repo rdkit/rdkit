@@ -272,14 +272,6 @@ TEST_CASE("MorganGenerator bit info", "[fpgenerator][morgan]") {
       CHECK(*ao.atomCounts == expected2);
     }
   }
-
-  //   for (const auto &pr : *ao.bitInfoMap) {
-  //     std::cerr << pr.first << std::endl;
-  //     for (const auto &env : pr.second) {
-  //       std::cerr << "   " << env.first << " " << env.second << std::endl;
-  //     }
-  //   }
-  // }
 }
 
 TEST_CASE("RDKitGenerator bit info", "[fpgenerator][RDKit]") {
@@ -295,20 +287,15 @@ TEST_CASE("RDKitGenerator bit info", "[fpgenerator][RDKit]") {
   const int confId = -1;
 
   SECTION("folded bitInfo") {
-    AdditionalOutput::bitPathsType expected = {{1233,
-                                                {{
-                                                    0,
-                                                    1,
-                                                    2,
-                                                }}},
-                                               {1308, {{0}, {1}}},
-                                               {1339, {{2}}},
-                                               {1728, {{1, 2}}},
-                                               {1813,
-                                                {{
-                                                    0,
-                                                    1,
-                                                }}}};
+    // clang-format off
+    AdditionalOutput::bitPathsType expected = {
+          {1233, {{0, 1, 2}}},
+          {1308, {{0}, {1}}},
+          {1339, {{2}}},
+          {1728, {{1, 2}}},
+          {1813, {{0, 1}}}
+        };
+    // clang-format on
 
     {
       AdditionalOutput ao;
@@ -357,20 +344,15 @@ TEST_CASE("RDKitGenerator bit info", "[fpgenerator][RDKit]") {
   }
 
   SECTION("unfolded bitInfo") {
-    AdditionalOutput::bitPathsType expected = {{3977409745,
-                                                {{
-                                                    0,
-                                                    1,
-                                                    2,
-                                                }}},
-                                               {4275705116, {{0}, {1}}},
-                                               {4274652475, {{2}}},
-                                               {1524090560, {{1, 2}}},
-                                               {1940446997,
-                                                {{
-                                                    0,
-                                                    1,
-                                                }}}};
+    // clang-format off
+    AdditionalOutput::bitPathsType expected = {
+        {3977409745, {{0, 1, 2}}},
+        {4275705116, {{0}, {1}}},
+        {4274652475, {{2}}},
+        {1524090560, {{1, 2}}},
+        {1940446997, {{0, 1}}}
+      };
+    // clang-format on
 
     {
       AdditionalOutput ao;
@@ -431,20 +413,12 @@ TEST_CASE("TopologicalTorsionGenerator bit info", "[fpgenerator][TT]") {
 
   SECTION("folded bitInfo") {
     {
-      AdditionalOutput::bitPathsType expected = {{0,
-                                                  {{
-                                                      0,
-                                                      1,
-                                                      2,
-                                                      3,
-                                                  }}},
-                                                 {384,
-                                                  {{
-                                                      1,
-                                                      2,
-                                                      3,
-                                                      4,
-                                                  }}}};
+      // clang-format off
+      AdditionalOutput::bitPathsType expected = {
+          {0, {{0, 1, 2, 3}}},
+          {384, {{1, 2, 3, 4}}}
+      };
+      // clang-format on
       AdditionalOutput ao;
       ao.allocateBitPaths();
       std::unique_ptr<ExplicitBitVect> fp(fpGenerator->getFingerprint(
@@ -452,20 +426,13 @@ TEST_CASE("TopologicalTorsionGenerator bit info", "[fpgenerator][TT]") {
       CHECK(*ao.bitPaths == expected);
     }
     {
-      AdditionalOutput::bitPathsType expected = {{0,
-                                                  {{
-                                                      0,
-                                                      1,
-                                                      2,
-                                                      3,
-                                                  }}},
-                                                 {1920,
-                                                  {{
-                                                      1,
-                                                      2,
-                                                      3,
-                                                      4,
-                                                  }}}};
+      // clang-format off
+      AdditionalOutput::bitPathsType expected = {
+          {0, {{0, 1, 2, 3}}},
+          {1920, {{1, 2, 3, 4}}}
+      };
+      // clang-format on
+
       AdditionalOutput ao;
       ao.allocateBitPaths();
       std::unique_ptr<SparseIntVect<std::uint32_t>> fp(
@@ -505,20 +472,12 @@ TEST_CASE("TopologicalTorsionGenerator bit info", "[fpgenerator][TT]") {
 
   SECTION("unfolded bitInfo") {
     {
-      AdditionalOutput::bitPathsType expected = {{261685121,
-                                                  {{
-                                                      1,
-                                                      2,
-                                                      3,
-                                                      4,
-                                                  }}},
-                                                 {262078465,
-                                                  {{
-                                                      0,
-                                                      1,
-                                                      2,
-                                                      3,
-                                                  }}}};
+      // clang-format off
+      AdditionalOutput::bitPathsType expected = {
+          {261685121, {{1, 2, 3, 4}}},
+          {262078465, {{0, 1, 2, 3}}},
+      };
+      // clang-format on
       AdditionalOutput ao;
       ao.allocateBitPaths();
       std::unique_ptr<SparseBitVect> fp(fpGenerator->getSparseFingerprint(
@@ -526,20 +485,12 @@ TEST_CASE("TopologicalTorsionGenerator bit info", "[fpgenerator][TT]") {
       CHECK(*ao.bitPaths == expected);
     }
     {
-      AdditionalOutput::bitPathsType expected = {{4437590048,
-                                                  {{
-                                                      0,
-                                                      1,
-                                                      2,
-                                                      3,
-                                                  }}},
-                                                 {30073176097,
-                                                  {{
-                                                      1,
-                                                      2,
-                                                      3,
-                                                      4,
-                                                  }}}};
+      // clang-format off
+      AdditionalOutput::bitPathsType expected = {
+          {4437590048, {{0, 1, 2, 3}}},
+          {30073176097, {{1, 2, 3, 4}}}
+      };
+      // clang-format on
       AdditionalOutput ao;
       ao.allocateBitPaths();
       std::unique_ptr<SparseIntVect<std::uint64_t>> fp(
