@@ -21,9 +21,42 @@
 #endif
 
 #include <boost/format.hpp>
+#include <boost/algorithm/string.hpp>
 #include <sstream>
 
 namespace RDKit {
+namespace {
+template <class t_obj>
+void outputTagClasses(const t_obj *obj, std::ostream &d_os,
+	const std::string &d_activeClass) {
+	if (!d_activeClass.empty()) {
+		d_os<<" "<<d_activeClass;
+		}
+	if (obj->hasProp("_tagClass")) {
+		std::string value;
+		obj->getProp("_tagClass", value);
+		std::replace(value.begin(), value.end(), '\"', '_');
+		std::replace(value.begin(), value.end(), '\'', '_');
+		std::replace(value.begin(), value.end(), '.', '_');
+		d_os<<" "<<value;
+		}
+	}
+
+template <class t_obj>
+void outputMetaData(const t_obj *obj, std::ostream &d_os,
+	const std::string &d_activeClass) {
+	std::string value;
+	for (const auto &prop:obj->getPropList()) {
+		if (prop.length()<11||prop.rfind("_metaData-", 0)!=0) {
+			continue;
+			}
+		obj->getProp(prop, value);
+		boost::replace_all(value, "\"", "&quot;");
+		d_os<<" "<<prop.substr(10)<<"=\""<<value<<"\"";
+		}
+	}
+}
+
 std::string DrawColourToSVG(const DrawColour &col) {
   const char *convert = "0123456789ABCDEF";
   std::string res(7, ' ');
@@ -327,6 +360,8 @@ void MolDraw2DSVG::addMoleculeMetadata(const ROMol &mol, int confId) const {
          << " y=\"" << pos.y << "\""
          << " z=\"" << pos.z << "\"";
 
+    outputMetaData(atom, d_os, d_activeClass);
+
     d_os << " />" << std::endl;
   }
   for (const auto bond : mol.bonds()) {
@@ -337,6 +372,9 @@ void MolDraw2DSVG::addMoleculeMetadata(const ROMol &mol, int confId) const {
     d_os << " bond-smiles=\""
          << SmilesWrite::GetBondSmiles(bond, -1, doKekule, allBondsExplicit)
          << "\"";
+
+    outputMetaData(bond, d_os, d_activeClass);
+
     d_os << " />" << std::endl;
   }
   d_os << "</rdkit:mol></metadata>" << std::endl;
@@ -371,9 +409,7 @@ void MolDraw2DSVG::tagAtoms(const ROMol &mol, double radius,
            << " d='M " << a1pos.x << "," << a1pos.y << " L " << midp.x << ","
            << midp.y << "'";
       d_os << " class='bond-selector bond-" << this_idx << " atom-" << a_idx1;
-      if (!d_activeClass.empty()) {
-        d_os << " " << d_activeClass;
-      }
+      outputTagClasses(bond, d_os, d_activeClass);
       d_os << "'";
       d_os << " style='fill:#fff;stroke:#fff;stroke-width:"
            << boost::format("%.1f") % width
@@ -385,9 +421,7 @@ void MolDraw2DSVG::tagAtoms(const ROMol &mol, double radius,
            << " d='M " << midp.x << "," << midp.y << " L " << a2pos.x << ","
            << a2pos.y << "'";
       d_os << " class='bond-selector bond-" << this_idx << " atom-" << a_idx2;
-      if (!d_activeClass.empty()) {
-        d_os << " " << d_activeClass;
-      }
+      outputTagClasses(bond, d_os, d_activeClass);
       d_os << "'";
       d_os << " style='fill:#fff;stroke:#fff;stroke-width:"
            << boost::format("%.1f") % width
@@ -400,9 +434,7 @@ void MolDraw2DSVG::tagAtoms(const ROMol &mol, double radius,
            << a2pos.y << "'";
       d_os << " class='bond-selector bond-" << this_idx << " atom-" << a_idx1
            << " atom-" << a_idx2;
-      if (!d_activeClass.empty()) {
-        d_os << " " << d_activeClass;
-      }
+      outputTagClasses(bond, d_os, d_activeClass);
       d_os << "'";
       d_os << " style='fill:#fff;stroke:#fff;stroke-width:"
            << boost::format("%.1f") % width
@@ -419,9 +451,7 @@ void MolDraw2DSVG::tagAtoms(const ROMol &mol, double radius,
          << " cy='" << pos.y << "'"
          << " r='" << (scale() * radius) << "'";
     d_os << " class='atom-selector atom-" << this_idx;
-    if (d_activeClass != "") {
-      d_os << " " << d_activeClass;
-    }
+    outputTagClasses(at, d_os, d_activeClass);
     d_os << "'";
     d_os << " style='fill:#fff;stroke:#fff;stroke-width:1px;fill-opacity:0;"
             "stroke-opacity:0' ";
@@ -456,4 +486,5 @@ void MolDraw2DSVG::outputClasses() {
   }
   d_os << "' ";
 }
+
 }  // namespace RDKit

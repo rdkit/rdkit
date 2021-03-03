@@ -74,7 +74,105 @@ TEST_CASE("tag atoms in SVG", "[drawing][SVG]") {
     CHECK(text.find("atom-selector") != std::string::npos);
     CHECK(text.find("bond-selector") != std::string::npos);
   }
+  SECTION("inject prop to class") {
+    auto m1 = "C1N[C@@H]2OCC12"_smiles;
+    REQUIRE(m1);
+
+    for (auto atom : m1->atoms()) {
+      auto prop = boost::format("__prop_class_atom_%d") % atom->getIdx();
+	  atom->setProp("_tagClass", prop.str());
+    }
+    for (auto bond : m1->bonds()) {
+      auto prop = boost::format("__prop_class_bond_%d") % bond->getIdx();
+      bond->setProp("_tagClass", prop.str());
+    }
+
+    MolDraw2DSVG drawer(200, 200, -1, -1, NO_FREETYPE);
+    MolDraw2DUtils::prepareMolForDrawing(*m1);
+    drawer.drawMolecule(*m1);
+    drawer.tagAtoms(*m1);
+    drawer.finishDrawing();
+    std::string text = drawer.getDrawingText();
+    std::ofstream outs("testAtomTags_2.svg");
+    outs << text;
+    outs.flush();
+
+    size_t i = 0;
+    size_t c = 0;
+    while (true) {
+      auto i2 = text.find("__prop_class_atom_", i);
+	  if (i2==std::string::npos) {
+		  break;
+	  }
+      i = i2+1;
+      c++;
+    }
+    CHECK(c == 6);
+
+    i = 0;
+    c = 0;
+    while (true) {
+      auto i2 = text.find("__prop_class_bond_", i);
+	  if (i2==std::string::npos) {
+		  break;
+	  }
+      i = i2+1;
+      c++;
+    }
+    CHECK(c == 7);
+  }
 }
+
+TEST_CASE("metadata in SVG", "[drawing][SVG]") {
+  SECTION("inject prop to metada") {
+    auto m1 = "C1N[C@@H]2OCC12"_smiles;
+    REQUIRE(m1);
+
+    for (auto atom : m1->atoms()) {
+      auto prop = boost::format("__prop_metadata_atom_%d") % atom->getIdx();
+      atom->setProp("_metaData-atom-inject-prop", prop.str());
+    }
+    for (auto bond : m1->bonds()) {
+      auto prop = boost::format("__prop_metadata_bond_%d") % bond->getIdx();
+      bond->setProp("_metaData-bond-inject-prop", prop.str());
+    }
+
+    MolDraw2DSVG drawer(200, 200, -1, -1, NO_FREETYPE);
+    MolDraw2DUtils::prepareMolForDrawing(*m1);
+    drawer.drawMolecule(*m1);
+    drawer.addMoleculeMetadata(*m1);
+    drawer.finishDrawing();
+    std::string text = drawer.getDrawingText();
+    std::ofstream outs("testAtomTags_2.svg");
+    outs << text;
+    outs.flush();
+
+    size_t i = 0;
+    size_t c = 0;
+    while (true) {
+      auto i2 = text.find("atom-inject-prop=\"__prop_metadata_atom_", i);
+      if (i2 == std::string::npos) {
+        break;
+      }
+      i = i2 + 1;
+      c++;
+    }
+    CHECK(c == 6);
+
+    i = 0;
+    c = 0;
+    while (true) {
+      auto i2 = text.find("bond-inject-prop=\"__prop_metadata_bond_", i);
+      if (i2 == std::string::npos) {
+        break;
+      }
+      i = i2 + 1;
+      c++;
+    }
+    CHECK(c == 7);
+  }
+}
+
 TEST_CASE("contour data", "[drawing][conrec]") {
   auto m1 = "C1N[C@@H]2OCC12"_smiles;
   REQUIRE(m1);
