@@ -67,17 +67,24 @@ struct Bits {
     }
   }
 
-  Bits(const FPHolderBase *fps, const TautomerQuery &m, bool recursionPossible,
+  Bits(const FPHolderBase *fingerprints, const TautomerQuery &m, bool recursionPossible,
        bool useChirality, bool useQueryQueryMatches)
-      : fps(fps),
+      : fps(nullptr),
         recursionPossible(recursionPossible),
         useChirality(useChirality),
         useQueryQueryMatches(useQueryQueryMatches) {
-    if (fps) {
+    if (fingerprints) {
       const TautomerPatternHolder *tp =
-          dynamic_cast<const TautomerPatternHolder *>(fps);
-      PRECONDITION(tp, "TautomerQueries only support TautomerPatternHolders");
-      queryBits = m.patternFingerprintTemplate(tp->getNumBits());
+          dynamic_cast<const TautomerPatternHolder *>(fingerprints);
+        if(!tp) {
+            BOOST_LOG(rdWarningLog) << "Pattern fingerprints for tautomersearch aren't tautomer fingerprints, ignoring..." << std::endl;
+            queryBits = nullptr;
+            fps = nullptr;
+        }
+        else {
+            fps = fingerprints;
+            queryBits = m.patternFingerprintTemplate(tp->getNumBits());
+        }
     } else {
       queryBits = nullptr;
     }

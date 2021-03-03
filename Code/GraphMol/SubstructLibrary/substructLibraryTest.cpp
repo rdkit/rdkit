@@ -703,6 +703,16 @@ void testTautomerQueries() {
   auto tq = TautomerQuery::fromMol(*query);
   auto matches2 = sss.getMatches(*tq);
     TEST_ASSERT(matches2.size() == 1);
+    
+    SubstructLibrary sss2(sss);
+    addPatterns(sss, boost::make_shared<TautomerPatternHolder>());
+    matches2 = sss.getMatches(*tq);
+    TEST_ASSERT(matches2.size() == 1);
+    
+    // should work but throw logging errors
+    addPatterns(sss2);
+    matches2 = sss2.getMatches(*tq);
+    TEST_ASSERT(matches2.size() == 1);
 }
 
 int main() {
