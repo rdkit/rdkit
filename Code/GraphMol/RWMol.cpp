@@ -448,4 +448,13 @@ unsigned int RWMol::finishPartialBond(unsigned int atomIdx2, int bondBookmark,
   return addBond(bsp->getBeginAtomIdx(), atomIdx2, bondType);
 }
 
+void RWMol::beginBatchEdit() {
+  if (dp_delAtoms || dp_delBonds) {
+  }
+}
+void RWMol::commitBatchEdit() {
+  dp_delAtoms.release();
+  dp_delBonds.release();
+}
+
 }  // namespace RDKit

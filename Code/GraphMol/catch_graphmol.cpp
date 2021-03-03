@@ -1483,6 +1483,17 @@ TEST_CASE("needsHs function", "[chemistry]") {
   }
 }
 
+TEST_CASE("batch edits", "[editing]") {
+  SECTION("basics") {
+    auto m = "C1CCCO1"_smiles;
+    REQUIRE(m);
+    m->beginBatchEdit();
+    m->removeAtom(2);
+    m->removeAtom(3);
+    m->commitBatchEdit();
+    CHECK(MolToSmiles(*m) == "CC.O");
+  }
+}
 TEST_CASE(
     "github #3330: incorrect number of radicals electrons calculated for "
     "metals",

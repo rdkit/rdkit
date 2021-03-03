@@ -1,5 +1,5 @@
 //
-//  Copyright (C) 2003-2009 Greg Landrum and Rational Discovery LLC
+//  Copyright (C) 2003-2021 Greg Landrum and Rational Discovery LLC
 //
 //   @@ All Rights Reserved @@
 //  This file is part of the RDKit.
@@ -14,8 +14,10 @@
 */
 
 #include <RDGeneral/export.h>
-#ifndef __RD_RWMOL_H__
-#define __RD_RWMOL_H__
+#include <boost/dynamic_bitset.hpp>
+
+#ifndef RD_RWMOL_H
+#define RD_RWMOL_H
 
 // our stuff
 #include "ROMol.h"
@@ -211,8 +213,18 @@ class RDKIT_GRAPHMOL_EXPORT RWMol : public ROMol {
     numBonds = 0;
   };
 
+  void beginBatchEdit();
+  void abortBatchEdit(){
+    dp_delAtoms.release();
+    dp_delBonds.release();
+  };
+  void commitBatchEdit();
+  
  private:
   std::vector<Bond *> d_partialBonds;
+  std::unique_ptr<boost::dynamic_bitset<>> dp_delAtoms=nullptr;
+  std::unique_ptr<boost::dynamic_bitset<>> dp_delBonds=nullptr;
+  
   void destroy();
 };
 
