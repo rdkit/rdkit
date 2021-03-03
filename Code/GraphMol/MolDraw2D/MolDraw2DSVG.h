@@ -86,9 +86,6 @@ class RDKIT_MOLDRAW2D_EXPORT MolDraw2DSVG : public MolDraw2D {
   void initDrawing() override;
   void initTextDrawer(bool noFreetype) override;
 
-  template<class t_obj> void outputTagClasses(const t_obj *obj) const;
-  template<class t_obj> void outputMetaData(const t_obj *obj) const;
-
  protected:
   void drawBond(const ROMol &mol, const Bond *bond, int at1_idx, int at2_idx,
                 const std::vector<int> *highlight_atoms = nullptr,

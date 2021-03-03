@@ -78,13 +78,13 @@ TEST_CASE("tag atoms in SVG", "[drawing][SVG]") {
     auto m1 = "C1N[C@@H]2OCC12"_smiles;
     REQUIRE(m1);
 
-    for (auto it = m1->beginAtoms(); it != m1->endAtoms(); it++) {
-      auto prop = boost::format("__prop_class_atom_%d") % (*it)->getIdx();
-      (*it)->setProp("_tagClass", prop.str());
+    for (auto atom : m1->atoms()) {
+      auto prop = boost::format("__prop_class_atom_%d") % atom->getIdx();
+	  atom->setProp("_tagClass", prop.str());
     }
-    for (auto it = m1->beginBonds(); it != m1->endBonds(); it++) {
-      auto prop = boost::format("__prop_class_bond_%d") % (*it)->getIdx();
-      (*it)->setProp("_tagClass", prop.str());
+    for (auto bond : m1->bonds()) {
+      auto prop = boost::format("__prop_class_bond_%d") % bond->getIdx();
+      bond->setProp("_tagClass", prop.str());
     }
 
     MolDraw2DSVG drawer(200, 200, -1, -1, NO_FREETYPE);
@@ -101,7 +101,9 @@ TEST_CASE("tag atoms in SVG", "[drawing][SVG]") {
     size_t c = 0;
     while (true) {
       auto i2 = text.find("__prop_class_atom_", i);
-      if (i2 == std::string::npos) break;
+	  if (i2==std::string::npos) {
+		  break;
+	  }
       i = i2+1;
       c++;
     }
@@ -111,7 +113,9 @@ TEST_CASE("tag atoms in SVG", "[drawing][SVG]") {
     c = 0;
     while (true) {
       auto i2 = text.find("__prop_class_bond_", i);
-      if (i2 == std::string::npos) break;
+	  if (i2==std::string::npos) {
+		  break;
+	  }
       i = i2+1;
       c++;
     }
@@ -124,13 +128,13 @@ TEST_CASE("metadata in SVG", "[drawing][SVG]") {
     auto m1 = "C1N[C@@H]2OCC12"_smiles;
     REQUIRE(m1);
 
-    for (auto it = m1->beginAtoms(); it != m1->endAtoms(); it++) {
-      auto prop = boost::format("__prop_metadata_atom_%d") % (*it)->getIdx();
-      (*it)->setProp("_metaData-atom-inject-prop", prop.str());
+    for (auto atom : m1->atoms()) {
+      auto prop = boost::format("__prop_metadata_atom_%d") % atom->getIdx();
+      atom->setProp("_metaData-atom-inject-prop", prop.str());
     }
-    for (auto it = m1->beginBonds(); it != m1->endBonds(); it++) {
-      auto prop = boost::format("__prop_metadata_bond_%d") % (*it)->getIdx();
-      (*it)->setProp("_metaData-bond-inject-prop", prop.str());
+    for (auto bond : m1->bonds()) {
+      auto prop = boost::format("__prop_metadata_bond_%d") % bond->getIdx();
+      bond->setProp("_metaData-bond-inject-prop", prop.str());
     }
 
     MolDraw2DSVG drawer(200, 200, -1, -1, NO_FREETYPE);
@@ -147,7 +151,9 @@ TEST_CASE("metadata in SVG", "[drawing][SVG]") {
     size_t c = 0;
     while (true) {
       auto i2 = text.find("atom-inject-prop=\"__prop_metadata_atom_", i);
-      if (i2 == std::string::npos) break;
+      if (i2 == std::string::npos) {
+        break;
+      }
       i = i2 + 1;
       c++;
     }
@@ -157,7 +163,9 @@ TEST_CASE("metadata in SVG", "[drawing][SVG]") {
     c = 0;
     while (true) {
       auto i2 = text.find("bond-inject-prop=\"__prop_metadata_bond_", i);
-      if (i2 == std::string::npos) break;
+      if (i2 == std::string::npos) {
+        break;
+      }
       i = i2 + 1;
       c++;
     }
