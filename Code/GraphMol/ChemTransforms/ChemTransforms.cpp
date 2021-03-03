@@ -473,6 +473,15 @@ ROMol *replaceCore(const ROMol &mol, const ROMol &core,
       // add the bonds now, after we've finished the loop over neighbors:
       for (auto &newBond : newBonds) {
         newMol->addBond(newBond, true);
+        auto beginAtom = newBond->getBeginAtom();
+        auto endAtom = newBond->getEndAtom();
+        if (newMol->getNumConformers()) {
+          if (endAtom->getAtomicNum() == 0) {
+            MolOps::setHydrogenCoords(newMol, endAtom->getIdx(), beginAtom->getIdx());
+          } else {
+            MolOps::setHydrogenCoords(newMol, beginAtom->getIdx(), endAtom->getIdx());
+          }
+        }
       }
     }
   }

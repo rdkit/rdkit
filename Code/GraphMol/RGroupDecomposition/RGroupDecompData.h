@@ -317,6 +317,9 @@ struct RGroupDecompData {
     for (auto &i : atomsToAdd) {
       core.addAtom(i.second, false, true);
       core.addBond(i.first, i.second, Bond::SINGLE);
+      if (core.getNumConformers()) {
+        MolOps::setHydrogenCoords(&core, i.second->getIdx(), i.first->getIdx());
+      }
     }
     core.updatePropertyCache(false);  // this was github #1550
   }
@@ -360,6 +363,9 @@ struct RGroupDecompData {
     for (auto &i : atomsToAdd) {
       mol.addAtom(i.second, false, true);
       mol.addBond(i.first, i.second, Bond::SINGLE);
+      if (mol.getNumConformers()) {
+        MolOps::setHydrogenCoords(&mol, i.second->getIdx(), i.first->getIdx());
+      }
     }
 
     if (params.removeHydrogensPostMatch) {
