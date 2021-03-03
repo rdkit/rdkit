@@ -843,6 +843,12 @@ struct mol_wrapper {
         .def("SetStereoGroups", &ReadWriteMol::SetStereoGroups,
              (python::arg("stereo_groups")), "Set the stereo groups")
 
+        .def("BeginBatchEdit", &RWMol::beginBatchEdit, "starts batch editing")
+        .def("RollbackBatchEdit", &RWMol::rollbackBatchEdit,
+             "cancels batch editing")
+        .def("CommitBatchEdit", &RWMol::commitBatchEdit,
+             "finishes batch editing and makes the actual changes")
+
         // enable pickle support
         .def_pickle(mol_pickle_suite());
   };

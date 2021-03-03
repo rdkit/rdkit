@@ -14,7 +14,6 @@
 */
 
 #include <RDGeneral/export.h>
-#include <boost/dynamic_bitset.hpp>
 
 #ifndef RD_RWMOL_H
 #define RD_RWMOL_H

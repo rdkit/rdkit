@@ -6388,29 +6388,31 @@ CAS<~>
   def testBatchEdits(self):
     mol = Chem.MolFromSmiles("C1CCCO1")
 
-    rwmol = Chem.EditableMol(mol)
-    rwmol.BeginBatchEdit()
-    rwmol.RemoveAtom(2)
-    rwmol.RemoveAtom(3)
-    rwmol.CommitBatchEdit()
-    nmol = rwmol.GetMol()
-    self.assertEqual(Chem.MolToSmiles(nmol), "CCO")
+    for rwmol in [Chem.EditableMol(mol), Chem.RWMol(mol)]:
+      rwmol.BeginBatchEdit()
+      rwmol.RemoveAtom(2)
+      rwmol.RemoveAtom(3)
+      rwmol.CommitBatchEdit()
+      nmol = rwmol.GetMol()
+      self.assertEqual(Chem.MolToSmiles(nmol), "CCO")
 
-    rwmol = Chem.EditableMol(mol)
-    rwmol.BeginBatchEdit()
-    rwmol.RemoveAtom(3)
-    rwmol.RemoveBond(4, 0)
-    rwmol.CommitBatchEdit()
-    nmol = rwmol.GetMol()
-    self.assertEqual(Chem.MolToSmiles(nmol), "CCC.O")
+    for rwmol in [Chem.EditableMol(mol), Chem.RWMol(mol)]:
+      rwmol = Chem.EditableMol(mol)
+      rwmol.BeginBatchEdit()
+      rwmol.RemoveAtom(3)
+      rwmol.RemoveBond(4, 0)
+      rwmol.CommitBatchEdit()
+      nmol = rwmol.GetMol()
+      self.assertEqual(Chem.MolToSmiles(nmol), "CCC.O")
 
-    rwmol = Chem.EditableMol(mol)
-    rwmol.BeginBatchEdit()
-    rwmol.RemoveAtom(2)
-    rwmol.RemoveAtom(3)
-    rwmol.RollbackBatchEdit()
-    nmol = rwmol.GetMol()
-    self.assertEqual(Chem.MolToSmiles(nmol), "C1CCOC1")
+    for rwmol in [Chem.EditableMol(mol), Chem.RWMol(mol)]:
+      rwmol = Chem.EditableMol(mol)
+      rwmol.BeginBatchEdit()
+      rwmol.RemoveAtom(2)
+      rwmol.RemoveAtom(3)
+      rwmol.RollbackBatchEdit()
+      nmol = rwmol.GetMol()
+      self.assertEqual(Chem.MolToSmiles(nmol), "C1CCOC1")
 
 
 if __name__ == '__main__':
