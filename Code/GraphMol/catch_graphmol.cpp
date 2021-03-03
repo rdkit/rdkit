@@ -1484,17 +1484,34 @@ TEST_CASE("needsHs function", "[chemistry]") {
 }
 
 TEST_CASE("batch edits", "[editing]") {
-  SECTION("basics") {
+  SECTION("removeAtom") {
     auto m = "C1CCCO1"_smiles;
     REQUIRE(m);
     m->beginBatchEdit();
     m->removeAtom(2);
     m->removeAtom(3);
     m->commitBatchEdit();
-    CHECK(MolToSmiles(*m) == "CC.O");
+    CHECK(MolToSmiles(*m) == "CCO");
   }
-}
-TEST_CASE(
+  SECTION("removeAtom + removeBond") {
+    auto m = "C1CCCO1"_smiles;
+    REQUIRE(m);
+    m->beginBatchEdit();
+    m->removeAtom(3);
+    m->removeBond(4, 0);
+    m->commitBatchEdit();
+    CHECK(MolToSmiles(*m) == "CCC.O");
+  }
+  SECTION("rollback") {
+    auto m = "C1CCCO1"_smiles;
+    REQUIRE(m);
+    m->beginBatchEdit();
+    m->removeAtom(2);
+    m->removeAtom(3);
+    m->rollbackBatchEdit();
+    CHECK(MolToSmiles(*m) == "C1CCOC1");
+  }
+}TEST_CASE(
     "github #3330: incorrect number of radicals electrons calculated for "
     "metals",
     "[chemistry][metals]") {

@@ -48,7 +48,7 @@ class RDKIT_GRAPHMOL_EXPORT RWMol : public ROMol {
       : ROMol(other, quickCopy, confId) {
     d_partialBonds.clear();
   };
-  RWMol(const RWMol &other) : ROMol(other){};
+  RWMol(const RWMol &other) : ROMol(other) {};
   RWMol &operator=(const RWMol &);
 
   //! insert the atoms and bonds from \c other into this molecule
@@ -214,7 +214,7 @@ class RDKIT_GRAPHMOL_EXPORT RWMol : public ROMol {
   };
 
   void beginBatchEdit();
-  void abortBatchEdit(){
+  void rollbackBatchEdit(){
     dp_delAtoms.release();
     dp_delBonds.release();
   };
@@ -222,8 +222,6 @@ class RDKIT_GRAPHMOL_EXPORT RWMol : public ROMol {
   
  private:
   std::vector<Bond *> d_partialBonds;
-  std::unique_ptr<boost::dynamic_bitset<>> dp_delAtoms=nullptr;
-  std::unique_ptr<boost::dynamic_bitset<>> dp_delBonds=nullptr;
   
   void destroy();
 };

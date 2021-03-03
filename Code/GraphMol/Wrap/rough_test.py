@@ -1,5 +1,5 @@
 #
-#  Copyright (C) 2003-2019  Greg Landrum and Rational Discovery LLC
+#  Copyright (C) 2003-2021  Greg Landrum and Rational Discovery LLC
 #         All Rights Reserved
 #
 """ This is a rough coverage test of the python wrapper
@@ -6006,9 +6006,10 @@ M  END
     phenyl = Chem.MolFromSmiles("c1ccccc1")
 
     def numHsMatchingDummies(mol, core, match):
-      return sum([1 for qi, ai in enumerate(match)
-        if core.GetAtomWithIdx(qi).GetAtomicNum() == 0 and
-          mol.GetAtomWithIdx(ai).GetAtomicNum() == 1])
+      return sum([
+        1 for qi, ai in enumerate(match) if core.GetAtomWithIdx(qi).GetAtomicNum() == 0
+        and mol.GetAtomWithIdx(ai).GetAtomicNum() == 1
+      ])
 
     for mol, res in ((orthoMeta, 0), (ortho, 1), (meta, 1), (biphenyl, 2), (phenyl, 3)):
       mol = Chem.AddHs(mol)
@@ -6016,8 +6017,10 @@ M  END
       bestMatch = Chem.GetMostSubstitutedCoreMatch(mol, core, matches)
       self.assertEqual(numHsMatchingDummies(mol, core, bestMatch), res)
       ctrlCounts = sorted([numHsMatchingDummies(mol, core, match) for match in matches])
-      sortedCounts = [numHsMatchingDummies(mol, core, match)
-        for match in Chem.SortMatchesByDegreeOfCoreSubstitution(mol, core, matches)]
+      sortedCounts = [
+        numHsMatchingDummies(mol, core, match)
+        for match in Chem.SortMatchesByDegreeOfCoreSubstitution(mol, core, matches)
+      ]
       self.assertEqual(len(ctrlCounts), len(sortedCounts))
       self.assertTrue(all(ctrl == sortedCounts[i] for i, ctrl in enumerate(ctrlCounts)))
     with self.assertRaises(ValueError):
@@ -6381,6 +6384,33 @@ CAS<~>
         ms = [x for x in suppl if x is not None]
 
     RDLogger.EnableLog('rdApp.*')
+
+  def testBatchEdits(self):
+    mol = Chem.MolFromSmiles("C1CCCO1")
+
+    rwmol = Chem.EditableMol(mol)
+    rwmol.BeginBatchEdit()
+    rwmol.RemoveAtom(2)
+    rwmol.RemoveAtom(3)
+    rwmol.CommitBatchEdit()
+    nmol = rwmol.GetMol()
+    self.assertEqual(Chem.MolToSmiles(nmol), "CCO")
+
+    rwmol = Chem.EditableMol(mol)
+    rwmol.BeginBatchEdit()
+    rwmol.RemoveAtom(3)
+    rwmol.RemoveBond(4, 0)
+    rwmol.CommitBatchEdit()
+    nmol = rwmol.GetMol()
+    self.assertEqual(Chem.MolToSmiles(nmol), "CCC.O")
+
+    rwmol = Chem.EditableMol(mol)
+    rwmol.BeginBatchEdit()
+    rwmol.RemoveAtom(2)
+    rwmol.RemoveAtom(3)
+    rwmol.RollbackBatchEdit()
+    nmol = rwmol.GetMol()
+    self.assertEqual(Chem.MolToSmiles(nmol), "C1CCOC1")
 
 
 if __name__ == '__main__':
