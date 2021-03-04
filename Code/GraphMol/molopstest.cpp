@@ -8051,6 +8051,38 @@ void testRingFamilies() {
 void testRingFamilies() {}
 #endif
 
+void testSetTerminalAtomCoords() {
+  BOOST_LOG(rdInfoLog) << "-----------------------\n Testing adding "
+                          "coordinates to a terminal atom. "
+                       << std::endl;
+  auto mol = R"CTAB(
+     RDKit          2D
+
+  6  6  0  0  0  0  0  0  0  0999 V2000
+    1.5000    0.0000    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    0.7500   -1.2990    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -0.7500   -1.2990    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -1.5000    0.0000    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -0.7500    1.2990    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    0.7500    1.2990    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+  1  2  2  0
+  2  3  1  0
+  3  4  2  0
+  4  5  1  0
+  5  6  2  0
+  6  1  1  0
+M  END)CTAB"_ctab;
+  auto atom = new Atom(0);
+  auto idx = mol->addAtom(atom);
+  mol->addBond(idx, 0);
+  MolOps::setTerminalAtomCoords(static_cast<ROMol &>(*mol), idx, 0);
+  auto &coord = mol->getConformer().getAtomPos(idx);
+  TEST_ASSERT(coord.x > 2.499 && coord.x < 2.501);
+  TEST_ASSERT(coord.y > -0.001 && coord.y < 0.001);
+  TEST_ASSERT(coord.z > -0.001 && coord.z < 0.001);
+  BOOST_LOG(rdInfoLog) << "\tdone" << std::endl;
+}
+
 int main() {
   RDLog::InitLogs();
   // boost::logging::enable_logs("rdApp.debug");
@@ -8164,6 +8196,7 @@ int main() {
   testRingFamilies();
   testRemoveAndTrackIsotopes();
   testGithub3854();
+  testSetTerminalAtomCoords();
 
   return 0;
 }

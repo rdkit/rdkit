@@ -192,6 +192,18 @@ RDKIT_GRAPHMOL_EXPORT void addHs(RWMol &mol, bool explicitOnly = false,
                                  const UINT_VECT *onlyOnAtoms = nullptr,
                                  bool addResidueInfo = false);
 
+//! Sets Cartesian coordinates for a terminal atom.
+//! Useful for growing an atom off a molecule with sensible
+//! coordinates based on the geometry of the neighbor.
+/*!
+    \param mol       the molecule the atoms belong to
+    \param idx       index of the terminal atom whose coordinates are set
+    \param otherIdx  index of the bonded neighbor atom
+*/
+
+RDKIT_GRAPHMOL_EXPORT void setTerminalAtomCoords(ROMol &mol, unsigned int idx,
+                                                 unsigned int otherIdx);
+
 //! returns a copy of a molecule with hydrogens removed
 /*!
     \param mol          the molecule to remove Hs from
@@ -224,9 +236,6 @@ RDKIT_GRAPHMOL_EXPORT void addHs(RWMol &mol, bool explicitOnly = false,
        - the caller is responsible for <tt>delete</tt>ing the pointer this
    returns.
 */
-
-RDKIT_GRAPHMOL_EXPORT void setHydrogenCoords(ROMol *mol, unsigned int hydIdx,
-                                             unsigned int heavyIdx);
 
 RDKIT_GRAPHMOL_EXPORT ROMol *removeHs(const ROMol &mol,
                                       bool implicitOnly = false,

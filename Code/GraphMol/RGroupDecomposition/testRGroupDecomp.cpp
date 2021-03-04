@@ -2016,7 +2016,8 @@ void testNoAlignmentAndSymmetry() {
 void testAddedRGroupsHaveCoords() {
   BOOST_LOG(rdInfoLog)
       << "********************************************************\n";
-  BOOST_LOG(rdInfoLog) << "test added R groups have non-zero coords" << std::endl;
+  BOOST_LOG(rdInfoLog) << "test added R groups have non-zero coords"
+                       << std::endl;
   auto core = R"CTAB(
      RDKit          2D
 
@@ -2073,10 +2074,12 @@ M  END
         TEST_ASSERT(!(r2Coord.x > -1.e-4 && r2Coord.x < 1.e-4));
         TEST_ASSERT(!(r2Coord.y > -1.e-4 && r2Coord.y < 1.e-4));
         size_t nBonds = 0;
-        for (const auto &nbri : boost::make_iterator_range(rgdCore->getAtomNeighbors(atom))) {
+        for (const auto &nbri :
+             boost::make_iterator_range(rgdCore->getAtomNeighbors(atom))) {
           ++nBonds;
           const auto nbr = (*rgdCore)[nbri];
-          const auto bond = rgdCore->getBondBetweenAtoms(nbr->getIdx(), atom->getIdx());
+          const auto bond =
+              rgdCore->getBondBetweenAtoms(nbr->getIdx(), atom->getIdx());
           TEST_ASSERT(bond);
           auto &nbrCoord = rgdCore->getConformer().getAtomPos(nbr->getIdx());
           auto bondLen = (nbrCoord - r2Coord).length();

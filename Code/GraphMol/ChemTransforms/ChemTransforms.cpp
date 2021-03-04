@@ -477,9 +477,11 @@ ROMol *replaceCore(const ROMol &mol, const ROMol &core,
         auto endAtom = newBond->getEndAtom();
         if (newMol->getNumConformers()) {
           if (endAtom->getAtomicNum() == 0) {
-            MolOps::setHydrogenCoords(newMol, endAtom->getIdx(), beginAtom->getIdx());
+            MolOps::setTerminalAtomCoords(*newMol, endAtom->getIdx(),
+                                          beginAtom->getIdx());
           } else {
-            MolOps::setHydrogenCoords(newMol, beginAtom->getIdx(), endAtom->getIdx());
+            MolOps::setTerminalAtomCoords(*newMol, beginAtom->getIdx(),
+                                          endAtom->getIdx());
           }
         }
       }

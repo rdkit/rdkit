@@ -151,19 +151,19 @@ std::map<unsigned int, std::vector<unsigned int>> getIsoMap(const ROMol &mol) {
 
 namespace MolOps {
 
-void setHydrogenCoords(ROMol *mol, unsigned int hydIdx, unsigned int heavyIdx) {
+void setTerminalAtomCoords(ROMol &mol, unsigned int idx,
+                           unsigned int otherIdx) {
   // we will loop over all the coordinates
-  PRECONDITION(mol, "bad molecule");
-  PRECONDITION(heavyIdx != hydIdx, "degenerate atoms");
-  Atom *hydAtom = mol->getAtomWithIdx(hydIdx);
-  PRECONDITION(mol->getAtomDegree(hydAtom) == 1, "bad atom degree");
-  const Bond *bond = mol->getBondBetweenAtoms(heavyIdx, hydIdx);
+  PRECONDITION(otherIdx != idx, "degenerate atoms");
+  Atom *atom = mol.getAtomWithIdx(idx);
+  PRECONDITION(mol.getAtomDegree(atom) == 1, "bad atom degree");
+  const Bond *bond = mol.getBondBetweenAtoms(otherIdx, idx);
   PRECONDITION(bond, "no bond between atoms");
 
-  const Atom *heavyAtom = mol->getAtomWithIdx(heavyIdx);
+  const Atom *otherAtom = mol.getAtomWithIdx(otherIdx);
   double bondLength =
       PeriodicTable::getTable()->getRb0(1) +
-      PeriodicTable::getTable()->getRb0(heavyAtom->getAtomicNum());
+      PeriodicTable::getTable()->getRb0(otherAtom->getAtomicNum());
 
   RDGeom::Point3D dirVect(0, 0, 0);
 
@@ -176,22 +176,22 @@ void setHydrogenCoords(ROMol *mol, unsigned int hydIdx, unsigned int heavyIdx) {
   const Bond *nbrBond;
   ROMol::ADJ_ITER nbrIdx, endNbrs;
 
-  switch (heavyAtom->getDegree()) {
+  switch (otherAtom->getDegree()) {
     case 1:
       // --------------------------------------------------------------------------
       //   No other atoms present:
       // --------------------------------------------------------------------------
       // loop over the conformations and set the coordinates
-      for (auto cfi = mol->beginConformers(); cfi != mol->endConformers();
+      for (auto cfi = mol.beginConformers(); cfi != mol.endConformers();
            cfi++) {
         if ((*cfi)->is3D()) {
           dirVect.z = 1;
         } else {
           dirVect.x = 1;
         }
-        heavyPos = (*cfi)->getAtomPos(heavyIdx);
+        heavyPos = (*cfi)->getAtomPos(otherIdx);
         hydPos = heavyPos + dirVect * ((*cfi)->is3D() ? bondLength : 1.0);
-        (*cfi)->setAtomPos(hydIdx, hydPos);
+        (*cfi)->setAtomPos(idx, hydPos);
       }
       break;
 
@@ -199,17 +199,17 @@ void setHydrogenCoords(ROMol *mol, unsigned int hydIdx, unsigned int heavyIdx) {
       // --------------------------------------------------------------------------
       //  One other neighbor:
       // --------------------------------------------------------------------------
-      nbr1 = getAtomNeighborNot(mol, heavyAtom, hydAtom);
-      for (auto cfi = mol->beginConformers(); cfi != mol->endConformers();
+      nbr1 = getAtomNeighborNot(&mol, otherAtom, atom);
+      for (auto cfi = mol.beginConformers(); cfi != mol.endConformers();
            ++cfi) {
-        heavyPos = (*cfi)->getAtomPos(heavyIdx);
+        heavyPos = (*cfi)->getAtomPos(otherIdx);
         RDGeom::Point3D nbr1Pos = (*cfi)->getAtomPos(nbr1->getIdx());
         // get a normalized vector pointing away from the neighbor:
         nbr1Vect = nbr1Pos - heavyPos;
         if (fabs(nbr1Vect.lengthSq()) < 1e-4) {
           // no difference, which likely indicates that we have redundant atoms.
           // just put it on top of the heavy atom. This was #678
-          (*cfi)->setAtomPos(hydIdx, heavyPos);
+          (*cfi)->setAtomPos(idx, heavyPos);
           continue;
         }
         nbr1Vect.normalize();
@@ -217,7 +217,7 @@ void setHydrogenCoords(ROMol *mol, unsigned int hydIdx, unsigned int heavyIdx) {
 
         // ok, nbr1Vect points away from the other atom, figure out where
         // this H goes:
-        switch (heavyAtom->getHybridization()) {
+        switch (otherAtom->getHybridization()) {
           case Atom::SP3:
             // get a perpendicular to nbr1Vect:
             if ((*cfi)->is3D()) {
@@ -229,7 +229,7 @@ void setHydrogenCoords(ROMol *mol, unsigned int hydIdx, unsigned int heavyIdx) {
             tform.SetRotation((180 - 109.471) * M_PI / 180., perpVect);
             dirVect = tform * nbr1Vect;
             hydPos = heavyPos + dirVect * ((*cfi)->is3D() ? bondLength : 1.0);
-            (*cfi)->setAtomPos(hydIdx, hydPos);
+            (*cfi)->setAtomPos(idx, hydPos);
             break;
           case Atom::SP2:
             // default 3D position is to just take an arbitrary perpendicular
@@ -241,11 +241,11 @@ void setHydrogenCoords(ROMol *mol, unsigned int hydIdx, unsigned int heavyIdx) {
             }
             if (nbr1->getDegree() > 1) {
               // can we use the neighboring atom to establish a perpendicular?
-              nbrBond = mol->getBondBetweenAtoms(heavyIdx, nbr1->getIdx());
+              nbrBond = mol.getBondBetweenAtoms(otherIdx, nbr1->getIdx());
               if (nbrBond->getIsAromatic() ||
                   nbrBond->getBondType() == Bond::DOUBLE ||
                   nbrBond->getIsConjugated()) {
-                nbr2 = getAtomNeighborNot(mol, nbr1, heavyAtom);
+                nbr2 = getAtomNeighborNot(&mol, nbr1, otherAtom);
                 nbr2Vect =
                     nbr1Pos.directionVector((*cfi)->getAtomPos(nbr2->getIdx()));
                 perpVect = nbr2Vect.crossProduct(nbr1Vect);
@@ -256,20 +256,20 @@ void setHydrogenCoords(ROMol *mol, unsigned int hydIdx, unsigned int heavyIdx) {
             tform.SetRotation(60. * M_PI / 180., perpVect);
             dirVect = tform * nbr1Vect;
             hydPos = heavyPos + dirVect * ((*cfi)->is3D() ? bondLength : 1.0);
-            (*cfi)->setAtomPos(hydIdx, hydPos);
+            (*cfi)->setAtomPos(idx, hydPos);
             break;
           case Atom::SP:
             // just lay the H along the vector:
             dirVect = nbr1Vect;
             hydPos = heavyPos + dirVect * ((*cfi)->is3D() ? bondLength : 1.0);
-            (*cfi)->setAtomPos(hydIdx, hydPos);
+            (*cfi)->setAtomPos(idx, hydPos);
             break;
           default:
             // FIX: handle other hybridizations
             // for now, just lay the H along the vector:
             dirVect = nbr1Vect;
             hydPos = heavyPos + dirVect * ((*cfi)->is3D() ? bondLength : 1.0);
-            (*cfi)->setAtomPos(hydIdx, hydPos);
+            (*cfi)->setAtomPos(idx, hydPos);
         }
       }
       break;
@@ -277,30 +277,30 @@ void setHydrogenCoords(ROMol *mol, unsigned int hydIdx, unsigned int heavyIdx) {
       // --------------------------------------------------------------------------
       // Two other neighbors:
       // --------------------------------------------------------------------------
-      boost::tie(nbrIdx, endNbrs) = mol->getAtomNeighbors(heavyAtom);
+      boost::tie(nbrIdx, endNbrs) = mol.getAtomNeighbors(otherAtom);
       while (nbrIdx != endNbrs) {
-        if (*nbrIdx != hydIdx) {
+        if (*nbrIdx != idx) {
           if (!nbr1) {
-            nbr1 = mol->getAtomWithIdx(*nbrIdx);
+            nbr1 = mol.getAtomWithIdx(*nbrIdx);
           } else {
-            nbr2 = mol->getAtomWithIdx(*nbrIdx);
+            nbr2 = mol.getAtomWithIdx(*nbrIdx);
           }
         }
         ++nbrIdx;
       }
       TEST_ASSERT(nbr1);
       TEST_ASSERT(nbr2);
-      for (auto cfi = mol->beginConformers(); cfi != mol->endConformers();
+      for (auto cfi = mol.beginConformers(); cfi != mol.endConformers();
            ++cfi) {
         // start along the average of the two vectors:
-        heavyPos = (*cfi)->getAtomPos(heavyIdx);
+        heavyPos = (*cfi)->getAtomPos(otherIdx);
         nbr1Vect = heavyPos - (*cfi)->getAtomPos(nbr1->getIdx());
         nbr2Vect = heavyPos - (*cfi)->getAtomPos(nbr2->getIdx());
         if (fabs(nbr1Vect.lengthSq()) < 1e-4 ||
             fabs(nbr2Vect.lengthSq()) < 1e-4) {
           // no difference, which likely indicates that we have redundant atoms.
           // just put it on top of the heavy atom. This was #678
-          (*cfi)->setAtomPos(hydIdx, heavyPos);
+          (*cfi)->setAtomPos(idx, heavyPos);
           continue;
         }
         nbr1Vect.normalize();
@@ -309,7 +309,7 @@ void setHydrogenCoords(ROMol *mol, unsigned int hydIdx, unsigned int heavyIdx) {
 
         dirVect.normalize();
         if ((*cfi)->is3D()) {
-          switch (heavyAtom->getHybridization()) {
+          switch (otherAtom->getHybridization()) {
             case Atom::SP3:
               // get the perpendicular to the neighbors:
               nbrPerp = nbr1Vect.crossProduct(nbr2Vect);
@@ -320,26 +320,26 @@ void setHydrogenCoords(ROMol *mol, unsigned int hydIdx, unsigned int heavyIdx) {
               tform.SetRotation((109.471 / 2) * M_PI / 180., rotnAxis);
               dirVect = tform * dirVect;
               hydPos = heavyPos + dirVect * ((*cfi)->is3D() ? bondLength : 1.0);
-              (*cfi)->setAtomPos(hydIdx, hydPos);
+              (*cfi)->setAtomPos(idx, hydPos);
               break;
             case Atom::SP2:
               // don't need to do anything here, the H atom goes right on the
               // direction vector
               hydPos = heavyPos + dirVect * ((*cfi)->is3D() ? bondLength : 1.0);
-              (*cfi)->setAtomPos(hydIdx, hydPos);
+              (*cfi)->setAtomPos(idx, hydPos);
               break;
             default:
               // FIX: handle other hybridizations
               // for now, just lay the H along the neighbor vector;
               hydPos = heavyPos + dirVect * ((*cfi)->is3D() ? bondLength : 1.0);
-              (*cfi)->setAtomPos(hydIdx, hydPos);
+              (*cfi)->setAtomPos(idx, hydPos);
               break;
           }
         } else {
           // don't need to do anything here, the H atom goes right on the
           // direction vector
           hydPos = heavyPos + dirVect;
-          (*cfi)->setAtomPos(hydIdx, hydPos);
+          (*cfi)->setAtomPos(idx, hydPos);
         }
       }
       break;
@@ -347,15 +347,15 @@ void setHydrogenCoords(ROMol *mol, unsigned int hydIdx, unsigned int heavyIdx) {
       // --------------------------------------------------------------------------
       // Three other neighbors:
       // --------------------------------------------------------------------------
-      boost::tie(nbrIdx, endNbrs) = mol->getAtomNeighbors(heavyAtom);
+      boost::tie(nbrIdx, endNbrs) = mol.getAtomNeighbors(otherAtom);
 
-      if (heavyAtom->hasProp(common_properties::_CIPCode)) {
+      if (otherAtom->hasProp(common_properties::_CIPCode)) {
         // if the central atom is chiral, we'll order the neighbors
         // by CIP rank:
         std::vector<std::pair<unsigned int, int>> nbrs;
         while (nbrIdx != endNbrs) {
-          if (*nbrIdx != hydIdx) {
-            const Atom *tAtom = mol->getAtomWithIdx(*nbrIdx);
+          if (*nbrIdx != idx) {
+            const Atom *tAtom = mol.getAtomWithIdx(*nbrIdx);
             unsigned int cip = 0;
             tAtom->getPropIfPresent<unsigned int>(common_properties::_CIPRank,
                                                   cip);
@@ -364,19 +364,19 @@ void setHydrogenCoords(ROMol *mol, unsigned int hydIdx, unsigned int heavyIdx) {
           ++nbrIdx;
         }
         std::sort(nbrs.begin(), nbrs.end());
-        nbr1 = mol->getAtomWithIdx(nbrs[0].second);
-        nbr2 = mol->getAtomWithIdx(nbrs[1].second);
-        nbr3 = mol->getAtomWithIdx(nbrs[2].second);
+        nbr1 = mol.getAtomWithIdx(nbrs[0].second);
+        nbr2 = mol.getAtomWithIdx(nbrs[1].second);
+        nbr3 = mol.getAtomWithIdx(nbrs[2].second);
       } else {
         // central atom isn't chiral, so the neighbor ordering isn't important:
         while (nbrIdx != endNbrs) {
-          if (*nbrIdx != hydIdx) {
+          if (*nbrIdx != idx) {
             if (!nbr1) {
-              nbr1 = mol->getAtomWithIdx(*nbrIdx);
+              nbr1 = mol.getAtomWithIdx(*nbrIdx);
             } else if (!nbr2) {
-              nbr2 = mol->getAtomWithIdx(*nbrIdx);
+              nbr2 = mol.getAtomWithIdx(*nbrIdx);
             } else {
-              nbr3 = mol->getAtomWithIdx(*nbrIdx);
+              nbr3 = mol.getAtomWithIdx(*nbrIdx);
             }
           }
           ++nbrIdx;
@@ -385,10 +385,10 @@ void setHydrogenCoords(ROMol *mol, unsigned int hydIdx, unsigned int heavyIdx) {
       TEST_ASSERT(nbr1);
       TEST_ASSERT(nbr2);
       TEST_ASSERT(nbr3);
-      for (auto cfi = mol->beginConformers(); cfi != mol->endConformers();
+      for (auto cfi = mol.beginConformers(); cfi != mol.endConformers();
            ++cfi) {
         // use the average of the three vectors:
-        heavyPos = (*cfi)->getAtomPos(heavyIdx);
+        heavyPos = (*cfi)->getAtomPos(otherIdx);
         nbr1Vect = heavyPos - (*cfi)->getAtomPos(nbr1->getIdx());
         nbr2Vect = heavyPos - (*cfi)->getAtomPos(nbr2->getIdx());
         nbr3Vect = heavyPos - (*cfi)->getAtomPos(nbr3->getIdx());
@@ -397,7 +397,7 @@ void setHydrogenCoords(ROMol *mol, unsigned int hydIdx, unsigned int heavyIdx) {
             fabs(nbr3Vect.lengthSq()) < 1e-4) {
           // no difference, which likely indicates that we have redundant atoms.
           // just put it on top of the heavy atom. This was #678
-          (*cfi)->setAtomPos(hydIdx, heavyPos);
+          (*cfi)->setAtomPos(idx, heavyPos);
           continue;
         }
         nbr1Vect.normalize();
@@ -414,7 +414,7 @@ void setHydrogenCoords(ROMol *mol, unsigned int hydIdx, unsigned int heavyIdx) {
             // compute the normal:
             dirVect = nbr1Vect.crossProduct(nbr2Vect);
             std::string cipCode;
-            if (heavyAtom->getPropIfPresent(common_properties::_CIPCode,
+            if (otherAtom->getPropIfPresent(common_properties::_CIPCode,
                                             cipCode)) {
               // the heavy atom is a chiral center, make sure
               // that we went go the right direction to preserve
@@ -466,7 +466,7 @@ void setHydrogenCoords(ROMol *mol, unsigned int hydIdx, unsigned int heavyIdx) {
         }
         dirVect.normalize();
         hydPos = heavyPos + dirVect * ((*cfi)->is3D() ? bondLength : 1.0);
-        (*cfi)->setAtomPos(hydIdx, hydPos);
+        (*cfi)->setAtomPos(idx, hydPos);
       }
       break;
     default:
@@ -474,9 +474,9 @@ void setHydrogenCoords(ROMol *mol, unsigned int hydIdx, unsigned int heavyIdx) {
       // FIX: figure out what to do here
       // --------------------------------------------------------------------------
       hydPos = heavyPos + dirVect * bondLength;
-      for (auto cfi = mol->beginConformers(); cfi != mol->endConformers();
+      for (auto cfi = mol.beginConformers(); cfi != mol.endConformers();
            ++cfi) {
-        (*cfi)->setAtomPos(hydIdx, hydPos);
+        (*cfi)->setAtomPos(idx, hydPos);
       }
       break;
   }
@@ -546,7 +546,7 @@ void addHs(RWMol &mol, bool explicitOnly, bool addCoords,
       auto hAtom = mol.getAtomWithIdx(newIdx);
       hAtom->updatePropertyCache();
       if (addCoords) {
-        setHydrogenCoords(&mol, newIdx, aidx);
+        setTerminalAtomCoords(mol, newIdx, aidx);
       }
       if (isoH != isoHs.end()) {
         hAtom->setIsotope(*isoH);
@@ -568,7 +568,7 @@ void addHs(RWMol &mol, bool explicitOnly, bool addCoords,
         hAtom->setProp(common_properties::isImplicit, 1);
         hAtom->updatePropertyCache();
         if (addCoords) {
-          setHydrogenCoords(&mol, newIdx, aidx);
+          setTerminalAtomCoords(mol, newIdx, aidx);
         }
         if (isoH != isoHs.end()) {
           hAtom->setIsotope(*isoH);
