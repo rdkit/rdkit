@@ -6422,6 +6422,15 @@ CAS<~>
       self.assertEqual(rwmol.GetNumAtoms(), mol.GetNumAtoms())
     self.assertEqual(rwmol.GetNumAtoms(), mol.GetNumAtoms() - 2)
 
+    # make sure no changes get made if we throw an exception
+    try:
+      with Chem.RWMol(mol) as rwmol:
+        rwmol.RemoveAtom(2)
+        rwmol.RemoveAtom(6)
+    except:
+      pass
+    self.assertEqual(rwmol.GetNumAtoms(), mol.GetNumAtoms())
+
 
 if __name__ == '__main__':
   if "RDTESTCASE" in os.environ:
