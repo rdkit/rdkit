@@ -228,6 +228,22 @@ class ReadWriteMol : public RWMol {
     auto *res = new ROMol(*this);
     return res;
   }
+
+  ReadWriteMol *enter() {
+    beginBatchEdit();
+    return this;
+  }
+  bool exit(python::object exc_type, python::object exc_val,
+            python::object traceback) {
+    RDUNUSED_PARAM(exc_type);
+    RDUNUSED_PARAM(exc_val);
+    RDUNUSED_PARAM(traceback);
+    commitBatchEdit();
+    return false;
+  }
+
+ private:
+  boost::shared_ptr<RWMol> dp_mol;
 };
 
 std::string molClassDoc =
@@ -810,6 +826,10 @@ struct mol_wrapper {
         .def(python::init<const ROMol &, bool, int>())
         .def("__copy__", &generic__copy__<ReadWriteMol>)
         .def("__deepcopy__", &generic__deepcopy__<ReadWriteMol>)
+        .def("__enter__", &ReadWriteMol::enter,
+             python::return_internal_reference<>())
+        .def("__exit__", &ReadWriteMol::exit)
+
         .def("RemoveAtom", &ReadWriteMol::RemoveAtom,
              "Remove the specified atom from the molecule")
         .def("RemoveBond", &ReadWriteMol::RemoveBond,

@@ -6406,13 +6406,21 @@ CAS<~>
       self.assertEqual(Chem.MolToSmiles(nmol), "CCC.O")
 
     for rwmol in [Chem.EditableMol(mol), Chem.RWMol(mol)]:
-      rwmol = Chem.EditableMol(mol)
       rwmol.BeginBatchEdit()
       rwmol.RemoveAtom(2)
       rwmol.RemoveAtom(3)
       rwmol.RollbackBatchEdit()
       nmol = rwmol.GetMol()
       self.assertEqual(Chem.MolToSmiles(nmol), "C1CCOC1")
+
+  def testBatchEditContextManager(self):
+    mol = Chem.MolFromSmiles("C1CCCO1")
+    with Chem.RWMol(mol) as rwmol:
+      rwmol.RemoveAtom(2)
+      rwmol.RemoveAtom(3)
+      # make sure we haven't actually changed anything yet:
+      self.assertEqual(rwmol.GetNumAtoms(), mol.GetNumAtoms())
+    self.assertEqual(rwmol.GetNumAtoms(), mol.GetNumAtoms() - 2)
 
 
 if __name__ == '__main__':
