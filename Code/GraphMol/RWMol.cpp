@@ -202,6 +202,10 @@ void RWMol::removeAtom(Atom *atom) {
   unsigned int idx = atom->getIdx();
   if (dp_delAtoms) {
     // we're in a batch edit
+    // if atoms have been added since we started, resize dp_delAtoms
+    if (dp_delAtoms->size() < getNumAtoms()) {
+      dp_delAtoms->resize(getNumAtoms());
+    }
     dp_delAtoms->set(idx);
     return;
   }
@@ -355,6 +359,10 @@ void RWMol::removeBond(unsigned int aid1, unsigned int aid2) {
   unsigned int idx = bnd->getIdx();
   if (dp_delBonds) {
     // we're in a batch edit
+    // if bonds have been added since we started, resize dp_delBonds
+    if (dp_delBonds->size() < getNumBonds()) {
+      dp_delBonds->resize(getNumBonds());
+    }
     dp_delBonds->set(idx);
     return;
   }

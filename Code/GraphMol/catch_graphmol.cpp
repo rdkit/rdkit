@@ -1483,35 +1483,7 @@ TEST_CASE("needsHs function", "[chemistry]") {
   }
 }
 
-TEST_CASE("batch edits", "[editing]") {
-  SECTION("removeAtom") {
-    auto m = "C1CCCO1"_smiles;
-    REQUIRE(m);
-    m->beginBatchEdit();
-    m->removeAtom(2);
-    m->removeAtom(3);
-    m->commitBatchEdit();
-    CHECK(MolToSmiles(*m) == "CCO");
-  }
-  SECTION("removeAtom + removeBond") {
-    auto m = "C1CCCO1"_smiles;
-    REQUIRE(m);
-    m->beginBatchEdit();
-    m->removeAtom(3);
-    m->removeBond(4, 0);
-    m->commitBatchEdit();
-    CHECK(MolToSmiles(*m) == "CCC.O");
-  }
-  SECTION("rollback") {
-    auto m = "C1CCCO1"_smiles;
-    REQUIRE(m);
-    m->beginBatchEdit();
-    m->removeAtom(2);
-    m->removeAtom(3);
-    m->rollbackBatchEdit();
-    CHECK(MolToSmiles(*m) == "C1CCOC1");
-  }
-}TEST_CASE(
+TEST_CASE(
     "github #3330: incorrect number of radicals electrons calculated for "
     "metals",
     "[chemistry][metals]") {
@@ -1717,5 +1689,74 @@ M  END
       CHECK(v1.dotProduct(v3) < -1e-4);
       CHECK(v1.dotProduct(v4) < -1e-4);
     }
+  }
+}
+
+TEST_CASE("batch edits", "[editing]") {
+  SECTION("removeAtom") {
+    auto m = "C1CCCO1"_smiles;
+    REQUIRE(m);
+    m->beginBatchEdit();
+    m->removeAtom(2);
+    m->removeAtom(3);
+    m->commitBatchEdit();
+    CHECK(MolToSmiles(*m) == "CCO");
+  }
+  SECTION("removeAtom + removeBond") {
+    auto m = "C1CCCO1"_smiles;
+    REQUIRE(m);
+    m->beginBatchEdit();
+    m->removeAtom(3);
+    m->removeBond(4, 0);
+    m->commitBatchEdit();
+    CHECK(MolToSmiles(*m) == "CCC.O");
+  }
+  SECTION("rollback") {
+    auto m = "C1CCCO1"_smiles;
+    REQUIRE(m);
+    m->beginBatchEdit();
+    m->removeAtom(2);
+    m->removeAtom(3);
+    m->rollbackBatchEdit();
+    CHECK(MolToSmiles(*m) == "C1CCOC1");
+  }
+  SECTION("adding atoms while in a batch") {
+    auto m = "CCCO"_smiles;
+    REQUIRE(m);
+    m->beginBatchEdit();
+    m->removeAtom(2);
+    m->addAtom(new Atom(7));
+    m->removeAtom(1);
+    m->commitBatchEdit();
+    CHECK(MolToSmiles(*m) == "C.N.O");
+  }
+  SECTION("removing added atoms while in a batch") {
+    auto m = "CCCO"_smiles;
+    REQUIRE(m);
+    m->beginBatchEdit();
+    m->removeAtom(2);
+    m->addAtom(new Atom(7));
+    m->removeAtom(4);
+    m->commitBatchEdit();
+    CHECK(MolToSmiles(*m) == "CC.O");
+  }
+  SECTION("adding bonds while in a batch") {
+    auto m = "CCCO"_smiles;
+    REQUIRE(m);
+    m->beginBatchEdit();
+    m->removeBond(2, 3);
+    m->addBond(0, 3, Bond::BondType::SINGLE);
+    m->commitBatchEdit();
+    CHECK(MolToSmiles(*m) == "CCCO");
+  }
+  SECTION("removing added bonds while in a batch") {
+    auto m = "CCCO"_smiles;
+    REQUIRE(m);
+    m->beginBatchEdit();
+    m->addBond(0, 3, Bond::BondType::SINGLE);
+    m->removeBond(2, 3);
+    m->removeBond(0, 3);
+    m->commitBatchEdit();
+    CHECK(MolToSmiles(*m) == "CCC.O");
   }
 }
