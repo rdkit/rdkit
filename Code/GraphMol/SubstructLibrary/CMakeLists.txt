@@ -8,7 +8,7 @@ endif()
 rdkit_library(SubstructLibrary
               SubstructLibrary.cpp
 	      PatternFactory.cpp
-              LINK_LIBRARIES Fingerprints SubstructMatch SmilesParse
+              LINK_LIBRARIES  TautomerQuery MolStandardize Fingerprints SubstructMatch SmilesParse
               GraphMol Catalogs DataStructs RDGeneral ${RDKit_SERIALIZATION_LIBS})
 target_compile_definitions(SubstructLibrary PRIVATE RDKIT_SUBSTRUCTLIBRARY_BUILD)
 
@@ -22,4 +22,4 @@ add_subdirectory(Wrap)
 endif()
 
 rdkit_test(substructLibraryTest substructLibraryTest.cpp
-           LINK_LIBRARIES SubstructLibrary FileParsers )
+           LINK_LIBRARIES TautomerQuery MolStandardize SubstructLibrary FileParsers )
