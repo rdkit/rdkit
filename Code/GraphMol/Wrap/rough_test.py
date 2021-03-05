@@ -5904,8 +5904,7 @@ M  END
     m_noh = Chem.RemoveHs(m, ps)
     self.assertEqual(m_noh.GetNumAtoms(), m.GetNumAtoms() - 2)
     self.assertTrue(m_noh.GetAtomWithIdx(2).HasProp("_isotopicHs"))
-    self.assertEqual(tuple(map(int,
-                               m_noh.GetAtomWithIdx(2).GetProp("_isotopicHs").split())), (2, 2))
+    self.assertEqual(tuple(m_noh.GetAtomWithIdx(2).GetPropsAsDict().get("_isotopicHs")), (2, 2))
     m_h = Chem.AddHs(m_noh)
     self.assertFalse(m_h.GetAtomWithIdx(2).HasProp("_isotopicHs"))
     self.assertEqual(

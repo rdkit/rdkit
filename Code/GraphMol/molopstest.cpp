@@ -7715,8 +7715,10 @@ void testRemoveAndTrackIsotopes() {
   std::unique_ptr<ROMol> mNoH(removeHs(*static_cast<ROMol *>(m.get()), ps));
   TEST_ASSERT(mNoH->getAtomWithIdx(0)->getAtomicNum() == 6);
   TEST_ASSERT(mNoH->getAtomWithIdx(0)->hasProp(common_properties::_isotopicHs));
-  TEST_ASSERT(mNoH->getAtomWithIdx(0)->getProp<std::string>(
-                  common_properties::_isotopicHs) == "2");
+  std::vector<unsigned int> isoHs;
+  TEST_ASSERT(mNoH->getAtomWithIdx(0)->getPropIfPresent(common_properties::_isotopicHs, isoHs));
+  TEST_ASSERT(isoHs.size() == 1);
+  TEST_ASSERT(isoHs.front() == 2);
   TEST_ASSERT(mNoH->getAtomWithIdx(30)->getAtomicNum() == 6);
   TEST_ASSERT(
       !mNoH->getAtomWithIdx(30)->hasProp(common_properties::_isotopicHs));
