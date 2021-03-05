@@ -14,9 +14,6 @@
 #include "MonomerInfo.h"
 #include <Geometry/Transform3D.h>
 #include <Geometry/point.h>
-#include <boost/lexical_cast.hpp>
-#include <boost/tokenizer.hpp>
-#include <boost/algorithm/string/trim.hpp>
 #include <boost/algorithm/string/classification.hpp>
 #include <boost/dynamic_bitset.hpp>
 #include <boost/range/iterator_range.hpp>
@@ -439,15 +436,6 @@ void AssignHsResidueInfo(RWMol &mol) {
   }
 }
 
-std::string isoHsToString(const std::vector<unsigned int> &isoHs) {
-  std::stringstream ss;
-  std::copy(isoHs.begin(), isoHs.end(),
-            std::ostream_iterator<unsigned int>(ss, " "));
-  std::string res(ss.str());
-  boost::trim(res);
-  return res;
-}
-
 std::map<unsigned int, std::vector<unsigned int>> getIsoMap(const ROMol &mol) {
   std::map<unsigned int, std::vector<unsigned int>> isoMap;
   for (auto atom : mol.atoms()) {
@@ -522,18 +510,9 @@ void addHs(RWMol &mol, bool explicitOnly, bool addCoords,
     Atom *newAt = mol.getAtomWithIdx(aidx);
 
     std::vector<unsigned int> isoHs;
-    std::string isotopicHsProp;
     if (newAt->getPropIfPresent(common_properties::_isotopicHs,
-                                isotopicHsProp)) {
+                                isoHs)) {
       newAt->clearProp(common_properties::_isotopicHs);
-      // be lenient on input, even if we write only space-separated
-      // strings of indices
-      boost::trim_if(isotopicHsProp, boost::is_any_of(" \t\r\n,()[]{}"));
-      boost::tokenizer<> tokens(isotopicHsProp);
-      std::transform(tokens.begin(), tokens.end(), std::back_inserter(isoHs),
-                     [](const std::string &t) {
-                       return boost::lexical_cast<unsigned int>(t);
-                     });
     }
     std::vector<unsigned int>::const_iterator isoH = isoHs.begin();
     unsigned int newIdx;
@@ -792,7 +771,7 @@ void removeHs(RWMol &mol, const RemoveHsParameters &ps, bool sanitize) {
   if (ps.removeAndTrackIsotopes) {
     for (const auto &pair : getIsoMap(mol)) {
       mol.getAtomWithIdx(pair.first)
-          ->setProp(common_properties::_isotopicHs, isoHsToString(pair.second));
+          ->setProp(common_properties::_isotopicHs, pair.second);
     }
   }
   boost::dynamic_bitset<> atomsToRemove{mol.getNumAtoms(), 0};
