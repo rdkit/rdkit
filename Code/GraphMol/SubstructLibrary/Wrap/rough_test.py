@@ -400,27 +400,27 @@ class TestCase(unittest.TestCase):
       "CC1(C)CNc2cc(NC(=O)c3cccnc3NCc3ccncc3)ccc21"
     ]
     
-    mols = [Chem.MolFromSmiles(smi) for smi in pdb_ligands]
-    holder = rdSubstructLibrary.CachedMolHolder()
-    patterns = rdSubstructLibrary.PatternHolder()
-    
-    slib_with_patterns = rdSubstructLibrary.SubstructLibrary(holder, patterns)
-    
 
-    for mol in mols:
-      slib_with_patterns.AddMol(mol)
+    for patterns in [rdSubstructLibrary.PatternHolder(), rdSubstructLibrary.TautomerPatternHolder()]:
+      mols = [Chem.MolFromSmiles(smi) for smi in pdb_ligands]
+      holder = rdSubstructLibrary.CachedMolHolder()
+      slib_with_patterns = rdSubstructLibrary.SubstructLibrary(holder, patterns)
 
-    for nthreads in [1, 2, 0]:
-      slib_without_patterns = rdSubstructLibrary.SubstructLibrary(holder, None)
-      rdSubstructLibrary.AddPatterns(slib_without_patterns, nthreads)
-      # check for seg fault
-      #  were the fingerprints really created
-      slib_without_patterns.GetFpHolder().GetFingerprint(0)
+
       for mol in mols:
-        l1 = slib_with_patterns.CountMatches(mol)
-        l2 = slib_without_patterns.CountMatches(mol)
-        self.assertTrue(l1)
-        self.assertEqual(l1,l2)
+        slib_with_patterns.AddMol(mol)
+
+      for nthreads in [1, 2, 0]:
+        slib_without_patterns = rdSubstructLibrary.SubstructLibrary(holder, None)
+        rdSubstructLibrary.AddPatterns(slib_without_patterns, nthreads)
+        # check for seg fault
+        #  were the fingerprints really created
+        slib_without_patterns.GetFpHolder().GetFingerprint(0)
+        for mol in mols:
+          l1 = slib_with_patterns.CountMatches(mol)
+          l2 = slib_without_patterns.CountMatches(mol)
+          self.assertTrue(l1)
+          self.assertEqual(l1,l2)
                          
 
   def test_basic_addpatterns(self):
@@ -462,40 +462,43 @@ class TestCase(unittest.TestCase):
       for smi in pdb_ligands:
         holder.AddSmiles(smi)
 
-      lib = rdSubstructLibrary.SubstructLibrary(holder)
-      rdSubstructLibrary.AddPatterns(lib, numThreads=-1)
-      self.assertEqual(len(lib.GetMolHolder()), len(lib.GetFpHolder()))
-      for smi in pdb_ligands:
-        self.assertTrue( lib.CountMatches(Chem.MolFromSmiles(smi)) )
+      for patttern in [None, rdSubstructLibrary.PatternHolder(), rdSubstructLibrary.TautomerPatternHolder()]:
+        lib = rdSubstructLibrary.SubstructLibrary(holder)
+        rdSubstructLibrary.AddPatterns(lib, numThreads=-1)
+        self.assertEqual(len(lib.GetMolHolder()), len(lib.GetFpHolder()))
+        for smi in pdb_ligands:
+          self.assertTrue( lib.CountMatches(Chem.MolFromSmiles(smi)) )
 
   def test_PatternHolder(self):
-    fname = os.path.join(os.environ["RDBASE"], "Data", "NCI", "first_5K.smi")
-    suppl = Chem.SmilesMolSupplier(fname, delimiter="\t", titleLine=False)
-    mols1 = rdSubstructLibrary.CachedTrustedSmilesMolHolder()
-    fps1 = rdSubstructLibrary.PatternHolder(2048)
-    ssslib1 = rdSubstructLibrary.SubstructLibrary(mols1, fps1)
-    mols2 = rdSubstructLibrary.CachedTrustedSmilesMolHolder()
-    fps2 = rdSubstructLibrary.PatternHolder()
-    ssslib2 = rdSubstructLibrary.SubstructLibrary(mols2, fps2)
+    for holder in [rdSubstructLibrary.PatternHolder,
+                   rdSubstructLibrary.TautomerPatternHolder]:
+      fname = os.path.join(os.environ["RDBASE"], "Data", "NCI", "first_5K.smi")
+      suppl = Chem.SmilesMolSupplier(fname, delimiter="\t", titleLine=False)
+      mols1 = rdSubstructLibrary.CachedTrustedSmilesMolHolder()
+      fps1 = holder(2048)
+      ssslib1 = rdSubstructLibrary.SubstructLibrary(mols1, fps1)
+      mols2 = rdSubstructLibrary.CachedTrustedSmilesMolHolder()
+      fps2 = holder()
+      ssslib2 = rdSubstructLibrary.SubstructLibrary(mols2, fps2)
 
-    RDLogger.DisableLog('rdApp.error')
-    for i in range(0, 1000, 10):
-      try:
-        mol = suppl[i]
-      except Exception:
-        continue
-      if (not mol):
-        continue
-      mols1.AddSmiles(Chem.MolToSmiles(mol))
-      fps1.AddFingerprint(fps1.MakeFingerprint(mol))
-      ssslib2.AddMol(mol)
-    RDLogger.EnableLog('rdApp.error')
-    query = Chem.MolFromSmarts("N")
-    self.assertIsNotNone(query)
-    matches1 = sorted(ssslib1.GetMatches(query))
-    matches2 = sorted(ssslib2.GetMatches(query))
-    self.assertEqual(len(matches1), len(matches2))
-    self.assertTrue(all([m1 == matches2[i] for i, m1 in enumerate(matches1)]))
+      RDLogger.DisableLog('rdApp.error')
+      for i in range(0, 1000, 10):
+        try:
+          mol = suppl[i]
+        except Exception:
+          continue
+        if (not mol):
+          continue
+        mols1.AddSmiles(Chem.MolToSmiles(mol))
+        fps1.AddFingerprint(fps1.MakeFingerprint(mol))
+        ssslib2.AddMol(mol)
+      RDLogger.EnableLog('rdApp.error')
+      query = Chem.MolFromSmarts("N")
+      self.assertIsNotNone(query)
+      matches1 = sorted(ssslib1.GetMatches(query))
+      matches2 = sorted(ssslib2.GetMatches(query))
+      self.assertEqual(len(matches1), len(matches2))
+      self.assertTrue(all([m1 == matches2[i] for i, m1 in enumerate(matches1)]))
 
 if __name__ == '__main__':
   unittest.main()

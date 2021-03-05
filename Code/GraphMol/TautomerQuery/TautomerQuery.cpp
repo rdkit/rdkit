@@ -266,7 +266,7 @@ bool TautomerQuery::isSubstructOf(const ROMol &mol,
 }
 
 ExplicitBitVect *TautomerQuery::patternFingerprintTemplate(
-    unsigned int fpSize) {
+    unsigned int fpSize) const {
   return PatternFingerprintMol(*d_templateMolecule, fpSize, nullptr, nullptr,
                                true);
 }
