@@ -220,7 +220,7 @@ void getExperimentalTorsions(const RDKit::ROMol &mol, CrystalFFDetails &details,
         // FIX: check if bond is NULL
         bid2 = mol.getBondBetweenAtoms(aid2, aid3)->getIdx();
         // check that a bond is part of maximum one ring
-        if (mol.getRingInfo()->numBondRings(bid2) > 1 ||
+        if (mol.getRingInfo()->numBondRings(bid2) > 3 ||
             excludedBonds[bid2] == 1) {
           doneBonds[bid2] = 1;
         }
@@ -234,13 +234,16 @@ void getExperimentalTorsions(const RDKit::ROMol &mol, CrystalFFDetails &details,
           details.expTorsionAtoms.push_back(atoms);
           details.expTorsionAngles.emplace_back(param.signs, param.V);
           if (verbose) {
-            BOOST_LOG(rdInfoLog) << param.smarts << ": " << aid1 << " " << aid2
-                                 << " " << aid3 << " " << aid4 << ", (";
+            // using the stringstream seems redundant, but we don't want the
+            // extra formatting provided by the logger after every entry;
+            std::stringstream sstr;
+            sstr << param.smarts << ": " << aid1 << " " << aid2 << " " << aid3
+                 << " " << aid4 << ", (";
             for (unsigned int i = 0; i < param.V.size() - 1; ++i) {
-              BOOST_LOG(rdInfoLog) << param.V[i] << ", ";
+              sstr << param.V[i] << ", ";
             }
-            BOOST_LOG(rdInfoLog)
-                << param.V[param.V.size() - 1] << ") " << std::endl;
+            sstr << param.V[param.V.size() - 1] << ") ";
+            BOOST_LOG(rdInfoLog) << sstr.str() << std::endl;
           }
         }  // if not donePaths
       }    // end loop over matches
