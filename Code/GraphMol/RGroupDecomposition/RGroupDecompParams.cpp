@@ -13,39 +13,55 @@
 #include <GraphMol/Substruct/SubstructMatch.h>
 #include <GraphMol/SmilesParse/SmilesParse.h>
 #include <GraphMol/FMCS/FMCS.h>
+#include <set>
 
 namespace RDKit {
 
 namespace {
 
-bool isSingleUserDummy(Atom *atom) {
-  return  atom->getAtomicNum() == 0 && atom->getDegree() == 1 &&
-         atom->hasProp(RLABEL) && atom->hasProp(RLABEL_TYPE) &&
-         static_cast<Labelling>(atom->getProp<int>(RLABEL_TYPE)) !=
-             Labelling::INDEX_LABELS;
-}
-
-Atom *firstNeighbor(ROMol &mol, Atom *atom) {
-  auto otherAtomIdx = *mol.getAtomNeighbors(atom).first;
-  return mol.getAtomWithIdx(otherAtomIdx);
-}
-
-bool canMoveDummy(ROMol &mol, Atom *atom) {
-  if (!isSingleUserDummy(atom)) return false;
-  auto otherAtom = firstNeighbor(mol, atom);
-  if (otherAtom->hasProp(RLABEL_TYPE) &&
-      static_cast<Labelling>(otherAtom->getProp<int>(RLABEL_TYPE)) !=
-          Labelling::INDEX_LABELS)
-    return false;
-  RWMol::ADJ_ITER nbrIdx, endNbrs;
-  boost::tie(nbrIdx, endNbrs) = mol.getAtomNeighbors(otherAtom);
-  while (nbrIdx != endNbrs) {
-    if (!(*nbrIdx == atom->getIdx())) {
-      if (isSingleUserDummy(mol.getAtomWithIdx(*nbrIdx))) return false;
-    }
-    nbrIdx++;
+bool hasLabel(const Atom *atom, unsigned int autoLabels) {
+  bool atomHasLabel = false;
+  if (autoLabels & MDLRGroupLabels) {
+    atomHasLabel |= atom->hasProp(common_properties::_MolFileRLabel);
   }
-  return true;
+  if (autoLabels & IsotopeLabels) {
+    atomHasLabel |= (atom->getIsotope() > 0);
+  }
+  if (autoLabels & AtomMapLabels) {
+    atomHasLabel |= (atom->getAtomMapNum() > 0);
+  }
+  if (autoLabels & DummyAtomLabels) {
+    atomHasLabel |= (atom->getAtomicNum() == 0);
+  }
+  // don't match negative rgroups as these are used by AtomIndexRLabels which
+  // are set for the template core before the MCS and after the MCS for the
+  // other core
+  if (atom->hasProp(RLABEL)) {
+    auto label = atom->getProp<int>(RLABEL);
+    atomHasLabel |= label > 0;
+  }
+  return atomHasLabel;
+}
+
+/* When comparing atoms for the MCS overlay, we don't want to overlay a core
+ * atom that has a labelled rgroup on top of one that hasn't a labelled rgroup.
+ * The labelled rgroup may be on a terminal dummy atom bonded to the core atom.
+ *
+ * This function checks to see if there is a terminal dummy labelled rgroup
+ * attached to the atom.
+ */
+bool hasAttachedLabels(const ROMol &mol, const Atom *atom, unsigned int autoLabels) {
+  RWMol::ADJ_ITER nbrIdx, endNbrs;
+  boost::tie(nbrIdx, endNbrs) = mol.getAtomNeighbors(atom);
+  while (nbrIdx != endNbrs) {
+    const auto neighborAtom = mol.getAtomWithIdx(*nbrIdx);
+    if (neighborAtom->getAtomicNum() == 0 && neighborAtom->getDegree() == 1 &&
+        hasLabel(neighborAtom, autoLabels)) {
+      return true;
+    }
+    ++nbrIdx;
+  }
+  return false;
 }
 
 }  // namespace
@@ -94,37 +110,13 @@ bool rgdAtomCompare(const MCSAtomCompareParameters &p, const ROMol &mol1,
     return false;
   }
   unsigned int autoLabels = *reinterpret_cast<unsigned int *>(userData);
-  bool atom1HasLabel = false;
-  bool atom2HasLabel = false;
   const auto a1 = mol1.getAtomWithIdx(atom1);
   const auto a2 = mol2.getAtomWithIdx(atom2);
-  if (autoLabels & MDLRGroupLabels) {
-    atom1HasLabel |= a1->hasProp(common_properties::_MolFileRLabel);
-    atom2HasLabel |= a2->hasProp(common_properties::_MolFileRLabel);
-  }
-  if (autoLabels & IsotopeLabels) {
-    atom2HasLabel |= (a1->getIsotope() > 0);
-    atom2HasLabel |= (a2->getIsotope() > 0);
-  }
-  if (autoLabels & AtomMapLabels) {
-    atom1HasLabel |= (a1->getAtomMapNum() > 0);
-    atom2HasLabel |= (a2->getAtomMapNum() > 0);
-  }
-  if (autoLabels & DummyAtomLabels) {
-    atom1HasLabel |= (a1->getAtomicNum() == 0);
-    atom2HasLabel |= (a2->getAtomicNum() == 0);
-  }
-  // don't match negative rgroups as these are used by AtomIndexRLabels which
-  // are set for the template core before the MCS and after the MCS for the
-  // other core
-  if (a1->hasProp(RLABEL)) {
-    auto label = a1->getProp<int>(RLABEL);
-    atom1HasLabel |= label > 0;
-  }
-  if (a2->hasProp(RLABEL)) {
-    auto label = a2->getProp<int>(RLABEL);
-    atom2HasLabel |= label > 0;
-  }
+  bool atom1HasLabel = hasLabel(a1, autoLabels);
+  bool atom2HasLabel = hasLabel(a2, autoLabels);
+  // check for the presence of rgroup labels on adjacent terminal dummy atoms
+  atom1HasLabel |= hasAttachedLabels(mol1, a1, autoLabels);
+  atom2HasLabel |= hasAttachedLabels(mol2, a2, autoLabels);
   return !(atom1HasLabel != atom2HasLabel);
 }
 
@@ -274,28 +266,6 @@ bool RGroupDecompositionParameters::prepareCore(RWMol &core,
   adjustQueryProperties(core, &adjustParams);
   for (auto &it : atomToLabel) {
     core.getAtomWithIdx(it.first)->setProp(RLABEL, it.second);
-  }
-
-  // Move user RLABELS on single connected dummy to adjacent atom
-  std::set<Atom *> atomsToRemove;
-  for (auto atom : core.atoms()) {
-    if (canMoveDummy(core, atom)) {
-      auto neighbor = firstNeighbor(core, atom);
-      neighbor->setProp<int>(RLABEL, atom->getProp<int>(RLABEL));
-      neighbor->setProp<int>(RLABEL_TYPE, atom->getProp<int>(RLABEL_TYPE));
-      neighbor->setProp<bool>(RLABEL_MOVED, true);
-      atomsToRemove.insert(atom);
-    }
-  }
-
-  // then delete those dummies
-  if (atomsToRemove.size() > 0) {
-    for (auto atom : atomsToRemove) {
-      // Perhaps here we should save any dummy coordinates, since the dummy
-      // atoms will be added back in when results are returned to the user.
-      core.removeAtom(atom);
-    }
-    core.updatePropertyCache(false);
   }
 
   return true;

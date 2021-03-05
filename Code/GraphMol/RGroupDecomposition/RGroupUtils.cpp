@@ -103,10 +103,6 @@ bool isAnyAtomWithMultipleNeighborsOrNotUserRLabel(const Atom &atom) {
   auto userRLabel = atom.hasProp(RLABEL) && atom.hasProp(RLABEL_TYPE) &&
                     static_cast<Labelling>(atom.getProp<int>(RLABEL_TYPE)) !=
                         Labelling::INDEX_LABELS;
-  if (userRLabel && atom.hasProp(RLABEL_MOVED) && atom.getProp<bool>(RLABEL_MOVED)) {
-    // not really a user r label as it has been moved onto the atom
-    return true;
-  }
   return !userRLabel;
 }
 

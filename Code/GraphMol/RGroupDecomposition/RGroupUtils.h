@@ -19,7 +19,6 @@ namespace RDKit {
 RDKIT_RGROUPDECOMPOSITION_EXPORT extern const std::string RLABEL;
 extern const std::string RLABEL_TYPE;
 extern const std::string RLABEL_CORE_INDEX;
-extern const std::string RLABEL_MOVED;
 extern const std::string SIDECHAIN_RLABELS;
 extern const std::string done;
 

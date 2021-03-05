@@ -259,11 +259,8 @@ struct RGroupDecompData {
       Atom *atom = rlabels.second;
       mappings[userLabel] = userLabel;
       used_labels.add(userLabel);
-      auto movedRLabel =
-          atom->hasProp(RLABEL_MOVED) && atom->getProp<bool>(RLABEL_MOVED);
 
-      if (atom->getAtomicNum() == 0 &&
-          !movedRLabel) {  // add to existing dummy/rlabel
+      if (atom->getAtomicNum() == 0 && atom->getDegree() == 1) {  // add to existing dummy/rlabel
         setRlabel(atom, userLabel);
       } else {  // adds new rlabel
         auto *newAt = new Atom(0);

@@ -190,7 +190,7 @@ C1CCO[C@@](S)(P)1
         rg.Process()
         self.assertEqual(rg.GetRGroupsAsColumns(asSmiles=True), {
             'Core': ['C(N(O[*:6])[*:5])[*:1]'],
-            'R1': ['Cl[*:1].[H][*:1].[H][*:1]'],
+            'R1': ['Cl[*:1]'],
             'R5': ['N[*:5]'],
             'R6': ['O[*:6]']
         })
@@ -204,7 +204,7 @@ C1CCO[C@@](S)(P)1
         rg.Process()
         self.assertEqual(rg.GetRGroupsAsColumns(asSmiles=True), {
             'Core': ['C(N(O[*:6])[*:5])[*:4]'],
-            'R4': ['Cl[*:4].[H][*:4].[H][*:4]'],
+            'R4': ['Cl[*:4]'],
             'R5': ['N[*:5]'],
             'R6': ['O[*:6]']
         })
@@ -230,20 +230,20 @@ C1CCO[C@@](S)(P)1
         scaffolds = [Chem.MolFromSmarts(x) for x in ("C1NCCC1",)]
         groups, unmatched = RGroupDecompose(scaffolds, mols, asSmiles=True, asRows=False)
 
-        self.assertEqual(groups, {'Core': ['C1CNC([*:1])C1'], 'R1': ['Cl[*:1].[H][*:1]']})
+        self.assertEqual(groups, {'Core': ['C1CNC([*:1])C1'], 'R1': ['Cl[*:1]']})
 
         scaffolds = [Chem.MolFromSmarts(x) for x in ("C1OCCC1",)]
         groups, unmatched = RGroupDecompose(scaffolds, mols, asSmiles=True, asRows=False)
         self.assertEqual(groups, {
             'Core': ['C1COC([*:1])C1', 'C1COC([*:1])C1'],
-            'R1': ['Cl[*:1].[H][*:1]', 'Cl[*:1].[H][*:1]']
+            'R1': ['Cl[*:1]', 'Cl[*:1]']
         })
         scaffolds = [Chem.MolFromSmarts(x) for x in ("C1NCCC1", "C1OCCC1")]
         groups, unmatched = RGroupDecompose(scaffolds, mols, asSmiles=True, asRows=False)
         self.assertEqual(
             groups, {
                 'Core': ['C1CNC([*:1])C1', 'C1COC([*:1])C1', 'C1COC([*:1])C1'],
-                'R1': ['Cl[*:1].[H][*:1]', 'Cl[*:1].[H][*:1]', 'Cl[*:1].[H][*:1]']
+                'R1': ['Cl[*:1]', 'Cl[*:1]', 'Cl[*:1]']
             })
 
     def test_aligned_cores(self):
@@ -254,10 +254,10 @@ C1CCO[C@@](S)(P)1
         # print("groups:", groups)
         self.assertEqual(groups, [{
             'Core': 'C1NC1OC[*:1]',
-            'R1': 'CC[*:1].[H][*:1].[H][*:1]'
+            'R1': 'CC[*:1]'
         }, {
             'Core': 'C1NC1NC[*:2]',
-            'R2': 'CC[*:2].[H][*:2].[H][*:2]'
+            'R2': 'CC[*:2]'
         }])
 
     def test_aligned_cores2(self):
@@ -271,7 +271,7 @@ C1CCO[C@@](S)(P)1
             'R1': 'P[*:1]'
         }, {
             'Core': 'C1C[SH]([*:2])C1',
-            'R2': 'P[*:2].[H][*:2]'
+            'R2': 'P[*:2]'
         }])
 
     def test_getrgrouplabels(self):
