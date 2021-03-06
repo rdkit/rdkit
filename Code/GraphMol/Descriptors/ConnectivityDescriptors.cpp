@@ -1,6 +1,5 @@
-// $Id$
 //
-//  Copyright (C) 2012 Greg Landrum
+//  Copyright (C) 2012-2021 Greg Landrum
 //
 //   @@ All Rights Reserved @@
 //  This file is part of the RDKit.
@@ -346,6 +345,19 @@ double calcKappa3(const ROMol &mol) {
   double alpha = calcHallKierAlpha(mol);
   double kappa = kappa3Helper(P3, A, alpha);
   return kappa;
+}
+double calcPhi(const ROMol &mol) {
+  if (!mol.getNumHeavyAtoms()) {
+    return 0.0;
+  }
+  auto alpha = calcHallKierAlpha(mol);
+  auto P1 = mol.getNumBonds();
+  auto A = mol.getNumHeavyAtoms();
+  auto kappa1 = kappa1Helper(P1, A, alpha);
+  auto P2 = findAllPathsOfLengthN(mol, 2).size();
+  auto kappa2 = kappa2Helper(P2, A, alpha);
+  auto Phi = kappa1 * kappa2 / A;
+  return Phi;
 }
 }  // end of namespace Descriptors
 }  // namespace RDKit
