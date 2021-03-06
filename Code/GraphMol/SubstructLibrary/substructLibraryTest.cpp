@@ -715,6 +715,17 @@ void testTautomerQueries() {
     TEST_ASSERT(matches2.size() == 1);
 }
 
+void github3881() {
+  BOOST_LOG(rdErrorLog) << "-------------------------------------" << std::endl;
+  BOOST_LOG(rdErrorLog) << "  github3881 recursive smarts with rings " << std::endl;
+  boost::shared_ptr<CachedTrustedSmilesMolHolder> mols(
+      new CachedTrustedSmilesMolHolder());
+  mols->addSmiles("c1ccccc1S(=O)(=O)Cl");
+  SubstructLibrary sss(mols);
+  auto pat = "[$(S-!@[#6]):2](=O)(=O)(Cl)"_smarts;
+  TEST_ASSERT(sss.getMatches(*pat).size()==1);
+}
+
 int main() {
   RDLog::InitLogs();
 #if 1
@@ -734,6 +745,7 @@ int main() {
   testMaxResultsAllSameNumThreads();
   testTautomerQueries();
 #endif
+  github3881();
 #endif
   return 0;
 }
