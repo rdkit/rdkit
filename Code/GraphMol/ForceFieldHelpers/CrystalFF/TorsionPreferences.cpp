@@ -32,6 +32,8 @@ namespace ForceFields {
 namespace CrystalFF {
 using namespace RDKit;
 
+const unsigned int MIN_MACROCYCLE_SIZE = 9;
+
 /* SMARTS patterns for experimental torsion angle preferences
  * Version 1 taken from J. Med. Chem. 56, 1026-2028 (2013)
  * Version 2 taken from J. Chem. Inf. Model. 56, 1 (2016)
@@ -172,10 +174,15 @@ void getExperimentalTorsions(const RDKit::ROMol &mol, CrystalFFDetails &details,
   VECT_INT_VECT_CI rii, rjj;
   for (rii = bondRings.begin(); rii != bondRings.end(); ++rii) {
     boost::dynamic_bitset<> rs1(nb);  // bitset for ring 1
-    for (unsigned int i = 0; i < rii->size(); i++) {
-      rs1[(*rii)[i]] = 1;
+    for (auto riiv : *rii) {
+      rs1[riiv] = 1;
     }
     for (rjj = rii + 1; rjj != bondRings.end(); ++rjj) {
+      // we don't worry about the overlap if both rings are macrocycles:
+      if (rii->size() >= MIN_MACROCYCLE_SIZE &&
+          rjj->size() >= MIN_MACROCYCLE_SIZE) {
+        continue;
+      }
       unsigned int nInCommon = 0;
       for (auto rjj_i : *rjj) {
         if (rs1[rjj_i]) {
@@ -186,11 +193,16 @@ void getExperimentalTorsions(const RDKit::ROMol &mol, CrystalFFDetails &details,
         }
       }
       if (nInCommon > 1) {  // more than one bond in common
-        for (unsigned int i = 0; i < rii->size(); i++) {
-          excludedBonds[(*rii)[i]] = 1;  // exclude all bonds of ring 1
+        // exclude bonds from non-macrocycles:
+        if (rii->size() < MIN_MACROCYCLE_SIZE) {
+          for (unsigned int i = 0; i < rii->size(); i++) {
+            excludedBonds[(*rii)[i]] = 1;  // exclude all bonds of ring 1
+          }
         }
-        for (unsigned int i = 0; i < rjj->size(); i++) {
-          excludedBonds[(*rjj)[i]] = 1;  // exclude all bonds of ring 2
+        if (rjj->size() < MIN_MACROCYCLE_SIZE) {
+          for (unsigned int i = 0; i < rjj->size(); i++) {
+            excludedBonds[(*rjj)[i]] = 1;  // exclude all bonds of ring 2
+          }
         }
       }
     }
@@ -208,7 +220,6 @@ void getExperimentalTorsions(const RDKit::ROMol &mol, CrystalFFDetails &details,
     for (const auto &param : *params) {
       std::vector<MatchVectType> matches;
       SubstructMatch(mol, *(param.dp_pattern.get()), matches, false, true);
-
       // loop over matches
       for (std::vector<MatchVectType>::const_iterator matchIt = matches.begin();
            matchIt != matches.end(); ++matchIt) {
