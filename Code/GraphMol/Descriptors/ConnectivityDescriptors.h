@@ -135,6 +135,10 @@ const std::string chiNnVersion = "1.2.0";
 
 //! calculate the Hall-Kier alpha value for a molecule
 //! From equation (58) of Rev. Comp. Chem. vol 2, 367-422, (1991)
+//!
+//! \note Because hybridization is used to calculate this, results may differ
+//! from other implementations which have different conventions for assigning
+//! hybridization
 /*!
   \param mol           the molecule of interest
   \param atomContribs  if provided, this will be used to return the
@@ -149,6 +153,10 @@ const std::string hallKierAlphaVersion = "1.2.0";
 
 //! calculate the Hall-Kier kappa1 value for a molecule
 //! From equations (58) and (59) of Rev. Comp. Chem. vol 2, 367-422, (1991)
+//!
+//! \note Because hybridization is used to calculate this, results may differ
+//! from other implementations which have different conventions for assigning
+//! hybridization
 /*!
   \param mol           the molecule of interest
 */
@@ -157,6 +165,10 @@ const std::string kappa1Version = "1.1.0";
 
 //! calculate the Hall-Kier kappa2 value for a molecule
 //! From equations (58) and (60) of Rev. Comp. Chem. vol 2, 367-422, (1991)
+//!
+//! \note Because hybridization is used to calculate this results may differ
+//! from other implementations which have different conventions for assigning
+//! hybridization
 /*!
   \param mol           the molecule of interest
 */
@@ -166,6 +178,10 @@ const std::string kappa2Version = "1.1.0";
 //! calculate the Hall-Kier kappa3 value for a molecule
 //! From equations (58), (61) and (62) of Rev. Comp. Chem. vol 2, 367-422,
 //(1991)
+//!
+//! \note Because hybridization is used to calculate this results may differ
+//! from other implementations which have different conventions for assigning
+//! hybridization
 /*!
   \param mol           the molecule of interest
 */
@@ -174,6 +190,10 @@ const std::string kappa3Version = "1.1.0";
 
 //! calculate the Kier Phi value for a molecule
 //! From Quantitative Structure-Activity Relationships 8, 221–224 (1989).
+//!
+//! \note Because hybridization is used to calculate this results may differ
+//! from other implementations which have different conventions for assigning
+//! hybridization
 /*!
   \param mol           the molecule of interest
 */
