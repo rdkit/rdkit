@@ -345,9 +345,11 @@ TEST_CASE("dative bonds", "[drawing][organometallics]") {
     outs << text;
     outs.flush();
 
-    CHECK(text.find("<path class='bond-0 atom-0 atom-1' d='M 126.052,100 L 85.9675,100'"
-                    " style='fill:none;fill-rule:evenodd;"
-                    "stroke:#0000FF;") != std::string::npos);
+    CHECK(
+        text.find(
+            "<path class='bond-0 atom-0 atom-1' d='M 126.052,100 L 85.9675,100'"
+            " style='fill:none;fill-rule:evenodd;"
+            "stroke:#0000FF;") != std::string::npos);
   }
   SECTION("more complex") {
     auto m1 = "N->1[C@@H]2CCCC[C@H]2N->[Pt]11OC(=O)C(=O)O1"_smiles;
@@ -2147,16 +2149,17 @@ M  V30 LINKNODE 1 3 2 1 2 1 5
 M  V30 LINKNODE 1 4 2 4 3 4 5
 M  V30 END CTAB
 M  END)CTAB"_ctab;
-    std::vector<int> rotns={0,30,60,90,120,150,180};
-    for(auto rotn : rotns){
-    MolDraw2DSVG drawer(350, 300);
-    drawer.drawOptions().rotate = (double)rotn;
-    drawer.drawMolecule(*m);
-    drawer.finishDrawing();
-    auto text = drawer.getDrawingText();
-    std::ofstream outs((boost::format("testLinkNodes-2-%d.svg")%rotn).str());
-    outs << text;
-    outs.flush();
+    std::vector<int> rotns = {0, 30, 60, 90, 120, 150, 180};
+    for (auto rotn : rotns) {
+      MolDraw2DSVG drawer(350, 300);
+      drawer.drawOptions().rotate = (double)rotn;
+      drawer.drawMolecule(*m);
+      drawer.finishDrawing();
+      auto text = drawer.getDrawingText();
+      std::ofstream outs(
+          (boost::format("testLinkNodes-2-%d.svg") % rotn).str());
+      outs << text;
+      outs.flush();
     }
   }
 }
@@ -2639,5 +2642,58 @@ TEST_CASE("test the options that toggle isotope labels", "[drawing]") {
                                    textDeuteriumTritium.end(), regex, 1),
         std::sregex_token_iterator());
     CHECK(nDeuteriumTritium == 2);
+  }
+}
+
+TEST_CASE("draw hydrogen bonds", "[drawing]") {
+  SECTION("basics") {
+    auto m = R"CTAB(
+  Mrv2014 03022114422D          
+
+  0  0  0     0  0            999 V3000
+M  V30 BEGIN CTAB
+M  V30 COUNTS 8 8 0 0 0
+M  V30 BEGIN ATOM
+M  V30 1 C -5.4583 -0.125 0 0
+M  V30 2 C -4.1247 0.645 0 0
+M  V30 3 C -2.791 -0.125 0 0
+M  V30 4 C -1.4573 0.645 0 0
+M  V30 5 O -2.791 -1.665 0 0
+M  V30 6 C -6.792 0.645 0 0
+M  V30 7 O -5.4583 -1.665 0 0
+M  V30 8 H -4.1247 -2.435 0 0
+M  V30 END ATOM
+M  V30 BEGIN BOND
+M  V30 1 1 1 2
+M  V30 2 1 2 3
+M  V30 3 1 3 4
+M  V30 4 2 3 5
+M  V30 5 1 1 6
+M  V30 6 1 1 7
+M  V30 7 1 7 8
+M  V30 8 10 5 8
+M  V30 END BOND
+M  V30 END CTAB
+M  END
+)CTAB"_ctab;
+    REQUIRE(m);
+
+    MolDraw2DSVG drawer(300, 300);
+    drawer.drawMolecule(*m);
+    drawer.finishDrawing();
+    std::ofstream outs("testHydrogenBonds1.svg");
+    outs << drawer.getDrawingText();
+    outs.flush();
+  }
+  SECTION("from CXSMILES") {
+    auto m = "CC1O[H]O=C(C)C1 |H:4.3|"_smiles;
+    REQUIRE(m);
+
+    MolDraw2DSVG drawer(300, 300);
+    drawer.drawMolecule(*m);
+    drawer.finishDrawing();
+    std::ofstream outs("testHydrogenBonds2.svg");
+    outs << drawer.getDrawingText();
+    outs.flush();
   }
 }

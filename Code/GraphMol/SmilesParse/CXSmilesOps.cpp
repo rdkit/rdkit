@@ -214,8 +214,9 @@ bool parse_coords(Iterator &first, Iterator last, RDKit::RWMol &mol) {
 }
 
 template <typename Iterator>
-bool parse_coordinate_bonds(Iterator &first, Iterator last, RDKit::RWMol &mol) {
-  if (first >= last || *first != 'C') {
+bool parse_coordinate_bonds(Iterator &first, Iterator last, RDKit::RWMol &mol,
+                            Bond::BondType typ) {
+  if (first >= last || (*first != 'C' && *first != 'H')) {
     return false;
   }
   ++first;
@@ -242,7 +243,7 @@ bool parse_coordinate_bonds(Iterator &first, Iterator last, RDKit::RWMol &mol) {
                                 << " involving atom " << aidx << std::endl;
         return false;
       }
-      bnd->setBondType(Bond::DATIVE);
+      bnd->setBondType(typ);
       if (bnd->getBeginAtomIdx() != aidx) {
         unsigned int tmp = bnd->getBeginAtomIdx();
         bnd->setBeginAtomIdx(aidx);
@@ -670,7 +671,11 @@ bool parse_it(Iterator &first, Iterator last, RDKit::RWMol &mol) {
         return false;
       }
     } else if (*first == 'C') {
-      if (!parse_coordinate_bonds(first, last, mol)) {
+      if (!parse_coordinate_bonds(first, last, mol, Bond::DATIVE)) {
+        return false;
+      }
+    } else if (*first == 'H') {
+      if (!parse_coordinate_bonds(first, last, mol, Bond::HYDROGEN)) {
         return false;
       }
     } else if (*first == '^') {

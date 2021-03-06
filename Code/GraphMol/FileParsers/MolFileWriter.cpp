@@ -1023,6 +1023,9 @@ int GetV3000BondCode(const Bond *bond) {
       case Bond::DATIVE:
         res = 9;
         break;
+      case Bond::HYDROGEN:
+        res = 10;
+        break;
       default:
         res = 0;
         break;

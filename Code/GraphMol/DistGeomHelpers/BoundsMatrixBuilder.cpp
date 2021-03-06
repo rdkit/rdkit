@@ -220,9 +220,10 @@ void set12Bounds(const ROMol &mol, DistGeom::BoundsMatPtr mmat,
   for (bi = mol.beginBonds(); bi != mol.endBonds(); bi++) {
     begId = (*bi)->getBeginAtomIdx();
     endId = (*bi)->getEndAtomIdx();
-    if (atomParams[begId] && atomParams[endId]) {
+    auto bOrder = (*bi)->getBondTypeAsDouble();
+    if (atomParams[begId] && atomParams[endId] && bOrder > 0) {
       bl = ForceFields::UFF::Utils::calcBondRestLength(
-          (*bi)->getBondTypeAsDouble(), atomParams[begId], atomParams[endId]);
+          bOrder, atomParams[begId], atomParams[endId]);
       accumData.bondLengths[(*bi)->getIdx()] = bl;
       mmat->setUpperBound(begId, endId, bl + DIST12_DELTA);
       mmat->setLowerBound(begId, endId, bl - DIST12_DELTA);
