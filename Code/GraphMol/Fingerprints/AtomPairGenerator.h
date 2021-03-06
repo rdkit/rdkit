@@ -104,7 +104,8 @@ class RDKIT_FINGERPRINTS_EXPORT AtomPairAtomEnv
                       const std::vector<std::uint32_t> *atomInvariants,
                       const std::vector<std::uint32_t> *bondInvariants,
                       const AdditionalOutput *additionalOutput,
-                      const bool hashResults = false) const;
+                      const bool hashResults = false,
+                      const std::uint64_t fpSize = 0) const;
 
   /*!
     \brief construct a new AtomPairAtomEnv object
@@ -162,6 +163,12 @@ class RDKIT_FINGERPRINTS_EXPORT AtomPairEnvGenerator
 
   \return FingerprintGenerator<OutputType>* that generates atom-pair
   fingerprints
+
+  This generator supports the following \c AdditionalOutput types:
+  - \c atomToBits : which bits each atom is involved in
+  - \c atomCounts : how many bits each atom sets
+  - \c bitInfoMap : map from bitId to (atomId1, atomId2) pairs
+
  */
 template <typename OutputType>
 RDKIT_FINGERPRINTS_EXPORT FingerprintGenerator<OutputType>

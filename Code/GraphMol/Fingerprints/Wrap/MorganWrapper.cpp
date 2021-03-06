@@ -101,6 +101,10 @@ void exportMorgan() {
       "sparse versions\n"
       "    - atomInvariantsGenerator: atom invariants to be used during "
       "fingerprint generation\n\n"
+      "This generator supports the following AdditionalOutput types:\n"
+      "    - atomToBits: which bits each atom is the center of\n"
+      "    - atomCounts: how many bits each atom sets\n"
+      "    - bitInfoMap: map from bitId to (atomId1, radius) pairs\n\n"
       "  RETURNS: FingerprintGenerator\n\n",
       python::return_value_policy<python::manage_new_object>());
 

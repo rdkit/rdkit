@@ -135,16 +135,24 @@ std::string MorganArguments<OutputType>::infoString() const {
 
 template <typename OutputType>
 OutputType MorganAtomEnv<OutputType>::getBitId(
-    FingerprintArguments<OutputType> *,  // arguments
-    const std::vector<std::uint32_t> *,  // atomInvariants
-    const std::vector<std::uint32_t> *,  // bondInvariants
-    const AdditionalOutput *additionalOutput,
-    const bool  // hashResults
-) const {
+    FingerprintArguments<OutputType> *arguments,
+    const std::vector<std::uint32_t> *,                    // atomInvariants
+    const std::vector<std::uint32_t> *,                    // bondInvariants
+    const AdditionalOutput *additionalOutput, const bool,  // hashResults
+    const std::uint64_t fpSize) const {
+  PRECONDITION(arguments, "bad arguments");
   if (additionalOutput) {
-    // todo: set additional outputs
+    OutputType bit_id = fpSize ? (d_code % fpSize) : d_code;
+    if (additionalOutput->bitInfoMap) {
+      (*additionalOutput->bitInfoMap)[bit_id].emplace_back(d_atomId, d_layer);
+    }
+    if (additionalOutput->atomCounts) {
+      (*additionalOutput->atomCounts)[d_atomId]++;
+    }
+    if (additionalOutput->atomToBits) {
+      (*additionalOutput->atomToBits)[d_atomId].push_back(bit_id);
+    }
   }
-
   return d_code;
 }
 
@@ -199,8 +207,8 @@ MorganEnvGenerator<OutputType>::getEnvironments(
       nAtoms, boost::dynamic_bitset<>(mol.getNumBonds()));
   boost::dynamic_bitset<> deadAtoms(nAtoms);
 
-  // if df_onlyNonzeroInvariants is set order the atoms to make sure atoms with
-  // zero invariants are processed last so that in case of duplicate
+  // if df_onlyNonzeroInvariants is set order the atoms to make sure atoms
+  // with zero invariants are processed last so that in case of duplicate
   // environments atoms with non-zero invariants are used
   std::vector<unsigned int> atomOrder(nAtoms);
   if (morganArguments->df_onlyNonzeroInvariants) {
@@ -239,14 +247,14 @@ MorganEnvGenerator<OutputType>::getEnvironments(
     std::vector<OutputType> nextLayerInvariants(nAtoms);
 
     // holds atoms in the environment (neighborhood) for the current layer for
-    // each atom, starts with the immediate neighbors of atoms and expands with
-    // every iteration
+    // each atom, starts with the immediate neighbors of atoms and expands
+    // with every iteration
     std::vector<boost::dynamic_bitset<>> roundAtomNeighborhoods =
         atomNeighborhoods;
     std::vector<AccumTuple> allNeighborhoodsThisRound;
     for (auto atomIdx : atomOrder) {
-      // skip atoms which will not generate unique environments (neighborhoods)
-      // anymore
+      // skip atoms which will not generate unique environments
+      // (neighborhoods) anymore
       if (!deadAtoms[atomIdx]) {
         const Atom *tAtom = mol.getAtomWithIdx(atomIdx);
         if (!tAtom->getDegree()) {
@@ -257,9 +265,9 @@ MorganEnvGenerator<OutputType>::getEnvironments(
         ROMol::OEDGE_ITER beg, end;
         boost::tie(beg, end) = mol.getAtomBonds(tAtom);
 
-        // will hold up to date invariants of neighboring atoms with bond types,
-        // these invariants hold information from atoms around radius as big as
-        // current layer around the current atom
+        // will hold up to date invariants of neighboring atoms with bond
+        // types, these invariants hold information from atoms around radius
+        // as big as current layer around the current atom
         std::vector<std::pair<int32_t, uint32_t>> neighborhoodInvariants;
         // add up to date invariants of neighbors
         while (beg != end) {
@@ -315,8 +323,8 @@ MorganEnvGenerator<OutputType>::getEnvironments(
           }
         }
 
-        // this rounds bit id will be next rounds atom invariant, so we save it
-        // here
+        // this rounds bit id will be next rounds atom invariant, so we save
+        // it here
         nextLayerInvariants[atomIdx] = static_cast<OutputType>(invar);
 
         // store the environment that generated this bit id along with the bit
@@ -338,7 +346,8 @@ MorganEnvGenerator<OutputType>::getEnvironments(
     for (std::vector<AccumTuple>::const_iterator iter =
              allNeighborhoodsThisRound.begin();
          iter != allNeighborhoodsThisRound.end(); ++iter) {
-      // if we haven't seen this exact environment before, add it to the result
+      // if we haven't seen this exact environment before, add it to the
+      // result
       if (std::find(neighborhoods.begin(), neighborhoods.end(),
                     iter->get<0>()) == neighborhoods.end()) {
         if (!morganArguments->df_onlyNonzeroInvariants ||

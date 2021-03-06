@@ -47,8 +47,8 @@ or by indexing (i.e. bv[i] = 1 or if bv[i]).\n\
 \n";
 struct SBV_wrapper {
   static void wrap() {
-    python::class_<SparseBitVect>("SparseBitVect", sbvClassDoc.c_str(),
-                                  python::init<unsigned int>())
+    python::class_<SparseBitVect, boost::shared_ptr<SparseBitVect>>(
+        "SparseBitVect", sbvClassDoc.c_str(), python::init<unsigned int>())
         .def(python::init<std::string>())
         .def("SetBit", (bool (SBV::*)(unsigned int)) & SBV::setBit,
              "Turns on a particular bit.  Returns the original state of the "
@@ -75,13 +75,13 @@ struct SBV_wrapper {
              "Returns the number of off bits.\n")
         .def("__getitem__", (int (*)(const SBV &, int))get_VectItem)
         .def("__setitem__", (int (*)(SBV &, int, int))set_VectItem)
-        .def("GetOnBits", (IntVect (*)(const SBV &))GetOnBits,
+        .def("GetOnBits", (IntVect(*)(const SBV &))GetOnBits,
              "Returns a tuple containing IDs of the on bits.\n")
-        .def("ToBinary", (python::object (*)(const SBV &))BVToBinary,
+        .def("ToBinary", (python::object(*)(const SBV &))BVToBinary,
              "Returns an internal binary representation of the vector.\n")
         .def("FromBase64", (void (*)(SBV &, const std::string &))InitFromBase64,
              "Initializes the vector from a base64 encoded binary string.\n")
-        .def("ToBase64", (std::string (*)(SBV &))ToBase64,
+        .def("ToBase64", (std::string(*)(SBV &))ToBase64,
              "Converts the vector to a base64 string (the base64 encoded "
              "version of the results of ToString()).\n")
         .def(python::self & python::self)

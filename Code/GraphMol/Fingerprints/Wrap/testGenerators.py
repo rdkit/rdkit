@@ -212,6 +212,33 @@ class TestCase(unittest.TestCase):
     fp = g.GetFingerprint(m1)
     self.assertEqual(fp.GetNumOnBits(), 4)
 
+  def testAdditionalOutput(self):
+    m1 = Chem.MolFromSmiles('CCO')
+    g = rdFingerprintGenerator.GetAtomPairGenerator()
+    ao = rdFingerprintGenerator.AdditionalOutput()
+    ao.AllocateAtomCounts()
+    fp = g.GetFingerprint(m1, additionalOutput=ao)
+    self.assertEqual(ao.GetAtomCounts(), (2, 2, 2))
+    self.assertIsNone(ao.GetAtomToBits())
+    self.assertIsNone(ao.GetBitInfoMap())
+    self.assertIsNone(ao.GetBitPaths())
+
+    ao = rdFingerprintGenerator.AdditionalOutput()
+    ao.AllocateAtomToBits()
+    fp = g.GetFingerprint(m1, additionalOutput=ao)
+    self.assertIsNone(ao.GetAtomCounts())
+    self.assertEqual(ao.GetAtomToBits(), ((351, 479), (351, 399), (479, 399)))
+    self.assertIsNone(ao.GetBitInfoMap())
+    self.assertIsNone(ao.GetBitPaths())
+
+    ao = rdFingerprintGenerator.AdditionalOutput()
+    ao.AllocateBitInfoMap()
+    fp = g.GetFingerprint(m1, additionalOutput=ao)
+    self.assertIsNone(ao.GetAtomCounts())
+    self.assertIsNone(ao.GetAtomToBits())
+    self.assertEqual(ao.GetBitInfoMap(), {351: ((0, 1), ), 399: ((1, 2), ), 479: ((0, 2), )})
+    self.assertIsNone(ao.GetBitPaths())
+
 
 if __name__ == '__main__':
   unittest.main()

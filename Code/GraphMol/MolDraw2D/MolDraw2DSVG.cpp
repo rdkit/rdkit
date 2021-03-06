@@ -404,7 +404,7 @@ void MolDraw2DSVG::tagAtoms(const ROMol &mol, double radius,
     const auto width = 2 + lineWidth();
     if (drawOptions().splitBonds) {
       const auto midp = (a1pos + a2pos) / 2;
-	    // from begin to mid
+      // from begin to mid
       d_os << "<path "
            << " d='M " << a1pos.x << "," << a1pos.y << " L " << midp.x << ","
            << midp.y << "'";
@@ -416,7 +416,7 @@ void MolDraw2DSVG::tagAtoms(const ROMol &mol, double radius,
            << "px;fill-opacity:0;"
               "stroke-opacity:0' ";
       d_os << "/>\n";
-	    // mid to end
+      // mid to end
       d_os << "<path "
            << " d='M " << midp.x << "," << midp.y << " L " << a2pos.x << ","
            << a2pos.y << "'";
@@ -478,11 +478,11 @@ void MolDraw2DSVG::outputClasses() {
   d_os << (!d_activeClass.empty() ? " " : "");
   const auto aidx1 = getActiveAtmIdx1();
   if (aidx1 >= 0) {
-    d_os << "atom-" <<aidx1;
+    d_os << "atom-" << aidx1;
   }
   const auto aidx2 = getActiveAtmIdx2();
   if (aidx2 >= 0 && aidx2 != aidx1) {
-    d_os << " atom-" <<aidx2;
+    d_os << " atom-" << aidx2;
   }
   d_os << "' ";
 }
