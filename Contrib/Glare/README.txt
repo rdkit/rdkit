@@ -21,6 +21,13 @@ Implementation of
 
       glare = Glare()
       glare.optimize(lib, props)
+      # print out the selected reactants
+      for reactant_idx, rgroup in enumerate(lib.rgroups):
+        print(f"Reactants for reactant {reactant_idx}")
+        for reactant in rgroup.sidechains:
+            print(reactant.name)
+
+ 
       
 Notes:
 Some nomenclature:
@@ -32,7 +39,7 @@ Some nomenclature:
  We desire to optimize the Library so that we have a good chance
   of making the desired products.
 
- From the testing code, using Fake data:
+ From the testing code, you can make fake data:
 
     r1 = RGroups(makeFakeSidechains("aldehydes", num=1000))
     r2 = RGroups(makeFakeSidechains("boronic_acids", num=1500))
@@ -47,3 +54,9 @@ Some nomenclature:
     glare = Glare()
     # optimize the library...
     glare.optimize(libs, props)
+
+Sidechains can hold arbitrary data:
+  s = Sidechain(name="foo", props=(mw, alogp, tpsa), reactant=mol)
+
+And to retrieve the extra data:
+  s.extra_data['reactant']
