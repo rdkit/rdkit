@@ -81,6 +81,7 @@ struct RCore {
             mol.getBondBetweenAtoms(match[bond->getBeginAtomIdx()].second,
                                     match[bond->getEndAtomIdx()].second);
         Bond newBond(molBond->getBondType());
+        newBond.setIsAromatic(molBond->getIsAromatic());
         coreReplacedDummies->replaceBond(bond->getIdx(), &newBond, true);
       }
     }
@@ -99,8 +100,22 @@ struct RCore {
     auto atomicNumber = other.getAtomicNum();
     if (atom.hasQuery()) {
       Atom newAtom(atomicNumber);
-      newAtom.setIsAromatic(other.getIsAromatic());
-      mol.replaceAtom(atom.getIdx(), &newAtom, false, true);
+      auto atomIdx = atom.getIdx();
+      mol.replaceAtom(atomIdx, &newAtom, false, true);
+      auto replacedAtom = mol.getAtomWithIdx(atomIdx);
+      replacedAtom->setIsAromatic(other.getIsAromatic());
+      replacedAtom->setFormalCharge(other.getFormalCharge());
+      replacedAtom->setNoImplicit(true);
+      unsigned int numHs = 0;
+      const auto &otherMol = other.getOwningMol();
+      for (const auto &nbri : boost::make_iterator_range(otherMol.getAtomNeighbors(&other))) {
+        const auto nbrAtom = otherMol[nbri];
+        if (nbrAtom->getAtomicNum() == 1) {
+          ++numHs;
+        }
+      }
+      replacedAtom->setNumExplicitHs(numHs + other.getTotalNumHs());
+      replacedAtom->updatePropertyCache(false);
     } else {
       atom.setAtomicNum(other.getAtomicNum());
       atom.setIsAromatic(other.getIsAromatic());
@@ -109,7 +124,7 @@ struct RCore {
 
   // Final core returned to user with dummy atoms and bonds set to those in the
   // match
-  ROMOL_SPTR coreWithMatches(const ROMol &coreReplacedDummies) {
+  RWMOL_SPTR coreWithMatches(const ROMol &coreReplacedDummies) const {
     auto finalCore = boost::make_shared<RWMol>(*labelledCore);
     for (size_t atomIdx = 0; atomIdx < coreReplacedDummies.getNumAtoms();
          ++atomIdx) {
@@ -119,7 +134,6 @@ struct RCore {
       if (coreAtom->getAtomicNum() == 0 && templateAtom->getAtomicNum() > 0 &&
           isAnyAtomWithMultipleNeighborsOrNotUserRLabel(*unlabelledCoreAtom)) {
         replaceDummyAtom(*finalCore, *coreAtom, *templateAtom);
-        finalCore->getAtomWithIdx(atomIdx)->setNoImplicit(true);
       }
     }
 
@@ -129,6 +143,7 @@ struct RCore {
       if (coreBond->hasQuery()) {
         auto templateBond = coreReplacedDummies.getBondWithIdx(bondIdx);
         Bond newBond(templateBond->getBondType());
+        newBond.setIsAromatic(templateBond->getIsAromatic());
         finalCore->replaceBond(bondIdx, &newBond, true);
       }
     }

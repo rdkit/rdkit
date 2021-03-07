@@ -228,7 +228,7 @@ struct RGroupDecompData {
 
   void relabelCore(RWMol &core, std::map<int, int> &mappings,
                    UsedLabels &used_labels, const std::set<int> &indexLabels,
-                   std::map<int, std::vector<int>> extraAtomRLabels) {
+                   const std::map<int, std::vector<int>> &extraAtomRLabels) {
     // Now remap to proper rlabel ids
     //  if labels are positive, they come from User labels
     //  if they are negative, they come from indices and should be
@@ -297,16 +297,15 @@ struct RGroupDecompData {
     }
 
     // Deal with multiple bonds to the same label
-    for (auto &extraAtomRLabel : extraAtomRLabels) {
+    for (const auto &extraAtomRLabel : extraAtomRLabels) {
       auto atm = atoms.find(extraAtomRLabel.first);
       if (atm == atoms.end()) {
         continue;  // label not used in the rgroup
       }
       Atom *atom = atm->second;
 
-      for (int &i : extraAtomRLabel.second) {
+      for (size_t i = 0; i < extraAtomRLabel.second.size(); ++i) {
         int rlabel = used_labels.next();
-        i = rlabel;
         // Is this necessary?
         CHECK_INVARIANT(
             atom->getAtomicNum() > 1,
@@ -317,7 +316,7 @@ struct RGroupDecompData {
       }
     }
 
-    for (auto &i : atomsToAdd) {
+    for (const auto &i : atomsToAdd) {
       core.addAtom(i.second, false, true);
       core.addBond(i.first, i.second, Bond::SINGLE);
       MolOps::setHydrogenCoords(&core, i.second->getIdx(), i.first->getIdx());

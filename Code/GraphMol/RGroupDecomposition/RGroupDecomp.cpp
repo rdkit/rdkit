@@ -351,11 +351,48 @@ std::vector<std::string> RGroupDecomposition::getRGroupLabels() const {
   return labels;
 }
 
-ROMOL_SPTR RGroupDecomposition::outputCoreMolecule(
-    const RGroupMatch &match) const {
-  auto &core = data->cores[match.core_idx];
-  return match.matchedCore ? core.coreWithMatches(*match.matchedCore)
-                           : core.labelledCore;
+RWMOL_SPTR RGroupDecomposition::outputCoreMolecule(
+    const RGroupMatch &match, const std::map<int, bool> &usedRGroupMap) const {
+  const auto &core = data->cores[match.core_idx];
+  if (!match.matchedCore) {
+    return core.labelledCore;
+  }
+  auto coreWithMatches = core.coreWithMatches(*match.matchedCore);
+  for (auto atomIdx = coreWithMatches->getNumAtoms(); atomIdx--;) {
+    auto atom = coreWithMatches->getAtomWithIdx(atomIdx);
+    if (atom->getAtomicNum()) {
+      continue;
+    }
+    auto it = usedRGroupMap.find(atom->getAtomMapNum());
+    if (it == usedRGroupMap.end()) {
+      continue;
+    }
+    Atom *nbrAtom = nullptr;
+    for (const auto &nbri : boost::make_iterator_range(coreWithMatches->getAtomNeighbors(atom))) {
+      nbrAtom = (*coreWithMatches)[nbri];
+      break;
+    }
+    if (nbrAtom) {
+      if (it->second) {
+        auto numExplicitHs = nbrAtom->getNumExplicitHs();
+        if (numExplicitHs) {
+          nbrAtom->setNumExplicitHs(numExplicitHs - 1);
+        }
+      } else {
+        coreWithMatches->removeAtom(atomIdx);
+      }
+      nbrAtom->updatePropertyCache(false);
+    }
+  }
+  return coreWithMatches;
+}
+
+std::map<int, bool> RGroupDecomposition::getBlankRGroupMap() const {
+  std::map<int, bool> usedRGroupMap;
+  for (const auto &rl : data->finalRlabelMapping) {
+    usedRGroupMap[rl.second] = false;
+  }
+  return usedRGroupMap;
 }
 
 RGroupRows RGroupDecomposition::getRGroupsAsRows() const {
@@ -363,26 +400,30 @@ RGroupRows RGroupDecomposition::getRGroupsAsRows() const {
 
   RGroupRows groups;
 
-  int molidx = 0;
-  for (auto it = permutation.begin(); it != permutation.end(); ++it, ++molidx) {
+  auto usedRGroupMap = getBlankRGroupMap();
+
+  for (auto it = permutation.begin(); it != permutation.end(); ++it) {
+    auto Rs_seen(usedRGroupMap);
     // make a new rgroup entry
     groups.push_back(RGroupRow());
     RGroupRow &out_rgroups = groups.back();
 
-    out_rgroups[CORE] = outputCoreMolecule(*it);
-
-    R_DECOMP &in_rgroups = it->rgroups;
+    const R_DECOMP &in_rgroups = it->rgroups;
 
     for (const auto &rgroup : in_rgroups) {
       const auto realLabel = data->finalRlabelMapping.find(rgroup.first);
       CHECK_INVARIANT(realLabel != data->finalRlabelMapping.end(),
                       "unprocessed rlabel, please call process() first.");
+      Rs_seen[realLabel->second] = true;
       out_rgroups[RPREFIX + std::to_string(realLabel->second)] =
           rgroup.second->combinedMol;
     }
+
+    out_rgroups[CORE] = outputCoreMolecule(*it, Rs_seen);
   }
   return groups;
 }
+
 //! return rgroups in column order group[attachment_point][molidx] = ROMol
 RGroupColumns RGroupDecomposition::getRGroupsAsColumns() const {
   std::vector<RGroupMatch> permutation = data->GetCurrentBestPermutation();
@@ -390,18 +431,12 @@ RGroupColumns RGroupDecomposition::getRGroupsAsColumns() const {
   RGroupColumns groups;
   std::unordered_set<std::string> rGroupWithRealMol{CORE};
 
-  // collect the list of all possible RGroups:
-  std::map<int, size_t> rgrp_pos_map;
-  unsigned int ridx = 0;
-  for (const auto rl : data->finalRlabelMapping) {
-    rgrp_pos_map[rl.second] = ridx++;
-  }
+  auto usedRGroupMap = getBlankRGroupMap();
 
   unsigned int molidx = 0;
   for (auto it = permutation.begin(); it != permutation.end(); ++it, ++molidx) {
-    boost::dynamic_bitset<> Rs_seen(rgrp_pos_map.size());
-    R_DECOMP &in_rgroups = it->rgroups;
-    groups[CORE].push_back(outputCoreMolecule(*it));
+    auto Rs_seen(usedRGroupMap);
+    const R_DECOMP &in_rgroups = it->rgroups;
 
     for (const auto &rgroup : in_rgroups) {
       const auto realLabel = data->finalRlabelMapping.find(rgroup.first);
@@ -410,20 +445,22 @@ RGroupColumns RGroupDecomposition::getRGroupsAsColumns() const {
       CHECK_INVARIANT(rgroup.second->combinedMol->hasProp(done),
                       "Not done! Call process()");
 
-      CHECK_INVARIANT(!Rs_seen[rgrp_pos_map[realLabel->second]],
+      CHECK_INVARIANT(!Rs_seen.at(realLabel->second),
                       "R group label appears multiple times!");
-      Rs_seen.set(rgrp_pos_map[realLabel->second]);
+      Rs_seen[realLabel->second] = true;
       std::string r = RPREFIX + std::to_string(realLabel->second);
       RGroupColumn &col = groups[r];
-      if (molidx && col.size() < (size_t)(molidx - 1)) {
+      if (molidx && col.size() < molidx - 1) {
         col.resize(molidx - 1);
       }
       col.push_back(rgroup.second->combinedMol);
       rGroupWithRealMol.insert(r);
     }
+    groups[CORE].push_back(outputCoreMolecule(*it, Rs_seen));
+
     // add empty entries to columns where this molecule didn't appear
-    for (const auto rpr : rgrp_pos_map) {
-      if (!Rs_seen[rpr.second]) {
+    for (const auto &rpr : Rs_seen) {
+      if (!rpr.second) {
         std::string r = RPREFIX + std::to_string(rpr.first);
         groups[r].push_back(boost::make_shared<RWMol>());
       }

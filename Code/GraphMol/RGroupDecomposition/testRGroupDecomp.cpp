@@ -256,9 +256,9 @@ void testRGroupOnlyMatching() {
 
 const char *ringData[3] = {"c1cocc1", "c1c[nH]cc1", "c1cscc1"};
 
-const char *ringDataRes[3] = {"Core:c1cco([*:1])c1",
+const char *ringDataRes[3] = {"Core:c1ccoc1",
                               "Core:c1ccn([*:1])c1 R1:[H][*:1]",
-                              "Core:c1ccs([*:1])c1"};
+                              "Core:c1ccsc1"};
 
 void testRingMatching() {
   BOOST_LOG(rdInfoLog)
@@ -296,9 +296,9 @@ void testRingMatching() {
 const char *ringData2[3] = {"c1cocc1CCl", "c1c[nH]cc1CI", "c1cscc1CF"};
 
 const char *ringDataRes2[3] = {
-    "Core:c1cc(C[*:2])([*:1])co1[*:3] R2:Cl[*:2]",
-    "Core:c1cc(C[*:2])([*:1])cn1[*:3] R2:I[*:2] R3:[H][*:3]",
-    "Core:c1cc(C[*:2])([*:1])cs1[*:3] R2:F[*:2]"};
+    "Core:c1cc(C[*:2])co1 R2:Cl[*:2]",
+    "Core:c1cn([*:3])cc1C[*:2] R2:I[*:2] R3:[H][*:3]",
+    "Core:c1cc(C[*:2])cs1 R2:F[*:2]"};
 
 void testRingMatching2() {
   BOOST_LOG(rdInfoLog)
@@ -333,9 +333,9 @@ void testRingMatching2() {
 const char *ringData3[3] = {"c1cocc1CCl", "c1c[nH]cc1CI", "c1cscc1CF"};
 
 const char *ringDataRes3[3] = {
-    "Core:c1co([*:2])cc1[*:1] R1:ClC[*:1]",
+    "Core:c1cc([*:1])co1 R1:ClC[*:1]",
     "Core:c1cn([*:2])cc1[*:1] R1:IC[*:1] R2:[H][*:2]",
-    "Core:c1cs([*:2])cc1[*:1] R1:FC[*:1]"};
+    "Core:c1cc([*:1])cs1 R1:FC[*:1]"};
 
 void testRingMatching3() {
   BOOST_LOG(rdInfoLog)
@@ -977,14 +977,14 @@ $$$$)CTAB";
     RGroupRows rows = decomp.getRGroupsAsRows();
 
     const char *expected[4] = {
-        "Core:N1C(N([*:2])[*:4])C2C([*:6])C([*:3])N([*:5])C2NC1[*:1] "
+        "Core:C1C([*:6])C2C(N([*:2])[*:4])NC([*:1])NC2N1[*:5] "
         "R1:[H][*:1] R2:C(CC[*:2])CC[*:4] R4:C(CC[*:2])CC[*:4] R5:[H][*:5] "
         "R6:[H][*:6]",
-        "Core:N1C(N([*:2])[*:4])C2C([*:6])C([*:3])S([*:5])C2NC1[*:1] "
+        "Core:C1SC2NC([*:1])NC(N([*:2])[*:4])C2C1[*:6] "
         "R1:[H][*:1] R2:C[*:2] R4:[H][*:4] R6:CC(C)[*:6]",
-        "Core:C1C2C(C([*:6])C([*:3])S2[*:5])C(N([*:2])[*:4])NC1[*:1] "
+        "Core:C1SC2CC([*:1])NC(N([*:2])[*:4])C2C1[*:6] "
         "R1:[H][*:1] R2:C[*:2] R4:[H][*:4] R6:CC(C)[*:6]",
-        "Core:C1C2C(C(N([*:2])[*:4])NC1[*:1])N([*:6])C([*:3])N2[*:5] R1:O[*:1] "
+        "Core:C1C2C(C(N([*:2])[*:4])NC1[*:1])N([*:6])CN2[*:5] R1:O[*:1] "
         "R2:[H][*:2] R4:[H][*:4] R5:C[*:5] R6:[H][*:6]"};
     int i = 0;
     for (RGroupRows::const_iterator it = rows.begin(); it != rows.end();
@@ -1734,9 +1734,9 @@ $$$$
   // test pre-labelled with dummy atom labels, autodetect
 
   expectedRows = {"Core:O=C(c1cncn1[*:2])[*:1] R1:CN[*:1] R2:CC[*:2]",
-                  "Core:c1cc2ccc([*:1])nc2nc1[*:2] R1:Br[*:1] R2:F[*:2]"};
+                  "Core:c1cc2ccc([*:2])nc2nc1[*:1] R1:Br[*:1] R2:F[*:2]"};
 
-  expectedItems = {{"O=C(c1cncn1[*:2])[*:1]", "c1cc2ccc([*:1])nc2nc1[*:2]"},
+  expectedItems = {{"O=C(c1cncn1[*:2])[*:1]", "c1cc2ccc([*:2])nc2nc1[*:1]"},
                    {"CN[*:1]", "Br[*:1]"},
                    {"CC[*:2]", "F[*:2]"}};
 
@@ -2036,7 +2036,7 @@ M  END
   TEST_ASSERT(rows.size() == 1)
   RGroupRows::const_iterator it = rows.begin();
   std::string expected(
-      "Core:O=C(NC1CCN([*:3])CC1[*:2])[*:1] R1:Clc1cc([*:1])[nH]c1Cl "
+      "Core:O=C(NC1CCN([*:3])CC1)[*:1] R1:Clc1cc([*:1])[nH]c1Cl "
       "R3:O=[N+]([O-])c1cccnc1[*:3]");
   CHECK_RGROUP(it, expected);
 

@@ -568,9 +568,9 @@ $$$$
         # test pre-labelled with dummy atom labels, autodetect
 
         expected_rows = [{'Core': 'O=C(c1cncn1[*:2])[*:1]', 'R1': 'CN[*:1]', 'R2': 'CC[*:2]'},
-                         {'Core': 'c1cc2ccc([*:1])nc2nc1[*:2]', 'R1': 'Br[*:1]', 'R2': 'F[*:2]'}]
+                         {'Core': 'c1cc2ccc([*:2])nc2nc1[*:1]', 'R1': 'Br[*:1]', 'R2': 'F[*:2]'}]
 
-        expected_items = {'Core': ['O=C(c1cncn1[*:2])[*:1]', 'c1cc2ccc([*:1])nc2nc1[*:2]'],
+        expected_items = {'Core': ['O=C(c1cncn1[*:2])[*:1]', 'c1cc2ccc([*:2])nc2nc1[*:1]'],
                           'R1': ['CN[*:1]', 'Br[*:1]'],
                           'R2': ['CC[*:2]', 'F[*:2]']}
 
