@@ -71,22 +71,29 @@ class RDKIT_FINGERPRINTS_EXPORT RDKitFPAtomEnv
     : public AtomEnvironment<OutputType> {
   const OutputType d_bitId;
   const boost::dynamic_bitset<> d_atomsInPath;
+  const INT_VECT d_bondPath;
 
  public:
   OutputType getBitId(FingerprintArguments<OutputType> *arguments,
                       const std::vector<std::uint32_t> *atomInvariants,
                       const std::vector<std::uint32_t> *bondInvariants,
                       const AdditionalOutput *additionalOutput,
-                      bool hashResults = false) const;
+                      bool hashResults = false,
+                      const std::uint64_t fpSize = 0) const;
 
   /**
   \brief Construct a new RDKitFPAtomEnv object
 
   \param bitId bitId generated for this environment
   \param atomsInPath holds atoms in this environment to set additional output
+  \param bondPath the bond path defining the environment
 
   */
-  RDKitFPAtomEnv(const OutputType bitId, boost::dynamic_bitset<> atomsInPath);
+  RDKitFPAtomEnv(const OutputType bitId, boost::dynamic_bitset<> atomsInPath,
+                 INT_VECT bondPath)
+      : d_bitId(bitId),
+        d_atomsInPath(std::move(atomsInPath)),
+        d_bondPath(std::move(bondPath)){};
 };
 
 template <typename OutputType>
@@ -129,7 +136,14 @@ class RDKIT_FINGERPRINTS_EXPORT RDKitFPEnvGenerator
  \param ownsAtomInvGen  if set atom invariants generator is destroyed with the
  fingerprint generator
 
- /return FingerprintGenerator<OutputType>* that generated RDKit fingerprints
+ /return FingerprintGenerator<OutputType>* that generates RDKit fingerprints
+
+ This generator supports the following \c AdditionalOutput types:
+  - \c atomToBits : which bits each atom is involved in
+  - \c atomCounts : how many bits each atom sets
+  - \c bitPaths : map from bitId to vectors of bond indices for the individual
+ subgraphs
+
  */
 template <typename OutputType>
 RDKIT_FINGERPRINTS_EXPORT FingerprintGenerator<OutputType> *getRDKitFPGenerator(

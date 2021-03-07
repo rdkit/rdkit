@@ -8,8 +8,8 @@
 #  of the RDKit source tree.
 #
 import os
-import re
 import warnings
+from importlib.util import find_spec
 
 from rdkit.Chem.Draw import rdMolDraw2D
 from rdkit.Chem.Draw.MolDrawing import MolDrawing, DrawingOptions
@@ -149,38 +149,35 @@ def _legacyMolToImage(mol, size, kekulize, wedgeBonds, fitImage, options, canvas
     return img
 
 
-if hasattr(rdMolDraw2D, 'MolDraw2DQt'):
-  try:
-    from PyQt5.Qt import *
-  except ImportError:
-    # If we can't find Qt, there's nothing we can do
-    sip = None
-  else:
+def _sip_available():
+  if find_spec('PyQt5') and find_spec('PyQt5.sip'):
+    return True
+  elif find_spec('sip'):
+    return True
+  return False
+
+if find_spec('rdkit.Chem.Draw.rdMolDraw2DQt') and _sip_available():
+  def MolDraw2DFromQPainter(qpainter, width=-1, height=-1, panelWidth=-1, panelHeight=-1):
+    from PyQt5.Qt import QPainter
     try:
       # Prefer the PyQt5-bundled sip
       from PyQt5 import sip
     except ImportError:
       # No bundled sip, try the standalone package
-      try:
-        import sip
-      except ImportError:
-        # No sip at all
-        sip = None
+      import sip
+    from rdkit.Chem.Draw import rdMolDraw2DQt
 
-  if sip is not None:
-
-    def MolDraw2DFromQPainter(qpainter, width=-1, height=-1, panelWidth=-1, panelHeight=-1):
-      if not isinstance(qpainter, QPainter):
-        raise ValueError("argument must be a QPainter instance")
-      if width <= 0:
-        width = qpainter.viewport().width()
-      if height <= 0:
-        height = qpainter.viewport().height()
-      ptr = sip.unwrapinstance(qpainter)
-      d2d = rdMolDraw2D.MolDraw2DFromQPainter_(width, height, ptr, panelWidth, panelWidth)
-      # tie the lifetime of the QPainter to this MolDraw2D object
-      d2d._qptr = qpainter
-      return d2d
+    if not isinstance(qpainter, QPainter):
+      raise ValueError("argument must be a QPainter instance")
+    if width <= 0:
+      width = qpainter.viewport().width()
+    if height <= 0:
+      height = qpainter.viewport().height()
+    ptr = sip.unwrapinstance(qpainter)
+    d2d = rdMolDraw2DQt.MolDraw2DFromQPainter_(width, height, ptr, panelWidth, panelWidth)
+    # tie the lifetime of the QPainter to this MolDraw2D object
+    d2d._qptr = qpainter
+    return d2d
 
 
 def MolToImage(mol, size=(300, 300), kekulize=True, wedgeBonds=True, fitImage=False, options=None,
@@ -830,11 +827,10 @@ def DrawMorganEnvs(envs, molsPerRow=3, subImgSize=(150, 150), baseRad=0.3, useSV
     drawer = rdMolDraw2D.MolDraw2DCairo(fullSize[0], fullSize[1], subImgSize[0], subImgSize[1])
 
   if drawOptions is None:
-    drawopt = drawer.drawOptions()
-    drawopt.continuousHighlight = False
-  else:
-    drawOptions.continuousHighlight = False
-    drawer.SetDrawOptions(drawOptions)
+    drawOptions = drawer.drawOptions()
+  drawOptions.continuousHighlight = False
+  drawOptions.includeMetadata = False
+  drawer.SetDrawOptions(drawOptions)
   drawer.DrawMolecules(submols, legends=legends, highlightAtoms=highlightAtoms,
                        highlightAtomColors=atomColors, highlightBonds=highlightBonds,
                        highlightBondColors=bondColors, highlightAtomRadii=highlightRadii, **kwargs)
@@ -856,12 +852,10 @@ def DrawMorganEnv(mol, atomId, radius, molSize=(150, 150), baseRad=0.3, useSVG=T
     drawer = rdMolDraw2D.MolDraw2DCairo(molSize[0], molSize[1])
 
   if drawOptions is None:
-    drawopt = drawer.drawOptions()
-    drawopt.continuousHighlight = False
-  else:
-    drawOptions.continuousHighlight = False
-    drawer.SetDrawOptions(drawOptions)
-
+    drawOptions = drawer.drawOptions()
+  drawOptions.continuousHighlight = False
+  drawOptions.includeMetadata = False
+  drawer.SetDrawOptions(drawOptions)
   drawer.DrawMolecule(menv.submol, highlightAtoms=menv.highlightAtoms,
                       highlightAtomColors=menv.atomColors, highlightBonds=menv.highlightBonds,
                       highlightBondColors=menv.bondColors, highlightAtomRadii=menv.highlightRadii,
@@ -975,11 +969,10 @@ def DrawRDKitEnvs(envs, molsPerRow=3, subImgSize=(150, 150), baseRad=0.3, useSVG
     drawer = rdMolDraw2D.MolDraw2DCairo(fullSize[0], fullSize[1], subImgSize[0], subImgSize[1])
 
   if drawOptions is None:
-    drawopt = drawer.drawOptions()
-    drawopt.continuousHighlight = False
-  else:
-    drawOptions.continuousHighlight = False
-    drawer.SetDrawOptions(drawOptions)
+    drawOptions = drawer.drawOptions()
+  drawOptions.continuousHighlight = False
+  drawOptions.includeMetadata = False
+  drawer.SetDrawOptions(drawOptions)
   drawer.DrawMolecules(submols, legends=legends, highlightAtoms=highlightAtoms,
                        highlightAtomColors=atomColors, highlightBonds=highlightBonds,
                        highlightBondColors=bondColors, highlightAtomRadii=highlightRadii, **kwargs)
@@ -999,12 +992,10 @@ def DrawRDKitEnv(mol, bondPath, molSize=(150, 150), baseRad=0.3, useSVG=True,
     drawer = rdMolDraw2D.MolDraw2DCairo(molSize[0], molSize[1])
 
   if drawOptions is None:
-    drawopt = drawer.drawOptions()
-    drawopt.continuousHighlight = False
-  else:
-    drawOptions.continuousHighlight = False
-    drawer.SetDrawOptions(drawOptions)
-
+    drawOptions = drawer.drawOptions()
+  drawOptions.continuousHighlight = False
+  drawOptions.includeMetadata = False
+  drawer.SetDrawOptions(drawOptions)
   drawer.DrawMolecule(menv.submol, highlightAtoms=menv.highlightAtoms,
                       highlightAtomColors=menv.atomColors, highlightBonds=menv.highlightBonds,
                       highlightBondColors=menv.bondColors, highlightAtomRadii=menv.highlightRadii,

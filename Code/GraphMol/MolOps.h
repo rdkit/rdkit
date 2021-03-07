@@ -1,5 +1,5 @@
 //
-//  Copyright (C) 2001-2019 Greg Landrum and Rational Discovery LLC
+//  Copyright (C) 2001-2021 Greg Landrum and Rational Discovery LLC
 //  Copyright (c) 2014, Novartis Institutes for BioMedical Research Inc.
 //
 //   @@ All Rights Reserved @@
@@ -854,69 +854,6 @@ RDKIT_GRAPHMOL_EXPORT std::list<int> getShortestPath(const ROMol &mol, int aid1,
 
 //@}
 
-#if 0
-    //! \name Canonicalization
-    //@{
-
-    //! assign a canonical ordering to a molecule's atoms
-    /*!
-      The algorithm used here is a modification of the published Daylight canonical
-      smiles algorithm (i.e. it uses atom invariants and products of primes).
-
-      \param mol               the molecule of interest
-      \param ranks             used to return the ranks
-      \param breakTies         toggles breaking of ties (see below)
-      \param includeChirality  toggles inclusion of chirality in the invariants
-      \param includeIsotopes   toggles inclusion of isotopes in the invariants
-      \param rankHistory       used to return the rank history (see below)
-
-      <b>Notes:</b>
-        - Tie breaking should be done when it's important to have a full ordering
-          of the atoms (e.g. when generating canonical traversal trees). If it's
-	        acceptable to have ties between symmetry-equivalent atoms (e.g. when
-	        generating CIP codes), tie breaking can/should be skipped.
-	      - if the \c rankHistory argument is provided, the evolution of the ranks of
-	        individual atoms will be tracked.  The \c rankHistory pointer should be
-	        to a VECT_INT_VECT that has at least \c mol.getNumAtoms() elements.
-    */
-    RDKIT_GRAPHMOL_EXPORT void rankAtoms(const ROMol &mol,std::vector<int> &ranks,
-                   bool breakTies=true,
-                   bool includeChirality=true,
-                   bool includeIsotopes=true,
-                   std::vector<std::vector<int> > *rankHistory=0);
-    //! assign a canonical ordering to a sub-molecule's atoms
-    /*!
-      The algorithm used here is a modification of the published Daylight canonical
-      smiles algorithm (i.e. it uses atom invariants and products of primes).
-
-      \param mol               the molecule of interest
-      \param atomsToUse        atoms to be included
-      \param bondsToUse        bonds to be included
-      \param atomSymbols       symbols to use for the atoms in the output (these are
-                               used in place of atomic number and isotope information)
-      \param ranks             used to return the ranks
-      \param breakTies         toggles breaking of ties (see below)
-      \param rankHistory       used to return the rank history (see below)
-
-      <b>Notes:</b>
-        - Tie breaking should be done when it's important to have a full ordering
-          of the atoms (e.g. when generating canonical traversal trees). If it's
-	        acceptable to have ties between symmetry-equivalent atoms (e.g. when
-	        generating CIP codes), tie breaking can/should be skipped.
-	      - if the \c rankHistory argument is provided, the evolution of the ranks of
-	        individual atoms will be tracked.  The \c rankHistory pointer should be
-	        to a VECT_INT_VECT that has at least \c mol.getNumAtoms() elements.
-    */
-    RDKIT_GRAPHMOL_EXPORT void rankAtomsInFragment(const ROMol &mol,std::vector<int> &ranks,
-                             const boost::dynamic_bitset<> &atomsToUse,
-                             const boost::dynamic_bitset<> &bondsToUse,
-                             const std::vector<std::string> *atomSymbols=0,
-                             const std::vector<std::string> *bondSymbols=0,
-                             bool breakTies=true,
-                             std::vector<std::vector<int> > *rankHistory=0);
-
-    // @}
-#endif
 //! \name Stereochemistry
 //@{
 
@@ -1032,8 +969,6 @@ RDKIT_GRAPHMOL_EXPORT void removeStereochemistry(ROMol &mol);
 */
 RDKIT_GRAPHMOL_EXPORT void findPotentialStereoBonds(ROMol &mol,
                                                     bool cleanIt = false);
-//@}
-
 //! \brief Uses the molParity atom property to assign ChiralType to a molecule's
 //! atoms
 /*!
@@ -1044,9 +979,14 @@ RDKIT_GRAPHMOL_EXPORT void findPotentialStereoBonds(ROMol &mol,
 RDKIT_GRAPHMOL_EXPORT void assignChiralTypesFromMolParity(
     ROMol &mol, bool replaceExistingTags = true);
 
+//@}
+
 //! returns the number of atoms which have a particular property set
 RDKIT_GRAPHMOL_EXPORT unsigned getNumAtomsWithDistinctProperty(
     const ROMol &mol, std::string prop);
+
+//! returns whether or not a molecule needs to have Hs added to it.
+RDKIT_GRAPHMOL_EXPORT bool needsHs(const ROMol &mol);
 
 };  // end of namespace MolOps
 };  // end of namespace RDKit

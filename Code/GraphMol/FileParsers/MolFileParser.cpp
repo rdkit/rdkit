@@ -2479,6 +2479,9 @@ void ParseV3000BondBlock(std::istream *inStream, unsigned int &line,
       case 9:
         bond = new Bond(Bond::DATIVE);
         break;
+      case 10:
+        bond = new Bond(Bond::HYDROGEN);
+        break;
       case 0:
         bond = new Bond(Bond::UNSPECIFIED);
         BOOST_LOG(rdWarningLog)

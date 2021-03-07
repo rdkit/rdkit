@@ -7,12 +7,12 @@
 //  of the RDKit source tree.
 //
 //
+#include "DrawTextQt.h"
 
-#include <GraphMol/MolDraw2D/MolDraw2D.h>
-#include <GraphMol/MolDraw2D/DrawTextQt.h>
-#include <GraphMol/MolDraw2D/MolDraw2DDetails.h>
 #include <QPainter>
 #include <QCoreApplication>
+#include <GraphMol/MolDraw2D/MolDraw2D.h>
+#include <GraphMol/MolDraw2D/MolDraw2DDetails.h>
 
 using namespace std;
 

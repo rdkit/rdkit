@@ -12,6 +12,7 @@
 #ifndef RDDEPICTOR_H
 #define RDDEPICTOR_H
 
+#include <GraphMol/Substruct/SubstructMatch.h>
 #include <RDGeneral/types.h>
 #include <Geometry/point.h>
 #include <boost/smart_ptr.hpp>
@@ -64,6 +65,9 @@ class RDKIT_DEPICTOR_EXPORT DepictException : public std::exception {
 
   \param permuteDeg4Nodes - try permuting the drawing order of bonds around
         atoms with four neighbors in order to improve the depiction
+
+  \param forceRDKit - use RDKit to generate coordinates even if
+        preferCoordGen is set to true
 
   \return ID of the conformation added to the molecule containing the
   2D coordinates
@@ -119,6 +123,9 @@ RDKIT_DEPICTOR_EXPORT unsigned int compute2DCoords(
   \param permuteDeg4Nodes - try permuting the drawing order of bonds around
         atoms with four neighbors in order to improve the depiction
 
+  \param forceRDKit - use RDKit to generate coordinates even if
+        preferCoordGen is set to true
+
   \return ID of the conformation added to the molecule containing the
   2D coordinates
 
@@ -149,17 +156,57 @@ RDKIT_DEPICTOR_EXPORT unsigned int compute2DCoordsMimicDistMat(
   \param referencePattern -  (optional) a query molecule to be used to
                              generate the atom mapping between the molecule
                              and the reference.
-  \param acceptFailure - (optional) if True, standard depictions will be
-  generated
-                         for molecules that don't have a substructure match to
-  the
-                         reference; if false, throws a DepictException.
+  \param acceptFailure - (optional) if true, standard depictions will be
+                         generated for molecules that don't have a substructure
+                         match to the reference; if false, throws a
+                         DepictException.
+  \param forceRDKit - (optional) use RDKit to generate coordinates even if
+                      preferCoordGen is set to true
+  \param allowOptionalAttachments -  (optional) if true, terminal dummy atoms in
+                         the reference are ignored if they match an implicit
+                         hydrogen in the molecule, and a constrained
+                         depiction is still attempted
+  RETURNS:
 
+  \return MatchVectType with (queryAtomidx, molAtomIdx) pairs used for
+          the constrained depiction
+*/
+RDKIT_DEPICTOR_EXPORT RDKit::MatchVectType generateDepictionMatching2DStructure(
+    RDKit::ROMol &mol, const RDKit::ROMol &reference, int confId = -1,
+    const RDKit::ROMol *referencePattern =
+        static_cast<const RDKit::ROMol *>(nullptr),
+    bool acceptFailure = false, bool forceRDKit = false,
+    bool allowOptionalAttachments = false);
+
+//! \brief Compute 2D coordinates where a piece of the molecule is
+//   constrained to have the same coordinates as a reference.
+/*!
+  This function generates a depiction for a molecule where a piece of the
+  molecule is constrained to have the same coordinates as a reference.
+
+  This is useful for, for example, generating depictions of SAR data
+  sets so that the cores of the molecules are all oriented the same way.
+  This overload allow to specify the (referenceAtom, molAtom) index pairs
+  which should be matched as MatchVectType. Please note that the
+  vector can be shorter than the number of atoms in the reference.
+
+  ARGUMENTS:
+
+  \param mol -    the molecule to be aligned, this will come back
+                  with a single conformer.
+  \param reference -    a molecule with the reference atoms to align to;
+                        this should have a depiction.
+  \param refMatchVect -  a MatchVectType that will be used to
+                         generate the atom mapping between the molecule
+                         and the reference.
+  \param confId -       (optional) the id of the reference conformation to use
+  \param forceRDKit - (optional) use RDKit to generate coordinates even if
+                      preferCoordGen is set to true
 */
 RDKIT_DEPICTOR_EXPORT void generateDepictionMatching2DStructure(
-    RDKit::ROMol &mol, const RDKit::ROMol &reference, int confId = -1,
-    RDKit::ROMol *referencePattern = static_cast<RDKit::ROMol *>(nullptr),
-    bool acceptFailure = false, bool forceRDKit = false);
+    RDKit::ROMol &mol, const RDKit::ROMol &reference,
+    const RDKit::MatchVectType &refMatchVect, int confId = -1,
+    bool forceRDKit = false);
 
 //! \brief Generate a 2D depiction for a molecule where all or part of
 //   it mimics the coordinates of a 3D reference structure.
@@ -179,9 +226,11 @@ RDKIT_DEPICTOR_EXPORT void generateDepictionMatching2DStructure(
                       the reference onto the mol, so that only some of the
                       atoms are aligned.
   \param acceptFailure - (optional) if true, standard depictions will be
-  generated
+                         generated
                          for molecules that don't match the reference or the
                          referencePattern; if false, throws a DepictException.
+  \param forceRDKit - (optional) use RDKit to generate coordinates even if
+                      preferCoordGen is set to true
 */
 RDKIT_DEPICTOR_EXPORT void generateDepictionMatching3DStructure(
     RDKit::ROMol &mol, const RDKit::ROMol &reference, int confId = -1,

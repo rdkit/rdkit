@@ -1,3 +1,13 @@
+# Release_2021.03.1
+(Changes relative to Release_2020.09.1)
+
+
+## Backwards incompatible changes
+- The distance-geometry based conformation generation now by defaults generates
+  trans(oid) conformations for amides, esters, and related structures. This can be
+  toggled off with the `forceTransAmides` flag in EmbedParameters.
+
+
 # Release_2020.09.1
 (Changes relative to Release_2020.03.1)
 

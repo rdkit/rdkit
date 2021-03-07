@@ -1,6 +1,5 @@
-// $Id$
 //
-//  Copyright (C) 2013-2016 Paolo Tosco
+//  Copyright (C) 2013-2021 Paolo Tosco
 //
 //  Copyright (C) 2004-2006 Rational Discovery LLC
 //
@@ -106,7 +105,7 @@ const MMFFVdWCollection *getMMFFVdW() {
 }  // namespace DefaultParameters
 class RingMembership {
  public:
-  RingMembership()  {};
+  RingMembership(){};
   bool getIsInAromaticRing() const { return d_isInAromaticRing; }
   void setIsInAromaticRing(bool isInAromaticRing) {
     d_isInAromaticRing = isInAromaticRing;
@@ -2514,12 +2513,18 @@ MMFFMolProperties::MMFFMolProperties(ROMol &mol, const std::string &mmffVariant,
       d_verbosity(verbosity),
       d_oStream(&oStream),
       d_MMFFAtomPropertiesPtrVect(mol.getNumAtoms()) {
-  ROMol::AtomIterator it;
+  if (MolOps::needsHs(mol)) {
+    BOOST_LOG(rdWarningLog)
+        << "Molecule does not have explicit Hs. Consider calling AddHs()"
+        << std::endl;
+  }
   if (!mol.hasProp(common_properties::_MMFFSanitized)) {
     bool isAromaticSet = false;
-    for (it = mol.beginAtoms(); (!isAromaticSet) && (it != mol.endAtoms());
-         ++it) {
-      isAromaticSet = (*it)->getIsAromatic();
+    for (const auto atom : mol.atoms()) {
+      if (atom->getIsAromatic()) {
+        isAromaticSet = true;
+        break;
+      }
     }
     if (isAromaticSet) {
       MolOps::Kekulize((RWMol &)mol, true);
@@ -2530,19 +2535,16 @@ MMFFMolProperties::MMFFMolProperties(ROMol &mol, const std::string &mmffVariant,
     d_MMFFAtomPropertiesPtrVect[i] =
         MMFFAtomPropertiesPtr(new MMFFAtomProperties());
   }
-  unsigned int idx;
-  std::uint8_t atomType = 1;
-
   setMMFFAromaticity((RWMol &)mol);
   RingMembershipSize rmSize(mol);
-  for (it = mol.beginAtoms(); it != mol.endAtoms(); ++it) {
-    if ((*it)->getAtomicNum() != 1) {
-      this->setMMFFHeavyAtomType(rmSize, *it);
+  for (const auto atom : mol.atoms()) {
+    if (atom->getAtomicNum() != 1) {
+      this->setMMFFHeavyAtomType(rmSize, atom);
     }
   }
-  for (it = mol.beginAtoms(); atomType && (it != mol.endAtoms()); ++it) {
-    if ((*it)->getAtomicNum() == 1) {
-      this->setMMFFHydrogenType(*it);
+  for (const auto atom : mol.atoms()) {
+    if (atom->getAtomicNum() == 1) {
+      this->setMMFFHydrogenType(atom);
     }
   }
   if (this->isValid()) {
@@ -2555,7 +2557,7 @@ MMFFMolProperties::MMFFMolProperties(ROMol &mol, const std::string &mmffVariant,
                " ATOM     TYPE    CHARGE    CHARGE\n"
                "-----------------------------------"
             << std::endl;
-    for (idx = 0; idx < mol.getNumAtoms(); ++idx) {
+    for (unsigned int idx = 0; idx < mol.getNumAtoms(); ++idx) {
       oStream << std::left << std::setw(2)
               << mol.getAtomWithIdx(idx)->getSymbol() << std::left << " #"
               << std::setw(5) << idx + 1 << std::right << std::setw(5)
@@ -2585,20 +2587,20 @@ unsigned int MMFFMolProperties::getMMFFAngleType(const ROMol &mol,
   //--------------------------------------------------------------------------
   //  0		      The angle i-j-k is a "normal" bond angle
   //  1 		    Either bond i-j or bond j-k has a bond type of 1
-  //  2		      Bonds i-j and j-k each have bond types of 1; the sum is 2.
-  //  3		      The angle occurs in a three-membered ring
+  //  2		      Bonds i-j and j-k each have bond types of 1; the
+  //  sum is 2. 3		      The angle occurs in a three-membered ring
   //  4		      The angle occurs in a four-membered ring
-  //  5		      Is in a three-membered ring and the sum of the bond types
-  //  is
+  //  5		      Is in a three-membered ring and the sum of the
+  //  bond types is
   //  1
-  //  6		      Is in a three-membered ring and the sum of the bond types
-  //  is
+  //  6		      Is in a three-membered ring and the sum of the
+  //  bond types is
   //  2
-  //  7		      Is in a four-membered ring and the sum of the bond types
-  //  is
+  //  7		      Is in a four-membered ring and the sum of the bond
+  //  types is
   //  1
-  //  8		      Is in a four-membered ring and the sum of the bond types
-  //  is
+  //  8		      Is in a four-membered ring and the sum of the bond
+  //  types is
   //  2
 
   unsigned int bondTypeSum =
@@ -2714,10 +2716,10 @@ MMFFMolProperties::getMMFFTorsionType(const ROMol &mol, const unsigned int idx1,
     torsionType = 2;
   }
   unsigned int size = isTorsionInRingOfSize4or5(mol, idx1, idx2, idx3, idx4);
-  // the additional check on the existence of a bond between I and K or J and L
-  // is to avoid assigning torsionType 4 to those torsions in a 4-membered ring
-  // constituted by the fusion of two 3-membered rings, even though it would
-  // be harmless for the energy calculation since parameters for
+  // the additional check on the existence of a bond between I and K or J and
+  // L is to avoid assigning torsionType 4 to those torsions in a 4-membered
+  // ring constituted by the fusion of two 3-membered rings, even though it
+  // would be harmless for the energy calculation since parameters for
   // 4,22,22,22,22 and 0,22,22,22,22 are identical
   if ((size == 4) && (!(mol.getBondBetweenAtoms(idx1, idx3) ||
                         mol.getBondBetweenAtoms(idx2, idx4)))) {

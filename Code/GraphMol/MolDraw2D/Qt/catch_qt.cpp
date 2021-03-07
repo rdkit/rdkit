@@ -14,7 +14,7 @@
 
 #include <GraphMol/SmilesParse/SmilesParse.h>
 #include <GraphMol/MolDraw2D/MolDraw2D.h>
-#include <GraphMol/MolDraw2D/MolDraw2DQt.h>
+#include <GraphMol/MolDraw2D/Qt/MolDraw2DQt.h>
 #include <GraphMol/MolDraw2D/MolDraw2DUtils.h>
 #include <GraphMol/MolDraw2D/MolDraw2DDetails.h>
 #include <GraphMol/FileParsers/FileParsers.h>

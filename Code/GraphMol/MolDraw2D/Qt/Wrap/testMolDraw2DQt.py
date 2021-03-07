@@ -2,7 +2,7 @@ from rdkit import RDConfig
 import unittest
 from rdkit import Chem
 from rdkit.Chem import Draw, AllChem, rdDepictor
-from rdkit.Chem.Draw import rdMolDraw2D
+from rdkit.Chem.Draw import rdMolDraw2DQt
 
 import sys
 try:
@@ -23,6 +23,7 @@ else:
       sip = None
 
 
+
 @unittest.skipIf(sip is None, "skipping tests because pyqt is not installed")
 class TestCase(unittest.TestCase):
 
@@ -35,7 +36,7 @@ class TestCase(unittest.TestCase):
     qimg = QImage(250, 200, QImage.Format_RGB32)
     with QPainter(qimg) as qptr:
       p = sip.unwrapinstance(qptr)
-      d2d = Draw.MolDraw2DFromQPainter_(250, 200, p)
+      d2d = rdMolDraw2DQt.MolDraw2DFromQPainter_(250, 200, p)
       d2d.DrawMolecule(m)
     qimg.save("testImageFromPyQt-1.png")
 
@@ -56,7 +57,7 @@ class TestCase(unittest.TestCase):
       qimg = QImage(250, 200, QImage.Format_RGB32)
       with QPainter(qimg) as qptr:
         p = sip.unwrapinstance(qptr)
-        d2d = Draw.MolDraw2DFromQPainter_(250, 200, p, -1, -1)
+        d2d = rdMolDraw2DQt.MolDraw2DFromQPainter_(250, 200, p, -1, -1)
       raise ValueError("expected")
 
     with self.assertRaises(ValueError):

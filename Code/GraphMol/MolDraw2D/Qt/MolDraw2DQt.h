@@ -14,7 +14,7 @@
 #ifndef MOLDRAW2DQT_H
 #define MOLDRAW2DQT_H
 
-#include "MolDraw2D.h"
+#include <GraphMol/MolDraw2D/MolDraw2D.h>
 
 class QPainter;
 class QString;
@@ -28,12 +28,12 @@ class RDKIT_MOLDRAW2D_EXPORT MolDraw2DQt : public MolDraw2D {
   MolDraw2DQt(int width, int height, QPainter *qp, int panelWidth = -1,
               int panelHeight = -1, bool noFreetype = false);
 
-  void setColour(const DrawColour &col);
+  void setColour(const DrawColour &col) override;
 
-  void drawLine(const Point2D &cds1, const Point2D &cds2);
+  void drawLine(const Point2D &cds1, const Point2D &cds2) override;
   void drawChar(char c, const Point2D &cds);
-  void drawPolygon(const std::vector<Point2D> &cds);
-  void clearDrawing();
+  void drawPolygon(const std::vector<Point2D> &cds) override;
+  void clearDrawing() override;
 
  private:
   QPainter *d_qp;

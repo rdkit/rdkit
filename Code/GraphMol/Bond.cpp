@@ -172,6 +172,9 @@ double Bond::getBondTypeAsDouble() const {
     case DATIVE:
       return 1.0;
       break;  // FIX: again probably wrong
+    case HYDROGEN:
+      return 0.0;
+      break;
     default:
       UNDER_CONSTRUCTION("Bad bond type");
   }
@@ -233,6 +236,9 @@ double Bond::getValenceContrib(const Atom *atom) const {
       } else {
         return 0.0;
       }
+      break;
+    case HYDROGEN:
+      return 0.0;
       break;
     default:
       UNDER_CONSTRUCTION("Bad bond type");
@@ -349,6 +355,9 @@ uint8_t getTwiceBondType(const Bond &b) {
     case Bond::DATIVE:
       return 2;
       break;  // FIX: again probably wrong
+    case Bond::HYDROGEN:
+      return 0;
+      break;
     default:
       UNDER_CONSTRUCTION("Bad bond type");
   }

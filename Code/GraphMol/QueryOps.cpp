@@ -695,7 +695,7 @@ bool isAtomListQuery(const Atom *a) {
     return false;
   }
   if (a->getQuery()->getDescription() == "AtomOr") {
-    for (const auto child : boost::make_iterator_range(
+    for (const auto &child : boost::make_iterator_range(
              a->getQuery()->beginChildren(), a->getQuery()->endChildren())) {
       if (!_atomListQueryHelper(child)) {
         return false;
@@ -713,7 +713,7 @@ void getAtomListQueryVals(const Atom::QUERYATOM_QUERY *q,
   auto descr = q->getDescription();
   PRECONDITION(descr == "AtomOr", "bad query");
   if (descr == "AtomOr") {
-    for (const auto child :
+    for (const auto &child :
          boost::make_iterator_range(q->beginChildren(), q->endChildren())) {
       auto descr = child->getDescription();
       if (child->getNegation() ||

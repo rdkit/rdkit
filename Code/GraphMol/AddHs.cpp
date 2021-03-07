@@ -1,5 +1,5 @@
 //
-//  Copyright (C) 2003-2019 Greg Landrum and Rational Discovery LLC
+//  Copyright (C) 2003-2021 Greg Landrum and Rational Discovery LLC
 //
 //   @@ All Rights Reserved @@
 //  This file is part of the RDKit.
@@ -14,11 +14,9 @@
 #include "MonomerInfo.h"
 #include <Geometry/Transform3D.h>
 #include <Geometry/point.h>
-#include <boost/lexical_cast.hpp>
-#include <boost/tokenizer.hpp>
-#include <boost/algorithm/string/trim.hpp>
 #include <boost/algorithm/string/classification.hpp>
 #include <boost/dynamic_bitset.hpp>
+#include <boost/range/iterator_range.hpp>
 
 namespace RDKit {
 
@@ -435,16 +433,31 @@ void setHydrogenCoords(ROMol *mol, unsigned int hydIdx, unsigned int heavyIdx) {
           // we're in flatland
           // this was github #908
           // We're in a 2D conformation, put the H between the two neighbors
-          // that have the widest angle between them:
+          // that have the widest angle between them. Unless the two are
+          // opposite ends of a straight line through the heavy atom,
+          // which would make the H overlap with the heavy atom.
+          // In such case, set it on the opposite direction to the 3rd neighbor.
           double minDot = nbr1Vect.dotProduct(nbr2Vect);
-          dirVect = nbr1Vect + nbr2Vect;
+          if (fabs(minDot + 1) < 1e-4) {
+            dirVect = -nbr3Vect;
+          } else {
+            dirVect = nbr1Vect + nbr2Vect;
+          }
           if (nbr2Vect.dotProduct(nbr3Vect) < minDot) {
             minDot = nbr2Vect.dotProduct(nbr3Vect);
-            dirVect = nbr2Vect + nbr3Vect;
+            if (fabs(minDot + 1) < 1e-4) {
+              dirVect = -nbr1Vect;
+            } else {
+              dirVect = nbr2Vect + nbr3Vect;
+            }
           }
           if (nbr1Vect.dotProduct(nbr3Vect) < minDot) {
             minDot = nbr1Vect.dotProduct(nbr3Vect);
-            dirVect = nbr1Vect + nbr3Vect;
+            if (fabs(minDot + 1) < 1e-4) {
+              dirVect = -nbr2Vect;
+            } else {
+              dirVect = nbr1Vect + nbr3Vect;
+            }
           }
           dirVect *= -1;
         }
@@ -465,6 +478,102 @@ void setHydrogenCoords(ROMol *mol, unsigned int hydIdx, unsigned int heavyIdx) {
       break;
   }
 }
+
+void AssignHsResidueInfo(RWMol &mol) {
+  int max_serial = 0;
+  unsigned int stopIdx = mol.getNumAtoms();
+  for (unsigned int aidx = 0; aidx < stopIdx; ++aidx) {
+    auto *info =
+        (AtomPDBResidueInfo *)(mol.getAtomWithIdx(aidx)->getMonomerInfo());
+    if (info && info->getMonomerType() == AtomMonomerInfo::PDBRESIDUE &&
+        info->getSerialNumber() > max_serial) {
+      max_serial = info->getSerialNumber();
+    }
+  }
+
+  AtomPDBResidueInfo *current_info = nullptr;
+  int current_h_id = 0;
+  for (unsigned int aidx = 0; aidx < stopIdx; ++aidx) {
+    Atom *newAt = mol.getAtomWithIdx(aidx);
+    auto *info = (AtomPDBResidueInfo *)(newAt->getMonomerInfo());
+    if (info && info->getMonomerType() == AtomMonomerInfo::PDBRESIDUE) {
+      ROMol::ADJ_ITER begin, end;
+      boost::tie(begin, end) = mol.getAtomNeighbors(newAt);
+      while (begin != end) {
+        if (mol.getAtomWithIdx(*begin)->getAtomicNum() == 1) {
+          // Make all Hs unique - increment id even for existing
+          ++current_h_id;
+          // skip if hydrogen already has PDB info
+          auto *h_info = (AtomPDBResidueInfo *)mol.getAtomWithIdx(*begin)
+                             ->getMonomerInfo();
+          if (h_info &&
+              h_info->getMonomerType() == AtomMonomerInfo::PDBRESIDUE) {
+            continue;
+          }
+          // the hydrogens have unique names on residue basis (H1, H2, ...)
+          if (!current_info ||
+              current_info->getResidueNumber() != info->getResidueNumber() ||
+              current_info->getChainId() != info->getChainId()) {
+            current_h_id = 1;
+            current_info = info;
+          }
+          std::string h_label = std::to_string(current_h_id);
+          if (h_label.length() > 3) {
+            h_label = h_label.substr(h_label.length() - 3, 3);
+          }
+          while (h_label.length() < 3) {
+            h_label = h_label + " ";
+          }
+          h_label = "H" + h_label;
+          // wrap around id to '3H12'
+          h_label = h_label.substr(3, 1) + h_label.substr(0, 3);
+          AtomPDBResidueInfo *newInfo = new AtomPDBResidueInfo(
+              h_label, max_serial, "", info->getResidueName(),
+              info->getResidueNumber(), info->getChainId(), "", 1.0, 0.0,
+              info->getIsHeteroAtom());
+          mol.getAtomWithIdx(*begin)->setMonomerInfo(newInfo);
+
+          ++max_serial;
+        }
+        ++begin;
+      }
+    }
+  }
+}
+
+std::map<unsigned int, std::vector<unsigned int>> getIsoMap(const ROMol &mol) {
+  std::map<unsigned int, std::vector<unsigned int>> isoMap;
+  for (auto atom : mol.atoms()) {
+    if (atom->hasProp(common_properties::_isotopicHs)) {
+      atom->clearProp(common_properties::_isotopicHs);
+    }
+  }
+  for (auto bond : mol.bonds()) {
+    auto ba = bond->getBeginAtom();
+    auto ea = bond->getEndAtom();
+    int ha = -1;
+    unsigned int iso;
+    if (ba->getAtomicNum() == 1 && ba->getIsotope() &&
+        ea->getAtomicNum() != 1) {
+      ha = ea->getIdx();
+      iso = ba->getIsotope();
+    } else if (ea->getAtomicNum() == 1 && ea->getIsotope() &&
+               ba->getAtomicNum() != 1) {
+      ha = ba->getIdx();
+      iso = ea->getIsotope();
+    }
+    if (ha == -1) {
+      continue;
+    }
+    auto &v = isoMap[ha];
+    v.push_back(iso);
+  }
+  return isoMap;
+}
+
+}  // end of unnamed namespace
+
+namespace MolOps {
 
 void addHs(RWMol &mol, bool explicitOnly, bool addCoords,
            const UINT_VECT *onlyOnAtoms, bool addResidueInfo) {
@@ -506,18 +615,9 @@ void addHs(RWMol &mol, bool explicitOnly, bool addCoords,
     Atom *newAt = mol.getAtomWithIdx(aidx);
 
     std::vector<unsigned int> isoHs;
-    std::string isotopicHsProp;
     if (newAt->getPropIfPresent(common_properties::_isotopicHs,
-                                isotopicHsProp)) {
+                                isoHs)) {
       newAt->clearProp(common_properties::_isotopicHs);
-      // be lenient on input, even if we write only space-separated
-      // strings of indices
-      boost::trim_if(isotopicHsProp, boost::is_any_of(" \t\r\n,()[]{}"));
-      boost::tokenizer<> tokens(isotopicHsProp);
-      std::transform(tokens.begin(), tokens.end(), std::back_inserter(isoHs),
-                     [](const std::string &t) {
-                       return boost::lexical_cast<unsigned int>(t);
-                     });
     }
     std::vector<unsigned int>::const_iterator isoH = isoHs.begin();
     unsigned int newIdx;
@@ -776,7 +876,7 @@ void removeHs(RWMol &mol, const RemoveHsParameters &ps, bool sanitize) {
   if (ps.removeAndTrackIsotopes) {
     for (const auto &pair : getIsoMap(mol)) {
       mol.getAtomWithIdx(pair.first)
-          ->setProp(common_properties::_isotopicHs, isoHsToString(pair.second));
+          ->setProp(common_properties::_isotopicHs, pair.second);
     }
   }
   boost::dynamic_bitset<> atomsToRemove{mol.getNumAtoms(), 0};
@@ -1138,5 +1238,23 @@ ROMol *mergeQueryHs(const ROMol &mol, bool mergeUnmappedOnly) {
   return static_cast<ROMol *>(res);
 };
 
-};  // end of namespace MolOps
-};  // namespace RDKit
+bool needsHs(const ROMol &mol) {
+  for (const auto atom : mol.atoms()) {
+    unsigned int nHNbrs = 0;
+    for (const auto nbri :
+         boost::make_iterator_range(mol.getAtomNeighbors(atom))) {
+      const auto nbr = mol[nbri];
+      if (nbr->getAtomicNum() == 1) {
+        ++nHNbrs;
+      }
+    }
+    bool noNeighbors = false;
+    if (atom->getTotalNumHs(noNeighbors) > nHNbrs) {
+      return true;
+    }
+  }
+  return false;
+}
+
+}  // end of namespace MolOps
+}  // namespace RDKit

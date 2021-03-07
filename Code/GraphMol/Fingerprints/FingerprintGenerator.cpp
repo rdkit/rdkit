@@ -123,6 +123,25 @@ SparseIntVect<OutputType>
         const std::vector<std::uint32_t> *customAtomInvariants,
         const std::vector<std::uint32_t> *customBondInvariants,
         const std::uint64_t fpSize) const {
+  if (additionalOutput) {
+    if (additionalOutput->atomCounts) {
+      additionalOutput->atomCounts->resize(mol.getNumAtoms());
+      std::fill(additionalOutput->atomCounts->begin(),
+                additionalOutput->atomCounts->end(), 0);
+    }
+    if (additionalOutput->atomToBits) {
+      additionalOutput->atomToBits->resize(mol.getNumAtoms());
+      std::fill(additionalOutput->atomToBits->begin(),
+                additionalOutput->atomToBits->end(),
+                std::vector<std::uint64_t>());
+    }
+    if (additionalOutput->bitInfoMap) {
+      additionalOutput->bitInfoMap->clear();
+    }
+    if (additionalOutput->bitPaths) {
+      additionalOutput->bitPaths->clear();
+    }
+  }
   bool hashResults = false;
   if (fpSize != 0) {
     hashResults = true;
@@ -191,7 +210,7 @@ SparseIntVect<OutputType>
   for (auto it = atomEnvironments.begin(); it != atomEnvironments.end(); it++) {
     OutputType seed =
         (*it)->getBitId(dp_fingerprintArguments, atomInvariants, bondInvariants,
-                        additionalOutput, hashResults);
+                        additionalOutput, hashResults, fpSize);
 
     auto bitId = seed;
     if (fpSize != 0) {

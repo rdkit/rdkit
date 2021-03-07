@@ -10,14 +10,15 @@
 //
 
 #include "MolDraw2DQt.h"
-#ifdef RDK_BUILD_FREETYPE_SUPPORT
-#include <GraphMol/MolDraw2D/DrawTextFTQt.h>
-#else
-#include <GraphMol/MolDraw2D/DrawTextQt.h>
-#endif
-
 #include <QPainter>
 #include <QString>
+
+#ifdef RDK_BUILD_FREETYPE_SUPPORT
+#include "DrawTextFTQt.h"
+#else
+#include "DrawTextQt.h"
+#endif
+
 
 using namespace boost;
 using namespace std;

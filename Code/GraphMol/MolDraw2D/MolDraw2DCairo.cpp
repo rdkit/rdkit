@@ -136,7 +136,7 @@ void MolDraw2DCairo::drawPolygon(const std::vector<Point2D> &cds) {
   PRECONDITION(dp_cr, "no draw context");
   PRECONDITION(cds.size() >= 3, "must have at least three points");
 
-  unsigned int width = getDrawLineWidth();
+  double width = getDrawLineWidth();
 
   cairo_line_cap_t olinecap = cairo_get_line_cap(dp_cr);
   cairo_line_join_t olinejoin = cairo_get_line_join(dp_cr);

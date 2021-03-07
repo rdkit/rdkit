@@ -141,6 +141,8 @@ LinkedPopLinearSel<Chromosome, PopulationPolicy>::LinkedPopLinearSel(
   assert(abs(totalScaledFitness - predictTotalScaledFitness) < 1.0e-5);
 
   double predictEndFitness = SELECT_START + (popsize - 1.0) * scaledFitnessStep;
+  (void)predictEndFitness;  // suppress warnings when building with
+                            // assertions disabled
 #ifdef INCLUDE_REPORTER
   REPORT(Reporter::TRACE) << "endFitness " << endFitness
                           << " predictEndFitness " << predictEndFitness;

@@ -37,8 +37,8 @@ using namespace RDKit;
  * Version 2 taken from J. Chem. Inf. Model. 56, 1 (2016)
  *
  * torsion-angle potential form:
- * V = V1*(1 + s1*cos(1x)) + V2*(1 + s2*cos(2x)) + V3*(1 + s3*cos(1x))
- *     + V4*(1 + s4*cos(1x)) + V5*(1 + s5*cos(1x)) + V6*(1 + s6*cos(1x))
+ * V = V1*(1 + s1*cos(1x)) + V2*(1 + s2*cos(2x)) + V3*(1 + s3*cos(3x))
+ *     + V4*(1 + s4*cos(4x)) + V5*(1 + s5*cos(5x)) + V6*(1 + s6*cos(6x))
  *
  * format: [SMARTS, s1, V1, s2, V2, s3, V3, s4, V4, s5, V5, s6, V6]
  */
@@ -61,7 +61,8 @@ class ExpTorsionAngleCollection {
  public:
   typedef std::vector<ExpTorsionAngle> ParamsVect;
   static const ExpTorsionAngleCollection *getParams(
-      unsigned int version, bool useSmallRingTorsions, bool useMacrocycleTorsions, const std::string &paramData = "");
+      unsigned int version, bool useSmallRingTorsions,
+      bool useMacrocycleTorsions, const std::string &paramData = "");
   ParamsVect::const_iterator begin() const { return d_params.begin(); };
   ParamsVect::const_iterator end() const { return d_params.end(); };
   ExpTorsionAngleCollection(const std::string &paramData);
@@ -76,7 +77,8 @@ typedef boost::flyweight<
     param_flyweight;
 
 const ExpTorsionAngleCollection *ExpTorsionAngleCollection::getParams(
-    unsigned int version, bool useSmallRingTorsions, bool useMacrocycleTorsions, const std::string &paramData) {
+    unsigned int version, bool useSmallRingTorsions, bool useMacrocycleTorsions,
+    const std::string &paramData) {
   std::string params;
   if (paramData == "") {
     switch (version) {
@@ -92,11 +94,14 @@ const ExpTorsionAngleCollection *ExpTorsionAngleCollection::getParams(
   } else {
     params = paramData;
   }
-  if (useSmallRingTorsions)
-	  params += torsionPreferencesSmallRings;
 
-  if (useMacrocycleTorsions)
-	  params += torsionPreferencesMacrocycles;
+  if (useSmallRingTorsions) {
+    params += torsionPreferencesSmallRings;
+  }
+
+  if (useMacrocycleTorsions) {
+    params += torsionPreferencesMacrocycles;
+  }
 
   const ExpTorsionAngleCollection *res = &(param_flyweight(params).get());
   return res;
@@ -143,9 +148,8 @@ ExpTorsionAngleCollection::ExpTorsionAngleCollection(
 }
 
 void getExperimentalTorsions(const RDKit::ROMol &mol, CrystalFFDetails &details,
-                             bool useExpTorsions, 
-                             bool useSmallRingTorsions,bool useMacrocycleTorsions,
-                             bool useBasicKnowledge,
+                             bool useExpTorsions, bool useSmallRingTorsions,
+                             bool useMacrocycleTorsions, bool useBasicKnowledge,
                              unsigned int version, bool verbose) {
   unsigned int nb = mol.getNumBonds();
   unsigned int na = mol.getNumAtoms();
@@ -167,11 +171,11 @@ void getExperimentalTorsions(const RDKit::ROMol &mol, CrystalFFDetails &details,
   const VECT_INT_VECT &bondRings = rinfo->bondRings();
   VECT_INT_VECT_CI rii, rjj;
   for (rii = bondRings.begin(); rii != bondRings.end(); ++rii) {
-    boost::dynamic_bitset<> rs1(nb); // bitset for ring 1
+    boost::dynamic_bitset<> rs1(nb);  // bitset for ring 1
     for (unsigned int i = 0; i < rii->size(); i++) {
       rs1[(*rii)[i]] = 1;
     }
-    for (rjj = rii+1; rjj != bondRings.end(); ++rjj) {
+    for (rjj = rii + 1; rjj != bondRings.end(); ++rjj) {
       unsigned int nInCommon = 0;
       for (auto rjj_i : *rjj) {
         if (rs1[rjj_i]) {
@@ -183,10 +187,10 @@ void getExperimentalTorsions(const RDKit::ROMol &mol, CrystalFFDetails &details,
       }
       if (nInCommon > 1) {  // more than one bond in common
         for (unsigned int i = 0; i < rii->size(); i++) {
-          excludedBonds[(*rii)[i]] = 1; // exclude all bonds of ring 1
+          excludedBonds[(*rii)[i]] = 1;  // exclude all bonds of ring 1
         }
         for (unsigned int i = 0; i < rjj->size(); i++) {
-          excludedBonds[(*rjj)[i]] = 1; // exclude all bonds of ring 2
+          excludedBonds[(*rjj)[i]] = 1;  // exclude all bonds of ring 2
         }
       }
     }
@@ -197,7 +201,8 @@ void getExperimentalTorsions(const RDKit::ROMol &mol, CrystalFFDetails &details,
   if (useExpTorsions) {
     // we set the torsion angles with experimental data
     const ExpTorsionAngleCollection *params =
-        ExpTorsionAngleCollection::getParams(version, useSmallRingTorsions, useMacrocycleTorsions);
+        ExpTorsionAngleCollection::getParams(version, useSmallRingTorsions,
+                                             useMacrocycleTorsions);
 
     // loop over patterns
     for (const auto &param : *params) {
@@ -214,10 +219,11 @@ void getExperimentalTorsions(const RDKit::ROMol &mol, CrystalFFDetails &details,
         aid4 = (*matchIt)[param.idx[3]].second;
         // FIX: check if bond is NULL
         bid2 = mol.getBondBetweenAtoms(aid2, aid3)->getIdx();
-	// check that a bond is part of maximum one ring
-	if (mol.getRingInfo()->numBondRings(bid2) > 1 || excludedBonds[bid2] == 1) {
-	  doneBonds[bid2] = 1;
-	}
+        // check that a bond is part of maximum one ring
+        if (mol.getRingInfo()->numBondRings(bid2) > 1 ||
+            excludedBonds[bid2] == 1) {
+          doneBonds[bid2] = 1;
+        }
         if (!doneBonds[bid2]) {
           doneBonds[bid2] = 1;
           std::vector<int> atoms(4);
@@ -228,12 +234,13 @@ void getExperimentalTorsions(const RDKit::ROMol &mol, CrystalFFDetails &details,
           details.expTorsionAtoms.push_back(atoms);
           details.expTorsionAngles.emplace_back(param.signs, param.V);
           if (verbose) {
-            std::cout << param.smarts << ": " << aid1 << " " << aid2 << " "
-                      << aid3 << " " << aid4 << ", (";
+            BOOST_LOG(rdInfoLog) << param.smarts << ": " << aid1 << " " << aid2
+                                 << " " << aid3 << " " << aid4 << ", (";
             for (unsigned int i = 0; i < param.V.size() - 1; ++i) {
-              std::cout << param.V[i] << ", ";
+              BOOST_LOG(rdInfoLog) << param.V[i] << ", ";
             }
-            std::cout << param.V[param.V.size() - 1] << ") " << std::endl;
+            BOOST_LOG(rdInfoLog)
+                << param.V[param.V.size() - 1] << ") " << std::endl;
           }
         }  // if not donePaths
       }    // end loop over matches

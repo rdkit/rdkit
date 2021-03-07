@@ -14,6 +14,7 @@
 #include <RDGeneral/Invariant.h>
 
 #include <RDGeneral/BoostStartInclude.h>
+#include <Numerics/Vector.h>
 //
 // Generic Wrapper utility functionality
 //
@@ -139,6 +140,14 @@ void pythonObjectToVect(const python::object &obj, std::vector<T> &res) {
 RDKIT_RDBOOST_EXPORT boost::dynamic_bitset<> pythonObjectToDynBitset(const python::object &obj,
                                                    boost::dynamic_bitset<>::size_type maxV);
 
+RDKIT_RDBOOST_EXPORT std::vector<std::pair<int, int>> *translateAtomMap(
+    const python::object &atomMap);
+RDKIT_RDBOOST_EXPORT std::vector<std::vector<std::pair<int, int>>>
+translateAtomMapSeq(const python::object &atomMapSeq);
+RDKIT_RDBOOST_EXPORT RDNumeric::DoubleVector *translateDoubleSeq(
+    const python::object &doubleSeq);
+RDKIT_RDBOOST_EXPORT std::vector<unsigned int> *translateIntSeq(
+    const python::object &intSeq);
 
 // Quiet warnings on GCC
 #if defined(__GNUC__) || defined(__GNUG__)

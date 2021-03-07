@@ -1,6 +1,5 @@
 //
-//
-//  Copyright (C) 2018-2020 Greg Landrum and T5 Informatics GmbH
+//  Copyright (C) 2018-2021 Greg Landrum and T5 Informatics GmbH
 //
 //   @@ All Rights Reserved @@
 //  This file is part of the RDKit.
@@ -1421,6 +1420,81 @@ TEST_CASE("Additional oxidation states", "[chemistry]") {
       std::unique_ptr<ROMol> m(SmilesToMol(smi));
       REQUIRE(m);
       CHECK(m->getAtomWithIdx(1)->getNumRadicalElectrons() == 0);
+    }
+  }
+}
+
+TEST_CASE("Github #3805: radicals on [He]", "[chemistry]") {
+  SECTION("Basics") {
+    {
+      auto m = "[He]"_smiles;
+      REQUIRE(m);
+      CHECK(m->getAtomWithIdx(0)->getNumRadicalElectrons() == 0);
+      CHECK(m->getAtomWithIdx(0)->getTotalNumHs() == 0);
+    }
+    {
+      auto m = "[Ne]"_smiles;
+      REQUIRE(m);
+      CHECK(m->getAtomWithIdx(0)->getNumRadicalElectrons() == 0);
+      CHECK(m->getAtomWithIdx(0)->getTotalNumHs() == 0);
+    }
+  }
+  SECTION("Basics") {
+    {
+      auto m = "[He+]"_smiles;
+      REQUIRE(m);
+      CHECK(m->getAtomWithIdx(0)->getNumRadicalElectrons() == 1);
+      CHECK(m->getAtomWithIdx(0)->getTotalNumHs() == 0);
+    }
+    {
+      auto m = "[Ne+]"_smiles;
+      REQUIRE(m);
+      CHECK(m->getAtomWithIdx(0)->getNumRadicalElectrons() == 1);
+      CHECK(m->getAtomWithIdx(0)->getTotalNumHs() == 0);
+    }
+  }
+}
+
+TEST_CASE("needsHs function", "[chemistry]") {
+  SECTION("basics") {
+    const auto m = "CC"_smiles;
+    REQUIRE(m);
+    CHECK(MolOps::needsHs(*m));
+
+    // add a single H:
+    m->addAtom(new Atom(1));
+    m->addBond(0, 2, Bond::BondType::SINGLE);
+    MolOps::sanitizeMol(*m);
+    CHECK(MolOps::needsHs(*m));
+
+    // now add all the Hs:
+    MolOps::addHs(*m);
+    CHECK(!MolOps::needsHs(*m));
+  }
+  SECTION("radical") {
+    const auto m = "[O][O]"_smiles;
+    REQUIRE(m);
+    CHECK(!MolOps::needsHs(*m));
+  }
+  SECTION("none needed") {
+    const auto m = "FF"_smiles;
+    REQUIRE(m);
+    CHECK(!MolOps::needsHs(*m));
+  }
+}
+
+TEST_CASE(
+    "github #3330: incorrect number of radicals electrons calculated for "
+    "metals",
+    "[chemistry][metals]") {
+  SECTION("basics") {
+    std::vector<std::pair<std::string, unsigned int>> data = {
+        {"[Mn+2]", 1}, {"[Mn+1]", 0}, {"[Mn]", 1}, {"[Mn-1]", 0},
+        {"[C]", 4},    {"[C+1]", 3},  {"[C-1]", 3}};
+    for (const auto &pr : data) {
+      std::unique_ptr<ROMol> m(SmilesToMol(pr.first));
+      REQUIRE(m);
+      CHECK(m->getAtomWithIdx(0)->getNumRadicalElectrons() == pr.second);
     }
   }
 }

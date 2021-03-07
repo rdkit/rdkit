@@ -1437,7 +1437,11 @@ BOOST_PYTHON_MODULE(rdMolDescriptors) {
               (python::arg("mol"), python::arg("force") = false));
   python::scope().attr("_CalcChi4n_version") = RDKit::Descriptors::chi4nVersion;
 
-  docString = "From equation (58) of Rev. Comp. Chem. vol 2, 367-422, (1991)";
+  docString =
+      "From equation (58) of Rev. Comp. Chem. vol 2, 367-422, (1991). "
+      "NOTE: Because hybridization is used to calculate this, results may "
+      "differ from other implementations which have different conventions for "
+      "assigning hybridization";
   python::def(
       "CalcHallKierAlpha", hkAlphaHelper,
       (python::arg("mol"), python::arg("atomContribs") = python::object()));
@@ -1445,24 +1449,40 @@ BOOST_PYTHON_MODULE(rdMolDescriptors) {
       RDKit::Descriptors::hallKierAlphaVersion;
 
   docString =
-      "From equations (58) and (59) of Rev. Comp. Chem. vol 2, 367-422, (1991)";
+      "From equations (58) and (59) of Rev. Comp. Chem. vol 2, 367-422, (1991) "
+      "NOTE: Because hybridization is used to calculate this, results may "
+      "differ from other implementations which have different conventions for "
+      "assigning hybridization";
   python::def("CalcKappa1", RDKit::Descriptors::calcKappa1,
               (python::arg("mol")));
   python::scope().attr("_CalcKappa1_version") =
       RDKit::Descriptors::kappa1Version;
   docString =
-      "From equations (58) and (60) of Rev. Comp. Chem. vol 2, 367-422, (1991)";
+      "From equations (58) and (60) of Rev. Comp. Chem. vol 2, 367-422, (1991) "
+      "NOTE: Because hybridization is used to calculate this, results may "
+      "differ from other implementations which have different conventions for "
+      "assigning hybridization";
   python::def("CalcKappa2", RDKit::Descriptors::calcKappa2,
               (python::arg("mol")));
   python::scope().attr("_CalcKappa2_version") =
       RDKit::Descriptors::kappa2Version;
   docString =
       "From equations (58), (61) and (62) of Rev. Comp. Chem. vol 2, 367-422, "
-      "(1991)";
+      "(1991) "
+      "NOTE: Because hybridization is used to calculate this, results may "
+      "differ from other implementations which have different conventions for "
+      "assigning hybridization";
   python::def("CalcKappa3", RDKit::Descriptors::calcKappa3,
               (python::arg("mol")));
   python::scope().attr("_CalcKappa3_version") =
       RDKit::Descriptors::kappa3Version;
+  docString =
+      "From Quantitative Structure-Activity Relationships 8, 221–224 (1989). "
+      "NOTE: Because hybridization is used to calculate this, results may "
+      "differ from other implementations which have different conventions for "
+      "assigning hybridization";
+  python::def("CalcPhi", RDKit::Descriptors::calcPhi, (python::arg("mol")));
+  python::scope().attr("_CalcPhi_version") = RDKit::Descriptors::PhiVersion;
 
   docString = "Returns the MACCS keys for a molecule as an ExplicitBitVect";
   python::def("GetMACCSKeysFingerprint",

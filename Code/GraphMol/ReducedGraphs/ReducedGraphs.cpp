@@ -144,12 +144,12 @@ RDNumeric::DoubleVector *generateErGFingerprintForReducedGraph(
   double *dm = MolOps::getDistanceMat(mol);
 
   // cache the atom type vectors:
-  std::vector<std::list<int> > tvs;
+  std::vector<std::vector<int> > tvs;
   tvs.reserve(mol.getNumAtoms());
   for (ROMol::ConstAtomIterator atIt = mol.beginAtoms(); atIt != mol.endAtoms();
        ++atIt) {
-    const std::list<int> &tv =
-        (*atIt)->getProp<std::list<int> >("_ErGAtomTypes");
+    const std::vector<int> &tv =
+        (*atIt)->getProp<std::vector<int> >("_ErGAtomTypes");
     tvs.push_back(tv);
   }
 
@@ -213,7 +213,7 @@ ROMol *generateMolExtendedReducedGraph(
 
   for (ROMol::AtomIterator atIt = res->beginAtoms(); atIt != res->endAtoms();
        ++atIt) {
-    std::list<int> tv;
+    std::vector<int> tv;
     tv.clear();
     for (unsigned int i = 0; i < atomTypes->size(); ++i) {
       if ((*atomTypes)[i][(*atIt)->getIdx()]) {
@@ -236,7 +236,7 @@ ROMol *generateMolExtendedReducedGraph(
           ++nSP2;
         }
       }
-      std::list<int> tv;
+      std::vector<int> tv;
       if (nAromatic >= 2 || nSP2 >= rdcast<int>(ring.size() / 2)) {
         tv.push_back(aromaticFlag);
       } else {
@@ -251,7 +251,7 @@ ROMol *generateMolExtendedReducedGraph(
     if (mol.getRingInfo()->numAtomRings(i) &&
         mol.getAtomWithIdx(i)->getDegree() == 2 &&
         res->getAtomWithIdx(i)
-            ->getProp<std::list<int> >("_ErGAtomTypes")
+            ->getProp<std::vector<int> >("_ErGAtomTypes")
             .empty()) {
       res->removeAtom(i);
     }

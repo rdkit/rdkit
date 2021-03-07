@@ -8,7 +8,6 @@ voting on a data set
 
 """
 
-
 from PIL import Image, ImageDraw
 import numpy
 
@@ -104,8 +103,7 @@ def BuildVoteImage(nModels, data, values, trueValues=[], sortTrueVals=0, xScale=
   maxVal = max(numpy.ravel(data))
   data = data * 255 / maxVal
   datab = data.astype('B')
-  img = getattr(Image, 'frombytes', Image.fromstring)('L', (nModels, nData),
-                                                      getattr(datab, 'tobytes', datab.tostring)())
+  img = Image.frombytes('L', (nModels, nData), datab.tobytes())
 
   if addLine:
     img = img.convert('RGB')

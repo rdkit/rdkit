@@ -12,7 +12,6 @@
 
 namespace RDKit {
 namespace MolEnumerator {
-
 namespace {
 
 //! recursively builds the variations
@@ -44,7 +43,24 @@ void enumerateVariations(std::vector<std::vector<size_t>> &variations,
   getVariations(0, base, variations, variationCounts, params.maxToEnumerate,
                 params.doRandom);
 }
+
 }  // namespace
+
+namespace detail {
+const std::string idxPropName = "_enumeratorOrigIdx";
+void preserveOrigIndices(ROMol &mol) {
+  mol.setProp(idxPropName, 1);
+  for (auto atom : mol.atoms()) {
+    atom->setProp(idxPropName, atom->getIdx());
+  }
+}
+void removeOrigIndices(ROMol &mol) {
+  for (auto atom : mol.atoms()) {
+    atom->clearProp(idxPropName);
+  }
+  mol.clearProp(idxPropName);
+}
+}  // namespace detail
 
 MolBundle enumerate(const ROMol &mol,
                     const std::vector<MolEnumeratorParams> &paramLists) {
@@ -53,6 +69,7 @@ MolBundle enumerate(const ROMol &mol,
   }
   std::unique_ptr<MolBundle> accum{new MolBundle()};
   boost::shared_ptr<ROMol> molCpy{new ROMol(mol)};
+  detail::preserveOrigIndices(*molCpy);
   accum->addMol(molCpy);
   bool variationsFound = false;
   for (const auto &params : paramLists) {
@@ -83,16 +100,24 @@ MolBundle enumerate(const ROMol &mol,
   if (!variationsFound) {
     return MolBundle();
   }
+  for (auto rmol : accum->getMols()) {
+    detail::removeOrigIndices(*rmol);
+  }
   return *accum;
 }
 
 MolBundle enumerate(const ROMol &mol) {
   std::vector<MolEnumeratorParams> paramsList;
+
+  // position variation first
   MolEnumerator::MolEnumeratorParams posVariationParams;
   posVariationParams.dp_operation =
       std::shared_ptr<MolEnumerator::MolEnumeratorOp>(
           new MolEnumerator::PositionVariationOp());
   paramsList.push_back(posVariationParams);
+
+  // linknodes last because we can only enumerate mols with a single
+  // fragment
   MolEnumerator::MolEnumeratorParams linkParams;
   linkParams.dp_operation = std::shared_ptr<MolEnumerator::MolEnumeratorOp>(
       new MolEnumerator::LinkNodeOp());

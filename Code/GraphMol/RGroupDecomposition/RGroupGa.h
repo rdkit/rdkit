@@ -91,9 +91,11 @@ struct GaResult {
   vector<vector<size_t>> permutations;
 
   GaResult(const double score, const vector<vector<size_t>>& permutations)
-      : score(score), permutations(permutations) {}
+      : score(score), permutations(permutations){};
+  GaResult(const GaResult& other)
+      : score(other.score), permutations(other.permutations){};
 
-  GaResult() {}
+  GaResult(){};
 
   // Copy constructor required by MSVC for future<GaResult>
   GaResult& operator=(const GaResult& other);

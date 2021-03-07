@@ -723,6 +723,7 @@ def RGroupDecompositionToFrame(groups, mols, include_core=False, redraw_sidechai
   """
   cols = ['Mol'] + list(groups.keys())
   if redraw_sidechains:
+    from rdkit.Chem import rdDepictor
     for k, vl in groups.items():
       if k == 'Core':
         continue

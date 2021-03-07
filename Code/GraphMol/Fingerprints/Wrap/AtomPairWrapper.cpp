@@ -49,18 +49,6 @@ AtomInvariantsGenerator *getAtomPairAtomInvGen(const bool includeChirality) {
 }
 
 void exportAtompair() {
-  /*python::def(
-      "GetAtomPairGenerator", &getAtomPairGenerator<std::uint32_t>,
-      (python::arg("minDistance") = 1,
-       python::arg("maxDistance") = AtomPair::maxPathLen - 1,
-       python::arg("includeChirality") = false, python::arg("use2D") = true,
-       python::arg("useCountSimulation") = true,
-       python::arg("countBounds") = python::object(),
-       python::arg("fpSize") = 2048,
-       python::arg("atomInvariantsGenerator") = python::object()),
-      docString.c_str(),
-      python::return_value_policy<python::manage_new_object>());*/
-
   python::def(
       "GetAtomPairGenerator", &getAtomPairGenerator<std::uint64_t>,
       (python::arg("minDistance") = 1,
@@ -89,6 +77,10 @@ void exportAtompair() {
       "sparse versions\n"
       "    - atomInvariantsGenerator: atom invariants to be used during "
       "fingerprint generation\n\n"
+      "This generator supports the following AdditionalOutput types:\n"
+      "    - atomToBits: which bits each atom is involved in\n"
+      "    - atomCounts: how many bits each atom sets\n"
+      "    - bitInfoMap: map from bitId to (atomId, radius) pairs\n\n"
       "  RETURNS: FingerprintGenerator\n\n",
       python::return_value_policy<python::manage_new_object>());
 

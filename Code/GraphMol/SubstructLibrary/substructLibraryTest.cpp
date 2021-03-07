@@ -41,7 +41,6 @@
 
 #include <GraphMol/Substruct/SubstructMatch.h>
 
-
 #include <GraphMol/SmilesParse/SmilesParse.h>
 #include <GraphMol/SmilesParse/SmilesWrite.h>
 #include <GraphMol/FileParsers/FileParsers.h>
@@ -51,10 +50,12 @@ using namespace RDKit;
 
 namespace {
 boost::dynamic_bitset<> runTest(SubstructLibrary &ssslib, const ROMol &pattern,
-                                 int nThreads) {
+                                int nThreads) {
   std::vector<unsigned int> libMatches = ssslib.getMatches(pattern, nThreads);
   boost::dynamic_bitset<> hasMatch(ssslib.size());
-  for (auto idx : libMatches) { hasMatch[idx] = 1; }
+  for (auto idx : libMatches) {
+    hasMatch[idx] = 1;
+  }
 
   for (unsigned int i = 0; i < ssslib.size(); ++i) {
     MatchVectType match;
@@ -66,16 +67,15 @@ boost::dynamic_bitset<> runTest(SubstructLibrary &ssslib, const ROMol &pattern,
   return hasMatch;
 };
 
-void runTest(SubstructLibrary &ssslib,
-             const ROMol &pattern,
-             int nThreads,
-             const boost::dynamic_bitset<> &hasMatch
-             ) {
+void runTest(SubstructLibrary &ssslib, const ROMol &pattern, int nThreads,
+             const boost::dynamic_bitset<> &hasMatch) {
   std::vector<unsigned int> libMatches = ssslib.getMatches(pattern, nThreads);
   boost::dynamic_bitset<> hasMatch2(ssslib.size());
-  for (auto idx : libMatches) { hasMatch2[idx] = 1; }
+  for (auto idx : libMatches) {
+    hasMatch2[idx] = 1;
+  }
   TEST_ASSERT(hasMatch == hasMatch2);
-  
+
   for (unsigned int i = 0; i < ssslib.size(); ++i) {
     MatchVectType match;
     bool matched = SubstructMatch(*ssslib.getMol(i), pattern, match);
@@ -84,7 +84,6 @@ void runTest(SubstructLibrary &ssslib,
     TEST_ASSERT(hasMatch[i] == matched);
   }
 };
-
 
 }  // namespace
 
@@ -110,7 +109,7 @@ void test1() {
     delete mol;
   }
 
-  std::vector<SubstructLibrary*> libs;
+  std::vector<SubstructLibrary *> libs;
   libs.push_back(&ssslib);
 
 #ifdef RDK_USE_BOOST_SERIALIZATION
@@ -122,9 +121,9 @@ void test1() {
 #endif
 
   boost::dynamic_bitset<> hasMatch;
-  
-  int i=0;
-  for(auto lib: libs) {
+
+  int i = 0;
+  for (auto lib : libs) {
     ROMol *query = SmartsToMol("[#6;$([#6]([#6])[!#6])]");
     if (i == 0) {
       hasMatch = runTest(*lib, *query, 1);
@@ -140,7 +139,7 @@ void test1() {
   }
 
   i = 0;
-  for(auto lib: libs) {
+  for (auto lib : libs) {
     ROMol *query = SmartsToMol("[$([O,S]-[!$(*=O)])]");
     if (i == 0) {
       hasMatch = runTest(*lib, *query, 1);
@@ -185,7 +184,7 @@ void test2() {
     delete mol;
   }
 
-  std::vector<SubstructLibrary*> libs;
+  std::vector<SubstructLibrary *> libs;
   libs.push_back(&ssslib);
 
 #ifdef RDK_USE_BOOST_SERIALIZATION
@@ -197,14 +196,17 @@ void test2() {
   // check to see if we are still the right base type
   MolHolderBase *_holder = serialized.getMolHolder().get();
   TEST_ASSERT(_holder != nullptr);
-  TEST_ASSERT(dynamic_cast<MolHolder*>(_holder) != nullptr);
-  try { serialized.getFingerprints(); }
-  catch(...) { TEST_ASSERT(0); }
-  
+  TEST_ASSERT(dynamic_cast<MolHolder *>(_holder) != nullptr);
+  try {
+    serialized.getFingerprints();
+  } catch (...) {
+    TEST_ASSERT(0);
+  }
+
   libs.push_back(&serialized);
 #endif
 
-  for(auto lib: libs) {  
+  for (auto lib : libs) {
     ROMol *query = SmartsToMol("[#6]([#6])[!#6]");
     runTest(*lib, *query, 1);
 #ifdef RDK_TEST_MULTITHREADED
@@ -236,7 +238,7 @@ void test3() {
     delete m4;
   }
 
-  std::vector<SubstructLibrary*> libs;
+  std::vector<SubstructLibrary *> libs;
   libs.push_back(&ssslib);
 
 #ifdef RDK_USE_BOOST_SERIALIZATION
@@ -248,11 +250,10 @@ void test3() {
   // check to see if we are still the right base type
   MolHolderBase *_holder = serialized.getMolHolder().get();
   TEST_ASSERT(_holder != nullptr);
-  TEST_ASSERT(dynamic_cast<MolHolder*>(_holder) != nullptr);  
+  TEST_ASSERT(dynamic_cast<MolHolder *>(_holder) != nullptr);
 #endif
 
-
-  for(auto lib: libs) {  
+  for (auto lib : libs) {
     ROMol *query = SmartsToMol("C-1-C-C-O-C(-[O])(-[N])1");
     std::vector<unsigned int> res = lib->getMatches(*query, true, false);
     TEST_ASSERT(res.size() == 40);
@@ -286,7 +287,7 @@ void test4() {
     holder->addSmiles("C1CCO[C@](O)(N)1");
   }
 
-  std::vector<SubstructLibrary*> libs;
+  std::vector<SubstructLibrary *> libs;
   libs.push_back(&ssslib);
 
 #ifdef RDK_USE_BOOST_SERIALIZATION
@@ -298,26 +299,26 @@ void test4() {
   // check to see if we are still the right base type
   MolHolderBase *_holder = serialized.getMolHolder().get();
   TEST_ASSERT(_holder != nullptr);
-  TEST_ASSERT(dynamic_cast<CachedSmilesMolHolder*>(_holder) != nullptr);
+  TEST_ASSERT(dynamic_cast<CachedSmilesMolHolder *>(_holder) != nullptr);
 #endif
 
-  for(auto lib: libs) {
+  for (auto lib : libs) {
     ROMol *query = SmartsToMol("C-1-C-C-O-C(-[O])(-[N])1");
 
     std::vector<unsigned int> res = lib->getMatches(*query, true, false);
     TEST_ASSERT(res.size() == 40);
-    
+
     delete query;
     query = SmartsToMol("C-1-C-C-O-[C@@](-[O])(-[N])1");
-    
+
     res = lib->getMatches(*query, true, true);
     TEST_ASSERT(res.size() == 20);
-    
+
     res = lib->getMatches(*query, true, false);
     TEST_ASSERT(res.size() == 40);
     delete query;
   }
-  
+
   BOOST_LOG(rdErrorLog) << "    Done (trusted smiles)" << std::endl;
 }
 
@@ -379,9 +380,10 @@ void docTest() {
   BOOST_LOG(rdErrorLog) << "    Done (C++ doc tests)" << std::endl;
 }
 
-void ringTest() {
+template <class Holder>
+void ringTest(const std::string &name) {
   BOOST_LOG(rdErrorLog) << "-------------------------------------" << std::endl;
-  BOOST_LOG(rdErrorLog) << "    Testing C++ ring query" << std::endl;
+  BOOST_LOG(rdErrorLog) << "    Testing C++ ring query: " << name << std::endl;
 
   std::unique_ptr<ROMol> q(SmartsToMol("[C&R1]"));
   std::unique_ptr<ROMol> q2(SmartsToMol("C@C"));
@@ -389,10 +391,9 @@ void ringTest() {
   std::unique_ptr<ROMol> m(SmilesToMol("C1CCO[C@@](N)(O)1"));
 
   boost::shared_ptr<CachedTrustedSmilesMolHolder> molHolder =
-    boost::make_shared<CachedTrustedSmilesMolHolder>();
-  boost::shared_ptr<PatternHolder> patternHolder =
-    boost::make_shared<PatternHolder>();
-  
+      boost::make_shared<CachedTrustedSmilesMolHolder>();
+  boost::shared_ptr<Holder> patternHolder = boost::make_shared<Holder>();
+
   SubstructLibrary lib(molHolder, patternHolder);
   lib.addMol(*m.get());
   std::vector<unsigned int> results = lib.getMatches(*q.get());
@@ -438,20 +439,27 @@ void testAddPatterns() {
       "CC1(C)CNc2cc(NC(=O)c3cccnc3NCc3ccncc3)ccc21"};
 
   boost::shared_ptr<CachedSmilesMolHolder> holder =
-    boost::make_shared<CachedSmilesMolHolder>();
+      boost::make_shared<CachedSmilesMolHolder>();
 
-  for(auto s : pdb_ligands) {
+  for (auto s : pdb_ligands) {
     holder->addSmiles(s);
   }
 
   SubstructLibrary ssslib(holder);
-  std::vector<int> num_threads = { 1, 0 };
-  for(auto nthreads : num_threads) {
+  std::vector<int> num_threads = {1, 0};
+  for (auto nthreads : num_threads) {
     SubstructLibrary ssslib_with_patterns(holder);
+    SubstructLibrary ssslib_with_taut_patterns(holder);
     addPatterns(ssslib_with_patterns, nthreads);
-    for(unsigned int i=0; i<ssslib.size(); ++i) {
-      TEST_ASSERT( ssslib.countMatches( *ssslib.getMol(i).get() ) ==
-		   ssslib_with_patterns.countMatches( *ssslib.getMol(i).get() ) );
+    boost::shared_ptr<TautomerPatternHolder> patterns(
+        new TautomerPatternHolder);
+    addPatterns(ssslib_with_taut_patterns, patterns, nthreads);
+    for (unsigned int i = 0; i < ssslib.size(); ++i) {
+      TEST_ASSERT(ssslib.countMatches(*ssslib.getMol(i).get()) ==
+                  ssslib_with_patterns.countMatches(*ssslib.getMol(i).get()));
+      TEST_ASSERT(
+          ssslib.countMatches(*ssslib.getMol(i).get()) ==
+          ssslib_with_taut_patterns.countMatches(*ssslib.getMol(i).get()));
     }
   }
 }
@@ -564,20 +572,21 @@ void testMaxResultsAllSameNumThreads() {
   }
 }
 
-void testPatternHolder() {
+template <class Holder>
+void testPatternHolder(const std::string &name) {
   BOOST_LOG(rdErrorLog) << "-------------------------------------" << std::endl;
-  BOOST_LOG(rdErrorLog) << "   testPatternHolder" << std::endl;
+  BOOST_LOG(rdErrorLog) << "   testing " << name << std::endl;
 
   std::string fName = getenv("RDBASE");
   fName += "/Data/NCI/first_5K.smi";
   SmilesMolSupplier suppl(fName, "\t", 0, 1, false);
   boost::shared_ptr<CachedTrustedSmilesMolHolder> mols1(
       new CachedTrustedSmilesMolHolder());
-  boost::shared_ptr<PatternHolder> fps1(new PatternHolder());
+  boost::shared_ptr<Holder> fps1(new Holder());
   SubstructLibrary ssslib1(mols1, fps1);
   boost::shared_ptr<CachedTrustedSmilesMolHolder> mols2(
       new CachedTrustedSmilesMolHolder());
-  boost::shared_ptr<PatternHolder> fps2(new PatternHolder());
+  boost::shared_ptr<Holder> fps2(new Holder());
   SubstructLibrary ssslib2(mols2, fps2);
 
   boost::logging::disable_logs("rdApp.error");
@@ -634,10 +643,10 @@ void testPatternHolder() {
   }
   for (size_t i = 0; i < 2; ++i) {
     auto serialized_pattern_holder =
-        dynamic_cast<PatternHolder *>(serialized.getFpHolder().get());
+        dynamic_cast<Holder *>(serialized.getFpHolder().get());
     TEST_ASSERT(serialized_pattern_holder);
     auto orig_pattern_holder =
-        dynamic_cast<PatternHolder *>(ssslib1.getFpHolder().get());
+        dynamic_cast<Holder *>(ssslib1.getFpHolder().get());
     TEST_ASSERT(orig_pattern_holder);
     TEST_ASSERT(serialized_pattern_holder->getNumBits() ==
                 orig_pattern_holder->getNumBits());
@@ -657,16 +666,15 @@ void testSegFaultInHolder() {
 
   boost::shared_ptr<CachedTrustedSmilesMolHolder> mols1(
       new CachedTrustedSmilesMolHolder());
-  boost::shared_ptr<CachedSmilesMolHolder> mols2(
-      new CachedSmilesMolHolder());
-  for(int i=0; i<100; ++i) {
-      if(i%2==0) {
-          mols1->addSmiles("dsafsdf");
-          mols2->addSmiles("dsafsdf");
-      } else {
-          mols1->addSmiles("c1ccccc1");
-          mols2->addSmiles("c1ccccc1");
-      }
+  boost::shared_ptr<CachedSmilesMolHolder> mols2(new CachedSmilesMolHolder());
+  for (int i = 0; i < 100; ++i) {
+    if (i % 2 == 0) {
+      mols1->addSmiles("dsafsdf");
+      mols2->addSmiles("dsafsdf");
+    } else {
+      mols1->addSmiles("c1ccccc1");
+      mols2->addSmiles("c1ccccc1");
+    }
   }
   SubstructLibrary sss(mols1);
   SubstructLibrary sss2(mols2);
@@ -681,6 +689,43 @@ void testSegFaultInHolder() {
   addPatterns(sss2, 2);
 }
 
+void testTautomerQueries() {
+  BOOST_LOG(rdErrorLog) << "-------------------------------------" << std::endl;
+  BOOST_LOG(rdErrorLog) << "   testTautomerQueries" << std::endl;
+    
+  boost::shared_ptr<CachedTrustedSmilesMolHolder> mols1(
+							new CachedTrustedSmilesMolHolder());
+  mols1->addSmiles("CN1C2=C(C(=O)Nc3ccccc3)C(=O)CCN2c2ccccc21");
+  SubstructLibrary sss(mols1);
+  auto query = "Cc1nc2ccccc2[nH]1"_smiles;
+  //auto matches1 = sss.getMatches(*query);
+  //TEST_ASSERT(matches1.size() == 0);
+  auto tq = TautomerQuery::fromMol(*query);
+  auto matches2 = sss.getMatches(*tq);
+    TEST_ASSERT(matches2.size() == 1);
+    
+    SubstructLibrary sss2(sss);
+    addPatterns(sss, boost::make_shared<TautomerPatternHolder>());
+    matches2 = sss.getMatches(*tq);
+    TEST_ASSERT(matches2.size() == 1);
+    
+    // should work but throw logging errors
+    addPatterns(sss2);
+    matches2 = sss2.getMatches(*tq);
+    TEST_ASSERT(matches2.size() == 1);
+}
+
+void github3881() {
+  BOOST_LOG(rdErrorLog) << "-------------------------------------" << std::endl;
+  BOOST_LOG(rdErrorLog) << "  github3881 recursive smarts with rings " << std::endl;
+  boost::shared_ptr<CachedTrustedSmilesMolHolder> mols(
+      new CachedTrustedSmilesMolHolder());
+  mols->addSmiles("c1ccccc1S(=O)(=O)Cl");
+  SubstructLibrary sss(mols);
+  auto pat = "[$(S-!@[#6]):2](=O)(=O)(Cl)"_smarts;
+  TEST_ASSERT(sss.getMatches(*pat).size()==1);
+}
+
 int main() {
   RDLog::InitLogs();
 #if 1
@@ -689,14 +734,18 @@ int main() {
   test3();
   test4();
   docTest();
-  ringTest();
+  ringTest<PatternHolder>("PatternHolder");
+  ringTest<TautomerPatternHolder>("TautomerPatternHolder");
   testAddPatterns();
-  testPatternHolder();
+  testPatternHolder<PatternHolder>("PatternHolder");
+  testPatternHolder<TautomerPatternHolder>("TautomerPatternHolder");
   testSegFaultInHolder();
 #ifdef RDK_TEST_MULTITHREADED
   testMaxResultsNumThreads();
   testMaxResultsAllSameNumThreads();
+  testTautomerQueries();
 #endif
+  github3881();
 #endif
   return 0;
 }

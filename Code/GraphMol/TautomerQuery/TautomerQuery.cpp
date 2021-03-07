@@ -120,8 +120,6 @@ TautomerQuery::TautomerQuery(const std::vector<ROMOL_SPTR> &tautomers,
       d_modifiedAtoms(modifiedAtoms),
       d_modifiedBonds(modifiedBonds) {}
 
-TautomerQuery::~TautomerQuery() { delete d_templateMolecule; }
-
 TautomerQuery *TautomerQuery::fromMol(
     const ROMol &query, const std::string &tautomerTransformFile) {
   auto tautomerFile = !tautomerTransformFile.empty()
@@ -268,7 +266,7 @@ bool TautomerQuery::isSubstructOf(const ROMol &mol,
 }
 
 ExplicitBitVect *TautomerQuery::patternFingerprintTemplate(
-    unsigned int fpSize) {
+    unsigned int fpSize) const {
   return PatternFingerprintMol(*d_templateMolecule, fpSize, nullptr, nullptr,
                                true);
 }
