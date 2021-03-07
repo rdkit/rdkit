@@ -17,7 +17,6 @@
 #include <boost/algorithm/string/classification.hpp>
 #include <boost/dynamic_bitset.hpp>
 #include <boost/range/iterator_range.hpp>
-#include <boost/algorithm/string.hpp>
 
 namespace RDKit {
 
@@ -104,15 +103,6 @@ void AssignHsResidueInfo(RWMol &mol) {
       }
     }
   }
-}
-
-std::string isoHsToString(const std::vector<unsigned int> &isoHs) {
-  std::stringstream ss;
-  std::copy(isoHs.begin(), isoHs.end(),
-            std::ostream_iterator<unsigned int>(ss, " "));
-  std::string res(ss.str());
-  boost::trim(res);
-  return res;
 }
 
 std::map<unsigned int, std::vector<unsigned int>> getIsoMap(const ROMol &mol) {
@@ -479,102 +469,6 @@ void setHydrogenCoords(ROMol *mol, unsigned int hydIdx, unsigned int heavyIdx) {
       break;
   }
 }
-
-void AssignHsResidueInfo(RWMol &mol) {
-  int max_serial = 0;
-  unsigned int stopIdx = mol.getNumAtoms();
-  for (unsigned int aidx = 0; aidx < stopIdx; ++aidx) {
-    auto *info =
-        (AtomPDBResidueInfo *)(mol.getAtomWithIdx(aidx)->getMonomerInfo());
-    if (info && info->getMonomerType() == AtomMonomerInfo::PDBRESIDUE &&
-        info->getSerialNumber() > max_serial) {
-      max_serial = info->getSerialNumber();
-    }
-  }
-
-  AtomPDBResidueInfo *current_info = nullptr;
-  int current_h_id = 0;
-  for (unsigned int aidx = 0; aidx < stopIdx; ++aidx) {
-    Atom *newAt = mol.getAtomWithIdx(aidx);
-    auto *info = (AtomPDBResidueInfo *)(newAt->getMonomerInfo());
-    if (info && info->getMonomerType() == AtomMonomerInfo::PDBRESIDUE) {
-      ROMol::ADJ_ITER begin, end;
-      boost::tie(begin, end) = mol.getAtomNeighbors(newAt);
-      while (begin != end) {
-        if (mol.getAtomWithIdx(*begin)->getAtomicNum() == 1) {
-          // Make all Hs unique - increment id even for existing
-          ++current_h_id;
-          // skip if hydrogen already has PDB info
-          auto *h_info = (AtomPDBResidueInfo *)mol.getAtomWithIdx(*begin)
-                             ->getMonomerInfo();
-          if (h_info &&
-              h_info->getMonomerType() == AtomMonomerInfo::PDBRESIDUE) {
-            continue;
-          }
-          // the hydrogens have unique names on residue basis (H1, H2, ...)
-          if (!current_info ||
-              current_info->getResidueNumber() != info->getResidueNumber() ||
-              current_info->getChainId() != info->getChainId()) {
-            current_h_id = 1;
-            current_info = info;
-          }
-          std::string h_label = std::to_string(current_h_id);
-          if (h_label.length() > 3) {
-            h_label = h_label.substr(h_label.length() - 3, 3);
-          }
-          while (h_label.length() < 3) {
-            h_label = h_label + " ";
-          }
-          h_label = "H" + h_label;
-          // wrap around id to '3H12'
-          h_label = h_label.substr(3, 1) + h_label.substr(0, 3);
-          AtomPDBResidueInfo *newInfo = new AtomPDBResidueInfo(
-              h_label, max_serial, "", info->getResidueName(),
-              info->getResidueNumber(), info->getChainId(), "", 1.0, 0.0,
-              info->getIsHeteroAtom());
-          mol.getAtomWithIdx(*begin)->setMonomerInfo(newInfo);
-
-          ++max_serial;
-        }
-        ++begin;
-      }
-    }
-  }
-}
-
-std::map<unsigned int, std::vector<unsigned int>> getIsoMap(const ROMol &mol) {
-  std::map<unsigned int, std::vector<unsigned int>> isoMap;
-  for (auto atom : mol.atoms()) {
-    if (atom->hasProp(common_properties::_isotopicHs)) {
-      atom->clearProp(common_properties::_isotopicHs);
-    }
-  }
-  for (auto bond : mol.bonds()) {
-    auto ba = bond->getBeginAtom();
-    auto ea = bond->getEndAtom();
-    int ha = -1;
-    unsigned int iso;
-    if (ba->getAtomicNum() == 1 && ba->getIsotope() &&
-        ea->getAtomicNum() != 1) {
-      ha = ea->getIdx();
-      iso = ba->getIsotope();
-    } else if (ea->getAtomicNum() == 1 && ea->getIsotope() &&
-               ba->getAtomicNum() != 1) {
-      ha = ba->getIdx();
-      iso = ea->getIsotope();
-    }
-    if (ha == -1) {
-      continue;
-    }
-    auto &v = isoMap[ha];
-    v.push_back(iso);
-  }
-  return isoMap;
-}
-
-}  // end of unnamed namespace
-
-namespace MolOps {
 
 void addHs(RWMol &mol, bool explicitOnly, bool addCoords,
            const UINT_VECT *onlyOnAtoms, bool addResidueInfo) {
