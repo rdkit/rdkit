@@ -2137,7 +2137,7 @@ void testUserMatchTypes() {
       RGroupRows::const_iterator it = rows.begin();
       CHECK_RGROUP(it, expected);
     }
-  }
+  };
 
   auto mol = "C1CCCCC1(N)(O)"_smiles;
   auto core = "C1CCCCC1[*:1]"_smiles;

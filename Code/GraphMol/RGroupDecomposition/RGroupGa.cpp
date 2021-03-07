@@ -43,7 +43,7 @@ double RGroupDecompositionChromosome::score() {
   }
   if (scoreMethod == FingerprintVariance && fingerprintVarianceScoreData.labelsToVarianceData.size() > 0 &&
       operationName == RgroupMutate) {
-    fitness = fingerprintVarianceGroupScore(fingerprintVarianceScoreData);
+    fitness = fingerprintVarianceScoreData.fingerprintVarianceGroupScore();
     // Uncomment the following line to check that the
     // fingerprintVarianceGroupScore is giving the correct result.  Don't do
     // this in production as it will be extremely slow.
@@ -183,13 +183,12 @@ void RGroupGa::rGroupMutateOperation(
     int parentValue = parentPermutation.at(pos);
     int childValue = childPermutation.at(pos);
     if (parentValue != childValue) {
-      removeVarianceData(pos, parentValue, matches, labels,
-                         fingerprintVarianceScoreData);
+      fingerprintVarianceScoreData.removeVarianceData(pos, parentValue, matches, labels);
 #ifdef DEBUG
       std::cerr << "After removing parent" << std::endl;
       fingerprintVarianceGroupScore(fingerprintVarianceScoreData);
 #endif
-      addVarianceData(pos, childValue, matches, labels, fingerprintVarianceScoreData);
+      fingerprintVarianceScoreData.addVarianceData(pos, childValue, matches, labels);
 #ifdef DEBUG
       std::cerr << "After adding child" << std::endl;
       fingerprintVarianceGroupScore(fingerprintVarianceScoreData);

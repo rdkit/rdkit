@@ -168,14 +168,11 @@ double fingerprintDistanceScore(
 
 // Adds or subtracts a molecule match to the rgroup fingerprint bit counts
 // vectors
-void modifyVarianceData(
+void FingerprintVarianceScoreData::modifyVarianceData(
     int matchNumber, int permutationNumber,
     const std::vector<std::vector<RGroupMatch>> &matches,
-    const std::set<int> &labels,
-    FingerprintVarianceScoreData &fingerprintVarianceScoreData, bool add) {
+    const std::set<int> &labels, bool add) {
   // For each label (group)
-  auto &labelsToVarianceData =
-      fingerprintVarianceScoreData.labelsToVarianceData;
   for (int l : labels) {
     auto match = matches[matchNumber][permutationNumber].rgroups;
     auto rg = match.find(l);
@@ -199,34 +196,30 @@ void modifyVarianceData(
   auto rgroupsMissing =
       matches[matchNumber][permutationNumber].numberMissingUserRGroups;
   if (add) {
-    fingerprintVarianceScoreData.numberOfMissingUserRGroups += rgroupsMissing;
-    fingerprintVarianceScoreData.numberOfMolecules++;
+    numberOfMissingUserRGroups += rgroupsMissing;
+    numberOfMolecules++;
   } else {
-    fingerprintVarianceScoreData.numberOfMissingUserRGroups -= rgroupsMissing;
-    fingerprintVarianceScoreData.numberOfMolecules--;
+    numberOfMissingUserRGroups -= rgroupsMissing;
+    numberOfMolecules--;
   }
 }
 
 // Adds a molecule match to the rgroup fingerprint bit counts
 // vectors
-void addVarianceData(
+void FingerprintVarianceScoreData::addVarianceData(
     int matchNumber, int permutationNumber,
     const std::vector<std::vector<RGroupMatch>> &matches,
-    const std::set<int> &labels,
-    FingerprintVarianceScoreData &fingerprintVarianceScoreData) {
-  modifyVarianceData(matchNumber, permutationNumber, matches, labels,
-                     fingerprintVarianceScoreData, true);
+    const std::set<int> &labels) {
+  modifyVarianceData(matchNumber, permutationNumber, matches, labels, true);
 }
 
 // Subtracts a molecule match from the rgroup fingerprint bit counts
 // vectors
-void removeVarianceData(
+void FingerprintVarianceScoreData::removeVarianceData(
     int matchNumber, int permutationNumber,
     const std::vector<std::vector<RGroupMatch>> &matches,
-    const std::set<int> &labels,
-    FingerprintVarianceScoreData &fingerprintVarianceScoreData) {
-  modifyVarianceData(matchNumber, permutationNumber, matches, labels,
-                     fingerprintVarianceScoreData, false);
+    const std::set<int> &labels) {
+  modifyVarianceData(matchNumber, permutationNumber, matches, labels, false);
 }
 
 // fingerprint variance score
@@ -283,19 +276,17 @@ double fingerprintVarianceScore(
       numberMissingRGroups;
   fingerprintVarianceScoreData->numberOfMolecules += permutation.size();
 
-  return fingerprintVarianceGroupScore(*fingerprintVarianceScoreData);
+  return fingerprintVarianceScoreData->fingerprintVarianceGroupScore();
 }
 
 // calculates fingerprint variance score from rgroup bit counts
-double fingerprintVarianceGroupScore(
-    FingerprintVarianceScoreData &fingerprintVarianceScoreData) {
+double FingerprintVarianceScoreData::fingerprintVarianceGroupScore() {
   // arithmetic mean of scores for each label
-  auto bitCountsByLabel = fingerprintVarianceScoreData.labelsToVarianceData;
 #ifdef DEBUG
   std::cerr << "fingerprint variance score: ";
 #endif
   auto sum = std::accumulate(
-      bitCountsByLabel.cbegin(), bitCountsByLabel.cend(), 0.0,
+      labelsToVarianceData.cbegin(), labelsToVarianceData.cend(), 0.0,
       [](double sum,
          std::pair<int, std::shared_ptr<VarianceDataForLabel>> pair) {
         auto variance = pair.second->variance();
@@ -307,11 +298,9 @@ double fingerprintVarianceGroupScore(
 
   // Heuristic correction of missing user r_groups - equivalent to a variance
   // penalty of 1 for each missing user R-group across the entire dataset
-  CHECK_INVARIANT(fingerprintVarianceScoreData.numberOfMolecules > 0,
-                  "No compounds to be scored!");
+  CHECK_INVARIANT(numberOfMolecules > 0, "No compounds to be scored!");
   double rgroupPenalty =
-      (double)fingerprintVarianceScoreData.numberOfMissingUserRGroups /
-      (double)fingerprintVarianceScoreData.numberOfMolecules;
+      (double)numberOfMissingUserRGroups / (double)numberOfMolecules;
   auto score = sum + rgroupPenalty;
 #ifdef DEBUG
   std::cerr << " sum " << sum << " rgroup penalty " << rgroupPenalty

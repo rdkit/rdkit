@@ -98,18 +98,13 @@ struct RGroupDecompData {
                  "Illegal permutation prune length");
     if (permutation.size() < pruneLength * 1.5) {
       for (unsigned int pos = pruneLength; pos < permutation.size(); pos++) {
-        addVarianceData(pos, permutation[pos], matches, labels,
-                        prunedFingerprintVarianceScoreData);
+        prunedFingerprintVarianceScoreData.addVarianceData(pos, permutation[pos], matches, labels);
       }
       double score =
-          fingerprintVarianceGroupScore(prunedFingerprintVarianceScoreData);
-      std::map<int, std::shared_ptr<VarianceDataForLabel>> vd;
-      // assert(score == fingerprintVarianceScore(permutation, matches,
-      // labels));
+          prunedFingerprintVarianceScoreData.fingerprintVarianceGroupScore();
       if (reset) {
         for (unsigned int pos = pruneLength; pos < permutation.size(); pos++) {
-          removeVarianceData(pos, permutation[pos], matches, labels,
-                             prunedFingerprintVarianceScoreData);
+          prunedFingerprintVarianceScoreData.removeVarianceData(pos, permutation[pos], matches, labels);
         }
       } else {
         pruneLength = permutation.size();
