@@ -215,7 +215,6 @@ struct rgroupdecomp_wrapper {
 
     python::enum_<RDKit::RGroupScore>("RGroupScore")
         .value("Match", RDKit::Match)
-        .value("FingerprintDistance", RDKit::FingerprintDistance)
         .value("FingerprintVariance", RDKit::FingerprintVariance)
         .export_values();
 

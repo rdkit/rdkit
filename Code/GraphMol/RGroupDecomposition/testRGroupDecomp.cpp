@@ -2189,7 +2189,6 @@ int main() {
 
   testGaSymmetryMatching(FingerprintVariance);
   testGaSymmetryMatching(Match);
-  testGaSymmetryMatching(FingerprintDistance);
   testGaBatch();
 
   testUnprocessedMapping();

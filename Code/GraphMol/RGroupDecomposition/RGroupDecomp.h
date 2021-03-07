@@ -59,7 +59,6 @@ typedef enum {
 
 typedef enum {
   Match = 0x1,
-  FingerprintDistance = 0x2,
   FingerprintVariance = 0x4,
 } RGroupScore;
 

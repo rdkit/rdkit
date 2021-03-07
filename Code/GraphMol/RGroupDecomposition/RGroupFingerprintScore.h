@@ -76,14 +76,6 @@ double fingerprintVarianceScore(
     const std::set<int> &labels,
     FingerprintVarianceScoreData *fingerprintVarianceScoreData = nullptr);
 
-// Fingerprint score based on distance to fingerprint centroid for rgroups at
-// each label
-// Quite slow
-double fingerprintDistanceScore(
-    const std::vector<size_t> &bitCount,
-    const std::vector<std::vector<RGroupMatch>> &matches,
-    const std::set<int> &labels);
-
 }  // namespace RDKit
 
 #endif  // RDKIT_RGROUPFINGERPRINTSCORE_H

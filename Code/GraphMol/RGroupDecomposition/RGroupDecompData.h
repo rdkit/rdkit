@@ -535,9 +535,6 @@ struct RGroupDecompData {
       case Match:
         return matchScore(permutation, matches, labels);
         break;
-      case FingerprintDistance:
-        return fingerprintDistanceScore(permutation, matches, labels);
-        break;
       case FingerprintVariance:
         return fingerprintVarianceScore(permutation, matches, labels,
                                         fingerprintVarianceScoreData);
