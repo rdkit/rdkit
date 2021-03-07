@@ -236,7 +236,7 @@ int RGroupDecomposition::add(const ROMol &inmol) {
             ADD_MATCH(match, rlabel);
             match[rlabel]->add(newMol, attachments);
 #ifdef VERBOSE
-            std::cerr << "Fragment " << i << " " << MolToSmiles(*newMol)
+            std::cerr << "Fragment " << i << " R" << rlabel << " " << MolToSmiles(*newMol)
                       << std::endl;
 #endif
           }
@@ -283,7 +283,14 @@ int RGroupDecomposition::add(const ROMol &inmol) {
       }
 
       if (match.size()) {
-        potentialMatches.emplace_back(core_idx, match,
+        auto numberUserGroupsInMatch = std::accumulate(
+            match.begin(), match.end(), 0,
+            [](int sum, std::pair<int, boost::shared_ptr<RGroupData>> p) {
+              return p.first > 0 && !p.second->is_hydrogen ? ++sum : sum;
+            });
+        int numberMissingUserGroups = rcore->numberUserRGroups - numberUserGroupsInMatch;
+        CHECK_INVARIANT(numberMissingUserGroups >= 0, "Data error in missing user rgroup count");
+        potentialMatches.emplace_back(core_idx, numberMissingUserGroups, match,
                                       hasCoreDummies ? coreCopy : nullptr);
       }
     }

@@ -33,7 +33,7 @@ struct RGroupDecompData {
   std::set<int> labels;
   std::vector<size_t> permutation;
   unsigned int pruneLength = 0U;
-  std::map<int, std::shared_ptr<VarianceDataForLabel>> prunedVarianceData;
+  FingerprintVarianceScoreData prunedFingerprintVarianceScoreData;
   std::map<int, std::vector<int>> userLabels;
 
   std::vector<int> processedRlabels;
@@ -66,6 +66,7 @@ struct RGroupDecompData {
       if (params.onlyMatchAtRGroups) {
         core.second.findIndicesWithRLabel();
       }
+      core.second.countUserRGroups();
       core.second.labelledCore.reset(new RWMol(*core.second.core));
     }
   }
@@ -98,16 +99,17 @@ struct RGroupDecompData {
     if (permutation.size() < pruneLength * 1.5) {
       for (unsigned int pos = pruneLength; pos < permutation.size(); pos++) {
         addVarianceData(pos, permutation[pos], matches, labels,
-                        prunedVarianceData);
+                        prunedFingerprintVarianceScoreData);
       }
-      double score = fingerprintVarianceGroupScore(prunedVarianceData);
+      double score =
+          fingerprintVarianceGroupScore(prunedFingerprintVarianceScoreData);
       std::map<int, std::shared_ptr<VarianceDataForLabel>> vd;
       // assert(score == fingerprintVarianceScore(permutation, matches,
       // labels));
       if (reset) {
         for (unsigned int pos = pruneLength; pos < permutation.size(); pos++) {
           removeVarianceData(pos, permutation[pos], matches, labels,
-                             prunedVarianceData);
+                             prunedFingerprintVarianceScoreData);
         }
       } else {
         pruneLength = permutation.size();
@@ -117,10 +119,10 @@ struct RGroupDecompData {
       if (reset) {
         return fingerprintVarianceScore(permutation, matches, labels);
       } else {
-        prunedVarianceData.clear();
+        prunedFingerprintVarianceScoreData.clear();
         pruneLength = permutation.size();
         return fingerprintVarianceScore(permutation, matches, labels,
-                                        &prunedVarianceData);
+                                        &prunedFingerprintVarianceScoreData);
       }
     }
   }
@@ -260,7 +262,8 @@ struct RGroupDecompData {
       mappings[userLabel] = userLabel;
       used_labels.add(userLabel);
 
-      if (atom->getAtomicNum() == 0 && atom->getDegree() == 1) {  // add to existing dummy/rlabel
+      if (atom->getAtomicNum() == 0 &&
+          atom->getDegree() == 1) {  // add to existing dummy/rlabel
         setRlabel(atom, userLabel);
       } else {  // adds new rlabel
         auto *newAt = new Atom(0);
@@ -491,7 +494,8 @@ struct RGroupDecompData {
   //  accepted this permutation
   size_t compute_num_added_rgroups(const std::vector<size_t> &tied_permutation,
                                    const std::vector<int> &ordered_labels,
-                                   std::vector<int> &heavy_counts) {
+                                   std::vector<int> &heavy_counts,
+                                   size_t &number_user_rgroups_matched) {
     // heavy_counts is a vector which has the same size of labels
     // for each label we add an increment if a molecule
     // bears an R-group at that label. The increment has opposite
@@ -499,6 +503,9 @@ struct RGroupDecompData {
     size_t i = 0;
     size_t num_added_rgroups = 0;
     heavy_counts.resize(labels.size(), 0);
+    // number_user_rgroups_matched counts the total number of user labelled r
+    // groups filled in this permutation.  We want to maximize this number
+    number_user_rgroups_matched = 0;
 
     for (int label : ordered_labels) {
       bool incremented = false;
@@ -514,6 +521,8 @@ struct RGroupDecompData {
           if (label < 0 && !incremented) {
             incremented = true;
             ++num_added_rgroups;
+          } else if (label > 0) {
+            ++number_user_rgroups_matched;
           }
           ++heavy_counts[i];
         }
@@ -524,8 +533,8 @@ struct RGroupDecompData {
   }
 
   double score(const std::vector<size_t> &permutation,
-               std::map<int, std::shared_ptr<VarianceDataForLabel>>
-                   *labelsToVarianceData = nullptr) const {
+               FingerprintVarianceScoreData *fingerprintVarianceScoreData =
+                   nullptr) const {
     RGroupScore scoreMethod = static_cast<RGroupScore>(params.scoreMethod);
     switch (scoreMethod) {
       case Match:
@@ -536,7 +545,7 @@ struct RGroupDecompData {
         break;
       case FingerprintVariance:
         return fingerprintVarianceScore(permutation, matches, labels,
-                                        labelsToVarianceData);
+                                        fingerprintVarianceScoreData);
         break;
       default:;
     }
@@ -636,6 +645,7 @@ struct RGroupDecompData {
     if (ties.size() > 1) {
       size_t max_perm_value = 0;
       size_t smallest_added_rgroups = labels.size();
+      size_t largest_sum_user_rgroups = -1;
       std::vector<int> largest_heavy_counts(labels.size(), 0);
       std::vector<int> ordered_labels;
       std::copy_if(labels.begin(), labels.end(),
@@ -646,11 +656,19 @@ struct RGroupDecompData {
                    [](const int &i) { return (i < 0); });
       for (const auto &tied_permutation : ties) {
         std::vector<int> heavy_counts;
+        size_t number_user_rgroups_matched = 0;
         size_t num_added_rgroups = compute_num_added_rgroups(
-            tied_permutation, ordered_labels, heavy_counts);
+            tied_permutation, ordered_labels, heavy_counts,
+            number_user_rgroups_matched);
         size_t perm_value =
             iterator ? iterator->value(tied_permutation) : max_perm_value;
-        if (num_added_rgroups < smallest_added_rgroups) {
+        if (number_user_rgroups_matched > largest_sum_user_rgroups) {
+          largest_sum_user_rgroups = number_user_rgroups_matched;
+          smallest_added_rgroups = num_added_rgroups;
+          largest_heavy_counts = heavy_counts;
+          max_perm_value = perm_value;
+          best_permutation = tied_permutation;
+        } else if (num_added_rgroups < smallest_added_rgroups) {
           smallest_added_rgroups = num_added_rgroups;
           largest_heavy_counts = heavy_counts;
           max_perm_value = perm_value;

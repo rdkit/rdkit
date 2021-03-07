@@ -23,13 +23,32 @@ namespace RDKit {
 struct RCore {
   boost::shared_ptr<RWMol> core;
   boost::shared_ptr<RWMol> labelledCore;
+
+  // A list of user indices for when onlyMatchAtRGroups = True
   std::set<int> core_atoms_with_user_labels;
+  // Number of user labelled rgroups in the core
+  size_t numberUserRGroups = 0;
   RCore(){};
   RCore(const RWMol &c, bool onlyMatchAtRGroups = false) : core(new RWMol(c)) {
+    // Remove this from constructor if the create new core path can be removed from RGroupDecomposition::add
     if (onlyMatchAtRGroups) {
       findIndicesWithRLabel();
     }
+    countUserRGroups();
   }
+
+  void countUserRGroups() {
+    numberUserRGroups = 0;
+    for (const auto atom : core->atoms()) {
+      int label;
+      if (atom->getPropIfPresent(RLABEL, label)) {
+        if (label > 0) {
+          ++numberUserRGroups;
+        }
+      }
+    }
+  }
+
   void findIndicesWithRLabel() {
     // First find all the core atoms that have user
     //  label and put their indices into core_atoms_with_user_labels

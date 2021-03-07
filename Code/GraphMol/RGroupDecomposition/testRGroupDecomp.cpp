@@ -1878,7 +1878,7 @@ void testMutipleCoreRelabellingIssues() {
 
 void testUnprocessedMapping() {
   // Tests a bug that results in an unprocessed mapping Invariant violation
-  // The cause of the error is an rgroup mistakenly idetified as containing only
+  // The cause of the error is an rgroup mistakenly identified as containing only
   // hydrogens in a multicore decomp
 
   // See https://github.com/rdkit/rdkit/pull/3565
@@ -1956,7 +1956,8 @@ M  END
       // GJ, I will figure out why this is required- currently allowing a match on any atom is
       // returning "Core:C1CCC([*:5])([*:6])C([*:1])C1 R1:C(C[*:1])[*:1]"- I've seen this before
       // and I think it is an error with the ranking function.
-      params.onlyMatchAtRGroups = true;
+      // params.onlyMatchAtRGroups = true;
+      params.scoreMethod = FingerprintVariance;
       if (matchAtRGroup) {
         params.labels = MDLRGroupLabels;
       }
@@ -2117,6 +2118,47 @@ void testSingleAtomBridge() {
   CHECK_RGROUP(it, expected);
 }
 
+void testUserMatchTypes() {
+  BOOST_LOG(rdInfoLog)
+      << "********************************************************\n";
+  BOOST_LOG(rdInfoLog) << "Test user rgroup label specification and matching"
+                       << std::endl;
+
+  struct TestMatchType {
+    static void test(RWMol &core, RWMol &mol,
+                     RGroupDecompositionParameters &parameters,
+                     std::string &expected) {
+      RGroupDecomposition decomp(core, parameters);
+      auto res = decomp.add(mol);
+      TEST_ASSERT(res == 0);
+      TEST_ASSERT(decomp.process());
+      auto rows = decomp.getRGroupsAsRows();
+      TEST_ASSERT(rows.size() == 1)
+      RGroupRows::const_iterator it = rows.begin();
+      CHECK_RGROUP(it, expected);
+    }
+  }
+
+  auto mol = "C1CCCCC1(N)(O)"_smiles;
+  auto core = "C1CCCCC1[*:1]"_smiles;
+  core = "C1CCCCC1[*:1]"_smarts;
+  RGroupDecompositionParameters params;
+  params.onlyMatchAtRGroups = true;
+  params.scoreMethod = FingerprintVariance;
+  RGroupDecomposition decomp(*core, params);
+  int res = decomp.add(*mol);
+  TEST_ASSERT(res == -1);
+
+  params.onlyMatchAtRGroups = false;
+  std::string expected("Core:C1CCC([*:1])([*:2])CC1 R1:O[*:1] R2:N[*:2]");
+  TestMatchType::test(*core, *mol, params, expected);
+  core = "C1CCCCC1([*:1])([*:2])"_smiles;
+  TestMatchType::test(*core, *mol, params, expected);
+  core = "C1CCCC[C:2]1[*:1]"_smarts;
+  TestMatchType::test(*core, *mol, params, expected);
+}
+
+
 int main() {
   RDLog::InitLogs();
   boost::logging::disable_logs("rdApp.debug");
@@ -2125,7 +2167,7 @@ int main() {
       << "********************************************************\n";
   BOOST_LOG(rdInfoLog) << "Testing R-Group Decomposition \n";
 
-  testGeminalRGroups();
+  testUserMatchTypes();
 #if 1
   testSymmetryMatching(FingerprintVariance);
   testSymmetryMatching();

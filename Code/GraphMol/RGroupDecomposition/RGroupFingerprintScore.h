@@ -39,18 +39,25 @@ struct VarianceDataForLabel {
   double variance() const;
 };
 
+struct FingerprintVarianceScoreData {
+  size_t numberOfMissingUserRGroups= 0;
+  size_t numberOfMolecules = 0;
+  std::map<int, std::shared_ptr<VarianceDataForLabel>> labelsToVarianceData;
+
+  void clear();
+};
+
 // The arithmetic mean of the mean fingerprint bit variances for the
 // fingerprints at each rgroup position.
 double fingerprintVarianceScore(
     const std::vector<size_t> &bitCount,
     const std::vector<std::vector<RGroupMatch>> &matches,
     const std::set<int> &labels,
-    std::map<int, std::shared_ptr<VarianceDataForLabel>> *labelsToVarianceData =
+    FingerprintVarianceScoreData *fingerprintVarianceScoreData =
         nullptr);
 
 // calculates fingerprint variance score from rgroup bit counts
-double fingerprintVarianceGroupScore(
-    const std::map<int, std::shared_ptr<VarianceDataForLabel>>
+double fingerprintVarianceGroupScore(FingerprintVarianceScoreData
         &bitCountsByLabel);
 
 // Adds a molecule match to the rgroup fingerprint bit counts
@@ -59,7 +66,7 @@ void addVarianceData(
     int matchNumber, int permutationNumber,
     const std::vector<std::vector<RGroupMatch>> &matches,
     const std::set<int> &labels,
-    std::map<int, std::shared_ptr<VarianceDataForLabel>> &labelsToVarianceData);
+    FingerprintVarianceScoreData &fingerprintVarianceScoreData);
 
 // Subtracts a molecule match from the rgroup fingerprint bit counts
 // vectors
@@ -67,7 +74,7 @@ void removeVarianceData(
     int matchNumber, int permutationNumber,
     const std::vector<std::vector<RGroupMatch>> &matches,
     const std::set<int> &labels,
-    std::map<int, std::shared_ptr<VarianceDataForLabel>> &labelsToVarianceData);
+    FingerprintVarianceScoreData &fingerprintVarianceScoreData);
 
 // Fingerprint score based on distance to fingerprint centroid for rgroups at
 // each label
