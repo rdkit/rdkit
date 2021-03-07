@@ -146,7 +146,7 @@ class RGroups:
         fractionToKeep percentage"""
         assert 0 < fractionToKeep <= 1.0, "fractionToKeep: %s"%fractionToKeep
 
-        self.sidechains.sort(key=lambda x: x.good_count, reverse=True)#,y: -cmp(x.good_count, y.good_count))
+        self.sidechains.sort(key=lambda x: x.good_count, reverse=True)
         fragment_index = int(len(self.sidechains) * fractionToKeep + 0.5)
 
         # update rejected set
@@ -186,7 +186,7 @@ class Library:
         # "optimally" apportion the partitions according the
         #  the glare paper see Appendix eq (8) and (9)
         # sort by size
-        sizes.sort(key=lambda sz: sz[1])#cmp(x[1], y[1]))
+        sizes.sort(key=lambda sz: sz[1])
         last_size = 1
         opt_sizes = []
         for libIdx, current_size in sizes[:-1]:
