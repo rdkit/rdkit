@@ -2415,6 +2415,29 @@ void testGitHub3693() {
   BOOST_LOG(rdInfoLog) << "\tdone" << std::endl;
 }
 
+void testGitHub3886() {
+  BOOST_LOG(rdInfoLog) << "-------------------------------------" << std::endl;
+  BOOST_LOG(rdInfoLog) << "testGitHub3886" << std::endl;
+
+  std::vector<ROMOL_SPTR> mols = {
+      "c1cccnc1"_smiles,
+      "Fc1ccccc1"_smiles};
+
+  MCSParameters p;
+  p.InitialSeed = "c1ccc*c1";
+  std::stringstream captureLog;
+  rdWarningLog->SetTee(captureLog);
+  MCSResult res = findMCS(mols, &p);
+  rdWarningLog->ClearTee();
+  TEST_ASSERT(captureLog.str().find("The provided InitialSeed is not an MCS") != std::string::npos);
+  TEST_ASSERT(res.NumAtoms == 5);
+  TEST_ASSERT(res.NumBonds == 4);
+  TEST_ASSERT(res.SmartsString == "[#6](:[#6]:[#6]:[#6]):[#6]");
+  BOOST_LOG(rdInfoLog) << "============================================"
+                       << std::endl;
+  BOOST_LOG(rdInfoLog) << "\tdone" << std::endl;
+}
+
 //====================================================================================================
 //====================================================================================================
 
@@ -2422,6 +2445,7 @@ int main(int argc, const char* argv[]) {
   (void)argc;
   (void)argv;
   // p.Verbose = true;
+  RDLog::InitLogs();
   BOOST_LOG(rdInfoLog)
       << "*******************************************************\n";
   BOOST_LOG(rdInfoLog) << "FMCS Unit Test \n";
@@ -2495,6 +2519,7 @@ int main(int argc, const char* argv[]) {
   testGitHub3095();
   testGitHub3458();
   testGitHub3693();
+  testGitHub3886();
 
   unsigned long long t1 = nanoClock();
   double sec = double(t1 - T0) / 1000000.;
