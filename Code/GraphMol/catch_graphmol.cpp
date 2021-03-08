@@ -1536,7 +1536,28 @@ M  END)CTAB"_ctab;
     bool addCoords = true;
     UINT_VECT onlyOnAtoms = {3, 6};
     MolOps::addHs(*m, explicitOnly, addCoords, &onlyOnAtoms);
-    std::cerr << MolToV3KMolBlock(*m);
+    const auto &conf = m->getConformer();
+    // check that the H atoms are opposite the appropriate heavy atoms
+    {
+      REQUIRE(m->getAtomWithIdx(9)->getAtomicNum() == 1);
+      REQUIRE(m->getBondBetweenAtoms(9, 3));
+      REQUIRE(m->getBondBetweenAtoms(3, 4));
+      auto v1 = conf.getAtomPos(9) - conf.getAtomPos(3);
+      auto v2 = conf.getAtomPos(4) - conf.getAtomPos(3);
+      v1.normalize();
+      v2.normalize();
+      CHECK(fabs(v1.dotProduct(v2) + 1) < 1e-4);
+    }
+    {
+      REQUIRE(m->getAtomWithIdx(10)->getAtomicNum() == 1);
+      REQUIRE(m->getBondBetweenAtoms(10, 6));
+      REQUIRE(m->getBondBetweenAtoms(5, 6));
+      auto v1 = conf.getAtomPos(10) - conf.getAtomPos(6);
+      auto v2 = conf.getAtomPos(5) - conf.getAtomPos(6);
+      v1.normalize();
+      v2.normalize();
+      CHECK(fabs(v1.dotProduct(v2) + 1) < 1e-4);
+    }
   }
   SECTION("non-chiral version") {
     auto m = R"CTAB(
@@ -1574,6 +1595,26 @@ M  END)CTAB"_ctab;
     bool addCoords = true;
     UINT_VECT onlyOnAtoms = {3, 6};
     MolOps::addHs(*m, explicitOnly, addCoords, &onlyOnAtoms);
-    std::cerr << MolToV3KMolBlock(*m);
+    const auto &conf = m->getConformer();
+    {
+      REQUIRE(m->getAtomWithIdx(9)->getAtomicNum() == 1);
+      REQUIRE(m->getBondBetweenAtoms(9, 3));
+      REQUIRE(m->getBondBetweenAtoms(3, 4));
+      auto v1 = conf.getAtomPos(9) - conf.getAtomPos(3);
+      auto v2 = conf.getAtomPos(4) - conf.getAtomPos(3);
+      v1.normalize();
+      v2.normalize();
+      CHECK(fabs(v1.dotProduct(v2) + 1) < 1e-4);
+    }
+    {
+      REQUIRE(m->getAtomWithIdx(10)->getAtomicNum() == 1);
+      REQUIRE(m->getBondBetweenAtoms(10, 6));
+      REQUIRE(m->getBondBetweenAtoms(5, 6));
+      auto v1 = conf.getAtomPos(10) - conf.getAtomPos(6);
+      auto v2 = conf.getAtomPos(5) - conf.getAtomPos(6);
+      v1.normalize();
+      v2.normalize();
+      CHECK(fabs(v1.dotProduct(v2) + 1) < 1e-4);
+    }
   }
 }

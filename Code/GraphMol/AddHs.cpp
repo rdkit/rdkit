@@ -328,9 +328,6 @@ void setHydrogenCoords(ROMol *mol, unsigned int hydIdx, unsigned int heavyIdx) {
           double dot12 = nbr1Vect.dotProduct(nbr2Vect);
           double dot13 = nbr1Vect.dotProduct(nbr3Vect);
           double dot23 = nbr2Vect.dotProduct(nbr3Vect);
-          std::cerr << "!!! " << nbr1->getIdx() << "," << nbr2->getIdx() << ","
-                    << nbr3->getIdx() << " : " << dot12 << " " << dot13 << " "
-                    << dot23 << std::endl;
           unsigned int numNeg = 0;
           if (dot12 < -1e-4) {
             ++numNeg;
@@ -342,20 +339,23 @@ void setHydrogenCoords(ROMol *mol, unsigned int hydIdx, unsigned int heavyIdx) {
             ++numNeg;
           }
 
-          if (numNeg <= 1) {
-            // github #3879: all three neighbors are on "one side" of the heavy
-            // atom; put the H on the other side, opposite the "middle" atom
-            if (dot12 > dot13 && dot12 > dot23) {
-              dirVect = nbr3Vect;
-            } else if (dot13 > dot12 && dot13 > dot23) {
+          if (1) {  // numNeg < 3) {
+            // github #3879:
+            auto angle12 = nbr1Vect.angleTo(nbr2Vect);
+            auto angle13 = nbr1Vect.angleTo(nbr3Vect);
+            auto angle23 = nbr2Vect.angleTo(nbr3Vect);
+            auto accum1 = angle12 + angle13;
+            auto accum2 = angle12 + angle23;
+            auto accum3 = angle13 + angle23;
+            if (accum1 <= accum2 && accum1 <= accum3) {
+              dirVect = nbr1Vect;
+            } else if (accum2 <= accum1 && accum2 <= accum3) {
               dirVect = nbr2Vect;
             } else {
-              dirVect = nbr1Vect;
+              dirVect = nbr3Vect;
             }
-            std::cerr << " !#!#!#" << std::endl;
-            dirVect *= -1;
           } else {
-            // this was github #908
+            // all angles > 90 degrees. this was github #908
             // Put the H between the two neighbors that have the widest angle
             // between them. Unless the two are opposite ends of a straight line
             // through the heavy atom, which would make the H overlap with the
