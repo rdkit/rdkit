@@ -279,7 +279,6 @@ void setHydrogenCoords(ROMol *mol, unsigned int hydIdx, unsigned int heavyIdx) {
       TEST_ASSERT(nbr3);
       for (auto cfi = mol->beginConformers(); cfi != mol->endConformers();
            ++cfi) {
-        // use the average of the three vectors:
         heavyPos = (*cfi)->getAtomPos(heavyIdx);
         nbr1Vect = heavyPos - (*cfi)->getAtomPos(nbr1->getIdx());
         nbr2Vect = heavyPos - (*cfi)->getAtomPos(nbr2->getIdx());
@@ -326,35 +325,66 @@ void setHydrogenCoords(ROMol *mol, unsigned int hydIdx, unsigned int heavyIdx) {
           }
         } else {
           // we're in flatland
-          // this was github #908
-          // We're in a 2D conformation, put the H between the two neighbors
-          // that have the widest angle between them. Unless the two are
-          // opposite ends of a straight line through the heavy atom,
-          // which would make the H overlap with the heavy atom.
-          // In such case, set it on the opposite direction to the 3rd neighbor.
-          double minDot = nbr1Vect.dotProduct(nbr2Vect);
-          if (fabs(minDot + 1) < 1e-4) {
-            dirVect = -nbr3Vect;
+          double dot12 = nbr1Vect.dotProduct(nbr2Vect);
+          double dot13 = nbr1Vect.dotProduct(nbr3Vect);
+          double dot23 = nbr2Vect.dotProduct(nbr3Vect);
+          std::cerr << "!!! " << nbr1->getIdx() << "," << nbr2->getIdx() << ","
+                    << nbr3->getIdx() << " : " << dot12 << " " << dot13 << " "
+                    << dot23 << std::endl;
+          unsigned int numNeg = 0;
+          if (dot12 < -1e-4) {
+            ++numNeg;
+          }
+          if (dot13 < -1e-4) {
+            ++numNeg;
+          }
+          if (dot23 < -1e-4) {
+            ++numNeg;
+          }
+
+          if (numNeg <= 1) {
+            // github #3879: all three neighbors are on "one side" of the heavy
+            // atom; put the H on the other side, opposite the "middle" atom
+            if (dot12 > dot13 && dot12 > dot23) {
+              dirVect = nbr3Vect;
+            } else if (dot13 > dot12 && dot13 > dot23) {
+              dirVect = nbr2Vect;
+            } else {
+              dirVect = nbr1Vect;
+            }
+            std::cerr << " !#!#!#" << std::endl;
+            dirVect *= -1;
           } else {
-            dirVect = nbr1Vect + nbr2Vect;
-          }
-          if (nbr2Vect.dotProduct(nbr3Vect) < minDot) {
-            minDot = nbr2Vect.dotProduct(nbr3Vect);
+            // this was github #908
+            // Put the H between the two neighbors that have the widest angle
+            // between them. Unless the two are opposite ends of a straight line
+            // through the heavy atom, which would make the H overlap with the
+            // heavy atom. In such case, set it on the opposite direction to the
+            // 3rd neighbor.
+            double minDot = dot12;
             if (fabs(minDot + 1) < 1e-4) {
-              dirVect = -nbr1Vect;
+              dirVect = -nbr3Vect;
             } else {
-              dirVect = nbr2Vect + nbr3Vect;
+              dirVect = nbr1Vect + nbr2Vect;
             }
-          }
-          if (nbr1Vect.dotProduct(nbr3Vect) < minDot) {
-            minDot = nbr1Vect.dotProduct(nbr3Vect);
-            if (fabs(minDot + 1) < 1e-4) {
-              dirVect = -nbr2Vect;
-            } else {
-              dirVect = nbr1Vect + nbr3Vect;
+            if (dot23 < minDot) {
+              minDot = dot23;
+              if (fabs(minDot + 1) < 1e-4) {
+                dirVect = -nbr1Vect;
+              } else {
+                dirVect = nbr2Vect + nbr3Vect;
+              }
             }
+            if (dot13 < minDot) {
+              minDot = dot13;
+              if (fabs(minDot + 1) < 1e-4) {
+                dirVect = -nbr2Vect;
+              } else {
+                dirVect = nbr1Vect + nbr3Vect;
+              }
+            }
+            dirVect *= -1;
           }
-          dirVect *= -1;
         }
         dirVect.normalize();
         hydPos = heavyPos + dirVect * ((*cfi)->is3D() ? bondLength : 1.0);
@@ -510,8 +540,7 @@ void addHs(RWMol &mol, bool explicitOnly, bool addCoords,
     Atom *newAt = mol.getAtomWithIdx(aidx);
 
     std::vector<unsigned int> isoHs;
-    if (newAt->getPropIfPresent(common_properties::_isotopicHs,
-                                isoHs)) {
+    if (newAt->getPropIfPresent(common_properties::_isotopicHs, isoHs)) {
       newAt->clearProp(common_properties::_isotopicHs);
     }
     std::vector<unsigned int>::const_iterator isoH = isoHs.begin();
