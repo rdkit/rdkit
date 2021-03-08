@@ -32,6 +32,7 @@ namespace ForceFields {
 namespace CrystalFF {
 using namespace RDKit;
 
+// the "macrocycle" patterns for ETKDGv3 use a minimum ring size of 9
 const unsigned int MIN_MACROCYCLE_SIZE = 9;
 
 /* SMARTS patterns for experimental torsion angle preferences
