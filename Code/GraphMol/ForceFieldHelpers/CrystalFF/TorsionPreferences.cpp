@@ -232,8 +232,7 @@ void getExperimentalTorsions(const RDKit::ROMol &mol, CrystalFFDetails &details,
         // FIX: check if bond is NULL
         bid2 = mol.getBondBetweenAtoms(aid2, aid3)->getIdx();
         // check that a bond is part of maximum one ring
-        if (mol.getRingInfo()->numBondRings(bid2) > 3 ||
-            excludedBonds[bid2] == 1) {
+        if (excludedBonds[bid2] || mol.getRingInfo()->numBondRings(bid2) > 3) {
           doneBonds[bid2] = 1;
         }
         if (!doneBonds[bid2]) {

@@ -46,9 +46,11 @@ TEST_CASE("Torsions not found in fused macrocycles", "[macrocycles]") {
   }
   SECTION("edges") {
     std::vector<std::tuple<std::string, bool, unsigned int>> tests{
-        {"O=C1CNC(=O)C2CCC(N1)NC(=O)CNC2=O", true, 15},   // 9-9
-        {"O=C1NC2CCC(C(=O)N1)C(=O)NCC(=O)N2", true, 4},   // 9-8
-        {"O=C1NC2CCC(C(=O)N1)C(=O)NC(=O)N2", false, 0}};  // 8-8
+        {"O=C1CNC(=O)C2CCC(N1)NC(=O)CNC2=O", true, 15},  // 9-9
+        {"O=C1NC2CCC(C(=O)N1)C(=O)NCC(=O)N2", true, 4},  // 9-8
+        {"O=C1NC2CCC(C(=O)N1)C(=O)NC(=O)N2", false, 0},  // 8-8
+        {"O=C1CC(=O)NC2NC(=O)CC(=O)NC(N1)NC(=O)CC(=O)N2", true,
+         18}};  // 12-12-12
     for (const auto &tpl : tests) {
       std::unique_ptr<RWMol> m{SmilesToMol(std::get<0>(tpl))};
       REQUIRE(m);
