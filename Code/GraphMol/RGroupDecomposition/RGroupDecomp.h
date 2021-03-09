@@ -82,6 +82,8 @@ struct RDKIT_RGROUPDECOMPOSITION_EXPORT RGroupDecompositionParameters {
   bool onlyMatchAtRGroups = false;
   bool removeAllHydrogenRGroups = true;
   bool removeHydrogensPostMatch = true;
+  bool allowNonTerminalRGroups = false;
+
   double timeout = -1.0;  ///< timeout in seconds. <=0 indicates no timeout
 
   // Determine how to assign the rgroup labels from the given core
@@ -108,6 +110,7 @@ struct RDKIT_RGROUPDECOMPOSITION_EXPORT RGroupDecompositionParameters {
 
  private:
   int indexOffset{-1};
+  void checkNonTerminal(const Atom &atom) const;
 };
 
 typedef std::map<std::string, ROMOL_SPTR> RGroupRow;

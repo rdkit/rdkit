@@ -261,7 +261,9 @@ struct rgroupdecomp_wrapper {
         "    - setRemoveRGroupsThatAreAllHydrogen: remove all rgroups that "
         "only have hydrogens\n"
         "    - removeHydrogensPostMatch: remove all hydrogens from the output "
-        "molecules\n";
+        "molecules\n"
+        "    - allowNonTerminalRGroups: allow labelled Rgroups or degree 2 or "
+        "more\n";
     python::class_<RDKit::RGroupDecompositionParameters>(
         "RGroupDecompositionParameters", docString.c_str(),
         python::init<>("Constructor, takes no arguments"))
@@ -301,7 +303,10 @@ struct rgroupdecomp_wrapper {
         .def_readwrite("gaNumberRuns",
                        &RDKit::RGroupDecompositionParameters::gaNumberRuns)
         .def_readwrite("gaParallelRuns",
-                       &RDKit::RGroupDecompositionParameters::gaParallelRuns);
+                       &RDKit::RGroupDecompositionParameters::gaParallelRuns)
+        .def_readwrite(
+            "allowNonTerminalRGroups",
+            &RDKit::RGroupDecompositionParameters::allowNonTerminalRGroups);
 
     python::class_<RDKit::RGroupDecompositionHelper, boost::noncopyable>(
         "RGroupDecomposition", docString.c_str(),

@@ -256,9 +256,8 @@ void testRGroupOnlyMatching() {
 
 const char *ringData[3] = {"c1cocc1", "c1c[nH]cc1", "c1cscc1"};
 
-const char *ringDataRes[3] = {"Core:c1ccoc1",
-                              "Core:c1ccn([*:1])c1 R1:[H][*:1]",
-                              "Core:c1ccsc1"};
+const char *ringDataRes[3] = {"Core:c1cco([*:1])c1", "Core:c1ccn([*:1])c1",
+                              "Core:c1ccs([*:1])c1"};
 
 void testRingMatching() {
   BOOST_LOG(rdInfoLog)
@@ -270,6 +269,15 @@ void testRingMatching() {
   RGroupDecompositionParameters params;
   params.labels = IsotopeLabels;
 
+  auto exceptionThrown = false;
+  try {
+    RGroupDecomposition decompError(*core, params);
+  } catch (ValueErrorException &) {
+    exceptionThrown = true;
+  }
+  TEST_ASSERT(exceptionThrown);
+
+  params.allowNonTerminalRGroups = true;
   RGroupDecomposition decomp(*core, params);
   for (int i = 0; i < 3; ++i) {
     ROMol *mol = SmilesToMol(ringData[i]);
@@ -295,10 +303,9 @@ void testRingMatching() {
 
 const char *ringData2[3] = {"c1cocc1CCl", "c1c[nH]cc1CI", "c1cscc1CF"};
 
-const char *ringDataRes2[3] = {
-    "Core:c1cc(C[*:2])co1 R2:Cl[*:2]",
-    "Core:c1cn([*:3])cc1C[*:2] R2:I[*:2] R3:[H][*:3]",
-    "Core:c1cc(C[*:2])cs1 R2:F[*:2]"};
+const char *ringDataRes2[3] = {"Core:c1cc(C[*:2])([*:1])co1 R2:Cl[*:2]",
+                               "Core:c1cc(C[*:2])([*:1])cn1 R2:I[*:2]",
+                               "Core:c1cc(C[*:2])([*:1])cs1 R2:F[*:2]"};
 
 void testRingMatching2() {
   BOOST_LOG(rdInfoLog)
@@ -308,6 +315,7 @@ void testRingMatching2() {
 
   RWMol *core = SmartsToMol("*1***[*:1]1C[*:2]");
   RGroupDecompositionParameters params;
+  params.allowNonTerminalRGroups = true;
 
   RGroupDecomposition decomp(*core, params);
   for (int i = 0; i < 3; ++i) {
@@ -332,10 +340,9 @@ void testRingMatching2() {
 
 const char *ringData3[3] = {"c1cocc1CCl", "c1c[nH]cc1CI", "c1cscc1CF"};
 
-const char *ringDataRes3[3] = {
-    "Core:c1cc([*:1])co1 R1:ClC[*:1]",
-    "Core:c1cn([*:2])cc1[*:1] R1:IC[*:1] R2:[H][*:2]",
-    "Core:c1cc([*:1])cs1 R1:FC[*:1]"};
+const char *ringDataRes3[3] = {"Core:c1cc([*:1])co1 R1:ClC[*:1]",
+                               "Core:c1cc([*:1])cn1 R1:IC[*:1]",
+                               "Core:c1cc([*:1])cs1 R1:FC[*:1]"};
 
 void testRingMatching3() {
   BOOST_LOG(rdInfoLog)
@@ -349,6 +356,7 @@ void testRingMatching3() {
   // This test is currently failing using the default scoring method (the
   // halogens are not all in the same group)
   params.scoreMethod = FingerprintVariance;
+  params.allowNonTerminalRGroups = true;
 
   RGroupDecomposition decomp(*core, params);
   for (int i = 0; i < 3; ++i) {
@@ -378,18 +386,13 @@ const char *coreSmi[] = {
 
     "C1CCOC(Cl)CC1", "C1CC(Cl)OCCC1", "C1CCOC(I)CC1", "C1CC(I)OCCC1"};
 
-const char *coreSmiRes[] = {"Core:C1CCNC([*:1])CC1 R1:Cl[*:1]",
-                            "Core:C1CCNC([*:1])CC1 R1:Cl[*:1]",
-                            "Core:C1CCNC([*:1])CC1 R1:I[*:1]",
-                            "Core:C1CCNC([*:1])CC1 R1:I[*:1]",
-                            "Core:C1CCSC([*:1])CC1 R1:Cl[*:1]",
-                            "Core:C1CCSC([*:1])CC1 R1:Cl[*:1]",
-                            "Core:C1CCSC([*:1])CC1 R1:I[*:1]",
-                            "Core:C1CCSC([*:1])CC1 R1:I[*:1]",
-                            "Core:C1CCOC([*:1])CC1 R1:Cl[*:1]",
-                            "Core:C1CCOC([*:1])CC1 R1:Cl[*:1]",
-                            "Core:C1CCOC([*:1])CC1 R1:I[*:1]",
-                            "Core:C1CCOC([*:1])CC1 R1:I[*:1]"};
+const char *coreSmiRes[] = {
+    "Core:C1CCNC([*:1])CC1 R1:Cl[*:1]", "Core:C1CCNC([*:1])CC1 R1:Cl[*:1]",
+    "Core:C1CCNC([*:1])CC1 R1:I[*:1]",  "Core:C1CCNC([*:1])CC1 R1:I[*:1]",
+    "Core:C1CCSC([*:1])CC1 R1:Cl[*:1]", "Core:C1CCSC([*:1])CC1 R1:Cl[*:1]",
+    "Core:C1CCSC([*:1])CC1 R1:I[*:1]",  "Core:C1CCSC([*:1])CC1 R1:I[*:1]",
+    "Core:C1CCOC([*:1])CC1 R1:Cl[*:1]", "Core:C1CCOC([*:1])CC1 R1:Cl[*:1]",
+    "Core:C1CCOC([*:1])CC1 R1:I[*:1]",  "Core:C1CCOC([*:1])CC1 R1:I[*:1]"};
 
 void testMultiCore() {
   BOOST_LOG(rdInfoLog)
@@ -1878,8 +1881,8 @@ void testMutipleCoreRelabellingIssues() {
 
 void testUnprocessedMapping() {
   // Tests a bug that results in an unprocessed mapping Invariant violation
-  // The cause of the error is an rgroup mistakenly identified as containing only
-  // hydrogens in a multicore decomp
+  // The cause of the error is an rgroup mistakenly identified as containing
+  // only hydrogens in a multicore decomp
 
   // See https://github.com/rdkit/rdkit/pull/3565
 
@@ -1953,10 +1956,10 @@ M  END
   for (auto matchAtRGroup = 0; matchAtRGroup < 2; ++matchAtRGroup) {
     for (auto mdlRGroupLabels = 0; mdlRGroupLabels < 2; ++mdlRGroupLabels) {
       RGroupDecompositionParameters params;
-      // GJ, I will figure out why this is required- currently allowing a match on any atom is
-      // returning "Core:C1CCC([*:5])([*:6])C([*:1])C1 R1:C(C[*:1])[*:1]"- I've seen this before
-      // and I think it is an error with the ranking function.
-      // params.onlyMatchAtRGroups = true;
+      // GJ, I will figure out why this is required- currently allowing a match
+      // on any atom is returning "Core:C1CCC([*:5])([*:6])C([*:1])C1
+      // R1:C(C[*:1])[*:1]"- I've seen this before and I think it is an error
+      // with the ranking function. params.onlyMatchAtRGroups = true;
       params.scoreMethod = FingerprintVariance;
       if (matchAtRGroup) {
         params.labels = MDLRGroupLabels;
@@ -2056,8 +2059,8 @@ void testNoAlignmentAndSymmetry() {
   BOOST_LOG(rdInfoLog)
       << "********************************************************\n";
   BOOST_LOG(rdInfoLog) << "test NoAlignment with symmetric groups" << std::endl;
-  const std::vector<ROMOL_SPTR> cores{"[cH:1]1[cH:2][cH:3]ccc1"_smiles,
-                                      "[cH:3]1[cH:2][cH:1]cnc1"_smiles};
+  const std::vector<ROMOL_SPTR> cores{"c([*:1])1c([*:2])c([*:3])ccc1"_smiles,
+                                      "c([*:3])1c([*:2])c([*:1])cnc1"_smiles};
   const std::vector<const char *> smilesData{"c1(CO)c(F)c(CN)ccc1",
                                              "c1(CO)c(Cl)c(CN)cnc1"};
 
@@ -2154,10 +2157,10 @@ void testUserMatchTypes() {
   TestMatchType::test(*core, *mol, params, expected);
   core = "C1CCCCC1([*:1])([*:2])"_smiles;
   TestMatchType::test(*core, *mol, params, expected);
-  core = "C1CCCC[C:2]1[*:1]"_smarts;
+  core = "C1CCCC[*:2]1[*:1]"_smiles;
+  params.allowNonTerminalRGroups = true;
   TestMatchType::test(*core, *mol, params, expected);
 }
-
 
 int main() {
   RDLog::InitLogs();
@@ -2167,7 +2170,6 @@ int main() {
       << "********************************************************\n";
   BOOST_LOG(rdInfoLog) << "Testing R-Group Decomposition \n";
 
-  testUserMatchTypes();
 #if 1
   testSymmetryMatching(FingerprintVariance);
   testSymmetryMatching();
@@ -2202,6 +2204,8 @@ int main() {
   testGeminalRGroups();
   testMatchOnAnyAtom();
   testNoAlignmentAndSymmetry();
+  testUserMatchTypes();
+
   BOOST_LOG(rdInfoLog)
       << "********************************************************\n";
   return 0;

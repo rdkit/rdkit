@@ -50,7 +50,8 @@ bool hasLabel(const Atom *atom, unsigned int autoLabels) {
  * This function checks to see if there is a terminal dummy labelled rgroup
  * attached to the atom.
  */
-bool hasAttachedLabels(const ROMol &mol, const Atom *atom, unsigned int autoLabels) {
+bool hasAttachedLabels(const ROMol &mol, const Atom *atom,
+                       unsigned int autoLabels) {
   RWMol::ADJ_ITER nbrIdx, endNbrs;
   boost::tie(nbrIdx, endNbrs) = mol.getAtomNeighbors(atom);
   while (nbrIdx != endNbrs) {
@@ -198,44 +199,50 @@ bool RGroupDecompositionParameters::prepareCore(RWMol &core,
     bool found = false;
 
     if (atom->hasProp(RLABEL)) {
+      // set from MCS match
       if (setLabel(atom, atom->getProp<int>(RLABEL), foundLabels, maxLabel,
                    relabel, Labelling::INTERNAL_LABELS)) {
         found = true;
       }
     }
 
-    if (!found && (autoLabels & MDLRGroupLabels)) {
-      unsigned int rgroup;
-      if (atom->getPropIfPresent<unsigned int>(
-              common_properties::_MolFileRLabel, rgroup)) {
-        if (setLabel(atom, rdcast<int>(rgroup), foundLabels, maxLabel, relabel,
-                     Labelling::RGROUP_LABELS)) {
+    if (atom->getAtomicNum() == 0) {
+      if (!found && (autoLabels & MDLRGroupLabels)) {
+        unsigned int rgroup;
+        if (atom->getPropIfPresent<unsigned int>(
+                common_properties::_MolFileRLabel, rgroup)) {
+          if (setLabel(atom, rdcast<int>(rgroup), foundLabels, maxLabel,
+                       relabel, Labelling::RGROUP_LABELS)) {
+            found = true;
+            checkNonTerminal(*atom);
+          }
+        }
+      }
+
+      if (!found && (autoLabels & IsotopeLabels) && atom->getIsotope() > 0) {
+        if (setLabel(atom, rdcast<int>(atom->getIsotope()), foundLabels,
+                     maxLabel, relabel, Labelling::ISOTOPE_LABELS)) {
+          checkNonTerminal(*atom);
           found = true;
         }
       }
-    }
 
-    if (!found && (autoLabels & IsotopeLabels) && atom->getIsotope() > 0) {
-      if (setLabel(atom, rdcast<int>(atom->getIsotope()), foundLabels, maxLabel,
-                   relabel, Labelling::ISOTOPE_LABELS)) {
-        found = true;
+      if (!found && (autoLabels & AtomMapLabels) && atom->getAtomMapNum() > 0) {
+        if (setLabel(atom, rdcast<int>(atom->getAtomMapNum()), foundLabels,
+                     maxLabel, relabel, Labelling::ATOMMAP_LABELS)) {
+          checkNonTerminal(*atom);
+          found = true;
+        }
       }
-    }
 
-    if (!found && (autoLabels & AtomMapLabels) && atom->getAtomMapNum() > 0) {
-      if (setLabel(atom, rdcast<int>(atom->getAtomMapNum()), foundLabels,
-                   maxLabel, relabel, Labelling::ATOMMAP_LABELS)) {
-        found = true;
-      }
-    }
-
-    if (!found && (autoLabels & DummyAtomLabels) && atom->getAtomicNum() == 0 &&
-        atom->getDegree() == 1) {
-      const bool forceRelabellingWithDummies = true;
-      int defaultDummyStartLabel = maxLabel;
-      if (setLabel(atom, defaultDummyStartLabel, foundLabels, maxLabel,
-                   forceRelabellingWithDummies, Labelling::DUMMY_LABELS)) {
-        found = true;
+      if (!found && (autoLabels & DummyAtomLabels) &&
+          atom->getAtomicNum() == 0 && atom->getDegree() == 1) {
+        const bool forceRelabellingWithDummies = true;
+        int defaultDummyStartLabel = maxLabel;
+        if (setLabel(atom, defaultDummyStartLabel, foundLabels, maxLabel,
+                     forceRelabellingWithDummies, Labelling::DUMMY_LABELS)) {
+          found = true;
+        }
       }
     }
 
@@ -269,6 +276,18 @@ bool RGroupDecompositionParameters::prepareCore(RWMol &core,
   }
 
   return true;
+}
+
+void RGroupDecompositionParameters::checkNonTerminal(const Atom &atom) const {
+  if (allowNonTerminalRGroups || atom.getDegree() == 1) {
+    return;
+  }
+
+  BOOST_LOG(rdDebugLog)
+      << "Non terminal R group defined.  To allow set allowNonTerminalRGroups "
+         "in RGroupDecompositionParameters"
+      << std::endl;
+  throw ValueErrorException("Non terminal R group defined.");
 }
 
 }  // namespace RDKit
