@@ -179,8 +179,8 @@ struct RGroupDecompData {
           R_DECOMP::const_iterator rgroup = position.rgroups.find(label);
           bool labelHasCore = labelCores[label].find(position.core_idx) !=
                               labelCores[label].end();
-          if (labelHasCore && (rgroup == position.rgroups.end() ||
-                               !rgroup->second->is_hydrogen)) {
+          if (labelHasCore && rgroup != position.rgroups.end() &&
+                               !rgroup->second->is_hydrogen) {
             allH = false;
             break;
           }
