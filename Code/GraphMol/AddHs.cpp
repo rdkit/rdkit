@@ -43,6 +43,22 @@ Atom *getAtomNeighborNot(ROMol *mol, const Atom *atom, const Atom *other) {
   return res;
 }
 
+namespace {
+RDGeom::Point3D pickBisector(const RDGeom::Point3D &nbr1Vect,
+                             const RDGeom::Point3D &nbr2Vect,
+                             const RDGeom::Point3D &nbr3Vect) {
+  auto dirVect = nbr2Vect + nbr3Vect;
+  if (dirVect.lengthSq() < 1e-4) {
+    // nbr2Vect and nbr3Vect are anti-parallel (was #3854)
+    dirVect = nbr2Vect;
+    std::swap(dirVect.x, dirVect.y);
+    if (dirVect.dotProduct(nbr1Vect) > 0) {
+      dirVect *= -1;
+    }
+  }
+  return dirVect;
+}
+}  // namespace
 void setHydrogenCoords(ROMol *mol, unsigned int hydIdx, unsigned int heavyIdx) {
   // we will loop over all the coordinates
   PRECONDITION(mol, "bad molecule");
@@ -337,11 +353,11 @@ void setHydrogenCoords(ROMol *mol, unsigned int hydIdx, unsigned int heavyIdx) {
           auto accum2 = angle12 + angle23;
           auto accum3 = angle13 + angle23;
           if (accum1 <= accum2 && accum1 <= accum3) {
-            dirVect = nbr2Vect + nbr3Vect;
+            dirVect = pickBisector(nbr1Vect, nbr2Vect, nbr3Vect);
           } else if (accum2 <= accum1 && accum2 <= accum3) {
-            dirVect = nbr1Vect + nbr3Vect;
+            dirVect = pickBisector(nbr2Vect, nbr1Vect, nbr3Vect);
           } else {
-            dirVect = nbr1Vect + nbr2Vect;
+            dirVect = pickBisector(nbr3Vect, nbr1Vect, nbr2Vect);
           }
         }
         dirVect.normalize();
