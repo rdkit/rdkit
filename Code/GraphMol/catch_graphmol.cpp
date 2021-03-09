@@ -1532,31 +1532,44 @@ M  V30 10 1 9 4
 M  V30 END BOND
 M  V30 END CTAB
 M  END)CTAB"_ctab;
+    REQUIRE(m);
     bool explicitOnly = false;
     bool addCoords = true;
     UINT_VECT onlyOnAtoms = {3, 6};
     MolOps::addHs(*m, explicitOnly, addCoords, &onlyOnAtoms);
     const auto &conf = m->getConformer();
-    // check that the H atoms are opposite the appropriate heavy atoms
+    // check that the H atoms bisect the angle correctly
     {
       REQUIRE(m->getAtomWithIdx(9)->getAtomicNum() == 1);
       REQUIRE(m->getBondBetweenAtoms(9, 3));
       REQUIRE(m->getBondBetweenAtoms(3, 4));
+      REQUIRE(m->getBondBetweenAtoms(3, 2));
+      REQUIRE(m->getBondBetweenAtoms(3, 8));
       auto v1 = conf.getAtomPos(9) - conf.getAtomPos(3);
       auto v2 = conf.getAtomPos(4) - conf.getAtomPos(3);
-      v1.normalize();
-      v2.normalize();
-      CHECK(fabs(v1.dotProduct(v2) + 1) < 1e-4);
+      auto v3 = conf.getAtomPos(2) - conf.getAtomPos(3);
+      auto v4 = conf.getAtomPos(8) - conf.getAtomPos(3);
+      CHECK(v1.angleTo(v3) < v1.angleTo(v2));
+      CHECK(v1.angleTo(v4) < v1.angleTo(v2));
+      CHECK(fabs(v1.angleTo(v3) - v1.angleTo(v4)) < 1e-4);
+      CHECK(v1.dotProduct(v3) < -1e-4);
+      CHECK(v1.dotProduct(v4) < -1e-4);
     }
     {
       REQUIRE(m->getAtomWithIdx(10)->getAtomicNum() == 1);
       REQUIRE(m->getBondBetweenAtoms(10, 6));
       REQUIRE(m->getBondBetweenAtoms(5, 6));
+      REQUIRE(m->getBondBetweenAtoms(6, 1));
+      REQUIRE(m->getBondBetweenAtoms(6, 7));
       auto v1 = conf.getAtomPos(10) - conf.getAtomPos(6);
       auto v2 = conf.getAtomPos(5) - conf.getAtomPos(6);
-      v1.normalize();
-      v2.normalize();
-      CHECK(fabs(v1.dotProduct(v2) + 1) < 1e-4);
+      auto v3 = conf.getAtomPos(1) - conf.getAtomPos(6);
+      auto v4 = conf.getAtomPos(7) - conf.getAtomPos(6);
+      CHECK(v1.angleTo(v3) < v1.angleTo(v2));
+      CHECK(v1.angleTo(v4) < v1.angleTo(v2));
+      CHECK(fabs(v1.angleTo(v3) - v1.angleTo(v4)) < 1e-4);
+      CHECK(v1.dotProduct(v3) < -1e-4);
+      CHECK(v1.dotProduct(v4) < -1e-4);
     }
   }
   SECTION("non-chiral version") {
@@ -1591,6 +1604,7 @@ M  V30 10 1 9 4
 M  V30 END BOND
 M  V30 END CTAB
 M  END)CTAB"_ctab;
+    REQUIRE(m);
     bool explicitOnly = false;
     bool addCoords = true;
     UINT_VECT onlyOnAtoms = {3, 6};
@@ -1600,21 +1614,80 @@ M  END)CTAB"_ctab;
       REQUIRE(m->getAtomWithIdx(9)->getAtomicNum() == 1);
       REQUIRE(m->getBondBetweenAtoms(9, 3));
       REQUIRE(m->getBondBetweenAtoms(3, 4));
+      REQUIRE(m->getBondBetweenAtoms(3, 2));
+      REQUIRE(m->getBondBetweenAtoms(3, 8));
       auto v1 = conf.getAtomPos(9) - conf.getAtomPos(3);
       auto v2 = conf.getAtomPos(4) - conf.getAtomPos(3);
-      v1.normalize();
-      v2.normalize();
-      CHECK(fabs(v1.dotProduct(v2) + 1) < 1e-4);
+      auto v3 = conf.getAtomPos(2) - conf.getAtomPos(3);
+      auto v4 = conf.getAtomPos(8) - conf.getAtomPos(3);
+      CHECK(v1.angleTo(v3) < v1.angleTo(v2));
+      CHECK(v1.angleTo(v4) < v1.angleTo(v2));
+      CHECK(fabs(v1.angleTo(v3) - v1.angleTo(v4)) < 1e-4);
+      CHECK(v1.dotProduct(v3) < -1e-4);
+      CHECK(v1.dotProduct(v4) < -1e-4);
     }
     {
       REQUIRE(m->getAtomWithIdx(10)->getAtomicNum() == 1);
       REQUIRE(m->getBondBetweenAtoms(10, 6));
       REQUIRE(m->getBondBetweenAtoms(5, 6));
+      REQUIRE(m->getBondBetweenAtoms(6, 1));
+      REQUIRE(m->getBondBetweenAtoms(6, 7));
       auto v1 = conf.getAtomPos(10) - conf.getAtomPos(6);
       auto v2 = conf.getAtomPos(5) - conf.getAtomPos(6);
-      v1.normalize();
-      v2.normalize();
-      CHECK(fabs(v1.dotProduct(v2) + 1) < 1e-4);
+      auto v3 = conf.getAtomPos(1) - conf.getAtomPos(6);
+      auto v4 = conf.getAtomPos(7) - conf.getAtomPos(6);
+      CHECK(v1.angleTo(v3) < v1.angleTo(v2));
+      CHECK(v1.angleTo(v4) < v1.angleTo(v2));
+      CHECK(fabs(v1.angleTo(v3) - v1.angleTo(v4)) < 1e-4);
+      CHECK(v1.dotProduct(v3) < -1e-4);
+      CHECK(v1.dotProduct(v4) < -1e-4);
+    }
+  }
+  SECTION("a simpler system") {
+    auto m = R"CTAB(
+  Mrv2014 03092106042D          
+
+  0  0  0     0  0            999 V3000
+M  V30 BEGIN CTAB
+M  V30 COUNTS 5 6 0 0 0
+M  V30 BEGIN ATOM
+M  V30 1 C -4.3533 6.6867 0 0
+M  V30 2 C -4.3533 5.1467 0 0 CFG=1
+M  V30 3 O -2.8133 6.6867 0 0
+M  V30 4 C -2.8133 5.1467 0 0 CFG=1
+M  V30 5 C -3.5833 3.813 0 0
+M  V30 END ATOM
+M  V30 BEGIN BOND
+M  V30 1 1 1 3
+M  V30 2 1 2 4
+M  V30 3 1 3 4
+M  V30 4 1 2 5
+M  V30 5 1 4 5 CFG=1
+M  V30 6 1 2 1 CFG=1
+M  V30 END BOND
+M  V30 END CTAB
+M  END
+)CTAB"_ctab;
+    bool explicitOnly = false;
+    bool addCoords = true;
+    UINT_VECT onlyOnAtoms = {3, 1};
+    MolOps::addHs(*m, explicitOnly, addCoords, &onlyOnAtoms);
+    const auto &conf = m->getConformer();
+    {
+      REQUIRE(m->getAtomWithIdx(5)->getAtomicNum() == 1);
+      REQUIRE(m->getBondBetweenAtoms(5, 1));
+      REQUIRE(m->getBondBetweenAtoms(1, 3));
+      REQUIRE(m->getBondBetweenAtoms(1, 0));
+      REQUIRE(m->getBondBetweenAtoms(1, 4));
+      auto v1 = conf.getAtomPos(5) - conf.getAtomPos(1);
+      auto v2 = conf.getAtomPos(3) - conf.getAtomPos(1);
+      auto v3 = conf.getAtomPos(0) - conf.getAtomPos(1);
+      auto v4 = conf.getAtomPos(4) - conf.getAtomPos(1);
+      CHECK(v1.angleTo(v3) < v1.angleTo(v2));
+      CHECK(v1.angleTo(v4) < v1.angleTo(v2));
+      CHECK(fabs(v1.angleTo(v3) - v1.angleTo(v4)) < 1e-4);
+      CHECK(v1.dotProduct(v3) < -1e-4);
+      CHECK(v1.dotProduct(v4) < -1e-4);
     }
   }
 }

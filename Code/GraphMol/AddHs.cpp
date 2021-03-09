@@ -325,65 +325,23 @@ void setHydrogenCoords(ROMol *mol, unsigned int hydIdx, unsigned int heavyIdx) {
           }
         } else {
           // we're in flatland
-          double dot12 = nbr1Vect.dotProduct(nbr2Vect);
-          double dot13 = nbr1Vect.dotProduct(nbr3Vect);
-          double dot23 = nbr2Vect.dotProduct(nbr3Vect);
-          unsigned int numNeg = 0;
-          if (dot12 < -1e-4) {
-            ++numNeg;
-          }
-          if (dot13 < -1e-4) {
-            ++numNeg;
-          }
-          if (dot23 < -1e-4) {
-            ++numNeg;
-          }
 
-          if (1) {  // numNeg < 3) {
-            // github #3879:
-            auto angle12 = nbr1Vect.angleTo(nbr2Vect);
-            auto angle13 = nbr1Vect.angleTo(nbr3Vect);
-            auto angle23 = nbr2Vect.angleTo(nbr3Vect);
-            auto accum1 = angle12 + angle13;
-            auto accum2 = angle12 + angle23;
-            auto accum3 = angle13 + angle23;
-            if (accum1 <= accum2 && accum1 <= accum3) {
-              dirVect = nbr1Vect;
-            } else if (accum2 <= accum1 && accum2 <= accum3) {
-              dirVect = nbr2Vect;
-            } else {
-              dirVect = nbr3Vect;
-            }
+          // github #3879 and #908: find the two neighbors with the largest
+          // outer angle between them and then place the H to bisect that angle
+          // This is recommendation ST-1.1.4 from the 2006 IUPAC "Graphical
+          // representation of stereochemical configuration" guideline
+          auto angle12 = nbr1Vect.angleTo(nbr2Vect);
+          auto angle13 = nbr1Vect.angleTo(nbr3Vect);
+          auto angle23 = nbr2Vect.angleTo(nbr3Vect);
+          auto accum1 = angle12 + angle13;
+          auto accum2 = angle12 + angle23;
+          auto accum3 = angle13 + angle23;
+          if (accum1 <= accum2 && accum1 <= accum3) {
+            dirVect = nbr2Vect + nbr3Vect;
+          } else if (accum2 <= accum1 && accum2 <= accum3) {
+            dirVect = nbr1Vect + nbr3Vect;
           } else {
-            // all angles > 90 degrees. this was github #908
-            // Put the H between the two neighbors that have the widest angle
-            // between them. Unless the two are opposite ends of a straight line
-            // through the heavy atom, which would make the H overlap with the
-            // heavy atom. In such case, set it on the opposite direction to the
-            // 3rd neighbor.
-            double minDot = dot12;
-            if (fabs(minDot + 1) < 1e-4) {
-              dirVect = -nbr3Vect;
-            } else {
-              dirVect = nbr1Vect + nbr2Vect;
-            }
-            if (dot23 < minDot) {
-              minDot = dot23;
-              if (fabs(minDot + 1) < 1e-4) {
-                dirVect = -nbr1Vect;
-              } else {
-                dirVect = nbr2Vect + nbr3Vect;
-              }
-            }
-            if (dot13 < minDot) {
-              minDot = dot13;
-              if (fabs(minDot + 1) < 1e-4) {
-                dirVect = -nbr2Vect;
-              } else {
-                dirVect = nbr1Vect + nbr3Vect;
-              }
-            }
-            dirVect *= -1;
+            dirVect = nbr1Vect + nbr2Vect;
           }
         }
         dirVect.normalize();
