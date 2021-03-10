@@ -113,8 +113,8 @@ struct RDKIT_RGROUPDECOMPOSITION_EXPORT RGroupDecompositionParameters {
   void checkNonTerminal(const Atom &atom) const;
 };
 
-typedef std::map<std::string, boost::shared_ptr<ROMol>> RGroupRow;
-typedef std::vector<boost::shared_ptr<ROMol>> RGroupColumn;
+typedef std::map<std::string, ROMOL_SPTR> RGroupRow;
+typedef std::vector<ROMOL_SPTR> RGroupColumn;
 
 typedef std::vector<RGroupRow> RGroupRows;
 typedef std::map<std::string, RGroupColumn> RGroupColumns;
@@ -126,7 +126,8 @@ class RDKIT_RGROUPDECOMPOSITION_EXPORT RGroupDecomposition {
   RGroupDecomposition(const RGroupDecomposition &);  // no copy construct
   RGroupDecomposition &operator=(
       const RGroupDecomposition &);  // Prevent assignment
-  ROMOL_SPTR outputCoreMolecule(const RGroupMatch & match) const;
+  RWMOL_SPTR outputCoreMolecule(const RGroupMatch &match, const std::map<int, bool> &usedRGroupMap = std::map<int, bool>()) const;
+  std::map<int, bool> getBlankRGroupMap() const;
 
  public:
   RGroupDecomposition(const ROMol &core,
