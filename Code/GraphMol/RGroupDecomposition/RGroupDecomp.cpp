@@ -181,7 +181,7 @@ int RGroupDecomposition::add(const ROMol &inmol) {
     const bool requireDummyMatch = false;
     bool hasCoreDummies = false;
     auto coreCopy =
-        rcore->replaceCoreDummiesWithMolMatches(hasCoreDummies, mol, tmatche);
+        rcore->replaceCoreAtomsWithMolMatches(hasCoreDummies, mol, tmatche);
     tMol.reset(replaceCore(mol, *coreCopy, tmatche, replaceDummies,
                            labelByIndex, requireDummyMatch));
 #ifdef VERBOSE
@@ -292,8 +292,10 @@ int RGroupDecomposition::add(const ROMol &inmol) {
             rcore->numberUserRGroups - numberUserGroupsInMatch;
         CHECK_INVARIANT(numberMissingUserGroups >= 0,
                         "Data error in missing user rgroup count");
-        potentialMatches.emplace_back(core_idx, numberMissingUserGroups, match,
-                                      hasCoreDummies ? coreCopy : nullptr);
+        potentialMatches.emplace_back(
+            core_idx, numberMissingUserGroups, match,
+            hasCoreDummies || !data->params.onlyMatchAtRGroups ? coreCopy
+                                                               : nullptr);
       }
     }
   }
