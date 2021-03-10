@@ -196,7 +196,8 @@ double FingerprintVarianceScoreData::fingerprintVarianceGroupScore() {
   CHECK_INVARIANT(numberOfMolecules > 0, "No compounds to be scored!");
   double rgroupPenalty =
       (double)numberOfMissingUserRGroups / (double)numberOfMolecules;
-  auto score = sum + rgroupPenalty;
+  // double the penalty to catch systems like https://github.com/rdkit/rdkit/issues/3896
+  auto score = sum + 2.0*rgroupPenalty;
 #ifdef DEBUG
   std::cerr << " sum " << sum << " rgroup penalty " << rgroupPenalty
             << " score " << score << std::endl;

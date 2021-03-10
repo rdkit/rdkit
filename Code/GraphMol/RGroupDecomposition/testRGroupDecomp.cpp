@@ -256,8 +256,8 @@ void testRGroupOnlyMatching() {
 
 const char *ringData[3] = {"c1cocc1", "c1c[nH]cc1", "c1cscc1"};
 
-const char *ringDataRes[3] = {"Core:c1cco([*:1])c1", "Core:c1ccn([*:1])c1",
-                              "Core:c1ccs([*:1])c1"};
+const char *ringDataRes[3] = {"Core:c1ccoc1", "Core:c1cc[nH]c1",
+                              "Core:c1ccsc1"};
 
 void testRingMatching() {
   BOOST_LOG(rdInfoLog)
@@ -303,9 +303,9 @@ void testRingMatching() {
 
 const char *ringData2[3] = {"c1cocc1CCl", "c1c[nH]cc1CI", "c1cscc1CF"};
 
-const char *ringDataRes2[3] = {"Core:c1cc(C[*:2])([*:1])co1 R2:Cl[*:2]",
-                               "Core:c1cc(C[*:2])([*:1])cn1 R2:I[*:2]",
-                               "Core:c1cc(C[*:2])([*:1])cs1 R2:F[*:2]"};
+const char *ringDataRes2[3] = {"Core:c1cc(C[*:2])co1 R2:Cl[*:2]",
+                               "Core:c1cc(C[*:2])c[nH]1 R2:I[*:2]",
+                               "Core:c1cc(C[*:2])cs1 R2:F[*:2]"};
 
 void testRingMatching2() {
   BOOST_LOG(rdInfoLog)
@@ -341,7 +341,7 @@ void testRingMatching2() {
 const char *ringData3[3] = {"c1cocc1CCl", "c1c[nH]cc1CI", "c1cscc1CF"};
 
 const char *ringDataRes3[3] = {"Core:c1cc([*:1])co1 R1:ClC[*:1]",
-                               "Core:c1cc([*:1])cn1 R1:IC[*:1]",
+                               "Core:c1cc([*:1])c[nH]1 R1:IC[*:1]",
                                "Core:c1cc([*:1])cs1 R1:FC[*:1]"};
 
 void testRingMatching3() {
