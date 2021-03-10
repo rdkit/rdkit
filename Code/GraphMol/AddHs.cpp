@@ -139,6 +139,22 @@ std::map<unsigned int, std::vector<unsigned int>> getIsoMap(const ROMol &mol) {
 
 namespace MolOps {
 
+namespace {
+RDGeom::Point3D pickBisector(const RDGeom::Point3D &nbr1Vect,
+                             const RDGeom::Point3D &nbr2Vect,
+                             const RDGeom::Point3D &nbr3Vect) {
+  auto dirVect = nbr2Vect + nbr3Vect;
+  if (dirVect.lengthSq() < 1e-4) {
+    // nbr2Vect and nbr3Vect are anti-parallel (was #3854)
+    dirVect = nbr2Vect;
+    std::swap(dirVect.x, dirVect.y);
+    if (dirVect.dotProduct(nbr1Vect) > 0) {
+      dirVect *= -1;
+    }
+  }
+  return dirVect;
+}
+}  // namespace
 void setHydrogenCoords(ROMol *mol, unsigned int hydIdx, unsigned int heavyIdx) {
   // we will loop over all the coordinates
   PRECONDITION(mol, "bad molecule");
@@ -375,7 +391,6 @@ void setHydrogenCoords(ROMol *mol, unsigned int hydIdx, unsigned int heavyIdx) {
       TEST_ASSERT(nbr3);
       for (auto cfi = mol->beginConformers(); cfi != mol->endConformers();
            ++cfi) {
-        // use the average of the three vectors:
         heavyPos = (*cfi)->getAtomPos(heavyIdx);
         nbr1Vect = heavyPos - (*cfi)->getAtomPos(nbr1->getIdx());
         nbr2Vect = heavyPos - (*cfi)->getAtomPos(nbr2->getIdx());
@@ -422,35 +437,24 @@ void setHydrogenCoords(ROMol *mol, unsigned int hydIdx, unsigned int heavyIdx) {
           }
         } else {
           // we're in flatland
-          // this was github #908
-          // We're in a 2D conformation, put the H between the two neighbors
-          // that have the widest angle between them. Unless the two are
-          // opposite ends of a straight line through the heavy atom,
-          // which would make the H overlap with the heavy atom.
-          // In such case, set it on the opposite direction to the 3rd neighbor.
-          double minDot = nbr1Vect.dotProduct(nbr2Vect);
-          if (fabs(minDot + 1) < 1e-4) {
-            dirVect = -nbr3Vect;
+
+          // github #3879 and #908: find the two neighbors with the largest
+          // outer angle between them and then place the H to bisect that angle
+          // This is recommendation ST-1.1.4 from the 2006 IUPAC "Graphical
+          // representation of stereochemical configuration" guideline
+          auto angle12 = nbr1Vect.angleTo(nbr2Vect);
+          auto angle13 = nbr1Vect.angleTo(nbr3Vect);
+          auto angle23 = nbr2Vect.angleTo(nbr3Vect);
+          auto accum1 = angle12 + angle13;
+          auto accum2 = angle12 + angle23;
+          auto accum3 = angle13 + angle23;
+          if (accum1 <= accum2 && accum1 <= accum3) {
+            dirVect = pickBisector(nbr1Vect, nbr2Vect, nbr3Vect);
+          } else if (accum2 <= accum1 && accum2 <= accum3) {
+            dirVect = pickBisector(nbr2Vect, nbr1Vect, nbr3Vect);
           } else {
-            dirVect = nbr1Vect + nbr2Vect;
+            dirVect = pickBisector(nbr3Vect, nbr1Vect, nbr2Vect);
           }
-          if (nbr2Vect.dotProduct(nbr3Vect) < minDot) {
-            minDot = nbr2Vect.dotProduct(nbr3Vect);
-            if (fabs(minDot + 1) < 1e-4) {
-              dirVect = -nbr1Vect;
-            } else {
-              dirVect = nbr2Vect + nbr3Vect;
-            }
-          }
-          if (nbr1Vect.dotProduct(nbr3Vect) < minDot) {
-            minDot = nbr1Vect.dotProduct(nbr3Vect);
-            if (fabs(minDot + 1) < 1e-4) {
-              dirVect = -nbr2Vect;
-            } else {
-              dirVect = nbr1Vect + nbr3Vect;
-            }
-          }
-          dirVect *= -1;
         }
         dirVect.normalize();
         hydPos = heavyPos + dirVect * ((*cfi)->is3D() ? bondLength : 1.0);
@@ -510,8 +514,7 @@ void addHs(RWMol &mol, bool explicitOnly, bool addCoords,
     Atom *newAt = mol.getAtomWithIdx(aidx);
 
     std::vector<unsigned int> isoHs;
-    if (newAt->getPropIfPresent(common_properties::_isotopicHs,
-                                isoHs)) {
+    if (newAt->getPropIfPresent(common_properties::_isotopicHs, isoHs)) {
       newAt->clearProp(common_properties::_isotopicHs);
     }
     std::vector<unsigned int>::const_iterator isoH = isoHs.begin();

@@ -32,6 +32,9 @@ namespace ForceFields {
 namespace CrystalFF {
 using namespace RDKit;
 
+// the "macrocycle" patterns for ETKDGv3 use a minimum ring size of 9
+const unsigned int MIN_MACROCYCLE_SIZE = 9;
+
 /* SMARTS patterns for experimental torsion angle preferences
  * Version 1 taken from J. Med. Chem. 56, 1026-2028 (2013)
  * Version 2 taken from J. Chem. Inf. Model. 56, 1 (2016)
@@ -172,10 +175,15 @@ void getExperimentalTorsions(const RDKit::ROMol &mol, CrystalFFDetails &details,
   VECT_INT_VECT_CI rii, rjj;
   for (rii = bondRings.begin(); rii != bondRings.end(); ++rii) {
     boost::dynamic_bitset<> rs1(nb);  // bitset for ring 1
-    for (unsigned int i = 0; i < rii->size(); i++) {
-      rs1[(*rii)[i]] = 1;
+    for (auto riiv : *rii) {
+      rs1[riiv] = 1;
     }
     for (rjj = rii + 1; rjj != bondRings.end(); ++rjj) {
+      // we don't worry about the overlap if both rings are macrocycles:
+      if (rii->size() >= MIN_MACROCYCLE_SIZE &&
+          rjj->size() >= MIN_MACROCYCLE_SIZE) {
+        continue;
+      }
       unsigned int nInCommon = 0;
       for (auto rjj_i : *rjj) {
         if (rs1[rjj_i]) {
@@ -186,11 +194,16 @@ void getExperimentalTorsions(const RDKit::ROMol &mol, CrystalFFDetails &details,
         }
       }
       if (nInCommon > 1) {  // more than one bond in common
-        for (unsigned int i = 0; i < rii->size(); i++) {
-          excludedBonds[(*rii)[i]] = 1;  // exclude all bonds of ring 1
+        // exclude bonds from non-macrocycles:
+        if (rii->size() < MIN_MACROCYCLE_SIZE) {
+          for (unsigned int i = 0; i < rii->size(); i++) {
+            excludedBonds[(*rii)[i]] = 1;  // exclude all bonds of ring 1
+          }
         }
-        for (unsigned int i = 0; i < rjj->size(); i++) {
-          excludedBonds[(*rjj)[i]] = 1;  // exclude all bonds of ring 2
+        if (rjj->size() < MIN_MACROCYCLE_SIZE) {
+          for (unsigned int i = 0; i < rjj->size(); i++) {
+            excludedBonds[(*rjj)[i]] = 1;  // exclude all bonds of ring 2
+          }
         }
       }
     }
@@ -208,7 +221,6 @@ void getExperimentalTorsions(const RDKit::ROMol &mol, CrystalFFDetails &details,
     for (const auto &param : *params) {
       std::vector<MatchVectType> matches;
       SubstructMatch(mol, *(param.dp_pattern.get()), matches, false, true);
-
       // loop over matches
       for (std::vector<MatchVectType>::const_iterator matchIt = matches.begin();
            matchIt != matches.end(); ++matchIt) {
@@ -220,8 +232,7 @@ void getExperimentalTorsions(const RDKit::ROMol &mol, CrystalFFDetails &details,
         // FIX: check if bond is NULL
         bid2 = mol.getBondBetweenAtoms(aid2, aid3)->getIdx();
         // check that a bond is part of maximum one ring
-        if (mol.getRingInfo()->numBondRings(bid2) > 1 ||
-            excludedBonds[bid2] == 1) {
+        if (excludedBonds[bid2] || mol.getRingInfo()->numBondRings(bid2) > 3) {
           doneBonds[bid2] = 1;
         }
         if (!doneBonds[bid2]) {
@@ -234,13 +245,16 @@ void getExperimentalTorsions(const RDKit::ROMol &mol, CrystalFFDetails &details,
           details.expTorsionAtoms.push_back(atoms);
           details.expTorsionAngles.emplace_back(param.signs, param.V);
           if (verbose) {
-            BOOST_LOG(rdInfoLog) << param.smarts << ": " << aid1 << " " << aid2
-                                 << " " << aid3 << " " << aid4 << ", (";
+            // using the stringstream seems redundant, but we don't want the
+            // extra formatting provided by the logger after every entry;
+            std::stringstream sstr;
+            sstr << param.smarts << ": " << aid1 << " " << aid2 << " " << aid3
+                 << " " << aid4 << ", (";
             for (unsigned int i = 0; i < param.V.size() - 1; ++i) {
-              BOOST_LOG(rdInfoLog) << param.V[i] << ", ";
+              sstr << param.V[i] << ", ";
             }
-            BOOST_LOG(rdInfoLog)
-                << param.V[param.V.size() - 1] << ") " << std::endl;
+            sstr << param.V[param.V.size() - 1] << ") ";
+            BOOST_LOG(rdInfoLog) << sstr.str() << std::endl;
           }
         }  // if not donePaths
       }    // end loop over matches
