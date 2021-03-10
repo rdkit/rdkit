@@ -1759,4 +1759,22 @@ TEST_CASE("batch edits", "[editing]") {
     m->commitBatchEdit();
     CHECK(MolToSmiles(*m) == "CCC.O");
   }
+  SECTION("some details") {
+    auto m = "CCCO"_smiles;
+    REQUIRE(m);
+    m->beginBatchEdit();
+    CHECK_THROWS_AS(m->beginBatchEdit(), ValueErrorException);
+    m->removeAtom(0U);
+    // copying includes the edit status:
+    RWMol m2(*m);
+    CHECK_THROWS_AS(m2.beginBatchEdit(), ValueErrorException);
+
+    // without a commit, the mols haven't changed
+    CHECK(MolToSmiles(*m) == "CCCO");
+    CHECK(MolToSmiles(m2) == "CCCO");
+    m->commitBatchEdit();
+    CHECK(MolToSmiles(*m) == "CCO");
+    m2.commitBatchEdit();
+    CHECK(MolToSmiles(m2) == "CCO");
+  }
 }

@@ -471,7 +471,7 @@ void RWMol::beginBatchEdit() {
     BOOST_LOG(rdWarningLog) << "batchEdit mode already enabled, ignoring "
                                "additional call to beginBatchEdit()"
                             << std::endl;
-    return;
+    throw ValueErrorException("Attempt to re-enter batchEdit mode");
   }
   dp_delAtoms.reset(new boost::dynamic_bitset<>(getNumAtoms()));
   dp_delBonds.reset(new boost::dynamic_bitset<>(getNumBonds()));
