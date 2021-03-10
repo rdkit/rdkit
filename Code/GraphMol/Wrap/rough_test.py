@@ -6382,7 +6382,17 @@ CAS<~>
 
     RDLogger.EnableLog('rdApp.*')
 
+  def testInsertMol(self):
+    m = Chem.MolFromSmiles("CNO")
+    m2 = Chem.MolFromSmiles("c1ccccc1")
+    m3 = Chem.MolFromSmiles("C1CC1")
 
+    rwmol = Chem.RWMol(m)
+    rwmol.InsertMol(m2)
+    rwmol.InsertMol(m3)
+    self.assertEqual(Chem.MolToSmiles(rwmol),
+                     Chem.CanonSmiles("CNO.c1ccccc1.C1CC1A"))
+    
 if __name__ == '__main__':
   if "RDTESTCASE" in os.environ:
     suite = unittest.TestSuite()
