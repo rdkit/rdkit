@@ -180,9 +180,6 @@ bool RGroupDecompositionParameters::prepareCore(RWMol &core,
             if (alignCoreAtm->hasProp(RLABEL)) {
               int rlabel = alignCoreAtm->getProp<int>(RLABEL);
               maxLabel = (std::max)(maxLabel, rlabel + 1);
-              BOOST_LOG(rdDebugLog)
-                  << "MCS match setting core atom " << coreAtm->getIdx()
-                  << " to rgroup " << rlabel << std::endl;
               coreAtm->setProp(RLABEL, rlabel);
             }
           }
@@ -283,7 +280,7 @@ void RGroupDecompositionParameters::checkNonTerminal(const Atom &atom) const {
     return;
   }
 
-  BOOST_LOG(rdDebugLog)
+  BOOST_LOG(rdWarningLog)
       << "Non terminal R group defined.  To allow set allowNonTerminalRGroups "
          "in RGroupDecompositionParameters"
       << std::endl;

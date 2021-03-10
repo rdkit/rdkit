@@ -60,7 +60,6 @@ struct RGroupDecompData {
   void prepareCores() {
     for (auto &core : cores) {
       RWMol *alignCore = core.first ? cores[0].core.get() : nullptr;
-      BOOST_LOG(rdDebugLog) << "Preparing core " << core.first << std::endl;
       CHECK_INVARIANT(params.prepareCore(*core.second.core, alignCore),
                       "Could not prepare at least one core");
       if (params.onlyMatchAtRGroups) {
@@ -98,13 +97,15 @@ struct RGroupDecompData {
                  "Illegal permutation prune length");
     if (permutation.size() < pruneLength * 1.5) {
       for (unsigned int pos = pruneLength; pos < permutation.size(); pos++) {
-        prunedFingerprintVarianceScoreData.addVarianceData(pos, permutation[pos], matches, labels);
+        prunedFingerprintVarianceScoreData.addVarianceData(
+            pos, permutation[pos], matches, labels);
       }
       double score =
           prunedFingerprintVarianceScoreData.fingerprintVarianceGroupScore();
       if (reset) {
         for (unsigned int pos = pruneLength; pos < permutation.size(); pos++) {
-          prunedFingerprintVarianceScoreData.removeVarianceData(pos, permutation[pos], matches, labels);
+          prunedFingerprintVarianceScoreData.removeVarianceData(
+              pos, permutation[pos], matches, labels);
         }
       } else {
         pruneLength = permutation.size();
@@ -180,7 +181,7 @@ struct RGroupDecompData {
           bool labelHasCore = labelCores[label].find(position.core_idx) !=
                               labelCores[label].end();
           if (labelHasCore && rgroup != position.rgroups.end() &&
-                               !rgroup->second->is_hydrogen) {
+              !rgroup->second->is_hydrogen) {
             allH = false;
             break;
           }
@@ -627,10 +628,6 @@ struct RGroupDecompData {
         }
         ++count;
       }
-
-      BOOST_LOG(rdDebugLog)
-          << "Exhaustive or GreedyChunks process, best score " << best_score
-          << " permutation size " << best_permutation.size() << std::endl;
     }
 
     if (ties.size() > 1) {
