@@ -159,7 +159,7 @@ int RGroupDecomposition::add(const ROMol &inmol) {
   }
 
   if (rcore == nullptr) {
-    BOOST_LOG(rdDebugLog) << "No core matches" << std::endl;
+    BOOST_LOG(rdWarningLog) << "No core matches" << std::endl;
     return -1;
   }
 
@@ -236,8 +236,8 @@ int RGroupDecomposition::add(const ROMol &inmol) {
             ADD_MATCH(match, rlabel);
             match[rlabel]->add(newMol, attachments);
 #ifdef VERBOSE
-            std::cerr << "Fragment " << i << " R" << rlabel << " " << MolToSmiles(*newMol)
-                      << std::endl;
+            std::cerr << "Fragment " << i << " R" << rlabel << " "
+                      << MolToSmiles(*newMol) << std::endl;
 #endif
           }
         } else {
@@ -288,8 +288,10 @@ int RGroupDecomposition::add(const ROMol &inmol) {
             [](int sum, std::pair<int, boost::shared_ptr<RGroupData>> p) {
               return p.first > 0 && !p.second->is_hydrogen ? ++sum : sum;
             });
-        int numberMissingUserGroups = rcore->numberUserRGroups - numberUserGroupsInMatch;
-        CHECK_INVARIANT(numberMissingUserGroups >= 0, "Data error in missing user rgroup count");
+        int numberMissingUserGroups =
+            rcore->numberUserRGroups - numberUserGroupsInMatch;
+        CHECK_INVARIANT(numberMissingUserGroups >= 0,
+                        "Data error in missing user rgroup count");
         potentialMatches.emplace_back(core_idx, numberMissingUserGroups, match,
                                       hasCoreDummies ? coreCopy : nullptr);
       }
@@ -368,7 +370,8 @@ RWMOL_SPTR RGroupDecomposition::outputCoreMolecule(
       continue;
     }
     Atom *nbrAtom = nullptr;
-    for (const auto &nbri : boost::make_iterator_range(coreWithMatches->getAtomNeighbors(atom))) {
+    for (const auto &nbri :
+         boost::make_iterator_range(coreWithMatches->getAtomNeighbors(atom))) {
       nbrAtom = (*coreWithMatches)[nbri];
       break;
     }

@@ -255,7 +255,6 @@ GaResult RGroupGa::run(int runNumber) {
   population.create();
   double bestScore = population.getBestScore();
   BOOST_LOG(rdInfoLog) << population.info() << endl;
-  BOOST_LOG(rdDebugLog) << population.populationInfo();
 
   int nOps = 0;
   int lastImprovementOp = 0;
@@ -284,10 +283,6 @@ GaResult RGroupGa::run(int runNumber) {
     }
   }
   const shared_ptr<RGroupDecompositionChromosome> best = population.getBest();
-  BOOST_LOG(rdDebugLog) << "Run " << runNumber << " Best solution "
-                        << best->info() << endl;
-  BOOST_LOG(rdDebugLog) << "Run " << runNumber << " "
-                        << population.populationInfo();
 
   auto ties = population.getTiedBest();
   vector<vector<size_t>> permutations;
