@@ -6391,7 +6391,7 @@ CAS<~>
     rwmol.InsertMol(m2)
     rwmol.InsertMol(m3)
     self.assertEqual(Chem.MolToSmiles(rwmol),
-                     Chem.CanonSmiles("CNO.c1ccccc1.C1CC1A"))
+                     Chem.CanonSmiles("CNO.c1ccccc1.C1CC1"))
     
 if __name__ == '__main__':
   if "RDTESTCASE" in os.environ:
