@@ -5,27 +5,6 @@ from rdkit import Chem
 from rdkit.Chem import rdFMCS
 
 
-class GrabStderr:
-    def __init__(self):
-        self._orig_stderr = None
-        self._redir_stderr = None
-        self._stderr_data = None
-
-    def __enter__(self):
-        self._orig_stderr = sys.stderr
-        self._redir_stderr = StringIO()
-        sys.stderr = self._redir_stderr
-        return self
-
-    def __exit__(self, *args, **kwargs):
-        self._stderr_data = self._redir_stderr.getvalue()
-        self._redir_stderr.close()
-        sys.stderr = self._orig_stderr
-
-    @property
-    def stderr(self):
-        return self._stderr_data
-
 class BondMatchOrderMatrix:
     def __init__(self, ignoreAromatization):
         self.MatchMatrix = [[False]*(Chem.BondType.ZERO + 1)
@@ -578,39 +557,33 @@ class Common:
         else:
             r = rdFMCS.FindMCS(ms, seedSmarts='C1CC1')
         self.assertEqual(r.smartsString, "[#6]1-[#6]-[#6]-1")
-        Chem.WrapLogs()
-        with GrabStderr() as grab:
-            if kwargs:
-                params = Common.getParams(**kwargs)
-                params.InitialSeed = 'C1OC1'
-                r = rdFMCS.FindMCS(ms, params)
-            else:
-                r = rdFMCS.FindMCS(ms, seedSmarts='C1OC1')
-        self.assertTrue("The provided InitialSeed is not an MCS" in grab.stderr)
+        if kwargs:
+            params = Common.getParams(**kwargs)
+            params.InitialSeed = 'C1OC1'
+            r = rdFMCS.FindMCS(ms, params)
+        else:
+            r = rdFMCS.FindMCS(ms, seedSmarts='C1OC1')
         self.assertEqual(r.smartsString, "[#6]1-[#6]-[#6]-[#6]-1")
         self.assertEqual(r.numAtoms, 4)
         self.assertEqual(r.numBonds, 4)
-        with GrabStderr() as grab:
-            if kwargs:
-                params = Common.getParams(**kwargs)
-                params.InitialSeed = 'C1OC1'
-                params.AtomCompareParameters.RingMatchesRingOnly = True
-                params.BondCompareParameters.RingMatchesRingOnly = True
-                r = rdFMCS.FindMCS(ms, params)
-            else:
-                r = rdFMCS.FindMCS(ms, seedSmarts='C1OC1', ringMatchesRingOnly=True)
-        self.assertTrue("The provided InitialSeed is not an MCS" in grab.stderr)
+        if kwargs:
+            params = Common.getParams(**kwargs)
+            params.InitialSeed = 'C1OC1'
+            params.AtomCompareParameters.RingMatchesRingOnly = True
+            params.BondCompareParameters.RingMatchesRingOnly = True
+            r = rdFMCS.FindMCS(ms, params)
+        else:
+            r = rdFMCS.FindMCS(ms, seedSmarts='C1OC1', ringMatchesRingOnly=True)
         self.assertEqual(r.smartsString, "[#6&R]1-&@[#6&R]-&@[#6&R]-&@[#6&R]-&@1")
         self.assertEqual(r.numAtoms, 4)
         self.assertEqual(r.numBonds, 4)
-        with GrabStderr() as grab:
-            if kwargs:
-                params = Common.getParams(**kwargs)
-                params.InitialSeed = 'C1OC1'
-                params.BondCompareParameters.CompleteRingsOnly = True
-                r = rdFMCS.FindMCS(ms, params)
-            else:
-                r = rdFMCS.FindMCS(ms, seedSmarts='C1OC1', completeRingsOnly=True)
+        if kwargs:
+            params = Common.getParams(**kwargs)
+            params.InitialSeed = 'C1OC1'
+            params.BondCompareParameters.CompleteRingsOnly = True
+            r = rdFMCS.FindMCS(ms, params)
+        else:
+            r = rdFMCS.FindMCS(ms, seedSmarts='C1OC1', completeRingsOnly=True)
         self.assertEqual(r.smartsString, "[#6]1-&@[#6]-&@[#6]-&@[#6]-&@1")
         self.assertEqual(r.numAtoms, 4)
         self.assertEqual(r.numBonds, 4)
