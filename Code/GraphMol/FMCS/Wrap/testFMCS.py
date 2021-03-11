@@ -1,4 +1,6 @@
 import unittest
+import sys
+from io import StringIO
 from rdkit import Chem
 from rdkit.Chem import rdFMCS
 
@@ -561,19 +563,20 @@ class Common:
             r = rdFMCS.FindMCS(ms, params)
         else:
             r = rdFMCS.FindMCS(ms, seedSmarts='C1OC1')
-        self.assertEqual(r.smartsString, "[#6]")
-        self.assertEqual(r.numAtoms, 1)
-        self.assertEqual(r.numBonds, 0)
+        self.assertEqual(r.smartsString, "[#6]1-[#6]-[#6]-[#6]-1")
+        self.assertEqual(r.numAtoms, 4)
+        self.assertEqual(r.numBonds, 4)
         if kwargs:
             params = Common.getParams(**kwargs)
             params.InitialSeed = 'C1OC1'
             params.AtomCompareParameters.RingMatchesRingOnly = True
+            params.BondCompareParameters.RingMatchesRingOnly = True
             r = rdFMCS.FindMCS(ms, params)
         else:
             r = rdFMCS.FindMCS(ms, seedSmarts='C1OC1', ringMatchesRingOnly=True)
-        self.assertEqual(r.smartsString, "[#6&R]")
-        self.assertEqual(r.numAtoms, 1)
-        self.assertEqual(r.numBonds, 0)
+        self.assertEqual(r.smartsString, "[#6&R]1-&@[#6&R]-&@[#6&R]-&@[#6&R]-&@1")
+        self.assertEqual(r.numAtoms, 4)
+        self.assertEqual(r.numBonds, 4)
         if kwargs:
             params = Common.getParams(**kwargs)
             params.InitialSeed = 'C1OC1'
@@ -581,9 +584,9 @@ class Common:
             r = rdFMCS.FindMCS(ms, params)
         else:
             r = rdFMCS.FindMCS(ms, seedSmarts='C1OC1', completeRingsOnly=True)
-        self.assertEqual(r.smartsString, "")
-        self.assertEqual(r.numAtoms, 0)
-        self.assertEqual(r.numBonds, 0)
+        self.assertEqual(r.smartsString, "[#6]1-&@[#6]-&@[#6]-&@[#6]-&@1")
+        self.assertEqual(r.numAtoms, 4)
+        self.assertEqual(r.numBonds, 4)
 
     def test8MatchParams(self, **kwargs):
         smis = ("CCC1NC1", "CCC1N(C)C1", "CCC1OC1")
