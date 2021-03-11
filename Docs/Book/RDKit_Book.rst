@@ -1608,6 +1608,37 @@ Some concrete examples of this:
   False
 
 
+Query Features in Molecule Drawings
+***********************************
+
+Compactly and clearly including information about query features in molecule
+drawings is a challenging problem. This is definitely a work in progress, but
+this section describes what is currently supported.
+
+Query Bonds
+===========
+
+Here is an example image showing how different bond and query-bond types are rendered.
+
+.. image:: images/query_bonds.png
+
+There's clearly some room for improvement here, for example, it's not trivial to
+distinguish "Any" bonds from query bonds where no special handling has been
+implemented ("other" query types):
+
+.. image:: images/query_bonds.2.png
+
+Query Atoms
+===========
+
+At the moment the only real support for atomic query features is rendering of
+atom lists (and "NOT" atom lists); other atomic queries are rendered with a simple `?`:
+
+.. image:: images/query_atoms.png
+
+
+
+
 
 Additional Information About the Fingerprints
 *********************************************
