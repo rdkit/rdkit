@@ -1778,3 +1778,19 @@ TEST_CASE("batch edits", "[editing]") {
     CHECK(MolToSmiles(m2) == "CCO");
   }
 }
+
+TEST_CASE("github #3912: cannot draw atom lists from SMARTS", "[query][bug]") {
+  SECTION("original") {
+    auto m = "C(-[N,O])-[#7,#8]"_smarts;
+    REQUIRE(m);
+    CHECK(isAtomListQuery(m->getAtomWithIdx(1)));
+    CHECK(isAtomListQuery(m->getAtomWithIdx(2)));
+
+    std::vector<int> vals;
+    getAtomListQueryVals(m->getAtomWithIdx(2)->getQuery(), vals);
+    CHECK(vals == std::vector<int>{7, 8});
+    vals.clear();
+    getAtomListQueryVals(m->getAtomWithIdx(1)->getQuery(), vals);
+    CHECK(vals == std::vector<int>{7, 8});
+  }
+}
