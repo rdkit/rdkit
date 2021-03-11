@@ -13,23 +13,24 @@
   * 2D and 3D molecular operations
   * [Descriptor](https://www.rdkit.org/docs/GettingStartedInPython.html#list-of-available-descriptors) and [Fingerprint](http://www.rdkit.org/docs/GettingStartedInPython.html#list-of-available-fingerprints) generation for machine learning
   * Molecular database [cartridge](https://www.rdkit.org/docs/Cartridge.html) for PostgreSQL supporting substructure and similarity searches as well as many descriptor calculators
-  * Cheminformatics nodes for [KNIME](http://tech.knime.org/community/rdkit)
+  * Cheminformatics nodes for [KNIME](https://www.knime.com/rdkit)
   * [Contrib](https://github.com/rdkit/rdkit/tree/master/Contrib) folder with useful community-contributed software harnessing the power of the RDKit
 
-## Web presence
+#### Community
 
-  * [RDKit web page](https://github.com/rdkit/rdkit)
-  * [Blog](https://rdkit.blogspot.com)
-  * [Documentation](https://www.rdkit.org/docs/index.html)
+  * [Mailing list](https://sourceforge.net/p/rdkit/mailman/)
+  * [GitHub discussions](https://github.com/rdkit/rdkit/discussions)
+  * [LinkedIn](https://www.linkedin.com/groups/RDKit-8192558/about)
 
 #### Code
 
   * [GitHub code](https://github.com/rdkit) and [bug tracker](https://github.com/rdkit/rdkit/issues)
 
-#### Community
+## Web presence
 
-  * [Mailing list](https://sourceforge.net/p/rdkit/mailman/)
-  * [LinkedIn](https://www.linkedin.com/groups/RDKit-8192558/about)
+  * [RDKit web page](https://rdkit.org)
+  * [Blog](https://rdkit.blogspot.com)
+  * [Documentation](https://www.rdkit.org/docs/index.html)
 
 #### Materials from user group meetings
 
@@ -41,9 +42,10 @@
   * [2017 UGM](https://github.com/rdkit/UGM_2017)
   * [2018 UGM](https://github.com/rdkit/UGM_2018)
   * [2019 UGM](https://github.com/rdkit/UGM_2019)
+  * [2020 UGM](https://github.com/rdkit/UGM_2020)
 
 ## Documentation
-Available on the [RDKit page](http://www.rdkit.org/docs/index.html)
+Available on the [RDKit page](https://www.rdkit.org/docs/index.html)
 and in the [Docs](https://github.com/rdkit/rdkit/tree/master/Docs) folder on GitHub
 
 ## Installation
@@ -53,7 +55,7 @@ Installation instructions are available in [Docs/Book/Install.md](https://github
 #### Binary distributions, anaconda, homebrew
 
   * [binaries for conda python](https://anaconda.org/rdkit/rdkit) or, if you are using the conda-forge stack, the RDKit is also [available from conda-forge](https://anaconda.org/conda-forge/rdkit).
-  * [RPMs](https://copr.fedoraproject.org/coprs/giallu/rdkit/) for RedHat Enterprise Linux, Centos, and Fedora. Contributed by Gianluca Sforna.
+  * [RPMs](https://src.fedoraproject.org/rpms/rdkit) for RedHat Enterprise Linux, Centos, and Fedora. Contributed by Gianluca Sforna.
   * [debs](https://blends.debian.org/debichem/tasks/cheminformatics) for Ubuntu and other Debian-derived Linux distros. Contributed by the Debichem team.
   * [homebrew](https://github.com/rdkit/homebrew-rdkit) formula for building on the Mac. Contributed by Eddie Cao.
   * [recipes](https://github.com/rdkit/conda-rdkit) for building using the excellent conda package manager. Contributed by Riccardo Vianello.
