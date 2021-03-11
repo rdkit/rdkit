@@ -69,7 +69,7 @@ struct RDKIT_RGROUPDECOMPOSITION_EXPORT RGroupDecompositionProcessResult {
       : success(success), score(score) {}
 };
 
-class RGroupMatch;
+struct RGroupMatch;
 
 struct RDKIT_RGROUPDECOMPOSITION_EXPORT RGroupDecompositionParameters {
   unsigned int labels = AutoDetect;
