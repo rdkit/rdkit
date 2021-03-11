@@ -869,6 +869,9 @@ struct mol_wrapper {
         .def("SetStereoGroups", &ReadWriteMol::SetStereoGroups,
              (python::arg("stereo_groups")), "Set the stereo groups")
 
+        .def("InsertMol", &ReadWriteMol::insertMol,
+        	   (python::arg("mol")), "Insert (add) the given molecule into this one")
+
         .def("BeginBatchEdit", &RWMol::beginBatchEdit, "starts batch editing")
         .def("RollbackBatchEdit", &RWMol::rollbackBatchEdit,
              "cancels batch editing")
