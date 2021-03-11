@@ -7920,6 +7920,7 @@ void testRemoveAndTrackIsotopes() {
     // 2) ...Removing all Hs including isotopes and then putting them back
     mNoH.reset(MolOps::removeHs(*static_cast<ROMol *>(mChiral.get()), ps));
     mH.reset(MolOps::addHs(*mNoH));
+
     MolOps::assignStereochemistry(*mH, true, true);
     match.clear();
     TEST_ASSERT(SubstructMatch(*mH, *mChiral, match));
