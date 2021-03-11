@@ -21,7 +21,7 @@ set(AVALON_SRC_PATH ${AVALONTOOLS_DIR}/common)
 
 if(needDownload)
   if(NOT DEFINED AVALONTOOLS_URL)
-    set(AVALONTOOLS_URL "http://sourceforge.net/projects/avalontoolkit/files/AvalonToolkit_1.2/AvalonToolkit_1.2.0.source.tar")
+    set(AVALONTOOLS_URL "https://sourceforge.net/projects/avalontoolkit/files/AvalonToolkit_1.2/AvalonToolkit_1.2.0.source.tar")
   endif()
   if(NOT DEFINED AVALONTOOLS_MD5SUM)
     set(AVALONTOOLS_MD5SUM "092a94f421873f038aa67d4a6cc8cb54")
