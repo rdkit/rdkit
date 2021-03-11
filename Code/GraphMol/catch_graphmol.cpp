@@ -1691,3 +1691,90 @@ M  END
     }
   }
 }
+
+TEST_CASE("batch edits", "[editing]") {
+  SECTION("removeAtom") {
+    auto m = "C1CCCO1"_smiles;
+    REQUIRE(m);
+    m->beginBatchEdit();
+    m->removeAtom(2);
+    m->removeAtom(3);
+    m->commitBatchEdit();
+    CHECK(MolToSmiles(*m) == "CCO");
+  }
+  SECTION("removeAtom + removeBond") {
+    auto m = "C1CCCO1"_smiles;
+    REQUIRE(m);
+    m->beginBatchEdit();
+    m->removeAtom(3);
+    m->removeBond(4, 0);
+    m->commitBatchEdit();
+    CHECK(MolToSmiles(*m) == "CCC.O");
+  }
+  SECTION("rollback") {
+    auto m = "C1CCCO1"_smiles;
+    REQUIRE(m);
+    m->beginBatchEdit();
+    m->removeAtom(2);
+    m->removeAtom(3);
+    m->rollbackBatchEdit();
+    CHECK(MolToSmiles(*m) == "C1CCOC1");
+  }
+  SECTION("adding atoms while in a batch") {
+    auto m = "CCCO"_smiles;
+    REQUIRE(m);
+    m->beginBatchEdit();
+    m->removeAtom(2);
+    m->addAtom(new Atom(7));
+    m->removeAtom(1);
+    m->commitBatchEdit();
+    CHECK(MolToSmiles(*m) == "C.N.O");
+  }
+  SECTION("removing added atoms while in a batch") {
+    auto m = "CCCO"_smiles;
+    REQUIRE(m);
+    m->beginBatchEdit();
+    m->removeAtom(2);
+    m->addAtom(new Atom(7));
+    m->removeAtom(4);
+    m->commitBatchEdit();
+    CHECK(MolToSmiles(*m) == "CC.O");
+  }
+  SECTION("adding bonds while in a batch") {
+    auto m = "CCCO"_smiles;
+    REQUIRE(m);
+    m->beginBatchEdit();
+    m->removeBond(2, 3);
+    m->addBond(0, 3, Bond::BondType::SINGLE);
+    m->commitBatchEdit();
+    CHECK(MolToSmiles(*m) == "CCCO");
+  }
+  SECTION("removing added bonds while in a batch") {
+    auto m = "CCCO"_smiles;
+    REQUIRE(m);
+    m->beginBatchEdit();
+    m->addBond(0, 3, Bond::BondType::SINGLE);
+    m->removeBond(2, 3);
+    m->removeBond(0, 3);
+    m->commitBatchEdit();
+    CHECK(MolToSmiles(*m) == "CCC.O");
+  }
+  SECTION("some details") {
+    auto m = "CCCO"_smiles;
+    REQUIRE(m);
+    m->beginBatchEdit();
+    CHECK_THROWS_AS(m->beginBatchEdit(), ValueErrorException);
+    m->removeAtom(0U);
+    // copying includes the edit status:
+    RWMol m2(*m);
+    CHECK_THROWS_AS(m2.beginBatchEdit(), ValueErrorException);
+
+    // without a commit, the mols haven't changed
+    CHECK(MolToSmiles(*m) == "CCCO");
+    CHECK(MolToSmiles(m2) == "CCCO");
+    m->commitBatchEdit();
+    CHECK(MolToSmiles(*m) == "CCO");
+    m2.commitBatchEdit();
+    CHECK(MolToSmiles(m2) == "CCO");
+  }
+}

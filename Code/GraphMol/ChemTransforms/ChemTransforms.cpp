@@ -114,17 +114,13 @@ ROMol *deleteSubstructs(const ROMol &mol, const ROMol &query, bool onlyFrags,
   }
 
   // now loop over the union list and delete the atoms
-  // Will do this in the decreasing order of the atomIds
-  // this is so that the AtomIds ids in the "delList" are
-  // not invalidated by a previous removal (removing atom number i changes
-  // the atom indices only atoms with indices >i )
-  std::sort(delList.begin(), delList.end());
-
+  res->beginBatchEdit();
   boost::dynamic_bitset<> removedAtoms(mol.getNumAtoms());
-  for (auto dri = delList.rbegin(); dri != delList.rend(); dri++) {
-    removedAtoms.set(*dri);
-    res->removeAtom(*dri);
+  for (auto idx : delList) {
+    removedAtoms.set(idx);
+    res->removeAtom(idx);
   }
+  res->commitBatchEdit();
   // if we removed any atoms, clear the computed properties:
   if (delList.size()) {
     updateSubMolConfs(mol, *res, removedAtoms);
@@ -209,22 +205,25 @@ std::vector<ROMOL_SPTR> replaceSubstructs(
       delList = tmp;
     } else {
       // just delete the atoms now:
-      for (auto dri = sortMatch.rbegin(); dri != sortMatch.rend(); dri++) {
-        removedAtoms.set(*dri);
-        newMol->removeAtom(*dri);
+      newMol->beginBatchEdit();
+      for (auto idx : sortMatch) {
+        removedAtoms.set(idx);
+        newMol->removeAtom(idx);
       }
+      newMol->commitBatchEdit();
     }
   }
 
   if (delList.size()) {
     if (replaceAll) {
       // remove the atoms from the delList:
-      std::sort(delList.begin(), delList.end());
       auto *newMol = static_cast<RWMol *>(res[0].get());
-      for (auto dri = delList.rbegin(); dri != delList.rend(); dri++) {
-        removedAtoms.set(*dri);
-        newMol->removeAtom(*dri);
+      newMol->beginBatchEdit();
+      for (auto idx : delList) {
+        removedAtoms.set(idx);
+        newMol->removeAtom(idx);
       }
+      newMol->commitBatchEdit();
     }
 
     // clear conformers and computed props and do basic updates
@@ -286,20 +285,15 @@ ROMol *replaceSidechains(const ROMol &mol, const ROMol &coreQuery,
       }
     }
   }
-  std::vector<Atom *> delList;
   boost::dynamic_bitset<> removedAtoms(mol.getNumAtoms());
-  for (RWMol::AtomIterator atIt = newMol->beginAtoms();
-       atIt != newMol->endAtoms(); atIt++) {
-    Atom *tmp = *atIt;
-    if (std::find(keepList.begin(), keepList.end(), tmp) == keepList.end()) {
-      delList.push_back(tmp);
-      removedAtoms.set(tmp->getIdx());
+  newMol->beginBatchEdit();
+  for (const auto at : newMol->atoms()) {
+    if (std::find(keepList.begin(), keepList.end(), at) == keepList.end()) {
+      newMol->removeAtom(at);
+      removedAtoms.set(at->getIdx());
     }
   }
-  for (std::vector<Atom *>::const_iterator delIt = delList.begin();
-       delIt != delList.end(); delIt++) {
-    newMol->removeAtom(*delIt);
-  }
+  newMol->commitBatchEdit();
 
   updateSubMolConfs(mol, *newMol, removedAtoms);
 
@@ -499,18 +493,14 @@ ROMol *replaceCore(const ROMol &mol, const ROMol &core,
 
   std::vector<Atom *> delList;
   boost::dynamic_bitset<> removedAtoms(mol.getNumAtoms());
-  for (RWMol::AtomIterator atIt = newMol->beginAtoms();
-       atIt != newMol->endAtoms(); atIt++) {
-    Atom *tmp = *atIt;
-    if (std::find(keepList.begin(), keepList.end(), tmp) == keepList.end()) {
-      delList.push_back(tmp);
-      removedAtoms.set(tmp->getIdx());
+  newMol->beginBatchEdit();
+  for (const auto at : newMol->atoms()) {
+    if (std::find(keepList.begin(), keepList.end(), at) == keepList.end()) {
+      newMol->removeAtom(at);
+      removedAtoms.set(at->getIdx());
     }
   }
-  for (std::vector<Atom *>::const_iterator delIt = delList.begin();
-       delIt != delList.end(); delIt++) {
-    newMol->removeAtom(*delIt);
-  }
+  newMol->commitBatchEdit();
 
   updateSubMolConfs(mol, *newMol, removedAtoms);
 
@@ -575,7 +565,7 @@ ROMol *MurckoDecompose(const ROMol &mol) {
   }
 
   boost::dynamic_bitset<> removedAtoms(nAtoms);
-  std::vector<Atom *> atomsToRemove;
+  res->beginBatchEdit();
   for (unsigned int i = 0; i < nAtoms; ++i) {
     if (!keepAtoms[i]) {
       Atom *atom = res->getAtomWithIdx(i);
@@ -609,16 +599,13 @@ ROMol *MurckoDecompose(const ROMol &mol) {
       }
 
       if (removeIt) {
-        atomsToRemove.push_back(atom);
+        res->removeAtom(atom);
         removedAtoms.set(atom->getIdx());
       }
     }
   }
+  res->commitBatchEdit();
 
-  for (std::vector<Atom *>::const_iterator atomIt = atomsToRemove.begin();
-       atomIt != atomsToRemove.end(); ++atomIt) {
-    res->removeAtom(*atomIt);
-  }
   updateSubMolConfs(mol, *res, removedAtoms);
   res->clearComputedProps();
 

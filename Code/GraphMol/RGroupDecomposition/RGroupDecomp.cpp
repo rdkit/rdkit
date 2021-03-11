@@ -260,12 +260,13 @@ int RGroupDecomposition::add(const ROMol &inmol) {
               newCoreAtm->setProp<bool>("keep", true);
             }
 
-            for (int aIdx = newCore.getNumAtoms() - 1; aIdx >= 0; --aIdx) {
-              Atom *atom = newCore.getAtomWithIdx(aIdx);
+            newCore.beginBatchEdit();
+            for (const auto atom : newCore.atoms()) {
               if (!atom->hasProp("keep")) {
                 newCore.removeAtom(atom);
               }
             }
+            newCore.commitBatchEdit();
             if (newCore.getNumAtoms()) {
               std::string newCoreSmi = MolToSmiles(newCore, true);
               // add a new core if possible
