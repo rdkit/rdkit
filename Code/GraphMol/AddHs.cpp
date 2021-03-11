@@ -882,6 +882,8 @@ void removeHs(RWMol &mol, const RemoveHsParameters &ps, bool sanitize) {
     }
   }  // end of the loop over atoms
   // now that we know which atoms need to be removed, go ahead and remove them
+  // NOTE: there's too much complexity around stereochemistry here
+  // to be able to safely use batch editing.
   for (int idx = mol.getNumAtoms() - 1; idx >= 0; --idx) {
     if (atomsToRemove[idx]) {
       molRemoveH(mol, idx, ps.updateExplicitCount);
@@ -1122,13 +1124,11 @@ void mergeQueryHs(RWMol &mol, bool mergeUnmappedOnly) {
     }
     ++currIdx;
   }
-  std::sort(atomsToRemove.begin(), atomsToRemove.end());
-  for (std::vector<unsigned int>::const_reverse_iterator aiter =
-           atomsToRemove.rbegin();
-       aiter != atomsToRemove.rend(); ++aiter) {
-    Atom *atom = mol.getAtomWithIdx(*aiter);
-    mol.removeAtom(atom);
+  mol.beginBatchEdit();
+  for (auto aidx : atomsToRemove) {
+    mol.removeAtom(aidx);
   }
+  mol.commitBatchEdit();
 };
 ROMol *mergeQueryHs(const ROMol &mol, bool mergeUnmappedOnly) {
   auto *res = new RWMol(mol);

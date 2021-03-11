@@ -924,11 +924,13 @@ std::unique_ptr<ROMol> molzip(const ROMol &a, const ROMol &b,
   for (auto &kv : mappings) {
     kv.second.bond(*newmol);
   }
+  newmol->beginBatchEdit();
   for (auto &atom : deletions) {
     if (atom->hasProp("__molzip_used")) {
       newmol->removeAtom(atom);
     }
   }
+  newmol->commitBatchEdit();
 
   std::set<Atom *> already_checked;
   for (auto &kv : mappings_by_atom) {

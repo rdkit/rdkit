@@ -200,6 +200,15 @@ void RWMol::removeAtom(Atom *atom) {
   PRECONDITION(static_cast<RWMol *>(&atom->getOwningMol()) == this,
                "atom not owned by this molecule");
   unsigned int idx = atom->getIdx();
+  if (dp_delAtoms) {
+    // we're in a batch edit
+    // if atoms have been added since we started, resize dp_delAtoms
+    if (dp_delAtoms->size() < getNumAtoms()) {
+      dp_delAtoms->resize(getNumAtoms());
+    }
+    dp_delAtoms->set(idx);
+    return;
+  }
 
   // remove any bookmarks which point to this atom:
   ATOM_BOOKMARK_MAP *marks = getAtomBookmarks();
@@ -348,6 +357,15 @@ void RWMol::removeBond(unsigned int aid1, unsigned int aid2) {
     return;
   }
   unsigned int idx = bnd->getIdx();
+  if (dp_delBonds) {
+    // we're in a batch edit
+    // if bonds have been added since we started, resize dp_delBonds
+    if (dp_delBonds->size() < getNumBonds()) {
+      dp_delBonds->resize(getNumBonds());
+    }
+    dp_delBonds->set(idx);
+    return;
+  }
 
   // remove any bookmarks which point to this bond:
   BOND_BOOKMARK_MAP *marks = getBondBookmarks();
@@ -446,6 +464,38 @@ unsigned int RWMol::finishPartialBond(unsigned int atomIdx2, int bondBookmark,
   }
 
   return addBond(bsp->getBeginAtomIdx(), atomIdx2, bondType);
+}
+
+void RWMol::beginBatchEdit() {
+  if (dp_delAtoms || dp_delBonds) {
+    BOOST_LOG(rdWarningLog) << "batchEdit mode already enabled, ignoring "
+                               "additional call to beginBatchEdit()"
+                            << std::endl;
+    throw ValueErrorException("Attempt to re-enter batchEdit mode");
+  }
+  dp_delAtoms.reset(new boost::dynamic_bitset<>(getNumAtoms()));
+  dp_delBonds.reset(new boost::dynamic_bitset<>(getNumBonds()));
+}
+void RWMol::commitBatchEdit() {
+  if (!dp_delBonds || !dp_delAtoms) {
+    return;
+  }
+  auto delBonds = *dp_delBonds;
+  dp_delBonds.release();
+  for (unsigned int i = getNumBonds(); i > 0; --i) {
+    if (delBonds[i - 1]) {
+      const auto bnd = getBondWithIdx(i - 1);
+      CHECK_INVARIANT(bnd, "bond not found");
+      removeBond(bnd->getBeginAtomIdx(), bnd->getEndAtomIdx());
+    }
+  }
+  auto delAtoms = *dp_delAtoms;
+  dp_delAtoms.release();
+  for (unsigned int i = getNumAtoms(); i > 0; --i) {
+    if (delAtoms[i - 1]) {
+      removeAtom(i - 1);
+    }
+  }
 }
 
 }  // namespace RDKit
