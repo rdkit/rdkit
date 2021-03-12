@@ -614,6 +614,15 @@ BOOST_PYTHON_MODULE(rdMolDraw2D) {
            "method returning the symbol colour")
       .def("setSymbolColour", &RDKit::setSymbolColour,
            "method for setting the symbol colour")
+      .def("getAnnotationColour", &RDKit::getAnnotationColour,
+           "method returning the annotation colour")
+      .def("setAnnotationColour", &RDKit::setAnnotationColour,
+           "method for setting the annotation colour")
+      .def("getLegendColour", &RDKit::getLegendColour,
+           "method returning the legend colour")
+      .def("setLegendColour", &RDKit::setLegendColour,
+           "method for setting the legend colour")
+
       .def("useDefaultAtomPalette", &RDKit::useDefaultAtomPalette,
            "use the default colour palette for atoms and bonds")
       .def("useBWAtomPalette", &RDKit::useBWAtomPalette,
