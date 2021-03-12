@@ -1672,60 +1672,61 @@ Parameters Controlling Conformer Generation
 ===========================================
 
 A large number of parameters which allow control over the conformer generation
-process are available in the `EmbedParameters` class. A subset of particularly
+process are available in the ``EmbedParameters`` class. A subset of particularly
 useful parameters are described here:
 
-- `randomSeed`: (default -1) allows you to set a random seed to allow reproducible results
+- ``randomSeed``: (default -1) allows you to set a random seed to allow reproducible results
 
-- `numThreads`: (default 1) sets the number of compute threads to be used when 
-  generating multiple conformers. If set to -1 this will use all available cores
-  on the system.
+- ``numThreads``: (default 1) sets the number of compute threads to be used when 
+  generating multiple conformers. If set to 0 this will use the maximum number
+  of threads allowed on your system.
 
-- `useRandomCoords`: (default False) if set to True then random-coordinate embedding will be
+- ``useRandomCoords``: (default False) if set to True then random-coordinate embedding will be
   done: instead of steps 3. and 4. above, the atoms will be randomly placed in a
   box and then their positions will be minimized with the "distance geometry force
   field" in step 5. This approach was described in reference [#spellmeyerDG]_
 
-- `enforceChirality`: (default True) ensures that the chirality of specified
+- ``enforceChirality``: (default True) ensures that the chirality of specified
   stereocenters in the molecule is preserved in the conformers.
 
-- `embedFragsSeparately`: (default True) for molecules made up of multiple
+- ``embedFragsSeparately``: (default True) for molecules made up of multiple
   disconnected fragments, this cause conformers of the fragments to be generated
   independently of each other.
 
-- `coordMap`: (default empty) can be used to provide 3D coordinates which will
+- ``coordMap``: (default empty) can be used to provide 3D coordinates which will
   be used to constrain the positions of some of the atoms in the molecule.
 
-- `boundsMat`: (default empty) can be used to provide the distance bounds matrix
+- ``boundsMat``: (default empty) can be used to provide the distance bounds matrix
   for the molecule.
 
-- `useExpTorsionAnglePrefs`: (default False) use the ET part of ETKDG [#riniker2]_
+- ``useExpTorsionAnglePrefs``: (default False) use the ET part of ETKDG [#riniker2]_
 
-- `useBasicKnowledge`: (default False) use the K part of ETKDG [#riniker2]_
+- ``useBasicKnowledge``: (default False) use the K part of ETKDG [#riniker2]_
 
-- `ETVersion`: (default 1) specify the version of the standard torsion
+- ``ETVersion``: (default 1) specify the version of the standard torsion
   definitions to use. NOTE for both ETKDGv2 and ETKDGv3 this should be 2 since ETKDGv3 uses the
   ETKDGv2 definitions for standard torsions (apologies for the confusing numbering)
 
-- `useSmallRingTorsions`: (default False) use the sr part of srETDKGv3 [#wangETKDG3]_
+- ``useSmallRingTorsions``: (default False) use the sr part of srETDKGv3 [#wangETKDG3]_
 
-- `useMacrocycleTorsions`: (default False) use the macrocycle torsions from ETKDGv3 [#wangETKDG3]_
+- ``useMacrocycleTorsions``: (default False) use the macrocycle torsions from ETKDGv3 [#wangETKDG3]_
 
-- `useMacrocycle14config`: (default False) use the 1-4 distance bounds from ETKDGv3 [#wangETKDG3]_
+- ``useMacrocycle14config``: (default False) use the 1-4 distance bounds from ETKDGv3 [#wangETKDG3]_
 
-- `forceTransAmides`: (default True) constrain amide bonds to be trans
+- ``forceTransAmides``: (default True) constrain amide bonds to be trans
 
-- `pruneRMsThresh`: (default -1.0) if >0.0 this turns on RMSD pruning of the conformers
+- ``pruneRMsThresh``: (default -1.0) if >0.0 this turns on RMSD pruning of the conformers
 
-- `onlyHeavyAtomsForRMS`: (default: False) toggles ignoring H atoms when doing RMSD pruning
+- ``onlyHeavyAtomsForRMS``: (default: False) toggles ignoring H atoms when doing RMSD pruning
 
-- `useSymmetryForPruning`: (default True) uses symmetry to calculate the minimum
+- ``useSymmetryForPruning``: (default True) uses symmetry to calculate the minimum
   RMSD between two conformers when doing RMSD pruning. Note that enabling this
   causes the RMSD computation to act as if `onlyHeavyAtomsForRMS` is set to true
   (even if the parameter itself is set to False).
 
 
-Note that there are pre-configured parameter objects for the available ETKDG versions: `ETKDG`, `ETKDGv2`, `ETKDGv3`, and `srETKDGv3`
+Note that there are pre-configured parameter objects for the available ETKDG
+versions: ``ETKDG``, ``ETKDGv2``, ``ETKDGv3``, and ``srETKDGv3``
 
 
 

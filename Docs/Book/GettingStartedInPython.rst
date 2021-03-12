@@ -366,7 +366,7 @@ If we don't want the Hs in our later analysis, they are easy to remove:
   M  END
   <BLANKLINE>
 
-If you'd like to write the molecules to a file, use Python file objects:
+If you'd like to write the molecule to a file, use Python file objects:
 
 .. doctest::
 
@@ -667,17 +667,17 @@ The algorithm followed is:
 5. The resulting coordinates are cleaned up somewhat using a crude force field and the bounds matrix.
 
 Note that the conformers that result from this procedure tend to be fairly ugly.
-They should be cleaned up using a force field.
-This can be done within the RDKit using its implementation of the Universal Force Field (UFF). [#rappe]_
+They should be cleaned up using a force field. This can be done within the RDKit
+using its implementation of the Universal Force Field (UFF). [#rappe]_
 
-More recently, there is an implementation of the method of Riniker and
-Landrum [#riniker2]_ which uses torsion angle preferences from the
-Cambridge Structural Database (CSD) to correct the conformers after
-distance geometry has been used to generate them.  With this method,
-there should be no need to use a minimisation step to clean up the
-structures.
+More recently, there is an implementation of the ETKDG method of Riniker and
+Landrum [#riniker2]_ which uses torsion angle preferences from the Cambridge
+Structural Database (CSD) to correct the conformers after distance geometry has
+been used to generate them.  With this method, there should be no need to use a
+minimisation step to clean up the structures.
 
-More detailed information about the conformer generator and the parameters controlling it can be found in the "RDKit Book".
+More detailed information about the conformer generator and the parameters
+controlling it can be found in the "RDKit Book".
 
 Since the 2018.09 release of the RDKit, ETKDG is the default conformer generation method.
 
@@ -689,10 +689,10 @@ The full process of embedding a molecule is easier than all the above verbiage m
   >>> AllChem.EmbedMolecule(m2)
   0
 
-The RDKit also has an implementation of the MMFF94 force field available. [#mmff1]_, [#mmff2]_, [#mmff3]_, [#mmff4]_, [#mmffs]_
-Please note that the MMFF atom typing code uses its own aromaticity model,
-so the aromaticity flags of the molecule will be modified after calling
-MMFF-related methods.
+The RDKit also has an implementation of the MMFF94 force field available.
+[#mmff1]_, [#mmff2]_, [#mmff3]_, [#mmff4]_, [#mmffs]_ Please note that the MMFF
+atom typing code uses its own aromaticity model, so the aromaticity flags of the
+molecule will be modified after calling MMFF-related methods.
 
 Here's an example of using MMFF94 to minimize an RDKit-generated conformer:
 .. doctest::
@@ -786,9 +786,12 @@ Molecules can be converted to and from text using Python's pickling machinery:
   >>> Chem.MolToSmiles(m2)
   'c1ccncc1'
 
-The RDKit pickle format is fairly compact and it is much, much faster to build a molecule from a pickle than from a Mol file or SMILES string, so storing molecules you will be working with repeatedly as pickles can be a good idea.
+The RDKit pickle format is fairly compact and it is much, much faster to build a
+molecule from a pickle than from a Mol file or SMILES string, so storing
+molecules you will be working with repeatedly as pickles can be a good idea.
 
-The raw binary data that is encapsulated in a pickle can also be directly obtained from a molecule:
+The raw binary data that is encapsulated in a pickle can also be directly
+obtained from a molecule:
 
 .. doctest::
 
@@ -811,11 +814,19 @@ Note that this is smaller than the pickle:
   >>> len(binStr) < len(pkl)
   True
 
-The small overhead associated with python's pickling machinery normally doesn't end up making much of a difference for collections of larger molecules (the extra data associated with the pickle is independent of the size of the molecule, while the binary string increases in length as the molecule gets larger).
+The small overhead associated with python's pickling machinery normally doesn't
+end up making much of a difference for collections of larger molecules (the
+extra data associated with the pickle is independent of the size of the
+molecule, while the binary string increases in length as the molecule gets
+larger).
 
-*Tip*: The performance difference associated with storing molecules in a pickled form on disk instead of constantly reparsing an SD file or SMILES table is difficult to overstate.
-In a test I just ran on my laptop, loading a set of 699 drug-like molecules from an SD file took 10.8 seconds; loading the same molecules from a pickle file took 0.7 seconds.
-The pickle file is also smaller – 1/3 the size of the SD file – but this difference is not always so dramatic (it's a particularly fat SD file).
+*Tip*: The performance difference associated with storing molecules in a pickled
+form on disk instead of constantly reparsing an SD file or SMILES table is
+difficult to overstate. In a test I just ran on my laptop, loading a set of 699
+drug-like molecules from an SD file took 10.8 seconds; loading the same
+molecules from a pickle file took 0.7 seconds. The pickle file is also smaller –
+1/3 the size of the SD file – but this difference is not always so dramatic
+(it's a particularly fat SD file).
 
 Drawing Molecules
 =================
@@ -865,7 +876,8 @@ aligned. This is easy enough to do:
   14
   >>> AllChem.Compute2DCoords(p)
   0
-  >>> for m in subms: _ = AllChem.GenerateDepictionMatching2DStructure(m,p)
+  >>> for m in subms: 
+  ...   _ = AllChem.GenerateDepictionMatching2DStructure(m,p)
   >>> img=Draw.MolsToGridImage(subms,molsPerRow=4,subImgSize=(200,200),legends=[x.GetProp("_Name") for x in subms])    # doctest: +SKIP
   >>> img.save('images/cdk2_molgrid.aligned.o.png')    # doctest: +SKIP
 
@@ -929,15 +941,13 @@ data/test_multi_colours.py, which produces the somewhat garish
 
 .. image:: images/atom_highlights_3.png
 
-As of version 2020.03, it is possible to add arbitrary small strings
-to annotate atoms and bonds in the drawing.  The strings are added as
-properties ``atomNote`` and
-``bondNote`` and they will be placed automatically
-close to the atom or bond in question in a manner intended to minimise
-their clash with the rest of the drawing.  For convenience, here are 3
-flags in 
-``MolDraw2DOptions`` that will add stereo information (R/S to atoms, E/Z
-to bonds) and atom and bond sequence numbers.
+As of version 2020.03, it is possible to add arbitrary small strings to annotate
+atoms and bonds in the drawing.  The strings are added as properties
+``atomNote`` and ``bondNote`` and they will be placed automatically close to the
+atom or bond in question in a manner intended to minimise their clash with the
+rest of the drawing.  For convenience, here are 3 flags in ``MolDraw2DOptions``
+that will add stereo information (R/S to atoms, E/Z to bonds) and atom and bond
+sequence numbers.
 
 .. doctest::
    
@@ -1009,8 +1019,6 @@ into them from the right (the West), you can also set the ``_displayLabelW`` pro
 this gives:
 
 .. image:: images/atom_labels_3.png
-
-
 
 
 Metadata in Molecule Images
@@ -1396,7 +1404,7 @@ or into a generic framework:
 
 
 Maximum Common Substructure
-***************************************
+***************************
 
 The FindMCS function find a maximum common substructure (MCS) of two
 or more molecules:
@@ -1521,9 +1529,6 @@ Of course the two options can be combined with each other:
   '[#6&!R]-&!@[#6&R]'
 
 
-
-
-
 The MCS algorithm will exhaustively search for a maximum common substructure.
 Typically this takes a fraction of a second, but for some comparisons this
 can take minutes or longer. Use the ``timeout`` parameter to stop the search
@@ -1538,7 +1543,6 @@ return the best match found in that time. If timeout is reached then the
   True
 
 (The MCS after 50 seconds contained 511 atoms.)
-
 
 
 Fingerprinting and Molecular Similarity
@@ -1605,7 +1609,9 @@ There is a SMARTS-based implementation of the 166 public MACCS keys.
   >>> DataStructs.FingerprintSimilarity(fps[1],fps[2])
   0.214...
 
-The MACCS keys were critically evaluated and compared to other MACCS implementations in Q3 2008. In cases where the public keys are fully defined, things looked pretty good.
+The MACCS keys were critically evaluated and compared to other MACCS
+implementations in Q3 2008. In cases where the public keys are fully defined,
+things looked pretty good.
 
 
 Atom Pairs and Topological Torsions
@@ -1620,8 +1626,9 @@ The standard form is as fingerprint including counts for each bit instead of jus
   >>> ms = [Chem.MolFromSmiles('C1CCC1OCC'),Chem.MolFromSmiles('CC(C)OCC'),Chem.MolFromSmiles('CCOCC')]
   >>> pairFps = [Pairs.GetAtomPairFingerprint(x) for x in ms]
 
-Because the space of bits that can be included in atom-pair fingerprints is huge, they are stored in a sparse manner.
-We can get the list of bits and their counts for each fingerprint as a dictionary:
+Because the space of bits that can be included in atom-pair fingerprints is
+huge, they are stored in a sparse manner. We can get the list of bits and their
+counts for each fingerprint as a dictionary:
 
 .. doctest::
 
@@ -1683,7 +1690,9 @@ essentially the same way:
   >>> DataStructs.DiceSimilarity(tts[0],tts[1])
   0.166...
 
-At the time of this writing, topological torsion fingerprints have too many bits to be encodeable using the BitVector machinery, so there is no GetTopologicalTorsionFingerprintAsBitVect function.
+At the time of this writing, topological torsion fingerprints have too many bits
+to be encodeable using the BitVector machinery, so there is no
+GetTopologicalTorsionFingerprintAsBitVect function.
 
 
 Morgan Fingerprints (Circular Fingerprints)
@@ -1911,9 +1920,9 @@ Producing this image:
 Picking Diverse Molecules Using Fingerprints
 ============================================
 
-A common task is to pick a small subset of diverse molecules from a
-larger set.  The RDKit provides a number of approaches for doing this
-in the :py:mod:`rdkit.SimDivFilters` module.  The most efficient of these uses the
+A common task is to pick a small subset of diverse molecules from a larger set.
+The RDKit provides a number of approaches for doing this in the
+:py:mod:`rdkit.SimDivFilters` module.  The most efficient of these uses the
 MaxMin algorithm. [#ashton]_ Here's an example:
 
 Start by reading in a set of molecules and generating Morgan fingerprints:
@@ -2503,8 +2512,9 @@ Chemical Features and Pharmacophores
 Chemical Features
 =================
 
-Chemical features in the RDKit are defined using a SMARTS-based feature definition language (described in detail in the RDKit book).
-To identify chemical features in molecules, you first must build a feature factory:
+Chemical features in the RDKit are defined using a SMARTS-based feature
+definition language (described in detail in the RDKit book). To identify
+chemical features in molecules, you first must build a feature factory:
 
 .. doctest::
 
@@ -2524,7 +2534,9 @@ and then use the factory to search for features:
   >>> len(feats)
   8
 
-The individual features carry information about their family (e.g. donor, acceptor, etc.), type (a more detailed description), and the atom(s) that is/are associated with the feature:
+The individual features carry information about their family (e.g. donor,
+acceptor, etc.), type (a more detailed description), and the atom(s) that is/are
+associated with the feature:
 
 .. doctest::
 
@@ -2833,8 +2845,9 @@ example.
 R-Group Decomposition
 *********************
 
-Let's look at how it works. We'll read in a group of molecules (these were taken ChEMBL), define a core
-with labelled R groups, and then use the simplest call to do R-group decomposition: 
+Let's look at how it works. We'll read in a group of molecules (these were taken
+ChEMBL), define a core with labelled R groups, and then use the simplest call to
+do R-group decomposition:
 :py:func:`rdkit.Chem.rdRGroupDecomposition.RGroupDecompose`
 
 .. doctest::
@@ -3019,7 +3032,6 @@ More complex transformations can be carried out using the
   >>> mw.GetNumAtoms()
   8
 
-
 The RWMol can be used just like an ROMol:
 
 .. doctest::
@@ -3031,10 +3043,36 @@ The RWMol can be used just like an ROMol:
   >>> Chem.MolToSmiles(mw)
   'O=Cc1ccccn1'
 
+The RDKit also has functionality enabling batch edits of molecules which provides a
+more efficient way to remove multiple atoms or bonds at once.
+
+.. doctest::
+
+  >>> m = Chem.MolFromSmiles('CC(=O)C=CC=C')
+  >>> mw = Chem.RWMol(m)
+  >>> mw.BeginBatchEdit()
+  >>> mw.RemoveAtom(3)
+  >>> mw.RemoveBond(1,2)  #<- these are the begin and end atoms of the bond
+
+None of the changes actually happen until we "commit" them:
+.. doctest::
+>>> Chem.MolToSmiles(mw)
+'C=CC=CC(C)=O'
+>>> mw.CommitBatchEdit()
+>>> Chem.MolToSmiles(mw)
+'C=CC.CC.O'
+
+You can make this more concise using a context manager, which takes care of the commit for you:
+>>> with Chem.RWMol(m) as mw:
+...     mw.RemoveAtom(3)
+...     mw.RemoveBond(1,2)
+... 
+>>> Chem.MolToSmiles(mw)
+'C=CC.CC.O'
+
 It is even easier to generate nonsense using the RWMol than it
 is with standard molecules.  If you need chemically reasonable
 results, be certain to sanitize the results.
-
 
 Miscellaneous Tips and Hints
 ****************************
