@@ -642,14 +642,15 @@ void ParseSGroupV2000SCDSEDLine(IDX_TO_SGROUP_MAP &sGroupMap,
     lastDataSGroup = 0;
   }
 
-  // this group must already have seen an SDT line
+  // have we already seen an SDT line?
   if (!sgroup->hasProp("FIELDNAME")) {
-    std::ostringstream errout;
-    errout << "Found a SCD line without a previous SDT specification at line "
-           << line;
-    SGroupWarnOrThrow<>(strictParsing, errout.str());
-    sgroup->setIsValid(false);
-    return;
+    // one can read the docs and draw the conclusion that this is mandatory,
+    // but it's also possible to interpret them the other way, and we know
+    // that there are CTABs out there with empty fieldnames in SDT lines,
+    // so let's just issue a warning and accept it.
+    BOOST_LOG(rdWarningLog)
+        << "Found a SCD/SED line with missing/empty SDT specification at line "
+        << line << std::endl;
   }
 
   if (strictParsing) {
