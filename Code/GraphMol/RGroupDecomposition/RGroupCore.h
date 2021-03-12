@@ -70,7 +70,9 @@ struct RCore {
     hasCoreDummies = false;
     for (const auto &p : match) {
       auto atom = coreReplacedAtoms->getAtomWithIdx(p.first);
-      hasCoreDummies |= (atom->getAtomicNum() == 0);
+      if (atom->getAtomicNum() == 0) {
+        hasCoreDummies = true;
+      }
       if (isAtomWithMultipleNeighborsOrNotUserRLabel(*atom)) {
         auto molAtom = mol.getAtomWithIdx(p.second);
         replaceCoreAtom(*coreReplacedAtoms, *atom, *molAtom);
