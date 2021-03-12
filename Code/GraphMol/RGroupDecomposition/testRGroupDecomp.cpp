@@ -2162,6 +2162,32 @@ void testUserMatchTypes() {
   TestMatchType::test(*core, *mol, params, expected);
 }
 
+void testUnlabelledRGroupsOnAromaticNitrogen() {
+  BOOST_LOG(rdInfoLog)
+      << "********************************************************\n";
+  BOOST_LOG(rdInfoLog) << "Test unlabelled R groups on aromatic nitrogens"
+                       << std::endl;
+
+  auto core = "c1ccc(-c2cccc3[nH]ncc23)nc1"_smiles;
+  auto mol1 = "c1ccc(-c2cccc3n(C)ncc23)nc1"_smiles;
+  auto mol2 = "c1ccc(-c2cccc3[nH]ncc23)[n+](CC)c1"_smiles;
+  RGroupDecompositionParameters params;
+  RGroupDecomposition decomp(*core, params);
+  TEST_ASSERT(decomp.add(*mol1) == 0);
+  TEST_ASSERT(decomp.add(*mol2) == 1);
+  TEST_ASSERT(decomp.process());
+  auto rows = decomp.getRGroupsAsRows();
+  TEST_ASSERT(rows.size() == 2);
+  size_t i = 0;
+  std::vector<std::string> expected{
+      "Core:c1ccc(-c2cccc3c2cnn3[*:2])nc1 R2:C[*:2]",
+      "Core:c1cc[n+]([*:1])c(-c2cccc3c2cnn3[*:2])c1 R1:CC[*:1] R2:[H][*:2]",
+  };
+  for (RGroupRows::const_iterator it = rows.begin(); it != rows.end(); ++it) {
+    CHECK_RGROUP(it, expected.at(i++));
+  }
+}
+
 int main() {
   RDLog::InitLogs();
   boost::logging::disable_logs("rdApp.debug");
@@ -2205,6 +2231,7 @@ int main() {
   testMatchOnAnyAtom();
   testNoAlignmentAndSymmetry();
   testUserMatchTypes();
+  testUnlabelledRGroupsOnAromaticNitrogen();
 
   BOOST_LOG(rdInfoLog)
       << "********************************************************\n";
