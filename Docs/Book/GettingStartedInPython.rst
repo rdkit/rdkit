@@ -668,6 +668,8 @@ distance geometry has been used to generate them.  With this method,
 there should be no need to use a minimisation step to clean up the
 structures.
 
+More detailed information about the conformer generator and the parameters controlling it can be found in the "RDKit Book".
+
 Since the 2018.09 release of the RDKit, ETKDG is the default conformation generation method.
 
 The full process of embedding a molecule is easier than all the above verbiage makes it sound:
@@ -3359,7 +3361,7 @@ License
 
 .. image:: images/picture_5.png
 
-This document is copyright (C) 2007-2016 by Greg Landrum
+This document is copyright (C) 2007-2021 by Greg Landrum
 
 This work is licensed under the Creative Commons Attribution-ShareAlike 4.0 License.
 To view a copy of this license, visit http://creativecommons.org/licenses/by-sa/4.0/ or send a letter to Creative Commons, 543 Howard Street, 5th Floor, San Francisco, California, 94105, USA.
