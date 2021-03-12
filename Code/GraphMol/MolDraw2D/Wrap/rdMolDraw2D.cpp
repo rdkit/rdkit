@@ -413,6 +413,19 @@ python::object getSymbolColour(const RDKit::MolDrawOptions &self) {
 void setSymbolColour(RDKit::MolDrawOptions &self, python::tuple tpl) {
   self.symbolColour = pyTupleToDrawColour(tpl);
 }
+python::object getLegendColour(const RDKit::MolDrawOptions &self) {
+  return colourToPyTuple(self.legendColour);
+}
+void setLegendColour(RDKit::MolDrawOptions &self, python::tuple tpl) {
+  self.legendColour = pyTupleToDrawColour(tpl);
+}
+python::object getAnnotationColour(const RDKit::MolDrawOptions &self) {
+  return colourToPyTuple(self.annotationColour);
+}
+void setAnnotationColour(RDKit::MolDrawOptions &self, python::tuple tpl) {
+  self.annotationColour = pyTupleToDrawColour(tpl);
+}
+
 python::object getVariableAttachmentColour(const RDKit::MolDrawOptions &self) {
   return colourToPyTuple(self.variableAttachmentColour);
 }
@@ -588,7 +601,7 @@ BOOST_PYTHON_MODULE(rdMolDraw2D) {
       .def_readwrite("dummiesAreAttachments",
                      &RDKit::MolDrawOptions::dummiesAreAttachments)
       .def_readwrite("circleAtoms", &RDKit::MolDrawOptions::circleAtoms)
-	    .def_readwrite("splitBonds", &RDKit::MolDrawOptions::splitBonds)
+      .def_readwrite("splitBonds", &RDKit::MolDrawOptions::splitBonds)
       .def("getBackgroundColour", &RDKit::getBgColour,
            "method returning the background colour")
       .def("getHighlightColour", &RDKit::getHighlightColour,
@@ -688,7 +701,8 @@ BOOST_PYTHON_MODULE(rdMolDraw2D) {
                      "adds bond indices to drawings. Default False.")
       .def_readwrite("isotopeLabels", &RDKit::MolDrawOptions::isotopeLabels,
                      "adds isotope labels on non-dummy atoms. Default True.")
-      .def_readwrite("dummyIsotopeLabels", &RDKit::MolDrawOptions::dummyIsotopeLabels,
+      .def_readwrite("dummyIsotopeLabels",
+                     &RDKit::MolDrawOptions::dummyIsotopeLabels,
                      "adds isotope labels on dummy atoms. Default True.")
       .def_readwrite("atomHighlightsAreCircles",
                      &RDKit::MolDrawOptions::atomHighlightsAreCircles,
