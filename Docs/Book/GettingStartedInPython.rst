@@ -119,29 +119,31 @@ or just treat the Supplier itself as a random-access object:
   >>> suppl[0].GetNumAtoms()
   20
 
-A good practice is to test each molecule to see if it was correctly read before working with it:
+Two good practices when working with Suppliers are to use a context manager and
+to test each molecule to see if it was correctly read before working with it:
 
 .. doctest::
 
-  >>> suppl = Chem.SDMolSupplier('data/5ht3ligs.sdf')
-  >>> for mol in suppl:
-  ...   if mol is None: continue
-  ...   print(mol.GetNumAtoms())
+  >>> with Chem.SDMolSupplier('data/5ht3ligs.sdf') as suppl:
+  ...   for mol in suppl:
+  ...     if mol is None: continue
+  ...     print(mol.GetNumAtoms())
   ...
   20
   24
   24
   26
 
-An alternate type of Supplier, the :py:class:`rdkit.Chem.rdmolfiles.ForwardSDMolSupplier` can be used to read from file-like objects:
+An alternate type of Supplier, the :py:class:`rdkit.Chem.rdmolfiles.ForwardSDMolSupplier` 
+can be used to read from file-like objects:
 
 .. doctest::
 
   >>> inf = open('data/5ht3ligs.sdf','rb')
-  >>> fsuppl = Chem.ForwardSDMolSupplier(inf)
-  >>> for mol in fsuppl:
-  ...   if mol is None: continue
-  ...   print(mol.GetNumAtoms())
+  >>> with Chem.ForwardSDMolSupplier(inf) as fsuppl:
+  ...   for mol in fsuppl:
+  ...     if mol is None: continue
+  ...     print(mol.GetNumAtoms())
   ...
   20
   24
@@ -154,8 +156,8 @@ This means that they can be used to read from compressed files:
 
   >>> import gzip
   >>> inf = gzip.open('data/actives_5ht3.sdf.gz')
-  >>> gzsuppl = Chem.ForwardSDMolSupplier(inf)
-  >>> ms = [x for x in gzsuppl if x is not None]
+  >>> with Chem.ForwardSDMolSupplier(inf) as gzsuppl:
+  ...    ms = [x for x in gzsuppl if x is not None]
   >>> len(ms)
   180
 
@@ -163,7 +165,9 @@ Note that ForwardSDMolSuppliers cannot be used as random-access objects:
 
 .. doctest::
 
-  >>> fsuppl[0]
+  >>> inf = open('data/5ht3ligs.sdf','rb')
+  >>> with Chem.ForwardSDMolSupplier(inf) as fsuppl:
+  ...   fsuppl[0]
   Traceback (most recent call last):
     ...
   TypeError: 'ForwardSDMolSupplier' object does not support indexing
@@ -172,23 +176,20 @@ For reading Smiles or SDF files with large number of records concurrently, Multi
 
 .. doctest::
 
-  >>> sdSupl = Chem.MultithreadedSDMolSupplier('data/5ht3ligs.sdf')
   >>> i = 0
-  >>> for mol in sdSupl:
-  ...   if(mol): 
-  ...     i += 1
+  >>> with Chem.MultithreadedSDMolSupplier('data/5ht3ligs.sdf') as sdSupl:
+  ...   for mol in sdSupl:
+  ...     if mol is not None: 
+  ...       i += 1
   ...
   >>> print(i)
   4
   
-By default a single reader thread is used to extract records from the file and a single writer thread is used to process them. Note that due to multithreading the output may not be in the expected order. Furthermore, the MultithreadedSmilesMolSupplier and the MultithreadedSDMolSupplier cannot be used as random-access objects. 
-
-.. doctest::
-
-  >>> sdSupl[0]
-  Traceback (most recent call last):
-    ...
-  TypeError: 'MultithreadedSDMolSupplier' object does not support indexing
+By default a single reader thread is used to extract records from the file and a
+single writer thread is used to process them. Note that due to multithreading
+the output may not be in the expected order. Furthermore, the
+MultithreadedSmilesMolSupplier and the MultithreadedSDMolSupplier cannot be used
+as random-access objects. 
 
 
 Writing molecules
@@ -304,38 +305,47 @@ You can either include 2D coordinates (i.e. a depiction):
   <BLANKLINE>
 
 Or you can add 3D coordinates by embedding the molecule (this uses the ETKDG
-method, which is described in more detail below):
-
-.. doctest::
-
-  >>> AllChem.EmbedMolecule(m2,randomSeed=0xf00d)   # optional random seed for reproducibility)
-  0
-  >>> print(Chem.MolToMolBlock(m2))    # doctest: +NORMALIZE_WHITESPACE
-  cyclobutane
-       RDKit          3D
-  <BLANKLINE>
-    4  4  0  0  0  0  0  0  0  0999 V2000
-     -0.7372   -0.6322   -0.4324 C   0  0  0  0  0  0  0  0  0  0  0  0
-     -0.4468    0.8555   -0.5229 C   0  0  0  0  0  0  0  0  0  0  0  0
-      0.8515    0.5725    0.2205 C   0  0  0  0  0  0  0  0  0  0  0  0
-      0.3326   -0.7959    0.6107 C   0  0  0  0  0  0  0  0  0  0  0  0
-    1  2  1  0
-    2  3  1  0
-    3  4  1  0
-    4  1  1  0
-  M  END
-  <BLANKLINE>
-
-To get good 3D conformers, it's almost always a good idea to add
-hydrogens to the molecule first:
+method, which is described in more detail below). Note that we add Hs to the 
+molecule before generating the conformer. This is essential to get good structures:
 
 .. doctest::
 
   >>> m3 = Chem.AddHs(m2)
   >>> AllChem.EmbedMolecule(m3,randomSeed=0xf00d)   # optional random seed for reproducibility)
   0
+  >>> print(Chem.MolToMolBlock(m3))    # doctest: +NORMALIZE_WHITESPACE
+  cyclobutane
+       RDKit          3D
+  <BLANKLINE>
+   12 12  0  0  0  0  0  0  0  0999 V2000
+      1.0256    0.2491   -0.0964 C   0  0  0  0  0  0  0  0  0  0  0  0
+     -0.2041    0.9236    0.4320 C   0  0  0  0  0  0  0  0  0  0  0  0
+     -1.0435   -0.2466   -0.0266 C   0  0  0  0  0  0  0  0  0  0  0  0
+      0.2104   -0.9922   -0.3417 C   0  0  0  0  0  0  0  0  0  0  0  0
+      1.4182    0.7667   -0.9782 H   0  0  0  0  0  0  0  0  0  0  0  0
+      1.8181    0.1486    0.6820 H   0  0  0  0  0  0  0  0  0  0  0  0
+     -0.1697    1.0826    1.5236 H   0  0  0  0  0  0  0  0  0  0  0  0
+     -0.5336    1.8391   -0.1051 H   0  0  0  0  0  0  0  0  0  0  0  0
+     -1.6809   -0.0600   -0.8987 H   0  0  0  0  0  0  0  0  0  0  0  0
+     -1.6501   -0.6194    0.8220 H   0  0  0  0  0  0  0  0  0  0  0  0
+      0.4659   -1.7768    0.3858 H   0  0  0  0  0  0  0  0  0  0  0  0
+      0.3439   -1.3147   -1.3988 H   0  0  0  0  0  0  0  0  0  0  0  0
+    1  2  1  0
+    2  3  1  0
+    3  4  1  0
+    4  1  1  0
+    1  5  1  0
+    1  6  1  0
+    2  7  1  0
+    2  8  1  0
+    3  9  1  0
+    3 10  1  0
+    4 11  1  0
+    4 12  1  0
+  M  END
+<BLANKLINE>
 
-These can then be removed:
+If we don't want the Hs in our later analysis, they are easy to remove:
 
 .. doctest::
 
@@ -371,9 +381,9 @@ Multiple molecules can be written to a file using an :py:class:`rdkit.Chem.rdmol
 
 .. doctest::
 
-  >>> w = Chem.SDWriter('data/foo.sdf')
-  >>> for m in mols: w.write(m)
-  ...
+  >>> with Chem.SDWriter('data/foo.sdf') as w:
+  ...   for m in mols: 
+  ...     w.write(m)
   >>>
 
 An SDWriter can also be initialized using a file-like object:
@@ -382,10 +392,9 @@ An SDWriter can also be initialized using a file-like object:
 
   >>> from rdkit.six import StringIO
   >>> sio = StringIO()
-  >>> w = Chem.SDWriter(sio)
-  >>> for m in mols: w.write(m)
-  ...
-  >>> w.flush()
+  >>> with Chem.SDWriter(sio) as w:
+  ...   for m in mols: 
+  ...     w.write(m)
   >>> print(sio.getvalue())
   mol-295
        RDKit          3D
@@ -816,8 +825,8 @@ molecules found in the :py:mod:`rdkit.Chem.Draw` package:
 
 .. doctest::
 
-  >>> suppl = Chem.SDMolSupplier('data/cdk2.sdf')
-  >>> ms = [x for x in suppl if x is not None]
+  >>> with Chem.SDMolSupplier('data/cdk2.sdf') as suppl:
+  ...   ms = [x for x in suppl if x is not None]
   >>> for m in ms: tmp=AllChem.Compute2DCoords(m)
   >>> from rdkit.Chem import Draw
   >>> Draw.MolToFile(ms[0],'images/cdk2_mol1.o.png')    # doctest: +SKIP
@@ -1073,13 +1082,12 @@ This can be used to easily filter lists of molecules:
 
 .. doctest::
 
-  >>> suppl = Chem.SDMolSupplier('data/actives_5ht3.sdf')
   >>> patt = Chem.MolFromSmarts('c[NH1]')
   >>> matches = []
-  >>> for mol in suppl:
-  ...   if mol.HasSubstructMatch(patt):
-  ...     matches.append(mol)
-  ...
+  >>> with Chem.SDMolSupplier('data/actives_5ht3.sdf') as suppl:
+  ...   for mol in suppl:
+  ...     if mol.HasSubstructMatch(patt):
+  ...       matches.append(mol)
   >>> len(matches)
   22
 
@@ -1087,7 +1095,8 @@ We can write the same thing more compactly using Python's list comprehension syn
 
 .. doctest::
 
-  >>> matches = [x for x in suppl if x.HasSubstructMatch(patt)]
+  >>> with Chem.SDMolSupplier('data/actives_5ht3.sdf') as suppl:
+  ...   matches = [x for x in suppl if x.HasSubstructMatch(patt)]
   >>> len(matches)
   22
 
@@ -1371,8 +1380,8 @@ into scaffolds:
 .. doctest::
 
   >>> from rdkit.Chem.Scaffolds import MurckoScaffold
-  >>> cdk2mols = Chem.SDMolSupplier('data/cdk2.sdf')
-  >>> m1 = cdk2mols[0]
+  >>> with Chem.SDMolSupplier('data/cdk2.sdf') as cdk2mols:
+  ...   m1 = cdk2mols[0]
   >>> core = MurckoScaffold.GetScaffoldForMol(m1)
   >>> Chem.MolToSmiles(core)
   'c1ncc2nc[nH]c2n1'
@@ -1915,8 +1924,8 @@ Start by reading in a set of molecules and generating Morgan fingerprints:
   >>> from rdkit.Chem.rdMolDescriptors import GetMorganFingerprint
   >>> from rdkit import DataStructs
   >>> from rdkit.SimDivFilters.rdSimDivPickers import MaxMinPicker
-  >>> ms = [x for x in Chem.SDMolSupplier('data/actives_5ht3.sdf')]
-  >>> while ms.count(None): ms.remove(None)
+  >>> with Chem.SDMolSupplier('data/actives_5ht3.sdf') as suppl:
+  ...   ms = [x for x in suppl if x is not None]
   >>> fps = [GetMorganFingerprint(x,3) for x in ms]
   >>> nfps = len(fps)
 
@@ -2333,11 +2342,11 @@ method for fragmenting molecules along synthetically accessible bonds:
 .. doctest::
 
   >>> from rdkit.Chem import BRICS
-  >>> cdk2mols = Chem.SDMolSupplier('data/cdk2.sdf')
-  >>> m1 = cdk2mols[0]
+  >>> with Chem.SDMolSupplier('data/cdk2.sdf') as cdk2mols:
+  ...   m1 = cdk2mols[0]
+  ...   m2 = cdk2mols[20]
   >>> sorted(BRICS.BRICSDecompose(m1))
   ['[14*]c1nc(N)nc2[nH]cnc12', '[3*]O[3*]', '[4*]CC(=O)C(C)C']
-  >>> m2 = cdk2mols[20]
   >>> sorted(BRICS.BRICSDecompose(m2))
   ['[1*]C(=O)NN(C)C', '[14*]c1[nH]nc2c1C(=O)c1c([16*])cccc1-2', '[16*]c1ccc([16*])cc1', '[3*]OC', '[5*]N[5*]']
 
@@ -2351,9 +2360,12 @@ group of molecules:
 .. doctest::
 
   >>> allfrags=set()
-  >>> for m in cdk2mols:
-  ...    pieces = BRICS.BRICSDecompose(m)
-  ...    allfrags.update(pieces)
+  >>> with Chem.SDMolSupplier('data/cdk2.sdf') as cdk2mols:
+  ...   for m in cdk2mols:
+  ...      if m is None:
+  ...        continue
+  ...      pieces = BRICS.BRICSDecompose(m)
+  ...      allfrags.update(pieces)
   >>> len(allfrags)
   90
   >>> sorted(allfrags)[:5]
@@ -2729,8 +2741,8 @@ The fragments from multiple molecules can be added to a catalog:
 
 .. doctest::
 
-  >>> suppl = Chem.SmilesMolSupplier('data/bzr.smi')
-  >>> ms = [x for x in suppl]
+  >>> with Chem.SmilesMolSupplier('data/bzr.smi') as suppl:
+  ...    ms = [x for x in suppl]
   >>> fcat=FragmentCatalog.FragCatalog(fparams)
   >>> for m in ms: nAdded=fcgen.AddFragsFromMol(m,fcat)
   >>> fcat.GetNumEntries()
@@ -2793,8 +2805,8 @@ that distinguish actives from inactives:
 
 .. doctest::
 
-  >>> suppl = Chem.SDMolSupplier('data/bzr.sdf')
-  >>> sdms = [x for x in suppl]
+  >>> with Chem.SDMolSupplier('data/bzr.sdf') as suppl:
+  ...    sdms = [x for x in suppl]
   >>> fps = [fpgen.GetFPForMol(x,fcat) for x in sdms]
   >>> from rdkit.ML.InfoTheory import InfoBitRanker
   >>> ranker = InfoBitRanker(len(fps[0]),2)
@@ -2829,8 +2841,9 @@ with labelled R groups, and then use the simplest call to do R-group decompositi
 
   >>> from rdkit import Chem
   >>> from rdkit.Chem import rdRGroupDecomposition as rdRGD
-  >>> suppl = Chem.SmilesMolSupplier('data/s1p_chembldoc89753.txt',delimiter=",",smilesColumn=9,nameColumn=10)
-  >>> ms = [x for x in suppl if x is not None]
+  >>> with Chem.SmilesMolSupplier('data/s1p_chembldoc89753.txt',delimiter=",",
+  ...                              smilesColumn=9,nameColumn=10) as suppl:
+  ...   ms = [x for x in suppl if x is not None]
   >>> len(ms)
   40
   >>> core = Chem.MolFromSmarts('[*:1]c1nc([*:2])on1')
