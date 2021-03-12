@@ -326,7 +326,7 @@ method, which is described in more detail below):
   M  END
   <BLANKLINE>
 
-To get good 3D conformations, it's almost always a good idea to add
+To get good 3D conformers, it's almost always a good idea to add
 hydrogens to the molecule first:
 
 .. doctest::
@@ -602,7 +602,7 @@ This library, which is part of the AllChem module, is accessed using the :py:fun
   >>> AllChem.Compute2DCoords(m)
   0
 
-The 2D conformation is constructed in a canonical orientation and is
+The 2D conformer is constructed in a canonical orientation and is
 built to minimize intramolecular clashes, i.e. to maximize the clarity
 of the drawing.
 
@@ -624,7 +624,7 @@ Running this process for the molecules above gives:
 | |picture_1|   | |picture_0|   | |picture_3|   |
 +---------------+---------------+---------------+
 
-Another option for Compute2DCoords allows you to generate 2D depictions for molecules that closely mimic 3D conformations.
+Another option for Compute2DCoords allows you to generate 2D depictions for molecules that closely mimic 3D conformers.
 This is available using the function :py:func:`rdkit.Chem.AllChem.GenerateDepictionMatching3DStructure`.
 
 Here is an illustration of the results using the ligand from PDB structure 1XP0:
@@ -643,7 +643,7 @@ how it is used.
 Working with 3D Molecules
 =========================
 
-The RDKit can generate conformations for molecules using two different
+The RDKit can generate conformers for molecules using two different
 methods.  The original method used distance geometry. [#blaney]_
 The algorithm followed is:
 
@@ -657,7 +657,7 @@ The algorithm followed is:
 
 5. The resulting coordinates are cleaned up somewhat using a crude force field and the bounds matrix.
 
-Note that the conformations that result from this procedure tend to be fairly ugly.
+Note that the conformers that result from this procedure tend to be fairly ugly.
 They should be cleaned up using a force field.
 This can be done within the RDKit using its implementation of the Universal Force Field (UFF). [#rappe]_
 
@@ -670,7 +670,7 @@ structures.
 
 More detailed information about the conformer generator and the parameters controlling it can be found in the "RDKit Book".
 
-Since the 2018.09 release of the RDKit, ETKDG is the default conformation generation method.
+Since the 2018.09 release of the RDKit, ETKDG is the default conformer generation method.
 
 The full process of embedding a molecule is easier than all the above verbiage makes it sound:
 
@@ -756,12 +756,11 @@ via the `numThreads` argument:
 Setting `numThreads` to zero causes the software to use the maximum number
 of threads allowed on your computer.
 
-*Disclaimer/Warning*: Conformation generation is a difficult and subtle task.
-The original 2D->3D conversion provided with the RDKit was not intended
-to be a replacement for a “real” conformational analysis tool; it
-merely provides quick 3D structures for cases when they are
-required. We believe, however, that the newer ETKDG method [#riniker2]_ should be
-adequate for most purposes.
+*Disclaimer/Warning*: Conformer generation is a difficult and subtle task. The
+plain distance-geometry 2D->3D conversion provided with the RDKit is not
+intended to be a replacement for a “real” conformer analysis tool; it merely
+provides quick 3D structures for cases when they are required. We believe,
+however, that the newer ETKDG method [#riniker2]_ is suitable for most purposes.
 
 
 Preserving Molecules
