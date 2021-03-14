@@ -285,6 +285,15 @@ void getBondHighlightsForAtoms(const ROMol &mol,
     }
   }
 }
+void centerMolForDrawing(RWMol &mol, int confId) {
+  auto &conf = mol.getConformer(confId);
+  RDGeom::Transform3D tf;
+  auto centroid = MolTransforms::computeCentroid(conf);
+  centroid *= -1;
+  tf.SetTranslation(centroid);
+  MolTransforms::transformConformer(conf, tf);
+  MolTransforms::transformMolSubstanceGroups(mol, tf);
+}
 }  // namespace
 
 // ****************************************************************************
@@ -608,10 +617,7 @@ void MolDraw2D::drawMoleculeWithHighlights(
 void MolDraw2D::get2DCoordsMol(RWMol &mol, double &offset, double spacing,
                                double &maxY, double &minY, int confId,
                                bool shiftAgents, double coordScale) {
-  try {
-    RDLog::BlockLogs blocker;
-    MolOps::sanitizeMol(mol);
-  } catch (const MolSanitizeException &) {
+  if (drawOptions().prepareMolsBeforeDrawing) {
     mol.updatePropertyCache(false);
     try {
       RDLog::BlockLogs blocker;
@@ -621,12 +627,18 @@ void MolDraw2D::get2DCoordsMol(RWMol &mol, double &offset, double spacing,
     }
     MolOps::setHybridization(mol);
   }
-
-  const bool canonOrient = true;
-  const bool kekulize = false;  // don't kekulize, we just did that
-  RDDepict::compute2DCoords(mol, nullptr, canonOrient);
-
-  MolDraw2DUtils::prepareMolForDrawing(mol, kekulize);
+  if (!mol.getNumConformers()) {
+    const bool canonOrient = true;
+    RDDepict::compute2DCoords(mol, nullptr, canonOrient);
+  } else {
+    // we need to center the molecule
+    centerMolForDrawing(mol, confId);
+  }
+  // when preparing a reaction component to be drawn we should neither kekulize
+  // (we did that above if required) nor add chiralHs
+  const bool kekulize = false;
+  const bool addChiralHs = false;
+  MolDraw2DUtils::prepareMolForDrawing(mol, kekulize, addChiralHs);
   double minX = 1e8;
   double maxX = -1e8;
   double vShift = 0;
@@ -1522,15 +1534,7 @@ unique_ptr<RWMol> MolDraw2D::setupDrawMolecule(
   if (drawOptions().centreMoleculesBeforeDrawing) {
     if (!rwmol) rwmol.reset(new RWMol(mol));
     if (rwmol->getNumConformers()) {
-      auto &conf = rwmol->getConformer(confId);
-      RDGeom::Transform3D tf;
-      auto centroid = MolTransforms::computeCentroid(conf);
-      centroid *= -1;
-      tf.SetTranslation(centroid);
-      MolTransforms::transformConformer(conf, tf);
-      MolTransforms::transformMolSubstanceGroups(*rwmol, tf);
-      rwmol->setProp("_centroidx", centroid.x);
-      rwmol->setProp("_centroidy", centroid.y);
+      centerMolForDrawing(*rwmol, confId);
     }
   }
   if (drawOptions().simplifiedStereoGroupLabel &&
