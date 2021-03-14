@@ -1187,7 +1187,8 @@ void MolDraw2D::setScale(int width, int height, const Point2D &minv,
 // ****************************************************************************
 void MolDraw2D::calculateScale(int width, int height, const ROMol &mol,
                                const std::vector<int> *highlight_atoms,
-                               const std::map<int, double> *highlight_radii) {
+                               const std::map<int, double> *highlight_radii,
+                               int confId) {
   PRECONDITION(width > 0, "bad width");
   PRECONDITION(height > 0, "bad height");
   PRECONDITION(activeMolIdx_ >= 0, "bad active mol");
@@ -1288,6 +1289,23 @@ void MolDraw2D::calculateScale(int width, int height, const ROMol &mol,
     y_trans_ = 0.;
   }
 
+  const auto &conf = mol.getConformer(confId);
+  double meanBondLength = 0.0;
+  unsigned int nBonds = 0;
+  for (const auto &bond : mol.bonds()) {
+    meanBondLength += (conf.getAtomPos(bond->getBeginAtomIdx()) -
+                       conf.getAtomPos(bond->getEndAtomIdx()))
+                          .length();
+    ++nBonds;
+  }
+  meanBondLength /= nBonds;
+  // the rdkit depictor sets bond lengths to be like covalent bond lengths
+  // but many others set them to a smaller base value
+  // In this case the fonts will be too big, so add a correction there.
+  // both the 1.0 and the 0.75 are empirical
+  if (meanBondLength < 1.0) {
+    text_drawer_->setBaseFontSize(text_drawer_->baseFontSize() * 0.75);
+  }
   text_drawer_->setFontScale(scale_);
   // cout << "leaving calculateScale" << endl;
   // cout << "final scale : " << scale_ << endl;
@@ -1304,6 +1322,8 @@ void MolDraw2D::calculateScale(int width, int height,
   global_x_min = global_y_min = numeric_limits<double>::max();
   global_x_max = global_y_max = -numeric_limits<double>::max();
 
+  double meanBondLength = 0.0;
+  unsigned int nBonds = 0;
   for (size_t i = 0; i < mols.size(); ++i) {
     tabulaRasa();
     if (!mols[i]) {
@@ -1326,8 +1346,24 @@ void MolDraw2D::calculateScale(int width, int height,
     global_y_min = min(y_min_, global_y_min);
     global_y_max = max(y_max, global_y_max);
 
+    const auto &conf = rwmol->getConformer(id);
+    for (const auto &bond : rwmol->bonds()) {
+      meanBondLength += (conf.getAtomPos(bond->getBeginAtomIdx()) -
+                         conf.getAtomPos(bond->getEndAtomIdx()))
+                            .length();
+      ++nBonds;
+    }
+
     tmols.emplace_back(std::move(rwmol));
     popDrawDetails();
+  }
+  meanBondLength /= nBonds;
+  // the rdkit depictor sets bond lengths to be like covalent bond lengths
+  // but many others set them to a smaller base value
+  // In this case the fonts will be too big, so add a correction there.
+  // both the 1.0 and the 0.75 are empirical
+  if (meanBondLength < 1.0) {
+    text_drawer_->setBaseFontSize(text_drawer_->baseFontSize() * 0.75);
   }
 
   x_min_ = global_x_min;
@@ -1612,7 +1648,8 @@ unique_ptr<RWMol> MolDraw2D::setupDrawMolecule(
   extractLinkNodes(draw_mol);
 
   if (!activeMolIdx_ && needs_scale_) {
-    calculateScale(width, height, draw_mol, highlight_atoms, highlight_radii);
+    calculateScale(width, height, draw_mol, highlight_atoms, highlight_radii,
+                   confId);
     needs_scale_ = false;
   }
 
