@@ -2999,7 +2999,7 @@ void drawNormalBond(MolDraw2D &d2d, const Bond &bond, bool highlight_bond,
       swap(col1, col2);
       inverted = true;
     }
-    if(d2d.drawOptions().blackWedgeBonds) {
+    if(d2d.drawOptions().singleColourWedgeBonds) {
       col1 = d2d.drawOptions().symbolColour;
       col2 = d2d.drawOptions().symbolColour;
     }

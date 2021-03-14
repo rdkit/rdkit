@@ -751,8 +751,8 @@ BOOST_PYTHON_MODULE(rdMolDraw2D) {
                      "if all specified stereocenters are in a single "
                      "StereoGroup, show a molecule-level annotation instead of "
                      "the individual labels. Default is false.")
-      .def_readwrite("blackWedgeBonds",
-                     &RDKit::MolDrawOptions::blackWedgeBonds,
+      .def_readwrite("singleColourWedgeBonds",
+                     &RDKit::MolDrawOptions::singleColourWedgeBonds,
                      "if true wedged and dashed bonds are drawn using symbolColour "
                      "rather than inheriting their colour from the atoms. "
                      "Default is false.")

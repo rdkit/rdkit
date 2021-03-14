@@ -306,7 +306,7 @@ struct RDKIT_MOLDRAW2D_EXPORT MolDrawOptions {
       false;  // if all specified stereocenters are in a single StereoGroup,
               // show a molecule-level annotation instead of the individual
               // labels
-  bool blackWedgeBonds = false; // if true wedged and dashed bonds are drawn
+  bool singleColourWedgeBonds = false; // if true wedged and dashed bonds are drawn
                                 // using symbolColour rather than inheriting
                                 // their colour from the atoms
 
