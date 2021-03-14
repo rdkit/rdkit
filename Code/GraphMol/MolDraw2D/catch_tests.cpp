@@ -2754,7 +2754,7 @@ TEST_CASE("github #2976: kekulizing reactions when drawing", "[reactions]") {
 
 TEST_CASE("preserve Reaction coordinates", "[reactions]") {
   SECTION("basics") {
-    std::string data=R"RXN($RXN
+    std::string data = R"RXN($RXN
 
   Mrv16822    031301211645
 
@@ -2809,8 +2809,7 @@ $MOL
   1  2  1  0  0  0  0
 M  END
 )RXN";
-    std::unique_ptr<ChemicalReaction> rxn{
-        RxnBlockToChemicalReaction(data)};
+    std::unique_ptr<ChemicalReaction> rxn{RxnBlockToChemicalReaction(data)};
     MolDraw2DSVG drawer(450, 200);
     drawer.drawReaction(*rxn);
     drawer.finishDrawing();
@@ -2818,5 +2817,29 @@ M  END
     auto txt = drawer.getDrawingText();
     outs << txt;
     outs.flush();
+
+    // the reaction is drawn with some bonds vertical, make sure they remain
+    // vertical
+    {
+      std::regex regex("class='bond-0.*? d='M (\\d+\\.\\d+).* L (\\d+\\.\\d+)");
+      std::smatch bondMatch;
+      REQUIRE(std::regex_search(txt, bondMatch, regex));
+      REQUIRE(bondMatch.size() == 3);  // match both halves of the bond
+      CHECK(bondMatch[1].str() == bondMatch[2].str());
+    }
+    {
+      std::regex regex("class='bond-2.*? d='M (\\d+\\.\\d+).* L (\\d+\\.\\d+)");
+      std::smatch bondMatch;
+      REQUIRE(std::regex_search(txt, bondMatch, regex));
+      REQUIRE(bondMatch.size() == 3);  // match both halves of the bond
+      CHECK(bondMatch[1].str() == bondMatch[2].str());
+    }
+    {
+      std::regex regex("class='bond-4.*? d='M (\\d+\\.\\d+).* L (\\d+\\.\\d+)");
+      std::smatch bondMatch;
+      REQUIRE(std::regex_search(txt, bondMatch, regex));
+      REQUIRE(bondMatch.size() == 3);  // match both halves of the bond
+      CHECK(bondMatch[1].str() == bondMatch[2].str());
+    }
   }
 }
