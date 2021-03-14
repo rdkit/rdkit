@@ -8,11 +8,11 @@
 //  of the RDKit source tree.
 //
 
+// #define DEBUG
+
 #include "RGroupScore.h"
 #include <vector>
 #include <map>
-
-
 
 namespace RDKit {
 
@@ -20,8 +20,8 @@ namespace RDKit {
 // This has to handle all permutations and doesn't do anything terribly smart
 //  For r-groups with large symmetries, this can take way too long.
 double matchScore(const std::vector<size_t> &permutation,
-             const std::vector<std::vector<RGroupMatch>> &matches,
-             const std::set<int> &labels) {
+                  const std::vector<std::vector<RGroupMatch>> &matches,
+                  const std::set<int> &labels) {
   double score = 0.;
 
 #ifdef DEBUG
@@ -31,7 +31,14 @@ double matchScore(const std::vector<size_t> &permutation,
             << " num matches: " << matches.size() << std::endl;
 #endif
 
-  // For each label (group)
+  BOOST_LOG(rdDebugLog) << "Scoring" << std::endl;
+  for (size_t m = 0; m < permutation.size(); ++m) {  // for each molecule
+    BOOST_LOG(rdDebugLog)
+      << "Molecule " << m << " " << matches[m][permutation[m]].toString()
+      << std::endl;
+  }
+
+    // For each label (group)
   for (int l : labels) {
 #ifdef DEBUG
     std::cerr << "Label: " << l << std::endl;
@@ -40,6 +47,7 @@ double matchScore(const std::vector<size_t> &permutation,
     std::map<std::set<int>, int> linkerMatchSet;
 
     for (size_t m = 0; m < permutation.size(); ++m) {  // for each molecule
+
       auto rg = matches[m][permutation[m]].rgroups.find(l);
       if (rg == matches[m][permutation[m]].rgroups.end()) {
         continue;
@@ -56,7 +64,9 @@ double matchScore(const std::vector<size_t> &permutation,
       }
 #ifdef DEBUG
       std::cerr << " " << rg->second->combinedMol->getNumAtoms(false)
-                << " score: " << count << std::endl;
+                // looks like code has been edited round this define
+                // << " score: " << count
+                << std::endl;
 #endif
       size_t i = 0;
       for (const auto &smiles : rg->second->smilesVect) {
@@ -72,16 +82,17 @@ double matchScore(const std::vector<size_t> &permutation,
         ++i;
       }
     }
-    
+
     double tempScore = 0.;
     for (const auto &matchSet : matchSetVect) {
       // get the counts for each rgroup found and sort in reverse order
       std::vector<unsigned int> equivalentRGroupCount;
 
-      std::transform(
-          matchSet.begin(), matchSet.end(),
-          std::back_inserter(equivalentRGroupCount),
-          [](const std::pair<std::string, unsigned int> &p) { return p.second; });
+      std::transform(matchSet.begin(), matchSet.end(),
+                     std::back_inserter(equivalentRGroupCount),
+                     [](const std::pair<std::string, unsigned int> &p) {
+                       return p.second;
+                     });
       std::sort(equivalentRGroupCount.begin(), equivalentRGroupCount.end(),
                 std::greater<unsigned int>());
 
@@ -130,6 +141,8 @@ double matchScore(const std::vector<size_t> &permutation,
     std::cerr << "Score = " << score << std::endl;
 #endif
   }
+
+  BOOST_LOG(rdDebugLog) << score << std::endl;
 
   return score;
 }

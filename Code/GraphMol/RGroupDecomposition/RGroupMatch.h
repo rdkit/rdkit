@@ -17,14 +17,30 @@ typedef std::map<int, RData> R_DECOMP;
 
 //! RGroupMatch is the decomposition for a single molecule
 struct RGroupMatch {
-  size_t core_idx;   // index of the matching core
+  size_t core_idx;  // index of the matching core
   size_t numberMissingUserRGroups;
-  R_DECOMP rgroups;  // rlabel->RGroupData mapping
-  ROMOL_SPTR matchedCore; // Core with dummy or query atoms and bonds matched
+  R_DECOMP rgroups;        // rlabel->RGroupData mapping
+  ROMOL_SPTR matchedCore;  // Core with dummy or query atoms and bonds matched
 
-  RGroupMatch(size_t core_index, size_t numberMissingUserRGroups, R_DECOMP input_rgroups, ROMOL_SPTR matchedCore)
+  RGroupMatch(size_t core_index, size_t numberMissingUserRGroups,
+              R_DECOMP input_rgroups, ROMOL_SPTR matchedCore)
       : core_idx(core_index),
-        numberMissingUserRGroups(numberMissingUserRGroups), rgroups(std::move(input_rgroups)), matchedCore(std::move(matchedCore)) {}
+        numberMissingUserRGroups(numberMissingUserRGroups),
+        rgroups(std::move(input_rgroups)),
+        matchedCore(std::move(matchedCore)) {}
+
+  std::string toString() const {
+    auto rGroupsString = std::accumulate(
+        rgroups.cbegin(), rgroups.cend(), std::string(),
+        [](std::string s, const std::pair<int, RData>& rgroup) {
+          return std::move(s) + '|' + std::to_string(rgroup.first) + ':' +
+                 rgroup.second->toString();
+        });
+    std::stringstream ss;
+    ss << "Match coreIdx " << core_idx << " missing count "
+       << numberMissingUserRGroups << " " << rGroupsString;
+    return ss.str();
+  }
 };
 
 }  // namespace RDKit

@@ -71,7 +71,7 @@ struct FingerprintVarianceScoreData {
 // The arithmetic mean of the mean fingerprint bit variances for the
 // fingerprints at each rgroup position.
 double fingerprintVarianceScore(
-    const std::vector<size_t> &bitCount,
+    const std::vector<size_t> &permutation,
     const std::vector<std::vector<RGroupMatch>> &matches,
     const std::set<int> &labels,
     FingerprintVarianceScoreData *fingerprintVarianceScoreData = nullptr);
