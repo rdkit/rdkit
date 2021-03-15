@@ -106,7 +106,7 @@ void testRingMatching3Score() {
 
   BOOST_LOG(rdInfoLog)
     << "********************************************************\n";
-  BOOST_LOG(rdInfoLog) << "Test scoring function for RingMatching3" << std::endl;
+  BOOST_LOG(rdInfoLog) << "Test scoring function for RingMatching3- see GitHub ##3924" << std::endl;
 
   R_DECOMP decomp1Mol1 = {
       makeRData(-4, "*[H]"),
@@ -181,7 +181,7 @@ void testRingMatching3Score() {
 void testGeminalRGroups() {
   BOOST_LOG(rdInfoLog)
     << "********************************************************\n";
-  BOOST_LOG(rdInfoLog) << "Test scoring function for Geminal R-Groups" << std::endl;
+  BOOST_LOG(rdInfoLog) << "Test scoring function for Geminal R-Groups- see GitHub #3924" << std::endl;
 
   std::vector<int> attachments {5, 6};
   R_DECOMP decomp1Mol1 = {
@@ -262,12 +262,7 @@ void testGeminalRGroups() {
   auto test1 = matchScore(permutation, allMatches1, labels);
   auto test2 = matchScore(permutation, allMatches2, labels);
 
-  // expect test1 to have better score than test2 since all heavy substituents are on user labelled R-groups
-  // but this is not the case for the default scoring function
-
-  TEST_ASSERT(test1 < test2);   // Fix Me!
-
-  // But it is for the fingerprint score
+  TEST_ASSERT(test1 > test2);   // Fix Me!
 
   auto testFp1 = fingerprintVarianceScore(permutation, allMatches1, labels);
   auto testFp2 = fingerprintVarianceScore(permutation, allMatches2, labels);
@@ -284,7 +279,6 @@ int main() {
   BOOST_LOG(rdInfoLog) << "Testing R-Group Decomposition Internals\n";
 
   testRingMatching3Score();
-
   testGeminalRGroups();
   testCoresLabelledProperly();
 

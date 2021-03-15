@@ -1955,11 +1955,6 @@ M  END
   for (auto matchAtRGroup = 0; matchAtRGroup < 2; ++matchAtRGroup) {
     for (auto mdlRGroupLabels = 0; mdlRGroupLabels < 2; ++mdlRGroupLabels) {
       RGroupDecompositionParameters params;
-      // GJ, I will figure out why this is required- currently allowing a match
-      // on any atom is returning "Core:C1CCC([*:5])([*:6])C([*:1])C1
-      // R1:C(C[*:1])[*:1]"- I've seen this before and I think it is an error
-      // with the ranking function. params.onlyMatchAtRGroups = true;
-      //params.scoreMethod = FingerprintVariance;
       if (matchAtRGroup) {
         params.labels = MDLRGroupLabels;
       }
