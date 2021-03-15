@@ -2477,7 +2477,7 @@ void test17MaxMinFontSize() {
       TEST_ASSERT(text.find("<path  class='atom-4' d='M 140.145 170.008") !=
                   std::string::npos);
 #else
-      TEST_ASSERT(text.find("font-size:56px") != std::string::npos);
+      TEST_ASSERT(text.find("font-size:42px") != std::string::npos);
 #endif
     }
     {
