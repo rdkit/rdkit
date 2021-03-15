@@ -572,7 +572,7 @@ M  END
     smi = 'CO[C@@H](O)C1=C(O[C@H](F)Cl)C(C#N)=C1ONNC[NH3+]'
     smarts = ['CONN', 'N#CC~CO', 'C=CON', 'CONNCN']
     txt = do_a_picture(smi, smarts, 'pyTest2')
-    self.assertGreater(txt.find('stroke:#FF8C00;stroke-width:5.5'), -1)
+    self.assertGreater(txt.find('stroke:#FF8C00;stroke-width:8.0'), -1)
     self.assertEqual(
       txt.find("ellipse cx='244.253' cy='386.518'"
                " rx='11.9872' ry='12.8346'"
@@ -610,14 +610,14 @@ M  END''')
 
   def testUpdateParamsFromJSON(self):
     m = Chem.MolFromSmiles('c1ccccc1NC(=O)C1COC1')
-    d2d = Draw.MolDraw2DSVG(250,200,-1,-1,True)
+    d2d = Draw.MolDraw2DSVG(250, 200, -1, -1, True)
     d2d.DrawMolecule(m)
     d2d.FinishDrawing()
     txt = d2d.GetDrawingText()
     self.assertFalse('>8</text>' in txt)
 
-    d2d = Draw.MolDraw2DSVG(250,200,-1,-1,True)
-    Draw.UpdateDrawerParamsFromJSON(d2d,'{"addAtomIndices": 1}')
+    d2d = Draw.MolDraw2DSVG(250, 200, -1, -1, True)
+    Draw.UpdateDrawerParamsFromJSON(d2d, '{"addAtomIndices": 1}')
     d2d.DrawMolecule(m)
     d2d.FinishDrawing()
     txt = d2d.GetDrawingText()
@@ -671,6 +671,7 @@ M  END''')
     textDeuteriumTritium = d2d.GetDrawingText()
     nDeuteriumTritium = len(deuteriumTritiumRegex.findall(textDeuteriumTritium))
     self.assertEqual(nDeuteriumTritium, 2)
+
 
 if __name__ == "__main__":
   unittest.main()
