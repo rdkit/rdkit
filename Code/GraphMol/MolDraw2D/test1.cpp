@@ -2478,7 +2478,7 @@ M  END
 #ifdef RDK_BUILD_FREETYPE_SUPPORT
       // where it starts drawing the N is a poor surrogate for checking
       // the font size, but all we have.
-      TEST_ASSERT(text.find("<path  class='atom-4' d='M 142.783 175.974") !=
+      TEST_ASSERT(text.find("<path  class='atom-4' d='M 256.959 204.022") !=
                   std::string::npos);
 #else
       TEST_ASSERT(text.find("font-size:40px") != std::string::npos);
@@ -2495,7 +2495,7 @@ M  END
       outs.flush();
 #ifdef RDK_BUILD_FREETYPE_SUPPORT
       // where it starts drawing the N
-      TEST_ASSERT(text.find("<path  class='atom-4' d='M 140.145 170.008") !=
+      TEST_ASSERT(text.find("<path  class='atom-4' d='M 252.653 199.374") !=
                   std::string::npos);
 #else
       TEST_ASSERT(text.find("font-size:53px") != std::string::npos);
@@ -2512,7 +2512,7 @@ M  END
       outs.flush();
 #ifdef RDK_BUILD_FREETYPE_SUPPORT
       // where it starts drawing the N
-      TEST_ASSERT(text.find("<path  class='atom-4' d='M 145.913 183.054") !=
+      TEST_ASSERT(text.find("<path  class='atom-4' d='M 262.53 211.102") !=
                   std::string::npos);
 
 #else
