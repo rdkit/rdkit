@@ -557,7 +557,7 @@ struct RGroupDecompData {
 
     if (params.matchingStrategy == GA) {
       RGroupGa ga(*this, params.timeout >= 0 ? &t0 : nullptr);
-      if (ga.numberPermutations() < 10000) {
+      if (ga.numberPermutations() < 100*ga.getPopsize()) {
         params.matchingStrategy = Exhaustive;
       } else {
         if (params.gaNumberRuns > 1) {

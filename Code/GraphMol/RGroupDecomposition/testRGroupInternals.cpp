@@ -84,6 +84,39 @@ void testCoresLabelledProperly() {
   }
 }
 
+void testGithub3746() {
+  BOOST_LOG(rdInfoLog)
+      << "********************************************************\n";
+  BOOST_LOG(rdInfoLog) << "Test GA falls over to exhaustive on simple system"
+                       << std::endl;
+  const std::vector<ROMOL_SPTR> cores{"c1([*:1])c([*:2])c([*:3])ccc1"_smiles,
+                                      "c1([*:1])c([*:2])c([*:3])cnc1"_smiles};
+  const std::vector<const char *> smilesData{"c1(CO)cc(CN)ccc1",
+                                             "c1(CO)cc(CN)cnc1"};
+
+  RGroupDecompositionParameters params;
+  params.onlyMatchAtRGroups = true;
+  params.removeHydrogensPostMatch = true;
+  params.matchingStrategy = GA;
+  params.removeHydrogensPostMatch = true;
+
+  RGroupDecomposition decomposition(cores, params);
+  size_t i = 0;
+  for (const auto &smi : smilesData) {
+    ROMOL_SPTR mol(static_cast<ROMol *>(SmilesToMol(smi)));
+    TEST_ASSERT(decomposition.add(*mol) == static_cast<int>(i++));
+  }
+
+  auto data = decomposition.data;
+  RGroupGa ga(*data);
+  auto numberPermutations = ga.numberPermutations();
+
+  TEST_ASSERT(numberPermutations == 4);
+  // criteria for exhaustive search instead of GA
+  TEST_ASSERT(numberPermutations < ga.getPopsize() * 100);
+}
+
+
 int main() {
   RDLog::InitLogs();
   boost::logging::disable_logs("rdApp.debug");
@@ -92,6 +125,7 @@ int main() {
       << "********************************************************\n";
   BOOST_LOG(rdInfoLog) << "Testing R-Group Decomposition Internals\n";
 
+  testGithub3746();
   testCoresLabelledProperly();
 
   BOOST_LOG(rdInfoLog)
