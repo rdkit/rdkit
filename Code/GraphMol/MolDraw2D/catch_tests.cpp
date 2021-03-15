@@ -2811,7 +2811,6 @@ M  END
 )RXN";
     std::unique_ptr<ChemicalReaction> rxn{RxnBlockToChemicalReaction(data)};
     MolDraw2DSVG drawer(450, 200);
-    std::cerr << "DRAW" << std::endl;
     drawer.drawReaction(*rxn);
     drawer.finishDrawing();
     std::ofstream outs("testReactionCoords.svg");
