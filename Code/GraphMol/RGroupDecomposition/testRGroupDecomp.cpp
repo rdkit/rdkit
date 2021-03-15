@@ -1484,39 +1484,38 @@ N[*:1]
 O[*:1]
 S[*:1]
 C(N[*:1])[*:2]
+P[*:1]
 O[*:1]
-O[*:1]
-C[*:1]
+N[*:1]
 C[*:1]
 CC(C)[*:1]
 c1ccc(C[*:1])cc1
 c1ccc(C[*:1])cc1
-CCC[*:1]
+OC[*:1]
 CC(C)C[*:1]
 Rgroup===R2
 [H][*:2]
 [H][*:2]
 [H][*:2]
 C(N[*:1])[*:2]
-P[*:2]
+O[*:2]
 N[*:2]
-N[*:2]
+C[*:2]
 CC[*:2]
 CC[*:2]
 CC[*:2]
 OC[*:2]
-OC[*:2]
+CCC[*:2]
 CCCC[*:2]
 )RES";
-#ifdef DEBUG
+
     if (ss.str() != expected) {
       std::cerr << __LINE__ << " ERROR got\n"
                 << ss.str() << "\nexpected\n"
                 << expected << std::endl;
     }
-#else
+
     TEST_ASSERT(ss.str() == expected);
-#endif
   }
 }
 
@@ -1960,7 +1959,7 @@ M  END
       // on any atom is returning "Core:C1CCC([*:5])([*:6])C([*:1])C1
       // R1:C(C[*:1])[*:1]"- I've seen this before and I think it is an error
       // with the ranking function. params.onlyMatchAtRGroups = true;
-      params.scoreMethod = FingerprintVariance;
+      //params.scoreMethod = FingerprintVariance;
       if (matchAtRGroup) {
         params.labels = MDLRGroupLabels;
       }
@@ -2165,7 +2164,6 @@ void testUserMatchTypes() {
 int main() {
   RDLog::InitLogs();
   boost::logging::disable_logs("rdApp.debug");
-
   BOOST_LOG(rdInfoLog)
       << "********************************************************\n";
   BOOST_LOG(rdInfoLog) << "Testing R-Group Decomposition \n";
