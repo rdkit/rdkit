@@ -33,8 +33,8 @@ struct RGroupMatch {
     auto rGroupsString = std::accumulate(
         rgroups.cbegin(), rgroups.cend(), std::string(),
         [](std::string s, const std::pair<int, RData>& rgroup) {
-          return std::move(s) + '|' + std::to_string(rgroup.first) + ':' +
-                 rgroup.second->toString();
+          return std::move(s) + "\n\t(" + std::to_string(rgroup.first) + ':' +
+                 rgroup.second->toString() + ')';
         });
     std::stringstream ss;
     ss << "Match coreIdx " << core_idx << " missing count "
