@@ -46,6 +46,7 @@
 %ignore RDKit::Bond::Match(const Bond *) const;
 %ignore RDKit::Bond::setBeginAtom(Atom *at);
 %ignore RDKit::Bond::setEndAtom(Atom *at);
+%ignore RDKit::getTwiceBondType(const RDKit::Bond &b);
 
 %include <GraphMol/Bond.h>
 
