@@ -99,12 +99,12 @@ RGroupGa::RGroupGa(const RGroupDecompData& rGroupData,
   setSelectionPressure(1.0001);
 
   const auto& matches = rGroupData.matches;
-  numPermutations = 0L;
+  numPermutations = 1L;
   auto pos = 0;
   for (auto m : matches) {
     if (m.size() == 1) continue;
     chromosomePolicy.setMax(pos, m.size());
-    unsigned long count = numPermutations = m.size();
+    unsigned long count = numPermutations * m.size();
     numPermutations = count / m.size() == numPermutations
                           ? count
                           : numeric_limits<unsigned int>::max();
