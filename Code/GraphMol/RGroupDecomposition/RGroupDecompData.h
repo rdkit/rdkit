@@ -227,6 +227,14 @@ struct RGroupDecompData {
     }
   }
 
+  void addAtoms(RWMol &mol, const std::vector<std::pair<Atom *, Atom *>> &atomsToAdd) {
+    for (const auto &i : atomsToAdd) {
+      mol.addAtom(i.second, false, true);
+      mol.addBond(i.first, i.second, Bond::SINGLE);
+      MolOps::setHydrogenCoords(&mol, i.second->getIdx(), i.first->getIdx());
+    }
+  }
+
   void relabelCore(RWMol &core, std::map<int, int> &mappings,
                    UsedLabels &used_labels, const std::set<int> &indexLabels,
                    const std::map<int, std::vector<int>> &extraAtomRLabels) {
@@ -317,11 +325,7 @@ struct RGroupDecompData {
       }
     }
 
-    for (const auto &i : atomsToAdd) {
-      core.addAtom(i.second, false, true);
-      core.addBond(i.first, i.second, Bond::SINGLE);
-      MolOps::setHydrogenCoords(&core, i.second->getIdx(), i.first->getIdx());
-    }
+    addAtoms(core, atomsToAdd);
     core.updatePropertyCache(false);  // this was github #1550
   }
 
@@ -373,11 +377,7 @@ struct RGroupDecompData {
       }
     }
 
-    for (auto &i : atomsToAdd) {
-      mol.addAtom(i.second, false, true);
-      mol.addBond(i.first, i.second, Bond::SINGLE);
-      MolOps::setHydrogenCoords(&mol, i.second->getIdx(), i.first->getIdx());
-    }
+    addAtoms(mol, atomsToAdd);
 
     if (params.removeHydrogensPostMatch) {
       RDLog::BlockLogs blocker;
@@ -557,7 +557,7 @@ struct RGroupDecompData {
 
     if (params.matchingStrategy == GA) {
       RGroupGa ga(*this, params.timeout >= 0 ? &t0 : nullptr);
-      if (ga.numberPermutations() < 10000) {
+      if (ga.numberPermutations() < 100*ga.getPopsize()) {
         params.matchingStrategy = Exhaustive;
       } else {
         if (params.gaNumberRuns > 1) {

@@ -97,8 +97,7 @@ bool setLabel(Atom *atom, int label, std::set<int> &labels, int &maxLabel,
   return false;
 }
 
-bool isAnyAtomWithMultipleNeighborsOrNotUserRLabel(const Atom &atom) {
-  if (atom.getAtomicNum()) return false;
+bool isAtomWithMultipleNeighborsOrNotUserRLabel(const Atom &atom) {
   if (atom.getDegree() > 1) return true;
   auto userRLabel = atom.hasProp(RLABEL) && atom.hasProp(RLABEL_TYPE) &&
                     static_cast<Labelling>(atom.getProp<int>(RLABEL_TYPE)) !=

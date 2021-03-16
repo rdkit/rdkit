@@ -148,10 +148,12 @@ RDGeom::Point3D pickBisector(const RDGeom::Point3D &nbr1Vect,
     // nbr2Vect and nbr3Vect are anti-parallel (was #3854)
     dirVect = nbr2Vect;
     std::swap(dirVect.x, dirVect.y);
-    if (dirVect.dotProduct(nbr1Vect) > 0) {
-      dirVect *= -1;
-    }
+    dirVect.x *= -1;
   }
+  if (dirVect.dotProduct(nbr1Vect) < 0) {
+    dirVect *= -1;
+  }
+
   return dirVect;
 }
 }  // namespace
@@ -1154,5 +1156,5 @@ bool needsHs(const ROMol &mol) {
   return false;
 }
 
-}  // end of namespace MolOps
+}  // namespace MolOps
 }  // namespace RDKit
