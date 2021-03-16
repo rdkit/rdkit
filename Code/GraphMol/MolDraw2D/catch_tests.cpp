@@ -80,7 +80,7 @@ TEST_CASE("tag atoms in SVG", "[drawing][SVG]") {
 
     for (auto atom : m1->atoms()) {
       auto prop = boost::format("__prop_class_atom_%d") % atom->getIdx();
-	  atom->setProp("_tagClass", prop.str());
+      atom->setProp("_tagClass", prop.str());
     }
     for (auto bond : m1->bonds()) {
       auto prop = boost::format("__prop_class_bond_%d") % bond->getIdx();
@@ -101,10 +101,10 @@ TEST_CASE("tag atoms in SVG", "[drawing][SVG]") {
     size_t c = 0;
     while (true) {
       auto i2 = text.find("__prop_class_atom_", i);
-	  if (i2==std::string::npos) {
-		  break;
-	  }
-      i = i2+1;
+      if (i2 == std::string::npos) {
+        break;
+      }
+      i = i2 + 1;
       c++;
     }
     CHECK(c == 6);
@@ -113,10 +113,10 @@ TEST_CASE("tag atoms in SVG", "[drawing][SVG]") {
     c = 0;
     while (true) {
       auto i2 = text.find("__prop_class_bond_", i);
-	  if (i2==std::string::npos) {
-		  break;
-	  }
-      i = i2+1;
+      if (i2 == std::string::npos) {
+        break;
+      }
+      i = i2 + 1;
       c++;
     }
     CHECK(c == 7);
@@ -2695,5 +2695,44 @@ M  END
     std::ofstream outs("testHydrogenBonds2.svg");
     outs << drawer.getDrawingText();
     outs.flush();
+  }
+}
+
+TEST_CASE("github #3912: cannot draw atom lists from SMARTS", "[query][bug]") {
+  SECTION("original") {
+    auto m = "C-[N,O]"_smarts;
+    REQUIRE(m);
+    int panelWidth = -1;
+    int panelHeight = -1;
+    bool noFreeType = true;
+    MolDraw2DSVG drawer(300, 300, panelWidth, panelHeight, noFreeType);
+    drawer.drawMolecule(*m);
+    drawer.finishDrawing();
+    std::ofstream outs("testGithub3912.1.svg");
+    auto txt = drawer.getDrawingText();
+    outs << txt;
+    outs.flush();
+    CHECK(txt.find(">N<") != std::string::npos);
+    CHECK(txt.find(">O<") != std::string::npos);
+    CHECK(txt.find(">!<") == std::string::npos);
+  }
+  SECTION("negated") {
+    auto m = "C-[N,O]"_smarts;
+    REQUIRE(m);
+    REQUIRE(m->getAtomWithIdx(1)->hasQuery());
+    m->getAtomWithIdx(1)->getQuery()->setNegation(true);
+    int panelWidth = -1;
+    int panelHeight = -1;
+    bool noFreeType = true;
+    MolDraw2DSVG drawer(300, 300, panelWidth, panelHeight, noFreeType);
+    drawer.drawMolecule(*m);
+    drawer.finishDrawing();
+    std::ofstream outs("testGithub3912.2.svg");
+    auto txt = drawer.getDrawingText();
+    outs << txt;
+    outs.flush();
+    CHECK(txt.find(">N<") != std::string::npos);
+    CHECK(txt.find(">O<") != std::string::npos);
+    CHECK(txt.find(">!<") != std::string::npos);
   }
 }

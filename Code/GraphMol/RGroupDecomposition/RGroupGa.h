@@ -101,7 +101,7 @@ struct GaResult {
   GaResult& operator=(const GaResult& other);
 };
 
-class RGroupGa : public GaBase {
+class RDKIT_RGROUPDECOMPOSITION_EXPORT RGroupGa : public GaBase {
  public:
   RGroupGa(const RGroupDecompData& rGroupData,
            const chrono::steady_clock::time_point* const t0 = nullptr);

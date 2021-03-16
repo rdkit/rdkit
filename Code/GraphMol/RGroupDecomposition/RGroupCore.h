@@ -60,88 +60,97 @@ struct RCore {
   }
 
   // Return a copy of core where dummy atoms are replaced by
-  // the atomic number of the respective matching atom in mol
-  ROMOL_SPTR replaceCoreDummiesWithMolMatches(
-      bool &hasDummies, const ROMol &mol, const MatchVectType &match) const {
-    auto coreReplacedDummies = boost::make_shared<RWMol>(*core);
-    hasDummies = false;
+  // the respective matching atom in mol, while other atoms have
+  // their aromatic flag and formal charge copied from from
+  // the respective matching atom in mol
+  ROMOL_SPTR replaceCoreAtomsWithMolMatches(bool &hasCoreDummies,
+                                            const ROMol &mol,
+                                            const MatchVectType &match) const {
+    auto coreReplacedAtoms = boost::make_shared<RWMol>(*core);
+    hasCoreDummies = false;
     for (const auto &p : match) {
-      auto atom = coreReplacedDummies->getAtomWithIdx(p.first);
-      if (isAnyAtomWithMultipleNeighborsOrNotUserRLabel(*atom)) {
-        hasDummies = true;
+      auto atom = coreReplacedAtoms->getAtomWithIdx(p.first);
+      if (atom->getAtomicNum() == 0) {
+        hasCoreDummies = true;
+      }
+      if (isAtomWithMultipleNeighborsOrNotUserRLabel(*atom)) {
         auto molAtom = mol.getAtomWithIdx(p.second);
-        replaceDummyAtom(*coreReplacedDummies, *atom, *molAtom);
+        replaceCoreAtom(*coreReplacedAtoms, *atom, *molAtom);
       }
     }
 
-    for (auto bond : coreReplacedDummies->bonds()) {
+    for (auto bond : coreReplacedAtoms->bonds()) {
       if (bond->hasQuery()) {
-        hasDummies = true;
+        hasCoreDummies = true;
         const auto molBond =
             mol.getBondBetweenAtoms(match[bond->getBeginAtomIdx()].second,
                                     match[bond->getEndAtomIdx()].second);
         Bond newBond(molBond->getBondType());
         newBond.setIsAromatic(molBond->getIsAromatic());
-        coreReplacedDummies->replaceBond(bond->getIdx(), &newBond, true);
+        coreReplacedAtoms->replaceBond(bond->getIdx(), &newBond, true);
       }
     }
 
 #ifdef VERBOSE
     std::cerr << "Original core smarts  " << MolToSmarts(*core) << std::endl;
     std::cerr << "Dummy replaced core smarts  "
-              << MolToSmarts(*coreReplacedDummies) << std::endl;
+              << MolToSmarts(*coreReplacedAtoms) << std::endl;
 #endif
-
-    return coreReplacedDummies;
+    return coreReplacedAtoms;
   }
 
-  void replaceDummyAtom(RWMol &mol, Atom &atom, const Atom &other) const {
-    PRECONDITION(atom.getAtomicNum() == 0, "Atom must be dummy");
+  void replaceCoreAtom(RWMol &mol, Atom &atom, const Atom &other) const {
     auto atomicNumber = other.getAtomicNum();
-    if (atom.hasQuery()) {
-      Atom newAtom(atomicNumber);
-      auto atomIdx = atom.getIdx();
-      mol.replaceAtom(atomIdx, &newAtom, false, true);
-      auto replacedAtom = mol.getAtomWithIdx(atomIdx);
-      replacedAtom->setIsAromatic(other.getIsAromatic());
-      replacedAtom->setFormalCharge(other.getFormalCharge());
-      replacedAtom->setNoImplicit(true);
+    auto targetAtom = &atom;
+    bool wasDummy = (atom.getAtomicNum() == 0);
+    if (wasDummy) {
+      if (atom.hasQuery()) {
+        Atom newAtom(atomicNumber);
+        auto atomIdx = atom.getIdx();
+        mol.replaceAtom(atomIdx, &newAtom, false, true);
+        targetAtom = mol.getAtomWithIdx(atomIdx);
+      } else {
+        atom.setAtomicNum(atomicNumber);
+      }
+    }
+    targetAtom->setIsAromatic(other.getIsAromatic());
+    targetAtom->setFormalCharge(other.getFormalCharge());
+    if (wasDummy) {
+      targetAtom->setNoImplicit(true);
       unsigned int numHs = 0;
       const auto &otherMol = other.getOwningMol();
-      for (const auto &nbri : boost::make_iterator_range(otherMol.getAtomNeighbors(&other))) {
+      for (const auto &nbri :
+           boost::make_iterator_range(otherMol.getAtomNeighbors(&other))) {
         const auto nbrAtom = otherMol[nbri];
         if (nbrAtom->getAtomicNum() == 1) {
           ++numHs;
         }
       }
-      replacedAtom->setNumExplicitHs(numHs + other.getTotalNumHs());
-      replacedAtom->updatePropertyCache(false);
-    } else {
-      atom.setAtomicNum(other.getAtomicNum());
-      atom.setIsAromatic(other.getIsAromatic());
+      targetAtom->setNumExplicitHs(numHs + other.getTotalNumHs());
+      targetAtom->updatePropertyCache(false);
     }
   }
 
   // Final core returned to user with dummy atoms and bonds set to those in the
   // match
-  RWMOL_SPTR coreWithMatches(const ROMol &coreReplacedDummies) const {
+  RWMOL_SPTR coreWithMatches(const ROMol &coreReplacedAtoms) const {
     auto finalCore = boost::make_shared<RWMol>(*labelledCore);
-    for (size_t atomIdx = 0; atomIdx < coreReplacedDummies.getNumAtoms();
+    for (size_t atomIdx = 0; atomIdx < coreReplacedAtoms.getNumAtoms();
          ++atomIdx) {
       auto coreAtom = finalCore->getAtomWithIdx(atomIdx);
-      auto templateAtom = coreReplacedDummies.getAtomWithIdx(atomIdx);
+      auto templateAtom = coreReplacedAtoms.getAtomWithIdx(atomIdx);
       auto unlabelledCoreAtom = core->getAtomWithIdx(atomIdx);
-      if (coreAtom->getAtomicNum() == 0 && templateAtom->getAtomicNum() > 0 &&
-          isAnyAtomWithMultipleNeighborsOrNotUserRLabel(*unlabelledCoreAtom)) {
-        replaceDummyAtom(*finalCore, *coreAtom, *templateAtom);
+      if (templateAtom->getAtomicNum() > 0 &&
+          isAtomWithMultipleNeighborsOrNotUserRLabel(*unlabelledCoreAtom)) {
+        replaceCoreAtom(*finalCore, *coreAtom, *templateAtom);
       }
     }
 
-    for (size_t bondIdx = 0; bondIdx < coreReplacedDummies.getNumBonds();
+    for (size_t bondIdx = 0; bondIdx < coreReplacedAtoms.getNumBonds();
          ++bondIdx) {
       auto coreBond = finalCore->getBondWithIdx(bondIdx);
       if (coreBond->hasQuery()) {
-        auto templateBond = coreReplacedDummies.getBondWithIdx(bondIdx);
+        auto templateBond = coreReplacedAtoms.getBondWithIdx(bondIdx);
         Bond newBond(templateBond->getBondType());
         newBond.setIsAromatic(templateBond->getIsAromatic());
         finalCore->replaceBond(bondIdx, &newBond, true);

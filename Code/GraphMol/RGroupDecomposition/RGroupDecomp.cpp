@@ -181,7 +181,7 @@ int RGroupDecomposition::add(const ROMol &inmol) {
     const bool requireDummyMatch = false;
     bool hasCoreDummies = false;
     auto coreCopy =
-        rcore->replaceCoreDummiesWithMolMatches(hasCoreDummies, mol, tmatche);
+        rcore->replaceCoreAtomsWithMolMatches(hasCoreDummies, mol, tmatche);
     tMol.reset(replaceCore(mol, *coreCopy, tmatche, replaceDummies,
                            labelByIndex, requireDummyMatch));
 #ifdef VERBOSE
@@ -260,12 +260,13 @@ int RGroupDecomposition::add(const ROMol &inmol) {
               newCoreAtm->setProp<bool>("keep", true);
             }
 
-            for (int aIdx = newCore.getNumAtoms() - 1; aIdx >= 0; --aIdx) {
-              Atom *atom = newCore.getAtomWithIdx(aIdx);
+            newCore.beginBatchEdit();
+            for (const auto atom : newCore.atoms()) {
               if (!atom->hasProp("keep")) {
                 newCore.removeAtom(atom);
               }
             }
+            newCore.commitBatchEdit();
             if (newCore.getNumAtoms()) {
               std::string newCoreSmi = MolToSmiles(newCore, true);
               // add a new core if possible
@@ -292,8 +293,10 @@ int RGroupDecomposition::add(const ROMol &inmol) {
             rcore->numberUserRGroups - numberUserGroupsInMatch;
         CHECK_INVARIANT(numberMissingUserGroups >= 0,
                         "Data error in missing user rgroup count");
-        potentialMatches.emplace_back(core_idx, numberMissingUserGroups, match,
-                                      hasCoreDummies ? coreCopy : nullptr);
+        potentialMatches.emplace_back(
+            core_idx, numberMissingUserGroups, match,
+            hasCoreDummies || !data->params.onlyMatchAtRGroups ? coreCopy
+                                                               : nullptr);
       }
     }
   }

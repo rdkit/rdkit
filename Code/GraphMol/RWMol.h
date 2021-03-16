@@ -1,5 +1,5 @@
 //
-//  Copyright (C) 2003-2009 Greg Landrum and Rational Discovery LLC
+//  Copyright (C) 2003-2021 Greg Landrum and Rational Discovery LLC
 //
 //   @@ All Rights Reserved @@
 //  This file is part of the RDKit.
@@ -14,8 +14,9 @@
 */
 
 #include <RDGeneral/export.h>
-#ifndef __RD_RWMOL_H__
-#define __RD_RWMOL_H__
+
+#ifndef RD_RWMOL_H
+#define RD_RWMOL_H
 
 // our stuff
 #include "ROMol.h"
@@ -46,7 +47,7 @@ class RDKIT_GRAPHMOL_EXPORT RWMol : public ROMol {
       : ROMol(other, quickCopy, confId) {
     d_partialBonds.clear();
   };
-  RWMol(const RWMol &other) : ROMol(other){};
+  RWMol(const RWMol &other) : ROMol(other) {};
   RWMol &operator=(const RWMol &);
 
   //! insert the atoms and bonds from \c other into this molecule
@@ -211,8 +212,16 @@ class RDKIT_GRAPHMOL_EXPORT RWMol : public ROMol {
     numBonds = 0;
   };
 
+  void beginBatchEdit();
+  void rollbackBatchEdit(){
+    dp_delAtoms.release();
+    dp_delBonds.release();
+  };
+  void commitBatchEdit();
+  
  private:
   std::vector<Bond *> d_partialBonds;
+  
   void destroy();
 };
 

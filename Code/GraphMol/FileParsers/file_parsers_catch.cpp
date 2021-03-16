@@ -3084,3 +3084,50 @@ M  END
                                 // do with it
   }
 }
+
+TEST_CASE("Support empty FIELDNAMES in SDT lines") {
+  SECTION("basics") {
+    auto m = R"CTAB(
+  Mrv2014 03112117322D          
+
+  6  6  0  0  0  0            999 V2000
+   -1.8270   -1.5114    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -2.2764   -0.8194    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -3.1002   -0.8626    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -3.4748   -1.5977    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -3.0255   -2.2896    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -2.2016   -2.2465    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+  1  2  1  0  0  0  0
+  2  3  1  0  0  0  0
+  3  4  1  0  0  0  0
+  4  5  1  0  0  0  0
+  5  6  1  0  0  0  0
+  1  6  1  0  0  0  0
+M  STY  1   1 DAT
+M  SAL   1  6   1   2   3   4   5   6
+M  SDT   1                                                       
+M  SDD   1    -2.4921   -3.0466    DA    ALL  1       5  
+M  SED   1 foo: 1234.6
+M  END
+)CTAB"_ctab;
+    REQUIRE(m);
+    auto sgs = getSubstanceGroups(*m);
+    REQUIRE(sgs.size() == 1);
+    {
+      auto outctab = MolToMolBlock(*m);
+      CHECK(outctab.find("1234.6") != std::string::npos);
+      auto nm = MolBlockToMol(outctab);
+      REQUIRE(nm);
+      auto sgs = getSubstanceGroups(*nm);
+      REQUIRE(sgs.size() == 1);
+    }
+    {
+      auto outctab = MolToV3KMolBlock(*m);
+      CHECK(outctab.find("1234.6") != std::string::npos);
+      auto nm = MolBlockToMol(outctab);
+      REQUIRE(nm);
+      auto sgs = getSubstanceGroups(*nm);
+      REQUIRE(sgs.size() == 1);
+    }
+  }
+}

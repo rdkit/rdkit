@@ -1,6 +1,5 @@
-// $Id$
 //
-//  Copyright (C) 2007 Greg Landrum
+//  Copyright (C) 2007-2021 Greg Landrum
 //
 //   @@ All Rights Reserved @@
 //  This file is part of the RDKit.
@@ -8,10 +7,6 @@
 //  which is included in the file license.txt, found at the root
 //  of the RDKit source tree.
 //
-// there's a compiler bug in some versions of g++ that causes this file to not
-// compile unless
-// we skip the docstrings:
-//#define BOOST_PYTHON_NO_PY_SIGNATURES
 
 #define NO_IMPORT_ARRAY
 #include <RDBoost/python.h>
@@ -59,6 +54,18 @@ class EditableMol : boost::noncopyable {
     PRECONDITION(dp_mol, "no molecule");
     PRECONDITION(bond, "bad bond");
     dp_mol->replaceBond(idx, bond, preserveProps);
+  };
+  void BeginBatchEdit() {
+    PRECONDITION(dp_mol, "no molecule");
+    dp_mol->beginBatchEdit();
+  };
+  void RollbackBatchEdit() {
+    PRECONDITION(dp_mol, "no molecule");
+    dp_mol->rollbackBatchEdit();
+  };
+  void CommitBatchEdit() {
+    PRECONDITION(dp_mol, "no molecule");
+    dp_mol->commitBatchEdit();
   };
 
   ROMol *GetMol() const {
@@ -122,6 +129,13 @@ struct EditableMol_wrapper {
              "replaces the specified bond with the provided one.\n"
              "If preserveProps is True preserve keep the existing props unless "
              "explicit set on the new bond")
+
+        .def("BeginBatchEdit", &EditableMol::BeginBatchEdit,
+             "starts batch editing")
+        .def("RollbackBatchEdit", &EditableMol::RollbackBatchEdit,
+             "cancels batch editing")
+        .def("CommitBatchEdit", &EditableMol::CommitBatchEdit,
+             "finishes batch editing and makes the actual edits")
 
         .def("GetMol", &EditableMol::GetMol,
              "Returns a Mol (a normal molecule)",
