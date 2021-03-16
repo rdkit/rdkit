@@ -326,19 +326,22 @@ void setTerminalAtomCoords(ROMol &mol, unsigned int idx,
               rotnAxis.normalize();
               tform.SetRotation((109.471 / 2) * M_PI / 180., rotnAxis);
               dirVect = tform * dirVect;
-              atomPos = otherPos + dirVect * ((*cfi)->is3D() ? bondLength : 1.0);
+              atomPos =
+                  otherPos + dirVect * ((*cfi)->is3D() ? bondLength : 1.0);
               (*cfi)->setAtomPos(idx, atomPos);
               break;
             case Atom::SP2:
               // don't need to do anything here, the H atom goes right on the
               // direction vector
-              atomPos = otherPos + dirVect * ((*cfi)->is3D() ? bondLength : 1.0);
+              atomPos =
+                  otherPos + dirVect * ((*cfi)->is3D() ? bondLength : 1.0);
               (*cfi)->setAtomPos(idx, atomPos);
               break;
             default:
               // FIX: handle other hybridizations
               // for now, just lay the H along the neighbor vector;
-              atomPos = otherPos + dirVect * ((*cfi)->is3D() ? bondLength : 1.0);
+              atomPos =
+                  otherPos + dirVect * ((*cfi)->is3D() ? bondLength : 1.0);
               (*cfi)->setAtomPos(idx, atomPos);
               break;
           }

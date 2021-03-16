@@ -2261,6 +2261,18 @@ void testUnlabelledRGroupsOnAromaticNitrogen() {
   }
 }
 
+void testAddHsDoesNotFail() {
+  BOOST_LOG(rdInfoLog)
+      << "********************************************************\n";
+  BOOST_LOG(rdInfoLog) << "Test that AddHs does not fail"
+                       << std::endl;
+  auto core = "[1*]c1ccc([2*])cn1"_smiles;
+  auto mol = "Fc1ccc([2*])cn1"_smiles;
+  RGroupDecompositionParameters params;
+  RGroupDecomposition decomp(*core, params);
+  TEST_ASSERT(decomp.add(*mol) == 0);
+}
+
 int main() {
   RDLog::InitLogs();
   boost::logging::disable_logs("rdApp.debug");
@@ -2305,6 +2317,7 @@ int main() {
   testAddedRGroupsHaveCoords();
   testUserMatchTypes();
   testUnlabelledRGroupsOnAromaticNitrogen();
+  testAddHsDoesNotFail();
 
   BOOST_LOG(rdInfoLog)
       << "********************************************************\n";

@@ -7716,7 +7716,8 @@ void testRemoveAndTrackIsotopes() {
   TEST_ASSERT(mNoH->getAtomWithIdx(0)->getAtomicNum() == 6);
   TEST_ASSERT(mNoH->getAtomWithIdx(0)->hasProp(common_properties::_isotopicHs));
   std::vector<unsigned int> isoHs;
-  TEST_ASSERT(mNoH->getAtomWithIdx(0)->getPropIfPresent(common_properties::_isotopicHs, isoHs));
+  TEST_ASSERT(mNoH->getAtomWithIdx(0)->getPropIfPresent(
+      common_properties::_isotopicHs, isoHs));
   TEST_ASSERT(isoHs.size() == 1);
   TEST_ASSERT(isoHs.front() == 2);
   TEST_ASSERT(mNoH->getAtomWithIdx(30)->getAtomicNum() == 6);
@@ -8014,7 +8015,8 @@ M  END)CTAB";
   auto v06 = conf.getAtomPos(0) - conf.getAtomPos(6);
   auto v56 = conf.getAtomPos(5) - conf.getAtomPos(6);
   auto v16 = conf.getAtomPos(1) - conf.getAtomPos(6);
-  TEST_ASSERT(fabs(fabs(v86.dotProduct(v56)) - fabs(v86.dotProduct(v06))) < 1e-3);
+  TEST_ASSERT(fabs(fabs(v86.dotProduct(v56)) - fabs(v86.dotProduct(v06))) <
+              1e-3);
   TEST_ASSERT(v86.dotProduct(v16) < -1e-4);
 }
 
