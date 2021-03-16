@@ -76,11 +76,13 @@ void applyMatches(RWMol& mol, const std::vector<AbbreviationMatch>& matches) {
       mol.addBond(oaidx, connectIdx, Bond::BondType::SINGLE);
     }
   }
-  for (unsigned int i = toRemove.size(); i > 0; --i) {
-    if (toRemove[i - 1]) {
-      mol.removeAtom(i - 1);
+  mol.beginBatchEdit();
+  for (unsigned int i = 0; i < toRemove.size(); ++i) {
+    if (toRemove[i]) {
+      mol.removeAtom(i);
     }
   }
+  mol.commitBatchEdit();
 }
 
 void labelMatches(RWMol& mol, const std::vector<AbbreviationMatch>& matches) {
@@ -112,7 +114,7 @@ std::vector<AbbreviationMatch> findApplicableAbbreviationMatches(
   }
 
   bool hasRings = mol.getRingInfo()->isInitialized();
-  if(!hasRings) {
+  if (!hasRings) {
     MolOps::fastFindRings(mol);
   }
 
@@ -169,10 +171,10 @@ std::vector<AbbreviationMatch> findApplicableAbbreviationMatches(
   }
 
   // if we added ring info, go ahead and remove it
-  if(!hasRings){
+  if (!hasRings) {
     mol.getRingInfo()->reset();
   }
-  
+
   return res;
 }
 

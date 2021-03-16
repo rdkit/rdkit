@@ -388,7 +388,11 @@ void MaximumCommonSubgraph::makeInitialSeeds() {
         QueryMoleculeMatchedBonds = seed.getNumBonds();
       }
     }
-  } else {  // create a set of seeds from each query bond
+    if (Seeds.empty()) {
+      BOOST_LOG(rdWarningLog) << "The provided InitialSeed is not an MCS and will be ignored" << std::endl;
+    }
+  }
+  if (Seeds.empty()) {  // create a set of seeds from each query bond
     // R1 additional performance OPTIMISATION
     // if(Parameters.BondCompareParameters.CompleteRingsOnly)
     // disable all mismatched rings, and do not generate initial seeds

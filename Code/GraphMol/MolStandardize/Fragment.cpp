@@ -121,7 +121,7 @@ ROMol *FragmentRemover::remove(const ROMol &mol) {
 
   boost::dynamic_bitset<> atomsToRemove(mol.getNumAtoms());
   atomsToRemove.set();
-  // loop over remaining fragments and track atoms that need to be removed
+  // loop over remaining fragments and track atoms we aren't keeping
   for (const auto &frag : frags) {
     unsigned int fragIdx = frag.second;
     for (auto atomIdx : atomFragMapping[fragIdx]) {
@@ -130,11 +130,13 @@ ROMol *FragmentRemover::remove(const ROMol &mol) {
   }
   // remove the atoms that need to go
   auto *removed = new RWMol(mol);
-  for (int i = mol.getNumAtoms() - 1; i >= 0; --i) {
+  removed->beginBatchEdit();
+  for (unsigned int i = 0; i < mol.getNumAtoms(); ++i) {
     if (atomsToRemove[i]) {
       removed->removeAtom(i);
     }
   }
+  removed->commitBatchEdit();
   return static_cast<ROMol *>(removed);
 }
 

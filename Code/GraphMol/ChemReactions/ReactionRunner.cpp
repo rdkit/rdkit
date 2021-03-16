@@ -1618,10 +1618,11 @@ ROMol *reduceProductToSideChains(const ROMOL_SPTR &product,
       }
     }
   }
-
+  mol->beginBatchEdit();
   for (unsigned int ai : atomsToRemove) {
     mol->removeAtom(ai);
   }
+  mol->commitBatchEdit();
   return mol;
 }
 

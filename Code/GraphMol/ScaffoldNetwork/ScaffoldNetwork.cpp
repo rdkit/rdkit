@@ -77,8 +77,8 @@ ROMol *removeAttachmentPoints(const ROMol &mol,
                               const ScaffoldNetworkParams &params) {
   RDUNUSED_PARAM(params);
   RWMol *res = new RWMol(mol);
-  for (unsigned int i = 1; i <= mol.getNumAtoms(); ++i) {
-    auto atom = res->getAtomWithIdx(mol.getNumAtoms() - i);
+  res->beginBatchEdit();
+  for (const auto atom : res->atoms()) {
     if (!atom->getAtomicNum() && atom->getDegree() == 1) {
       // if we're removing a neighbor from an aromatic heteroatom,
       // don't forget to set the H count on that atom:
@@ -92,6 +92,7 @@ ROMol *removeAttachmentPoints(const ROMol &mol,
       res->removeAtom(atom);
     }
   }
+  res->commitBatchEdit();
   return static_cast<ROMol *>(res);
 }
 ROMol *pruneMol(const ROMol &mol, const ScaffoldNetworkParams &params) {
