@@ -37,7 +37,7 @@ void initDataset(T &suppl, ROMOL_SPTR &core, std::vector<ROMOL_SPTR> &mols) {
 
 std::string flatten_whitespace(const std::string &txt) {
   auto res = txt;
-  boost::algorithm::trim_fill_if(res, "", boost::is_any_of(" \t\n"));
+  boost::algorithm::trim_fill_if(res, "", boost::is_any_of(" \t\r\n"));
   return res;
 }
 

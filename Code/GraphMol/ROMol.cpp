@@ -102,6 +102,17 @@ void ROMol::initFromOther(const ROMol &other, bool quickCopy, int confId) {
     d_stereo_groups.emplace_back(otherGroup.getGroupType(), std::move(atoms));
   }
 
+  if (other.dp_delAtoms) {
+    dp_delAtoms.reset(new boost::dynamic_bitset<>(*other.dp_delAtoms));
+  } else {
+    dp_delAtoms.reset(nullptr);
+  }
+  if (other.dp_delBonds) {
+    dp_delBonds.reset(new boost::dynamic_bitset<>(*other.dp_delBonds));
+  } else {
+    dp_delBonds.reset(nullptr);
+  }
+
   if (!quickCopy) {
     // copy conformations
     for (auto ci = other.beginConformers(); ci != other.endConformers(); ++ci) {
@@ -134,6 +145,7 @@ void ROMol::initFromOther(const ROMol &other, bool quickCopy, int confId) {
     STR_VECT computed;
     d_props.setVal(RDKit::detail::computedPropName, computed);
   }
+
   // std::cerr<<"---------    done init from other: "<<this<<"
   // "<<&other<<std::endl;
 }

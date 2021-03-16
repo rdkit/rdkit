@@ -83,8 +83,9 @@ template <typename OutputType>
 OutputType AtomPairAtomEnv<OutputType>::getBitId(
     FingerprintArguments<OutputType> *arguments,
     const std::vector<std::uint32_t> *atomInvariants,
-    const std::vector<std::uint32_t> *, // bondInvariants
-    const AdditionalOutput *additionalOutput, const bool hashResults) const {
+    const std::vector<std::uint32_t> *,  // bondInvariants
+    const AdditionalOutput *additionalOutput, const bool hashResults,
+    const std::uint64_t fpSize) const {
   PRECONDITION((atomInvariants->size() >= d_atomIdFirst) &&
                    (atomInvariants->size() >= d_atomIdSecond),
                "bad atom invariants size");
@@ -113,9 +114,23 @@ OutputType AtomPairAtomEnv<OutputType>::getBitId(
                             atomPairArguments->df_includeChirality);
   }
 
-  if (additionalOutput && additionalOutput->atomToBits) {
-    additionalOutput->atomToBits->at(d_atomIdFirst).push_back(bitId);
-    additionalOutput->atomToBits->at(d_atomIdSecond).push_back(bitId);
+  if (additionalOutput) {
+    std::uint32_t tBitId = bitId;
+    if (fpSize) {
+      tBitId = tBitId % fpSize;
+    }
+    if (additionalOutput->bitInfoMap) {
+      (*additionalOutput->bitInfoMap)[tBitId].emplace_back(d_atomIdFirst,
+                                                           d_atomIdSecond);
+    }
+    if (additionalOutput->atomToBits) {
+      additionalOutput->atomToBits->at(d_atomIdFirst).push_back(tBitId);
+      additionalOutput->atomToBits->at(d_atomIdSecond).push_back(tBitId);
+    }
+    if (additionalOutput->atomCounts) {
+      additionalOutput->atomCounts->at(d_atomIdFirst)++;
+      additionalOutput->atomCounts->at(d_atomIdSecond)++;
+    }
   }
   return bitId;
 }
@@ -135,9 +150,9 @@ AtomPairEnvGenerator<OutputType>::getEnvironments(
     const std::vector<std::uint32_t> *fromAtoms,
     const std::vector<std::uint32_t> *ignoreAtoms, const int confId,
     const AdditionalOutput *additionalOutput,
-    const std::vector<std::uint32_t> *, // atomInvariants
-    const std::vector<std::uint32_t> *, // bondInvariants,
-    const bool // hashResults
+    const std::vector<std::uint32_t> *,  // atomInvariants
+    const std::vector<std::uint32_t> *,  // bondInvariants,
+    const bool                           // hashResults
 ) const {
   const unsigned int atomCount = mol.getNumAtoms();
   PRECONDITION(!additionalOutput || !additionalOutput->atomToBits ||
@@ -221,18 +236,22 @@ FingerprintGenerator<OutputType> *getAtomPairGenerator(
       ownsAtomInvGenerator, false);
 }
 
-template RDKIT_FINGERPRINTS_EXPORT FingerprintGenerator<std::uint32_t> *getAtomPairGenerator(
-    const unsigned int minDistance, const unsigned int maxDistance,
-    const bool includeChirality, const bool use2D,
-    AtomInvariantsGenerator *atomInvariantsGenerator,
-    const bool useCountSimulation, const std::uint32_t fpSize,
-    const std::vector<std::uint32_t> countBounds, const bool ownsAtomInvGen);
+template RDKIT_FINGERPRINTS_EXPORT FingerprintGenerator<std::uint32_t> *
+getAtomPairGenerator(const unsigned int minDistance,
+                     const unsigned int maxDistance,
+                     const bool includeChirality, const bool use2D,
+                     AtomInvariantsGenerator *atomInvariantsGenerator,
+                     const bool useCountSimulation, const std::uint32_t fpSize,
+                     const std::vector<std::uint32_t> countBounds,
+                     const bool ownsAtomInvGen);
 
-template RDKIT_FINGERPRINTS_EXPORT FingerprintGenerator<std::uint64_t> *getAtomPairGenerator(
-    const unsigned int minDistance, const unsigned int maxDistance,
-    const bool includeChirality, const bool use2D,
-    AtomInvariantsGenerator *atomInvariantsGenerator,
-    const bool useCountSimulation, const std::uint32_t fpSize,
-    const std::vector<std::uint32_t> countBounds, const bool ownsAtomInvGen);
+template RDKIT_FINGERPRINTS_EXPORT FingerprintGenerator<std::uint64_t> *
+getAtomPairGenerator(const unsigned int minDistance,
+                     const unsigned int maxDistance,
+                     const bool includeChirality, const bool use2D,
+                     AtomInvariantsGenerator *atomInvariantsGenerator,
+                     const bool useCountSimulation, const std::uint32_t fpSize,
+                     const std::vector<std::uint32_t> countBounds,
+                     const bool ownsAtomInvGen);
 }  // namespace AtomPair
 }  // namespace RDKit

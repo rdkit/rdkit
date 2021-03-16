@@ -61,119 +61,12 @@ void addFingerprintToRGroupData(RGroupData *rgroupData) {
   }
 }
 
-// calculate centroid of fingerprints
-static std::vector<double> fingerprintCenter(
-    const std::vector<ExplicitBitVect *> &fingerprints) {
-  std::vector<double> center(fingerprintSize, 0.0);
-  for (auto fingerprint : fingerprints) {
-    for (int i = 0; i < fingerprintSize; i++) {
-      if (fingerprint->operator[](i)) {
-        center[i] += 1.0;
-      }
-    }
-  }
-
-  for (int i = 0; i < fingerprintSize; i++) {
-    center[i] /= fingerprints.size();
-  }
-
-#ifdef DEBUG
-  std::cerr << "Center " << GarethUtil::collectionToString(center, ",")
-            << std::endl;
-#endif
-  return center;
-}
-
-// calculate Euclidean distance between center and fingerprint
-static double euclideanDistance(const std::vector<double> &center,
-                                const ExplicitBitVect *fingerprint) {
-  double sqrSum = 0.0;
-  for (int i = 0; i < fingerprintSize; i++) {
-    double bit = fingerprint->operator[](i) ? 1.0 : 0.0;
-    double d = center[i] - bit;
-    sqrSum += d * d;
-  }
-  auto distance = sqrt(sqrSum);
-
-#ifdef DEBUG
-  std::cerr << "Distance " << distance << "sqrSum " << sqrSum << std::endl;
-#endif
-  return distance;
-}
-
-// TODO Profile fingerprintDistanceScore
-// Fingerprint score based on distance to fingerprint centroid for rgroups at
-// each label Quite slow
-double fingerprintDistanceScore(
-    const std::vector<size_t> &permutation,
-    const std::vector<std::vector<RGroupMatch>> &matches,
-    const std::set<int> &labels) {
-#ifdef DEBUG
-  std::cerr << "---------------------------------------------------"
-            << std::endl;
-  std::cerr << "Fingerprint Scoring permutation "
-            << " num matches: " << matches.size() << std::endl;
-#endif
-
-  std::vector<double> labelScores;
-  labelScores.reserve(labels.size());
-
-  // For each label (group)
-  for (int l : labels) {
-#ifdef DEBUG
-    std::cerr << "Label: " << l << std::endl;
-#endif
-    std::vector<ExplicitBitVect *> fingerprints;
-    fingerprints.reserve(permutation.size());
-
-    for (size_t m = 0; m < permutation.size(); ++m) {  // for each molecule
-      auto rg = matches[m][permutation[m]].rgroups.find(l);
-      if (rg != matches[m][permutation[m]].rgroups.end()) {
-        auto rgroupData = rg->second;
-        if (rgroupData->fingerprint == nullptr) {
-          addFingerprintToRGroupData(rgroupData.get());
-        }
-        auto fingerprint = rgroupData->fingerprint.get();
-        fingerprints.push_back(fingerprint);
-      }
-    }
-
-    auto center = fingerprintCenter(fingerprints);
-    auto distanceSum =
-        std::accumulate(fingerprints.begin(), fingerprints.end(), 0.0,
-                        [&center](double ss, ExplicitBitVect *fp) {
-                          return ss + euclideanDistance(center, fp);
-                        });
-    auto rmsDistance = sqrt(distanceSum / fingerprints.size());
-#ifdef DEBUG
-    std::cerr << "RMS distance to center " << rmsDistance
-              << " sum of distances " << distanceSum << std::endl;
-#endif
-
-    labelScores.push_back(rmsDistance);
-  }
-
-  // arithmetic mean of scores for each label
-  auto sum =
-      std::accumulate(labelScores.begin(), labelScores.end(), 0.0,
-                      [](double sum, double score) { return sum + score; });
-  auto score = sum / labelScores.size();
-
-  // want to minimize this score
-#ifdef DEBUG
-  std::cerr << "Fingerprint score " << score << std::endl;
-#endif
-  return -score;
-}
-
 // Adds or subtracts a molecule match to the rgroup fingerprint bit counts
 // vectors
-void modifyVarianceData(
+void FingerprintVarianceScoreData::modifyVarianceData(
     int matchNumber, int permutationNumber,
     const std::vector<std::vector<RGroupMatch>> &matches,
-    const std::set<int> &labels,
-    std::map<int, std::shared_ptr<VarianceDataForLabel>> &labelsToVarianceData,
-    bool add) {
+    const std::set<int> &labels, bool add) {
   // For each label (group)
   for (int l : labels) {
     auto match = matches[matchNumber][permutationNumber].rgroups;
@@ -195,28 +88,33 @@ void modifyVarianceData(
       }
     }
   }
+  auto rgroupsMissing =
+      matches[matchNumber][permutationNumber].numberMissingUserRGroups;
+  if (add) {
+    numberOfMissingUserRGroups += rgroupsMissing;
+    numberOfMolecules++;
+  } else {
+    numberOfMissingUserRGroups -= rgroupsMissing;
+    numberOfMolecules--;
+  }
 }
 
 // Adds a molecule match to the rgroup fingerprint bit counts
 // vectors
-void addVarianceData(int matchNumber, int permutationNumber,
-                     const std::vector<std::vector<RGroupMatch>> &matches,
-                     const std::set<int> &labels,
-                     std::map<int, std::shared_ptr<VarianceDataForLabel>>
-                         &labelsToVarianceData) {
-  modifyVarianceData(matchNumber, permutationNumber, matches, labels,
-                     labelsToVarianceData, true);
+void FingerprintVarianceScoreData::addVarianceData(
+    int matchNumber, int permutationNumber,
+    const std::vector<std::vector<RGroupMatch>> &matches,
+    const std::set<int> &labels) {
+  modifyVarianceData(matchNumber, permutationNumber, matches, labels, true);
 }
 
 // Subtracts a molecule match from the rgroup fingerprint bit counts
 // vectors
-void removeVarianceData(int matchNumber, int permutationNumber,
-                        const std::vector<std::vector<RGroupMatch>> &matches,
-                        const std::set<int> &labels,
-                        std::map<int, std::shared_ptr<VarianceDataForLabel>>
-                            &labelsToVarianceData) {
-  modifyVarianceData(matchNumber, permutationNumber, matches, labels,
-                     labelsToVarianceData, false);
+void FingerprintVarianceScoreData::removeVarianceData(
+    int matchNumber, int permutationNumber,
+    const std::vector<std::vector<RGroupMatch>> &matches,
+    const std::set<int> &labels) {
+  modifyVarianceData(matchNumber, permutationNumber, matches, labels, false);
 }
 
 // fingerprint variance score
@@ -226,8 +124,7 @@ double fingerprintVarianceScore(
     const std::vector<size_t> &permutation,
     const std::vector<std::vector<RGroupMatch>> &matches,
     const std::set<int> &labels,
-    std::map<int, std::shared_ptr<VarianceDataForLabel>>
-        *labelsToVarianceData) {
+    FingerprintVarianceScoreData *fingerprintVarianceScoreData) {
 #ifdef DEBUG
   std::cerr << "---------------------------------------------------"
             << std::endl;
@@ -235,10 +132,12 @@ double fingerprintVarianceScore(
             << " num matches: " << matches.size() << std::endl;
 #endif
 
-  std::map<int, std::shared_ptr<VarianceDataForLabel>> bitCountsByLabel;
-  if (!labelsToVarianceData) {
-    labelsToVarianceData = &bitCountsByLabel;
+  FingerprintVarianceScoreData fingerprintVarianceScoreData2;
+  if (!fingerprintVarianceScoreData) {
+    fingerprintVarianceScoreData = &fingerprintVarianceScoreData2;
   }
+  auto &labelsToVarianceData =
+      fingerprintVarianceScoreData->labelsToVarianceData;
 
   // For each label (group)
   for (int l : labels) {
@@ -247,10 +146,10 @@ double fingerprintVarianceScore(
 #endif
 
     std::shared_ptr<VarianceDataForLabel> variableDataForLabel;
-    auto d = labelsToVarianceData->find(l);
-    if (d == labelsToVarianceData->end()) {
+    auto d = labelsToVarianceData.find(l);
+    if (d == labelsToVarianceData.end()) {
       variableDataForLabel = std::make_shared<VarianceDataForLabel>(l);
-      labelsToVarianceData->emplace(l, variableDataForLabel);
+      labelsToVarianceData.emplace(l, variableDataForLabel);
     } else {
       variableDataForLabel = d->second;
     }
@@ -264,30 +163,50 @@ double fingerprintVarianceScore(
     }
   }
 
-  return fingerprintVarianceGroupScore(*labelsToVarianceData);
+  size_t numberMissingRGroups = 0;
+  for (size_t m = 0; m < permutation.size(); ++m) {  // for each molecule
+    numberMissingRGroups += matches[m][permutation[m]].numberMissingUserRGroups;
+  }
+  fingerprintVarianceScoreData->numberOfMissingUserRGroups +=
+      numberMissingRGroups;
+  fingerprintVarianceScoreData->numberOfMolecules += permutation.size();
+
+  return fingerprintVarianceScoreData->fingerprintVarianceGroupScore();
 }
 
 // calculates fingerprint variance score from rgroup bit counts
-double fingerprintVarianceGroupScore(
-    const std::map<int, std::shared_ptr<VarianceDataForLabel>>
-        &bitCountsByLabel) {
+double FingerprintVarianceScoreData::fingerprintVarianceGroupScore() {
   // arithmetic mean of scores for each label
 #ifdef DEBUG
   std::cerr << "fingerprint variance score: ";
 #endif
   auto sum = std::accumulate(
-      bitCountsByLabel.cbegin(), bitCountsByLabel.cend(), 0.0,
+      labelsToVarianceData.cbegin(), labelsToVarianceData.cend(), 0.0,
       [](double sum,
          std::pair<int, std::shared_ptr<VarianceDataForLabel>> pair) {
         auto variance = pair.second->variance();
+        // perhaps here the variance should be weighted by occupancy- so that
+        // sparsely populated rgroups are penalized
+
+        // e.g variance *= ((double) numberOfMolecules) /
+        // ((double)pair.second->numberFingerprints);
 #ifdef DEBUG
         std::cerr << variance << ',';
 #endif
         return sum + variance;
       });
-  auto score = sum / bitCountsByLabel.size();
+
+  // Heuristic correction of missing user r_groups - equivalent to a variance
+  // penalty of 1 for each missing user R-group across the entire dataset
+  CHECK_INVARIANT(numberOfMolecules > 0, "No compounds to be scored!");
+  double rgroupPenalty =
+      (double)numberOfMissingUserRGroups / (double)numberOfMolecules;
+  // double the penalty to catch systems like
+  // https://github.com/rdkit/rdkit/issues/3896
+  auto score = sum + 2.0 * rgroupPenalty;
 #ifdef DEBUG
-  std::cerr << " sum " << sum << " score " << score << std::endl;
+  std::cerr << " sum " << sum << " rgroup penalty " << rgroupPenalty
+            << " score " << score << std::endl;
 #endif
   // want to minimize this score
   return -score;
@@ -366,6 +285,12 @@ double VarianceDataForLabel::variance() const {
             << rmsVariance << std::endl;
 #endif
   return rmsVariance;
+}
+
+void FingerprintVarianceScoreData::clear() {
+  numberOfMissingUserRGroups = 0;
+  numberOfMolecules = 0;
+  labelsToVarianceData.clear();
 }
 
 }  // namespace RDKit

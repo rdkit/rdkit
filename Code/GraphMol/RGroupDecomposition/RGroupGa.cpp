@@ -11,10 +11,14 @@
 #include <ctime>
 #include <limits>
 #include <future>
+#include <assert.h>
 #include "RGroupGa.h"
 #include "RGroupDecompData.h"
 #include "RGroupDecomp.h"
+#include "RGroupFingerprintScore.h"
 #include "../../../External/GA/util/Util.h"
+
+// #define DEBUG
 
 namespace RDKit {
 
@@ -37,14 +41,16 @@ double RGroupDecompositionChromosome::score() {
   if (operationName != RgroupMutate) {
     decode();
   }
-  if (scoreMethod == FingerprintVariance && labelsToVarianceData.size() > 0 &&
+  if (scoreMethod == FingerprintVariance && fingerprintVarianceScoreData.labelsToVarianceData.size() > 0 &&
       operationName == RgroupMutate) {
-    fitness = fingerprintVarianceGroupScore(labelsToVarianceData);
-    // Uncomment the following line to check that the fingerprintVarianceGroupScore is giving
-    // the correct result.  Don't do this in production as it will be extremely slow.
-    // assert(fitness == recalculateScore(), "Error in variance score");
+    fitness = fingerprintVarianceScoreData.fingerprintVarianceGroupScore();
+    // Uncomment the following line to check that the
+    // fingerprintVarianceGroupScore is giving the correct result.  Don't do
+    // this in production as it will be extremely slow.
+
+    // assert(fitness == recalculateScore());
   } else {
-    fitness = rGroupData.score(permutation, &labelsToVarianceData);
+    fitness = rGroupData.score(permutation, &fingerprintVarianceScoreData);
   }
   return fitness;
 }
@@ -73,7 +79,7 @@ void RGroupDecompositionChromosome::copyGene(
     const StringChromosomeBase<int, IntegerStringChromosomePolicy>& other) {
   StringChromosomeBase<int, IntegerStringChromosomePolicy>::copyGene(other);
   const auto& parent = static_cast<const RGroupDecompositionChromosome&>(other);
-  copyVarianceData(parent.labelsToVarianceData, labelsToVarianceData);
+  copyVarianceData(parent.fingerprintVarianceScoreData, fingerprintVarianceScoreData);
 }
 
 GaResult& GaResult::operator=(const GaResult& other) {
@@ -93,12 +99,12 @@ RGroupGa::RGroupGa(const RGroupDecompData& rGroupData,
   setSelectionPressure(1.0001);
 
   const auto& matches = rGroupData.matches;
-  numPermutations = 0L;
+  numPermutations = 1L;
   auto pos = 0;
   for (auto m : matches) {
     if (m.size() == 1) continue;
     chromosomePolicy.setMax(pos, m.size());
-    unsigned long count = numPermutations = m.size();
+    unsigned long count = numPermutations * m.size();
     numPermutations = count / m.size() == numPermutations
                           ? count
                           : numeric_limits<unsigned int>::max();
@@ -157,14 +163,14 @@ void RGroupGa::rGroupMutateOperation(
   child->setOperationName(RgroupMutate);
   child->decode();
 
-  auto& labelsToVarianceData = child->getLabelsToVarianceData();
-  if (labelsToVarianceData.size() == 0) return;
+  auto &fingerprintVarianceScoreData = child->getFingerprintVarianceScoreData();
+  if (fingerprintVarianceScoreData.labelsToVarianceData.size() == 0) return;
 #ifdef DEBUG
   std::cerr << "RGroup mutate start" << std::endl;
 #endif
 #ifdef DEBUG
   std::cerr << "Starting child score" << std::endl;
-  fingerprintVarianceScore(labelsToVarianceData);
+  fingerprintVarianceGroupScore(fingerprintVarianceScoreData);
 #endif
 
   auto& parentPermutation = parent->getPermutation();
@@ -177,16 +183,15 @@ void RGroupGa::rGroupMutateOperation(
     int parentValue = parentPermutation.at(pos);
     int childValue = childPermutation.at(pos);
     if (parentValue != childValue) {
-      removeVarianceData(pos, parentValue, matches, labels,
-                         labelsToVarianceData);
+      fingerprintVarianceScoreData.removeVarianceData(pos, parentValue, matches, labels);
 #ifdef DEBUG
       std::cerr << "After removing parent" << std::endl;
-      fingerprintVarianceScore(labelsToVarianceData);
+      fingerprintVarianceGroupScore(fingerprintVarianceScoreData);
 #endif
-      addVarianceData(pos, childValue, matches, labels, labelsToVarianceData);
+      fingerprintVarianceScoreData.addVarianceData(pos, childValue, matches, labels);
 #ifdef DEBUG
       std::cerr << "After adding child" << std::endl;
-      fingerprintVarianceScore(labelsToVarianceData);
+      fingerprintVarianceGroupScore(fingerprintVarianceScoreData);
 #endif
     }
   }
@@ -207,8 +212,8 @@ void RGroupGa::rGroupCrossoverOperation(
 
   child1->setOperationName(Crossover);
   child2->setOperationName(Crossover);
-  clearVarianceData(child1->getLabelsToVarianceData());
-  clearVarianceData(child2->getLabelsToVarianceData());
+  clearVarianceData(child1->getFingerprintVarianceScoreData());
+  clearVarianceData(child2->getFingerprintVarianceScoreData());
 
   parent1->twoPointCrossover(*parent2, *child1, *child2);
 }
@@ -250,7 +255,6 @@ GaResult RGroupGa::run(int runNumber) {
   population.create();
   double bestScore = population.getBestScore();
   BOOST_LOG(rdInfoLog) << population.info() << endl;
-  BOOST_LOG(rdDebugLog) << population.populationInfo();
 
   int nOps = 0;
   int lastImprovementOp = 0;
@@ -258,8 +262,8 @@ GaResult RGroupGa::run(int runNumber) {
     population.iterate();
     nOps++;
     if (nOps % 1000 == 0) {
-      BOOST_LOG(rdInfoLog) << "Run " << runNumber << " " << population.info() << " "
-                           << timeInfo(startTime) << endl;
+      BOOST_LOG(rdInfoLog) << "Run " << runNumber << " " << population.info()
+                           << " " << timeInfo(startTime) << endl;
     }
     if (population.getBestScore() > bestScore) {
       bestScore = population.getBestScore();
@@ -279,8 +283,6 @@ GaResult RGroupGa::run(int runNumber) {
     }
   }
   const shared_ptr<RGroupDecompositionChromosome> best = population.getBest();
-  BOOST_LOG(rdDebugLog) << "Run " << runNumber << " Best solution " << best->info() << endl;
-  BOOST_LOG(rdDebugLog) << "Run " << runNumber << " " << population.populationInfo();
 
   auto ties = population.getTiedBest();
   vector<vector<size_t>> permutations;
@@ -289,7 +291,8 @@ GaResult RGroupGa::run(int runNumber) {
                  [](const shared_ptr<RGroupDecompositionChromosome> c) {
                    return c->getPermutation();
                  });
-  BOOST_LOG(rdInfoLog) << "Run " << runNumber << " Execution " << timeInfo(startTime) << std::endl;
+  BOOST_LOG(rdInfoLog) << "Run " << runNumber << " Execution "
+                       << timeInfo(startTime) << std::endl;
   GaResult result{best->getFitness(), permutations};
   return result;
 }
@@ -323,8 +326,11 @@ shared_ptr<RGroupDecompositionChromosome> RGroupGa::createChromosome() {
   return make_shared<RGroupDecompositionChromosome>(*this);
 }
 
-void copyVarianceData(const map<int, shared_ptr<VarianceDataForLabel>>& from,
-                      map<int, shared_ptr<VarianceDataForLabel>>& to) {
+void copyVarianceData(const FingerprintVarianceScoreData& fromData,
+                      FingerprintVarianceScoreData& toData) {
+  auto& from = fromData.labelsToVarianceData;
+  auto& to = toData.labelsToVarianceData;
+
   for (auto it = from.cbegin(); it != from.end(); ++it) {
     auto df = to.find(it->first);
     if (df == to.end()) {
@@ -337,14 +343,21 @@ void copyVarianceData(const map<int, shared_ptr<VarianceDataForLabel>>& from,
                                fromData->bitCounts.cend());
     }
   }
+
+  toData.numberOfMolecules = fromData.numberOfMolecules;
+  toData.numberOfMissingUserRGroups = fromData.numberOfMissingUserRGroups;
 }
 
-void clearVarianceData(map<int, shared_ptr<VarianceDataForLabel>>& data) {
+void clearVarianceData(
+    FingerprintVarianceScoreData& fingerprintVarianceScoreData) {
+  auto& data = fingerprintVarianceScoreData.labelsToVarianceData;
   for (auto it = data.begin(); it != data.end(); ++it) {
     auto d = it->second;
     d->numberFingerprints = 0;
     d->bitCounts.assign(d->bitCounts.size(), 0.0);
   }
+  fingerprintVarianceScoreData.numberOfMissingUserRGroups = 0;
+  fingerprintVarianceScoreData.numberOfMolecules = 0;
 }
 
 }  // namespace RDKit

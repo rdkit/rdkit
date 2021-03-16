@@ -21,6 +21,7 @@
 #include "../../../External/GA/ga/GaOperation.h"
 #include "../../../External/GA/ga/LinkedPopLinearSel.h"
 #include "../../../External/GA/ga/IntegerStringChromosomePolicy.h"
+#include "RGroupFingerprintScore.h"
 
 namespace RDKit {
 
@@ -30,7 +31,6 @@ using namespace std;
 class RGroupDecompositionChromosome;
 class RGroupGa;
 struct RGroupDecompData;
-struct VarianceDataForLabel;
 
 typedef LinkedPopLinearSel<RGroupDecompositionChromosome, RGroupGa>
     RGroupGaPopulation;
@@ -65,8 +65,8 @@ class RGroupDecompositionChromosome : public IntegerStringChromosome {
 
   void copyGene(const StringChromosomeBase& other) override;
 
-  map<int, shared_ptr<VarianceDataForLabel>>& getLabelsToVarianceData() {
-    return labelsToVarianceData;
+  FingerprintVarianceScoreData & getFingerprintVarianceScoreData() {
+    return fingerprintVarianceScoreData;
   }
 
   const vector<size_t>& getPermutation() const { return permutation; }
@@ -79,7 +79,7 @@ class RGroupDecompositionChromosome : public IntegerStringChromosome {
   RGroupDecompositionChromosome& operator=(
       const RGroupDecompositionChromosome& other) = delete;
   double fitness;
-  map<int, shared_ptr<VarianceDataForLabel>> labelsToVarianceData;
+  FingerprintVarianceScoreData fingerprintVarianceScoreData;
   OperationName operationName = Create;
   vector<size_t> permutation;
 
@@ -101,7 +101,7 @@ struct GaResult {
   GaResult& operator=(const GaResult& other);
 };
 
-class RGroupGa : public GaBase {
+class RDKIT_RGROUPDECOMPOSITION_EXPORT RGroupGa : public GaBase {
  public:
   RGroupGa(const RGroupDecompData& rGroupData,
            const chrono::steady_clock::time_point* const t0 = nullptr);
@@ -151,12 +151,11 @@ class RGroupGa : public GaBase {
       std::vector<std::shared_ptr<RGroupDecompositionChromosome>>& children);
 };
 
-void copyVarianceData(
-    const std::map<int, std::shared_ptr<VarianceDataForLabel>>& from,
-    std::map<int, std::shared_ptr<VarianceDataForLabel>>& to);
+void copyVarianceData(const FingerprintVarianceScoreData& fromData,
+                      FingerprintVarianceScoreData& toData);
 
 void clearVarianceData(
-    std::map<int, std::shared_ptr<VarianceDataForLabel>>& data);
+    FingerprintVarianceScoreData& fingerprintVarianceScoreData);
 
 }  // namespace RDKit
 

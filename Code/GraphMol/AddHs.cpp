@@ -14,9 +14,6 @@
 #include "MonomerInfo.h"
 #include <Geometry/Transform3D.h>
 #include <Geometry/point.h>
-#include <boost/lexical_cast.hpp>
-#include <boost/tokenizer.hpp>
-#include <boost/algorithm/string/trim.hpp>
 #include <boost/algorithm/string/classification.hpp>
 #include <boost/dynamic_bitset.hpp>
 #include <boost/range/iterator_range.hpp>
@@ -108,15 +105,6 @@ void AssignHsResidueInfo(RWMol &mol) {
   }
 }
 
-std::string isoHsToString(const std::vector<unsigned int> &isoHs) {
-  std::stringstream ss;
-  std::copy(isoHs.begin(), isoHs.end(),
-            std::ostream_iterator<unsigned int>(ss, " "));
-  std::string res(ss.str());
-  boost::trim(res);
-  return res;
-}
-
 std::map<unsigned int, std::vector<unsigned int>> getIsoMap(const ROMol &mol) {
   std::map<unsigned int, std::vector<unsigned int>> isoMap;
   for (auto atom : mol.atoms()) {
@@ -151,6 +139,25 @@ std::map<unsigned int, std::vector<unsigned int>> getIsoMap(const ROMol &mol) {
 
 namespace MolOps {
 
+namespace {
+RDGeom::Point3D pickBisector(const RDGeom::Point3D &nbr1Vect,
+                             const RDGeom::Point3D &nbr2Vect,
+                             const RDGeom::Point3D &nbr3Vect) {
+  auto dirVect = nbr2Vect + nbr3Vect;
+  if (dirVect.lengthSq() < 1e-4) {
+    // nbr2Vect and nbr3Vect are anti-parallel (was #3854)
+    dirVect = nbr2Vect;
+    std::swap(dirVect.x, dirVect.y);
+    dirVect.x *= -1;
+  }
+  if (dirVect.dotProduct(nbr1Vect) < 0) {
+    dirVect *= -1;
+  }
+
+  return dirVect;
+}
+}  // namespace
+
 void setTerminalAtomCoords(ROMol &mol, unsigned int idx,
                            unsigned int otherIdx) {
   // we will loop over all the coordinates
@@ -170,7 +177,7 @@ void setTerminalAtomCoords(ROMol &mol, unsigned int idx,
   RDGeom::Point3D perpVect, rotnAxis, nbrPerp;
   RDGeom::Point3D nbr1Vect, nbr2Vect, nbr3Vect;
   RDGeom::Transform3D tform;
-  RDGeom::Point3D heavyPos, hydPos;
+  RDGeom::Point3D otherPos, atomPos;
 
   const Atom *nbr1 = nullptr, *nbr2 = nullptr, *nbr3 = nullptr;
   const Bond *nbrBond;
@@ -189,9 +196,9 @@ void setTerminalAtomCoords(ROMol &mol, unsigned int idx,
         } else {
           dirVect.x = 1;
         }
-        heavyPos = (*cfi)->getAtomPos(otherIdx);
-        hydPos = heavyPos + dirVect * ((*cfi)->is3D() ? bondLength : 1.0);
-        (*cfi)->setAtomPos(idx, hydPos);
+        otherPos = (*cfi)->getAtomPos(otherIdx);
+        atomPos = otherPos + dirVect * ((*cfi)->is3D() ? bondLength : 1.0);
+        (*cfi)->setAtomPos(idx, atomPos);
       }
       break;
 
@@ -202,14 +209,14 @@ void setTerminalAtomCoords(ROMol &mol, unsigned int idx,
       nbr1 = getAtomNeighborNot(&mol, otherAtom, atom);
       for (auto cfi = mol.beginConformers(); cfi != mol.endConformers();
            ++cfi) {
-        heavyPos = (*cfi)->getAtomPos(otherIdx);
+        otherPos = (*cfi)->getAtomPos(otherIdx);
         RDGeom::Point3D nbr1Pos = (*cfi)->getAtomPos(nbr1->getIdx());
         // get a normalized vector pointing away from the neighbor:
-        nbr1Vect = nbr1Pos - heavyPos;
+        nbr1Vect = nbr1Pos - otherPos;
         if (fabs(nbr1Vect.lengthSq()) < 1e-4) {
           // no difference, which likely indicates that we have redundant atoms.
           // just put it on top of the heavy atom. This was #678
-          (*cfi)->setAtomPos(idx, heavyPos);
+          (*cfi)->setAtomPos(idx, otherPos);
           continue;
         }
         nbr1Vect.normalize();
@@ -228,8 +235,8 @@ void setTerminalAtomCoords(ROMol &mol, unsigned int idx,
             // and move off it:
             tform.SetRotation((180 - 109.471) * M_PI / 180., perpVect);
             dirVect = tform * nbr1Vect;
-            hydPos = heavyPos + dirVect * ((*cfi)->is3D() ? bondLength : 1.0);
-            (*cfi)->setAtomPos(idx, hydPos);
+            atomPos = otherPos + dirVect * ((*cfi)->is3D() ? bondLength : 1.0);
+            (*cfi)->setAtomPos(idx, atomPos);
             break;
           case Atom::SP2:
             // default 3D position is to just take an arbitrary perpendicular
@@ -255,21 +262,21 @@ void setTerminalAtomCoords(ROMol &mol, unsigned int idx,
             // rotate the nbr1Vect 60 degrees about perpVect and we're done:
             tform.SetRotation(60. * M_PI / 180., perpVect);
             dirVect = tform * nbr1Vect;
-            hydPos = heavyPos + dirVect * ((*cfi)->is3D() ? bondLength : 1.0);
-            (*cfi)->setAtomPos(idx, hydPos);
+            atomPos = otherPos + dirVect * ((*cfi)->is3D() ? bondLength : 1.0);
+            (*cfi)->setAtomPos(idx, atomPos);
             break;
           case Atom::SP:
             // just lay the H along the vector:
             dirVect = nbr1Vect;
-            hydPos = heavyPos + dirVect * ((*cfi)->is3D() ? bondLength : 1.0);
-            (*cfi)->setAtomPos(idx, hydPos);
+            atomPos = otherPos + dirVect * ((*cfi)->is3D() ? bondLength : 1.0);
+            (*cfi)->setAtomPos(idx, atomPos);
             break;
           default:
             // FIX: handle other hybridizations
             // for now, just lay the H along the vector:
             dirVect = nbr1Vect;
-            hydPos = heavyPos + dirVect * ((*cfi)->is3D() ? bondLength : 1.0);
-            (*cfi)->setAtomPos(idx, hydPos);
+            atomPos = otherPos + dirVect * ((*cfi)->is3D() ? bondLength : 1.0);
+            (*cfi)->setAtomPos(idx, atomPos);
         }
       }
       break;
@@ -293,14 +300,14 @@ void setTerminalAtomCoords(ROMol &mol, unsigned int idx,
       for (auto cfi = mol.beginConformers(); cfi != mol.endConformers();
            ++cfi) {
         // start along the average of the two vectors:
-        heavyPos = (*cfi)->getAtomPos(otherIdx);
-        nbr1Vect = heavyPos - (*cfi)->getAtomPos(nbr1->getIdx());
-        nbr2Vect = heavyPos - (*cfi)->getAtomPos(nbr2->getIdx());
+        otherPos = (*cfi)->getAtomPos(otherIdx);
+        nbr1Vect = otherPos - (*cfi)->getAtomPos(nbr1->getIdx());
+        nbr2Vect = otherPos - (*cfi)->getAtomPos(nbr2->getIdx());
         if (fabs(nbr1Vect.lengthSq()) < 1e-4 ||
             fabs(nbr2Vect.lengthSq()) < 1e-4) {
           // no difference, which likely indicates that we have redundant atoms.
           // just put it on top of the heavy atom. This was #678
-          (*cfi)->setAtomPos(idx, heavyPos);
+          (*cfi)->setAtomPos(idx, otherPos);
           continue;
         }
         nbr1Vect.normalize();
@@ -319,27 +326,27 @@ void setTerminalAtomCoords(ROMol &mol, unsigned int idx,
               rotnAxis.normalize();
               tform.SetRotation((109.471 / 2) * M_PI / 180., rotnAxis);
               dirVect = tform * dirVect;
-              hydPos = heavyPos + dirVect * ((*cfi)->is3D() ? bondLength : 1.0);
-              (*cfi)->setAtomPos(idx, hydPos);
+              atomPos = otherPos + dirVect * ((*cfi)->is3D() ? bondLength : 1.0);
+              (*cfi)->setAtomPos(idx, atomPos);
               break;
             case Atom::SP2:
               // don't need to do anything here, the H atom goes right on the
               // direction vector
-              hydPos = heavyPos + dirVect * ((*cfi)->is3D() ? bondLength : 1.0);
-              (*cfi)->setAtomPos(idx, hydPos);
+              atomPos = otherPos + dirVect * ((*cfi)->is3D() ? bondLength : 1.0);
+              (*cfi)->setAtomPos(idx, atomPos);
               break;
             default:
               // FIX: handle other hybridizations
               // for now, just lay the H along the neighbor vector;
-              hydPos = heavyPos + dirVect * ((*cfi)->is3D() ? bondLength : 1.0);
-              (*cfi)->setAtomPos(idx, hydPos);
+              atomPos = otherPos + dirVect * ((*cfi)->is3D() ? bondLength : 1.0);
+              (*cfi)->setAtomPos(idx, atomPos);
               break;
           }
         } else {
           // don't need to do anything here, the H atom goes right on the
           // direction vector
-          hydPos = heavyPos + dirVect;
-          (*cfi)->setAtomPos(idx, hydPos);
+          atomPos = otherPos + dirVect;
+          (*cfi)->setAtomPos(idx, atomPos);
         }
       }
       break;
@@ -387,17 +394,16 @@ void setTerminalAtomCoords(ROMol &mol, unsigned int idx,
       TEST_ASSERT(nbr3);
       for (auto cfi = mol.beginConformers(); cfi != mol.endConformers();
            ++cfi) {
-        // use the average of the three vectors:
-        heavyPos = (*cfi)->getAtomPos(otherIdx);
-        nbr1Vect = heavyPos - (*cfi)->getAtomPos(nbr1->getIdx());
-        nbr2Vect = heavyPos - (*cfi)->getAtomPos(nbr2->getIdx());
-        nbr3Vect = heavyPos - (*cfi)->getAtomPos(nbr3->getIdx());
+        otherPos = (*cfi)->getAtomPos(otherIdx);
+        nbr1Vect = otherPos - (*cfi)->getAtomPos(nbr1->getIdx());
+        nbr2Vect = otherPos - (*cfi)->getAtomPos(nbr2->getIdx());
+        nbr3Vect = otherPos - (*cfi)->getAtomPos(nbr3->getIdx());
         if (fabs(nbr1Vect.lengthSq()) < 1e-4 ||
             fabs(nbr2Vect.lengthSq()) < 1e-4 ||
             fabs(nbr3Vect.lengthSq()) < 1e-4) {
           // no difference, which likely indicates that we have redundant atoms.
           // just put it on top of the heavy atom. This was #678
-          (*cfi)->setAtomPos(idx, heavyPos);
+          (*cfi)->setAtomPos(idx, otherPos);
           continue;
         }
         nbr1Vect.normalize();
@@ -434,49 +440,38 @@ void setTerminalAtomCoords(ROMol &mol, unsigned int idx,
           }
         } else {
           // we're in flatland
-          // this was github #908
-          // We're in a 2D conformation, put the H between the two neighbors
-          // that have the widest angle between them. Unless the two are
-          // opposite ends of a straight line through the heavy atom,
-          // which would make the H overlap with the heavy atom.
-          // In such case, set it on the opposite direction to the 3rd neighbor.
-          double minDot = nbr1Vect.dotProduct(nbr2Vect);
-          if (fabs(minDot + 1) < 1e-4) {
-            dirVect = -nbr3Vect;
+
+          // github #3879 and #908: find the two neighbors with the largest
+          // outer angle between them and then place the H to bisect that angle
+          // This is recommendation ST-1.1.4 from the 2006 IUPAC "Graphical
+          // representation of stereochemical configuration" guideline
+          auto angle12 = nbr1Vect.angleTo(nbr2Vect);
+          auto angle13 = nbr1Vect.angleTo(nbr3Vect);
+          auto angle23 = nbr2Vect.angleTo(nbr3Vect);
+          auto accum1 = angle12 + angle13;
+          auto accum2 = angle12 + angle23;
+          auto accum3 = angle13 + angle23;
+          if (accum1 <= accum2 && accum1 <= accum3) {
+            dirVect = pickBisector(nbr1Vect, nbr2Vect, nbr3Vect);
+          } else if (accum2 <= accum1 && accum2 <= accum3) {
+            dirVect = pickBisector(nbr2Vect, nbr1Vect, nbr3Vect);
           } else {
-            dirVect = nbr1Vect + nbr2Vect;
+            dirVect = pickBisector(nbr3Vect, nbr1Vect, nbr2Vect);
           }
-          if (nbr2Vect.dotProduct(nbr3Vect) < minDot) {
-            minDot = nbr2Vect.dotProduct(nbr3Vect);
-            if (fabs(minDot + 1) < 1e-4) {
-              dirVect = -nbr1Vect;
-            } else {
-              dirVect = nbr2Vect + nbr3Vect;
-            }
-          }
-          if (nbr1Vect.dotProduct(nbr3Vect) < minDot) {
-            minDot = nbr1Vect.dotProduct(nbr3Vect);
-            if (fabs(minDot + 1) < 1e-4) {
-              dirVect = -nbr2Vect;
-            } else {
-              dirVect = nbr1Vect + nbr3Vect;
-            }
-          }
-          dirVect *= -1;
         }
         dirVect.normalize();
-        hydPos = heavyPos + dirVect * ((*cfi)->is3D() ? bondLength : 1.0);
-        (*cfi)->setAtomPos(idx, hydPos);
+        atomPos = otherPos + dirVect * ((*cfi)->is3D() ? bondLength : 1.0);
+        (*cfi)->setAtomPos(idx, atomPos);
       }
       break;
     default:
       // --------------------------------------------------------------------------
       // FIX: figure out what to do here
       // --------------------------------------------------------------------------
-      hydPos = heavyPos + dirVect * bondLength;
+      atomPos = otherPos + dirVect * bondLength;
       for (auto cfi = mol.beginConformers(); cfi != mol.endConformers();
            ++cfi) {
-        (*cfi)->setAtomPos(idx, hydPos);
+        (*cfi)->setAtomPos(idx, atomPos);
       }
       break;
   }
@@ -522,18 +517,8 @@ void addHs(RWMol &mol, bool explicitOnly, bool addCoords,
     Atom *newAt = mol.getAtomWithIdx(aidx);
 
     std::vector<unsigned int> isoHs;
-    std::string isotopicHsProp;
-    if (newAt->getPropIfPresent(common_properties::_isotopicHs,
-                                isotopicHsProp)) {
+    if (newAt->getPropIfPresent(common_properties::_isotopicHs, isoHs)) {
       newAt->clearProp(common_properties::_isotopicHs);
-      // be lenient on input, even if we write only space-separated
-      // strings of indices
-      boost::trim_if(isotopicHsProp, boost::is_any_of(" \t\r\n,()[]{}"));
-      boost::tokenizer<> tokens(isotopicHsProp);
-      std::transform(tokens.begin(), tokens.end(), std::back_inserter(isoHs),
-                     [](const std::string &t) {
-                       return boost::lexical_cast<unsigned int>(t);
-                     });
     }
     std::vector<unsigned int>::const_iterator isoH = isoHs.begin();
     unsigned int newIdx;
@@ -792,7 +777,7 @@ void removeHs(RWMol &mol, const RemoveHsParameters &ps, bool sanitize) {
   if (ps.removeAndTrackIsotopes) {
     for (const auto &pair : getIsoMap(mol)) {
       mol.getAtomWithIdx(pair.first)
-          ->setProp(common_properties::_isotopicHs, isoHsToString(pair.second));
+          ->setProp(common_properties::_isotopicHs, pair.second);
     }
   }
   boost::dynamic_bitset<> atomsToRemove{mol.getNumAtoms(), 0};
@@ -900,6 +885,8 @@ void removeHs(RWMol &mol, const RemoveHsParameters &ps, bool sanitize) {
     }
   }  // end of the loop over atoms
   // now that we know which atoms need to be removed, go ahead and remove them
+  // NOTE: there's too much complexity around stereochemistry here
+  // to be able to safely use batch editing.
   for (int idx = mol.getNumAtoms() - 1; idx >= 0; --idx) {
     if (atomsToRemove[idx]) {
       molRemoveH(mol, idx, ps.updateExplicitCount);
@@ -1140,13 +1127,11 @@ void mergeQueryHs(RWMol &mol, bool mergeUnmappedOnly) {
     }
     ++currIdx;
   }
-  std::sort(atomsToRemove.begin(), atomsToRemove.end());
-  for (std::vector<unsigned int>::const_reverse_iterator aiter =
-           atomsToRemove.rbegin();
-       aiter != atomsToRemove.rend(); ++aiter) {
-    Atom *atom = mol.getAtomWithIdx(*aiter);
-    mol.removeAtom(atom);
+  mol.beginBatchEdit();
+  for (auto aidx : atomsToRemove) {
+    mol.removeAtom(aidx);
   }
+  mol.commitBatchEdit();
 };
 ROMol *mergeQueryHs(const ROMol &mol, bool mergeUnmappedOnly) {
   auto *res = new RWMol(mol);
@@ -1172,5 +1157,5 @@ bool needsHs(const ROMol &mol) {
   return false;
 }
 
-}  // end of namespace MolOps
+}  // namespace MolOps
 }  // namespace RDKit

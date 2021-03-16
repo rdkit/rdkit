@@ -39,43 +39,42 @@ struct VarianceDataForLabel {
   double variance() const;
 };
 
+struct FingerprintVarianceScoreData {
+  size_t numberOfMissingUserRGroups = 0;
+  size_t numberOfMolecules = 0;
+  std::map<int, std::shared_ptr<VarianceDataForLabel>> labelsToVarianceData;
+
+  // calculates fingerprint variance score from rgroup bit counts
+  double fingerprintVarianceGroupScore();
+
+  // Adds a molecule match to the rgroup fingerprint bit counts
+  // vectors
+  void addVarianceData(int matchNumber, int permutationNumber,
+                       const std::vector<std::vector<RGroupMatch>> &matches,
+                       const std::set<int> &labels);
+
+  // Subtracts a molecule match from the rgroup fingerprint bit counts
+  // vectors
+  void removeVarianceData(int matchNumber, int permutationNumber,
+                          const std::vector<std::vector<RGroupMatch>> &matches,
+                          const std::set<int> &labels);
+
+  void clear();
+
+ private:
+  void modifyVarianceData(
+      int matchNumber, int permutationNumber,
+      const std::vector<std::vector<RGroupMatch>> &matches,
+      const std::set<int> &labels, bool add);
+};
+
 // The arithmetic mean of the mean fingerprint bit variances for the
 // fingerprints at each rgroup position.
-double fingerprintVarianceScore(
-    const std::vector<size_t> &bitCount,
+RDKIT_RGROUPDECOMPOSITION_EXPORT double fingerprintVarianceScore(
+    const std::vector<size_t> &permutation,
     const std::vector<std::vector<RGroupMatch>> &matches,
     const std::set<int> &labels,
-    std::map<int, std::shared_ptr<VarianceDataForLabel>> *labelsToVarianceData =
-        nullptr);
-
-// calculates fingerprint variance score from rgroup bit counts
-double fingerprintVarianceGroupScore(
-    const std::map<int, std::shared_ptr<VarianceDataForLabel>>
-        &bitCountsByLabel);
-
-// Adds a molecule match to the rgroup fingerprint bit counts
-// vectors
-void addVarianceData(
-    int matchNumber, int permutationNumber,
-    const std::vector<std::vector<RGroupMatch>> &matches,
-    const std::set<int> &labels,
-    std::map<int, std::shared_ptr<VarianceDataForLabel>> &labelsToVarianceData);
-
-// Subtracts a molecule match from the rgroup fingerprint bit counts
-// vectors
-void removeVarianceData(
-    int matchNumber, int permutationNumber,
-    const std::vector<std::vector<RGroupMatch>> &matches,
-    const std::set<int> &labels,
-    std::map<int, std::shared_ptr<VarianceDataForLabel>> &labelsToVarianceData);
-
-// Fingerprint score based on distance to fingerprint centroid for rgroups at
-// each label
-// Quite slow
-double fingerprintDistanceScore(
-    const std::vector<size_t> &bitCount,
-    const std::vector<std::vector<RGroupMatch>> &matches,
-    const std::set<int> &labels);
+    FingerprintVarianceScoreData *fingerprintVarianceScoreData = nullptr);
 
 }  // namespace RDKit
 

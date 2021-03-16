@@ -1,5 +1,5 @@
 #
-#  Copyright (C) 2003-2019  Greg Landrum and Rational Discovery LLC
+#  Copyright (C) 2003-2021  Greg Landrum and Rational Discovery LLC
 #         All Rights Reserved
 #
 """ This is a rough coverage test of the python wrapper
@@ -5904,8 +5904,7 @@ M  END
     m_noh = Chem.RemoveHs(m, ps)
     self.assertEqual(m_noh.GetNumAtoms(), m.GetNumAtoms() - 2)
     self.assertTrue(m_noh.GetAtomWithIdx(2).HasProp("_isotopicHs"))
-    self.assertEqual(tuple(map(int,
-                               m_noh.GetAtomWithIdx(2).GetProp("_isotopicHs").split())), (2, 2))
+    self.assertEqual(tuple(m_noh.GetAtomWithIdx(2).GetPropsAsDict().get("_isotopicHs")), (2, 2))
     m_h = Chem.AddHs(m_noh)
     self.assertFalse(m_h.GetAtomWithIdx(2).HasProp("_isotopicHs"))
     self.assertEqual(
@@ -6007,9 +6006,10 @@ M  END
     phenyl = Chem.MolFromSmiles("c1ccccc1")
 
     def numHsMatchingDummies(mol, core, match):
-      return sum([1 for qi, ai in enumerate(match)
-        if core.GetAtomWithIdx(qi).GetAtomicNum() == 0 and
-          mol.GetAtomWithIdx(ai).GetAtomicNum() == 1])
+      return sum([
+        1 for qi, ai in enumerate(match) if core.GetAtomWithIdx(qi).GetAtomicNum() == 0
+        and mol.GetAtomWithIdx(ai).GetAtomicNum() == 1
+      ])
 
     for mol, res in ((orthoMeta, 0), (ortho, 1), (meta, 1), (biphenyl, 2), (phenyl, 3)):
       mol = Chem.AddHs(mol)
@@ -6017,8 +6017,10 @@ M  END
       bestMatch = Chem.GetMostSubstitutedCoreMatch(mol, core, matches)
       self.assertEqual(numHsMatchingDummies(mol, core, bestMatch), res)
       ctrlCounts = sorted([numHsMatchingDummies(mol, core, match) for match in matches])
-      sortedCounts = [numHsMatchingDummies(mol, core, match)
-        for match in Chem.SortMatchesByDegreeOfCoreSubstitution(mol, core, matches)]
+      sortedCounts = [
+        numHsMatchingDummies(mol, core, match)
+        for match in Chem.SortMatchesByDegreeOfCoreSubstitution(mol, core, matches)
+      ]
       self.assertEqual(len(ctrlCounts), len(sortedCounts))
       self.assertTrue(all(ctrl == sortedCounts[i] for i, ctrl in enumerate(ctrlCounts)))
     with self.assertRaises(ValueError):
@@ -6412,6 +6414,62 @@ CAS<~>
 
     RDLogger.EnableLog('rdApp.*')
 
+  def testInsertMol(self):
+    m = Chem.MolFromSmiles("CNO")
+    m2 = Chem.MolFromSmiles("c1ccccc1")
+    m3 = Chem.MolFromSmiles("C1CC1")
+
+    rwmol = Chem.RWMol(m)
+    rwmol.InsertMol(m2)
+    rwmol.InsertMol(m3)
+    self.assertEqual(Chem.MolToSmiles(rwmol),
+                     Chem.CanonSmiles("CNO.c1ccccc1.C1CC1"))
+    
+  def testBatchEdits(self):
+    mol = Chem.MolFromSmiles("C1CCCO1")
+
+    for rwmol in [Chem.EditableMol(mol), Chem.RWMol(mol)]:
+      rwmol.BeginBatchEdit()
+      rwmol.RemoveAtom(2)
+      rwmol.RemoveAtom(3)
+      rwmol.CommitBatchEdit()
+      nmol = rwmol.GetMol()
+      self.assertEqual(Chem.MolToSmiles(nmol), "CCO")
+
+    for rwmol in [Chem.EditableMol(mol), Chem.RWMol(mol)]:
+      rwmol = Chem.EditableMol(mol)
+      rwmol.BeginBatchEdit()
+      rwmol.RemoveAtom(3)
+      rwmol.RemoveBond(4, 0)
+      rwmol.CommitBatchEdit()
+      nmol = rwmol.GetMol()
+      self.assertEqual(Chem.MolToSmiles(nmol), "CCC.O")
+
+    for rwmol in [Chem.EditableMol(mol), Chem.RWMol(mol)]:
+      rwmol.BeginBatchEdit()
+      rwmol.RemoveAtom(2)
+      rwmol.RemoveAtom(3)
+      rwmol.RollbackBatchEdit()
+      nmol = rwmol.GetMol()
+      self.assertEqual(Chem.MolToSmiles(nmol), "C1CCOC1")
+
+  def testBatchEditContextManager(self):
+    mol = Chem.MolFromSmiles("C1CCCO1")
+    with Chem.RWMol(mol) as rwmol:
+      rwmol.RemoveAtom(2)
+      rwmol.RemoveAtom(3)
+      # make sure we haven't actually changed anything yet:
+      self.assertEqual(rwmol.GetNumAtoms(), mol.GetNumAtoms())
+    self.assertEqual(rwmol.GetNumAtoms(), mol.GetNumAtoms() - 2)
+
+    # make sure no changes get made if we throw an exception
+    try:
+      with Chem.RWMol(mol) as rwmol:
+        rwmol.RemoveAtom(2)
+        rwmol.RemoveAtom(6)
+    except:
+      pass
+    self.assertEqual(rwmol.GetNumAtoms(), mol.GetNumAtoms())
 
 if __name__ == '__main__':
   if "RDTESTCASE" in os.environ:

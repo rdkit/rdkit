@@ -13,8 +13,60 @@
 #include <GraphMol/Substruct/SubstructMatch.h>
 #include <GraphMol/SmilesParse/SmilesParse.h>
 #include <GraphMol/FMCS/FMCS.h>
+#include <set>
 
 namespace RDKit {
+
+namespace {
+
+bool hasLabel(const Atom *atom, unsigned int autoLabels) {
+  bool atomHasLabel = false;
+  if (autoLabels & MDLRGroupLabels) {
+    atomHasLabel |= atom->hasProp(common_properties::_MolFileRLabel);
+  }
+  if (autoLabels & IsotopeLabels) {
+    atomHasLabel |= (atom->getIsotope() > 0);
+  }
+  if (autoLabels & AtomMapLabels) {
+    atomHasLabel |= (atom->getAtomMapNum() > 0);
+  }
+  if (autoLabels & DummyAtomLabels) {
+    atomHasLabel |= (atom->getAtomicNum() == 0);
+  }
+  // don't match negative rgroups as these are used by AtomIndexRLabels which
+  // are set for the template core before the MCS and after the MCS for the
+  // other core
+  if (atom->hasProp(RLABEL)) {
+    auto label = atom->getProp<int>(RLABEL);
+    atomHasLabel |= label > 0;
+  }
+  return atomHasLabel;
+}
+
+/* When comparing atoms for the MCS overlay, we don't want to overlay a core
+ * atom that has a labelled rgroup on top of one that hasn't a labelled rgroup.
+ * The labelled rgroup may be on a terminal dummy atom bonded to the core atom.
+ *
+ * This function checks to see if there is a terminal dummy labelled rgroup
+ * attached to the atom.
+ */
+bool hasAttachedLabels(const ROMol &mol, const Atom *atom,
+                       unsigned int autoLabels) {
+  RWMol::ADJ_ITER nbrIdx, endNbrs;
+  boost::tie(nbrIdx, endNbrs) = mol.getAtomNeighbors(atom);
+  while (nbrIdx != endNbrs) {
+    const auto neighborAtom = mol.getAtomWithIdx(*nbrIdx);
+    if (neighborAtom->getAtomicNum() == 0 && neighborAtom->getDegree() == 1 &&
+        hasLabel(neighborAtom, autoLabels)) {
+      return true;
+    }
+    ++nbrIdx;
+  }
+  return false;
+}
+
+}  // namespace
+
 unsigned int RGroupDecompositionParameters::autoGetLabels(const RWMol &core) {
   unsigned int autoLabels = 0;
   if (!onlyMatchAtRGroups) {
@@ -34,7 +86,7 @@ unsigned int RGroupDecompositionParameters::autoGetLabels(const RWMol &core) {
     if (atm->hasProp(common_properties::_MolFileRLabel)) {
       hasMDLRGroup = true;
     }
-    if (atm->getAtomicNum() == 0) {
+    if (atm->getAtomicNum() == 0 && atm->getDegree() == 1) {
       hasDummies = true;
     }
   }
@@ -59,36 +111,13 @@ bool rgdAtomCompare(const MCSAtomCompareParameters &p, const ROMol &mol1,
     return false;
   }
   unsigned int autoLabels = *reinterpret_cast<unsigned int *>(userData);
-  bool atom1HasLabel = false;
-  bool atom2HasLabel = false;
   const auto a1 = mol1.getAtomWithIdx(atom1);
   const auto a2 = mol2.getAtomWithIdx(atom2);
-  if (autoLabels & MDLRGroupLabels) {
-    atom1HasLabel |= a1->hasProp(common_properties::_MolFileRLabel);
-    atom2HasLabel |= a2->hasProp(common_properties::_MolFileRLabel);
-  }
-  if (autoLabels & IsotopeLabels) {
-    atom2HasLabel |= (a1->getIsotope() > 0);
-    atom2HasLabel |= (a2->getIsotope() > 0);
-  }
-  if (autoLabels & AtomMapLabels) {
-    atom1HasLabel |= (a1->getAtomMapNum() > 0);
-    atom2HasLabel |= (a2->getAtomMapNum() > 0);
-  }
-  if (autoLabels & DummyAtomLabels) {
-    atom1HasLabel |= (a1->getAtomicNum() == 0);
-    atom2HasLabel |= (a2->getAtomicNum() == 0);
-  }
-  // don't match negative rgroups as these are used by AtomIndexRLabels which
-  // are set for the template core before the MCS and after the MCS for the other core
-  if (a1->hasProp(RLABEL)) {
-    auto label = a1->getProp<int>(RLABEL);
-    atom1HasLabel |= label > 0;
-  }
-  if (a2->hasProp(RLABEL)) {
-    auto label = a2->getProp<int>(RLABEL);
-    atom2HasLabel |= label > 0;
-  }
+  bool atom1HasLabel = hasLabel(a1, autoLabels);
+  bool atom2HasLabel = hasLabel(a2, autoLabels);
+  // check for the presence of rgroup labels on adjacent terminal dummy atoms
+  atom1HasLabel |= hasAttachedLabels(mol1, a1, autoLabels);
+  atom2HasLabel |= hasAttachedLabels(mol2, a2, autoLabels);
   return !(atom1HasLabel != atom2HasLabel);
 }
 
@@ -151,9 +180,6 @@ bool RGroupDecompositionParameters::prepareCore(RWMol &core,
             if (alignCoreAtm->hasProp(RLABEL)) {
               int rlabel = alignCoreAtm->getProp<int>(RLABEL);
               maxLabel = (std::max)(maxLabel, rlabel + 1);
-              BOOST_LOG(rdDebugLog)
-                  << "MCS match setting core atom " << coreAtm->getIdx()
-                  << " to rgroup " << rlabel << std::endl;
               coreAtm->setProp(RLABEL, rlabel);
             }
           }
@@ -170,43 +196,50 @@ bool RGroupDecompositionParameters::prepareCore(RWMol &core,
     bool found = false;
 
     if (atom->hasProp(RLABEL)) {
+      // set from MCS match
       if (setLabel(atom, atom->getProp<int>(RLABEL), foundLabels, maxLabel,
                    relabel, Labelling::INTERNAL_LABELS)) {
         found = true;
       }
     }
 
-    if (!found && (autoLabels & MDLRGroupLabels)) {
-      unsigned int rgroup;
-      if (atom->getPropIfPresent<unsigned int>(
-              common_properties::_MolFileRLabel, rgroup)) {
-        if (setLabel(atom, rdcast<int>(rgroup), foundLabels, maxLabel, relabel,
-                     Labelling::RGROUP_LABELS)) {
+    if (atom->getAtomicNum() == 0) {
+      if (!found && (autoLabels & MDLRGroupLabels)) {
+        unsigned int rgroup;
+        if (atom->getPropIfPresent<unsigned int>(
+                common_properties::_MolFileRLabel, rgroup)) {
+          if (setLabel(atom, rdcast<int>(rgroup), foundLabels, maxLabel,
+                       relabel, Labelling::RGROUP_LABELS)) {
+            found = true;
+            checkNonTerminal(*atom);
+          }
+        }
+      }
+
+      if (!found && (autoLabels & IsotopeLabels) && atom->getIsotope() > 0) {
+        if (setLabel(atom, rdcast<int>(atom->getIsotope()), foundLabels,
+                     maxLabel, relabel, Labelling::ISOTOPE_LABELS)) {
+          checkNonTerminal(*atom);
           found = true;
         }
       }
-    }
 
-    if (!found && (autoLabels & IsotopeLabels) && atom->getIsotope() > 0) {
-      if (setLabel(atom, rdcast<int>(atom->getIsotope()), foundLabels, maxLabel,
-                   relabel, Labelling::ISOTOPE_LABELS)) {
-        found = true;
+      if (!found && (autoLabels & AtomMapLabels) && atom->getAtomMapNum() > 0) {
+        if (setLabel(atom, rdcast<int>(atom->getAtomMapNum()), foundLabels,
+                     maxLabel, relabel, Labelling::ATOMMAP_LABELS)) {
+          checkNonTerminal(*atom);
+          found = true;
+        }
       }
-    }
 
-    if (!found && (autoLabels & AtomMapLabels) && atom->getAtomMapNum() > 0) {
-      if (setLabel(atom, rdcast<int>(atom->getAtomMapNum()), foundLabels,
-                   maxLabel, relabel, Labelling::ATOMMAP_LABELS)) {
-        found = true;
-      }
-    }
-
-    if (!found && (autoLabels & DummyAtomLabels) && atom->getAtomicNum() == 0) {
-      const bool forceRelabellingWithDummies = true;
-      int defaultDummyStartLabel = maxLabel;
-      if (setLabel(atom, defaultDummyStartLabel, foundLabels, maxLabel,
-                   forceRelabellingWithDummies, Labelling::DUMMY_LABELS)) {
-        found = true;
+      if (!found && (autoLabels & DummyAtomLabels) &&
+          atom->getAtomicNum() == 0 && atom->getDegree() == 1) {
+        const bool forceRelabellingWithDummies = true;
+        int defaultDummyStartLabel = maxLabel;
+        if (setLabel(atom, defaultDummyStartLabel, foundLabels, maxLabel,
+                     forceRelabellingWithDummies, Labelling::DUMMY_LABELS)) {
+          found = true;
+        }
       }
     }
 
@@ -238,7 +271,20 @@ bool RGroupDecompositionParameters::prepareCore(RWMol &core,
   for (auto &it : atomToLabel) {
     core.getAtomWithIdx(it.first)->setProp(RLABEL, it.second);
   }
+
   return true;
+}
+
+void RGroupDecompositionParameters::checkNonTerminal(const Atom &atom) const {
+  if (allowNonTerminalRGroups || atom.getDegree() == 1) {
+    return;
+  }
+
+  BOOST_LOG(rdWarningLog)
+      << "Non terminal R group defined.  To allow set allowNonTerminalRGroups "
+         "in RGroupDecompositionParameters"
+      << std::endl;
+  throw ValueErrorException("Non terminal R group defined.");
 }
 
 }  // namespace RDKit

@@ -89,11 +89,20 @@ bool setLabel(Atom *atom, int label, std::set<int> &labels, int &maxLabel,
     }
 
     atom->setProp<int>(RLABEL, label);
+    atom->setProp<int>(RLABEL_TYPE, static_cast<int>(type));
     labels.insert(label);
     maxLabel = (std::max)(maxLabel, label + 1);
     return true;
   }
   return false;
+}
+
+bool isAtomWithMultipleNeighborsOrNotUserRLabel(const Atom &atom) {
+  if (atom.getDegree() > 1) return true;
+  auto userRLabel = atom.hasProp(RLABEL) && atom.hasProp(RLABEL_TYPE) &&
+                    static_cast<Labelling>(atom.getProp<int>(RLABEL_TYPE)) !=
+                        Labelling::INDEX_LABELS;
+  return !userRLabel;
 }
 
 bool hasDummy(const RWMol &core) {

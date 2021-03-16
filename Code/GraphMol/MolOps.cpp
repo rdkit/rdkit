@@ -264,45 +264,55 @@ void assignRadicals(RWMol &mol) {
         !atom->getAtomicNum()) {
       continue;
     }
-    double accum = 0.0;
-    RWMol::OEDGE_ITER beg, end;
-    boost::tie(beg, end) = mol.getAtomBonds(atom);
-    while (beg != end) {
-      accum += mol[*beg]->getValenceContrib(atom);
-      ++beg;
-    }
-    accum += atom->getNumExplicitHs();
-    int totalValence = static_cast<int>(accum + 0.1);
+    const auto &valens =
+        PeriodicTable::getTable()->getValenceList(atom->getAtomicNum());
     int chg = atom->getFormalCharge();
     int nOuter =
         PeriodicTable::getTable()->getNouterElecs(atom->getAtomicNum());
-    int baseCount = 8;
-    if (atom->getAtomicNum() == 1 || atom->getAtomicNum() == 2) {
-      baseCount = 2;
-    }
+    if (valens.size() != 1 || valens[0] != -1) {
+      double accum = 0.0;
+      RWMol::OEDGE_ITER beg, end;
+      boost::tie(beg, end) = mol.getAtomBonds(atom);
+      while (beg != end) {
+        accum += mol[*beg]->getValenceContrib(atom);
+        ++beg;
+      }
+      accum += atom->getNumExplicitHs();
+      int totalValence = static_cast<int>(accum + 0.1);
+      int baseCount = 8;
+      if (atom->getAtomicNum() == 1 || atom->getAtomicNum() == 2) {
+        baseCount = 2;
+      }
 
-    // applies to later (more electronegative) elements:
-    int numRadicals = baseCount - nOuter - totalValence + chg;
-    if (numRadicals < 0) {
-      numRadicals = 0;
-      // can the atom be "hypervalent"?  (was github #447)
-      const INT_VECT &valens =
-          PeriodicTable::getTable()->getValenceList(atom->getAtomicNum());
-      if (valens.size() > 1) {
-        for (auto val : valens) {
-          if (val - totalValence + chg >= 0) {
-            numRadicals = val - totalValence + chg;
-            break;
+      // applies to later (more electronegative) elements:
+      int numRadicals = baseCount - nOuter - totalValence + chg;
+      if (numRadicals < 0) {
+        numRadicals = 0;
+        // can the atom be "hypervalent"?  (was github #447)
+        const INT_VECT &valens =
+            PeriodicTable::getTable()->getValenceList(atom->getAtomicNum());
+        if (valens.size() > 1) {
+          for (auto val : valens) {
+            if (val - totalValence + chg >= 0) {
+              numRadicals = val - totalValence + chg;
+              break;
+            }
           }
         }
       }
+      // applies to earlier elements:
+      int numRadicals2 = nOuter - totalValence - chg;
+      if (numRadicals2 >= 0) {
+        numRadicals = std::min(numRadicals, numRadicals2);
+      }
+      atom->setNumRadicalElectrons(numRadicals);
+    } else {
+      //  if this is an atom where we have no preferred valence info at all,
+      //  e.g. for transition metals, then we shouldn't be guessing. This was
+      //  #3330
+      auto nValence = nOuter - chg;
+      atom->setNumRadicalElectrons(nValence % 2);
     }
-    // applies to earlier elements:
-    int numRadicals2 = nOuter - totalValence - chg;
-    if (numRadicals2 >= 0) {
-      numRadicals = std::min(numRadicals, numRadicals2);
-    }
-    atom->setNumRadicalElectrons(numRadicals);
   }
 }
 

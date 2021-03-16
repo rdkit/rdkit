@@ -7715,8 +7715,10 @@ void testRemoveAndTrackIsotopes() {
   std::unique_ptr<ROMol> mNoH(removeHs(*static_cast<ROMol *>(m.get()), ps));
   TEST_ASSERT(mNoH->getAtomWithIdx(0)->getAtomicNum() == 6);
   TEST_ASSERT(mNoH->getAtomWithIdx(0)->hasProp(common_properties::_isotopicHs));
-  TEST_ASSERT(mNoH->getAtomWithIdx(0)->getProp<std::string>(
-                  common_properties::_isotopicHs) == "2");
+  std::vector<unsigned int> isoHs;
+  TEST_ASSERT(mNoH->getAtomWithIdx(0)->getPropIfPresent(common_properties::_isotopicHs, isoHs));
+  TEST_ASSERT(isoHs.size() == 1);
+  TEST_ASSERT(isoHs.front() == 2);
   TEST_ASSERT(mNoH->getAtomWithIdx(30)->getAtomicNum() == 6);
   TEST_ASSERT(
       !mNoH->getAtomWithIdx(30)->hasProp(common_properties::_isotopicHs));
@@ -7918,6 +7920,7 @@ void testRemoveAndTrackIsotopes() {
     // 2) ...Removing all Hs including isotopes and then putting them back
     mNoH.reset(MolOps::removeHs(*static_cast<ROMol *>(mChiral.get()), ps));
     mH.reset(MolOps::addHs(*mNoH));
+
     MolOps::assignStereochemistry(*mH, true, true);
     match.clear();
     TEST_ASSERT(SubstructMatch(*mH, *mChiral, match));
@@ -7997,6 +8000,22 @@ M  END)CTAB";
     auto atom_pos = conf.getAtomPos(i);
     TEST_ASSERT(!isnan(atom_pos.x) && !isnan(atom_pos.y) && !isnan(atom_pos.z));
   }
+
+  // check that we bisect the correct angle and point outside the rings
+  auto v71 = conf.getAtomPos(7) - conf.getAtomPos(1);
+  auto v21 = conf.getAtomPos(2) - conf.getAtomPos(1);
+  auto v01 = conf.getAtomPos(0) - conf.getAtomPos(1);
+  auto v61 = conf.getAtomPos(6) - conf.getAtomPos(1);
+  TEST_ASSERT(fabs(fabs(v71.dotProduct(v01)) - fabs(v71.dotProduct(v21))) <
+              1e-3);
+  TEST_ASSERT(v71.dotProduct(v61) < -1e-4);
+
+  auto v86 = conf.getAtomPos(8) - conf.getAtomPos(6);
+  auto v06 = conf.getAtomPos(0) - conf.getAtomPos(6);
+  auto v56 = conf.getAtomPos(5) - conf.getAtomPos(6);
+  auto v16 = conf.getAtomPos(1) - conf.getAtomPos(6);
+  TEST_ASSERT(fabs(fabs(v86.dotProduct(v56)) - fabs(v86.dotProduct(v06))) < 1e-3);
+  TEST_ASSERT(v86.dotProduct(v16) < -1e-4);
 }
 
 #ifdef RDK_USE_URF

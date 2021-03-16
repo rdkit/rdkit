@@ -17,6 +17,8 @@
 namespace RDKit {
 
 RDKIT_RGROUPDECOMPOSITION_EXPORT extern const std::string RLABEL;
+extern const std::string RLABEL_TYPE;
+extern const std::string RLABEL_CORE_INDEX;
 extern const std::string SIDECHAIN_RLABELS;
 extern const std::string done;
 
@@ -49,6 +51,21 @@ bool setLabel(Atom *atom, int label, std::set<int> &labels, int &maxLabel,
 
 //! Returns true if the core has a dummy atom
 bool hasDummy(const RWMol &core);
+
+//! Returns true if the core atom is either an atom with multiple
+// connections or an atom with a single connection that has no user
+// defined rgroup label
+bool isAtomWithMultipleNeighborsOrNotUserRLabel(const Atom &atom);
+
+//! Returns true if the core atom is either a dummy atom with multiple
+// connections or a dummy atom with a single connection that has no user
+// defined rgroup label
+inline bool isAnyAtomWithMultipleNeighborsOrNotUserRLabel(const Atom &atom) {
+  if (atom.getAtomicNum()) {
+    return false;
+  }
+  return isAtomWithMultipleNeighborsOrNotUserRLabel(atom);
+}
 
 //! Returns a JSON form
 //  The prefix argument is added to each line in the output

@@ -118,6 +118,7 @@ BOOST_PYTHON_MODULE(rdBase) {
 
   RegisterListConverter<int>();
   RegisterListConverter<std::vector<int>>();
+  RegisterListConverter<std::vector<unsigned int>>();
 
   python::register_exception_translator<IndexErrorException>(
       &translate_index_error);

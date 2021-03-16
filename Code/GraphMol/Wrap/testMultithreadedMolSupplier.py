@@ -29,7 +29,7 @@ class TestCase(unittest.TestCase):
         confusedProps = []
         i = 0
         for mol in smiSup:
-            if(mol):
+            if mol is not None:
                 self.assertTrue(mol.HasProp("_Name"))
                 self.assertTrue(mol.HasProp("Column_2"))
                 prop = mol.GetProp("Column_2")
@@ -40,7 +40,27 @@ class TestCase(unittest.TestCase):
         self.assertTrue(i == 10)
         self.assertTrue(sorted(confusedNames) == sorted(names))
         self.assertTrue(sorted(confusedProps) == sorted(props))
-        
+
+        # context manager
+        confusedNames = []
+        confusedProps = []
+        i = 0
+        with Chem.MultithreadedSmilesMolSupplier(fileN,delimiter=",", smilesColumn=1, 
+                  nameColumn=0, titleLine=0) as smiSup:
+            for mol in smiSup:
+                if mol is not None:
+                    self.assertTrue(mol.HasProp("_Name"))
+                    self.assertTrue(mol.HasProp("Column_2"))
+                    prop = mol.GetProp("Column_2")
+                    name = mol.GetProp("_Name")
+                    confusedProps.append(prop)
+                    confusedNames.append(name)
+                    i += 1
+            self.assertTrue(i == 10)
+            self.assertTrue(sorted(confusedNames) == sorted(names))
+            self.assertTrue(sorted(confusedProps) == sorted(props))
+
+
     def testMultiSDMolSupplier(self):
         fileN = os.path.join(RDConfig.RDBaseDir, 'Code', 'GraphMol',
                              'FileParsers', 'test_data', 'NCI_aids_few.sdf')
@@ -51,12 +71,27 @@ class TestCase(unittest.TestCase):
         confusedMolNames = []
         i = 0
         for mol in sdSup:
-            if(mol):
+            if mol is not None:
                 confusedMolNames.append(mol.GetProp("_Name"))
                 i += 1
         self.assertTrue(len(molNames) == i)
         self.assertTrue(sorted(confusedMolNames) == sorted(molNames))
-        
+
+        # context manager
+        confusedMolNames = []
+        i = 0
+        with Chem.MultithreadedSDMolSupplier(fileN) as sdSup:
+            for mol in sdSup:
+                if mol is not None:
+                    confusedMolNames.append(mol.GetProp("_Name"))
+                    i += 1
+        self.assertTrue(len(molNames) == i)
+        self.assertTrue(sorted(confusedMolNames) == sorted(molNames))
+
+
+
+
+
     # NOTE these are disabled until we rewrite the code to construct a 
     #      MultithreadedSDMolSupplier from a python stream
     @unittest.skip("Skipping construction from stream")
