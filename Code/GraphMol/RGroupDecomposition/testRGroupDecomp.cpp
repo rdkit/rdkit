@@ -2115,6 +2115,46 @@ void testSingleAtomBridge() {
   CHECK_RGROUP(it, expected);
 }
 
+void testUserMatchTypesDefaultScore() {
+  BOOST_LOG(rdInfoLog)
+      << "********************************************************\n";
+  BOOST_LOG(rdInfoLog) << "Test user rgroup label specification and matching with default sccoring"
+                       << std::endl;
+
+  struct TestMatchType {
+    static void test(RWMol &core, RWMol &mol,
+                     RGroupDecompositionParameters &parameters,
+                     std::string &expected) {
+      RGroupDecomposition decomp(core, parameters);
+      auto res = decomp.add(mol);
+      TEST_ASSERT(res == 0);
+      TEST_ASSERT(decomp.process());
+      auto rows = decomp.getRGroupsAsRows();
+      TEST_ASSERT(rows.size() == 1)
+      RGroupRows::const_iterator it = rows.begin();
+      CHECK_RGROUP(it, expected);
+    }
+  };
+
+  auto mol = "C1CCCCC1(N)(O)"_smiles;
+  auto core = "C1CCCCC1[*:1]"_smiles;
+  core = "C1CCCCC1[*:1]"_smarts;
+  RGroupDecompositionParameters params;
+  params.onlyMatchAtRGroups = true;
+  RGroupDecomposition decomp(*core, params);
+  int res = decomp.add(*mol);
+  TEST_ASSERT(res == -1);
+
+  params.onlyMatchAtRGroups = false;
+  std::string expected("Core:C1CCC([*:1])([*:2])CC1 R1:O[*:1] R2:N[*:2]");
+  TestMatchType::test(*core, *mol, params, expected);
+  core = "C1CCCCC1([*:1])([*:2])"_smiles;
+  TestMatchType::test(*core, *mol, params, expected);
+  core = "C1CCCC[*:2]1[*:1]"_smiles;
+  params.allowNonTerminalRGroups = true;
+  TestMatchType::test(*core, *mol, params, expected);
+}
+
 void testUserMatchTypes() {
   BOOST_LOG(rdInfoLog)
       << "********************************************************\n";
