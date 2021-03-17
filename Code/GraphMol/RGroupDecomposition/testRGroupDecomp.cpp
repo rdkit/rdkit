@@ -2173,8 +2173,8 @@ M  END
       if (atom->getAtomicNum() == 0 && atom->getAtomMapNum() == 2) {
         ++r2Num;
         auto &r2Coord = rgdCore->getConformer().getAtomPos(atom->getIdx());
-        TEST_ASSERT(!(r2Coord.x > -1.e-4 && r2Coord.x < 1.e-4));
-        TEST_ASSERT(!(r2Coord.y > -1.e-4 && r2Coord.y < 1.e-4));
+        TEST_ASSERT(fabs(r2Coord.x)>1e-4);
+        TEST_ASSERT(fabs(r2Coord.y)>1e-4);
         size_t nBonds = 0;
         for (const auto &nbri :
              boost::make_iterator_range(rgdCore->getAtomNeighbors(atom))) {
