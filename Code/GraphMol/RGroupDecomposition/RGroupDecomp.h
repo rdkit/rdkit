@@ -79,9 +79,16 @@ struct RDKIT_RGROUPDECOMPOSITION_EXPORT RGroupDecompositionParameters {
   unsigned int alignment = MCS;
 
   unsigned int chunkSize = 5;
+  //! only allow rgroup decomposition at the specified rgroups
   bool onlyMatchAtRGroups = false;
+  //! remove all user-defined rgroups that only have hydrogens
   bool removeAllHydrogenRGroups = true;
+  //! remove all user-defined rgroups that only have hydrogens,
+  //! and also remove the corresponding labels from the core
+  bool removeAllHydrogenRGroupsAndLabels = true;
+  //! remove all hydrogens from the output molecules
   bool removeHydrogensPostMatch = true;
+  //! allow labelled Rgroups of degree 2 or more
   bool allowNonTerminalRGroups = false;
 
   double timeout = -1.0;  ///< timeout in seconds. <=0 indicates no timeout
@@ -119,6 +126,21 @@ typedef std::vector<ROMOL_SPTR> RGroupColumn;
 typedef std::vector<RGroupRow> RGroupRows;
 typedef std::map<std::string, RGroupColumn> RGroupColumns;
 
+class UsedLabelMap {
+ public:
+  UsedLabelMap(const std::map<int, int> &mapping) {
+    for (const auto &rl : mapping) {
+      d_map[rl.second] = std::make_pair(false, (rl.first >= 0));
+    }
+  }
+  bool getIsUsed(int label) const { return d_map.at(label).first; }
+  void setIsUsed(int label) { d_map[label].first = true; }
+  bool isUserDefined(int label) const { return d_map.at(label).second; }
+
+ private:
+  std::map<int, std::pair<bool, bool>> d_map;
+};
+
 struct RGroupDecompData;
 class RDKIT_RGROUPDECOMPOSITION_EXPORT RGroupDecomposition {
  private:
@@ -126,7 +148,8 @@ class RDKIT_RGROUPDECOMPOSITION_EXPORT RGroupDecomposition {
   RGroupDecomposition(const RGroupDecomposition &);  // no copy construct
   RGroupDecomposition &operator=(
       const RGroupDecomposition &);  // Prevent assignment
-  RWMOL_SPTR outputCoreMolecule(const RGroupMatch &match, const std::map<int, bool> &usedRGroupMap = std::map<int, bool>()) const;
+  RWMOL_SPTR outputCoreMolecule(const RGroupMatch &match,
+                                const UsedLabelMap &usedRGroupMap) const;
   std::map<int, bool> getBlankRGroupMap() const;
 
  public:

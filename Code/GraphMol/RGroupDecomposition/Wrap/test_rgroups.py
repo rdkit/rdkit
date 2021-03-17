@@ -586,6 +586,46 @@ $$$$
         multicorergd_test(cores, params, expected_rows,
                           expected_items)
 
+    def testRemoveAllHydrogenFlags(self):
+        core = Chem.MolFromSmiles("[1*]c1ccc([2*])cn1")
+        mol = Chem.MolFromSmiles("Fc1ccccn1")
+
+        params = RGroupDecompositionParameters()
+        rgd = RGroupDecomposition(core, params)
+        self.assertEqual(rgd.Add(mol), 0)
+        self.assertTrue(rgd.Process())
+        res = rgd.GetRGroupsAsColumns(asSmiles=True)
+        self.assertEqual(res, {'Core': ['c1ccc([*:1])nc1'], 'R1': ['F[*:1]']})
+
+        # no change, as removeAllHydrogenRGroupsAndLabels is True
+        params = RGroupDecompositionParameters()
+        params.removeAllHydrogenRGroups = False
+        rgd = RGroupDecomposition(core, params)
+        self.assertEqual(rgd.Add(mol), 0)
+        self.assertTrue(rgd.Process())
+        res = rgd.GetRGroupsAsColumns(asSmiles=True)
+        self.assertEqual(res, {'Core': ['c1ccc([*:1])nc1'], 'R1': ['F[*:1]']})
+
+        # Unused user-defined labels retained on core
+        # R groups still retained as removeAllHydrogenRGroups is True
+        params = RGroupDecompositionParameters()
+        params.removeAllHydrogenRGroupsAndLabels = False
+        rgd = RGroupDecomposition(core, params)
+        self.assertEqual(rgd.Add(mol), 0)
+        self.assertTrue(rgd.Process())
+        res = rgd.GetRGroupsAsColumns(asSmiles=True)
+        self.assertEqual(res, {'Core': ['c1cc([*:1])ncc1[*:2]'], 'R1': ['F[*:1]']})
+
+        # Unused user-defined labels retained on core and in R groups
+        params = RGroupDecompositionParameters()
+        params.removeAllHydrogenRGroups = False
+        params.removeAllHydrogenRGroupsAndLabels = False
+        rgd = RGroupDecomposition(core, params)
+        self.assertEqual(rgd.Add(mol), 0)
+        self.assertTrue(rgd.Process())
+        res = rgd.GetRGroupsAsColumns(asSmiles=True)
+        self.assertEqual(res, {'Core': ['c1cc([*:1])ncc1[*:2]'], 'R1': ['F[*:1]'], 'R2': ['[H][*:2]']})
+
 
 if __name__ == '__main__':
     rdBase.DisableLog("rdApp.debug")

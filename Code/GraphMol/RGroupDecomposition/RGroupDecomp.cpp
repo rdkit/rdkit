@@ -357,7 +357,7 @@ std::vector<std::string> RGroupDecomposition::getRGroupLabels() const {
 }
 
 RWMOL_SPTR RGroupDecomposition::outputCoreMolecule(
-    const RGroupMatch &match, const std::map<int, bool> &usedRGroupMap) const {
+    const RGroupMatch &match, const UsedLabelMap &usedLabelMap) const {
   const auto &core = data->cores[match.core_idx];
   if (!match.matchedCore) {
     return core.labelledCore;
@@ -368,10 +368,7 @@ RWMOL_SPTR RGroupDecomposition::outputCoreMolecule(
     if (atom->getAtomicNum()) {
       continue;
     }
-    auto it = usedRGroupMap.find(atom->getAtomMapNum());
-    if (it == usedRGroupMap.end()) {
-      continue;
-    }
+    auto label = atom->getAtomMapNum();
     Atom *nbrAtom = nullptr;
     for (const auto &nbri :
          boost::make_iterator_range(coreWithMatches->getAtomNeighbors(atom))) {
@@ -379,13 +376,25 @@ RWMOL_SPTR RGroupDecomposition::outputCoreMolecule(
       break;
     }
     if (nbrAtom) {
-      if (it->second) {
-        auto numExplicitHs = nbrAtom->getNumExplicitHs();
+      bool isUserDefinedLabel = usedLabelMap.isUserDefined(label);
+      auto numExplicitHs = nbrAtom->getNumExplicitHs();
+      if (usedLabelMap.getIsUsed(label)) {
         if (numExplicitHs) {
           nbrAtom->setNumExplicitHs(numExplicitHs - 1);
         }
-      } else {
+      } else if (!isUserDefinedLabel ||
+                 data->params.removeAllHydrogenRGroupsAndLabels) {
         coreWithMatches->removeAtom(atomIdx);
+        // if we remove an unused label from an aromatic atom,
+        // we need to check whether we need to adjust its explicit
+        // H count, or it will fail to kekulize
+        if (isUserDefinedLabel && nbrAtom->getIsAromatic()) {
+          nbrAtom->updatePropertyCache(false);
+          if (!numExplicitHs) {
+            nbrAtom->setNumExplicitHs(nbrAtom->getExplicitValence() -
+                                      nbrAtom->getDegree());
+          }
+        }
       }
       nbrAtom->updatePropertyCache(false);
     }
@@ -393,23 +402,15 @@ RWMOL_SPTR RGroupDecomposition::outputCoreMolecule(
   return coreWithMatches;
 }
 
-std::map<int, bool> RGroupDecomposition::getBlankRGroupMap() const {
-  std::map<int, bool> usedRGroupMap;
-  for (const auto &rl : data->finalRlabelMapping) {
-    usedRGroupMap[rl.second] = false;
-  }
-  return usedRGroupMap;
-}
-
 RGroupRows RGroupDecomposition::getRGroupsAsRows() const {
   std::vector<RGroupMatch> permutation = data->GetCurrentBestPermutation();
 
   RGroupRows groups;
 
-  auto usedRGroupMap = getBlankRGroupMap();
+  auto usedLabelMap = UsedLabelMap(data->finalRlabelMapping);
 
   for (auto it = permutation.begin(); it != permutation.end(); ++it) {
-    auto Rs_seen(usedRGroupMap);
+    auto Rs_seen(usedLabelMap);
     // make a new rgroup entry
     groups.push_back(RGroupRow());
     RGroupRow &out_rgroups = groups.back();
@@ -420,7 +421,7 @@ RGroupRows RGroupDecomposition::getRGroupsAsRows() const {
       const auto realLabel = data->finalRlabelMapping.find(rgroup.first);
       CHECK_INVARIANT(realLabel != data->finalRlabelMapping.end(),
                       "unprocessed rlabel, please call process() first.");
-      Rs_seen[realLabel->second] = true;
+      Rs_seen.setIsUsed(realLabel->second);
       out_rgroups[RPREFIX + std::to_string(realLabel->second)] =
           rgroup.second->combinedMol;
     }
@@ -437,11 +438,11 @@ RGroupColumns RGroupDecomposition::getRGroupsAsColumns() const {
   RGroupColumns groups;
   std::unordered_set<std::string> rGroupWithRealMol{CORE};
 
-  auto usedRGroupMap = getBlankRGroupMap();
+  auto usedLabelMap = UsedLabelMap(data->finalRlabelMapping);
 
   unsigned int molidx = 0;
   for (auto it = permutation.begin(); it != permutation.end(); ++it, ++molidx) {
-    auto Rs_seen(usedRGroupMap);
+    auto Rs_seen(usedLabelMap);
     const R_DECOMP &in_rgroups = it->rgroups;
 
     for (const auto &rgroup : in_rgroups) {
@@ -451,9 +452,9 @@ RGroupColumns RGroupDecomposition::getRGroupsAsColumns() const {
       CHECK_INVARIANT(rgroup.second->combinedMol->hasProp(done),
                       "Not done! Call process()");
 
-      CHECK_INVARIANT(!Rs_seen.at(realLabel->second),
+      CHECK_INVARIANT(!Rs_seen.getIsUsed(realLabel->second),
                       "R group label appears multiple times!");
-      Rs_seen[realLabel->second] = true;
+      Rs_seen.setIsUsed(realLabel->second);
       std::string r = RPREFIX + std::to_string(realLabel->second);
       RGroupColumn &col = groups[r];
       if (molidx && col.size() < molidx - 1) {
@@ -465,9 +466,9 @@ RGroupColumns RGroupDecomposition::getRGroupsAsColumns() const {
     groups[CORE].push_back(outputCoreMolecule(*it, Rs_seen));
 
     // add empty entries to columns where this molecule didn't appear
-    for (const auto &rpr : Rs_seen) {
-      if (!rpr.second) {
-        std::string r = RPREFIX + std::to_string(rpr.first);
+    for (const auto &realLabel : data->finalRlabelMapping) {
+      if (!Rs_seen.getIsUsed(realLabel.second)) {
+        std::string r = RPREFIX + std::to_string(realLabel.second);
         groups[r].push_back(boost::make_shared<RWMol>());
       }
     }
