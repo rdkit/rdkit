@@ -2185,7 +2185,7 @@ M  END
           TEST_ASSERT(bond);
           auto &nbrCoord = rgdCore->getConformer().getAtomPos(nbr->getIdx());
           auto bondLen = (nbrCoord - r2Coord).length();
-          TEST_ASSERT(bondLen > 0.9 && bondLen < 1.1);
+          TEST_ASSERT(fabs(bondLen - 1.0) < 0.1);
         }
         TEST_ASSERT(nBonds == 1);
       }
