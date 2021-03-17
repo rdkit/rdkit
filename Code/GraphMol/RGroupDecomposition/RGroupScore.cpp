@@ -43,11 +43,8 @@ double matchScore(const std::vector<size_t> &permutation,
   int N = 0;
   std::map<int, int> num_rgroups;
   for (size_t m = 0; m < permutation.size(); ++m) {  // for each molecule
-  for (auto l : matches[m][permutation[m]].rgroups) {
-    int count = ++num_rgroups[l.first];
-    if (N < count) {
-        N = count;
-      }
+    for (auto l : matches[m][permutation[m]].rgroups) {
+       N = std::max(N, ++num_rgroups[l.first]);
     }
   }
   // for each label (r-group)
