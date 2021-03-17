@@ -23,7 +23,7 @@ double matchScore(const std::vector<size_t> &permutation,
                   const std::vector<std::vector<RGroupMatch>> &matches,
                   const std::set<int> &labels) {
   double score = 0.;
-
+  const std::string EMPTY_RGROUP = "";
 #ifdef DEBUG
   std::cerr << "---------------------------------------------------"
             << std::endl;
@@ -96,12 +96,11 @@ double matchScore(const std::vector<size_t> &permutation,
     }
     
     double tempScore = 0.;
-    const std::string no_rgroup;
     for (auto &matchSet : matchSetVect) {
       // get the counts for each rgroup found and sort in reverse order
       // If we don't have as many rgroups as the largest set add a empty ones
       if( N - num_rgroups_for_label > 0) {
-          matchSet[no_rgroup] = N - num_rgroups_for_label;
+          matchSet[EMPTY_RGROUP] = N - num_rgroups_for_label;
       }
       std::vector<unsigned int> equivalentRGroupCount;
 
