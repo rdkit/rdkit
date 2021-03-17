@@ -262,7 +262,7 @@ void testGeminalRGroups() {
   auto test1 = matchScore(permutation, allMatches1, labels);
   auto test2 = matchScore(permutation, allMatches2, labels);
 
-  TEST_ASSERT(test1 > test2);   // Fix Me!
+  TEST_ASSERT(test1 > test2);
 
   auto testFp1 = fingerprintVarianceScore(permutation, allMatches1, labels);
   auto testFp2 = fingerprintVarianceScore(permutation, allMatches2, labels);
