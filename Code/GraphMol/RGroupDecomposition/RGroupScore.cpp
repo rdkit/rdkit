@@ -123,6 +123,10 @@ double matchScore(const std::vector<size_t> &permutation,
                   << std::endl;
 #endif
       }
+      // make sure to rescale groups like [*:1].[*:1]C otherwise this will be
+        // double counted
+        // WE SHOULD PROBABLY REJECT THESE OUTRIGHT
+      tempScore /= matchSetVect.size();
     }
 
     // overweight linkers with the same attachments points....
@@ -148,7 +152,6 @@ double matchScore(const std::vector<size_t> &permutation,
     } else {
       increment = tempScore;
     }
-
     score += increment * linkerIncrement;
 #ifdef DEBUG
     std::cerr << "Increment: " << increment
