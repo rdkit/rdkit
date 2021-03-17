@@ -3,9 +3,21 @@
 
 
 ## Backwards incompatible changes
-- The distance-geometry based conformation generation now by defaults generates
-  trans(oid) conformations for amides, esters, and related structures. This can be
-  toggled off with the `forceTransAmides` flag in EmbedParameters.
+- The distance-geometry based conformer generation now by defaults generates
+  trans(oid) conformations for amides, esters, and related structures. This can
+  be toggled off with the `forceTransAmides` flag in EmbedParameters. Note that
+  this change does not impact conformers created using one of the ET versions.
+  (#3794)
+- The conformer generator now uses symmetry by default when doing RMS pruning.
+  This can be disabled using the `useSymmetryForPruning` flag in
+  EmbedParameters. (#3813)
+- Double bonds with unspecified stereochemistry in the products of chemical
+  reactions now have their stereo set to STEREONONE instead of STEREOANY (#3078)
+- The MolToSVG() function has been moved from rdkit.Chem to rdkit.Chem.Draw
+  (#3696)
+- There have been numerous changes to the RGroup Decomposition code which change
+  the results. (#3767)
+- There have been numerous changes to `GenerateDepictionMatching2DStructure()` (#3811)
 
 
 # Release_2020.09.1
