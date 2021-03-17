@@ -2843,3 +2843,22 @@ M  END
     }
   }
 }
+TEST_CASE("support annotation colors", "[drawing]") {
+  SECTION("basics") {
+    auto m = "CCCO"_smiles;
+    REQUIRE(m);
+    int panelWidth = -1;
+    int panelHeight = -1;
+    bool noFreeType = true;
+    MolDraw2DSVG drawer(300, 300, panelWidth, panelHeight, noFreeType);
+    drawer.drawOptions().annotationColour = DrawColour{0, 0, 1, 1};
+    drawer.drawOptions().addAtomIndices = true;
+    drawer.drawMolecule(*m, "blue annotations");
+    drawer.finishDrawing();
+    std::ofstream outs("testAnnotationColors.svg");
+    auto txt = drawer.getDrawingText();
+    outs << txt;
+    outs.flush();
+    CHECK(txt.find("fill:#0000FF' >2<") != std::string::npos);
+  }
+}

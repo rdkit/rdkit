@@ -413,6 +413,19 @@ python::object getSymbolColour(const RDKit::MolDrawOptions &self) {
 void setSymbolColour(RDKit::MolDrawOptions &self, python::tuple tpl) {
   self.symbolColour = pyTupleToDrawColour(tpl);
 }
+python::object getLegendColour(const RDKit::MolDrawOptions &self) {
+  return colourToPyTuple(self.legendColour);
+}
+void setLegendColour(RDKit::MolDrawOptions &self, python::tuple tpl) {
+  self.legendColour = pyTupleToDrawColour(tpl);
+}
+python::object getAnnotationColour(const RDKit::MolDrawOptions &self) {
+  return colourToPyTuple(self.annotationColour);
+}
+void setAnnotationColour(RDKit::MolDrawOptions &self, python::tuple tpl) {
+  self.annotationColour = pyTupleToDrawColour(tpl);
+}
+
 python::object getVariableAttachmentColour(const RDKit::MolDrawOptions &self) {
   return colourToPyTuple(self.variableAttachmentColour);
 }
@@ -588,7 +601,7 @@ BOOST_PYTHON_MODULE(rdMolDraw2D) {
       .def_readwrite("dummiesAreAttachments",
                      &RDKit::MolDrawOptions::dummiesAreAttachments)
       .def_readwrite("circleAtoms", &RDKit::MolDrawOptions::circleAtoms)
-	    .def_readwrite("splitBonds", &RDKit::MolDrawOptions::splitBonds)
+      .def_readwrite("splitBonds", &RDKit::MolDrawOptions::splitBonds)
       .def("getBackgroundColour", &RDKit::getBgColour,
            "method returning the background colour")
       .def("getHighlightColour", &RDKit::getHighlightColour,
@@ -601,6 +614,15 @@ BOOST_PYTHON_MODULE(rdMolDraw2D) {
            "method returning the symbol colour")
       .def("setSymbolColour", &RDKit::setSymbolColour,
            "method for setting the symbol colour")
+      .def("getAnnotationColour", &RDKit::getAnnotationColour,
+           "method returning the annotation colour")
+      .def("setAnnotationColour", &RDKit::setAnnotationColour,
+           "method for setting the annotation colour")
+      .def("getLegendColour", &RDKit::getLegendColour,
+           "method returning the legend colour")
+      .def("setLegendColour", &RDKit::setLegendColour,
+           "method for setting the legend colour")
+
       .def("useDefaultAtomPalette", &RDKit::useDefaultAtomPalette,
            "use the default colour palette for atoms and bonds")
       .def("useBWAtomPalette", &RDKit::useBWAtomPalette,
@@ -688,7 +710,8 @@ BOOST_PYTHON_MODULE(rdMolDraw2D) {
                      "adds bond indices to drawings. Default False.")
       .def_readwrite("isotopeLabels", &RDKit::MolDrawOptions::isotopeLabels,
                      "adds isotope labels on non-dummy atoms. Default True.")
-      .def_readwrite("dummyIsotopeLabels", &RDKit::MolDrawOptions::dummyIsotopeLabels,
+      .def_readwrite("dummyIsotopeLabels",
+                     &RDKit::MolDrawOptions::dummyIsotopeLabels,
                      "adds isotope labels on dummy atoms. Default True.")
       .def_readwrite("atomHighlightsAreCircles",
                      &RDKit::MolDrawOptions::atomHighlightsAreCircles,

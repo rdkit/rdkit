@@ -178,6 +178,7 @@ void updateDrawerParamsFromJSON(MolDraw2D &drawer, const std::string &json) {
   get_colour_option(&pt, "backgroundColour", opts.backgroundColour);
   get_colour_option(&pt, "legendColour", opts.legendColour);
   get_colour_option(&pt, "symbolColour", opts.symbolColour);
+  get_colour_option(&pt, "annotationColour", opts.annotationColour);
   get_colour_option(&pt, "variableAttachmentColour",
                     opts.variableAttachmentColour);
   if (pt.find("atomLabels") != pt.not_found()) {
