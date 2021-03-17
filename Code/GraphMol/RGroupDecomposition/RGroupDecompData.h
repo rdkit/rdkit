@@ -257,7 +257,7 @@ struct RGroupDecompData {
     std::vector<std::pair<Atom *, Atom *>> atomsToAdd;  // adds -R if necessary
 
     // Deal with user supplied labels
-    for (auto rlabels : atoms) {
+    for (const auto &rlabels : atoms) {
       int userLabel = rlabels.first;
       if (userLabel < 0) {
         continue;  // not a user specified label
@@ -326,6 +326,15 @@ struct RGroupDecompData {
     }
 
     addAtoms(core, atomsToAdd);
+    for (const auto &rlabels : atoms) {
+      auto atom = rlabels.second;
+      if (atom->hasProp(RLABEL)) {
+        atom->clearProp(RLABEL);
+      }
+      if (atom->hasProp(RLABEL_TYPE)) {
+        atom->clearProp(RLABEL_TYPE);
+      }
+    }
     core.updatePropertyCache(false);  // this was github #1550
   }
 
@@ -399,6 +408,10 @@ struct RGroupDecompData {
         atom->setAtomicNum(
             rLabelCoreIndexToAtomicWt[atom->getProp<int>(RLABEL_CORE_INDEX)]);
         atom->setNoImplicit(true);
+        atom->clearProp(RLABEL_CORE_INDEX);
+      }
+      if (atom->hasProp(SIDECHAIN_RLABELS)) {
+        atom->clearProp(SIDECHAIN_RLABELS);
       }
     }
 
