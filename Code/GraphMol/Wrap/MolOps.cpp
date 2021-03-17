@@ -1019,6 +1019,7 @@ struct molops_wrapper {
   Useful for growing an atom off a molecule with sensible \n\
   coordinates based on the geometry of the neighbor.\n\
 \n\
+  NOTE: this sets the appropriate coordinates in all of the molecule's conformers \n\
   ARGUMENTS:\n\
 \n\
     - mol: the molecule the atoms belong to.\n\
