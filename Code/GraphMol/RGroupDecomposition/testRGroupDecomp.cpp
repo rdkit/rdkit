@@ -2173,12 +2173,10 @@ M  END
       if (atom->getAtomicNum() == 0 && atom->getAtomMapNum() == 2) {
         ++r2Num;
         auto &r2Coord = rgdCore->getConformer().getAtomPos(atom->getIdx());
-        TEST_ASSERT(fabs(r2Coord.x)>1e-4);
-        TEST_ASSERT(fabs(r2Coord.y)>1e-4);
-        size_t nBonds = 0;
+        TEST_ASSERT(fabs(r2Coord.x) > 1e-4);
+        TEST_ASSERT(fabs(r2Coord.y) > 1e-4);
         for (const auto &nbri :
              boost::make_iterator_range(rgdCore->getAtomNeighbors(atom))) {
-          ++nBonds;
           const auto nbr = (*rgdCore)[nbri];
           const auto bond =
               rgdCore->getBondBetweenAtoms(nbr->getIdx(), atom->getIdx());
@@ -2187,7 +2185,7 @@ M  END
           auto bondLen = (nbrCoord - r2Coord).length();
           TEST_ASSERT(fabs(bondLen - 1.0) < 0.1);
         }
-        TEST_ASSERT(nBonds == 1);
+        TEST_ASSERT(atom->getDegree() == 1);
       }
     }
     TEST_ASSERT(r2Num == 1);
@@ -2264,8 +2262,7 @@ void testUnlabelledRGroupsOnAromaticNitrogen() {
 void testAddHsDoesNotFail() {
   BOOST_LOG(rdInfoLog)
       << "********************************************************\n";
-  BOOST_LOG(rdInfoLog) << "Test that AddHs does not fail"
-                       << std::endl;
+  BOOST_LOG(rdInfoLog) << "Test that AddHs does not fail" << std::endl;
   auto core = "[1*]c1ccc([2*])cn1"_smiles;
   auto mol = "Fc1ccc([2*])cn1"_smiles;
   RGroupDecompositionParameters params;
