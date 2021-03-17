@@ -303,6 +303,9 @@ std::string FragmentSmilesConstruct(
                "bad atomSymbols");
   PRECONDITION(!bondSymbols || bondSymbols->size() >= mol.getNumBonds(),
                "bad bondSymbols");
+  if (doKekule) {
+    MolOps::Kekulize(static_cast<RWMol &>(mol));
+  }
 
   Canon::MolStack molStack;
   // try to prevent excessive reallocation
@@ -503,7 +506,6 @@ std::string MolToSmiles(const ROMol &mol, bool doIsomericSmiles, bool doKekule,
       }
     }
     CHECK_INVARIANT(nextAtomIdx >= 0, "no start atom found");
-
     subSmi = SmilesWrite::FragmentSmilesConstruct(
         *tmol, nextAtomIdx, colors, ranks, doKekule, canonical,
         doIsomericSmiles, allBondsExplicit, allHsExplicit, doRandom,
