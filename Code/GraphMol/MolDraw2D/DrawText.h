@@ -45,9 +45,11 @@ class RDKIT_MOLDRAW2D_EXPORT DrawText {
   DrawColour const &colour() const;
   void setColour(const DrawColour &col);
 
-  // size in "pixels" i.e scale() * FONT_SIZE.
+  // size in "pixels" i.e scale() * base_font_size_.
   double fontSize() const;
   void setFontSize(double new_size);
+  double baseFontSize() const;
+  void setBaseFontSize(double new_size);
   double maxFontSize() const;
   void setMaxFontSize(double new_max);
   double minFontSize() const;
@@ -148,6 +150,7 @@ class RDKIT_MOLDRAW2D_EXPORT DrawText {
   double font_scale_;
   double max_font_size_;
   double min_font_size_;
+  double base_font_size_ = FONT_SIZE;
 
   // return a vector of StringRects, one for each char in text, with
   // super- and subscripts taken into account.  Sizes in pixel coords,

@@ -26,7 +26,7 @@ DrawColour const &DrawText::colour() const { return colour_; }
 void DrawText::setColour(const DrawColour &col) { colour_ = col; }
 
 // ****************************************************************************
-double DrawText::fontSize() const { return fontScale() * FONT_SIZE; }
+double DrawText::fontSize() const { return fontScale() * baseFontSize(); }
 
 // ****************************************************************************
 void DrawText::setFontSize(double new_size) {
@@ -39,9 +39,14 @@ void DrawText::setFontSize(double new_size) {
         << "The new font size " << new_size << " is above the current maximum ("
         << maxFontSize() << ")." << std::endl;
   }
-  double new_scale = new_size / FONT_SIZE;
+  double new_scale = new_size / baseFontSize();
   setFontScale(new_scale);
 }
+
+// ****************************************************************************
+double DrawText::baseFontSize() const { return base_font_size_; }
+// ****************************************************************************
+void DrawText::setBaseFontSize(double val) { base_font_size_ = val; }
 
 // ****************************************************************************
 double DrawText::maxFontSize() const { return max_font_size_; }
@@ -62,11 +67,13 @@ double DrawText::fontScale() const { return font_scale_; }
 void DrawText::setFontScale(double new_scale) {
   font_scale_ = new_scale;
   double nfs = fontSize();
-  if (max_font_size_ != -1 && nfs > max_font_size_) {
-    font_scale_ = max_font_size_ / FONT_SIZE;
+  if (max_font_size_ != -1 &&
+      nfs * (baseFontSize() / FONT_SIZE) > max_font_size_) {
+    font_scale_ = max_font_size_ / baseFontSize();
   }
-  if (min_font_size_ != -1 && nfs < min_font_size_) {
-    font_scale_ = min_font_size_ / FONT_SIZE;
+  if (min_font_size_ != -1 &&
+      nfs * (baseFontSize() / FONT_SIZE) < min_font_size_) {
+    font_scale_ = min_font_size_ / baseFontSize();
   }
 }
 

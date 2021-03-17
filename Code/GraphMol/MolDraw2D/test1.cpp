@@ -2439,12 +2439,33 @@ void test17MaxMinFontSize() {
   std::cout << " ----------------- Test 17 - Testing maximum font size"
             << std::endl;
   {
-    std::string fName = getenv("RDBASE");
-    fName += "/Code/GraphMol/MolDraw2D/test_dir";
-    fName += "/clash.mol";
-    std::unique_ptr<ROMol> m(MolFileToMol(fName));
-    std::string nameBase = "test17_";
+    auto m = R"CTAB(
+  Mrv2014 03142110062D          
+
+  0  0  0     0  0            999 V3000
+M  V30 BEGIN CTAB
+M  V30 COUNTS 6 6 0 0 0
+M  V30 BEGIN ATOM
+M  V30 1 C -4.4137 4.3863 0 0
+M  V30 2 C -5.7475 3.6163 0 0
+M  V30 3 C -5.7475 2.0763 0 0
+M  V30 4 C -4.4137 1.3063 0 0
+M  V30 5 N -3.08 2.0763 0 0
+M  V30 6 C -3.0801 3.6163 0 0
+M  V30 END ATOM
+M  V30 BEGIN BOND
+M  V30 1 1 1 2
+M  V30 2 2 1 6
+M  V30 3 2 2 3
+M  V30 4 1 3 4
+M  V30 5 2 4 5
+M  V30 6 1 5 6
+M  V30 END BOND
+M  V30 END CTAB
+M  END
+)CTAB"_ctab;
     TEST_ASSERT(m);
+    std::string nameBase = "test17_";
 
     {
       std::ofstream outs((nameBase + "1.svg").c_str());
@@ -2457,7 +2478,7 @@ void test17MaxMinFontSize() {
 #ifdef RDK_BUILD_FREETYPE_SUPPORT
       // where it starts drawing the N is a poor surrogate for checking
       // the font size, but all we have.
-      TEST_ASSERT(text.find("<path  class='atom-4' d='M 142.783 175.974") !=
+      TEST_ASSERT(text.find("<path  class='atom-4' d='M 256.959 204.022") !=
                   std::string::npos);
 #else
       TEST_ASSERT(text.find("font-size:40px") != std::string::npos);
@@ -2474,10 +2495,10 @@ void test17MaxMinFontSize() {
       outs.flush();
 #ifdef RDK_BUILD_FREETYPE_SUPPORT
       // where it starts drawing the N
-      TEST_ASSERT(text.find("<path  class='atom-4' d='M 140.145 170.008") !=
+      TEST_ASSERT(text.find("<path  class='atom-4' d='M 252.653 199.374") !=
                   std::string::npos);
 #else
-      TEST_ASSERT(text.find("font-size:56px") != std::string::npos);
+      TEST_ASSERT(text.find("font-size:53px") != std::string::npos);
 #endif
     }
     {
@@ -2491,7 +2512,7 @@ void test17MaxMinFontSize() {
       outs.flush();
 #ifdef RDK_BUILD_FREETYPE_SUPPORT
       // where it starts drawing the N
-      TEST_ASSERT(text.find("<path  class='atom-4' d='M 145.913 183.054") !=
+      TEST_ASSERT(text.find("<path  class='atom-4' d='M 262.53 211.102") !=
                   std::string::npos);
 
 #else
@@ -2894,7 +2915,7 @@ void testGithub2931() {
       outs << text;
       outs.flush();
 #ifdef RDK_BUILD_FREETYPE_SUPPORT
-      TEST_ASSERT(text.find("stroke:#FF8C00;stroke-width:5.6px") !=
+      TEST_ASSERT(text.find("stroke:#FF8C00;stroke-width:8.0px") !=
                   std::string::npos);
       TEST_ASSERT(text.find("<ellipse cx='242.185' cy='367.491'"
                             " rx='10.4207' ry='10.7138' "
@@ -2922,7 +2943,7 @@ void testGithub2931() {
       outs << text;
       outs.flush();
 #ifdef RDK_BUILD_FREETYPE_SUPPORT
-      TEST_ASSERT(text.find("stroke:#FF8C00;stroke-width:5.6px") !=
+      TEST_ASSERT(text.find("stroke:#FF8C00;stroke-width:8.0px") !=
                   std::string::npos);
       TEST_ASSERT(text.find("<ellipse cx='242.154' cy='367.046'"
                             " rx='10.4609' ry='10.4609' "
