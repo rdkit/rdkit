@@ -196,6 +196,7 @@ RDKIT_GRAPHMOL_EXPORT void addHs(RWMol &mol, bool explicitOnly = false,
 //! Useful for growing an atom off a molecule with sensible
 //! coordinates based on the geometry of the neighbor.
 /*!
+    NOTE: this sets appropriate coordinates in all of the molecule's conformers.
     \param mol       the molecule the atoms belong to
     \param idx       index of the terminal atom whose coordinates are set
     \param otherIdx  index of the bonded neighbor atom
