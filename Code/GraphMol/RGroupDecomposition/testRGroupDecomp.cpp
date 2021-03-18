@@ -1862,13 +1862,15 @@ void testMutipleCoreRelabellingIssues() {
       "O=C1C([*:2])([*:1])[C@@H]2N1C(C(O)=O)C([*:3])([*:4])S2",
       "O=C1C([*:2])([*:1])[C@@H]2N1C(C(O)=O)C([*:3])([*:4])O2",
       "O=C1C([*:2])([*:1])C([*:6])([*:5])N1"};
+ std::vector<RGroupScore> matchtypes{Match, FingerprintVariance};
+ for(auto match: matchtypes) {
   std::vector<ROMOL_SPTR> cores;
   for (const auto &s : smi) {
     cores.emplace_back(SmartsToMol(s));
   }
 
   RGroupDecompositionParameters params;
-  params.scoreMethod = FingerprintVariance;
+  params.scoreMethod = match;
   RGroupDecomposition decomposition(cores, params);
   for (auto &mol : molecules) {
     decomposition.add(*mol);
@@ -1880,6 +1882,7 @@ void testMutipleCoreRelabellingIssues() {
   for (auto &col : columns) {
     TEST_ASSERT(30U == col.second.size());
   }
+ }
 }
 
 void testUnprocessedMapping() {
@@ -1903,24 +1906,27 @@ void testUnprocessedMapping() {
   std::vector<std::string> coreSmi = {"N1([*:1])CCN([*:2])CC1",
                                       "C1(O[*:1])CCC(O[*:2])CC1",
                                       "C1([*:1])CCC([*:2])CC1"};
+    
+  std::vector<RGroupScore> matchtypes{Match, FingerprintVariance};
+  for(auto match: matchtypes) {
+      std::vector<ROMOL_SPTR> cores;
+      for (const auto &s : coreSmi) {
+        cores.emplace_back(SmartsToMol(s));
+      }
 
-  std::vector<ROMOL_SPTR> cores;
-  for (const auto &s : coreSmi) {
-    cores.emplace_back(SmartsToMol(s));
+      RGroupDecompositionParameters params;
+      params.scoreMethod = match;
+      RGroupDecomposition decomposition(cores, params);
+      for (auto &smi : structureSmi) {
+        auto mol = SmilesToMol(smi);
+        decomposition.add(*mol);
+        delete mol;
+      }
+
+      auto result = decomposition.processAndScore();
+      TEST_ASSERT(result.success);
+      TEST_ASSERT(result.score != -1.0);
   }
-
-  RGroupDecompositionParameters params;
-  params.scoreMethod = FingerprintVariance;
-  RGroupDecomposition decomposition(cores, params);
-  for (auto &smi : structureSmi) {
-    auto mol = SmilesToMol(smi);
-    decomposition.add(*mol);
-    delete mol;
-  }
-
-  auto result = decomposition.processAndScore();
-  TEST_ASSERT(result.success);
-  TEST_ASSERT(result.score != -1.0);
 }
 
 void testGeminalRGroups() {
