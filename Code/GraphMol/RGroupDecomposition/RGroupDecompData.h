@@ -406,9 +406,7 @@ struct RGroupDecompData {
         atom->setNoImplicit(true);
         atom->clearProp(RLABEL_CORE_INDEX);
       }
-      if (atom->hasProp(SIDECHAIN_RLABELS)) {
-        atom->clearProp(SIDECHAIN_RLABELS);
-      }
+      atom->clearProp(SIDECHAIN_RLABELS);
     }
 
 #ifdef VERBOSE
