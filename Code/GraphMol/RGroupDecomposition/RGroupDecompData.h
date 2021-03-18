@@ -328,12 +328,8 @@ struct RGroupDecompData {
     addAtoms(core, atomsToAdd);
     for (const auto &rlabels : atoms) {
       auto atom = rlabels.second;
-      if (atom->hasProp(RLABEL)) {
-        atom->clearProp(RLABEL);
-      }
-      if (atom->hasProp(RLABEL_TYPE)) {
-        atom->clearProp(RLABEL_TYPE);
-      }
+      atom->clearProp(RLABEL);
+      atom->clearProp(RLABEL_TYPE);
     }
     core.updatePropertyCache(false);  // this was github #1550
   }
