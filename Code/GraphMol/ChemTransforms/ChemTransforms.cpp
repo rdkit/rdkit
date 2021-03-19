@@ -469,10 +469,14 @@ ROMol *replaceCore(const ROMol &mol, const ROMol &core,
         newMol->addBond(newBond, true);
         auto beginAtom = newBond->getBeginAtom();
         auto endAtom = newBond->getEndAtom();
-        if (endAtom->getAtomicNum() == 0) {
-          MolOps::setHydrogenCoords(newMol, endAtom->getIdx(), beginAtom->getIdx());
-        } else {
-          MolOps::setHydrogenCoords(newMol, beginAtom->getIdx(), endAtom->getIdx());
+        if (newMol->getNumConformers()) {
+          if (endAtom->getAtomicNum() == 0) {
+            MolOps::setTerminalAtomCoords(*newMol, endAtom->getIdx(),
+                                          beginAtom->getIdx());
+          } else {
+            MolOps::setTerminalAtomCoords(*newMol, beginAtom->getIdx(),
+                                          endAtom->getIdx());
+          }
         }
       }
     }

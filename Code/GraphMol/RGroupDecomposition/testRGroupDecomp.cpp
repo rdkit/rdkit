@@ -2125,6 +2125,83 @@ void testSingleAtomBridge() {
   CHECK_RGROUP(it, expected);
 }
 
+void testAddedRGroupsHaveCoords() {
+  BOOST_LOG(rdInfoLog)
+      << "********************************************************\n";
+  BOOST_LOG(rdInfoLog) << "test added R groups have non-zero coords"
+                       << std::endl;
+  auto core = R"CTAB(
+     RDKit          2D
+
+ 13 14  0  0  0  0  0  0  0  0999 V2000
+   -3.9955    2.1866    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -4.7099    1.7741    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -4.7099    0.9490    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -3.9955    0.5365    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -3.2810    0.9490    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -3.2810    1.7741    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -5.4244    2.1866    0.0000 R1  0  0  0  0  0  0  0  0  0  0  0  0
+   -3.9956   -0.2884    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -3.2811   -0.7009    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -3.1948   -1.5214    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -2.3878   -1.6929    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -1.9753   -0.9785    0.0000 N   0  0  0  0  0  0  0  0  0  0  0  0
+   -2.5274   -0.3654    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+  1  2  2  0  0  0  0
+  2  3  1  0  0  0  0
+  3  4  2  0  0  0  0
+  4  5  1  0  0  0  0
+  5  6  2  0  0  0  0
+  6  1  1  0  0  0  0
+  4  8  1  0  0  0  0
+  8  9  1  0  0  0  0
+ 10 11  1  0  0  0  0
+  9 10  1  0  0  0  0
+  9 13  1  0  0  0  0
+ 11 12  1  0  0  0  0
+ 12 13  1  0  0  0  0
+  2  7  1  0  0  0  0
+M  RGP  1   7   1
+M  END
+)CTAB"_ctab;
+  TEST_ASSERT(core);
+  auto mol = "COc1ccc(CC2CCNC2)cc1NC(C)=O"_smiles;
+  RGroupDecompositionParameters params;
+  RGroupDecomposition decomp(*core, params);
+  TEST_ASSERT(decomp.add(*mol) == 0);
+  decomp.process();
+  RGroupRows rows = decomp.getRGroupsAsRows();
+  for (const auto &row : rows) {
+    auto it = row.find("Core");
+    TEST_ASSERT(it != row.end());
+    const auto &rgdCore = it->second;
+    TEST_ASSERT(rgdCore->getNumConformers() == 1);
+    size_t r2Num = 0;
+    for (const auto atom : rgdCore->atoms()) {
+      // test that R2 has non-zero coords and a sensible bond length
+      // to its neighboring atom
+      if (atom->getAtomicNum() == 0 && atom->getAtomMapNum() == 2) {
+        ++r2Num;
+        auto &r2Coord = rgdCore->getConformer().getAtomPos(atom->getIdx());
+        TEST_ASSERT(fabs(r2Coord.x) > 1e-4);
+        TEST_ASSERT(fabs(r2Coord.y) > 1e-4);
+        for (const auto &nbri :
+             boost::make_iterator_range(rgdCore->getAtomNeighbors(atom))) {
+          const auto nbr = (*rgdCore)[nbri];
+          const auto bond =
+              rgdCore->getBondBetweenAtoms(nbr->getIdx(), atom->getIdx());
+          TEST_ASSERT(bond);
+          auto &nbrCoord = rgdCore->getConformer().getAtomPos(nbr->getIdx());
+          auto bondLen = (nbrCoord - r2Coord).length();
+          TEST_ASSERT(fabs(bondLen - 1.0) < 0.1);
+        }
+        TEST_ASSERT(atom->getDegree() == 1);
+      }
+    }
+    TEST_ASSERT(r2Num == 1);
+  }
+}
+
 void testUserMatchTypes() {
   BOOST_LOG(rdInfoLog)
       << "********************************************************\n";
@@ -2196,6 +2273,17 @@ void testUnlabelledRGroupsOnAromaticNitrogen() {
   }
 }
 
+void testAddHsDoesNotFail() {
+  BOOST_LOG(rdInfoLog)
+      << "********************************************************\n";
+  BOOST_LOG(rdInfoLog) << "Test that AddHs does not fail" << std::endl;
+  auto core = "[1*]c1ccc([2*])cn1"_smiles;
+  auto mol = "Fc1ccc([2*])cn1"_smiles;
+  RGroupDecompositionParameters params;
+  RGroupDecomposition decomp(*core, params);
+  TEST_ASSERT(decomp.add(*mol) == 0);
+}
+
 void testNoTempLabels() {
   BOOST_LOG(rdInfoLog)
       << "********************************************************\n";
@@ -2259,8 +2347,10 @@ int main() {
   testGeminalRGroups();
   testMatchOnAnyAtom();
   testNoAlignmentAndSymmetry();
+  testAddedRGroupsHaveCoords();
   testUserMatchTypes();
   testUnlabelledRGroupsOnAromaticNitrogen();
+  testAddHsDoesNotFail();
   testNoTempLabels();
 
   BOOST_LOG(rdInfoLog)

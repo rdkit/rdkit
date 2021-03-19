@@ -234,11 +234,15 @@ struct RGroupDecompData {
     }
   }
 
-  void addAtoms(RWMol &mol, const std::vector<std::pair<Atom *, Atom *>> &atomsToAdd) {
+  void addAtoms(RWMol &mol,
+                const std::vector<std::pair<Atom *, Atom *>> &atomsToAdd) {
     for (const auto &i : atomsToAdd) {
       mol.addAtom(i.second, false, true);
       mol.addBond(i.first, i.second, Bond::SINGLE);
-      MolOps::setHydrogenCoords(&mol, i.second->getIdx(), i.first->getIdx());
+      if (mol.getNumConformers()) {
+        MolOps::setTerminalAtomCoords(mol, i.second->getIdx(),
+                                      i.first->getIdx());
+      }
     }
   }
 
@@ -571,7 +575,7 @@ struct RGroupDecompData {
 
     if (params.matchingStrategy == GA) {
       RGroupGa ga(*this, params.timeout >= 0 ? &t0 : nullptr);
-      if (ga.numberPermutations() < 100*ga.getPopsize()) {
+      if (ga.numberPermutations() < 100 * ga.getPopsize()) {
         params.matchingStrategy = Exhaustive;
       } else {
         if (params.gaNumberRuns > 1) {
