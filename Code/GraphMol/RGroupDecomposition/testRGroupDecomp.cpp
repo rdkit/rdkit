@@ -352,29 +352,33 @@ void testRingMatching3() {
 
   RWMol *core = SmartsToMol("*1***[*:1]1");
   // RWMol *core = SmartsToMol("*1****1");
-  RGroupDecompositionParameters params;
-  // This test is currently failing using the default scoring method (the
-  // halogens are not all in the same group)
-  params.scoreMethod = FingerprintVariance;
-  params.allowNonTerminalRGroups = true;
+    
+  std::vector<RGroupScore> matchtypes{Match, FingerprintVariance};
+  for(auto match: matchtypes) {
+      RGroupDecompositionParameters params;
+      // This test is currently failing using the default scoring method (the
+      // halogens are not all in the same group)
+      params.scoreMethod = match;
+      params.allowNonTerminalRGroups = true;
 
-  RGroupDecomposition decomp(*core, params);
-  for (int i = 0; i < 3; ++i) {
-    ROMol *mol = SmilesToMol(ringData3[i]);
-    int res = decomp.add(*mol);
-    delete mol;
-    TEST_ASSERT(res == i);
-  }
+      RGroupDecomposition decomp(*core, params);
+      for (int i = 0; i < 3; ++i) {
+        ROMol *mol = SmilesToMol(ringData3[i]);
+        int res = decomp.add(*mol);
+        delete mol;
+        TEST_ASSERT(res == i);
+      }
 
-  decomp.process();
-  RGroupRows rows = decomp.getRGroupsAsRows();
-  std::ostringstream str;
+      decomp.process();
+      RGroupRows rows = decomp.getRGroupsAsRows();
+      std::ostringstream str;
 
-  // All Cl's should be labeled with the same rgroup
-  int i = 0;
-  for (RGroupRows::const_iterator it = rows.begin(); it != rows.end();
-       ++it, ++i) {
-    CHECK_RGROUP(it, ringDataRes3[i]);
+      // All Cl's should be labeled with the same rgroup
+      int i = 0;
+      for (RGroupRows::const_iterator it = rows.begin(); it != rows.end();
+           ++it, ++i) {
+        CHECK_RGROUP(it, ringDataRes3[i]);
+      }
   }
   delete core;
 }
@@ -1858,13 +1862,15 @@ void testMutipleCoreRelabellingIssues() {
       "O=C1C([*:2])([*:1])[C@@H]2N1C(C(O)=O)C([*:3])([*:4])S2",
       "O=C1C([*:2])([*:1])[C@@H]2N1C(C(O)=O)C([*:3])([*:4])O2",
       "O=C1C([*:2])([*:1])C([*:6])([*:5])N1"};
+ std::vector<RGroupScore> matchtypes{Match, FingerprintVariance};
+ for(auto match: matchtypes) {
   std::vector<ROMOL_SPTR> cores;
   for (const auto &s : smi) {
     cores.emplace_back(SmartsToMol(s));
   }
 
   RGroupDecompositionParameters params;
-  params.scoreMethod = FingerprintVariance;
+  params.scoreMethod = match;
   RGroupDecomposition decomposition(cores, params);
   for (auto &mol : molecules) {
     decomposition.add(*mol);
@@ -1876,6 +1882,7 @@ void testMutipleCoreRelabellingIssues() {
   for (auto &col : columns) {
     TEST_ASSERT(30U == col.second.size());
   }
+ }
 }
 
 void testUnprocessedMapping() {
@@ -1899,24 +1906,27 @@ void testUnprocessedMapping() {
   std::vector<std::string> coreSmi = {"N1([*:1])CCN([*:2])CC1",
                                       "C1(O[*:1])CCC(O[*:2])CC1",
                                       "C1([*:1])CCC([*:2])CC1"};
+    
+  std::vector<RGroupScore> matchtypes{Match, FingerprintVariance};
+  for(auto match: matchtypes) {
+      std::vector<ROMOL_SPTR> cores;
+      for (const auto &s : coreSmi) {
+        cores.emplace_back(SmartsToMol(s));
+      }
 
-  std::vector<ROMOL_SPTR> cores;
-  for (const auto &s : coreSmi) {
-    cores.emplace_back(SmartsToMol(s));
+      RGroupDecompositionParameters params;
+      params.scoreMethod = match;
+      RGroupDecomposition decomposition(cores, params);
+      for (auto &smi : structureSmi) {
+        auto mol = SmilesToMol(smi);
+        decomposition.add(*mol);
+        delete mol;
+      }
+
+      auto result = decomposition.processAndScore();
+      TEST_ASSERT(result.success);
+      TEST_ASSERT(result.score != -1.0);
   }
-
-  RGroupDecompositionParameters params;
-  params.scoreMethod = FingerprintVariance;
-  RGroupDecomposition decomposition(cores, params);
-  for (auto &smi : structureSmi) {
-    auto mol = SmilesToMol(smi);
-    decomposition.add(*mol);
-    delete mol;
-  }
-
-  auto result = decomposition.processAndScore();
-  TEST_ASSERT(result.success);
-  TEST_ASSERT(result.score != -1.0);
 }
 
 void testGeminalRGroups() {
@@ -2136,24 +2146,28 @@ void testUserMatchTypes() {
     }
   };
 
-  auto mol = "C1CCCCC1(N)(O)"_smiles;
-  auto core = "C1CCCCC1[*:1]"_smiles;
-  core = "C1CCCCC1[*:1]"_smarts;
-  RGroupDecompositionParameters params;
-  params.onlyMatchAtRGroups = true;
-  params.scoreMethod = FingerprintVariance;
-  RGroupDecomposition decomp(*core, params);
-  int res = decomp.add(*mol);
-  TEST_ASSERT(res == -1);
 
-  params.onlyMatchAtRGroups = false;
-  std::string expected("Core:C1CCC([*:1])([*:2])CC1 R1:O[*:1] R2:N[*:2]");
-  TestMatchType::test(*core, *mol, params, expected);
-  core = "C1CCCCC1([*:1])([*:2])"_smiles;
-  TestMatchType::test(*core, *mol, params, expected);
-  core = "C1CCCC[*:2]1[*:1]"_smiles;
-  params.allowNonTerminalRGroups = true;
-  TestMatchType::test(*core, *mol, params, expected);
+  std::vector<RGroupScore> matchtype{Match, FingerprintVariance};
+  for(auto match : matchtype) {
+      auto mol = "C1CCCCC1(N)(O)"_smiles;
+      auto core = "C1CCCCC1[*:1]"_smiles;
+      core = "C1CCCCC1[*:1]"_smarts;
+      RGroupDecompositionParameters params;
+      params.onlyMatchAtRGroups = true;
+      params.scoreMethod = match;
+      RGroupDecomposition decomp(*core, params);
+      int res = decomp.add(*mol);
+      TEST_ASSERT(res == -1);
+
+      params.onlyMatchAtRGroups = false;
+      std::string expected("Core:C1CCC([*:1])([*:2])CC1 R1:O[*:1] R2:N[*:2]");
+      TestMatchType::test(*core, *mol, params, expected);
+      core = "C1CCCCC1([*:1])([*:2])"_smiles;
+      TestMatchType::test(*core, *mol, params, expected);
+      core = "C1CCCC[*:2]1[*:1]"_smiles;
+      params.allowNonTerminalRGroups = true;
+      TestMatchType::test(*core, *mol, params, expected);
+  }
 }
 
 void testUnlabelledRGroupsOnAromaticNitrogen() {
@@ -2211,7 +2225,6 @@ int main() {
   BOOST_LOG(rdInfoLog)
       << "********************************************************\n";
   BOOST_LOG(rdInfoLog) << "Testing R-Group Decomposition \n";
-
 #if 1
   testSymmetryMatching(FingerprintVariance);
   testSymmetryMatching();
