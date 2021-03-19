@@ -256,13 +256,16 @@ struct rgroupdecomp_wrapper {
         "                        RGroupLabels.MDLRGroup - store rgroups as mdl "
         "rgroups (for molblocks)\n"
         "                       default: AtomMap | MDLRGroup\n"
-        "    - matchOnlyAtRGroups: only allow rgroup decomposition at the "
+        "    - onlyMatchAtRGroups: only allow rgroup decomposition at the "
         "specified rgroups\n"
-        "    - setRemoveRGroupsThatAreAllHydrogen: remove all rgroups that "
+        "    - removeAllHydrogenRGroups: remove all user-defined rgroups that "
         "only have hydrogens\n"
+        "    - removeAllHydrogenRGroupsAndLabels: remove all user-defined "
+        "rgroups that only have hydrogens, and also remove the corresponding "
+        "labels from the core\n"
         "    - removeHydrogensPostMatch: remove all hydrogens from the output "
         "molecules\n"
-        "    - allowNonTerminalRGroups: allow labelled Rgroups or degree 2 or "
+        "    - allowNonTerminalRGroups: allow labelled Rgroups of degree 2 or "
         "more\n";
     python::class_<RDKit::RGroupDecompositionParameters>(
         "RGroupDecompositionParameters", docString.c_str(),
@@ -306,7 +309,10 @@ struct rgroupdecomp_wrapper {
                        &RDKit::RGroupDecompositionParameters::gaParallelRuns)
         .def_readwrite(
             "allowNonTerminalRGroups",
-            &RDKit::RGroupDecompositionParameters::allowNonTerminalRGroups);
+            &RDKit::RGroupDecompositionParameters::allowNonTerminalRGroups)
+        .def_readwrite("removeAllHydrogenRGroupsAndLabels",
+                       &RDKit::RGroupDecompositionParameters::
+                           removeAllHydrogenRGroupsAndLabels);
 
     python::class_<RDKit::RGroupDecompositionHelper, boost::noncopyable>(
         "RGroupDecomposition", docString.c_str(),
