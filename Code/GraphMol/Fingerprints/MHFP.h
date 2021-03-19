@@ -118,7 +118,7 @@ public:
           unsigned char radius = 3,
           bool rings = true,
           bool isomeric = false,
-          bool kekulize = true,
+          bool kekulize = false,
           unsigned char min_radius = 1);
 
   //! \overload
@@ -127,7 +127,7 @@ public:
           unsigned char radius = 3,
           bool rings = true,
           bool isomeric = false,
-          bool kekulize = true,
+          bool kekulize = false,
           unsigned char min_radius = 1);
 
   /*!
@@ -159,7 +159,7 @@ public:
        unsigned char radius = 3,
        bool rings = true,
        bool isomeric = false,
-       bool kekulize = true,
+       bool kekulize = false,
        unsigned char min_radius = 1);
 
   //! \overload
@@ -168,7 +168,7 @@ public:
        unsigned char radius = 3,
        bool rings = true,
        bool isomeric = false,
-       bool kekulize = true,
+       bool kekulize = false,
        unsigned char min_radius = 1);
 
   //! \overload
@@ -177,7 +177,7 @@ public:
        unsigned char radius = 3,
        bool rings = true,
        bool isomeric = false,
-       bool kekulize = true,
+       bool kekulize = false,
        unsigned char min_radius = 1);
 
   //! \overload
@@ -186,7 +186,7 @@ public:
        unsigned char radius = 3,
        bool rings = true,
        bool isomeric = false,
-       bool kekulize = true,
+       bool kekulize = false,
        unsigned char min_radius = 1);
 
 
@@ -220,7 +220,7 @@ public:
        unsigned char radius = 3,
        bool rings = true,
        bool isomeric = false,
-       bool kekulize = true,
+       bool kekulize = false,
        unsigned char min_radius = 1,
        size_t length = 2048);
 
@@ -230,7 +230,7 @@ public:
        unsigned char radius = 3,
        bool rings = true,
        bool isomeric = false,
-       bool kekulize = true,
+       bool kekulize = false,
        unsigned char min_radius = 1,
        size_t length = 2048);
 
@@ -240,7 +240,7 @@ public:
        unsigned char radius = 3,
        bool rings = true,
        bool isomeric = false,
-       bool kekulize = true,
+       bool kekulize = false,
        unsigned char min_radius = 1,
        size_t length = 2048);
 
@@ -250,7 +250,7 @@ public:
        unsigned char radius = 3,
        bool rings = true,
        bool isomeric = false,
-       bool kekulize = true,
+       bool kekulize = false,
        unsigned char min_radius = 1,
        size_t length = 2048);
 
