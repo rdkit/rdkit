@@ -18,7 +18,15 @@
 - There have been numerous changes to the RGroup Decomposition code which change
   the results. (#3767)
 - There have been numerous changes to `GenerateDepictionMatching2DStructure()` (#3811)
-
+- Setting the kekuleSmiles argument (doKekule in C++) to MolToSmiles will now
+  cause the molecule to be kekulized before SMILES generation. Note that this
+  can lead to an exception being thrown. Previously this argument would only
+  write kekulized SMILES if the molecule had already been kekulized (#2788)
+- Using the kekulize argument in the MHFP code will now cause the molecule to be
+  kekulized before the fingerprint is generated. Note that becaues kekulization
+  is not canonical, using this argument currently causes the results to depend
+  on the input atom numbering. Note that this can lead to an exception being
+  thrown. (#3942)
 
 # Release_2020.09.1
 (Changes relative to Release_2020.03.1)
