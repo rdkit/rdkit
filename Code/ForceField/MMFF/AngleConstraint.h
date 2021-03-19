@@ -53,6 +53,7 @@ class RDKIT_FORCEFIELD_EXPORT AngleConstraintContrib
   };
 
  private:
+  double computeAngleTerm(double angle) const;
   int d_at1Idx{-1}, d_at2Idx{-1},
       d_at3Idx{-1};                     //!< indices of atoms forming the angle
   double d_minAngleDeg, d_maxAngleDeg;  //!< rest amplitudes of the angle
