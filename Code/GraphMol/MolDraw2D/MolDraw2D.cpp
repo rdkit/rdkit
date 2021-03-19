@@ -1783,7 +1783,7 @@ void MolDraw2D::finishMoleculeDraw(const RDKit::ROMol &draw_mol,
       drawAtomLabel(i, atom_colours[i]);
     }
   }
-  text_drawer_->setColour(DrawColour(0.0, 0.0, 0.0));
+  text_drawer_->setColour(drawOptions().annotationColour);
   if (!supportsAnnotations() && !annotations_.empty()) {
     BOOST_LOG(rdWarningLog) << "annotations not currently supported for this "
                                "MolDraw2D class, they will be ignored."

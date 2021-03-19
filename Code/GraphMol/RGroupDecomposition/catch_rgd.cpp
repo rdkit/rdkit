@@ -175,6 +175,68 @@ TEST_CASE("simple2 with specified R groups") {
   }
 }
 
+TEST_CASE("simple3 with user labels on aromatic N") {
+  std::string testDataDir =
+      std::string(getenv("RDBASE")) +
+      std::string("/Code/GraphMol/RGroupDecomposition/test_data/");
+  std::string fName = testDataDir + "simple3.sdf";
+  SDMolSupplier suppl(fName);
+  std::vector<ROMOL_SPTR> cores(1);
+  std::vector<ROMOL_SPTR> mols;
+  initDataset(suppl, cores.front(), mols);
+  SECTION("defaults (allH labels and R-groups are removed)") {
+    RGroupRows rows;
+    auto n = RGroupDecompose(cores, mols, rows);
+    CHECK(n == mols.size());
+    CHECK(rows.size() == mols.size());
+    CHECK(flatten_whitespace(toJSON(rows)) ==
+          flatten_whitespace(
+              readReferenceData(testDataDir + "simple3.out1.json")));
+  }
+  SECTION("removeAllHydrogenRGroups = false (as defaults)") {
+    RGroupRows rows;
+    RGroupDecompositionParameters ps;
+    ps.removeAllHydrogenRGroups = false;
+    std::vector<unsigned> unmatched;
+    auto n = RGroupDecompose(cores, mols, rows, &unmatched, ps);
+    CHECK(n == mols.size());
+    CHECK(rows.size() == mols.size());
+    CHECK(unmatched.empty());
+    CHECK(flatten_whitespace(toJSON(rows)) ==
+          flatten_whitespace(
+              readReferenceData(testDataDir + "simple3.out2.json")));
+  }
+  SECTION("removeAllHydrogenRGroupsAndLabels = false (allH labels retained)") {
+    RGroupRows rows;
+    RGroupDecompositionParameters ps;
+    ps.removeAllHydrogenRGroupsAndLabels = false;
+    std::vector<unsigned> unmatched;
+    auto n = RGroupDecompose(cores, mols, rows, &unmatched, ps);
+    CHECK(n == mols.size());
+    CHECK(rows.size() == mols.size());
+    CHECK(unmatched.empty());
+    CHECK(flatten_whitespace(toJSON(rows)) ==
+          flatten_whitespace(
+              readReferenceData(testDataDir + "simple3.out3.json")));
+  }
+  SECTION(
+      "removeAllHydrogenRGroupsAndLabels = false, removeAllHydrogenRGroups = "
+      "false (allH labels and R-groups are retained)") {
+    RGroupRows rows;
+    RGroupDecompositionParameters ps;
+    ps.removeAllHydrogenRGroups = false;
+    ps.removeAllHydrogenRGroupsAndLabels = false;
+    std::vector<unsigned> unmatched;
+    auto n = RGroupDecompose(cores, mols, rows, &unmatched, ps);
+    CHECK(n == mols.size());
+    CHECK(rows.size() == mols.size());
+    CHECK(unmatched.empty());
+    CHECK(flatten_whitespace(toJSON(rows)) ==
+          flatten_whitespace(
+              readReferenceData(testDataDir + "simple3.out4.json")));
+  }
+}
+
 TEST_CASE("jm7b00306 Snippet") {
   std::string testDataDir =
       std::string(getenv("RDBASE")) +

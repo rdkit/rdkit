@@ -143,7 +143,9 @@ double matchScore(const std::vector<size_t> &permutation,
 #endif
   }
 
+#ifdef DEBUG
   BOOST_LOG(rdDebugLog) << score << std::endl;
+#endif
 
   return score;
 }

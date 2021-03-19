@@ -19,38 +19,38 @@ class TestCase(unittest.TestCase):
   def test1(self):
     fName = os.path.join(self.dirName, 'benzene.mol')
     m = Chem.MolFromMolFile(fName)
-    self.failIf(ChemicalForceFields.UFFOptimizeMolecule(m))
+    self.assertFalse(ChemicalForceFields.UFFOptimizeMolecule(m))
     # make sure that keyword arguments work:
     m = Chem.MolFromMolFile(fName)
-    self.failUnless(ChemicalForceFields.UFFOptimizeMolecule(m, maxIters=1))
+    self.assertTrue(ChemicalForceFields.UFFOptimizeMolecule(m, maxIters=1))
 
     m = Chem.MolFromMolFile(fName)
-    self.failIf(ChemicalForceFields.UFFOptimizeMolecule(m, vdwThresh=2.0))
+    self.assertFalse(ChemicalForceFields.UFFOptimizeMolecule(m, vdwThresh=2.0))
 
     m = Chem.MolFromMolFile(fName)
-    self.failIf(ChemicalForceFields.UFFOptimizeMolecule(m, confId=-1))
+    self.assertFalse(ChemicalForceFields.UFFOptimizeMolecule(m, confId=-1))
 
     m = Chem.MolFromMolFile(fName)
-    self.failUnlessRaises(ValueError, lambda: ChemicalForceFields.UFFOptimizeMolecule(m, confId=1))
+    self.assertRaises(ValueError, lambda: ChemicalForceFields.UFFOptimizeMolecule(m, confId=1))
 
   def test2(self):
     fName = os.path.join(self.dirName, 'benzene.mol')
     m = Chem.MolFromMolFile(fName)
     ff = ChemicalForceFields.UFFGetMoleculeForceField(m)
-    self.failUnless(ff)
+    self.assertTrue(ff)
     e1 = ff.CalcEnergy()
     r = ff.Minimize()
-    self.failUnless(r == 0)
+    self.assertTrue(r == 0)
     e2 = ff.CalcEnergy()
-    self.failUnless(e2 < e1)
+    self.assertTrue(e2 < e1)
 
     # test keyword args:
     r = ff.Minimize(forceTol=1e-8)
-    self.failUnless(r == 0)
+    self.assertTrue(r == 0)
 
     # test keyword args:
     r = ff.Minimize(energyTol=1e-3)
-    self.failUnless(r == 0)
+    self.assertTrue(r == 0)
 
   def test3(self):
     molB = """
@@ -69,56 +69,56 @@ M  END"""
     m = Chem.MolFromMolBlock(molB)
 
     ff = ChemicalForceFields.UFFGetMoleculeForceField(m)
-    self.failUnless(ff)
+    self.assertTrue(ff)
     e1 = ff.CalcEnergy()
     r = ff.Minimize()
-    self.failUnless(r == 0)
+    self.assertTrue(r == 0)
     e2 = ff.CalcEnergy()
-    self.failUnless(e2 < e1)
+    self.assertTrue(e2 < e1)
 
   def test4(self):
     m = Chem.MolFromSmiles('[Cu](C)(C)(C)(C)C')
-    self.failIf(ChemicalForceFields.UFFHasAllMoleculeParams(m))
+    self.assertFalse(ChemicalForceFields.UFFHasAllMoleculeParams(m))
 
     m = Chem.MolFromSmiles('C(C)(C)(C)C')
-    self.failUnless(ChemicalForceFields.UFFHasAllMoleculeParams(m))
+    self.assertTrue(ChemicalForceFields.UFFHasAllMoleculeParams(m))
 
   def test5(self):
     fName = os.path.join(self.dirName, 'benzene.mol')
     m = Chem.MolFromMolFile(fName)
-    self.failIf(ChemicalForceFields.MMFFOptimizeMolecule(m))
+    self.assertFalse(ChemicalForceFields.MMFFOptimizeMolecule(m))
     # make sure that keyword arguments work:
     m = Chem.MolFromMolFile(fName)
-    self.failUnless(ChemicalForceFields.MMFFOptimizeMolecule(m, maxIters=1))
+    self.assertTrue(ChemicalForceFields.MMFFOptimizeMolecule(m, maxIters=1))
 
     m = Chem.MolFromMolFile(fName)
-    self.failIf(ChemicalForceFields.MMFFOptimizeMolecule(m, nonBondedThresh=2.0))
+    self.assertFalse(ChemicalForceFields.MMFFOptimizeMolecule(m, nonBondedThresh=2.0))
 
     m = Chem.MolFromMolFile(fName)
-    self.failIf(ChemicalForceFields.MMFFOptimizeMolecule(m, confId=-1))
+    self.assertFalse(ChemicalForceFields.MMFFOptimizeMolecule(m, confId=-1))
 
     m = Chem.MolFromMolFile(fName)
-    self.failUnlessRaises(ValueError, lambda: ChemicalForceFields.MMFFOptimizeMolecule(m, confId=1))
+    self.assertRaises(ValueError, lambda: ChemicalForceFields.MMFFOptimizeMolecule(m, confId=1))
 
   def test6(self):
     fName = os.path.join(self.dirName, 'benzene.mol')
     m = Chem.MolFromMolFile(fName)
     mp = ChemicalForceFields.MMFFGetMoleculeProperties(m)
     ff = ChemicalForceFields.MMFFGetMoleculeForceField(m, mp)
-    self.failUnless(ff)
+    self.assertTrue(ff)
     e1 = ff.CalcEnergy()
     r = ff.Minimize()
-    self.failUnless(r == 0)
+    self.assertTrue(r == 0)
     e2 = ff.CalcEnergy()
-    self.failUnless(e2 < e1)
+    self.assertTrue(e2 < e1)
 
     # test keyword args:
     r = ff.Minimize(forceTol=1.0e-8)
-    self.failUnless(r == 0)
+    self.assertTrue(r == 0)
 
     # test keyword args:
     r = ff.Minimize(energyTol=1.0e-3)
-    self.failUnless(r == 0)
+    self.assertTrue(r == 0)
 
   def test7(self):
     molB = """
@@ -138,65 +138,65 @@ M  END"""
 
     mp = ChemicalForceFields.MMFFGetMoleculeProperties(m)
     ff = ChemicalForceFields.MMFFGetMoleculeForceField(m, mp)
-    self.failUnless(ff)
+    self.assertTrue(ff)
     e1 = ff.CalcEnergy()
     r = ff.Minimize()
-    self.failUnless(r == 0)
+    self.assertTrue(r == 0)
     e2 = ff.CalcEnergy()
-    self.failUnless(e2 < e1)
+    self.assertTrue(e2 < e1)
 
   def test8(self):
     m = Chem.MolFromSmiles('[Cu](C)(C)(C)(C)C')
-    self.failIf(ChemicalForceFields.MMFFHasAllMoleculeParams(m))
+    self.assertFalse(ChemicalForceFields.MMFFHasAllMoleculeParams(m))
 
     m = Chem.MolFromSmiles('C(C)(C)(C)C')
-    self.failUnless(ChemicalForceFields.MMFFHasAllMoleculeParams(m))
+    self.assertTrue(ChemicalForceFields.MMFFHasAllMoleculeParams(m))
 
   def test9(self):
     m = Chem.MolFromSmiles('c1ccccc1CCNN')
     m = Chem.AddHs(m)
     mp = ChemicalForceFields.MMFFGetMoleculeProperties(m)
     mmffBondStretchParams = mp.GetMMFFBondStretchParams(m, 6, 7)
-    self.failUnless(mmffBondStretchParams)
-    self.failUnless((mmffBondStretchParams[0] == 0) and
+    self.assertTrue(mmffBondStretchParams)
+    self.assertTrue((mmffBondStretchParams[0] == 0) and
                     (int(round(mmffBondStretchParams[1] * 1000) == 4258)) and
                     (int(round(mmffBondStretchParams[2] * 1000) == 1508)))
     mmffBondStretchParams = mp.GetMMFFBondStretchParams(m, 0, 7)
-    self.failIf(mmffBondStretchParams)
+    self.assertFalse(mmffBondStretchParams)
     mmffAngleBendParams = mp.GetMMFFAngleBendParams(m, 6, 7, 8)
-    self.failUnless(mmffAngleBendParams)
-    self.failUnless((mmffAngleBendParams[0] == 0) and
+    self.assertTrue(mmffAngleBendParams)
+    self.assertTrue((mmffAngleBendParams[0] == 0) and
                     (int(round(mmffAngleBendParams[1] * 1000) == 777)) and
                     (int(round(mmffAngleBendParams[2] * 1000) == 108290)))
     mmffAngleBendParams = mp.GetMMFFAngleBendParams(m, 0, 7, 8)
-    self.failIf(mmffAngleBendParams)
+    self.assertFalse(mmffAngleBendParams)
     mmffStretchBendParams = mp.GetMMFFStretchBendParams(m, 6, 7, 8)
-    self.failUnless(mmffStretchBendParams)
-    self.failUnless((mmffStretchBendParams[0] == 0) and
+    self.assertTrue(mmffStretchBendParams)
+    self.assertTrue((mmffStretchBendParams[0] == 0) and
                     (int(round(mmffStretchBendParams[1] * 1000) == 136)) and
                     (int(round(mmffStretchBendParams[2] * 1000) == 282)))
     mmffStretchBendParams = mp.GetMMFFStretchBendParams(m, 0, 7, 8)
-    self.failIf(mmffStretchBendParams)
+    self.assertFalse(mmffStretchBendParams)
     mmffTorsionParams = mp.GetMMFFTorsionParams(m, 6, 7, 8, 9)
-    self.failUnless(mmffTorsionParams)
-    self.failUnless((mmffTorsionParams[0] == 0) and
+    self.assertTrue(mmffTorsionParams)
+    self.assertTrue((mmffTorsionParams[0] == 0) and
                     (int(round(mmffTorsionParams[1] * 1000) == 0)) and
                     (int(round(mmffTorsionParams[2] * 1000) == -300)) and
                     (int(round(mmffTorsionParams[3] * 1000) == 500)))
     mmffTorsionParams = mp.GetMMFFTorsionParams(m, 0, 7, 8, 9)
-    self.failIf(mmffTorsionParams)
+    self.assertFalse(mmffTorsionParams)
     mmffOopBendParams = mp.GetMMFFOopBendParams(m, 6, 5, 4, 0)
-    self.failUnless(mmffOopBendParams)
-    self.failUnless(int(round(mmffOopBendParams * 1000)) == 40)
+    self.assertTrue(mmffOopBendParams)
+    self.assertTrue(int(round(mmffOopBendParams * 1000)) == 40)
     mmffOopBendParams = mp.GetMMFFOopBendParams(m, 6, 5, 4, 1)
-    self.failIf(mmffOopBendParams)
+    self.assertFalse(mmffOopBendParams)
     sub1 = m.GetSubstructMatch(Chem.MolFromSmarts('NN[H]'))
-    self.failUnless(len(sub1) == 3)
+    self.assertTrue(len(sub1) == 3)
     nIdx = sub1[0]
     hIdx = sub1[2]
     mmffVdWParams = mp.GetMMFFVdWParams(nIdx, hIdx)
-    self.failUnless(mmffVdWParams)
-    self.failUnless((int(round(mmffVdWParams[0] * 1000)) == 3321) and
+    self.assertTrue(mmffVdWParams)
+    self.assertTrue((int(round(mmffVdWParams[0] * 1000)) == 3321) and
                     (int(round(mmffVdWParams[1] * 1000)) == 34) and
                     (int(round(mmffVdWParams[2] * 1000)) == 2657) and
                     (int(round(mmffVdWParams[3] * 1000)) == 17))
@@ -205,30 +205,30 @@ M  END"""
     m = Chem.MolFromSmiles('c1ccccc1CCNN')
     m = Chem.AddHs(m)
     uffBondStretchParams = ChemicalForceFields.GetUFFBondStretchParams(m, 6, 7)
-    self.failUnless(uffBondStretchParams)
-    self.failUnless((int(round(uffBondStretchParams[0] * 1000) == 699592)) and
+    self.assertTrue(uffBondStretchParams)
+    self.assertTrue((int(round(uffBondStretchParams[0] * 1000) == 699592)) and
                     (int(round(uffBondStretchParams[1] * 1000) == 1514)))
     uffBondStretchParams = ChemicalForceFields.GetUFFBondStretchParams(m, 0, 7)
-    self.failIf(uffBondStretchParams)
+    self.assertFalse(uffBondStretchParams)
     uffAngleBendParams = ChemicalForceFields.GetUFFAngleBendParams(m, 6, 7, 8)
-    self.failUnless(uffAngleBendParams)
-    self.failUnless((int(round(uffAngleBendParams[0] * 1000) == 303297)) and
+    self.assertTrue(uffAngleBendParams)
+    self.assertTrue((int(round(uffAngleBendParams[0] * 1000) == 303297)) and
                     (int(round(uffAngleBendParams[1] * 1000) == 109470)))
     uffAngleBendParams = ChemicalForceFields.GetUFFAngleBendParams(m, 0, 7, 8)
-    self.failIf(uffAngleBendParams)
+    self.assertFalse(uffAngleBendParams)
     uffTorsionParams = ChemicalForceFields.GetUFFTorsionParams(m, 6, 7, 8, 9)
-    self.failUnless(uffTorsionParams)
-    self.failUnless((int(round(uffTorsionParams * 1000) == 976)))
+    self.assertTrue(uffTorsionParams)
+    self.assertTrue((int(round(uffTorsionParams * 1000) == 976)))
     uffTorsionParams = ChemicalForceFields.GetUFFTorsionParams(m, 0, 7, 8, 9)
-    self.failIf(uffTorsionParams)
+    self.assertFalse(uffTorsionParams)
     uffInversionParams = ChemicalForceFields.GetUFFInversionParams(m, 6, 5, 4, 0)
-    self.failUnless(uffInversionParams)
-    self.failUnless(int(round(uffInversionParams * 1000)) == 2000)
+    self.assertTrue(uffInversionParams)
+    self.assertTrue(int(round(uffInversionParams * 1000)) == 2000)
     uffInversionParams = ChemicalForceFields.GetUFFInversionParams(m, 6, 5, 4, 1)
-    self.failIf(uffInversionParams)
+    self.assertFalse(uffInversionParams)
     uffVdWParams = ChemicalForceFields.GetUFFVdWParams(m, 0, 9)
-    self.failUnless(uffVdWParams)
-    self.failUnless((int(round(uffVdWParams[0] * 1000)) == 3754) and
+    self.assertTrue(uffVdWParams)
+    self.assertTrue((int(round(uffVdWParams[0] * 1000)) == 3754) and
                     (int(round(uffVdWParams[1] * 1000)) == 85))
 
   def test11(self):
@@ -239,18 +239,18 @@ M  END"""
       for a in m.GetAtoms():
         aromaticFlagsBefore.append(a.GetIsAromatic())
       if (i):
-        self.failUnless(ChemicalForceFields.MMFFGetMoleculeProperties(m))
+        self.assertTrue(ChemicalForceFields.MMFFGetMoleculeProperties(m))
       else:
-        self.failUnless(ChemicalForceFields.MMFFHasAllMoleculeParams(m))
+        self.assertTrue(ChemicalForceFields.MMFFHasAllMoleculeParams(m))
       aromaticFlagsAfter = []
       for a in m.GetAtoms():
         aromaticFlagsAfter.append(a.GetIsAromatic())
       res = (aromaticFlagsBefore == aromaticFlagsAfter)
       if (i):
         res = not res
-      self.failUnless(res)
+      self.assertTrue(res)
       pyrroleNIdx = m.GetSubstructMatch(query)[-1]
-      self.failUnless(m.GetAtomWithIdx(pyrroleNIdx).GetTotalDegree() == 3)
+      self.assertTrue(m.GetAtomWithIdx(pyrroleNIdx).GetTotalDegree() == 3)
 
   def test12(self):
     self.dirName = os.path.join(RDConfig.RDBaseDir, 'Code', 'GraphMol', 'ForceFieldHelpers', 'UFF',
@@ -265,7 +265,7 @@ M  END"""
     e1 = ff.CalcEnergy()
     ff.Minimize(10000, 1.0e-6, 1.0e-3)
     e2 = ff.CalcEnergy()
-    self.failUnless(e2 < e1)
+    self.assertTrue(e2 < e1)
     e3 = ff.CalcEnergy(savedPos)
     self.assertAlmostEqual(e3, e1, 2)
     savedPos = tuple(positions)
@@ -289,7 +289,7 @@ M  END"""
     e1 = ff.CalcEnergy()
     ff.Minimize(10000, 1.0e-6, 1.0e-3)
     e2 = ff.CalcEnergy()
-    self.failUnless(e2 < e1)
+    self.assertTrue(e2 < e1)
     e3 = ff.CalcEnergy(savedPos)
     self.assertAlmostEqual(e3, e1, 2)
 
@@ -350,6 +350,31 @@ M  END"""
     self.assertEqual(len(res), 2)
     self.assertEqual(res[0], res[1])
     self.assertEqual(res[0], (-1, -1.0))
+
+  def testOptimizeMolecule(self):
+    m = Chem.AddHs(Chem.MolFromSmiles("CCCO"))
+    self.assertIsNotNone(m)
+    self.assertEqual(rdDistGeom.EmbedMolecule(m), 0)
+    mp = ChemicalForceFields.MMFFGetMoleculeProperties(m)
+    ff = ChemicalForceFields.MMFFGetMoleculeForceField(m, mp)
+    before = ff.CalcEnergy()
+    self.assertEqual(ChemicalForceFields.OptimizeMolecule(ff, maxIters=200), 0)
+    after = ff.CalcEnergy()
+    self.assertLess(after, before)
+
+  def testOptimizeMoleculeConfs(self):
+    m = Chem.AddHs(Chem.MolFromSmiles("CCCO"))
+    self.assertIsNotNone(m)
+    cids = rdDistGeom.EmbedMultipleConfs(m, numConfs=10)
+    self.assertEqual(len(cids), 10)
+    mp = ChemicalForceFields.MMFFGetMoleculeProperties(m)
+    ff = ChemicalForceFields.MMFFGetMoleculeForceField(m, mp)
+    before = [ChemicalForceFields.MMFFGetMoleculeForceField(m, mp, confId=cid).CalcEnergy() for cid in cids]
+    res, after = tuple(zip(*ChemicalForceFields.OptimizeMoleculeConfs(m, ff, maxIters=200)))
+    self.assertEqual(len(res), 10)
+    self.assertEqual(len(before), len(after))
+    self.assertTrue(all(map(lambda i: i == 0, res)))
+    self.assertTrue(all(after[i] < b for i, b in enumerate(before)))
 
 if __name__ == '__main__':
   unittest.main()

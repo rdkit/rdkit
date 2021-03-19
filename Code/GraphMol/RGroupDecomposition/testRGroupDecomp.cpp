@@ -2270,6 +2270,29 @@ void testAddHsDoesNotFail() {
   TEST_ASSERT(decomp.add(*mol) == 0);
 }
 
+void testNoTempLabels() {
+  BOOST_LOG(rdInfoLog)
+      << "********************************************************\n";
+  BOOST_LOG(rdInfoLog) << "Test that temp labels are removed from results"
+                       << std::endl;
+  auto core = "[1*]c1ccccc1"_smiles;
+  auto mol = "Cc1ccccc1"_smiles;
+  RGroupDecompositionParameters params;
+  RGroupDecomposition decomp(*core, params);
+  TEST_ASSERT(decomp.add(*mol) == 0);
+  TEST_ASSERT(decomp.process());
+  auto rows = decomp.getRGroupsAsRows();
+  TEST_ASSERT(rows.size() == 1);
+  const auto &res = rows.front();
+  for (const auto &pair : res) {
+    for (const auto a : pair.second->atoms()) {
+      for (const auto &propName : a->getPropList()) {
+        TEST_ASSERT(propName.find("label") == std::string::npos);
+      }
+    }
+  }
+}
+
 int main() {
   RDLog::InitLogs();
   boost::logging::disable_logs("rdApp.debug");
@@ -2315,6 +2338,7 @@ int main() {
   testUserMatchTypes();
   testUnlabelledRGroupsOnAromaticNitrogen();
   testAddHsDoesNotFail();
+  testNoTempLabels();
 
   BOOST_LOG(rdInfoLog)
       << "********************************************************\n";
