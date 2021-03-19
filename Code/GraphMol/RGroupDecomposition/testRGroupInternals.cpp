@@ -166,11 +166,8 @@ void testRingMatching3Score() {
   auto test2 = matchScore(permutation, allMatches2, labels);
 
   // expect test1 to have better score than test2 since all halogens are on R1
-  // but this is not the case
 
   TEST_ASSERT(test1 > test2); 
-
-  // But it is for the fingerprint score
 
   auto testFp1 = fingerprintVarianceScore(permutation, allMatches1, labels);
   auto testFp2 = fingerprintVarianceScore(permutation, allMatches2, labels);
