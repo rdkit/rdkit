@@ -18,7 +18,9 @@
 #include "../Substruct/SubstructMatch.h"
 #include "SubstructMatchCustom.h"
 #include "MaximumCommonSubgraph.h"
+#include <RDGeneral/BoostStartInclude.h>
 #include <boost/graph/adjacency_list.hpp>
+#include <RDGeneral/BoostEndInclude.h>
 
 namespace RDKit {
 namespace FMCS {
@@ -389,7 +391,9 @@ void MaximumCommonSubgraph::makeInitialSeeds() {
       }
     }
     if (Seeds.empty()) {
-      BOOST_LOG(rdWarningLog) << "The provided InitialSeed is not an MCS and will be ignored" << std::endl;
+      BOOST_LOG(rdWarningLog)
+          << "The provided InitialSeed is not an MCS and will be ignored"
+          << std::endl;
     }
   }
   if (Seeds.empty()) {  // create a set of seeds from each query bond

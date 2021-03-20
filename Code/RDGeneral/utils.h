@@ -15,9 +15,7 @@
 #include "types.h"
 #include <RDGeneral/Invariant.h>
 #include <RDGeneral/BoostStartInclude.h>
-#define BOOST_ALLOW_DEPRECATED_HEADERS
 #include <boost/random.hpp>
-#undef BOOST_ALLOW_DEPRECATED_HEADERS
 #include <RDGeneral/BoostEndInclude.h>
 
 namespace RDKit {
