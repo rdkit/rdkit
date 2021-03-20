@@ -89,6 +89,7 @@ a Python library for building, manipulating, analyzing and automatic design of m
 - [Vernalis KNIME nodes](https://www.knime.com/book/vernalis-nodes-for-knime-trusted-extension)
 - [Erlwood KNIME nodes](https://www.knime.com/community/erlwood)
 - [AZOrange](https://github.com/AZcompTox/AZOrange)
+- [Scopy](https://github.com/kotori-y/Scopy)([docs](https://scopy.iamkotori.com/), [paper](https://doi.org/10.1093/bib/bbaa194)) - an integrated negative design Python library for desirable HTS/VS database design
 
 ## License
 
