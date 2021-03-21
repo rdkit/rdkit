@@ -210,8 +210,12 @@ void addMol(const T &imol, rj::Value &rjMol, rj::Document &doc,
           auto val = mol.getProp<double>(pN);
           rjv = val;
         } catch (const boost::bad_any_cast &) {
-          auto val = mol.getProp<std::string>(pN);
-          rjv.SetString(val.c_str(), val.size(), doc.GetAllocator());
+          try {
+            auto val = mol.getProp<std::string>(pN);
+            rjv.SetString(val.c_str(), val.size(), doc.GetAllocator());
+          } catch (const boost::bad_any_cast &) {
+            continue;
+          }
         }
       }
       rj::Value rjpN;
