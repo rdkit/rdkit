@@ -1284,3 +1284,38 @@ TEST_CASE(
     }
   }
 }
+
+TEST_CASE("N Chirality in rings") {
+  SECTION("basics 4 coordinate") {
+    {
+      auto mol = "CC1CC2CC[N@@+]1(C)OC2"_smiles;
+      REQUIRE(mol);
+      CHECK(mol->getAtomWithIdx(6)->getAtomicNum() == 7);
+      CHECK(mol->getAtomWithIdx(6)->getChiralTag() !=
+            Atom::ChiralType::CHI_UNSPECIFIED);
+    }
+    {
+      auto mol = "C[N@@+](F)(Cl)O"_smiles;
+      REQUIRE(mol);
+      CHECK(mol->getAtomWithIdx(1)->getAtomicNum() == 7);
+      CHECK(mol->getAtomWithIdx(1)->getChiralTag() !=
+            Atom::ChiralType::CHI_UNSPECIFIED);
+    }
+  }
+  SECTION("basics 3 coordinate") {
+    {
+      auto mol = "CC1CC2CC[N@@]1OC2"_smiles;
+      REQUIRE(mol);
+      CHECK(mol->getAtomWithIdx(6)->getAtomicNum() == 7);
+      CHECK(mol->getAtomWithIdx(6)->getChiralTag() !=
+            Atom::ChiralType::CHI_UNSPECIFIED);
+    }
+    {
+      auto mol = "C1CC[N@]2OCCCC2C1"_smiles;
+      REQUIRE(mol);
+      CHECK(mol->getAtomWithIdx(3)->getAtomicNum() == 7);
+      CHECK(mol->getAtomWithIdx(3)->getChiralTag() ==
+            Atom::ChiralType::CHI_UNSPECIFIED);
+    }
+  }
+}

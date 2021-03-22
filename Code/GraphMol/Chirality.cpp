@@ -1190,8 +1190,13 @@ bool atomIsCandidateForRingStereochem(const ROMol &mol, const Atom *atom) {
   if (!atom->getPropIfPresent(common_properties::_ringStereochemCand, res)) {
     const RingInfo *ringInfo = mol.getRingInfo();
     if (ringInfo->isInitialized() && ringInfo->numAtomRings(atom->getIdx())) {
+      // three-coordinate N additional requirements:
+      //   in a ring of size 3  (from InChI)
+      // OR
+      //   a bridgehead, i.e. shared by more than 2 rings (RDKit extension)
       if (atom->getAtomicNum() == 7 &&
-          !ringInfo->isAtomInRingOfSize(atom->getIdx(), 3)) {
+          !ringInfo->isAtomInRingOfSize(atom->getIdx(), 3) &&
+          ringInfo->numAtomRings(atom->getIdx()) <= 2) {
         return false;
       }
       ROMol::OEDGE_ITER beg, end;
@@ -1412,9 +1417,12 @@ std::pair<bool, bool> isAtomPotentialChiralCenter(
       // chiral, then look for exceptions
       legalCenter = false;
       if (atom->getAtomicNum() == 7) {
-        if (mol.getRingInfo()->isAtomInRingOfSize(atom->getIdx(), 3)) {
-          // three-coordinate N is only stereogenic if it's in a 3-ring (this is
-          // from InChI)
+        // three-coordinate N additional requirements:
+        //   in a ring of size 3  (from InChI)
+        // OR
+        //   a bridgehead, i.e. shared by more than 2 rings (RDKit extension)
+        if (mol.getRingInfo()->isAtomInRingOfSize(atom->getIdx(), 3) ||
+            mol.getRingInfo()->numAtomRings(atom->getIdx()) > 2) {
           legalCenter = true;
         }
       } else if (atom->getAtomicNum() == 15 || atom->getAtomicNum() == 33) {
