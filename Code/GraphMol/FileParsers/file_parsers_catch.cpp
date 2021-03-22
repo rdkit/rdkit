@@ -3131,3 +3131,50 @@ M  END
     }
   }
 }
+
+TEST_CASE("Support reading unambiguous short atom lines") {
+  SECTION("basics") {
+    std::string mb = R"CTAB(
+  Mrv2014 03112117322D          
+
+  2  1  0  0  0  0            999 V2000
+   -1.8270   -1.5114    0.0000 C 
+   -2.2764   -0.8194    0.0000 C
+  1  2  1  0  0  0  0
+M  END
+)CTAB";
+    // we fail when doing strict parsing
+    REQUIRE_THROWS_AS(MolBlockToMol(mb), FileParseException);
+
+    bool removeHs = true;
+    bool sanitize = true;
+    bool strictParsing = false;
+    // but can read it with non-strict parsing
+    std::unique_ptr<ROMol> m{
+        MolBlockToMol(mb, sanitize, removeHs, strictParsing)};
+    REQUIRE(m);
+    CHECK(m->getNumAtoms() == 2);
+    CHECK(m->getAtomWithIdx(0)->getAtomicNum() == 6);
+    CHECK(m->getAtomWithIdx(1)->getAtomicNum() == 6);
+  }
+  SECTION("too short") {
+    std::string mb = R"CTAB(
+  Mrv2014 03112117322D          
+
+  2  1  0  0  0  0            999 V2000
+   -1.8270   -1.5114    0.0000  
+   -2.2764   -0.8194    0.0000 C
+  1  2  1  0  0  0  0
+M  END
+)CTAB";
+    // we fail when doing strict parsing
+    REQUIRE_THROWS_AS(MolBlockToMol(mb), FileParseException);
+
+    bool removeHs = true;
+    bool sanitize = true;
+    bool strictParsing = false;
+    // fail even with non-strict parsing
+    REQUIRE_THROWS_AS(MolBlockToMol(mb, sanitize, removeHs, strictParsing),
+                      FileParseException);
+  }
+}
