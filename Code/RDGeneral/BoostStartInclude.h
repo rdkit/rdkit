@@ -88,3 +88,8 @@
 /* Oracle Solaris Studio. ----------------------------------- */
 
 #endif
+
+#ifndef BOOST_ALLOW_DEPRECATED_HEADERS
+#define RDK_ALLOW_BOOST_DEPRECATED_HEADERS
+#define BOOST_ALLOW_DEPRECATED_HEADERS
+#endif
