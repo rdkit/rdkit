@@ -1318,4 +1318,43 @@ TEST_CASE("N Chirality in rings") {
             Atom::ChiralType::CHI_UNSPECIFIED);
     }
   }
+  SECTION("ring stereo") {
+    {  // real chirality
+      auto mol = "C[C@H]1CC[N@@+](C)(O)OC1"_smiles;
+      REQUIRE(mol);
+      CHECK(mol->getAtomWithIdx(4)->getAtomicNum() == 7);
+      CHECK(mol->getAtomWithIdx(4)->getChiralTag() !=
+            Atom::ChiralType::CHI_UNSPECIFIED);
+      CHECK(mol->getAtomWithIdx(1)->getAtomicNum() == 6);
+      CHECK(mol->getAtomWithIdx(1)->getChiralTag() !=
+            Atom::ChiralType::CHI_UNSPECIFIED);
+    }
+    {  // ring stereo
+      auto mol = "C[C@H]1CC[N@@+](C)(O)CC1"_smiles;
+      REQUIRE(mol);
+      CHECK(mol->getAtomWithIdx(4)->getAtomicNum() == 7);
+      CHECK(mol->getAtomWithIdx(4)->getChiralTag() !=
+            Atom::ChiralType::CHI_UNSPECIFIED);
+      CHECK(mol->getAtomWithIdx(1)->getAtomicNum() == 6);
+      CHECK(mol->getAtomWithIdx(1)->getChiralTag() !=
+            Atom::ChiralType::CHI_UNSPECIFIED);
+    }
+    {  // ring stereo
+      auto mol = "C[C@H]1CC[N@@+](C)(O)CC1"_smiles;
+      REQUIRE(mol);
+      CHECK(mol->getAtomWithIdx(4)->getAtomicNum() == 7);
+      CHECK(mol->getAtomWithIdx(4)->getChiralTag() !=
+            Atom::ChiralType::CHI_UNSPECIFIED);
+      CHECK(mol->getAtomWithIdx(1)->getAtomicNum() == 6);
+      CHECK(mol->getAtomWithIdx(1)->getChiralTag() !=
+            Atom::ChiralType::CHI_UNSPECIFIED);
+    }
+    {  // three-ring degree-three ring stereo
+      auto mol = "C[C@H]1[C@@H](C)[N@]1C"_smiles;
+      REQUIRE(mol);
+      CHECK(mol->getAtomWithIdx(4)->getAtomicNum() == 7);
+      CHECK(mol->getAtomWithIdx(4)->getChiralTag() !=
+            Atom::ChiralType::CHI_UNSPECIFIED);
+    }
+  }
 }

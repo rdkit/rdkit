@@ -1194,7 +1194,7 @@ bool atomIsCandidateForRingStereochem(const ROMol &mol, const Atom *atom) {
       //   in a ring of size 3  (from InChI)
       // OR
       //   a bridgehead, i.e. shared by more than 2 rings (RDKit extension)
-      if (atom->getAtomicNum() == 7 &&
+      if (atom->getAtomicNum() == 7 && atom->getDegree() == 3 &&
           !ringInfo->isAtomInRingOfSize(atom->getIdx(), 3) &&
           ringInfo->numAtomRings(atom->getIdx()) <= 2) {
         return false;
