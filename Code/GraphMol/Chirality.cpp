@@ -1,5 +1,5 @@
 //
-//  Copyright (C) 2004-2018 Greg Landrum and Rational Discovery LLC
+//  Copyright (C) 2004-2021 Greg Landrum and Rational Discovery LLC
 //
 //   @@ All Rights Reserved @@
 //  This file is part of the RDKit.
@@ -10,6 +10,7 @@
 #include <GraphMol/RDKitBase.h>
 #include <RDGeneral/Ranking.h>
 #include <GraphMol/new_canon.h>
+#include <GraphMol/QueryOps.h>
 #include <RDGeneral/types.h>
 #include <sstream>
 #include <set>
@@ -1193,10 +1194,10 @@ bool atomIsCandidateForRingStereochem(const ROMol &mol, const Atom *atom) {
       // three-coordinate N additional requirements:
       //   in a ring of size 3  (from InChI)
       // OR
-      //   a bridgehead, i.e. shared by more than 2 rings (RDKit extension)
+      //   a bridgehead (RDKit extension)
       if (atom->getAtomicNum() == 7 && atom->getDegree() == 3 &&
           !ringInfo->isAtomInRingOfSize(atom->getIdx(), 3) &&
-          ringInfo->numAtomRings(atom->getIdx()) <= 2) {
+          !queryIsAtomBridgehead(atom)) {
         return false;
       }
       ROMol::OEDGE_ITER beg, end;
@@ -1420,9 +1421,9 @@ std::pair<bool, bool> isAtomPotentialChiralCenter(
         // three-coordinate N additional requirements:
         //   in a ring of size 3  (from InChI)
         // OR
-        //   a bridgehead, i.e. shared by more than 2 rings (RDKit extension)
+        /// is a bridgehead atom (RDKit extension)
         if (mol.getRingInfo()->isAtomInRingOfSize(atom->getIdx(), 3) ||
-            mol.getRingInfo()->numAtomRings(atom->getIdx()) > 2) {
+            queryIsAtomBridgehead(atom)) {
           legalCenter = true;
         }
       } else if (atom->getAtomicNum() == 15 || atom->getAtomicNum() == 33) {

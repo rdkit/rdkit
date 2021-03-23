@@ -1,5 +1,5 @@
 //
-// Copyright (C) 2003-2017 Greg Landrum and Rational Discovery LLC
+// Copyright (C) 2003-2021 Greg Landrum and Rational Discovery LLC
 //
 //   @@ All Rights Reserved @@
 //  This file is part of the RDKit.
@@ -12,10 +12,76 @@
 #include <RDGeneral/types.h>
 #include <GraphMol/QueryAtom.h>
 #include <boost/range/iterator_range.hpp>
+#include <boost/dynamic_bitset.hpp>
 
 namespace RDKit {
 
 // common general queries
+
+int queryIsAtomBridgehead(Atom const *at) {
+  // at least three ring bonds, at least one ring bond in a ring which shares at
+  // least two bonds with another ring involving this atom
+  //
+  // We can't just go with "at least three ring bonds shared between multiple
+  // rings" because of structures like CC12CCN(CC1)C2 where there are only two
+  // SSSRs
+  PRECONDITION(at, "no atom");
+  if (at->getDegree() < 3) {
+    return 0;
+  }
+  const auto &mol = at->getOwningMol();
+  const auto ri = mol.getRingInfo();
+  if (!ri || !ri->isInitialized()) {
+    return 0;
+  }
+  // track which bonds involve this atom and how many ring bonds we have;
+  unsigned int nRingBonds = 0;
+  boost::dynamic_bitset<> atomRingBonds(mol.getNumBonds());
+  for (const auto &nbri : boost::make_iterator_range(mol.getAtomBonds(at))) {
+    const auto &bnd = mol[nbri];
+    if (ri->numBondRings(bnd->getIdx())) {
+      atomRingBonds.set(bnd->getIdx());
+      ++nRingBonds;
+    }
+  }
+  if (nRingBonds < 3) {
+    return 0;
+  }
+
+  boost::dynamic_bitset<> bondsInRing(mol.getNumBonds());
+  for (unsigned int i = 0; i < ri->bondRings().size(); ++i) {
+    bondsInRing.reset();
+    bool atomInRingI = false;
+
+    for (const auto bidx : ri->bondRings()[i]) {
+      bondsInRing.set(bidx);
+      if (atomRingBonds[bidx]) {
+        atomInRingI = true;
+      }
+    }
+    if (!atomInRingI) {
+      continue;
+    }
+    for (unsigned int j = i + 1; j < ri->bondRings().size(); ++j) {
+      unsigned int overlap = 0;
+      bool atomInRingJ;
+      for (const auto bidx : ri->bondRings()[j]) {
+        if (atomRingBonds[bidx]) {
+          atomInRingJ = true;
+        }
+        if (bondsInRing[bidx]) {
+          ++overlap;
+        }
+        if (overlap >= 2 && atomInRingJ) {
+          // we have two rings containing the atom which share at least two
+          // bonds:
+          return 1;
+        }
+      }
+    }
+  }
+  return 0;
+}
 
 //! returns a Query for matching atoms with a particular number of ring bonds
 ATOM_EQUALS_QUERY *makeAtomRingBondCountQuery(int what) {
@@ -618,7 +684,8 @@ bool isComplexQuery(const Bond *b) {
     return true;
   }
   if (descr == "BondOr") {
-    // detect the types of queries that appear for unspecified bonds in SMARTS:
+    // detect the types of queries that appear for unspecified bonds in
+    // SMARTS:
     if (b->getQuery()->endChildren() - b->getQuery()->beginChildren() == 2) {
       for (auto child = b->getQuery()->beginChildren();
            child != b->getQuery()->endChildren(); ++child) {
