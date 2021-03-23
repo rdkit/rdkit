@@ -24,37 +24,32 @@ struct RCore {
   boost::shared_ptr<RWMol> core;
   boost::shared_ptr<RWMol> labelledCore;
 
-  // A list of user indices for when onlyMatchAtRGroups = True
-  std::set<int> core_atoms_with_user_labels;
+  // Bitset: indices corresponding to atoms bearing user-defined labels are 1
+  boost::dynamic_bitset<> core_atoms_with_user_labels;
   // Number of user labelled rgroups in the core
   size_t numberUserRGroups = 0;
   RCore(){};
-  RCore(const RWMol &c, bool onlyMatchAtRGroups = false) : core(new RWMol(c)) {
-    // Remove this from constructor if the create new core path can be removed from RGroupDecomposition::add
-    if (onlyMatchAtRGroups) {
-      findIndicesWithRLabel();
-    }
+  RCore(const RWMol &c) : core(new RWMol(c)) {
+    findIndicesWithRLabel();
     countUserRGroups();
   }
 
+  inline bool isCoreAtomUserLabelled(int idx) const {
+    return core_atoms_with_user_labels.test(idx);
+  }
+
   void countUserRGroups() {
-    numberUserRGroups = 0;
-    for (const auto atom : core->atoms()) {
-      int label;
-      if (atom->getPropIfPresent(RLABEL, label)) {
-        if (label > 0) {
-          ++numberUserRGroups;
-        }
-      }
-    }
+    numberUserRGroups = core_atoms_with_user_labels.count();
   }
 
   void findIndicesWithRLabel() {
-    // First find all the core atoms that have user
-    //  label and put their indices into core_atoms_with_user_labels
+    // Find all the core atoms that have user
+    // label and set their indices to 1 into core_atoms_with_user_labels
+    core_atoms_with_user_labels.resize(core->getNumAtoms());
     for (const auto atom : core->atoms()) {
-      if (atom->hasProp(RLABEL)) {
-        core_atoms_with_user_labels.insert(atom->getIdx());
+      int label;
+      if (atom->getPropIfPresent(RLABEL, label) && label > 0) {
+        core_atoms_with_user_labels.set(atom->getIdx());
       }
     }
   }
