@@ -1865,3 +1865,40 @@ TEST_CASE("github #3912: cannot draw atom lists from SMARTS", "[query][bug]") {
     CHECK(vals == std::vector<int>{7, 8});
   }
 }
+
+TEST_CASE("bridgehead queries", "[query]") {
+  SECTION("basics") {
+    {
+      auto m = "CC12CCN(CC1)C2"_smiles;
+      REQUIRE(m);
+      for (const auto atom : m->atoms()) {
+        auto test = queryIsAtomBridgehead(atom);
+        if (atom->getIdx() == 1 || atom->getIdx() == 4) {
+          CHECK(test == true);
+        } else {
+          CHECK(test == false);
+        }
+      }
+    }
+    {
+      auto m = "CC12CCC(C)(CC1)CC2"_smiles;
+      REQUIRE(m);
+      for (const auto atom : m->atoms()) {
+        auto test = queryIsAtomBridgehead(atom);
+        if (atom->getIdx() == 1 || atom->getIdx() == 4) {
+          CHECK(test == true);
+        } else {
+          CHECK(test == false);
+        }
+      }
+    }
+    {  // no bridgehead
+      auto m = "C1CCC2CCCCC2C1"_smiles;
+      REQUIRE(m);
+      for (const auto atom : m->atoms()) {
+        auto test = queryIsAtomBridgehead(atom);
+        CHECK(test == false);
+      }
+    }
+  }
+}
