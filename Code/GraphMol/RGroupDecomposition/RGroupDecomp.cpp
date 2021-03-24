@@ -159,7 +159,7 @@ int RGroupDecomposition::add(const ROMol &inmol) {
   }
 
   if (rcore == nullptr) {
-    BOOST_LOG(rdWarningLog) << "No core matches" << std::endl;
+    BOOST_LOG(rdDebugLog) << "No core matches" << std::endl;
     return -1;
   }
 
@@ -301,9 +301,9 @@ int RGroupDecomposition::add(const ROMol &inmol) {
     }
   }
   if (potentialMatches.size() == 0) {
-    BOOST_LOG(rdWarningLog)
+    BOOST_LOG(rdDebugLog)
         << "No attachment points in side chains" << std::endl;
-    return -1;
+    return -2;
   }
 
   if (data->params.matchingStrategy != GA) {
