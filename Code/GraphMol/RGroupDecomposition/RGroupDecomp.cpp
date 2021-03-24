@@ -161,6 +161,9 @@ int RGroupDecomposition::add(const ROMol &inmol) {
         global_min_heavy_nbrs = min_heavy_nbrs;
         rcore = &core.second;
         core_idx = core.first;
+        if (global_min_heavy_nbrs == 0) {
+          break;
+        }
       }
     } else if (!tmatches_filtered.empty()) {
       rcore = &core.second;

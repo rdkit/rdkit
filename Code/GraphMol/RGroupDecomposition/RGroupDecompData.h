@@ -178,7 +178,7 @@ struct RGroupDecompData {
     }
 
     for (int label : labels) {
-      if (label >= 0 && !removeAllHydrogenRGroups) {
+      if (label > 0 && !removeAllHydrogenRGroups) {
         continue;
       }
       bool allH = true;
@@ -443,7 +443,7 @@ struct RGroupDecompData {
 
     for (auto &it : best) {
       for (auto &rgroup : it.rgroups) {
-        if (rgroup.first >= 0) {
+        if (rgroup.first > 0) {
           userLabels.insert(rgroup.first);
         }
         if (rgroup.first < 0 && !params.onlyMatchAtRGroups) {
