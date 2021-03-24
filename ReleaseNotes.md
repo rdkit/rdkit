@@ -18,8 +18,9 @@
 - There have been numerous changes to the RGroup Decomposition code which change
   the results. (#3767)
 - In RGroup Decomposition, when onlyMatchAtRGroups is set to false, each molecule
-  is now decomposed based on the first scaffold which adds/uses the least number
-  of non-user-provided R labels, rather than the first scaffold tout court.
+  is now decomposed based on the first matching scaffold which adds/uses the
+  least number of non-user-provided R labels, rather than simply the first
+  matching scaffold.
   Among other things, this allows the code to provide the same results for both
   onlyMatchAtRGroups=true and onlyMatchAtRGroups=false when suitable scaffolds
   are provided without requiring the user to get overly concerned about the
