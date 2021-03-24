@@ -34,17 +34,15 @@ int queryIsAtomBridgehead(Atom const *at) {
   if (!ri || !ri->isInitialized()) {
     return 0;
   }
-  // track which bonds involve this atom and how many ring bonds we have;
-  unsigned int nRingBonds = 0;
+  // track which bonds involve this atom
   boost::dynamic_bitset<> atomRingBonds(mol.getNumBonds());
   for (const auto &nbri : boost::make_iterator_range(mol.getAtomBonds(at))) {
     const auto &bnd = mol[nbri];
     if (ri->numBondRings(bnd->getIdx())) {
       atomRingBonds.set(bnd->getIdx());
-      ++nRingBonds;
     }
   }
-  if (nRingBonds < 3) {
+  if (atomRingBonds.count() < 3) {
     return 0;
   }
 
@@ -64,7 +62,7 @@ int queryIsAtomBridgehead(Atom const *at) {
     }
     for (unsigned int j = i + 1; j < ri->bondRings().size(); ++j) {
       unsigned int overlap = 0;
-      bool atomInRingJ;
+      bool atomInRingJ = false;
       for (const auto bidx : ri->bondRings()[j]) {
         if (atomRingBonds[bidx]) {
           atomInRingJ = true;
@@ -407,6 +405,13 @@ ATOM_EQUALS_QUERY *makeAtomMissingChiralTagQuery() {
 ATOM_EQUALS_QUERY *makeAtomInRingQuery() {
   auto *res = makeAtomSimpleQuery<ATOM_EQUALS_QUERY>(true, queryIsAtomInRing);
   res->setDescription("AtomInRing");
+  return res;
+}
+
+ATOM_EQUALS_QUERY *makeAtomIsBridgeheadQuery() {
+  auto *res =
+      makeAtomSimpleQuery<ATOM_EQUALS_QUERY>(true, queryIsAtomBridgehead);
+  res->setDescription("AtomIsBridgehead");
   return res;
 }
 
