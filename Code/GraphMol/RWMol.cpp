@@ -481,7 +481,7 @@ void RWMol::commitBatchEdit() {
     return;
   }
   auto delBonds = *dp_delBonds;
-  dp_delBonds.release();
+  dp_delBonds.reset();
   for (unsigned int i = getNumBonds(); i > 0; --i) {
     if (delBonds[i - 1]) {
       const auto bnd = getBondWithIdx(i - 1);
@@ -490,7 +490,7 @@ void RWMol::commitBatchEdit() {
     }
   }
   auto delAtoms = *dp_delAtoms;
-  dp_delAtoms.release();
+  dp_delAtoms.reset();
   for (unsigned int i = getNumAtoms(); i > 0; --i) {
     if (delAtoms[i - 1]) {
       removeAtom(i - 1);
