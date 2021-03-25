@@ -133,7 +133,7 @@ double matchScore(const std::vector<size_t> &permutation,
     //  because these belong to 2 (or more) rgroups we really want these to stay
     //  the size of the set is the number of labels that are being used
     //  ** this heuristic really should be taken care of above **
-    int maxLinkerMatches = 0;
+    unsigned int maxLinkerMatches = 0;
     for (const auto &it : linkerMatchSet) {
       if (it.first.size() > 1 || it.second > 1) {
         if (it.first.size() > maxLinkerMatches) {

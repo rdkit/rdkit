@@ -89,8 +89,12 @@ int RGroupDecomposition::add(const ROMol &inmol) {
   int core_idx = 0;
   const RCore *rcore = nullptr;
   std::vector<MatchVectType> tmatches;
+  std::vector<MatchVectType> tmatches_filtered;
 
-  // Find the first matching core.
+  // Find the first matching core (onlyMatchAtRGroups)
+  // or the first core that requires the smallest number
+  // of newly added labels
+  int global_min_heavy_nbrs = -1;
   for (const auto &core : data->cores) {
     {
       const bool uniquify = false;
@@ -99,62 +103,84 @@ int RGroupDecomposition::add(const ROMol &inmol) {
       SubstructMatch(mol, *core.second.core, tmatches, uniquify,
                      recursionPossible, useChirality);
     }
+    if (tmatches.empty()) {
+      continue;
+    }
 
-    if (data->params.onlyMatchAtRGroups) {
-      std::vector<MatchVectType> tmatches_filtered;
-      for (auto &mv : tmatches) {
-        bool passes_filter = true;
-        boost::dynamic_bitset<> target_match_indices(mol.getNumAtoms());
-        for (auto &match : mv) {
-          target_match_indices[match.second] = 1;
-        }
+    std::vector<int> tmatches_heavy_nbrs(tmatches.size(), 0);
+    size_t i = 0;
+    for (const auto &mv : tmatches) {
+      bool passes_filter = data->params.onlyMatchAtRGroups;
+      boost::dynamic_bitset<> target_match_indices(mol.getNumAtoms());
+      for (const auto &match : mv) {
+        target_match_indices[match.second] = 1;
+      }
 
-        for (auto &match : mv) {
-          const Atom *atm = mol.getAtomWithIdx(match.second);
-          // is this a labelled rgroup or not?
-          if (core.second.core_atoms_with_user_labels.find(match.first) ==
-              core.second.core_atoms_with_user_labels.end()) {
-            // nope... if any neighbor is not part of the substructure
-            //  make sure we are a hydrogen, otherwise, skip the match
-            for (const auto &nbri :
-                 boost::make_iterator_range(mol.getAtomNeighbors(atm))) {
-              const auto &nbr = mol[nbri];
-              if (nbr->getAtomicNum() != 1 &&
-                  !target_match_indices[nbr->getIdx()]) {
+      for (const auto &match : mv) {
+        const Atom *atm = mol.getAtomWithIdx(match.second);
+        // is this a labelled rgroup or not?
+        if (!core.second.isCoreAtomUserLabelled(match.first)) {
+          // nope... if any neighbor is not part of the substructure
+          //  make sure we are a hydrogen, otherwise, skip the match
+          for (const auto &nbri :
+               boost::make_iterator_range(mol.getAtomNeighbors(atm))) {
+            const auto &nbr = mol[nbri];
+            if (nbr->getAtomicNum() != 1 &&
+                !target_match_indices[nbr->getIdx()]) {
+              if (data->params.onlyMatchAtRGroups) {
                 passes_filter = false;
                 break;
+              } else {
+                ++tmatches_heavy_nbrs[i];
               }
             }
           }
-          if (!passes_filter) {
-            break;
-          }
         }
-
-        if (passes_filter) {
-          tmatches_filtered.push_back(mv);
+        if (!passes_filter && data->params.onlyMatchAtRGroups) {
+          break;
         }
       }
-      tmatches = tmatches_filtered;
+      if (passes_filter) {
+        tmatches_filtered.push_back(mv);
+      }
+      ++i;
     }
-
-    if (tmatches.empty()) {
-      continue;
-    } else {
-      if (tmatches.size() > 1) {
-        if (data->params.matchingStrategy == NoSymmetrization) {
-          tmatches.resize(1);
-        } else if (data->matches.size() == 0) {
-          // Greedy strategy just grabs the first match and
-          //  takes the best matches from the rest
-          if (data->params.matchingStrategy == Greedy) {
-            tmatches.resize(1);
+    if (!data->params.onlyMatchAtRGroups) {
+      int min_heavy_nbrs = *std::min_element(tmatches_heavy_nbrs.begin(),
+                                             tmatches_heavy_nbrs.end());
+      if (global_min_heavy_nbrs == -1 ||
+          min_heavy_nbrs < global_min_heavy_nbrs) {
+        i = 0;
+        tmatches_filtered.clear();
+        for (const auto heavy_nbrs : tmatches_heavy_nbrs) {
+          if (heavy_nbrs <= min_heavy_nbrs) {
+            tmatches_filtered.push_back(std::move(tmatches[i]));
           }
+          ++i;
+        }
+        global_min_heavy_nbrs = min_heavy_nbrs;
+        rcore = &core.second;
+        core_idx = core.first;
+        if (global_min_heavy_nbrs == 0) {
+          break;
         }
       }
+    } else if (!tmatches_filtered.empty()) {
       rcore = &core.second;
       core_idx = core.first;
       break;
+    }
+  }
+  tmatches = std::move(tmatches_filtered);
+  if (tmatches.size() > 1) {
+    if (data->params.matchingStrategy == NoSymmetrization) {
+      tmatches.resize(1);
+    } else if (data->matches.size() == 0) {
+      // Greedy strategy just grabs the first match and
+      //  takes the best matches from the rest
+      if (data->params.matchingStrategy == Greedy) {
+        tmatches.resize(1);
+      }
     }
   }
 
@@ -175,7 +201,7 @@ int RGroupDecomposition::add(const ROMol &inmol) {
   std::vector<RGroupMatch> potentialMatches;
 
   std::unique_ptr<ROMol> tMol;
-  for (auto &tmatche : tmatches) {
+  for (const auto &tmatche : tmatches) {
     const bool replaceDummies = false;
     const bool labelByIndex = true;
     const bool requireDummyMatch = false;
@@ -274,8 +300,7 @@ int RGroupDecomposition::add(const ROMol &inmol) {
               int core_idx = 0;
               if (newcore == data->newCores.end()) {
                 core_idx = data->newCores[newCoreSmi] = data->newCoreLabel--;
-                data->cores[core_idx] =
-                    RCore(newCore, data->params.onlyMatchAtRGroups);
+                data->cores[core_idx] = RCore(newCore);
                 return add(inmol);
               }
             }
