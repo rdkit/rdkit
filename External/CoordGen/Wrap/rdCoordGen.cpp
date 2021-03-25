@@ -91,8 +91,9 @@ struct coordgen_wrapper {
         .def_readwrite("minimizerPrecision",
                        &CoordGen::CoordGenParams::minimizerPrecision,
                        "controls sketcher precision")
-        .def_readwrite("treatBondsToMetalAsZOBs",
-                       &CoordGen::CoordGenParams::treatBondsToMetalAsZeroOrder);
+        .def_readwrite(
+            "treatNonterminalBondsToMetalAsZOBs",
+            &CoordGen::CoordGenParams::treatNonterminalBondsToMetalAsZeroOrder);
     python::def("SetDefaultTemplateFileDir", SetDefaultTemplateFileDir);
     docString =
         "Add 2D coordinates.\n"
