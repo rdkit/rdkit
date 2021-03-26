@@ -54,7 +54,7 @@ Nealschneider, Jin Pan, Daniel Paoliello, António JM Ribeiro, Sereina Riniker,
 Braxton Robbason, Jaime Rodríguez-Guerra, Ricardo Rodriguez-Schmidt, Steve
 Roughley, Vincent F. Scalfani, Nadine Schneider, Philippe Schwaller, Dan Skatov,
 Pascal Soveaux, Paolo Tosco, Kazuya Ujihara, Riccardo Vianello, Shuzhe Wang,
-Piotr Wawrzyniak, Maciej Wójcikowski, Yutong Zhao
+Piotr Wawrzyniak, Maciej Wójcikowski, Zhijiang Yang, Yutong Zhao
 'driesvr', 'GintasKam', 'SPKorhonen', 'pkubaj', 'AnPallo', 'darintay',
 'slchan3', 'Robins', 'sirbiscuit', 'amateurcat', 'noncomputable', 'yurivict',
 'magattaca'
@@ -186,6 +186,8 @@ Piotr Wawrzyniak, Maciej Wójcikowski, Yutong Zhao
  (github issue #3768 from greglandrum)
   - MolToSmarts inverts direction of dative bond
  (github issue #3774 from IvanChernyshov)
+  - Regression in dihedral constraints
+ (github issue #3781 from ptosco)
   - Fix pillow error in IPythonConsole.py
  (github pull #3783 from skearnes)
   - lock swig version in MacOS CI builds
@@ -254,8 +256,15 @@ Piotr Wawrzyniak, Maciej Wójcikowski, Yutong Zhao
  (github pull #3935 from ricrogz)
   - Fix building JavaWrappers on Windows, dynamic linking
  (github pull #3936 from ricrogz)
+  - Boost header warnings when compiling
+ (github issue #3956 from jasondbiggs)
   - Adds removeAllHydrogenRGroupsAndLabels and fixes kekulization issues
  (github pull #3944 from ptosco)
+  - MolToJSONData fails when mol has a property that can't be stringified
+ (github issue #3956 from jasondbiggs)
+  - RWMol should reset(), not release(), dp_delAtoms and dp_delBonds
+ (github pull #3970 from greglandrum)
+
 
 ## New Features and Enhancements:
   - add context managers for writers
@@ -398,6 +407,15 @@ Piotr Wawrzyniak, Maciej Wójcikowski, Yutong Zhao
  (github pull #3944 from ptosco)
   - Remove temporary labels from RGD results
  (github pull #3947 from ptosco)
+  - appended a new project depend on RDKit
+ (github pull #3955 from kotori-y)
+  - Do not add unnecessary R-labels (and an optimization)
+ (github pull #3969 from ptosco)
+  - Add return codes and make RGroupDecomp less verbose 
+ (github pull #3971 from bp-kelley)
+  - update to coordgen 2.0.0
+ (github pull #3974 from greglandrum)
+
 
 ## Deprecated code (to be removed in a future release):
 - The "minimizeOnly" option for coordgen will be removed in the next RDKit release
