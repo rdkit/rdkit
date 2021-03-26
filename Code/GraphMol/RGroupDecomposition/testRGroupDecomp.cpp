@@ -2313,6 +2313,17 @@ void testNoTempLabels() {
   }
 }
 
+void testNoSideChains() {
+  BOOST_LOG(rdInfoLog)
+      << "********************************************************\n";
+  BOOST_LOG(rdInfoLog) << "Test the no side chain return code" << std::endl;
+  auto core = "[H]C([H])([H])[H]"_smarts;
+  auto mol = "C"_smiles;
+  RGroupDecompositionParameters params;
+  RGroupDecomposition decomp(*core, params);
+  TEST_ASSERT(decomp.add(*mol) == -2);
+}
+
 void testDoNotAddUnnecessaryRLabels() {
   BOOST_LOG(rdInfoLog)
       << "********************************************************\n";
@@ -2474,8 +2485,8 @@ int main() {
   testUnlabelledRGroupsOnAromaticNitrogen();
   testAddHsDoesNotFail();
   testNoTempLabels();
+  testNoSideChains();
   testDoNotAddUnnecessaryRLabels();
-
   BOOST_LOG(rdInfoLog)
       << "********************************************************\n";
   return 0;
