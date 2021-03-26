@@ -22,8 +22,7 @@ namespace UFF {
 class RDKIT_FORCEFIELD_EXPORT TorsionConstraintContrib
     : public ForceFieldContrib {
  public:
-  TorsionConstraintContrib()
-       {};
+  TorsionConstraintContrib(){};
   //! Constructor
   /*!
   \param owner          pointer to the owning ForceField
@@ -55,9 +54,10 @@ class RDKIT_FORCEFIELD_EXPORT TorsionConstraintContrib
   };
 
  private:
-  void setParameters(ForceField *owner, unsigned int idx1,
-    unsigned int idx2, unsigned int idx3, unsigned int idx4,
-    double minDihedralDeg, double maxDihedralDeg, double forceConst);
+  void setParameters(ForceField *owner, unsigned int idx1, unsigned int idx2,
+                     unsigned int idx3, unsigned int idx4,
+                     double minDihedralDeg, double maxDihedralDeg,
+                     double forceConst);
   double computeDihedralTerm(double dihedral) const;
   int d_at1Idx{-1}, d_at2Idx{-1}, d_at3Idx{-1},
       d_at4Idx{-1};  //!< indices of atoms forming the dihedral angle

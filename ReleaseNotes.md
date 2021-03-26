@@ -34,6 +34,11 @@
   is not canonical, using this argument currently causes the results to depend
   on the input atom numbering. Note that this can lead to an exception being
   thrown. (#3942)
+- Gradients for angle and torsional restraints in both UFF and MMFF were computed
+  incorrectly, which could give rise to potential instability during minimization.
+  As part of fixing this problem, force constants have been switched to using
+  kcal/degree^2 units instead of kcal/rad^2 units, consistently with the fact that
+  angle and dihedral restraints are specified in degrees. (#3975)
 
 ## Highlights
 - MolDraw2D now does a much better job of handling query features like common
