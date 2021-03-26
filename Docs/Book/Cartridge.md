@@ -666,17 +666,19 @@ There are additional operators defined in the cartridge, but these are used for 
 -   mol\_numaromaticcarbocycles(mol) : returns the number of aromatic carbocycles in a molecule (*available from 2013\_03 release*).
 -   mol\_numaliphaticcarbocycles(mol) : returns the number of aliphatic (at least one non-aromatic bond) carbocycles in a molecule (*available from 2013\_03 release*).
 -   mol\_numsaturatedcarbocycles(mol) : returns the number of saturated carbocycles in a molecule (*available from 2013\_03 release*).
+-   mol\_numspiroatoms : returns the number of spiro atoms in a molecule (*available from 2015\_09 release*).
+-   mol\_numbridgeheadatoms : returns the number of bridgehead atoms in a molecule (*available from 2015\_09 release*).
 -   mol\_inchi(mol) : returns an InChI for the molecule. (*available from the 2011\_06 release, requires that the RDKit be built with InChI support*).
 -   mol\_inchikey(mol) : returns an InChI key for the molecule. (*available from the 2011\_06 release, requires that the RDKit be built with InChI support*).
 -   mol\_formula(mol,bool default false, bool default true) : returns a string with the molecular formula. The second argument controls whether isotope information is included in the formula; the third argument controls whether "D" and "T" are used instead of [2H] and [3H]. (*available from the 2014\_03 release*)
+-   mol\_nm\_hash(mol,string default '') : returns a string with a hash for the molecule. The second argument controls the hash type. Legal values are 'AnonymousGraph', 'ElementGraph', 'CanonicalSmiles', 'MurckoScaffold', 'ExtendedMurcko', 'MolFormula', 'AtomBondCounts', 'DegreeVector', 'Mesomer', 'HetAtomTautomer', 'HetAtomProtomer', 'RedoxPair', 'Regioisomer', 'NetCharge', 'SmallWorldIndexBR', 'SmallWorldIndexBRL', 'ArthorSubstructureOrder`. The default is 'AnonymousGraph'.
 
 ##### Connectivity Descriptors
 
 -   mol\_chi0v(mol) - mol\_chi4v(mol) : returns the ChiXv value for a molecule for X=0-4 (*available from 2012\_01 release*).
 -   mol\_chi0n(mol) - mol\_chi4n(mol) : returns the ChiXn value for a molecule for X=0-4 (*available from 2012\_01 release*).
 -   mol\_kappa1(mol) - mol\_kappa3(mol) : returns the kappaX value for a molecule for X=1-3 (*available from 2012\_01 release*).
--   mol\_numspiroatoms : returns the number of spiro atoms in a molecule (*available from 2015\_09 release*).
--   mol\_numbridgeheadatoms : returns the number of bridgehead atoms in a molecule (*available from 2015\_09 release*).
+-   mol\_phi(mol) : returns the Kier Phi value for a molecule (*available from 2021\_09 release*).
 
 ##### MCS
 
@@ -686,6 +688,7 @@ There are additional operators defined in the cartridge, but these are used for 
 #### Other
 
 -   rdkit\_version() : returns a string with the cartridge version number.
+-   rdkit\_toolkit\_version() : returns a string with the RDKit version number.
 
 There are additional functions defined in the cartridge, but these are used for internal purposes.
 
@@ -718,7 +721,7 @@ These pickles can then be converted into molecules:
 
 ## License
 
-This document is copyright (C) 2013-2016 by Greg Landrum
+This document is copyright (C) 2013-2021 by Greg Landrum
 
 This work is licensed under the Creative Commons Attribution-ShareAlike 4.0 License. To view a copy of this license, visit <http://creativecommons.org/licenses/by-sa/4.0/> or send a letter to Creative Commons, 543 Howard Street, 5th Floor, San Francisco, California, 94105, USA.
 
