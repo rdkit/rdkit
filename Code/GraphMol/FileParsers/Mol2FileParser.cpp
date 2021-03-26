@@ -321,7 +321,7 @@ bool cleanUpMol2Substructures(RWMol *res) {
       std::string tATT;
       nbr->getProp(common_properties::_TriposAtomType, tATT);
       // carboxylates
-      if (tATT == "C.2" || tATT == "S.o2") {
+      if (tATT == "C.2" || tATT == "S.o2" || tATT=="P.3") {
         // this should return only the bond between C.2 and O.co2
         Bond *b = res->getBondBetweenAtoms(idx, *nbrIdxIt);
         if (!isFixed[*nbrIdxIt]) {
