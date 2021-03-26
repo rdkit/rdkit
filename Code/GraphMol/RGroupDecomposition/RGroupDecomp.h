@@ -130,7 +130,7 @@ class UsedLabelMap {
  public:
   UsedLabelMap(const std::map<int, int> &mapping) {
     for (const auto &rl : mapping) {
-      d_map[rl.second] = std::make_pair(false, (rl.first >= 0));
+      d_map[rl.second] = std::make_pair(false, (rl.first > 0));
     }
   }
   bool getIsUsed(int label) const { return d_map.at(label).first; }

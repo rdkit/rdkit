@@ -62,9 +62,7 @@ struct RGroupDecompData {
       RWMol *alignCore = core.first ? cores[0].core.get() : nullptr;
       CHECK_INVARIANT(params.prepareCore(*core.second.core, alignCore),
                       "Could not prepare at least one core");
-      if (params.onlyMatchAtRGroups) {
-        core.second.findIndicesWithRLabel();
-      }
+      core.second.findIndicesWithRLabel();
       core.second.countUserRGroups();
       core.second.labelledCore.reset(new RWMol(*core.second.core));
     }
@@ -180,7 +178,7 @@ struct RGroupDecompData {
     }
 
     for (int label : labels) {
-      if (label >= 0 && !removeAllHydrogenRGroups) {
+      if (label > 0 && !removeAllHydrogenRGroups) {
         continue;
       }
       bool allH = true;
@@ -445,7 +443,7 @@ struct RGroupDecompData {
 
     for (auto &it : best) {
       for (auto &rgroup : it.rgroups) {
-        if (rgroup.first >= 0) {
+        if (rgroup.first > 0) {
           userLabels.insert(rgroup.first);
         }
         if (rgroup.first < 0 && !params.onlyMatchAtRGroups) {

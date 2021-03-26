@@ -293,6 +293,8 @@ static inline int queryAtomHasRingBond(Atom const *at) {
   }
   return 0;
 };
+RDKIT_GRAPHMOL_EXPORT int queryIsAtomBridgehead(Atom const *at);
+
 static inline int queryIsBondInRing(Bond const *bond) {
   return bond->getOwningMol().getRingInfo()->numBondRings(bond->getIdx()) != 0;
 };
@@ -545,8 +547,8 @@ template <class T>
 T *makeAtomInRingQuery(const std::string &descr) {
   return makeAtomSimpleQuery<T>(true, queryIsAtomInRing, descr);
 }
-RDKIT_GRAPHMOL_EXPORT ATOM_EQUALS_QUERY *makeAtomInRingQuery();
 //! \overload
+RDKIT_GRAPHMOL_EXPORT ATOM_EQUALS_QUERY *makeAtomInRingQuery();
 
 //! returns a Query for matching atoms in a particular number of rings
 template <class T>
@@ -644,6 +646,14 @@ T *makeAtomNonHydrogenDegreeQuery(int what, const std::string &descr) {
 //! \overload
 RDKIT_GRAPHMOL_EXPORT ATOM_EQUALS_QUERY *makeAtomNonHydrogenDegreeQuery(
     int what);
+
+//! returns a Query for matching bridgehead atoms
+template <class T>
+T *makeAtomIsBridgeheadQuery(const std::string &descr) {
+  return makeAtomSimpleQuery<T>(true, queryIsAtomBridgehead, descr);
+}
+//! \overload
+RDKIT_GRAPHMOL_EXPORT ATOM_EQUALS_QUERY *makeAtomIsBridgeheadQuery();
 
 //! returns a Query for matching bond orders
 RDKIT_GRAPHMOL_EXPORT BOND_EQUALS_QUERY *makeBondOrderEqualsQuery(
