@@ -10,16 +10,17 @@ if(RDK_BUILD_MINIMAL_LIB)
         endif()
     endif()
     add_executable(RDKit_minimal jswrapper.cpp minilib.cpp)
-    target_link_libraries(RDKit_minimal Abbreviations_static CIPLabeler_static MolDraw2D_static Depictor_static RDInchiLib_static SubstructMatch_static FileParsers_static 
+    target_link_libraries(RDKit_minimal MolInterchange_static Abbreviations_static CIPLabeler_static MolDraw2D_static Depictor_static RDInchiLib_static SubstructMatch_static FileParsers_static 
         SmilesParse_static GraphMol_static RDGeometryLib_static RDGeneral_static)
 
     set_target_properties(RDKit_minimal PROPERTIES LINK_FLAGS "--bind")
 endif(RDK_BUILD_MINIMAL_LIB)
 
 if(RDK_BUILD_CFFI_LIB)
+    set(CMAKE_C_STANDARD 99)
     rdkit_library(rdkitcffi cffiwrapper.cpp 
       SHARED
-      LINK_LIBRARIES Abbreviations_static CIPLabeler_static MolDraw2D_static Depictor_static 
+      LINK_LIBRARIES MolInterchange_static Abbreviations_static CIPLabeler_static MolDraw2D_static Depictor_static 
         RDInchiLib_static SubstructMatch_static FileParsers_static 
         SmilesParse_static GraphMol_static RDGeometryLib_static RDGeneral_static )
 

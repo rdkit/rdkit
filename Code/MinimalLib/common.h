@@ -20,6 +20,7 @@
 #include <GraphMol/MolDraw2D/MolDraw2DSVG.h>
 #include <GraphMol/MolDraw2D/MolDraw2DUtils.h>
 #include <GraphMol/Substruct/SubstructMatch.h>
+#include <GraphMol/MolInterchange/MolInterchange.h>
 #include <GraphMol/Descriptors/Property.h>
 #include <GraphMol/Descriptors/MolDescriptors.h>
 #include <GraphMol/Fingerprints/MorganFingerprints.h>
@@ -28,9 +29,8 @@
 #include <GraphMol/Abbreviations/Abbreviations.h>
 #include <DataStructs/BitOps.h>
 
-
 namespace RDKit {
-    namespace MinimalLib {
+namespace MinimalLib {
 RWMol *mol_from_input(const std::string &input) {
   RWMol *res = nullptr;
   if (input.find("M  END") != std::string::npos) {
@@ -38,6 +38,11 @@ RWMol *mol_from_input(const std::string &input) {
     bool removeHs = true;
     bool strictParsing = false;
     res = MolBlockToMol(input, sanitize, removeHs, strictParsing);
+  } else if (input.find("commonchem") != std::string::npos) {
+    auto molVect = MolInterchange::JSONDataToMols(input);
+    if (!molVect.empty()) {
+      res = new RWMol(*molVect[0]);
+    }
   } else {
     SmilesParserParams ps;
     ps.sanitize = false;
@@ -67,5 +72,5 @@ RWMol *qmol_from_input(const std::string &input) {
   }
   return res;
 }
-    }
-}
+}  // namespace MinimalLib
+}  // namespace RDKit

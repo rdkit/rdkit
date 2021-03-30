@@ -19,8 +19,12 @@
 #ifdef __cplusplus
 extern "C" {
 #endif
-RDKIT_RDKITCFFI_EXPORT char *get_smiles(const char *pkl, size_t len);
-RDKIT_RDKITCFFI_EXPORT char *get_mol(const char *input, size_t *len);
+RDKIT_RDKITCFFI_EXPORT char *get_molblock(const char *pkl, size_t pkl_sz);
+RDKIT_RDKITCFFI_EXPORT char *get_v3kmolblock(const char *pkl, size_t pkl_sz);
+RDKIT_RDKITCFFI_EXPORT char *get_smiles(const char *pkl, size_t pkl_sz);
+RDKIT_RDKITCFFI_EXPORT char *get_cxsmiles(const char *pkl, size_t pkl_sz);
+RDKIT_RDKITCFFI_EXPORT char *get_json(const char *pkl, size_t pkl_sz);
+RDKIT_RDKITCFFI_EXPORT char *get_mol(const char *input, size_t *mol_sz);
 RDKIT_RDKITCFFI_EXPORT char *version();
 #ifdef __cplusplus
 }

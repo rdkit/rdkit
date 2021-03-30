@@ -20,6 +20,7 @@
 #include <GraphMol/MolDraw2D/MolDraw2D.h>
 #include <GraphMol/MolDraw2D/MolDraw2DSVG.h>
 #include <GraphMol/MolDraw2D/MolDraw2DUtils.h>
+#include <GraphMol/MolInterchange/MolInterchange.h>
 #include <GraphMol/Substruct/SubstructMatch.h>
 #include <GraphMol/Descriptors/Property.h>
 #include <GraphMol/Descriptors/MolDescriptors.h>
@@ -42,36 +43,63 @@ namespace rj = rapidjson;
 using namespace RDKit;
 
 namespace {
-  char *str_to_c(const std::string &str,size_t *len=nullptr){
-    if(len){
-      *len = str.size();
-    }
-    char *res;
-    res = (char *)malloc(str.size()+1);
-    strncpy(res,str.c_str(),str.size());
-    res[str.size()]=0;
-    return res;
+char *str_to_c(const std::string &str, size_t *len = nullptr) {
+  if (len) {
+    *len = str.size();
   }
-  char *str_to_c(const char *str){
-    char *res;
-    res = (char *)malloc(strlen(str)+1);
-    strcpy(res,str);
-    return res;
-  }
+  char *res;
+  res = (char *)malloc(str.size() + 1);
+  memcpy((void *)res, (const void *)str.c_str(), str.size());
+  res[str.size()] = 0;
+  return res;
 }
+char *str_to_c(const char *str) {
+  char *res;
+  res = (char *)malloc(strlen(str) + 1);
+  strcpy(res, str);
+  return res;
+}
+}  // namespace
 
 #if 0
 std::string get_inchikey_for_inchi(const std::string &input) {
   return InchiToInchiKey(input);
 }
 #endif
-extern "C" char *get_smiles(const char *pkl, size_t len) {
-  if (!pkl || !len) return str_to_c("");
-  std::string lpkl(pkl,len);
+
+#define MOL_FROM_PKL(pkl, len) \
+  if (!pkl || !len) {          \
+    return str_to_c("");       \
+  }                            \
+  std::string lpkl(pkl, len);  \
   ROMol mol(lpkl);
-  auto smi=MolToSmiles(mol);
-  return str_to_c(smi);
+
+extern "C" char *get_smiles(const char *pkl, size_t len) {
+  MOL_FROM_PKL(pkl, len);
+  auto data = MolToSmiles(mol);
+  return str_to_c(data);
 }
+extern "C" char *get_cxsmiles(const char *pkl, size_t len) {
+  MOL_FROM_PKL(pkl, len);
+  auto data = MolToCXSmiles(mol);
+  return str_to_c(data);
+}
+extern "C" char *get_molblock(const char *pkl, size_t len) {
+  MOL_FROM_PKL(pkl, len);
+  auto data = MolToMolBlock(mol);
+  return str_to_c(data);
+}
+extern "C" char *get_v3kmolblock(const char *pkl, size_t len) {
+  MOL_FROM_PKL(pkl, len);
+  auto data = MolToV3KMolBlock(mol);
+  return str_to_c(data);
+}
+extern "C" char *get_json(const char *pkl, size_t len) {
+  MOL_FROM_PKL(pkl, len);
+  auto data = MolInterchange::MolToJSONData(mol);
+  return str_to_c(data);
+}
+
 #if 0
 std::string get_cxsmiles(const char *pkl, size_t len) const {
   if (!d_mol) return "";
@@ -105,16 +133,15 @@ std::string JSMol::get_v3Kmolblock() const {
 }
 #endif
 
-
 extern "C" char *get_mol(const char *input, size_t *len) {
   RWMol *mol = MinimalLib::mol_from_input(input);
-  if(!mol){
-      *len=0;
-      return str_to_c("Error!");
+  if (!mol) {
+    *len = 0;
+    return str_to_c("Error!");
   }
   std::string pkl;
-  MolPickler::pickleMol(*mol,pkl);
-  return str_to_c(pkl,len);
+  MolPickler::pickleMol(*mol, pkl);
+  return str_to_c(pkl, len);
 }
 #if 0
 JSMol *get_qmol(const std::string &input) {
@@ -122,7 +149,7 @@ JSMol *get_qmol(const std::string &input) {
   return new JSMol(mol);
 }
 #endif
-extern "C" char * version() { return str_to_c(rdkitVersion); }
+extern "C" char *version() { return str_to_c(rdkitVersion); }
 
 extern "C" void prefer_coordgen(bool useCoordGen) {
 #ifdef RDK_BUILD_COORDGEN_SUPPORT
