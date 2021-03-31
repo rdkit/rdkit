@@ -19,12 +19,30 @@
 #ifdef __cplusplus
 extern "C" {
 #endif
+
+// I/O
+RDKIT_RDKITCFFI_EXPORT char *get_mol(const char *input, size_t *mol_sz);
 RDKIT_RDKITCFFI_EXPORT char *get_molblock(const char *pkl, size_t pkl_sz);
 RDKIT_RDKITCFFI_EXPORT char *get_v3kmolblock(const char *pkl, size_t pkl_sz);
 RDKIT_RDKITCFFI_EXPORT char *get_smiles(const char *pkl, size_t pkl_sz);
 RDKIT_RDKITCFFI_EXPORT char *get_cxsmiles(const char *pkl, size_t pkl_sz);
 RDKIT_RDKITCFFI_EXPORT char *get_json(const char *pkl, size_t pkl_sz);
-RDKIT_RDKITCFFI_EXPORT char *get_mol(const char *input, size_t *mol_sz);
+RDKIT_RDKITCFFI_EXPORT char *get_inchi(const char *pkl, size_t pkl_sz);
+RDKIT_RDKITCFFI_EXPORT char *get_inchi_for_molblock(const char *ctab);
+RDKIT_RDKITCFFI_EXPORT char *get_inchikey_for_inchi(const char *inchi);
+
+// Drawing
+RDKIT_RDKITCFFI_EXPORT char *get_svg(const char *pkl, size_t pkl_sz,
+                                     unsigned int width, unsigned int height);
+RDKIT_RDKITCFFI_EXPORT char *get_svg_with_highlights(const char *pkl,
+                                                     size_t pkl_sz,
+                                                     const char *details_json);
+
+//
+
+// housekeeping
+RDKIT_RDKITCFFI_EXPORT void free_ptr(char *ptr);
+
 RDKIT_RDKITCFFI_EXPORT char *version();
 #ifdef __cplusplus
 }

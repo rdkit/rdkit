@@ -67,81 +67,83 @@ std::string get_inchikey_for_inchi(const std::string &input) {
 }
 #endif
 
-#define MOL_FROM_PKL(pkl, len) \
-  if (!pkl || !len) {          \
-    return str_to_c("");       \
-  }                            \
-  std::string lpkl(pkl, len);  \
+#define MOL_FROM_PKL(pkl, pkl_sz) \
+  if (!pkl || !pkl_sz) {          \
+    return str_to_c("");          \
+  }                               \
+  std::string lpkl(pkl, pkl_sz);  \
   ROMol mol(lpkl);
 
-extern "C" char *get_smiles(const char *pkl, size_t len) {
-  MOL_FROM_PKL(pkl, len);
+extern "C" char *get_smiles(const char *pkl, size_t pkl_sz) {
+  MOL_FROM_PKL(pkl, pkl_sz);
   auto data = MolToSmiles(mol);
   return str_to_c(data);
 }
-extern "C" char *get_cxsmiles(const char *pkl, size_t len) {
-  MOL_FROM_PKL(pkl, len);
+extern "C" char *get_cxsmiles(const char *pkl, size_t pkl_sz) {
+  MOL_FROM_PKL(pkl, pkl_sz);
   auto data = MolToCXSmiles(mol);
   return str_to_c(data);
 }
-extern "C" char *get_molblock(const char *pkl, size_t len) {
-  MOL_FROM_PKL(pkl, len);
+extern "C" char *get_molblock(const char *pkl, size_t pkl_sz) {
+  MOL_FROM_PKL(pkl, pkl_sz);
   auto data = MolToMolBlock(mol);
   return str_to_c(data);
 }
-extern "C" char *get_v3kmolblock(const char *pkl, size_t len) {
-  MOL_FROM_PKL(pkl, len);
+extern "C" char *get_v3kmolblock(const char *pkl, size_t pkl_sz) {
+  MOL_FROM_PKL(pkl, pkl_sz);
   auto data = MolToV3KMolBlock(mol);
   return str_to_c(data);
 }
-extern "C" char *get_json(const char *pkl, size_t len) {
-  MOL_FROM_PKL(pkl, len);
+extern "C" char *get_json(const char *pkl, size_t pkl_sz) {
+  MOL_FROM_PKL(pkl, pkl_sz);
   auto data = MolInterchange::MolToJSONData(mol);
   return str_to_c(data);
 }
+extern "C" void free_ptr(char *ptr) { free(ptr); }
 
-#if 0
-std::string get_cxsmiles(const char *pkl, size_t len) const {
-  if (!d_mol) return "";
-  return MolToCXSmiles(*d_mol);
+extern "C" char *get_svg(const char *pkl, size_t pkl_sz, unsigned int width,
+                         unsigned int height) {
+  MOL_FROM_PKL(pkl, pkl_sz);
+  return str_to_c(MinimalLib::mol_to_svg(mol, width, height));
+}
+extern "C" char *get_svg_with_highlights(const char *pkl, size_t pkl_sz,
+                                         const char *details_json) {
+  MOL_FROM_PKL(pkl, pkl_sz);
+  unsigned int width = MinimalLib::d_defaultWidth;
+  unsigned int height = MinimalLib::d_defaultHeight;
+  return str_to_c(MinimalLib::mol_to_svg(mol, width, height, details_json));
 }
 
-std::string JSMol::get_svg(unsigned int w, unsigned int h) const {
-  if (!d_mol) return "";
-  return svg_(*d_mol, w, h);
-}
-std::string JSMol::get_svg_with_highlights(const std::string &details) const {
-  if (!d_mol) return "";
-
-  unsigned int w = d_defaultWidth;
-  unsigned int h = d_defaultHeight;
-  return svg_(*d_mol, w, h, details);
-}
-
-std::string JSMol::get_inchi() const {
-  if (!d_mol) return "";
+extern "C" char *get_inchi(const char *pkl, size_t pkl_sz) {
+  MOL_FROM_PKL(pkl, pkl_sz);
   ExtraInchiReturnValues rv;
-  return MolToInchi(*d_mol, rv);
+  return str_to_c(MolToInchi(mol, rv));
 }
-std::string JSMol::get_molblock() const {
-  if (!d_mol) return "";
-  return MolToMolBlock(*d_mol);
-}
-std::string JSMol::get_v3Kmolblock() const {
-  if (!d_mol) return "";
-  return MolToV3KMolBlock(*d_mol);
-}
-#endif
 
-extern "C" char *get_mol(const char *input, size_t *len) {
+extern "C" char *get_inchi_for_molblock(const char *ctab) {
+  if (!ctab) {
+    return str_to_c("");
+  }
+  ExtraInchiReturnValues rv;
+  return str_to_c(MolBlockToInchi(ctab, rv));
+}
+
+extern "C" char *get_inchikey_for_inchi(const char *inchi) {
+  if (!inchi) {
+    return str_to_c("");
+  }
+  return str_to_c(InchiToInchiKey(inchi));
+}
+
+extern "C" char *get_mol(const char *input, size_t *pkl_sz) {
   RWMol *mol = MinimalLib::mol_from_input(input);
   if (!mol) {
-    *len = 0;
+    *pkl_sz = 0;
     return str_to_c("Error!");
   }
   std::string pkl;
   MolPickler::pickleMol(*mol, pkl);
-  return str_to_c(pkl, len);
+  return str_to_c(pkl, pkl_sz);
 }
 #if 0
 JSMol *get_qmol(const std::string &input) {
