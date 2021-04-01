@@ -22,14 +22,28 @@ extern "C" {
 
 // I/O
 RDKIT_RDKITCFFI_EXPORT char *get_mol(const char *input, size_t *mol_sz);
+RDKIT_RDKITCFFI_EXPORT char *get_qmol(const char *input, size_t *mol_sz);
 RDKIT_RDKITCFFI_EXPORT char *get_molblock(const char *pkl, size_t pkl_sz);
 RDKIT_RDKITCFFI_EXPORT char *get_v3kmolblock(const char *pkl, size_t pkl_sz);
 RDKIT_RDKITCFFI_EXPORT char *get_smiles(const char *pkl, size_t pkl_sz);
+RDKIT_RDKITCFFI_EXPORT char *get_smarts(const char *pkl, size_t pkl_sz);
 RDKIT_RDKITCFFI_EXPORT char *get_cxsmiles(const char *pkl, size_t pkl_sz);
 RDKIT_RDKITCFFI_EXPORT char *get_json(const char *pkl, size_t pkl_sz);
 RDKIT_RDKITCFFI_EXPORT char *get_inchi(const char *pkl, size_t pkl_sz);
 RDKIT_RDKITCFFI_EXPORT char *get_inchi_for_molblock(const char *ctab);
 RDKIT_RDKITCFFI_EXPORT char *get_inchikey_for_inchi(const char *inchi);
+
+// substructure
+RDKIT_RDKITCFFI_EXPORT char *get_substruct_match(const char *mol_pkl,
+                                                 size_t mol_pkl_sz,
+                                                 const char *query_pkl,
+                                                 size_t query_pkl_sz,
+                                                 const char *options_json);
+RDKIT_RDKITCFFI_EXPORT char *get_substruct_matches(const char *mol_pkl,
+                                                   size_t mol_pkl_sz,
+                                                   const char *query_pkl,
+                                                   size_t query_pkl_sz,
+                                                   const char *options_json);
 
 // Drawing
 RDKIT_RDKITCFFI_EXPORT char *get_svg(const char *pkl, size_t pkl_sz,

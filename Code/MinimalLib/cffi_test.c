@@ -92,6 +92,18 @@ void test_io(){
   free(inchi);
   free(molblock);
 
+  char *smarts = get_smarts(pkl,pkl_size);
+  assert(!strcmp(smarts,"[#6]1:[#6]:[#6](-[#8]):[#6]:[#6]:[#6]:1"));
+  
+  pkl2 = get_qmol(smarts,&pkl2_size);
+  assert(pkl2);
+  free(smarts);
+  smarts = get_smarts(pkl2,pkl2_size);
+  assert(!strcmp(smarts,"[#6]1:[#6]:[#6](-[#8]):[#6]:[#6]:[#6]:1"));
+  free(smarts);
+  free(pkl2);
+
+
   free(pkl);
   pkl=NULL;
   printf("  done\n");
@@ -127,13 +139,47 @@ void test_svg(){
   free(pkl);
   pkl=NULL;
   printf("  done\n");
+  printf("--------------------------\n"); 
+}
+
+void test_substruct(){
   printf("--------------------------\n");
+  printf("  test_substruct\n");
   
+  char *mpkl;
+  size_t mpkl_size;
+  mpkl = get_mol("Cl[C@H](F)C[C@H](F)Cl",&mpkl_size);
+  char *qpkl;
+  size_t qpkl_size;
+  qpkl = get_qmol("Cl[C@@H](F)C",&qpkl_size);
+
+  char *json = get_substruct_match(mpkl,mpkl_size,qpkl,qpkl_size,"");
+  assert(!strcmp(json,"{\"atoms\":[0,1,2,3],\"bonds\":[0,1,2]}"));
+  free(json);
+  json = get_substruct_matches(mpkl,mpkl_size,qpkl,qpkl_size,"");
+  assert(!strcmp(json,"[{\"atoms\":[0,1,2,3],\"bonds\":[0,1,2]},{\"atoms\":[6,4,5,3],\"bonds\":[5,4,3]}]"));
+  free(json);
+
+  // make sure using parameters works
+  json = get_substruct_match(mpkl,mpkl_size,qpkl,qpkl_size,"{\"useChirality\":true}");
+  assert(!strcmp(json,"{\"atoms\":[6,4,5,3],\"bonds\":[5,4,3]}"));
+  free(json);
+  json = get_substruct_matches(mpkl,mpkl_size,qpkl,qpkl_size,"{\"useChirality\":true}");
+  assert(!strcmp(json,"[{\"atoms\":[6,4,5,3],\"bonds\":[5,4,3]}]"));
+  free(json);
+  
+  free(mpkl);
+  mpkl=NULL;
+  free(qpkl);
+  qpkl=NULL;
+  printf("  done\n");
+  printf("--------------------------\n"); 
 }
 
 int main(){
   printf("hello %s\n",version()); 
   test_io();
   test_svg();
+  test_substruct();
   return 0;
 }

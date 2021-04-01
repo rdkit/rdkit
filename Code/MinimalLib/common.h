@@ -88,6 +88,11 @@ RWMol *qmol_from_input(const std::string &input) {
     bool removeHs = true;
     bool strictParsing = false;
     res = MolBlockToMol(input, sanitize, removeHs, strictParsing);
+  } else if (input.find("commonchem") != std::string::npos) {
+    auto molVect = MolInterchange::JSONDataToMols(input);
+    if (!molVect.empty()) {
+      res = new RWMol(*molVect[0]);
+    }
   } else {
     res = SmartsToMol(input);
   }
@@ -157,6 +162,32 @@ std::string process_details(const std::string &details, unsigned int &width,
   }
 
   return "";
+}
+
+void get_sss_json(const ROMol &d_mol, const ROMol &q_mol,
+                  const MatchVectType &match, rj::Value &obj,
+                  rj::Document &doc) {
+  rj::Value rjAtoms(rj::kArrayType);
+  for (const auto &pr : match) {
+    rjAtoms.PushBack(pr.second, doc.GetAllocator());
+  }
+  obj.AddMember("atoms", rjAtoms, doc.GetAllocator());
+
+  rj::Value rjBonds(rj::kArrayType);
+  for (const auto qbond : q_mol.bonds()) {
+    unsigned int beginIdx = qbond->getBeginAtomIdx();
+    unsigned int endIdx = qbond->getEndAtomIdx();
+    if (beginIdx >= match.size() || endIdx >= match.size()) {
+      continue;
+    }
+    unsigned int idx1 = match[beginIdx].second;
+    unsigned int idx2 = match[endIdx].second;
+    const auto bond = d_mol.getBondBetweenAtoms(idx1, idx2);
+    if (bond != nullptr) {
+      rjBonds.PushBack(bond->getIdx(), doc.GetAllocator());
+    }
+  }
+  obj.AddMember("bonds", rjBonds, doc.GetAllocator());
 }
 
 std::string mol_to_svg(const ROMol &m, unsigned int w, unsigned int h,
