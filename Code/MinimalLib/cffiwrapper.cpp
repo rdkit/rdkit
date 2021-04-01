@@ -26,6 +26,7 @@
 #include <GraphMol/Descriptors/Property.h>
 #include <GraphMol/Descriptors/MolDescriptors.h>
 #include <GraphMol/Fingerprints/MorganFingerprints.h>
+#include <GraphMol/Fingerprints/Fingerprints.h>
 #include <GraphMol/Depictor/RDDepictor.h>
 #include <GraphMol/CIPLabeler/CIPLabeler.h>
 #include <GraphMol/Abbreviations/Abbreviations.h>
@@ -234,4 +235,24 @@ extern "C" char *get_substruct_matches(const char *mol_pkl, size_t mol_pkl_sz,
 extern "C" char *get_descriptors(const char *mol_pkl, size_t mol_pkl_sz) {
   MOL_FROM_PKL(mol, mol_pkl, mol_pkl_sz)
   return str_to_c(MinimalLib::get_descriptors(mol));
+}
+
+extern "C" char *get_morgan_fp(const char *mol_pkl, size_t mol_pkl_sz,
+                               unsigned int radius, size_t fplen) {
+  MOL_FROM_PKL(mol, mol_pkl, mol_pkl_sz)
+  auto fp = MorganFingerprints::getFingerprintAsBitVect(mol, radius, fplen);
+  auto res = BitVectToText(*fp);
+  delete fp;
+
+  return str_to_c(res);
+}
+
+extern "C" char *get_rdkit_fp(const char *mol_pkl, size_t mol_pkl_sz,
+                              size_t fplen) {
+  MOL_FROM_PKL(mol, mol_pkl, mol_pkl_sz)
+  auto fp = RDKFingerprintMol(mol, 1, 7, fplen);
+  auto res = BitVectToText(*fp);
+  delete fp;
+
+  return str_to_c(res);
 }

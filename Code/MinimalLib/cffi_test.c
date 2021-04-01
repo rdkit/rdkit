@@ -187,7 +187,36 @@ void test_descriptors(){
   char *descrs = get_descriptors(mpkl,mpkl_size);
   assert(strstr(descrs,"lipinskiHBA"));
   assert(strstr(descrs,"NumAliphaticRings"));
+  assert(strstr(descrs,"chi3v"));
   free(descrs);
+
+  free(mpkl);
+  mpkl=NULL;
+  printf("  done\n");
+  printf("--------------------------\n"); 
+}
+
+void test_fingerprints(){
+  printf("--------------------------\n");
+  printf("  test_fingerprints\n");
+  
+  char *mpkl;
+  size_t mpkl_size;
+  mpkl = get_mol("c1nccc(O)c1",&mpkl_size);
+
+  char *fp = get_morgan_fp(mpkl,mpkl_size,2,1024);
+  assert(strlen(fp)==1024);
+  free(fp);
+  fp = get_morgan_fp(mpkl,mpkl_size,1,64);
+  assert(!strcmp(fp,"0011000000100000010000100000000000001001010000000000000000100000"));
+  free(fp);
+  fp = get_morgan_fp(mpkl,mpkl_size,2,64);
+  assert(!strcmp(fp,"0011000000100000010000100000000000001001010000000010000010100001"));
+  free(fp);
+
+  fp = get_rdkit_fp(mpkl,mpkl_size,64);
+  assert(!strcmp(fp,"1111011000111100011011011111011001111111110010000111000011111111"));
+  free(fp);
 
   free(mpkl);
   mpkl=NULL;
@@ -201,5 +230,6 @@ int main(){
   test_svg();
   test_substruct();
   test_descriptors();
+  test_fingerprints();
   return 0;
 }

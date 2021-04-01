@@ -54,6 +54,10 @@ RDKIT_RDKITCFFI_EXPORT char *get_svg_with_highlights(const char *pkl,
 
 // Calculators
 RDKIT_RDKITCFFI_EXPORT char *get_descriptors(const char *pkl, size_t pkl_sz);
+RDKIT_RDKITCFFI_EXPORT char *get_morgan_fp(const char *pkl, size_t pkl_sz,
+                                           unsigned int radius, size_t fplen);
+RDKIT_RDKITCFFI_EXPORT char *get_rdkit_fp(const char *pkl, size_t pkl_sz,
+                                          size_t fplen);
 
 // housekeeping
 RDKIT_RDKITCFFI_EXPORT void free_ptr(char *ptr);
