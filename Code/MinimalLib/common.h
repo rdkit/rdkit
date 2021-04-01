@@ -216,5 +216,29 @@ std::string mol_to_svg(const ROMol &m, unsigned int w, unsigned int h,
   return drawer.getDrawingText();
 }
 
+std::string get_descriptors(const ROMol &m) {
+  rj::Document doc;
+  doc.SetObject();
+
+  Descriptors::Properties props;
+  std::vector<std::string> dns = props.getPropertyNames();
+  std::vector<double> dvs = props.computeProperties(m);
+  for (size_t i = 0; i < dns.size(); ++i) {
+    rj::Value v(dvs[i]);
+    const auto srt = rj::StringRef(dns[i].c_str());
+    doc.AddMember(srt, v, doc.GetAllocator());
+  }
+
+  if (std::find(dns.begin(), dns.end(), std::string("amw")) == dns.end()) {
+    rj::Value v(Descriptors::calcAMW(m));
+    doc.AddMember("amw", v, doc.GetAllocator());
+  }
+
+  rj::StringBuffer buffer;
+  rj::Writer<rj::StringBuffer> writer(buffer);
+  writer.SetMaxDecimalPlaces(5);
+  doc.Accept(writer);
+  return buffer.GetString();
+}
 }  // namespace MinimalLib
 }  // namespace RDKit

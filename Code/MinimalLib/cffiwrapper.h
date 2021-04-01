@@ -52,7 +52,8 @@ RDKIT_RDKITCFFI_EXPORT char *get_svg_with_highlights(const char *pkl,
                                                      size_t pkl_sz,
                                                      const char *details_json);
 
-//
+// Calculators
+RDKIT_RDKITCFFI_EXPORT char *get_descriptors(const char *pkl, size_t pkl_sz);
 
 // housekeeping
 RDKIT_RDKITCFFI_EXPORT void free_ptr(char *ptr);

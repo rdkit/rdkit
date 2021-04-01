@@ -176,10 +176,30 @@ void test_substruct(){
   printf("--------------------------\n"); 
 }
 
+void test_descriptors(){
+  printf("--------------------------\n");
+  printf("  test_descriptors\n");
+  
+  char *mpkl;
+  size_t mpkl_size;
+  mpkl = get_mol("c1nccc(O)c1",&mpkl_size);
+
+  char *descrs = get_descriptors(mpkl,mpkl_size);
+  assert(strstr(descrs,"lipinskiHBA"));
+  assert(strstr(descrs,"NumAliphaticRings"));
+  free(descrs);
+
+  free(mpkl);
+  mpkl=NULL;
+  printf("  done\n");
+  printf("--------------------------\n"); 
+}
+
 int main(){
   printf("hello %s\n",version()); 
   test_io();
   test_svg();
   test_substruct();
+  test_descriptors();
   return 0;
 }

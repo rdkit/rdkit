@@ -147,8 +147,9 @@ extern "C" char *get_mol(const char *input, size_t *pkl_sz) {
     *pkl_sz = 0;
     return str_to_c("Error!");
   }
+  unsigned int propFlags = PicklerOps::PropertyPickleOptions::AllProps;
   std::string pkl;
-  MolPickler::pickleMol(*mol, pkl);
+  MolPickler::pickleMol(*mol, pkl, propFlags);
   return str_to_c(pkl, pkl_sz);
 }
 extern "C" char *get_qmol(const char *input, size_t *pkl_sz) {
@@ -228,4 +229,9 @@ extern "C" char *get_substruct_matches(const char *mol_pkl, size_t mol_pkl_sz,
   }
 
   return str_to_c(res);
+}
+
+extern "C" char *get_descriptors(const char *mol_pkl, size_t mol_pkl_sz) {
+  MOL_FROM_PKL(mol, mol_pkl, mol_pkl_sz)
+  return str_to_c(MinimalLib::get_descriptors(mol));
 }
