@@ -51,6 +51,9 @@ struct RDKIT_SUBSTRUCTMATCH_EXPORT SubstructMatchParameters {
   SubstructMatchParameters(){};
 };
 
+RDKIT_SUBSTRUCTMATCH_EXPORT void updateSubstructMatchParamsFromJSON(
+    SubstructMatchParameters &params, const std::string &json);
+
 //! Find a substructure match for a query in a molecule
 /*!
     \param mol         The ROMol to be searched
