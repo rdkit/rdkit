@@ -224,6 +224,31 @@ void test_fingerprints(){
   printf("--------------------------\n"); 
 }
 
+void test_coords(){
+  printf("--------------------------\n");
+  printf("  test_coords\n");
+  char *mpkl;
+  size_t mpkl_size;
+  mpkl = get_mol("C1CCC1CC",&mpkl_size);
+  
+  char *cxsmi = get_cxsmiles(mpkl,mpkl_size);
+  // no cxsmiles yet
+  assert(!strstr(cxsmi,"|"));
+
+  set_2d_coords(&mpkl,&mpkl_size);
+  free(cxsmi);
+  cxsmi = get_cxsmiles(mpkl,mpkl_size);
+  printf("%s\n",cxsmi);
+  // since we have coords there's something there:
+  assert(strstr(cxsmi,"|"));
+  free(cxsmi);
+
+  free(mpkl);
+  mpkl=NULL;
+  printf("  done\n");
+  printf("--------------------------\n"); 
+}
+
 int main(){
   printf("hello %s\n",version()); 
   test_io();
@@ -231,5 +256,6 @@ int main(){
   test_substruct();
   test_descriptors();
   test_fingerprints();
+  test_coords();
   return 0;
 }

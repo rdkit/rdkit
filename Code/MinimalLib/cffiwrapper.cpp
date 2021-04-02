@@ -69,12 +69,13 @@ std::string get_inchikey_for_inchi(const std::string &input) {
 }
 #endif
 
-#define MOL_FROM_PKL(mol, pkl, pkl_sz)    \
-  if (!pkl || !pkl_sz) {                  \
-    return str_to_c("");                  \
-  }                                       \
-  std::string mol##pkl##str(pkl, pkl_sz); \
-  ROMol mol(mol##pkl##str);
+#define MOL_FROM_PKL(mol, pkl, pkl_sz)       \
+  if (!(pkl) || !(pkl_sz)) {                 \
+    return str_to_c("");                     \
+  }                                          \
+  std::string mol##inp_str((pkl), (pkl_sz)); \
+  ROMol mol(mol##inp_str);                   \
+  mol.setProp(common_properties::_StereochemDone, 1, true);
 
 extern "C" char *get_smiles(const char *pkl, size_t pkl_sz) {
   MOL_FROM_PKL(mol, pkl, pkl_sz);
@@ -148,7 +149,8 @@ extern "C" char *get_mol(const char *input, size_t *pkl_sz) {
     *pkl_sz = 0;
     return str_to_c("Error!");
   }
-  unsigned int propFlags = PicklerOps::PropertyPickleOptions::AllProps;
+  unsigned int propFlags = PicklerOps::PropertyPickleOptions::AllProps ^
+                           PicklerOps::PropertyPickleOptions::ComputedProps;
   std::string pkl;
   MolPickler::pickleMol(*mol, pkl, propFlags);
   return str_to_c(pkl, pkl_sz);
@@ -255,4 +257,18 @@ extern "C" char *get_rdkit_fp(const char *mol_pkl, size_t mol_pkl_sz,
   delete fp;
 
   return str_to_c(res);
+}
+
+extern "C" char *set_2d_coords(char **mol_pkl, size_t *mol_pkl_sz) {
+  MOL_FROM_PKL(mol, *mol_pkl, *mol_pkl_sz)
+  RDDepict::compute2DCoords(mol);
+
+  unsigned int propFlags = PicklerOps::PropertyPickleOptions::AllProps ^
+                           PicklerOps::PropertyPickleOptions::ComputedProps;
+  std::string pkl;
+  MolPickler::pickleMol(mol, pkl, propFlags);
+
+  free(*mol_pkl);
+  *mol_pkl = str_to_c(pkl, mol_pkl_sz);
+  return str_to_c("");
 }
