@@ -71,7 +71,7 @@ std::string get_inchikey_for_inchi(const std::string &input) {
 
 #define MOL_FROM_PKL(mol, pkl, pkl_sz)       \
   if (!(pkl) || !(pkl_sz)) {                 \
-    return str_to_c("");                     \
+    return NULL;                             \
   }                                          \
   std::string mol##inp_str((pkl), (pkl_sz)); \
   ROMol mol(mol##inp_str);                   \
@@ -107,7 +107,11 @@ extern "C" char *get_json(const char *pkl, size_t pkl_sz) {
   auto data = MolInterchange::MolToJSONData(mol);
   return str_to_c(data);
 }
-extern "C" void free_ptr(char *ptr) { free(ptr); }
+extern "C" void free_ptr(char *ptr) {
+  if (ptr) {
+    free(ptr);
+  }
+}
 
 extern "C" char *get_svg(const char *pkl, size_t pkl_sz, unsigned int width,
                          unsigned int height) {
@@ -147,7 +151,7 @@ extern "C" char *get_mol(const char *input, size_t *pkl_sz) {
   RWMol *mol = MinimalLib::mol_from_input(input);
   if (!mol) {
     *pkl_sz = 0;
-    return str_to_c("Error!");
+    return NULL;
   }
   unsigned int propFlags = PicklerOps::PropertyPickleOptions::AllProps ^
                            PicklerOps::PropertyPickleOptions::ComputedProps;
@@ -259,7 +263,7 @@ extern "C" void prefer_coordgen(short val) {
 #endif
 };
 
-extern "C" char *set_2d_coords(char **mol_pkl, size_t *mol_pkl_sz) {
+extern "C" short set_2d_coords(char **mol_pkl, size_t *mol_pkl_sz) {
   MOL_FROM_PKL(mol, *mol_pkl, *mol_pkl_sz)
   RDDepict::compute2DCoords(mol);
 
@@ -270,5 +274,5 @@ extern "C" char *set_2d_coords(char **mol_pkl, size_t *mol_pkl_sz) {
 
   free(*mol_pkl);
   *mol_pkl = str_to_c(pkl, mol_pkl_sz);
-  return str_to_c("");
+  return 1;
 }

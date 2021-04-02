@@ -53,6 +53,28 @@ void test_io(){
   free(json);
   json=NULL;
 
+  //---------
+  // failures
+
+  // kekulization
+  pkl2 = get_mol("c1cccc1",&pkl2_size);
+  assert(pkl2==NULL);
+  assert(!pkl2_size);
+
+  // bad input
+  pkl2 = get_mol("foo",&pkl2_size);
+  assert(pkl2==NULL);
+  assert(!pkl2_size);
+  
+  // valence
+  pkl2 = get_mol("CO(C)C",&pkl2_size);
+  assert(pkl2==NULL);
+  assert(!pkl2_size);
+
+
+
+
+
   char *molblock = get_molblock(pkl,pkl_size);
   pkl2=get_mol(molblock,&pkl2_size);
   assert(pkl2);
