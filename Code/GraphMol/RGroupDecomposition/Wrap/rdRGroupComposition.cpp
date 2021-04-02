@@ -258,7 +258,7 @@ struct rgroupdecomp_wrapper {
         "                       default: AtomMap | MDLRGroup\n"
         "    - matchOnlyAtRGroups: only allow rgroup decomposition at the "
         "specified rgroups\n"
-        "    - setRemoveRGroupsThatAreAllHydrogen: remove all rgroups that "
+        "    - removeAllHydrogenRGroups: remove all rgroups that "
         "only have hydrogens\n"
         "    - removeHydrogensPostMatch: remove all hydrogens from the output "
         "molecules\n"

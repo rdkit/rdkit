@@ -14,6 +14,8 @@
 // std bits
 #include <vector>
 #include <functional>
+#include <unordered_map>
+#include "GraphMol/StereoGroup.h"
 
 namespace RDKit {
 class ROMol;
@@ -200,6 +202,21 @@ inline unsigned int SubstructMatch(ResonanceMolSupplier &resMolSupplier,
   params.numThreads = numThreads;
   matchVect = SubstructMatch(resMolSupplier, query, params);
   return matchVect.size();
+};
+
+class MolMatchFinalCheckFunctor {
+ public:
+  MolMatchFinalCheckFunctor(const ROMol &query, const ROMol &mol,
+                            const SubstructMatchParameters &ps);
+
+  bool operator()(const std::uint32_t q_c[],
+                  const std::uint32_t m_c[]) const;
+
+ private:
+  const ROMol &d_query;
+  const ROMol &d_mol;
+  const SubstructMatchParameters &d_params;
+  std::unordered_map<unsigned int, StereoGroup const *> d_molStereoGroups;
 };
 
 }  // namespace RDKit

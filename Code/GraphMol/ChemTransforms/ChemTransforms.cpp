@@ -51,6 +51,18 @@ void updateSubMolConfs(const ROMol &mol, RWMol &res,
     res.addConformer(newConf, false);
   }
 }
+
+struct SideChainMapping {
+  int molIndex;
+  int coreIndex = -1;
+  bool useMatch;
+
+  SideChainMapping(int molIndex)
+      : molIndex(molIndex), coreIndex(-1), useMatch(false) {}
+  SideChainMapping(int molIndex, int coreIndex, bool useMatch)
+      : molIndex(molIndex), coreIndex(coreIndex), useMatch(useMatch) {}
+};
+
 }  // namespace
 
 ROMol *deleteSubstructs(const ROMol &mol, const ROMol &query, bool onlyFrags,
@@ -328,8 +340,13 @@ ROMol *replaceCore(const ROMol &mol, const ROMol &core,
                    const MatchVectType &matchV, bool replaceDummies,
                    bool labelByIndex, bool requireDummyMatch) {
   unsigned int origNumAtoms = mol.getNumAtoms();
+  std::vector<std::pair<int, SideChainMapping>> matches;
+  matches.reserve(origNumAtoms);
+
   std::vector<int> matchingIndices(origNumAtoms, -1);
   std::vector<int> allIndices(origNumAtoms, -1);
+  boost::dynamic_bitset<> molAtomsMapped(origNumAtoms);
+  std::set<int> multipleMappedMolAtoms;
   for (const auto &mvit : matchV) {
     if (mvit.first < 0 || mvit.first >= rdcast<int>(core.getNumAtoms())) {
       throw ValueErrorException(
@@ -339,11 +356,44 @@ ROMol *replaceCore(const ROMol &mol, const ROMol &core,
       throw ValueErrorException(
           "Supplied MatchVect indices out of bounds of the target molecule");
     }
-
+    bool useMatch = false;
     if (replaceDummies || core.getAtomWithIdx(mvit.first)->getAtomicNum() > 0) {
       matchingIndices[mvit.second] = mvit.first;
+      useMatch = true;
     }
     allIndices[mvit.second] = mvit.first;
+    SideChainMapping mapping(mvit.second, mvit.first, useMatch);
+    matches.emplace_back(mvit.second, mapping);
+    if (molAtomsMapped[mvit.second]) {
+      multipleMappedMolAtoms.insert(mvit.second);
+    }
+    molAtomsMapped.set(mvit.second);
+  }
+
+  boost::dynamic_bitset<> multipleOwnedBonds(mol.getNumBonds());
+  if (multipleMappedMolAtoms.size() > 0) {
+    for (const auto &match : matches) {
+      const auto &mappingInfo = match.second;
+      if (multipleMappedMolAtoms.find(mappingInfo.molIndex) !=
+          multipleMappedMolAtoms.end()) {
+        auto coreAtom = core.getAtomWithIdx(mappingInfo.coreIndex);
+        CHECK_INVARIANT(
+            coreAtom->getDegree() == 1,
+            "Multiple core atoms match a mol atom, but one of the core "
+            "atoms has degree > 1 ");
+        auto coreNeighborIdx = *core.getAtomNeighbors(coreAtom).first;
+        auto molNeighborIdx =
+            std::find_if(matchV.cbegin(), matchV.cend(),
+                         [coreNeighborIdx](std::pair<int, int> p) {
+                           return p.first == coreNeighborIdx;
+                         })->second;
+        if (molNeighborIdx > -1) {
+          auto connectingBond =
+              mol.getBondBetweenAtoms(mappingInfo.molIndex, molNeighborIdx);
+          multipleOwnedBonds.set(connectingBond->getIdx());
+        }
+      }
+    }
   }
 
   auto *newMol = new RWMol(mol);
@@ -356,24 +406,31 @@ ROMol *replaceCore(const ROMol &mol, const ROMol &core,
   for (unsigned int i = 0; i < origNumAtoms; ++i) {
     int queryatom = allIndices[i];
     matchorder_atomidx.emplace_back(queryatom, i);
+    if (!molAtomsMapped[i]) {
+      SideChainMapping mapping(i);
+      matches.emplace_back(i, mapping);
+    }
   }
 
   std::sort(matchorder_atomidx.begin(), matchorder_atomidx.end());
+  std::sort(matches.begin(), matches.end(),
+            [](const std::pair<int, SideChainMapping> &p1,
+               const std::pair<int, SideChainMapping> &p2) {
+              return p1.second.coreIndex < p2.second.coreIndex;
+            });
   std::vector<std::pair<int, Atom *>> dummies;
 
-  for (unsigned int j = 0; j < origNumAtoms; ++j) {
-    auto i = (unsigned)matchorder_atomidx[j].second;
+  for (const auto &match : matches) {
+    // for (unsigned int j = 0; j < origNumAtoms; ++j) {
+    //  auto i = (unsigned)matchorder_atomidx[j].second;
 
-    if (matchingIndices[i] == -1) {
-      Atom *sidechainAtom = newMol->getAtomWithIdx(i);
+    const auto &mappingInfo = match.second;
+
+    if (!mappingInfo.useMatch) {
+      Atom *sidechainAtom = newMol->getAtomWithIdx(mappingInfo.molIndex);
       // we're keeping the sidechain atoms:
       keepList.push_back(sidechainAtom);
-      int mapping = -1;
-      // if we were not in the matching list, still keep
-      //  the original indices (replaceDummies=False)
-      if (allIndices[i] != -1) {
-        mapping = allIndices[i];
-      }
+
       // loop over our neighbors and see if any are in the match:
       std::list<unsigned int> nbrList;
       ROMol::ADJ_ITER nbrIter, endNbrs;
@@ -390,8 +447,27 @@ ROMol *replaceCore(const ROMol &mol, const ROMol &core,
       for (std::list<unsigned int>::const_iterator lIter = nbrList.begin();
            lIter != nbrList.end(); ++lIter) {
         unsigned int nbrIdx = *lIter;
-        Bond *connectingBond = newMol->getBondBetweenAtoms(i, nbrIdx);
-        if (matchingIndices[nbrIdx] > -1) {
+        Bond *connectingBond =
+            newMol->getBondBetweenAtoms(mappingInfo.molIndex, nbrIdx);
+        bool bondToCore = matchingIndices[nbrIdx] > -1;
+        auto coreBond =
+            bondToCore && allIndices[nbrIdx] > -1 && mappingInfo.coreIndex > -1
+                ? core.getBondBetweenAtoms(mappingInfo.coreIndex,
+                                           allIndices[nbrIdx])
+                : nullptr;
+        if (bondToCore &&
+            multipleMappedMolAtoms.find(mappingInfo.molIndex) !=
+                multipleMappedMolAtoms.end() &&
+            mappingInfo.coreIndex > -1) {
+          // The core has multiple atoms that map onto this mol atom - check we
+          // have matched correct core bond.
+          // Otherwise we can use this bond only if nobody else owns it.
+          if (coreBond == nullptr &&
+              multipleOwnedBonds[connectingBond->getIdx()]) {
+            bondToCore = false;
+          }
+        }
+        if (bondToCore) {
           // we've matched an atom in the core.
           if (requireDummyMatch &&
               core.getAtomWithIdx(matchingIndices[nbrIdx])->getAtomicNum() !=
@@ -401,7 +477,15 @@ ROMol *replaceCore(const ROMol &mol, const ROMol &core,
           }
           auto *newAt = new Atom(0);
 
-          // we want to order the dummies int the same orders as
+          // if we were not in the matching list, still keep
+          //  the original indices (replaceDummies=False)
+          int mapping = mappingInfo.coreIndex;
+          // If we don't have a core bond, the label belongs to the neighbor
+          if (coreBond == nullptr) {
+            mapping = allIndices[nbrIdx];
+          }
+
+          // we want to order the dummies in the same orders as
           //  the mappings, if not labelling by Index they are in arbitrary
           //  order
           //  right now so save and sort later.
@@ -415,7 +499,8 @@ ROMol *replaceCore(const ROMol &mol, const ROMol &core,
           dummyAtomMap[nbrIdx] = newAt;
           keepList.push_back(newAt);
           Bond *bnd = connectingBond->copy();
-          if (bnd->getBeginAtomIdx() == i) {
+          if (bnd->getBeginAtomIdx() ==
+              static_cast<size_t>(mappingInfo.molIndex)) {
             bnd->setEndAtomIdx(newAt->getIdx());
           } else {
             bnd->setBeginAtomIdx(newAt->getIdx());
@@ -470,9 +555,11 @@ ROMol *replaceCore(const ROMol &mol, const ROMol &core,
         auto beginAtom = newBond->getBeginAtom();
         auto endAtom = newBond->getEndAtom();
         if (endAtom->getAtomicNum() == 0) {
-          MolOps::setHydrogenCoords(newMol, endAtom->getIdx(), beginAtom->getIdx());
+          MolOps::setHydrogenCoords(newMol, endAtom->getIdx(),
+                                    beginAtom->getIdx());
         } else {
-          MolOps::setHydrogenCoords(newMol, beginAtom->getIdx(), endAtom->getIdx());
+          MolOps::setHydrogenCoords(newMol, beginAtom->getIdx(),
+                                    endAtom->getIdx());
         }
       }
     }

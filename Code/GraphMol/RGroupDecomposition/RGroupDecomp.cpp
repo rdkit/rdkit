@@ -43,7 +43,7 @@
 #include <utility>
 #include <vector>
 
-// #define VERBOSE 1
+#define VERBOSE 1
 
 namespace RDKit {
 
@@ -96,8 +96,19 @@ int RGroupDecomposition::add(const ROMol &inmol) {
       const bool uniquify = false;
       const bool recursionPossible = true;
       const bool useChirality = true;
-      SubstructMatch(mol, *core.second.core, tmatches, uniquify,
-                     recursionPossible, useChirality);
+      if (false) {
+        SubstructMatch(mol, *core.second.core, tmatches, uniquify,
+                       recursionPossible, useChirality);
+      } else {
+        std::vector<MatchVectType> baseMatches;
+        SubstructMatch(mol, *core.second.matchingMol, baseMatches, uniquify,
+                       recursionPossible, useChirality);
+        tmatches.clear();
+        for (const auto &baseMatch: baseMatches) {
+          auto matchesWithDummy = core.second.matchTerminalUserRGroups(mol, baseMatch);
+          tmatches.insert(tmatches.end(), matchesWithDummy.cbegin(), matchesWithDummy.cend());
+        }
+      }
     }
 
     if (data->params.onlyMatchAtRGroups) {
@@ -108,6 +119,9 @@ int RGroupDecomposition::add(const ROMol &inmol) {
         for (auto &match : mv) {
           target_match_indices[match.second] = 1;
         }
+
+        // target atoms that map to user defined R-groups
+        std::vector<int> targetAttachments;
 
         for (auto &match : mv) {
           const Atom *atm = mol.getAtomWithIdx(match.second);
@@ -126,8 +140,23 @@ int RGroupDecomposition::add(const ROMol &inmol) {
               }
             }
           }
+          else {
+            // labelled R-group
+            if (core.second.isTerminalRGroupWithUserLabel(match.first)) {
+              targetAttachments.push_back(match.second);
+            }
+          }
           if (!passes_filter) {
             break;
+          }
+        }
+
+        if (passes_filter) {
+          for (auto attachmentIdx: targetAttachments) {
+              if (!core.second.checkAllBondsToAttachmentPointPresent(mol, attachmentIdx, mv)) {
+                passes_filter = false;
+                break;
+              }
           }
         }
 
@@ -203,7 +232,9 @@ int RGroupDecomposition::add(const ROMol &inmol) {
         newMol->setProp<int>("core", core_idx);
         newMol->setProp<int>("idx", data->matches.size());
         newMol->setProp<int>("frag_idx", i);
-
+#ifdef VERBOSE
+        std::cerr << "Fragment " << MolToSmiles(*newMol) << std::endl;
+#endif
         for (auto at : newMol->atoms()) {
           unsigned int elno = at->getAtomicNum();
           if (elno == 0) {

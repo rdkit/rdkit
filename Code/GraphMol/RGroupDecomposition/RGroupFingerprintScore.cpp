@@ -16,7 +16,6 @@
 #include <vector>
 #include <map>
 #include <mutex>
-#include <thread>
 
 // #define DEBUG
 
@@ -24,6 +23,9 @@ namespace RDKit {
 
 static const int fingerprintSize = 512;
 static const bool useTopologicalFingerprints = false;
+
+// TODO scale variance by the number of separate attachments (as that variance
+// will be counted for each attachment).
 
 // Add fingerprint information to RGroupData
 void addFingerprintToRGroupData(RGroupData *rgroupData) {
@@ -185,6 +187,12 @@ double FingerprintVarianceScoreData::fingerprintVarianceGroupScore() {
       [](double sum,
          std::pair<int, std::shared_ptr<VarianceDataForLabel>> pair) {
         auto variance = pair.second->variance();
+    // perhaps here the variance should be weighted by occupancy- so that
+    // sparsely populated rgroups are penalized
+
+    // e.g variance *= ((double) numberOfMolecules) /
+    // ((double)pair.second->numberFingerprints);
+
 #ifdef DEBUG
         std::cerr << variance << ',';
 #endif
@@ -196,8 +204,9 @@ double FingerprintVarianceScoreData::fingerprintVarianceGroupScore() {
   CHECK_INVARIANT(numberOfMolecules > 0, "No compounds to be scored!");
   double rgroupPenalty =
       (double)numberOfMissingUserRGroups / (double)numberOfMolecules;
-  // double the penalty to catch systems like https://github.com/rdkit/rdkit/issues/3896
-  auto score = sum + 2.0*rgroupPenalty;
+  // double the penalty to catch systems like
+  // https://github.com/rdkit/rdkit/issues/3896
+  auto score = sum + 2.0 * rgroupPenalty;
 #ifdef DEBUG
   std::cerr << " sum " << sum << " rgroup penalty " << rgroupPenalty
             << " score " << score << std::endl;
