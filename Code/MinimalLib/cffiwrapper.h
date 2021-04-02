@@ -59,14 +59,22 @@ RDKIT_RDKITCFFI_EXPORT char *get_morgan_fp(const char *pkl, size_t pkl_sz,
 RDKIT_RDKITCFFI_EXPORT char *get_rdkit_fp(const char *pkl, size_t pkl_sz,
                                           size_t fplen);
 
+// modification
+RDKIT_RDKITCFFI_EXPORT short add_hs(char **pkl, size_t *pkl_sz);
+RDKIT_RDKITCFFI_EXPORT short remove_hs(char **pkl, size_t *pkl_sz);
+
 // coordinates
 RDKIT_RDKITCFFI_EXPORT void prefer_coordgen(short val);
 RDKIT_RDKITCFFI_EXPORT short set_2d_coords(char **pkl, size_t *pkl_sz);
+RDKIT_RDKITCFFI_EXPORT short set_3d_coords(char **pkl, size_t *pkl_sz);
 
 // housekeeping
 RDKIT_RDKITCFFI_EXPORT void free_ptr(char *ptr);
 
 RDKIT_RDKITCFFI_EXPORT char *version();
+RDKIT_RDKITCFFI_EXPORT void enable_logging();
+RDKIT_RDKITCFFI_EXPORT void disable_logging();
+
 #ifdef __cplusplus
 }
 #endif

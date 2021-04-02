@@ -246,6 +246,30 @@ void test_fingerprints(){
   printf("--------------------------\n"); 
 }
 
+void test_modifications(){
+  printf("--------------------------\n");
+  printf("  test_modifications\n");
+  char *mpkl;
+  size_t mpkl_size;
+  mpkl = get_mol("CCC",&mpkl_size);
+  
+  assert(add_hs(&mpkl,&mpkl_size)>0);
+  char *ctab = get_molblock(mpkl,mpkl_size);
+  assert(strstr(ctab," H "));
+  free(ctab);
+
+  assert(remove_hs(&mpkl,&mpkl_size)>0);
+  ctab = get_molblock(mpkl,mpkl_size);
+  assert(!strstr(ctab," H "));
+  free(ctab);
+
+  free(mpkl);
+  mpkl=NULL;
+  printf("  done\n");
+  printf("--------------------------\n"); 
+}
+
+
 void test_coords(){
   printf("--------------------------\n");
   printf("  test_coords\n");
@@ -273,6 +297,16 @@ void test_coords(){
 #endif
   free(cxsmi);
 
+  // 3D
+  assert(add_hs(&mpkl,&mpkl_size));
+  assert(set_3d_coords(&mpkl,&mpkl_size)>0);
+  cxsmi = get_cxsmiles(mpkl,mpkl_size);
+  printf("%s\n",cxsmi);
+  // since we have coords there's something there:
+  assert(strstr(cxsmi,"|"));
+  free(cxsmi);
+
+
   free(mpkl);
   mpkl=NULL;
   printf("  done\n");
@@ -280,12 +314,14 @@ void test_coords(){
 }
 
 int main(){
+  enable_logging();
   printf("hello %s\n",version()); 
   test_io();
   test_svg();
   test_substruct();
   test_descriptors();
   test_fingerprints();
+  test_modifications();
   test_coords();
   return 0;
 }

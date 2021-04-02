@@ -18,13 +18,11 @@ endif(RDK_BUILD_MINIMAL_LIB)
 
 if(RDK_BUILD_CFFI_LIB)
     set(CMAKE_C_STANDARD 99)
-    #rdkit _ library(rdkitcffi cffiwrapper.cpp 
-    #  SHARED
-    #  LINK_LIBRARIES MolInterchange_static Abbreviations_static CIPLabeler_static MolDraw2D_static Depictor_static 
-    #    RDInchiLib_static SubstructMatch_static FileParsers_static 
-    #    SmilesParse_static GraphMol_static RDGeometryLib_static RDGeneral_static )
-
-    set(LIBS_TO_USE MolInterchange_static Abbreviations_static CIPLabeler_static MolDraw2D_static Depictor_static 
+    set(LIBS_TO_USE 
+        DistGeomHelpers_static ForceFieldHelpers_static DistGeometry_static
+        ForceField_static Alignment_static
+        MolInterchange_static Abbreviations_static CIPLabeler_static 
+        MolDraw2D_static Depictor_static 
         RDInchiLib_static SubstructMatch_static FileParsers_static 
         SmilesParse_static GraphMol_static RDGeometryLib_static RDGeneral_static )
     add_library(rdkitcffi SHARED cffiwrapper.cpp)

@@ -12,6 +12,7 @@
 #include <iostream>
 
 #include <RDGeneral/versions.h>
+#include <atomic>
 #include <GraphMol/RDKitBase.h>
 #include <GraphMol/MolPickler.h>
 #include <GraphMol/SmilesParse/SmilesParse.h>
@@ -30,6 +31,7 @@
 #include <GraphMol/Depictor/RDDepictor.h>
 #include <GraphMol/CIPLabeler/CIPLabeler.h>
 #include <GraphMol/Abbreviations/Abbreviations.h>
+#include <GraphMol/DistGeomHelpers/Embedder.h>
 #include <DataStructs/BitOps.h>
 
 #include "common.h"
@@ -43,6 +45,11 @@
 namespace rj = rapidjson;
 
 using namespace RDKit;
+
+#if (defined(__GNUC__) || defined(__GNUG__))
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wconversion-null"
+#endif
 
 namespace {
 char *str_to_c(const std::string &str, size_t *len = nullptr) {
@@ -68,13 +75,22 @@ std::string get_inchikey_for_inchi(const std::string &input) {
   return InchiToInchiKey(input);
 }
 #endif
+#define MOL_TO_PKL(mol, mol_pkl, mol_pkl_sz)                                   \
+  {                                                                            \
+    unsigned int propFlags = PicklerOps::PropertyPickleOptions::AllProps ^     \
+                             PicklerOps::PropertyPickleOptions::ComputedProps; \
+    std::string pkl;                                                           \
+    MolPickler::pickleMol(mol, pkl, propFlags);                                \
+    free(*mol_pkl);                                                            \
+    *mol_pkl = str_to_c(pkl, mol_pkl_sz);                                      \
+  }
 
 #define MOL_FROM_PKL(mol, pkl, pkl_sz)       \
   if (!(pkl) || !(pkl_sz)) {                 \
     return NULL;                             \
   }                                          \
   std::string mol##inp_str((pkl), (pkl_sz)); \
-  ROMol mol(mol##inp_str);                   \
+  RWMol mol(mol##inp_str);                   \
   mol.setProp(common_properties::_StereochemDone, 1, true);
 
 extern "C" char *get_smiles(const char *pkl, size_t pkl_sz) {
@@ -170,12 +186,37 @@ extern "C" char *get_qmol(const char *input, size_t *pkl_sz) {
   return str_to_c(pkl, pkl_sz);
 }
 extern "C" char *version() { return str_to_c(rdkitVersion); }
+#ifdef RDK_THREADSAFE_SSS
+std::atomic_int logging_needs_init{1};
+#else
+short logging_needs_init = 1;
+#endif
+extern "C" void enable_logging() {
+  if (logging_needs_init) {
+    RDLog::InitLogs();
+    logging_needs_init = 0;
+  }
+  boost::logging::enable_logs("rdApp.*");
+}
+
+extern "C" void disable_logging() {
+#ifdef RDK_THREADSAFE_SSS
+  static std::atomic_int needs_init{1};
+#else
+  static short needs_init = 1;
+#endif
+  if (needs_init) {
+    RDLog::InitLogs();
+    needs_init = 0;
+  }
+  boost::logging::disable_logs("rdApp.*");
+}
 
 extern "C" char *get_substruct_match(const char *mol_pkl, size_t mol_pkl_sz,
                                      const char *query_pkl, size_t query_pkl_sz,
                                      const char *options_json) {
-  MOL_FROM_PKL(mol, mol_pkl, mol_pkl_sz)
-  MOL_FROM_PKL(query, query_pkl, query_pkl_sz)
+  MOL_FROM_PKL(mol, mol_pkl, mol_pkl_sz);
+  MOL_FROM_PKL(query, query_pkl, query_pkl_sz);
 
   SubstructMatchParameters params;
   if (options_json) {
@@ -203,8 +244,8 @@ extern "C" char *get_substruct_matches(const char *mol_pkl, size_t mol_pkl_sz,
                                        const char *query_pkl,
                                        size_t query_pkl_sz,
                                        const char *options_json) {
-  MOL_FROM_PKL(mol, mol_pkl, mol_pkl_sz)
-  MOL_FROM_PKL(query, query_pkl, query_pkl_sz)
+  MOL_FROM_PKL(mol, mol_pkl, mol_pkl_sz);
+  MOL_FROM_PKL(query, query_pkl, query_pkl_sz);
   SubstructMatchParameters params;
   if (options_json) {
     std::string json(options_json);
@@ -233,13 +274,13 @@ extern "C" char *get_substruct_matches(const char *mol_pkl, size_t mol_pkl_sz,
 }
 
 extern "C" char *get_descriptors(const char *mol_pkl, size_t mol_pkl_sz) {
-  MOL_FROM_PKL(mol, mol_pkl, mol_pkl_sz)
+  MOL_FROM_PKL(mol, mol_pkl, mol_pkl_sz);
   return str_to_c(MinimalLib::get_descriptors(mol));
 }
 
 extern "C" char *get_morgan_fp(const char *mol_pkl, size_t mol_pkl_sz,
                                unsigned int radius, size_t fplen) {
-  MOL_FROM_PKL(mol, mol_pkl, mol_pkl_sz)
+  MOL_FROM_PKL(mol, mol_pkl, mol_pkl_sz);
   auto fp = MorganFingerprints::getFingerprintAsBitVect(mol, radius, fplen);
   auto res = BitVectToText(*fp);
   delete fp;
@@ -249,7 +290,7 @@ extern "C" char *get_morgan_fp(const char *mol_pkl, size_t mol_pkl_sz,
 
 extern "C" char *get_rdkit_fp(const char *mol_pkl, size_t mol_pkl_sz,
                               size_t fplen) {
-  MOL_FROM_PKL(mol, mol_pkl, mol_pkl_sz)
+  MOL_FROM_PKL(mol, mol_pkl, mol_pkl_sz);
   auto fp = RDKFingerprintMol(mol, 1, 7, fplen);
   auto res = BitVectToText(*fp);
   delete fp;
@@ -264,15 +305,46 @@ extern "C" void prefer_coordgen(short val) {
 };
 
 extern "C" short set_2d_coords(char **mol_pkl, size_t *mol_pkl_sz) {
-  MOL_FROM_PKL(mol, *mol_pkl, *mol_pkl_sz)
+  MOL_FROM_PKL(mol, *mol_pkl, *mol_pkl_sz);
   RDDepict::compute2DCoords(mol);
 
-  unsigned int propFlags = PicklerOps::PropertyPickleOptions::AllProps ^
-                           PicklerOps::PropertyPickleOptions::ComputedProps;
-  std::string pkl;
-  MolPickler::pickleMol(mol, pkl, propFlags);
-
-  free(*mol_pkl);
-  *mol_pkl = str_to_c(pkl, mol_pkl_sz);
+  MOL_TO_PKL(mol, mol_pkl, mol_pkl_sz);
   return 1;
 }
+
+extern "C" short set_3d_coords(char **mol_pkl, size_t *mol_pkl_sz) {
+  MOL_FROM_PKL(mol, *mol_pkl, *mol_pkl_sz);
+  DGeomHelpers::EmbedParameters ps = DGeomHelpers::srETKDGv3;
+  int res = DGeomHelpers::EmbedMolecule(mol, ps);
+  if (res >= 0) {
+    ++res;
+  }
+  MOL_TO_PKL(mol, mol_pkl, mol_pkl_sz);
+  return (short)res;
+}
+
+extern "C" short add_hs(char **mol_pkl, size_t *mol_pkl_sz) {
+  MOL_FROM_PKL(mol, *mol_pkl, *mol_pkl_sz);
+  MolOps::addHs(mol);
+  // we don't need the properties that sets:
+  for (auto atom : mol.atoms()) {
+    if (atom->getAtomicNum() == 1) {
+      atom->clearProp(common_properties::isImplicit);
+    }
+  }
+
+  MOL_TO_PKL(mol, mol_pkl, mol_pkl_sz);
+  return 1;
+}
+
+extern "C" short remove_hs(char **mol_pkl, size_t *mol_pkl_sz) {
+  MOL_FROM_PKL(mol, *mol_pkl, *mol_pkl_sz);
+  MolOps::removeAllHs(mol);
+
+  MOL_TO_PKL(mol, mol_pkl, mol_pkl_sz);
+  return 1;
+}
+
+#if (defined(__GNUC__) || defined(__GNUG__))
+#pragma GCC diagnostic pop
+#endif
