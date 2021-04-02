@@ -137,14 +137,8 @@ void MolPickler::addCustomPropHandler(const CustomPropHandler &handler) {
       std::shared_ptr<CustomPropHandler>(handler.clone()));
 }
 
-namespace {
-
-using QueryDetails =
-    std::variant<MolPickler::Tags, std::tuple<MolPickler::Tags, int32_t>,
-                 std::tuple<MolPickler::Tags, int32_t, int32_t>,
-                 std::tuple<MolPickler::Tags, int32_t, int32_t, int32_t, char>,
-                 std::tuple<MolPickler::Tags, std::set<int32_t>>>;
 using namespace Queries;
+namespace PicklerOps {
 
 template <class T>
 QueryDetails getQueryDetails(const Query<int, T const *, true> *query) {
@@ -223,8 +217,10 @@ QueryDetails getQueryDetails(const Query<int, T const *, true> *query) {
   } else {
     throw MolPicklerException("do not know how to pickle part of the query.");
   }
-}  // namespace
+}
+}  // namespace PicklerOps
 
+namespace {
 template <class T>
 void pickleQuery(std::ostream &ss, const Query<int, T const *, true> *query) {
   PRECONDITION(query, "no query");
@@ -242,7 +238,7 @@ void pickleQuery(std::ostream &ss, const Query<int, T const *, true> *query) {
     MolPickler::pickleMol(
         ((const RecursiveStructureQuery *)query)->getQueryMol(), ss);
   } else {
-    auto qdetails = getQueryDetails(query);
+    auto qdetails = PicklerOps::getQueryDetails(query);
     switch (qdetails.index()) {
       case 0:
         streamWrite(ss, std::get<0>(qdetails));
@@ -264,6 +260,7 @@ void pickleQuery(std::ostream &ss, const Query<int, T const *, true> *query) {
         streamWrite(ss, MolPickler::QUERY_VALUE, std::get<1>(v));
         streamWrite(ss, std::get<2>(v));
         streamWrite(ss, std::get<3>(v));
+        streamWrite(ss, std::get<4>(v));
       } break;
       case 4: {
         auto v = std::get<4>(qdetails);
