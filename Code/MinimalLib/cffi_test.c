@@ -235,12 +235,20 @@ void test_coords(){
   // no cxsmiles yet
   assert(!strstr(cxsmi,"|"));
 
+  prefer_coordgen(0);
   set_2d_coords(&mpkl,&mpkl_size);
   free(cxsmi);
   cxsmi = get_cxsmiles(mpkl,mpkl_size);
-  printf("%s\n",cxsmi);
   // since we have coords there's something there:
   assert(strstr(cxsmi,"|"));
+#ifdef RDK_BUILD_COORDGEN_SUPPORT
+  prefer_coordgen(1);
+  set_2d_coords(&mpkl,&mpkl_size);
+  char *cxsmi2 = get_cxsmiles(mpkl,mpkl_size);
+  assert(strstr(cxsmi2,"|"));
+  assert(strcmp(cxsmi,cxsmi2));
+  free(cxsmi2);
+#endif
   free(cxsmi);
 
   free(mpkl);

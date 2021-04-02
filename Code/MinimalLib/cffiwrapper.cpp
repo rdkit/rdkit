@@ -167,12 +167,6 @@ extern "C" char *get_qmol(const char *input, size_t *pkl_sz) {
 }
 extern "C" char *version() { return str_to_c(rdkitVersion); }
 
-extern "C" void prefer_coordgen(bool useCoordGen) {
-#ifdef RDK_BUILD_COORDGEN_SUPPORT
-  RDDepict::preferCoordGen = useCoordGen;
-#endif
-}
-
 extern "C" char *get_substruct_match(const char *mol_pkl, size_t mol_pkl_sz,
                                      const char *query_pkl, size_t query_pkl_sz,
                                      const char *options_json) {
@@ -258,6 +252,12 @@ extern "C" char *get_rdkit_fp(const char *mol_pkl, size_t mol_pkl_sz,
 
   return str_to_c(res);
 }
+
+extern "C" void prefer_coordgen(short val) {
+#ifdef RDK_BUILD_COORDGEN_SUPPORT
+  RDDepict::preferCoordGen = val;
+#endif
+};
 
 extern "C" char *set_2d_coords(char **mol_pkl, size_t *mol_pkl_sz) {
   MOL_FROM_PKL(mol, *mol_pkl, *mol_pkl_sz)
