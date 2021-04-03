@@ -6028,6 +6028,35 @@ M  END
     with self.assertRaises(ValueError):
       Chem.SortMatchesByDegreeOfCoreSubstitution(orthoMeta, core, [])
 
+  def testSetCoordsTerminalAtom(self):
+    mol = Chem.MolFromMolBlock("""
+     RDKit          2D
+
+  6  6  0  0  0  0  0  0  0  0999 V2000
+    1.5000    0.0000    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    0.7500   -1.2990    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -0.7500   -1.2990    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -1.5000    0.0000    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -0.7500    1.2990    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    0.7500    1.2990    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+  1  2  2  0
+  2  3  1  0
+  3  4  2  0
+  4  5  1  0
+  5  6  2  0
+  6  1  1  0
+M  END
+""")
+    mol = Chem.RWMol(mol)
+    atom = Chem.Atom(0)
+    idx = mol.AddAtom(atom)
+    mol.AddBond(idx, 0)
+    Chem.SetTerminalAtomCoords(mol, idx, 0)
+    coord = mol.GetConformer().GetAtomPosition(idx)
+    self.assertAlmostEqual(coord.x, 2.5, 2)
+    self.assertAlmostEqual(coord.y, 0, 2)
+    self.assertAlmostEqual(coord.z, 0, 2)
+
   def testSuppliersReadingDirectories(self):
     # this is an odd one, basically we need to check that we don't hang
     #  which is pretty much a bad test in my opinion, but YMMV

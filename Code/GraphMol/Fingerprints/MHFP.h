@@ -91,22 +91,23 @@ public:
 
   /*!
     \brief Creates a molecular shingling based on circular substructures.
-   
+
     A molecular shingling is a vector of SMILES that were extracted from and
     represent a molecule. This method extracts substructures centered at each
     atom of the molecule with different radii. A molecule with 10 atoms will
     generate <tt>10 * 3</tt> shingles when a radius of <tt>3</tt> is chosen.
-   
+
     \param radius the maximum radius of the substructure that is generated at
           each atom. Default: <tt>3</tt>.
     \param rings whether the rings (SSSR) are extrected from the molecule and
-           added to the shingling. Given the molecule 
+           added to the shingling. Given the molecule
            <tt>"C1CCCCCC1C(=O)C"</tt>, "<tt>C1CCCCCC1"</tt> would be added
            to the shingling. Default: <tt>true</tt>.
     \param isomeric whether the SMILES added to the shingling are isomeric.
             Default: <tt>false</tt>.
     \param kekulize whether the SMILES added to the shingling are kekulized.
-            Default: <tt>true</tt>.
+            Default: <tt>true</tt>. NOTE that this will throw an exception if
+            the molecule cannot be kekulized.
     \param min_radius the minimum radius that is used to extract n-grams.
             Default: <tt>1</tt>.
 
@@ -117,7 +118,7 @@ public:
           unsigned char radius = 3,
           bool rings = true,
           bool isomeric = false,
-          bool kekulize = true,
+          bool kekulize = false,
           unsigned char min_radius = 1);
 
   //! \overload
@@ -126,27 +127,28 @@ public:
           unsigned char radius = 3,
           bool rings = true,
           bool isomeric = false,
-          bool kekulize = true,
+          bool kekulize = false,
           unsigned char min_radius = 1);
 
   /*!
     \brief Creates a MinHash vector from a molecule.
-   
+
     This methods is a wrapper around MHFPEncoder::CreateShingling and
     MHFPEncoder::FromStringArray. When a vector of molecules or SMILES is passed
     and RDKit was compiled with OpenMP, it is parallelized and will speed up by
     a factor of the number of cores.
-   
+
     \param radius the maximum radius of the substructure that is generated at
           each atom. Default: <tt>3</tt>.
     \param rings whether the rings (SSSR) are extrected from the molecule and
-           added to the shingling. Given the molecule 
+           added to the shingling. Given the molecule
            <tt>"C1CCCCCC1C(=O)C"</tt>, "<tt>C1CCCCCC1"</tt> would be added
            to the shingling. Default: <tt>true</tt>.
     \param isomeric whether the SMILES added to the shingling are isomeric.
             Default: <tt>false</tt>.
     \param kekulize whether the SMILES added to the shingling are kekulized.
-            Default: <tt>true</tt>.
+            Default: <tt>true</tt>. NOTE that this will throw an exception if
+            the molecule cannot be kekulized.
     \param min_radius the minimum radius that is used to extract n-grams.
             Default: <tt>1</tt>.
 
@@ -157,7 +159,7 @@ public:
        unsigned char radius = 3,
        bool rings = true,
        bool isomeric = false,
-       bool kekulize = true,
+       bool kekulize = false,
        unsigned char min_radius = 1);
 
   //! \overload
@@ -166,7 +168,7 @@ public:
        unsigned char radius = 3,
        bool rings = true,
        bool isomeric = false,
-       bool kekulize = true,
+       bool kekulize = false,
        unsigned char min_radius = 1);
 
   //! \overload
@@ -175,7 +177,7 @@ public:
        unsigned char radius = 3,
        bool rings = true,
        bool isomeric = false,
-       bool kekulize = true,
+       bool kekulize = false,
        unsigned char min_radius = 1);
 
   //! \overload
@@ -184,7 +186,7 @@ public:
        unsigned char radius = 3,
        bool rings = true,
        bool isomeric = false,
-       bool kekulize = true,
+       bool kekulize = false,
        unsigned char min_radius = 1);
 
 
@@ -204,7 +206,8 @@ public:
     \param isomeric whether the SMILES added to the shingling are isomeric.
             Default: <tt>false</tt>.
     \param kekulize whether the SMILES added to the shingling are kekulized.
-            Default: <tt>true</tt>.
+            Default: <tt>true</tt>. NOTE that this will throw an exception if
+            the molecule cannot be kekulized.
     \param min_radius the minimum radius that is used to extract n-grams.
             Default: <tt>1</tt>.
     \param length the length into which the fingerprint is folded.
@@ -217,7 +220,7 @@ public:
        unsigned char radius = 3,
        bool rings = true,
        bool isomeric = false,
-       bool kekulize = true,
+       bool kekulize = false,
        unsigned char min_radius = 1,
        size_t length = 2048);
 
@@ -227,7 +230,7 @@ public:
        unsigned char radius = 3,
        bool rings = true,
        bool isomeric = false,
-       bool kekulize = true,
+       bool kekulize = false,
        unsigned char min_radius = 1,
        size_t length = 2048);
 
@@ -237,7 +240,7 @@ public:
        unsigned char radius = 3,
        bool rings = true,
        bool isomeric = false,
-       bool kekulize = true,
+       bool kekulize = false,
        unsigned char min_radius = 1,
        size_t length = 2048);
 
@@ -247,7 +250,7 @@ public:
        unsigned char radius = 3,
        bool rings = true,
        bool isomeric = false,
-       bool kekulize = true,
+       bool kekulize = false,
        unsigned char min_radius = 1,
        size_t length = 2048);
 

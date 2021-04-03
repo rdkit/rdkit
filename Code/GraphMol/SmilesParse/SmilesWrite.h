@@ -62,7 +62,10 @@ RDKIT_SMILESPARSE_EXPORT std::string GetBondSmiles(
   \param mol : the molecule in question.
   \param doIsomericSmiles : include stereochemistry and isotope information
       in the SMILES
-  \param doKekule : do Kekule smiles (i.e. don't use aromatic bonds)
+
+  \param doKekule : do Kekule smiles (i.e. don't use aromatic bonds) NOTE that
+      this will throw an exception if the molecule cannot be kekulized.
+
   \param rootedAtAtom : make sure the SMILES starts at the specified atom.
       The resulting SMILES is not, of course, canonical.
   \param canonical : if false, no attempt will be made to canonicalize the

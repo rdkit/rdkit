@@ -17,6 +17,7 @@
 #include <string>
 #include <vector>
 
+#include <RDGeneral/export.h>
 #include <Geometry/point.h>
 #include <GraphMol/MolDraw2D/MolDraw2D.h>
 
@@ -34,7 +35,7 @@ std::ostream &operator<<(std::ostream &oss, const TextDrawType &tdt);
 std::ostream &operator<<(std::ostream &oss, const OrientType &o);
 
 // ****************************************************************************
-class DrawText {
+class RDKIT_MOLDRAW2D_EXPORT DrawText {
  public:
   static constexpr double FONT_SIZE = 0.6;  // seems to be a good number
 
@@ -44,9 +45,11 @@ class DrawText {
   DrawColour const &colour() const;
   void setColour(const DrawColour &col);
 
-  // size in "pixels" i.e scale() * FONT_SIZE.
+  // size in "pixels" i.e scale() * base_font_size_.
   double fontSize() const;
   void setFontSize(double new_size);
+  double baseFontSize() const;
+  void setBaseFontSize(double new_size);
   double maxFontSize() const;
   void setMaxFontSize(double new_max);
   double minFontSize() const;
@@ -147,6 +150,7 @@ class DrawText {
   double font_scale_;
   double max_font_size_;
   double min_font_size_;
+  double base_font_size_ = FONT_SIZE;
 
   // return a vector of StringRects, one for each char in text, with
   // super- and subscripts taken into account.  Sizes in pixel coords,
@@ -165,8 +169,9 @@ class DrawText {
 //! mode based on contents of instring from i onwards. Increments i
 //! appropriately
 //! \returns true or false depending on whether it did something or not
-bool setStringDrawMode(const std::string &instring, TextDrawType &draw_mode,
-                       size_t &i);
+RDKIT_MOLDRAW2D_EXPORT bool setStringDrawMode(const std::string &instring,
+                                              TextDrawType &draw_mode,
+                                              size_t &i);
 
 // take the label for the given atom and return the individual pieces
 // that need to be drawn for it.  So NH<sub>2</sub> will return

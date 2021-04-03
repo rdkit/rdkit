@@ -48,7 +48,7 @@ Include an Atom Index
 ======================
 
 | **Author:** Takayuki Serizawa
-| **Source:** `<https://iwatobipen.wordpress.com/2017/02/25/draw-molecule-with-atom-index-in-rdkit/>`_
+| **Original Source:** `<https://iwatobipen.wordpress.com/2017/02/25/draw-molecule-with-atom-index-in-rdkit/>`_
 | **Index ID#:** RDKitCB_0
 | **Summary:** Draw a molecule with atom index numbers.
 
@@ -82,11 +82,31 @@ Include an Atom Index
    
 .. image:: images/RDKitCB_0_im1.png
 
+A simpler way to add atom indices is to adjust the IPythonConsole properties.
+This produces a similar image to the example above, the difference being that the atom 
+indices are now near the atom, rather than at the atom position.
+
+.. testcode::
+
+   from rdkit import Chem
+   from rdkit.Chem.Draw import IPythonConsole
+   from rdkit.Chem import Draw
+   IPythonConsole.drawOptions.addAtomIndices = True
+   IPythonConsole.molSize = 300,300
+
+.. testcode::
+
+   mol = Chem.MolFromSmiles("C1CC2=C3C(=CC=C2)C(=CN3C1)[C@H]4[C@@H](C(=O)NC4=O)C5=CNC6=CC=CC=C65")
+   mol
+
+.. image:: images/RDKitCB_0_im2.png
+
+
 Include a Calculation
 ======================
 
 | **Author:** Greg Landrum
-| **Source:** `<https://sourceforge.net/p/rdkit/mailman/message/36457619/>`_
+| **Original Source:** `<https://sourceforge.net/p/rdkit/mailman/message/36457619/>`_
 | **Index ID#:** RDKitCB_23
 | **Summary:** Draw a molecule with a calculation value displayed (e.g., Gasteiger Charge)
 
@@ -94,6 +114,8 @@ Include a Calculation
 
    from rdkit import Chem
    from rdkit.Chem import AllChem
+   from rdkit.Chem.Draw import IPythonConsole
+   IPythonConsole.molSize = 250,250 
 
 .. testcode::
 
@@ -108,8 +130,8 @@ Include a Calculation
 
    m2 = Chem.Mol(m)
    for at in m2.GetAtoms():
-       lbl = '%s:%.2f'%(at.GetSymbol(),at.GetDoubleProp("_GasteigerCharge"))
-       at.SetProp('atomLabel',lbl)
+       lbl = '%.2f'%(at.GetDoubleProp("_GasteigerCharge"))
+       at.SetProp('atomNote',lbl)
    m2
 
 .. image:: images/RDKitCB_23_im1.png
@@ -493,7 +515,7 @@ Identify Aromatic Atoms
 ==========================
 
 | **Author:** Paolo Tosco
-| **Source:** `<https://sourceforge.net/p/rdkit/mailman/message/36862879/>`_
+| **Original Source:** `<https://sourceforge.net/p/rdkit/mailman/message/36862879/>`_
 | **Index ID#:** RDKitCB_9
 | **Summary:** Differentiate aromatic carbon from olefinic carbon with SMARTS
 
@@ -518,6 +540,43 @@ Identify Aromatic Atoms
 .. testoutput::
 
    ((6,), (7,))
+
+There is also an alternative, more efficient approach, using the `rdqueries` module:
+
+.. testcode::
+
+   from rdkit import Chem
+   from rdkit.Chem import rdqueries
+
+.. testcode::
+
+   mol = Chem.MolFromSmiles("c1ccccc1C=CCC")
+   q = rdqueries.IsAromaticQueryAtom()
+   print([x.GetIdx() for x in mol.GetAtomsMatchingQuery(q)])
+
+.. testoutput::
+
+   [0, 1, 2, 3, 4, 5]
+
+.. testcode::
+
+   q = rdqueries.HybridizationEqualsQueryAtom(Chem.HybridizationType.SP2)
+   print([x.GetIdx() for x in mol.GetAtomsMatchingQuery(q)])
+
+.. testoutput::
+
+   [0, 1, 2, 3, 4, 5, 6, 7]
+
+.. testcode::
+
+   qcombined = rdqueries.IsAliphaticQueryAtom()
+   qcombined.ExpandQuery(q)
+   print([x.GetIdx() for x in mol.GetAtomsMatchingQuery(qcombined)])
+
+.. testoutput::
+
+   [6, 7]
+
 
 Stereochemistry
 ****************
@@ -677,9 +736,8 @@ Create Fragments
 .. testcode::
 
    # Finally, you can manually cut bonds using Chem.RWMol.RemoveBonds:
-   rwmol = Chem.RWMol(mol)
-   for b_idx in sorted([0, 2, 4], reverse=True): # reverse because when a bond or atom is deleted, 
-   # the bond or atom indices are remapped. If you remove bonds with a higher index first, bonds with lower indices will not be remapped.
+   with Chem.RWMol(mol) as rwmol:
+     for b_idx in [0, 2, 4]:
        b = rwmol.GetBondWithIdx(b_idx)
        rwmol.RemoveBond(b.GetBeginAtomIdx(), b.GetEndAtomIdx())
    # And then call Chem.GetMolFrags() to get sanitized fragments where empty valences were filled with implicit hydrogens:
@@ -2100,6 +2158,7 @@ One additional tool we used in the paper is changing the bounds matrix of a mole
    import rdkit.DistanceGeometry as DG
    
    mol = Chem.MolFromSmiles("C1CCC1C")
+   mol = Chem.AddHs(mol)
    bm = rdDistGeom.GetMoleculeBoundsMatrix(mol)
    bm[0,3] = 1.21
    bm[3,0] = 1.20

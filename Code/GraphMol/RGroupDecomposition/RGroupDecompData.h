@@ -62,7 +62,7 @@ struct RGroupDecompData {
       RWMol *alignCore = core.first ? cores[0].core.get() : nullptr;
       CHECK_INVARIANT(params.prepareCore(*core.second.core, alignCore),
                       "Could not prepare at least one core");
-      core.second.init(params.onlyMatchAtRGroups);
+      core.second.init();
       core.second.labelledCore.reset(new RWMol(*core.second.core));
     }
   }
@@ -137,7 +137,9 @@ struct RGroupDecompData {
   // Return the RGroups with the current "best" permutation
   //  of matches.
   std::vector<RGroupMatch> GetCurrentBestPermutation() const {
-    const bool removeAllHydrogenRGroups = params.removeAllHydrogenRGroups;
+    const bool removeAllHydrogenRGroups =
+        params.removeAllHydrogenRGroups ||
+        params.removeAllHydrogenRGroupsAndLabels;
 
     std::vector<RGroupMatch> results;  // std::map<int, RGroup> > result;
     for (size_t i = 0; i < permutation.size(); ++i) {
@@ -148,46 +150,51 @@ struct RGroupDecompData {
       results.push_back(matches[i][permutation[i]]);
     }
 
-    if (removeAllHydrogenRGroups) {
-      // if a label is all hydrogens, remove it
+    // * if a dynamically-added RGroup (i.e., when onlyMatchAtRGroups=false)
+    //   is all hydrogens, remove it
+    // * if a user-defined RGroup is all hydrogens and either
+    //   params.removeAllHydrogenRGroups==true or
+    //   params.removeAllHydrogenRGroupsAndLabels==true, remove it
 
-      // This logic is a bit tricky, find all labels that have common cores
-      //  and analyze those sets independently.
-      //  i.e. if core 1 doesn't have R1 then don't analyze it in when looking
-      //  at label 1
-      std::map<int, std::set<int>> labelCores;  // map from label->cores
-      std::set<int> coresVisited;
-      for (auto &position : results) {
-        int core_idx = position.core_idx;
-        if (coresVisited.find(core_idx) == coresVisited.end()) {
-          coresVisited.insert(core_idx);
-          auto core = cores.find(core_idx);
-          if (core != cores.end()) {
-            for (auto rlabels : getRlabels(*core->second.core)) {
-              int rlabel = rlabels.first;
-              labelCores[rlabel].insert(core_idx);
-            }
+    // This logic is a bit tricky, find all labels that have common cores
+    //  and analyze those sets independently.
+    //  i.e. if core 1 doesn't have R1 then don't analyze it in when looking
+    //  at label 1
+    std::map<int, std::set<int>> labelCores;  // map from label->cores
+    std::set<int> coresVisited;
+    for (auto &position : results) {
+      int core_idx = position.core_idx;
+      if (coresVisited.find(core_idx) == coresVisited.end()) {
+        coresVisited.insert(core_idx);
+        auto core = cores.find(core_idx);
+        if (core != cores.end()) {
+          for (auto rlabels : getRlabels(*core->second.core)) {
+            int rlabel = rlabels.first;
+            labelCores[rlabel].insert(core_idx);
           }
         }
       }
+    }
 
-      for (int label : labels) {
-        bool allH = true;
-        for (auto &position : results) {
-          R_DECOMP::const_iterator rgroup = position.rgroups.find(label);
-          bool labelHasCore = labelCores[label].find(position.core_idx) !=
-                              labelCores[label].end();
-          if (labelHasCore && rgroup != position.rgroups.end() &&
-              !rgroup->second->is_hydrogen) {
-            allH = false;
-            break;
-          }
+    for (int label : labels) {
+      if (label > 0 && !removeAllHydrogenRGroups) {
+        continue;
+      }
+      bool allH = true;
+      for (auto &position : results) {
+        R_DECOMP::const_iterator rgroup = position.rgroups.find(label);
+        bool labelHasCore = labelCores[label].find(position.core_idx) !=
+                            labelCores[label].end();
+        if (labelHasCore && rgroup != position.rgroups.end() &&
+            !rgroup->second->is_hydrogen) {
+          allH = false;
+          break;
         }
+      }
 
-        if (allH) {
-          for (auto &position : results) {
-            position.rgroups.erase(label);
-          }
+      if (allH) {
+        for (auto &position : results) {
+          position.rgroups.erase(label);
         }
       }
     }
@@ -224,11 +231,15 @@ struct RGroupDecompData {
     }
   }
 
-  void addAtoms(RWMol &mol, const std::vector<std::pair<Atom *, Atom *>> &atomsToAdd) {
+  void addAtoms(RWMol &mol,
+                const std::vector<std::pair<Atom *, Atom *>> &atomsToAdd) {
     for (const auto &i : atomsToAdd) {
       mol.addAtom(i.second, false, true);
       mol.addBond(i.first, i.second, Bond::SINGLE);
-      MolOps::setHydrogenCoords(&mol, i.second->getIdx(), i.first->getIdx());
+      if (mol.getNumConformers()) {
+        MolOps::setTerminalAtomCoords(mol, i.second->getIdx(),
+                                      i.first->getIdx());
+      }
     }
   }
 
@@ -254,7 +265,7 @@ struct RGroupDecompData {
     std::vector<std::pair<Atom *, Atom *>> atomsToAdd;  // adds -R if necessary
 
     // Deal with user supplied labels
-    for (auto rlabels : atoms) {
+    for (const auto &rlabels : atoms) {
       int userLabel = rlabels.first;
       if (userLabel < 0) {
         continue;  // not a user specified label
@@ -323,6 +334,11 @@ struct RGroupDecompData {
     }
 
     addAtoms(core, atomsToAdd);
+    for (const auto &rlabels : atoms) {
+      auto atom = rlabels.second;
+      atom->clearProp(RLABEL);
+      atom->clearProp(RLABEL_TYPE);
+    }
     core.updatePropertyCache(false);  // this was github #1550
   }
 
@@ -396,7 +412,9 @@ struct RGroupDecompData {
         atom->setAtomicNum(
             rLabelCoreIndexToAtomicWt[atom->getProp<int>(RLABEL_CORE_INDEX)]);
         atom->setNoImplicit(true);
+        atom->clearProp(RLABEL_CORE_INDEX);
       }
+      atom->clearProp(SIDECHAIN_RLABELS);
     }
 
 #ifdef VERBOSE
@@ -424,7 +442,7 @@ struct RGroupDecompData {
 
     for (auto &it : best) {
       for (auto &rgroup : it.rgroups) {
-        if (rgroup.first >= 0) {
+        if (rgroup.first > 0) {
           userLabels.insert(rgroup.first);
         }
         if (rgroup.first < 0 && !params.onlyMatchAtRGroups) {
@@ -554,7 +572,7 @@ struct RGroupDecompData {
 
     if (params.matchingStrategy == GA) {
       RGroupGa ga(*this, params.timeout >= 0 ? &t0 : nullptr);
-      if (ga.numberPermutations() < 10000) {
+      if (ga.numberPermutations() < 100 * ga.getPopsize()) {
         params.matchingStrategy = Exhaustive;
       } else {
         if (params.gaNumberRuns > 1) {

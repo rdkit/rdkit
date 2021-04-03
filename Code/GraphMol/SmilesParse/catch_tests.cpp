@@ -815,3 +815,39 @@ TEST_CASE("Hydrogen bonds", "[smiles]") {
           Bond::BondType::HYDROGEN);
   }
 }
+
+TEST_CASE("Github #2788: doKekule=true should kekulize the molecule",
+          "[smiles]") {
+  SECTION("basics1") {
+    auto m = "c1ccccc1"_smiles;
+    REQUIRE(m);
+    bool doIsomeric = true;
+    bool doKekule = true;
+    CHECK(MolToSmiles(*m, doIsomeric, doKekule) == "C1=CC=CC=C1");
+  }
+  SECTION("basics2") {
+    auto m = "c1cc[nH]c1"_smiles;
+    REQUIRE(m);
+    bool doIsomeric = true;
+    bool doKekule = true;
+    CHECK(MolToSmiles(*m, doIsomeric, doKekule) == "C1=CNC=C1");
+  }
+
+  SECTION("can thrown exceptions") {
+    int debugParse = 0;
+    bool sanitize = false;
+    std::unique_ptr<RWMol> m{SmilesToMol("c1ccnc1", debugParse, sanitize)};
+    REQUIRE(m);
+    bool doIsomeric = true;
+    bool doKekule = false;
+    {
+      RWMol tm(*m);
+      CHECK(MolToSmiles(tm, doIsomeric, doKekule) == "c1ccnc1");
+    }
+    doKekule = true;
+    {
+      RWMol tm(*m);
+      CHECK_THROWS_AS(MolToSmiles(tm, doIsomeric, doKekule), KekulizeException);
+    }
+  }
+}

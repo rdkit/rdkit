@@ -214,8 +214,8 @@ class RDKIT_GRAPHMOL_EXPORT RWMol : public ROMol {
 
   void beginBatchEdit();
   void rollbackBatchEdit(){
-    dp_delAtoms.release();
-    dp_delBonds.release();
+    dp_delAtoms.reset();
+    dp_delBonds.reset();
   };
   void commitBatchEdit();
   

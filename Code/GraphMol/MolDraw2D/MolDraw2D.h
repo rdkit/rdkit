@@ -203,8 +203,8 @@ struct RDKIT_MOLDRAW2D_EXPORT MolDrawOptions {
   bool dummiesAreAttachments = false;  // draws "breaks" at dummy atoms
   bool circleAtoms = true;             // draws circles under highlighted atoms
   bool splitBonds = false;             // split bonds into per atom segments
-                                       // most useful for dynamic manipulation of drawing
-                                       // especially for svg
+                            // most useful for dynamic manipulation of drawing
+                            // especially for svg
   DrawColour highlightColour{1, 0.5, 0.5, 1.0};  // default highlight color
   bool continuousHighlight = true;  // highlight by drawing an outline
                                     // *underneath* the molecule
@@ -245,6 +245,7 @@ struct RDKIT_MOLDRAW2D_EXPORT MolDrawOptions {
   std::vector<std::vector<int>> atomRegions;  // regions
   DrawColour symbolColour{
       0, 0, 0, 1};  // color to be used for the symbols and arrows in reactions
+  DrawColour annotationColour{0, 0, 0, 1};  // color to be used for annotations
   int bondLineWidth = 2;        // default line width when drawing bonds
   bool scaleBondWidth = false;  // whether to apply scale() to the bond width
   bool scaleHighlightBondWidth = true;   // likewise with bond highlights.
@@ -273,9 +274,9 @@ struct RDKIT_MOLDRAW2D_EXPORT MolDrawOptions {
                         // 0.0, fixedScale wins.
   double rotate = 0.0;  // angle in degrees to rotate coords by about centre
                         // before drawing.
-  bool addAtomIndices = false;  // adds atom indices to drawings.
-  bool addBondIndices = false;  // adds bond indices to drawings.
-  bool isotopeLabels = true;  // adds isotope to non-dummy atoms.
+  bool addAtomIndices = false;     // adds atom indices to drawings.
+  bool addBondIndices = false;     // adds bond indices to drawings.
+  bool isotopeLabels = true;       // adds isotope to non-dummy atoms.
   bool dummyIsotopeLabels = true;  // adds isotope labels to dummy atoms.
 
   bool addStereoAnnotation = false;       // adds E/Z and R/S to drawings.
@@ -306,6 +307,9 @@ struct RDKIT_MOLDRAW2D_EXPORT MolDrawOptions {
       false;  // if all specified stereocenters are in a single StereoGroup,
               // show a molecule-level annotation instead of the individual
               // labels
+  bool singleColourWedgeBonds = false; // if true wedged and dashed bonds are drawn
+                                // using symbolColour rather than inheriting
+                                // their colour from the atoms
 
   MolDrawOptions() {
     highlightColourPalette.emplace_back(
@@ -528,7 +532,8 @@ class RDKIT_MOLDRAW2D_EXPORT MolDraw2D {
   // coords)
   void calculateScale(int width, int height, const ROMol &mol,
                       const std::vector<int> *highlight_atoms = nullptr,
-                      const std::map<int, double> *highlight_radii = nullptr);
+                      const std::map<int, double> *highlight_radii = nullptr,
+                      int confId = -1);
   //! overload
   // calculate a single scale that will suit all molecules.  For use by
   // drawMolecules primarily.
@@ -662,7 +667,7 @@ class RDKIT_MOLDRAW2D_EXPORT MolDraw2D {
   virtual bool supportsAnnotations() { return true; }
   virtual void drawAnnotation(const AnnotationType &annotation);
 
-  bool hasActiveAtmIdx() { return activeAtmIdx1_>=0; }
+  bool hasActiveAtmIdx() { return activeAtmIdx1_ >= 0; }
   int getActiveAtmIdx1() { return activeAtmIdx1_; }
   int getActiveAtmIdx2() { return activeAtmIdx2_; }
   void setActiveAtmIdx(int at_idx1 = -1, int at_idx2 = -1) {
@@ -672,7 +677,7 @@ class RDKIT_MOLDRAW2D_EXPORT MolDraw2D {
       std::swap(at_idx1, at_idx2);
     }
     activeAtmIdx1_ = at_idx1;
-	activeAtmIdx2_ = at_idx2;
+    activeAtmIdx2_ = at_idx2;
   }
 
  protected:

@@ -1328,11 +1328,11 @@ void convertComplexNameToQuery(Atom *query, const std::string &symb) {
 }
 
 Atom *ParseMolFileAtomLine(const std::string text, RDGeom::Point3D &pos,
-                           unsigned int line) {
+                           unsigned int line, bool strictParsing) {
   std::string symb;
   int massDiff, chg, hCount;
 
-  if (text.size() < 34) {
+  if ((strictParsing && text.size() < 34) || text.size() < 32) {
     std::ostringstream errout;
     errout << "Atom line too short: '" << text << "' on line " << line;
     throw FileParseException(errout.str());
@@ -1732,7 +1732,8 @@ Bond *ParseMolFileBondLine(const std::string &text, unsigned int line) {
 }  // namespace
 
 void ParseMolBlockAtoms(std::istream *inStream, unsigned int &line,
-                        unsigned int nAtoms, RWMol *mol, Conformer *conf) {
+                        unsigned int nAtoms, RWMol *mol, Conformer *conf,
+                        bool strictParsing) {
   PRECONDITION(inStream, "bad stream");
   PRECONDITION(mol, "bad molecule");
   PRECONDITION(conf, "bad conformer");
@@ -1743,7 +1744,7 @@ void ParseMolBlockAtoms(std::istream *inStream, unsigned int &line,
       throw FileParseException("EOF hit while reading atoms");
     }
     RDGeom::Point3D pos;
-    Atom *atom = ParseMolFileAtomLine(tempStr, pos, line);
+    Atom *atom = ParseMolFileAtomLine(tempStr, pos, line, strictParsing);
     unsigned int aid = mol->addAtom(atom, false, true);
     conf->setAtomPos(aid, pos);
     mol->setAtomBookmark(atom, i);
@@ -2890,7 +2891,7 @@ bool ParseV2000CTAB(std::istream *inStream, unsigned int &line, RWMol *mol,
   if (nAtoms == 0) {
     conf->set3D(false);
   } else {
-    ParseMolBlockAtoms(inStream, line, nAtoms, mol, conf);
+    ParseMolBlockAtoms(inStream, line, nAtoms, mol, conf, strictParsing);
 
     bool nonzeroZ = hasNonZeroZCoords(*conf);
     if (mol->hasProp(common_properties::_3DConf)) {

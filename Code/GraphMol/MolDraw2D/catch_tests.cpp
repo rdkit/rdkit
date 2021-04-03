@@ -2736,3 +2736,129 @@ TEST_CASE("github #3912: cannot draw atom lists from SMARTS", "[query][bug]") {
     CHECK(txt.find(">!<") != std::string::npos);
   }
 }
+
+TEST_CASE("github #2976: kekulizing reactions when drawing", "[reactions]") {
+  SECTION("basics") {
+    bool asSmiles = true;
+    std::unique_ptr<ChemicalReaction> rxn{
+        RxnSmartsToChemicalReaction("c1ccccc1>>c1ncccc1", nullptr, asSmiles)};
+    MolDraw2DSVG drawer(450, 200);
+    drawer.drawReaction(*rxn);
+    drawer.finishDrawing();
+    std::ofstream outs("testGithub2976.svg");
+    auto txt = drawer.getDrawingText();
+    outs << txt;
+    outs.flush();
+  }
+}
+
+TEST_CASE("preserve Reaction coordinates", "[reactions]") {
+  SECTION("basics") {
+    std::string data = R"RXN($RXN
+
+  Mrv16822    031301211645
+
+  2  2  1
+$MOL
+
+  Mrv1682203132116452D          
+
+  3  2  0  0  0  0            999 V2000
+   -4.3304    2.5893    0.0000 O   0  0  0  0  0  0  0  0  0  0  0  0
+   -4.3304    1.7643    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -3.5054    1.7643    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+  1  2  1  0  0  0  0
+  2  3  1  0  0  0  0
+M  END
+$MOL
+
+  Mrv1682203132116452D          
+
+  2  1  0  0  0  0            999 V2000
+   -2.1652    2.6339    0.0000 N   0  0  0  0  0  0  0  0  0  0  0  0
+   -2.1652    1.8089    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+  1  2  1  0  0  0  0
+M  END
+$MOL
+
+  Mrv1682203132116452D          
+
+  3  2  0  0  0  0            999 V2000
+    3.6109    1.9512    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    2.7859    1.9512    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    2.7859    2.7762    0.0000 N   0  0  0  0  0  0  0  0  0  0  0  0
+  2  1  1  0  0  0  0
+  3  2  1  0  0  0  0
+M  END
+$MOL
+
+  Mrv1682203132116452D          
+
+  2  1  0  0  0  0            999 V2000
+    4.9511    1.9959    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    4.9511    2.8209    0.0000 O   0  0  0  0  0  0  0  0  0  0  0  0
+  2  1  1  0  0  0  0
+M  END
+$MOL
+
+  Mrv1682203132116452D          
+
+  2  1  0  0  0  0            999 V2000
+   -0.3571    2.7232    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -0.4003    3.5471    0.0000 O   0  0  0  0  0  0  0  0  0  0  0  0
+  1  2  1  0  0  0  0
+M  END
+)RXN";
+    std::unique_ptr<ChemicalReaction> rxn{RxnBlockToChemicalReaction(data)};
+    MolDraw2DSVG drawer(450, 200);
+    drawer.drawReaction(*rxn);
+    drawer.finishDrawing();
+    std::ofstream outs("testReactionCoords.svg");
+    auto txt = drawer.getDrawingText();
+    outs << txt;
+    outs.flush();
+
+    // the reaction is drawn with some bonds vertical, make sure they remain
+    // vertical
+    {
+      std::regex regex("class='bond-0.*? d='M (\\d+\\.\\d+).* L (\\d+\\.\\d+)");
+      std::smatch bondMatch;
+      REQUIRE(std::regex_search(txt, bondMatch, regex));
+      REQUIRE(bondMatch.size() == 3);  // match both halves of the bond
+      CHECK(bondMatch[1].str() == bondMatch[2].str());
+    }
+    {
+      std::regex regex("class='bond-2.*? d='M (\\d+\\.\\d+).* L (\\d+\\.\\d+)");
+      std::smatch bondMatch;
+      REQUIRE(std::regex_search(txt, bondMatch, regex));
+      REQUIRE(bondMatch.size() == 3);  // match both halves of the bond
+      CHECK(bondMatch[1].str() == bondMatch[2].str());
+    }
+    {
+      std::regex regex("class='bond-4.*? d='M (\\d+\\.\\d+).* L (\\d+\\.\\d+)");
+      std::smatch bondMatch;
+      REQUIRE(std::regex_search(txt, bondMatch, regex));
+      REQUIRE(bondMatch.size() == 3);  // match both halves of the bond
+      CHECK(bondMatch[1].str() == bondMatch[2].str());
+    }
+  }
+}
+TEST_CASE("support annotation colors", "[drawing]") {
+  SECTION("basics") {
+    auto m = "CCCO"_smiles;
+    REQUIRE(m);
+    int panelWidth = -1;
+    int panelHeight = -1;
+    bool noFreeType = true;
+    MolDraw2DSVG drawer(300, 300, panelWidth, panelHeight, noFreeType);
+    drawer.drawOptions().annotationColour = DrawColour{0, 0, 1, 1};
+    drawer.drawOptions().addAtomIndices = true;
+    drawer.drawMolecule(*m, "blue annotations");
+    drawer.finishDrawing();
+    std::ofstream outs("testAnnotationColors.svg");
+    auto txt = drawer.getDrawingText();
+    outs << txt;
+    outs.flush();
+    CHECK(txt.find("fill:#0000FF' >2<") != std::string::npos);
+  }
+}

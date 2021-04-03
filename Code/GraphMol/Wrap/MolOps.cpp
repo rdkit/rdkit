@@ -1014,6 +1014,25 @@ struct molops_wrapper {
 
     // ------------------------------------------------------------------------
     docString =
+        "Sets Cartesian coordinates for a terminal atom.\n\
+\n\
+  Useful for growing an atom off a molecule with sensible \n\
+  coordinates based on the geometry of the neighbor.\n\
+\n\
+  NOTE: this sets the appropriate coordinates in all of the molecule's conformers \n\
+  ARGUMENTS:\n\
+\n\
+    - mol: the molecule the atoms belong to.\n\
+    - idx: index of the terminal atom whose coordinates are set.\n\
+    - mol: index of the bonded neighbor atom.\n\
+\n\
+  RETURNS: Nothing\n\
+\n";
+    python::def("SetTerminalAtomCoords", MolOps::setTerminalAtomCoords,
+                docString.c_str());
+
+    // ------------------------------------------------------------------------
+    docString =
         "Does a non-SSSR ring finding for a molecule.\n\
 \n\
   ARGUMENTS:\n\

@@ -1,5 +1,5 @@
 //
-//  Copyright (C) 2004-2018 Greg Landrum and Rational Discovery LLC
+//  Copyright (C) 2004-2021 Greg Landrum and Rational Discovery LLC
 //
 //   @@ All Rights Reserved @@
 //  This file is part of the RDKit.
@@ -10,6 +10,7 @@
 #include <GraphMol/RDKitBase.h>
 #include <RDGeneral/Ranking.h>
 #include <GraphMol/new_canon.h>
+#include <GraphMol/QueryOps.h>
 #include <RDGeneral/types.h>
 #include <sstream>
 #include <set>
@@ -1190,8 +1191,13 @@ bool atomIsCandidateForRingStereochem(const ROMol &mol, const Atom *atom) {
   if (!atom->getPropIfPresent(common_properties::_ringStereochemCand, res)) {
     const RingInfo *ringInfo = mol.getRingInfo();
     if (ringInfo->isInitialized() && ringInfo->numAtomRings(atom->getIdx())) {
-      if (atom->getAtomicNum() == 7 &&
-          !ringInfo->isAtomInRingOfSize(atom->getIdx(), 3)) {
+      // three-coordinate N additional requirements:
+      //   in a ring of size 3  (from InChI)
+      // OR
+      //   a bridgehead (RDKit extension)
+      if (atom->getAtomicNum() == 7 && atom->getDegree() == 3 &&
+          !ringInfo->isAtomInRingOfSize(atom->getIdx(), 3) &&
+          !queryIsAtomBridgehead(atom)) {
         return false;
       }
       ROMol::OEDGE_ITER beg, end;
@@ -1412,9 +1418,12 @@ std::pair<bool, bool> isAtomPotentialChiralCenter(
       // chiral, then look for exceptions
       legalCenter = false;
       if (atom->getAtomicNum() == 7) {
-        if (mol.getRingInfo()->isAtomInRingOfSize(atom->getIdx(), 3)) {
-          // three-coordinate N is only stereogenic if it's in a 3-ring (this is
-          // from InChI)
+        // three-coordinate N additional requirements:
+        //   in a ring of size 3  (from InChI)
+        // OR
+        /// is a bridgehead atom (RDKit extension)
+        if (mol.getRingInfo()->isAtomInRingOfSize(atom->getIdx(), 3) ||
+            queryIsAtomBridgehead(atom)) {
           legalCenter = true;
         }
       } else if (atom->getAtomicNum() == 15 || atom->getAtomicNum() == 33) {

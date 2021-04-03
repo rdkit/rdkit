@@ -7716,7 +7716,8 @@ void testRemoveAndTrackIsotopes() {
   TEST_ASSERT(mNoH->getAtomWithIdx(0)->getAtomicNum() == 6);
   TEST_ASSERT(mNoH->getAtomWithIdx(0)->hasProp(common_properties::_isotopicHs));
   std::vector<unsigned int> isoHs;
-  TEST_ASSERT(mNoH->getAtomWithIdx(0)->getPropIfPresent(common_properties::_isotopicHs, isoHs));
+  TEST_ASSERT(mNoH->getAtomWithIdx(0)->getPropIfPresent(
+      common_properties::_isotopicHs, isoHs));
   TEST_ASSERT(isoHs.size() == 1);
   TEST_ASSERT(isoHs.front() == 2);
   TEST_ASSERT(mNoH->getAtomWithIdx(30)->getAtomicNum() == 6);
@@ -8000,6 +8001,23 @@ M  END)CTAB";
     auto atom_pos = conf.getAtomPos(i);
     TEST_ASSERT(!isnan(atom_pos.x) && !isnan(atom_pos.y) && !isnan(atom_pos.z));
   }
+
+  // check that we bisect the correct angle and point outside the rings
+  auto v71 = conf.getAtomPos(7) - conf.getAtomPos(1);
+  auto v21 = conf.getAtomPos(2) - conf.getAtomPos(1);
+  auto v01 = conf.getAtomPos(0) - conf.getAtomPos(1);
+  auto v61 = conf.getAtomPos(6) - conf.getAtomPos(1);
+  TEST_ASSERT(fabs(fabs(v71.dotProduct(v01)) - fabs(v71.dotProduct(v21))) <
+              1e-3);
+  TEST_ASSERT(v71.dotProduct(v61) < -1e-4);
+
+  auto v86 = conf.getAtomPos(8) - conf.getAtomPos(6);
+  auto v06 = conf.getAtomPos(0) - conf.getAtomPos(6);
+  auto v56 = conf.getAtomPos(5) - conf.getAtomPos(6);
+  auto v16 = conf.getAtomPos(1) - conf.getAtomPos(6);
+  TEST_ASSERT(fabs(fabs(v86.dotProduct(v56)) - fabs(v86.dotProduct(v06))) <
+              1e-3);
+  TEST_ASSERT(v86.dotProduct(v16) < -1e-4);
 }
 
 #ifdef RDK_USE_URF
@@ -8053,6 +8071,38 @@ void testRingFamilies() {
 #else
 void testRingFamilies() {}
 #endif
+
+void testSetTerminalAtomCoords() {
+  BOOST_LOG(rdInfoLog) << "-----------------------\n Testing adding "
+                          "coordinates to a terminal atom. "
+                       << std::endl;
+  auto mol = R"CTAB(
+     RDKit          2D
+
+  6  6  0  0  0  0  0  0  0  0999 V2000
+    1.5000    0.0000    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    0.7500   -1.2990    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -0.7500   -1.2990    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -1.5000    0.0000    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -0.7500    1.2990    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    0.7500    1.2990    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+  1  2  2  0
+  2  3  1  0
+  3  4  2  0
+  4  5  1  0
+  5  6  2  0
+  6  1  1  0
+M  END)CTAB"_ctab;
+  auto atom = new Atom(0);
+  auto idx = mol->addAtom(atom);
+  mol->addBond(idx, 0);
+  MolOps::setTerminalAtomCoords(static_cast<ROMol &>(*mol), idx, 0);
+  auto &coord = mol->getConformer().getAtomPos(idx);
+  TEST_ASSERT(coord.x > 2.499 && coord.x < 2.501);
+  TEST_ASSERT(coord.y > -0.001 && coord.y < 0.001);
+  TEST_ASSERT(coord.z > -0.001 && coord.z < 0.001);
+  BOOST_LOG(rdInfoLog) << "\tdone" << std::endl;
+}
 
 int main() {
   RDLog::InitLogs();
@@ -8167,6 +8217,7 @@ int main() {
   testRingFamilies();
   testRemoveAndTrackIsotopes();
   testGithub3854();
+  testSetTerminalAtomCoords();
 
   return 0;
 }

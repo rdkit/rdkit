@@ -10,7 +10,6 @@
 //  which is included in the file license.txt, found at the root
 //  of the RDKit source tree.
 //
-#include "TorsionAngle.h"
 #include "TorsionConstraint.h"
 #include "Params.h"
 #include <cmath>
@@ -25,8 +24,12 @@
 namespace ForceFields {
 namespace UFF {
 inline void checkPrecondition(const ForceField *owner, unsigned int idx1,
-    unsigned int idx2, unsigned int idx3, unsigned int idx4) {
+                              unsigned int idx2, unsigned int idx3,
+                              unsigned int idx4, double minDihedralDeg,
+                              double maxDihedralDeg) {
   PRECONDITION(owner, "bad owner");
+  PRECONDITION(!(minDihedralDeg > maxDihedralDeg),
+               "minDihedralDeg must be <= maxDihedralDeg");
   URANGE_CHECK(idx1, owner->positions().size());
   URANGE_CHECK(idx2, owner->positions().size());
   URANGE_CHECK(idx3, owner->positions().size());
@@ -35,29 +38,35 @@ inline void checkPrecondition(const ForceField *owner, unsigned int idx1,
 
 double TorsionConstraintContrib::computeDihedralTerm(double dihedral) const {
   double dihedralTarget = dihedral;
-  if (!(dihedral > d_minDihedralDeg && dihedral < d_maxDihedralDeg)
-      && !(dihedral > d_minDihedralDeg && d_minDihedralDeg > d_maxDihedralDeg)
-      && !(dihedral < d_maxDihedralDeg && d_minDihedralDeg > d_maxDihedralDeg)) {
-    double minDihedralTarget = dihedral - d_minDihedralDeg;
-    double maxDihedralTarget = dihedral - d_maxDihedralDeg;
-    RDKit::ForceFieldsHelper::normalizeAngleDeg(minDihedralTarget);
-    RDKit::ForceFieldsHelper::normalizeAngleDeg(maxDihedralTarget);
-    dihedralTarget = (fabs(minDihedralTarget) < fabs(maxDihedralTarget)
-      ? d_minDihedralDeg : d_maxDihedralDeg);
+  if (!(dihedral > d_minDihedralDeg && dihedral < d_maxDihedralDeg) &&
+      !(dihedral > d_minDihedralDeg && d_minDihedralDeg > d_maxDihedralDeg) &&
+      !(dihedral < d_maxDihedralDeg && d_minDihedralDeg > d_maxDihedralDeg)) {
+    double dihedralMinTarget = dihedral - d_minDihedralDeg;
+    RDKit::ForceFieldsHelper::normalizeAngleDeg(dihedralMinTarget);
+    double dihedralMaxTarget = dihedral - d_maxDihedralDeg;
+    RDKit::ForceFieldsHelper::normalizeAngleDeg(dihedralMaxTarget);
+    if (fabs(dihedralMinTarget) < fabs(dihedralMaxTarget)) {
+      dihedralTarget = d_minDihedralDeg;
+    } else {
+      dihedralTarget = d_maxDihedralDeg;
+    }
   }
   double dihedralTerm = dihedral - dihedralTarget;
   RDKit::ForceFieldsHelper::normalizeAngleDeg(dihedralTerm);
   return dihedralTerm;
 }
 
-void TorsionConstraintContrib::setParameters(ForceField *owner, unsigned int idx1,
-    unsigned int idx2, unsigned int idx3, unsigned int idx4, double minDihedralDeg,
-    double maxDihedralDeg, double forceConst) {
+void TorsionConstraintContrib::setParameters(
+    ForceField *owner, unsigned int idx1, unsigned int idx2, unsigned int idx3,
+    unsigned int idx4, double minDihedralDeg, double maxDihedralDeg,
+    double forceConst) {
   dp_forceField = owner;
   d_at1Idx = idx1;
   d_at2Idx = idx2;
   d_at3Idx = idx3;
   d_at4Idx = idx4;
+  RDKit::ForceFieldsHelper::normalizeAngleDeg(minDihedralDeg);
+  RDKit::ForceFieldsHelper::normalizeAngleDeg(maxDihedralDeg);
   d_minDihedralDeg = minDihedralDeg;
   d_maxDihedralDeg = maxDihedralDeg;
   d_forceConstant = forceConst;
@@ -67,44 +76,39 @@ TorsionConstraintContrib::TorsionConstraintContrib(
     ForceField *owner, unsigned int idx1, unsigned int idx2, unsigned int idx3,
     unsigned int idx4, double minDihedralDeg, double maxDihedralDeg,
     double forceConst) {
-  checkPrecondition(owner, idx1, idx2, idx3, idx4);
-  RDKit::ForceFieldsHelper::normalizeAngleDeg(minDihedralDeg);
-  RDKit::ForceFieldsHelper::normalizeAngleDeg(maxDihedralDeg);
-  setParameters(owner, idx1, idx2, idx3, idx4,
-    minDihedralDeg, maxDihedralDeg, forceConst);
+  checkPrecondition(owner, idx1, idx2, idx3, idx4, minDihedralDeg,
+                    maxDihedralDeg);
+  setParameters(owner, idx1, idx2, idx3, idx4, minDihedralDeg, maxDihedralDeg,
+                forceConst);
 }
 
 TorsionConstraintContrib::TorsionConstraintContrib(
     ForceField *owner, unsigned int idx1, unsigned int idx2, unsigned int idx3,
     unsigned int idx4, bool relative, double minDihedralDeg,
     double maxDihedralDeg, double forceConst) {
-  checkPrecondition(owner, idx1, idx2, idx3, idx4);
-  RDKit::ForceFieldsHelper::normalizeAngleDeg(minDihedralDeg);
-  RDKit::ForceFieldsHelper::normalizeAngleDeg(maxDihedralDeg);
+  checkPrecondition(owner, idx1, idx2, idx3, idx4, minDihedralDeg,
+                    maxDihedralDeg);
   if (relative) {
     double dihedral;
-    RDKit::ForceFieldsHelper::computeDihedral(
-        owner->positions(), idx1, idx2, idx3, idx4, &dihedral);
+    RDKit::ForceFieldsHelper::computeDihedral(owner->positions(), idx1, idx2,
+                                              idx3, idx4, &dihedral);
     dihedral *= RAD2DEG;
     minDihedralDeg += dihedral;
     maxDihedralDeg += dihedral;
-    RDKit::ForceFieldsHelper::normalizeAngleDeg(minDihedralDeg);
-    RDKit::ForceFieldsHelper::normalizeAngleDeg(maxDihedralDeg);
   }
-  setParameters(owner, idx1, idx2, idx3, idx4,
-    minDihedralDeg, maxDihedralDeg, forceConst);
+  setParameters(owner, idx1, idx2, idx3, idx4, minDihedralDeg, maxDihedralDeg,
+                forceConst);
 }
 
 double TorsionConstraintContrib::getEnergy(double *pos) const {
   PRECONDITION(dp_forceField, "no owner");
   PRECONDITION(pos, "bad vector");
   double dihedral;
-  RDKit::ForceFieldsHelper::computeDihedral(
-    pos, d_at1Idx, d_at2Idx, d_at3Idx, d_at4Idx, &dihedral);
+  RDKit::ForceFieldsHelper::computeDihedral(pos, d_at1Idx, d_at2Idx, d_at3Idx,
+                                            d_at4Idx, &dihedral);
   dihedral *= RAD2DEG;
   double dihedralTerm = computeDihedralTerm(dihedral);
-  static double const c = 0.5 * DEG2RAD * DEG2RAD;
-  double res = c * d_forceConstant * dihedralTerm * dihedralTerm;
+  double res = d_forceConstant * dihedralTerm * dihedralTerm;
 
   return res;
 }
@@ -120,23 +124,35 @@ void TorsionConstraintContrib::getGrad(double *pos, double *grad) const {
   RDGeom::Point3D r[4];
   RDGeom::Point3D t[2];
   double d[2];
-  double cosPhi;
   double dihedral;
   RDKit::ForceFieldsHelper::computeDihedral(
-    pos, d_at1Idx, d_at2Idx, d_at3Idx, d_at4Idx, &dihedral, &cosPhi, r, t, d);
+      pos, d_at1Idx, d_at2Idx, d_at3Idx, d_at4Idx, &dihedral, nullptr, r, t, d);
   dihedral *= RAD2DEG;
-  double sinPhiSq = 1.0 - cosPhi * cosPhi;
-  double sinPhi = ((sinPhiSq > 0.0) ? sqrt(sinPhiSq) : 0.0);
-  // dE/dPhi is independent of cartesians:
   double dihedralTerm = computeDihedralTerm(dihedral);
-  double dE_dPhi = DEG2RAD * d_forceConstant * dihedralTerm;
+  double dE_dPhi = 2.0 * RAD2DEG * d_forceConstant * dihedralTerm;
 
-  // FIX: use a tolerance here
-  // this is hacky, but it's per the
-  // recommendation from Niketic and Rasmussen:
-  double sinTerm =
-      -dE_dPhi * (isDoubleZero(sinPhi) ? (1.0 / cosPhi) : (1.0 / sinPhi));
-  Utils::calcTorsionGrad(r, t, d, g, sinTerm, cosPhi);
+  double d23 = dp_forceField->distance(d_at2Idx, d_at3Idx, pos);
+  RDGeom::Point3D r31(pos[3 * d_at3Idx] - pos[3 * d_at1Idx],
+                      pos[3 * d_at3Idx + 1] - pos[3 * d_at1Idx + 1],
+                      pos[3 * d_at3Idx + 2] - pos[3 * d_at1Idx + 2]);
+  RDGeom::Point3D r42(pos[3 * d_at4Idx] - pos[3 * d_at2Idx],
+                      pos[3 * d_at4Idx + 1] - pos[3 * d_at2Idx + 1],
+                      pos[3 * d_at4Idx + 2] - pos[3 * d_at2Idx + 2]);
+  double prefactor = dE_dPhi / d23;
+  RDGeom::Point3D tt[2] = {r[0].crossProduct(r[1]), r[2].crossProduct(r[3])};
+  RDGeom::Point3D dedt[2] = {
+      tt[0].crossProduct(r[2]) / tt[0].lengthSq() * prefactor,
+      tt[1].crossProduct(r[1]) / tt[1].lengthSq() * prefactor};
+  RDGeom::Point3D dedp[4] = {
+      r[2].crossProduct(dedt[0]),
+      r31.crossProduct(dedt[0]) - r[3].crossProduct(dedt[1]),
+      r[0].crossProduct(dedt[0]) + r42.crossProduct(dedt[1]),
+      r[2].crossProduct(dedt[1])};
+  for (unsigned int i = 0; i < 4; ++i) {
+    g[i][0] += dedp[i].x;
+    g[i][1] += dedp[i].y;
+    g[i][2] += dedp[i].z;
+  }
 }
-}
-}
+}  // namespace UFF
+}  // namespace ForceFields

@@ -1690,6 +1690,77 @@ M  END
       CHECK(v1.dotProduct(v4) < -1e-4);
     }
   }
+  SECTION("#3932: followup from #3879") {
+    auto m = R"CTAB(
+     RDKit          2D
+
+ 21 22  0  0  0  0  0  0  0  0999 V2000
+   -6.9959    0.0617    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -5.5212    0.3365    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -5.0219    1.7509    0.0000 O   0  0  0  0  0  0  0  0  0  0  0  0
+   -4.5460   -0.8032    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -3.0713   -0.5284    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -2.0961   -1.6681    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -0.6214   -1.3933    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    0.2270   -0.1562    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    1.4640   -1.0046    0.0000 N   0  0  0  0  0  0  0  0  0  0  0  0
+    2.6531   -0.0903    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    4.0918   -0.5150    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    5.1788    0.5186    0.0000 O   0  0  0  0  0  0  0  0  0  0  0  0
+    4.4434   -1.9732    0.0000 O   0  0  0  0  0  0  0  0  0  0  0  0
+    2.1510    1.3231    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    3.6092    1.6747    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    1.9538    2.8101    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    0.6516    1.2824    0.0000 S   0  0  0  0  0  0  0  0  0  0  0  0
+    0.7678    2.7779    0.0000 O   0  0  0  0  0  0  0  0  0  0  0  0
+   -0.8236    1.5543    0.0000 O   0  0  0  0  0  0  0  0  0  0  0  0
+    0.6156   -2.2417    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    0.8904   -3.7163    0.0000 O   0  0  0  0  0  0  0  0  0  0  0  0
+  1  2  1  0
+  2  3  2  0
+  2  4  1  0
+  4  5  2  0
+  5  6  1  0
+  6  7  1  0
+  8  7  1  6
+  8  9  1  0
+  9 10  1  0
+ 10 11  1  6
+ 11 12  2  0
+ 11 13  1  0
+ 10 14  1  0
+ 14 15  1  0
+ 14 16  1  0
+ 14 17  1  0
+ 17 18  2  0
+ 17 19  2  0
+  9 20  1  0
+ 20 21  2  0
+ 20  7  1  0
+ 17  8  1  0
+M  END)CTAB"_ctab;
+    REQUIRE(m);
+
+    bool explicitOnly = false;
+    bool addCoords = true;
+    UINT_VECT onlyOnAtoms = {7};
+    MolOps::addHs(*m, explicitOnly, addCoords, &onlyOnAtoms);
+    const auto &conf = m->getConformer();
+    {
+      REQUIRE(m->getAtomWithIdx(21)->getAtomicNum() == 1);
+      REQUIRE(m->getBondBetweenAtoms(21, 7));
+      REQUIRE(m->getBondBetweenAtoms(7, 8));
+      REQUIRE(m->getBondBetweenAtoms(7, 16));
+      REQUIRE(m->getBondBetweenAtoms(7, 6));
+      auto v1 = conf.getAtomPos(21) - conf.getAtomPos(7);
+      auto v2 = conf.getAtomPos(6) - conf.getAtomPos(7);
+      auto v3 = conf.getAtomPos(16) - conf.getAtomPos(7);
+      auto v4 = conf.getAtomPos(8) - conf.getAtomPos(7);
+      CHECK(v1.angleTo(v2) < v1.angleTo(v4));
+      CHECK(v1.angleTo(v3) < v1.angleTo(v4));
+      CHECK(fabs(v1.angleTo(v2) - v1.angleTo(v3)) < 1e-4);
+    }
+  }
 }
 
 TEST_CASE("batch edits", "[editing]") {
@@ -1792,5 +1863,42 @@ TEST_CASE("github #3912: cannot draw atom lists from SMARTS", "[query][bug]") {
     vals.clear();
     getAtomListQueryVals(m->getAtomWithIdx(1)->getQuery(), vals);
     CHECK(vals == std::vector<int>{7, 8});
+  }
+}
+
+TEST_CASE("bridgehead queries", "[query]") {
+  SECTION("basics") {
+    {
+      auto m = "CC12CCN(CC1)C2"_smiles;
+      REQUIRE(m);
+      for (const auto atom : m->atoms()) {
+        auto test = queryIsAtomBridgehead(atom);
+        if (atom->getIdx() == 1 || atom->getIdx() == 4) {
+          CHECK(test == true);
+        } else {
+          CHECK(test == false);
+        }
+      }
+    }
+    {
+      auto m = "CC12CCC(C)(CC1)CC2"_smiles;
+      REQUIRE(m);
+      for (const auto atom : m->atoms()) {
+        auto test = queryIsAtomBridgehead(atom);
+        if (atom->getIdx() == 1 || atom->getIdx() == 4) {
+          CHECK(test == true);
+        } else {
+          CHECK(test == false);
+        }
+      }
+    }
+    {  // no bridgehead
+      auto m = "C1CCC2CCCCC2C1"_smiles;
+      REQUIRE(m);
+      for (const auto atom : m->atoms()) {
+        auto test = queryIsAtomBridgehead(atom);
+        CHECK(test == false);
+      }
+    }
   }
 }

@@ -607,7 +607,7 @@ M  END
     }
 
     CoordGen::CoordGenParams ps;
-    ps.treatBondsToMetalAsZeroOrder = true;
+    ps.treatNonterminalBondsToMetalAsZeroOrder = true;
     CoordGen::addCoords(*m1, &ps);
     {
       // the ZOB behavior screws up the double bond stereo here... detect that
