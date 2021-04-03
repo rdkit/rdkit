@@ -44,12 +44,13 @@ template <class MatchFuncArgType, class DataFuncArgType = MatchFuncArgType,
           bool needsConversion = false>
 class RDKIT_QUERY_EXPORT Query {
  public:
-  typedef std::shared_ptr<
-      Query<MatchFuncArgType, DataFuncArgType, needsConversion>>
-      CHILD_TYPE;
-  typedef std::vector<CHILD_TYPE> CHILD_VECT;
-  typedef typename CHILD_VECT::iterator CHILD_VECT_I;
-  typedef typename CHILD_VECT::const_iterator CHILD_VECT_CI;
+  using CHILD_TYPE = std::shared_ptr<
+      Query<MatchFuncArgType, DataFuncArgType, needsConversion>>;
+  using CHILD_VECT = std::vector<CHILD_TYPE>;
+  using CHILD_VECT_I = typename CHILD_VECT::iterator;
+  using CHILD_VECT_CI = typename CHILD_VECT::const_iterator;
+  using MATCH_FUNC_ARG_TYPE = MatchFuncArgType;
+  using DATA_FUNC_ARG_TYPE = DataFuncArgType;
 
   Query() : d_matchFunc(nullptr), d_dataFunc(nullptr){};
   virtual ~Query() { this->d_children.clear(); };
