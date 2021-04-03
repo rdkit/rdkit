@@ -167,9 +167,6 @@ struct RCore {
                    });
     std::map<int, int> matchMap(match.cbegin(), match.cend());
 
-    std::cerr << "matchTerminalUserRGroups Target smiles "
-              << MolToSmiles(target) << std::endl;
-
     std::vector<MatchVectType> allMappings;
     if (terminalRGroupAtomsWithUserLabels.size() == 0) {
       allMappings.push_back(match);
@@ -240,7 +237,6 @@ struct RCore {
                       "Size error in dummy mapping");
       auto duplicateBonds = false;
       targetBondsPresent.reset();
-      std::cerr << "Checking mapping" << std::endl;
       for (size_t i = 0; i < dummyMapping.size(); i++) {
         size_t position = match.size() + i;
         queryIndices[position] = dummiesWithMapping[i];
@@ -253,12 +249,8 @@ struct RCore {
         CHECK_INVARIANT(targetBond != nullptr,
                         "Matching target bond not found");
         const auto targetBondIdx = targetBond->getIdx();
-        std::cerr << " Checking bond between " << dummyMapping[i] << " and "
-                  << targetNeighborIdx << " Index " << targetBondIdx
-                  << std::endl;
         if (targetBondsPresent[targetBondIdx]) {
           duplicateBonds = true;
-          std::cerr << "Duplicate bond found!" << std::endl;
           break;
         }
         targetBondsPresent[targetBondIdx] = 1;
@@ -298,12 +290,14 @@ struct RCore {
       // attachment?
       if (nbr->getAtomicNum() >= 1) {
         const auto match = std::find_if(
-            mapping.cbegin(), mapping.cend(),
-            [nbri](std::pair<int, int> p) { return p.second == static_cast<int>(nbri); });
+            mapping.cbegin(), mapping.cend(), [nbri](std::pair<int, int> p) {
+              return p.second == static_cast<int>(nbri);
+            });
         if (match != mapping.end()) {
           auto coreAtom = core->getAtomWithIdx(match->first);
           // don't need to match a non terminal user R group
-          if (!(coreAtom->getDegree() > 1 && isUserRLabel(*coreAtom))) {
+          // if (!(coreAtom->getDegree() > 1 && isUserRLabel(*coreAtom))) {
+          if (!(coreAtom->getAtomicNum() == 0 && isUserRLabel(*coreAtom))) {
             coreNeighbors.insert(match->first);
           }
         }

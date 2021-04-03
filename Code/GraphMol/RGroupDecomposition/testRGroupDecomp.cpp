@@ -1450,7 +1450,8 @@ F[*:2]
     params.onlyMatchAtRGroups = true;
     RGroupDecomposition decomp(*core, params);
     for (auto &m : mols) {
-      decomp.add(*m);
+      auto res = decomp.add(*m);
+      TEST_ASSERT(res != -1);
     }
     decomp.process();
     std::stringstream ss;
@@ -2088,9 +2089,6 @@ void testNoAlignmentAndSymmetry() {
 }
 
 void testSingleAtomBridge() {
-  /* This test for the expected result for the "cubane fix" is currently
-   * failing. */
-
   BOOST_LOG(rdInfoLog)
       << "********************************************************\n";
   BOOST_LOG(rdInfoLog) << "test single atom bridge between 2 user r groups"
@@ -2214,6 +2212,7 @@ int main() {
   BOOST_LOG(rdInfoLog) << "Testing R-Group Decomposition \n";
 
   testSingleAtomBridge();
+  testScorePermutations();
 #if 1
   testSymmetryMatching(FingerprintVariance);
   testSymmetryMatching();
@@ -2238,9 +2237,7 @@ int main() {
   testGaBatch();
 
   testUnprocessedMapping();
-  // This test is currently failing. The spec is correct, so we do want to get
-  // it working.
-  // testSingleAtomBridge();
+  testSingleAtomBridge();
 #endif
   // testSymmetryPerformance();
   // testScorePermutations();

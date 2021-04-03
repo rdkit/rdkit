@@ -43,7 +43,7 @@
 #include <utility>
 #include <vector>
 
-#define VERBOSE 1
+// #define VERBOSE 1
 
 namespace RDKit {
 
