@@ -36,6 +36,10 @@ namespace RDKit {
 namespace MolInterchange {
 
 namespace {
+template <typename T>
+void addMol(const T &imol, rj::Value &rjMol, rj::Document &doc,
+            const rj::Value &atomDefaults, const rj::Value &bondDefaults);
+
 void initAtomDefaults(rj::Value &rjDefaults, rj::Document &document) {
   // "atomDefaults": {"Z": 6, "impHs": 0, "chg": 0, "stereo": "unspecified",
   // "nrad": 0, "isotope": 0},
@@ -88,7 +92,9 @@ void addStringVal(rj::Value &dest, const rj::Value &defaults, const char *tag,
 void addAtom(const Atom &atom, rj::Value &rjAtom, rj::Document &doc,
              const rj::Value &rjDefaults) {
   addIntVal(rjAtom, rjDefaults, "z", atom.getAtomicNum(), doc);
-  addIntVal(rjAtom, rjDefaults, "impHs", atom.getTotalNumHs(), doc);
+  if (!atom.hasQuery()) {
+    addIntVal(rjAtom, rjDefaults, "impHs", atom.getTotalNumHs(), doc);
+  }
   addIntVal(rjAtom, rjDefaults, "chg", atom.getFormalCharge(), doc);
   addIntVal(rjAtom, rjDefaults, "isotope", atom.getIsotope(), doc);
   addIntVal(rjAtom, rjDefaults, "nRad", atom.getNumRadicalElectrons(), doc);
@@ -118,47 +124,59 @@ void addQuery(const Q &query, rj::Value &rjQuery, rj::Document &doc) {
   if (query.getNegation()) {
     rjQuery.AddMember("negated", true, doc.GetAllocator());
   }
-  auto qdetails = PicklerOps::getQueryDetails(&query);
-  switch (qdetails.index()) {
-    case 0:
-      rjQuery.AddMember("tag", std::get<0>(qdetails), doc.GetAllocator());
-      break;
-    case 1: {
-      auto v = std::get<1>(qdetails);
-      rjQuery.AddMember("tag", std::get<0>(v), doc.GetAllocator());
-      rjQuery.AddMember("val", std::get<1>(v), doc.GetAllocator());
-    } break;
-    case 2: {
-      auto v = std::get<2>(qdetails);
-      rjQuery.AddMember("tag", std::get<0>(v), doc.GetAllocator());
-      rjQuery.AddMember("val", std::get<1>(v), doc.GetAllocator());
-      if (std::get<2>(v)) {
-        rjQuery.AddMember("tol", std::get<2>(v), doc.GetAllocator());
-      }
-    } break;
-    case 3: {
-      auto v = std::get<3>(qdetails);
-      rjQuery.AddMember("tag", std::get<0>(v), doc.GetAllocator());
-      rjQuery.AddMember("lower", std::get<1>(v), doc.GetAllocator());
-      rjQuery.AddMember("upper", std::get<2>(v), doc.GetAllocator());
-      if (std::get<3>(v)) {
-        rjQuery.AddMember("tol", std::get<3>(v), doc.GetAllocator());
-      }
-      rjQuery.AddMember("ends", std::get<4>(v), doc.GetAllocator());
-    } break;
-    case 4: {
-      auto v = std::get<4>(qdetails);
-      rjQuery.AddMember("tag", std::get<0>(v), doc.GetAllocator());
-      const auto &tset = std::get<1>(v);
-      rj::Value sval(rj::kArrayType);
-      for (auto val : tset) {
-        sval.PushBack(val, doc.GetAllocator());
-      }
-      rjQuery.AddMember("set", sval, doc.GetAllocator());
+  if (typeid(query) == typeid(RecursiveStructureQuery)) {
+    auto rq = (const RecursiveStructureQuery *)&query;
+    auto submol = rq->getQueryMol();
+    PRECONDITION(submol, "bad recursive query");
+    rj::Value subquery(rj::kObjectType);
+    addMol(*submol, subquery, doc,
+           *rj::GetValueByPointer(doc, "/defaults/atom"),
+           *rj::GetValueByPointer(doc, "/defaults/bond"));
+    rjQuery.AddMember("subquery", subquery, doc.GetAllocator());
+  } else {
+    auto qdetails = PicklerOps::getQueryDetails(&query);
+    switch (qdetails.index()) {
+      case 0:
+        rjQuery.AddMember("tag", std::get<0>(qdetails), doc.GetAllocator());
+        break;
+      case 1: {
+        auto v = std::get<1>(qdetails);
+        rjQuery.AddMember("tag", std::get<0>(v), doc.GetAllocator());
+        rjQuery.AddMember("val", std::get<1>(v), doc.GetAllocator());
+      } break;
+      case 2: {
+        auto v = std::get<2>(qdetails);
+        rjQuery.AddMember("tag", std::get<0>(v), doc.GetAllocator());
+        rjQuery.AddMember("val", std::get<1>(v), doc.GetAllocator());
+        if (std::get<2>(v)) {
+          rjQuery.AddMember("tol", std::get<2>(v), doc.GetAllocator());
+        }
+      } break;
+      case 3: {
+        auto v = std::get<3>(qdetails);
+        rjQuery.AddMember("tag", std::get<0>(v), doc.GetAllocator());
+        rjQuery.AddMember("lower", std::get<1>(v), doc.GetAllocator());
+        rjQuery.AddMember("upper", std::get<2>(v), doc.GetAllocator());
+        if (std::get<3>(v)) {
+          rjQuery.AddMember("tol", std::get<3>(v), doc.GetAllocator());
+        }
+        rjQuery.AddMember("ends", std::get<4>(v), doc.GetAllocator());
+      } break;
+      case 4: {
+        auto v = std::get<4>(qdetails);
+        rjQuery.AddMember("tag", std::get<0>(v), doc.GetAllocator());
+        const auto &tset = std::get<1>(v);
+        rj::Value sval(rj::kArrayType);
+        for (auto val : tset) {
+          sval.PushBack(val, doc.GetAllocator());
+        }
+        rjQuery.AddMember("set", sval, doc.GetAllocator());
 
-    } break;
-    default:
-      throw MolPicklerException("do not know how to pickle part of the query.");
+      } break;
+      default:
+        throw MolPicklerException(
+            "do not know how to pickle part of the query.");
+    }
   }
   if (query.endChildren() != query.beginChildren()) {
     rj::Value children(rj::kArrayType);
@@ -229,6 +247,9 @@ template <typename T>
 void addMol(const T &imol, rj::Value &rjMol, rj::Document &doc,
             const rj::Value &atomDefaults, const rj::Value &bondDefaults) {
   RWMol mol(imol);
+  if (!mol.getRingInfo()->isInitialized()) {
+    MolOps::symmetrizeSSSR(mol);
+  }
   if (mol.needsUpdatePropertyCache()) {
     mol.updatePropertyCache(false);
   }
