@@ -370,28 +370,6 @@ struct RCore {
     return atom->getProp<int>(RLABEL_CORE_INDEX);
   }
 
-  void countUserRGroups() {
-    numberUserRGroups = 0;
-    for (const auto atom : core->atoms()) {
-      int label;
-      if (atom->getPropIfPresent(RLABEL, label)) {
-        if (label > 0) {
-          ++numberUserRGroups;
-        }
-      }
-    }
-  }
-
-  void findIndicesWithRLabel() {
-    // First find all the core atoms that have user
-    //  label and put their indices into core_atoms_with_user_labels
-    for (const auto atom : core->atoms()) {
-      if (atom->hasProp(RLABEL)) {
-        core_atoms_with_user_labels.insert(atom->getIdx());
-      }
-    }
-  }
-
   void buildMatchingMol() {
     matchingMol = boost::make_shared<RWMol>(*core);
     terminalRGroupAtomsWithUserLabels.clear();

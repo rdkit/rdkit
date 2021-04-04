@@ -151,15 +151,14 @@ int RGroupDecomposition::add(const ROMol &inmol) {
               }
             }
           }
-          else {
-            // labelled R-group
-            if (core.second.isTerminalRGroupWithUserLabel(match.first)) {
-              targetAttachments.push_back(match.second);
-            }
+        } else {
+          // labelled R-group
+          if (core.second.isTerminalRGroupWithUserLabel(match.first)) {
+            targetAttachments.push_back(match.second);
           }
-          if (!passes_filter && data->params.onlyMatchAtRGroups) {
-            break;
-          }
+        }
+        if (!passes_filter && data->params.onlyMatchAtRGroups) {
+          break;
         }
 
         if (passes_filter && data->params.onlyMatchAtRGroups) {
@@ -171,11 +170,8 @@ int RGroupDecomposition::add(const ROMol &inmol) {
             }
           }
         }
-
-        if (passes_filter) {
-          tmatches_filtered.push_back(mv);
-        }
       }
+
       if (passes_filter) {
         tmatches_filtered.push_back(mv);
       }

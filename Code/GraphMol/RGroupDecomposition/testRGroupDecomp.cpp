@@ -211,7 +211,7 @@ void testGaBatch() {
   delete core;
 }
 
-const char *matchRGroupOnlyData[5] = {
+const char *matchRGroupOnlyData[] = {
     "c1(Cl)ccccc1", "c1c(Cl)cccc1",    "c1cc(Cl)ccc1",
     "c1ccc(Cl)cc1", "c1c(Cl)cccc(I)1",
 };
@@ -2461,6 +2461,7 @@ int main() {
   BOOST_LOG(rdInfoLog)
       << "********************************************************\n";
   BOOST_LOG(rdInfoLog) << "Testing R-Group Decomposition \n";
+
 #if 1
   testSymmetryMatching(FingerprintVariance);
   testSymmetryMatching();
