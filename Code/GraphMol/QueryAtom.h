@@ -47,13 +47,22 @@ class RDKIT_GRAPHMOL_EXPORT QueryAtom : public Atom {
     }
   };
   QueryAtom(const QueryAtom &other) : Atom(other) {
-    dp_query = other.dp_query->copy();
+    std::cerr << " > " << dp_query << " " << other.dp_query << std::endl;
+    if (other.dp_query) {
+      dp_query = other.dp_query->copy();
+    } else {
+      dp_query = nullptr;
+    }
   };
   QueryAtom &operator=(const QueryAtom &other) {
     if (this == &other) return *this;
     Atom::operator=(other);
     delete dp_query;
-    dp_query = other.dp_query->copy();
+    if (other.dp_query) {
+      dp_query = other.dp_query->copy();
+    } else {
+      dp_query = nullptr;
+    }
     return *this;
   }
   ~QueryAtom();
