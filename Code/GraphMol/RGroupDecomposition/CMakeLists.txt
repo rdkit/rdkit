@@ -1,5 +1,5 @@
 
-rdkit_library(RGroupDecomposition RGroupDecomp.cpp RGroupUtils.cpp
+rdkit_library(RGroupDecomposition RGroupDecomp.cpp RGroupUtils.cpp RGroupCore.cpp
 				  RGroupDecompParams.cpp RGroupScore.cpp RGroupFingerprintScore.cpp RGroupGa.cpp
   LINK_LIBRARIES
   FMCS ChemTransforms SubstructMatch SmilesParse Fingerprints

@@ -2462,6 +2462,7 @@ int main() {
       << "********************************************************\n";
   BOOST_LOG(rdInfoLog) << "Testing R-Group Decomposition \n";
 
+  testSingleAtomBridge();
 #if 1
   testSymmetryMatching(FingerprintVariance);
   testSymmetryMatching();
