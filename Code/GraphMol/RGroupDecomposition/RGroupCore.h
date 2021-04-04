@@ -23,6 +23,7 @@ namespace RDKit {
 //! RCore is the core common to a series of molecules
 struct RCore {
   boost::shared_ptr<RWMol> core;
+  // core with terminal user R groups stripped for matching
   boost::shared_ptr<RWMol> matchingMol;
   boost::shared_ptr<RWMol> labelledCore;
 
