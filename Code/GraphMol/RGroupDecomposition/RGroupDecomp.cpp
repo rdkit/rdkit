@@ -100,20 +100,15 @@ int RGroupDecomposition::add(const ROMol &inmol) {
       const bool uniquify = false;
       const bool recursionPossible = true;
       const bool useChirality = true;
-      if (false) {
-        SubstructMatch(mol, *core.second.core, tmatches, uniquify,
-                       recursionPossible, useChirality);
-      } else {
-        std::vector<MatchVectType> baseMatches;
-        SubstructMatch(mol, *core.second.matchingMol, baseMatches, uniquify,
-                       recursionPossible, useChirality);
-        tmatches.clear();
-        for (const auto &baseMatch : baseMatches) {
-          auto matchesWithDummy =
-              core.second.matchTerminalUserRGroups(mol, baseMatch);
-          tmatches.insert(tmatches.end(), matchesWithDummy.cbegin(),
-                          matchesWithDummy.cend());
-        }
+      std::vector<MatchVectType> baseMatches;
+      SubstructMatch(mol, *core.second.matchingMol, baseMatches, uniquify,
+                     recursionPossible, useChirality);
+      tmatches.clear();
+      for (const auto &baseMatch : baseMatches) {
+        auto matchesWithDummy =
+            core.second.matchTerminalUserRGroups(mol, baseMatch);
+        tmatches.insert(tmatches.end(), matchesWithDummy.cbegin(),
+                        matchesWithDummy.cend());
       }
     }
     if (tmatches.empty()) {
