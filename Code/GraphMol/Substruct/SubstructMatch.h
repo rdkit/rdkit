@@ -204,7 +204,7 @@ inline unsigned int SubstructMatch(ResonanceMolSupplier &resMolSupplier,
   return matchVect.size();
 };
 
-class MolMatchFinalCheckFunctor {
+class RDKIT_SUBSTRUCTMATCH_EXPORT MolMatchFinalCheckFunctor {
  public:
   MolMatchFinalCheckFunctor(const ROMol &query, const ROMol &mol,
                             const SubstructMatchParameters &ps);
