@@ -129,13 +129,8 @@ extern "C" void free_ptr(char *ptr) {
   }
 }
 
-extern "C" char *get_svg(const char *pkl, size_t pkl_sz, unsigned int width,
-                         unsigned int height) {
-  MOL_FROM_PKL(mol, pkl, pkl_sz);
-  return str_to_c(MinimalLib::mol_to_svg(mol, width, height));
-}
-extern "C" char *get_svg_with_highlights(const char *pkl, size_t pkl_sz,
-                                         const char *details_json) {
+extern "C" char *get_svg(const char *pkl, size_t pkl_sz,
+                         const char *details_json) {
   MOL_FROM_PKL(mol, pkl, pkl_sz);
   unsigned int width = MinimalLib::d_defaultWidth;
   unsigned int height = MinimalLib::d_defaultHeight;
@@ -312,9 +307,17 @@ extern "C" short set_2d_coords(char **mol_pkl, size_t *mol_pkl_sz) {
   return 1;
 }
 
-extern "C" short set_3d_coords(char **mol_pkl, size_t *mol_pkl_sz) {
+extern "C" short set_3d_coords(char **mol_pkl, size_t *mol_pkl_sz,
+                               const char *params_json) {
   MOL_FROM_PKL(mol, *mol_pkl, *mol_pkl_sz);
+  std::string json;
+  if (params_json) {
+    json = params_json;
+  }
   DGeomHelpers::EmbedParameters ps = DGeomHelpers::srETKDGv3;
+  if (!json.empty()) {
+    DGeomHelpers::updateEmbedParametersFromJSON(ps, json);
+  }
   int res = DGeomHelpers::EmbedMolecule(mol, ps);
   if (res >= 0) {
     ++res;

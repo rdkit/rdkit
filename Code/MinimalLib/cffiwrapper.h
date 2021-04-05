@@ -47,10 +47,7 @@ RDKIT_RDKITCFFI_EXPORT char *get_substruct_matches(const char *mol_pkl,
 
 // Drawing
 RDKIT_RDKITCFFI_EXPORT char *get_svg(const char *pkl, size_t pkl_sz,
-                                     unsigned int width, unsigned int height);
-RDKIT_RDKITCFFI_EXPORT char *get_svg_with_highlights(const char *pkl,
-                                                     size_t pkl_sz,
-                                                     const char *details_json);
+                                     const char *details_json);
 
 // Calculators
 RDKIT_RDKITCFFI_EXPORT char *get_descriptors(const char *pkl, size_t pkl_sz);
@@ -66,7 +63,8 @@ RDKIT_RDKITCFFI_EXPORT short remove_hs(char **pkl, size_t *pkl_sz);
 // coordinates
 RDKIT_RDKITCFFI_EXPORT void prefer_coordgen(short val);
 RDKIT_RDKITCFFI_EXPORT short set_2d_coords(char **pkl, size_t *pkl_sz);
-RDKIT_RDKITCFFI_EXPORT short set_3d_coords(char **pkl, size_t *pkl_sz);
+RDKIT_RDKITCFFI_EXPORT short set_3d_coords(char **pkl, size_t *pkl_sz,
+                                           const char *params_json);
 
 // housekeeping
 RDKIT_RDKITCFFI_EXPORT void free_ptr(char *ptr);

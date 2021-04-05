@@ -146,13 +146,13 @@ void test_svg(){
   assert(pkl);
   assert(pkl_size>0);
 
-  char *svg = get_svg(pkl,pkl_size,350,300);
+  char *svg = get_svg(pkl,pkl_size,"{\"width\":350,\"height\":300}");
   assert(strstr(svg,"width='350px'"));
   assert(strstr(svg,"height='300px'"));
   assert(strstr(svg,"</svg>"));
   free(svg);
 
-  svg = get_svg_with_highlights(pkl,pkl_size,"{\"atoms\": [0, 1, 2], \"width\":127}");
+  svg = get_svg(pkl,pkl_size,"{\"atoms\": [0, 1, 2], \"width\":127}");
   assert(strstr(svg,"fill:#FF7F7F"));
   assert(strstr(svg,"width='127px'"));
   assert(strstr(svg,"</svg>"));
@@ -299,11 +299,15 @@ void test_coords(){
 
   // 3D
   assert(add_hs(&mpkl,&mpkl_size));
-  assert(set_3d_coords(&mpkl,&mpkl_size)>0);
+  assert(set_3d_coords(&mpkl,&mpkl_size,"")>0);
+  const char *cxsmi3 = get_cxsmiles(mpkl,mpkl_size); 
+  assert(set_3d_coords(&mpkl,&mpkl_size,"{\"randomSeed\":123}")>0);
   cxsmi = get_cxsmiles(mpkl,mpkl_size);
-  printf("%s\n",cxsmi);
   // since we have coords there's something there:
   assert(strstr(cxsmi,"|"));
+  // coords generated with two different seeds differ:
+  assert(strcmp(cxsmi,cxsmi3));
+  free(cxsmi3);
   free(cxsmi);
 
 
