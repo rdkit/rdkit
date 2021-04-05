@@ -52,16 +52,15 @@ RDKIT_RDKITCFFI_EXPORT char *get_svg(const char *pkl, size_t pkl_sz,
 // Calculators
 RDKIT_RDKITCFFI_EXPORT char *get_descriptors(const char *pkl, size_t pkl_sz);
 RDKIT_RDKITCFFI_EXPORT char *get_morgan_fp(const char *pkl, size_t pkl_sz,
-                                           unsigned int radius, size_t fplen);
+                                           const char *details_json);
+RDKIT_RDKITCFFI_EXPORT char *get_morgan_fp_as_bytes(const char *pkl,
+                                                    size_t pkl_sz,
+                                                    size_t *nbytes,
+                                                    const char *details_json);
 RDKIT_RDKITCFFI_EXPORT char *get_rdkit_fp(const char *pkl, size_t pkl_sz,
                                           size_t fplen);
 RDKIT_RDKITCFFI_EXPORT char *get_pattern_fp(const char *pkl, size_t pkl_sz,
                                             short tautomeric, size_t fplen);
-RDKIT_RDKITCFFI_EXPORT char *get_morgan_fp_as_bytes(const char *pkl,
-                                                    size_t pkl_sz,
-                                                    size_t *nbytes,
-                                                    unsigned int radius,
-                                                    size_t fplen);
 RDKIT_RDKITCFFI_EXPORT char *get_rdkit_fp_as_bytes(const char *pkl,
                                                    size_t pkl_sz,
                                                    size_t *nbytes,

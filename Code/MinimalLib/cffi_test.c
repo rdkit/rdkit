@@ -225,18 +225,18 @@ void test_fingerprints(){
   char *mpkl;
   size_t mpkl_size;
   mpkl = get_mol("c1nccc(O)c1",&mpkl_size);
-
-  char *fp = get_morgan_fp(mpkl,mpkl_size,2,1024);
+  const char *mfp_json="{\"radius\":2,\"nBits\":1024}";
+  char *fp = get_morgan_fp(mpkl,mpkl_size,mfp_json);
   assert(strlen(fp)==1024);
   free(fp);
-  fp = get_morgan_fp(mpkl,mpkl_size,1,64);
+  fp = get_morgan_fp(mpkl,mpkl_size,"{\"radius\":1,\"nBits\":64}");
   assert(!strcmp(fp,"0011000000100000010000100000000000001001010000000000000000100000"));
   free(fp);
-  fp = get_morgan_fp(mpkl,mpkl_size,2,64);
+  fp = get_morgan_fp(mpkl,mpkl_size,"{\"radius\":2,\"nBits\":64}");
   assert(!strcmp(fp,"0011000000100000010000100000000000001001010000000010000010100001"));
   free(fp);
   size_t nbytes;
-  fp = get_morgan_fp_as_bytes(mpkl,mpkl_size,&nbytes,2,64);
+  fp = get_morgan_fp_as_bytes(mpkl,mpkl_size,&nbytes,"{\"radius\":2,\"nBits\":64}");
   assert(nbytes==8);
   free(fp);
 

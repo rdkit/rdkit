@@ -36,6 +36,12 @@
 
 #include "common.h"
 
+#include <sstream>
+#include <RDGeneral/BoostStartInclude.h>
+#include <boost/property_tree/ptree.hpp>
+#include <boost/property_tree/json_parser.hpp>
+#include <RDGeneral/BoostEndInclude.h>
+
 #include <INCHI-API/inchi.h>
 
 #include <rapidjson/document.h>
@@ -273,14 +279,52 @@ extern "C" char *get_descriptors(const char *mol_pkl, size_t mol_pkl_sz) {
   return str_to_c(MinimalLib::get_descriptors(mol));
 }
 
-extern "C" char *get_morgan_fp(const char *mol_pkl, size_t mol_pkl_sz,
-                               unsigned int radius, size_t fplen) {
+namespace {
+#define PT_OPT_GET(opt) opt = pt.get(#opt, opt);
+std::unique_ptr<ExplicitBitVect> morgan_fp_helper(const char *mol_pkl,
+                                                  size_t mol_pkl_sz,
+                                                  const char *details_json) {
   MOL_FROM_PKL(mol, mol_pkl, mol_pkl_sz);
-  auto fp = MorganFingerprints::getFingerprintAsBitVect(mol, radius, fplen);
-  auto res = BitVectToText(*fp);
-  delete fp;
 
+  size_t radius = 2;
+  size_t nBits = 2048;
+  bool useChirality = false;
+  bool useBondTypes = true;
+  bool includeRedundantEnvironments = false;
+  bool onlyNonzeroInvariants = false;
+  if (details_json) {
+    // FIX: this should eventually be moved somewhere else
+    std::istringstream ss;
+    ss.str(details_json);
+    boost::property_tree::ptree pt;
+    boost::property_tree::read_json(ss, pt);
+    PT_OPT_GET(radius);
+    PT_OPT_GET(nBits);
+    PT_OPT_GET(useChirality);
+    PT_OPT_GET(useBondTypes);
+    PT_OPT_GET(includeRedundantEnvironments);
+    PT_OPT_GET(onlyNonzeroInvariants);
+  }
+  auto fp = MorganFingerprints::getFingerprintAsBitVect(
+      mol, radius, nBits, nullptr, nullptr, useChirality, useBondTypes,
+      onlyNonzeroInvariants, nullptr, includeRedundantEnvironments);
+  return std::unique_ptr<ExplicitBitVect>{fp};
+}
+}  // namespace
+
+extern "C" char *get_morgan_fp(const char *mol_pkl, size_t mol_pkl_sz,
+                               const char *details_json) {
+  auto fp = morgan_fp_helper(mol_pkl, mol_pkl_sz, details_json);
+  auto res = BitVectToText(*fp);
   return str_to_c(res);
+}
+
+extern "C" char *get_morgan_fp_as_bytes(const char *mol_pkl, size_t mol_pkl_sz,
+                                        size_t *nbytes,
+                                        const char *details_json) {
+  auto fp = morgan_fp_helper(mol_pkl, mol_pkl_sz, details_json);
+  auto res = BitVectToBinaryText(*fp);
+  return str_to_c(res, nbytes);
 }
 
 extern "C" char *get_rdkit_fp(const char *mol_pkl, size_t mol_pkl_sz,
@@ -301,16 +345,6 @@ extern "C" char *get_pattern_fp(const char *mol_pkl, size_t mol_pkl_sz,
   delete fp;
 
   return str_to_c(res);
-}
-
-extern "C" char *get_morgan_fp_as_bytes(const char *mol_pkl, size_t mol_pkl_sz,
-                                        size_t *nbytes, unsigned int radius,
-                                        size_t fplen) {
-  MOL_FROM_PKL(mol, mol_pkl, mol_pkl_sz);
-  auto fp = MorganFingerprints::getFingerprintAsBitVect(mol, radius, fplen);
-  auto res = BitVectToBinaryText(*fp);
-  delete fp;
-  return str_to_c(res, nbytes);
 }
 
 extern "C" char *get_rdkit_fp_as_bytes(const char *mol_pkl, size_t mol_pkl_sz,
