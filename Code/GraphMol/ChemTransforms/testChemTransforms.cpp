@@ -935,6 +935,7 @@ void testReplaceCorePositions() {
   TEST_ASSERT(feq(op.z, np.z));
   op = mol1->getConformer().getAtomPos(0);
   np = mol2->getConformer().getAtomPos(2);
+  BOOST_LOG(rdInfoLog) << "op 0 np 2 op.x " << op.x << " np.x " << np.x << std::endl;
   TEST_ASSERT(feq(op.x, np.x));
   TEST_ASSERT(feq(op.y, np.y));
   TEST_ASSERT(feq(op.z, np.z));

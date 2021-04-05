@@ -385,7 +385,7 @@ ROMol *replaceCore(const ROMol &mol, const ROMol &core,
         auto molNeighborIdx =
             std::find_if(matchV.cbegin(), matchV.cend(),
                          [coreNeighborIdx](std::pair<int, int> p) {
-                           return p.first == coreNeighborIdx;
+                           return p.first == static_cast<int>(coreNeighborIdx);
                          })->second;
         if (molNeighborIdx > -1) {
           auto connectingBond =
