@@ -1,5 +1,5 @@
 
-rdkit_library(DistGeomHelpers BoundsMatrixBuilder.cpp Embedder.cpp
+rdkit_library(DistGeomHelpers BoundsMatrixBuilder.cpp Embedder.cpp EmbedderUtils.cpp
               LINK_LIBRARIES ForceFieldHelpers SubstructMatch GraphMol DistGeometry Alignment
                 )
 target_compile_definitions(DistGeomHelpers PRIVATE RDKIT_DISTGEOMHELPERS_BUILD)
