@@ -59,7 +59,6 @@ typedef enum {
   AllProps = 0x0000FFFF,       // all data pickled
   CoordsAsDouble = 0x0001FFFF  // save coordinates in double precision
 } PropertyPickleOptions;
-
 }  // namespace PicklerOps
 
 //! handles pickling (serializing) molecules

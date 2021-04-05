@@ -10,6 +10,7 @@
 #include <GraphMol/RDKitBase.h>
 #include <GraphMol/RDKitQueries.h>
 #include <GraphMol/MolPickler.h>
+#include <GraphMol/QueryOps.h>
 #include <GraphMol/MonomerInfo.h>
 #include <GraphMol/StereoGroup.h>
 #include <GraphMol/SubstanceGroup.h>
@@ -289,136 +290,6 @@ void pickleQuery(std::ostream &ss, const Query<int, T const *, true> *query) {
   }
 }
 
-void finalizeQueryFromDescription(Query<int, Atom const *, true> *query,
-                                  Atom const *owner) {
-  std::string descr = query->getDescription();
-  RDUNUSED_PARAM(owner);
-
-  if (boost::starts_with(descr, "range_")) {
-    descr = descr.substr(6);
-  } else if (boost::starts_with(descr, "less_")) {
-    descr = descr.substr(5);
-  } else if (boost::starts_with(descr, "greater_")) {
-    descr = descr.substr(8);
-  }
-
-  Query<int, Atom const *, true> *tmpQuery;
-  if (descr == "AtomRingBondCount") {
-    query->setDataFunc(queryAtomRingBondCount);
-  } else if (descr == "AtomHasRingBond") {
-    query->setDataFunc(queryAtomHasRingBond);
-  } else if (descr == "AtomRingSize") {
-    tmpQuery = makeAtomInRingOfSizeQuery(
-        static_cast<ATOM_EQUALS_QUERY *>(query)->getVal());
-    query->setDataFunc(tmpQuery->getDataFunc());
-    delete tmpQuery;
-  } else if (descr == "AtomMinRingSize") {
-    query->setDataFunc(queryAtomMinRingSize);
-  } else if (descr == "AtomImplicitValence") {
-    query->setDataFunc(queryAtomImplicitValence);
-  } else if (descr == "AtomTotalValence") {
-    query->setDataFunc(queryAtomTotalValence);
-  } else if (descr == "AtomAtomicNum") {
-    query->setDataFunc(queryAtomNum);
-  } else if (descr == "AtomExplicitDegree") {
-    query->setDataFunc(queryAtomExplicitDegree);
-  } else if (descr == "AtomTotalDegree") {
-    query->setDataFunc(queryAtomTotalDegree);
-  } else if (descr == "AtomHeavyAtomDegree") {
-    query->setDataFunc(queryAtomHeavyAtomDegree);
-  } else if (descr == "AtomHCount") {
-    query->setDataFunc(queryAtomHCount);
-  } else if (descr == "AtomImplicitHCount") {
-    query->setDataFunc(queryAtomImplicitHCount);
-  } else if (descr == "AtomHasImplicitH") {
-    query->setDataFunc(queryAtomHasImplicitH);
-  } else if (descr == "AtomIsAromatic") {
-    query->setDataFunc(queryAtomAromatic);
-  } else if (descr == "AtomIsAliphatic") {
-    query->setDataFunc(queryAtomAliphatic);
-  } else if (descr == "AtomUnsaturated") {
-    query->setDataFunc(queryAtomUnsaturated);
-  } else if (descr == "AtomMass") {
-    query->setDataFunc(queryAtomMass);
-  } else if (descr == "AtomIsotope") {
-    query->setDataFunc(queryAtomIsotope);
-  } else if (descr == "AtomFormalCharge") {
-    query->setDataFunc(queryAtomFormalCharge);
-  } else if (descr == "AtomNegativeFormalCharge") {
-    query->setDataFunc(queryAtomNegativeFormalCharge);
-  } else if (descr == "AtomHybridization") {
-    query->setDataFunc(queryAtomHybridization);
-  } else if (descr == "AtomInRing") {
-    query->setDataFunc(queryIsAtomInRing);
-  } else if (descr == "AtomInNRings") {
-    query->setDataFunc(queryIsAtomInNRings);
-  } else if (descr == "AtomHasHeteroatomNeighbors") {
-    query->setDataFunc(queryAtomHasHeteroatomNbrs);
-  } else if (descr == "AtomNumHeteroatomNeighbors") {
-    query->setDataFunc(queryAtomNumHeteroatomNbrs);
-  } else if (descr == "AtomNonHydrogenDegree") {
-    query->setDataFunc(queryAtomNonHydrogenDegree);
-  } else if (descr == "AtomHasAliphaticHeteroatomNeighbors") {
-    query->setDataFunc(queryAtomHasAliphaticHeteroatomNbrs);
-  } else if (descr == "AtomNumAliphaticHeteroatomNeighbors") {
-    query->setDataFunc(queryAtomNumAliphaticHeteroatomNbrs);
-  } else if (descr == "AtomNull") {
-    query->setDataFunc(nullDataFun);
-    query->setMatchFunc(nullQueryFun);
-  } else if (descr == "AtomType") {
-    query->setDataFunc(queryAtomType);
-  } else if (descr == "AtomInNRings" || descr == "RecursiveStructure") {
-    // don't need to do anything here because the classes
-    // automatically have everything set
-  } else if (descr == "AtomAnd" || descr == "AtomOr" || descr == "AtomXor") {
-    // don't need to do anything here because the classes
-    // automatically have everything set
-  } else {
-    throw MolPicklerException("Do not know how to finalize query: '" + descr +
-                              "'");
-  }
-}
-
-void finalizeQueryFromDescription(Query<int, Bond const *, true> *query,
-                                  Bond const *owner) {
-  RDUNUSED_PARAM(owner);
-  std::string descr = query->getDescription();
-  Query<int, Bond const *, true> *tmpQuery;
-  if (descr == "BondRingSize") {
-    tmpQuery = makeBondInRingOfSizeQuery(
-        static_cast<BOND_EQUALS_QUERY *>(query)->getVal());
-    query->setDataFunc(tmpQuery->getDataFunc());
-    delete tmpQuery;
-  } else if (descr == "BondMinRingSize") {
-    query->setDataFunc(queryBondMinRingSize);
-  } else if (descr == "BondOrder") {
-    query->setDataFunc(queryBondOrder);
-  } else if (descr == "BondDir") {
-    query->setDataFunc(queryBondDir);
-  } else if (descr == "BondInRing") {
-    query->setDataFunc(queryIsBondInRing);
-  } else if (descr == "BondInNRings") {
-    query->setDataFunc(queryIsBondInNRings);
-  } else if (descr == "SingleOrAromaticBond") {
-    query->setDataFunc(queryBondIsSingleOrAromatic);
-  } else if (descr == "SingleOrDoubleBond") {
-    query->setDataFunc(queryBondIsSingleOrDouble);
-  } else if (descr == "DoubleOrAromaticBond") {
-    query->setDataFunc(queryBondIsDoubleOrAromatic);
-  } else if (descr == "SingleOrDoubleOrAromaticBond") {
-    query->setDataFunc(queryBondIsSingleOrDoubleOrAromatic);
-  } else if (descr == "BondNull") {
-    query->setDataFunc(nullDataFun);
-    query->setMatchFunc(nullQueryFun);
-  } else if (descr == "BondAnd" || descr == "BondOr" || descr == "BondXor") {
-    // don't need to do anything here because the classes
-    // automatically have everything set
-  } else {
-    throw MolPicklerException("Do not know how to finalize query: '" + descr +
-                              "'");
-  }
-}
-
 template <class T>
 Query<int, T const *, true> *buildBaseQuery(std::istream &ss, T const *owner,
                                             MolPickler::Tags tag, int version) {
@@ -602,7 +473,7 @@ Query<int, Atom const *, true> *unpickleQuery(std::istream &ss,
   res->setDescription(descr);
   if (!typeLabel.empty()) res->setTypeLabel(typeLabel);
 
-  finalizeQueryFromDescription(res, owner);
+  QueryOps::finalizeQueryFromDescription(res, owner);
 
   // read in the children:
   streamRead(ss, tag, version);
@@ -638,7 +509,7 @@ Query<int, Bond const *, true> *unpickleQuery(std::istream &ss,
   res->setNegation(isNegated);
   res->setDescription(descr);
 
-  finalizeQueryFromDescription(res, owner);
+  QueryOps::finalizeQueryFromDescription(res, owner);
 
   // read in the children:
   streamRead(ss, tag, version);
