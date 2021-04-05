@@ -11,6 +11,7 @@
 #include "catch.hpp"
 
 #include <GraphMol/RDKitBase.h>
+#include <GraphMol/MolPickler.h>
 #include <GraphMol/FileParsers/FileParsers.h>
 #include <GraphMol/SmilesParse/SmilesWrite.h>
 #include <GraphMol/SmilesParse/SmilesParse.h>
@@ -24,21 +25,20 @@ TEST_CASE("basic queries", "[query]") {
     auto mol = "C[cH]:[#7+]"_smarts;
     REQUIRE(mol);
     auto json = MolInterchange::MolToJSONData(*mol);
-    std::cerr << json << std::endl;
     // no implicit Hs added with queries
     CHECK(json.find("{\"impHs\":3}") == std::string::npos);
     CHECK(json.find("\"descr\":\"AtomHCount\"") != std::string::npos);
     auto nmols = MolInterchange::JSONDataToMols(json);
     CHECK(nmols.size() == 1);
-    std::cerr << MolToSmarts(*nmols[0]) << std::endl;
+    CHECK(MolToSmarts(*nmols[0]) == MolToSmarts(*mol));
   }
   SECTION("Recursive SMARTS 1") {
-    auto mol = "C[$(CO)]"_smarts;
+    auto mol = "[C;R2][$(CO),r6]"_smarts;
     REQUIRE(mol);
     auto json = MolInterchange::MolToJSONData(*mol);
     CHECK(json.find("\"subquery\":") != std::string::npos);
     auto nmols = MolInterchange::JSONDataToMols(json);
     CHECK(nmols.size() == 1);
-    std::cerr << MolToSmarts(*nmols[0]) << std::endl;
+    CHECK(MolToSmarts(*nmols[0]) == MolToSmarts(*mol));
   }
 }

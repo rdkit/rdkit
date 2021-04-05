@@ -132,6 +132,7 @@ void addQuery(const Q &query, rj::Value &rjQuery, rj::Document &doc) {
     addMol(*submol, subquery, doc,
            *rj::GetValueByPointer(doc, "/defaults/atom"),
            *rj::GetValueByPointer(doc, "/defaults/bond"));
+    rjQuery.AddMember("tag", MolPickler::QUERY_RECURSIVE, doc.GetAllocator());
     rjQuery.AddMember("subquery", subquery, doc.GetAllocator());
   } else {
     auto qdetails = PicklerOps::getQueryDetails(&query);
