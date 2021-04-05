@@ -293,6 +293,45 @@ extern "C" char *get_rdkit_fp(const char *mol_pkl, size_t mol_pkl_sz,
   return str_to_c(res);
 }
 
+extern "C" char *get_pattern_fp(const char *mol_pkl, size_t mol_pkl_sz,
+                                short tautomeric, size_t fplen) {
+  MOL_FROM_PKL(mol, mol_pkl, mol_pkl_sz);
+  auto fp = PatternFingerprintMol(mol, fplen, nullptr, nullptr, tautomeric);
+  auto res = BitVectToText(*fp);
+  delete fp;
+
+  return str_to_c(res);
+}
+
+extern "C" char *get_morgan_fp_as_bytes(const char *mol_pkl, size_t mol_pkl_sz,
+                                        size_t *nbytes, unsigned int radius,
+                                        size_t fplen) {
+  MOL_FROM_PKL(mol, mol_pkl, mol_pkl_sz);
+  auto fp = MorganFingerprints::getFingerprintAsBitVect(mol, radius, fplen);
+  auto res = BitVectToBinaryText(*fp);
+  delete fp;
+  return str_to_c(res, nbytes);
+}
+
+extern "C" char *get_rdkit_fp_as_bytes(const char *mol_pkl, size_t mol_pkl_sz,
+                                       size_t *nbytes, size_t fplen) {
+  MOL_FROM_PKL(mol, mol_pkl, mol_pkl_sz);
+  auto fp = RDKFingerprintMol(mol, 1, 7, fplen);
+  auto res = BitVectToBinaryText(*fp);
+  delete fp;
+  return str_to_c(res, nbytes);
+}
+
+extern "C" char *get_pattern_fp_as_bytes(const char *mol_pkl, size_t mol_pkl_sz,
+                                         size_t *nbytes, short tautomeric,
+                                         size_t fplen) {
+  MOL_FROM_PKL(mol, mol_pkl, mol_pkl_sz);
+  auto fp = PatternFingerprintMol(mol, fplen, nullptr, nullptr, tautomeric);
+  auto res = BitVectToBinaryText(*fp);
+  delete fp;
+  return str_to_c(res, nbytes);
+}
+
 extern "C" void prefer_coordgen(short val) {
 #ifdef RDK_BUILD_COORDGEN_SUPPORT
   RDDepict::preferCoordGen = val;

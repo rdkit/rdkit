@@ -235,10 +235,29 @@ void test_fingerprints(){
   fp = get_morgan_fp(mpkl,mpkl_size,2,64);
   assert(!strcmp(fp,"0011000000100000010000100000000000001001010000000010000010100001"));
   free(fp);
+  size_t nbytes;
+  fp = get_morgan_fp_as_bytes(mpkl,mpkl_size,&nbytes,2,64);
+  assert(nbytes==8);
+  free(fp);
 
   fp = get_rdkit_fp(mpkl,mpkl_size,64);
   assert(!strcmp(fp,"1111011000111100011011011111011001111111110010000111000011111111"));
   free(fp);
+  fp = get_rdkit_fp_as_bytes(mpkl,mpkl_size,&nbytes,64);
+  assert(nbytes==8);
+  free(fp);
+
+  fp = get_pattern_fp(mpkl,mpkl_size,0,64);
+  assert(!strcmp(fp,"1011111111111111110011011111011001011110111101111110101111010011"));
+  free(fp);
+  fp = get_pattern_fp_as_bytes(mpkl,mpkl_size,&nbytes,0,64);
+  assert(nbytes==8);
+  free(fp);
+
+  fp = get_pattern_fp(mpkl,mpkl_size,1,64);
+  assert(!strcmp(fp,"1011111111111111110011111111011101011111111101111111111111011011"));
+  free(fp);
+
 
   free(mpkl);
   mpkl=NULL;
@@ -300,7 +319,7 @@ void test_coords(){
   // 3D
   assert(add_hs(&mpkl,&mpkl_size));
   assert(set_3d_coords(&mpkl,&mpkl_size,"")>0);
-  const char *cxsmi3 = get_cxsmiles(mpkl,mpkl_size); 
+  char *cxsmi3 = get_cxsmiles(mpkl,mpkl_size); 
   assert(set_3d_coords(&mpkl,&mpkl_size,"{\"randomSeed\":123}")>0);
   cxsmi = get_cxsmiles(mpkl,mpkl_size);
   // since we have coords there's something there:

@@ -55,6 +55,22 @@ RDKIT_RDKITCFFI_EXPORT char *get_morgan_fp(const char *pkl, size_t pkl_sz,
                                            unsigned int radius, size_t fplen);
 RDKIT_RDKITCFFI_EXPORT char *get_rdkit_fp(const char *pkl, size_t pkl_sz,
                                           size_t fplen);
+RDKIT_RDKITCFFI_EXPORT char *get_pattern_fp(const char *pkl, size_t pkl_sz,
+                                            short tautomeric, size_t fplen);
+RDKIT_RDKITCFFI_EXPORT char *get_morgan_fp_as_bytes(const char *pkl,
+                                                    size_t pkl_sz,
+                                                    size_t *nbytes,
+                                                    unsigned int radius,
+                                                    size_t fplen);
+RDKIT_RDKITCFFI_EXPORT char *get_rdkit_fp_as_bytes(const char *pkl,
+                                                   size_t pkl_sz,
+                                                   size_t *nbytes,
+                                                   size_t fplen);
+RDKIT_RDKITCFFI_EXPORT char *get_pattern_fp_as_bytes(const char *pkl,
+                                                     size_t pkl_sz,
+                                                     size_t *nbytes,
+                                                     short tautomeric,
+                                                     size_t fplen);
 
 // modification
 RDKIT_RDKITCFFI_EXPORT short add_hs(char **pkl, size_t *pkl_sz);
