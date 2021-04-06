@@ -310,6 +310,56 @@ std::unique_ptr<ExplicitBitVect> morgan_fp_helper(const char *mol_pkl,
       onlyNonzeroInvariants, nullptr, includeRedundantEnvironments);
   return std::unique_ptr<ExplicitBitVect>{fp};
 }
+
+std::unique_ptr<ExplicitBitVect> rdkit_fp_helper(const char *mol_pkl,
+                                                 size_t mol_pkl_sz,
+                                                 const char *details_json) {
+  MOL_FROM_PKL(mol, mol_pkl, mol_pkl_sz);
+  unsigned int minPath = 1;
+  unsigned int maxPath = 7;
+  unsigned int nBits = 2048;
+  unsigned int nBitsPerHash = 2;
+  bool useHs = true;
+  bool branchedPaths = true;
+  bool useBondOrder = true;
+  if (details_json) {
+    // FIX: this should eventually be moved somewhere else
+    std::istringstream ss;
+    ss.str(details_json);
+    boost::property_tree::ptree pt;
+    boost::property_tree::read_json(ss, pt);
+    PT_OPT_GET(minPath);
+    PT_OPT_GET(maxPath);
+    PT_OPT_GET(nBits);
+    PT_OPT_GET(nBitsPerHash);
+    PT_OPT_GET(useHs);
+    PT_OPT_GET(branchedPaths);
+    PT_OPT_GET(useBondOrder);
+  }
+  auto fp = RDKFingerprintMol(mol, minPath, maxPath, nBits, nBitsPerHash, useHs,
+                              0, 128, branchedPaths, useBondOrder);
+  return std::unique_ptr<ExplicitBitVect>{fp};
+}
+
+std::unique_ptr<ExplicitBitVect> pattern_fp_helper(const char *mol_pkl,
+                                                   size_t mol_pkl_sz,
+                                                   const char *details_json) {
+  MOL_FROM_PKL(mol, mol_pkl, mol_pkl_sz);
+  unsigned int nBits = 2048;
+  bool tautomericFingerprint = false;
+  if (details_json) {
+    // FIX: this should eventually be moved somewhere else
+    std::istringstream ss;
+    ss.str(details_json);
+    boost::property_tree::ptree pt;
+    boost::property_tree::read_json(ss, pt);
+    PT_OPT_GET(nBits);
+    PT_OPT_GET(tautomericFingerprint);
+  }
+  auto fp = PatternFingerprintMol(mol, nBits, nullptr, nullptr,
+                                  tautomericFingerprint);
+  return std::unique_ptr<ExplicitBitVect>{fp};
+}
 }  // namespace
 
 extern "C" char *get_morgan_fp(const char *mol_pkl, size_t mol_pkl_sz,
@@ -328,41 +378,32 @@ extern "C" char *get_morgan_fp_as_bytes(const char *mol_pkl, size_t mol_pkl_sz,
 }
 
 extern "C" char *get_rdkit_fp(const char *mol_pkl, size_t mol_pkl_sz,
-                              size_t fplen) {
-  MOL_FROM_PKL(mol, mol_pkl, mol_pkl_sz);
-  auto fp = RDKFingerprintMol(mol, 1, 7, fplen);
+                              const char *details_json) {
+  auto fp = rdkit_fp_helper(mol_pkl, mol_pkl_sz, details_json);
   auto res = BitVectToText(*fp);
-  delete fp;
-
-  return str_to_c(res);
-}
-
-extern "C" char *get_pattern_fp(const char *mol_pkl, size_t mol_pkl_sz,
-                                short tautomeric, size_t fplen) {
-  MOL_FROM_PKL(mol, mol_pkl, mol_pkl_sz);
-  auto fp = PatternFingerprintMol(mol, fplen, nullptr, nullptr, tautomeric);
-  auto res = BitVectToText(*fp);
-  delete fp;
-
   return str_to_c(res);
 }
 
 extern "C" char *get_rdkit_fp_as_bytes(const char *mol_pkl, size_t mol_pkl_sz,
-                                       size_t *nbytes, size_t fplen) {
-  MOL_FROM_PKL(mol, mol_pkl, mol_pkl_sz);
-  auto fp = RDKFingerprintMol(mol, 1, 7, fplen);
+                                       size_t *nbytes,
+                                       const char *details_json) {
+  auto fp = rdkit_fp_helper(mol_pkl, mol_pkl_sz, details_json);
   auto res = BitVectToBinaryText(*fp);
-  delete fp;
   return str_to_c(res, nbytes);
 }
 
+extern "C" char *get_pattern_fp(const char *mol_pkl, size_t mol_pkl_sz,
+                                const char *details_json) {
+  auto fp = pattern_fp_helper(mol_pkl, mol_pkl_sz, details_json);
+  auto res = BitVectToText(*fp);
+  return str_to_c(res);
+}
+
 extern "C" char *get_pattern_fp_as_bytes(const char *mol_pkl, size_t mol_pkl_sz,
-                                         size_t *nbytes, short tautomeric,
-                                         size_t fplen) {
-  MOL_FROM_PKL(mol, mol_pkl, mol_pkl_sz);
-  auto fp = PatternFingerprintMol(mol, fplen, nullptr, nullptr, tautomeric);
+                                         size_t *nbytes,
+                                         const char *details_json) {
+  auto fp = pattern_fp_helper(mol_pkl, mol_pkl_sz, details_json);
   auto res = BitVectToBinaryText(*fp);
-  delete fp;
   return str_to_c(res, nbytes);
 }
 

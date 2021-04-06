@@ -240,21 +240,24 @@ void test_fingerprints(){
   assert(nbytes==8);
   free(fp);
 
-  fp = get_rdkit_fp(mpkl,mpkl_size,64);
+  fp = get_rdkit_fp(mpkl,mpkl_size,"{\"nBits\":64}");
   assert(!strcmp(fp,"1111011000111100011011011111011001111111110010000111000011111111"));
   free(fp);
-  fp = get_rdkit_fp_as_bytes(mpkl,mpkl_size,&nbytes,64);
+  fp = get_rdkit_fp(mpkl,mpkl_size,"{\"nBits\":64,\"maxPath\":4}");
+  assert(!strcmp(fp,"1111011000110000010001010111000001101011100010000001000011100011"));
+  free(fp);
+  fp = get_rdkit_fp_as_bytes(mpkl,mpkl_size,&nbytes,"{\"nBits\":64}");
   assert(nbytes==8);
   free(fp);
 
-  fp = get_pattern_fp(mpkl,mpkl_size,0,64);
+  fp = get_pattern_fp(mpkl,mpkl_size,"{\"nBits\":64}");
   assert(!strcmp(fp,"1011111111111111110011011111011001011110111101111110101111010011"));
   free(fp);
-  fp = get_pattern_fp_as_bytes(mpkl,mpkl_size,&nbytes,0,64);
+  fp = get_pattern_fp_as_bytes(mpkl,mpkl_size,&nbytes,"{\"nBits\":64}");
   assert(nbytes==8);
   free(fp);
 
-  fp = get_pattern_fp(mpkl,mpkl_size,1,64);
+  fp = get_pattern_fp(mpkl,mpkl_size,"{\"nBits\":64,\"tautomericFingerprint\":true}");
   assert(!strcmp(fp,"1011111111111111110011111111011101011111111101111111111111011011"));
   free(fp);
 
