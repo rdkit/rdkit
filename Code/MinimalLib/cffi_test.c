@@ -297,7 +297,7 @@ void test_coords(){
   printf("  test_coords\n");
   char *mpkl;
   size_t mpkl_size;
-  mpkl = get_mol("C1CCC1CC",&mpkl_size);
+  mpkl = get_mol("C1CNC1CC",&mpkl_size);
   
   char *cxsmi = get_cxsmiles(mpkl,mpkl_size);
   // no cxsmiles yet
@@ -318,6 +318,37 @@ void test_coords(){
   free(cxsmi2);
 #endif
   free(cxsmi);
+
+  // aligned
+  char *tpkl;
+  size_t tpkl_size;
+  tpkl = get_mol("\n\
+  Mrv2102 04062106432D\n\
+\n\
+  0  0  0     0  0            999 V3000\n\
+M  V30 BEGIN CTAB\n\
+M  V30 COUNTS 6 6 0 0 0\n\
+M  V30 BEGIN ATOM\n\
+M  V30 1 R# 0 2.1032 0 0 RGROUPS=(1 1)\n\
+M  V30 2 C 0 0.5632 0 0\n\
+M  V30 3 C 1.0889 -0.5258 0 0\n\
+M  V30 4 C 0 -1.6147 0 0\n\
+M  V30 5 N -1.0889 -0.5258 0 0\n\
+M  V30 6 R# 2.6289 -0.5258 0 0 RGROUPS=(1 2)\n\
+M  V30 END ATOM\n\
+M  V30 BEGIN BOND\n\
+M  V30 1 1 1 2\n\
+M  V30 2 1 2 3\n\
+M  V30 3 1 3 4\n\
+M  V30 4 1 4 5\n\
+M  V30 5 1 2 5\n\
+M  V30 6 1 3 6\n\
+M  V30 END BOND\n\
+M  V30 END CTAB\n\
+M  END\n",&tpkl_size);
+  assert(!set_2d_coords_aligned(&mpkl,&mpkl_size,tpkl,tpkl_size,"{\"acceptFailure\":false}"));
+  assert(set_2d_coords_aligned(&mpkl,&mpkl_size,tpkl,tpkl_size,"{\"allowRGroups\":true,\"acceptFailure\":false}"));
+  free(tpkl);
 
   // 3D
   assert(add_hs(&mpkl,&mpkl_size));

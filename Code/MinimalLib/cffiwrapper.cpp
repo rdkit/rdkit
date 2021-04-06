@@ -292,7 +292,7 @@ std::unique_ptr<ExplicitBitVect> morgan_fp_helper(const char *mol_pkl,
   bool useBondTypes = true;
   bool includeRedundantEnvironments = false;
   bool onlyNonzeroInvariants = false;
-  if (details_json) {
+  if (details_json && strlen(details_json)) {
     // FIX: this should eventually be moved somewhere else
     std::istringstream ss;
     ss.str(details_json);
@@ -322,7 +322,7 @@ std::unique_ptr<ExplicitBitVect> rdkit_fp_helper(const char *mol_pkl,
   bool useHs = true;
   bool branchedPaths = true;
   bool useBondOrder = true;
-  if (details_json) {
+  if (details_json && strlen(details_json)) {
     // FIX: this should eventually be moved somewhere else
     std::istringstream ss;
     ss.str(details_json);
@@ -347,7 +347,7 @@ std::unique_ptr<ExplicitBitVect> pattern_fp_helper(const char *mol_pkl,
   MOL_FROM_PKL(mol, mol_pkl, mol_pkl_sz);
   unsigned int nBits = 2048;
   bool tautomericFingerprint = false;
-  if (details_json) {
+  if (details_json && strlen(details_json)) {
     // FIX: this should eventually be moved somewhere else
     std::istringstream ss;
     ss.str(details_json);
@@ -420,6 +420,46 @@ extern "C" short set_2d_coords(char **mol_pkl, size_t *mol_pkl_sz) {
   MOL_TO_PKL(mol, mol_pkl, mol_pkl_sz);
   return 1;
 }
+
+extern "C" short set_2d_coords_aligned(char **mol_pkl, size_t *mol_pkl_sz,
+                                       const char *template_pkl,
+                                       size_t template_sz,
+                                       const char *details_json) {
+  MOL_FROM_PKL(mol, *mol_pkl, *mol_pkl_sz);
+  MOL_FROM_PKL(templ, template_pkl, template_sz);
+  bool useCoordGen = true;
+  bool allowRGroups = false;
+  bool acceptFailure = true;
+  if (details_json && strlen(details_json)) {
+    std::istringstream ss;
+    ss.str(details_json);
+    boost::property_tree::ptree pt;
+    boost::property_tree::read_json(ss, pt);
+    PT_OPT_GET(useCoordGen);
+    PT_OPT_GET(allowRGroups);
+    PT_OPT_GET(acceptFailure);
+  }
+#ifdef RDK_BUILD_COORDGEN_SUPPORT
+  bool oprefer = RDDepict::preferCoordGen;
+  RDDepict::preferCoordGen = useCoordGen;
+#endif
+
+  int confId = -1;
+  // always accept failure in the original call because
+  // we detect it afterwards
+  bool acceptOrigFailure = true;
+  auto match = RDDepict::generateDepictionMatching2DStructure(
+      mol, templ, confId, nullptr, acceptOrigFailure, false, allowRGroups);
+#ifdef RDK_BUILD_COORDGEN_SUPPORT
+  RDDepict::preferCoordGen = oprefer;
+#endif
+  if (match.empty() && !acceptFailure) {
+    return 0;
+  } else {
+    MOL_TO_PKL(mol, mol_pkl, mol_pkl_sz);
+    return 1;
+  }
+};
 
 extern "C" short set_3d_coords(char **mol_pkl, size_t *mol_pkl_sz,
                                const char *params_json) {
