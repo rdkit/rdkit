@@ -21,8 +21,10 @@ extern "C" {
 #endif
 
 // I/O
-RDKIT_RDKITCFFI_EXPORT char *get_mol(const char *input, size_t *mol_sz);
-RDKIT_RDKITCFFI_EXPORT char *get_qmol(const char *input, size_t *mol_sz);
+RDKIT_RDKITCFFI_EXPORT char *get_mol(const char *input, size_t *mol_sz,
+                                     const char *details_json);
+RDKIT_RDKITCFFI_EXPORT char *get_qmol(const char *input, size_t *mol_sz,
+                                      const char *details_json);
 RDKIT_RDKITCFFI_EXPORT char *get_molblock(const char *pkl, size_t pkl_sz);
 RDKIT_RDKITCFFI_EXPORT char *get_v3kmolblock(const char *pkl, size_t pkl_sz);
 RDKIT_RDKITCFFI_EXPORT char *get_smiles(const char *pkl, size_t pkl_sz);

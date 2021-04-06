@@ -24,7 +24,7 @@ void test_io(){
   printf("--------------------------\n");
   printf("  test_io\n");
   
-  pkl = get_mol("c1cc(O)ccc1",&pkl_size);
+  pkl = get_mol("c1cc(O)ccc1",&pkl_size,"");
   assert(pkl);
   assert(pkl_size>0);
 
@@ -41,7 +41,7 @@ void test_io(){
   char *json=get_json(pkl,pkl_size);
   assert(strstr(json,"commonchem"));
 
-  pkl2=get_mol(json,&pkl2_size);
+  pkl2=get_mol(json,&pkl2_size,"");
   assert(pkl2);
   assert(pkl2_size>0);
   smiles=get_smiles(pkl2,pkl2_size);
@@ -57,26 +57,40 @@ void test_io(){
   // failures
 
   // kekulization
-  pkl2 = get_mol("c1cccc1",&pkl2_size);
+  pkl2 = get_mol("c1cccc1",&pkl2_size,"");
   assert(pkl2==NULL);
   assert(!pkl2_size);
 
   // bad input
-  pkl2 = get_mol("foo",&pkl2_size);
+  pkl2 = get_mol("foo",&pkl2_size,"");
   assert(pkl2==NULL);
   assert(!pkl2_size);
   
   // valence
-  pkl2 = get_mol("CO(C)C",&pkl2_size);
+  pkl2 = get_mol("CO(C)C",&pkl2_size,"");
   assert(pkl2==NULL);
   assert(!pkl2_size);
 
+  //---------
+  // options
+  pkl2 = get_mol("[H]C",&pkl2_size,"{\"removeHs\":false}");
+  assert(pkl2!=NULL);
+  assert(pkl2_size);
+  smiles=get_smiles(pkl2,pkl2_size);
+  assert(!strcmp(smiles,"[H]C"));
+  free(smiles);
+  smiles=NULL;
+  free(pkl2);
+  pkl2 = NULL;
 
-
-
-
+  pkl2 = get_mol("[H]C",&pkl2_size,NULL);
+  assert(pkl2!=NULL);
+  assert(pkl2_size);
+  free(pkl2);
+  pkl2 = NULL;
+  
   char *molblock = get_molblock(pkl,pkl_size);
-  pkl2=get_mol(molblock,&pkl2_size);
+  pkl2=get_mol(molblock,&pkl2_size,"");
   assert(pkl2);
   assert(pkl2_size>0);
   smiles=get_smiles(pkl2,pkl2_size);
@@ -89,7 +103,7 @@ void test_io(){
   molblock=NULL;
 
   molblock = get_v3kmolblock(pkl,pkl_size);
-  pkl2=get_mol(molblock,&pkl2_size);
+  pkl2=get_mol(molblock,&pkl2_size,"");
   assert(pkl2);
   assert(pkl2_size>0);
   smiles=get_smiles(pkl2,pkl2_size);
@@ -117,7 +131,7 @@ void test_io(){
   char *smarts = get_smarts(pkl,pkl_size);
   assert(!strcmp(smarts,"[#6]1:[#6]:[#6](-[#8]):[#6]:[#6]:[#6]:1"));
   
-  pkl2 = get_qmol(smarts,&pkl2_size);
+  pkl2 = get_qmol(smarts,&pkl2_size,"");
   assert(pkl2);
   free(smarts);
   smarts = get_smarts(pkl2,pkl2_size);
@@ -142,7 +156,7 @@ void test_svg(){
   printf("--------------------------\n");
   printf("  test_svg\n");
   
-  pkl = get_mol("c1cc(O)ccc1",&pkl_size);
+  pkl = get_mol("c1cc(O)ccc1",&pkl_size,"");
   assert(pkl);
   assert(pkl_size>0);
 
@@ -170,10 +184,10 @@ void test_substruct(){
   
   char *mpkl;
   size_t mpkl_size;
-  mpkl = get_mol("Cl[C@H](F)C[C@H](F)Cl",&mpkl_size);
+  mpkl = get_mol("Cl[C@H](F)C[C@H](F)Cl",&mpkl_size,"");
   char *qpkl;
   size_t qpkl_size;
-  qpkl = get_qmol("Cl[C@@H](F)C",&qpkl_size);
+  qpkl = get_qmol("Cl[C@@H](F)C",&qpkl_size,"");
 
   char *json = get_substruct_match(mpkl,mpkl_size,qpkl,qpkl_size,"");
   assert(!strcmp(json,"{\"atoms\":[0,1,2,3],\"bonds\":[0,1,2]}"));
@@ -204,7 +218,7 @@ void test_descriptors(){
   
   char *mpkl;
   size_t mpkl_size;
-  mpkl = get_mol("c1nccc(O)c1",&mpkl_size);
+  mpkl = get_mol("c1nccc(O)c1",&mpkl_size,"");
 
   char *descrs = get_descriptors(mpkl,mpkl_size);
   assert(strstr(descrs,"lipinskiHBA"));
@@ -224,7 +238,7 @@ void test_fingerprints(){
   
   char *mpkl;
   size_t mpkl_size;
-  mpkl = get_mol("c1nccc(O)c1",&mpkl_size);
+  mpkl = get_mol("c1nccc(O)c1",&mpkl_size,"");
   const char *mfp_json="{\"radius\":2,\"nBits\":1024}";
   char *fp = get_morgan_fp(mpkl,mpkl_size,mfp_json);
   assert(strlen(fp)==1024);
@@ -273,7 +287,7 @@ void test_modifications(){
   printf("  test_modifications\n");
   char *mpkl;
   size_t mpkl_size;
-  mpkl = get_mol("CCC",&mpkl_size);
+  mpkl = get_mol("CCC",&mpkl_size,"");
   
   assert(add_hs(&mpkl,&mpkl_size)>0);
   char *ctab = get_molblock(mpkl,mpkl_size);
@@ -297,7 +311,7 @@ void test_coords(){
   printf("  test_coords\n");
   char *mpkl;
   size_t mpkl_size;
-  mpkl = get_mol("C1CNC1CC",&mpkl_size);
+  mpkl = get_mol("C1CNC1CC",&mpkl_size,"");
   
   char *cxsmi = get_cxsmiles(mpkl,mpkl_size);
   // no cxsmiles yet
@@ -345,7 +359,7 @@ M  V30 5 1 2 5\n\
 M  V30 6 1 3 6\n\
 M  V30 END BOND\n\
 M  V30 END CTAB\n\
-M  END\n",&tpkl_size);
+M  END\n",&tpkl_size,"");
   assert(!set_2d_coords_aligned(&mpkl,&mpkl_size,tpkl,tpkl_size,"{\"acceptFailure\":false}"));
   assert(set_2d_coords_aligned(&mpkl,&mpkl_size,tpkl,tpkl_size,"{\"allowRGroups\":true,\"acceptFailure\":false}"));
   free(tpkl);

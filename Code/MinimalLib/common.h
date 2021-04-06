@@ -29,6 +29,12 @@
 #include <GraphMol/Abbreviations/Abbreviations.h>
 #include <DataStructs/BitOps.h>
 
+#include <sstream>
+#include <RDGeneral/BoostStartInclude.h>
+#include <boost/property_tree/ptree.hpp>
+#include <boost/property_tree/json_parser.hpp>
+#include <RDGeneral/BoostEndInclude.h>
+
 #ifndef _MSC_VER
 // shutoff some warnings from rapidjson
 #if !defined(__clang__) and defined(__GNUC__)
@@ -52,26 +58,50 @@ namespace MinimalLib {
 static constexpr unsigned int d_defaultWidth = 250;
 static constexpr unsigned int d_defaultHeight = 200;
 
-RWMol *mol_from_input(const std::string &input) {
+#define LPT_OPT_GET(opt) opt = pt.get(#opt, opt);
+#define LPT_OPT_GET2(holder, opt) holder.opt = pt.get(#opt, holder.opt);
+
+RWMol *mol_from_input(const std::string &input,
+                      const std::string &details_json = "") {
+  bool sanitize = true;
+  bool removeHs = true;
   RWMol *res = nullptr;
+  boost::property_tree::ptree pt;
+  if (!details_json.empty()) {
+    std::istringstream ss;
+    ss.str(details_json);
+    boost::property_tree::read_json(ss, pt);
+    LPT_OPT_GET(sanitize);
+    LPT_OPT_GET(removeHs);
+  }
   if (input.find("M  END") != std::string::npos) {
-    bool sanitize = false;
-    bool removeHs = true;
     bool strictParsing = false;
-    res = MolBlockToMol(input, sanitize, removeHs, strictParsing);
+    LPT_OPT_GET(strictParsing);
+    res = MolBlockToMol(input, false, removeHs, strictParsing);
   } else if (input.find("commonchem") != std::string::npos) {
-    auto molVect = MolInterchange::JSONDataToMols(input);
+    auto ps = MolInterchange::defaultJSONParseParameters;
+    LPT_OPT_GET2(ps, setAromaticBonds);
+    LPT_OPT_GET2(ps, strictValenceCheck);
+    LPT_OPT_GET2(ps, parseProperties);
+    LPT_OPT_GET2(ps, parseConformers);
+
+    auto molVect = MolInterchange::JSONDataToMols(input, ps);
     if (!molVect.empty()) {
       res = new RWMol(*molVect[0]);
     }
   } else {
     SmilesParserParams ps;
     ps.sanitize = false;
+    ps.removeHs = removeHs;
+    LPT_OPT_GET2(ps, strictCXSMILES);
+    LPT_OPT_GET2(ps, useLegacyStereo);
     res = SmilesToMol(input, ps);
   }
   if (res) {
     try {
-      MolOps::sanitizeMol(*res);
+      if (sanitize) {
+        MolOps::sanitizeMol(*res);
+      }
       MolOps::assignStereochemistry(*res, true, true, true);
     } catch (...) {
       delete res;
@@ -80,23 +110,56 @@ RWMol *mol_from_input(const std::string &input) {
   }
   return res;
 }
+RWMol *mol_from_input(const std::string &input, const char *details_json) {
+  std::string json;
+  if (details_json) {
+    json = details_json;
+  }
+  return mol_from_input(input, json);
+}
 
-RWMol *qmol_from_input(const std::string &input) {
+RWMol *qmol_from_input(const std::string &input,
+                       const std::string &details_json = "") {
   RWMol *res = nullptr;
+  bool sanitize = false;
+  bool removeHs = true;
+  boost::property_tree::ptree pt;
+  if (!details_json.empty()) {
+    // FIX: this should eventually be moved somewhere else
+    std::istringstream ss;
+    ss.str(details_json);
+    boost::property_tree::read_json(ss, pt);
+    LPT_OPT_GET(sanitize);
+    LPT_OPT_GET(removeHs);
+  }
   if (input.find("M  END") != std::string::npos) {
-    bool sanitize = false;
-    bool removeHs = true;
     bool strictParsing = false;
-    res = MolBlockToMol(input, sanitize, removeHs, strictParsing);
+    LPT_OPT_GET(strictParsing);
+    res = MolBlockToMol(input, false, removeHs, strictParsing);
   } else if (input.find("commonchem") != std::string::npos) {
-    auto molVect = MolInterchange::JSONDataToMols(input);
+    auto ps = MolInterchange::defaultJSONParseParameters;
+    LPT_OPT_GET2(ps, setAromaticBonds);
+    LPT_OPT_GET2(ps, strictValenceCheck);
+    LPT_OPT_GET2(ps, parseProperties);
+    LPT_OPT_GET2(ps, parseConformers);
+
+    auto molVect = MolInterchange::JSONDataToMols(input, ps);
     if (!molVect.empty()) {
       res = new RWMol(*molVect[0]);
     }
   } else {
-    res = SmartsToMol(input);
+    bool mergeHs = false;
+    LPT_OPT_GET(mergeHs);
+    res = SmartsToMol(input, 0, mergeHs);
   }
   return res;
+}
+RWMol *qmol_from_input(const std::string &input, const char *details_json) {
+  std::string json;
+  if (details_json) {
+    json = details_json;
+  }
+  return qmol_from_input(input, json);
 }
 
 std::string process_details(const std::string &details, unsigned int &width,

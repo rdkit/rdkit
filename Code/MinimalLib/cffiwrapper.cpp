@@ -76,11 +76,6 @@ char *str_to_c(const char *str) {
 }
 }  // namespace
 
-#if 0
-std::string get_inchikey_for_inchi(const std::string &input) {
-  return InchiToInchiKey(input);
-}
-#endif
 #define MOL_TO_PKL(mol, mol_pkl, mol_pkl_sz)                                   \
   {                                                                            \
     unsigned int propFlags = PicklerOps::PropertyPickleOptions::AllProps ^     \
@@ -164,8 +159,9 @@ extern "C" char *get_inchikey_for_inchi(const char *inchi) {
   return str_to_c(InchiToInchiKey(inchi));
 }
 
-extern "C" char *get_mol(const char *input, size_t *pkl_sz) {
-  RWMol *mol = MinimalLib::mol_from_input(input);
+extern "C" char *get_mol(const char *input, size_t *pkl_sz,
+                         const char *details_json) {
+  RWMol *mol = MinimalLib::mol_from_input(input, details_json);
   if (!mol) {
     *pkl_sz = 0;
     return NULL;
@@ -176,8 +172,9 @@ extern "C" char *get_mol(const char *input, size_t *pkl_sz) {
   MolPickler::pickleMol(*mol, pkl, propFlags);
   return str_to_c(pkl, pkl_sz);
 }
-extern "C" char *get_qmol(const char *input, size_t *pkl_sz) {
-  RWMol *mol = MinimalLib::qmol_from_input(input);
+extern "C" char *get_qmol(const char *input, size_t *pkl_sz,
+                          const char *details_json) {
+  RWMol *mol = MinimalLib::qmol_from_input(input, details_json);
   if (!mol) {
     *pkl_sz = 0;
     return str_to_c("Error!");
