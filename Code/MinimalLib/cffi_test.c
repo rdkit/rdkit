@@ -28,23 +28,23 @@ void test_io(){
   assert(pkl);
   assert(pkl_size>0);
 
-  char *smiles=get_smiles(pkl,pkl_size);
+  char *smiles=get_smiles(pkl,pkl_size,NULL);
   assert(!strcmp(smiles,"Oc1ccccc1"));
   free(smiles);
   smiles=NULL;
 
-  smiles=get_cxsmiles(pkl,pkl_size);
+  smiles=get_cxsmiles(pkl,pkl_size,NULL);
   assert(!strcmp(smiles,"Oc1ccccc1"));
   free(smiles);
   smiles=NULL;
 
-  char *json=get_json(pkl,pkl_size);
+  char *json=get_json(pkl,pkl_size,NULL);
   assert(strstr(json,"commonchem"));
 
   pkl2=get_mol(json,&pkl2_size,"");
   assert(pkl2);
   assert(pkl2_size>0);
-  smiles=get_smiles(pkl2,pkl2_size);
+  smiles=get_smiles(pkl2,pkl2_size,NULL);
   assert(!strcmp(smiles,"Oc1ccccc1"));
   free(smiles);
   smiles=NULL;
@@ -76,7 +76,7 @@ void test_io(){
   pkl2 = get_mol("[H]C",&pkl2_size,"{\"removeHs\":false}");
   assert(pkl2!=NULL);
   assert(pkl2_size);
-  smiles=get_smiles(pkl2,pkl2_size);
+  smiles=get_smiles(pkl2,pkl2_size,NULL);
   assert(!strcmp(smiles,"[H]C"));
   free(smiles);
   smiles=NULL;
@@ -89,11 +89,18 @@ void test_io(){
   free(pkl2);
   pkl2 = NULL;
   
-  char *molblock = get_molblock(pkl,pkl_size);
+  smiles=get_smiles(pkl,pkl_size,"{\"canonical\":false}");
+  assert(!strcmp(smiles,"c1cc(O)ccc1"));
+  free(smiles);
+  smiles=NULL;
+
+  //---------
+  // mol block
+  char *molblock = get_molblock(pkl,pkl_size,NULL);
   pkl2=get_mol(molblock,&pkl2_size,"");
   assert(pkl2);
   assert(pkl2_size>0);
-  smiles=get_smiles(pkl2,pkl2_size);
+  smiles=get_smiles(pkl2,pkl2_size,NULL);
   assert(!strcmp(smiles,"Oc1ccccc1"));
   free(smiles);
   smiles=NULL;
@@ -102,11 +109,11 @@ void test_io(){
   free(molblock);
   molblock=NULL;
 
-  molblock = get_v3kmolblock(pkl,pkl_size);
+  molblock = get_v3kmolblock(pkl,pkl_size,NULL);
   pkl2=get_mol(molblock,&pkl2_size,"");
   assert(pkl2);
   assert(pkl2_size>0);
-  smiles=get_smiles(pkl2,pkl2_size);
+  smiles=get_smiles(pkl2,pkl2_size,NULL);
   assert(!strcmp(smiles,"Oc1ccccc1"));
   free(smiles);
   smiles=NULL;
@@ -115,26 +122,43 @@ void test_io(){
   free(molblock);
   molblock=NULL;
 
-  char *inchi = get_inchi(pkl,pkl_size);
+  molblock = get_v3kmolblock(pkl,pkl_size,"{\"kekulize\":false}");
+  assert(strstr(molblock,"M  V30 1 4 1 2"));
+  free(molblock);
+  molblock=NULL;
+
+  //---------
+  // InChI
+  char *inchi = get_inchi(pkl,pkl_size,NULL);
   assert(!strcmp(inchi,"InChI=1S/C6H6O/c7-6-4-2-1-3-5-6/h1-5,7H"));
   free(inchi);
   inchi = get_inchikey_for_inchi("InChI=1S/C6H6O/c7-6-4-2-1-3-5-6/h1-5,7H");
   assert(!strcmp(inchi,"ISWSIDIOOBJBQZ-UHFFFAOYSA-N"));
   free(inchi);
 
-  molblock = get_molblock(pkl,pkl_size);
-  inchi = get_inchi_for_molblock(molblock);
+  inchi = get_inchi(pkl,pkl_size,"{\"options\":\"/FixedH\"}");
+  assert(!strcmp(inchi,"InChI=1/C6H6O/c7-6-4-2-1-3-5-6/h1-5,7H"));
+  free(inchi);
+  
+
+  molblock = get_molblock(pkl,pkl_size,NULL);
+  inchi = get_inchi_for_molblock(molblock,NULL);
   assert(!strcmp(inchi,"InChI=1S/C6H6O/c7-6-4-2-1-3-5-6/h1-5,7H"));
+  free(inchi);
+  inchi = get_inchi_for_molblock(molblock,"{\"options\":\"/FixedH\"}");
+  assert(!strcmp(inchi,"InChI=1/C6H6O/c7-6-4-2-1-3-5-6/h1-5,7H"));
   free(inchi);
   free(molblock);
 
-  char *smarts = get_smarts(pkl,pkl_size);
+  //---------
+  // queries
+  char *smarts = get_smarts(pkl,pkl_size,NULL);
   assert(!strcmp(smarts,"[#6]1:[#6]:[#6](-[#8]):[#6]:[#6]:[#6]:1"));
   
   pkl2 = get_qmol(smarts,&pkl2_size,"");
   assert(pkl2);
   free(smarts);
-  smarts = get_smarts(pkl2,pkl2_size);
+  smarts = get_smarts(pkl2,pkl2_size,NULL);
   assert(!strcmp(smarts,"[#6]1:[#6]:[#6](-[#8]):[#6]:[#6]:[#6]:1"));
   free(smarts);
   free(pkl2);
@@ -290,12 +314,12 @@ void test_modifications(){
   mpkl = get_mol("CCC",&mpkl_size,"");
   
   assert(add_hs(&mpkl,&mpkl_size)>0);
-  char *ctab = get_molblock(mpkl,mpkl_size);
+  char *ctab = get_molblock(mpkl,mpkl_size,NULL);
   assert(strstr(ctab," H "));
   free(ctab);
 
   assert(remove_hs(&mpkl,&mpkl_size)>0);
-  ctab = get_molblock(mpkl,mpkl_size);
+  ctab = get_molblock(mpkl,mpkl_size,NULL);
   assert(!strstr(ctab," H "));
   free(ctab);
 
@@ -313,20 +337,20 @@ void test_coords(){
   size_t mpkl_size;
   mpkl = get_mol("C1CNC1CC",&mpkl_size,"");
   
-  char *cxsmi = get_cxsmiles(mpkl,mpkl_size);
+  char *cxsmi = get_cxsmiles(mpkl,mpkl_size,NULL);
   // no cxsmiles yet
   assert(!strstr(cxsmi,"|"));
 
   prefer_coordgen(0);
   set_2d_coords(&mpkl,&mpkl_size);
   free(cxsmi);
-  cxsmi = get_cxsmiles(mpkl,mpkl_size);
+  cxsmi = get_cxsmiles(mpkl,mpkl_size,NULL);
   // since we have coords there's something there:
   assert(strstr(cxsmi,"|"));
 #ifdef RDK_BUILD_COORDGEN_SUPPORT
   prefer_coordgen(1);
   set_2d_coords(&mpkl,&mpkl_size);
-  char *cxsmi2 = get_cxsmiles(mpkl,mpkl_size);
+  char *cxsmi2 = get_cxsmiles(mpkl,mpkl_size,NULL);
   assert(strstr(cxsmi2,"|"));
   assert(strcmp(cxsmi,cxsmi2));
   free(cxsmi2);
@@ -367,9 +391,9 @@ M  END\n",&tpkl_size,"");
   // 3D
   assert(add_hs(&mpkl,&mpkl_size));
   assert(set_3d_coords(&mpkl,&mpkl_size,"")>0);
-  char *cxsmi3 = get_cxsmiles(mpkl,mpkl_size); 
+  char *cxsmi3 = get_cxsmiles(mpkl,mpkl_size,NULL); 
   assert(set_3d_coords(&mpkl,&mpkl_size,"{\"randomSeed\":123}")>0);
-  cxsmi = get_cxsmiles(mpkl,mpkl_size);
+  cxsmi = get_cxsmiles(mpkl,mpkl_size,NULL);
   // since we have coords there's something there:
   assert(strstr(cxsmi,"|"));
   // coords generated with two different seeds differ:

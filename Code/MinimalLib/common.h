@@ -305,3 +305,5 @@ std::string get_descriptors(const ROMol &m) {
 }
 }  // namespace MinimalLib
 }  // namespace RDKit
+#undef LPT_OPT_GET
+#undef LPT_OPT_GET2

@@ -25,14 +25,22 @@ RDKIT_RDKITCFFI_EXPORT char *get_mol(const char *input, size_t *mol_sz,
                                      const char *details_json);
 RDKIT_RDKITCFFI_EXPORT char *get_qmol(const char *input, size_t *mol_sz,
                                       const char *details_json);
-RDKIT_RDKITCFFI_EXPORT char *get_molblock(const char *pkl, size_t pkl_sz);
-RDKIT_RDKITCFFI_EXPORT char *get_v3kmolblock(const char *pkl, size_t pkl_sz);
-RDKIT_RDKITCFFI_EXPORT char *get_smiles(const char *pkl, size_t pkl_sz);
-RDKIT_RDKITCFFI_EXPORT char *get_smarts(const char *pkl, size_t pkl_sz);
-RDKIT_RDKITCFFI_EXPORT char *get_cxsmiles(const char *pkl, size_t pkl_sz);
-RDKIT_RDKITCFFI_EXPORT char *get_json(const char *pkl, size_t pkl_sz);
-RDKIT_RDKITCFFI_EXPORT char *get_inchi(const char *pkl, size_t pkl_sz);
-RDKIT_RDKITCFFI_EXPORT char *get_inchi_for_molblock(const char *ctab);
+RDKIT_RDKITCFFI_EXPORT char *get_molblock(const char *pkl, size_t pkl_sz,
+                                          const char *details_json);
+RDKIT_RDKITCFFI_EXPORT char *get_v3kmolblock(const char *pkl, size_t pkl_sz,
+                                             const char *details_json);
+RDKIT_RDKITCFFI_EXPORT char *get_smiles(const char *pkl, size_t pkl_sz,
+                                        const char *details_json);
+RDKIT_RDKITCFFI_EXPORT char *get_smarts(const char *pkl, size_t pkl_sz,
+                                        const char *details_json);
+RDKIT_RDKITCFFI_EXPORT char *get_cxsmiles(const char *pkl, size_t pkl_sz,
+                                          const char *details_json);
+RDKIT_RDKITCFFI_EXPORT char *get_json(const char *pkl, size_t pkl_sz,
+                                      const char *details_json);
+RDKIT_RDKITCFFI_EXPORT char *get_inchi(const char *pkl, size_t pkl_sz,
+                                       const char *details_json);
+RDKIT_RDKITCFFI_EXPORT char *get_inchi_for_molblock(const char *ctab,
+                                                    const char *details_json);
 RDKIT_RDKITCFFI_EXPORT char *get_inchikey_for_inchi(const char *inchi);
 
 // substructure

@@ -94,32 +94,89 @@ char *str_to_c(const char *str) {
   RWMol mol(mol##inp_str);                   \
   mol.setProp(common_properties::_StereochemDone, 1, true);
 
-extern "C" char *get_smiles(const char *pkl, size_t pkl_sz) {
+#ifdef PT_OPT_GET
+#undef PT_OPT_GET
+#endif
+#define PT_OPT_GET(opt) opt = pt.get(#opt, opt);
+
+namespace {
+template <class T>
+std::string smiles_helper(const char *pkl, size_t pkl_sz,
+                          const char *details_json, T func) {
   MOL_FROM_PKL(mol, pkl, pkl_sz);
-  auto data = MolToSmiles(mol);
+  bool doIsomericSmiles = true;
+  bool doKekule = false;
+  int rootedAtAtom = -1;
+  bool canonical = true;
+  bool allBondsExplicit = false;
+  bool allHsExplicit = false;
+  bool doRandom = false;
+  if (details_json && strlen(details_json)) {
+    boost::property_tree::ptree pt;
+    std::istringstream ss;
+    ss.str(details_json);
+    boost::property_tree::read_json(ss, pt);
+    PT_OPT_GET(doIsomericSmiles);
+    PT_OPT_GET(doKekule);
+    PT_OPT_GET(rootedAtAtom);
+    PT_OPT_GET(canonical);
+    PT_OPT_GET(allBondsExplicit);
+    PT_OPT_GET(allHsExplicit);
+    PT_OPT_GET(doRandom);
+  }
+  auto data = func(mol, doIsomericSmiles, doKekule, rootedAtAtom, canonical,
+                   allBondsExplicit, allHsExplicit, doRandom);
+  return data;
+}
+
+std::string molblock_helper(const char *pkl, size_t pkl_sz,
+                            const char *details_json, bool forceV3000) {
+  MOL_FROM_PKL(mol, pkl, pkl_sz);
+  bool includeStereo = true;
+  bool kekulize = true;
+  if (details_json && strlen(details_json)) {
+    boost::property_tree::ptree pt;
+    std::istringstream ss;
+    ss.str(details_json);
+    boost::property_tree::read_json(ss, pt);
+    PT_OPT_GET(includeStereo);
+    PT_OPT_GET(kekulize);
+  }
+  auto data = MolToMolBlock(mol, includeStereo, -1, kekulize, forceV3000);
+  return data;
+}
+
+}  // namespace
+extern "C" char *get_smiles(const char *pkl, size_t pkl_sz,
+                            const char *details_json) {
+  auto data = smiles_helper(pkl, pkl_sz, details_json, MolToSmiles);
   return str_to_c(data);
 }
-extern "C" char *get_smarts(const char *pkl, size_t pkl_sz) {
+extern "C" char *get_smarts(const char *pkl, size_t pkl_sz,
+                            const char *details_json) {
+  RDUNUSED_PARAM(details_json);
   MOL_FROM_PKL(mol, pkl, pkl_sz);
   auto data = MolToSmarts(mol);
   return str_to_c(data);
 }
-extern "C" char *get_cxsmiles(const char *pkl, size_t pkl_sz) {
-  MOL_FROM_PKL(mol, pkl, pkl_sz);
-  auto data = MolToCXSmiles(mol);
+extern "C" char *get_cxsmiles(const char *pkl, size_t pkl_sz,
+                              const char *details_json) {
+  auto data = smiles_helper(pkl, pkl_sz, details_json, MolToCXSmiles);
   return str_to_c(data);
 }
-extern "C" char *get_molblock(const char *pkl, size_t pkl_sz) {
-  MOL_FROM_PKL(mol, pkl, pkl_sz);
-  auto data = MolToMolBlock(mol);
+extern "C" char *get_molblock(const char *pkl, size_t pkl_sz,
+                              const char *details_json) {
+  auto data = molblock_helper(pkl, pkl_sz, details_json, false);
   return str_to_c(data);
 }
-extern "C" char *get_v3kmolblock(const char *pkl, size_t pkl_sz) {
-  MOL_FROM_PKL(mol, pkl, pkl_sz);
-  auto data = MolToV3KMolBlock(mol);
+extern "C" char *get_v3kmolblock(const char *pkl, size_t pkl_sz,
+                                 const char *details_json) {
+  auto data = molblock_helper(pkl, pkl_sz, details_json, true);
   return str_to_c(data);
 }
-extern "C" char *get_json(const char *pkl, size_t pkl_sz) {
+extern "C" char *get_json(const char *pkl, size_t pkl_sz,
+                          const char *details_json) {
+  RDUNUSED_PARAM(details_json);
   MOL_FROM_PKL(mol, pkl, pkl_sz);
   auto data = MolInterchange::MolToJSONData(mol);
   return str_to_c(data);
@@ -138,18 +195,46 @@ extern "C" char *get_svg(const char *pkl, size_t pkl_sz,
   return str_to_c(MinimalLib::mol_to_svg(mol, width, height, details_json));
 }
 
-extern "C" char *get_inchi(const char *pkl, size_t pkl_sz) {
+extern "C" char *get_inchi(const char *pkl, size_t pkl_sz,
+                           const char *details_json) {
   MOL_FROM_PKL(mol, pkl, pkl_sz);
   ExtraInchiReturnValues rv;
-  return str_to_c(MolToInchi(mol, rv));
+  std::string options;
+  if (details_json && strlen(details_json)) {
+    boost::property_tree::ptree pt;
+    std::istringstream ss;
+    ss.str(details_json);
+    boost::property_tree::read_json(ss, pt);
+    PT_OPT_GET(options);
+  }
+
+  const char *opts = nullptr;
+  if (!options.empty()) {
+    opts = options.c_str();
+  }
+  return str_to_c(MolToInchi(mol, rv, opts));
 }
 
-extern "C" char *get_inchi_for_molblock(const char *ctab) {
+extern "C" char *get_inchi_for_molblock(const char *ctab,
+                                        const char *details_json) {
   if (!ctab) {
     return str_to_c("");
   }
+  std::string options;
+  if (details_json && strlen(details_json)) {
+    boost::property_tree::ptree pt;
+    std::istringstream ss;
+    ss.str(details_json);
+    boost::property_tree::read_json(ss, pt);
+    PT_OPT_GET(options);
+  }
+
   ExtraInchiReturnValues rv;
-  return str_to_c(MolBlockToInchi(ctab, rv));
+  const char *opts = nullptr;
+  if (!options.empty()) {
+    opts = options.c_str();
+  }
+  return str_to_c(MolBlockToInchi(ctab, rv, opts));
 }
 
 extern "C" char *get_inchikey_for_inchi(const char *inchi) {
@@ -277,7 +362,6 @@ extern "C" char *get_descriptors(const char *mol_pkl, size_t mol_pkl_sz) {
 }
 
 namespace {
-#define PT_OPT_GET(opt) opt = pt.get(#opt, opt);
 std::unique_ptr<ExplicitBitVect> morgan_fp_helper(const char *mol_pkl,
                                                   size_t mol_pkl_sz,
                                                   const char *details_json) {
