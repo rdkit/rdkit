@@ -318,7 +318,7 @@ void test_modifications(){
   assert(strstr(ctab," H "));
   free(ctab);
 
-  assert(remove_hs(&mpkl,&mpkl_size)>0);
+  assert(remove_all_hs(&mpkl,&mpkl_size)>0);
   ctab = get_molblock(mpkl,mpkl_size,NULL);
   assert(!strstr(ctab," H "));
   free(ctab);

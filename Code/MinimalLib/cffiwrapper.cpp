@@ -575,7 +575,7 @@ extern "C" short add_hs(char **mol_pkl, size_t *mol_pkl_sz) {
   return 1;
 }
 
-extern "C" short remove_hs(char **mol_pkl, size_t *mol_pkl_sz) {
+extern "C" short remove_all_hs(char **mol_pkl, size_t *mol_pkl_sz) {
   MOL_FROM_PKL(mol, *mol_pkl, *mol_pkl_sz);
   MolOps::removeAllHs(mol);
 
