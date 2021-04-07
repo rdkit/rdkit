@@ -9,6 +9,7 @@
 */
 #include <stdio.h>
 #include <string.h>
+#include <stdlib.h>
 #include "cffiwrapper.h"
 #ifdef NDEBUG
 #undef NDEBUG

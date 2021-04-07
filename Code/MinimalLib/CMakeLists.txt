@@ -25,6 +25,24 @@ if(RDK_BUILD_CFFI_LIB)
         MolDraw2D_static Depictor_static 
         RDInchiLib_static SubstructMatch_static FileParsers_static 
         SmilesParse_static GraphMol_static RDGeometryLib_static RDGeneral_static )
+    if((NOT MSVC) OR (MSVC AND RDK_INSTALL_DLLS_MSVC))
+    set(LIBS_TO_USE 
+        DistGeomHelpers_static ForceFieldHelpers_static DistGeometry_static
+        ForceField_static Alignment_static
+        MolInterchange_static Abbreviations_static CIPLabeler_static 
+        MolDraw2D_static Depictor_static 
+        RDInchiLib_static SubstructMatch_static FileParsers_static 
+        SmilesParse_static GraphMol_static RDGeometryLib_static RDGeneral_static )
+    else()
+        set(LIBS_TO_USE 
+        DistGeomHelpers ForceFieldHelpers DistGeometry
+        ForceField Alignment
+        MolInterchange Abbreviations CIPLabeler 
+        MolDraw2D Depictor 
+        RDInchiLib SubstructMatch FileParsers 
+        SmilesParse GraphMol RDGeometryLib RDGeneral )
+    endif()
+    
     add_library(rdkitcffi SHARED cffiwrapper.cpp)
     target_link_libraries(rdkitcffi PUBLIC rdkit_base)
     target_link_libraries(rdkitcffi PUBLIC ${LIBS_TO_USE})
@@ -40,6 +58,9 @@ if(RDK_BUILD_CFFI_LIB)
                             ARCHIVE_OUTPUT_DIRECTORY ${RDK_ARCHIVE_OUTPUT_DIRECTORY}
                             RUNTIME_OUTPUT_DIRECTORY ${RDK_RUNTIME_OUTPUT_DIRECTORY}
                             LIBRARY_OUTPUT_DIRECTORY ${RDK_LIBRARY_OUTPUT_DIRECTORY})
+if(MSVC OR WIN32)
+  set_target_properties(rdkitcffi PROPERTIES WINDOWS_EXPORT_ALL_SYMBOLS TRUE)
+endif()
 
 
     add_executable(cffi_test cffi_test.c)
