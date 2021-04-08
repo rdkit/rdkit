@@ -24,7 +24,6 @@
 #include <iostream>
 #include <cstdint>
 #include <boost/algorithm/string.hpp>
-#include <variant>
 
 #ifdef RDK_THREADSAFE_SSS
 #include <mutex>
@@ -240,23 +239,26 @@ void pickleQuery(std::ostream &ss, const Query<int, T const *, true> *query) {
         ((const RecursiveStructureQuery *)query)->getQueryMol(), ss);
   } else {
     auto qdetails = PicklerOps::getQueryDetails(query);
-    switch (qdetails.index()) {
+    switch (qdetails.which()) {
       case 0:
-        streamWrite(ss, std::get<0>(qdetails));
+        streamWrite(ss, boost::get<MolPickler::Tags>(qdetails));
         break;
       case 1: {
-        auto v = std::get<1>(qdetails);
+        auto v = boost::get<std::tuple<MolPickler::Tags, int32_t>>(qdetails);
         streamWrite(ss, std::get<0>(v));
         streamWrite(ss, MolPickler::QUERY_VALUE, std::get<1>(v));
       } break;
       case 2: {
-        auto v = std::get<2>(qdetails);
+        auto v = boost::get<std::tuple<MolPickler::Tags, int32_t, int32_t>>(
+            qdetails);
         streamWrite(ss, std::get<0>(v));
         streamWrite(ss, MolPickler::QUERY_VALUE, std::get<1>(v));
         streamWrite(ss, std::get<2>(v));
       } break;
       case 3: {
-        auto v = std::get<3>(qdetails);
+        auto v = boost::get<
+            std::tuple<MolPickler::Tags, int32_t, int32_t, int32_t, char>>(
+            qdetails);
         streamWrite(ss, std::get<0>(v));
         streamWrite(ss, MolPickler::QUERY_VALUE, std::get<1>(v));
         streamWrite(ss, std::get<2>(v));
@@ -264,7 +266,8 @@ void pickleQuery(std::ostream &ss, const Query<int, T const *, true> *query) {
         streamWrite(ss, std::get<4>(v));
       } break;
       case 4: {
-        auto v = std::get<4>(qdetails);
+        auto v = boost::get<std::tuple<MolPickler::Tags, std::set<int32_t>>>(
+            qdetails);
         streamWrite(ss, std::get<0>(v));
         const auto &tset = std::get<1>(v);
         int32_t sz = tset.size();

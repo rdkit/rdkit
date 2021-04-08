@@ -136,17 +136,19 @@ void addQuery(const Q &query, rj::Value &rjQuery, rj::Document &doc) {
     rjQuery.AddMember("subquery", subquery, doc.GetAllocator());
   } else {
     auto qdetails = PicklerOps::getQueryDetails(&query);
-    switch (qdetails.index()) {
+    switch (qdetails.which()) {
       case 0:
-        rjQuery.AddMember("tag", std::get<0>(qdetails), doc.GetAllocator());
+        rjQuery.AddMember("tag", boost::get<MolPickler::Tags>(qdetails),
+                          doc.GetAllocator());
         break;
       case 1: {
-        auto v = std::get<1>(qdetails);
+        auto v = boost::get<std::tuple<MolPickler::Tags, int32_t>>(qdetails);
         rjQuery.AddMember("tag", std::get<0>(v), doc.GetAllocator());
         rjQuery.AddMember("val", std::get<1>(v), doc.GetAllocator());
       } break;
       case 2: {
-        auto v = std::get<2>(qdetails);
+        auto v = boost::get<std::tuple<MolPickler::Tags, int32_t, int32_t>>(
+            qdetails);
         rjQuery.AddMember("tag", std::get<0>(v), doc.GetAllocator());
         rjQuery.AddMember("val", std::get<1>(v), doc.GetAllocator());
         if (std::get<2>(v)) {
@@ -154,7 +156,9 @@ void addQuery(const Q &query, rj::Value &rjQuery, rj::Document &doc) {
         }
       } break;
       case 3: {
-        auto v = std::get<3>(qdetails);
+        auto v = boost::get<
+            std::tuple<MolPickler::Tags, int32_t, int32_t, int32_t, char>>(
+            qdetails);
         rjQuery.AddMember("tag", std::get<0>(v), doc.GetAllocator());
         rjQuery.AddMember("lower", std::get<1>(v), doc.GetAllocator());
         rjQuery.AddMember("upper", std::get<2>(v), doc.GetAllocator());
@@ -164,7 +168,8 @@ void addQuery(const Q &query, rj::Value &rjQuery, rj::Document &doc) {
         rjQuery.AddMember("ends", std::get<4>(v), doc.GetAllocator());
       } break;
       case 4: {
-        auto v = std::get<4>(qdetails);
+        auto v = boost::get<std::tuple<MolPickler::Tags, std::set<int32_t>>>(
+            qdetails);
         rjQuery.AddMember("tag", std::get<0>(v), doc.GetAllocator());
         const auto &tset = std::get<1>(v);
         rj::Value sval(rj::kArrayType);
