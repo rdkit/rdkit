@@ -218,6 +218,11 @@ QueryDetails getQueryDetails(const Query<int, T const *, true> *query) {
     throw MolPicklerException("do not know how to pickle part of the query.");
   }
 }
+template QueryDetails getQueryDetails<RDKit::Atom>(
+    const Queries::Query<int, RDKit::Atom const *, true> *query);
+template QueryDetails getQueryDetails<RDKit::Bond>(
+    const Queries::Query<int, RDKit::Bond const *, true> *query);
+
 }  // namespace PicklerOps
 
 namespace {
