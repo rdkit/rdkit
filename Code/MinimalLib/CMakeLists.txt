@@ -65,6 +65,9 @@ endif()
 
     add_executable(cffi_test cffi_test.c)
     target_link_libraries(cffi_test rdkitcffi)
+#if(NOT MSVC)
+    # doesn't work as a test on windows because the DLL needs to be either in the PATH OR
+	# in the same dir as the executable
     add_test(cffi_test ${EXECUTABLE_OUTPUT_PATH}/cffi_test)
-
+#endif
 endif(RDK_BUILD_CFFI_LIB)
