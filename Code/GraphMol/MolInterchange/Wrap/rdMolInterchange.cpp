@@ -37,7 +37,7 @@ std::string MolsToJSON(const python::object &mols) {
   auto pymols = pythonObjectToVect<const RDKit::ROMol *>(mols);
   return RDKit::MolInterchange::MolsToJSONData(*pymols);
 }
-}
+}  // namespace
 
 BOOST_PYTHON_MODULE(rdMolInterchange) {
   python::scope().attr("__doc__") =
@@ -63,7 +63,11 @@ BOOST_PYTHON_MODULE(rdMolInterchange) {
       .def_readwrite(
           "parseProperties",
           &RDKit::MolInterchange::JSONParseParameters::parseProperties,
-          "parse molecular properties in the JSON");
+          "parse molecular properties in the JSON")
+      .def_readwrite("useHCounts",
+                     &RDKit::MolInterchange::JSONParseParameters::useHCounts,
+                     "use atomic H counts from the JSON. You may want to set "
+                     "this to False when parsing queries.");
 
   std::string docString;
   docString =
@@ -73,8 +77,9 @@ BOOST_PYTHON_MODULE(rdMolInterchange) {
       - mol: the molecule to work with\n\
     RETURNS:\n\
       a string\n";
-  python::def("MolToJSON", (std::string(*)(const RDKit::ROMol &))
-                               RDKit::MolInterchange::MolToJSONData,
+  python::def("MolToJSON",
+              (std::string(*)(
+                  const RDKit::ROMol &))RDKit::MolInterchange::MolToJSONData,
               (python::arg("mol")), docString.c_str());
   docString =
       "Convert a set of molecules to JSON\n\

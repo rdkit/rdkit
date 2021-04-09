@@ -45,6 +45,9 @@ struct RDKIT_MOLINTERCHANGE_EXPORT JSONParseParameters {
       true; /*! toggles extracting molecular properties from the JSON block */
   bool parseConformers =
       true; /*! toggles extracting conformers from the JSON block */
+  bool useHCounts =
+      true; /*! toggles using the implicit H counts for atoms from the JSON
+               block. You may want to set this to false when parsing queries. */
 };
 static JSONParseParameters defaultJSONParseParameters;
 

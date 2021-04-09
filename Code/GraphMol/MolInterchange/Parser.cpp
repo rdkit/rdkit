@@ -164,11 +164,14 @@ std::string getStringDefaultValue(const char *key, const rj::Value &from,
 }
 
 void readAtom(RWMol *mol, const rj::Value &atomVal,
-              const DefaultValueCache &atomDefaults) {
+              const DefaultValueCache &atomDefaults,
+              const JSONParseParameters &params) {
   PRECONDITION(mol, "no mol");
   Atom *at = new Atom(getIntDefaultValue("z", atomVal, atomDefaults));
-  at->setNoImplicit(true);
-  at->setNumExplicitHs(getIntDefaultValue("impHs", atomVal, atomDefaults));
+  if (params.useHCounts) {
+    at->setNoImplicit(true);
+    at->setNumExplicitHs(getIntDefaultValue("impHs", atomVal, atomDefaults));
+  }
   at->setFormalCharge(getIntDefaultValue("chg", atomVal, atomDefaults));
   at->setNumRadicalElectrons(getIntDefaultValue("nRad", atomVal, atomDefaults));
   at->setIsotope(getIntDefaultValue("isotope", atomVal, atomDefaults));
@@ -447,7 +450,7 @@ Query<int, Atom const *, true> *readQuery(Atom const *owner,
                                           const JSONParseParameters &params) {
   PRECONDITION(owner, "no owner");
   if (!repVal.HasMember("tag")) {
-    throw FileParseException("Bad Format: missing query tag");
+    throw FileParseException("Bad Format: missing atom query tag");
   }
   Query<int, Atom const *, true> *res = nullptr;
   int tag = repVal["tag"].GetInt();
@@ -481,7 +484,7 @@ Query<int, Bond const *, true> *readQuery(Bond const *bond,
                                           const JSONParseParameters &params) {
   PRECONDITION(bond, "no owner");
   if (!repVal.HasMember("tag")) {
-    throw FileParseException("Bad Format: missing query tag");
+    throw FileParseException("Bad Format: missing bond query tag");
   }
   Query<int, Bond const *, true> *res = nullptr;
   res = readBaseQuery(bond, repVal, params);
@@ -546,6 +549,10 @@ void readQueries(RWMol *mol, const rj::Value &repVal,
       for (const auto &val : miter->value.GetArray()) {
         if (!val.IsObject()) {
           throw FileParseException("Bad Format: bondQuery not object");
+        }
+        if (!val.HasMember("tag")) {
+          // nothing here, continue
+          continue;
         }
         if (idx >= mol->getNumBonds()) {
           throw FileParseException("too much bond data found");
@@ -680,7 +687,7 @@ void processMol(RWMol *mol, const rj::Value &molval,
   }
 
   for (const auto &atomVal : molval["atoms"].GetArray()) {
-    readAtom(mol, atomVal, atomDefaults);
+    readAtom(mol, atomVal, atomDefaults, params);
   }
   bool needStereoLoop = false;
   for (const auto &bondVal : molval["bonds"].GetArray()) {
