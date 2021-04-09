@@ -196,8 +196,6 @@ def MolToImage(mol, size=(300, 300), kekulize=True, wedgeBonds=True, fitImage=Fa
 
         - highlightAtoms: list of atoms to highlight (default [])
 
-        - highlightMap: dictionary of (atom, color) pairs (default None)
-
         - highlightBonds: list of bonds to highlight (default [])
 
         - highlightColor: RGB color as tuple (default [1, 0, 0])
