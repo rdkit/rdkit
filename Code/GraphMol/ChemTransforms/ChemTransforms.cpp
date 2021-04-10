@@ -254,16 +254,16 @@ ROMol *replaceSidechains(const ROMol &mol, const ROMol &coreQuery,
 
   boost::dynamic_bitset<> matchingIndices(mol.getNumAtoms());
   for (MatchVectType::const_iterator mvit = matchV.begin();
-       mvit != matchV.end(); mvit++) {
+       mvit != matchV.end(); ++mvit) {
     matchingIndices[mvit->second] = 1;
   }
-  std::vector<Atom *> keepList;
 
   auto *newMol = new RWMol(mol);
-  unsigned int nDummies = 0;
+  boost::dynamic_bitset<> keepSet(newMol->getNumAtoms());
+  std::vector<unsigned int> dummyIndices;
   for (MatchVectType::const_iterator mvit = matchV.begin();
-       mvit != matchV.end(); mvit++) {
-    keepList.push_back(newMol->getAtomWithIdx(mvit->second));
+       mvit != matchV.end(); ++mvit) {
+    keepSet.set(mvit->second);
     // if the atom in the molecule has higher degree than the atom in the
     // core, we have an attachment point:
     if (newMol->getAtomWithIdx(mvit->second)->getDegree() >
@@ -275,22 +275,41 @@ ROMol *replaceSidechains(const ROMol &mol, const ROMol &coreQuery,
         if (!matchingIndices[*nbrIdx]) {
           // this neighbor isn't in the match, convert it to a dummy atom and
           // save it
+          keepSet.set(*nbrIdx);
+          dummyIndices.push_back(*nbrIdx);
           Atom *at = newMol->getAtomWithIdx(*nbrIdx);
+          Bond *b = newMol->getBondBetweenAtoms(mvit->second, *nbrIdx);
+          if (b) {
+            b->setIsAromatic(false);
+            b->setBondType(Bond::SINGLE);
+          }
           at->setAtomicNum(0);
-          ++nDummies;
-          at->setIsotope(nDummies);
-          keepList.push_back(at);
+          at->setNumExplicitHs(0);
+          at->setIsAromatic(false);
+          at->setIsotope(dummyIndices.size());
         }
-        nbrIdx++;
+        ++nbrIdx;
       }
     }
   }
   boost::dynamic_bitset<> removedAtoms(mol.getNumAtoms());
   newMol->beginBatchEdit();
   for (const auto at : newMol->atoms()) {
-    if (std::find(keepList.begin(), keepList.end(), at) == keepList.end()) {
+    if (!keepSet.test(at->getIdx())) {
       newMol->removeAtom(at);
       removedAtoms.set(at->getIdx());
+    }
+  }
+  // Remove bonds between newly added dummies (if any)
+  if (dummyIndices.size() > 1) {
+    for (size_t i = 0; i < dummyIndices.size() - 1; ++i) {
+      for (size_t j = i + 1; j < dummyIndices.size(); ++j) {
+        const auto b =
+            newMol->getBondBetweenAtoms(dummyIndices.at(i), dummyIndices.at(j));
+        if (b) {
+          newMol->removeBond(dummyIndices.at(i), dummyIndices.at(j));
+        }
+      }
     }
   }
   newMol->commitBatchEdit();
