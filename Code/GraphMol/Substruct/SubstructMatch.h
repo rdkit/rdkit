@@ -14,6 +14,7 @@
 // std bits
 #include <vector>
 #include <functional>
+#include <string>
 
 namespace RDKit {
 class ROMol;
