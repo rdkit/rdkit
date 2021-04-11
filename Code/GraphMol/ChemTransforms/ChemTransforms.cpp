@@ -406,20 +406,19 @@ ROMol *replaceCore(const ROMol &mol, const ROMol &core,
 
   // go through the matches in query order, not target molecule
   //  order
-  std::vector<std::pair<int, int>> matchorder_atomidx;
   for (unsigned int i = 0; i < origNumAtoms; ++i) {
-    int queryatom = allIndices[i];
-    matchorder_atomidx.emplace_back(queryatom, i);
     if (!molAtomsMapped[i]) {
       SideChainMapping mapping(i);
       matches.emplace_back(i, mapping);
     }
   }
 
-  std::sort(matchorder_atomidx.begin(), matchorder_atomidx.end());
   std::sort(matches.begin(), matches.end(),
             [](const std::pair<int, SideChainMapping> &p1,
                const std::pair<int, SideChainMapping> &p2) {
+              if (p1.second.coreIndex == p2.second.coreIndex) {
+                return p1.first < p2.first;
+              }
               return p1.second.coreIndex < p2.second.coreIndex;
             });
   std::vector<std::pair<int, Atom *>> dummies;
@@ -431,8 +430,6 @@ ROMol *replaceCore(const ROMol &mol, const ROMol &core,
   }
 
   for (const auto &match : matches) {
-    // for (unsigned int j = 0; j < origNumAtoms; ++j) {
-    //  auto i = (unsigned)matchorder_atomidx[j].second;
 
     const auto &mappingInfo = match.second;
 
