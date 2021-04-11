@@ -15,6 +15,7 @@
 #include <vector>
 #include <functional>
 #include <unordered_map>
+#include <cstdint>
 #include "GraphMol/StereoGroup.h"
 
 namespace RDKit {
