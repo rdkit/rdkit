@@ -935,7 +935,6 @@ void testReplaceCorePositions() {
   TEST_ASSERT(feq(op.z, np.z));
   op = mol1->getConformer().getAtomPos(0);
   np = mol2->getConformer().getAtomPos(2);
-  BOOST_LOG(rdInfoLog) << "op 0 np 2 op.x " << op.x << " np.x " << np.x << std::endl;
   TEST_ASSERT(feq(op.x, np.x));
   TEST_ASSERT(feq(op.y, np.y));
   TEST_ASSERT(feq(op.z, np.z));
@@ -1954,7 +1953,7 @@ void testGithubIssue511() {
     TEST_ASSERT(frags->getNumAtoms() == 9);
 
     std::string csmi1 = MolToSmiles(*mol, true);
-    std::cerr << csmi1 << std::endl;
+    // std::cerr << csmi1 << std::endl;
 
     TEST_ASSERT(csmi1 == "CC[C@@](C)(N)OC");
     std::string csmi2 = MolToSmiles(*frags, true);

@@ -347,7 +347,6 @@ ROMol *replaceCore(const ROMol &mol, const ROMol &core,
   std::vector<int> allIndices(origNumAtoms, -1);
   boost::dynamic_bitset<> molAtomsMapped(origNumAtoms);
   std::set<int> multipleMappedMolAtoms;
-  BOOST_LOG(rdDebugLog) << "Input Match " << std::endl;
   for (const auto &mvit : matchV) {
     if (mvit.first < 0 || mvit.first >= rdcast<int>(core.getNumAtoms())) {
       throw ValueErrorException(
@@ -369,8 +368,6 @@ ROMol *replaceCore(const ROMol &mol, const ROMol &core,
       multipleMappedMolAtoms.insert(mvit.second);
     }
     molAtomsMapped.set(mvit.second);
-    BOOST_LOG(rdDebugLog) << '\t' << mvit.first << " -> " << mvit.second
-                          << " Use " << useMatch << std::endl;
   }
 
   boost::dynamic_bitset<> multipleOwnedBonds(mol.getNumBonds());
@@ -423,12 +420,6 @@ ROMol *replaceCore(const ROMol &mol, const ROMol &core,
             });
   std::vector<std::pair<int, Atom *>> dummies;
 
-  BOOST_LOG(rdDebugLog) << "Ordered Matches" << std::endl;
-  for (const auto &match : matches) {
-    BOOST_LOG(rdDebugLog) << '\t' << match.first << ": " << match.second.coreIndex
-                          << " -> " << match.second.molIndex << std::endl;
-  }
-
   for (const auto &match : matches) {
 
     const auto &mappingInfo = match.second;
@@ -436,7 +427,6 @@ ROMol *replaceCore(const ROMol &mol, const ROMol &core,
     if (!mappingInfo.useMatch) {
       Atom *sidechainAtom = newMol->getAtomWithIdx(mappingInfo.molIndex);
       // we're keeping the sidechain atoms:
-      BOOST_LOG(rdDebugLog) << "keeping atom " << mappingInfo.molIndex << std::endl;
       keepList.push_back(sidechainAtom);
 
       // loop over our neighbors and see if any are in the match:
@@ -507,7 +497,6 @@ ROMol *replaceCore(const ROMol &mol, const ROMol &core,
           dummyAtomMap[nbrIdx] = newAt;
           keepList.push_back(newAt);
           Bond *bnd = connectingBond->copy();
-          BOOST_LOG(rdDebugLog) << "Added dummy atom with index " << newAt->getIdx() << std::endl;
           if (bnd->getBeginAtomIdx() ==
               static_cast<size_t>(mappingInfo.molIndex)) {
             bnd->setEndAtomIdx(newAt->getIdx());
