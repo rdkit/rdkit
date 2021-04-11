@@ -17,22 +17,19 @@ if(RDK_BUILD_MINIMAL_LIB)
 endif(RDK_BUILD_MINIMAL_LIB)
 
 if(RDK_BUILD_CFFI_LIB)
+
     set(CMAKE_C_STANDARD 99)
-    set(LIBS_TO_USE 
-        DistGeomHelpers_static ForceFieldHelpers_static DistGeometry_static
-        ForceField_static Alignment_static
-        MolInterchange_static Abbreviations_static CIPLabeler_static 
-        MolDraw2D_static Depictor_static 
-        RDInchiLib_static SubstructMatch_static FileParsers_static 
-        SmilesParse_static GraphMol_static RDGeometryLib_static RDGeneral_static )
     if((NOT MSVC) OR (MSVC AND RDK_INSTALL_DLLS_MSVC))
-    set(LIBS_TO_USE 
-        DistGeomHelpers_static ForceFieldHelpers_static DistGeometry_static
-        ForceField_static Alignment_static
-        MolInterchange_static Abbreviations_static CIPLabeler_static 
-        MolDraw2D_static Depictor_static 
-        RDInchiLib_static SubstructMatch_static FileParsers_static 
-        SmilesParse_static GraphMol_static RDGeometryLib_static RDGeneral_static )
+        set(LIBS_TO_USE 
+            DistGeomHelpers_static ForceFieldHelpers_static DistGeometry_static
+            ForceField_static Alignment_static
+            MolInterchange_static Abbreviations_static CIPLabeler_static 
+            MolDraw2D_static Depictor_static 
+            RDInchiLib_static SubstructMatch_static FileParsers_static 
+            SmilesParse_static GraphMol_static RingDecomposerLib_static RDGeometryLib_static RDGeneral_static )
+        if(RDK_URF_LIBS)
+            list(APPEND LIBS_TO_USE RingDecomposerLib_static)
+        endif()
     else()
         set(LIBS_TO_USE 
         DistGeomHelpers ForceFieldHelpers DistGeometry
@@ -40,7 +37,10 @@ if(RDK_BUILD_CFFI_LIB)
         MolInterchange Abbreviations CIPLabeler 
         MolDraw2D Depictor 
         RDInchiLib SubstructMatch FileParsers 
-        SmilesParse GraphMol RDGeometryLib RDGeneral )
+        SmilesParse GraphMol RingDecomposerLib RDGeometryLib RDGeneral )
+        if(RDK_URF_LIBS)
+            list(APPEND LIBS_TO_USE RingDecomposerLib)
+        endif()
     endif()
     
     add_library(rdkitcffi SHARED cffiwrapper.cpp)
