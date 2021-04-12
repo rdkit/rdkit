@@ -65,7 +65,7 @@ if(RDK_BUILD_MAEPARSER_SUPPORT)
 else (RDK_BUILD_MAEPARSER_SUPPORT)
 
   set(RDK_MAEPARSER_LIBS CACHE STRING "the external libraries" FORCE)
-  
+
 endif(RDK_BUILD_MAEPARSER_SUPPORT)
 
 if(RDK_BUILD_COORDGEN_SUPPORT)
@@ -82,14 +82,14 @@ if(RDK_BUILD_COORDGEN_SUPPORT)
     endif()
 
     if(NOT EXISTS "${COORDGEN_DIR}/sketcherMinimizer.h")
-        set(RELEASE_NO "2.0.0")
-        set(MD5 "d819cacd84b4938f49c0d5b486fcb653")
+        set(RELEASE_NO "2.0.3")
+        set(MD5 "e5541909e4283c67ef4934d2ad271aa3")
         downloadAndCheckMD5("https://github.com/schrodinger/coordgenlibs/archive/v${RELEASE_NO}.tar.gz"
               "${CMAKE_CURRENT_SOURCE_DIR}/coordgenlibs-${RELEASE_NO}.tar.gz" ${MD5})
         execute_process(COMMAND ${CMAKE_COMMAND} -E tar zxf
           ${CMAKE_CURRENT_SOURCE_DIR}/coordgenlibs-${RELEASE_NO}.tar.gz
           WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR})
-        
+
         file(RENAME "coordgenlibs-${RELEASE_NO}" "${COORDGEN_DIR}")
     else()
       message("-- Found coordgenlibs source in ${COORDGEN_DIR}")
