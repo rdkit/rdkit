@@ -47,7 +47,27 @@ void updateEmbedParametersFromJSON(EmbedParameters &params,
   PT_OPT_GET(useMacrocycle14config);
   PT_OPT_GET(forceTransAmides);
   PT_OPT_GET(useSymmetryForPruning);
-}
+  std::map<int, RDGeom::Point3D> *cmap = nullptr;
+  const auto coordMap = pt.get_child_optional("coordMap");
+  if (coordMap) {
+    // NOTE: this leaks since EmbedParameters uses a naked pointer and we don't
+    // have any way to tie the lifetime of the memory we allocate here to the
+    // EmbedParameters object itself.
+    cmap = new std::map<int, RDGeom::Point3D>();
+    for (const auto &entry : *coordMap) {
+      RDGeom::Point3D pt;
 
+      auto itm = entry.second.begin();
+      pt.x = itm->second.get_value<float>();
+      ++itm;
+      pt.y = itm->second.get_value<float>();
+      ++itm;
+      pt.z = itm->second.get_value<float>();
+
+      (*cmap)[boost::lexical_cast<int>(entry.first)] = pt;
+    }
+    params.coordMap = cmap;
+  }
+}
 }  // namespace DGeomHelpers
 }  // namespace RDKit

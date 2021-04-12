@@ -557,6 +557,11 @@ extern "C" short set_3d_coords(char **mol_pkl, size_t *mol_pkl_sz,
   if (res >= 0) {
     ++res;
   }
+  // if we have a coordMap then be sure to clear up the memory that
+  // updateEmbedParametersFromJSON() allocated for it
+  if (ps.coordMap) {
+    delete ps.coordMap;
+  }
   MOL_TO_PKL(mol, mol_pkl, mol_pkl_sz);
   return (short)res;
 }

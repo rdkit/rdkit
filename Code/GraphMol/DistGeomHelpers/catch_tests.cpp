@@ -154,4 +154,21 @@ TEST_CASE("update parameters from JSON") {
     CHECK(DGeomHelpers::EmbedMolecule(*mol, params) == 0);
     compareConfs(ref.get(), mol.get());
   }
+
+  SECTION("setting atommap") {
+    std::unique_ptr<RWMol> mol{SmilesToMol("OCCC")};
+    REQUIRE(mol);
+    MolOps::addHs(*mol);
+    {
+      DGeomHelpers::EmbedParameters params;
+      std::string json = R"JSON({"randomSeed":42,
+    "coordMap":{"0":[0,0,0],"1":[0,0,1.5],"2":[0,1.5,1.5]}})JSON";
+      DGeomHelpers::updateEmbedParametersFromJSON(params, json);
+      CHECK(DGeomHelpers::EmbedMolecule(*mol, params) == 0);
+      auto conf = mol->getConformer();
+      auto v1 = conf.getAtomPos(0) - conf.getAtomPos(1);
+      auto v2 = conf.getAtomPos(2) - conf.getAtomPos(1);
+      CHECK(v1.angleTo(v2) == Approx(M_PI / 2).margin(0.15));
+    }
+  }
 }

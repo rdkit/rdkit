@@ -394,6 +394,7 @@ M  END\n",&tpkl_size,"");
   assert(set_3d_coords(&mpkl,&mpkl_size,"")>0);
   char *cxsmi3 = get_cxsmiles(mpkl,mpkl_size,NULL); 
   assert(set_3d_coords(&mpkl,&mpkl_size,"{\"randomSeed\":123}")>0);
+  assert(set_3d_coords(&mpkl,&mpkl_size,"{\"randomSeed\":123,\"coordMap\":{\"3\":[0,0,0],\"4\":[0,0,1.5],\"5\":[0,1.5,1.5]}}")>0);
   cxsmi = get_cxsmiles(mpkl,mpkl_size,NULL);
   // since we have coords there's something there:
   assert(strstr(cxsmi,"|"));
