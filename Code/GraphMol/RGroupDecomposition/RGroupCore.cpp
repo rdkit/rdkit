@@ -22,7 +22,7 @@ static std::vector<std::vector<int>> cartesianProduct(
   }
   return s;
 }
-} // namespace
+}  // namespace
 
 // move this to constructor if the create new core path can be removed from
 // RGroupDecomposition::add
@@ -203,10 +203,13 @@ std::vector<MatchVectType> RCore::matchTerminalUserRGroups(
     if (available.size()) {
       dummiesWithMapping.push_back(dummyIdx);
       availableMappingsForDummy.push_back(available);
+    } else {
+      // We could continue here and allow a userR group to be unmapped
+      // However, the code below will fail at the molMatchFunctor check as all
+      // query atoms are not matched to the target- the query would need to be
+      // edited before passing to the molMatchFunctor.
+      return allMappings;
     }
-    // We could return no matches here if available.size() == 0 as the user R
-    // group has not matched which is the behavior of release 2021.03, but I
-    // think it is better to allow a user R group to be unmapped.
   }
   if (availableMappingsForDummy.size() == 0) {
     allMappings.push_back(match);
@@ -243,7 +246,8 @@ std::vector<MatchVectType> RCore::matchTerminalUserRGroups(
           target.getBondBetweenAtoms(dummyMapping[i], targetNeighborIdx);
       CHECK_INVARIANT(targetBond != nullptr, "Matching target bond not found");
       const auto targetBondIdx = targetBond->getIdx();
-      // check for duplicates- some of this could also be handled within a modified cartesian product.
+      // check for duplicates- some of this could also be handled within a
+      // modified cartesian product.
       if (targetBondsPresent[targetBondIdx]) {
         duplicateBonds = true;
         break;

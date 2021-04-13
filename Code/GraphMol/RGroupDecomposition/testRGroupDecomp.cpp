@@ -2110,7 +2110,7 @@ void testSingleAtomBridge() {
   RGroupDecomposition decomp(*core, params);
   auto mol = "C1CC2NC12"_smiles;
   params.onlyMatchAtRGroups = true;
-  int res = decomp.add(*mol);
+  auto res = decomp.add(*mol);
   TEST_ASSERT(res == 0);
   TEST_ASSERT(decomp.process());
   auto rows = decomp.getRGroupsAsRows();
@@ -2145,6 +2145,13 @@ void testSingleAtomBridge() {
   TEST_ASSERT(rows.size() == 1)
   it = rows.begin();
   CHECK_RGROUP(it, expected);
+
+  core = "C1([*:1])C([*:2])*([*:3])C1"_smiles;
+  params.onlyMatchAtRGroups = true;
+  RGroupDecomposition decomp5(*core, params);
+  mol = "C1OC2NC12"_smiles;
+  res = decomp5.add(*mol);
+  TEST_ASSERT(res == -1);
 }
 
 void testAddedRGroupsHaveCoords() {
@@ -2462,7 +2469,6 @@ int main() {
       << "********************************************************\n";
   BOOST_LOG(rdInfoLog) << "Testing R-Group Decomposition \n";
 
-  testSingleAtomBridge();
 #if 1
   testSymmetryMatching(FingerprintVariance);
   testSymmetryMatching();
