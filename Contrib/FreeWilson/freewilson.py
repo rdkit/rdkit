@@ -19,14 +19,34 @@ Basic usage: get a scaffold (or scaffolds) some compounds and their scores,
 then run freewilson:
 
 
+Read some example data:
 ```
->>> import sys
->>> freewilson impor FWDecompose, FWBuild, predictions_to_csv
+>>> import os, sys
+>>> DATA_PATH = "data"
+>>> smilesfile = os.path.join(DATA_PATH, "CHEMBL2321810.smi")
+>>> scaffoldfile = os.path.join(DATA_PATH, "CHEMBL2321810_scaffold.mol")
+>>> csvfile = os.path.join(DATA_PATH, "CHEMBL2321810_act.csv")
+>>> mols = []
+>>> for line in open(smilesfile):
+...     smiles, name = line.strip().split()
+...     m = Chem.MolFromSmiles(smiles)
+...     m.SetProp("_Name", name)
+...     mols.append(m)
+>>> scaffold = Chem.MolFromMolBlock(open(scaffoldfile).read())
+>>> data = {k:float(v) for k,v in list(csv.reader(open(csvfile)))[1:]}
+>>> scores = [data[m.GetProp("_Name")] for m in mols]
+
+```
+
+And do the decomposition:
+```
+>>> from freewilson import FWDecompose, FWBuild, predictions_to_csv
 >>> decomp = FWDecompose(scaffold, mols, scores)
->>> preds = FWBuild(fdecomp, 
-...                    pred_filter=lambda x: x > 8, 
-...                    mw_filter=lambda mw: 100<mw<550)
+>>> preds = FWBuild(decomp, 
+...                 pred_filter=lambda x: x > 8, 
+...                 mw_filter=lambda mw: 100<mw<550)
 >>> predictions_to_csv(sys.stdout, preds)
+
 ```
 
 Scores need to be in an appropriate form for regrerssion analysis, i.e. pIC50s as opposed to IC50s.
@@ -38,7 +58,9 @@ enumerates matching cores in the analysis.
 To see if the decomposition is useful, check the r squared value
 
 ```
->>> print(f"Training R^2 is {decomp.r2}")
+>>> print(f"Training R^2 is {decomp.r2:0.2f}")
+Training R^2 is 0.81
+
 ```
 
 You can also get some more information by setting logging to INFO
@@ -46,7 +68,13 @@ You can also get some more information by setting logging to INFO
 ```
 >>> import logging
 >>> logging.getLogger().setLevel(logging.INFO)
->>> preds = list(fw.FWBuild(free, pred_filter=lambda x: x > 8))
+>>> preds = list(FWBuild(decomp, pred_filter=lambda x: x > 8))
+
+```
+
+You'll see something like this:
+
+```
 INFO:root:Enumerating rgroups with no broken cycles...
 INFO:root:	Core	1
 INFO:root:	R1	73
@@ -76,9 +104,9 @@ input structures
 
 ```
 >>> from rdkit.Chem import rdFMCS
->>> mcs = rdFMCS.FindMCS(mols, threshold=0.8, atomCompare=rdFMCS.AtomCompare.CompareAny,
-...                      completeRingsOnly=True)
->>> decomp = FWDecompose(mcs.queryMol, mols, scores)
+>>> mcs = rdFMCS.FindMCS(mols[0:8], threshold=0.8, atomCompare=rdFMCS.AtomCompare.CompareAny,
+...                      completeRingsOnly=True)                           # doctest: +SKIP
+>>> decomp = FWDecompose(mcs.queryMol, mols, scores)                       # doctest: +SKIP
 ```
 
 Using Molecule filters
@@ -87,8 +115,9 @@ Finally, the molecule filter can be used to prune greasy or otherrwise undesirab
 molecules:
 
 ```
-from rdkit.Chem import Descriptors
->>> for pred in fw.FWBuild(free, mol_filter=lambda mol: -3 < Descriptors.MolLogP(mol) < 3):
+>>> from rdkit.Chem import Descriptors
+>>> for pred in FWBuild(decomp, pred_filter=lambda x: x > 8,
+...                             mol_filter=lambda mol: -3 < Descriptors.MolLogP(mol) < 3):
 ...   print(pred.smiles, pred.prediction)
 """
 
@@ -108,13 +137,11 @@ import logging
 import csv
 import re
 from typing import Generator
-logger = logging.getLogger("rdkit.Chem.FreeWilson")
+logger = logging.getLogger("freewilson")
 
 FreeWilsonPrediction = namedtuple("FreeWilsonPrediction", ['prediction', 'smiles', 'rgroups'])
 
-# hydrogens with dummy atoms
-hspat = re.compile(r"\[[H0-9]+\]\[\*:([0-9]+)")
-# all dummy atoms
+# match dummy atoms in a smiles string to extract atom maps 
 dummypat = re.compile(r"\*:([0-9]+)")
 
 
@@ -132,9 +159,6 @@ class RGroup:
         self.count = count             # num molecules with this rgruop
         self.coefficient = coefficient # ridge coefficient
         self.idx = idx                # descriptor index
-        hs = [int(x) for x in hspat.findall(smiles)]
-        assert len(hs) <= 1
-        self.hs = hs                   # hydrogen with dummy atoms    
         self.dummies = tuple([int(x) for x in sorted(dummypat.findall(smiles))])
 
         # Assemble some additive properties 
@@ -189,6 +213,9 @@ default_decomp_params.matchingStrategy = rgd.GA
 # Also the decomposition is allowed to add new rgroups
 default_decomp_params.onlyMatchAtRGroups = False
 
+# use the fingerprint variance method for scoring
+default_decomp_params.scoreMethod = rgd.RGroupScore.FingerprintVariance
+
 def FWDecompose(scaffolds, mols, scores, decomp_params=default_decomp_params) -> FreeWilsonDecomposition:
     """
     Perform a free wilson analysis
@@ -206,24 +233,19 @@ def FWDecompose(scaffolds, mols, scores, decomp_params=default_decomp_params) ->
 
 
         >>> from rdkit import Chem
-        >>> from rdkit.Chem import Descriptors, FreeWilson
+        >>> from freewilson import FWBuild, FWDecompose
+        >>> from rdkit.Chem import Descriptors
         >>> scaffold = Chem.MolFromSmiles("c1cccnc1")
         >>> mols = [Chem.MolFromSmiles("c1cccnc1"+"C"*(i+1)) for i in range(100)]
         >>> scores = [Descriptors.MolLogP(m) for m in mols]
         >>> fw = FWDecompose(scaffold, mols, scores)
         >>> for pred in FWBuild(fw):
-        >>>  ...
-
-    To filter out molecules in the training set, send the freewilson decomposition into
-    the builder.
-
-       >>> for pred in FWBuild(fw, decomposition=fw):
-       >>>    ...
+        ...   print(pred)
 
     For an easy way to report predictions see 
 
        >>> import sys
-       >>> predictions_to_csv(sys.stdout, fw, FWBuild(fw))
+       >>> predictions_to_csv(sys.stdout, FWBuild(fw))
 
    
     See FWBuild docs to see how to filter predictions, molecular weight or molecular properties.
@@ -458,11 +480,6 @@ def test_freewilson():
     # some simple tests
     from rdkit import Chem
     from rdkit.Chem import Descriptors
-    assert hspat.findall("C[*:1]N.[H][*:2]") == ['2']
-    assert hspat.findall("C[*:1]N.[HH][*:2]") == ['2']
-    assert hspat.findall("C[*:1]N.[2H][*:2]") == ['2']
-    assert hspat.findall("C[*:1]N.[CH2][*:2]") == []
-
     assert dummypat.findall("C[*:1]N.[H][*:2]") == ['1', '2']
     assert dummypat.findall("C[*:1]N.[HH][*:2]") == ['1', '2']
     assert dummypat.findall("C[*:1]N.[2H][*:2]") == ['1', '2']
