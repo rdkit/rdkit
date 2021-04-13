@@ -56,22 +56,15 @@ __pycache__/
 /External/catch/catch/
 /External/CoordGen/coordgen/
 /External/CoordGen/maeparser/
-/External/FreeSASA/freesasa-2.0.*/
-/External/FreeSASA/additional_exports.def
+/External/FreeSASA/freesasa-2.0.1/
 /External/INCHI-API/INCHI-1-SRC/
 /External/INCHI-API/src/
 /External/rapidjson-1.1.0/
 /External/RingFamilies/RingDecomposerLib/
 /External/AvalonTools/SourceDistribution
-/External/AvalonTools/StandardFiles/
-/External/AvalonTools/AvalonToolkit_*.tar
 
 /rdkit/RDPaths.py
 /rdkit/Chem/inchi.py
-
-/Code/GraphMol/MolDraw2D/Comic_Neue.zip
-/Data/Fonts/ComicNeue-*
-/Data/Fonts/OFL.txt
 
 #- Files created during tests
 /Code/ForceField/MMFF/test_data/MMFF94_dative_min.sdf
