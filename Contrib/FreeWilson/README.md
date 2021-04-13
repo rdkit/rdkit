@@ -32,11 +32,6 @@ And do the decomposition:
 ```
 >>> from freewilson import FWDecompose, FWBuild, predictions_to_csv
 >>> decomp = FWDecompose(scaffold, mols, scores)
->>> preds = FWBuild(decomp, 
-...                 pred_filter=lambda x: x > 8, 
-...                 mw_filter=lambda mw: 100<mw<550)
->>> predictions_to_csv(sys.stdout, preds)
-
 ```
 
 Scores need to be in an appropriate form for regrerssion analysis, i.e. pIC50s as opposed to IC50s.
@@ -53,6 +48,47 @@ Training R^2 is 0.81
 
 ```
 
+Finally you can build the decomposition into new molecules:
+
+```
+>>> for pred in FWBuild(decomp):
+...     print(pred.smiles, pred.prediction)
+
+```
+
+Now this builds both well and poorly predictedd molecules.  To prevent
+this you can use the following filters while building:
+
+   1. pred_filter:  given a prediction, return True to keep the molecule
+   2. hvy_filter: given a heavy atom count, return True to keep the molecule
+   3. mw_filter: given a molecular weight, return True to keep the molecule
+   4. mol_filter: given a sanitized molecule, return True to keep the molecule
+
+Here are some examples (see using Molecular Filters below)
+
+```
+>>> preds = FWBuild(decomp, 
+...                 pred_filter=lambda x: x > 8, 
+...                 mw_filter=lambda mw: 100<mw<550)
+>>> predictions_to_csv(sys.stdout, preds)
+
+```
+
+Using Molecule filters
+----------------------
+Finally, the molecule filter can be used to prune greasy or otherrwise undesirable
+molecules:
+
+```
+>>> from rdkit.Chem import Descriptors
+>>> for pred in FWBuild(decomp, pred_filter=lambda x: x > 8,
+...                             mol_filter=lambda mol: -3 < Descriptors.MolLogP(mol) < 3):
+...   print(pred.smiles, pred.prediction)
+
+```
+
+More Info
+---------
 You can also get some more information by setting logging to INFO
 
 ```
@@ -97,6 +133,7 @@ input structures
 >>> mcs = rdFMCS.FindMCS(mols, threshold=0.8, atomCompare=rdFMCS.AtomCompare.CompareAny,
 ...                      completeRingsOnly=True)
 >>> decomp = FWDecompose(mcs.queryMol, mols, scores)
+
 ```
 
 Note that the MCS returned can generate multiple Cores, this freewilson implementatino

@@ -42,10 +42,6 @@ And do the decomposition:
 ```
 >>> from freewilson import FWDecompose, FWBuild, predictions_to_csv
 >>> decomp = FWDecompose(scaffold, mols, scores)
->>> preds = FWBuild(decomp, 
-...                 pred_filter=lambda x: x > 8, 
-...                 mw_filter=lambda mw: 100<mw<550)
->>> predictions_to_csv(sys.stdout, preds)
 
 ```
 
@@ -62,7 +58,34 @@ To see if the decomposition is useful, check the r squared value
 Training R^2 is 0.81
 
 ```
+Finally you can build the decomposition into new molecules:
 
+```
+>>> for pred in FWBuild(decomp):                            # doctest: +SKIP
+...     print(pred.smiles, pred.prediction)
+
+```
+
+Now this builds both well and poorly predictedd molecules.  To prevent
+this you can use the following filters while building:
+
+   1. pred_filter:  given a prediction, return True to keep the molecule
+   2. hvy_filter: given a heavy atom count, return True to keep the molecule
+   3. mw_filter: given a molecular weight, return True to keep the molecule
+   4. mol_filter: given a sanitized molecule, return True to keep the molecule
+
+Here are some examples (see using Molecular Filters below)
+
+```
+>>> preds = FWBuild(decomp, 
+...                 pred_filter=lambda x: x > 8, 
+...                 mw_filter=lambda mw: 100<mw<550)
+>>> predictions_to_csv(sys.stdout, preds)
+
+```
+
+More Info
+---------
 You can also get some more information by setting logging to INFO
 
 ```
@@ -107,18 +130,8 @@ input structures
 >>> mcs = rdFMCS.FindMCS(mols[0:8], threshold=0.8, atomCompare=rdFMCS.AtomCompare.CompareAny,
 ...                      completeRingsOnly=True)                           # doctest: +SKIP
 >>> decomp = FWDecompose(mcs.queryMol, mols, scores)                       # doctest: +SKIP
-```
-
-Using Molecule filters
-----------------------
-Finally, the molecule filter can be used to prune greasy or otherrwise undesirable
-molecules:
 
 ```
->>> from rdkit.Chem import Descriptors
->>> for pred in FWBuild(decomp, pred_filter=lambda x: x > 8,
-...                             mol_filter=lambda mol: -3 < Descriptors.MolLogP(mol) < 3):
-...   print(pred.smiles, pred.prediction)
 """
 
 from rdkit.Chem import rdRGroupDecomposition as rgd
@@ -161,19 +174,28 @@ class RGroup:
         self.idx = idx                # descriptor index
         self.dummies = tuple([int(x) for x in sorted(dummypat.findall(smiles))])
 
-        # Assemble some additive properties 
+        # Assemble some additive properties
         try:
             # will fail on some structures
-            self.mw = Descriptors.MolWt(Chem.MolFromSmiles(smiles))
+            m = Chem.MolFromSmiles(smiles)
+            self.mw = Descriptors.MolWt(m)
+            self.hvyct = Descriptors.HeavyAtomCount(mol)
         except:
             # guess the MW if we can't sanitize
             table = Chem.GetPeriodicTable()
             try:
+                m = Chem.MolFromSmiles(smiles, sanitize=False)
                 self.mw = 0.
-                for atom in Chem.MolFromSmiles(smiles, sanitize=False).GetAtoms():
-                    self.mw += table.GetAtomicWeight(atom.GetAtomicNum())
+                self.hvyct = 0
+                for atom in m.GetAtoms():
+                    atomicnum = atom.GetAtomicNum()
+                    self.mw += table.GetAtomicWeight(atomicnum)
+                    if atomicnum > 1:
+                        self.hvyct += 1
+                self.hvyct = Descriptors.HeavyAtomCount(mol)
             except:
                 self.mw = 0 # dunno
+                self.hvyct = 0
         
     def __str__(self):
         return f"RGroup(smiles={repr(self.smiles)}, rgroup={repr(self.rgroup)}, count={repr(self.count)}, coefficient={repr(self.coefficient)}, idx={repr(self.idx)})"
@@ -309,7 +331,7 @@ def FWDecompose(scaffolds, mols, scores, decomp_params=default_decomp_params) ->
     return FreeWilsonDecomposition(rgroups, rgroup_idx, lm, r2, descriptors)
 
 def _enumerate(rgroups, fw, 
-               mw_filter=None, pred_filter=None, mol_filter=None):
+               mw_filter=None, hvy_filter=None, pred_filter=None, mol_filter=None):
     N = fw.N
     fitter = fw.fitter
     num_products = 1
@@ -320,11 +342,14 @@ def _enumerate(rgroups, fw,
     in_training_set = 0
     rejected_pred = 0
     rejected_mw = 0
+    rejected_hvy = 0
     good_pred = 0
     rejected_filters = 0
     rejected_bad = 0
     min_mw = 10000000
     max_mw = 0
+    min_hvy = 10000000
+    max_hvy = 0
     max_pred = -1e10
     min_pred = 1e10
     delta = num_products//10 or 1
@@ -333,10 +358,13 @@ def _enumerate(rgroups, fw,
             logging.debug(f"Wrote {wrote} results out of {num_products}\n\t\n\tIn Training Set{in_training_set}\n\tBad MW: {rejected_mw}\n\tBad Pred: {rejected_pred}\n\tBad Filters: {rejected_filters}\n\tBad smi: {rejected_bad}\n\tmin mw: {min_mw}\n\tmax mw: {max_mw}\n\t\n\tmin pred: {min_pred}\n\tmax pred: {max_pred}", file=sys.stderr)
 
         mw = 0
+        hvy = 0
         descriptors = [0] * N
         for g in groups:
             descriptors[g.idx] = 1
             mw += g.mw
+            hvy += g.hvyct
+
         if tuple(descriptors) in fw.descriptors:
             in_training_set += 1
             continue
@@ -346,6 +374,13 @@ def _enumerate(rgroups, fw,
         if mw_filter and not mw_filter(mw):
             rejected_mw += 1
             continue
+
+        min_hvy = min(min_hvy, hvy)
+        max_hvy = max(max_hvy, hvy)
+        if hvy_filter and not hvy_filter(hvy):
+            rejected_hvy += 1
+            continue
+
         pred = fitter.predict([descriptors])[0]
         max_pred = max(pred, max_pred)
         min_pred = min(pred, min_pred)
@@ -369,12 +404,13 @@ def _enumerate(rgroups, fw,
         out_smi = Chem.MolToSmiles(mol)
         yield FreeWilsonPrediction(pred, out_smi, groups)
         wrote += 1
-    logging.info(f"Wrote {wrote} results out of {num_products}\n\tIn Training set: {in_training_set}\n\tBad MW: {rejected_mw}\n\tBad Pred: {rejected_pred}\n\tBad Filters: {rejected_filters}\n\tBad smi: {rejected_bad}\n\tmin mw: {min_mw}\n\tmax mw: {max_mw}\n\t\n\tmin pred: {min_pred}\n\tmax pred: {max_pred}")
+    logging.info(f"Wrote {wrote} results out of {num_products}\n\tIn Training set: {in_training_set}\n\tBad MW: {rejected_mw}\n\tBad Pred: {rejected_pred}\n\tBad Filters: {rejected_filters}\n\tBad smi: {rejected_bad}\n\tmin mw: {min_mw}\n\tmax mw: {max_mw}\n\tBad HVY: {rejected_hvy}\n\tBad Pred: {rejected_pred}\n\tBad Filters: {rejected_filters}\n\tBad smi: {rejected_bad}\n\tmin mw: {min_mw}\n\tmax mw: {max_mw}\n\tmin hvy: {min_hvy}\n\tmax hvy: {max_hvy}\n\t\n\tmin pred: {min_pred}\n\tmax pred: {max_pred}")
 
     
 def FWBuild(fw: FreeWilsonDecomposition,
             pred_filter=None,
             mw_filter=None,
+            hvy_filter=None,
             mol_filter=None) -> Generator[FreeWilsonPrediction,None,None]:
     """Enumerate the freewilson decomposition and return their predictions
 
@@ -383,6 +419,8 @@ def FWBuild(fw: FreeWilsonDecomposition,
                            e.g.  lambda pic50: pic50>=8
        :param mw_filter: return True if the enumerated molecular weight is in a desireable rrange
                            e.g. lambda mw: 150 < mw < 550
+       :param hvy_filter: return True if the enumerated heavy couont is in a desireable rrange
+                           e.g. lambda hvy: 10 < hvy < 50
        :param mol_filter: return True if the molecule is ok to be enumerated
                            e.g. lambda mol: -3 < Descriptors.MolLogp(mol) < 5
     """
@@ -413,6 +451,7 @@ def FWBuild(fw: FreeWilsonDecomposition,
                           fw,
                           pred_filter=pred_filter,
                           mw_filter=mw_filter,
+                          hvy_filter=hvy_filter,
                           mol_filter=mol_filter):
         yield res
 
@@ -440,6 +479,7 @@ def FWBuild(fw: FreeWilsonDecomposition,
                               fw,
                               pred_filter=pred_filter,
                               mw_filter=mw_filter,
+                              hvy_filter=hvy_filter,
                               mol_filter=mol_filter):
             yield res    
 
@@ -493,6 +533,7 @@ def test_freewilson():
     for pred in FWBuild(fw,
                         pred_filter=lambda x: -3 < x < 3,
                         mw_filter=lambda mw: 100<mw<450,
+                        hvy_filter=lambda hvy: 10<hvy<50,
                         mol_filter=lambda m: -3 < Descriptors.MolLogP(m) < 3):
         rgroups = set()
         for sidechain in pred.rgroups:
