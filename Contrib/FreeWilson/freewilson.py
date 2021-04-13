@@ -38,7 +38,7 @@ enumerates matching cores in the analysis.
 To see if the decomposition is useful, check the r squared value
 
 ```
->>> print(r"Training R^2 is {decomp.r2}")
+>>> print(f"Training R^2 is {decomp.r2}")
 ```
 
 You can also get some more information by setting logging to INFO
@@ -131,7 +131,7 @@ class RGroup:
         self.rgroup  = rgroup          # rgroup Core, R1, R2,...
         self.count = count             # num molecules with this rgruop
         self.coefficient = coefficient # ridge coefficient
-        self.idx = None                # descriptor index
+        self.idx = idx                # descriptor index
         hs = [int(x) for x in hspat.findall(smiles)]
         assert len(hs) <= 1
         self.hs = hs                   # hydrogen with dummy atoms    
@@ -214,8 +214,8 @@ def FWDecompose(scaffolds, mols, scores, decomp_params=default_decomp_params) ->
         >>> for pred in FWBuild(fw):
         >>>  ...
 
-    To filter out molecules in the training set, send the freewilson decomoposition into
-    the builer.
+    To filter out molecules in the training set, send the freewilson decomposition into
+    the builder.
 
        >>> for pred in FWBuild(fw, decomposition=fw):
        >>>    ...
@@ -228,11 +228,11 @@ def FWDecompose(scaffolds, mols, scores, decomp_params=default_decomp_params) ->
    
     See FWBuild docs to see how to filter predictions, molecular weight or molecular properties.
     """
-    descriptors = descriptors = [] # list of descriptors, one per matched molecules
+    descriptors = [] # list of descriptors, one per matched molecules
                                    #    descriptors are 1/0 if a sidechain is present
     matched_scores = []            # scores from the matching molecules
-    rgroup_idx = rgroup_idx = {}   # rgroup index into descriptor { smiles: idx }
-    rgroups = rgroups = defaultdict(list) # final list of rgrups/sidechains
+    rgroup_idx = {}   # rgroup index into descriptor { smiles: idx }
+    rgroups = defaultdict(list) # final list of rgrups/sidechains
 
     if len(mols) != len(scores):
         raise ValueError(f"The number of molecules must match the number of scores #mols {len(mols)} #scores {len(scores)}")
@@ -260,10 +260,10 @@ def FWDecompose(scaffolds, mols, scores, decomp_params=default_decomp_params) ->
 
     logger.info(f"Descriptor size {len(rgroup_idx)}")
     # get the descriptors list, one-hot encoding per rgroup
-    for i,row in enumerate(decomposition):
+    for row in decomposition:
         descriptor = [0] * len(rgroup_idx)
         descriptors.append(descriptor)
-        for rgroup,smiles in row.items():
+        for smiles in row.values():
             if smiles in rgroup_idx:
                 descriptor[rgroup_idx[smiles]] = 1
 
@@ -271,14 +271,14 @@ def FWDecompose(scaffolds, mols, scores, decomp_params=default_decomp_params) ->
 
     # Perform the Ridge Regression
     logger.info("Ridge Regressing...")
-    lm = lm = Ridge()
+    lm = Ridge()
     lm.fit(descriptors, matched_scores)
     preds = lm.predict(descriptors)
     r2 = r2_score(matched_scores, preds)
-    logger.info(f"R2 {r2_score(matched_scores, preds)}")
+    logger.info(f"R2 {r2}")
     logger.info(f"Intercept = {lm.intercept_:.2f}")
 
-    for _, sidechains in rgroups.items():
+    for sidechains in rgroups.values():
         for rgroup in sidechains:
             rgroup.count = rgroup_counts[rgroup.smiles]
             rgroup.coefficient = lm.coef_[rgroup_idx[rgroup.smiles]]
@@ -291,7 +291,7 @@ def _enumerate(rgroups, fw,
     N = fw.N
     fitter = fw.fitter
     num_products = 1
-    for i,r in enumerate(rgroups):
+    for r in rgroups:
         num_products*=len(r)
 
     wrote = 0
@@ -397,7 +397,7 @@ def FWBuild(fw: FreeWilsonDecomposition,
     # iterate on rgroups with cycles
     #  basically only let one set of RGroups show up once.
     indices = set()
-    for k in fw.rgroups.keys():
+    for k in fw.rgroups:
         if k[0] == "R":
             indices.add(int(k[1:]))
     if cycles:
@@ -482,5 +482,4 @@ def test_freewilson():
             rgroups.add(sidechain.rgroup)
         rgroups = sorted(rgroups)
         assert list(rgroups) == ['Core', 'R1', 'R2']
-
 
