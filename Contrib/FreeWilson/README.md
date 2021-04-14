@@ -76,7 +76,7 @@ Here are some examples (see using Molecular Filters below)
 
 Using Molecule filters
 ----------------------
-Finally, the molecule filter can be used to prune greasy or otherrwise undesirable
+Finally, the molecule filter can be used to prune greasy or otherwise undesirable
 molecules:
 
 ```
