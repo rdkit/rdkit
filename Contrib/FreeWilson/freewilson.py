@@ -157,7 +157,6 @@ FreeWilsonPrediction = namedtuple("FreeWilsonPrediction", ['prediction', 'smiles
 # match dummy atoms in a smiles string to extract atom maps 
 dummypat = re.compile(r"\*:([0-9]+)")
 
-
 class RGroup:
     """FreeWilson RGroup
         smiles - isomeric smiles of the rgroup
@@ -175,16 +174,17 @@ class RGroup:
         self.dummies = tuple([int(x) for x in sorted(dummypat.findall(smiles))])
 
         # Assemble some additive properties
-        try:
-            # will fail on some structures
-            m = Chem.MolFromSmiles(smiles)
+        
+        # will fail on some structures
+        m = Chem.MolFromSmiles(smiles)
+        if m:
             self.mw = Descriptors.MolWt(m)
-            self.hvyct = Descriptors.HeavyAtomCount(mol)
-        except:
+            self.hvyct = Descriptors.HeavyAtomCount(m)
+        else:
             # guess the MW if we can't sanitize
             table = Chem.GetPeriodicTable()
-            try:
-                m = Chem.MolFromSmiles(smiles, sanitize=False)
+            m = Chem.MolFromSmiles(smiles, sanitize=False)
+            if m:
                 self.mw = 0.
                 self.hvyct = 0
                 for atom in m.GetAtoms():
@@ -192,8 +192,8 @@ class RGroup:
                     self.mw += table.GetAtomicWeight(atomicnum)
                     if atomicnum > 1:
                         self.hvyct += 1
-                self.hvyct = Descriptors.HeavyAtomCount(mol)
-            except:
+                self.hvyct = Descriptors.HeavyAtomCount(m)
+            else:
                 self.mw = 0 # dunno
                 self.hvyct = 0
         
@@ -541,3 +541,26 @@ def test_freewilson():
         rgroups = sorted(rgroups)
         assert list(rgroups) == ['Core', 'R1', 'R2']
 
+def test_rgroups():
+    smiles = "[*:2]c1ccccc1[*:1]"
+    rg = RGroup(smiles=smiles, rgroup="Core", count=1, coefficient=0.1)
+    mol = Chem.MolFromSmiles(smiles)
+    assert rg.mw == Descriptors.MolWt(mol)
+    assert rg.hvyct == Descriptors.HeavyAtomCount(mol)
+    assert rg.dummies == (1,2)
+    
+    # try a non parseable smiles
+    smiles = "[*:2]cccccc[*:1]"
+    rg = RGroup(smiles=smiles, rgroup="Core", count=1, coefficient=0.1)
+    assert rg.mw == 72.06599999999999 # almost but not quite benzene
+    assert rg.hvyct == 6
+    assert rg.dummies == (1,2)
+
+    # finally aa non parseble one
+    smiles = "Nope"
+    rg = RGroup(smiles=smiles, rgroup="Core", count=1, coefficient=0.1)
+    assert rg.mw == 0
+    assert rg.hvyct == 0
+    assert rg.dummies == tuple()
+
+        
