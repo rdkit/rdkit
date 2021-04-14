@@ -175,6 +175,12 @@ std::string labelRecursivePatterns(const std::string &sma) {
     } else if (sma[pos] == '(') {
       state.push_back(BRANCH);
     } else if (sma[pos] == ')') {
+      if (state.empty() || state.back() == BASE) {
+        std::stringstream errout;
+        errout << "SMARTS '" << sma
+               << "' has a closing parentheses which doesn't have an opener.";
+        throw SmilesParseException(errout.str());
+      }
       SmaState currState = state.back();
       state.pop_back();
       if (currState == RECURSE) {
