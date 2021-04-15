@@ -56,7 +56,8 @@ typedef enum {
   ComputedProps = 0x20,
   AllProps = 0x0000FFFF,        // all data pickled
   CoordsAsDouble = 0x0001FFFF,  // save coordinates in double precision
-  NoCoords = 0x00020000         // do not include coordinates
+  NoConformers =
+      0x00020000  // do not include conformers or associated properties
 } PropertyPickleOptions;
 }
 

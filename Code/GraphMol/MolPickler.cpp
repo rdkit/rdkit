@@ -1058,7 +1058,7 @@ void MolPickler::_pickle(const ROMol *mol, std::ostream &ss,
     }
   }
 
-  if (!(propertyFlags & PicklerOps::NoCoords)) {
+  if (!(propertyFlags & PicklerOps::NoConformers)) {
     std::stringstream tss;
     if (propertyFlags & PicklerOps::CoordsAsDouble) {
       // pickle the conformations
@@ -1082,33 +1082,43 @@ void MolPickler::_pickle(const ROMol *mol, std::ostream &ss,
 
     if (propertyFlags & PicklerOps::MolProps) {
       streamWrite(tss, BEGINCONFPROPS);
+      std::stringstream tss2;
       for (auto ci = mol->beginConformers(); ci != mol->endConformers(); ++ci) {
         const Conformer *conf = ci->get();
-        _pickleProperties(tss, *conf, propertyFlags);
+        _pickleProperties(tss2, *conf, propertyFlags);
       }
+      write_sstream_to_stream(tss, tss2);
     }
     write_sstream_to_stream(ss, tss);
   }
+
   if (propertyFlags & PicklerOps::MolProps) {
     streamWrite(ss, BEGINPROPS);
-    _pickleProperties(ss, *mol, propertyFlags);
+    std::stringstream tss;
+    _pickleProperties(tss, *mol, propertyFlags);
+    write_sstream_to_stream(ss, tss);
     streamWrite(ss, ENDPROPS);
   }
+
   if (propertyFlags & PicklerOps::AtomProps) {
     streamWrite(ss, BEGINATOMPROPS);
+    std::stringstream tss;
     for (ROMol::ConstAtomIterator atIt = mol->beginAtoms();
          atIt != mol->endAtoms(); ++atIt) {
-      _pickleProperties(ss, **atIt, propertyFlags);
+      _pickleProperties(tss, **atIt, propertyFlags);
     }
+    write_sstream_to_stream(ss, tss);
     streamWrite(ss, ENDPROPS);
   }
 
   if (propertyFlags & PicklerOps::BondProps) {
     streamWrite(ss, BEGINBONDPROPS);
+    std::stringstream tss;
     for (ROMol::ConstBondIterator bondIt = mol->beginBonds();
          bondIt != mol->endBonds(); ++bondIt) {
-      _pickleProperties(ss, **bondIt, propertyFlags);
+      _pickleProperties(tss, **bondIt, propertyFlags);
     }
+    write_sstream_to_stream(ss, tss);
     streamWrite(ss, ENDPROPS);
   }
 
@@ -1224,13 +1234,9 @@ void MolPickler::_depickle(std::istream &ss, ROMol *mol, int version,
     if (version >= 13000) {
       streamRead(ss, blkSize, version);
     }
-    if (version >= 13000 && (propertyFlags & PicklerOps::NoCoords)) {
+    if (version >= 13000 && (propertyFlags & PicklerOps::NoConformers)) {
       // not reading coordinates, so just skip over those bytes
-      // FIX: would be nice to be able to seek here, but we can't rely on that
-      // being available with all streams. Look into whether nor not we can
-      // somehow test if that's available.
-      char buff[blkSize];
-      ss.read(buff, blkSize);
+      ss.seekg(blkSize, std::ios_base::cur);
       streamRead(ss, tag, version);
     } else {
       // read in the conformation
@@ -1248,8 +1254,16 @@ void MolPickler::_depickle(std::istream &ss, ROMol *mol, int version,
       }
       streamRead(ss, tag, version);
       if (tag == BEGINCONFPROPS) {
-        for (auto cid : cids) {
-          _unpickleProperties(ss, mol->getConformer(cid));
+        int32_t blkSize = 0;
+        if (version >= 13000) {
+          streamRead(ss, blkSize, version);
+        }
+        if (version >= 13000 && !(propertyFlags & PicklerOps::MolProps)) {
+          ss.seekg(blkSize, std::ios_base::cur);
+        } else {
+          for (auto cid : cids) {
+            _unpickleProperties(ss, mol->getConformer(cid));
+          }
         }
         streamRead(ss, tag, version);
       }
@@ -1258,18 +1272,42 @@ void MolPickler::_depickle(std::istream &ss, ROMol *mol, int version,
 
   while (tag != ENDMOL) {
     if (tag == BEGINPROPS) {
-      _unpickleProperties(ss, *mol);
+      int32_t blkSize = 0;
+      if (version >= 13000) {
+        streamRead(ss, blkSize, version);
+      }
+      if (version >= 13000 && !(propertyFlags & PicklerOps::MolProps)) {
+        ss.seekg(blkSize, std::ios_base::cur);
+      } else {
+        _unpickleProperties(ss, *mol);
+      }
       streamRead(ss, tag, version);
     } else if (tag == BEGINATOMPROPS) {
-      for (ROMol::AtomIterator atIt = mol->beginAtoms();
-           atIt != mol->endAtoms(); ++atIt) {
-        _unpickleProperties(ss, **atIt);
+      int32_t blkSize = 0;
+      if (version >= 13000) {
+        streamRead(ss, blkSize, version);
+      }
+      if (version >= 13000 && !(propertyFlags & PicklerOps::AtomProps)) {
+        ss.seekg(blkSize, std::ios_base::cur);
+      } else {
+        for (ROMol::AtomIterator atIt = mol->beginAtoms();
+             atIt != mol->endAtoms(); ++atIt) {
+          _unpickleProperties(ss, **atIt);
+        }
       }
       streamRead(ss, tag, version);
     } else if (tag == BEGINBONDPROPS) {
-      for (ROMol::BondIterator bdIt = mol->beginBonds();
-           bdIt != mol->endBonds(); ++bdIt) {
-        _unpickleProperties(ss, **bdIt);
+      int32_t blkSize = 0;
+      if (version >= 13000) {
+        streamRead(ss, blkSize, version);
+      }
+      if (version >= 13000 && !(propertyFlags & PicklerOps::BondProps)) {
+        ss.seekg(blkSize, std::ios_base::cur);
+      } else {
+        for (ROMol::BondIterator bdIt = mol->beginBonds();
+             bdIt != mol->endBonds(); ++bdIt) {
+          _unpickleProperties(ss, **bdIt);
+        }
       }
       streamRead(ss, tag, version);
     } else if (tag == BEGINQUERYATOMDATA) {

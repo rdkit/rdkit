@@ -1559,21 +1559,135 @@ void testConformerOptions() {
     TEST_ASSERT(m1.getNumAtoms() == m2.getNumAtoms());
     TEST_ASSERT(m2.getNumConformers() == m1.getNumConformers());
     ROMol m3;
-    MolPickler::molFromPickle(pickle, m3, PicklerOps::NoCoords);
+    MolPickler::molFromPickle(pickle, m3, PicklerOps::NoConformers);
     TEST_ASSERT(m3.getNumConformers() == 0);
     TEST_ASSERT(m1.getNumAtoms() == m3.getNumAtoms());
   }
   {
     std::string pickle;
-    MolPickler::pickleMol(m1, pickle, PicklerOps::NoCoords);
+    MolPickler::pickleMol(m1, pickle, PicklerOps::NoConformers);
     ROMol m2;
     MolPickler::molFromPickle(pickle, m2);
     TEST_ASSERT(m1.getNumAtoms() == m2.getNumAtoms());
     TEST_ASSERT(m2.getNumConformers() == 0);
     ROMol m3;
-    MolPickler::molFromPickle(pickle, m3, PicklerOps::NoCoords);
+    MolPickler::molFromPickle(pickle, m3, PicklerOps::NoConformers);
     TEST_ASSERT(m1.getNumAtoms() == m3.getNumAtoms());
     TEST_ASSERT(m3.getNumConformers() == 0);
+  }
+  BOOST_LOG(rdErrorLog) << "\tdone" << std::endl;
+}
+
+void testPropertyOptions() {
+  BOOST_LOG(rdErrorLog) << "-------------------------------------" << std::endl;
+  BOOST_LOG(rdErrorLog) << "Testing property reading options" << std::endl;
+
+  std::string pklName = getenv("RDBASE");
+  pklName += "/Code/GraphMol/test_data/mol_with_confs.pkl";  // written with
+                                                             // v2021.03.1
+  std::ifstream inStream(pklName.c_str(), std::ios_base::binary);
+  ROMol m1;
+  MolPickler::molFromPickle(inStream, m1);
+  TEST_ASSERT(m1.getNumConformers() == 5);
+  m1.setProp("intp", 1);
+  for (auto conf = m1.beginConformers(); conf != m1.endConformers(); ++conf) {
+    (*conf)->setProp("intp", 1);
+  }
+  for (const auto atom : m1.atoms()) {
+    atom->setProp("intp", 1);
+  }
+  for (const auto bond : m1.bonds()) {
+    bond->setProp("intp", 1);
+  }
+  // reading when properties are present
+  std::string pickle;
+  MolPickler::pickleMol(m1, pickle, PicklerOps::AllProps);
+  ROMol m2;
+  MolPickler::molFromPickle(pickle, m2);
+  TEST_ASSERT(m1.getNumAtoms() == m2.getNumAtoms());
+  TEST_ASSERT(m2.getNumConformers() == m1.getNumConformers());
+  int ival;
+  TEST_ASSERT(m2.getPropIfPresent("intp", ival));
+  TEST_ASSERT(ival == 1);
+  for (auto conf = m2.beginConformers(); conf != m2.endConformers(); ++conf) {
+    TEST_ASSERT((*conf)->getPropIfPresent("intp", ival));
+    TEST_ASSERT(ival == 1);
+  }
+  for (const auto atom : m2.atoms()) {
+    TEST_ASSERT(atom->getPropIfPresent("intp", ival));
+    TEST_ASSERT(ival == 1);
+  }
+  for (const auto bond : m2.bonds()) {
+    TEST_ASSERT(bond->getPropIfPresent("intp", ival));
+    TEST_ASSERT(ival == 1);
+  }
+  {  // reading when properties are present but we ignore them
+    ROMol m3;
+    MolPickler::molFromPickle(pickle, m3, PicklerOps::NoProps);
+    TEST_ASSERT(m1.getNumAtoms() == m3.getNumAtoms());
+    TEST_ASSERT(m3.getNumConformers() == m1.getNumConformers());
+    TEST_ASSERT(!m3.getPropIfPresent("intp", ival));
+    for (auto conf = m3.beginConformers(); conf != m3.endConformers(); ++conf) {
+      TEST_ASSERT(!(*conf)->getPropIfPresent("intp", ival));
+    }
+    for (const auto atom : m3.atoms()) {
+      TEST_ASSERT(!atom->getPropIfPresent("intp", ival));
+    }
+    for (const auto bond : m3.bonds()) {
+      TEST_ASSERT(!bond->getPropIfPresent("intp", ival));
+    }
+  }
+  {  // reading when properties are present but we ignore some of them
+    ROMol m3;
+    MolPickler::molFromPickle(pickle, m3, PicklerOps::MolProps);
+    TEST_ASSERT(m1.getNumAtoms() == m3.getNumAtoms());
+    TEST_ASSERT(m3.getNumConformers() == m1.getNumConformers());
+    TEST_ASSERT(m3.getPropIfPresent("intp", ival));
+    TEST_ASSERT(ival == 1);
+    for (auto conf = m3.beginConformers(); conf != m3.endConformers(); ++conf) {
+      TEST_ASSERT((*conf)->getPropIfPresent("intp", ival));
+      TEST_ASSERT(ival == 1);
+    }
+    for (const auto atom : m3.atoms()) {
+      TEST_ASSERT(!atom->getPropIfPresent("intp", ival));
+    }
+    for (const auto bond : m3.bonds()) {
+      TEST_ASSERT(!bond->getPropIfPresent("intp", ival));
+    }
+  }
+  {  // reading when properties are present but we ignore some of them
+    ROMol m3;
+    MolPickler::molFromPickle(pickle, m3, PicklerOps::AtomProps);
+    TEST_ASSERT(m1.getNumAtoms() == m3.getNumAtoms());
+    TEST_ASSERT(m3.getNumConformers() == m1.getNumConformers());
+    TEST_ASSERT(!m3.getPropIfPresent("intp", ival));
+    for (auto conf = m3.beginConformers(); conf != m3.endConformers(); ++conf) {
+      TEST_ASSERT(!(*conf)->getPropIfPresent("intp", ival));
+    }
+    for (const auto atom : m3.atoms()) {
+      TEST_ASSERT(atom->getPropIfPresent("intp", ival));
+      TEST_ASSERT(ival == 1);
+    }
+    for (const auto bond : m3.bonds()) {
+      TEST_ASSERT(!bond->getPropIfPresent("intp", ival));
+    }
+  }
+  {  // reading when properties are present but we ignore some of them
+    ROMol m3;
+    MolPickler::molFromPickle(pickle, m3, PicklerOps::BondProps);
+    TEST_ASSERT(m1.getNumAtoms() == m3.getNumAtoms());
+    TEST_ASSERT(m3.getNumConformers() == m1.getNumConformers());
+    TEST_ASSERT(!m3.getPropIfPresent("intp", ival));
+    for (auto conf = m3.beginConformers(); conf != m3.endConformers(); ++conf) {
+      TEST_ASSERT(!(*conf)->getPropIfPresent("intp", ival));
+    }
+    for (const auto atom : m3.atoms()) {
+      TEST_ASSERT(!atom->getPropIfPresent("intp", ival));
+    }
+    for (const auto bond : m3.bonds()) {
+      TEST_ASSERT(bond->getPropIfPresent("intp", ival));
+      TEST_ASSERT(ival == 1);
+    }
   }
   BOOST_LOG(rdErrorLog) << "\tdone" << std::endl;
 }
@@ -1620,4 +1734,5 @@ int main(int argc, char *argv[]) {
   testNegativeMaps();
   testHistoricalConfs();
   testConformerOptions();
+  testPropertyOptions();
 }
