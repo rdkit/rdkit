@@ -76,23 +76,24 @@ char *str_to_c(const char *str) {
 }
 }  // namespace
 
-#define MOL_TO_PKL(mol, mol_pkl, mol_pkl_sz)                                   \
-  {                                                                            \
-    unsigned int propFlags = PicklerOps::PropertyPickleOptions::AllProps ^     \
-                             PicklerOps::PropertyPickleOptions::ComputedProps; \
-    std::string pkl;                                                           \
-    MolPickler::pickleMol(mol, pkl, propFlags);                                \
-    free(*mol_pkl);                                                            \
-    *mol_pkl = str_to_c(pkl, mol_pkl_sz);                                      \
-  }
+void mol_to_pkl(const ROMol &mol, char **mol_pkl, size_t *mol_pkl_sz) {
+  unsigned int propFlags = PicklerOps::PropertyPickleOptions::AllProps ^
+                           PicklerOps::PropertyPickleOptions::ComputedProps;
+  std::string pkl;
+  MolPickler::pickleMol(mol, pkl, propFlags);
+  free(*mol_pkl);
+  *mol_pkl = str_to_c(pkl, mol_pkl_sz);
+}
 
-#define MOL_FROM_PKL(mol, pkl, pkl_sz)       \
-  if (!(pkl) || !(pkl_sz)) {                 \
-    return NULL;                             \
-  }                                          \
-  std::string mol##inp_str((pkl), (pkl_sz)); \
-  RWMol mol(mol##inp_str);                   \
-  mol.setProp(common_properties::_StereochemDone, 1, true);
+RWMol mol_from_pkl(const char *pkl, size_t pkl_sz) {
+  if (!pkl || !pkl_sz) {
+    return RWMol();
+  }
+  std::string mol_pkl(pkl, pkl_sz);
+  RWMol res(mol_pkl);
+  res.setProp(common_properties::_StereochemDone, 1, true);
+  return res;
+}
 
 #ifdef PT_OPT_GET
 #undef PT_OPT_GET
@@ -103,7 +104,10 @@ namespace {
 template <class T>
 std::string smiles_helper(const char *pkl, size_t pkl_sz,
                           const char *details_json, T func) {
-  MOL_FROM_PKL(mol, pkl, pkl_sz);
+  if (!pkl || !pkl_sz) {
+    return "";
+  }
+  auto mol = mol_from_pkl(pkl, pkl_sz);
   bool doIsomericSmiles = true;
   bool doKekule = false;
   int rootedAtAtom = -1;
@@ -131,7 +135,10 @@ std::string smiles_helper(const char *pkl, size_t pkl_sz,
 
 std::string molblock_helper(const char *pkl, size_t pkl_sz,
                             const char *details_json, bool forceV3000) {
-  MOL_FROM_PKL(mol, pkl, pkl_sz);
+  if (!pkl || !pkl_sz) {
+    return "";
+  }
+  auto mol = mol_from_pkl(pkl, pkl_sz);
   bool includeStereo = true;
   bool kekulize = true;
   if (details_json && strlen(details_json)) {
@@ -155,7 +162,10 @@ extern "C" char *get_smiles(const char *pkl, size_t pkl_sz,
 extern "C" char *get_smarts(const char *pkl, size_t pkl_sz,
                             const char *details_json) {
   RDUNUSED_PARAM(details_json);
-  MOL_FROM_PKL(mol, pkl, pkl_sz);
+  if (!pkl || !pkl_sz) {
+    return nullptr;
+  }
+  auto mol = mol_from_pkl(pkl, pkl_sz);
   auto data = MolToSmarts(mol);
   return str_to_c(data);
 }
@@ -177,7 +187,10 @@ extern "C" char *get_v3kmolblock(const char *pkl, size_t pkl_sz,
 extern "C" char *get_json(const char *pkl, size_t pkl_sz,
                           const char *details_json) {
   RDUNUSED_PARAM(details_json);
-  MOL_FROM_PKL(mol, pkl, pkl_sz);
+  if (!pkl || !pkl_sz) {
+    return nullptr;
+  }
+  auto mol = mol_from_pkl(pkl, pkl_sz);
   auto data = MolInterchange::MolToJSONData(mol);
   return str_to_c(data);
 }
@@ -189,7 +202,10 @@ extern "C" void free_ptr(char *ptr) {
 
 extern "C" char *get_svg(const char *pkl, size_t pkl_sz,
                          const char *details_json) {
-  MOL_FROM_PKL(mol, pkl, pkl_sz);
+  if (!pkl || !pkl_sz) {
+    return nullptr;
+  }
+  auto mol = mol_from_pkl(pkl, pkl_sz);
   unsigned int width = MinimalLib::d_defaultWidth;
   unsigned int height = MinimalLib::d_defaultHeight;
   return str_to_c(MinimalLib::mol_to_svg(mol, width, height, details_json));
@@ -197,7 +213,10 @@ extern "C" char *get_svg(const char *pkl, size_t pkl_sz,
 
 extern "C" char *get_inchi(const char *pkl, size_t pkl_sz,
                            const char *details_json) {
-  MOL_FROM_PKL(mol, pkl, pkl_sz);
+  if (!pkl || !pkl_sz) {
+    return nullptr;
+  }
+  auto mol = mol_from_pkl(pkl, pkl_sz);
   ExtraInchiReturnValues rv;
   std::string options;
   if (details_json && strlen(details_json)) {
@@ -298,8 +317,11 @@ extern "C" void disable_logging() {
 extern "C" char *get_substruct_match(const char *mol_pkl, size_t mol_pkl_sz,
                                      const char *query_pkl, size_t query_pkl_sz,
                                      const char *options_json) {
-  MOL_FROM_PKL(mol, mol_pkl, mol_pkl_sz);
-  MOL_FROM_PKL(query, query_pkl, query_pkl_sz);
+  if (!mol_pkl || !mol_pkl_sz || !query_pkl || !query_pkl_sz) {
+    return nullptr;
+  }
+  auto mol = mol_from_pkl(mol_pkl, mol_pkl_sz);
+  auto query = mol_from_pkl(query_pkl, query_pkl_sz);
 
   SubstructMatchParameters params;
   if (options_json) {
@@ -327,8 +349,12 @@ extern "C" char *get_substruct_matches(const char *mol_pkl, size_t mol_pkl_sz,
                                        const char *query_pkl,
                                        size_t query_pkl_sz,
                                        const char *options_json) {
-  MOL_FROM_PKL(mol, mol_pkl, mol_pkl_sz);
-  MOL_FROM_PKL(query, query_pkl, query_pkl_sz);
+  if (!mol_pkl || !mol_pkl_sz || !query_pkl || !query_pkl_sz) {
+    return nullptr;
+  }
+  auto mol = mol_from_pkl(mol_pkl, mol_pkl_sz);
+  auto query = mol_from_pkl(query_pkl, query_pkl_sz);
+
   SubstructMatchParameters params;
   if (options_json) {
     std::string json(options_json);
@@ -357,7 +383,10 @@ extern "C" char *get_substruct_matches(const char *mol_pkl, size_t mol_pkl_sz,
 }
 
 extern "C" char *get_descriptors(const char *mol_pkl, size_t mol_pkl_sz) {
-  MOL_FROM_PKL(mol, mol_pkl, mol_pkl_sz);
+  if (!mol_pkl || !mol_pkl_sz) {
+    return nullptr;
+  }
+  auto mol = mol_from_pkl(mol_pkl, mol_pkl_sz);
   return str_to_c(MinimalLib::get_descriptors(mol));
 }
 
@@ -365,7 +394,10 @@ namespace {
 std::unique_ptr<ExplicitBitVect> morgan_fp_helper(const char *mol_pkl,
                                                   size_t mol_pkl_sz,
                                                   const char *details_json) {
-  MOL_FROM_PKL(mol, mol_pkl, mol_pkl_sz);
+  if (!mol_pkl || !mol_pkl_sz) {
+    return nullptr;
+  }
+  auto mol = mol_from_pkl(mol_pkl, mol_pkl_sz);
 
   size_t radius = 2;
   size_t nBits = 2048;
@@ -395,7 +427,10 @@ std::unique_ptr<ExplicitBitVect> morgan_fp_helper(const char *mol_pkl,
 std::unique_ptr<ExplicitBitVect> rdkit_fp_helper(const char *mol_pkl,
                                                  size_t mol_pkl_sz,
                                                  const char *details_json) {
-  MOL_FROM_PKL(mol, mol_pkl, mol_pkl_sz);
+  if (!mol_pkl || !mol_pkl_sz) {
+    return nullptr;
+  }
+  auto mol = mol_from_pkl(mol_pkl, mol_pkl_sz);
   unsigned int minPath = 1;
   unsigned int maxPath = 7;
   unsigned int nBits = 2048;
@@ -425,7 +460,10 @@ std::unique_ptr<ExplicitBitVect> rdkit_fp_helper(const char *mol_pkl,
 std::unique_ptr<ExplicitBitVect> pattern_fp_helper(const char *mol_pkl,
                                                    size_t mol_pkl_sz,
                                                    const char *details_json) {
-  MOL_FROM_PKL(mol, mol_pkl, mol_pkl_sz);
+  if (!mol_pkl || !mol_pkl_sz) {
+    return nullptr;
+  }
+  auto mol = mol_from_pkl(mol_pkl, mol_pkl_sz);
   unsigned int nBits = 2048;
   bool tautomericFingerprint = false;
   if (details_json && strlen(details_json)) {
@@ -495,10 +533,13 @@ extern "C" void prefer_coordgen(short val) {
 };
 
 extern "C" short set_2d_coords(char **mol_pkl, size_t *mol_pkl_sz) {
-  MOL_FROM_PKL(mol, *mol_pkl, *mol_pkl_sz);
+  if (!mol_pkl || !mol_pkl_sz || !*mol_pkl || !*mol_pkl_sz) {
+    return 0;
+  }
+  auto mol = mol_from_pkl(*mol_pkl, *mol_pkl_sz);
   RDDepict::compute2DCoords(mol);
 
-  MOL_TO_PKL(mol, mol_pkl, mol_pkl_sz);
+  mol_to_pkl(mol, mol_pkl, mol_pkl_sz);
   return 1;
 }
 
@@ -506,8 +547,12 @@ extern "C" short set_2d_coords_aligned(char **mol_pkl, size_t *mol_pkl_sz,
                                        const char *template_pkl,
                                        size_t template_sz,
                                        const char *details_json) {
-  MOL_FROM_PKL(mol, *mol_pkl, *mol_pkl_sz);
-  MOL_FROM_PKL(templ, template_pkl, template_sz);
+  if (!mol_pkl || !mol_pkl_sz || !*mol_pkl || !*mol_pkl_sz || !template_pkl ||
+      !template_sz || !template_pkl || !template_sz) {
+    return 0;
+  }
+  auto mol = mol_from_pkl(*mol_pkl, *mol_pkl_sz);
+  auto templ = mol_from_pkl(template_pkl, template_sz);
   bool useCoordGen = true;
   bool allowRGroups = false;
   bool acceptFailure = true;
@@ -537,14 +582,17 @@ extern "C" short set_2d_coords_aligned(char **mol_pkl, size_t *mol_pkl_sz,
   if (match.empty() && !acceptFailure) {
     return 0;
   } else {
-    MOL_TO_PKL(mol, mol_pkl, mol_pkl_sz);
+    mol_to_pkl(mol, mol_pkl, mol_pkl_sz);
     return 1;
   }
 };
 
 extern "C" short set_3d_coords(char **mol_pkl, size_t *mol_pkl_sz,
                                const char *params_json) {
-  MOL_FROM_PKL(mol, *mol_pkl, *mol_pkl_sz);
+  if (!mol_pkl || !mol_pkl_sz || !*mol_pkl || !*mol_pkl_sz) {
+    return 0;
+  }
+  auto mol = mol_from_pkl(*mol_pkl, *mol_pkl_sz);
   std::string json;
   if (params_json) {
     json = params_json;
@@ -562,12 +610,15 @@ extern "C" short set_3d_coords(char **mol_pkl, size_t *mol_pkl_sz,
   if (ps.coordMap) {
     delete ps.coordMap;
   }
-  MOL_TO_PKL(mol, mol_pkl, mol_pkl_sz);
+  mol_to_pkl(mol, mol_pkl, mol_pkl_sz);
   return (short)res;
 }
 
 extern "C" short add_hs(char **mol_pkl, size_t *mol_pkl_sz) {
-  MOL_FROM_PKL(mol, *mol_pkl, *mol_pkl_sz);
+  if (!mol_pkl || !mol_pkl_sz || !*mol_pkl || !*mol_pkl_sz) {
+    return 0;
+  }
+  auto mol = mol_from_pkl(*mol_pkl, *mol_pkl_sz);
   MolOps::addHs(mol);
   // we don't need the properties that sets:
   for (auto atom : mol.atoms()) {
@@ -576,15 +627,18 @@ extern "C" short add_hs(char **mol_pkl, size_t *mol_pkl_sz) {
     }
   }
 
-  MOL_TO_PKL(mol, mol_pkl, mol_pkl_sz);
+  mol_to_pkl(mol, mol_pkl, mol_pkl_sz);
   return 1;
 }
 
 extern "C" short remove_all_hs(char **mol_pkl, size_t *mol_pkl_sz) {
-  MOL_FROM_PKL(mol, *mol_pkl, *mol_pkl_sz);
+  if (!mol_pkl || !mol_pkl_sz || !*mol_pkl || !*mol_pkl_sz) {
+    return 0;
+  }
+  auto mol = mol_from_pkl(*mol_pkl, *mol_pkl_sz);
   MolOps::removeAllHs(mol);
 
-  MOL_TO_PKL(mol, mol_pkl, mol_pkl_sz);
+  mol_to_pkl(mol, mol_pkl, mol_pkl_sz);
   return 1;
 }
 

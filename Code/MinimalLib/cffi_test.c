@@ -249,6 +249,7 @@ void test_descriptors(){
   assert(strstr(descrs,"lipinskiHBA"));
   assert(strstr(descrs,"NumAliphaticRings"));
   assert(strstr(descrs,"chi3v"));
+  assert(strstr(descrs,"amw"));
   free(descrs);
 
   free(mpkl);

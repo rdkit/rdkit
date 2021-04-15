@@ -292,11 +292,6 @@ std::string get_descriptors(const ROMol &m) {
     doc.AddMember(srt, v, doc.GetAllocator());
   }
 
-  if (std::find(dns.begin(), dns.end(), std::string("amw")) == dns.end()) {
-    rj::Value v(Descriptors::calcAMW(m));
-    doc.AddMember("amw", v, doc.GetAllocator());
-  }
-
   rj::StringBuffer buffer;
   rj::Writer<rj::StringBuffer> writer(buffer);
   writer.SetMaxDecimalPlaces(5);
