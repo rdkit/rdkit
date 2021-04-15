@@ -854,5 +854,5 @@ TEST_CASE("Github #2788: doKekule=true should kekulize the molecule",
 
 TEST_CASE("bogus recursive SMARTS", "[smarts]") {
   std::string sma = "C)foo";
-  CHECK_THROWS_AS(SmartsToMol(sma), SmilesParseException);
+  CHECK(SmartsToMol(sma) == nullptr);
 }
