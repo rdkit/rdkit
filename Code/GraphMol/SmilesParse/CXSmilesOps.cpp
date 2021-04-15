@@ -915,6 +915,12 @@ std::string get_radical_block(const ROMol &mol,
   }
   return res;
 }
+double zero_small_vals(double val) {
+  if (fabs(val) < 1e-4) {
+    return 0.0;
+  }
+  return val;
+}
 std::string get_coords_block(const ROMol &mol,
                              const std::vector<unsigned int> &atomOrder) {
   std::string res = "";
@@ -927,9 +933,10 @@ std::string get_coords_block(const ROMol &mol,
     } else {
       first = false;
     }
-    res += boost::str(boost::format("%g,%g,") % pt.x % pt.y);
+    res += boost::str(boost::format("%g,%g,") % zero_small_vals(pt.x) %
+                      zero_small_vals(pt.y));
     if (conf.is3D()) {
-      auto zc = boost::str(boost::format("%g") % pt.z);
+      auto zc = boost::str(boost::format("%g") % zero_small_vals(pt.z));
       if (zc != "0") {
         res += zc;
       }

@@ -1,5 +1,5 @@
 //
-//  Copyright (C) 2003-2019 Greg Landrum and Rational Discovery LLC
+//  Copyright (C) 2003-2021 Greg Landrum and Rational Discovery LLC
 //
 //   @@ All Rights Reserved @@
 //  This file is part of the RDKit.
@@ -11,7 +11,13 @@
 #include <RDGeneral/utils.h>
 #include <GraphMol/RDKitBase.h>
 #include <GraphMol/RDKitQueries.h>
+
+#include <RDGeneral/BoostStartInclude.h>
 #include <boost/dynamic_bitset.hpp>
+#include <boost/lexical_cast.hpp>
+#include <boost/property_tree/ptree.hpp>
+#include <boost/property_tree/json_parser.hpp>
+#include <RDGeneral/BoostEndInclude.h>
 
 namespace RDKit {
 
@@ -205,6 +211,27 @@ std::vector<MatchVectType> sortMatchesByDegreeOfCoreSubstitution(
   detail::ScoreMatchesByDegreeOfCoreSubstitution matchScorer(mol, core,
                                                              matches);
   return matchScorer.sortMatchesByDegreeOfCoreSubstitution();
+}
+
+#define PT_OPT_GET(opt) params.opt = pt.get(#opt, params.opt)
+
+void updateSubstructMatchParamsFromJSON(SubstructMatchParameters &params,
+                                        const std::string &json) {
+  if (json.empty()) {
+    return;
+  }
+  std::istringstream ss;
+  ss.str(json);
+  boost::property_tree::ptree pt;
+  boost::property_tree::read_json(ss, pt);
+  PT_OPT_GET(useChirality);
+  PT_OPT_GET(useEnhancedStereo);
+  PT_OPT_GET(aromaticMatchesConjugated);
+  PT_OPT_GET(useQueryQueryMatches);
+  PT_OPT_GET(recursionPossible);
+  PT_OPT_GET(uniquify);
+  PT_OPT_GET(maxMatches);
+  PT_OPT_GET(numThreads);
 }
 
 }  // namespace RDKit

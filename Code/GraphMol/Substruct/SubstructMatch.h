@@ -14,6 +14,7 @@
 // std bits
 #include <vector>
 #include <functional>
+#include <string>
 
 namespace RDKit {
 class ROMol;
@@ -50,6 +51,9 @@ struct RDKIT_SUBSTRUCTMATCH_EXPORT SubstructMatchParameters {
 
   SubstructMatchParameters(){};
 };
+
+RDKIT_SUBSTRUCTMATCH_EXPORT void updateSubstructMatchParamsFromJSON(
+    SubstructMatchParameters &params, const std::string &json);
 
 //! Find a substructure match for a query in a molecule
 /*!
