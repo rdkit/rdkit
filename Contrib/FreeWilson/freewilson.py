@@ -66,7 +66,7 @@ Finally you can build the decomposition into new molecules:
 
 ```
 
-Now this builds both well and poorly predictedd molecules.  To prevent
+Now this builds both well and poorly predicted molecules.  To prevent
 this you can use the following filters while building:
 
    1. pred_filter:  given a prediction, return True to keep the molecule
