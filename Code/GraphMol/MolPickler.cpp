@@ -1,5 +1,5 @@
 //
-//  Copyright (C) 2001-2020 Greg Landrum and Rational Discovery LLC
+//  Copyright (C) 2001-2021 Greg Landrum and Rational Discovery LLC
 //
 //   @@ All Rights Reserved @@
 //  This file is part of the RDKit.
@@ -32,8 +32,8 @@ using std::int32_t;
 using std::uint32_t;
 namespace RDKit {
 
-const int32_t MolPickler::versionMajor = 12;
-const int32_t MolPickler::versionMinor = 1;
+const int32_t MolPickler::versionMajor = 13;
+const int32_t MolPickler::versionMinor = 0;
 const int32_t MolPickler::versionPatch = 0;
 const int32_t MolPickler::endianId = 0xDEADBEEF;
 
@@ -94,6 +94,15 @@ std::mutex &GetPropMutex() {
   return propmutex_get();
 }
 #endif
+
+void write_sstream_to_stream(std::ostream &outStream,
+                             const std::stringstream &toWrite) {
+  auto ts = toWrite.str();
+  int32_t tmpInt = static_cast<int32_t>(ts.size());
+  streamWrite(outStream, tmpInt);
+  outStream.write(ts.c_str(), sizeof(char) * tmpInt);
+}
+
 }  // namespace
 
 unsigned int MolPickler::getDefaultPickleProperties() {
@@ -879,7 +888,8 @@ void MolPickler::pickleMol(const ROMol &mol, std::string &ss) {
 // NOTE: if the mol passed in here already has atoms and bonds, they will
 // be left intact.  The side effect is that ALL atom and bond bookmarks
 // will be blown out by the end of this process.
-void MolPickler::molFromPickle(std::istream &ss, ROMol *mol) {
+void MolPickler::molFromPickle(std::istream &ss, ROMol *mol,
+                               unsigned int propertyFlags) {
   PRECONDITION(mol, "empty molecule");
 
   // Ensure that the exception state of the `istream` is reset to the previous
@@ -929,9 +939,10 @@ void MolPickler::molFromPickle(std::istream &ss, ROMol *mol) {
       int32_t numAtoms;
       streamRead(ss, numAtoms, majorVersion);
       if (numAtoms > 255) {
-        _depickle<int32_t>(ss, mol, majorVersion, numAtoms);
+        _depickle<int32_t>(ss, mol, majorVersion, numAtoms, propertyFlags);
       } else {
-        _depickle<unsigned char>(ss, mol, majorVersion, numAtoms);
+        _depickle<unsigned char>(ss, mol, majorVersion, numAtoms,
+                                 propertyFlags);
       }
     }
     mol->clearAllAtomBookmarks();
@@ -955,12 +966,13 @@ void MolPickler::molFromPickle(std::istream &ss, ROMol *mol) {
     }
   }
 }
-void MolPickler::molFromPickle(const std::string &pickle, ROMol *mol) {
+void MolPickler::molFromPickle(const std::string &pickle, ROMol *mol,
+                               unsigned int propertyFlags) {
   PRECONDITION(mol, "empty molecule");
   std::stringstream ss(std::ios_base::binary | std::ios_base::out |
                        std::ios_base::in);
   ss.write(pickle.c_str(), pickle.length());
-  MolPickler::molFromPickle(ss, mol);
+  MolPickler::molFromPickle(ss, mol, propertyFlags);
 }
 
 //--------------------------------------
@@ -1046,38 +1058,42 @@ void MolPickler::_pickle(const ROMol *mol, std::ostream &ss,
     }
   }
 
-  if (propertyFlags & PicklerOps::CoordsAsDouble) {
-    // pickle the conformations
-    streamWrite(ss, BEGINCONFS_DOUBLE);
-    tmpInt = static_cast<int32_t>(mol->getNumConformers());
-    streamWrite(ss, tmpInt);
-    for (auto ci = mol->beginConformers(); ci != mol->endConformers(); ++ci) {
-      const Conformer *conf = ci->get();
-      _pickleConformer<T, double>(ss, conf);
+  if (!(propertyFlags & PicklerOps::NoCoords)) {
+    std::stringstream tss;
+    if (propertyFlags & PicklerOps::CoordsAsDouble) {
+      // pickle the conformations
+      streamWrite(ss, BEGINCONFS_DOUBLE);
+      tmpInt = static_cast<int32_t>(mol->getNumConformers());
+      streamWrite(tss, tmpInt);
+      for (auto ci = mol->beginConformers(); ci != mol->endConformers(); ++ci) {
+        const Conformer *conf = ci->get();
+        _pickleConformer<T, double>(tss, conf);
+      }
+    } else {
+      // pickle the conformations
+      streamWrite(ss, BEGINCONFS);
+      tmpInt = static_cast<int32_t>(mol->getNumConformers());
+      streamWrite(tss, tmpInt);
+      for (auto ci = mol->beginConformers(); ci != mol->endConformers(); ++ci) {
+        const Conformer *conf = ci->get();
+        _pickleConformer<T, float>(tss, conf);
+      }
     }
 
-  } else {
-    // pickle the conformations
-    streamWrite(ss, BEGINCONFS);
-    tmpInt = static_cast<int32_t>(mol->getNumConformers());
-    streamWrite(ss, tmpInt);
-    for (auto ci = mol->beginConformers(); ci != mol->endConformers(); ++ci) {
-      const Conformer *conf = ci->get();
-      _pickleConformer<T, float>(ss, conf);
+    if (propertyFlags & PicklerOps::MolProps) {
+      streamWrite(tss, BEGINCONFPROPS);
+      for (auto ci = mol->beginConformers(); ci != mol->endConformers(); ++ci) {
+        const Conformer *conf = ci->get();
+        _pickleProperties(tss, *conf, propertyFlags);
+      }
     }
+    write_sstream_to_stream(ss, tss);
   }
-
   if (propertyFlags & PicklerOps::MolProps) {
-    streamWrite(ss, BEGINCONFPROPS);
-    for (auto ci = mol->beginConformers(); ci != mol->endConformers(); ++ci) {
-      const Conformer *conf = ci->get();
-      _pickleProperties(ss, *conf, propertyFlags);
-    }
     streamWrite(ss, BEGINPROPS);
     _pickleProperties(ss, *mol, propertyFlags);
     streamWrite(ss, ENDPROPS);
   }
-
   if (propertyFlags & PicklerOps::AtomProps) {
     streamWrite(ss, BEGINATOMPROPS);
     for (ROMol::ConstAtomIterator atIt = mol->beginAtoms();
@@ -1101,7 +1117,7 @@ void MolPickler::_pickle(const ROMol *mol, std::ostream &ss,
 
 template <typename T>
 void MolPickler::_depickle(std::istream &ss, ROMol *mol, int version,
-                           int numAtoms) {
+                           int numAtoms, unsigned int propertyFlags) {
   PRECONDITION(mol, "empty molecule");
   bool directMap = mol->getNumAtoms() == 0;
   Tags tag;
@@ -1204,25 +1220,39 @@ void MolPickler::_depickle(std::istream &ss, ROMol *mol, int version,
   }
 
   if (tag == BEGINCONFS || tag == BEGINCONFS_DOUBLE) {
-    // read in the conformation
-    streamRead(ss, tmpInt, version);
-    std::vector<unsigned int> cids(tmpInt);
-    for (auto i = 0; i < tmpInt; i++) {
-      Conformer *conf;
-      if (tag == BEGINCONFS) {
-        conf = _conformerFromPickle<T, float>(ss, version);
-      } else {
-        conf = _conformerFromPickle<T, double>(ss, version);
-      }
-      mol->addConformer(conf);
-      cids[i] = conf->getId();
+    int32_t blkSize = 0;
+    if (version >= 13000) {
+      streamRead(ss, blkSize, version);
     }
-    streamRead(ss, tag, version);
-    if (tag == BEGINCONFPROPS) {
-      for (auto cid : cids) {
-        _unpickleProperties(ss, mol->getConformer(cid));
+    if (version >= 13000 && (propertyFlags & PicklerOps::NoCoords)) {
+      // not reading coordinates, so just skip over those bytes
+      // FIX: would be nice to be able to seek here, but we can't rely on that
+      // being available with all streams. Look into whether nor not we can
+      // somehow test if that's available.
+      char buff[blkSize];
+      ss.read(buff, blkSize);
+      streamRead(ss, tag, version);
+    } else {
+      // read in the conformation
+      streamRead(ss, tmpInt, version);
+      std::vector<unsigned int> cids(tmpInt);
+      for (auto i = 0; i < tmpInt; i++) {
+        Conformer *conf;
+        if (tag == BEGINCONFS) {
+          conf = _conformerFromPickle<T, float>(ss, version);
+        } else {
+          conf = _conformerFromPickle<T, double>(ss, version);
+        }
+        mol->addConformer(conf);
+        cids[i] = conf->getId();
       }
       streamRead(ss, tag, version);
+      if (tag == BEGINCONFPROPS) {
+        for (auto cid : cids) {
+          _unpickleProperties(ss, mol->getConformer(cid));
+        }
+        streamRead(ss, tag, version);
+      }
     }
   }
 

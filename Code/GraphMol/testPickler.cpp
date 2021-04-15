@@ -1377,8 +1377,7 @@ void testEnhancedStereoChemistry() {
 
 void testCustomPickler() {
   BOOST_LOG(rdInfoLog) << "-----------------------\n";
-  BOOST_LOG(rdInfoLog) << "Testing custom pickler (bitvector)"
-                       << std::endl;  
+  BOOST_LOG(rdInfoLog) << "Testing custom pickler (bitvector)" << std::endl;
   const bool bitsSet = false;
   ExplicitBitVect bv(1024, bitsSet);
   bv.setBit(100);
@@ -1387,10 +1386,10 @@ void testCustomPickler() {
 
   m.getAtomWithIdx(0)->setProp<ExplicitBitVect>("bv", bv);
 
-  TEST_ASSERT(
-      m.getAtomWithIdx(0)->getProp<ExplicitBitVect>("bv").getBit(100) == true);
-  TEST_ASSERT(
-      m.getAtomWithIdx(0)->getProp<ExplicitBitVect>("bv").getBit(101) == false);
+  TEST_ASSERT(m.getAtomWithIdx(0)->getProp<ExplicitBitVect>("bv").getBit(100) ==
+              true);
+  TEST_ASSERT(m.getAtomWithIdx(0)->getProp<ExplicitBitVect>("bv").getBit(101) ==
+              false);
 
   std::string pkl;
   MolPickler::pickleMol(m, pkl, PicklerOps::AllProps);
@@ -1398,16 +1397,18 @@ void testCustomPickler() {
 
   TEST_ASSERT(roundTripped->getAtomWithIdx(0)->hasProp("bv"));
   TEST_ASSERT(
-      roundTripped->getAtomWithIdx(0)->getProp<ExplicitBitVect>("bv").getBit(100) == true);
+      roundTripped->getAtomWithIdx(0)->getProp<ExplicitBitVect>("bv").getBit(
+          100) == true);
   TEST_ASSERT(
-      roundTripped->getAtomWithIdx(0)->getProp<ExplicitBitVect>("bv").getBit(101) == false);
+      roundTripped->getAtomWithIdx(0)->getProp<ExplicitBitVect>("bv").getBit(
+          101) == false);
 }
-
 
 void testGithub2441() {
   BOOST_LOG(rdErrorLog) << "-------------------------------------" << std::endl;
   BOOST_LOG(rdErrorLog)
-      << "Testing Github2441: Add RDProps interface to Conformers." << std::endl;
+      << "Testing Github2441: Add RDProps interface to Conformers."
+      << std::endl;
 
   auto m1 = "CC"_smiles;
   TEST_ASSERT(m1);
@@ -1445,7 +1446,6 @@ void testGithub2441() {
     TEST_ASSERT(m2->getConformer(12).getProp<int>("foo") == 2);
     TEST_ASSERT(!m2->getConformer().hasProp("bar"));
     TEST_ASSERT(m2->getConformer(12).getProp<int>("bar") == 23);
-    
   }
 
   BOOST_LOG(rdErrorLog) << "\tdone" << std::endl;
@@ -1475,8 +1475,8 @@ void testNegativeMaps() {
 
 void testGithubIssue2510() {
   BOOST_LOG(rdErrorLog) << "-------------------------------------" << std::endl;
-  BOOST_LOG(rdErrorLog)
-      << "Testing Issue2510: Pickle Confs as double." << std::endl;
+  BOOST_LOG(rdErrorLog) << "Testing Issue2510: Pickle Confs as double."
+                        << std::endl;
 
   std::string smi = "CC";
   ROMol *m1 = SmilesToMol(smi);
@@ -1491,23 +1491,90 @@ void testGithubIssue2510() {
   auto *conf = new Conformer(2);
   double test_num = 3.1111124589;
   TEST_ASSERT(static_cast<float>(test_num) != test_num);
-  
-  RDGeom::Point3D point(3.1111124589,0.0,0.0);
-  
+
+  RDGeom::Point3D point(3.1111124589, 0.0, 0.0);
+
   conf->setAtomPos(0, point);
   m1->addConformer(conf);
-  
+
   MolPickler::pickleMol(*m1, pickle, PicklerOps::CoordsAsDouble);
   m3 = new ROMol();
   MolPickler::molFromPickle(pickle, *m3);
   TEST_ASSERT(m1->getNumAtoms() == m3->getNumAtoms());
   TEST_ASSERT(m3->getConformer().getAtomPos(0).x == test_num);
 
-  
   delete m1;
   delete m2;
   delete m3;
 
+  BOOST_LOG(rdErrorLog) << "\tdone" << std::endl;
+}
+
+void testHistoricalConfs() {
+  BOOST_LOG(rdErrorLog) << "-------------------------------------" << std::endl;
+  BOOST_LOG(rdErrorLog) << "Testing loading pickled mols with conformers"
+                        << std::endl;
+
+  {
+    std::string pklName = getenv("RDBASE");
+    pklName += "/Code/GraphMol/test_data/mol_with_confs.pkl";  // written with
+                                                               // v2021.03.1
+    std::ifstream inStream(pklName.c_str(), std::ios_base::binary);
+    ROMol m1;
+    MolPickler::molFromPickle(inStream, m1);
+    TEST_ASSERT(m1.getNumConformers() == 5);
+  }
+
+  {
+    std::string pklName = getenv("RDBASE");
+    pklName +=
+        "/Code/GraphMol/test_data/mol_with_double_confs.pkl";  // written with
+                                                               // v2021.03.1
+    std::ifstream inStream(pklName.c_str(), std::ios_base::binary);
+    ROMol m1;
+    MolPickler::molFromPickle(inStream, m1);
+    TEST_ASSERT(m1.getNumConformers() == 5);
+  }
+
+  BOOST_LOG(rdErrorLog) << "\tdone" << std::endl;
+}
+void testConformerOptions() {
+  BOOST_LOG(rdErrorLog) << "-------------------------------------" << std::endl;
+  BOOST_LOG(rdErrorLog) << "Testing conformer reading/writing options"
+                        << std::endl;
+
+  std::string pklName = getenv("RDBASE");
+  pklName += "/Code/GraphMol/test_data/mol_with_confs.pkl";  // written with
+                                                             // v2021.03.1
+  std::ifstream inStream(pklName.c_str(), std::ios_base::binary);
+  ROMol m1;
+  MolPickler::molFromPickle(inStream, m1);
+  TEST_ASSERT(m1.getNumConformers() == 5);
+
+  {
+    std::string pickle;
+    MolPickler::pickleMol(m1, pickle);
+    ROMol m2;
+    MolPickler::molFromPickle(pickle, m2);
+    TEST_ASSERT(m1.getNumAtoms() == m2.getNumAtoms());
+    TEST_ASSERT(m2.getNumConformers() == m1.getNumConformers());
+    ROMol m3;
+    MolPickler::molFromPickle(pickle, m3, PicklerOps::NoCoords);
+    TEST_ASSERT(m3.getNumConformers() == 0);
+    TEST_ASSERT(m1.getNumAtoms() == m3.getNumAtoms());
+  }
+  {
+    std::string pickle;
+    MolPickler::pickleMol(m1, pickle, PicklerOps::NoCoords);
+    ROMol m2;
+    MolPickler::molFromPickle(pickle, m2);
+    TEST_ASSERT(m1.getNumAtoms() == m2.getNumAtoms());
+    TEST_ASSERT(m2.getNumConformers() == 0);
+    ROMol m3;
+    MolPickler::molFromPickle(pickle, m3, PicklerOps::NoCoords);
+    TEST_ASSERT(m1.getNumAtoms() == m3.getNumAtoms());
+    TEST_ASSERT(m3.getNumConformers() == 0);
+  }
   BOOST_LOG(rdErrorLog) << "\tdone" << std::endl;
 }
 
@@ -1551,4 +1618,6 @@ int main(int argc, char *argv[]) {
   testGithubIssue2510();
 #endif
   testNegativeMaps();
+  testHistoricalConfs();
+  testConformerOptions();
 }
