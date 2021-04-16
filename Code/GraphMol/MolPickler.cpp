@@ -1946,13 +1946,18 @@ void MolPickler::_addRingInfoFromPickle(std::istream &ss, ROMol *mol,
       T tmpT;
       T ringSize;
       streamRead(ss, ringSize, version);
-
+      if (ringSize < 0) {
+        throw MolPicklerException("negative ring size");
+      }
       INT_VECT atoms(static_cast<int>(ringSize));
       INT_VECT bonds(static_cast<int>(ringSize));
       for (unsigned int j = 0; j < static_cast<unsigned int>(ringSize); j++) {
         streamRead(ss, tmpT, version);
         if (directMap) {
           atoms[j] = static_cast<int>(tmpT);
+          if (atoms[j] < 0 || atoms[j] >= mol->getNumAtoms()) {
+            throw MolPicklerException("ring-atom index out of range");
+          }
         } else {
           atoms[j] = mol->getAtomWithBookmark(static_cast<int>(tmpT))->getIdx();
         }
@@ -1962,6 +1967,10 @@ void MolPickler::_addRingInfoFromPickle(std::istream &ss, ROMol *mol,
           streamRead(ss, tmpT, version);
           if (directMap) {
             bonds[j] = static_cast<int>(tmpT);
+            if (bonds[j] < 0 || bonds[j] >= mol->getNumBonds()) {
+              throw MolPicklerException("ring-bond index out of range");
+            }
+
           } else {
             bonds[j] =
                 mol->getBondWithBookmark(static_cast<int>(tmpT))->getIdx();

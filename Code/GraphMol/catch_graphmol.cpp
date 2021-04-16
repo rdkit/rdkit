@@ -1397,7 +1397,9 @@ TEST_CASE("Github #3470: Hydrogen is incorrectly identified as an early atom",
   }
   SECTION("confirm with SMILES") {
     RWMol m;
-    m.addAtom(new Atom(1));
+    bool updateLabel = false;
+    bool takeOwnership = true;
+    m.addAtom(new Atom(1), updateLabel, takeOwnership);
     m.getAtomWithIdx(0)->setFormalCharge(-1);
     m.updatePropertyCache();
     CHECK(MolToSmiles(m) == "[H-]");
@@ -1462,7 +1464,9 @@ TEST_CASE("needsHs function", "[chemistry]") {
     CHECK(MolOps::needsHs(*m));
 
     // add a single H:
-    m->addAtom(new Atom(1));
+    bool updateLabel = false;
+    bool takeOwnership = true;
+    m->addAtom(new Atom(1), updateLabel, takeOwnership);
     m->addBond(0, 2, Bond::BondType::SINGLE);
     MolOps::sanitizeMol(*m);
     CHECK(MolOps::needsHs(*m));
@@ -1796,7 +1800,9 @@ TEST_CASE("batch edits", "[editing]") {
     REQUIRE(m);
     m->beginBatchEdit();
     m->removeAtom(2);
-    m->addAtom(new Atom(7));
+    bool updateLabel = false;
+    bool takeOwnership = true;
+    m->addAtom(new Atom(7), updateLabel, takeOwnership);
     m->removeAtom(1);
     m->commitBatchEdit();
     CHECK(MolToSmiles(*m) == "C.N.O");
@@ -1806,7 +1812,9 @@ TEST_CASE("batch edits", "[editing]") {
     REQUIRE(m);
     m->beginBatchEdit();
     m->removeAtom(2);
-    m->addAtom(new Atom(7));
+    bool updateLabel = false;
+    bool takeOwnership = true;
+    m->addAtom(new Atom(7), updateLabel, takeOwnership);
     m->removeAtom(4);
     m->commitBatchEdit();
     CHECK(MolToSmiles(*m) == "CC.O");
@@ -1900,5 +1908,32 @@ TEST_CASE("bridgehead queries", "[query]") {
         CHECK(test == false);
       }
     }
+  }
+}
+
+TEST_CASE("replaceAtom/Bond should not screw up bookmarks", "[RWMol]") {
+  SECTION("atom basics") {
+    auto m = "CCC"_smiles;
+    REQUIRE(m);
+    m->setAtomBookmark(m->getAtomWithIdx(2), 1);
+    auto origAt2 = m->getAtomWithIdx(2);
+    CHECK(m->getUniqueAtomWithBookmark(1) == origAt2);
+    Atom O(8);
+    m->replaceAtom(2, &O);
+    auto at2 = m->getAtomWithIdx(2);
+    CHECK(at2 != origAt2);
+    CHECK(m->getUniqueAtomWithBookmark(1) == at2);
+  }
+  SECTION("bond basics") {
+    auto m = "CCCC"_smiles;
+    REQUIRE(m);
+    m->setBondBookmark(m->getBondWithIdx(2), 1);
+    auto origB2 = m->getBondWithIdx(2);
+    CHECK(m->getUniqueBondWithBookmark(1) == origB2);
+    Bond single(Bond::BondType::SINGLE);
+    m->replaceBond(2, &single);
+    auto b2 = m->getBondWithIdx(2);
+    CHECK(b2 != origB2);
+    CHECK(m->getUniqueBondWithBookmark(1) == b2);
   }
 }

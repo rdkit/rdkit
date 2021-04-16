@@ -250,7 +250,7 @@ void ParseOldAtomList(RWMol *mol, const std::string &text, unsigned int line) {
     default:
       delete q;
       std::ostringstream errout;
-      errout << "Unrecognized atom-list query modifier: '" << text[14]
+      errout << "Unrecognized atom-list query modifier: '" << text[4]
              << "' on line " << line;
       throw FileParseException(errout.str());
   }
