@@ -63,6 +63,7 @@ Installation instructions are available in [Docs/Book/Install.md](https://github
 
 ## Projects using RDKit
 
+- [Datamol](https://datamol.io/) ([docs](https://doc.datamol.io/stable/), [repo](https://github.com/datamol-org/datamol/)) - A Python library to intuitively manipulate molecules.
 - [Scopy](https://github.com/kotori-y/Scopy) ([docs](https://scopy.iamkotori.com/), [paper](https://doi.org/10.1093/bib/bbaa194)) - an integrated negative design Python library for desirable HTS/VS database design
 - [stk](https://github.com/lukasturcani/stk) ([docs](https://stk.readthedocs.io), [paper](https://onlinelibrary.wiley.com/doi/10.1002/jcc.25377)) -
 a Python library for building, manipulating, analyzing and automatic design of molecules.

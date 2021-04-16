@@ -50,6 +50,7 @@
 ## Usage by other open-source projects
 This will, inevitably, be out of date. If you know of others, please let us know or submit a pull request!
 
+- [Datamol](https://datamol.io/) ([docs](https://doc.datamol.io/stable/), [repo](https://github.com/datamol-org/datamol/)) - A Python library to intuitively manipulate molecules.
 - [DockOnSurf](https://gitlab.com/lch_interfaces/dockonsurf) ([docs](https://dockonsurf.readthedocs.io), [paper](https://www.doi.org/10.26434/chemrxiv.14095699)) - A high-throughput python code to automatically find the most stable geometry for molecules adsorbed on surfaces.
 - [Scopy](https://github.com/kotori-y/Scopy) ([docs](https://scopy.iamkotori.com/), [paper](https://doi.org/10.1093/bib/bbaa194)) - an integrated negative design Python library for desirable HTS/VS database design
 - [Open Force Field Toolkit](https://github.com/openforcefield/openforcefield/) - A parametrization engine for force fields based on direct chemical perception.
