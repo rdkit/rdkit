@@ -3120,6 +3120,7 @@ M  END
       REQUIRE(nm);
       auto sgs = getSubstanceGroups(*nm);
       REQUIRE(sgs.size() == 1);
+      delete nm;
     }
     {
       auto outctab = MolToV3KMolBlock(*m);
@@ -3128,6 +3129,7 @@ M  END
       REQUIRE(nm);
       auto sgs = getSubstanceGroups(*nm);
       REQUIRE(sgs.size() == 1);
+      delete nm;
     }
   }
 }

@@ -2349,7 +2349,9 @@ void testGithub3667() {
 void testForceTransAmides() {
   auto mol = "CC(=O)NC"_smiles;
   TEST_ASSERT(mol);
-  mol->addAtom(new Atom(1));
+  bool updateLabel = true;
+  bool takeOwnership = true;
+  mol->addAtom(new Atom(1), updateLabel, takeOwnership);
   mol->addBond(3, 5, Bond::BondType::SINGLE);
   MolOps::sanitizeMol(*mol);
   MolOps::addHs(*mol);
