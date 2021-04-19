@@ -1430,6 +1430,27 @@ void test16BitVectProps() {
   delete handlers[1];
 }
 
+void test17Github3994() {
+  SparseIntVect<std::uint32_t> siv1(128);
+  siv1.setVal(0, 3);
+  siv1.setVal(100, 4);
+
+  SparseIntVect<std::uint32_t> siv2(128);
+  siv2.setVal(1, 12);
+  siv2.setVal(17, 3);
+  siv2.setVal(99, 4);
+
+  auto siv3 = siv1;
+  TEST_ASSERT(siv3.getNonzeroElements().size() == 2);
+  TEST_ASSERT(siv3 == siv1);
+  TEST_ASSERT(siv3 != siv2);
+
+  siv1 = siv2;
+  TEST_ASSERT(siv1.getNonzeroElements().size() == 3);
+  TEST_ASSERT(siv1 != siv3);
+  TEST_ASSERT(siv1 == siv2);
+}
+
 int main() {
   RDLog::InitLogs();
   try {
@@ -1533,5 +1554,12 @@ int main() {
                           "-------------------------------"
                        << std::endl;
   test16BitVectProps();
+
+  BOOST_LOG(rdInfoLog) << " Test #3944: SparseIntVect copy constructor and "
+                          "assignment operators not clearing existing data"
+                          "-------------------------------"
+                       << std::endl;
+  test17Github3994();
+
   return 0;
 }
