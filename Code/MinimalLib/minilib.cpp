@@ -83,7 +83,7 @@ std::string JSMol::get_substruct_match(const JSMol &q) const {
   if (SubstructMatch(*d_mol, *(q.d_mol), match)) {
     rj::Document doc;
     doc.SetObject();
-    get_sss_json(*d_mol, *(q.d_mol), match, doc, doc);
+    MinimalLib::get_sss_json(*d_mol, *(q.d_mol), match, doc, doc);
     rj::StringBuffer buffer;
     rj::Writer<rj::StringBuffer> writer(buffer);
     doc.Accept(writer);
@@ -104,7 +104,7 @@ std::string JSMol::get_substruct_matches(const JSMol &q) const {
 
     for (const auto &match : matches) {
       rj::Value rjMatch(rj::kObjectType);
-      get_sss_json(*d_mol, *(q.d_mol), match, rjMatch, doc);
+      MinimalLib::get_sss_json(*d_mol, *(q.d_mol), match, rjMatch, doc);
       doc.PushBack(rjMatch, doc.GetAllocator());
     }
 
@@ -305,7 +305,7 @@ std::string JSMol::generate_aligned_coords(const JSMol &templateMol,
   if (!match.empty()) {
     rj::Document doc;
     doc.SetObject();
-    get_sss_json(d_mol.get(), templateMol.d_mol.get(), match, doc, doc);
+    MinimalLib::get_sss_json(*d_mol, *templateMol.d_mol, match, doc, doc);
     rj::StringBuffer buffer;
     rj::Writer<rj::StringBuffer> writer(buffer);
     doc.Accept(writer);
