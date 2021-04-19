@@ -847,11 +847,11 @@ struct ZipBond {
 
 std::unique_ptr<ROMol> molzip(const ROMol &a, const ROMol &b,
                               const MolzipParams &params) {
-  RWMol *newmol;
+  std::unique_ptr<RWMol> newmol;
   if (b.getNumAtoms()) {
-    newmol = static_cast<RWMol *>(combineMols(a, b));
+    newmol.reset(static_cast<RWMol *>(combineMols(a, b)));
   } else {
-    newmol = new RWMol(a);
+    newmol.reset(new RWMol(a));
   }
 
   std::map<unsigned int, ZipBond> mappings;
@@ -957,7 +957,7 @@ std::unique_ptr<ROMol> molzip(const ROMol &a, const ROMol &b,
   }
   newmol->updatePropertyCache();
   newmol->setProp(common_properties::_StereochemDone, true);
-  return std::unique_ptr<ROMol>(newmol);
+  return newmol;
 }
 
 std::unique_ptr<ROMol> molzip(const ROMol &a, const MolzipParams &params) {
