@@ -84,6 +84,22 @@ RDKIT_RDKITCFFI_EXPORT char *get_pattern_fp_as_bytes(const char *pkl,
 RDKIT_RDKITCFFI_EXPORT short add_hs(char **pkl, size_t *pkl_sz);
 RDKIT_RDKITCFFI_EXPORT short remove_all_hs(char **pkl, size_t *pkl_sz);
 
+// standardization
+RDKIT_RDKITCFFI_EXPORT short cleanup(char **pkl, size_t *pkl_sz,
+                                     const char *details_json);
+RDKIT_RDKITCFFI_EXPORT short normalize(char **pkl, size_t *pkl_sz,
+                                       const char *details_json);
+RDKIT_RDKITCFFI_EXPORT short neutralize(char **pkl, size_t *pkl_sz,
+                                        const char *details_json);
+RDKIT_RDKITCFFI_EXPORT short reionize(char **pkl, size_t *pkl_sz,
+                                      const char *details_json);
+RDKIT_RDKITCFFI_EXPORT short canonical_tautomer(char **pkl, size_t *pkl_sz,
+                                                const char *details_json);
+RDKIT_RDKITCFFI_EXPORT short charge_parent(char **pkl, size_t *pkl_sz,
+                                           const char *details_json);
+RDKIT_RDKITCFFI_EXPORT short fragment_parent(char **pkl, size_t *pkl_sz,
+                                             const char *details_json);
+
 // coordinates
 RDKIT_RDKITCFFI_EXPORT void prefer_coordgen(short val);
 RDKIT_RDKITCFFI_EXPORT short set_2d_coords(char **pkl, size_t *pkl_sz);
