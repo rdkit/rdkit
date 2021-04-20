@@ -32,9 +32,6 @@
 #include <GraphMol/CIPLabeler/CIPLabeler.h>
 #include <GraphMol/Abbreviations/Abbreviations.h>
 #include <GraphMol/DistGeomHelpers/Embedder.h>
-#include <GraphMol/MolStandardize/MolStandardize.h>
-#include <GraphMol/MolStandardize/Charge.h>
-#include <GraphMol/MolStandardize/Tautomer.h>
 #include <DataStructs/BitOps.h>
 
 #include "common.h"
@@ -646,135 +643,58 @@ extern "C" short remove_all_hs(char **mol_pkl, size_t *mol_pkl_sz) {
 }
 
 // standardization
-extern "C" short cleanup(char **mol_pkl, size_t *mol_pkl_sz,
-                         const char *details_json) {
+namespace {
+template <typename T>
+short standardize_func(char **mol_pkl, size_t *mol_pkl_sz,
+                       const char *details_json, T func) {
   if (!mol_pkl || !mol_pkl_sz || !*mol_pkl || !*mol_pkl_sz) {
     return 0;
   }
   auto mol = mol_from_pkl(*mol_pkl, *mol_pkl_sz);
-  MolStandardize::CleanupParameters ps =
-      MolStandardize::defaultCleanupParameters;
+  std::string json;
   if (details_json) {
-    std::string json = details_json;
-    MolStandardize::updateCleanupParamsFromJSON(ps, json);
+    json = details_json;
   }
-  std::unique_ptr<RWMol> res(MolStandardize::cleanup(mol, ps));
+  std::unique_ptr<RWMol> res(func(mol, json));
 
   mol_to_pkl(*res, mol_pkl, mol_pkl_sz);
   return 1;
+}
+}  // namespace
+extern "C" short cleanup(char **mol_pkl, size_t *mol_pkl_sz,
+                         const char *details_json) {
+  return standardize_func(mol_pkl, mol_pkl_sz, details_json,
+                          MinimalLib::do_cleanup);
 };
 extern "C" short normalize(char **mol_pkl, size_t *mol_pkl_sz,
                            const char *details_json) {
-  if (!mol_pkl || !mol_pkl_sz || !*mol_pkl || !*mol_pkl_sz) {
-    return 0;
-  }
-  auto mol = mol_from_pkl(*mol_pkl, *mol_pkl_sz);
-  MolStandardize::CleanupParameters ps =
-      MolStandardize::defaultCleanupParameters;
-  if (details_json) {
-    std::string json = details_json;
-    MolStandardize::updateCleanupParamsFromJSON(ps, json);
-  }
-  std::unique_ptr<RWMol> res(MolStandardize::normalize(&mol, ps));
-
-  mol_to_pkl(*res, mol_pkl, mol_pkl_sz);
-  return 1;
+  return standardize_func(mol_pkl, mol_pkl_sz, details_json,
+                          MinimalLib::do_normalize);
 };
 extern "C" short canonical_tautomer(char **mol_pkl, size_t *mol_pkl_sz,
                                     const char *details_json) {
-  if (!mol_pkl || !mol_pkl_sz || !*mol_pkl || !*mol_pkl_sz) {
-    return 0;
-  }
-  auto mol = mol_from_pkl(*mol_pkl, *mol_pkl_sz);
-  MolStandardize::CleanupParameters ps =
-      MolStandardize::defaultCleanupParameters;
-  if (details_json) {
-    std::string json = details_json;
-    MolStandardize::updateCleanupParamsFromJSON(ps, json);
-  }
-  MolStandardize::TautomerEnumerator te(ps);
-  std::unique_ptr<RWMol> res(static_cast<RWMol *>(te.canonicalize(mol)));
-
-  mol_to_pkl(*res, mol_pkl, mol_pkl_sz);
-  return 1;
+  return standardize_func(mol_pkl, mol_pkl_sz, details_json,
+                          MinimalLib::do_canonical_tautomer);
 };
 extern "C" short charge_parent(char **mol_pkl, size_t *mol_pkl_sz,
                                const char *details_json) {
-  if (!mol_pkl || !mol_pkl_sz || !*mol_pkl || !*mol_pkl_sz) {
-    return 0;
-  }
-  auto mol = mol_from_pkl(*mol_pkl, *mol_pkl_sz);
-  MolStandardize::CleanupParameters ps =
-      MolStandardize::defaultCleanupParameters;
-  bool skipStandardize = false;
-  if (details_json) {
-    std::string json = details_json;
-    if (!json.empty()) {
-      MolStandardize::updateCleanupParamsFromJSON(ps, json);
-      boost::property_tree::ptree pt;
-      std::istringstream ss;
-      ss.str(json);
-      boost::property_tree::read_json(ss, pt);
-      PT_OPT_GET(skipStandardize);
-    }
-  }
-  std::unique_ptr<RWMol> res(
-      MolStandardize::chargeParent(mol, ps, skipStandardize));
-
-  mol_to_pkl(*res, mol_pkl, mol_pkl_sz);
-  return 1;
+  return standardize_func(mol_pkl, mol_pkl_sz, details_json,
+                          MinimalLib::do_charge_parent);
 };
 extern "C" short reionize(char **mol_pkl, size_t *mol_pkl_sz,
                           const char *details_json) {
-  if (!mol_pkl || !mol_pkl_sz || !*mol_pkl || !*mol_pkl_sz) {
-    return 0;
-  }
-  auto mol = mol_from_pkl(*mol_pkl, *mol_pkl_sz);
-  MolStandardize::CleanupParameters ps =
-      MolStandardize::defaultCleanupParameters;
-  if (details_json) {
-    std::string json = details_json;
-    MolStandardize::updateCleanupParamsFromJSON(ps, json);
-  }
-  std::unique_ptr<RWMol> res(MolStandardize::reionize(&mol, ps));
-
-  mol_to_pkl(*res, mol_pkl, mol_pkl_sz);
-  return 1;
+  return standardize_func(mol_pkl, mol_pkl_sz, details_json,
+                          MinimalLib::do_reionize);
 };
 extern "C" short neutralize(char **mol_pkl, size_t *mol_pkl_sz,
                             const char *details_json) {
-  if (!mol_pkl || !mol_pkl_sz || !*mol_pkl || !*mol_pkl_sz) {
-    return 0;
-  }
-  auto mol = mol_from_pkl(*mol_pkl, *mol_pkl_sz);
-  MolStandardize::CleanupParameters ps =
-      MolStandardize::defaultCleanupParameters;
-  if (details_json) {
-    std::string json = details_json;
-    MolStandardize::updateCleanupParamsFromJSON(ps, json);
-  }
-  MolStandardize::Uncharger uncharger(ps.doCanonical);
-  std::unique_ptr<RWMol> res(static_cast<RWMol *>(uncharger.uncharge(mol)));
-
-  mol_to_pkl(*res, mol_pkl, mol_pkl_sz);
-  return 1;
+  return standardize_func(mol_pkl, mol_pkl_sz, details_json,
+                          MinimalLib::do_neutralize);
 };
 extern "C" short fragment_parent(char **mol_pkl, size_t *mol_pkl_sz,
                                  const char *details_json) {
-  if (!mol_pkl || !mol_pkl_sz || !*mol_pkl || !*mol_pkl_sz) {
-    return 0;
-  }
-  auto mol = mol_from_pkl(*mol_pkl, *mol_pkl_sz);
-  MolStandardize::CleanupParameters ps =
-      MolStandardize::defaultCleanupParameters;
-  if (details_json) {
-    std::string json = details_json;
-    MolStandardize::updateCleanupParamsFromJSON(ps, json);
-  }
-  std::unique_ptr<RWMol> res(MolStandardize::fragmentParent(mol, ps));
-
-  mol_to_pkl(*res, mol_pkl, mol_pkl_sz);
-  return 1;
+  return standardize_func(mol_pkl, mol_pkl_sz, details_json,
+                          MinimalLib::do_fragment_parent);
 };
 
 #if (defined(__GNUC__) || defined(__GNUG__))

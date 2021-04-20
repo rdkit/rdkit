@@ -457,15 +457,14 @@ void test_standardize(){
   assert(!strcmp(smi,"O=C([O-])c1cccc(O)c1"));
 
   free(mpkl);
-  mpkl = get_mol("OC(=O)C(N)CO",&mpkl_size,"");
-  assert(reionize(&mpkl,&mpkl_size,"")>0);
+  mpkl = get_mol("OC(O)C(=N)CO",&mpkl_size,"");
+  assert(canonical_tautomer(&mpkl,&mpkl_size,"")>0);
   smi = get_smiles(mpkl,mpkl_size,"");
-  printf("%s\n",smi);
   assert(!strcmp(smi,"NC(CO)C(=O)O"));
 
-
-
   enable_logging();
+  printf("  done\n");
+  printf("--------------------------\n"); 
 
 }
 
