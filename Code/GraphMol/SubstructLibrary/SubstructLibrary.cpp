@@ -67,8 +67,8 @@ struct Bits {
     }
   }
 
-  Bits(const FPHolderBase *fingerprints, const TautomerQuery &m, bool recursionPossible,
-       bool useChirality, bool useQueryQueryMatches)
+  Bits(const FPHolderBase *fingerprints, const TautomerQuery &m,
+       bool recursionPossible, bool useChirality, bool useQueryQueryMatches)
       : fps(nullptr),
         recursionPossible(recursionPossible),
         useChirality(useChirality),
@@ -76,15 +76,16 @@ struct Bits {
     if (fingerprints) {
       const TautomerPatternHolder *tp =
           dynamic_cast<const TautomerPatternHolder *>(fingerprints);
-        if(!tp) {
-            BOOST_LOG(rdWarningLog) << "Pattern fingerprints for tautomersearch aren't tautomer fingerprints, ignoring..." << std::endl;
-            queryBits = nullptr;
-            fps = nullptr;
-        }
-        else {
-            fps = fingerprints;
-            queryBits = m.patternFingerprintTemplate(tp->getNumBits());
-        }
+      if (!tp) {
+        BOOST_LOG(rdWarningLog) << "Pattern fingerprints for tautomersearch "
+                                   "aren't tautomer fingerprints, ignoring..."
+                                << std::endl;
+        queryBits = nullptr;
+        fps = nullptr;
+      } else {
+        fps = fingerprints;
+        queryBits = m.patternFingerprintTemplate(tp->getNumBits());
+      }
     } else {
       queryBits = nullptr;
     }
@@ -116,10 +117,10 @@ bool query_needs_rings(const ROMol &in_query) {
       if (describeQuery(atom).find("Ring") != std::string::npos) {
         return true;
       } else if (atom->getQuery()->getDescription() == "RecursiveStructure") {
-          auto *rsq = (RecursiveStructureQuery *)atom->getQuery();
-          if (query_needs_rings(*rsq->getQueryMol())) {
-              return true;
-          }
+        auto *rsq = (RecursiveStructureQuery *)atom->getQuery();
+        if (query_needs_rings(*rsq->getQueryMol())) {
+          return true;
+        }
       }
     }
   }
@@ -233,6 +234,7 @@ int internalGetMatches(const Query &query, MolHolderBase &mols,
                      maxResultsVect[thread_group_idx],
                      idxs ? &internal_results[thread_group_idx] : nullptr));
     }
+    unsigned int maxEndIdx;
     if (maxResults > 0) {
       // If we are running with maxResults in a multi-threaded settings,
       // some threads may have screened more molecules than others.
@@ -251,8 +253,7 @@ int internalGetMatches(const Query &query, MolHolderBase &mols,
       // Find out out the max number of molecules that was screened by the most
       // productive thread and do the same in all other threads, unless the
       // max number of molecules was reached
-      unsigned int maxEndIdx =
-          *std::max_element(endIdxVect.begin(), endIdxVect.end());
+      maxEndIdx = *std::max_element(endIdxVect.begin(), endIdxVect.end());
       for (thread_group_idx = 0; thread_group_idx < numThreads;
            ++thread_group_idx) {
         if (endIdxVect[thread_group_idx] >= maxEndIdx) {

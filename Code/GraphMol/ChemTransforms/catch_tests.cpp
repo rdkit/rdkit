@@ -75,6 +75,7 @@ TEST_CASE("Github #1039", "[]") {
           received_stereo.push_back(bond->getStereoAtoms());
       }
       CHECK(received_stereo==expected_stereo_atoms);
+      delete resa;
   }
   { // break non stereo atom bond
     auto m =  "C/C(O)=N/C=C"_smiles;
@@ -96,7 +97,8 @@ TEST_CASE("Github #1039", "[]") {
       received_stereo.push_back(bond->getStereoAtoms());
     }
     CHECK(received_stereo==expected_stereo_atoms);
-  }  
+    delete resa;
+  }
   { // bond stereo should only be removed when deleting the double bond with E/Z
     auto m =  "O/C=N/C=C"_smiles;
     std::vector<std::pair<unsigned int, unsigned int>> dummyLabels{{1,1}};
@@ -111,6 +113,7 @@ TEST_CASE("Github #1039", "[]") {
       auto resa = RDKit::MolFragmenter::fragmentOnBonds(*m, bonds);
       auto smiles = MolToSmiles(*resa);
       CHECK(smiles == expected[i]);
+      delete resa;
     }
   }
   { // bond stereo should only be removed when deleting the double bond with E/Z
@@ -129,6 +132,7 @@ TEST_CASE("Github #1039", "[]") {
       auto resa = RDKit::MolFragmenter::fragmentOnBonds(*m, bonds);
       auto smiles = MolToSmiles(*resa);
       CHECK(smiles == expected[i]);
+      delete resa;
     }
   }
 }
@@ -228,7 +232,7 @@ TEST_CASE("molzip", "[]") {
                     MolzipParams p;
                     p.label = MolzipLabel::FragmentOnBonds;
                      CHECK(MolToSmiles(*molzip(*resa,p)) == MolToSmiles(*m));
-                    
+                    delete resa;
                     // Now try using atom labels
                     auto res = RDKit::MolFragmenter::fragmentOnBonds(*m, bonds, true, &dummyLabels);
                     for(auto *atom : res->atoms()) {
@@ -237,6 +241,7 @@ TEST_CASE("molzip", "[]") {
                         }
                     }
                     CHECK(MolToSmiles(*molzip(*res)) == MolToSmiles(*m));
+                    delete res;
                 }
             }
         }
@@ -315,7 +320,7 @@ TEST_CASE("molzip", "[]") {
           for(unsigned int i=0;i<m->getNumBonds();++i) {
             std::vector<unsigned int> bonds{i};
             {
-              auto resa = RDKit::MolFragmenter::fragmentOnBonds(*m, bonds);
+              std::unique_ptr<ROMol> resa{RDKit::MolFragmenter::fragmentOnBonds(*m, bonds)};
               auto smiles = MolToSmiles(*resa);
                 
               if (std::count(smiles.begin(), smiles.end(), '/') != 2) continue;  // we removed bond stereo in fragment to bonds!
@@ -325,7 +330,7 @@ TEST_CASE("molzip", "[]") {
             }
             {
               // Now try using atom labels
-              auto res = RDKit::MolFragmenter::fragmentOnBonds(*m, bonds, true, &dummyLabels);
+              std::unique_ptr<ROMol> res{RDKit::MolFragmenter::fragmentOnBonds(*m, bonds, true, &dummyLabels)};
               auto smiles = MolToSmiles(*res);
               
               if (std::count(smiles.begin(), smiles.end(), '/') != 2) continue;  // we removed bond stereo in fragment to bonds!
