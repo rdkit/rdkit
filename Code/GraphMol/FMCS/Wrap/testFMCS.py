@@ -1126,7 +1126,7 @@ class TestCase(unittest.TestCase):
         res = rdFMCS.FindMCS(mols, params)
         self.assertEqual(res.numAtoms, 10)
         self.assertEqual(res.numBonds, 11)
-        self.assertEqual(res.smartsString, "[#6]1:&@[#6]:&@[#6]:&@[#6]2:&@[#6](:&@[#6]:&@1):&@[#6]:&@[#6]:&@[#6]:&@[#6]:&@2")
+        self.assertEqual(res.smartsString, "[#6&R]1:&@[#6&R]:&@[#6&R]:&@[#6&R]2:&@[#6&R](:&@[#6&R]:&@1):&@[#6&R]:&@[#6&R]:&@[#6&R]:&@[#6&R]:&@2")
 
         params = rdFMCS.MCSParameters()
         params.AtomCompareParameters.CompleteRingsOnly = True
@@ -1135,11 +1135,28 @@ class TestCase(unittest.TestCase):
         res = rdFMCS.FindMCS(mols, params)
         self.assertEqual(res.numAtoms, 10)
         self.assertEqual(res.numBonds, 11)
-        self.assertEqual(res.smartsString, "[#6]1:&@[#6]:&@[#6]:&@[#6]2:&@[#6](:&@[#6]:&@1):&@[#6]:&@[#6]:&@[#6]:&@[#6]:&@2")
+        self.assertEqual(res.smartsString, "[#6&R]1:&@[#6&R]:&@[#6&R]:&@[#6&R]2:&@[#6&R](:&@[#6&R]:&@1):&@[#6&R]:&@[#6&R]:&@[#6&R]:&@[#6&R]:&@2")
 
     def test19MCS3d(self):
         Common.test19MCS3d(self)
 
+    def test20AtomCompareCompleteRingsOnly(self):
+        mols = [Chem.MolFromSmiles(smi) for smi in ["C1CCCC1C", "C1CCCC1C1CCCCC1"]]
+        params = rdFMCS.MCSParameters()
+        params.AtomCompareParameters.CompleteRingsOnly = True
+        res = rdFMCS.FindMCS(mols, params)
+        self.assertEqual(res.numAtoms, 5)
+        self.assertEqual(res.numBonds, 5)
+        self.assertEqual(res.smartsString, "[#6&R]1-&@[#6&R]-&@[#6&R]-&@[#6&R]-&@[#6&R]-&@1")
+
+        params = rdFMCS.MCSParameters()
+        params.AtomCompareParameters.CompleteRingsOnly = True
+        # this will automatically be set to True
+        params.BondCompareParameters.CompleteRingsOnly = False
+        res = rdFMCS.FindMCS(mols, params)
+        self.assertEqual(res.numAtoms, 5)
+        self.assertEqual(res.numBonds, 5)
+        self.assertEqual(res.smartsString, "[#6&R]1-&@[#6&R]-&@[#6&R]-&@[#6&R]-&@[#6&R]-&@1")
 
 if __name__ == "__main__":
     unittest.main()

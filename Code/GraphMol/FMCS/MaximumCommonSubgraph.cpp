@@ -956,6 +956,9 @@ MCSResult MaximumCommonSubgraph::find(const std::vector<ROMOL_SPTR>& src_mols) {
   if (Parameters.BondCompareParameters.CompleteRingsOnly) {
     Parameters.BondCompareParameters.RingMatchesRingOnly = true;
   }
+  if (Parameters.AtomCompareParameters.CompleteRingsOnly) {
+    Parameters.AtomCompareParameters.RingMatchesRingOnly = true;
+  }
 
   for (const auto& src_mol : src_mols) {
     Molecules.push_back(src_mol.get());
