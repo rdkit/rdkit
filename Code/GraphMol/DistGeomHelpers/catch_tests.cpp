@@ -165,6 +165,7 @@ TEST_CASE("update parameters from JSON") {
     "coordMap":{"0":[0,0,0],"1":[0,0,1.5],"2":[0,1.5,1.5]}})JSON";
       DGeomHelpers::updateEmbedParametersFromJSON(params, json);
       CHECK(DGeomHelpers::EmbedMolecule(*mol, params) == 0);
+      delete params.coordMap;
       auto conf = mol->getConformer();
       auto v1 = conf.getAtomPos(0) - conf.getAtomPos(1);
       auto v2 = conf.getAtomPos(2) - conf.getAtomPos(1);
