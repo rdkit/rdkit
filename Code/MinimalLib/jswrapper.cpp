@@ -93,6 +93,7 @@ std::string draw_to_canvas_with_highlights(JSMol &self, emscripten::val canvas,
 using namespace emscripten;
 EMSCRIPTEN_BINDINGS(RDKit_minimal) {
   class_<JSMol>("Mol")
+      .function("delete_mol", &JSMol::delete_mol)
       .function("is_valid", &JSMol::is_valid)
       .function("get_smiles", &JSMol::get_smiles)
       .function("get_cxsmiles", &JSMol::get_cxsmiles)

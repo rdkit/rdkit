@@ -15,6 +15,7 @@ class JSMol {
  public:
   JSMol() : d_mol(nullptr){};
   JSMol(RDKit::RWMol *mol) : d_mol(mol){};
+  void delete_mol() { d_mol.reset(nullptr); }
   std::string get_smiles() const;
   std::string get_cxsmiles() const;
   std::string get_molblock() const;
