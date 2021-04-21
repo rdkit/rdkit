@@ -156,7 +156,9 @@ def _sip_available():
     return True
   return False
 
+
 if find_spec('rdkit.Chem.Draw.rdMolDraw2DQt') and _sip_available():
+
   def MolDraw2DFromQPainter(qpainter, width=-1, height=-1, panelWidth=-1, panelHeight=-1):
     from PyQt5.Qt import QPainter
     try:
@@ -194,8 +196,6 @@ def MolToImage(mol, size=(300, 300), kekulize=True, wedgeBonds=True, fitImage=Fa
 
         - highlightAtoms: list of atoms to highlight (default [])
 
-        - highlightMap: dictionary of (atom, color) pairs (default None)
-
         - highlightBonds: list of bonds to highlight (default [])
 
         - highlightColor: RGB color as tuple (default [1, 0, 0])
@@ -223,8 +223,9 @@ def MolToImage(mol, size=(300, 300), kekulize=True, wedgeBonds=True, fitImage=Fa
       DeprecationWarning)
     options = None
   return _moltoimg(mol, size, kwargs.get('highlightAtoms', []), kwargs.get('legend', ''),
-                   highlightBonds=kwargs.get('highlightBonds', []), drawOptions=options,
-                   kekulize=kekulize, wedgeBonds=wedgeBonds)
+                   highlightBonds=kwargs.get('highlightBonds',
+                                             []), drawOptions=options, kekulize=kekulize,
+                   wedgeBonds=wedgeBonds, highlightColor=kwargs.get('highlightColor', None))
 
 
 def _legacyMolToFile(mol, fileName, size, kekulize, wedgeBonds, imageType, fitImage, options,
@@ -468,8 +469,8 @@ def _moltoimg(mol, sz, highlights, legend, returnPNG=False, drawOptions=None, **
     d2d = rdMolDraw2D.MolDraw2DCairo(sz[0], sz[1])
     if drawOptions is not None:
       d2d.SetDrawOptions(drawOptions)
-    if 'highlightColor' in kwargs:
-      d2d.drawOptions().setHighlightColor(kwargs['highlightColor'])
+    if 'highlightColor' in kwargs and kwargs['highlightColor']:
+      d2d.drawOptions().setHighlightColour(kwargs['highlightColor'])
     # we already prepared the molecule:
     d2d.drawOptions().prepareMolsBeforeDrawing = False
     bondHighlights = kwargs.get('highlightBonds', None)
