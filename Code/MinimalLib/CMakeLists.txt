@@ -21,7 +21,7 @@ if(RDK_BUILD_CFFI_LIB)
     set(CMAKE_C_STANDARD 99)
     if((NOT MSVC) OR (MSVC AND RDK_INSTALL_DLLS_MSVC))
         set(LIBS_TO_USE 
-            DistGeomHelpers_static ForceFieldHelpers_static DistGeometry_static
+            MolStandardize_static DistGeomHelpers_static ForceFieldHelpers_static DistGeometry_static
             ForceField_static Alignment_static
             MolInterchange_static Abbreviations_static CIPLabeler_static 
             MolDraw2D_static Depictor_static 
@@ -32,7 +32,7 @@ if(RDK_BUILD_CFFI_LIB)
         endif()
     else()
         set(LIBS_TO_USE 
-        DistGeomHelpers ForceFieldHelpers DistGeometry
+        MolStandardize DistGeomHelpers ForceFieldHelpers DistGeometry
         ForceField Alignment
         MolInterchange Abbreviations CIPLabeler 
         MolDraw2D Depictor 

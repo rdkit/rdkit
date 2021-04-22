@@ -642,6 +642,61 @@ extern "C" short remove_all_hs(char **mol_pkl, size_t *mol_pkl_sz) {
   return 1;
 }
 
+// standardization
+namespace {
+template <typename T>
+short standardize_func(char **mol_pkl, size_t *mol_pkl_sz,
+                       const char *details_json, T func) {
+  if (!mol_pkl || !mol_pkl_sz || !*mol_pkl || !*mol_pkl_sz) {
+    return 0;
+  }
+  auto mol = mol_from_pkl(*mol_pkl, *mol_pkl_sz);
+  std::string json;
+  if (details_json) {
+    json = details_json;
+  }
+  std::unique_ptr<RWMol> res(func(mol, json));
+
+  mol_to_pkl(*res, mol_pkl, mol_pkl_sz);
+  return 1;
+}
+}  // namespace
+extern "C" short cleanup(char **mol_pkl, size_t *mol_pkl_sz,
+                         const char *details_json) {
+  return standardize_func(mol_pkl, mol_pkl_sz, details_json,
+                          MinimalLib::do_cleanup);
+};
+extern "C" short normalize(char **mol_pkl, size_t *mol_pkl_sz,
+                           const char *details_json) {
+  return standardize_func(mol_pkl, mol_pkl_sz, details_json,
+                          MinimalLib::do_normalize);
+};
+extern "C" short canonical_tautomer(char **mol_pkl, size_t *mol_pkl_sz,
+                                    const char *details_json) {
+  return standardize_func(mol_pkl, mol_pkl_sz, details_json,
+                          MinimalLib::do_canonical_tautomer);
+};
+extern "C" short charge_parent(char **mol_pkl, size_t *mol_pkl_sz,
+                               const char *details_json) {
+  return standardize_func(mol_pkl, mol_pkl_sz, details_json,
+                          MinimalLib::do_charge_parent);
+};
+extern "C" short reionize(char **mol_pkl, size_t *mol_pkl_sz,
+                          const char *details_json) {
+  return standardize_func(mol_pkl, mol_pkl_sz, details_json,
+                          MinimalLib::do_reionize);
+};
+extern "C" short neutralize(char **mol_pkl, size_t *mol_pkl_sz,
+                            const char *details_json) {
+  return standardize_func(mol_pkl, mol_pkl_sz, details_json,
+                          MinimalLib::do_neutralize);
+};
+extern "C" short fragment_parent(char **mol_pkl, size_t *mol_pkl_sz,
+                                 const char *details_json) {
+  return standardize_func(mol_pkl, mol_pkl_sz, details_json,
+                          MinimalLib::do_fragment_parent);
+};
+
 #if (defined(__GNUC__) || defined(__GNUG__))
 #pragma GCC diagnostic pop
 #endif

@@ -54,12 +54,12 @@ struct RDKIT_MOLSTANDARDIZE_EXPORT CleanupParameters {
                          //! series of normalizations (default 200).
   bool preferOrganic{false};  //! Whether to prioritize organic fragments when
                               //! choosing fragment parent (default False).
-  bool doCanonical{true};  //! Whether to apply normalizations in a
-                           //! canonical order
-  int maxTautomers{1000};  //! The maximum number of tautomers to enumerate
-                           //! (default 1000).
-  int maxTransforms{1000};  //! The maximum number of tautomer transformations
-                            //! to apply (default 1000).
+  bool doCanonical{true};     //! Whether to apply normalizations in a
+                              //! canonical order
+  int maxTautomers{1000};     //! The maximum number of tautomers to enumerate
+                              //! (default 1000).
+  int maxTransforms{1000};    //! The maximum number of tautomer transformations
+                              //! to apply (default 1000).
   bool tautomerRemoveSp3Stereo{
       true};  //! Whether to remove stereochemistry from sp3
               //! centers involved in tautomerism (defaults to true)
@@ -80,12 +80,14 @@ struct RDKIT_MOLSTANDARDIZE_EXPORT CleanupParameters {
         fragmentFile(rdbase + "/Data/MolStandardize/fragmentPatterns.txt"),
         // chargeCorrections()
         tautomerTransforms(rdbase +
-                           "/Data/MolStandardize/tautomerTransforms.in")
-        {}
+                           "/Data/MolStandardize/tautomerTransforms.in") {}
 };
 
 RDKIT_MOLSTANDARDIZE_EXPORT extern const CleanupParameters
     defaultCleanupParameters;
+
+RDKIT_MOLSTANDARDIZE_EXPORT void updateCleanupParamsFromJSON(
+    CleanupParameters &params, const std::string &json);
 
 //! The cleanup function is equivalent to the
 // molvs.Standardizer().standardize(mol) function. It calls the same steps,

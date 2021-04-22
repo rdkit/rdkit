@@ -28,6 +28,9 @@
 #include <GraphMol/CIPLabeler/CIPLabeler.h>
 #include <GraphMol/Abbreviations/Abbreviations.h>
 #include <DataStructs/BitOps.h>
+#include <GraphMol/MolStandardize/MolStandardize.h>
+#include <GraphMol/MolStandardize/Charge.h>
+#include <GraphMol/MolStandardize/Tautomer.h>
 
 #include <sstream>
 #include <RDGeneral/BoostStartInclude.h>
@@ -298,6 +301,96 @@ std::string get_descriptors(const ROMol &m) {
   doc.Accept(writer);
   return buffer.GetString();
 }
+
+namespace {
+template <typename T, typename U>
+std::unique_ptr<RWMol> standardize_func(T &mol, const std::string &details_json,
+                                        U func) {
+  MolStandardize::CleanupParameters ps =
+      MolStandardize::defaultCleanupParameters;
+  if (!details_json.empty()) {
+    MolStandardize::updateCleanupParamsFromJSON(ps, details_json);
+  }
+  return std::unique_ptr<RWMol>(static_cast<RWMol *>(func(mol, ps)));
+}
+}  // namespace
+
+std::unique_ptr<RWMol> do_cleanup(RWMol &mol, const std::string &details_json) {
+  return standardize_func(mol, details_json, MolStandardize::cleanup);
+}
+
+std::unique_ptr<RWMol> do_normalize(RWMol &mol,
+                                    const std::string &details_json) {
+  auto molp = &mol;
+  return standardize_func(molp, details_json, MolStandardize::normalize);
+}
+
+std::unique_ptr<RWMol> do_reionize(RWMol &mol,
+                                   const std::string &details_json) {
+  auto molp = &mol;
+  return standardize_func(molp, details_json, MolStandardize::reionize);
+}
+
+std::unique_ptr<RWMol> do_canonical_tautomer(RWMol &mol,
+                                             const std::string &details_json) {
+  MolStandardize::CleanupParameters ps =
+      MolStandardize::defaultCleanupParameters;
+  if (!details_json.empty()) {
+    MolStandardize::updateCleanupParamsFromJSON(ps, details_json);
+  }
+  MolStandardize::TautomerEnumerator te(ps);
+  std::unique_ptr<RWMol> res(static_cast<RWMol *>(te.canonicalize(mol)));
+  return res;
+}
+
+std::unique_ptr<RWMol> do_neutralize(RWMol &mol,
+                                     const std::string &details_json) {
+  MolStandardize::CleanupParameters ps =
+      MolStandardize::defaultCleanupParameters;
+  if (!details_json.empty()) {
+    MolStandardize::updateCleanupParamsFromJSON(ps, details_json);
+  }
+  MolStandardize::Uncharger uncharger(ps.doCanonical);
+  std::unique_ptr<RWMol> res(static_cast<RWMol *>(uncharger.uncharge(mol)));
+  return res;
+}
+
+std::unique_ptr<RWMol> do_charge_parent(RWMol &mol,
+                                        const std::string &details_json) {
+  MolStandardize::CleanupParameters ps =
+      MolStandardize::defaultCleanupParameters;
+  bool skipStandardize = false;
+  if (!details_json.empty()) {
+    MolStandardize::updateCleanupParamsFromJSON(ps, details_json);
+    boost::property_tree::ptree pt;
+    std::istringstream ss;
+    ss.str(details_json);
+    boost::property_tree::read_json(ss, pt);
+    LPT_OPT_GET(skipStandardize);
+  }
+  std::unique_ptr<RWMol> res(
+      MolStandardize::chargeParent(mol, ps, skipStandardize));
+  return res;
+}
+
+std::unique_ptr<RWMol> do_fragment_parent(RWMol &mol,
+                                          const std::string &details_json) {
+  MolStandardize::CleanupParameters ps =
+      MolStandardize::defaultCleanupParameters;
+  bool skipStandardize = false;
+  if (!details_json.empty()) {
+    MolStandardize::updateCleanupParamsFromJSON(ps, details_json);
+    boost::property_tree::ptree pt;
+    std::istringstream ss;
+    ss.str(details_json);
+    boost::property_tree::read_json(ss, pt);
+    LPT_OPT_GET(skipStandardize);
+  }
+  std::unique_ptr<RWMol> res(
+      MolStandardize::fragmentParent(mol, ps, skipStandardize));
+  return res;
+}
+
 }  // namespace MinimalLib
 }  // namespace RDKit
 #undef LPT_OPT_GET

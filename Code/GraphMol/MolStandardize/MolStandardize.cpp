@@ -21,10 +21,41 @@
 #include <GraphMol/SmilesParse/SmilesWrite.h>
 #include <GraphMol/SmilesParse/SmilesParse.h>
 
+#include <RDGeneral/BoostStartInclude.h>
+#include <boost/property_tree/ptree.hpp>
+#include <boost/property_tree/json_parser.hpp>
+#include <RDGeneral/BoostEndInclude.h>
+
 using namespace std;
 namespace RDKit {
 namespace MolStandardize {
 const CleanupParameters defaultCleanupParameters;
+
+#define PT_OPT_GET(opt) params.opt = pt.get(#opt, params.opt)
+void updateCleanupParamsFromJSON(CleanupParameters &params,
+                                 const std::string &json) {
+  if (json.empty()) {
+    return;
+  }
+  std::istringstream ss;
+  ss.str(json);
+  boost::property_tree::ptree pt;
+  boost::property_tree::read_json(ss, pt);
+  PT_OPT_GET(rdbase);
+  PT_OPT_GET(normalizations);
+  PT_OPT_GET(acidbaseFile);
+  PT_OPT_GET(fragmentFile);
+  PT_OPT_GET(tautomerTransforms);
+  PT_OPT_GET(maxRestarts);
+  PT_OPT_GET(preferOrganic);
+  PT_OPT_GET(doCanonical);
+  PT_OPT_GET(maxTautomers);
+  PT_OPT_GET(maxTransforms);
+  PT_OPT_GET(tautomerRemoveSp3Stereo);
+  PT_OPT_GET(tautomerRemoveBondStereo);
+  PT_OPT_GET(tautomerRemoveIsotopicHs);
+  PT_OPT_GET(tautomerReassignStereo);
+}
 
 RWMol *cleanup(const RWMol &mol, const CleanupParameters &params) {
   RWMol m(mol);
@@ -35,7 +66,7 @@ RWMol *cleanup(const RWMol &mol, const CleanupParameters &params) {
   RWMOL_SPTR normalized(MolStandardize::normalize(&m, params));
   RWMol *reionized = MolStandardize::reionize(normalized.get(), params);
   MolOps::assignStereochemistry(*reionized);
-  
+
   // update properties of reionized using m.
   reionized->updateProps(m);
 

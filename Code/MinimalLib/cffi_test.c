@@ -411,6 +411,63 @@ M  END\n",&tpkl_size,"");
   printf("--------------------------\n"); 
 }
 
+void test_standardize(){
+  printf("--------------------------\n");
+  printf("  test_standardize\n");
+  disable_logging();
+  char *mpkl;
+  size_t mpkl_size;
+  mpkl = get_mol("[Pt]CCN(=O)=O",&mpkl_size,"{\"sanitize\":false}");
+  char *smi = get_smiles(mpkl,mpkl_size,"");
+  assert(!strcmp(smi,"O=N(=O)CC[Pt]"));
+  assert(cleanup(&mpkl,&mpkl_size,"")>0);
+  smi = get_smiles(mpkl,mpkl_size,"");
+  assert(!strcmp(smi,"[CH2-]C[N+](=O)[O-].[Pt+]"));
+
+  assert(fragment_parent(&mpkl,&mpkl_size,"")>0);
+  smi = get_smiles(mpkl,mpkl_size,"");
+  assert(!strcmp(smi,"[CH2-]C[N+](=O)[O-]"));
+
+  assert(charge_parent(&mpkl,&mpkl_size,"")>0);
+  smi = get_smiles(mpkl,mpkl_size,"");
+  assert(!strcmp(smi,"CC[N+](=O)[O-]"));
+
+  free(mpkl);
+  mpkl = get_mol("[Pt]CCN(=O)=O",&mpkl_size,"{\"sanitize\":false}");
+  assert(charge_parent(&mpkl,&mpkl_size,"")>0);
+  smi = get_smiles(mpkl,mpkl_size,"");
+  assert(!strcmp(smi,"CC[N+](=O)[O-]"));
+
+  free(mpkl);
+  mpkl = get_mol("[Pt]CCN(=O)=O",&mpkl_size,"{\"sanitize\":false}");
+  assert(charge_parent(&mpkl,&mpkl_size,"{\"skipStandardize\":true}")>0);
+  smi = get_smiles(mpkl,mpkl_size,"");
+  assert(!strcmp(smi,"[CH2-]C[N+](=O)[O-].[Pt+]"));
+
+  free(mpkl);
+  mpkl = get_mol("[CH2-]CN(=O)=O",&mpkl_size,"{\"sanitize\":false}");
+  assert(neutralize(&mpkl,&mpkl_size,"")>0);
+  smi = get_smiles(mpkl,mpkl_size,"");
+  assert(!strcmp(smi,"CCN(=O)=O"));
+
+  free(mpkl);
+  mpkl = get_mol("[O-]c1cc(C(=O)O)ccc1",&mpkl_size,"");
+  assert(reionize(&mpkl,&mpkl_size,"")>0);
+  smi = get_smiles(mpkl,mpkl_size,"");
+  assert(!strcmp(smi,"O=C([O-])c1cccc(O)c1"));
+
+  free(mpkl);
+  mpkl = get_mol("OC(O)C(=N)CO",&mpkl_size,"");
+  assert(canonical_tautomer(&mpkl,&mpkl_size,"")>0);
+  smi = get_smiles(mpkl,mpkl_size,"");
+  assert(!strcmp(smi,"NC(CO)C(=O)O"));
+
+  enable_logging();
+  printf("  done\n");
+  printf("--------------------------\n"); 
+
+}
+
 int main(){
   enable_logging();
   printf("hello %s\n",version()); 
@@ -421,5 +478,6 @@ int main(){
   test_fingerprints();
   test_modifications();
   test_coords();
+  test_standardize();
   return 0;
 }
