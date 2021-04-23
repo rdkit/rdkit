@@ -452,6 +452,30 @@ void testInitStruChk() {
   BOOST_LOG(rdInfoLog) << "done" << std::endl;
 }
 
+void testGithub4075() {
+  BOOST_LOG(rdInfoLog) << "testing Github #4075: AvalonTools.Generate2DCoords "
+                          "results in an assert violation"
+                       << std::endl;
+  {
+    auto mol = "Cl[C@H](C)CCC(F)Cl"_smiles;
+    TEST_ASSERT(mol);
+    AvalonTools::set2DCoords(*mol);
+    TEST_ASSERT(mol->getNumConformers() == 1);
+    std::unique_ptr<ROMol> newMol(MolBlockToMol(MolToMolBlock(*mol)));
+    TEST_ASSERT(newMol);
+    TEST_ASSERT(MolToSmiles(*newMol) == MolToSmiles(*mol));
+  }
+  {
+    auto mol = "Cl[C@H](C)C([C@H](O)I)C[C@H](F)Cl"_smiles;
+    TEST_ASSERT(mol);
+    AvalonTools::set2DCoords(*mol);
+    TEST_ASSERT(mol->getNumConformers() == 1);
+    std::unique_ptr<ROMol> newMol(MolBlockToMol(MolToMolBlock(*mol)));
+    TEST_ASSERT(newMol);
+    TEST_ASSERT(MolToSmiles(*newMol) == MolToSmiles(*mol));
+  }
+  BOOST_LOG(rdInfoLog) << "done" << std::endl;
+}
 int main() {
   RDLog::InitLogs();
 #if 1
@@ -469,6 +493,7 @@ int main() {
   testCountFps();
 #endif
   testInitStruChk();
+  testGithub4075();
 
   return 0;
 }
