@@ -98,6 +98,21 @@ ROMol *renumberAtoms(const ROMol &mol,
     }
   }
 
+  if (mol.getStereoGroups().size()) {
+    std::vector<StereoGroup> nsgs;
+    nsgs.reserve(mol.getStereoGroups().size());
+    for (const auto &osg : mol.getStereoGroups()) {
+      std::vector<Atom *> ats;
+      ats.reserve(osg.getAtoms().size());
+      for (const auto aptr : osg.getAtoms()) {
+        ats.push_back(res->getAtomWithIdx(revOrder[aptr->getIdx()]));
+      }
+      StereoGroup nsg(osg.getGroupType(), ats);
+      nsgs.push_back(nsg);
+    }
+    res->setStereoGroups(std::move(nsgs));
+  }
+
   return dynamic_cast<ROMol *>(res);
 }
 
