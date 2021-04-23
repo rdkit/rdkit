@@ -1941,15 +1941,21 @@ TEST_CASE("replaceAtom/Bond should not screw up bookmarks", "[RWMol]") {
 TEST_CASE("github #4071: StereoGroups not preserved by RenumberAtoms()",
           "[molops]") {
   SECTION("basics") {
-    auto m =
+    auto mol =
         "C[C@@H](O)[C@H](C)[C@@H](C)[C@@H](C)O |&3:3,o1:7,&1:1,&2:5,r|"_smiles;
-    REQUIRE(m);
-    REQUIRE(m->getStereoGroups().size() == 4);
-    std::vector<unsigned int> aindices(m->getNumAtoms());
+    REQUIRE(mol);
+    REQUIRE(mol->getStereoGroups().size() == 4);
+    std::vector<unsigned int> aindices(mol->getNumAtoms());
     std::iota(aindices.begin(), aindices.end(), 0);
     std::reverse(aindices.begin(), aindices.end());
-    std::unique_ptr<ROMol> nmol(MolOps::renumberAtoms(*m, aindices));
+    std::unique_ptr<ROMol> nmol(MolOps::renumberAtoms(*mol, aindices));
     REQUIRE(nmol);
     CHECK(nmol->getStereoGroups().size() == 4);
+    for (size_t i = 0; i < nmol->getStereoGroups().size(); ++i) {
+      CHECK(nmol->getStereoGroups()[i].getGroupType() ==
+            mol->getStereoGroups()[i].getGroupType());
+    }
+    CHECK(MolToCXSmiles(*nmol) ==
+          "C[C@@H](O)[C@H](C)[C@@H](C)[C@@H](C)O |o1:1,&1:3,&2:5,&3:7|");
   }
 }
