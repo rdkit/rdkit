@@ -1408,7 +1408,7 @@ TEST_CASE("CML writer", "[CML][writer]") {
       <bond atomRefs2="a0 a2" id="b1" order="S"/>
       <bond atomRefs2="a0 a3" id="b2" order="S"/>
       <bond atomRefs2="a0 a4" id="b3" order="S"/>
-      <bond atomRefs2="a4 a5" id="b4" order="S"/>
+      <bond atomRefs2="a4 a5" id="b4" order="S" bondStereo="H"/>
       <bond atomRefs2="a4 a6" id="b5" order="S"/>
       <bond atomRefs2="a4 a8" id="b6" order="S"/>
       <bond atomRefs2="a6 a7" id="b7" order="S"/>
@@ -1462,7 +1462,7 @@ M  END
     <bondArray>
       <bond atomRefs2="a0 a1" id="b0" order="S"/>
       <bond atomRefs2="a1 a2" id="b1" order="S"/>
-      <bond atomRefs2="a1 a3" id="b2" order="S"/>
+      <bond atomRefs2="a1 a3" id="b2" order="S" bondStereo="W"/>
       <bond atomRefs2="a1 a4" id="b3" order="S"/>
     </bondArray>
   </molecule>
@@ -1507,6 +1507,35 @@ M  END
       <atom id="a2" elementType="Br" formalCharge="0" hydrogenCount="0" x2="0.891800" y2="2.032800"/>
       <atom id="a3" elementType="F" formalCharge="0" hydrogenCount="0" x2="2.431800" y2="0.492800"/>
       <atom id="a4" elementType="Cl" formalCharge="0" hydrogenCount="0" x2="-0.648200" y2="0.492800"/>
+    </atomArray>
+    <bondArray>
+      <bond atomRefs2="a0 a1" id="b0" order="S"/>
+      <bond atomRefs2="a1 a2" id="b1" order="S"/>
+      <bond atomRefs2="a1 a3" id="b2" order="S" bondStereo="H"/>
+      <bond atomRefs2="a1 a4" id="b3" order="S"/>
+    </bondArray>
+  </molecule>
+</cml>
+)CML";
+    CHECK(cmlblock == cmlblock_expected);
+  }
+
+  SECTION("no conformer") {
+    auto mol = "C[C@](O)(F)Cl"_smiles;
+    REQUIRE(mol);
+    const std::string cmlblock = MolToCMLBlock(*mol);
+    const std::string cmlblock_expected =
+        R"CML(<?xml version="1.0" encoding="utf-8"?>
+<cml xmlns="http://www.xml-cml.org/schema" xmlns:convention="http://www.xml-cml.org/convention/" convention="convention:molecular">
+  <molecule id="m-1" formalCharge="0" spinMultiplicity="1">
+    <atomArray>
+      <atom id="a0" elementType="C" formalCharge="0" hydrogenCount="3"/>
+      <atom id="a1" elementType="C" formalCharge="0" hydrogenCount="0">
+        <atomParity atomRefs4="a0 a2 a3 a4">1</atomParity>
+      </atom>
+      <atom id="a2" elementType="O" formalCharge="0" hydrogenCount="1"/>
+      <atom id="a3" elementType="F" formalCharge="0" hydrogenCount="0"/>
+      <atom id="a4" elementType="Cl" formalCharge="0" hydrogenCount="0"/>
     </atomArray>
     <bondArray>
       <bond atomRefs2="a0 a1" id="b0" order="S"/>

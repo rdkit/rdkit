@@ -14,6 +14,7 @@
 //
 
 #include "FileParsers.h"
+#include "MolFileStereochem.h"
 #include <fstream>
 #include <sstream>
 #include <boost/format.hpp>
@@ -64,6 +65,12 @@ boost::property_tree::ptree molToPTree(const ROMol& mol, int confId,
   // http://www.xml-cml.org/convention/molecular#atom-id
   const auto atom_id_prefix = "a";
 
+  const Conformer* conf = nullptr;
+  if (rwmol.getNumConformers()) {
+    conf = &rwmol.getConformer(confId);
+    // wedge bonds so that we can use that info:
+    WedgeMolBonds(rwmol, conf);
+  }
   auto& atomArray = molecule.put("atomArray", "");
   for (unsigned i = 0u, nAtoms = rwmol.getNumAtoms(); i < nAtoms; i++) {
     auto& atom = atomArray.add("atom", "");
@@ -90,21 +97,18 @@ boost::property_tree::ptree molToPTree(const ROMol& mol, int confId,
     const auto n_rad_es = a->getNumRadicalElectrons();
     mol_num_radical_electrons += n_rad_es;
 
-    if (!mol.getNumConformers()) {
-      continue;
-    }
+    if (conf != nullptr) {
+      const auto& pos = conf->getAtomPos(i);
+      boost::format xyz_fmt{"%.6f"};
 
-    const auto& conf = rwmol.getConformer(confId);
-    const auto& pos = conf.getAtomPos(i);
-    boost::format xyz_fmt{"%.6f"};
-
-    if (!conf.is3D()) {
-      atom.put("<xmlattr>.x2", xyz_fmt % pos.x);
-      atom.put("<xmlattr>.y2", xyz_fmt % pos.y);
-    } else {
-      atom.put("<xmlattr>.x3", xyz_fmt % pos.x);
-      atom.put("<xmlattr>.y3", xyz_fmt % pos.y);
-      atom.put("<xmlattr>.z3", xyz_fmt % pos.z);
+      if (!conf->is3D()) {
+        atom.put("<xmlattr>.x2", xyz_fmt % pos.x);
+        atom.put("<xmlattr>.y2", xyz_fmt % pos.y);
+      } else {
+        atom.put("<xmlattr>.x3", xyz_fmt % pos.x);
+        atom.put("<xmlattr>.y3", xyz_fmt % pos.y);
+        atom.put("<xmlattr>.z3", xyz_fmt % pos.z);
+      }
     }
     // atom/@atomParity if chiral
     // http://www.xml-cml.org/convention/molecular#atom-atomParity
@@ -231,6 +235,19 @@ boost::property_tree::ptree molToPTree(const ROMol& mol, int confId,
           BOOST_LOG(rdInfoLog)
               << boost::format{"CMLWriter: Unsupported BondType %1%\n"} % btype;
           bond.put("<xmlattr>.order", "");
+      }
+      // bond/@BondStereo if appropriate
+      // http://www.xml-cml.org/convention/molecular#bondStereo-element
+      auto bdir = bptr->getBondDir();
+      switch (bdir) {
+        case Bond::BondDir::BEGINDASH:
+          bond.put("<xmlattr>.bondStereo", "H");
+          break;
+        case Bond::BondDir::BEGINWEDGE:
+          bond.put("<xmlattr>.bondStereo", "W");
+          break;
+        default:
+          break;
       }
     }
   }
