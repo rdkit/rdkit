@@ -224,10 +224,19 @@ unsigned int set2DCoords(ROMol &mol, bool clearConfs) {
   auto smiles = MolToSmiles(mol);
   struct reaccs_molecule_t *mp = stringToReaccs(smiles, true);
   struct reaccs_molecule_t *mp2 = reaccsGetCoords(mp);
-  TEST_ASSERT(mp2->n_atoms == mol.getNumAtoms());
+  TEST_ASSERT(mp2->n_atoms >= mol.getNumAtoms());
 
   auto *conf = new RDKit::Conformer(mol.getNumAtoms());
   conf->set3D(false);
+
+  // the toolkit may add chiral Hs... we need to be able to ignore them:
+  std::vector<int> nonHydrogenIndices;
+  for (unsigned int i = 0; i < mp2->n_atoms; i++) {
+    if (strcmp(mp2->atom_array[i].atom_symbol, "H")) {
+      nonHydrogenIndices.push_back(i);
+    }
+  }
+  TEST_ASSERT(nonHydrogenIndices.size() == mol.getNumAtoms());
 
   // Atoms in the intermediate smiles representation may be ordered
   // differently compared to the original input molecule.
@@ -235,8 +244,8 @@ unsigned int set2DCoords(ROMol &mol, bool clearConfs) {
   std::vector<unsigned int> atomOrdering;
   mol.getProp(common_properties::_smilesAtomOutputOrder, atomOrdering);
   for (unsigned int i = 0; i < mol.getNumAtoms(); ++i) {
-    auto x = mp2->atom_array[atomOrdering[i]].x;
-    auto y = mp2->atom_array[atomOrdering[i]].y;
+    auto x = mp2->atom_array[nonHydrogenIndices[atomOrdering[i]]].x;
+    auto y = mp2->atom_array[nonHydrogenIndices[atomOrdering[i]]].y;
     RDGeom::Point3D loc(x, y, 0.);
     conf->setAtomPos(i, loc);
   }
