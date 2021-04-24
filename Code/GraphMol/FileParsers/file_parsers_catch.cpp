@@ -1348,13 +1348,8 @@ TEST_CASE("CML writer", "[CML][writer]") {
       auto *a = new Atom{z};
       mol->addAtom(a, false, true);
     }
-    mol->getAtomWithIdx(0u)->setNumExplicitHs(3u);
-    mol->getAtomWithIdx(4u)->setNumExplicitHs(1u);
-    mol->getAtomWithIdx(6u)->setNumExplicitHs(1u);
     mol->getAtomWithIdx(7u)->setIsotope(2u);
     mol->getAtomWithIdx(10u)->setFormalCharge(-1);
-
-    mol->getAtomWithIdx(4u)->setChiralTag(Atom::CHI_TETRAHEDRAL_CCW);
 
     mol->addBond(0u, 1u, Bond::SINGLE);
     mol->addBond(0u, 2u, Bond::SINGLE);
@@ -1384,41 +1379,172 @@ TEST_CASE("CML writer", "[CML][writer]") {
 
     mol->addConformer(conf);
 
+    mol->updatePropertyCache();
+    MolOps::assignChiralTypesFrom3D(*mol);
+
     const std::string cmlblock = MolToCMLBlock(*mol);
     const std::string cmlblock_expected =
         R"CML(<?xml version="1.0" encoding="utf-8"?>
-<cml:cml xmlns:cml="http://www.xml-cml.org/schema" xmlns:convention="http://www.xml-cml.org/convention/" convention="convention:molecular">
-  <cml:molecule id="m-1" formalCharge="-1" spinMultiplicity="1">
-    <cml:name>S-lactic acid</cml:name>
-    <cml:atomArray>
-      <cml:atom id="a0" elementType="C" formalCharge="0" hydrogenCount="3" x3="-0.953300" y3="0.604160" z3="1.016090"/>
-      <cml:atom id="a1" elementType="H" formalCharge="0" hydrogenCount="0" x3="-1.008320" y3="1.687460" z3="0.835200"/>
-      <cml:atom id="a2" elementType="H" formalCharge="0" hydrogenCount="0" x3="-1.962740" y3="0.161030" z3="0.944710"/>
-      <cml:atom id="a3" elementType="H" formalCharge="0" hydrogenCount="0" x3="-0.577010" y3="0.447370" z3="2.041670"/>
-      <cml:atom id="a4" elementType="C" formalCharge="0" hydrogenCount="1" x3="0.000000" y3="0.000000" z3="0.000000">
-        <cml:atomParity atomRefs4="a0 a5 a6 a8">-1</cml:atomParity>
-      </cml:atom>
-      <cml:atom id="a5" elementType="H" formalCharge="0" hydrogenCount="0" x3="-0.430380" y3="0.185960" z3="-1.013770"/>
-      <cml:atom id="a6" elementType="O" formalCharge="0" hydrogenCount="1" x3="0.225380" y3="-1.365310" z3="0.193730"/>
-      <cml:atom id="a7" elementType="H" formalCharge="0" hydrogenCount="0" isotopeNumber="2" x3="1.219930" y3="-1.339370" z3="0.145800"/>
-      <cml:atom id="a8" elementType="C" formalCharge="0" hydrogenCount="0" x3="1.384900" y3="0.730030" z3="0.000000"/>
-      <cml:atom id="a9" elementType="O" formalCharge="0" hydrogenCount="0" x3="1.384900" y3="1.967950" z3="0.000000"/>
-      <cml:atom id="a10" elementType="O" formalCharge="-1" hydrogenCount="0" x3="2.352530" y3="-0.077000" z3="0.000000"/>
-    </cml:atomArray>
-    <cml:bondArray>
-      <cml:bond atomRefs2="a0 a1" id="b0" order="S"/>
-      <cml:bond atomRefs2="a0 a2" id="b1" order="S"/>
-      <cml:bond atomRefs2="a0 a3" id="b2" order="S"/>
-      <cml:bond atomRefs2="a0 a4" id="b3" order="S"/>
-      <cml:bond atomRefs2="a4 a5" id="b4" order="S"/>
-      <cml:bond atomRefs2="a4 a6" id="b5" order="S"/>
-      <cml:bond atomRefs2="a4 a8" id="b6" order="S"/>
-      <cml:bond atomRefs2="a6 a7" id="b7" order="S"/>
-      <cml:bond atomRefs2="a8 a9" id="b8" order="D"/>
-      <cml:bond atomRefs2="a8 a10" id="b9" order="S"/>
-    </cml:bondArray>
-  </cml:molecule>
-</cml:cml>
+<cml xmlns="http://www.xml-cml.org/schema" xmlns:convention="http://www.xml-cml.org/convention/" convention="convention:molecular">
+  <molecule id="m-1" formalCharge="-1" spinMultiplicity="1">
+    <name>S-lactic acid</name>
+    <atomArray>
+      <atom id="a0" elementType="C" formalCharge="0" hydrogenCount="3" x3="-0.953300" y3="0.604160" z3="1.016090"/>
+      <atom id="a1" elementType="H" formalCharge="0" hydrogenCount="0" x3="-1.008320" y3="1.687460" z3="0.835200"/>
+      <atom id="a2" elementType="H" formalCharge="0" hydrogenCount="0" x3="-1.962740" y3="0.161030" z3="0.944710"/>
+      <atom id="a3" elementType="H" formalCharge="0" hydrogenCount="0" x3="-0.577010" y3="0.447370" z3="2.041670"/>
+      <atom id="a4" elementType="C" formalCharge="0" hydrogenCount="1" x3="0.000000" y3="0.000000" z3="0.000000">
+        <atomParity atomRefs4="a0 a5 a6 a8">1</atomParity>
+      </atom>
+      <atom id="a5" elementType="H" formalCharge="0" hydrogenCount="0" x3="-0.430380" y3="0.185960" z3="-1.013770"/>
+      <atom id="a6" elementType="O" formalCharge="0" hydrogenCount="1" x3="0.225380" y3="-1.365310" z3="0.193730"/>
+      <atom id="a7" elementType="H" formalCharge="0" hydrogenCount="0" isotopeNumber="2" x3="1.219930" y3="-1.339370" z3="0.145800"/>
+      <atom id="a8" elementType="C" formalCharge="0" hydrogenCount="0" x3="1.384900" y3="0.730030" z3="0.000000"/>
+      <atom id="a9" elementType="O" formalCharge="0" hydrogenCount="0" x3="1.384900" y3="1.967950" z3="0.000000"/>
+      <atom id="a10" elementType="O" formalCharge="-1" hydrogenCount="0" x3="2.352530" y3="-0.077000" z3="0.000000"/>
+    </atomArray>
+    <bondArray>
+      <bond atomRefs2="a0 a1" id="b0" order="S"/>
+      <bond atomRefs2="a0 a2" id="b1" order="S"/>
+      <bond atomRefs2="a0 a3" id="b2" order="S"/>
+      <bond atomRefs2="a0 a4" id="b3" order="S"/>
+      <bond atomRefs2="a4 a5" id="b4" order="S" bondStereo="H"/>
+      <bond atomRefs2="a4 a6" id="b5" order="S"/>
+      <bond atomRefs2="a4 a8" id="b6" order="S"/>
+      <bond atomRefs2="a6 a7" id="b7" order="S"/>
+      <bond atomRefs2="a8 a9" id="b8" order="D"/>
+      <bond atomRefs2="a8 a10" id="b9" order="S"/>
+    </bondArray>
+  </molecule>
+</cml>
+)CML";
+    CHECK(cmlblock == cmlblock_expected);
+  }
+
+  SECTION("chirality1") {
+    auto mol = R"CTAB(
+  Mrv1921 04232106262D          
+
+  0  0  0     0  0            999 V3000
+M  V30 BEGIN CTAB
+M  V30 COUNTS 5 4 0 0 1
+M  V30 BEGIN ATOM
+M  V30 1 I 0.8918 -1.0472 0 0
+M  V30 2 C 0.8918 0.4928 0 0
+M  V30 3 Br 0.8918 2.0328 0 0
+M  V30 4 F 2.4318 0.4928 0 0
+M  V30 5 Cl -0.6482 0.4928 0 0
+M  V30 END ATOM
+M  V30 BEGIN BOND
+M  V30 1 1 2 1
+M  V30 2 1 2 3 CFG=3
+M  V30 3 1 2 4 CFG=1
+M  V30 4 1 2 5
+M  V30 END BOND
+M  V30 END CTAB
+M  END
+)CTAB"_ctab;
+    REQUIRE(mol);
+    const std::string cmlblock = MolToCMLBlock(*mol);
+    const std::string cmlblock_expected =
+        R"CML(<?xml version="1.0" encoding="utf-8"?>
+<cml xmlns="http://www.xml-cml.org/schema" xmlns:convention="http://www.xml-cml.org/convention/" convention="convention:molecular">
+  <molecule id="m-1" formalCharge="0" spinMultiplicity="1">
+    <atomArray>
+      <atom id="a0" elementType="I" formalCharge="0" hydrogenCount="0" x2="0.891800" y2="-1.047200"/>
+      <atom id="a1" elementType="C" formalCharge="0" hydrogenCount="0" x2="0.891800" y2="0.492800">
+        <atomParity atomRefs4="a0 a2 a3 a4">1</atomParity>
+      </atom>
+      <atom id="a2" elementType="Br" formalCharge="0" hydrogenCount="0" x2="0.891800" y2="2.032800"/>
+      <atom id="a3" elementType="F" formalCharge="0" hydrogenCount="0" x2="2.431800" y2="0.492800"/>
+      <atom id="a4" elementType="Cl" formalCharge="0" hydrogenCount="0" x2="-0.648200" y2="0.492800"/>
+    </atomArray>
+    <bondArray>
+      <bond atomRefs2="a0 a1" id="b0" order="S"/>
+      <bond atomRefs2="a1 a2" id="b1" order="S"/>
+      <bond atomRefs2="a1 a3" id="b2" order="S" bondStereo="W"/>
+      <bond atomRefs2="a1 a4" id="b3" order="S"/>
+    </bondArray>
+  </molecule>
+</cml>
+)CML";
+    CHECK(cmlblock == cmlblock_expected);
+  }
+  SECTION("chirality2") {
+    auto mol = R"CTAB(
+  Mrv1921 04232106262D          
+
+  0  0  0     0  0            999 V3000
+M  V30 BEGIN CTAB
+M  V30 COUNTS 5 4 0 0 1
+M  V30 BEGIN ATOM
+M  V30 1 I 0.8918 -1.0472 0 0
+M  V30 2 C 0.8918 0.4928 0 0
+M  V30 3 Br 0.8918 2.0328 0 0
+M  V30 4 F 2.4318 0.4928 0 0
+M  V30 5 Cl -0.6482 0.4928 0 0
+M  V30 END ATOM
+M  V30 BEGIN BOND
+M  V30 1 1 2 1
+M  V30 2 1 2 3 CFG=1
+M  V30 3 1 2 4 CFG=3
+M  V30 4 1 2 5
+M  V30 END BOND
+M  V30 END CTAB
+M  END
+)CTAB"_ctab;
+    REQUIRE(mol);
+    const std::string cmlblock = MolToCMLBlock(*mol);
+    const std::string cmlblock_expected =
+        R"CML(<?xml version="1.0" encoding="utf-8"?>
+<cml xmlns="http://www.xml-cml.org/schema" xmlns:convention="http://www.xml-cml.org/convention/" convention="convention:molecular">
+  <molecule id="m-1" formalCharge="0" spinMultiplicity="1">
+    <atomArray>
+      <atom id="a0" elementType="I" formalCharge="0" hydrogenCount="0" x2="0.891800" y2="-1.047200"/>
+      <atom id="a1" elementType="C" formalCharge="0" hydrogenCount="0" x2="0.891800" y2="0.492800">
+        <atomParity atomRefs4="a0 a2 a3 a4">-1</atomParity>
+      </atom>
+      <atom id="a2" elementType="Br" formalCharge="0" hydrogenCount="0" x2="0.891800" y2="2.032800"/>
+      <atom id="a3" elementType="F" formalCharge="0" hydrogenCount="0" x2="2.431800" y2="0.492800"/>
+      <atom id="a4" elementType="Cl" formalCharge="0" hydrogenCount="0" x2="-0.648200" y2="0.492800"/>
+    </atomArray>
+    <bondArray>
+      <bond atomRefs2="a0 a1" id="b0" order="S"/>
+      <bond atomRefs2="a1 a2" id="b1" order="S"/>
+      <bond atomRefs2="a1 a3" id="b2" order="S" bondStereo="H"/>
+      <bond atomRefs2="a1 a4" id="b3" order="S"/>
+    </bondArray>
+  </molecule>
+</cml>
+)CML";
+    CHECK(cmlblock == cmlblock_expected);
+  }
+
+  SECTION("no conformer") {
+    auto mol = "C[C@](O)(F)Cl"_smiles;
+    REQUIRE(mol);
+    const std::string cmlblock = MolToCMLBlock(*mol);
+    const std::string cmlblock_expected =
+        R"CML(<?xml version="1.0" encoding="utf-8"?>
+<cml xmlns="http://www.xml-cml.org/schema" xmlns:convention="http://www.xml-cml.org/convention/" convention="convention:molecular">
+  <molecule id="m-1" formalCharge="0" spinMultiplicity="1">
+    <atomArray>
+      <atom id="a0" elementType="C" formalCharge="0" hydrogenCount="3"/>
+      <atom id="a1" elementType="C" formalCharge="0" hydrogenCount="0">
+        <atomParity atomRefs4="a0 a2 a3 a4">1</atomParity>
+      </atom>
+      <atom id="a2" elementType="O" formalCharge="0" hydrogenCount="1"/>
+      <atom id="a3" elementType="F" formalCharge="0" hydrogenCount="0"/>
+      <atom id="a4" elementType="Cl" formalCharge="0" hydrogenCount="0"/>
+    </atomArray>
+    <bondArray>
+      <bond atomRefs2="a0 a1" id="b0" order="S"/>
+      <bond atomRefs2="a1 a2" id="b1" order="S"/>
+      <bond atomRefs2="a1 a3" id="b2" order="S"/>
+      <bond atomRefs2="a1 a4" id="b3" order="S"/>
+    </bondArray>
+  </molecule>
+</cml>
 )CML";
     CHECK(cmlblock == cmlblock_expected);
   }

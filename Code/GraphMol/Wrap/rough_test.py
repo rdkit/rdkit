@@ -5636,47 +5636,44 @@ M  END
     mol.SetProp('_Name', 'S-lactic acid')
     mol.AddConformer(conf)
 
-    mol.GetAtomWithIdx(0).SetNumExplicitHs(3)
-    mol.GetAtomWithIdx(4).SetNumExplicitHs(1)
-    mol.GetAtomWithIdx(6).SetNumExplicitHs(1)
     mol.GetAtomWithIdx(7).SetIsotope(2)
     mol.GetAtomWithIdx(10).SetFormalCharge(-1)
 
     mol.GetAtomWithIdx(4).SetChiralTag(Chem.ChiralType.CHI_TETRAHEDRAL_CCW)
 
     cmlblock_expected = """<?xml version="1.0" encoding="utf-8"?>
-<cml:cml xmlns:cml="http://www.xml-cml.org/schema" xmlns:convention="http://www.xml-cml.org/convention/" convention="convention:molecular">
-  <cml:molecule id="m-1" formalCharge="-1" spinMultiplicity="1">
-    <cml:name>S-lactic acid</cml:name>
-    <cml:atomArray>
-      <cml:atom id="a0" elementType="C" formalCharge="0" hydrogenCount="3" x3="-0.953300" y3="0.604160" z3="1.016090"/>
-      <cml:atom id="a1" elementType="H" formalCharge="0" hydrogenCount="0" x3="-1.008320" y3="1.687460" z3="0.835200"/>
-      <cml:atom id="a2" elementType="H" formalCharge="0" hydrogenCount="0" x3="-1.962740" y3="0.161030" z3="0.944710"/>
-      <cml:atom id="a3" elementType="H" formalCharge="0" hydrogenCount="0" x3="-0.577010" y3="0.447370" z3="2.041670"/>
-      <cml:atom id="a4" elementType="C" formalCharge="0" hydrogenCount="1" x3="0.000000" y3="0.000000" z3="0.000000">
-        <cml:atomParity atomRefs4="a0 a5 a6 a8">-1</cml:atomParity>
-      </cml:atom>
-      <cml:atom id="a5" elementType="H" formalCharge="0" hydrogenCount="0" x3="-0.430380" y3="0.185960" z3="-1.013770"/>
-      <cml:atom id="a6" elementType="O" formalCharge="0" hydrogenCount="1" x3="0.225380" y3="-1.365310" z3="0.193730"/>
-      <cml:atom id="a7" elementType="H" formalCharge="0" hydrogenCount="0" isotopeNumber="2" x3="1.219930" y3="-1.339370" z3="0.145800"/>
-      <cml:atom id="a8" elementType="C" formalCharge="0" hydrogenCount="0" x3="1.384900" y3="0.730030" z3="0.000000"/>
-      <cml:atom id="a9" elementType="O" formalCharge="0" hydrogenCount="0" x3="1.384900" y3="1.967950" z3="0.000000"/>
-      <cml:atom id="a10" elementType="O" formalCharge="-1" hydrogenCount="0" x3="2.352530" y3="-0.077000" z3="0.000000"/>
-    </cml:atomArray>
-    <cml:bondArray>
-      <cml:bond atomRefs2="a0 a1" id="b0" order="S"/>
-      <cml:bond atomRefs2="a0 a2" id="b1" order="S"/>
-      <cml:bond atomRefs2="a0 a3" id="b2" order="S"/>
-      <cml:bond atomRefs2="a0 a4" id="b3" order="S"/>
-      <cml:bond atomRefs2="a4 a5" id="b4" order="S"/>
-      <cml:bond atomRefs2="a4 a6" id="b5" order="S"/>
-      <cml:bond atomRefs2="a4 a8" id="b6" order="S"/>
-      <cml:bond atomRefs2="a6 a7" id="b7" order="S"/>
-      <cml:bond atomRefs2="a8 a9" id="b8" order="D"/>
-      <cml:bond atomRefs2="a8 a10" id="b9" order="S"/>
-    </cml:bondArray>
-  </cml:molecule>
-</cml:cml>
+<cml xmlns="http://www.xml-cml.org/schema" xmlns:convention="http://www.xml-cml.org/convention/" convention="convention:molecular">
+  <molecule id="m-1" formalCharge="-1" spinMultiplicity="1">
+    <name>S-lactic acid</name>
+    <atomArray>
+      <atom id="a0" elementType="C" formalCharge="0" hydrogenCount="3" x3="-0.953300" y3="0.604160" z3="1.016090"/>
+      <atom id="a1" elementType="H" formalCharge="0" hydrogenCount="0" x3="-1.008320" y3="1.687460" z3="0.835200"/>
+      <atom id="a2" elementType="H" formalCharge="0" hydrogenCount="0" x3="-1.962740" y3="0.161030" z3="0.944710"/>
+      <atom id="a3" elementType="H" formalCharge="0" hydrogenCount="0" x3="-0.577010" y3="0.447370" z3="2.041670"/>
+      <atom id="a4" elementType="C" formalCharge="0" hydrogenCount="1" x3="0.000000" y3="0.000000" z3="0.000000">
+        <atomParity atomRefs4="a0 a5 a6 a8">1</atomParity>
+      </atom>
+      <atom id="a5" elementType="H" formalCharge="0" hydrogenCount="0" x3="-0.430380" y3="0.185960" z3="-1.013770"/>
+      <atom id="a6" elementType="O" formalCharge="0" hydrogenCount="1" x3="0.225380" y3="-1.365310" z3="0.193730"/>
+      <atom id="a7" elementType="H" formalCharge="0" hydrogenCount="0" isotopeNumber="2" x3="1.219930" y3="-1.339370" z3="0.145800"/>
+      <atom id="a8" elementType="C" formalCharge="0" hydrogenCount="0" x3="1.384900" y3="0.730030" z3="0.000000"/>
+      <atom id="a9" elementType="O" formalCharge="0" hydrogenCount="0" x3="1.384900" y3="1.967950" z3="0.000000"/>
+      <atom id="a10" elementType="O" formalCharge="-1" hydrogenCount="0" x3="2.352530" y3="-0.077000" z3="0.000000"/>
+    </atomArray>
+    <bondArray>
+      <bond atomRefs2="a0 a1" id="b0" order="S"/>
+      <bond atomRefs2="a0 a2" id="b1" order="S"/>
+      <bond atomRefs2="a0 a3" id="b2" order="S"/>
+      <bond atomRefs2="a0 a4" id="b3" order="S"/>
+      <bond atomRefs2="a4 a5" id="b4" order="S" bondStereo="H"/>
+      <bond atomRefs2="a4 a6" id="b5" order="S"/>
+      <bond atomRefs2="a4 a8" id="b6" order="S"/>
+      <bond atomRefs2="a6 a7" id="b7" order="S"/>
+      <bond atomRefs2="a8 a9" id="b8" order="D"/>
+      <bond atomRefs2="a8 a10" id="b9" order="S"/>
+    </bondArray>
+  </molecule>
+</cml>
 """
 
     self.assertEqual(Chem.MolToCMLBlock(mol), cmlblock_expected)
@@ -6502,9 +6499,8 @@ CAS<~>
     rwmol = Chem.RWMol(m)
     rwmol.InsertMol(m2)
     rwmol.InsertMol(m3)
-    self.assertEqual(Chem.MolToSmiles(rwmol),
-                     Chem.CanonSmiles("CNO.c1ccccc1.C1CC1"))
-    
+    self.assertEqual(Chem.MolToSmiles(rwmol), Chem.CanonSmiles("CNO.c1ccccc1.C1CC1"))
+
   def testBatchEdits(self):
     mol = Chem.MolFromSmiles("C1CCCO1")
 
@@ -6550,6 +6546,7 @@ CAS<~>
     except:
       pass
     self.assertEqual(rwmol.GetNumAtoms(), mol.GetNumAtoms())
+
 
 if __name__ == '__main__':
   if "RDTESTCASE" in os.environ:

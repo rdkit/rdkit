@@ -14,6 +14,7 @@
 //
 
 #include "FileParsers.h"
+#include "MolFileStereochem.h"
 #include <fstream>
 #include <sstream>
 #include <boost/format.hpp>
@@ -28,20 +29,7 @@
 #endif
 
 namespace RDKit {
-
 namespace {
-double determinant(double a00, double a01, double a10, double a11) noexcept {
-  return a00 * a11 - a01 * a10;
-}
-
-double determinant(double a00, double a01, double a02,  //
-                   double a10, double a11, double a12,  //
-                   double a20, double a21, double a22) noexcept {
-  return a00 * determinant(a11, a12, a21, a22) -
-         a01 * determinant(a10, a12, a20, a22) +
-         a02 * determinant(a10, a11, a20, a21);
-}
-
 boost::property_tree::ptree molToPTree(const ROMol& mol, int confId,
                                        bool kekulize) {
   RWMol rwmol{mol};
@@ -51,12 +39,12 @@ boost::property_tree::ptree molToPTree(const ROMol& mol, int confId,
 
   boost::property_tree::ptree pt;
   // prefix namespaces
-  auto& root = pt.add("cml:cml", "");
-  root.put("<xmlattr>.xmlns:cml", "http://www.xml-cml.org/schema");
+  auto& root = pt.add("cml", "");
+  root.put("<xmlattr>.xmlns", "http://www.xml-cml.org/schema");
   root.put("<xmlattr>.xmlns:convention", "http://www.xml-cml.org/convention/");
   root.put("<xmlattr>.convention", "convention:molecular");
 
-  auto& molecule = root.add("cml:molecule", "");
+  auto& molecule = root.add("molecule", "");
 
   // molecule/@id MUST start with an alphabetical character
   // http://www.xml-cml.org/convention/molecular#molecule-id
@@ -67,7 +55,7 @@ boost::property_tree::ptree molToPTree(const ROMol& mol, int confId,
   std::string name;
   rwmol.getPropIfPresent(common_properties::_Name, name);
   if (!name.empty()) {
-    molecule.put("cml:name", name);
+    molecule.put("name", name);
   }
 
   int mol_formal_charge = 0;
@@ -77,9 +65,15 @@ boost::property_tree::ptree molToPTree(const ROMol& mol, int confId,
   // http://www.xml-cml.org/convention/molecular#atom-id
   const auto atom_id_prefix = "a";
 
-  auto& atomArray = molecule.put("cml:atomArray", "");
+  const Conformer* conf = nullptr;
+  if (rwmol.getNumConformers()) {
+    conf = &rwmol.getConformer(confId);
+    // wedge bonds so that we can use that info:
+    WedgeMolBonds(rwmol, conf);
+  }
+  auto& atomArray = molecule.put("atomArray", "");
   for (unsigned i = 0u, nAtoms = rwmol.getNumAtoms(); i < nAtoms; i++) {
-    auto& atom = atomArray.add("cml:atom", "");
+    auto& atom = atomArray.add("atom", "");
     const auto& a = rwmol.getAtomWithIdx(i);
 
     atom.put("<xmlattr>.id", boost::format{"%1%%2%"} % atom_id_prefix % i);
@@ -93,7 +87,7 @@ boost::property_tree::ptree molToPTree(const ROMol& mol, int confId,
     mol_formal_charge += charge;
     atom.put("<xmlattr>.formalCharge", charge);
 
-    atom.put("<xmlattr>.hydrogenCount", a->getTotalNumHs());
+    atom.put("<xmlattr>.hydrogenCount", a->getTotalNumHs(true));
 
     const auto isotope = a->getIsotope();
     if (isotope) {
@@ -103,70 +97,47 @@ boost::property_tree::ptree molToPTree(const ROMol& mol, int confId,
     const auto n_rad_es = a->getNumRadicalElectrons();
     mol_num_radical_electrons += n_rad_es;
 
-    if (!mol.getNumConformers()) {
-      continue;
+    if (conf != nullptr) {
+      const auto& pos = conf->getAtomPos(i);
+      boost::format xyz_fmt{"%.6f"};
+
+      if (!conf->is3D()) {
+        atom.put("<xmlattr>.x2", xyz_fmt % pos.x);
+        atom.put("<xmlattr>.y2", xyz_fmt % pos.y);
+      } else {
+        atom.put("<xmlattr>.x3", xyz_fmt % pos.x);
+        atom.put("<xmlattr>.y3", xyz_fmt % pos.y);
+        atom.put("<xmlattr>.z3", xyz_fmt % pos.z);
+      }
     }
-
-    const auto& conf = rwmol.getConformer(confId);
-    const auto& pos = conf.getAtomPos(i);
-    boost::format xyz_fmt{"%.6f"};
-
-    if (!conf.is3D()) {
-      atom.put("<xmlattr>.x2", xyz_fmt % pos.x);
-      atom.put("<xmlattr>.y2", xyz_fmt % pos.y);
-      continue;
-    }
-
-    atom.put("<xmlattr>.x3", xyz_fmt % pos.x);
-    atom.put("<xmlattr>.y3", xyz_fmt % pos.y);
-    atom.put("<xmlattr>.z3", xyz_fmt % pos.z);
-
     // atom/@atomParity if chiral
     // http://www.xml-cml.org/convention/molecular#atom-atomParity
-    const auto chiral = a->getChiralTag();
-    if (chiral == Atom::CHI_UNSPECIFIED || chiral == Atom::CHI_OTHER) {
-      continue;
+    // the parity is the sign of the chiral volume. We can determine that from
+    // the ChiralTag:
+    int parity = 0;
+    switch (a->getChiralTag()) {
+      case Atom::CHI_TETRAHEDRAL_CCW:
+        parity = 1;
+        break;
+      case Atom::CHI_TETRAHEDRAL_CW:
+        parity = -1;
+        break;
+      default:
+        parity = 0;
     }
+    if (parity) {
+      std::vector<unsigned> neighbors;
+      for (auto nbri : boost::make_iterator_range(mol.getAtomNeighbors(a))) {
+        const auto at = mol[nbri];
+        neighbors.push_back(at->getIdx());
+      }
 
-    std::vector<RDGeom::Point3D> xyzs;
-    std::vector<unsigned> neighbors;
-    for (auto nbri : boost::make_iterator_range(mol.getAtomBonds(a))) {
-      const auto* const b = mol[nbri];
-      const auto o = b->getOtherAtom(a)->getIdx();
-      neighbors.push_back(o);
-      xyzs.push_back(conf.getAtomPos(o));
+      auto& atomParity = atom.add("atomParity", parity);
+      atomParity.put("<xmlattr>.atomRefs4",
+                     boost::format{"%1%%2% %1%%3% %1%%4% %1%%5%"} %
+                         atom_id_prefix % neighbors[0u] % neighbors[1u] %
+                         neighbors[2u] % neighbors[3u]);
     }
-
-    if (neighbors.size() != 4u) {
-      continue;
-    }
-
-    /* atomParity = sign(det([[1,  1,  1,  1],
-                              [x0, x1, x2, x3],
-                              [y0, y1, y2, y3],
-                              [z0, z1, z2, z3]]))
-     */
-    const auto det = determinant(xyzs[1u].x, xyzs[2u].x, xyzs[3u].x,  //
-                                 xyzs[1u].y, xyzs[2u].y, xyzs[3u].y,  //
-                                 xyzs[1u].z, xyzs[2u].z, xyzs[3u].z) -
-                     determinant(xyzs[0u].x, xyzs[2u].x, xyzs[3u].x,  //
-                                 xyzs[0u].y, xyzs[2u].y, xyzs[3u].y,  //
-                                 xyzs[0u].z, xyzs[2u].z, xyzs[3u].z) +
-                     determinant(xyzs[0u].x, xyzs[1u].x, xyzs[3u].x,  //
-                                 xyzs[0u].y, xyzs[1u].y, xyzs[3u].y,  //
-                                 xyzs[0u].z, xyzs[1u].z, xyzs[3u].z) -
-                     determinant(xyzs[0u].x, xyzs[1u].x, xyzs[2u].x,  //
-                                 xyzs[0u].y, xyzs[1u].y, xyzs[2u].y,  //
-                                 xyzs[0u].z, xyzs[1u].z, xyzs[2u].z);
-    if (det == 0.0) {
-      continue;
-    }
-
-    auto& atomParity = atom.add("cml:atomParity", det > 0.0 ? 1 : -1);
-    atomParity.put("<xmlattr>.atomRefs4",
-                   boost::format{"%1%%2% %1%%3% %1%%4% %1%%5%"} %
-                       atom_id_prefix % neighbors[0u] % neighbors[1u] %
-                       neighbors[2u] % neighbors[3u]);
   }
 
   molecule.put("<xmlattr>.formalCharge", mol_formal_charge);
@@ -184,7 +155,7 @@ boost::property_tree::ptree molToPTree(const ROMol& mol, int confId,
   const auto bond_id_prefix = "b";
   unsigned bond_id = 0u;
 
-  auto& bondArray = molecule.add("cml:bondArray", "");
+  auto& bondArray = molecule.add("bondArray", "");
   for (auto atom_itr = rwmol.beginAtoms(), atom_itr_end = rwmol.endAtoms();
        atom_itr != atom_itr_end; ++atom_itr) {
     const auto& atom = *atom_itr;
@@ -201,7 +172,7 @@ boost::property_tree::ptree molToPTree(const ROMol& mol, int confId,
         continue;
       }
 
-      auto& bond = bondArray.add("cml:bond", "");
+      auto& bond = bondArray.add("bond", "");
       bond.put("<xmlattr>.atomRefs2",
                boost::format{"%1%%2% %1%%3%"} % atom_id_prefix % src % dst);
 
@@ -264,6 +235,19 @@ boost::property_tree::ptree molToPTree(const ROMol& mol, int confId,
           BOOST_LOG(rdInfoLog)
               << boost::format{"CMLWriter: Unsupported BondType %1%\n"} % btype;
           bond.put("<xmlattr>.order", "");
+      }
+      // bond/@BondStereo if appropriate
+      // http://www.xml-cml.org/convention/molecular#bondStereo-element
+      auto bdir = bptr->getBondDir();
+      switch (bdir) {
+        case Bond::BondDir::BEGINDASH:
+          bond.put("<xmlattr>.bondStereo", "H");
+          break;
+        case Bond::BondDir::BEGINWEDGE:
+          bond.put("<xmlattr>.bondStereo", "W");
+          break;
+        default:
+          break;
       }
     }
   }
