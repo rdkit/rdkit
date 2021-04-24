@@ -62,6 +62,14 @@ ROMol::ROMol(const std::string &pickle) : RDProps() {
   numBonds = rdcast<unsigned int>(boost::num_edges(d_graph));
 }
 
+ROMol::ROMol(const std::string &pickle, unsigned int propertyFlags)
+    : RDProps() {
+  initMol();
+  numBonds = 0;
+  MolPickler::molFromPickle(pickle, *this, propertyFlags);
+  numBonds = rdcast<unsigned int>(boost::num_edges(d_graph));
+}
+
 void ROMol::initFromOther(const ROMol &other, bool quickCopy, int confId) {
   if (this == &other) {
     return;
