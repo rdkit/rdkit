@@ -34,11 +34,11 @@ The `Dockerfile` in the `docker/` shows how to setup an appropriate environment 
 npm i @rdkit/rdkit
 ```  
 
-## Using the rdkit package assets
+## Using the RDKit package assets
 
 ### Option 1: Use the npm package distribution files
 
-Once you have the rdkit package installed in your node modules, copy the following distribution files anywhere in your deployed assets.
+Once you have the RDKit package installed in your node modules, copy the following distribution files anywhere in your deployed assets.
 
 - `node_modules/@rdkit/rdkit/CodeMinimalLib/dist/RDKit_minimal.js`
 - `node_modules/@rdkit/rdkit/CodeMinimalLib/dist/RDKit_minimal.wasm`
@@ -51,9 +51,9 @@ Once you have the rdkit package installed in your node modules, copy the followi
 - `https://unpkg.com/@rdkit/rdkit@2021.3.1-beta.0/Code/MinimalLib/dist/RDKit_minimal.wasm`
 
 
-## Running rdkit in your JavaScript code
+## Running RDKit in your JavaScript code
 
-To use rdkit, load the javascript file and instantiate the wasm module inside the `head` tag of your `index.html`, before you run your application code:
+To use RDKit, load the javascript file and instantiate the wasm module inside the `head` tag of your `index.html`, before you run your application code:
 
 ```html
 <head>
