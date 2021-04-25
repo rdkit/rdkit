@@ -45,7 +45,7 @@ Once you have the RDKit package installed in your node modules, copy the followi
 
 **NOTE: Both files must be copied at the same location in your deployed assets for the library to work properly.**
 
-### Option 2: Use the remote distribution files from [unpkg.com](unpkg.com)
+### Option 2: Use the remote distribution files from [unpkg.com](https://unpkg.com/)
 
 - `https://unpkg.com/@rdkit/rdkit@2021.3.1-beta.0/Code/MinimalLib/dist/RDKit_minimal.js`
 - `https://unpkg.com/@rdkit/rdkit@2021.3.1-beta.0/Code/MinimalLib/dist/RDKit_minimal.wasm`
