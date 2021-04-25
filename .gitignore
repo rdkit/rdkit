@@ -109,6 +109,6 @@ __pycache__/
 /rdkit/ML/Data/test_data/testquant.qdat.pkl
 .DS_Store
 
-# JS distribution files
+# JS distribution or temp files
 Code/MinimalLib/dist
 MAIN_RDKIT_README*
