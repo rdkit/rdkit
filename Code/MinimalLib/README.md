@@ -123,7 +123,7 @@ npm publish --access public
 
 ### Releasing a new beta version of the package
 
-The process is the same as publishing a regular version, but the version specified and the npm publish command changes slightly:
+The process is the same as publishing a regular version, but the version specified and the npm publish command change slightly:
 
 ```bash
 npm version 2021.3.1-beta.0 # specify beta number in version here
