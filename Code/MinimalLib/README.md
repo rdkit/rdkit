@@ -1,3 +1,5 @@
+# WARNING: CURRENTLY, THIS IS NOT AN OFFICIAL RELEASE OF RDKIT - THIS IS ONLY A PROPOSAL FROM THE PUBLISHER (GitHub user @michelml). USE THIS AT YOUR OWN RISK.
+
 # JavaScript wrappers for the RDKit
 
 **Note** These wrappers should be considered experimental. The API is not yet stable and may change from release to release.
