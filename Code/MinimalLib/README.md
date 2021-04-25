@@ -97,7 +97,8 @@ Inspect the source code of this page to see the various ways to use the JavaScip
 Make sure you are at the root of the [RDKit](https://github.com/rdkit/rdkit) GitHub project, and on the branch and version of the project you want to release. Then, run the following command:
 
 ```bash
-npm run build -- <RDKit release version name>
+npm run build -- <RDKit git release tag name>
+# Example: npm run build -- Release_2021_03_1
 ```  
 
 This command will default to using the `master` branch if no version is provided.
