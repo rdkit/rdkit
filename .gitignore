@@ -108,3 +108,6 @@ __pycache__/
 /rdkit/ML/Data/test_data/testgeneral.dat.pkl
 /rdkit/ML/Data/test_data/testquant.qdat.pkl
 .DS_Store
+
+# JS Build temp files
+Code/MinimalLib/dist

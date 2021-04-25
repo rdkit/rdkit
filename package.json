@@ -1,0 +1,37 @@
+{
+  "name": "@rdkit/rdkit",
+  "version": "2021.3.1",
+  "description": "JavaScript distribution of RDKit - a collection of cheminformatics and machine-learning software written in C++ and Python.",
+  "main": "RDKit_minimal.js",
+  "scripts": {
+    "build": "bash Code/MinimalLib/scripts/build_rdkitjs.sh",
+    "prepublish": "bash Code/MinimalLib/scripts/npm_prepublish.sh",
+    "postpublish": "bash Code/MinimalLib/scripts/npm_postpublish.sh",
+    "test": "echo \"Tests are run during the docker build. See https://github.com/rdkit/rdkit/blob/master/Code/MinimalLib/docker/Dockerfile .\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/rdkit/rdkit.git"
+  },
+  "keywords": [
+    "javascript",
+    "c-plus-plus",
+    "cheminformatics",
+    "rdkit",
+    "wasm"
+  ],
+  "author": "Rational Discovery LLC, Greg Landrum, Julie Penzotti and others",
+  "license": "BSD-3-Clause",
+  "bugs": {
+    "url": "https://github.com/rdkit/rdkit/issues"
+  },
+  "homepage": "https://github.com/rdkit/rdkit#readme",
+  "files": [
+    "license.txt",
+    "package.json",
+    "ReleaseNotes.md",
+    "README.md",
+    "Code/MinimalLib/dist/RDKit_minimal.js",
+    "Code/MinimalLib/dist/RDKit_minimal.wasm"
+  ]
+}
