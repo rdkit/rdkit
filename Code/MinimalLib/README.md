@@ -1,4 +1,4 @@
-# RDKit
+# RDKit for JavaScript
 
 ## **WARNING: THIS IS NOT AN OFFICIAL RELEASE OF RDKIT - THIS IS ONLY A PROPOSAL FROM THE PUBLISHER (GitHub user @michelml). USE THIS AT YOUR OWN RISK.**
 
@@ -19,14 +19,13 @@
 
 ## Introduction
 
-**Note:  This package should be considered experimental. The API is not yet stable and may change from release to release.**
+**Note: This package should be considered experimental. The API is not yet stable and may change from release to release.**
 
-The idea of this package is to allow the [RDKit](https://github.com/rdkit/rdkit) to be used from JavaScript so that we can add chemical capabilities to web applications.
+The idea of this package is to allow the [RDKit](https://github.com/rdkit/rdkit) to be used from JavaScript so that we can add chemical capabilities to web applications.  
+
 Rather than attempting a comprehensive wrapper (like the old [RDKitJS](https://github.com/rdkit/RDKitjs)), this exposes a small set of key functionality. I think the general approach, including this actual library, can be useful for other wrapper projects in the future.
 
 This initial set of functionality is not complete, but it is intended to already be directly useful.
-
-The `Dockerfile` in the `docker/` shows how to setup an appropriate environment and build the wrappers.
 
 ## Install
 
@@ -50,7 +49,6 @@ Once you have the RDKit package installed in your node modules, copy the followi
 - `https://unpkg.com/@rdkit/rdkit@2021.3.1-beta.0/Code/MinimalLib/dist/RDKit_minimal.js`
 - `https://unpkg.com/@rdkit/rdkit@2021.3.1-beta.0/Code/MinimalLib/dist/RDKit_minimal.wasm`
 
-
 ## Running RDKit in your JavaScript code
 
 To use RDKit, load the javascript file and instantiate the wasm module inside the `head` tag of your `index.html`, before you run your application code:
@@ -60,7 +58,7 @@ To use RDKit, load the javascript file and instantiate the wasm module inside th
     <!-- ...other files and html tags... -->
     <!-- Load the JS file -->
     <script src="https://unpkg.com/@rdkit/rdkit@2021.3.1-beta.0/Code/MinimalLib/dist/RDKit_minimal.js"></script>
-    <!-- Instantiate the WASM module -->
+    <!-- Instantiate the WASM module. The inline script below could live elsewhere inside your application code. -->
     <script>
         window.initRDKitModule()
             .then(function(RDKit) {
@@ -74,7 +72,7 @@ To use RDKit, load the javascript file and instantiate the wasm module inside th
                 // handle loading errors here...
             });
     </script>
-    <!-- ...your application code goes here... -->
+    <!-- ...your application code goes here (or somewhere else)... -->
 </head>
 
 ```
@@ -83,7 +81,7 @@ To use RDKit, load the javascript file and instantiate the wasm module inside th
 
 The best examples on how you can use RDKit are currently at https://rdkit.org/rdkitjs/beta/GettingStartedInJS.html .
 
-Inspect the source code of this page to see the various ways to use the JavaSciprt release of RDKit.
+Inspect the source code of this page to see the various ways to use the JavaScript release of RDKit.
 
 ## Live demos
 
@@ -101,13 +99,13 @@ npm run build -- <RDKit git release tag name>
 # Example: npm run build -- Release_2021_03_1
 ```  
 
-This command will default to using the `master` branch if no version is provided.
+This command will default to using the `master` branch if no version is provided. Also, checkout the `build_rdkitjs.sh` file and the minimallib `Dockerfile` to see how things are tied together.
 
 ### Releasing a new npm version of the package
 
 **Note: To release new versions, you need to be a member of the @rdkit npm organization.**
 
-Make sure you are login to npm with a user member of the @rdkit npm organization:
+Make sure you are login to npm with a user who's a member of the @rdkit npm organization:
 
 ```bash
 npm login
