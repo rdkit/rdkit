@@ -55,8 +55,8 @@ To use RDKit, load the javascript file and instantiate the wasm module inside th
 
 ```html
 <head>
-    <!-- ...other files and html tags... -->
-    <!-- Load the JS file -->
+    <!-- ...other files and HTML tags... -->
+    <!-- Load the RDKit JS file -->
     <script src="https://unpkg.com/@rdkit/rdkit@2021.3.1-beta.0/Code/MinimalLib/dist/RDKit_minimal.js"></script>
     <!-- Instantiate the WASM module. The inline script below could live elsewhere inside your application code. -->
     <script>
@@ -72,7 +72,7 @@ To use RDKit, load the javascript file and instantiate the wasm module inside th
                 // handle loading errors here...
             });
     </script>
-    <!-- ...your application code goes here (or somewhere else)... -->
+    <!-- ...your application code goes here... -->
 </head>
 
 ```
