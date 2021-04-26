@@ -1,5 +1,13 @@
 # RDKit for JavaScript
 
+[![Azure build Status](https://dev.azure.com/rdkit-builds/RDKit/_apis/build/status/rdkit.rdkit?branchName=master)](https://dev.azure.com/rdkit-builds/RDKit/_build/latest?definitionId=1&branchName=master)
+[![Documentation Status](https://readthedocs.org/projects/rdkit/badge/?version=latest)](https://rdkit.org/rdkitjs/beta/GettingStartedInJS.html)
+[![NPM Latest Version](https://img.shields.io/npm/v/@rdkit/rdkit)](https://www.npmjs.com/package/@rdkit/rdkit)
+[![NPM Weekly Downloads](https://img.shields.io/npm/dw/@rdkit/rdkit)](https://www.npmjs.com/package/@rdkit/rdkit)
+[![NPM Monthly Downloads](https://img.shields.io/npm/dm/@rdkit/rdkit)](https://www.npmjs.com/package/@rdkit/rdkit)
+[![NPM Yearly Downloads](https://img.shields.io/npm/dy/@rdkit/rdkit)](https://www.npmjs.com/package/@rdkit/rdkit)
+[![NPM Total Downloads](https://img.shields.io/npm/dt/@rdkit/rdkit?label=total%20downloads)](https://www.npmjs.com/package/@rdkit/rdkit)
+
 ## **WARNING: THIS IS NOT AN OFFICIAL RELEASE OF RDKIT - THIS IS ONLY A PROPOSAL FROM THE PUBLISHER (GitHub user @michelml). USE THIS AT YOUR OWN RISK.**
 
 ## Table of contents
