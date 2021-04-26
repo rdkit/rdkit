@@ -25,7 +25,7 @@
   "bugs": {
     "url": "https://github.com/rdkit/rdkit/issues"
   },
-  "homepage": "https://github.com/rdkit/rdkit#readme",
+  "homepage": "https://github.com/rdkit/rdkit/blob/master/Code/MinimalLib/README.md",
   "files": [
     "license.txt",
     "package.json",
