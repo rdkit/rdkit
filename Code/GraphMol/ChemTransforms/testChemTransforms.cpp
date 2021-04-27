@@ -2073,6 +2073,69 @@ void testGithub3206() {
   BOOST_LOG(rdInfoLog) << "\tdone" << std::endl;
 }
 
+void testGithub4019() {
+  BOOST_LOG(rdInfoLog) << "-------------------------------------" << std::endl;
+  BOOST_LOG(rdInfoLog)
+      << "Testing GitHub #4019: dummy atoms should not be marked "
+      << "as aromatic, not have explicit Hs, not "
+      << "be bonded through an aromatic bond and "
+      << "not be bonded with each other" << std::endl;
+  {
+    auto mol = "c1ncccc1n1ccc2ccccc12"_smiles;
+    ROMOL_SPTR core(SmartsToMol("n1ccc2ccccc12"));
+    ROMOL_SPTR molNoSidechain(replaceSidechains(*mol, *core));
+    bool hasDummy = false;
+    for (auto a : molNoSidechain->atoms()) {
+      if (a->getAtomicNum() == 0) {
+        hasDummy = true;
+        TEST_ASSERT(!a->getIsAromatic());
+        a->setAtomicNum(1);
+        a->setIsotope(0);
+      }
+    }
+    TEST_ASSERT(hasDummy);
+    molNoSidechain.reset(MolOps::removeHs(*molNoSidechain));
+    TEST_ASSERT(MolToSmiles(*molNoSidechain) == "c1ccc2[nH]ccc2c1");
+  }
+  {
+    auto mol = "c1ccc2[nH]ccc2c1"_smiles;
+    ROMOL_SPTR core(SmartsToMol("c1ccccc1"));
+    ROMOL_SPTR molNoSidechain(replaceSidechains(*mol, *core));
+    unsigned int nDummies = 0;
+    for (auto a : molNoSidechain->atoms()) {
+      if (a->getAtomicNum() == 0) {
+        ++nDummies;
+        TEST_ASSERT(!a->getIsAromatic());
+        TEST_ASSERT(!a->getNumExplicitHs());
+      }
+    }
+    TEST_ASSERT(nDummies == 2);
+    for (auto b : molNoSidechain->bonds()) {
+      if (b->getBeginAtom()->getAtomicNum() == 0 ||
+          b->getEndAtom()->getAtomicNum() == 0) {
+        TEST_ASSERT(!b->getIsAromatic());
+        TEST_ASSERT(b->getBondType() == Bond::SINGLE);
+      }
+    }
+  }
+  {
+    auto mol = "c1ccccc1C1CC1"_smiles;
+    ROMOL_SPTR core(SmartsToMol("c1ccccc1C"));
+    ROMOL_SPTR molNoSidechain(replaceSidechains(*mol, *core));
+    std::vector<unsigned int> dummies;
+    for (auto a : molNoSidechain->atoms()) {
+      if (a->getAtomicNum() == 0) {
+        dummies.push_back(a->getIdx());
+        TEST_ASSERT(!a->getIsAromatic());
+        TEST_ASSERT(!a->getNumExplicitHs());
+      }
+    }
+    TEST_ASSERT(dummies.size() == 2);
+    TEST_ASSERT(
+        !molNoSidechain->getBondBetweenAtoms(dummies.front(), dummies.back()));
+  }
+}
+
 int main() {
   RDLog::InitLogs();
 
@@ -2113,6 +2176,7 @@ int main() {
 #endif
   testGithub1734();
   testGithub3206();
+  testGithub4019();
   BOOST_LOG(rdInfoLog)
       << "*******************************************************\n";
   return (0);
