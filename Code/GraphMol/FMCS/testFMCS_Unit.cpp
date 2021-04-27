@@ -2382,8 +2382,8 @@ void testGitHub3693() {
       TEST_ASSERT(res.NumAtoms == 10);
       TEST_ASSERT(res.NumBonds == 11);
       TEST_ASSERT(res.SmartsString ==
-                  "[#6]1:&@[#6]:&@[#6]:&@[#6]2:&@[#6](:&@[#6]:&@1):&@[#6]:&@[#"
-                  "6]:&@[#6]:&@[#6]:&@2");
+                  "[#6&R]1:&@[#6&R]:&@[#6&R]:&@[#6&R]2:&@[#6&R](:&@[#6&R]:&@1):"
+                  "&@[#6&R]:&@[#6&R]:&@[#6&R]:&@[#6&R]:&@2");
     }
     {
       MCSParameters p;
@@ -2393,8 +2393,8 @@ void testGitHub3693() {
       TEST_ASSERT(res.NumAtoms == 10);
       TEST_ASSERT(res.NumBonds == 11);
       TEST_ASSERT(res.SmartsString ==
-                  "[#6]1:&@[#6]:&@[#6]:&@[#6]2:&@[#6](:&@[#6]:&@1):&@[#6]:&@[#"
-                  "6]:&@[#6]:&@[#6]:&@2");
+                  "[#6&R]1:&@[#6&R]:&@[#6&R]:&@[#6&R]2:&@[#6&R](:&@[#6&R]:&@1):"
+                  "&@[#6&R]:&@[#6&R]:&@[#6&R]:&@[#6&R]:&@2");
     }
     {
       MCSParameters p;
@@ -2405,11 +2405,10 @@ void testGitHub3693() {
       TEST_ASSERT(res.NumAtoms == 10);
       TEST_ASSERT(res.NumBonds == 11);
       TEST_ASSERT(res.SmartsString ==
-                  "[#6]1:&@[#6]:&@[#6]:&@[#6]2:&@[#6](:&@[#6]:&@1):&@[#6]:&@[#"
-                  "6]:&@[#6]:&@[#6]:&@2");
+                  "[#6&R]1:&@[#6&R]:&@[#6&R]:&@[#6&R]2:&@[#6&R](:&@[#6&R]:&@1):"
+                  "&@[#6&R]:&@[#6&R]:&@[#6&R]:&@[#6&R]:&@2");
     }
   }
-
   BOOST_LOG(rdInfoLog) << "============================================"
                        << std::endl;
   BOOST_LOG(rdInfoLog) << "\tdone" << std::endl;
@@ -2432,6 +2431,39 @@ void testGitHub3886() {
   TEST_ASSERT(res.NumAtoms == 5);
   TEST_ASSERT(res.NumBonds == 4);
   TEST_ASSERT(res.SmartsString == "[#6](:[#6]:[#6]:[#6]):[#6]");
+  BOOST_LOG(rdInfoLog) << "============================================"
+                       << std::endl;
+  BOOST_LOG(rdInfoLog) << "\tdone" << std::endl;
+}
+
+void testAtomCompareCompleteRingsOnly() {
+  BOOST_LOG(rdInfoLog) << "-------------------------------------" << std::endl;
+  BOOST_LOG(rdInfoLog)
+      << "When AtomCompareParameters.CompleteRingsOnly is true single atoms "
+         "which are part of a ring in one of the molecules should not be "
+         "included in MCS"
+      << std::endl;
+  std::vector<ROMOL_SPTR> mols = {"C1CCCC1C"_smiles, "C1CCCC1C1CCCCC1"_smiles};
+  {
+    MCSParameters p;
+    p.AtomCompareParameters.CompleteRingsOnly = true;
+    MCSResult res = findMCS(mols, &p);
+    TEST_ASSERT(res.NumAtoms == 5);
+    TEST_ASSERT(res.NumBonds == 5);
+    TEST_ASSERT(res.SmartsString ==
+                "[#6&R]1-&@[#6&R]-&@[#6&R]-&@[#6&R]-&@[#6&R]-&@1");
+  }
+  {
+    MCSParameters p;
+    p.AtomCompareParameters.CompleteRingsOnly = true;
+    // this will automatically be set to true
+    p.AtomCompareParameters.RingMatchesRingOnly = false;
+    MCSResult res = findMCS(mols, &p);
+    TEST_ASSERT(res.NumAtoms == 5);
+    TEST_ASSERT(res.NumBonds == 5);
+    TEST_ASSERT(res.SmartsString ==
+                "[#6&R]1-&@[#6&R]-&@[#6&R]-&@[#6&R]-&@[#6&R]-&@1");
+  }
   BOOST_LOG(rdInfoLog) << "============================================"
                        << std::endl;
   BOOST_LOG(rdInfoLog) << "\tdone" << std::endl;
@@ -2519,6 +2551,7 @@ int main(int argc, const char* argv[]) {
   testGitHub3458();
   testGitHub3693();
   testGitHub3886();
+  testAtomCompareCompleteRingsOnly();
 
   unsigned long long t1 = nanoClock();
   double sec = double(t1 - T0) / 1000000.;
