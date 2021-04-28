@@ -61,7 +61,8 @@ RUN cp /src/rdkit/External/INCHI-API/src/INCHI_BASE/src/util.c /src/rdkit/Extern
 
 # build and "install"
 RUN make -j2 RDKit_minimal && \
-  cp Code/MinimalLib/RDKit_minimal.* ../Code/MinimalLib/demo/
+  cp Code/MinimalLib/RDKit_minimal.* ../Code/MinimalLib/demo/ && \
+  cp ../Code/MinimalLib/docs/ ../Code/MinimalLib/docs/
 
 # run the tests
 WORKDIR /src/rdkit/Code/MinimalLib/tests

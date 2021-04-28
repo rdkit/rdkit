@@ -20,7 +20,7 @@
     "rdkit",
     "wasm"
   ],
-  "author": "Rational Discovery LLC, Greg Landrum, Julie Penzotti and others",
+  "author": "Greg Landrum and the RDKit contributors",
   "license": "BSD-3-Clause",
   "bugs": {
     "url": "https://github.com/rdkit/rdkit/issues"
@@ -31,7 +31,8 @@
     "package.json",
     "ReleaseNotes.md",
     "README.md",
-    "Code/MinimalLib/dist/index.html",
+    "Code/MinimalLib/dist/demo.html",
+    "Code/MinimalLib/dist/GettingStarted.html",
     "Code/MinimalLib/dist/RDKit_minimal.js",
     "Code/MinimalLib/dist/RDKit_minimal.wasm"
   ]

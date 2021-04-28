@@ -89,13 +89,14 @@ To use RDKit, load the javascript file and instantiate the wasm module inside th
 
 ## Usage
 
-See the getting started demo at https://unpkg.com/@rdkit/rdkit@2021.3.1-beta.16/Code/MinimalLib/dist/index.html .
+See the getting started demo at https://unpkg.com/@rdkit/rdkit@2021.3.1-beta.16/Code/MinimalLib/dist/GettingStarted.html .
 
 Follow the examples of this page to see the various ways to use the JavaScript release of RDKit.
 
-## Live demo
+## Live demos
 
-- From this npm package: https://unpkg.com/@rdkit/rdkit@2021.3.1-beta.16/Code/MinimalLib/dist/index.html
+- From this npm package: https://unpkg.com/@rdkit/rdkit@2021.3.1-beta.16/Code/MinimalLib/dist/GettingStarted.html
+- From this npm package: https://unpkg.com/@rdkit/rdkit@2021.3.1-beta.16/Code/MinimalLib/dist/demo.html
 
 ## Contributing
 
