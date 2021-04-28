@@ -1,7 +1,7 @@
 # RDKit for JavaScript
 
 [![Azure build Status](https://dev.azure.com/rdkit-builds/RDKit/_apis/build/status/rdkit.rdkit?branchName=master)](https://dev.azure.com/rdkit-builds/RDKit/_build/latest?definitionId=1&branchName=master)
-[![Documentation Status](https://readthedocs.org/projects/rdkit/badge/?version=latest)](https://rdkit.org/rdkitjs/beta/GettingStartedInJS.html)
+[![Documentation Status](https://readthedocs.org/projects/rdkit/badge/?version=latest)](https://unpkg.com/@rdkit/rdkit@2021.3.1-beta.17/Code/MinimalLib/dist/GettingStartedInJS.html)
 [![License](https://img.shields.io/github/license/rdkit/rdkit)](https://github.com/rdkit/rdkit/blob/master/license.txt)
 [![NPM Latest Version](https://img.shields.io/npm/v/@rdkit/rdkit)](https://www.npmjs.com/package/@rdkit/rdkit)
 [![NPM Weekly Downloads](https://img.shields.io/npm/dw/@rdkit/rdkit)](https://www.npmjs.com/package/@rdkit/rdkit)
@@ -89,14 +89,14 @@ To use RDKit, load the javascript file and instantiate the wasm module inside th
 
 ## Usage
 
-See the getting started demo at https://unpkg.com/@rdkit/rdkit@2021.3.1-beta.16/Code/MinimalLib/dist/GettingStarted.html .
+See the getting started demo at https://unpkg.com/@rdkit/rdkit@2021.3.1-beta.17/Code/MinimalLib/dist/GettingStartedInJS.html .
 
 Follow the examples of this page to see the various ways to use the JavaScript release of RDKit.
 
 ## Live demos
 
-- From this npm package: https://unpkg.com/@rdkit/rdkit@2021.3.1-beta.16/Code/MinimalLib/dist/GettingStarted.html
-- From this npm package: https://unpkg.com/@rdkit/rdkit@2021.3.1-beta.16/Code/MinimalLib/dist/demo.html
+- From this npm package: https://unpkg.com/@rdkit/rdkit@2021.3.1-beta.17/Code/MinimalLib/dist/GettingStartedInJS.html
+- From this npm package: https://unpkg.com/@rdkit/rdkit@2021.3.1-beta.17/Code/MinimalLib/dist/demo.html
 
 ## Contributing
 
