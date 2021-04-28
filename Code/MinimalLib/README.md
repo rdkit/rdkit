@@ -71,6 +71,7 @@ To use RDKit, load the javascript file and instantiate the wasm module inside th
     <script>
         window.initRDKitModule()
             .then(function(RDKit) {
+                console.log("RDKit version: " + RDKit.version());
                 window.RDKit = RDKit;
                 /**
                  * The RDKit module is now loaded.
