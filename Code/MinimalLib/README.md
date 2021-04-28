@@ -100,33 +100,41 @@ Follow the examples of this page to see the various ways to use the JavaScript r
 
 ## Contributing
 
-### Building the distribution files of a new release
+### Preparing a new release of the package
 
-Make sure you are at the root of the [RDKit](https://github.com/rdkit/rdkit) GitHub project, and on the branch and version of the project you want to release. Then, run the following command:
+Make sure you are at the root of the [RDKit](https://github.com/rdkit/rdkit) GitHub project, and on the branch and version of the project you want to release. **Note that no commits should occur during the release process.**
+
+#### Step 1: Set the release version in package.json
+
+```bash
+npm --no-git-tag-version version <semver version matching an RDKit release>
+# Example npm --no-git-tag-version version 2021.3.1
+```
+
+#### Step 2: Build the distribution files
 
 ```bash
 npm run build -- <RDKit git release tag name>
 # Example: npm run build -- Release_2021_03_1
-```  
+```
 
 This command will default to using the `master` branch if no version is provided. Also, checkout the `build_rdkitjs.sh` file and the minimallib `Dockerfile` to see how things are tied together.
 
-### Releasing a new npm version of the package
+#### Step 3: Publish the package to npm
 
-**Note: To release new versions, you need to be a member of the @rdkit npm organization.**
-
-Make sure you are login to npm with a user who's a member of the @rdkit npm organization:
+Once you have verified that the distribution files have been properly added in `Code/MinimalLib/dist`, publish the package:
 
 ```bash
-npm login
-```
-
-Then, simply version and publish the package on npm:
-
-```bash
-npm --no-git-tag-version version 2021.3.1
 npm publish --access public
+```  
+
+#### Step 4: Set back the placeholder version in package.json
+
+```bash
+npm run resetVersion
 ```
+
+And you're done!
 
 ### Releasing a new beta version of the package
 
@@ -134,6 +142,5 @@ The process is the same as publishing a regular version, but the version specifi
 
 ```bash
 npm --no-git-tag-version version 2021.3.1-beta.0 # specify beta number in version here
-git push origin master # npm version creates a git commit
 npm publish --beta --access public # specify npm that it's a beta version
 ```
