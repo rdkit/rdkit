@@ -22,8 +22,7 @@
   - [Usage](#usage)
   - [Live demos](#live-demos)
   - [Contributing](#contributing)
-    - [Building the distribution files of a new release](#building-the-distribution-files-of-a-new-release)
-    - [Releasing a new npm version of the package](#releasing-a-new-npm-version-of-the-package)
+    - [Preparing a new release of the package](#preparing-a-new-release-of-the-package)
     - [Releasing a new beta version of the package](#releasing-a-new-beta-version-of-the-package)
 
 ## Introduction

@@ -1,6 +1,6 @@
 {
   "name": "@rdkit/rdkit",
-  "version": "PLACEHOLDER",
+  "version": "2021.3.1-beta.20",
   "description": "JavaScript distribution of cheminformatics functionality from the RDKit - a C++ library for cheminformatics.",
   "main": "Code/MinimalLib/dist/RDKit_minimal.js",
   "scripts": {
