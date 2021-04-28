@@ -123,8 +123,7 @@ npm login
 Then, simply version and publish the package on npm:
 
 ```bash
-npm version 2021.3.1
-git push origin master # npm version creates a git commit
+npm --no-git-tag-version version 2021.3.1
 npm publish --access public
 ```
 
@@ -133,7 +132,7 @@ npm publish --access public
 The process is the same as publishing a regular version, but the version specified and the npm publish command change slightly:
 
 ```bash
-npm version 2021.3.1-beta.0 # specify beta number in version here
+npm --no-git-tag-version version 2021.3.1-beta.0 # specify beta number in version here
 git push origin master # npm version creates a git commit
 npm publish --beta --access public # specify npm that it's a beta version
 ```

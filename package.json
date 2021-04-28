@@ -1,7 +1,7 @@
 {
   "name": "@rdkit/rdkit",
-  "version": "2021.3.1-beta.14",
-  "description": "JavaScript distribution of RDKit - a collection of cheminformatics and machine-learning software written in C++ and Python.",
+  "version": "PLACEHOLDER",
+  "description": "JavaScript distribution of cheminformatics functionality from the RDKit - a C++ library for cheminformatics.",
   "main": "Code/MinimalLib/dist/RDKit_minimal.js",
   "scripts": {
     "build": "bash Code/MinimalLib/scripts/build_rdkitjs.sh",
