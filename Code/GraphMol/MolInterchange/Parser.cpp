@@ -579,7 +579,7 @@ void readRDKitRepresentation(RWMol *mol, const rj::Value &repVal,
   if (!repVal.HasMember("formatVersion")) {
     throw FileParseException("Bad Format: missing format_version");
   }
-  if (repVal["formatVersion"].GetInt() > 2) {
+  if (repVal["formatVersion"].GetInt() > currentRDKitRepresentationVersion) {
     BOOST_LOG(rdWarningLog) << "RDKit representation format version "
                             << repVal["formatVersion"].GetInt()
                             << " too recent. Ignoring it." << std::endl;
