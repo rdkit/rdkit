@@ -112,3 +112,4 @@ __pycache__/
 # JS distribution or temp files
 Code/MinimalLib/dist
 MAIN_RDKIT_README*
+node_modules
