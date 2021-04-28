@@ -160,10 +160,6 @@ inline void MolToV3KMolFile(const ROMol &mol, const std::string &fName,
   MolToMolFile(mol, fName, includeStereo, confId, kekulize, true);
 }
 
-RDKIT_FILEPARSERS_EXPORT void MolToCMLBlock(std::ostream &os, const ROMol &mol,
-                                            int confId = -1,
-                                            bool kekulize = true);
-
 RDKIT_FILEPARSERS_EXPORT std::string MolToCMLBlock(const ROMol &mol,
                                                    int confId = -1,
                                                    bool kekulize = true);

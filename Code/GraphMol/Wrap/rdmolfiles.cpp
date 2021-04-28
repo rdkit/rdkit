@@ -944,9 +944,7 @@ BOOST_PYTHON_MODULE(rdmolfiles) {
     - confId: (optional) selects which conformation to output\n\
     - kekulize: (optional) triggers kekulization of the molecule before it's written\n\
 \n";
-  python::def("MolToCMLBlock",
-              static_cast<std::string (*)(const ROMol &, int, bool)>(
-                  RDKit::MolToCMLBlock),
+  python::def("MolToCMLBlock", RDKit::MolToCMLBlock,
               (python::arg{"mol"}, python::arg{"confId"} = -1,
                python::arg{"kekulize"} = true),
               docString.c_str());
