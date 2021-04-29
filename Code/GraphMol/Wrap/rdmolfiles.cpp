@@ -934,6 +934,34 @@ BOOST_PYTHON_MODULE(rdmolfiles) {
                python::arg("includeStereo") = true, python::arg("confId") = -1,
                python::arg("kekulize") = true),
               docString.c_str());
+  //
+
+  docString =
+      "Writes a CML block for a molecule\n\
+  ARGUMENTS:\n\
+\n\
+    - mol: the molecule\n\
+    - confId: (optional) selects which conformation to output\n\
+    - kekulize: (optional) triggers kekulization of the molecule before it's written\n\
+\n";
+  python::def("MolToCMLBlock", RDKit::MolToCMLBlock,
+              (python::arg{"mol"}, python::arg{"confId"} = -1,
+               python::arg{"kekulize"} = true),
+              docString.c_str());
+
+  docString =
+      "Writes a CML file for a molecule\n\
+  ARGUMENTS:\n\
+\n\
+    - mol: the molecule\n\
+    - filename: the file to write to\n\
+    - confId: (optional) selects which conformation to output\n\
+    - kekulize: (optional) triggers kekulization of the molecule before it's written\n\
+\n";
+  python::def("MolToCMLFile", RDKit::MolToCMLFile,
+              (python::arg{"mol"}, python::arg{"filename"},
+               python::arg{"confId"} = -1, python::arg{"kekulize"} = true),
+              docString.c_str());
 
   //
 
