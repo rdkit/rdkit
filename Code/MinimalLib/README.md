@@ -1,15 +1,13 @@
-# RDKit for JavaScript
+# RDKit for JavaScript (Official)
 
 [![Azure build Status](https://dev.azure.com/rdkit-builds/RDKit/_apis/build/status/rdkit.rdkit?branchName=master)](https://dev.azure.com/rdkit-builds/RDKit/_build/latest?definitionId=1&branchName=master)
-[![Documentation Status](https://readthedocs.org/projects/rdkit/badge/?version=latest)](https://unpkg.com/@rdkit/rdkit@v2021.3.1-beta.19/Code/MinimalLib/dist/GettingStartedInJS.html)
+[![Documentation Status](https://readthedocs.org/projects/rdkit/badge/?version=latest)](https://unpkg.com/@rdkit/rdkit@v2021.3.1-release/Code/MinimalLib/dist/GettingStartedInJS.html)
 [![License](https://img.shields.io/github/license/rdkit/rdkit)](https://github.com/rdkit/rdkit/blob/master/license.txt)
 [![NPM Latest Version](https://img.shields.io/npm/v/@rdkit/rdkit)](https://www.npmjs.com/package/@rdkit/rdkit)
 [![NPM Weekly Downloads](https://img.shields.io/npm/dw/@rdkit/rdkit)](https://www.npmjs.com/package/@rdkit/rdkit)
 [![NPM Monthly Downloads](https://img.shields.io/npm/dm/@rdkit/rdkit)](https://www.npmjs.com/package/@rdkit/rdkit)
 [![NPM Yearly Downloads](https://img.shields.io/npm/dy/@rdkit/rdkit)](https://www.npmjs.com/package/@rdkit/rdkit)
 [![NPM Total Downloads](https://img.shields.io/npm/dt/@rdkit/rdkit?label=total%20downloads)](https://www.npmjs.com/package/@rdkit/rdkit)
-
-## **WARNING: THIS IS NOT AN OFFICIAL RELEASE OF RDKIT - THIS IS ONLY A PROPOSAL FROM THE PUBLISHER (GitHub user @michelml). USE THIS AT YOUR OWN RISK.**
 
 ## Table of contents
 
@@ -88,14 +86,14 @@ To use RDKit, load the javascript file and instantiate the wasm module inside th
 
 ## Usage
 
-See the getting started demo at https://unpkg.com/@rdkit/rdkit@v2021.3.1-beta.19/Code/MinimalLib/dist/GettingStartedInJS.html .
+See the getting started demo at https://unpkg.com/@rdkit/rdkit@v2021.3.1-release/Code/MinimalLib/dist/GettingStartedInJS.html .
 
 Follow the examples of this page to see the various ways to use the JavaScript release of RDKit.
 
 ## Live demos
 
-- From this npm package: https://unpkg.com/@rdkit/rdkit@v2021.3.1-beta.19/Code/MinimalLib/dist/GettingStartedInJS.html
-- From this npm package: https://unpkg.com/@rdkit/rdkit@v2021.3.1-beta.19/Code/MinimalLib/dist/demo.html
+- From this npm package: https://unpkg.com/@rdkit/rdkit@v2021.3.1-release/Code/MinimalLib/dist/GettingStartedInJS.html
+- From this npm package: https://unpkg.com/@rdkit/rdkit@v2021.3.1-release/Code/MinimalLib/dist/demo.html
 
 ## Contributing
 
