@@ -14,7 +14,7 @@ RUN apt-get update && apt-get upgrade -y && apt install -y \
 ENV LANG C
 
 WORKDIR /opt
-RUN wget -q https://dl.bintray.com/boostorg/release/1.67.0/source/boost_1_67_0.tar.gz && \
+RUN wget -q https://boostorg.jfrog.io/artifactory/main/release/1.67.0/source/boost_1_67_0.tar.gz && \
   tar xzf boost_1_67_0.tar.gz 
 WORKDIR /opt/boost_1_67_0
 RUN ./bootstrap.sh --prefix=/opt/boost --with-libraries=system && \
