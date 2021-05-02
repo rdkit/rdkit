@@ -505,7 +505,7 @@ void readQueries(RWMol *mol, const rj::Value &repVal,
   if (!repVal.HasMember("formatVersion")) {
     throw FileParseException("Bad Format: missing format_version");
   }
-  if (repVal["formatVersion"].GetInt() > 10) {
+  if (repVal["formatVersion"].GetInt() > currentQueryRepresentationVersion) {
     BOOST_LOG(rdWarningLog) << "RDKit query representation format version "
                             << repVal["formatVersion"].GetInt()
                             << " too recent. Ignoring it." << std::endl;
