@@ -23,21 +23,24 @@
 #include <exception>
 #include <map>
 
+#if !defined(_MSC_VER)
 // g++ (at least as of v9.3.0) generates some spurious warnings from here.
 // disable them
 #if !defined(__clang__) and defined(__GNUC__)
 #pragma GCC diagnostic push
 #pragma GCC diagnostic ignored "-Wclass-memaccess"
 #endif
+#endif
 #include <rapidjson/document.h>
 #include <rapidjson/istreamwrapper.h>
 #include <rapidjson/stringbuffer.h>
 #include <rapidjson/writer.h>
 #include <rapidjson/pointer.h>
+#if !defined(_MSC_VER)
 #if !defined(__clang__) and defined(__GNUC__)
 #pragma GCC diagnostic pop
 #endif
-
+#endif
 namespace rj = rapidjson;
 
 namespace RDKit {

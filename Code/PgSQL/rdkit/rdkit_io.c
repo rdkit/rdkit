@@ -448,6 +448,14 @@ rdkit_version(PG_FUNCTION_ARGS) {
   PG_RETURN_TEXT_P(cstring_to_text(buf));
 }
 
+PGDLLEXPORT Datum           rdkit_toolkit_version(PG_FUNCTION_ARGS);
+PG_FUNCTION_INFO_V1(rdkit_toolkit_version);
+Datum
+rdkit_toolkit_version(PG_FUNCTION_ARGS) {
+  const char    *ver = "" RDK_TOOLKIT_VERSION;
+  PG_RETURN_TEXT_P(cstring_to_text(ver));
+}
+
 
 /* chemical reactions */
 

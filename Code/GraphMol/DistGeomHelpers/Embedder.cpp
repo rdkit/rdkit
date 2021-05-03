@@ -236,7 +236,7 @@ struct EmbedArgs {
   boost::dynamic_bitset<> *confsOk;
   bool fourD;
   INT_VECT *fragMapping;
-  std::vector<Conformer *> *confs;
+  std::vector<std::unique_ptr<Conformer>> *confs;
   unsigned int fragIdx;
   DistGeom::BoundsMatPtr mmat;
   DistGeom::VECT_CHIRALSET const *chiralCenters;
@@ -929,6 +929,7 @@ bool setupInitialBoundsMatrix(
 void _fillAtomPositions(RDGeom::Point3DConstPtrVect &pts, const Conformer &conf,
                         const ROMol &mol,
                         const std::vector<unsigned int> &match) {
+  RDUNUSED_PARAM(mol);
   PRECONDITION(pts.size() == match.size(), "bad pts size");
   for (unsigned int i = 0; i < match.size(); i++) {
     pts[i] = &conf.getAtomPos(match[i]);
@@ -983,12 +984,19 @@ void embedHelper_(int threadId, int numThreads, EmbedArgs *eargs,
   PRECONDITION(params, "bogus params");
   unsigned int nAtoms = eargs->mmat->numRows();
   RDGeom::PointPtrVect positions(nAtoms);
+  // we might thrown an exception in a callback
+  // in order to avoid leaking the points we're working with
+  // allocate them with unique_ptrs and then work with the naked
+  // pointers from those
+  std::vector<std::unique_ptr<RDGeom::Point>> positionsStore;
+  positionsStore.reserve(nAtoms);
   for (unsigned int i = 0; i < nAtoms; ++i) {
     if (eargs->fourD) {
-      positions[i] = new RDGeom::PointND(4);
+      positionsStore.emplace_back(new RDGeom::PointND(4));
     } else {
-      positions[i] = new RDGeom::Point3D();
+      positionsStore.emplace_back(new RDGeom::Point3D());
     }
+    positions[i] = positionsStore[i].get();
   }
   for (size_t ci = 0; ci < eargs->confs->size(); ci++) {
     if (rdcast<int>(ci % numThreads) != threadId) {
@@ -1036,7 +1044,7 @@ void embedHelper_(int threadId, int numThreads, EmbedArgs *eargs,
 
     // copy the coordinates into the correct conformer
     if (gotCoords) {
-      Conformer *conf = (*eargs->confs)[ci];
+      auto &conf = (*eargs->confs)[ci];
       unsigned int fragAtomIdx = 0;
       for (unsigned int i = 0; i < conf->getNumAtoms(); ++i) {
         if (!eargs->fragMapping ||
@@ -1050,9 +1058,6 @@ void embedHelper_(int threadId, int numThreads, EmbedArgs *eargs,
     } else {
       (*eargs->confsOk)[ci] = 0;
     }
-  }
-  for (unsigned int i = 0; i < nAtoms; ++i) {
-    delete positions[i];
   }
 }
 
@@ -1122,9 +1127,10 @@ void EmbedMultipleConfs(ROMol &mol, INT_VECT &res, unsigned int numConfs,
     res.clear();
     mol.clearConformers();
   }
-  std::vector<Conformer *> confs(numConfs);
+  std::vector<std::unique_ptr<Conformer>> confs;
+  confs.reserve(numConfs);
   for (unsigned int i = 0; i < numConfs; ++i) {
-    confs[i] = new Conformer(mol.getNumAtoms());
+    confs.emplace_back(new Conformer(mol.getNumAtoms()));
   }
 
   boost::dynamic_bitset<> confsOk(numConfs);
@@ -1229,19 +1235,15 @@ void EmbedMultipleConfs(ROMol &mol, INT_VECT &res, unsigned int numConfs,
   }
   auto selfMatches = detail::getMolSelfMatches(mol, params);
   for (unsigned int ci = 0; ci < confs.size(); ++ci) {
-    Conformer *conf = confs[ci];
+    auto &conf = confs[ci];
     if (confsOk[ci]) {
       // check if we are pruning away conformations and
       // a close-by conformation has already been chosen :
-      if (params.pruneRmsThresh > 0.0 &&
-          !_isConfFarFromRest(mol, *conf, params.pruneRmsThresh, selfMatches)) {
-        delete conf;
-      } else {
-        int confId = (int)mol.addConformer(conf, true);
+      if (params.pruneRmsThresh <= 0.0 ||
+          _isConfFarFromRest(mol, *conf, params.pruneRmsThresh, selfMatches)) {
+        int confId = (int)mol.addConformer(conf.release(), true);
         res.push_back(confId);
       }
-    } else {
-      delete conf;
     }
   }
 }

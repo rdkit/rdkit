@@ -8095,6 +8095,7 @@ void testSetTerminalAtomCoords() {
 M  END)CTAB"_ctab;
   auto atom = new Atom(0);
   auto idx = mol->addAtom(atom);
+  delete atom;
   mol->addBond(idx, 0);
   MolOps::setTerminalAtomCoords(static_cast<ROMol &>(*mol), idx, 0);
   auto &coord = mol->getConformer().getAtomPos(idx);

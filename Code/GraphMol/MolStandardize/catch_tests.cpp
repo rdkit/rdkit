@@ -589,27 +589,49 @@ TEST_CASE("github #2792: carbon in the uncharger", "[uncharger][bug]") {
   }
 }
 
-TEST_CASE("github #2965: molecules properties not retained after cleanup", "[cleanup][bug]") {
+TEST_CASE("github #2965: molecules properties not retained after cleanup",
+          "[cleanup][bug]") {
   SECTION("example 1") {
-	MolStandardize::CleanupParameters params;
-	std::unique_ptr<RWMol> m(SmilesToMol("Cl.c1cnc(OCCCC2CCNCC2)cn1"));
-	REQUIRE(m);
-	m->setProp("testing_prop", "1234");
-	std::unique_ptr<RWMol> res(MolStandardize::cleanup(*m, params));
-        REQUIRE(res);
-	auto x = res->getDict(); 
-	CHECK(x.getVal<std::string>("testing_prop") == "1234");
-  }
-} 
-
-TEST_CASE("github #2970: chargeParent() segmentation fault when standardization is skipped i.e. skip_standardize is set to true") {
-    auto m = "COC=1C=CC(NC=2N=CN=C3NC=NC23)=CC1"_smiles;
-    REQUIRE(m);
     MolStandardize::CleanupParameters params;
+    std::unique_ptr<RWMol> m(SmilesToMol("Cl.c1cnc(OCCCC2CCNCC2)cn1"));
+    REQUIRE(m);
+    m->setProp("testing_prop", "1234");
     std::unique_ptr<RWMol> res(MolStandardize::cleanup(*m, params));
+    REQUIRE(res);
+    auto x = res->getDict();
+    CHECK(x.getVal<std::string>("testing_prop") == "1234");
+  }
+}
 
-    std::unique_ptr<ROMol> outm(MolStandardize::chargeParent(*res, params, true));
+TEST_CASE(
+    "github #2970: chargeParent() segmentation fault when standardization is "
+    "skipped i.e. skip_standardize is set to true") {
+  auto m = "COC=1C=CC(NC=2N=CN=C3NC=NC23)=CC1"_smiles;
+  REQUIRE(m);
+  MolStandardize::CleanupParameters params;
+  std::unique_ptr<RWMol> res(MolStandardize::cleanup(*m, params));
 
-    REQUIRE(outm);
-    CHECK(MolToSmiles(*outm) == "COc1ccc(Nc2ncnc3[nH]cnc23)cc1");
+  std::unique_ptr<ROMol> outm(MolStandardize::chargeParent(*res, params, true));
+
+  REQUIRE(outm);
+  CHECK(MolToSmiles(*outm) == "COc1ccc(Nc2ncnc3[nH]cnc23)cc1");
+}
+
+TEST_CASE("update parameters from JSON") {
+  std::string rdbase = std::getenv("RDBASE");
+
+  // a few tests to make sure the basics work
+  MolStandardize::CleanupParameters params;
+  CHECK(params.maxRestarts == 200);
+  CHECK(params.tautomerReassignStereo == true);
+  CHECK(params.fragmentFile ==
+        rdbase + "/Data/MolStandardize/fragmentPatterns.txt");
+
+  MolStandardize::updateCleanupParamsFromJSON(params,
+                                              R"JSON({"maxRestarts":12,
+  "tautomerReassignStereo":false,
+  "fragmentFile":"foo.txt"})JSON");
+  CHECK(params.maxRestarts == 12);
+  CHECK(params.tautomerReassignStereo == false);
+  CHECK(params.fragmentFile == "foo.txt");
 }

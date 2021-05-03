@@ -17,6 +17,7 @@
 #include <unordered_map>
 #include <cstdint>
 #include "GraphMol/StereoGroup.h"
+#include <string>
 
 namespace RDKit {
 class ROMol;
@@ -53,6 +54,9 @@ struct RDKIT_SUBSTRUCTMATCH_EXPORT SubstructMatchParameters {
 
   SubstructMatchParameters(){};
 };
+
+RDKIT_SUBSTRUCTMATCH_EXPORT void updateSubstructMatchParamsFromJSON(
+    SubstructMatchParameters &params, const std::string &json);
 
 //! Find a substructure match for a query in a molecule
 /*!

@@ -692,38 +692,39 @@ void testSegFaultInHolder() {
 void testTautomerQueries() {
   BOOST_LOG(rdErrorLog) << "-------------------------------------" << std::endl;
   BOOST_LOG(rdErrorLog) << "   testTautomerQueries" << std::endl;
-    
+
   boost::shared_ptr<CachedTrustedSmilesMolHolder> mols1(
-							new CachedTrustedSmilesMolHolder());
+      new CachedTrustedSmilesMolHolder());
   mols1->addSmiles("CN1C2=C(C(=O)Nc3ccccc3)C(=O)CCN2c2ccccc21");
   SubstructLibrary sss(mols1);
   auto query = "Cc1nc2ccccc2[nH]1"_smiles;
-  //auto matches1 = sss.getMatches(*query);
-  //TEST_ASSERT(matches1.size() == 0);
-  auto tq = TautomerQuery::fromMol(*query);
+  // auto matches1 = sss.getMatches(*query);
+  // TEST_ASSERT(matches1.size() == 0);
+  std::unique_ptr<TautomerQuery> tq(TautomerQuery::fromMol(*query));
   auto matches2 = sss.getMatches(*tq);
-    TEST_ASSERT(matches2.size() == 1);
-    
-    SubstructLibrary sss2(sss);
-    addPatterns(sss, boost::make_shared<TautomerPatternHolder>());
-    matches2 = sss.getMatches(*tq);
-    TEST_ASSERT(matches2.size() == 1);
-    
-    // should work but throw logging errors
-    addPatterns(sss2);
-    matches2 = sss2.getMatches(*tq);
-    TEST_ASSERT(matches2.size() == 1);
+  TEST_ASSERT(matches2.size() == 1);
+
+  SubstructLibrary sss2(sss);
+  addPatterns(sss, boost::make_shared<TautomerPatternHolder>());
+  matches2 = sss.getMatches(*tq);
+  TEST_ASSERT(matches2.size() == 1);
+
+  // should work but throw logging errors
+  addPatterns(sss2);
+  matches2 = sss2.getMatches(*tq);
+  TEST_ASSERT(matches2.size() == 1);
 }
 
 void github3881() {
   BOOST_LOG(rdErrorLog) << "-------------------------------------" << std::endl;
-  BOOST_LOG(rdErrorLog) << "  github3881 recursive smarts with rings " << std::endl;
+  BOOST_LOG(rdErrorLog) << "  github3881 recursive smarts with rings "
+                        << std::endl;
   boost::shared_ptr<CachedTrustedSmilesMolHolder> mols(
       new CachedTrustedSmilesMolHolder());
   mols->addSmiles("c1ccccc1S(=O)(=O)Cl");
   SubstructLibrary sss(mols);
   auto pat = "[$(S-!@[#6]):2](=O)(=O)(Cl)"_smarts;
-  TEST_ASSERT(sss.getMatches(*pat).size()==1);
+  TEST_ASSERT(sss.getMatches(*pat).size() == 1);
 }
 
 int main() {

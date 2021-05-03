@@ -188,6 +188,7 @@ MOLDESCR(chi4v, MolChi4v, FLOAT4)
 MOLDESCR(kappa1, MolKappa1, FLOAT4)
 MOLDESCR(kappa2, MolKappa2, FLOAT4)
 MOLDESCR(kappa3, MolKappa3, FLOAT4)
+MOLDESCR(phi, MolPhi, FLOAT4)
 
 MOLDESCR(numspiroatoms, MolNumSpiroAtoms, INT32)
 MOLDESCR(numbridgeheadatoms, MolNumBridgeheadAtoms, INT32)

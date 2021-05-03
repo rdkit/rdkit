@@ -289,6 +289,8 @@ class RDKIT_GRAPHMOL_EXPORT ROMol : public RDProps {
   };
   //! construct a molecule from a pickle string
   ROMol(const std::string &binStr);
+  //! construct a molecule from a pickle string
+  ROMol(const std::string &binStr, unsigned int propertyFlags);
 
   virtual ~ROMol() { destroy(); };
 

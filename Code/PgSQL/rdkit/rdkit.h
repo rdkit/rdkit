@@ -152,6 +152,7 @@ double MolChi4n(CROMol i);
 double MolKappa1(CROMol i);
 double MolKappa2(CROMol i);
 double MolKappa3(CROMol i);
+double MolPhi(CROMol i);
 
 int MolNumSpiroAtoms(CROMol i);
 int MolNumBridgeheadAtoms(CROMol i);

@@ -155,6 +155,12 @@ SELECT mol_numbridgeheadatoms('CC1(C)CC2(C)CCC1(C)CC2'::mol) v;
  2
 (1 row)
 
+SELECT mol_phi('CC(C)(C)C(C)C'::mol) v;
+    v    
+---------
+ 1.85185
+(1 row)
+
 -- Mol formula tests - SQL equivalents of tests in testMolDescriptors.py.
 select mol_formula('[2H]C([3H])O'::mol);
  mol_formula 

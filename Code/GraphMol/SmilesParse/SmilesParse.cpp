@@ -175,6 +175,11 @@ std::string labelRecursivePatterns(const std::string &sma) {
     } else if (sma[pos] == '(') {
       state.push_back(BRANCH);
     } else if (sma[pos] == ')') {
+      if (state.empty() || state.back() == BASE) {
+        // seriously bogus input. Just return the input
+        // and let the SMARTS parser itself report the error
+        return sma;
+      }
       SmaState currState = state.back();
       state.pop_back();
       if (currState == RECURSE) {

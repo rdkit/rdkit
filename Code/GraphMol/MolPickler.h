@@ -1,5 +1,5 @@
 ///
-//  Copyright (C) 2001-2008 Greg Landrum and Rational Discovery LLC
+//  Copyright (C) 2001-2021 Greg Landrum and Rational Discovery LLC
 //
 //   @@ All Rights Reserved @@
 //  This file is part of the RDKit.
@@ -47,15 +47,17 @@ class RDKIT_GRAPHMOL_EXPORT MolPicklerException : public std::exception {
 namespace PicklerOps {
 typedef enum {
   NoProps = 0,  // no data pickled (default pickling, single-precision coords)
-  MolProps = BOOST_BINARY(1),  // only public non computed properties
-  AtomProps = BOOST_BINARY(10),
-  BondProps = BOOST_BINARY(100),
-  QueryAtomData = BOOST_BINARY(
-      10),  // n.b. DEPRECATED and set to AtomProps (does the same work)
-  PrivateProps = BOOST_BINARY(10000),
-  ComputedProps = BOOST_BINARY(100000),
-  AllProps = 0x0000FFFF,       // all data pickled
-  CoordsAsDouble = 0x0001FFFF  // save coordinates in double precision
+  MolProps = 0x1,  // only public non computed properties
+  AtomProps = 0x2,
+  BondProps = 0x4,
+  QueryAtomData =
+      0x2,  // n.b. DEPRECATED and set to AtomProps (does the same work)
+  PrivateProps = 0x10,
+  ComputedProps = 0x20,
+  AllProps = 0x0000FFFF,        // all data pickled
+  CoordsAsDouble = 0x0001FFFF,  // save coordinates in double precision
+  NoConformers =
+      0x00020000  // do not include conformers or associated properties
 } PropertyPickleOptions;
 }
 
@@ -171,15 +173,31 @@ class RDKIT_GRAPHMOL_EXPORT MolPickler {
   };
 
   //! constructs a molecule from a pickle stored in a string
-  static void molFromPickle(const std::string &pickle, ROMol *mol);
+  static void molFromPickle(const std::string &pickle, ROMol *mol,
+                            unsigned int propertyFlags);
+  static void molFromPickle(const std::string &pickle, ROMol &mol,
+                            unsigned int propertyFlags) {
+    MolPickler::molFromPickle(pickle, &mol, propertyFlags);
+  };
+  static void molFromPickle(const std::string &pickle, ROMol *mol) {
+    MolPickler::molFromPickle(pickle, mol, PicklerOps::AllProps);
+  };
   static void molFromPickle(const std::string &pickle, ROMol &mol) {
-    MolPickler::molFromPickle(pickle, &mol);
+    MolPickler::molFromPickle(pickle, &mol, PicklerOps::AllProps);
   };
 
   //! constructs a molecule from a pickle stored in a stream
-  static void molFromPickle(std::istream &ss, ROMol *mol);
+  static void molFromPickle(std::istream &ss, ROMol *mol,
+                            unsigned int propertyFlags);
+  static void molFromPickle(std::istream &ss, ROMol &mol,
+                            unsigned int propertyFlags) {
+    MolPickler::molFromPickle(ss, &mol, propertyFlags);
+  };
+  static void molFromPickle(std::istream &ss, ROMol *mol) {
+    MolPickler::molFromPickle(ss, mol, PicklerOps::AllProps);
+  };
   static void molFromPickle(std::istream &ss, ROMol &mol) {
-    MolPickler::molFromPickle(ss, &mol);
+    MolPickler::molFromPickle(ss, &mol, PicklerOps::AllProps);
   };
 
  private:
@@ -228,8 +246,8 @@ class RDKIT_GRAPHMOL_EXPORT MolPickler {
 
   //! do the actual work of de-pickling a molecule
   template <typename T>
-  static void _depickle(std::istream &ss, ROMol *mol, int version,
-                        int numAtoms);
+  static void _depickle(std::istream &ss, ROMol *mol, int version, int numAtoms,
+                        unsigned int propertyFlags);
 
   //! extract atomic data from a pickle and add the resulting Atom to the
   // molecule

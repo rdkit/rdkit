@@ -79,3 +79,97 @@ TEST_CASE("Torsions not found in fused macrocycles", "[macrocycles]") {
     }
   }
 }
+
+namespace {
+void compareConfs(const ROMol *m, const ROMol *expected, int molConfId = -1,
+                  int expectedConfId = -1) {
+  PRECONDITION(m, "bad pointer");
+  PRECONDITION(expected, "bad pointer");
+  TEST_ASSERT(m->getNumAtoms() == expected->getNumAtoms());
+  const Conformer &conf1 = m->getConformer(molConfId);
+  const Conformer &conf2 = expected->getConformer(expectedConfId);
+  for (unsigned int i = 0; i < m->getNumAtoms(); i++) {
+    TEST_ASSERT(m->getAtomWithIdx(i)->getAtomicNum() ==
+                expected->getAtomWithIdx(i)->getAtomicNum());
+
+    RDGeom::Point3D pt1i = conf1.getAtomPos(i);
+    RDGeom::Point3D pt2i = conf2.getAtomPos(i);
+    TEST_ASSERT((pt1i - pt2i).length() < 0.05);
+  }
+}
+}  // namespace
+
+TEST_CASE("update parameters from JSON") {
+  std::string rdbase = getenv("RDBASE");
+  SECTION("DG") {
+    std::string fname =
+        rdbase +
+        "/Code/GraphMol/DistGeomHelpers/test_data/simple_torsion.dg.mol";
+    std::unique_ptr<RWMol> ref{MolFileToMol(fname, true, false)};
+    REQUIRE(ref);
+    std::unique_ptr<RWMol> mol{SmilesToMol("OCCC")};
+    REQUIRE(mol);
+    MolOps::addHs(*mol);
+    CHECK(ref->getNumAtoms() == mol->getNumAtoms());
+    DGeomHelpers::EmbedParameters params;
+    std::string json = R"JSON({"randomSeed":42})JSON";
+    DGeomHelpers::updateEmbedParametersFromJSON(params, json);
+    CHECK(DGeomHelpers::EmbedMolecule(*mol, params) == 0);
+    compareConfs(ref.get(), mol.get());
+  }
+  SECTION("ETKDG") {
+    std::string fname =
+        rdbase +
+        "/Code/GraphMol/DistGeomHelpers/test_data/simple_torsion.etkdg.mol";
+    std::unique_ptr<RWMol> ref{MolFileToMol(fname, true, false)};
+    REQUIRE(ref);
+    std::unique_ptr<RWMol> mol{SmilesToMol("OCCC")};
+    REQUIRE(mol);
+    MolOps::addHs(*mol);
+    CHECK(ref->getNumAtoms() == mol->getNumAtoms());
+    DGeomHelpers::EmbedParameters params;
+    std::string json = R"JSON({"randomSeed":42,
+    "useExpTorsionAnglePrefs":true,
+    "useBasicKnowledge":true})JSON";
+    DGeomHelpers::updateEmbedParametersFromJSON(params, json);
+    CHECK(DGeomHelpers::EmbedMolecule(*mol, params) == 0);
+    compareConfs(ref.get(), mol.get());
+  }
+  SECTION("ETKDGv2") {
+    std::string fname =
+        rdbase +
+        "/Code/GraphMol/DistGeomHelpers/test_data/torsion.etkdg.v2.mol";
+    std::unique_ptr<RWMol> ref{MolFileToMol(fname, true, false)};
+    REQUIRE(ref);
+    std::unique_ptr<RWMol> mol{SmilesToMol("n1cccc(C)c1ON")};
+    REQUIRE(mol);
+    MolOps::addHs(*mol);
+    CHECK(ref->getNumAtoms() == mol->getNumAtoms());
+    DGeomHelpers::EmbedParameters params;
+    std::string json = R"JSON({"randomSeed":42,
+    "useExpTorsionAnglePrefs":true,
+    "useBasicKnowledge":true,
+    "ETversion":2})JSON";
+    DGeomHelpers::updateEmbedParametersFromJSON(params, json);
+    CHECK(DGeomHelpers::EmbedMolecule(*mol, params) == 0);
+    compareConfs(ref.get(), mol.get());
+  }
+
+  SECTION("setting atommap") {
+    std::unique_ptr<RWMol> mol{SmilesToMol("OCCC")};
+    REQUIRE(mol);
+    MolOps::addHs(*mol);
+    {
+      DGeomHelpers::EmbedParameters params;
+      std::string json = R"JSON({"randomSeed":42,
+    "coordMap":{"0":[0,0,0],"1":[0,0,1.5],"2":[0,1.5,1.5]}})JSON";
+      DGeomHelpers::updateEmbedParametersFromJSON(params, json);
+      CHECK(DGeomHelpers::EmbedMolecule(*mol, params) == 0);
+      delete params.coordMap;
+      auto conf = mol->getConformer();
+      auto v1 = conf.getAtomPos(0) - conf.getAtomPos(1);
+      auto v2 = conf.getAtomPos(2) - conf.getAtomPos(1);
+      CHECK(v1.angleTo(v2) == Approx(M_PI / 2).margin(0.15));
+    }
+  }
+}

@@ -59,6 +59,7 @@ option(RDK_INSTALL_DEV_COMPONENT "install libraries and headers" ON)
 option(RDK_USE_BOOST_REGEX "use boost::regex instead of std::regex (needed for systems with g++-4.8)" OFF)
 option(RDK_USE_BOOST_IOSTREAMS "use boost::iostreams" ON)
 option(RDK_BUILD_MINIMAL_LIB "build the minimal RDKit wrapper (for the JS bindings)" OFF)
+option(RDK_BUILD_CFFI_LIB "build the CFFI wrapper (for use in other programming languges)" OFF)
 option(RDK_BUILD_FUZZ_TARGETS "build the fuzz targets" OFF)
 
 set(RDK_BOOST_VERSION "1.58.0")
@@ -105,6 +106,13 @@ if(RDK_PGSQL_STATIC AND RDK_BUILD_PGSQL)
   endif(NOT MSVC AND NOT RDK_INSTALL_STATIC_LIBS)
 endif()
 
+if(RDK_BUILD_CFFI_LIB)
+  if(NOT MSVC AND NOT RDK_INSTALL_STATIC_LIBS)
+    message("Enabling RDK_INSTALL_STATIC_LIBS because RDK_BUILD_CFFI_LIB is set.")
+    set(RDK_INSTALL_STATIC_LIBS ON CACHE BOOL "install the rdkit static libraries" FORCE)
+  endif(NOT MSVC AND NOT RDK_INSTALL_STATIC_LIBS)
+endif()
+
 
 include(TestBigEndian)
 TEST_BIG_ENDIAN(RDK_BIG_ENDIAN)
@@ -119,9 +127,9 @@ set(RDK_PYTHON_OUTPUT_DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}/rdkit")
 #-------
 # Config variables:
 set(RDKit_Year "2021")
-set(RDKit_Month "03")
+set(RDKit_Month "09")
 set(RDKit_Revision "1")
-set(RDKit_RevisionModifier "b1")
+set(RDKit_RevisionModifier "pre")
 set(RDKit_ABI "1")
 
 # we need an integer version of the month later, so remove the zero padding
@@ -365,18 +373,21 @@ endif(RDK_BUILD_PYTHON_WRAPPERS)
 # detect it.
 string(REGEX MATCH "clang" CMAKE_COMPILER_IS_CLANG "${CMAKE_C_COMPILER}")
 
+find_package(Eigen3)
+if(EIGEN3_FOUND)
+  target_compile_definitions(rdkit_base INTERFACE "-DRDK_HAS_EIGEN3")
+  target_link_libraries(rdkit_base INTERFACE Eigen3::Eigen)
+  set(RDK_HAS_EIGEN ON)
+endif(EIGEN3_FOUND)
+
 if(RDK_BUILD_DESCRIPTORS3D)
-  find_package(Eigen3)
   if(EIGEN3_FOUND)
-    target_compile_definitions(rdkit_base INTERFACE "-DRDK_HAS_EIGEN3" "-DRDK_BUILD_DESCRIPTORS3D")
-    target_link_libraries(rdkit_base INTERFACE Eigen3::Eigen)
-    set(RDK_HAS_EIGEN ON)
+    target_compile_definitions(rdkit_base INTERFACE "-DRDK_BUILD_DESCRIPTORS3D")
   else(EIGEN3_FOUND)
     message("Eigen3 not found, some Mol descriptors will not be built.")
     set(RDK_BUILD_DESCRIPTORS3D OFF)
   endif(EIGEN3_FOUND)
 endif(RDK_BUILD_DESCRIPTORS3D)
-
 
 if(RDK_BUILD_THREADSAFE_SSS)
   find_package (Threads)
