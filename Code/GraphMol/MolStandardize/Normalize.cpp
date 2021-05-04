@@ -67,6 +67,16 @@ Normalizer::Normalizer(std::istream &normalizeStream,
   this->MAX_RESTARTS = maxRestarts;
 }
 
+// overloaded constructor
+Normalizer::Normalizer(
+    const std::vector<std::pair<std::string, std::string>> &normalizations,
+    const unsigned int maxRestarts) {
+  BOOST_LOG(rdInfoLog) << "Initializing Normalizer\n";
+  TransformCatalogParams tparams(normalizations);
+  this->d_tcat = new TransformCatalog(&tparams);
+  this->MAX_RESTARTS = maxRestarts;
+}
+
 // destructor
 Normalizer::~Normalizer() { delete d_tcat; }
 

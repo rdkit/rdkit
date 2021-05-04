@@ -31,8 +31,11 @@ class RDKIT_MOLSTANDARDIZE_EXPORT TransformCatalogParams
     d_transformations.clear();
   }
 
+  // if the string here is empty the default transforms will be used
   TransformCatalogParams(const std::string &transformFile);
   TransformCatalogParams(std::istream &transformStream);
+  TransformCatalogParams(
+      const std::vector<std::pair<std::string, std::string>> &data);
   // copy constructor
   TransformCatalogParams(const TransformCatalogParams &other);
 

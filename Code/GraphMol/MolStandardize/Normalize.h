@@ -40,7 +40,7 @@ typedef std::pair<std::string, ROMOL_SPTR> SmilesMolPair;
   <b>Notes:</b>
     - This class is typically used to apply a series of Normalization transforms
   to correct functional groups and recombine charges.
-                - Each transform is repeatedly applied until no further changes
+    - Each transform is repeatedly applied until no further changes
   occur.
 */
 
@@ -52,6 +52,10 @@ class RDKIT_MOLSTANDARDIZE_EXPORT Normalizer {
   //! Construct a Normalizer with a particular stream (with parameters) and
   //! maxRestarts
   Normalizer(std::istream &normalizeStream, const unsigned int maxRestarts);
+  //! Construct a Normalizer with a set of data and maxRestarts
+  Normalizer(
+      const std::vector<std::pair<std::string, std::string>> &normalizations,
+      const unsigned int maxRestarts);
   //! making Normalizer objects non-copyable
   Normalizer(const Normalizer &other) = delete;
   Normalizer &operator=(Normalizer const &) = delete;
@@ -67,7 +71,7 @@ class RDKIT_MOLSTANDARDIZE_EXPORT Normalizer {
       - If any changes occurred, we go back and start from the first
     Normalization again, in case the changes mean an earlier transform is now
     applicable.
-                        - The molecule is returned once the entire series of
+      - The molecule is returned once the entire series of
     Normalizations cause no further changes or if max_restarts (default 200) is
     reached.
   */
