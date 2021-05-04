@@ -72,9 +72,7 @@ struct RDKIT_MOLSTANDARDIZE_EXPORT CleanupParameters {
   bool tautomerReassignStereo{
       true};  //! Whether enumerate() should call assignStereochemistry
               //! on all generated tautomers (defaults to true)
-  CleanupParameters()
-      : tautomerTransforms(rdbase +
-                           "/Data/MolStandardize/tautomerTransforms.in") {}
+  CleanupParameters() {}
 };
 
 RDKIT_MOLSTANDARDIZE_EXPORT extern const CleanupParameters
