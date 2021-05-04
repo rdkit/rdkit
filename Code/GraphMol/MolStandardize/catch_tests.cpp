@@ -624,8 +624,6 @@ TEST_CASE("update parameters from JSON") {
   MolStandardize::CleanupParameters params;
   CHECK(params.maxRestarts == 200);
   CHECK(params.tautomerReassignStereo == true);
-  CHECK(params.fragmentFile ==
-        rdbase + "/Data/MolStandardize/fragmentPatterns.txt");
 
   MolStandardize::updateCleanupParamsFromJSON(params,
                                               R"JSON({"maxRestarts":12,

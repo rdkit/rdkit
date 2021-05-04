@@ -1,5 +1,5 @@
 //
-//  Copyright (C) 2018 Susan H. Leung
+//  Copyright (C) 2018-2021 Susan H. Leung and other RDKit contributors
 //
 //   @@ All Rights Reserved @@
 //  This file is part of the RDKit.
@@ -19,7 +19,17 @@ typedef boost::tokenizer<boost::char_separator<char>> tokenizer;
 
 namespace RDKit {
 namespace {
-ROMol *getSmarts(std::string &&tmpStr) {
+ROMol *getMol(const std::string &name, const std::string &smarts) {
+  auto mol = SmartsToMol(smarts);
+  if (!mol) {
+    throw ValueErrorException("Failed parsing fragment SMARTS: " + smarts);
+  }
+  mol->setProp(common_properties::_Name, name);
+  mol->setProp(common_properties::_fragSMARTS, smarts);
+  return mol;
+}
+
+ROMol *getMol(std::string &&tmpStr) {
   ROMol *mol = nullptr;
 
   // Remove whitespace
@@ -49,12 +59,7 @@ ROMol *getSmarts(std::string &&tmpStr) {
   std::string smarts = *token;
   boost::erase_all(smarts, " ");
   ++token;
-
-  mol = SmartsToMol(smarts);
-  CHECK_INVARIANT(mol, smarts);
-  mol->setProp(common_properties::_Name, name);
-  mol->setProp(common_properties::_fragSMARTS, smarts);
-  return mol;
+  return getMol(name, smarts);
 }
 }  // namespace
 
@@ -88,10 +93,22 @@ std::vector<std::shared_ptr<ROMol>> readFuncGroups(std::istream &inStream,
     inStream.getline(inLine, MAX_LINE_LEN, '\n');
     std::string tmpstr(inLine);
     // parse the molecule on this line (if there is one)
-    std::shared_ptr<ROMol> mol(getSmarts(std::move(tmpstr)));
+    std::shared_ptr<ROMol> mol(getMol(std::move(tmpstr)));
     if (mol) {
       funcGroups.push_back(mol);
       nRead++;
+    }
+  }
+  return funcGroups;
+}
+
+std::vector<std::shared_ptr<ROMol>> readFuncGroups(
+    const std::vector<std::pair<std::string, std::string>> &data) {
+  std::vector<std::shared_ptr<ROMol>> funcGroups;
+  for (const auto &pr : data) {
+    auto mol = getMol(pr.first, pr.second);
+    if (mol) {
+      funcGroups.push_back(std::shared_ptr<ROMol>(mol));
     }
   }
   return funcGroups;

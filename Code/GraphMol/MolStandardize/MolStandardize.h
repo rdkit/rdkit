@@ -74,7 +74,6 @@ struct RDKIT_MOLSTANDARDIZE_EXPORT CleanupParameters {
               //! on all generated tautomers (defaults to true)
   CleanupParameters()
       : acidbaseFile(rdbase + "/Data/MolStandardize/acid_base_pairs.txt"),
-        fragmentFile(rdbase + "/Data/MolStandardize/fragmentPatterns.txt"),
         // chargeCorrections()
         tautomerTransforms(rdbase +
                            "/Data/MolStandardize/tautomerTransforms.in") {}
