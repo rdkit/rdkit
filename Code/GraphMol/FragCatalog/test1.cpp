@@ -284,7 +284,7 @@ void testFragmentWithoutSmarts() {
     RDKit::MOL_SPTR_VECT groups;
     try {
       groups = readFuncGroups(input);
-    } catch (const ValueErrorException &) {
+    } catch (const Invar::Invariant &) {
       ok = true;
     }
     TEST_ASSERT(ok);
