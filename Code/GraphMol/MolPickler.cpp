@@ -10,6 +10,7 @@
 #include <GraphMol/RDKitBase.h>
 #include <GraphMol/RDKitQueries.h>
 #include <GraphMol/MolPickler.h>
+#include <GraphMol/QueryOps.h>
 #include <GraphMol/MonomerInfo.h>
 #include <GraphMol/StereoGroup.h>
 #include <GraphMol/SubstanceGroup.h>
@@ -145,8 +146,95 @@ void MolPickler::addCustomPropHandler(const CustomPropHandler &handler) {
       std::shared_ptr<CustomPropHandler>(handler.clone()));
 }
 
-namespace {
 using namespace Queries;
+namespace PicklerOps {
+
+template <class T>
+QueryDetails getQueryDetails(const Query<int, T const *, true> *query) {
+  PRECONDITION(query, "no query");
+  if (typeid(*query) == typeid(AndQuery<int, T const *, true>)) {
+    return QueryDetails(MolPickler::QUERY_AND);
+  } else if (typeid(*query) == typeid(OrQuery<int, T const *, true>)) {
+    return QueryDetails(MolPickler::QUERY_OR);
+  } else if (typeid(*query) == typeid(XOrQuery<int, T const *, true>)) {
+    return QueryDetails(MolPickler::QUERY_XOR);
+  } else if (typeid(*query) == typeid(EqualityQuery<int, T const *, true>)) {
+    return QueryDetails(std::make_tuple(
+        MolPickler::QUERY_EQUALS,
+        static_cast<const EqualityQuery<int, T const *, true> *>(query)
+            ->getVal(),
+        static_cast<const EqualityQuery<int, T const *, true> *>(query)
+            ->getTol()));
+  } else if (typeid(*query) == typeid(GreaterQuery<int, T const *, true>)) {
+    return QueryDetails(std::make_tuple(
+        MolPickler::QUERY_GREATER,
+        static_cast<const GreaterQuery<int, T const *, true> *>(query)
+            ->getVal(),
+        static_cast<const GreaterQuery<int, T const *, true> *>(query)
+            ->getTol()));
+  } else if (typeid(*query) ==
+             typeid(GreaterEqualQuery<int, T const *, true>)) {
+    return QueryDetails(std::make_tuple(
+        MolPickler::QUERY_GREATEREQUAL,
+        static_cast<const GreaterEqualQuery<int, T const *, true> *>(query)
+            ->getVal(),
+        static_cast<const GreaterEqualQuery<int, T const *, true> *>(query)
+            ->getTol()));
+  } else if (typeid(*query) == typeid(LessQuery<int, T const *, true>)) {
+    return QueryDetails(std::make_tuple(
+        MolPickler::QUERY_LESS,
+        static_cast<const LessQuery<int, T const *, true> *>(query)->getVal(),
+        static_cast<const LessQuery<int, T const *, true> *>(query)->getTol()));
+  } else if (typeid(*query) == typeid(LessEqualQuery<int, T const *, true>)) {
+    return QueryDetails(std::make_tuple(
+        MolPickler::QUERY_LESSEQUAL,
+        static_cast<const LessEqualQuery<int, T const *, true> *>(query)
+            ->getVal(),
+        static_cast<const LessEqualQuery<int, T const *, true> *>(query)
+            ->getTol()));
+  } else if (typeid(*query) == typeid(AtomRingQuery)) {
+    return QueryDetails(std::make_tuple(
+        MolPickler::QUERY_ATOMRING,
+        static_cast<const EqualityQuery<int, T const *, true> *>(query)
+            ->getVal(),
+        static_cast<const EqualityQuery<int, T const *, true> *>(query)
+            ->getTol()));
+  } else if (typeid(*query) == typeid(Query<int, T const *, true>)) {
+    return QueryDetails(MolPickler::QUERY_NULL);
+  } else if (typeid(*query) == typeid(RangeQuery<int, T const *, true>)) {
+    char ends;
+    bool lowerOpen, upperOpen;
+    boost::tie(lowerOpen, upperOpen) =
+        static_cast<const RangeQuery<int, T const *, true> *>(query)
+            ->getEndsOpen();
+    ends = 0 | (rdcast<int>(lowerOpen) << 1) | rdcast<int>(upperOpen);
+    return QueryDetails(std::make_tuple(
+        MolPickler::QUERY_RANGE,
+        static_cast<const RangeQuery<int, T const *, true> *>(query)
+            ->getLower(),
+        static_cast<const RangeQuery<int, T const *, true> *>(query)
+            ->getUpper(),
+        static_cast<const EqualityQuery<int, T const *, true> *>(query)
+            ->getTol(),
+        ends));
+  } else if (typeid(*query) == typeid(SetQuery<int, T const *, true>)) {
+    std::set<int32_t> tset(
+        static_cast<const SetQuery<int, T const *, true> *>(query)->beginSet(),
+        static_cast<const SetQuery<int, T const *, true> *>(query)->endSet());
+    return QueryDetails(
+        std::make_tuple(MolPickler::QUERY_SET, std::move(tset)));
+  } else {
+    throw MolPicklerException("do not know how to pickle part of the query.");
+  }
+}
+template RDKIT_GRAPHMOL_EXPORT QueryDetails getQueryDetails<RDKit::Atom>(
+    const Queries::Query<int, RDKit::Atom const *, true> *query);
+template RDKIT_GRAPHMOL_EXPORT QueryDetails getQueryDetails<RDKit::Bond>(
+    const Queries::Query<int, RDKit::Bond const *, true> *query);
+
+}  // namespace PicklerOps
+
+namespace {
 template <class T>
 void pickleQuery(std::ostream &ss, const Query<int, T const *, true> *query) {
   PRECONDITION(query, "no query");
@@ -158,107 +246,55 @@ void pickleQuery(std::ostream &ss, const Query<int, T const *, true> *query) {
   if (query->getNegation()) {
     streamWrite(ss, MolPickler::QUERY_ISNEGATED);
   }
-  int32_t queryVal;
-  // if (typeid(*query)==typeid(ATOM_BOOL_QUERY)){
-  //  streamWrite(ss,QUERY_BOOL);
-  if (typeid(*query) == typeid(AndQuery<int, T const *, true>)) {
-    streamWrite(ss, MolPickler::QUERY_AND);
-  } else if (typeid(*query) == typeid(OrQuery<int, T const *, true>)) {
-    streamWrite(ss, MolPickler::QUERY_OR);
-  } else if (typeid(*query) == typeid(XOrQuery<int, T const *, true>)) {
-    streamWrite(ss, MolPickler::QUERY_XOR);
-  } else if (typeid(*query) == typeid(EqualityQuery<int, T const *, true>)) {
-    streamWrite(ss, MolPickler::QUERY_EQUALS);
-    queryVal = static_cast<const EqualityQuery<int, T const *, true> *>(query)
-                   ->getVal();
-    streamWrite(ss, MolPickler::QUERY_VALUE, queryVal);
-    queryVal = static_cast<const EqualityQuery<int, T const *, true> *>(query)
-                   ->getTol();
-    streamWrite(ss, queryVal);
-  } else if (typeid(*query) == typeid(GreaterQuery<int, T const *, true>)) {
-    streamWrite(ss, MolPickler::QUERY_GREATER);
-    queryVal = static_cast<const GreaterQuery<int, T const *, true> *>(query)
-                   ->getVal();
-    streamWrite(ss, MolPickler::QUERY_VALUE, queryVal);
-    queryVal = static_cast<const GreaterQuery<int, T const *, true> *>(query)
-                   ->getTol();
-    streamWrite(ss, queryVal);
-  } else if (typeid(*query) ==
-             typeid(GreaterEqualQuery<int, T const *, true>)) {
-    streamWrite(ss, MolPickler::QUERY_GREATEREQUAL);
-    queryVal =
-        static_cast<const GreaterEqualQuery<int, T const *, true> *>(query)
-            ->getVal();
-    streamWrite(ss, MolPickler::QUERY_VALUE, queryVal);
-    queryVal =
-        static_cast<const GreaterEqualQuery<int, T const *, true> *>(query)
-            ->getTol();
-    streamWrite(ss, queryVal);
-  } else if (typeid(*query) == typeid(LessQuery<int, T const *, true>)) {
-    streamWrite(ss, MolPickler::QUERY_LESS);
-    queryVal =
-        static_cast<const LessQuery<int, T const *, true> *>(query)->getVal();
-    streamWrite(ss, MolPickler::QUERY_VALUE, queryVal);
-    queryVal =
-        static_cast<const LessQuery<int, T const *, true> *>(query)->getTol();
-    streamWrite(ss, queryVal);
-  } else if (typeid(*query) == typeid(LessEqualQuery<int, T const *, true>)) {
-    streamWrite(ss, MolPickler::QUERY_LESSEQUAL);
-    queryVal = static_cast<const LessEqualQuery<int, T const *, true> *>(query)
-                   ->getVal();
-    streamWrite(ss, MolPickler::QUERY_VALUE, queryVal);
-    queryVal = static_cast<const LessEqualQuery<int, T const *, true> *>(query)
-                   ->getTol();
-    streamWrite(ss, queryVal);
-  } else if (typeid(*query) == typeid(RangeQuery<int, T const *, true>)) {
-    streamWrite(ss, MolPickler::QUERY_RANGE);
-    queryVal = static_cast<const RangeQuery<int, T const *, true> *>(query)
-                   ->getLower();
-    streamWrite(ss, MolPickler::QUERY_VALUE, queryVal);
-    queryVal = static_cast<const RangeQuery<int, T const *, true> *>(query)
-                   ->getUpper();
-    streamWrite(ss, queryVal);
-    queryVal =
-        static_cast<const RangeQuery<int, T const *, true> *>(query)->getTol();
-    streamWrite(ss, queryVal);
-    char ends;
-    bool lowerOpen, upperOpen;
-    boost::tie(lowerOpen, upperOpen) =
-        static_cast<const RangeQuery<int, T const *, true> *>(query)
-            ->getEndsOpen();
-    ends = 0 | (rdcast<int>(lowerOpen) << 1) | rdcast<int>(upperOpen);
-    streamWrite(ss, ends);
-  } else if (typeid(*query) == typeid(SetQuery<int, T const *, true>)) {
-    streamWrite(ss, MolPickler::QUERY_SET);
-    queryVal =
-        static_cast<const SetQuery<int, T const *, true> *>(query)->size();
-    streamWrite(ss, MolPickler::QUERY_VALUE, queryVal);
-    typename SetQuery<int, T const *, true>::CONTAINER_TYPE::const_iterator cit;
-    for (cit = static_cast<const SetQuery<int, T const *, true> *>(query)
-                   ->beginSet();
-         cit !=
-         static_cast<const SetQuery<int, T const *, true> *>(query)->endSet();
-         ++cit) {
-      queryVal = *cit;
-      streamWrite(ss, queryVal);
-    }
-  } else if (typeid(*query) == typeid(AtomRingQuery)) {
-    streamWrite(ss, MolPickler::QUERY_ATOMRING);
-    queryVal = static_cast<const EqualityQuery<int, T const *, true> *>(query)
-                   ->getVal();
-    streamWrite(ss, MolPickler::QUERY_VALUE, queryVal);
-    queryVal = static_cast<const EqualityQuery<int, T const *, true> *>(query)
-                   ->getTol();
-    streamWrite(ss, queryVal);
-  } else if (typeid(*query) == typeid(RecursiveStructureQuery)) {
+  if (typeid(*query) == typeid(RecursiveStructureQuery)) {
     streamWrite(ss, MolPickler::QUERY_RECURSIVE);
     streamWrite(ss, MolPickler::QUERY_VALUE);
     MolPickler::pickleMol(
         ((const RecursiveStructureQuery *)query)->getQueryMol(), ss);
-  } else if (typeid(*query) == typeid(Query<int, T const *, true>)) {
-    streamWrite(ss, MolPickler::QUERY_NULL);
   } else {
-    throw MolPicklerException("do not know how to pickle part of the query.");
+    auto qdetails = PicklerOps::getQueryDetails(query);
+    switch (qdetails.which()) {
+      case 0:
+        streamWrite(ss, boost::get<MolPickler::Tags>(qdetails));
+        break;
+      case 1: {
+        auto v = boost::get<std::tuple<MolPickler::Tags, int32_t>>(qdetails);
+        streamWrite(ss, std::get<0>(v));
+        streamWrite(ss, MolPickler::QUERY_VALUE, std::get<1>(v));
+      } break;
+      case 2: {
+        auto v = boost::get<std::tuple<MolPickler::Tags, int32_t, int32_t>>(
+            qdetails);
+        streamWrite(ss, std::get<0>(v));
+        streamWrite(ss, MolPickler::QUERY_VALUE, std::get<1>(v));
+        streamWrite(ss, std::get<2>(v));
+      } break;
+      case 3: {
+        auto v = boost::get<
+            std::tuple<MolPickler::Tags, int32_t, int32_t, int32_t, char>>(
+            qdetails);
+        streamWrite(ss, std::get<0>(v));
+        streamWrite(ss, MolPickler::QUERY_VALUE, std::get<1>(v));
+        streamWrite(ss, std::get<2>(v));
+        streamWrite(ss, std::get<3>(v));
+        streamWrite(ss, std::get<4>(v));
+      } break;
+      case 4: {
+        auto v = boost::get<std::tuple<MolPickler::Tags, std::set<int32_t>>>(
+            qdetails);
+        streamWrite(ss, std::get<0>(v));
+        const auto &tset = std::get<1>(v);
+        int32_t sz = tset.size();
+        streamWrite(ss, MolPickler::QUERY_VALUE, sz);
+        for (auto val : tset) {
+          streamWrite(ss, val);
+        }
+
+      } break;
+      default:
+        throw MolPicklerException(
+            "do not know how to pickle part of the query.");
+    }
   }
 
   // now the children:
@@ -268,136 +304,6 @@ void pickleQuery(std::ostream &ss, const Query<int, T const *, true> *query) {
   typename Query<int, T const *, true>::CHILD_VECT_CI cit;
   for (cit = query->beginChildren(); cit != query->endChildren(); ++cit) {
     pickleQuery(ss, cit->get());
-  }
-}
-
-void finalizeQueryFromDescription(Query<int, Atom const *, true> *query,
-                                  Atom const *owner) {
-  std::string descr = query->getDescription();
-  RDUNUSED_PARAM(owner);
-
-  if (boost::starts_with(descr, "range_")) {
-    descr = descr.substr(6);
-  } else if (boost::starts_with(descr, "less_")) {
-    descr = descr.substr(5);
-  } else if (boost::starts_with(descr, "greater_")) {
-    descr = descr.substr(8);
-  }
-
-  Query<int, Atom const *, true> *tmpQuery;
-  if (descr == "AtomRingBondCount") {
-    query->setDataFunc(queryAtomRingBondCount);
-  } else if (descr == "AtomHasRingBond") {
-    query->setDataFunc(queryAtomHasRingBond);
-  } else if (descr == "AtomRingSize") {
-    tmpQuery = makeAtomInRingOfSizeQuery(
-        static_cast<ATOM_EQUALS_QUERY *>(query)->getVal());
-    query->setDataFunc(tmpQuery->getDataFunc());
-    delete tmpQuery;
-  } else if (descr == "AtomMinRingSize") {
-    query->setDataFunc(queryAtomMinRingSize);
-  } else if (descr == "AtomImplicitValence") {
-    query->setDataFunc(queryAtomImplicitValence);
-  } else if (descr == "AtomTotalValence") {
-    query->setDataFunc(queryAtomTotalValence);
-  } else if (descr == "AtomAtomicNum") {
-    query->setDataFunc(queryAtomNum);
-  } else if (descr == "AtomExplicitDegree") {
-    query->setDataFunc(queryAtomExplicitDegree);
-  } else if (descr == "AtomTotalDegree") {
-    query->setDataFunc(queryAtomTotalDegree);
-  } else if (descr == "AtomHeavyAtomDegree") {
-    query->setDataFunc(queryAtomHeavyAtomDegree);
-  } else if (descr == "AtomHCount") {
-    query->setDataFunc(queryAtomHCount);
-  } else if (descr == "AtomImplicitHCount") {
-    query->setDataFunc(queryAtomImplicitHCount);
-  } else if (descr == "AtomHasImplicitH") {
-    query->setDataFunc(queryAtomHasImplicitH);
-  } else if (descr == "AtomIsAromatic") {
-    query->setDataFunc(queryAtomAromatic);
-  } else if (descr == "AtomIsAliphatic") {
-    query->setDataFunc(queryAtomAliphatic);
-  } else if (descr == "AtomUnsaturated") {
-    query->setDataFunc(queryAtomUnsaturated);
-  } else if (descr == "AtomMass") {
-    query->setDataFunc(queryAtomMass);
-  } else if (descr == "AtomIsotope") {
-    query->setDataFunc(queryAtomIsotope);
-  } else if (descr == "AtomFormalCharge") {
-    query->setDataFunc(queryAtomFormalCharge);
-  } else if (descr == "AtomNegativeFormalCharge") {
-    query->setDataFunc(queryAtomNegativeFormalCharge);
-  } else if (descr == "AtomHybridization") {
-    query->setDataFunc(queryAtomHybridization);
-  } else if (descr == "AtomInRing") {
-    query->setDataFunc(queryIsAtomInRing);
-  } else if (descr == "AtomInNRings") {
-    query->setDataFunc(queryIsAtomInNRings);
-  } else if (descr == "AtomHasHeteroatomNeighbors") {
-    query->setDataFunc(queryAtomHasHeteroatomNbrs);
-  } else if (descr == "AtomNumHeteroatomNeighbors") {
-    query->setDataFunc(queryAtomNumHeteroatomNbrs);
-  } else if (descr == "AtomNonHydrogenDegree") {
-    query->setDataFunc(queryAtomNonHydrogenDegree);
-  } else if (descr == "AtomHasAliphaticHeteroatomNeighbors") {
-    query->setDataFunc(queryAtomHasAliphaticHeteroatomNbrs);
-  } else if (descr == "AtomNumAliphaticHeteroatomNeighbors") {
-    query->setDataFunc(queryAtomNumAliphaticHeteroatomNbrs);
-  } else if (descr == "AtomNull") {
-    query->setDataFunc(nullDataFun);
-    query->setMatchFunc(nullQueryFun);
-  } else if (descr == "AtomType") {
-    query->setDataFunc(queryAtomType);
-  } else if (descr == "AtomInNRings" || descr == "RecursiveStructure") {
-    // don't need to do anything here because the classes
-    // automatically have everything set
-  } else if (descr == "AtomAnd" || descr == "AtomOr" || descr == "AtomXor") {
-    // don't need to do anything here because the classes
-    // automatically have everything set
-  } else {
-    throw MolPicklerException("Do not know how to finalize query: '" + descr +
-                              "'");
-  }
-}
-
-void finalizeQueryFromDescription(Query<int, Bond const *, true> *query,
-                                  Bond const *owner) {
-  RDUNUSED_PARAM(owner);
-  std::string descr = query->getDescription();
-  Query<int, Bond const *, true> *tmpQuery;
-  if (descr == "BondRingSize") {
-    tmpQuery = makeBondInRingOfSizeQuery(
-        static_cast<BOND_EQUALS_QUERY *>(query)->getVal());
-    query->setDataFunc(tmpQuery->getDataFunc());
-    delete tmpQuery;
-  } else if (descr == "BondMinRingSize") {
-    query->setDataFunc(queryBondMinRingSize);
-  } else if (descr == "BondOrder") {
-    query->setDataFunc(queryBondOrder);
-  } else if (descr == "BondDir") {
-    query->setDataFunc(queryBondDir);
-  } else if (descr == "BondInRing") {
-    query->setDataFunc(queryIsBondInRing);
-  } else if (descr == "BondInNRings") {
-    query->setDataFunc(queryIsBondInNRings);
-  } else if (descr == "SingleOrAromaticBond") {
-    query->setDataFunc(queryBondIsSingleOrAromatic);
-  } else if (descr == "SingleOrDoubleBond") {
-    query->setDataFunc(queryBondIsSingleOrDouble);
-  } else if (descr == "DoubleOrAromaticBond") {
-    query->setDataFunc(queryBondIsDoubleOrAromatic);
-  } else if (descr == "SingleOrDoubleOrAromaticBond") {
-    query->setDataFunc(queryBondIsSingleOrDoubleOrAromatic);
-  } else if (descr == "BondNull") {
-    query->setDataFunc(nullDataFun);
-    query->setMatchFunc(nullQueryFun);
-  } else if (descr == "BondAnd" || descr == "BondOr" || descr == "BondXor") {
-    // don't need to do anything here because the classes
-    // automatically have everything set
-  } else {
-    throw MolPicklerException("Do not know how to finalize query: '" + descr +
-                              "'");
   }
 }
 
@@ -584,7 +490,7 @@ Query<int, Atom const *, true> *unpickleQuery(std::istream &ss,
   res->setDescription(descr);
   if (!typeLabel.empty()) res->setTypeLabel(typeLabel);
 
-  finalizeQueryFromDescription(res, owner);
+  QueryOps::finalizeQueryFromDescription(res, owner);
 
   // read in the children:
   streamRead(ss, tag, version);
@@ -620,7 +526,7 @@ Query<int, Bond const *, true> *unpickleQuery(std::istream &ss,
   res->setNegation(isNegated);
   res->setDescription(descr);
 
-  finalizeQueryFromDescription(res, owner);
+  QueryOps::finalizeQueryFromDescription(res, owner);
 
   // read in the children:
   streamRead(ss, tag, version);
@@ -796,7 +702,7 @@ AtomMonomerInfo *unpickleAtomMonomerInfo(std::istream &ss, int version) {
   return res;
 }
 
-}  // end of anonymous namespace
+}  // namespace
 
 // Resets the `exceptionState` of the passed stream `ss` in the destructor to
 // the `exceptionState` the stream ss was in, before setting
