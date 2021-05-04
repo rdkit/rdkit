@@ -30,18 +30,12 @@ ROMol *getMol(const std::string &name, const std::string &smarts) {
 }
 
 ROMol *getMol(std::string &&tmpStr) {
-  ROMol *mol = nullptr;
-
   // Remove whitespace
   boost::trim(tmpStr);
 
-  if (tmpStr.length() == 0) {
-    // empty line
-    return mol;
-  }
-  if (tmpStr.substr(0, 2) == "//") {
-    // comment line
-    return mol;
+  if (tmpStr.length() == 0 || tmpStr.substr(0, 2) == "//") {
+    // empty or comment line
+    return nullptr;
   }
 
   boost::char_separator<char> tabSep("\t");
@@ -53,7 +47,9 @@ ROMol *getMol(std::string &&tmpStr) {
   ++token;
 
   // There must be a SMARTS expression
-  CHECK_INVARIANT(token != tokens.end(), tmpStr);
+  if (token == tokens.end()) {
+    throw ValueErrorException("no SMARTS found in input: " + tmpStr);
+  }
 
   // grab the smarts:
   std::string smarts = *token;

@@ -73,9 +73,7 @@ struct RDKIT_MOLSTANDARDIZE_EXPORT CleanupParameters {
       true};  //! Whether enumerate() should call assignStereochemistry
               //! on all generated tautomers (defaults to true)
   CleanupParameters()
-      : acidbaseFile(rdbase + "/Data/MolStandardize/acid_base_pairs.txt"),
-        // chargeCorrections()
-        tautomerTransforms(rdbase +
+      : tautomerTransforms(rdbase +
                            "/Data/MolStandardize/tautomerTransforms.in") {}
 };
 

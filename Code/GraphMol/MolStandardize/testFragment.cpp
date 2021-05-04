@@ -222,7 +222,7 @@ void testFragmentWithoutSmarts() {
     std::vector<std::shared_ptr<RDKit::ROMol>> groups;
     try {
       groups = readFuncGroups(input);
-    } catch (const Invar::Invariant&) {
+    } catch (const ValueErrorException&) {
       ok = true;
     }
     TEST_ASSERT(ok);
