@@ -33,19 +33,26 @@ std::vector<ChargeCorrection> CHARGE_CORRECTIONS = {
 typedef boost::flyweight<
     boost::flyweights::key_value<std::string, AcidBaseCatalogParams>,
     boost::flyweights::no_tracking>
-    param_flyweight;
+    param_filename_flyweight;
+
+typedef boost::flyweight<
+    boost::flyweights::key_value<
+        std::vector<std::tuple<std::string, std::string, std::string>>,
+        AcidBaseCatalogParams>,
+    boost::flyweights::no_tracking>
+    param_data_flyweight;
 
 // constructor
 Reionizer::Reionizer() {
   const AcidBaseCatalogParams *abparams =
-      &(param_flyweight(defaultCleanupParameters.acidbaseFile).get());
+      &(param_filename_flyweight(defaultCleanupParameters.acidbaseFile).get());
   this->d_abcat = new AcidBaseCatalog(abparams);
   this->d_ccs = CHARGE_CORRECTIONS;
 }
 
 Reionizer::Reionizer(const std::string acidbaseFile) {
   const AcidBaseCatalogParams *abparams =
-      &(param_flyweight(acidbaseFile).get());
+      &(param_filename_flyweight(acidbaseFile).get());
   this->d_abcat = new AcidBaseCatalog(abparams);
   this->d_ccs = CHARGE_CORRECTIONS;
 }
@@ -53,23 +60,23 @@ Reionizer::Reionizer(const std::string acidbaseFile) {
 Reionizer::Reionizer(
     const std::vector<std::tuple<std::string, std::string, std::string>>
         &data) {
-  AcidBaseCatalogParams abparams(data);
-  this->d_abcat = new AcidBaseCatalog(&abparams);
+  const AcidBaseCatalogParams *abparams = &(param_data_flyweight(data).get());
+  this->d_abcat = new AcidBaseCatalog(abparams);
   this->d_ccs = CHARGE_CORRECTIONS;
 }
 
 Reionizer::Reionizer(
     const std::vector<std::tuple<std::string, std::string, std::string>> &data,
     const std::vector<ChargeCorrection> ccs) {
-  AcidBaseCatalogParams abparams(data);
-  this->d_abcat = new AcidBaseCatalog(&abparams);
+  const AcidBaseCatalogParams *abparams = &(param_data_flyweight(data).get());
+  this->d_abcat = new AcidBaseCatalog(abparams);
   this->d_ccs = ccs;
 }
 
 Reionizer::Reionizer(const std::string acidbaseFile,
                      const std::vector<ChargeCorrection> ccs) {
   const AcidBaseCatalogParams *abparams =
-      &(param_flyweight(acidbaseFile).get());
+      &(param_filename_flyweight(acidbaseFile).get());
   this->d_abcat = new AcidBaseCatalog(abparams);
   this->d_ccs = ccs;
 }

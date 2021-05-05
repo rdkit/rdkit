@@ -1,5 +1,5 @@
 //
-//  Copyright (C) 2019 Greg Landrum
+//  Copyright (C) 2019-2021 Greg Landrum
 //
 //   @@ All Rights Reserved @@
 //  This file is part of the RDKit.
@@ -7,8 +7,6 @@
 //  which is included in the file license.txt, found at the root
 //  of the RDKit source tree.
 //
-#define CATCH_CONFIG_MAIN  // This tells Catch to provide a main() - only do
-                           // this in one cpp file
 #include "catch.hpp"
 
 #include <GraphMol/RDKitBase.h>
@@ -632,4 +630,49 @@ TEST_CASE("update parameters from JSON") {
   CHECK(params.maxRestarts == 12);
   CHECK(params.tautomerReassignStereo == false);
   CHECK(params.fragmentFile == "foo.txt");
+}
+
+TEST_CASE("provide normalizer parameters as data") {
+  std::vector<std::pair<std::string, std::string>> tfs{
+      {"Bad amide tautomer1",
+       "[C:1]([OH1;D1:2])=;!@[NH1:3]>>[C:1](=[OH0:2])-[NH2:3]"},
+      {"Bad amide tautomer2",
+       "[C:1]([OH1;D1:2])=;!@[NH0:3]>>[C:1](=[OH0:2])-[NH1:3]"}};
+  SECTION("example1") {
+    MolStandardize::Normalizer nrml(tfs, 20);
+    auto m = "Cl.Cl.OC(=N)NCCCCCCCCCCCCNC(O)=N"_smiles;
+    REQUIRE(m);
+    std::unique_ptr<ROMol> res(nrml.normalize(*m));
+    REQUIRE(res);
+    CHECK(MolToSmiles(*res) == "Cl.Cl.NC(=O)NCCCCCCCCCCCCNC(N)=O");
+  }
+  SECTION("example2") {
+    MolStandardize::Normalizer nrml(tfs, 20);
+    auto m = "OC(=N)NCCCCCCCCCCCCNC(O)=N"_smiles;
+    REQUIRE(m);
+    std::unique_ptr<ROMol> res(nrml.normalize(*m));
+    REQUIRE(res);
+    CHECK(MolToSmiles(*res) == "NC(=O)NCCCCCCCCCCCCNC(N)=O");
+  }
+}
+
+TEST_CASE("provide charge parameters as data") {
+  std::vector<std::tuple<std::string, std::string, std::string>> params{
+      {"-CO2H", "C(=O)[OH]", "C(=O)[O-]"}, {"phenol", "c[OH]", "c[O-]"}};
+  SECTION("example1") {
+    MolStandardize::Reionizer reion(params);
+    auto m = "c1cc([O-])cc(C(=O)O)c1"_smiles;
+    REQUIRE(m);
+    std::unique_ptr<ROMol> res(reion.reionize(*m));
+    REQUIRE(res);
+    CHECK(MolToSmiles(*res) == "O=C([O-])c1cccc(O)c1");
+  }
+  SECTION("example2") {
+    MolStandardize::Reionizer reion(params);
+    auto m = "C1=C(C=CC(=C1)[S]([O-])=O)[S](O)(=O)=O"_smiles;
+    REQUIRE(m);
+    std::unique_ptr<ROMol> res(reion.reionize(*m));
+    REQUIRE(res);
+    CHECK(MolToSmiles(*res) == "O=S([O-])c1ccc(S(=O)(=O)O)cc1");
+  }
 }

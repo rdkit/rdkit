@@ -33,17 +33,21 @@ namespace MolStandardize {
 typedef boost::flyweight<
     boost::flyweights::key_value<std::string, TransformCatalogParams>,
     boost::flyweights::no_tracking>
-    param_flyweight;
+    param_filename_flyweight;
+
+typedef boost::flyweight<boost::flyweights::key_value<
+                             std::vector<std::pair<std::string, std::string>>,
+                             TransformCatalogParams>,
+                         boost::flyweights::no_tracking>
+    param_data_flyweight;
 
 // unsigned int MAX_RESTARTS = 200;
 
 // constructor
 Normalizer::Normalizer() {
   BOOST_LOG(rdInfoLog) << "Initializing Normalizer\n";
-  const TransformCatalogParams *tparams =
-      &(param_flyweight(defaultCleanupParameters.normalizations).get());
-  //  unsigned int ntransforms = tparams->getNumTransformations();
-  //  TEST_ASSERT(ntransforms == 22);
+  const TransformCatalogParams *tparams = &(
+      param_filename_flyweight(defaultCleanupParameters.normalizations).get());
   this->d_tcat = new TransformCatalog(tparams);
   this->MAX_RESTARTS = 200;
 }
@@ -53,7 +57,7 @@ Normalizer::Normalizer(const std::string normalizeFile,
                        const unsigned int maxRestarts) {
   BOOST_LOG(rdInfoLog) << "Initializing Normalizer\n";
   const TransformCatalogParams *tparams =
-      &(param_flyweight(normalizeFile).get());
+      &(param_filename_flyweight(normalizeFile).get());
   this->d_tcat = new TransformCatalog(tparams);
   this->MAX_RESTARTS = maxRestarts;
 }
@@ -72,8 +76,9 @@ Normalizer::Normalizer(
     const std::vector<std::pair<std::string, std::string>> &normalizations,
     const unsigned int maxRestarts) {
   BOOST_LOG(rdInfoLog) << "Initializing Normalizer\n";
-  TransformCatalogParams tparams(normalizations);
-  this->d_tcat = new TransformCatalog(&tparams);
+  const TransformCatalogParams *tparams =
+      &(param_data_flyweight(normalizations).get());
+  this->d_tcat = new TransformCatalog(tparams);
   this->MAX_RESTARTS = maxRestarts;
 }
 
