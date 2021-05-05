@@ -1,5 +1,5 @@
 //
-//  Copyright (C) 2018 Susan H. Leung
+//  Copyright (C) 2018-2021 Susan H. Leung and other RDKit contributors
 //
 //   @@ All Rights Reserved @@
 //  This file is part of the RDKit.

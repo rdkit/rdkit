@@ -1,5 +1,5 @@
 //
-//  Copyright (C) 2018 Susan H. Leung
+//  Copyright (C) 2018-2021 Susan H. Leung and other RDKit contributors
 //
 //   @@ All Rights Reserved @@
 //  This file is part of the RDKit.
@@ -15,8 +15,8 @@
 
 */
 #include <RDGeneral/export.h>
-#ifndef __RD_VALIDATE_H__
-#define __RD_VALIDATE_H__
+#ifndef RD_VALIDATE_H
+#define RD_VALIDATE_H
 
 #include <GraphMol/RDKitBase.h>
 #include <GraphMol/ROMol.h>
