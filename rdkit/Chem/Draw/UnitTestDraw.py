@@ -107,10 +107,12 @@ class TestCase(unittest.TestCase):
   def testQtImage(self):
     try:
       from PySide import QtGui
-      _ = QtGui.QApplication(sys.argv)
     except ImportError:
-      from PyQt5 import QtGui
-      _ = QtGui.QGuiApplication(sys.argv)
+      try:
+        from PyQt5 import QtGui
+      except ImportError:
+        from PySide2 import QtGui
+    _ = QtGui.QGuiApplication(sys.argv)
     img = Draw.MolToQPixmap(self.mol, size=(300, 300))
     self.assertTrue(img)
     self.assertEqual(img.size().height(), 300)

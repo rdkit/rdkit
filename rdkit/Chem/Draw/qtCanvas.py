@@ -12,7 +12,10 @@ from rdkit.Chem.Draw.canvasbase import CanvasBase
 try:
   from PySide import QtGui, QtCore
 except ImportError:
-  from PyQt5 import QtGui, QtCore
+  try:
+    from PyQt5 import QtGui, QtCore
+  except ImportError:
+    from PySide2 import QtGui, QtCore
 
 
 class Canvas(CanvasBase):
