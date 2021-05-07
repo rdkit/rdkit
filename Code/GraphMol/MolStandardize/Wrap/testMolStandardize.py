@@ -794,10 +794,12 @@ chlorine	[Cl]
     te = rdMolStandardize.TautomerEnumerator(params)
     tauts = [Chem.MolToSmiles(x) for x in te.Enumerate(m)]
     self.assertEqual(tauts, ["CC=CO", "CCC=O"])
+    self.assertEqual(Chem.MolToSmiles(rdMolStandardize.CanonicalTautomer(m, params)), "CCC=O")
     # now with defaults
     te = rdMolStandardize.TautomerEnumerator()
     tauts = [Chem.MolToSmiles(x) for x in te.Enumerate(m)]
     self.assertEqual(tauts, ["CC=CO", "CCC=O"])
+    self.assertEqual(Chem.MolToSmiles(rdMolStandardize.CanonicalTautomer(m)), "CCC=O")
 
     m = Chem.MolFromSmiles('ClCCCBr')
     nm = rdMolStandardize.Normalize(m, params)

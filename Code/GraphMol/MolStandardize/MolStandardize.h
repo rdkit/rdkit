@@ -138,6 +138,11 @@ RDKIT_MOLSTANDARDIZE_EXPORT RWMol *removeFragments(
     const RWMol *mol,
     const CleanupParameters &params = defaultCleanupParameters);
 
+//! Works the same as TautomerEnumerator().canonicalize(mol)
+RDKIT_MOLSTANDARDIZE_EXPORT RWMol *canonicalTautomer(
+    const RWMol *mol,
+    const CleanupParameters &params = defaultCleanupParameters);
+
 //! Convenience function for quickly standardizing a single SMILES string.
 // Returns a standardized canonical SMILES string given a SMILES string.
 RDKIT_MOLSTANDARDIZE_EXPORT std::string standardizeSmiles(

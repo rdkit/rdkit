@@ -407,6 +407,12 @@ class RDKIT_MOLSTANDARDIZE_EXPORT TautomerEnumerator {
   bool d_reassignStereo;
 };  // TautomerEnumerator class
 
+// caller owns the pointer
+inline TautomerEnumerator *tautomerEnumeratorFromParams(
+    const CleanupParameters &params) {
+  return new TautomerEnumerator(params);
+}
+
 }  // namespace MolStandardize
 }  // namespace RDKit
 

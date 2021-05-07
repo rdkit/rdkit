@@ -754,6 +754,19 @@ TEST_CASE("provide tautomer parameters as JSON") {
     CHECK(MolToSmiles(*tauts[0]) == "C#N");
     CHECK(MolToSmiles(*tauts[1]) == "[C-]#[NH+]");
   }
+  SECTION("example3") {
+    std::string json = R"JSON({"tautomerTransformData":[
+      {"name":"1,3 (thio)keto/enol f","smarts":"[CX4!H0]-[C]=[O,S,Se,Te;X1]","bonds":"","charges":""},
+      {"name":"1,3 (thio)keto/enol r","smarts":"[O,S,Se,Te;X2!H0]-[C]=[C]"}
+    ]})JSON";
+    MolStandardize::CleanupParameters params;
+    MolStandardize::updateCleanupParamsFromJSON(params, json);
+    CHECK(params.tautomerTransformData.size() == 2);
+    auto m = "CCC=O"_smiles;
+    REQUIRE(m);
+    std::unique_ptr<RWMol> nm{MolStandardize::canonicalTautomer(m.get())};
+    CHECK(MolToSmiles(*nm) == "CCC=O");
+  }
 }
 
 TEST_CASE("provide fragment parameters as JSON") {
