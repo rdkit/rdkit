@@ -160,6 +160,9 @@ ROMol *LargestFragmentChooser::choose(const ROMol &mol) {
   BOOST_LOG(rdInfoLog) << "Running LargestFragmentChooser\n";
 
   std::vector<boost::shared_ptr<ROMol>> frags = MolOps::getMolFrags(mol);
+  if (frags.empty()) {
+    return new ROMol();
+  }
   LargestFragmentChooser::Largest l;
 
   for (const auto &frag : frags) {

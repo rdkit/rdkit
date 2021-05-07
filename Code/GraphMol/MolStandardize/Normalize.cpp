@@ -86,6 +86,9 @@ ROMol *Normalizer::normalize(const ROMol &mol) {
     ROMOL_SPTR nfrag(this->normalizeFragment(*frag, transforms));
     nfrags.push_back(nfrag);
   }
+  if (nfrags.empty()) {
+    return new ROMol();
+  }
   auto *outmol = new ROMol(*(nfrags.back()));
   nfrags.pop_back();
   for (const auto &nfrag : nfrags) {
