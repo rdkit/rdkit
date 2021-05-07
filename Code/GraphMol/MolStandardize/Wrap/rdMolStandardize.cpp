@@ -59,7 +59,9 @@ RDKit::ROMol *chargeParentHelper(const RDKit::ROMol *mol, python::object params,
       *static_cast<const RDKit::RWMol *>(mol), *ps, skip_standardize));
 }
 
-RDKit::ROMol *normalizeHelper(const RDKit::ROMol *mol, python::object params) {
+template <typename FUNCTYPE>
+RDKit::ROMol *msHelper(const RDKit::ROMol *mol, python::object params,
+                       FUNCTYPE func) {
   if (!mol) {
     throw_value_error("Molecule is None");
   }
@@ -68,49 +70,26 @@ RDKit::ROMol *normalizeHelper(const RDKit::ROMol *mol, python::object params) {
   if (params) {
     ps = python::extract<RDKit::MolStandardize::CleanupParameters *>(params);
   }
-  return static_cast<RDKit::ROMol *>(RDKit::MolStandardize::normalize(
-      static_cast<const RDKit::RWMol *>(mol), *ps));
+  return static_cast<RDKit::ROMol *>(
+      func(static_cast<const RDKit::RWMol *>(mol), *ps));
+}
+
+RDKit::ROMol *normalizeHelper(const RDKit::ROMol *mol, python::object params) {
+  return msHelper(mol, params, RDKit::MolStandardize::normalize);
 }
 
 RDKit::ROMol *reionizeHelper(const RDKit::ROMol *mol, python::object params) {
-  if (!mol) {
-    throw_value_error("Molecule is None");
-  }
-  const RDKit::MolStandardize::CleanupParameters *ps =
-      &RDKit::MolStandardize::defaultCleanupParameters;
-  if (params) {
-    ps = python::extract<RDKit::MolStandardize::CleanupParameters *>(params);
-  }
-  return static_cast<RDKit::ROMol *>(RDKit::MolStandardize::reionize(
-      static_cast<const RDKit::RWMol *>(mol), *ps));
+  return msHelper(mol, params, RDKit::MolStandardize::reionize);
 }
 
 RDKit::ROMol *removeFragsHelper(const RDKit::ROMol *mol,
                                 python::object params) {
-  if (!mol) {
-    throw_value_error("Molecule is None");
-  }
-  const RDKit::MolStandardize::CleanupParameters *ps =
-      &RDKit::MolStandardize::defaultCleanupParameters;
-  if (params) {
-    ps = python::extract<RDKit::MolStandardize::CleanupParameters *>(params);
-  }
-  return static_cast<RDKit::ROMol *>(RDKit::MolStandardize::removeFragments(
-      static_cast<const RDKit::RWMol *>(mol), *ps));
+  return msHelper(mol, params, RDKit::MolStandardize::removeFragments);
 }
 
 RDKit::ROMol *canonicalTautomerHelper(const RDKit::ROMol *mol,
                                       python::object params) {
-  if (!mol) {
-    throw_value_error("Molecule is None");
-  }
-  const RDKit::MolStandardize::CleanupParameters *ps =
-      &RDKit::MolStandardize::defaultCleanupParameters;
-  if (params) {
-    ps = python::extract<RDKit::MolStandardize::CleanupParameters *>(params);
-  }
-  return static_cast<RDKit::ROMol *>(RDKit::MolStandardize::canonicalTautomer(
-      static_cast<const RDKit::RWMol *>(mol), *ps));
+  return msHelper(mol, params, RDKit::MolStandardize::canonicalTautomer);
 }
 
 }  // namespace
