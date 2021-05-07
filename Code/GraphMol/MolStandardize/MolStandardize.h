@@ -150,7 +150,8 @@ RDKIT_MOLSTANDARDIZE_EXPORT RWMol *chargeParent(
     const CleanupParameters &params = defaultCleanupParameters,
     bool skip_standardize = false);
 
-// TODO Need to do tautomers first
+//! Returns the super parent. The super parent is the fragment, charge, isotope,
+//! stereo, and tautomer parent of the molecule.
 RDKIT_MOLSTANDARDIZE_EXPORT RWMol *superParent(
     const RWMol &mol,
     const CleanupParameters &params = defaultCleanupParameters,

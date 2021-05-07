@@ -187,10 +187,12 @@ BOOST_PYTHON_MODULE(rdMolStandardize) {
               (python::arg("mol"), python::arg("params") = python::object()),
               docString.c_str(),
               python::return_value_policy<python::manage_new_object>());
-  docString = "Convenience function fo standardizing a SMILES";
+  docString = "Convenience function for standardizing a SMILES";
   python::def("StandardizeSmiles", RDKit::MolStandardize::standardizeSmiles,
               (python::arg("smiles")), docString.c_str());
-  docString = "";
+  docString =
+      "Returns the tautomer parent of a given molecule. The fragment parent is "
+      "the standardized canonical tautomer of the molecule";
   python::def("TautomerParent", tautomerParentHelper,
               (python::arg("mol"), python::arg("params") = python::object(),
                python::arg("skipStandardize") = false),
@@ -202,13 +204,13 @@ BOOST_PYTHON_MODULE(rdMolStandardize) {
                python::arg("skipStandardize") = false),
               docString.c_str(),
               python::return_value_policy<python::manage_new_object>());
-  docString = "";
+  docString = "calls removeStereochemistry() on the given molecule";
   python::def("StereoParent", stereoParentHelper,
               (python::arg("mol"), python::arg("params") = python::object(),
                python::arg("skipStandardize") = false),
               docString.c_str(),
               python::return_value_policy<python::manage_new_object>());
-  docString = "";
+  docString = "removes all isotopes specifications from the given molecule";
   python::def("IsotopeParent", isotopeParentHelper,
               (python::arg("mol"), python::arg("params") = python::object(),
                python::arg("skipStandardize") = false),
@@ -220,7 +222,9 @@ BOOST_PYTHON_MODULE(rdMolStandardize) {
                python::arg("skipStandardize") = false),
               docString.c_str(),
               python::return_value_policy<python::manage_new_object>());
-  docString = "";
+  docString =
+      "Returns the super parent. The super parent is the fragment, charge, "
+      "isotope, stereo, and tautomer parent of the molecule.";
   python::def("SuperParent", superParentHelper,
               (python::arg("mol"), python::arg("params") = python::object(),
                python::arg("skipStandardize") = false),
