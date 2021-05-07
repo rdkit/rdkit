@@ -17,48 +17,6 @@
 namespace python = boost::python;
 
 namespace {
-RDKit::ROMol *cleanupHelper(const RDKit::ROMol *mol, python::object params) {
-  if (!mol) {
-    throw_value_error("Molecule is None");
-  }
-  const RDKit::MolStandardize::CleanupParameters *ps =
-      &RDKit::MolStandardize::defaultCleanupParameters;
-  if (params) {
-    ps = python::extract<RDKit::MolStandardize::CleanupParameters *>(params);
-  }
-  return static_cast<RDKit::ROMol *>(RDKit::MolStandardize::cleanup(
-      *static_cast<const RDKit::RWMol *>(mol), *ps));
-}
-
-RDKit::ROMol *fragmentParentHelper(const RDKit::ROMol *mol,
-                                   python::object params,
-                                   bool skip_standardize) {
-  if (!mol) {
-    throw_value_error("Molecule is None");
-  }
-  const RDKit::MolStandardize::CleanupParameters *ps =
-      &RDKit::MolStandardize::defaultCleanupParameters;
-  if (params) {
-    ps = python::extract<RDKit::MolStandardize::CleanupParameters *>(params);
-  }
-  return static_cast<RDKit::ROMol *>(RDKit::MolStandardize::fragmentParent(
-      *static_cast<const RDKit::RWMol *>(mol), *ps, skip_standardize));
-}
-
-RDKit::ROMol *chargeParentHelper(const RDKit::ROMol *mol, python::object params,
-                                 bool skip_standardize) {
-  if (!mol) {
-    throw_value_error("Molecule is None");
-  }
-  const RDKit::MolStandardize::CleanupParameters *ps =
-      &RDKit::MolStandardize::defaultCleanupParameters;
-  if (params) {
-    ps = python::extract<RDKit::MolStandardize::CleanupParameters *>(params);
-  }
-  return static_cast<RDKit::ROMol *>(RDKit::MolStandardize::chargeParent(
-      *static_cast<const RDKit::RWMol *>(mol), *ps, skip_standardize));
-}
-
 template <typename FUNCTYPE>
 RDKit::ROMol *msHelper(const RDKit::ROMol *mol, python::object params,
                        FUNCTYPE func) {
@@ -72,6 +30,15 @@ RDKit::ROMol *msHelper(const RDKit::ROMol *mol, python::object params,
   }
   return static_cast<RDKit::ROMol *>(
       func(static_cast<const RDKit::RWMol *>(mol), *ps));
+}
+
+RDKit::ROMol *cleanupHelper(const RDKit::ROMol *mol, python::object params) {
+  return msHelper(
+      mol, params,
+      static_cast<
+          RDKit::RWMol *(*)(const RDKit::RWMol *,
+                            const RDKit::MolStandardize::CleanupParameters &)>(
+          RDKit::MolStandardize::cleanup));
 }
 
 RDKit::ROMol *normalizeHelper(const RDKit::ROMol *mol, python::object params) {
@@ -90,6 +57,55 @@ RDKit::ROMol *removeFragsHelper(const RDKit::ROMol *mol,
 RDKit::ROMol *canonicalTautomerHelper(const RDKit::ROMol *mol,
                                       python::object params) {
   return msHelper(mol, params, RDKit::MolStandardize::canonicalTautomer);
+}
+
+template <typename FUNCTYPE>
+RDKit::ROMol *parentHelper(const RDKit::ROMol *mol, python::object params,
+                           bool skip_standardize, FUNCTYPE func) {
+  if (!mol) {
+    throw_value_error("Molecule is None");
+  }
+  const RDKit::MolStandardize::CleanupParameters *ps =
+      &RDKit::MolStandardize::defaultCleanupParameters;
+  if (params) {
+    ps = python::extract<RDKit::MolStandardize::CleanupParameters *>(params);
+  }
+  return static_cast<RDKit::ROMol *>(
+      func(static_cast<const RDKit::RWMol &>(*mol), *ps, skip_standardize));
+}
+
+RDKit::ROMol *tautomerParentHelper(const RDKit::ROMol *mol,
+                                   python::object params,
+                                   bool skip_standardize) {
+  return parentHelper(mol, params, skip_standardize,
+                      RDKit::MolStandardize::tautomerParent);
+}
+RDKit::ROMol *fragmentParentHelper(const RDKit::ROMol *mol,
+                                   python::object params,
+                                   bool skip_standardize) {
+  return parentHelper(mol, params, skip_standardize,
+                      RDKit::MolStandardize::fragmentParent);
+}
+RDKit::ROMol *stereoParentHelper(const RDKit::ROMol *mol, python::object params,
+                                 bool skip_standardize) {
+  return parentHelper(mol, params, skip_standardize,
+                      RDKit::MolStandardize::stereoParent);
+}
+RDKit::ROMol *isotopeParentHelper(const RDKit::ROMol *mol,
+                                  python::object params,
+                                  bool skip_standardize) {
+  return parentHelper(mol, params, skip_standardize,
+                      RDKit::MolStandardize::isotopeParent);
+}
+RDKit::ROMol *chargeParentHelper(const RDKit::ROMol *mol, python::object params,
+                                 bool skip_standardize) {
+  return parentHelper(mol, params, skip_standardize,
+                      RDKit::MolStandardize::chargeParent);
+}
+RDKit::ROMol *superParentHelper(const RDKit::ROMol *mol, python::object params,
+                                bool skip_standardize) {
+  return parentHelper(mol, params, skip_standardize,
+                      RDKit::MolStandardize::superParent);
 }
 
 }  // namespace
@@ -174,14 +190,38 @@ BOOST_PYTHON_MODULE(rdMolStandardize) {
   docString = "Convenience function fo standardizing a SMILES";
   python::def("StandardizeSmiles", RDKit::MolStandardize::standardizeSmiles,
               (python::arg("smiles")), docString.c_str());
+  docString = "";
+  python::def("TautomerParent", tautomerParentHelper,
+              (python::arg("mol"), python::arg("params") = python::object(),
+               python::arg("skipStandardize") = false),
+              docString.c_str(),
+              python::return_value_policy<python::manage_new_object>());
   docString = "Returns the largest fragment after doing a cleanup";
   python::def("FragmentParent", fragmentParentHelper,
               (python::arg("mol"), python::arg("params") = python::object(),
                python::arg("skipStandardize") = false),
               docString.c_str(),
               python::return_value_policy<python::manage_new_object>());
+  docString = "";
+  python::def("StereoParent", stereoParentHelper,
+              (python::arg("mol"), python::arg("params") = python::object(),
+               python::arg("skipStandardize") = false),
+              docString.c_str(),
+              python::return_value_policy<python::manage_new_object>());
+  docString = "";
+  python::def("IsotopeParent", isotopeParentHelper,
+              (python::arg("mol"), python::arg("params") = python::object(),
+               python::arg("skipStandardize") = false),
+              docString.c_str(),
+              python::return_value_policy<python::manage_new_object>());
   docString = "Returns the uncharged version of the largest fragment";
   python::def("ChargeParent", chargeParentHelper,
+              (python::arg("mol"), python::arg("params") = python::object(),
+               python::arg("skipStandardize") = false),
+              docString.c_str(),
+              python::return_value_policy<python::manage_new_object>());
+  docString = "";
+  python::def("SuperParent", superParentHelper,
               (python::arg("mol"), python::arg("params") = python::object(),
                python::arg("skipStandardize") = false),
               docString.c_str(),

@@ -787,3 +787,48 @@ TEST_CASE("provide fragment parameters as JSON") {
     CHECK(MolToSmiles(*nm) == "CC.[Br-]");
   }
 }
+
+TEST_CASE("tautomer parent") {
+  SECTION("example1") {
+    auto m = "[O-]c1ccc(C(=O)O)cc1CC=CO"_smiles;
+    REQUIRE(m);
+    std::unique_ptr<ROMol> nm{MolStandardize::tautomerParent(*m)};
+    CHECK(MolToSmiles(*nm) == "O=CCCc1cc(C(=O)[O-])ccc1O");
+  }
+}
+
+TEST_CASE("stereo parent") {
+  SECTION("example1") {
+    auto m = "C[C@](F)(Cl)C/C=C/[C@H](F)Cl"_smiles;
+    REQUIRE(m);
+    std::unique_ptr<ROMol> nm{MolStandardize::stereoParent(*m)};
+    CHECK(MolToSmiles(*nm) == "CC(F)(Cl)CC=CC(F)Cl");
+  }
+}
+
+TEST_CASE("isotope parent") {
+  SECTION("example1") {
+    auto m = "[12CH3][13CH3]"_smiles;
+    REQUIRE(m);
+    std::unique_ptr<ROMol> nm{MolStandardize::isotopeParent(*m)};
+    CHECK(MolToSmiles(*nm) == "CC");
+  }
+  SECTION("attached D") {
+    // this behavior - leaving H atoms with no isotope info - is intentional
+    // It may be that we're working with molecules which include Hs and we don't
+    // want to just automatically remove them.
+    auto m = "O[2H]"_smiles;
+    REQUIRE(m);
+    std::unique_ptr<ROMol> nm{MolStandardize::isotopeParent(*m)};
+    CHECK(MolToSmiles(*nm) == "[H]O");
+  }
+}
+
+TEST_CASE("super parent") {
+  SECTION("example1") {
+    auto m = "[O-]c1c([12C@H](F)Cl)c(O[2H])c(C(=O)O)cc1CC=CO.[Na+]"_smiles;
+    REQUIRE(m);
+    std::unique_ptr<ROMol> nm{MolStandardize::superParent(*m)};
+    CHECK(MolToSmiles(*nm) == "O=CCCc1cc(C(=O)O)c(O)c(C(F)Cl)c1O");
+  }
+}

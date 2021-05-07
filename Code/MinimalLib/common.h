@@ -316,7 +316,12 @@ std::unique_ptr<RWMol> standardize_func(T &mol, const std::string &details_json,
 }  // namespace
 
 std::unique_ptr<RWMol> do_cleanup(RWMol &mol, const std::string &details_json) {
-  return standardize_func(mol, details_json, MolStandardize::cleanup);
+  auto molp = &mol;
+  return standardize_func(
+      molp, details_json,
+      static_cast<RWMol *(*)(const RWMol *,
+                             const MolStandardize::CleanupParameters &)>(
+          MolStandardize::cleanup));
 }
 
 std::unique_ptr<RWMol> do_normalize(RWMol &mol,

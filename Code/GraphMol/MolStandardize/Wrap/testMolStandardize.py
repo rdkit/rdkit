@@ -27,20 +27,37 @@ class TestCase(unittest.TestCase):
 
   def test2StandardizeSmiles(self):
     self.assertEqual(rdMolStandardize.StandardizeSmiles("CCC(=O)O[Na]"), "CCC(=O)[O-].[Na+]")
-    # should get ValueError
 
-
-#    rdMolStandardize.StandardizeSmiles("C1CCC1C(=O)O.Na")
-
-  def test3FragmentParent(self):
+  def test3Parents(self):
     mol = Chem.MolFromSmiles("[Na]OC(=O)c1ccccc1")
     nmol = rdMolStandardize.FragmentParent(mol)
     self.assertEqual(Chem.MolToSmiles(nmol), "O=C([O-])c1ccccc1")
 
-  def test4ChargeParent(self):
     mol = Chem.MolFromSmiles("C[NH+](C)(C).[Cl-]")
     nmol = rdMolStandardize.ChargeParent(mol)
     self.assertEqual(Chem.MolToSmiles(nmol), "CN(C)C")
+
+    mol = Chem.MolFromSmiles("[O-]CCCC=CO.[Na+]")
+    nmol = rdMolStandardize.TautomerParent(mol)
+    self.assertEqual(Chem.MolToSmiles(nmol), "O=CCCCC[O-].[Na+]")
+    nmol = rdMolStandardize.TautomerParent(mol, skipStandardize=True)
+    # same answer because of the standardization at the end
+    self.assertEqual(Chem.MolToSmiles(nmol), "O=CCCCC[O-].[Na+]")
+
+    mol = Chem.MolFromSmiles("C[C@](F)(Cl)C/C=C/[C@H](F)Cl")
+    nmol = rdMolStandardize.StereoParent(mol)
+    self.assertEqual(Chem.MolToSmiles(nmol), "CC(F)(Cl)CC=CC(F)Cl")
+
+    mol = Chem.MolFromSmiles("[12CH3][13CH3]")
+    nmol = rdMolStandardize.IsotopeParent(mol)
+    self.assertEqual(Chem.MolToSmiles(nmol), "CC")
+
+    mol = Chem.MolFromSmiles("[Na]Oc1c([12C@H](F)Cl)c(O[2H])c(C(=O)O)cc1CC=CO")
+    nmol = rdMolStandardize.SuperParent(mol)
+    self.assertEqual(Chem.MolToSmiles(nmol), "O=CCCc1cc(C(=O)O)c(O)c(C(F)Cl)c1O")
+    mol = Chem.MolFromSmiles("[Na]Oc1c([12C@H](F)Cl)c(O[2H])c(C(=O)O)cc1CC=CO")
+    nmol = rdMolStandardize.SuperParent(mol, skipStandardize=True)
+    self.assertEqual(Chem.MolToSmiles(nmol), "O=CCCc1cc(C(=O)[O-])c(O)c(C(F)Cl)c1O.[Na+]")
 
   def test4Normalize(self):
     mol = Chem.MolFromSmiles("C[N+](C)=C\C=C\[O-]")
@@ -828,6 +845,7 @@ chlorine	[Cl]
     # now with defaults
     nm = rdMolStandardize.RemoveFragments(m)
     self.assertEqual(Chem.MolToSmiles(nm), "CC")
+
 
 if __name__ == "__main__":
   unittest.main()
