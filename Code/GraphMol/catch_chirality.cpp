@@ -1363,3 +1363,22 @@ TEST_CASE("N Chirality in rings") {
     }
   }
 }
+
+TEST_CASE(
+    "Github #4115: RemoveStereochemistry should also remove stereogroups") {
+  SECTION("basics") {
+    auto mol = "C[C@H](O)[C@@H](C)F |o1:1,3,r|"_smiles;
+    REQUIRE(mol);
+    CHECK(mol->getAtomWithIdx(1)->getChiralTag() !=
+          Atom::ChiralType::CHI_UNSPECIFIED);
+    CHECK(mol->getAtomWithIdx(3)->getChiralTag() !=
+          Atom::ChiralType::CHI_UNSPECIFIED);
+    CHECK(mol->getStereoGroups().size() == 1);
+    MolOps::removeStereochemistry(*mol);
+    CHECK(mol->getAtomWithIdx(1)->getChiralTag() ==
+          Atom::ChiralType::CHI_UNSPECIFIED);
+    CHECK(mol->getAtomWithIdx(3)->getChiralTag() ==
+          Atom::ChiralType::CHI_UNSPECIFIED);
+    CHECK(mol->getStereoGroups().empty());
+  }
+}
