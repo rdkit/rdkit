@@ -755,3 +755,22 @@ TEST_CASE("provide tautomer parameters as JSON") {
     CHECK(MolToSmiles(*tauts[1]) == "[C-]#[NH+]");
   }
 }
+
+TEST_CASE("provide fragment parameters as JSON") {
+  SECTION("example1") {
+    std::string json = R"JSON({"fragmentData":[
+        {"name":"hydrogen", "smarts":"[H]"}, 
+        {"name":"fluorine", "smarts":"[F]"}, 
+        {"name":"chlorine", "smarts":"[Cl]"}
+    ]})JSON";
+    MolStandardize::CleanupParameters params;
+    MolStandardize::updateCleanupParamsFromJSON(params, json);
+    CHECK(params.fragmentData.size() == 3);
+    std::unique_ptr<MolStandardize::FragmentRemover> fm{
+        MolStandardize::fragmentRemoverFromParams(params, true)};
+    auto m = "[F-].[Cl-].[Br-].CC"_smiles;
+    REQUIRE(m);
+    std::unique_ptr<ROMol> nm{fm->remove(*m)};
+    CHECK(MolToSmiles(*nm) == "CC.[Br-]");
+  }
+}

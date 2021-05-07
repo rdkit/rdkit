@@ -71,6 +71,7 @@ struct RDKIT_MOLSTANDARDIZE_EXPORT CleanupParameters {
       true};  //! Whether enumerate() should call assignStereochemistry
               //! on all generated tautomers (defaults to true)
   std::vector<std::pair<std::string, std::string>> normalizationData;
+  std::vector<std::pair<std::string, std::string>> fragmentData;
   std::vector<std::tuple<std::string, std::string, std::string>> acidbaseData;
   std::vector<std::tuple<std::string, std::string, std::string, std::string>>
       tautomerTransformData;
@@ -129,6 +130,11 @@ RDKIT_MOLSTANDARDIZE_EXPORT RWMol *normalize(
 
 //! Works the same as Reionizer().reionize(mol)
 RDKIT_MOLSTANDARDIZE_EXPORT RWMol *reionize(
+    const RWMol *mol,
+    const CleanupParameters &params = defaultCleanupParameters);
+
+//! Works the same as FragmentRemover().remove(mol)
+RDKIT_MOLSTANDARDIZE_EXPORT RWMol *removeFragments(
     const RWMol *mol,
     const CleanupParameters &params = defaultCleanupParameters);
 

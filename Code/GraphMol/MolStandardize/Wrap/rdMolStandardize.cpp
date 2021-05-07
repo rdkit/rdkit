@@ -85,6 +85,20 @@ RDKit::ROMol *reionizeHelper(const RDKit::ROMol *mol, python::object params) {
       static_cast<const RDKit::RWMol *>(mol), *ps));
 }
 
+RDKit::ROMol *removeFragsHelper(const RDKit::ROMol *mol,
+                                python::object params) {
+  if (!mol) {
+    throw_value_error("Molecule is None");
+  }
+  const RDKit::MolStandardize::CleanupParameters *ps =
+      &RDKit::MolStandardize::defaultCleanupParameters;
+  if (params) {
+    ps = python::extract<RDKit::MolStandardize::CleanupParameters *>(params);
+  }
+  return static_cast<RDKit::ROMol *>(RDKit::MolStandardize::removeFragments(
+      static_cast<const RDKit::RWMol *>(mol), *ps));
+}
+
 }  // namespace
 
 void wrap_validate();
@@ -188,6 +202,11 @@ BOOST_PYTHON_MODULE(rdMolStandardize) {
               python::return_value_policy<python::manage_new_object>());
   docString = "Ensures the strongest acid groups are charged first";
   python::def("Reionize", reionizeHelper,
+              (python::arg("mol"), python::arg("params") = python::object()),
+              docString.c_str(),
+              python::return_value_policy<python::manage_new_object>());
+  docString = "Removes fragments from the molecule";
+  python::def("RemoveFragments", removeFragsHelper,
               (python::arg("mol"), python::arg("params") = python::object()),
               docString.c_str(),
               python::return_value_policy<python::manage_new_object>());

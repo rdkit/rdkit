@@ -234,7 +234,6 @@ void testFragmentWithoutSmarts() {
 void testParameters() {
   BOOST_LOG(rdDebugLog) << "----- Test providing fragment parameters."
                         << std::endl;
-
   {
     std::vector<std::pair<std::string, std::string>> data{
         {"hydrogen", "[H]"}, {"fluorine", "[F]"}, {"chlorine", "[Cl]"}};
@@ -253,6 +252,19 @@ void testParameters() {
     }
     TEST_ASSERT(ok);
   }
+  {
+    std::vector<std::pair<std::string, std::string>> data{
+        {"hydrogen", "[H]"}, {"fluorine", "[F]"}, {"chlorine", "[Cl]"}};
+
+    FragmentRemover remover(data, true);
+    auto m = "[F-].[Cl-].[Br-].CC"_smiles;
+    TEST_ASSERT(m);
+
+    std::unique_ptr<ROMol> nm{remover.remove(*m)};
+    TEST_ASSERT(nm);
+    TEST_ASSERT(MolToSmiles(*nm) == "CC.[Br-]");
+  }
+
   BOOST_LOG(rdDebugLog) << "---- Done" << std::endl;
 }
 
