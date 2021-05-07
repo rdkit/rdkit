@@ -2609,6 +2609,8 @@ void removeStereochemistry(ROMol &mol) {
       (*bondIt)->setBondDir(Bond::NONE);
     }
   }
+  std::vector<StereoGroup> sgs;
+  static_cast<RWMol &>(mol).setStereoGroups(std::move(sgs));
 }
 
 }  // end of namespace MolOps
