@@ -767,5 +767,40 @@ chlorine	[Cl]
     with self.assertRaises(ValueError):
       rdMolStandardize.Reionize(None)
 
+  def test21UpdateFromJSON(self):
+    params = rdMolStandardize.CleanupParameters()
+    # note: these actual parameters aren't useful... they are for testing
+    rdMolStandardize.UpdateParamsFromJSON(
+      params, """{
+    "normalizationData":[
+      {"name":"silly 1","smarts":"[Cl:1]>>[F:1]"},
+      {"name":"silly 2","smarts":"[Br:1]>>[F:1]"}
+    ],
+    "acidbaseData":[
+      {"name":"-CO2H","acid":"C(=O)[OH]","base":"C(=O)[O-]"},
+      {"name":"phenol","acid":"c[OH]","base":"c[O-]"}
+    ],
+    "tautomerTransformData":[
+      {"name":"1,3 (thio)keto/enol f","smarts":"[CX4!H0]-[C]=[O,S,Se,Te;X1]","bonds":"","charges":""},
+      {"name":"1,3 (thio)keto/enol r","smarts":"[O,S,Se,Te;X2!H0]-[C]=[C]"}
+    ]}""")
+
+    m = Chem.MolFromSmiles("CCC=O")
+    te = rdMolStandardize.TautomerEnumerator(params)
+    tauts = [Chem.MolToSmiles(x) for x in te.Enumerate(m)]
+    self.assertEqual(tauts, ["CC=CO", "CCC=O"])
+
+    m = Chem.MolFromSmiles('ClCCCBr')
+    nm = rdMolStandardize.Normalize(m, params)
+    self.assertEqual(Chem.MolToSmiles(nm), "FCCCF")
+
+    m = Chem.MolFromSmiles('c1cc([O-])cc(C(=O)O)c1')
+    nm = rdMolStandardize.Reionize(m, params)
+    self.assertEqual(Chem.MolToSmiles(nm), "O=C([O-])c1cccc(O)c1")
+
+    m = Chem.MolFromSmiles('C1=C(C=CC(=C1)[S]([O-])=O)[S](O)(=O)=O')
+    nm = rdMolStandardize.Reionize(m, params)
+    self.assertEqual(Chem.MolToSmiles(nm), "O=S([O-])c1ccc(S(=O)(=O)O)cc1")
+
 if __name__ == "__main__":
   unittest.main()

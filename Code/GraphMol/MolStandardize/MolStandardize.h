@@ -47,9 +47,7 @@ struct RDKIT_MOLSTANDARDIZE_EXPORT CleanupParameters {
   std::string normalizations;
   std::string acidbaseFile;
   std::string fragmentFile;
-  // std::vector<std::string> chargeCorrections;
   std::string tautomerTransforms;
-  // std::vector<std::string> TautomerScores;
   int maxRestarts{200};  //! The maximum number of times to attempt to apply the
                          //! series of normalizations (default 200).
   bool preferOrganic{false};  //! Whether to prioritize organic fragments when
@@ -72,6 +70,10 @@ struct RDKIT_MOLSTANDARDIZE_EXPORT CleanupParameters {
   bool tautomerReassignStereo{
       true};  //! Whether enumerate() should call assignStereochemistry
               //! on all generated tautomers (defaults to true)
+  std::vector<std::pair<std::string, std::string>> normalizationData;
+  std::vector<std::tuple<std::string, std::string, std::string>> acidbaseData;
+  std::vector<std::tuple<std::string, std::string, std::string, std::string>>
+      tautomerTransformData;
   CleanupParameters() {}
 };
 

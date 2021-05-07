@@ -55,6 +55,49 @@ void updateCleanupParamsFromJSON(CleanupParameters &params,
   PT_OPT_GET(tautomerRemoveBondStereo);
   PT_OPT_GET(tautomerRemoveIsotopicHs);
   PT_OPT_GET(tautomerReassignStereo);
+  const auto norm_tfs = pt.get_child_optional("normalizationData");
+  if (norm_tfs) {
+    for (const auto &entry : *norm_tfs) {
+      std::string nm = entry.second.get<std::string>("name", "");
+      std::string tf = entry.second.get<std::string>("smarts", "");
+      if (nm.empty() || tf.empty()) {
+        BOOST_LOG(rdWarningLog)
+            << " empty transformation name or SMARTS" << std::endl;
+        continue;
+      }
+      params.normalizationData.push_back(std::make_pair(nm, tf));
+    }
+  }
+  const auto ab_data = pt.get_child_optional("acidbaseData");
+  if (ab_data) {
+    for (const auto &entry : *ab_data) {
+      std::string nm = entry.second.get<std::string>("name", "");
+      std::string acid = entry.second.get<std::string>("acid", "");
+      std::string base = entry.second.get<std::string>("base", "");
+      if (nm.empty() || acid.empty() || base.empty()) {
+        BOOST_LOG(rdWarningLog)
+            << " empty component in acidbaseData" << std::endl;
+        continue;
+      }
+      params.acidbaseData.push_back(std::make_tuple(nm, acid, base));
+    }
+  }
+  const auto taut_data = pt.get_child_optional("tautomerTransformData");
+  if (taut_data) {
+    for (const auto &entry : *taut_data) {
+      std::string nm = entry.second.get<std::string>("name", "");
+      std::string smarts = entry.second.get<std::string>("smarts", "");
+      std::string bonds = entry.second.get<std::string>("bonds", "");
+      std::string charges = entry.second.get<std::string>("charges", "");
+      if (nm.empty() || smarts.empty()) {
+        BOOST_LOG(rdWarningLog)
+            << " empty component in tautomerTransformData" << std::endl;
+        continue;
+      }
+      params.tautomerTransformData.push_back(
+          std::make_tuple(nm, smarts, bonds, charges));
+    }
+  }
 }
 
 RWMol *cleanup(const RWMol &mol, const CleanupParameters &params) {
@@ -138,18 +181,17 @@ void superParent(RWMol &mol, const CleanupParameters &params) {
 }
 
 RWMol *normalize(const RWMol *mol, const CleanupParameters &params) {
-  Normalizer normalizer(params.normalizations, params.maxRestarts);
-
+  std::unique_ptr<Normalizer> normalizer{normalizerFromParams(params)};
   ROMol m(*mol);
-  ROMol *normalized = normalizer.normalize(m);
+  ROMol *normalized = normalizer->normalize(m);
 
   return static_cast<RWMol *>(normalized);
 }
 
 RWMol *reionize(const RWMol *mol, const CleanupParameters &params) {
-  Reionizer reionizer(params.acidbaseFile);
+  std::unique_ptr<Reionizer> reionizer{reionizerFromParams(params)};
   ROMol m(*mol);
-  ROMol *reionized = reionizer.reionize(m);
+  ROMol *reionized = reionizer->reionize(m);
 
   return static_cast<RWMol *>(reionized);
 }
@@ -181,4 +223,4 @@ std::vector<std::string> enumerateTautomerSmiles(
 }
 
 }  // end of namespace MolStandardize
-}  // end of namespace RDKit
+}  // namespace RDKit

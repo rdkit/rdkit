@@ -18,6 +18,7 @@
 #include <GraphMol/MolStandardize/Normalize.h>
 #include <GraphMol/MolStandardize/Fragment.h>
 #include <GraphMol/MolStandardize/Charge.h>
+#include <GraphMol/MolStandardize/Tautomer.h>
 
 #include <iostream>
 #include <fstream>
@@ -656,6 +657,25 @@ TEST_CASE("provide normalizer parameters as data") {
   }
 }
 
+TEST_CASE("provide normalizer parameters as JSON") {
+  SECTION("example1") {
+    std::string json = R"JSON({"normalizationData":[
+      {"name":"silly 1","smarts":"[Cl:1]>>[F:1]"},
+      {"name":"silly 2","smarts":"[Br:1]>>[F:1]"}
+    ]})JSON";
+    MolStandardize::CleanupParameters params;
+    MolStandardize::updateCleanupParamsFromJSON(params, json);
+    CHECK(params.normalizationData.size() == 2);
+
+    MolStandardize::Normalizer nrml(params.normalizationData, 20);
+    auto m = "ClCCCBr"_smiles;
+    REQUIRE(m);
+    std::unique_ptr<ROMol> res(nrml.normalize(*m));
+    REQUIRE(res);
+    CHECK(MolToSmiles(*res) == "FCCCF");
+  }
+}
+
 TEST_CASE("provide charge parameters as data") {
   std::vector<std::tuple<std::string, std::string, std::string>> params{
       {"-CO2H", "C(=O)[OH]", "C(=O)[O-]"}, {"phenol", "c[OH]", "c[O-]"}};
@@ -674,5 +694,64 @@ TEST_CASE("provide charge parameters as data") {
     std::unique_ptr<ROMol> res(reion.reionize(*m));
     REQUIRE(res);
     CHECK(MolToSmiles(*res) == "O=S([O-])c1ccc(S(=O)(=O)O)cc1");
+  }
+}
+
+TEST_CASE("provide charge parameters as JSON") {
+  SECTION("example1") {
+    std::string json = R"JSON({"acidbaseData":[
+      {"name":"-CO2H","acid":"C(=O)[OH]","base":"C(=O)[O-]"},
+      {"name":"phenol","acid":"c[OH]","base":"c[O-]"}
+    ]})JSON";
+    MolStandardize::CleanupParameters params;
+    MolStandardize::updateCleanupParamsFromJSON(params, json);
+    CHECK(params.acidbaseData.size() == 2);
+
+    MolStandardize::Reionizer reion(params.acidbaseData);
+    auto m = "c1cc([O-])cc(C(=O)O)c1"_smiles;
+    REQUIRE(m);
+    std::unique_ptr<ROMol> res(reion.reionize(*m));
+    REQUIRE(res);
+    CHECK(MolToSmiles(*res) == "O=C([O-])c1cccc(O)c1");
+    m = "C1=C(C=CC(=C1)[S]([O-])=O)[S](O)(=O)=O"_smiles;
+    REQUIRE(m);
+    res.reset(reion.reionize(*m));
+    REQUIRE(res);
+    CHECK(MolToSmiles(*res) == "O=S([O-])c1ccc(S(=O)(=O)O)cc1");
+  }
+}
+
+TEST_CASE("provide tautomer parameters as JSON") {
+  SECTION("example1") {
+    std::string json = R"JSON({"tautomerTransformData":[
+      {"name":"1,3 (thio)keto/enol f","smarts":"[CX4!H0]-[C]=[O,S,Se,Te;X1]","bonds":"","charges":""},
+      {"name":"1,3 (thio)keto/enol r","smarts":"[O,S,Se,Te;X2!H0]-[C]=[C]"}
+    ]})JSON";
+    MolStandardize::CleanupParameters params;
+    MolStandardize::updateCleanupParamsFromJSON(params, json);
+    CHECK(params.tautomerTransformData.size() == 2);
+    MolStandardize::TautomerEnumerator te(params);
+    auto m = "CCC=O"_smiles;
+    REQUIRE(m);
+    auto tauts = te.enumerate(*m);
+    CHECK(tauts.size() == 2);
+    CHECK(MolToSmiles(*tauts[0]) == "CC=CO");
+    CHECK(MolToSmiles(*tauts[1]) == "CCC=O");
+  }
+  SECTION("example 2") {
+    std::string json = R"JSON({"tautomerTransformData":[
+        {"name":"isocyanide f", "smarts":"[C-0!H0]#[N+0]", "bonds":"#", "charges":"-+"},
+        {"name":"isocyanide r", "smarts":"[N+!H0]#[C-]", "bonds":"#", "charges":"-+"}
+    ]})JSON";
+    MolStandardize::CleanupParameters params;
+    MolStandardize::updateCleanupParamsFromJSON(params, json);
+    CHECK(params.tautomerTransformData.size() == 2);
+    MolStandardize::TautomerEnumerator te(params);
+    auto m = "C#N"_smiles;
+    REQUIRE(m);
+    auto tauts = te.enumerate(*m);
+    CHECK(tauts.size() == 2);
+    CHECK(MolToSmiles(*tauts[0]) == "C#N");
+    CHECK(MolToSmiles(*tauts[1]) == "[C-]#[NH+]");
   }
 }

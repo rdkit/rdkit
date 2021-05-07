@@ -88,6 +88,16 @@ class RDKIT_MOLSTANDARDIZE_EXPORT Normalizer {
                                ChemicalReaction &rule) const;
 
 };  // Normalizer class
+
+// caller owns the returned pointer
+inline Normalizer *normalizerFromParams(const CleanupParameters &params) {
+  if (params.normalizationData.empty()) {
+    return new Normalizer(params.normalizations, params.maxRestarts);
+  } else {
+    return new Normalizer(params.normalizationData, params.maxRestarts);
+  }
+}
+
 }  // namespace MolStandardize
 }  // namespace RDKit
 

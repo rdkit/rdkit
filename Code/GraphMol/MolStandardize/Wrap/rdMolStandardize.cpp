@@ -155,6 +155,10 @@ BOOST_PYTHON_MODULE(rdMolStandardize) {
           "call AssignStereochemistry on all generated tautomers "
           "(defaults to True)");
 
+  python::def("UpdateParamsFromJSON",
+              &RDKit::MolStandardize::updateCleanupParamsFromJSON,
+              "updates the cleanup parameters from the provided JSON string");
+
   docString = "Standardizes a molecule";
   python::def("Cleanup", cleanupHelper,
               (python::arg("mol"), python::arg("params") = python::object()),

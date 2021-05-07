@@ -156,8 +156,13 @@ TautomerEnumerator::TautomerEnumerator(const CleanupParameters &params)
       d_removeBondStereo(params.tautomerRemoveBondStereo),
       d_removeIsotopicHs(params.tautomerRemoveIsotopicHs),
       d_reassignStereo(params.tautomerReassignStereo) {
-  TautomerCatalogParams tautParams(params.tautomerTransforms);
-  dp_catalog.reset(new TautomerCatalog(&tautParams));
+  std::unique_ptr<TautomerCatalogParams> tautParams;
+  if (params.tautomerTransformData.empty()) {
+    tautParams.reset(new TautomerCatalogParams(params.tautomerTransforms));
+  } else {
+    tautParams.reset(new TautomerCatalogParams(params.tautomerTransformData));
+  }
+  dp_catalog.reset(new TautomerCatalog(tautParams.get()));
 }
 
 bool TautomerEnumerator::setTautomerStereoAndIsoHs(
