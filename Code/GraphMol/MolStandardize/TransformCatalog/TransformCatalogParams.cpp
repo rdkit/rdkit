@@ -21,7 +21,7 @@ TransformCatalogParams::TransformCatalogParams(
     const std::string &transformFile) {
   d_transformations.clear();
   if (transformFile.empty()) {
-    d_transformations = readTransformations(defaultNormalizations);
+    d_transformations = readTransformations(defaults::defaultNormalizations);
   } else {
     d_transformations = readTransformations(transformFile);
   }

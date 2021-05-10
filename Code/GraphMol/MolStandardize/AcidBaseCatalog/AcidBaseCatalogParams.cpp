@@ -20,7 +20,7 @@ namespace MolStandardize {
 AcidBaseCatalogParams::AcidBaseCatalogParams(const std::string &acidBaseFile) {
   d_pairs.clear();
   if (acidBaseFile.empty()) {
-    d_pairs = readPairs(defaultAcidBasePairs);
+    d_pairs = readPairs(defaults::defaultAcidBasePairs);
   } else {
     d_pairs = readPairs(acidBaseFile);
   }

@@ -20,7 +20,7 @@ namespace MolStandardize {
 FragmentCatalogParams::FragmentCatalogParams(const std::string &fgroupFile) {
   d_funcGroups.clear();
   if (fgroupFile.empty()) {
-    d_funcGroups = readFuncGroups(defaultFragments);
+    d_funcGroups = readFuncGroups(defaults::defaultFragments);
   } else {
     d_funcGroups = readFuncGroups(fgroupFile);
   }

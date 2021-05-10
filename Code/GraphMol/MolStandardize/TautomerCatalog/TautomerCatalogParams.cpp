@@ -20,7 +20,7 @@ namespace MolStandardize {
 TautomerCatalogParams::TautomerCatalogParams(const std::string &tautomerFile) {
   d_transforms.clear();
   if (tautomerFile.empty()) {
-    d_transforms = readTautomers(defaultTautomerTransforms);
+    d_transforms = readTautomers(defaults::defaultTautomerTransforms);
   } else {
     d_transforms = readTautomers(tautomerFile);
   }
