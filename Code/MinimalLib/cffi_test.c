@@ -72,6 +72,17 @@ void test_io(){
   assert(pkl2==NULL);
   assert(!pkl2_size);
 
+  // bad molblock
+  pkl2 = get_mol("  Mrv1921 05042106432D\n\
+\n\
+  2  1  0  0  0  0            999 V2000\n\
+   -7.3214    3.7500    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0\n\
+   -6.6070    4.1625    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0\n\
+  1  2  1  0  0  0  0\n\
+M  END",&pkl2_size,"");
+  assert(pkl2==NULL);
+  assert(!pkl2_size);
+
   //---------
   // options
   pkl2 = get_mol("[H]C",&pkl2_size,"{\"removeHs\":false}");
