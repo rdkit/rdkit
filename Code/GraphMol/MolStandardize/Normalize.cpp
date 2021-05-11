@@ -76,7 +76,7 @@ ROMol *Normalizer::normalize(const ROMol &mol) {
   const TransformCatalogParams *tparams = this->d_tcat->getCatalogParams();
 
   PRECONDITION(tparams, "");
-  if (mol.getNumAtoms()) {
+  if (!mol.getNumAtoms()) {
     return new ROMol(mol);
   }
   const std::vector<std::shared_ptr<ChemicalReaction>> &transforms =
