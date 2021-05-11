@@ -243,6 +243,17 @@ void testFragmentWithoutSmarts() {
   BOOST_LOG(rdInfoLog) << "---- Done" << std::endl;
 }
 
+void testEmptyMol() {
+  BOOST_LOG(rdInfoLog)
+      << "-----------------------\n Test that "
+         "LargestFragmentChooser does not crash on an empty mol"
+      << std::endl;
+  LargestFragmentChooser lfragchooser;
+  std::unique_ptr<ROMol> emptyMol(new ROMol());
+  std::unique_ptr<ROMol> largestMol(lfragchooser.choose(*emptyMol));
+  TEST_ASSERT(!largestMol->getNumAtoms());
+}
+
 int main() {
   // may want to enable this for debugging
   // RDLog::InitLogs();
@@ -250,5 +261,6 @@ int main() {
   test_largest_fragment();
   testWhiteSpaceInSmarts();
   testFragmentWithoutSmarts();
+  testEmptyMol();
   return 0;
 }
