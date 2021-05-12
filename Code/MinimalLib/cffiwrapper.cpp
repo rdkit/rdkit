@@ -551,8 +551,11 @@ extern "C" short set_2d_coords_aligned(char **mol_pkl, size_t *mol_pkl_sz,
       !template_sz || !template_pkl || !template_sz) {
     return 0;
   }
-  auto mol = mol_from_pkl(*mol_pkl, *mol_pkl_sz);
   auto templ = mol_from_pkl(template_pkl, template_sz);
+  if (!templ.getNumConformers()) {
+    return 0;
+  }
+  auto mol = mol_from_pkl(*mol_pkl, *mol_pkl_sz);
   bool useCoordGen = true;
   bool allowRGroups = false;
   bool acceptFailure = true;

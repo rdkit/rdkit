@@ -401,6 +401,12 @@ M  END\n",&tpkl_size,"");
   assert(set_2d_coords_aligned(&mpkl,&mpkl_size,tpkl,tpkl_size,"{\"allowRGroups\":true,\"acceptFailure\":false}"));
   free(tpkl);
 
+  // Github #4121: set_2d_coords_aligned crashes if template mol has no conformer
+  tpkl = get_mol("C1CNC1",&tpkl_size,NULL);
+  assert(!set_2d_coords_aligned(&mpkl,&mpkl_size,tpkl,tpkl_size,""));
+  free(tpkl);  
+
+
   // 3D
   assert(add_hs(&mpkl,&mpkl_size));
   assert(set_3d_coords(&mpkl,&mpkl_size,"")>0);
