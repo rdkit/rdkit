@@ -55,7 +55,6 @@ Once you have the RDKit package installed in your node modules, copy the followi
 - `https://unpkg.com/@rdkit/rdkit@v2021.3.2-release/Code/MinimalLib/dist/RDKit_minimal.js`
 - `https://unpkg.com/@rdkit/rdkit@v2021.3.2-release/Code/MinimalLib/dist/RDKit_minimal.wasm`
 
-
 ## Running RDKit in your JavaScript code
 
 To use RDKit, load the javascript file and instantiate the wasm module inside the `head` tag of your `index.html`, before you run your application code:
