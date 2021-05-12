@@ -96,7 +96,6 @@ Follow the examples of this page to see the various ways to use the JavaScript r
 - From this npm package: https://unpkg.com/@rdkit/rdkit@v2021.3.2-release/Code/MinimalLib/dist/GettingStartedInJS.html
 - From this npm package: https://unpkg.com/@rdkit/rdkit@v2021.3.2-release/Code/MinimalLib/dist/demo.html
 
-
 ## Contributing
 
 ### Preparing a new release of the package
