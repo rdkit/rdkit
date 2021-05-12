@@ -491,6 +491,16 @@ void testGithub3460() {
   BOOST_LOG(rdInfoLog) << "Finished" << std::endl;
 }
 
+void testEmptyMol() {
+  BOOST_LOG(rdInfoLog) << "-----------------------\n Test that Normalizer "
+                          "does not crash on an empty mol"
+                       << std::endl;
+  Normalizer nn;
+  std::unique_ptr<ROMol> emptyMol(new ROMol());
+  std::unique_ptr<ROMol> normalized(nn.normalize(*emptyMol));
+  TEST_ASSERT(!normalized->getNumAtoms());
+}
+
 int main() {
   RDLog::InitLogs();
 #if 1
@@ -500,5 +510,6 @@ int main() {
   testGithub2414();
   testNormalizeMultipleAltSmarts();
   testGithub3460();
+  testEmptyMol();
   return 0;
 }

@@ -265,7 +265,7 @@ extern "C" char *get_inchikey_for_inchi(const char *inchi) {
 
 extern "C" char *get_mol(const char *input, size_t *pkl_sz,
                          const char *details_json) {
-  RWMol *mol = MinimalLib::mol_from_input(input, details_json);
+  std::unique_ptr<RWMol> mol{MinimalLib::mol_from_input(input, details_json)};
   if (!mol) {
     *pkl_sz = 0;
     return NULL;
@@ -278,7 +278,7 @@ extern "C" char *get_mol(const char *input, size_t *pkl_sz,
 }
 extern "C" char *get_qmol(const char *input, size_t *pkl_sz,
                           const char *details_json) {
-  RWMol *mol = MinimalLib::qmol_from_input(input, details_json);
+  std::unique_ptr<RWMol> mol{MinimalLib::qmol_from_input(input, details_json)};
   if (!mol) {
     *pkl_sz = 0;
     return str_to_c("Error!");

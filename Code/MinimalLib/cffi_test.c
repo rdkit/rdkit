@@ -72,6 +72,17 @@ void test_io(){
   assert(pkl2==NULL);
   assert(!pkl2_size);
 
+  // bad molblock
+  pkl2 = get_mol("  Mrv1921 05042106432D\n\
+\n\
+  2  1  0  0  0  0            999 V2000\n\
+   -7.3214    3.7500    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0\n\
+   -6.6070    4.1625    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0\n\
+  1  2  1  0  0  0  0\n\
+M  END",&pkl2_size,"");
+  assert(pkl2==NULL);
+  assert(!pkl2_size);
+
   //---------
   // options
   pkl2 = get_mol("[H]C",&pkl2_size,"{\"removeHs\":false}");
@@ -420,48 +431,58 @@ void test_standardize(){
   mpkl = get_mol("[Pt]CCN(=O)=O",&mpkl_size,"{\"sanitize\":false}");
   char *smi = get_smiles(mpkl,mpkl_size,"");
   assert(!strcmp(smi,"O=N(=O)CC[Pt]"));
+  free(smi);
   assert(cleanup(&mpkl,&mpkl_size,"")>0);
   smi = get_smiles(mpkl,mpkl_size,"");
   assert(!strcmp(smi,"[CH2-]C[N+](=O)[O-].[Pt+]"));
+  free(smi);
 
   assert(fragment_parent(&mpkl,&mpkl_size,"")>0);
   smi = get_smiles(mpkl,mpkl_size,"");
   assert(!strcmp(smi,"[CH2-]C[N+](=O)[O-]"));
-
+  free(smi);
+  
   assert(charge_parent(&mpkl,&mpkl_size,"")>0);
   smi = get_smiles(mpkl,mpkl_size,"");
   assert(!strcmp(smi,"CC[N+](=O)[O-]"));
-
+  free(smi);
   free(mpkl);
+  
   mpkl = get_mol("[Pt]CCN(=O)=O",&mpkl_size,"{\"sanitize\":false}");
   assert(charge_parent(&mpkl,&mpkl_size,"")>0);
   smi = get_smiles(mpkl,mpkl_size,"");
   assert(!strcmp(smi,"CC[N+](=O)[O-]"));
-
+  free(smi);
   free(mpkl);
+
   mpkl = get_mol("[Pt]CCN(=O)=O",&mpkl_size,"{\"sanitize\":false}");
   assert(charge_parent(&mpkl,&mpkl_size,"{\"skipStandardize\":true}")>0);
   smi = get_smiles(mpkl,mpkl_size,"");
   assert(!strcmp(smi,"[CH2-]C[N+](=O)[O-].[Pt+]"));
-
+  free(smi);
   free(mpkl);
+
   mpkl = get_mol("[CH2-]CN(=O)=O",&mpkl_size,"{\"sanitize\":false}");
   assert(neutralize(&mpkl,&mpkl_size,"")>0);
   smi = get_smiles(mpkl,mpkl_size,"");
   assert(!strcmp(smi,"CCN(=O)=O"));
-
+  free(smi);
   free(mpkl);
+  
   mpkl = get_mol("[O-]c1cc(C(=O)O)ccc1",&mpkl_size,"");
   assert(reionize(&mpkl,&mpkl_size,"")>0);
   smi = get_smiles(mpkl,mpkl_size,"");
   assert(!strcmp(smi,"O=C([O-])c1cccc(O)c1"));
-
+  free(smi);
   free(mpkl);
+  
   mpkl = get_mol("OC(O)C(=N)CO",&mpkl_size,"");
   assert(canonical_tautomer(&mpkl,&mpkl_size,"")>0);
   smi = get_smiles(mpkl,mpkl_size,"");
   assert(!strcmp(smi,"NC(CO)C(=O)O"));
-
+  free(smi);
+  free(mpkl);
+  
   enable_logging();
   printf("  done\n");
   printf("--------------------------\n"); 
@@ -470,7 +491,10 @@ void test_standardize(){
 
 int main(){
   enable_logging();
-  printf("hello %s\n",version()); 
+  char *vers=version();
+  printf("hello %s\n",vers);
+  free(vers); 
+
   test_io();
   test_svg();
   test_substruct();

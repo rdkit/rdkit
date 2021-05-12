@@ -16,6 +16,7 @@
 #include <GraphMol/SmilesParse/SmilesParse.h>
 #include <GraphMol/SmilesParse/SmilesWrite.h>
 #include <GraphMol/FileParsers/FileParsers.h>
+#include <RDGeneral/FileParseException.h>
 #include <GraphMol/MolDraw2D/MolDraw2D.h>
 #include <GraphMol/MolDraw2D/MolDraw2DSVG.h>
 #include <GraphMol/MolDraw2D/MolDraw2DUtils.h>
@@ -77,28 +78,33 @@ RWMol *mol_from_input(const std::string &input,
     LPT_OPT_GET(sanitize);
     LPT_OPT_GET(removeHs);
   }
-  if (input.find("M  END") != std::string::npos) {
-    bool strictParsing = false;
-    LPT_OPT_GET(strictParsing);
-    res = MolBlockToMol(input, false, removeHs, strictParsing);
-  } else if (input.find("commonchem") != std::string::npos) {
-    auto ps = MolInterchange::defaultJSONParseParameters;
-    LPT_OPT_GET2(ps, setAromaticBonds);
-    LPT_OPT_GET2(ps, strictValenceCheck);
-    LPT_OPT_GET2(ps, parseProperties);
-    LPT_OPT_GET2(ps, parseConformers);
+  try {
+    if (input.find("M  END") != std::string::npos) {
+      bool strictParsing = false;
+      LPT_OPT_GET(strictParsing);
+      res = MolBlockToMol(input, false, removeHs, strictParsing);
+    } else if (input.find("commonchem") != std::string::npos) {
+      auto ps = MolInterchange::defaultJSONParseParameters;
+      LPT_OPT_GET2(ps, setAromaticBonds);
+      LPT_OPT_GET2(ps, strictValenceCheck);
+      LPT_OPT_GET2(ps, parseProperties);
+      LPT_OPT_GET2(ps, parseConformers);
 
-    auto molVect = MolInterchange::JSONDataToMols(input, ps);
-    if (!molVect.empty()) {
-      res = new RWMol(*molVect[0]);
+      auto molVect = MolInterchange::JSONDataToMols(input, ps);
+      if (!molVect.empty()) {
+        res = new RWMol(*molVect[0]);
+      }
+    } else {
+      SmilesParserParams ps;
+      ps.sanitize = false;
+      ps.removeHs = removeHs;
+      LPT_OPT_GET2(ps, strictCXSMILES);
+      LPT_OPT_GET2(ps, useLegacyStereo);
+      res = SmilesToMol(input, ps);
     }
-  } else {
-    SmilesParserParams ps;
-    ps.sanitize = false;
-    ps.removeHs = removeHs;
-    LPT_OPT_GET2(ps, strictCXSMILES);
-    LPT_OPT_GET2(ps, useLegacyStereo);
-    res = SmilesToMol(input, ps);
+  } catch (...) {
+    // we really don't want exceptions to be thrown in here
+    res = nullptr;
   }
   if (res) {
     try {
