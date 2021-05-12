@@ -70,7 +70,7 @@ Here are some examples (see using Molecular Filters below)
 >>> preds = FWBuild(decomp, 
 ...                 pred_filter=lambda x: x > 8, 
 ...                 mw_filter=lambda mw: 100<mw<550)
->>> predictions_to_csv(sys.stdout, preds)
+>>> predictions_to_csv(sys.stdout, decomp, preds)
 
 ```
 

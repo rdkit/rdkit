@@ -31,7 +31,11 @@ QueryBond &QueryBond::operator=(const QueryBond &other) {
   // FIX: how to deal with atom indices?
   dp_mol = nullptr;
   d_bondType = other.d_bondType;
-  dp_query = other.dp_query->copy();
+  if (other.dp_query) {
+    dp_query = other.dp_query->copy();
+  } else {
+    dp_query = nullptr;
+  }
   d_props = other.d_props;
   return *this;
 }

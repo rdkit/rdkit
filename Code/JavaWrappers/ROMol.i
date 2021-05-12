@@ -190,6 +190,13 @@ void setPreferCoordGen(bool);
     return RDKit::MolToHELM(*($self));
   }
 
+  std::string MolToCMLBlock(int confId=-1, bool kekulize=true) {
+    return RDKit::MolToCMLBlock(*($self), confId, kekulize);
+  }
+  void MolToCMLFile(std::string fName, int confId=-1, bool kekulize=true) {
+    RDKit::MolToCMLFile(*($self), fName, confId, kekulize);
+  }
+
   std::string MolToXYZBlock(int confId=-1) {
     return RDKit::MolToXYZBlock(*($self), confId);
   }
