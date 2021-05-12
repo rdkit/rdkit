@@ -1,3 +1,41 @@
+# Release_2021.03.2
+(Changes relative to Release_2021.03.1)
+
+## Acknowledgements
+Harrison Green, Brian Kelley, Alan Kerstjens, Dan Nealschneider, Alessio Ragno, 
+Paolo Tosco, Kazuya Ujihara, Riccardo Vianello
+
+## Bug Fixes:
+  - Draw.MolToImage() cannot highlight with highlightMap (v > '2019.09.3' )
+ (github #3616 from spideralessio)
+  - SparseIntVect copy constructor and assignment operators not clearing existing data
+ (github #3994 from AlanKerstjens)
+  - update clang version for linux CI fuzzer builds
+ (github #4012 from greglandrum)
+  - Update coordgen to 2.0.3
+ (github #4017 from d-b-w)
+  - Get SWIG wrappers working with C# again
+ (github #4020 from kazuyaujihara)
+  - replaceSidechains creates aromatic dummy atoms
+ (github #4022 from ptosco)
+  - A set of fixes for problems caused by bad input
+ (github #4033 from greglandrum)
+  - Cleanup some problems found during an ASAN build
+ (github #4054 from greglandrum)
+  - Avoid that lone atoms which are part of a ring in one of the molecules become part of the MCS
+ (github #4065 from ptosco)
+  - call to pyAvalonTools.Generate2DCoords results in an assert violation
+ (github #4075 from rvianello)
+  - Update boost download location in Dockerfile
+ (github #4094 from greglandrum)
+  - RemoveStereochemistry should also remove stereogroups
+ (github #4115 from greglandrum)
+  - Avoid that MolStandardizer segfaults on empty mols
+ (github #4119 from ptosco)
+  - SEGV in RWMol::commitBatchEdit
+ (github #4122 from hgarrereyn)
+
+
 # Release_2021.03.1
 (Changes relative to Release_2020.09.1)
 
