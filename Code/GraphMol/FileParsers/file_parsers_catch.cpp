@@ -3197,3 +3197,28 @@ M  END)CTAB"_ctab;
     CHECK(MolToSmarts(*mol) == "[#6&h{2-}]-[#7&h0]-[#6&h{1-}]");
   }
 }
+
+TEST_CASE("Github #4131: HCOUNT from v3000 CTABS incorrectly interpreted") {
+  SECTION("basics") {
+    auto mol = R"CTAB(
+  Mrv2108 05122108272D          
+
+  0  0  0     0  0            999 V3000
+M  V30 BEGIN CTAB
+M  V30 COUNTS 3 2 0 0 0
+M  V30 BEGIN ATOM
+M  V30 1 C 5.458 -2.2567 0 0 HCOUNT=2
+M  V30 2 N 6.7916 -1.4867 0 0 HCOUNT=0
+M  V30 3 C 8.1254 -2.2567 0 0 HCOUNT=-1
+M  V30 END ATOM
+M  V30 BEGIN BOND
+M  V30 1 1 1 2
+M  V30 2 1 2 3
+M  V30 END BOND
+M  V30 END CTAB
+M  END
+)CTAB"_ctab;
+    REQUIRE(mol);
+    CHECK(MolToSmarts(*mol) == "[#6&h{2-}]-[#7]-[#6&h0]");
+  }
+}
