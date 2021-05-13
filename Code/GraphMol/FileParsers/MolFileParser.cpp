@@ -1446,9 +1446,23 @@ Atom *ParseMolFileAtomLine(const std::string text, RDGeom::Point3D &pos,
     res->setFormalCharge(4 - chg);
   }
 
-  // FIX: this does not appear to be correct
-  if (hCount == 1) {
+  if (hCount >= 1) {
+    if (!res->hasQuery()) {
+      auto qatom = new QueryAtom(*res);
+      delete res;
+      res = qatom;
+    }
     res->setNoImplicit(true);
+    if (hCount > 1) {
+      ATOM_EQUALS_QUERY *oq = makeAtomImplicitHCountQuery(hCount - 1);
+      auto nq = makeAtomSimpleQuery<ATOM_LESSEQUAL_QUERY>(
+          hCount - 1, oq->getDataFunc(),
+          std::string("less_") + oq->getDescription());
+      res->expandQuery(nq);
+      delete oq;
+    } else {
+      res->expandQuery(makeAtomImplicitHCountQuery(0));
+    }
   }
 
   if (massDiff != 0) {
@@ -2205,7 +2219,16 @@ void ParseV3000AtomProps(RWMol *mol, Atom *&atom, typename T::iterator &token,
         if (hcount == -1) {
           hcount = 0;
         }
-        atom->expandQuery(makeAtomHCountQuery(hcount));
+        if (hcount > 0) {
+          ATOM_EQUALS_QUERY *oq = makeAtomImplicitHCountQuery(hcount);
+          auto nq = makeAtomSimpleQuery<ATOM_LESSEQUAL_QUERY>(
+              hcount, oq->getDataFunc(),
+              std::string("less_") + oq->getDescription());
+          atom->expandQuery(nq);
+          delete oq;
+        } else {
+          atom->expandQuery(makeAtomImplicitHCountQuery(0));
+        }
       }
     } else if (prop == "UNSAT") {
       if (val == "1") {
