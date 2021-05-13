@@ -1,7 +1,7 @@
 # RDKit for JavaScript (Official)
 
 [![Azure build Status](https://dev.azure.com/rdkit-builds/RDKit/_apis/build/status/rdkit.rdkit?branchName=master)](https://dev.azure.com/rdkit-builds/RDKit/_build/latest?definitionId=1&branchName=master)
-[![Documentation Status](https://readthedocs.org/projects/rdkit/badge/?version=latest)](https://unpkg.com/@rdkit/rdkit@v2021.3.1-release/Code/MinimalLib/dist/GettingStartedInJS.html)
+[![Documentation Status](https://readthedocs.org/projects/rdkit/badge/?version=latest)](https://unpkg.com/@rdkit/rdkit/Code/MinimalLib/dist/GettingStartedInJS.html)
 [![License](https://img.shields.io/github/license/rdkit/rdkit)](https://github.com/rdkit/rdkit/blob/master/license.txt)
 [![NPM Latest Version](https://img.shields.io/npm/v/@rdkit/rdkit)](https://www.npmjs.com/package/@rdkit/rdkit)
 [![NPM Weekly Downloads](https://img.shields.io/npm/dw/@rdkit/rdkit)](https://www.npmjs.com/package/@rdkit/rdkit)
@@ -52,8 +52,8 @@ Once you have the RDKit package installed in your node modules, copy the followi
 
 ### Option 2: Use the remote distribution files from [unpkg.com](https://unpkg.com/)
 
-- `https://unpkg.com/@rdkit/rdkit@2021.3.1-beta.13/Code/MinimalLib/dist/RDKit_minimal.js`
-- `https://unpkg.com/@rdkit/rdkit@2021.3.1-beta.13/Code/MinimalLib/dist/RDKit_minimal.wasm`
+- `https://unpkg.com/@rdkit/rdkit/Code/MinimalLib/dist/RDKit_minimal.js`
+- `https://unpkg.com/@rdkit/rdkit/Code/MinimalLib/dist/RDKit_minimal.wasm`
 
 ## Running RDKit in your JavaScript code
 
@@ -63,7 +63,8 @@ To use RDKit, load the javascript file and instantiate the wasm module inside th
 <head>
     <!-- ...other files and HTML tags... -->
     <!-- Load the RDKit JS file -->
-    <script src="https://unpkg.com/@rdkit/rdkit@2021.3.1-beta.13/Code/MinimalLib/dist/RDKit_minimal.js"></script>
+    <script src="https://unpkg.com/@rdkit/rdkit/Code/MinimalLib/dist/RDKit_minimal.js"></script>
+
     <!-- Instantiate the WASM module. The inline script below could live elsewhere inside your application code. -->
     <script>
         window.initRDKitModule()
@@ -86,14 +87,14 @@ To use RDKit, load the javascript file and instantiate the wasm module inside th
 
 ## Usage
 
-See the getting started demo at https://unpkg.com/@rdkit/rdkit@v2021.3.1-release/Code/MinimalLib/dist/GettingStartedInJS.html .
+See the getting started demo at https://unpkg.com/@rdkit/rdkit/Code/MinimalLib/dist/GettingStartedInJS.html .
 
 Follow the examples of this page to see the various ways to use the JavaScript release of RDKit.
 
 ## Live demos
 
-- From this npm package: https://unpkg.com/@rdkit/rdkit@v2021.3.1-release/Code/MinimalLib/dist/GettingStartedInJS.html
-- From this npm package: https://unpkg.com/@rdkit/rdkit@v2021.3.1-release/Code/MinimalLib/dist/demo.html
+- From this npm package: https://unpkg.com/@rdkit/rdkit/Code/MinimalLib/dist/GettingStartedInJS.html
+- From this npm package: https://unpkg.com/@rdkit/rdkit/Code/MinimalLib/dist/demo.html
 
 ## Contributing
 
