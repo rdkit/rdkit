@@ -93,15 +93,15 @@ jobs:
     number_of_cores: nproc
   steps:
   - template: .azure-pipelines/linux_build_cartridge.yml
-- job: Ubuntu_18_04_x64_fuzzer
-  timeoutInMinutes: 90
-  pool:
-    vmImage: ubuntu-18.04
-  variables:
-    boost_version: 1.67.0
-    number_of_cores: nproc
-  steps:
-  - template: .azure-pipelines/linux_build_fuzzer.yml
+#- job: Ubuntu_18_04_x64_fuzzer
+#  timeoutInMinutes: 90
+#  pool:
+#    vmImage: ubuntu-18.04
+#  variables:
+#    boost_version: 1.67.0
+#    number_of_cores: nproc
+#  steps:
+#  - template: .azure-pipelines/linux_build_fuzzer.yml
 - job: Ubuntu_18_04_x64_limitexternaldependencies
   timeoutInMinutes: 90
   pool:
