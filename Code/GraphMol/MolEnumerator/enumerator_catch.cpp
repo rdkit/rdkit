@@ -639,4 +639,42 @@ M  END)CTAB"_ctab;
       CHECK(MolToSmiles(*newmol) == "*COCOCO*");
     }
   }
+  SECTION("RepeatUnit unit tests 2") {
+    auto mol1 = R"CTAB(
+  ACCLDraw05132106232D
+
+  0  0  0     0  0            999 V3000
+M  V30 BEGIN CTAB
+M  V30 COUNTS 4 3 1 0 0
+M  V30 BEGIN ATOM
+M  V30 1 C 9.7578 -7.0211 0 0 
+M  V30 2 O 10.7757 -7.6201 0 0 
+M  V30 3 * 11.8037 -7.0378 0 0 
+M  V30 4 * 8.7298 -7.6034 0 0 
+M  V30 END ATOM
+M  V30 BEGIN BOND
+M  V30 1 1 1 2 
+M  V30 2 1 2 3 
+M  V30 3 1 1 4 
+M  V30 END BOND
+M  V30 BEGIN SGROUP
+M  V30 1 SRU 1 ATOMS=(2 2 1) XBONDS=(2 3 2) BRKXYZ=(9 9.24 -7.9 0 9.24 -6.72 -
+M  V30 0 0 0 0) BRKXYZ=(9 11.29 -6.74 0 11.29 -7.92 0 0 0 0) CONNECT=HH -
+M  V30 LABEL=n 
+M  V30 END SGROUP
+M  V30 END CTAB
+M  END)CTAB"_ctab;
+    REQUIRE(mol1);
+    MolEnumerator::RepeatUnitOp op;
+    op.initFromMol(*mol1);
+    auto vcnts = op.getVariationCounts();
+    REQUIRE(vcnts.size() == 1);
+    CHECK(vcnts[0] == op.d_defaultRepeatCount);
+
+    {
+      std::vector<size_t> elems{3};
+      std::unique_ptr<ROMol> newmol(op(elems));
+      CHECK(MolToSmiles(*newmol) == "*COOCCO*");
+    }
+  }
 }
