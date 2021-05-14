@@ -591,7 +591,7 @@ M  END
 }
 
 TEST_CASE("RepeatUnit", "[MolEnumerator]") {
-  SECTION("RepeatUnit unit tests 1") {
+  SECTION("basic HT enumeration") {
     auto mol1 = R"CTAB(
   ACCLDraw05132106232D
 
@@ -639,7 +639,7 @@ M  END)CTAB"_ctab;
       CHECK(MolToSmiles(*newmol) == "*COCOCO*");
     }
   }
-  SECTION("RepeatUnit unit tests 2") {
+  SECTION("basic HH enumeration") {
     auto mol1 = R"CTAB(
   ACCLDraw05132106232D
 
@@ -677,4 +677,90 @@ M  END)CTAB"_ctab;
       CHECK(MolToSmiles(*newmol) == "*COOCCO*");
     }
   }
+  SECTION("EU enumeration (which we don't do)") {
+    auto mol1 = R"CTAB(
+  ACCLDraw05132106232D
+
+  0  0  0     0  0            999 V3000
+M  V30 BEGIN CTAB
+M  V30 COUNTS 4 3 1 0 0
+M  V30 BEGIN ATOM
+M  V30 1 C 9.7578 -7.0211 0 0 
+M  V30 2 O 10.7757 -7.6201 0 0 
+M  V30 3 * 11.8037 -7.0378 0 0 
+M  V30 4 * 8.7298 -7.6034 0 0 
+M  V30 END ATOM
+M  V30 BEGIN BOND
+M  V30 1 1 1 2 
+M  V30 2 1 2 3 
+M  V30 3 1 1 4 
+M  V30 END BOND
+M  V30 BEGIN SGROUP
+M  V30 1 SRU 1 ATOMS=(2 2 1) XBONDS=(2 3 2) BRKXYZ=(9 9.24 -7.9 0 9.24 -6.72 -
+M  V30 0 0 0 0) BRKXYZ=(9 11.29 -6.74 0 11.29 -7.92 0 0 0 0) CONNECT=EU -
+M  V30 LABEL=n 
+M  V30 END SGROUP
+M  V30 END CTAB
+M  END)CTAB"_ctab;
+    REQUIRE(mol1);
+    MolEnumerator::RepeatUnitOp op;
+    op.initFromMol(*mol1);
+    auto vcnts = op.getVariationCounts();
+    REQUIRE(vcnts.empty());
+  }
+
+#if 0
+THIS TEST ISN'T FINISHED AND THE CODE IT WOULD NEED ISN'T WRITTEN
+  SECTION("nested HT enumeration") {
+    auto mol1 = R"CTAB(
+  ACCLDraw05132106342D
+
+  0  0  0     0  0            999 V3000
+M  V30 BEGIN CTAB
+M  V30 COUNTS 7 6 2 0 0
+M  V30 BEGIN ATOM
+M  V30 1 * 9.2115 -7.4169 0 0 
+M  V30 2 C 10.2483 -6.8511 0 0 CFG=3 
+M  V30 3 C 10.2767 -5.67 0 0 
+M  V30 4 O 11.257 -7.4662 0 0 
+M  V30 5 * 12.2941 -6.9003 0 0 
+M  V30 6 N 9.268 -5.0548 0 0 CFG=3 
+M  V30 7 * 9.2964 -3.8737 0 0 
+M  V30 END ATOM
+M  V30 BEGIN BOND
+M  V30 1 1 1 2 
+M  V30 2 1 2 3 
+M  V30 3 1 2 4 
+M  V30 4 1 4 5 
+M  V30 5 1 3 6 
+M  V30 6 1 6 7 
+M  V30 END BOND
+M  V30 BEGIN SGROUP
+M  V30 1 SRU 1 ATOMS=(5 3 2 4 6 7) XBONDS=(2 1 4) BRKXYZ=(9 9.72 -7.72 0 9.74 -
+M  V30 -6.54 0 0 0 0) BRKXYZ=(9 11.79 -6.59 0 11.76 -7.77 0 0 0 0) -
+M  V30 CONNECT=HT LABEL=n 
+M  V30 2 SRU 2 ATOMS=(2 3 6) XBONDS=(2 6 2) BRKXYZ=(9 8.78 -4.78 0 9.78 -4.15 -
+M  V30 0 0 0 0) BRKXYZ=(9 10.76 -5.95 0 9.76 -6.57 0 0 0 0) CONNECT=HT -
+M  V30 LABEL=n 
+M  V30 END SGROUP
+M  V30 END CTAB
+M  END)CTAB"_ctab;
+    REQUIRE(mol1);
+    MolEnumerator::RepeatUnitOp op;
+    op.initFromMol(*mol1);
+    auto vcnts = op.getVariationCounts();
+    REQUIRE(vcnts.size() == 1);
+    CHECK(vcnts[0] == op.d_defaultRepeatCount);
+    {
+      std::vector<size_t> elems{1};
+      std::unique_ptr<ROMol> newmol(op(elems));
+      CHECK(MolToSmiles(*newmol) == "*NCC(*)O*");
+    }
+    {
+      std::vector<size_t> elems{2};
+      std::unique_ptr<ROMol> newmol(op(elems));
+      CHECK(MolToSmiles(*newmol) == "*COCOCO*");
+    }
+  }
+#endif
 }
