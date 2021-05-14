@@ -155,6 +155,70 @@ class RDKIT_MOLENUMERATOR_EXPORT LinkNodeOp : public MolEnumeratorOp {
   void initFromMol();
 };
 
+//! Molecule enumeration operation corresponding to SRUs and the like
+/*!
+ */
+class RDKIT_MOLENUMERATOR_EXPORT RepeatUnitOp : public MolEnumeratorOp {
+ public:
+  RepeatUnitOp(){};
+  RepeatUnitOp(const std::shared_ptr<ROMol> mol) : dp_mol(mol) {
+    PRECONDITION(mol, "bad molecule");
+    initFromMol();
+  };
+  RepeatUnitOp(const ROMol &mol) : dp_mol(new ROMol(mol)) { initFromMol(); };
+  RepeatUnitOp(const RepeatUnitOp &other)
+      : d_defaultRepeatCount(other.d_defaultRepeatCount),
+        dp_mol(other.dp_mol),
+        dp_frame(other.dp_frame),
+        d_countAtEachPoint(other.d_countAtEachPoint),
+        d_variations(other.d_variations),
+        d_pointRanges(other.d_pointRanges),
+        d_isotopeMap(other.d_isotopeMap),
+        d_atomMap(other.d_atomMap){};
+  RepeatUnitOp &operator=(const RepeatUnitOp &other) {
+    if (&other == this) {
+      return *this;
+    }
+    dp_mol = other.dp_mol;
+    dp_frame = other.dp_frame;
+    d_countAtEachPoint = other.d_countAtEachPoint;
+    d_variations = other.d_variations;
+    d_pointRanges = other.d_pointRanges;
+    d_isotopeMap = other.d_isotopeMap;
+    d_atomMap = other.d_atomMap;
+    d_defaultRepeatCount = other.d_defaultRepeatCount;
+    return *this;
+  };
+  //! \override
+  std::vector<size_t> getVariationCounts() const override;
+
+  //! \override
+  std::unique_ptr<ROMol> operator()(
+      const std::vector<size_t> &which) const override;
+
+  //! \override
+  void initFromMol(const ROMol &mol) override;
+
+  //! \override
+  std::unique_ptr<MolEnumeratorOp> copy() const override {
+    return std::unique_ptr<MolEnumeratorOp>(new RepeatUnitOp(*this));
+  }
+
+  size_t d_defaultRepeatCount =
+      4;  //! from mol files we typically don't know the repeat count. This is
+          //! what we use instead
+ private:
+  std::shared_ptr<ROMol> dp_mol{nullptr};
+  std::shared_ptr<RWMol> dp_frame{nullptr};
+  std::vector<size_t> d_countAtEachPoint{};
+  std::vector<std::tuple<unsigned, unsigned, unsigned>> d_variations;
+  std::vector<std::pair<unsigned, unsigned>> d_pointRanges;
+  std::map<unsigned, unsigned> d_isotopeMap;
+  std::map<unsigned, Atom *> d_atomMap;
+
+  void initFromMol();
+};
+
 //! Parameters used to control the molecule enumeration
 struct RDKIT_MOLENUMERATOR_EXPORT MolEnumeratorParams {
   bool sanitize = false;
