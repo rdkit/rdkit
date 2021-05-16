@@ -25,26 +25,26 @@ typedef FeatSPtrList::iterator FeatSPtrList_I;
 class RDKIT_MOLCHEMICALFEATURES_EXPORT MolChemicalFeatureFactory {
  public:
   //! returns the number of feature definitions
-  int getNumFeatureDefs() const { return d_featDefs.size(); };
+  int getNumFeatureDefs() const { return d_featDefs.size(); }
 
   //! returns an iterator referring to the first feature definition
   MolChemicalFeatureDef::CollectionType::iterator beginFeatureDefs() {
     return d_featDefs.begin();
-  };
+  }
   //! returns an iterator referring to the end of the feature definitions
   MolChemicalFeatureDef::CollectionType::iterator endFeatureDefs() {
     return d_featDefs.end();
-  };
+  }
 
   //! returns a const_iterator referring to the first feature definition
   MolChemicalFeatureDef::CollectionType::const_iterator beginFeatureDefs()
       const {
     return d_featDefs.begin();
-  };
+  }
   //! returns a const_iterator referring to the end of the feature definitions
   MolChemicalFeatureDef::CollectionType::const_iterator endFeatureDefs() const {
     return d_featDefs.end();
-  };
+  }
 
   //! appends a feature definition to the collection of features defs.
   void addFeatureDef(

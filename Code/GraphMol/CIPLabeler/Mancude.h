@@ -30,12 +30,12 @@ namespace CIPLabeler {
 class CIPMol;
 
 enum class Type {
-  Cv4D3,      // =C(X)-
-  Nv3D2,      // =N-
-  Nv4D3Plus,  // =[N+]<
-  Nv2D2Minus, // -[N-]-
-  Cv3D3Minus, // -[C(X)-]-
-  Ov3D2Plus,  // -[O+]=
+  Cv4D3,       // =C(X)-
+  Nv3D2,       // =N-
+  Nv4D3Plus,   // =[N+]<
+  Nv2D2Minus,  // -[N-]-
+  Cv3D3Minus,  // -[C(X)-]-
+  Ov3D2Plus,   // -[O+]=
   Other
 };
 
@@ -48,5 +48,5 @@ enum class Type {
  */
 std::vector<boost::rational<int>> calcFracAtomNums(const CIPMol &mol);
 
-} // namespace CIPLabeler
-} // namespace RDKit
+}  // namespace CIPLabeler
+}  // namespace RDKit

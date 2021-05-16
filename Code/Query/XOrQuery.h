@@ -22,7 +22,7 @@ class RDKIT_QUERY_EXPORT XOrQuery
     : public Query<MatchFuncArgType, DataFuncArgType, needsConversion> {
  public:
   typedef Query<MatchFuncArgType, DataFuncArgType, needsConversion> BASE;
-  XOrQuery() { this->df_negate = false; };
+  XOrQuery() { this->df_negate = false; }
 
   bool Match(const DataFuncArgType what) const {
     bool res = false;
@@ -40,7 +40,7 @@ class RDKIT_QUERY_EXPORT XOrQuery
     }
     if (this->getNegation()) res = !res;
     return res;
-  };
+  }
 
   Query<MatchFuncArgType, DataFuncArgType, needsConversion> *copy() const {
     XOrQuery<MatchFuncArgType, DataFuncArgType, needsConversion> *res =
@@ -54,7 +54,7 @@ class RDKIT_QUERY_EXPORT XOrQuery
     res->d_description = this->d_description;
     res->d_queryType = this->d_queryType;
     return res;
-  };
+  }
 };
 }  // namespace Queries
 #endif

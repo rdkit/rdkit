@@ -21,7 +21,7 @@ class AtomicParams;
 //! The angle-bend term for the Universal Force Field
 class RDKIT_FORCEFIELD_EXPORT AngleBendContrib : public ForceFieldContrib {
  public:
-  AngleBendContrib(){};
+  AngleBendContrib() {}
   //! Constructor
   /*!
     The angle is between atom1 - atom2 - atom3
@@ -50,9 +50,7 @@ class RDKIT_FORCEFIELD_EXPORT AngleBendContrib : public ForceFieldContrib {
   double getEnergy(double *pos) const;
   void getGrad(double *pos, double *grad) const;
 
-  virtual AngleBendContrib *copy() const {
-    return new AngleBendContrib(*this);
-  };
+  virtual AngleBendContrib *copy() const { return new AngleBendContrib(*this); }
 
  private:
   int d_at1Idx{-1};

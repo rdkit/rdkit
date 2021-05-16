@@ -27,7 +27,7 @@ class RDKIT_QUERY_EXPORT SetQuery
  public:
   typedef std::set<MatchFuncArgType> CONTAINER_TYPE;
 
-  SetQuery() : Query<MatchFuncArgType, DataFuncArgType, needsConversion>(){};
+  SetQuery() : Query<MatchFuncArgType, DataFuncArgType, needsConversion>() {}
 
   //! insert an entry into our \c set
   void insert(const MatchFuncArgType what) {
@@ -41,7 +41,7 @@ class RDKIT_QUERY_EXPORT SetQuery
     MatchFuncArgType mfArg =
         this->TypeConvert(what, Int2Type<needsConversion>());
     return (this->d_set.find(mfArg) != this->d_set.end()) ^ this->getNegation();
-  };
+  }
 
   Query<MatchFuncArgType, DataFuncArgType, needsConversion> *copy() const {
     SetQuery<MatchFuncArgType, DataFuncArgType, needsConversion> *res =
@@ -55,15 +55,13 @@ class RDKIT_QUERY_EXPORT SetQuery
     res->d_description = this->d_description;
     res->d_queryType = this->d_queryType;
     return res;
-  };
+  }
 
   typename CONTAINER_TYPE::const_iterator beginSet() const {
     return d_set.begin();
-  };
-  typename CONTAINER_TYPE::const_iterator endSet() const {
-    return d_set.end();
-  };
-  unsigned int size() const { return rdcast<unsigned int>(d_set.size()); };
+  }
+  typename CONTAINER_TYPE::const_iterator endSet() const { return d_set.end(); }
+  unsigned int size() const { return rdcast<unsigned int>(d_set.size()); }
 
   std::string getFullDescription() const {
     std::ostringstream res;

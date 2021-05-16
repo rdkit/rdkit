@@ -30,7 +30,7 @@ struct RCore {
   boost::dynamic_bitset<> core_atoms_with_user_labels;
   // Number of user labelled rgroups in the core
   size_t numberUserRGroups = 0;
-  RCore(){};
+  RCore() {}
   RCore(const RWMol &c) : core(new RWMol(c)) { init(); }
 
   void init();

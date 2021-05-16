@@ -21,7 +21,7 @@ class RDKIT_QUERY_EXPORT OrQuery
     : public Query<MatchFuncArgType, DataFuncArgType, needsConversion> {
  public:
   typedef Query<MatchFuncArgType, DataFuncArgType, needsConversion> BASE;
-  OrQuery() { this->df_negate = false; };
+  OrQuery() { this->df_negate = false; }
 
   bool Match(const DataFuncArgType what) const {
     bool res = false;
@@ -35,7 +35,7 @@ class RDKIT_QUERY_EXPORT OrQuery
     }
     if (this->getNegation()) res = !res;
     return res;
-  };
+  }
 
   Query<MatchFuncArgType, DataFuncArgType, needsConversion> *copy() const {
     OrQuery<MatchFuncArgType, DataFuncArgType, needsConversion> *res =
@@ -49,7 +49,7 @@ class RDKIT_QUERY_EXPORT OrQuery
     res->d_description = this->d_description;
     res->d_queryType = this->d_queryType;
     return res;
-  };
+  }
 };
 }  // namespace Queries
 #endif

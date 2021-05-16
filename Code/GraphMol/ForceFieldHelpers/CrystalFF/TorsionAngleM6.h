@@ -33,8 +33,7 @@ namespace CrystalFF {
 class RDKIT_FORCEFIELDHELPERS_EXPORT TorsionAngleContribM6
     : public ForceFields::ForceFieldContrib {
  public:
-  TorsionAngleContribM6()
-       {};
+  TorsionAngleContribM6() {}
   //! Constructor
   /*!
    The torsion is between atom1 - atom2 - atom3 - atom4
@@ -56,7 +55,7 @@ class RDKIT_FORCEFIELDHELPERS_EXPORT TorsionAngleContribM6
   void getGrad(double *pos, double *grad) const;
   virtual TorsionAngleContribM6 *copy() const {
     return new TorsionAngleContribM6(*this);
-  };
+  }
 
  private:
   int d_at1Idx{-1}, d_at2Idx{-1}, d_at3Idx{-1}, d_at4Idx{-1};

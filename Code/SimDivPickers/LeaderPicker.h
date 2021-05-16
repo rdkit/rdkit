@@ -36,7 +36,7 @@ class LeaderPicker : public DistPicker {
   /*! \brief Default Constructor
    *
    */
-  LeaderPicker()  {}
+  LeaderPicker() {}
   LeaderPicker(double threshold)
       : default_threshold(threshold), default_nthreads(1) {}
   LeaderPicker(double threshold, int nthreads)
@@ -326,7 +326,8 @@ struct LeaderPickerState {
   int query;
   T *func;
 
-  LeaderPickerState(unsigned int count, int) : left(count), threshold(0.0), query(0), func(nullptr) {
+  LeaderPickerState(unsigned int count, int)
+      : left(count), threshold(0.0), query(0), func(nullptr) {
     v.resize(count);
     for (unsigned int i = 0; i < count; i++) v[i] = i;
   }

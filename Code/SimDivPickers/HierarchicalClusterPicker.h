@@ -41,9 +41,7 @@ class RDKIT_SIMDIVPICKERS_EXPORT HierarchicalClusterPicker : public DistPicker {
    * Sets the hierarchy clustering method
    */
   explicit HierarchicalClusterPicker(ClusterMethod clusterMethod)
-      : d_method(clusterMethod) {
-    ;
-  };
+      : d_method(clusterMethod) {}
 
   /*! \brief This is the function that does the picking
    *

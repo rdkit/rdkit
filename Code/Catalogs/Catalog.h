@@ -43,7 +43,7 @@ class Catalog {
   typedef paramType paramType_t;
 
   //------------------------------------
-  Catalog() :  dp_cParams(nullptr){};
+  Catalog() : dp_cParams(nullptr) {}
 
   //------------------------------------
   virtual ~Catalog() { delete dp_cParams; }
@@ -107,7 +107,7 @@ class Catalog {
   // id of the entry in the catalog.
   // this is more along the lines of bitId
   unsigned int d_fpLength{0};  //!< the length of our fingerprint
-  paramType *dp_cParams;    //!< our params object
+  paramType *dp_cParams;       //!< our params object
 };
 
 //-----------------------------------------------------------------------------

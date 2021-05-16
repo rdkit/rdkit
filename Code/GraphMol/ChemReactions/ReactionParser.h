@@ -50,13 +50,13 @@ class RDKIT_CHEMREACTIONS_EXPORT ChemicalReactionParserException
     : public std::exception {
  public:
   //! construct with an error message
-  explicit ChemicalReactionParserException(const char *msg) : _msg(msg){};
+  explicit ChemicalReactionParserException(const char *msg) : _msg(msg) {}
   //! construct with an error message
   explicit ChemicalReactionParserException(const std::string &msg)
-      : _msg(msg){};
+      : _msg(msg) {}
   //! get the error message
-  const char *what() const noexcept override { return _msg.c_str(); };
-  ~ChemicalReactionParserException() noexcept {};
+  const char *what() const noexcept override { return _msg.c_str(); }
+  ~ChemicalReactionParserException() noexcept {}
 
  private:
   std::string _msg;

@@ -44,7 +44,7 @@ class RDKIT_GRAPHMOL_EXPORT StereoGroup {
   std::vector<Atom*> d_atoms;
 
  public:
-  StereoGroup() :  d_atoms(0u){};
+  StereoGroup() : d_atoms(0u) {}
   // Takes control of atoms if possible.
   StereoGroup(StereoGroupType grouptype, std::vector<Atom*>&& atoms);
   StereoGroup(StereoGroupType grouptype, const std::vector<Atom*>& atoms);
@@ -54,10 +54,10 @@ class RDKIT_GRAPHMOL_EXPORT StereoGroup {
   // won't build
   bool operator==(const StereoGroup& other) const {
     return (d_grouptype == other.d_grouptype) && (d_atoms == other.d_atoms);
-  };
+  }
   bool operator!=(const StereoGroup& other) const {
     return (d_grouptype != other.d_grouptype) || (d_atoms != other.d_atoms);
-  };
+  }
 };
 RDKIT_GRAPHMOL_EXPORT void removeGroupsWithAtom(
     const Atom* atom, std::vector<StereoGroup>& groups);

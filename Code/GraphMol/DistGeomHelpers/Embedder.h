@@ -127,12 +127,7 @@ struct RDKIT_DISTGEOMHELPERS_EXPORT EmbedParameters {
   void (*callback)(unsigned int);
   bool forceTransAmides{true};
   bool useSymmetryForPruning{true};
-  EmbedParameters()
-      : boundsMat(nullptr),
-
-        CPCI(nullptr),
-
-        callback(nullptr){};
+  EmbedParameters() : boundsMat(nullptr), CPCI(nullptr), callback(nullptr) {}
   EmbedParameters(
       unsigned int maxIterations, int numThreads, int randomSeed,
       bool clearConfs, bool useRandomCoords, double boxSizeMult,
@@ -173,7 +168,7 @@ struct RDKIT_DISTGEOMHELPERS_EXPORT EmbedParameters {
         useMacrocycleTorsions(useMacrocycleTorsions),
         useMacrocycle14config(useMacrocycle14config),
         CPCI(CPCI),
-        callback(callback){};
+        callback(callback) {}
 };
 
 //*! update parameters from a JSON string

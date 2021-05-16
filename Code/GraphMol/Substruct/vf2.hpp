@@ -190,7 +190,7 @@ class VF2SubState {
 
     // es_compared = new std::map<unsigned int,bool>();
     *share_count = 1;
-  };
+  }
 
   VF2SubState(const VF2SubState &state)
       : g1(state.g1),
@@ -215,7 +215,7 @@ class VF2SubState {
     share_count = state.share_count;
 
     ++(*share_count);
-  };
+  }
 
   ~VF2SubState() {
     if (--*share_count == 0) {
@@ -228,13 +228,13 @@ class VF2SubState {
       // delete [] vs_compared;
       // delete es_compared;
     }
-  };
+  }
 
-  bool IsGoal() { return core_len == n1; };
+  bool IsGoal() { return core_len == n1; }
   bool MatchChecks(const node_id c1[], const node_id c2[]) {
     return mc(c1, c2);
-  };
-  bool IsDead() { return n1 > n2 || t1_len > t2_len; };
+  }
+  bool IsDead() { return n1 > n2 || t1_len > t2_len; }
   unsigned int CoreLen() { return core_len; }
   Graph *GetGraph1() { return g1; }
   Graph *GetGraph2() { return g2; }
@@ -325,7 +325,7 @@ class VF2SubState {
       }
     }
     return pair.n1 < n1 && pair.n2 < n2;
-  };
+  }
   bool IsFeasiblePair(node_id node1, node_id node2) {
     assert(node1 < n1);
     assert(node2 < n2);
@@ -400,7 +400,7 @@ class VF2SubState {
 #else
     return true;
 #endif
-  };
+  }
   void AddPair(node_id node1, node_id node2) {
     assert(node1 < n1);
     assert(node2 < n2);
@@ -443,7 +443,7 @@ class VF2SubState {
       }
       ++bNbrs;
     }
-  };
+  }
   void GetCoreSet(node_id c1[], node_id c2[]) {
     unsigned int i, j;
     for (i = 0, j = 0; i < n1; ++i) {
@@ -453,8 +453,8 @@ class VF2SubState {
         ++j;
       }
     }
-  };
-  VF2SubState *Clone() { return new VF2SubState(*this); };
+  }
+  VF2SubState *Clone() { return new VF2SubState(*this); }
   void BackTrack(node_id node1, node_id node2) {
     if (term_1[node1] == core_len) {
       term_1[node1] = 0;
@@ -490,7 +490,7 @@ class VF2SubState {
     core_1[node1] = NULL_NODE;
     core_2[node2] = NULL_NODE;
     --core_len;
-  };
+  }
   bool Match(node_id c1[], node_id c2[]) {
     if (IsGoal()) {
       GetCoreSet(c1, c2);

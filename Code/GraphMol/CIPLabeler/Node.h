@@ -25,7 +25,7 @@ namespace CIPLabeler {
 class Digraph;
 
 class Node {
-public:
+ public:
   /**
    * Flag indicates whether the node has been expanded.
    */
@@ -105,7 +105,7 @@ public:
 
   std::vector<Edge *> getNonTerminalOutEdges() const;
 
-private:
+ private:
   Digraph *dp_g;
   Atom *dp_atom;
   int d_dist;
@@ -121,5 +121,5 @@ private:
   Node *newTerminalChild(int idx, Atom *atom, int flags) const;
 };
 
-} // namespace CIPLabeler
-} // namespace RDKit
+}  // namespace CIPLabeler
+}  // namespace RDKit

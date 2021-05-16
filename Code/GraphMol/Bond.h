@@ -117,9 +117,9 @@ class RDKIT_GRAPHMOL_EXPORT Bond : public RDProps {
   virtual Bond *copy() const;
 
   //! returns our \c bondType
-  BondType getBondType() const { return static_cast<BondType>(d_bondType); };
+  BondType getBondType() const { return static_cast<BondType>(d_bondType); }
   //! sets our \c bondType
-  void setBondType(BondType bT) { d_bondType = bT; };
+  void setBondType(BondType bT) { d_bondType = bT; }
   //! \brief returns our \c bondType as a double
   //!   (e.g. SINGLE->1.0, AROMATIC->1.5, etc.)
   double getBondTypeAsDouble() const;
@@ -132,27 +132,27 @@ class RDKIT_GRAPHMOL_EXPORT Bond : public RDProps {
   double getValenceContrib(const Atom *at) const;
 
   //! sets our \c isAromatic flag
-  void setIsAromatic(bool what) { df_isAromatic = what; };
+  void setIsAromatic(bool what) { df_isAromatic = what; }
   //! returns the status of our \c isAromatic flag
-  bool getIsAromatic() const { return df_isAromatic; };
+  bool getIsAromatic() const { return df_isAromatic; }
 
   //! sets our \c isConjugated flag
-  void setIsConjugated(bool what) { df_isConjugated = what; };
+  void setIsConjugated(bool what) { df_isConjugated = what; }
   //! returns the status of our \c isConjugated flag
-  bool getIsConjugated() const { return df_isConjugated; };
+  bool getIsConjugated() const { return df_isConjugated; }
 
   //! returns whether or not this instance belongs to a molecule
-  bool hasOwningMol() const { return dp_mol != nullptr; };
+  bool hasOwningMol() const { return dp_mol != nullptr; }
 
   //! returns a reference to the ROMol that owns this instance
   ROMol &getOwningMol() const {
     PRECONDITION(dp_mol, "no owner");
     return *dp_mol;
-  };
+  }
   //! sets our owning molecule
   void setOwningMol(ROMol *other);
   //! sets our owning molecule
-  void setOwningMol(ROMol &other) { setOwningMol(&other); };
+  void setOwningMol(ROMol &other) { setOwningMol(&other); }
 
   //! returns our index within the ROMol
   /*!
@@ -160,28 +160,28 @@ class RDKIT_GRAPHMOL_EXPORT Bond : public RDProps {
       - this makes no sense if we do not have an owning molecule
 
   */
-  unsigned int getIdx() const { return d_index; };
+  unsigned int getIdx() const { return d_index; }
   //! sets our index within the ROMol
   /*!
     <b>Notes:</b>
       - this makes no sense if we do not have an owning molecule
       - the index should be <tt>< this->getOwningMol()->getNumBonds()</tt>
   */
-  void setIdx(unsigned int index) { d_index = index; };
+  void setIdx(unsigned int index) { d_index = index; }
 
   //! returns the index of our begin Atom
   /*!
     <b>Notes:</b>
       - this makes no sense if we do not have an owning molecule
   */
-  unsigned int getBeginAtomIdx() const { return d_beginAtomIdx; };
+  unsigned int getBeginAtomIdx() const { return d_beginAtomIdx; }
 
   //! returns the index of our end Atom
   /*!
     <b>Notes:</b>
       - this makes no sense if we do not have an owning molecule
   */
-  unsigned int getEndAtomIdx() const { return d_endAtomIdx; };
+  unsigned int getEndAtomIdx() const { return d_endAtomIdx; }
 
   //! given the index of one Atom, returns the index of the other
   /*!
@@ -241,7 +241,7 @@ class RDKIT_GRAPHMOL_EXPORT Bond : public RDProps {
   // ------------------------------------
 
   // This method can be used to distinguish query bonds from standard bonds
-  virtual bool hasQuery() const { return false; };
+  virtual bool hasQuery() const { return false; }
 
   // FIX: the const crap here is all mucked up.
   //! NOT CALLABLE
@@ -265,9 +265,9 @@ class RDKIT_GRAPHMOL_EXPORT Bond : public RDProps {
   virtual bool Match(Bond const *what) const;
 
   //! sets our direction
-  void setBondDir(BondDir what) { d_dirTag = what; };
+  void setBondDir(BondDir what) { d_dirTag = what; }
   //! returns our direction
-  BondDir getBondDir() const { return static_cast<BondDir>(d_dirTag); };
+  BondDir getBondDir() const { return static_cast<BondDir>(d_dirTag); }
 
   //! sets our stereo code
   /*!
@@ -286,9 +286,9 @@ class RDKIT_GRAPHMOL_EXPORT Bond : public RDProps {
                  "Stereo atoms should be specified before specifying CIS/TRANS "
                  "bond stereochemistry")
     d_stereo = what;
-  };
+  }
   //! returns our stereo code
-  BondStereo getStereo() const { return static_cast<BondStereo>(d_stereo); };
+  BondStereo getStereo() const { return static_cast<BondStereo>(d_stereo); }
 
   //! sets the atoms to be considered as reference points for bond stereo
   /*!
@@ -310,12 +310,12 @@ class RDKIT_GRAPHMOL_EXPORT Bond : public RDProps {
       const_cast<Bond *>(this)->dp_stereoAtoms = new INT_VECT();
     }
     return *dp_stereoAtoms;
-  };
+  }
   //! \overload
   INT_VECT &getStereoAtoms() {
     if (!dp_stereoAtoms) dp_stereoAtoms = new INT_VECT();
     return *dp_stereoAtoms;
-  };
+  }
 
   //! calculates any of our lazy \c properties
   /*!
@@ -328,7 +328,7 @@ class RDKIT_GRAPHMOL_EXPORT Bond : public RDProps {
   //! sets our owning molecule
   // void setOwningMol(ROMol *other);
   //! sets our owning molecule
-  // void setOwningMol(ROMol &other) {setOwningMol(&other);};
+  // void setOwningMol(ROMol &other) { setOwningMol(&other); }
   bool df_isAromatic;
   bool df_isConjugated;
   std::uint8_t d_bondType;

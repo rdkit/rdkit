@@ -28,10 +28,10 @@ class ChemicalReaction;
 class RDKIT_CHEMREACTIONS_EXPORT ReactionPicklerException
     : public std::exception {
  public:
-  ReactionPicklerException(const char *msg) : _msg(msg){};
-  ReactionPicklerException(const std::string msg) : _msg(msg){};
-  const char *what() const noexcept override { return _msg.c_str(); };
-  ~ReactionPicklerException() noexcept {};
+  ReactionPicklerException(const char *msg) : _msg(msg) {}
+  ReactionPicklerException(const std::string msg) : _msg(msg) {}
+  const char *what() const noexcept override { return _msg.c_str(); }
+  ~ReactionPicklerException() noexcept {}
 
  private:
   std::string _msg;
@@ -67,22 +67,22 @@ class RDKIT_CHEMREACTIONS_EXPORT ReactionPickler {
   static void pickleReaction(const ChemicalReaction *rxn, std::ostream &ss);
   static void pickleReaction(const ChemicalReaction &rxn, std::ostream &ss) {
     ReactionPickler::pickleReaction(&rxn, ss);
-  };
+  }
   static void pickleReaction(const ChemicalReaction &rxn, std::ostream &ss,
                              unsigned int propertyFlags) {
     ReactionPickler::pickleReaction(&rxn, ss, propertyFlags);
-  };
+  }
   //! pickles a reaction and adds the results to string \c res
   static void pickleReaction(const ChemicalReaction *rxn, std::string &res,
                              unsigned int propertyFlags);
   static void pickleReaction(const ChemicalReaction *rxn, std::string &res);
   static void pickleReaction(const ChemicalReaction &rxn, std::string &res) {
     ReactionPickler::pickleReaction(&rxn, res);
-  };
+  }
   static void pickleReaction(const ChemicalReaction &rxn, std::string &res,
                              unsigned int propertyFlags) {
     ReactionPickler::pickleReaction(&rxn, res, propertyFlags);
-  };
+  }
 
   //! constructs a reaction from a pickle stored in a
   //! string
@@ -91,14 +91,14 @@ class RDKIT_CHEMREACTIONS_EXPORT ReactionPickler {
   static void reactionFromPickle(const std::string &pickle,
                                  ChemicalReaction &rxn) {
     ReactionPickler::reactionFromPickle(pickle, &rxn);
-  };
+  }
 
   //! constructs a reaction from a pickle stored in a
   //! stream
   static void reactionFromPickle(std::istream &ss, ChemicalReaction *rxn);
   static void reactionFromPickle(std::istream &ss, ChemicalReaction &rxn) {
     ReactionPickler::reactionFromPickle(ss, &rxn);
-  };
+  }
 
  private:
   //! do the actual work of pickling a reaction

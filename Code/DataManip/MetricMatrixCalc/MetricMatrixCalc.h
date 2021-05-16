@@ -35,7 +35,7 @@ class MetricMatrixCalc {
   /*! \brief Default Constructor
    *
    */
-  MetricMatrixCalc(){};
+  MetricMatrixCalc() {}
 
   /*! \brief Set the metric function
    *
@@ -87,7 +87,7 @@ class MetricMatrixCalc {
         distMat[itab + j] = dp_metricFunc(descripts[i], descripts[j], dim);
       }
     }
-  };
+  }
 
  private:
   // pointer to the metric function

@@ -47,7 +47,7 @@ class RDKIT_GRAPHMOL_EXPORT PeriodicTable {
   ~PeriodicTable() {
     byanum.clear();
     byname.clear();
-  };
+  }
 
   //! returns the atomic weight
   double getAtomicWeight(UINT atomicNumber) const {

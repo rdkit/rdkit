@@ -21,10 +21,11 @@ namespace RDKit {
 
 namespace CIPLabeler {
 
-template <typename T, typename U> class CIPMolSpan {
-public:
+template <typename T, typename U>
+class CIPMolSpan {
+ public:
   class CIPMolIter {
-  public:
+   public:
     CIPMolIter() = delete;
     CIPMolIter(ROMol &mol, U pos) : d_mol{mol}, d_pos{std::move(pos)} {}
 
@@ -40,29 +41,30 @@ public:
 
     bool operator!=(const CIPMolIter &it) const { return d_pos != it.d_pos; }
 
-  private:
+   private:
     ROMol &d_mol;
     U d_pos;
     T d_current = nullptr;
   };
 
-public:
+ public:
   CIPMolSpan() = delete;
   CIPMolSpan(ROMol &mol, std::pair<U, U> &&itr)
-      : d_mol{mol}, d_istart{std::move(itr.first)},
+      : d_mol{mol},
+        d_istart{std::move(itr.first)},
         d_iend{std::move(itr.second)} {}
 
   CIPMolIter begin() { return {d_mol, d_istart}; }
   CIPMolIter end() { return {d_mol, d_iend}; }
 
-private:
+ private:
   ROMol &d_mol;
   const U d_istart;
   const U d_iend;
 };
 
 class CIPMol {
-public:
+ public:
   CIPMol() = delete;
 
   explicit CIPMol(ROMol &mol);
@@ -91,12 +93,12 @@ public:
   // Dative bonds get bond order 0.
   int getBondOrder(Bond *bond) const;
 
-private:
+ private:
   ROMol &d_mol;
   std::unique_ptr<RWMol> dp_kekulized_mol = nullptr;
 
   std::vector<boost::rational<int>> d_atomnums;
 };
 
-} // namespace CIPLabeler
-} // namespace RDKit
+}  // namespace CIPLabeler
+}  // namespace RDKit

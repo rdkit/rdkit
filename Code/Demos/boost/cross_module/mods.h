@@ -6,12 +6,12 @@
 
 class ClassA {
  public:
-  int get4() { return 4; };
+  int get4() { return 4; }
 };
 
 class ClassB {
  public:
-  ClassA *returnOther() { return new ClassA; };
-  int get3() { return 3; };
-  int acceptOther(ClassA *other) { return other->get4(); };
+  ClassA *returnOther() { return new ClassA; }
+  int get3() { return 3; }
+  int acceptOther(ClassA *other) { return other->get4(); }
 };

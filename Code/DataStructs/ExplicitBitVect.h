@@ -28,12 +28,12 @@
  */
 class RDKIT_DATASTRUCTS_EXPORT ExplicitBitVect : public BitVect {
  public:
-  ExplicitBitVect()  {};
+  ExplicitBitVect() {}
   //! initialize with a particular size;
   explicit ExplicitBitVect(unsigned int size)
       : dp_bits(nullptr), d_size(0), d_numOnBits(0) {
     _initForSize(size);
-  };
+  }
   //! initialize with a particular size and all bits set
   ExplicitBitVect(unsigned int size, bool bitsSet);
   ExplicitBitVect(const ExplicitBitVect &other);
@@ -46,7 +46,7 @@ class RDKIT_DATASTRUCTS_EXPORT ExplicitBitVect : public BitVect {
   ExplicitBitVect(boost::dynamic_bitset<> *bits)
       : dp_bits(bits),
         d_size(static_cast<unsigned int>(bits->size())),
-        d_numOnBits(static_cast<unsigned int>(bits->count())){};
+        d_numOnBits(static_cast<unsigned int>(bits->count())) {}
 
   ~ExplicitBitVect();
 
@@ -75,7 +75,7 @@ class RDKIT_DATASTRUCTS_EXPORT ExplicitBitVect : public BitVect {
 
   void getOnBits(IntVect &v) const;
 
-  void clearBits() { dp_bits->reset(); };
+  void clearBits() { dp_bits->reset(); }
   std::string toString() const;
 
   boost::dynamic_bitset<> *dp_bits{nullptr};  //!< our raw storage

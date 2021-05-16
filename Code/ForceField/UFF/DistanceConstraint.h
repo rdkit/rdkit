@@ -22,7 +22,7 @@ namespace UFF {
 class RDKIT_FORCEFIELD_EXPORT DistanceConstraintContrib
     : public ForceFieldContrib {
  public:
-  DistanceConstraintContrib(){};
+  DistanceConstraintContrib() {}
   //! Constructor
   /*!
     \param owner       pointer to the owning ForceField
@@ -49,7 +49,7 @@ class RDKIT_FORCEFIELD_EXPORT DistanceConstraintContrib
   void getGrad(double *pos, double *grad) const;
   virtual DistanceConstraintContrib *copy() const {
     return new DistanceConstraintContrib(*this);
-  };
+  }
 
  private:
   int d_end1Idx{-1};          //!< indices of end points

@@ -16,7 +16,7 @@ namespace RDKit {
 namespace CIPLabeler {
 
 class Sp2Bond : public Configuration {
-public:
+ public:
   Sp2Bond() = delete;
 
   Sp2Bond(const CIPMol &mol, Bond *bond, Atom *startAtom, Atom *endAtom,
@@ -28,14 +28,14 @@ public:
 
   Descriptor label(Node *root1, Digraph &digraph, const Rules &comp) override;
 
-private:
+ private:
   Bond *dp_bond;
 
   // bond->getStereo() can return both E/Z or CIS/TRANS,
   // so we cache CIS/TRANS we found.
   Bond::BondStereo d_cfg;
 
-}; // namespace CIPLabeler
+};  // namespace CIPLabeler
 
-} // namespace CIPLabeler
-} // namespace RDKit
+}  // namespace CIPLabeler
+}  // namespace RDKit

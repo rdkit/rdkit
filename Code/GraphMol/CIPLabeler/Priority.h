@@ -19,8 +19,7 @@ namespace CIPLabeler {
  *
  */
 class Priority {
-
-public:
+ public:
   Priority() = delete;
 
   Priority(bool unique, bool pseudoAsym)
@@ -42,10 +41,10 @@ public:
    */
   bool isPseudoAsymetric() const { return d_pseudoAsym; }
 
-private:
+ private:
   bool d_unique;
   bool d_pseudoAsym;
 };
 
-} // namespace CIPLabeler
-} // namespace RDKit
+}  // namespace CIPLabeler
+}  // namespace RDKit

@@ -127,7 +127,7 @@ static inline int queryAtomTotalValence(Atom const *at) {
 static inline int queryAtomUnsaturated(Atom const *at) {
   return at->getTotalDegree() < at->getTotalValence();
 };
-static inline int queryAtomNum(Atom const *at) { return at->getAtomicNum(); };
+static inline int queryAtomNum(Atom const *at) { return at->getAtomicNum(); }
 static inline int makeAtomType(int atomic_num, bool aromatic) {
   return atomic_num + 1000 * static_cast<int>(aromatic);
 }
@@ -704,13 +704,13 @@ class RDKIT_GRAPHMOL_EXPORT AtomRingQuery
     // default is to just do a number of rings query:
     this->setDescription("AtomInNRings");
     this->setDataFunc(queryAtomRingMembership);
-  };
+  }
   explicit AtomRingQuery(int v)
       : Queries::EqualityQuery<int, ConstAtomPtr, true>(v) {
     // default is to just do a number of rings query:
     this->setDescription("AtomInNRings");
     this->setDataFunc(queryAtomRingMembership);
-  };
+  }
 
   virtual bool Match(const ConstAtomPtr what) const {
     int v = this->TypeConvert(what, Queries::Int2Type<true>());
@@ -744,7 +744,7 @@ class RDKIT_GRAPHMOL_EXPORT RecursiveStructureQuery
   RecursiveStructureQuery() : Queries::SetQuery<int, Atom const *, true>() {
     setDataFunc(getAtIdx);
     setDescription("RecursiveStructure");
-  };
+  }
   //! initialize from an ROMol pointer
   /*!
     <b>Notes</b>
@@ -756,12 +756,12 @@ class RDKIT_GRAPHMOL_EXPORT RecursiveStructureQuery
     setQueryMol(query);
     setDataFunc(getAtIdx);
     setDescription("RecursiveStructure");
-  };
+  }
   //! returns the index of an atom
   static inline int getAtIdx(Atom const *at) {
     PRECONDITION(at, "bad atom argument");
     return at->getIdx();
-  };
+  }
 
   //! sets the molecule we'll use recursively
   /*!
@@ -770,7 +770,7 @@ class RDKIT_GRAPHMOL_EXPORT RecursiveStructureQuery
   */
   void setQueryMol(ROMol const *query) { dp_queryMol.reset(query); }
   //! returns a pointer to our query molecule
-  ROMol const *getQueryMol() const { return dp_queryMol.get(); };
+  ROMol const *getQueryMol() const { return dp_queryMol.get(); }
 
   //! returns a copy of this query
   Queries::Query<int, Atom const *, true> *copy() const {
@@ -786,7 +786,7 @@ class RDKIT_GRAPHMOL_EXPORT RecursiveStructureQuery
     res->d_serialNumber = d_serialNumber;
     return res;
   }
-  unsigned int getSerialNumber() const { return d_serialNumber; };
+  unsigned int getSerialNumber() const { return d_serialNumber; }
 
 #ifdef RDK_THREADSAFE_SSS
   std::mutex d_mutex;
@@ -817,13 +817,13 @@ class HasPropQuery : public Queries::EqualityQuery<int, TargetPtr, true> {
     // default is to just do a number of rings query:
     this->setDescription("AtomHasProp");
     this->setDataFunc(0);
-  };
+  }
   explicit HasPropQuery(const std::string &v)
       : Queries::EqualityQuery<int, TargetPtr, true>(), propname(v) {
     // default is to just do a number of rings query:
     this->setDescription("AtomHasProp");
     this->setDataFunc(nullptr);
-  };
+  }
 
   virtual bool Match(const TargetPtr what) const {
     bool res = what->hasProp(propname);
@@ -866,7 +866,7 @@ class HasPropWithValueQuery
     // default is to just do a number of rings query:
     this->setDescription("HasPropWithValue");
     this->setDataFunc(0);
-  };
+  }
   explicit HasPropWithValueQuery(const std::string &prop, const T &v,
                                  const T &tol = 0.0)
       : Queries::EqualityQuery<int, TargetPtr, true>(),
@@ -876,7 +876,7 @@ class HasPropWithValueQuery
     // default is to just do a number of rings query:
     this->setDescription("HasPropWithValue");
     this->setDataFunc(nullptr);
-  };
+  }
 
   virtual bool Match(const TargetPtr what) const {
     bool res = what->hasProp(propname);
@@ -932,7 +932,7 @@ class HasPropWithValueQuery<TargetPtr, std::string>
     // default is to just do a number of rings query:
     this->setDescription("HasPropWithValue");
     this->setDataFunc(0);
-  };
+  }
   explicit HasPropWithValueQuery(const std::string &prop, const std::string &v,
                                  const std::string &tol = "")
       : Queries::EqualityQuery<int, TargetPtr, true>(), propname(prop), val(v) {
@@ -940,7 +940,7 @@ class HasPropWithValueQuery<TargetPtr, std::string>
     // default is to just do a number of rings query:
     this->setDescription("HasPropWithValue");
     this->setDataFunc(nullptr);
-  };
+  }
 
   virtual bool Match(const TargetPtr what) const {
     bool res = what->hasProp(propname);
@@ -997,7 +997,7 @@ class HasPropWithValueQuery<TargetPtr, ExplicitBitVect>
       : Queries::EqualityQuery<int, TargetPtr, true>(), propname(), val() {
     this->setDescription("HasPropWithValue");
     this->setDataFunc(0);
-  };
+  }
 
   explicit HasPropWithValueQuery(const std::string &prop,
                                  const ExplicitBitVect &v, float tol = 0.0)
@@ -1007,7 +1007,7 @@ class HasPropWithValueQuery<TargetPtr, ExplicitBitVect>
         tol(tol) {
     this->setDescription("HasPropWithValue");
     this->setDataFunc(nullptr);
-  };
+  }
 
   virtual bool Match(const TargetPtr what) const {
     bool res = what->hasProp(propname);

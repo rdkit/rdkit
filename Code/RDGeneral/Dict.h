@@ -46,7 +46,7 @@ class RDKIT_RDGENERAL_EXPORT Dict {
 
   typedef std::vector<Pair> DataType;
 
-  Dict()  {}
+  Dict() {}
 
   Dict(const Dict &other) : _data(other._data) {
     _hasNonPodData = other._hasNonPodData;
@@ -311,9 +311,9 @@ class RDKIT_RDGENERAL_EXPORT Dict {
   }
 
  private:
-  DataType _data{};       //!< the actual dictionary
+  DataType _data{};            //!< the actual dictionary
   bool _hasNonPodData{false};  // if true, need a deep copy
-                        //  (copy_rdvalue)
+                               //  (copy_rdvalue)
 };
 
 template <>

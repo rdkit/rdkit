@@ -21,15 +21,14 @@ namespace CIPLabeler {
  *
  */
 class Rule5New : public SequenceRule {
-
-public:
+ public:
   Rule5New();
 
   Rule5New(Descriptor ref);
 
   int compare(const Edge *a, const Edge *b) const override;
 
-private:
+ private:
   const Descriptor d_ref = Descriptor::NONE;
 
   void fillPairs(const Node *beg, PairList &plist) const;
@@ -37,5 +36,5 @@ private:
   Sort getRefSorter(const SequenceRule *replacement_rule) const;
 };
 
-} // namespace CIPLabeler
-} // namespace RDKit
+}  // namespace CIPLabeler
+}  // namespace RDKit

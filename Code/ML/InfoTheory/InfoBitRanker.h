@@ -209,9 +209,8 @@ class RDKIT_INFOTHEORY_EXPORT InfoBitRanker {
    *computed
    *    - the maximum of these fractions for classes that are not in the
    *biasList are computed
-   *    - If this maximum is less than the fraction for at least one of the classes
-   *in the biaslist
-   *      the bit is considered good
+   *    - If this maximum is less than the fraction for at least one of the
+   *      classes in the biaslist, the bit is considered good
    * ARGUMENTS:
    *   - resMat : the result matrix, one dimensional matrix of dimension (2*(num
    *of classes))

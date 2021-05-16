@@ -23,15 +23,14 @@ namespace CIPLabeler {
  *
  */
 class Rule4b : public SequenceRule {
-
-public:
+ public:
   Rule4b();
 
   Rule4b(Descriptor ref);
 
   int compare(const Edge *a, const Edge *b) const override;
 
-private:
+ private:
   const Descriptor d_ref = Descriptor::NONE;
 
   std::vector<Descriptor> getReferenceDescriptors(const Node *node) const;
@@ -43,14 +42,14 @@ private:
 
   std::vector<std::vector<const Node *>> initialLevel(const Node *node) const;
 
-  std::vector<std::vector<const Node *>>
-  getNextLevel(const std::vector<std::vector<const Node *>> &prevLevel) const;
+  std::vector<std::vector<const Node *>> getNextLevel(
+      const std::vector<std::vector<const Node *>> &prevLevel) const;
 
-  std::vector<const Node *>
-  toNodeList(const std::vector<Edge *> &eqEdges) const;
+  std::vector<const Node *> toNodeList(
+      const std::vector<Edge *> &eqEdges) const;
 
-  std::vector<PairList>
-  newPairLists(const std::vector<Descriptor> &descriptors) const;
+  std::vector<PairList> newPairLists(
+      const std::vector<Descriptor> &descriptors) const;
 
   void fillPairs(const Node *beg, PairList &plist) const;
 
@@ -60,5 +59,5 @@ private:
   Sort getRefSorter(const SequenceRule *replacement_rule) const;
 };
 
-} // namespace CIPLabeler
-} // namespace RDKit
+}  // namespace CIPLabeler
+}  // namespace RDKit

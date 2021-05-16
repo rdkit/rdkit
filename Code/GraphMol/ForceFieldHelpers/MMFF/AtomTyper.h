@@ -26,29 +26,39 @@ class Atom;
 class Bond;
 
 namespace MMFF {
-  
+
 namespace DefaultParameters {
-RDKIT_FORCEFIELDHELPERS_EXPORT const ForceFields::MMFF::MMFFPropCollection *getMMFFProp();
-RDKIT_FORCEFIELDHELPERS_EXPORT const ForceFields::MMFF::MMFFAromCollection *getMMFFArom();
-RDKIT_FORCEFIELDHELPERS_EXPORT const ForceFields::MMFF::MMFFDefCollection *getMMFFDef();
-RDKIT_FORCEFIELDHELPERS_EXPORT const ForceFields::MMFF::MMFFHerschbachLaurieCollection *
-  getMMFFHerschbachLaurie();
-RDKIT_FORCEFIELDHELPERS_EXPORT const ForceFields::MMFF::MMFFPBCICollection *getMMFFPBCI();
-RDKIT_FORCEFIELDHELPERS_EXPORT const ForceFields::MMFF::MMFFAngleCollection *getMMFFAngle();
-RDKIT_FORCEFIELDHELPERS_EXPORT const ForceFields::MMFF::MMFFStbnCollection *getMMFFStbn();
-RDKIT_FORCEFIELDHELPERS_EXPORT const ForceFields::MMFF::MMFFDfsbCollection *getMMFFDfsb();
-RDKIT_FORCEFIELDHELPERS_EXPORT const ForceFields::MMFF::MMFFTorCollection *getMMFFTor(const bool isMMFFs);
-RDKIT_FORCEFIELDHELPERS_EXPORT const ForceFields::MMFF::MMFFOopCollection *getMMFFOop(const bool isMMFFs);
-RDKIT_FORCEFIELDHELPERS_EXPORT const ForceFields::MMFF::MMFFVdWCollection *getMMFFVdW();
-}
- 
+RDKIT_FORCEFIELDHELPERS_EXPORT const ForceFields::MMFF::MMFFPropCollection *
+getMMFFProp();
+RDKIT_FORCEFIELDHELPERS_EXPORT const ForceFields::MMFF::MMFFAromCollection *
+getMMFFArom();
+RDKIT_FORCEFIELDHELPERS_EXPORT const ForceFields::MMFF::MMFFDefCollection *
+getMMFFDef();
+RDKIT_FORCEFIELDHELPERS_EXPORT const
+    ForceFields::MMFF::MMFFHerschbachLaurieCollection *
+    getMMFFHerschbachLaurie();
+RDKIT_FORCEFIELDHELPERS_EXPORT const ForceFields::MMFF::MMFFPBCICollection *
+getMMFFPBCI();
+RDKIT_FORCEFIELDHELPERS_EXPORT const ForceFields::MMFF::MMFFAngleCollection *
+getMMFFAngle();
+RDKIT_FORCEFIELDHELPERS_EXPORT const ForceFields::MMFF::MMFFStbnCollection *
+getMMFFStbn();
+RDKIT_FORCEFIELDHELPERS_EXPORT const ForceFields::MMFF::MMFFDfsbCollection *
+getMMFFDfsb();
+RDKIT_FORCEFIELDHELPERS_EXPORT const ForceFields::MMFF::MMFFTorCollection *
+getMMFFTor(const bool isMMFFs);
+RDKIT_FORCEFIELDHELPERS_EXPORT const ForceFields::MMFF::MMFFOopCollection *
+getMMFFOop(const bool isMMFFs);
+RDKIT_FORCEFIELDHELPERS_EXPORT const ForceFields::MMFF::MMFFVdWCollection *
+getMMFFVdW();
+}  // namespace DefaultParameters
+
 class RingMembershipSize;
 using namespace ForceFields::MMFF;
 class RDKIT_FORCEFIELDHELPERS_EXPORT MMFFAtomProperties {
  public:
-  MMFFAtomProperties()
-       {};
-  ~MMFFAtomProperties(){};
+  MMFFAtomProperties() {}
+  ~MMFFAtomProperties() {}
   std::uint8_t mmffAtomType{0};
   double mmffFormalCharge{0.0};
   double mmffPartialCharge{0.0};
@@ -66,7 +76,7 @@ class RDKIT_FORCEFIELDHELPERS_EXPORT MMFFMolProperties {
   MMFFMolProperties(ROMol &mol, const std::string &mmffVariant = "MMFF94",
                     std::uint8_t verbosity = MMFF_VERBOSITY_NONE,
                     std::ostream &oStream = std::cout);
-  ~MMFFMolProperties(){};
+  ~MMFFMolProperties() {}
   unsigned int getMMFFBondType(const Bond *bond);
   unsigned int getMMFFAngleType(const ROMol &mol, const unsigned int idx1,
                                 const unsigned int idx2,
@@ -83,64 +93,63 @@ class RDKIT_FORCEFIELDHELPERS_EXPORT MMFFMolProperties {
     URANGE_CHECK(idx, this->d_MMFFAtomPropertiesPtrVect.size());
 
     return this->d_MMFFAtomPropertiesPtrVect[idx]->mmffAtomType;
-  };
+  }
   double getMMFFFormalCharge(const unsigned int idx) {
     URANGE_CHECK(idx, this->d_MMFFAtomPropertiesPtrVect.size());
 
     return this->d_MMFFAtomPropertiesPtrVect[idx]->mmffFormalCharge;
-  };
+  }
   double getMMFFPartialCharge(const unsigned int idx) {
     URANGE_CHECK(idx, this->d_MMFFAtomPropertiesPtrVect.size());
 
     return this->d_MMFFAtomPropertiesPtrVect[idx]->mmffPartialCharge;
-  };
-  void setMMFFBondTerm(const bool state) { this->d_bondTerm = state; };
-  bool getMMFFBondTerm() { return this->d_bondTerm; };
-  void setMMFFAngleTerm(const bool state) { this->d_angleTerm = state; };
-  bool getMMFFAngleTerm() { return this->d_angleTerm; };
+  }
+  void setMMFFBondTerm(const bool state) { this->d_bondTerm = state; }
+  bool getMMFFBondTerm() { return this->d_bondTerm; }
+  void setMMFFAngleTerm(const bool state) { this->d_angleTerm = state; }
+  bool getMMFFAngleTerm() { return this->d_angleTerm; }
   void setMMFFStretchBendTerm(const bool state) {
     this->d_stretchBendTerm = state;
-  };
-  bool getMMFFStretchBendTerm() { return this->d_stretchBendTerm; };
-  void setMMFFOopTerm(const bool state) { this->d_oopTerm = state; };
-  bool getMMFFOopTerm() { return this->d_oopTerm; };
-  void setMMFFTorsionTerm(const bool state) { this->d_torsionTerm = state; };
-  bool getMMFFTorsionTerm() { return this->d_torsionTerm; };
-  void setMMFFVdWTerm(const bool state) { this->d_vdWTerm = state; };
-  bool getMMFFVdWTerm() { return this->d_vdWTerm; };
-  void setMMFFEleTerm(const bool state) { this->d_eleTerm = state; };
-  bool getMMFFEleTerm() { return this->d_eleTerm; };
+  }
+  bool getMMFFStretchBendTerm() { return this->d_stretchBendTerm; }
+  void setMMFFOopTerm(const bool state) { this->d_oopTerm = state; }
+  bool getMMFFOopTerm() { return this->d_oopTerm; }
+  void setMMFFTorsionTerm(const bool state) { this->d_torsionTerm = state; }
+  bool getMMFFTorsionTerm() { return this->d_torsionTerm; }
+  void setMMFFVdWTerm(const bool state) { this->d_vdWTerm = state; }
+  bool getMMFFVdWTerm() { return this->d_vdWTerm; }
+  void setMMFFEleTerm(const bool state) { this->d_eleTerm = state; }
+  bool getMMFFEleTerm() { return this->d_eleTerm; }
   void setMMFFVariant(const std::string &mmffVariant) {
     PRECONDITION((mmffVariant == "MMFF94") || (mmffVariant == "MMFF94s"),
                  "bad MMFF variant");
 
     this->d_mmffs = ((mmffVariant == "MMFF94s") ? true : false);
-  };
+  }
   const std::string getMMFFVariant() {
     return (this->d_mmffs ? "MMFF94s" : "MMFF94");
-  };
+  }
   void setMMFFDielectricConstant(const double dielConst) {
     PRECONDITION(dielConst > 0.0, "bad dielectric constant");
 
     this->d_dielConst = dielConst;
-  };
-  double getMMFFDielectricConstant() { return this->d_dielConst; };
+  }
+  double getMMFFDielectricConstant() { return this->d_dielConst; }
   void setMMFFDielectricModel(std::uint8_t dielModel) {
     this->d_dielModel = dielModel;
-  };
-  std::uint8_t getMMFFDielectricModel() { return this->d_dielModel; };
+  }
+  std::uint8_t getMMFFDielectricModel() { return this->d_dielModel; }
   void setMMFFVerbosity(std::uint8_t verbosity) {
     this->d_verbosity = verbosity;
-  };
-  std::uint8_t getMMFFVerbosity() { return this->d_verbosity; };
-  void setMMFFOStream(std::ostream *oStream) { this->d_oStream = oStream; };
-  std::ostream &getMMFFOStream() { return *(this->d_oStream); };
-  bool isValid() { return d_valid; };
+  }
+  std::uint8_t getMMFFVerbosity() { return this->d_verbosity; }
+  void setMMFFOStream(std::ostream *oStream) { this->d_oStream = oStream; }
+  std::ostream &getMMFFOStream() { return *(this->d_oStream); }
+  bool isValid() { return d_valid; }
   bool getMMFFBondStretchParams(const ROMol &mol, const unsigned int idx1,
                                 const unsigned int idx2, unsigned int &bondType,
                                 MMFFBond &mmffBondStretchParams);
-  bool getMMFFAngleBendParams(const ROMol &mol,
-			      const unsigned int idx1,
+  bool getMMFFAngleBendParams(const ROMol &mol, const unsigned int idx1,
                               const unsigned int idx2, const unsigned int idx3,
                               unsigned int &angleType,
                               MMFFAngle &mmffAngleBendParams);
@@ -169,12 +178,12 @@ class RDKIT_FORCEFIELDHELPERS_EXPORT MMFFMolProperties {
     URANGE_CHECK(idx, this->d_MMFFAtomPropertiesPtrVect.size());
 
     this->d_MMFFAtomPropertiesPtrVect[idx]->mmffFormalCharge = fChg;
-  };
+  }
   void setMMFFPartialCharge(const unsigned int idx, const double pChg) {
     URANGE_CHECK(idx, this->d_MMFFAtomPropertiesPtrVect.size());
 
     this->d_MMFFAtomPropertiesPtrVect[idx]->mmffPartialCharge = pChg;
-  };
+  }
   bool d_valid;
   bool d_mmffs;
   bool d_bondTerm;

@@ -31,7 +31,7 @@ ROMol *MolForwardSupplNext(T *suppl) {
   if (!suppl->atEnd()) {
     try {
       res = suppl->next();
-    } catch (const FileParseException&) {
+    } catch (const FileParseException &) {
       throw;
     } catch (...) {
       res = nullptr;
@@ -53,7 +53,7 @@ ROMol *MolSupplNext(T *suppl) {
   if (!suppl->atEnd()) {
     try {
       res = suppl->next();
-    } catch (const FileParseException&) {
+    } catch (const FileParseException &) {
       throw;
     } catch (...) {
       res = nullptr;

@@ -22,13 +22,13 @@ class RDKIT_RDGENERAL_EXPORT BadFileException : public std::runtime_error {
  public:
   //! construct with an error message
   explicit BadFileException(const char *msg)
-      : std::runtime_error("BadFileException"), _msg(msg){};
+      : std::runtime_error("BadFileException"), _msg(msg) {}
   //! construct with an error message
   explicit BadFileException(const std::string &msg)
-      : std::runtime_error("BadFileException"), _msg(msg){};
+      : std::runtime_error("BadFileException"), _msg(msg) {}
   //! get the error message
-  const char *what() const noexcept override { return _msg.c_str(); };
-  ~BadFileException() noexcept {};
+  const char *what() const noexcept override { return _msg.c_str(); }
+  ~BadFileException() noexcept {}
 
  private:
   std::string _msg;
