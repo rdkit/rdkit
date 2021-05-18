@@ -1858,6 +1858,35 @@ TEST_CASE("batch edits", "[editing]") {
   }
 }
 
+TEST_CASE("github #4122: segfaults in commitBatchEdit()", "[editing]][bug]") {
+  SECTION("as reported, no atoms") {
+    RWMol m;
+    m.beginBatchEdit();
+    m.addAtom();
+    m.commitBatchEdit();
+  }
+  SECTION("no bonds") {
+    auto m = "C.C"_smiles;
+    m->beginBatchEdit();
+    m->addBond(0, 1, Bond::BondType::SINGLE);
+    m->commitBatchEdit();
+  }
+  SECTION("after add atom") {
+    auto m = "CC"_smiles;
+    m->beginBatchEdit();
+    m->addAtom(6);
+    m->removeAtom(0u);
+    m->addAtom(6);
+    m->commitBatchEdit();
+  }
+  SECTION("remove a just-added atom") {
+    auto m = "CC"_smiles;
+    m->beginBatchEdit();
+    m->addAtom(6);
+    m->removeAtom(2);
+    m->commitBatchEdit();
+  }
+}
 TEST_CASE("github #3912: cannot draw atom lists from SMARTS", "[query][bug]") {
   SECTION("original") {
     auto m = "C(-[N,O])-[#7,#8]"_smarts;
