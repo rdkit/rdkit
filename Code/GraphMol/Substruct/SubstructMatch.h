@@ -209,6 +209,8 @@ inline unsigned int SubstructMatch(ResonanceMolSupplier &resMolSupplier,
   return matchVect.size();
 };
 
+//! Class used as a final step to confirm whether or not a given atom->atom mapping is a valid
+//! substructure match.
 class RDKIT_SUBSTRUCTMATCH_EXPORT MolMatchFinalCheckFunctor {
  public:
   MolMatchFinalCheckFunctor(const ROMol &query, const ROMol &mol,
