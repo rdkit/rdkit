@@ -127,8 +127,8 @@ boost::property_tree::ptree molToPTree(const ROMol& mol, int confId,
     }
     if (parity) {
       std::vector<unsigned> neighbors;
-      for (auto nbri : boost::make_iterator_range(mol.getAtomNeighbors(a))) {
-        const auto at = mol[nbri];
+      for (auto nbri : boost::make_iterator_range(rwmol.getAtomNeighbors(a))) {
+        const auto at = rwmol[nbri];
         neighbors.push_back(at->getIdx());
       }
 
@@ -161,11 +161,9 @@ boost::property_tree::ptree molToPTree(const ROMol& mol, int confId,
     const auto& atom = *atom_itr;
     PRECONDITION(atom, "bad atom");
     const auto src = atom->getIdx();
-    const auto* const mol = &atom->getOwningMol();
-
-    for (auto bond_itrs = mol->getAtomBonds(atom);
+    for (auto bond_itrs = rwmol.getAtomBonds(atom);
          bond_itrs.first != bond_itrs.second; ++bond_itrs.first) {
-      auto* bptr = (*mol)[*bond_itrs.first];
+      auto* bptr = rwmol[*bond_itrs.first];
       auto* nptr = bptr->getOtherAtom(atom);
       const auto dst = nptr->getIdx();
       if (dst < src) {
