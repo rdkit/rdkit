@@ -950,6 +950,34 @@ void testReplaceCorePositions() {
   BOOST_LOG(rdInfoLog) << "\tdone" << std::endl;
 }
 
+void testReplaceCoreMatchVectMultipleMappingToCore() {
+  BOOST_LOG(rdInfoLog) << "-------------------------------------" << std::endl;
+  BOOST_LOG(rdInfoLog) << "Testing replaceCore with a matchvect with multiple "
+                          "dummy target atoms mapping to single core atom"
+                       << std::endl;
+
+  std::unique_ptr<RWMol> core, mol;
+
+  // 2 dummies in core map to single N in molecule
+  core = "C1([*:1])C([*:2])CC1"_smiles;
+  mol = "C1CC2NC12"_smiles;
+  MatchVectType mapping{{0, 4}, {1, 3}, {2, 2}, {3, 3}, {4, 1}, {5, 0}};
+
+  ROMOL_SPTR result(replaceCore(*mol.get(), *core.get(), mapping, false));
+  std::string smi = MolToSmiles(*result.get(), true);
+  TEST_ASSERT("[1*]N[2*]" == smi);
+
+  // 3 dummies in core map to single N in molecule
+  core = "C1([*:1])C([*:2])C([*:3])C1"_smiles;
+  mol = "C1C2C3N2C13"_smiles;
+  mapping.clear();
+  mapping.insert(mapping.end(),
+                 {{0, 4}, {1, 3}, {2, 2}, {3, 3}, {4, 1}, {5, 3}, {6, 0}});
+  result.reset(replaceCore(*mol.get(), *core.get(), mapping, false));
+  smi = MolToSmiles(*result.get(), true);
+  TEST_ASSERT("[1*]N([2*])[3*]" == smi);
+}
+
 void testReplaceCoreMatchVect() {
   BOOST_LOG(rdInfoLog) << "-------------------------------------" << std::endl;
   BOOST_LOG(rdInfoLog) << "Testing replaceCore with a matchvect" << std::endl;
@@ -2153,6 +2181,7 @@ int main() {
   testReplaceCoreCrash();
   testReplaceCorePositions();
   testReplaceCoreMatchVect();
+  testReplaceCoreMatchVectMultipleMappingToCore();
 
   testMurckoDecomp();
   testReplaceCoreRequireDummies();

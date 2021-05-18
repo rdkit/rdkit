@@ -231,7 +231,7 @@ void RCore::buildMatchingMol() {
         isUserRLabel(*atom)) {
       atomsToRemove.push_back(atom);
       terminalRGroupAtomsWithUserLabels.insert(atom->getIdx());
-      const int neighborIdx = *core->getAtomNeighbors(atom).first;
+      const int neighborIdx = *matchingMol->getAtomNeighbors(atom).first;
       terminalRGroupAtomToNeighbor.emplace(atom->getIdx(), neighborIdx);
     }
   }
