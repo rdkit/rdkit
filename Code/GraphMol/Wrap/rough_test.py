@@ -6547,6 +6547,19 @@ CAS<~>
       pass
     self.assertEqual(rwmol.GetNumAtoms(), mol.GetNumAtoms())
 
+  def testGithub4138(self):
+    m = Chem.MolFromSmiles('C1CCCO1')
+    q = Chem.MolFromSmarts('')
+    self.assertFalse(m.HasSubstructMatch(q))
+    self.assertEqual(m.GetSubstructMatch(q), ())
+    self.assertEqual(m.GetSubstructMatches(q), ())
+
+    m = Chem.MolFromSmiles('')
+    q = Chem.MolFromSmarts('C')
+    self.assertFalse(m.HasSubstructMatch(q))
+    self.assertEqual(m.GetSubstructMatch(q), ())
+    self.assertEqual(m.GetSubstructMatches(q), ())
+
 
 if __name__ == '__main__':
   if "RDTESTCASE" in os.environ:
