@@ -1988,3 +1988,50 @@ TEST_CASE("github #4071: StereoGroups not preserved by RenumberAtoms()",
           "C[C@@H](O)[C@H](C)[C@@H](C)[C@@H](C)O |o1:1,&1:3,&2:5,&3:7|");
   }
 }
+
+TEST_CASE("github #4127: SEGV in ROMol::getAtomDegree if atom is not in graph",
+          "[graphmol]") {
+  // also includes tests for some related edge cases found as part of that bug
+  // fix
+  Atom atom(6);
+  RWMol mol1;
+  auto mol2 = "CCC"_smiles;
+  SECTION("getAtomDegree") {
+    CHECK_THROWS_AS(mol1.getAtomDegree(nullptr), Invar::Invariant);
+    CHECK_THROWS_AS(mol1.getAtomDegree(&atom), Invar::Invariant);
+    CHECK_THROWS_AS(mol1.getAtomDegree(mol2->getAtomWithIdx(0)),
+                    Invar::Invariant);
+  }
+  SECTION("getAtomNeighbors") {
+    CHECK_THROWS_AS(mol1.getAtomNeighbors(nullptr), Invar::Invariant);
+    CHECK_THROWS_AS(mol1.getAtomNeighbors(&atom), Invar::Invariant);
+    CHECK_THROWS_AS(mol1.getAtomNeighbors(mol2->getAtomWithIdx(0)),
+                    Invar::Invariant);
+  }
+  SECTION("getAtomBonds") {
+    CHECK_THROWS_AS(mol1.getAtomBonds(nullptr), Invar::Invariant);
+    CHECK_THROWS_AS(mol1.getAtomBonds(&atom), Invar::Invariant);
+    CHECK_THROWS_AS(mol1.getAtomBonds(mol2->getAtomWithIdx(0)),
+                    Invar::Invariant);
+  }
+  SECTION("addAtom from another molecule") {
+    RWMol mol1cp(mol1);
+    CHECK_THROWS_AS(mol1cp.addAtom(nullptr), Invar::Invariant);
+    bool updateLabel = false;
+    bool takeOwnership = true;
+    CHECK_THROWS_AS(
+        mol1cp.addAtom(mol2->getAtomWithIdx(0), updateLabel, takeOwnership),
+        Invar::Invariant);
+    takeOwnership = false;
+    CHECK(mol1cp.addAtom(mol2->getAtomWithIdx(0), updateLabel, takeOwnership) ==
+          0);
+  }
+  SECTION("addBond from another molecule") {
+    auto mol3 = "C.C.C"_smiles;
+    bool takeOwnership = true;
+    CHECK_THROWS_AS(mol3->addBond(mol2->getBondWithIdx(0), takeOwnership),
+                    Invar::Invariant);
+    takeOwnership = false;
+    CHECK(mol3->addBond(mol2->getBondWithIdx(0), takeOwnership) == 1);
+  }
+}

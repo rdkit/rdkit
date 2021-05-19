@@ -415,6 +415,10 @@ void ResSubstructMatchHelper_(const ResSubstructMatchHelperArgs_ &args,
 std::vector<MatchVectType> SubstructMatch(
     const ROMol &mol, const ROMol &query,
     const SubstructMatchParameters &params) {
+  std::vector<MatchVectType> matches;
+  if (!mol.getNumAtoms() || !query.getNumAtoms()) {
+    return matches;
+  }
   std::vector<RecursiveStructureQuery *> locked;
 #ifdef RDK_THREADSAFE_SSS
   locked.reserve(query.getNumAtoms());
@@ -444,7 +448,6 @@ std::vector<MatchVectType> SubstructMatch(
       boost::vf2_all(query.getTopology(), mol.getTopology(), atomLabeler,
                      bondLabeler, matchChecker, pms, params.maxMatches);
 #endif
-  std::vector<MatchVectType> matches;
   if (found) {
     unsigned int nQueryAtoms = query.getNumAtoms();
     matches.reserve(pms.size());
