@@ -1,5 +1,5 @@
 //
-//  Copyright (C) 2018 Susan H. Leung
+//  Copyright (C) 2018-2021 Susan H. Leung and other RDKit contributors
 //
 //   @@ All Rights Reserved @@
 //  This file is part of the RDKit.
@@ -8,8 +8,8 @@
 //  of the RDKit source tree.
 //
 #include <RDGeneral/export.h>
-#ifndef __RD_TAUTOMER_CATALOG_ENTRY_H__
-#define __RD_TAUTOMER_CATALOG_ENTRY_H__
+#ifndef RD_TAUTOMER_CATALOG_ENTRY_H
+#define RD_TAUTOMER_CATALOG_ENTRY_H
 
 #include <Catalogs/CatalogEntry.h>
 #include <GraphMol/Subgraphs/Subgraphs.h>

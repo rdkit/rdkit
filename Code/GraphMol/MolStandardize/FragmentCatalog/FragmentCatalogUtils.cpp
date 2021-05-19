@@ -1,5 +1,5 @@
 //
-//  Copyright (C) 2018 Susan H. Leung
+//  Copyright (C) 2018-2021 Susan H. Leung and other RDKit contributors
 //
 //   @@ All Rights Reserved @@
 //  This file is part of the RDKit.
@@ -19,19 +19,23 @@ typedef boost::tokenizer<boost::char_separator<char>> tokenizer;
 
 namespace RDKit {
 namespace {
-ROMol *getSmarts(std::string &&tmpStr) {
-  ROMol *mol = nullptr;
+ROMol *getMol(const std::string &name, const std::string &smarts) {
+  auto mol = SmartsToMol(smarts);
+  if (!mol) {
+    throw ValueErrorException("Failed parsing fragment SMARTS: " + smarts);
+  }
+  mol->setProp(common_properties::_Name, name);
+  mol->setProp(common_properties::_fragSMARTS, smarts);
+  return mol;
+}
 
+ROMol *getMol(std::string &&tmpStr) {
   // Remove whitespace
   boost::trim(tmpStr);
 
-  if (tmpStr.length() == 0) {
-    // empty line
-    return mol;
-  }
-  if (tmpStr.substr(0, 2) == "//") {
-    // comment line
-    return mol;
+  if (tmpStr.length() == 0 || tmpStr.substr(0, 2) == "//") {
+    // empty or comment line
+    return nullptr;
   }
 
   boost::char_separator<char> tabSep("\t");
@@ -43,18 +47,15 @@ ROMol *getSmarts(std::string &&tmpStr) {
   ++token;
 
   // There must be a SMARTS expression
-  CHECK_INVARIANT(token != tokens.end(), tmpStr);
+  if (token == tokens.end()) {
+    throw ValueErrorException("no SMARTS found in input: " + tmpStr);
+  }
 
   // grab the smarts:
   std::string smarts = *token;
   boost::erase_all(smarts, " ");
   ++token;
-
-  mol = SmartsToMol(smarts);
-  CHECK_INVARIANT(mol, smarts);
-  mol->setProp(common_properties::_Name, name);
-  mol->setProp(common_properties::_fragSMARTS, smarts);
-  return mol;
+  return getMol(name, smarts);
 }
 }  // namespace
 
@@ -88,10 +89,22 @@ std::vector<std::shared_ptr<ROMol>> readFuncGroups(std::istream &inStream,
     inStream.getline(inLine, MAX_LINE_LEN, '\n');
     std::string tmpstr(inLine);
     // parse the molecule on this line (if there is one)
-    std::shared_ptr<ROMol> mol(getSmarts(std::move(tmpstr)));
+    std::shared_ptr<ROMol> mol(getMol(std::move(tmpstr)));
     if (mol) {
       funcGroups.push_back(mol);
       nRead++;
+    }
+  }
+  return funcGroups;
+}
+
+std::vector<std::shared_ptr<ROMol>> readFuncGroups(
+    const std::vector<std::pair<std::string, std::string>> &data) {
+  std::vector<std::shared_ptr<ROMol>> funcGroups;
+  for (const auto &pr : data) {
+    auto mol = getMol(pr.first, pr.second);
+    if (mol) {
+      funcGroups.push_back(std::shared_ptr<ROMol>(mol));
     }
   }
   return funcGroups;

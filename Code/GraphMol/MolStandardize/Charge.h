@@ -1,5 +1,5 @@
 //
-//  Copyright (C) 2018 Susan H. Leung
+//  Copyright (C) 2018-2021 Susan H. Leung and other RDKit contributors
 //
 //   @@ All Rights Reserved @@
 //  This file is part of the RDKit.
@@ -60,6 +60,9 @@ class RDKIT_MOLSTANDARDIZE_EXPORT Reionizer {
   Reionizer();
   //! construct a Reionizer with a particular acidbaseFile
   Reionizer(const std::string acidbaseFile);
+  //! construct a Reionizer with parameter data
+  Reionizer(const std::vector<std::tuple<std::string, std::string, std::string>>
+                &data);
   //! construct a Reionizer with a particular acidbaseFile and charge
   // corrections
   Reionizer(const std::string acidbaseFile,
@@ -68,6 +71,12 @@ class RDKIT_MOLSTANDARDIZE_EXPORT Reionizer {
   // corrections
   Reionizer(std::istream &acidbaseStream,
             const std::vector<ChargeCorrection> ccs);
+
+  //! construct a Reionizer with parameter data and charge corrections
+  Reionizer(const std::vector<std::tuple<std::string, std::string, std::string>>
+                &data,
+            const std::vector<ChargeCorrection> ccs);
+
   //! making Reionizer objects non-copyable
   Reionizer(const Reionizer &other) = delete;
   Reionizer &operator=(Reionizer const &) = delete;
@@ -88,6 +97,15 @@ class RDKIT_MOLSTANDARDIZE_EXPORT Reionizer {
       const std::vector<std::pair<ROMOL_SPTR, ROMOL_SPTR>> &abpairs);
 
 };  // Reionizer class
+
+// caller owns the returned pointer
+inline Reionizer *reionizerFromParams(const CleanupParameters &params) {
+  if (params.acidbaseData.empty()) {
+    return new Reionizer(params.acidbaseFile);
+  } else {
+    return new Reionizer(params.acidbaseData);
+  }
+}
 
 //! The Uncharger class for neutralizing ionized acids and bases.
 /*!

@@ -252,11 +252,10 @@ void testWhiteSpaceInSmarts() {
   BOOST_LOG(rdInfoLog) << "----- Test Whitespace in SMARTS Fragment string."
                        << std::endl;
 
-  std::vector<std::string> data({
-      "          ",    // whitespace only
-      "          \n",  // whitespace plus new line
-      " //   initial space plus comment\nfluorine\t[F]\n"
-  });
+  std::vector<std::string> data(
+      {"          ",    // whitespace only
+       "          \n",  // whitespace plus new line
+       " //   initial space plus comment\nfluorine\t[F]\n"});
 
   std::vector<size_t> reference_sizes({0, 0, 1});
 
@@ -274,11 +273,10 @@ void testFragmentWithoutSmarts() {
   BOOST_LOG(rdInfoLog) << "----- Test Fragment string without SMARTS."
                        << std::endl;
 
-  std::vector<std::string> data({
-      "//   Name	SMARTS\nnonsense\n",
-      "//   Name	SMARTS\nnonsense no new line",
-      "//   Name	SMARTS\nnonsense with tab\t\n"
-  });
+  std::vector<std::string> data(
+      {"//   Name	SMARTS\nnonsense\n",
+       "//   Name	SMARTS\nnonsense no new line",
+       "//   Name	SMARTS\nnonsense with tab\t\n"});
 
   for (const auto &smarts : data) {
     bool ok = false;
