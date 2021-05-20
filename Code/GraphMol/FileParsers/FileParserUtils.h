@@ -129,7 +129,7 @@ inline void processMolPropertyList(
     } else {
       prefix = atomPropPrefix + "iprop.";
       if (pn.find(prefix) == 0 && pn.length() > prefix.length()) {
-        applyMolListPropToAtoms<int>(mol, pn, prefix,
+        applyMolListPropToAtoms<std::int64_t>(mol, pn, prefix,
                                               missingValueMarker);
       } else {
         prefix = atomPropPrefix + "dprop.";
@@ -192,7 +192,7 @@ inline void createAtomIntPropertyList(
     const std::string &missingValueMarker = "", unsigned int lineSize = 190) {
   std::string molPropName = "atom.iprop." + atomPropName;
   mol.setProp(molPropName,
-              getAtomPropertyList<int>(
+              getAtomPropertyList<std::int64_t>(
                   mol, atomPropName, missingValueMarker, lineSize));
 }
 inline void createAtomDoublePropertyList(
