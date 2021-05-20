@@ -51,20 +51,34 @@ __pycache__/
 /Code/GraphMol/SmilesParse/smiles.tab.cpp
 /Code/GraphMol/SmilesParse/smiles.tab.hpp
 
+/Data/Fonts/ComicNeue-Bold.ttf
+/Data/Fonts/ComicNeue-BoldItalic.ttf
+/Data/Fonts/ComicNeue-Italic.ttf
+/Data/Fonts/ComicNeue-Light.ttf
+/Data/Fonts/ComicNeue-LightItalic.ttf
+/Data/Fonts/ComicNeue-Regular.ttf
+/Data/Fonts/OFL.txt
+
 /External/**/*.tar.gz
 /External/**/*.zip
+
 /External/catch/catch/
 /External/CoordGen/coordgen/
 /External/CoordGen/maeparser/
-/External/FreeSASA/freesasa-2.0.1/
+/External/FreeSASA/freesasa-2.*/
 /External/INCHI-API/INCHI-1-SRC/
 /External/INCHI-API/src/
 /External/rapidjson-1.1.0/
 /External/RingFamilies/RingDecomposerLib/
-/External/AvalonTools/SourceDistribution
+/External/AvalonTools/SourceDistribution/
+/External/AvalonTools/StandardFiles/
+/External/YAeHMOP/src/
+/External/YAeHMOP/tmp/
+/External/YAeHMOP/yaehmop/
 
 /rdkit/RDPaths.py
 /rdkit/Chem/inchi.py
+
 
 #- Files created during tests
 /Code/ForceField/MMFF/test_data/MMFF94_dative_min.sdf
