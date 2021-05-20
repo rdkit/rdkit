@@ -129,7 +129,7 @@ inline void processMolPropertyList(
     } else {
       prefix = atomPropPrefix + "iprop.";
       if (pn.find(prefix) == 0 && pn.length() > prefix.length()) {
-        applyMolListPropToAtoms<std::int64_t>(mol, pn, prefix,
+        applyMolListPropToAtoms<int>(mol, pn, prefix,
                                               missingValueMarker);
       } else {
         prefix = atomPropPrefix + "dprop.";
