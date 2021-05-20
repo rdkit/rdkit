@@ -192,7 +192,7 @@ inline void createAtomIntPropertyList(
     const std::string &missingValueMarker = "", unsigned int lineSize = 190) {
   std::string molPropName = "atom.iprop." + atomPropName;
   mol.setProp(molPropName,
-              getAtomPropertyList<boost::int64_t>(
+              getAtomPropertyList<int>(
                   mol, atomPropName, missingValueMarker, lineSize));
 }
 inline void createAtomDoublePropertyList(
