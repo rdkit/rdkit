@@ -76,6 +76,8 @@ $$$$"""
         self.assertTrue(m.GetAtomWithIdx(0).HasProp("NumHeavyNeighbors"))
         m.ClearProp("atom.iprop.NumHeavyNeighbors")
         self.assertFalse(m.HasProp("atom.iprop.NumHeavyNeighbors"))
+        for a in m.GetAtoms():
+            a.SetIntProp("NumHeavyNeighbors", 2)
         Chem.CreateAtomIntPropertyList(m,"NumHeavyNeighbors")
         self.assertTrue(m.HasProp("atom.iprop.NumHeavyNeighbors"))
 
