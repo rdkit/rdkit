@@ -293,7 +293,7 @@ struct atom_wrapper {
              "    - If the property has not been set, a KeyError exception "
              "will be raised.\n")
 
-        .def("SetIntProp", AtomSetProp<std::int64_t>,
+        .def("SetIntProp", AtomSetProp<int>,
              (python::arg("self"), python::arg("key"), python::arg("val")),
              "Sets an atomic property\n\n"
              "  ARGUMENTS:\n"
@@ -308,7 +308,7 @@ struct atom_wrapper {
              "integer).\n"
              "    - value: the property value (a int >= 0).\n\n")
 
-        .def("GetIntProp", GetProp<Atom, std::int64_t>,
+        .def("GetIntProp", GetProp<Atom, int>,
              "Returns the value of the property.\n\n"
              "  ARGUMENTS:\n"
              "    - key: the name of the property to return (an int).\n\n"
