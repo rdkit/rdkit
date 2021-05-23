@@ -22,6 +22,8 @@ namespace RDKit {
 //! RCore is the core common to a series of molecules
 struct RCore {
   boost::shared_ptr<RWMol> core;
+  // core with terminal user R groups stripped for matching
+  boost::shared_ptr<RWMol> matchingMol;
   boost::shared_ptr<RWMol> labelledCore;
 
   // Bitset: indices corresponding to atoms bearing user-defined labels are 1
@@ -29,10 +31,9 @@ struct RCore {
   // Number of user labelled rgroups in the core
   size_t numberUserRGroups = 0;
   RCore(){};
-  RCore(const RWMol &c) : core(new RWMol(c)) {
-    findIndicesWithRLabel();
-    countUserRGroups();
-  }
+  RCore(const RWMol &c) : core(new RWMol(c)) { init(); }
+
+  void init();
 
   inline bool isCoreAtomUserLabelled(int idx) const {
     return core_atoms_with_user_labels.test(idx);
@@ -74,15 +75,24 @@ struct RCore {
       }
     }
 
+    std::map<int, int> matchLookup(match.cbegin(), match.cend());
     for (auto bond : coreReplacedAtoms->bonds()) {
       if (bond->hasQuery()) {
         hasCoreDummies = true;
         const auto molBond =
-            mol.getBondBetweenAtoms(match[bond->getBeginAtomIdx()].second,
-                                    match[bond->getEndAtomIdx()].second);
-        Bond newBond(molBond->getBondType());
-        newBond.setIsAromatic(molBond->getIsAromatic());
-        coreReplacedAtoms->replaceBond(bond->getIdx(), &newBond, true);
+            mol.getBondBetweenAtoms(matchLookup[bond->getBeginAtomIdx()],
+                                    matchLookup[bond->getEndAtomIdx()]);
+        if (molBond == nullptr) {
+          // this can happen if we have a user-defined R group that is not
+          // matched in the query
+          CHECK_INVARIANT(bond->getBeginAtom()->getAtomicNum() == 0 ||
+                              bond->getEndAtom()->getAtomicNum() == 0,
+                          "Failed to find core bond in molecule");
+        } else {
+          Bond newBond(molBond->getBondType());
+          newBond.setIsAromatic(molBond->getIsAromatic());
+          coreReplacedAtoms->replaceBond(bond->getIdx(), &newBond, true);
+        }
       }
     }
 
@@ -155,6 +165,31 @@ struct RCore {
     finalCore->updatePropertyCache(false);
     return finalCore;
   }
+
+  std::vector<MatchVectType> matchTerminalUserRGroups(
+      const RWMol &target, MatchVectType match) const;
+
+  inline bool isTerminalRGroupWithUserLabel(const int idx) const {
+    return terminalRGroupAtomsWithUserLabels.find(idx) !=
+           terminalRGroupAtomsWithUserLabels.end();
+  }
+
+  /*
+   * For when onlyMatchAtRGroups = true.  Checks the query core can satisfy all
+   * attachment points. Including when two user defined attachment points can
+   * match the same target atom.
+   */
+  bool checkAllBondsToAttachmentPointPresent(
+      const ROMol &mol, const int attachmentIdx,
+      const MatchVectType &mapping) const;
+
+ private:
+  std::set<int> terminalRGroupAtomsWithUserLabels;
+  std::map<int, int> terminalRGroupAtomToNeighbor;
+
+  int matchingIndexToCoreIndex(int matchingIndex) const;
+
+  void buildMatchingMol();
 };
 
 }  // namespace RDKit

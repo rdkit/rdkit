@@ -211,7 +211,7 @@ void testGaBatch() {
   delete core;
 }
 
-const char *matchRGroupOnlyData[5] = {
+const char *matchRGroupOnlyData[] = {
     "c1(Cl)ccccc1", "c1c(Cl)cccc1",    "c1cc(Cl)ccc1",
     "c1ccc(Cl)cc1", "c1c(Cl)cccc(I)1",
 };
@@ -1461,7 +1461,8 @@ F[*:2]
     params.onlyMatchAtRGroups = true;
     RGroupDecomposition decomp(*core, params);
     for (auto &m : mols) {
-      decomp.add(*m);
+      auto res = decomp.add(*m);
+      TEST_ASSERT(res != -1);
     }
     decomp.process();
     std::stringstream ss;
@@ -1828,7 +1829,7 @@ $$$$
   }
 }
 
-void testMutipleCoreRelabellingIssues() {
+void testMultipleCoreRelabellingIssues() {
   // This test fixes 2 issues with relabelling groups
   // Firstly, a new R group which appeared in a later core could have it's label
   // assigned to an unindexed group in a previous core
@@ -1860,6 +1861,7 @@ void testMutipleCoreRelabellingIssues() {
   }
 
   std::vector<std::string> smi{
+      "O=C1C([*:2])([*:1])[C@@H]2N1C(C(O)=O)C([*:3])([*:4])S2",
       "O=C1C([*:2])([*:1])[C@@H]2N1C(C(O)=O)=C([*:3])CS2",
       "O=C1C([*:2])([*:1])[C@@H]2N1C(C(O)=O)=C([*:3])CC2",
       "O=C1C([*:2])([*:1])[C@@H]2N1C(C(O)=O)=C([*:3])CO2",
@@ -2098,9 +2100,6 @@ void testNoAlignmentAndSymmetry() {
 }
 
 void testSingleAtomBridge() {
-  /* This test for the expected result for the "cubane fix" is currently
-   * failing. */
-
   BOOST_LOG(rdInfoLog)
       << "********************************************************\n";
   BOOST_LOG(rdInfoLog) << "test single atom bridge between 2 user r groups"
@@ -2110,18 +2109,24 @@ void testSingleAtomBridge() {
   RGroupDecompositionParameters params;
   RGroupDecomposition decomp(*core, params);
   auto mol = "C1CC2NC12"_smiles;
-  int res = decomp.add(*mol);
+  params.onlyMatchAtRGroups = true;
+  auto res = decomp.add(*mol);
   TEST_ASSERT(res == 0);
   TEST_ASSERT(decomp.process());
   auto rows = decomp.getRGroupsAsRows();
   TEST_ASSERT(rows.size() == 1)
   const std::string expected(
       "Core:C1CC([*:2])C1[*:1] R1:N([*:1])[*:2]"
-      "R2:N([*:1])[*:2]");
+      " R2:N([*:1])[*:2]");
   RGroupRows::const_iterator it = rows.begin();
   CHECK_RGROUP(it, expected);
 
   core = "C1([*:1])CCC1"_smiles;
+  RGroupDecomposition decomp3(*core, params);
+  res = decomp3.add(*mol);
+  TEST_ASSERT(res == -1);
+
+  params.onlyMatchAtRGroups = false;
   RGroupDecomposition decomp2(*core, params);
   res = decomp2.add(*mol);
   TEST_ASSERT(res == 0);
@@ -2130,6 +2135,23 @@ void testSingleAtomBridge() {
   TEST_ASSERT(rows.size() == 1)
   it = rows.begin();
   CHECK_RGROUP(it, expected);
+
+  params.onlyMatchAtRGroups = true;
+  params.allowNonTerminalRGroups = true;
+  core = "C1([*:1])[*:2]CC1"_smiles;
+  RGroupDecomposition decomp4(*core, params);
+  res = decomp4.add(*mol);
+  TEST_ASSERT(res == 0);
+  TEST_ASSERT(rows.size() == 1)
+  it = rows.begin();
+  CHECK_RGROUP(it, expected);
+
+  core = "C1([*:1])C([*:2])*([*:3])C1"_smiles;
+  params.onlyMatchAtRGroups = true;
+  RGroupDecomposition decomp5(*core, params);
+  mol = "C1OC2NC12"_smiles;
+  res = decomp5.add(*mol);
+  TEST_ASSERT(res == -1);
 }
 
 void testAddedRGroupsHaveCoords() {
@@ -2446,6 +2468,7 @@ int main() {
   BOOST_LOG(rdInfoLog)
       << "********************************************************\n";
   BOOST_LOG(rdInfoLog) << "Testing R-Group Decomposition \n";
+
 #if 1
   testSymmetryMatching(FingerprintVariance);
   testSymmetryMatching();
@@ -2463,15 +2486,14 @@ int main() {
   testSDFGRoupMultiCoreNoneShouldMatch();
   testRowColumnAlignmentProblem();
   testSymmetryIssues();
-  testMutipleCoreRelabellingIssues();
+  testMultipleCoreRelabellingIssues();
 
   testGaSymmetryMatching(FingerprintVariance);
   testGaSymmetryMatching(Match);
   testGaBatch();
 
   testUnprocessedMapping();
-  // This test is currently failing. The spec is correct, so we do want to get
-  // it working. testSingleAtomBridge();
+  testSingleAtomBridge();
 #endif
   testSymmetryPerformance();
   testScorePermutations();

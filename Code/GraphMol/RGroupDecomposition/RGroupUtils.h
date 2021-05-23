@@ -57,6 +57,9 @@ bool hasDummy(const RWMol &core);
 // defined rgroup label
 bool isAtomWithMultipleNeighborsOrNotUserRLabel(const Atom &atom);
 
+//! Return true if the atom has a user-defined R group label
+bool isUserRLabel(const Atom &atom);
+
 //! Returns true if the core atom is either a dummy atom with multiple
 // connections or a dummy atom with a single connection that has no user
 // defined rgroup label

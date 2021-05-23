@@ -100,8 +100,16 @@ int RGroupDecomposition::add(const ROMol &inmol) {
       const bool uniquify = false;
       const bool recursionPossible = true;
       const bool useChirality = true;
-      SubstructMatch(mol, *core.second.core, tmatches, uniquify,
+      std::vector<MatchVectType> baseMatches;
+      SubstructMatch(mol, *core.second.matchingMol, baseMatches, uniquify,
                      recursionPossible, useChirality);
+      tmatches.clear();
+      for (const auto &baseMatch : baseMatches) {
+        auto matchesWithDummy =
+            core.second.matchTerminalUserRGroups(mol, baseMatch);
+        tmatches.insert(tmatches.end(), matchesWithDummy.cbegin(),
+                        matchesWithDummy.cend());
+      }
     }
     if (tmatches.empty()) {
       continue;
@@ -115,6 +123,9 @@ int RGroupDecomposition::add(const ROMol &inmol) {
       for (const auto &match : mv) {
         target_match_indices[match.second] = 1;
       }
+
+      // target atoms that map to user defined R-groups
+      std::vector<int> targetAttachments;
 
       for (const auto &match : mv) {
         const Atom *atm = mol.getAtomWithIdx(match.second);
@@ -135,11 +146,27 @@ int RGroupDecomposition::add(const ROMol &inmol) {
               }
             }
           }
+        } else {
+          // labelled R-group
+          if (core.second.isTerminalRGroupWithUserLabel(match.first)) {
+            targetAttachments.push_back(match.second);
+          }
         }
         if (!passes_filter && data->params.onlyMatchAtRGroups) {
           break;
         }
+
+        if (passes_filter && data->params.onlyMatchAtRGroups) {
+          for (auto attachmentIdx : targetAttachments) {
+            if (!core.second.checkAllBondsToAttachmentPointPresent(
+                    mol, attachmentIdx, mv)) {
+              passes_filter = false;
+              break;
+            }
+          }
+        }
       }
+
       if (passes_filter) {
         tmatches_filtered.push_back(mv);
       }
@@ -229,7 +256,9 @@ int RGroupDecomposition::add(const ROMol &inmol) {
         newMol->setProp<int>("core", core_idx);
         newMol->setProp<int>("idx", data->matches.size());
         newMol->setProp<int>("frag_idx", i);
-
+#ifdef VERBOSE
+        std::cerr << "Fragment " << MolToSmiles(*newMol) << std::endl;
+#endif
         for (auto at : newMol->atoms()) {
           unsigned int elno = at->getAtomicNum();
           if (elno == 0) {
@@ -326,8 +355,7 @@ int RGroupDecomposition::add(const ROMol &inmol) {
     }
   }
   if (potentialMatches.size() == 0) {
-    BOOST_LOG(rdDebugLog)
-        << "No attachment points in side chains" << std::endl;
+    BOOST_LOG(rdDebugLog) << "No attachment points in side chains" << std::endl;
     return -2;
   }
 
