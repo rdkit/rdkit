@@ -7523,6 +7523,22 @@ void testGithub3078() {
   TEST_ASSERT(!bond->hasProp("_UnknownStereoRxnBond"));
 }
 
+void testGithub4162() {
+  const std::string reaction(
+      R"([C:1](=[O:2])-[OD1].[N!H0:3]>>[C:1](=[O:2])[N:3])");
+  std::unique_ptr<ChemicalReaction> rxn(RxnSmartsToChemicalReaction(reaction));
+  std::unique_ptr<ChemicalReaction> rxnCopy(new ChemicalReaction(*rxn));
+  RxnOps::sanitizeRxn(*rxn);
+  RxnOps::sanitizeRxn(*rxnCopy);
+  std::string pkl;
+  ReactionPickler::pickleReaction(*rxn, pkl);
+  std::unique_ptr<ChemicalReaction> rxnFromPickle(new ChemicalReaction(pkl));
+  RxnOps::sanitizeRxn(*rxnFromPickle);
+  ReactionPickler::pickleReaction(*rxnFromPickle, pkl);
+  rxnFromPickle.reset(new ChemicalReaction(pkl));
+  RxnOps::sanitizeRxn(*rxnFromPickle);
+}
+
 int main() {
   RDLog::InitLogs();
 
@@ -7616,6 +7632,7 @@ int main() {
   testDblBondCrash();
   testRxnBlockRemoveHs();
   testGithub3078();
+  testGithub4162();
 
   BOOST_LOG(rdInfoLog)
       << "*******************************************************\n";
