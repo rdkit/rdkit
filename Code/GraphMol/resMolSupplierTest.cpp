@@ -960,7 +960,6 @@ void testGitHub3349() {
   delete mol;
 }
 
-
 int main() {
   RDLog::InitLogs();
 #if 1

@@ -40,19 +40,18 @@ bool SeedTypes(std::vector<Type> &types, const CIPMol &mol) {
     int btypes = atom->getTotalNumHs();
     bool ring = false;
     for (const auto &bond : mol.getBonds(atom)) {
-
       // Given the possible types we have, we only care
       // for single and double bonds which are in rings.
       switch (mol.getBondOrder(bond)) {
-      case 1:
-        btypes += 0x00000001;
-        break;
-      case 2:
-        btypes += 0x00000100;
-        break;
-      default:
-        btypes += 0x01000000;
-        break;
+        case 1:
+          btypes += 0x00000001;
+          break;
+        case 2:
+          btypes += 0x00000100;
+          break;
+        default:
+          btypes += 0x01000000;
+          break;
       }
       if (mol.isInRing(bond)) {
         ring = true;
@@ -61,36 +60,36 @@ bool SeedTypes(std::vector<Type> &types, const CIPMol &mol) {
     if (ring) {
       int q = atom->getFormalCharge();
       switch (atom->getAtomicNum()) {
-      case 6:  // C
-      case 14: // Si
-      case 32: // Ge
-        if (q == 0 && btypes == 0x0102) {
-          types[aidx] = Type::Cv4D3;
-        } else if (q == -1 && btypes == 0x0003) {
-          types[aidx] = Type::Cv3D3Minus;
-          result = true;
-        }
-        break;
-      case 7:  // N
-      case 15: // P
-      case 33: // As
-        if (q == 0 && btypes == 0x0101) {
-          types[aidx] = Type::Nv3D2;
-          result = true;
-        } else if (q == -1 && btypes == 0x0002) {
-          types[aidx] = Type::Nv2D2Minus;
-          result = true;
-        } else if (q == +1 && btypes == 0x0102) {
-          types[aidx] = Type::Nv4D3Plus;
-          result = true;
-        }
-        break;
-      case 8: // O
-        if (q == 1 && btypes == 0x0101) {
-          types[aidx] = Type::Ov3D2Plus;
-          result = true;
-        }
-        break;
+        case 6:   // C
+        case 14:  // Si
+        case 32:  // Ge
+          if (q == 0 && btypes == 0x0102) {
+            types[aidx] = Type::Cv4D3;
+          } else if (q == -1 && btypes == 0x0003) {
+            types[aidx] = Type::Cv3D3Minus;
+            result = true;
+          }
+          break;
+        case 7:   // N
+        case 15:  // P
+        case 33:  // As
+          if (q == 0 && btypes == 0x0101) {
+            types[aidx] = Type::Nv3D2;
+            result = true;
+          } else if (q == -1 && btypes == 0x0002) {
+            types[aidx] = Type::Nv2D2Minus;
+            result = true;
+          } else if (q == +1 && btypes == 0x0102) {
+            types[aidx] = Type::Nv4D3Plus;
+            result = true;
+          }
+          break;
+        case 8:  // O
+          if (q == 1 && btypes == 0x0101) {
+            types[aidx] = Type::Ov3D2Plus;
+            result = true;
+          }
+          break;
       }
     }
   }
@@ -173,7 +172,7 @@ int VisitParts(std::vector<int> &parts, const std::vector<Type> &types,
   return numparts;
 }
 
-} // namespace
+}  // namespace
 
 std::vector<boost::rational<int>> calcFracAtomNums(const CIPMol &mol) {
   const auto num_atoms = mol.getNumAtoms();
@@ -186,7 +185,6 @@ std::vector<boost::rational<int>> calcFracAtomNums(const CIPMol &mol) {
   // Mark all atoms which are potentially part of a resonance system.
   auto types = std::vector<Type>(num_atoms, Type::Other);
   if (SeedTypes(types, mol)) {
-
     // Filter out atoms which cannot be resonant because
     // of not having the proper environment.
     RelaxTypes(types, mol);
@@ -248,7 +246,6 @@ std::vector<boost::rational<int>> calcFracAtomNums(const CIPMol &mol) {
         int part = resparts[j];
         for (auto i = 0u; i < num_atoms; ++i) {
           if (parts[i] == part) {
-
             // boost::rational does not accept 0 as denominator
             if (denominator == 0) {
               fractions[i].assign(0, 1);
@@ -273,5 +270,5 @@ std::vector<boost::rational<int>> calcFracAtomNums(const CIPMol &mol) {
   return fractions;
 }
 
-} // namespace CIPLabeler
-} // namespace RDKit
+}  // namespace CIPLabeler
+}  // namespace RDKit

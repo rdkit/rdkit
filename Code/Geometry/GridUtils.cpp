@@ -20,7 +20,8 @@ using namespace RDKit;
 namespace RDGeom {
 
 template <class GRIDTYPE>
-double tverskyIndex(const GRIDTYPE &grid1, const GRIDTYPE &grid2, double alpha, double beta) {
+double tverskyIndex(const GRIDTYPE &grid1, const GRIDTYPE &grid2, double alpha,
+                    double beta) {
   if (!grid1.compareParams(grid2)) {
     throw ValueErrorException("Grid parameters do not match");
   }
@@ -30,17 +31,17 @@ double tverskyIndex(const GRIDTYPE &grid1, const GRIDTYPE &grid2, double alpha, 
   unsigned int totv1 = v1->getTotalVal();
   unsigned int totv2 = v2->getTotalVal();
   double inter = 0.5 * (totv1 + totv2 - dist);
-//  double alpha = 1.0;
-//  double beta = 1.0;
-  double tversky_res = inter / (alpha * (1.0 * totv1 - inter) + beta * (1.0 * totv2 - inter) + inter);
-//  double res = dist / (dist + inter);
+  //  double alpha = 1.0;
+  //  double beta = 1.0;
+  double tversky_res = inter / (alpha * (1.0 * totv1 - inter) +
+                                beta * (1.0 * totv2 - inter) + inter);
+  //  double res = dist / (dist + inter);
   return tversky_res;
 }
 
-template RDKIT_RDGEOMETRYLIB_EXPORT double tverskyIndex(const UniformGrid3D &grid1,
-                                 const UniformGrid3D &grid2, 
-				 double alpha, 
-				 double beta);
+template RDKIT_RDGEOMETRYLIB_EXPORT double tverskyIndex(
+    const UniformGrid3D &grid1, const UniformGrid3D &grid2, double alpha,
+    double beta);
 
 template <class GRIDTYPE>
 double tanimotoDistance(const GRIDTYPE &grid1, const GRIDTYPE &grid2) {
@@ -57,8 +58,8 @@ double tanimotoDistance(const GRIDTYPE &grid1, const GRIDTYPE &grid2) {
   return res;
 }
 
-template RDKIT_RDGEOMETRYLIB_EXPORT double tanimotoDistance(const UniformGrid3D &grid1,
-                                 const UniformGrid3D &grid2);
+template RDKIT_RDGEOMETRYLIB_EXPORT double tanimotoDistance(
+    const UniformGrid3D &grid1, const UniformGrid3D &grid2);
 
 template <class GRIDTYPE>
 double protrudeDistance(const GRIDTYPE &grid1, const GRIDTYPE &grid2) {
@@ -75,10 +76,10 @@ double protrudeDistance(const GRIDTYPE &grid1, const GRIDTYPE &grid2) {
   return res;
 }
 
-template RDKIT_RDGEOMETRYLIB_EXPORT double protrudeDistance(const UniformGrid3D &grid1,
-                                 const UniformGrid3D &grid2);
+template RDKIT_RDGEOMETRYLIB_EXPORT double protrudeDistance(
+    const UniformGrid3D &grid1, const UniformGrid3D &grid2);
 
-std::map<int, std::vector<int> > gridIdxCache;
+std::map<int, std::vector<int>> gridIdxCache;
 std::vector<int> computeGridIndices(const UniformGrid3D &grid,
                                     double windowRadius) {
   double gridSpacing = grid.getSpacing();
@@ -164,4 +165,4 @@ std::vector<Point3D> findGridTerminalPoints(const UniformGrid3D &grid,
   }
   return res;
 }
-}
+}  // namespace RDGeom

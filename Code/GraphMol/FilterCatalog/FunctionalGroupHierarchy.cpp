@@ -235,7 +235,7 @@ void hierarchy_create() {
         fd->getName(), boost::shared_ptr<FilterMatcherBase>(fd)));
   }
 }
-}
+}  // namespace
 
 const FilterCatalog &GetFunctionalGroupHierarchy() {
 #ifdef RDK_THREADSAFE_SSS
@@ -259,4 +259,4 @@ const std::map<std::string, ROMOL_SPTR> &GetFlattenedFunctionalGroupHierarchy(
   }
   return flatten_get();
 }
-}
+}  // namespace RDKit

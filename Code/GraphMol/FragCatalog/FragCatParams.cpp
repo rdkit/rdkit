@@ -102,4 +102,4 @@ void FragCatParams::initFromStream(std::istream &ss) {
 
   d_funcGroups = readFuncGroups(ss, nGroups);
 }
-}
+}  // namespace RDKit

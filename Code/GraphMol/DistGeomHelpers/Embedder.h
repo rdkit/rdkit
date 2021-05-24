@@ -283,7 +283,7 @@ inline int EmbedMolecule(
     bool useBasicKnowledge = false, bool verbose = false,
     double basinThresh = 5.0, bool onlyHeavyAtomsForRMS = false,
     unsigned int ETversion = 1, bool useSmallRingTorsions = false,
-    bool useMacrocycleTorsions = false,  bool useMacrocycle14config = false) {
+    bool useMacrocycleTorsions = false, bool useMacrocycle14config = false) {
   EmbedParameters params(
       maxIterations, 1, seed, clearConfs, useRandomCoords, boxSizeMult,
       randNegEig, numZeroFail, coordMap, optimizerForceTol,
@@ -389,7 +389,7 @@ inline void EmbedMultipleConfs(
       ignoreSmoothingFailures, enforceChirality, useExpTorsionAnglePrefs,
       useBasicKnowledge, verbose, basinThresh, pruneRmsThresh,
       onlyHeavyAtomsForRMS, ETversion, nullptr, true, useSmallRingTorsions,
-      useMacrocycleTorsions,  useMacrocycle14config);
+      useMacrocycleTorsions, useMacrocycle14config);
   EmbedMultipleConfs(mol, res, numConfs, params);
 };
 //! \overload

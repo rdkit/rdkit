@@ -162,37 +162,58 @@ static const char *trb[] = /* pseudosymbol "trb" */
 
 static const char *tm1[] = /* pseudosymbol "tm1" */
     {
-        "Cu", "Ag", "Au", nullptr,
+        "Cu",
+        "Ag",
+        "Au",
+        nullptr,
 };
 
 static const char *tm2[] = /* pseudosymbol "tm2" */
     {
-        "Zn", "Cd", "Hg", nullptr,
+        "Zn",
+        "Cd",
+        "Hg",
+        nullptr,
 };
 
 static const char *tm3[] = /* pseudosymbol "tm3" */
     {
-        "Sc", "Y", "La", nullptr,
+        "Sc",
+        "Y",
+        "La",
+        nullptr,
 };
 
 static const char *tm4[] = /* pseudosymbol "tm4" */
     {
-        "Ti", "Zr", "Hf", nullptr,
+        "Ti",
+        "Zr",
+        "Hf",
+        nullptr,
 };
 
 static const char *tm5[] = /* pseudosymbol "tm5" */
     {
-        "V", "Nb", "Ta", nullptr,
+        "V",
+        "Nb",
+        "Ta",
+        nullptr,
 };
 
 static const char *tm6[] = /* pseudosymbol "tm6" */
     {
-        "Cr", "Mo", "W", nullptr,
+        "Cr",
+        "Mo",
+        "W",
+        nullptr,
 };
 
 static const char *tm7[] = /* pseudosymbol "tm7" */
     {
-        "Mn", "Tc", "Re", nullptr,
+        "Mn",
+        "Tc",
+        "Re",
+        nullptr,
 };
 
 static const char *tm8[] = /* pseudosymbol "tm8" */

@@ -1318,13 +1318,13 @@ BOOST_PYTHON_MODULE(rdmolfiles) {
       .value("CX_POLYMER", RDKit::SmilesWrite::CXSmilesFields::CX_POLYMER)
       .value("CX_ALL", RDKit::SmilesWrite::CXSmilesFields::CX_ALL);
 
-  python::def("MolToCXSmiles",
-              (std::string(*)(const ROMol &, const SmilesWriteParams &,
-                              std::uint32_t))RDKit::MolToCXSmiles,
-              (python::arg("mol"), python::arg("params"),
-               python::arg("flags") =
-                   RDKit::SmilesWrite::CXSmilesFields::CX_ALL),
-              "Returns the CXSMILES string for a molecule");
+  python::def(
+      "MolToCXSmiles",
+      (std::string(*)(const ROMol &, const SmilesWriteParams &,
+                      std::uint32_t))RDKit::MolToCXSmiles,
+      (python::arg("mol"), python::arg("params"),
+       python::arg("flags") = RDKit::SmilesWrite::CXSmilesFields::CX_ALL),
+      "Returns the CXSMILES string for a molecule");
 
   docString =
       "Returns the CXSMILES string for a molecule\n\

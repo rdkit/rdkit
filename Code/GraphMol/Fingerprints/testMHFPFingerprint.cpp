@@ -23,10 +23,10 @@
 
 using namespace RDKit;
 
-
 void testMHFPInit() {
   BOOST_LOG(rdErrorLog) << "-------------------------------------" << std::endl;
-  BOOST_LOG(rdErrorLog) << "Test MHFP fingerprint encoder initialization" << std::endl;
+  BOOST_LOG(rdErrorLog) << "Test MHFP fingerprint encoder initialization"
+                        << std::endl;
 
   std::string s = "CN1C=NC2=C1C(=O)N(C(=O)N2C)C";
   std::string t = "Cn1cnc2c1c(=O)[nH]c(=O)n2C";
@@ -53,29 +53,23 @@ void testMHFPInit() {
 
 void testMHFPHashing() {
   BOOST_LOG(rdErrorLog) << "-------------------------------------" << std::endl;
-  BOOST_LOG(rdErrorLog) << "Test MHFP hashing of string and uint arrays" << std::endl;
+  BOOST_LOG(rdErrorLog) << "Test MHFP hashing of string and uint arrays"
+                        << std::endl;
 
   MHFPFingerprints::MHFPEncoder enc(8);
 
-  std::vector<uint32_t> input_a = {
-    1, 2, 4, 5, 6, 7, 8, 9
-  };
+  std::vector<uint32_t> input_a = {1, 2, 4, 5, 6, 7, 8, 9};
 
-  std::vector<uint32_t> output_a = {
-    188049437, 364485576, 737251017, 810894466, 
-    300249621, 154369992, 2221926165, 283729444
-  };
+  std::vector<uint32_t> output_a = {188049437,  364485576, 737251017,
+                                    810894466,  300249621, 154369992,
+                                    2221926165, 283729444};
 
   TEST_ASSERT(enc.FromArray(input_a) == output_a);
 
-  std::vector<std::string> input_b = {
-    "a", "b", "c", "d", "e", "f"
-  };
+  std::vector<std::string> input_b = {"a", "b", "c", "d", "e", "f"};
 
-  std::vector<uint32_t> output_b = {
-    631555539, 835857365, 445245415, 4162827301, 
-    955545975, 943207071, 712975995, 363547692
-  };
+  std::vector<uint32_t> output_b = {631555539, 835857365, 445245415, 4162827301,
+                                    955545975, 943207071, 712975995, 363547692};
 
   TEST_ASSERT(enc.FromStringArray(input_b) == output_b);
 
@@ -144,7 +138,8 @@ void testMHFPDistance() {
   auto fp_s = enc.Encode(s);
   auto fp_t = enc.Encode(t);
 
-  TEST_ASSERT(feq(MHFPFingerprints::MHFPEncoder::Distance(fp_s, fp_t), 0.2890625));
+  TEST_ASSERT(
+      feq(MHFPFingerprints::MHFPEncoder::Distance(fp_s, fp_t), 0.2890625));
 
   BOOST_LOG(rdErrorLog) << "  done" << std::endl;
 }

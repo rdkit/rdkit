@@ -42,8 +42,10 @@ MHFPEncoder::MHFPEncoder(unsigned int n_permutations, unsigned int seed)
   boost::mt19937 rand;
   rand.seed(seed_);
 
-  boost::random::uniform_int_distribution<boost::mt19937::result_type> dist_a(1, max_hash_);
-  boost::random::uniform_int_distribution<boost::mt19937::result_type> dist_b(0, max_hash_);
+  boost::random::uniform_int_distribution<boost::mt19937::result_type> dist_a(
+      1, max_hash_);
+  boost::random::uniform_int_distribution<boost::mt19937::result_type> dist_b(
+      0, max_hash_);
 
   for (unsigned int i = 0; i < n_permutations_; i++) {
     uint32_t a = dist_a(rand);

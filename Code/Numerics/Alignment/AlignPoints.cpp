@@ -350,5 +350,5 @@ double AlignPoints(const RDGeom::Point3DConstPtrVect &refPoints,
   trans.SetTranslation(move);
   return ssr;
 }
-}
-}
+}  // namespace Alignments
+}  // namespace RDNumeric

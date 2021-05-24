@@ -37,8 +37,12 @@ Node *Node::newTerminalChild(int idx, Atom *atom, int flags) const {
 
 Node::Node(Digraph *g, std::vector<char> &&visit, Atom *atom,
            boost::rational<int> &&frac, int dist, int flags)
-    : dp_g{g}, dp_atom{atom}, d_dist{dist}, d_atomic_num{std::move(frac)},
-      d_flags{flags}, d_visit{std::move(visit)} {
+    : dp_g{g},
+      dp_atom{atom},
+      d_dist{dist},
+      d_atomic_num{std::move(frac)},
+      d_flags{flags},
+      d_visit{std::move(visit)} {
   if (d_flags & DUPLICATE) {
     d_edges.reserve(4);
     d_atomic_mass = 0.;
@@ -150,5 +154,5 @@ std::vector<Edge *> Node::getNonTerminalOutEdges() const {
   return edges;
 }
 
-} // namespace CIPLabeler
-} // namespace RDKit
+}  // namespace CIPLabeler
+}  // namespace RDKit

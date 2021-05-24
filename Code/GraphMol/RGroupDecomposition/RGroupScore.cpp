@@ -24,7 +24,8 @@ double RGroupScorer::matchScore(
     const std::vector<size_t> &permutation,
     const std::vector<std::vector<RGroupMatch>> &matches,
     const std::set<int> &labels) {
-  PRECONDITION(permutation.size() <= matches.size(), "permutation.size() should be <= matches.size()");
+  PRECONDITION(permutation.size() <= matches.size(),
+               "permutation.size() should be <= matches.size()");
   double score = 0.;
   const std::string EMPTY_RGROUP = "";
   size_t offset = matches.size() - permutation.size();
@@ -33,7 +34,6 @@ double RGroupScorer::matchScore(
             << std::endl;
   std::cerr << "Scoring permutation "
             << " num matches: " << matches.size() << std::endl;
-
 
   BOOST_LOG(rdDebugLog) << "Scoring" << std::endl;
   for (size_t m = 0; m < permutation.size(); ++m) {  // for each molecule
@@ -90,15 +90,15 @@ double RGroupScorer::matchScore(
         unsigned int &count = labelData.matchSetVect[i][smiles];
         ++count;
 #ifdef DEBUG
-          std::cerr << i << " smiles:" << smiles << " " << count << std::endl;
-          std::cerr << " Linker Score: "
-                    << labelData.linkerMatchSet[rg->second->attachments]
-                    << std::endl;
+        std::cerr << i << " smiles:" << smiles << " " << count << std::endl;
+        std::cerr << " Linker Score: "
+                  << labelData.linkerMatchSet[rg->second->attachments]
+                  << std::endl;
 #endif
         ++i;
       }
     }
-    
+
     double tempScore = 0.;
     for (auto &matchSet : labelData.matchSetVect) {
       // get the counts for each rgroup found and sort in reverse order
@@ -128,8 +128,8 @@ double RGroupScorer::matchScore(
 #endif
       }
       // make sure to rescale groups like [*:1].[*:1]C otherwise this will be
-        // double counted
-        // WE SHOULD PROBABLY REJECT THESE OUTRIGHT
+      // double counted
+      // WE SHOULD PROBABLY REJECT THESE OUTRIGHT
       tempScore /= static_cast<double>(labelData.matchSetVect.size());
     }
 
@@ -164,7 +164,7 @@ double RGroupScorer::matchScore(
               << std::endl;
     std::cerr << "Score = " << score << std::endl;
 #endif
-  } // end for each label
+  }  // end for each label
 
 #ifdef DEBUG
   BOOST_LOG(rdDebugLog) << score << std::endl;

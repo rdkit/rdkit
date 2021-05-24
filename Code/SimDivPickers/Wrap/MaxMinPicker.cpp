@@ -77,8 +77,8 @@ RDKit::INT_VECT LazyMaxMinPicks(MaxMinPicker *picker, python::object distFunc,
                                 python::object firstPicks, int seed,
                                 python::object useCache) {
   if (useCache != python::object()) {
-    BOOST_LOG(rdWarningLog) << "the useCache argument is deprecated and ignored"
-                            << std::endl;
+    BOOST_LOG(rdWarningLog)
+        << "the useCache argument is deprecated and ignored" << std::endl;
   }
   pyobjFunctor functor(distFunc);
   RDKit::INT_VECT res;
@@ -102,8 +102,8 @@ RDKit::INT_VECT LazyVectorMaxMinPicks(MaxMinPicker *picker, python::object objs,
                                       python::object firstPicks, int seed,
                                       python::object useCache) {
   if (useCache != python::object()) {
-    BOOST_LOG(rdWarningLog) << "the useCache argument is deprecated and ignored"
-                            << std::endl;
+    BOOST_LOG(rdWarningLog)
+        << "the useCache argument is deprecated and ignored" << std::endl;
   }
   std::vector<const ExplicitBitVect *> bvs(poolSize);
   for (int i = 0; i < poolSize; ++i) {

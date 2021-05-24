@@ -43,7 +43,8 @@ void testOr() {
   TEST_ASSERT(stereo_groups[0].getGroupType() ==
               RDKit::StereoGroupType::STEREO_ABSOLUTE);
   TEST_ASSERT(stereo_groups[0].getAtoms().size() == 1u);
-  TEST_ASSERT(stereo_groups[1].getGroupType() == RDKit::StereoGroupType::STEREO_OR);
+  TEST_ASSERT(stereo_groups[1].getGroupType() ==
+              RDKit::StereoGroupType::STEREO_OR);
   TEST_ASSERT(stereo_groups[1].getAtoms().size() == 2u);
 
   BOOST_LOG(rdInfoLog) << "done" << std::endl;
@@ -61,7 +62,8 @@ void testAnd() {
   TEST_ASSERT(stereo_groups.size() == 2);
   TEST_ASSERT(stereo_groups[0].getGroupType() ==
               RDKit::StereoGroupType::STEREO_ABSOLUTE);
-  TEST_ASSERT(stereo_groups[1].getGroupType() == RDKit::StereoGroupType::STEREO_AND);
+  TEST_ASSERT(stereo_groups[1].getGroupType() ==
+              RDKit::StereoGroupType::STEREO_AND);
 
   BOOST_LOG(rdInfoLog) << "done" << std::endl;
 }
@@ -81,7 +83,8 @@ void testWrite() {
   TEST_ASSERT(stereo_groups0.size() == stereo_groups1.size());
 
   for (unsigned i = 0u; i < 2; ++i) {
-    TEST_ASSERT(stereo_groups0[i].getGroupType() == stereo_groups1[i].getGroupType());
+    TEST_ASSERT(stereo_groups0[i].getGroupType() ==
+                stereo_groups1[i].getGroupType());
     TEST_ASSERT(stereo_groups0[i].getAtoms().size() ==
                 stereo_groups1[i].getAtoms().size());
     for (auto &&atom0 = stereo_groups0[i].getAtoms().begin(),

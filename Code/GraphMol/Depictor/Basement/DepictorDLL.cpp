@@ -139,4 +139,4 @@ int Add2DCoordsToMolDLL(ROMol &mol, std::string tempFilename) {
 }
 
 #endif
-}
+}  // namespace RDKit

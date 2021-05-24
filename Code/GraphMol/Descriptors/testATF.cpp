@@ -27,155 +27,142 @@
 using namespace RDKit;
 
 void test1() {
- 
-    auto m = "CO"_smiles; 
+  auto m = "CO"_smiles;
 
-    TEST_ASSERT(m);
-    
-    std::vector<double> res;
+  TEST_ASSERT(m);
 
-    int atomid = 0;
-    RDKit::Descriptors::AtomFeatVect(*m, res, atomid);
+  std::vector<double> res;
 
-    std::vector <double > exp{ 0. , 1. , 0. , 0. , 0. , 0. , 0. , 0. , 0. , 0. , 0. , 0. , 0. ,
+  int atomid = 0;
+  RDKit::Descriptors::AtomFeatVect(*m, res, atomid);
+
+  std::vector<double> exp{ 0. , 1. , 0. , 0. , 0. , 0. , 0. , 0. , 0. , 0. , 0. , 0. , 0. ,
        0. , 0. , 1. , 0. , 0. , 0. , 0. , 0. , 0. , 0. , 1. , 0. , 0. ,
        0. , 0. , 0. , 1. , 0. , 0. , 0. , 0. , 1. , 0. , 0. , 0. , 0. ,
        0. , 0. , 0. , 0. , 0. , 0. , 0. , 1. , 0. , 0.5};
 
-    // 49 features
-    TEST_ASSERT(res.size() == 49);
+  // 49 features
+  TEST_ASSERT(res.size() == 49);
 
-    for (std::size_t i = 0; i < res.size() ; i++) {
-     	TEST_ASSERT(fabs( res[i]-exp[i])< 0.001);
-      //std::cout << res[i] << "," ;
-    }
-
-
-    
+  for (std::size_t i = 0; i < res.size(); i++) {
+    TEST_ASSERT(fabs(res[i] - exp[i]) < 0.001);
+    // std::cout << res[i] << "," ;
+  }
 }
 
 void test2() {
- 
-    auto m = "C1CC=C1[NH3+]"_smiles; 
+  auto m = "C1CC=C1[NH3+]"_smiles;
 
-    TEST_ASSERT(m);
-    
-    std::vector<double> res;
+  TEST_ASSERT(m);
 
-    std::vector <double > molatf{ 0,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,0,0,0,0,0,0,1,0,0,0,0,1,0,0,0,0,0,1,0,0,1,0,0,0,0,0,0,0,1,0,0,0.2,
+  std::vector<double> res;
+
+  std::vector<double> molatf{ 0,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,0,0,0,0,0,0,1,0,0,0,0,1,0,0,0,0,0,1,0,0,1,0,0,0,0,0,0,0,1,0,0,0.2,
      0,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,0,0,0,0,0,0,1,0,0,0,0,1,0,0,0,0,0,1,0,0,1,0,0,0,0,0,0,0,1,0,0,0.2,
      0,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,0,0,0,0,0,1,0,0,0,0,1,0,0,0,0,0,0,1,0,0,1,0,0,0,0,0,0,1,0,0,0,0.2,
      0,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,0,0,0,0,1,0,0,0,1,0,0,0,0,0,0,0,1,0,0,1,0,0,0,0,0,1,0,0,0,0,0.2,
      0,0,1,0,0,0,0,0,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0,1,0,0,1,0,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0,0,0,0,1,0,0.2};
 
+  for (unsigned int j = 0; j < m->getNumAtoms(); j++) {
+    RDKit::Descriptors::AtomFeatVect(*m, res, j);
 
-    for (unsigned int j=0; j< m->getNumAtoms(); j++) {
+    // 49 features
+    TEST_ASSERT(res.size() == 49);
 
-      RDKit::Descriptors::AtomFeatVect(*m, res, j);
-
-      // 49 features
-      TEST_ASSERT(res.size() == 49);
-
-      for (std::size_t i = 0; i < res.size() ; i++) {
-        TEST_ASSERT(fabs( res[i]-molatf[i+j*49])< 0.001);
-      }
-
-     res.clear();
-     res.resize(49);
+    for (std::size_t i = 0; i < res.size(); i++) {
+      TEST_ASSERT(fabs(res[i] - molatf[i + j * 49]) < 0.001);
     }
-    
+
+    res.clear();
+    res.resize(49);
+  }
 }
 
 void test3() {
- 
-    auto m = "O[C@H](F)[C@H](F)O"_smiles; 
+  auto m = "O[C@H](F)[C@H](F)O"_smiles;
 
-    TEST_ASSERT(m);
+  TEST_ASSERT(m);
 
-    std::vector <double > molatf{ 0,0,0,1,0,0,0,0,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0,1,0,0,0,1,0,0,0,0,0,0,1,0,0,0,0,0,0,0,0,0,1,0,0,0,0.166667,
+  std::vector<double> molatf{ 0,0,0,1,0,0,0,0,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0,1,0,0,0,1,0,0,0,0,0,0,1,0,0,0,0,0,0,0,0,0,1,0,0,0,0.166667,
     0,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,0,0,0,0,0,1,0,0,1,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0,0,0,1,0,0,0,0.166667,
     0,0,0,0,0,1,0,0,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0,1,0,0,1,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0,0,1,0,0,0,0,0.166667,
     0,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,0,0,0,0,0,1,0,0,1,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0,0,0,1,0,0,0,0.166667,
     0,0,0,0,0,1,0,0,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0,1,0,0,1,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0,0,1,0,0,0,0,0.166667,
     0,0,0,1,0,0,0,0,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0,1,0,0,0,1,0,0,0,0,0,0,1,0,0,0,0,0,0,0,0,0,1,0,0,0,0.166667};
 
-    std::vector<double> res;
+  std::vector<double> res;
 
-    for (unsigned int j=0; j< m->getNumAtoms(); j++) {
+  for (unsigned int j = 0; j < m->getNumAtoms(); j++) {
+    RDKit::Descriptors::AtomFeatVect(*m, res, j);
 
-      RDKit::Descriptors::AtomFeatVect(*m, res, j);
+    // 49 features
+    TEST_ASSERT(res.size() == 49);
 
-
-      // 49 features
-      TEST_ASSERT(res.size() == 49);
-
-      for (std::size_t i = 0; i < res.size() ; i++) {
-        TEST_ASSERT(fabs( res[i]-molatf[i+j*49])< 0.001);
-      }
-
-     res.clear();
-     res.resize(49);
+    for (std::size_t i = 0; i < res.size(); i++) {
+      TEST_ASSERT(fabs(res[i] - molatf[i + j * 49]) < 0.001);
     }
+
+    res.clear();
+    res.resize(49);
+  }
 }
 
 void test4() {
- 
-    auto m = "O[C@H](F)[C@H](F)O"_smiles; 
+  auto m = "O[C@H](F)[C@H](F)O"_smiles;
 
-    TEST_ASSERT(m);
-    
-    std::vector<double> res;
+  TEST_ASSERT(m);
 
-    std::vector <double > molatf{ 0,0,0,1,0,0,0,0,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0,1,0,0,0,1,0,0,0,0,0,0,1,0,0,0,0,0,0,0,0,0,1,0,0,0,0.166667,0,0,0,
+  std::vector<double> res;
+
+  std::vector<double> molatf{ 0,0,0,1,0,0,0,0,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0,1,0,0,0,1,0,0,0,0,0,0,1,0,0,0,0,0,0,0,0,0,1,0,0,0,0.166667,0,0,0,
     0,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,0,0,0,0,0,1,0,0,1,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0,0,0,1,0,0,0,0.166667,0,1,0,
     0,0,0,0,0,1,0,0,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0,1,0,0,1,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0,0,1,0,0,0,0,0.166667,0,0,0,
     0,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,0,0,0,0,0,1,0,0,1,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0,0,0,1,0,0,0,0.166667,0,1,0,
     0,0,0,0,0,1,0,0,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0,1,0,0,1,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0,0,1,0,0,0,0,0.166667,0,0,0,
     0,0,0,1,0,0,0,0,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0,1,0,0,0,1,0,0,0,0,0,0,1,0,0,0,0,0,0,0,0,0,1,0,0,0,0.166667,0,0,0};
 
-    for (unsigned int j=0; j< m->getNumAtoms(); j++) {
-      RDKit::Descriptors::AtomFeatVect(*m, res, j, true);
+  for (unsigned int j = 0; j < m->getNumAtoms(); j++) {
+    RDKit::Descriptors::AtomFeatVect(*m, res, j, true);
 
-      // 52 features
-      TEST_ASSERT(res.size() == 52);
+    // 52 features
+    TEST_ASSERT(res.size() == 52);
 
-      for (std::size_t i = 0; i < res.size() ; i++) {
-        TEST_ASSERT(fabs( res[i]-molatf[i+j*52])< 0.001);
-      }
-
-     res.clear();
-     res.resize(52);
+    for (std::size_t i = 0; i < res.size(); i++) {
+      TEST_ASSERT(fabs(res[i] - molatf[i + j * 52]) < 0.001);
     }
+
+    res.clear();
+    res.resize(52);
+  }
 }
 
 void test5() {
- 
-    auto m = "O[C@@H](F)[C@@H](F)O"_smiles; 
+  auto m = "O[C@@H](F)[C@@H](F)O"_smiles;
 
-    TEST_ASSERT(m);
-    
-    std::vector<double> res;
+  TEST_ASSERT(m);
 
-    std::vector <double > molatf{ 0,0,0,1,0,0,0,0,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0,1,0,0,0,1,0,0,0,0,0,0,1,0,0,0,0,0,0,0,0,0,1,0,0,0,0.166667,0,0,0,
+  std::vector<double> res;
+
+  std::vector<double> molatf{ 0,0,0,1,0,0,0,0,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0,1,0,0,0,1,0,0,0,0,0,0,1,0,0,0,0,0,0,0,0,0,1,0,0,0,0.166667,0,0,0,
     0,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,0,0,0,0,0,1,0,0,1,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0,0,0,1,0,0,0,0.166667,1,0,0,
     0,0,0,0,0,1,0,0,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0,1,0,0,1,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0,0,1,0,0,0,0,0.166667,0,0,0,
     0,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,0,0,0,0,0,1,0,0,1,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0,0,0,1,0,0,0,0.166667,1,0,0,
     0,0,0,0,0,1,0,0,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0,1,0,0,1,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0,0,1,0,0,0,0,0.166667,0,0,0,
     0,0,0,1,0,0,0,0,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0,1,0,0,0,1,0,0,0,0,0,0,1,0,0,0,0,0,0,0,0,0,1,0,0,0,0.166667,0,0,0};
 
-    for (unsigned int j=0; j< m->getNumAtoms(); j++) {
-      RDKit::Descriptors::AtomFeatVect(*m, res, j, true);
+  for (unsigned int j = 0; j < m->getNumAtoms(); j++) {
+    RDKit::Descriptors::AtomFeatVect(*m, res, j, true);
 
-      // 52 features
-      TEST_ASSERT(res.size() == 52);
+    // 52 features
+    TEST_ASSERT(res.size() == 52);
 
-      for (std::size_t i = 0; i < res.size() ; i++) {
-        TEST_ASSERT(fabs( res[i]-molatf[i+j*52])< 0.001);
-      }
-
-     res.clear();
-     res.resize(52);
+    for (std::size_t i = 0; i < res.size(); i++) {
+      TEST_ASSERT(fabs(res[i] - molatf[i + j * 52]) < 0.001);
     }
+
+    res.clear();
+    res.resize(52);
+  }
 }
 
 int main() {

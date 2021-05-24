@@ -26,8 +26,8 @@ class ROMol;
 namespace MolStandardize {
 
 //! The CleanupParameters structure defines the default parameters for the
-/// cleanup process and also allows the user to customize the process by changing
-/// the parameters.
+/// cleanup process and also allows the user to customize the process by
+/// changing the parameters.
 /*!
 
   <b>Notes:</b>

@@ -129,7 +129,9 @@ double PyForceField::calcEnergyWithPos(const python::object &pos) {
     size_t s = this->field->dimension() * this->field->numPoints();
     size_t numElements = python::extract<size_t>(pos.attr("__len__")());
     if (s != numElements) {
-      throw ValueErrorException("The Python container must have length equal to Dimension() * NumPoints()");
+      throw ValueErrorException(
+          "The Python container must have length equal to Dimension() * "
+          "NumPoints()");
     }
     std::vector<double> c(s);
     for (size_t i = 0; i < s; ++i) {
@@ -148,7 +150,7 @@ PyObject *PyForceField::positions() {
   const RDGeom::PointPtrVect &p = this->field->positions();
   size_t i = 0;
   PyObject *coordItem;
-  for (const auto pptr: p) {
+  for (const auto pptr : p) {
     for (size_t j = 0; j < 3; ++j) {
       coordItem = PyFloat_FromDouble((*pptr)[j]);
       PyTuple_SetItem(coordTuple, i++, coordItem);
@@ -165,7 +167,9 @@ PyObject *PyForceField::calcGradWithPos(const python::object &pos) {
   if (pos != python::object()) {
     size_t numElements = python::extract<size_t>(pos.attr("__len__")());
     if (s != numElements) {
-      throw ValueErrorException("The Python container must have length equal to Dimension() * NumPoints()");
+      throw ValueErrorException(
+          "The Python container must have length equal to Dimension() * "
+          "NumPoints()");
     }
     std::vector<double> c(s);
     for (size_t i = 0; i < s; ++i) {
@@ -182,18 +186,19 @@ PyObject *PyForceField::calcGradWithPos(const python::object &pos) {
   return gradTuple;
 }
 
-python::tuple PyForceField::minimizeTrajectory(unsigned int snapshotFreq, int maxIts, double forceTol, double energyTol) {
+python::tuple PyForceField::minimizeTrajectory(unsigned int snapshotFreq,
+                                               int maxIts, double forceTol,
+                                               double energyTol) {
   PRECONDITION(this->field, "no force field");
   RDKit::SnapshotVect snapshotVect;
-  int resInt = this->field->minimize(snapshotFreq, &snapshotVect,
-                               maxIts, forceTol, energyTol);
+  int resInt = this->field->minimize(snapshotFreq, &snapshotVect, maxIts,
+                                     forceTol, energyTol);
   python::list l;
   for (RDKit::SnapshotVect::const_iterator it = snapshotVect.begin();
        it != snapshotVect.end(); ++it) {
     l.append(new RDKit::Snapshot(*it));
   }
   return python::make_tuple(resInt, l);
-  
 }
 
 PyObject *PyMMFFMolProperties::getMMFFBondStretchParams(
@@ -302,22 +307,24 @@ BOOST_PYTHON_MODULE(rdForceField) {
 
   python::class_<PyForceField>("ForceField", "A force field", python::no_init)
       .def("CalcEnergy",
-           (double (PyForceField::*)(const python::object &) const) &PyForceField::calcEnergyWithPos,
+           (double (PyForceField::*)(const python::object &) const) &
+               PyForceField::calcEnergyWithPos,
            (python::arg("pos") = python::object()),
            "Returns the energy (in kcal/mol) of the current arrangement\n"
            "or of the supplied coordinate list (if non-empty)")
       .def("CalcGrad", &PyForceField::calcGradWithPos,
            (python::arg("pos") = python::object()),
            "Returns a tuple filled with the per-coordinate gradients\n"
-           "of the current arrangement or of the supplied coordinate list (if non-empty)")
+           "of the current arrangement or of the supplied coordinate list "
+           "(if non-empty)")
       .def("Positions", &PyForceField::positions,
            "Returns a tuple filled with the coordinates of the\n"
            "points the ForceField is handling")
       .def("Dimension",
-           (unsigned int (PyForceField::*)() const) &PyForceField::dimension,
+           (unsigned int (PyForceField::*)() const) & PyForceField::dimension,
            "Returns the dimension of the ForceField")
       .def("NumPoints",
-           (unsigned int (PyForceField::*)() const) &PyForceField::numPoints,
+           (unsigned int (PyForceField::*)() const) & PyForceField::numPoints,
            "Returns the number of points the ForceField is handling")
       .def("Minimize", &PyForceField::minimize,
            (python::arg("maxIts") = 200, python::arg("forceTol") = 1e-4,
@@ -329,7 +336,8 @@ BOOST_PYTHON_MODULE(rdForceField) {
             python::arg("forceTol") = 1e-4, python::arg("energyTol") = 1e-6),
            "Runs some minimization iterations, recording the minimization "
            "trajectory every snapshotFreq steps.\n\n"
-           "Returns a (int, []) tuple; the int is 0 if the minimization succeeded, "
+           "Returns a (int, []) tuple; the int is 0 if the minimization "
+           "succeeded, "
            "while the list contains Snapshot objects.")
       .def("AddDistanceConstraint", ForceFieldAddDistanceConstraint,
            (python::arg("self"), python::arg("idx1"), python::arg("idx2"),

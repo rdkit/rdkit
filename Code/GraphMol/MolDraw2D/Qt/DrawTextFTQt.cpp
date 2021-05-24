@@ -12,7 +12,6 @@
 #include <QPainter>
 #include <QPainterPath>
 
-
 namespace RDKit {
 
 // ****************************************************************************

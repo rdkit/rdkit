@@ -35,7 +35,6 @@ bool StructCheckTautomer::applyTautomer(unsigned it) {
   const unsigned nta = toTautomer.getNumAtoms();
   MatchVectType match;  // The format is (queryAtomIdx, molAtomIdx)
 
-
   if (!SubstructMatch(Mol, *Options.FromTautomer[it],
                       match))  // SSMatch(mp, from_tautomer, SINGLE_MATCH);
     return false;
@@ -44,7 +43,8 @@ bool StructCheckTautomer::applyTautomer(unsigned it) {
                          << " atoms\n";
   // init
   size_t invalid_idx = 1 + Mol.getNumAtoms();
-  std::vector<unsigned> atomIdxMap(Mol.getNumAtoms(), invalid_idx);  // matched tau atom indices
+  std::vector<unsigned> atomIdxMap(Mol.getNumAtoms(),
+                                   invalid_idx);  // matched tau atom indices
   for (MatchVectType::const_iterator mit = match.begin(); mit != match.end();
        ++mit) {
     unsigned tai = mit->first;   // From and To Tautomer Atom index

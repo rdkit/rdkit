@@ -19,7 +19,6 @@
 #include "DrawTextQt.h"
 #endif
 
-
 using namespace boost;
 using namespace std;
 

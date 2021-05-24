@@ -80,7 +80,7 @@ void calcTorsionGrad(RDGeom::Point3D *r, RDGeom::Point3D *t, double *d,
   g[3][1] += sinTerm * (dCos_dT[5] * r[2].x - dCos_dT[3] * r[2].z);
   g[3][2] += sinTerm * (dCos_dT[3] * r[2].y - dCos_dT[4] * r[2].x);
 }
-}
+}  // namespace Utils
 
 TorsionAngleContrib::TorsionAngleContrib(
     ForceField *owner, unsigned int idx1, unsigned int idx2, unsigned int idx3,
@@ -272,5 +272,5 @@ double TorsionAngleContrib::getThetaDeriv(double cosTheta,
 
   return res;
 }
-}
-}
+}  // namespace UFF
+}  // namespace ForceFields

@@ -121,15 +121,16 @@ void EncodeMolShape(
                            maxLayers, ignoreHs);
   }
 }
-double tverskyMolShapes(const ROMol &mol1, const ROMol &mol2, double alpha, double beta, int confId1 = -1,
-                         int confId2 = -1, double gridSpacing = 0.5,
-                         DiscreteValueVect::DiscreteValueType bitsPerPoint =
-                             DiscreteValueVect::TWOBITVALUE,
-                         double vdwScale = 0.8, double stepSize = 0.25,
-                         int maxLayers = -1, bool ignoreHs = true) {
-  return MolShapes::tverskyIndex(mol1, mol2, alpha, beta, confId1, confId2, gridSpacing,
-                                     bitsPerPoint, vdwScale, stepSize,
-                                     maxLayers, ignoreHs);
+double tverskyMolShapes(const ROMol &mol1, const ROMol &mol2, double alpha,
+                        double beta, int confId1 = -1, int confId2 = -1,
+                        double gridSpacing = 0.5,
+                        DiscreteValueVect::DiscreteValueType bitsPerPoint =
+                            DiscreteValueVect::TWOBITVALUE,
+                        double vdwScale = 0.8, double stepSize = 0.25,
+                        int maxLayers = -1, bool ignoreHs = true) {
+  return MolShapes::tverskyIndex(mol1, mol2, alpha, beta, confId1, confId2,
+                                 gridSpacing, bitsPerPoint, vdwScale, stepSize,
+                                 maxLayers, ignoreHs);
 }
 
 double tanimotoMolShapes(const ROMol &mol1, const ROMol &mol2, int confId1 = -1,
@@ -153,7 +154,7 @@ double protrudeMolShapes(const ROMol &mol1, const ROMol &mol2, int confId1 = -1,
                                      bitsPerPoint, vdwScale, stepSize,
                                      maxLayers, ignoreHs, allowReordering);
 }
-}
+}  // namespace RDKit
 
 BOOST_PYTHON_MODULE(rdShapeHelpers) {
   python::scope().attr("__doc__") =
@@ -210,14 +211,13 @@ BOOST_PYTHON_MODULE(rdShapeHelpers) {
 
   python::def(
       "ShapeTverskyIndex", RDKit::tverskyMolShapes,
-      (python::arg("mol1"), python::arg("mol2"), python::arg("alpha"), python::arg("beta"),
-       python::arg("confId1") = -1,
+      (python::arg("mol1"), python::arg("mol2"), python::arg("alpha"),
+       python::arg("beta"), python::arg("confId1") = -1,
        python::arg("confId2") = -1, python::arg("gridSpacing") = 0.5,
        python::arg("bitsPerPoint") = RDKit::DiscreteValueVect::TWOBITVALUE,
        python::arg("vdwScale") = 0.8, python::arg("stepSize") = 0.25,
        python::arg("maxLayers") = -1, python::arg("ignoreHs") = true),
       docString.c_str());
-
 
   docString =
       "Compute the shape tanimoto distance between two molecule based on a predefined alignment\n\

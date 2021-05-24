@@ -43,7 +43,8 @@ double RGroupDecompositionChromosome::score() {
   if (operationName != RgroupMutate) {
     decode();
   }
-  if (scoreMethod == FingerprintVariance && fingerprintVarianceScoreData.labelsToVarianceData.size() > 0 &&
+  if (scoreMethod == FingerprintVariance &&
+      fingerprintVarianceScoreData.labelsToVarianceData.size() > 0 &&
       operationName == RgroupMutate) {
     fitness = fingerprintVarianceScoreData.fingerprintVarianceGroupScore();
     // Uncomment the following line to check that the
@@ -81,7 +82,8 @@ void RGroupDecompositionChromosome::copyGene(
     const StringChromosomeBase<int, IntegerStringChromosomePolicy>& other) {
   StringChromosomeBase<int, IntegerStringChromosomePolicy>::copyGene(other);
   const auto& parent = static_cast<const RGroupDecompositionChromosome&>(other);
-  copyVarianceData(parent.fingerprintVarianceScoreData, fingerprintVarianceScoreData);
+  copyVarianceData(parent.fingerprintVarianceScoreData,
+                   fingerprintVarianceScoreData);
 }
 
 GaResult& GaResult::operator=(const GaResult& other) {
@@ -164,7 +166,7 @@ void RGroupGa::rGroupMutateOperation(
   child->setOperationName(RgroupMutate);
   child->decode();
 
-  auto &fingerprintVarianceScoreData = child->getFingerprintVarianceScoreData();
+  auto& fingerprintVarianceScoreData = child->getFingerprintVarianceScoreData();
   if (fingerprintVarianceScoreData.labelsToVarianceData.size() == 0) return;
 #ifdef DEBUG
   std::cerr << "RGroup mutate start" << std::endl;
@@ -184,12 +186,14 @@ void RGroupGa::rGroupMutateOperation(
     int parentValue = parentPermutation.at(pos);
     int childValue = childPermutation.at(pos);
     if (parentValue != childValue) {
-      fingerprintVarianceScoreData.removeVarianceData(pos, parentValue, matches, labels);
+      fingerprintVarianceScoreData.removeVarianceData(pos, parentValue, matches,
+                                                      labels);
 #ifdef DEBUG
       std::cerr << "After removing parent" << std::endl;
       fingerprintVarianceGroupScore(fingerprintVarianceScoreData);
 #endif
-      fingerprintVarianceScoreData.addVarianceData(pos, childValue, matches, labels);
+      fingerprintVarianceScoreData.addVarianceData(pos, childValue, matches,
+                                                   labels);
 #ifdef DEBUG
       std::cerr << "After adding child" << std::endl;
       fingerprintVarianceGroupScore(fingerprintVarianceScoreData);
@@ -304,7 +308,8 @@ vector<GaResult> RGroupGa::runBatch() {
 #ifndef RDK_TEST_MULTITHREADED
   if (gaParallelRuns) {
     gaParallelRuns = false;
-    BOOST_LOG(rdWarningLog) << "This RDKit build does not enable GA parallel runs" << std::endl;
+    BOOST_LOG(rdWarningLog)
+        << "This RDKit build does not enable GA parallel runs" << std::endl;
   }
 #endif
 

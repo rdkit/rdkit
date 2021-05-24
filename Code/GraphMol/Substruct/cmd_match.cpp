@@ -60,8 +60,8 @@ int main(int argc, char *argv[]) {
     for (i = matches.begin(); i != matches.end(); i++) {
       MatchVectType::iterator j;
       for (j = i->begin(); j != i->end(); j++) {
-        BOOST_LOG(rdInfoLog) << "\t" << j->first << " -> " << j->second
-                             << std::endl;
+        BOOST_LOG(rdInfoLog)
+            << "\t" << j->first << " -> " << j->second << std::endl;
       }
       BOOST_LOG(rdInfoLog) << std::endl;
     }

@@ -134,7 +134,7 @@ void Transform3D::Reflect() {
     }
   }
 }
-}
+}  // namespace RDGeom
 
 RDGeom::Transform3D operator*(const RDGeom::Transform3D &t1,
                               const RDGeom::Transform3D &t2) {

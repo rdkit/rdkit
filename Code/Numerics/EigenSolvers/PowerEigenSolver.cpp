@@ -99,5 +99,5 @@ bool powerEigenSolver(unsigned int numEig, DoubleSymmMatrix &mat,
   }
   return converged;
 }
-}
-}
+}  // namespace EigenSolvers
+}  // namespace RDNumeric

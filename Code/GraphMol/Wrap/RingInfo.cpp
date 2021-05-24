@@ -51,9 +51,10 @@ python::object bondRingFamilies(const RingInfo *self) {
 }
 #endif
 
-void addRing(RingInfo *self,python::object atomRing, python::object bondRing){
+void addRing(RingInfo *self, python::object atomRing, python::object bondRing) {
   unsigned int nAts = python::extract<unsigned int>(atomRing.attr("__len__")());
-  unsigned int nBnds = python::extract<unsigned int>(bondRing.attr("__len__")());
+  unsigned int nBnds =
+      python::extract<unsigned int>(bondRing.attr("__len__")());
   if (nAts != nBnds) {
     throw_value_error("list sizes must match");
   }
@@ -66,9 +67,9 @@ void addRing(RingInfo *self,python::object atomRing, python::object bondRing){
     aring[i] = python::extract<int>(atomRing[i])();
     bring[i] = python::extract<int>(bondRing[i])();
   }
-  self->addRing(aring,bring);
+  self->addRing(aring, bring);
 }
-}
+}  // namespace
 
 namespace RDKit {
 std::string classDoc = "contains information about a molecule's rings\n";
@@ -90,11 +91,14 @@ struct ringinfo_wrapper {
         .def("NumRelevantCycles", &RingInfo::numRelevantCycles)
         .def("AtomRingFamilies", atomRingFamilies)
         .def("BondRingFamilies", bondRingFamilies)
-        .def("AreRingFamiliesInitialized", &RingInfo::areRingFamiliesInitialized)
+        .def("AreRingFamiliesInitialized",
+             &RingInfo::areRingFamiliesInitialized)
 #endif
-        .def("AddRing", addRing, (python::arg("self"),python::arg("atomIds"),python::arg("bondIds")),
-         "Adds a ring to the set. Be very careful with this operation.");
+        .def("AddRing", addRing,
+             (python::arg("self"), python::arg("atomIds"),
+              python::arg("bondIds")),
+             "Adds a ring to the set. Be very careful with this operation.");
   };
 };
-}  // end of namespace
+}  // namespace RDKit
 void wrap_ringinfo() { RDKit::ringinfo_wrapper::wrap(); }

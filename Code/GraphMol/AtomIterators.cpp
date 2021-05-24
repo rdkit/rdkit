@@ -332,8 +332,8 @@ AromaticAtomIterator_<Atom_, Mol_>
   return *this;
 }
 template <class Atom_, class Mol_>
-AromaticAtomIterator_<Atom_, Mol_> AromaticAtomIterator_<Atom_, Mol_>::
-operator++(int) {
+AromaticAtomIterator_<Atom_, Mol_>
+AromaticAtomIterator_<Atom_, Mol_>::operator++(int) {
   AromaticAtomIterator_<Atom_, Mol_> res(*this);
   _pos = _findNext(_pos + 1);
   return res;
@@ -346,8 +346,8 @@ AromaticAtomIterator_<Atom_, Mol_>
   return *this;
 }
 template <class Atom_, class Mol_>
-AromaticAtomIterator_<Atom_, Mol_> AromaticAtomIterator_<Atom_, Mol_>::
-operator--(int) {
+AromaticAtomIterator_<Atom_, Mol_>
+AromaticAtomIterator_<Atom_, Mol_>::operator--(int) {
   AromaticAtomIterator_<Atom_, Mol_> res(*this);
   _pos = _findPrev(_pos - 1);
   return res;
@@ -542,8 +542,9 @@ MatchingAtomIterator_<Atom_, Mol_>::MatchingAtomIterator_(
 }
 
 template <class Atom_, class Mol_>
-MatchingAtomIterator_<Atom_, Mol_> &MatchingAtomIterator_<Atom_, Mol_>::
-operator=(const MatchingAtomIterator_<Atom_, Mol_> &other) {
+MatchingAtomIterator_<Atom_, Mol_>
+    &MatchingAtomIterator_<Atom_, Mol_>::operator=(
+        const MatchingAtomIterator_<Atom_, Mol_> &other) {
   if (this != &other) {
     _mol = other._mol;
     _pos = other._pos;
@@ -576,8 +577,8 @@ MatchingAtomIterator_<Atom_, Mol_>
   return *this;
 }
 template <class Atom_, class Mol_>
-MatchingAtomIterator_<Atom_, Mol_> MatchingAtomIterator_<Atom_, Mol_>::
-operator++(int) {
+MatchingAtomIterator_<Atom_, Mol_>
+MatchingAtomIterator_<Atom_, Mol_>::operator++(int) {
   MatchingAtomIterator_ res(*this);
   _pos = _findNext(_pos + 1);
   return res;
@@ -590,8 +591,8 @@ MatchingAtomIterator_<Atom_, Mol_>
   return *this;
 }
 template <class Atom_, class Mol_>
-MatchingAtomIterator_<Atom_, Mol_> MatchingAtomIterator_<Atom_, Mol_>::
-operator--(int) {
+MatchingAtomIterator_<Atom_, Mol_>
+MatchingAtomIterator_<Atom_, Mol_>::operator--(int) {
   MatchingAtomIterator_<Atom_, Mol_> res(*this);
   _pos = _findPrev(_pos - 1);
   return res;
@@ -639,4 +640,4 @@ template class QueryAtomIterator_<const Atom, const ROMol>;
 template class MatchingAtomIterator_<Atom, ROMol>;
 template class MatchingAtomIterator_<const Atom, const ROMol>;
 
-};  // end o' namespace
+};  // namespace RDKit

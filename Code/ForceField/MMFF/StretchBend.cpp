@@ -149,5 +149,5 @@ void StretchBendContrib::getGrad(double *pos, double *grad) const {
   g3[2] += c5 * (p32.z * d_forceConstants.second * angleTerm +
                  dCos_dS6 / (-sinTheta) * distTerm);
 }
-}
-}
+}  // namespace MMFF
+}  // namespace ForceFields

@@ -21,7 +21,7 @@
 #include <boost/lexical_cast.hpp>
 #include <boost/dynamic_bitset.hpp>
 #include <boost/tokenizer.hpp>
-typedef boost::tokenizer<boost::char_separator<char> > tokenizer;
+typedef boost::tokenizer<boost::char_separator<char>> tokenizer;
 
 #include <RDGeneral/BoostStartInclude.h>
 #include <boost/flyweight.hpp>
@@ -121,22 +121,22 @@ void calcCrippenDescriptors(const ROMol &mol, double &logp, double &mr,
   mol.setProp(common_properties::_crippenMR, mr, true);
 };
 
-
 double calcClogP(const ROMol &mol) {
-  double clogp,mr;
+  double clogp, mr;
   calcCrippenDescriptors(mol, clogp, mr);
   return clogp;
 }
 
 double calcMR(const ROMol &mol) {
-  double clogp,mr;
+  double clogp, mr;
   calcCrippenDescriptors(mol, clogp, mr);
   return mr;
 }
 
 typedef boost::flyweight<
     boost::flyweights::key_value<std::string, CrippenParamCollection>,
-    boost::flyweights::no_tracking> param_flyweight;
+    boost::flyweights::no_tracking>
+    param_flyweight;
 
 const CrippenParamCollection *CrippenParamCollection::getParams(
     const std::string &paramData) {
@@ -320,4 +320,4 @@ const std::string defaultParamData =
     "Me2	[#72,#73,#74,#75,#76,#77,#78,#79,#80]	-0.0025		\n";
 
 }  // end of namespace Descriptors
-}
+}  // namespace RDKit

@@ -26,8 +26,8 @@ Rule4b::Rule4b() = default;
 
 Rule4b::Rule4b(Descriptor ref) : d_ref{ref} {}
 
-std::vector<Descriptor>
-Rule4b::getReferenceDescriptors(const Node *node) const {
+std::vector<Descriptor> Rule4b::getReferenceDescriptors(
+    const Node *node) const {
   std::vector<Descriptor> result;
   auto prev = initialLevel(node);
   while (!prev.empty()) {
@@ -103,7 +103,6 @@ bool Rule4b::hasDescriptors(const Node *node) const {
   auto queue = std::list<const Node *>({node});
 
   for (const auto &node : queue) {
-
     if (node->getAux() != Descriptor::NONE) {
       return true;
     }
@@ -127,20 +126,20 @@ bool Rule4b::getReference(const std::vector<const Node *> &nodes,
   for (const auto &node : nodes) {
     auto desc = node->getAux();
     switch (desc) {
-    case Descriptor::NONE:
-      continue;
-    case Descriptor::R:
-    case Descriptor::M:
-    case Descriptor::seqCis:
-      ++right;
-      break;
-    case Descriptor::S:
-    case Descriptor::P:
-    case Descriptor::seqTrans:
-      ++left;
-      break;
-    default:
-      break;
+      case Descriptor::NONE:
+        continue;
+      case Descriptor::R:
+      case Descriptor::M:
+      case Descriptor::seqCis:
+        ++right;
+        break;
+      case Descriptor::S:
+      case Descriptor::P:
+      case Descriptor::seqTrans:
+        ++left;
+        break;
+      default:
+        break;
     }
   }
   if (right + left == 0) {
@@ -158,8 +157,8 @@ bool Rule4b::getReference(const std::vector<const Node *> &nodes,
   }
 }
 
-std::vector<std::vector<const Node *>>
-Rule4b::initialLevel(const Node *node) const {
+std::vector<std::vector<const Node *>> Rule4b::initialLevel(
+    const Node *node) const {
   return {{node}};
 }
 
@@ -201,8 +200,8 @@ std::vector<std::vector<const Node *>> Rule4b::getNextLevel(
   return nextLevel;
 }
 
-std::vector<const Node *>
-Rule4b::toNodeList(const std::vector<Edge *> &eqEdges) const {
+std::vector<const Node *> Rule4b::toNodeList(
+    const std::vector<Edge *> &eqEdges) const {
   std::vector<const Node *> eqNodes;
   eqNodes.reserve(eqEdges.size());
   for (const auto &edge : eqEdges) {
@@ -211,8 +210,8 @@ Rule4b::toNodeList(const std::vector<Edge *> &eqEdges) const {
   return eqNodes;
 }
 
-std::vector<PairList>
-Rule4b::newPairLists(const std::vector<Descriptor> &descriptors) const {
+std::vector<PairList> Rule4b::newPairLists(
+    const std::vector<Descriptor> &descriptors) const {
   std::vector<PairList> pairs;
   pairs.reserve(descriptors.size());
   for (Descriptor descriptor : descriptors) {
@@ -227,7 +226,6 @@ void Rule4b::fillPairs(const Node *beg, PairList &plist) const {
   auto queue = std::list<const Node *>({beg});
 
   for (const auto &node : queue) {
-
     plist.add(node->getAux());
     auto edges = node->getEdges();
     sorter.prioritize(node, edges);
@@ -297,5 +295,5 @@ Sort Rule4b::getRefSorter(const SequenceRule *replacement_rule) const {
   return {new_rules};
 }
 
-} // namespace CIPLabeler
-} // namespace RDKit
+}  // namespace CIPLabeler
+}  // namespace RDKit

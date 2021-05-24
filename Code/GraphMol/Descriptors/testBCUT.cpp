@@ -20,12 +20,11 @@
 using namespace RDKit;
 
 // from knuth.
-bool feq(float a, float b, float epsilon=1e-6)
-{
-    return fabs(a - b) <= ( (fabs(a) < fabs(b) ? fabs(b) : fabs(a)) * epsilon);
+bool feq(float a, float b, float epsilon = 1e-6) {
+  return fabs(a - b) <= ((fabs(a) < fabs(b) ? fabs(b) : fabs(a)) * epsilon);
 }
 
-void test1(){
+void test1() {
   BOOST_LOG(rdErrorLog) << "-------------------------------------" << std::endl;
   BOOST_LOG(rdErrorLog) << "    Basic BCUT tests." << std::endl;
 
@@ -44,27 +43,27 @@ void test1(){
 		   {31.111807418763107, 11.906469225329653, 1.5848247701762241, -1.5909887821270712, 2.0038391834918317, -1.3277290609201042, 7.422700514979134, 0.5941465179281992}
   };
 
-  for (size_t i=0; i<vec.size(); ++i) {
+  for (size_t i = 0; i < vec.size(); ++i) {
     std::unique_ptr<ROMol> m(SmilesToMol(vec[i]));
     auto bcut = Descriptors::BCUT2D(*m);
     TEST_ASSERT(bcut.size() == expected[i].size());
-    for(size_t j=0; j<bcut.size(); ++j) {
-      TEST_ASSERT(feq(bcut[j],expected[i][j]));
+    for (size_t j = 0; j < bcut.size(); ++j) {
+      TEST_ASSERT(feq(bcut[j], expected[i][j]));
     }
   }
   BOOST_LOG(rdErrorLog) << "  done" << std::endl;
 }
 
 void test2() {
-    BOOST_LOG(rdErrorLog) << "-------------------------------------" << std::endl;
-    BOOST_LOG(rdErrorLog) << "    Larger BCUT tests." << std::endl;
+  BOOST_LOG(rdErrorLog) << "-------------------------------------" << std::endl;
+  BOOST_LOG(rdErrorLog) << "    Larger BCUT tests." << std::endl;
 
-    std::string pathName = getenv("RDBASE");
-    std::string sdfName =
+  std::string pathName = getenv("RDBASE");
+  std::string sdfName =
       pathName + "/Code/GraphMol/Descriptors/test_data/bace_200_bcut.sdf";
-    
+
   RDKit::SDMolSupplier reader(sdfName, true, false);
-  while(!reader.atEnd()) {
+  while (!reader.atEnd()) {
     std::unique_ptr<RDKit::ROMol> m(reader.next());
     TEST_ASSERT(m.get());
     std::vector<double> bcuts = Descriptors::BCUT2D(*m);
@@ -79,7 +78,6 @@ void test2() {
     TEST_ASSERT(feq(bcuts[7], m->getProp<double>("bcut8")));
   }
 }
-
 
 int main() {
   RDLog::InitLogs();

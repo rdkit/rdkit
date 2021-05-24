@@ -13,4 +13,4 @@
 
 namespace RDCatalog {
 CatalogEntry::~CatalogEntry() {}
-}
+}  // namespace RDCatalog
