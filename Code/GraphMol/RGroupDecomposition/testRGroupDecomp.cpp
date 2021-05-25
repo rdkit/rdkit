@@ -2462,6 +2462,84 @@ C[*:2]
   }
 }
 
+void testAddExplicitHsOnAromaticHetatms() {
+  BOOST_LOG(rdInfoLog)
+      << "********************************************************\n";
+  BOOST_LOG(rdInfoLog) << "Test that explicit Hs on aromatic heteroatoms "
+                       << "are only added where needed" << std::endl;
+  {
+    std::vector<ROMOL_SPTR> mols(
+        {"c1nccc(C)c1F"_smiles, "c1nccc(C)c1"_smiles, "c1nccc(C)n1"_smiles});
+    auto core = "c1nccc(-C)[*:1]1"_smiles;
+    RGroupRows rows;
+    RGroupDecompositionParameters params;
+    params.allowNonTerminalRGroups = true;
+    RGroupDecomposition decomp(*core, params);
+    int n = 0;
+    for (const auto &m : mols) {
+      TEST_ASSERT(decomp.add(*m) == n++);
+    }
+    decomp.process();
+    rows = decomp.getRGroupsAsRows();
+    TEST_ASSERT(rows.size() == 3);
+    std::vector<std::string> expected{"Core:Cc1ccncc1[*:1] R1:F[*:1]",
+                                      "Core:Cc1ccncc1[*:1] R1:[H][*:1]",
+                                      "Core:Cc1ccncn1"};
+    size_t i = 0;
+    for (RGroupRows::const_iterator it = rows.begin(); it != rows.end(); ++it) {
+      CHECK_RGROUP(it, expected.at(i++));
+    }
+  }
+  {
+    std::vector<ROMOL_SPTR> mols({"c1[nH]cc(C)c1F"_smiles,
+                                  "c1[nH]cc(C)c1"_smiles,
+                                  "c1[nH]cc(C)n1"_smiles});
+    auto core = "c1[nH]cc(-C)[*:1]1"_smiles;
+    RGroupRows rows;
+    RGroupDecompositionParameters params;
+    params.allowNonTerminalRGroups = true;
+    RGroupDecomposition decomp(*core, params);
+    int n = 0;
+    for (const auto &m : mols) {
+      TEST_ASSERT(decomp.add(*m) == n++);
+    }
+    decomp.process();
+    rows = decomp.getRGroupsAsRows();
+    TEST_ASSERT(rows.size() == 3);
+    std::vector<std::string> expected{"Core:Cc1c[nH]cc1[*:1] R1:F[*:1]",
+                                      "Core:Cc1c[nH]cc1[*:1] R1:[H][*:1]",
+                                      "Core:Cc1c[nH]cn1"};
+    size_t i = 0;
+    for (RGroupRows::const_iterator it = rows.begin(); it != rows.end(); ++it) {
+      CHECK_RGROUP(it, expected.at(i++));
+    }
+  }
+  {
+    std::vector<ROMOL_SPTR> mols({"c1[nH]cc(C)c1F"_smiles,
+                                  "c1[nH]cc(C)c1"_smiles,
+                                  "c1[nH]cc(C)n1"_smiles});
+    auto core = "c1[*:1]cc(-C)[*:2]1"_smarts;
+    RGroupRows rows;
+    RGroupDecompositionParameters params;
+    params.allowNonTerminalRGroups = true;
+    RGroupDecomposition decomp(*core, params);
+    int n = 0;
+    for (const auto &m : mols) {
+      TEST_ASSERT(decomp.add(*m) == n++);
+    }
+    decomp.process();
+    rows = decomp.getRGroupsAsRows();
+    TEST_ASSERT(rows.size() == 3);
+    std::vector<std::string> expected{"Core:Cc1c[nH]cc1[*:2] R2:F[*:2]",
+                                      "Core:Cc1c[nH]cc1[*:2] R2:[H][*:2]",
+                                      "Core:Cc1c[nH]cn1"};
+    size_t i = 0;
+    for (RGroupRows::const_iterator it = rows.begin(); it != rows.end(); ++it) {
+      CHECK_RGROUP(it, expected.at(i++));
+    }
+  }
+}
+
 int main() {
   RDLog::InitLogs();
   boost::logging::disable_logs("rdApp.debug");
@@ -2509,6 +2587,7 @@ int main() {
   testNoTempLabels();
   testNoSideChains();
   testDoNotAddUnnecessaryRLabels();
+  testAddExplicitHsOnAromaticHetatms();
   BOOST_LOG(rdInfoLog)
       << "********************************************************\n";
   return 0;
