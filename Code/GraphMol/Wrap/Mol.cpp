@@ -33,6 +33,10 @@ namespace python = boost::python;
 
 namespace RDKit {
 
+void MolClearComputedPropsHelper(const ROMol &mol, bool includeRings) {
+  mol.clearComputedProps(includeRings);
+}
+
 python::object MolToBinary(const ROMol &self) {
   std::string res;
   {
@@ -712,7 +716,8 @@ struct mol_wrapper {
              "  ARGUMENTS:\n"
              "    - key: the name of the property to clear (a string).\n")
 
-        .def("ClearComputedProps", MolClearComputedProps<ROMol>,
+        .def("ClearComputedProps", MolClearComputedPropsHelper,
+             (python::arg("self"), python::arg("includeRings") = true),
              "Removes all computed properties from the molecule.\n\n")
 
         .def("UpdatePropertyCache", &ROMol::updatePropertyCache,
