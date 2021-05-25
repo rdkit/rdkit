@@ -19,6 +19,7 @@
 #include <GraphMol/SmilesParse/SmilesWrite.h>
 #include <GraphMol/SmilesParse/SmartsWrite.h>
 #include <boost/format.hpp>
+#include <limits>
 
 using namespace RDKit;
 #if 1
@@ -2034,4 +2035,14 @@ TEST_CASE("github #4127: SEGV in ROMol::getAtomDegree if atom is not in graph",
     takeOwnership = false;
     CHECK(mol3->addBond(mol2->getBondWithIdx(0), takeOwnership) == 1);
   }
+}
+
+TEST_CASE(
+    "github #4128: SEGV from unsigned integer overflow in "
+    "Conformer::setAtomPos",
+    "[graphmol]") {
+  Conformer conf;
+  RDGeom::Point3D pt(0, 0, 0);
+  CHECK_THROWS_AS(conf.setAtomPos(std::numeric_limits<unsigned>::max(), pt),
+                  ValueErrorException);
 }

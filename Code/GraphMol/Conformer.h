@@ -1,5 +1,5 @@
 //
-//  Copyright (C) 2001-2008 Greg Landrum and Rational Discovery LLC
+//  Copyright (C) 2001-2021 Greg Landrum and other RDKit contributors
 //
 //   @@ All Rights Reserved @@
 //  This file is part of the RDKit.
@@ -15,6 +15,7 @@
 #include <RDGeneral/types.h>
 #include <boost/smart_ptr.hpp>
 #include <RDGeneral/RDProps.h>
+#include <limits>
 
 namespace RDKit {
 class ROMol;
@@ -104,7 +105,9 @@ class RDKIT_GRAPHMOL_EXPORT Conformer : public RDProps {
 
   //! Set the position of the specified atom
   inline void setAtomPos(unsigned int atomId, const RDGeom::Point3D &position) {
-    // RANGE_CHECK(0,atomId,d_positions.size()-1);
+    if (atomId == std::numeric_limits<unsigned int>::max()) {
+      throw ValueErrorException("atom index overflow");
+    }
     if (atomId >= d_positions.size()) {
       d_positions.resize(atomId + 1, RDGeom::Point3D(0.0, 0.0, 0.0));
     }
