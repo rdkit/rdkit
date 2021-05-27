@@ -126,17 +126,17 @@ class RDKIT_CHEMREACTIONS_EXPORT ChemicalReaction : public RDProps {
     df_implicitProperties = other.df_implicitProperties;
     for (MOL_SPTR_VECT::const_iterator iter = other.beginReactantTemplates();
          iter != other.endReactantTemplates(); ++iter) {
-      ROMol *reactant = new ROMol(**iter);
+      RWMol *reactant = new RWMol(**iter);
       m_reactantTemplates.push_back(ROMOL_SPTR(reactant));
     }
     for (MOL_SPTR_VECT::const_iterator iter = other.beginProductTemplates();
          iter != other.endProductTemplates(); ++iter) {
-      ROMol *product = new ROMol(**iter);
+      RWMol *product = new RWMol(**iter);
       m_productTemplates.push_back(ROMOL_SPTR(product));
     }
     for (MOL_SPTR_VECT::const_iterator iter = other.beginAgentTemplates();
          iter != other.endAgentTemplates(); ++iter) {
-      ROMol *agent = new ROMol(**iter);
+      RWMol *agent = new RWMol(**iter);
       m_agentTemplates.push_back(ROMOL_SPTR(agent));
     }
     d_props = other.d_props;
