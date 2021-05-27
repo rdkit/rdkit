@@ -143,6 +143,19 @@ class TestCase(unittest.TestCase):
       self.assertAlmostEqual(npr1s[0], npr1s[i])
       self.assertAlmostEqual(npr2s[0], npr2s[i])
 
+  @unittest.skipIf(not haveDescrs3D, "3d descriptors not present")
+  def testGithub4167(self):
+    with Chem.SDMolSupplier(os.path.join(self.dataDir, 'github4167.sdf'), removeHs=False,
+                            sanitize=True) as suppl:
+      m1 = suppl[0]
+      m2 = suppl[1]
+    m1.AddConformer(Chem.Conformer(m2.GetConformer()), assignId=True)
+    v1_0 = rdMD.CalcSpherocityIndex(m1)
+    v1_1 = rdMD.CalcSpherocityIndex(m1, confId=1, force=True)
+    v2 = rdMD.CalcSpherocityIndex(m2)
+    self.assertNotEqual(v1_0, v1_1)
+    self.assertEqual(v1_1, v2)
+
 
 if (__name__ == '__main__'):
   unittest.main()
