@@ -62,7 +62,6 @@ class JSMol {
   std::string get_new_coords() const { return get_new_coords(false); };
   std::string remove_hs() const;
   std::string add_hs() const;
-  bool merge_hs_as_queries();
 
   std::unique_ptr<RDKit::RWMol> d_mol;
   static constexpr unsigned int d_defaultWidth = 250;

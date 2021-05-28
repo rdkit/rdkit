@@ -70,6 +70,7 @@ RWMol *mol_from_input(const std::string &input,
   bool sanitize = true;
   bool kekulize = true;
   bool removeHs = true;
+  bool mergeQueryHs = false;
   RWMol *res = nullptr;
   boost::property_tree::ptree pt;
   if (!details_json.empty()) {
@@ -79,6 +80,7 @@ RWMol *mol_from_input(const std::string &input,
     LPT_OPT_GET(sanitize);
     LPT_OPT_GET(kekulize);
     LPT_OPT_GET(removeHs);
+    LPT_OPT_GET(mergeQueryHs);
   }
   try {
     if (input.find("M  END") != std::string::npos) {
@@ -119,6 +121,9 @@ RWMol *mol_from_input(const std::string &input,
         MolOps::sanitizeMol(*res, failedOp, sanitizeOps);
       }
       MolOps::assignStereochemistry(*res, true, true, true);
+      if (mergeQueryHs) {
+        MolOps::mergeQueryHs(*res);
+      }
     } catch (...) {
       delete res;
       res = nullptr;

@@ -16,7 +16,6 @@ const {
 var initRDKitModule = require("../demo/RDKit_minimal.js");
 var RDKitModule;
 const fs       = require('fs');
-const zlib     = require('zlib');
 const readline = require('readline');
 
 // the goal here isn't to be comprehensive (the RDKit has tests for that),
@@ -168,20 +167,21 @@ function test_abbreviations() {
     assert.equal(bmol.get_cxsmiles(),"*C1CCC1 |$CF3;;;;$|");
 }
 
-function test_substruct_library(done){
+function test_substruct_library(done) {
+    done.test_substruct_library = false;
     var smiReader = readline.createInterface({
         input: fs.createReadStream(__dirname + '/../../GraphMol/test_data/compounds.smi')
     });
     var sslib = new RDKitModule.SubstructLibrary();
-    var t0 = performance.now()
-    console.log('Started adding trusted SMILES');
+    // var t0 = performance.now()
+    // console.log('Started adding trusted SMILES');
     smiReader.on('line', (smi) => {
         sslib.add_trusted_smiles(smi);
     });
     smiReader.on('close', () => {
-        var t1 = performance.now();
         var query = RDKitModule.get_qmol("N");
-        console.log('Finished adding trusted SMILES took ' + (t1 - t0) / 1000 + ' seconds');
+        // var t1 = performance.now();
+        // console.log('Finished adding trusted SMILES took ' + (t1 - t0) / 1000 + ' seconds');
         assert.equal(sslib.count_matches(query), 52);
         assert.equal(sslib.get_matches(query), JSON.stringify([
             12,13,19,22,24,30,31,32,35,36,39,41,43,44,55,56,58,64,72,80,
@@ -218,7 +218,7 @@ M  END`);
     assert.equal(sslib.get_matches(query), JSON.stringify([0, 1]));
     var query_hs = RDKitModule.get_mol(query.add_hs());
     assert.equal(sslib.get_matches(query_hs), JSON.stringify([]));
-    query_hs.merge_hs_as_queries();
+    query_hs = RDKitModule.get_mol(query_hs.get_molblock(), JSON.stringify({ mergeQueryHs: true }));
     assert.equal(sslib.get_matches(query_hs), JSON.stringify([0]));
 }
 
@@ -404,9 +404,7 @@ function test_get_mol_no_kekulize() {
 
 
 initRDKitModule().then(function(instance) {
-    var done = {
-        test_substruct_library: false,
-    };
+    var done = {};
     const waitAllTestsFinished = () => {
         const poll = resolve => {
             if (Object.values(done).every(v => v)) {

@@ -17,8 +17,6 @@
 #include <GraphMol/RDKitBase.h>
 #include <GraphMol/MolPickler.h>
 #include <GraphMol/SmilesParse/SmilesParse.h>
-#include <GraphMol/SmilesParse/SmilesParse.h>
-#include <GraphMol/SmilesParse/SmartsWrite.h>
 #include <GraphMol/FileParsers/FileParsers.h>
 #include <GraphMol/MolDraw2D/MolDraw2D.h>
 #include <GraphMol/MolDraw2D/MolDraw2DSVG.h>
@@ -255,12 +253,6 @@ std::string JSMol::add_hs() const {
   return MolToMolBlock(molCopy, includeStereo, confId, kekulize);
 }
 
-bool JSMol::merge_hs_as_queries() {
-  if (!d_mol) return false;
-  MolOps::mergeQueryHs(*d_mol);
-  return true;
-}
-
 std::string JSMol::condense_abbreviations(double maxCoverage, bool useLinkers) {
   if (!d_mol) return "";
   if (!useLinkers) {
@@ -339,10 +331,11 @@ JSSubstructLibrary::JSSubstructLibrary(unsigned int num_bits)
 }
 
 int JSSubstructLibrary::add_trusted_smiles(const std::string &smi) {
-  std::unique_ptr<RWMol> mol(SmilesToMol(smi));
+  std::unique_ptr<RWMol> mol(SmilesToMol(smi, 0, false));
   if (!mol) {
     return -1;
   }
+  mol->updatePropertyCache();
   ExplicitBitVect *bv = PatternFingerprintMol(*mol, d_num_bits);
   if (!bv) {
     return -1;

@@ -151,8 +151,7 @@ EMSCRIPTEN_BINDINGS(RDKit_minimal) {
                 select_overload<std::string(double, bool)>(
                     &JSMol::condense_abbreviations))
       .function("add_hs", &JSMol::add_hs)
-      .function("remove_hs", &JSMol::remove_hs)
-      .function("merge_hs_as_queries", &JSMol::merge_hs_as_queries);
+      .function("remove_hs", &JSMol::remove_hs);
 
   class_<JSSubstructLibrary>("SubstructLibrary")
       .constructor<>()
