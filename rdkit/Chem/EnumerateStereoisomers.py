@@ -324,7 +324,7 @@ def EnumerateStereoisomers(m, options=StereoEnumerationOptions(), verbose=False)
       flippers[i].flip(flag)
     isomer = Chem.Mol(tm)
     Chem.SetDoubleBondNeighborDirections(isomer)
-    isomer.ClearComputedProps()
+    isomer.ClearComputedProps(includeRings=False)
 
     Chem.AssignStereochemistry(isomer, cleanIt=True, force=True, flagPossibleStereoCenters=True)
     if options.unique:

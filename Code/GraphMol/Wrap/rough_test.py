@@ -6560,6 +6560,19 @@ CAS<~>
     self.assertEqual(m.GetSubstructMatch(q), ())
     self.assertEqual(m.GetSubstructMatches(q), ())
 
+  def testGithub4144(self):
+    ''' the underlying problem with #4144 was that the 
+    includeRings argument could not be passed to ClearComputedProps() 
+    from Python. Make sure that's fixed
+    '''
+    m = Chem.MolFromSmiles('c1ccccc1')
+    self.assertEqual(m.GetRingInfo().NumRings(), 1)
+    m.ClearComputedProps(includeRings=False)
+    self.assertEqual(m.GetRingInfo().NumRings(), 1)
+    m.ClearComputedProps()
+    with self.assertRaises(RuntimeError):
+      m.GetRingInfo().NumRings()
+
 
 if __name__ == '__main__':
   if "RDTESTCASE" in os.environ:
