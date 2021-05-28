@@ -68,10 +68,7 @@ static constexpr unsigned int d_defaultHeight = 200;
 RWMol *mol_from_input(const std::string &input,
                       const std::string &details_json = "") {
   bool sanitize = true;
-<<<<<<< HEAD
   bool kekulize = true;
-=======
->>>>>>> upstream/master
   bool removeHs = true;
   RWMol *res = nullptr;
   boost::property_tree::ptree pt;
@@ -80,10 +77,7 @@ RWMol *mol_from_input(const std::string &input,
     ss.str(details_json);
     boost::property_tree::read_json(ss, pt);
     LPT_OPT_GET(sanitize);
-<<<<<<< HEAD
     LPT_OPT_GET(kekulize);
-=======
->>>>>>> upstream/master
     LPT_OPT_GET(removeHs);
   }
   try {
@@ -117,16 +111,12 @@ RWMol *mol_from_input(const std::string &input,
   if (res) {
     try {
       if (sanitize) {
-<<<<<<< HEAD
         unsigned int failedOp;
         unsigned int sanitizeOps = MolOps::SANITIZE_ALL;
         if (!kekulize) {
           sanitizeOps ^= MolOps::SANITIZE_KEKULIZE;
         }
         MolOps::sanitizeMol(*res, failedOp, sanitizeOps);
-=======
-        MolOps::sanitizeMol(*res);
->>>>>>> upstream/master
       }
       MolOps::assignStereochemistry(*res, true, true, true);
     } catch (...) {
@@ -147,10 +137,6 @@ RWMol *mol_from_input(const std::string &input, const char *details_json) {
 RWMol *qmol_from_input(const std::string &input,
                        const std::string &details_json = "") {
   RWMol *res = nullptr;
-<<<<<<< HEAD
-=======
-  bool sanitize = false;
->>>>>>> upstream/master
   bool removeHs = true;
   boost::property_tree::ptree pt;
   if (!details_json.empty()) {
@@ -158,10 +144,6 @@ RWMol *qmol_from_input(const std::string &input,
     std::istringstream ss;
     ss.str(details_json);
     boost::property_tree::read_json(ss, pt);
-<<<<<<< HEAD
-=======
-    LPT_OPT_GET(sanitize);
->>>>>>> upstream/master
     LPT_OPT_GET(removeHs);
   }
   if (input.find("M  END") != std::string::npos) {
@@ -428,8 +410,4 @@ std::unique_ptr<RWMol> do_fragment_parent(RWMol &mol,
 }  // namespace MinimalLib
 }  // namespace RDKit
 #undef LPT_OPT_GET
-<<<<<<< HEAD
 #undef LPT_OPT_GET2
-=======
-#undef LPT_OPT_GET2
->>>>>>> upstream/master
