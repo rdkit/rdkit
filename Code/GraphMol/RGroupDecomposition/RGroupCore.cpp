@@ -49,9 +49,8 @@ void RCore::findIndicesWithRLabel() {
 // the respective matching atom in mol, while other atoms have
 // their aromatic flag and formal charge copied from from
 // the respective matching atom in mol
-ROMOL_SPTR RCore::replaceCoreAtomsWithMolMatches(bool &hasCoreDummies,
-                                          const ROMol &mol,
-                                          const MatchVectType &match) const {
+ROMOL_SPTR RCore::replaceCoreAtomsWithMolMatches(
+    bool &hasCoreDummies, const ROMol &mol, const MatchVectType &match) const {
   auto coreReplacedAtoms = boost::make_shared<RWMol>(*core);
   hasCoreDummies = false;
   for (const auto &p : match) {
@@ -76,7 +75,7 @@ ROMOL_SPTR RCore::replaceCoreAtomsWithMolMatches(bool &hasCoreDummies,
         // this can happen if we have a user-defined R group that is not
         // matched in the query
         CHECK_INVARIANT(bond->getBeginAtom()->getAtomicNum() == 0 ||
-                        bond->getEndAtom()->getAtomicNum() == 0,
+                            bond->getEndAtom()->getAtomicNum() == 0,
                         "Failed to find core bond in molecule");
       } else {
         Bond newBond(molBond->getBondType());
@@ -88,8 +87,8 @@ ROMOL_SPTR RCore::replaceCoreAtomsWithMolMatches(bool &hasCoreDummies,
 
 #ifdef VERBOSE
   std::cerr << "Original core smarts  " << MolToSmarts(*core) << std::endl;
-    std::cerr << "Dummy replaced core smarts  "
-              << MolToSmarts(*coreReplacedAtoms) << std::endl;
+  std::cerr << "Dummy replaced core smarts  " << MolToSmarts(*coreReplacedAtoms)
+            << std::endl;
 #endif
   return coreReplacedAtoms;
 }
@@ -115,7 +114,7 @@ void RCore::replaceCoreAtom(RWMol &mol, Atom &atom, const Atom &other) const {
     unsigned int numHs = 0;
     const auto &otherMol = other.getOwningMol();
     for (const auto &nbri :
-        boost::make_iterator_range(otherMol.getAtomNeighbors(&other))) {
+         boost::make_iterator_range(otherMol.getAtomNeighbors(&other))) {
       const auto nbrAtom = otherMol[nbri];
       if (nbrAtom->getAtomicNum() == 1) {
         ++numHs;
@@ -125,7 +124,6 @@ void RCore::replaceCoreAtom(RWMol &mol, Atom &atom, const Atom &other) const {
     targetAtom->updatePropertyCache(false);
   }
 }
-
 
 // Final core returned to user with dummy atoms and bonds set to those in the
 // match
@@ -158,16 +156,16 @@ RWMOL_SPTR RCore::coreWithMatches(const ROMol &coreReplacedAtoms) const {
 }
 
 // matching the core to the target molecule is a two step process
-// First match to a reduced representation (the core minus terminal user R-groups).
-// Next, match the R-groups.
-// We do this as the core may not be a substructure match for the molecule if
-// a single molecule atom matches 2 terminal user defined RGroup attachments
-// (see https://github.com/rdkit/rdkit/pull/4002)
-// buildMatchingMol() creates the reduced representation from the core and
-// matchTerminalUserRGroups() adds in the terminal R Groups to the match
+// First match to a reduced representation (the core minus terminal user
+// R-groups). Next, match the R-groups. We do this as the core may not be a
+// substructure match for the molecule if a single molecule atom matches 2
+// terminal user defined RGroup attachments (see
+// https://github.com/rdkit/rdkit/pull/4002) buildMatchingMol() creates the
+// reduced representation from the core and matchTerminalUserRGroups() adds in
+// the terminal R Groups to the match
 
-// Builds a matching molecule which is the core with terminal user R groups removed
-// Also creates the data structures used in matching the R groups
+// Builds a matching molecule which is the core with terminal user R groups
+// removed Also creates the data structures used in matching the R groups
 void RCore::buildMatchingMol() {
   matchingMol = boost::make_shared<RWMol>(*core);
   terminalRGroupAtomsWithUserLabels.clear();
@@ -192,8 +190,8 @@ void RCore::buildMatchingMol() {
   }
 }
 
-// Given a matching molecule substructure match to a target molecule, return core
-// matches with terminal user R groups matched
+// Given a matching molecule substructure match to a target molecule, return
+// core matches with terminal user R groups matched
 std::vector<MatchVectType> RCore::matchTerminalUserRGroups(
     const RWMol &target, MatchVectType match) const {
   // Transform match indexed by matching molecule atoms to a map
@@ -222,8 +220,8 @@ std::vector<MatchVectType> RCore::matchTerminalUserRGroups(
 
   // User R groups that can possibly be incorporated into the match
   std::vector<int> dummiesWithMapping;
-  // For each of those user R groups in dummiesWithMapping list of possible target
-  // atoms that the R group can map to
+  // For each of those user R groups in dummiesWithMapping list of possible
+  // target atoms that the R group can map to
   std::vector<std::vector<int>> availableMappingsForDummy;
 
   SubstructMatchParameters ssParameters;
