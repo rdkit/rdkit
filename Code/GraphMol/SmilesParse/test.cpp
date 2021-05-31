@@ -4340,27 +4340,23 @@ void testOSSFuzzFailures() {
 }
 
 void testGithub3967() {
-  RWMol *mol;
-  std::string smi;
-
   BOOST_LOG(rdInfoLog) << "-------------------------------------" << std::endl;
-  BOOST_LOG(rdInfoLog) << "Testing Github Issue 3967: Double bond stereo gets flipped by SMILES reader/writer"
+  BOOST_LOG(rdInfoLog) << "Testing Github Issue 3967: Double bond stereo gets "
+                          "flipped by SMILES reader/writer"
                        << std::endl;
 
-  smi = "C=c1s/c2n(c1=O)CCCCCCC\\N=2";
-  mol = SmilesToMol(smi, 1);
-  TEST_ASSERT(mol);
-  smi = MolToSmiles(*mol);
-  TEST_ASSERT(smi == "C=c1s/c2n(c1=O)CCCCCCC\\N=2");
-  delete mol;
-
-  smi = "C1=C\\C/C=C2C3=C/C/C=C\\C=C/C\\3C\\2\\C=C/1";
-  mol = SmilesToMol(smi, 1);
-  TEST_ASSERT(mol);
-  smi = MolToSmiles(*mol);
-  TEST_ASSERT(smi == "C1=C\\C/C=C2C3=C/C/C=C\\C=C/C\\3C\\2\\C=C/1");
-  delete mol;
-
+  {
+    auto mol = "C=c1s/c2n(c1=O)CCCCCCC\\N=2"_smiles;
+    TEST_ASSERT(mol);
+    auto smi = MolToSmiles(*mol);
+    TEST_ASSERT(smi == "C=c1s/c2n(c1=O)CCCCCCC\\N=2");
+  }
+  {
+    auto mol = "C1=C\\C/C=C2C3=C/C/C=C\\C=C/C\\3C\\2\\C=C/1"_smiles;
+    TEST_ASSERT(mol);
+    auto smi = MolToSmiles(*mol);
+    TEST_ASSERT(smi == "C1=C\\C/C=C2C3=C/C/C=C\\C=C/C\\3C\\2\\C=C/1");
+  }
   BOOST_LOG(rdInfoLog) << "\tdone" << std::endl;
 }
 
