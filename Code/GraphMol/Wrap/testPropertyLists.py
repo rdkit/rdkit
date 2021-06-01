@@ -101,7 +101,7 @@ $$$$"""
         self.assertTrue(m.HasProp("atom.prop.PartiallyMissing"))
         self.assertEqual(m.GetProp("atom.prop.PartiallyMissing"),"[?] one ? three")
 
-    def testGithubPR4160():
+    def testGithubPR4160(self):
         # this shouldn't fail with a bad any cast anymore
         from rdkit import Chem
         m = Chem.MolFromSmiles("CC")
