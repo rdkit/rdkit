@@ -11,6 +11,7 @@
 #include <iostream>
 #include <fstream>
 #include <cmath>
+#include <boost/any.hpp>
 
 using namespace RDKit;
 
@@ -252,6 +253,30 @@ void testPickleBinaryString() {
   BOOST_LOG(rdErrorLog) << "..done" << std::endl;
 }
 
+void testIntConversions() {
+     RDProps p;
+     p.setProp<int>("foo", 1);
+     p.getProp<std::int64_t>("foo");
+     p.getProp<std::int8_t>("foo");
+     p.getProp<std::int16_t>("foo");
+    try {
+        p.getProp<std::uint16_t>("foo");
+        TEST_ASSERT(0);
+    }
+    catch (boost::bad_any_cast) {
+    }
+    
+    p.setProp<unsigned int>("foo", 1);
+    p.getProp<std::uint64_t>("foo");
+    p.getProp<std::uint8_t>("foo");
+    p.getProp<std::uint16_t>("foo");
+    try {
+        p.getProp<std::int16_t>("foo");
+        TEST_ASSERT(0);
+    }
+    catch (boost::bad_any_cast) {
+    }
+}
 int main() {
   std::cerr << "-- running tests -- " << std::endl;
   testPOD();
@@ -260,4 +285,5 @@ int main() {
   testNaN();
   testPropertyPickler();
   testPickleBinaryString();
+  testIntConversions();
 }
