@@ -10,6 +10,7 @@
 
 #define NO_IMPORT_ARRAY
 #include <boost/python.hpp>
+#include <boost/python/stl_iterator.hpp>
 #include <boost/python/suite/indexing/vector_indexing_suite.hpp>
 #include <string>
 
@@ -23,6 +24,16 @@ namespace python = boost::python;
 namespace RDKit {
 
 namespace {
+
+  template< typename T >
+  inline
+  std::vector< T > to_std_vector( const python::object& iterable )
+  {
+    return std::vector< T >( python::stl_input_iterator< T >( iterable ),
+                             python::stl_input_iterator< T >( ) );
+  }
+
+
 SubstanceGroup *getMolSubstanceGroupWithIdx(ROMol &mol, unsigned int idx) {
   auto &sgs = getSubstanceGroups(mol);
   if (idx >= sgs.size()) {
@@ -88,6 +99,21 @@ python::tuple getAttachPointsHelper(const SubstanceGroup &self) {
   }
   return python::tuple(res);
 }
+
+
+void SetAtomsHelper(SubstanceGroup &self, const python::object& iterable) {
+  self.setAtoms(to_std_vector<unsigned int>(iterable));
+}
+
+void SetParentAtomsHelper(SubstanceGroup &self, const python::object& iterable) {
+  self.setParentAtoms(to_std_vector<unsigned int>(iterable));
+}
+
+void SetBondsHelper(SubstanceGroup &self, const python::object& iterable) {
+  self.setBonds(to_std_vector<unsigned int>(iterable));
+}
+
+
 }  // namespace
 
 std::string sGroupClassDoc =
@@ -133,6 +159,18 @@ struct sgroup_wrap {
              "returns a list of the indices of the bonds in this "
              "SubstanceGroup",
              python::return_value_policy<python::copy_const_reference>())
+        .def("SetAtoms", SetAtomsHelper,
+             "Set the list of the indices of the atoms in this "
+             "SubstanceGroup.\nNote that this does not update "
+             "properties, CStates or Attachment Points.")
+        .def("SetParentAtoms", SetParentAtomsHelper,
+             "Set the list of the indices of the parent atoms in this "
+             "SubstanceGroup.\nNote that this does not update "
+             "properties, CStates or Attachment Points.")
+        .def("SetBonds", SetBondsHelper,
+             "Set the list of the indices of the bonds in this "
+             "SubstanceGroup.\nNote that this does not update "
+             "properties, CStates or Attachment Points.")
         .def("AddAtomWithIdx", &SubstanceGroup::addAtomWithIdx)
         .def("AddBondWithIdx", &SubstanceGroup::addBondWithIdx)
         .def("AddParentAtomWithIdx", &SubstanceGroup::addParentAtomWithIdx)
