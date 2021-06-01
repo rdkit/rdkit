@@ -100,11 +100,18 @@ int RGroupDecomposition::add(const ROMol &inmol) {
       const bool uniquify = false;
       const bool recursionPossible = true;
       const bool useChirality = true;
+      // matching the core to the molecule is a two step process
+      // First match to a reduced representation (the core minus terminal
+      // R-groups). Next, match the R-groups. We do this as the core may not be
+      // a substructure match for the molecule if a single molecule atom matches
+      // 2 RGroup attachments (see https://github.com/rdkit/rdkit/pull/4002)
       std::vector<MatchVectType> baseMatches;
+      // match reduced representation
       SubstructMatch(mol, *core.second.matchingMol, baseMatches, uniquify,
                      recursionPossible, useChirality);
       tmatches.clear();
       for (const auto &baseMatch : baseMatches) {
+        // Match the R Groups
         auto matchesWithDummy =
             core.second.matchTerminalUserRGroups(mol, baseMatch);
         tmatches.insert(tmatches.end(), matchesWithDummy.cbegin(),
