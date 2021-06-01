@@ -4352,6 +4352,7 @@ void MolDraw2D::drawArrow(const Point2D &arrowBegin, const Point2D &arrowEnd,
 // ****************************************************************************
 void MolDraw2D::tabulaRasa() {
   scale_ = 1.0;
+  text_drawer_->setFontScale(1.0);
   x_trans_ = y_trans_ = 0.0;
   x_offset_ = y_offset_ = 0;
   d_metadata.clear();

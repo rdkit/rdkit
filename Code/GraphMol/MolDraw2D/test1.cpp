@@ -3539,6 +3539,46 @@ void testGithub3391() {
   std::cerr << "Done" << std::endl;
 }
 
+void testGithub4156() {
+  std::cout << " ----------------- Test Github 4156 - bad scale for radicals in grid"
+            << std::endl;
+  auto m1 = "C1[CH]C1[C@H](F)C1CCC1"_smiles;
+  auto m2 = "F[C@H]1CC[C@H](O)CC1"_smiles;
+
+  {
+    std::vector<ROMol *> mols;
+    mols.push_back(m1.get());
+    mols.push_back(m2.get());
+    MolDraw2DSVG drawer(500, 200, 250, 200);
+    drawer.drawMolecules(mols);
+    drawer.finishDrawing();
+    std::string text = drawer.getDrawingText();
+    std::ofstream outs("testGithub4156_1.svg");
+    outs << text;
+    outs.flush();
+    // this is the start of the radical spot.
+    TEST_ASSERT(text.find("<path d='M 58.8277,79.4854 L 58.8245,79.4119") !=
+                std::string::npos);
+  }
+  {
+    std::vector<ROMol *> mols;
+    mols.push_back(m2.get());
+    mols.push_back(m1.get());
+    MolDraw2DSVG drawer(500, 200, 250, 200);
+    drawer.drawMolecules(mols);
+    drawer.finishDrawing();
+    std::string text = drawer.getDrawingText();
+    std::ofstream outs("testGithub4156_2.svg");
+    outs << text;
+    outs.flush();
+    // this is the start of the radical spot.
+    TEST_ASSERT(text.find("<path d='M 308.828,79.4854 L 308.825,79.4119") !=
+                std::string::npos);
+  }
+
+  std::cerr << " Done" << std::endl;
+}
+
 int main() {
 #ifdef RDK_BUILD_COORDGEN_SUPPORT
   RDDepict::preferCoordGen = false;
@@ -3592,5 +3632,6 @@ int main() {
   testGithub3112();
   testGithub3305();
   testGithub3391();
+  testGithub4156();
 #endif
 }
