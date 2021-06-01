@@ -690,6 +690,7 @@ void test6() {
     std::ofstream outs("test6_2.svg");
     outs << txt;
     outs.close();
+    std::cout << txt << std::endl;
     // start of bond-0
     TEST_ASSERT(
         txt.find("<path class='bond-0 atom-0 atom-1' d='M 273.606,147.528") !=
