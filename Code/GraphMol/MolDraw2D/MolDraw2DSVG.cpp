@@ -56,6 +56,10 @@ void outputMetaData(const t_obj *obj, std::ostream &d_os,
     d_os << " " << prop.substr(10) << "=\"" << value << "\"";
   }
 }
+std::string formatDouble(double val) {
+  return str(boost::format("%.1f") % val);
+}
+
 }  // namespace
 
 std::string DrawColourToSVG(const DrawColour &col) {
@@ -246,10 +250,11 @@ void MolDraw2DSVG::drawLine(const Point2D &cds1, const Point2D &cds2) {
   }
   d_os << "<path ";
   outputClasses();
-  d_os << "d='M " << c1.x << "," << c1.y << " L " << c2.x << "," << c2.y
+  d_os << "d='M " << formatDouble(c1.x) << "," << formatDouble(c1.y)
+       << " L " << formatDouble(c2.x) << "," << formatDouble(c2.y)
        << "' ";
   d_os << "style='fill:none;fill-rule:evenodd;stroke:" << col
-       << ";stroke-width:" << boost::format("%.1f") % width
+       << ";stroke-width:" << formatDouble(width)
        << "px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1"
        << dashString << "'";
   d_os << " />\n";
@@ -266,10 +271,10 @@ void MolDraw2DSVG::drawPolygon(const std::vector<Point2D> &cds) {
   outputClasses();
   d_os << "d='M";
   Point2D c0 = getDrawCoords(cds[0]);
-  d_os << " " << c0.x << "," << c0.y;
+  d_os << " " << formatDouble(c0.x) << "," << formatDouble(c0.y);
   for (unsigned int i = 1; i < cds.size(); ++i) {
     Point2D ci = getDrawCoords(cds[i]);
-    d_os << " L " << ci.x << "," << ci.y;
+    d_os << " L " << formatDouble(ci.x) << "," << formatDouble(ci.y);
   }
   if (fillPolys()) {
     // the Z closes the path which we don't want for unfilled polygons
@@ -279,7 +284,7 @@ void MolDraw2DSVG::drawPolygon(const std::vector<Point2D> &cds) {
     d_os << "' style='fill:none;";
   }
 
-  d_os << "stroke:" << col << ";stroke-width:" << boost::format("%.1f") % width
+  d_os << "stroke:" << col << ";stroke-width:" << formatDouble(width)
        << "px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:"
        << colour().a << ";" << dashString << "'";
   d_os << " />\n";
@@ -300,10 +305,10 @@ void MolDraw2DSVG::drawEllipse(const Point2D &cds1, const Point2D &cds2) {
   double width = getDrawLineWidth();
   std::string dashString = "";
   d_os << "<ellipse"
-       << " cx='" << cx << "'"
-       << " cy='" << cy << "'"
-       << " rx='" << w / 2 << "'"
-       << " ry='" << h / 2 << "' ";
+       << " cx='" << formatDouble(cx) << "'"
+       << " cy='" << formatDouble(cy) << "'"
+       << " rx='" << formatDouble(w / 2) << "'"
+       << " ry='" << formatDouble(h / 2) << "' ";
   outputClasses();
   d_os << " style='";
   if (fillPolys()) {
@@ -323,8 +328,10 @@ void MolDraw2DSVG::clearDrawing() {
   std::string col = DrawColourToSVG(drawOptions().backgroundColour);
   d_os << "<rect";
   d_os << " style='opacity:1.0;fill:" << col << ";stroke:none'";
-  d_os << " width='" << width() << "' height='" << height() << "'";
-  d_os << " x='" << offset().x << "' y='" << offset().y << "'";
+  d_os << " width='" << formatDouble(width())
+       << "' height='" << formatDouble(height()) << "'";
+  d_os << " x='" << formatDouble(offset().x)
+       << "' y='" << formatDouble(offset().y) << "'";
   d_os << "> </rect>\n";
 }
 
@@ -355,11 +362,11 @@ void MolDraw2DSVG::addMoleculeMetadata(const ROMol &mol, int confId) const {
     } else {
       dpos = getDrawCoords(dpos);
     }
-    d_os << " drawing-x=\"" << dpos.x << "\""
-         << " drawing-y=\"" << dpos.y << "\"";
-    d_os << " x=\"" << pos.x << "\""
-         << " y=\"" << pos.y << "\""
-         << " z=\"" << pos.z << "\"";
+    d_os << " drawing-x=\"" << formatDouble(dpos.x) << "\""
+         << " drawing-y=\"" << formatDouble(dpos.y) << "\"";
+    d_os << " x=\"" << formatDouble(pos.x) << "\""
+         << " y=\"" << formatDouble(pos.y) << "\""
+         << " z=\"" << formatDouble(pos.z) << "\"";
 
     outputMetaData(atom, d_os, d_activeClass);
 
@@ -407,39 +414,41 @@ void MolDraw2DSVG::tagAtoms(const ROMol &mol, double radius,
       const auto midp = (a1pos + a2pos) / 2;
       // from begin to mid
       d_os << "<path "
-           << " d='M " << a1pos.x << "," << a1pos.y << " L " << midp.x << ","
-           << midp.y << "'";
+           << " d='M " << formatDouble(a1pos.x)
+           << "," << formatDouble(a1pos.y)
+           << " L " << formatDouble(midp.x) << ","
+           << formatDouble(midp.y) << "'";
       d_os << " class='bond-selector bond-" << this_idx << " atom-" << a_idx1;
       outputTagClasses(bond, d_os, d_activeClass);
       d_os << "'";
       d_os << " style='fill:#fff;stroke:#fff;stroke-width:"
-           << boost::format("%.1f") % width
+           << formatDouble(width)
            << "px;fill-opacity:0;"
               "stroke-opacity:0' ";
       d_os << "/>\n";
       // mid to end
       d_os << "<path "
-           << " d='M " << midp.x << "," << midp.y << " L " << a2pos.x << ","
-           << a2pos.y << "'";
+           << " d='M " << formatDouble(midp.x) << "," << formatDouble(midp.y)
+           << " L " << formatDouble(a2pos.x) << "," << formatDouble(a2pos.y)
+           << "'";
       d_os << " class='bond-selector bond-" << this_idx << " atom-" << a_idx2;
       outputTagClasses(bond, d_os, d_activeClass);
       d_os << "'";
       d_os << " style='fill:#fff;stroke:#fff;stroke-width:"
-           << boost::format("%.1f") % width
-           << "px;fill-opacity:0;"
+           << formatDouble(width) << "px;fill-opacity:0;"
               "stroke-opacity:0' ";
       d_os << "/>\n";
     } else {
       d_os << "<path "
-           << " d='M " << a1pos.x << "," << a1pos.y << " L " << a2pos.x << ","
-           << a2pos.y << "'";
+           << " d='M " << formatDouble(a1pos.x) << "," << formatDouble(a1pos.y)
+           << " L " << formatDouble(a2pos.x) << "," << formatDouble(a2pos.y)
+           << "'";
       d_os << " class='bond-selector bond-" << this_idx << " atom-" << a_idx1
            << " atom-" << a_idx2;
       outputTagClasses(bond, d_os, d_activeClass);
       d_os << "'";
       d_os << " style='fill:#fff;stroke:#fff;stroke-width:"
-           << boost::format("%.1f") % width
-           << "px;fill-opacity:0;"
+           << formatDouble(width) << "px;fill-opacity:0;"
               "stroke-opacity:0' ";
       d_os << "/>\n";
     }
@@ -448,9 +457,9 @@ void MolDraw2DSVG::tagAtoms(const ROMol &mol, double radius,
     auto this_idx = at->getIdx();
     auto pos = getDrawCoords(atomCoords()[this_idx]);
     d_os << "<circle "
-         << " cx='" << pos.x << "'"
-         << " cy='" << pos.y << "'"
-         << " r='" << (scale() * radius) << "'";
+         << " cx='" << formatDouble(pos.x) << "'"
+         << " cy='" << formatDouble(pos.y) << "'"
+         << " r='" << formatDouble(scale() * radius) << "'";
     d_os << " class='atom-selector atom-" << this_idx;
     outputTagClasses(at, d_os, d_activeClass);
     d_os << "'";

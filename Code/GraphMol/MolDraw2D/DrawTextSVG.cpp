@@ -12,12 +12,19 @@
 
 #include <sstream>
 #include <boost/algorithm/string.hpp>
+#include <boost/format.hpp>
 
 #include <GraphMol/MolDraw2D/DrawTextSVG.h>
 #include <GraphMol/MolDraw2D/MolDraw2DSVG.h>
 #include <GraphMol/MolDraw2D/MolDraw2DDetails.h>
 
 namespace RDKit {
+
+namespace {
+std::string formatDouble(double val) {
+  return str(boost::format("%.1f") % val);
+}
+} // namespace
 
 std::string DrawColourToSVG(const RDKit::DrawColour &col);
 
@@ -45,8 +52,8 @@ void DrawTextSVG::drawChar(char c, const Point2D &cds) {
   std::string col = DrawColourToSVG(colour());
 
   oss_ << "<text";
-  oss_ << " x='" << cds.x;
-  oss_ << "' y='" << cds.y << "'";
+  oss_ << " x='" << formatDouble(cds.x);
+  oss_ << "' y='" << formatDouble(cds.y) << "'";
   if (!d_active_class_.empty()) {
     oss_ << " class='" << d_active_class_ << "'";
   }
