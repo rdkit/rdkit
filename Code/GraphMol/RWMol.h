@@ -1,5 +1,5 @@
 //
-//  Copyright (C) 2003-2021 Greg Landrum and Rational Discovery LLC
+//  Copyright (C) 2003-2021 Greg Landrum and other RDKit contributors
 //
 //   @@ All Rights Reserved @@
 //  This file is part of the RDKit.
@@ -31,8 +31,7 @@ namespace RDKit {
  */
 class RDKIT_GRAPHMOL_EXPORT RWMol : public ROMol {
  public:
-  RWMol() : ROMol() { d_partialBonds.clear(); }
-
+  RWMol() : ROMol() {};
   //! copy constructor with a twist
   /*!
     \param other     the molecule to be copied
@@ -44,9 +43,7 @@ class RDKIT_GRAPHMOL_EXPORT RWMol : public ROMol {
          the specified conformer from \c other.
   */
   RWMol(const ROMol &other, bool quickCopy = false, int confId = -1)
-      : ROMol(other, quickCopy, confId) {
-    d_partialBonds.clear();
-  };
+      : ROMol(other, quickCopy, confId) {};
   RWMol(const RWMol &other) : ROMol(other) {};
   RWMol &operator=(const RWMol &);
 
@@ -219,10 +216,6 @@ class RDKIT_GRAPHMOL_EXPORT RWMol : public ROMol {
   };
   void commitBatchEdit();
   
- private:
-  std::vector<Bond *> d_partialBonds;
-  
-  void destroy();
 };
 
 typedef boost::shared_ptr<RWMol> RWMOL_SPTR;

@@ -19,16 +19,10 @@
 #include "SubstanceGroup.h"
 
 namespace RDKit {
-void RWMol::destroy() {
-  ROMol::destroy();
-  d_partialBonds.clear();
-  d_partialBonds.resize(0);
-};
 
 RWMol &RWMol::operator=(const RWMol &other) {
   if (this != &other) {
     this->clear();
-    d_partialBonds.clear();
     numBonds = 0;
     initFromOther(other, false, -1);
   }
