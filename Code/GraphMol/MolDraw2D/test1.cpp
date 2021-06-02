@@ -24,7 +24,9 @@
 #include <GraphMol/MolDraw2D/MolDraw2DSVG.h>
 #include <GraphMol/MolDraw2D/MolDraw2DUtils.h>
 
+#include <iosfwd>
 #include <iostream>
+#include <iterator>
 #include <fstream>
 #include <sstream>
 
@@ -40,6 +42,12 @@ using std::regex_search;
 
 using namespace RDKit;
 
+std::size_t hash_file(const std::string &filename) {
+  std::ifstream ifs(filename);
+  std::string file_contents(std::istreambuf_iterator<char>{ifs}, {});
+  return std::hash<std::string>{}(file_contents);
+}
+
 void test1() {
   std::cout << " ----------------- Test 1" << std::endl;
   {
@@ -53,6 +61,8 @@ void test1() {
     drawer.drawMolecule(*m);
     drawer.finishDrawing();
     outs.flush();
+    std::cout << hash_file("test1_1.svg") << std::endl;
+    TEST_ASSERT(hash_file("test1_1.svg") == 18085097256413412657U);
     delete m;
   }
   {
@@ -81,6 +91,8 @@ void test1() {
     drawer.drawMolecule(*m);
     drawer.finishDrawing();
     outs.flush();
+    std::cout << hash_file("test1_2.svg") << std::endl;
+    TEST_ASSERT(hash_file("test1_2.svg") == 13774731244825990665U);
     delete m;
   }
   {
@@ -98,6 +110,8 @@ void test1() {
     drawer.drawMolecule(*m, &highlights);
     drawer.finishDrawing();
     outs.flush();
+    TEST_ASSERT(hash_file("test1_3.svg") == 17271102335184501769U);
+    std::cout << hash_file("test1_3.svg") << std::endl;
     delete m;
   }
   {
@@ -112,6 +126,8 @@ void test1() {
     drawer.drawMolecule(*m);
     drawer.finishDrawing();
     outs.flush();
+    TEST_ASSERT(hash_file("test1_4.svg") == 6657601980772871355U);
+    std::cout << hash_file("test1_4.svg") << std::endl;
     delete m;
   }
   {
@@ -129,6 +145,8 @@ void test1() {
     drawer.drawMolecule(*m);
     drawer.finishDrawing();
     outs.flush();
+    TEST_ASSERT(hash_file("test1_5.svg") == 12842925866223767944U);
+    std::cout << hash_file("test1_5.svg") << std::endl;
     delete m;
   }
   {
@@ -146,6 +164,9 @@ void test1() {
     std::string txt = drawer.getDrawingText();
     std::ofstream outs("test1_6.svg");
     outs << txt;
+    outs.flush();
+    TEST_ASSERT(hash_file("test1_6.svg") == 653235860696017259U);
+    std::cout << hash_file("test1_6.svg") << std::endl;
     delete m;
   }
 
@@ -3593,8 +3614,9 @@ int main() {
 #endif
 
   RDLog::InitLogs();
+  test1();
 
-#if 1
+#if 0
   test1();
   test2();
   test4();
