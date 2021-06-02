@@ -1,5 +1,5 @@
 //
-//  Copyright (C) 2015-2017 Greg Landrum
+//  Copyright (C) 2015-2021 Greg Landrum and other RDKit contributors
 //
 //   @@ All Rights Reserved @@
 //  This file is part of the RDKit.
@@ -27,6 +27,16 @@
 #include <iostream>
 #include <fstream>
 #include <sstream>
+
+#ifdef RDKIT_USE_BOOST_REGEX
+#include <boost/regex.hpp>
+using boost::regex;
+using boost::regex_search;
+#else
+#include <regex>
+using std::regex;
+using std::regex_search;
+#endif
 
 using namespace RDKit;
 
@@ -3540,8 +3550,9 @@ void testGithub3391() {
 }
 
 void testGithub4156() {
-  std::cout << " ----------------- Test Github 4156 - bad scale for radicals in grid"
-            << std::endl;
+  std::cout
+      << " ----------------- Test Github 4156 - bad scale for radicals in grid"
+      << std::endl;
   auto m1 = "C1[CH]C1[C@H](F)C1CCC1"_smiles;
   auto m2 = "F[C@H]1CC[C@H](O)CC1"_smiles;
 
@@ -3557,8 +3568,8 @@ void testGithub4156() {
     outs << text;
     outs.flush();
     // this is the start of the radical spot.
-    TEST_ASSERT(text.find("<path d='M 58.8277,79.4854 L 58.8245,79.4119") !=
-                std::string::npos);
+    regex qry("<path d='M 58.[0-9]*,79.[0-9]* L 58.[0-9]*,79.[0-9]*");
+    TEST_ASSERT(regex_search(text, qry));
   }
   {
     std::vector<ROMol *> mols;
@@ -3572,8 +3583,8 @@ void testGithub4156() {
     outs << text;
     outs.flush();
     // this is the start of the radical spot.
-    TEST_ASSERT(text.find("<path d='M 308.828,79.4854 L 308.825,79.4119") !=
-                std::string::npos);
+    regex qry("<path d='M 308.[0-9]*,79.[0-9]* L 308.[0-9]*,79.[0-9]*");
+    TEST_ASSERT(regex_search(text, qry));
   }
 
   std::cerr << " Done" << std::endl;
