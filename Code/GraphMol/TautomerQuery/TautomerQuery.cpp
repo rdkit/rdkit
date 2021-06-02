@@ -127,7 +127,7 @@ TautomerQuery *TautomerQuery::fromMol(
                           : std::string(getenv("RDBASE")) +
                                 "/Data/MolStandardize/tautomerTransforms.in";
   auto tautomerParams = std::unique_ptr<MolStandardize::TautomerCatalogParams>(
-      new MolStandardize::TautomerCatalogParams(tautomerFile));
+      new MolStandardize::TautomerCatalogParams(tautomerTransformFile));
   MolStandardize::TautomerEnumerator tautomerEnumerator(
       new MolStandardize::TautomerCatalog(tautomerParams.get()));
   const auto res = tautomerEnumerator.enumerate(query);
@@ -230,8 +230,7 @@ std::vector<MatchVectType> TautomerQuery::substructOf(
   // need to check all mappings of template to target
   templateParams.uniquify = false;
 
-  TautomerQueryMatcher tautomerQueryMatcher(*this, params,
-                                                  matchingTautomers);
+  TautomerQueryMatcher tautomerQueryMatcher(*this, params, matchingTautomers);
   // use this functor as a final check to see if any tautomer matches the target
   auto checker = [&tautomerQueryMatcher](
                      const ROMol &mol,

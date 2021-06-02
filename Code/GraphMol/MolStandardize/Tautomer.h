@@ -1,5 +1,5 @@
 //
-//  Copyright (C) 2018 Susan H. Leung
+//  Copyright (C) 2018-2021 Susan H. Leung and other RDKit contributors
 //
 //   @@ All Rights Reserved @@
 //  This file is part of the RDKit.
@@ -406,6 +406,12 @@ class RDKIT_MOLSTANDARDIZE_EXPORT TautomerEnumerator {
   bool d_removeIsotopicHs;
   bool d_reassignStereo;
 };  // TautomerEnumerator class
+
+// caller owns the pointer
+inline TautomerEnumerator *tautomerEnumeratorFromParams(
+    const CleanupParameters &params) {
+  return new TautomerEnumerator(params);
+}
 
 }  // namespace MolStandardize
 }  // namespace RDKit

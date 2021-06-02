@@ -27,20 +27,37 @@ class TestCase(unittest.TestCase):
 
   def test2StandardizeSmiles(self):
     self.assertEqual(rdMolStandardize.StandardizeSmiles("CCC(=O)O[Na]"), "CCC(=O)[O-].[Na+]")
-    # should get ValueError
 
-
-#    rdMolStandardize.StandardizeSmiles("C1CCC1C(=O)O.Na")
-
-  def test3FragmentParent(self):
+  def test3Parents(self):
     mol = Chem.MolFromSmiles("[Na]OC(=O)c1ccccc1")
     nmol = rdMolStandardize.FragmentParent(mol)
     self.assertEqual(Chem.MolToSmiles(nmol), "O=C([O-])c1ccccc1")
 
-  def test4ChargeParent(self):
     mol = Chem.MolFromSmiles("C[NH+](C)(C).[Cl-]")
     nmol = rdMolStandardize.ChargeParent(mol)
     self.assertEqual(Chem.MolToSmiles(nmol), "CN(C)C")
+
+    mol = Chem.MolFromSmiles("[O-]CCCC=CO.[Na+]")
+    nmol = rdMolStandardize.TautomerParent(mol)
+    self.assertEqual(Chem.MolToSmiles(nmol), "O=CCCCC[O-].[Na+]")
+    nmol = rdMolStandardize.TautomerParent(mol, skipStandardize=True)
+    # same answer because of the standardization at the end
+    self.assertEqual(Chem.MolToSmiles(nmol), "O=CCCCC[O-].[Na+]")
+
+    mol = Chem.MolFromSmiles("C[C@](F)(Cl)C/C=C/[C@H](F)Cl")
+    nmol = rdMolStandardize.StereoParent(mol)
+    self.assertEqual(Chem.MolToSmiles(nmol), "CC(F)(Cl)CC=CC(F)Cl")
+
+    mol = Chem.MolFromSmiles("[12CH3][13CH3]")
+    nmol = rdMolStandardize.IsotopeParent(mol)
+    self.assertEqual(Chem.MolToSmiles(nmol), "CC")
+
+    mol = Chem.MolFromSmiles("[Na]Oc1c([12C@H](F)Cl)c(O[2H])c(C(=O)O)cc1CC=CO")
+    nmol = rdMolStandardize.SuperParent(mol)
+    self.assertEqual(Chem.MolToSmiles(nmol), "O=CCCc1cc(C(=O)O)c(O)c(C(F)Cl)c1O")
+    mol = Chem.MolFromSmiles("[Na]Oc1c([12C@H](F)Cl)c(O[2H])c(C(=O)O)cc1CC=CO")
+    nmol = rdMolStandardize.SuperParent(mol, skipStandardize=True)
+    self.assertEqual(Chem.MolToSmiles(nmol), "O=CCCc1cc(C(=O)[O-])c(O)c(C(F)Cl)c1O.[Na+]")
 
   def test4Normalize(self):
     mol = Chem.MolFromSmiles("C[N+](C)=C\C=C\[O-]")
@@ -77,7 +94,8 @@ class TestCase(unittest.TestCase):
 
     # try reionize with another acid base pair library without the right
     # pairs
-    abfile = os.path.join(RDConfig.RDDataDir, 'MolStandardize', 'acid_base_pairs2.txt')
+    abfile = os.path.join(RDConfig.RDBaseDir, 'Code', 'GraphMol', 'MolStandardize', 'test_data',
+                          'acid_base_pairs2.txt')
     reionizer2 = rdMolStandardize.Reionizer(abfile)
     nm2 = reionizer2.reionize(mol)
     self.assertEqual(Chem.MolToSmiles(nm2), "O=S([O-])c1ccc(S(=O)(=O)O)cc1")
@@ -242,8 +260,10 @@ chlorine	[Cl]
       enumerator.PickCanonical(1)
     with self.assertRaises(TypeError):
       enumerator.PickCanonical([0, 1])
-    self.assertEqual(Chem.MolToSmiles(enumerator.PickCanonical(
-                     Chem.MolFromSmiles(x) for x in ['O=C1CCCCC1', 'OC1=CCCCC1'])), "O=C1CCCCC1")
+    self.assertEqual(
+      Chem.MolToSmiles(
+        enumerator.PickCanonical(Chem.MolFromSmiles(x) for x in ['O=C1CCCCC1', 'OC1=CCCCC1'])),
+      "O=C1CCCCC1")
 
     def scorefunc1(mol):
       ' stupid tautomer scoring function '
@@ -261,8 +281,8 @@ chlorine	[Cl]
     ctaut = enumerator.Canonicalize(m, scorefunc2)
     self.assertEqual(Chem.MolToSmiles(ctaut), "O=C1CCCCC1")
     # make sure lambdas work
-    ctaut = enumerator.Canonicalize(
-      m, lambda x: len(x.GetSubstructMatches(Chem.MolFromSmarts('C=O'))))
+    ctaut = enumerator.Canonicalize(m,
+                                    lambda x: len(x.GetSubstructMatches(Chem.MolFromSmarts('C=O'))))
     self.assertEqual(Chem.MolToSmiles(ctaut), "O=C1CCCCC1")
 
     # make sure we behave if we return something bogus from the scoring function
@@ -283,8 +303,8 @@ chlorine	[Cl]
     ctaut = enumerator.Canonicalize(m, scorefunc2)
     self.assertEqual(Chem.MolToSmiles(ctaut), "O=C1CCCCC1")
     # make sure lambdas work
-    ctaut = enumerator.Canonicalize(
-      m, lambda x: len(x.GetSubstructMatches(Chem.MolFromSmarts('C=O'))))
+    ctaut = enumerator.Canonicalize(m,
+                                    lambda x: len(x.GetSubstructMatches(Chem.MolFromSmarts('C=O'))))
     self.assertEqual(Chem.MolToSmiles(ctaut), "O=C1CCCCC1")
 
     # make sure we behave if we return something bogus from the scoring function
@@ -324,19 +344,19 @@ chlorine	[Cl]
     enumerator = rdMolStandardize.TautomerEnumerator()
     m = Chem.MolFromSmiles("c1ccccc1CN=c1[nH]cccc1")
     taut_res = enumerator.Enumerate(m)
-    self.assertEqual(len(taut_res.tautomers),2)
-    self.assertEqual(taut_res.modifiedAtoms,(7,9))
-    self.assertEqual(len(taut_res.modifiedBonds),7)
-    self.assertEqual(taut_res.modifiedBonds,(7,8,9,10,11,12,14))
+    self.assertEqual(len(taut_res.tautomers), 2)
+    self.assertEqual(taut_res.modifiedAtoms, (7, 9))
+    self.assertEqual(len(taut_res.modifiedBonds), 7)
+    self.assertEqual(taut_res.modifiedBonds, (7, 8, 9, 10, 11, 12, 14))
 
     taut_res = enumerator.Enumerate(m)
-    self.assertEqual(len(taut_res.tautomers),2)
-    self.assertEqual(taut_res.modifiedAtoms,(7,9))
+    self.assertEqual(len(taut_res.tautomers), 2)
+    self.assertEqual(taut_res.modifiedAtoms, (7, 9))
 
     taut_res = enumerator.Enumerate(m)
-    self.assertEqual(len(taut_res.tautomers),2)
-    self.assertEqual(len(taut_res.modifiedBonds),7)
-    self.assertEqual(taut_res.modifiedBonds,(7,8,9,10,11,12,14))
+    self.assertEqual(len(taut_res.tautomers), 2)
+    self.assertEqual(len(taut_res.modifiedBonds), 7)
+    self.assertEqual(taut_res.modifiedBonds, (7, 8, 9, 10, 11, 12, 14))
 
   def test15EnumeratorParams(self):
     # Test a structure with hundreds of tautomers.
@@ -350,7 +370,7 @@ chlorine	[Cl]
     self.assertEqual(res68.status, rdMolStandardize.TautomerEnumeratorStatus.MaxTransformsReached)
 
     params = rdMolStandardize.CleanupParameters()
-    params.maxTautomers = 50;
+    params.maxTautomers = 50
     enumerator = rdMolStandardize.TautomerEnumerator(params)
     res68 = enumerator.Enumerate(m68)
     self.assertEqual(len(res68), 50)
@@ -380,7 +400,8 @@ chlorine	[Cl]
     for i, taut in enumerate(res.tautomers):
       self.assertEqual(Chem.MolToSmiles(taut), Chem.MolToSmiles(res[i]))
       self.assertEqual(Chem.MolToSmiles(taut), res.smiles[i])
-      self.assertEqual(Chem.MolToSmiles(taut), Chem.MolToSmiles(res.smilesTautomerMap.values()[i].tautomer))
+      self.assertEqual(Chem.MolToSmiles(taut),
+                       Chem.MolToSmiles(res.smilesTautomerMap.values()[i].tautomer))
     for i, k in enumerate(res.smilesTautomerMap.keys()):
       self.assertEqual(k, res.smiles[i])
     for i, v in enumerate(res.smilesTautomerMap.values()):
@@ -392,16 +413,17 @@ chlorine	[Cl]
       self.assertEqual(smiles, Chem.MolToSmiles(res[i]))
       self.assertEqual(smiles, res.smilesTautomerMap.keys()[i])
     self.assertEqual(Chem.MolToSmiles(res.tautomers[-1]), Chem.MolToSmiles(res[-1]))
-    self.assertEqual(Chem.MolToSmiles(res[-1]), Chem.MolToSmiles(res[len(res)-1]))
-    self.assertEqual(Chem.MolToSmiles(res.tautomers[-1]), Chem.MolToSmiles(res.tautomers[len(res)-1]))
+    self.assertEqual(Chem.MolToSmiles(res[-1]), Chem.MolToSmiles(res[len(res) - 1]))
+    self.assertEqual(Chem.MolToSmiles(res.tautomers[-1]),
+                     Chem.MolToSmiles(res.tautomers[len(res) - 1]))
     with self.assertRaises(IndexError):
       res[len(res)]
     with self.assertRaises(IndexError):
-      res[-len(res)-1]
+      res[-len(res) - 1]
     with self.assertRaises(IndexError):
       res.tautomers[len(res)]
     with self.assertRaises(IndexError):
-      res.tautomers[-len(res.tautomers)-1]
+      res.tautomers[-len(res.tautomers) - 1]
 
     # test retain (S)-Ala stereochemistry
     self.assertEqual(sAla.GetAtomWithIdx(1).GetChiralTag(), Chem.ChiralType.CHI_TETRAHEDRAL_CCW)
@@ -480,7 +502,9 @@ chlorine	[Cl]
       self.assertTrue(taut.GetAtomWithIdx(12).HasProp("_isotopicHs"))
 
   def test16EnumeratorCallback(self):
+
     class MyTautomerEnumeratorCallback(rdMolStandardize.TautomerEnumeratorCallback):
+
       def __init__(self, parent, timeout_ms):
         super().__init__()
         self._parent = parent
@@ -510,10 +534,10 @@ chlorine	[Cl]
     res68 = enumerator.Enumerate(m68)
     # either the enumeration was canceled due to timeout
     # or it has completed very quickly
-    hasReachedTimeout = (len(res68.tautomers) < 375 and
-        res68.status == rdMolStandardize.TautomerEnumeratorStatus.Canceled)
-    hasCompleted = (len(res68.tautomers) == 375 and
-        res68.status == rdMolStandardize.TautomerEnumeratorStatus.Completed)
+    hasReachedTimeout = (len(res68.tautomers) < 375
+                         and res68.status == rdMolStandardize.TautomerEnumeratorStatus.Canceled)
+    hasCompleted = (len(res68.tautomers) == 375
+                    and res68.status == rdMolStandardize.TautomerEnumeratorStatus.Completed)
     if hasReachedTimeout:
       print("Enumeration was canceled due to timeout (50 ms)", file=sys.stderr)
     if hasCompleted:
@@ -526,10 +550,10 @@ chlorine	[Cl]
     res68 = enumerator.Enumerate(m68)
     # either the enumeration completed
     # or it ran very slowly and was canceled due to timeout
-    hasReachedTimeout = (len(res68.tautomers) < 375 and
-        res68.status == rdMolStandardize.TautomerEnumeratorStatus.Canceled)
-    hasCompleted = (len(res68.tautomers) == 375 and
-        res68.status == rdMolStandardize.TautomerEnumeratorStatus.Completed)
+    hasReachedTimeout = (len(res68.tautomers) < 375
+                         and res68.status == rdMolStandardize.TautomerEnumeratorStatus.Canceled)
+    hasCompleted = (len(res68.tautomers) == 375
+                    and res68.status == rdMolStandardize.TautomerEnumeratorStatus.Completed)
     if hasReachedTimeout:
       print("Enumeration was canceled due to timeout (10 s)", file=sys.stderr)
     if hasCompleted:
@@ -544,6 +568,7 @@ chlorine	[Cl]
       enumerator.SetCallback(MyBrokenCallback2())
 
   def test17PickCanonicalCIPChangeOnChiralCenter(self):
+
     def get_canonical_taut(res):
       best_idx = max([(rdMolStandardize.TautomerEnumerator.ScoreTautomer(t), i)
                       for i, t in enumerate(res.tautomers)])[1]
@@ -758,6 +783,69 @@ chlorine	[Cl]
       rdMolStandardize.Normalize(None)
     with self.assertRaises(ValueError):
       rdMolStandardize.Reionize(None)
+
+  def test21UpdateFromJSON(self):
+    params = rdMolStandardize.CleanupParameters()
+    # note: these actual parameters aren't useful... they are for testing
+    rdMolStandardize.UpdateParamsFromJSON(
+      params, """{
+    "normalizationData":[
+      {"name":"silly 1","smarts":"[Cl:1]>>[F:1]"},
+      {"name":"silly 2","smarts":"[Br:1]>>[F:1]"}
+    ],
+    "acidbaseData":[
+      {"name":"-CO2H","acid":"C(=O)[OH]","base":"C(=O)[O-]"},
+      {"name":"phenol","acid":"c[OH]","base":"c[O-]"}
+    ],
+    "fragmentData":[
+      {"name":"hydrogen", "smarts":"[H]"}, 
+      {"name":"fluorine", "smarts":"[F]"}, 
+      {"name":"chlorine", "smarts":"[Cl]"}
+    ],
+    "tautomerTransformData":[
+      {"name":"1,3 (thio)keto/enol f","smarts":"[CX4!H0]-[C]=[O,S,Se,Te;X1]","bonds":"","charges":""},
+      {"name":"1,3 (thio)keto/enol r","smarts":"[O,S,Se,Te;X2!H0]-[C]=[C]"}
+    ]}""")
+
+    m = Chem.MolFromSmiles("CCC=O")
+    te = rdMolStandardize.TautomerEnumerator(params)
+    tauts = [Chem.MolToSmiles(x) for x in te.Enumerate(m)]
+    self.assertEqual(tauts, ["CC=CO", "CCC=O"])
+    self.assertEqual(Chem.MolToSmiles(rdMolStandardize.CanonicalTautomer(m, params)), "CCC=O")
+    # now with defaults
+    te = rdMolStandardize.TautomerEnumerator()
+    tauts = [Chem.MolToSmiles(x) for x in te.Enumerate(m)]
+    self.assertEqual(tauts, ["CC=CO", "CCC=O"])
+    self.assertEqual(Chem.MolToSmiles(rdMolStandardize.CanonicalTautomer(m)), "CCC=O")
+
+    m = Chem.MolFromSmiles('ClCCCBr')
+    nm = rdMolStandardize.Normalize(m, params)
+    self.assertEqual(Chem.MolToSmiles(nm), "FCCCF")
+    # now with defaults
+    nm = rdMolStandardize.Normalize(m)
+    self.assertEqual(Chem.MolToSmiles(nm), "ClCCCBr")
+
+    m = Chem.MolFromSmiles('c1cc([O-])cc(C(=O)O)c1')
+    nm = rdMolStandardize.Reionize(m, params)
+    self.assertEqual(Chem.MolToSmiles(nm), "O=C([O-])c1cccc(O)c1")
+    # now with defaults
+    nm = rdMolStandardize.Reionize(m)
+    self.assertEqual(Chem.MolToSmiles(nm), "O=C([O-])c1cccc(O)c1")
+
+    m = Chem.MolFromSmiles('C1=C(C=CC(=C1)[S]([O-])=O)[S](O)(=O)=O')
+    nm = rdMolStandardize.Reionize(m, params)
+    self.assertEqual(Chem.MolToSmiles(nm), "O=S([O-])c1ccc(S(=O)(=O)O)cc1")
+    # now with defaults
+    nm = rdMolStandardize.Reionize(m)
+    self.assertEqual(Chem.MolToSmiles(nm), "O=S(O)c1ccc(S(=O)(=O)[O-])cc1")
+
+    m = Chem.MolFromSmiles('[F-].[Cl-].[Br-].CC')
+    nm = rdMolStandardize.RemoveFragments(m, params)
+    self.assertEqual(Chem.MolToSmiles(nm), "CC.[Br-]")
+    # now with defaults
+    nm = rdMolStandardize.RemoveFragments(m)
+    self.assertEqual(Chem.MolToSmiles(nm), "CC")
+
 
 if __name__ == "__main__":
   unittest.main()

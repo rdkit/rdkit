@@ -19,6 +19,7 @@
 #include <GraphMol/SmilesParse/SmilesWrite.h>
 #include <GraphMol/SmilesParse/SmartsWrite.h>
 #include <boost/format.hpp>
+#include <limits>
 
 using namespace RDKit;
 #if 1
@@ -1858,6 +1859,35 @@ TEST_CASE("batch edits", "[editing]") {
   }
 }
 
+TEST_CASE("github #4122: segfaults in commitBatchEdit()", "[editing]][bug]") {
+  SECTION("as reported, no atoms") {
+    RWMol m;
+    m.beginBatchEdit();
+    m.addAtom();
+    m.commitBatchEdit();
+  }
+  SECTION("no bonds") {
+    auto m = "C.C"_smiles;
+    m->beginBatchEdit();
+    m->addBond(0, 1, Bond::BondType::SINGLE);
+    m->commitBatchEdit();
+  }
+  SECTION("after add atom") {
+    auto m = "CC"_smiles;
+    m->beginBatchEdit();
+    m->addAtom(6);
+    m->removeAtom(0u);
+    m->addAtom(6);
+    m->commitBatchEdit();
+  }
+  SECTION("remove a just-added atom") {
+    auto m = "CC"_smiles;
+    m->beginBatchEdit();
+    m->addAtom(6);
+    m->removeAtom(2);
+    m->commitBatchEdit();
+  }
+}
 TEST_CASE("github #3912: cannot draw atom lists from SMARTS", "[query][bug]") {
   SECTION("original") {
     auto m = "C(-[N,O])-[#7,#8]"_smarts;
@@ -1958,4 +1988,61 @@ TEST_CASE("github #4071: StereoGroups not preserved by RenumberAtoms()",
     CHECK(MolToCXSmiles(*nmol) ==
           "C[C@@H](O)[C@H](C)[C@@H](C)[C@@H](C)O |o1:1,&1:3,&2:5,&3:7|");
   }
+}
+
+TEST_CASE("github #4127: SEGV in ROMol::getAtomDegree if atom is not in graph",
+          "[graphmol]") {
+  // also includes tests for some related edge cases found as part of that bug
+  // fix
+  Atom atom(6);
+  RWMol mol1;
+  auto mol2 = "CCC"_smiles;
+  SECTION("getAtomDegree") {
+    CHECK_THROWS_AS(mol1.getAtomDegree(nullptr), Invar::Invariant);
+    CHECK_THROWS_AS(mol1.getAtomDegree(&atom), Invar::Invariant);
+    CHECK_THROWS_AS(mol1.getAtomDegree(mol2->getAtomWithIdx(0)),
+                    Invar::Invariant);
+  }
+  SECTION("getAtomNeighbors") {
+    CHECK_THROWS_AS(mol1.getAtomNeighbors(nullptr), Invar::Invariant);
+    CHECK_THROWS_AS(mol1.getAtomNeighbors(&atom), Invar::Invariant);
+    CHECK_THROWS_AS(mol1.getAtomNeighbors(mol2->getAtomWithIdx(0)),
+                    Invar::Invariant);
+  }
+  SECTION("getAtomBonds") {
+    CHECK_THROWS_AS(mol1.getAtomBonds(nullptr), Invar::Invariant);
+    CHECK_THROWS_AS(mol1.getAtomBonds(&atom), Invar::Invariant);
+    CHECK_THROWS_AS(mol1.getAtomBonds(mol2->getAtomWithIdx(0)),
+                    Invar::Invariant);
+  }
+  SECTION("addAtom from another molecule") {
+    RWMol mol1cp(mol1);
+    CHECK_THROWS_AS(mol1cp.addAtom(nullptr), Invar::Invariant);
+    bool updateLabel = false;
+    bool takeOwnership = true;
+    CHECK_THROWS_AS(
+        mol1cp.addAtom(mol2->getAtomWithIdx(0), updateLabel, takeOwnership),
+        Invar::Invariant);
+    takeOwnership = false;
+    CHECK(mol1cp.addAtom(mol2->getAtomWithIdx(0), updateLabel, takeOwnership) ==
+          0);
+  }
+  SECTION("addBond from another molecule") {
+    auto mol3 = "C.C.C"_smiles;
+    bool takeOwnership = true;
+    CHECK_THROWS_AS(mol3->addBond(mol2->getBondWithIdx(0), takeOwnership),
+                    Invar::Invariant);
+    takeOwnership = false;
+    CHECK(mol3->addBond(mol2->getBondWithIdx(0), takeOwnership) == 1);
+  }
+}
+
+TEST_CASE(
+    "github #4128: SEGV from unsigned integer overflow in "
+    "Conformer::setAtomPos",
+    "[graphmol]") {
+  Conformer conf;
+  RDGeom::Point3D pt(0, 0, 0);
+  CHECK_THROWS_AS(conf.setAtomPos(std::numeric_limits<unsigned>::max(), pt),
+                  ValueErrorException);
 }

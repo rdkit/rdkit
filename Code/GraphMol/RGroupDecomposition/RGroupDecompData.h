@@ -62,8 +62,7 @@ struct RGroupDecompData {
       RWMol *alignCore = core.first ? cores[0].core.get() : nullptr;
       CHECK_INVARIANT(params.prepareCore(*core.second.core, alignCore),
                       "Could not prepare at least one core");
-      core.second.findIndicesWithRLabel();
-      core.second.countUserRGroups();
+      core.second.init();
       core.second.labelledCore.reset(new RWMol(*core.second.core));
     }
   }

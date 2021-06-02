@@ -80,7 +80,7 @@ Here are some examples (see using Molecular Filters below)
 >>> preds = FWBuild(decomp, 
 ...                 pred_filter=lambda x: x > 8, 
 ...                 mw_filter=lambda mw: 100<mw<550)
->>> predictions_to_csv(sys.stdout, preds)
+>>> predictions_to_csv(sys.stdout, decomp, preds)
 
 ```
 
@@ -267,7 +267,7 @@ def FWDecompose(scaffolds, mols, scores, decomp_params=default_decomp_params) ->
     For an easy way to report predictions see 
 
        >>> import sys
-       >>> predictions_to_csv(sys.stdout, FWBuild(fw))
+       >>> predictions_to_csv(sys.stdout, fw, FWBuild(fw))
 
    
     See FWBuild docs to see how to filter predictions, molecular weight or molecular properties.
@@ -489,19 +489,19 @@ def _rgroup_sort(r):
     if r[0] == "R": return ("R", int(r[1:]))
     return (r, None)
 
-def predictions_to_csv(outstream, predictions):
+def predictions_to_csv(outstream, decomposition: FreeWilsonDecomposition, predictions):
     """Output predictions in csv format to the output stream
 
        :param outstream: output stream to write results
-       :param fw: freewillson decomposition
+       :param decomposition: freewillson decomposition
        :param predictions: list of Predictions to output
     """
     writer = None
     for pred in predictions:
         if not writer:
             rgroups = set()
-            for sidechain in pred.rgroups:
-                rgroups.add(sidechain.rgroup)
+            for rgroup in decomposition.rgroups:
+                rgroups.add(rgroup)
             rgroups = sorted(rgroups, key=_rgroup_sort)
 
             lookup = {}
@@ -515,7 +515,7 @@ def predictions_to_csv(outstream, predictions):
             rg[lookup[s.rgroup]] = s.smiles
         row = [pred.smiles, repr(pred.prediction)] + rg
         writer.writerow(row)
-            
+
 def test_freewilson():
     # some simple tests
     from rdkit import Chem

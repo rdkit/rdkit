@@ -1,5 +1,5 @@
 //
-//  Copyright (C) 2018-2020 Susan H. Leung and Greg Landrum
+//  Copyright (C) 2018-2021 Susan H. Leung and other RDKit contributors
 //
 //   @@ All Rights Reserved @@
 //  This file is part of the RDKit.
@@ -156,8 +156,13 @@ TautomerEnumerator::TautomerEnumerator(const CleanupParameters &params)
       d_removeBondStereo(params.tautomerRemoveBondStereo),
       d_removeIsotopicHs(params.tautomerRemoveIsotopicHs),
       d_reassignStereo(params.tautomerReassignStereo) {
-  TautomerCatalogParams tautParams(params.tautomerTransforms);
-  dp_catalog.reset(new TautomerCatalog(&tautParams));
+  std::unique_ptr<TautomerCatalogParams> tautParams;
+  if (params.tautomerTransformData.empty()) {
+    tautParams.reset(new TautomerCatalogParams(params.tautomerTransforms));
+  } else {
+    tautParams.reset(new TautomerCatalogParams(params.tautomerTransformData));
+  }
+  dp_catalog.reset(new TautomerCatalog(tautParams.get()));
 }
 
 bool TautomerEnumerator::setTautomerStereoAndIsoHs(
@@ -303,7 +308,8 @@ TautomerEnumeratorResult TautomerEnumerator::enumerate(const ROMol &mol) const {
       std::string tsmiles;
       if (smilesTautomerPair.second.d_done) {
 #ifdef VERBOSE_ENUMERATION
-        std::cout << "Skipping " << smilesTautomerPair.first << " as already done" << std::endl;
+        std::cout << "Skipping " << smilesTautomerPair.first
+                  << " as already done" << std::endl;
 #endif
         continue;
       }
@@ -319,8 +325,7 @@ TautomerEnumeratorResult TautomerEnumerator::enumerate(const ROMol &mol) const {
         // kmol is the kekulized version of the tautomer
         const auto &kmol = smilesTautomerPair.second.kekulized;
         std::vector<MatchVectType> matches;
-        unsigned int matched =
-            SubstructMatch(*kmol, *(transform.Mol), matches);
+        unsigned int matched = SubstructMatch(*kmol, *(transform.Mol), matches);
 
         if (!matched) {
           continue;
@@ -329,7 +334,8 @@ TautomerEnumeratorResult TautomerEnumerator::enumerate(const ROMol &mol) const {
 #ifdef VERBOSE_ENUMERATION
         std::string name;
         (transform.Mol)->getProp(common_properties::_Name, name);
-        std::cout << "kmol for " << smilesTautomerPair.first << " : " << MolToSmiles(*kmol) << std::endl;
+        std::cout << "kmol for " << smilesTautomerPair.first << " : "
+                  << MolToSmiles(*kmol) << std::endl;
         std::cout << "transform mol: " << MolToSmarts(*(transform.Mol))
                   << std::endl;
 
@@ -426,8 +432,8 @@ TautomerEnumeratorResult TautomerEnumerator::enumerate(const ROMol &mol) const {
           tsmiles = MolToSmiles(*product, true);
 #ifdef VERBOSE_ENUMERATION
           (transform.Mol)->getProp(common_properties::_Name, name);
-          std::cout << "Applied rule: " << name << " to " << smilesTautomerPair.first
-                    << std::endl;
+          std::cout << "Applied rule: " << name << " to "
+                    << smilesTautomerPair.first << std::endl;
 #endif
           if (res.d_tautomers.find(tsmiles) != res.d_tautomers.end()) {
 #ifdef VERBOSE_ENUMERATION
@@ -443,8 +449,7 @@ TautomerEnumeratorResult TautomerEnumerator::enumerate(const ROMol &mol) const {
             auto tautBondType = product->getBondWithIdx(i)->getBondType();
             if (molBondType != tautBondType && !res.d_modifiedBonds.test(i)) {
 #ifdef VERBOSE_ENUMERATION
-              std::cout << "Sanitization has modified bond " << i
-                        << std::endl;
+              std::cout << "Sanitization has modified bond " << i << std::endl;
 #endif
               res.d_modifiedBonds.set(i);
             }

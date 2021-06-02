@@ -1079,6 +1079,12 @@ namespace QueryOps {
 RDKIT_GRAPHMOL_EXPORT void completeMolQueries(
     RWMol *mol, unsigned int magicVal = 0xDEADBEEF);
 RDKIT_GRAPHMOL_EXPORT Atom *replaceAtomWithQueryAtom(RWMol *mol, Atom *atom);
+
+RDKIT_GRAPHMOL_EXPORT void finalizeQueryFromDescription(
+    Queries::Query<int, Atom const *, true> *query, Atom const *owner);
+RDKIT_GRAPHMOL_EXPORT void finalizeQueryFromDescription(
+    Queries::Query<int, Bond const *, true> *query, Bond const *owner);
+
 }  // namespace QueryOps
 }  // namespace RDKit
 #endif

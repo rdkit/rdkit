@@ -8,8 +8,8 @@
 //  of the RDKit source tree.
 //
 #include <RDGeneral/export.h>
-#ifndef _RD_MOLPICKLE_H
-#define _RD_MOLPICKLE_H
+#ifndef RD_MOLPICKLE_H
+#define RD_MOLPICKLE_H
 
 #include <Geometry/point.h>
 #include <GraphMol/Atom.h>
@@ -18,6 +18,9 @@
 #include <GraphMol/QueryBond.h>
 #include <RDGeneral/StreamOps.h>
 #include <boost/utility/binary.hpp>
+#include <boost/variant.hpp>
+#include <Query/QueryObjects.h>
+
 // Std stuff
 #include <iostream>
 #include <string>
@@ -59,7 +62,7 @@ typedef enum {
   NoConformers =
       0x00020000  // do not include conformers or associated properties
 } PropertyPickleOptions;
-}
+}  // namespace PicklerOps
 
 //! handles pickling (serializing) molecules
 class RDKIT_GRAPHMOL_EXPORT MolPickler {
@@ -294,6 +297,18 @@ class RDKIT_GRAPHMOL_EXPORT MolPickler {
   //! backwards compatibility
   static void _addBondFromPickleV1(std::istream &ss, ROMol *mol);
 };
+
+namespace PicklerOps {
+using QueryDetails = boost::variant<
+    MolPickler::Tags, std::tuple<MolPickler::Tags, int32_t>,
+    std::tuple<MolPickler::Tags, int32_t, int32_t>,
+    std::tuple<MolPickler::Tags, int32_t, int32_t, int32_t, char>,
+    std::tuple<MolPickler::Tags, std::set<int32_t>>>;
+template <class T>
+QueryDetails getQueryDetails(const Queries::Query<int, T const *, true> *query);
+
+}  // namespace PicklerOps
+
 };  // namespace RDKit
 
 #endif

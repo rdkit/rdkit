@@ -51,6 +51,18 @@ void updateSubMolConfs(const ROMol &mol, RWMol &res,
     res.addConformer(newConf, false);
   }
 }
+
+struct SideChainMapping {
+  int molIndex;
+  int coreIndex;
+  bool useMatch;
+
+  SideChainMapping(int molIndex)
+      : molIndex(molIndex), coreIndex(-1), useMatch(false) {}
+  SideChainMapping(int molIndex, int coreIndex, bool useMatch)
+      : molIndex(molIndex), coreIndex(coreIndex), useMatch(useMatch) {}
+};
+
 }  // namespace
 
 ROMol *deleteSubstructs(const ROMol &mol, const ROMol &query, bool onlyFrags,
@@ -347,8 +359,13 @@ ROMol *replaceCore(const ROMol &mol, const ROMol &core,
                    const MatchVectType &matchV, bool replaceDummies,
                    bool labelByIndex, bool requireDummyMatch) {
   unsigned int origNumAtoms = mol.getNumAtoms();
+  std::vector<std::pair<int, SideChainMapping>> matches;
+  matches.reserve(origNumAtoms);
+
   std::vector<int> matchingIndices(origNumAtoms, -1);
   std::vector<int> allIndices(origNumAtoms, -1);
+  boost::dynamic_bitset<> molAtomsMapped(origNumAtoms);
+  boost::dynamic_bitset<> multipleMappedMolAtoms(origNumAtoms);
   for (const auto &mvit : matchV) {
     if (mvit.first < 0 || mvit.first >= rdcast<int>(core.getNumAtoms())) {
       throw ValueErrorException(
@@ -358,11 +375,45 @@ ROMol *replaceCore(const ROMol &mol, const ROMol &core,
       throw ValueErrorException(
           "Supplied MatchVect indices out of bounds of the target molecule");
     }
-
+    bool useMatch = false;
     if (replaceDummies || core.getAtomWithIdx(mvit.first)->getAtomicNum() > 0) {
       matchingIndices[mvit.second] = mvit.first;
+      useMatch = true;
     }
     allIndices[mvit.second] = mvit.first;
+    SideChainMapping mapping(mvit.second, mvit.first, useMatch);
+    matches.emplace_back(mvit.second, mapping);
+    if (molAtomsMapped[mvit.second]) {
+      multipleMappedMolAtoms.set(mvit.second);
+    }
+    molAtomsMapped.set(mvit.second);
+  }
+
+  boost::dynamic_bitset<> multipleOwnedBonds(mol.getNumBonds());
+  if (multipleMappedMolAtoms.any()) {
+    for (const auto &match : matches) {
+      const auto &mappingInfo = match.second;
+      if (multipleMappedMolAtoms[mappingInfo.molIndex]) {
+        auto coreAtom = core.getAtomWithIdx(mappingInfo.coreIndex);
+        CHECK_INVARIANT(
+            coreAtom->getDegree() == 1,
+            "Multiple core atoms match a mol atom, but one of the core "
+            "atoms has degree > 1 ");
+        auto coreNeighborIdx = core[*core.getAtomNeighbors(coreAtom).first]->getIdx();
+        auto molNeighborIdx =
+            std::find_if(matchV.cbegin(), matchV.cend(),
+                         [coreNeighborIdx](std::pair<int, int> p) {
+                           return p.first == static_cast<int>(coreNeighborIdx);
+                         })
+                ->second;
+        if (molNeighborIdx > -1) {
+          auto connectingBond =
+              mol.getBondBetweenAtoms(mappingInfo.molIndex, molNeighborIdx);
+          CHECK_INVARIANT(connectingBond,"expected bond in molecule not found");
+          multipleOwnedBonds.set(connectingBond->getIdx());
+        }
+      }
+    }
   }
 
   auto *newMol = new RWMol(mol);
@@ -371,28 +422,31 @@ ROMol *replaceCore(const ROMol &mol, const ROMol &core,
 
   // go through the matches in query order, not target molecule
   //  order
-  std::vector<std::pair<int, int>> matchorder_atomidx;
   for (unsigned int i = 0; i < origNumAtoms; ++i) {
-    int queryatom = allIndices[i];
-    matchorder_atomidx.emplace_back(queryatom, i);
+    if (!molAtomsMapped[i]) {
+      SideChainMapping mapping(i);
+      matches.emplace_back(i, mapping);
+    }
   }
 
-  std::sort(matchorder_atomidx.begin(), matchorder_atomidx.end());
+  std::sort(matches.begin(), matches.end(),
+            [](const std::pair<int, SideChainMapping> &p1,
+               const std::pair<int, SideChainMapping> &p2) {
+              if (p1.second.coreIndex == p2.second.coreIndex) {
+                return p1.first < p2.first;
+              }
+              return p1.second.coreIndex < p2.second.coreIndex;
+            });
   std::vector<std::pair<int, Atom *>> dummies;
 
-  for (unsigned int j = 0; j < origNumAtoms; ++j) {
-    auto i = (unsigned)matchorder_atomidx[j].second;
+  for (const auto &match : matches) {
+    const auto &mappingInfo = match.second;
 
-    if (matchingIndices[i] == -1) {
-      Atom *sidechainAtom = newMol->getAtomWithIdx(i);
+    if (!mappingInfo.useMatch) {
+      Atom *sidechainAtom = newMol->getAtomWithIdx(mappingInfo.molIndex);
       // we're keeping the sidechain atoms:
       keepList.push_back(sidechainAtom);
-      int mapping = -1;
-      // if we were not in the matching list, still keep
-      //  the original indices (replaceDummies=False)
-      if (allIndices[i] != -1) {
-        mapping = allIndices[i];
-      }
+
       // loop over our neighbors and see if any are in the match:
       std::list<unsigned int> nbrList;
       ROMol::ADJ_ITER nbrIter, endNbrs;
@@ -409,8 +463,25 @@ ROMol *replaceCore(const ROMol &mol, const ROMol &core,
       for (std::list<unsigned int>::const_iterator lIter = nbrList.begin();
            lIter != nbrList.end(); ++lIter) {
         unsigned int nbrIdx = *lIter;
-        Bond *connectingBond = newMol->getBondBetweenAtoms(i, nbrIdx);
-        if (matchingIndices[nbrIdx] > -1) {
+        Bond *connectingBond =
+            newMol->getBondBetweenAtoms(mappingInfo.molIndex, nbrIdx);
+        bool bondToCore = matchingIndices[nbrIdx] > -1;
+        auto coreBond =
+            bondToCore && allIndices[nbrIdx] > -1 && mappingInfo.coreIndex > -1
+                ? core.getBondBetweenAtoms(mappingInfo.coreIndex,
+                                           allIndices[nbrIdx])
+                : nullptr;
+        if (bondToCore && multipleMappedMolAtoms[mappingInfo.molIndex] &&
+            mappingInfo.coreIndex > -1) {
+          // The core has multiple atoms that map onto this mol atom - check we
+          // have matched correct core bond.
+          // Otherwise we can use this bond only if nobody else owns it.
+          if (coreBond == nullptr &&
+              multipleOwnedBonds[connectingBond->getIdx()]) {
+            bondToCore = false;
+          }
+        }
+        if (bondToCore) {
           // we've matched an atom in the core.
           if (requireDummyMatch &&
               core.getAtomWithIdx(matchingIndices[nbrIdx])->getAtomicNum() !=
@@ -420,7 +491,15 @@ ROMol *replaceCore(const ROMol &mol, const ROMol &core,
           }
           auto *newAt = new Atom(0);
 
-          // we want to order the dummies int the same orders as
+          // if we were not in the matching list, still keep
+          //  the original indices (replaceDummies=False)
+          int mapping = mappingInfo.coreIndex;
+          // If we don't have a core bond, the label belongs to the neighbor
+          if (coreBond == nullptr) {
+            mapping = allIndices[nbrIdx];
+          }
+
+          // we want to order the dummies in the same orders as
           //  the mappings, if not labelling by Index they are in arbitrary
           //  order
           //  right now so save and sort later.
@@ -434,7 +513,8 @@ ROMol *replaceCore(const ROMol &mol, const ROMol &core,
           dummyAtomMap[nbrIdx] = newAt;
           keepList.push_back(newAt);
           Bond *bnd = connectingBond->copy();
-          if (bnd->getBeginAtomIdx() == i) {
+          if (bnd->getBeginAtomIdx() ==
+              static_cast<size_t>(mappingInfo.molIndex)) {
             bnd->setEndAtomIdx(newAt->getIdx());
           } else {
             bnd->setBeginAtomIdx(newAt->getIdx());

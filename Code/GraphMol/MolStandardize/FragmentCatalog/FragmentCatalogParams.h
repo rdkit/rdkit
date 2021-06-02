@@ -1,5 +1,5 @@
 //
-//  Copyright (C) 2018 Susan H. Leung
+//  Copyright (C) 2018-2021 Susan H. Leung and other RDKit contributors
 //
 //   @@ All Rights Reserved @@
 //  This file is part of the RDKit.
@@ -8,8 +8,8 @@
 //  of the RDKit source tree.
 //
 #include <RDGeneral/export.h>
-#ifndef __RD_FRAGMENT_CATALOG_PARAMS_H__
-#define __RD_FRAGMENT_CATALOG_PARAMS_H__
+#ifndef RD_FRAGMENT_CATALOG_PARAMS_H
+#define RD_FRAGMENT_CATALOG_PARAMS_H
 
 #include <Catalogs/CatalogParams.h>
 #include "FragmentCatalogUtils.h"
@@ -32,6 +32,8 @@ class RDKIT_MOLSTANDARDIZE_EXPORT FragmentCatalogParams
 
   FragmentCatalogParams(const std::string &fgroupFile);
   FragmentCatalogParams(std::istream &fgroupStream);
+  FragmentCatalogParams(
+      const std::vector<std::pair<std::string, std::string>> &data);
   // copy constructor
   FragmentCatalogParams(const FragmentCatalogParams &other);
 

@@ -47,10 +47,10 @@ bool getMoments(const ROMol& mol, int confId, bool useAtomicMasses, double& pm1,
       weights[(*cai)->getIdx()] = (*cai)->getMass();
     }
     res = MolTransforms::computePrincipalAxesAndMoments(
-        conf, axes, moments, ignoreHs, false, &weights);
+        conf, axes, moments, ignoreHs, force, &weights);
   } else {
     res = MolTransforms::computePrincipalAxesAndMoments(conf, axes, moments,
-                                                        ignoreHs);
+                                                        ignoreHs, force);
   }
   if (res) {
     pm1 = moments(0);
@@ -90,10 +90,10 @@ bool getMomentsFromGyration(const ROMol& mol, int confId, bool useAtomicMasses,
       weights[(*cai)->getIdx()] = (*cai)->getMass();
     }
     res = MolTransforms::computePrincipalAxesAndMomentsFromGyrationMatrix(
-        conf, axes, moments, ignoreHs, false, &weights);
+        conf, axes, moments, ignoreHs, force, &weights);
   } else {
     res = MolTransforms::computePrincipalAxesAndMomentsFromGyrationMatrix(
-        conf, axes, moments, ignoreHs);
+        conf, axes, moments, ignoreHs, force);
   }
   if (res) {
     pm1 = moments(0);

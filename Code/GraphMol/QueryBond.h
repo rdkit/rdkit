@@ -35,9 +35,13 @@ class RDKIT_GRAPHMOL_EXPORT QueryBond : public Bond {
   //! initialize from a bond
   explicit QueryBond(const Bond &other)
       : Bond(other), dp_query(makeBondOrderEqualsQuery(other.getBondType())){};
-  QueryBond(const QueryBond &other)
-      : Bond(other), dp_query(other.dp_query->copy()){};
-
+  QueryBond(const QueryBond &other) : Bond(other) {
+    if (other.dp_query) {
+      dp_query = other.dp_query->copy();
+    } else {
+      dp_query = nullptr;
+    }
+  };
   ~QueryBond();
 
   //! returns a copy of this query, owned by the caller

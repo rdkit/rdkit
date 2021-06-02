@@ -63,6 +63,8 @@ Installation instructions are available in [Docs/Book/Install.md](https://github
 
 ## Projects using RDKit
 
+- [ChEMBL Structure Pipeline](https://github.com/chembl/ChEMBL_Structure_Pipeline) - ChEMBL protocols used to standardise and salt strip molecules.
+- [FPSim2](https://github.com/chembl/FPSim2) - Simple package for fast molecular similarity searches.
 - [Datamol](https://datamol.io/) ([docs](https://doc.datamol.io/stable/), [repo](https://github.com/datamol-org/datamol/)) - A Python library to intuitively manipulate molecules.
 - [Scopy](https://github.com/kotori-y/Scopy) ([docs](https://scopy.iamkotori.com/), [paper](https://doi.org/10.1093/bib/bbaa194)) - an integrated negative design Python library for desirable HTS/VS database design
 - [stk](https://github.com/lukasturcani/stk) ([docs](https://stk.readthedocs.io), [paper](https://onlinelibrary.wiley.com/doi/10.1002/jcc.25377)) -
@@ -76,7 +78,6 @@ a Python library for building, manipulating, analyzing and automatic design of m
 - [CheTo](https://github.com/rdkit/CheTo) ([paper](http://pubs.acs.org/doi/10.1021/acs.jcim.7b00249))- Chemical topic modeling
 - [OCEAN](https://github.com/rdkit/OCEAN) ([paper](http://pubs.acs.org/doi/abs/10.1021/acs.jcim.6b00067))- Optimized cross reactivity estimation
 - [ChEMBL Beaker](https://github.com/mnowotka/chembl_beaker) - standalone web server wrapper for RDKit and OSRA
-- [myChEMBL](https://github.com/chembl/mychembl) ([blog post](http://chembl.blogspot.de/2013/10/chembl-virtual-machine-aka-mychembl.html), [paper](http://bioinformatics.oxfordjournals.org/content/early/2013/11/20/bioinformatics.btt666)) - A virtual machine implementation of open data and cheminformatics tools
 - [ZINC](http://zinc15.docking.org) - Free database of commercially-available compounds for virtual screening
 - [sdf_viewer.py](https://github.com/apahl/sdf_viewer) - an interactive SDF viewer
 - [sdf2ppt](https://github.com/dkuhn/sdf2ppt) - Reads an SDFile and displays molecules as image grid in powerpoint/openoffice presentation.

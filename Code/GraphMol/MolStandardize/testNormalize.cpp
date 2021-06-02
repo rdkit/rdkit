@@ -87,19 +87,39 @@ void test1() {
 
 void test2() {
   BOOST_LOG(rdInfoLog) << "-----------------------\n test2" << std::endl;
-  std::string tfdata = R"DATA(//	Name	SMIRKS
+  {
+    // initialization from string:
+    std::string tfdata = R"DATA(//	Name	SMIRKS
 Nitro to N+(O-)=O	[N,P,As,Sb;X3:1](=[O,S,Se,Te:2])=[O,S,Se,Te:3]>>[*+1:1]([*-1:2])=[*:3]
 Sulfone to S(=O)(=O)	[S+2:1]([O-:2])([O-:3])>>[S+0:1](=[O-0:2])(=[O-0:3])
 Pyridine oxide to n+O-	[n:1]=[O:2]>>[n+:1][O-:2]
 )DATA";
-  std::stringstream sstr(tfdata);
-  Normalizer nn(sstr, 10);
-  bool debugParse = false;
-  bool sanitize = false;
-  std::unique_ptr<ROMol> imol(
-      SmilesToMol("O=N(=O)CCN=N#N", debugParse, sanitize));
-  std::unique_ptr<ROMol> m2(nn.normalize(*imol));
-  TEST_ASSERT(MolToSmiles(*m2) == "N#N=NCC[N+](=O)[O-]");
+    std::stringstream sstr(tfdata);
+    Normalizer nn(sstr, 10);
+    bool debugParse = false;
+    bool sanitize = false;
+    std::unique_ptr<ROMol> imol(
+        SmilesToMol("O=N(=O)CCN=N#N", debugParse, sanitize));
+    std::unique_ptr<ROMol> m2(nn.normalize(*imol));
+    TEST_ASSERT(MolToSmiles(*m2) == "N#N=NCC[N+](=O)[O-]");
+  }
+  {
+    // initialization from vector:
+    std::vector<std::pair<std::string, std::string>> tfdata = {
+        {"Nitro to N+(O-)=O",
+         "[N,P,As,Sb;X3:1](=[O,S,Se,Te:2])=[O,S,Se,Te:3]>>[*+1:1]([*-1:2])=[*:"
+         "3]"},
+        {"Sulfone to S(=O)(=O)",
+         "[S+2:1]([O-:2])([O-:3])>>[S+0:1](=[O-0:2])(=[O-0:3])"},
+        {"Pyridine oxide to n+O-", "[n:1]=[O:2]>>[n+:1][O-:2]"}};
+    Normalizer nn(tfdata, 10);
+    bool debugParse = false;
+    bool sanitize = false;
+    std::unique_ptr<ROMol> imol(
+        SmilesToMol("O=N(=O)CCN=N#N", debugParse, sanitize));
+    std::unique_ptr<ROMol> m2(nn.normalize(*imol));
+    TEST_ASSERT(MolToSmiles(*m2) == "N#N=NCC[N+](=O)[O-]");
+  }
   BOOST_LOG(rdInfoLog) << "Finished" << std::endl;
 }
 
@@ -471,6 +491,16 @@ void testGithub3460() {
   BOOST_LOG(rdInfoLog) << "Finished" << std::endl;
 }
 
+void testEmptyMol() {
+  BOOST_LOG(rdInfoLog) << "-----------------------\n Test that Normalizer "
+                          "does not crash on an empty mol"
+                       << std::endl;
+  Normalizer nn;
+  std::unique_ptr<ROMol> emptyMol(new ROMol());
+  std::unique_ptr<ROMol> normalized(nn.normalize(*emptyMol));
+  TEST_ASSERT(!normalized->getNumAtoms());
+}
+
 int main() {
   RDLog::InitLogs();
 #if 1
@@ -480,5 +510,6 @@ int main() {
   testGithub2414();
   testNormalizeMultipleAltSmarts();
   testGithub3460();
+  testEmptyMol();
   return 0;
 }

@@ -32,7 +32,6 @@
 
 import unittest
 import os,sys
-
 import pickle
 
 from rdkit import rdBase
@@ -325,6 +324,25 @@ class TestCase(unittest.TestCase) :
         
         groups = rxn.RunReactants([Chem.MolFromSmiles("c1ccccc1")])
         self.assertTrue(len(groups[0]))
+
+    def test_github_4162(self):
+        rxn = rdChemReactions.ReactionFromSmarts(
+            "[C:1](=[O:2])-[OD1].[N!H0:3]>>[C:1](=[O:2])[N:3]")
+        rxn_copy = rdChemReactions.ChemicalReaction(rxn)
+        rdChemReactions.SanitizeRxn(rxn)
+        rdChemReactions.SanitizeRxn(rxn_copy)
+        pkl = rxn.ToBinary()
+        rxn_from_pickle = rdChemReactions.ChemicalReaction(pkl)
+        rdChemReactions.SanitizeRxn(rxn_from_pickle)
+        pkl = pickle.dumps(rxn)
+        rxn_from_pickle = pickle.loads(pkl)
+        rdChemReactions.SanitizeRxn(rxn_from_pickle)
+        pkl = rxn_from_pickle.ToBinary()
+        rxn_from_pickle = rdChemReactions.ChemicalReaction(pkl)
+        rdChemReactions.SanitizeRxn(rxn_from_pickle)
+        pkl = pickle.dumps(rxn_from_pickle)
+        rxn_from_pickle = pickle.loads(pkl)
+        rdChemReactions.SanitizeRxn(rxn_from_pickle)
         
 
         

@@ -1,5 +1,5 @@
 //
-//  Copyright (C) 2003-2016 Greg Landrum and Rational Discovery LLC
+//  Copyright (C) 2003-2021 Greg Landrum and other RDKit contributors
 //
 //   @@ All Rights Reserved @@
 //  This file is part of the RDKit.
@@ -203,6 +203,7 @@ Atom *RWMol::getActiveAtom() {
 };
 
 void RWMol::setActiveAtom(Atom *at) {
+  PRECONDITION(at, "NULL atom provided");
   clearAtomBookmark(ci_RIGHTMOST_ATOM);
   setAtomBookmark(at, ci_RIGHTMOST_ATOM);
 };
@@ -499,7 +500,7 @@ void RWMol::commitBatchEdit() {
   }
   auto delBonds = *dp_delBonds;
   dp_delBonds.reset();
-  for (unsigned int i = getNumBonds(); i > 0; --i) {
+  for (unsigned int i = delBonds.size(); i > 0; --i) {
     if (delBonds[i - 1]) {
       const auto bnd = getBondWithIdx(i - 1);
       CHECK_INVARIANT(bnd, "bond not found");
@@ -508,7 +509,7 @@ void RWMol::commitBatchEdit() {
   }
   auto delAtoms = *dp_delAtoms;
   dp_delAtoms.reset();
-  for (unsigned int i = getNumAtoms(); i > 0; --i) {
+  for (unsigned int i = delAtoms.size(); i > 0; --i) {
     if (delAtoms[i - 1]) {
       removeAtom(i - 1);
     }
