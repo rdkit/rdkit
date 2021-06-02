@@ -12,6 +12,7 @@
 
 #include <GraphMol/RDKitBase.h>
 #include <GraphMol/SmilesParse/SmilesParse.h>
+#include <GraphMol/Descriptors/MolDescriptors.h>
 #include <GraphMol/Descriptors/ConnectivityDescriptors.h>
 
 using namespace RDKit;
@@ -106,5 +107,17 @@ TEST_CASE("Kier Phi", "[2D]") {
       auto val = Descriptors::calcPhi(*m);
       CHECK(val == Approx(pr.second).epsilon(0.01));
     }
+  }
+}
+
+TEST_CASE("atom counts", "[2D]") {
+  {
+    SmilesParserParams ps;
+    ps.sanitize = true;
+    ps.removeHs = false;
+    std::unique_ptr<ROMol> m(SmilesToMol("CC[H]", ps));
+    REQUIRE(m);
+    CHECK(Descriptors::calcNumHeavyAtoms(*m) == 2);
+    CHECK(Descriptors::calcNumAtoms(*m) == 8);
   }
 }

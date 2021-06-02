@@ -47,13 +47,14 @@ namespace Descriptors {
 
 namespace {
 void _registerDescriptors() {
-  REGISTER_DESCRIPTOR(exactmw, calcExactMW);
   REGISTER_DESCRIPTOR(amw, calcAMW);
   REGISTER_DESCRIPTOR(lipinskiHBA, calcLipinskiHBA);
   REGISTER_DESCRIPTOR(lipinskiHBD, calcLipinskiHBD);
   REGISTER_DESCRIPTOR(NumRotatableBonds, calcNumRotatableBonds);
   REGISTER_DESCRIPTOR(NumHBD, calcNumHBD);
   REGISTER_DESCRIPTOR(NumHBA, calcNumHBA);
+  REGISTER_DESCRIPTOR(NumHeavyAtoms, calcNumHeavyAtoms);
+  REGISTER_DESCRIPTOR(NumAtoms, calcNumAtoms);
   REGISTER_DESCRIPTOR(NumHeteroatoms, calcNumHeteroatoms);
   REGISTER_DESCRIPTOR(NumAmideBonds, calcNumAmideBonds);
   REGISTER_DESCRIPTOR(FractionCSP3, calcFractionCSP3);
