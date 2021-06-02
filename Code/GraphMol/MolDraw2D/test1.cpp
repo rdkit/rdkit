@@ -3555,7 +3555,7 @@ void testGithub4156() {
       << std::endl;
   auto m1 = "C1[CH]C1[C@H](F)C1CCC1"_smiles;
   auto m2 = "F[C@H]1CC[C@H](O)CC1"_smiles;
-
+#ifdef RDK_BUILD_FREETYPE_SUPPORT
   {
     std::vector<ROMol *> mols;
     mols.push_back(m1.get());
@@ -3586,7 +3586,7 @@ void testGithub4156() {
     regex qry("<path d='M 308.[0-9]*,79.[0-9]* L 308.[0-9]*,79.[0-9]*");
     TEST_ASSERT(regex_search(text, qry));
   }
-
+#endif
   std::cerr << " Done" << std::endl;
 }
 
