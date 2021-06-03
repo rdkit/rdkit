@@ -947,7 +947,7 @@ TEST_CASE("findPotentialStereo problems related to #3490", "[chirality][bug]") {
     bool flagPossible = true;
     auto stereoInfo =
         Chirality::findPotentialStereo(*mol, cleanIt, flagPossible);
-    CHECK(stereoInfo.size() == 3);  // [1, 4, 12]
+    CHECK(stereoInfo.size() == 4);  // [1, 4, 6, 12]
     CHECK(stereoInfo[0].type == Chirality::StereoType::Atom_Tetrahedral);
     CHECK(stereoInfo[0].centeredOn == 1);
     CHECK(stereoInfo[0].specified == Chirality::StereoSpecified::Unspecified);
@@ -955,8 +955,11 @@ TEST_CASE("findPotentialStereo problems related to #3490", "[chirality][bug]") {
     CHECK(stereoInfo[1].centeredOn == 4);
     CHECK(stereoInfo[1].specified == Chirality::StereoSpecified::Unspecified);
     CHECK(stereoInfo[2].type == Chirality::StereoType::Atom_Tetrahedral);
-    CHECK(stereoInfo[2].centeredOn == 12);
+    CHECK(stereoInfo[2].centeredOn == 6);
     CHECK(stereoInfo[2].specified == Chirality::StereoSpecified::Unspecified);
+    CHECK(stereoInfo[3].type == Chirality::StereoType::Atom_Tetrahedral);
+    CHECK(stereoInfo[3].centeredOn == 12);
+    CHECK(stereoInfo[3].specified == Chirality::StereoSpecified::Unspecified);
   }
 }
 TEST_CASE("ring stereo finding is overly aggressive", "[chirality][bug]") {
@@ -1097,8 +1100,21 @@ TEST_CASE("ring stereo finding is overly aggressive", "[chirality][bug]") {
     bool flagPossible = true;
     auto stereoInfo =
         Chirality::findPotentialStereo(*mol, cleanIt, flagPossible);
-    CHECK(stereoInfo.size() == 1);
+    CHECK(stereoInfo.size() == 3);
     CHECK(stereoInfo[0].centeredOn == 1);
+    CHECK(stereoInfo[1].centeredOn == 3);
+    CHECK(stereoInfo[2].centeredOn == 6);
+  }
+  SECTION("cages 1b") {
+    auto mol = "O1CN2CCC1CC2"_smiles;
+    REQUIRE(mol);
+    bool cleanIt = true;
+    bool flagPossible = true;
+    auto stereoInfo =
+        Chirality::findPotentialStereo(*mol, cleanIt, flagPossible);
+    CHECK(stereoInfo.size() == 2);
+    CHECK(stereoInfo[0].centeredOn == 2);
+    CHECK(stereoInfo[1].centeredOn == 5);
   }
   SECTION("cages 2") {
     auto mol = "C1CC2(O)CCC1(C)CC2"_smiles;
@@ -1107,7 +1123,9 @@ TEST_CASE("ring stereo finding is overly aggressive", "[chirality][bug]") {
     bool flagPossible = true;
     auto stereoInfo =
         Chirality::findPotentialStereo(*mol, cleanIt, flagPossible);
-    CHECK(stereoInfo.size() == 0);
+    CHECK(stereoInfo.size() == 2);
+    CHECK(stereoInfo[0].centeredOn == 2);
+    CHECK(stereoInfo[1].centeredOn == 6);
   }
   SECTION("cages 3") {
     auto mol = "C1CC2(O)CCC1CC2"_smiles;
@@ -1116,12 +1134,11 @@ TEST_CASE("ring stereo finding is overly aggressive", "[chirality][bug]") {
     bool flagPossible = true;
     auto stereoInfo =
         Chirality::findPotentialStereo(*mol, cleanIt, flagPossible);
-    CHECK(stereoInfo.size() == 0);
+    CHECK(stereoInfo.size() == 2);
+    CHECK(stereoInfo[0].centeredOn == 2);
+    CHECK(stereoInfo[1].centeredOn == 6);
   }
   SECTION("adamantyl") {
-    // the fact that we find four possible stereocenters here isn't nice, but
-    // it's not technically wrong and is more or less unavoidable with the
-    // current algorithm
     auto mol = "CC12CC3CC(CC(C3)C1)C2"_smiles;
     REQUIRE(mol);
     bool cleanIt = true;
@@ -1347,7 +1364,6 @@ TEST_CASE("N Chirality in rings") {
             Atom::ChiralType::CHI_UNSPECIFIED);
     }
     {  // CHEMBL79374
-      std::cerr << "--------------------------" << std::endl;
       auto mol = "Cn1ncc([C@]23CC[N@](CC2)C3)n1"_smiles;
       REQUIRE(mol);
       CHECK(mol->getAtomWithIdx(8)->getAtomicNum() == 7);
@@ -1380,5 +1396,40 @@ TEST_CASE(
     CHECK(mol->getAtomWithIdx(3)->getChiralTag() ==
           Atom::ChiralType::CHI_UNSPECIFIED);
     CHECK(mol->getStereoGroups().empty());
+  }
+}
+
+TEST_CASE(
+    "Github #4155: Problem finding stereocenters in bridged bicyclics with "
+    "4-rings") {
+  SECTION("specified") {
+    std::vector<std::string> smis = {
+        "C[C@H]1CC[C@H](CC1)C(N)=O", "C[C@]12CC[C@](CC1)(C2)C(N)=O",
+        "C[C@H]1C[C@H](C1)C(N)=O", "C[C@]12C[C@](C1)(CC2)C(N)=O"};
+    for (const auto &smi : smis) {
+      std::unique_ptr<ROMol> mol(SmilesToMol(smi));
+      REQUIRE(mol);
+      bool cleanIt = true;
+      bool flagPossible = true;
+      auto stereoInfo =
+          Chirality::findPotentialStereo(*mol, cleanIt, flagPossible);
+      REQUIRE(stereoInfo.size() == 2);
+      CHECK(stereoInfo[0].centeredOn == 1);
+    }
+  }
+  SECTION("unspecified") {
+    std::vector<std::string> smis = {
+        "CC1CCC(CC1)C(N)=O", "CC12CCC(CC1)(C2)C(N)=O", "CC1CC(C1)C(N)=O",
+        "CC12CC(C1)(CC2)C(N)=O"};
+    for (const auto &smi : smis) {
+      std::unique_ptr<ROMol> mol(SmilesToMol(smi));
+      REQUIRE(mol);
+      bool cleanIt = true;
+      bool flagPossible = true;
+      auto stereoInfo =
+          Chirality::findPotentialStereo(*mol, cleanIt, flagPossible);
+      REQUIRE(stereoInfo.size() == 2);
+      CHECK(stereoInfo[0].centeredOn == 1);
+    }
   }
 }
