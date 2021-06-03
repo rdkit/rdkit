@@ -141,9 +141,9 @@ class RDKIT_GRAPHMOL_EXPORT SubstanceGroup : public RDProps {
   const std::vector<unsigned int> &getParentAtoms() const { return d_patoms; }
   const std::vector<unsigned int> &getBonds() const { return d_bonds; }
 
-  void setAtoms(const std::vector<unsigned int> & atoms) { d_atoms = atoms; }
-  void setParentAtoms(const std::vector<unsigned int> & patoms) { d_patoms = patoms; }
-  void setBonds(const std::vector<unsigned int> &bonds) { d_bonds = bonds; }
+  void setAtoms(std::vector<unsigned int> atoms) { d_atoms = std::move(atoms); }
+  void setParentAtoms(std::vector<unsigned int> patoms) { d_patoms = std::move(patoms); }
+  void setBonds(std::vector<unsigned int> bonds) { d_bonds = std::move(bonds); }
 
   const std::vector<Bracket> &getBrackets() const { return d_brackets; }
   const std::vector<CState> &getCStates() const { return d_cstates; }
