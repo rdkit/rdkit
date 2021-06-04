@@ -541,15 +541,15 @@ class TestCase(unittest.TestCase):
     for name, value in zip(properties.GetPropertyNames(), properties.ComputeProperties(m)):
       print(name, value)
 
-    properties = rdMD.Properties(['exactmw', 'lipinskiHBA'])
+    properties = rdMD.Properties(['amw', 'lipinskiHBA'])
     for name, value in zip(properties.GetPropertyNames(), properties.ComputeProperties(m)):
       print(name, value)
 
   def testPropertyRanges(self):
-    query = rdMD.MakePropertyRangeQuery("exactmw", 0, 1000)
+    query = rdMD.MakePropertyRangeQuery("amw", 0, 1000)
     self.assertTrue(query.Match(Chem.MolFromSmiles("C")))
 
-    query = rdMD.MakePropertyRangeQuery("exactmw", 1000, 10000)
+    query = rdMD.MakePropertyRangeQuery("amw", 1000, 10000)
     self.assertFalse(query.Match(Chem.MolFromSmiles("C")))
 
   def testNumStereoCenters(self):
