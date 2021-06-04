@@ -12,6 +12,7 @@
 
 #include <GraphMol/RDKitBase.h>
 #include <GraphMol/SmilesParse/SmilesParse.h>
+#include <GraphMol/Descriptors/MolDescriptors.h>
 #include <GraphMol/FileParsers/MolSupplier.h>
 #include <GraphMol/Descriptors/ConnectivityDescriptors.h>
 #include <GraphMol/Descriptors/PMI.h>
@@ -111,6 +112,17 @@ TEST_CASE("Kier Phi", "[2D]") {
   }
 }
 
+TEST_CASE("atom counts", "[2D]") {
+  {
+    SmilesParserParams ps;
+    ps.sanitize = true;
+    ps.removeHs = false;
+    std::unique_ptr<ROMol> m(SmilesToMol("CC[H]", ps));
+    REQUIRE(m);
+    CHECK(Descriptors::calcNumHeavyAtoms(*m) == 2);
+    CHECK(Descriptors::calcNumAtoms(*m) == 8);
+  }
+}
 #ifdef RDK_BUILD_DESCRIPTORS3D
 TEST_CASE(
     "Github #4167: SpherocityIndex() not being recalculated for different "

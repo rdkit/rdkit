@@ -1,5 +1,5 @@
 //
-//  Copyright (C) 2004-2010 Greg Landrum and Rational Discovery LLC
+//  Copyright (C) 2004-2021 Greg Landrum and other RDKit contributors
 //
 //   @@ All Rights Reserved @@
 //  This file is part of the RDKit.
@@ -9,8 +9,8 @@
 //
 
 #include <RDGeneral/export.h>
-#ifndef _RD_MOLDESCRIPTORS_H_
-#define _RD_MOLDESCRIPTORS_H_
+#ifndef RD_MOLDESCRIPTORS_H
+#define RD_MOLDESCRIPTORS_H
 
 #include <GraphMol/Descriptors/Crippen.h>
 #include <GraphMol/Descriptors/MolSurf.h>
@@ -34,6 +34,24 @@ namespace Descriptors {
 RDKIT_DESCRIPTORS_EXPORT extern const std::string amwVersion;
 RDKIT_DESCRIPTORS_EXPORT double calcAMW(const ROMol &mol,
                                         bool onlyHeavy = false);
+/*!
+  Calculates a molecule's number of heavy (non-hydrogen) atoms
+
+  \param mol        the molecule of interest
+
+  \return the number of heavy atoms
+*/
+RDKIT_DESCRIPTORS_EXPORT extern const std::string NumHeavyAtomsVersion;
+RDKIT_DESCRIPTORS_EXPORT unsigned int calcNumHeavyAtoms(const ROMol &mol);
+/*!
+  Calculates a molecule's number of atoms
+
+  \param mol        the molecule of interest
+
+  \return the number of atoms
+*/
+RDKIT_DESCRIPTORS_EXPORT extern const std::string NumAtomsVersion;
+RDKIT_DESCRIPTORS_EXPORT unsigned int calcNumAtoms(const ROMol &mol);
 /*!
   Calculates a molecule's exact molecular weight
 
