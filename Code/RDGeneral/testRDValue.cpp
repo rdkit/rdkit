@@ -301,11 +301,11 @@ void testIntConversions() {
     } catch (boost::numeric::positive_overflow) {
     }
     
-    p.getProp<std::int16_t>("foo"); // should fail
+    p.getProp<std::int16_t>("foo"); // should pass
     try {
         p.getProp<std::uint16_t>("foo"); // should fail
         TEST_ASSERT(0);
-    } catch (boost::numeric::positive_overflow) {
+    } catch (boost::numeric::negative_overflow) {
     }
 
 }
