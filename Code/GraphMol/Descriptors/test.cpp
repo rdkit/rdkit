@@ -1943,19 +1943,19 @@ void testPropertyQueries() {
   RWMol *mol;
   mol = SmilesToMol("C1CCC2(C1)CC1CCC2CC1");
   {
-    PROP_RANGE_QUERY *query = makePropertyRangeQuery("exactmw", 50, 300);
+    PROP_RANGE_QUERY *query = makePropertyRangeQuery("amw", 50, 300);
     TEST_ASSERT(query->Match(*mol));
     delete query;
   }
   {
-    PROP_RANGE_QUERY *query = makePropertyRangeQuery("exactmw", 1000, 10300);
+    PROP_RANGE_QUERY *query = makePropertyRangeQuery("amw", 1000, 10300);
     TEST_ASSERT(!query->Match(*mol));
     delete query;
   }
 
   {
     auto pq = std::unique_ptr<PROP_EQUALS_QUERY>(
-        makePropertyQuery<PROP_EQUALS_QUERY>("exactmw", calcExactMW(*mol)));
+        makePropertyQuery<PROP_EQUALS_QUERY>("amw", calcAMW(*mol)));
     TEST_ASSERT(pq->Match(*mol));
 
     pq = std::unique_ptr<PROP_EQUALS_QUERY>(
