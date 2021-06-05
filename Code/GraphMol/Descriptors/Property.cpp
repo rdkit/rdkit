@@ -47,6 +47,7 @@ namespace Descriptors {
 
 namespace {
 void _registerDescriptors() {
+  REGISTER_DESCRIPTOR(exactmw, calcExactMW);
   REGISTER_DESCRIPTOR(amw, calcAMW);
   REGISTER_DESCRIPTOR(lipinskiHBA, calcLipinskiHBA);
   REGISTER_DESCRIPTOR(lipinskiHBD, calcLipinskiHBD);
