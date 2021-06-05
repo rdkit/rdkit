@@ -99,15 +99,15 @@ std::unique_ptr<std::vector<T>> pythonObjectToVect(const python::object &obj,
   std::unique_ptr<std::vector<T>> res;
   if (obj) {
     res.reset(new std::vector<T>);
-    python::stl_input_iterator<T> beg(obj), end;
-    while (beg != end) {
-      T v = *beg;
+
+    auto check_max = [&maxV](const T &v) {
       if (v >= maxV) {
         throw_value_error("list element larger than allowed value");
       }
-      res->push_back(v);
-      ++beg;
-    }
+      return true;
+    };
+    std::copy_if(python::stl_input_iterator<T>(obj),
+                 python::stl_input_iterator<T>(), res->begin(), check_max);
   }
   return res;
 }
@@ -115,12 +115,8 @@ template <typename T>
 std::unique_ptr<std::vector<T>> pythonObjectToVect(const python::object &obj) {
   std::unique_ptr<std::vector<T>> res;
   if (obj) {
-    res.reset(new std::vector<T>);
-    unsigned int nFrom = python::extract<unsigned int>(obj.attr("__len__")());
-    for (unsigned int i = 0; i < nFrom; ++i) {
-      T v = python::extract<T>(obj[i]);
-      res->push_back(v);
-    }
+    res.reset(new std::vector<T>(python::stl_input_iterator<T>(obj),
+                                 python::stl_input_iterator<T>()));
   }
   return res;
 }
