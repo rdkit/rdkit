@@ -4409,6 +4409,7 @@ $$$$
       self.assertEqual(str(e.exception), errors["uint overflow"])        
 
       ob.SetUnsignedProp("foo", 4294967295)
+      self.assertEqual(ob.GetUnsignedProp("foo"), 4294967295)
       with self.assertRaises(ValueError) as e:
         ob.GetIntProp("foo")
       self.assertEqual(str(e.exception), errors["int overflow"])        
