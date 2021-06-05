@@ -17,6 +17,7 @@
 // ours
 #include <GraphMol/RDKitBase.h>
 #include <GraphMol/SubstanceGroup.h>
+#include <RDBoost/Wrap.h>
 #include "props.hpp"
 
 namespace python = boost::python;
@@ -24,15 +25,6 @@ namespace python = boost::python;
 namespace RDKit {
 
 namespace {
-
-  template< typename T >
-  inline
-  std::vector< T > to_std_vector( const python::object& iterable )
-  {
-    return std::vector< T >( python::stl_input_iterator< T >( iterable ),
-                             python::stl_input_iterator< T >( ) );
-  }
-
 
 SubstanceGroup *getMolSubstanceGroupWithIdx(ROMol &mol, unsigned int idx) {
   auto &sgs = getSubstanceGroups(mol);
@@ -100,19 +92,24 @@ python::tuple getAttachPointsHelper(const SubstanceGroup &self) {
   return python::tuple(res);
 }
 
-
-void SetAtomsHelper(SubstanceGroup &self, const python::object& iterable) {
-  self.setAtoms(to_std_vector<unsigned int>(iterable));
+void SetAtomsHelper(SubstanceGroup &self, const python::object &iterable) {
+  std::vector<unsigned int> atoms;
+  pythonObjectToVect(iterable, atoms);
+  self.setAtoms(atoms);
 }
 
-void SetParentAtomsHelper(SubstanceGroup &self, const python::object& iterable) {
-  self.setParentAtoms(to_std_vector<unsigned int>(iterable));
+void SetParentAtomsHelper(SubstanceGroup &self,
+                          const python::object &iterable) {
+  std::vector<unsigned int> patoms;
+  pythonObjectToVect(iterable, patoms);
+  self.setParentAtoms(patoms);
 }
 
-void SetBondsHelper(SubstanceGroup &self, const python::object& iterable) {
-  self.setBonds(to_std_vector<unsigned int>(iterable));
+void SetBondsHelper(SubstanceGroup &self, const python::object &iterable) {
+  std::vector<unsigned int> bonds;
+  pythonObjectToVect(iterable, bonds);
+  self.setBonds(bonds);
 }
-
 
 }  // namespace
 

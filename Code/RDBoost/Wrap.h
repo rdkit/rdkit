@@ -127,18 +127,13 @@ std::unique_ptr<std::vector<T>> pythonObjectToVect(const python::object &obj) {
 template <typename T>
 void pythonObjectToVect(const python::object &obj, std::vector<T> &res) {
   if (obj) {
-    res.clear();
-    python::stl_input_iterator<T> beg(obj), end;
-    while (beg != end) {
-      T v = *beg;
-      res.push_back(v);
-      ++beg;
-    }
+    res.assign(python::stl_input_iterator<T>(obj),
+               python::stl_input_iterator<T>());
   }
 }
 
-RDKIT_RDBOOST_EXPORT boost::dynamic_bitset<> pythonObjectToDynBitset(const python::object &obj,
-                                                   boost::dynamic_bitset<>::size_type maxV);
+RDKIT_RDBOOST_EXPORT boost::dynamic_bitset<> pythonObjectToDynBitset(
+    const python::object &obj, boost::dynamic_bitset<>::size_type maxV);
 
 RDKIT_RDBOOST_EXPORT std::vector<std::pair<int, int>> *translateAtomMap(
     const python::object &atomMap);
@@ -157,13 +152,11 @@ RDKIT_RDBOOST_EXPORT std::vector<unsigned int> *translateIntSeq(
 #endif
 
 class PyGILStateHolder {
-public:
-  PyGILStateHolder() :
-    d_gstate(PyGILState_Ensure()) {}
-  ~PyGILStateHolder() {
-    PyGILState_Release(d_gstate);
-  }
-private:
+ public:
+  PyGILStateHolder() : d_gstate(PyGILState_Ensure()) {}
+  ~PyGILStateHolder() { PyGILState_Release(d_gstate); }
+
+ private:
   PyGILState_STATE d_gstate;
 };
 
