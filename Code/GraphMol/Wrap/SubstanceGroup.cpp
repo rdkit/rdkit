@@ -10,7 +10,6 @@
 
 #define NO_IMPORT_ARRAY
 #include <boost/python.hpp>
-#include <boost/python/stl_iterator.hpp>
 #include <boost/python/suite/indexing/vector_indexing_suite.hpp>
 #include <string>
 
