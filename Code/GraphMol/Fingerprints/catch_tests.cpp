@@ -700,3 +700,19 @@ TEST_CASE("Generators, bit info, and multiple calls", "[fpgenerator]") {
   CHECK(ao.atomCounts->size() == m1->getNumAtoms());
   CHECK(ao.atomToBits->size() == m1->getNumAtoms());
 }
+
+TEST_CASE(
+    "github #4212: UnfoldedRDKFingerprintCountBased returns a different "
+    "fingerprint length for every molecule") {
+  auto m1 = "c1ccccc1"_smiles;
+  REQUIRE(m1);
+  auto m2 = "CCCC"_smiles;
+  REQUIRE(m2);
+  std::unique_ptr<SparseIntVect<boost::uint64_t>> fp1{
+      getUnfoldedRDKFingerprintMol(*m1)};
+  REQUIRE(fp1);
+  std::unique_ptr<SparseIntVect<boost::uint64_t>> fp2{
+      getUnfoldedRDKFingerprintMol(*m2)};
+  REQUIRE(fp2);
+  CHECK(fp1->getLength() == fp2->getLength());
+}
