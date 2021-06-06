@@ -107,7 +107,8 @@ std::unique_ptr<std::vector<T>> pythonObjectToVect(const python::object &obj,
       return true;
     };
     std::copy_if(python::stl_input_iterator<T>(obj),
-                 python::stl_input_iterator<T>(), res->begin(), check_max);
+                 python::stl_input_iterator<T>(), std::back_inserter(*res),
+                 check_max);
   }
   return res;
 }
