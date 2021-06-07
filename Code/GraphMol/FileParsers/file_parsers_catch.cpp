@@ -3433,3 +3433,124 @@ M  END
     CHECK(MolToSmarts(*mol) == "[#6&h{2-}]-[#7]-[#6&h0]");
   }
 }
+
+TEST_CASE("sgroups and strict parsing") {
+  SECTION("everything ok") {
+    std::string ctab = R"CTAB(
+  Mrv2108 06052107052D          
+
+  0  0  0     0  0            999 V3000
+M  V30 BEGIN CTAB
+M  V30 COUNTS 2 1 2 0 0
+M  V30 BEGIN ATOM
+M  V30 1 C -6.875 1.0417 0 0
+M  V30 2 C -5.5413 1.8117 0 0
+M  V30 END ATOM
+M  V30 BEGIN BOND
+M  V30 1 1 1 2
+M  V30 END BOND
+M  V30 BEGIN SGROUP
+M  V30 1 DAT 0 ATOMS=(1 2) FIELDNAME=foo -
+M  V30 FIELDDISP="   -5.5413    1.8117    DAU   ALL  0       0" -
+M  V30 MRV_FIELDDISP=0 FIELDDATA=bar
+M  V30 2 DAT 0 ATOMS=(1 1) FIELDNAME=foo -
+M  V30 FIELDDISP="   -6.8750    1.0417    DAU   ALL  0       0" -
+M  V30 MRV_FIELDDISP=0 FIELDDATA=baz
+M  V30 END SGROUP
+M  V30 END CTAB
+M  END
+)CTAB";
+    std::unique_ptr<ROMol> m(MolBlockToMol(ctab));
+    CHECK(m);
+  }
+  SECTION("SGroups totally missing") {
+    std::string ctab = R"CTAB(
+  Mrv2108 06052107052D          
+
+  0  0  0     0  0            999 V3000
+M  V30 BEGIN CTAB
+M  V30 COUNTS 2 1 2 0 0
+M  V30 BEGIN ATOM
+M  V30 1 C -6.875 1.0417 0 0
+M  V30 2 C -5.5413 1.8117 0 0
+M  V30 END ATOM
+M  V30 BEGIN BOND
+M  V30 1 1 1 2
+M  V30 END BOND
+M  V30 END CTAB
+M  END
+)CTAB";
+    std::unique_ptr<ROMol> m;
+    CHECK_THROWS_AS(m.reset(MolBlockToMol(ctab)), FileParseException);
+    bool sanitize = true;
+    bool removeHs = true;
+    bool strictParsing = false;
+    m.reset(MolBlockToMol(ctab, sanitize, removeHs, strictParsing));
+    CHECK(m);
+  }
+  SECTION("one SGroup missing") {
+    std::string ctab = R"CTAB(
+  Mrv2108 06052107052D          
+
+  0  0  0     0  0            999 V3000
+M  V30 BEGIN CTAB
+M  V30 COUNTS 2 1 2 0 0
+M  V30 BEGIN ATOM
+M  V30 1 C -6.875 1.0417 0 0
+M  V30 2 C -5.5413 1.8117 0 0
+M  V30 END ATOM
+M  V30 BEGIN BOND
+M  V30 1 1 1 2
+M  V30 END BOND
+M  V30 BEGIN SGROUP
+M  V30 2 DAT 0 ATOMS=(1 1) FIELDNAME=foo -
+M  V30 FIELDDISP="   -6.8750    1.0417    DAU   ALL  0       0" -
+M  V30 MRV_FIELDDISP=0 FIELDDATA=baz
+M  V30 END SGROUP
+M  V30 END CTAB
+M  END
+)CTAB";
+    std::unique_ptr<ROMol> m;
+    // fails without an exception
+    m.reset(MolBlockToMol(ctab));
+    CHECK(!m);
+    bool sanitize = true;
+    bool removeHs = true;
+    bool strictParsing = false;
+    m.reset(MolBlockToMol(ctab, sanitize, removeHs, strictParsing));
+    CHECK(m);
+  }
+
+  SECTION("END SGROUPS missing") {
+    std::string ctab = R"CTAB(
+  Mrv2108 06052107052D          
+
+  0  0  0     0  0            999 V3000
+M  V30 BEGIN CTAB
+M  V30 COUNTS 2 1 2 0 0
+M  V30 BEGIN ATOM
+M  V30 1 C -6.875 1.0417 0 0
+M  V30 2 C -5.5413 1.8117 0 0
+M  V30 END ATOM
+M  V30 BEGIN BOND
+M  V30 1 1 1 2
+M  V30 END BOND
+M  V30 BEGIN SGROUP
+M  V30 1 DAT 0 ATOMS=(1 2) FIELDNAME=foo -
+M  V30 FIELDDISP="   -5.5413    1.8117    DAU   ALL  0       0" -
+M  V30 MRV_FIELDDISP=0 FIELDDATA=bar
+M  V30 2 DAT 0 ATOMS=(1 1) FIELDNAME=foo -
+M  V30 FIELDDISP="   -6.8750    1.0417    DAU   ALL  0       0" -
+M  V30 MRV_FIELDDISP=0 FIELDDATA=baz
+M  V30 END CTAB
+M  END
+)CTAB";
+    std::unique_ptr<ROMol> m;
+    CHECK_THROWS_AS(m.reset(MolBlockToMol(ctab)), FileParseException);
+    bool sanitize = true;
+    bool removeHs = true;
+    bool strictParsing = false;
+    m.reset(MolBlockToMol(ctab, sanitize, removeHs, strictParsing));
+    CHECK(m);
+  }
+}
