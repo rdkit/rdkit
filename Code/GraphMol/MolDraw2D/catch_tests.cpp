@@ -11,6 +11,7 @@
 
 #include <GraphMol/RDKitBase.h>
 
+#include <RDGeneral/hash/hash.hpp>
 #include <GraphMol/SmilesParse/SmilesParse.h>
 #include <GraphMol/MolDraw2D/MolDraw2D.h>
 #include <GraphMol/MolDraw2D/MolDraw2DSVG.h>
@@ -33,6 +34,170 @@
 // a lot of the tests check <text> flags in the SVG.  That doesn't
 // happen with the Freetype versions
 static const bool NO_FREETYPE = true;
+
+namespace {
+
+// if the generated SVG hashes to the value we're expecting, delete
+// the file.  That way, only the files that need inspection will be
+// left at the end of the run.
+// The hand-drawn pictures will fail this frequently due to the use
+// of random numbers to draw the lines.  As well as all the testHandDrawn
+// files, this includes testBrackets-5a.svg and testPositionVariation-1b.svg
+static const bool DELETE_WITH_GOOD_HASH = true;
+static const std::map<std::string, std::hash_result_t> SVG_HASHES = {
+    {"testAtomTags_1.svg", 2816838644U},
+    {"testAtomTags_2.svg", 479715142U},
+    {"testAtomTags_3.svg", 257804242U},
+    {"contourMol_1.svg", 643828415U},
+    {"contourMol_2.svg", 2117685063U},
+    {"contourMol_3.svg", 2802682249U},
+    {"contourMol_4.svg", 2032744517U},
+    {"testDativeBonds_1.svg", 1288509407U},
+    {"testDativeBonds_2.svg", 2473279167U},
+    {"testDativeBonds_3.svg", 3551403428U},
+    {"testDativeBonds_2a.svg", 338608338U},
+    {"testDativeBonds_2b.svg", 1192512328U},
+    {"testDativeBonds_2c.svg", 1065957903U},
+    {"testDativeBonds_2d.svg", 1550552233U},
+    {"testZeroOrderBonds_1.svg", 3653276688U},
+    {"testFoundations_1.svg", 2316881138U},
+    {"testFoundations_2.svg", 3090026078U},
+    {"testTest_1.svg", 3090026078U},
+    {"testKekulizationProblems_1.svg", 3864409625U},
+    {"testAtomBondIndices_1.svg", 3577013093U},
+    {"testAtomBondIndices_2.svg", 3088602859U},
+    {"testAtomBondIndices_3.svg", 3676717031U},
+    {"testAtomBondIndices_4.svg", 2887221748U},
+    {"testAtomBondIndices_5.svg", 2447538404U},
+    {"testGithub3226_1.svg", 346364363U},
+    {"testGithub3226_2.svg", 3176042786U},
+    {"testGithub3226_3.svg", 4242253168U},
+    {"testGithub3369_1.svg", 3632291332U},
+    {"testIncludeRadicals_1a.svg", 86978196U},
+    {"testIncludeRadicals_1b.svg", 1886150469U},
+    {"testLegendsAndDrawing-1.svg", 1600882564U},
+    {"testGithub3577-1.svg", 1370578225U},
+    {"testHandDrawn-1.svg", 4111199347U},
+    {"testHandDrawn-2.svg", 4012723289U},
+    {"testHandDrawn-3.svg", 2383129377U},
+    {"testHandDrawn-4.svg", 2926689459U},
+    {"testHandDrawn-5a.svg", 4278270292U},
+    {"testHandDrawn-5b.svg", 1413631668U},
+    {"testBrackets-1a.svg", 1866285039U},
+    {"testBrackets-1b.svg", 1004032144U},
+    {"testBrackets-1c.svg", 1866285039U},
+    {"testBrackets-1d.svg", 1004032144U},
+    {"testBrackets-1e.svg", 2746654496U},
+    {"testBrackets-2a.svg", 3644629163U},
+    {"testBrackets-2b.svg", 2246882873U},
+    {"testBrackets-2c.svg", 3644629163U},
+    {"testBrackets-2d.svg", 2246882873U},
+    {"testBrackets-3a.svg", 1097544454U},
+    {"testBrackets-4a.svg", 795221854U},
+    {"testBrackets-4b.svg", 121671625U},
+    {"testBrackets-5a.svg", 1662252963U},
+    {"testSGroupData-1a.svg", 678378038U},
+    {"testSGroupData-1b.svg", 3984408386U},
+    {"testSGroupData-3a.svg", 1846217387U},
+    {"testSGroupData-2a.svg", 1179919474U},
+    {"testSGroupData-2b.svg", 1955475018U},
+    {"testSGroupData-3a.svg", 1846217387U},
+    {"testPositionVariation-1.svg", 3103806438U},
+    {"testPositionVariation-1b.svg", 297886280U},
+    {"testPositionVariation-2.svg", 634475796U},
+    {"testPositionVariation-3.svg", 3016244767U},
+    {"testPositionVariation-4.svg", 3568646926U},
+    {"testNoAtomLabels-1.svg", 3591526839U},
+    {"testQueryBonds-1a.svg", 4136415723U},
+    {"testQueryBonds-1b.svg", 582100110U},
+    {"testQueryBonds-1c.svg", 4137769878U},
+    {"testQueryBonds-2.svg", 1035280354U},
+    {"testLinkNodes-2-0.svg", 1164466138U},
+    {"testLinkNodes-2-30.svg", 2039328115U},
+    {"testLinkNodes-2-60.svg", 1845847033U},
+    {"testLinkNodes-2-90.svg", 1414987172U},
+    {"testLinkNodes-2-120.svg", 3049988619U},
+    {"testLinkNodes-2-150.svg", 2617902017U},
+    {"testLinkNodes-2-180.svg", 1877344463U},
+    {"testMolAnnotations-1.svg", 1528595256U},
+    {"testMolAnnotations-2a.svg", 564219453U},
+    {"testMolAnnotations-2b.svg", 3081985494U},
+    {"testMolAnnotations-2c.svg", 3984419931U},
+    {"testMolAnnotations-3a.svg", 3312386498U},
+    {"testMolAnnotations-3b.svg", 998067230U},
+    {"testMolAnnotations-3c.svg", 3806324920U},
+    {"testMolAnnotations-3d.svg", 3006706995U},
+    {"testMolAnnotations-4a.svg", 181181207U},
+    {"testLinkNodes-1-0.svg", 3016092158U},
+    {"testLinkNodes-1-30.svg", 3128578153U},
+    {"testLinkNodes-1-60.svg", 771018225U},
+    {"testLinkNodes-1-90.svg", 3134831159U},
+    {"testLinkNodes-1-120.svg", 2649296883U},
+    {"testLinkNodes-1-150.svg", 3953815697U},
+    {"testLinkNodes-1-180.svg", 4069297865U},
+    {"testGithub3744.svg", 1228490835U},
+    {"testAtomLists-1.svg", 3855928660U},
+    {"testAtomLists-2.svg", 1413737187U},
+    {"testIsoDummyIso.svg", 932401268U},
+    {"testNoIsoDummyIso.svg", 2201041942U},
+    {"testIsoNoDummyIso.svg", 1333151286U},
+    {"testNoIsoNoDummyIso.svg", 2147371130U},
+    {"testDeuteriumTritium.svg", 2083575745U},
+    {"testHydrogenBonds1.svg", 1224633130U},
+    {"testHydrogenBonds2.svg", 3056371259U},
+    {"testGithub3912.1.svg", 3644652967U},
+    {"testGithub3912.2.svg", 2868397535U},
+    {"testGithub2976.svg", 4285372032U},
+    {"testReactionCoords.svg", 1266050580U},
+    {"testAnnotationColors.svg", 3669978208U}
+};
+
+// These PNG hashes aren't completely reliable due to floating point cruft,
+// but they can still reduce the number of drawings that need visual
+// inspection.  At present, the files
+// testPNGMetadata_2.png
+// give different results on my MBP and Ubuntu 20.04 VM.  The SVGs work
+// better because the floats are all output to only 1 decimal place so there
+// is a much smaller chance of different systems producing different files.
+static const std::map<std::string, std::hash_result_t> PNG_HASHES = {
+    {"testGithub3226_1.png", 459584719U},
+    {"testGithub3226_2.png", 1885164782U},
+    {"testGithub3226_3.png", 175334341U},
+    {"testPNGMetadata_1.png", 1040156718U},
+    {"testPNGMetadata_2.png", 452499970U},
+    {"testHandDrawn-1.png", 1656781517U},
+    {"testHandDrawn-2.png", 1191090506U},
+    {"testHandDrawn-3.png", 2579778653U},
+    {"testHandDrawn-4.png", 2660533685U},
+    {"testHandDrawn-5.png", 2787812269U}};
+
+std::hash_result_t hash_file(const std::string &filename) {
+  std::ifstream ifs(filename, std::ios_base::binary);
+  std::string file_contents(std::istreambuf_iterator<char>{ifs}, {});
+  if (filename.substr(filename.length() - 4) == ".svg") {
+    // deal with MSDOS newlines.
+    file_contents.erase(
+        remove(file_contents.begin(), file_contents.end(), '\r'),
+        file_contents.end());
+  }
+  return gboost::hash_range(file_contents.begin(), file_contents.end());
+}
+
+void check_file_hash(const std::string &filename) {
+//    std::cout << filename << " : " << hash_file(filename) << "U" << std::endl;
+
+  std::map<std::string, std::hash_result_t>::const_iterator it;
+  if (filename.substr(filename.length() - 4) == ".svg") {
+    it = SVG_HASHES.find(filename);
+  } else {
+    it = PNG_HASHES.find(filename);
+  }
+  if (it != SVG_HASHES.end() && hash_file(filename) == it->second &&
+      DELETE_WITH_GOOD_HASH) {
+    std::remove(filename.c_str());
+  }
+}
+} // namespace
 
 using namespace RDKit;
 
@@ -68,6 +233,7 @@ TEST_CASE("tag atoms in SVG", "[drawing][SVG]") {
     std::ofstream outs("testAtomTags_1.svg");
     outs << text;
     outs.flush();
+    check_file_hash("testAtomTags_1.svg");
 
     CHECK(text.find("<circle") != std::string::npos);
     CHECK(text.find("<circle") != std::string::npos);
@@ -96,6 +262,7 @@ TEST_CASE("tag atoms in SVG", "[drawing][SVG]") {
     std::ofstream outs("testAtomTags_2.svg");
     outs << text;
     outs.flush();
+    check_file_hash("testAtomTags_2.svg");
 
     size_t i = 0;
     size_t c = 0;
@@ -143,9 +310,10 @@ TEST_CASE("metadata in SVG", "[drawing][SVG]") {
     drawer.addMoleculeMetadata(*m1);
     drawer.finishDrawing();
     std::string text = drawer.getDrawingText();
-    std::ofstream outs("testAtomTags_2.svg");
+    std::ofstream outs("testAtomTags_3.svg");
     outs << text;
     outs.flush();
+    check_file_hash("testAtomTags_3.svg");
 
     size_t i = 0;
     size_t c = 0;
@@ -231,6 +399,7 @@ TEST_CASE("contour data", "[drawing][conrec]") {
     std::ofstream outs("contourMol_1.svg");
     outs << text;
     outs.flush();
+    check_file_hash("contourMol_1.svg");
     delete[] grid;
   }
   SECTION("gaussian basics") {
@@ -262,6 +431,7 @@ TEST_CASE("contour data", "[drawing][conrec]") {
     std::ofstream outs("contourMol_2.svg");
     outs << text;
     outs.flush();
+    check_file_hash("contourMol_2.svg");
   }
   SECTION("gaussian fill") {
     MolDraw2DSVG drawer(250, 250, -1, -1, NO_FREETYPE);
@@ -293,6 +463,7 @@ TEST_CASE("contour data", "[drawing][conrec]") {
     std::ofstream outs("contourMol_3.svg");
     outs << text;
     outs.flush();
+    check_file_hash("contourMol_3.svg");
   }
 
   SECTION("gaussian fill 2") {
@@ -329,6 +500,7 @@ TEST_CASE("contour data", "[drawing][conrec]") {
     std::ofstream outs("contourMol_4.svg");
     outs << text;
     outs.flush();
+    check_file_hash("contourMol_4.svg");
   }
 }
 
@@ -344,6 +516,7 @@ TEST_CASE("dative bonds", "[drawing][organometallics]") {
     std::ofstream outs("testDativeBonds_1.svg");
     outs << text;
     outs.flush();
+    check_file_hash("testDativeBonds_1.svg");
 
     CHECK(
         text.find(
@@ -362,6 +535,7 @@ TEST_CASE("dative bonds", "[drawing][organometallics]") {
     std::ofstream outs("testDativeBonds_2.svg");
     outs << text;
     outs.flush();
+    check_file_hash("testDativeBonds_2.svg");
 
     CHECK(text.find("<path class='bond-7 atom-7 atom-8' d='M 101.3,79.4 "
                     "L 95.7,87.2' style='fill:none;"
@@ -380,6 +554,7 @@ TEST_CASE("dative bonds", "[drawing][organometallics]") {
     std::ofstream outs("testDativeBonds_3.svg");
     outs << text;
     outs.flush();
+    check_file_hash("testDativeBonds_3.svg");
 
     CHECK(text.find("<path class='bond-2 atom-3 atom-4' d='M 53.3,140.7"
                     " L 81.0,149.7' style='fill:none;"
@@ -397,6 +572,7 @@ TEST_CASE("dative bonds", "[drawing][organometallics]") {
       std::ofstream outs("testDativeBonds_2a.svg");
       outs << text;
       outs.flush();
+      check_file_hash("testDativeBonds_2a.svg");
     }
     {
       MolDraw2DSVG drawer(250, 250, -1, -1, NO_FREETYPE);
@@ -407,6 +583,7 @@ TEST_CASE("dative bonds", "[drawing][organometallics]") {
       std::ofstream outs("testDativeBonds_2b.svg");
       outs << text;
       outs.flush();
+      check_file_hash("testDativeBonds_2b.svg");
     }
     {
       MolDraw2DSVG drawer(350, 350, -1, -1, NO_FREETYPE);
@@ -417,6 +594,7 @@ TEST_CASE("dative bonds", "[drawing][organometallics]") {
       std::ofstream outs("testDativeBonds_2c.svg");
       outs << text;
       outs.flush();
+      check_file_hash("testDativeBonds_2c.svg");
     }
     {
       MolDraw2DSVG drawer(450, 450, -1, -1, NO_FREETYPE);
@@ -427,6 +605,7 @@ TEST_CASE("dative bonds", "[drawing][organometallics]") {
       std::ofstream outs("testDativeBonds_2d.svg");
       outs << text;
       outs.flush();
+      check_file_hash("testDativeBonds_2d.svg");
     }
   }
 }
@@ -444,6 +623,8 @@ TEST_CASE("zero-order bonds", "[drawing][organometallics]") {
     std::ofstream outs("testZeroOrderBonds_1.svg");
     outs << text;
     outs.flush();
+    check_file_hash("testZeroOrderBonds_1.svg");
+
 
     CHECK(text.find("stroke-dasharray:2,2") != std::string::npos);
   }
@@ -461,6 +642,7 @@ TEST_CASE("copying drawing options", "[drawing]") {
       std::ofstream outs("testFoundations_1.svg");
       outs << text;
       outs.flush();
+      check_file_hash("testFoundations_1.svg");
       CHECK(text.find("fill:#0000FF' >N</text>") != std::string::npos);
     }
     {
@@ -472,6 +654,7 @@ TEST_CASE("copying drawing options", "[drawing]") {
       std::ofstream outs("testFoundations_2.svg");
       outs << text;
       outs.flush();
+      check_file_hash("testFoundations_2.svg");
       CHECK(text.find("fill:#0000FF' >N</text>") == std::string::npos);
       CHECK(text.find("fill:#000000' >N</text>") != std::string::npos);
     }
@@ -488,6 +671,7 @@ TEST_CASE("copying drawing options", "[drawing]") {
       std::ofstream outs("testTest_1.svg");
       outs << text;
       outs.flush();
+      check_file_hash("testTest_1.svg");
       CHECK(text.find("fill:#0000FF' >N</text>") == std::string::npos);
       CHECK(text.find("fill:#000000' >N</text>") != std::string::npos);
     }
@@ -514,6 +698,7 @@ TEST_CASE("bad DrawMolecules() when molecules are not kekulized",
     std::ofstream outs("testKekulizationProblems_1.svg");
     outs << text;
     outs.flush();
+    check_file_hash("testKekulizationProblems_1.svg");
 
     // this is a very crude test - really we just need to look at the SVG - but
     // it's better than nothing.
@@ -536,6 +721,7 @@ TEST_CASE("draw atom/bond indices", "[drawing]") {
       std::ofstream outs("testAtomBondIndices_1.svg");
       outs << text;
       outs.flush();
+      check_file_hash("testAtomBondIndices_1.svg");
       CHECK(text.find(">1</text>") == std::string::npos);
       CHECK(text.find(">(</text>") == std::string::npos);
       CHECK(text.find(">S</text>") == std::string::npos);
@@ -550,6 +736,7 @@ TEST_CASE("draw atom/bond indices", "[drawing]") {
       std::ofstream outs("testAtomBondIndices_2.svg");
       outs << text;
       outs.flush();
+      check_file_hash("testAtomBondIndices_2.svg");
       CHECK(text.find(">1</text>") != std::string::npos);
       // it only appears once though:
       CHECK(text.find(">1</text>", text.find(">1</text>") + 1) ==
@@ -565,6 +752,7 @@ TEST_CASE("draw atom/bond indices", "[drawing]") {
       std::ofstream outs("testAtomBondIndices_3.svg");
       outs << text;
       outs.flush();
+      check_file_hash("testAtomBondIndices_3.svg");
       CHECK(text.find(">1</text>") != std::string::npos);
       // it only appears once though:
       CHECK(text.find(">1</text>", text.find(">1</text>") + 1) ==
@@ -580,6 +768,7 @@ TEST_CASE("draw atom/bond indices", "[drawing]") {
       std::ofstream outs("testAtomBondIndices_4.svg");
       outs << text;
       outs.flush();
+      check_file_hash("testAtomBondIndices_4.svg");
       CHECK(text.find(">1</text>") != std::string::npos);
       // it appears twice:
       CHECK(text.find(">1</text>", text.find(">1</text>") + 1) !=
@@ -597,6 +786,7 @@ TEST_CASE("draw atom/bond indices", "[drawing]") {
       std::ofstream outs("testAtomBondIndices_5.svg");
       outs << text;
       outs.flush();
+      check_file_hash("testAtomBondIndices_5.svg");
       CHECK(text.find(">1</text>") != std::string::npos);
       CHECK(text.find(">,</text>") != std::string::npos);
       CHECK(text.find(">(</text>") != std::string::npos);
@@ -623,6 +813,7 @@ TEST_CASE("Github #3226: Lines in wedge bonds being drawn too closely together",
       std::ofstream outs("testGithub3226_1.svg");
       outs << text;
       outs.flush();
+      check_file_hash("testGithub3226_1.svg");
       std::vector<std::string> tkns;
       boost::algorithm::find_all(tkns, text, "bond-0");
       CHECK(tkns.size() == 6);
@@ -635,6 +826,7 @@ TEST_CASE("Github #3226: Lines in wedge bonds being drawn too closely together",
       drawer.drawMolecule(*m1);
       drawer.finishDrawing();
       drawer.writeDrawingText("testGithub3226_1.png");
+      check_file_hash("testGithub3226_1.png");
     }
   }
 #endif
@@ -647,6 +839,7 @@ TEST_CASE("Github #3226: Lines in wedge bonds being drawn too closely together",
       std::ofstream outs("testGithub3226_2.svg");
       outs << text;
       outs.flush();
+      check_file_hash("testGithub3226_2.svg");
       std::vector<std::string> tkns;
       boost::algorithm::find_all(tkns, text, "bond-0");
       CHECK(tkns.size() == 4);
@@ -659,6 +852,7 @@ TEST_CASE("Github #3226: Lines in wedge bonds being drawn too closely together",
       drawer.drawMolecule(*m1);
       drawer.finishDrawing();
       drawer.writeDrawingText("testGithub3226_2.png");
+      check_file_hash("testGithub3226_2.png");
     }
   }
 #endif
@@ -671,6 +865,7 @@ TEST_CASE("Github #3226: Lines in wedge bonds being drawn too closely together",
       std::ofstream outs("testGithub3226_3.svg");
       outs << text;
       outs.flush();
+      check_file_hash("testGithub3226_3.svg");
       std::vector<std::string> tkns;
       boost::algorithm::find_all(tkns, text, "bond-0");
       CHECK(tkns.size() == 4);
@@ -683,6 +878,7 @@ TEST_CASE("Github #3226: Lines in wedge bonds being drawn too closely together",
       drawer.drawMolecule(*m1);
       drawer.finishDrawing();
       drawer.writeDrawingText("testGithub3226_3.png");
+      check_file_hash("testGithub3226_3.png");
     }
   }
 #endif
@@ -735,6 +931,7 @@ M  END
       drawer.finishDrawing();
       auto png = drawer.getDrawingText();
       drawer.writeDrawingText("testPNGMetadata_1.png");
+      check_file_hash("testPNGMetadata_1.png");
       CHECK(png.find(PNGData::smilesTag) != std::string::npos);
       CHECK(png.find(PNGData::molTag) != std::string::npos);
       CHECK(png.find(PNGData::pklTag) != std::string::npos);
@@ -777,6 +974,7 @@ M  END
       drawer.finishDrawing();
       auto png = drawer.getDrawingText();
       drawer.writeDrawingText("testPNGMetadata_2.png");
+      check_file_hash("testPNGMetadata_2.png");
       CHECK(png.find(PNGData::smilesTag) == std::string::npos);
       CHECK(png.find(PNGData::molTag) == std::string::npos);
       CHECK(png.find(PNGData::pklTag) == std::string::npos);
@@ -885,6 +1083,7 @@ TEST_CASE(
     std::ofstream outs("testGithub3369_1.svg");
     outs << text;
     outs.flush();
+    check_file_hash("testGithub3369_1.svg");
   }
 }
 
@@ -903,6 +1102,7 @@ TEST_CASE("includeRadicals", "[options]") {
       std::ofstream outs("testIncludeRadicals_1a.svg");
       outs << text;
       outs.flush();
+      check_file_hash("testIncludeRadicals_1a.svg");
       CHECK(text.find("<path d='M") != std::string::npos);
     }
     {
@@ -914,6 +1114,7 @@ TEST_CASE("includeRadicals", "[options]") {
       std::ofstream outs("testIncludeRadicals_1b.svg");
       outs << text;
       outs.flush();
+      check_file_hash("testIncludeRadicals_1b.svg");
       CHECK(text.find("<path d='M") == std::string::npos);
     }
   }
@@ -941,6 +1142,7 @@ TEST_CASE("including legend in drawing results in offset drawing later",
     outs << text;
     outs.flush();
     outs.close();
+    check_file_hash("testLegendsAndDrawing-1.svg");
 
     // make sure the polygon starts at a bond
     CHECK(text.find("<path class='bond-0 atom-0 atom-1' d='M 322.0,140.0") !=
@@ -965,6 +1167,7 @@ TEST_CASE("Github #3577", "[bug]") {
     std::ofstream outs("testGithub3577-1.svg");
     outs << text;
     outs.flush();
+    check_file_hash("testGithub3577-1.svg");
   }
 }
 TEST_CASE("hand drawn", "[play]") {
@@ -988,6 +1191,7 @@ TEST_CASE("hand drawn", "[play]") {
       std::ofstream outs("testHandDrawn-1.svg");
       outs << text;
       outs.flush();
+      check_file_hash("testHandDrawn-1.svg");
     }
 #ifdef RDK_BUILD_CAIRO_SUPPORT
     {
@@ -997,6 +1201,7 @@ TEST_CASE("hand drawn", "[play]") {
       drawer.drawMolecule(*m, "Oxytocin (flat)");
       drawer.finishDrawing();
       drawer.writeDrawingText("testHandDrawn-1.png");
+      check_file_hash("testHandDrawn-1.png");
     }
 #endif
   }
@@ -1020,6 +1225,7 @@ TEST_CASE("hand drawn", "[play]") {
       std::ofstream outs("testHandDrawn-2.svg");
       outs << text;
       outs.flush();
+      check_file_hash("testHandDrawn-2.svg");
     }
 #ifdef RDK_BUILD_CAIRO_SUPPORT
     {
@@ -1029,6 +1235,7 @@ TEST_CASE("hand drawn", "[play]") {
       drawer.drawMolecule(*m, "Oxytocin");
       drawer.finishDrawing();
       drawer.writeDrawingText("testHandDrawn-2.png");
+      check_file_hash("testHandDrawn-2.png");
     }
 #endif
   }
@@ -1051,6 +1258,7 @@ TEST_CASE("hand drawn", "[play]") {
       std::ofstream outs("testHandDrawn-3.svg");
       outs << text;
       outs.flush();
+      check_file_hash("testHandDrawn-3.svg");
     }
 #ifdef RDK_BUILD_CAIRO_SUPPORT
     {
@@ -1060,6 +1268,7 @@ TEST_CASE("hand drawn", "[play]") {
       drawer.drawMolecule(*m);
       drawer.finishDrawing();
       drawer.writeDrawingText("testHandDrawn-3.png");
+      check_file_hash("testHandDrawn-3.png");
     }
 #endif
   }
@@ -1083,6 +1292,7 @@ TEST_CASE("hand drawn", "[play]") {
       std::ofstream outs("testHandDrawn-4.svg");
       outs << text;
       outs.flush();
+      check_file_hash("testHandDrawn-4.svg");
     }
 #ifdef RDK_BUILD_CAIRO_SUPPORT
     {
@@ -1092,6 +1302,7 @@ TEST_CASE("hand drawn", "[play]") {
       drawer.drawMolecule(*m);
       drawer.finishDrawing();
       drawer.writeDrawingText("testHandDrawn-4.png");
+      check_file_hash("testHandDrawn-4.png");
     }
 #endif
   }
@@ -1113,6 +1324,7 @@ TEST_CASE("hand drawn", "[play]") {
       std::ofstream outs("testHandDrawn-5a.svg");
       outs << text;
       outs.flush();
+      check_file_hash("testHandDrawn-5a.svg");
     }
     {
       MolDraw2DSVG drawer(900, 450);
@@ -1124,6 +1336,7 @@ TEST_CASE("hand drawn", "[play]") {
       std::ofstream outs("testHandDrawn-5b.svg");
       outs << text;
       outs.flush();
+      check_file_hash("testHandDrawn-5b.svg");
     }
 #ifdef RDK_BUILD_CAIRO_SUPPORT
     {
@@ -1133,6 +1346,7 @@ TEST_CASE("hand drawn", "[play]") {
       drawer.drawMolecule(*m);
       drawer.finishDrawing();
       drawer.writeDrawingText("testHandDrawn-5.png");
+      check_file_hash("testHandDrawn-5.png");
     }
 #endif
   }
@@ -1176,6 +1390,7 @@ M  END
       std::ofstream outs("testBrackets-1a.svg");
       outs << text;
       outs.flush();
+      check_file_hash("testBrackets-1a.svg");
     }
     {  // rotation
       MolDraw2DSVG drawer(350, 300);
@@ -1186,6 +1401,7 @@ M  END
       std::ofstream outs("testBrackets-1b.svg");
       outs << text;
       outs.flush();
+      check_file_hash("testBrackets-1b.svg");
     }
     {  // centering
       MolDraw2DSVG drawer(350, 300);
@@ -1196,6 +1412,7 @@ M  END
       std::ofstream outs("testBrackets-1c.svg");
       outs << text;
       outs.flush();
+      check_file_hash("testBrackets-1c.svg");
     }
     {  // rotation + centering
       MolDraw2DSVG drawer(350, 300);
@@ -1207,6 +1424,7 @@ M  END
       std::ofstream outs("testBrackets-1d.svg");
       outs << text;
       outs.flush();
+      check_file_hash("testBrackets-1d.svg");
     }
     {  // rotation
       MolDraw2DSVG drawer(350, 300);
@@ -1217,6 +1435,7 @@ M  END
       std::ofstream outs("testBrackets-1e.svg");
       outs << text;
       outs.flush();
+      check_file_hash("testBrackets-1e.svg");
     }
   }
   SECTION("three brackets") {
@@ -1258,6 +1477,7 @@ M  END)CTAB"_ctab;
       std::ofstream outs("testBrackets-2a.svg");
       outs << text;
       outs.flush();
+      check_file_hash("testBrackets-2a.svg");
     }
     {  // rotation
       MolDraw2DSVG drawer(350, 300);
@@ -1268,6 +1488,7 @@ M  END)CTAB"_ctab;
       std::ofstream outs("testBrackets-2b.svg");
       outs << text;
       outs.flush();
+      check_file_hash("testBrackets-2b.svg");
     }
     {  // centering
       MolDraw2DSVG drawer(350, 300);
@@ -1278,6 +1499,7 @@ M  END)CTAB"_ctab;
       std::ofstream outs("testBrackets-2c.svg");
       outs << text;
       outs.flush();
+      check_file_hash("testBrackets-2c.svg");
     }
     {  // rotation + centering
       MolDraw2DSVG drawer(350, 300);
@@ -1289,6 +1511,7 @@ M  END)CTAB"_ctab;
       std::ofstream outs("testBrackets-2d.svg");
       outs << text;
       outs.flush();
+      check_file_hash("testBrackets-2d.svg");
     }
   }
   SECTION("ChEBI 59342") {
@@ -1374,6 +1597,7 @@ M  END)CTAB"_ctab;
       std::ofstream outs("testBrackets-3a.svg");
       outs << text;
       outs.flush();
+      check_file_hash("testBrackets-3a.svg");
     }
   }
   SECTION("pathological bracket orientation") {
@@ -1421,6 +1645,7 @@ M  END
       std::ofstream outs("testBrackets-4a.svg");
       outs << text;
       outs.flush();
+      check_file_hash("testBrackets-4a.svg");
     }
 
     {  // no bonds in the sgroup, the bracket should point the other way
@@ -1468,6 +1693,7 @@ M  END
       std::ofstream outs("testBrackets-4b.svg");
       outs << text;
       outs.flush();
+      check_file_hash("testBrackets-4b.svg");
     }
   }
   SECTION("comic brackets (no font though)") {
@@ -1508,6 +1734,7 @@ M  END
       std::ofstream outs("testBrackets-5a.svg");
       outs << text;
       outs.flush();
+      check_file_hash("testBrackets-5a.svg");
     }
   }
 }
@@ -1587,6 +1814,7 @@ M  END
       std::ofstream outs("testSGroupData-1a.svg");
       outs << text;
       outs.flush();
+      check_file_hash("testSGroupData-1a.svg");
     }
     {
       MolDraw2DSVG drawer(350, 300);
@@ -1598,6 +1826,7 @@ M  END
       std::ofstream outs("testSGroupData-1b.svg");
       outs << text;
       outs.flush();
+      check_file_hash("testSGroupData-1b.svg");
     }
   }
   SECTION("REL") {
@@ -1646,6 +1875,7 @@ M  END
       std::ofstream outs("testSGroupData-2a.svg");
       outs << text;
       outs.flush();
+      check_file_hash("testSGroupData-2a.svg");
     }
     {
       MolDraw2DSVG drawer(350, 300);
@@ -1657,6 +1887,7 @@ M  END
       std::ofstream outs("testSGroupData-2b.svg");
       outs << text;
       outs.flush();
+      check_file_hash("testSGroupData-2b.svg");
     }
   }
   {
@@ -1718,6 +1949,7 @@ M  END)CTAB"_ctab;
       std::ofstream outs("testSGroupData-3a.svg");
       outs << text;
       outs.flush();
+      check_file_hash("testSGroupData-3a.svg");
     }
   }
 }
@@ -1763,6 +1995,7 @@ M  END
       std::ofstream outs("testPositionVariation-1.svg");
       outs << text;
       outs.flush();
+      check_file_hash("testPositionVariation-1.svg");
     }
     {  // make sure comic mode doesn't screw this up
       MolDraw2DSVG drawer(350, 300);
@@ -1773,6 +2006,7 @@ M  END
       std::ofstream outs("testPositionVariation-1b.svg");
       outs << text;
       outs.flush();
+      check_file_hash("testPositionVariation-1b.svg");
     }
   }
   SECTION("multiple") {
@@ -1827,6 +2061,7 @@ M  END
       std::ofstream outs("testPositionVariation-2.svg");
       outs << text;
       outs.flush();
+      check_file_hash("testPositionVariation-2.svg");
     }
   }
   SECTION("non-contiguous") {
@@ -1869,6 +2104,7 @@ M  END
       std::ofstream outs("testPositionVariation-3.svg");
       outs << text;
       outs.flush();
+      check_file_hash("testPositionVariation-3.svg");
     }
   }
   SECTION("larger mol") {
@@ -1941,6 +2177,7 @@ M  END
       std::ofstream outs("testPositionVariation-4.svg");
       outs << text;
       outs.flush();
+      check_file_hash("testPositionVariation-4.svg");
     }
   }
 }
@@ -1957,6 +2194,7 @@ TEST_CASE("disable atom labels", "[feature]") {
     std::ofstream outs("testNoAtomLabels-1.svg");
     outs << text;
     outs.flush();
+    check_file_hash("testNoAtomLabels-1.svg");
     CHECK(text.find("class='atom-0") == std::string::npos);
     CHECK(text.find("class='atom-3") == std::string::npos);
   }
@@ -2014,6 +2252,7 @@ M  END
       std::ofstream outs("testQueryBonds-1a.svg");
       outs << text;
       outs.flush();
+      check_file_hash("testQueryBonds-1a.svg");
     }
     {
       MolDraw2DSVG drawer(350, 300);
@@ -2027,6 +2266,7 @@ M  END
       std::ofstream outs("testQueryBonds-1b.svg");
       outs << text;
       outs.flush();
+      check_file_hash("testQueryBonds-1b.svg");
     }
     {
       MolDraw2DSVG drawer(350, 300);
@@ -2039,6 +2279,7 @@ M  END
       std::ofstream outs("testQueryBonds-1c.svg");
       outs << text;
       outs.flush();
+      check_file_hash("testQueryBonds-1c.svg");
     }
   }
   SECTION("smaller drawing") {
@@ -2119,6 +2360,7 @@ M  END
       std::ofstream outs("testQueryBonds-2.svg");
       outs << text;
       outs.flush();
+      check_file_hash("testQueryBonds-2.svg");
     }
   }
   SECTION("two linknodes") {
@@ -2157,10 +2399,11 @@ M  END)CTAB"_ctab;
       drawer.drawMolecule(*m);
       drawer.finishDrawing();
       auto text = drawer.getDrawingText();
-      std::ofstream outs(
-          (boost::format("testLinkNodes-2-%d.svg") % rotn).str());
+      std::string filename((boost::format("testLinkNodes-2-%d.svg") % rotn).str());
+      std::ofstream outs(filename);
       outs << text;
       outs.flush();
+      check_file_hash(filename);
     }
   }
 }
@@ -2181,6 +2424,7 @@ TEST_CASE("molecule annotations", "[extra]") {
     std::ofstream outs("testMolAnnotations-1.svg");
     outs << text;
     outs.flush();
+    check_file_hash("testMolAnnotations-1.svg");
     CHECK(text.find("class='note'") != std::string::npos);
   }
   SECTION("chiral flag") {
@@ -2221,6 +2465,7 @@ M  END
       std::ofstream outs("testMolAnnotations-2a.svg");
       outs << text;
       outs.flush();
+      check_file_hash("testMolAnnotations-2a.svg");
       CHECK(text.find("class='note'") == std::string::npos);
     }
     {
@@ -2232,6 +2477,7 @@ M  END
       std::ofstream outs("testMolAnnotations-2b.svg");
       outs << text;
       outs.flush();
+      check_file_hash("testMolAnnotations-2b.svg");
       CHECK(text.find("class='note'") != std::string::npos);
     }
     {
@@ -2244,6 +2490,7 @@ M  END
       std::ofstream outs("testMolAnnotations-2c.svg");
       outs << text;
       outs.flush();
+      check_file_hash("testMolAnnotations-2c.svg");
       CHECK(text.find("class='note'") == std::string::npos);
     }
   }
@@ -2259,6 +2506,7 @@ M  END
       std::ofstream outs("testMolAnnotations-3a.svg");
       outs << text;
       outs.flush();
+      check_file_hash("testMolAnnotations-3a.svg");
     }
     {
       auto m = "C[C@H](F)[C@@H](F)[C@@H](C)Cl |o1:3,5,1|"_smiles;
@@ -2272,6 +2520,7 @@ M  END
       std::ofstream outs("testMolAnnotations-3b.svg");
       outs << text;
       outs.flush();
+      check_file_hash("testMolAnnotations-3b.svg");
     }
     {
       auto m = "C[C@H](F)[C@@H](F)[C@@H](C)Cl |&1:3,5,1|"_smiles;
@@ -2285,6 +2534,7 @@ M  END
       std::ofstream outs("testMolAnnotations-3c.svg");
       outs << text;
       outs.flush();
+      check_file_hash("testMolAnnotations-3c.svg");
     }
   }
   SECTION("simplified stereo 2") {
@@ -2299,6 +2549,7 @@ M  END
     std::ofstream outs("testMolAnnotations-3d.svg");
     outs << text;
     outs.flush();
+    check_file_hash("testMolAnnotations-3d.svg");
   }
   SECTION("label placement") {
     auto m = R"CTAB(
@@ -2357,6 +2608,7 @@ M  END
     std::ofstream outs("testMolAnnotations-4a.svg");
     outs << text;
     outs.flush();
+    check_file_hash("testMolAnnotations-4a.svg");
   }
 }
 
@@ -2398,6 +2650,7 @@ M  END)CTAB"_ctab;
           (boost::format("testLinkNodes-1-%d.svg") % rotn).str());
       outs << text;
       outs.flush();
+      check_file_hash((boost::format("testLinkNodes-1-%d.svg") % rotn).str());
     }
   }
 }
@@ -2430,6 +2683,7 @@ M  END)CTAB"));
     std::ofstream outs("testGithub3744.svg");
     outs << text;
     outs.flush();
+    check_file_hash("testGithub3744.svg");
     std::vector<std::string> bond0;
     std::vector<std::string> bond2;
     std::istringstream ss(text);
@@ -2521,6 +2775,7 @@ M  END
     std::ofstream outs("testAtomLists-1.svg");
     outs << text;
     outs.flush();
+    check_file_hash("testAtomLists-1.svg");
   }
 
   SECTION("NOT atom list") {
@@ -2551,6 +2806,7 @@ M  END
     std::ofstream outs("testAtomLists-2.svg");
     outs << text;
     outs.flush();
+    check_file_hash("testAtomLists-2.svg");
   }
 }
 
@@ -2569,6 +2825,7 @@ TEST_CASE("test the options that toggle isotope labels", "[drawing]") {
       std::ofstream outs("testIsoDummyIso.svg");
       outs << textIsoDummyIso;
       outs.flush();
+      check_file_hash("testIsoDummyIso.svg");
       size_t nIsoDummyIso = std::distance(
           std::sregex_token_iterator(textIsoDummyIso.begin(),
                                      textIsoDummyIso.end(), regex),
@@ -2584,6 +2841,7 @@ TEST_CASE("test the options that toggle isotope labels", "[drawing]") {
       std::ofstream outs("testNoIsoDummyIso.svg");
       outs << textNoIsoDummyIso;
       outs.flush();
+      check_file_hash("testNoIsoDummyIso.svg");
       size_t nNoIsoDummyIso = std::distance(
           std::sregex_token_iterator(textNoIsoDummyIso.begin(),
                                      textNoIsoDummyIso.end(), regex, 1),
@@ -2599,6 +2857,7 @@ TEST_CASE("test the options that toggle isotope labels", "[drawing]") {
       std::ofstream outs("testIsoNoDummyIso.svg");
       outs << textIsoNoDummyIso;
       outs.flush();
+      check_file_hash("testIsoNoDummyIso.svg");
       size_t nIsoNoDummyIso = std::distance(
           std::sregex_token_iterator(textIsoNoDummyIso.begin(),
                                      textIsoNoDummyIso.end(), regex, 1),
@@ -2615,6 +2874,7 @@ TEST_CASE("test the options that toggle isotope labels", "[drawing]") {
       std::ofstream outs("testNoIsoNoDummyIso.svg");
       outs << textNoIsoNoDummyIso;
       outs.flush();
+      check_file_hash("testNoIsoNoDummyIso.svg");
       size_t nNoIsoNoDummyIso = std::distance(
           std::sregex_token_iterator(textNoIsoNoDummyIso.begin(),
                                      textNoIsoNoDummyIso.end(), regex, 1),
@@ -2638,6 +2898,7 @@ TEST_CASE("test the options that toggle isotope labels", "[drawing]") {
     std::ofstream outs("testDeuteriumTritium.svg");
     outs << textDeuteriumTritium;
     outs.flush();
+    check_file_hash("testDeuteriumTritium.svg");
     size_t nDeuteriumTritium = std::distance(
         std::sregex_token_iterator(textDeuteriumTritium.begin(),
                                    textDeuteriumTritium.end(), regex, 1),
@@ -2685,6 +2946,7 @@ M  END
     std::ofstream outs("testHydrogenBonds1.svg");
     outs << drawer.getDrawingText();
     outs.flush();
+    check_file_hash("testHydrogenBonds1.svg");
   }
   SECTION("from CXSMILES") {
     auto m = "CC1O[H]O=C(C)C1 |H:4.3|"_smiles;
@@ -2696,6 +2958,7 @@ M  END
     std::ofstream outs("testHydrogenBonds2.svg");
     outs << drawer.getDrawingText();
     outs.flush();
+    check_file_hash("testHydrogenBonds2.svg");
   }
 }
 
@@ -2713,6 +2976,7 @@ TEST_CASE("github #3912: cannot draw atom lists from SMARTS", "[query][bug]") {
     auto txt = drawer.getDrawingText();
     outs << txt;
     outs.flush();
+    check_file_hash("testGithub3912.1.svg");
     CHECK(txt.find(">N<") != std::string::npos);
     CHECK(txt.find(">O<") != std::string::npos);
     CHECK(txt.find(">!<") == std::string::npos);
@@ -2732,6 +2996,7 @@ TEST_CASE("github #3912: cannot draw atom lists from SMARTS", "[query][bug]") {
     auto txt = drawer.getDrawingText();
     outs << txt;
     outs.flush();
+    check_file_hash("testGithub3912.2.svg");
     CHECK(txt.find(">N<") != std::string::npos);
     CHECK(txt.find(">O<") != std::string::npos);
     CHECK(txt.find(">!<") != std::string::npos);
@@ -2750,6 +3015,7 @@ TEST_CASE("github #2976: kekulizing reactions when drawing", "[reactions]") {
     auto txt = drawer.getDrawingText();
     outs << txt;
     outs.flush();
+    check_file_hash("testGithub2976.svg");
   }
 }
 
@@ -2818,6 +3084,7 @@ M  END
     auto txt = drawer.getDrawingText();
     outs << txt;
     outs.flush();
+    check_file_hash("testReactionCoords.svg");
 
     // the reaction is drawn with some bonds vertical, make sure they remain
     // vertical
@@ -2860,6 +3127,7 @@ TEST_CASE("support annotation colors", "[drawing]") {
     auto txt = drawer.getDrawingText();
     outs << txt;
     outs.flush();
+    check_file_hash("testAnnotationColors.svg");
     CHECK(txt.find("fill:#0000FF' >2<") != std::string::npos);
   }
 }
