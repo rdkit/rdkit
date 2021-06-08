@@ -30,11 +30,7 @@ class RDKIT_DEPICTOR_EXPORT EmbeddedAtom {
  public:
   typedef enum { UNSPECIFIED = 0, CISTRANS, RING } EAtomType;
 
-  EmbeddedAtom()
-      
-        {
-    neighs.clear();
-  }
+  EmbeddedAtom() { neighs.clear(); }
 
   EmbeddedAtom(const EmbeddedAtom &other) = default;
 
@@ -161,7 +157,7 @@ class RDKIT_DEPICTOR_EXPORT EmbeddedFrag {
   EmbeddedFrag() {
     d_eatoms.clear();
     d_attachPts.clear();
-  };
+  }
 
   //! Initializer from a single atom id
   /*!

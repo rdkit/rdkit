@@ -29,7 +29,7 @@ class RDKIT_FMCS_EXPORT SubstructureCache {
     TValue Value{0};
 
    public:
-    KeyNumericMetrics()  {}
+    KeyNumericMetrics() {}
   };
 #pragma pack(pop)
 

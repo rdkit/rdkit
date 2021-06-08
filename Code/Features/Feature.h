@@ -19,24 +19,24 @@ template <typename FAMILYMARKER, typename TYPEMARKER = FAMILYMARKER,
           typename LOCTYPE = RDGeom::Point3D>
 class ExplicitFeature {
  public:
-  ExplicitFeature(){};
+  ExplicitFeature() {}
   explicit ExplicitFeature(const FAMILYMARKER &f, const TYPEMARKER &t)
-      : d_family(f), d_type(t){};
+      : d_family(f), d_type(t) {}
   ExplicitFeature(const FAMILYMARKER &f, const TYPEMARKER &t,
                   const LOCTYPE &loc)
-      : d_family(f), d_type(t), d_loc(loc){};
+      : d_family(f), d_type(t), d_loc(loc) {}
 
-  const FAMILYMARKER &getFamily() const { return d_family; };
-  void setFamily(const FAMILYMARKER &f) { d_family = f; };
+  const FAMILYMARKER &getFamily() const { return d_family; }
+  void setFamily(const FAMILYMARKER &f) { d_family = f; }
 
-  const TYPEMARKER &getType() const { return d_type; };
-  void setType(const TYPEMARKER &t) { d_type = t; };
+  const TYPEMARKER &getType() const { return d_type; }
+  void setType(const TYPEMARKER &t) { d_type = t; }
 
-  const LOCTYPE &getLoc() const { return d_loc; };
-  void setLoc(const LOCTYPE &loc) { d_loc = loc; };
+  const LOCTYPE &getLoc() const { return d_loc; }
+  void setLoc(const LOCTYPE &loc) { d_loc = loc; }
 
-  const std::vector<LOCTYPE> &getDirs() const { return d_dirs; };
-  std::vector<LOCTYPE> &getDirs() { return d_dirs; };
+  const std::vector<LOCTYPE> &getDirs() const { return d_dirs; }
+  std::vector<LOCTYPE> &getDirs() { return d_dirs; }
 
  private:
   FAMILYMARKER d_family;
@@ -49,15 +49,15 @@ template <typename FAMILYMARKER, typename TYPEMARKER = FAMILYMARKER,
           typename LOCTYPE = RDGeom::Point3D>
 class ImplicitFeature {
  public:
-  ImplicitFeature() : d_weightSum(0.0){};
+  ImplicitFeature() : d_weightSum(0.0) {}
   explicit ImplicitFeature(const FAMILYMARKER &f, const TYPEMARKER &t)
-      : d_weightSum(0.0), d_family(f), d_type(t){};
+      : d_weightSum(0.0), d_family(f), d_type(t) {}
 
-  const FAMILYMARKER &getFamily() const { return d_family; };
-  void setFamily(const FAMILYMARKER &f) { d_family = f; };
+  const FAMILYMARKER &getFamily() const { return d_family; }
+  void setFamily(const FAMILYMARKER &f) { d_family = f; }
 
-  const TYPEMARKER &getType() const { return d_type; };
-  void setType(const TYPEMARKER &t) { d_type = t; };
+  const TYPEMARKER &getType() const { return d_type; }
+  void setType(const TYPEMARKER &t) { d_type = t; }
 
   LOCTYPE getLoc() const {
     PRECONDITION(d_weights.size() == d_locs.size(), "weight/locs mismatch");
@@ -68,7 +68,7 @@ class ImplicitFeature {
       accum += tmp;
     }
     return accum;
-  };
+  }
   void addPoint(const LOCTYPE *p, double weight = 1.0) {
     d_locs.push_back(p);
     d_weights.push_back(weight);
@@ -80,8 +80,8 @@ class ImplicitFeature {
     d_weightSum = 0.0;
   }
 
-  const std::vector<LOCTYPE> &getDirs() const { return d_dirs; };
-  std::vector<LOCTYPE> &getDirs() { return d_dirs; };
+  const std::vector<LOCTYPE> &getDirs() const { return d_dirs; }
+  std::vector<LOCTYPE> &getDirs() { return d_dirs; }
 
  private:
   double d_weightSum;

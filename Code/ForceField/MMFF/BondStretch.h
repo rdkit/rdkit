@@ -22,7 +22,7 @@ class MMFFBondStretchEmpiricalRule;
 //! The bond-stretch term for MMFF
 class RDKIT_FORCEFIELD_EXPORT BondStretchContrib : public ForceFieldContrib {
  public:
-  BondStretchContrib()  {};
+  BondStretchContrib() {}
   //! Constructor
   /*!
     \param owner       pointer to the owning ForceField
@@ -42,12 +42,12 @@ class RDKIT_FORCEFIELD_EXPORT BondStretchContrib : public ForceFieldContrib {
 
   virtual BondStretchContrib *copy() const {
     return new BondStretchContrib(*this);
-  };
+  }
 
  private:
   int d_at1Idx{-1}, d_at2Idx{-1};  //!< indices of end points
-  double d_r0;             //!< rest length of the bond
-  double d_kb;             //!< force constant of the bond
+  double d_r0;                     //!< rest length of the bond
+  double d_kb;                     //!< force constant of the bond
 };
 
 namespace Utils {

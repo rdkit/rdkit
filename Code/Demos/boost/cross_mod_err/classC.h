@@ -20,7 +20,7 @@ typedef std::vector<STR_INT> PAIR_VECT;
 
 class classC {
  public:
-  classC() { setProp("useless", 10); };
+  classC() { setProp("useless", 10); }
   ~classC() {}
 
   void printC() const {

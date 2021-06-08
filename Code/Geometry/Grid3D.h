@@ -22,12 +22,12 @@ class Point3D;
 class RDKIT_RDGEOMETRYLIB_EXPORT GridException : public std::exception {
  public:
   //! construct with an error message
-  GridException(const char *msg) : _msg(msg){};
+  GridException(const char *msg) : _msg(msg) {}
   //! construct with an error message
-  GridException(const std::string &msg) : _msg(msg){};
+  GridException(const std::string &msg) : _msg(msg) {}
   //! get the error message
-  const char *what() const noexcept override { return _msg.c_str(); };
-  ~GridException() noexcept {};
+  const char *what() const noexcept override { return _msg.c_str(); }
+  ~GridException() noexcept {}
 
  private:
   std::string _msg;
@@ -36,7 +36,7 @@ class RDKIT_RDGEOMETRYLIB_EXPORT GridException : public std::exception {
 //! Virtual base class for a grid object
 class RDKIT_RDGEOMETRYLIB_EXPORT Grid3D {
  public:
-  virtual ~Grid3D(){};
+  virtual ~Grid3D() {}
   virtual int getGridPointIndex(const Point3D &point) const = 0;
   virtual int getVal(const Point3D &point) const = 0;
   virtual void setVal(const Point3D &point, unsigned int val) = 0;

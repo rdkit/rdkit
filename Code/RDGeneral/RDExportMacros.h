@@ -20,17 +20,17 @@
 
 // RDKit export macro definitions
 #ifdef RDKIT_DYN_LINK
-#if defined( WIN32 ) && defined( _MSC_VER ) && defined( BOOST_HAS_DECLSPEC )
+#if defined(WIN32) && defined(_MSC_VER) && defined(BOOST_HAS_DECLSPEC)
 #define RDKIT_EXPORT_API __declspec(dllexport)
 #define RDKIT_IMPORT_API __declspec(dllimport)
-#elif __GNUC__ >= 4 || defined( __clang__ )
+#elif __GNUC__ >= 4 || defined(__clang__)
 #define RDKIT_EXPORT_API __attribute__((visibility("default")))
 #define RDKIT_IMPORT_API __attribute__((visibility("default")))
-#endif // WIN32
-#endif // RDKIT_DYN_LINK
+#endif  // WIN32
+#endif  // RDKIT_DYN_LINK
 // RDKit end export macro definitions
 
-#endif // SWIG
+#endif  // SWIG
 
 #ifndef RDKIT_EXPORT_API
 #define RDKIT_EXPORT_API

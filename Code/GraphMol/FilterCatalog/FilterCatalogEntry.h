@@ -179,9 +179,9 @@ class RDKIT_FILTERCATALOG_EXPORT FilterCatalogEntry
   void clearProp(const char *key) {
     std::string what(key);
     clearProp(what);
-  };
+  }
   //! \overload
-  void clearProp(const std::string &key) { d_props.clearVal(key); };
+  void clearProp(const std::string &key) { d_props.clearVal(key); }
 
   // -------------------------------------------
   //!  Properties usually contain the reference and source

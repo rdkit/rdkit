@@ -22,7 +22,7 @@ namespace MMFF {
 class RDKIT_FORCEFIELD_EXPORT AngleConstraintContrib
     : public ForceFieldContrib {
  public:
-  AngleConstraintContrib(){};
+  AngleConstraintContrib() {}
   //! Constructor
   /*!
   \param owner       pointer to the owning ForceField
@@ -50,7 +50,7 @@ class RDKIT_FORCEFIELD_EXPORT AngleConstraintContrib
 
   virtual AngleConstraintContrib *copy() const {
     return new AngleConstraintContrib(*this);
-  };
+  }
 
  private:
   double computeAngleTerm(double angle) const;

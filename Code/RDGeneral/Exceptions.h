@@ -21,12 +21,12 @@ class RDKIT_RDGENERAL_EXPORT IndexErrorException : public std::runtime_error {
   IndexErrorException(int i)
       : std::runtime_error("IndexErrorException"),
         _idx(i),
-        _msg("Index Error: " + std::to_string(_idx)){};
-  int index() const { return _idx; };
+        _msg("Index Error: " + std::to_string(_idx)) {}
+  int index() const { return _idx; }
 
-  const char* what() const noexcept override { return _msg.c_str(); };
+  const char* what() const noexcept override { return _msg.c_str(); }
 
-  ~IndexErrorException() noexcept {};
+  ~IndexErrorException() noexcept {}
 
  private:
   int _idx;
@@ -39,11 +39,11 @@ class RDKIT_RDGENERAL_EXPORT IndexErrorException : public std::runtime_error {
 class RDKIT_RDGENERAL_EXPORT ValueErrorException : public std::runtime_error {
  public:
   ValueErrorException(const std::string& i)
-      : std::runtime_error("ValueErrorException"), _value(i){};
+      : std::runtime_error("ValueErrorException"), _value(i) {}
   ValueErrorException(const char* msg)
-      : std::runtime_error("ValueErrorException"), _value(msg){};
-  const char* what() const noexcept override { return _value.c_str(); };
-  ~ValueErrorException() noexcept {};
+      : std::runtime_error("ValueErrorException"), _value(msg) {}
+  const char* what() const noexcept override { return _value.c_str(); }
+  ~ValueErrorException() noexcept {}
 
  private:
   std::string _value;
@@ -57,12 +57,12 @@ class RDKIT_RDGENERAL_EXPORT KeyErrorException : public std::runtime_error {
   KeyErrorException(std::string key)
       : std::runtime_error("KeyErrorException"),
         _key(key),
-        _msg("Key Error: " + key){};
-  std::string key() const { return _key; };
+        _msg("Key Error: " + key) {}
+  std::string key() const { return _key; }
 
-  const char* what() const noexcept override { return _msg.c_str(); };
+  const char* what() const noexcept override { return _msg.c_str(); }
 
-  ~KeyErrorException() noexcept {};
+  ~KeyErrorException() noexcept {}
 
  private:
   std::string _key;

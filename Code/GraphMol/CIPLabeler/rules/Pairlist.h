@@ -30,19 +30,19 @@ namespace CIPLabeler {
  * @see Descriptor
  */
 class PairList {
-public:
+ public:
   static Descriptor ref(Descriptor descriptor) {
     switch (descriptor) {
-    case Descriptor::R:
-    case Descriptor::M:
-    case Descriptor::seqCis:
-      return Descriptor::R;
-    case Descriptor::S:
-    case Descriptor::P:
-    case Descriptor::seqTrans:
-      return Descriptor::S;
-    default:
-      return Descriptor::NONE;
+      case Descriptor::R:
+      case Descriptor::M:
+      case Descriptor::seqCis:
+        return Descriptor::R;
+      case Descriptor::S:
+      case Descriptor::P:
+      case Descriptor::seqTrans:
+        return Descriptor::S;
+      default:
+        return Descriptor::NONE;
     }
   }
 
@@ -77,16 +77,16 @@ public:
 
   bool add(Descriptor descriptor) {
     switch (descriptor) {
-    case Descriptor::R:
-    case Descriptor::S:
-    case Descriptor::M:
-    case Descriptor::P:
-    case Descriptor::seqTrans:
-    case Descriptor::seqCis:
-      addAndPair(descriptor);
-      return true;
-    default:
-      return false;
+      case Descriptor::R:
+      case Descriptor::S:
+      case Descriptor::M:
+      case Descriptor::P:
+      case Descriptor::seqTrans:
+      case Descriptor::seqCis:
+        addAndPair(descriptor);
+        return true;
+      default:
+        return false;
     }
   }
 
@@ -96,7 +96,8 @@ public:
    *
    * @param descriptors a collection of descriptors to be added
    */
-  template <typename T> void addAll(const T &descriptors) {
+  template <typename T>
+  void addAll(const T &descriptors) {
     for (const auto &descriptor : descriptors) {
       add(descriptor);
     }
@@ -151,7 +152,7 @@ public:
     return ss.str();
   }
 
-private:
+ private:
   std::vector<Descriptor> d_descriptors;
 
   std::uint32_t d_pairing = 0;
@@ -173,5 +174,5 @@ private:
   }
 };
 
-} // namespace CIPLabeler
-} // namespace RDKit
+}  // namespace CIPLabeler
+}  // namespace RDKit

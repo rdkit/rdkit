@@ -112,31 +112,31 @@ class RDKIT_GRAPHMOL_EXPORT Atom : public RDProps {
   virtual Atom *copy() const;
 
   //! returns our atomic number
-  int getAtomicNum() const { return d_atomicNum; };
+  int getAtomicNum() const { return d_atomicNum; }
   //! sets our atomic number
-  void setAtomicNum(int newNum) { d_atomicNum = newNum; };
+  void setAtomicNum(int newNum) { d_atomicNum = newNum; }
 
   //! returns our symbol (determined by our atomic number)
   std::string getSymbol() const;
 
   //! returns whether or not this instance belongs to a molecule
-  bool hasOwningMol() const { return dp_mol != nullptr; };
+  bool hasOwningMol() const { return dp_mol != nullptr; }
 
   //! returns a reference to the ROMol that owns this instance
   ROMol &getOwningMol() const {
     PRECONDITION(dp_mol, "no owner");
     return *dp_mol;
-  };
+  }
 
   //! returns our index within the ROMol
-  unsigned int getIdx() const { return d_index; };
+  unsigned int getIdx() const { return d_index; }
   //! sets our index within the ROMol
   /*!
     <b>Notes:</b>
       - this makes no sense if we do not have an owning molecule
       - the index should be <tt>< this->getOwningMol()->getNumAtoms()</tt>
   */
-  void setIdx(unsigned int index) { d_index = index; };
+  void setIdx(unsigned int index) { d_index = index; }
   //! overload
   template <class U>
   void setIdx(const U index) {
@@ -196,31 +196,29 @@ class RDKIT_GRAPHMOL_EXPORT Atom : public RDProps {
     <b>Notes:</b>
       - requires an owning molecule
   */
-  unsigned int getNumRadicalElectrons() const { return d_numRadicalElectrons; };
-  void setNumRadicalElectrons(unsigned int num) {
-    d_numRadicalElectrons = num;
-  };
+  unsigned int getNumRadicalElectrons() const { return d_numRadicalElectrons; }
+  void setNumRadicalElectrons(unsigned int num) { d_numRadicalElectrons = num; }
 
   //! returns the formal charge of this atom
-  int getFormalCharge() const { return d_formalCharge; };
+  int getFormalCharge() const { return d_formalCharge; }
   //! set's the formal charge of this atom
-  void setFormalCharge(int what) { d_formalCharge = what; };
+  void setFormalCharge(int what) { d_formalCharge = what; }
 
   //! \brief sets our \c noImplicit flag, indicating whether or not
   //!  we are allowed to have implicit Hs
-  void setNoImplicit(bool what) { df_noImplicit = what; };
+  void setNoImplicit(bool what) { df_noImplicit = what; }
   //! returns the \c noImplicit flag
-  bool getNoImplicit() const { return df_noImplicit; };
+  bool getNoImplicit() const { return df_noImplicit; }
 
   //! sets our number of explicit Hs
-  void setNumExplicitHs(unsigned int what) { d_numExplicitHs = what; };
+  void setNumExplicitHs(unsigned int what) { d_numExplicitHs = what; }
   //! returns our number of explicit Hs
-  unsigned int getNumExplicitHs() const { return d_numExplicitHs; };
+  unsigned int getNumExplicitHs() const { return d_numExplicitHs; }
 
   //! sets our \c isAromatic flag, indicating whether or not we are aromatic
-  void setIsAromatic(bool what) { df_isAromatic = what; };
+  void setIsAromatic(bool what) { df_isAromatic = what; }
   //! returns our \c isAromatic flag
-  bool getIsAromatic() const { return df_isAromatic; };
+  bool getIsAromatic() const { return df_isAromatic; }
 
   //! returns our mass
   double getMass() const;
@@ -228,23 +226,23 @@ class RDKIT_GRAPHMOL_EXPORT Atom : public RDProps {
   //! sets our isotope number
   void setIsotope(unsigned int what);
   //! returns our isotope number
-  unsigned int getIsotope() const { return d_isotope; };
+  unsigned int getIsotope() const { return d_isotope; }
 
   //! sets our \c chiralTag
-  void setChiralTag(ChiralType what) { d_chiralTag = what; };
+  void setChiralTag(ChiralType what) { d_chiralTag = what; }
   //! inverts our \c chiralTag
   void invertChirality();
   //! returns our \c chiralTag
   ChiralType getChiralTag() const {
     return static_cast<ChiralType>(d_chiralTag);
-  };
+  }
 
   //! sets our hybridization
-  void setHybridization(HybridizationType what) { d_hybrid = what; };
+  void setHybridization(HybridizationType what) { d_hybrid = what; }
   //! returns our hybridization
   HybridizationType getHybridization() const {
     return static_cast<HybridizationType>(d_hybrid);
-  };
+  }
 
   // ------------------------------------
   // Some words of explanation before getting down into
@@ -259,7 +257,7 @@ class RDKIT_GRAPHMOL_EXPORT Atom : public RDProps {
   // ------------------------------------
 
   // This method can be used to distinguish query atoms from standard atoms:
-  virtual bool hasQuery() const { return false; };
+  virtual bool hasQuery() const { return false; }
 
   //! NOT CALLABLE
   virtual void setQuery(QUERYATOM_QUERY *what);
@@ -356,10 +354,10 @@ class RDKIT_GRAPHMOL_EXPORT Atom : public RDProps {
   */
   int calcImplicitValence(bool strict = true);
 
-  AtomMonomerInfo *getMonomerInfo() { return dp_monomerInfo; };
-  const AtomMonomerInfo *getMonomerInfo() const { return dp_monomerInfo; };
+  AtomMonomerInfo *getMonomerInfo() { return dp_monomerInfo; }
+  const AtomMonomerInfo *getMonomerInfo() const { return dp_monomerInfo; }
   //! takes ownership of the pointer
-  void setMonomerInfo(AtomMonomerInfo *info) { dp_monomerInfo = info; };
+  void setMonomerInfo(AtomMonomerInfo *info) { dp_monomerInfo = info; }
 
   //! Set the atom map Number of the atom
   void setAtomMapNum(int mapno, bool strict = true) {
@@ -384,7 +382,7 @@ class RDKIT_GRAPHMOL_EXPORT Atom : public RDProps {
   //! sets our owning molecule
   void setOwningMol(ROMol *other);
   //! sets our owning molecule
-  void setOwningMol(ROMol &other) { setOwningMol(&other); };
+  void setOwningMol(ROMol &other) { setOwningMol(&other); }
 
   bool df_isAromatic;
   bool df_noImplicit;

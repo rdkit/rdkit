@@ -18,8 +18,8 @@ namespace ChemicalFeatures {
 //! abstract base class for chemical feature
 class ChemicalFeature {
  public:
-  ChemicalFeature(){};
-  virtual ~ChemicalFeature(){};
+  ChemicalFeature() {}
+  virtual ~ChemicalFeature() {}
 
   // returns the feature id
   virtual int getId() const = 0;

@@ -21,19 +21,19 @@ template <class MatchFuncArgType, class DataFuncArgType = MatchFuncArgType,
 class RDKIT_QUERY_EXPORT LessEqualQuery
     : public EqualityQuery<MatchFuncArgType, DataFuncArgType, needsConversion> {
  public:
-  LessEqualQuery() { this->d_tol = 0; };
+  LessEqualQuery() { this->d_tol = 0; }
   //! constructs with our target value
   explicit LessEqualQuery(DataFuncArgType what) {
     this->d_val = what;
     this->d_tol = 0;
     this->df_negate = false;
-  };
+  }
   //! constructs with our target value and a tolerance
   LessEqualQuery(DataFuncArgType v, DataFuncArgType t) {
     this->d_val = v;
     this->d_tol = t;
     this->df_negate = false;
-  };
+  }
 
   bool Match(const DataFuncArgType what) const {
     MatchFuncArgType mfArg =
@@ -49,7 +49,7 @@ class RDKIT_QUERY_EXPORT LessEqualQuery
       else
         return false;
     }
-  };
+  }
 
   Query<MatchFuncArgType, DataFuncArgType, needsConversion> *copy() const {
     LessEqualQuery<MatchFuncArgType, DataFuncArgType, needsConversion> *res =
@@ -62,7 +62,7 @@ class RDKIT_QUERY_EXPORT LessEqualQuery
     res->d_description = this->d_description;
     res->d_queryType = this->d_queryType;
     return res;
-  };
+  }
 
   std::string getFullDescription() const {
     std::ostringstream res;
@@ -73,7 +73,7 @@ class RDKIT_QUERY_EXPORT LessEqualQuery
     else
       res << " <= ";
     return res.str();
-  };
+  }
 };
 }  // namespace Queries
 #endif

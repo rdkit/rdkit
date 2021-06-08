@@ -47,12 +47,12 @@ class RDKIT_CHEMREACTIONS_EXPORT ChemicalReactionException
     : public std::exception {
  public:
   //! construct with an error message
-  explicit ChemicalReactionException(const char *msg) : _msg(msg){};
+  explicit ChemicalReactionException(const char *msg) : _msg(msg) {}
   //! construct with an error message
-  explicit ChemicalReactionException(const std::string msg) : _msg(msg){};
+  explicit ChemicalReactionException(const std::string msg) : _msg(msg) {}
   //! get the error message
-  const char *what() const noexcept override { return _msg.c_str(); };
-  ~ChemicalReactionException() noexcept {};
+  const char *what() const noexcept override { return _msg.c_str(); }
+  ~ChemicalReactionException() noexcept {}
 
  private:
   std::string _msg;
@@ -120,7 +120,7 @@ class RDKIT_CHEMREACTIONS_EXPORT ChemicalReaction : public RDProps {
   friend class ReactionPickler;
 
  public:
-  ChemicalReaction() : RDProps(){};
+  ChemicalReaction() : RDProps() {}
   ChemicalReaction(const ChemicalReaction &other) : RDProps() {
     df_needsInit = other.df_needsInit;
     df_implicitProperties = other.df_implicitProperties;
@@ -277,13 +277,13 @@ class RDKIT_CHEMREACTIONS_EXPORT ChemicalReaction : public RDProps {
   }
   unsigned int getNumReactantTemplates() const {
     return rdcast<unsigned int>(this->m_reactantTemplates.size());
-  };
+  }
   unsigned int getNumProductTemplates() const {
     return rdcast<unsigned int>(this->m_productTemplates.size());
-  };
+  }
   unsigned int getNumAgentTemplates() const {
     return rdcast<unsigned int>(this->m_agentTemplates.size());
-  };
+  }
 
   //! initializes our internal reactant-matching datastructures.
   /*!
@@ -296,7 +296,7 @@ class RDKIT_CHEMREACTIONS_EXPORT ChemicalReaction : public RDProps {
   */
   void initReactantMatchers(bool silent = false);
 
-  bool isInitialized() const { return !df_needsInit; };
+  bool isInitialized() const { return !df_needsInit; }
 
   //! validates the reactants and products to make sure the reaction seems
   //"reasonable"
@@ -335,10 +335,10 @@ class RDKIT_CHEMREACTIONS_EXPORT ChemicalReaction : public RDProps {
       specified in the reaction.
 
   */
-  bool getImplicitPropertiesFlag() const { return df_implicitProperties; };
+  bool getImplicitPropertiesFlag() const { return df_implicitProperties; }
   //! sets the implicit properties flag. See the documentation for
   //! getImplicitProertiesFlag() for a discussion of what this means.
-  void setImplicitPropertiesFlag(bool val) { df_implicitProperties = val; };
+  void setImplicitPropertiesFlag(bool val) { df_implicitProperties = val; }
 
  private:
   bool df_needsInit{true};

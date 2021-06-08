@@ -125,7 +125,7 @@ class RDKIT_MOLSTANDARDIZE_EXPORT Uncharger {
   Uncharger();
   Uncharger(bool canonicalOrdering) : Uncharger() {
     df_canonicalOrdering = canonicalOrdering;
-  };
+  }
   Uncharger(const Uncharger &other);
   ~Uncharger();
 

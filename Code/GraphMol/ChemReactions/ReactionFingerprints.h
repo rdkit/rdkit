@@ -73,9 +73,7 @@ enum FingerprintType {
    the difference fingerprint.
  */
 struct RDKIT_CHEMREACTIONS_EXPORT ReactionFingerprintParams {
-  ReactionFingerprintParams()
-      
-        {}
+  ReactionFingerprintParams() {}
 
   ReactionFingerprintParams(bool includeAgents, double bitRatioAgents,
                             unsigned int nonAgentWeight, int agentWeight,

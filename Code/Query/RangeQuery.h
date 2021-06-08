@@ -27,36 +27,36 @@ template <class MatchFuncArgType, class DataFuncArgType = MatchFuncArgType,
 class RDKIT_QUERY_EXPORT RangeQuery
     : public Query<MatchFuncArgType, DataFuncArgType, needsConversion> {
  public:
-  RangeQuery() : d_upper(0), d_lower(0) { this->df_negate = false; };
+  RangeQuery() : d_upper(0), d_lower(0) { this->df_negate = false; }
   //! construct and set the lower and upper bounds
   RangeQuery(MatchFuncArgType lower, MatchFuncArgType upper)
       : d_upper(upper), d_lower(lower), df_upperOpen(true), df_lowerOpen(true) {
     this->df_negate = false;
-  };
+  }
 
   //! sets our upper bound
-  void setUpper(MatchFuncArgType what) { this->d_upper = what; };
+  void setUpper(MatchFuncArgType what) { this->d_upper = what; }
   //! returns our upper bound
-  const MatchFuncArgType getUpper() const { return this->d_upper; };
+  const MatchFuncArgType getUpper() const { return this->d_upper; }
   //! sets our lower bound
-  void setLower(MatchFuncArgType what) { this->d_lower = what; };
+  void setLower(MatchFuncArgType what) { this->d_lower = what; }
   //! returns our lower bound
-  const MatchFuncArgType getLower() const { return this->d_lower; };
+  const MatchFuncArgType getLower() const { return this->d_lower; }
 
   //! sets whether or not the ends of the range are open
   void setEndsOpen(bool lower, bool upper) {
     this->df_lowerOpen = lower;
     this->df_upperOpen = upper;
-  };
+  }
   //! returns the state of our ends (open or not)
   std::pair<bool, bool> getEndsOpen() const {
     return std::make_pair(this->df_lowerOpen, this->df_upperOpen);
-  };
+  }
 
   //! sets our tolerance
-  void setTol(MatchFuncArgType what) { this->d_tol = what; };
+  void setTol(MatchFuncArgType what) { this->d_tol = what; }
   //! returns our tolerance
-  const MatchFuncArgType getTol() const { return this->d_tol; };
+  const MatchFuncArgType getTol() const { return this->d_tol; }
 
   bool Match(const DataFuncArgType what) const {
     MatchFuncArgType mfArg =
@@ -78,7 +78,7 @@ class RDKIT_QUERY_EXPORT RangeQuery
       return tempR;
     else
       return !tempR;
-  };
+  }
 
   Query<MatchFuncArgType, DataFuncArgType, needsConversion> *copy() const {
     RangeQuery<MatchFuncArgType, DataFuncArgType, needsConversion> *res =
@@ -92,7 +92,7 @@ class RDKIT_QUERY_EXPORT RangeQuery
     res->d_description = this->d_description;
     res->d_queryType = this->d_queryType;
     return res;
-  };
+  }
 
   std::string getFullDescription() const {
     std::ostringstream res;
@@ -100,7 +100,7 @@ class RDKIT_QUERY_EXPORT RangeQuery
     if (this->getNegation()) res << " ! ";
     res << " " << this->d_lower << " val " << this->d_upper;
     return res.str();
-  };
+  }
 
  protected:
   MatchFuncArgType d_upper, d_lower;

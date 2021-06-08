@@ -38,7 +38,7 @@ class RDKIT_RDGENERAL_EXPORT rdLogger {
         df_owner(owner),
         df_enabled(true),
         tee(nullptr),
-        teestream(nullptr){};
+        teestream(nullptr) {}
 
   //! Sets a stream to tee the output to.
   void SetTee(std::ostream &stream) {
@@ -117,8 +117,8 @@ RDKIT_RDGENERAL_EXPORT void InitLogs();
 // ! Temporarily block logging until this object goes out of scope
 struct RDKIT_RDGENERAL_EXPORT BlockLogs {
   std::vector<RDLogger> logs_to_reenable;
-   BlockLogs();
+  BlockLogs();
   ~BlockLogs();
 };
-}
+}  // namespace RDLog
 #endif

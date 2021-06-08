@@ -22,12 +22,11 @@ namespace CIPLabeler {
  *
  */
 class Rule3 : public SequenceRule {
-
-public:
+ public:
   Rule3();
 
   int compare(const Edge *a, const Edge *b) const override;
 };
 
-} // namespace CIPLabeler
-} // namespace RDKit
+}  // namespace CIPLabeler
+}  // namespace RDKit

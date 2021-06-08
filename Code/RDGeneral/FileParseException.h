@@ -20,13 +20,13 @@ class RDKIT_RDGENERAL_EXPORT FileParseException : public std::runtime_error {
  public:
   //! construct with an error message
   explicit FileParseException(const char *msg)
-      : std::runtime_error("FileParseException"), _msg(msg){};
+      : std::runtime_error("FileParseException"), _msg(msg) {}
   //! construct with an error message
   explicit FileParseException(const std::string msg)
-      : std::runtime_error("FileParseException"), _msg(msg){};
+      : std::runtime_error("FileParseException"), _msg(msg) {}
   //! get the error message
-  const char *what() const noexcept override { return _msg.c_str(); };
-  ~FileParseException() noexcept {};
+  const char *what() const noexcept override { return _msg.c_str(); }
+  ~FileParseException() noexcept {}
 
  private:
   std::string _msg;

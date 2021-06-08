@@ -26,14 +26,14 @@ namespace CIPLabeler {
 class CIPMol;
 
 namespace {
-template <typename T> inline int three_way_comparison(const T &x, const T &y) {
+template <typename T>
+inline int three_way_comparison(const T &x, const T &y) {
   return x < y ? -1 : (x == y ? 0 : 1);
 }
-} // namespace
+}  // namespace
 
 class SequenceRule {
-
-public:
+ public:
   SequenceRule();
 
   virtual ~SequenceRule();
@@ -56,12 +56,12 @@ public:
 
   virtual int compare(const Edge *a, const Edge *b) const = 0;
 
-protected:
+ protected:
   std::unique_ptr<const Sort> dp_sorter = nullptr;
 
-private:
+ private:
   bool areUpEdges(Node *aNode, Node *bNode, Edge *aEdge, Edge *bEdge) const;
 };
 
-} // namespace CIPLabeler
-} // namespace RDKit
+}  // namespace CIPLabeler
+}  // namespace RDKit

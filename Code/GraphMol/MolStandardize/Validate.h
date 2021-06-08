@@ -38,9 +38,9 @@ class RDKIT_MOLSTANDARDIZE_EXPORT ValidationErrorInfo : public std::exception {
  public:
   ValidationErrorInfo(const std::string &msg) : d_msg(msg) {
     BOOST_LOG(rdInfoLog) << d_msg << std::endl;
-  };
-  const char *what() const noexcept override { return d_msg.c_str(); };
-  ~ValidationErrorInfo() noexcept {};
+  }
+  const char *what() const noexcept override { return d_msg.c_str(); }
+  ~ValidationErrorInfo() noexcept {}
 
  private:
   std::string d_msg;
@@ -96,7 +96,7 @@ class RDKIT_MOLSTANDARDIZE_EXPORT NoAtomValidation final
   //! pointer to it
   virtual boost::shared_ptr<MolVSValidations> copy() const override {
     return boost::make_shared<NoAtomValidation>(*this);
-  };
+  }
 };
 
 //! The FragmentValidation class logs if certain fragments are present.
@@ -109,7 +109,7 @@ class RDKIT_MOLSTANDARDIZE_EXPORT FragmentValidation final
   //! pointer to it
   virtual boost::shared_ptr<MolVSValidations> copy() const override {
     return boost::make_shared<FragmentValidation>(*this);
-  };
+  }
 };
 
 //! The NeutralValidation class logs if not an overall neutral system.
@@ -122,7 +122,7 @@ class RDKIT_MOLSTANDARDIZE_EXPORT NeutralValidation final
   //! pointer to it
   virtual boost::shared_ptr<MolVSValidations> copy() const override {
     return boost::make_shared<NeutralValidation>(*this);
-  };
+  }
 };
 
 //! The IsotopeValidation class logs if molecule contains isotopes.
@@ -135,7 +135,7 @@ class RDKIT_MOLSTANDARDIZE_EXPORT IsotopeValidation final
   //! pointer to it
   virtual boost::shared_ptr<MolVSValidations> copy() const override {
     return boost::make_shared<IsotopeValidation>(*this);
-  };
+  }
 };
 
 ////////////////////////////////
@@ -165,7 +165,7 @@ class RDKIT_MOLSTANDARDIZE_EXPORT AllowedAtomsValidation
     : public ValidationMethod {
  public:
   AllowedAtomsValidation(const std::vector<std::shared_ptr<Atom>> &atoms)
-      : d_allowedList(atoms){};
+      : d_allowedList(atoms) {}
   std::vector<ValidationErrorInfo> validate(
       const ROMol &mol, bool reportAllFailures) const override;
 
@@ -180,7 +180,7 @@ class RDKIT_MOLSTANDARDIZE_EXPORT DisallowedAtomsValidation
     : public ValidationMethod {
  public:
   DisallowedAtomsValidation(const std::vector<std::shared_ptr<Atom>> &atoms)
-      : d_disallowedList(atoms){};
+      : d_disallowedList(atoms) {}
   std::vector<ValidationErrorInfo> validate(
       const ROMol &mol, bool reportAllFailures) const override;
 

@@ -112,9 +112,10 @@ struct RGroupData {
 
   std::string toString() const {
     auto attachmentString = std::accumulate(
-        attachments.cbegin(), attachments.cend(),
-        std::string(), [](std::string s, int a) {
-          return s.empty() ? std::to_string(a) : std::move(s) + ',' + std::to_string(a);
+        attachments.cbegin(), attachments.cend(), std::string(),
+        [](std::string s, int a) {
+          return s.empty() ? std::to_string(a)
+                           : std::move(s) + ',' + std::to_string(a);
         });
     std::stringstream ss;
     ss << "RG " << attachmentString << " " << getSmiles();

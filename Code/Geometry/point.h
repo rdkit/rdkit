@@ -29,7 +29,7 @@ namespace RDGeom {
 class RDKIT_RDGEOMETRYLIB_EXPORT Point {
   // this is the virtual base class, mandating certain functions
  public:
-  virtual ~Point(){};
+  virtual ~Point() {}
 
   virtual double operator[](unsigned int i) const = 0;
   virtual double &operator[](unsigned int i) = 0;
@@ -57,10 +57,10 @@ class RDKIT_RDGEOMETRYLIB_EXPORT Point3D : public Point {
   double y{0.0};
   double z{0.0};
 
-  Point3D(){};
-  Point3D(double xv, double yv, double zv) : x(xv), y(yv), z(zv){};
+  Point3D() {}
+  Point3D(double xv, double yv, double zv) : x(xv), y(yv), z(zv) {}
 
-  ~Point3D(){};
+  ~Point3D() {}
 
   Point3D(const Point3D &other)
       : Point(other), x(other.x), y(other.y), z(other.z) {}
@@ -99,35 +99,35 @@ class RDKIT_RDGEOMETRYLIB_EXPORT Point3D : public Point {
     y = other.y;
     z = other.z;
     return *this;
-  };
+  }
 
   Point3D &operator+=(const Point3D &other) {
     x += other.x;
     y += other.y;
     z += other.z;
     return *this;
-  };
+  }
 
   Point3D &operator-=(const Point3D &other) {
     x -= other.x;
     y -= other.y;
     z -= other.z;
     return *this;
-  };
+  }
 
   Point3D &operator*=(double scale) {
     x *= scale;
     y *= scale;
     z *= scale;
     return *this;
-  };
+  }
 
   Point3D &operator/=(double scale) {
     x /= scale;
     y /= scale;
     z /= scale;
     return *this;
-  };
+  }
 
   Point3D operator-() const {
     Point3D res(x, y, z);
@@ -142,23 +142,23 @@ class RDKIT_RDGEOMETRYLIB_EXPORT Point3D : public Point {
     x /= l;
     y /= l;
     z /= l;
-  };
+  }
 
   double length() const {
     double res = x * x + y * y + z * z;
     return sqrt(res);
-  };
+  }
 
   double lengthSq() const {
     // double res = pow(x,2) + pow(y,2) + pow(z,2);
     double res = x * x + y * y + z * z;
     return res;
-  };
+  }
 
   double dotProduct(const Point3D &other) const {
     double res = x * (other.x) + y * (other.y) + z * (other.z);
     return res;
-  };
+  }
 
   /*! \brief determines the angle between a vector to this point
    *   from the origin and a vector to the other point.
@@ -217,7 +217,7 @@ class RDKIT_RDGEOMETRYLIB_EXPORT Point3D : public Point {
     res.y = -x * (other.z) + z * (other.x);
     res.z = x * (other.y) - y * (other.x);
     return res;
-  };
+  }
 
   /*! \brief Get a unit perpendicular from this point (treating it as a vector):
    *
@@ -273,13 +273,13 @@ class RDKIT_RDGEOMETRYLIB_EXPORT Point2D : public Point {
   double x{0.0};
   double y{0.0};
 
-  Point2D(){};
-  Point2D(double xv, double yv) : x(xv), y(yv){};
-  ~Point2D(){};
+  Point2D() {}
+  Point2D(double xv, double yv) : x(xv), y(yv) {}
+  ~Point2D() {}
 
   Point2D(const Point2D &other) : Point(other), x(other.x), y(other.y) {}
   //! construct from a Point3D (ignoring the z coordinate)
-  Point2D(const Point3D &p3d) : Point(p3d), x(p3d.x), y(p3d.y){};
+  Point2D(const Point3D &p3d) : Point(p3d), x(p3d.x), y(p3d.y) {}
 
   virtual Point *copy() const { return new Point2D(*this); }
 
@@ -307,31 +307,31 @@ class RDKIT_RDGEOMETRYLIB_EXPORT Point2D : public Point {
     x = other.x;
     y = other.y;
     return *this;
-  };
+  }
 
   Point2D &operator+=(const Point2D &other) {
     x += other.x;
     y += other.y;
     return *this;
-  };
+  }
 
   Point2D &operator-=(const Point2D &other) {
     x -= other.x;
     y -= other.y;
     return *this;
-  };
+  }
 
   Point2D &operator*=(double scale) {
     x *= scale;
     y *= scale;
     return *this;
-  };
+  }
 
   Point2D &operator/=(double scale) {
     x /= scale;
     y /= scale;
     return *this;
-  };
+  }
 
   Point2D operator-() const {
     Point2D res(x, y);
@@ -344,7 +344,7 @@ class RDKIT_RDGEOMETRYLIB_EXPORT Point2D : public Point {
     double ln = this->length();
     x /= ln;
     y /= ln;
-  };
+  }
 
   void rotate90() {
     double temp = x;
@@ -356,17 +356,17 @@ class RDKIT_RDGEOMETRYLIB_EXPORT Point2D : public Point {
     // double res = pow(x,2) + pow(y,2);
     double res = x * x + y * y;
     return sqrt(res);
-  };
+  }
 
   double lengthSq() const {
     double res = x * x + y * y;
     return res;
-  };
+  }
 
   double dotProduct(const Point2D &other) const {
     double res = x * (other.x) + y * (other.y);
     return res;
-  };
+  }
 
   double angleTo(const Point2D &other) const {
     Point2D t1, t2;
@@ -405,7 +405,7 @@ class RDKIT_RDGEOMETRYLIB_EXPORT PointND : public Point {
   PointND(unsigned int dim) {
     RDNumeric::Vector<double> *nvec = new RDNumeric::Vector<double>(dim, 0.0);
     dp_storage.reset(nvec);
-  };
+  }
 
   PointND(const PointND &other) : Point(other) {
     RDNumeric::Vector<double> *nvec =

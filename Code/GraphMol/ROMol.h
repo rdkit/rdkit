@@ -286,13 +286,13 @@ class RDKIT_GRAPHMOL_EXPORT ROMol : public RDProps {
     dp_ringInfo = nullptr;
     initFromOther(other, quickCopy, confId);
     numBonds = rdcast<unsigned int>(boost::num_edges(d_graph));
-  };
+  }
   //! construct a molecule from a pickle string
   ROMol(const std::string &binStr);
   //! construct a molecule from a pickle string
   ROMol(const std::string &binStr, unsigned int propertyFlags);
 
-  virtual ~ROMol() { destroy(); };
+  virtual ~ROMol() { destroy(); }
 
   //@}
   //! \name Atoms
@@ -301,7 +301,7 @@ class RDKIT_GRAPHMOL_EXPORT ROMol : public RDProps {
   //! returns our number of atoms
   inline unsigned int getNumAtoms() const {
     return rdcast<unsigned int>(boost::num_vertices(d_graph));
-  };
+  }
   unsigned int getNumAtoms(bool onlyExplicit) const;
   //! returns our number of heavy atoms (atomic number > 1)
   unsigned int getNumHeavyAtoms() const;
@@ -367,12 +367,12 @@ class RDKIT_GRAPHMOL_EXPORT ROMol : public RDProps {
   //! associates an Atom pointer with a bookmark
   void setAtomBookmark(Atom *at, int mark) {
     d_atomBookmarks[mark].push_back(at);
-  };
+  }
   //! associates an Atom pointer with a bookmark
   void replaceAtomBookmark(Atom *at, int mark) {
     d_atomBookmarks[mark].clear();
     d_atomBookmarks[mark].push_back(at);
-  };
+  }
   //! returns the first Atom associated with the \c bookmark provided
   Atom *getAtomWithBookmark(int mark);
   //! returns the Atom associated with the \c bookmark provided
@@ -386,16 +386,16 @@ class RDKIT_GRAPHMOL_EXPORT ROMol : public RDProps {
   void clearAtomBookmark(int mark, const Atom *atom);
 
   //! blows out all atomic \c bookmarks
-  void clearAllAtomBookmarks() { d_atomBookmarks.clear(); };
+  void clearAllAtomBookmarks() { d_atomBookmarks.clear(); }
   //! queries whether or not any atoms are associated with a \c bookmark
-  bool hasAtomBookmark(int mark) const { return d_atomBookmarks.count(mark); };
+  bool hasAtomBookmark(int mark) const { return d_atomBookmarks.count(mark); }
   //! returns a pointer to all of our atom \c bookmarks
-  ATOM_BOOKMARK_MAP *getAtomBookmarks() { return &d_atomBookmarks; };
+  ATOM_BOOKMARK_MAP *getAtomBookmarks() { return &d_atomBookmarks; }
 
   //! associates a Bond pointer with a bookmark
   void setBondBookmark(Bond *bond, int mark) {
     d_bondBookmarks[mark].push_back(bond);
-  };
+  }
   //! returns the first Bond associated with the \c bookmark provided
   Bond *getBondWithBookmark(int mark);
   //! returns the Bond associated with the \c bookmark provided
@@ -409,11 +409,11 @@ class RDKIT_GRAPHMOL_EXPORT ROMol : public RDProps {
   void clearBondBookmark(int mark, const Bond *bond);
 
   //! blows out all bond \c bookmarks
-  void clearAllBondBookmarks() { d_bondBookmarks.clear(); };
+  void clearAllBondBookmarks() { d_bondBookmarks.clear(); }
   //! queries whether or not any bonds are associated with a \c bookmark
-  bool hasBondBookmark(int mark) const { return d_bondBookmarks.count(mark); };
+  bool hasBondBookmark(int mark) const { return d_bondBookmarks.count(mark); }
   //! returns a pointer to all of our bond \c bookmarks
-  BOND_BOOKMARK_MAP *getBondBookmarks() { return &d_bondBookmarks; };
+  BOND_BOOKMARK_MAP *getBondBookmarks() { return &d_bondBookmarks; }
 
   //@}
 
@@ -455,7 +455,7 @@ class RDKIT_GRAPHMOL_EXPORT ROMol : public RDProps {
 
   //! returns a pointer to our RingInfo structure
   //! <b>Note:</b> the client should not delete this.
-  RingInfo *getRingInfo() const { return dp_ringInfo; };
+  RingInfo *getRingInfo() const { return dp_ringInfo; }
 
   //! provides access to all neighbors around an Atom
   /*!
@@ -558,7 +558,7 @@ class RDKIT_GRAPHMOL_EXPORT ROMol : public RDProps {
          int res = boost::connected_components(G_p,&mapping[0]);
       \endcode
    */
-  MolGraph const &getTopology() const { return d_graph; };
+  MolGraph const &getTopology() const { return d_graph; }
   //@}
 
   //! \name Iterators
@@ -652,13 +652,13 @@ class RDKIT_GRAPHMOL_EXPORT ROMol : public RDProps {
   void debugMol(std::ostream &str) const;
   //@}
 
-  Atom *operator[](const vertex_descriptor &v) { return d_graph[v]; };
+  Atom *operator[](const vertex_descriptor &v) { return d_graph[v]; }
   const Atom *operator[](const vertex_descriptor &v) const {
     return d_graph[v];
-  };
+  }
 
-  Bond *operator[](const edge_descriptor &e) { return d_graph[e]; };
-  const Bond *operator[](const edge_descriptor &e) const { return d_graph[e]; };
+  Bond *operator[](const edge_descriptor &e) { return d_graph[e]; }
+  const Bond *operator[](const edge_descriptor &e) const { return d_graph[e]; }
 
   //! Gets a reference to the groups of atoms with relative stereochemistry
   /*!

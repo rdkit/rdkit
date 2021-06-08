@@ -37,7 +37,7 @@ class RDKIT_SIMDIVPICKERS_EXPORT MaxMinPicker : public DistPicker {
   /*! \brief Default Constructor
    *
    */
-  MaxMinPicker(){};
+  MaxMinPicker() {}
 
   /*! \brief Contains the implementation for a lazy MaxMin diversity picker
    *

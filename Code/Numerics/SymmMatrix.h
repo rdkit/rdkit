@@ -233,7 +233,7 @@ class SymmMatrix {
   }
 
  protected:
-  SymmMatrix() :  d_data(0){};
+  SymmMatrix() : d_data(0) {}
   unsigned int d_size{0};
   unsigned int d_dataSize{0};
   DATA_SPTR d_data;

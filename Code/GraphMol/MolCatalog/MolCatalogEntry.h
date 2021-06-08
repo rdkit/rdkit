@@ -16,7 +16,7 @@ class ROMol;
 //! This class is used to store ROMol objects in a MolCatalog
 class RDKIT_MOLCATALOG_EXPORT MolCatalogEntry : public RDCatalog::CatalogEntry {
  public:
-  MolCatalogEntry() :  d_descrip("") {
+  MolCatalogEntry() : d_descrip("") {
     dp_props = new Dict();
     setBitId(-1);
   }
@@ -39,10 +39,10 @@ class RDKIT_MOLCATALOG_EXPORT MolCatalogEntry : public RDCatalog::CatalogEntry {
 
   void setDescription(std::string val) { d_descrip = val; }
 
-  unsigned int getOrder() const { return d_order; };
-  void setOrder(unsigned int order) { d_order = order; };
+  unsigned int getOrder() const { return d_order; }
+  void setOrder(unsigned int order) { d_order = order; }
 
-  const ROMol *getMol() const { return dp_mol; };
+  const ROMol *getMol() const { return dp_mol; }
   //! hold the provided ROMol
   /*!
     The MolCatalogEntry takes ownership of the pointer.

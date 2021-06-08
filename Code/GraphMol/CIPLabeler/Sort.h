@@ -26,8 +26,7 @@ class Node;
  *
  */
 class Sort {
-
-public:
+ public:
   Sort(const SequenceRule *comparator);
 
   Sort(std::vector<const SequenceRule *> comparators);
@@ -37,15 +36,15 @@ public:
   Priority prioritize(const Node *node, std::vector<Edge *> &edges,
                       bool deep = true) const;
 
-  std::vector<std::vector<Edge *>>
-  getGroups(const std::vector<Edge *> &sorted) const;
+  std::vector<std::vector<Edge *>> getGroups(
+      const std::vector<Edge *> &sorted) const;
 
-private:
+ private:
   const std::vector<const SequenceRule *> d_rules;
 
   int compareSubstituents(const Node *node, const Edge *a, const Edge *b,
                           bool deep) const;
-}; // namespace CIPLabeler
+};  // namespace CIPLabeler
 
-} // namespace CIPLabeler
-} // namespace RDKit
+}  // namespace CIPLabeler
+}  // namespace RDKit
