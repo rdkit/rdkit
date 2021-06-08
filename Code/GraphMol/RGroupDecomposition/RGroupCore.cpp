@@ -324,8 +324,8 @@ std::vector<MatchVectType> RCore::matchTerminalUserRGroups(
     }
   }
 
-  delete queryIndices;
-  delete targetIndices;
+  delete [] queryIndices;
+  delete [] targetIndices;
   return allMappings;
 }
 
