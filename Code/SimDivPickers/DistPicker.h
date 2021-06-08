@@ -48,8 +48,8 @@ class RDKIT_SIMDIVPICKERS_EXPORT DistPicker {
   /*! \brief Default constructor
    *
    */
-  DistPicker(){};
-  virtual ~DistPicker(){};
+  DistPicker() {}
+  virtual ~DistPicker() {}
 
   /*! \brief this is a virtual function specific to the type of algorihtm used
    *
@@ -77,7 +77,7 @@ class RDKIT_SIMDIVPICKERS_EXPORT DistPicker {
 namespace {
 class distmatFunctor {
  public:
-  distmatFunctor(const double *distMat) : dp_distMat(distMat){};
+  distmatFunctor(const double *distMat) : dp_distMat(distMat) {}
   double operator()(unsigned int i, unsigned int j) {
     return getDistFromLTM(this->dp_distMat, i, j);
   }

@@ -83,7 +83,7 @@ class RDKIT_RDGEOMETRYLIB_EXPORT UniformGrid3D : public Grid3D {
   void setVal(unsigned int pointId, unsigned int val);
 
   //! \brief get the size of the grid (number of grid points)
-  unsigned int getSize() const { return d_numX * d_numY * d_numZ; };
+  unsigned int getSize() const { return d_numX * d_numY * d_numZ; }
 
   //! \brief set the occupancy for a multi-layered sphere
   /*!
@@ -115,24 +115,24 @@ class RDKIT_RDGEOMETRYLIB_EXPORT UniformGrid3D : public Grid3D {
                       unsigned int &zi) const;
 
   //! \brief get the number of grid points along x-axis
-  unsigned int getNumX() const { return d_numX; };
+  unsigned int getNumX() const { return d_numX; }
 
   //! \brief get the number of grid points along y-axis
-  unsigned int getNumY() const { return d_numY; };
+  unsigned int getNumY() const { return d_numY; }
 
   //! \brief get the number of grid points along z-axis
-  unsigned int getNumZ() const { return d_numZ; };
+  unsigned int getNumZ() const { return d_numZ; }
 
   //! \brief get the grid's offset
-  const Point3D &getOffset() const { return d_offSet; };
+  const Point3D &getOffset() const { return d_offSet; }
 
   //! \brief get the grid's spacing
-  double getSpacing() const { return d_spacing; };
+  double getSpacing() const { return d_spacing; }
 
   //! \brief return a \b const pointer to our occupancy vector
   const RDKit::DiscreteValueVect *getOccupancyVect() const {
     return dp_storage;
-  };
+  }
 
   //! \brief returns true if the grid \c other has parameters
   //!        compatible with ours.
@@ -168,7 +168,7 @@ class RDKIT_RDGEOMETRYLIB_EXPORT UniformGrid3D : public Grid3D {
                       d_numZ * d_spacing, d_spacing, dp_storage->getValueType(),
                       &d_offSet);
     return res;
-  };
+  }
 
  private:
   //! \brief internal initialization code

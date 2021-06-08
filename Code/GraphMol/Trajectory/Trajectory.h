@@ -68,7 +68,7 @@ class RDKIT_TRAJECTORY_EXPORT Trajectory {
    */
   unsigned int removeSnapshot(unsigned int snapshotNum);
   //! Clear all Snapshots from a Trajectory
-  void clear() { d_snapshotVect->clear(); };
+  void clear() { d_snapshotVect->clear(); }
   //! Add conformations from the Trajectory to a molecule
   /*!
     \param mol - ROMol to which Conformers with coordinates from the Trajectory

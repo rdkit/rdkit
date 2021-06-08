@@ -19,12 +19,13 @@ namespace ForceFieldsHelper {
 namespace detail {
 #ifdef RDK_THREADSAFE_SSS
 void OptimizeMoleculeConfsHelper_(ForceFields::ForceField ff, ROMol *mol,
-                                      std::vector<std::pair<int, double>> *res,
-                                      unsigned int threadIdx,
-                                      unsigned int numThreads, int maxIters) {
+                                  std::vector<std::pair<int, double>> *res,
+                                  unsigned int threadIdx,
+                                  unsigned int numThreads, int maxIters) {
   PRECONDITION(mol, "mol must not be nullptr");
   PRECONDITION(res, "res must not be nullptr");
-  PRECONDITION(res->size() >= mol->getNumConformers(), "res->size() must be >= mol->getNumConformers()");
+  PRECONDITION(res->size() >= mol->getNumConformers(),
+               "res->size() must be >= mol->getNumConformers()");
   unsigned int i = 0;
   ff.positions().resize(mol->getNumAtoms());
   for (ROMol::ConformerIterator cit = mol->beginConformers();
@@ -41,12 +42,12 @@ void OptimizeMoleculeConfsHelper_(ForceFields::ForceField ff, ROMol *mol,
 }
 
 void OptimizeMoleculeConfsMT(ROMol &mol, const ForceFields::ForceField &ff,
-                               std::vector<std::pair<int, double>> &res,
-                               int numThreads, int maxIters) {
+                             std::vector<std::pair<int, double>> &res,
+                             int numThreads, int maxIters) {
   std::vector<std::thread> tg;
   for (int ti = 0; ti < numThreads; ++ti) {
-    tg.emplace_back(std::thread(detail::OptimizeMoleculeConfsHelper_,
-                                ff, &mol, &res, ti, numThreads, maxIters));
+    tg.emplace_back(std::thread(detail::OptimizeMoleculeConfsHelper_, ff, &mol,
+                                &res, ti, numThreads, maxIters));
   }
   for (auto &thread : tg) {
     if (thread.joinable()) thread.join();
@@ -55,9 +56,10 @@ void OptimizeMoleculeConfsMT(ROMol &mol, const ForceFields::ForceField &ff,
 #endif
 
 void OptimizeMoleculeConfsST(ROMol &mol, ForceFields::ForceField &ff,
-                               std::vector<std::pair<int, double>> &res,
-                               int maxIters) {
-  PRECONDITION(res.size() >= mol.getNumConformers(), "res.size() must be >= mol.getNumConformers()");
+                             std::vector<std::pair<int, double>> &res,
+                             int maxIters) {
+  PRECONDITION(res.size() >= mol.getNumConformers(),
+               "res.size() must be >= mol.getNumConformers()");
   unsigned int i = 0;
   for (ROMol::ConformerIterator cit = mol.beginConformers();
        cit != mol.endConformers(); ++cit, ++i) {
@@ -70,9 +72,10 @@ void OptimizeMoleculeConfsST(ROMol &mol, ForceFields::ForceField &ff,
     res[i] = std::make_pair(needsMore, e);
   }
 }
-}  // end of detail namespace
+}  // namespace detail
 
-//! Convenience function for optimizing a molecule using a pre-generated force-field
+//! Convenience function for optimizing a molecule using a pre-generated
+//! force-field
 /*
   \param ff         the force-field
   \param res        vector of (needsMore,energy) pairs
@@ -83,7 +86,8 @@ void OptimizeMoleculeConfsST(ROMol &mol, ForceFields::ForceField &ff,
   more iterations are required.
      second: the energy
 */
-std::pair<int, double> OptimizeMolecule(ForceFields::ForceField &ff, int maxIters = 1000) {
+std::pair<int, double> OptimizeMolecule(ForceFields::ForceField &ff,
+                                        int maxIters = 1000) {
   ff.initialize();
   int res = ff.minimize(maxIters);
   double e = ff.calcEnergy();
@@ -104,8 +108,8 @@ std::pair<int, double> OptimizeMolecule(ForceFields::ForceField &ff, int maxIter
 
 */
 void OptimizeMoleculeConfs(ROMol &mol, ForceFields::ForceField &ff,
-                             std::vector<std::pair<int, double>> &res,
-                             int numThreads = 1, int maxIters = 1000) {
+                           std::vector<std::pair<int, double>> &res,
+                           int numThreads = 1, int maxIters = 1000) {
   res.resize(mol.getNumConformers());
   numThreads = getNumThreadsToUse(numThreads);
   if (numThreads == 1) {

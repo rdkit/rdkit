@@ -19,11 +19,11 @@ namespace CIPLabeler {
  * <b>Sequence Rule 6 (proposed)</b>
  */
 class Rule6 : public SequenceRule {
-public:
+ public:
   Rule6();
 
   int compare(const Edge *a, const Edge *b) const override;
 };
 
-} // namespace CIPLabeler
-} // namespace RDKit
+}  // namespace CIPLabeler
+}  // namespace RDKit

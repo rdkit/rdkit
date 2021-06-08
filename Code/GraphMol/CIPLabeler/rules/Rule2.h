@@ -31,12 +31,11 @@ namespace CIPLabeler {
  * cases as the element’s atomic weight."</i>
  */
 class Rule2 : public SequenceRule {
-
-public:
+ public:
   Rule2();
 
   int compare(const Edge *a, const Edge *b) const override;
 };
 
-} // namespace CIPLabeler
-} // namespace RDKit
+}  // namespace CIPLabeler
+}  // namespace RDKit

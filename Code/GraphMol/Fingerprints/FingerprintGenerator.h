@@ -111,7 +111,7 @@ class RDKIT_FINGERPRINTS_EXPORT FingerprintArguments
    */
   std::string commonArgumentsString() const;
 
-  virtual ~FingerprintArguments(){};
+  virtual ~FingerprintArguments() {}
 };
 
 /*!
@@ -140,7 +140,7 @@ class RDKIT_FINGERPRINTS_EXPORT AtomEnvironment : private boost::noncopyable {
                               const bool hashResults = false,
                               const std::uint64_t fpSize = 0) const = 0;
 
-  virtual ~AtomEnvironment(){};
+  virtual ~AtomEnvironment() {}
 };
 
 /*!
@@ -195,7 +195,7 @@ class RDKIT_FINGERPRINTS_EXPORT AtomEnvironmentGenerator
    */
   virtual std::string infoString() const = 0;
 
-  virtual ~AtomEnvironmentGenerator(){};
+  virtual ~AtomEnvironmentGenerator() {}
 };
 
 /*!
@@ -224,7 +224,7 @@ class RDKIT_FINGERPRINTS_EXPORT AtomInvariantsGenerator
    */
   virtual std::string infoString() const = 0;
 
-  virtual ~AtomInvariantsGenerator(){};
+  virtual ~AtomInvariantsGenerator() {}
   virtual AtomInvariantsGenerator *clone() const = 0;
 };
 
@@ -254,7 +254,7 @@ class RDKIT_FINGERPRINTS_EXPORT BondInvariantsGenerator
  */
   virtual std::string infoString() const = 0;
 
-  virtual ~BondInvariantsGenerator(){};
+  virtual ~BondInvariantsGenerator() {}
   virtual BondInvariantsGenerator *clone() const = 0;
 };  // namespace RDKit
 
@@ -329,12 +329,12 @@ class RDKIT_FINGERPRINTS_EXPORT UnimplementedFPException
     : public std::exception {
  public:
   //! construct with an error message
-  UnimplementedFPException(const char *msg) : _msg(msg){};
+  UnimplementedFPException(const char *msg) : _msg(msg) {}
   //! construct with an error message
-  UnimplementedFPException(const std::string &msg) : _msg(msg){};
+  UnimplementedFPException(const std::string &msg) : _msg(msg) {}
   //! get the error message
-  const char *what() const noexcept override { return _msg.c_str(); };
-  ~UnimplementedFPException() noexcept {};
+  const char *what() const noexcept override { return _msg.c_str(); }
+  ~UnimplementedFPException() noexcept {}
 
  private:
   std::string _msg;

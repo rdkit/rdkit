@@ -27,7 +27,7 @@ namespace RDKit {
 class RDKIT_FRAGCATALOG_EXPORT FragCatalogEntry
     : public RDCatalog::CatalogEntry {
  public:
-  FragCatalogEntry() :  d_descrip("") {
+  FragCatalogEntry() : d_descrip("") {
     dp_props = new Dict();
     setBitId(-1);
   }

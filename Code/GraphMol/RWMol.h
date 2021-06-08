@@ -31,7 +31,7 @@ namespace RDKit {
  */
 class RDKIT_GRAPHMOL_EXPORT RWMol : public ROMol {
  public:
-  RWMol() : ROMol() {};
+  RWMol() : ROMol() {}
   //! copy constructor with a twist
   /*!
     \param other     the molecule to be copied
@@ -43,8 +43,8 @@ class RDKIT_GRAPHMOL_EXPORT RWMol : public ROMol {
          the specified conformer from \c other.
   */
   RWMol(const ROMol &other, bool quickCopy = false, int confId = -1)
-      : ROMol(other, quickCopy, confId) {};
-  RWMol(const RWMol &other) : ROMol(other) {};
+      : ROMol(other, quickCopy, confId) {}
+  RWMol(const RWMol &other) : ROMol(other) {}
   RWMol &operator=(const RWMol &);
 
   //! insert the atoms and bonds from \c other into this molecule
@@ -77,7 +77,7 @@ class RDKIT_GRAPHMOL_EXPORT RWMol : public ROMol {
   unsigned int addAtom(Atom *atom, bool updateLabel = true,
                        bool takeOwnership = false) {
     return ROMol::addAtom(atom, updateLabel, takeOwnership);
-  };
+  }
 
   //! adds an Atom to our collection
 
@@ -93,7 +93,7 @@ class RDKIT_GRAPHMOL_EXPORT RWMol : public ROMol {
   void replaceAtom(unsigned int idx, Atom *atom, bool updateLabel = false,
                    bool preserveProps = false);
   //! returns a pointer to the highest-numbered Atom
-  Atom *getLastAtom() { return getAtomWithIdx(getNumAtoms() - 1); };
+  Atom *getLastAtom() { return getAtomWithIdx(getNumAtoms() - 1); }
   //! returns a pointer to the "active" Atom
   /*!
      If we have an \c activeAtom, it will be returned,
@@ -135,7 +135,7 @@ class RDKIT_GRAPHMOL_EXPORT RWMol : public ROMol {
   */
   unsigned int addBond(Bond *bond, bool takeOwnership = false) {
     return ROMol::addBond(bond, takeOwnership);
-  };
+  }
 
   //! starts a Bond and sets its beginAtomIdx
   /*!
@@ -199,7 +199,7 @@ class RDKIT_GRAPHMOL_EXPORT RWMol : public ROMol {
   */
   void setStereoGroups(std::vector<StereoGroup> &&stereo_groups) {
     return ROMol::setStereoGroups(std::move(stereo_groups));
-  };
+  }
 
   //! removes all atoms, bonds, properties, bookmarks, etc.
   void clear() {
@@ -207,15 +207,14 @@ class RDKIT_GRAPHMOL_EXPORT RWMol : public ROMol {
     d_confs.clear();
     ROMol::initMol();  // make sure we have a "fresh" ready to go copy
     numBonds = 0;
-  };
+  }
 
   void beginBatchEdit();
-  void rollbackBatchEdit(){
+  void rollbackBatchEdit() {
     dp_delAtoms.reset();
     dp_delBonds.reset();
-  };
+  }
   void commitBatchEdit();
-  
 };
 
 typedef boost::shared_ptr<RWMol> RWMOL_SPTR;

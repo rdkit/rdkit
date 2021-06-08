@@ -12,8 +12,8 @@ class RDMolSupplier : public IRDMolSupplier {
   NS_DECL_ISUPPORTS
   NS_DECL_IRDMOLSUPPLIER
 
-  RDMolSupplier() : dp_suppl(0){};
-  RDMolSupplier(RDKit::MolSupplier *suppl) : dp_suppl(suppl){};
+  RDMolSupplier() : dp_suppl(0) {}
+  RDMolSupplier(RDKit::MolSupplier *suppl) : dp_suppl(suppl) {}
   RDKit::MolSupplier *dp_suppl;
 
  private:

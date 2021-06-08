@@ -32,8 +32,8 @@ void removeOrigIndices(ROMol &mol);
 //! abstract base class for the a molecule enumeration operation
 class RDKIT_MOLENUMERATOR_EXPORT MolEnumeratorOp {
  public:
-  MolEnumeratorOp(){};
-  virtual ~MolEnumeratorOp(){};
+  MolEnumeratorOp() {}
+  virtual ~MolEnumeratorOp() {}
   //! returns a vector of the number of possible variations at variability point
   //! covered by this operation
   virtual std::vector<size_t> getVariationCounts() const = 0;
@@ -55,16 +55,16 @@ class RDKIT_MOLENUMERATOR_EXPORT MolEnumeratorOp {
  */
 class RDKIT_MOLENUMERATOR_EXPORT PositionVariationOp : public MolEnumeratorOp {
  public:
-  PositionVariationOp(){};
+  PositionVariationOp() {}
   PositionVariationOp(const std::shared_ptr<ROMol> mol) : dp_mol(mol) {
     PRECONDITION(mol, "bad molecule");
     initFromMol();
-  };
+  }
   PositionVariationOp(const ROMol &mol) : dp_mol(new ROMol(mol)) {
     initFromMol();
-  };
+  }
   PositionVariationOp(const PositionVariationOp &other)
-      : dp_mol(other.dp_mol), d_variationPoints(other.d_variationPoints){};
+      : dp_mol(other.dp_mol), d_variationPoints(other.d_variationPoints) {}
   PositionVariationOp &operator=(const PositionVariationOp &other) {
     if (&other == this) {
       return *this;
@@ -72,7 +72,7 @@ class RDKIT_MOLENUMERATOR_EXPORT PositionVariationOp : public MolEnumeratorOp {
     dp_mol = other.dp_mol;
     d_variationPoints = other.d_variationPoints;
     return *this;
-  };
+  }
   //! \override
   std::vector<size_t> getVariationCounts() const override;
 
@@ -101,12 +101,12 @@ class RDKIT_MOLENUMERATOR_EXPORT PositionVariationOp : public MolEnumeratorOp {
  */
 class RDKIT_MOLENUMERATOR_EXPORT LinkNodeOp : public MolEnumeratorOp {
  public:
-  LinkNodeOp(){};
+  LinkNodeOp() {}
   LinkNodeOp(const std::shared_ptr<ROMol> mol) : dp_mol(mol) {
     PRECONDITION(mol, "bad molecule");
     initFromMol();
-  };
-  LinkNodeOp(const ROMol &mol) : dp_mol(new ROMol(mol)) { initFromMol(); };
+  }
+  LinkNodeOp(const ROMol &mol) : dp_mol(new ROMol(mol)) { initFromMol(); }
   LinkNodeOp(const LinkNodeOp &other)
       : dp_mol(other.dp_mol),
         dp_frame(other.dp_frame),
@@ -114,7 +114,7 @@ class RDKIT_MOLENUMERATOR_EXPORT LinkNodeOp : public MolEnumeratorOp {
         d_variations(other.d_variations),
         d_pointRanges(other.d_pointRanges),
         d_isotopeMap(other.d_isotopeMap),
-        d_atomMap(other.d_atomMap){};
+        d_atomMap(other.d_atomMap) {}
   LinkNodeOp &operator=(const LinkNodeOp &other) {
     if (&other == this) {
       return *this;
@@ -127,7 +127,7 @@ class RDKIT_MOLENUMERATOR_EXPORT LinkNodeOp : public MolEnumeratorOp {
     d_isotopeMap = other.d_isotopeMap;
     d_atomMap = other.d_atomMap;
     return *this;
-  };
+  }
   //! \override
   std::vector<size_t> getVariationCounts() const override;
 

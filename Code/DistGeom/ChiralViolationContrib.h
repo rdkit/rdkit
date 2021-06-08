@@ -16,9 +16,7 @@ class ChiralSet;
 class RDKIT_DISTGEOMETRY_EXPORT ChiralViolationContrib
     : public ForceFields::ForceFieldContrib {
  public:
-  ChiralViolationContrib()
-      
-        {};
+  ChiralViolationContrib() {}
 
   //! Constructor
   /*!
@@ -40,7 +38,7 @@ class RDKIT_DISTGEOMETRY_EXPORT ChiralViolationContrib
   void getGrad(double *pos, double *grad) const;
   virtual ChiralViolationContrib *copy() const {
     return new ChiralViolationContrib(*this);
-  };
+  }
 
   static double calcChiralVolume(unsigned int idx1, unsigned int idx2,
                                  unsigned int idx3, unsigned int idx4,

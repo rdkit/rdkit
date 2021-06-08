@@ -58,8 +58,8 @@ RDKIT_FILEPARSERS_EXPORT std::string strip(const std::string &orig);
 class RDKIT_FILEPARSERS_EXPORT MolSupplier {
   // this is an abstract base class to supply molecules one at a time
  public:
-  MolSupplier(){};
-  virtual ~MolSupplier(){};
+  MolSupplier() {}
+  virtual ~MolSupplier() {}
   virtual void init() = 0;
   virtual void reset() = 0;
   virtual bool atEnd() = 0;
@@ -123,14 +123,14 @@ class RDKIT_FILEPARSERS_EXPORT ForwardSDMolSupplier : public MolSupplier {
    *noted.
    ***********************************************************************************/
  public:
-  ForwardSDMolSupplier() { init(); };
+  ForwardSDMolSupplier() { init(); }
 
   explicit ForwardSDMolSupplier(std::istream *inStream,
                                 bool takeOwnership = true, bool sanitize = true,
                                 bool removeHs = true,
                                 bool strictParsing = false);
 
-  virtual ~ForwardSDMolSupplier() { close(); };
+  virtual ~ForwardSDMolSupplier() { close(); }
 
   virtual void init();
   virtual void reset();
@@ -168,7 +168,7 @@ class RDKIT_FILEPARSERS_EXPORT SDMolSupplier : public ForwardSDMolSupplier {
    ***********************************************************************************/
 
  public:
-  SDMolSupplier() { init(); };
+  SDMolSupplier() { init(); }
 
   /*!
    *   \param fileName - the name of the SD file
@@ -186,7 +186,7 @@ class RDKIT_FILEPARSERS_EXPORT SDMolSupplier : public ForwardSDMolSupplier {
                          bool sanitize = true, bool removeHs = true,
                          bool strictParsing = true);
 
-  virtual ~SDMolSupplier() { close(); };
+  virtual ~SDMolSupplier() { close(); }
   void init();
   void reset();
   ROMol *next();
@@ -270,7 +270,7 @@ class RDKIT_FILEPARSERS_EXPORT SmilesMolSupplier : public MolSupplier {
                              int smilesColumn = 0, int nameColumn = 1,
                              bool titleLine = true, bool sanitize = true);
 
-  virtual ~SmilesMolSupplier() { close(); };
+  virtual ~SmilesMolSupplier() { close(); }
   void setData(const std::string &text, const std::string &delimiter = " ",
                int smilesColumn = 0, int nameColumn = 1, bool titleLine = true,
                bool sanitize = true);
@@ -342,7 +342,7 @@ class RDKIT_FILEPARSERS_EXPORT TDTMolSupplier : public MolSupplier {
                           const std::string &nameRecord = "", int confId2D = -1,
                           int confId3D = 0, bool sanitize = true);
   TDTMolSupplier();
-  virtual ~TDTMolSupplier() { close(); };
+  virtual ~TDTMolSupplier() { close(); }
   void setData(const std::string &text, const std::string &nameRecord = "",
                int confId2D = -1, int confId3D = 0, bool sanitize = true);
   void init();
@@ -387,7 +387,7 @@ class RDKIT_FILEPARSERS_EXPORT PDBMolSupplier : public MolSupplier {
                           bool removeHs = true, unsigned int flavor = 0,
                           bool proximityBonding = true);
 
-  virtual ~PDBMolSupplier() { close(); };
+  virtual ~PDBMolSupplier() { close(); }
 
   virtual void init();
   virtual void reset();
@@ -408,7 +408,7 @@ class RDKIT_FILEPARSERS_EXPORT MaeMolSupplier : public MolSupplier {
    */
 
  public:
-  MaeMolSupplier() { init(); };
+  MaeMolSupplier() { init(); }
 
   explicit MaeMolSupplier(std::shared_ptr<std::istream> inStream,
                           bool sanitize = true, bool removeHs = true);
@@ -419,7 +419,7 @@ class RDKIT_FILEPARSERS_EXPORT MaeMolSupplier : public MolSupplier {
   explicit MaeMolSupplier(const std::string &fname, bool sanitize = true,
                           bool removeHs = true);
 
-  virtual ~MaeMolSupplier(){};
+  virtual ~MaeMolSupplier() {}
 
   virtual void init();
   virtual void reset();

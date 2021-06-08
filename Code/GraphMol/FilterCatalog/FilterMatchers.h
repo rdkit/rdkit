@@ -237,7 +237,7 @@ class RDKIT_FILTERCATALOG_EXPORT SmartsMatcher : public FilterMatcherBase {
   SmartsMatcher(const std::string &name = SMARTS_MATCH_NAME_DEFAULT)
       : FilterMatcherBase(name),
         d_pattern(),
-        
+
         d_max_count(UINT_MAX) {}
 
   //! Construct a SmartsMatcher from a query molecule

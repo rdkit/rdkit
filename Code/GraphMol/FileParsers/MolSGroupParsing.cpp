@@ -1153,17 +1153,9 @@ void ParseV3000ParseLabel(const std::string &label,
   }
 }
 
-void ParseV3000SGroupsBlock(std::istream *inStream, unsigned int line,
-                            unsigned int nSgroups, RWMol *mol,
-                            bool strictParsing) {
-  std::string tempStr = FileParserUtils::getV3000Line(inStream, line);
-  boost::to_upper(tempStr);
-  if (tempStr.length() < 12 || tempStr.substr(0, 12) != "BEGIN SGROUP") {
-    std::ostringstream errout;
-    errout << "BEGIN SGROUP line not found on line " << line;
-    throw FileParseException(errout.str());
-  }
-
+std::string ParseV3000SGroupsBlock(std::istream *inStream, unsigned int line,
+                                   unsigned int nSgroups, RWMol *mol,
+                                   bool strictParsing) {
   unsigned int defaultLineNum = 0;
   std::string defaultString;
 
@@ -1173,7 +1165,7 @@ void ParseV3000SGroupsBlock(std::istream *inStream, unsigned int line,
 
   std::unordered_map<std::string, std::stringstream> defaultLabels;
 
-  tempStr = FileParserUtils::getV3000Line(inStream, line);
+  auto tempStr = FileParserUtils::getV3000Line(inStream, line);
 
   // Store defaults
   if (tempStr.substr(0, 7) == "DEFAULT" && tempStr.length() > 8) {
@@ -1195,7 +1187,6 @@ void ParseV3000SGroupsBlock(std::istream *inStream, unsigned int line,
     lineStream >> externalId;
 
     std::set<std::string> parsedLabels;
-
     if (strictParsing && !SubstanceGroupChecks::isValidType(type)) {
       std::ostringstream errout;
       errout << "Unsupported SGroup type '" << type << "' on line " << line;
@@ -1309,13 +1300,16 @@ void ParseV3000SGroupsBlock(std::istream *inStream, unsigned int line,
     boost::trim_right(tempStr);
   }
 
-  boost::to_upper(tempStr);
-  if (tempStr.length() < 10 || tempStr.substr(0, 10) != "END SGROUP") {
+  if (sGroupMap.size() != nSgroups) {
     std::ostringstream errout;
-    errout << "END SGROUP line not found on line " << line;
-    throw FileParseException(errout.str());
+    errout << "Found " << sGroupMap.size() << " SGroups when " << nSgroups
+           << " were expected." << std::endl;
+    if (strictParsing) {
+      throw FileParseException(errout.str());
+    } else {
+      BOOST_LOG(rdWarningLog) << errout.str() << std::endl;
+    }
   }
-
   // SGroups successfully parsed, now add them to the molecule
   for (const auto &sg : sGroupMap) {
     if (sg.second.getIsValid()) {
@@ -1325,6 +1319,7 @@ void ParseV3000SGroupsBlock(std::istream *inStream, unsigned int line,
                               << " is invalid and will be ignored" << std::endl;
     }
   }
+  return tempStr;
 }
 
 }  // namespace SGroupParsing

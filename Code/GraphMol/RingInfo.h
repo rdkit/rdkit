@@ -34,7 +34,7 @@ class RDKIT_GRAPHMOL_EXPORT RingInfo {
   typedef std::vector<int> INT_VECT;
   typedef std::vector<INT_VECT> VECT_INT_VECT;
 
-  RingInfo()  {};
+  RingInfo() {}
   RingInfo(const RingInfo &other)
       : df_init(other.df_init),
         d_atomMembers(other.d_atomMembers),
@@ -44,12 +44,14 @@ class RDKIT_GRAPHMOL_EXPORT RingInfo {
         d_atomRingFamilies(other.d_atomRingFamilies),
         d_bondRingFamilies(other.d_bondRingFamilies)
 #ifdef RDK_USE_URF
-        ,dp_urfData(other.dp_urfData)
+        ,
+        dp_urfData(other.dp_urfData)
 #endif
-            {};
+  {
+  }
 
   //! checks to see if we've been properly initialized
-  bool isInitialized() const { return df_init; };
+  bool isInitialized() const { return df_init; }
   //! does initialization
   void initialize();
 
@@ -74,7 +76,8 @@ class RDKIT_GRAPHMOL_EXPORT RingInfo {
   //! \name Atom information
   //@{
 
-  //! returns a vector with sizes of the rings that atom with index \c idx is in.
+  //! returns a vector with sizes of the rings that atom with index \c idx is
+  //! in.
   /*!
     <b>Notes:</b>
       - the object must be initialized before calling this
@@ -104,14 +107,15 @@ class RDKIT_GRAPHMOL_EXPORT RingInfo {
     <b>Notes:</b>
       - the object must be initialized before calling this
   */
-  const VECT_INT_VECT &atomRings() const { return d_atomRings; };
+  const VECT_INT_VECT &atomRings() const { return d_atomRings; }
 
   //@}
 
   //! \name Bond information
   //@{
 
-  //! returns a vector with sizes of the rings that bond with index \c idx is in.
+  //! returns a vector with sizes of the rings that bond with index \c idx is
+  //! in.
   /*!
     <b>Notes:</b>
       - the object must be initialized before calling this
@@ -150,7 +154,7 @@ class RDKIT_GRAPHMOL_EXPORT RingInfo {
     <b>Notes:</b>
       - the object must be initialized before calling this
   */
-  const VECT_INT_VECT &bondRings() const { return d_bondRings; };
+  const VECT_INT_VECT &bondRings() const { return d_bondRings; }
 
 #ifdef RDK_USE_URF
   //! adds a ring family to our data
@@ -188,14 +192,14 @@ class RDKIT_GRAPHMOL_EXPORT RingInfo {
     <b>Notes:</b>
       - the object must be initialized before calling this
   */
-  const VECT_INT_VECT &atomRingFamilies() const { return d_atomRingFamilies; };
+  const VECT_INT_VECT &atomRingFamilies() const { return d_atomRingFamilies; }
 
   //! returns our bond ring family vectors
   /*!
     <b>Notes:</b>
       - the object must be initialized before calling this
   */
-  const VECT_INT_VECT &bondRingFamilies() const { return d_bondRingFamilies; };
+  const VECT_INT_VECT &bondRingFamilies() const { return d_bondRingFamilies; }
 
   //! check if the ring families have been initialized
   bool areRingFamiliesInitialized() const { return dp_urfData != nullptr; }

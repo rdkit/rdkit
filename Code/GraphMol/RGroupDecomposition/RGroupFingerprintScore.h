@@ -62,10 +62,9 @@ struct FingerprintVarianceScoreData {
   void clear();
 
  private:
-  void modifyVarianceData(
-      int matchNumber, int permutationNumber,
-      const std::vector<std::vector<RGroupMatch>> &matches,
-      const std::set<int> &labels, bool add);
+  void modifyVarianceData(int matchNumber, int permutationNumber,
+                          const std::vector<std::vector<RGroupMatch>> &matches,
+                          const std::set<int> &labels, bool add);
 };
 
 // The arithmetic mean of the mean fingerprint bit variances for the

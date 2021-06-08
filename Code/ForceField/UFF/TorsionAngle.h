@@ -28,7 +28,7 @@ class AtomicParams;
 //! the torsion term for the Universal Force Field
 class RDKIT_FORCEFIELD_EXPORT TorsionAngleContrib : public ForceFieldContrib {
  public:
-  TorsionAngleContrib(){};
+  TorsionAngleContrib() {}
   //! Constructor
   /*!
     The torsion is between atom1 - atom2 - atom3 - atom4
@@ -68,10 +68,10 @@ class RDKIT_FORCEFIELD_EXPORT TorsionAngleContrib : public ForceFieldContrib {
   void getGrad(double *pos, double *grad) const;
   void scaleForceConstant(unsigned int count) {
     this->d_forceConstant /= static_cast<double>(count);
-  };
+  }
   virtual TorsionAngleContrib *copy() const {
     return new TorsionAngleContrib(*this);
-  };
+  }
 
  private:
   int d_at1Idx{-1};

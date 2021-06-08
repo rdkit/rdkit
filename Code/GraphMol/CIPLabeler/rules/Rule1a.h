@@ -17,11 +17,11 @@ namespace CIPLabeler {
 
 // CIP Rule 1a: Higher atomic number precedes lower.
 class Rule1a : public SequenceRule {
-public:
+ public:
   Rule1a();
 
   int compare(const Edge *a, const Edge *b) const override;
 };
 
-} // namespace CIPLabeler
-} // namespace RDKit
+}  // namespace CIPLabeler
+}  // namespace RDKit

@@ -23,7 +23,7 @@ class MMFFVdW;
 //! the van der Waals term for MMFF
 class RDKIT_FORCEFIELD_EXPORT VdWContrib : public ForceFieldContrib {
  public:
-  VdWContrib()  {};
+  VdWContrib() {}
 
   //! Constructor
   /*!
@@ -36,7 +36,7 @@ class RDKIT_FORCEFIELD_EXPORT VdWContrib : public ForceFieldContrib {
              const MMFFVdWRijstarEps *mmffVdWConstants);
   double getEnergy(double *pos) const;
   void getGrad(double *pos, double *grad) const;
-  virtual VdWContrib *copy() const { return new VdWContrib(*this); };
+  virtual VdWContrib *copy() const { return new VdWContrib(*this); }
 
  private:
   int d_at1Idx{-1}, d_at2Idx{-1};
@@ -47,7 +47,7 @@ class RDKIT_FORCEFIELD_EXPORT VdWContrib : public ForceFieldContrib {
 //! the electrostatic term for MMFF
 class RDKIT_FORCEFIELD_EXPORT EleContrib : public ForceFieldContrib {
  public:
-  EleContrib()  {};
+  EleContrib() {}
 
   //! Constructor
   /*!
@@ -61,7 +61,7 @@ class RDKIT_FORCEFIELD_EXPORT EleContrib : public ForceFieldContrib {
   double getEnergy(double *pos) const;
   void getGrad(double *pos, double *grad) const;
 
-  virtual EleContrib *copy() const { return new EleContrib(*this); };
+  virtual EleContrib *copy() const { return new EleContrib(*this); }
 
  private:
   int d_at1Idx{-1}, d_at2Idx{-1};

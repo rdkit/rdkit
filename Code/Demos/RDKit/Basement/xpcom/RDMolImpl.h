@@ -11,8 +11,8 @@ class RDMolecule : public IRDMolecule {
   NS_DECL_ISUPPORTS
   NS_DECL_IRDMOLECULE
 
-  RDMolecule() : dp_mol(0){};
-  RDMolecule(RDKit::ROMol *mol) : dp_mol(mol){};
+  RDMolecule() : dp_mol(0) {}
+  RDMolecule(RDKit::ROMol *mol) : dp_mol(mol) {}
   RDKit::ROMol *dp_mol;
 
  private:

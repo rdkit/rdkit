@@ -67,7 +67,7 @@ class RDKIT_FINGERPRINTS_EXPORT TopologicalTorsionAtomEnv
    \param bitId bitId generated for this environment
    */
   TopologicalTorsionAtomEnv(OutputType bitId, INT_VECT atomPath)
-      : d_bitId(bitId), d_atomPath(std::move(atomPath)){};
+      : d_bitId(bitId), d_atomPath(std::move(atomPath)) {}
 };
 
 template <typename OutputType>

@@ -93,7 +93,7 @@ class RDKIT_FINGERPRINTS_EXPORT RDKitFPAtomEnv
                  INT_VECT bondPath)
       : d_bitId(bitId),
         d_atomsInPath(std::move(atomsInPath)),
-        d_bondPath(std::move(bondPath)){};
+        d_bondPath(std::move(bondPath)) {}
 };
 
 template <typename OutputType>

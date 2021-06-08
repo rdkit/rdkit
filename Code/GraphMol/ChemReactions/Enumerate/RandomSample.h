@@ -71,7 +71,7 @@ class RDKIT_CHEMREACTIONS_EXPORT RandomSampleStrategy
  public:
   RandomSampleStrategy()
       : EnumerationStrategyBase(),
-        
+
         m_rng(),
         m_distributions() {
     for (size_t i = 0; i < m_permutation.size(); ++i) {
@@ -85,8 +85,7 @@ class RDKIT_CHEMREACTIONS_EXPORT RandomSampleStrategy
                                   const EnumerationTypes::BBS &) {
     m_distributions.clear();
     for (size_t i = 0; i < m_permutationSizes.size(); ++i) {
-      m_distributions.emplace_back(
-          0, m_permutationSizes[i] - 1);
+      m_distributions.emplace_back(0, m_permutationSizes[i] - 1);
     }
 
     m_numPermutationsProcessed = 0;
@@ -145,8 +144,7 @@ class RDKIT_CHEMREACTIONS_EXPORT RandomSampleStrategy
     // reset the uniform distributions
     m_distributions.clear();
     for (size_t i = 0; i < m_permutationSizes.size(); ++i) {
-      m_distributions.emplace_back(
-          0, m_permutationSizes[i] - 1);
+      m_distributions.emplace_back(0, m_permutationSizes[i] - 1);
     }
   }
 

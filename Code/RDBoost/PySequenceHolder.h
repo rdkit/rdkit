@@ -31,7 +31,7 @@ namespace python = boost::python;
 template <typename T>
 class PySequenceHolder {
  public:
-  PySequenceHolder(python::object seq) { d_seq = seq; };
+  PySequenceHolder(python::object seq) { d_seq = seq; }
 
   // --------------------------------------------------
   //! \brief Returns the size of the contained sequence.
@@ -46,7 +46,7 @@ class PySequenceHolder {
       throw_value_error("sequence does not support length query");
     }
     return res;
-  };
+  }
 
   // --------------------------------------------------
   //! \brief Returns an element of the sequence
@@ -73,7 +73,7 @@ class PySequenceHolder {
 
     POSTCONDITION(0, "cannot reach this point");
     return static_cast<T>(T());
-  };
+  }
 
  private:
   python::object d_seq;

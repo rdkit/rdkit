@@ -62,7 +62,7 @@ class RDKIT_CHEMREACTIONS_EXPORT EvenSamplePairsStrategy
   std::vector<std::vector<boost::uint64_t>> pair_counts;
   std::set<boost::uint64_t> selected;
 
-  boost::uint64_t seed{};     // last seed for permutation (starts at 0)
+  boost::uint64_t seed{};         // last seed for permutation (starts at 0)
   boost::uint64_t M{}, a{}, b{};  // random number stuff
   boost::uint64_t nslack{}, min_nslack{};
   boost::uint64_t rejected_period{}, rejected_unique{};
@@ -71,13 +71,12 @@ class RDKIT_CHEMREACTIONS_EXPORT EvenSamplePairsStrategy
  public:
   EvenSamplePairsStrategy()
       : EnumerationStrategyBase(),
-        
+
         used_count(),
         var_used(),
         pair_used(),
         pair_counts(),
-        selected()
-        {}
+        selected() {}
 
   EvenSamplePairsStrategy(const EvenSamplePairsStrategy &rhs)
       : EnumerationStrategyBase(rhs),

@@ -21,19 +21,19 @@ template <class MatchFuncArgType, class DataFuncArgType = MatchFuncArgType,
 class RDKIT_QUERY_EXPORT GreaterQuery
     : public EqualityQuery<MatchFuncArgType, DataFuncArgType, needsConversion> {
  public:
-  GreaterQuery() { this->d_tol = 0; };
+  GreaterQuery() { this->d_tol = 0; }
   //! constructs with our target value
   explicit GreaterQuery(DataFuncArgType v) {
     this->d_val = v;
     this->d_tol = 0;
     this->df_negate = false;
-  };
+  }
   //! constructs with our target value and a tolerance
   GreaterQuery(DataFuncArgType v, DataFuncArgType t) {
     this->d_val = v;
     this->d_tol = t;
     this->df_negate = false;
-  };
+  }
 
   bool Match(const DataFuncArgType what) const {
     MatchFuncArgType mfArg =
@@ -49,7 +49,7 @@ class RDKIT_QUERY_EXPORT GreaterQuery
       else
         return false;
     }
-  };
+  }
 
   Query<MatchFuncArgType, DataFuncArgType, needsConversion> *copy() const {
     GreaterQuery<MatchFuncArgType, DataFuncArgType, needsConversion> *res =
@@ -61,7 +61,7 @@ class RDKIT_QUERY_EXPORT GreaterQuery
     res->d_description = this->d_description;
     res->d_queryType = this->d_queryType;
     return res;
-  };
+  }
 
   std::string getFullDescription() const {
     std::ostringstream res;
@@ -72,7 +72,7 @@ class RDKIT_QUERY_EXPORT GreaterQuery
     else
       res << " > ";
     return res.str();
-  };
+  }
 };
 }  // namespace Queries
 #endif

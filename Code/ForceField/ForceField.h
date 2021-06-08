@@ -79,9 +79,7 @@ typedef std::vector<ContribPtr> ContribPtrVect;
 class RDKIT_FORCEFIELD_EXPORT ForceField {
  public:
   //! construct with a dimension
-  ForceField(unsigned int dimension = 3)
-      : d_dimension(dimension)
-        {};
+  ForceField(unsigned int dimension = 3) : d_dimension(dimension) {}
 
   ~ForceField();
 
@@ -180,12 +178,12 @@ class RDKIT_FORCEFIELD_EXPORT ForceField {
   // setters and getters
 
   //! returns a reference to our points (a PointPtrVect)
-  RDGeom::PointPtrVect &positions() { return d_positions; };
-  const RDGeom::PointPtrVect &positions() const { return d_positions; };
+  RDGeom::PointPtrVect &positions() { return d_positions; }
+  const RDGeom::PointPtrVect &positions() const { return d_positions; }
 
   //! returns a reference to our contribs (a ContribPtrVect)
-  ContribPtrVect &contribs() { return d_contribs; };
-  const ContribPtrVect &contribs() const { return d_contribs; };
+  ContribPtrVect &contribs() { return d_contribs; }
+  const ContribPtrVect &contribs() const { return d_contribs; }
 
   //! returns the distance between two points
   /*!
@@ -222,16 +220,16 @@ class RDKIT_FORCEFIELD_EXPORT ForceField {
   unsigned int dimension() const { return d_dimension; }
 
   //! returns the number of points the ForceField is handling
-  unsigned int numPoints() const { return d_numPoints; };
+  unsigned int numPoints() const { return d_numPoints; }
 
-  INT_VECT &fixedPoints() { return d_fixedPoints; };
-  const INT_VECT &fixedPoints() const { return d_fixedPoints; };
+  INT_VECT &fixedPoints() { return d_fixedPoints; }
+  const INT_VECT &fixedPoints() const { return d_fixedPoints; }
 
  protected:
   unsigned int d_dimension;
-  bool df_init{false};                      //!< whether or not we've been initialized
-  unsigned int d_numPoints{0};          //!< the number of active points
-  double *dp_distMat{nullptr};                //!< our internal distance matrix
+  bool df_init{false};               //!< whether or not we've been initialized
+  unsigned int d_numPoints{0};       //!< the number of active points
+  double *dp_distMat{nullptr};       //!< our internal distance matrix
   RDGeom::PointPtrVect d_positions;  //!< pointers to the points we're using
   ContribPtrVect d_contribs;         //!< contributions to the energy
   INT_VECT d_fixedPoints;

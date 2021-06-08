@@ -23,30 +23,30 @@ template <typename MatchFuncArgType,
 class RDKIT_QUERY_EXPORT EqualityQuery
     : public Query<MatchFuncArgType, DataFuncArgType, needsConversion> {
  public:
-  EqualityQuery() { this->df_negate = false; };
+  EqualityQuery() { this->df_negate = false; }
 
   //! constructs with our target value
   explicit EqualityQuery(MatchFuncArgType v) {
     this->d_val = v;
     this->df_negate = false;
-  };
+  }
 
   //! constructs with our target value and a tolerance
   EqualityQuery(MatchFuncArgType v, MatchFuncArgType t) {
     this->d_val = v;
     this->d_tol = t;
     this->df_negate = false;
-  };
+  }
 
   //! sets our target value
-  void setVal(MatchFuncArgType what) { this->d_val = what; };
+  void setVal(MatchFuncArgType what) { this->d_val = what; }
   //! returns our target value
-  const MatchFuncArgType getVal() const { return this->d_val; };
+  const MatchFuncArgType getVal() const { return this->d_val; }
 
   //! sets our tolerance
-  void setTol(MatchFuncArgType what) { this->d_tol = what; };
+  void setTol(MatchFuncArgType what) { this->d_tol = what; }
   //! returns out tolerance
-  const MatchFuncArgType getTol() const { return this->d_tol; };
+  const MatchFuncArgType getTol() const { return this->d_tol; }
 
   virtual bool Match(const DataFuncArgType what) const {
     MatchFuncArgType mfArg =
@@ -64,7 +64,7 @@ class RDKIT_QUERY_EXPORT EqualityQuery
         return false;
       }
     }
-  };
+  }
 
   virtual Query<MatchFuncArgType, DataFuncArgType, needsConversion> *copy()
       const {
@@ -77,7 +77,7 @@ class RDKIT_QUERY_EXPORT EqualityQuery
     res->d_description = this->d_description;
     res->d_queryType = this->d_queryType;
     return res;
-  };
+  }
 
   std::string getFullDescription() const {
     std::ostringstream res;

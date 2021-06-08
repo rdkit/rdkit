@@ -2825,20 +2825,48 @@ bool ParseV3000CTAB(std::istream *inStream, unsigned int &line, RWMol *mol,
     ParseV3000BondBlock(inStream, line, nBonds, mol, chiralityPossible);
   }
 
+  tempStr = getV3000Line(inStream, line);
   if (nSgroups) {
-    ParseV3000SGroupsBlock(inStream, line, nSgroups, mol, strictParsing);
+    boost::to_upper(tempStr);
+    if (tempStr.length() < 12 || tempStr.substr(0, 12) != "BEGIN SGROUP") {
+      std::ostringstream errout;
+      errout << "BEGIN SGROUP line not found on line " << line;
+      if (strictParsing) {
+        throw FileParseException(errout.str());
+      } else {
+        BOOST_LOG(rdWarningLog) << errout.str() << std::endl;
+      }
+    } else {
+      tempStr =
+          ParseV3000SGroupsBlock(inStream, line, nSgroups, mol, strictParsing);
+      boost::to_upper(tempStr);
+      if (tempStr.length() < 10 || tempStr.substr(0, 10) != "END SGROUP") {
+        std::ostringstream errout;
+        errout << "END SGROUP line not found on line " << line;
+        if (strictParsing) {
+          throw FileParseException(errout.str());
+        } else {
+          BOOST_LOG(rdWarningLog) << errout.str() << std::endl;
+        }
+      } else {
+        tempStr = getV3000Line(inStream, line);
+      }
+    }
   }
 
   if (n3DConstraints) {
     BOOST_LOG(rdWarningLog)
         << "3D constraint information in mol block ignored at line " << line
         << std::endl;
-    tempStr = getV3000Line(inStream, line);
     boost::to_upper(tempStr);
     if (tempStr.length() < 11 || tempStr.substr(0, 11) != "BEGIN OBJ3D") {
       std::ostringstream errout;
       errout << "BEGIN OBJ3D line not found on line " << line;
-      throw FileParseException(errout.str());
+      if (strictParsing) {
+        throw FileParseException(errout.str());
+      } else {
+        BOOST_LOG(rdWarningLog) << errout.str() << std::endl;
+      }
     }
     for (unsigned int i = 0; i < n3DConstraints; ++i) {
       tempStr = getV3000Line(inStream, line);
@@ -2848,11 +2876,16 @@ bool ParseV3000CTAB(std::istream *inStream, unsigned int &line, RWMol *mol,
     if (tempStr.length() < 9 || tempStr.substr(0, 9) != "END OBJ3D") {
       std::ostringstream errout;
       errout << "END OBJ3D line not found on line " << line;
-      throw FileParseException(errout.str());
+      if (strictParsing) {
+        throw FileParseException(errout.str());
+      } else {
+        BOOST_LOG(rdWarningLog) << errout.str() << std::endl;
+      }
+    } else {
+      tempStr = getV3000Line(inStream, line);
     }
   }
 
-  tempStr = getV3000Line(inStream, line);
   // do link nodes:
   boost::to_upper(tempStr);
   while (tempStr.length() > 8 && tempStr.substr(0, 8) == "LINKNODE") {
@@ -2886,7 +2919,11 @@ bool ParseV3000CTAB(std::istream *inStream, unsigned int &line, RWMol *mol,
 
   boost::to_upper(tempStr);
   if (tempStr.length() < 8 || tempStr.substr(0, 8) != "END CTAB") {
-    throw FileParseException("END CTAB line not found");
+    if (strictParsing) {
+      throw FileParseException("END CTAB line not found");
+    } else {
+      BOOST_LOG(rdWarningLog) << "END CTAB line not found." << std::endl;
+    }
   }
 
   if (expectMEND) {

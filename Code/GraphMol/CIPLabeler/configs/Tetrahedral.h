@@ -16,7 +16,7 @@ namespace RDKit {
 namespace CIPLabeler {
 
 class Tetrahedral : public Configuration {
-public:
+ public:
   Tetrahedral() = delete;
 
   Tetrahedral(const CIPMol &mol, Atom *focus);
@@ -27,9 +27,9 @@ public:
 
   Descriptor label(Node *node, Digraph &digraph, const Rules &comp) override;
 
-private:
+ private:
   Descriptor label(Node *node, const Rules &comp) const;
 };
 
-} // namespace CIPLabeler
-} // namespace RDKit
+}  // namespace CIPLabeler
+}  // namespace RDKit
