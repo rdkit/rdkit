@@ -36,7 +36,7 @@ class RDKIT_FRAGCATALOG_EXPORT FragCatalogEntry
                    const MatchVectType &aidToFid);
   FragCatalogEntry(const std::string &pickle);
 
-  ~FragCatalogEntry() {
+  ~FragCatalogEntry() override {
     delete dp_mol;
     dp_mol = nullptr;
     if (dp_props) {
@@ -45,7 +45,7 @@ class RDKIT_FRAGCATALOG_EXPORT FragCatalogEntry
     }
   }
 
-  std::string getDescription() const { return d_descrip; }
+  std::string getDescription() const override { return d_descrip; }
 
   void setDescription(const std::string &val) { d_descrip = val; }
 
@@ -111,10 +111,10 @@ class RDKIT_FRAGCATALOG_EXPORT FragCatalogEntry
 
   void clearProp(const std::string &key) const { clearProp(key.c_str()); }
 
-  void toStream(std::ostream &ss) const;
-  std::string Serialize() const;
-  void initFromStream(std::istream &ss);
-  void initFromString(const std::string &text);
+  void toStream(std::ostream &ss) const override;
+  std::string Serialize() const override;
+  void initFromStream(std::istream &ss) override;
+  void initFromString(const std::string &text) override;
 
  private:
   ROMol *dp_mol{nullptr};

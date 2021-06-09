@@ -44,9 +44,9 @@ class RDKIT_FORCEFIELD_EXPORT TorsionAngleContrib : public ForceFieldContrib {
   TorsionAngleContrib(ForceField *owner, unsigned int idx1, unsigned int idx2,
                       unsigned int idx3, unsigned int idx4,
                       const MMFFTor *mmffTorParams);
-  double getEnergy(double *pos) const;
-  void getGrad(double *pos, double *grad) const;
-  virtual TorsionAngleContrib *copy() const {
+  double getEnergy(double *pos) const override;
+  void getGrad(double *pos, double *grad) const override;
+  TorsionAngleContrib *copy() const override {
     return new TorsionAngleContrib(*this);
   }
 

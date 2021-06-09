@@ -76,15 +76,15 @@ class RDKIT_CHEMREACTIONS_EXPORT CartesianProductStrategy
 
   using EnumerationStrategyBase::initialize;
 
-  virtual void initializeStrategy(const ChemicalReaction &,
-                                  const EnumerationTypes::BBS &) {
+  void initializeStrategy(const ChemicalReaction &,
+                          const EnumerationTypes::BBS &) override {
     m_numPermutationsProcessed = 0;
   }
 
-  virtual const char *type() const { return "CartesianProductStrategy"; }
+  const char *type() const override { return "CartesianProductStrategy"; }
 
   //! The current permutation {r1, r2, ...}
-  virtual const EnumerationTypes::RGROUPS &next() {
+  const EnumerationTypes::RGROUPS &next() override {
     if (m_numPermutationsProcessed) {
       increment();
     } else
@@ -93,13 +93,13 @@ class RDKIT_CHEMREACTIONS_EXPORT CartesianProductStrategy
     return m_permutation;
   }
 
-  virtual boost::uint64_t getPermutationIdx() const {
+  boost::uint64_t getPermutationIdx() const override {
     return m_numPermutationsProcessed;
   }
 
-  virtual operator bool() const { return hasNext(); }
+  operator bool() const override { return hasNext(); }
 
-  EnumerationStrategyBase *copy() const {
+  EnumerationStrategyBase *copy() const override {
     return new CartesianProductStrategy(*this);
   }
 

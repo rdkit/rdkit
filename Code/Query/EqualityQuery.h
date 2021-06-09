@@ -48,7 +48,7 @@ class RDKIT_QUERY_EXPORT EqualityQuery
   //! returns out tolerance
   const MatchFuncArgType getTol() const { return this->d_tol; }
 
-  virtual bool Match(const DataFuncArgType what) const {
+  bool Match(const DataFuncArgType what) const override {
     MatchFuncArgType mfArg =
         this->TypeConvert(what, Int2Type<needsConversion>());
     if (queryCmp(this->d_val, mfArg, this->d_tol) == 0) {
@@ -66,8 +66,8 @@ class RDKIT_QUERY_EXPORT EqualityQuery
     }
   }
 
-  virtual Query<MatchFuncArgType, DataFuncArgType, needsConversion> *copy()
-      const {
+  Query<MatchFuncArgType, DataFuncArgType, needsConversion> *copy()
+      const override {
     EqualityQuery<MatchFuncArgType, DataFuncArgType, needsConversion> *res =
         new EqualityQuery<MatchFuncArgType, DataFuncArgType, needsConversion>();
     res->setNegation(this->getNegation());
@@ -79,7 +79,7 @@ class RDKIT_QUERY_EXPORT EqualityQuery
     return res;
   }
 
-  std::string getFullDescription() const {
+  std::string getFullDescription() const override {
     std::ostringstream res;
     res << this->getDescription();
     res << " " << this->d_val;

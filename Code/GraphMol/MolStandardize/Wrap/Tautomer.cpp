@@ -96,8 +96,9 @@ class PyTautomerEnumeratorCallback
   inline python::object getCallbackOverride() const {
     return get_override("__call__");
   }
-  bool operator()(const ROMol &mol,
-                  const MolStandardize::TautomerEnumeratorResult &res) {
+  bool operator()(
+      const ROMol &mol,
+      const MolStandardize::TautomerEnumeratorResult &res) override {
     PyTautomerEnumeratorResult pyRes(res);
     return getCallbackOverride()(boost::ref(mol), boost::ref(pyRes));
   }

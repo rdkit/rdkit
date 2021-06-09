@@ -47,7 +47,7 @@ class RDKIT_FRAGCATALOG_EXPORT FragCatParams : public RDCatalog::CatalogParams {
   //! construct from a pickle string (serialized representation)
   FragCatParams(const std::string &pickle);
 
-  ~FragCatParams();
+  ~FragCatParams() override;
 
   //! returns our lower fragment length
   unsigned int getLowerFragLength() const { return d_lowerFragLen; }
@@ -75,10 +75,10 @@ class RDKIT_FRAGCATALOG_EXPORT FragCatParams : public RDCatalog::CatalogParams {
   //! returns a pointer to a specific functional group
   const ROMol *getFuncGroup(unsigned int fid) const;
 
-  void toStream(std::ostream &) const;
-  std::string Serialize() const;
-  void initFromStream(std::istream &ss);
-  void initFromString(const std::string &text);
+  void toStream(std::ostream &) const override;
+  std::string Serialize() const override;
+  void initFromStream(std::istream &ss) override;
+  void initFromString(const std::string &text) override;
 
  private:
   unsigned int d_lowerFragLen;

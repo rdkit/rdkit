@@ -29,7 +29,7 @@ class RDKIT_RDGENERAL_EXPORT BadFileException : public std::runtime_error {
       : std::runtime_error("BadFileException"), _msg(std::move(msg)) {}
   //! get the error message
   const char *what() const noexcept override { return _msg.c_str(); }
-  ~BadFileException() noexcept {}
+  ~BadFileException() noexcept override {}
 
  private:
   std::string _msg;

@@ -33,11 +33,11 @@ class RDKIT_FILEPARSERS_EXPORT MultithreadedMolSupplier : public MolSupplier {
   //! time
  public:
   MultithreadedMolSupplier() {}
-  virtual ~MultithreadedMolSupplier();
+  ~MultithreadedMolSupplier() override;
   //! pop elements from the output queue
-  ROMol *next();
+  ROMol *next() override;
   //! returns true when all records have been read from the supplier
-  bool atEnd();
+  bool atEnd() override;
 
   //! included for the interface, always returns false
   bool getEOFHitOnRead() const { return false; }
@@ -69,8 +69,8 @@ class RDKIT_FILEPARSERS_EXPORT MultithreadedMolSupplier : public MolSupplier {
   MultithreadedMolSupplier(const MultithreadedMolSupplier &);
   MultithreadedMolSupplier &operator=(const MultithreadedMolSupplier &);
   //! not yet implemented
-  virtual void reset();
-  virtual void init() = 0;
+  void reset() override;
+  void init() override = 0;
   virtual bool getEnd() const = 0;
   //! extracts next record from the input file or stream
   virtual bool extractNextRecord(std::string &record, unsigned int &lineNum,

@@ -64,12 +64,12 @@ class RDKIT_FORCEFIELD_EXPORT TorsionAngleContrib : public ForceFieldContrib {
                       RDKit::Atom::HybridizationType hyb3,
                       const AtomicParams *at2Params,
                       const AtomicParams *at3Params, bool endAtomIsSP2 = false);
-  double getEnergy(double *pos) const;
-  void getGrad(double *pos, double *grad) const;
+  double getEnergy(double *pos) const override;
+  void getGrad(double *pos, double *grad) const override;
   void scaleForceConstant(unsigned int count) {
     this->d_forceConstant /= static_cast<double>(count);
   }
-  virtual TorsionAngleContrib *copy() const {
+  TorsionAngleContrib *copy() const override {
     return new TorsionAngleContrib(*this);
   }
 

@@ -31,7 +31,7 @@ class RDKIT_CHEMREACTIONS_EXPORT ReactionPicklerException
   ReactionPicklerException(const char *msg) : _msg(msg) {}
   ReactionPicklerException(const std::string msg) : _msg(msg) {}
   const char *what() const noexcept override { return _msg.c_str(); }
-  ~ReactionPicklerException() noexcept {}
+  ~ReactionPicklerException() noexcept override {}
 
  private:
   std::string _msg;
