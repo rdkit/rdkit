@@ -38,7 +38,7 @@ FingerprintGenerator<OutputType> *getAtomPairGenerator(
     countBounds = *tmp;
   }
   // just there to handle a bad API inconsistency in v2021.03 and earlier
-  if (useCountSimulation) {
+  if (useCountSimulation != python::object()) {
     countSimulation = python::extract<bool>(useCountSimulation)();
   }
 
