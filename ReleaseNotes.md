@@ -1,4 +1,54 @@
 # Release_2021.03.2
+(Changes relative to Release_2021.03.2)
+
+## Acknowledgements
+Jason Biggs, James Davidson, Harrison Green, Brian Kelley, Stephanie Labouille,
+Dan Nealschneider, Maximilian Peters, Ricardo Rodriguez-Schmidt Riccardo
+Sabatini, Peter St. John, Paolo Tosco, Ivan Tubert-Brohman, Rachel Walker,
+Maciej Wójcikowski, 
+
+## Bug Fixes:
+  - Double bond stereo gets flipped by SMILES reader/writer
+ (github #3967 from mwojcikowski)
+  - StereoGroups not preserved by RenumberAtoms() 
+ (github #4071 from greglandrum)
+  - HCount field in v2000 Mol blocks ignored
+ (github #4099 from riccardosabatini)
+  - Reactions don't propagate bond properties
+ (github #4114 from d-b-w)
+  - SEGV in ROMol::getAtomDegree if atom is not in graph
+ (github #4127 from hgarrereyn)
+  - SEGV from unsigned integer overflow in Conformer::setAtomPos
+ (github #4128 from hgarrereyn)
+  - HCOUNT from v3000 CTABS incorrectly interpreted
+ (github #4131 from greglandrum)
+  - Empty query produces empty match, but at the same time is considered non-matching
+ (github #4138 from i-tub)
+  - fixed AddBond documentation
+ (github #4142 from Ashafix)
+  - Possible bug with `EnumerateStereoisomers`
+ (github #4144 from stephanielabouille)
+  - Odd drawing behavior with radicals and MolsToGridImage
+ (github #4156 from pstjohn)
+  - pre-condition violation when sanitizing a de-pickled reaction
+ (github #4162 from jasondbiggs)
+  - Many of the PMI descriptors are not being recalculated for different conformers
+ (github #4167 from greglandrum)
+  - Fix python to C++ pointer conversion issue in moldrawFromQPainter
+ (github #4182 from rachelnwalker)
+  - Potentially chiral bridgehead atoms not being identified.
+ (github #4192 from greglandrum)
+  - allow more recoverable V3000 parsing errors when strictParsing=false
+ (github #4210 from greglandrum)
+  - RGD: Fix memory leak with deleting array
+ (github #4211 from bp-kelley)
+  - UnfoldedRDKFingerprintCountBased returns a different fingerprint length for every molecule
+ (github #4212 from greglandrum)
+  - rdMolHash.MolHash fails on non-standard valences
+ (github #4222 from ricrogz)
+
+
+# Release_2021.03.2
 (Changes relative to Release_2021.03.1)
 
 ## Acknowledgements
