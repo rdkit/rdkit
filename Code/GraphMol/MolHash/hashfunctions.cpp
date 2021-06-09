@@ -105,7 +105,10 @@ void NMRDKitSanitizeHydrogens(RDKit::RWMol *mol) {
     unsigned int hcount = aptr->getTotalNumHs();
     aptr->setNoImplicit(true);
     aptr->setNumExplicitHs(hcount);
-    aptr->updatePropertyCache();  // or else the valence is reported incorrectly
+
+    bool strict = false;
+    aptr->updatePropertyCache(
+        strict);  // or else the valence is reported incorrectly
   }
 }
 
