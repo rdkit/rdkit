@@ -16,6 +16,7 @@
 #include <boost/smart_ptr.hpp>
 #include <RDGeneral/RDProps.h>
 #include <limits>
+#include <utility>
 
 namespace RDKit {
 class ROMol;
@@ -26,7 +27,7 @@ class RDKIT_GRAPHMOL_EXPORT ConformerException : public std::exception {
   //! construct with an error message
   ConformerException(const char *msg) : _msg(msg) {}
   //! construct with an error message
-  ConformerException(const std::string &msg) : _msg(msg) {}
+  ConformerException(std::string msg) : _msg(std::move(msg)) {}
   //! get the error message
   const char *what() const noexcept override { return _msg.c_str(); }
   ~ConformerException() noexcept {}

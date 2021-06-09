@@ -24,6 +24,7 @@
 #include <iostream>
 #include <exception>
 #include <string>
+#include <utility>
 #include <vector>
 
 namespace RDKit {
@@ -36,7 +37,7 @@ namespace MolStandardize {
 // ValidationMethod validate.
 class RDKIT_MOLSTANDARDIZE_EXPORT ValidationErrorInfo : public std::exception {
  public:
-  ValidationErrorInfo(const std::string &msg) : d_msg(msg) {
+  ValidationErrorInfo(std::string msg) : d_msg(std::move(msg)) {
     BOOST_LOG(rdInfoLog) << d_msg << std::endl;
   }
   const char *what() const noexcept override { return d_msg.c_str(); }
@@ -164,8 +165,8 @@ class RDKIT_MOLSTANDARDIZE_EXPORT MolVSValidation : public ValidationMethod {
 class RDKIT_MOLSTANDARDIZE_EXPORT AllowedAtomsValidation
     : public ValidationMethod {
  public:
-  AllowedAtomsValidation(const std::vector<std::shared_ptr<Atom>> &atoms)
-      : d_allowedList(atoms) {}
+  AllowedAtomsValidation(std::vector<std::shared_ptr<Atom>> atoms)
+      : d_allowedList(std::move(atoms)) {}
   std::vector<ValidationErrorInfo> validate(
       const ROMol &mol, bool reportAllFailures) const override;
 
@@ -179,8 +180,8 @@ class RDKIT_MOLSTANDARDIZE_EXPORT AllowedAtomsValidation
 class RDKIT_MOLSTANDARDIZE_EXPORT DisallowedAtomsValidation
     : public ValidationMethod {
  public:
-  DisallowedAtomsValidation(const std::vector<std::shared_ptr<Atom>> &atoms)
-      : d_disallowedList(atoms) {}
+  DisallowedAtomsValidation(std::vector<std::shared_ptr<Atom>> atoms)
+      : d_disallowedList(std::move(atoms)) {}
   std::vector<ValidationErrorInfo> validate(
       const ROMol &mol, bool reportAllFailures) const override;
 

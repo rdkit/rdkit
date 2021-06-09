@@ -35,6 +35,7 @@
 
 #include "EnumerateTypes.h"
 #include "../Reaction.h"
+#include <utility>
 #include <vector>
 #include <RDGeneral/BoostStartInclude.h>
 #include <cstdint>
@@ -57,7 +58,7 @@ class RDKIT_CHEMREACTIONS_EXPORT EnumerationStrategyException
     : public std::exception {
  public:
   EnumerationStrategyException(const char *msg) : _msg(msg) {}
-  EnumerationStrategyException(const std::string &msg) : _msg(msg) {}
+  EnumerationStrategyException(std::string msg) : _msg(std::move(msg)) {}
   const char *what() const noexcept override { return _msg.c_str(); }
   ~EnumerationStrategyException() noexcept {}
 

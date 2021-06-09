@@ -38,10 +38,10 @@ class RDKIT_TAUTOMERQUERY_EXPORT TautomerQuery {
                      const SubstructMatchParameters &params) const;
 
  public:
-  TautomerQuery(const std::vector<ROMOL_SPTR> &tautomers,
+  TautomerQuery(std::vector<ROMOL_SPTR> tautomers,
                 const ROMol *const templateMolecule,
-                const std::vector<size_t> &modifiedAtoms,
-                const std::vector<size_t> &modifiedBonds);
+                std::vector<size_t> modifiedAtoms,
+                std::vector<size_t> modifiedBonds);
 
   //! Copy constructor performs a deep copy
   TautomerQuery(const TautomerQuery &other)

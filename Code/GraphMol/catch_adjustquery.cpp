@@ -11,6 +11,8 @@
 
 #include "catch.hpp"
 
+#include <utility>
+
 #include <GraphMol/RDKitBase.h>
 #include <GraphMol/RDKitQueries.h>
 #include <GraphMol/FileParsers/FileParsers.h>
@@ -29,12 +31,14 @@ class _IsSubstructOf : public Catch::MatcherBase<const std::string &> {
   SubstructMatchParameters m_ps;
 
  public:
-  _IsSubstructOf(const ROMol &m, const std::string &description)
-      : m_query(&m), m_description(description) {}
+  _IsSubstructOf(const ROMol &m, std::string description)
+      : m_query(&m), m_description(std::move(description)) {}
 
-  _IsSubstructOf(const ROMol &m, const std::string &description,
+  _IsSubstructOf(const ROMol &m, std::string description,
                  SubstructMatchParameters ps)
-      : m_query(&m), m_description(description), m_ps(ps) {}
+      : m_query(&m),
+        m_description(std::move(description)),
+        m_ps(std::move(ps)) {}
 
   virtual bool match(const std::string &smiles) const override {
     std::unique_ptr<ROMol> mol(SmilesToMol(smiles));
