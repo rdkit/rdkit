@@ -5531,7 +5531,7 @@ C1C(Cl)CCCC duff2
     self.assertTrue(l[6] is None)
 
     sdf = b"""
-  Mrv1810 06051911332D          
+  Mrv1810 06051911332D
 
   3  2  0  0  0  0            999 V2000
   -13.3985    4.9850    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
@@ -5542,7 +5542,7 @@ C1C(Cl)CCCC duff2
 M  END
 $$$$
 
-  Mrv1810 06051911332D          
+  Mrv1810 06051911332D
 
   3  2  0  0  0  0            999 V2000
   -10.3083    4.8496    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
@@ -5553,7 +5553,7 @@ $$$$
 M  END
 $$$$
 
-  Mrv1810 06051911332D          
+  Mrv1810 06051911332D
 
   3  2  0  0  0  0            999 V2000
   -10.3083    4.8496    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
@@ -5574,7 +5574,7 @@ $$$$
     self.assertTrue(l[2] is None)
 
     sdf = b"""
-  Mrv1810 06051911332D          
+  Mrv1810 06051911332D
 
   3  2  0  0  0  0            999 V2000
   -13.3985    4.9850    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
@@ -5583,12 +5583,12 @@ $$$$
   1  2  1  0  0  0  0
   2  3  1  0  0  0  0
 M  END
->  <pval>  (1) 
+>  <pval>  (1)
 [1,2,]
 
 $$$$
 
-  Mrv1810 06051911332D          
+  Mrv1810 06051911332D
 
   3  2  0  0  0  0            999 V2000
   -10.3083    4.8496    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
@@ -5597,7 +5597,7 @@ $$$$
   1  2  1  0  0  0  0
   2  3  1  0  0  0  0
 M  END
->  <pval>  (1) 
+>  <pval>  (1)
 [1,2,]
 """
     suppl3 = Chem.SDMolSupplier()
@@ -5750,6 +5750,15 @@ H      0.635000    0.635000    0.635000
     with self.assertRaises(ValueError):
       Chem.SanitizeMol(Chem.MolFromSmiles('c1cc1', sanitize=False))
 
+  def testNoExceptionSmilesParserParams(self):
+    """
+    MolFromSmiles should catch exceptions even when SmilesParserParams
+    is provided.
+    """
+    smiles_params = Chem.SmilesParserParams()
+    mol = Chem.MolFromSmiles("C1CC", smiles_params)
+    self.assertIsNone(mol)
+
   def testDetectChemistryProblems(self):
     m = Chem.MolFromSmiles('CFCc1cc1FC', sanitize=False)
     ps = Chem.DetectChemistryProblems(m)
@@ -5803,7 +5812,7 @@ H      0.635000    0.635000    0.635000
   def testSetBondStereoFromDirections(self):
     m1 = Chem.MolFromMolBlock(
       '''
-  Mrv1810 10141909482D          
+  Mrv1810 10141909482D
 
   4  3  0  0  0  0            999 V2000
     3.3412   -2.9968    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
@@ -5822,7 +5831,7 @@ M  END
 
     m2 = Chem.MolFromMolBlock(
       '''
-  Mrv1810 10141909542D          
+  Mrv1810 10141909542D
 
   4  3  0  0  0  0            999 V2000
     3.4745   -5.2424    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
