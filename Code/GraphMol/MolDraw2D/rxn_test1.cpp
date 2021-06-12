@@ -140,7 +140,7 @@ void drawit(ChemicalReaction *rxn, std::string nameBase,
     MolDraw2DSVG drawer(width, height, outs);
     drawer.drawReaction(*rxn, highlight_map, highlight_colors);
     drawer.finishDrawing();
-    outs.flush();
+    outs.close();
     check_file_hash(nameBase + ".svg");
   }
 }
