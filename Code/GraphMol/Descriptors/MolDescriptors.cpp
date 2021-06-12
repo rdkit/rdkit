@@ -1,6 +1,5 @@
-// $Id$
 //
-//  Copyright (C) 2005-2012 Greg Landrum and Rational Discovery LLC
+//  Copyright (C) 2005-2021 Greg Landrum and other RDKit contributors
 //
 //   @@ All Rights Reserved @@
 //  This file is part of the RDKit.
@@ -36,6 +35,17 @@ double calcAMW(const ROMol &mol, bool onlyHeavy) {
     }
   }
   return res;
+}
+
+const std::string NumHeavyAtomsVersion = "1.0.0";
+unsigned int calcNumHeavyAtoms(const ROMol &mol) {
+  return mol.getNumHeavyAtoms();
+}
+
+const std::string NumAtomsVersion = "1.0.0";
+unsigned int calcNumAtoms(const ROMol &mol) {
+  bool onlyExplicit = false;
+  return mol.getNumAtoms(onlyExplicit);
 }
 
 const std::string exactmwVersion = "1.1.0";
@@ -153,7 +163,7 @@ std::string calcMolFormula(const ROMol &mol, bool separateIsotopes,
       counts[key] = nHs;
     }
   }
-  std::list<std::pair<unsigned int, std::string> > ks;
+  std::list<std::pair<unsigned int, std::string>> ks;
   for (std::map<std::pair<unsigned int, std::string>,
                 unsigned int>::const_iterator countIt = counts.begin();
        countIt != counts.end(); ++countIt) {
@@ -161,7 +171,7 @@ std::string calcMolFormula(const ROMol &mol, bool separateIsotopes,
   }
   ks.sort(HillCompare);
 
-  for (std::list<std::pair<unsigned int, std::string> >::const_iterator kIter =
+  for (std::list<std::pair<unsigned int, std::string>>::const_iterator kIter =
            ks.begin();
        kIter != ks.end(); ++kIter) {
     const std::pair<unsigned int, std::string> &key = *kIter;

@@ -49,7 +49,7 @@ class RDKIT_FMCS_EXPORT RingMatchTableSet {
     inline unsigned getRingIndex(const INT_VECT* r2) const {
       std::map<const INT_VECT*, unsigned>::const_iterator j =
           RingIndex.find(r2);
-      if (RingIndex.end() == j) throw - 1;
+      if (RingIndex.end() == j) throw -1;
       return j->second;
     }
   };
@@ -63,7 +63,7 @@ class RDKIT_FMCS_EXPORT RingMatchTableSet {
   std::map<const INT_VECT*, unsigned> QueryRingIndex;
 
  public:
-  RingMatchTableSet()  {}
+  RingMatchTableSet() {}
 
   inline void clear() {
     if (QueryBondRingsIndeces) QueryBondRingsIndeces->clear();
@@ -82,14 +82,14 @@ class RDKIT_FMCS_EXPORT RingMatchTableSet {
   inline bool isTargetBondInRing(const ROMol* target, unsigned bi) const {
     std::map<const ROMol*, std::vector<std::vector<size_t>>>::const_iterator i =
         TargetBondRingsIndecesSet.find(target);
-    if (TargetBondRingsIndecesSet.end() == i) throw - 1;  // never
+    if (TargetBondRingsIndecesSet.end() == i) throw -1;  // never
     return i->second[bi].empty();
   }
   inline const std::vector<size_t>& getTargetBondRings(const ROMol* target,
                                                        unsigned bi) const {
     std::map<const ROMol*, std::vector<std::vector<size_t>>>::const_iterator i =
         TargetBondRingsIndecesSet.find(target);
-    if (TargetBondRingsIndecesSet.end() == i) throw - 1;  // never
+    if (TargetBondRingsIndecesSet.end() == i) throw -1;  // never
     return i->second[bi];
   }
 
@@ -211,13 +211,13 @@ class RDKIT_FMCS_EXPORT RingMatchTableSet {
   inline unsigned getQueryRingIndex(const INT_VECT* r1) const {
     std::map<const INT_VECT*, unsigned>::const_iterator i =
         QueryRingIndex.find(r1);
-    if (QueryRingIndex.end() == i) throw - 1;  // never
+    if (QueryRingIndex.end() == i) throw -1;  // never
     return i->second;
   }
   inline const RingMatchTable& getTargetMatchMatrix(const ROMol* mol2) const {
     std::map<const ROMol*, RingMatchTable>::const_iterator mi =
         MatchMatrixSet.find(mol2);
-    if (MatchMatrixSet.end() == mi) throw - 1;  // never
+    if (MatchMatrixSet.end() == mi) throw -1;  // never
     return mi->second;
   }
 

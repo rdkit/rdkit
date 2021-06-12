@@ -33,11 +33,11 @@ typedef IntSet::const_iterator IntSetConstIter;
  */
 class RDKIT_DATASTRUCTS_EXPORT SparseBitVect : public BitVect {
  public:
-  SparseBitVect()  {};
+  SparseBitVect() {}
   //! initialize with a particular size;
   explicit SparseBitVect(unsigned int size) : dp_bits(nullptr), d_size(0) {
     _initForSize(size);
-  };
+  }
 
   //! copy constructor
   SparseBitVect(const SparseBitVect &other) : BitVect(other) {
@@ -53,18 +53,18 @@ class RDKIT_DATASTRUCTS_EXPORT SparseBitVect : public BitVect {
   SparseBitVect(const char *data, const unsigned int dataLen);
 
   SparseBitVect &operator=(const SparseBitVect &);
-  ~SparseBitVect() { delete dp_bits; };
+  ~SparseBitVect() { delete dp_bits; }
 
   bool operator[](const unsigned int which) const;
   SparseBitVect operator|(const SparseBitVect &) const;
-  SparseBitVect operator&(const SparseBitVect &)const;
+  SparseBitVect operator&(const SparseBitVect &) const;
   SparseBitVect operator^(const SparseBitVect &) const;
   SparseBitVect operator~() const;
 
   //! returns a (const) pointer to our raw storage
   const IntSet *getBitSet() const { return dp_bits; }
 
-  unsigned int getNumBits() const { return d_size; };
+  unsigned int getNumBits() const { return d_size; }
   bool setBit(const unsigned int which);
   bool setBit(const IntSetIter which);
   bool unsetBit(const unsigned int which);
@@ -74,16 +74,17 @@ class RDKIT_DATASTRUCTS_EXPORT SparseBitVect : public BitVect {
 
   unsigned int getNumOnBits() const {
     return static_cast<unsigned int>(dp_bits->size());
-  };
+  }
   unsigned int getNumOffBits() const {
     return d_size - static_cast<unsigned int>(dp_bits->size());
-  };
+  }
 
   std::string toString() const;
 
   void getOnBits(IntVect &v) const;
-  void clearBits() { dp_bits->clear(); };
-  IntSet *dp_bits{nullptr};  //!< our raw data, exposed for the sake of efficiency
+  void clearBits() { dp_bits->clear(); }
+  IntSet *dp_bits{
+      nullptr};  //!< our raw data, exposed for the sake of efficiency
 
   bool operator==(const SparseBitVect &o) const {
     return *dp_bits == *o.dp_bits;

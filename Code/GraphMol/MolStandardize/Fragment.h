@@ -72,11 +72,11 @@ inline FragmentRemover *fragmentRemoverFromParams(
 
 class RDKIT_MOLSTANDARDIZE_EXPORT LargestFragmentChooser {
  public:
-  //  LargestFragmentChooser(){};
+  //  LargestFragmentChooser() {}
   LargestFragmentChooser(bool prefer_organic = false)
-      : PREFER_ORGANIC(prefer_organic){};
+      : PREFER_ORGANIC(prefer_organic) {}
   LargestFragmentChooser(const LargestFragmentChooser &other);
-  ~LargestFragmentChooser(){};
+  ~LargestFragmentChooser() {}
 
   ROMol *choose(const ROMol &mol);
   struct Largest {

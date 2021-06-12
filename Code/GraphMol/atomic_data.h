@@ -31,17 +31,17 @@ RDKIT_GRAPHMOL_EXPORT extern const double electronMass;
 class RDKIT_GRAPHMOL_EXPORT atomicData {
  public:
   atomicData(const std::string &dataLine);
-  ~atomicData(){};
+  ~atomicData() {}
 
-  int AtomicNum() const { return anum; };
+  int AtomicNum() const { return anum; }
 
-  int DefaultValence() const { return valence.front(); };
+  int DefaultValence() const { return valence.front(); }
 
-  int NumValence() const { return static_cast<int>(valence.size()); };
+  int NumValence() const { return static_cast<int>(valence.size()); }
 
-  const INT_VECT &ValenceList() const { return valence; };
+  const INT_VECT &ValenceList() const { return valence; }
 
-  double Mass() const { return mass; };
+  double Mass() const { return mass; }
 
   std::string Symbol() const { return symb; }
 

@@ -87,9 +87,11 @@ void MMFFOptimizeMoleculeConfs(ROMol &mol,
                                bool ignoreInterfragInteractions = true) {
   MMFF::MMFFMolProperties mmffMolProperties(mol, mmffVariant);
   if (mmffMolProperties.isValid()) {
-    ForceFields::ForceField *ff = MMFF::constructForceField(
-        mol, &mmffMolProperties, nonBondedThresh, -1, ignoreInterfragInteractions);
-    ForceFieldsHelper::OptimizeMoleculeConfs(mol, *ff, res, numThreads, maxIters);
+    ForceFields::ForceField *ff =
+        MMFF::constructForceField(mol, &mmffMolProperties, nonBondedThresh, -1,
+                                  ignoreInterfragInteractions);
+    ForceFieldsHelper::OptimizeMoleculeConfs(mol, *ff, res, numThreads,
+                                             maxIters);
     delete ff;
   } else {
     res.resize(mol.getNumConformers());

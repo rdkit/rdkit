@@ -29,19 +29,19 @@ class RDKIT_GRAPHMOL_EXPORT QueryBond : public Bond {
  public:
   typedef Queries::Query<int, Bond const *, true> QUERYBOND_QUERY;
 
-  QueryBond() : Bond(){};
+  QueryBond() : Bond() {}
   //! initialize with a particular bond order
   explicit QueryBond(BondType bT);
   //! initialize from a bond
   explicit QueryBond(const Bond &other)
-      : Bond(other), dp_query(makeBondOrderEqualsQuery(other.getBondType())){};
+      : Bond(other), dp_query(makeBondOrderEqualsQuery(other.getBondType())) {}
   QueryBond(const QueryBond &other) : Bond(other) {
     if (other.dp_query) {
       dp_query = other.dp_query->copy();
     } else {
       dp_query = nullptr;
     }
-  };
+  }
   ~QueryBond();
 
   //! returns a copy of this query, owned by the caller
@@ -61,16 +61,16 @@ class RDKIT_GRAPHMOL_EXPORT QueryBond : public Bond {
   bool QueryMatch(QueryBond const *what) const;
 
   // This method can be used to distinguish query bonds from standard bonds
-  bool hasQuery() const { return dp_query != nullptr; };
+  bool hasQuery() const { return dp_query != nullptr; }
 
   //! returns our current query
-  QUERYBOND_QUERY *getQuery() const { return dp_query; };
+  QUERYBOND_QUERY *getQuery() const { return dp_query; }
   //! replaces our current query with the value passed in
   void setQuery(QUERYBOND_QUERY *what) {
     // free up any existing query (Issue255):
     delete dp_query;
     dp_query = what;
-  };
+  }
 
   //! expands our current query
   /*!

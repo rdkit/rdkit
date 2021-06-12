@@ -1319,6 +1319,16 @@ BOOST_PYTHON_MODULE(rdMolDescriptors) {
   python::scope().attr("_CalcNumAliphaticCarbocycles_version") =
       RDKit::Descriptors::NumAliphaticCarbocyclesVersion;
 
+  docString = "returns the number of heavy atoms for a molecule";
+  python::def("CalcNumHeavyAtoms", RDKit::Descriptors::calcNumHeavyAtoms,
+              (python::arg("mol")), docString.c_str());
+  python::scope().attr("_CalcNumHeavyAtoms_version") =
+      RDKit::Descriptors::NumHeavyAtomsVersion;
+  docString = "returns the total number of atoms for a molecule";
+  python::def("CalcNumAtoms", RDKit::Descriptors::calcNumAtoms,
+              (python::arg("mol")), docString.c_str());
+  python::scope().attr("_CalcNumAtoms_version") =
+      RDKit::Descriptors::NumAtomsVersion;
   docString = "returns the number of heteroatoms for a molecule";
   python::def("CalcNumHeteroatoms", RDKit::Descriptors::calcNumHeteroatoms,
               (python::arg("mol")), docString.c_str());

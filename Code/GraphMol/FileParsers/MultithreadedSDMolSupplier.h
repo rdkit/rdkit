@@ -31,7 +31,7 @@ class RDKIT_FILEPARSERS_EXPORT MultithreadedSDMolSupplier
 
   MultithreadedSDMolSupplier();
   ~MultithreadedSDMolSupplier();
-  void init(){};
+  void init() {}
 
   void checkForEnd();
   bool getEnd() const;

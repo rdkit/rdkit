@@ -22,7 +22,7 @@ namespace MMFF {
 class RDKIT_FORCEFIELD_EXPORT TorsionConstraintContrib
     : public ForceFieldContrib {
  public:
-  TorsionConstraintContrib(){};
+  TorsionConstraintContrib() {}
   //! Constructor
   /*!
   \param owner          pointer to the owning ForceField
@@ -51,7 +51,7 @@ class RDKIT_FORCEFIELD_EXPORT TorsionConstraintContrib
   void getGrad(double *pos, double *grad) const;
   virtual TorsionConstraintContrib *copy() const {
     return new TorsionConstraintContrib(*this);
-  };
+  }
 
  private:
   void setParameters(ForceField *owner, unsigned int idx1, unsigned int idx2,

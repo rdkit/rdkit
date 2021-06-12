@@ -85,7 +85,7 @@ class RDKIT_FILEPARSERS_EXPORT SmilesWriter : public MolWriter {
       } catch (const std::runtime_error &) {
       }
     }
-  };
+  }
 
   //! \brief close our stream (the writer cannot be used again)
   void close() {
@@ -97,10 +97,10 @@ class RDKIT_FILEPARSERS_EXPORT SmilesWriter : public MolWriter {
       df_owner = false;
     }
     dp_ostream = nullptr;
-  };
+  }
 
   //! \brief get the number of molecules written so far
-  unsigned int numMols() const { return d_molid; };
+  unsigned int numMols() const { return d_molid; }
 
  private:
   // local initialization
@@ -163,7 +163,7 @@ class RDKIT_FILEPARSERS_EXPORT SDWriter : public MolWriter {
       } catch (const std::runtime_error &) {
       }
     }
-  };
+  }
 
   //! \brief close our stream (the writer cannot be used again)
   void close() {
@@ -175,16 +175,16 @@ class RDKIT_FILEPARSERS_EXPORT SDWriter : public MolWriter {
       df_owner = false;
     }
     dp_ostream = nullptr;
-  };
+  }
 
   //! \brief get the number of molecules written so far
-  unsigned int numMols() const { return d_molid; };
+  unsigned int numMols() const { return d_molid; }
 
-  void setForceV3000(bool val) { df_forceV3000 = val; };
-  bool getForceV3000() const { return df_forceV3000; };
+  void setForceV3000(bool val) { df_forceV3000 = val; }
+  bool getForceV3000() const { return df_forceV3000; }
 
-  void setKekulize(bool val) { df_kekulize = val; };
-  bool getKekulize() const { return df_kekulize; };
+  void setKekulize(bool val) { df_kekulize = val; }
+  bool getKekulize() const { return df_kekulize; }
 
  private:
   void writeProperty(const ROMol &mol, const std::string &name);
@@ -234,7 +234,7 @@ class RDKIT_FILEPARSERS_EXPORT TDTWriter : public MolWriter {
       } catch (const std::runtime_error &) {
       }
     }
-  };
+  }
 
   //! \brief close our stream (the writer cannot be used again)
   void close() {
@@ -250,19 +250,19 @@ class RDKIT_FILEPARSERS_EXPORT TDTWriter : public MolWriter {
       df_owner = false;
     }
     dp_ostream = nullptr;
-  };
+  }
 
   //! \brief get the number of molecules written so far
-  unsigned int numMols() const { return d_molid; };
+  unsigned int numMols() const { return d_molid; }
 
-  void setWrite2D(bool state = true) { df_write2D = state; };
-  bool getWrite2D() const { return df_write2D; };
+  void setWrite2D(bool state = true) { df_write2D = state; }
+  bool getWrite2D() const { return df_write2D; }
 
-  void setWriteNames(bool state = true) { df_writeNames = state; };
-  bool getWriteNames() const { return df_writeNames; };
+  void setWriteNames(bool state = true) { df_writeNames = state; }
+  bool getWriteNames() const { return df_writeNames; }
 
-  void setNumDigits(unsigned int numDigits) { d_numDigits = numDigits; };
-  unsigned int getNumDigits() const { return d_numDigits; };
+  void setNumDigits(unsigned int numDigits) { d_numDigits = numDigits; }
+  unsigned int getNumDigits() const { return d_numDigits; }
 
  private:
   void writeProperty(const ROMol &mol, const std::string &name);
@@ -289,7 +289,7 @@ class RDKIT_FILEPARSERS_EXPORT PDBWriter : public MolWriter {
   //! \brief write a new molecule to the file
   void write(const ROMol &mol, int confId = defaultConfId);
 
-  void setProps(const STR_VECT &){};
+  void setProps(const STR_VECT &) {}
 
   //! \brief flush the ostream
   void flush() {
@@ -302,7 +302,7 @@ class RDKIT_FILEPARSERS_EXPORT PDBWriter : public MolWriter {
       } catch (const std::runtime_error &) {
       }
     }
-  };
+  }
 
   //! \brief close our stream (the writer cannot be used again)
   void close() {
@@ -314,10 +314,10 @@ class RDKIT_FILEPARSERS_EXPORT PDBWriter : public MolWriter {
       df_owner = false;
     }
     dp_ostream = nullptr;
-  };
+  }
 
   //! \brief get the number of molecules written so far
-  unsigned int numMols() const { return d_count; };
+  unsigned int numMols() const { return d_count; }
 
  private:
   std::ostream *dp_ostream;

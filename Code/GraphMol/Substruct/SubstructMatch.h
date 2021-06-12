@@ -52,7 +52,7 @@ struct RDKIT_SUBSTRUCTMATCH_EXPORT SubstructMatchParameters {
       extraFinalCheck;  //!< a function to be called at the end to validate a
                         //!< match
 
-  SubstructMatchParameters(){};
+  SubstructMatchParameters() {}
 };
 
 RDKIT_SUBSTRUCTMATCH_EXPORT void updateSubstructMatchParamsFromJSON(
@@ -209,15 +209,14 @@ inline unsigned int SubstructMatch(ResonanceMolSupplier &resMolSupplier,
   return matchVect.size();
 };
 
-//! Class used as a final step to confirm whether or not a given atom->atom mapping is a valid
-//! substructure match.
+//! Class used as a final step to confirm whether or not a given atom->atom
+//! mapping is a valid substructure match.
 class RDKIT_SUBSTRUCTMATCH_EXPORT MolMatchFinalCheckFunctor {
  public:
   MolMatchFinalCheckFunctor(const ROMol &query, const ROMol &mol,
                             const SubstructMatchParameters &ps);
 
-  bool operator()(const std::uint32_t q_c[],
-                  const std::uint32_t m_c[]) const;
+  bool operator()(const std::uint32_t q_c[], const std::uint32_t m_c[]) const;
 
  private:
   const ROMol &d_query;

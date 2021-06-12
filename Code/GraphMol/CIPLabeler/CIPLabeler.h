@@ -52,8 +52,8 @@ RDKIT_CIPLABELER_EXPORT void assignCIPLabels(ROMol &mol);
  *   \param bonds - bitset with the bond indexes to be labeled.
  *
  */
-RDKIT_CIPLABELER_EXPORT void
-assignCIPLabels(ROMol &mol, const boost::dynamic_bitset<> &atoms,
-                const boost::dynamic_bitset<> &bonds);
-} // namespace CIPLabeler
-} // namespace RDKit
+RDKIT_CIPLABELER_EXPORT void assignCIPLabels(
+    ROMol &mol, const boost::dynamic_bitset<> &atoms,
+    const boost::dynamic_bitset<> &bonds);
+}  // namespace CIPLabeler
+}  // namespace RDKit

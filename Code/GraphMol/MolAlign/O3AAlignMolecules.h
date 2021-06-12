@@ -68,8 +68,8 @@ class RDKIT_MOLALIGN_EXPORT O3AConstraint {
 //! they were appended.
 class RDKIT_MOLALIGN_EXPORT O3AConstraintVect {
  public:
-  O3AConstraintVect()  {};
-  ~O3AConstraintVect(){};
+  O3AConstraintVect() {}
+  ~O3AConstraintVect() {}
   void append(unsigned int prbIdx, unsigned int refIdx, double weight) {
     O3AConstraint *o3aConstraint = new O3AConstraint();
     o3aConstraint->d_idx = d_count;
@@ -100,7 +100,7 @@ class RDKIT_MOLALIGN_EXPORT O3AConstraintVect {
                    ? (a->d_refIdx < b->d_refIdx)
                    : ((a->d_weight != b->d_weight) ? (a->d_weight > b->d_weight)
                                                    : (a->d_idx < b->d_idx))));
-  };
+  }
 };
 
 const int O3_DUMMY_COST = 100000;
@@ -131,7 +131,7 @@ enum {
 class RDKIT_MOLALIGN_EXPORT MolHistogram {
  public:
   MolHistogram(const ROMol &mol, const double *dmat, bool cleanupDmat = false);
-  ~MolHistogram(){};
+  ~MolHistogram() {}
   inline int get(const unsigned int y, const unsigned int x) const {
     PRECONDITION(y < d_h.shape()[0], "Invalid index on MolHistogram");
     PRECONDITION(x < d_h.shape()[1], "Invalid index on MolHistogram");
@@ -153,8 +153,8 @@ class RDKIT_MOLALIGN_EXPORT LAP {
         d_d(dim),
         d_v(dim),
         d_pred(dim),
-        d_cost(boost::extents[dim][dim]){};
-  ~LAP(){};
+        d_cost(boost::extents[dim][dim]) {}
+  ~LAP() {}
   int getCost(const unsigned int i, const unsigned int j) {
     PRECONDITION(i < d_cost.shape()[0], "Invalid index on LAP.cost");
     PRECONDITION(j < d_cost.shape()[1], "Invalid index on LAP.cost");
@@ -191,7 +191,7 @@ class RDKIT_MOLALIGN_EXPORT SDM {
       O3AConstraintVect *o3aConstraintVect = nullptr)
       : d_prbConf(prbConf),
         d_refConf(refConf),
-        d_o3aConstraintVect(o3aConstraintVect){};
+        d_o3aConstraintVect(o3aConstraintVect) {}
   // copy constructor
   SDM(const SDM &other)
       : d_prbConf(other.d_prbConf),
@@ -203,7 +203,7 @@ class RDKIT_MOLALIGN_EXPORT SDM {
       memcpy(d_SDMPtrVect[i].get(), other.d_SDMPtrVect[i].get(),
              sizeof(SDMElement));
     }
-  };
+  }
   // assignment operator
   SDM &operator=(const SDM &other) {
     if (this == &other) return *this;
@@ -218,9 +218,9 @@ class RDKIT_MOLALIGN_EXPORT SDM {
     }
 
     return *this;
-  };
+  }
   // destructor
-  ~SDM(){};
+  ~SDM() {}
   void fillFromDist(double threshold,
                     const boost::dynamic_bitset<> &refHvyAtoms,
                     const boost::dynamic_bitset<> &prbHvyAtoms);
@@ -255,7 +255,7 @@ class RDKIT_MOLALIGN_EXPORT SDM {
                        ? (a->cost < b->cost)
                        : ((a->idx[0] != b->idx[0]) ? (a->idx[0] < b->idx[0])
                                                    : (a->idx[1] < b->idx[1]))));
-  };
+  }
   static bool compareSDMDist(boost::shared_ptr<SDMElement> a,
                              boost::shared_ptr<SDMElement> b) {
     double aWeight = (a->o3aConstraint ? a->o3aConstraint->getWeight() : 0.0);
@@ -266,7 +266,7 @@ class RDKIT_MOLALIGN_EXPORT SDM {
                        ? (a->sqDist < b->sqDist)
                        : ((a->idx[0] != b->idx[0]) ? (a->idx[0] < b->idx[0])
                                                    : (a->idx[1] < b->idx[1]))));
-  };
+  }
 };
 
 class RDKIT_MOLALIGN_EXPORT O3A {
@@ -298,12 +298,12 @@ class RDKIT_MOLALIGN_EXPORT O3A {
     if (d_o3aWeights) {
       delete d_o3aWeights;
     }
-  };
+  }
   double align();
   double trans(RDGeom::Transform3D &trans);
-  double score() { return d_o3aScore; };
-  const RDKit::MatchVectType *matches() { return d_o3aMatchVect; };
-  const RDNumeric::DoubleVector *weights() { return d_o3aWeights; };
+  double score() { return d_o3aScore; }
+  const RDKit::MatchVectType *matches() { return d_o3aMatchVect; }
+  const RDNumeric::DoubleVector *weights() { return d_o3aWeights; }
 
  private:
   ROMol *d_prbMol;

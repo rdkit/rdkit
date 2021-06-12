@@ -118,7 +118,7 @@ class RDProps {
   }
 
   //! \overload
-  bool hasProp(const std::string &key) const { return d_props.hasVal(key); };
+  bool hasProp(const std::string &key) const { return d_props.hasVal(key); }
 
   //! clears the value of a \c property
   /*!
@@ -139,7 +139,7 @@ class RDProps {
       }
     }
     d_props.clearVal(key);
-  };
+  }
 
   //! clears all of our \c computed \c properties
   void clearComputedProps() const {

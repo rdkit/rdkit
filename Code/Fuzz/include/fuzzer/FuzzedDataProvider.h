@@ -19,6 +19,7 @@
 #include <cstdint>
 #include <cstring>
 #include <initializer_list>
+#include <limits>
 #include <string>
 #include <type_traits>
 #include <utility>
@@ -41,10 +42,12 @@ class FuzzedDataProvider {
   // when splitting fuzzing input into pieces, as every piece is put into a
   // separate buffer (i.e. ASan would catch any under-/overflow) and the memory
   // will be released automatically.
-  template <typename T> std::vector<T> ConsumeBytes(size_t num_bytes);
+  template <typename T>
+  std::vector<T> ConsumeBytes(size_t num_bytes);
   template <typename T>
   std::vector<T> ConsumeBytesWithTerminator(size_t num_bytes, T terminator = 0);
-  template <typename T> std::vector<T> ConsumeRemainingBytes();
+  template <typename T>
+  std::vector<T> ConsumeRemainingBytes();
 
   // Methods returning strings. Use only when you need a std::string or a null
   // terminated C-string. Otherwise, prefer the methods returning std::vector.
@@ -54,24 +57,32 @@ class FuzzedDataProvider {
   std::string ConsumeRemainingBytesAsString();
 
   // Methods returning integer values.
-  template <typename T> T ConsumeIntegral();
-  template <typename T> T ConsumeIntegralInRange(T min, T max);
+  template <typename T>
+  T ConsumeIntegral();
+  template <typename T>
+  T ConsumeIntegralInRange(T min, T max);
 
   // Methods returning floating point values.
-  template <typename T> T ConsumeFloatingPoint();
-  template <typename T> T ConsumeFloatingPointInRange(T min, T max);
+  template <typename T>
+  T ConsumeFloatingPoint();
+  template <typename T>
+  T ConsumeFloatingPointInRange(T min, T max);
 
   // 0 <= return value <= 1.
-  template <typename T> T ConsumeProbability();
+  template <typename T>
+  T ConsumeProbability();
 
   bool ConsumeBool();
 
   // Returns a value chosen from the given enum.
-  template <typename T> T ConsumeEnum();
+  template <typename T>
+  T ConsumeEnum();
 
   // Returns a value from the given array.
-  template <typename T, size_t size> T PickValueInArray(const T (&array)[size]);
-  template <typename T> T PickValueInArray(std::initializer_list<const T> list);
+  template <typename T, size_t size>
+  T PickValueInArray(const T (&array)[size]);
+  template <typename T>
+  T PickValueInArray(std::initializer_list<const T> list);
 
   // Writes data to the given destination and returns number of bytes written.
   size_t ConsumeData(void *destination, size_t num_bytes);
@@ -90,7 +101,8 @@ class FuzzedDataProvider {
   template <typename T>
   std::vector<T> ConsumeBytes(size_t size, size_t num_bytes);
 
-  template <typename TS, typename TU> TS ConvertUnsignedToSigned(TU value);
+  template <typename TS, typename TU>
+  TS ConvertUnsignedToSigned(TU value);
 
   const uint8_t *data_ptr_;
   size_t remaining_bytes_;
@@ -144,8 +156,8 @@ inline std::string FuzzedDataProvider::ConsumeBytesAsString(size_t num_bytes) {
 // input data, returns what remains of the input. Designed to be more stable
 // with respect to a fuzzer inserting characters than just picking a random
 // length and then consuming that many bytes with |ConsumeBytes|.
-inline std::string
-FuzzedDataProvider::ConsumeRandomLengthString(size_t max_length) {
+inline std::string FuzzedDataProvider::ConsumeRandomLengthString(
+    size_t max_length) {
   // Reads bytes from the start of |data_ptr_|. Maps "\\" to "\", and maps "\"
   // followed by anything else to the end of the string. As a result of this
   // logic, a fuzzer can insert characters into the string, and the string
@@ -162,8 +174,9 @@ FuzzedDataProvider::ConsumeRandomLengthString(size_t max_length) {
     if (next == '\\' && remaining_bytes_ != 0) {
       next = ConvertUnsignedToSigned<char>(data_ptr_[0]);
       Advance(1);
-      if (next != '\\')
+      if (next != '\\') {
         break;
+      }
     }
     result += next;
   }
@@ -187,7 +200,8 @@ inline std::string FuzzedDataProvider::ConsumeRemainingBytesAsString() {
 // Returns a number in the range [Type's min, Type's max]. The value might
 // not be uniformly distributed in the given range. If there's no input data
 // left, always returns |min|.
-template <typename T> T FuzzedDataProvider::ConsumeIntegral() {
+template <typename T>
+T FuzzedDataProvider::ConsumeIntegral() {
   return ConsumeIntegralInRange(std::numeric_limits<T>::min(),
                                 std::numeric_limits<T>::max());
 }
@@ -201,8 +215,9 @@ T FuzzedDataProvider::ConsumeIntegralInRange(T min, T max) {
   static_assert(std::is_integral<T>::value, "An integral type is required.");
   static_assert(sizeof(T) <= sizeof(uint64_t), "Unsupported integral type.");
 
-  if (min > max)
+  if (min > max) {
     abort();
+  }
 
   // Use the biggest type possible to hold the range and the result.
   uint64_t range = static_cast<uint64_t>(max) - min;
@@ -232,7 +247,8 @@ T FuzzedDataProvider::ConsumeIntegralInRange(T min, T max) {
 // Returns a floating point value in the range [Type's lowest, Type's max] by
 // consuming bytes from the input data. If there's no input data left, always
 // returns approximately 0.
-template <typename T> T FuzzedDataProvider::ConsumeFloatingPoint() {
+template <typename T>
+T FuzzedDataProvider::ConsumeFloatingPoint() {
   return ConsumeFloatingPointInRange<T>(std::numeric_limits<T>::lowest(),
                                         std::numeric_limits<T>::max());
 }
@@ -242,8 +258,9 @@ template <typename T> T FuzzedDataProvider::ConsumeFloatingPoint() {
 // |min| must be less than or equal to |max|.
 template <typename T>
 T FuzzedDataProvider::ConsumeFloatingPointInRange(T min, T max) {
-  if (min > max)
+  if (min > max) {
     abort();
+  }
 
   T range = .0;
   T result = min;
@@ -265,7 +282,8 @@ T FuzzedDataProvider::ConsumeFloatingPointInRange(T min, T max) {
 
 // Returns a floating point number in the range [0.0, 1.0]. If there's no
 // input data left, always returns 0.
-template <typename T> T FuzzedDataProvider::ConsumeProbability() {
+template <typename T>
+T FuzzedDataProvider::ConsumeProbability() {
   static_assert(std::is_floating_point<T>::value,
                 "A floating point type is required.");
 
@@ -288,7 +306,8 @@ inline bool FuzzedDataProvider::ConsumeBool() {
 // Returns an enum value. The enum must start at 0 and be contiguous. It must
 // also contain |kMaxValue| aliased to its largest (inclusive) value. Such as:
 // enum class Foo { SomeValue, OtherValue, kMaxValue = OtherValue };
-template <typename T> T FuzzedDataProvider::ConsumeEnum() {
+template <typename T>
+T FuzzedDataProvider::ConsumeEnum() {
   static_assert(std::is_enum<T>::value, "|T| must be an enum type.");
   return static_cast<T>(
       ConsumeIntegralInRange<uint32_t>(0, static_cast<uint32_t>(T::kMaxValue)));
@@ -304,8 +323,9 @@ T FuzzedDataProvider::PickValueInArray(const T (&array)[size]) {
 template <typename T>
 T FuzzedDataProvider::PickValueInArray(std::initializer_list<const T> list) {
   // TODO(Dor1s): switch to static_assert once C++14 is allowed.
-  if (!list.size())
+  if (!list.size()) {
     abort();
+  }
 
   return *(list.begin() + ConsumeIntegralInRange<size_t>(0, list.size() - 1));
 }
@@ -331,8 +351,9 @@ inline void FuzzedDataProvider::CopyAndAdvance(void *destination,
 }
 
 inline void FuzzedDataProvider::Advance(size_t num_bytes) {
-  if (num_bytes > remaining_bytes_)
+  if (num_bytes > remaining_bytes_) {
     abort();
+  }
 
   data_ptr_ += num_bytes;
   remaining_bytes_ -= num_bytes;
@@ -350,8 +371,9 @@ std::vector<T> FuzzedDataProvider::ConsumeBytes(size_t size, size_t num_bytes) {
   // To increase the odds even more, we also call |shrink_to_fit| below.
   std::vector<T> result(size);
   if (size == 0) {
-    if (num_bytes != 0)
+    if (num_bytes != 0) {
       abort();
+    }
     return result;
   }
 
@@ -371,8 +393,9 @@ TS FuzzedDataProvider::ConvertUnsignedToSigned(TU value) {
                 "Source type must be unsigned.");
 
   // TODO(Dor1s): change to `if constexpr` once C++17 becomes mainstream.
-  if (std::numeric_limits<TS>::is_modulo)
+  if (std::numeric_limits<TS>::is_modulo) {
     return static_cast<TS>(value);
+  }
 
   // Avoid using implementation-defined unsigned to signed conversions.
   // To learn more, see https://stackoverflow.com/questions/13150449.
@@ -384,4 +407,4 @@ TS FuzzedDataProvider::ConvertUnsignedToSigned(TU value) {
   }
 }
 
-#endif // LLVM_FUZZER_FUZZED_DATA_PROVIDER_H_
+#endif  // LLVM_FUZZER_FUZZED_DATA_PROVIDER_H_

@@ -54,6 +54,8 @@ void _registerDescriptors() {
   REGISTER_DESCRIPTOR(NumRotatableBonds, calcNumRotatableBonds);
   REGISTER_DESCRIPTOR(NumHBD, calcNumHBD);
   REGISTER_DESCRIPTOR(NumHBA, calcNumHBA);
+  REGISTER_DESCRIPTOR(NumHeavyAtoms, calcNumHeavyAtoms);
+  REGISTER_DESCRIPTOR(NumAtoms, calcNumAtoms);
   REGISTER_DESCRIPTOR(NumHeteroatoms, calcNumHeteroatoms);
   REGISTER_DESCRIPTOR(NumAmideBonds, calcNumAmideBonds);
   REGISTER_DESCRIPTOR(FractionCSP3, calcFractionCSP3);

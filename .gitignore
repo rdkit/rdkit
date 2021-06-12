@@ -8,6 +8,8 @@
 #- Eclipse files
 /.project
 /.pydevproject
+/.cproject
+/.settings/
 
 #- CLion files
 /cmake-build-*

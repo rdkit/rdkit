@@ -21,19 +21,19 @@ template <class MatchFuncArgType, class DataFuncArgType = MatchFuncArgType,
 class RDKIT_QUERY_EXPORT GreaterEqualQuery
     : public EqualityQuery<MatchFuncArgType, DataFuncArgType, needsConversion> {
  public:
-  GreaterEqualQuery() { this->d_tol = 0; };
+  GreaterEqualQuery() { this->d_tol = 0; }
   //! constructs with our target value
   explicit GreaterEqualQuery(DataFuncArgType what) {
     this->d_val = what;
     this->d_tol = 0;
     this->df_negate = false;
-  };
+  }
   //! constructs with our target value and a tolerance
   GreaterEqualQuery(DataFuncArgType v, DataFuncArgType t) {
     this->d_val = v;
     this->d_tol = t;
     this->df_negate = false;
-  };
+  }
 
   bool Match(const DataFuncArgType what) const {
     MatchFuncArgType mfArg =
@@ -49,7 +49,7 @@ class RDKIT_QUERY_EXPORT GreaterEqualQuery
       else
         return false;
     }
-  };
+  }
   Query<MatchFuncArgType, DataFuncArgType, needsConversion> *copy() const {
     GreaterEqualQuery<MatchFuncArgType, DataFuncArgType, needsConversion> *res =
         new GreaterEqualQuery<MatchFuncArgType, DataFuncArgType,
@@ -61,7 +61,7 @@ class RDKIT_QUERY_EXPORT GreaterEqualQuery
     res->d_description = this->d_description;
     res->d_queryType = this->d_queryType;
     return res;
-  };
+  }
 
   std::string getFullDescription() const {
     std::ostringstream res;
@@ -72,7 +72,7 @@ class RDKIT_QUERY_EXPORT GreaterEqualQuery
     else
       res << " >= ";
     return res.str();
-  };
+  }
 };
 }  // namespace Queries
 #endif

@@ -7539,6 +7539,73 @@ void testGithub4162() {
   RxnOps::sanitizeRxn(*rxnFromPickle);
 }
 
+void testGithub4114() {
+  BOOST_LOG(rdInfoLog) << "--------------------------------------" << std::endl;
+  BOOST_LOG(rdInfoLog) << "Reactions don't propagate bond properties"
+                       << std::endl;
+
+  const std::string DUMMY_PROP{"dummy_prop"};
+  std::vector<ROMOL_SPTR> mol{"ClC(N=O)=C=C=C=C(Br)N=S"_smiles};
+
+  // React the left side of the mol
+  const std::string reaction(
+      R"([Cl:1][C:2]([N:3]=[O:4])=[C:5]=[C:6]>>[F:1][Si:2]([P:3]~[S:4])(~[Si:5]=[Si:6]))");
+  std::unique_ptr<ChemicalReaction> rxn(RxnSmartsToChemicalReaction(reaction));
+  TEST_ASSERT(rxn);
+  rxn->initReactantMatchers();
+
+  // Set dummy properties on all bonds; mark the central double bonds
+  // as EITHERDOUBLE
+  for (unsigned int i = 0; i < mol[0]->getNumBonds(); ++i) {
+    auto bnd = mol[0]->getBondWithIdx(i);
+    bnd->setProp(DUMMY_PROP, i);
+
+    if (i >= 3 && i <= 6) {
+      TEST_ASSERT(bnd->getBondType() == Bond::DOUBLE);
+      bnd->setBondDir(Bond::EITHERDOUBLE);
+    }
+  }
+
+  auto prods = rxn->runReactants(mol);
+  TEST_ASSERT(prods.size() == 1);
+  TEST_ASSERT(prods[0].size() == 1);
+
+  // Make sure the reaction did not alter the graph
+  for (const auto &at : prods[0][0]->atoms()) {
+    auto mapno = at->getProp<unsigned int>(common_properties::reactantAtomIdx);
+    TEST_ASSERT(mapno == at->getIdx());
+  }
+
+  for (const auto &rBnd : mol[0]->bonds()) {
+    auto pBnd = prods[0][0]->getBondBetweenAtoms(rBnd->getBeginAtomIdx(),
+                                                 rBnd->getEndAtomIdx());
+
+    // Bonds 0, 1 and 4 are overridden in the product template, and should
+    // therefore override the properties.
+    // Bonds 2 and 3 are "null bonds", and should get properties copied over.
+    // Bonds > 4 are reactant bonds, and should keep their properties.
+    auto rBndIdx = rBnd->getIdx();
+    if (rBndIdx == 0 || rBndIdx == 1 || rBndIdx == 4) {
+      TEST_ASSERT(!pBnd->hasProp(DUMMY_PROP));
+    } else {
+      unsigned int dummy_prop;
+      TEST_ASSERT(pBnd->getPropIfPresent(DUMMY_PROP, dummy_prop));
+      TEST_ASSERT(dummy_prop == rBndIdx);
+    }
+
+    // Bond 3 is a "null bond", and should preserve EITHERDOUBLE.
+    // Bond 4 is specified in the reaction, and should not preserve
+    // EITHERDOUBLE. Bonds 5 & 6 are not included in the reaction, so they
+    // should keep EITHERDOUBLE dir.
+    if (rBndIdx == 3 || rBndIdx == 5 || rBndIdx == 6) {
+      TEST_ASSERT(pBnd->getBondType() == Bond::DOUBLE);
+      TEST_ASSERT(pBnd->getBondDir() == Bond::EITHERDOUBLE);
+    } else {
+      TEST_ASSERT(pBnd->getBondDir() == Bond::NONE);
+    }
+  }
+}
+
 int main() {
   RDLog::InitLogs();
 
@@ -7633,6 +7700,7 @@ int main() {
   testRxnBlockRemoveHs();
   testGithub3078();
   testGithub4162();
+  testGithub4114();
 
   BOOST_LOG(rdInfoLog)
       << "*******************************************************\n";

@@ -55,7 +55,7 @@ class RDKIT_GRAPHMOL_EXPORT MolStackElem {
   explicit MolStackElem(Atom *at) {
     type = MOL_STACK_ATOM;
     obj.atom = at;
-  };
+  }
   //! construct a bond node
   /*!
 
@@ -67,12 +67,12 @@ class RDKIT_GRAPHMOL_EXPORT MolStackElem {
     type = MOL_STACK_BOND;
     obj.bond = bond;
     number = idx;
-  };
+  }
   //! construct for a ring closure
   explicit MolStackElem(int idx) {
     type = MOL_STACK_RING;
     number = idx;
-  };
+  }
   //! construct for a branch opening or closing
   explicit MolStackElem(const char *chr, int idx) {
     switch (chr[0]) {

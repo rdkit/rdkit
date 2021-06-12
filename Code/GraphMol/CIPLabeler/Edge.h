@@ -21,8 +21,7 @@ namespace CIPLabeler {
 class Node;
 
 class Edge {
-
-public:
+ public:
   Edge() = delete;
   Edge(const Edge &) = delete;
   Edge &operator=(const Edge &) = delete;
@@ -47,12 +46,12 @@ public:
 
   void flip();
 
-private:
+ private:
   Node *dp_beg;
   Node *dp_end;
   Bond *dp_bond;
   Descriptor d_aux = Descriptor::NONE;
 };
 
-} // namespace CIPLabeler
-} // namespace RDKit
+}  // namespace CIPLabeler
+}  // namespace RDKit

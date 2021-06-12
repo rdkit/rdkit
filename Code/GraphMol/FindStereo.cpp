@@ -19,6 +19,7 @@
 #include <boost/dynamic_bitset.hpp>
 #include <boost/format.hpp>
 #include "Chirality.h"
+#include <GraphMol/QueryOps.h>
 
 namespace RDKit {
 namespace Chirality {
@@ -253,11 +254,15 @@ bool isAtomPotentialTetrahedralCenter(const Atom *atom) {
              (atom->getExplicitValence() == 3 &&
               atom->getFormalCharge() == 1))) {
           legalCenter = true;
-        } else if (atom->getAtomicNum() == 7 &&
-                   mol.getRingInfo()->isAtomInRingOfSize(atom->getIdx(), 3)) {
-          // N in a three-membered ring is another one of the InChI special
-          // cases
-          legalCenter = true;
+        } else if (atom->getAtomicNum() == 7) {
+          // three-coordinate N additional requirements:
+          //   in a ring of size 3  (from InChI)
+          // OR
+          /// is a bridgehead atom (RDKit extension)
+          if (mol.getRingInfo()->isAtomInRingOfSize(atom->getIdx(), 3) ||
+              queryIsAtomBridgehead(atom)) {
+            legalCenter = true;
+          }
         }
         return legalCenter;
       }
@@ -477,12 +482,10 @@ std::vector<StereoInfo> findPotentialStereo(ROMol &mol, bool cleanIt,
           if (std::find(nbrs.begin(), nbrs.end(), rnk) != nbrs.end()) {
             // ok, we just hit a duplicate rank. If the atom we're concerned
             // about is a candidate for ring stereo and the bond to the atom
-            // with the duplicate rank is a ring bond that's not fused between
-            // rings, we can ignore the duplicate
+            // with the duplicate rank is a ring bond
             if (possibleRingStereoAtoms[aidx]) {
               auto bnd = mol.getBondBetweenAtoms(aidx, nbrIdx);
-              if (!bnd || !possibleRingStereoBonds[bnd->getIdx()] ||
-                  possibleRingStereoBonds[bnd->getIdx()] > 1) {
+              if (!bnd || !possibleRingStereoBonds[bnd->getIdx()]) {
                 haveADupe = true;
                 break;
               }

@@ -4377,9 +4377,11 @@ $$$$
   def testGetSetProps(self):
     m = Chem.MolFromSmiles("CC")
     errors = {
-      "int": "key `foo` exists but does not result in an integer value",
-      "double": "key `foo` exists but does not result in a double value",
-      "bool": "key `foo` exists but does not result in a True or False value"
+      "int": "key `foo` exists but does not result in an integer value reason: boost::bad_any_cast: failed conversion using boost::any_cast",
+      "uint overflow": "key `foo` exists but does not result in an unsigned integer value reason: bad numeric conversion: negative overflow",
+      "int overflow": "key `foo` exists but does not result in an integer value reason: bad numeric conversion: positive overflow",
+      "double": "key `foo` exists but does not result in a double value reason: boost::bad_any_cast: failed conversion using boost::any_cast",
+      "bool": "key `foo` exists but does not result in a True or False value reason: boost::bad_any_cast: failed conversion using boost::any_cast"
     }
 
     for ob in [m, list(m.GetAtoms())[0], list(m.GetBonds())[0]]:
@@ -4400,6 +4402,18 @@ $$$$
       with self.assertRaises(ValueError) as e:
         ob.GetIntProp("foo")
       self.assertEqual(str(e.exception), errors["int"])
+
+      ob.SetIntProp("foo", -1)
+      with self.assertRaises(ValueError) as e:
+        ob.GetUnsignedProp("foo")
+      self.assertEqual(str(e.exception), errors["uint overflow"])        
+
+      ob.SetUnsignedProp("foo", 4294967295)
+      self.assertEqual(ob.GetUnsignedProp("foo"), 4294967295)
+      with self.assertRaises(ValueError) as e:
+        ob.GetIntProp("foo")
+      self.assertEqual(str(e.exception), errors["int overflow"])        
+
 
   def testInvariantException(self):
     m = Chem.MolFromSmiles("C")
@@ -5517,7 +5531,7 @@ C1C(Cl)CCCC duff2
     self.assertTrue(l[6] is None)
 
     sdf = b"""
-  Mrv1810 06051911332D          
+  Mrv1810 06051911332D
 
   3  2  0  0  0  0            999 V2000
   -13.3985    4.9850    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
@@ -5528,7 +5542,7 @@ C1C(Cl)CCCC duff2
 M  END
 $$$$
 
-  Mrv1810 06051911332D          
+  Mrv1810 06051911332D
 
   3  2  0  0  0  0            999 V2000
   -10.3083    4.8496    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
@@ -5539,7 +5553,7 @@ $$$$
 M  END
 $$$$
 
-  Mrv1810 06051911332D          
+  Mrv1810 06051911332D
 
   3  2  0  0  0  0            999 V2000
   -10.3083    4.8496    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
@@ -5560,7 +5574,7 @@ $$$$
     self.assertTrue(l[2] is None)
 
     sdf = b"""
-  Mrv1810 06051911332D          
+  Mrv1810 06051911332D
 
   3  2  0  0  0  0            999 V2000
   -13.3985    4.9850    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
@@ -5569,12 +5583,12 @@ $$$$
   1  2  1  0  0  0  0
   2  3  1  0  0  0  0
 M  END
->  <pval>  (1) 
+>  <pval>  (1)
 [1,2,]
 
 $$$$
 
-  Mrv1810 06051911332D          
+  Mrv1810 06051911332D
 
   3  2  0  0  0  0            999 V2000
   -10.3083    4.8496    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
@@ -5583,7 +5597,7 @@ $$$$
   1  2  1  0  0  0  0
   2  3  1  0  0  0  0
 M  END
->  <pval>  (1) 
+>  <pval>  (1)
 [1,2,]
 """
     suppl3 = Chem.SDMolSupplier()
@@ -5736,6 +5750,15 @@ H      0.635000    0.635000    0.635000
     with self.assertRaises(ValueError):
       Chem.SanitizeMol(Chem.MolFromSmiles('c1cc1', sanitize=False))
 
+  def testNoExceptionSmilesParserParams(self):
+    """
+    MolFromSmiles should catch exceptions even when SmilesParserParams
+    is provided.
+    """
+    smiles_params = Chem.SmilesParserParams()
+    mol = Chem.MolFromSmiles("C1CC", smiles_params)
+    self.assertIsNone(mol)
+
   def testDetectChemistryProblems(self):
     m = Chem.MolFromSmiles('CFCc1cc1FC', sanitize=False)
     ps = Chem.DetectChemistryProblems(m)
@@ -5789,7 +5812,7 @@ H      0.635000    0.635000    0.635000
   def testSetBondStereoFromDirections(self):
     m1 = Chem.MolFromMolBlock(
       '''
-  Mrv1810 10141909482D          
+  Mrv1810 10141909482D
 
   4  3  0  0  0  0            999 V2000
     3.3412   -2.9968    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
@@ -5808,7 +5831,7 @@ M  END
 
     m2 = Chem.MolFromMolBlock(
       '''
-  Mrv1810 10141909542D          
+  Mrv1810 10141909542D
 
   4  3  0  0  0  0            999 V2000
     3.4745   -5.2424    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0

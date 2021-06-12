@@ -49,7 +49,7 @@ class RDKIT_TRAJECTORY_EXPORT Snapshot {
   RDGeom::Point3D getPoint3D(unsigned int pointNum) const;
   /*! \return the energy for this Snapshot
    */
-  double getEnergy() const { return d_energy; };
+  double getEnergy() const { return d_energy; }
   /*! \brief Sets the energy for this Snapshot
       \param energy the energy value assigned to this Snapshot
    */

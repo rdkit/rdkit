@@ -4339,6 +4339,27 @@ void testOSSFuzzFailures() {
   BOOST_LOG(rdInfoLog) << "done" << std::endl;
 }
 
+void testGithub3967() {
+  BOOST_LOG(rdInfoLog) << "-------------------------------------" << std::endl;
+  BOOST_LOG(rdInfoLog) << "Testing Github Issue 3967: Double bond stereo gets "
+                          "flipped by SMILES reader/writer"
+                       << std::endl;
+
+  {
+    auto mol = "C=c1s/c2n(c1=O)CCCCCCC\\N=2"_smiles;
+    TEST_ASSERT(mol);
+    auto smi = MolToSmiles(*mol);
+    TEST_ASSERT(smi == "C=c1s/c2n(c1=O)CCCCCCC\\N=2");
+  }
+  {
+    auto mol = "C1=C\\C/C=C2C3=C/C/C=C\\C=C/C\\3C\\2\\C=C/1"_smiles;
+    TEST_ASSERT(mol);
+    auto smi = MolToSmiles(*mol);
+    TEST_ASSERT(smi == "C1=C\\C/C=C2C3=C/C/C=C\\C=C/C\\3C\\2\\C=C/1");
+  }
+  BOOST_LOG(rdInfoLog) << "\tdone" << std::endl;
+}
+
 int main(int argc, char *argv[]) {
   (void)argc;
   (void)argv;
@@ -4417,6 +4438,7 @@ int main(int argc, char *argv[]) {
   testdoRandomSmileGeneration();
   testGithub1028();
   testGithub3139();
+  testGithub3967();
 #endif
   testOSSFuzzFailures();
 }

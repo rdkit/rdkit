@@ -21,7 +21,7 @@ namespace CIPLabeler {
 class RDKIT_CIPLABELER_EXPORT TooManyNodesException
     : public std::runtime_error {
  public:
-  TooManyNodesException(const std::string &msg) : std::runtime_error(msg){};
+  TooManyNodesException(const std::string &msg) : std::runtime_error(msg) {}
 };
 
 }  // namespace CIPLabeler

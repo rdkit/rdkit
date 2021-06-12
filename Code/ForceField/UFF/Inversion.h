@@ -23,7 +23,7 @@ class AtomicParams;
 //! The inversion term for the Universal Force Field
 class RDKIT_FORCEFIELD_EXPORT InversionContrib : public ForceFieldContrib {
  public:
-  InversionContrib(){};
+  InversionContrib() {}
   //! Constructor
   /*!
     \param owner          pointer to the owning ForceField
@@ -43,9 +43,7 @@ class RDKIT_FORCEFIELD_EXPORT InversionContrib : public ForceFieldContrib {
   double getEnergy(double *pos) const;
 
   void getGrad(double *pos, double *grad) const;
-  virtual InversionContrib *copy() const {
-    return new InversionContrib(*this);
-  };
+  virtual InversionContrib *copy() const { return new InversionContrib(*this); }
 
  private:
   int d_at1Idx{-1};

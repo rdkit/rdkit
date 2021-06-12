@@ -23,7 +23,7 @@ namespace MMFF {
 class RDKIT_FORCEFIELD_EXPORT PositionConstraintContrib
     : public ForceFieldContrib {
  public:
-  PositionConstraintContrib()  {};
+  PositionConstraintContrib() {}
   //! Constructor
   /*!
     \param owner       pointer to the owning ForceField
@@ -42,10 +42,10 @@ class RDKIT_FORCEFIELD_EXPORT PositionConstraintContrib
   void getGrad(double *pos, double *grad) const;
   virtual PositionConstraintContrib *copy() const {
     return new PositionConstraintContrib(*this);
-  };
+  }
 
  private:
-  int d_atIdx{-1};             //!< index of the restrained atom
+  int d_atIdx{-1};         //!< index of the restrained atom
   double d_maxDispl;       //!< maximum allowed displacement
   RDGeom::Point3D d_pos0;  //!< reference position
   double d_forceConstant;  //!< force constant of the bond

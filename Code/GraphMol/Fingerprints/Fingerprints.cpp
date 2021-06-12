@@ -1,5 +1,5 @@
 //
-//  Copyright (C) 2003-2018 Greg Landrum and Rational Discovery LLC
+//  Copyright (C) 2003-2021 Greg Landrum and other RDKit contributors
 //
 //   @@ All Rights Reserved @@
 //  This file is part of the RDKit.
@@ -20,9 +20,8 @@
 #include <RDGeneral/Invariant.h>
 #include <RDGeneral/BoostStartInclude.h>
 #include <boost/random.hpp>
-#include <cstdint>
 #include <RDGeneral/BoostEndInclude.h>
-#include <climits>
+#include <limits>
 #include <RDGeneral/hash/hash.hpp>
 #include <RDGeneral/types.h>
 #include <algorithm>
@@ -806,14 +805,13 @@ SparseIntVect<boost::uint64_t> *getUnfoldedRDKFingerprintMol(
     }
   }
 
-  unsigned int len = 0;
-  if (bitMap.size()) {
-    len = bitMap.rbegin()->first + 1;
-  }
-  auto *res = new SparseIntVect<boost::uint64_t>(len);
-  std::map<unsigned int, unsigned int>::iterator iter;
-  for (iter = bitMap.begin(); iter != bitMap.end(); ++iter) {
-    res->setVal(iter->first, iter->second);
+  // technically the upper limit here could be std::uint32_t since `bitMap` uses
+  // unsigned ints, but that could change in the future and saying that the
+  // sparse vector is bigger than it actually is doesn't hurt anything
+  auto *res = new SparseIntVect<std::uint64_t>(
+      std::numeric_limits<std::uint64_t>::max());
+  for (const auto &pr : bitMap) {
+    res->setVal(pr.first, pr.second);
   }
 
   return res;

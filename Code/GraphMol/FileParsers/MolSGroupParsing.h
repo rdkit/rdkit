@@ -152,9 +152,10 @@ void ParseV3000SAPLabel(RWMol *mol, SubstanceGroup &sgroup,
 
 std::string ParseV3000StringPropLabel(std::stringstream &stream);
 
-void ParseV3000SGroupsBlock(std::istream *inStream, unsigned int line,
-                            unsigned int nSgroups, RWMol *mol,
-                            bool strictParsing);
+// returns the last line read in the SGroups block
+std::string ParseV3000SGroupsBlock(std::istream *inStream, unsigned int line,
+                                   unsigned int nSgroups, RWMol *mol,
+                                   bool strictParsing);
 
 }  // namespace SGroupParsing
 }  // namespace RDKit

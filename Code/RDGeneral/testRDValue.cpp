@@ -11,6 +11,7 @@
 #include <iostream>
 #include <fstream>
 #include <cmath>
+#include <boost/any.hpp>
 
 using namespace RDKit;
 
@@ -252,6 +253,62 @@ void testPickleBinaryString() {
   BOOST_LOG(rdErrorLog) << "..done" << std::endl;
 }
 
+void testIntConversions() {
+     RDProps p;
+     p.setProp<int>("foo", 1);
+     p.getProp<std::int64_t>("foo");
+     p.getProp<std::int8_t>("foo");
+     p.getProp<std::int16_t>("foo");
+     p.getProp<std::uint16_t>("foo");
+    
+    p.setProp<int64_t>("foo", 1);
+    p.getProp<int64_t>("foo");
+    
+    p.setProp<unsigned int>("foo", 1);
+    p.getProp<std::uint64_t>("foo");
+    p.getProp<std::uint8_t>("foo");
+    p.getProp<std::uint16_t>("foo");
+    
+    p.getProp<std::int16_t>("foo");
+    
+    // Test some overflows
+    p.setProp<int>("foo", 32767+1);
+    try {
+        p.getProp<std::int8_t>("foo"); // should fail
+        TEST_ASSERT(0);
+    } catch (boost::numeric::positive_overflow&) {
+    }
+    try {
+        p.getProp<std::uint8_t>("foo"); // should fail
+        TEST_ASSERT(0);
+    } catch (boost::numeric::positive_overflow&) {
+    }
+    try {
+        p.getProp<std::int16_t>("foo"); // should fail
+        TEST_ASSERT(0);
+    } catch (boost::numeric::positive_overflow&) {
+    }
+    try {
+        p.getProp<std::uint16_t>("foo"); // should fail
+        TEST_ASSERT(0);
+    } catch (boost::numeric::positive_overflow&) {
+    }
+    
+    p.setProp<int>("foo", -1);
+    try {
+        p.getProp<std::uint8_t>("foo"); // should fail
+        TEST_ASSERT(0);
+    } catch (boost::numeric::positive_overflow&) {
+    }
+    
+    p.getProp<std::int16_t>("foo"); // should pass
+    try {
+        p.getProp<std::uint16_t>("foo"); // should fail
+        TEST_ASSERT(0);
+    } catch (boost::numeric::negative_overflow&) {
+    }
+
+}
 int main() {
   std::cerr << "-- running tests -- " << std::endl;
   testPOD();
@@ -260,4 +317,5 @@ int main() {
   testNaN();
   testPropertyPickler();
   testPickleBinaryString();
+  testIntConversions();
 }

@@ -35,9 +35,9 @@ class RDKIT_GRAPHMOL_EXPORT SubstanceGroupException
     : public std::runtime_error {
  public:
   //! construct with an error message
-  SubstanceGroupException(const char *msg) : std::runtime_error(msg){};
+  SubstanceGroupException(const char *msg) : std::runtime_error(msg) {}
   //! construct with an error message
-  SubstanceGroupException(const std::string &msg) : std::runtime_error(msg){};
+  SubstanceGroupException(const std::string &msg) : std::runtime_error(msg) {}
 };
 
 //! The class for representing SubstanceGroups
@@ -101,10 +101,10 @@ class RDKIT_GRAPHMOL_EXPORT SubstanceGroup : public RDProps {
   SubstanceGroup &operator=(SubstanceGroup &&other) = default;
 
   //! Destructor
-  ~SubstanceGroup(){};
+  ~SubstanceGroup() {}
 
   //! returns whether or not this belongs to a molecule
-  bool hasOwningMol() const { return dp_mol != nullptr; };
+  bool hasOwningMol() const { return dp_mol != nullptr; }
 
   //! Get the molecule that owns this instance
   ROMol &getOwningMol() const {
@@ -141,6 +141,12 @@ class RDKIT_GRAPHMOL_EXPORT SubstanceGroup : public RDProps {
   const std::vector<unsigned int> &getParentAtoms() const { return d_patoms; }
   const std::vector<unsigned int> &getBonds() const { return d_bonds; }
 
+  void setAtoms(std::vector<unsigned int> atoms) { d_atoms = std::move(atoms); }
+  void setParentAtoms(std::vector<unsigned int> patoms) {
+    d_patoms = std::move(patoms);
+  }
+  void setBonds(std::vector<unsigned int> bonds) { d_bonds = std::move(bonds); }
+
   const std::vector<Bracket> &getBrackets() const { return d_brackets; }
   const std::vector<CState> &getCStates() const { return d_cstates; }
   const std::vector<AttachPoint> &getAttachPoints() const { return d_saps; }
@@ -149,9 +155,9 @@ class RDKIT_GRAPHMOL_EXPORT SubstanceGroup : public RDProps {
   std::vector<CState> &getCStates() { return d_cstates; }
   std::vector<AttachPoint> &getAttachPoints() { return d_saps; }
 
-  void clearBrackets() { d_brackets.clear(); };
-  void clearCStates() { d_cstates.clear(); };
-  void clearAttachPoints() { d_saps.clear(); };
+  void clearBrackets() { d_brackets.clear(); }
+  void clearCStates() { d_cstates.clear(); }
+  void clearAttachPoints() { d_saps.clear(); }
 
   //! adjusts our atom IDs to reflect that an atom has been removed from the
   //! parent molecule

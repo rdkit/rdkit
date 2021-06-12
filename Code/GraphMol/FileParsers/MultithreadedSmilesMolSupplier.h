@@ -13,7 +13,7 @@
 #include "MultithreadedMolSupplier.h"
 namespace RDKit {
 //! This class is still a bit experimental and the public API may change
-//! in future releases.    
+//! in future releases.
 class RDKIT_FILEPARSERS_EXPORT MultithreadedSmilesMolSupplier
     : public MultithreadedMolSupplier {
  public:
@@ -32,7 +32,7 @@ class RDKIT_FILEPARSERS_EXPORT MultithreadedSmilesMolSupplier
   MultithreadedSmilesMolSupplier();
   ~MultithreadedSmilesMolSupplier();
 
-  void init(){};
+  void init() {}
   //! returns df_end
   bool getEnd() const;
   //! reads and processes the title line

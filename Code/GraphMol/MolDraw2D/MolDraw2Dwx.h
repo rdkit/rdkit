@@ -77,7 +77,7 @@ class RDKIT_MOLDRAW2D_EXPORT MolDraw2Dwx : public MolDraw2D {
     }
     // FIX: deal with toggling fills
     m_dc.DrawPolygon(cds.size(), lines);
-  };
+  }
 
   void clearDrawing() {
     const wxBrush &brush = m_dc.GetBrush();

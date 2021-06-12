@@ -18,24 +18,24 @@ class AtomCountFunctor {
   const ROMOL_SPTR _mol;
 
  public:
-  AtomCountFunctor(const ROMOL_SPTR &mol) : _mol(mol){};
-  unsigned int operator()() const { return _mol->getNumAtoms(); };
+  AtomCountFunctor(const ROMOL_SPTR &mol) : _mol(mol) {}
+  unsigned int operator()() const { return _mol->getNumAtoms(); }
 };
 class BondCountFunctor {
  private:
   const ROMOL_SPTR _mol;
 
  public:
-  BondCountFunctor(const ROMOL_SPTR &mol) : _mol(mol){};
-  unsigned int operator()() const { return _mol->getNumBonds(); };
+  BondCountFunctor(const ROMOL_SPTR &mol) : _mol(mol) {}
+  unsigned int operator()() const { return _mol->getNumBonds(); }
 };
 class ConformerCountFunctor {
  private:
   const ROMOL_SPTR _mol;
 
  public:
-  ConformerCountFunctor(const ROMOL_SPTR &mol) : _mol(mol){};
-  unsigned int operator()() const { return _mol->getNumConformers(); };
+  ConformerCountFunctor(const ROMOL_SPTR &mol) : _mol(mol) {}
+  unsigned int operator()() const { return _mol->getNumConformers(); }
 };
 
 // Note: T1 should be some iterator type,
@@ -125,6 +125,8 @@ typedef ReadOnlySeq<ROMol::AtomIterator, Atom *, AtomCountFunctor> AtomIterSeq;
 typedef ReadOnlySeq<ROMol::QueryAtomIterator, Atom *, AtomCountFunctor>
     QueryAtomIterSeq;
 typedef ReadOnlySeq<ROMol::BondIterator, Bond *, BondCountFunctor> BondIterSeq;
-typedef ReadOnlySeq<ROMol::ConformerIterator, CONFORMER_SPTR &, ConformerCountFunctor> ConformerIterSeq;
-}
+typedef ReadOnlySeq<ROMol::ConformerIterator, CONFORMER_SPTR &,
+                    ConformerCountFunctor>
+    ConformerIterSeq;
+}  // namespace RDKit
 #endif

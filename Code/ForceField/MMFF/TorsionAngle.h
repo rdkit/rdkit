@@ -27,7 +27,7 @@ class MMFFTor;
 //! the torsion term for MMFF
 class RDKIT_FORCEFIELD_EXPORT TorsionAngleContrib : public ForceFieldContrib {
  public:
-  TorsionAngleContrib(){};
+  TorsionAngleContrib() {}
   //! Constructor
   /*!
     The torsion is between atom1 - atom2 - atom3 - atom4
@@ -48,7 +48,7 @@ class RDKIT_FORCEFIELD_EXPORT TorsionAngleContrib : public ForceFieldContrib {
   void getGrad(double *pos, double *grad) const;
   virtual TorsionAngleContrib *copy() const {
     return new TorsionAngleContrib(*this);
-  };
+  }
 
  private:
   int d_at1Idx{-1}, d_at2Idx{-1}, d_at3Idx{-1}, d_at4Idx{-1};
