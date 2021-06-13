@@ -208,7 +208,7 @@ MolStandardize::TautomerEnumerator *createDefaultEnumerator() {
 class pyobjFunctor {
  public:
   pyobjFunctor(python::object obj) : dp_obj(std::move(obj)) {}
-  ~pyobjFunctor() {}
+  ~pyobjFunctor() = default;
   int operator()(const ROMol &m) {
     return python::extract<int>(dp_obj(boost::ref(m)));
   }

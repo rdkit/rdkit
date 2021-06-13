@@ -92,7 +92,7 @@ class FixedMolSizeMolBundle : public MolBundle {
   FixedMolSizeMolBundle(const FixedMolSizeMolBundle &other)
       : MolBundle(other) {}
 
-  ~FixedMolSizeMolBundle() override {}
+  ~FixedMolSizeMolBundle() override = default;
 
   //! adds a new molecule and returns the total number of molecules
   //!  enforces that the new molecule has the same number of atoms and bonds

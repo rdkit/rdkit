@@ -31,7 +31,7 @@ RDKIT_GRAPHMOL_EXPORT extern const double electronMass;
 class RDKIT_GRAPHMOL_EXPORT atomicData {
  public:
   atomicData(const std::string &dataLine);
-  ~atomicData() {}
+  ~atomicData() = default;
 
   int AtomicNum() const { return anum; }
 

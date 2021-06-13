@@ -30,7 +30,7 @@ class RDKIT_GRAPHMOL_EXPORT ConformerException : public std::exception {
   ConformerException(std::string msg) : _msg(std::move(msg)) {}
   //! get the error message
   const char *what() const noexcept override { return _msg.c_str(); }
-  ~ConformerException() noexcept override {}
+  ~ConformerException() noexcept override = default;
 
  private:
   std::string _msg;
@@ -64,7 +64,7 @@ class RDKIT_GRAPHMOL_EXPORT Conformer : public RDProps {
   Conformer &operator=(const Conformer &other);
 
   //! Destructor
-  ~Conformer() {}
+  ~Conformer() = default;
 
   //! Resize the conformer so that more atoms location can be added.
   //! Useful, for e.g., when adding hydrogens

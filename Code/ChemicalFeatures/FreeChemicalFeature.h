@@ -50,7 +50,7 @@ class RDKIT_CHEMICALFEATURES_EXPORT FreeChemicalFeature
         d_type(other.getType()),
         d_position(other.getPos()) {}
 
-  ~FreeChemicalFeature() override {}
+  ~FreeChemicalFeature() override = default;
 
   //! return our id
   int getId() const override { return d_id; }

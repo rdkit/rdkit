@@ -41,7 +41,7 @@ class RDKIT_MOLSTANDARDIZE_EXPORT ValidationErrorInfo : public std::exception {
     BOOST_LOG(rdInfoLog) << d_msg << std::endl;
   }
   const char *what() const noexcept override { return d_msg.c_str(); }
-  ~ValidationErrorInfo() noexcept override {}
+  ~ValidationErrorInfo() noexcept override = default;
 
  private:
   std::string d_msg;

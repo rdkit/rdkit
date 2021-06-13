@@ -87,7 +87,7 @@ class PyMMFFMolProperties {
  public:
   PyMMFFMolProperties(RDKit::MMFF::MMFFMolProperties *mp)
       : mmffMolProperties(mp) {}
-  ~PyMMFFMolProperties() {}
+  ~PyMMFFMolProperties() = default;
 
   unsigned int getMMFFAtomType(unsigned int idx) {
     return (unsigned int)(mmffMolProperties->getMMFFAtomType(idx));

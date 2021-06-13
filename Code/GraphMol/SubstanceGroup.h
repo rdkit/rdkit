@@ -101,7 +101,7 @@ class RDKIT_GRAPHMOL_EXPORT SubstanceGroup : public RDProps {
   SubstanceGroup &operator=(SubstanceGroup &&other) = default;
 
   //! Destructor
-  ~SubstanceGroup() {}
+  ~SubstanceGroup() = default;
 
   //! returns whether or not this belongs to a molecule
   bool hasOwningMol() const { return dp_mol != nullptr; }

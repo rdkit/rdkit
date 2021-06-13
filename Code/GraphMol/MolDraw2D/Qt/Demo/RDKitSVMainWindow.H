@@ -35,7 +35,7 @@ class RDKitSVMainWindow : public QMainWindow {
 public :
 
   RDKitSVMainWindow( int argc , char **argv );
-  ~RDKitSVMainWindow() {}
+  ~RDKitSVMainWindow() = default;
 
   typedef enum { SMILES , SDF , UNKNOWN } FILE_TYPE;
 

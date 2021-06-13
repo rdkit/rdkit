@@ -17,7 +17,7 @@
 class classA {
  public:
   classA() { setProp("useless", 10); }
-  ~classA() {}
+  ~classA() = default;
 
   void printA() const {
     if (hasProp("useless")) {

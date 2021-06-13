@@ -97,7 +97,7 @@ class RDKIT_FINGERPRINTS_EXPORT MorganBondInvGenerator
 
   std::string infoString() const override;
   MorganBondInvGenerator *clone() const override;
-  ~MorganBondInvGenerator() override {}
+  ~MorganBondInvGenerator() override = default;
 };
 
 /**

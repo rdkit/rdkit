@@ -69,7 +69,7 @@ class RDKIT_MOLALIGN_EXPORT O3AConstraint {
 class RDKIT_MOLALIGN_EXPORT O3AConstraintVect {
  public:
   O3AConstraintVect() {}
-  ~O3AConstraintVect() {}
+  ~O3AConstraintVect() = default;
   void append(unsigned int prbIdx, unsigned int refIdx, double weight) {
     O3AConstraint *o3aConstraint = new O3AConstraint();
     o3aConstraint->d_idx = d_count;
@@ -131,7 +131,7 @@ enum {
 class RDKIT_MOLALIGN_EXPORT MolHistogram {
  public:
   MolHistogram(const ROMol &mol, const double *dmat, bool cleanupDmat = false);
-  ~MolHistogram() {}
+  ~MolHistogram() = default;
   inline int get(const unsigned int y, const unsigned int x) const {
     PRECONDITION(y < d_h.shape()[0], "Invalid index on MolHistogram");
     PRECONDITION(x < d_h.shape()[1], "Invalid index on MolHistogram");
@@ -154,7 +154,7 @@ class RDKIT_MOLALIGN_EXPORT LAP {
         d_v(dim),
         d_pred(dim),
         d_cost(boost::extents[dim][dim]) {}
-  ~LAP() {}
+  ~LAP() = default;
   int getCost(const unsigned int i, const unsigned int j) {
     PRECONDITION(i < d_cost.shape()[0], "Invalid index on LAP.cost");
     PRECONDITION(j < d_cost.shape()[1], "Invalid index on LAP.cost");
@@ -220,7 +220,7 @@ class RDKIT_MOLALIGN_EXPORT SDM {
     return *this;
   }
   // destructor
-  ~SDM() {}
+  ~SDM() = default;
   void fillFromDist(double threshold,
                     const boost::dynamic_bitset<> &refHvyAtoms,
                     const boost::dynamic_bitset<> &prbHvyAtoms);

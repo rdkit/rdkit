@@ -51,7 +51,7 @@ class ReadOnlySeq {
   const ROMOL_SPTR _mol;
 
  public:
-  ~ReadOnlySeq() {}
+  ~ReadOnlySeq() = default;
   ReadOnlySeq(ROMOL_SPTR mol, T1 start, T1 end, T3 lenFunc)
       : _start(start),
         _end(end),
