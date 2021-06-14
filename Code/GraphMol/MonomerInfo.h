@@ -17,6 +17,7 @@
 #define _RD_MONOMERINFO_H
 
 #include <string>
+#include <utility>
 #include <boost/shared_ptr.hpp>
 
 namespace RDKit {
@@ -29,8 +30,8 @@ class RDKIT_GRAPHMOL_EXPORT AtomMonomerInfo {
   virtual ~AtomMonomerInfo() {}
 
   AtomMonomerInfo() : d_name("") {}
-  AtomMonomerInfo(AtomMonomerType typ, const std::string &nm = "")
-      : d_monomerType(typ), d_name(nm) {}
+  AtomMonomerInfo(AtomMonomerType typ, std::string nm = "")
+      : d_monomerType(typ), d_name(std::move(nm)) {}
   AtomMonomerInfo(const AtomMonomerInfo &other)
       : d_monomerType(other.d_monomerType), d_name(other.d_name) {}
 
@@ -65,21 +66,19 @@ class RDKIT_GRAPHMOL_EXPORT AtomPDBResidueInfo : public AtomMonomerInfo {
         d_segmentNumber(other.d_segmentNumber) {}
 
   AtomPDBResidueInfo(const std::string &atomName, int serialNumber = 0,
-                     const std::string &altLoc = "",
-                     const std::string &residueName = "", int residueNumber = 0,
-                     const std::string &chainId = "",
-                     const std::string &insertionCode = "",
-                     double occupancy = 1.0, double tempFactor = 0.0,
-                     bool isHeteroAtom = false,
+                     std::string altLoc = "", std::string residueName = "",
+                     int residueNumber = 0, std::string chainId = "",
+                     std::string insertionCode = "", double occupancy = 1.0,
+                     double tempFactor = 0.0, bool isHeteroAtom = false,
                      unsigned int secondaryStructure = 0,
                      unsigned int segmentNumber = 0)
       : AtomMonomerInfo(PDBRESIDUE, atomName),
         d_serialNumber(serialNumber),
-        d_altLoc(altLoc),
-        d_residueName(residueName),
+        d_altLoc(std::move(altLoc)),
+        d_residueName(std::move(residueName)),
         d_residueNumber(residueNumber),
-        d_chainId(chainId),
-        d_insertionCode(insertionCode),
+        d_chainId(std::move(chainId)),
+        d_insertionCode(std::move(insertionCode)),
         d_occupancy(occupancy),
         d_tempFactor(tempFactor),
         df_heteroAtom(isHeteroAtom),

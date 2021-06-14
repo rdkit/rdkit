@@ -35,6 +35,7 @@
 
 #include <GraphMol/RDKitBase.h>
 #include <string>
+#include <utility>
 #include <RDGeneral/BoostStartInclude.h>
 #include <boost/shared_ptr.hpp>
 #include <RDGeneral/BoostEndInclude.h>
@@ -50,9 +51,11 @@ struct RDKIT_DESCRIPTORS_EXPORT PropertyFunctor {
   std::string propVersion;
   double (*d_dataFunc)(const ROMol &);
 
-  PropertyFunctor(const std::string &name, const std::string &version,
+  PropertyFunctor(std::string name, std::string version,
                   double (*func)(const ROMol &) = nullptr)
-      : propName(name), propVersion(version), d_dataFunc(func) {}
+      : propName(std::move(name)),
+        propVersion(std::move(version)),
+        d_dataFunc(func) {}
   virtual ~PropertyFunctor() {}
 
   //! Compute the value of the property

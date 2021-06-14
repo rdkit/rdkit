@@ -11,6 +11,7 @@
 #include "TautomerQuery.h"
 #include <boost/smart_ptr.hpp>
 #include <functional>
+#include <utility>
 #include <GraphMol/RDKitBase.h>
 #include <GraphMol/MolStandardize/Tautomer.h>
 #include <GraphMol/Bond.h>
@@ -111,14 +112,14 @@ class TautomerQueryMatcher {
   }
 };
 
-TautomerQuery::TautomerQuery(const std::vector<ROMOL_SPTR> &tautomers,
+TautomerQuery::TautomerQuery(std::vector<ROMOL_SPTR> tautomers,
                              const ROMol *const templateMolecule,
-                             const std::vector<size_t> &modifiedAtoms,
-                             const std::vector<size_t> &modifiedBonds)
-    : d_tautomers(tautomers),
+                             std::vector<size_t> modifiedAtoms,
+                             std::vector<size_t> modifiedBonds)
+    : d_tautomers(std::move(tautomers)),
       d_templateMolecule(templateMolecule),
-      d_modifiedAtoms(modifiedAtoms),
-      d_modifiedBonds(modifiedBonds) {}
+      d_modifiedAtoms(std::move(modifiedAtoms)),
+      d_modifiedBonds(std::move(modifiedBonds)) {}
 
 TautomerQuery *TautomerQuery::fromMol(
     const ROMol &query, const std::string &tautomerTransformFile) {

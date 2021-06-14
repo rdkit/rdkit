@@ -30,6 +30,8 @@
 //
 #ifndef RDK_SUBSTRUCT_LIBRARY
 #define RDK_SUBSTRUCT_LIBRARY
+#include <utility>
+
 #include <RDGeneral/export.h>
 #include <GraphMol/RDKitBase.h>
 #include <GraphMol/MolPickler.h>
@@ -411,12 +413,15 @@ class RDKIT_SUBSTRUCTLIBRARY_EXPORT SubstructLibrary {
       : molholder(new MolHolder), fpholder(), mols(molholder.get()) {}
 
   SubstructLibrary(boost::shared_ptr<MolHolderBase> molecules)
-      : molholder(molecules), fpholder(), mols(molholder.get()), fps(nullptr) {}
+      : molholder(std::move(molecules)),
+        fpholder(),
+        mols(molholder.get()),
+        fps(nullptr) {}
 
   SubstructLibrary(boost::shared_ptr<MolHolderBase> molecules,
                    boost::shared_ptr<FPHolderBase> fingerprints)
-      : molholder(molecules),
-        fpholder(fingerprints),
+      : molholder(std::move(molecules)),
+        fpholder(std::move(fingerprints)),
         mols(molholder.get()),
         fps(fpholder.get()) {
     if (fpholder.get() &&

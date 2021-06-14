@@ -37,6 +37,7 @@
 
 #include <string>
 #include <exception>
+#include <utility>
 
 namespace RDKit {
 class RWMol;
@@ -57,7 +58,7 @@ RDKIT_SLNPARSE_EXPORT RWMol *SLNQueryToMol(const std::string &smi,
 class RDKIT_SLNPARSE_EXPORT SLNParseException : public std::exception {
  public:
   SLNParseException(const char *msg) : _msg(msg) {}
-  SLNParseException(const std::string &msg) : _msg(msg) {}
+  SLNParseException(std::string msg) : _msg(std::move(msg)) {}
   const char *what() const noexcept override { return _msg.c_str(); }
   ~SLNParseException() noexcept {}
 

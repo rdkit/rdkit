@@ -12,6 +12,7 @@
 #define _RD_EXCEPTIONS_H
 #include <stdexcept>
 #include <string>
+#include <utility>
 
 //! \brief Class to allow us to throw an \c IndexError from C++ and have
 //!         it make it back to Python
@@ -38,8 +39,8 @@ class RDKIT_RDGENERAL_EXPORT IndexErrorException : public std::runtime_error {
 //!
 class RDKIT_RDGENERAL_EXPORT ValueErrorException : public std::runtime_error {
  public:
-  ValueErrorException(const std::string& i)
-      : std::runtime_error("ValueErrorException"), _value(i) {}
+  ValueErrorException(std::string i)
+      : std::runtime_error("ValueErrorException"), _value(std::move(i)) {}
   ValueErrorException(const char* msg)
       : std::runtime_error("ValueErrorException"), _value(msg) {}
   const char* what() const noexcept override { return _value.c_str(); }

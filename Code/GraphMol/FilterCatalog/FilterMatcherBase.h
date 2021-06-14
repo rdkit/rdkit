@@ -32,6 +32,8 @@
 #include <RDGeneral/export.h>
 #ifndef __RD_FILTER_MATCHER_BASE_H__
 #define __RD_FILTER_MATCHER_BASE_H__
+#include <utility>
+
 #include <GraphMol/RDKitBase.h>
 #include <GraphMol/Substruct/SubstructMatch.h>
 
@@ -56,7 +58,7 @@ struct RDKIT_FILTERCATALOG_EXPORT FilterMatch {
   FilterMatch() : filterMatch(), atomPairs() {}
   FilterMatch(boost::shared_ptr<FilterMatcherBase> filter,
               MatchVectType atomPairs)
-      : filterMatch(filter), atomPairs(atomPairs) {}
+      : filterMatch(std::move(filter)), atomPairs(std::move(atomPairs)) {}
 
   FilterMatch(const FilterMatch &rhs)
       : filterMatch(rhs.filterMatch), atomPairs(rhs.atomPairs) {}
@@ -80,9 +82,9 @@ class RDKIT_FILTERCATALOG_EXPORT FilterMatcherBase
   std::string d_filterName;
 
  public:
-  FilterMatcherBase(const std::string &name = DEFAULT_FILTERMATCHERBASE_NAME)
+  FilterMatcherBase(std::string name = DEFAULT_FILTERMATCHERBASE_NAME)
       : boost::enable_shared_from_this<FilterMatcherBase>(),
-        d_filterName(name) {}
+        d_filterName(std::move(name)) {}
 
   FilterMatcherBase(const FilterMatcherBase &rhs)
       : boost::enable_shared_from_this<FilterMatcherBase>(),

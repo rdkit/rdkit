@@ -8,6 +8,7 @@
 
 #include <GraphMol/RDKitBase.h>
 #include <iostream>
+#include <utility>
 #include <RDBoost/python.h>
 namespace python = boost::python;
 
@@ -18,7 +19,7 @@ class AtomCountFunctor {
   const ROMOL_SPTR _mol;
 
  public:
-  AtomCountFunctor(const ROMOL_SPTR &mol) : _mol(mol) {}
+  AtomCountFunctor(ROMOL_SPTR mol) : _mol(std::move(mol)) {}
   unsigned int operator()() const { return _mol->getNumAtoms(); }
 };
 class BondCountFunctor {
@@ -26,7 +27,7 @@ class BondCountFunctor {
   const ROMOL_SPTR _mol;
 
  public:
-  BondCountFunctor(const ROMOL_SPTR &mol) : _mol(mol) {}
+  BondCountFunctor(ROMOL_SPTR mol) : _mol(std::move(mol)) {}
   unsigned int operator()() const { return _mol->getNumBonds(); }
 };
 class ConformerCountFunctor {
@@ -34,7 +35,7 @@ class ConformerCountFunctor {
   const ROMOL_SPTR _mol;
 
  public:
-  ConformerCountFunctor(const ROMOL_SPTR &mol) : _mol(mol) {}
+  ConformerCountFunctor(ROMOL_SPTR mol) : _mol(std::move(mol)) {}
   unsigned int operator()() const { return _mol->getNumConformers(); }
 };
 
@@ -51,14 +52,14 @@ class ReadOnlySeq {
 
  public:
   ~ReadOnlySeq() {}
-  ReadOnlySeq(const ROMOL_SPTR &mol, T1 start, T1 end, T3 lenFunc)
+  ReadOnlySeq(ROMOL_SPTR mol, T1 start, T1 end, T3 lenFunc)
       : _start(start),
         _end(end),
         _pos(start),
         _size(-1),
         _lenFunc(lenFunc),
         _origLen(lenFunc()),
-        _mol(mol) {}
+        _mol(std::move(mol)) {}
   ReadOnlySeq(const ReadOnlySeq<T1, T2, T3> &other)
       : _start(other._start),
         _end(other._end),
