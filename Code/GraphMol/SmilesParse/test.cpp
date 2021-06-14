@@ -4360,6 +4360,27 @@ void testGithub3967() {
   BOOST_LOG(rdInfoLog) << "\tdone" << std::endl;
 }
 
+void testGithub3998() {
+  BOOST_LOG(rdInfoLog) << "-------------------------------------" << std::endl;
+  BOOST_LOG(rdInfoLog) << "Testing Github 3998: MolFragmentToSmiles with "
+                          "kekuleSmiles=True raises AtomKekulizeException"
+                       << std::endl;
+  {
+    RWMol *m;
+    std::string smiles = "CC(c1ccccc1)";
+    m = SmilesToMol(smiles);
+    TEST_ASSERT(m);
+    int as[] = {0};
+    std::vector<int> atomsToUse(as, as + sizeof(as) / sizeof(int));
+    std::string smi = MolFragmentToSmiles(*m, atomsToUse, nullptr, nullptr, 
+                                               nullptr, true, true);
+    TEST_ASSERT(smi == "C");                                             
+    delete m;
+  }
+
+  BOOST_LOG(rdInfoLog) << "done" << std::endl;
+}
+
 int main(int argc, char *argv[]) {
   (void)argc;
   (void)argv;
@@ -4439,6 +4460,7 @@ int main(int argc, char *argv[]) {
   testGithub1028();
   testGithub3139();
   testGithub3967();
+  testGithub3998();
 #endif
   testOSSFuzzFailures();
 }

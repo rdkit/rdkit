@@ -646,33 +646,6 @@ std::string MolFragmentToSmiles(const ROMol &mol,
     }
   }
 
-  // copy over the rings that only involve atoms/bonds in this fragment:
-  if (mol.getRingInfo()->isInitialized()) {
-    tmol.getRingInfo()->reset();
-    tmol.getRingInfo()->initialize();
-    for (unsigned int ridx = 0; ridx < mol.getRingInfo()->numRings(); ++ridx) {
-      const INT_VECT &aring = mol.getRingInfo()->atomRings()[ridx];
-      bool keepIt = true;
-      for (auto aidx : aring) {
-        if (!atomsInPlay[aidx]) {
-          keepIt = false;
-          break;
-        }
-      }
-      if (keepIt) {
-        const INT_VECT &bring = mol.getRingInfo()->bondRings()[ridx];
-        for (auto bidx : bring) {
-          if (!bondsInPlay[bidx]) {
-            keepIt = false;
-            break;
-          }
-        }
-        if (keepIt) {
-          tmol.getRingInfo()->addRing(aring, bring);
-        }
-      }
-    }
-  }
   if (tmol.needsUpdatePropertyCache()) {
     for (auto atom : tmol.atoms()) {
       atom->updatePropertyCache(false);
