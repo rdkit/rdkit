@@ -44,10 +44,12 @@ namespace {
 // of random numbers to draw the lines.  As well as all the testHandDrawn
 // files, this includes testBrackets-5a.svg and testPositionVariation-1b.svg
 static const bool DELETE_WITH_GOOD_HASH = true;
+// The expected hash code for a file may be included in these maps, or
+// provided in the call to check_file_hash().
 static const std::map<std::string, std::hash_result_t> SVG_HASHES = {
     {"testAtomTags_1.svg", 2816838644U},
     {"testAtomTags_2.svg", 479715142U},
-    {"testAtomTags_3.svg", 257804242U},
+    {"testAtomTags_3.svg", 3742581890U},
     {"contourMol_1.svg", 643828415U},
     {"contourMol_2.svg", 2117685063U},
     {"contourMol_3.svg", 2802682249U},
@@ -183,7 +185,8 @@ std::hash_result_t hash_file(const std::string &filename) {
   return gboost::hash_range(file_contents.begin(), file_contents.end());
 }
 
-void check_file_hash(const std::string &filename) {
+void check_file_hash(const std::string &filename,
+                     std::hash_result_t exp_hash=0U) {
 //    std::cout << filename << " : " << hash_file(filename) << "U" << std::endl;
 
   std::map<std::string, std::hash_result_t>::const_iterator it;
@@ -192,9 +195,17 @@ void check_file_hash(const std::string &filename) {
   } else {
     it = PNG_HASHES.find(filename);
   }
-  if (it != SVG_HASHES.end() && hash_file(filename) == it->second &&
-      DELETE_WITH_GOOD_HASH) {
-    std::remove(filename.c_str());
+  std::hash_result_t file_hash = hash_file(filename);
+  if (exp_hash == 0U) {
+    exp_hash = it == SVG_HASHES.end() ? 0U : it->second;
+  }
+  if (it != SVG_HASHES.end() && file_hash == exp_hash) {
+    if (DELETE_WITH_GOOD_HASH) {
+      std::remove(filename.c_str());
+    }
+  } else {
+    std::cout << "file " << filename << " gave hash " << file_hash
+              << "U not the expected " << exp_hash << "U" << std::endl;
   }
 }
 } // namespace
@@ -233,7 +244,7 @@ TEST_CASE("tag atoms in SVG", "[drawing][SVG]") {
     std::ofstream outs("testAtomTags_1.svg");
     outs << text;
     outs.close();
-    check_file_hash("testAtomTags_1.svg");
+    check_file_hash("testAtomTags_1.svg", 2816838644U);
 
     CHECK(text.find("<circle") != std::string::npos);
     CHECK(text.find("<circle") != std::string::npos);
