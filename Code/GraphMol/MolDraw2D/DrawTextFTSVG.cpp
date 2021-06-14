@@ -8,16 +8,11 @@
 // Original author: David Cosgrove (CozChemIx) on 08/05/2020.
 //
 
-#include <boost/format.hpp>
+#include <GraphMol/MolDraw2D/MolDraw2DDetails.h>
 #include <GraphMol/MolDraw2D/DrawTextFTSVG.h>
 
 namespace RDKit {
 
-namespace {
-std::string formatDouble(double val) {
-  return str(boost::format("%.1f") % val);
-}
-} // namespace
 std::string DrawColourToSVG(const RDKit::DrawColour &col);
 
 // ****************************************************************************
@@ -50,7 +45,8 @@ double DrawTextFTSVG::extractOutline() {
 int DrawTextFTSVG::MoveToFunctionImpl(const FT_Vector *to) {
   double dx, dy;
   fontPosToDrawPos(to->x, to->y, dx, dy);
-  oss_ << "M " << formatDouble(dx) << ' ' << formatDouble(dy) << std::endl;
+  oss_ << "M " << MolDraw2D_detail::formatDouble(dx)
+       << ' ' << MolDraw2D_detail::formatDouble(dy) << std::endl;
 
   return 0;
 }
@@ -59,7 +55,8 @@ int DrawTextFTSVG::MoveToFunctionImpl(const FT_Vector *to) {
 int DrawTextFTSVG::LineToFunctionImpl(const FT_Vector *to) {
   double dx, dy;
   fontPosToDrawPos(to->x, to->y, dx, dy);
-  oss_ << "L " << formatDouble(dx) << ' ' << formatDouble(dy) << std::endl;
+  oss_ << "L " << MolDraw2D_detail::formatDouble(dx)
+       << ' ' << MolDraw2D_detail::formatDouble(dy) << std::endl;
 
   return 0;
 }
@@ -73,9 +70,10 @@ int DrawTextFTSVG::ConicToFunctionImpl(const FT_Vector *control,
   double dx, dy;
   fontPosToDrawPos(to->x, to->y, dx, dy);
 
-  oss_ << "Q " << formatDouble(controlX) << ' ' << formatDouble(controlY)
-       << ", "
-       << formatDouble(dx) << ' ' << formatDouble(dy)
+  oss_ << "Q " << MolDraw2D_detail::formatDouble(controlX)
+       << ' ' << MolDraw2D_detail::formatDouble(controlY)
+       << ", " << MolDraw2D_detail::formatDouble(dx)
+       << ' ' << MolDraw2D_detail::formatDouble(dy)
        << std::endl;
 
   return 0;
@@ -93,12 +91,12 @@ int DrawTextFTSVG::CubicToFunctionImpl(const FT_Vector *controlOne,
   double dx, dy;
   fontPosToDrawPos(to->x, to->y, dx, dy);
 
-  oss_ << "C " << formatDouble(controlOneX) << ' '
-       << formatDouble(controlOneY)
-       << ", " << formatDouble(controlTwoX)
-       << ' ' << formatDouble(controlTwoY)
-       << ", " << formatDouble(dx)
-       << ' ' << formatDouble(dy) << std::endl;
+  oss_ << "C " << MolDraw2D_detail::formatDouble(controlOneX) << ' '
+       << MolDraw2D_detail::formatDouble(controlOneY)
+       << ", " << MolDraw2D_detail::formatDouble(controlTwoX)
+       << ' ' << MolDraw2D_detail::formatDouble(controlTwoY)
+       << ", " << MolDraw2D_detail::formatDouble(dx)
+       << ' ' << MolDraw2D_detail::formatDouble(dy) << std::endl;
 
   return 0;
 }

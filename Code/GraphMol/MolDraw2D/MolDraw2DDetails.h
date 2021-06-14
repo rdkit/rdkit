@@ -103,6 +103,10 @@ RDKIT_MOLDRAW2D_EXPORT std::vector<Point2D> handdrawnLine(
     bool shiftEnd = false, unsigned nSteps = 4, double deviation = 0.03,
     double endShift = 0.5);
 
+inline std::string formatDouble(double val) {
+  return boost::str(boost::format("%.1f") % val);
+}
+
 }  // namespace MolDraw2D_detail
 }  // namespace RDKit
 
