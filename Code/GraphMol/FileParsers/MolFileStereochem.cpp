@@ -1,5 +1,5 @@
 //
-//  Copyright (C) 2004-2021 Greg Landrum and Rational Discovery LLC
+//  Copyright (C) 2004-2021 Greg Landrum and other RDKit contributors
 //
 //   @@ All Rights Reserved @@
 //  This file is part of the RDKit.
@@ -57,6 +57,25 @@ void WedgeMolBonds(ROMol &mol, const Conformer *conf) {
       }
     }
   }
+}
+
+std::tuple<unsigned int, unsigned int, unsigned int> getDoubleBondPresence(
+    const ROMol &mol, const Atom &atom) {
+  unsigned int hasDouble = 0;
+  unsigned int hasKnownDouble = 0;
+  unsigned int hasAnyDouble = 0;
+  for (const auto &nbri : boost::make_iterator_range(mol.getAtomBonds(&atom))) {
+    const auto bond = mol[nbri];
+    if (bond->getBondType() == Bond::BondType::DOUBLE) {
+      ++hasDouble;
+      if (bond->getStereo() == Bond::BondStereo::STEREOANY) {
+        ++hasAnyDouble;
+      } else if (bond->getStereo() > Bond::BondStereo::STEREOANY) {
+        ++hasKnownDouble;
+      }
+    }
+  }
+  return std::make_tuple(hasDouble, hasKnownDouble, hasAnyDouble);
 }
 
 INT_MAP_INT pickBondsToWedge(const ROMol &mol) {
@@ -193,6 +212,16 @@ INT_MAP_INT pickBondsToWedge(const ROMol &mol) {
         nbrScore += 10000 * mol.getRingInfo()->numAtomRings(oIdx);
         // prefer non-ring bonds;
         nbrScore += 10000 * mol.getRingInfo()->numBondRings(bid);
+        // prefer bonds to atoms which don't have a double bond from them
+        unsigned int hasDoubleBond;       // is a double bond there?
+        unsigned int hasKnownDoubleBond;  // is specified stereo there?
+        unsigned int hasAnyDoubleBond;    // is STEREOANY there?
+        std::tie(hasDoubleBond, hasKnownDoubleBond, hasAnyDoubleBond) =
+            getDoubleBondPresence(mol, *oatom);
+        nbrScore += 11000 * hasDoubleBond;
+        nbrScore += 12000 * hasKnownDoubleBond;
+        nbrScore += 13000 * hasAnyDoubleBond;
+
         // std::cerr << "    nrbScore: " << idx << " - " << oIdx << " : "
         //           << nbrScore << " nChiralNbrs: " << nChiralNbrs[oIdx]
         //           << std::endl;

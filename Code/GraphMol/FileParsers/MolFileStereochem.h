@@ -1,5 +1,5 @@
 //
-//  Copyright (C) 2004-2017 Rational Discovery LLC
+//  Copyright (C) 2004-2021 Greg Landrum and other RDKit contributors
 //
 //   @@ All Rights Reserved @@
 //  This file is part of the RDKit.
@@ -23,6 +23,8 @@ RDKIT_FILEPARSERS_EXPORT void DetectBondStereoChemistry(ROMol &mol,
 RDKIT_FILEPARSERS_EXPORT void WedgeMolBonds(ROMol &mol, const Conformer *conf);
 RDKIT_FILEPARSERS_EXPORT void WedgeBond(Bond *bond, unsigned int fromAtomIdx,
                                         const Conformer *conf);
+//! picks the bonds which shoudld be wedged
+// \returns a map from bond idx -> controlling atom idx
 RDKIT_FILEPARSERS_EXPORT INT_MAP_INT pickBondsToWedge(const ROMol &mol);
 RDKIT_FILEPARSERS_EXPORT void ClearSingleBondDirFlags(ROMol &mol);
 RDKIT_FILEPARSERS_EXPORT Bond::BondDir DetermineBondWedgeState(
