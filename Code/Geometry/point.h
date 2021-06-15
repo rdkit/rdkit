@@ -1,5 +1,5 @@
 //
-// Copyright (C) 2003-2008 Greg Landrum and Rational Discovery LLC
+// Copyright (C) 2003-2021 Greg Landrum and other RDKit contributors
 //
 //   @@ All Rights Reserved @@
 //  This file is part of the RDKit.
@@ -167,17 +167,18 @@ class RDKIT_RDGEOMETRYLIB_EXPORT Point3D : public Point {
    *   be between 0 and M_PI
    */
   double angleTo(const Point3D &other) const {
-    Point3D t1, t2;
-    t1 = *this;
-    t2 = other;
-    t1.normalize();
-    t2.normalize();
-    double dotProd = t1.dotProduct(t2);
+    double lsq = lengthSq() * other.lengthSq();
+    double dotProd = dotProduct(other);
+    dotProd /= sqrt(lsq);
+
     // watch for roundoff error:
-    if (dotProd < -1.0)
-      dotProd = -1.0;
-    else if (dotProd > 1.0)
-      dotProd = 1.0;
+    if (dotProd <= -1.0) {
+      return M_PI;
+    }
+    if (dotProd >= 1.0) {
+      return 0.0;
+    }
+
     return acos(dotProd);
   }
 

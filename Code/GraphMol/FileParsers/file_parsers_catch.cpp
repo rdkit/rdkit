@@ -3343,3 +3343,21 @@ M  END
     CHECK(m);
   }
 }
+
+TEST_CASE("double bond stereo should not be set when the coords are all zero") {
+  auto m = R"CTAB(
+     RDKit          2D
+
+  4  3  0  0  0  0  0  0  0  0999 V2000
+    0.0000    0.0000    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    0.0000    0.0000    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    0.0000    0.0000    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    0.0000    0.0000    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+  1  2  1  0
+  2  3  2  0
+  3  4  1  0
+M  END)CTAB"_ctab;
+  REQUIRE(m);
+  REQUIRE(m->getBondBetweenAtoms(1, 2));
+  CHECK(m->getBondBetweenAtoms(1, 2)->getBondDir() == Bond::EITHERDOUBLE);
+}
