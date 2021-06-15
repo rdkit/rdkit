@@ -294,9 +294,12 @@ std::string FragmentSmilesConstruct(
     const UINT_VECT &ranks, bool doKekule, bool canonical,
     bool doIsomericSmiles, bool allBondsExplicit, bool allHsExplicit,
     bool doRandom, std::vector<unsigned int> &atomOrdering,
+    const boost::dynamic_bitset<> *atomsInPlay = nullptr,
     const boost::dynamic_bitset<> *bondsInPlay = nullptr,
     const std::vector<std::string> *atomSymbols = nullptr,
     const std::vector<std::string> *bondSymbols = nullptr) {
+  PRECONDITION(!atomsInPlay || atomsInPlay->size() >= mol.getNumAtoms(),
+               "bad atomsInPlay");
   PRECONDITION(!bondsInPlay || bondsInPlay->size() >= mol.getNumBonds(),
                "bad bondsInPlay");
   PRECONDITION(!atomSymbols || atomSymbols->size() >= mol.getNumAtoms(),
@@ -304,7 +307,12 @@ std::string FragmentSmilesConstruct(
   PRECONDITION(!bondSymbols || bondSymbols->size() >= mol.getNumBonds(),
                "bad bondSymbols");
   if (doKekule) {
-    MolOps::Kekulize(static_cast<RWMol &>(mol));
+    if (atomsInPlay && bondsInPlay) {
+      MolOps::details::KekulizeFragment(static_cast<RWMol &>(mol), *atomsInPlay,
+                                        *bondsInPlay);
+    } else {
+      MolOps::Kekulize(static_cast<RWMol &>(mol));
+    }
   }
 
   Canon::MolStack molStack;
@@ -750,8 +758,8 @@ std::string MolFragmentToSmiles(const ROMol &mol,
     bool doRandom = false;
     auto subSmi = SmilesWrite::FragmentSmilesConstruct(
         tmol, nextAtomIdx, colors, ranks, doKekule, canonical, doIsomericSmiles,
-        allBondsExplicit, allHsExplicit, doRandom, atomOrdering, &bondsInPlay,
-        atomSymbols, bondSymbols);
+        allBondsExplicit, allHsExplicit, doRandom, atomOrdering, &atomsInPlay,
+        &bondsInPlay, atomSymbols, bondSymbols);
 
     res += subSmi;
     colorIt = std::find(colors.begin(), colors.end(), Canon::WHITE_NODE);
