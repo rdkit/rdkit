@@ -628,7 +628,10 @@ void KekulizeFragment(RWMol &mol, const boost::dynamic_bitset<> &atomsToUse,
     }
     for (auto atom : mol.atoms()) {
       if (atomsToUse[atom->getIdx()] && atom->getIsAromatic()) {
-        if (!mol.getRingInfo()->numAtomRings(atom->getIdx())) {
+        // if we're doing the full molecule and there are aromatic atoms not in
+        // a ring, throw an exception
+        if (atomsToUse.all() && bondsToUse.all() &&
+            !mol.getRingInfo()->numAtomRings(atom->getIdx())) {
           std::ostringstream errout;
           errout << "non-ring atom " << atom->getIdx() << " marked aromatic";
           std::string msg = errout.str();
