@@ -43,13 +43,13 @@ def flatten(x):
 
 def GetFrame(mol, mode='Scaff'):
   '''return a ganeric molecule defining the reduced scaffold of the input mol.
-	mode can be 'Scaff' or 'RedScaff':
-	
-	Scaff	->	chop off the side chains and return the scaffold
-	
-	RedScaff	->	remove all linking chains and connect the rings 
-	directly at the atoms where the linker was
-	'''
+    mode can be 'Scaff' or 'RedScaff':
+
+    Scaff	->	chop off the side chains and return the scaffold
+
+    RedScaff	->	remove all linking chains and connect the rings
+    directly at the atoms where the linker was
+    '''
 
   ring = mol.GetRingInfo()
   RingAtoms = flatten(ring.AtomRings())

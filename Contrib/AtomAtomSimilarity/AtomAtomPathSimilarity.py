@@ -224,7 +224,7 @@ def getsimmatrix(m1, m1pathintegers, m2, m2pathintegers):
 
 def AtomAtomPathSimilarity(m1, m2, m1pathintegers=None, m2pathintegers=None):
   '''compute the Atom Atom Path Similarity for a pair of RDKit molecules.  See Gobbi et al, J. ChemInf (2015) 7:11
-	the most expensive part of the calculation is computing the path integers - we can precompute these and pass them in as an argument'''
+      the most expensive part of the calculation is computing the path integers - we can precompute these and pass them in as an argument'''
   if m1pathintegers is None:
     m1pathintegers = getpathintegers(m1)
   if m2pathintegers is None:
