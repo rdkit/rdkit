@@ -305,12 +305,12 @@ Notes:
     * the current lazy properties are implicit and explicit valence
 
 '''
-_renote = re.compile('^\w*(Notes?[:]?)(?:.*?$)(.*?)((^\w)|\Z)', flags=(re.M | re.I | re.DOTALL))
-_reparam = re.compile('^\w*(Param(?:eter)?s?[:]?)(?:.*?$)(.*?)((^\w)|\Z)', flags=(re.M | re.I |
+_renote = re.compile(r'^\w*(Notes?[:]?)(?:.*?$)(.*?)((^\w)|\Z)', flags=(re.M | re.I | re.DOTALL))
+_reparam = re.compile(r'^\w*(Param(?:eter)?s?[:]?)(?:.*?$)(.*?)((^\w)|\Z)', flags=(re.M | re.I |
                                                                                   re.DOTALL))
-_rereturn = re.compile('^\w*(Returns[:])(?:.*?$)(.*?)((^\w)|\Z)', flags=(re.M | re.I | re.DOTALL))
-_rereturn2 = re.compile('^\w*(Returns)\s+(.*?)((^\w)|\Z)', flags=(re.M | re.I | re.DOTALL))
-_reusage = re.compile('^\w*(Usage[:]?)(?:.*?$)(.*?)((^\w)|\Z)', flags=(re.M | re.I | re.DOTALL))
+_rereturn = re.compile(r'^\w*(Returns[:])(?:.*?$)(.*?)((^\w)|\Z)', flags=(re.M | re.I | re.DOTALL))
+_rereturn2 = re.compile(r'^\w*(Returns)\s+(.*?)((^\w)|\Z)', flags=(re.M | re.I | re.DOTALL))
+_reusage = re.compile(r'^\w*(Usage[:]?)(?:.*?$)(.*?)((^\w)|\Z)', flags=(re.M | re.I | re.DOTALL))
 
 
 def make_method_doc(doxy_method_text, class_name):

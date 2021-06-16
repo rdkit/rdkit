@@ -410,7 +410,7 @@ cursor.execute('PRAGMA main.temp_store = MEMORY;')
 for line in sys.stdin:
 
   line = line.rstrip()
-  line_fields = re.split('\s|,', line)
+  line_fields = re.split(r'\s|,', line)
 
   if (len(line_fields) == 1):
     id = line_fields[0]

@@ -48,7 +48,7 @@ if __name__ == '__main__':
 
     line = line.rstrip()
 
-    line_fields = re.split('\s|,', line)
+    line_fields = re.split(r'\s|,', line)
     smirks = line_fields[0]
 
     if (len(line_fields) == 1):

@@ -79,7 +79,7 @@ if __name__ == '__main__':
   #read the STDIN
   for line in sys.stdin:
     line = line.rstrip()
-    smi, id = re.split('\s|,', line)
+    smi, id = re.split(r'\s|,', line)
     #print smiles,id
     smiles.append((smi, id))
 

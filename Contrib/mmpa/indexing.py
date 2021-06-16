@@ -281,8 +281,8 @@ def switch_specific_labels_on_symmetry(smi, symmetry_class, a, b):
       #if the higher label comes first, fix
       if (int(matchObj.group(a)) > int(matchObj.group(b))):
         #if(int(matchObj.group(1)) > int(matchObj.group(2))):
-        smi = re.sub(r'\[\*\:' + matchObj.group(a) + '\]', '[*:XX' + matchObj.group(b) + 'XX]', smi)
-        smi = re.sub(r'\[\*\:' + matchObj.group(b) + '\]', '[*:XX' + matchObj.group(a) + 'XX]', smi)
+        smi = re.sub(r'\[\*\:' + matchObj.group(a) + r'\]', '[*:XX' + matchObj.group(b) + 'XX]', smi)
+        smi = re.sub(r'\[\*\:' + matchObj.group(b) + r'\]', '[*:XX' + matchObj.group(a) + 'XX]', smi)
         smi = re.sub('XX', '', smi)
 
   return smi
