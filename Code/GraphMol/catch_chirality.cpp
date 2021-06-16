@@ -1442,7 +1442,6 @@ TEST_CASE("pickBondsToWedge() should avoid double bonds") {
     auto wedgedBonds = pickBondsToWedge(*mol);
     REQUIRE(wedgedBonds.size() == 1);
     auto head = wedgedBonds.begin();
-    std::cerr << " >>> " << head->first << " " << head->second << std::endl;
     CHECK(head->first == 3);
     CHECK(head->second == 3);
   }
@@ -1454,7 +1453,6 @@ TEST_CASE("pickBondsToWedge() should avoid double bonds") {
     auto wedgedBonds = pickBondsToWedge(*mol);
     REQUIRE(wedgedBonds.size() == 1);
     auto head = wedgedBonds.begin();
-    std::cerr << " >>> " << head->first << " " << head->second << std::endl;
     CHECK(head->first == 3);
     CHECK(head->second == 3);
   }
@@ -1468,8 +1466,83 @@ TEST_CASE("pickBondsToWedge() should avoid double bonds") {
     auto wedgedBonds = pickBondsToWedge(*mol);
     REQUIRE(wedgedBonds.size() == 1);
     auto head = wedgedBonds.begin();
-    std::cerr << " >>> " << head->first << " " << head->second << std::endl;
     CHECK(head->first == 6);
     CHECK(head->second == 3);
+  }
+}
+
+TEST_CASE("addWavyBondsForStereoAny()") {
+  SECTION("simplest") {
+    auto mol = "CC=CC"_smiles;
+    REQUIRE(mol);
+    mol->getBondWithIdx(1)->setStereoAtoms(0, 3);
+    mol->getBondWithIdx(1)->setStereo(Bond::BondStereo::STEREOANY);
+    addWavyBondsForStereoAny(*mol);
+    CHECK(mol->getBondWithIdx(0)->getBondDir() == Bond::BondDir::UNKNOWN);
+  }
+  SECTION("avoid double bonds") {
+    auto mol = "CC=CC(CC)=CC"_smiles;
+    REQUIRE(mol);
+    mol->getBondWithIdx(5)->setStereoAtoms(2, 7);
+    mol->getBondWithIdx(5)->setStereo(Bond::BondStereo::STEREOANY);
+    addWavyBondsForStereoAny(*mol);
+    CHECK(mol->getBondWithIdx(6)->getBondDir() == Bond::BondDir::UNKNOWN);
+  }
+  SECTION("avoid chiral atoms") {
+    auto mol = "C[C@](F)(Cl)C(C)=CC"_smiles;
+    REQUIRE(mol);
+    mol->getBondWithIdx(5)->setStereoAtoms(1, 7);
+    mol->getBondWithIdx(5)->setStereo(Bond::BondStereo::STEREOANY);
+    addWavyBondsForStereoAny(*mol);
+    CHECK(mol->getBondWithIdx(4)->getBondDir() == Bond::BondDir::UNKNOWN);
+  }
+  SECTION("prefer atoms with less neighbors") {
+    auto mol = "CC(F)(Cl)C(CF)=CC"_smiles;
+    REQUIRE(mol);
+    mol->getBondWithIdx(6)->setStereoAtoms(1, 8);
+    mol->getBondWithIdx(6)->setStereo(Bond::BondStereo::STEREOANY);
+    addWavyBondsForStereoAny(*mol);
+    CHECK(mol->getBondWithIdx(7)->getBondDir() == Bond::BondDir::UNKNOWN);
+  }
+  SECTION("more complex") {
+    auto mol = "CC=CC(C=CO)=CC"_smiles;
+    REQUIRE(mol);
+    mol->getBondWithIdx(6)->setStereoAtoms(2, 8);
+    mol->getBondWithIdx(6)->setStereo(Bond::BondStereo::STEREOANY);
+    addWavyBondsForStereoAny(*mol);
+    CHECK(mol->getBondWithIdx(7)->getBondDir() == Bond::BondDir::UNKNOWN);
+  }
+  SECTION("no solution without changing threshold") {
+    auto mol = "CC=CC=CC=CC"_smiles;
+    REQUIRE(mol);
+    mol->getBondWithIdx(1)->setStereoAtoms(0, 3);
+    mol->getBondWithIdx(1)->setStereo(Bond::BondStereo::STEREOCIS);
+    mol->getBondWithIdx(3)->setStereoAtoms(2, 5);
+    mol->getBondWithIdx(3)->setStereo(Bond::BondStereo::STEREOANY);
+    mol->getBondWithIdx(5)->setStereoAtoms(4, 7);
+    mol->getBondWithIdx(5)->setStereo(Bond::BondStereo::STEREOCIS);
+    addWavyBondsForStereoAny(*mol);
+    CHECK(mol->getBondWithIdx(2)->getBondDir() == Bond::BondDir::NONE);
+    addWavyBondsForStereoAny(*mol,
+                             StereoBondThresholds::DBL_BOND_SPECIFIED_STEREO);
+    CHECK(mol->getBondWithIdx(2)->getBondDir() == Bond::BondDir::UNKNOWN);
+  }
+  SECTION("multiple bonds to wedge") {
+    auto mol = "CCC(C)=CC=C(CC)C=CC(C)=CC"_smiles;
+    REQUIRE(mol);
+    mol->getBondWithIdx(3)->setStereoAtoms(3, 5);
+    mol->getBondWithIdx(3)->setStereo(Bond::BondStereo::STEREOCIS);
+    mol->getBondWithIdx(9)->setStereoAtoms(6, 11);
+    mol->getBondWithIdx(9)->setStereo(Bond::BondStereo::STEREOANY);
+    mol->getBondWithIdx(5)->setStereoAtoms(4, 7);
+    mol->getBondWithIdx(5)->setStereo(Bond::BondStereo::STEREOANY);
+    addWavyBondsForStereoAny(*mol);
+    CHECK(mol->getBondWithIdx(8)->getBondDir() == Bond::BondDir::UNKNOWN);
+    for (const auto bond : mol->bonds()) {
+      if (bond->getBondType() == Bond::BondType::SINGLE &&
+          bond->getIdx() != 8) {
+        CHECK(bond->getBondDir() == Bond::BondDir::NONE);
+      }
+    }
   }
 }
