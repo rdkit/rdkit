@@ -358,7 +358,7 @@ def make_class_doc(doxy_text, class_name):
 
 def do_note(doxy_text):
   m1 = _renote.search(doxy_text)
-  if m1 != None:
+  if m1 is not None:
     repl = m1.group(0)
     if repl[-1] != '\n':
       repl = repl[:-1]
@@ -375,7 +375,7 @@ def do_note(doxy_text):
 
 def do_param(doxy_text):
   m1 = _reparam.search(doxy_text)
-  if m1 != None:
+  if m1 is not None:
     repl = m1.group(0)
     if repl[-1] != '\n':
       repl = repl[:-1]
@@ -390,9 +390,9 @@ def do_param(doxy_text):
 
 def do_return(doxy_text):
   m1 = _rereturn.search(doxy_text)
-  if m1 == None:
+  if m1 is None:
     m1 = _rereturn2.search(doxy_text)
-  if m1 != None:
+  if m1 is not None:
     repl = m1.group(0)
     if repl[-1] != '\n':
       repl = repl[:-1]
@@ -407,7 +407,7 @@ def do_return(doxy_text):
 
 def do_usage(doxy_text):
   m1 = _reusage.search(doxy_text)
-  if m1 != None:
+  if m1 is not None:
     repl = m1.group(0)
     if repl[-1] != '\n':
       repl = repl[:-1]

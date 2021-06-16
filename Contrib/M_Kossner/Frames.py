@@ -75,7 +75,7 @@ def GetFrame(mol, mode='Scaff'):
   while len(Paths) > 0:
     NewPaths = []
     for P in Paths:
-      if P == None:
+      if P is None:
         print('ooh')
       else:
         for neighbor in mol.GetAtomWithIdx(P[-1]).GetNeighbors():
@@ -130,7 +130,7 @@ def GetFrame(mol, mode='Scaff'):
     todel = []
     NonRingAtoms.sort(reverse=True)
     for i in NonRingAtoms:
-      if i != None:
+      if i is not None:
         if i not in Framework:
           todel.append(i)
     em = Chem.EditableMol(mol)

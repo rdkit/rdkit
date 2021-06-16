@@ -450,7 +450,7 @@ def mainLoop():
         print
 
         # now, if we have a valid backend and test, run it
-        if backend != None and test != None:
+        if backend is not None and test is not None:
             runtest(backends[backend], tests[test])
 
 

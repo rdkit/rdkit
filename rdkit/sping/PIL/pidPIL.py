@@ -134,7 +134,7 @@ def _pilFont(font):
                 break
             except Exception:
                 pass
-        if pilfont == None:
+        if pilfont is None:
             return 0  # font not found!
     return pilfont
 
@@ -174,7 +174,7 @@ class PILCanvas(Canvas):
         if hasattr(file, 'write'):
             raise ValueError('fileobj not implemented for piddlePIL')
         # below here, file is guaranteed to be a string
-        if format == None:
+        if format is None:
             if '.' not in file:
                 filename = file + '.png'  # default to producing jpg
             else:

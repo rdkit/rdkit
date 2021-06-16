@@ -372,7 +372,7 @@ def index_hydrogen_change():
       #now cansmi it
       temp = Chem.MolFromSmiles(smi)
 
-      if (temp == None):
+      if temp is None:
         sys.stderr.write('Error with key: %s, Added H: %s\n' % (key, smi))
       else:
         c_smi = Chem.MolToSmiles(temp, isomericSmiles=True)
@@ -419,9 +419,9 @@ if __name__ == '__main__':
   (options, args) = parser.parse_args()
 
   #print options
-  if (options.maxsize != None):
+  if options.maxsize is not None:
     max_size = options.maxsize
-  elif (options.ratio != None):
+  elif options.ratio is not None:
     ratio = options.ratio
     if (ratio >= 1):
       print("Ratio specified: %s. Ratio needs to be less than 1.")

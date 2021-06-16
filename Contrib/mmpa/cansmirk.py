@@ -59,12 +59,12 @@ if __name__ == '__main__':
     lhs, rhs = smirks.split(">>")
 
     l = Chem.MolFromSmiles(lhs)
-    if (l == None):
+    if l is None:
       sys.stderr.write("Can't generate mol for: %s\n" % (lhs))
       continue
 
     r = Chem.MolFromSmiles(rhs)
-    if (r == None):
+    if r is None:
       sys.stderr.write("Can't generate mol for: %s\n" % (rhs))
       continue
 

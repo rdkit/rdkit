@@ -187,7 +187,7 @@ def fragment_mol(smi, cid):
   #to use outlines to remove them
   outlines = set()
 
-  if (mol == None):
+  if mol is None:
     sys.stderr.write("Can't generate mol for: %s\n" % (smi))
   else:
     frags = rdMMPA.FragmentMol(mol, pattern="[#6+0;!$(*=,#[!#6])]!@!=!#[*]", resultsAsMols=False)

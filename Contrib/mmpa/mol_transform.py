@@ -71,7 +71,7 @@ if __name__ == '__main__':
   (options, args) = parser.parse_args()
 
   #print options.transform_file
-  if (options.transform_file == None):
+  if options.transform_file is None:
     print("Please specify the transform file.")
     sys.exit(1)
 
