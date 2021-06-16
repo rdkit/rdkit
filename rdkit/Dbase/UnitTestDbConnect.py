@@ -40,7 +40,7 @@ class TestCase(unittest.TestCase):
       os.close(self.fd)
       try:
         os.unlink(self.tempDbName)
-      except:
+      except Exception:
         import traceback
         traceback.print_exc()
 

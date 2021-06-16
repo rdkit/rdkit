@@ -23,14 +23,14 @@ class TestCase(unittest.TestCase):
     e = False
     try:
       s.GetPoint2D(12)
-    except:
+    except Exception:
       e = True
     self.assertTrue(e)
     s = Snapshot([0.0, 0.0, 0.0])
     e = False
     try:
       s.GetPoint2D(0)
-    except:
+    except Exception:
       e = True
     self.assertTrue(e)
 
@@ -50,13 +50,13 @@ class TestCase(unittest.TestCase):
     e = False
     try:
       traj.GetSnapshot(ns)
-    except:
+    except Exception:
       e = True
     self.assertTrue(e)
     e = False
     try:
       traj.GetSnapshot(0).GetPoint2D(np)
-    except:
+    except Exception:
       e = True
     self.assertTrue(e)
     for i in range(np):
@@ -65,7 +65,7 @@ class TestCase(unittest.TestCase):
       e = False
       try:
         self.assertAlmostEqual(traj.GetSnapshot(0).GetPoint3D(i).z, 0.0)
-      except:
+      except Exception:
         e = True
       self.assertFalse(e)
     for i in range(ns):
@@ -101,13 +101,13 @@ class TestCase(unittest.TestCase):
     e = False
     try:
       traj.GetSnapshot(ns)
-    except:
+    except Exception:
       e = True
     self.assertTrue(e)
     e = False
     try:
       traj.GetSnapshot(0).GetPoint2D(np)
-    except:
+    except Exception:
       e = True
     self.assertTrue(e)
     for i in range(np):
@@ -118,7 +118,7 @@ class TestCase(unittest.TestCase):
         e = False
         try:
           traj.GetSnapshot(0).GetPoint2D(i)
-        except:
+        except Exception:
           e = True
         self.assertTrue(e)
     for i in range(ns):
@@ -145,14 +145,14 @@ class TestCase(unittest.TestCase):
     ok = False
     try:
       ReadAmberTrajectory(fName, traj)
-    except:
+    except Exception:
       ok = True
     self.assertTrue(ok)
     traj = Trajectory(3, 3)
     ok = False
     try:
       ReadAmberTrajectory(fName, traj)
-    except:
+    except Exception:
       ok = True
     self.assertTrue(ok)
     fName = os.path.join(rdbase, 'Code', 'GraphMol', 'test_data', 'water_coords_bad2.trx')
@@ -160,7 +160,7 @@ class TestCase(unittest.TestCase):
     try:
       traj = Trajectory(3, 3)
       ReadAmberTrajectory(fName, traj)
-    except:
+    except Exception:
       ok = True
     self.assertTrue(ok)
     fName = os.path.join(rdbase, 'Code', 'GraphMol', 'test_data', 'water_coords.trx')
@@ -227,14 +227,14 @@ class TestCase(unittest.TestCase):
     ok = False
     try:
       ReadGromosTrajectory(fName, traj)
-    except:
+    except Exception:
       ok = True
     self.assertTrue(ok)
     traj = Trajectory(3, 3)
     ok = False
     try:
       ReadGromosTrajectory(fName, traj)
-    except:
+    except Exception:
       ok = True
     self.assertTrue(ok)
     fName = os.path.join(rdbase, 'Code', 'GraphMol', 'test_data', 'water_coords_bad2.trc')
@@ -242,7 +242,7 @@ class TestCase(unittest.TestCase):
     try:
       traj = Trajectory(3, 3)
       ReadGromosTrajectory(fName, traj)
-    except:
+    except Exception:
       ok = True
     self.assertTrue(ok)
     fName = os.path.join(rdbase, 'Code', 'GraphMol', 'test_data', 'water_coords.trc')
@@ -435,7 +435,7 @@ class TestCase(unittest.TestCase):
     e = False
     try:
       traj.GetSnapshot(0)
-    except:
+    except Exception:
       e = True
     self.assertTrue(e)
 
@@ -456,7 +456,7 @@ class TestCase(unittest.TestCase):
     e = False
     try:
       traj.AddConformersToMol(mol, 1)
-    except:
+    except Exception:
       e = True
     self.assertTrue(e)
     self.assertEqual(mol.GetNumConformers(), 0)
@@ -489,7 +489,7 @@ class TestCase(unittest.TestCase):
     e = False
     try:
       traj.AddConformersToMol(mol, 1)
-    except:
+    except Exception:
       e = True
     self.assertTrue(e)
     self.assertEqual(mol.GetNumConformers(), 0)

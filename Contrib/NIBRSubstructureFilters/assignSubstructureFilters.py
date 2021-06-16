@@ -87,7 +87,7 @@ def assignFilters(data, nameSmilesColumn='smiles'):
                 NO_filter = 'no_oxygen_or_nitrogen'
             else:
                 NO_filter = 'no match'
-        except:
+        except Exception:
             print("Failed on compound {0}\n".format(smi))
             pass
         results.append(FilterMatch(qc,NO_filter,fracNO,co,sm,sc))
@@ -106,7 +106,7 @@ if __name__ == "__main__":
     datafile = args.data
     try:
         data = pd.read_csv(datafile)
-    except:
+    except Exception:
         if args.verbose:
             print('Data could not be read. Please check your file.')
         sys.exit()
@@ -117,7 +117,7 @@ if __name__ == "__main__":
         print('---> Apply filters to data')
     try:
         results = assignFilters(data, nameSmilesColumn=smiCol)
-    except:
+    except Exception:
         if args.verbose:
             print('Smiles column does not exist. Please check.')
         sys.exit()

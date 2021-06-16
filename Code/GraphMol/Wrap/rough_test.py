@@ -2214,7 +2214,7 @@ CAS<~>
     try:
       Chem.ReplaceCore(mol, smarts, (3, ))
       self.asssertFalse(True)
-    except:
+    except Exception:
       pass
 
     mol = Chem.MolFromSmiles("C")
@@ -2222,7 +2222,7 @@ CAS<~>
     try:
       Chem.ReplaceCore(mol, smarts, (0, 0))
       self.asssertFalse(True)
-    except:
+    except Exception:
       pass
 
   def test47RWMols(self):
@@ -5268,7 +5268,7 @@ M  END
     # simple check, this used to throw an exception
     try:
       Chem.MolToSmarts(Chem.MolFromSmarts("[C@]"))
-    except:
+    except Exception:
       self.fail("[C@] caused an exception when roundtripping smarts")
 
   def testGetEnhancedStereo(self):
@@ -6621,7 +6621,7 @@ CAS<~>
       with Chem.RWMol(mol) as rwmol:
         rwmol.RemoveAtom(2)
         rwmol.RemoveAtom(6)
-    except:
+    except Exception:
       pass
     self.assertEqual(rwmol.GetNumAtoms(), mol.GetNumAtoms())
 
