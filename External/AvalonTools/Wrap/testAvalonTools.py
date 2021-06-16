@@ -254,13 +254,13 @@ class TestCase(unittest.TestCase):
     m = Chem.MolFromSmiles('c1ccccc1C1(CC1)N')
     pyAvalonTools.Generate2DCoords(m)
     self.assertEqual(m.GetNumConformers(), 1)
-    self.assertTrue(m.GetConformer(0).Is3D() == False)
+    self.assertFalse(m.GetConformer(0).Is3D())
 
   def test6(self):
     mb = pyAvalonTools.Generate2DCoords('c1ccccc1C1(CC1)N', True)
     m = Chem.MolFromMolBlock(mb)
     self.assertEqual(m.GetNumConformers(), 1)
-    self.assertTrue(m.GetConformer(0).Is3D() == False)
+    self.assertFalse(m.GetConformer(0).Is3D())
 
   def testGitHub1062(self):
     s0 = 'C/C=C\C'

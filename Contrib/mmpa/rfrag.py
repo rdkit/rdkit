@@ -121,7 +121,7 @@ def delete_bonds(smi, id, mol, bonds, out):
       #need to cansmi again as smiles can be different
       output = '%s,%s,,%s.%s' % (smi, id, Chem.MolToSmiles(s1, isomericSmiles=True),
                                  Chem.MolToSmiles(s2, isomericSmiles=True))
-      if ((output in out) == False):
+      if output not in out:
         out.add(output)
 
     elif (isotope >= 2):
@@ -176,7 +176,7 @@ def delete_bonds(smi, id, mol, bonds, out):
       side_chains = re.sub('XX', '', side_chains)
 
       output = '%s,%s,%s,%s' % (smi, id, core, side_chains)
-      if ((output in out) == False):
+      if output not in out:
         out.add(output)
 
 

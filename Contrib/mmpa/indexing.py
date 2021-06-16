@@ -442,7 +442,7 @@ if __name__ == '__main__':
     #of mol already calculated. If not, calculate and store
     cmpd_heavy = None
     if (use_ratio):
-      if ((id in id_to_heavy) == False):
+      if id not in id_to_heavy:
         id_to_heavy[id] = heavy_atom_count(smi)
 
       cmpd_heavy = id_to_heavy[id]
@@ -456,7 +456,7 @@ if __name__ == '__main__':
       side_chains = context.split('.')
 
       #minus 1 for the attachment pt
-      if (add_to_index(side_chains[1], 1, cmpd_heavy) == True):
+      if add_to_index(side_chains[1], 1, cmpd_heavy):
         context = side_chains[0]
         core = side_chains[1]
 
@@ -467,7 +467,7 @@ if __name__ == '__main__':
         index.setdefault(context, []).append(value)
 
       #minus 1 for the attachment pt
-      if (add_to_index(side_chains[0], 1, cmpd_heavy) == True):
+      if add_to_index(side_chains[0], 1, cmpd_heavy):
         context = side_chains[1]
         core = side_chains[0]
 
@@ -482,7 +482,7 @@ if __name__ == '__main__':
 
       attachments = core.count('*')
 
-      if (add_to_index(core, attachments, cmpd_heavy) == True):
+      if add_to_index(core, attachments, cmpd_heavy):
         value = "%s;t%s" % (id, core)
 
         #add the array if no key exists
@@ -524,7 +524,7 @@ if __name__ == '__main__':
                     (id_to_smi[id_a], id_to_smi[id_b], id_a, id_b, smirks, context))
 
               #deal with symmetry switch
-              if (options.sym == True):
+              if options.sym:
                 smirks, context = cansmirk(core_b, core_a, key)
                 print("%s,%s,%s,%s,%s,%s" %
                       (id_to_smi[id_b], id_to_smi[id_a], id_b, id_a, smirks, context))

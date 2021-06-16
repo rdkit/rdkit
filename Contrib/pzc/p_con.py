@@ -1314,7 +1314,7 @@ if __name__ == "__main__":
     print("-h for help")
     sys.exit(-1)
 
-  if options.dupl == False and options.uniq == False:
+  if not options.dupl and not options.uniq:
     print("Please select uniq or dupl -h for help")
     print("-h for help")
     sys.exit(-1)
