@@ -228,7 +228,7 @@ class TestCase(unittest.TestCase):
     self.assertTrue([x.GetNumExplicitHs() for x in aList] == [0, 0, 0, 2])
     self.assertTrue([x.GetIsAromatic() for x in aList] == [1, 1, 0, 0])
     self.assertTrue([x.GetHybridization() for x in aList]==[Chem.HybridizationType.SP2,Chem.HybridizationType.SP2,
-                                                   Chem.HybridizationType.SP3,Chem.HybridizationType.SP3],\
+                                                   Chem.HybridizationType.SP3,Chem.HybridizationType.SP3],
                                                    [x.GetHybridization() for x in aList])
 
   def test8Bond(self):
@@ -1005,10 +1005,10 @@ class TestCase(unittest.TestCase):
       self.assertTrue(mol.HasProp("ID"))
       self.assertTrue(mol.GetProp("ID") == "Lig1")
       self.assertTrue(mol.HasProp("ANOTHER_PROPERTY"))
-      self.assertTrue(mol.GetProp("ANOTHER_PROPERTY") == \
-        "No blank line before dollars\n" \
-        "$$$$\n" \
-        "Structure1\n" \
+      self.assertTrue(mol.GetProp("ANOTHER_PROPERTY") ==
+        "No blank line before dollars\n"
+        "$$$$\n"
+        "Structure1\n"
         "csChFnd70/05230312262D")
       i += 1
     self.assertTrue(i == 1)
@@ -1038,10 +1038,10 @@ class TestCase(unittest.TestCase):
       self.assertTrue(mol.HasProp("ID"))
       self.assertTrue(mol.GetProp("ID") == "Lig1")
       self.assertTrue(mol.HasProp("ANOTHER_PROPERTY"))
-      self.assertTrue(mol.GetProp("ANOTHER_PROPERTY") == \
-        "No blank line before dollars\n" \
-        "$$$$\n" \
-        "Structure1\n" \
+      self.assertTrue(mol.GetProp("ANOTHER_PROPERTY") ==
+        "No blank line before dollars\n"
+        "$$$$\n"
+        "Structure1\n"
         "csChFnd70/05230312262D")
       i += 1
     self.assertTrue(i == 1)
@@ -2730,17 +2730,17 @@ CAS<~>
   def test64MoleculeCleanup(self):
     m = Chem.MolFromSmiles('CN(=O)=O', False)
     self.assertTrue(m)
-    self.assertTrue(m.GetAtomWithIdx(1).GetFormalCharge()==0 and \
-                      m.GetAtomWithIdx(2).GetFormalCharge()==0 and \
+    self.assertTrue(m.GetAtomWithIdx(1).GetFormalCharge()==0 and
+                      m.GetAtomWithIdx(2).GetFormalCharge()==0 and
                       m.GetAtomWithIdx(3).GetFormalCharge()==0)
-    self.assertTrue(m.GetBondBetweenAtoms(1,3).GetBondType()==Chem.BondType.DOUBLE and \
+    self.assertTrue(m.GetBondBetweenAtoms(1,3).GetBondType()==Chem.BondType.DOUBLE and
                       m.GetBondBetweenAtoms(1,2).GetBondType()==Chem.BondType.DOUBLE )
     Chem.Cleanup(m)
     m.UpdatePropertyCache()
-    self.assertTrue(m.GetAtomWithIdx(1).GetFormalCharge()==1 and \
-                      (m.GetAtomWithIdx(2).GetFormalCharge()==-1 or \
+    self.assertTrue(m.GetAtomWithIdx(1).GetFormalCharge()==1 and
+                      (m.GetAtomWithIdx(2).GetFormalCharge()==-1 or
                          m.GetAtomWithIdx(3).GetFormalCharge()==-1))
-    self.assertTrue(m.GetBondBetweenAtoms(1,3).GetBondType()==Chem.BondType.SINGLE or \
+    self.assertTrue(m.GetBondBetweenAtoms(1,3).GetBondType()==Chem.BondType.SINGLE or
                       m.GetBondBetweenAtoms(1,2).GetBondType()==Chem.BondType.SINGLE )
 
   def test65StreamSupplier(self):
@@ -3856,9 +3856,9 @@ CAS<~>
     self.assertFalse(resMolSuppl.GetIsEnumerated())
     resMolSuppl.Enumerate()
     self.assertTrue(resMolSuppl.GetIsEnumerated())
-    self.assertTrue((resMolSuppl[0].GetBondBetweenAtoms(0, 1).GetBondType() \
+    self.assertTrue((resMolSuppl[0].GetBondBetweenAtoms(0, 1).GetBondType()
       != resMolSuppl[1].GetBondBetweenAtoms(0, 1).GetBondType())
-      or (resMolSuppl[0].GetBondBetweenAtoms(9, 10).GetBondType() \
+      or (resMolSuppl[0].GetBondBetweenAtoms(9, 10).GetBondType()
       != resMolSuppl[1].GetBondBetweenAtoms(9, 10).GetBondType()))
 
     resMolSuppl = Chem.ResonanceMolSupplier(mol, Chem.KEKULE_ALL)
@@ -3871,8 +3871,8 @@ CAS<~>
 
     bondTypeDict = {}
     resMolSuppl = Chem.ResonanceMolSupplier(mol,
-      Chem.ALLOW_INCOMPLETE_OCTETS \
-      | Chem.UNCONSTRAINED_CATIONS \
+      Chem.ALLOW_INCOMPLETE_OCTETS
+      | Chem.UNCONSTRAINED_CATIONS
       | Chem.UNCONSTRAINED_ANIONS)
     self.assertEqual(len(resMolSuppl), 32)
     for i in range(len(resMolSuppl)):
@@ -3885,8 +3885,8 @@ CAS<~>
     cmpFormalChargeBondOrder(self, resMolSuppl[0], next(resMolSuppl))
 
     resMolSuppl = Chem.ResonanceMolSupplier(mol,
-      Chem.ALLOW_INCOMPLETE_OCTETS \
-      | Chem.UNCONSTRAINED_CATIONS \
+      Chem.ALLOW_INCOMPLETE_OCTETS
+      | Chem.UNCONSTRAINED_CATIONS
       | Chem.UNCONSTRAINED_ANIONS, 10)
     self.assertEqual(len(resMolSuppl), 10)
 

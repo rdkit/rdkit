@@ -247,7 +247,7 @@ class StringFormatter(xmllib.XMLParser):
 
     # automatically add handlers for all of the greek characters
     for item in greekchars.keys():
-      self.elements[item] = (lambda attr,self=self,letter=greekchars[item]: \
+      self.elements[item] = (lambda attr,self=self,letter=greekchars[item]:
               self.start_greek(attr,letter), self.end_greek)
 
     # flag for greek characters
