@@ -325,7 +325,7 @@ def wxTest(testfunc):
         return
 
     global wx_app
-    if not 'wx_app' in globals():
+    if 'wx_app' not in globals():
 
         class CanvasApp(wxApp):
             "The wxApp that runs canvas.  Initializes windows, and handles redrawing"
