@@ -47,7 +47,8 @@ namespace {
 // the file.  That way, only the files that need inspection will be
 // left at the end of the run.
 static const bool DELETE_WITH_GOOD_HASH = true;
-static const std::map<std::string, std::hash_result_t> SVG_HASHES = {
+#ifdef RDK_BUILD_FREETYPE_SUPPORT
+    static const std::map<std::string, std::hash_result_t> SVG_HASHES = {
     {"rxn_test1_1.svg", 4142488780U},
     {"rxn_test1_2.svg", 2391235449U},
     {"rxn_test1_3.svg", 1596835824U},
@@ -64,6 +65,25 @@ static const std::map<std::string, std::hash_result_t> SVG_HASHES = {
     {"rxn_test4_1.svg", 1446031830U},
     {"rxn_test4_2.svg", 3254692708U}
 };
+#else
+static const std::map<std::string, std::hash_result_t> SVG_HASHES = {
+    {"rxn_test1_1.svg", 3455349472U},
+    {"rxn_test1_2.svg", 1549953602U},
+    {"rxn_test1_3.svg", 3887971655U},
+    {"rxn_test1_4.svg", 4154131138U},
+    {"rxn_test1_5.svg", 817859479U},
+    {"rxn_test1_6.svg", 3148235567U},
+    {"rxn_test1_7.svg", 1494204470U},
+    {"rxn_test2_1.svg", 3794156425U},
+    {"rxn_test2_2_1.svg", 905466032U},
+    {"rxn_test2_2_2.svg", 937555927U},
+    {"rxn_test2_2_3.svg", 571938327U},
+    {"rxn_test2_2_4.svg", 2056889618U},
+    {"rxn_test3_1.svg", 2623086145U},
+    {"rxn_test4_1.svg", 3737522161U},
+    {"rxn_test4_2.svg", 873707471U}
+};
+#endif
 
 // These PNG hashes aren't completely reliable due to floating point cruft,
 // but they can still reduce the number of drawings that need visual
@@ -105,8 +125,9 @@ std::hash_result_t hash_file(const std::string &filename) {
   return gboost::hash_range(file_contents.begin(), file_contents.end());
 }
 
-void check_file_hash(const std::string &filename) {
-//  std::cout << filename << " : " << hash_file(filename) << "U" << std::endl;
+void check_file_hash(const std::string &filename,
+                     std::hash_result_t exp_hash=0U) {
+//    std::cout << filename << " : " << hash_file(filename) << "U" << std::endl;
 
   std::map<std::string, std::hash_result_t>::const_iterator it;
   if (filename.substr(filename.length() - 4) == ".svg") {
@@ -114,8 +135,17 @@ void check_file_hash(const std::string &filename) {
   } else {
     it = PNG_HASHES.find(filename);
   }
-  if (it != SVG_HASHES.end() && hash_file(filename) == it->second && DELETE_WITH_GOOD_HASH) {
-    std::remove(filename.c_str());
+  std::hash_result_t file_hash = hash_file(filename);
+  if (exp_hash == 0U) {
+    exp_hash = it == SVG_HASHES.end() ? 0U : it->second;
+  }
+  if (it != SVG_HASHES.end() && file_hash == exp_hash) {
+    if (DELETE_WITH_GOOD_HASH) {
+      std::remove(filename.c_str());
+    }
+  } else {
+    std::cout << "file " << filename << " gave hash " << file_hash
+              << "U not the expected " << exp_hash << "U" << std::endl;
   }
 }
 
