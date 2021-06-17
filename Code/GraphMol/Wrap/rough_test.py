@@ -4377,11 +4377,16 @@ $$$$
   def testGetSetProps(self):
     m = Chem.MolFromSmiles("CC")
     errors = {
-      "int": "key `foo` exists but does not result in an integer value reason: boost::bad_any_cast: failed conversion using boost::any_cast",
-      "uint overflow": "key `foo` exists but does not result in an unsigned integer value reason: bad numeric conversion: negative overflow",
-      "int overflow": "key `foo` exists but does not result in an integer value reason: bad numeric conversion: positive overflow",
-      "double": "key `foo` exists but does not result in a double value reason: boost::bad_any_cast: failed conversion using boost::any_cast",
-      "bool": "key `foo` exists but does not result in a True or False value reason: boost::bad_any_cast: failed conversion using boost::any_cast"
+      "int":
+      "key `foo` exists but does not result in an integer value reason: boost::bad_any_cast: failed conversion using boost::any_cast",
+      "uint overflow":
+      "key `foo` exists but does not result in an unsigned integer value reason: bad numeric conversion: negative overflow",
+      "int overflow":
+      "key `foo` exists but does not result in an integer value reason: bad numeric conversion: positive overflow",
+      "double":
+      "key `foo` exists but does not result in a double value reason: boost::bad_any_cast: failed conversion using boost::any_cast",
+      "bool":
+      "key `foo` exists but does not result in a True or False value reason: boost::bad_any_cast: failed conversion using boost::any_cast"
     }
 
     for ob in [m, list(m.GetAtoms())[0], list(m.GetBonds())[0]]:
@@ -4406,14 +4411,13 @@ $$$$
       ob.SetIntProp("foo", -1)
       with self.assertRaises(ValueError) as e:
         ob.GetUnsignedProp("foo")
-      self.assertEqual(str(e.exception), errors["uint overflow"])        
+      self.assertEqual(str(e.exception), errors["uint overflow"])
 
       ob.SetUnsignedProp("foo", 4294967295)
       self.assertEqual(ob.GetUnsignedProp("foo"), 4294967295)
       with self.assertRaises(ValueError) as e:
         ob.GetIntProp("foo")
-      self.assertEqual(str(e.exception), errors["int overflow"])        
-
+      self.assertEqual(str(e.exception), errors["int overflow"])
 
   def testInvariantException(self):
     m = Chem.MolFromSmiles("C")
@@ -6595,6 +6599,34 @@ CAS<~>
     m.ClearComputedProps()
     with self.assertRaises(RuntimeError):
       m.GetRingInfo().NumRings()
+
+  def testAddWavyBondsForStereoAny(self):
+    m = Chem.MolFromSmiles('CC=CC')
+    m.GetBondWithIdx(1).SetStereo(Chem.BondStereo.STEREOANY)
+    m2 = Chem.Mol(m)
+    Chem.AddWavyBondsForStereoAny(m2)
+    self.assertEqual(m2.GetBondWithIdx(1).GetStereo(), Chem.BondStereo.STEREONONE)
+    self.assertEqual(m2.GetBondWithIdx(0).GetBondDir(), Chem.BondDir.UNKNOWN)
+    m2 = Chem.Mol(m)
+    Chem.AddWavyBondsForStereoAny(m2, clearDoubleBondFlags=False)
+    self.assertEqual(m2.GetBondWithIdx(1).GetStereo(), Chem.BondStereo.STEREOANY)
+    self.assertEqual(m2.GetBondWithIdx(0).GetBondDir(), Chem.BondDir.UNKNOWN)
+
+    m = Chem.MolFromSmiles("CC=CC=CC=CC")
+    m.GetBondWithIdx(1).SetStereoAtoms(0, 3)
+    m.GetBondWithIdx(1).SetStereo(Chem.BondStereo.STEREOCIS)
+    m.GetBondWithIdx(3).SetStereo(Chem.BondStereo.STEREOANY)
+    m.GetBondWithIdx(5).SetStereoAtoms(4, 7)
+    m.GetBondWithIdx(5).SetStereo(Chem.BondStereo.STEREOCIS)
+    m2 = Chem.Mol(m)
+    Chem.AddWavyBondsForStereoAny(m2)
+    self.assertEqual(m2.GetBondWithIdx(3).GetStereo(), Chem.BondStereo.STEREOANY)
+    self.assertEqual(m2.GetBondWithIdx(0).GetBondDir(), Chem.BondDir.NONE)
+
+    Chem.AddWavyBondsForStereoAny(
+      m2, addWhenImpossible=Chem.StereoBondThresholds.DBL_BOND_SPECIFIED_STEREO)
+    self.assertEqual(m2.GetBondWithIdx(3).GetStereo(), Chem.BondStereo.STEREONONE)
+    self.assertEqual(m2.GetBondWithIdx(2).GetBondDir(), Chem.BondDir.UNKNOWN)
 
 
 if __name__ == '__main__':

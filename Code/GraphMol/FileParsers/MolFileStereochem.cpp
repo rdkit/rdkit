@@ -276,6 +276,11 @@ const Atom *getNonsharedAtom(const Bond &bond1, const Bond &bond2) {
   POSTCONDITION(0, "bonds don't share an atom");
 }
 
+const unsigned StereoBondThresholds::DBL_BOND_NO_STEREO;
+const unsigned StereoBondThresholds::DBL_BOND_SPECIFIED_STEREO;
+const unsigned StereoBondThresholds::CHIRAL_ATOM;
+const unsigned StereoBondThresholds::DIRECTION_SET;
+
 // a note on the way the StereoBondThresholds are used:
 //  the penalties are all 1/10th of the corresponding threshold, so
 //  the penalty for being connected to a chiral atom is

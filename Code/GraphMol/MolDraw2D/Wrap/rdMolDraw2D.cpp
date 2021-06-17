@@ -1,5 +1,5 @@
 //
-//  Copyright (C) 2015-2019 Greg Landrum
+//  Copyright (C) 2015-2021 Greg Landrum and other RDKit Contributors
 //
 //   @@ All Rights Reserved @@
 //  This file is part of the RDKit.
@@ -377,12 +377,11 @@ python::object getCairoDrawingText(const RDKit::MolDraw2DCairo &self) {
   return retval;
 }
 #endif
-ROMol *prepMolForDrawing(const ROMol *m, bool kekulize = true,
-                         bool addChiralHs = true, bool wedgeBonds = true,
-                         bool forceCoords = false) {
+ROMol *prepMolForDrawing(const ROMol *m, bool kekulize, bool addChiralHs,
+                         bool wedgeBonds, bool forceCoords, bool wavyBonds) {
   auto *res = new RWMol(*m);
   MolDraw2DUtils::prepareMolForDrawing(*res, kekulize, addChiralHs, wedgeBonds,
-                                       forceCoords);
+                                       forceCoords, wavyBonds);
   return static_cast<ROMol *>(res);
 }
 
@@ -759,11 +758,12 @@ BOOST_PYTHON_MODULE(rdMolDraw2D) {
                      "if all specified stereocenters are in a single "
                      "StereoGroup, show a molecule-level annotation instead of "
                      "the individual labels. Default is false.")
-      .def_readwrite("singleColourWedgeBonds",
-                     &RDKit::MolDrawOptions::singleColourWedgeBonds,
-                     "if true wedged and dashed bonds are drawn using symbolColour "
-                     "rather than inheriting their colour from the atoms. "
-                     "Default is false.")
+      .def_readwrite(
+          "singleColourWedgeBonds",
+          &RDKit::MolDrawOptions::singleColourWedgeBonds,
+          "if true wedged and dashed bonds are drawn using symbolColour "
+          "rather than inheriting their colour from the atoms. "
+          "Default is false.")
       .def("getVariableAttachmentColour", &RDKit::getVariableAttachmentColour,
            "method for getting the colour of variable attachment points")
       .def("setVariableAttachmentColour", &RDKit::setVariableAttachmentColour,
@@ -966,7 +966,7 @@ BOOST_PYTHON_MODULE(rdMolDraw2D) {
       "PrepareMolForDrawing", &RDKit::prepMolForDrawing,
       (python::arg("mol"), python::arg("kekulize") = true,
        python::arg("addChiralHs") = true, python::arg("wedgeBonds") = true,
-       python::arg("forceCoords") = false),
+       python::arg("forceCoords") = false, python::arg("wavyBonds") = false),
       docString.c_str(),
       python::return_value_policy<python::manage_new_object>());
   python::def(
