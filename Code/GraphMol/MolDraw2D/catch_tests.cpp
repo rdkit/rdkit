@@ -2863,25 +2863,40 @@ TEST_CASE("support annotation colors", "[drawing]") {
   }
 }
 
-TEST_CASE("prepareMolForDrawing and wavy bonds") {
+TEST_CASE("Github #4228: prepareMolForDrawing and wavy bonds") {
   {
     auto mol = "CC=CC"_smiles;
     REQUIRE(mol);
     mol->getBondWithIdx(1)->setStereoAtoms(0, 3);
     mol->getBondWithIdx(1)->setStereo(Bond::BondStereo::STEREOANY);
-    // default is to not add wavy bonds:
-    MolDraw2DUtils::prepareMolForDrawing(*mol);
-    CHECK(mol->getBondWithIdx(0)->getBondDir() == Bond::BondDir::NONE);
-    CHECK(mol->getBondWithIdx(1)->getStereo() == Bond::BondStereo::STEREOANY);
-
     bool kekulize = true;
     bool addChiralHs = true;
     bool wedgeBonds = true;
-    bool forceCoords = false;
-    bool wavyBonds = true;
+    bool forceCoords = true;
+    bool wavyBonds = false;
     MolDraw2DUtils::prepareMolForDrawing(*mol, kekulize, addChiralHs,
                                          wedgeBonds, forceCoords, wavyBonds);
-    CHECK(mol->getBondWithIdx(0)->getBondDir() == Bond::BondDir::UNKNOWN);
-    CHECK(mol->getBondWithIdx(1)->getStereo() == Bond::BondStereo::STEREONONE);
+    CHECK(mol->getBondWithIdx(0)->getBondDir() == Bond::BondDir::NONE);
+    CHECK(mol->getBondWithIdx(1)->getStereo() == Bond::BondStereo::STEREOANY);
+
+    RWMol mol2(*mol);
+    wavyBonds = true;
+    MolDraw2DUtils::prepareMolForDrawing(mol2, kekulize, addChiralHs,
+                                         wedgeBonds, forceCoords, wavyBonds);
+    CHECK(mol2.getBondWithIdx(0)->getBondDir() == Bond::BondDir::UNKNOWN);
+    CHECK(mol2.getBondWithIdx(1)->getStereo() == Bond::BondStereo::STEREONONE);
+
+    MolDraw2DSVG drawer(500, 200, 250, 200);
+    // drawer.drawOptions().prepareMolsBeforeDrawing = false;
+    MOL_PTR_VECT ms{mol.get(), &mol2};
+    std::cerr << "  !!!! " << ms[0]->getNumConformers() << " "
+              << ms[1]->getNumConformers() << std::endl;
+    std::vector<std::string> legends = {"before", "after"};
+    drawer.drawMolecules(ms, &legends);
+    drawer.finishDrawing();
+    std::string text = drawer.getDrawingText();
+    std::ofstream outs("testGithub4228_1.svg");
+    outs << text;
+    outs.flush();
   }
 }
