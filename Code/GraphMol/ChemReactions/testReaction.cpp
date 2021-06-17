@@ -7606,6 +7606,24 @@ void testGithub4114() {
   }
 }
 
+void testGithub4183() {
+  BOOST_LOG(rdInfoLog) << "-------------------------------------" << std::endl;
+  BOOST_LOG(rdInfoLog) << "Testing Github #4183: Reading a rxn file in v3000 format that contains agents"
+                       << std::endl;
+  
+  std::string rdbase = getenv("RDBASE");
+  std::string fName;
+  fName = rdbase + "/Code/GraphMol/ChemReactions/testData/v3k_with_agents.rxn";
+  ChemicalReaction *rxn = RxnFileToChemicalReaction(fName);
+  TEST_ASSERT(rxn);
+
+  TEST_ASSERT(rxn->getNumReactantTemplates() == 2);
+  TEST_ASSERT(rxn->getNumProductTemplates() == 1);
+  TEST_ASSERT(rxn->getNumAgentTemplates() == 3);
+
+  delete rxn;
+}
+
 int main() {
   RDLog::InitLogs();
 
@@ -7701,7 +7719,8 @@ int main() {
   testGithub3078();
   testGithub4162();
   testGithub4114();
-
+  testGithub4183();
+  
   BOOST_LOG(rdInfoLog)
       << "*******************************************************\n";
   return (0);
