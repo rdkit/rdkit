@@ -1,5 +1,5 @@
 //
-//  Copyright (C) 2019-2020 Greg Landrum
+//  Copyright (C) 2019-2021 Greg Landrum and other RDKit contributors
 //
 //   @@ All Rights Reserved @@
 //  This file is part of the RDKit.
@@ -2860,5 +2860,28 @@ TEST_CASE("support annotation colors", "[drawing]") {
     outs << txt;
     outs.flush();
     CHECK(txt.find("fill:#0000FF' >2<") != std::string::npos);
+  }
+}
+
+TEST_CASE("prepareMolForDrawing and wavy bonds") {
+  {
+    auto mol = "CC=CC"_smiles;
+    REQUIRE(mol);
+    mol->getBondWithIdx(1)->setStereoAtoms(0, 3);
+    mol->getBondWithIdx(1)->setStereo(Bond::BondStereo::STEREOANY);
+    // default is to not add wavy bonds:
+    MolDraw2DUtils::prepareMolForDrawing(*mol);
+    CHECK(mol->getBondWithIdx(0)->getBondDir() == Bond::BondDir::NONE);
+    CHECK(mol->getBondWithIdx(1)->getStereo() == Bond::BondStereo::STEREOANY);
+
+    bool kekulize = true;
+    bool addChiralHs = true;
+    bool wedgeBonds = true;
+    bool forceCoords = false;
+    bool wavyBonds = true;
+    MolDraw2DUtils::prepareMolForDrawing(*mol, kekulize, addChiralHs,
+                                         wedgeBonds, forceCoords, wavyBonds);
+    CHECK(mol->getBondWithIdx(0)->getBondDir() == Bond::BondDir::UNKNOWN);
+    CHECK(mol->getBondWithIdx(1)->getStereo() == Bond::BondStereo::STEREONONE);
   }
 }

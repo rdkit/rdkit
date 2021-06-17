@@ -1,5 +1,5 @@
 //
-//  Copyright (C) 2016-2020 Greg Landrum
+//  Copyright (C) 2016-2021 Greg Landrum and other RDKit contributors
 //
 //   @@ All Rights Reserved @@
 //  This file is part of the RDKit.
@@ -43,7 +43,7 @@ bool isAtomCandForChiralH(const RWMol &mol, const Atom *atom) {
 }  // end of anonymous namespace
 
 void prepareMolForDrawing(RWMol &mol, bool kekulize, bool addChiralHs,
-                          bool wedgeBonds, bool forceCoords) {
+                          bool wedgeBonds, bool forceCoords, bool wavyBonds) {
   if (kekulize) {
     try {
       MolOps::Kekulize(mol, false);  // kekulize, but keep the aromatic flags!
@@ -73,6 +73,9 @@ void prepareMolForDrawing(RWMol &mol, bool kekulize, bool addChiralHs,
   }
   if (wedgeBonds) {
     WedgeMolBonds(mol, &mol.getConformer());
+  }
+  if (wavyBonds) {
+    addWavyBondsForStereoAny(mol);
   }
 }
 
