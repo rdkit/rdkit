@@ -3169,8 +3169,6 @@ TEST_CASE("Github #4238: prepareMolForDrawing and wavy bonds") {
     MolDraw2DSVG drawer(500, 200, 250, 200);
     // drawer.drawOptions().prepareMolsBeforeDrawing = false;
     MOL_PTR_VECT ms{mol.get(), &mol2};
-    std::cerr << "  !!!! " << ms[0]->getNumConformers() << " "
-              << ms[1]->getNumConformers() << std::endl;
     std::vector<std::string> legends = {"before", "after"};
     drawer.drawMolecules(ms, &legends);
     drawer.finishDrawing();
