@@ -23,26 +23,29 @@ RDKIT_FILEPARSERS_EXPORT void DetectBondStereoChemistry(ROMol &mol,
 RDKIT_FILEPARSERS_EXPORT void WedgeMolBonds(ROMol &mol, const Conformer *conf);
 RDKIT_FILEPARSERS_EXPORT void WedgeBond(Bond *bond, unsigned int fromAtomIdx,
                                         const Conformer *conf);
-//! set wavy bonds around double bonds with STEREOANY stereo
-// if \c addWhenImpossible is nonzero, a neighboring single will be made wavy
-// even if it connects to a chiral center or double bond with specified stereo.
-//   one example of this would be the middle double bond in C/C=C/C=C/C=C/C
-//   (if that's set to STEREOANY after constructing the molecule)
-// Otherwise, no wavy bond will be set
-//  thresholds:
-//     1000: double bond with no stereochemistry indicated
-//    10000: double bond with specified stereochemistry
-//   100000: chiral atom
-//  1000000: direction already set
-//
 struct RDKIT_FILEPARSERS_EXPORT StereoBondThresholds {
-  const static unsigned DBL_BOND_NO_STEREO = 1000;
-  const static unsigned DBL_BOND_SPECIFIED_STEREO = 10000;
-  const static unsigned CHIRAL_ATOM = 100000;
-  const static unsigned DIRECTION_SET = 1000000;
+  const static unsigned DBL_BOND_NO_STEREO =
+      1000;  //!< neighboring double bond without stereo info
+  const static unsigned DBL_BOND_SPECIFIED_STEREO =
+      10000;  //!< neighboring double bond with stereo specified
+  const static unsigned CHIRAL_ATOM =
+      100000;  //!< atom with specified chirality
+  const static unsigned DIRECTION_SET =
+      1000000;  //!< single bond with the direction already set
 };
+//! set wavy bonds around double bonds with STEREOANY stereo
+/*!
+ \param mol molecule to be modified
+ \param clearDoubleBondFlags when this is true flags for unknown double bond
+   stereo will also be removed.
+ \param addWhenImpossible if nonzero a neighboring single bond will be made wavy
+   even if it connects to a chiral center or double bond with specified stereo.
+   one example of this would be the middle double bond in C/C=C/C=C/C=C/C (if
+   that's set to STEREOANY after constructing the molecule) Otherwise, no wavy
+   bond will be set
+*/
 RDKIT_FILEPARSERS_EXPORT void addWavyBondsForStereoAny(
-    ROMol &mol,
+    ROMol &mol, bool clearDoubleBondFlags = true,
     unsigned addWhenImpossible = StereoBondThresholds::DBL_BOND_NO_STEREO);
 
 //! picks the bonds which should be wedged

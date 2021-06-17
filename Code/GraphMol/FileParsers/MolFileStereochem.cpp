@@ -285,7 +285,8 @@ const Atom *getNonsharedAtom(const Bond &bond1, const Bond &bond2) {
 //  single bond will never have any particular penalty term applied
 //  more than a couple of times
 //
-void addWavyBondsForStereoAny(ROMol &mol, unsigned addWhenImpossible) {
+void addWavyBondsForStereoAny(ROMol &mol, bool clearDoubleBondFlags,
+                              unsigned addWhenImpossible) {
   std::vector<int> singleBondScores(mol.getNumBonds(), 0);
   // used to store the double bond neighbors, if any, of each single bond
   std::map<unsigned, std::vector<unsigned>> singleBondNeighbors;
@@ -363,6 +364,13 @@ void addWavyBondsForStereoAny(ROMol &mol, unsigned addWhenImpossible) {
         }
         mol.getBondWithIdx(std::get<2>(tpl))
             ->setBondDir(Bond::BondDir::UNKNOWN);
+        if (clearDoubleBondFlags) {
+          auto dblBond = mol.getBondWithIdx(dblBondIdx);
+          if (dblBond->getBondDir() == Bond::BondDir::EITHERDOUBLE) {
+            dblBond->setBondDir(Bond::BondDir::NONE);
+          }
+          dblBond->setStereo(Bond::BondStereo::STEREONONE);
+        }
         doubleBondsToSet.reset(dblBondIdx);
       }
     }
