@@ -17,6 +17,7 @@
 #include <GraphMol/ChemReactions/Reaction.h>
 #include <GraphMol/Bond.h>
 #include <iostream>
+#include <utility>
 
 namespace RDKit {
 class ROMol;
@@ -38,9 +39,11 @@ class RDKIT_MOLSTANDARDIZE_EXPORT TautomerTransform {
   std::vector<Bond::BondType> BondTypes;
   std::vector<int> Charges;
 
-  TautomerTransform(ROMol* mol, const std::vector<Bond::BondType>& bondtypes,
-                    const std::vector<int>& charges)
-      : Mol(mol), BondTypes(bondtypes), Charges(charges) {}
+  TautomerTransform(ROMol* mol, std::vector<Bond::BondType> bondtypes,
+                    std::vector<int> charges)
+      : Mol(mol),
+        BondTypes(std::move(bondtypes)),
+        Charges(std::move(charges)) {}
 
   TautomerTransform(const TautomerTransform& other)
       : BondTypes(other.BondTypes), Charges(other.Charges) {

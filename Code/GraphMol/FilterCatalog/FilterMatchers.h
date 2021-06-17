@@ -32,6 +32,8 @@
 #include <RDGeneral/export.h>
 #ifndef __RD_FILTER_MATCHER_H__
 #define __RD_FILTER_MATCHER_H__
+#include <utility>
+
 #include <GraphMol/RDKitBase.h>
 #include <GraphMol/Substruct/SubstructMatch.h>
 #include "FilterMatcherBase.h"
@@ -61,9 +63,11 @@ class RDKIT_FILTERCATALOG_EXPORT And : public FilterMatcherBase {
   And(const FilterMatcherBase &arg1, const FilterMatcherBase &arg2)
       : FilterMatcherBase("And"), arg1(arg1.copy()), arg2(arg2.copy()) {}
 
-  And(const boost::shared_ptr<FilterMatcherBase> &arg1,
-      const boost::shared_ptr<FilterMatcherBase> &arg2)
-      : FilterMatcherBase("And"), arg1(arg1), arg2(arg2) {}
+  And(boost::shared_ptr<FilterMatcherBase> arg1,
+      boost::shared_ptr<FilterMatcherBase> arg2)
+      : FilterMatcherBase("And"),
+        arg1(std::move(arg1)),
+        arg2(std::move(arg2)) {}
 
   And(const And &rhs)
       : FilterMatcherBase(rhs), arg1(rhs.arg1), arg2(rhs.arg2) {}
@@ -125,9 +129,9 @@ class RDKIT_FILTERCATALOG_EXPORT Or : public FilterMatcherBase {
   Or(const FilterMatcherBase &arg1, const FilterMatcherBase &arg2)
       : FilterMatcherBase("Or"), arg1(arg1.copy()), arg2(arg2.copy()) {}
 
-  Or(const boost::shared_ptr<FilterMatcherBase> &arg1,
-     const boost::shared_ptr<FilterMatcherBase> &arg2)
-      : FilterMatcherBase("Or"), arg1(arg1), arg2(arg2) {}
+  Or(boost::shared_ptr<FilterMatcherBase> arg1,
+     boost::shared_ptr<FilterMatcherBase> arg2)
+      : FilterMatcherBase("Or"), arg1(std::move(arg1)), arg2(std::move(arg2)) {}
 
   Or(const Or &rhs) : FilterMatcherBase(rhs), arg1(rhs.arg1), arg2(rhs.arg2) {}
 
@@ -185,8 +189,8 @@ class RDKIT_FILTERCATALOG_EXPORT Not : public FilterMatcherBase {
   Not(const FilterMatcherBase &arg1)
       : FilterMatcherBase("Not"), arg1(arg1.copy()) {}
 
-  Not(const boost::shared_ptr<FilterMatcherBase> &arg1)
-      : FilterMatcherBase("Not"), arg1(arg1) {}
+  Not(boost::shared_ptr<FilterMatcherBase> arg1)
+      : FilterMatcherBase("Not"), arg1(std::move(arg1)) {}
 
   Not(const Not &rhs) : FilterMatcherBase(rhs), arg1(rhs.arg1) {}
 
@@ -382,9 +386,9 @@ class RDKIT_FILTERCATALOG_EXPORT ExclusionList : public FilterMatcherBase {
   //!                 And(Not(SmartsMatcher(pat2)),
   //!                                And(Not(Single...
 
-  ExclusionList(
-      const std::vector<boost::shared_ptr<FilterMatcherBase>> &offPatterns)
-      : FilterMatcherBase("Not any of"), d_offPatterns(offPatterns) {}
+  ExclusionList(std::vector<boost::shared_ptr<FilterMatcherBase>> offPatterns)
+      : FilterMatcherBase("Not any of"),
+        d_offPatterns(std::move(offPatterns)) {}
 
   virtual std::string getName() const {
     std::string res;

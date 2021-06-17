@@ -38,6 +38,7 @@
 #include <iostream>
 #include <fstream>
 #include <sstream>
+#include <utility>
 #include <boost/format.hpp>
 #include <RDGeneral/BadFileException.h>
 #include <RDGeneral/FileParseException.h>
@@ -52,8 +53,8 @@ class RDKIT_CHEMREACTIONS_EXPORT ChemicalReactionParserException
   //! construct with an error message
   explicit ChemicalReactionParserException(const char *msg) : _msg(msg) {}
   //! construct with an error message
-  explicit ChemicalReactionParserException(const std::string &msg)
-      : _msg(msg) {}
+  explicit ChemicalReactionParserException(std::string msg)
+      : _msg(std::move(msg)) {}
   //! get the error message
   const char *what() const noexcept override { return _msg.c_str(); }
   ~ChemicalReactionParserException() noexcept {}

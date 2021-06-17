@@ -15,6 +15,7 @@
 #include <DataStructs/SparseIntVect.h>
 #include <DataStructs/ExplicitBitVect.h>
 #include <DataStructs/SparseBitVect.h>
+#include <utility>
 #include <vector>
 #include <memory>
 #include <cstdint>
@@ -331,7 +332,7 @@ class RDKIT_FINGERPRINTS_EXPORT UnimplementedFPException
   //! construct with an error message
   UnimplementedFPException(const char *msg) : _msg(msg) {}
   //! construct with an error message
-  UnimplementedFPException(const std::string &msg) : _msg(msg) {}
+  UnimplementedFPException(std::string msg) : _msg(std::move(msg)) {}
   //! get the error message
   const char *what() const noexcept override { return _msg.c_str(); }
   ~UnimplementedFPException() noexcept {}

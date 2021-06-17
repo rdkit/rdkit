@@ -1,5 +1,5 @@
 //
-//  Copyright (C) 2004-2021 Greg Landrum and Rational Discovery LLC
+//  Copyright (C) 2004-2021 Greg Landrum and other RDKit contributors
 //
 //   @@ All Rights Reserved @@
 //  This file is part of the RDKit.
@@ -404,10 +404,19 @@ void setBondDirRelativeToAtom(Bond *bond, Atom *atom, Bond::BondDir dir,
   bond->setBondDir(dir);
 }
 
-bool isLinearArrangement(const RDGeom::Point3D &v1, const RDGeom::Point3D &v2,
-                         double tol = 0.035) {  // tolerance of 2 degrees
-  return fabs(v2.angleTo(v1) - M_PI) < tol;
+bool isLinearArrangement(const RDGeom::Point3D &v1, const RDGeom::Point3D &v2) {
+  double lsq = v1.lengthSq() * v2.lengthSq();
+
+  // treat zero length vectors as linear
+  if (lsq < 1.0e-6) return true;
+
+  double dotProd = v1.dotProduct(v2);
+
+  double cos178 =
+      -0.999388;  // == cos(M_PI-0.035), corresponds to a tolerance of 2 degrees
+  return dotProd < cos178 * sqrt(lsq);
 }
+
 void updateDoubleBondNeighbors(ROMol &mol, Bond *dblBond, const Conformer *conf,
                                boost::dynamic_bitset<> &needsDir,
                                std::vector<unsigned int> &singleBondCounts,

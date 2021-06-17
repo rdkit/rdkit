@@ -24,6 +24,7 @@
 
 #ifdef RDK_THREADSAFE_SSS
 #include <mutex>
+#include <utility>
 #endif
 
 namespace RDKit {
@@ -818,8 +819,8 @@ class HasPropQuery : public Queries::EqualityQuery<int, TargetPtr, true> {
     this->setDescription("AtomHasProp");
     this->setDataFunc(0);
   }
-  explicit HasPropQuery(const std::string &v)
-      : Queries::EqualityQuery<int, TargetPtr, true>(), propname(v) {
+  explicit HasPropQuery(std::string v)
+      : Queries::EqualityQuery<int, TargetPtr, true>(), propname(std::move(v)) {
     // default is to just do a number of rings query:
     this->setDescription("AtomHasProp");
     this->setDataFunc(nullptr);
@@ -867,10 +868,10 @@ class HasPropWithValueQuery
     this->setDescription("HasPropWithValue");
     this->setDataFunc(0);
   }
-  explicit HasPropWithValueQuery(const std::string &prop, const T &v,
+  explicit HasPropWithValueQuery(std::string prop, const T &v,
                                  const T &tol = 0.0)
       : Queries::EqualityQuery<int, TargetPtr, true>(),
-        propname(prop),
+        propname(std::move(prop)),
         val(v),
         tolerance(tol) {
     // default is to just do a number of rings query:
@@ -933,9 +934,11 @@ class HasPropWithValueQuery<TargetPtr, std::string>
     this->setDescription("HasPropWithValue");
     this->setDataFunc(0);
   }
-  explicit HasPropWithValueQuery(const std::string &prop, const std::string &v,
+  explicit HasPropWithValueQuery(std::string prop, std::string v,
                                  const std::string &tol = "")
-      : Queries::EqualityQuery<int, TargetPtr, true>(), propname(prop), val(v) {
+      : Queries::EqualityQuery<int, TargetPtr, true>(),
+        propname(std::move(prop)),
+        val(std::move(v)) {
     RDUNUSED_PARAM(tol);
     // default is to just do a number of rings query:
     this->setDescription("HasPropWithValue");
@@ -999,10 +1002,10 @@ class HasPropWithValueQuery<TargetPtr, ExplicitBitVect>
     this->setDataFunc(0);
   }
 
-  explicit HasPropWithValueQuery(const std::string &prop,
-                                 const ExplicitBitVect &v, float tol = 0.0)
+  explicit HasPropWithValueQuery(std::string prop, const ExplicitBitVect &v,
+                                 float tol = 0.0)
       : Queries::EqualityQuery<int, TargetPtr, true>(),
-        propname(prop),
+        propname(std::move(prop)),
         val(v),
         tol(tol) {
     this->setDescription("HasPropWithValue");

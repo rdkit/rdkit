@@ -12,6 +12,7 @@
 #define _GRID3D_H_20050124_1113
 #include <exception>
 #include <string>
+#include <utility>
 
 namespace RDKit {
 class DiscreteValueVect;
@@ -24,7 +25,7 @@ class RDKIT_RDGEOMETRYLIB_EXPORT GridException : public std::exception {
   //! construct with an error message
   GridException(const char *msg) : _msg(msg) {}
   //! construct with an error message
-  GridException(const std::string &msg) : _msg(msg) {}
+  GridException(std::string msg) : _msg(std::move(msg)) {}
   //! get the error message
   const char *what() const noexcept override { return _msg.c_str(); }
   ~GridException() noexcept {}

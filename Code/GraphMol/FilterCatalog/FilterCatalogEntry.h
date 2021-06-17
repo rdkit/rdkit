@@ -32,6 +32,7 @@
 #include <RDGeneral/export.h>
 #ifndef __RD_FILTER_CATALOG_H__
 #define __RD_FILTER_CATALOG_H__
+#include <utility>
 
 #include <RDGeneral/types.h>  // For Dict
 #include <GraphMol/RDKitBase.h>
@@ -68,7 +69,7 @@ class RDKIT_FILTERCATALOG_EXPORT FilterCatalogEntry
 
   FilterCatalogEntry(const std::string &name,
                      boost::shared_ptr<FilterMatcherBase> matcher)
-      : RDCatalog::CatalogEntry(), d_matcher(matcher) {
+      : RDCatalog::CatalogEntry(), d_matcher(std::move(matcher)) {
     setDescription(name);
   }
 

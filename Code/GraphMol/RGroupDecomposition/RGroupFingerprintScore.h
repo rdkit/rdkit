@@ -27,7 +27,7 @@ struct VarianceDataForLabel {
   std::vector<int> bitCounts;
 
   VarianceDataForLabel(const int &label, int numberFingerprints,
-                       const std::vector<int> &bitCounts);
+                       std::vector<int> bitCounts);
   VarianceDataForLabel(const int &label);
   VarianceDataForLabel(const VarianceDataForLabel &other) = default;
   VarianceDataForLabel &operator=(const VarianceDataForLabel &other) = delete;
