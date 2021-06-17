@@ -130,12 +130,12 @@ static const std::map<std::string, std::hash_result_t> SVG_HASHES = {
     {"test18_5.svg", 393339448U},
     {"test19_1.svg", 2622450140U},
     {"test19_2.svg", 226882495U},
-    {"test16_1.svg", 1543468936U},
-    {"test16_2.svg", 2859101299U},
-    {"testGithub2063_1.svg", 70727106U},
-    {"testGithub2063_2.svg", 70727106U},
-    {"testGithub2151_1.svg", 22797086U},
-    {"testGithub2151_2.svg", 426159838U},
+    {"test16_1.svg", 247758111U},
+    {"test16_2.svg", 252943288U},
+    {"testGithub2063_1.svg", 2158365418U},
+    {"testGithub2063_2.svg", 2158365418U},
+    {"testGithub2151_1.svg", 739229913U},
+    {"testGithub2151_2.svg", 3095783108U},
     {"testGithub2762.svg", 320023621U},
     {"testGithub2931_1.svg", 2708252551U},
     {"testGithub2931_2.svg", 2520170665U},
@@ -249,12 +249,12 @@ static const std::map<std::string, std::hash_result_t> SVG_HASHES = {
     {"test18_5.svg", 1655129816U},
     {"test19_1.svg", 1937998685U},
     {"test19_2.svg", 2158406784U},
-    {"test16_1.svg", 1443077210U},
-    {"test16_2.svg", 4103065867U},
-    {"testGithub2063_1.svg", 830046464U},
-    {"testGithub2063_2.svg", 830046464U},
-    {"testGithub2151_1.svg", 170282974U},
-    {"testGithub2151_2.svg", 4193629113U},
+    {"test16_1.svg", 3385311765U},
+    {"test16_2.svg", 2735861810U},
+    {"testGithub2063_1.svg", 4196564529U},
+    {"testGithub2063_2.svg", 4196564529U},
+    {"testGithub2151_1.svg", 1816894413U},
+    {"testGithub2151_2.svg", 2185139506U},
     {"testGithub2762.svg", 1991842363U},
     {"testGithub2931_1.svg", 1459334551U},
     {"testGithub2931_2.svg", 2613847891U},
@@ -345,8 +345,9 @@ std::hash_result_t hash_file(const std::string &filename) {
   return gboost::hash_range(file_contents.begin(), file_contents.end());
 }
 
-void check_file_hash(const std::string &filename) {
-  //  std::cout << filename << " : " << hash_file(filename) << "U" << std::endl;
+void check_file_hash(const std::string &filename,
+                     std::hash_result_t exp_hash=0U) {
+//    std::cout << filename << " : " << hash_file(filename) << "U" << std::endl;
 
   std::map<std::string, std::hash_result_t>::const_iterator it;
   if (filename.substr(filename.length() - 4) == ".svg") {
@@ -354,9 +355,17 @@ void check_file_hash(const std::string &filename) {
   } else {
     it = PNG_HASHES.find(filename);
   }
-  if (it != SVG_HASHES.end() && hash_file(filename) == it->second &&
-      DELETE_WITH_GOOD_HASH) {
-    std::remove(filename.c_str());
+  std::hash_result_t file_hash = hash_file(filename);
+  if (exp_hash == 0U) {
+    exp_hash = it == SVG_HASHES.end() ? 0U : it->second;
+  }
+  if (it != SVG_HASHES.end() && file_hash == exp_hash) {
+    if (DELETE_WITH_GOOD_HASH) {
+      std::remove(filename.c_str());
+    }
+  } else {
+    std::cout << "file " << filename << " gave hash " << file_hash
+              << "U not the expected " << exp_hash << "U" << std::endl;
   }
 }
 
