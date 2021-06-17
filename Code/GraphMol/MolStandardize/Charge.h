@@ -15,6 +15,7 @@
 #include <RDGeneral/export.h>
 #ifndef RD_CHARGE_H
 #define RD_CHARGE_H
+#include <utility>
 
 #include "MolStandardize.h"
 #include <Catalogs/Catalog.h>
@@ -40,7 +41,7 @@ struct RDKIT_MOLSTANDARDIZE_EXPORT ChargeCorrection {
   int Charge;
 
   ChargeCorrection(std::string name, std::string smarts, int charge)
-      : Name(name), Smarts(smarts), Charge(charge) {}
+      : Name(std::move(name)), Smarts(std::move(smarts)), Charge(charge) {}
 };
 
 // The default list of ChargeCorrections.

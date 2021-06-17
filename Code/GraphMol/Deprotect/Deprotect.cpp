@@ -13,21 +13,19 @@
 #include <GraphMol/ChemReactions/ReactionParser.h>
 
 #include <boost/smart_ptr.hpp>
+#include <utility>
 
 namespace RDKit {
 namespace Deprotect {
-DeprotectData::DeprotectData(const std::string &deprotection_class,
+DeprotectData::DeprotectData(std::string deprotection_class,
                              const std::string &reaction_smarts,
-                             const std::string &abbreviation,
-                             const std::string &full_name,
-			     const std::string &example)
-    :
-
-      deprotection_class(deprotection_class),
+                             std::string abbreviation, std::string full_name,
+                             std::string example)
+    : deprotection_class(std::move(deprotection_class)),
       reaction_smarts(reaction_smarts),
-      abbreviation(abbreviation),
-      full_name(full_name),
-      example(example),
+      abbreviation(std::move(abbreviation)),
+      full_name(std::move(full_name)),
+      example(std::move(example)),
       rxn(RxnSmartsToChemicalReaction(reaction_smarts)) {
   if (rxn.get()) {
     if (rxn->getNumProductTemplates() != 1) {

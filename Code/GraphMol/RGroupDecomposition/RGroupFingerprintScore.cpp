@@ -13,6 +13,7 @@
 #include "GraphMol//Fingerprints/MorganFingerprints.h"
 #include "../../../External/GA/util/Util.h"
 #include <memory>
+#include <utility>
 #include <vector>
 #include <map>
 #include <mutex>
@@ -216,10 +217,10 @@ double FingerprintVarianceScoreData::fingerprintVarianceGroupScore() {
 
 VarianceDataForLabel::VarianceDataForLabel(const int &label,
                                            int numberFingerprints,
-                                           const std::vector<int> &bitCounts)
+                                           std::vector<int> bitCounts)
     : label(label),
       numberFingerprints(numberFingerprints),
-      bitCounts(bitCounts) {}
+      bitCounts(std::move(bitCounts)) {}
 
 VarianceDataForLabel::VarianceDataForLabel(const int &label) : label(label) {
   numberFingerprints = 0;

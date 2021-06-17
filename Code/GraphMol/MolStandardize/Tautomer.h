@@ -13,6 +13,7 @@
 
 #include <boost/function.hpp>
 #include <string>
+#include <utility>
 #include <iterator>
 #include <Catalogs/Catalog.h>
 #include <GraphMol/MolStandardize/MolStandardize.h>
@@ -55,9 +56,9 @@ class Tautomer {
 
  public:
   Tautomer() : d_numModifiedAtoms(0), d_numModifiedBonds(0), d_done(false) {}
-  Tautomer(const ROMOL_SPTR &t, const ROMOL_SPTR &k, size_t a = 0, size_t b = 0)
-      : tautomer(t),
-        kekulized(k),
+  Tautomer(ROMOL_SPTR t, ROMOL_SPTR k, size_t a = 0, size_t b = 0)
+      : tautomer(std::move(t)),
+        kekulized(std::move(k)),
         d_numModifiedAtoms(a),
         d_numModifiedBonds(b),
         d_done(false) {}

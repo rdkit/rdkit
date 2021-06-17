@@ -56,6 +56,20 @@ struct Trajectory_wrapper {
   static void wrap() {
     python::class_<Trajectory>(
         "Trajectory", "A class which allows storing Snapshots from a trajectory", python::no_init)
+        .def("__init__",
+             python::make_constructor(
+                 &constructTrajectory_wrap, python::default_call_policies(),
+                 (python::arg("dimension"), python::arg("numPoints"),
+                  python::arg("snapshotList") = python::list())),
+             "Constructor;\n"
+             "dimension:    dimensionality of this Trajectory's coordinate tuples;\n"
+             "numPoints:    number of coordinate tuples associated to each Snapshot;\n"
+             "snapshotList: list of Snapshot objects used to initialize the Trajectory (optional; defaults to []).\n")
+        .def("__init__",
+             python::make_constructor(
+                 &copyConstructTrajectory_wrap, python::default_call_policies(),
+                 python::arg("other")),
+             "Copy constructor")
         .def("Dimension", &Trajectory::dimension, (python::arg("self")),
              "returns the dimensionality of this Trajectory's coordinate tuples")
         .def("NumPoints", &Trajectory::numPoints, (python::arg("self")),
@@ -91,19 +105,21 @@ struct Trajectory_wrapper {
              "defaults to -1 (first available)\n"
              "to is the last Snapshot that will be added as a Conformer; "
              "defaults to -1 (all)\n");
-    python::def("Trajectory", constructTrajectory_wrap,
-        (python::arg("dimension"), python::arg("numPoints"),
-        python::arg("snapshotList") = python::list()),
-        "Constructor;\n"
-        "dimension:    dimensionality of this Trajectory's coordinate tuples;\n"
-        "numPoints:    number of coordinate tuples associated to each Snapshot;\n"
-        "snapshotList: list of Snapshot objects used to initialize the Trajectory (optional; defaults to []).\n",
-        python::return_value_policy<python::manage_new_object>());
-    python::def("Trajectory", copyConstructTrajectory_wrap, (python::arg("other")),
-        "Copy constructor", python::return_value_policy<python::manage_new_object>());
 
     python::class_<Snapshot>(
         "Snapshot", "A class which allows storing coordinates from a trajectory", python::no_init)
+        .def("__init__",
+             python::make_constructor(
+                 &constructSnapshot_wrap, python::default_call_policies(),
+                 (python::arg("coordList"), python::arg("energy") = 0.0)),
+             "Constructor;\n"
+             "coordList: list of floats containing the coordinates for this Snapshot;\n"
+             "energy:    the energy for this Snapshot.\n")
+        .def("__init__",
+             python::make_constructor(
+                 &copyConstructSnapshot_wrap, python::default_call_policies(),
+                 python::arg("other")),
+             "Copy constructor")
         .def("GetPoint2D", &Snapshot::getPoint2D, (python::arg("self"), python::arg("pointNum")),
              "return the coordinates at pointNum as a Point2D object; "
              "requires the Trajectory dimension to be == 2")
@@ -114,14 +130,6 @@ struct Trajectory_wrapper {
              "returns the energy for this Snapshot")
         .def("SetEnergy", &Snapshot::setEnergy, (python::arg("self"), python::arg("energy")),
              "sets the energy for this Snapshot");
-    python::def("Snapshot", constructSnapshot_wrap,
-        (python::arg("coordList"), python::arg("energy") = 0.0),
-        "Constructor;\n"
-        "coordList: list of floats containing the coordinates for this Snapshot;\n"
-        "energy:    the energy for this Snapshot.\n",
-        python::return_value_policy<python::manage_new_object>());
-    python::def("Snapshot", copyConstructSnapshot_wrap, (python::arg("other")),
-        "Copy constructor", python::return_value_policy<python::manage_new_object>());
     python::def("ReadAmberTrajectory", &readAmberTrajectory,
         (python::arg("fName"), python::arg("traj")),
         "reads coordinates from an AMBER trajectory file into the Trajectory object; "

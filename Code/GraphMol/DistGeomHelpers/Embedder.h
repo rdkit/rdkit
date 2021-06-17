@@ -13,6 +13,7 @@
 #define RD_EMBEDDER_H_GUARD
 
 #include <map>
+#include <utility>
 #include <Geometry/point.h>
 #include <GraphMol/ROMol.h>
 #include <boost/shared_ptr.hpp>
@@ -167,7 +168,7 @@ struct RDKIT_DISTGEOMHELPERS_EXPORT EmbedParameters {
         useSmallRingTorsions(useSmallRingTorsions),
         useMacrocycleTorsions(useMacrocycleTorsions),
         useMacrocycle14config(useMacrocycle14config),
-        CPCI(CPCI),
+        CPCI(std::move(CPCI)),
         callback(callback) {}
 };
 

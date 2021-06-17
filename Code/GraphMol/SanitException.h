@@ -18,6 +18,7 @@
 #include <GraphMol/Bond.h>
 
 #include <string>
+#include <utility>
 #include <vector>
 #include <exception>
 
@@ -27,7 +28,7 @@ namespace RDKit {
 class RDKIT_GRAPHMOL_EXPORT MolSanitizeException : public std::exception {
  public:
   MolSanitizeException(const char *msg) : d_msg(msg) {}
-  MolSanitizeException(const std::string &msg) : d_msg(msg) {}
+  MolSanitizeException(std::string msg) : d_msg(std::move(msg)) {}
   MolSanitizeException(const MolSanitizeException &other)
       : d_msg(other.d_msg) {}
   virtual const char *what() const noexcept override { return d_msg.c_str(); }
@@ -93,11 +94,10 @@ class RDKIT_GRAPHMOL_EXPORT AtomKekulizeException
 
 class RDKIT_GRAPHMOL_EXPORT KekulizeException : public MolSanitizeException {
  public:
-  KekulizeException(const char *msg, const std::vector<unsigned int> &indices)
-      : MolSanitizeException(msg), d_atomIndices(indices) {}
-  KekulizeException(const std::string &msg,
-                    const std::vector<unsigned int> &indices)
-      : MolSanitizeException(msg), d_atomIndices(indices) {}
+  KekulizeException(const char *msg, std::vector<unsigned int> indices)
+      : MolSanitizeException(msg), d_atomIndices(std::move(indices)) {}
+  KekulizeException(const std::string &msg, std::vector<unsigned int> indices)
+      : MolSanitizeException(msg), d_atomIndices(std::move(indices)) {}
   KekulizeException(const KekulizeException &other)
       : MolSanitizeException(other), d_atomIndices(other.d_atomIndices) {}
   const std::vector<unsigned int> &getAtomIndices() const {

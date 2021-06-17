@@ -219,3 +219,14 @@ TEST_CASE("Molecular formula with fragments", "[molhash]") {
     CHECK(hsh == "C6H15NO2");
   }
 }
+
+TEST_CASE("Github issues", "[molhash]") {
+  SECTION("Issue #4222: MolHash fails on non-standard valences") {
+    SmilesParserParams p;
+    p.sanitize = false;
+    std::unique_ptr<RWMol> mol(SmilesToMol("C[Cl]C", p));
+    REQUIRE(mol);
+    auto hsh = MolHash::MolHash(mol.get(), MolHash::HashFunction::MolFormula);
+    CHECK(hsh == "C2H6Cl");
+  }
+}
