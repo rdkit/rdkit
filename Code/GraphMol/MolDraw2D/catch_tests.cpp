@@ -2863,7 +2863,7 @@ TEST_CASE("support annotation colors", "[drawing]") {
   }
 }
 
-TEST_CASE("Github #4228: prepareMolForDrawing and wavy bonds") {
+TEST_CASE("Github #4238: prepareMolForDrawing and wavy bonds") {
   {
     auto mol = "CC=CC"_smiles;
     REQUIRE(mol);
@@ -2895,7 +2895,7 @@ TEST_CASE("Github #4228: prepareMolForDrawing and wavy bonds") {
     drawer.drawMolecules(ms, &legends);
     drawer.finishDrawing();
     std::string text = drawer.getDrawingText();
-    std::ofstream outs("testGithub4228_1.svg");
+    std::ofstream outs("testGithub4238_1.svg");
     outs << text;
     outs.flush();
   }
