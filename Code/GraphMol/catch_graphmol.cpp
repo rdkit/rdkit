@@ -2046,3 +2046,27 @@ TEST_CASE(
   CHECK_THROWS_AS(conf.setAtomPos(std::numeric_limits<unsigned>::max(), pt),
                   ValueErrorException);
 }
+
+TEST_CASE("KekulizeFragment", "[graphmol]") {
+  SECTION("basics") {
+    auto mol = "CCc1ccccc1"_smiles;
+    REQUIRE(mol);
+    boost::dynamic_bitset<> atomsInPlay(mol->getNumAtoms());
+    for (auto aidx : std::vector<size_t>{0, 1, 2, 3}) {
+      atomsInPlay.set(aidx);
+    }
+    boost::dynamic_bitset<> bondsInPlay(mol->getNumBonds());
+    for (auto bidx : std::vector<size_t>{0, 1, 2}) {
+      bondsInPlay.set(bidx);
+    }
+    MolOps::details::KekulizeFragment(*mol, atomsInPlay, bondsInPlay);
+    CHECK(!mol->getAtomWithIdx(2)->getIsAromatic());
+    CHECK(mol->getAtomWithIdx(4)->getIsAromatic());
+    CHECK(!mol->getBondWithIdx(2)->getIsAromatic());
+    // at the moment that bond still has an aromatic bond order, which isn't
+    // optimal, but that will have to wait until we add a feature to allow
+    // kekulization of conjugated chains.
+    CHECK(mol->getBondWithIdx(2)->getBondType() == Bond::AROMATIC);
+    CHECK(mol->getBondWithIdx(4)->getIsAromatic());
+  }
+}
