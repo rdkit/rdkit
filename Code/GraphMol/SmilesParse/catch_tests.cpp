@@ -856,3 +856,31 @@ TEST_CASE("bogus recursive SMARTS", "[smarts]") {
   std::string sma = "C)foo";
   CHECK(SmartsToMol(sma) == nullptr);
 }
+
+TEST_CASE(
+    "Github #3998 MolFragmentToSmiles failing in Kekulization with "
+    "kekuleSmiles=true") {
+  auto mol = "Cc1ccccc1"_smiles;
+  REQUIRE(mol);
+  SECTION("normal") {
+    std::vector<int> ats{0};
+    std::string smi = MolFragmentToSmiles(*mol, ats);
+    CHECK(smi == "C");
+  }
+  SECTION("kekulized") {
+    std::vector<int> ats{0};
+    bool doIsomericSmiles = true;
+    bool doKekule = true;
+    std::string smi = MolFragmentToSmiles(*mol, ats, nullptr, nullptr, nullptr,
+                                          doIsomericSmiles, doKekule);
+    CHECK(smi == "C");
+  }
+  SECTION("including ring parts") {
+    std::vector<int> ats{0, 1, 2};
+    bool doIsomericSmiles = true;
+    bool doKekule = true;
+    std::string smi = MolFragmentToSmiles(*mol, ats, nullptr, nullptr, nullptr,
+                                          doIsomericSmiles, doKekule);
+    CHECK(smi == "C:CC");
+  }
+}
