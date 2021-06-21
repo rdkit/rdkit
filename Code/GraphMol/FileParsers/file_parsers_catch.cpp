@@ -1,5 +1,5 @@
 //
-//  Copyright (C) 2020 Greg Landrum
+//  Copyright (C) 2020-2021 Greg Landrum and other RDKit contributors
 //   @@ All Rights Reserved @@
 //  This file is part of the RDKit.
 //  The contents are covered by the terms of the BSD license
@@ -3571,4 +3571,35 @@ M  END)CTAB"_ctab;
   REQUIRE(m);
   REQUIRE(m->getBondBetweenAtoms(1, 2));
   CHECK(m->getBondBetweenAtoms(1, 2)->getBondDir() == Bond::EITHERDOUBLE);
+}
+
+TEST_CASE(
+    "Github #4256: multiple ATTCHPT entries for one atom handled incorrectly") {
+  std::string ctab = R"CTAB(
+  Mrv2108 06172117542D          
+
+  0  0  0     0  0            999 V3000
+M  V30 BEGIN CTAB
+M  V30 COUNTS 2 1 0 0 0
+M  V30 BEGIN ATOM
+M  V30 1 C -4.8333 3.5 0 0
+M  V30 2 C -3.4997 4.27 0 0 ATTCHPT=-1 ATTCHPT=3
+M  V30 END ATOM
+M  V30 BEGIN BOND
+M  V30 1 1 1 2
+M  V30 END BOND
+M  V30 END CTAB
+M  END)CTAB";
+  { REQUIRE_THROWS_AS(MolBlockToMol(ctab), FileParseException); }
+  {
+    bool sanitize = true;
+    bool removeHs = true;
+    bool strictParsing = false;
+    std::unique_ptr<RWMol> m{
+        MolBlockToMol(ctab, sanitize, removeHs, strictParsing)};
+    REQUIRE(m);
+    auto atom = m->getAtomWithIdx(1);
+    REQUIRE(atom->hasProp(common_properties::molAttachPoint));
+    REQUIRE(atom->getProp<int>(common_properties::molAttachPoint) == -1);
+  }
 }
