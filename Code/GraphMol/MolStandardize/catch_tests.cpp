@@ -832,3 +832,15 @@ TEST_CASE("super parent") {
     CHECK(MolToSmiles(*nm) == "O=CCCc1cc(C(=O)O)c(O)c(C(F)Cl)c1O");
   }
 }
+
+TEST_CASE(
+    "Github #4260: Exception thrown by reionizer when dealing with Mg+2") {
+  SECTION("reported") {
+    auto m = "[Mg].OC(=O)c1ccccc1C"_smiles;
+    REQUIRE(m);
+    std::unique_ptr<RWMol> m2(MolStandardize::reionize(m.get()));
+    REQUIRE(m2);
+    CHECK(m2->getAtomWithIdx(0)->getFormalCharge() == 2);
+    CHECK(m2->getAtomWithIdx(1)->getFormalCharge() == -1);
+  }
+}
