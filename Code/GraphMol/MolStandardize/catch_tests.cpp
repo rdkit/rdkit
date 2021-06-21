@@ -613,3 +613,15 @@ TEST_CASE("github #2970: chargeParent() segmentation fault when standardization 
     REQUIRE(outm);
     CHECK(MolToSmiles(*outm) == "COc1ccc(Nc2ncnc3[nH]cnc23)cc1");
 }
+
+TEST_CASE(
+    "Github #4260: Exception thrown by reionizer when dealing with Mg+2") {
+  SECTION("reported") {
+    auto m = "[Mg].OC(=O)c1ccccc1C"_smiles;
+    REQUIRE(m);
+    std::unique_ptr<RWMol> m2(MolStandardize::reionize(m.get()));
+    REQUIRE(m2);
+    CHECK(m2->getAtomWithIdx(0)->getFormalCharge() == 2);
+    CHECK(m2->getAtomWithIdx(1)->getFormalCharge() == -1);
+  }
+}
