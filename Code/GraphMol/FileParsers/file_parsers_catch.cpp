@@ -3574,8 +3574,10 @@ M  END)CTAB"_ctab;
 }
 
 TEST_CASE(
-    "Github #4256: multiple ATTCHPT entries for one atom handled incorrectly") {
-  std::string ctab = R"CTAB(
+    "Github #4256: multiple ATTCHPT entries for one atom handled "
+    "incorrectly") {
+  SECTION("V3000") {
+    std::string ctab = R"CTAB(
   Mrv2108 06172117542D          
 
   0  0  0     0  0            999 V3000
@@ -3590,16 +3592,44 @@ M  V30 1 1 1 2
 M  V30 END BOND
 M  V30 END CTAB
 M  END)CTAB";
-  { REQUIRE_THROWS_AS(MolBlockToMol(ctab), FileParseException); }
-  {
-    bool sanitize = true;
-    bool removeHs = true;
-    bool strictParsing = false;
-    std::unique_ptr<RWMol> m{
-        MolBlockToMol(ctab, sanitize, removeHs, strictParsing)};
-    REQUIRE(m);
-    auto atom = m->getAtomWithIdx(1);
-    REQUIRE(atom->hasProp(common_properties::molAttachPoint));
-    REQUIRE(atom->getProp<int>(common_properties::molAttachPoint) == -1);
+    { REQUIRE_THROWS_AS(MolBlockToMol(ctab), FileParseException); }
+    {
+      bool sanitize = true;
+      bool removeHs = true;
+      bool strictParsing = false;
+      std::unique_ptr<RWMol> m{
+          MolBlockToMol(ctab, sanitize, removeHs, strictParsing)};
+      REQUIRE(m);
+      auto atom = m->getAtomWithIdx(1);
+      REQUIRE(atom->hasProp(common_properties::molAttachPoint));
+      REQUIRE(atom->getProp<int>(common_properties::molAttachPoint) == -1);
+    }
+  }
+  SECTION("V2000 1") {  // Marvin doesn't actually do this, but might as well
+                        // test for it anyway
+    std::string ctab = R"CTAB(
+  Mrv2108 06212115462D          
+
+  2  1  0  0  0  0            999 V2000
+   -2.5894    1.8751    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -1.8749    2.2876    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+  1  2  1  0  0  0  0
+M  APO  2   2   3   2   2
+M  END
+)CTAB";
+  }
+  SECTION("V2000 2") {  // Marvin doesn't actually do this, but might as well
+                        // test for it anyway
+    std::string ctab = R"CTAB(
+  Mrv2108 06212115482D          
+
+  2  1  0  0  0  0            999 V2000
+   -2.5894    1.8751    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -1.8749    2.2876    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+  1  2  1  0  0  0  0
+M  APO  1   2   3
+M  APO  1   2   2
+M  END
+)CTAB";
   }
 }

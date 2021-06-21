@@ -860,7 +860,7 @@ void ParseMarvinSmartsLine(RWMol *mol, const std::string &text,
 }
 
 void ParseAttachPointLine(RWMol *mol, const std::string &text,
-                          unsigned int line) {
+                          unsigned int line, bool strictParsing) {
   PRECONDITION(mol, "bad mol");
   PRECONDITION(text.substr(0, 6) == std::string("M  APO"), "bad APO line");
 
@@ -908,7 +908,18 @@ void ParseAttachPointLine(RWMol *mol, const std::string &text,
             // this is -1 in v3k mol blocks, so use that:
             val = -1;
           }
-          atom->setProp(common_properties::molAttachPoint, val);
+          if (atom->hasProp(common_properties::molAttachPoint)) {
+            std::ostringstream errout;
+            errout << "Multiple ATTCHPT values for atom " << atom->getIdx() + 1
+                   << " on line " << line;
+            if (strictParsing) {
+              throw FileParseException(errout.str());
+            } else {
+              BOOST_LOG(rdWarningLog) << errout.str() << std::endl;
+            }
+          } else {
+            atom->setProp(common_properties::molAttachPoint, val);
+          }
         }
       }
     } catch (boost::bad_lexical_cast &) {
@@ -1974,7 +1985,7 @@ bool ParseMolBlockProperties(std::istream *inStream, unsigned int &line,
     } else if (lineBeg == "M  MRV") {
       ParseMarvinSmartsLine(mol, tempStr, line);
     } else if (lineBeg == "M  APO") {
-      ParseAttachPointLine(mol, tempStr, line);
+      ParseAttachPointLine(mol, tempStr, line, strictParsing);
     } else if (lineBeg == "M  LIN") {
       ParseLinkNodeLine(mol, tempStr, line);
     }
@@ -2282,7 +2293,7 @@ void ParseV3000AtomProps(RWMol *mol, Atom *&atom, typename T::iterator &token,
         auto ival = FileParserUtils::toInt(val);
         if (atom->hasProp(common_properties::molAttachPoint)) {
           errout << "Multiple ATTCHPT values for atom " << atom->getIdx() + 1
-                 << " on line " << line << std::endl;
+                 << " on line " << line;
           if (strictParsing) {
             throw FileParseException(errout.str());
           } else {
