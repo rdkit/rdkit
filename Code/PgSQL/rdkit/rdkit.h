@@ -1,5 +1,6 @@
 //
-//  Copyright (c) 2010-2015, Novartis Institutes for BioMedical Research Inc.
+//  Copyright (c) 2010-2021, Novartis Institutes for BioMedical Research Inc.
+//    and other RDKit contributors
 //  All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -105,6 +106,7 @@ CROMol parseMolCTAB(char *data, bool keepConformer, bool warnOnFail,
                     bool asQuery);
 char *makeMolText(CROMol data, int *len, bool asSmarts, bool cxSmiles);
 char *makeCtabText(CROMol data, int *len, bool createDepictionIfMissing);
+const char *makeMolJSON(CROMol data);
 bool isValidSmiles(char *data);
 bool isValidSmarts(char *data);
 bool isValidCTAB(char *data);

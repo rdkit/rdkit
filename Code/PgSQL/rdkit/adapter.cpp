@@ -72,6 +72,10 @@
 #include <GraphMol/ChemReactions/ReactionFingerprints.h>
 #include <GraphMol/ChemReactions/ReactionUtils.h>
 
+#ifdef RDK_BUILD_MOLINTERCHANGE_SUPPORT
+#include <GraphMol/MolInterchange/MolInterchange.h>
+#endif
+
 #include "rdkit.h"
 #include "guc.h"
 #include "bitstring.h"
@@ -380,6 +384,23 @@ extern "C" char *makeCtabText(CROMol data, int *len,
 
   *len = StringData.size();
   return (char *)StringData.c_str();
+}
+
+extern "C" const char *makeMolJSON(CROMol data) {
+  std::string json = "MolToJSON not available";
+#ifdef RDK_BUILD_MOLINTERCHANGE_SUPPORT
+  auto *mol = (ROMol *)data;
+
+  try {
+    json = MolInterchange::MolToJSONData(*mol);
+  } catch (...) {
+    ereport(WARNING,
+            (errcode(ERRCODE_WARNING),
+             errmsg("makeMolJSON: problems converting molecule to JSON")));
+    json = "";
+  }
+#endif
+  return strdup(json.c_str());
 }
 
 extern "C" char *makeMolBlob(CROMol data, int *len) {
