@@ -1,5 +1,5 @@
 //
-//  Copyright (C) 2020 Greg Landrum and T5 Informatics GmbH
+//  Copyright (C) 2020 Greg Landrum and other RDKit contributors
 //
 //   @@ All Rights Reserved @@
 //  This file is part of the RDKit.
@@ -15,6 +15,7 @@
 #include <GraphMol/MolOps.h>
 
 #include <GraphMol/FileParsers/FileParsers.h>
+#include <GraphMol/FileParsers/MolFileStereochem.h>
 #include <GraphMol/SmilesParse/SmilesParse.h>
 #include <GraphMol/SmilesParse/SmilesWrite.h>
 
@@ -1430,6 +1431,140 @@ TEST_CASE(
           Chirality::findPotentialStereo(*mol, cleanIt, flagPossible);
       REQUIRE(stereoInfo.size() == 2);
       CHECK(stereoInfo[0].centeredOn == 1);
+    }
+  }
+}
+
+TEST_CASE("pickBondsToWedge() should avoid double bonds") {
+  SECTION("simplest") {
+    auto mol = "OC=C[C@H](C1CC1)C2CCC2"_smiles;
+    REQUIRE(mol);
+    auto wedgedBonds = pickBondsToWedge(*mol);
+    REQUIRE(wedgedBonds.size() == 1);
+    auto head = wedgedBonds.begin();
+    CHECK(head->first == 3);
+    CHECK(head->second == 3);
+  }
+  SECTION("simplest, specified double bond") {
+    auto mol = "OC=C[C@H](C1CC1)C2CCC2"_smiles;
+    REQUIRE(mol);
+    mol->getBondBetweenAtoms(1, 2)->setStereoAtoms(0, 3);
+    mol->getBondBetweenAtoms(1, 2)->setStereo(Bond::BondStereo::STEREOCIS);
+    auto wedgedBonds = pickBondsToWedge(*mol);
+    REQUIRE(wedgedBonds.size() == 1);
+    auto head = wedgedBonds.begin();
+    CHECK(head->first == 3);
+    CHECK(head->second == 3);
+  }
+  SECTION("prefer unspecified bond stereo") {
+    auto mol = "OC=C[C@H](C=CF)(C=CC)"_smiles;
+    REQUIRE(mol);
+    mol->getBondBetweenAtoms(1, 2)->setStereoAtoms(0, 3);
+    mol->getBondBetweenAtoms(1, 2)->setStereo(Bond::BondStereo::STEREOCIS);
+    mol->getBondBetweenAtoms(4, 5)->setStereoAtoms(3, 6);
+    mol->getBondBetweenAtoms(4, 5)->setStereo(Bond::BondStereo::STEREOANY);
+    auto wedgedBonds = pickBondsToWedge(*mol);
+    REQUIRE(wedgedBonds.size() == 1);
+    auto head = wedgedBonds.begin();
+    CHECK(head->first == 6);
+    CHECK(head->second == 3);
+  }
+}
+
+TEST_CASE("addWavyBondsForStereoAny()") {
+  SECTION("simplest") {
+    auto mol = "CC=CC"_smiles;
+    REQUIRE(mol);
+    mol->getBondWithIdx(1)->setStereoAtoms(0, 3);
+    mol->getBondWithIdx(1)->setStereo(Bond::BondStereo::STEREOANY);
+    addWavyBondsForStereoAny(*mol);
+    CHECK(mol->getBondWithIdx(0)->getBondDir() == Bond::BondDir::UNKNOWN);
+    CHECK(mol->getBondWithIdx(1)->getStereo() == Bond::BondStereo::STEREONONE);
+  }
+  SECTION("don't reset flags") {
+    auto mol = "CC=CC"_smiles;
+    REQUIRE(mol);
+    mol->getBondWithIdx(1)->setStereoAtoms(0, 3);
+    mol->getBondWithIdx(1)->setStereo(Bond::BondStereo::STEREOANY);
+    bool clearFlags = false;
+    addWavyBondsForStereoAny(*mol, clearFlags);
+    CHECK(mol->getBondWithIdx(0)->getBondDir() == Bond::BondDir::UNKNOWN);
+    CHECK(mol->getBondWithIdx(1)->getStereo() == Bond::BondStereo::STEREOANY);
+  }
+  SECTION("avoid double bonds") {
+    auto mol = "CC=CC(CC)=CC"_smiles;
+    REQUIRE(mol);
+    mol->getBondWithIdx(5)->setStereoAtoms(2, 7);
+    mol->getBondWithIdx(5)->setStereo(Bond::BondStereo::STEREOANY);
+    addWavyBondsForStereoAny(*mol);
+    CHECK(mol->getBondWithIdx(6)->getBondDir() == Bond::BondDir::UNKNOWN);
+    CHECK(mol->getBondWithIdx(5)->getStereo() == Bond::BondStereo::STEREONONE);
+  }
+  SECTION("avoid chiral atoms") {
+    auto mol = "C[C@](F)(Cl)C(C)=CC"_smiles;
+    REQUIRE(mol);
+    mol->getBondWithIdx(5)->setStereoAtoms(1, 7);
+    mol->getBondWithIdx(5)->setStereo(Bond::BondStereo::STEREOANY);
+    addWavyBondsForStereoAny(*mol);
+    CHECK(mol->getBondWithIdx(4)->getBondDir() == Bond::BondDir::UNKNOWN);
+    CHECK(mol->getBondWithIdx(5)->getStereo() == Bond::BondStereo::STEREONONE);
+  }
+  SECTION("prefer atoms with less neighbors") {
+    auto mol = "CC(F)(Cl)C(CF)=CC"_smiles;
+    REQUIRE(mol);
+    mol->getBondWithIdx(6)->setStereoAtoms(1, 8);
+    mol->getBondWithIdx(6)->setStereo(Bond::BondStereo::STEREOANY);
+    addWavyBondsForStereoAny(*mol);
+    CHECK(mol->getBondWithIdx(7)->getBondDir() == Bond::BondDir::UNKNOWN);
+    CHECK(mol->getBondWithIdx(6)->getStereo() == Bond::BondStereo::STEREONONE);
+  }
+  SECTION("more complex") {
+    auto mol = "CC=CC(C=CO)=CC"_smiles;
+    REQUIRE(mol);
+    mol->getBondWithIdx(6)->setStereoAtoms(2, 8);
+    mol->getBondWithIdx(6)->setStereo(Bond::BondStereo::STEREOANY);
+    addWavyBondsForStereoAny(*mol);
+    CHECK(mol->getBondWithIdx(7)->getBondDir() == Bond::BondDir::UNKNOWN);
+    CHECK(mol->getBondWithIdx(6)->getStereo() == Bond::BondStereo::STEREONONE);
+  }
+  SECTION("no solution without changing threshold") {
+    auto mol = "CC=CC=CC=CC"_smiles;
+    REQUIRE(mol);
+    mol->getBondWithIdx(1)->setStereoAtoms(0, 3);
+    mol->getBondWithIdx(1)->setStereo(Bond::BondStereo::STEREOCIS);
+    mol->getBondWithIdx(3)->setStereoAtoms(2, 5);
+    mol->getBondWithIdx(3)->setStereo(Bond::BondStereo::STEREOANY);
+    mol->getBondWithIdx(5)->setStereoAtoms(4, 7);
+    mol->getBondWithIdx(5)->setStereo(Bond::BondStereo::STEREOCIS);
+    addWavyBondsForStereoAny(*mol);
+    // we didn't actually do anything:
+    CHECK(mol->getBondWithIdx(2)->getBondDir() == Bond::BondDir::NONE);
+    CHECK(mol->getBondWithIdx(3)->getStereo() == Bond::BondStereo::STEREOANY);
+
+    bool clearDoubleBondFlags = true;
+    addWavyBondsForStereoAny(*mol, clearDoubleBondFlags,
+                             StereoBondThresholds::DBL_BOND_SPECIFIED_STEREO);
+    CHECK(mol->getBondWithIdx(2)->getBondDir() == Bond::BondDir::UNKNOWN);
+    CHECK(mol->getBondWithIdx(3)->getStereo() == Bond::BondStereo::STEREONONE);
+  }
+  SECTION("multiple bonds to wedge") {
+    auto mol = "CCC(C)=CC=C(CC)C=CC(C)=CC"_smiles;
+    REQUIRE(mol);
+    mol->getBondWithIdx(3)->setStereoAtoms(3, 5);
+    mol->getBondWithIdx(3)->setStereo(Bond::BondStereo::STEREOCIS);
+    mol->getBondWithIdx(9)->setStereoAtoms(6, 11);
+    mol->getBondWithIdx(9)->setStereo(Bond::BondStereo::STEREOANY);
+    mol->getBondWithIdx(5)->setStereoAtoms(4, 7);
+    mol->getBondWithIdx(5)->setStereo(Bond::BondStereo::STEREOANY);
+    addWavyBondsForStereoAny(*mol);
+    CHECK(mol->getBondWithIdx(9)->getStereo() == Bond::BondStereo::STEREONONE);
+    CHECK(mol->getBondWithIdx(5)->getStereo() == Bond::BondStereo::STEREONONE);
+    CHECK(mol->getBondWithIdx(8)->getBondDir() == Bond::BondDir::UNKNOWN);
+    for (const auto bond : mol->bonds()) {
+      if (bond->getBondType() == Bond::BondType::SINGLE &&
+          bond->getIdx() != 8) {
+        CHECK(bond->getBondDir() == Bond::BondDir::NONE);
+      }
     }
   }
 }
