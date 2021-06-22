@@ -403,6 +403,32 @@ extern "C" const char *makeMolJSON(CROMol data) {
   return strdup(json.c_str());
 }
 
+extern "C" CROMol parseMolJSON(char *data, bool warnOnFail) {
+  RWMol *mol = nullptr;
+#ifdef RDK_BUILD_MOLINTERCHANGE_SUPPORT
+  try {
+    auto mols = MolInterchange::JSONDataToMols(std::string(data));
+    mol = new RWMol(*mols[0]);
+  } catch (...) {
+    mol = nullptr;
+  }
+  if (mol == nullptr) {
+    if (warnOnFail) {
+      ereport(WARNING,
+              (errcode(ERRCODE_WARNING),
+               errmsg("could not create molecule from JSON '%s'", data)));
+
+    } else {
+      ereport(ERROR,
+              (errcode(ERRCODE_DATA_EXCEPTION),
+               errmsg("could not create molecule from JSON '%s'", data)));
+    }
+  }
+#endif
+
+  return (CROMol)mol;
+}
+
 extern "C" char *makeMolBlob(CROMol data, int *len) {
   auto *mol = (ROMol *)data;
   StringData.clear();

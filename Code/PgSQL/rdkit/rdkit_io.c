@@ -301,6 +301,7 @@ mol_from_pkl(PG_FUNCTION_ARGS) {
   PG_RETURN_MOL_P(res);           
 }
 
+
 PGDLLEXPORT Datum           mol_to_pkl(PG_FUNCTION_ARGS);
 PG_FUNCTION_INFO_V1(mol_to_pkl);
 Datum
@@ -322,6 +323,7 @@ mol_to_pkl(PG_FUNCTION_ARGS) {
   PG_RETURN_BYTEA_P( res );
 }
 
+
 PGDLLEXPORT Datum           mol_to_json(PG_FUNCTION_ARGS);
 PG_FUNCTION_INFO_V1(mol_to_json);
 Datum
@@ -342,6 +344,24 @@ mol_to_json(PG_FUNCTION_ARGS) {
     free((void *)str);
     PG_RETURN_CSTRING(res);
   }
+}
+
+PGDLLEXPORT Datum           mol_from_json(PG_FUNCTION_ARGS);
+PG_FUNCTION_INFO_V1(mol_from_json);
+Datum
+mol_from_json(PG_FUNCTION_ARGS) {
+  char    *data = PG_GETARG_CSTRING(0);
+  CROMol  mol;
+  Mol     *res;
+
+  mol = parseMolJSON(data,true);
+  if (!mol) {
+    PG_RETURN_NULL();
+  }
+  res = deconstructROMol(mol);
+  freeCROMol(mol);
+
+  PG_RETURN_MOL_P(res);           
 }
 
 
