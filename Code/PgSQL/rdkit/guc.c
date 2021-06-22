@@ -129,7 +129,7 @@ initRDKitGUC()
   DefineCustomBoolVariable(
                            "rdkit.do_enhanced_stereo_sss",
                            "Should enhanced stereochemistry be taken into account in substructure matching",
-                           "If false (the default), enhanced stereo information is ignored in substructure matching.",
+                           "If true (the default), enhanced stereo information is used in substructure matching. Has no effect if rdkit.do_chiral_sss is false.",
                            &rdkit_do_enhanced_stereo_sss,
                            false,
                            PGC_USERSET,
