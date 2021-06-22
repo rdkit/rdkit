@@ -1,5 +1,6 @@
 //
-//  Copyright (c) 2010-2013, Novartis Institutes for BioMedical Research Inc.
+//  Copyright (c) 2010-2021 Novartis Institutes for BioMedical Research Inc.
+//    and other RDKit contributors
 //  All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -460,13 +461,18 @@ extern "C" int molcmp(CROMol i, CROMol a) {
     return res;
   }
 
-  RDKit::MatchVectType matchVect;
-  bool recursionPossible = false;
-  bool doChiralMatch = getDoChiralSSS();
-  bool ss1 = RDKit::SubstructMatch(*im, *am, matchVect, recursionPossible,
-                                   doChiralMatch);
-  bool ss2 = RDKit::SubstructMatch(*am, *im, matchVect, recursionPossible,
-                                   doChiralMatch);
+  bool useChirality = getDoChiralSSS();
+  bool useEnhancedStereo = getDoEnhancedStereoSSS();
+
+  RDKit::SubstructMatchParameters params;
+  params.recursionPossible = false;
+  params.useChirality = useChirality;
+  params.useEnhancedStereo = useEnhancedStereo;
+  params.maxMatches = 1;
+  auto mv1 = RDKit::SubstructMatch(*im, *am, params);
+  auto mv2 = RDKit::SubstructMatch(*am, *im, params);
+  bool ss1 = mv1.size() != 0;
+  bool ss2 = mv2.size() != 0;
   if (ss1 && !ss2) {
     return 1;
   } else if (!ss1 && ss2) {
@@ -474,26 +480,38 @@ extern "C" int molcmp(CROMol i, CROMol a) {
   }
 
   // the above can still fail in some chirality cases
-  std::string smi1 = MolToSmiles(*im, doChiralMatch);
-  std::string smi2 = MolToSmiles(*am, doChiralMatch);
+  std::string smi1;
+  std::string smi2;
+  if (!useEnhancedStereo) {
+    smi1 = MolToSmiles(*im, useChirality);
+    smi2 = MolToSmiles(*am, useChirality);
+  } else {
+    smi1 = MolToCXSmiles(*im);
+    smi2 = MolToCXSmiles(*am);
+  }
   return smi1 == smi2 ? 0 : (smi1 < smi2 ? -1 : 1);
 }
 
 extern "C" int MolSubstruct(CROMol i, CROMol a) {
   auto *im = (ROMol *)i;
   auto *am = (ROMol *)a;
-  RDKit::MatchVectType matchVect;
-
-  return RDKit::SubstructMatch(*im, *am, matchVect, true, getDoChiralSSS());
+  RDKit::SubstructMatchParameters params;
+  params.useChirality = getDoChiralSSS();
+  params.useEnhancedStereo = getDoEnhancedStereoSSS();
+  params.maxMatches = 1;
+  auto matchVect = RDKit::SubstructMatch(*im, *am, params);
+  return static_cast<int>(matchVect.size());
 }
 
 extern "C" int MolSubstructCount(CROMol i, CROMol a, bool uniquify) {
   auto *im = (ROMol *)i;
   auto *am = (ROMol *)a;
-  std::vector<RDKit::MatchVectType> matchVect;
-
-  return static_cast<int>(RDKit::SubstructMatch(*im, *am, matchVect, uniquify,
-                                                true, getDoChiralSSS()));
+  RDKit::SubstructMatchParameters params;
+  params.useChirality = getDoChiralSSS();
+  params.useEnhancedStereo = getDoEnhancedStereoSSS();
+  params.uniquify = uniquify;
+  auto matchVect = RDKit::SubstructMatch(*im, *am, params);
+  return static_cast<int>(matchVect.size());
 }
 
 /*******************************************
