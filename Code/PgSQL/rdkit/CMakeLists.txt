@@ -219,9 +219,15 @@ endif(${PostgreSQL_VERSION_STRING} VERSION_LESS 9.6)
 
 configure_file("${PG_CURRENT_SOURCE_DIR}${EXTENSION}.sql.in"
                "${PG_CURRENT_BINARY_DIR}${EXTENSION}--${PG_EXTVERSION}.sql")
+file(GLOB files "update_sql/*.in")
+foreach(file ${files})
+  string(REPLACE ".in" "" output_name ${file})
+  configure_file(${file} ${output_name})
+endforeach()
 set(installPgSQLBody "${installPgSQLBody}"
     "${installCopyCommand} \"${PG_CURRENT_BINARY_DIR}${EXTENSION}--${PG_EXTVERSION}.sql\" \"${PG_EXTENSIONDIR}\"\n"
     "${installCopyCommand} \"${PG_CURRENT_SOURCE_DIR}${EXTENSION}.control\" \"${PG_EXTENSIONDIR}\"\n"
+    "${installCopyCommand} \"${PG_CURRENT_SOURCE_DIR}update_sql/*.sql\" \"${PG_EXTENSIONDIR}\"\n"
     "${installCopyCommand} \"${PG_CURRENT_BINARY_DIR}${PG_RDKIT_LIB_SRC}\" "
     "\"${PG_PKGLIBDIR}${PG_RDKIT_LIB_DEST}\"\n")
 file(WRITE ${testPgSQLName} ${testPgSQLBody})
