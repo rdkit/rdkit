@@ -433,5 +433,14 @@ class TestCase(unittest.TestCase):
       self.assertTrue(at.HasProp("_ChiralityPossible"))
 
 
+  def testEnumerateEitherDoubleStereo(self):
+    """ EnumerateStereoisomers from MOL with explicit either cis/trans bond """
+    rdbase = os.environ["RDBASE"]
+    filename = os.path.join(rdbase, 'Code/GraphMol/FileParsers/test_data/simple_either.mol')
+    mol = Chem.MolFromMolFile(filename)
+    smiles = [Chem.MolToSmiles(m) for m in AllChem.EnumerateStereoisomers(mol)]
+    self.assertEqual(set(smiles), {"C/C=C/C", "C/C=C\\C"})
+
+
 if __name__ == '__main__':
   unittest.main()
