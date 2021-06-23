@@ -3978,7 +3978,7 @@ CAS<~>
                                (125, 124, 126, 123), (126, 124, 125, 123)))
     matches = resMolSupplST.GetSubstructMatches(guanidiniumQuery, uniquify=True)
     self.assertEqual(len(matches), 2)
-    self.assertEqual(matches, ((66, 67, 69, 68), (123, 124, 126, 125)))
+    self.assertEqual(matches, ((66, 67, 68, 69), (123, 124, 125, 126)))
     btList2ST = getBtList2(resMolSupplST)
     self.assertTrue(btList2ST)
     resMolSupplMT = Chem.ResonanceMolSupplier(crambin)
@@ -4005,7 +4005,7 @@ CAS<~>
                                  (125, 124, 126, 123), (126, 124, 125, 123)))
       matches = suppl.GetSubstructMatches(guanidiniumQuery, uniquify=True, numThreads=0)
       self.assertEqual(len(matches), 2)
-      self.assertEqual(matches, ((66, 67, 69, 68), (123, 124, 126, 125)))
+      self.assertEqual(matches, ((66, 67, 68, 69), (123, 124, 125, 126)))
 
   def testGitHub1166(self):
     mol = Chem.MolFromSmiles('NC(=[NH2+])c1ccc(cc1)C(=O)[O-]')
