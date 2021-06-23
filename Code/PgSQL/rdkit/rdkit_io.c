@@ -354,7 +354,7 @@ mol_from_json(PG_FUNCTION_ARGS) {
   CROMol  mol;
   Mol     *res;
 
-  mol = parseMolJSON(data,true);
+  mol = parseMolJSON(data, true);
   if (!mol) {
     PG_RETURN_NULL();
   }

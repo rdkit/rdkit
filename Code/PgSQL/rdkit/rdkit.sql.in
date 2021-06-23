@@ -937,13 +937,13 @@ RETURNS bool
 AS 'MODULE_PATHNAME', 'mol_substruct'
 LANGUAGE C STRICT IMMUTABLE;
 
-CREATE OR REPLACE FUNCTION substruct_count(mol, mol,bool default true)
+CREATE OR REPLACE FUNCTION substruct_count(mol, mol, bool default true)
 RETURNS int
 @RDKIT_PARALLEL_SAFE@
 AS 'MODULE_PATHNAME', 'mol_substruct_count'
 LANGUAGE C STRICT IMMUTABLE;
 
-CREATE OR REPLACE FUNCTION substruct_count(mol, qmol,bool default true)
+CREATE OR REPLACE FUNCTION substruct_count(mol, qmol, bool default true)
 RETURNS int
 @RDKIT_PARALLEL_SAFE@
 AS 'MODULE_PATHNAME', 'mol_substruct_count'

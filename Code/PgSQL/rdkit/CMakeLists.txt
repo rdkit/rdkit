@@ -116,7 +116,7 @@ if(RDK_BUILD_INCHI_SUPPORT)
 endif(RDK_BUILD_INCHI_SUPPORT)
 if(RDK_BUILD_MOLINTERCHANGE_SUPPORT)
   set(jsonRegress "json")
-  set(pgRDKitLibList "${pgRDKitLibList}RDKitMolInterchange;")
+  set(pgRDKitLibList "${pgRDKitLibList}MolInterchange;")
 endif(RDK_BUILD_MOLINTERCHANGE_SUPPORT)
 set(pgRDKitLibList "${pgRDKitLibList}"
     "MolDraw2D;MolTransforms;MolHash;FMCS;ChemReactions;ChemTransforms;"
