@@ -1,5 +1,5 @@
 //
-//  Copyright (C) 2019-2020 Greg Landrum
+//  Copyright (C) 2019-2021 Greg Landrum and other RDKit contributors
 //
 //   @@ All Rights Reserved @@
 //  This file is part of the RDKit.
@@ -3140,5 +3140,41 @@ TEST_CASE("support annotation colors", "[drawing]") {
     outs.close();
     check_file_hash("testAnnotationColors.svg");
     CHECK(txt.find("fill:#0000FF' >2<") != std::string::npos);
+  }
+}
+
+TEST_CASE("Github #4238: prepareMolForDrawing and wavy bonds") {
+  {
+    auto mol = "CC=CC"_smiles;
+    REQUIRE(mol);
+    mol->getBondWithIdx(1)->setStereoAtoms(0, 3);
+    mol->getBondWithIdx(1)->setStereo(Bond::BondStereo::STEREOANY);
+    bool kekulize = true;
+    bool addChiralHs = true;
+    bool wedgeBonds = true;
+    bool forceCoords = true;
+    bool wavyBonds = false;
+    MolDraw2DUtils::prepareMolForDrawing(*mol, kekulize, addChiralHs,
+                                         wedgeBonds, forceCoords, wavyBonds);
+    CHECK(mol->getBondWithIdx(0)->getBondDir() == Bond::BondDir::NONE);
+    CHECK(mol->getBondWithIdx(1)->getStereo() == Bond::BondStereo::STEREOANY);
+
+    RWMol mol2(*mol);
+    wavyBonds = true;
+    MolDraw2DUtils::prepareMolForDrawing(mol2, kekulize, addChiralHs,
+                                         wedgeBonds, forceCoords, wavyBonds);
+    CHECK(mol2.getBondWithIdx(0)->getBondDir() == Bond::BondDir::UNKNOWN);
+    CHECK(mol2.getBondWithIdx(1)->getStereo() == Bond::BondStereo::STEREONONE);
+
+    MolDraw2DSVG drawer(500, 200, 250, 200);
+    // drawer.drawOptions().prepareMolsBeforeDrawing = false;
+    MOL_PTR_VECT ms{mol.get(), &mol2};
+    std::vector<std::string> legends = {"before", "after"};
+    drawer.drawMolecules(ms, &legends);
+    drawer.finishDrawing();
+    std::string text = drawer.getDrawingText();
+    std::ofstream outs("testGithub4238_1.svg");
+    outs << text;
+    outs.flush();
   }
 }

@@ -137,7 +137,7 @@ ROMol *Reionizer::reionize(const ROMol &mol) {
       // returns the acid strength ranking (ppos)
       // and the substruct match (poccur) in a pair
       std::shared_ptr<std::pair<unsigned int, std::vector<unsigned int>>> res(
-          this->strongestProtonated(mol, abpairs));
+          this->strongestProtonated(*omol, abpairs));
       if (res == nullptr) {
         break;
       } else {

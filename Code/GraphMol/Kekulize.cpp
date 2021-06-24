@@ -495,27 +495,41 @@ void kekulizeFused(RWMol &mol, const VECT_INT_VECT &arings,
 }  // namespace
 
 namespace MolOps {
-void Kekulize(RWMol &mol, bool markAtomsBonds, unsigned int maxBackTracks) {
+namespace details {
+void KekulizeFragment(RWMol &mol, const boost::dynamic_bitset<> &atomsToUse,
+                      const boost::dynamic_bitset<> &bondsToUse,
+                      bool markAtomsBonds, unsigned int maxBackTracks) {
+  PRECONDITION(atomsToUse.size() == mol.getNumAtoms(),
+               "atomsToUse is wrong size");
+  PRECONDITION(bondsToUse.size() == mol.getNumBonds(),
+               "bondsToUse is wrong size");
+
   // there's no point doing kekulization if there are no aromatic bonds:
   bool foundAromatic = false;
-  for (ROMol::BondIterator bi = mol.beginBonds();
-       bi != mol.endBonds() && !foundAromatic; ++bi) {
-    if ((*bi)->getIsAromatic()) {
+  for (const auto bond : mol.bonds()) {
+    if (bondsToUse[bond->getIdx()] && bond->getIsAromatic()) {
       foundAromatic = true;
+      break;
     }
   }
 
   // before everything do implicit valence calculation and store them
   // we will repeat after kekulization and compare for the sake of error
   // checking
-  INT_VECT valences;
   int numAtoms = mol.getNumAtoms();
-  valences.reserve(numAtoms);
-  for (ROMol::AtomIterator ai = mol.beginAtoms(); ai != mol.endAtoms(); ++ai) {
-    (*ai)->calcImplicitValence(false);
-    valences.push_back((*ai)->getTotalValence());
-    if (!foundAromatic && (*ai)->getIsAromatic()) {
+  INT_VECT valences(numAtoms);
+  boost::dynamic_bitset<> dummyAts(mol.getNumAtoms());
+  for (auto atom : mol.atoms()) {
+    if (!atomsToUse[atom->getIdx()]) {
+      continue;
+    }
+    atom->calcImplicitValence(false);
+    valences[atom->getIdx()] = atom->getTotalValence();
+    if (atom->getIsAromatic()) {
       foundAromatic = true;
+    }
+    if (!atom->getAtomicNum()) {
+      dummyAts[atom->getIdx()] = 1;
     }
   }
   if (!foundAromatic) {
@@ -533,41 +547,46 @@ void Kekulize(RWMol &mol, bool markAtomsBonds, unsigned int maxBackTracks) {
 
   // first find the all the simple rings in the molecule that are not
   // completely composed of dummy atoms
-  VECT_INT_VECT arings;
-  boost::dynamic_bitset<> dummyAts(mol.getNumAtoms());
-  for (ROMol::AtomIterator atit = mol.beginAtoms(); atit != mol.endAtoms();
-       ++atit) {
-    if (!(*atit)->getAtomicNum()) {
-      dummyAts[(*atit)->getIdx()] = 1;
-    }
+  VECT_INT_VECT allrings;
+  if (mol.getRingInfo()->isInitialized()) {
+    allrings = mol.getRingInfo()->atomRings();
+  } else {
+    MolOps::findSSSR(mol, allrings);
   }
-  if (dummyAts.any()) {
-    VECT_INT_VECT allrings;
-    if (mol.getRingInfo()->isInitialized()) {
-      allrings = mol.getRingInfo()->atomRings();
-    } else {
-      MolOps::findSSSR(mol, allrings);
-    }
-    arings.reserve(allrings.size());
-    for (auto &ring : allrings) {
-      for (auto ai : ring) {
-        if (!dummyAts[ai]) {
-          arings.push_back(ring);
-          break;
-        }
+  VECT_INT_VECT arings;
+  arings.reserve(allrings.size());
+  for (auto &ring : allrings) {
+    bool ringOk = false;
+    for (auto ai : ring) {
+      if (!atomsToUse[ai]) {
+        ringOk = false;
+        break;
+      }
+      if (!dummyAts[ai]) {
+        ringOk = true;
       }
     }
-  } else {
-    if (mol.getRingInfo()->isInitialized()) {
-      arings = mol.getRingInfo()->atomRings();
-    } else {
-      MolOps::findSSSR(mol, arings);
+    if (ringOk) {
+      arings.push_back(ring);
     }
   }
 
+  VECT_INT_VECT allbrings;
+  RingUtils::convertToBonds(arings, allbrings, mol);
   VECT_INT_VECT brings;
-  // brings = mol.getRingInfo()->bondRings();
-  RingUtils::convertToBonds(arings, brings, mol);
+  brings.reserve(allbrings.size());
+  for (auto &ring : allbrings) {
+    bool ringOk = true;
+    for (auto bi : ring) {
+      if (!bondsToUse[bi]) {
+        ringOk = false;
+        break;
+      }
+    }
+    if (ringOk) {
+      brings.push_back(ring);
+    }
+  }
 
   // make a neighbor map for the rings i.e. a ring is a
   // neighbor to another candidate ring if it shares at least
@@ -602,28 +621,31 @@ void Kekulize(RWMol &mol, bool markAtomsBonds, unsigned int maxBackTracks) {
   if (markAtomsBonds) {
     // if we want the atoms and bonds to be marked non-aromatic do
     // that here.
-    for (ROMol::BondIterator bi = mol.beginBonds(); bi != mol.endBonds();
-         ++bi) {
-      (*bi)->setIsAromatic(false);
+    for (auto bond : mol.bonds()) {
+      if (bondsToUse[bond->getIdx()]) {
+        bond->setIsAromatic(false);
+      }
     }
-    for (ROMol::AtomIterator ai = mol.beginAtoms(); ai != mol.endAtoms();
-         ++ai) {
-      if ((*ai)->getIsAromatic()) {
-        if (!mol.getRingInfo()->numAtomRings((*ai)->getIdx())) {
+    for (auto atom : mol.atoms()) {
+      if (atomsToUse[atom->getIdx()] && atom->getIsAromatic()) {
+        // if we're doing the full molecule and there are aromatic atoms not in
+        // a ring, throw an exception
+        if (atomsToUse.all() && bondsToUse.all() &&
+            !mol.getRingInfo()->numAtomRings(atom->getIdx())) {
           std::ostringstream errout;
-          errout << "non-ring atom " << (*ai)->getIdx() << " marked aromatic";
+          errout << "non-ring atom " << atom->getIdx() << " marked aromatic";
           std::string msg = errout.str();
           BOOST_LOG(rdErrorLog) << msg << std::endl;
-          throw AtomKekulizeException(msg, (*ai)->getIdx());
+          throw AtomKekulizeException(msg, atom->getIdx());
         }
-        (*ai)->setIsAromatic(false);
+        atom->setIsAromatic(false);
         // make sure "explicit" Hs on things like pyrroles don't hang around
         // this was Github Issue 141
-        if (((*ai)->getAtomicNum() == 7 || (*ai)->getAtomicNum() == 15) &&
-            (*ai)->getFormalCharge() == 0 && (*ai)->getNumExplicitHs() == 1) {
-          (*ai)->setNoImplicit(false);
-          (*ai)->setNumExplicitHs(0);
-          (*ai)->updatePropertyCache(false);
+        if ((atom->getAtomicNum() == 7 || atom->getAtomicNum() == 15) &&
+            atom->getFormalCharge() == 0 && atom->getNumExplicitHs() == 1) {
+          atom->setNoImplicit(false);
+          atom->setNumExplicitHs(0);
+          atom->updatePropertyCache(false);
         }
       }
     }
@@ -632,19 +654,29 @@ void Kekulize(RWMol &mol, bool markAtomsBonds, unsigned int maxBackTracks) {
   // ok some error checking here force a implicit valence
   // calculation that should do some error checking by itself. In
   // addition compare them to what they were before kekulizing
-  int i = 0;
-  for (ROMol::AtomIterator ai = mol.beginAtoms(); ai != mol.endAtoms(); ++ai) {
-    int val = (*ai)->getTotalValence();
-    if (val != valences[i]) {
+  for (auto atom : mol.atoms()) {
+    if (!atomsToUse[atom->getIdx()]) {
+      continue;
+    }
+    int val = atom->getTotalValence();
+    if (val != valences[atom->getIdx()]) {
       std::ostringstream errout;
-      errout << "Kekulization somehow screwed up valence on " << (*ai)->getIdx()
-             << ": " << val << "!=" << valences[i] << std::endl;
+      errout << "Kekulization somehow screwed up valence on " << atom->getIdx()
+             << ": " << val << "!=" << valences[atom->getIdx()] << std::endl;
       std::string msg = errout.str();
       BOOST_LOG(rdErrorLog) << msg << std::endl;
-      throw AtomKekulizeException(msg, (*ai)->getIdx());
+      throw AtomKekulizeException(msg, atom->getIdx());
     }
-    i++;
   }
 }
-}  // end of namespace MolOps
-}  // end of namespace RDKit
+}  // namespace details
+void Kekulize(RWMol &mol, bool markAtomsBonds, unsigned int maxBackTracks) {
+  boost::dynamic_bitset<> atomsToUse(mol.getNumAtoms());
+  atomsToUse.set();
+  boost::dynamic_bitset<> bondsToUse(mol.getNumBonds());
+  bondsToUse.set();
+  details::KekulizeFragment(mol, atomsToUse, bondsToUse, markAtomsBonds,
+                            maxBackTracks);
+}
+}  // namespace MolOps
+}  // namespace RDKit

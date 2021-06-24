@@ -1,5 +1,5 @@
 //
-//  Copyright (C) 2003-2014 Greg Landrum and Rational Discovery LLC
+//  Copyright (C) 2003-2021 Greg Landrum and other RDKit contributors
 //
 //   @@ All Rights Reserved @@
 //  This file is part of the RDKit.
@@ -2150,16 +2150,39 @@ ARGUMENTS:\n\
     python::def("WedgeMolBonds", WedgeMolBonds, docString.c_str());
 
     docString =
-        "Set the wedging on an individual bond from a molecule.\n\
-   The wedging scheme used is that from Mol files.\n\
-\n\
-  ARGUMENTS:\n\
-\n\
-    - bond: the bond to update\n\
-    - atom ID: the atom from which to do the wedging\n\
-    - conformer: the conformer to use to determine wedge direction\n\
-\n\
-\n";
+        R"DOC(Constants used to set the thresholds for which single bonds can be made wavy.)DOC";
+    python::class_<StereoBondThresholds>("StereoBondThresholds",
+                                         docString.c_str(), python::no_init)
+        .def_readonly("DBL_BOND_NO_STEREO",
+                      &StereoBondThresholds::DBL_BOND_NO_STEREO,
+                      "neighboring double bond without stereo info")
+        .def_readonly("DBL_BOND_SPECIFIED_STEREO",
+                      &StereoBondThresholds::DBL_BOND_SPECIFIED_STEREO,
+                      "neighboring double bond with stereo specified")
+        .def_readonly("CHIRAL_ATOM", &StereoBondThresholds::CHIRAL_ATOM,
+                      "atom with specified chirality")
+        .def_readonly("DIRECTION_SET", &StereoBondThresholds::DIRECTION_SET,
+                      "single bond with the direction already set");
+
+    docString = R"DOC(set wavy bonds around double bonds with STEREOANY stereo
+  ARGUMENTS :
+    - molecule : the molecule to update\n -
+    - conformer : the conformer to use to determine wedge direction
+)DOC";
+    python::def("AddWavyBondsForStereoAny", addWavyBondsForStereoAny,
+                (python::arg("mol"), python::arg("clearDoubleBondFlags") = true,
+                 python::arg("addWhenImpossible") =
+                     StereoBondThresholds::DBL_BOND_NO_STEREO),
+                docString.c_str());
+
+    docString =
+        R"DOC(Set the wedging on an individual bond from a molecule.
+   The wedging scheme used is that from Mol files.
+  ARGUMENTS:
+    - bond: the bond to update
+    - atom ID: the atom from which to do the wedging
+    - conformer: the conformer to use to determine wedge direction
+)DOC";
     python::def("WedgeBond", WedgeBond, docString.c_str());
 
     // ------------------------------------------------------------------------

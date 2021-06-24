@@ -1,7 +1,6 @@
-// $Id$
 //
-//  Copyright (c) 2010-2015, Novartis Institutes for BioMedical Research Inc.
-//  All rights reserved.
+//  Copyright (c) 2010-2021 Novartis Institutes for BioMedical Research Inc.
+//    and other RDKit contributors
 //
 // Redistribution and use in source and binary forms, with or without
 // modification, are permitted provided that the following conditions are
@@ -41,6 +40,7 @@ extern "C" {
 double getTanimotoLimit(void);
 double getDiceLimit(void);
 bool getDoChiralSSS(void);
+bool getDoEnhancedStereoSSS(void);
 int getSubstructFpSize(void);
 int getMorganFpSize(void);
 int getFeatMorganFpSize(void);

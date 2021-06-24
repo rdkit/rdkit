@@ -2179,18 +2179,12 @@ void findPotentialStereoBonds(ROMol &mol, bool cleanIt) {
           !(mol.getRingInfo()->numBondRings((*bondIt)->getIdx()))) {
         // we are ignoring ring bonds here - read the FIX above
         Bond *dblBond = *bondIt;
-        // We ignore bonds flagged as EITHERDOUBLE or STEREOANY which have
-        // stereo atoms set.
-        if (dblBond->getBondDir() == Bond::EITHERDOUBLE ||
-            (dblBond->getStereo() == Bond::STEREOANY &&
-             dblBond->getStereoAtoms().size() == 2)) {
-          continue;
-        }
         // proceed only if we either want to clean the stereocode on this bond,
         // if none is set on it yet, or it is STEREOANY and we need to find
         // stereoatoms
         if (cleanIt || dblBond->getStereo() == Bond::STEREONONE ||
-            dblBond->getStereo() == Bond::STEREOANY) {
+            (dblBond->getStereo() == Bond::STEREOANY &&
+             dblBond->getStereoAtoms().size() != 2)) {
           dblBond->setStereo(Bond::STEREONONE);
           const Atom *begAtom = dblBond->getBeginAtom(),
                      *endAtom = dblBond->getEndAtom();

@@ -544,6 +544,7 @@ Available parameters and their default values are:
 -   rdkit.tanimoto\_threshold : threshold value for the Tanimoto similarity operator. Searches done using Tanimoto similarity will only return results with a similarity of at least this value.
 -   rdkit.dice\_threshold : threshold value for the Dice similiarty operator. Searches done using Dice similarity will only return results with a similarity of at least this value.
 -   rdkit.do\_chiral\_sss : toggles whether or not stereochemistry is used in substructure matching. (*available from 2013\_03 release*).
+-   rdkit.do\_enhanced\_stereo\_sss : toggles whether or not enhanced stereo is used in substructure matching. Has no effect if `rdkit.do_chiral_sss` is false. (*available from 2021\_09 release*).
 -   rdkit.sss\_fp\_size : the size (in bits) of the fingerprint used for substructure screening.
 -   rdkit.morgan\_fp\_size : the size (in bits) of morgan fingerprints
 -   rdkit.featmorgan\_fp\_size : the size (in bits) of featmorgan fingerprints
@@ -636,6 +637,8 @@ There are additional operators defined in the cartridge, but these are used for 
 -   mol\_to\_pkl(mol) : returns binary string (bytea) for a molecule. (*available from Q3 2012 (2012\_09) release*)
 -   mol\_to\_ctab(mol,bool default true) : returns a CTAB (mol block) string for a molecule. The optional second argument controls whether or not 2D coordinates will be generated for molecules that don't have coordinates. (*available from the 2014\_03 release*)
 -   mol\_to\_svg(mol,string default '',int default 250, int default 200, string default '') : returns an SVG with a drawing of the molecule. The optional parameters are a string to use as the legend, the width of the image, the height of the image, and a JSON with additional rendering parameters. (*available from the 2016\_09 release*)
+-   mol\_to\_json(string) : returns the commonchem JSON for a molecule. (*available from the 2021\_09 release*)
+-   mol\_from\_json(string) : returns a molecule for a commonchem JSON string, NULL if the molecule construction fails. (*available from the 2021\_09 release*)
 
 
 ##### Substructure operations

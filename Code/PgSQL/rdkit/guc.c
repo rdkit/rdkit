@@ -1,6 +1,6 @@
-// $Id$
 //
-//  Copyright (c) 2010, Novartis Institutes for BioMedical Research Inc.
+//  Copyright (c) 2010-2021 Novartis Institutes for BioMedical Research Inc.
+//    and other RDKit contributors
 //  All rights reserved.
 // 
 // Redistribution and use in source and binary forms, with or without
@@ -40,6 +40,7 @@ static double rdkit_dice_smlar_limit = 0.5;
 static double rdkit_agent_FP_bit_ratio = 0.2;
 static double rdkit_threshold_unmapped_reactant_atoms = 0.2;
 static bool rdkit_do_chiral_sss = false;
+static bool rdkit_do_enhanced_stereo_sss = false;
 static bool rdkit_ignore_reaction_agents = false;
 static bool rdkit_move_unmmapped_reactants_to_agents = true;
 static bool rdkit_init_reaction = true;
@@ -125,6 +126,19 @@ initRDKitGUC()
                            NULL,
                            NULL
                            );
+  DefineCustomBoolVariable(
+                           "rdkit.do_enhanced_stereo_sss",
+                           "Should enhanced stereochemistry be taken into account in substructure matching",
+                           "If true, enhanced stereo information is used in substructure matching. Has no effect if rdkit.do_chiral_sss is false.",
+                           &rdkit_do_enhanced_stereo_sss,
+                           false,
+                           PGC_USERSET,
+                           0,
+			   NULL,
+                           NULL,
+                           NULL
+                           );
+
 
   DefineCustomIntVariable(
                            "rdkit.sss_fp_size",
@@ -412,6 +426,14 @@ getDoChiralSSS(void) {
     initRDKitGUC();
 
   return rdkit_do_chiral_sss;
+}
+
+bool
+getDoEnhancedStereoSSS(void) {
+  if (!rdkit_guc_inited)
+    initRDKitGUC();
+
+  return rdkit_do_enhanced_stereo_sss;
 }
 
 int

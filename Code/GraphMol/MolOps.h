@@ -998,7 +998,15 @@ RDKIT_GRAPHMOL_EXPORT unsigned getNumAtomsWithDistinctProperty(
 //! returns whether or not a molecule needs to have Hs added to it.
 RDKIT_GRAPHMOL_EXPORT bool needsHs(const ROMol &mol);
 
-};  // end of namespace MolOps
-};  // end of namespace RDKit
+namespace details {
+//! not recommended for use in other code
+RDKIT_GRAPHMOL_EXPORT void KekulizeFragment(
+    RWMol &mol, const boost::dynamic_bitset<> &atomsToUse,
+    const boost::dynamic_bitset<> &bondsToUse, bool markAtomsBonds = true,
+    unsigned int maxBackTracks = 100);
+}  // namespace details
+
+}  // namespace MolOps
+}  // namespace RDKit
 
 #endif
