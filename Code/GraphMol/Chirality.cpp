@@ -1185,43 +1185,11 @@ void findAtomNeighborsHelper(const ROMol &mol, const Atom *atom,
   }
 }
 
-namespace {
-bool queryIsAtomSpiro(const Atom *atom) {
-  PRECONDITION(atom, "bad atom");
-  PRECONDITION(atom->hasOwningMol(), "no owner");
-  PRECONDITION(atom->getOwningMol().getRingInfo(), "no ring info");
-  PRECONDITION(atom->getOwningMol().getRingInfo()->isInitialized(),
-               "ring info not initialized");
-  // std::cerr << "----------" << std::endl;
-  // std::cerr << atom->getIdx() << std::endl;
-  std::vector<boost::dynamic_bitset<>> arings;
-  for (const auto &aring : atom->getOwningMol().getRingInfo()->atomRings()) {
-    if (std::find(aring.begin(), aring.end(), atom->getIdx()) == aring.end()) {
-      continue;
-    }
-    arings.push_back(
-        boost::dynamic_bitset<>(atom->getOwningMol().getNumAtoms()));
-    for (const auto aidx : aring) {
-      arings.back().set(aidx);
-    }
-  }
-  for (unsigned int i = 0; i < arings.size(); ++i) {
-    for (unsigned int j = i + 1; j < arings.size(); ++j) {
-      if ((arings[i] & arings[j]).count() == 1) {
-        return true;
-      }
-    }
-  }
-  return false;
-}
-}  // namespace
-
 // conditions for an atom to be a candidate for ring stereochem:
 //   1) two non-ring neighbors that have different ranks
 //   2) one non-ring neighbor and two ring neighbors (the ring neighbors will
 //      have the same rank)
-//   3a) four ring neighbors with three different ranks
-//   3b) four ring neighbors with two different ranks and this is a spiro center
+//   3) four ring neighbors with three different ranks
 //   4) three ring neighbors with two different ranks
 //     example for this last one: C[C@H]1CC2CCCC3CCCC(C1)[C@@H]23
 // Note that N atoms are only candidates if they are in a 3-ring
@@ -1279,9 +1247,6 @@ bool atomIsCandidateForRingStereochem(const ROMol &mol, const Atom *atom) {
           break;
         case 0:
           if (ringNbrs.size() == 4 && nbrRanks.size() == 3) {
-            res = true;
-          } else if (ringNbrs.size() == 4 && nbrRanks.size() == 2 &&
-                     queryIsAtomSpiro(atom)) {
             res = true;
           } else if (ringNbrs.size() == 3 && nbrRanks.size() == 2) {
             res = true;
@@ -1387,13 +1352,12 @@ void findChiralAtomSpecialCases(ROMol &mol,
     }  // end of BFS
     if (ringStereoAtoms.size() != 0) {
       atom->setProp(common_properties::_ringStereoAtoms, ringStereoAtoms, true);
-      // because we're only going to hit each ring atom once, the first atom
-      // we encounter in a ring is going to end up with all the other atoms
-      // set as stereoAtoms, but each of them will only have the first atom
-      // present. We need to fix that. because the traverse from the first
-      // atom only followed ring bonds, these things are all by definition in
-      // one ring system. (Q: is this true if there's a spiro center in
-      // there?)
+      // because we're only going to hit each ring atom once, the first atom we
+      // encounter in a ring is going to end up with all the other atoms set as
+      // stereoAtoms, but each of them will only have the first atom present. We
+      // need to fix that. because the traverse from the first atom only
+      // followed ring bonds, these things are all by definition in one ring
+      // system. (Q: is this true if there's a spiro center in there?)
       INT_VECT same(mol.getNumAtoms(), 0);
       for (auto ringAtomEntry : ringStereoAtoms) {
         int ringAtomIdx =
@@ -1883,10 +1847,9 @@ void assignStereochemistry(ROMol &mol, bool cleanIt, bool force,
   }
 
   // later we're going to need ring information, get it now if we don't
-  // have it already. We need
+  // have it already:
   if (!mol.getRingInfo()->isInitialized()) {
-    VECT_INT_VECT sssrs;
-    MolOps::symmetrizeSSSR(mol, sssrs);
+    MolOps::fastFindRings(mol);
   }
 
 #if 0
@@ -2654,4 +2617,4 @@ void removeStereochemistry(ROMol &mol) {
 }
 
 }  // end of namespace MolOps
-}  // namespace RDKit
+}  // end of namespace RDKit
