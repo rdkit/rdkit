@@ -1573,45 +1573,80 @@ TEST_CASE("Github #4215: Ring stereo being discarded in spiro systems") {
   SmilesParserParams ps;
   ps.useLegacyStereo = false;
   SECTION("original failing example") {
-    auto m = "C[C@H]1CCC2(CC1)CC[C@H](C)C(C)C2"_smiles;
-    REQUIRE(m);
-    CHECK(m->getAtomWithIdx(1)->getChiralTag() != Atom::CHI_UNSPECIFIED);
-    CHECK(m->getAtomWithIdx(9)->getChiralTag() != Atom::CHI_UNSPECIFIED);
-
-    // ensure the new code is doing the right thing (more tests never
-    // hurt, right?)
-    m.reset(SmilesToMol("C[C@H]1CCC2(CC1)CC[C@H](C)C(C)C2", ps));
+    std::unique_ptr<RWMol> m{
+        SmilesToMol("C[C@H]1CCC2(CC1)CC[C@H](C)C(C)C2", ps)};
     REQUIRE(m);
     CHECK(m->getAtomWithIdx(1)->getChiralTag() != Atom::CHI_UNSPECIFIED);
     CHECK(m->getAtomWithIdx(9)->getChiralTag() != Atom::CHI_UNSPECIFIED);
   }
-#if 0
   SECTION("original passing example") {
-    auto m = "C[C@H]1CCC2(CC1)CC[C@H](C)CC2"_smiles;
+    std::unique_ptr<RWMol> m{SmilesToMol("C[C@H]1CCC2(CC1)CC[C@H](C)CC2", ps)};
     REQUIRE(m);
-    CHECK(m->getAtomWithIdx(1)->getChiralTag() != Atom::CHI_UNSPECIFIED);
-    CHECK(m->getAtomWithIdx(9)->getChiralTag() != Atom::CHI_UNSPECIFIED);
+    // if the middle is unspecified, the two ends can't be specified
+    CHECK(m->getAtomWithIdx(1)->getChiralTag() == Atom::CHI_UNSPECIFIED);
+    CHECK(m->getAtomWithIdx(9)->getChiralTag() == Atom::CHI_UNSPECIFIED);
 
-    m.reset(SmilesToMol("C[C@H]1CCC2(CC1)CC[C@H](C)CC2", ps));
-    MolOps::sanitizeMol(*m);
     bool cleanIt = true;
     bool flagPossible = true;
     auto stereoInfo = Chirality::findPotentialStereo(*m, cleanIt, flagPossible);
     CHECK(stereoInfo.size() == 3);
+    for (const auto si : stereoInfo) {
+      CHECK(si.type == Chirality::StereoType::Atom_Tetrahedral);
+      CHECK(si.specified == Chirality::StereoSpecified::Unspecified);
+      CHECK(si.descriptor == Chirality::StereoDescriptor::None);
+    }
+  }
+  SECTION("presto debuggo") {
+    std::unique_ptr<RWMol> m{SmilesToMol("C[C@H]1CC[C@@H](C)CC1", ps)};
+    REQUIRE(m);
+    CHECK(m->getAtomWithIdx(1)->getChiralTag() != Atom::CHI_UNSPECIFIED);
+    CHECK(m->getAtomWithIdx(4)->getChiralTag() != Atom::CHI_UNSPECIFIED);
+
+    bool cleanIt = true;
+    bool flagPossible = true;
+    auto stereoInfo = Chirality::findPotentialStereo(*m, cleanIt, flagPossible);
+    for (const auto si : stereoInfo) {
+      CHECK(si.type == Chirality::StereoType::Atom_Tetrahedral);
+      CHECK(si.specified == Chirality::StereoSpecified::Specified);
+      CHECK(si.descriptor != Chirality::StereoDescriptor::None);
+    }
   }
   SECTION("specified chirality on spiro atom") {
-    auto m = "C[C@H]1CC[C@@]2(CC[C@H](C)CC2)CC1"_smiles;
+    std::unique_ptr<RWMol> m{
+        SmilesToMol("C[C@H]1CC[C@@]2(CC[C@H](C)CC2)CC1", ps)};
     REQUIRE(m);
     CHECK(m->getAtomWithIdx(1)->getChiralTag() != Atom::CHI_UNSPECIFIED);
     CHECK(m->getAtomWithIdx(7)->getChiralTag() != Atom::CHI_UNSPECIFIED);
     CHECK(m->getAtomWithIdx(4)->getChiralTag() != Atom::CHI_UNSPECIFIED);
-
-    m.reset(SmilesToMol("C[C@H]1CC[C@@]2(CC[C@H](C)CC2)CC1", ps));
-    MolOps::sanitizeMol(*m);
     bool cleanIt = true;
     bool flagPossible = true;
     auto stereoInfo = Chirality::findPotentialStereo(*m, cleanIt, flagPossible);
     CHECK(stereoInfo.size() == 3);
+    for (const auto si : stereoInfo) {
+      CHECK(si.type == Chirality::StereoType::Atom_Tetrahedral);
+      CHECK(si.specified == Chirality::StereoSpecified::Specified);
+      CHECK(si.descriptor != Chirality::StereoDescriptor::None);
+    }
   }
-#endif
+}
+
+TEST_CASE(
+    "Github #4279: FindPotentialStereo() doesn't find *marked* ring stereo "
+    "when flagPossible=False") {
+  SECTION("base") {
+    std::unique_ptr<RWMol> m{SmilesToMol("C[C@H]1CC[C@@H](C)CC1")};
+    REQUIRE(m);
+    CHECK(m->getAtomWithIdx(1)->getChiralTag() != Atom::CHI_UNSPECIFIED);
+    CHECK(m->getAtomWithIdx(4)->getChiralTag() != Atom::CHI_UNSPECIFIED);
+    bool cleanIt = true;
+    bool flagPossible = false;
+    auto stereoInfo = Chirality::findPotentialStereo(*m, cleanIt, flagPossible);
+    for (const auto si : stereoInfo) {
+      CHECK(si.type == Chirality::StereoType::Atom_Tetrahedral);
+      CHECK(si.specified == Chirality::StereoSpecified::Specified);
+      CHECK(si.descriptor != Chirality::StereoDescriptor::None);
+    }
+    CHECK(m->getAtomWithIdx(1)->getChiralTag() != Atom::CHI_UNSPECIFIED);
+    CHECK(m->getAtomWithIdx(4)->getChiralTag() != Atom::CHI_UNSPECIFIED);
+  }
 }
