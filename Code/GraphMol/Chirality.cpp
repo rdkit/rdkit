@@ -1192,25 +1192,21 @@ bool queryIsAtomSpiro(const Atom *atom) {
   PRECONDITION(atom->getOwningMol().getRingInfo(), "no ring info");
   PRECONDITION(atom->getOwningMol().getRingInfo()->isInitialized(),
                "ring info not initialized");
-  std::cerr << "----------" << std::endl;
-  std::cerr << atom->getIdx() << std::endl;
+  // std::cerr << "----------" << std::endl;
+  // std::cerr << atom->getIdx() << std::endl;
   std::vector<boost::dynamic_bitset<>> arings;
-  for (const auto aring : atom->getOwningMol().getRingInfo()->atomRings()) {
-    std::cerr << "  " << arings.size() << ": ";
+  for (const auto &aring : atom->getOwningMol().getRingInfo()->atomRings()) {
+    if (std::find(aring.begin(), aring.end(), atom->getIdx()) == aring.end()) {
+      continue;
+    }
     arings.push_back(
         boost::dynamic_bitset<>(atom->getOwningMol().getNumAtoms()));
     for (const auto aidx : aring) {
-      std::cerr << aidx << " ";
       arings.back().set(aidx);
     }
-    std::cerr << std::endl;
   }
-  std::cerr << " spiro? " << arings.size() << std::endl;
   for (unsigned int i = 0; i < arings.size(); ++i) {
     for (unsigned int j = i + 1; j < arings.size(); ++j) {
-      std::cerr << "        " << i << " "
-                << " " << j << " " << (arings[i] & arings[j]).count()
-                << std::endl;
       if ((arings[i] & arings[j]).count() == 1) {
         return true;
       }
@@ -1263,11 +1259,6 @@ bool atomIsCandidateForRingStereochem(const ROMol &mol, const Atom *atom) {
         ++beg;
       }
       unsigned int rank1 = 0, rank2 = 0;
-      std::cerr << " !!!! " << atom->getIdx()
-                << " nonring: " << nonRingNbrs.size()
-                << " nbrranks: " << nbrRanks.size()
-                << " ringnbrs: " << ringNbrs.size() << " spiro? "
-                << queryIsAtomSpiro(atom) << std::endl;
       switch (nonRingNbrs.size()) {
         case 2:
           if (nonRingNbrs[0]->getPropIfPresent(common_properties::_CIPRank,
@@ -1321,38 +1312,6 @@ void findChiralAtomSpecialCases(ROMol &mol,
   boost::dynamic_bitset<> atomsSeen(mol.getNumAtoms());
   boost::dynamic_bitset<> atomsUsed(mol.getNumAtoms());
   boost::dynamic_bitset<> bondsSeen(mol.getNumBonds());
-
-#if 0
-  // find ring stereo candidates by going through the rings themselves:
-  boost::dynamic_bitset<> ringstereoCandidates(mol.getNumAtoms());
-  const auto ringInfo = mol.getRingInfo();
-  for (const auto &aring : ringInfo->atomRings()) {
-    for (const aidx : aring) {
-      if (atomsSeen[aidx]) {
-        continue;
-      }
-      atomsSeen[aidx] = true;
-      const auto atom = mol.getAtomWithIdx(aidx);
-      // three-coordinate N additional requirements:
-      //   in a ring of size 3  (from InChI)
-      // OR
-      //   a bridgehead (RDKit extension)
-      if (atom->getAtomicNum() == 7 && atom->getDegree() == 3 &&
-          aring.size()!=3 &&
-          !queryIsAtomBridgehead(atom)) {
-        continue
-      }
-
-      // conditions for an atom to be a candidate for ring stereochem:
-      //   1) two neighbors not in this ring that have different ranks
-      //   2) one neighbor not in this ring and two ring neighbors (the ring
-      //      neighbors will have the same rank)
-      //   3) four ring neighbors with three different ranks if this is a spiro center
-      //   4) three ring neighbors with two different ranks example for this
-      //      last one: C[C@H]1CC2CCCC3CCCC(C1)[C@@H]23
-    }
-  }
-#endif
 
   for (ROMol::AtomIterator ait = mol.beginAtoms(); ait != mol.endAtoms();
        ++ait) {
