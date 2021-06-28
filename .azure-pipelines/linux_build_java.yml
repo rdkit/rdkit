@@ -29,8 +29,7 @@ steps:
     -DRDK_BUILD_THREADSAFE_SSS=ON \
     -DRDK_TEST_MULTITHREADED=ON \
     -DBoost_NO_SYSTEM_PATHS=ON \
-    -DBoost_NO_BOOST_CMAKE=TRUE \
-    -DBoost_USE_STATIC_LIBS=ON
+    -DBoost_NO_BOOST_CMAKE=TRUE
   displayName: Configure build (Run CMake)
 - bash: |
     cd build
