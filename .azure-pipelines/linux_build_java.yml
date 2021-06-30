@@ -1,17 +1,12 @@
 steps:
 - bash: |
-    sudo apt-get install -y software-properties-common zlib1g zlib1g-dev swig
-    sudo add-apt-repository -y ppa:csaba-kertesz/random
     sudo apt-get update
-    sudo apt-get install -y boost1.58
-    cd /opt
-    wget -q https://cmake.org/files/v3.12/cmake-3.12.0-Linux-x86_64.tar.gz
-    tar xzf cmake-3.12.0-Linux-x86_64.tar.gz
+    sudo apt-get install -y software-properties-common zlib1g zlib1g-dev swig3.0
+    sudo apt-get install -y libboost-all-dev libfreetype-dev libeigen3-dev
   displayName: Setup build environment
 - bash: |
     export CXX=/usr/bin/g++
     export CC=/usr/bin/gcc
-    export PATH=/opt/cmake-3.12.0-Linux-x86_64/bin:$PATH
     mkdir build && cd build && \
     cmake .. \
     -DCMAKE_BUILD_TYPE=Release \
@@ -34,7 +29,7 @@ steps:
     -DRDK_BUILD_THREADSAFE_SSS=ON \
     -DRDK_TEST_MULTITHREADED=ON \
     -DBoost_NO_SYSTEM_PATHS=ON \
-    -DBoost_USE_STATIC_LIBS=ON
+    -DBoost_NO_BOOST_CMAKE=TRUE
   displayName: Configure build (Run CMake)
 - bash: |
     cd build
