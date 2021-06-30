@@ -21,6 +21,18 @@ if not debug:
 class TestCase(unittest.TestCase):
 
     def test1(self):
+        # computeCanonicalTransform returns more approximate eigenvalues/eigencvectors
+        # when built against the native RDKit PowerEigenSolver, so unit test results
+        # differ slightly
+        builtAgainstEigen3 = hasattr(AllChem, 'ComputePrincipalAxesAndMomentsFromGyrationMatrix')
+        if builtAgainstEigen3:
+            expectedSkelPts = 15
+            expectedAlgs = [0, 5, 21, 0]
+            prunedAlgs = [0, 4, 11, 0]
+        else:
+            expectedSkelPts = 16
+            expectedAlgs = [0, 5, 28, 0]
+            prunedAlgs = [0, 4, 12, 0]
         filename = os.path.join(os.path.dirname(os.path.abspath(__file__)),
                                 'test_data', '5ht3ligs.sdf')
         suppl = Chem.SDMolSupplier(filename)
@@ -43,7 +55,8 @@ class TestCase(unittest.TestCase):
         self.assertEqual([len(x.skelPts) for x in shapes], [5, 5, 5, 5])
 
         refShape = builder.GenerateSubshapeShape(ms[0])
-        self.assertEqual(len(refShape.skelPts), 16)
+
+        self.assertEqual(len(refShape.skelPts), expectedSkelPts)
 
         aligner = SubshapeAligner.SubshapeAligner()
         aligner.shapeDistTol = .30
@@ -56,7 +69,7 @@ class TestCase(unittest.TestCase):
             m1 = ms[i]
             alignments = aligner.GetSubshapeAlignments(ms[0], refShape, m1, s1, builder)
             algStore.append(alignments)
-        self.assertEqual([len(x) for x in algStore], [0, 5, 28, 0])
+        self.assertEqual([len(x) for x in algStore], expectedAlgs)
 
         algStore = []
         for i, s1 in enumerate(shapes):
@@ -66,14 +79,14 @@ class TestCase(unittest.TestCase):
             m1 = ms[i]
             alignments = list(aligner(ms[0], refShape, m1, s1, builder))
             algStore.append(alignments)
-        self.assertEqual([len(x) for x in algStore], [0, 5, 28, 0])
+        self.assertEqual([len(x) for x in algStore], expectedAlgs)
 
         pruned = []
         for i, mi in enumerate(ms):
             alignments = algStore[i]
             pruned.append(SubshapeAligner.ClusterAlignments(
                 mi, alignments, builder, neighborTol=0.15))
-        self.assertEqual([len(x) for x in pruned], [0, 4, 12, 0])
+        self.assertEqual([len(x) for x in pruned], prunedAlgs)
 
 
 class TestSubshapeObjects(unittest.TestCase):

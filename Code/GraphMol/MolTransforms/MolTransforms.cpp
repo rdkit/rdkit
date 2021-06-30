@@ -41,22 +41,25 @@ void transformMolsAtoms(ROMol *mol, RDGeom::Transform3D &tform) {
   }
 }
 
-RDGeom::Point3D computeCentroid(const Conformer &conf, bool ignoreHs) {
+RDGeom::Point3D computeCentroid(const Conformer &conf, bool ignoreHs,
+                                const std::vector<double> *weights) {
+  PRECONDITION(!weights || weights->size() >= conf.getNumAtoms(),
+               "bad weights vector");
   RDGeom::Point3D res(0.0, 0.0, 0.0);
   const ROMol &mol = conf.getOwningMol();
-  ROMol::ConstAtomIterator cai;
-  unsigned int nAtms = 0;
-
-  for (cai = mol.beginAtoms(); cai != mol.endAtoms(); cai++) {
-    if (((*cai)->getAtomicNum() == 1) && (ignoreHs)) {
+  double wSum = 0.0;
+  for (unsigned int i = 0; i < conf.getNumAtoms(); ++i) {
+    if (ignoreHs && mol.getAtomWithIdx(i)->getAtomicNum() == 1) {
       continue;
     }
-    res += conf.getAtomPos((*cai)->getIdx());
-    nAtms++;
+    double w = (weights ? weights->at(i) : 1.0);
+    wSum += w;
+    res += conf.getAtomPos(i) * w;
   }
-  res /= nAtms;
+  res /= wSum;
   return res;
 }
+
 namespace {
 void computeCovarianceTerms(const Conformer &conf,
                             const RDGeom::Point3D &center, double &xx,
@@ -98,6 +101,7 @@ void computeCovarianceTerms(const Conformer &conf,
   }
 }
 
+#ifndef RDK_HAS_EIGEN3
 RDNumeric::DoubleSymmMatrix *computeCovarianceMatrix(
     const Conformer &conf, const RDGeom::Point3D &center, bool normalize,
     bool ignoreHs) {
@@ -113,6 +117,7 @@ RDNumeric::DoubleSymmMatrix *computeCovarianceMatrix(
   res->setVal(2, 2, zz);
   return res;
 }
+#endif
 
 void computeInertiaTerms(const Conformer &conf, const RDGeom::Point3D &center,
                          double &xx, double &xy, double &xz, double &yy,
@@ -143,8 +148,51 @@ void computeInertiaTerms(const Conformer &conf, const RDGeom::Point3D &center,
   }
 }
 }  // namespace
+
 #ifdef RDK_HAS_EIGEN3
 #include <Eigen/Dense>
+
+namespace {
+bool getEigenValEigenVectHelper(Eigen::Matrix3d &eigVecs,
+                                Eigen::Vector3d &eigVals, double sumXX,
+                                double sumXY, double sumXZ, double sumYY,
+                                double sumYZ, double sumZZ) {
+  Eigen::Matrix3d mat;
+  mat << sumXX, sumXY, sumXZ, sumXY, sumYY, sumYZ, sumXZ, sumYZ, sumZZ;
+  // std::cerr<<"getEigenValEigenVectHelper  matrix: "<<mat<<std::endl;
+  Eigen::SelfAdjointEigenSolver<Eigen::Matrix3d> eigensolver(mat);
+  if (eigensolver.info() != Eigen::Success) {
+    BOOST_LOG(rdErrorLog) << "eigenvalue calculation did not converge"
+                          << std::endl;
+    return false;
+  }
+  eigVecs = eigensolver.eigenvectors();
+  // std::cerr<<"getEigenValEigenVectHelper  eigVecs: "<<eigVecs<<std::endl;
+  eigVals = eigensolver.eigenvalues();
+  // std::cerr<<"getEigenValEigenVectHelper  eigVals: "<<eigVals<<std::endl;
+  return true;
+}
+
+bool getEigenValEigenVectFromCovMat(const RDKit::Conformer &conf,
+                                    Eigen::Matrix3d &eigVecs,
+                                    Eigen::Vector3d &eigVals,
+                                    const RDGeom::Point3D &origin,
+                                    bool ignoreHs, bool normalizeCovar,
+                                    const std::vector<double> *weights) {
+  PRECONDITION((!weights || weights->size() >= conf.getNumAtoms()),
+               "bad weights vector");
+
+  // std::cerr << "getEigenValEigenVectFromCovMat ignoreHs " << ignoreHs << "
+  // normalizeCovar " << normalizeCovar << " weights " << weights << " origin "
+  // << origin.x << "," << origin.y << ","  << origin.z << std::endl;
+  double sumXX, sumXY, sumXZ, sumYY, sumYZ, sumZZ;
+  computeCovarianceTerms(conf, origin, sumXX, sumXY, sumXZ, sumYY, sumYZ, sumZZ,
+                         normalizeCovar, ignoreHs, weights);
+
+  return getEigenValEigenVectHelper(eigVecs, eigVals, sumXX, sumXY, sumXZ,
+                                    sumYY, sumYZ, sumZZ);
+}
+}  // namespace
 
 bool computePrincipalAxesAndMoments(const RDKit::Conformer &conf,
                                     Eigen::Matrix3d &axes,
@@ -156,108 +204,106 @@ bool computePrincipalAxesAndMoments(const RDKit::Conformer &conf,
   const char *axesPropName = ignoreHs ? "_principalAxes_noH" : "_principalAxes";
   const char *momentsPropName =
       ignoreHs ? "_principalMoments_noH" : "_principalMoments";
-  if (!weights && !force && conf.getOwningMol().hasProp(axesPropName) &&
-      conf.getOwningMol().hasProp(momentsPropName)) {
-    conf.getOwningMol().getProp(axesPropName, axes);
-    conf.getOwningMol().getProp(momentsPropName, moments);
+  const ROMol &mol = conf.getOwningMol();
+  if (!weights && !force && mol.hasProp(axesPropName) &&
+      mol.hasProp(momentsPropName)) {
+    mol.getProp(axesPropName, axes);
+    mol.getProp(momentsPropName, moments);
     return true;
   }
-  const ROMol &mol = conf.getOwningMol();
-  RDGeom::Point3D origin(0, 0, 0);
-  double wSum = 0.0;
-  for (unsigned int i = 0; i < conf.getNumAtoms(); ++i) {
-    if (ignoreHs && mol.getAtomWithIdx(i)->getAtomicNum() == 1) {
-      continue;
-    }
-    double w = 1.0;
-    if (weights) {
-      w = (*weights)[i];
-    }
-    wSum += w;
-    origin += conf.getAtomPos(i) * w;
-  }
-  // std::cerr<<"  origin: "<<origin<<" "<<wSum<<std::endl;
-  origin /= wSum;
+  auto origin = computeCentroid(conf, ignoreHs, weights);
 
   double sumXX, sumXY, sumXZ, sumYY, sumYZ, sumZZ;
   computeInertiaTerms(conf, origin, sumXX, sumXY, sumXZ, sumYY, sumYZ, sumZZ,
                       ignoreHs, weights);
 
-  Eigen::Matrix3d mat;
-  mat << sumXX, sumXY, sumXZ, sumXY, sumYY, sumYZ, sumXZ, sumYZ, sumZZ;
-  // std::cerr<<"  matrix: "<<mat<<std::endl;
-  Eigen::SelfAdjointEigenSolver<Eigen::Matrix3d> eigensolver(mat);
-  if (eigensolver.info() != Eigen::Success) {
-    BOOST_LOG(rdErrorLog) << "eigenvalue calculation did not converge"
-                          << std::endl;
+  if (!getEigenValEigenVectHelper(axes, moments, sumXX, sumXY, sumXZ, sumYY,
+                                  sumYZ, sumZZ)) {
     return false;
   }
 
-  axes = eigensolver.eigenvectors();
-  moments = eigensolver.eigenvalues();
   if (!weights) {
-    conf.getOwningMol().setProp(axesPropName, axes, true);
-    conf.getOwningMol().setProp(momentsPropName, moments, true);
+    mol.setProp(axesPropName, axes, true);
+    mol.setProp(momentsPropName, moments, true);
   }
   return true;
 }
+
 bool computePrincipalAxesAndMomentsFromGyrationMatrix(
     const RDKit::Conformer &conf, Eigen::Matrix3d &axes,
     Eigen::Vector3d &moments, bool ignoreHs, bool force,
     const std::vector<double> *weights) {
-  PRECONDITION((!weights || weights->size() >= conf.getNumAtoms()),
-               "bad weights vector");
   const char *axesPropName =
       ignoreHs ? "_principalAxes_noH_cov" : "_principalAxes_cov";
   const char *momentsPropName =
       ignoreHs ? "_principalMoments_noH_cov" : "_principalMoments_cov";
-  if (!weights && !force && conf.getOwningMol().hasProp(axesPropName) &&
-      conf.getOwningMol().hasProp(momentsPropName)) {
-    conf.getOwningMol().getProp(axesPropName, axes);
-    conf.getOwningMol().getProp(momentsPropName, moments);
+  const ROMol &mol = conf.getOwningMol();
+  if (!weights && !force && mol.hasProp(axesPropName) &&
+      mol.hasProp(momentsPropName)) {
+    mol.getProp(axesPropName, axes);
+    mol.getProp(momentsPropName, moments);
     return true;
   }
-  const ROMol &mol = conf.getOwningMol();
-  RDGeom::Point3D origin(0, 0, 0);
-  double wSum = 0.0;
-  for (unsigned int i = 0; i < conf.getNumAtoms(); ++i) {
-    if (ignoreHs && mol.getAtomWithIdx(i)->getAtomicNum() == 1) {
-      continue;
-    }
-    double w = 1.0;
-    if (weights) {
-      w = (*weights)[i];
-    }
-    wSum += w;
-    origin += conf.getAtomPos(i) * w;
-  }
-  // std::cerr<<"  origin: "<<origin<<" "<<wSum<<std::endl;
-  origin /= wSum;
-
-  double sumXX, sumXY, sumXZ, sumYY, sumYZ, sumZZ;
-  computeCovarianceTerms(conf, origin, sumXX, sumXY, sumXZ, sumYY, sumYZ, sumZZ,
-                         true, ignoreHs, weights);
-
-  Eigen::Matrix3d mat;
-  mat << sumXX, sumXY, sumXZ, sumXY, sumYY, sumYZ, sumXZ, sumYZ, sumZZ;
-  // std::cerr<<"  matrix: "<<mat<<std::endl;
-  Eigen::SelfAdjointEigenSolver<Eigen::Matrix3d> eigensolver(mat);
-  if (eigensolver.info() != Eigen::Success) {
-    BOOST_LOG(rdErrorLog) << "eigenvalue calculation did not converge"
-                          << std::endl;
-    return false;
-  }
-
-  axes = eigensolver.eigenvectors();
-  moments = eigensolver.eigenvalues();
-  if (!weights) {
+  auto origin = computeCentroid(conf, ignoreHs, weights);
+  bool res = getEigenValEigenVectFromCovMat(conf, axes, moments, origin,
+                                            ignoreHs, true, weights);
+  if (res && !weights) {
     conf.getOwningMol().setProp(axesPropName, axes, true);
     conf.getOwningMol().setProp(momentsPropName, moments, true);
   }
-  return true;
+  return res;
 }
-#endif
 
+RDGeom::Transform3D *computeCanonicalTransform(const Conformer &conf,
+                                               const RDGeom::Point3D *center,
+                                               bool normalizeCovar,
+                                               bool ignoreHs) {
+  constexpr unsigned int DIM = 3;
+  RDGeom::Point3D origin;
+  if (!center) {
+    origin = computeCentroid(conf, ignoreHs);
+  } else {
+    origin = (*center);
+  }
+  unsigned int nAtms = conf.getNumAtoms();
+  auto *trans = new RDGeom::Transform3D;
+  trans->setToIdentity();
+
+  // if we have a single atom system we don't need to do anyhting setting
+  // translation is sufficient
+  if (nAtms > 1) {
+    Eigen::Matrix3d eigVecs;
+    Eigen::Vector3d eigVals;
+    if (getEigenValEigenVectFromCovMat(conf, eigVecs, eigVals, origin, ignoreHs,
+                                       normalizeCovar, nullptr)) {
+      std::vector<std::pair<unsigned int, double>> eigValsSorted;
+      CHECK_INVARIANT(eigVals.size() == DIM, "less eigenvalues than expected");
+      auto eigVecCoeffSums = eigVecs.colwise().sum();
+      eigValsSorted.reserve(DIM);
+      for (unsigned int i = 0; i < DIM; ++i) {
+        eigValsSorted.emplace_back(i, eigVals(i));
+      }
+      std::sort(eigValsSorted.begin(), eigValsSorted.end(),
+                [](const std::pair<unsigned int, double> &a,
+                   const std::pair<unsigned int, double> &b) {
+                  return (a.second > b.second);
+                });
+      for (unsigned int col = 0; col < DIM; ++col) {
+        unsigned int colSorted = eigValsSorted.at(col).first;
+        double sign = (eigVecCoeffSums(colSorted) > 0.0) ? 1.0 : -1.0;
+        for (unsigned int row = 0; row < DIM; ++row) {
+          trans->setVal(col, row, sign * eigVecs(row, colSorted));
+        }
+      }
+    }
+  }
+  origin *= -1.0;
+  trans->TransformPoint(origin);
+  trans->SetTranslation(origin);
+
+  return trans;
+}
+#else
 RDGeom::Transform3D *computeCanonicalTransform(const Conformer &conf,
                                                const RDGeom::Point3D *center,
                                                bool normalizeCovar,
@@ -337,6 +383,22 @@ RDGeom::Transform3D *computeCanonicalTransform(const Conformer &conf,
 
   return trans;
 }
+#endif
+
+void canonicalizeConformer(Conformer &conf, const RDGeom::Point3D *center,
+                           bool normalizeCovar, bool ignoreHs) {
+  RDGeom::Transform3D *trans =
+      computeCanonicalTransform(conf, center, normalizeCovar, ignoreHs);
+  transformConformer(conf, *trans);
+  delete trans;
+}
+
+void canonicalizeMol(RDKit::ROMol &mol, bool normalizeCovar, bool ignoreHs) {
+  ROMol::ConformerIterator ci;
+  for (ci = mol.beginConformers(); ci != mol.endConformers(); ci++) {
+    canonicalizeConformer(*(*ci), nullptr, normalizeCovar, ignoreHs);
+  }
+}
 
 void transformConformer(Conformer &conf, const RDGeom::Transform3D &trans) {
   RDGeom::POINT3D_VECT &positions = conf.getPositions();
@@ -359,22 +421,6 @@ void transformMolSubstanceGroups(ROMol &mol, const RDGeom::Transform3D &trans) {
     }
   }
 }
-
-void canonicalizeConformer(Conformer &conf, const RDGeom::Point3D *center,
-                           bool normalizeCovar, bool ignoreHs) {
-  RDGeom::Transform3D *trans =
-      computeCanonicalTransform(conf, center, normalizeCovar, ignoreHs);
-  transformConformer(conf, *trans);
-  delete trans;
-}
-
-void canonicalizeMol(RDKit::ROMol &mol, bool normalizeCovar, bool ignoreHs) {
-  ROMol::ConformerIterator ci;
-  for (ci = mol.beginConformers(); ci != mol.endConformers(); ci++) {
-    canonicalizeConformer(*(*ci), nullptr, normalizeCovar, ignoreHs);
-  }
-}
-
 namespace {
 void _toBeMovedIdxList(const ROMol &mol, unsigned int iAtomId,
                        unsigned int jAtomId, std::list<unsigned int> &alist) {
