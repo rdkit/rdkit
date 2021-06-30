@@ -3572,3 +3572,58 @@ M  END)CTAB"_ctab;
   REQUIRE(m->getBondBetweenAtoms(1, 2));
   CHECK(m->getBondBetweenAtoms(1, 2)->getBondDir() == Bond::EITHERDOUBLE);
 }
+
+TEST_CASE(
+    "Convert SDF V200 MRV_COORDINATE_BOND_TYPE data Substance Groups "
+    "into coordinate bonds") {
+  auto m = R"CTAB(
+  Mrv2111 06302118332D          
+
+  9  9  0  0  0  0            999 V2000
+   -2.9465    0.7804    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -3.6609    0.3679    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -3.6609   -0.4572    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -2.9465   -0.8697    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -2.2320   -0.4572    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -2.2320    0.3679    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -1.5175    0.7804    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -2.9465   -1.6947    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -4.3754    0.7804    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+  1  2  2  0  0  0  0
+  2  3  1  0  0  0  0
+  3  4  2  0  0  0  0
+  4  5  1  0  0  0  0
+  5  6  2  0  0  0  0
+  6  1  1  0  0  0  0
+  6  7  8  0  0  0  0
+  4  8  8  0  0  0  0
+  2  9  8  0  0  0  0
+M  STY  3   1 DAT   2 DAT   3 DAT
+M  SAL   1  2   6   7
+M  SDT   1 MRV_COORDINATE_BOND_TYPE                              
+M  SDD   1     0.0000    0.0000    DR    ALL  0       0  
+M  SED   1 7
+M  SAL   2  2   4   8
+M  SDT   2 MRV_COORDINATE_BOND_TYPE                              
+M  SDD   2     0.0000    0.0000    DR    ALL  0       0  
+M  SED   2 8
+M  SAL   3  2   2   9
+M  SDT   3 MRV_COORDINATE_BOND_TYPE                              
+M  SDD   3     0.0000    0.0000    DR    ALL  0       0  
+M  SED   3 9
+M  END
+)CTAB"_ctab;
+  REQUIRE(m);
+
+  std::vector<std::pair<unsigned, unsigned>> coordinate_bonds{
+      {5, 6}, {3, 7}, {1, 8}};
+
+  for (const auto &bond_atoms : coordinate_bonds) {
+    auto bnd = m->getBondBetweenAtoms(bond_atoms.first, bond_atoms.second);
+    REQUIRE(bnd);
+    CHECK(bnd->getBondType() == Bond::BondType::DATIVE);
+    CHECK(typeid(*bnd) == typeid(Bond));
+  }
+
+  CHECK(getSubstanceGroups(*m).empty());
+}
