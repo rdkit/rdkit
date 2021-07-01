@@ -871,7 +871,8 @@ struct mol_wrapper {
               python::arg("keepSGroups") = false),
              "replaces the specified bond with the provided one.\n"
              "If preserveProps is True preserve keep the existing props unless "
-             "explicit set on the new bond")
+             "explicit set on the new bond. If keepSGroups is False, all"
+             "Substance Groups referencing the bond will be dropped.")
         .def("GetMol", &ReadWriteMol::GetMol,
              "Returns a Mol (a normal molecule)",
              python::return_value_policy<python::manage_new_object>())
