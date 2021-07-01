@@ -1,5 +1,5 @@
 //
-//  Copyright (C) 2002-2017 Greg Landrum and Rational Discovery LLC
+//  Copyright (C) 2002-2021 Greg Landrum and other RDKit contributors
 //
 //   @@ All Rights Reserved @@
 //  This file is part of the RDKit.
@@ -860,7 +860,7 @@ void ParseMarvinSmartsLine(RWMol *mol, const std::string &text,
 }
 
 void ParseAttachPointLine(RWMol *mol, const std::string &text,
-                          unsigned int line) {
+                          unsigned int line, bool strictParsing) {
   PRECONDITION(mol, "bad mol");
   PRECONDITION(text.substr(0, 6) == std::string("M  APO"), "bad APO line");
 
@@ -908,7 +908,18 @@ void ParseAttachPointLine(RWMol *mol, const std::string &text,
             // this is -1 in v3k mol blocks, so use that:
             val = -1;
           }
-          atom->setProp(common_properties::molAttachPoint, val);
+          if (atom->hasProp(common_properties::molAttachPoint)) {
+            std::ostringstream errout;
+            errout << "Multiple ATTCHPT values for atom " << atom->getIdx() + 1
+                   << " on line " << line;
+            if (strictParsing) {
+              throw FileParseException(errout.str());
+            } else {
+              BOOST_LOG(rdWarningLog) << errout.str() << std::endl;
+            }
+          } else {
+            atom->setProp(common_properties::molAttachPoint, val);
+          }
         }
       }
     } catch (boost::bad_lexical_cast &) {
@@ -1974,7 +1985,7 @@ bool ParseMolBlockProperties(std::istream *inStream, unsigned int &line,
     } else if (lineBeg == "M  MRV") {
       ParseMarvinSmartsLine(mol, tempStr, line);
     } else if (lineBeg == "M  APO") {
-      ParseAttachPointLine(mol, tempStr, line);
+      ParseAttachPointLine(mol, tempStr, line, strictParsing);
     } else if (lineBeg == "M  LIN") {
       ParseLinkNodeLine(mol, tempStr, line);
     }
@@ -2128,7 +2139,8 @@ bool splitAssignToken(const std::string &token, std::string &prop,
 
 template <class T>
 void ParseV3000AtomProps(RWMol *mol, Atom *&atom, typename T::iterator &token,
-                         const T &tokens, unsigned int &line) {
+                         const T &tokens, unsigned int &line,
+                         bool strictParsing) {
   PRECONDITION(mol, "bad molecule");
   PRECONDITION(atom, "bad atom");
   std::ostringstream errout;
@@ -2279,7 +2291,18 @@ void ParseV3000AtomProps(RWMol *mol, Atom *&atom, typename T::iterator &token,
     } else if (prop == "ATTCHPT") {
       if (val != "0") {
         auto ival = FileParserUtils::toInt(val);
-        atom->setProp(common_properties::molAttachPoint, ival);
+        if (atom->hasProp(common_properties::molAttachPoint)) {
+          errout << "Multiple ATTCHPT values for atom " << atom->getIdx() + 1
+                 << " on line " << line;
+          if (strictParsing) {
+            throw FileParseException(errout.str());
+          } else {
+            BOOST_LOG(rdWarningLog) << errout.str() << std::endl;
+            errout.str(std::string());
+          }
+        } else {
+          atom->setProp(common_properties::molAttachPoint, ival);
+        }
       }
     } else if (prop == "ATTCHORD") {
       if (val != "0") {
@@ -2351,7 +2374,8 @@ void tokenizeV3000Line(std::string line, std::vector<std::string> &tokens) {
 }
 
 void ParseV3000AtomBlock(std::istream *inStream, unsigned int &line,
-                         unsigned int nAtoms, RWMol *mol, Conformer *conf) {
+                         unsigned int nAtoms, RWMol *mol, Conformer *conf,
+                         bool strictParsing) {
   PRECONDITION(inStream, "bad stream");
   PRECONDITION(nAtoms > 0, "bad atom count");
   PRECONDITION(mol, "bad molecule");
@@ -2435,7 +2459,7 @@ void ParseV3000AtomBlock(std::istream *inStream, unsigned int &line,
 
     // additional properties this may change the atom,
     // so be careful with it:
-    ParseV3000AtomProps(mol, atom, token, tokens, line);
+    ParseV3000AtomProps(mol, atom, token, tokens, line, strictParsing);
 
     mol->setAtomBookmark(atom, molIdx);
     conf->setAtomPos(aid, pos);
@@ -2819,7 +2843,7 @@ bool ParseV3000CTAB(std::istream *inStream, unsigned int &line, RWMol *mol,
   }
 
   if (nAtoms) {
-    ParseV3000AtomBlock(inStream, line, nAtoms, mol, conf);
+    ParseV3000AtomBlock(inStream, line, nAtoms, mol, conf, strictParsing);
   }
   if (nBonds) {
     ParseV3000BondBlock(inStream, line, nBonds, mol, chiralityPossible);
