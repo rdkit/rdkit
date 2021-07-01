@@ -81,8 +81,8 @@ class RDKIT_CHEMREACTIONS_EXPORT RandomSampleStrategy
 
   using EnumerationStrategyBase::initialize;
 
-  virtual void initializeStrategy(const ChemicalReaction &,
-                                  const EnumerationTypes::BBS &) {
+  void initializeStrategy(const ChemicalReaction &,
+                          const EnumerationTypes::BBS &) override {
     m_distributions.clear();
     for (size_t i = 0; i < m_permutationSizes.size(); ++i) {
       m_distributions.emplace_back(0, m_permutationSizes[i] - 1);
@@ -91,10 +91,10 @@ class RDKIT_CHEMREACTIONS_EXPORT RandomSampleStrategy
     m_numPermutationsProcessed = 0;
   }
 
-  virtual const char *type() const { return "RandomSampleStrategy"; }
+  const char *type() const override { return "RandomSampleStrategy"; }
 
   //! The current permutation {r1, r2, ...}
-  virtual const EnumerationTypes::RGROUPS &next() {
+  const EnumerationTypes::RGROUPS &next() override {
     for (size_t i = 0; i < m_permutation.size(); ++i) {
       m_permutation[i] = m_distributions[i](m_rng);
     }
@@ -104,13 +104,13 @@ class RDKIT_CHEMREACTIONS_EXPORT RandomSampleStrategy
     return m_permutation;
   }
 
-  virtual boost::uint64_t getPermutationIdx() const {
+  boost::uint64_t getPermutationIdx() const override {
     return m_numPermutationsProcessed;
   }
 
-  virtual operator bool() const { return true; }
+  operator bool() const override { return true; }
 
-  EnumerationStrategyBase *copy() const {
+  EnumerationStrategyBase *copy() const override {
     return new RandomSampleStrategy(*this);
   }
 

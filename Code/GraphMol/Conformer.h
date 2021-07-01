@@ -30,7 +30,7 @@ class RDKIT_GRAPHMOL_EXPORT ConformerException : public std::exception {
   ConformerException(std::string msg) : _msg(std::move(msg)) {}
   //! get the error message
   const char *what() const noexcept override { return _msg.c_str(); }
-  ~ConformerException() noexcept {}
+  ~ConformerException() noexcept override {}
 
  private:
   std::string _msg;

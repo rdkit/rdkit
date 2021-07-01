@@ -36,11 +36,11 @@ class RDKIT_FORCEFIELD_EXPORT BondStretchContrib : public ForceFieldContrib {
   BondStretchContrib(ForceField *owner, const unsigned int idx1,
                      const unsigned int idx2, const MMFFBond *mmffBondParams);
 
-  double getEnergy(double *pos) const;
+  double getEnergy(double *pos) const override;
 
-  void getGrad(double *pos, double *grad) const;
+  void getGrad(double *pos, double *grad) const override;
 
-  virtual BondStretchContrib *copy() const {
+  BondStretchContrib *copy() const override {
     return new BondStretchContrib(*this);
   }
 

@@ -713,7 +713,7 @@ class RDKIT_GRAPHMOL_EXPORT AtomRingQuery
     this->setDataFunc(queryAtomRingMembership);
   }
 
-  virtual bool Match(const ConstAtomPtr what) const {
+  bool Match(const ConstAtomPtr what) const override {
     int v = this->TypeConvert(what, Queries::Int2Type<true>());
     bool res;
     if (this->d_val < 0) {
@@ -728,7 +728,7 @@ class RDKIT_GRAPHMOL_EXPORT AtomRingQuery
   }
 
   //! returns a copy of this query
-  Queries::Query<int, ConstAtomPtr, true> *copy() const {
+  Queries::Query<int, ConstAtomPtr, true> *copy() const override {
     AtomRingQuery *res = new AtomRingQuery(this->d_val);
     res->setNegation(getNegation());
     res->setTol(this->getTol());
@@ -774,7 +774,7 @@ class RDKIT_GRAPHMOL_EXPORT RecursiveStructureQuery
   ROMol const *getQueryMol() const { return dp_queryMol.get(); }
 
   //! returns a copy of this query
-  Queries::Query<int, Atom const *, true> *copy() const {
+  Queries::Query<int, Atom const *, true> *copy() const override {
     RecursiveStructureQuery *res = new RecursiveStructureQuery();
     res->dp_queryMol.reset(new ROMol(*dp_queryMol, true));
 
@@ -826,7 +826,7 @@ class HasPropQuery : public Queries::EqualityQuery<int, TargetPtr, true> {
     this->setDataFunc(nullptr);
   }
 
-  virtual bool Match(const TargetPtr what) const {
+  bool Match(const TargetPtr what) const override {
     bool res = what->hasProp(propname);
     if (this->getNegation()) {
       res = !res;
@@ -835,7 +835,7 @@ class HasPropQuery : public Queries::EqualityQuery<int, TargetPtr, true> {
   }
 
   //! returns a copy of this query
-  Queries::Query<int, TargetPtr, true> *copy() const {
+  Queries::Query<int, TargetPtr, true> *copy() const override {
     HasPropQuery *res = new HasPropQuery(this->propname);
     res->setNegation(this->getNegation());
     res->d_description = this->d_description;
@@ -879,7 +879,7 @@ class HasPropWithValueQuery
     this->setDataFunc(nullptr);
   }
 
-  virtual bool Match(const TargetPtr what) const {
+  bool Match(const TargetPtr what) const override {
     bool res = what->hasProp(propname);
     if (res) {
       try {
@@ -912,7 +912,7 @@ class HasPropWithValueQuery
   }
 
   //! returns a copy of this query
-  Queries::Query<int, TargetPtr, true> *copy() const {
+  Queries::Query<int, TargetPtr, true> *copy() const override {
     HasPropWithValueQuery *res =
         new HasPropWithValueQuery(this->propname, this->val, this->tolerance);
     res->setNegation(this->getNegation());
@@ -945,7 +945,7 @@ class HasPropWithValueQuery<TargetPtr, std::string>
     this->setDataFunc(nullptr);
   }
 
-  virtual bool Match(const TargetPtr what) const {
+  bool Match(const TargetPtr what) const override {
     bool res = what->hasProp(propname);
     if (res) {
       try {
@@ -978,7 +978,7 @@ class HasPropWithValueQuery<TargetPtr, std::string>
   }
 
   //! returns a copy of this query
-  Queries::Query<int, TargetPtr, true> *copy() const {
+  Queries::Query<int, TargetPtr, true> *copy() const override {
     HasPropWithValueQuery<TargetPtr, std::string> *res =
         new HasPropWithValueQuery<TargetPtr, std::string>(this->propname,
                                                           this->val);
@@ -1012,7 +1012,7 @@ class HasPropWithValueQuery<TargetPtr, ExplicitBitVect>
     this->setDataFunc(nullptr);
   }
 
-  virtual bool Match(const TargetPtr what) const {
+  bool Match(const TargetPtr what) const override {
     bool res = what->hasProp(propname);
     if (res) {
       try {
@@ -1047,7 +1047,7 @@ class HasPropWithValueQuery<TargetPtr, ExplicitBitVect>
   }
 
   //! returns a copy of this query
-  Queries::Query<int, TargetPtr, true> *copy() const {
+  Queries::Query<int, TargetPtr, true> *copy() const override {
     HasPropWithValueQuery<TargetPtr, ExplicitBitVect> *res =
         new HasPropWithValueQuery<TargetPtr, ExplicitBitVect>(
             this->propname, this->val, this->tol);

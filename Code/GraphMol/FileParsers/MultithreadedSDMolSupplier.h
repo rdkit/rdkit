@@ -30,21 +30,22 @@ class RDKIT_FILEPARSERS_EXPORT MultithreadedSDMolSupplier
       size_t sizeOutputQueue = 5);
 
   MultithreadedSDMolSupplier();
-  ~MultithreadedSDMolSupplier();
-  void init() {}
+  ~MultithreadedSDMolSupplier() override;
+  void init() override {}
 
   void checkForEnd();
-  bool getEnd() const;
+  bool getEnd() const override;
   void setProcessPropertyLists(bool val) { df_processPropertyLists = val; }
   bool getProcessPropertyLists() const { return df_processPropertyLists; }
   bool getEOFHitOnRead() const { return df_eofHitOnRead; }
 
   //! reads next record and returns whether or not EOF was hit
   bool extractNextRecord(std::string &record, unsigned int &lineNum,
-                         unsigned int &index);
+                         unsigned int &index) override;
   void readMolProps(ROMol *mol, std::istringstream &inStream);
   //! parses the record and returns the resulting molecule
-  ROMol *processMoleculeRecord(const std::string &record, unsigned int lineNum);
+  ROMol *processMoleculeRecord(const std::string &record,
+                               unsigned int lineNum) override;
 
  private:
   void initFromSettings(bool takeOwnership, bool sanitize, bool removeHs,

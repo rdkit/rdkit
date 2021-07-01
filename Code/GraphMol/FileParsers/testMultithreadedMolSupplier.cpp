@@ -31,7 +31,7 @@ using namespace std::chrono;
 // Usage Example: PrintThread{} << "something";
 struct PrintThread : public std::stringstream {
   static std::mutex cout_mutex;
-  ~PrintThread() {
+  ~PrintThread() override {
     std::lock_guard<std::mutex> l{cout_mutex};
     std::cout << rdbuf();
   }

@@ -50,19 +50,19 @@ class RDKIT_CHEMICALFEATURES_EXPORT FreeChemicalFeature
         d_type(other.getType()),
         d_position(other.getPos()) {}
 
-  ~FreeChemicalFeature() {}
+  ~FreeChemicalFeature() override {}
 
   //! return our id
-  int getId() const { return d_id; }
+  int getId() const override { return d_id; }
 
   //! return our family
-  const std::string &getFamily() const { return d_family; }
+  const std::string &getFamily() const override { return d_family; }
 
   //! return our type
-  const std::string &getType() const { return d_type; }
+  const std::string &getType() const override { return d_type; }
 
   //! return our position
-  RDGeom::Point3D getPos() const { return d_position; }
+  RDGeom::Point3D getPos() const override { return d_position; }
 
   //! set our id
   void setId(const int id) { d_id = id; }

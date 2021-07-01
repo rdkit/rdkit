@@ -108,7 +108,7 @@ class LeaderPicker : public DistPicker {
 
   /*! \overload */
   RDKit::INT_VECT pick(const double *distMat, unsigned int poolSize,
-                       unsigned int pickSize) const {
+                       unsigned int pickSize) const override {
     RDKit::INT_VECT iv;
     return pick(distMat, poolSize, pickSize, iv, default_threshold,
                 default_nthreads);

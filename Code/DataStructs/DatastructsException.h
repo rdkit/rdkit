@@ -22,7 +22,7 @@ class RDKIT_DATASTRUCTS_EXPORT DatastructsException : public std::exception {
   DatastructsException(std::string msg) : _msg(std::move(msg)) {}
   //! get the error message
   const char *what() const noexcept override { return _msg.c_str(); }
-  ~DatastructsException() noexcept {}
+  ~DatastructsException() noexcept override {}
 
  private:
   std::string _msg;

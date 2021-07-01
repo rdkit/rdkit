@@ -37,10 +37,11 @@ class RDKIT_FINGERPRINTS_EXPORT MorganAtomInvGenerator
    */
   MorganAtomInvGenerator(const bool includeRingMembership = true);
 
-  std::vector<std::uint32_t> *getAtomInvariants(const ROMol &mol) const;
+  std::vector<std::uint32_t> *getAtomInvariants(
+      const ROMol &mol) const override;
 
-  std::string infoString() const;
-  MorganAtomInvGenerator *clone() const;
+  std::string infoString() const override;
+  MorganAtomInvGenerator *clone() const override;
 };
 
 /**
@@ -63,10 +64,11 @@ class RDKIT_FINGERPRINTS_EXPORT MorganFeatureAtomInvGenerator
    */
   MorganFeatureAtomInvGenerator(std::vector<const ROMol *> *patterns = nullptr);
 
-  std::vector<std::uint32_t> *getAtomInvariants(const ROMol &mol) const;
+  std::vector<std::uint32_t> *getAtomInvariants(
+      const ROMol &mol) const override;
 
-  std::string infoString() const;
-  MorganFeatureAtomInvGenerator *clone() const;
+  std::string infoString() const override;
+  MorganFeatureAtomInvGenerator *clone() const override;
 };
 
 /**
@@ -90,11 +92,12 @@ class RDKIT_FINGERPRINTS_EXPORT MorganBondInvGenerator
   MorganBondInvGenerator(const bool useBondTypes = true,
                          const bool useChirality = false);
 
-  std::vector<std::uint32_t> *getBondInvariants(const ROMol &mol) const;
+  std::vector<std::uint32_t> *getBondInvariants(
+      const ROMol &mol) const override;
 
-  std::string infoString() const;
-  MorganBondInvGenerator *clone() const;
-  ~MorganBondInvGenerator() {}
+  std::string infoString() const override;
+  MorganBondInvGenerator *clone() const override;
+  ~MorganBondInvGenerator() override {}
 };
 
 /**
@@ -109,9 +112,9 @@ class RDKIT_FINGERPRINTS_EXPORT MorganArguments
   const bool df_onlyNonzeroInvariants;
   const unsigned int d_radius;
 
-  OutputType getResultSize() const;
+  OutputType getResultSize() const override;
 
-  std::string infoString() const;
+  std::string infoString() const override;
 
   /**
    \brief Construct a new MorganArguments object
@@ -153,7 +156,7 @@ class RDKIT_FINGERPRINTS_EXPORT MorganAtomEnv
                       const std::vector<std::uint32_t> *bondInvariants,
                       const AdditionalOutput *additionalOutput,
                       const bool hashResults = false,
-                      const std::uint64_t fpSize = 0) const;
+                      const std::uint64_t fpSize = 0) const override;
 
   /**
    \brief Construct a new MorganAtomEnv object
@@ -181,9 +184,9 @@ class RDKIT_FINGERPRINTS_EXPORT MorganEnvGenerator
       const AdditionalOutput *additionalOutput,
       const std::vector<std::uint32_t> *atomInvariants,
       const std::vector<std::uint32_t> *bondInvariants,
-      const bool hashResults = false) const;
+      const bool hashResults = false) const override;
 
-  std::string infoString() const;
+  std::string infoString() const override;
 };
 
 /**

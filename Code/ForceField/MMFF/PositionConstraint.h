@@ -36,11 +36,11 @@ class RDKIT_FORCEFIELD_EXPORT PositionConstraintContrib
   PositionConstraintContrib(ForceField *owner, unsigned int idx,
                             double maxDispl, double forceConst);
 
-  ~PositionConstraintContrib() {}
-  double getEnergy(double *pos) const;
+  ~PositionConstraintContrib() override {}
+  double getEnergy(double *pos) const override;
 
-  void getGrad(double *pos, double *grad) const;
-  virtual PositionConstraintContrib *copy() const {
+  void getGrad(double *pos, double *grad) const override;
+  PositionConstraintContrib *copy() const override {
     return new PositionConstraintContrib(*this);
   }
 
