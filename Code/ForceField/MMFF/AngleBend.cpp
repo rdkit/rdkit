@@ -100,7 +100,7 @@ AngleBendContrib::AngleBendContrib(ForceField *owner, unsigned int idx1,
   d_at1Idx = idx1;
   d_at2Idx = idx2;
   d_at3Idx = idx3;
-  d_isLinear = (mmffPropParamsCentralAtom->linh ? true : false);
+  d_isLinear = mmffPropParamsCentralAtom->linh > 0u;
 
   d_theta0 = mmffAngleParams->theta0;
   d_ka = mmffAngleParams->ka;

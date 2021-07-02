@@ -605,11 +605,7 @@ void updateDoubleBondNeighbors(ROMol &mol, Bond *dblBond, const Conformer *conf,
     }
 
     double ang = RDGeom::computeDihedralAngle(bond1P, beginP, endP, bond2P);
-    if (ang < M_PI / 2) {
-      sameTorsionDir = false;
-    } else {
-      sameTorsionDir = true;
-    }
+    sameTorsionDir = ang >= M_PI / 2;
     // std::cerr << "   angle: " << ang << " sameTorsionDir: " << sameTorsionDir
     // << "\n";
   } else {
@@ -742,15 +738,12 @@ void updateDoubleBondNeighbors(ROMol &mol, Bond *dblBond, const Conformer *conf,
 
 bool isBondCandidateForStereo(const Bond *bond) {
   PRECONDITION(bond, "no bond");
-  if (bond->getBondType() == Bond::DOUBLE &&
-      bond->getStereo() != Bond::STEREOANY &&
-      bond->getBondDir() != Bond::EITHERDOUBLE &&
-      bond->getBeginAtom()->getDegree() > 1 &&
-      bond->getEndAtom()->getDegree() > 1 &&
-      shouldDetectDoubleBondStereo(bond)) {
-    return true;
-  }
-  return false;
+  return bond->getBondType() == Bond::DOUBLE &&
+         bond->getStereo() != Bond::STEREOANY &&
+         bond->getBondDir() != Bond::EITHERDOUBLE &&
+         bond->getBeginAtom()->getDegree() > 1u &&
+         bond->getEndAtom()->getDegree() > 1u &&
+         shouldDetectDoubleBondStereo(bond);
 }
 
 const Atom *findHighestCIPNeighbor(const Atom *atom, const Atom *skipAtom) {
@@ -1235,11 +1228,7 @@ bool atomIsCandidateForRingStereochem(const ROMol &mol, const Atom *atom) {
                                                rank1) &&
               nonRingNbrs[1]->getPropIfPresent(common_properties::_CIPRank,
                                                rank2)) {
-            if (rank1 == rank2) {
-              res = false;
-            } else {
-              res = true;
-            }
+            res = rank1 != rank2;
           }
           break;
         case 1:

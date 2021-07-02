@@ -26,7 +26,7 @@ int StringChromosome<bool, BinaryStringChromosomePolicy>::decodeToInt(
   int mask = 1, result = 0;
   bool *ptr = string.get() + start;
   for (int i = 0; i < nBits; i++, mask <<= 1) {
-    if (*ptr++ == true) {
+    if (*ptr++) {
       result |= mask;
     }
   }

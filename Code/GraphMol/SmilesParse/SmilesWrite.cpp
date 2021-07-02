@@ -32,10 +32,7 @@ bool inOrganicSubset(int atomicNumber) {
   while (atomicSmiles[idx] < atomicNumber && atomicSmiles[idx] != -1) {
     ++idx;
   }
-  if (atomicSmiles[idx] == atomicNumber) {
-    return true;
-  }
-  return false;
+  return atomicSmiles[idx] == atomicNumber;
 }
 
 std::string GetAtomSmiles(const Atom *atom, bool doKekule, const Bond *,

@@ -622,7 +622,7 @@ void DrawMol::extractBrackets() {
       Point2D longline = brkShp.points_[1] - brkShp.points_[2];
       longline.normalize();
       static const double cos45 = 1.0 / sqrt(2.0);
-      bool horizontal = fabs(longline.x) > cos45 ? true : false;
+      bool horizontal = fabs(longline.x) > cos45;
       size_t labelBrk = postShapes_.size() - 1;
       for (int i = 1; i < numBrackets; ++i) {
         const auto &brkShp = *postShapes_[postShapes_.size() - i - 1];
