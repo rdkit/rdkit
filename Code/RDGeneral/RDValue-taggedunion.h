@@ -443,7 +443,7 @@ inline unsigned int rdvalue_cast<unsigned int>(RDValue_cast_t v) {
 
 template <>
 inline std::uint8_t rdvalue_cast<std::uint8_t>(RDValue_cast_t v) {
-  if (rdvalue_is<int>(v)) return boost::numeric_cast<std::uint8_t>(v.value.u);
+  if (rdvalue_is<int>(v)) return boost::numeric_cast<std::uint8_t>(v.value.i);
   if (rdvalue_is<unsigned int>(v))
     return boost::numeric_cast<std::uint8_t>(v.value.u);
   throw boost::bad_any_cast();
@@ -451,9 +451,9 @@ inline std::uint8_t rdvalue_cast<std::uint8_t>(RDValue_cast_t v) {
 
 template <>
 inline std::uint16_t rdvalue_cast<std::uint16_t>(RDValue_cast_t v) {
-  if (rdvalue_is<int>(v)) return boost::numeric_cast<std::uint8_t>(v.value.i);
+  if (rdvalue_is<int>(v)) return boost::numeric_cast<std::uint16_t>(v.value.i);
   if (rdvalue_is<unsigned int>(v))
-    return boost::numeric_cast<std::uint8_t>(v.value.u);
+    return boost::numeric_cast<std::uint16_t>(v.value.u);
   throw boost::bad_any_cast();
 }
 

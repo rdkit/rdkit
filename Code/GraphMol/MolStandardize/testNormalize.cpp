@@ -501,6 +501,21 @@ void testEmptyMol() {
   TEST_ASSERT(!normalized->getNumAtoms());
 }
 
+void testGithub4281() {
+  BOOST_LOG(rdInfoLog)
+      << "-----------------------\n Testing Github #3460: "
+         "Normalization rule incorrectly matches [N+]=O rather than n=O"
+      << std::endl;
+  auto mol = "Cn1c(=O)c2nc[nH][n+](=O)c2n(C)c1=O"_smiles;
+  std::stringstream captureLog;
+  rdInfoLog->SetTee(captureLog);
+  Normalizer nn;
+  std::unique_ptr<ROMol> normalized(nn.normalize(*mol));
+  rdInfoLog->ClearTee();
+  auto logged = captureLog.str();
+  TEST_ASSERT(logged.find("FAILED sanitizeMol") == std::string::npos);
+}
+
 int main() {
   RDLog::InitLogs();
 #if 1
@@ -511,5 +526,6 @@ int main() {
   testNormalizeMultipleAltSmarts();
   testGithub3460();
   testEmptyMol();
+  testGithub4281();
   return 0;
 }

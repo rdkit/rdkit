@@ -97,7 +97,7 @@ class RDKIT_CHEMREACTIONS_EXPORT EvenSamplePairsStrategy
         rejected_slack_condition(rhs.rejected_slack_condition),
         rejected_bb_sampling_condition(rhs.rejected_bb_sampling_condition) {}
 
-  virtual const char *type() const { return "EvenSamplePairsStrategy"; }
+  const char *type() const override { return "EvenSamplePairsStrategy"; }
 
   //! This is a class for enumerating RGroups using Cartesian Products of
   //! reagents.
@@ -120,19 +120,19 @@ class RDKIT_CHEMREACTIONS_EXPORT EvenSamplePairsStrategy
   */
   using EnumerationStrategyBase::initialize;
 
-  virtual void initializeStrategy(const ChemicalReaction &,
-                                  const EnumerationTypes::BBS &);
+  void initializeStrategy(const ChemicalReaction &,
+                          const EnumerationTypes::BBS &) override;
 
   //! The current permutation {r1, r2, ...}
-  virtual const EnumerationTypes::RGROUPS &next();
+  const EnumerationTypes::RGROUPS &next() override;
 
-  virtual boost::uint64_t getPermutationIdx() const {
+  boost::uint64_t getPermutationIdx() const override {
     return m_numPermutationsProcessed;
   }
 
-  virtual operator bool() const { return true; }
+  operator bool() const override { return true; }
 
-  EnumerationStrategyBase *copy() const {
+  EnumerationStrategyBase *copy() const override {
     return new EvenSamplePairsStrategy(*this);
   }
 

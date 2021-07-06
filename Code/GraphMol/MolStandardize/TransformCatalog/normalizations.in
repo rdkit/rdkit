@@ -16,7 +16,7 @@ std::vector<std::pair<std::string, std::string>> defaultNormalizations = {
      "[N,P,As,Sb;X3:1](=[O,S,Se,Te:2])=[O,S,Se,Te:3]>>[*+1:1]([*-1:2])=[*:3]"},
     {"Sulfone to S(=O)(=O)",
      "[S+2:1]([O-:2])([O-:3])>>[S+0:1](=[O-0:2])(=[O-0:3])"},
-    {"Pyridine oxide to n+O-", "[n:1]=[O:2]>>[n+:1][O-:2]"},
+    {"Pyridine oxide to n+O-", "[nH0+0:1]=[OH0+0:2]>>[n+:1][O-:2]"},
     {"Azide to N=N+=N-", "[*:1][N:2]=[N:3]#[N:4]>>[*:1][N:2]=[N+:3]=[N-:4]"},
     {"Diazo/azo to =N+=N-", "[*:1]=[N:2]#[N:3]>>[*:1]=[N+:2]=[N-:3]"},
     {"Sulfoxide to -S+(O-)-",

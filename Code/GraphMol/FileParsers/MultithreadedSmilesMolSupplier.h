@@ -30,18 +30,19 @@ class RDKIT_FILEPARSERS_EXPORT MultithreadedSmilesMolSupplier
       unsigned int numWriterThreads = 1, size_t sizeInputQueue = 5,
       size_t sizeOutputQueue = 5);
   MultithreadedSmilesMolSupplier();
-  ~MultithreadedSmilesMolSupplier();
+  ~MultithreadedSmilesMolSupplier() override;
 
-  void init() {}
+  void init() override {}
   //! returns df_end
-  bool getEnd() const;
+  bool getEnd() const override;
   //! reads and processes the title line
   void processTitleLine();
   //! reads next record and returns whether or not EOF was hit
   bool extractNextRecord(std::string &record, unsigned int &lineNum,
-                         unsigned int &index);
+                         unsigned int &index) override;
   //! parses the record and returns the resulting molecule
-  ROMol *processMoleculeRecord(const std::string &record, unsigned int lineNum);
+  ROMol *processMoleculeRecord(const std::string &record,
+                               unsigned int lineNum) override;
 
  private:
   void initFromSettings(bool takeOwnership, const std::string &delimiter,

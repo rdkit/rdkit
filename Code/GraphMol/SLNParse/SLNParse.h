@@ -60,7 +60,7 @@ class RDKIT_SLNPARSE_EXPORT SLNParseException : public std::exception {
   SLNParseException(const char *msg) : _msg(msg) {}
   SLNParseException(std::string msg) : _msg(std::move(msg)) {}
   const char *what() const noexcept override { return _msg.c_str(); }
-  ~SLNParseException() noexcept {}
+  ~SLNParseException() noexcept override {}
 
  private:
   std::string _msg;

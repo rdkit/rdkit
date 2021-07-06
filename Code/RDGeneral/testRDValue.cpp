@@ -271,6 +271,29 @@ void testIntConversions() {
     
     p.getProp<std::int16_t>("foo");
     
+	// Test that min/max values of smaller types do not under/overflow
+	p.setProp<unsigned int>("foo", 0);
+    p.getProp<std::uint8_t>("foo");
+    p.getProp<std::uint16_t>("foo");
+
+	p.setProp<unsigned int>("foo", 255);
+    p.getProp<std::uint8_t>("foo");
+
+	p.setProp<unsigned int>("foo", 65535);
+    p.getProp<std::uint16_t>("foo");
+
+	p.setProp<int>("foo", -128);
+    p.getProp<std::int8_t>("foo");
+
+	p.setProp<int>("foo", -32768);
+    p.getProp<std::int16_t>("foo");
+
+	p.setProp<int>("foo", 127);
+    p.getProp<std::int8_t>("foo");
+
+    p.setProp<int>("foo", 32767);
+    p.getProp<std::int16_t>("foo");
+    
     // Test some overflows
     p.setProp<int>("foo", 32767+1);
     try {
@@ -288,6 +311,7 @@ void testIntConversions() {
         TEST_ASSERT(0);
     } catch (boost::numeric::positive_overflow&) {
     }
+    p.setProp<int>("foo", 65535 + 1);
     try {
         p.getProp<std::uint16_t>("foo"); // should fail
         TEST_ASSERT(0);
@@ -298,7 +322,7 @@ void testIntConversions() {
     try {
         p.getProp<std::uint8_t>("foo"); // should fail
         TEST_ASSERT(0);
-    } catch (boost::numeric::positive_overflow&) {
+    } catch (boost::numeric::negative_overflow&) {
     }
     
     p.getProp<std::int16_t>("foo"); // should pass

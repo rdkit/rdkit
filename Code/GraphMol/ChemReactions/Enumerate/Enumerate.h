@@ -131,10 +131,10 @@ class RDKIT_CHEMREACTIONS_EXPORT EnumerateLibrary
   const EnumerationTypes::BBS &getReagents() const { return m_bbs; }
 
   //! Get the next product set
-  std::vector<MOL_SPTR_VECT> next();
+  std::vector<MOL_SPTR_VECT> next() override;
 
-  void toStream(std::ostream &ss) const;
-  void initFromStream(std::istream &ss);
+  void toStream(std::ostream &ss) const override;
+  void initFromStream(std::istream &ss) override;
 
  private:
 #ifdef RDK_USE_BOOST_SERIALIZATION
