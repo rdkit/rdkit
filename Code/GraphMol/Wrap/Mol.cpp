@@ -208,9 +208,10 @@ class ReadWriteMol : public RWMol {
     PRECONDITION(atom, "bad atom");
     replaceAtom(idx, atom, updateLabel, preserveProps);
   };
-  void ReplaceBond(unsigned int idx, Bond *bond, bool preserveProps) {
+  void ReplaceBond(unsigned int idx, Bond *bond, bool preserveProps,
+                   bool keepSGroups) {
     PRECONDITION(bond, "bad bond");
-    replaceBond(idx, bond, preserveProps);
+    replaceBond(idx, bond, preserveProps, keepSGroups);
   };
   void SetStereoGroups(python::list &stereo_groups) {
     std::vector<StereoGroup> groups;
@@ -866,10 +867,12 @@ struct mol_wrapper {
              "explicit set on the new atom")
         .def("ReplaceBond", &ReadWriteMol::ReplaceBond,
              (python::arg("index"), python::arg("newBond"),
-              python::arg("preserveProps") = false),
+              python::arg("preserveProps") = false,
+              python::arg("keepSGroups") = false),
              "replaces the specified bond with the provided one.\n"
              "If preserveProps is True preserve keep the existing props unless "
-             "explicit set on the new bond")
+             "explicit set on the new bond. If keepSGroups is False, all"
+             "Substance Groups referencing the bond will be dropped.")
         .def("GetMol", &ReadWriteMol::GetMol,
              "Returns a Mol (a normal molecule)",
              python::return_value_policy<python::manage_new_object>())
