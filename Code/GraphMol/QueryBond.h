@@ -1,5 +1,5 @@
 //
-//  Copyright (C) 2001-2017 Greg Landrum and Rational Discovery LLC
+//  Copyright (C) 2001-2021 Greg Landrum and other RDKit contributors
 //
 //   @@ All Rights Reserved @@
 //  This file is part of the RDKit.
@@ -93,6 +93,13 @@ class RDKIT_GRAPHMOL_EXPORT QueryBond : public Bond {
   void expandQuery(QUERYBOND_QUERY *what,
                    Queries::CompositeQueryType how = Queries::COMPOSITE_AND,
                    bool maintainOrder = true) override;
+
+  //! returns our contribution to the explicit valence of an Atom
+  /*!
+    <b>Notes:</b>
+      - requires an owning molecule
+  */
+  double getValenceContrib(const Atom *at) const override;
 
  protected:
   QUERYBOND_QUERY *dp_query{nullptr};

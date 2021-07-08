@@ -1,5 +1,5 @@
 //
-// Copyright (C) 2003-2021 Greg Landrum and Rational Discovery LLC
+// Copyright (C) 2003-2021 Greg Landrum and other RDKit contributors
 //
 //   @@ All Rights Reserved @@
 //  This file is part of the RDKit.
@@ -624,6 +624,59 @@ makeSingleOrDoubleOrAromaticBondQuery() {
   res->setDescription("SingleOrDoubleOrAromaticBond");
   return res;
 };
+
+namespace QueryOps {
+const std::vector<std::string> bondOrderQueryFunctions{
+    std::string("BondOrder"), std::string("SingleOrAromaticBond"),
+    std::string("DoubleOrAromaticBond"), std::string("SingleOrDoubleBond"),
+    std::string("SingleOrDoubleOrAromaticBond")};
+RDKIT_GRAPHMOL_EXPORT bool hasBondTypeQuery(
+    const Queries::Query<int, Bond const *, true> &qry) {
+  const auto df = qry.getDescription();
+  // is this a bond order query?
+  if (std::find(bondOrderQueryFunctions.begin(), bondOrderQueryFunctions.end(),
+                df) != bondOrderQueryFunctions.end()) {
+    return true;
+  }
+  for (const auto &child :
+       boost::make_iterator_range(qry.beginChildren(), qry.endChildren())) {
+    if (hasBondTypeQuery(*child)) {
+      return true;
+    }
+  }
+  return false;
+}
+
+namespace {
+bool hasComplexBondTypeQueryHelper(
+    const Queries::Query<int, Bond const *, true> &qry, bool seenBondOrder) {
+  const auto df = qry.getDescription();
+  bool isBondOrder = (df == "BondOrder");
+  // is this a bond order query?
+  if (std::find(bondOrderQueryFunctions.begin(), bondOrderQueryFunctions.end(),
+                df) != bondOrderQueryFunctions.end()) {
+    if (seenBondOrder || !isBondOrder || qry.getNegation()) {
+      return true;
+    }
+  }
+  for (const auto &child :
+       boost::make_iterator_range(qry.beginChildren(), qry.endChildren())) {
+    if (hasComplexBondTypeQueryHelper(*child, seenBondOrder | isBondOrder)) {
+      return true;
+    }
+    if (child->getDescription() == "BondOrder") {
+      seenBondOrder = true;
+    }
+  }
+  return false;
+}
+}  // namespace
+
+RDKIT_GRAPHMOL_EXPORT bool hasComplexBondTypeQuery(
+    const Queries::Query<int, Bond const *, true> &qry) {
+  return hasComplexBondTypeQueryHelper(qry, false);
+}
+}  // namespace QueryOps
 
 BOND_EQUALS_QUERY *makeBondDirEqualsQuery(Bond::BondDir what) {
   auto *res = new BOND_EQUALS_QUERY;
