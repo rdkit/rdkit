@@ -1,5 +1,6 @@
 //
-//  Copyright (C) 2020 Novartis Institutes for BioMedical Research
+//  Copyright (C) 2020-2021 Novartis Institutes for BioMedical Research and
+//  other RDKit contributors
 //
 //   @@ All Rights Reserved @@
 //  This file is part of the RDKit.
@@ -60,7 +61,8 @@ struct RCore {
   RWMOL_SPTR coreWithMatches(const ROMol &coreReplacedAtoms) const;
 
   std::vector<MatchVectType> matchTerminalUserRGroups(
-      const RWMol &target, MatchVectType match) const;
+      const RWMol &target, MatchVectType match,
+      const SubstructMatchParameters &sssParams) const;
 
   inline bool isTerminalRGroupWithUserLabel(const int idx) const {
     return terminalRGroupAtomsWithUserLabels.find(idx) !=

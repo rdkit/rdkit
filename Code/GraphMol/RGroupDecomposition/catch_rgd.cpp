@@ -1,5 +1,5 @@
 //
-//  Copyright (C) 2021 Greg Landrum
+//  Copyright (C) 2021 Greg Landrum and other RDKit contributors
 //
 //   @@ All Rights Reserved @@
 //  This file is part of the RDKit.
@@ -282,5 +282,154 @@ TEST_CASE("jm200186n Snippet") {
     CHECK(flatten_whitespace(toJSON(rows)) ==
           flatten_whitespace(
               readReferenceData(testDataDir + "jm200186n.excerpt.out1.json")));
+  }
+}
+
+std::vector<ROMOL_SPTR> smisToMols(const std::vector<std::string> &smis) {
+  std::vector<ROMOL_SPTR> mols;
+  for (const auto &smi : smis) {
+    auto m = SmilesToMol(smi);
+    assert(m);
+    mols.emplace_back(m);
+  }
+  return mols;
+}
+
+TEST_CASE("substructure parameters and RGD: chirality") {
+  std::vector<std::string> smis = {"C1CN[C@H]1F", "C1CN[C@]1(O)F",
+                                   "C1CN[C@@H]1F", "C1CN[CH]1F"};
+  auto mols = smisToMols(smis);
+  std::vector<std::string> csmis = {"C1CNC1[*:1]"};
+  auto cores = smisToMols(csmis);
+  std::vector<std::string> csmis2 = {"C1CN[C@H]1[*:1]"};
+  auto chiral_cores = smisToMols(csmis2);
+  SECTION("defaults") {
+    RGroupRows rows;
+    std::vector<unsigned> unmatched;
+    RGroupDecompositionParameters params;
+    {
+      auto n = RGroupDecompose(cores, mols, rows, &unmatched, params);
+      CHECK(n == mols.size());
+      CHECK(rows.size() == n);
+      CHECK(unmatched.empty());
+      CHECK(flatten_whitespace(toJSON(rows)) == flatten_whitespace(R"JSON(
+[
+  {
+    "Core":"C1CC([*:1])([*:2])N1",
+    "R1":"F[*:1]",
+    "R2":"[H][*:2]"
+  },
+  {
+    "Core":"C1CC([*:1])([*:2])N1",
+    "R1":"F[*:1]",
+    "R2":"O[*:2]"
+  },
+  {
+    "Core":"C1CC([*:1])([*:2])N1",
+    "R1":"F[*:1]",
+    "R2":"[H][*:2]"
+  },
+  {
+    "Core":"C1CC([*:1])([*:2])N1",
+    "R1":"F[*:1]",
+    "R2":"[H][*:2]"
+  }
+]
+    )JSON"));
+    }
+    {
+      auto n = RGroupDecompose(chiral_cores, mols, rows, &unmatched, params);
+      CHECK(n == mols.size() - 1);
+      CHECK(rows.size() == n);
+      CHECK(unmatched.size() == 1);
+      CHECK(flatten_whitespace(toJSON(rows)) == flatten_whitespace(R"JSON(
+[
+  {
+    "Core":"C1C[C@@]([*:1])([*:2])N1",
+    "R1":"F[*:1]",
+    "R2":"[H][*:2]"
+  },
+  {
+    "Core":"C1C[C@@]([*:1])([*:2])N1",
+    "R1":"O[*:1]",
+    "R2":"F[*:2]"
+  },
+  {
+    "Core":"C1C[C@@]([*:1])([*:2])N1",
+    "R1":"[H][*:1]",
+    "R2":"F[*:2]"
+  }
+]
+    )JSON"));
+    }
+  }
+
+  SECTION("not using chirality") {
+    // this time both cores return the same thing and stereo information is
+    // removed from the chiral cores
+    RGroupRows rows;
+    std::vector<unsigned> unmatched;
+    RGroupDecompositionParameters params;
+    params.substructmatchParams.useChirality = false;
+    {
+      auto n = RGroupDecompose(cores, mols, rows, &unmatched, params);
+      CHECK(n == mols.size());
+      CHECK(rows.size() == n);
+      CHECK(unmatched.empty());
+      CHECK(flatten_whitespace(toJSON(rows)) == flatten_whitespace(R"JSON(
+[
+  {
+    "Core":"C1CC([*:1])([*:2])N1",
+    "R1":"F[*:1]",
+    "R2":"[H][*:2]"
+  },
+  {
+    "Core":"C1CC([*:1])([*:2])N1",
+    "R1":"F[*:1]",
+    "R2":"O[*:2]"
+  },
+  {
+    "Core":"C1CC([*:1])([*:2])N1",
+    "R1":"F[*:1]",
+    "R2":"[H][*:2]"
+  },
+  {
+    "Core":"C1CC([*:1])([*:2])N1",
+    "R1":"F[*:1]",
+    "R2":"[H][*:2]"
+  }
+]
+    )JSON"));
+    }
+    {
+      auto n = RGroupDecompose(chiral_cores, mols, rows, &unmatched, params);
+      CHECK(n == mols.size());
+      CHECK(rows.size() == n);
+      CHECK(unmatched.empty());
+      CHECK(flatten_whitespace(toJSON(rows)) == flatten_whitespace(R"JSON(
+[
+  {
+    "Core":"C1CC([*:1])([*:2])N1",
+    "R1":"F[*:1]",
+    "R2":"[H][*:2]"
+  },
+  {
+    "Core":"C1CC([*:1])([*:2])N1",
+    "R1":"F[*:1]",
+    "R2":"O[*:2]"
+  },
+  {
+    "Core":"C1CC([*:1])([*:2])N1",
+    "R1":"F[*:1]",
+    "R2":"[H][*:2]"
+  },
+  {
+    "Core":"C1CC([*:1])([*:2])N1",
+    "R1":"F[*:1]",
+    "R2":"[H][*:2]"
+  }
+]
+    )JSON"));
+    }
   }
 }
