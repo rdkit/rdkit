@@ -884,7 +884,7 @@ void testHasBondTypeQuery() {
                         << std::endl;
 
   {
-    auto m = "C-C-@C@-C@CC-,=C"_smarts;
+    auto m = "C-C-@C@-C@CC-,=C!-C"_smarts;
     TEST_ASSERT(m);
     for (const auto bond : m->bonds()) {
       bool hasQ = QueryOps::hasBondTypeQuery(*bond);
