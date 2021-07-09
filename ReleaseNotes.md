@@ -2,7 +2,8 @@
 (Changes relative to Release_2021.03.3)
 
 ## Acknowledgements
-Rasmus Lundsgaard, Paolo Tosco, Kazuya Ujihara, Alain Vaucher, 'jungb-basf' 
+Rasmus Lundsgaard, Dan Nealschneider, Ricardo Rodriguez-Schmidt, Paolo Tosco,
+Kazuya Ujihara, Alain Vaucher, 'jungb-basf' 
 
 
 
@@ -44,7 +45,7 @@ Rasmus Lundsgaard, Paolo Tosco, Kazuya Ujihara, Alain Vaucher, 'jungb-basf'
 
 ## Acknowledgements
 Jason Biggs, James Davidson, Harrison Green, Brian Kelley, Stephanie Labouille,
-Dan Nealschneider, Maximilian Peters, Ricardo Rodriguez-Schmidt Riccardo
+Dan Nealschneider, Maximilian Peters, Ricardo Rodriguez-Schmidt, Riccardo
 Sabatini, Peter St. John, Paolo Tosco, Ivan Tubert-Brohman, Rachel Walker,
 Maciej Wójcikowski, 
 
