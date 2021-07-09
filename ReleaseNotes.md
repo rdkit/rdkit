@@ -1,4 +1,45 @@
-# Release_2021.03.2
+# Release_2021.03.4
+(Changes relative to Release_2021.03.3)
+
+## Acknowledgements
+Rasmus Lundsgaard, Paolo Tosco, Kazuya Ujihara, Alain Vaucher, 'jungb-basf' 
+
+
+
+## Bug Fixes:
+  - EnumerateStereoisomers fail with STEREOANY bonds from molblock
+ (github #3759 from TermeHansen)
+  - MolFragmentToSmiles with kekuleSmiles=True raises AtomKekulizeException
+ (github #3998 from kazuyaujihara)
+  - bug in MDLParser.cpp when reading a rxn file in v3000 format that contains agents
+ (github #4183 from jungb-basf)
+  - allow more recoverable V3000 parsing errors when strictParsing=false
+ (github #4210 from greglandrum)
+  - Fix a couple of problems with fingerprint count simulation
+ (github #4228 from greglandrum)
+  - Chem.MolFromSmiles using SmilesParserParams throws exceptions
+ (github #4232 from greglandrum)
+  - double bonds now have EITHER stereo if no coordinates are present
+ (github #4239 from greglandrum)
+  - Fix CMakeLists for FileParsers
+ (github #4240 from kazuyaujihara)
+  - Multiple ATTCHPT entries for one atom handled incorrectly
+ (github #4256 from greglandrum)
+  - Exception thrown by reionizer when dealing with Mg+2
+ (github #4260 from greglandrum)
+  - Fallback ring finding failing on molecules with multiple fragments
+ (github #4266 from avaucher)
+  - FindPotentialStereo() doesn't find *marked* ring stereo when flagPossible=False
+ (github #4279 from greglandrum)
+  - The normalization pattern for pyridine N-oxide is not specific enough
+ (github #4281 from ptosco)
+  - Unreasonable calculation of implicit valence for atoms with query bonds
+ (github #4311 from greglandrum)
+
+
+
+
+# Release_2021.03.3
 (Changes relative to Release_2021.03.2)
 
 ## Acknowledgements
