@@ -1,4 +1,13 @@
-
+//
+//  Copyright (c) 2017-2021, Novartis Institutes for BioMedical Research Inc.
+//  and other RDKit contributors
+//
+//   @@ All Rights Reserved @@
+//  This file is part of the RDKit.
+//  The contents are covered by the terms of the BSD license
+//  which is included in the file license.txt, found at the root
+//  of the RDKit source tree.
+//
 #include "RGroupCore.h"
 #include <GraphMol/Substruct/SubstructUtils.h>
 
@@ -193,7 +202,8 @@ void RCore::buildMatchingMol() {
 // Given a matching molecule substructure match to a target molecule, return
 // core matches with terminal user R groups matched
 std::vector<MatchVectType> RCore::matchTerminalUserRGroups(
-    const RWMol &target, MatchVectType match) const {
+    const RWMol &target, MatchVectType match,
+    const SubstructMatchParameters &sssParams) const {
   // Transform match indexed by matching molecule atoms to a map
   // indexed by core atoms
   std::transform(match.begin(), match.end(), match.begin(),
@@ -224,9 +234,6 @@ std::vector<MatchVectType> RCore::matchTerminalUserRGroups(
   // target atoms that the R group can map to
   std::vector<std::vector<int>> availableMappingsForDummy;
 
-  SubstructMatchParameters ssParameters;
-  ssParameters.useChirality = true;
-
   // Loop over all the user terminal R groups and see if they can be included
   // in the match and, if so, record the target atoms that the R group can
   // be mapped to.
@@ -246,7 +253,7 @@ std::vector<MatchVectType> RCore::matchTerminalUserRGroups(
       if (mappedTargetIdx.find(*nbrIter) == mappedTargetIdx.end()) {
         const auto targetBond = target.getBondBetweenAtoms(targetIdx, *nbrIter);
         // check for bond compatibility
-        if (bondCompat(coreBond, targetBond, ssParameters)) {
+        if (bondCompat(coreBond, targetBond, sssParams)) {
           available.push_back(*nbrIter);
         }
       }
@@ -285,7 +292,7 @@ std::vector<MatchVectType> RCore::matchTerminalUserRGroups(
     targetIndices[position] = pair.second;
   }
 
-  MolMatchFinalCheckFunctor molMatchFunctor(*core, target, ssParameters);
+  MolMatchFinalCheckFunctor molMatchFunctor(*core, target, sssParams);
   boost::dynamic_bitset<> targetBondsPresent(target.getNumBonds());
 
   // Filter all available mappings removing those that contain duplicates,
@@ -324,8 +331,8 @@ std::vector<MatchVectType> RCore::matchTerminalUserRGroups(
     }
   }
 
-  delete [] queryIndices;
-  delete [] targetIndices;
+  delete[] queryIndices;
+  delete[] targetIndices;
   return allMappings;
 }
 
