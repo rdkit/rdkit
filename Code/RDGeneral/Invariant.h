@@ -66,7 +66,7 @@ class RDKIT_RDGENERAL_EXPORT Invariant : public std::runtime_error {
         prefix_d(prefix),
         file_dp(file),
         line_d(line) {}
-  ~Invariant() noexcept {}
+  ~Invariant() noexcept override {}
 
   const char* what() const noexcept override { return mess_d.c_str(); }
 

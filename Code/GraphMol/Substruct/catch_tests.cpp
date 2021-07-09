@@ -33,11 +33,11 @@ class _IsSubstructOf : public Catch::MatcherBase<const ROMol &> {
   _IsSubstructOf(const ROMol &m, SubstructMatchParameters ps)
       : m_mol(&m), m_ps(std::move(ps)) {}
 
-  virtual bool match(const ROMol &query) const override {
+  bool match(const ROMol &query) const override {
     return !SubstructMatch(*m_mol, query, m_ps).empty();
   }
 
-  virtual std::string describe() const override {
+  std::string describe() const override {
     std::ostringstream ss;
     ss << "is not a substructure of " << MolToCXSmiles(*m_mol);
     return ss.str();

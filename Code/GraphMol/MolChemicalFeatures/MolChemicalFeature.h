@@ -40,15 +40,15 @@ class RDKIT_MOLCHEMICALFEATURES_EXPORT MolChemicalFeature
         d_id(id),
         d_activeConf(-1) {}
 
-  ~MolChemicalFeature() {}
+  ~MolChemicalFeature() override {}
 
   //! \brief return the name of the feature's family
-  const std::string &getFamily() const;
+  const std::string &getFamily() const override;
   //! \brief return the name of the feature's type
-  const std::string &getType() const;
+  const std::string &getType() const override;
   //! \brief return the position of the feature (obtained from
   //! from the associated conformation
-  RDGeom::Point3D getPos() const;
+  RDGeom::Point3D getPos() const override;
 
   //! \brief return the position of the feature (obtained from
   //! from the requested conformation from the associated molecule)
@@ -61,7 +61,7 @@ class RDKIT_MOLCHEMICALFEATURES_EXPORT MolChemicalFeature
   const MolChemicalFeatureDef *getFeatDef() const { return dp_def; }
 
   //! \brief returns the active conformer (in the associated molecule)
-  int getId() const { return d_id; }
+  int getId() const override { return d_id; }
 
   //! \brief returns the number of atoms defining the feature
   inline unsigned int getNumAtoms() const { return d_atoms.size(); }

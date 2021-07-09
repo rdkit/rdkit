@@ -1,5 +1,5 @@
 //
-//  Copyright (C) 2018-2021 Greg Landrum and T5 Informatics GmbH
+//  Copyright (C) 2018-2021 Greg Landrum and other RDKit contributors
 //
 //   @@ All Rights Reserved @@
 //  This file is part of the RDKit.
@@ -2068,5 +2068,27 @@ TEST_CASE("KekulizeFragment", "[graphmol]") {
     // kekulization of conjugated chains.
     CHECK(mol->getBondWithIdx(2)->getBondType() == Bond::AROMATIC);
     CHECK(mol->getBondWithIdx(4)->getIsAromatic());
+  }
+}
+
+TEST_CASE(
+    "github #4266: fallback ring finding failing on molecules with multiple "
+    "fragments",
+    "[graphmol]") {
+  SECTION("case1") {
+    auto m = "C123C45C16C21C34C561.c1ccccc1"_smiles;
+    REQUIRE(m);
+    ROMol m2(*m);
+    m2.getRingInfo()->reset();
+    MolOps::fastFindRings(m2);
+    CHECK(m->getRingInfo()->numRings() == m2.getRingInfo()->numRings());
+  }
+  SECTION("case2") {
+    auto m = "c1ccccc1.C123C45C16C21C34C561"_smiles;
+    REQUIRE(m);
+    ROMol m2(*m);
+    m2.getRingInfo()->reset();
+    MolOps::fastFindRings(m2);
+    CHECK(m->getRingInfo()->numRings() == m2.getRingInfo()->numRings());
   }
 }

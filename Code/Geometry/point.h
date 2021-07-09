@@ -60,16 +60,16 @@ class RDKIT_RDGEOMETRYLIB_EXPORT Point3D : public Point {
   Point3D() {}
   Point3D(double xv, double yv, double zv) : x(xv), y(yv), z(zv) {}
 
-  ~Point3D() {}
+  ~Point3D() override {}
 
   Point3D(const Point3D &other)
       : Point(other), x(other.x), y(other.y), z(other.z) {}
 
-  virtual Point *copy() const { return new Point3D(*this); }
+  Point *copy() const override { return new Point3D(*this); }
 
-  inline unsigned int dimension() const { return 3; }
+  inline unsigned int dimension() const override { return 3; }
 
-  inline double operator[](unsigned int i) const {
+  inline double operator[](unsigned int i) const override {
     PRECONDITION(i < 3, "Invalid index on Point3D");
     if (i == 0) {
       return x;
@@ -80,7 +80,7 @@ class RDKIT_RDGEOMETRYLIB_EXPORT Point3D : public Point {
     }
   }
 
-  inline double &operator[](unsigned int i) {
+  inline double &operator[](unsigned int i) override {
     PRECONDITION(i < 3, "Invalid index on Point3D");
     if (i == 0) {
       return x;
@@ -137,19 +137,19 @@ class RDKIT_RDGEOMETRYLIB_EXPORT Point3D : public Point {
     return res;
   }
 
-  void normalize() {
+  void normalize() override {
     double l = this->length();
     x /= l;
     y /= l;
     z /= l;
   }
 
-  double length() const {
+  double length() const override {
     double res = x * x + y * y + z * z;
     return sqrt(res);
   }
 
-  double lengthSq() const {
+  double lengthSq() const override {
     // double res = pow(x,2) + pow(y,2) + pow(z,2);
     double res = x * x + y * y + z * z;
     return res;
@@ -276,17 +276,17 @@ class RDKIT_RDGEOMETRYLIB_EXPORT Point2D : public Point {
 
   Point2D() {}
   Point2D(double xv, double yv) : x(xv), y(yv) {}
-  ~Point2D() {}
+  ~Point2D() override {}
 
   Point2D(const Point2D &other) : Point(other), x(other.x), y(other.y) {}
   //! construct from a Point3D (ignoring the z coordinate)
   Point2D(const Point3D &p3d) : Point(p3d), x(p3d.x), y(p3d.y) {}
 
-  virtual Point *copy() const { return new Point2D(*this); }
+  Point *copy() const override { return new Point2D(*this); }
 
-  inline unsigned int dimension() const { return 2; }
+  inline unsigned int dimension() const override { return 2; }
 
-  inline double operator[](unsigned int i) const {
+  inline double operator[](unsigned int i) const override {
     PRECONDITION(i < 2, "Invalid index on Point2D");
     if (i == 0) {
       return x;
@@ -295,7 +295,7 @@ class RDKIT_RDGEOMETRYLIB_EXPORT Point2D : public Point {
     }
   }
 
-  inline double &operator[](unsigned int i) {
+  inline double &operator[](unsigned int i) override {
     PRECONDITION(i < 2, "Invalid index on Point2D");
     if (i == 0) {
       return x;
@@ -341,7 +341,7 @@ class RDKIT_RDGEOMETRYLIB_EXPORT Point2D : public Point {
     return res;
   }
 
-  void normalize() {
+  void normalize() override {
     double ln = this->length();
     x /= ln;
     y /= ln;
@@ -353,13 +353,13 @@ class RDKIT_RDGEOMETRYLIB_EXPORT Point2D : public Point {
     y = temp;
   }
 
-  double length() const {
+  double length() const override {
     // double res = pow(x,2) + pow(y,2);
     double res = x * x + y * y;
     return sqrt(res);
   }
 
-  double lengthSq() const {
+  double lengthSq() const override {
     double res = x * x + y * y;
     return res;
   }
@@ -414,7 +414,7 @@ class RDKIT_RDGEOMETRYLIB_EXPORT PointND : public Point {
     dp_storage.reset(nvec);
   }
 
-  virtual Point *copy() const { return new PointND(*this); }
+  Point *copy() const override { return new PointND(*this); }
 
 #if 0
 	template <typename T>
@@ -432,21 +432,25 @@ class RDKIT_RDGEOMETRYLIB_EXPORT PointND : public Point {
     };
 #endif
 
-  ~PointND() {}
+  ~PointND() override {}
 
-  inline double operator[](unsigned int i) const {
+  inline double operator[](unsigned int i) const override {
     return dp_storage.get()->getVal(i);
   }
 
-  inline double &operator[](unsigned int i) { return (*dp_storage.get())[i]; }
+  inline double &operator[](unsigned int i) override {
+    return (*dp_storage.get())[i];
+  }
 
-  inline void normalize() { dp_storage.get()->normalize(); }
+  inline void normalize() override { dp_storage.get()->normalize(); }
 
-  inline double length() const { return dp_storage.get()->normL2(); }
+  inline double length() const override { return dp_storage.get()->normL2(); }
 
-  inline double lengthSq() const { return dp_storage.get()->normL2Sq(); }
+  inline double lengthSq() const override {
+    return dp_storage.get()->normL2Sq();
+  }
 
-  unsigned int dimension() const { return dp_storage.get()->size(); }
+  unsigned int dimension() const override { return dp_storage.get()->size(); }
 
   PointND &operator=(const PointND &other) {
     if (this == &other) return *this;

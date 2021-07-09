@@ -130,12 +130,12 @@ class RDKIT_FILEPARSERS_EXPORT ForwardSDMolSupplier : public MolSupplier {
                                 bool removeHs = true,
                                 bool strictParsing = false);
 
-  virtual ~ForwardSDMolSupplier() { close(); }
+  ~ForwardSDMolSupplier() override { close(); }
 
-  virtual void init();
-  virtual void reset();
-  virtual ROMol *next();
-  virtual bool atEnd();
+  void init() override;
+  void reset() override;
+  ROMol *next() override;
+  bool atEnd() override;
 
   void setProcessPropertyLists(bool val) { df_processPropertyLists = val; }
   bool getProcessPropertyLists() const { return df_processPropertyLists; }
@@ -186,11 +186,11 @@ class RDKIT_FILEPARSERS_EXPORT SDMolSupplier : public ForwardSDMolSupplier {
                          bool sanitize = true, bool removeHs = true,
                          bool strictParsing = true);
 
-  virtual ~SDMolSupplier() { close(); }
-  void init();
-  void reset();
-  ROMol *next();
-  bool atEnd();
+  ~SDMolSupplier() override { close(); }
+  void init() override;
+  void reset() override;
+  ROMol *next() override;
+  bool atEnd() override;
   void moveTo(unsigned int idx);
   ROMol *operator[](unsigned int idx);
   /*! \brief returns the text block for a particular item
@@ -219,7 +219,7 @@ class RDKIT_FILEPARSERS_EXPORT SDMolSupplier : public ForwardSDMolSupplier {
   void setStreamIndices(const std::vector<std::streampos> &locs);
 
  private:
-  void checkForEnd();
+  void checkForEnd() override;
   void setDataCommon(const std::string &text, bool sanitize, bool removeHs);
   int d_len = 0;   // total number of mol blocks in the file (initialized to -1)
   int d_last = 0;  // the molecule we are ready to read
@@ -270,14 +270,14 @@ class RDKIT_FILEPARSERS_EXPORT SmilesMolSupplier : public MolSupplier {
                              int smilesColumn = 0, int nameColumn = 1,
                              bool titleLine = true, bool sanitize = true);
 
-  virtual ~SmilesMolSupplier() { close(); }
+  ~SmilesMolSupplier() override { close(); }
   void setData(const std::string &text, const std::string &delimiter = " ",
                int smilesColumn = 0, int nameColumn = 1, bool titleLine = true,
                bool sanitize = true);
-  void init();
-  void reset();
-  ROMol *next();
-  bool atEnd();
+  void init() override;
+  void reset() override;
+  ROMol *next() override;
+  bool atEnd() override;
   void moveTo(unsigned int idx);
   ROMol *operator[](unsigned int idx);
   /*! \brief returns the text block for a particular item
@@ -342,13 +342,13 @@ class RDKIT_FILEPARSERS_EXPORT TDTMolSupplier : public MolSupplier {
                           const std::string &nameRecord = "", int confId2D = -1,
                           int confId3D = 0, bool sanitize = true);
   TDTMolSupplier();
-  virtual ~TDTMolSupplier() { close(); }
+  ~TDTMolSupplier() override { close(); }
   void setData(const std::string &text, const std::string &nameRecord = "",
                int confId2D = -1, int confId3D = 0, bool sanitize = true);
-  void init();
-  void reset();
-  ROMol *next();
-  bool atEnd();
+  void init() override;
+  void reset() override;
+  ROMol *next() override;
+  bool atEnd() override;
   void moveTo(unsigned int idx);
   ROMol *operator[](unsigned int idx);
   /*! \brief returns the text block for a particular item
@@ -387,12 +387,12 @@ class RDKIT_FILEPARSERS_EXPORT PDBMolSupplier : public MolSupplier {
                           bool removeHs = true, unsigned int flavor = 0,
                           bool proximityBonding = true);
 
-  virtual ~PDBMolSupplier() { close(); }
+  ~PDBMolSupplier() override { close(); }
 
-  virtual void init();
-  virtual void reset();
-  virtual ROMol *next();
-  virtual bool atEnd();
+  void init() override;
+  void reset() override;
+  ROMol *next() override;
+  bool atEnd() override;
 
  protected:
   bool df_sanitize, df_removeHs, df_proximityBonding;
@@ -419,14 +419,14 @@ class RDKIT_FILEPARSERS_EXPORT MaeMolSupplier : public MolSupplier {
   explicit MaeMolSupplier(const std::string &fname, bool sanitize = true,
                           bool removeHs = true);
 
-  virtual ~MaeMolSupplier() {}
+  ~MaeMolSupplier() override {}
 
-  virtual void init();
-  virtual void reset();
-  virtual ROMol *next();
-  virtual bool atEnd();
+  void init() override;
+  void reset() override;
+  ROMol *next() override;
+  bool atEnd() override;
 
-  virtual void close() { dp_sInStream.reset(); }
+  void close() override { dp_sInStream.reset(); }
 
  private:
   void moveToNextBlock();

@@ -54,36 +54,36 @@ class RDKIT_RDGEOMETRYLIB_EXPORT UniformGrid3D : public Grid3D {
   UniformGrid3D(const char *pkl, unsigned int);
   UniformGrid3D &operator=(const UniformGrid3D &other);
 
-  ~UniformGrid3D();
+  ~UniformGrid3D() override;
 
   //! \brief Get the index of the grid point closest to point
   //!
   //! \return the integer index, -1 if the specified point is outside the grid
-  int getGridPointIndex(const Point3D &point) const;
+  int getGridPointIndex(const Point3D &point) const override;
 
   //! \brief Get the value at the grid point closest to the specified point
   //!
   //! \return the integer value, -1 if the specified index is outside the grid
-  int getVal(const Point3D &point) const;
+  int getVal(const Point3D &point) const override;
 
   //! \brief Get the value at a specified grid point
   //!
   //! \return the unsigned integer value
-  unsigned int getVal(unsigned int pointId) const;
+  unsigned int getVal(unsigned int pointId) const override;
 
   //! \brief Set the value at the grid point closest to the specified point
   //!
   //! doesn't do anything if the point is outside the grid
-  void setVal(const Point3D &point, unsigned int val);
+  void setVal(const Point3D &point, unsigned int val) override;
 
   //! \brief get the location of the specified grid point
-  Point3D getGridPointLoc(unsigned int pointId) const;
+  Point3D getGridPointLoc(unsigned int pointId) const override;
 
   //! \brief Set the value at the specified grid point
-  void setVal(unsigned int pointId, unsigned int val);
+  void setVal(unsigned int pointId, unsigned int val) override;
 
   //! \brief get the size of the grid (number of grid points)
-  unsigned int getSize() const { return d_numX * d_numY * d_numZ; }
+  unsigned int getSize() const override { return d_numX * d_numY * d_numZ; }
 
   //! \brief set the occupancy for a multi-layered sphere
   /*!
@@ -130,7 +130,7 @@ class RDKIT_RDGEOMETRYLIB_EXPORT UniformGrid3D : public Grid3D {
   double getSpacing() const { return d_spacing; }
 
   //! \brief return a \b const pointer to our occupancy vector
-  const RDKit::DiscreteValueVect *getOccupancyVect() const {
+  const RDKit::DiscreteValueVect *getOccupancyVect() const override {
     return dp_storage;
   }
 

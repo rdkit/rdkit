@@ -40,12 +40,12 @@ class _IsSubstructOf : public Catch::MatcherBase<const std::string &> {
         m_description(std::move(description)),
         m_ps(std::move(ps)) {}
 
-  virtual bool match(const std::string &smiles) const override {
+  bool match(const std::string &smiles) const override {
     std::unique_ptr<ROMol> mol(SmilesToMol(smiles));
     return !SubstructMatch(*mol, *m_query, m_ps).empty();
   }
 
-  virtual std::string describe() const override {
+  std::string describe() const override {
     std::ostringstream ss;
     ss << "is not a substructure of " << m_description;
     return ss.str();

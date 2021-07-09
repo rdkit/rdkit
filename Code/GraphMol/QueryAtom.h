@@ -64,21 +64,21 @@ class RDKIT_GRAPHMOL_EXPORT QueryAtom : public Atom {
     }
     return *this;
   }
-  ~QueryAtom();
+  ~QueryAtom() override;
 
   //! returns a copy of this query, owned by the caller
-  Atom *copy() const;
+  Atom *copy() const override;
 
   // This method can be used to distinguish query atoms from standard atoms:
-  bool hasQuery() const { return dp_query != nullptr; }
+  bool hasQuery() const override { return dp_query != nullptr; }
 
   //! replaces our current query with the value passed in
-  void setQuery(QUERYATOM_QUERY *what) {
+  void setQuery(QUERYATOM_QUERY *what) override {
     delete dp_query;
     dp_query = what;
   }
   //! returns our current query
-  QUERYATOM_QUERY *getQuery() const { return dp_query; }
+  QUERYATOM_QUERY *getQuery() const override { return dp_query; }
 
   //! expands our current query
   /*!
@@ -99,10 +99,10 @@ class RDKIT_GRAPHMOL_EXPORT QueryAtom : public Atom {
   */
   void expandQuery(QUERYATOM_QUERY *what,
                    Queries::CompositeQueryType how = Queries::COMPOSITE_AND,
-                   bool maintainOrder = true);
+                   bool maintainOrder = true) override;
 
   //! returns true if we match Atom \c what
-  bool Match(Atom const *what) const;
+  bool Match(Atom const *what) const override;
 
   //! returns true if our query details match those of QueryAtom \c what
   bool QueryMatch(QueryAtom const *what) const;

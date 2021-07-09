@@ -41,7 +41,7 @@ class RDKIT_MOLSTANDARDIZE_EXPORT ValidationErrorInfo : public std::exception {
     BOOST_LOG(rdInfoLog) << d_msg << std::endl;
   }
   const char *what() const noexcept override { return d_msg.c_str(); }
-  ~ValidationErrorInfo() noexcept {}
+  ~ValidationErrorInfo() noexcept override {}
 
  private:
   std::string d_msg;
@@ -95,7 +95,7 @@ class RDKIT_MOLSTANDARDIZE_EXPORT NoAtomValidation final
            std::vector<ValidationErrorInfo> &errors) const override;
   //! makes a copy of NoAtomValidation object and returns a MolVSValidations
   //! pointer to it
-  virtual boost::shared_ptr<MolVSValidations> copy() const override {
+  boost::shared_ptr<MolVSValidations> copy() const override {
     return boost::make_shared<NoAtomValidation>(*this);
   }
 };
@@ -108,7 +108,7 @@ class RDKIT_MOLSTANDARDIZE_EXPORT FragmentValidation final
            std::vector<ValidationErrorInfo> &errors) const override;
   //! makes a copy of FragmentValidation object and returns a MolVSValidations
   //! pointer to it
-  virtual boost::shared_ptr<MolVSValidations> copy() const override {
+  boost::shared_ptr<MolVSValidations> copy() const override {
     return boost::make_shared<FragmentValidation>(*this);
   }
 };
@@ -121,7 +121,7 @@ class RDKIT_MOLSTANDARDIZE_EXPORT NeutralValidation final
            std::vector<ValidationErrorInfo> &errors) const override;
   //! makes a copy of NeutralValidation object and returns a MolVSValidations
   //! pointer to it
-  virtual boost::shared_ptr<MolVSValidations> copy() const override {
+  boost::shared_ptr<MolVSValidations> copy() const override {
     return boost::make_shared<NeutralValidation>(*this);
   }
 };
@@ -134,7 +134,7 @@ class RDKIT_MOLSTANDARDIZE_EXPORT IsotopeValidation final
            std::vector<ValidationErrorInfo> &errors) const override;
   //! makes a copy of IsotopeValidation object and returns a MolVSValidations
   //! pointer to it
-  virtual boost::shared_ptr<MolVSValidations> copy() const override {
+  boost::shared_ptr<MolVSValidations> copy() const override {
     return boost::make_shared<IsotopeValidation>(*this);
   }
 };
@@ -150,7 +150,7 @@ class RDKIT_MOLSTANDARDIZE_EXPORT MolVSValidation : public ValidationMethod {
   MolVSValidation(
       const std::vector<boost::shared_ptr<MolVSValidations>> validations);
   MolVSValidation(const MolVSValidation &other);
-  ~MolVSValidation();
+  ~MolVSValidation() override;
 
   std::vector<ValidationErrorInfo> validate(
       const ROMol &mol, bool reportAllFailures) const override;

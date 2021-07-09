@@ -31,7 +31,7 @@ class SquareMatrix : public Matrix<TYPE> {
   //  return d_nRows;
   // }
 
-  virtual SquareMatrix<TYPE> &operator*=(TYPE scale) {
+  SquareMatrix<TYPE> &operator*=(TYPE scale) override {
     Matrix<TYPE>::operator*=(scale);
     return *this;
   }

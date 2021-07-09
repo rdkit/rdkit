@@ -70,7 +70,7 @@ class PyResonanceMolSupplierCallback
   inline python::object getCallbackOverride() const {
     return get_override("__call__");
   }
-  bool operator()() { return getCallbackOverride()(); }
+  bool operator()() override { return getCallbackOverride()(); }
   python::object getPyCallbackObject() { return d_pyCallbackObject; }
 
  private:

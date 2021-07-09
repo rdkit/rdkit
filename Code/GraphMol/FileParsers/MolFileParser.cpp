@@ -1,5 +1,5 @@
 //
-//  Copyright (C) 2002-2017 Greg Landrum and Rational Discovery LLC
+//  Copyright (C) 2002-2021 Greg Landrum and other RDKit contributors
 //
 //   @@ All Rights Reserved @@
 //  This file is part of the RDKit.
@@ -860,7 +860,7 @@ void ParseMarvinSmartsLine(RWMol *mol, const std::string &text,
 }
 
 void ParseAttachPointLine(RWMol *mol, const std::string &text,
-                          unsigned int line) {
+                          unsigned int line, bool strictParsing) {
   PRECONDITION(mol, "bad mol");
   PRECONDITION(text.substr(0, 6) == std::string("M  APO"), "bad APO line");
 
@@ -908,7 +908,18 @@ void ParseAttachPointLine(RWMol *mol, const std::string &text,
             // this is -1 in v3k mol blocks, so use that:
             val = -1;
           }
-          atom->setProp(common_properties::molAttachPoint, val);
+          if (atom->hasProp(common_properties::molAttachPoint)) {
+            std::ostringstream errout;
+            errout << "Multiple ATTCHPT values for atom " << atom->getIdx() + 1
+                   << " on line " << line;
+            if (strictParsing) {
+              throw FileParseException(errout.str());
+            } else {
+              BOOST_LOG(rdWarningLog) << errout.str() << std::endl;
+            }
+          } else {
+            atom->setProp(common_properties::molAttachPoint, val);
+          }
         }
       }
     } catch (boost::bad_lexical_cast &) {
@@ -1974,7 +1985,7 @@ bool ParseMolBlockProperties(std::istream *inStream, unsigned int &line,
     } else if (lineBeg == "M  MRV") {
       ParseMarvinSmartsLine(mol, tempStr, line);
     } else if (lineBeg == "M  APO") {
-      ParseAttachPointLine(mol, tempStr, line);
+      ParseAttachPointLine(mol, tempStr, line, strictParsing);
     } else if (lineBeg == "M  LIN") {
       ParseLinkNodeLine(mol, tempStr, line);
     }
@@ -2128,7 +2139,8 @@ bool splitAssignToken(const std::string &token, std::string &prop,
 
 template <class T>
 void ParseV3000AtomProps(RWMol *mol, Atom *&atom, typename T::iterator &token,
-                         const T &tokens, unsigned int &line) {
+                         const T &tokens, unsigned int &line,
+                         bool strictParsing) {
   PRECONDITION(mol, "bad molecule");
   PRECONDITION(atom, "bad atom");
   std::ostringstream errout;
@@ -2279,7 +2291,18 @@ void ParseV3000AtomProps(RWMol *mol, Atom *&atom, typename T::iterator &token,
     } else if (prop == "ATTCHPT") {
       if (val != "0") {
         auto ival = FileParserUtils::toInt(val);
-        atom->setProp(common_properties::molAttachPoint, ival);
+        if (atom->hasProp(common_properties::molAttachPoint)) {
+          errout << "Multiple ATTCHPT values for atom " << atom->getIdx() + 1
+                 << " on line " << line;
+          if (strictParsing) {
+            throw FileParseException(errout.str());
+          } else {
+            BOOST_LOG(rdWarningLog) << errout.str() << std::endl;
+            errout.str(std::string());
+          }
+        } else {
+          atom->setProp(common_properties::molAttachPoint, ival);
+        }
       }
     } else if (prop == "ATTCHORD") {
       if (val != "0") {
@@ -2351,7 +2374,8 @@ void tokenizeV3000Line(std::string line, std::vector<std::string> &tokens) {
 }
 
 void ParseV3000AtomBlock(std::istream *inStream, unsigned int &line,
-                         unsigned int nAtoms, RWMol *mol, Conformer *conf) {
+                         unsigned int nAtoms, RWMol *mol, Conformer *conf,
+                         bool strictParsing) {
   PRECONDITION(inStream, "bad stream");
   PRECONDITION(nAtoms > 0, "bad atom count");
   PRECONDITION(mol, "bad molecule");
@@ -2435,7 +2459,7 @@ void ParseV3000AtomBlock(std::istream *inStream, unsigned int &line,
 
     // additional properties this may change the atom,
     // so be careful with it:
-    ParseV3000AtomProps(mol, atom, token, tokens, line);
+    ParseV3000AtomProps(mol, atom, token, tokens, line, strictParsing);
 
     mol->setAtomBookmark(atom, molIdx);
     conf->setAtomPos(aid, pos);
@@ -2637,8 +2661,110 @@ void ParseV3000BondBlock(std::istream *inStream, unsigned int &line,
     throw FileParseException(errout.str());
   }
 }
+// Not much documentation on this, only
+// https://docs.chemaxon.com/display/docs/chemaxon-specific-information-in-mdl-mol-files.md
+// According to it, there's just 1 data field, containing just 1 atom index
+// for the coordinate atom. Also, all examples I have seen have one of these
+// groups for each separate coordinate bond.
+void processMrvCoordinateBond(RWMol &mol, const SubstanceGroup &sg) {
+  std::vector<std::string> dataFields;
+  if (sg.getPropIfPresent("DATAFIELDS", dataFields)) {
+    if (dataFields.empty()) {
+      BOOST_LOG(rdWarningLog)
+          << "ignoring MRV_COORDINATE_BOND_TYPE SGroup without data fields."
+          << std::endl;
+      return;
+    }
 
-namespace {
+    auto coordinate_atom_idx =
+        FileParserUtils::toUnsigned(dataFields[0], true) - 1;
+
+    if (dataFields.size() > 1) {
+      BOOST_LOG(rdWarningLog) << "ignoring extra data fields in "
+                                 "MRV_COORDINATE_BOND_TYPE SGroup for atom "
+                              << coordinate_atom_idx << '.' << std::endl;
+    }
+
+    auto atoms = sg.getAtoms();
+    if (atoms.size() != 2) {
+      BOOST_LOG(rdWarningLog)
+          << "ignoring MRV_COORDINATE_BOND_TYPE SGroup for atom "
+          << coordinate_atom_idx << " due to unexpected number of atoms."
+          << std::endl;
+      return;
+    }
+
+    // Coordinate bonds are directional, make sure we have the right order
+    if (atoms[0] == coordinate_atom_idx) {
+      std::swap(atoms[0], atoms[1]);
+    }
+    if (atoms[1] != coordinate_atom_idx) {
+      BOOST_LOG(rdWarningLog)
+          << "MRV_COORDINATE_BOND_TYPE SGroup for atom " << coordinate_atom_idx
+          << " does not contain the coordinate atom, ignoring." << std::endl;
+      return;
+    }
+
+    auto old_bond = mol.getBondBetweenAtoms(atoms[0], atoms[1]);
+    if (old_bond == nullptr) {
+      BOOST_LOG(rdWarningLog)
+          << "molecule does not contain a bond matching the "
+             "MRV_COORDINATE_BOND_TYPE SGroup for atom "
+          << coordinate_atom_idx << ", ignoring." << std::endl;
+      return;
+    }
+    // Make sure the bond points the right way
+    old_bond->setBeginAtomIdx(atoms[0]);
+    old_bond->setEndAtomIdx(atoms[1]);
+
+    Bond new_bond(Bond::BondType::DATIVE);
+    auto preserveProps = true;
+    auto keepSGroups = true;
+    mol.replaceBond(old_bond->getIdx(), &new_bond, preserveProps, keepSGroups);
+  }
+}
+
+void processMrvImplicitH(RWMol &mol, const SubstanceGroup &sg) {
+  std::vector<std::string> dataFields;
+  if (sg.getPropIfPresent("DATAFIELDS", dataFields)) {
+    for (const auto &df : dataFields) {
+      if (df.substr(0, 6) == "IMPL_H") {
+        auto val = FileParserUtils::toInt(df.substr(6));
+        for (auto atIdx : sg.getAtoms()) {
+          if (atIdx < mol.getNumAtoms()) {
+            // if the atom has aromatic bonds to it, then set the explicit
+            // value, otherwise skip it.
+            auto atom = mol.getAtomWithIdx(atIdx);
+            bool hasAromaticBonds = false;
+            for (auto bndI :
+                 boost::make_iterator_range(mol.getAtomBonds(atom))) {
+              auto bnd = (mol)[bndI];
+              if (bnd->getIsAromatic() ||
+                  bnd->getBondType() == Bond::AROMATIC) {
+                hasAromaticBonds = true;
+                break;
+              }
+            }
+            if (hasAromaticBonds) {
+              atom->setNumExplicitHs(val);
+            } else {
+              BOOST_LOG(rdWarningLog)
+                  << "MRV_IMPLICIT_H SGroup on atom without aromatic "
+                     "bonds, "
+                  << atIdx << ", ignored." << std::endl;
+            }
+          } else {
+            BOOST_LOG(rdWarningLog)
+                << "bad atom index, " << atIdx
+                << ", found in MRV_IMPLICIT_H SGroup. Ignoring it."
+                << std::endl;
+          }
+        }
+      }
+    }
+  }
+}
+
 // process (and remove) SGroups which modify the structure
 // and which we can unambiguously apply
 void processSGroups(RWMol *mol) {
@@ -2647,47 +2773,15 @@ void processSGroups(RWMol *mol) {
   for (auto &sg : getSubstanceGroups(*mol)) {
     if (sg.getProp<std::string>("TYPE") == "DAT") {
       std::string fieldn;
-      if (sg.getPropIfPresent("FIELDNAME", fieldn) &&
-          fieldn == "MRV_IMPLICIT_H") {
-        // CXN extension to specify implicit Hs, used for aromatic rings
-        sgsToRemove.push_back(sgIdx);
-        std::vector<std::string> dataFields;
-        if (sg.getPropIfPresent("DATAFIELDS", dataFields)) {
-          for (const auto &df : dataFields) {
-            if (df.substr(0, 6) == "IMPL_H") {
-              auto val = FileParserUtils::toInt(df.substr(6));
-              for (auto atIdx : sg.getAtoms()) {
-                if (atIdx < mol->getNumAtoms()) {
-                  // if the atom has aromatic bonds to it, then set the explicit
-                  // value, otherwise skip it.
-                  auto atom = mol->getAtomWithIdx(atIdx);
-                  bool hasAromaticBonds = false;
-                  for (auto bndI :
-                       boost::make_iterator_range(mol->getAtomBonds(atom))) {
-                    auto bnd = (*mol)[bndI];
-                    if (bnd->getIsAromatic() ||
-                        bnd->getBondType() == Bond::AROMATIC) {
-                      hasAromaticBonds = true;
-                      break;
-                    }
-                  }
-                  if (hasAromaticBonds) {
-                    atom->setNumExplicitHs(val);
-                  } else {
-                    BOOST_LOG(rdWarningLog)
-                        << "MRV_IMPLICIT_H SGroup on atom without aromatic "
-                           "bonds, "
-                        << atIdx << ", ignored." << std::endl;
-                  }
-                } else {
-                  BOOST_LOG(rdWarningLog)
-                      << "bad atom index, " << atIdx
-                      << ", found in MRV_IMPLICIT_H SGroup. Ignoring it."
-                      << std::endl;
-                }
-              }
-            }
-          }
+      if (sg.getPropIfPresent("FIELDNAME", fieldn)) {
+        if (fieldn == "MRV_COORDINATE_BOND_TYPE") {
+          // V2000 support for coordinate bonds
+          processMrvCoordinateBond(*mol, sg);
+          sgsToRemove.push_back(sgIdx);
+        } else if (fieldn == "MRV_IMPLICIT_H") {
+          // CXN extension to specify implicit Hs, used for aromatic rings
+          processMrvImplicitH(*mol, sg);
+          sgsToRemove.push_back(sgIdx);
         }
       }
     }
@@ -2700,7 +2794,6 @@ void processSGroups(RWMol *mol) {
     sgs.erase(sgs.begin() + *it);
   }
 }
-}  // namespace
 
 void ProcessMolProps(RWMol *mol) {
   PRECONDITION(mol, "no molecule");
@@ -2819,7 +2912,7 @@ bool ParseV3000CTAB(std::istream *inStream, unsigned int &line, RWMol *mol,
   }
 
   if (nAtoms) {
-    ParseV3000AtomBlock(inStream, line, nAtoms, mol, conf);
+    ParseV3000AtomBlock(inStream, line, nAtoms, mol, conf, strictParsing);
   }
   if (nBonds) {
     ParseV3000BondBlock(inStream, line, nBonds, mol, chiralityPossible);

@@ -40,9 +40,11 @@ class RDKIT_FORCEFIELD_EXPORT AngleBendContrib : public ForceFieldContrib {
   AngleBendContrib(ForceField *owner, unsigned int idx1, unsigned int idx2,
                    unsigned int idx3, const MMFFAngle *mmffAngleParams,
                    const MMFFProp *mmffPropParamsCentralAtom);
-  double getEnergy(double *pos) const;
-  void getGrad(double *pos, double *grad) const;
-  virtual AngleBendContrib *copy() const { return new AngleBendContrib(*this); }
+  double getEnergy(double *pos) const override;
+  void getGrad(double *pos, double *grad) const override;
+  AngleBendContrib *copy() const override {
+    return new AngleBendContrib(*this);
+  }
 
  private:
   bool d_isLinear;

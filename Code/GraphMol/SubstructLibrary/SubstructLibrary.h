@@ -79,17 +79,17 @@ class RDKIT_SUBSTRUCTLIBRARY_EXPORT MolHolder : public MolHolderBase {
  public:
   MolHolder() : MolHolderBase(), mols() {}
 
-  virtual unsigned int addMol(const ROMol &m) {
+  unsigned int addMol(const ROMol &m) override {
     mols.push_back(boost::make_shared<ROMol>(m));
     return size() - 1;
   }
 
-  virtual boost::shared_ptr<ROMol> getMol(unsigned int idx) const {
+  boost::shared_ptr<ROMol> getMol(unsigned int idx) const override {
     if (idx >= mols.size()) throw IndexErrorException(idx);
     return mols[idx];
   }
 
-  virtual unsigned int size() const {
+  unsigned int size() const override {
     return rdcast<unsigned int>(mols.size());
   }
 
@@ -111,7 +111,7 @@ class RDKIT_SUBSTRUCTLIBRARY_EXPORT CachedMolHolder : public MolHolderBase {
  public:
   CachedMolHolder() : MolHolderBase(), mols() {}
 
-  virtual unsigned int addMol(const ROMol &m) {
+  unsigned int addMol(const ROMol &m) override {
     mols.emplace_back();
     MolPickler::pickleMol(m, mols.back());
     return size() - 1;
@@ -124,14 +124,14 @@ class RDKIT_SUBSTRUCTLIBRARY_EXPORT CachedMolHolder : public MolHolderBase {
     return size() - 1;
   }
 
-  virtual boost::shared_ptr<ROMol> getMol(unsigned int idx) const {
+  boost::shared_ptr<ROMol> getMol(unsigned int idx) const override {
     if (idx >= mols.size()) throw IndexErrorException(idx);
     boost::shared_ptr<ROMol> mol(new ROMol);
     MolPickler::molFromPickle(mols[idx], mol.get());
     return mol;
   }
 
-  virtual unsigned int size() const {
+  unsigned int size() const override {
     return rdcast<unsigned int>(mols.size());
   }
 
@@ -155,7 +155,7 @@ class RDKIT_SUBSTRUCTLIBRARY_EXPORT CachedSmilesMolHolder
  public:
   CachedSmilesMolHolder() : MolHolderBase(), mols() {}
 
-  virtual unsigned int addMol(const ROMol &m) {
+  unsigned int addMol(const ROMol &m) override {
     bool doIsomericSmiles = true;
     mols.push_back(MolToSmiles(m, doIsomericSmiles));
     return size() - 1;
@@ -168,14 +168,14 @@ class RDKIT_SUBSTRUCTLIBRARY_EXPORT CachedSmilesMolHolder
     return size() - 1;
   }
 
-  virtual boost::shared_ptr<ROMol> getMol(unsigned int idx) const {
+  boost::shared_ptr<ROMol> getMol(unsigned int idx) const override {
     if (idx >= mols.size()) throw IndexErrorException(idx);
 
     boost::shared_ptr<ROMol> mol(SmilesToMol(mols[idx]));
     return mol;
   }
 
-  virtual unsigned int size() const {
+  unsigned int size() const override {
     return rdcast<unsigned int>(mols.size());
   }
 
@@ -204,7 +204,7 @@ class RDKIT_SUBSTRUCTLIBRARY_EXPORT CachedTrustedSmilesMolHolder
  public:
   CachedTrustedSmilesMolHolder() : MolHolderBase(), mols() {}
 
-  virtual unsigned int addMol(const ROMol &m) {
+  unsigned int addMol(const ROMol &m) override {
     bool doIsomericSmiles = true;
     mols.push_back(MolToSmiles(m, doIsomericSmiles));
     return size() - 1;
@@ -217,7 +217,7 @@ class RDKIT_SUBSTRUCTLIBRARY_EXPORT CachedTrustedSmilesMolHolder
     return size() - 1;
   }
 
-  virtual boost::shared_ptr<ROMol> getMol(unsigned int idx) const {
+  boost::shared_ptr<ROMol> getMol(unsigned int idx) const override {
     if (idx >= mols.size()) throw IndexErrorException(idx);
 
     RWMol *m = SmilesToMol(mols[idx], 0, false);
@@ -227,7 +227,7 @@ class RDKIT_SUBSTRUCTLIBRARY_EXPORT CachedTrustedSmilesMolHolder
     return boost::shared_ptr<ROMol>(m);
   }
 
-  virtual unsigned int size() const {
+  unsigned int size() const override {
     return rdcast<unsigned int>(mols.size());
   }
 
@@ -298,7 +298,7 @@ class RDKIT_SUBSTRUCTLIBRARY_EXPORT PatternHolder : public FPHolderBase {
   PatternHolder() : FPHolderBase(), numBits(defaultNumBits()) {}
   PatternHolder(unsigned int numBits) : FPHolderBase(), numBits(numBits) {}
   //! Caller owns the vector!
-  virtual ExplicitBitVect *makeFingerprint(const ROMol &m) const {
+  ExplicitBitVect *makeFingerprint(const ROMol &m) const override {
     return PatternFingerprintMol(m, numBits);
   }
   const unsigned int &getNumBits() const { return numBits; };
@@ -314,7 +314,7 @@ class RDKIT_SUBSTRUCTLIBRARY_EXPORT TautomerPatternHolder
  public:
   TautomerPatternHolder() : PatternHolder() {}
   TautomerPatternHolder(unsigned int numBits) : PatternHolder(numBits) {}
-  virtual ExplicitBitVect *makeFingerprint(const ROMol &m) const {
+  ExplicitBitVect *makeFingerprint(const ROMol &m) const override {
     std::vector<unsigned int> *atomCounts = nullptr;
     ExplicitBitVect *setOnlyBits = nullptr;
     const bool tautomericFingerprint = true;

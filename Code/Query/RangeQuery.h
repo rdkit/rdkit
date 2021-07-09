@@ -58,7 +58,7 @@ class RDKIT_QUERY_EXPORT RangeQuery
   //! returns our tolerance
   const MatchFuncArgType getTol() const { return this->d_tol; }
 
-  bool Match(const DataFuncArgType what) const {
+  bool Match(const DataFuncArgType what) const override {
     MatchFuncArgType mfArg =
         this->TypeConvert(what, Int2Type<needsConversion>());
     int lCmp = queryCmp(this->d_lower, mfArg, this->d_tol);
@@ -80,7 +80,8 @@ class RDKIT_QUERY_EXPORT RangeQuery
       return !tempR;
   }
 
-  Query<MatchFuncArgType, DataFuncArgType, needsConversion> *copy() const {
+  Query<MatchFuncArgType, DataFuncArgType, needsConversion> *copy()
+      const override {
     RangeQuery<MatchFuncArgType, DataFuncArgType, needsConversion> *res =
         new RangeQuery<MatchFuncArgType, DataFuncArgType, needsConversion>();
     res->setUpper(this->d_upper);
@@ -94,7 +95,7 @@ class RDKIT_QUERY_EXPORT RangeQuery
     return res;
   }
 
-  std::string getFullDescription() const {
+  std::string getFullDescription() const override {
     std::ostringstream res;
     res << this->getDescription();
     if (this->getNegation()) res << " ! ";

@@ -108,7 +108,7 @@ class RDKIT_GRAPHMOL_EXPORT AtomPDBResidueInfo : public AtomMonomerInfo {
   unsigned int getSegmentNumber() const { return d_segmentNumber; }
   void setSegmentNumber(unsigned int val) { d_segmentNumber = val; }
 
-  AtomMonomerInfo *copy() const {
+  AtomMonomerInfo *copy() const override {
     return static_cast<AtomMonomerInfo *>(new AtomPDBResidueInfo(*this));
   }
 
