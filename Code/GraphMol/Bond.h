@@ -1,5 +1,5 @@
 //
-//  Copyright (C) 2001-2017 Greg Landrum and Rational Discovery LLC
+//  Copyright (C) 2001-2021 Greg Landrum and other RDKit contributors
 //
 //   @@ All Rights Reserved @@
 //  This file is part of the RDKit.
@@ -129,7 +129,7 @@ class RDKIT_GRAPHMOL_EXPORT Bond : public RDProps {
     <b>Notes:</b>
       - requires an owning molecule
   */
-  double getValenceContrib(const Atom *at) const;
+  virtual double getValenceContrib(const Atom *at) const;
 
   //! sets our \c isAromatic flag
   void setIsAromatic(bool what) { df_isAromatic = what; }
