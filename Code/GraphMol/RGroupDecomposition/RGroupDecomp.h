@@ -1,5 +1,6 @@
 //
-//  Copyright (C) 2017 Novartis Institutes for BioMedical Research
+//  Copyright (c) 2017-2021, Novartis Institutes for BioMedical Research Inc.
+//  and other RDKit contributors
 //
 //   @@ All Rights Reserved @@
 //  This file is part of the RDKit.
@@ -114,6 +115,10 @@ struct RDKIT_RGROUPDECOMPOSITION_EXPORT RGroupDecompositionParameters {
   int gaNumberRuns = 1;
   // Sequential or parallel runs?
   bool gaParallelRuns = true;
+  // Controls the way substructure matching with the core is done
+  SubstructMatchParameters substructmatchParams;
+
+  RGroupDecompositionParameters() { substructmatchParams.useChirality = true; }
 
  private:
   int indexOffset{-1};
