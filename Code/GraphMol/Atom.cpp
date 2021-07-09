@@ -1,5 +1,5 @@
 //
-//  Copyright (C) 2001-2019 Greg Landrum and Rational Discovery LLC
+//  Copyright (C) 2001-2021 Greg Landrum and other RDKit contributors
 //
 //   @@ All Rights Reserved @@
 //  This file is part of the RDKit.
@@ -213,11 +213,10 @@ int Atom::calcExplicitValence(bool strict) {
   // FIX: contributions of bonds to valence are being done at best
   // approximately
   double accum = 0;
-  ROMol::OEDGE_ITER beg, end;
-  boost::tie(beg, end) = getOwningMol().getAtomBonds(this);
-  while (beg != end) {
-    accum += getOwningMol()[*beg]->getValenceContrib(this);
-    ++beg;
+  for (const auto &nbri :
+       boost::make_iterator_range(getOwningMol().getAtomBonds(this))) {
+    const auto bnd = getOwningMol()[nbri];
+    accum += bnd->getValenceContrib(this);
   }
   accum += getNumExplicitHs();
 
@@ -333,6 +332,14 @@ int Atom::calcImplicitValence(bool strict) {
   if (d_atomicNum == 0) {
     d_implicitValence = 0;
     return 0;
+  }
+  for (const auto &nbri :
+       boost::make_iterator_range(getOwningMol().getAtomBonds(this))) {
+    const auto bnd = getOwningMol()[nbri];
+    if (QueryOps::hasComplexBondTypeQuery(*bnd)) {
+      d_implicitValence = 0;
+      return 0;
+    }
   }
   if (d_explicitValence == 0 && d_atomicNum == 1 &&
       d_numRadicalElectrons == 0) {

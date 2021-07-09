@@ -1,5 +1,5 @@
 //
-//  Copyright (C) 2003-2017 Greg Landrum and Rational Discovery LLC
+//  Copyright (C) 2003-2021 Greg Landrum and other RDKit contributors
 //
 //   @@ All Rights Reserved @@
 //  This file is part of the RDKit.
@@ -668,6 +668,7 @@ RDKIT_GRAPHMOL_EXPORT BOND_EQUALS_QUERY *makeSingleOrDoubleBondQuery();
 //! returns a Query for tautomeric bonds
 RDKIT_GRAPHMOL_EXPORT BOND_EQUALS_QUERY *
 makeSingleOrDoubleOrAromaticBondQuery();
+
 //! returns a Query for matching bond directions
 RDKIT_GRAPHMOL_EXPORT BOND_EQUALS_QUERY *makeBondDirEqualsQuery(
     Bond::BondDir what);
@@ -1087,6 +1088,23 @@ RDKIT_GRAPHMOL_EXPORT void finalizeQueryFromDescription(
     Queries::Query<int, Atom const *, true> *query, Atom const *owner);
 RDKIT_GRAPHMOL_EXPORT void finalizeQueryFromDescription(
     Queries::Query<int, Bond const *, true> *query, Bond const *owner);
+
+RDKIT_GRAPHMOL_EXPORT bool hasBondTypeQuery(
+    const Queries::Query<int, Bond const *, true> &qry);
+inline bool hasBondTypeQuery(const Bond &bond) {
+  if (!bond.hasQuery()) {
+    return false;
+  }
+  return hasBondTypeQuery(*bond.getQuery());
+}
+RDKIT_GRAPHMOL_EXPORT bool hasComplexBondTypeQuery(
+    const Queries::Query<int, Bond const *, true> &qry);
+inline bool hasComplexBondTypeQuery(const Bond &bond) {
+  if (!bond.hasQuery()) {
+    return false;
+  }
+  return hasComplexBondTypeQuery(*bond.getQuery());
+}
 
 }  // namespace QueryOps
 }  // namespace RDKit

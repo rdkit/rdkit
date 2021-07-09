@@ -2092,3 +2092,33 @@ TEST_CASE(
     CHECK(m->getRingInfo()->numRings() == m2.getRingInfo()->numRings());
   }
 }
+
+TEST_CASE("QueryBond valence contribs") {
+  {
+    auto m = "CO"_smarts;
+    REQUIRE(m);
+    CHECK(m->getBondWithIdx(0)->getValenceContrib(m->getAtomWithIdx(0)) == 0.0);
+    CHECK(m->getBondWithIdx(0)->getValenceContrib(m->getAtomWithIdx(1)) == 0.0);
+  }
+  {
+    auto m = "C-O"_smarts;
+    REQUIRE(m);
+    CHECK(m->getBondWithIdx(0)->getValenceContrib(m->getAtomWithIdx(0)) == 1.0);
+    CHECK(m->getBondWithIdx(0)->getValenceContrib(m->getAtomWithIdx(1)) == 1.0);
+  }
+}
+
+TEST_CASE(
+    "github #4311: unreasonable calculation of implicit valence for atoms with "
+    "query bonds",
+    "[graphmol]") {
+  SECTION("basics") {
+    auto m = "C-,=O"_smarts;
+    REQUIRE(m);
+    m->updatePropertyCache();
+    CHECK(m->getAtomWithIdx(0)->getTotalNumHs() == 0);
+    CHECK(m->getAtomWithIdx(1)->getTotalNumHs() == 0);
+    CHECK(MolToSmiles(*m) == "CO");
+    CHECK(MolToSmarts(*m) == "C-,=O");
+  }
+}
