@@ -2,8 +2,8 @@
 (Changes relative to Release_2021.03.3)
 
 ## Acknowledgements
-Rasmus Lundsgaard, Dan Nealschneider, Ricardo Rodriguez-Schmidt, Paolo Tosco,
-Kazuya Ujihara, Alain Vaucher, 'jungb-basf' 
+Brian Kelley, Rasmus Lundsgaard, Dan Nealschneider, Ricardo Rodriguez-Schmidt,
+Matt Swain, Paolo Tosco, Kazuya Ujihara, Alain Vaucher, 'jungb-basf' 
 
 
 
