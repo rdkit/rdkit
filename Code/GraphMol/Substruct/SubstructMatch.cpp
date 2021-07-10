@@ -130,22 +130,18 @@ void MatchSubqueries(const ROMol &mol, QueryAtom::QUERYATOM_QUERY *q,
                      SUBQUERY_MAP &subqueryMap,
                      std::vector<RecursiveStructureQuery *> &locked);
 
-inline int getSecondPairElement(const std::pair<int, int> &p) {
-  return p.second;
-}
-
 bool insertIfNeeded(std::set<MatchVectType> &matches, const MatchVectType &m) {
   bool shouldInsert = true;
   std::unordered_set<int> matchAsSet;
   std::transform(m.begin(), m.end(),
                  std::inserter(matchAsSet, matchAsSet.begin()),
-                 getSecondPairElement);
+                 [](const std::pair<int, int> &p) { return p.second; });
   for (auto it = matches.begin(); it != matches.end(); ++it) {
     std::unordered_set<int> existingMatchAsSet;
     std::transform(
         it->begin(), it->end(),
         std::inserter(existingMatchAsSet, existingMatchAsSet.begin()),
-        getSecondPairElement);
+        [](const std::pair<int, int> &p) { return p.second; });
     if (matchAsSet == existingMatchAsSet) {
       if (m < *it) {
         matches.erase(it);
@@ -161,23 +157,17 @@ bool insertIfNeeded(std::set<MatchVectType> &matches, const MatchVectType &m) {
   return shouldInsert;
 }
 
-template <
-    typename Container,
-    typename std::enable_if<
-        std::is_same<MatchVectType, typename Container::value_type>::value,
-        int>::type = 0>
-void mergeMatchVect(std::set<MatchVectType> &matches,
-                    const Container &matchesTmp,
-                    const ResSubstructMatchHelperArgs_ &args) {
-  for (auto it = matchesTmp.begin();
-       (matches.size() < args.params.maxMatches) && (it != matchesTmp.end());
-       ++it) {
-    if (!args.params.uniquify) {
-      matches.insert(*it);
-    } else {
-      insertIfNeeded(matches, *it);
-    }
+bool tryToInsert(std::set<MatchVectType> &matches, const MatchVectType &match,
+                 const SubstructMatchParameters &params) {
+  if (matches.size() == params.maxMatches) {
+    return false;
   }
+  if (!params.uniquify) {
+    matches.insert(match);
+  } else {
+    insertIfNeeded(matches, match);
+  }
+  return true;
 }
 
 void ResSubstructMatchHelper_(const ResSubstructMatchHelperArgs_ &args,
@@ -429,7 +419,11 @@ void ResSubstructMatchHelper_(const ResSubstructMatchHelperArgs_ &args,
     ROMol *mol = args.resMolSupplier[i];
     std::vector<MatchVectType> matchesTmp =
         SubstructMatch(*mol, args.query, args.params);
-    mergeMatchVect(*matches, matchesTmp, args);
+    for (const auto &match : matchesTmp) {
+      if (!tryToInsert(*matches, match, args.params)) {
+        break;
+      }
+    }
     delete mol;
   }
 };
@@ -572,7 +566,11 @@ std::vector<MatchVectType> SubstructMatch(
     }
 
     for (unsigned int ti = 0; ti < nt; ++ti) {
-      mergeMatchVect(matches, *matchesThread[ti], args);
+      for (const auto &match : *matchesThread[ti]) {
+        if (!detail::tryToInsert(matches, match, args.params)) {
+          break;
+        }
+      }
       delete matchesThread[ti];
     }
   }
