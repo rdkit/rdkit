@@ -541,7 +541,7 @@ class TestCase(unittest.TestCase):
     smiles = ['mydoghasfleas']
     results = FilterCatalog.RunFilterCatalog(fc, smiles, numThreads=3)
     self.assertEquals(len(results[0]), 1)
-    self.assertEquals(results[0][0].GetDescription(), "no valid RDKit molecule");
+    self.assertEquals(results[0][0].GetDescription(), "no valid RDKit molecule")
 
 
 if __name__ == '__main__':

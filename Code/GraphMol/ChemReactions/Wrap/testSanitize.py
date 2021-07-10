@@ -295,7 +295,7 @@ class TestCase(unittest.TestCase) :
                 print(AllChem.ReactionToRxnBlock(rxnb))
                 self.assertEquals(res, good_res)
                 assert not status == "fail"
-            except:
+            except Exception:
                 print ("$RXN Failed")
                 if status == "fail":
                     continue

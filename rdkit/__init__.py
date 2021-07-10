@@ -16,5 +16,5 @@ try:
     WrapLogs()  
     logger.info("Enabling RDKit %s jupyter extensions"%__version__)
     
-except:
+except Exception:
   pass

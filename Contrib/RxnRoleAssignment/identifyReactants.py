@@ -182,13 +182,13 @@ def _calcScore(reactantFP,productFP,bitInfoProd=None,output=False):
     return [score,numUnmappedPBits,numUnmappedPAtoms,bitsUnmappedPAtoms]
 
 # Set of frequent reagents derived from all patent reactions
-frequentReagents = set(['CCN(CC)CC', '[Li+]', '[Na+]', 'O=C(O)CC(O)(CC(=O)O)C(=O)O', 'O=S(=O)(O)O', 'CN1CCCC1=O', 'CCN(C(C)C)C(C)C',\
- 'c1ccncc1', '[K]', 'CC(C)(C)O', 'CCO', 'Cc1ccc(S(=O)(=O)O)cc1', 'ClC(Cl)(Cl)Cl', '[Na]', 'CC(C)(C)[O-]', 'O=C([O-])O', 'COCCOC', '[NH4+]',\
- 'CC(C)OC(C)C', 'O=C([O-])[O-]', 'CC(=O)OC(C)=O', 'O=C=O', '[Cl-]', 'c1ccc(P(c2ccccc2)c2ccccc2)cc1', '[H-]', 'N#N', 'CN1CCOCC1',\
- 'C1COCCO1', 'c1ccccc1', '[Cs+]', '[K+]', '[OH-]', 'CCCCCC', 'CCCCC', 'CN(C)C=O', 'C[O-]', 'Cc1ccccc1', 'C1CCC2=NCCCN2CC1', 'CO',\
- 'CCCCO', 'O=C(O)C(F)(F)F', 'O=P([O-])([O-])[O-]', 'CCOC(C)=O', '[Mg+2]', 'C1CCCCC1', 'O', 'N', 'II', 'O=CO', 'CC(=O)N(C)C', 'CC(=O)O',\
- 'CCOCC', 'CC(C)O', 'C[Si](C)(C)Cl', 'Cc1ccccc1C', 'CC(C)=O', 'CS(=O)(=O)O', 'CN(C)c1ccncc1', 'Cl', 'ClCCCl', 'O=S(Cl)Cl', 'ClC(Cl)Cl',\
- '[Li]CCCC', '[Pd]', '[H][H]', '[Br-]', 'CS(C)=O', 'COC(C)(C)C', 'O=S(=O)([O-])[O-]', 'CC(Cl)Cl', 'CC(=O)[O-]', 'CCCC[N+](CCCC)(CCCC)CCCC',\
+frequentReagents = set(['CCN(CC)CC', '[Li+]', '[Na+]', 'O=C(O)CC(O)(CC(=O)O)C(=O)O', 'O=S(=O)(O)O', 'CN1CCCC1=O', 'CCN(C(C)C)C(C)C',
+ 'c1ccncc1', '[K]', 'CC(C)(C)O', 'CCO', 'Cc1ccc(S(=O)(=O)O)cc1', 'ClC(Cl)(Cl)Cl', '[Na]', 'CC(C)(C)[O-]', 'O=C([O-])O', 'COCCOC', '[NH4+]',
+ 'CC(C)OC(C)C', 'O=C([O-])[O-]', 'CC(=O)OC(C)=O', 'O=C=O', '[Cl-]', 'c1ccc(P(c2ccccc2)c2ccccc2)cc1', '[H-]', 'N#N', 'CN1CCOCC1',
+ 'C1COCCO1', 'c1ccccc1', '[Cs+]', '[K+]', '[OH-]', 'CCCCCC', 'CCCCC', 'CN(C)C=O', 'C[O-]', 'Cc1ccccc1', 'C1CCC2=NCCCN2CC1', 'CO',
+ 'CCCCO', 'O=C(O)C(F)(F)F', 'O=P([O-])([O-])[O-]', 'CCOC(C)=O', '[Mg+2]', 'C1CCCCC1', 'O', 'N', 'II', 'O=CO', 'CC(=O)N(C)C', 'CC(=O)O',
+ 'CCOCC', 'CC(C)O', 'C[Si](C)(C)Cl', 'Cc1ccccc1C', 'CC(C)=O', 'CS(=O)(=O)O', 'CN(C)c1ccncc1', 'Cl', 'ClCCCl', 'O=S(Cl)Cl', 'ClC(Cl)Cl',
+ '[Li]CCCC', '[Pd]', '[H][H]', '[Br-]', 'CS(C)=O', 'COC(C)(C)C', 'O=S(=O)([O-])[O-]', 'CC(Cl)Cl', 'CC(=O)[O-]', 'CCCC[N+](CCCC)(CCCC)CCCC',
  'ClCCl', 'CC#N', 'C1CCOC1', 'CCCCCCC'])
 
 
@@ -235,7 +235,7 @@ def _getBestCombination(rfps,pfps,output=False):
         productsScaffoldFPBitInfo.update(i.bitInfoScaffoldFP)
     # set some initial values    
     numUnmappedPAtoms,bitsUnmappedPAtoms = utils.getNumPositiveBitCountsOfRadius0(productsScaffoldFP,productsScaffoldFPBitInfo)
-    finalNumUnmappedProdAtoms=[[len(productsDetailFP.GetNonzeroElements()),\
+    finalNumUnmappedProdAtoms=[[len(productsDetailFP.GetNonzeroElements()),
                                 len(productsScaffoldFP.GetNonzeroElements()),numUnmappedPAtoms,bitsUnmappedPAtoms]]
 
     for test in tests:
@@ -311,7 +311,7 @@ def _findMissingReactiveReactants(rfps, pfps, currentReactants, unmappedPAtoms, 
             if umPA[1] > 0:
                 remainingReactants=set(range(numReactants)).difference(set(reacts))
                 # sort the possible reactants by the reactivity
-                remainingReactants = sorted(remainingReactants, key=lambda x: rfps[x].reactivity/float(rfps[x].molecule.GetNumAtoms()),\
+                remainingReactants = sorted(remainingReactants, key=lambda x: rfps[x].reactivity/float(rfps[x].molecule.GetNumAtoms()),
                                             reverse=True)
                 missingPAtoms = []
                 # get the missing atoms and counts

@@ -46,7 +46,7 @@ if __name__ == '__main__':
   #read the STDIN
   for line in sys.stdin:
     line = line.rstrip()
-    smi, id_ = re.split('\s|,', line)
+    smi, id_ = re.split(r'\s|,', line)
     #print smi,id_
 
     mol = Chem.MolFromSmiles(smi)

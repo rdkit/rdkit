@@ -30,7 +30,7 @@ def get_hit_atoms_and_bonds(mol, smt):
 
 def add_colours_to_map(els, cols, col_num):
     for el in els:
-        if not el in cols:
+        if el not in cols:
             cols[el] = []
         if COLS[col_num] not in cols[el]:
             cols[el].append(COLS[col_num])

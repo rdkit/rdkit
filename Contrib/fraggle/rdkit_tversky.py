@@ -83,7 +83,7 @@ fragments = len(query_info)
 for line in sys.stdin:
 
   line = line.rstrip()
-  smi, id = re.split('\s|,', line)
+  smi, id = re.split(r'\s|,', line)
   #print smi,id
 
   mol = Chem.MolFromSmiles(smi)

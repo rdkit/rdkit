@@ -38,7 +38,7 @@ class TestCase(unittest.TestCase):
       os.close(StorageUtils.fd)
       try:
         os.unlink(StorageUtils.tempDbName)
-      except:
+      except Exception:
         traceback.print_exc()
     self.assertFalse(failed)
 

@@ -28,7 +28,7 @@ for file in (root_cmakelists_path, rdkitutils_path):
     line = hnd.readline()
     while (line):
       # is this an uncommented set command?
-      m = re.match('^\s*set\s*\((\w+)\s*\"(.*)\"\s*\)',
+      m = re.match(r'^\s*set\s*\((\w+)\s*\"(.*)\"\s*\)',
         line, re.IGNORECASE)
       # if it is
       if (m is not None):
@@ -40,7 +40,7 @@ for file in (root_cmakelists_path, rdkitutils_path):
           keepLooping = True
           while (keepLooping):
             # recursively replace variables we already found
-            m = re.match('^.*\${(\w+)}', var_value)
+            m = re.match(r'^.*\${(\w+)}', var_value)
             keepLooping = (m is not None)
             if (keepLooping):
               v = var_dict.get(m.group(1))

@@ -20,7 +20,7 @@ This module implements a Python Imaging Library PIDDLE canvas.
 In other words, this is a PIDDLE backend that renders into a
 PIL Image object.  From there, you can save as GIF, plot into
 another PIDDLE canvas, etc.
-		
+
 Joe Strout (joe@strout.net), 10/26/99
 modified for use with sping.
 This requires Imaging to be installed as a package PIL
@@ -134,7 +134,7 @@ def _pilFont(font):
                 break
             except Exception:
                 pass
-        if pilfont == None:
+        if pilfont is None:
             return 0  # font not found!
     return pilfont
 
@@ -174,7 +174,7 @@ class PILCanvas(Canvas):
         if hasattr(file, 'write'):
             raise ValueError('fileobj not implemented for piddlePIL')
         # below here, file is guaranteed to be a string
-        if format == None:
+        if format is None:
             if '.' not in file:
                 filename = file + '.png'  # default to producing jpg
             else:

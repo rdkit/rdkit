@@ -18,7 +18,7 @@
 
 Bits have been shamelessly cobbled from piddlePDF.py and/or
 piddlePS.py
-		
+
 Greg Landrum (greg.landrum@gmail.com) 3/28/2005
 """
 """

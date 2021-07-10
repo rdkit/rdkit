@@ -374,7 +374,7 @@ class Glare:
                 if abs(Gt-G0) < 1e-4:
                     Ki = 1.0
                 else:
-                    Ki = (1.0 - K0) * (Gi - G0) / (Gt - G0) + K0;
+                    Ki = (1.0 - K0) * (Gi - G0) / (Gt - G0) + K0
                 fraction = min(1.0, Ki)
 
             # prune the library to keep the highest occurring sidechains

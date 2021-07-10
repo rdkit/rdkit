@@ -52,7 +52,7 @@ class TestCase(unittest.TestCase) :
 
   def testCartesianProduct(self):
     log("testCartesianProduct")
-    rxn = rdChemReactions.ChemicalReaction();
+    rxn = rdChemReactions.ChemicalReaction()
     rgroups = [[Chem.MolFromSmiles("C")]*10,
                [Chem.MolFromSmiles("N")]*5,
                [Chem.MolFromSmiles("O")]*6]
@@ -78,7 +78,7 @@ class TestCase(unittest.TestCase) :
     rgroups = [[Chem.MolFromSmiles("C")]*10,
                [Chem.MolFromSmiles("N")]*5,
                [Chem.MolFromSmiles("O")]*6]
-    rxn = rdChemReactions.ChemicalReaction();
+    rxn = rdChemReactions.ChemicalReaction()
 
     randProd = rdChemReactions.RandomSampleStrategy()
     randProd.Initialize(rxn, rgroups)
@@ -101,7 +101,7 @@ class TestCase(unittest.TestCase) :
     
   def testRandomSampleAllBBs(self):
     log("testRandomSampleAllBBs")
-    rxn = rdChemReactions.ChemicalReaction();
+    rxn = rdChemReactions.ChemicalReaction()
     rgroups = [[Chem.MolFromSmiles("C")]*10,
                [Chem.MolFromSmiles("N")]*5,
                [Chem.MolFromSmiles("O")]*6]
@@ -129,7 +129,7 @@ class TestCase(unittest.TestCase) :
     
   def testTimings(self):
     log("testTimings")
-    rxn = rdChemReactions.ChemicalReaction();
+    rxn = rdChemReactions.ChemicalReaction()
 
     rgroups = [[Chem.MolFromSmiles("C")]*17000,
                [Chem.MolFromSmiles("N")]*50000,
@@ -146,13 +146,13 @@ class TestCase(unittest.TestCase) :
       print("%s Skipped %s in %s seconds"%(r, num, t2-t1))
 
   def testEvenPairsSampling(self):
-    rxn = rdChemReactions.ChemicalReaction();
+    rxn = rdChemReactions.ChemicalReaction()
     
     rgroups = [[Chem.MolFromSmiles("C")]*10,
                [Chem.MolFromSmiles("N")]*10,
                [Chem.MolFromSmiles("O")]*10]
 
-    rxn = rdChemReactions.ChemicalReaction();
+    rxn = rdChemReactions.ChemicalReaction()
     count = 0
     pairs01 = {}
     pairs12 = {}
@@ -575,7 +575,7 @@ class TestCase(unittest.TestCase) :
     self.assertEquals([], list(enumerator))
 
   def testRemoveInsaneReagents(self):
-    rxndata = "$RXN\nUntitled Document-1\n  ChemDraw10291618492D\n\n  3  1\n$MOL\n\n\n\n  2  1  0  0  0  0  0  0  0  0999 V2000\n    0.4125    0.0000    0.0000 N   0  0  0  0  0  0  0  0  0  3  0  0\n   -0.4125    0.0000    0.0000 R2  0  0  0  0  0  0  0  0  0  2  0  0\n  1  2  1  0        0\nM  END\n$MOL\n\n\n\n  2  1  0  0  0  0  0  0  0  0999 V2000\n   -0.4125    0.0000    0.0000 R1  0  0  0  0  0  0  0  0  0  1  0  0\n    0.4125    0.0000    0.0000 Cl  0  0  0  0  0  0  0  0  0  0  0  0\n  1  2  1  0        0\nM  END\n$MOL\n\n\n\n  2  1  0  0  0  0  0  0  0  0999 V2000\n    0.4125    0.0000    0.0000 N   0  0  0  0  0  0  0  0  0  5  0  0\n   -0.4125    0.0000    0.0000 R4  0  0  0  0  0  0  0  0  0  4  0  0\n  1  2  1  0        0\nM  END\n$MOL\n\n\n\n 14 15  0  0  0  0  0  0  0  0999 V2000\n    0.5072   -0.5166    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0\n    0.5072    0.3084    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0\n    1.2949   -0.7616    0.0000 N   0  0  0  0  0  0  0  0  0  0  0  0\n    1.7817   -0.0880    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0\n    1.2967    0.5794    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0\n    1.5558   -1.5443    0.0000 R1  0  0  0  0  0  0  0  0  0  1  0  0\n   -0.2073    0.7208    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0\n   -0.9218    0.3083    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0\n   -0.9217   -0.5167    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0\n   -0.2073   -0.9292    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0\n   -1.6362    0.7208    0.0000 N   0  0  0  0  0  0  0  0  0  3  0  0\n    1.5452    1.3661    0.0000 N   0  0  0  0  0  0  0  0  0  5  0  0\n    2.3507    1.5443    0.0000 R4  0  0  0  0  0  0  0  0  0  4  0  0\n   -2.3507    0.3083    0.0000 R2  0  0  0  0  0  0  0  0  0  2  0  0\n  1  2  2  0        0\n  1  3  1  0        0\n  3  4  1  0        0\n  4  5  1  0        0\n  5  2  1  0        0\n  3  6  1  0        0\n  2  7  1  0        0\n  7  8  2  0        0\n  8  9  1  0        0\n  9 10  2  0        0\n 10  1  1  0        0\n  8 11  1  0        0\n 12 13  1  0        0\n 11 14  1  0        0\n 12  5  1  0        0\nM  END\n";
+    rxndata = "$RXN\nUntitled Document-1\n  ChemDraw10291618492D\n\n  3  1\n$MOL\n\n\n\n  2  1  0  0  0  0  0  0  0  0999 V2000\n    0.4125    0.0000    0.0000 N   0  0  0  0  0  0  0  0  0  3  0  0\n   -0.4125    0.0000    0.0000 R2  0  0  0  0  0  0  0  0  0  2  0  0\n  1  2  1  0        0\nM  END\n$MOL\n\n\n\n  2  1  0  0  0  0  0  0  0  0999 V2000\n   -0.4125    0.0000    0.0000 R1  0  0  0  0  0  0  0  0  0  1  0  0\n    0.4125    0.0000    0.0000 Cl  0  0  0  0  0  0  0  0  0  0  0  0\n  1  2  1  0        0\nM  END\n$MOL\n\n\n\n  2  1  0  0  0  0  0  0  0  0999 V2000\n    0.4125    0.0000    0.0000 N   0  0  0  0  0  0  0  0  0  5  0  0\n   -0.4125    0.0000    0.0000 R4  0  0  0  0  0  0  0  0  0  4  0  0\n  1  2  1  0        0\nM  END\n$MOL\n\n\n\n 14 15  0  0  0  0  0  0  0  0999 V2000\n    0.5072   -0.5166    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0\n    0.5072    0.3084    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0\n    1.2949   -0.7616    0.0000 N   0  0  0  0  0  0  0  0  0  0  0  0\n    1.7817   -0.0880    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0\n    1.2967    0.5794    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0\n    1.5558   -1.5443    0.0000 R1  0  0  0  0  0  0  0  0  0  1  0  0\n   -0.2073    0.7208    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0\n   -0.9218    0.3083    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0\n   -0.9217   -0.5167    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0\n   -0.2073   -0.9292    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0\n   -1.6362    0.7208    0.0000 N   0  0  0  0  0  0  0  0  0  3  0  0\n    1.5452    1.3661    0.0000 N   0  0  0  0  0  0  0  0  0  5  0  0\n    2.3507    1.5443    0.0000 R4  0  0  0  0  0  0  0  0  0  4  0  0\n   -2.3507    0.3083    0.0000 R2  0  0  0  0  0  0  0  0  0  2  0  0\n  1  2  2  0        0\n  1  3  1  0        0\n  3  4  1  0        0\n  4  5  1  0        0\n  5  2  1  0        0\n  3  6  1  0        0\n  2  7  1  0        0\n  7  8  2  0        0\n  8  9  1  0        0\n  9 10  2  0        0\n 10  1  1  0        0\n  8 11  1  0        0\n 12 13  1  0        0\n 11 14  1  0        0\n 12  5  1  0        0\nM  END\n"
 
     rxn = AllChem.ReactionFromRxnBlock(rxndata)
     bbs = []

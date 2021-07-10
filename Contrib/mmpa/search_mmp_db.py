@@ -367,16 +367,16 @@ search_type = "mmp"
 db_name = "mmp.db"
 pre = "mmp"
 
-if (options.maxsize != None):
+if options.maxsize is not None:
   max_size = options.maxsize
-elif (options.ratio != None):
+elif options.ratio is not None:
   ratio = options.ratio
   if (ratio >= 1):
     print("Ratio specified: %s. Ratio needs to be less than 1.")
     sys.exit(1)
   use_ratio = True
 
-if (options.type != None):
+if options.type is not None:
   if ((options.type == "mmp") or (options.type == "subs") or (options.type == "trans") or
       (options.type == "subs_smarts") or (options.type == "trans_smarts")):
     search_type = options.type
@@ -389,7 +389,7 @@ else:
     "Please specify search type. Please choose from: mmp, subs, trans, subs_smarts, trans_smarts")
   sys.exit(1)
 
-if (options.prefix != None):
+if options.prefix is not None:
   pre = options.prefix
   db_name = "%s.db" % (pre)
 
@@ -410,7 +410,7 @@ cursor.execute('PRAGMA main.temp_store = MEMORY;')
 for line in sys.stdin:
 
   line = line.rstrip()
-  line_fields = re.split('\s|,', line)
+  line_fields = re.split(r'\s|,', line)
 
   if (len(line_fields) == 1):
     id = line_fields[0]

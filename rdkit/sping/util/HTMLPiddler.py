@@ -146,10 +146,10 @@ class _HtmlPiddleWriter:
         else:
             face = "times"  # "roman"
         italic = fontParams[1]  # Italic indicator
-        if italic == None:
+        if italic is None:
             italic = 0
         bold = fontParams[2]  # Bold indicator
-        if bold == None:
+        if bold is None:
             bold = 0
         self.font = piddle.Font(points, bold, italic, face=face)
         x = self.pc.stringWidth('W' * 20, self.font)

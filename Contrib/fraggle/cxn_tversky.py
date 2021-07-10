@@ -90,7 +90,7 @@ for line in q_split_input:
 
 for line in sys.stdin:
 
-  line_fields = re.split('\s|,', line)
+  line_fields = re.split(r'\s|,', line)
   dbsmi = line_fields[0]
   dbid = line_fields[1]
 

@@ -103,14 +103,14 @@ def delete_bonds(smi, id, mol, bonds, out):
   if (isotope == 3):
     valid = False
     for f in fragments:
-      matchObj = re.search('\*.*\*.*\*', f)
+      matchObj = re.search(r'\*.*\*.*\*', f)
       if matchObj:
         valid = True
         break
 
   if valid:
     if (isotope == 1):
-      fragmented_smi_noIsotopes = re.sub('\[\*\]', '[*:1]', fragmented_smi_noIsotopes)
+      fragmented_smi_noIsotopes = re.sub(r'\[\*\]', '[*:1]', fragmented_smi_noIsotopes)
 
       fragments = fragmented_smi_noIsotopes.split(".")
 
@@ -121,7 +121,7 @@ def delete_bonds(smi, id, mol, bonds, out):
       #need to cansmi again as smiles can be different
       output = '%s,%s,,%s.%s' % (smi, id, Chem.MolToSmiles(s1, isomericSmiles=True),
                                  Chem.MolToSmiles(s2, isomericSmiles=True))
-      if ((output in out) == False):
+      if output not in out:
         out.add(output)
 
     elif (isotope >= 2):
@@ -132,9 +132,9 @@ def delete_bonds(smi, id, mol, bonds, out):
       fragmented_smi = Chem.MolToSmiles(modifiedMol, isomericSmiles=True)
 
       #change the isotopes into labels - currently can't add SMARTS or labels to mol
-      fragmented_smi = re.sub('\[1\*\]', '[*:1]', fragmented_smi)
-      fragmented_smi = re.sub('\[2\*\]', '[*:2]', fragmented_smi)
-      fragmented_smi = re.sub('\[3\*\]', '[*:3]', fragmented_smi)
+      fragmented_smi = re.sub(r'\[1\*\]', '[*:1]', fragmented_smi)
+      fragmented_smi = re.sub(r'\[2\*\]', '[*:2]', fragmented_smi)
+      fragmented_smi = re.sub(r'\[3\*\]', '[*:3]', fragmented_smi)
 
       fragments = fragmented_smi.split(".")
 
@@ -153,30 +153,30 @@ def delete_bonds(smi, id, mol, bonds, out):
       side_chain_fragments = side_chains.split(".")
 
       for s in range(len(side_chain_fragments)):
-        matchObj = re.search('\[\*\:([123])\]', side_chain_fragments[s])
+        matchObj = re.search(r'\[\*\:([123])\]', side_chain_fragments[s])
         if matchObj:
           #add to isotope_track with key: old_isotope, value:
           isotope_track[matchObj.group(1)] = str(s + 1)
 
       #change the labels if required
       if (isotope_track['1'] != '1'):
-        core = re.sub('\[\*\:1\]', '[*:XX' + isotope_track['1'] + 'XX]', core)
-        side_chains = re.sub('\[\*\:1\]', '[*:XX' + isotope_track['1'] + 'XX]', side_chains)
+        core = re.sub(r'\[\*\:1\]', '[*:XX' + isotope_track['1'] + 'XX]', core)
+        side_chains = re.sub(r'\[\*\:1\]', '[*:XX' + isotope_track['1'] + 'XX]', side_chains)
       if (isotope_track['2'] != '2'):
-        core = re.sub('\[\*\:2\]', '[*:XX' + isotope_track['2'] + 'XX]', core)
-        side_chains = re.sub('\[\*\:2\]', '[*:XX' + isotope_track['2'] + 'XX]', side_chains)
+        core = re.sub(r'\[\*\:2\]', '[*:XX' + isotope_track['2'] + 'XX]', core)
+        side_chains = re.sub(r'\[\*\:2\]', '[*:XX' + isotope_track['2'] + 'XX]', side_chains)
 
       if (isotope == 3):
         if (isotope_track['3'] != '3'):
-          core = re.sub('\[\*\:3\]', '[*:XX' + isotope_track['3'] + 'XX]', core)
-          side_chains = re.sub('\[\*\:3\]', '[*:XX' + isotope_track['3'] + 'XX]', side_chains)
+          core = re.sub(r'\[\*\:3\]', '[*:XX' + isotope_track['3'] + 'XX]', core)
+          side_chains = re.sub(r'\[\*\:3\]', '[*:XX' + isotope_track['3'] + 'XX]', side_chains)
 
       #now remove the XX
       core = re.sub('XX', '', core)
       side_chains = re.sub('XX', '', side_chains)
 
       output = '%s,%s,%s,%s' % (smi, id, core, side_chains)
-      if ((output in out) == False):
+      if output not in out:
         out.add(output)
 
 
@@ -187,7 +187,7 @@ def fragment_mol(smi, cid):
   #to use outlines to remove them
   outlines = set()
 
-  if (mol == None):
+  if mol is None:
     sys.stderr.write("Can't generate mol for: %s\n" % (smi))
   else:
     frags = rdMMPA.FragmentMol(mol, pattern="[#6+0;!$(*=,#[!#6])]!@!=!#[*]", resultsAsMols=False)
@@ -218,7 +218,7 @@ if __name__ == '__main__':
 
     line = line.rstrip()
 
-    line_fields = re.split('\s|,', line)
+    line_fields = re.split(r'\s|,', line)
     smiles = line_fields[0]
     cmpd_id = line_fields[1]
 

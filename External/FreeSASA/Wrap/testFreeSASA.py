@@ -358,8 +358,8 @@ class TestCase(unittest.TestCase) :
         sasa = rdFreeSASA.CalcSASA(mol, radii=radii, opts=opts)
         self.assertTrue( (sasa-shrakerupley) < 1e-5 )
 
-        apolar = rdFreeSASA.CalcSASA(mol, radii, query=rdFreeSASA.MakeFreeSasaAPolarAtomQuery(), opts=opts);
-        polar = rdFreeSASA.CalcSASA(mol, radii, query=rdFreeSASA.MakeFreeSasaPolarAtomQuery(), opts=opts);
+        apolar = rdFreeSASA.CalcSASA(mol, radii, query=rdFreeSASA.MakeFreeSasaAPolarAtomQuery(), opts=opts)
+        polar = rdFreeSASA.CalcSASA(mol, radii, query=rdFreeSASA.MakeFreeSasaPolarAtomQuery(), opts=opts)
 
         self.assertTrue( (polar + apolar - 5000.340175) < 1e-5 )
 

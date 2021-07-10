@@ -60,7 +60,7 @@ class TestCase(unittest.TestCase):
     self.assertEqual(Chem.MolToSmiles(nmol), "O=CCCc1cc(C(=O)[O-])c(O)c(C(F)Cl)c1O.[Na+]")
 
   def test4Normalize(self):
-    mol = Chem.MolFromSmiles("C[N+](C)=C\C=C\[O-]")
+    mol = Chem.MolFromSmiles(r"C[N+](C)=C\C=C\[O-]")
     nmol = rdMolStandardize.Normalize(mol)
     self.assertEqual(Chem.MolToSmiles(nmol), "CN(C)C=CC=O")
 

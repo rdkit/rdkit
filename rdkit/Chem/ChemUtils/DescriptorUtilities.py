@@ -57,7 +57,7 @@ class VectorDescriptorWrapper:
 
         try:
           results = self.func(mol)
-        except:
+        except Exception:
           return math.nan
 
         setattr(mol, self.func_key, results)

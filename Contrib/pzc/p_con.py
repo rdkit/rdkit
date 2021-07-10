@@ -87,7 +87,7 @@ class KappaResults(dict):
 
   def __init__(self, **kwds):
     self.update(kwds)
-    if not 'alpha' in self:
+    if 'alpha' not in self:
       self['alpha'] = 0.025
       self['alpha_ci'] = int_ifclose(100 - 0.025 * 200)[1]
 
@@ -458,7 +458,7 @@ class p_con:
     for cpd in self.sd_entries:
       Chem.RemoveHs(cpd)
       cansmi = Chem.MolToSmiles(cpd, canonical=True)
-      if not cansmi in all_struct_dict.keys():
+      if cansmi not in all_struct_dict.keys():
         all_struct_dict[cansmi] = []
       all_struct_dict[cansmi].append(cpd)
 
@@ -499,7 +499,7 @@ class p_con:
     result = []
     IC50_dict = {}
     for cpd in self.sd_entries:
-      if not "cansmirdkit" in cpd.GetPropNames():
+      if "cansmirdkit" not in cpd.GetPropNames():
         Chem.RemoveHs(cpd)
         cansmi = Chem.MolToSmiles(cpd, canonical=True)
         cpd.SetProp('cansmirdkit', cansmi)
@@ -1314,7 +1314,7 @@ if __name__ == "__main__":
     print("-h for help")
     sys.exit(-1)
 
-  if options.dupl == False and options.uniq == False:
+  if not options.dupl and not options.uniq:
     print("Please select uniq or dupl -h for help")
     print("-h for help")
     sys.exit(-1)

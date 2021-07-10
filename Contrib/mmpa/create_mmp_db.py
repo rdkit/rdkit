@@ -93,7 +93,7 @@ def index_hydrogen_change():
       #now cansmi it
       temp = Chem.MolFromSmiles(smi)
 
-      if (temp == None):
+      if temp is None:
         sys.stderr.write('Error with key: %s, Added H: %s\n' % (key, smi))
       else:
         c_smi = Chem.MolToSmiles(temp, isomericSmiles=True)
@@ -131,10 +131,10 @@ db_name = "mmp.db"
 pre = "mmp"
 
 #print options
-if (options.maxsize != None):
+if options.maxsize is not None:
   max_size = options.maxsize
 
-if (options.prefix != None):
+if options.prefix is not None:
   pre = options.prefix
   db_name = "%s.db" % (pre)
 

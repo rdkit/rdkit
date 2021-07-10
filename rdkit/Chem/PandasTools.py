@@ -161,7 +161,7 @@ except Exception as e:
 if pd:
   try:
     from pandas.io.formats import format as fmt
-  except:
+  except Exception:
     try:
       from pandas.formats import format as fmt
     except ImportError:
@@ -235,7 +235,7 @@ def patchPandasHTMLrepr(self, **kwargs):
 
   try:
     import pandas.io.formats.html  # necessary for loading HTMLFormatter
-  except:
+  except Exception:
     # this happens up until at least pandas v0.22
     return patch_v1()
   else:
@@ -263,7 +263,7 @@ def patchPandasHTMLrepr(self, **kwargs):
     pd.io.formats.format._get_adjustment = _patched_get_adjustment
     pd.io.formats.html.HTMLFormatter._write_cell = _patched_HTMLFormatter_write_cell
     return defPandasRendering(self, **kwargs)
-  except:
+  except Exception:
     pass
   finally:
     # restore original methods
@@ -484,7 +484,7 @@ def LoadSDF(filename, idName='ID', molColName='ROMol', includeFingerprints=False
     if smilesName is not None:
       try:
         row[smilesName] = Chem.MolToSmiles(mol, isomericSmiles=isomericSmiles)
-      except:
+      except Exception:
         log.warning('No valid smiles could be generated for molecule %s', i)
         row[smilesName] = None
     if molColName is not None and not includeFingerprints:

@@ -605,13 +605,13 @@ class Common:
         self.assertEqual(mcs.numAtoms, 3)
 
         ps = Common.getParams(**kwargs)
-        ps.BondCompareParameters.CompleteRingsOnly = True;
+        ps.BondCompareParameters.CompleteRingsOnly = True
         ps.BondCompareParameters.MatchFusedRings = True
         mcs = rdFMCS.FindMCS(ms, ps)
         self.assertEqual(mcs.numAtoms, 3)
 
         ps = Common.getParams(**kwargs)
-        ps.BondCompareParameters.CompleteRingsOnly = True;
+        ps.BondCompareParameters.CompleteRingsOnly = True
         ps.BondCompareParameters.MatchFusedRingsStrict = True
         mcs = rdFMCS.FindMCS(ms, ps)
         self.assertEqual(mcs.numAtoms, 3)

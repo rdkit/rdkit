@@ -35,15 +35,15 @@ returns the perturbation order for a list of integers
 This value is associated with chirality.
 
 Parameters:
-    	probe 	a list of bond indices. This must be the same length as our number of incoming bonds (our degree).
+        probe 	a list of bond indices. This must be the same length as our number of incoming bonds (our degree).
 
 Returns:
     the number of swaps required to convert the ordering of the probe list to match the order of our incoming bonds: e.g. if our incoming bond order is: [0,1,2,3]
 
-    	getPerturbationOrder([1,0,2,3]) = 1
-    	getPerturbationOrder([1,2,3,0]) = 3
-    	getPerturbationOrder([1,2,0,3]) = 2
-    	
+        getPerturbationOrder([1,0,2,3]) = 1
+        getPerturbationOrder([1,2,3,0]) = 3
+        getPerturbationOrder([1,2,0,3]) = 2
+
 
 See the class documentation for a more detailed description of our representation of chirality.
 
@@ -195,15 +195,15 @@ returns the perturbation order for a list of integers
 This value is associated with chirality.
 
 Parameters:
-    	probe 	a list of bond indices. This must be the same length as our number of incoming bonds (our degree).
+        probe 	a list of bond indices. This must be the same length as our number of incoming bonds (our degree).
 
 Returns:
     the number of swaps required to convert the ordering of the probe list to match the order of our incoming bonds: e.g. if our incoming bond order is: [0,1,2,3]
 
-    	getPerturbationOrder([1,0,2,3]) = 1
-    	getPerturbationOrder([1,2,3,0]) = 3
-    	getPerturbationOrder([1,2,0,3]) = 2
-    	
+        getPerturbationOrder([1,0,2,3]) = 1
+        getPerturbationOrder([1,2,3,0]) = 3
+        getPerturbationOrder([1,2,0,3]) = 2
+
 
 See the class documentation for a more detailed description of our representation of chirality.
 
@@ -213,20 +213,20 @@ Notes:
 
 template<typename T >
 void RDKit::Atom::getProp 	( 	const std::string  	key,
-		T &  	res	 
-	) 			const [inline]
+        T &  	res
+    ) 			const [inline]
 
 This is an overloaded member function, provided for convenience. It differs from the above function only in what argument(s) it accepts.
 template<typename T >
 void RDKit::Atom::getProp 	( 	const char *  	key,
-		T &  	res	 
-	) 			const [inline]
+        T &  	res
+    ) 			const [inline]
 
 allows retrieval of a particular property value
 
 Parameters:
-    	key 	the name under which the property should be stored. If a property is already stored under this name, it will be replaced.
-    	res 	a reference to the storage location for the value.
+        key 	the name under which the property should be stored. If a property is already stored under this name, it will be replaced.
+        res 	a reference to the storage location for the value.
 
 Notes:
 
@@ -277,23 +277,23 @@ Notes:
 
 template<typename T >
 void RDKit::Atom::setProp 	( 	const std::string  	key,
-		T  	val,
-		bool  	computed = false	 
-	) 			const [inline]
+        T  	val,
+        bool  	computed = false
+    ) 			const [inline]
 
 This is an overloaded member function, provided for convenience. It differs from the above function only in what argument(s) it accepts.
 template<typename T >
 void RDKit::Atom::setProp 	( 	const char *  	key,
-		T  	val,
-		bool  	computed = false	 
-	) 			const [inline]
+        T  	val,
+        bool  	computed = false
+    ) 			const [inline]
 
 sets a property value
 
 Parameters:
-    	key 	the name under which the property should be stored. If a property is already stored under this name, it will be replaced.
-    	val 	the value to be stored
-    	computed 	(optional) allows the property to be flagged computed.
+        key 	the name under which the property should be stored. If a property is already stored under this name, it will be replaced.
+        val 	the value to be stored
+        computed 	(optional) allows the property to be flagged computed.
 
 void RDKit::Atom::updatePropertyCache 	( 	bool  	strict = true 	 )  	
 
@@ -305,12 +305,12 @@ Notes:
     * the current lazy properties are implicit and explicit valence
 
 '''
-_renote = re.compile('^\w*(Notes?[:]?)(?:.*?$)(.*?)((^\w)|\Z)', flags=(re.M | re.I | re.DOTALL))
-_reparam = re.compile('^\w*(Param(?:eter)?s?[:]?)(?:.*?$)(.*?)((^\w)|\Z)', flags=(re.M | re.I |
+_renote = re.compile(r'^\w*(Notes?[:]?)(?:.*?$)(.*?)((^\w)|\Z)', flags=(re.M | re.I | re.DOTALL))
+_reparam = re.compile(r'^\w*(Param(?:eter)?s?[:]?)(?:.*?$)(.*?)((^\w)|\Z)', flags=(re.M | re.I |
                                                                                   re.DOTALL))
-_rereturn = re.compile('^\w*(Returns[:])(?:.*?$)(.*?)((^\w)|\Z)', flags=(re.M | re.I | re.DOTALL))
-_rereturn2 = re.compile('^\w*(Returns)\s+(.*?)((^\w)|\Z)', flags=(re.M | re.I | re.DOTALL))
-_reusage = re.compile('^\w*(Usage[:]?)(?:.*?$)(.*?)((^\w)|\Z)', flags=(re.M | re.I | re.DOTALL))
+_rereturn = re.compile(r'^\w*(Returns[:])(?:.*?$)(.*?)((^\w)|\Z)', flags=(re.M | re.I | re.DOTALL))
+_rereturn2 = re.compile(r'^\w*(Returns)\s+(.*?)((^\w)|\Z)', flags=(re.M | re.I | re.DOTALL))
+_reusage = re.compile(r'^\w*(Usage[:]?)(?:.*?$)(.*?)((^\w)|\Z)', flags=(re.M | re.I | re.DOTALL))
 
 
 def make_method_doc(doxy_method_text, class_name):
@@ -358,7 +358,7 @@ def make_class_doc(doxy_text, class_name):
 
 def do_note(doxy_text):
   m1 = _renote.search(doxy_text)
-  if m1 != None:
+  if m1 is not None:
     repl = m1.group(0)
     if repl[-1] != '\n':
       repl = repl[:-1]
@@ -375,7 +375,7 @@ def do_note(doxy_text):
 
 def do_param(doxy_text):
   m1 = _reparam.search(doxy_text)
-  if m1 != None:
+  if m1 is not None:
     repl = m1.group(0)
     if repl[-1] != '\n':
       repl = repl[:-1]
@@ -390,9 +390,9 @@ def do_param(doxy_text):
 
 def do_return(doxy_text):
   m1 = _rereturn.search(doxy_text)
-  if m1 == None:
+  if m1 is None:
     m1 = _rereturn2.search(doxy_text)
-  if m1 != None:
+  if m1 is not None:
     repl = m1.group(0)
     if repl[-1] != '\n':
       repl = repl[:-1]
@@ -407,7 +407,7 @@ def do_return(doxy_text):
 
 def do_usage(doxy_text):
   m1 = _reusage.search(doxy_text)
-  if m1 != None:
+  if m1 is not None:
     repl = m1.group(0)
     if repl[-1] != '\n':
       repl = repl[:-1]

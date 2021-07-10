@@ -107,7 +107,7 @@ def _fix_all(pat, sbt, my_string):
   try:
     new_string = re.sub(pat, sbt, my_string)
     return new_string
-  except:
+  except Exception:
     return None
 
 

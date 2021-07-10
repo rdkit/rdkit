@@ -281,8 +281,8 @@ def switch_specific_labels_on_symmetry(smi, symmetry_class, a, b):
       #if the higher label comes first, fix
       if (int(matchObj.group(a)) > int(matchObj.group(b))):
         #if(int(matchObj.group(1)) > int(matchObj.group(2))):
-        smi = re.sub(r'\[\*\:' + matchObj.group(a) + '\]', '[*:XX' + matchObj.group(b) + 'XX]', smi)
-        smi = re.sub(r'\[\*\:' + matchObj.group(b) + '\]', '[*:XX' + matchObj.group(a) + 'XX]', smi)
+        smi = re.sub(r'\[\*\:' + matchObj.group(a) + r'\]', '[*:XX' + matchObj.group(b) + 'XX]', smi)
+        smi = re.sub(r'\[\*\:' + matchObj.group(b) + r'\]', '[*:XX' + matchObj.group(a) + 'XX]', smi)
         smi = re.sub('XX', '', smi)
 
   return smi
@@ -372,7 +372,7 @@ def index_hydrogen_change():
       #now cansmi it
       temp = Chem.MolFromSmiles(smi)
 
-      if (temp == None):
+      if temp is None:
         sys.stderr.write('Error with key: %s, Added H: %s\n' % (key, smi))
       else:
         c_smi = Chem.MolToSmiles(temp, isomericSmiles=True)
@@ -419,9 +419,9 @@ if __name__ == '__main__':
   (options, args) = parser.parse_args()
 
   #print options
-  if (options.maxsize != None):
+  if options.maxsize is not None:
     max_size = options.maxsize
-  elif (options.ratio != None):
+  elif options.ratio is not None:
     ratio = options.ratio
     if (ratio >= 1):
       print("Ratio specified: %s. Ratio needs to be less than 1.")
@@ -442,7 +442,7 @@ if __name__ == '__main__':
     #of mol already calculated. If not, calculate and store
     cmpd_heavy = None
     if (use_ratio):
-      if ((id in id_to_heavy) == False):
+      if id not in id_to_heavy:
         id_to_heavy[id] = heavy_atom_count(smi)
 
       cmpd_heavy = id_to_heavy[id]
@@ -456,7 +456,7 @@ if __name__ == '__main__':
       side_chains = context.split('.')
 
       #minus 1 for the attachment pt
-      if (add_to_index(side_chains[1], 1, cmpd_heavy) == True):
+      if add_to_index(side_chains[1], 1, cmpd_heavy):
         context = side_chains[0]
         core = side_chains[1]
 
@@ -467,7 +467,7 @@ if __name__ == '__main__':
         index.setdefault(context, []).append(value)
 
       #minus 1 for the attachment pt
-      if (add_to_index(side_chains[0], 1, cmpd_heavy) == True):
+      if add_to_index(side_chains[0], 1, cmpd_heavy):
         context = side_chains[1]
         core = side_chains[0]
 
@@ -482,7 +482,7 @@ if __name__ == '__main__':
 
       attachments = core.count('*')
 
-      if (add_to_index(core, attachments, cmpd_heavy) == True):
+      if add_to_index(core, attachments, cmpd_heavy):
         value = "%s;t%s" % (id, core)
 
         #add the array if no key exists
@@ -524,7 +524,7 @@ if __name__ == '__main__':
                     (id_to_smi[id_a], id_to_smi[id_b], id_a, id_b, smirks, context))
 
               #deal with symmetry switch
-              if (options.sym == True):
+              if options.sym:
                 smirks, context = cansmirk(core_b, core_a, key)
                 print("%s,%s,%s,%s,%s,%s" %
                       (id_to_smi[id_b], id_to_smi[id_a], id_b, id_a, smirks, context))

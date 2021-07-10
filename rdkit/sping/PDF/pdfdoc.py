@@ -446,7 +446,7 @@ class PDFStream(PDFObject):
 
   def save(self, file):
     #avoid crashes if they wrote nothing in the page
-    if self.data == None:
+    if self.data is None:
       self.data = TestStream
 
     if self.compression == 1:

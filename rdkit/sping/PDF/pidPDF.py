@@ -112,7 +112,7 @@ class PDFCanvas(Canvas):
         self.filename = name
 
         # self.pdf.setPageSize(pagesize) # This doesn't seem to work correctly -cwl
-        if size == None:
+        if size is None:
             # take the page size, which might not be default
             self.drawingsize = self.pagesize
         else:

@@ -304,7 +304,7 @@ if __name__ == '__main__':  # pragma: nocover
   if RDConfig.useSqlLite and os.path.exists(tempDbName):
     try:
       os.unlink(tempDbName)
-    except:
+    except Exception:
       import traceback
       traceback.print_exc()
   sys.exit(failed)

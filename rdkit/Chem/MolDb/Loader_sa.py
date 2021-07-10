@@ -117,7 +117,7 @@ def LoadDb(suppl, dbName, nameProp='_Name', nameCol='compound_id', silent=False,
         try:
           os.unlink(dbName)
           break
-        except:
+        except Exception:
           import time
           time.sleep(2)
     if os.path.exists(dbName):
