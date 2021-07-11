@@ -1,0 +1,23 @@
+@import 'theme.css';
+
+#btw-footer {
+    color: white;
+    height: 0px !important;
+    font-size: 0.01px;
+}
+
+.right {
+position: fixed;
+right:0;
+top:10px;
+}
+
+@media screen and (max-width: 768px) {
+
+ .right {
+  display:None;
+ }
+}
+
+
+

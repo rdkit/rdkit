@@ -1,0 +1,54 @@
+AtomType NDonor [N&!H0&v3,N&!H0&+1&v4,n&H1&+0]
+AtomType ChalcDonor [O,S;H1;+0]
+DefineFeature SingleAtomDonor [{NDonor},{ChalcDonor},!$([D1]-[C;D3]=[O,S,N])]
+  Family Donor
+  Weights 1
+EndFeature
+
+AtomType NAcceptor [$([N&v3;H1,H2]-[!$(*=[O,N,P,S])])]
+Atomtype NAcceptor [$([N;v3;H0])]
+AtomType NAcceptor [$([n;+0])]
+AtomType ChalcAcceptor [$([O,S;H1;v2]-[!$(*=[O,N,P,S])])]
+AtomType ChalcAcceptor [O,S;H0;v2]
+Atomtype ChalcAcceptor [O,S;-]
+Atomtype ChalcAcceptor [o,s;+0]
+AtomType HalogenAcceptor [F]
+DefineFeature SingleAtomAcceptor [{NAcceptor},{ChalcAcceptor},{HalogenAcceptor}]
+  Family Acceptor
+  Weights 1
+EndFeature
+
+# this one is delightfully easy:
+DefineFeature AcidicGroup [C,S](=[O,S,P])-[O;H1,H0&-1]
+  Family NegIonizable
+  Weights 1.0,1.0,1.0
+EndFeature
+
+AtomType CarbonOrArom_NonCarbonyl [$([C,a]);!$([C,a](=O))]
+AtomType BasicNH2 [$([N;H2&+0][{CarbonOrArom_NonCarbonyl}])]
+AtomType BasicNH1 [$([N;H1&+0]([{CarbonOrArom_NonCarbonyl}])[{CarbonOrArom_NonCarbonyl}])]
+AtomType BasicNH0 [$([N;H0&+0]([{CarbonOrArom_NonCarbonyl}])([{CarbonOrArom_NonCarbonyl}])[{CarbonOrArom_NonCarbonyl}])]
+AtomType BasicNakedN [N,n;X2;+0]
+DefineFeature BasicGroup [{BasicNH2},{BasicNH1},{BasicNH0},{BasicNakedN}]
+  Family PosIonizable
+  Weights 1.0
+EndFeature
+
+# aromatic rings of various sizes:
+DefineFeature Arom5 a1aaaa1
+  Family Aromatic
+  Weights 1.0,1.0,1.0,1.0,1.0
+EndFeature
+DefineFeature Arom6 a1aaaaa1
+  Family Aromatic
+  Weights 1.0,1.0,1.0,1.0,1.0,1.0
+EndFeature
+DefineFeature Arom7 a1aaaaaa1
+  Family Aromatic
+  Weights 1.0,1.0,1.0,1.0,1.0,1.0,1.0
+EndFeature
+DefineFeature Arom8 a1aaaaaaa1
+  Family Aromatic
+  Weights 1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0
+EndFeature
+
