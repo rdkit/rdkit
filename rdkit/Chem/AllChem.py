@@ -20,6 +20,7 @@ from rdkit import DataStructs
 from rdkit import ForceField
 from rdkit import RDConfig
 from rdkit import rdBase
+from rdkit import Chem
 from rdkit.Chem import *
 from rdkit.Chem.ChemicalFeatures import *
 from rdkit.Chem.rdChemReactions import *
@@ -436,6 +437,65 @@ def AssignBondOrdersFromTemplate(refmol, mol):
     else:
       raise ValueError("No matching found")
   return mol2
+
+
+def GetNumOfUnsaturatedBonds(atom):
+    """
+    Returns
+        The number of electrons an atom is using for pi bonding
+        OR
+        The Number of Unsaturated bonds, an atom has
+    
+    >>> m = Chem.MolFromSmiles('C=C')
+    >>> GetNumOfUnsaturatedBonds(m.GetAtomWithIdx(0))
+    1
+    
+    >>> m = Chem.MolFromSmiles('C#CC')
+    >>> GetNumOfUnsaturatedBonds(m.GetAtomWithIdx(0))
+    2
+    
+    >>> GetNumOfUnsaturatedBonds(m.GetAtomWithIdx(1))
+    2
+    
+    >>> m = Chem.MolFromSmiles('O=C=CC')
+    >>> GetNumOfUnsaturatedBonds(m.GetAtomWithIdx(0))
+    1
+    
+    >>> GetNumOfUnsaturatedBonds(m.GetAtomWithIdx(1))
+    2
+    
+    >>> GetNumOfUnsaturatedBonds(m.GetAtomWithIdx(2))
+    1
+    
+    >>> GetNumOfUnsaturatedBonds(m.GetAtomWithIdx(3))
+    0
+    
+    >>> m = Chem.MolFromSmiles('c1ccccc1')
+    >>> GetNumOfUnsaturatedBonds(m.GetAtomWithIdx(0))
+    1
+    
+    >>> m = Chem.MolFromSmiles('S(=O)(=O)(O)O')
+    >>> GetNumOfUnsaturatedBonds(m.GetAtomWithIdx(0))
+    2
+    
+    >>> m = Chem.MolFromSmiles('P(=O)(O)(O)O')
+    >>> GetNumOfUnsaturatedBonds(m.GetAtomWithIdx(0))
+    1
+    
+    """
+   
+    # For aromatic atoms, num of unsaturated bonds = 1
+    if atom.GetIsAromatic():
+        num_uns_bonds = 1
+    
+    # For other bonded atoms, num of unsaturated bonds = Sum of bond orders - Number of non-hydrogen neighbors
+    else:
+        bond_order = 0
+        for bond in atom.GetBonds():
+            bond_order += bond.GetBondTypeAsDouble()
+        num_uns_bonds = bond_order - len(atom.GetNeighbors())
+
+    return int(num_uns_bonds)
 
 
 # ------------------------------------
