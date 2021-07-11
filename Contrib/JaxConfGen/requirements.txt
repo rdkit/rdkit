@@ -1,0 +1,4 @@
+jax==0.1.46
+jaxlib==0.1.28
+scipy
+simtk.unit
