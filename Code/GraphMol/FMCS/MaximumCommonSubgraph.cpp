@@ -620,7 +620,11 @@ bool MaximumCommonSubgraph::growSeeds() {
     VerboseStatistics.TotalSteps++;
 #endif
     auto si = Seeds.begin();
-
+    if (Parameters.BondCompareParameters.CompleteRingsOnly && !canCompleteRings(*si)) {
+      // there are rings in this seed that cannot be completed
+      Seeds.erase(si);
+      continue;
+    }
     si->grow(*this);
     {
       const Seed& fs = Seeds.front();
@@ -689,6 +693,82 @@ bool MaximumCommonSubgraph::growSeeds() {
   }
   return !canceled;
 }  // namespace FMCS
+
+bool MaximumCommonSubgraph::checkIfAtomsShareRing(
+    const ROMol& qmol, unsigned int srcAtomIdx,
+    const std::vector<unsigned int>& neighborsInSeed) const
+{
+    for (auto neigh1 : neighborsInSeed) {
+        for (auto neigh2 : neighborsInSeed) {
+            if (neigh1 <= neigh2) {
+                continue;
+            }
+            for (auto ring : qmol.getRingInfo()->atomRings()) {
+                if (std::find(ring.begin(), ring.end(), srcAtomIdx) !=
+                        ring.end() &&
+                    std::find(ring.begin(), ring.end(), neigh1) != ring.end() && std::find(ring.begin(), ring.end(), neigh2) != ring.end())
+                    {
+                        return true;
+                    }
+            }
+        }
+    }
+    return false;
+}
+
+bool MaximumCommonSubgraph::canCompleteRings(const Seed& s) {
+  if (checkIfRingsAreClosed(s)) {
+    return true;
+  }
+  // There are incomplete rings in this seed. If any of the LastAddedAtoms
+  // belong to an incomplete ring, we only want to continue growing
+  // this seed if a ring atom adjacent to that LastAddedAtom will be added
+  // to the seed. Otherwise, it would be impossible to complete that ring
+  // from this seed.
+  const ROMol& qmol = getQueryMolecule();
+  auto ringInfo = qmol.getRingInfo();
+  for (unsigned srcAtomIdx = s.LastAddedAtomsBeginIdx; srcAtomIdx < s.getNumAtoms();
+       srcAtomIdx++) {
+    if (ringInfo->numAtomRings(srcAtomIdx) == 0) {
+      continue;
+    }
+
+    // what atoms currently in the seed are adjacent to srcAtomIdx?
+    std::vector<unsigned int> neighborsInSeed = {};
+    bool growingWillAddRingBond = false;
+
+    const Atom* atom = qmol.getAtomWithIdx(srcAtomIdx);
+    ROMol::OEDGE_ITER beg, end;
+    for (boost::tie(beg, end) = qmol.getAtomBonds(atom); beg != end;
+         beg++) {  // all bonds from MoleculeFragment.Atoms[srcAtomIdx]
+      const Bond* bond = &*(qmol[*beg]);
+      unsigned ai = (atom == bond->getBeginAtom()) ? bond->getEndAtomIdx()
+                                                      : bond->getBeginAtomIdx();
+      const Atom* end_atom = qmol.getAtomWithIdx(ai);
+      bool bondAlreadyInSeed = false;
+      for (unsigned i = 0; i < s.getNumAtoms(); i++) {
+        if (end_atom ==
+            s.MoleculeFragment.Atoms[i]) {  // already exists in this seed
+          neighborsInSeed.push_back(i);
+          bondAlreadyInSeed = true;
+          break;
+        }
+      }
+      if (!s.ExcludedBonds[bond->getIdx()] && !bondAlreadyInSeed && (ringInfo->numBondRings(bond->getIdx()) > 0)) {
+        // growing this seed might close the incomplete ring
+        growingWillAddRingBond = true;
+      }
+    }
+
+    // Now we know that no new ring bonds will be added from srcAtomIdx. If
+    // srcAtomIdx is not already in a complete ring, then growing the seed
+    // is useless
+    if (!growingWillAddRingBond && (neighborsInSeed.size() < 2 || !checkIfAtomsShareRing(qmol, srcAtomIdx, neighborsInSeed))) {
+      return false;
+    }
+  }
+  return true;
+}
 
 struct AtomMatch {  // for each seed atom (matched)
   unsigned QueryAtomIdx;
