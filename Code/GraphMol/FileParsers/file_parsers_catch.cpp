@@ -2244,7 +2244,7 @@ M  END)CTAB"_ctab;
 
 TEST_CASE(
     "Problems parsing SGroup abbreviations with multiple attachment points",
-    "[bug][parser]") {
+    "[bug][reader]") {
   std::string rdbase = getenv("RDBASE");
   SECTION("basics") {
     std::string fName =

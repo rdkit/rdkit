@@ -23,7 +23,7 @@ class pyBVFunctor {
  public:
   pyBVFunctor(const std::vector<const BV *> &obj, DistanceMethod method)
       : d_obj(obj), d_method(method) {}
-  ~pyBVFunctor() {}
+  ~pyBVFunctor() = default;
   double operator()(unsigned int i, unsigned int j) {
     double res = 0.0;
     switch (d_method) {
@@ -47,7 +47,7 @@ class pyBVFunctor {
 class pyobjFunctor {
  public:
   pyobjFunctor(python::object obj) : dp_obj(std::move(obj)) {}
-  ~pyobjFunctor() {}
+  ~pyobjFunctor() = default;
   double operator()(unsigned int i, unsigned int j) {
     return python::extract<double>(dp_obj(i, j));
   }

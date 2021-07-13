@@ -58,7 +58,7 @@ using namespace ForceFields::MMFF;
 class RDKIT_FORCEFIELDHELPERS_EXPORT MMFFAtomProperties {
  public:
   MMFFAtomProperties() {}
-  ~MMFFAtomProperties() {}
+  ~MMFFAtomProperties() = default;
   std::uint8_t mmffAtomType{0};
   double mmffFormalCharge{0.0};
   double mmffPartialCharge{0.0};
@@ -76,7 +76,7 @@ class RDKIT_FORCEFIELDHELPERS_EXPORT MMFFMolProperties {
   MMFFMolProperties(ROMol &mol, const std::string &mmffVariant = "MMFF94",
                     std::uint8_t verbosity = MMFF_VERBOSITY_NONE,
                     std::ostream &oStream = std::cout);
-  ~MMFFMolProperties() {}
+  ~MMFFMolProperties() = default;
   unsigned int getMMFFBondType(const Bond *bond);
   unsigned int getMMFFAngleType(const ROMol &mol, const unsigned int idx1,
                                 const unsigned int idx2,

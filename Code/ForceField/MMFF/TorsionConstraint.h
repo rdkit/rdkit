@@ -45,7 +45,7 @@ class RDKIT_FORCEFIELD_EXPORT TorsionConstraintContrib
                            double minDihedralDeg, double maxDihedralDeg,
                            double forceConst);
 
-  ~TorsionConstraintContrib() override {}
+  ~TorsionConstraintContrib() override = default;
   double getEnergy(double *pos) const override;
 
   void getGrad(double *pos, double *grad) const override;

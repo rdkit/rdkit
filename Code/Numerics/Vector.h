@@ -72,7 +72,7 @@ class Vector {
     d_data.reset(data);
   }
 
-  ~Vector() {}
+  ~Vector() = default;
 
   //! return the size (dimension) of the vector
   unsigned int size() const { return d_size; }

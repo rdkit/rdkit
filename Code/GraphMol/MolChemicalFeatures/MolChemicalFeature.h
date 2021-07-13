@@ -40,7 +40,7 @@ class RDKIT_MOLCHEMICALFEATURES_EXPORT MolChemicalFeature
         d_id(id),
         d_activeConf(-1) {}
 
-  ~MolChemicalFeature() override {}
+  ~MolChemicalFeature() override = default;
 
   //! \brief return the name of the feature's family
   const std::string &getFamily() const override;

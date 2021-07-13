@@ -335,7 +335,7 @@ class RDKIT_FINGERPRINTS_EXPORT UnimplementedFPException
   UnimplementedFPException(std::string msg) : _msg(std::move(msg)) {}
   //! get the error message
   const char *what() const noexcept override { return _msg.c_str(); }
-  ~UnimplementedFPException() noexcept override {}
+  ~UnimplementedFPException() noexcept override = default;
 
  private:
   std::string _msg;

@@ -171,7 +171,7 @@ namespace {
 class pyobjFunctor {
  public:
   pyobjFunctor(python::object obj) : dp_obj(std::move(obj)) {}
-  ~pyobjFunctor() {}
+  ~pyobjFunctor() = default;
   bool operator()(const ROMol &m, const std::vector<unsigned int> &match) {
     return python::extract<bool>(dp_obj(boost::ref(m), boost::ref(match)));
   }

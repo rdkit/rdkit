@@ -76,7 +76,7 @@ class RDKIT_MOLSTANDARDIZE_EXPORT LargestFragmentChooser {
   LargestFragmentChooser(bool prefer_organic = false)
       : PREFER_ORGANIC(prefer_organic) {}
   LargestFragmentChooser(const LargestFragmentChooser &other);
-  ~LargestFragmentChooser() {}
+  ~LargestFragmentChooser() = default;
 
   ROMol *choose(const ROMol &mol);
   struct Largest {

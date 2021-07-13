@@ -17,7 +17,7 @@ class EnumException : public std::exception {
   EnumException(const char *msg) : _msg(msg) {}
   EnumException(const std::string msg) : _msg(msg) {}
   const char *what() const noexcept override { return _msg.c_str(); }
-  ~EnumException() noexcept {}
+  ~EnumException() noexcept = default;
 
  private:
   std::string _msg;

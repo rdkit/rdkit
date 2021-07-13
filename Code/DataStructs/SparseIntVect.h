@@ -61,7 +61,7 @@ class SparseIntVect {
   }
 
   //! destructor (doesn't need to do anything)
-  ~SparseIntVect() {}
+  ~SparseIntVect() = default;
 
 #ifdef __clang__
 #pragma clang diagnostic push

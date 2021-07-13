@@ -24,7 +24,7 @@ template <typename T>
 class BVFunctor {
  public:
   BVFunctor(const T &obj) : d_obj(obj) {}
-  ~BVFunctor() {}
+  ~BVFunctor() = default;
   double operator()(unsigned int i, unsigned int j) {
     double res = 1. - TanimotoSimilarity(*d_obj[i], *d_obj[j]);
     return res;

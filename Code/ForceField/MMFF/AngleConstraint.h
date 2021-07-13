@@ -43,7 +43,7 @@ class RDKIT_FORCEFIELD_EXPORT AngleConstraintContrib
                          double minAngleDeg, double maxAngleDeg,
                          double forceConst);
 
-  ~AngleConstraintContrib() override {}
+  ~AngleConstraintContrib() override = default;
   double getEnergy(double *pos) const override;
 
   void getGrad(double *pos, double *grad) const override;

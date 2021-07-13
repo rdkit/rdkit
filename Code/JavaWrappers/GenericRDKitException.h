@@ -30,7 +30,7 @@ class RDKIT_JAVAWRAPPERS_EXPORT GenericRDKitException : public std::exception {
   GenericRDKitException(const std::string &i) : _value(i) {}
   GenericRDKitException(const char *msg) : _value(msg) {}
   const char *what() const noexcept override { return _value.c_str(); }
-  ~GenericRDKitException() noexcept {}
+  ~GenericRDKitException() noexcept = default;
 
  private:
   std::string _value;

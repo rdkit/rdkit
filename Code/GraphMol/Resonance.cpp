@@ -182,7 +182,7 @@ class AtomElectrons {
   typedef enum { NEED_CHARGE_BIT = 1 } AllowedBondFlag;
   AtomElectrons(ConjElectrons *parent, const Atom *a);
   AtomElectrons(ConjElectrons *parent, const AtomElectrons &ae);
-  ~AtomElectrons(){};
+  ~AtomElectrons() = default;
   std::uint8_t findAllowedBonds(unsigned int bi);
   bool hasOctet() const { return ((d_nb + d_tv * 2) == 8); };
   bool isLastBond() const { return (d_flags & LAST_BOND); };
@@ -230,7 +230,7 @@ class BondElectrons {
   typedef enum { DEFINITIVE = (1 << 0) } BondElectronsFlags;
   BondElectrons(ConjElectrons *parent, const Bond *b);
   BondElectrons(ConjElectrons *parent, const BondElectrons &be);
-  ~BondElectrons(){};
+  ~BondElectrons() = default;
   bool isDefinitive() const { return (d_flags & DEFINITIVE); };
   void setDefinitive() { d_flags |= DEFINITIVE; };
   int conjGrpIdx() const {

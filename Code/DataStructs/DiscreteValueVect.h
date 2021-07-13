@@ -60,7 +60,7 @@ class RDKIT_DATASTRUCTS_EXPORT DiscreteValueVect {
     initFromText(pkl, len);
   }
 
-  ~DiscreteValueVect() {}
+  ~DiscreteValueVect() = default;
 
   //! return the value at an index
   unsigned int getVal(unsigned int i) const;
