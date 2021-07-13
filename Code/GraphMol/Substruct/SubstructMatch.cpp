@@ -130,16 +130,49 @@ void MatchSubqueries(const ROMol &mol, QueryAtom::QUERYATOM_QUERY *q,
                      SUBQUERY_MAP &subqueryMap,
                      std::vector<RecursiveStructureQuery *> &locked);
 
-bool matchCompare(const std::pair<int, int> &a, const std::pair<int, int> &b);
-bool matchVectCompare(const MatchVectType &a, const MatchVectType &b);
-bool isToBeAddedToVector(std::vector<MatchVectType> &matches,
-                         const MatchVectType &m);
-void mergeMatchVect(std::vector<MatchVectType> &matches,
-                    const std::vector<MatchVectType> &matchesTmp,
-                    const ResSubstructMatchHelperArgs_ &args);
+bool insertIfNeeded(std::set<MatchVectType> &matches, const MatchVectType &m) {
+  bool shouldInsert = true;
+  std::unordered_set<int> matchAsSet;
+  std::transform(m.begin(), m.end(),
+                 std::inserter(matchAsSet, matchAsSet.begin()),
+                 [](const std::pair<int, int> &p) { return p.second; });
+  for (auto it = matches.begin(); it != matches.end(); ++it) {
+    std::unordered_set<int> existingMatchAsSet;
+    std::transform(
+        it->begin(), it->end(),
+        std::inserter(existingMatchAsSet, existingMatchAsSet.begin()),
+        [](const std::pair<int, int> &p) { return p.second; });
+    if (matchAsSet == existingMatchAsSet) {
+      if (m < *it) {
+        matches.erase(it);
+      } else {
+        shouldInsert = false;
+      }
+      break;
+    }
+  }
+  if (shouldInsert) {
+    matches.insert(m);
+  }
+  return shouldInsert;
+}
+
+bool tryToInsert(std::set<MatchVectType> &matches, const MatchVectType &match,
+                 const SubstructMatchParameters &params) {
+  if (matches.size() == params.maxMatches) {
+    return false;
+  }
+  if (!params.uniquify) {
+    matches.insert(match);
+  } else {
+    insertIfNeeded(matches, match);
+  }
+  return true;
+}
+
 void ResSubstructMatchHelper_(const ResSubstructMatchHelperArgs_ &args,
-                              std::vector<MatchVectType> *matches,
-                              unsigned int bi, unsigned int ei);
+                              std::set<MatchVectType> *matches, unsigned int bi,
+                              unsigned int ei);
 
 typedef std::list<
     std::pair<MolGraph::vertex_descriptor, MolGraph::vertex_descriptor>>
@@ -162,9 +195,8 @@ MolMatchFinalCheckFunctor::MolMatchFinalCheckFunctor(
   }
 }
 
-bool MolMatchFinalCheckFunctor::operator()(
-    const std::uint32_t q_c[],
-    const std::uint32_t m_c[]) const {
+bool MolMatchFinalCheckFunctor::operator()(const std::uint32_t q_c[],
+                                           const std::uint32_t m_c[]) const {
   if (d_params.extraFinalCheck) {
     // EFF: we can no-doubt do better than this
     std::vector<unsigned int> aids(m_c, m_c + d_query.getNumAtoms());
@@ -379,27 +411,19 @@ class BondLabelFunctor {
   const ROMol &d_mol;
   const SubstructMatchParameters &d_params;
 };
-void mergeMatchVect(std::vector<MatchVectType> &matches,
-                    const std::vector<MatchVectType> &matchesTmp,
-                    const ResSubstructMatchHelperArgs_ &args) {
-  for (auto it = matchesTmp.begin();
-       (matches.size() < args.params.maxMatches) && (it != matchesTmp.end());
-       ++it) {
-    if ((std::find(matches.begin(), matches.end(), *it) == matches.end()) &&
-        (!args.params.uniquify || isToBeAddedToVector(matches, *it))) {
-      matches.push_back(*it);
-    }
-  }
-};
 void ResSubstructMatchHelper_(const ResSubstructMatchHelperArgs_ &args,
-                              std::vector<MatchVectType> *matches,
-                              unsigned int bi, unsigned int ei) {
+                              std::set<MatchVectType> *matches, unsigned int bi,
+                              unsigned int ei) {
   for (unsigned int i = bi;
        (matches->size() < args.params.maxMatches) && (i < ei); ++i) {
     ROMol *mol = args.resMolSupplier[i];
     std::vector<MatchVectType> matchesTmp =
         SubstructMatch(*mol, args.query, args.params);
-    mergeMatchVect(*matches, matchesTmp, args);
+    for (const auto &match : matchesTmp) {
+      if (!tryToInsert(*matches, match, args.params)) {
+        break;
+      }
+    }
     delete mol;
   }
 };
@@ -512,7 +536,7 @@ std::vector<MatchVectType> SubstructMatch(
 std::vector<MatchVectType> SubstructMatch(
     ResonanceMolSupplier &resMolSupplier, const ROMol &query,
     const SubstructMatchParameters &params) {
-  std::vector<MatchVectType> matches;
+  std::set<MatchVectType> matches;
   detail::ResSubstructMatchHelperArgs_ args = {resMolSupplier, query, params};
   unsigned int nt =
       std::min(resMolSupplier.length(), getNumThreadsToUse(params.numThreads));
@@ -523,13 +547,13 @@ std::vector<MatchVectType> SubstructMatch(
 #ifdef RDK_THREADSAFE_SSS
   else {
     std::vector<std::future<void>> tg;
-    std::vector<std::vector<MatchVectType> *> matchesThread(nt);
+    std::vector<std::set<MatchVectType> *> matchesThread(nt);
     unsigned int ei = 0;
     double dpt =
         static_cast<double>(resMolSupplier.length()) / static_cast<double>(nt);
     double dc = 0.0;
     for (unsigned int ti = 0; ti < nt; ++ti) {
-      matchesThread[ti] = new std::vector<MatchVectType>();
+      matchesThread[ti] = new std::set<MatchVectType>();
       unsigned int bi = ei;
       dc += dpt;
       ei = static_cast<unsigned int>(floor(dc));
@@ -541,19 +565,17 @@ std::vector<MatchVectType> SubstructMatch(
       fut.get();
     }
 
-    unsigned int matchSize = 0;
     for (unsigned int ti = 0; ti < nt; ++ti) {
-      matchSize += matchesThread[ti]->size();
-    }
-    matches.reserve(matchSize);
-    for (unsigned int ti = 0; ti < nt; ++ti) {
-      mergeMatchVect(matches, *(matchesThread[ti]), args);
+      for (const auto &match : *matchesThread[ti]) {
+        if (!detail::tryToInsert(matches, match, args.params)) {
+          break;
+        }
+      }
       delete matchesThread[ti];
     }
   }
 #endif
-  std::sort(matches.begin(), matches.end(), detail::matchVectCompare);
-  return matches;
+  return std::vector<MatchVectType>(matches.begin(), matches.end());
 }
 
 namespace detail {
@@ -677,45 +699,5 @@ void MatchSubqueries(const ROMol &mol, QueryAtom::QUERYATOM_QUERY *query,
   // std::cout << "<<- back " << (int)query << std::endl;
 }
 
-bool matchCompare(const std::pair<int, int> &a, const std::pair<int, int> &b) {
-  return (a.second < b.second);
-}
-
-bool matchVectCompare(const MatchVectType &a, const MatchVectType &b) {
-  for (unsigned int i = 0; i < std::min(a.size(), b.size()); ++i) {
-    if (a[i].second != b[i].second) {
-      return (a[i].second < b[i].second);
-    }
-  }
-  return (a.size() < b.size());
-}
-
-bool isToBeAddedToVector(std::vector<MatchVectType> &matches,
-                         const MatchVectType &m) {
-  bool isToBeAdded = true;
-  MatchVectType mCopy = m;
-  std::sort(mCopy.begin(), mCopy.end(), matchCompare);
-  for (auto it = matches.end(); isToBeAdded && it != matches.begin();) {
-    --it;
-    isToBeAdded = (it->size() != mCopy.size());
-    if (!isToBeAdded) {
-      MatchVectType matchCopy = *it;
-      std::sort(matchCopy.begin(), matchCopy.end(), matchCompare);
-      for (unsigned int i = 0; !isToBeAdded && (i < matchCopy.size()); ++i) {
-        isToBeAdded = (mCopy[i].second != matchCopy[i].second);
-      }
-      if (!isToBeAdded) {
-        for (unsigned int i = 0; !isToBeAdded && (i < m.size()); ++i) {
-          isToBeAdded = (m[i].second < (*it)[i].second);
-        }
-        if (isToBeAdded) {
-          matches.erase(it);
-          break;
-        }
-      }
-    }
-  }
-  return isToBeAdded;
-}
 }  // end of namespace detail
 }  // namespace RDKit
