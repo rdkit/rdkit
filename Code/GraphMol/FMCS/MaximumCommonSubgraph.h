@@ -86,6 +86,8 @@ class RDKIT_FMCS_EXPORT MaximumCommonSubgraph {
   unsigned getMaxNumberAtoms() const { return McsIdx.AtomsIdx.size(); }
   // internal:
   bool checkIfMatchAndAppend(Seed& seed);
+  bool checkIfAtomsShareRing(const ROMol& qmol, unsigned int srcAtomIdx, const std::vector<unsigned int>& neighborsInSeed) const;
+  bool canCompleteRings(const Seed& s);
 
  private:
   void clear() {

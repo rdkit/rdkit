@@ -1158,5 +1158,23 @@ class TestCase(unittest.TestCase):
         self.assertEqual(res.numBonds, 5)
         self.assertEqual(res.smartsString, "[#6&R]1-&@[#6&R]-&@[#6&R]-&@[#6&R]-&@[#6&R]-&@1")
 
+    def testGithub3965(self):
+        ref = Chem.MolFromSmiles(
+            'CC(C)CNC(=O)[C@H](C(C)C)C[C@H](O)[C@@H](NC1=O)COCc(ccc2)cc2[C@@H](c3ccccc3)NC(=O)c(cc14)cc(c4)N(C)S(=O)(=O)C'
+        )
+        lig = Chem.MolFromSmiles(
+            'CC(C)CNC(=O)[C@H](C(C)C)C[C@H](O)[C@@H](NC(=O)c(cc12)nc(c1)N(C)S(=O)(=O)C)COCc3cc(ccc3)[C@H](NC2=O)c4ccccc4'
+        )
+
+        params = rdFMCS.MCSParameters()
+        params.BondCompareParameters.CompleteRingsOnly = True
+        params.Timeout = 5
+        result = rdFMCS.FindMCS([ref, lig], params)
+        self.assertEqual(result.canceled, False)
+        self.assertEqual(
+            result.smartsString,
+            "[#6]-&!@[#6](-&!@[#6])-&!@[#6]-&!@[#7]-&!@[#6](=&!@[#8])-&!@[#6](-&!@[#6](-&!@[#6])-&!@[#6])-&!@[#6]-&!@[#6](-&!@[#8])-&!@[#6]1-&@[#7]-&@[#6](=&!@[#8])-&@[#6]:&@[#6]:&@[#6]-&@[#6](-&@[#7]-&@[#6](-&@[#6]2:&@[#6]:&@[#6](-&@[#6]-&@[#8]-&@[#6]-&@1):&@[#6]:&@[#6]:&@[#6]:&@2)-&!@[#6]1:&@[#6]:&@[#6]:&@[#6]:&@[#6]:&@[#6]:&@1)=&!@[#8]"
+        )
+
 if __name__ == "__main__":
     unittest.main()
