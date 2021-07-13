@@ -419,12 +419,85 @@ std::vector<std::string> RGroupDecomposition::getRGroupLabels() const {
   return labels;
 }
 
+void RGroupDecomposition::assignAromaticExplicitHs1(Atom *atom) const {
+  int currentValence = atom->getExplicitValence() - atom->getFormalCharge();
+  const auto &valences =
+      PeriodicTable::getTable()->getValenceList(atom->getAtomicNum());
+  auto closestValenceIt =
+      std::find_if(valences.begin(), valences.end(),
+                   [currentValence](const int allowedValence) {
+                     return (allowedValence >= currentValence);
+                   });
+  if (closestValenceIt != valences.end()) {
+    atom->setNumExplicitHs(*closestValenceIt - currentValence);
+  }
+}
+
+void RGroupDecomposition::assignAromaticExplicitHs2(Atom *atom) const {
+  int currentValence = atom->getTotalValence() - atom->getFormalCharge();
+  int numPotentialHs = currentValence - atom->getTotalDegree();
+  if (!numPotentialHs || atom->getAtomicNum() == 6) {
+    return;
+  }
+  const auto &mol = atom->getOwningMol();
+  const auto &atomRings = mol.getRingInfo()->atomRings();
+  auto ai = atom->getIdx();
+  const std::vector<int> *aromaticRing = nullptr;
+  for (const auto &ring : atomRings) {
+    if (std::find(ring.begin(), ring.end(), ai) != ring.end()) {
+      bool isAromaticRing = true;
+      for (auto i : ring) {
+        if (!mol.getAtomWithIdx(i)->getIsAromatic()) {
+          isAromaticRing = false;
+          break;
+        }
+      }
+      if (isAromaticRing) {
+        aromaticRing = &ring;
+        break;
+      }
+    }
+  }
+  if (!aromaticRing) {
+    return;
+  }
+  int ringPiElectrons = std::accumulate(
+      aromaticRing->begin(), aromaticRing->end(), 0,
+      [&mol](int sum, const int i) {
+        const auto ringAtom = mol.getAtomWithIdx(i);
+        int atomPiElectrons = ringAtom->getTotalValence() -
+                              ringAtom->getFormalCharge() -
+                              ringAtom->getTotalDegree();
+        const auto &valences =
+            PeriodicTable::getTable()->getValenceList(ringAtom->getAtomicNum());
+        int atomLpElectrons = 0;
+        if (!valences.empty()) {
+          int lp = 8 - 2 * valences.front();
+          if (lp > 0 && lp % 2 == 0 && !atomPiElectrons) {
+            atomLpElectrons = 2;
+          }
+        }
+        atomPiElectrons += atomLpElectrons;
+        return sum + atomPiElectrons;
+      });
+  if (ringPiElectrons < 2) {
+    return;
+  }
+  ringPiElectrons -= 2;
+  bool obeysHuckel = (ringPiElectrons % 4 == 0);
+  if (!obeysHuckel) {
+    atom->setNumExplicitHs(numPotentialHs);
+    atom->updatePropertyCache(false);
+  }
+}
+
 RWMOL_SPTR RGroupDecomposition::outputCoreMolecule(
     const RGroupMatch &match, const UsedLabelMap &usedLabelMap) const {
   const auto &core = data->cores[match.core_idx];
   if (!match.matchedCore) {
     return core.labelledCore;
   }
+  std::vector<unsigned int> atomsToAdjust;
   auto coreWithMatches = core.coreWithMatches(*match.matchedCore);
   for (auto atomIdx = coreWithMatches->getNumAtoms(); atomIdx--;) {
     auto atom = coreWithMatches->getAtomWithIdx(atomIdx);
@@ -453,13 +526,27 @@ RWMOL_SPTR RGroupDecomposition::outputCoreMolecule(
         // H count, or it will fail to kekulize
         if (isUserDefinedLabel && nbrAtom->getIsAromatic()) {
           nbrAtom->updatePropertyCache(false);
+          // 1st pass to fix explicit Hs on atoms, here
+          // we look at the valence list for each atom and adjust
+          // the H count based on current valence and formal charge
           if (!numExplicitHs) {
-            nbrAtom->setNumExplicitHs(nbrAtom->getExplicitValence() -
-                                      nbrAtom->getDegree());
+            assignAromaticExplicitHs1(nbrAtom);
+            atomsToAdjust.push_back(nbrAtom->getIdx());
           }
         }
       }
       nbrAtom->updatePropertyCache(false);
+    }
+  }
+  // 2nd pass to fix explicit Hs on atoms, here
+  // we look at heteroatoms that can potentially accept
+  // additional Hs and check to Huckel rule to assign where
+  // needed (lowest indices first)
+  if (!atomsToAdjust.empty()) {
+    std::sort(atomsToAdjust.begin(), atomsToAdjust.end());
+    MolOps::findSSSR(*coreWithMatches);
+    for (auto ai : atomsToAdjust) {
+      assignAromaticExplicitHs2(coreWithMatches->getAtomWithIdx(ai));
     }
   }
   return coreWithMatches;

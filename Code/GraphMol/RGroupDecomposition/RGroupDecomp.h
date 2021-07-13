@@ -156,6 +156,8 @@ class RDKIT_RGROUPDECOMPOSITION_EXPORT RGroupDecomposition {
   RWMOL_SPTR outputCoreMolecule(const RGroupMatch &match,
                                 const UsedLabelMap &usedRGroupMap) const;
   std::map<int, bool> getBlankRGroupMap() const;
+  void assignAromaticExplicitHs1(Atom *atom) const;
+  void assignAromaticExplicitHs2(Atom *atom) const;
 
  public:
   RGroupDecomposition(const ROMol &core,
