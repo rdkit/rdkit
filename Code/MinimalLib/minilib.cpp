@@ -131,6 +131,15 @@ std::string JSMol::get_morgan_fp(unsigned int radius,
   return res;
 }
 
+std::string JSMol::get_morgan_fp_as_binary_text(unsigned int radius,
+                                 unsigned int fplen) const {
+  if (!d_mol) return "";
+  auto fp = MorganFingerprints::getFingerprintAsBitVect(*d_mol, radius, fplen);
+  std::string res = BitVectToBinaryText(*fp);
+  delete fp;
+  return res;
+}
+
 std::string JSMol::get_stereo_tags() const {
   if (!d_mol) return "{}";
   rj::Document doc;

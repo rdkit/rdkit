@@ -92,6 +92,18 @@ JSMol *get_mol_no_details(const std::string &input) {
   return get_mol(input, std::string());
 }
 
+emscripten::val get_morgan_fp_as_uint8array(const JSMol &self, unsigned int radius, unsigned int fplen) {
+  std::string fp = self.get_morgan_fp_as_binary_text(radius, fplen);
+  emscripten::val view(emscripten::typed_memory_view(fp.size(), reinterpret_cast<const unsigned char *>(fp.c_str())));
+  auto res = emscripten::val::global("Uint8Array").new_(fp.size());
+  res.call<void>("set", view);
+  return res;
+}
+
+emscripten::val get_morgan_fp_as_uint8array(const JSMol &self) {
+  return get_morgan_fp_as_uint8array(self, 2, 2048);
+}
+
 }  // namespace
 
 using namespace emscripten;
@@ -115,6 +127,11 @@ EMSCRIPTEN_BINDINGS(RDKit_minimal) {
       .function("draw_to_canvas", &draw_to_canvas)
       .function("draw_to_canvas_with_highlights",
                 &draw_to_canvas_with_highlights)
+      .function("get_morgan_fp_as_uint8array",
+                select_overload<emscripten::val(const JSMol&)>(get_morgan_fp_as_uint8array))
+      .function("get_morgan_fp_as_uint8array",
+                select_overload<emscripten::val(const JSMol&, unsigned int, unsigned int)>(
+                    get_morgan_fp_as_uint8array))
 #endif
       .function("get_substruct_match", &JSMol::get_substruct_match)
       .function("get_substruct_matches", &JSMol::get_substruct_matches)
