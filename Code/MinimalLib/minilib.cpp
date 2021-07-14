@@ -131,6 +131,15 @@ std::string JSMol::get_morgan_fp(unsigned int radius,
   return res;
 }
 
+std::string JSMol::get_morgan_fp_as_binary_text(unsigned int radius,
+                                                unsigned int fplen) const {
+  if (!d_mol) return "";
+  auto fp = MorganFingerprints::getFingerprintAsBitVect(*d_mol, radius, fplen);
+  std::string res = BitVectToBinaryText(*fp);
+  delete fp;
+  return res;
+}
+
 std::string JSMol::get_stereo_tags() const {
   if (!d_mol) return "{}";
   rj::Document doc;
@@ -286,8 +295,7 @@ std::string JSMol::condense_abbreviations_from_defs(
 }
 
 std::string JSMol::generate_aligned_coords(const JSMol &templateMol,
-                                           bool useCoordGen,
-                                           bool allowRGroups,
+                                           bool useCoordGen, bool allowRGroups,
                                            bool acceptFailure) {
   std::string res;
   if (!d_mol || !templateMol.d_mol || !templateMol.d_mol->getNumConformers())
