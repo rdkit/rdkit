@@ -19,7 +19,7 @@ DrawTextFTCairo::DrawTextFTCairo(double max_fnt_sz, double min_fnt_sz,
 
 // ****************************************************************************
 double DrawTextFTCairo::extractOutline() {
-  cairo_set_source_rgb(dp_cr_, colour().r, colour().g, colour().b);
+  cairo_set_source_rgba(dp_cr_, colour().r, colour().g, colour().b, colour().a);
   double adv = DrawTextFT::extractOutline();
   cairo_fill(dp_cr_);
 
