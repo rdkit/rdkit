@@ -147,6 +147,7 @@ static const std::map<std::string, std::hash_result_t> SVG_HASHES = {
     {"test21_2.svg", 2346906091U},
     {"test22_1.svg", 3352529761U},
     {"test22_2.svg", 3623180832U},
+    {"test23_1.svg", 1474697688U},
     {"testGithub3112_1.svg", 4164182512U},
     {"testGithub3112_2.svg", 1727510065U},
     {"testGithub3112_3.svg", 1355264573U},
@@ -264,6 +265,7 @@ static const std::map<std::string, std::hash_result_t> SVG_HASHES = {
     {"test20_4.svg", 1948583366U},
     {"test22_1.svg", 3352529761U},
     {"test22_2.svg", 2183584384U},
+    {"test23_1.svg", 1655940990U},
     {"testGithub3112_1.svg", 2694789798U},
     {"testGithub3112_2.svg", 1912964589U},
     {"testGithub3112_3.svg", 1042493059U},
@@ -346,8 +348,8 @@ std::hash_result_t hash_file(const std::string &filename) {
 }
 
 void check_file_hash(const std::string &filename,
-                     std::hash_result_t exp_hash=0U) {
-//    std::cout << filename << " : " << hash_file(filename) << "U" << std::endl;
+                     std::hash_result_t exp_hash = 0U) {
+  std::cout << filename << " : " << hash_file(filename) << "U" << std::endl;
 
   std::map<std::string, std::hash_result_t>::const_iterator it;
   if (filename.substr(filename.length() - 4) == ".svg") {
@@ -1958,8 +1960,8 @@ void testDeuteriumTritium() {
       if (!ok) {
         continue;
       }
-      // there are no characters to look for, but each atom should
-      // be made of 2 glyphs, the superscript 2 and the H.
+        // there are no characters to look for, but each atom should
+        // be made of 2 glyphs, the superscript 2 and the H.
 #ifdef RDK_BUILD_FREETYPE_SUPPORT
       if ((line.find("atom-") != std::string::npos)) {
         if ((line.find("bond-") == std::string::npos)) {
@@ -4170,6 +4172,35 @@ void testGithub4156() {
   std::cerr << " Done" << std::endl;
 }
 
+void test23JSONAtomColourPalette() {
+  std::cerr << " ----------------- Test JSON atomColourPalette" << std::endl;
+  {
+    auto m = "c1cncs1"_smiles;
+    TEST_ASSERT(m);
+    MolDraw2DUtils::prepareMolForDrawing(*m);
+    MolDraw2DSVG drawer(250, 200);
+    const char *json =
+        R"JSON({"atomColourPalette": {"7": [0.2, 0.4, 0.9], "16": [0.9, 0.6, 0.0]},
+ "rotate": 90, "bondLineWidth": 5})JSON";
+    MolDraw2DUtils::updateDrawerParamsFromJSON(drawer, json);
+    drawer.drawMolecule(*m);
+    drawer.finishDrawing();
+    std::string text = drawer.getDrawingText();
+    std::ofstream outs("test23_1.svg");
+    outs << text;
+    outs.close();
+    check_file_hash("test23_1.svg");
+#ifdef RDK_BUILD_FREETYPE_SUPPORT
+    TEST_ASSERT(text.find("' fill='#3366E5") != std::string::npos);
+    TEST_ASSERT(text.find("' fill='#E59900") != std::string::npos);
+#else
+    TEST_ASSERT(text.find("fill:#3366E5") != std::string::npos);
+    TEST_ASSERT(text.find("fill:#E59900") != std::string::npos);
+#endif
+  }
+  std::cerr << " Done" << std::endl;
+}
+
 int main() {
 #ifdef RDK_BUILD_COORDGEN_SUPPORT
   RDDepict::preferCoordGen = false;
@@ -4224,5 +4255,6 @@ int main() {
   testGithub3305();
   testGithub3391();
   testGithub4156();
+  test23JSONAtomColourPalette();
 #endif
 }
