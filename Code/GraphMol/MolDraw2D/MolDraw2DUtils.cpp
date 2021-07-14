@@ -204,8 +204,7 @@ void updateDrawerParamsFromJSON(MolDraw2D &drawer, const std::string &json) {
   get_colour_option(&pt, "annotationColour", opts.annotationColour);
   get_colour_option(&pt, "variableAttachmentColour",
                     opts.variableAttachmentColour);
-  get_colour_palette_option(&pt, "atomColourPalette",
-                    opts.atomColourPalette);
+  get_colour_palette_option(&pt, "atomColourPalette", opts.atomColourPalette);
   if (pt.find("atomLabels") != pt.not_found()) {
     for (const auto &item : pt.get_child("atomLabels")) {
       opts.atomLabels[boost::lexical_cast<int>(item.first)] =

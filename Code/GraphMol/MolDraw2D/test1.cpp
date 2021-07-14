@@ -348,8 +348,8 @@ std::hash_result_t hash_file(const std::string &filename) {
 }
 
 void check_file_hash(const std::string &filename,
-                     std::hash_result_t exp_hash=0U) {
-    std::cout << filename << " : " << hash_file(filename) << "U" << std::endl;
+                     std::hash_result_t exp_hash = 0U) {
+  std::cout << filename << " : " << hash_file(filename) << "U" << std::endl;
 
   std::map<std::string, std::hash_result_t>::const_iterator it;
   if (filename.substr(filename.length() - 4) == ".svg") {
@@ -1960,8 +1960,8 @@ void testDeuteriumTritium() {
       if (!ok) {
         continue;
       }
-      // there are no characters to look for, but each atom should
-      // be made of 2 glyphs, the superscript 2 and the H.
+        // there are no characters to look for, but each atom should
+        // be made of 2 glyphs, the superscript 2 and the H.
 #ifdef RDK_BUILD_FREETYPE_SUPPORT
       if ((line.find("atom-") != std::string::npos)) {
         if ((line.find("bond-") == std::string::npos)) {
@@ -4180,9 +4180,8 @@ void test23JSONAtomColourPalette() {
     MolDraw2DUtils::prepareMolForDrawing(*m);
     MolDraw2DSVG drawer(250, 200);
     const char *json =
-        "{\"atomColourPalette\": {\"7\": [0.2, 0.4, 0.9], \"16\": [0.9, 0.6, 0.0]}, "
-        "\"rotate\": 90, "
-        "\"bondLineWidth\": 5}";
+        R"JSON({"atomColourPalette": {"7": [0.2, 0.4, 0.9], "16": [0.9, 0.6, 0.0]},
+ "rotate": 90, "bondLineWidth": 5})JSON";
     MolDraw2DUtils::updateDrawerParamsFromJSON(drawer, json);
     drawer.drawMolecule(*m);
     drawer.finishDrawing();
