@@ -64,7 +64,7 @@ void MolDraw2DCairo::finishDrawing() {}
 void MolDraw2DCairo::setColour(const DrawColour &col) {
   PRECONDITION(dp_cr, "no draw context");
   MolDraw2D::setColour(col);
-  cairo_set_source_rgb(dp_cr, col.r, col.g, col.b);
+  cairo_set_source_rgba(dp_cr, col.r, col.g, col.b, col.a);
 }
 
 // ****************************************************************************

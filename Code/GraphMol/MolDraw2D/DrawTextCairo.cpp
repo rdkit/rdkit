@@ -31,7 +31,7 @@ void DrawTextCairo::drawChar(char c, const Point2D &cds) {
 
   cairo_set_font_size(dp_cr_, fontSize());
   DrawColour col = colour();
-  cairo_set_source_rgb(dp_cr_, col.r, col.g, col.b);
+  cairo_set_source_rgba(dp_cr_, col.r, col.g, col.b, col.a);
 
   char txt[2];
   txt[0] = c;
