@@ -498,6 +498,15 @@ void testGithub4330() {
     AvalonTools::set2DCoords(*mol);
     TEST_ASSERT(mol->getNumConformers() == 1);
   }
+  {  // example with the explicit Hs already in the graph
+    SmilesParserParams params;
+    params.removeHs = false;
+    std::unique_ptr<RWMol> mol(SmilesToMol("F[C@]([H])(OOF)Br", params));
+    TEST_ASSERT(mol);
+    TEST_ASSERT(mol->getNumAtoms() == 7);
+    AvalonTools::set2DCoords(*mol);
+    TEST_ASSERT(mol->getNumConformers() == 1);
+  }
   {
     auto mol = "CC"_smiles;
     TEST_ASSERT(mol);
