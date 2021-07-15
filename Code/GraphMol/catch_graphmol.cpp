@@ -1,5 +1,5 @@
 //
-//  Copyright (C) 2018-2021 Greg Landrum and T5 Informatics GmbH
+//  Copyright (C) 2018-2021 Greg Landrum and other RDKit contributors
 //
 //   @@ All Rights Reserved @@
 //  This file is part of the RDKit.
@@ -19,6 +19,7 @@
 #include <GraphMol/SmilesParse/SmilesWrite.h>
 #include <GraphMol/SmilesParse/SmartsWrite.h>
 #include <boost/format.hpp>
+#include <limits>
 
 using namespace RDKit;
 #if 1
@@ -1986,5 +1987,138 @@ TEST_CASE("github #4071: StereoGroups not preserved by RenumberAtoms()",
     }
     CHECK(MolToCXSmiles(*nmol) ==
           "C[C@@H](O)[C@H](C)[C@@H](C)[C@@H](C)O |o1:1,&1:3,&2:5,&3:7|");
+  }
+}
+
+TEST_CASE("github #4127: SEGV in ROMol::getAtomDegree if atom is not in graph",
+          "[graphmol]") {
+  // also includes tests for some related edge cases found as part of that bug
+  // fix
+  Atom atom(6);
+  RWMol mol1;
+  auto mol2 = "CCC"_smiles;
+  SECTION("getAtomDegree") {
+    CHECK_THROWS_AS(mol1.getAtomDegree(nullptr), Invar::Invariant);
+    CHECK_THROWS_AS(mol1.getAtomDegree(&atom), Invar::Invariant);
+    CHECK_THROWS_AS(mol1.getAtomDegree(mol2->getAtomWithIdx(0)),
+                    Invar::Invariant);
+  }
+  SECTION("getAtomNeighbors") {
+    CHECK_THROWS_AS(mol1.getAtomNeighbors(nullptr), Invar::Invariant);
+    CHECK_THROWS_AS(mol1.getAtomNeighbors(&atom), Invar::Invariant);
+    CHECK_THROWS_AS(mol1.getAtomNeighbors(mol2->getAtomWithIdx(0)),
+                    Invar::Invariant);
+  }
+  SECTION("getAtomBonds") {
+    CHECK_THROWS_AS(mol1.getAtomBonds(nullptr), Invar::Invariant);
+    CHECK_THROWS_AS(mol1.getAtomBonds(&atom), Invar::Invariant);
+    CHECK_THROWS_AS(mol1.getAtomBonds(mol2->getAtomWithIdx(0)),
+                    Invar::Invariant);
+  }
+  SECTION("addAtom from another molecule") {
+    RWMol mol1cp(mol1);
+    CHECK_THROWS_AS(mol1cp.addAtom(nullptr), Invar::Invariant);
+    bool updateLabel = false;
+    bool takeOwnership = true;
+    CHECK_THROWS_AS(
+        mol1cp.addAtom(mol2->getAtomWithIdx(0), updateLabel, takeOwnership),
+        Invar::Invariant);
+    takeOwnership = false;
+    CHECK(mol1cp.addAtom(mol2->getAtomWithIdx(0), updateLabel, takeOwnership) ==
+          0);
+  }
+  SECTION("addBond from another molecule") {
+    auto mol3 = "C.C.C"_smiles;
+    bool takeOwnership = true;
+    CHECK_THROWS_AS(mol3->addBond(mol2->getBondWithIdx(0), takeOwnership),
+                    Invar::Invariant);
+    takeOwnership = false;
+    CHECK(mol3->addBond(mol2->getBondWithIdx(0), takeOwnership) == 1);
+  }
+}
+
+TEST_CASE(
+    "github #4128: SEGV from unsigned integer overflow in "
+    "Conformer::setAtomPos",
+    "[graphmol]") {
+  Conformer conf;
+  RDGeom::Point3D pt(0, 0, 0);
+  CHECK_THROWS_AS(conf.setAtomPos(std::numeric_limits<unsigned>::max(), pt),
+                  ValueErrorException);
+}
+
+TEST_CASE("KekulizeFragment", "[graphmol]") {
+  SECTION("basics") {
+    auto mol = "CCc1ccccc1"_smiles;
+    REQUIRE(mol);
+    boost::dynamic_bitset<> atomsInPlay(mol->getNumAtoms());
+    for (auto aidx : std::vector<size_t>{0, 1, 2, 3}) {
+      atomsInPlay.set(aidx);
+    }
+    boost::dynamic_bitset<> bondsInPlay(mol->getNumBonds());
+    for (auto bidx : std::vector<size_t>{0, 1, 2}) {
+      bondsInPlay.set(bidx);
+    }
+    MolOps::details::KekulizeFragment(*mol, atomsInPlay, bondsInPlay);
+    CHECK(!mol->getAtomWithIdx(2)->getIsAromatic());
+    CHECK(mol->getAtomWithIdx(4)->getIsAromatic());
+    CHECK(!mol->getBondWithIdx(2)->getIsAromatic());
+    // at the moment that bond still has an aromatic bond order, which isn't
+    // optimal, but that will have to wait until we add a feature to allow
+    // kekulization of conjugated chains.
+    CHECK(mol->getBondWithIdx(2)->getBondType() == Bond::AROMATIC);
+    CHECK(mol->getBondWithIdx(4)->getIsAromatic());
+  }
+}
+
+TEST_CASE(
+    "github #4266: fallback ring finding failing on molecules with multiple "
+    "fragments",
+    "[graphmol]") {
+  SECTION("case1") {
+    auto m = "C123C45C16C21C34C561.c1ccccc1"_smiles;
+    REQUIRE(m);
+    ROMol m2(*m);
+    m2.getRingInfo()->reset();
+    MolOps::fastFindRings(m2);
+    CHECK(m->getRingInfo()->numRings() == m2.getRingInfo()->numRings());
+  }
+  SECTION("case2") {
+    auto m = "c1ccccc1.C123C45C16C21C34C561"_smiles;
+    REQUIRE(m);
+    ROMol m2(*m);
+    m2.getRingInfo()->reset();
+    MolOps::fastFindRings(m2);
+    CHECK(m->getRingInfo()->numRings() == m2.getRingInfo()->numRings());
+  }
+}
+
+TEST_CASE("QueryBond valence contribs") {
+  {
+    auto m = "CO"_smarts;
+    REQUIRE(m);
+    CHECK(m->getBondWithIdx(0)->getValenceContrib(m->getAtomWithIdx(0)) == 0.0);
+    CHECK(m->getBondWithIdx(0)->getValenceContrib(m->getAtomWithIdx(1)) == 0.0);
+  }
+  {
+    auto m = "C-O"_smarts;
+    REQUIRE(m);
+    CHECK(m->getBondWithIdx(0)->getValenceContrib(m->getAtomWithIdx(0)) == 1.0);
+    CHECK(m->getBondWithIdx(0)->getValenceContrib(m->getAtomWithIdx(1)) == 1.0);
+  }
+}
+
+TEST_CASE(
+    "github #4311: unreasonable calculation of implicit valence for atoms with "
+    "query bonds",
+    "[graphmol]") {
+  SECTION("basics") {
+    auto m = "C-,=O"_smarts;
+    REQUIRE(m);
+    m->updatePropertyCache();
+    CHECK(m->getAtomWithIdx(0)->getTotalNumHs() == 0);
+    CHECK(m->getAtomWithIdx(1)->getTotalNumHs() == 0);
+    CHECK(MolToSmiles(*m) == "CO");
+    CHECK(MolToSmarts(*m) == "C-,=O");
   }
 }

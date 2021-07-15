@@ -105,7 +105,7 @@ python::object EnumerateLibraryBase_Serialize(const EnumerateLibraryBase &en) {
 
 class EnumerateLibraryWrap : public RDKit::EnumerateLibrary {
 public:
-  virtual ~EnumerateLibraryWrap() {}
+  ~EnumerateLibraryWrap() override {}
   EnumerateLibraryWrap() : RDKit::EnumerateLibrary() {}
   EnumerateLibraryWrap(const RDKit::ChemicalReaction &rxn, python::list ob,
                        const EnumerationParams & params = EnumerationParams()

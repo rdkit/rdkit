@@ -61,6 +61,15 @@ class TestCase(unittest.TestCase):
     self.assertEqual(nm.GetNumAtoms(), 10)
     self.assertEqual(nm.GetNumConformers(), 1)
 
+    m = Chem.MolFromSmiles('CC=CC')
+    m.GetBondWithIdx(1).SetStereo(Chem.BondStereo.STEREOANY)
+    nm = rdMolDraw2D.PrepareMolForDrawing(m)
+    self.assertEqual(nm.GetBondWithIdx(1).GetStereo(), Chem.BondStereo.STEREOANY)
+    self.assertEqual(nm.GetBondWithIdx(0).GetBondDir(), Chem.BondDir.NONE)
+    nm = rdMolDraw2D.PrepareMolForDrawing(m, wavyBonds=True)
+    self.assertEqual(nm.GetBondWithIdx(1).GetStereo(), Chem.BondStereo.STEREONONE)
+    self.assertEqual(nm.GetBondWithIdx(0).GetBondDir(), Chem.BondDir.UNKNOWN)
+
   def testRepeatedPrepareForDrawingCalls(self):
     m = Chem.MolFromMolBlock("""
           11280715312D 1   1.00000     0.00000     0

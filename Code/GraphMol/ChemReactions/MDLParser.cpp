@@ -274,7 +274,7 @@ void ParseV3000RxnBlock(std::istream &inStream, unsigned int &line,
   if (nAgents) {
     tempStr = FileParserUtils::getV3000Line(&inStream, line);
     boost::to_upper(tempStr);
-    if (tempStr.length() < 14 || tempStr.substr(0, 14) != "BEGIN AGENT") {
+    if (tempStr.length() < 11 || tempStr.substr(0, 11) != "BEGIN AGENT") {
       delete rxn;
       throw FileParseException("BEGIN AGENT line not found");
     }
@@ -301,7 +301,7 @@ void ParseV3000RxnBlock(std::istream &inStream, unsigned int &line,
   if (nAgents) {
     tempStr = FileParserUtils::getV3000Line(&inStream, line);
     boost::to_upper(tempStr);
-    if (tempStr.length() < 12 || tempStr.substr(0, 12) != "END AGENT") {
+    if (tempStr.length() < 9 || tempStr.substr(0, 9) != "END AGENT") {
       delete rxn;
       throw FileParseException("END AGENT line not found");
     }

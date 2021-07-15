@@ -1,5 +1,5 @@
 //
-//  Copyright (C) 2018 Susan H. Leung
+//  Copyright (C) 2018-2021 Susan H. Leung and other RDKit contributors
 //
 //   @@ All Rights Reserved @@
 //  This file is part of the RDKit.
@@ -8,8 +8,8 @@
 //  of the RDKit source tree.
 //
 #include <RDGeneral/export.h>
-#ifndef __RD_FRAGMENT_CATALOG_UTILS_H__
-#define __RD_FRAGMENT_CATALOG_UTILS_H__
+#ifndef RD_FRAGMENT_CATALOG_UTILS_H
+#define RD_FRAGMENT_CATALOG_UTILS_H
 
 #include <GraphMol/RDKitBase.h>
 #include "FragmentCatalogParams.h"
@@ -26,6 +26,8 @@ RDKIT_MOLSTANDARDIZE_EXPORT std::vector<std::shared_ptr<ROMol>> readFuncGroups(
     std::string fileName);
 RDKIT_MOLSTANDARDIZE_EXPORT std::vector<std::shared_ptr<ROMol>> readFuncGroups(
     std::istream &inStream, int nToRead = -1);
+RDKIT_MOLSTANDARDIZE_EXPORT std::vector<std::shared_ptr<ROMol>> readFuncGroups(
+    const std::vector<std::pair<std::string, std::string>> &data);
 
 }  // namespace MolStandardize
 }  // namespace RDKit

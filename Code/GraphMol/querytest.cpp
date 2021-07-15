@@ -1,5 +1,5 @@
 //
-//   Copyright (C) 2002-2017 Rational Discovery LLC and Greg Landrum
+//   Copyright (C) 2002-2021 Greg Landrum and other RDKit contributors
 //
 //   @@ All Rights Reserved @@
 //  This file is part of the RDKit.
@@ -878,6 +878,41 @@ void testGithub2471() {
   BOOST_LOG(rdErrorLog) << "Done!" << std::endl;
 }
 
+void testHasBondTypeQuery() {
+  BOOST_LOG(rdErrorLog) << "---------------------- Testing hasBondTypeQuery() "
+                           "and hasComplexBondTypeQuery()"
+                        << std::endl;
+
+  {
+    auto m = "C-C-@C@-C@CC-,=C!-C"_smarts;
+    TEST_ASSERT(m);
+    for (const auto bond : m->bonds()) {
+      bool hasQ = QueryOps::hasBondTypeQuery(*bond);
+      if (bond->getIdx() != 3) {
+        TEST_ASSERT(hasQ);
+      } else {
+        TEST_ASSERT(!hasQ);
+      }
+    }
+    for (const auto bond : m->bonds()) {
+      bool hasQ = QueryOps::hasComplexBondTypeQuery(*bond);
+      if (bond->getIdx() < 4) {
+        TEST_ASSERT(!hasQ);
+      } else {
+        TEST_ASSERT(hasQ);
+      }
+    }
+  }
+  {
+    auto m = "CC-C"_smiles;
+    TEST_ASSERT(m);
+    for (const auto bond : m->bonds()) {
+      TEST_ASSERT(!QueryOps::hasBondTypeQuery(*bond));
+    }
+  }
+  BOOST_LOG(rdErrorLog) << "Done!" << std::endl;
+}
+
 int main() {
   RDLog::InitLogs();
 #if 1
@@ -900,5 +935,6 @@ int main() {
   testNumHeteroatomNeighborQueries();
   testAtomTypeQueries();
   testGithub2471();
+  testHasBondTypeQuery();
   return 0;
 }

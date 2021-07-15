@@ -1,5 +1,5 @@
 //
-//  Copyright (C) 2018 Susan H. Leung
+//  Copyright (C) 2018-2021 Susan H. Leung and other RDKit contributors
 //
 //   @@ All Rights Reserved @@
 //  This file is part of the RDKit.
@@ -13,6 +13,7 @@
 
 #include <boost/function.hpp>
 #include <string>
+#include <utility>
 #include <iterator>
 #include <Catalogs/Catalog.h>
 #include <GraphMol/MolStandardize/MolStandardize.h>
@@ -55,9 +56,9 @@ class Tautomer {
 
  public:
   Tautomer() : d_numModifiedAtoms(0), d_numModifiedBonds(0), d_done(false) {}
-  Tautomer(const ROMOL_SPTR &t, const ROMOL_SPTR &k, size_t a = 0, size_t b = 0)
-      : tautomer(t),
-        kekulized(k),
+  Tautomer(ROMOL_SPTR t, ROMOL_SPTR k, size_t a = 0, size_t b = 0)
+      : tautomer(std::move(t)),
+        kekulized(std::move(k)),
         d_numModifiedAtoms(a),
         d_numModifiedBonds(b),
         d_done(false) {}
@@ -322,9 +323,9 @@ class RDKIT_MOLSTANDARDIZE_EXPORT TautomerEnumerator {
 
   //! Deprecated, please use the form returning a \c TautomerEnumeratorResult
   //! instead
-  [
-      [deprecated("please use the form returning a TautomerEnumeratorResult "
-                  "instead")]] std::vector<ROMOL_SPTR>
+  [[deprecated(
+      "please use the form returning a TautomerEnumeratorResult "
+      "instead")]] std::vector<ROMOL_SPTR>
   enumerate(const ROMol &mol, boost::dynamic_bitset<> *modifiedAtoms,
             boost::dynamic_bitset<> *modifiedBonds = nullptr) const;
 
@@ -406,6 +407,12 @@ class RDKIT_MOLSTANDARDIZE_EXPORT TautomerEnumerator {
   bool d_removeIsotopicHs;
   bool d_reassignStereo;
 };  // TautomerEnumerator class
+
+// caller owns the pointer
+inline TautomerEnumerator *tautomerEnumeratorFromParams(
+    const CleanupParameters &params) {
+  return new TautomerEnumerator(params);
+}
 
 }  // namespace MolStandardize
 }  // namespace RDKit

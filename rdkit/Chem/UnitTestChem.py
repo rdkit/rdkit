@@ -1,5 +1,4 @@
-
-#  Copyright (C) 2001-2018  greg Landrum
+#  Copyright (C) 2001-2021  greg Landrum
 #
 #   @@ All Rights Reserved @@
 #  This file is part of the RDKit.
@@ -142,18 +141,17 @@ class TestCase(unittest.TestCase):
         assert not at.IsInRingSize(4), 'atom %d improperly in ring' % (i)
       else:
         assert at.IsInRingSize(4), 'atom %d not in ring of size 4' % (i)
-  @unittest.skipIf(not hasattr(Chem,"MolToJSON"),
-                     "MolInterchange support not enabled")
+
+  @unittest.skipIf(not hasattr(Chem, "MolToJSON"), "MolInterchange support not enabled")
   def testJSON1(self):
     """ JSON test1 """
     for smi in self.bigSmiList:
       m = Chem.MolFromSmiles(smi)
       json = Chem.MolToJSON(m)
       nm = Chem.JSONToMols(json)[0]
-      self.assertEqual(Chem.MolToSmiles(m),Chem.MolToSmiles(nm))
+      self.assertEqual(Chem.MolToSmiles(m), Chem.MolToSmiles(nm))
 
-  @unittest.skipIf(not hasattr(Chem,"MolToJSON"),
-                     "MolInterchange support not enabled")
+  @unittest.skipIf(not hasattr(Chem, "MolToJSON"), "MolInterchange support not enabled")
   def testJSON2(self):
     """ JSON test2 """
     ms = [Chem.MolFromSmiles(smi) for smi in self.bigSmiList]
@@ -161,16 +159,27 @@ class TestCase(unittest.TestCase):
     nms = Chem.JSONToMols(json)
     #for nm in nms:
     #  Chem.SanitizeMol(nm)
-    self.assertEqual(len(ms),len(nms))
+    self.assertEqual(len(ms), len(nms))
     smis1 = [Chem.MolToSmiles(x) for x in ms]
     smis2 = [Chem.MolToSmiles(x) for x in nms]
-    for i,(smi1,smi2) in enumerate(zip(smis1,smis2)):
+    for i, (smi1, smi2) in enumerate(zip(smis1, smis2)):
       if smi1 != smi2:
         print(self.bigSmiList[i])
         print(smi1)
         print(smi2)
         print("-------")
-    self.assertEqual(smis1,smis2)
+    self.assertEqual(smis1, smis2)
+
+  def testGithub4144(self):
+    """ github4144: EnumerateStereiosomers clearing ring info """
+    from rdkit.Chem import EnumerateStereoisomers
+    m = Chem.MolFromSmiles('CSCc1cnc(C=Nn2c(C)nc3sc4c(c3c2=O)CCCCC4)s1')
+    sssr = [list(x) for x in Chem.GetSymmSSSR(m)]
+    sms = EnumerateStereoisomers.EnumerateStereoisomers(m)
+    for sm in sms:
+      sssr2 = [list(x) for x in Chem.GetSymmSSSR(sm)]
+      self.assertEqual(sssr, sssr2)
+
 
 if __name__ == '__main__':
   unittest.main()

@@ -46,7 +46,7 @@ struct DrawColour {
   double r = 0.0, g = 0.0, b = 0.0, a = 1.0;
   DrawColour() = default;
   DrawColour(double r, double g, double b, double a = 1.0)
-      : r(r), g(g), b(b), a(a){};
+      : r(r), g(g), b(b), a(a) {}
   bool operator==(const DrawColour &other) const {
     return r == other.r && g == other.g && b == other.b && a == other.a;
   }
@@ -55,7 +55,7 @@ struct DrawColour {
     return fabs(r - other.r) <= tol && fabs(g - other.g) <= tol &&
            fabs(b - other.b) <= tol &&
            (ignoreAlpha || fabs(a - other.a) <= tol);
-  };
+  }
   DrawColour operator+(const DrawColour &other) const {
     return {r + other.r, g + other.g, b + other.b, a + other.a};
   }
@@ -307,9 +307,10 @@ struct RDKIT_MOLDRAW2D_EXPORT MolDrawOptions {
       false;  // if all specified stereocenters are in a single StereoGroup,
               // show a molecule-level annotation instead of the individual
               // labels
-  bool singleColourWedgeBonds = false; // if true wedged and dashed bonds are drawn
-                                // using symbolColour rather than inheriting
-                                // their colour from the atoms
+  bool singleColourWedgeBonds =
+      false;  // if true wedged and dashed bonds are drawn
+              // using symbolColour rather than inheriting
+              // their colour from the atoms
 
   MolDrawOptions() {
     highlightColourPalette.emplace_back(
@@ -329,7 +330,7 @@ struct RDKIT_MOLDRAW2D_EXPORT MolDrawOptions {
         DrawColour(.56, .93, .56));  // light green
     highlightColourPalette.emplace_back(DrawColour(.20, .63, .79));  // peacock
     assignDefaultPalette(atomColourPalette);
-  };
+  }
 };
 
 //! MolDraw2D is the base class for doing 2D renderings of molecules
@@ -634,7 +635,7 @@ class RDKIT_MOLDRAW2D_EXPORT MolDraw2D {
                         const DrawColour &col1, const DrawColour &col2);
   //! adds additional information about the atoms to the output. Does not make
   //! sense for all renderers.
-  virtual void tagAtoms(const ROMol &mol) { RDUNUSED_PARAM(mol); };
+  virtual void tagAtoms(const ROMol &mol) { RDUNUSED_PARAM(mol); }
   //! set whether or not polygons are being filled
   virtual bool fillPolys() const { return fill_polys_; }
   //! returns either or not polygons should be filled
@@ -650,12 +651,12 @@ class RDKIT_MOLDRAW2D_EXPORT MolDraw2D {
   const std::vector<Point2D> &atomCoords() const {
     PRECONDITION(activeMolIdx_ >= 0, "no index");
     return at_cds_[activeMolIdx_];
-  };
+  }
   //! returns the atomic symbols of the current molecule
   const std::vector<std::pair<std::string, OrientType>> &atomSyms() const {
     PRECONDITION(activeMolIdx_ >= 0, "no index");
     return atom_syms_[activeMolIdx_];
-  };
+  }
   //! Draw an arrow with either lines or a filled head (when asPolygon is true)
   virtual void drawArrow(const Point2D &cds1, const Point2D &cds2,
                          bool asPolygon = false, double frac = 0.05,
@@ -860,10 +861,10 @@ class RDKIT_MOLDRAW2D_EXPORT MolDraw2D {
   virtual void updateMetadata(const ROMol &mol, int confId) {
     RDUNUSED_PARAM(mol);
     RDUNUSED_PARAM(confId);
-  };
+  }
   virtual void updateMetadata(const ChemicalReaction &rxn) {
     RDUNUSED_PARAM(rxn);
-  };
+  }
 
  protected:
   std::vector<std::pair<std::string, std::string>> d_metadata;

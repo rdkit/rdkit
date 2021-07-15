@@ -33,6 +33,10 @@ namespace python = boost::python;
 
 namespace RDKit {
 
+void MolClearComputedPropsHelper(const ROMol &mol, bool includeRings) {
+  mol.clearComputedProps(includeRings);
+}
+
 python::object MolToBinary(const ROMol &self) {
   std::string res;
   {
@@ -167,7 +171,7 @@ namespace {
 class pyobjFunctor {
  public:
   pyobjFunctor(python::object obj) : dp_obj(std::move(obj)) {}
-  ~pyobjFunctor() {}
+  ~pyobjFunctor() = default;
   bool operator()(const ROMol &m, const std::vector<unsigned int> &match) {
     return python::extract<bool>(dp_obj(boost::ref(m), boost::ref(match)));
   }
@@ -204,9 +208,10 @@ class ReadWriteMol : public RWMol {
     PRECONDITION(atom, "bad atom");
     replaceAtom(idx, atom, updateLabel, preserveProps);
   };
-  void ReplaceBond(unsigned int idx, Bond *bond, bool preserveProps) {
+  void ReplaceBond(unsigned int idx, Bond *bond, bool preserveProps,
+                   bool keepSGroups) {
     PRECONDITION(bond, "bad bond");
-    replaceBond(idx, bond, preserveProps);
+    replaceBond(idx, bond, preserveProps, keepSGroups);
   };
   void SetStereoGroups(python::list &stereo_groups) {
     std::vector<StereoGroup> groups;
@@ -712,7 +717,8 @@ struct mol_wrapper {
              "  ARGUMENTS:\n"
              "    - key: the name of the property to clear (a string).\n")
 
-        .def("ClearComputedProps", MolClearComputedProps<ROMol>,
+        .def("ClearComputedProps", MolClearComputedPropsHelper,
+             (python::arg("self"), python::arg("includeRings") = true),
              "Removes all computed properties from the molecule.\n\n")
 
         .def("UpdatePropertyCache", &ROMol::updatePropertyCache,
@@ -861,10 +867,12 @@ struct mol_wrapper {
              "explicit set on the new atom")
         .def("ReplaceBond", &ReadWriteMol::ReplaceBond,
              (python::arg("index"), python::arg("newBond"),
-              python::arg("preserveProps") = false),
+              python::arg("preserveProps") = false,
+              python::arg("keepSGroups") = false),
              "replaces the specified bond with the provided one.\n"
              "If preserveProps is True preserve keep the existing props unless "
-             "explicit set on the new bond")
+             "explicit set on the new bond. If keepSGroups is False, all"
+             "Substance Groups referencing the bond will be dropped.")
         .def("GetMol", &ReadWriteMol::GetMol,
              "Returns a Mol (a normal molecule)",
              python::return_value_policy<python::manage_new_object>())

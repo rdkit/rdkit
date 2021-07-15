@@ -13,10 +13,10 @@
 #include "GraphMol//Fingerprints/MorganFingerprints.h"
 #include "../../../External/GA/util/Util.h"
 #include <memory>
+#include <utility>
 #include <vector>
 #include <map>
 #include <mutex>
-#include <thread>
 
 // #define DEBUG
 
@@ -24,6 +24,9 @@ namespace RDKit {
 
 static const int fingerprintSize = 512;
 static const bool useTopologicalFingerprints = false;
+
+// TODO scale variance by the number of separate attachments (as that variance
+// will be counted for each attachment).
 
 // Add fingerprint information to RGroupData
 void addFingerprintToRGroupData(RGroupData *rgroupData) {
@@ -214,10 +217,10 @@ double FingerprintVarianceScoreData::fingerprintVarianceGroupScore() {
 
 VarianceDataForLabel::VarianceDataForLabel(const int &label,
                                            int numberFingerprints,
-                                           const std::vector<int> &bitCounts)
+                                           std::vector<int> bitCounts)
     : label(label),
       numberFingerprints(numberFingerprints),
-      bitCounts(bitCounts) {}
+      bitCounts(std::move(bitCounts)) {}
 
 VarianceDataForLabel::VarianceDataForLabel(const int &label) : label(label) {
   numberFingerprints = 0;

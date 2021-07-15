@@ -1,5 +1,5 @@
 //
-//  Copyright (C) 2018 Susan H. Leung
+//  Copyright (C) 2018-2021 Susan H. Leung and other RDKit contributors
 //
 //   @@ All Rights Reserved @@
 //  This file is part of the RDKit.
@@ -15,9 +15,21 @@
 namespace RDKit {
 namespace MolStandardize {
 
+#include "tautomerTransforms.in"
+
 TautomerCatalogParams::TautomerCatalogParams(const std::string &tautomerFile) {
   d_transforms.clear();
-  d_transforms = readTautomers(tautomerFile);
+  if (tautomerFile.empty()) {
+    d_transforms = readTautomers(defaults::defaultTautomerTransforms);
+  } else {
+    d_transforms = readTautomers(tautomerFile);
+  }
+}
+TautomerCatalogParams::TautomerCatalogParams(
+    const std::vector<
+        std::tuple<std::string, std::string, std::string, std::string>> &data) {
+  d_transforms.clear();
+  d_transforms = readTautomers(data);
 }
 
 TautomerCatalogParams::TautomerCatalogParams(

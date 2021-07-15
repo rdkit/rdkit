@@ -1,4 +1,6 @@
-//  Copyright (c) 2017, Novartis Institutes for BioMedical Research Inc.
+//  Copyright (c) 2017-2021, Novartis Institutes for BioMedical Research Inc.
+//  and other RDKit contributors
+//
 //  All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -312,7 +314,10 @@ struct rgroupdecomp_wrapper {
             &RDKit::RGroupDecompositionParameters::allowNonTerminalRGroups)
         .def_readwrite("removeAllHydrogenRGroupsAndLabels",
                        &RDKit::RGroupDecompositionParameters::
-                           removeAllHydrogenRGroupsAndLabels);
+                           removeAllHydrogenRGroupsAndLabels)
+        .def_readonly(
+            "substructMatchParams",
+            &RDKit::RGroupDecompositionParameters::substructmatchParams);
 
     python::class_<RDKit::RGroupDecompositionHelper, boost::noncopyable>(
         "RGroupDecomposition", docString.c_str(),

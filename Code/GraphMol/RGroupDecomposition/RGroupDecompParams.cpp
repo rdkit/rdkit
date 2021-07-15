@@ -1,5 +1,6 @@
 //
-//  Copyright (C) 2017 Novartis Institutes for BioMedical Research
+//  Copyright (c) 2017-2021, Novartis Institutes for BioMedical Research Inc.
+//  and other RDKit contributors
 //
 //   @@ All Rights Reserved @@
 //  This file is part of the RDKit.
@@ -135,6 +136,22 @@ bool RGroupDecompositionParameters::prepareCore(RWMol &core,
     }
   } else if (!onlyMatchAtRGroups) {
     autoLabels |= AtomIndexLabels;
+  }
+
+  // if we aren't doing stereochem matches, remove that info from the core
+  if (!substructmatchParams.useChirality) {
+    for (auto atom : core.atoms()) {
+      atom->setChiralTag(Atom::ChiralType::CHI_UNSPECIFIED);
+    }
+    for (auto bond : core.bonds()) {
+      bond->setStereo(Bond::BondStereo::STEREONONE);
+    }
+  }
+  // remove enhanced stereo info if not being used
+  // or if chirality isn't being used
+  if (!substructmatchParams.useChirality ||
+      !substructmatchParams.useEnhancedStereo) {
+    core.setStereoGroups(std::vector<StereoGroup>());
   }
 
   int maxLabel = 1;
@@ -273,7 +290,7 @@ bool RGroupDecompositionParameters::prepareCore(RWMol &core,
   }
 
   return true;
-}
+}  // namespace RDKit
 
 void RGroupDecompositionParameters::checkNonTerminal(const Atom &atom) const {
   if (allowNonTerminalRGroups || atom.getDegree() == 1) {

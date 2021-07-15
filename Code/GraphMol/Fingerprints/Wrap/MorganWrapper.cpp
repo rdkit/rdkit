@@ -1,5 +1,5 @@
 //
-//  Copyright (C) 2018 Boran Adas, Google Summer of Code
+//  Copyright (C) 2018-2021 Boran Adas and other RDKit contributors
 //
 //   @@ All Rights Reserved @@
 //  This file is part of the RDKit.
@@ -11,6 +11,7 @@
 #include <boost/python.hpp>
 #include <GraphMol/Fingerprints/FingerprintGenerator.h>
 #include <GraphMol/Fingerprints/MorganGenerator.h>
+#include <RDBoost/Wrap.h>
 
 using namespace RDKit;
 namespace python = boost::python;
@@ -23,7 +24,8 @@ FingerprintGenerator<OutputType> *getMorganGenerator(
     bool useBondTypes, bool onlyNonzeroInvariants,
     bool,  // includeRingMembership
     python::object &py_countBounds, std::uint32_t fpSize,
-    python::object &py_atomInvGen, python::object &py_bondInvGen) {
+    python::object &py_atomInvGen, python::object &py_bondInvGen,
+    python::object &useCountSimulation) {
   AtomInvariantsGenerator *atomInvariantsGenerator = nullptr;
   BondInvariantsGenerator *bondInvariantsGenerator = nullptr;
 
@@ -38,12 +40,15 @@ FingerprintGenerator<OutputType> *getMorganGenerator(
   }
 
   std::vector<std::uint32_t> countBounds = {1, 2, 4, 8};
-  python::extract<std::vector<std::uint32_t>> countBoundsE(py_countBounds);
-  if (countBoundsE.check() && !countBoundsE().empty()) {
-    countBounds = countBoundsE();
+  if (py_countBounds) {
+    auto tmp = pythonObjectToVect<std::uint32_t>(py_countBounds);
+    countBounds = *tmp;
   }
 
-  const std::vector<std::uint32_t> countBoundsC = countBounds;
+  // just there to handle a bad API inconsistency in v2021.03 and earlier
+  if (useCountSimulation != python::object()) {
+    countSimulation = python::extract<bool>(useCountSimulation)();
+  }
 
   return MorganFingerprint::getMorganGenerator<OutputType>(
       radius, countSimulation, includeChirality, useBondTypes,
@@ -76,7 +81,7 @@ BondInvariantsGenerator *getMorganBondInvGen(const bool useBondTypes,
 void exportMorgan() {
   python::def(
       "GetMorganGenerator", getMorganGenerator<std::uint64_t>,
-      (python::arg("radius") = 3, python::arg("useCountSimulation") = false,
+      (python::arg("radius") = 3, python::arg("countSimulation") = false,
        python::arg("includeChirality") = false,
        python::arg("useBondTypes") = true,
        python::arg("onlyNonzeroInvariants") = false,
@@ -84,11 +89,12 @@ void exportMorgan() {
        python::arg("countBounds") = python::object(),
        python::arg("fpSize") = 2048,
        python::arg("atomInvariantsGenerator") = python::object(),
-       python::arg("bondInvariantsGenerator") = python::object()),
+       python::arg("bondInvariantsGenerator") = python::object(),
+       python::arg("useCountSimulation") = python::object()),
       "Get a morgan fingerprint generator\n\n"
       "  ARGUMENTS:\n"
       "    - radius:  the number of iterations to grow the fingerprint\n"
-      "    - useCountSimulation: if set, use count simulation while generating "
+      "    - countSimulation: if set, use count simulation while generating "
       "the fingerprint\n"
       "    - includeChirality: if set, chirality information will be added to "
       "the generated fingerprint\n"

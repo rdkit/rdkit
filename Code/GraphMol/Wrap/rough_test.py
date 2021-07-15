@@ -3978,7 +3978,7 @@ CAS<~>
                                (125, 124, 126, 123), (126, 124, 125, 123)))
     matches = resMolSupplST.GetSubstructMatches(guanidiniumQuery, uniquify=True)
     self.assertEqual(len(matches), 2)
-    self.assertEqual(matches, ((66, 67, 69, 68), (123, 124, 126, 125)))
+    self.assertEqual(matches, ((66, 67, 68, 69), (123, 124, 125, 126)))
     btList2ST = getBtList2(resMolSupplST)
     self.assertTrue(btList2ST)
     resMolSupplMT = Chem.ResonanceMolSupplier(crambin)
@@ -4005,7 +4005,7 @@ CAS<~>
                                  (125, 124, 126, 123), (126, 124, 125, 123)))
       matches = suppl.GetSubstructMatches(guanidiniumQuery, uniquify=True, numThreads=0)
       self.assertEqual(len(matches), 2)
-      self.assertEqual(matches, ((66, 67, 69, 68), (123, 124, 126, 125)))
+      self.assertEqual(matches, ((66, 67, 68, 69), (123, 124, 125, 126)))
 
   def testGitHub1166(self):
     mol = Chem.MolFromSmiles('NC(=[NH2+])c1ccc(cc1)C(=O)[O-]')
@@ -4377,9 +4377,16 @@ $$$$
   def testGetSetProps(self):
     m = Chem.MolFromSmiles("CC")
     errors = {
-      "int": "key `foo` exists but does not result in an integer value",
-      "double": "key `foo` exists but does not result in a double value",
-      "bool": "key `foo` exists but does not result in a True or False value"
+      "int":
+      "key `foo` exists but does not result in an integer value reason: boost::bad_any_cast: failed conversion using boost::any_cast",
+      "uint overflow":
+      "key `foo` exists but does not result in an unsigned integer value reason: bad numeric conversion: negative overflow",
+      "int overflow":
+      "key `foo` exists but does not result in an integer value reason: bad numeric conversion: positive overflow",
+      "double":
+      "key `foo` exists but does not result in a double value reason: boost::bad_any_cast: failed conversion using boost::any_cast",
+      "bool":
+      "key `foo` exists but does not result in a True or False value reason: boost::bad_any_cast: failed conversion using boost::any_cast"
     }
 
     for ob in [m, list(m.GetAtoms())[0], list(m.GetBonds())[0]]:
@@ -4400,6 +4407,17 @@ $$$$
       with self.assertRaises(ValueError) as e:
         ob.GetIntProp("foo")
       self.assertEqual(str(e.exception), errors["int"])
+
+      ob.SetIntProp("foo", -1)
+      with self.assertRaises(ValueError) as e:
+        ob.GetUnsignedProp("foo")
+      self.assertEqual(str(e.exception), errors["uint overflow"])
+
+      ob.SetUnsignedProp("foo", 4294967295)
+      self.assertEqual(ob.GetUnsignedProp("foo"), 4294967295)
+      with self.assertRaises(ValueError) as e:
+        ob.GetIntProp("foo")
+      self.assertEqual(str(e.exception), errors["int overflow"])
 
   def testInvariantException(self):
     m = Chem.MolFromSmiles("C")
@@ -5517,7 +5535,7 @@ C1C(Cl)CCCC duff2
     self.assertTrue(l[6] is None)
 
     sdf = b"""
-  Mrv1810 06051911332D          
+  Mrv1810 06051911332D
 
   3  2  0  0  0  0            999 V2000
   -13.3985    4.9850    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
@@ -5528,7 +5546,7 @@ C1C(Cl)CCCC duff2
 M  END
 $$$$
 
-  Mrv1810 06051911332D          
+  Mrv1810 06051911332D
 
   3  2  0  0  0  0            999 V2000
   -10.3083    4.8496    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
@@ -5539,7 +5557,7 @@ $$$$
 M  END
 $$$$
 
-  Mrv1810 06051911332D          
+  Mrv1810 06051911332D
 
   3  2  0  0  0  0            999 V2000
   -10.3083    4.8496    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
@@ -5560,7 +5578,7 @@ $$$$
     self.assertTrue(l[2] is None)
 
     sdf = b"""
-  Mrv1810 06051911332D          
+  Mrv1810 06051911332D
 
   3  2  0  0  0  0            999 V2000
   -13.3985    4.9850    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
@@ -5569,12 +5587,12 @@ $$$$
   1  2  1  0  0  0  0
   2  3  1  0  0  0  0
 M  END
->  <pval>  (1) 
+>  <pval>  (1)
 [1,2,]
 
 $$$$
 
-  Mrv1810 06051911332D          
+  Mrv1810 06051911332D
 
   3  2  0  0  0  0            999 V2000
   -10.3083    4.8496    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
@@ -5583,7 +5601,7 @@ $$$$
   1  2  1  0  0  0  0
   2  3  1  0  0  0  0
 M  END
->  <pval>  (1) 
+>  <pval>  (1)
 [1,2,]
 """
     suppl3 = Chem.SDMolSupplier()
@@ -5736,6 +5754,15 @@ H      0.635000    0.635000    0.635000
     with self.assertRaises(ValueError):
       Chem.SanitizeMol(Chem.MolFromSmiles('c1cc1', sanitize=False))
 
+  def testNoExceptionSmilesParserParams(self):
+    """
+    MolFromSmiles should catch exceptions even when SmilesParserParams
+    is provided.
+    """
+    smiles_params = Chem.SmilesParserParams()
+    mol = Chem.MolFromSmiles("C1CC", smiles_params)
+    self.assertIsNone(mol)
+
   def testDetectChemistryProblems(self):
     m = Chem.MolFromSmiles('CFCc1cc1FC', sanitize=False)
     ps = Chem.DetectChemistryProblems(m)
@@ -5789,7 +5816,7 @@ H      0.635000    0.635000    0.635000
   def testSetBondStereoFromDirections(self):
     m1 = Chem.MolFromMolBlock(
       '''
-  Mrv1810 10141909482D          
+  Mrv1810 10141909482D
 
   4  3  0  0  0  0            999 V2000
     3.3412   -2.9968    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
@@ -5808,7 +5835,7 @@ M  END
 
     m2 = Chem.MolFromMolBlock(
       '''
-  Mrv1810 10141909542D          
+  Mrv1810 10141909542D
 
   4  3  0  0  0  0            999 V2000
     3.4745   -5.2424    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
@@ -6546,6 +6573,60 @@ CAS<~>
     except:
       pass
     self.assertEqual(rwmol.GetNumAtoms(), mol.GetNumAtoms())
+
+  def testGithub4138(self):
+    m = Chem.MolFromSmiles('C1CCCO1')
+    q = Chem.MolFromSmarts('')
+    self.assertFalse(m.HasSubstructMatch(q))
+    self.assertEqual(m.GetSubstructMatch(q), ())
+    self.assertEqual(m.GetSubstructMatches(q), ())
+
+    m = Chem.MolFromSmiles('')
+    q = Chem.MolFromSmarts('C')
+    self.assertFalse(m.HasSubstructMatch(q))
+    self.assertEqual(m.GetSubstructMatch(q), ())
+    self.assertEqual(m.GetSubstructMatches(q), ())
+
+  def testGithub4144(self):
+    ''' the underlying problem with #4144 was that the 
+    includeRings argument could not be passed to ClearComputedProps() 
+    from Python. Make sure that's fixed
+    '''
+    m = Chem.MolFromSmiles('c1ccccc1')
+    self.assertEqual(m.GetRingInfo().NumRings(), 1)
+    m.ClearComputedProps(includeRings=False)
+    self.assertEqual(m.GetRingInfo().NumRings(), 1)
+    m.ClearComputedProps()
+    with self.assertRaises(RuntimeError):
+      m.GetRingInfo().NumRings()
+
+  def testAddWavyBondsForStereoAny(self):
+    m = Chem.MolFromSmiles('CC=CC')
+    m.GetBondWithIdx(1).SetStereo(Chem.BondStereo.STEREOANY)
+    m2 = Chem.Mol(m)
+    Chem.AddWavyBondsForStereoAny(m2)
+    self.assertEqual(m2.GetBondWithIdx(1).GetStereo(), Chem.BondStereo.STEREONONE)
+    self.assertEqual(m2.GetBondWithIdx(0).GetBondDir(), Chem.BondDir.UNKNOWN)
+    m2 = Chem.Mol(m)
+    Chem.AddWavyBondsForStereoAny(m2, clearDoubleBondFlags=False)
+    self.assertEqual(m2.GetBondWithIdx(1).GetStereo(), Chem.BondStereo.STEREOANY)
+    self.assertEqual(m2.GetBondWithIdx(0).GetBondDir(), Chem.BondDir.UNKNOWN)
+
+    m = Chem.MolFromSmiles("CC=CC=CC=CC")
+    m.GetBondWithIdx(1).SetStereoAtoms(0, 3)
+    m.GetBondWithIdx(1).SetStereo(Chem.BondStereo.STEREOCIS)
+    m.GetBondWithIdx(3).SetStereo(Chem.BondStereo.STEREOANY)
+    m.GetBondWithIdx(5).SetStereoAtoms(4, 7)
+    m.GetBondWithIdx(5).SetStereo(Chem.BondStereo.STEREOCIS)
+    m2 = Chem.Mol(m)
+    Chem.AddWavyBondsForStereoAny(m2)
+    self.assertEqual(m2.GetBondWithIdx(3).GetStereo(), Chem.BondStereo.STEREOANY)
+    self.assertEqual(m2.GetBondWithIdx(0).GetBondDir(), Chem.BondDir.NONE)
+
+    Chem.AddWavyBondsForStereoAny(
+      m2, addWhenImpossible=Chem.StereoBondThresholds.DBL_BOND_SPECIFIED_STEREO)
+    self.assertEqual(m2.GetBondWithIdx(3).GetStereo(), Chem.BondStereo.STEREONONE)
+    self.assertEqual(m2.GetBondWithIdx(2).GetBondDir(), Chem.BondDir.UNKNOWN)
 
 
 if __name__ == '__main__':

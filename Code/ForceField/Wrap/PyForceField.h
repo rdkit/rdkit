@@ -23,7 +23,7 @@ namespace python = boost::python;
 namespace ForceFields {
 class PyForceField {
  public:
-  PyForceField(ForceField *f) : field(f){};
+  PyForceField(ForceField *f) : field(f) {}
 
   ~PyForceField() {
     // std::cerr << " *** destroy PyForce field " << std::endl;
@@ -86,18 +86,18 @@ class PyForceField {
 class PyMMFFMolProperties {
  public:
   PyMMFFMolProperties(RDKit::MMFF::MMFFMolProperties *mp)
-      : mmffMolProperties(mp){};
-  ~PyMMFFMolProperties(){};
+      : mmffMolProperties(mp) {}
+  ~PyMMFFMolProperties() = default;
 
   unsigned int getMMFFAtomType(unsigned int idx) {
     return (unsigned int)(mmffMolProperties->getMMFFAtomType(idx));
-  };
+  }
   double getMMFFFormalCharge(unsigned int idx) {
     return mmffMolProperties->getMMFFFormalCharge(idx);
-  };
+  }
   double getMMFFPartialCharge(unsigned int idx) {
     return mmffMolProperties->getMMFFPartialCharge(idx);
-  };
+  }
   PyObject *getMMFFBondStretchParams(const RDKit::ROMol &mol,
                                      const unsigned int idx1,
                                      const unsigned int idx2);
@@ -122,37 +122,37 @@ class PyMMFFMolProperties {
   PyObject *getMMFFVdWParams(const unsigned int idx1, const unsigned int idx2);
   void setMMFFDielectricModel(std::uint8_t dielModel) {
     mmffMolProperties->setMMFFDielectricModel(dielModel);
-  };
+  }
   void setMMFFDielectricConstant(double dielConst) {
     mmffMolProperties->setMMFFDielectricConstant(dielConst);
-  };
+  }
   void setMMFFBondTerm(bool state) {
     mmffMolProperties->setMMFFBondTerm(state);
-  };
+  }
   void setMMFFAngleTerm(const bool state) {
     mmffMolProperties->setMMFFAngleTerm(state);
-  };
+  }
   void setMMFFStretchBendTerm(const bool state) {
     mmffMolProperties->setMMFFStretchBendTerm(state);
-  };
+  }
   void setMMFFOopTerm(const bool state) {
     mmffMolProperties->setMMFFOopTerm(state);
-  };
+  }
   void setMMFFTorsionTerm(const bool state) {
     mmffMolProperties->setMMFFTorsionTerm(state);
-  };
+  }
   void setMMFFVdWTerm(const bool state) {
     mmffMolProperties->setMMFFVdWTerm(state);
-  };
+  }
   void setMMFFEleTerm(const bool state) {
     mmffMolProperties->setMMFFEleTerm(state);
-  };
+  }
   void setMMFFVariant(const std::string &mmffVariant) {
     mmffMolProperties->setMMFFVariant(mmffVariant);
-  };
+  }
   void setMMFFVerbosity(unsigned int verbosity) {
     mmffMolProperties->setMMFFVerbosity(verbosity);
-  };
+  }
   boost::shared_ptr<RDKit::MMFF::MMFFMolProperties> mmffMolProperties;
 };
 PyObject *getUFFBondStretchParams(const RDKit::ROMol &mol,

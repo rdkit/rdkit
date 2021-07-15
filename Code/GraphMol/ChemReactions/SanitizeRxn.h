@@ -37,16 +37,17 @@
 #include <GraphMol/MolOps.h>
 #include <string>
 #include <exception>
+#include <utility>
 
 namespace RDKit {
 
 //! class for flagging sanitization errors
 class RDKIT_CHEMREACTIONS_EXPORT RxnSanitizeException : public std::exception {
  public:
-  RxnSanitizeException(const char *msg) : _msg(msg){};
-  RxnSanitizeException(const std::string &msg) : _msg(msg){};
-  const char *what() const noexcept override { return _msg.c_str(); };
-  ~RxnSanitizeException() noexcept {};
+  RxnSanitizeException(const char *msg) : _msg(msg) {}
+  RxnSanitizeException(std::string msg) : _msg(std::move(msg)) {}
+  const char *what() const noexcept override { return _msg.c_str(); }
+  ~RxnSanitizeException() noexcept override = default;
 
  private:
   std::string _msg;

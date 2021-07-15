@@ -53,8 +53,7 @@ typedef enum {
 
 class RDKIT_SLNPARSE_EXPORT AttribType {
  public:
-  AttribType()
-      : first(""), second(""), op("") {};
+  AttribType() : first(""), second(""), op("") {}
   std::string first;
   std::string second;
   std::string op;

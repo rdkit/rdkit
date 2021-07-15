@@ -99,15 +99,16 @@ std::unique_ptr<std::vector<T>> pythonObjectToVect(const python::object &obj,
   std::unique_ptr<std::vector<T>> res;
   if (obj) {
     res.reset(new std::vector<T>);
-    python::stl_input_iterator<T> beg(obj), end;
-    while (beg != end) {
-      T v = *beg;
+
+    auto check_max = [&maxV](const T &v) {
       if (v >= maxV) {
         throw_value_error("list element larger than allowed value");
       }
-      res->push_back(v);
-      ++beg;
-    }
+      return true;
+    };
+    std::copy_if(python::stl_input_iterator<T>(obj),
+                 python::stl_input_iterator<T>(), std::back_inserter(*res),
+                 check_max);
   }
   return res;
 }
@@ -115,30 +116,21 @@ template <typename T>
 std::unique_ptr<std::vector<T>> pythonObjectToVect(const python::object &obj) {
   std::unique_ptr<std::vector<T>> res;
   if (obj) {
-    res.reset(new std::vector<T>);
-    unsigned int nFrom = python::extract<unsigned int>(obj.attr("__len__")());
-    for (unsigned int i = 0; i < nFrom; ++i) {
-      T v = python::extract<T>(obj[i]);
-      res->push_back(v);
-    }
+    res.reset(new std::vector<T>(python::stl_input_iterator<T>(obj),
+                                 python::stl_input_iterator<T>()));
   }
   return res;
 }
 template <typename T>
 void pythonObjectToVect(const python::object &obj, std::vector<T> &res) {
   if (obj) {
-    res.clear();
-    python::stl_input_iterator<T> beg(obj), end;
-    while (beg != end) {
-      T v = *beg;
-      res.push_back(v);
-      ++beg;
-    }
+    res.assign(python::stl_input_iterator<T>(obj),
+               python::stl_input_iterator<T>());
   }
 }
 
-RDKIT_RDBOOST_EXPORT boost::dynamic_bitset<> pythonObjectToDynBitset(const python::object &obj,
-                                                   boost::dynamic_bitset<>::size_type maxV);
+RDKIT_RDBOOST_EXPORT boost::dynamic_bitset<> pythonObjectToDynBitset(
+    const python::object &obj, boost::dynamic_bitset<>::size_type maxV);
 
 RDKIT_RDBOOST_EXPORT std::vector<std::pair<int, int>> *translateAtomMap(
     const python::object &atomMap);
@@ -157,13 +149,11 @@ RDKIT_RDBOOST_EXPORT std::vector<unsigned int> *translateIntSeq(
 #endif
 
 class PyGILStateHolder {
-public:
-  PyGILStateHolder() :
-    d_gstate(PyGILState_Ensure()) {}
-  ~PyGILStateHolder() {
-    PyGILState_Release(d_gstate);
-  }
-private:
+ public:
+  PyGILStateHolder() : d_gstate(PyGILState_Ensure()) {}
+  ~PyGILStateHolder() { PyGILState_Release(d_gstate); }
+
+ private:
   PyGILState_STATE d_gstate;
 };
 

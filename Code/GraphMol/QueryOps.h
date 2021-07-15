@@ -1,5 +1,5 @@
 //
-//  Copyright (C) 2003-2017 Greg Landrum and Rational Discovery LLC
+//  Copyright (C) 2003-2021 Greg Landrum and other RDKit contributors
 //
 //   @@ All Rights Reserved @@
 //  This file is part of the RDKit.
@@ -24,6 +24,7 @@
 
 #ifdef RDK_THREADSAFE_SSS
 #include <mutex>
+#include <utility>
 #endif
 
 namespace RDKit {
@@ -127,7 +128,7 @@ static inline int queryAtomTotalValence(Atom const *at) {
 static inline int queryAtomUnsaturated(Atom const *at) {
   return at->getTotalDegree() < at->getTotalValence();
 };
-static inline int queryAtomNum(Atom const *at) { return at->getAtomicNum(); };
+static inline int queryAtomNum(Atom const *at) { return at->getAtomicNum(); }
 static inline int makeAtomType(int atomic_num, bool aromatic) {
   return atomic_num + 1000 * static_cast<int>(aromatic);
 }
@@ -667,6 +668,7 @@ RDKIT_GRAPHMOL_EXPORT BOND_EQUALS_QUERY *makeSingleOrDoubleBondQuery();
 //! returns a Query for tautomeric bonds
 RDKIT_GRAPHMOL_EXPORT BOND_EQUALS_QUERY *
 makeSingleOrDoubleOrAromaticBondQuery();
+
 //! returns a Query for matching bond directions
 RDKIT_GRAPHMOL_EXPORT BOND_EQUALS_QUERY *makeBondDirEqualsQuery(
     Bond::BondDir what);
@@ -704,15 +706,15 @@ class RDKIT_GRAPHMOL_EXPORT AtomRingQuery
     // default is to just do a number of rings query:
     this->setDescription("AtomInNRings");
     this->setDataFunc(queryAtomRingMembership);
-  };
+  }
   explicit AtomRingQuery(int v)
       : Queries::EqualityQuery<int, ConstAtomPtr, true>(v) {
     // default is to just do a number of rings query:
     this->setDescription("AtomInNRings");
     this->setDataFunc(queryAtomRingMembership);
-  };
+  }
 
-  virtual bool Match(const ConstAtomPtr what) const {
+  bool Match(const ConstAtomPtr what) const override {
     int v = this->TypeConvert(what, Queries::Int2Type<true>());
     bool res;
     if (this->d_val < 0) {
@@ -727,7 +729,7 @@ class RDKIT_GRAPHMOL_EXPORT AtomRingQuery
   }
 
   //! returns a copy of this query
-  Queries::Query<int, ConstAtomPtr, true> *copy() const {
+  Queries::Query<int, ConstAtomPtr, true> *copy() const override {
     AtomRingQuery *res = new AtomRingQuery(this->d_val);
     res->setNegation(getNegation());
     res->setTol(this->getTol());
@@ -744,7 +746,7 @@ class RDKIT_GRAPHMOL_EXPORT RecursiveStructureQuery
   RecursiveStructureQuery() : Queries::SetQuery<int, Atom const *, true>() {
     setDataFunc(getAtIdx);
     setDescription("RecursiveStructure");
-  };
+  }
   //! initialize from an ROMol pointer
   /*!
     <b>Notes</b>
@@ -756,12 +758,12 @@ class RDKIT_GRAPHMOL_EXPORT RecursiveStructureQuery
     setQueryMol(query);
     setDataFunc(getAtIdx);
     setDescription("RecursiveStructure");
-  };
+  }
   //! returns the index of an atom
   static inline int getAtIdx(Atom const *at) {
     PRECONDITION(at, "bad atom argument");
     return at->getIdx();
-  };
+  }
 
   //! sets the molecule we'll use recursively
   /*!
@@ -770,10 +772,10 @@ class RDKIT_GRAPHMOL_EXPORT RecursiveStructureQuery
   */
   void setQueryMol(ROMol const *query) { dp_queryMol.reset(query); }
   //! returns a pointer to our query molecule
-  ROMol const *getQueryMol() const { return dp_queryMol.get(); };
+  ROMol const *getQueryMol() const { return dp_queryMol.get(); }
 
   //! returns a copy of this query
-  Queries::Query<int, Atom const *, true> *copy() const {
+  Queries::Query<int, Atom const *, true> *copy() const override {
     RecursiveStructureQuery *res = new RecursiveStructureQuery();
     res->dp_queryMol.reset(new ROMol(*dp_queryMol, true));
 
@@ -786,7 +788,7 @@ class RDKIT_GRAPHMOL_EXPORT RecursiveStructureQuery
     res->d_serialNumber = d_serialNumber;
     return res;
   }
-  unsigned int getSerialNumber() const { return d_serialNumber; };
+  unsigned int getSerialNumber() const { return d_serialNumber; }
 
 #ifdef RDK_THREADSAFE_SSS
   std::mutex d_mutex;
@@ -817,15 +819,15 @@ class HasPropQuery : public Queries::EqualityQuery<int, TargetPtr, true> {
     // default is to just do a number of rings query:
     this->setDescription("AtomHasProp");
     this->setDataFunc(0);
-  };
-  explicit HasPropQuery(const std::string &v)
-      : Queries::EqualityQuery<int, TargetPtr, true>(), propname(v) {
+  }
+  explicit HasPropQuery(std::string v)
+      : Queries::EqualityQuery<int, TargetPtr, true>(), propname(std::move(v)) {
     // default is to just do a number of rings query:
     this->setDescription("AtomHasProp");
     this->setDataFunc(nullptr);
-  };
+  }
 
-  virtual bool Match(const TargetPtr what) const {
+  bool Match(const TargetPtr what) const override {
     bool res = what->hasProp(propname);
     if (this->getNegation()) {
       res = !res;
@@ -834,7 +836,7 @@ class HasPropQuery : public Queries::EqualityQuery<int, TargetPtr, true> {
   }
 
   //! returns a copy of this query
-  Queries::Query<int, TargetPtr, true> *copy() const {
+  Queries::Query<int, TargetPtr, true> *copy() const override {
     HasPropQuery *res = new HasPropQuery(this->propname);
     res->setNegation(this->getNegation());
     res->d_description = this->d_description;
@@ -866,19 +868,19 @@ class HasPropWithValueQuery
     // default is to just do a number of rings query:
     this->setDescription("HasPropWithValue");
     this->setDataFunc(0);
-  };
-  explicit HasPropWithValueQuery(const std::string &prop, const T &v,
+  }
+  explicit HasPropWithValueQuery(std::string prop, const T &v,
                                  const T &tol = 0.0)
       : Queries::EqualityQuery<int, TargetPtr, true>(),
-        propname(prop),
+        propname(std::move(prop)),
         val(v),
         tolerance(tol) {
     // default is to just do a number of rings query:
     this->setDescription("HasPropWithValue");
     this->setDataFunc(nullptr);
-  };
+  }
 
-  virtual bool Match(const TargetPtr what) const {
+  bool Match(const TargetPtr what) const override {
     bool res = what->hasProp(propname);
     if (res) {
       try {
@@ -911,7 +913,7 @@ class HasPropWithValueQuery
   }
 
   //! returns a copy of this query
-  Queries::Query<int, TargetPtr, true> *copy() const {
+  Queries::Query<int, TargetPtr, true> *copy() const override {
     HasPropWithValueQuery *res =
         new HasPropWithValueQuery(this->propname, this->val, this->tolerance);
     res->setNegation(this->getNegation());
@@ -932,17 +934,19 @@ class HasPropWithValueQuery<TargetPtr, std::string>
     // default is to just do a number of rings query:
     this->setDescription("HasPropWithValue");
     this->setDataFunc(0);
-  };
-  explicit HasPropWithValueQuery(const std::string &prop, const std::string &v,
+  }
+  explicit HasPropWithValueQuery(std::string prop, std::string v,
                                  const std::string &tol = "")
-      : Queries::EqualityQuery<int, TargetPtr, true>(), propname(prop), val(v) {
+      : Queries::EqualityQuery<int, TargetPtr, true>(),
+        propname(std::move(prop)),
+        val(std::move(v)) {
     RDUNUSED_PARAM(tol);
     // default is to just do a number of rings query:
     this->setDescription("HasPropWithValue");
     this->setDataFunc(nullptr);
-  };
+  }
 
-  virtual bool Match(const TargetPtr what) const {
+  bool Match(const TargetPtr what) const override {
     bool res = what->hasProp(propname);
     if (res) {
       try {
@@ -975,7 +979,7 @@ class HasPropWithValueQuery<TargetPtr, std::string>
   }
 
   //! returns a copy of this query
-  Queries::Query<int, TargetPtr, true> *copy() const {
+  Queries::Query<int, TargetPtr, true> *copy() const override {
     HasPropWithValueQuery<TargetPtr, std::string> *res =
         new HasPropWithValueQuery<TargetPtr, std::string>(this->propname,
                                                           this->val);
@@ -997,19 +1001,19 @@ class HasPropWithValueQuery<TargetPtr, ExplicitBitVect>
       : Queries::EqualityQuery<int, TargetPtr, true>(), propname(), val() {
     this->setDescription("HasPropWithValue");
     this->setDataFunc(0);
-  };
+  }
 
-  explicit HasPropWithValueQuery(const std::string &prop,
-                                 const ExplicitBitVect &v, float tol = 0.0)
+  explicit HasPropWithValueQuery(std::string prop, const ExplicitBitVect &v,
+                                 float tol = 0.0)
       : Queries::EqualityQuery<int, TargetPtr, true>(),
-        propname(prop),
+        propname(std::move(prop)),
         val(v),
         tol(tol) {
     this->setDescription("HasPropWithValue");
     this->setDataFunc(nullptr);
-  };
+  }
 
-  virtual bool Match(const TargetPtr what) const {
+  bool Match(const TargetPtr what) const override {
     bool res = what->hasProp(propname);
     if (res) {
       try {
@@ -1044,7 +1048,7 @@ class HasPropWithValueQuery<TargetPtr, ExplicitBitVect>
   }
 
   //! returns a copy of this query
-  Queries::Query<int, TargetPtr, true> *copy() const {
+  Queries::Query<int, TargetPtr, true> *copy() const override {
     HasPropWithValueQuery<TargetPtr, ExplicitBitVect> *res =
         new HasPropWithValueQuery<TargetPtr, ExplicitBitVect>(
             this->propname, this->val, this->tol);
@@ -1084,6 +1088,23 @@ RDKIT_GRAPHMOL_EXPORT void finalizeQueryFromDescription(
     Queries::Query<int, Atom const *, true> *query, Atom const *owner);
 RDKIT_GRAPHMOL_EXPORT void finalizeQueryFromDescription(
     Queries::Query<int, Bond const *, true> *query, Bond const *owner);
+
+RDKIT_GRAPHMOL_EXPORT bool hasBondTypeQuery(
+    const Queries::Query<int, Bond const *, true> &qry);
+inline bool hasBondTypeQuery(const Bond &bond) {
+  if (!bond.hasQuery()) {
+    return false;
+  }
+  return hasBondTypeQuery(*bond.getQuery());
+}
+RDKIT_GRAPHMOL_EXPORT bool hasComplexBondTypeQuery(
+    const Queries::Query<int, Bond const *, true> &qry);
+inline bool hasComplexBondTypeQuery(const Bond &bond) {
+  if (!bond.hasQuery()) {
+    return false;
+  }
+  return hasComplexBondTypeQuery(*bond.getQuery());
+}
 
 }  // namespace QueryOps
 }  // namespace RDKit

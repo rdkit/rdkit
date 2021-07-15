@@ -21,21 +21,21 @@ template <class MatchFuncArgType, class DataFuncArgType = MatchFuncArgType,
 class RDKIT_QUERY_EXPORT LessQuery
     : public EqualityQuery<MatchFuncArgType, DataFuncArgType, needsConversion> {
  public:
-  LessQuery() { this->d_tol = 0; };
+  LessQuery() { this->d_tol = 0; }
   //! constructs with our target value
   explicit LessQuery(DataFuncArgType v) {
     this->d_val = v;
     this->d_tol = 0;
     this->df_negate = false;
-  };
+  }
   //! constructs with our target value and a tolerance
   LessQuery(DataFuncArgType v, DataFuncArgType t) {
     this->d_val = v;
     this->d_tol = t;
     this->df_negate = false;
-  };
+  }
 
-  bool Match(const DataFuncArgType what) const {
+  bool Match(const DataFuncArgType what) const override {
     MatchFuncArgType mfArg =
         this->TypeConvert(what, Int2Type<needsConversion>());
     if (queryCmp(this->d_val, mfArg, this->d_tol) < 0) {
@@ -49,9 +49,10 @@ class RDKIT_QUERY_EXPORT LessQuery
       else
         return false;
     }
-  };
+  }
 
-  Query<MatchFuncArgType, DataFuncArgType, needsConversion> *copy() const {
+  Query<MatchFuncArgType, DataFuncArgType, needsConversion> *copy()
+      const override {
     LessQuery<MatchFuncArgType, DataFuncArgType, needsConversion> *res =
         new LessQuery<MatchFuncArgType, DataFuncArgType, needsConversion>();
     res->setNegation(this->getNegation());
@@ -61,9 +62,9 @@ class RDKIT_QUERY_EXPORT LessQuery
     res->d_description = this->d_description;
     res->d_queryType = this->d_queryType;
     return res;
-  };
+  }
 
-  std::string getFullDescription() const {
+  std::string getFullDescription() const override {
     std::ostringstream res;
     res << this->getDescription();
     res << " " << this->d_val;
@@ -72,7 +73,7 @@ class RDKIT_QUERY_EXPORT LessQuery
     else
       res << " < ";
     return res.str();
-  };
+  }
 };
 }  // namespace Queries
 #endif

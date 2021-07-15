@@ -12,6 +12,7 @@
 #define _RD_BADFILEEXCEPTION_H
 
 #include <string>
+#include <utility>
 #include <vector>
 #include <stdexcept>
 
@@ -22,13 +23,13 @@ class RDKIT_RDGENERAL_EXPORT BadFileException : public std::runtime_error {
  public:
   //! construct with an error message
   explicit BadFileException(const char *msg)
-      : std::runtime_error("BadFileException"), _msg(msg){};
+      : std::runtime_error("BadFileException"), _msg(msg) {}
   //! construct with an error message
-  explicit BadFileException(const std::string &msg)
-      : std::runtime_error("BadFileException"), _msg(msg){};
+  explicit BadFileException(std::string msg)
+      : std::runtime_error("BadFileException"), _msg(std::move(msg)) {}
   //! get the error message
-  const char *what() const noexcept override { return _msg.c_str(); };
-  ~BadFileException() noexcept {};
+  const char *what() const noexcept override { return _msg.c_str(); }
+  ~BadFileException() noexcept override = default;
 
  private:
   std::string _msg;

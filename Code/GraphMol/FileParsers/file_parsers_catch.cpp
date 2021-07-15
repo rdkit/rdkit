@@ -1,5 +1,5 @@
 //
-//  Copyright (C) 2020 Greg Landrum
+//  Copyright (C) 2020-2021 Greg Landrum and other RDKit contributors
 //   @@ All Rights Reserved @@
 //  This file is part of the RDKit.
 //  The contents are covered by the terms of the BSD license
@@ -2244,7 +2244,7 @@ M  END)CTAB"_ctab;
 
 TEST_CASE(
     "Problems parsing SGroup abbreviations with multiple attachment points",
-    "[bug][parser]") {
+    "[bug][reader]") {
   std::string rdbase = getenv("RDBASE");
   SECTION("basics") {
     std::string fName =
@@ -3431,5 +3431,260 @@ M  END
 )CTAB"_ctab;
     REQUIRE(mol);
     CHECK(MolToSmarts(*mol) == "[#6&h{2-}]-[#7]-[#6&h0]");
+  }
+}
+
+TEST_CASE("sgroups and strict parsing") {
+  SECTION("everything ok") {
+    std::string ctab = R"CTAB(
+  Mrv2108 06052107052D          
+
+  0  0  0     0  0            999 V3000
+M  V30 BEGIN CTAB
+M  V30 COUNTS 2 1 2 0 0
+M  V30 BEGIN ATOM
+M  V30 1 C -6.875 1.0417 0 0
+M  V30 2 C -5.5413 1.8117 0 0
+M  V30 END ATOM
+M  V30 BEGIN BOND
+M  V30 1 1 1 2
+M  V30 END BOND
+M  V30 BEGIN SGROUP
+M  V30 1 DAT 0 ATOMS=(1 2) FIELDNAME=foo -
+M  V30 FIELDDISP="   -5.5413    1.8117    DAU   ALL  0       0" -
+M  V30 MRV_FIELDDISP=0 FIELDDATA=bar
+M  V30 2 DAT 0 ATOMS=(1 1) FIELDNAME=foo -
+M  V30 FIELDDISP="   -6.8750    1.0417    DAU   ALL  0       0" -
+M  V30 MRV_FIELDDISP=0 FIELDDATA=baz
+M  V30 END SGROUP
+M  V30 END CTAB
+M  END
+)CTAB";
+    std::unique_ptr<ROMol> m(MolBlockToMol(ctab));
+    CHECK(m);
+  }
+  SECTION("SGroups totally missing") {
+    std::string ctab = R"CTAB(
+  Mrv2108 06052107052D          
+
+  0  0  0     0  0            999 V3000
+M  V30 BEGIN CTAB
+M  V30 COUNTS 2 1 2 0 0
+M  V30 BEGIN ATOM
+M  V30 1 C -6.875 1.0417 0 0
+M  V30 2 C -5.5413 1.8117 0 0
+M  V30 END ATOM
+M  V30 BEGIN BOND
+M  V30 1 1 1 2
+M  V30 END BOND
+M  V30 END CTAB
+M  END
+)CTAB";
+    std::unique_ptr<ROMol> m;
+    CHECK_THROWS_AS(m.reset(MolBlockToMol(ctab)), FileParseException);
+    bool sanitize = true;
+    bool removeHs = true;
+    bool strictParsing = false;
+    m.reset(MolBlockToMol(ctab, sanitize, removeHs, strictParsing));
+    CHECK(m);
+  }
+  SECTION("one SGroup missing") {
+    std::string ctab = R"CTAB(
+  Mrv2108 06052107052D          
+
+  0  0  0     0  0            999 V3000
+M  V30 BEGIN CTAB
+M  V30 COUNTS 2 1 2 0 0
+M  V30 BEGIN ATOM
+M  V30 1 C -6.875 1.0417 0 0
+M  V30 2 C -5.5413 1.8117 0 0
+M  V30 END ATOM
+M  V30 BEGIN BOND
+M  V30 1 1 1 2
+M  V30 END BOND
+M  V30 BEGIN SGROUP
+M  V30 2 DAT 0 ATOMS=(1 1) FIELDNAME=foo -
+M  V30 FIELDDISP="   -6.8750    1.0417    DAU   ALL  0       0" -
+M  V30 MRV_FIELDDISP=0 FIELDDATA=baz
+M  V30 END SGROUP
+M  V30 END CTAB
+M  END
+)CTAB";
+    std::unique_ptr<ROMol> m;
+    // fails without an exception
+    m.reset(MolBlockToMol(ctab));
+    CHECK(!m);
+    bool sanitize = true;
+    bool removeHs = true;
+    bool strictParsing = false;
+    m.reset(MolBlockToMol(ctab, sanitize, removeHs, strictParsing));
+    CHECK(m);
+  }
+
+  SECTION("END SGROUPS missing") {
+    std::string ctab = R"CTAB(
+  Mrv2108 06052107052D          
+
+  0  0  0     0  0            999 V3000
+M  V30 BEGIN CTAB
+M  V30 COUNTS 2 1 2 0 0
+M  V30 BEGIN ATOM
+M  V30 1 C -6.875 1.0417 0 0
+M  V30 2 C -5.5413 1.8117 0 0
+M  V30 END ATOM
+M  V30 BEGIN BOND
+M  V30 1 1 1 2
+M  V30 END BOND
+M  V30 BEGIN SGROUP
+M  V30 1 DAT 0 ATOMS=(1 2) FIELDNAME=foo -
+M  V30 FIELDDISP="   -5.5413    1.8117    DAU   ALL  0       0" -
+M  V30 MRV_FIELDDISP=0 FIELDDATA=bar
+M  V30 2 DAT 0 ATOMS=(1 1) FIELDNAME=foo -
+M  V30 FIELDDISP="   -6.8750    1.0417    DAU   ALL  0       0" -
+M  V30 MRV_FIELDDISP=0 FIELDDATA=baz
+M  V30 END CTAB
+M  END
+)CTAB";
+    std::unique_ptr<ROMol> m;
+    CHECK_THROWS_AS(m.reset(MolBlockToMol(ctab)), FileParseException);
+    bool sanitize = true;
+    bool removeHs = true;
+    bool strictParsing = false;
+    m.reset(MolBlockToMol(ctab, sanitize, removeHs, strictParsing));
+    CHECK(m);
+  }
+}
+
+TEST_CASE("double bond stereo should not be set when the coords are all zero") {
+  auto m = R"CTAB(
+     RDKit          2D
+
+  4  3  0  0  0  0  0  0  0  0999 V2000
+    0.0000    0.0000    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    0.0000    0.0000    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    0.0000    0.0000    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    0.0000    0.0000    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+  1  2  1  0
+  2  3  2  0
+  3  4  1  0
+M  END)CTAB"_ctab;
+  REQUIRE(m);
+  REQUIRE(m->getBondBetweenAtoms(1, 2));
+  CHECK(m->getBondBetweenAtoms(1, 2)->getBondDir() == Bond::EITHERDOUBLE);
+}
+
+TEST_CASE(
+    "Convert SDF V200 MRV_COORDINATE_BOND_TYPE data Substance Groups "
+    "into coordinate bonds") {
+  auto m = R"CTAB(
+  Mrv2111 06302118332D          
+
+  9  9  0  0  0  0            999 V2000
+   -2.9465    0.7804    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -3.6609    0.3679    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -3.6609   -0.4572    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -2.9465   -0.8697    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -2.2320   -0.4572    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -2.2320    0.3679    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -1.5175    0.7804    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -2.9465   -1.6947    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -4.3754    0.7804    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+  1  2  2  0  0  0  0
+  2  3  1  0  0  0  0
+  3  4  2  0  0  0  0
+  4  5  1  0  0  0  0
+  5  6  2  0  0  0  0
+  6  1  1  0  0  0  0
+  6  7  8  0  0  0  0
+  4  8  8  0  0  0  0
+  2  9  8  0  0  0  0
+M  STY  3   1 DAT   2 DAT   3 DAT
+M  SAL   1  2   6   7
+M  SDT   1 MRV_COORDINATE_BOND_TYPE                              
+M  SDD   1     0.0000    0.0000    DR    ALL  0       0  
+M  SED   1 7
+M  SAL   2  2   4   8
+M  SDT   2 MRV_COORDINATE_BOND_TYPE                              
+M  SDD   2     0.0000    0.0000    DR    ALL  0       0  
+M  SED   2 8
+M  SAL   3  2   2   9
+M  SDT   3 MRV_COORDINATE_BOND_TYPE                              
+M  SDD   3     0.0000    0.0000    DR    ALL  0       0  
+M  SED   3 9
+M  END
+)CTAB"_ctab;
+  REQUIRE(m);
+
+  std::vector<std::pair<unsigned, unsigned>> coordinate_bonds{
+      {5, 6}, {3, 7}, {1, 8}};
+
+  for (const auto &bond_atoms : coordinate_bonds) {
+    auto bnd = m->getBondBetweenAtoms(bond_atoms.first, bond_atoms.second);
+    REQUIRE(bnd);
+    CHECK(bnd->getBondType() == Bond::BondType::DATIVE);
+    CHECK(typeid(*bnd) == typeid(Bond));
+  }
+
+  CHECK(getSubstanceGroups(*m).empty());
+}
+
+TEST_CASE(
+    "Github #4256: multiple ATTCHPT entries for one atom handled "
+    "incorrectly") {
+  SECTION("V3000") {
+    std::string ctab = R"CTAB(
+  Mrv2108 06172117542D          
+
+  0  0  0     0  0            999 V3000
+M  V30 BEGIN CTAB
+M  V30 COUNTS 2 1 0 0 0
+M  V30 BEGIN ATOM
+M  V30 1 C -4.8333 3.5 0 0
+M  V30 2 C -3.4997 4.27 0 0 ATTCHPT=-1 ATTCHPT=3
+M  V30 END ATOM
+M  V30 BEGIN BOND
+M  V30 1 1 1 2
+M  V30 END BOND
+M  V30 END CTAB
+M  END)CTAB";
+    { REQUIRE_THROWS_AS(MolBlockToMol(ctab), FileParseException); }
+    {
+      bool sanitize = true;
+      bool removeHs = true;
+      bool strictParsing = false;
+      std::unique_ptr<RWMol> m{
+          MolBlockToMol(ctab, sanitize, removeHs, strictParsing)};
+      REQUIRE(m);
+      auto atom = m->getAtomWithIdx(1);
+      REQUIRE(atom->hasProp(common_properties::molAttachPoint));
+      REQUIRE(atom->getProp<int>(common_properties::molAttachPoint) == -1);
+    }
+  }
+  SECTION("V2000 1") {  // Marvin doesn't actually do this, but might as well
+                        // test for it anyway
+    std::string ctab = R"CTAB(
+  Mrv2108 06212115462D          
+
+  2  1  0  0  0  0            999 V2000
+   -2.5894    1.8751    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -1.8749    2.2876    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+  1  2  1  0  0  0  0
+M  APO  2   2   3   2   2
+M  END
+)CTAB";
+  }
+  SECTION("V2000 2") {  // Marvin doesn't actually do this, but might as well
+                        // test for it anyway
+    std::string ctab = R"CTAB(
+  Mrv2108 06212115482D          
+
+  2  1  0  0  0  0            999 V2000
+   -2.5894    1.8751    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -1.8749    2.2876    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+  1  2  1  0  0  0  0
+M  APO  1   2   3
+M  APO  1   2   2
+M  END
+)CTAB";
   }
 }

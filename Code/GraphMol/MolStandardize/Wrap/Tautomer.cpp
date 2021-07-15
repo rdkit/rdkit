@@ -96,8 +96,9 @@ class PyTautomerEnumeratorCallback
   inline python::object getCallbackOverride() const {
     return get_override("__call__");
   }
-  bool operator()(const ROMol &mol,
-                  const MolStandardize::TautomerEnumeratorResult &res) {
+  bool operator()(
+      const ROMol &mol,
+      const MolStandardize::TautomerEnumeratorResult &res) override {
     PyTautomerEnumeratorResult pyRes(res);
     return getCallbackOverride()(boost::ref(mol), boost::ref(pyRes));
   }
@@ -207,7 +208,7 @@ MolStandardize::TautomerEnumerator *createDefaultEnumerator() {
 class pyobjFunctor {
  public:
   pyobjFunctor(python::object obj) : dp_obj(std::move(obj)) {}
-  ~pyobjFunctor() {}
+  ~pyobjFunctor() = default;
   int operator()(const ROMol &m) {
     return python::extract<int>(dp_obj(boost::ref(m)));
   }

@@ -20,8 +20,8 @@ using namespace RDKit;
 using namespace MolStandardize;
 
 void testReionizer() {
-  BOOST_LOG(rdInfoLog) << "-----------------------\n test reionizer"
-                       << std::endl;
+  BOOST_LOG(rdDebugLog) << "-----------------------\n test reionizer"
+                        << std::endl;
 
   std::string smi1, smi2, smi3, smi4, smi5, smi6, smi7;
 
@@ -64,12 +64,12 @@ void testReionizer() {
   ROMOL_SPTR reionized7(reionizer.reionize(*m7));
   TEST_ASSERT(MolToSmiles(*reionized7) ==
               "C[N+]1=CCN(C(=N)N)/C1=[C-]/[N+](=O)[O-]");
-  BOOST_LOG(rdInfoLog) << "Finished" << std::endl;
+  BOOST_LOG(rdDebugLog) << "Finished" << std::endl;
 }
 
 void testChargeParent() {
-  BOOST_LOG(rdInfoLog) << "-----------------------\n test charge parent"
-                       << std::endl;
+  BOOST_LOG(rdDebugLog) << "-----------------------\n test charge parent"
+                        << std::endl;
   MolStandardize::CleanupParameters params;
   // initialize CleanupParameters with preferOrganic=true
   MolStandardize::CleanupParameters params_preferorg;
@@ -149,13 +149,13 @@ void testChargeParent() {
   std::unique_ptr<RWMol> res14(MolStandardize::chargeParent(*m14));
   TEST_ASSERT(MolToSmiles(*res14) == "[Cu+2]");
 
-  BOOST_LOG(rdInfoLog) << "Finished" << std::endl;
+  BOOST_LOG(rdDebugLog) << "Finished" << std::endl;
 }
 
 void testGithub2144() {
-  BOOST_LOG(rdInfoLog) << "-----------------------\n Testing github #2144: "
-                          "Error when calling ChargeParent twice"
-                       << std::endl;
+  BOOST_LOG(rdDebugLog) << "-----------------------\n Testing github #2144: "
+                           "Error when calling ChargeParent twice"
+                        << std::endl;
 
   {
     // Test neutralization of ionized acids and bases.
@@ -169,14 +169,14 @@ void testGithub2144() {
     TEST_ASSERT(res2);
     TEST_ASSERT(MolToSmiles(*res2) == MolToSmiles(*m1));
   }
-  BOOST_LOG(rdInfoLog) << "Finished" << std::endl;
+  BOOST_LOG(rdDebugLog) << "Finished" << std::endl;
 }
 
 void testGithub2346() {
-  BOOST_LOG(rdInfoLog) << "-----------------------\n Testing github #2346: "
-                          "uncharger behaves differently on molecules "
-                          "constructed from mol blocks and SMILES"
-                       << std::endl;
+  BOOST_LOG(rdDebugLog) << "-----------------------\n Testing github #2346: "
+                           "uncharger behaves differently on molecules "
+                           "constructed from mol blocks and SMILES"
+                        << std::endl;
 
   {
     auto m1 = "[NH3+]CC[O-]"_smiles;
@@ -215,11 +215,11 @@ void testGithub2346() {
     }
   }
 
-  BOOST_LOG(rdInfoLog) << "Finished" << std::endl;
+  BOOST_LOG(rdDebugLog) << "Finished" << std::endl;
 }
 
 void testChargedAromatics() {
-  BOOST_LOG(rdInfoLog)
+  BOOST_LOG(rdDebugLog)
       << "-----------------------\n Testing charged aromatics: "
          "need to sanitize after using uncharger"
       << std::endl;
@@ -258,12 +258,12 @@ void testChargedAromatics() {
     TEST_ASSERT(MolToSmiles(*res) == "c1cc[nH]c1");
   }
 
-  BOOST_LOG(rdInfoLog) << "Finished" << std::endl;
+  BOOST_LOG(rdDebugLog) << "Finished" << std::endl;
 }
 
 void testInorganicAcids() {
-  BOOST_LOG(rdInfoLog) << "-----------------------\n Testing inorganic acids"
-                       << std::endl;
+  BOOST_LOG(rdDebugLog) << "-----------------------\n Testing inorganic acids"
+                        << std::endl;
   MolStandardize::Uncharger uncharger;
   std::vector<std::string> halogens{"Cl", "Br", "I"};
   std::unique_ptr<ROMol> res;
@@ -346,8 +346,36 @@ void testInorganicAcids() {
     res.reset(uncharger.uncharge(*phosphate));
     TEST_ASSERT(MolToSmiles(*res) == "O=P(O)(O)O");
   }
+  BOOST_LOG(rdDebugLog) << "Finished" << std::endl;
 }
 
+void testReionizerParams() {
+  BOOST_LOG(rdDebugLog)
+      << "-----------------------\n Testing reionizer parameters" << std::endl;
+  {  // defaults
+    Reionizer reionizer;
+    auto m1 = "c1cc([O-])cc(C(=O)O)c1"_smiles;
+    std::unique_ptr<ROMol> reionized1{reionizer.reionize(*m1)};
+    TEST_ASSERT(MolToSmiles(*reionized1) == "O=C([O-])c1cccc(O)c1");
+
+    auto m2 = "C1=C(C=CC(=C1)[S]([O-])=O)[S](O)(=O)=O"_smiles;
+    std::unique_ptr<ROMol> reionized2{reionizer.reionize(*m2)};
+    TEST_ASSERT(MolToSmiles(*reionized2) == "O=S(O)c1ccc(S(=O)(=O)[O-])cc1");
+  }
+  {  // parameters via tuple
+    std::vector<std::tuple<std::string, std::string, std::string>> params{
+        {"-CO2H", "C(=O)[OH]", "C(=O)[O-]"}, {"phenol", "c[OH]", "c[O-]"}};
+    Reionizer reionizer(params);
+    auto m1 = "c1cc([O-])cc(C(=O)O)c1"_smiles;
+    std::unique_ptr<ROMol> reionized1{reionizer.reionize(*m1)};
+    TEST_ASSERT(MolToSmiles(*reionized1) == "O=C([O-])c1cccc(O)c1");
+
+    auto m2 = "C1=C(C=CC(=C1)[S]([O-])=O)[S](O)(=O)=O"_smiles;
+    std::unique_ptr<ROMol> reionized2{reionizer.reionize(*m2)};
+    TEST_ASSERT(MolToSmiles(*reionized2) == "O=S([O-])c1ccc(S(=O)(=O)O)cc1");
+  }
+  BOOST_LOG(rdDebugLog) << "Finished" << std::endl;
+}
 int main() {
   RDLog::InitLogs();
   boost::logging::disable_logs("rdApp.info");
@@ -357,5 +385,6 @@ int main() {
   testGithub2346();
   testChargedAromatics();
   testInorganicAcids();
+  testReionizerParams();
   return 0;
 }

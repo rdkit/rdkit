@@ -1,5 +1,5 @@
 //
-//  Copyright (C) 2018 Susan H. Leung
+//  Copyright (C) 2018-2021 Susan H. Leung and other RDKit contributors
 //
 //   @@ All Rights Reserved @@
 //  This file is part of the RDKit.
@@ -8,8 +8,8 @@
 //  of the RDKit source tree.
 //
 #include <RDGeneral/export.h>
-#ifndef __RD_TRANSFORM_CATALOG_PARAMS_H__
-#define __RD_TRANSFORM_CATALOG_PARAMS_H__
+#ifndef RD_TRANSFORM_CATALOG_PARAMS_H
+#define RD_TRANSFORM_CATALOG_PARAMS_H
 
 #include <Catalogs/CatalogParams.h>
 #include "TransformCatalogUtils.h"
@@ -31,8 +31,11 @@ class RDKIT_MOLSTANDARDIZE_EXPORT TransformCatalogParams
     d_transformations.clear();
   }
 
+  // if the string here is empty the default transforms will be used
   TransformCatalogParams(const std::string &transformFile);
   TransformCatalogParams(std::istream &transformStream);
+  TransformCatalogParams(
+      const std::vector<std::pair<std::string, std::string>> &data);
   // copy constructor
   TransformCatalogParams(const TransformCatalogParams &other);
 

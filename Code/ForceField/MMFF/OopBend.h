@@ -23,7 +23,7 @@ class MMFFOop;
 //! the out-of-plane term for MMFF
 class RDKIT_FORCEFIELD_EXPORT OopBendContrib : public ForceFieldContrib {
  public:
-  OopBendContrib()  {};
+  OopBendContrib() {}
   //! Constructor
   /*!
     The Wilson angle is between the vector formed by atom2-atom4
@@ -38,9 +38,9 @@ and the angle formed by atom1-atom2-atom3
   OopBendContrib(ForceField *owner, unsigned int idx1, unsigned int idx2,
                  unsigned int idx3, unsigned int idx4,
                  const MMFFOop *mmffOopParams);
-  double getEnergy(double *pos) const;
-  void getGrad(double *pos, double *grad) const;
-  virtual OopBendContrib *copy() const { return new OopBendContrib(*this); };
+  double getEnergy(double *pos) const override;
+  void getGrad(double *pos, double *grad) const override;
+  OopBendContrib *copy() const override { return new OopBendContrib(*this); }
 
  private:
   int d_at1Idx{-1}, d_at2Idx{-1}, d_at3Idx{-1}, d_at4Idx{-1};

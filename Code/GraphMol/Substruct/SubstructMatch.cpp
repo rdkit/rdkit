@@ -130,204 +130,232 @@ void MatchSubqueries(const ROMol &mol, QueryAtom::QUERYATOM_QUERY *q,
                      SUBQUERY_MAP &subqueryMap,
                      std::vector<RecursiveStructureQuery *> &locked);
 
-bool matchCompare(const std::pair<int, int> &a, const std::pair<int, int> &b);
-bool matchVectCompare(const MatchVectType &a, const MatchVectType &b);
-bool isToBeAddedToVector(std::vector<MatchVectType> &matches,
-                         const MatchVectType &m);
-void mergeMatchVect(std::vector<MatchVectType> &matches,
-                    const std::vector<MatchVectType> &matchesTmp,
-                    const ResSubstructMatchHelperArgs_ &args);
+bool insertIfNeeded(std::set<MatchVectType> &matches, const MatchVectType &m) {
+  bool shouldInsert = true;
+  std::unordered_set<int> matchAsSet;
+  std::transform(m.begin(), m.end(),
+                 std::inserter(matchAsSet, matchAsSet.begin()),
+                 [](const std::pair<int, int> &p) { return p.second; });
+  for (auto it = matches.begin(); it != matches.end(); ++it) {
+    std::unordered_set<int> existingMatchAsSet;
+    std::transform(
+        it->begin(), it->end(),
+        std::inserter(existingMatchAsSet, existingMatchAsSet.begin()),
+        [](const std::pair<int, int> &p) { return p.second; });
+    if (matchAsSet == existingMatchAsSet) {
+      if (m < *it) {
+        matches.erase(it);
+      } else {
+        shouldInsert = false;
+      }
+      break;
+    }
+  }
+  if (shouldInsert) {
+    matches.insert(m);
+  }
+  return shouldInsert;
+}
+
+bool tryToInsert(std::set<MatchVectType> &matches, const MatchVectType &match,
+                 const SubstructMatchParameters &params) {
+  if (matches.size() == params.maxMatches) {
+    return false;
+  }
+  if (!params.uniquify) {
+    matches.insert(match);
+  } else {
+    insertIfNeeded(matches, match);
+  }
+  return true;
+}
+
 void ResSubstructMatchHelper_(const ResSubstructMatchHelperArgs_ &args,
-                              std::vector<MatchVectType> *matches,
-                              unsigned int bi, unsigned int ei);
+                              std::set<MatchVectType> *matches, unsigned int bi,
+                              unsigned int ei);
 
 typedef std::list<
     std::pair<MolGraph::vertex_descriptor, MolGraph::vertex_descriptor>>
     ssPairType;
 
-class MolMatchFinalCheckFunctor {
- public:
-  MolMatchFinalCheckFunctor(const ROMol &query, const ROMol &mol,
-                            const SubstructMatchParameters &ps)
-      : d_query(query), d_mol(mol), d_params(ps) {
-    if (d_params.useEnhancedStereo) {
-      for (const auto &sg : d_mol.getStereoGroups()) {
-        if (sg.getGroupType() == StereoGroupType::STEREO_ABSOLUTE) {
-          continue;
-        }
-        for (const auto a : sg.getAtoms()) {
-          d_molStereoGroups[a->getIdx()] = &sg;
-        }
+}  // namespace detail
+
+MolMatchFinalCheckFunctor::MolMatchFinalCheckFunctor(
+    const ROMol &query, const ROMol &mol, const SubstructMatchParameters &ps)
+    : d_query(query), d_mol(mol), d_params(ps) {
+  if (d_params.useEnhancedStereo) {
+    for (const auto &sg : d_mol.getStereoGroups()) {
+      if (sg.getGroupType() == StereoGroupType::STEREO_ABSOLUTE) {
+        continue;
+      }
+      for (const auto a : sg.getAtoms()) {
+        d_molStereoGroups[a->getIdx()] = &sg;
       }
     }
   }
+}
 
-  bool operator()(const boost::detail::node_id q_c[],
-                  const boost::detail::node_id m_c[]) const {
-    if (d_params.extraFinalCheck) {
-      // EFF: we can no-doubt do better than this
-      std::vector<unsigned int> aids(m_c, m_c + d_query.getNumAtoms());
-      for (unsigned int i = 0; i < d_query.getNumAtoms(); ++i) {
-        aids[i] = m_c[i];
-      }
-      if (!d_params.extraFinalCheck(d_mol, aids)) {
-        return false;
-      }
-    }
-    if (!d_params.useChirality) {
-      return true;
-    }
-
-    std::unordered_map<unsigned int, bool> matches;
-
-    // check chiral atoms:
+bool MolMatchFinalCheckFunctor::operator()(const std::uint32_t q_c[],
+                                           const std::uint32_t m_c[]) const {
+  if (d_params.extraFinalCheck) {
+    // EFF: we can no-doubt do better than this
+    std::vector<unsigned int> aids(m_c, m_c + d_query.getNumAtoms());
     for (unsigned int i = 0; i < d_query.getNumAtoms(); ++i) {
-      const Atom *qAt = d_query.getAtomWithIdx(q_c[i]);
-
-      // With less than 3 neighbors we can't establish CW/CCW parity,
-      // so query will be a match if it has any kind of chirality.
-      if (qAt->getDegree() < 3 || !hasChiralLabel(qAt)) {
-        continue;
-      }
-      const Atom *mAt = d_mol.getAtomWithIdx(m_c[i]);
-      if (!hasChiralLabel(mAt)) {
-        return false;
-      }
-      if (qAt->getDegree() > mAt->getDegree()) {
-        return false;
-      }
-
-      INT_LIST qOrder;
-      INT_LIST mOrder;
-      for (unsigned int j = 0; j < d_query.getNumAtoms(); ++j) {
-        const Bond *qB = d_query.getBondBetweenAtoms(q_c[i], q_c[j]);
-        const Bond *mB = d_mol.getBondBetweenAtoms(m_c[i], m_c[j]);
-        if (qB && mB) {
-          mOrder.push_back(mB->getIdx());
-          qOrder.push_back(qB->getIdx());
-          if (mOrder.size() == qAt->getDegree()) {
-            break;
-          }
-        }
-      }
-      CHECK_INVARIANT(qOrder.size() == qAt->getDegree(), "missing matches");
-      CHECK_INVARIANT(qOrder.size() == mOrder.size(), "bad matches");
-      int qPermCount = qAt->getPerturbationOrder(qOrder);
-
-      unsigned unmatchedNeighbors = mAt->getDegree() - mOrder.size();
-      mOrder.insert(mOrder.end(), unmatchedNeighbors, -1);
-
-      INT_LIST moOrder;
-      for (const auto &bond : make_iterator_range(d_mol.getAtomBonds(mAt))) {
-        int dbidx = d_mol[bond]->getIdx();
-        if (std::find(mOrder.begin(), mOrder.end(), dbidx) != mOrder.end()) {
-          moOrder.push_back(dbidx);
-        } else {
-          moOrder.push_back(-1);
-        }
-      }
-
-      int mPermCount =
-          static_cast<int>(countSwapsToInterconvert(moOrder, mOrder));
-
-      const bool requireMatch = qPermCount % 2 == mPermCount % 2;
-      const bool labelsMatch = qAt->getChiralTag() == mAt->getChiralTag();
-      const bool matchOK = requireMatch == labelsMatch;
-
-      // if this is not part of a stereogroup and doesn't match, return false
-      auto msg = d_molStereoGroups.find(m_c[i]);
-      if (msg == d_molStereoGroups.end()) {
-        if (!matchOK) {
-          return false;
-        }
-      } else {
-        matches[m_c[i]] = matchOK;
-      }
+      aids[i] = m_c[i];
     }
-
-    std::unordered_map<unsigned int, unsigned int> q_to_mol;
-    for (unsigned int j = 0; j < d_query.getNumAtoms(); ++j) {
-      q_to_mol[q_c[j]] = m_c[j];
+    if (!d_params.extraFinalCheck(d_mol, aids)) {
+      return false;
     }
-
-    if (d_params.useEnhancedStereo) {
-      if (!enhancedStereoIsOK(d_mol, d_query, q_to_mol, d_molStereoGroups,
-                              matches)) {
-        return false;
-      }
-    }
-
-    // now check double bonds
-    for (const auto &qBnd : d_query.bonds()) {
-      if (qBnd->getBondType() != Bond::DOUBLE ||
-          qBnd->getStereo() <= Bond::STEREOANY) {
-        continue;
-      }
-
-      // don't think this can actually happen, but check to be sure:
-      if (qBnd->getStereoAtoms().size() != 2) {
-        continue;
-      }
-
-      const Bond *mBnd = d_mol.getBondBetweenAtoms(
-          q_to_mol[qBnd->getBeginAtomIdx()], q_to_mol[qBnd->getEndAtomIdx()]);
-      CHECK_INVARIANT(mBnd, "Matching bond not found");
-      if (mBnd->getBondType() != Bond::DOUBLE ||
-          qBnd->getStereo() <= Bond::STEREOANY) {
-        continue;
-      }
-      // don't think this can actually happen, but check to be sure:
-      if (mBnd->getStereoAtoms().size() != 2) {
-        continue;
-      }
-
-      unsigned int end1Matches = 0;
-      unsigned int end2Matches = 0;
-      if (q_to_mol[qBnd->getBeginAtomIdx()] == mBnd->getBeginAtomIdx()) {
-        // query Begin == mol Begin
-        if (q_to_mol[qBnd->getStereoAtoms()[0]] ==
-            static_cast<unsigned>(mBnd->getStereoAtoms()[0])) {
-          end1Matches = 1;
-        }
-        if (q_to_mol[qBnd->getStereoAtoms()[1]] ==
-            static_cast<unsigned>(mBnd->getStereoAtoms()[1])) {
-          end2Matches = 1;
-        }
-      } else {
-        // query End == mol Begin
-        if (q_to_mol[qBnd->getStereoAtoms()[0]] ==
-            static_cast<unsigned>(mBnd->getStereoAtoms()[1])) {
-          end1Matches = 1;
-        }
-        if (q_to_mol[qBnd->getStereoAtoms()[1]] ==
-            static_cast<unsigned>(mBnd->getStereoAtoms()[0])) {
-          end2Matches = 1;
-        }
-      }
-
-      const unsigned totalMatches = end1Matches + end2Matches;
-      const auto mStereo =
-          Chirality::translateEZLabelToCisTrans(mBnd->getStereo());
-      const auto qStereo =
-          Chirality::translateEZLabelToCisTrans(qBnd->getStereo());
-
-      if (mStereo == qStereo && totalMatches == 1) {
-        return false;
-      }
-      if (mStereo != qStereo && totalMatches != 1) {
-        return false;
-      }
-    }
-
+  }
+  if (!d_params.useChirality) {
     return true;
   }
 
- private:
-  const ROMol &d_query;
-  const ROMol &d_mol;
-  const SubstructMatchParameters &d_params;
-  std::unordered_map<unsigned int, StereoGroup const *> d_molStereoGroups;
-};
+  std::unordered_map<unsigned int, bool> matches;
+
+  // check chiral atoms:
+  for (unsigned int i = 0; i < d_query.getNumAtoms(); ++i) {
+    const Atom *qAt = d_query.getAtomWithIdx(q_c[i]);
+
+    // With less than 3 neighbors we can't establish CW/CCW parity,
+    // so query will be a match if it has any kind of chirality.
+    if (qAt->getDegree() < 3 || !detail::hasChiralLabel(qAt)) {
+      continue;
+    }
+    const Atom *mAt = d_mol.getAtomWithIdx(m_c[i]);
+    if (!detail::hasChiralLabel(mAt)) {
+      return false;
+    }
+    if (qAt->getDegree() > mAt->getDegree()) {
+      return false;
+    }
+
+    INT_LIST qOrder;
+    INT_LIST mOrder;
+    for (unsigned int j = 0; j < d_query.getNumAtoms(); ++j) {
+      const Bond *qB = d_query.getBondBetweenAtoms(q_c[i], q_c[j]);
+      const Bond *mB = d_mol.getBondBetweenAtoms(m_c[i], m_c[j]);
+      if (qB && mB) {
+        mOrder.push_back(mB->getIdx());
+        qOrder.push_back(qB->getIdx());
+        if (mOrder.size() == qAt->getDegree()) {
+          break;
+        }
+      }
+    }
+    CHECK_INVARIANT(qOrder.size() == qAt->getDegree(), "missing matches");
+    CHECK_INVARIANT(qOrder.size() == mOrder.size(), "bad matches");
+    int qPermCount = qAt->getPerturbationOrder(qOrder);
+
+    unsigned unmatchedNeighbors = mAt->getDegree() - mOrder.size();
+    mOrder.insert(mOrder.end(), unmatchedNeighbors, -1);
+
+    INT_LIST moOrder;
+    for (const auto &bond : make_iterator_range(d_mol.getAtomBonds(mAt))) {
+      int dbidx = d_mol[bond]->getIdx();
+      if (std::find(mOrder.begin(), mOrder.end(), dbidx) != mOrder.end()) {
+        moOrder.push_back(dbidx);
+      } else {
+        moOrder.push_back(-1);
+      }
+    }
+
+    int mPermCount =
+        static_cast<int>(countSwapsToInterconvert(moOrder, mOrder));
+
+    const bool requireMatch = qPermCount % 2 == mPermCount % 2;
+    const bool labelsMatch = qAt->getChiralTag() == mAt->getChiralTag();
+    const bool matchOK = requireMatch == labelsMatch;
+
+    // if this is not part of a stereogroup and doesn't match, return false
+    auto msg = d_molStereoGroups.find(m_c[i]);
+    if (msg == d_molStereoGroups.end()) {
+      if (!matchOK) {
+        return false;
+      }
+    } else {
+      matches[m_c[i]] = matchOK;
+    }
+  }
+
+  std::unordered_map<unsigned int, unsigned int> q_to_mol;
+  for (unsigned int j = 0; j < d_query.getNumAtoms(); ++j) {
+    q_to_mol[q_c[j]] = m_c[j];
+  }
+
+  if (d_params.useEnhancedStereo) {
+    if (!detail::enhancedStereoIsOK(d_mol, d_query, q_to_mol, d_molStereoGroups,
+                                    matches)) {
+      return false;
+    }
+  }
+
+  // now check double bonds
+  for (const auto &qBnd : d_query.bonds()) {
+    if (qBnd->getBondType() != Bond::DOUBLE ||
+        qBnd->getStereo() <= Bond::STEREOANY) {
+      continue;
+    }
+
+    // don't think this can actually happen, but check to be sure:
+    if (qBnd->getStereoAtoms().size() != 2) {
+      continue;
+    }
+
+    const Bond *mBnd = d_mol.getBondBetweenAtoms(
+        q_to_mol[qBnd->getBeginAtomIdx()], q_to_mol[qBnd->getEndAtomIdx()]);
+    CHECK_INVARIANT(mBnd, "Matching bond not found");
+    if (mBnd->getBondType() != Bond::DOUBLE ||
+        qBnd->getStereo() <= Bond::STEREOANY) {
+      continue;
+    }
+    // don't think this can actually happen, but check to be sure:
+    if (mBnd->getStereoAtoms().size() != 2) {
+      continue;
+    }
+
+    unsigned int end1Matches = 0;
+    unsigned int end2Matches = 0;
+    if (q_to_mol[qBnd->getBeginAtomIdx()] == mBnd->getBeginAtomIdx()) {
+      // query Begin == mol Begin
+      if (q_to_mol[qBnd->getStereoAtoms()[0]] ==
+          static_cast<unsigned>(mBnd->getStereoAtoms()[0])) {
+        end1Matches = 1;
+      }
+      if (q_to_mol[qBnd->getStereoAtoms()[1]] ==
+          static_cast<unsigned>(mBnd->getStereoAtoms()[1])) {
+        end2Matches = 1;
+      }
+    } else {
+      // query End == mol Begin
+      if (q_to_mol[qBnd->getStereoAtoms()[0]] ==
+          static_cast<unsigned>(mBnd->getStereoAtoms()[1])) {
+        end1Matches = 1;
+      }
+      if (q_to_mol[qBnd->getStereoAtoms()[1]] ==
+          static_cast<unsigned>(mBnd->getStereoAtoms()[0])) {
+        end2Matches = 1;
+      }
+    }
+
+    const unsigned totalMatches = end1Matches + end2Matches;
+    const auto mStereo =
+        Chirality::translateEZLabelToCisTrans(mBnd->getStereo());
+    const auto qStereo =
+        Chirality::translateEZLabelToCisTrans(qBnd->getStereo());
+
+    if (mStereo == qStereo && totalMatches == 1) {
+      return false;
+    }
+    if (mStereo != qStereo && totalMatches != 1) {
+      return false;
+    }
+  }
+
+  return true;
+}
+
+namespace detail {
 
 class AtomLabelFunctor {
  public:
@@ -383,27 +411,19 @@ class BondLabelFunctor {
   const ROMol &d_mol;
   const SubstructMatchParameters &d_params;
 };
-void mergeMatchVect(std::vector<MatchVectType> &matches,
-                    const std::vector<MatchVectType> &matchesTmp,
-                    const ResSubstructMatchHelperArgs_ &args) {
-  for (auto it = matchesTmp.begin();
-       (matches.size() < args.params.maxMatches) && (it != matchesTmp.end());
-       ++it) {
-    if ((std::find(matches.begin(), matches.end(), *it) == matches.end()) &&
-        (!args.params.uniquify || isToBeAddedToVector(matches, *it))) {
-      matches.push_back(*it);
-    }
-  }
-};
 void ResSubstructMatchHelper_(const ResSubstructMatchHelperArgs_ &args,
-                              std::vector<MatchVectType> *matches,
-                              unsigned int bi, unsigned int ei) {
+                              std::set<MatchVectType> *matches, unsigned int bi,
+                              unsigned int ei) {
   for (unsigned int i = bi;
        (matches->size() < args.params.maxMatches) && (i < ei); ++i) {
     ROMol *mol = args.resMolSupplier[i];
     std::vector<MatchVectType> matchesTmp =
         SubstructMatch(*mol, args.query, args.params);
-    mergeMatchVect(*matches, matchesTmp, args);
+    for (const auto &match : matchesTmp) {
+      if (!tryToInsert(*matches, match, args.params)) {
+        break;
+      }
+    }
     delete mol;
   }
 };
@@ -415,6 +435,10 @@ void ResSubstructMatchHelper_(const ResSubstructMatchHelperArgs_ &args,
 std::vector<MatchVectType> SubstructMatch(
     const ROMol &mol, const ROMol &query,
     const SubstructMatchParameters &params) {
+  std::vector<MatchVectType> matches;
+  if (!mol.getNumAtoms() || !query.getNumAtoms()) {
+    return matches;
+  }
   std::vector<RecursiveStructureQuery *> locked;
 #ifdef RDK_THREADSAFE_SSS
   locked.reserve(query.getNumAtoms());
@@ -433,7 +457,7 @@ std::vector<MatchVectType> SubstructMatch(
 
   detail::AtomLabelFunctor atomLabeler(query, mol, params);
   detail::BondLabelFunctor bondLabeler(query, mol, params);
-  detail::MolMatchFinalCheckFunctor matchChecker(query, mol, params);
+  MolMatchFinalCheckFunctor matchChecker(query, mol, params);
 
   std::list<detail::ssPairType> pms;
 #if 0
@@ -444,7 +468,6 @@ std::vector<MatchVectType> SubstructMatch(
       boost::vf2_all(query.getTopology(), mol.getTopology(), atomLabeler,
                      bondLabeler, matchChecker, pms, params.maxMatches);
 #endif
-  std::vector<MatchVectType> matches;
   if (found) {
     unsigned int nQueryAtoms = query.getNumAtoms();
     matches.reserve(pms.size());
@@ -513,7 +536,7 @@ std::vector<MatchVectType> SubstructMatch(
 std::vector<MatchVectType> SubstructMatch(
     ResonanceMolSupplier &resMolSupplier, const ROMol &query,
     const SubstructMatchParameters &params) {
-  std::vector<MatchVectType> matches;
+  std::set<MatchVectType> matches;
   detail::ResSubstructMatchHelperArgs_ args = {resMolSupplier, query, params};
   unsigned int nt =
       std::min(resMolSupplier.length(), getNumThreadsToUse(params.numThreads));
@@ -524,13 +547,13 @@ std::vector<MatchVectType> SubstructMatch(
 #ifdef RDK_THREADSAFE_SSS
   else {
     std::vector<std::future<void>> tg;
-    std::vector<std::vector<MatchVectType> *> matchesThread(nt);
+    std::vector<std::set<MatchVectType> *> matchesThread(nt);
     unsigned int ei = 0;
     double dpt =
         static_cast<double>(resMolSupplier.length()) / static_cast<double>(nt);
     double dc = 0.0;
     for (unsigned int ti = 0; ti < nt; ++ti) {
-      matchesThread[ti] = new std::vector<MatchVectType>();
+      matchesThread[ti] = new std::set<MatchVectType>();
       unsigned int bi = ei;
       dc += dpt;
       ei = static_cast<unsigned int>(floor(dc));
@@ -542,19 +565,17 @@ std::vector<MatchVectType> SubstructMatch(
       fut.get();
     }
 
-    unsigned int matchSize = 0;
     for (unsigned int ti = 0; ti < nt; ++ti) {
-      matchSize += matchesThread[ti]->size();
-    }
-    matches.reserve(matchSize);
-    for (unsigned int ti = 0; ti < nt; ++ti) {
-      mergeMatchVect(matches, *(matchesThread[ti]), args);
+      for (const auto &match : *matchesThread[ti]) {
+        if (!detail::tryToInsert(matches, match, args.params)) {
+          break;
+        }
+      }
       delete matchesThread[ti];
     }
   }
 #endif
-  std::sort(matches.begin(), matches.end(), detail::matchVectCompare);
-  return matches;
+  return std::vector<MatchVectType>(matches.begin(), matches.end());
 }
 
 namespace detail {
@@ -572,7 +593,7 @@ unsigned int RecursiveMatcher(const ROMol &mol, const ROMol &query,
 
   detail::AtomLabelFunctor atomLabeler(query, mol, params);
   detail::BondLabelFunctor bondLabeler(query, mol, params);
-  detail::MolMatchFinalCheckFunctor matchChecker(query, mol, params);
+  MolMatchFinalCheckFunctor matchChecker(query, mol, params);
 
   matches.clear();
   matches.resize(0);
@@ -678,45 +699,5 @@ void MatchSubqueries(const ROMol &mol, QueryAtom::QUERYATOM_QUERY *query,
   // std::cout << "<<- back " << (int)query << std::endl;
 }
 
-bool matchCompare(const std::pair<int, int> &a, const std::pair<int, int> &b) {
-  return (a.second < b.second);
-}
-
-bool matchVectCompare(const MatchVectType &a, const MatchVectType &b) {
-  for (unsigned int i = 0; i < std::min(a.size(), b.size()); ++i) {
-    if (a[i].second != b[i].second) {
-      return (a[i].second < b[i].second);
-    }
-  }
-  return (a.size() < b.size());
-}
-
-bool isToBeAddedToVector(std::vector<MatchVectType> &matches,
-                         const MatchVectType &m) {
-  bool isToBeAdded = true;
-  MatchVectType mCopy = m;
-  std::sort(mCopy.begin(), mCopy.end(), matchCompare);
-  for (auto it = matches.end(); isToBeAdded && it != matches.begin();) {
-    --it;
-    isToBeAdded = (it->size() != mCopy.size());
-    if (!isToBeAdded) {
-      MatchVectType matchCopy = *it;
-      std::sort(matchCopy.begin(), matchCopy.end(), matchCompare);
-      for (unsigned int i = 0; !isToBeAdded && (i < matchCopy.size()); ++i) {
-        isToBeAdded = (mCopy[i].second != matchCopy[i].second);
-      }
-      if (!isToBeAdded) {
-        for (unsigned int i = 0; !isToBeAdded && (i < m.size()); ++i) {
-          isToBeAdded = (m[i].second < (*it)[i].second);
-        }
-        if (isToBeAdded) {
-          matches.erase(it);
-          break;
-        }
-      }
-    }
-  }
-  return isToBeAdded;
-}
 }  // end of namespace detail
 }  // namespace RDKit

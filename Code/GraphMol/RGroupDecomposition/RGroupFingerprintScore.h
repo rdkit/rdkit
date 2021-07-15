@@ -27,7 +27,7 @@ struct VarianceDataForLabel {
   std::vector<int> bitCounts;
 
   VarianceDataForLabel(const int &label, int numberFingerprints,
-                       const std::vector<int> &bitCounts);
+                       std::vector<int> bitCounts);
   VarianceDataForLabel(const int &label);
   VarianceDataForLabel(const VarianceDataForLabel &other) = default;
   VarianceDataForLabel &operator=(const VarianceDataForLabel &other) = delete;
@@ -62,10 +62,9 @@ struct FingerprintVarianceScoreData {
   void clear();
 
  private:
-  void modifyVarianceData(
-      int matchNumber, int permutationNumber,
-      const std::vector<std::vector<RGroupMatch>> &matches,
-      const std::set<int> &labels, bool add);
+  void modifyVarianceData(int matchNumber, int permutationNumber,
+                          const std::vector<std::vector<RGroupMatch>> &matches,
+                          const std::set<int> &labels, bool add);
 };
 
 // The arithmetic mean of the mean fingerprint bit variances for the

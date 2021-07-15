@@ -718,8 +718,14 @@ void setReactantBondPropertiesToProduct(RWMOL_SPTR product,
     }
 
     pBond->setBondType(rBond->getBondType());
+    if (rBond->getBondType() == Bond::DOUBLE &&
+        rBond->getBondDir() == Bond::EITHERDOUBLE) {
+      pBond->setBondDir(Bond::EITHERDOUBLE);
+    }
+
     pBond->setIsAromatic(rBond->getIsAromatic());
 
+    pBond->updateProps(*rBond);
     if (pBond->hasProp(common_properties::NullBond)) {
       pBond->clearProp(common_properties::NullBond);
     }
@@ -858,6 +864,14 @@ void addMissingProductAtom(const Atom &reactAtom, unsigned reactNeighborIdx,
   } else {
     product->addBond(productIdx, prodNeighborIdx, origB->getBondType());
   }
+
+  auto prodB = product->getBondBetweenAtoms(prodNeighborIdx, productIdx);
+  if (origB->getBondType() == Bond::DOUBLE &&
+      origB->getBondDir() == Bond::EITHERDOUBLE) {
+    prodB->setBondDir(Bond::EITHERDOUBLE);
+  }
+  bool preserveExisting = true;
+  prodB->updateProps(*origB, preserveExisting);
 }
 
 void addReactantNeighborsToProduct(

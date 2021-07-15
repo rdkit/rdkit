@@ -1,3 +1,15 @@
+# Release_2021.09.1
+(Changes relative to Release_2021.03.1)
+
+## Deprecated code (to be removed in a future release):
+- The `useCountSimulation` keyword argument for
+  `rdFingerprintGenerator.GetMorganGenerator` and
+  `rdFingerprintGenerator.GetAtomPairGenerator` has been deprecated and will be
+  removed in the next release. Please use the `countSimulation` keyword argument
+  instead.
+
+
+
 # Release_2021.03.1
 (Changes relative to Release_2020.09.1)
 

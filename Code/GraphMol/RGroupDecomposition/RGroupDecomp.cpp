@@ -1,4 +1,7 @@
-//  Copyright (c) 2017, Novartis Institutes for BioMedical Research Inc.
+//
+//  Copyright (c) 2017-2021, Novartis Institutes for BioMedical Research Inc.
+//  and other RDKit contributors
+//
 //  All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -95,13 +98,28 @@ int RGroupDecomposition::add(const ROMol &inmol) {
   // or the first core that requires the smallest number
   // of newly added labels
   int global_min_heavy_nbrs = -1;
+  SubstructMatchParameters sssparams(params().substructmatchParams);
+  sssparams.uniquify = false;
+  sssparams.recursionPossible = true;
   for (const auto &core : data->cores) {
     {
-      const bool uniquify = false;
-      const bool recursionPossible = true;
-      const bool useChirality = true;
-      SubstructMatch(mol, *core.second.core, tmatches, uniquify,
-                     recursionPossible, useChirality);
+      // matching the core to the molecule is a two step process
+      // First match to a reduced representation (the core minus terminal
+      // R-groups). Next, match the R-groups. We do this as the core may not be
+      // a substructure match for the molecule if a single molecule atom matches
+      // 2 RGroup attachments (see https://github.com/rdkit/rdkit/pull/4002)
+
+      // match the reduced represenation:
+      std::vector<MatchVectType> baseMatches =
+          SubstructMatch(mol, *core.second.matchingMol, sssparams);
+      tmatches.clear();
+      for (const auto &baseMatch : baseMatches) {
+        // Match the R Groups
+        auto matchesWithDummy =
+            core.second.matchTerminalUserRGroups(mol, baseMatch, sssparams);
+        tmatches.insert(tmatches.end(), matchesWithDummy.cbegin(),
+                        matchesWithDummy.cend());
+      }
     }
     if (tmatches.empty()) {
       continue;
@@ -115,6 +133,9 @@ int RGroupDecomposition::add(const ROMol &inmol) {
       for (const auto &match : mv) {
         target_match_indices[match.second] = 1;
       }
+
+      // target atoms that map to user defined R-groups
+      std::vector<int> targetAttachments;
 
       for (const auto &match : mv) {
         const Atom *atm = mol.getAtomWithIdx(match.second);
@@ -135,11 +156,27 @@ int RGroupDecomposition::add(const ROMol &inmol) {
               }
             }
           }
+        } else {
+          // labelled R-group
+          if (core.second.isTerminalRGroupWithUserLabel(match.first)) {
+            targetAttachments.push_back(match.second);
+          }
         }
         if (!passes_filter && data->params.onlyMatchAtRGroups) {
           break;
         }
+
+        if (passes_filter && data->params.onlyMatchAtRGroups) {
+          for (auto attachmentIdx : targetAttachments) {
+            if (!core.second.checkAllBondsToAttachmentPointPresent(
+                    mol, attachmentIdx, mv)) {
+              passes_filter = false;
+              break;
+            }
+          }
+        }
       }
+
       if (passes_filter) {
         tmatches_filtered.push_back(mv);
       }
@@ -229,7 +266,9 @@ int RGroupDecomposition::add(const ROMol &inmol) {
         newMol->setProp<int>("core", core_idx);
         newMol->setProp<int>("idx", data->matches.size());
         newMol->setProp<int>("frag_idx", i);
-
+#ifdef VERBOSE
+        std::cerr << "Fragment " << MolToSmiles(*newMol) << std::endl;
+#endif
         for (auto at : newMol->atoms()) {
           unsigned int elno = at->getAtomicNum();
           if (elno == 0) {
@@ -326,8 +365,7 @@ int RGroupDecomposition::add(const ROMol &inmol) {
     }
   }
   if (potentialMatches.size() == 0) {
-    BOOST_LOG(rdDebugLog)
-        << "No attachment points in side chains" << std::endl;
+    BOOST_LOG(rdDebugLog) << "No attachment points in side chains" << std::endl;
     return -2;
   }
 

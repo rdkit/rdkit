@@ -5,41 +5,47 @@
 
 //  Based on Peter Dimov's proposal
 //  http://www.open-std.org/JTC1/SC22/WG21/docs/papers/2005/n1756.pdf
-//  issue 6.18. 
+//  issue 6.18.
 
 #if !defined(GBOOST_FUNCTIONAL_HASH_FWD_HPP)
 #define GBOOST_FUNCTIONAL_HASH_FWD_HPP
 
 #if defined(_MSC_VER) && (_MSC_VER >= 1020)
-# pragma once
+#pragma once
 #endif
 
 #include <cstdint>
-namespace std{
-  typedef std::uint32_t hash_result_t;
+namespace std {
+typedef std::uint32_t hash_result_t;
 }
 
 #include <boost/config.hpp>
 #include <cstddef>
 #include <boost/detail/workaround.hpp>
 
-namespace gboost
-{
-    template <class T> struct hash;
+namespace gboost {
+template <class T>
+struct hash;
 
 #if BOOST_WORKAROUND(BOOST_MSVC, < 1300)
-    template <class T> void hash_combine(std::hash_result_t& seed, T& v);
+template <class T>
+void hash_combine(std::hash_result_t& seed, T& v);
 #else
-    template <class T> void hash_combine(std::hash_result_t& seed, T const& v);
+template <class T>
+void hash_combine(std::hash_result_t& seed, T const& v);
 #endif
 
-    template <class It> std::hash_result_t hash_range(It, It);
-    template <class It> void hash_range(std::hash_result_t&, It, It);
+template <class It>
+std::hash_result_t hash_range(It, It);
+template <class It>
+void hash_range(std::hash_result_t&, It, It);
 
 #if BOOST_WORKAROUND(__BORLANDC__, BOOST_TESTED_AT(0x551))
-    template <class T> inline std::hash_result_t hash_range(T*, T*);
-    template <class T> inline void hash_range(std::hash_result_t&, T*, T*);
+template <class T>
+inline std::hash_result_t hash_range(T*, T*);
+template <class T>
+inline void hash_range(std::hash_result_t&, T*, T*);
 #endif
-}
+}  // namespace gboost
 
 #endif

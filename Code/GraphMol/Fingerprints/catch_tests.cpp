@@ -700,3 +700,56 @@ TEST_CASE("Generators, bit info, and multiple calls", "[fpgenerator]") {
   CHECK(ao.atomCounts->size() == m1->getNumAtoms());
   CHECK(ao.atomToBits->size() == m1->getNumAtoms());
 }
+
+TEST_CASE(
+    "github #4212: UnfoldedRDKFingerprintCountBased returns a different "
+    "fingerprint length for every molecule") {
+  auto m1 = "c1ccccc1"_smiles;
+  REQUIRE(m1);
+  auto m2 = "CCCC"_smiles;
+  REQUIRE(m2);
+  std::unique_ptr<SparseIntVect<boost::uint64_t>> fp1{
+      getUnfoldedRDKFingerprintMol(*m1)};
+  REQUIRE(fp1);
+  std::unique_ptr<SparseIntVect<boost::uint64_t>> fp2{
+      getUnfoldedRDKFingerprintMol(*m2)};
+  REQUIRE(fp2);
+  CHECK(fp1->getLength() == fp2->getLength());
+}
+
+TEST_CASE("RDKit set countBounds", "[fpgenerator][rdkit]") {
+  auto m1 = "COc1ccc(CCNC(=O)c2ccccc2C(=O)NCCc2ccc(OC)cc2)cc1"_smiles;
+  REQUIRE(m1);
+  SECTION("change countBounds") {
+    unsigned int minPath = 1;
+    unsigned int maxPath = 7;
+    bool useHs = true;
+    bool branchedPaths = true;
+    bool useBondOrder = true;
+    AtomInvariantsGenerator *atomInvariantsGenerator = nullptr;
+    bool countSimulation = true;
+    std::vector<std::uint32_t> countBounds = {1, 2, 4, 8};
+    std::uint32_t fpSize = 2048;
+    std::uint32_t numBitsPerFeature = 2;
+    std::unique_ptr<FingerprintGenerator<std::uint64_t>> fpGenerator(
+        RDKitFP::getRDKitFPGenerator<std::uint64_t>(
+            minPath, maxPath, useHs, branchedPaths, useBondOrder,
+            atomInvariantsGenerator, countSimulation, countBounds, fpSize,
+            numBitsPerFeature));
+    REQUIRE(fpGenerator);
+    std::unique_ptr<ExplicitBitVect> fp1(fpGenerator->getFingerprint(*m1));
+    REQUIRE(fp1);
+    CHECK(fp1->getNumBits() == 2048);
+
+    countBounds = {2, 8, 16, 32};
+    fpGenerator.reset(RDKitFP::getRDKitFPGenerator<std::uint64_t>(
+        minPath, maxPath, useHs, branchedPaths, useBondOrder,
+        atomInvariantsGenerator, countSimulation, countBounds, fpSize,
+        numBitsPerFeature));
+    REQUIRE(fpGenerator);
+    std::unique_ptr<ExplicitBitVect> fp2(fpGenerator->getFingerprint(*m1));
+    REQUIRE(fp2);
+    CHECK(fp2->getNumBits() == 2048);
+    CHECK(fp2->getNumOnBits() != fp1->getNumOnBits());
+  }
+}

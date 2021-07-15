@@ -22,7 +22,7 @@ namespace UFF {
 class RDKIT_FORCEFIELD_EXPORT AngleConstraintContrib
     : public ForceFieldContrib {
  public:
-  AngleConstraintContrib(){};
+  AngleConstraintContrib() {}
   //! Constructor
   /*!
   \param owner       pointer to the owning ForceField
@@ -43,14 +43,14 @@ class RDKIT_FORCEFIELD_EXPORT AngleConstraintContrib
                          double minAngleDeg, double maxAngleDeg,
                          double forceConst);
 
-  ~AngleConstraintContrib() {}
-  double getEnergy(double *pos) const;
+  ~AngleConstraintContrib() override = default;
+  double getEnergy(double *pos) const override;
 
-  void getGrad(double *pos, double *grad) const;
+  void getGrad(double *pos, double *grad) const override;
 
-  virtual AngleConstraintContrib *copy() const {
+  AngleConstraintContrib *copy() const override {
     return new AngleConstraintContrib(*this);
-  };
+  }
 
  private:
   double computeAngleTerm(double angle) const;

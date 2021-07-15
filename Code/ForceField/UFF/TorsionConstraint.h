@@ -22,7 +22,7 @@ namespace UFF {
 class RDKIT_FORCEFIELD_EXPORT TorsionConstraintContrib
     : public ForceFieldContrib {
  public:
-  TorsionConstraintContrib(){};
+  TorsionConstraintContrib() {}
   //! Constructor
   /*!
   \param owner          pointer to the owning ForceField
@@ -45,13 +45,13 @@ class RDKIT_FORCEFIELD_EXPORT TorsionConstraintContrib
                            double minDihedralDeg, double maxDihedralDeg,
                            double forceConst);
 
-  ~TorsionConstraintContrib() {}
-  double getEnergy(double *pos) const;
+  ~TorsionConstraintContrib() override = default;
+  double getEnergy(double *pos) const override;
 
-  void getGrad(double *pos, double *grad) const;
-  virtual TorsionConstraintContrib *copy() const {
+  void getGrad(double *pos, double *grad) const override;
+  TorsionConstraintContrib *copy() const override {
     return new TorsionConstraintContrib(*this);
-  };
+  }
 
  private:
   void setParameters(ForceField *owner, unsigned int idx1, unsigned int idx2,

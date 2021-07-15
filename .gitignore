@@ -4,10 +4,14 @@
 /Code/JavaWrappers/gmwrapper/build/*
 /Code/JavaWrappers/gmwrapper/build-test/*
 /Code/JavaWrappers/csharp_wrapper/swig_csharp
+/Data/Fonts/ComicNeue-*
+/Data/Fonts/OFL.txt
 
 #- Eclipse files
 /.project
 /.pydevproject
+/.cproject
+/.settings/
 
 #- CLion files
 /cmake-build-*

@@ -80,7 +80,7 @@ class ComputedData {
     set15Atoms.resize(nAtoms * nAtoms);
   }
 
-  ~ComputedData() {}
+  ~ComputedData() = default;
 
   DOUBLE_VECT bondLengths;
   SymmIntMatPtr bondAdj;  // bond adjacency matrix

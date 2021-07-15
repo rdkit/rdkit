@@ -13,6 +13,7 @@
 #define RD_EMBEDDER_H_GUARD
 
 #include <map>
+#include <utility>
 #include <Geometry/point.h>
 #include <GraphMol/ROMol.h>
 #include <boost/shared_ptr.hpp>
@@ -127,12 +128,7 @@ struct RDKIT_DISTGEOMHELPERS_EXPORT EmbedParameters {
   void (*callback)(unsigned int);
   bool forceTransAmides{true};
   bool useSymmetryForPruning{true};
-  EmbedParameters()
-      : boundsMat(nullptr),
-
-        CPCI(nullptr),
-
-        callback(nullptr){};
+  EmbedParameters() : boundsMat(nullptr), CPCI(nullptr), callback(nullptr) {}
   EmbedParameters(
       unsigned int maxIterations, int numThreads, int randomSeed,
       bool clearConfs, bool useRandomCoords, double boxSizeMult,
@@ -172,8 +168,8 @@ struct RDKIT_DISTGEOMHELPERS_EXPORT EmbedParameters {
         useSmallRingTorsions(useSmallRingTorsions),
         useMacrocycleTorsions(useMacrocycleTorsions),
         useMacrocycle14config(useMacrocycle14config),
-        CPCI(CPCI),
-        callback(callback){};
+        CPCI(std::move(CPCI)),
+        callback(callback) {}
 };
 
 //*! update parameters from a JSON string

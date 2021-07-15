@@ -10,6 +10,7 @@
 #include <RDGeneral/export.h>
 #ifndef RD_ABBREVIATIONS_H
 #define RD_ABBREVIATIONS_H
+#include <utility>
 #include <vector>
 #include <string>
 #include <memory>
@@ -37,10 +38,10 @@ struct RDKIT_ABBREVIATIONS_EXPORT AbbreviationDefinition {
 struct RDKIT_ABBREVIATIONS_EXPORT AbbreviationMatch {
   std::vector<std::pair<int, int>> match;
   AbbreviationDefinition abbrev;
-  AbbreviationMatch(const std::vector<std::pair<int, int>>& matchArg,
-                    const AbbreviationDefinition& abbrevArg)
-      : match(matchArg), abbrev(abbrevArg){};
-  AbbreviationMatch() : match(), abbrev(){};
+  AbbreviationMatch(std::vector<std::pair<int, int>> matchArg,
+                    AbbreviationDefinition abbrevArg)
+      : match(std::move(matchArg)), abbrev(std::move(abbrevArg)) {}
+  AbbreviationMatch() : match(), abbrev() {}
   bool operator==(const AbbreviationMatch& other) const {
     return abbrev == other.abbrev && match == other.match;
   }

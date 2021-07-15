@@ -26,7 +26,7 @@ class MMFFProp;
 //! The angle-bend term for MMFF
 class RDKIT_FORCEFIELD_EXPORT StretchBendContrib : public ForceFieldContrib {
  public:
-  StretchBendContrib()  {};
+  StretchBendContrib() {}
   //! Constructor
   /*!
     The angle is between atom1 - atom2 - atom3
@@ -45,11 +45,11 @@ class RDKIT_FORCEFIELD_EXPORT StretchBendContrib : public ForceFieldContrib {
                      const MMFFBond *mmffBondParams1,
                      const MMFFBond *mmffBondParams2);
 
-  double getEnergy(double *pos) const;
-  void getGrad(double *pos, double *grad) const;
-  virtual StretchBendContrib *copy() const {
+  double getEnergy(double *pos) const override;
+  void getGrad(double *pos, double *grad) const override;
+  StretchBendContrib *copy() const override {
     return new StretchBendContrib(*this);
-  };
+  }
 
  private:
   int d_at1Idx{-1}, d_at2Idx{-1}, d_at3Idx{-1};

@@ -24,8 +24,7 @@ namespace CIPLabeler {
  *
  */
 class Rule1b : public SequenceRule {
-
-public:
+ public:
   Rule1b();
 
   int compare(const Edge *a, const Edge *b) const override;
@@ -34,9 +33,9 @@ public:
    * Flag indicates whether to match the problematic
    * IUPAC 2013 recommendations for Rule 1B.
    */
-private:
+ private:
   static const bool IUPAC_2013 = false;
 };
 
-} // namespace CIPLabeler
-} // namespace RDKit
+}  // namespace CIPLabeler
+}  // namespace RDKit

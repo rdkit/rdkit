@@ -22,10 +22,10 @@ class RDKIT_CATALOGS_EXPORT CatalogEntry {
   virtual ~CatalogEntry() = 0;
 
   //! sets our bit Id
-  void setBitId(int bid) { d_bitId = bid; };
+  void setBitId(int bid) { d_bitId = bid; }
 
   //! returns our bit Id
-  int getBitId() const { return d_bitId; };
+  int getBitId() const { return d_bitId; }
 
   //! returns a text description of this entry
   virtual std::string getDescription() const = 0;

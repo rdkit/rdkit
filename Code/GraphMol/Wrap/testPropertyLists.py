@@ -100,10 +100,14 @@ $$$$"""
         Chem.CreateAtomStringPropertyList(m,"PartiallyMissing",missingValueMarker="?")
         self.assertTrue(m.HasProp("atom.prop.PartiallyMissing"))
         self.assertEqual(m.GetProp("atom.prop.PartiallyMissing"),"[?] one ? three")
-        
 
-
-
+    def testGithubPR4160(self):
+        # this shouldn't fail with a bad any cast anymore
+        from rdkit import Chem
+        m = Chem.MolFromSmiles("CC")
+        for a in m.GetAtoms():
+             a.SetIntProp("foo", 1)
+        Chem.CreateAtomIntPropertyList(m, "foo")
  
 
 

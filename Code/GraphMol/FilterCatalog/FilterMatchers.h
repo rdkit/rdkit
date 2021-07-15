@@ -32,6 +32,8 @@
 #include <RDGeneral/export.h>
 #ifndef __RD_FILTER_MATCHER_H__
 #define __RD_FILTER_MATCHER_H__
+#include <utility>
+
 #include <GraphMol/RDKitBase.h>
 #include <GraphMol/Substruct/SubstructMatch.h>
 #include "FilterMatcherBase.h"
@@ -61,29 +63,32 @@ class RDKIT_FILTERCATALOG_EXPORT And : public FilterMatcherBase {
   And(const FilterMatcherBase &arg1, const FilterMatcherBase &arg2)
       : FilterMatcherBase("And"), arg1(arg1.copy()), arg2(arg2.copy()) {}
 
-  And(const boost::shared_ptr<FilterMatcherBase> &arg1,
-      const boost::shared_ptr<FilterMatcherBase> &arg2)
-      : FilterMatcherBase("And"), arg1(arg1), arg2(arg2) {}
+  And(boost::shared_ptr<FilterMatcherBase> arg1,
+      boost::shared_ptr<FilterMatcherBase> arg2)
+      : FilterMatcherBase("And"),
+        arg1(std::move(arg1)),
+        arg2(std::move(arg2)) {}
 
   And(const And &rhs)
       : FilterMatcherBase(rhs), arg1(rhs.arg1), arg2(rhs.arg2) {}
 
-  virtual std::string getName() const {
+  std::string getName() const override {
     return "(" + getArgName(arg1) + " " + FilterMatcherBase::getName() + " " +
            getArgName(arg2) + ")";
   }
 
-  bool isValid() const {
+  bool isValid() const override {
     return arg1.get() && arg2.get() && arg1->isValid() && arg2->isValid();
   }
 
-  bool hasMatch(const ROMol &mol) const {
+  bool hasMatch(const ROMol &mol) const override {
     PRECONDITION(isValid(),
                  "FilterMatchOps::And is not valid, null arg1 or arg2");
     return arg1->hasMatch(mol) && arg2->hasMatch(mol);
   }
 
-  bool getMatches(const ROMol &mol, std::vector<FilterMatch> &matchVect) const {
+  bool getMatches(const ROMol &mol,
+                  std::vector<FilterMatch> &matchVect) const override {
     PRECONDITION(isValid(),
                  "FilterMatchOps::And is not valid, null arg1 or arg2");
     std::vector<FilterMatch> matches;
@@ -94,7 +99,7 @@ class RDKIT_FILTERCATALOG_EXPORT And : public FilterMatcherBase {
     return false;
   }
 
-  boost::shared_ptr<FilterMatcherBase> copy() const {
+  boost::shared_ptr<FilterMatcherBase> copy() const override {
     return boost::shared_ptr<FilterMatcherBase>(new And(*this));
   }
 
@@ -125,27 +130,28 @@ class RDKIT_FILTERCATALOG_EXPORT Or : public FilterMatcherBase {
   Or(const FilterMatcherBase &arg1, const FilterMatcherBase &arg2)
       : FilterMatcherBase("Or"), arg1(arg1.copy()), arg2(arg2.copy()) {}
 
-  Or(const boost::shared_ptr<FilterMatcherBase> &arg1,
-     const boost::shared_ptr<FilterMatcherBase> &arg2)
-      : FilterMatcherBase("Or"), arg1(arg1), arg2(arg2) {}
+  Or(boost::shared_ptr<FilterMatcherBase> arg1,
+     boost::shared_ptr<FilterMatcherBase> arg2)
+      : FilterMatcherBase("Or"), arg1(std::move(arg1)), arg2(std::move(arg2)) {}
 
   Or(const Or &rhs) : FilterMatcherBase(rhs), arg1(rhs.arg1), arg2(rhs.arg2) {}
 
-  virtual std::string getName() const {
+  std::string getName() const override {
     return "(" + getArgName(arg1) + " " + FilterMatcherBase::getName() + " " +
            getArgName(arg2) + ")";
   }
 
-  bool isValid() const {
+  bool isValid() const override {
     return arg1.get() && arg2.get() && arg1->isValid() && arg2->isValid();
   }
 
-  bool hasMatch(const ROMol &mol) const {
+  bool hasMatch(const ROMol &mol) const override {
     PRECONDITION(isValid(), "Or is not valid, null arg1 or arg2");
     return arg1->hasMatch(mol) || arg2->hasMatch(mol);
   }
 
-  bool getMatches(const ROMol &mol, std::vector<FilterMatch> &matchVect) const {
+  bool getMatches(const ROMol &mol,
+                  std::vector<FilterMatch> &matchVect) const override {
     PRECONDITION(isValid(),
                  "FilterMatchOps::Or is not valid, null arg1 or arg2");
     // we want both matches to run in order to accumulate all matches
@@ -155,7 +161,7 @@ class RDKIT_FILTERCATALOG_EXPORT Or : public FilterMatcherBase {
     return res1 || res2;
   }
 
-  boost::shared_ptr<FilterMatcherBase> copy() const {
+  boost::shared_ptr<FilterMatcherBase> copy() const override {
     return boost::shared_ptr<FilterMatcherBase>(new Or(*this));
   }
 
@@ -185,23 +191,23 @@ class RDKIT_FILTERCATALOG_EXPORT Not : public FilterMatcherBase {
   Not(const FilterMatcherBase &arg1)
       : FilterMatcherBase("Not"), arg1(arg1.copy()) {}
 
-  Not(const boost::shared_ptr<FilterMatcherBase> &arg1)
-      : FilterMatcherBase("Not"), arg1(arg1) {}
+  Not(boost::shared_ptr<FilterMatcherBase> arg1)
+      : FilterMatcherBase("Not"), arg1(std::move(arg1)) {}
 
   Not(const Not &rhs) : FilterMatcherBase(rhs), arg1(rhs.arg1) {}
 
-  virtual std::string getName() const {
+  std::string getName() const override {
     return "(" + FilterMatcherBase::getName() + " " + getArgName(arg1) + ")";
   }
 
-  bool isValid() const { return arg1.get() && arg1->isValid(); }
+  bool isValid() const override { return arg1.get() && arg1->isValid(); }
 
-  bool hasMatch(const ROMol &mol) const {
+  bool hasMatch(const ROMol &mol) const override {
     PRECONDITION(isValid(), "FilterMatchOps::Not: arg1 is null");
     return !arg1->hasMatch(mol);
   }
 
-  bool getMatches(const ROMol &mol, std::vector<FilterMatch> &) const {
+  bool getMatches(const ROMol &mol, std::vector<FilterMatch> &) const override {
     PRECONDITION(isValid(), "FilterMatchOps::Not: arg1 is null");
     // If we are a not, we really can't hold the match for
     //  this query since by definition it won't exist!
@@ -209,7 +215,7 @@ class RDKIT_FILTERCATALOG_EXPORT Not : public FilterMatcherBase {
     return !arg1->getMatches(mol, matchVect);
   }
 
-  boost::shared_ptr<FilterMatcherBase> copy() const {
+  boost::shared_ptr<FilterMatcherBase> copy() const override {
     return boost::shared_ptr<FilterMatcherBase>(new Not(*this));
   }
 
@@ -237,7 +243,7 @@ class RDKIT_FILTERCATALOG_EXPORT SmartsMatcher : public FilterMatcherBase {
   SmartsMatcher(const std::string &name = SMARTS_MATCH_NAME_DEFAULT)
       : FilterMatcherBase(name),
         d_pattern(),
-        
+
         d_max_count(UINT_MAX) {}
 
   //! Construct a SmartsMatcher from a query molecule
@@ -299,7 +305,7 @@ class RDKIT_FILTERCATALOG_EXPORT SmartsMatcher : public FilterMatcherBase {
   SmartsMatcher(const SmartsMatcher &rhs);
 
   //! Returns True if the Smarts pattern is valid
-  bool isValid() const { return d_pattern.get(); }
+  bool isValid() const override { return d_pattern.get(); }
 
   //! Return the shared_ptr to the underlying query molecule
   const ROMOL_SPTR &getPattern() const { return d_pattern; }
@@ -319,10 +325,10 @@ class RDKIT_FILTERCATALOG_EXPORT SmartsMatcher : public FilterMatcherBase {
   //! Set the maximum match count for the pattern to be true
   void setMaxCount(unsigned int val) { d_max_count = val; }
 
-  virtual bool getMatches(const ROMol &mol,
-                          std::vector<FilterMatch> &matchVect) const;
-  virtual bool hasMatch(const ROMol &mol) const;
-  virtual boost::shared_ptr<FilterMatcherBase> copy() const {
+  bool getMatches(const ROMol &mol,
+                  std::vector<FilterMatch> &matchVect) const override;
+  bool hasMatch(const ROMol &mol) const override;
+  boost::shared_ptr<FilterMatcherBase> copy() const override {
     return boost::shared_ptr<FilterMatcherBase>(new SmartsMatcher(*this));
   }
 
@@ -382,11 +388,11 @@ class RDKIT_FILTERCATALOG_EXPORT ExclusionList : public FilterMatcherBase {
   //!                 And(Not(SmartsMatcher(pat2)),
   //!                                And(Not(Single...
 
-  ExclusionList(
-      const std::vector<boost::shared_ptr<FilterMatcherBase>> &offPatterns)
-      : FilterMatcherBase("Not any of"), d_offPatterns(offPatterns) {}
+  ExclusionList(std::vector<boost::shared_ptr<FilterMatcherBase>> offPatterns)
+      : FilterMatcherBase("Not any of"),
+        d_offPatterns(std::move(offPatterns)) {}
 
-  virtual std::string getName() const {
+  std::string getName() const override {
     std::string res;
     res = "(" + FilterMatcherBase::getName();
     for (size_t i = 0; i < d_offPatterns.size(); ++i) {
@@ -396,7 +402,7 @@ class RDKIT_FILTERCATALOG_EXPORT ExclusionList : public FilterMatcherBase {
     return res;
   }
 
-  bool isValid() const {
+  bool isValid() const override {
     for (size_t i = 0; i < d_offPatterns.size(); ++i)
       if (!d_offPatterns[i]->isValid()) return false;
     return true;
@@ -412,7 +418,7 @@ class RDKIT_FILTERCATALOG_EXPORT ExclusionList : public FilterMatcherBase {
     d_offPatterns = offPatterns;
   }
 
-  virtual bool getMatches(const ROMol &mol, std::vector<FilterMatch> &) const {
+  bool getMatches(const ROMol &mol, std::vector<FilterMatch> &) const override {
     PRECONDITION(isValid(),
                  "ExclusionList: one of the exclusion pattens is invalid");
     bool result = true;
@@ -423,7 +429,7 @@ class RDKIT_FILTERCATALOG_EXPORT ExclusionList : public FilterMatcherBase {
     return result;
   }
 
-  virtual bool hasMatch(const ROMol &mol) const {
+  bool hasMatch(const ROMol &mol) const override {
     PRECONDITION(isValid(),
                  "ExclusionList: one of the exclusion pattens is invalid");
     bool result = true;
@@ -434,7 +440,7 @@ class RDKIT_FILTERCATALOG_EXPORT ExclusionList : public FilterMatcherBase {
     return result;
   }
 
-  virtual boost::shared_ptr<FilterMatcherBase> copy() const {
+  boost::shared_ptr<FilterMatcherBase> copy() const override {
     return boost::shared_ptr<FilterMatcherBase>(new ExclusionList(*this));
   }
 
@@ -470,7 +476,7 @@ class RDKIT_FILTERCATALOG_EXPORT FilterHierarchyMatcher
       : FilterMatcherBase(), d_matcher(matcher.copy()) {}
 
   //! Return the name for this node (from the underlying FilterMatcherBase)
-  virtual std::string getName() const {
+  std::string getName() const override {
     if (d_matcher.get()) {
       return d_matcher->getName();
     }
@@ -478,7 +484,7 @@ class RDKIT_FILTERCATALOG_EXPORT FilterHierarchyMatcher
   }
 
   //! returns true if this node has a valid matcher
-  bool isValid() const { return d_matcher->isValid(); }
+  bool isValid() const override { return d_matcher->isValid(); }
 
   //! Set a new FilterMatcherBase for this node
   /*
@@ -511,20 +517,20 @@ class RDKIT_FILTERCATALOG_EXPORT FilterHierarchyMatcher
     \param mol The molecule to match against
     \param matches The vector of FilterMatch objects that match
   */
-  virtual bool getMatches(const ROMol &mol,
-                          std::vector<FilterMatch> &matches) const;
+  bool getMatches(const ROMol &mol,
+                  std::vector<FilterMatch> &matches) const override;
 
   //! Does this node match the molecule
   /*
     \param mol The molecule to match against
   */
-  virtual bool hasMatch(const ROMol &mol) const {
+  bool hasMatch(const ROMol &mol) const override {
     std::vector<FilterMatch> temp;
     return getMatches(mol, temp);
   }
 
   //! copys the FilterHierarchyMatcher into a FilterMatcherBase
-  virtual boost::shared_ptr<FilterMatcherBase> copy() const {
+  boost::shared_ptr<FilterMatcherBase> copy() const override {
     return boost::shared_ptr<FilterMatcherBase>(
         new FilterHierarchyMatcher(*this));
   }

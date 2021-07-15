@@ -14,10 +14,10 @@ using namespace RDKit;
 
 class EnumException : public std::exception {
  public:
-  EnumException(const char *msg) : _msg(msg){};
-  EnumException(const std::string msg) : _msg(msg){};
-  const char *what() const noexcept override { return _msg.c_str(); };
-  ~EnumException() noexcept {};
+  EnumException(const char *msg) : _msg(msg) {}
+  EnumException(const std::string msg) : _msg(msg) {}
+  const char *what() const noexcept override { return _msg.c_str(); }
+  ~EnumException() noexcept = default;
 
  private:
   std::string _msg;

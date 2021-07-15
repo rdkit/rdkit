@@ -19,7 +19,7 @@ class AtomicParams;
 //! The bond-stretch term for the Universal Force Field
 class RDKIT_FORCEFIELD_EXPORT BondStretchContrib : public ForceFieldContrib {
  public:
-  BondStretchContrib(){};
+  BondStretchContrib() {}
   //! Constructor
   /*!
     \param owner       pointer to the owning ForceField
@@ -34,13 +34,13 @@ class RDKIT_FORCEFIELD_EXPORT BondStretchContrib : public ForceFieldContrib {
                      double bondOrder, const AtomicParams *end1Params,
                      const AtomicParams *end2Params);
 
-  double getEnergy(double *pos) const;
+  double getEnergy(double *pos) const override;
 
-  void getGrad(double *pos, double *grad) const;
+  void getGrad(double *pos, double *grad) const override;
 
-  virtual BondStretchContrib *copy() const {
+  BondStretchContrib *copy() const override {
     return new BondStretchContrib(*this);
-  };
+  }
 
  private:
   int d_end1Idx{-1};       //!< indices of end points

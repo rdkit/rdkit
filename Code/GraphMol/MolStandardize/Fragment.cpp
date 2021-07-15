@@ -48,6 +48,18 @@ FragmentRemover::FragmentRemover(const std::string fragmentFile,
   this->SKIP_IF_ALL_MATCH = skip_if_all_match;
 }
 
+FragmentRemover::FragmentRemover(
+    const std::vector<std::pair<std::string, std::string>> &data,
+    bool leave_last, bool skip_if_all_match) {
+  FragmentCatalogParams fparams(data);
+  this->d_fcat = new FragmentCatalog(&fparams);
+  if (!this->d_fcat) {
+    throw ValueErrorException("could not process input data");
+  }
+  this->LEAVE_LAST = leave_last;
+  this->SKIP_IF_ALL_MATCH = skip_if_all_match;
+}
+
 // overloaded constructor
 FragmentRemover::FragmentRemover(std::istream &fragmentStream, bool leave_last,
                                  bool skip_if_all_match) {

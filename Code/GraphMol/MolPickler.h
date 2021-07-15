@@ -38,10 +38,10 @@ class RingInfo;
 //! used to indicate exceptions whilst pickling (serializing) molecules
 class RDKIT_GRAPHMOL_EXPORT MolPicklerException : public std::exception {
  public:
-  MolPicklerException(const char *msg) : _msg(msg){};
-  MolPicklerException(const std::string msg) : _msg(msg){};
-  const char *what() const noexcept override { return _msg.c_str(); };
-  ~MolPicklerException() noexcept {};
+  MolPicklerException(const char *msg) : _msg(msg) {}
+  MolPicklerException(const std::string msg) : _msg(msg) {}
+  const char *what() const noexcept override { return _msg.c_str(); }
+  ~MolPicklerException() noexcept override = default;
 
  private:
   std::string _msg;
@@ -163,7 +163,7 @@ class RDKIT_GRAPHMOL_EXPORT MolPickler {
   static void pickleMol(const ROMol &mol, std::ostream &ss,
                         unsigned int propertyFlags) {
     MolPickler::pickleMol(&mol, ss, propertyFlags);
-  };
+  }
 
   //! pickles a molecule and adds the results to string \c res
   static void pickleMol(const ROMol *mol, std::string &res);
@@ -173,7 +173,7 @@ class RDKIT_GRAPHMOL_EXPORT MolPickler {
   static void pickleMol(const ROMol &mol, std::string &res,
                         unsigned int propertyFlags) {
     MolPickler::pickleMol(&mol, res, propertyFlags);
-  };
+  }
 
   //! constructs a molecule from a pickle stored in a string
   static void molFromPickle(const std::string &pickle, ROMol *mol,
@@ -181,13 +181,13 @@ class RDKIT_GRAPHMOL_EXPORT MolPickler {
   static void molFromPickle(const std::string &pickle, ROMol &mol,
                             unsigned int propertyFlags) {
     MolPickler::molFromPickle(pickle, &mol, propertyFlags);
-  };
+  }
   static void molFromPickle(const std::string &pickle, ROMol *mol) {
     MolPickler::molFromPickle(pickle, mol, PicklerOps::AllProps);
-  };
+  }
   static void molFromPickle(const std::string &pickle, ROMol &mol) {
     MolPickler::molFromPickle(pickle, &mol, PicklerOps::AllProps);
-  };
+  }
 
   //! constructs a molecule from a pickle stored in a stream
   static void molFromPickle(std::istream &ss, ROMol *mol,
@@ -195,13 +195,13 @@ class RDKIT_GRAPHMOL_EXPORT MolPickler {
   static void molFromPickle(std::istream &ss, ROMol &mol,
                             unsigned int propertyFlags) {
     MolPickler::molFromPickle(ss, &mol, propertyFlags);
-  };
+  }
   static void molFromPickle(std::istream &ss, ROMol *mol) {
     MolPickler::molFromPickle(ss, mol, PicklerOps::AllProps);
-  };
+  }
   static void molFromPickle(std::istream &ss, ROMol &mol) {
     MolPickler::molFromPickle(ss, &mol, PicklerOps::AllProps);
-  };
+  }
 
  private:
   //! Pickle nonquery atom data

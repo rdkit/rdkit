@@ -1,5 +1,5 @@
 //
-//  Copyright (C) 2004-2021 Greg Landrum and Rational Discovery LLC
+//  Copyright (C) 2004-2021 Greg Landrum and other RDKit contributors
 //
 //   @@ All Rights Reserved @@
 //  This file is part of the RDKit.
@@ -57,6 +57,25 @@ void WedgeMolBonds(ROMol &mol, const Conformer *conf) {
       }
     }
   }
+}
+
+std::tuple<unsigned int, unsigned int, unsigned int> getDoubleBondPresence(
+    const ROMol &mol, const Atom &atom) {
+  unsigned int hasDouble = 0;
+  unsigned int hasKnownDouble = 0;
+  unsigned int hasAnyDouble = 0;
+  for (const auto &nbri : boost::make_iterator_range(mol.getAtomBonds(&atom))) {
+    const auto bond = mol[nbri];
+    if (bond->getBondType() == Bond::BondType::DOUBLE) {
+      ++hasDouble;
+      if (bond->getStereo() == Bond::BondStereo::STEREOANY) {
+        ++hasAnyDouble;
+      } else if (bond->getStereo() > Bond::BondStereo::STEREOANY) {
+        ++hasKnownDouble;
+      }
+    }
+  }
+  return std::make_tuple(hasDouble, hasKnownDouble, hasAnyDouble);
 }
 
 INT_MAP_INT pickBondsToWedge(const ROMol &mol) {
@@ -193,6 +212,16 @@ INT_MAP_INT pickBondsToWedge(const ROMol &mol) {
         nbrScore += 10000 * mol.getRingInfo()->numAtomRings(oIdx);
         // prefer non-ring bonds;
         nbrScore += 10000 * mol.getRingInfo()->numBondRings(bid);
+        // prefer bonds to atoms which don't have a double bond from them
+        unsigned int hasDoubleBond;       // is a double bond there?
+        unsigned int hasKnownDoubleBond;  // is specified stereo there?
+        unsigned int hasAnyDoubleBond;    // is STEREOANY there?
+        std::tie(hasDoubleBond, hasKnownDoubleBond, hasAnyDoubleBond) =
+            getDoubleBondPresence(mol, *oatom);
+        nbrScore += 11000 * hasDoubleBond;
+        nbrScore += 12000 * hasKnownDoubleBond;
+        nbrScore += 13000 * hasAnyDoubleBond;
+
         // std::cerr << "    nrbScore: " << idx << " - " << oIdx << " : "
         //           << nbrScore << " nChiralNbrs: " << nChiralNbrs[oIdx]
         //           << std::endl;
@@ -215,6 +244,155 @@ INT_MAP_INT pickBondsToWedge(const ROMol &mol) {
   return res;
 }
 
+std::vector<Bond *> getBondNeighbors(ROMol &mol, const Bond &bond) {
+  std::vector<Bond *> res;
+  for (auto nbri :
+       boost::make_iterator_range(mol.getAtomBonds(bond.getBeginAtom()))) {
+    auto nbrBond = mol[nbri];
+    if (nbrBond == &bond) {
+      continue;
+    }
+    res.push_back(nbrBond);
+  }
+  for (auto nbri :
+       boost::make_iterator_range(mol.getAtomBonds(bond.getEndAtom()))) {
+    auto nbrBond = mol[nbri];
+    if (nbrBond == &bond) {
+      continue;
+    }
+    res.push_back(nbrBond);
+  }
+  return res;
+}
+
+const Atom *getNonsharedAtom(const Bond &bond1, const Bond &bond2) {
+  if (bond1.getBeginAtomIdx() == bond2.getBeginAtomIdx() ||
+      bond1.getBeginAtomIdx() == bond2.getEndAtomIdx()) {
+    return bond1.getEndAtom();
+  } else if (bond1.getEndAtomIdx() == bond2.getBeginAtomIdx() ||
+             bond1.getEndAtomIdx() == bond2.getEndAtomIdx()) {
+    return bond1.getBeginAtom();
+  }
+  POSTCONDITION(0, "bonds don't share an atom");
+}
+
+const unsigned StereoBondThresholds::DBL_BOND_NO_STEREO;
+const unsigned StereoBondThresholds::DBL_BOND_SPECIFIED_STEREO;
+const unsigned StereoBondThresholds::CHIRAL_ATOM;
+const unsigned StereoBondThresholds::DIRECTION_SET;
+
+// a note on the way the StereoBondThresholds are used:
+//  the penalties are all 1/10th of the corresponding threshold, so
+//  the penalty for being connected to a chiral atom is
+//  StereoBondThresholds::CHIRAL_ATOM/10
+//  This allows us to just add up the penalties for a particular
+//  single bond and still use one set of thresholds - an individual
+//  single bond will never have any particular penalty term applied
+//  more than a couple of times
+//
+void addWavyBondsForStereoAny(ROMol &mol, bool clearDoubleBondFlags,
+                              unsigned addWhenImpossible) {
+  std::vector<int> singleBondScores(mol.getNumBonds(), 0);
+  // used to store the double bond neighbors, if any, of each single bond
+  std::map<unsigned, std::vector<unsigned>> singleBondNeighbors;
+  boost::dynamic_bitset<> doubleBondsToSet(mol.getNumBonds());
+  // mark single bonds adjacent to double bonds
+  for (const auto dblBond : mol.bonds()) {
+    if (dblBond->getBondType() != Bond::BondType::DOUBLE) {
+      continue;
+    }
+    if (dblBond->getStereo() == Bond::BondStereo::STEREOANY) {
+      doubleBondsToSet.set(dblBond->getIdx());
+    }
+    for (auto singleBond : getBondNeighbors(mol, *dblBond)) {
+      if (singleBond->getBondType() != Bond::BondType::SINGLE) {
+        continue;
+      }
+      // NOTE: we could make this canonical by initializing scores to the
+      // canonical atom ranks
+      int score = singleBondScores[singleBond->getIdx()];
+      ++score;
+
+      // penalty for having a direction already set
+      if (singleBond->getBondDir() != Bond::BondDir::NONE) {
+        score += StereoBondThresholds::DIRECTION_SET / 10;
+      }
+
+      // penalties from the double bond itself:
+
+      // penalize being adjacent to a double bond with empty stereo:
+      if (dblBond->getStereo() == Bond::BondStereo::STEREONONE) {
+        score += StereoBondThresholds::DBL_BOND_NO_STEREO / 10;
+      } else if (dblBond->getStereo() > Bond::BondStereo::STEREOANY) {
+        // penalize being adjacent to a double bond with specified stereo:
+        score += StereoBondThresholds::DBL_BOND_SPECIFIED_STEREO / 10;
+      }
+
+      // atom-related penalties
+      auto otherAtom = getNonsharedAtom(*singleBond, *dblBond);
+      // favor atoms with smaller numbers of neighbors:
+      score += 10 * otherAtom->getDegree();
+      // penalty for being adjacent to an atom with specified stereo
+      if (otherAtom->getChiralTag() != Atom::ChiralType::CHI_UNSPECIFIED &&
+          otherAtom->getChiralTag() != Atom::ChiralType::CHI_OTHER) {
+        score += StereoBondThresholds::CHIRAL_ATOM / 10;
+      }
+      singleBondScores[singleBond->getIdx()] = score;
+      if (dblBond->getStereo() == Bond::BondStereo::STEREOANY) {
+        singleBondNeighbors[singleBond->getIdx()].push_back(dblBond->getIdx());
+      }
+    }
+  }
+  std::vector<std::tuple<int, unsigned int, size_t>> sortedScores;
+  for (size_t i = 0; i < mol.getNumBonds(); ++i) {
+    auto score = singleBondScores[i];
+    if (!score) {
+      continue;
+    }
+    sortedScores.push_back(
+        std::make_tuple(-1 * singleBondNeighbors[i].size(), score, i));
+  }
+  std::sort(sortedScores.begin(), sortedScores.end());
+  for (const auto &tpl : sortedScores) {
+    // FIX: check if dir is already set
+    for (auto dblBondIdx : singleBondNeighbors[std::get<2>(tpl)]) {
+      if (doubleBondsToSet[dblBondIdx]) {
+        if (addWhenImpossible) {
+          if (std::get<1>(tpl) > addWhenImpossible) {
+            continue;
+          }
+        } else if (std::get<1>(tpl) >
+                   StereoBondThresholds::DBL_BOND_NO_STEREO) {
+          BOOST_LOG(rdWarningLog)
+              << "Setting wavy bond flag on bond " << std::get<2>(tpl)
+              << " which may make other stereo info ambiguous" << std::endl;
+        }
+        mol.getBondWithIdx(std::get<2>(tpl))
+            ->setBondDir(Bond::BondDir::UNKNOWN);
+        if (clearDoubleBondFlags) {
+          auto dblBond = mol.getBondWithIdx(dblBondIdx);
+          if (dblBond->getBondDir() == Bond::BondDir::EITHERDOUBLE) {
+            dblBond->setBondDir(Bond::BondDir::NONE);
+          }
+          dblBond->setStereo(Bond::BondStereo::STEREONONE);
+        }
+        doubleBondsToSet.reset(dblBondIdx);
+      }
+    }
+  }
+  if (addWhenImpossible) {
+    if (doubleBondsToSet.count()) {
+      std::stringstream sstr;
+      sstr << " unable to set wavy bonds for double bonds:";
+      for (size_t i = 0; i < mol.getNumBonds(); ++i) {
+        if (doubleBondsToSet[i]) {
+          sstr << " " << i;
+        }
+      }
+      BOOST_LOG(rdWarningLog) << sstr.str() << std::endl;
+    }
+  }
+}
 //
 // Determine bond wedge state
 ///

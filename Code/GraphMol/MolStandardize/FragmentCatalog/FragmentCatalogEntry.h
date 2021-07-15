@@ -23,7 +23,7 @@ namespace MolStandardize {
 class RDKIT_MOLSTANDARDIZE_EXPORT FragmentCatalogEntry
     : public RDCatalog::CatalogEntry {
  public:
-  FragmentCatalogEntry() :  d_descrip("") {
+  FragmentCatalogEntry() : d_descrip("") {
     dp_props = new Dict();
     setBitId(-1);
   }

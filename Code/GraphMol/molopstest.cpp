@@ -1,5 +1,5 @@
 //
-//   Copyright (C) 2002-2018 Greg Landrum and Rational Discovery LLC
+//   Copyright (C) 2002-2021 Greg Landrum and other RDKit contributors
 //
 //   @@ All Rights Reserved @@
 //  This file is part of the RDKit.
@@ -658,7 +658,7 @@ void test8() {
   delete m2;
 
   std::string sma;
-  smi = "CC";
+  smi = "C-C";
   m = SmartsToMol(smi);
   MolOps::sanitizeMol(*((RWMol *)m));
   TEST_ASSERT(m);

@@ -44,8 +44,7 @@ class CIPMol;
  *
  */
 class Digraph {
-
-public:
+ public:
   Digraph() = delete;
   Digraph(const Digraph &) = delete;
   Digraph &operator=(const Digraph &) = delete;
@@ -93,7 +92,7 @@ public:
   Node &addNode(std::vector<char> &&visit, Atom *atom,
                 boost::rational<int> &&frac, int dist, int flags);
 
-private:
+ private:
   const CIPMol &d_mol;
 
   // The node from which the Digraph is first initialized.
@@ -113,5 +112,5 @@ private:
   void addEdge(Node *beg, Bond *bond, Node *end);
 };
 
-} // namespace CIPLabeler
-} // namespace RDKit
+}  // namespace CIPLabeler
+}  // namespace RDKit

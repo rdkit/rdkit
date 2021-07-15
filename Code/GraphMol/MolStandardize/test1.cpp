@@ -23,7 +23,8 @@
 using namespace RDKit;
 
 void testCleanup() {
-  BOOST_LOG(rdInfoLog) << "-----------------------\n test cleanup" << std::endl;
+  BOOST_LOG(rdDebugLog) << "-----------------------\n test cleanup"
+                        << std::endl;
   MolStandardize::CleanupParameters params;
 
   // Test covalent metal is disconnected during standardize.
@@ -52,13 +53,13 @@ void testCleanup() {
     RWMOL_SPTR m = "C[Hg]C"_smiles;
     RWMOL_SPTR res(MolStandardize::cleanup(*m, params));
     TEST_ASSERT(MolToSmiles(*res) == "C[Hg]C")
-    BOOST_LOG(rdInfoLog) << "Finished" << std::endl;
+    BOOST_LOG(rdDebugLog) << "Finished" << std::endl;
   }
 }
 
 void testStandardizeSm() {
-  BOOST_LOG(rdInfoLog) << "-----------------------\n test standardize smiles"
-                       << std::endl;
+  BOOST_LOG(rdDebugLog) << "-----------------------\n test standardize smiles"
+                        << std::endl;
 
   // check aromaticity
   {
@@ -98,12 +99,12 @@ void testStandardizeSm() {
   // SMILES parsing error should stop tests
   //	std::string smi ="C1CCC1C(=O)O.Na";
   //	std::string ss6 = MolStandardize::standardizeSmiles(smi);
-  BOOST_LOG(rdInfoLog) << "Finished" << std::endl;
+  BOOST_LOG(rdDebugLog) << "Finished" << std::endl;
 }
 
 void testMetalDisconnector() {
-  BOOST_LOG(rdInfoLog) << "-----------------------\n test metal disconnector"
-                       << std::endl;
+  BOOST_LOG(rdDebugLog) << "-----------------------\n test metal disconnector"
+                        << std::endl;
 
   MolStandardize::MetalDisconnector md;
   unsigned int failedOp;
@@ -262,18 +263,18 @@ void testMetalDisconnector() {
     TEST_ASSERT(MolToSmiles(*m) == "[Al+3].[Cl-]");
   }
 
-  BOOST_LOG(rdInfoLog) << "Finished" << std::endl;
+  BOOST_LOG(rdDebugLog) << "Finished" << std::endl;
 }
 
 void testNormalize() {
-  BOOST_LOG(rdInfoLog) << "-----------------------\n test normalize"
-                       << std::endl;
+  BOOST_LOG(rdDebugLog) << "-----------------------\n test normalize"
+                        << std::endl;
 
   MolStandardize::CleanupParameters params;
 
   std::string rdbase = getenv("RDBASE");
   std::string transformFile =
-      rdbase + "/Data/MolStandardize/normalizations.txt";
+      rdbase + "/Code/GraphMol/MolStandardize/test_data/normalizations.txt";
   params.normalizations = transformFile;
 
   // Normalize nitro group.
@@ -396,19 +397,19 @@ void testNormalize() {
     RWMOL_SPTR m = "[C+](C)(N)N"_smiles;
     RWMOL_SPTR res(MolStandardize::cleanup(*m, params));
     TEST_ASSERT(MolToSmiles(*res) == "CC(N)=[NH2+]");
-    BOOST_LOG(rdInfoLog) << "Finished" << std::endl;
+    BOOST_LOG(rdDebugLog) << "Finished" << std::endl;
   }
 }
 
 void testNormalizeMultiFrags() {
-  BOOST_LOG(rdInfoLog)
+  BOOST_LOG(rdDebugLog)
       << "-----------------------\n test normalize multiple frags" << std::endl;
 
   MolStandardize::CleanupParameters params;
 
   std::string rdbase = getenv("RDBASE");
   std::string transformFile =
-      rdbase + "/Data/MolStandardize/normalizations.txt";
+      rdbase + "/Code/GraphMol/MolStandardize/test_data/normalizations.txt";
   params.normalizations = transformFile;
 
   // All fragments should stay if one gets transformed by normalization.
@@ -516,12 +517,13 @@ void testNormalizeMultiFrags() {
     RWMOL_SPTR m = "[nH]1c(=[N+](C)C)cccc1"_smiles;
     RWMOL_SPTR res(MolStandardize::cleanup(*m, params));
     TEST_ASSERT(MolToSmiles(*res) == "CN(C)c1cccc[nH+]1");
-    BOOST_LOG(rdInfoLog) << "Finished" << std::endl;
+    BOOST_LOG(rdDebugLog) << "Finished" << std::endl;
   }
 }
 
 void testCharge() {
-  BOOST_LOG(rdInfoLog) << "-----------------------\n test charges" << std::endl;
+  BOOST_LOG(rdDebugLog) << "-----------------------\n test charges"
+                        << std::endl;
 
   // Reionization should not infinitely loop forever on these molecules.
   {
@@ -559,7 +561,7 @@ void testCharge() {
     std::string smi = "[Na].[Na].O[Se](O)=O";
     std::string ss = MolStandardize::standardizeSmiles(smi);
     TEST_ASSERT(ss == "O=[Se](O)O.[Na+].[Na+]");
-    BOOST_LOG(rdInfoLog) << "Finished" << std::endl;
+    BOOST_LOG(rdDebugLog) << "Finished" << std::endl;
   }
 
   // Test that tetrazolate salts are not neutralised
@@ -567,7 +569,7 @@ void testCharge() {
     std::string smi = "c1nn[n-]n1.[Na+]";
     std::string ss = MolStandardize::standardizeSmiles(smi);
     TEST_ASSERT(ss == "[Na+].c1nn[n-]n1");
-    BOOST_LOG(rdInfoLog) << "Finished" << std::endl;
+    BOOST_LOG(rdDebugLog) << "Finished" << std::endl;
   }
 
   // Test that tetrazolate zwitterions are not neutralised
@@ -575,25 +577,25 @@ void testCharge() {
     std::string smi = "CCCc1cc(-c2ccccc2)cc(CCC)[n+]1-c1nn[n-]n1";
     std::string ss = MolStandardize::standardizeSmiles(smi);
     TEST_ASSERT(ss == "CCCc1cc(-c2ccccc2)cc(CCC)[n+]1-c1nn[n-]n1");
-    BOOST_LOG(rdInfoLog) << "Finished" << std::endl;
+    BOOST_LOG(rdDebugLog) << "Finished" << std::endl;
   }
 }
 
 void testEnumerateTautomerSmiles() {
-  BOOST_LOG(rdInfoLog)
+  BOOST_LOG(rdDebugLog)
       << "-----------------------\n test enumerate tautomer smiles"
       << std::endl;
   MolStandardize::CleanupParameters params;
   std::string smi = "c1(ccccc1)/C=C(/O)\\C";
   std::vector<std::string> tsmiles =
       MolStandardize::enumerateTautomerSmiles(smi, params);
-  BOOST_LOG(rdInfoLog) << "Finished" << std::endl;
+  BOOST_LOG(rdDebugLog) << "Finished" << std::endl;
 }
 
 void testMetalDisconnectorLigandExpo() {
-  BOOST_LOG(rdInfoLog) << "-----------------------\n test metal disconnector "
-                          "on LigandExpo ligands"
-                       << std::endl;
+  BOOST_LOG(rdDebugLog) << "-----------------------\n test metal disconnector "
+                           "on LigandExpo ligands"
+                        << std::endl;
 
   std::list<std::pair<std::string, std::string>> ligandExpoSmiles{
       {"[Be](O[P@@](=O)(O)O[P@](=O)(O)OCCCNc1ccc(cc1[N+](=O)[O-])[N+](=O)[O-])("
@@ -1425,10 +1427,12 @@ Positively charged tetravalent B	[B;v4;+1:1]>>[*;-1:1])DATA";
     auto prodsmi = MolToSmiles(static_cast<const ROMol &>(*rwmol));
     TEST_ASSERT(prodsmi == refsmi);
   }
-  BOOST_LOG(rdInfoLog) << "Finished" << std::endl;
+  BOOST_LOG(rdDebugLog) << "Finished" << std::endl;
 }
 
 int main() {
+  RDLog::InitLogs();
+  boost::logging::disable_logs("rdApp.info");
   testCleanup();
   testStandardizeSm();
   testMetalDisconnector();

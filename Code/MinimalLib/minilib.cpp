@@ -17,12 +17,12 @@
 #include <GraphMol/RDKitBase.h>
 #include <GraphMol/MolPickler.h>
 #include <GraphMol/SmilesParse/SmilesParse.h>
-#include <GraphMol/SmilesParse/SmilesWrite.h>
 #include <GraphMol/FileParsers/FileParsers.h>
 #include <GraphMol/MolDraw2D/MolDraw2D.h>
 #include <GraphMol/MolDraw2D/MolDraw2DSVG.h>
 #include <GraphMol/MolDraw2D/MolDraw2DUtils.h>
 #include <GraphMol/Substruct/SubstructMatch.h>
+#include <GraphMol/SubstructLibrary/SubstructLibrary.h>
 #include <GraphMol/Descriptors/Property.h>
 #include <GraphMol/Descriptors/MolDescriptors.h>
 #include <GraphMol/Fingerprints/MorganFingerprints.h>
@@ -127,6 +127,15 @@ std::string JSMol::get_morgan_fp(unsigned int radius,
   if (!d_mol) return "";
   auto fp = MorganFingerprints::getFingerprintAsBitVect(*d_mol, radius, fplen);
   std::string res = BitVectToText(*fp);
+  delete fp;
+  return res;
+}
+
+std::string JSMol::get_morgan_fp_as_binary_text(unsigned int radius,
+                                                unsigned int fplen) const {
+  if (!d_mol) return "";
+  auto fp = MorganFingerprints::getFingerprintAsBitVect(*d_mol, radius, fplen);
+  std::string res = BitVectToBinaryText(*fp);
   delete fp;
   return res;
 }
@@ -286,8 +295,8 @@ std::string JSMol::condense_abbreviations_from_defs(
 }
 
 std::string JSMol::generate_aligned_coords(const JSMol &templateMol,
-                                           bool useCoordGen,
-                                           bool allowRGroups) {
+                                           bool useCoordGen, bool allowRGroups,
+                                           bool acceptFailure) {
   std::string res;
   if (!d_mol || !templateMol.d_mol || !templateMol.d_mol->getNumConformers())
     return res;
@@ -297,7 +306,6 @@ std::string JSMol::generate_aligned_coords(const JSMol &templateMol,
   RDDepict::preferCoordGen = useCoordGen;
 #endif
   RDKit::ROMol *refPattern = nullptr;
-  bool acceptFailure = true;
   int confId = -1;
   RDKit::MatchVectType match = RDDepict::generateDepictionMatching2DStructure(
       *d_mol, *(templateMol.d_mol), confId, refPattern, acceptFailure, false,
@@ -310,6 +318,8 @@ std::string JSMol::generate_aligned_coords(const JSMol &templateMol,
     rj::Writer<rj::StringBuffer> writer(buffer);
     doc.Accept(writer);
     res = buffer.GetString();
+  } else {
+    res = "{}";
   }
 #ifdef RDK_BUILD_COORDGEN_SUPPORT
   RDDepict::preferCoordGen = oprefer;
@@ -317,12 +327,86 @@ std::string JSMol::generate_aligned_coords(const JSMol &templateMol,
   return res;
 };
 
+JSSubstructLibrary::JSSubstructLibrary(unsigned int num_bits)
+    : d_sslib(new SubstructLibrary(
+          boost::shared_ptr<CachedTrustedSmilesMolHolder>(
+              new CachedTrustedSmilesMolHolder()),
+          boost::shared_ptr<PatternHolder>(new PatternHolder()))),
+      d_num_bits(num_bits) {
+  d_molHolder = dynamic_cast<CachedTrustedSmilesMolHolder *>(
+      d_sslib->getMolHolder().get());
+  d_fpHolder = dynamic_cast<PatternHolder *>(d_sslib->getFpHolder().get());
+}
+
+int JSSubstructLibrary::add_trusted_smiles(const std::string &smi) {
+  std::unique_ptr<RWMol> mol(SmilesToMol(smi, 0, false));
+  if (!mol) {
+    return -1;
+  }
+  mol->updatePropertyCache();
+  ExplicitBitVect *bv = PatternFingerprintMol(*mol, d_num_bits);
+  if (!bv) {
+    return -1;
+  }
+  d_fpHolder->addFingerprint(bv);
+  auto ret = d_molHolder->addSmiles(smi);
+  return ret;
+}
+
+inline int JSSubstructLibrary::add_mol_helper(const ROMol &mol) {
+  std::string smi = MolToSmiles(mol);
+  return add_trusted_smiles(smi);
+}
+
+int JSSubstructLibrary::add_mol(const JSMol &m) {
+  return add_mol_helper(*m.d_mol);
+}
+
+int JSSubstructLibrary::add_smiles(const std::string &smi) {
+  std::unique_ptr<RWMol> mol(SmilesToMol(smi));
+  if (!mol) {
+    return -1;
+  }
+  return add_mol_helper(*mol);
+}
+
+JSMol *JSSubstructLibrary::get_mol(unsigned int i) {
+  return new JSMol(new RWMol(*d_sslib->getMol(i)));
+}
+
+std::string JSSubstructLibrary::get_matches(const JSMol &q, bool useChirality,
+                                            int numThreads,
+                                            int maxResults) const {
+  if (!d_sslib->size()) {
+    return "[]";
+  }
+  std::vector<unsigned int> indices = d_sslib->getMatches(
+      *q.d_mol, true, useChirality, false, numThreads, maxResults);
+  rj::Document doc;
+  doc.SetArray();
+  auto &alloc = doc.GetAllocator();
+  for (const auto &i : indices) {
+    doc.PushBack(i, alloc);
+  }
+  rj::StringBuffer buffer;
+  rj::Writer<rj::StringBuffer> writer(buffer);
+  doc.Accept(writer);
+  std::string res = buffer.GetString();
+  return res;
+}
+
+unsigned int JSSubstructLibrary::count_matches(const JSMol &q,
+                                               bool useChirality,
+                                               int numThreads) const {
+  return d_sslib->countMatches(*q.d_mol, true, useChirality, false, 1);
+}
+
 std::string get_inchikey_for_inchi(const std::string &input) {
   return InchiToInchiKey(input);
 }
 
-JSMol *get_mol(const std::string &input) {
-  RWMol *mol = MinimalLib::mol_from_input(input);
+JSMol *get_mol(const std::string &input, const std::string &details_json) {
+  RWMol *mol = MinimalLib::mol_from_input(input, details_json);
   return new JSMol(mol);
 }
 

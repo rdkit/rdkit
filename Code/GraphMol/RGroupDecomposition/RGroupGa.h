@@ -65,13 +65,13 @@ class RGroupDecompositionChromosome : public IntegerStringChromosome {
 
   void copyGene(const StringChromosomeBase& other) override;
 
-  FingerprintVarianceScoreData & getFingerprintVarianceScoreData() {
+  FingerprintVarianceScoreData& getFingerprintVarianceScoreData() {
     return fingerprintVarianceScoreData;
   }
 
   const vector<size_t>& getPermutation() const { return permutation; }
 
-  const RGroupGa& getRGroupGA() const { return rGroupGa; };
+  const RGroupGa& getRGroupGA() const { return rGroupGa; }
 
  private:
   RGroupDecompositionChromosome(const RGroupDecompositionChromosome& other) =
@@ -91,11 +91,11 @@ struct GaResult {
   vector<vector<size_t>> permutations;
 
   GaResult(const double score, const vector<vector<size_t>>& permutations)
-      : score(score), permutations(permutations){};
+      : score(score), permutations(permutations) {}
   GaResult(const GaResult& other)
-      : score(other.score), permutations(other.permutations){};
+      : score(other.score), permutations(other.permutations) {}
 
-  GaResult(){};
+  GaResult() {}
 
   // Copy constructor required by MSVC for future<GaResult>
   GaResult& operator=(const GaResult& other);
@@ -120,7 +120,7 @@ class RDKIT_RGROUPDECOMPOSITION_EXPORT RGroupGa : public GaBase {
 
   shared_ptr<RGroupDecompositionChromosome> createChromosome();
 
-  const RGroupDecompData& getRGroupData() const { return rGroupData; };
+  const RGroupDecompData& getRGroupData() const { return rGroupData; }
 
   const vector<shared_ptr<GaOperation<RGroupDecompositionChromosome>>>
   getOperations() const;

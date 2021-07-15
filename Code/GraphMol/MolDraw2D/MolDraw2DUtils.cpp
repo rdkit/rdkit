@@ -1,5 +1,5 @@
 //
-//  Copyright (C) 2016-2020 Greg Landrum
+//  Copyright (C) 2016-2021 Greg Landrum and other RDKit contributors
 //
 //   @@ All Rights Reserved @@
 //  This file is part of the RDKit.
@@ -43,7 +43,7 @@ bool isAtomCandForChiralH(const RWMol &mol, const Atom *atom) {
 }  // end of anonymous namespace
 
 void prepareMolForDrawing(RWMol &mol, bool kekulize, bool addChiralHs,
-                          bool wedgeBonds, bool forceCoords) {
+                          bool wedgeBonds, bool forceCoords, bool wavyBonds) {
   if (kekulize) {
     try {
       MolOps::Kekulize(mol, false);  // kekulize, but keep the aromatic flags!
@@ -74,6 +74,9 @@ void prepareMolForDrawing(RWMol &mol, bool kekulize, bool addChiralHs,
   if (wedgeBonds) {
     WedgeMolBonds(mol, &mol.getConformer());
   }
+  if (wavyBonds) {
+    addWavyBondsForStereoAny(mol);
+  }
 }
 
 void prepareAndDrawMolecule(MolDraw2D &drawer, const ROMol &mol,
@@ -101,6 +104,20 @@ void updateDrawerParamsFromJSON(MolDraw2D &drawer, const char *json) {
 };
 #define PT_OPT_GET(opt) opts.opt = pt.get(#opt, opts.opt)
 
+void get_rgba(const boost::property_tree::ptree &node, DrawColour &colour) {
+  boost::property_tree::ptree::const_iterator itm = node.begin();
+  colour.r = itm->second.get_value<float>();
+  ++itm;
+  colour.g = itm->second.get_value<float>();
+  ++itm;
+  colour.b = itm->second.get_value<float>();
+  ++itm;
+  if (itm != node.end()) {
+    colour.a = itm->second.get_value<float>();
+    ++itm;
+  }
+}
+
 void get_colour_option(boost::property_tree::ptree *pt, const char *pnm,
                        DrawColour &colour) {
   PRECONDITION(pnm && strlen(pnm), "bad property name");
@@ -108,16 +125,22 @@ void get_colour_option(boost::property_tree::ptree *pt, const char *pnm,
     return;
   }
 
-  boost::property_tree::ptree::const_iterator itm = pt->get_child(pnm).begin();
-  colour.r = itm->second.get_value<float>();
-  ++itm;
-  colour.g = itm->second.get_value<float>();
-  ++itm;
-  colour.b = itm->second.get_value<float>();
-  ++itm;
-  if (itm != pt->get_child(pnm).end()) {
-    colour.a = itm->second.get_value<float>();
-    ++itm;
+  const auto &node = pt->get_child(pnm);
+  get_rgba(node, colour);
+}
+
+void get_colour_palette_option(boost::property_tree::ptree *pt, const char *pnm,
+                               ColourPalette &palette) {
+  PRECONDITION(pnm && strlen(pnm), "bad property name");
+  if (pt->find(pnm) == pt->not_found()) {
+    return;
+  }
+
+  for (const auto &atomicNumNodeIt : pt->get_child(pnm)) {
+    int atomicNum = boost::lexical_cast<int>(atomicNumNodeIt.first);
+    DrawColour colour;
+    get_rgba(atomicNumNodeIt.second, colour);
+    palette[atomicNum] = colour;
   }
 }
 
@@ -181,6 +204,7 @@ void updateDrawerParamsFromJSON(MolDraw2D &drawer, const std::string &json) {
   get_colour_option(&pt, "annotationColour", opts.annotationColour);
   get_colour_option(&pt, "variableAttachmentColour",
                     opts.variableAttachmentColour);
+  get_colour_palette_option(&pt, "atomColourPalette", opts.atomColourPalette);
   if (pt.find("atomLabels") != pt.not_found()) {
     for (const auto &item : pt.get_child("atomLabels")) {
       opts.atomLabels[boost::lexical_cast<int>(item.first)] =

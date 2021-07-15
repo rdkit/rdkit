@@ -29,13 +29,13 @@ class RDKIT_FILEPARSERS_EXPORT MolFileUnhandledFeatureException
     : public std::exception {
  public:
   //! construct with an error message
-  explicit MolFileUnhandledFeatureException(const char *msg) : _msg(msg){};
+  explicit MolFileUnhandledFeatureException(const char *msg) : _msg(msg) {}
   //! construct with an error message
   explicit MolFileUnhandledFeatureException(const std::string msg)
-      : _msg(msg){};
+      : _msg(msg) {}
   //! get the error message
-  const char *what() const noexcept override { return _msg.c_str(); };
-  ~MolFileUnhandledFeatureException() noexcept override{};
+  const char *what() const noexcept override { return _msg.c_str(); }
+  ~MolFileUnhandledFeatureException() noexcept override = default;
 
  private:
   std::string _msg;

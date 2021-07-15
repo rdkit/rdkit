@@ -12,7 +12,10 @@
 
 #include <GraphMol/RDKitBase.h>
 #include <GraphMol/SmilesParse/SmilesParse.h>
+#include <GraphMol/Descriptors/MolDescriptors.h>
+#include <GraphMol/FileParsers/MolSupplier.h>
 #include <GraphMol/Descriptors/ConnectivityDescriptors.h>
+#include <GraphMol/Descriptors/PMI.h>
 
 using namespace RDKit;
 
@@ -108,3 +111,76 @@ TEST_CASE("Kier Phi", "[2D]") {
     }
   }
 }
+
+TEST_CASE("atom counts", "[2D]") {
+  {
+    SmilesParserParams ps;
+    ps.sanitize = true;
+    ps.removeHs = false;
+    std::unique_ptr<ROMol> m(SmilesToMol("CC[H]", ps));
+    REQUIRE(m);
+    CHECK(Descriptors::calcNumHeavyAtoms(*m) == 2);
+    CHECK(Descriptors::calcNumAtoms(*m) == 8);
+  }
+}
+#ifdef RDK_BUILD_DESCRIPTORS3D
+TEST_CASE(
+    "Github #4167: SpherocityIndex() not being recalculated for different "
+    "conformers",
+    "[3D]") {
+  std::string pathName = getenv("RDBASE");
+  std::string sdfName =
+      pathName + "/Code/GraphMol/Descriptors/test_data/github4167.sdf";
+  bool sanitize = true;
+  bool removeHs = false;
+  RDKit::SDMolSupplier reader(sdfName, sanitize, removeHs);
+  std::unique_ptr<ROMol> m1(reader.next());
+  std::unique_ptr<ROMol> m2(reader.next());
+  REQUIRE(m1);
+  REQUIRE(m2);
+  m1->addConformer(new RDKit::Conformer(m2->getConformer()), true);
+  REQUIRE(m1->getNumConformers() == 2);
+
+  {
+    int confId = 0;
+    auto v1_0 = RDKit::Descriptors::spherocityIndex(*m1, confId, true);
+    auto v2 = RDKit::Descriptors::spherocityIndex(*m2, confId, true);
+    confId = 1;
+    auto v1_1 = RDKit::Descriptors::spherocityIndex(*m1, confId, true);
+    CHECK(v1_0 != v1_1);
+    CHECK(v1_1 == v2);
+  }
+  {
+    std::vector<double (*)(const ROMol &, int, bool, bool)> funcs{
+        RDKit::Descriptors::NPR1,
+        RDKit::Descriptors::NPR2,
+        RDKit::Descriptors::PMI1,
+        RDKit::Descriptors::PMI2,
+        RDKit::Descriptors::PMI3,
+        RDKit::Descriptors::radiusOfGyration,
+        RDKit::Descriptors::inertialShapeFactor,
+        RDKit::Descriptors::eccentricity,
+        RDKit::Descriptors::asphericity};
+    for (const auto func : funcs) {
+      bool useAtomMasses = true;
+      bool force = true;
+      int confId = 0;
+      auto v1_0 = func(*m1, confId, useAtomMasses, force);
+      auto v2 = func(*m2, confId, useAtomMasses, force);
+      confId = 1;
+      auto v1_1 = func(*m1, confId, useAtomMasses, force);
+      CHECK(v1_0 != v1_1);
+      CHECK(v1_1 == v2);
+    }
+  }
+  // { // surrogate for NPR1, NPR2, PMI1, PM2,
+  //   int confId = 0;
+  //   auto v1_0 = RDKit::Descriptors::spherocityIndex(*m1, confId, true);
+  //   auto v2 = RDKit::Descriptors::spherocityIndex(*m2, confId, true);
+  //   confId = 1;
+  //   auto v1_1 = RDKit::Descriptors::spherocityIndex(*m1, confId, true);
+  //   CHECK(v1_0 != v1_1);
+  //   CHECK(v1_1 == v2);
+  // }
+}
+#endif

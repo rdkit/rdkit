@@ -20,7 +20,7 @@
 namespace python = boost::python;
 
 namespace RDKit {
-MolDraw2DQt *moldrawFromQPainter(int width, int height, unsigned long ptr,
+MolDraw2DQt *moldrawFromQPainter(int width, int height, size_t ptr,
                                  int panelWidth, int panelHeight) {
   if (!ptr) {
     throw_value_error("QPainter pointer is null");

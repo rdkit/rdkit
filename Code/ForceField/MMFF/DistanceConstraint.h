@@ -22,7 +22,7 @@ namespace MMFF {
 class RDKIT_FORCEFIELD_EXPORT DistanceConstraintContrib
     : public ForceFieldContrib {
  public:
-  DistanceConstraintContrib()  {};
+  DistanceConstraintContrib() {}
   //! Constructor
   /*!
     \param owner       pointer to the owning ForceField
@@ -40,21 +40,21 @@ class RDKIT_FORCEFIELD_EXPORT DistanceConstraintContrib
                             unsigned int idx2, bool relative, double minLen,
                             double maxLen, double forceConst);
 
-  ~DistanceConstraintContrib() {
+  ~DistanceConstraintContrib() override {
     // std::cerr << " ==== Destroy constraint " << d_end1Idx << " " << d_end2Idx
     // << std::endl;
   }
-  double getEnergy(double *pos) const;
+  double getEnergy(double *pos) const override;
 
-  void getGrad(double *pos, double *grad) const;
-  virtual DistanceConstraintContrib *copy() const {
+  void getGrad(double *pos, double *grad) const override;
+  DistanceConstraintContrib *copy() const override {
     return new DistanceConstraintContrib(*this);
-  };
+  }
 
  private:
-  int d_end1Idx{-1}, d_end2Idx{-1};   //!< indices of end points
-  double d_minLen, d_maxLen;  //!< rest length of the bond
-  double d_forceConstant;     //!< force constant of the bond
+  int d_end1Idx{-1}, d_end2Idx{-1};  //!< indices of end points
+  double d_minLen, d_maxLen;         //!< rest length of the bond
+  double d_forceConstant;            //!< force constant of the bond
 };
 }  // namespace MMFF
 }  // namespace ForceFields

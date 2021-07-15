@@ -60,8 +60,7 @@ struct RDKIT_SCAFFOLDNETWORK_EXPORT ScaffoldNetworkParams {
       bondBreakersRxns;  ///< the reaction(s) used to fragment. Should expect a
                          ///< single reactant and produce two products
   ScaffoldNetworkParams()
-      : ScaffoldNetworkParams{
-            {"[!#0;R:1]-!@[!#0:2]>>[*:1]-[#0].[#0]-[*:2]"}} {};
+      : ScaffoldNetworkParams{{"[!#0;R:1]-!@[!#0:2]>>[*:1]-[#0].[#0]-[*:2]"}} {}
   ScaffoldNetworkParams(const std::vector<std::string> &bondBreakersSmarts);
 };
 
@@ -77,9 +76,9 @@ struct RDKIT_SCAFFOLDNETWORK_EXPORT NetworkEdge {
   size_t beginIdx;
   size_t endIdx;
   EdgeType type;
-  NetworkEdge() : beginIdx(0), endIdx(0), type(EdgeType::Initialize){};
+  NetworkEdge() : beginIdx(0), endIdx(0), type(EdgeType::Initialize) {}
   NetworkEdge(size_t bi, size_t ei, EdgeType typ)
-      : beginIdx(bi), endIdx(ei), type(typ){};
+      : beginIdx(bi), endIdx(ei), type(typ) {}
   bool operator==(const RDKit::ScaffoldNetwork::NetworkEdge &o) const {
     return (beginIdx == o.beginIdx) && (endIdx == o.endIdx) && (type == o.type);
   }
@@ -106,7 +105,7 @@ struct RDKIT_SCAFFOLDNETWORK_EXPORT ScaffoldNetwork {
   std::vector<unsigned>
       molCounts;  ///< number of molecules each scaffold was found in
   std::vector<NetworkEdge> edges;  ///< edges in the network
-  ScaffoldNetwork(){};
+  ScaffoldNetwork() {}
 #ifdef RDK_USE_BOOST_SERIALIZATION
   ScaffoldNetwork(const std::string &pkl) {
     std::stringstream iss(pkl);

@@ -156,6 +156,7 @@ The currently supported options are:
 atomLabelDeuteriumTritium,
 dummiesAreAttachments,
 circleAtoms,
+splitBonds,
 continuousHighlight,
 fillHighlights,
 highlightRadius,
@@ -170,6 +171,7 @@ fontFile,
 multipleBondOffset,
 padding,
 additionalAtomLabelPadding,
+noAtomLabels,
 bondLineWidth,
 scaleBondWidth,
 scaleHighlightBondWidth,
@@ -180,21 +182,24 @@ fixedBondLength,
 rotate,
 addAtomIndices,
 addBondIndices,
+isotopeLabels,
+dummyIsotopeLabels,
 addStereoAnnotation,
 atomHighlightsAreCircles,
 centreMoleculesBeforeDrawing,
 explicitMethyl,
 includeMetadata,
 includeRadicals,
-highlightColour,
-backgroundColour,
-legendColour,
-symbolColour,
-atomLabels
+comicMode,
+variableBondWidthMultiplier,
+variableAtomRadius,
+includeChiralFlagLabel,
+simplifiedStereoGroupLabel,
+singleColourWedgeBonds
     </tt></li>
 </ol>
 
-<p>It's often useful to generate molecule renderings where the coordinates of a core is constrained.
+<p>It's often useful to generate molecule renderings where the coordinates of a core are constrained.
 <div class="row">
     <div class="col-sm-6">
         <textarea id="example-6" cols="40" rows="5" wrap="off">
@@ -240,6 +245,77 @@ mol.draw_to_canvas_with_highlights(canvas,tdetails);
 </div>
 </p>
 
+<p><tt>get_mol</tt> can be passed a JSON dictionary of boolean options. Currently supported options are:
+<tt>
+sanitize,
+kekulize,
+removeHs,
+mergeQueryHs
+</tt>
+<div class="row">
+    <div class="col-sm-6">
+        <textarea id="example-7" cols="40" rows="5" wrap="off">
+var smiles = "[*:1]ccc[*:2]";
+var mol = RDKitModule.get_mol(smiles, JSON.stringify({ kekulize: false }));
+var canvas = document.getElementById("canvas-7");
+mol.draw_to_canvas(canvas, -1, -1);
+</textarea>
+        <br /><input value="run" onclick="eval(document.getElementById('example-7').value)" type="button" />
+    </div>
+    <div id="example-7-output" class="col-sm-6">
+        <canvas id="canvas-7" width="250" height="200">
+        </canvas>
+    </div>
+</div>
+</p>
+
+<p>The <tt>SubstructLibrary</tt> functionality is exposed to enable running fast substructure searches
+taking advantage of pre-filtering through pattern fingerprints:
+<div class="row">
+    <div class="col-sm-6">
+        <textarea id="example-8" cols="40" rows="5" wrap="off">
+var sslib = new RDKitModule.SubstructLibrary();
+var mol0 = RDKitModule.get_mol("Cc1cc(F)ccc1");
+var mol1 = RDKitModule.get_mol("Clc1ccccn1");
+sslib.add_trusted_smiles(mol0.get_smiles());
+sslib.add_trusted_smiles(mol1.get_smiles());
+var query = RDKitModule.get_mol(`
+  MJ201100          2D          
+
+  6  6  0  0  0  0  0  0  0  0999 V2000
+   -1.0491    0.7134    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -1.7635    0.3009    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -1.7635   -0.5241    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -1.0491   -0.9366    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -0.3346   -0.5241    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -0.3346    0.3009    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+  2  3  1  0  0  0  0
+  5  6  2  0  0  0  0
+  1  2  2  0  0  0  0
+  6  1  1  0  0  0  0
+  3  4  2  0  0  0  0
+  4  5  1  0  0  0  0
+M  END`);
+matches = JSON.parse(sslib.get_matches(query));
+var canvas_query = document.getElementById("canvas-8-query");
+query.draw_to_canvas_with_highlights(canvas_query, JSON.stringify({ legend: 'query' }));
+var canvas_mol0 = document.getElementById("canvas-8-mol0");
+mol0.draw_to_canvas_with_highlights(canvas_mol0, JSON.stringify({ legend: `mol0 matches: ${matches.includes(0)}` }));
+var canvas_mol1 = document.getElementById("canvas-8-mol1");
+mol1.draw_to_canvas_with_highlights(canvas_mol1, JSON.stringify({ legend: `mol1 matches: ${matches.includes(1)}` }));
+</textarea>
+        <br /><input value="run" onclick="eval(document.getElementById('example-8').value)" type="button" />
+    </div>
+    <div id="example-8-output" class="col-sm-6">
+        <canvas id="canvas-8-query" width="150" height="150">
+        </canvas>
+        <canvas id="canvas-8-mol0" width="150" height="150">
+        </canvas>
+        <canvas id="canvas-8-mol1" width="150" height="150">
+        </canvas>
+    </div>
+</div>
+</p>
 
 
     </div>
