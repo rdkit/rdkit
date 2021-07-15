@@ -18,17 +18,16 @@
 
 using namespace RDKit;
 
-
-
-
 namespace RDKit {
-namespace MinimalLib{
-extern std::string process_details(const std::string &details, unsigned int &width,
-                            unsigned int &height, int &offsetx, int &offsety,
-                            std::string &legend, std::vector<int> &atomIds,
-                            std::vector<int> &bondIds);
+namespace MinimalLib {
+extern std::string process_details(const std::string &details,
+                                   unsigned int &width, unsigned int &height,
+                                   int &offsetx, int &offsety,
+                                   std::string &legend,
+                                   std::vector<int> &atomIds,
+                                   std::vector<int> &bondIds);
 }
-}
+}  // namespace RDKit
 
 namespace {
 std::string draw_to_canvas_with_offset(JSMol &self, emscripten::val canvas,
@@ -70,8 +69,8 @@ std::string draw_to_canvas_with_highlights(JSMol &self, emscripten::val canvas,
   int offsetx = 0;
   int offsety = 0;
   std::string legend = "";
-  auto problems = MinimalLib::process_details(details, w, h, offsetx, offsety, legend,
-                                  atomIds, bondIds);
+  auto problems = MinimalLib::process_details(details, w, h, offsetx, offsety,
+                                              legend, atomIds, bondIds);
   if (!problems.empty()) {
     return problems;
   }
@@ -90,6 +89,21 @@ std::string draw_to_canvas_with_highlights(JSMol &self, emscripten::val canvas,
 
 JSMol *get_mol_no_details(const std::string &input) {
   return get_mol(input, std::string());
+}
+
+emscripten::val get_morgan_fp_as_uint8array(const JSMol &self,
+                                            unsigned int radius,
+                                            unsigned int fplen) {
+  std::string fp = self.get_morgan_fp_as_binary_text(radius, fplen);
+  emscripten::val view(emscripten::typed_memory_view(
+      fp.size(), reinterpret_cast<const unsigned char *>(fp.c_str())));
+  auto res = emscripten::val::global("Uint8Array").new_(fp.size());
+  res.call<void>("set", view);
+  return res;
+}
+
+emscripten::val get_morgan_fp_as_uint8array(const JSMol &self) {
+  return get_morgan_fp_as_uint8array(self, 2, 2048);
 }
 
 }  // namespace
@@ -115,6 +129,13 @@ EMSCRIPTEN_BINDINGS(RDKit_minimal) {
       .function("draw_to_canvas", &draw_to_canvas)
       .function("draw_to_canvas_with_highlights",
                 &draw_to_canvas_with_highlights)
+      .function("get_morgan_fp_as_uint8array",
+                select_overload<emscripten::val(const JSMol &)>(
+                    get_morgan_fp_as_uint8array))
+      .function("get_morgan_fp_as_uint8array",
+                select_overload<emscripten::val(const JSMol &, unsigned int,
+                                                unsigned int)>(
+                    get_morgan_fp_as_uint8array))
 #endif
       .function("get_substruct_match", &JSMol::get_substruct_match)
       .function("get_substruct_matches", &JSMol::get_substruct_matches)
