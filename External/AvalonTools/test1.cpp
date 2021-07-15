@@ -1,4 +1,12 @@
-// $Id$
+//
+//  Copyright (C) 2008-2021 Greg Landrum and other RDKit contributors
+//
+//   @@ All Rights Reserved @@
+//  This file is part of the RDKit.
+//  The contents are covered by the terms of the BSD license
+//  which is included in the file license.txt, found at the root
+//  of the RDKit source tree.
+//
 //
 //  Created by Greg Landrum, July 2008
 //
@@ -476,6 +484,41 @@ void testGithub4075() {
   }
   BOOST_LOG(rdInfoLog) << "done" << std::endl;
 }
+
+void testGithub4330() {
+  BOOST_LOG(rdInfoLog) << "testing Github #4330: AvalonTools::set2DCoords "
+                          "failing for molecules which have Hs"
+                       << std::endl;
+  {
+    auto mol = "F[C@H](OOF)Br"_smiles;
+    TEST_ASSERT(mol);
+    AvalonTools::set2DCoords(*mol);
+    TEST_ASSERT(mol->getNumConformers() == 1);
+    MolOps::addHs(*mol);
+    AvalonTools::set2DCoords(*mol);
+    TEST_ASSERT(mol->getNumConformers() == 1);
+  }
+  {  // example with the explicit Hs already in the graph
+    SmilesParserParams params;
+    params.removeHs = false;
+    std::unique_ptr<RWMol> mol(SmilesToMol("F[C@]([H])(OOF)Br", params));
+    TEST_ASSERT(mol);
+    TEST_ASSERT(mol->getNumAtoms() == 7);
+    AvalonTools::set2DCoords(*mol);
+    TEST_ASSERT(mol->getNumConformers() == 1);
+  }
+  {
+    auto mol = "CC"_smiles;
+    TEST_ASSERT(mol);
+    AvalonTools::set2DCoords(*mol);
+    TEST_ASSERT(mol->getNumConformers() == 1);
+    MolOps::addHs(*mol);
+    AvalonTools::set2DCoords(*mol);
+    TEST_ASSERT(mol->getNumConformers() == 1);
+  }
+  BOOST_LOG(rdInfoLog) << "done" << std::endl;
+}
+
 int main() {
   RDLog::InitLogs();
 #if 1
@@ -491,9 +534,10 @@ int main() {
   testSmilesSegFault();
   testGithub336();
   testCountFps();
-#endif
   testInitStruChk();
+#endif
   testGithub4075();
+  testGithub4330();
 
   return 0;
 }
