@@ -171,7 +171,7 @@ static const std::map<std::string, std::hash_result_t> PNG_HASHES = {
     {"testHandDrawn-3.png", 2579778653U},
     {"testHandDrawn-4.png", 2660533685U},
     {"testHandDrawn-5.png", 2787812269U},
-    {"testGithub4323_1.png", 2022217515U},
+    {"testGithub4323_1.png", 2174252789U},
     {"testGithub4323_3.png", 1026038713U}};
 
 std::hash_result_t hash_file(const std::string &filename) {
