@@ -53,7 +53,11 @@ void pyDictToColourMap(python::object pyo, ColourPalette &res) {
     float r = python::extract<float>(tpl[0]);
     float g = python::extract<float>(tpl[1]);
     float b = python::extract<float>(tpl[2]);
-    DrawColour clr(r, g, b);
+    float a = 1.0;
+    if (python::len(tpl) > 3) {
+      a = python::extract<float>(tpl[3]);
+    }
+    DrawColour clr(r, g, b, a);
     res[python::extract<int>(tDict.keys()[i])] = clr;
   }
 }
@@ -112,7 +116,7 @@ DrawColour pyTupleToDrawColour(const python::tuple tpl) {
     throw ValueErrorException("RGBA color value needs to be between 0 and 1.");
   }
   float a = 1;
-  if (python::extract<unsigned int>(tpl.attr("__len__")()) > 3) {
+  if (python::len(tpl) > 3) {
     a = python::extract<float>(tpl[3]);
     if (a > 1 || a < 0) {
       throw ValueErrorException(
