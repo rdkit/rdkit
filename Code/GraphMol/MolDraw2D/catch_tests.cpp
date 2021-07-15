@@ -171,7 +171,8 @@ static const std::map<std::string, std::hash_result_t> PNG_HASHES = {
     {"testHandDrawn-3.png", 2579778653U},
     {"testHandDrawn-4.png", 2660533685U},
     {"testHandDrawn-5.png", 2787812269U},
-    {"testGithub4323_1.png", 2022217515U}};
+    {"testGithub4323_1.png", 2022217515U},
+    {"testGithub4323_3.png", 1026038713U}};
 
 std::hash_result_t hash_file(const std::string &filename) {
   std::ifstream ifs(filename, std::ios_base::binary);
@@ -3183,6 +3184,7 @@ TEST_CASE("Github #4238: prepareMolForDrawing and wavy bonds") {
 TEST_CASE("Github #4323: support providing RGBA colors") {
   auto mol = "CCCO"_smiles;
   REQUIRE(mol);
+#ifdef RDK_BUILD_FREETYPE_SUPPORT
   SECTION("with alpha") {
     MolDraw2DSVG drawer(200, 150);
     drawer.drawOptions().legendColour = DrawColour(1, 0, 1, 0.3);
@@ -3194,7 +3196,6 @@ TEST_CASE("Github #4323: support providing RGBA colors") {
     std::ofstream outs("testGithub4323_1.svg");
     outs << text;
     outs.flush();
-    std::cerr << text << std::endl;
     // background
     CHECK(text.find("fill:#7F7F7F4C;") != std::string::npos);
     CHECK(text.find("fill:#7F7F7F;") == std::string::npos);
@@ -3220,7 +3221,45 @@ TEST_CASE("Github #4323: support providing RGBA colors") {
     CHECK(text.find("fill='#FF00FF4C'") == std::string::npos);
     CHECK(text.find("fill='#FF00FF'") != std::string::npos);
   }
+#endif
+  SECTION("no FT with alpha") {
+    MolDraw2DSVG drawer(200, 150, -1, -1, NO_FREETYPE);
+    drawer.drawOptions().legendColour = DrawColour(1, 0, 1, 0.3);
+    drawer.drawOptions().backgroundColour = DrawColour(0.5, 0.5, 0.5, 0.3);
+    drawer.drawMolecule(*mol, "partially transparent legend/background");
+    drawer.finishDrawing();
+
+    std::string text = drawer.getDrawingText();
+    std::ofstream outs("testGithub4323_3.svg");
+    outs << text;
+    outs.flush();
+    // background
+    CHECK(text.find("fill:#7F7F7F4C;") != std::string::npos);
+    CHECK(text.find("fill:#7F7F7F;") == std::string::npos);
+    // legend
+    CHECK(text.find("fill:#FF00FF4C'") != std::string::npos);
+    CHECK(text.find("fill:#FF00FF'") == std::string::npos);
+  }
+  SECTION("no FT without alpha") {
+    MolDraw2DSVG drawer(200, 150, -1, -1, NO_FREETYPE);
+    drawer.drawOptions().legendColour = DrawColour(1, 0, 1);
+    drawer.drawOptions().backgroundColour = DrawColour(0.5, 0.5, 0.5);
+    drawer.drawMolecule(*mol, "no transparency");
+    drawer.finishDrawing();
+
+    std::string text = drawer.getDrawingText();
+    std::ofstream outs("testGithub4323_4.svg");
+    outs << text;
+    outs.flush();
+    // background
+    CHECK(text.find("fill:#7F7F7F4C;") == std::string::npos);
+    CHECK(text.find("fill:#7F7F7F;") != std::string::npos);
+    // legend
+    CHECK(text.find("fill:#FF00FF4C'") == std::string::npos);
+    CHECK(text.find("fill:#FF00FF'") != std::string::npos);
+  }
 #ifdef RDK_BUILD_CAIRO_SUPPORT
+#ifdef RDK_BUILD_FREETYPE_SUPPORT
   SECTION("Cairo with alpha") {
     MolDraw2DCairo drawer(200, 150);
     drawer.drawOptions().legendColour = DrawColour(1, 0, 1, 0.3);
@@ -3229,6 +3268,16 @@ TEST_CASE("Github #4323: support providing RGBA colors") {
     drawer.finishDrawing();
     drawer.writeDrawingText("testGithub4323_1.png");
     check_file_hash("testGithub4323_1.png");
+  }
+#endif
+  SECTION("No FT Cairo with alpha") {
+    MolDraw2DCairo drawer(200, 150, -1, -1, NO_FREETYPE);
+    drawer.drawOptions().legendColour = DrawColour(1, 0, 1, 0.3);
+    drawer.drawOptions().backgroundColour = DrawColour(0.5, 0.5, 0.5, 0.3);
+    drawer.drawMolecule(*mol, "partially transparent legend/background");
+    drawer.finishDrawing();
+    drawer.writeDrawingText("testGithub4323_3.png");
+    check_file_hash("testGithub4323_3.png");
   }
 #endif
 }
