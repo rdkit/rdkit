@@ -3194,6 +3194,7 @@ TEST_CASE("Github #4323: support providing RGBA colors") {
     std::ofstream outs("testGithub4323_1.svg");
     outs << text;
     outs.flush();
+    std::cerr << text << std::endl;
     // background
     CHECK(text.find("fill:#7F7F7F4C;") != std::string::npos);
     CHECK(text.find("fill:#7F7F7F;") == std::string::npos);
