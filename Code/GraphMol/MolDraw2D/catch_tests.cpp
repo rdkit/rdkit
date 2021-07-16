@@ -151,8 +151,7 @@ static const std::map<std::string, std::hash_result_t> SVG_HASHES = {
     {"testGithub3912.2.svg", 2868397535U},
     {"testGithub2976.svg", 4285372032U},
     {"testReactionCoords.svg", 1266050580U},
-    {"testAnnotationColors.svg", 3669978208U}
-};
+    {"testAnnotationColors.svg", 3669978208U}};
 
 // These PNG hashes aren't completely reliable due to floating point cruft,
 // but they can still reduce the number of drawings that need visual
@@ -171,7 +170,9 @@ static const std::map<std::string, std::hash_result_t> PNG_HASHES = {
     {"testHandDrawn-2.png", 1191090506U},
     {"testHandDrawn-3.png", 2579778653U},
     {"testHandDrawn-4.png", 2660533685U},
-    {"testHandDrawn-5.png", 2787812269U}};
+    {"testHandDrawn-5.png", 2787812269U},
+    {"testGithub4323_1.png", 2174252789U},
+    {"testGithub4323_3.png", 1026038713U}};
 
 std::hash_result_t hash_file(const std::string &filename) {
   std::ifstream ifs(filename, std::ios_base::binary);
@@ -186,8 +187,9 @@ std::hash_result_t hash_file(const std::string &filename) {
 }
 
 void check_file_hash(const std::string &filename,
-                     std::hash_result_t exp_hash=0U) {
-//    std::cout << filename << " : " << hash_file(filename) << "U" << std::endl;
+                     std::hash_result_t exp_hash = 0U) {
+  //    std::cout << filename << " : " << hash_file(filename) << "U" <<
+  //    std::endl;
 
   std::map<std::string, std::hash_result_t>::const_iterator it;
   if (filename.substr(filename.length() - 4) == ".svg") {
@@ -208,7 +210,7 @@ void check_file_hash(const std::string &filename,
               << "U not the expected " << exp_hash << "U" << std::endl;
   }
 }
-} // namespace
+}  // namespace
 
 using namespace RDKit;
 
@@ -635,7 +637,6 @@ TEST_CASE("zero-order bonds", "[drawing][organometallics]") {
     outs << text;
     outs.close();
     check_file_hash("testZeroOrderBonds_1.svg");
-
 
     CHECK(text.find("stroke-dasharray:2,2") != std::string::npos);
   }
@@ -2410,7 +2411,8 @@ M  END)CTAB"_ctab;
       drawer.drawMolecule(*m);
       drawer.finishDrawing();
       auto text = drawer.getDrawingText();
-      std::string filename((boost::format("testLinkNodes-2-%d.svg") % rotn).str());
+      std::string filename(
+          (boost::format("testLinkNodes-2-%d.svg") % rotn).str());
       std::ofstream outs(filename);
       outs << text;
       outs.close();
@@ -3177,4 +3179,105 @@ TEST_CASE("Github #4238: prepareMolForDrawing and wavy bonds") {
     outs << text;
     outs.flush();
   }
+}
+
+TEST_CASE("Github #4323: support providing RGBA colors") {
+  auto mol = "CCCO"_smiles;
+  REQUIRE(mol);
+#ifdef RDK_BUILD_FREETYPE_SUPPORT
+  SECTION("with alpha") {
+    MolDraw2DSVG drawer(200, 150);
+    drawer.drawOptions().legendColour = DrawColour(1, 0, 1, 0.3);
+    drawer.drawOptions().backgroundColour = DrawColour(0.5, 0.5, 0.5, 0.3);
+    drawer.drawMolecule(*mol, "partially transparent legend/background");
+    drawer.finishDrawing();
+
+    std::string text = drawer.getDrawingText();
+    std::ofstream outs("testGithub4323_1.svg");
+    outs << text;
+    outs.flush();
+    // background
+    CHECK(text.find("fill:#7F7F7F4C;") != std::string::npos);
+    CHECK(text.find("fill:#7F7F7F;") == std::string::npos);
+    // legend
+    CHECK(text.find("fill='#FF00FF4C'") != std::string::npos);
+    CHECK(text.find("fill='#FF00FF'") == std::string::npos);
+  }
+  SECTION("without alpha") {
+    MolDraw2DSVG drawer(200, 150);
+    drawer.drawOptions().legendColour = DrawColour(1, 0, 1);
+    drawer.drawOptions().backgroundColour = DrawColour(0.5, 0.5, 0.5);
+    drawer.drawMolecule(*mol, "no transparency");
+    drawer.finishDrawing();
+
+    std::string text = drawer.getDrawingText();
+    std::ofstream outs("testGithub4323_2.svg");
+    outs << text;
+    outs.flush();
+    // background
+    CHECK(text.find("fill:#7F7F7F4C;") == std::string::npos);
+    CHECK(text.find("fill:#7F7F7F;") != std::string::npos);
+    // legend
+    CHECK(text.find("fill='#FF00FF4C'") == std::string::npos);
+    CHECK(text.find("fill='#FF00FF'") != std::string::npos);
+  }
+#endif
+  SECTION("no FT with alpha") {
+    MolDraw2DSVG drawer(200, 150, -1, -1, NO_FREETYPE);
+    drawer.drawOptions().legendColour = DrawColour(1, 0, 1, 0.3);
+    drawer.drawOptions().backgroundColour = DrawColour(0.5, 0.5, 0.5, 0.3);
+    drawer.drawMolecule(*mol, "partially transparent legend/background");
+    drawer.finishDrawing();
+
+    std::string text = drawer.getDrawingText();
+    std::ofstream outs("testGithub4323_3.svg");
+    outs << text;
+    outs.flush();
+    // background
+    CHECK(text.find("fill:#7F7F7F4C;") != std::string::npos);
+    CHECK(text.find("fill:#7F7F7F;") == std::string::npos);
+    // legend
+    CHECK(text.find("fill:#FF00FF4C'") != std::string::npos);
+    CHECK(text.find("fill:#FF00FF'") == std::string::npos);
+  }
+  SECTION("no FT without alpha") {
+    MolDraw2DSVG drawer(200, 150, -1, -1, NO_FREETYPE);
+    drawer.drawOptions().legendColour = DrawColour(1, 0, 1);
+    drawer.drawOptions().backgroundColour = DrawColour(0.5, 0.5, 0.5);
+    drawer.drawMolecule(*mol, "no transparency");
+    drawer.finishDrawing();
+
+    std::string text = drawer.getDrawingText();
+    std::ofstream outs("testGithub4323_4.svg");
+    outs << text;
+    outs.flush();
+    // background
+    CHECK(text.find("fill:#7F7F7F4C;") == std::string::npos);
+    CHECK(text.find("fill:#7F7F7F;") != std::string::npos);
+    // legend
+    CHECK(text.find("fill:#FF00FF4C'") == std::string::npos);
+    CHECK(text.find("fill:#FF00FF'") != std::string::npos);
+  }
+#ifdef RDK_BUILD_CAIRO_SUPPORT
+#ifdef RDK_BUILD_FREETYPE_SUPPORT
+  SECTION("Cairo with alpha") {
+    MolDraw2DCairo drawer(200, 150);
+    drawer.drawOptions().legendColour = DrawColour(1, 0, 1, 0.3);
+    drawer.drawOptions().backgroundColour = DrawColour(0.5, 0.5, 0.5, 0.3);
+    drawer.drawMolecule(*mol, "partially transparent legend/background");
+    drawer.finishDrawing();
+    drawer.writeDrawingText("testGithub4323_1.png");
+    check_file_hash("testGithub4323_1.png");
+  }
+#endif
+  SECTION("No FT Cairo with alpha") {
+    MolDraw2DCairo drawer(200, 150, -1, -1, NO_FREETYPE);
+    drawer.drawOptions().legendColour = DrawColour(1, 0, 1, 0.3);
+    drawer.drawOptions().backgroundColour = DrawColour(0.5, 0.5, 0.5, 0.3);
+    drawer.drawMolecule(*mol, "partially transparent legend/background");
+    drawer.finishDrawing();
+    drawer.writeDrawingText("testGithub4323_3.png");
+    check_file_hash("testGithub4323_3.png");
+  }
+#endif
 }
