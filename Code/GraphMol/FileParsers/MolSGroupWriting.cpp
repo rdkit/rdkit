@@ -639,7 +639,7 @@ std::string FormatV3000AttachPointBlock(
 namespace {
 void addBlockToSGroupString(std::string block, std::string &currentLine,
                             std::ostringstream &os) {
-  if (currentLine.length() + block.length() < 80) {
+  if (currentLine.length() + block.length() < 78) {
     currentLine += block;
   } else {
     os << currentLine << " -\n";
@@ -651,7 +651,7 @@ void addBlockToSGroupString(std::string block, std::string &currentLine,
       unsigned int start = 0;
       os << "M  V30" << block.substr(start, 72) << "-\n";
       start += 72;
-      while (length - start > 73) {
+      while (length - start >= 73) {
         os << "M  V30 " << block.substr(start, 72);
         start += 72;
         if (start < length) {
@@ -720,7 +720,7 @@ const std::string GetV3000MolFileSGroupLines(const unsigned int idx,
   addBlockToSGroupString(FormatV3000StringPropertyBlock("SEQID", sgroup),
                          currLine, os);
   std::string res;
-  if (!currLine.empty()) {
+  if (!currLine.empty() && currLine != "M  V30") {
     os << currLine << std::endl;
     res = os.str();
   } else {
