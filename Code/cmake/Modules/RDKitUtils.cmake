@@ -274,7 +274,7 @@ function(createExportTestHeaders)
   " * templates), but make sure it is visible for *nix\n"
   " */\n"
   "// RDKIT_QUERY_EXPORT definitions\n"
-  "#if defined(RDKIT_DYN_LINK) && defined(WIN32) && defined(_MSC_VER) && defined(BOOST_HAS_DECLSPEC)\n"
+  "#if defined(RDKIT_DYN_LINK) && defined(WIN32) && defined(BOOST_HAS_DECLSPEC)\n"
   "#define RDKIT_QUERY_EXPORT\n"
   "#else\n"
   "#define RDKIT_QUERY_EXPORT RDKIT_GRAPHMOL_EXPORT\n"
