@@ -1,6 +1,6 @@
 //
 //
-//  Copyright (C) 2019 Greg Landrum
+//  Copyright (C) 2019-2021 Greg Landrum and other RDKit contributors
 //
 //   @@ All Rights Reserved @@
 //  This file is part of the RDKit.
@@ -26,6 +26,7 @@
 #include <GraphMol/Descriptors/Property.h>
 #include <GraphMol/Descriptors/MolDescriptors.h>
 #include <GraphMol/Fingerprints/MorganFingerprints.h>
+#include <GraphMol/MolInterchange/MolInterchange.h>
 #include <GraphMol/Depictor/RDDepictor.h>
 #include <GraphMol/CIPLabeler/CIPLabeler.h>
 #include <GraphMol/Abbreviations/Abbreviations.h>
@@ -73,6 +74,10 @@ std::string JSMol::get_molblock() const {
 std::string JSMol::get_v3Kmolblock() const {
   if (!d_mol) return "";
   return MolToV3KMolBlock(*d_mol);
+}
+std::string JSMol::get_json() const {
+  if (!d_mol) return "";
+  return MolInterchange::MolToJSONData(*d_mol);
 }
 
 std::string JSMol::get_substruct_match(const JSMol &q) const {

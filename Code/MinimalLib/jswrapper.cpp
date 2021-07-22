@@ -1,6 +1,6 @@
 //
 //
-//  Copyright (C) 2019-2020 Greg Landrum
+//  Copyright (C) 2019-2021 Greg Landrum and other RDKit contributors
 //
 //   @@ All Rights Reserved @@
 //  This file is part of the RDKit.
@@ -117,6 +117,7 @@ EMSCRIPTEN_BINDINGS(RDKit_minimal) {
       .function("get_molblock", &JSMol::get_molblock)
       .function("get_v3Kmolblock", &JSMol::get_v3Kmolblock)
       .function("get_inchi", &JSMol::get_inchi)
+      .function("get_json", &JSMol::get_json)
       .function("get_svg",
                 select_overload<std::string() const>(&JSMol::get_svg))
       .function("get_svg",

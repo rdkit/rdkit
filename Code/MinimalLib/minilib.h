@@ -1,6 +1,6 @@
 //
 //
-//  Copyright (C) 2019 Greg Landrum
+//  Copyright (C) 2019-2021 Greg Landrum and other RDKit contributors
 //
 //   @@ All Rights Reserved @@
 //  This file is part of the RDKit.
@@ -21,6 +21,7 @@ class JSMol {
   std::string get_molblock() const;
   std::string get_v3Kmolblock() const;
   std::string get_inchi() const;
+  std::string get_json() const;
   std::string get_svg(unsigned int width, unsigned int height) const;
   std::string get_svg() const {
     return get_svg(d_defaultWidth, d_defaultHeight);
