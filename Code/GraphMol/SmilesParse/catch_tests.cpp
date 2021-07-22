@@ -1,5 +1,4 @@
 //
-//
 //  Copyright (C) 2018-2021 Greg Landrum and other RDKit contributors
 //
 //   @@ All Rights Reserved @@
@@ -941,5 +940,30 @@ TEST_CASE("Github #4319 add CXSMARTS support") {
     REQUIRE(mol->getNumAtoms() == 4);
     CHECK(MolToSmarts(*mol) == "CCCO");
     CHECK(MolToCXSmarts(*mol) == "CCCO |$foo;;bar;$|");
+  }
+
+  SECTION("parser, confirm enhanced stereo working") {
+    auto mol = "[#6][C@]([#8])(F)Cl |&1:1|"_smarts;
+    REQUIRE(mol);
+    REQUIRE(mol->getNumAtoms() == 5);
+    CHECK(MolToSmarts(*mol) == "[#6][C@](-,:[#8])(-,:F)Cl");
+    CHECK(MolToCXSmarts(*mol) == "[#6][C@](-,:[#8])(-,:F)Cl |&1:1|");
+
+    {
+      auto smol = "C[C@](O)(F)Cl |&1:1|"_smiles;
+      REQUIRE(smol);
+      SubstructMatchParameters sssparams;
+      sssparams.useEnhancedStereo = true;
+      sssparams.useChirality = true;
+      CHECK(SubstructMatch(*smol, *mol, sssparams).size() == 1);
+    }
+    {
+      auto smol = "C[C@](O)(F)Cl |o1:1|"_smiles;
+      REQUIRE(smol);
+      SubstructMatchParameters sssparams;
+      sssparams.useEnhancedStereo = true;
+      sssparams.useChirality = true;
+      CHECK(SubstructMatch(*smol, *mol, sssparams).empty());
+    }
   }
 }
