@@ -10,7 +10,9 @@
 
 #include <ctime>
 #include <limits>
+#ifdef RDK_THREADSAFE_SSS
 #include <future>
+#endif
 #include <assert.h>
 #include "RGroupGa.h"
 #include "RGroupDecompData.h"
@@ -299,10 +301,19 @@ GaResult RGroupGa::run(int runNumber) {
 
 vector<GaResult> RGroupGa::runBatch() {
   int numberRuns = rGroupData.params.gaNumberRuns;
+  bool gaParallelRuns = rGroupData.params.gaParallelRuns;
+#ifndef RDK_TEST_MULTITHREADED
+  if (gaParallelRuns) {
+    gaParallelRuns = false;
+    BOOST_LOG(rdWarningLog) << "This RDKit build does not enable GA parallel runs" << std::endl;
+  }
+#endif
+
   vector<GaResult> results;
   results.reserve(numberRuns);
 
-  if (rGroupData.params.gaParallelRuns) {
+  if (gaParallelRuns) {
+#ifdef RDK_TEST_MULTITHREADED
     vector<future<GaResult>> tasks;
     tasks.reserve(numberRuns);
     for (int n = 0; n < numberRuns; n++) {
@@ -312,6 +323,7 @@ vector<GaResult> RGroupGa::runBatch() {
 
     std::transform(tasks.begin(), tasks.end(), back_inserter(results),
                    [](future<GaResult>& f) { return f.get(); });
+#endif
   } else {
     for (int n = 0; n < numberRuns; n++) {
       auto result = run(n + 1);

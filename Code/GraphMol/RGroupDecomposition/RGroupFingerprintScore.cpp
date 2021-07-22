@@ -16,7 +16,9 @@
 #include <utility>
 #include <vector>
 #include <map>
+#ifdef RDK_THREADSAFE_SSS
 #include <mutex>
+#endif
 
 // #define DEBUG
 
@@ -227,12 +229,16 @@ VarianceDataForLabel::VarianceDataForLabel(const int &label) : label(label) {
   bitCounts = std::vector<int>(fingerprintSize, 0.0);
 }
 
+#ifdef RDK_THREADSAFE_SSS
 static std::mutex groupMutex;
+#endif
 
 // add an rgroup structure to a bit counts array
 void VarianceDataForLabel::addRgroupData(RGroupData *rgroupData) {
   if (rgroupData->fingerprint == nullptr) {
+#ifdef RDK_THREADSAFE_SSS
     const std::lock_guard<std::mutex> lock(groupMutex);
+#endif
     if (rgroupData->fingerprint == nullptr) {
       addFingerprintToRGroupData(rgroupData);
     }

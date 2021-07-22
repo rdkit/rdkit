@@ -23,6 +23,10 @@
 #include "MultithreadedSDMolSupplier.h"
 #include "MultithreadedSmilesMolSupplier.h"
 
+#ifdef RDK_TEST_MULTITHREADED
+#include <mutex>
+#endif
+
 namespace io = boost::iostreams;
 using namespace RDKit;
 using namespace std::chrono;
@@ -30,9 +34,13 @@ using namespace std::chrono;
 // thread safe printing for debugging
 // Usage Example: PrintThread{} << "something";
 struct PrintThread : public std::stringstream {
+#ifdef RDK_TEST_MULTITHREADED
   static std::mutex cout_mutex;
+#endif
   ~PrintThread() override {
+#ifdef RDK_TEST_MULTITHREADED
     std::lock_guard<std::mutex> l{cout_mutex};
+#endif
     std::cout << rdbuf();
   }
 };

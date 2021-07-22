@@ -401,8 +401,11 @@ if(RDK_BUILD_THREADSAFE_SSS)
   endif()
   target_link_libraries(rdkit_base INTERFACE Threads::Threads)
 else()
+  # otherwise boost flyweight links against pthreads and causes the
+  # RDK_BUILD_THREADSAFE_SSS=OFF build to fail
+  target_compile_definitions(rdkit_base INTERFACE "-DBOOST_DISABLE_THREADS")
   if(RDK_TEST_MULTITHREADED)
-    message("RDK_TEST_MULTITHREADED does not make sense without RD_BUILD_THREADSAFE_SSS, disabling it.")
+    message("RDK_TEST_MULTITHREADED does not make sense without RDK_BUILD_THREADSAFE_SSS, disabling it.")
     set(RDK_TEST_MULTITHREADED OFF)
   endif()
 endif()
