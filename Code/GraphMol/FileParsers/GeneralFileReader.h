@@ -104,7 +104,7 @@ std::unique_ptr<MolSupplier> getSupplier(const std::string& path,
 
   std::istream* strm;
   if (compressionFormat.empty()) {
-    strm = new std::ifstream(path.c_str());
+    strm = new std::ifstream(path.c_str(), std::ios::in | std::ios::binary);
   } else {
     strm = new gzstream(path);
   }

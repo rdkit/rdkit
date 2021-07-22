@@ -53,6 +53,10 @@
 #include "../FMCS.h"
 #include "../DebugTrace.h"  //#ifdef VERBOSE_STATISTICS_ON
 
+#ifdef _WIN32
+#include <windows.h>
+#endif
+
 using namespace RDKit;
 
 unsigned long long T0;
@@ -117,10 +121,10 @@ std::string getSmilesOnlyChEMBL(
 
 MCSParameters p;
 
-void testFileMCSB(
-    const char* test, unsigned timeout = 30,
-    std::vector<unsigned> test_N = std::vector<
-        unsigned>()) {  // optional list of some tests for investigation
+void testFileMCSB(const char* test, unsigned timeout = 30,
+                  std::vector<unsigned> test_N =
+                      std::vector<unsigned>()) {  // optional list of some tests
+                                                  // for investigation
   p.Verbose = false;
 
   std::vector<ROMOL_SPTR> mols;  // IT CAN OCCUPY A LOT OF MEMORY. store SMILES
@@ -129,7 +133,7 @@ void testFileMCSB(
   std::string molFile, id;
   std::map<std::string, size_t> molIdMap;
   std::vector<std::string> smilesList;
-  std::list<std::vector<std::string> > testCase;
+  std::list<std::vector<std::string>> testCase;
   std::string referenceOutFile(test);
   referenceOutFile += ".REF.out";
   std::string outFile(test);
@@ -235,9 +239,9 @@ void testFileMCSB(
         *c = '\0';
       }
       std::string sm = getSmilesOnly(str, &id);
-      smilesList.push_back(sm);                     // without Id and LineFeed
+      smilesList.push_back(sm);            // without Id and LineFeed
       mols.emplace_back(SmilesToMol(sm));  // SmartsToMol ???
-      molIdMap[id] = mols.size() - 1;               // index in mols
+      molIdMap[id] = mols.size() - 1;      // index in mols
     }
   }
   fclose(f);
@@ -270,8 +274,8 @@ void testFileMCSB(
   fprintf(f, "#software RDKit C++ FMCS \n#options  timeout=%u threshold=%g\n",
           p.Timeout, p.Threshold);
   std::cout << "Perform test cases ... \n";
-  for (std::list<std::vector<std::string> >::const_iterator
-           tc = testCase.begin();
+  for (std::list<std::vector<std::string>>::const_iterator tc =
+           testCase.begin();
        tc != testCase.end(); tc++, n++) {
     if (!test_N.empty() &&
         test_N.end() == std::find(test_N.begin(), test_N.end(), n + 1)) {
@@ -340,14 +344,13 @@ void testFileMCSB(
                   referenceResults[n].NumBonds,
                   referenceResults[n].SmartsString.c_str());
         } else {
-          fprintf(
-              f, "# %u REFCMP: res  %s %s %u %u %s.\n", n + 1, "FAILED",
-              /*referenceResults[n].NumAtoms > res.NumAtoms ||*/ referenceResults
-                          [n].NumBonds > res.NumBonds
-                  ? "MISSING"
-                  : "GREATER",
-              referenceResults[n].NumAtoms, referenceResults[n].NumBonds,
-              referenceResults[n].SmartsString.c_str());
+          fprintf(f, "# %u REFCMP: res  %s %s %u %u %s.\n", n + 1, "FAILED",
+                  /*referenceResults[n].NumAtoms > res.NumAtoms ||*/
+                          referenceResults[n].NumBonds > res.NumBonds
+                      ? "MISSING"
+                      : "GREATER",
+                  referenceResults[n].NumAtoms, referenceResults[n].NumBonds,
+                  referenceResults[n].SmartsString.c_str());
         }
 
         if (referenceResults[n].Canceled ||
@@ -378,18 +381,20 @@ void testFileMCSB(
     }
 #ifdef xxVERBOSE_STATISTICS_ON
     if (ft)  // statistic details
-      fprintf(
-          ft, "%u; %s; %d; %d; %.2f; %.2f; %u; %u; %u; %u\n", n + 1,
-          !res.Canceled ? "ok" : referenceResults[n].Canceled ? "bad"
-                                                              : "TIMEOUT",
-          referenceResults[n].Canceled ? 0 : res.NumAtoms -
-                                                 referenceResults[n].NumAtoms,
-          referenceResults[n].Canceled ? 0 : res.NumBonds -
-                                                 referenceResults[n].NumBonds,
-          sec, referenceResultsTime[n], stat.Seed - curStat.Seed,
-          stat.MatchCall - curStat.MatchCall,
-          stat.AtomCompareCalls - curStat.AtomCompareCalls,
-          stat.BondCompareCalls - curStat.BondCompareCalls);
+      fprintf(ft, "%u; %s; %d; %d; %.2f; %.2f; %u; %u; %u; %u\n", n + 1,
+              !res.Canceled                  ? "ok"
+              : referenceResults[n].Canceled ? "bad"
+                                             : "TIMEOUT",
+              referenceResults[n].Canceled
+                  ? 0
+                  : res.NumAtoms - referenceResults[n].NumAtoms,
+              referenceResults[n].Canceled
+                  ? 0
+                  : res.NumBonds - referenceResults[n].NumBonds,
+              sec, referenceResultsTime[n], stat.Seed - curStat.Seed,
+              stat.MatchCall - curStat.MatchCall,
+              stat.AtomCompareCalls - curStat.AtomCompareCalls,
+              stat.BondCompareCalls - curStat.BondCompareCalls);
     stat.AtomCompareCalls =
         0;  // 32 bit counter with very big value -> possible overflow
     stat.BondCompareCalls = 0;
@@ -421,8 +426,9 @@ void testFileMCSB(
       ,
       stat.Seed, stat.Seed / n, stat.RemainingSizeRejected,
       stat.RemainingSizeRejected / n,
-      0 == stat.Seed ? 0 : int((double)stat.RemainingSizeRejected /
-                               (double)stat.Seed * 100.),
+      0 == stat.Seed
+          ? 0
+          : int((double)stat.RemainingSizeRejected / (double)stat.Seed * 100.),
       stat.MatchCall, stat.MatchCall / n, stat.MatchCallTrue,
       stat.MatchCallTrue / n,
       int((double)stat.MatchCallTrue / (double)stat.MatchCall * 100.)
@@ -432,14 +438,15 @@ void testFileMCSB(
       ,
       stat.FindHashInCache, stat.FindHashInCache / n, stat.HashKeyFoundInCache,
       stat.HashKeyFoundInCache / n,
-      0 == stat.FindHashInCache ? 0 : int((double)stat.HashKeyFoundInCache /
-                                          (double)stat.FindHashInCache * 100.)
+      0 == stat.FindHashInCache ? 0
+                                : int((double)stat.HashKeyFoundInCache /
+                                      (double)stat.FindHashInCache * 100.)
 
           ,
       stat.ExactMatchCall, stat.ExactMatchCall / n, stat.ExactMatchCallTrue,
       stat.ExactMatchCallTrue / n
 #endif
-      );
+  );
 #endif
   if (f) {
     fclose(f);
@@ -1078,8 +1085,8 @@ void testChEMBLdatALL(double th = 1.0) {
   };
   for (auto& i : test) {
     testChEMBLdat(
-        (std::string("benchmarking_platform-master/compounds/ChEMBL/") +
-         i).c_str(),
+        (std::string("benchmarking_platform-master/compounds/ChEMBL/") + i)
+            .c_str(),
         th);
   }
 }
@@ -1286,8 +1293,9 @@ void testFileSDF_RandomSet(const char* test = "chembl13-10000-random-pairs.sdf",
     return;
   }
   // commands for prepare Python test:
-  fprintf(fcmd, "DEL %s\n", (std::string(path) + "_" + test + ".P.csv")
-                                .c_str());  // clear before append results
+  fprintf(fcmd, "DEL %s\n",
+          (std::string(path) + "_" + test + ".P.csv")
+              .c_str());  // clear before append results
   fprintf(fcmd, "SET PATH=%%PATH%%;C:/LIB\n");
   fprintf(fcmd, "SET PYTHONPATH=C:/Projects/RDKit/RDKit_2013_09_1\n");
   fprintf(
@@ -1443,8 +1451,9 @@ void testFileSDF_RandomSet(const char* test = "chembl13-10000-random-pairs.sdf",
           "nAtoms;E nBonds;E C++ MCS\n");
 
   const unsigned n1 = n;
-  fprintf(fcmd, "DEL %s\n", (std::string(path) + "_" + test + ".BIG_MCS.P.csv")
-                                .c_str());  // clear before append results
+  fprintf(fcmd, "DEL %s\n",
+          (std::string(path) + "_" + test + ".BIG_MCS.P.csv")
+              .c_str());  // clear before append results
   fprintf(fcmd, "SET PATH=%%PATH%%;C:/LIB\n");
   fprintf(fcmd, "SET PYTHONPATH=C:/Projects/RDKit/RDKit_2013_09_1\n");
   fprintf(
@@ -1624,8 +1633,8 @@ void testGregSDFFileSetFiltered() {
 int main(int argc, const char* argv[]) {
   p.Verbose = true;
 
-// use maximum CPU resources to increase time measuring accuracy and stability in
-// multi process environment
+// use maximum CPU resources to increase time measuring accuracy and stability
+// in multi process environment
 #ifdef WIN32
   //    SetPriorityClass (GetCurrentProcess(), REALTIME_PRIORITY_CLASS );
   SetThreadPriority(GetCurrentThread(), THREAD_PRIORITY_HIGHEST);
@@ -1651,27 +1660,29 @@ int main(int argc, const char* argv[]) {
   testFileSDF_RandomSet("chembl13_threshold_90.smi");
   ////    testFileSDF_RandomSet("");
   return 0;
-//------------------------
-/*
-//    p.BondTyper = MCSBondCompareOrderExact;
-    testChEMBL_Txt("chembl_II_sets/Target_no_10980_51302.txt"); // 271 sec  SLOW
-!!!
-//    return 0;
+  //------------------------
+  /*
+  //    p.BondTyper = MCSBondCompareOrderExact;
+      testChEMBL_Txt("chembl_II_sets/Target_no_10980_51302.txt"); // 271 sec
+  SLOW
+  !!!
+  //    return 0;
 
- //   testChEMBL_TxtALL_chembl_II_sets();
- //   testTarget_no_10188_30149();
-//    return 0;
-    // SLOW tests
-    test330();
-    testChEMBL_Txt("chembl_II_sets/Target_no_10980_52937.txt");
-    testChEMBL_Txt("chembl_II_sets/Target_no_11489_37339.txt");
-    testChEMBL_Txt("chembl_II_sets/Target_no_10260_54285.txt");
-    testChEMBL_Txt("chembl_II_sets/Target_no_10980_51302.txt"); // 271 sec  SLOW
-!!!
-*/
+   //   testChEMBL_TxtALL_chembl_II_sets();
+   //   testTarget_no_10188_30149();
+  //    return 0;
+      // SLOW tests
+      test330();
+      testChEMBL_Txt("chembl_II_sets/Target_no_10980_52937.txt");
+      testChEMBL_Txt("chembl_II_sets/Target_no_11489_37339.txt");
+      testChEMBL_Txt("chembl_II_sets/Target_no_10260_54285.txt");
+      testChEMBL_Txt("chembl_II_sets/Target_no_10980_51302.txt"); // 271 sec
+  SLOW
+  !!!
+  */
 
 #ifdef xxWIN32  // brief test set for testing and issue investigation
-#ifdef _DEBUG   // check memory leaks
+#ifdef _DEBUG  // check memory leaks
   _CrtMemState _ms;
   _CrtMemCheckpoint(&_ms);
 #endif

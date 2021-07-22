@@ -226,6 +226,9 @@ endif(MSVC)
 if(MSVC)
   # FIX: do we still need this?
   target_compile_definitions(rdkit_base INTERFACE "-DBOOST_ALL_NO_LIB")
+  if(RDK_INSTALL_DLLS_MSVC)
+    target_compile_definitions(rdkit_base INTERFACE "-DBOOST_ALL_DYN_LINK")
+  endif(RDK_INSTALL_DLLS_MSVC)
 endif(MSVC)
 
 if(RDK_BUILD_INCHI_SUPPORT)
