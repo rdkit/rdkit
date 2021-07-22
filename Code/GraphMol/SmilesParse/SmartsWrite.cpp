@@ -1,5 +1,5 @@
 //
-//  Copyright (C) 2002-2019 Greg Landrum and Rational Discovery LLC
+//  Copyright (C) 2002-2021 Greg Landrum and other RDKit contributors
 //
 //   @@ All Rights Reserved @@
 //  This file is part of the RDKit.
@@ -603,7 +603,8 @@ std::string _recurseBondSmarts(const Bond *bond,
 std::string FragmentSmartsConstruct(
     ROMol &mol, unsigned int atomIdx, std::vector<Canon::AtomColors> &colors,
     UINT_VECT &ranks, bool doIsomericSmiles,
-    const boost::dynamic_bitset<> *bondsInPlay = nullptr) {
+    std::vector<unsigned int> &atomOrdering,
+    const boost::dynamic_bitset<> *bondsInPlay) {
   Canon::MolStack molStack;
   molStack.reserve(mol.getNumAtoms() + mol.getNumBonds());
   std::stringstream res;
@@ -645,6 +646,7 @@ std::string FragmentSmartsConstruct(
       case Canon::MOL_STACK_ATOM: {
         auto *qatm = static_cast<QueryAtom *>(msCI.obj.atom);
         res << SmartsWrite::GetAtomSmarts(qatm);
+        atomOrdering.push_back(qatm->getIdx());
         break;
       }
       case Canon::MOL_STACK_BOND: {
@@ -768,7 +770,7 @@ std::string getNonQueryBondSmarts(const QueryBond *qbond, int atomToLeftIdx) {
 
 std::string molToSmarts(const ROMol &inmol, bool doIsomericSmiles,
                         std::vector<AtomColors> &&colors,
-                        const boost::dynamic_bitset<> *bondsInPlay = nullptr) {
+                        const boost::dynamic_bitset<> *bondsInPlay) {
   ROMol mol(inmol);
   const unsigned int nAtoms = mol.getNumAtoms();
   UINT_VECT ranks;
@@ -782,6 +784,7 @@ std::string molToSmarts(const ROMol &inmol, bool doIsomericSmiles,
   if (doIsomericSmiles) {
     mol.setProp(common_properties::_doIsoSmiles, 1);
   }
+  std::vector<unsigned int> atomOrdering;
 
   std::string res;
   auto colorIt = std::find(colors.begin(), colors.end(), Canon::WHITE_NODE);
@@ -796,9 +799,9 @@ std::string molToSmarts(const ROMol &inmol, bool doIsomericSmiles,
         nextAtomIdx = i;
       }
     }
-
-    subSmi = FragmentSmartsConstruct(mol, nextAtomIdx, colors, ranks,
-                                     doIsomericSmiles, bondsInPlay);
+    subSmi =
+        FragmentSmartsConstruct(mol, nextAtomIdx, colors, ranks,
+                                doIsomericSmiles, atomOrdering, bondsInPlay);
     res += subSmi;
 
     colorIt = std::find(colors.begin(), colors.end(), Canon::WHITE_NODE);
@@ -806,6 +809,7 @@ std::string molToSmarts(const ROMol &inmol, bool doIsomericSmiles,
       res += ".";
     }
   }
+  inmol.setProp(common_properties::_smilesAtomOutputOrder, atomOrdering, true);
   return res;
 }
 
@@ -915,7 +919,7 @@ std::string MolToSmarts(const ROMol &mol, bool doIsomericSmarts) {
   }
 
   std::vector<AtomColors> colors(nAtoms, Canon::WHITE_NODE);
-  return molToSmarts(mol, doIsomericSmarts, std::move(colors));
+  return molToSmarts(mol, doIsomericSmarts, std::move(colors), nullptr);
 }
 
 std::string MolFragmentToSmarts(const ROMol &mol,
@@ -949,6 +953,31 @@ std::string MolFragmentToSmarts(const ROMol &mol,
 
   return molToSmarts(mol, doIsomericSmarts, std::move(colors),
                      bondsInPlay.get());
+}
+
+std::string MolToCXSmarts(const ROMol &mol, bool doIsomericSmarts) {
+  auto res = MolToSmarts(mol, doIsomericSmarts);
+  if (!res.empty()) {
+    auto cxext = SmilesWrite::getCXExtensions(mol);
+    if (!cxext.empty()) {
+      res += " " + cxext;
+    }
+  }
+  return res;
+}
+
+std::string MolFragmentToCXSmarts(const ROMol &mol,
+                                  const std::vector<int> &atomsToUse,
+                                  const std::vector<int> *bondsToUse,
+                                  bool doIsomericSmarts) {
+  auto res = MolFragmentToSmarts(mol, atomsToUse, bondsToUse, doIsomericSmarts);
+  if (!res.empty()) {
+    auto cxext = SmilesWrite::getCXExtensions(mol);
+    if (!cxext.empty()) {
+      res += " " + cxext;
+    }
+  }
+  return res;
 }
 
 }  // namespace RDKit
