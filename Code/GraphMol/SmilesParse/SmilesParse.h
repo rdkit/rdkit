@@ -91,8 +91,6 @@ struct RDKIT_SMILESPARSE_EXPORT SmartsParserParams {
   bool parseName = false; /**< parse (and set) the molecule name as well */
   bool mergeHs =
       true; /**< toggles merging H atoms in the SMARTS into neighboring atoms*/
-  bool useLegacyStereo =
-      true; /**< use the legacy stereochemistry perception code */
 };
 RDKIT_SMILESPARSE_EXPORT RWMol *SmartsToMol(const std::string &sma,
                                             const SmartsParserParams &ps);
