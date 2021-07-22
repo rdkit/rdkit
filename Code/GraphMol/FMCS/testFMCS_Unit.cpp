@@ -56,6 +56,10 @@
 
 #include "../Substruct/SubstructMatch.h"
 
+#ifdef _WIN32
+#include <windows.h>
+#endif
+
 using namespace RDKit;
 
 unsigned long long T0;
