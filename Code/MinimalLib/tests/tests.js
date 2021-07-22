@@ -36,6 +36,12 @@ function test_basics() {
     assert.equal(mol2.is_valid(),1);
     assert.equal(mol2.get_smiles(),"Oc1ccccc1");
     
+    var mjson = mol.get_json();
+    assert(mjson.search("commonchem")>0);
+    var mol3 = RDKitModule.get_mol(mjson);
+    assert.equal(mol3.is_valid(),1);
+    assert.equal(mol3.get_smiles(),"Oc1ccccc1");
+    
     var descrs = JSON.parse(mol.get_descriptors());
     assert.equal(descrs.NumAromaticRings,1);
     assert.equal(descrs.NumRings,1);
