@@ -636,6 +636,32 @@ std::string FormatV3000AttachPointBlock(
   return ret.str();
 }
 
+namespace {
+void addBlockToSGroupString(std::string block, std::string &currentLine,
+                            std::ostringstream &os) {
+  if (currentLine.length() + block.length() < 78) {
+    currentLine += block;
+  } else {
+    os << currentLine << " -\n";
+    unsigned int length = block.size();
+    unsigned int start = 0;
+    while (length - start >= 73) {
+      os << "M  V30";
+      os << block.substr(start, 72);
+      start += 72;
+      if (start < length) {
+        // need to write more, so add another "-"
+        os << "-\n";
+      }
+    }
+    if (start < length) {
+      currentLine =
+          "M  V30" + std::string(start ? " " : "") + block.substr(start, 73);
+    }
+  }
+}
+}  // namespace
+
 //! Write a SGroup line. The order of the labels is defined in the spec.
 const std::string GetV3000MolFileSGroupLines(const unsigned int idx,
                                              const SubstanceGroup &sgroup) {
@@ -644,44 +670,60 @@ const std::string GetV3000MolFileSGroupLines(const unsigned int idx,
   unsigned int id = 0;
   sgroup.getPropIfPresent("ID", id);
 
-  os << idx << ' ' << sgroup.getProp<std::string>("TYPE") << ' ' << id;
-
-  os << BuildV3000IdxVectorDataBlock("ATOMS", sgroup.getAtoms());
+  std::string currLine = (boost::format("M  V30 %d %s %d") % idx %
+                          sgroup.getProp<std::string>("TYPE") % id)
+                             .str();
+  addBlockToSGroupString(
+      BuildV3000IdxVectorDataBlock("ATOMS", sgroup.getAtoms()), currLine, os);
   // also writes XBHEAD and XBCORR
-  os << BuildV3000BondsBlock(sgroup);
-  os << BuildV3000IdxVectorDataBlock("PATOMS", sgroup.getParentAtoms());
-  os << FormatV3000StringPropertyBlock("SUBTYPE", sgroup);
-  os << FormatV3000StringPropertyBlock("MULT", sgroup);
-  os << FormatV3000StringPropertyBlock("CONNECT", sgroup);
-  os << FormatV3000ParentBlock(sgroup);
-  os << FormatV3000CompNoBlock(sgroup);
-  os << FormatV3000StringPropertyBlock("LABEL", sgroup);
-  os << FormatV3000BracketBlock(sgroup.getBrackets());
-  os << FormatV3000StringPropertyBlock("ESTATE", sgroup);
-  os << FormatV3000CStateBlock(sgroup);
-  os << FormatV3000StringPropertyBlock("FIELDNAME", sgroup);
-  os << FormatV3000StringPropertyBlock("FIELDINFO", sgroup);
-  os << FormatV3000StringPropertyBlock("FIELDDISP", sgroup);
-  os << FormatV3000StringPropertyBlock("QUERYTYPE", sgroup);
-  os << FormatV3000StringPropertyBlock("QUERYOP", sgroup);
-  os << FormatV3000FieldDataBlock(sgroup);
-  os << FormatV3000StringPropertyBlock("CLASS", sgroup);
-  os << FormatV3000AttachPointBlock(sgroup.getAttachPoints());
-  os << FormatV3000StringPropertyBlock("BRKTYP", sgroup);
-  os << FormatV3000StringPropertyBlock("SEQID", sgroup);
-
-  std::string sGroupBlock = os.str();
-  unsigned int length = sGroupBlock.size();
-  os.str("");
-
-  unsigned int start = 0;
-  while (length - start > 73) {
-    os << "M  V30 " << sGroupBlock.substr(start, 72) << '-' << std::endl;
-    start += 72;
+  addBlockToSGroupString(BuildV3000BondsBlock(sgroup), currLine, os);
+  addBlockToSGroupString(
+      BuildV3000IdxVectorDataBlock("PATOMS", sgroup.getParentAtoms()), currLine,
+      os);
+  addBlockToSGroupString(FormatV3000StringPropertyBlock("SUBTYPE", sgroup),
+                         currLine, os);
+  addBlockToSGroupString(FormatV3000StringPropertyBlock("MULT", sgroup),
+                         currLine, os);
+  addBlockToSGroupString(FormatV3000StringPropertyBlock("CONNECT", sgroup),
+                         currLine, os);
+  addBlockToSGroupString(FormatV3000ParentBlock(sgroup), currLine, os);
+  addBlockToSGroupString(FormatV3000CompNoBlock(sgroup), currLine, os);
+  addBlockToSGroupString(FormatV3000StringPropertyBlock("LABEL", sgroup),
+                         currLine, os);
+  addBlockToSGroupString(FormatV3000BracketBlock(sgroup.getBrackets()),
+                         currLine, os);
+  addBlockToSGroupString(FormatV3000StringPropertyBlock("ESTATE", sgroup),
+                         currLine, os);
+  addBlockToSGroupString(FormatV3000CStateBlock(sgroup), currLine, os);
+  addBlockToSGroupString(FormatV3000StringPropertyBlock("FIELDNAME", sgroup),
+                         currLine, os);
+  addBlockToSGroupString(FormatV3000StringPropertyBlock("FIELDINFO", sgroup),
+                         currLine, os);
+  addBlockToSGroupString(FormatV3000StringPropertyBlock("FIELDDISP", sgroup),
+                         currLine, os);
+  addBlockToSGroupString(FormatV3000StringPropertyBlock("QUERYTYPE", sgroup),
+                         currLine, os);
+  addBlockToSGroupString(FormatV3000StringPropertyBlock("QUERYOP", sgroup),
+                         currLine, os);
+  addBlockToSGroupString(FormatV3000FieldDataBlock(sgroup), currLine, os);
+  addBlockToSGroupString(FormatV3000StringPropertyBlock("CLASS", sgroup),
+                         currLine, os);
+  addBlockToSGroupString(FormatV3000AttachPointBlock(sgroup.getAttachPoints()),
+                         currLine, os);
+  addBlockToSGroupString(FormatV3000StringPropertyBlock("BRKTYP", sgroup),
+                         currLine, os);
+  addBlockToSGroupString(FormatV3000StringPropertyBlock("SEQID", sgroup),
+                         currLine, os);
+  std::string res;
+  if (!currLine.empty() && currLine != "M  V30") {
+    os << currLine << "\n";
+    res = os.str();
+  } else {
+    // there's an extra " -" at the end that we need to remove
+    res = os.str();
+    res = res.substr(0, res.length() - 3) + "\n";
   }
-  os << "M  V30 " << sGroupBlock.substr(start, 73) << std::endl;
-
-  return os.str();
+  return res;
 }
 
 }  // namespace SGroupWriting

@@ -3688,3 +3688,88 @@ M  END
 )CTAB";
   }
 }
+
+TEST_CASE("Long lines in V3000 mol blocks") {
+  SECTION("basics") {
+    auto m = R"CTAB(query
+  Mrv2108 07152116102D          
+
+  0  0  0     0  0            999 V3000
+M  V30 BEGIN CTAB
+M  V30 COUNTS 2 1 1 0 0
+M  V30 BEGIN ATOM
+M  V30 1 C 3.5417 -5.875 0 0
+M  V30 2 C 4.8753 -5.105 0 0
+M  V30 END ATOM
+M  V30 BEGIN BOND
+M  V30 1 1 1 2
+M  V30 END BOND
+M  V30 BEGIN SGROUP
+M  V30 1 DAT 0 ATOMS=(1 2) -
+M  V30 FIELDDISP="    4.8753   -5.1050    DA    ALL  0       0" -
+M  V30 QUERYTYPE=SMARTSQ QUERYOP== FIELDDATA=[#6;R]
+M  V30 END SGROUP
+M  V30 END CTAB
+M  END)CTAB"_ctab;
+    REQUIRE(m);
+    CHECK(getSubstanceGroups(*m).size() == 1);
+    auto mb = MolToV3KMolBlock(*m);
+    std::unique_ptr<RWMol> m2(MolBlockToMol(mb));
+    REQUIRE(m2);
+    CHECK(getSubstanceGroups(*m2).size() == 1);
+  }
+  SECTION("long data elements") {
+    auto m = R"CTAB(query with bogus sgroups
+  Mrv2108 07152116102D          
+
+  0  0  0     0  0            999 V3000
+M  V30 BEGIN CTAB
+M  V30 COUNTS 2 1 5 0 0
+M  V30 BEGIN ATOM
+M  V30 1 C 3.5417 -5.875 0 0
+M  V30 2 C 4.8753 -5.105 0 0
+M  V30 END ATOM
+M  V30 BEGIN BOND
+M  V30 1 1 1 2
+M  V30 END BOND
+M  V30 BEGIN SGROUP
+M  V30 1 DAT 0 ATOMS=(1 2) -
+M  V30 FIELDDISP="    0.0000    0.0000    DR    ALL  0       0" -
+M  V30 QUERYTYPE=SMARTSQ QUERYOP== -
+M  V30 FIELDDATA="quite long piece of text that needs to be broken -
+M  V30 across two lines"
+M  V30 2 DAT 0 ATOMS=(1 1) -
+M  V30 FIELDDISP="    0.0000    0.0000    DR    ALL  0       0" -
+M  V30 QUERYTYPE=SMARTSQ QUERYOP== -
+M  V30 FIELDDATA="quite long piece of text that needs to be broken -
+M  V30 across more than two lines because we really want to be sure -
+M  V30 that we are doing this right"
+M  V30 3 DAT 0 ATOMS=(1 1) -
+M  V30 FIELDDISP="    0.0000    0.0000    DR    ALL  0       0" -
+M  V30 QUERYTYPE=SMARTSQ QUERYOP== -
+M  V30 FIELDDATA="quite long piece of text that needs to be broken -
+M  V30 across exactly two lines so that we can check the edge case -
+M  V30 11111111111111111111"
+M  V30 4 DAT 0 ATOMS=(1 1) -
+M  V30 FIELDDISP="    0.0000    0.0000    DR    ALL  0       0" -
+M  V30 QUERYTYPE=SMARTSQ QUERYOP== -
+M  V30 FIELDDATA="quite long piece of text that needs to be broken -
+M  V30 across more than two lines because we really want to be sure -
+M  V30 that we are doing this right" SEQID=1
+M  V30 5 DAT 0 ATOMS=(1 1) -
+M  V30 FIELDDISP="    0.0000    0.0000    DR    ALL  0       0" -
+M  V30 QUERYTYPE=SMARTSQ QUERYOP== -
+M  V30 FIELDDATA="quite long piece of text that needs to be broken -
+M  V30 across exactly two lines so that we can check the edge case -
+M  V30 11111111111111111111" SEQID=2
+M  V30 END SGROUP
+M  V30 END CTAB
+M  END)CTAB"_ctab;
+    REQUIRE(m);
+    CHECK(getSubstanceGroups(*m).size() == 5);
+    auto mb = MolToV3KMolBlock(*m);
+    std::unique_ptr<RWMol> m2(MolBlockToMol(mb));
+    REQUIRE(m2);
+    CHECK(getSubstanceGroups(*m2).size() == 5);
+  }
+}
