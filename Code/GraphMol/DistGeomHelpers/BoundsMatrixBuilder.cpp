@@ -812,7 +812,7 @@ bool _checkNhChChNh(const Atom *atm1, const Atom *atm2, const Atom *atm3,
 //      2   5  <- 2 is an oxygen/nitrogen
 bool _checkAmideEster14(const Bond *bnd1, const Bond *bnd3, const Atom *atm1,
                         const Atom *atm2, const Atom *atm3, const Atom *atm4) {
-  unsigned int a1Num = atm1->getAtomicNum();
+  RDUNUSED_PARAM(atm1);
   unsigned int a2Num = atm2->getAtomicNum();
   unsigned int a3Num = atm3->getAtomicNum();
   unsigned int a4Num = atm4->getAtomicNum();
@@ -917,6 +917,7 @@ bool _isCarbonyl(const ROMol &mol, const Atom *at) {
 bool _checkAmideEster15(const ROMol &mol, const Bond *bnd1, const Bond *bnd3,
                         const Atom *atm1, const Atom *atm2, const Atom *atm3,
                         const Atom *atm4) {
+  RDUNUSED_PARAM(atm1);
   RDUNUSED_PARAM(atm4);
   unsigned int a2Num = atm2->getAtomicNum();
   if ((a2Num == 8) || ((a2Num == 7) && (atm2->getTotalNumHs(true) == 1))) {
