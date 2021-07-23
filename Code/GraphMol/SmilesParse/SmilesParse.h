@@ -1,5 +1,5 @@
 //
-//  Copyright (C) 2001-2020 Greg Landrum and Rational Discovery LLC
+//  Copyright (C) 2001-2021 Greg Landrum and other RDKit contributors
 //
 //   @@ All Rights Reserved @@
 //  This file is part of the RDKit.
@@ -81,6 +81,20 @@ inline RWMol *SmilesToMol(
   return SmilesToMol(smi, params);
 };
 
+struct RDKIT_SMILESPARSE_EXPORT SmartsParserParams {
+  int debugParse = 0; /**< enable debugging in the SMARTS parser*/
+  std::map<std::string, std::string> *replacements =
+      nullptr;               /**< allows SMARTS "macros" */
+  bool allowCXSMILES = true; /**< recognize and parse CXSMILES extensions */
+  bool strictCXSMILES =
+      true; /**< throw an exception if the CXSMILES parsing fails */
+  bool parseName = false; /**< parse (and set) the molecule name as well */
+  bool mergeHs =
+      true; /**< toggles merging H atoms in the SMARTS into neighboring atoms*/
+};
+RDKIT_SMILESPARSE_EXPORT RWMol *SmartsToMol(const std::string &sma,
+                                            const SmartsParserParams &ps);
+
 //! Construct a molecule from a SMARTS string
 /*!
  \param sma           the SMARTS to convert
@@ -93,9 +107,15 @@ inline RWMol *SmilesToMol(
  \return a pointer to the new molecule; the caller is responsible for free'ing
  this.
  */
-RDKIT_SMILESPARSE_EXPORT RWMol *SmartsToMol(
+inline RWMol *SmartsToMol(
     const std::string &sma, int debugParse = 0, bool mergeHs = false,
-    std::map<std::string, std::string> *replacements = nullptr);
+    std::map<std::string, std::string> *replacements = nullptr) {
+  SmartsParserParams ps;
+  ps.debugParse = debugParse;
+  ps.mergeHs = mergeHs;
+  ps.replacements = replacements;
+  return SmartsToMol(sma, ps);
+};
 
 RDKIT_SMILESPARSE_EXPORT Atom *SmartsToAtom(const std::string &sma);
 RDKIT_SMILESPARSE_EXPORT Bond *SmartsToBond(const std::string &sma);

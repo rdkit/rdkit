@@ -224,10 +224,10 @@ Specifying atoms by atomic number
 The ``[#6]`` construct from SMARTS is supported in SMILES.
 
 
-CXSMILES extensions
--------------------
+CXSMILES/CXSMARTS extensions
+----------------------------
 
-The RDKit supports parsing and writing a subset of the extended SMILES functionality introduced by ChemAxon [#cxsmiles]_.
+The RDKit supports parsing and writing a subset of the extended SMILES/SMARTS functionality introduced by ChemAxon [#cxsmiles]_.
 
 The features which are parsed include:
 
@@ -245,8 +245,9 @@ The features which are parsed include:
 - non-hydrogen substitution count specifications ``s``
 - unsaturation specification ``u``
 
-The features which are written by :py:func:`rdkit.Chem.rdmolfiles.MolToCXSmiles`
-(note the specialized writer function) include:
+The features which are written by :py:func:`rdkit.Chem.rdmolfiles.MolToCXSmiles` and
+:py:func:`rdkit.Chem.rdmolfiles.MolToCXSmarts` 
+(note the specialized writer functions) include:
 
 - atomic coordinates
 - atomic values
