@@ -15,8 +15,9 @@
 #include <memory>
 #include <vector>
 #include <map>
+#ifdef RDK_THREADSAFE_SSS
 #include <mutex>
-#include <thread>
+#endif
 
 // #define DEBUG
 
@@ -185,11 +186,11 @@ double FingerprintVarianceScoreData::fingerprintVarianceGroupScore() {
       [](double sum,
          std::pair<int, std::shared_ptr<VarianceDataForLabel>> pair) {
         auto variance = pair.second->variance();
-        // perhaps here the variance should be weighted by occupancy- so that
-        // sparsely populated rgroups are penalized
+    // perhaps here the variance should be weighted by occupancy- so that
+    // sparsely populated rgroups are penalized
 
-        // e.g variance *= ((double) numberOfMolecules) /
-        // ((double)pair.second->numberFingerprints);
+    // e.g variance *= ((double) numberOfMolecules) /
+    // ((double)pair.second->numberFingerprints);
 #ifdef DEBUG
         std::cerr << variance << ',';
 #endif
@@ -224,12 +225,16 @@ VarianceDataForLabel::VarianceDataForLabel(const int &label) : label(label) {
   bitCounts = std::vector<int>(fingerprintSize, 0.0);
 }
 
+#ifdef RDK_THREADSAFE_SSS
 static std::mutex groupMutex;
+#endif
 
 // add an rgroup structure to a bit counts array
 void VarianceDataForLabel::addRgroupData(RGroupData *rgroupData) {
   if (rgroupData->fingerprint == nullptr) {
+#ifdef RDK_THREADSAFE_SSS
     const std::lock_guard<std::mutex> lock(groupMutex);
+#endif
     if (rgroupData->fingerprint == nullptr) {
       addFingerprintToRGroupData(rgroupData);
     }
