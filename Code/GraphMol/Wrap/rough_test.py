@@ -1,5 +1,5 @@
 #
-#  Copyright (C) 2003-2021  Greg Landrum and Rational Discovery LLC
+#  Copyright (C) 2003-2021  Greg Landrum and other RDKit contributors
 #         All Rights Reserved
 #
 """ This is a rough coverage test of the python wrapper
@@ -6627,6 +6627,24 @@ CAS<~>
       m2, addWhenImpossible=Chem.StereoBondThresholds.DBL_BOND_SPECIFIED_STEREO)
     self.assertEqual(m2.GetBondWithIdx(3).GetStereo(), Chem.BondStereo.STEREONONE)
     self.assertEqual(m2.GetBondWithIdx(2).GetBondDir(), Chem.BondDir.UNKNOWN)
+
+  def testSmartsParseParams(self):
+    smi = "CCC |$foo;;bar$| ourname"
+    m = Chem.MolFromSmarts(smi)
+    self.assertTrue(m is not None)
+    ps = Chem.SmartsParserParams()
+    ps.allowCXSMILES = False
+    m = Chem.MolFromSmarts(smi, ps)
+    self.assertTrue(m is None)
+    ps.allowCXSMILES = True
+    ps.parseName = True
+    m = Chem.MolFromSmarts(smi, ps)
+    self.assertTrue(m is not None)
+    self.assertTrue(m.GetAtomWithIdx(0).HasProp('atomLabel'))
+    self.assertEqual(m.GetAtomWithIdx(0).GetProp('atomLabel'), "foo")
+    self.assertTrue(m.HasProp('_Name'))
+    self.assertEqual(m.GetProp('_Name'), "ourname")
+    self.assertEqual(m.GetProp("_CXSMILES_Data"), "|$foo;;bar$|")
 
 
 if __name__ == '__main__':

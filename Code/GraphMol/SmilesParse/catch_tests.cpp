@@ -1,6 +1,5 @@
 //
-//
-//  Copyright (C) 2018-2021 Greg Landrum and T5 Informatics GmbH
+//  Copyright (C) 2018-2021 Greg Landrum and other RDKit contributors
 //
 //   @@ All Rights Reserved @@
 //  This file is part of the RDKit.
@@ -882,5 +881,89 @@ TEST_CASE(
     std::string smi = MolFragmentToSmiles(*mol, ats, nullptr, nullptr, nullptr,
                                           doIsomericSmiles, doKekule);
     CHECK(smi == "C:CC");
+  }
+}
+
+TEST_CASE("Github #4319 add CXSMARTS support") {
+  // note: the CXSMARTS support uses exactly the same code as the CXSMILES
+  // parser/writer. We aren't testing that here since it's tested already with
+  // the CXSMILES tests. The goal here is just to make sure that it's being
+  // called by default and that we can control its behavior with the
+  // SmartsParseParams structure
+  SECTION("defaults") {
+    auto mol = "CCC |$foo;;bar$|"_smarts;
+    REQUIRE(mol);
+    REQUIRE(mol->getNumAtoms() == 3);
+    CHECK(mol->getAtomWithIdx(0)->getProp<std::string>(
+              common_properties::atomLabel) == "foo");
+    CHECK(mol->getAtomWithIdx(2)->getProp<std::string>(
+              common_properties::atomLabel) == "bar");
+    CHECK(!mol->getAtomWithIdx(1)->hasProp(common_properties::atomLabel));
+  }
+  SECTION("params") {
+    std::string sma = "CCC |$foo;;bar$|";
+    SmartsParserParams ps;
+    const std::unique_ptr<RWMol> mol(SmartsToMol(sma, ps));
+    REQUIRE(mol);
+    REQUIRE(mol->getNumAtoms() == 3);
+    CHECK(mol->getAtomWithIdx(0)->getProp<std::string>(
+              common_properties::atomLabel) == "foo");
+    CHECK(mol->getAtomWithIdx(2)->getProp<std::string>(
+              common_properties::atomLabel) == "bar");
+    CHECK(!mol->getAtomWithIdx(1)->hasProp(common_properties::atomLabel));
+  }
+  SECTION("no cxsmarts") {
+    std::string sma = "CCC |$foo;;bar$|";
+    SmartsParserParams ps;
+    ps.allowCXSMILES = false;
+    const std::unique_ptr<RWMol> mol(SmartsToMol(sma, ps));
+    REQUIRE(!mol);
+  }
+  SECTION("name") {
+    std::string sma = "CCC foobar";
+    SmartsParserParams ps;
+    ps.parseName = true;
+    const std::unique_ptr<RWMol> mol(SmartsToMol(sma, ps));
+    REQUIRE(mol);
+    REQUIRE(mol->getProp<std::string>(common_properties::_Name) == "foobar");
+  }
+  SECTION("writer") {
+    auto mol = "CCC |$foo;;bar$|"_smarts;
+    REQUIRE(mol);
+    REQUIRE(mol->getNumAtoms() == 3);
+    CHECK(MolToSmarts(*mol) == "CCC");
+    CHECK(MolToCXSmarts(*mol) == "CCC |$foo;;bar$|");
+  }
+  SECTION("writer, check reordering") {
+    auto mol = "CC1.OC1 |$foo;;;bar$|"_smarts;
+    REQUIRE(mol);
+    REQUIRE(mol->getNumAtoms() == 4);
+    CHECK(MolToSmarts(*mol) == "CCCO");
+    CHECK(MolToCXSmarts(*mol) == "CCCO |$foo;;bar;$|");
+  }
+
+  SECTION("parser, confirm enhanced stereo working") {
+    auto mol = "[#6][C@]([#8])(F)Cl |&1:1|"_smarts;
+    REQUIRE(mol);
+    REQUIRE(mol->getNumAtoms() == 5);
+    CHECK(MolToSmarts(*mol) == "[#6][C@](-,:[#8])(-,:F)Cl");
+    CHECK(MolToCXSmarts(*mol) == "[#6][C@](-,:[#8])(-,:F)Cl |&1:1|");
+
+    {
+      auto smol = "C[C@](O)(F)Cl |&1:1|"_smiles;
+      REQUIRE(smol);
+      SubstructMatchParameters sssparams;
+      sssparams.useEnhancedStereo = true;
+      sssparams.useChirality = true;
+      CHECK(SubstructMatch(*smol, *mol, sssparams).size() == 1);
+    }
+    {
+      auto smol = "C[C@](O)(F)Cl |o1:1|"_smiles;
+      REQUIRE(smol);
+      SubstructMatchParameters sssparams;
+      sssparams.useEnhancedStereo = true;
+      sssparams.useChirality = true;
+      CHECK(SubstructMatch(*smol, *mol, sssparams).empty());
+    }
   }
 }
