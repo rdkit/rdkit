@@ -198,7 +198,10 @@ if(RDK_BUILD_MAEPARSER_SUPPORT)
 endif()
 
 if(RDK_USE_URF)
-  ADD_DEFINITIONS("-DRDK_USE_URF")
+  add_definitions(-DRDK_USE_URF)
+  if((MSVC AND (NOT RDK_INSTALL_DLLS_MSVC)) OR ((NOT MSVC) AND WIN32 AND RDK_INSTALL_STATIC_LIBS))
+    add_definitions(-DRDL_WIN_STATIC)
+  endif()
   include_directories(${RDKit_ExternalDir}/RingFamilies/RingDecomposerLib/src/RingDecomposerLib)
 endif()
 
