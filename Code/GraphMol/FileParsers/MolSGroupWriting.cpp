@@ -643,25 +643,20 @@ void addBlockToSGroupString(std::string block, std::string &currentLine,
     currentLine += block;
   } else {
     os << currentLine << " -\n";
-    if (block.length() < 73) {
-      os << "M  V30" << block << " -\n";
-      currentLine = "M  V30";
-    } else {
-      unsigned int length = block.size();
-      unsigned int start = 0;
-      os << "M  V30" << block.substr(start, 72) << "-\n";
+    unsigned int length = block.size();
+    unsigned int start = 0;
+    while (length - start >= 73) {
+      os << "M  V30";
+      os << block.substr(start, 72);
       start += 72;
-      while (length - start >= 73) {
-        os << "M  V30 " << block.substr(start, 72);
-        start += 72;
-        if (start < length) {
-          // need to write more, so add another "-"
-          os << "-\n";
-        }
-      }
       if (start < length) {
-        currentLine = "M  V30 " + block.substr(start, 73);
+        // need to write more, so add another "-"
+        os << "-\n";
       }
+    }
+    if (start < length) {
+      currentLine =
+          "M  V30" + std::string(start ? " " : "") + block.substr(start, 73);
     }
   }
 }
@@ -721,7 +716,7 @@ const std::string GetV3000MolFileSGroupLines(const unsigned int idx,
                          currLine, os);
   std::string res;
   if (!currLine.empty() && currLine != "M  V30") {
-    os << currLine << std::endl;
+    os << currLine << "\n";
     res = os.str();
   } else {
     // there's an extra " -" at the end that we need to remove
