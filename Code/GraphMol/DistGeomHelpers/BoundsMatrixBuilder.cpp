@@ -1,5 +1,5 @@
 //
-//  Copyright (C) 2004-2019 Greg Landrum and Rational Discovery LLC
+//  Copyright (C) 2004-2021 Greg Landrum and other RDKit contributors
 //
 //   @@ All Rights Reserved @@
 //  This file is part of the RDKit.
@@ -610,6 +610,7 @@ void _setInRing14Bounds(const ROMol &mol, const Bond *bnd1, const Bond *bnd2,
   path14.bid3 = bid3;
   Bond::BondStereo stype = _getAtomStereo(bnd2, aid1, aid4);
   bool preferCis = false;
+  bool preferTrans = false;
 
   // we add a check for the ring size here because there's no reason to assume
   // cis bonds in bigger rings.
@@ -634,9 +635,12 @@ void _setInRing14Bounds(const ROMol &mol, const Bond *bnd1, const Bond *bnd2,
     }
   } else if (stype == Bond::STEREOZ || stype == Bond::STEREOCIS) {
     preferCis = true;
+  } else if (stype == Bond::STEREOE || stype == Bond::STEREOTRANS) {
+    preferTrans = true;
   }
-  // std::cerr << "  torsion: " << aid1 << " " << aid4 << ": " << preferCis
-  //           << std::endl;
+  // std::cerr << "  torsion: " << aid1 << " " << aid4 << ": " << preferCis << "
+  // "
+  //           << preferTrans << std::endl;
   if (preferCis) {
     dl = RDGeom::compute14DistCis(bl1, bl2, bl3, ba12, ba23) - GEN_DIST_TOL;
     du = dl + 2 * GEN_DIST_TOL;
@@ -645,6 +649,15 @@ void _setInRing14Bounds(const ROMol &mol, const Bond *bnd1, const Bond *bnd2,
                        bid3] = 1;
     accumData.cisPaths[static_cast<unsigned long>(bid3) * nb * nb + bid2 * nb +
                        bid1] = 1;
+  } else if (preferTrans) {
+    dl = RDGeom::compute14DistTrans(bl1, bl2, bl3, ba12, ba23) - GEN_DIST_TOL;
+    du = dl + 2 * GEN_DIST_TOL;
+    path14.type = Path14Configuration::TRANS;
+    accumData.transPaths[static_cast<unsigned long>(bid1) * nb * nb +
+                         bid2 * nb + bid3] = 1;
+    accumData.transPaths[static_cast<unsigned long>(bid3) * nb * nb +
+                         bid2 * nb + bid1] = 1;
+
   } else {
     // basically we will assume 0 to 180 allowed
     dl = RDGeom::compute14DistCis(bl1, bl2, bl3, ba12, ba23);
@@ -812,7 +825,7 @@ bool _checkNhChChNh(const Atom *atm1, const Atom *atm2, const Atom *atm3,
 //      2   5  <- 2 is an oxygen/nitrogen
 bool _checkAmideEster14(const Bond *bnd1, const Bond *bnd3, const Atom *atm1,
                         const Atom *atm2, const Atom *atm3, const Atom *atm4) {
-  unsigned int a1Num = atm1->getAtomicNum();
+  RDUNUSED_PARAM(atm1);
   unsigned int a2Num = atm2->getAtomicNum();
   unsigned int a3Num = atm3->getAtomicNum();
   unsigned int a4Num = atm4->getAtomicNum();
@@ -917,6 +930,7 @@ bool _isCarbonyl(const ROMol &mol, const Atom *at) {
 bool _checkAmideEster15(const ROMol &mol, const Bond *bnd1, const Bond *bnd3,
                         const Atom *atm1, const Atom *atm2, const Atom *atm3,
                         const Atom *atm4) {
+  RDUNUSED_PARAM(atm1);
   RDUNUSED_PARAM(atm4);
   unsigned int a2Num = atm2->getAtomicNum();
   if ((a2Num == 8) || ((a2Num == 7) && (atm2->getTotalNumHs(true) == 1))) {

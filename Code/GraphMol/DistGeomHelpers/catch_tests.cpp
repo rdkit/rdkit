@@ -1,5 +1,5 @@
 //
-//  Copyright (C) 2021 Greg Landrum
+//  Copyright (C) 2021 Greg Landrum and other RDKit contributors
 //   @@ All Rights Reserved @@
 //  This file is part of the RDKit.
 //  The contents are covered by the terms of the BSD license
@@ -77,5 +77,36 @@ TEST_CASE("Torsions not found in fused macrocycles", "[macrocycles]") {
       }
       CHECK(details.expTorsionAngles.size() == std::get<2>(tpl));
     }
+  }
+}
+
+TEST_CASE(
+    "github #4346: Specified cis/trans stereo being ignored during "
+    "conformation generation in macrocycles") {
+  SECTION("basics 1") {
+    auto m1 = "C1C/C=C/CCCCCCCC1"_smiles;
+    REQUIRE(m1);
+    CHECK(m1->getBondBetweenAtoms(2, 3)->getStereo() ==
+          Bond::BondStereo::STEREOE);
+    MolOps::addHs(*m1);
+    DGeomHelpers::EmbedParameters params = DGeomHelpers::KDG;
+    params.randomSeed = 0xf00d;
+    CHECK(DGeomHelpers::EmbedMolecule(*m1, params) != -1);
+    MolOps::assignStereochemistryFrom3D(*m1);
+    CHECK(m1->getBondBetweenAtoms(2, 3)->getStereo() ==
+          Bond::BondStereo::STEREOE);
+  }
+  SECTION("basics 2") {
+    auto m1 = "C1C/C=C\\CCCCCCCC1"_smiles;
+    REQUIRE(m1);
+    CHECK(m1->getBondBetweenAtoms(2, 3)->getStereo() ==
+          Bond::BondStereo::STEREOZ);
+    MolOps::addHs(*m1);
+    DGeomHelpers::EmbedParameters params = DGeomHelpers::KDG;
+    params.randomSeed = 0xf00d;
+    CHECK(DGeomHelpers::EmbedMolecule(*m1, params) != -1);
+    MolOps::assignStereochemistryFrom3D(*m1);
+    CHECK(m1->getBondBetweenAtoms(2, 3)->getStereo() ==
+          Bond::BondStereo::STEREOZ);
   }
 }
