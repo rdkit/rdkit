@@ -35,7 +35,7 @@ class TautomerCatalogParams;
 // typedef std::vector<ROMol*, std::string, std::string> tautomerTransform;
 class RDKIT_MOLSTANDARDIZE_EXPORT TautomerTransform {
  public:
-  ROMol* Mol;
+  ROMol* Mol = nullptr;
   std::vector<Bond::BondType> BondTypes;
   std::vector<int> Charges;
 
@@ -52,6 +52,7 @@ class RDKIT_MOLSTANDARDIZE_EXPORT TautomerTransform {
 
   TautomerTransform& operator=(const TautomerTransform& other) {
     if (this != &other) {
+      delete Mol;
       Mol = new ROMol(*other.Mol);
       BondTypes = other.BondTypes;
       Charges = other.Charges;
