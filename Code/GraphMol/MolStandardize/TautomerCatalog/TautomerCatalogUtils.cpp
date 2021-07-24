@@ -33,8 +33,8 @@ std::unique_ptr<MolStandardize::TautomerTransform> getTautomer(
     throw ValueErrorException("cannot parse tautomer SMARTS: " + smarts);
   }
   tautomer->setProp(common_properties::_Name, name);
-  return std::unique_ptr<MolStandardize::TautomerTransform>(
-      new MolStandardize::TautomerTransform(tautomer, bond_types, charges));
+  return std::make_unique<MolStandardize::TautomerTransform>(
+      tautomer, bond_types, charges);
 }
 
 std::unique_ptr<MolStandardize::TautomerTransform> getTautomer(
