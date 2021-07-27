@@ -40,7 +40,7 @@ typedef boost::variate_generator<rng_type &, uniform_int> int_source_type;
 typedef boost::variate_generator<rng_type &, uniform_double> double_source_type;
 
 //! Optionally seed and return a reference to the global (Boost) random
-// generator
+/// generator
 RDKIT_RDGENERAL_EXPORT rng_type &getRandomGenerator(int seed = -1);
 
 //! Return a random double value between 0.0 and 1.0
