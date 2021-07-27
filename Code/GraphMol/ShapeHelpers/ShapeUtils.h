@@ -25,7 +25,7 @@ class Conformer;
 namespace MolShapes {
 
 //! Compute the size of the box that can fit the conformation, and offset of the
-// box
+/// box
 //! from the origin
 RDKIT_SHAPEHELPERS_EXPORT void computeConfDimsAndOffset(
     const Conformer &conf, RDGeom::Point3D &dims, RDGeom::Point3D &offSet,
@@ -63,7 +63,7 @@ RDKIT_SHAPEHELPERS_EXPORT std::vector<double> getConfDimensions(
     const RDGeom::Point3D *center = nullptr, bool ignoreHs = true);
 
 //! Compute the shape tversky index between two molecule based on a
-// predefined alignment
+/// predefined alignment
 /*!
   \param mol1         The first molecule of interest
   \param mol2         The second molecule of interest
@@ -101,7 +101,7 @@ RDKIT_SHAPEHELPERS_EXPORT double tverskyIndex(
     bool ignoreHs = true);
 
 //! Compute the shape tversky index between two conformers based on a
-// predefined alignment
+/// predefined alignment
 
 /*!
   \param conf1        The first conformer of interest
@@ -135,7 +135,7 @@ RDKIT_SHAPEHELPERS_EXPORT double tverskyIndex(
     bool ignoreHs = true);
 
 //! Compute the shape tanimoto distance between two molecule based on a
-// predefined alignment
+/// predefined alignment
 /*!
   \param mol1         The first molecule of interest
   \param mol2         The second molecule of interest
@@ -171,7 +171,7 @@ RDKIT_SHAPEHELPERS_EXPORT double tanimotoDistance(
     bool ignoreHs = true);
 
 //! Compute the shape tanimoto distance between two conformers based on a
-// predefined alignment
+/// predefined alignment
 /*!
   \param conf1        The first conformer of interest
   \param conf2        The second conformer of interest
@@ -201,7 +201,7 @@ RDKIT_SHAPEHELPERS_EXPORT double tanimotoDistance(
     bool ignoreHs = true);
 
 //! Compute the shape protrusion distance between two molecule based on a
-// predefined alignment
+/// predefined alignment
 /*!
   \param mol1         The first molecule of interest
   \param mol2         The second molecule of interest
@@ -241,7 +241,7 @@ RDKIT_SHAPEHELPERS_EXPORT double protrudeDistance(
     bool ignoreHs = true, bool allowReordering = true);
 
 //! Compute the shape protrusion distance between two conformers based on a
-// predefined alignment
+/// predefined alignment
 /*!
   \param conf1        The first conformer of interest
   \param conf2        The second conformer of interest

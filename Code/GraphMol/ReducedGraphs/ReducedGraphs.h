@@ -35,7 +35,7 @@ RDKIT_REDUCEDGRAPHS_EXPORT ROMol *generateMolExtendedReducedGraph(
     const ROMol &mol,
     std::vector<boost::dynamic_bitset<>> *atomTypes = nullptr);
 //! \brief Generates a ErG fingerprint vector for a molecule that's already a
-// reduced graph
+/// reduced graph
 /*!
 
   \param mol:           the molecule to be fingerprinted
