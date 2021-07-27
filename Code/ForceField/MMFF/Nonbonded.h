@@ -73,12 +73,12 @@ class RDKIT_FORCEFIELD_EXPORT EleContrib : public ForceFieldContrib {
 
 namespace Utils {
 //! calculates and returns the unscaled minimum distance (R*ij) for a MMFF VdW
-// contact
+/// contact
 RDKIT_FORCEFIELD_EXPORT double calcUnscaledVdWMinimum(
     const MMFFVdWCollection *mmffVdW, const MMFFVdW *mmffVdWParamsAtom1,
     const MMFFVdW *mmffVdWParamsAtom2);
 //! calculates and returns the unscaled well depth (epsilon) for a MMFF VdW
-// contact
+/// contact
 RDKIT_FORCEFIELD_EXPORT double calcUnscaledVdWWellDepth(
     double R_star_ij, const MMFFVdW *mmffVdWParamsIAtom,
     const MMFFVdW *mmffVdWParamsJAtom);

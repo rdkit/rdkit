@@ -90,7 +90,7 @@ class RDKIT_FORCEFIELD_EXPORT ForceField {
   void initialize();
 
   //! calculates and returns the energy (in kcal/mol) based on existing
-  // positions in the forcefield
+  /// positions in the forcefield
   /*!
 
   \return the current energy

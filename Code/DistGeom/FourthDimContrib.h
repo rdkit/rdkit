@@ -43,7 +43,7 @@ class RDKIT_DISTGEOMETRY_EXPORT FourthDimContrib
   }
 
   //! calculate the contribution of this contrib to the gradient at a given
-  // state
+  /// state
   void getGrad(double *pos, double *grad) const override {
     PRECONDITION(dp_forceField, "no owner");
     PRECONDITION(dp_forceField->dimension() == 4,
