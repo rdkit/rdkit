@@ -102,7 +102,7 @@ RDKIT_DEPICTOR_EXPORT RDGeom::Point2D reflectPoint(const RDGeom::Point2D &point,
                                                    const RDGeom::Point2D &loc2);
 
 //! Set the neighbors yet to added to aid such that the atoms with the most subs
-// fall on opposite sides
+/// fall on opposite sides
 /*!
   Ok this needs some explanation
   - Let A, B, C, D be the substituent on the central atom X (given
@@ -139,7 +139,7 @@ RDKIT_DEPICTOR_EXPORT RDKit::INT_VECT setNbrOrder(unsigned int aid,
                                                   const RDKit::ROMol &mol);
 
 //! \brief From a given set of rings find the ring the largest common elements
-// with other rings
+/// with other rings
 /*
   Bit of a weird function - this is typically called once we have embedded some
   of the

@@ -42,7 +42,7 @@
 namespace RDKit {
 
 //! This is a class for fully randomly sampling reagents.
-//   Note that this enumerator never halts.
+///  Note that this enumerator never halts.
 /*!
   basic usage:
 

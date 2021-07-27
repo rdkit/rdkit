@@ -176,7 +176,7 @@ class RDKIT_CHEMREACTIONS_EXPORT ChemicalReaction : public RDProps {
   }
 
   //! Removes the reactant templates from a reaction if atom mapping ratio is
-  // below a given threshold
+  /// below a given threshold
   /*! By default the removed reactant templates were attached to the agent
      templates.
       An alternative will be to provide a pointer to a molecule vector where
@@ -187,7 +187,7 @@ class RDKIT_CHEMREACTIONS_EXPORT ChemicalReaction : public RDProps {
                                        MOL_SPTR_VECT *targetVector = nullptr);
 
   //! Removes the product templates from a reaction if its atom mapping ratio is
-  // below a given threshold
+  /// below a given threshold
   /*! By default the removed products templates were attached to the agent
      templates.
       An alternative will be to provide a pointer to a molecule vector where
@@ -299,7 +299,7 @@ class RDKIT_CHEMREACTIONS_EXPORT ChemicalReaction : public RDProps {
   bool isInitialized() const { return !df_needsInit; }
 
   //! validates the reactants and products to make sure the reaction seems
-  //"reasonable"
+  /// "reasonable"
   /*!
       \return   true if the reaction validates without errors (warnings do not
       stop validation)

@@ -84,7 +84,7 @@ class RDKIT_DEPICTOR_EXPORT EmbeddedAtom {
   unsigned int aid{0};  // the id of the atom
 
   //! the angle that is already takes at this atom, so any new atom attaching to
-  // this
+  /// this
   //! atom with have to fall in the available part
   double angle{-1.0};
 
@@ -95,19 +95,19 @@ class RDKIT_DEPICTOR_EXPORT EmbeddedAtom {
   int nbr2{-1};
 
   //! is this is a cis/trans atom the neighbor of this atom that is involved in
-  // the
+  /// the
   //! cis/trans system - defaults to -1
   int CisTransNbr{-1};
 
   //! which direction do we rotate this normal to add the next bond
   //! if ccw is true we rotate counter clockwise, otherwise rotate clock wise,
-  // by an angle that is
+  /// by an angle that is
   //! <= PI/2
   bool ccw{true};
 
   //! rotation direction around this atom when adding new atoms,
   //! we determine this for the first neighbor and stick to this direction after
-  // that
+  /// that
   //! useful only on atoms that are degree >= 4
   int rotDir{0};
 
@@ -115,7 +115,7 @@ class RDKIT_DEPICTOR_EXPORT EmbeddedAtom {
   //! this is a normal vector to one of the bonds that added this atom
   //! it provides the side on which we want to add a new bond to this atom,
   //! this is only relevant when we are dealing with non ring atoms. We would
-  // like to draw chains in
+  /// like to draw chains in
   //! a zig-zag manner
   RDGeom::Point2D normal;
 
@@ -203,7 +203,7 @@ class RDKIT_DEPICTOR_EXPORT EmbeddedFrag {
   explicit EmbeddedFrag(const RDKit::Bond *dblBond);
 
   //! Expand this embedded system by adding neighboring atoms or other embedded
-  // systems
+  /// systems
   /*!
 
     Note that both nratms and efrags are modified in this function
@@ -351,7 +351,7 @@ class RDKIT_DEPICTOR_EXPORT EmbeddedFrag {
   void removeCollisionsOpenAngles();
 
   //! Remove collisions by shortening bonds along the shortest path between the
-  // atoms
+  /// atoms
   void removeCollisionsShortenBonds();
 
   //! helpers functions to
@@ -380,7 +380,7 @@ class RDKIT_DEPICTOR_EXPORT EmbeddedFrag {
   void embedFusedRings(const RDKit::VECT_INT_VECT &fusedRings);
 
   //! \brief Find a transform to join a ring to the current embedded frag when
-  // we
+  /// we
   //! have only on common atom
   /*!
     So this is the state of affairs assumed here:
@@ -539,7 +539,7 @@ class RDKIT_DEPICTOR_EXPORT EmbeddedFrag {
   double d_px = 0.0, d_nx = 0.0, d_py = 0.0, d_ny = 0.0;
 
   //! a map that takes one from the atom id to the embeddedatom object for that
-  // atom.
+  /// atom.
   INT_EATOM_MAP d_eatoms;
 
   // RDKit::INT_DEQUE d_attachPts;
