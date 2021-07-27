@@ -32,7 +32,7 @@ RDKIT_DISTGEOMHELPERS_EXPORT void initBoundsMat(DistGeom::BoundsMatPtr mmat,
                                                 double defaultMax = 1000.0);
 
 //! Set upper and lower distance bounds between atoms in a molecule based on
-// topology
+/// topology
 /*!
   This consists of setting 1-2, 1-3 and 1-4 distance based on bond lengths,
   bond angles and torsion angle ranges. Optionally 1-5 bounds can also be set,

@@ -177,7 +177,7 @@ const std::string kappa2Version = "1.1.0";
 
 //! calculate the Hall-Kier kappa3 value for a molecule
 //! From equations (58), (61) and (62) of Rev. Comp. Chem. vol 2, 367-422,
-//(1991)
+/// 1991)
 //!
 //! \note Because hybridization is used to calculate this results may differ
 //! from other implementations which have different conventions for assigning
