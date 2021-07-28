@@ -440,9 +440,7 @@ std::vector<MatchVectType> SubstructMatch(
     return matches;
   }
   std::vector<RecursiveStructureQuery *> locked;
-#ifdef RDK_THREADSAFE_SSS
   locked.reserve(query.getNumAtoms());
-#endif
   if (params.recursionPossible) {
     detail::SUBQUERY_MAP subqueryMap;
     ROMol::ConstAtomIterator atIt;
@@ -486,7 +484,7 @@ std::vector<MatchVectType> SubstructMatch(
   }
 
   if (params.recursionPossible) {
-    for (auto *v : locked) {
+    for (auto v : locked) {
       v->clear();
 #ifdef RDK_THREADSAFE_SSS
       v->d_mutex.unlock();
@@ -646,8 +644,8 @@ void MatchSubqueries(const ROMol &mol, QueryAtom::QUERYATOM_QUERY *query,
     auto *rsq = (RecursiveStructureQuery *)query;
 #ifdef RDK_THREADSAFE_SSS
     rsq->d_mutex.lock();
-    locked.push_back(rsq);
 #endif
+    locked.push_back(rsq);
     rsq->clear();
     bool matchDone = false;
     if (rsq->getSerialNumber() &&

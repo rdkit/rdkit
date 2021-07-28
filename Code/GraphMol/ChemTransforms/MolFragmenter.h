@@ -101,7 +101,7 @@ RDKIT_CHEMTRANSFORMS_EXPORT void constructBRICSBondTypes(
     std::vector<FragmenterBondType> &defs);
 }  // namespace MolFragmenter
 
-enum class RDKIT_CHEMTRANSFORMS_EXPORT MolzipLabel {
+enum class MolzipLabel {
   AtomMapNumber,
   Isotope,
   FragmentOnBonds,

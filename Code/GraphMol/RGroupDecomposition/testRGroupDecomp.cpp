@@ -130,8 +130,6 @@ void testSymmetryMatching(RGroupScore scoreMethod = Match) {
   decomp.process();
   RGroupRows rows = decomp.getRGroupsAsRows();
 
-  std::ostringstream str;
-
   // All Cl's should be labeled with the same rgroup
   int i = 0;
   for (RGroupRows::const_iterator it = rows.begin(); it != rows.end();
@@ -164,8 +162,6 @@ void testGaSymmetryMatching(RGroupScore scoreMethod) {
   decomp.process();
   RGroupRows rows = decomp.getRGroupsAsRows();
 
-  std::ostringstream str;
-
   // All Cl's should be labeled with the same rgroup
   int i = 0;
   for (RGroupRows::const_iterator it = rows.begin(); it != rows.end();
@@ -190,6 +186,8 @@ void testGaBatch() {
   params.gaNumberRuns = 3;
   params.gaParallelRuns = true;
 
+  std::stringstream sstrm;
+  rdWarningLog->SetTee(sstrm);
   RGroupDecomposition decomp(*core, params);
   for (int i = 0; i < 5; ++i) {
     ROMol *mol = SmilesToMol(symdata[i]);
@@ -200,8 +198,13 @@ void testGaBatch() {
 
   decomp.process();
   RGroupRows rows = decomp.getRGroupsAsRows();
-
-  std::ostringstream str;
+  bool isParallelGaEnabled = (sstrm.str().find("This RDKit build does not enable GA parallel runs") == std::string::npos);
+#ifdef RDK_TEST_MULTITHREADED
+  TEST_ASSERT(isParallelGaEnabled);
+#else
+  TEST_ASSERT(!isParallelGaEnabled);
+#endif
+  rdWarningLog->ClearTee();
 
   // All Cl's should be labeled with the same rgroup
   int i = 0;
@@ -243,8 +246,6 @@ void testRGroupOnlyMatching() {
 
   decomp.process();
   RGroupRows rows = decomp.getRGroupsAsRows();
-  std::ostringstream str;
-
   // All Cl's should be labeled with the same rgroup
   int i = 0;
   for (RGroupRows::const_iterator it = rows.begin(); it != rows.end();
@@ -289,8 +290,6 @@ void testRingMatching() {
   decomp.process();
   RGroupRows rows = decomp.getRGroupsAsRows();
   auto cols = decomp.getRGroupsAsColumns();
-  std::ostringstream str;
-
   // All Cl's should be labeled with the same rgroup
   int i = 0;
   for (RGroupRows::const_iterator it = rows.begin(); it != rows.end();
@@ -327,8 +326,6 @@ void testRingMatching2() {
 
   decomp.process();
   RGroupRows rows = decomp.getRGroupsAsRows();
-  std::ostringstream str;
-
   // All Cl's should be labeled with the same rgroup
   int i = 0;
   for (RGroupRows::const_iterator it = rows.begin(); it != rows.end();
@@ -371,8 +368,6 @@ void testRingMatching3() {
 
     decomp.process();
     RGroupRows rows = decomp.getRGroupsAsRows();
-    std::ostringstream str;
-
     // All Cl's should be labeled with the same rgroup
     int i = 0;
     for (RGroupRows::const_iterator it = rows.begin(); it != rows.end();
@@ -417,8 +412,6 @@ void testMultiCore() {
 
   decomp.process();
   RGroupRows rows = decomp.getRGroupsAsRows();
-  std::ostringstream str;
-
   // All Cl's should be labeled with the same rgroup
   int i = 0;
   for (RGroupRows::const_iterator it = rows.begin(); it != rows.end();

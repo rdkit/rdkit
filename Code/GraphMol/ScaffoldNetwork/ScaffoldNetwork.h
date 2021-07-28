@@ -64,7 +64,7 @@ struct RDKIT_SCAFFOLDNETWORK_EXPORT ScaffoldNetworkParams {
   ScaffoldNetworkParams(const std::vector<std::string> &bondBreakersSmarts);
 };
 
-enum class RDKIT_SCAFFOLDNETWORK_EXPORT EdgeType {
+enum class EdgeType {
   Fragment = 1,     ///< molecule -> fragment
   Generic = 2,      ///< molecule -> generic molecule (all atoms are dummies)
   GenericBond = 3,  ///< molecule -> generic bond molecule (all bonds single)
