@@ -800,27 +800,60 @@ void GetMolFileBondStereoInfo(const Bond *bond, const INT_MAP_INT &wedgeBonds,
             ROMol::OEDGE_ITER beg, end;
             boost::tie(beg, end) =
                 bond->getOwningMol().getAtomBonds(bond->getBeginAtom());
+            bool atomHasDuplicateRanks = false;
+            std::vector<int> nbrRanks;
             while (beg != end && !nbrHasDir) {
-              const Bond *nbrBond = bond->getOwningMol()[*beg];
-              if (nbrBond->getBondType() == Bond::SINGLE &&
-                  (nbrBond->getBondDir() == Bond::ENDUPRIGHT ||
-                   nbrBond->getBondDir() == Bond::ENDDOWNRIGHT)) {
-                nbrHasDir = true;
+              const auto nbrBond = bond->getOwningMol()[*beg];
+              if (nbrBond->getBondType() == Bond::SINGLE) {
+                if (nbrBond->getBondDir() == Bond::ENDUPRIGHT ||
+                    nbrBond->getBondDir() == Bond::ENDDOWNRIGHT) {
+                  nbrHasDir = true;
+                } else {
+                  const auto otherAtom =
+                      nbrBond->getOtherAtom(bond->getBeginAtom());
+                  int rank;
+                  if (!atomHasDuplicateRanks &&
+                      otherAtom->getPropIfPresent(common_properties::_CIPRank,
+                                                  rank)) {
+                    if (std::find(nbrRanks.begin(), nbrRanks.end(), rank) !=
+                        nbrRanks.end()) {
+                      atomHasDuplicateRanks = true;
+                    } else {
+                      nbrRanks.push_back(rank);
+                    }
+                  }
+                }
               }
               ++beg;
             }
+            nbrRanks.clear();
             boost::tie(beg, end) =
                 bond->getOwningMol().getAtomBonds(bond->getEndAtom());
             while (beg != end && !nbrHasDir) {
               const Bond *nbrBond = bond->getOwningMol()[*beg];
-              if (nbrBond->getBondType() == Bond::SINGLE &&
-                  (nbrBond->getBondDir() == Bond::ENDUPRIGHT ||
-                   nbrBond->getBondDir() == Bond::ENDDOWNRIGHT)) {
-                nbrHasDir = true;
+              if (nbrBond->getBondType() == Bond::SINGLE) {
+                if (nbrBond->getBondDir() == Bond::ENDUPRIGHT ||
+                    nbrBond->getBondDir() == Bond::ENDDOWNRIGHT) {
+                  nbrHasDir = true;
+                } else {
+                  const auto otherAtom =
+                      nbrBond->getOtherAtom(bond->getEndAtom());
+                  int rank;
+                  if (!atomHasDuplicateRanks &&
+                      otherAtom->getPropIfPresent(common_properties::_CIPRank,
+                                                  rank)) {
+                    if (std::find(nbrRanks.begin(), nbrRanks.end(), rank) !=
+                        nbrRanks.end()) {
+                      atomHasDuplicateRanks = true;
+                    } else {
+                      nbrRanks.push_back(rank);
+                    }
+                  }
+                }
               }
               ++beg;
             }
-            if (!nbrHasDir) {
+            if (!atomHasDuplicateRanks && !nbrHasDir) {
               dirCode = 3;
             }
           }
