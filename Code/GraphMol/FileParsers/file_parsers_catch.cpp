@@ -3815,4 +3815,14 @@ TEST_CASE("github #4345: non-stereo bonds written with unspecified parity") {
     mb = MolToMolBlock(*m);
     CHECK(mb.find("  2  3  2  3") != std::string::npos);
   }
+  SECTION("direction explicitly set should be ignored") {
+    auto m = "CC=C(F)F"_smiles;
+    REQUIRE(m);
+    m->getBondWithIdx(0)->setBondDir(Bond::BondDir::ENDUPRIGHT);
+    m->getBondWithIdx(2)->setBondDir(Bond::BondDir::ENDUPRIGHT);
+    auto mb = MolToV3KMolBlock(*m);
+    CHECK(mb.find("CFG=2") == std::string::npos);
+    mb = MolToMolBlock(*m);
+    CHECK(mb.find("  2  3  2  3") == std::string::npos);
+  }
 }
