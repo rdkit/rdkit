@@ -3773,3 +3773,56 @@ M  END)CTAB"_ctab;
     CHECK(getSubstanceGroups(*m2).size() == 5);
   }
 }
+
+TEST_CASE("github #4345: non-stereo bonds written with unspecified parity") {
+  SECTION("basics") {
+    auto m = "CC=C(F)F"_smiles;
+    REQUIRE(m);
+    auto mb = MolToV3KMolBlock(*m);
+    CHECK(mb.find("CFG=2") == std::string::npos);
+    mb = MolToMolBlock(*m);
+    CHECK(mb.find("  2  3  2  3") == std::string::npos);
+  }
+  SECTION("possible chirality") {
+    auto m = "CC=C(O)F"_smiles;
+    REQUIRE(m);
+    auto mb = MolToV3KMolBlock(*m);
+    CHECK(mb.find("CFG=2") != std::string::npos);
+    mb = MolToMolBlock(*m);
+    CHECK(mb.find("  2  3  2  3") != std::string::npos);
+  }
+  SECTION("terminal") {
+    auto m = "CC=C"_smiles;
+    REQUIRE(m);
+    auto mb = MolToV3KMolBlock(*m);
+    CHECK(mb.find("CFG=2") == std::string::npos);
+    mb = MolToMolBlock(*m);
+    CHECK(mb.find("  2  3  2  3") == std::string::npos);
+  }
+  SECTION("nitrogen") {
+    auto m = "CC(C)=NF"_smiles;
+    REQUIRE(m);
+    auto mb = MolToV3KMolBlock(*m);
+    CHECK(mb.find("CFG=2") == std::string::npos);
+    mb = MolToMolBlock(*m);
+    CHECK(mb.find("  3  4  2  3") == std::string::npos);
+  }
+  SECTION("nitrogen with") {
+    auto m = "CC=NF"_smiles;
+    REQUIRE(m);
+    auto mb = MolToV3KMolBlock(*m);
+    CHECK(mb.find("CFG=2") != std::string::npos);
+    mb = MolToMolBlock(*m);
+    CHECK(mb.find("  2  3  2  3") != std::string::npos);
+  }
+  SECTION("direction explicitly set should be ignored") {
+    auto m = "CC=C(F)F"_smiles;
+    REQUIRE(m);
+    m->getBondWithIdx(0)->setBondDir(Bond::BondDir::ENDUPRIGHT);
+    m->getBondWithIdx(2)->setBondDir(Bond::BondDir::ENDUPRIGHT);
+    auto mb = MolToV3KMolBlock(*m);
+    CHECK(mb.find("CFG=2") == std::string::npos);
+    mb = MolToMolBlock(*m);
+    CHECK(mb.find("  2  3  2  3") == std::string::npos);
+  }
+}
