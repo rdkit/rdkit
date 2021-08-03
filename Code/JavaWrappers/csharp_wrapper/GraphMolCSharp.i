@@ -32,25 +32,6 @@
 */
 %module RDKFuncs
 
-#if defined(SWIGWORDSIZE64)
-%{
-// There's a problem with SWIG, 64bit windows, and modern VC++ versions
-//   This fine, fine piece of code fixes that.
-//   it's ok to think this is horrible, we won't mind
-#ifdef _MSC_VER
-
-#ifndef LONG_MAX
-#include <limits.h>
-#endif
-
-#if LONG_MAX==INT_MAX
-#define LONG_MAX (INT_MAX+1)
-#endif
-
-#endif
-%}
-#endif
-
 /* Suppress the unimportant warnings */
 #pragma SWIG nowarn=503,516
 
