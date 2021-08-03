@@ -36,9 +36,18 @@ void PositionVariationOp::initFromMol() {
       if (atom->getAtomicNum() == 0) {
         atom = bond->getEndAtom();
         if (atom->getAtomicNum() == 0) {
-          throw ValueErrorException(
-              "position variation bond does not have connection to a "
-              "non-dummy atom");
+          // marvin sketch seems to place the position-variation dummy at the
+          // beginning of the bond, so we're going to favor taking the end atom.
+          // In case other tools construct this differently, we have an
+          // exception to that if the end atom is an AtomNull query and the
+          // beginning atom is not one.
+          if (atom->hasQuery() &&
+              atom->getQuery()->getDescription() == "AtomNull" &&
+              bond->getBeginAtom()->hasQuery() &&
+              bond->getBeginAtom()->getQuery()->getDescription() !=
+                  "AtomNull") {
+            atom = bond->getBeginAtom();
+          }
         }
       }
       d_dummiesAtEachPoint.push_back(bond->getOtherAtomIdx(atom->getIdx()));
