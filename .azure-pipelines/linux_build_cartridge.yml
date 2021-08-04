@@ -1,12 +1,9 @@
 steps:
 - bash: |
     sudo apt-get update
-    apt search postgresql
+    sudo apt-get uninstall postgresql
     apt list --installed | grep postgr
-    echo "SOURCES"
-    grep "^" /etc/apt/sources.list /etc/apt/sources.list.d/*
-    echo "<-----"
-    sudo apt-get install -y libboost-all-dev postgresql-server-dev-all
+    sudo apt-get install -y libboost-all-dev postgresql-12 postgresql-server-dev-12
     sudo service postgresql start
     #sudo su postgres
     sudo -u postgres createuser -s `whoami`
