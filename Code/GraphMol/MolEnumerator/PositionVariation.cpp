@@ -53,12 +53,19 @@ void PositionVariationOp::initFromMol() {
       d_dummiesAtEachPoint.push_back(bond->getOtherAtomIdx(atom->getIdx()));
       std::vector<unsigned int> oats =
           RDKit::SGroupParsing::ParseV3000Array<unsigned int>(endpts);
-      // decrement the indices and do error checking:
+      // decrement the indices and do error checking and whatever additional
+      // cleanup is required:
       for (auto &oat : oats) {
         if (oat == 0 || oat > dp_mol->getNumAtoms()) {
           throw ValueErrorException("Bad variation point index");
         }
         --oat;
+        // github #4381: if we're connecting to an aromatic heteroatom which
+        // has implicit Hs, we should remove those
+        auto attachAtom = dp_mol->getAtomWithIdx(oat);
+        if (attachAtom->getIsAromatic() && attachAtom->getAtomicNum() != 6) {
+          attachAtom->setNumExplicitHs(0);
+        }
       }
       d_variationPoints.push_back(std::make_pair(atom->getIdx(), oats));
     }
