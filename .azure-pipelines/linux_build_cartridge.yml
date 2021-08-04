@@ -1,7 +1,8 @@
 steps:
 - bash: |
     sudo apt-get update
-    sudo apt-get uninstall postgresql
+    sudo apt-get remove postgresql
+    echo "REMAINING"
     apt list --installed | grep postgr
     sudo apt-get install -y libboost-all-dev postgresql-12 postgresql-server-dev-12
     sudo service postgresql start
