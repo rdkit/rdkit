@@ -105,7 +105,8 @@ CROMol parseMolText(char *data, bool asSmarts, bool warnOnFail, bool asQuery);
 CROMol parseMolCTAB(char *data, bool keepConformer, bool warnOnFail,
                     bool asQuery);
 char *makeMolText(CROMol data, int *len, bool asSmarts, bool cxSmiles);
-char *makeCtabText(CROMol data, int *len, bool createDepictionIfMissing);
+char *makeCtabText(CROMol data, int *len, bool createDepictionIfMissing,
+                   bool useV3000);
 const char *makeMolJSON(CROMol data);
 CROMol parseMolJSON(char *data, bool warnOnFail);
 

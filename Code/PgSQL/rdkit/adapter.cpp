@@ -367,14 +367,18 @@ extern "C" char *makeMolText(CROMol data, int *len, bool asSmarts,
 }
 
 extern "C" char *makeCtabText(CROMol data, int *len,
-                              bool createDepictionIfMissing) {
+                              bool createDepictionIfMissing, bool useV3000) {
   auto *mol = (ROMol *)data;
 
   try {
     if (createDepictionIfMissing && mol->getNumConformers() == 0) {
       RDDepict::compute2DCoords(*mol);
     }
-    StringData = MolToMolBlock(*mol);
+    if (!useV3000) {
+      StringData = MolToMolBlock(*mol);
+    } else {
+      StringData = MolToV3KMolBlock(*mol);
+    }
   } catch (...) {
     ereport(WARNING,
             (errcode(ERRCODE_WARNING),
