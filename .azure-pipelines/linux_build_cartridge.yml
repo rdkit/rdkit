@@ -2,12 +2,15 @@ steps:
 - bash: |
     sudo apt-get update
     sudo apt-get remove postgresql postgresql-13 postgresql-client-13 postgresql-common postgresql-client-common
+    sudo apt purge postgresql postgresql-13 postgresql-client-13 postgresql-common postgresql-client-common
     echo "REMAINING"
     apt list --installed | grep postgr
     sudo apt-get install -y libboost-all-dev postgresql-common postgresql-12 postgresql-server-dev-12
     # sudo service postgresql start
+    echo "launch cluster"
     sudo -u postgres pg_ctlcluster 12 main start
     #sudo su postgres
+    echo "add user"
     sudo -u postgres createuser -s `whoami`
   displayName: Setup build environment
 - bash: |
