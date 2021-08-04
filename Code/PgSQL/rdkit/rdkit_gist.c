@@ -33,6 +33,7 @@
 #include <access/gist.h>
 #include <access/skey.h>
 #include <utils/memutils.h>
+#include <math.h>
 
 #include "rdkit.h"
 #include "guc.h"

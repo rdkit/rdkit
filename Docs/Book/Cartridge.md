@@ -653,6 +653,7 @@ There are additional operators defined in the cartridge, but these are used for 
 -   mol\_exactmw(mol) : returns the exact MW for a molecule (*available from 2021\_09 release*).
 -   mol\_logp(mol) : returns the MolLogP for a molecule.
 -   mol\_tpsa(mol) : returns the topological polar surface area for a molecule (*available from Q1 2011 (2011\_03) release*).
+-   mol\_labuteasa(mol) : returns Labute's approximate surface area (ASA) for a molecule (*available from 2021\_09 release*).
 -   mol\_fractioncsp3(mol) : returns the fraction of carbons that are sp3 hybridized (*available from 2013\_03 release*).
 -   mol\_hba(mol) : returns the number of Lipinski H-bond acceptors (i.e. number of Os and Ns) for a molecule.
 -   mol\_hbd(mol) : returns the number of Lipinski H-bond donors (i.e. number of Os and Ns that have at least one H) for a molecule.
@@ -683,6 +684,7 @@ There are additional operators defined in the cartridge, but these are used for 
 -   mol\_chi0n(mol) - mol\_chi4n(mol) : returns the ChiXn value for a molecule for X=0-4 (*available from 2012\_01 release*).
 -   mol\_kappa1(mol) - mol\_kappa3(mol) : returns the kappaX value for a molecule for X=1-3 (*available from 2012\_01 release*).
 -   mol\_phi(mol) : returns the Kier Phi value for a molecule (*available from 2021\_09 release*).
+-   mol\_hallkieralpha(mol) : returns the Hall-Kier alpha value for a molecule (*available from 2021\_09 release*).
 
 ##### MCS
 

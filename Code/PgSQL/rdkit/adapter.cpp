@@ -571,6 +571,7 @@ extern "C" int MolSubstructCount(CROMol i, CROMol a, bool uniquify) {
   }
 MOLDESCR(FractionCSP3, RDKit::Descriptors::calcFractionCSP3, double)
 MOLDESCR(TPSA, RDKit::Descriptors::calcTPSA, double)
+MOLDESCR(LabuteASA, RDKit::Descriptors::calcLabuteASA, double)
 MOLDESCR(AMW, RDKit::Descriptors::calcAMW, double)
 MOLDESCR(ExactMW, RDKit::Descriptors::calcExactMW, double)
 MOLDESCR(HBA, RDKit::Descriptors::calcLipinskiHBA, int)
@@ -593,6 +594,9 @@ MOLDESCR(NumAliphaticCarbocycles,
 MOLDESCR(NumSaturatedCarbocycles,
          RDKit::Descriptors::calcNumSaturatedCarbocycles, int)
 MOLDESCR(NumHeterocycles, RDKit::Descriptors::calcNumHeterocycles, int)
+MOLDESCR(NumSpiroAtoms, RDKit::Descriptors::calcNumSpiroAtoms, int)
+MOLDESCR(NumBridgeheadAtoms, RDKit::Descriptors::calcNumBridgeheadAtoms, int)
+MOLDESCR(NumAmideBonds, RDKit::Descriptors::calcNumAmideBonds, int)
 
 MOLDESCR(NumRotatableBonds, RDKit::Descriptors::calcNumRotatableBonds, int)
 MOLDESCR(Chi0v, RDKit::Descriptors::calcChi0v, double)
@@ -608,9 +612,8 @@ MOLDESCR(Chi4n, RDKit::Descriptors::calcChi4n, double)
 MOLDESCR(Kappa1, RDKit::Descriptors::calcKappa1, double)
 MOLDESCR(Kappa2, RDKit::Descriptors::calcKappa2, double)
 MOLDESCR(Kappa3, RDKit::Descriptors::calcKappa3, double)
+MOLDESCR(HallKierAlpha, RDKit::Descriptors::calcHallKierAlpha, double)
 MOLDESCR(Phi, RDKit::Descriptors::calcPhi, double)
-MOLDESCR(NumSpiroAtoms, RDKit::Descriptors::calcNumSpiroAtoms, int)
-MOLDESCR(NumBridgeheadAtoms, RDKit::Descriptors::calcNumBridgeheadAtoms, int)
 
 extern "C" double MolLogP(CROMol i) {
   double logp, mr;

@@ -141,9 +141,11 @@ int MolNumAromaticCarbocycles(CROMol i);
 int MolNumAliphaticCarbocycles(CROMol i);
 int MolNumSaturatedCarbocycles(CROMol i);
 int MolNumHeterocycles(CROMol i);
+int MolNumAmideBonds(CROMol i);
 
 double MolFractionCSP3(CROMol i);
 double MolTPSA(CROMol i);
+double MolLabuteASA(CROMol i);
 double MolChi0v(CROMol i);
 double MolChi1v(CROMol i);
 double MolChi2v(CROMol i);
@@ -158,6 +160,7 @@ double MolKappa1(CROMol i);
 double MolKappa2(CROMol i);
 double MolKappa3(CROMol i);
 double MolPhi(CROMol i);
+double MolHallKierAlpha(CROMol i);
 
 int MolNumSpiroAtoms(CROMol i);
 int MolNumBridgeheadAtoms(CROMol i);

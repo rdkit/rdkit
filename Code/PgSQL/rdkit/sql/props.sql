@@ -27,6 +27,8 @@ SELECT mol_numbridgeheadatoms('C1CCC2(C1)CC1CCC2CC1'::mol) v;
 SELECT mol_numspiroatoms('CC1(C)CC2(C)CCC1(C)CC2'::mol) v;
 SELECT mol_numbridgeheadatoms('CC1(C)CC2(C)CCC1(C)CC2'::mol) v;
 SELECT mol_phi('CC(C)(C)C(C)C'::mol) v;
+SELECT mol_hallkieralpha('CC(O)(C)C(C)C'::mol) v;
+SELECT mol_numamidebonds('O=C(C)NC'::mol) v;
 
 
 -- Mol formula tests - SQL equivalents of tests in testMolDescriptors.py.
@@ -49,6 +51,7 @@ SELECT mol_numheteroatoms('CCC'::mol) val;
 SELECT mol_numheteroatoms('CCO'::mol) val;
 SELECT mol_tpsa('CCC'::mol) val;
 SELECT mol_tpsa('CCO'::mol) val;
+SELECT mol_labuteasa('CCC'::mol) val;
 SELECT mol_numrings('CCC'::mol) val;
 SELECT mol_numrings('C1CC1'::mol) val;
 SELECT mol_murckoscaffold('c1ccccc1CCC'::mol) val;
