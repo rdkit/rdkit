@@ -2,6 +2,7 @@ steps:
 - bash: |
     sudo apt-get update
     apt search postgresql
+    apt list --installed | grep postgr
     sudo apt-get install -y libboost-all-dev postgresql-server-dev-13
     sudo service postgresql start
     #sudo su postgres
