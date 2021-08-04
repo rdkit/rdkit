@@ -650,6 +650,7 @@ There are additional operators defined in the cartridge, but these are used for 
 ##### Descriptors
 
 -   mol\_amw(mol) : returns the AMW for a molecule.
+-   mol\_exactmw(mol) : returns the exact MW for a molecule (*available from 2021\_09 release*).
 -   mol\_logp(mol) : returns the MolLogP for a molecule.
 -   mol\_tpsa(mol) : returns the topological polar surface area for a molecule (*available from Q1 2011 (2011\_03) release*).
 -   mol\_fractioncsp3(mol) : returns the fraction of carbons that are sp3 hybridized (*available from 2013\_03 release*).

@@ -154,6 +154,7 @@ Datum mol_substruct_count(PG_FUNCTION_ARGS) {
   }
 
 MOLDESCR(amw, MolAMW, FLOAT4)
+MOLDESCR(exactmw, MolExactMW, FLOAT4)
 MOLDESCR(logp, MolLogP, FLOAT4)
 MOLDESCR(tpsa, MolTPSA, FLOAT4)
 MOLDESCR(hba, MolHBA, INT32)

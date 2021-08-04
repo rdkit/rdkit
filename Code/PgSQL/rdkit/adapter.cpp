@@ -572,6 +572,7 @@ extern "C" int MolSubstructCount(CROMol i, CROMol a, bool uniquify) {
 MOLDESCR(FractionCSP3, RDKit::Descriptors::calcFractionCSP3, double)
 MOLDESCR(TPSA, RDKit::Descriptors::calcTPSA, double)
 MOLDESCR(AMW, RDKit::Descriptors::calcAMW, double)
+MOLDESCR(ExactMW, RDKit::Descriptors::calcExactMW, double)
 MOLDESCR(HBA, RDKit::Descriptors::calcLipinskiHBA, int)
 MOLDESCR(HBD, RDKit::Descriptors::calcLipinskiHBD, int)
 MOLDESCR(NumHeteroatoms, RDKit::Descriptors::calcNumHeteroatoms, int)

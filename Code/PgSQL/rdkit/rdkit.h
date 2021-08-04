@@ -122,6 +122,7 @@ int MolSubstructCount(CROMol i, CROMol a, bool uniquify);
 bytea *makeMolSignature(CROMol data);
 
 double MolAMW(CROMol i);
+double MolExactMW(CROMol i);
 double MolLogP(CROMol i);
 int MolHBA(CROMol i);
 int MolHBD(CROMol i);
