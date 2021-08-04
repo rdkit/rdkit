@@ -37,6 +37,7 @@ steps:
     if [ -e ./Code/PgSQL/rdkit/regression.diffs ]
     then
       cat ./Code/PgSQL/rdkit/regression.diffs
+      exit 1
     fi
   displayName: Run tests
 
