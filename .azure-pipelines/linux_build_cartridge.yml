@@ -3,8 +3,10 @@ steps:
     sudo apt-get update
     apt search postgresql
     apt list --installed | grep postgr
-    grep ^ /etc/apt/sources.list /etc/apt/sources.list.d/*
-    sudo apt-get install -y libboost-all-dev postgresql-server-dev-13
+    echo "SOURCES"
+    grep "^" /etc/apt/sources.list /etc/apt/sources.list.d/*
+    echo "<-----"
+    sudo apt-get install -y libboost-all-dev postgresql-server-dev-all
     sudo service postgresql start
     #sudo su postgres
     sudo -u postgres createuser -s `whoami`
