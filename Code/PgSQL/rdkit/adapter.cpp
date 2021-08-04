@@ -352,7 +352,11 @@ extern "C" char *makeMolText(CROMol data, int *len, bool asSmarts,
         StringData = MolToCXSmiles(*mol);
       }
     } else {
-      StringData = MolToSmarts(*mol, false);
+      if (!cxSmiles) {
+        StringData = MolToSmarts(*mol, false);
+      } else {
+        StringData = MolToCXSmarts(*mol);
+      }
     }
   } catch (...) {
     ereport(

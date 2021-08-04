@@ -307,6 +307,24 @@ mol_to_smarts(PG_FUNCTION_ARGS) {
   PG_RETURN_CSTRING( pnstrdup(str, len) );
 }
 
+PGDLLEXPORT Datum           mol_to_cxsmarts(PG_FUNCTION_ARGS);
+PG_FUNCTION_INFO_V1(mol_to_cxsmarts);
+Datum
+mol_to_cxsmarts(PG_FUNCTION_ARGS) {
+  CROMol  mol;
+  char    *str;
+  int     len;
+
+  fcinfo->flinfo->fn_extra = searchMolCache(
+                                            fcinfo->flinfo->fn_extra,
+                                            fcinfo->flinfo->fn_mcxt,
+                                            PG_GETARG_DATUM(0),
+                                            NULL, &mol, NULL);
+  str = makeMolText(mol, &len,true,true);
+
+  PG_RETURN_CSTRING( pnstrdup(str, len) );
+}
+
 PGDLLEXPORT Datum           mol_from_pkl(PG_FUNCTION_ARGS);
 PG_FUNCTION_INFO_V1(mol_from_pkl);
 Datum

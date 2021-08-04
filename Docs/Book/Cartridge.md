@@ -633,7 +633,9 @@ There are additional operators defined in the cartridge, but these are used for 
 -   qmol\_from\_smiles(smiles) : returns a query molecule for a SMILES string, NULL if the molecule construction fails. Explicit Hs in the SMILES are converted into query features on the attached atom.
 -   qmol\_from\_ctab(ctab, bool default false) : returns a query molecule for a CTAB (mol block) string, NULL if the molecule construction fails. Explicit Hs in the SMILES are converted into query features on the attached atom. The optional second argument controls whether or not the molecule's coordinates are saved.
 -   mol\_to\_smiles(mol) : returns the canonical SMILES for a molecule.
+-   mol\_to\_cxsmiles(mol) : returns the CXSMILES for a molecule.
 -   mol\_to\_smarts(mol) : returns SMARTS string for a molecule.
+-   mol\_to\_cxsmarts(mol) : returns the CXSMARTS for a molecule.
 -   mol\_to\_pkl(mol) : returns binary string (bytea) for a molecule. (*available from Q3 2012 (2012\_09) release*)
 -   mol\_to\_ctab(mol,bool default true, bool default false) : returns a CTAB (mol block) string for a molecule. The optional second argument controls whether or not 2D coordinates will be generated for molecules that don't have coordinates. The optional third argument (available since the 2021\_09 release) controls whether or not a V3000 ctab should be generated.
 -   mol\_to\_v3kctab(mol,bool default true) : returns a CTAB (mol block) string for a molecule. The optional second argument controls whether or not 2D coordinates will be generated for molecules that don't have coordinates (available since the 2021\_09 release).
