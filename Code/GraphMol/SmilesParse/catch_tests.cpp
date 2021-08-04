@@ -966,4 +966,25 @@ TEST_CASE("Github #4319 add CXSMARTS support") {
       CHECK(SubstructMatch(*smol, *mol, sssparams).empty());
     }
   }
+
+  SECTION("CXSMARTS parsing bug") {
+    {  // no cxsmarts
+      auto mol = "C[C@H]([F,Cl,Br])[C@H](C)[C@@H](C)Br"_smarts;
+      REQUIRE(mol);
+      CHECK(mol->getAtomWithIdx(2)->getQuery()->getDescription() == "AtomOr");
+      CHECK(MolToSmarts(*mol) ==
+            "C[C@&H1](-,:[F,Cl,Br])[C@&H1](-,:C)[C@@&H1](-,:C)Br");
+      CHECK(MolToCXSmarts(*mol) ==
+            "C[C@&H1](-,:[F,Cl,Br])[C@&H1](-,:C)[C@@&H1](-,:C)Br");
+    }
+    {  // make sure that doesn't break anything
+      auto mol = "C[C@H]([F,Cl,Br])[C@H](C)[C@@H](C)Br |a:1,o1:4,5|"_smarts;
+      REQUIRE(mol);
+      CHECK(mol->getAtomWithIdx(2)->getQuery()->getDescription() == "AtomOr");
+      CHECK(MolToSmarts(*mol) ==
+            "C[C@&H1](-,:[F,Cl,Br])[C@&H1](-,:C)[C@@&H1](-,:C)Br");
+      CHECK(MolToCXSmarts(*mol) ==
+            "C[C@&H1](-,:[F,Cl,Br])[C@&H1](-,:C)[C@@&H1](-,:C)Br |a:1,o1:4,5|");
+    }
+  }
 }
