@@ -73,10 +73,10 @@ jobs:
     target_platform: 10.9
   steps:
   - template: .azure-pipelines/mac_build_java.yml
-- job: Ubuntu_18_04_x64_cartridge
+- job: Ubuntu_20_04_x64_cartridge
   timeoutInMinutes: 90
   pool:
-    vmImage: ubuntu-18.04
+    vmImage: ubuntu-20.04
   variables:
     boost_version: 1.69.0
     number_of_cores: nproc

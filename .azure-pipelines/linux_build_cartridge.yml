@@ -1,7 +1,7 @@
 steps:
 - bash: |
     sudo apt-get update
-    sudo apt-get install -y libboost-all-dev postgresql-10 postgresql-server-dev-10
+    sudo apt-get install -y libboost-all-dev
     sudo service postgresql start
     #sudo su postgres
     sudo -u postgres createuser -s `whoami`
