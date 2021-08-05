@@ -244,6 +244,7 @@ The features which are parsed include:
 - ring bond count specifications ``rb``
 - non-hydrogen substitution count specifications ``s``
 - unsaturation specification ``u``
+- SGroup Data ``SgD``
 
 The features which are written by :py:func:`rdkit.Chem.rdmolfiles.MolToCXSmiles` and
 :py:func:`rdkit.Chem.rdmolfiles.MolToCXSmarts` 
