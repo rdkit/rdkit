@@ -45,10 +45,9 @@ bool read_int_list(Iterator &first, Iterator last,
       num += *first;
       ++first;
     }
-    if (num.empty()) {
-      return false;
+    if (!num.empty()) {
+      res.push_back(boost::lexical_cast<unsigned int>(num));
     }
-    res.push_back(boost::lexical_cast<unsigned int>(num));
     if (first >= last || *first != sep) {
       break;
     }
@@ -105,6 +104,58 @@ std::string read_text_to(Iterator &first, Iterator last, std::string delims) {
   }
   return res;
 }
+namespace {
+template <typename Q>
+void addquery(Q *qry, std::string symbol, RDKit::RWMol &mol, unsigned int idx) {
+  PRECONDITION(qry, "bad query");
+  auto *qa = new QueryAtom(0);
+  qa->setQuery(qry);
+  qa->setNoImplicit(true);
+  mol.replaceAtom(idx, qa);
+  if (symbol != "") {
+    mol.getAtomWithIdx(idx)->setProp(RDKit::common_properties::atomLabel,
+                                     symbol);
+  }
+  delete qa;
+}
+
+void processCXSmilesLabels(RDKit::RWMol &mol) {
+  for (RDKit::ROMol::AtomIterator atIt = mol.beginAtoms();
+       atIt != mol.endAtoms(); ++atIt) {
+    std::string symb = "";
+    if ((*atIt)->getPropIfPresent(RDKit::common_properties::atomLabel, symb)) {
+      if (symb == "star_e") {
+        /* according to the MDL spec, these match anything, but in MARVIN they
+        are "unspecified end groups" for polymers */
+        addquery(makeAtomNullQuery(), symb, mol, (*atIt)->getIdx());
+      } else if (symb == "Q_e") {
+        addquery(makeQAtomQuery(), symb, mol, (*atIt)->getIdx());
+      } else if (symb == "QH_p") {
+        addquery(makeQHAtomQuery(), symb, mol, (*atIt)->getIdx());
+      } else if (symb == "AH_p") {  // this seems wrong...
+        /* According to the MARVIN Sketch, AH is "any atom, including H" -
+        this would be "*" in SMILES - and "A" is "any atom except H".
+        The CXSMILES docs say that "A" can be represented normally in SMILES
+        and that "AH" needs to be written out as AH_p. I'm going to assume that
+        this is a Marvin internal thing and just parse it as they describe it.
+        This means that "*" in the SMILES itself needs to be treated
+        differently, which we do below. */
+        addquery(makeAHAtomQuery(), symb, mol, (*atIt)->getIdx());
+      } else if (symb == "X_p") {
+        addquery(makeXAtomQuery(), symb, mol, (*atIt)->getIdx());
+      } else if (symb == "XH_p") {
+        addquery(makeXHAtomQuery(), symb, mol, (*atIt)->getIdx());
+      } else if (symb == "M_p") {
+        addquery(makeMAtomQuery(), symb, mol, (*atIt)->getIdx());
+      } else if (symb == "MH_p") {
+        addquery(makeMHAtomQuery(), symb, mol, (*atIt)->getIdx());
+      }
+    } else if ((*atIt)->getAtomicNum() == 0 && (*atIt)->getSymbol() == "*") {
+      addquery(makeAAtomQuery(), "", mol, (*atIt)->getIdx());
+    }
+  }
+}
+}  // end of anonymous namespace
 
 template <typename Iterator>
 bool parse_atom_values(Iterator &first, Iterator last, RDKit::RWMol &mol) {
@@ -505,6 +556,94 @@ bool parse_data_sgroup(Iterator &first, Iterator last, RDKit::RWMol &mol) {
 }
 
 template <typename Iterator>
+bool parse_polymer_sgroup(Iterator &first, Iterator last, RDKit::RWMol &mol) {
+  // these look like:
+  //    |Sg:n:6,1,2,4::hh&#44;f:6,0,:4,2,|
+  // example from CXSMILES docs:
+  // the fields are:
+  //    Sg:[type]:[atom indices]:[subscript]:[superscript]:[head crossing
+  //    bonds]:[tail crossing bonds]:
+  //
+  // note that it's legit for empty fields to be completely missing.
+  //   for example, this doesn't have any crossing bonds indicated:
+  // *-CCCN-* |$star_e;;;;;star_e$,Sg:n:4,1,2,3::hh|
+  // this last bit makes the whole thing doubleplusfun to parse
+
+  if (first >= last || *first != 'S' || first + 2 >= last ||
+      *(first + 1) != 'g' || *(first + 2) != ':') {
+    return false;
+  }
+  first += 3;
+
+  std::map<std::string, std::string> typemap = {
+      {"n", "SRU"},   {"mon", "MON"}, {"mer", "MER"}, {"co", "COP"},
+      {"xl", "CRO"},  {"mod", "MOD"}, {"mix", "MIX"}, {"f", "FOR"},
+      {"any", "ANY"}, {"gen", "GEN"}, {"c", "COM"},   {"grf", "GRA"},
+      {"alt", "COP"}, {"ran", "COP"}, {"blk", "COP"}};
+  std::string typ = read_text_to(first, last, ":");
+  ++first;
+  if (typemap.find(typ) == typemap.end()) {
+    return false;
+  }
+  SubstanceGroup sgroup(&mol, typemap[typ]);
+  if (typ == "alt") {
+    sgroup.setProp("SUBTYPE", std::string("ALT"));
+  } else if (typ == "ran") {
+    sgroup.setProp("SUBTYPE", std::string("RAN"));
+  } else if (typ == "blk") {
+    sgroup.setProp("SUBTYPE", std::string("BLO"));
+  }
+
+  std::vector<unsigned int> atoms;
+  if (!read_int_list(first, last, atoms)) {
+    return false;
+  }
+  //++first;
+  for (auto idx : atoms) {
+    sgroup.addAtomWithIdx(idx);
+  }
+  std::vector<unsigned int> headCrossing;
+  std::vector<unsigned int> tailCrossing;
+  bool isFlipped = false;
+  if (first != last && *first == ':') {
+    ++first;
+    std::string subscript = read_text_to(first, last, ":");
+    if (!subscript.empty()) {
+      sgroup.setProp("LABEL", subscript);
+    }
+    if (first != last && *first == ':') {
+      ++first;
+      std::string superscript = read_text_to(first, last, ":");
+      if (!superscript.empty()) {
+        sgroup.setProp("CONNECT", superscript);
+      }
+
+      if (first != last && *first == ':') {
+        ++first;
+        if (!read_int_list(first, last, headCrossing)) {
+          return false;
+        }
+        if (!headCrossing.empty()) {
+          sgroup.setProp("_headCrossing", headCrossing, true);
+        }
+        if (first != last && *first == ':') {
+          ++first;
+          if (!read_int_list(first, last, tailCrossing)) {
+            return false;
+          }
+        }
+        if (!tailCrossing.empty()) {
+          sgroup.setProp("_tailCrossing", tailCrossing, true);
+        }
+      }
+    }
+  }
+  finalizePolymerSGroup(mol, sgroup);
+  addSubstanceGroup(mol, sgroup);
+  return true;
+}
+
+template <typename Iterator>
 bool parse_variable_attachments(Iterator &first, Iterator last,
                                 RDKit::RWMol &mol) {
   // these look like: CO*.C1=CC=NC=C1 |m:2:3.5.4|
@@ -749,6 +888,7 @@ bool parse_it(Iterator &first, Iterator last, RDKit::RWMol &mol) {
         if (!parse_atom_labels(first, last, mol)) {
           return false;
         }
+        processCXSmilesLabels(mol);
       }
     } else if (length > 9 && std::string(first, first + 9) == "atomProp:") {
       first += 9;
@@ -785,6 +925,10 @@ bool parse_it(Iterator &first, Iterator last, RDKit::RWMol &mol) {
       if (!parse_data_sgroup(first, last, mol)) {
         return false;
       }
+    } else if (*first == 'S' && first + 1 < last && first[1] == 'g') {
+      if (!parse_polymer_sgroup(first, last, mol)) {
+        return false;
+      }
     } else if (*first == 'u') {
       if (!parse_unsaturation(first, last, mol)) {
         return false;
@@ -810,59 +954,6 @@ bool parse_it(Iterator &first, Iterator last, RDKit::RWMol &mol) {
 }
 }  // namespace parser
 
-namespace {
-template <typename Q>
-void addquery(Q *qry, std::string symbol, RDKit::RWMol &mol, unsigned int idx) {
-  PRECONDITION(qry, "bad query");
-  auto *qa = new QueryAtom(0);
-  qa->setQuery(qry);
-  qa->setNoImplicit(true);
-  mol.replaceAtom(idx, qa);
-  if (symbol != "") {
-    mol.getAtomWithIdx(idx)->setProp(RDKit::common_properties::atomLabel,
-                                     symbol);
-  }
-  delete qa;
-}
-void processCXSmilesLabels(RDKit::RWMol &mol) {
-  for (RDKit::ROMol::AtomIterator atIt = mol.beginAtoms();
-       atIt != mol.endAtoms(); ++atIt) {
-    std::string symb = "";
-    if ((*atIt)->getPropIfPresent(RDKit::common_properties::atomLabel, symb)) {
-      if (symb == "star_e") {
-        /* according to the MDL spec, these match anything, but in MARVIN they
-        are "unspecified end groups" for polymers */
-        addquery(makeAtomNullQuery(), symb, mol, (*atIt)->getIdx());
-      } else if (symb == "Q_e") {
-        addquery(makeQAtomQuery(), symb, mol, (*atIt)->getIdx());
-      } else if (symb == "QH_p") {
-        addquery(makeQHAtomQuery(), symb, mol, (*atIt)->getIdx());
-      } else if (symb == "AH_p") {  // this seems wrong...
-        /* According to the MARVIN Sketch, AH is "any atom, including H" -
-        this would be "*" in SMILES - and "A" is "any atom except H".
-        The CXSMILES docs say that "A" can be represented normally in SMILES
-        and that "AH" needs to be written out as AH_p. I'm going to assume that
-        this is a Marvin internal thing and just parse it as they describe it.
-        This means that "*" in the SMILES itself needs to be treated
-        differently, which we do below. */
-        addquery(makeAHAtomQuery(), symb, mol, (*atIt)->getIdx());
-      } else if (symb == "X_p") {
-        addquery(makeXAtomQuery(), symb, mol, (*atIt)->getIdx());
-      } else if (symb == "XH_p") {
-        addquery(makeXHAtomQuery(), symb, mol, (*atIt)->getIdx());
-      } else if (symb == "M_p") {
-        addquery(makeMAtomQuery(), symb, mol, (*atIt)->getIdx());
-      } else if (symb == "MH_p") {
-        addquery(makeMHAtomQuery(), symb, mol, (*atIt)->getIdx());
-      }
-    } else if ((*atIt)->getAtomicNum() == 0 && (*atIt)->getSymbol() == "*") {
-      addquery(makeAAtomQuery(), "", mol, (*atIt)->getIdx());
-    }
-  }
-}
-
-}  // end of anonymous namespace
-
 void parseCXExtensions(RDKit::RWMol &mol, const std::string &extText,
                        std::string::const_iterator &first) {
   // BOOST_LOG(rdWarningLog) << "parseCXNExtensions: " << extText << std::endl;
@@ -874,7 +965,6 @@ void parseCXExtensions(RDKit::RWMol &mol, const std::string &extText,
   if (!ok) {
     throw RDKit::SmilesParseException("failure parsing CXSMILES extensions");
   }
-  processCXSmilesLabels(mol);
 }
 }  // end of namespace SmilesParseOps
 
@@ -956,6 +1046,31 @@ std::string get_enhanced_stereo_block(
   return resStr;
 }
 
+std::string get_sgroup_polymer_block(
+    const ROMol &mol, const std::vector<unsigned int> &atomOrder) {
+  const auto &sgs = getSubstanceGroups(mol);
+  if (sgs.empty()) {
+    return "";
+  }
+  std::stringstream res;
+  // we need a map from original atom idx to output idx:
+  std::vector<unsigned int> revOrder(mol.getNumAtoms());
+  for (unsigned i = 0; i < atomOrder.size(); ++i) {
+    revOrder[atomOrder[i]] = i;
+  }
+
+  for (const auto &sg : sgs) {
+    std::string typ;
+    if (sg.getPropIfPresent("TYPE", typ)) {
+    }
+  }
+  std::string resStr = res.str();
+  if (!resStr.empty() && resStr.back() == ',') {
+    resStr.pop_back();
+  }
+  return resStr;
+}
+
 std::string get_sgroup_data_block(const ROMol &mol,
                                   const std::vector<unsigned int> &atomOrder) {
   const auto &sgs = getSubstanceGroups(mol);
@@ -1017,6 +1132,7 @@ std::string get_sgroup_data_block(const ROMol &mol,
   }
   return resStr;
 }
+
 std::string get_value_block(const ROMol &mol,
                             const std::vector<unsigned int> &atomOrder,
                             const std::string &prop) {
@@ -1188,6 +1304,9 @@ std::string getCXExtensions(const ROMol &mol) {
 
   const auto sgroupdatablock = get_sgroup_data_block(mol, atomOrder);
   appendToCXExtension(sgroupdatablock, res);
+
+  const auto sgrouppolyblock = get_sgroup_polymer_block(mol, atomOrder);
+  appendToCXExtension(sgrouppolyblock, res);
 
   if (res.size() > 1) {
     res += "|";

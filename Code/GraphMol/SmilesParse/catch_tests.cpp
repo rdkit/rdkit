@@ -1041,3 +1041,27 @@ TEST_CASE("Github #4233: data groups in CXSMILES neither parsed nor written") {
     }
   }
 }
+
+TEST_CASE("polymer SGroups") {
+  SECTION("basics") {
+    {
+      auto mol =
+          "*CC(*)C(*)N* |$star_e;;;star_e;;star_e;;star_e$,Sg:n:6,1,2,4::hh&#44;f:6,0,:4,2,|"_smiles;
+      REQUIRE(mol);
+      const auto &sgs = getSubstanceGroups(*mol);
+      REQUIRE(sgs.size() == 1);
+      CHECK(sgs[0].getAtoms() == std::vector<unsigned int>{6, 1, 2, 4});
+      CHECK(sgs[0].getProp<std::string>("TYPE") == "SRU");
+      // CHECK(MolToCXSmiles(*mol) == "C/C=C/C |SgD:2,1:FIELD:info::::|");
+    }
+    {  // minimal
+      auto mol = "*-CCCN-* |$star_e;;;;;star_e$,Sg:n:4,1,2,3|"_smiles;
+      REQUIRE(mol);
+      const auto &sgs = getSubstanceGroups(*mol);
+      REQUIRE(sgs.size() == 1);
+      CHECK(sgs[0].getAtoms() == std::vector<unsigned int>{4, 1, 2, 3});
+      CHECK(sgs[0].getProp<std::string>("TYPE") == "SRU");
+      // CHECK(MolToCXSmiles(*mol) == "C/C=C/C |SgD:2,1:FIELD:info::::|");
+    }
+  }
+}
