@@ -1,5 +1,5 @@
 //
-//  Copyright (C) 2016-2019 Greg Landrum
+//  Copyright (C) 2016-2021 Greg Landrum and other RDKit contributors
 //
 //   @@ All Rights Reserved @@
 //  This file is part of the RDKit.
@@ -15,6 +15,7 @@
 #include <GraphMol/RDKitBase.h>
 #include <GraphMol/RDKitQueries.h>
 #include <iostream>
+#include <algorithm>
 #include "SmilesWrite.h"
 #include "SmilesParse.h"
 #include "SmilesParseOps.h"
@@ -23,6 +24,10 @@ namespace SmilesParseOps {
 using namespace RDKit;
 
 namespace parser {
+
+const std::string _headCrossings = "_headCrossings";
+const std::string _tailCrossings = "_tailCrossings";
+
 template <typename Iterator>
 bool read_int(Iterator &first, Iterator last, unsigned int &res) {
   std::string num = "";
@@ -155,6 +160,141 @@ void processCXSmilesLabels(RDKit::RWMol &mol) {
     }
   }
 }
+
+// this is the super fun case where no information about bonds in/out of the
+// sgroup is present.
+void setupUnmarkedPolymerSGroup(RWMol &mol, SubstanceGroup &sgroup,
+                                std::vector<unsigned int> &headCrossings,
+                                std::vector<unsigned int> &tailCrossings) {
+  const auto &atoms = sgroup.getAtoms();
+  if (atoms.empty()) {
+    throw SmilesParseException("no atoms in polymer sgroup");
+  }
+  const auto firstAtom = mol.getAtomWithIdx(atoms.front());
+  for (auto nbr : boost::make_iterator_range(mol.getAtomNeighbors(firstAtom))) {
+    const auto nbrAtom = mol[nbr];
+    if (std::find(atoms.begin(), atoms.end(), nbrAtom->getIdx()) ==
+        atoms.end()) {
+      // in most cases we just add this to the set of headCrossings.
+      // The exception occurs when there's only one atom in the SGroup and
+      //  we already have a headCrossing, in which case we may put this one
+      //  as a tailCrossing
+      if (atoms.size() > 1 || headCrossings.empty()) {
+        headCrossings.push_back(
+            mol.getBondBetweenAtoms(firstAtom->getIdx(), nbrAtom->getIdx())
+                ->getIdx());
+      } else if (atoms.size() == 1) {
+        if (tailCrossings.empty()) {
+          tailCrossings.push_back(
+              mol.getBondBetweenAtoms(firstAtom->getIdx(), nbrAtom->getIdx())
+                  ->getIdx());
+        } else {
+          BOOST_LOG(rdWarningLog)
+              << " single atom polymer Sgroup has more than two bonds to "
+                 "external atoms. Ignoring all bonds after the first two."
+              << std::endl;
+        }
+      }
+    }
+  }
+  if (atoms.size() > 1) {
+    const auto lastAtom = mol.getAtomWithIdx(atoms.back());
+    for (auto nbr :
+         boost::make_iterator_range(mol.getAtomNeighbors(lastAtom))) {
+      const auto nbrAtom = mol[nbr];
+      if (std::find(atoms.begin(), atoms.end(), nbrAtom->getIdx()) ==
+          atoms.end()) {
+        tailCrossings.push_back(
+            mol.getBondBetweenAtoms(lastAtom->getIdx(), nbrAtom->getIdx())
+                ->getIdx());
+      }
+    }
+  }
+}
+
+// deal with setting up the crossing bonds, etc.
+void finalizePolymerSGroup(RWMol &mol, SubstanceGroup &sgroup) {
+  bool isFlipped = false;
+  std::string connect = "EU";
+  if (sgroup.getPropIfPresent("CONNECT", connect)) {
+    if (connect.find(",f") != std::string::npos) {
+      isFlipped = true;
+      boost::replace_all(connect, ",f", "");
+    }
+  }
+  if (connect == "hh") {
+    connect = "HH";
+  } else if (connect == "ht") {
+    connect = "HT";
+  } else if (connect == "eu") {
+    connect = "EU";
+  } else {
+    BOOST_LOG(rdWarningLog) << "unrecognized CXSMILES CONNECT value: '"
+                            << connect << "'. Assuming 'eu'" << std::endl;
+    connect = "EU";
+  }
+  sgroup.setProp("CONNECT", connect);
+
+  std::vector<unsigned int> headCrossings;
+  std::vector<unsigned int> tailCrossings;
+  sgroup.getPropIfPresent(_headCrossings, headCrossings);
+  sgroup.clearProp(_headCrossings);
+  sgroup.getPropIfPresent(_tailCrossings, tailCrossings);
+  sgroup.clearProp(_tailCrossings);
+  if (headCrossings.empty() && tailCrossings.empty()) {
+    setupUnmarkedPolymerSGroup(mol, sgroup, headCrossings, tailCrossings);
+  }
+  if (headCrossings.empty() && tailCrossings.empty()) {
+    // we tried... nothing more we can do
+    return;
+  }
+  // bondIndexMap uses the position in the vector for the SMILES index and
+  // the value in that position as the actual bond index.
+  std::vector<int> bondIndexMap(mol.getNumBonds(), -1);
+  for (const auto bond : mol.bonds()) {
+    unsigned int smilesIdx;
+    if (bond->getPropIfPresent("_cxsmilesBondIdx", smilesIdx)) {
+      bondIndexMap[smilesIdx] = bond->getIdx();
+    }
+  }
+  for (auto &smilesIdx : headCrossings) {
+    int bondIdx = bondIndexMap[smilesIdx];
+    if (bondIdx < 0) {
+      throw RDKit::SmilesParseException(
+          "could not find SGroup bond index in molecule");
+    }
+    sgroup.addBondWithIdx(bondIdx);
+    // and replace the original value
+    smilesIdx = bondIdx;
+  }
+  sgroup.setProp("XBHEAD", headCrossings);
+
+  for (auto &smilesIdx : tailCrossings) {
+    int bondIdx = bondIndexMap[smilesIdx];
+    if (bondIdx < 0) {
+      throw RDKit::SmilesParseException(
+          "could not find SGroup bond index in molecule");
+    }
+    sgroup.addBondWithIdx(bondIdx);
+    // and replace the original value
+    smilesIdx = bondIdx;
+  }
+
+  // now we can setup XBCORR
+  std::vector<unsigned int> xbcorr;
+  for (unsigned int i = 0;
+       i < std::min(headCrossings.size(), tailCrossings.size()); ++i) {
+    unsigned headIdx = headCrossings[i];
+    unsigned tailIdx = tailCrossings[i];
+    if (isFlipped) {
+      tailIdx = tailCrossings[tailCrossings.size() - i - 1];
+    }
+    xbcorr.push_back(headIdx);
+    xbcorr.push_back(tailIdx);
+  }
+  sgroup.setProp("XBCORR", xbcorr);
+}
+
 }  // end of anonymous namespace
 
 template <typename Iterator>
@@ -604,16 +744,15 @@ bool parse_polymer_sgroup(Iterator &first, Iterator last, RDKit::RWMol &mol) {
   }
   std::vector<unsigned int> headCrossing;
   std::vector<unsigned int> tailCrossing;
-  bool isFlipped = false;
   if (first != last && *first == ':') {
     ++first;
-    std::string subscript = read_text_to(first, last, ":");
+    std::string subscript = read_text_to(first, last, ":|");
     if (!subscript.empty()) {
       sgroup.setProp("LABEL", subscript);
     }
     if (first != last && *first == ':') {
       ++first;
-      std::string superscript = read_text_to(first, last, ":");
+      std::string superscript = read_text_to(first, last, ":|");
       if (!superscript.empty()) {
         sgroup.setProp("CONNECT", superscript);
       }
@@ -624,7 +763,7 @@ bool parse_polymer_sgroup(Iterator &first, Iterator last, RDKit::RWMol &mol) {
           return false;
         }
         if (!headCrossing.empty()) {
-          sgroup.setProp("_headCrossing", headCrossing, true);
+          sgroup.setProp(_headCrossings, headCrossing, true);
         }
         if (first != last && *first == ':') {
           ++first;
@@ -633,7 +772,7 @@ bool parse_polymer_sgroup(Iterator &first, Iterator last, RDKit::RWMol &mol) {
           }
         }
         if (!tailCrossing.empty()) {
-          sgroup.setProp("_tailCrossing", tailCrossing, true);
+          sgroup.setProp("_tailCrossings", tailCrossing, true);
         }
       }
     }
