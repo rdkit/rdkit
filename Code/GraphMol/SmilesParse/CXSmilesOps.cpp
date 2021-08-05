@@ -888,6 +888,9 @@ std::string quote_string(const std::string &txt) {
 
 std::string get_enhanced_stereo_block(
     const ROMol &mol, const std::vector<unsigned int> &atomOrder) {
+  if (mol.getStereoGroups().empty()) {
+    return "";
+  }
   std::stringstream res;
   // we need a map from original atom idx to output idx:
   std::vector<unsigned int> revOrder(mol.getNumAtoms());
