@@ -1040,5 +1040,4 @@ TEST_CASE("Github #4233: data groups in CXSMILES neither parsed nor written") {
             std::vector<std::string>{"Ring2"});
     }
   }
-  SECTION("more") {}
 }
