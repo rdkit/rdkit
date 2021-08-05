@@ -969,7 +969,7 @@ TEST_CASE("Github #4319 add CXSMARTS support") {
   }
 }
 
-TEST_CASE("Github #4233: data groups in CXSMILES not parsed") {
+TEST_CASE("Github #4233: data groups in CXSMILES neither parsed nor written") {
   SECTION("basics") {
     {
       auto mol = "C/C=C/C |SgD:2,1:FIELD:info::::|"_smiles;
@@ -981,9 +981,10 @@ TEST_CASE("Github #4233: data groups in CXSMILES not parsed") {
       CHECK(sgs[0].getProp<std::string>("FIELDNAME") == "FIELD");
       CHECK(sgs[0].getProp<std::vector<std::string>>("DATAFIELDS") ==
             std::vector<std::string>{"info"});
+      CHECK(MolToCXSmiles(*mol) == "C/C=C/C |SgD:2,1:FIELD:info::::|");
     }
     {
-      auto mol = "C/C=C/C |SgD:2,1:FIELD:foo::::|"_smiles;
+      auto mol = "C/C=C/C |SgD:2,1:FIELD:foo:like:info:tag:|"_smiles;
       REQUIRE(mol);
       const auto &sgs = getSubstanceGroups(*mol);
       REQUIRE(sgs.size() == 1);
@@ -992,6 +993,11 @@ TEST_CASE("Github #4233: data groups in CXSMILES not parsed") {
       CHECK(sgs[0].getProp<std::string>("FIELDNAME") == "FIELD");
       CHECK(sgs[0].getProp<std::vector<std::string>>("DATAFIELDS") ==
             std::vector<std::string>{"foo"});
+      CHECK(sgs[0].getProp<std::string>("QUERYOP") == "like");
+      CHECK(sgs[0].getProp<std::string>("FIELDINFO") == "info");
+      CHECK(sgs[0].getProp<std::string>("FIELDTAG") == "tag");
+      CHECK(MolToCXSmiles(*mol) ==
+            "C/C=C/C |SgD:2,1:FIELD:foo:like:info:tag:|");
     }
     {
       auto mol =
@@ -1009,6 +1015,11 @@ TEST_CASE("Github #4233: data groups in CXSMILES not parsed") {
       CHECK(sgs[1].getProp<std::string>("FIELDNAME") == "PieceName");
       CHECK(sgs[1].getProp<std::vector<std::string>>("DATAFIELDS") ==
             std::vector<std::string>{"Ring2"});
+
+      CHECK(MolToCXSmiles(*mol) ==
+            "c1ccc(-c2ccccc2)cc1 "
+            "|SgD:6,7,9,8,5,4:PieceName:Ring1::::,SgD:1,2,3,10,11,0:PieceName:"
+            "Ring2::::|");
 
       // make sure we can round-trip that result through mol blocks
       auto mb = MolToV3KMolBlock(*mol);

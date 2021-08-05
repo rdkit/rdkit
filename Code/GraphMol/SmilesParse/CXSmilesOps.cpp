@@ -956,6 +956,67 @@ std::string get_enhanced_stereo_block(
   return resStr;
 }
 
+std::string get_sgroup_data_block(const ROMol &mol,
+                                  const std::vector<unsigned int> &atomOrder) {
+  const auto &sgs = getSubstanceGroups(mol);
+  if (sgs.empty()) {
+    return "";
+  }
+  std::stringstream res;
+  // we need a map from original atom idx to output idx:
+  std::vector<unsigned int> revOrder(mol.getNumAtoms());
+  for (unsigned i = 0; i < atomOrder.size(); ++i) {
+    revOrder[atomOrder[i]] = i;
+  }
+
+  for (const auto &sg : sgs) {
+    if (sg.hasProp("TYPE") && sg.getProp<std::string>("TYPE") == "DAT") {
+      res << "SgD:";
+      // we don't attempt to canonicalize the atom order because the user
+      // may ascribe some significance to the ordering of the atoms
+      for (const auto oaid : sg.getAtoms()) {
+        res << revOrder[oaid] << ",";
+      }
+      // remove the extra ",":
+      res.seekp(-1, res.cur);
+      res << ":";
+      std::string prop;
+      if (sg.getPropIfPresent("FIELDNAME", prop) && !prop.empty()) {
+        res << prop;
+      }
+      res << ":";
+      std::vector<std::string> vprop;
+      if (sg.getPropIfPresent("DATAFIELDS", vprop) && !vprop.empty()) {
+        for (const auto &pv : vprop) {
+          res << pv << ",";
+        }
+        // remove the extra ",":
+        res.seekp(-1, res.cur);
+      }
+      res << ":";
+      if (sg.getPropIfPresent("QUERYOP", prop) && !prop.empty()) {
+        res << prop;
+      }
+      res << ":";
+      if (sg.getPropIfPresent("FIELDINFO", prop) && !prop.empty()) {
+        res << prop;
+      }
+      res << ":";
+      if (sg.getPropIfPresent("FIELDTAG", prop) && !prop.empty()) {
+        res << prop;
+      }
+      res << ":";
+      // FIX: do something about the coordinates
+    }
+    res << ",";
+  }
+
+  std::string resStr = res.str();
+  if (!resStr.empty() && resStr.back() == ',') {
+    resStr.pop_back();
+  }
+  return resStr;
+}
 std::string get_value_block(const ROMol &mol,
                             const std::vector<unsigned int> &atomOrder,
                             const std::string &prop) {
@@ -1124,6 +1185,9 @@ std::string getCXExtensions(const ROMol &mol) {
 
   const auto stereoblock = get_enhanced_stereo_block(mol, atomOrder);
   appendToCXExtension(stereoblock, res);
+
+  const auto sgroupdatablock = get_sgroup_data_block(mol, atomOrder);
+  appendToCXExtension(sgroupdatablock, res);
 
   if (res.size() > 1) {
     res += "|";
