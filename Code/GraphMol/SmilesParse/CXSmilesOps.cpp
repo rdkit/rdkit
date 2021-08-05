@@ -30,10 +30,30 @@ bool read_int(Iterator &first, Iterator last, unsigned int &res) {
     num += *first;
     ++first;
   }
-  if (num == "") {
+  if (num.empty()) {
     return false;
   }
   res = boost::lexical_cast<unsigned int>(num);
+  return true;
+}
+template <typename Iterator>
+bool read_int_list(Iterator &first, Iterator last,
+                   std::vector<unsigned int> &res, char sep = ',') {
+  while (1) {
+    std::string num = "";
+    while (first != last && *first >= '0' && *first <= '9') {
+      num += *first;
+      ++first;
+    }
+    if (num.empty()) {
+      return false;
+    }
+    res.push_back(boost::lexical_cast<unsigned int>(num));
+    if (first >= last || *first != sep) {
+      break;
+    }
+    ++first;
+  }
   return true;
 }
 template <typename Iterator>
@@ -420,6 +440,71 @@ bool parse_linknodes(Iterator &first, Iterator last, RDKit::RWMol &mol) {
 }
 
 template <typename Iterator>
+bool parse_data_sgroup(Iterator &first, Iterator last, RDKit::RWMol &mol) {
+  // these look like: |SgD:2,1:FIELD:info::::|
+  // example from CXSMILES docs:
+  //    SgD:3,2,1,0:name:data:like:unit:t:(1.,1.)
+  // the fields are:
+  //    SgD:[atom indices]:[field name]:[data value]:[query
+  //    operator]:[unit]:[tag]:[coords]
+  //   coords are (-1) if atomic coordinates are present
+  if (first >= last || *first != 'S' || first + 3 >= last ||
+      *(first + 1) != 'g' || *(first + 2) != 'D' || *(first + 3) != ':') {
+    return false;
+  }
+  first += 4;
+  std::vector<unsigned int> atoms;
+  if (!read_int_list(first, last, atoms)) {
+    return false;
+  }
+  SubstanceGroup sgroup(&mol, std::string("DAT"));
+  for (auto idx : atoms) {
+    sgroup.addAtomWithIdx(idx);
+  }
+  ++first;
+  std::string name = read_text_to(first, last, ":");
+  ++first;
+  if (!name.empty()) {
+    sgroup.setProp("FIELDNAME", name);
+  }
+  // FIX:
+  sgroup.setProp("FIELDDISP", "    0.0000    0.0000    DR    ALL  0       0");
+
+  std::string data = read_text_to(first, last, ":");
+  ++first;
+  if (!data.empty()) {
+    std::vector<std::string> dataFields = {data};
+    sgroup.setProp("DATAFIELDS", dataFields);
+  }
+
+  std::string oper = read_text_to(first, last, ":");
+  ++first;
+  if (!oper.empty()) {
+    sgroup.setProp("QUERYOP", oper);
+  }
+  std::string unit = read_text_to(first, last, ":");
+  ++first;
+  if (!unit.empty()) {
+    sgroup.setProp("FIELDINFO", unit);
+  }
+  std::string tag = read_text_to(first, last, ":");
+  ++first;
+  if (!tag.empty()) {
+    // not actually part of what ends up in the output, but
+    // it is part of CXSMARTS
+    sgroup.setProp("FIELDTAG", tag);
+  }
+  if (first < last && *first == '(') {
+    // FIX
+    std::string coords = read_text_to(first, last, ")");
+    ++first;
+    sgroup.setProp("COORDS", coords);
+  }
+  addSubstanceGroup(mol, sgroup);
+  return true;
+}
+
+template <typename Iterator>
 bool parse_variable_attachments(Iterator &first, Iterator last,
                                 RDKit::RWMol &mol) {
   // these look like: CO*.C1=CC=NC=C1 |m:2:3.5.4|
@@ -693,6 +778,11 @@ bool parse_it(Iterator &first, Iterator last, RDKit::RWMol &mol) {
       }
     } else if (*first == 'L' && first + 1 < last && first[1] == 'N') {
       if (!parse_linknodes(first, last, mol)) {
+        return false;
+      }
+    } else if (*first == 'S' && first + 2 < last && first[1] == 'g' &&
+               first[2] == 'D') {
+      if (!parse_data_sgroup(first, last, mol)) {
         return false;
       }
     } else if (*first == 'u') {

@@ -18,6 +18,7 @@
 #include <GraphMol/SmilesParse/SmilesWrite.h>
 #include <GraphMol/SmilesParse/SmartsWrite.h>
 #include <GraphMol/Substruct/SubstructMatch.h>
+#include <GraphMol/FileParsers/FileParsers.h>
 
 using namespace RDKit;
 
@@ -966,4 +967,67 @@ TEST_CASE("Github #4319 add CXSMARTS support") {
       CHECK(SubstructMatch(*smol, *mol, sssparams).empty());
     }
   }
+}
+
+TEST_CASE("Github #4233: data groups in CXSMILES not parsed") {
+  SECTION("basics") {
+    {
+      auto mol = "C/C=C/C |SgD:2,1:FIELD:info::::|"_smiles;
+      REQUIRE(mol);
+      const auto &sgs = getSubstanceGroups(*mol);
+      REQUIRE(sgs.size() == 1);
+      CHECK(sgs[0].getAtoms() == std::vector<unsigned int>{2, 1});
+      CHECK(sgs[0].getProp<std::string>("TYPE") == "DAT");
+      CHECK(sgs[0].getProp<std::string>("FIELDNAME") == "FIELD");
+      CHECK(sgs[0].getProp<std::vector<std::string>>("DATAFIELDS") ==
+            std::vector<std::string>{"info"});
+    }
+    {
+      auto mol = "C/C=C/C |SgD:2,1:FIELD:foo::::|"_smiles;
+      REQUIRE(mol);
+      const auto &sgs = getSubstanceGroups(*mol);
+      REQUIRE(sgs.size() == 1);
+      CHECK(sgs[0].getAtoms() == std::vector<unsigned int>{2, 1});
+      CHECK(sgs[0].getProp<std::string>("TYPE") == "DAT");
+      CHECK(sgs[0].getProp<std::string>("FIELDNAME") == "FIELD");
+      CHECK(sgs[0].getProp<std::vector<std::string>>("DATAFIELDS") ==
+            std::vector<std::string>{"foo"});
+    }
+    {
+      auto mol =
+          "C1=CC=C(C=C1)C1=CC=CC=C1 |c:0,2,4,9,11,t:7,SgD:8,9,11,10,7,6:PieceName:Ring1::::,SgD:1,2,3,4,5,0:PieceName:Ring2::::|"_smiles;
+      REQUIRE(mol);
+      const auto &sgs = getSubstanceGroups(*mol);
+      REQUIRE(sgs.size() == 2);
+      CHECK(sgs[0].getAtoms() == std::vector<unsigned int>{8, 9, 11, 10, 7, 6});
+      CHECK(sgs[0].getProp<std::string>("TYPE") == "DAT");
+      CHECK(sgs[0].getProp<std::string>("FIELDNAME") == "PieceName");
+      CHECK(sgs[0].getProp<std::vector<std::string>>("DATAFIELDS") ==
+            std::vector<std::string>{"Ring1"});
+      CHECK(sgs[1].getAtoms() == std::vector<unsigned int>{1, 2, 3, 4, 5, 0});
+      CHECK(sgs[1].getProp<std::string>("TYPE") == "DAT");
+      CHECK(sgs[1].getProp<std::string>("FIELDNAME") == "PieceName");
+      CHECK(sgs[1].getProp<std::vector<std::string>>("DATAFIELDS") ==
+            std::vector<std::string>{"Ring2"});
+
+      // make sure we can round-trip that result through mol blocks
+      auto mb = MolToV3KMolBlock(*mol);
+      std::unique_ptr<RWMol> mol2(MolBlockToMol(mb));
+      REQUIRE(mol2);
+      const auto &sgs2 = getSubstanceGroups(*mol2);
+      REQUIRE(sgs2.size() == 2);
+      CHECK(sgs2[0].getAtoms() ==
+            std::vector<unsigned int>{8, 9, 11, 10, 7, 6});
+      CHECK(sgs2[0].getProp<std::string>("TYPE") == "DAT");
+      CHECK(sgs2[0].getProp<std::string>("FIELDNAME") == "PieceName");
+      CHECK(sgs2[0].getProp<std::vector<std::string>>("DATAFIELDS") ==
+            std::vector<std::string>{"Ring1"});
+      CHECK(sgs2[1].getAtoms() == std::vector<unsigned int>{1, 2, 3, 4, 5, 0});
+      CHECK(sgs2[1].getProp<std::string>("TYPE") == "DAT");
+      CHECK(sgs2[1].getProp<std::string>("FIELDNAME") == "PieceName");
+      CHECK(sgs2[1].getProp<std::vector<std::string>>("DATAFIELDS") ==
+            std::vector<std::string>{"Ring2"});
+    }
+  }
+  SECTION("more") {}
 }
