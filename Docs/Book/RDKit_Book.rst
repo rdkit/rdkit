@@ -245,6 +245,7 @@ The features which are parsed include:
 - non-hydrogen substitution count specifications ``s``
 - unsaturation specification ``u``
 - SGroup Data ``SgD``
+- polymer SGroups ``Sg``
 
 The features which are written by :py:func:`rdkit.Chem.rdmolfiles.MolToCXSmiles` and
 :py:func:`rdkit.Chem.rdmolfiles.MolToCXSmarts` 
@@ -257,6 +258,7 @@ The features which are written by :py:func:`rdkit.Chem.rdmolfiles.MolToCXSmiles`
 - radicals
 - enhanced stereo
 - SGroup Data ``SgD``
+- polymer SGroups ``Sg``
 
 .. doctest::
 

@@ -23,6 +23,12 @@
 namespace SmilesParseOps {
 using namespace RDKit;
 
+std::map<std::string, std::string> sgroupTypemap = {
+    {"n", "SRU"},   {"mon", "MON"}, {"mer", "MER"}, {"co", "COP"},
+    {"xl", "CRO"},  {"mod", "MOD"}, {"mix", "MIX"}, {"f", "FOR"},
+    {"any", "ANY"}, {"gen", "GEN"}, {"c", "COM"},   {"grf", "GRA"},
+    {"alt", "COP"}, {"ran", "COP"}, {"blk", "COP"}};
+
 namespace parser {
 
 const std::string _headCrossings = "_headCrossings";
@@ -715,17 +721,12 @@ bool parse_polymer_sgroup(Iterator &first, Iterator last, RDKit::RWMol &mol) {
   }
   first += 3;
 
-  std::map<std::string, std::string> typemap = {
-      {"n", "SRU"},   {"mon", "MON"}, {"mer", "MER"}, {"co", "COP"},
-      {"xl", "CRO"},  {"mod", "MOD"}, {"mix", "MIX"}, {"f", "FOR"},
-      {"any", "ANY"}, {"gen", "GEN"}, {"c", "COM"},   {"grf", "GRA"},
-      {"alt", "COP"}, {"ran", "COP"}, {"blk", "COP"}};
   std::string typ = read_text_to(first, last, ":");
   ++first;
-  if (typemap.find(typ) == typemap.end()) {
+  if (sgroupTypemap.find(typ) == sgroupTypemap.end()) {
     return false;
   }
-  SubstanceGroup sgroup(&mol, typemap[typ]);
+  SubstanceGroup sgroup(&mol, sgroupTypemap[typ]);
   if (typ == "alt") {
     sgroup.setProp("SUBTYPE", std::string("ALT"));
   } else if (typ == "ran") {
@@ -1186,30 +1187,97 @@ std::string get_enhanced_stereo_block(
 }
 
 std::string get_sgroup_polymer_block(
-    const ROMol &mol, const std::vector<unsigned int> &atomOrder) {
+    const ROMol &mol, const std::vector<unsigned int> &atomOrder,
+    const std::vector<unsigned int> &bondOrder) {
   const auto &sgs = getSubstanceGroups(mol);
   if (sgs.empty()) {
     return "";
   }
   std::stringstream res;
   // we need a map from original atom idx to output idx:
-  std::vector<unsigned int> revOrder(mol.getNumAtoms());
+  std::vector<unsigned int> revAtomOrder(mol.getNumAtoms());
   for (unsigned i = 0; i < atomOrder.size(); ++i) {
-    revOrder[atomOrder[i]] = i;
+    revAtomOrder[atomOrder[i]] = i;
+  }
+  // we need a map from original bond idx to output idx:
+  std::vector<unsigned int> revBondOrder(mol.getNumBonds());
+  for (unsigned i = 0; i < bondOrder.size(); ++i) {
+    revBondOrder[bondOrder[i]] = i;
+  }
+
+  std::map<std::string, std::string> reverseTypemap;
+  for (const auto &pr : SmilesParseOps::sgroupTypemap) {
+    if (reverseTypemap.find(pr.second) == reverseTypemap.end()) {
+      reverseTypemap[pr.second] = pr.first;
+    }
   }
 
   for (const auto &sg : sgs) {
     std::string typ;
-    if (sg.getPropIfPresent("TYPE", typ)) {
+    if (sg.getPropIfPresent("TYPE", typ) &&
+        reverseTypemap.find(typ) != reverseTypemap.end()) {
+      res << "Sg:";
+      std::string subtype;
+      if (typ == "COP" && sg.getPropIfPresent("SUBTYPE", subtype)) {
+        if (subtype == "ALT") {
+          res << "alt";
+        } else if (subtype == "RAN") {
+          res << "ran";
+        } else if (subtype == "BLO") {
+          res << "blk";
+        } else {
+          res << reverseTypemap["COP"];
+        }
+      } else {
+        res << reverseTypemap[typ];
+      }
+      res << ":";
+      for (const auto oaid : sg.getAtoms()) {
+        res << revAtomOrder[oaid] << ",";
+      }
+      // remove the extra ",":
+      res.seekp(-1, res.cur);
+      res << ":";
+      std::string label;
+      if (sg.getPropIfPresent("LABEL", label)) {
+        res << label;
+      }
+      res << ":";
+      std::string connect;
+      if (sg.getPropIfPresent("CONNECT", connect)) {
+        boost::algorithm::to_lower(connect);
+        res << connect;
+      }
+      res << ":";
+      std::vector<unsigned int> headCrossings;
+      if (sg.getPropIfPresent("XBHEAD", headCrossings) &&
+          headCrossings.size() > 1) {
+        for (auto v : headCrossings) {
+          res << bondOrder[v] << ",";
+        }
+        // remove the extra ",":
+        res.seekp(-1, res.cur);
+      }
+      res << ":";
+      std::vector<unsigned int> tailCrossings;
+      if (sg.getPropIfPresent("XBCORR", tailCrossings) &&
+          tailCrossings.size() > 2) {
+        for (unsigned int i = 1; i < tailCrossings.size(); i += 2) {
+          res << bondOrder[tailCrossings[i]] << ",";
+        }
+        // remove the extra ",":
+        res.seekp(-1, res.cur);
+      }
+      res << ":";
     }
   }
+
   std::string resStr = res.str();
   if (!resStr.empty() && resStr.back() == ',') {
     resStr.pop_back();
   }
   return resStr;
 }
-
 std::string get_sgroup_data_block(const ROMol &mol,
                                   const std::vector<unsigned int> &atomOrder) {
   const auto &sgs = getSubstanceGroups(mol);
@@ -1391,10 +1459,13 @@ void appendToCXExtension(const std::string &addition, std::string &base) {
 }  // namespace
 std::string getCXExtensions(const ROMol &mol) {
   std::string res = "|";
-  // we will need atom ordering. Get that now:
+  // we will need atom and bond orderings. Get them now:
   const std::vector<unsigned int> &atomOrder =
       mol.getProp<std::vector<unsigned int>>(
           common_properties::_smilesAtomOutputOrder);
+  const std::vector<unsigned int> &bondOrder =
+      mol.getProp<std::vector<unsigned int>>(
+          common_properties::_smilesBondOutputOrder);
   bool needLabels = false;
   bool needValues = false;
   for (auto idx : atomOrder) {
@@ -1444,7 +1515,8 @@ std::string getCXExtensions(const ROMol &mol) {
   const auto sgroupdatablock = get_sgroup_data_block(mol, atomOrder);
   appendToCXExtension(sgroupdatablock, res);
 
-  const auto sgrouppolyblock = get_sgroup_polymer_block(mol, atomOrder);
+  const auto sgrouppolyblock =
+      get_sgroup_polymer_block(mol, atomOrder, bondOrder);
   appendToCXExtension(sgrouppolyblock, res);
 
   if (res.size() > 1) {

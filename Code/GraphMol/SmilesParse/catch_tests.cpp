@@ -1058,6 +1058,10 @@ TEST_CASE("polymer SGroups") {
             std::vector<unsigned int>{6, 4, 0, 2});
       CHECK(sgs[0].getProp<std::string>("TYPE") == "SRU");
       CHECK(sgs[0].getProp<std::string>("CONNECT") == "HT");
+      auto smi = MolToCXSmiles(*mol);
+      CHECK(smi ==
+            "*CC(*)C(*)N* "
+            "|$star_e;;;star_e;;star_e;;star_e$,Sg:n:6,1,2,4::ht:6,0:4,2:|");
       // auto mb = MolToV3KMolBlock(*mol);
       // std::cerr << mb << std::endl;
     }
@@ -1075,6 +1079,10 @@ TEST_CASE("polymer SGroups") {
             std::vector<unsigned int>{6, 2, 0, 4});
       CHECK(sgs[0].getProp<std::string>("TYPE") == "SRU");
       CHECK(sgs[0].getProp<std::string>("CONNECT") == "HH");
+      auto smi = MolToCXSmiles(*mol);
+      CHECK(smi ==
+            "*CC(*)C(*)N* "
+            "|$star_e;;;star_e;;star_e;;star_e$,Sg:n:6,1,2,4::hh:6,0:2,4:|");
     }
     {  // minimal
       auto mol = "*-CCO-* |$star_e;;;;star_e$,Sg:n:1,2,3|"_smiles;
@@ -1089,6 +1097,8 @@ TEST_CASE("polymer SGroups") {
       CHECK(sgs[0].getProp<std::vector<unsigned int>>("XBHEAD") == bonds);
       CHECK(sgs[0].getProp<std::string>("TYPE") == "SRU");
       CHECK(sgs[0].getProp<std::string>("CONNECT") == "EU");
+      auto smi = MolToCXSmiles(*mol);
+      CHECK(smi == "*CCO* |$star_e;;;;star_e$,Sg:n:1,2,3::eu:::|");
     }
     {  // single atom
       auto mol = "*-C-* |$star_e;;star_e$,Sg:n:1::ht|"_smiles;
@@ -1103,6 +1113,8 @@ TEST_CASE("polymer SGroups") {
       CHECK(sgs[0].getProp<std::vector<unsigned int>>("XBHEAD") == bonds);
       CHECK(sgs[0].getProp<std::string>("TYPE") == "SRU");
       CHECK(sgs[0].getProp<std::string>("CONNECT") == "HT");
+      auto smi = MolToCXSmiles(*mol);
+      CHECK(smi == "*C* |$star_e;;star_e$,Sg:n:1::ht:::|");
     }
   }
 }
