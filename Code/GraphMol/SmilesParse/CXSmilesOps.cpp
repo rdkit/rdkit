@@ -30,10 +30,30 @@ bool read_int(Iterator &first, Iterator last, unsigned int &res) {
     num += *first;
     ++first;
   }
-  if (num == "") {
+  if (num.empty()) {
     return false;
   }
   res = boost::lexical_cast<unsigned int>(num);
+  return true;
+}
+template <typename Iterator>
+bool read_int_list(Iterator &first, Iterator last,
+                   std::vector<unsigned int> &res, char sep = ',') {
+  while (1) {
+    std::string num = "";
+    while (first != last && *first >= '0' && *first <= '9') {
+      num += *first;
+      ++first;
+    }
+    if (num.empty()) {
+      return false;
+    }
+    res.push_back(boost::lexical_cast<unsigned int>(num));
+    if (first >= last || *first != sep) {
+      break;
+    }
+    ++first;
+  }
   return true;
 }
 template <typename Iterator>
@@ -420,6 +440,71 @@ bool parse_linknodes(Iterator &first, Iterator last, RDKit::RWMol &mol) {
 }
 
 template <typename Iterator>
+bool parse_data_sgroup(Iterator &first, Iterator last, RDKit::RWMol &mol) {
+  // these look like: |SgD:2,1:FIELD:info::::|
+  // example from CXSMILES docs:
+  //    SgD:3,2,1,0:name:data:like:unit:t:(1.,1.)
+  // the fields are:
+  //    SgD:[atom indices]:[field name]:[data value]:[query
+  //    operator]:[unit]:[tag]:[coords]
+  //   coords are (-1) if atomic coordinates are present
+  if (first >= last || *first != 'S' || first + 3 >= last ||
+      *(first + 1) != 'g' || *(first + 2) != 'D' || *(first + 3) != ':') {
+    return false;
+  }
+  first += 4;
+  std::vector<unsigned int> atoms;
+  if (!read_int_list(first, last, atoms)) {
+    return false;
+  }
+  SubstanceGroup sgroup(&mol, std::string("DAT"));
+  for (auto idx : atoms) {
+    sgroup.addAtomWithIdx(idx);
+  }
+  ++first;
+  std::string name = read_text_to(first, last, ":");
+  ++first;
+  if (!name.empty()) {
+    sgroup.setProp("FIELDNAME", name);
+  }
+  // FIX:
+  sgroup.setProp("FIELDDISP", "    0.0000    0.0000    DR    ALL  0       0");
+
+  std::string data = read_text_to(first, last, ":");
+  ++first;
+  if (!data.empty()) {
+    std::vector<std::string> dataFields = {data};
+    sgroup.setProp("DATAFIELDS", dataFields);
+  }
+
+  std::string oper = read_text_to(first, last, ":");
+  ++first;
+  if (!oper.empty()) {
+    sgroup.setProp("QUERYOP", oper);
+  }
+  std::string unit = read_text_to(first, last, ":");
+  ++first;
+  if (!unit.empty()) {
+    sgroup.setProp("FIELDINFO", unit);
+  }
+  std::string tag = read_text_to(first, last, ":");
+  ++first;
+  if (!tag.empty()) {
+    // not actually part of what ends up in the output, but
+    // it is part of CXSMARTS
+    sgroup.setProp("FIELDTAG", tag);
+  }
+  if (first < last && *first == '(') {
+    // FIX
+    std::string coords = read_text_to(first, last, ")");
+    ++first;
+    sgroup.setProp("COORDS", coords);
+  }
+  addSubstanceGroup(mol, sgroup);
+  return true;
+}
+
+template <typename Iterator>
 bool parse_variable_attachments(Iterator &first, Iterator last,
                                 RDKit::RWMol &mol) {
   // these look like: CO*.C1=CC=NC=C1 |m:2:3.5.4|
@@ -695,6 +780,11 @@ bool parse_it(Iterator &first, Iterator last, RDKit::RWMol &mol) {
       if (!parse_linknodes(first, last, mol)) {
         return false;
       }
+    } else if (*first == 'S' && first + 2 < last && first[1] == 'g' &&
+               first[2] == 'D') {
+      if (!parse_data_sgroup(first, last, mol)) {
+        return false;
+      }
     } else if (*first == 'u') {
       if (!parse_unsaturation(first, last, mol)) {
         return false;
@@ -798,6 +888,9 @@ std::string quote_string(const std::string &txt) {
 
 std::string get_enhanced_stereo_block(
     const ROMol &mol, const std::vector<unsigned int> &atomOrder) {
+  if (mol.getStereoGroups().empty()) {
+    return "";
+  }
   std::stringstream res;
   // we need a map from original atom idx to output idx:
   std::vector<unsigned int> revOrder(mol.getNumAtoms());
@@ -863,6 +956,67 @@ std::string get_enhanced_stereo_block(
   return resStr;
 }
 
+std::string get_sgroup_data_block(const ROMol &mol,
+                                  const std::vector<unsigned int> &atomOrder) {
+  const auto &sgs = getSubstanceGroups(mol);
+  if (sgs.empty()) {
+    return "";
+  }
+  std::stringstream res;
+  // we need a map from original atom idx to output idx:
+  std::vector<unsigned int> revOrder(mol.getNumAtoms());
+  for (unsigned i = 0; i < atomOrder.size(); ++i) {
+    revOrder[atomOrder[i]] = i;
+  }
+
+  for (const auto &sg : sgs) {
+    if (sg.hasProp("TYPE") && sg.getProp<std::string>("TYPE") == "DAT") {
+      res << "SgD:";
+      // we don't attempt to canonicalize the atom order because the user
+      // may ascribe some significance to the ordering of the atoms
+      for (const auto oaid : sg.getAtoms()) {
+        res << revOrder[oaid] << ",";
+      }
+      // remove the extra ",":
+      res.seekp(-1, res.cur);
+      res << ":";
+      std::string prop;
+      if (sg.getPropIfPresent("FIELDNAME", prop) && !prop.empty()) {
+        res << prop;
+      }
+      res << ":";
+      std::vector<std::string> vprop;
+      if (sg.getPropIfPresent("DATAFIELDS", vprop) && !vprop.empty()) {
+        for (const auto &pv : vprop) {
+          res << pv << ",";
+        }
+        // remove the extra ",":
+        res.seekp(-1, res.cur);
+      }
+      res << ":";
+      if (sg.getPropIfPresent("QUERYOP", prop) && !prop.empty()) {
+        res << prop;
+      }
+      res << ":";
+      if (sg.getPropIfPresent("FIELDINFO", prop) && !prop.empty()) {
+        res << prop;
+      }
+      res << ":";
+      if (sg.getPropIfPresent("FIELDTAG", prop) && !prop.empty()) {
+        res << prop;
+      }
+      res << ":";
+      // FIX: do something about the coordinates
+    }
+    res << ",";
+  }
+
+  std::string resStr = res.str();
+  if (!resStr.empty() && resStr.back() == ',') {
+    resStr.pop_back();
+  }
+  return resStr;
+}
 std::string get_value_block(const ROMol &mol,
                             const std::vector<unsigned int> &atomOrder,
                             const std::string &prop) {
@@ -1031,6 +1185,9 @@ std::string getCXExtensions(const ROMol &mol) {
 
   const auto stereoblock = get_enhanced_stereo_block(mol, atomOrder);
   appendToCXExtension(stereoblock, res);
+
+  const auto sgroupdatablock = get_sgroup_data_block(mol, atomOrder);
+  appendToCXExtension(sgroupdatablock, res);
 
   if (res.size() > 1) {
     res += "|";

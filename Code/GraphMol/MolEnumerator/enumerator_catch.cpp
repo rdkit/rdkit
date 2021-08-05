@@ -589,3 +589,162 @@ M  END
     }
   }
 }
+
+TEST_CASE(
+    "github #4382: Enumerate fails on variable attachment points with queries",
+    "[MolEnumerator][bug]") {
+  SECTION("test1") {
+    auto mol1 = R"CTAB(
+  Mrv2108 08032115452D          
+
+  0  0  0     0  0            999 V3000
+M  V30 BEGIN CTAB
+M  V30 COUNTS 7 6 0 0 0
+M  V30 BEGIN ATOM
+M  V30 1 C -1.083 5.5632 0 0
+M  V30 2 C -1.083 7.1033 0 0
+M  V30 3 N 0.3973 7.5278 0 0
+M  V30 4 N 0.3104 5.0376 0 0
+M  V30 5 C 1.2585 6.251 0 0
+M  V30 6 * 0.3539 6.2827 0 0
+M  V30 7 A 1.5089 8.2832 0 0
+M  V30 END ATOM
+M  V30 BEGIN BOND
+M  V30 1 1 1 2
+M  V30 2 1 3 2
+M  V30 3 1 1 4
+M  V30 4 1 4 5
+M  V30 5 2 3 5
+M  V30 6 1 6 7 ENDPTS=(2 4 3) ATTACH=ANY
+M  V30 END BOND
+M  V30 END CTAB
+M  END
+)CTAB"_ctab;
+    REQUIRE(mol1);
+    auto bundle = MolEnumerator::enumerate(*mol1);
+    CHECK(bundle.size() == 2);
+    std::vector<std::string> tsmas = {"[#6]1-[#6]-[#7]=[#6]-[#7]-1-[!#1]",
+                                      "[#6]1-[#6]-[#7](=[#6]-[#7]-1)-[!#1]"};
+    for (const auto &molp : bundle.getMols()) {
+      auto smarts = MolToSmarts(*molp);
+      CHECK(std::find(tsmas.begin(), tsmas.end(), smarts) != tsmas.end());
+    }
+  }
+  SECTION("test1 reversed") {
+    // never actually observed one of these, but it should still work
+    auto mol1 = R"CTAB(
+  Mrv2108 08032115452D          
+
+  0  0  0     0  0            999 V3000
+M  V30 BEGIN CTAB
+M  V30 COUNTS 7 6 0 0 0
+M  V30 BEGIN ATOM
+M  V30 1 C -1.083 5.5632 0 0
+M  V30 2 C -1.083 7.1033 0 0
+M  V30 3 N 0.3973 7.5278 0 0
+M  V30 4 N 0.3104 5.0376 0 0
+M  V30 5 C 1.2585 6.251 0 0
+M  V30 6 A 1.5089 8.2832 0 0
+M  V30 7 * 0.3539 6.2827 0 0
+M  V30 END ATOM
+M  V30 BEGIN BOND
+M  V30 1 1 1 2
+M  V30 2 1 3 2
+M  V30 3 1 1 4
+M  V30 4 1 4 5
+M  V30 5 2 3 5
+M  V30 6 1 6 7 ENDPTS=(2 4 3) ATTACH=ANY
+M  V30 END BOND
+M  V30 END CTAB
+M  END
+)CTAB"_ctab;
+    REQUIRE(mol1);
+    auto bundle = MolEnumerator::enumerate(*mol1);
+    CHECK(bundle.size() == 2);
+    std::vector<std::string> tsmas = {"[#6]1-[#6]-[#7]=[#6]-[#7]-1-[!#1]",
+                                      "[#6]1-[#6]-[#7](=[#6]-[#7]-1)-[!#1]"};
+    for (const auto &molp : bundle.getMols()) {
+      auto smarts = MolToSmarts(*molp);
+      CHECK(std::find(tsmas.begin(), tsmas.end(), smarts) != tsmas.end());
+    }
+  }
+
+  SECTION("test3: both are dummy atoms") {
+    auto mol1 = R"CTAB(
+  Mrv2108 08032115452D          
+
+  0  0  0     0  0            999 V3000
+M  V30 BEGIN CTAB
+M  V30 COUNTS 7 6 0 0 0
+M  V30 BEGIN ATOM
+M  V30 1 C -1.083 5.5632 0 0
+M  V30 2 C -1.083 7.1033 0 0
+M  V30 3 N 0.3973 7.5278 0 0
+M  V30 4 N 0.3104 5.0376 0 0
+M  V30 5 C 1.2585 6.251 0 0
+M  V30 6 * 0.3539 6.2827 0 0
+M  V30 7 * 1.5089 8.2832 0 0
+M  V30 END ATOM
+M  V30 BEGIN BOND
+M  V30 1 1 1 2
+M  V30 2 1 3 2
+M  V30 3 1 1 4
+M  V30 4 1 4 5
+M  V30 5 2 3 5
+M  V30 6 1 6 7 ENDPTS=(2 4 3) ATTACH=ANY
+M  V30 END BOND
+M  V30 END CTAB
+M  END
+)CTAB"_ctab;
+    REQUIRE(mol1);
+    auto bundle = MolEnumerator::enumerate(*mol1);
+    CHECK(bundle.size() == 2);
+    std::vector<std::string> tsmas = {"[#6]1-[#6]-[#7]=[#6]-[#7]-1-*",
+                                      "[#6]1-[#6]-[#7](=[#6]-[#7]-1)-*"};
+    for (const auto &molp : bundle.getMols()) {
+      auto smarts = MolToSmarts(*molp);
+      CHECK(std::find(tsmas.begin(), tsmas.end(), smarts) != tsmas.end());
+    }
+  }
+}
+
+TEST_CASE("github #4381: need implicit H cleanup after Enumerate",
+          "[MolEnumerator][bug]") {
+  SECTION("test1") {
+    auto mol1 = R"CTAB(
+  Mrv2108 08032115452D          
+
+  0  0  0     0  0            999 V3000
+M  V30 BEGIN CTAB
+M  V30 COUNTS 7 6 0 0 0
+M  V30 BEGIN ATOM
+M  V30 1 C -1.083 5.5632 0 0
+M  V30 2 C -1.083 7.1033 0 0
+M  V30 3 N 0.3973 7.5278 0 0
+M  V30 4 N 0.3104 5.0376 0 0
+M  V30 5 C 1.2585 6.251 0 0
+M  V30 6 * 0.3539 6.2827 0 0
+M  V30 7 C 1.5089 8.2832 0 0
+M  V30 END ATOM
+M  V30 BEGIN BOND
+M  V30 1 2 1 2
+M  V30 2 1 3 2
+M  V30 3 1 1 4
+M  V30 4 1 4 5
+M  V30 5 2 3 5
+M  V30 6 1 6 7 ENDPTS=(2 4 3) ATTACH=ANY
+M  V30 END BOND
+M  V30 END CTAB
+M  END
+)CTAB"_ctab;
+    REQUIRE(mol1);
+    auto bundle = MolEnumerator::enumerate(*mol1);
+    CHECK(bundle.size() == 2);
+    std::vector<std::string> tsmas = {"[#6]1:[#6]:[#7]:[#6]:[#7]:1-[#6]",
+                                      "[#6]1:[#6]:[#7](:[#6]:[#7]:1)-[#6]"};
+    for (const auto &molp : bundle.getMols()) {
+      auto smarts = MolToSmarts(*molp);
+      CHECK(std::find(tsmas.begin(), tsmas.end(), smarts) != tsmas.end());
+    }
+  }
+}
