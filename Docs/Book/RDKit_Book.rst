@@ -1199,6 +1199,8 @@ ROMol  (Mol in Python)
 +------------------------+---------------------------------------------------+
 | _smilesAtomOutputOrder |   The order in which atoms were written to SMILES |
 +------------------------+---------------------------------------------------+
+| _smilesBondOutputOrder |   The order in which bonds were written to SMILES |
++------------------------+---------------------------------------------------+
 
 Atom
 ----

@@ -1058,8 +1058,8 @@ TEST_CASE("polymer SGroups") {
             std::vector<unsigned int>{6, 4, 0, 2});
       CHECK(sgs[0].getProp<std::string>("TYPE") == "SRU");
       CHECK(sgs[0].getProp<std::string>("CONNECT") == "HT");
-      auto mb = MolToV3KMolBlock(*mol);
-      std::cerr << mb << std::endl;
+      // auto mb = MolToV3KMolBlock(*mol);
+      // std::cerr << mb << std::endl;
     }
     {
       auto mol =
@@ -1104,5 +1104,18 @@ TEST_CASE("polymer SGroups") {
       CHECK(sgs[0].getProp<std::string>("TYPE") == "SRU");
       CHECK(sgs[0].getProp<std::string>("CONNECT") == "HT");
     }
+  }
+}
+
+TEST_CASE("smilesBondOutputOrder") {
+  SECTION("basics") {
+    auto m = "OCCN.CCO"_smiles;
+    REQUIRE(m);
+    CHECK(MolToSmiles(*m) == "CCO.NCCO");
+    std::vector<unsigned int> order;
+    m->getProp(common_properties::_smilesAtomOutputOrder, order);
+    CHECK(order == std::vector<unsigned int>{4, 5, 6, 3, 2, 1, 0});
+    m->getProp(common_properties::_smilesBondOutputOrder, order);
+    CHECK(order == std::vector<unsigned int>{3, 4, 2, 1, 0});
   }
 }

@@ -1,5 +1,5 @@
 //
-//  Copyright (C) 2002-2020 Greg Landrum and Rational Discovery LLC
+//  Copyright (C) 2002-2021 Greg Landrum and other RDKit contributors
 //
 //   @@ All Rights Reserved @@
 //  This file is part of the RDKit.
@@ -294,6 +294,7 @@ std::string FragmentSmilesConstruct(
     const UINT_VECT &ranks, bool doKekule, bool canonical,
     bool doIsomericSmiles, bool allBondsExplicit, bool allHsExplicit,
     bool doRandom, std::vector<unsigned int> &atomOrdering,
+    std::vector<unsigned int> &bondOrdering,
     const boost::dynamic_bitset<> *atomsInPlay = nullptr,
     const boost::dynamic_bitset<> *bondsInPlay = nullptr,
     const std::vector<std::string> *atomSymbols = nullptr,
@@ -346,7 +347,6 @@ std::string FragmentSmilesConstruct(
           res << (*atomSymbols)[mSE.obj.atom->getIdx()];
         }
         atomOrdering.push_back(mSE.obj.atom->getIdx());
-
         break;
       case Canon::MOL_STACK_BOND:
         bond = mSE.obj.bond;
@@ -356,6 +356,7 @@ std::string FragmentSmilesConstruct(
         } else {
           res << (*bondSymbols)[bond->getIdx()];
         }
+        bondOrdering.push_back(bond->getIdx());
         break;
       case Canon::MOL_STACK_RING:
         ringIdx = mSE.number;
@@ -429,6 +430,24 @@ std::string MolToSmiles(const ROMol &mol, bool doIsomericSmiles, bool doKekule,
   std::vector<std::vector<int>> fragsMolAtomMapping;
   auto mols =
       MolOps::getMolFrags(mol, false, nullptr, &fragsMolAtomMapping, false);
+  // we got the mapping between fragments and atoms; repeat that for bonds
+  std::vector<std::vector<int>> fragsMolBondMapping;
+  for (const auto &atsInFrag : fragsMolAtomMapping) {
+    std::vector<int> bondsInFrag;
+    for (auto aidx : atsInFrag) {
+      const auto atm = mol.getAtomWithIdx(aidx);
+      for (const auto bndIter :
+           boost::make_iterator_range(mol.getAtomBonds(atm))) {
+        const auto bnd = mol[bndIter];
+        if (std::find(bondsInFrag.begin(), bondsInFrag.end(), bnd->getIdx()) ==
+            bondsInFrag.end()) {
+          bondsInFrag.push_back(bnd->getIdx());
+        }
+      }
+    }
+    fragsMolBondMapping.push_back(bondsInFrag);
+  }
+
   std::vector<std::string> vfragsmi(mols.size());
 
   //    for(unsigned i=0; i<fragsMolAtomMapping.size(); i++){
@@ -440,6 +459,7 @@ std::string MolToSmiles(const ROMol &mol, bool doIsomericSmiles, bool doKekule,
   //    }
 
   std::vector<std::vector<RDKit::UINT>> allAtomOrdering;
+  std::vector<std::vector<RDKit::UINT>> allBondOrdering;
   for (unsigned fragIdx = 0; fragIdx < mols.size(); fragIdx++) {
     ROMol *tmol = mols[fragIdx].get();
 
@@ -473,6 +493,7 @@ std::string MolToSmiles(const ROMol &mol, bool doIsomericSmiles, bool doKekule,
     unsigned int nAtoms = tmol->getNumAtoms();
     std::vector<unsigned int> ranks(nAtoms);
     std::vector<unsigned int> atomOrdering;
+    std::vector<unsigned int> bondOrdering;
 
     if (canonical) {
       if (tmol->hasProp("_canonicalRankingNumbers")) {
@@ -517,7 +538,7 @@ std::string MolToSmiles(const ROMol &mol, bool doIsomericSmiles, bool doKekule,
     subSmi = SmilesWrite::FragmentSmilesConstruct(
         *tmol, nextAtomIdx, colors, ranks, doKekule, canonical,
         doIsomericSmiles, allBondsExplicit, allHsExplicit, doRandom,
-        atomOrdering);
+        atomOrdering, bondOrdering);
 
     res += subSmi;
     vfragsmi[fragIdx] = res;
@@ -527,33 +548,48 @@ std::string MolToSmiles(const ROMol &mol, bool doIsomericSmiles, bool doKekule,
                                                 // molecule
     }
     allAtomOrdering.push_back(atomOrdering);
+    for (unsigned int &vit : bondOrdering) {
+      vit = fragsMolBondMapping[fragIdx][vit];  // Lookup the Id in the original
+                                                // molecule
+    }
+    allBondOrdering.push_back(bondOrdering);
   }
 
   std::string result;
   std::vector<unsigned int> flattenedAtomOrdering;
   flattenedAtomOrdering.reserve(mol.getNumAtoms());
+  std::vector<unsigned int> flattenedBondOrdering;
+  flattenedBondOrdering.reserve(mol.getNumBonds());
   if (canonical) {
-    // Sort the vfragsmi, but also sort the atom order vectors into the same
-    // order
-    typedef std::pair<std::string, std::vector<unsigned int>> PairStrAndVec;
-    std::vector<PairStrAndVec> tmp(vfragsmi.size());
+    // Sort the vfragsmi, but also sort the atom and bond order vectors into the
+    // same order
+    typedef std::tuple<std::string, std::vector<unsigned int>,
+                       std::vector<unsigned int>>
+        tplType;
+    std::vector<tplType> tmp(vfragsmi.size());
     for (unsigned int ti = 0; ti < vfragsmi.size(); ++ti) {
-      tmp[ti] = PairStrAndVec(vfragsmi[ti], allAtomOrdering[ti]);
+      tmp[ti] = std::make_tuple(vfragsmi[ti], allAtomOrdering[ti],
+                                allBondOrdering[ti]);
     }
-    std::sort(tmp.begin(), tmp.end(), SortBasedOnFirstElement);
+    std::sort(tmp.begin(), tmp.end());
 
     for (unsigned int ti = 0; ti < vfragsmi.size(); ++ti) {
-      result += tmp[ti].first;
+      result += std::get<0>(tmp[ti]);
       if (ti < vfragsmi.size() - 1) {
         result += ".";
       }
       flattenedAtomOrdering.insert(flattenedAtomOrdering.end(),
-                                   tmp[ti].second.begin(),
-                                   tmp[ti].second.end());
+                                   std::get<1>(tmp[ti]).begin(),
+                                   std::get<1>(tmp[ti]).end());
+      flattenedBondOrdering.insert(flattenedBondOrdering.end(),
+                                   std::get<2>(tmp[ti]).begin(),
+                                   std::get<2>(tmp[ti]).end());
     }
   } else {  // Not canonical
     for (auto &i : allAtomOrdering) {
       flattenedAtomOrdering.insert(flattenedAtomOrdering.end(), i.begin(),
+                                   i.end());
+      flattenedBondOrdering.insert(flattenedBondOrdering.end(), i.begin(),
                                    i.end());
     }
     for (unsigned i = 0; i < vfragsmi.size(); ++i) {
@@ -564,6 +600,8 @@ std::string MolToSmiles(const ROMol &mol, bool doIsomericSmiles, bool doKekule,
     }
   }
   mol.setProp(common_properties::_smilesAtomOutputOrder, flattenedAtomOrdering,
+              true);
+  mol.setProp(common_properties::_smilesBondOutputOrder, flattenedBondOrdering,
               true);
   return result;
 }  // end of MolToSmiles()
@@ -690,6 +728,7 @@ std::string MolFragmentToSmiles(const ROMol &mol,
   UINT_VECT ranks(tmol.getNumAtoms());
 
   std::vector<unsigned int> atomOrdering;
+  std::vector<unsigned int> bondOrdering;
 
   // clean up the chirality on any atom that is marked as chiral,
   // but that should not be:
@@ -758,8 +797,8 @@ std::string MolFragmentToSmiles(const ROMol &mol,
     bool doRandom = false;
     auto subSmi = SmilesWrite::FragmentSmilesConstruct(
         tmol, nextAtomIdx, colors, ranks, doKekule, canonical, doIsomericSmiles,
-        allBondsExplicit, allHsExplicit, doRandom, atomOrdering, &atomsInPlay,
-        &bondsInPlay, atomSymbols, bondSymbols);
+        allBondsExplicit, allHsExplicit, doRandom, atomOrdering, bondOrdering,
+        &atomsInPlay, &bondsInPlay, atomSymbols, bondSymbols);
 
     res += subSmi;
     colorIt = std::find(colors.begin(), colors.end(), Canon::WHITE_NODE);
@@ -768,6 +807,7 @@ std::string MolFragmentToSmiles(const ROMol &mol,
     }
   }
   mol.setProp(common_properties::_smilesAtomOutputOrder, atomOrdering, true);
+  mol.setProp(common_properties::_smilesBondOutputOrder, bondOrdering, true);
   return res;
 }  // end of MolFragmentToSmiles()
 
