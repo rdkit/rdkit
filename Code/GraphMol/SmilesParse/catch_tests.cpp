@@ -999,6 +999,18 @@ TEST_CASE("Github #4233: data groups in CXSMILES neither parsed nor written") {
       CHECK(MolToCXSmiles(*mol) ==
             "C/C=C/C |SgD:2,1:FIELD:foo:like:info:tag:|");
     }
+    {  // data on a dummy atom
+      auto mol = "CC-* |$;;star_e$,SgD:2:querydata:val::::|"_smiles;
+      REQUIRE(mol);
+      const auto &sgs = getSubstanceGroups(*mol);
+      REQUIRE(sgs.size() == 1);
+      CHECK(sgs[0].getAtoms().size() == 1);
+      CHECK(sgs[0].getAtoms()[0] == 2);
+      CHECK(sgs[0].getProp<std::string>("TYPE") == "DAT");
+      CHECK(sgs[0].getProp<std::vector<std::string>>("DATAFIELDS") ==
+            std::vector<std::string>{"val"});
+      CHECK(MolToCXSmiles(*mol) == "*CC |$star_e;;$,SgD:0:querydata:val::::|");
+    }
     {
       auto mol =
           "C1=CC=C(C=C1)C1=CC=CC=C1 |c:0,2,4,9,11,t:7,SgD:8,9,11,10,7,6:PieceName:Ring1::::,SgD:1,2,3,4,5,0:PieceName:Ring2::::|"_smiles;

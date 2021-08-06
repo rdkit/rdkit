@@ -29,6 +29,61 @@ std::map<std::string, std::string> sgroupTypemap = {
     {"any", "ANY"}, {"gen", "GEN"}, {"c", "COM"},   {"grf", "GRA"},
     {"alt", "COP"}, {"ran", "COP"}, {"blk", "COP"}};
 
+template <typename Q>
+void addquery(Q *qry, std::string symbol, RDKit::RWMol &mol, unsigned int idx) {
+  PRECONDITION(qry, "bad query");
+  auto *qa = new QueryAtom(0);
+  qa->setQuery(qry);
+  qa->setNoImplicit(true);
+  mol.replaceAtom(idx, qa);
+  if (symbol != "") {
+    mol.getAtomWithIdx(idx)->setProp(RDKit::common_properties::atomLabel,
+                                     symbol);
+  }
+  delete qa;
+}
+
+void processCXSmilesLabels(RDKit::RWMol &mol) {
+  if (mol.hasProp("_cxsmilesLabelsProcessed")) {
+    return;
+  }
+  for (RDKit::ROMol::AtomIterator atIt = mol.beginAtoms();
+       atIt != mol.endAtoms(); ++atIt) {
+    std::string symb = "";
+    if ((*atIt)->getPropIfPresent(RDKit::common_properties::atomLabel, symb)) {
+      if (symb == "star_e") {
+        /* according to the MDL spec, these match anything, but in MARVIN they
+        are "unspecified end groups" for polymers */
+        addquery(makeAtomNullQuery(), symb, mol, (*atIt)->getIdx());
+      } else if (symb == "Q_e") {
+        addquery(makeQAtomQuery(), symb, mol, (*atIt)->getIdx());
+      } else if (symb == "QH_p") {
+        addquery(makeQHAtomQuery(), symb, mol, (*atIt)->getIdx());
+      } else if (symb == "AH_p") {  // this seems wrong...
+        /* According to the MARVIN Sketch, AH is "any atom, including H" -
+        this would be "*" in SMILES - and "A" is "any atom except H".
+        The CXSMILES docs say that "A" can be represented normally in SMILES
+        and that "AH" needs to be written out as AH_p. I'm going to assume that
+        this is a Marvin internal thing and just parse it as they describe it.
+        This means that "*" in the SMILES itself needs to be treated
+        differently, which we do below. */
+        addquery(makeAHAtomQuery(), symb, mol, (*atIt)->getIdx());
+      } else if (symb == "X_p") {
+        addquery(makeXAtomQuery(), symb, mol, (*atIt)->getIdx());
+      } else if (symb == "XH_p") {
+        addquery(makeXHAtomQuery(), symb, mol, (*atIt)->getIdx());
+      } else if (symb == "M_p") {
+        addquery(makeMAtomQuery(), symb, mol, (*atIt)->getIdx());
+      } else if (symb == "MH_p") {
+        addquery(makeMHAtomQuery(), symb, mol, (*atIt)->getIdx());
+      }
+    } else if ((*atIt)->getAtomicNum() == 0 && (*atIt)->getSymbol() == "*") {
+      addquery(makeAAtomQuery(), "", mol, (*atIt)->getIdx());
+    }
+  }
+  mol.setProp("_cxsmilesLabelsProcessed", 1, true);
+}
+
 namespace parser {
 
 const std::string _headCrossings = "_headCrossings";
@@ -116,56 +171,6 @@ std::string read_text_to(Iterator &first, Iterator last, std::string delims) {
   return res;
 }
 namespace {
-template <typename Q>
-void addquery(Q *qry, std::string symbol, RDKit::RWMol &mol, unsigned int idx) {
-  PRECONDITION(qry, "bad query");
-  auto *qa = new QueryAtom(0);
-  qa->setQuery(qry);
-  qa->setNoImplicit(true);
-  mol.replaceAtom(idx, qa);
-  if (symbol != "") {
-    mol.getAtomWithIdx(idx)->setProp(RDKit::common_properties::atomLabel,
-                                     symbol);
-  }
-  delete qa;
-}
-
-void processCXSmilesLabels(RDKit::RWMol &mol) {
-  for (RDKit::ROMol::AtomIterator atIt = mol.beginAtoms();
-       atIt != mol.endAtoms(); ++atIt) {
-    std::string symb = "";
-    if ((*atIt)->getPropIfPresent(RDKit::common_properties::atomLabel, symb)) {
-      if (symb == "star_e") {
-        /* according to the MDL spec, these match anything, but in MARVIN they
-        are "unspecified end groups" for polymers */
-        addquery(makeAtomNullQuery(), symb, mol, (*atIt)->getIdx());
-      } else if (symb == "Q_e") {
-        addquery(makeQAtomQuery(), symb, mol, (*atIt)->getIdx());
-      } else if (symb == "QH_p") {
-        addquery(makeQHAtomQuery(), symb, mol, (*atIt)->getIdx());
-      } else if (symb == "AH_p") {  // this seems wrong...
-        /* According to the MARVIN Sketch, AH is "any atom, including H" -
-        this would be "*" in SMILES - and "A" is "any atom except H".
-        The CXSMILES docs say that "A" can be represented normally in SMILES
-        and that "AH" needs to be written out as AH_p. I'm going to assume that
-        this is a Marvin internal thing and just parse it as they describe it.
-        This means that "*" in the SMILES itself needs to be treated
-        differently, which we do below. */
-        addquery(makeAHAtomQuery(), symb, mol, (*atIt)->getIdx());
-      } else if (symb == "X_p") {
-        addquery(makeXAtomQuery(), symb, mol, (*atIt)->getIdx());
-      } else if (symb == "XH_p") {
-        addquery(makeXHAtomQuery(), symb, mol, (*atIt)->getIdx());
-      } else if (symb == "M_p") {
-        addquery(makeMAtomQuery(), symb, mol, (*atIt)->getIdx());
-      } else if (symb == "MH_p") {
-        addquery(makeMHAtomQuery(), symb, mol, (*atIt)->getIdx());
-      }
-    } else if ((*atIt)->getAtomicNum() == 0 && (*atIt)->getSymbol() == "*") {
-      addquery(makeAAtomQuery(), "", mol, (*atIt)->getIdx());
-    }
-  }
-}
 
 // this is the super fun case where no information about bonds in/out of the
 // sgroup is present.
@@ -697,6 +702,9 @@ bool parse_data_sgroup(Iterator &first, Iterator last, RDKit::RWMol &mol) {
     ++first;
     sgroup.setProp("COORDS", coords);
   }
+  // the label processing can destroy sgroup info, so do that now
+  // (the function will immediately return if already called)
+  processCXSmilesLabels(mol);
   addSubstanceGroup(mol, sgroup);
   return true;
 }
@@ -778,6 +786,10 @@ bool parse_polymer_sgroup(Iterator &first, Iterator last, RDKit::RWMol &mol) {
       }
     }
   }
+  // the label processing can destroy sgroup info, so do that now
+  // (the function will immediately return if already called)
+  processCXSmilesLabels(mol);
+
   finalizePolymerSGroup(mol, sgroup);
   addSubstanceGroup(mol, sgroup);
   return true;
@@ -1028,7 +1040,6 @@ bool parse_it(Iterator &first, Iterator last, RDKit::RWMol &mol) {
         if (!parse_atom_labels(first, last, mol)) {
           return false;
         }
-        processCXSmilesLabels(mol);
       }
     } else if (length > 9 && std::string(first, first + 9) == "atomProp:") {
       first += 9;
@@ -1105,6 +1116,8 @@ void parseCXExtensions(RDKit::RWMol &mol, const std::string &extText,
   if (!ok) {
     throw RDKit::SmilesParseException("failure parsing CXSMILES extensions");
   }
+  processCXSmilesLabels(mol);
+  mol.clearProp("_cxsmilesLabelsProcessed");
 }
 }  // end of namespace SmilesParseOps
 
