@@ -825,18 +825,17 @@ void addquery(Q *qry, std::string symbol, RDKit::RWMol &mol, unsigned int idx) {
   delete qa;
 }
 void processCXSmilesLabels(RDKit::RWMol &mol) {
-  for (RDKit::ROMol::AtomIterator atIt = mol.beginAtoms();
-       atIt != mol.endAtoms(); ++atIt) {
+  for (auto atom : mol.atoms()) {
     std::string symb = "";
-    if ((*atIt)->getPropIfPresent(RDKit::common_properties::atomLabel, symb)) {
+    if (atom->getPropIfPresent(RDKit::common_properties::atomLabel, symb)) {
       if (symb == "star_e") {
         /* according to the MDL spec, these match anything, but in MARVIN they
         are "unspecified end groups" for polymers */
-        addquery(makeAtomNullQuery(), symb, mol, (*atIt)->getIdx());
+        addquery(makeAtomNullQuery(), symb, mol, atom->getIdx());
       } else if (symb == "Q_e") {
-        addquery(makeQAtomQuery(), symb, mol, (*atIt)->getIdx());
+        addquery(makeQAtomQuery(), symb, mol, atom->getIdx());
       } else if (symb == "QH_p") {
-        addquery(makeQHAtomQuery(), symb, mol, (*atIt)->getIdx());
+        addquery(makeQHAtomQuery(), symb, mol, atom->getIdx());
       } else if (symb == "AH_p") {  // this seems wrong...
         /* According to the MARVIN Sketch, AH is "any atom, including H" -
         this would be "*" in SMILES - and "A" is "any atom except H".
@@ -845,18 +844,19 @@ void processCXSmilesLabels(RDKit::RWMol &mol) {
         this is a Marvin internal thing and just parse it as they describe it.
         This means that "*" in the SMILES itself needs to be treated
         differently, which we do below. */
-        addquery(makeAHAtomQuery(), symb, mol, (*atIt)->getIdx());
+        addquery(makeAHAtomQuery(), symb, mol, atom->getIdx());
       } else if (symb == "X_p") {
-        addquery(makeXAtomQuery(), symb, mol, (*atIt)->getIdx());
+        addquery(makeXAtomQuery(), symb, mol, atom->getIdx());
       } else if (symb == "XH_p") {
-        addquery(makeXHAtomQuery(), symb, mol, (*atIt)->getIdx());
+        addquery(makeXHAtomQuery(), symb, mol, atom->getIdx());
       } else if (symb == "M_p") {
-        addquery(makeMAtomQuery(), symb, mol, (*atIt)->getIdx());
+        addquery(makeMAtomQuery(), symb, mol, atom->getIdx());
       } else if (symb == "MH_p") {
-        addquery(makeMHAtomQuery(), symb, mol, (*atIt)->getIdx());
+        addquery(makeMHAtomQuery(), symb, mol, atom->getIdx());
       }
-    } else if ((*atIt)->getAtomicNum() == 0 && (*atIt)->getSymbol() == "*") {
-      addquery(makeAAtomQuery(), "", mol, (*atIt)->getIdx());
+    } else if (atom->getAtomicNum() == 0 && !atom->hasQuery() &&
+               atom->getSymbol() == "*") {
+      addquery(makeAAtomQuery(), "", mol, atom->getIdx());
     }
   }
 }
