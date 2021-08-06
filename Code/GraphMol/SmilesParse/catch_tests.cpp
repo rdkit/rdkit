@@ -1129,7 +1129,82 @@ TEST_CASE("polymer SGroups") {
       CHECK(smi == "*C* |$star_e;;star_e$,Sg:n:1::ht:::|");
     }
   }
+  SECTION("multiple s groups") {
+    {
+      auto mol =
+          "*-NCCO-* |$star_e;;;;;star_e$,Sg:n:1,2::ht,Sg:any:3,4::hh|"_smiles;
+      REQUIRE(mol);
+      const auto &sgs = getSubstanceGroups(*mol);
+      REQUIRE(sgs.size() == 2);
+      CHECK(sgs[0].getAtoms() == std::vector<unsigned int>{1, 2});
+      CHECK(sgs[0].getBonds() == std::vector<unsigned int>{0, 2});
+      CHECK(sgs[0].getProp<std::vector<unsigned int>>("XBCORR") ==
+            sgs[0].getBonds());
+      CHECK(sgs[0].getProp<std::vector<unsigned int>>("XBHEAD") ==
+            std::vector<unsigned int>{0});
+      CHECK(sgs[0].getProp<std::string>("TYPE") == "SRU");
+      CHECK(sgs[0].getProp<std::string>("CONNECT") == "HT");
+      CHECK(sgs[1].getAtoms() == std::vector<unsigned int>{3, 4});
+      CHECK(sgs[1].getBonds() == std::vector<unsigned int>{2, 4});
+      CHECK(sgs[1].getProp<std::vector<unsigned int>>("XBCORR") ==
+            sgs[1].getBonds());
+      CHECK(sgs[1].getProp<std::vector<unsigned int>>("XBHEAD") ==
+            std::vector<unsigned int>{2});
+      CHECK(sgs[1].getProp<std::string>("TYPE") == "ANY");
+      CHECK(sgs[1].getProp<std::string>("CONNECT") == "HH");
+      auto smi = MolToCXSmiles(*mol);
+      CHECK(smi ==
+            "*NCCO* |$star_e;;;;;star_e$,,,Sg:n:1,2::ht:::,Sg:any:3,4::hh:::|");
+    }
+
+    {  // multiple s groups + data
+      auto mol =
+          "CCNCCO-* "
+          "|$;;;;;;star_e$,SgD:1:atomdata:val::::,Sg:n:2,3::ht,Sg:any:4,5::hh|"_smiles;
+      REQUIRE(mol);
+      const auto &sgs = getSubstanceGroups(*mol);
+      REQUIRE(sgs.size() == 3);
+      CHECK(sgs[0].getAtoms() == std::vector<unsigned int>{1});
+      CHECK(sgs[0].getProp<std::string>("TYPE") == "DAT");
+      CHECK(sgs[0].getProp<std::string>("FIELDNAME") == "atomdata");
+      CHECK(sgs[0].getProp<std::vector<std::string>>("DATAFIELDS") ==
+            std::vector<std::string>{"val"});
+      CHECK(sgs[1].getAtoms() == std::vector<unsigned int>{2, 3});
+      CHECK(sgs[1].getBonds() == std::vector<unsigned int>{1, 3});
+      CHECK(sgs[1].getProp<std::vector<unsigned int>>("XBCORR") ==
+            sgs[1].getBonds());
+      CHECK(sgs[1].getProp<std::vector<unsigned int>>("XBHEAD") ==
+            std::vector<unsigned int>{1});
+      CHECK(sgs[1].getProp<std::string>("TYPE") == "SRU");
+      CHECK(sgs[1].getProp<std::string>("CONNECT") == "HT");
+      CHECK(sgs[2].getAtoms() == std::vector<unsigned int>{4, 5});
+      CHECK(sgs[2].getBonds() == std::vector<unsigned int>{3, 5});
+      CHECK(sgs[2].getProp<std::vector<unsigned int>>("XBCORR") ==
+            sgs[2].getBonds());
+      CHECK(sgs[2].getProp<std::vector<unsigned int>>("XBHEAD") ==
+            std::vector<unsigned int>{3});
+      CHECK(sgs[2].getProp<std::string>("TYPE") == "ANY");
+      CHECK(sgs[2].getProp<std::string>("CONNECT") == "HH");
+      auto smi = MolToCXSmiles(*mol);
+      CHECK(smi ==
+            "*OCCNCC "
+            "|$star_e;;;;;;$,SgD:5:atomdata:val::::,,,,Sg:n:4,3::ht:::,Sg:any:"
+            "2,1::hh:::|");
+    }
+  }
 }
+
+// TEST_CASE("SGroup hierarchy") {
+//   SECTION("basics") {
+//     auto mol =
+//         "*-CNC(C-*)O-* "
+//         "|$star_e;;;;;star_e;;star_e$,Sg:any:2,1::ht,Sg:any:4,3,2,1,0,6::ht,"
+//         "SgH:1:0|"_smiles;
+//     REQUIRE(mol);
+//     const auto &sgs = getSubstanceGroups(*mol);
+//     REQUIRE(sgs.size() == 2);
+//   }
+// }
 
 TEST_CASE("smilesBondOutputOrder") {
   SECTION("basics") {

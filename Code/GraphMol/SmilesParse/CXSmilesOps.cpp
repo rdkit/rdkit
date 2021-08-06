@@ -761,7 +761,7 @@ bool parse_polymer_sgroup(Iterator &first, Iterator last, RDKit::RWMol &mol) {
     }
     if (first != last && *first == ':') {
       ++first;
-      std::string superscript = read_text_to(first, last, ":|");
+      std::string superscript = read_text_to(first, last, ":|,");
       if (!superscript.empty()) {
         sgroup.setProp("CONNECT", superscript);
       }
@@ -1283,10 +1283,11 @@ std::string get_sgroup_polymer_block(
       }
       res << ":";
     }
+    res << ",";
   }
 
   std::string resStr = res.str();
-  if (!resStr.empty() && resStr.back() == ',') {
+  while (!resStr.empty() && resStr.back() == ',') {
     resStr.pop_back();
   }
   return resStr;
