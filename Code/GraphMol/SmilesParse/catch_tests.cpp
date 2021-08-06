@@ -1102,11 +1102,11 @@ TEST_CASE("polymer SGroups") {
       const auto &sgs = getSubstanceGroups(*mol);
       REQUIRE(sgs.size() == 1);
       CHECK(sgs[0].getAtoms() == std::vector<unsigned int>{1, 2, 3});
-      std::vector<unsigned int> bonds = {0, 3};
-      CHECK(sgs[0].getBonds() == bonds);
-      CHECK(sgs[0].getProp<std::vector<unsigned int>>("XBCORR") == bonds);
-      bonds = {0};
-      CHECK(sgs[0].getProp<std::vector<unsigned int>>("XBHEAD") == bonds);
+      CHECK(sgs[0].getBonds() == std::vector<unsigned int>{0, 3});
+      CHECK(sgs[0].getProp<std::vector<unsigned int>>("XBCORR") ==
+            sgs[0].getBonds());
+      CHECK(sgs[0].getProp<std::vector<unsigned int>>("XBHEAD") ==
+            std::vector<unsigned int>{0});
       CHECK(sgs[0].getProp<std::string>("TYPE") == "SRU");
       CHECK(sgs[0].getProp<std::string>("CONNECT") == "EU");
       auto smi = MolToCXSmiles(*mol);
@@ -1118,11 +1118,11 @@ TEST_CASE("polymer SGroups") {
       const auto &sgs = getSubstanceGroups(*mol);
       REQUIRE(sgs.size() == 1);
       CHECK(sgs[0].getAtoms() == std::vector<unsigned int>{1});
-      std::vector<unsigned int> bonds = {0, 1};
-      CHECK(sgs[0].getBonds() == bonds);
-      CHECK(sgs[0].getProp<std::vector<unsigned int>>("XBCORR") == bonds);
-      bonds = {0};
-      CHECK(sgs[0].getProp<std::vector<unsigned int>>("XBHEAD") == bonds);
+      CHECK(sgs[0].getBonds() == std::vector<unsigned int>{0, 1});
+      CHECK(sgs[0].getProp<std::vector<unsigned int>>("XBCORR") ==
+            sgs[0].getBonds());
+      CHECK(sgs[0].getProp<std::vector<unsigned int>>("XBHEAD") ==
+            std::vector<unsigned int>{0});
       CHECK(sgs[0].getProp<std::string>("TYPE") == "SRU");
       CHECK(sgs[0].getProp<std::string>("CONNECT") == "HT");
       auto smi = MolToCXSmiles(*mol);
