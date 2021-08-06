@@ -1258,6 +1258,30 @@ TEST_CASE("SGroup hierarchy") {
   }
 }
 
+TEST_CASE("Linknode writing") {
+  SECTION("single") {
+    auto mol = "OC1CCC(F)C1 |LN:1:1.3.2.6|"_smiles;
+    REQUIRE(mol);
+    std::string lns;
+    CHECK(mol->getPropIfPresent(common_properties::molFileLinkNodes, lns));
+    CHECK(lns == "1 3 2 2 3 2 7");
+    CHECK(MolToCXSmiles(*mol) == "OC1CCC(F)C1 |LN:1:1.3.2.6|");
+  }
+  SECTION("multiple") {
+    auto mol = "FC1CCC(O)C1 |LN:1:1.3.2.6,4:1.4.3.6|"_smiles;
+    REQUIRE(mol);
+    std::string lns;
+    CHECK(mol->getPropIfPresent(common_properties::molFileLinkNodes, lns));
+    CHECK(lns == "1 3 2 2 3 2 7|1 4 2 5 4 5 7");
+    CHECK(MolToCXSmiles(*mol) == "OC1CCC(F)C1 |LN:4:1.3.3.6,1:1.4.2.6|");
+  }
+  SECTION("two-coordinate") {
+    auto mol = "C1OCCC1C |LN:0:1.5,1:1.3|"_smiles;
+    REQUIRE(mol);
+    CHECK(MolToCXSmiles(*mol) == "CC1CCOC1 |LN:5:1.5,4:1.3|");
+  }
+}
+
 TEST_CASE("smilesBondOutputOrder") {
   SECTION("basics") {
     auto m = "OCCN.CCO"_smiles;

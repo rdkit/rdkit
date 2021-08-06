@@ -19,6 +19,7 @@
 #include "SmilesWrite.h"
 #include "SmilesParse.h"
 #include "SmilesParseOps.h"
+#include <GraphMol/MolEnumerator/LinkNode.h>
 
 namespace SmilesParseOps {
 using namespace RDKit;
@@ -1586,6 +1587,39 @@ std::string get_atom_props_block(const ROMol &mol,
   return res;
 }
 
+std::string get_linknodes_block(const ROMol &mol,
+                                const std::vector<unsigned int> &atomOrder) {
+  bool strict = false;
+  auto linkNodes = MolEnumerator::utils::getMolLinkNodes(mol, strict);
+  if (linkNodes.empty()) {
+    return "";
+  }
+  // we need a map from original atom idx to output idx:
+  std::vector<unsigned int> revOrder(mol.getNumAtoms());
+  for (unsigned i = 0; i < atomOrder.size(); ++i) {
+    revOrder[atomOrder[i]] = i;
+  }
+
+  std::stringstream res;
+  res << "LN:";
+  for (const auto &ln : linkNodes) {
+    unsigned int atomIdx = atomOrder[ln.bondAtoms[0].first];
+    res << atomIdx << ":" << ln.minRep << "." << ln.maxRep;
+    if (mol.getAtomWithIdx(ln.bondAtoms[0].first)->getDegree() > 2) {
+      // include the outer atom indices
+      res << "." << atomOrder[ln.bondAtoms[0].second] << "."
+          << atomOrder[ln.bondAtoms[1].second];
+    }
+    res << ",";
+  }
+
+  std::string resStr = res.str();
+  if (!resStr.empty() && resStr.back() == ',') {
+    resStr.pop_back();
+  }
+  return resStr;
+}
+
 void appendToCXExtension(const std::string &addition, std::string &base) {
   if (!addition.empty()) {
     if (base.size() > 1) {
@@ -1647,6 +1681,9 @@ std::string getCXExtensions(const ROMol &mol) {
 
   const auto atomblock = get_atom_props_block(mol, atomOrder);
   appendToCXExtension(atomblock, res);
+
+  const auto linknodeblock = get_linknodes_block(mol, atomOrder);
+  appendToCXExtension(linknodeblock, res);
 
   const auto stereoblock = get_enhanced_stereo_block(mol, atomOrder);
   appendToCXExtension(stereoblock, res);

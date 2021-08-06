@@ -258,9 +258,10 @@ The features which are written by :py:func:`rdkit.Chem.rdmolfiles.MolToCXSmiles`
 - atomic properties
 - radicals
 - enhanced stereo
-- SGroup Data ``SgD``
-- polymer SGroups ``Sg``
-- SGroup Hierarchy ``SgH``
+- linknodes 
+- SGroup Data
+- polymer SGroups
+- SGroup Hierarchy
 
 .. doctest::
 
