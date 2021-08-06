@@ -246,6 +246,7 @@ The features which are parsed include:
 - unsaturation specification ``u``
 - SGroup Data ``SgD``
 - polymer SGroups ``Sg``
+- SGroup Hierarchy ``SgH``
 
 The features which are written by :py:func:`rdkit.Chem.rdmolfiles.MolToCXSmiles` and
 :py:func:`rdkit.Chem.rdmolfiles.MolToCXSmarts` 
@@ -259,6 +260,7 @@ The features which are written by :py:func:`rdkit.Chem.rdmolfiles.MolToCXSmiles`
 - enhanced stereo
 - SGroup Data ``SgD``
 - polymer SGroups ``Sg``
+- SGroup Hierarchy ``SgH``
 
 .. doctest::
 

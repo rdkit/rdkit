@@ -705,7 +705,54 @@ bool parse_data_sgroup(Iterator &first, Iterator last, RDKit::RWMol &mol) {
   // the label processing can destroy sgroup info, so do that now
   // (the function will immediately return if already called)
   processCXSmilesLabels(mol);
+  sgroup.setProp<unsigned int>("index", getSubstanceGroups(mol).size() + 1);
   addSubstanceGroup(mol, sgroup);
+  return true;
+}
+
+template <typename Iterator>
+bool parse_sgroup_hierarchy(Iterator &first, Iterator last, RDKit::RWMol &mol) {
+  // these look like: |SgH:1:0|
+  // from CXSMILES docs:
+  //    SgH:parentSgroupIndex1:childSgroupIndex1.childSgroupIndex2,parentSgroupIndex2:childSgroupIndex1
+  if (first >= last || *first != 'S' || first + 3 >= last ||
+      *(first + 1) != 'g' || *(first + 2) != 'H' || *(first + 3) != ':') {
+    return false;
+  }
+  first += 4;
+  auto &sgs = getSubstanceGroups(mol);
+  while (1) {
+    unsigned int parentId;
+    if (!read_int(first, last, parentId)) {
+      return false;
+    }
+    if (parentId >= sgs.size()) {
+      throw SmilesParseException("parent id references non-existent SGroup");
+    }
+    sgs[parentId].getPropIfPresent("index", parentId);
+
+    if (first != last && *first == ':') {
+      ++first;
+      std::vector<unsigned int> children;
+      if (!read_int_list(first, last, children, '.')) {
+        return false;
+      }
+      for (auto childId : children) {
+        if (childId >= sgs.size()) {
+          throw SmilesParseException("child id references non-existent SGroup");
+        }
+        sgs[childId].setProp("PARENT", parentId);
+      }
+      if (first != last && *first == ',') {
+        ++first;
+      } else {
+        break;
+      }
+    } else {
+      return false;
+    }
+  }
+
   return true;
 }
 
@@ -791,6 +838,8 @@ bool parse_polymer_sgroup(Iterator &first, Iterator last, RDKit::RWMol &mol) {
   processCXSmilesLabels(mol);
 
   finalizePolymerSGroup(mol, sgroup);
+  sgroup.setProp<unsigned int>("index", getSubstanceGroups(mol).size() + 1);
+
   addSubstanceGroup(mol, sgroup);
   return true;
 }
@@ -1076,6 +1125,11 @@ bool parse_it(Iterator &first, Iterator last, RDKit::RWMol &mol) {
       if (!parse_data_sgroup(first, last, mol)) {
         return false;
       }
+    } else if (*first == 'S' && first + 2 < last && first[1] == 'g' &&
+               first[2] == 'H') {
+      if (!parse_sgroup_hierarchy(first, last, mol)) {
+        return false;
+      }
     } else if (*first == 'S' && first + 1 < last && first[1] == 'g') {
       if (!parse_polymer_sgroup(first, last, mol)) {
         return false;
@@ -1199,6 +1253,60 @@ std::string get_enhanced_stereo_block(
   return resStr;
 }
 
+std::string get_sgroup_hierarchy_block(const ROMol &mol) {
+  const auto &sgs = getSubstanceGroups(mol);
+  if (sgs.empty()) {
+    return "";
+  }
+  std::stringstream res;
+  // we need a map from sgroup index to output index;
+  std::map<unsigned int, unsigned int> sgroupOrder;
+  bool parentPresent = false;
+  for (const auto &sg : sgs) {
+    if (sg.hasProp("_cxsmilesOutputIndex")) {
+      unsigned int sgidx = sg.getIndexInMol();
+      sg.getPropIfPresent("index", sgidx);
+      sgroupOrder[sgidx] = sg.getProp<unsigned int>("_cxsmilesOutputIndex");
+      sg.clearProp("_cxsmilesOutputIndex");
+    }
+    if (sg.hasProp("PARENT")) {
+      parentPresent = true;
+    }
+  }
+
+  if (parentPresent) {
+    res << "SgH:";
+
+    // now loop over them and add the information
+    std::map<unsigned int, std::vector<unsigned int>> accum;
+    for (const auto &sg : sgs) {
+      unsigned pidx;
+      if (sg.getPropIfPresent("PARENT", pidx)) {
+        unsigned int sgidx = sg.getIndexInMol();
+        sg.getPropIfPresent("index", sgidx);
+        accum[sgroupOrder[pidx]].push_back(sgroupOrder[sgidx]);
+      }
+    }
+    for (const auto &pr : accum) {
+      res << pr.first << ":";
+      for (auto v : pr.second) {
+        res << v << ".";
+      }
+      // remove the extra ".":
+      res.seekp(-1, res.cur);
+      res << ",";
+    }
+
+    std::string resStr = res.str();
+    while (!resStr.empty() && resStr.back() == ',') {
+      resStr.pop_back();
+    }
+    return resStr;
+  } else {
+    return "";
+  }
+}
+
 std::string get_sgroup_polymer_block(
     const ROMol &mol, const std::vector<unsigned int> &atomOrder,
     const std::vector<unsigned int> &bondOrder) {
@@ -1206,6 +1314,8 @@ std::string get_sgroup_polymer_block(
   if (sgs.empty()) {
     return "";
   }
+  unsigned int sgroupOutputIndex = 0;
+  mol.getPropIfPresent("_cxsmilesOutputIndex", sgroupOutputIndex);
   std::stringstream res;
   // we need a map from original atom idx to output idx:
   std::vector<unsigned int> revAtomOrder(mol.getNumAtoms());
@@ -1229,6 +1339,9 @@ std::string get_sgroup_polymer_block(
     std::string typ;
     if (sg.getPropIfPresent("TYPE", typ) &&
         reverseTypemap.find(typ) != reverseTypemap.end()) {
+      sg.setProp("_cxsmilesOutputIndex", sgroupOutputIndex);
+      sgroupOutputIndex++;
+
       res << "Sg:";
       std::string subtype;
       if (typ == "COP" && sg.getPropIfPresent("SUBTYPE", subtype)) {
@@ -1290,14 +1403,21 @@ std::string get_sgroup_polymer_block(
   while (!resStr.empty() && resStr.back() == ',') {
     resStr.pop_back();
   }
+  mol.setProp("_cxsmilesOutputIndex", sgroupOutputIndex);
+
   return resStr;
 }
+
 std::string get_sgroup_data_block(const ROMol &mol,
                                   const std::vector<unsigned int> &atomOrder) {
   const auto &sgs = getSubstanceGroups(mol);
   if (sgs.empty()) {
     return "";
   }
+
+  unsigned int sgroupOutputIndex = 0;
+  mol.getPropIfPresent("_cxsmilesOutputIndex", sgroupOutputIndex);
+
   std::stringstream res;
   // we need a map from original atom idx to output idx:
   std::vector<unsigned int> revOrder(mol.getNumAtoms());
@@ -1307,6 +1427,9 @@ std::string get_sgroup_data_block(const ROMol &mol,
 
   for (const auto &sg : sgs) {
     if (sg.hasProp("TYPE") && sg.getProp<std::string>("TYPE") == "DAT") {
+      sg.setProp("_cxsmilesOutputIndex", sgroupOutputIndex);
+      sgroupOutputIndex++;
+
       res << "SgD:";
       // we don't attempt to canonicalize the atom order because the user
       // may ascribe some significance to the ordering of the atoms
@@ -1351,6 +1474,8 @@ std::string get_sgroup_data_block(const ROMol &mol,
   if (!resStr.empty() && resStr.back() == ',') {
     resStr.pop_back();
   }
+  mol.setProp("_cxsmilesOutputIndex", sgroupOutputIndex);
+
   return resStr;
 }
 
@@ -1532,6 +1657,10 @@ std::string getCXExtensions(const ROMol &mol) {
   const auto sgrouppolyblock =
       get_sgroup_polymer_block(mol, atomOrder, bondOrder);
   appendToCXExtension(sgrouppolyblock, res);
+
+  const auto sgrouphierarchyblock = get_sgroup_hierarchy_block(mol);
+  appendToCXExtension(sgrouphierarchyblock, res);
+  mol.clearProp("_cxsmilesOutputIndex");
 
   if (res.size() > 1) {
     res += "|";
