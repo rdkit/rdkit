@@ -1,4 +1,6 @@
-//  Copyright (c) 2017-2019, Novartis Institutes for BioMedical Research Inc.
+//  Copyright (c) 2017-2021, Novartis Institutes for BioMedical Research Inc.
+//  and other RDKit contributors
+//
 //  All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -35,6 +37,7 @@
 #include <RDGeneral/export.h>
 #include <GraphMol/RDKitBase.h>
 #include <GraphMol/MolPickler.h>
+#include <GraphMol/MolBundle.h>
 #include <GraphMol/SmilesParse/SmilesParse.h>
 #include <GraphMol/SmilesParse/SmilesWrite.h>
 #include <GraphMol/Fingerprints/Fingerprints.h>
@@ -508,11 +511,6 @@ class RDKIT_SUBSTRUCTLIBRARY_EXPORT SubstructLibrary {
     return getMatches(query, 0, size(), recursionPossible, useChirality,
                       useQueryQueryMatches, numThreads, maxResults);
   }
-  std::vector<unsigned int> getMatches(
-      const ROMol &query, unsigned int startIdx, unsigned int endIdx,
-      bool recursionPossible = true, bool useChirality = true,
-      bool useQueryQueryMatches = false, int numThreads = -1,
-      int maxResults = -1) const;
   //! Get the matching indices for the query between the given indices
   /*!
     \param query       Query to match against molecules
@@ -528,7 +526,19 @@ class RDKIT_SUBSTRUCTLIBRARY_EXPORT SubstructLibrary {
     \param numThreads  If -1 use all available processors [default -1]
     \param maxResults  Maximum results to return, -1 means return all
                        [default -1]
-*/
+  */
+  std::vector<unsigned int> getMatches(
+      const ROMol &query, unsigned int startIdx, unsigned int endIdx,
+      bool recursionPossible = true, bool useChirality = true,
+      bool useQueryQueryMatches = false, int numThreads = -1,
+      int maxResults = -1) const;
+  //! overload
+  std::vector<unsigned int> getMatches(
+      const MolBundle &query, unsigned int startIdx, unsigned int endIdx,
+      bool recursionPossible = true, bool useChirality = true,
+      bool useQueryQueryMatches = false, int numThreads = -1,
+      int maxResults = -1) const;
+  //! overload
   std::vector<unsigned int> getMatches(
       const TautomerQuery &query, unsigned int startIdx, unsigned int endIdx,
       bool recursionPossible = true, bool useChirality = true,
@@ -575,21 +585,14 @@ class RDKIT_SUBSTRUCTLIBRARY_EXPORT SubstructLibrary {
                             bool useChirality = true,
                             bool useQueryQueryMatches = false,
                             int numThreads = -1) const;
-  //! Return the number of matches for the query between the given indices
-  /*!
-    \param query       TautomerQuery to match against molecules
-    \param startIdx    Start index of the search
-    \param endIdx      Ending idx (non-inclusive) of the search.
-    \param recursionPossible  flags whether or not recursive matches are allowed
-                              [default true]
-    \param useChirality  use atomic CIP codes as part of the comparison
-                         [default true]
-    \param useQueryQueryMatches  if set, the contents of atom and bond queries
-                                 will be used as part of the matching
-                                 [default false]
-    \param numThreads  If -1 use all available processors [default -1]
-  */
+  //! overload
   unsigned int countMatches(const TautomerQuery &query, unsigned int startIdx,
+                            unsigned int endIdx, bool recursionPossible = true,
+                            bool useChirality = true,
+                            bool useQueryQueryMatches = false,
+                            int numThreads = -1) const;
+  //! overload
+  unsigned int countMatches(const MolBundle &query, unsigned int startIdx,
                             unsigned int endIdx, bool recursionPossible = true,
                             bool useChirality = true,
                             bool useQueryQueryMatches = false,
@@ -631,22 +634,13 @@ class RDKIT_SUBSTRUCTLIBRARY_EXPORT SubstructLibrary {
   bool hasMatch(const ROMol &query, unsigned int startIdx, unsigned int endIdx,
                 bool recursionPossible = true, bool useChirality = true,
                 bool useQueryQueryMatches = false, int numThreads = -1) const;
-  //! Returns true if any match exists for the query between the specified
-  //! indices
-  /*!
-    \param query       TautomerQuery to match against molecules
-    \param startIdx    Start index of the search
-    \param endIdx      Ending idx (inclusive) of the search.
-    \param recursionPossible  flags whether or not recursive matches are
-                              allowed [default true]
-    \param useChirality  use atomic CIP codes as part of the comparison
-                         [default true]
-    \param useQueryQueryMatches  if set, the contents of atom and bond queries
-                                 will be used as part of the matching
-                                 [default false]
-    \param numThreads  If -1 use all available processors [default -1]
-  */
+  //! overload
   bool hasMatch(const TautomerQuery &query, unsigned int startIdx,
+                unsigned int endIdx, bool recursionPossible = true,
+                bool useChirality = true, bool useQueryQueryMatches = false,
+                int numThreads = -1) const;
+  //! overload
+  bool hasMatch(const MolBundle &query, unsigned int startIdx,
                 unsigned int endIdx, bool recursionPossible = true,
                 bool useChirality = true, bool useQueryQueryMatches = false,
                 int numThreads = -1) const;
