@@ -28,8 +28,7 @@ TEST_CASE("querying with a molbundle") {
     REQUIRE(mol);
     ssslib.addMol(*mol);
   }
-  bool recursionPossible = true, useChirality = true,
-       useQueryQueryMatches = false;
+  SubstructMatchParameters params;
   SECTION("basics") {
     std::vector<std::string> qSmiles = {"CCC", "COC", "CNC"};
     MolBundle bundle;
@@ -39,13 +38,9 @@ TEST_CASE("querying with a molbundle") {
       bundle.addMol(mol);
     }
     for (auto numThreads : std::vector<int>{1, -1}) {
-      CHECK(ssslib.countMatches(bundle, recursionPossible, useChirality,
-                                useQueryQueryMatches, numThreads) == 3);
-      CHECK(ssslib.hasMatch(bundle, recursionPossible, useChirality,
-                            useQueryQueryMatches, numThreads));
-      auto libMatches =
-          ssslib.getMatches(bundle, recursionPossible, useChirality,
-                            useQueryQueryMatches, numThreads);
+      CHECK(ssslib.countMatches(bundle, params, numThreads) == 3);
+      CHECK(ssslib.hasMatch(bundle, params, numThreads));
+      auto libMatches = ssslib.getMatches(bundle, params, numThreads);
       CHECK(libMatches.size() == 3);
       std::sort(libMatches.begin(), libMatches.end());
       CHECK(libMatches == std::vector<unsigned int>{0, 1, 2});
@@ -60,13 +55,9 @@ TEST_CASE("querying with a molbundle") {
       bundle.addMol(mol);
     }
     for (auto numThreads : std::vector<int>{1, -1}) {
-      CHECK(ssslib.countMatches(bundle, recursionPossible, useChirality,
-                                useQueryQueryMatches, numThreads) == 2);
-      CHECK(ssslib.hasMatch(bundle, recursionPossible, useChirality,
-                            useQueryQueryMatches, numThreads));
-      auto libMatches =
-          ssslib.getMatches(bundle, recursionPossible, useChirality,
-                            useQueryQueryMatches, numThreads);
+      CHECK(ssslib.countMatches(bundle, params, numThreads) == 2);
+      CHECK(ssslib.hasMatch(bundle, params, numThreads));
+      auto libMatches = ssslib.getMatches(bundle, params, numThreads);
       CHECK(libMatches.size() == 2);
       std::sort(libMatches.begin(), libMatches.end());
       CHECK(libMatches == std::vector<unsigned int>{0, 2});
@@ -81,16 +72,45 @@ TEST_CASE("querying with a molbundle") {
       bundle.addMol(mol);
     }
     for (auto numThreads : std::vector<int>{1, -1}) {
-      CHECK(ssslib.countMatches(bundle, recursionPossible, useChirality,
-                                useQueryQueryMatches, numThreads) == 3);
-      CHECK(ssslib.hasMatch(bundle, recursionPossible, useChirality,
-                            useQueryQueryMatches, numThreads));
-      auto libMatches =
-          ssslib.getMatches(bundle, recursionPossible, useChirality,
-                            useQueryQueryMatches, numThreads);
+      CHECK(ssslib.countMatches(bundle, params, numThreads) == 3);
+      CHECK(ssslib.hasMatch(bundle, params, numThreads));
+      auto libMatches = ssslib.getMatches(bundle, params, numThreads);
       CHECK(libMatches.size() == 3);
       std::sort(libMatches.begin(), libMatches.end());
       CHECK(libMatches == std::vector<unsigned int>{0, 1, 2});
+    }
+  }
+}
+
+TEST_CASE("using modified query parameters") {
+  std::vector<std::string> libSmiles = {"C[C@H](F)Cl", "C[C@@H](F)Cl",
+                                        "C[CH](F)Cl"};
+  SubstructLibrary ssslib;
+  for (const auto smi : libSmiles) {
+    std::unique_ptr<RWMol> mol(SmilesToMol(smi));
+    REQUIRE(mol);
+    ssslib.addMol(*mol);
+  }
+  SECTION("basics") {
+    auto qm = "C[C@@H](F)Cl"_smiles;
+    {  // by default stereo is not used
+      SubstructMatchParameters params;
+      CHECK(ssslib.countMatches(*qm, params) == 3);
+      CHECK(ssslib.hasMatch(*qm, params));
+      auto libMatches = ssslib.getMatches(*qm, params);
+      CHECK(libMatches.size() == 3);
+      std::sort(libMatches.begin(), libMatches.end());
+      CHECK(libMatches == std::vector<unsigned int>{0, 1, 2});
+    }
+    {  // use stereo
+      SubstructMatchParameters params;
+      params.useChirality = true;
+      CHECK(ssslib.countMatches(*qm, params) == 1);
+      CHECK(ssslib.hasMatch(*qm, params));
+      auto libMatches = ssslib.getMatches(*qm, params);
+      CHECK(libMatches.size() == 1);
+      std::sort(libMatches.begin(), libMatches.end());
+      CHECK(libMatches == std::vector<unsigned int>{1});
     }
   }
 }

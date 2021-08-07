@@ -53,16 +53,11 @@ bool SubstructLibraryCanSerialize() {
 struct Bits {
   const ExplicitBitVect *queryBits;
   const FPHolderBase *fps;
-  bool recursionPossible;
-  bool useChirality;
-  bool useQueryQueryMatches;
+  SubstructMatchParameters params;
 
-  Bits(const FPHolderBase *fps, const ROMol &m, bool recursionPossible,
-       bool useChirality, bool useQueryQueryMatches)
-      : fps(fps),
-        recursionPossible(recursionPossible),
-        useChirality(useChirality),
-        useQueryQueryMatches(useQueryQueryMatches) {
+  Bits(const FPHolderBase *fps, const ROMol &m,
+       const SubstructMatchParameters &ssparams)
+      : fps(fps), params(ssparams) {
     if (fps) {
       queryBits = fps->makeFingerprint(m);
     } else {
@@ -71,11 +66,8 @@ struct Bits {
   }
 
   Bits(const FPHolderBase *fingerprints, const TautomerQuery &m,
-       bool recursionPossible, bool useChirality, bool useQueryQueryMatches)
-      : fps(nullptr),
-        recursionPossible(recursionPossible),
-        useChirality(useChirality),
-        useQueryQueryMatches(useQueryQueryMatches) {
+       const SubstructMatchParameters &ssparams)
+      : fps(nullptr), params(ssparams) {
     if (fingerprints) {
       const TautomerPatternHolder *tp =
           dynamic_cast<const TautomerPatternHolder *>(fingerprints);
@@ -149,7 +141,6 @@ void SubSearcher(const Query &in_query, const Bits &bits,
                  boost::dynamic_bitset<> &found,
                  std::vector<unsigned int> *idxs) {
   Query query(in_query);
-  MatchVectType matchVect;
   for (unsigned int idx = start; idx < end; idx += numThreads) {
     if (!bits.check(idx) || found[idx]) {
       continue;
@@ -166,8 +157,7 @@ void SubSearcher(const Query &in_query, const Bits &bits,
       MolOps::symmetrizeSSSR(*mol);
     }
 
-    if (SubstructMatch(*mol, query, matchVect, bits.recursionPossible,
-                       bits.useChirality, bits.useQueryQueryMatches)) {
+    if (!SubstructMatch(*mol, query, bits.params).empty()) {
       ++counter;
       found.set(idx);
       if (idxs) {
@@ -186,10 +176,9 @@ void SubSearcher(const Query &in_query, const Bits &bits,
 template <class Query>
 int internalGetMatches(const Query &query, MolHolderBase &mols,
                        const FPHolderBase *fps, unsigned int startIdx,
-                       unsigned int endIdx, bool recursionPossible,
-                       bool useChirality, bool useQueryQueryMatches,
-                       int numThreads, int maxResults,
-                       boost::dynamic_bitset<> &found,
+                       unsigned int endIdx,
+                       const SubstructMatchParameters &params, int numThreads,
+                       int maxResults, boost::dynamic_bitset<> &found,
                        std::vector<unsigned int> *idxs) {
   PRECONDITION(startIdx < mols.size(), "startIdx out of bounds");
   PRECONDITION(endIdx > startIdx, "endIdx > startIdx");
@@ -205,7 +194,7 @@ int internalGetMatches(const Query &query, MolHolderBase &mols,
   numThreads = std::min(numThreads, static_cast<int>(endIdx));
 
   bool needs_rings = query_needs_rings(query);
-  Bits bits(fps, query, recursionPossible, useChirality, useQueryQueryMatches);
+  Bits bits(fps, query, params);
   int counter = 0;
 
 #ifdef RDK_THREADSAFE_SSS
@@ -324,17 +313,16 @@ int internalGetMatches(const Query &query, MolHolderBase &mols,
 
 int molbundleGetMatches(const MolBundle &query, MolHolderBase &mols,
                         const FPHolderBase *fps, unsigned int startIdx,
-                        unsigned int endIdx, bool recursionPossible,
-                        bool useChirality, bool useQueryQueryMatches,
+                        unsigned int endIdx,
+                        const SubstructMatchParameters &params,
                         int numThreads = -1, int maxResults = 1000,
                         std::vector<unsigned int> *idxs = nullptr) {
   int res = 0;
   boost::dynamic_bitset<> found(mols.size());
   for (const auto qmol : query.getMols()) {
     maxResults -= res;
-    res += internalGetMatches(
-        *qmol, mols, fps, startIdx, endIdx, recursionPossible, useChirality,
-        useQueryQueryMatches, numThreads, maxResults, found, idxs);
+    res += internalGetMatches(*qmol, mols, fps, startIdx, endIdx, params,
+                              numThreads, maxResults, found, idxs);
   }
   return res;
 }
@@ -343,94 +331,81 @@ int molbundleGetMatches(const MolBundle &query, MolHolderBase &mols,
 
 std::vector<unsigned int> SubstructLibrary::getMatches(
     const ROMol &query, unsigned int startIdx, unsigned int endIdx,
-    bool recursionPossible, bool useChirality, bool useQueryQueryMatches,
-    int numThreads, int maxResults) const {
+    const SubstructMatchParameters &params, int numThreads,
+    int maxResults) const {
   std::vector<unsigned int> idxs;
   boost::dynamic_bitset<> found(mols->size());
-  internalGetMatches(query, *mols, fps, startIdx, endIdx, recursionPossible,
-                     useChirality, useQueryQueryMatches, numThreads, maxResults,
-                     found, &idxs);
+  internalGetMatches(query, *mols, fps, startIdx, endIdx, params, numThreads,
+                     maxResults, found, &idxs);
   return idxs;
 }
 
 std::vector<unsigned int> SubstructLibrary::getMatches(
     const TautomerQuery &query, unsigned int startIdx, unsigned int endIdx,
-    bool recursionPossible, bool useChirality, bool useQueryQueryMatches,
-    int numThreads, int maxResults) const {
+    const SubstructMatchParameters &params, int numThreads,
+    int maxResults) const {
   std::vector<unsigned int> idxs;
   boost::dynamic_bitset<> found(mols->size());
-  internalGetMatches(query, *mols, fps, startIdx, endIdx, recursionPossible,
-                     useChirality, useQueryQueryMatches, numThreads, maxResults,
-                     found, &idxs);
+  internalGetMatches(query, *mols, fps, startIdx, endIdx, params, numThreads,
+                     maxResults, found, &idxs);
   return idxs;
 }
 
 std::vector<unsigned int> SubstructLibrary::getMatches(
     const MolBundle &query, unsigned int startIdx, unsigned int endIdx,
-    bool recursionPossible, bool useChirality, bool useQueryQueryMatches,
-    int numThreads, int maxResults) const {
+    const SubstructMatchParameters &params, int numThreads,
+    int maxResults) const {
   std::vector<unsigned int> idxs;
-  molbundleGetMatches(query, *mols, fps, startIdx, endIdx, recursionPossible,
-                      useChirality, useQueryQueryMatches, numThreads,
+  molbundleGetMatches(query, *mols, fps, startIdx, endIdx, params, numThreads,
                       maxResults, &idxs);
   return idxs;
 }
 
 unsigned int SubstructLibrary::countMatches(
     const ROMol &query, unsigned int startIdx, unsigned int endIdx,
-    bool recursionPossible, bool useChirality, bool useQueryQueryMatches,
-    int numThreads) const {
+    const SubstructMatchParameters &params, int numThreads) const {
   boost::dynamic_bitset<> found(mols->size());
-  return internalGetMatches(
-      query, *mols, fps, startIdx, endIdx, recursionPossible, useChirality,
-      useQueryQueryMatches, numThreads, -1, found, nullptr);
+  return internalGetMatches(query, *mols, fps, startIdx, endIdx, params,
+                            numThreads, -1, found, nullptr);
 }
 
 unsigned int SubstructLibrary::countMatches(
     const TautomerQuery &query, unsigned int startIdx, unsigned int endIdx,
-    bool recursionPossible, bool useChirality, bool useQueryQueryMatches,
-    int numThreads) const {
+    const SubstructMatchParameters &params, int numThreads) const {
   boost::dynamic_bitset<> found(mols->size());
-  return internalGetMatches(
-      query, *mols, fps, startIdx, endIdx, recursionPossible, useChirality,
-      useQueryQueryMatches, numThreads, -1, found, nullptr);
+  return internalGetMatches(query, *mols, fps, startIdx, endIdx, params,
+                            numThreads, -1, found, nullptr);
 }
 unsigned int SubstructLibrary::countMatches(
     const MolBundle &query, unsigned int startIdx, unsigned int endIdx,
-    bool recursionPossible, bool useChirality, bool useQueryQueryMatches,
-    int numThreads) const {
-  return molbundleGetMatches(query, *mols, fps, startIdx, endIdx,
-                             recursionPossible, useChirality,
-                             useQueryQueryMatches, numThreads, -1, nullptr);
+    const SubstructMatchParameters &params, int numThreads) const {
+  return molbundleGetMatches(query, *mols, fps, startIdx, endIdx, params,
+                             numThreads, -1, nullptr);
 }
 
 bool SubstructLibrary::hasMatch(const ROMol &query, unsigned int startIdx,
-                                unsigned int endIdx, bool recursionPossible,
-                                bool useChirality, bool useQueryQueryMatches,
+                                unsigned int endIdx,
+                                const SubstructMatchParameters &params,
                                 int numThreads) const {
   const int maxResults = 1;
-  return getMatches(query, startIdx, endIdx, recursionPossible, useChirality,
-                    useQueryQueryMatches, numThreads, maxResults)
+  return getMatches(query, startIdx, endIdx, params, numThreads, maxResults)
              .size() > 0;
 }
 
 bool SubstructLibrary::hasMatch(const TautomerQuery &query,
                                 unsigned int startIdx, unsigned int endIdx,
-                                bool recursionPossible, bool useChirality,
-                                bool useQueryQueryMatches,
+                                const SubstructMatchParameters &params,
                                 int numThreads) const {
   const int maxResults = 1;
-  return getMatches(query, startIdx, endIdx, recursionPossible, useChirality,
-                    useQueryQueryMatches, numThreads, maxResults)
+  return getMatches(query, startIdx, endIdx, params, numThreads, maxResults)
              .size() > 0;
 }
 bool SubstructLibrary::hasMatch(const MolBundle &query, unsigned int startIdx,
-                                unsigned int endIdx, bool recursionPossible,
-                                bool useChirality, bool useQueryQueryMatches,
+                                unsigned int endIdx,
+                                const SubstructMatchParameters &params,
                                 int numThreads) const {
   const int maxResults = 1;
-  return getMatches(query, startIdx, endIdx, recursionPossible, useChirality,
-                    useQueryQueryMatches, numThreads, maxResults)
+  return getMatches(query, startIdx, endIdx, params, numThreads, maxResults)
              .size() > 0;
 }
 
