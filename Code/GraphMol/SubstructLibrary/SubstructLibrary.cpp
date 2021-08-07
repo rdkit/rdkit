@@ -303,7 +303,7 @@ int internalGetMatches(const Query &query, MolHolderBase &mols,
   }
 #else
   SubSearcher(query, bits, mols, startIdx, endIdx, 1, needs_rings, counter,
-              maxResults, idxs);
+              maxResults, found, idxs);
 #endif
 
   delete bits.queryBits;
