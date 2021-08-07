@@ -512,7 +512,7 @@ class TestCase(unittest.TestCase):
       bndl.AddMol(Chem.MolFromSmiles(smi))
     self.assertEqual(list(ssl.GetMatches(bndl)),[0, 4])
     bndl.AddMol(Chem.MolFromSmiles('CN'))
-    self.assertEqual(list(ssl.GetMatches(bndl)), [0, 1, 3, 4])
+    self.assertEqual(list(sorted(ssl.GetMatches(bndl))), [0, 1, 3, 4])
 
   def testSubstructParameters(self):
     ssl = rdSubstructLibrary.SubstructLibrary()
@@ -522,10 +522,10 @@ class TestCase(unittest.TestCase):
     for smi in ('C[C@H](F)Cl',):
       bndl.AddMol(Chem.MolFromSmiles(smi))
     params = Chem.SubstructMatchParameters()
-    self.assertEqual(list(ssl.GetMatches(bndl,params)), [0, 1, 2])
+    self.assertEqual(list(sorted(ssl.GetMatches(bndl,params))), [0, 1, 2])
 
     params.useChirality = True
-    self.assertEqual(list(ssl.GetMatches(bndl,params)), [0])
+    self.assertEqual(list(sorted(ssl.GetMatches(bndl,params))), [0])
 
 if __name__ == '__main__':
   unittest.main()
