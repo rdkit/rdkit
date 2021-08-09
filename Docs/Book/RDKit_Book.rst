@@ -22,6 +22,15 @@ An aromatic bond must be between aromatic atoms, but a bond between aromatic ato
 
 For example the fusing bonds here are not considered to be aromatic by the RDKit:
 
+.. testsetup::
+  
+  # clean up in case these tests are running in a python process that has already
+  # imported the IPythonConsole code
+  from rdkit.Chem.Draw import IPythonConsole
+  IPythonConsole.UninstallIPythonRenderer()
+  from rdkit.Chem import rdDepictor
+  rdDepictor.SetPreferCoordGen(False)
+
 .. image:: images/picture_9.png
 
 .. doctest::
