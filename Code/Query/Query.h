@@ -175,7 +175,7 @@ class RDKIT_QUERY_EXPORT Query {
     return mfArg;
   }
   //! calls our \c dataFunc (which must be set) on \c what and returns the
-  // result
+  /// result
   MatchFuncArgType TypeConvert(DataFuncArgType what,
                                Int2Type<true> /*d*/) const {
     PRECONDITION(this->d_dataFunc, "no data function");

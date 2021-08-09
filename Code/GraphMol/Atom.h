@@ -99,7 +99,7 @@ class RDKIT_GRAPHMOL_EXPORT Atom : public RDProps {
   //! construct an Atom with a particular atomic number
   explicit Atom(unsigned int num);
   //! construct an Atom with a particular symbol (looked up in the
-  // PeriodicTable)
+  /// PeriodicTable)
   explicit Atom(const std::string &what);
   Atom(const Atom &other);
   Atom &operator=(const Atom &other);
@@ -407,23 +407,23 @@ class RDKIT_GRAPHMOL_EXPORT Atom : public RDProps {
 };
 
 //! Set the atom's MDL integer RLabel
-//   Setting to 0 clears the rlabel.  Rlabel must be in the range [0..99]
+///  Setting to 0 clears the rlabel.  Rlabel must be in the range [0..99]
 RDKIT_GRAPHMOL_EXPORT void setAtomRLabel(Atom *atm, int rlabel);
 RDKIT_GRAPHMOL_EXPORT int getAtomRLabel(const Atom *atm);
 
 //! Set the atom's MDL atom alias
-//   Setting to an empty string clears the alias
+///  Setting to an empty string clears the alias
 RDKIT_GRAPHMOL_EXPORT void setAtomAlias(Atom *atom, const std::string &alias);
 RDKIT_GRAPHMOL_EXPORT std::string getAtomAlias(const Atom *atom);
 
 //! Set the atom's MDL atom value
-//   Setting to an empty string clears the value
-//   This is where recursive smarts get stored in MolBlock Queries
+///  Setting to an empty string clears the value
+///  This is where recursive smarts get stored in MolBlock Queries
 RDKIT_GRAPHMOL_EXPORT void setAtomValue(Atom *atom, const std::string &value);
 RDKIT_GRAPHMOL_EXPORT std::string getAtomValue(const Atom *atom);
 
 //! Sets the supplemental label that will follow the atom when writing
-//   smiles strings.
+///  smiles strings.
 RDKIT_GRAPHMOL_EXPORT void setSupplementalSmilesLabel(Atom *atom,
                                                       const std::string &label);
 RDKIT_GRAPHMOL_EXPORT std::string getSupplementalSmilesLabel(const Atom *atom);

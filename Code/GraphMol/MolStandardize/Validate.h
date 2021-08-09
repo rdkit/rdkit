@@ -34,7 +34,7 @@ class ROMol;
 namespace MolStandardize {
 
 //! The ValidationErrorInfo class is used to store the information returned by a
-// ValidationMethod validate.
+/// ValidationMethod validate.
 class RDKIT_MOLSTANDARDIZE_EXPORT ValidationErrorInfo : public std::exception {
  public:
   ValidationErrorInfo(std::string msg) : d_msg(std::move(msg)) {
@@ -48,7 +48,7 @@ class RDKIT_MOLSTANDARDIZE_EXPORT ValidationErrorInfo : public std::exception {
 };  // class ValidationErrorInfo
 
 //! The ValidationMethod class is the abstract base class upon which all the
-// four different ValidationMethods inherit from.
+/// four different ValidationMethods inherit from.
 class RDKIT_MOLSTANDARDIZE_EXPORT ValidationMethod {
  public:
   ValidationMethod() = default;
@@ -59,7 +59,7 @@ class RDKIT_MOLSTANDARDIZE_EXPORT ValidationMethod {
 };
 
 //! The RDKitValidation class throws an error when there are no atoms in the
-// molecule or when there is incorrect atom valency.
+/// molecule or when there is incorrect atom valency.
 /*!
 
   <b>Notes:</b>
@@ -73,12 +73,12 @@ class RDKIT_MOLSTANDARDIZE_EXPORT RDKitValidation : public ValidationMethod {
 };
 
 //////////////////////////////
-// MolVS Validations
+/// MolVS Validations
 //
 //! The MolVSValidations class includes most of the same validations as
-// molvs.validations, namely NoAtomValidation, FragmentValidation,
-// NeutralValidation, IsotopeValidation. MolVS also has IsNoneValidation and
-// DichloroethaneValidation but these were not included here (yet).
+/// molvs.validations, namely NoAtomValidation, FragmentValidation,
+/// NeutralValidation, IsotopeValidation. MolVS also has IsNoneValidation and
+/// DichloroethaneValidation but these were not included here (yet).
 class RDKIT_MOLSTANDARDIZE_EXPORT MolVSValidations {
  public:
   virtual void run(const ROMol &mol, bool reportAllFailures,
@@ -87,7 +87,7 @@ class RDKIT_MOLSTANDARDIZE_EXPORT MolVSValidations {
 };
 
 //! The NoAtomValidation class throws an error if no atoms are present in the
-// molecule.
+/// molecule.
 class RDKIT_MOLSTANDARDIZE_EXPORT NoAtomValidation final
     : public MolVSValidations {
  public:
@@ -161,7 +161,7 @@ class RDKIT_MOLSTANDARDIZE_EXPORT MolVSValidation : public ValidationMethod {
 
 //! The AllowedAtomsValidation class lets the user input a list of atoms,
 //! anything not on
-// the list throws an error.
+/// the list throws an error.
 class RDKIT_MOLSTANDARDIZE_EXPORT AllowedAtomsValidation
     : public ValidationMethod {
  public:
@@ -176,7 +176,7 @@ class RDKIT_MOLSTANDARDIZE_EXPORT AllowedAtomsValidation
 
 //! The DisallowedAtomsValidation class lets the user input a list of atoms and
 //! as long
-// as there are no atoms from the list it is deemed acceptable.
+/// as there are no atoms from the list it is deemed acceptable.
 class RDKIT_MOLSTANDARDIZE_EXPORT DisallowedAtomsValidation
     : public ValidationMethod {
  public:
