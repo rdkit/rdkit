@@ -182,6 +182,7 @@ void save(Archive &ar, const RDKit::SubstructLibrary &slib,
           const unsigned int version) {
   RDUNUSED_PARAM(version);
   registerSubstructLibraryTypes(ar);
+  ar &slib.getSearchOrder();
   ar &slib.getMolHolder();
   ar &slib.getFpHolder();
 }
@@ -191,6 +192,9 @@ void load(Archive &ar, RDKit::SubstructLibrary &slib,
           const unsigned int version) {
   RDUNUSED_PARAM(version);
   registerSubstructLibraryTypes(ar);
+  if (version > 1) {
+    ar &slib.getSearchOrder();
+  }
   ar &slib.getMolHolder();
   ar &slib.getFpHolder();
   slib.resetHolders();
@@ -205,7 +209,7 @@ BOOST_CLASS_VERSION(RDKit::CachedSmilesMolHolder, 1);
 BOOST_CLASS_VERSION(RDKit::CachedTrustedSmilesMolHolder, 1);
 BOOST_CLASS_VERSION(RDKit::PatternHolder, 1);
 BOOST_CLASS_VERSION(RDKit::TautomerPatternHolder, 1);
-BOOST_CLASS_VERSION(RDKit::SubstructLibrary, 1);
+BOOST_CLASS_VERSION(RDKit::SubstructLibrary, 2);
 
 BOOST_SERIALIZATION_SPLIT_FREE(RDKit::MolHolder);
 BOOST_SERIALIZATION_SPLIT_FREE(RDKit::FPHolderBase);

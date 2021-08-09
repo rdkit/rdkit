@@ -236,6 +236,19 @@ boost::shared_ptr<FPHolderBase> GetFpHolder(SubstructLibrary &sslib) {
   return sslib.getFpHolder();
 }
 
+python::tuple getSearchOrderHelper(const SubstructLibrary &sslib) {
+  python::list res;
+  for (const auto v : sslib.getSearchOrder()) {
+    res.append(v);
+  }
+  return python::tuple(res);
+}
+void setSearchOrderHelper(SubstructLibrary &sslib, const python::object &seq) {
+  std::unique_ptr<std::vector<unsigned int>> sorder =
+      pythonObjectToVect<unsigned int>(seq);
+  sslib.setSearchOrder(*sorder);
+}
+
 #define LARGE_DEF(_tname_)                                                     \
   .def("GetMatches",                                                           \
        (std::vector<unsigned int>(SubstructLibrary::*)(                        \
@@ -506,6 +519,15 @@ struct substructlibrary_wrapper {
              "Returns a particular molecule in the molecule holder\n\n"
              "  ARGUMENTS:\n"
              "    - idx: which molecule to return\n\n"
+             "  NOTE: molecule indices start at 0\n")
+
+        .def("SetSearchOrder", setSearchOrderHelper,
+             "Sets the search order for the library\n\n"
+             "  ARGUMENTS:\n"
+             "    - order: sequence of molecule indices\n\n"
+             "  NOTE: molecule indices start at 0\n")
+        .def("GetSearchOrder", getSearchOrderHelper,
+             "Returns the search order for the library\n\n"
              "  NOTE: molecule indices start at 0\n")
 
         .def("__len__", &SubstructLibrary::size)

@@ -114,3 +114,88 @@ TEST_CASE("using modified query parameters") {
     }
   }
 }
+
+TEST_CASE("searchOrder") {
+  std::vector<std::string> libSmiles = {"CCCOC", "CCCCOCC", "CCOC", "COC",
+                                        "CCCCCOC"};
+  boost::shared_ptr<MolHolder> mholder(new MolHolder());
+  boost::shared_ptr<PatternHolder> fpholder(new PatternHolder());
+
+  SubstructLibrary ssslib(mholder, fpholder);
+
+  for (const auto smi : libSmiles) {
+    std::unique_ptr<RWMol> mol(SmilesToMol(smi));
+    REQUIRE(mol);
+    ssslib.addMol(*mol);
+  }
+  SECTION("basics") {
+    auto qm = "COC"_smiles;
+    for (auto numThreads : std::vector<int>{1, -1}) {
+      {  // default search order
+        ssslib.setSearchOrder(std::vector<unsigned int>());
+        unsigned int maxResults = 2;
+        SubstructMatchParameters params;
+        CHECK(ssslib.countMatches(*qm, params, numThreads) == 5);
+        CHECK(ssslib.hasMatch(*qm, params));
+        auto libMatches =
+            ssslib.getMatches(*qm, params, numThreads, maxResults);
+        CHECK(libMatches.size() == 2);
+        CHECK(libMatches == std::vector<unsigned int>{0, 1});
+      }
+      {  // specified search order
+        unsigned int maxResults = 2;
+        std::vector<unsigned int> searchOrder = {3, 2, 0, 1, 4};
+        ssslib.setSearchOrder(searchOrder);
+        SubstructMatchParameters params;
+        CHECK(ssslib.countMatches(*qm, params, numThreads) == 5);
+        CHECK(ssslib.hasMatch(*qm, params));
+        auto libMatches =
+            ssslib.getMatches(*qm, params, numThreads, maxResults);
+        CHECK(libMatches.size() == 2);
+        CHECK(libMatches == std::vector<unsigned int>{3, 2});
+      }
+      {  // search order not the full length
+        unsigned int maxResults = 2;
+        std::vector<unsigned int> searchOrder = {3, 2, 0};
+        ssslib.setSearchOrder(searchOrder);
+        SubstructMatchParameters params;
+        CHECK(ssslib.countMatches(*qm, params, numThreads) == 3);
+        CHECK(ssslib.hasMatch(*qm, params));
+        auto libMatches =
+            ssslib.getMatches(*qm, params, numThreads, maxResults);
+        CHECK(libMatches.size() == 2);
+        CHECK(libMatches == std::vector<unsigned int>{3, 2});
+      }
+    }
+  }
+
+  SECTION("overly long searchOrder") {
+    auto qm = "COC"_smiles;
+    unsigned int maxResults = 2;
+    int numThreads = -1;
+    std::vector<unsigned int> searchOrder = {3, 2, 0, 1, 4, 2, 1, 4, 0};
+    ssslib.setSearchOrder(searchOrder);
+    SubstructMatchParameters params;
+    CHECK(ssslib.countMatches(*qm, params, numThreads) == 5);
+    CHECK(ssslib.hasMatch(*qm, params));
+    auto libMatches = ssslib.getMatches(*qm, params, numThreads, maxResults);
+    CHECK(libMatches.size() == 2);
+    CHECK(libMatches == std::vector<unsigned int>{3, 2});
+  }
+  SECTION("bogus indices in searchOrder") {
+    auto qm = "COC"_smiles;
+    std::vector<unsigned int> searchOrder = {3, 12, 0};
+    CHECK_THROWS_AS(ssslib.setSearchOrder(searchOrder), IndexErrorException);
+  }
+#ifdef RDK_USE_BOOST_SERIALIZATION
+  SECTION("serialization") {
+    std::vector<unsigned int> searchOrder = {3, 0, 1};
+    ssslib.setSearchOrder(searchOrder);
+    std::string pickle = ssslib.Serialize();
+    SubstructLibrary serialized;
+    serialized.initFromString(pickle);
+    CHECK(serialized.size() == ssslib.size());
+    CHECK(serialized.getSearchOrder() == ssslib.getSearchOrder());
+  }
+#endif
+}

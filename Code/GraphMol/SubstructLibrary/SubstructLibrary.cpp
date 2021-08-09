@@ -139,15 +139,22 @@ void SubSearcher(const Query &in_query, const Bits &bits,
                  unsigned int &end, unsigned int numThreads,
                  const bool needs_rings, int &counter, const int maxResults,
                  boost::dynamic_bitset<> &found,
+                 const std::vector<unsigned int> &searchOrder,
                  std::vector<unsigned int> *idxs) {
+  PRECONDITION(searchOrder.empty() || searchOrder.size() >= end,
+               "bad searchOrder data");
   Query query(in_query);
   for (unsigned int idx = start; idx < end; idx += numThreads) {
-    if (!bits.check(idx) || found[idx]) {
+    unsigned int sidx = idx;
+    if (!searchOrder.empty()) {
+      sidx = searchOrder[idx];
+    }
+    if (!bits.check(sidx) || found[sidx]) {
       continue;
     }
     // need shared_ptr as it (may) control the lifespan of the
     //  returned molecule!
-    const boost::shared_ptr<ROMol> &m = mols.getMol(idx);
+    const boost::shared_ptr<ROMol> &m = mols.getMol(sidx);
     ROMol *mol = m.get();
     if (!mol) {
       continue;
@@ -159,9 +166,9 @@ void SubSearcher(const Query &in_query, const Bits &bits,
 
     if (!SubstructMatch(*mol, query, bits.params).empty()) {
       ++counter;
-      found.set(idx);
+      found.set(sidx);
       if (idxs) {
-        idxs->push_back(idx);
+        idxs->push_back(sidx);
         if (maxResults > 0 && counter == maxResults) {
           // if we reached maxResults, record the last idx we processed and bail
           // out
@@ -179,8 +186,11 @@ int internalGetMatches(const Query &query, MolHolderBase &mols,
                        unsigned int endIdx,
                        const SubstructMatchParameters &params, int numThreads,
                        int maxResults, boost::dynamic_bitset<> &found,
+                       const std::vector<unsigned int> &searchOrder,
                        std::vector<unsigned int> *idxs) {
   PRECONDITION(startIdx < mols.size(), "startIdx out of bounds");
+  PRECONDITION(searchOrder.empty() || startIdx < searchOrder.size(),
+               "startIdx out of bounds");
   PRECONDITION(endIdx > startIdx, "endIdx > startIdx");
 
   // do not do any work if no results were requested
@@ -189,6 +199,9 @@ int internalGetMatches(const Query &query, MolHolderBase &mols,
   }
 
   endIdx = std::min(mols.size(), endIdx);
+  if (!searchOrder.empty()) {
+    endIdx = std::min(static_cast<unsigned int>(searchOrder.size()), endIdx);
+  }
 
   numThreads = static_cast<int>(getNumThreadsToUse(numThreads));
   numThreads = std::min(numThreads, static_cast<int>(endIdx));
@@ -223,14 +236,14 @@ int internalGetMatches(const Query &query, MolHolderBase &mols,
          ++thread_group_idx) {
       internal_found[thread_group_idx] = found;
       // need to use boost::ref otherwise things are passed by value
-      thread_group.emplace_back(
-          std::async(std::launch::async, SubSearcher<Query>, std::ref(query),
-                     bits, std::ref(mols), startIdx + thread_group_idx,
-                     std::ref(endIdxVect[thread_group_idx]), numThreads,
-                     needs_rings, std::ref(counterVect[thread_group_idx]),
-                     maxResultsVect[thread_group_idx],
-                     std::ref(internal_found[thread_group_idx]),
-                     idxs ? &internal_results[thread_group_idx] : nullptr));
+      thread_group.emplace_back(std::async(
+          std::launch::async, SubSearcher<Query>, std::ref(query), bits,
+          std::ref(mols), startIdx + thread_group_idx,
+          std::ref(endIdxVect[thread_group_idx]), numThreads, needs_rings,
+          std::ref(counterVect[thread_group_idx]),
+          maxResultsVect[thread_group_idx],
+          std::ref(internal_found[thread_group_idx]), std::ref(searchOrder),
+          idxs ? &internal_results[thread_group_idx] : nullptr));
     }
     unsigned int maxEndIdx;
     if (maxResults > 0) {
@@ -264,7 +277,7 @@ int internalGetMatches(const Query &query, MolHolderBase &mols,
             std::ref(mols), endIdxVect[thread_group_idx] + numThreads,
             std::ref(maxEndIdx), numThreads, needs_rings,
             std::ref(counterVect[thread_group_idx]), -1,
-            std::ref(internal_found[thread_group_idx]),
+            std::ref(internal_found[thread_group_idx]), std::ref(searchOrder),
             &internal_results[thread_group_idx]));
       }
     }
@@ -288,11 +301,19 @@ int internalGetMatches(const Query &query, MolHolderBase &mols,
     // if this is running single-threaded, no need to suffer the overhead of
     // std::async
     SubSearcher(query, bits, mols, startIdx, endIdx, 1, needs_rings, counter,
-                maxResults, found, idxs);
+                maxResults, found, searchOrder, idxs);
   }
-  if (idxs) {
+  if (idxs && numThreads > 1) {
     // the sort is necessary to ensure consistency across runs with different
     // numbers of threads
+    if (!searchOrder.empty()) {
+      std::transform(idxs->begin(), idxs->end(), idxs->begin(),
+                     [searchOrder](unsigned int v) -> unsigned int {
+                       return std::find(searchOrder.begin(), searchOrder.end(),
+                                        v) -
+                              searchOrder.begin();
+                     });
+    }
     std::sort(idxs->begin(), idxs->end());
     // we may have actually accumulated more results than maxResults due
     // to the top up above, so trim the results down if that's the case
@@ -300,10 +321,16 @@ int internalGetMatches(const Query &query, MolHolderBase &mols,
         idxs->size() > static_cast<unsigned int>(maxResults)) {
       idxs->resize(maxResults);
     }
+    if (!searchOrder.empty()) {
+      std::transform(idxs->begin(), idxs->end(), idxs->begin(),
+                     [searchOrder](unsigned int v) -> unsigned int {
+                       return searchOrder[v];
+                     });
+    }
   }
 #else
   SubSearcher(query, bits, mols, startIdx, endIdx, 1, needs_rings, counter,
-              maxResults, found, idxs);
+              maxResults, found, searchOrder, idxs);
 #endif
 
   delete bits.queryBits;
@@ -314,15 +341,16 @@ int internalGetMatches(const Query &query, MolHolderBase &mols,
 int molbundleGetMatches(const MolBundle &query, MolHolderBase &mols,
                         const FPHolderBase *fps, unsigned int startIdx,
                         unsigned int endIdx,
-                        const SubstructMatchParameters &params,
-                        int numThreads = -1, int maxResults = 1000,
-                        std::vector<unsigned int> *idxs = nullptr) {
+                        const SubstructMatchParameters &params, int numThreads,
+                        int maxResults,
+                        const std::vector<unsigned int> &searchOrder,
+                        std::vector<unsigned int> *idxs) {
   int res = 0;
   boost::dynamic_bitset<> found(mols.size());
   for (const auto qmol : query.getMols()) {
     maxResults -= res;
     res += internalGetMatches(*qmol, mols, fps, startIdx, endIdx, params,
-                              numThreads, maxResults, found, idxs);
+                              numThreads, maxResults, found, searchOrder, idxs);
   }
   return res;
 }
@@ -336,7 +364,7 @@ std::vector<unsigned int> SubstructLibrary::getMatches(
   std::vector<unsigned int> idxs;
   boost::dynamic_bitset<> found(mols->size());
   internalGetMatches(query, *mols, fps, startIdx, endIdx, params, numThreads,
-                     maxResults, found, &idxs);
+                     maxResults, found, searchOrder, &idxs);
   return idxs;
 }
 
@@ -347,7 +375,7 @@ std::vector<unsigned int> SubstructLibrary::getMatches(
   std::vector<unsigned int> idxs;
   boost::dynamic_bitset<> found(mols->size());
   internalGetMatches(query, *mols, fps, startIdx, endIdx, params, numThreads,
-                     maxResults, found, &idxs);
+                     maxResults, found, searchOrder, &idxs);
   return idxs;
 }
 
@@ -357,7 +385,7 @@ std::vector<unsigned int> SubstructLibrary::getMatches(
     int maxResults) const {
   std::vector<unsigned int> idxs;
   molbundleGetMatches(query, *mols, fps, startIdx, endIdx, params, numThreads,
-                      maxResults, &idxs);
+                      maxResults, searchOrder, &idxs);
   return idxs;
 }
 
@@ -366,7 +394,7 @@ unsigned int SubstructLibrary::countMatches(
     const SubstructMatchParameters &params, int numThreads) const {
   boost::dynamic_bitset<> found(mols->size());
   return internalGetMatches(query, *mols, fps, startIdx, endIdx, params,
-                            numThreads, -1, found, nullptr);
+                            numThreads, -1, found, searchOrder, nullptr);
 }
 
 unsigned int SubstructLibrary::countMatches(
@@ -374,13 +402,13 @@ unsigned int SubstructLibrary::countMatches(
     const SubstructMatchParameters &params, int numThreads) const {
   boost::dynamic_bitset<> found(mols->size());
   return internalGetMatches(query, *mols, fps, startIdx, endIdx, params,
-                            numThreads, -1, found, nullptr);
+                            numThreads, -1, found, searchOrder, nullptr);
 }
 unsigned int SubstructLibrary::countMatches(
     const MolBundle &query, unsigned int startIdx, unsigned int endIdx,
     const SubstructMatchParameters &params, int numThreads) const {
   return molbundleGetMatches(query, *mols, fps, startIdx, endIdx, params,
-                             numThreads, -1, nullptr);
+                             numThreads, -1, searchOrder, nullptr);
 }
 
 bool SubstructLibrary::hasMatch(const ROMol &query, unsigned int startIdx,

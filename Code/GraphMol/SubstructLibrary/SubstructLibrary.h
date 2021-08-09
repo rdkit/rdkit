@@ -411,6 +411,7 @@ class RDKIT_SUBSTRUCTLIBRARY_EXPORT SubstructLibrary {
   MolHolderBase *mols;  // used for a small optimization
   FPHolderBase *fps{nullptr};
   bool is_tautomerquery = false;
+  std::vector<unsigned int> searchOrder;
 
  public:
   SubstructLibrary()
@@ -740,6 +741,19 @@ class RDKIT_SUBSTRUCTLIBRARY_EXPORT SubstructLibrary {
     return rdcast<unsigned int>(molholder->size());
   }
 
+  //! does error checking
+  void setSearchOrder(const std::vector<unsigned int> &order) {
+    for (const auto idx : order) {
+      if (idx >= mols->size()) {
+        throw IndexErrorException(idx);
+      }
+    }
+    searchOrder = order;
+  }
+  const std::vector<unsigned int> &getSearchOrder() const {
+    return searchOrder;
+  }
+  std::vector<unsigned int> &getSearchOrder() { return searchOrder; }
   //! access required for serialization
   void resetHolders() {
     is_tautomerquery = false;

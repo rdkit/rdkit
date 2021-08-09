@@ -527,5 +527,15 @@ class TestCase(unittest.TestCase):
     params.useChirality = True
     self.assertEqual(list(sorted(ssl.GetMatches(bndl,params))), [0])
 
+  def testSearchOrder(self):
+    ssl = rdSubstructLibrary.SubstructLibrary()
+    for smi in ("CCCOC", "CCCCOCC", "CCOC", "COC", "CCCCCOC"):
+      ssl.AddMol(Chem.MolFromSmiles(smi))
+    ssl.SetSearchOrder((3,2,0,1,4))
+    self.assertEqual(ssl.GetSearchOrder(),(3,2,0,1,4))
+    qm = Chem.MolFromSmiles('COC')
+    self.assertEqual(list(ssl.GetMatches(qm,maxResults=2)),[3,2])
+
+
 if __name__ == '__main__':
   unittest.main()
