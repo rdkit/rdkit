@@ -604,6 +604,7 @@ std::string FragmentSmartsConstruct(
     ROMol &mol, unsigned int atomIdx, std::vector<Canon::AtomColors> &colors,
     UINT_VECT &ranks, bool doIsomericSmiles,
     std::vector<unsigned int> &atomOrdering,
+    std::vector<unsigned int> &bondOrdering,
     const boost::dynamic_bitset<> *bondsInPlay) {
   Canon::MolStack molStack;
   molStack.reserve(mol.getNumAtoms() + mol.getNumBonds());
@@ -652,6 +653,7 @@ std::string FragmentSmartsConstruct(
       case Canon::MOL_STACK_BOND: {
         auto *qbnd = static_cast<QueryBond *>(msCI.obj.bond);
         res << SmartsWrite::GetBondSmarts(qbnd, msCI.number);
+        bondOrdering.push_back(qbnd->getIdx());
         break;
       }
       case Canon::MOL_STACK_RING: {
@@ -785,6 +787,7 @@ std::string molToSmarts(const ROMol &inmol, bool doIsomericSmiles,
     mol.setProp(common_properties::_doIsoSmiles, 1);
   }
   std::vector<unsigned int> atomOrdering;
+  std::vector<unsigned int> bondOrdering;
 
   std::string res;
   auto colorIt = std::find(colors.begin(), colors.end(), Canon::WHITE_NODE);
@@ -799,9 +802,9 @@ std::string molToSmarts(const ROMol &inmol, bool doIsomericSmiles,
         nextAtomIdx = i;
       }
     }
-    subSmi =
-        FragmentSmartsConstruct(mol, nextAtomIdx, colors, ranks,
-                                doIsomericSmiles, atomOrdering, bondsInPlay);
+    subSmi = FragmentSmartsConstruct(mol, nextAtomIdx, colors, ranks,
+                                     doIsomericSmiles, atomOrdering,
+                                     bondOrdering, bondsInPlay);
     res += subSmi;
 
     colorIt = std::find(colors.begin(), colors.end(), Canon::WHITE_NODE);
@@ -810,6 +813,7 @@ std::string molToSmarts(const ROMol &inmol, bool doIsomericSmiles,
     }
   }
   inmol.setProp(common_properties::_smilesAtomOutputOrder, atomOrdering, true);
+  inmol.setProp(common_properties::_smilesBondOutputOrder, bondOrdering, true);
   return res;
 }
 

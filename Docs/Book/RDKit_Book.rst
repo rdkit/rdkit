@@ -253,6 +253,9 @@ The features which are parsed include:
 - ring bond count specifications ``rb``
 - non-hydrogen substitution count specifications ``s``
 - unsaturation specification ``u``
+- SGroup Data ``SgD``
+- polymer SGroups ``Sg``
+- SGroup Hierarchy ``SgH``
 
 The features which are written by :py:func:`rdkit.Chem.rdmolfiles.MolToCXSmiles` and
 :py:func:`rdkit.Chem.rdmolfiles.MolToCXSmarts` 
@@ -264,6 +267,10 @@ The features which are written by :py:func:`rdkit.Chem.rdmolfiles.MolToCXSmiles`
 - atomic properties
 - radicals
 - enhanced stereo
+- linknodes 
+- SGroup Data
+- polymer SGroups
+- SGroup Hierarchy
 
 .. doctest::
 
@@ -1205,6 +1212,8 @@ ROMol  (Mol in Python)
 | _Name                  |   Read from/written to the name line of CTABs.    |
 +------------------------+---------------------------------------------------+
 | _smilesAtomOutputOrder |   The order in which atoms were written to SMILES |
++------------------------+---------------------------------------------------+
+| _smilesBondOutputOrder |   The order in which bonds were written to SMILES |
 +------------------------+---------------------------------------------------+
 
 Atom
