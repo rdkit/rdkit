@@ -74,6 +74,7 @@ void ptreeToMol(RWMol *mol, const pt::ptree &molE) {
 }
 }  // namespace
 
+namespace FileParsers {
 std::unique_ptr<RWMol> RDKitSVGToMol(std::istream *instream, bool sanitize,
                                      bool removeHs) {
   PRECONDITION(instream, "bad stream");
@@ -104,4 +105,5 @@ std::unique_ptr<RWMol> RDKitSVGToMol(const std::string &svg, bool sanitize,
   std::stringstream iss(svg);
   return RDKitSVGToMol(&iss, sanitize, removeHs);
 }
+}  // namespace FileParsers
 }  // namespace RDKit

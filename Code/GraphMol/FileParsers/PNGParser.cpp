@@ -283,7 +283,8 @@ ROMol *PNGStreamToMol(std::istream &inStream,
       res = SmilesParser::SmilesToMol(pr.second, params);
       formatFound = true;
     } else if (boost::starts_with(pr.first, PNGData::molTag)) {
-      res = MolBlockToMol(pr.second, params.sanitize, params.removeHs);
+      res = FileParsers::MolBlockToMol(pr.second, params.sanitize,
+                                       params.removeHs);
       formatFound = true;
     }
     if (formatFound) {
@@ -310,8 +311,8 @@ std::vector<std::unique_ptr<ROMol>> PNGStreamToMols(
     } else if (boost::starts_with(pr.first, PNGData::smilesTag)) {
       res.emplace_back(SmilesParser::SmilesToMol(pr.second, params));
     } else if (boost::starts_with(pr.first, PNGData::molTag)) {
-      res.emplace_back(
-          MolBlockToMol(pr.second, params.sanitize, params.removeHs));
+      res.emplace_back(FileParsers::MolBlockToMol(pr.second, params.sanitize,
+                                                  params.removeHs));
     }
   }
   return res;

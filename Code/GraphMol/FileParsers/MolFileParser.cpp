@@ -3132,6 +3132,7 @@ void finishMolProcessing(RWMol *res, bool chiralityPossible, bool sanitize,
 }
 }  // namespace FileParserUtils
 
+namespace FileParsers {
 //------------------------------------------------
 //
 //  Read a molecule from a stream
@@ -3374,4 +3375,5 @@ std::unique_ptr<RWMol> MolFileToMol(const std::string &fName, bool sanitize,
   }
   return res;
 }
+}  // namespace FileParsers
 }  // namespace RDKit

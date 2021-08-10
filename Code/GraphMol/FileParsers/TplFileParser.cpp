@@ -161,7 +161,7 @@ Conformer *ParseConfData(std::istream *inStream, unsigned int &line, RWMol *mol,
   }
   return conf;
 }
-
+namespace FileParsers {
 //*************************************
 //
 // Every effort has been made to adhere to the BioCad tpl definition
@@ -295,5 +295,5 @@ std::unique_ptr<RWMol> TPLFileToMol(const std::string &fName, bool sanitize,
   }
   return res;
 }
-
+}  // namespace FileParsers
 }  // namespace RDKit

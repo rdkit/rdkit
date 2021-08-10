@@ -196,8 +196,8 @@ ROMol *ForwardSDMolSupplier::_next() {
   df_eofHitOnRead = false;
   unsigned int line = d_line;
   try {
-    res = MolDataStreamToMol(dp_inStream, line, df_sanitize, df_removeHs,
-                             df_strictParsing);
+    res = FileParsers::MolDataStreamToMol(dp_inStream, line, df_sanitize,
+                                          df_removeHs, df_strictParsing);
     // there's a special case when trying to read an empty string that
     // we get an empty molecule after only reading a single line without any
     // additional error state.

@@ -26,6 +26,7 @@
 #include <boost/algorithm/string.hpp>
 
 using namespace RDKit;
+using namespace RDKit::FileParsers;
 
 TEST_CASE("Basic SVG Parsing", "[SVG][reader]") {
   SECTION("basics") {

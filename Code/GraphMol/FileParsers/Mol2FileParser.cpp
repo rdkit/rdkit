@@ -52,6 +52,7 @@
 
 namespace RDKit {
 
+namespace FileParsers {
 namespace {
 void fixNitroSubstructureAndCharge(RWMol *res, unsigned int atIdx) {
   unsigned int noODblNeighbors = 0;
@@ -1014,4 +1015,5 @@ std::unique_ptr<RWMol> Mol2FileToMol(const std::string &fName, bool sanitize,
   }
   return res;
 }
+}  // namespace FileParsers
 }  // namespace RDKit

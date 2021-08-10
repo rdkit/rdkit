@@ -672,7 +672,7 @@ std::unique_ptr<RWMol> parsePdbBlock(const char *str, bool sanitize,
   return res;
 }
 }  // namespace
-
+namespace FileParsers {
 std::unique_ptr<RWMol> PDBBlockToMol(const char *str, bool sanitize,
                                      bool removeHs, unsigned int flavor,
                                      bool proximityBonding) {
@@ -733,4 +733,5 @@ std::unique_ptr<RWMol> PDBFileToMol(const std::string &fileName, bool sanitize,
   return PDBDataStreamToMol(static_cast<std::istream *>(&ifs), sanitize,
                             removeHs, flavor, proximityBonding);
 }
+}  // namespace FileParsers
 }  // namespace RDKit

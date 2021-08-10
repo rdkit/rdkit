@@ -20,9 +20,6 @@
 #include <exception>
 
 namespace RDKit {
-const int MOLFILE_MAXLINE = 256;
-RDKIT_FILEPARSERS_EXPORT std::string strip(const std::string &orig);
-
 class RDKIT_FILEPARSERS_EXPORT MolFileUnhandledFeatureException
     : public std::exception {
  public:
@@ -39,6 +36,11 @@ class RDKIT_FILEPARSERS_EXPORT MolFileUnhandledFeatureException
   std::string _msg;
 };
 
+typedef enum {
+  CORINA = 0  //! supports output from Corina and some dbtranslate output
+} Mol2Type;
+
+namespace FileParsers {
 //-----
 // mol files
 //-----
@@ -89,6 +91,126 @@ RDKIT_FILEPARSERS_EXPORT std::unique_ptr<RWMol> MolBlockToMol(
 RDKIT_FILEPARSERS_EXPORT std::unique_ptr<RWMol> MolFileToMol(
     const std::string &fName, bool sanitize = true, bool removeHs = true,
     bool strictParsing = true);
+
+//! \brief translate TPL data (BioCad format) into a multi-conf molecule
+/*!
+  \param inStream:      the stream from which to read
+  \param line:          used to track the line number of errors
+  \param sanitize:      toggles sanitization and stereochemistry
+                        perception of the molecule
+  \param skipFirstConf: according to the TPL format description, the atomic
+                        coords in the atom-information block describe the first
+                        conformation and the first conf block describes second
+                        conformation. The CombiCode, on the other hand, writes
+                        the first conformation data both to the atom-information
+                        block and to the first conf block. We want to be able to
+                        read CombiCode-style tpls, so we'll allow this
+  mis-feature
+                        to be parsed when this flag is set.
+*/
+RDKIT_FILEPARSERS_EXPORT std::unique_ptr<RWMol> TPLDataStreamToMol(
+    std::istream *inStream, unsigned int &line, bool sanitize = true,
+    bool skipFirstConf = false);
+
+//! \brief construct a multi-conf molecule from a TPL (BioCad format) file
+/*!
+  \param fName:         the name of the file from which to read
+  \param sanitize:      toggles sanitization and stereochemistry
+                        perception of the molecule
+  \param skipFirstConf: according to the TPL format description, the atomic
+                        coords in the atom-information block describe the first
+                        conformation and the first conf block describes second
+                        conformation. The CombiCode, on the other hand, writes
+                        the first conformation data both to the atom-information
+                        block and to the first conf block. We want to be able to
+                        read CombiCode-style tpls, so we'll allow this
+  mis-feature
+                        to be parsed when this flag is set.
+*/
+RDKIT_FILEPARSERS_EXPORT std::unique_ptr<RWMol> TPLFileToMol(
+    const std::string &fName, bool sanitize = true, bool skipFirstConf = false);
+
+// \brief construct a molecule from a Tripos mol2 file
+/*!
+ *
+ *   \param fName    - string containing the file name
+ *   \param sanitize - toggles sanitization of the molecule
+ *   \param removeHs - toggles removal of Hs from the molecule. H removal
+ *                     is only done if the molecule is sanitized
+ *   \param variant  - the atom type definitions to use
+ *   \param cleanupSubstructures - toggles recognition and cleanup of common
+ *                                 substructures
+ */
+RDKIT_FILEPARSERS_EXPORT std::unique_ptr<RWMol> Mol2FileToMol(
+    const std::string &fName, bool sanitize = true, bool removeHs = true,
+    Mol2Type variant = CORINA, bool cleanupSubstructures = true);
+
+// \brief construct a molecule from Tripos mol2 data in a stream
+/*!
+ *   \param inStream - stream containing the data
+ *   \param sanitize - toggles sanitization of the molecule
+ *   \param removeHs - toggles removal of Hs from the molecule. H removal
+ *                     is only done if the molecule is sanitized
+ *   \param variant  - the atom type definitions to use
+ *   \param cleanupSubstructures - toggles recognition and cleanup of common
+ *                                 substructures
+ */
+RDKIT_FILEPARSERS_EXPORT std::unique_ptr<RWMol> Mol2DataStreamToMol(
+    std::istream *inStream, bool sanitize = true, bool removeHs = true,
+    Mol2Type variant = CORINA, bool cleanupSubstructures = true);
+// \overload
+RDKIT_FILEPARSERS_EXPORT std::unique_ptr<RWMol> Mol2DataStreamToMol(
+    std::istream &inStream, bool sanitize = true, bool removeHs = true,
+    Mol2Type variant = CORINA, bool cleanupSubstructures = true);
+
+// \brief construct a molecule from a Tripos mol2 block
+/*!
+ *   \param molBlock - string containing the mol block
+ *   \param sanitize - toggles sanitization of the molecule
+ *   \param removeHs - toggles removal of Hs from the molecule. H removal
+ *                     is only done if the molecule is sanitized
+ *   \param variant  - the atom type definitions to use
+ *   \param cleanupSubstructures - toggles recognition and cleanup of common
+ *                                 substructures
+ */
+RDKIT_FILEPARSERS_EXPORT std::unique_ptr<RWMol> Mol2BlockToMol(
+    const std::string &molBlock, bool sanitize = true, bool removeHs = true,
+    Mol2Type variant = CORINA, bool cleanupSubstructures = true);
+
+RDKIT_FILEPARSERS_EXPORT std::unique_ptr<RWMol> PDBBlockToMol(
+    const char *str, bool sanitize = true, bool removeHs = true,
+    unsigned int flavor = 0, bool proximityBonding = true);
+
+RDKIT_FILEPARSERS_EXPORT std::unique_ptr<RWMol> PDBBlockToMol(
+    const std::string &str, bool sanitize = true, bool removeHs = true,
+    unsigned int flavor = 0, bool proximityBonding = true);
+RDKIT_FILEPARSERS_EXPORT std::unique_ptr<RWMol> PDBDataStreamToMol(
+    std::istream *inStream, bool sanitize = true, bool removeHs = true,
+    unsigned int flavor = 0, bool proximityBonding = true);
+RDKIT_FILEPARSERS_EXPORT std::unique_ptr<RWMol> PDBDataStreamToMol(
+    std::istream &inStream, bool sanitize = true, bool removeHs = true,
+    unsigned int flavor = 0, bool proximityBonding = true);
+RDKIT_FILEPARSERS_EXPORT std::unique_ptr<RWMol> PDBFileToMol(
+    const std::string &fname, bool sanitize = true, bool removeHs = true,
+    unsigned int flavor = 0, bool proximityBonding = true);
+
+// \brief reads a molecule from the metadata in an RDKit-generated SVG file
+/*!
+ *   \param svg      - string containing the SVG
+ *   \param sanitize - toggles sanitization of the molecule
+ *   \param removeHs - toggles removal of Hs from the molecule. H removal
+ *                     is only done if the molecule is sanitized
+ *
+ *   **NOTE** This functionality should be considered beta.
+ */
+RDKIT_FILEPARSERS_EXPORT std::unique_ptr<RWMol> RDKitSVGToMol(
+    const std::string &svg, bool sanitize = true, bool removeHs = true);
+/*! \overload
+ */
+RDKIT_FILEPARSERS_EXPORT std::unique_ptr<RWMol> RDKitSVGToMol(
+    std::istream *instream, bool sanitize = true, bool removeHs = true);
+
+}  // namespace FileParsers
 
 // \brief generates an MDL mol block for a molecule
 /*!
@@ -167,48 +289,6 @@ RDKIT_FILEPARSERS_EXPORT void MolToXYZFile(const ROMol &mol,
                                            const std::string &fName,
                                            int confId = -1);
 
-//-----
-//  TPL handling:
-//-----
-
-//! \brief translate TPL data (BioCad format) into a multi-conf molecule
-/*!
-  \param inStream:      the stream from which to read
-  \param line:          used to track the line number of errors
-  \param sanitize:      toggles sanitization and stereochemistry
-                        perception of the molecule
-  \param skipFirstConf: according to the TPL format description, the atomic
-                        coords in the atom-information block describe the first
-                        conformation and the first conf block describes second
-                        conformation. The CombiCode, on the other hand, writes
-                        the first conformation data both to the atom-information
-                        block and to the first conf block. We want to be able to
-                        read CombiCode-style tpls, so we'll allow this
-  mis-feature
-                        to be parsed when this flag is set.
-*/
-RDKIT_FILEPARSERS_EXPORT std::unique_ptr<RWMol> TPLDataStreamToMol(
-    std::istream *inStream, unsigned int &line, bool sanitize = true,
-    bool skipFirstConf = false);
-
-//! \brief construct a multi-conf molecule from a TPL (BioCad format) file
-/*!
-  \param fName:         the name of the file from which to read
-  \param sanitize:      toggles sanitization and stereochemistry
-                        perception of the molecule
-  \param skipFirstConf: according to the TPL format description, the atomic
-                        coords in the atom-information block describe the first
-                        conformation and the first conf block describes second
-                        conformation. The CombiCode, on the other hand, writes
-                        the first conformation data both to the atom-information
-                        block and to the first conf block. We want to be able to
-                        read CombiCode-style tpls, so we'll allow this
-  mis-feature
-                        to be parsed when this flag is set.
-*/
-RDKIT_FILEPARSERS_EXPORT std::unique_ptr<RWMol> TPLFileToMol(
-    const std::string &fName, bool sanitize = true, bool skipFirstConf = false);
-
 RDKIT_FILEPARSERS_EXPORT std::string MolToTPLText(
     const ROMol &mol, const std::string &partialChargeProp = "_GasteigerCharge",
     bool writeFirstConfTwice = false);
@@ -216,78 +296,6 @@ RDKIT_FILEPARSERS_EXPORT void MolToTPLFile(
     const ROMol &mol, const std::string &fName,
     const std::string &partialChargeProp = "_GasteigerCharge",
     bool writeFirstConfTwice = false);
-
-//-----
-//  MOL2 handling
-//-----
-
-typedef enum {
-  CORINA = 0  //! supports output from Corina and some dbtranslate output
-} Mol2Type;
-
-// \brief construct a molecule from a Tripos mol2 file
-/*!
- *
- *   \param fName    - string containing the file name
- *   \param sanitize - toggles sanitization of the molecule
- *   \param removeHs - toggles removal of Hs from the molecule. H removal
- *                     is only done if the molecule is sanitized
- *   \param variant  - the atom type definitions to use
- *   \param cleanupSubstructures - toggles recognition and cleanup of common
- *                                 substructures
- */
-RDKIT_FILEPARSERS_EXPORT std::unique_ptr<RWMol> Mol2FileToMol(
-    const std::string &fName, bool sanitize = true, bool removeHs = true,
-    Mol2Type variant = CORINA, bool cleanupSubstructures = true);
-
-// \brief construct a molecule from Tripos mol2 data in a stream
-/*!
- *   \param inStream - stream containing the data
- *   \param sanitize - toggles sanitization of the molecule
- *   \param removeHs - toggles removal of Hs from the molecule. H removal
- *                     is only done if the molecule is sanitized
- *   \param variant  - the atom type definitions to use
- *   \param cleanupSubstructures - toggles recognition and cleanup of common
- *                                 substructures
- */
-RDKIT_FILEPARSERS_EXPORT std::unique_ptr<RWMol> Mol2DataStreamToMol(
-    std::istream *inStream, bool sanitize = true, bool removeHs = true,
-    Mol2Type variant = CORINA, bool cleanupSubstructures = true);
-// \overload
-RDKIT_FILEPARSERS_EXPORT std::unique_ptr<RWMol> Mol2DataStreamToMol(
-    std::istream &inStream, bool sanitize = true, bool removeHs = true,
-    Mol2Type variant = CORINA, bool cleanupSubstructures = true);
-
-// \brief construct a molecule from a Tripos mol2 block
-/*!
- *   \param molBlock - string containing the mol block
- *   \param sanitize - toggles sanitization of the molecule
- *   \param removeHs - toggles removal of Hs from the molecule. H removal
- *                     is only done if the molecule is sanitized
- *   \param variant  - the atom type definitions to use
- *   \param cleanupSubstructures - toggles recognition and cleanup of common
- *                                 substructures
- */
-RDKIT_FILEPARSERS_EXPORT std::unique_ptr<RWMol> Mol2BlockToMol(
-    const std::string &molBlock, bool sanitize = true, bool removeHs = true,
-    Mol2Type variant = CORINA, bool cleanupSubstructures = true);
-
-RDKIT_FILEPARSERS_EXPORT std::unique_ptr<RWMol> PDBBlockToMol(
-    const char *str, bool sanitize = true, bool removeHs = true,
-    unsigned int flavor = 0, bool proximityBonding = true);
-
-RDKIT_FILEPARSERS_EXPORT std::unique_ptr<RWMol> PDBBlockToMol(
-    const std::string &str, bool sanitize = true, bool removeHs = true,
-    unsigned int flavor = 0, bool proximityBonding = true);
-RDKIT_FILEPARSERS_EXPORT std::unique_ptr<RWMol> PDBDataStreamToMol(
-    std::istream *inStream, bool sanitize = true, bool removeHs = true,
-    unsigned int flavor = 0, bool proximityBonding = true);
-RDKIT_FILEPARSERS_EXPORT std::unique_ptr<RWMol> PDBDataStreamToMol(
-    std::istream &inStream, bool sanitize = true, bool removeHs = true,
-    unsigned int flavor = 0, bool proximityBonding = true);
-RDKIT_FILEPARSERS_EXPORT std::unique_ptr<RWMol> PDBFileToMol(
-    const std::string &fname, bool sanitize = true, bool removeHs = true,
-    unsigned int flavor = 0, bool proximityBonding = true);
 
 // \brief generates an PDB block for a molecule
 /*!
@@ -322,28 +330,12 @@ RDKIT_FILEPARSERS_EXPORT void MolToPDBFile(const ROMol &mol,
                                            int confId = -1,
                                            unsigned int flavor = 0);
 
-// \brief reads a molecule from the metadata in an RDKit-generated SVG file
-/*!
- *   \param svg      - string containing the SVG
- *   \param sanitize - toggles sanitization of the molecule
- *   \param removeHs - toggles removal of Hs from the molecule. H removal
- *                     is only done if the molecule is sanitized
- *
- *   **NOTE** This functionality should be considered beta.
- */
-RDKIT_FILEPARSERS_EXPORT std::unique_ptr<RWMol> RDKitSVGToMol(
-    const std::string &svg, bool sanitize = true, bool removeHs = true);
-/*! \overload
- */
-RDKIT_FILEPARSERS_EXPORT std::unique_ptr<RWMol> RDKitSVGToMol(
-    std::istream *instream, bool sanitize = true, bool removeHs = true);
-
 inline std::unique_ptr<RDKit::RWMol> operator"" _ctab(const char *text,
                                                       size_t len) {
   std::string data(text, len);
   std::unique_ptr<RWMol> ptr;
   try {
-    ptr = MolBlockToMol(data);
+    ptr = FileParsers::MolBlockToMol(data);
   } catch (const RDKit::MolSanitizeException &) {
     ptr = nullptr;
   }
@@ -354,7 +346,7 @@ inline std::unique_ptr<RDKit::RWMol> operator"" _mol2(const char *text,
   std::string data(text, len);
   std::unique_ptr<RWMol> ptr;
   try {
-    ptr = Mol2BlockToMol(data);
+    ptr = FileParsers::Mol2BlockToMol(data);
   } catch (const RDKit::MolSanitizeException &) {
     ptr = nullptr;
   }
@@ -366,7 +358,7 @@ inline std::unique_ptr<RDKit::RWMol> operator"" _pdb(const char *text,
   std::string data(text, len);
   std::unique_ptr<RWMol> ptr;
   try {
-    ptr = PDBBlockToMol(data);
+    ptr = FileParsers::PDBBlockToMol(data);
   } catch (const RDKit::MolSanitizeException &) {
     ptr = nullptr;
   }
