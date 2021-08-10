@@ -1,5 +1,5 @@
 //
-//  Copyright (C) 2007-2010 Greg Landrum
+//  Copyright (C) 2007-2021 Greg Landrum and other RDKit contributors
 //
 //   @@ All Rights Reserved @@
 //  This file is part of the RDKit.
@@ -13,7 +13,7 @@
 #include <boost/algorithm/string/trim.hpp>
 #include <RDGeneral/BoostEndInclude.h>
 
-#include "FileParsers.h"
+#include "FileParsersv2.h"
 #include "FileParserUtils.h"
 #include "MolFileStereochem.h"
 #include <RDGeneral/StreamOps.h>
@@ -165,33 +165,36 @@ Conformer *ParseConfData(std::istream *inStream, unsigned int &line, RWMol *mol,
 //*************************************
 //
 // Every effort has been made to adhere to the BioCad tpl definition
-//
+// std::unique_ptr<RWMol>
 //*************************************
-RWMol *TPLDataStreamToMol(std::istream *inStream, unsigned int &line,
-                          bool sanitize, bool skipFirstConf) {
+std::unique_ptr<RWMol> TPLDataStreamToMol(std::istream *inStream,
+                                          unsigned int &line, bool sanitize,
+                                          bool skipFirstConf) {
   PRECONDITION(inStream, "no stream");
   std::string tempStr;
   std::vector<std::string> splitText;
+  std::unique_ptr<RWMol> res;
 
   // format line:
   line++;
   tempStr = getLine(inStream);
   if (inStream->eof()) {
-    return nullptr;
+    return res;
   }
   // comment line:
   line++;
   tempStr = getLine(inStream);
   if (inStream->eof()) {
-    return nullptr;
+    return res;
   }
   // optional name line:
   line++;
   tempStr = getLine(inStream);
   if (inStream->eof()) {
-    return nullptr;
+    return res;
   }
-  auto *res = new RWMol();
+
+  res.reset(new RWMol());
   if (tempStr.size() >= 4 && tempStr.substr(0, 4) == "NAME") {
     tempStr = boost::trim_copy(tempStr.substr(4, tempStr.size() - 4));
     res->setProp(common_properties::_Name, tempStr);
@@ -225,7 +228,7 @@ RWMol *TPLDataStreamToMol(std::istream *inStream, unsigned int &line,
       delete conf;
       throw FileParseException("EOF hit while reading atoms.");
     }
-    ParseTPLAtomLine(tempStr, line, res, conf);
+    ParseTPLAtomLine(tempStr, line, res.get(), conf);
   }
   res->addConformer(conf, true);
 
@@ -235,7 +238,7 @@ RWMol *TPLDataStreamToMol(std::istream *inStream, unsigned int &line,
     if (inStream->eof()) {
       throw FileParseException("EOF hit while reading bonds.");
     }
-    ParseTPLBondLine(tempStr, line, res);
+    ParseTPLBondLine(tempStr, line, res.get());
   }
 
   line++;
@@ -250,7 +253,7 @@ RWMol *TPLDataStreamToMol(std::istream *inStream, unsigned int &line,
     nConfs = FileParserUtils::stripSpacesAndCast<unsigned int>(splitText[1]);
   }
   for (unsigned int i = 0; i < nConfs; ++i) {
-    Conformer *conf = ParseConfData(inStream, line, res, i + 1);
+    Conformer *conf = ParseConfData(inStream, line, res.get(), i + 1);
     if (i > 0 || !skipFirstConf) {
       conf->setId(i + 1);
       res->addConformer(conf, true);
@@ -277,15 +280,15 @@ RWMol *TPLDataStreamToMol(std::istream *inStream, unsigned int &line,
 //  Read a molecule from a file
 //
 //------------------------------------------------
-RWMol *TPLFileToMol(const std::string &fName, bool sanitize,
-                    bool skipFirstConf) {
+std::unique_ptr<RWMol> TPLFileToMol(const std::string &fName, bool sanitize,
+                                    bool skipFirstConf) {
   std::ifstream inStream(fName.c_str());
   if (!inStream || (inStream.bad())) {
     std::ostringstream errout;
     errout << "Bad input file " << fName;
     throw BadFileException(errout.str());
   }
-  RWMol *res = nullptr;
+  std::unique_ptr<RWMol> res;
   if (!inStream.eof()) {
     unsigned int line = 0;
     res = TPLDataStreamToMol(&inStream, line, sanitize, skipFirstConf);
@@ -293,23 +296,4 @@ RWMol *TPLFileToMol(const std::string &fName, bool sanitize,
   return res;
 }
 
-#if 0  
-
-  RWMol *MolDataStreamToMol(std::istream &inStream, unsigned int &line,
-                            bool sanitize){
-    return MolDataStreamToMol(&inStream,line,sanitize);
-  };
-  //------------------------------------------------
-  //
-  //  Read a molecule from a string
-  //
-  //------------------------------------------------
-  RWMol *MolBlockToMol(const std::string &molBlock, bool sanitize){
-    std::istringstream inStream(molBlock);
-    RWMol *res = nullptr;
-    unsigned int line = 0;
-    return MolDataStreamToMol(inStream, line, sanitize);
-  }
-
-#endif
 }  // namespace RDKit

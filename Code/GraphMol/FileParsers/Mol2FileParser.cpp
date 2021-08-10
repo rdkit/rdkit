@@ -1,6 +1,7 @@
-// $Id: Mol2FileParser.cpp 1457 2009-04-03 09:05:17Z landrgr1 $
 //
-//  Copyright (c) 2008, Novartis Institutes for BioMedical Research Inc.
+//  Copyright (c) 2008-2021, Novartis Institutes for BioMedical Research Inc.
+//  and other RDKit contributors
+//
 //  All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -34,7 +35,7 @@
 //  this file is heavily based on glandrum's MolFileParser
 //
 
-#include "FileParsers.h"
+#include "FileParsersv2.h"
 #include <RDGeneral/Invariant.h>
 #include <GraphMol/RDKitQueries.h>
 #include <RDGeneral/StreamOps.h>
@@ -799,8 +800,10 @@ void ParseMol2BondBlock(std::istream *inStream, RWMol *res, unsigned int nBonds,
 //  Read a molecule from a stream
 //
 //------------------------------------------------
-RWMol *Mol2DataStreamToMol(std::istream *inStream, bool sanitize, bool removeHs,
-                           Mol2Type variant, bool cleanupSubstructures) {
+std::unique_ptr<RWMol> Mol2DataStreamToMol(std::istream *inStream,
+                                           bool sanitize, bool removeHs,
+                                           Mol2Type variant,
+                                           bool cleanupSubstructures) {
   RDUNUSED_PARAM(variant);
   PRECONDITION(inStream, "no stream");
   std::string tempStr, lineBeg;
@@ -862,14 +865,13 @@ RWMol *Mol2DataStreamToMol(std::istream *inStream, bool sanitize, bool removeHs,
 
   inStream->seekg(molStart, std::ios::beg);
   tempStr = getLine(inStream);
-  auto *res = new RWMol();
+  std::unique_ptr<RWMol> res(new RWMol());
   boost::trim_right(tempStr);
   res->setProp(common_properties::_Name, tempStr);
 
   tempStr = getLine(inStream);
   tokenizer tokens(tempStr, sep);
   if (tokens.begin() == tokens.end()) {
-    delete res;
     throw FileParseException("Empty counts line");
   }
 
@@ -884,14 +886,12 @@ RWMol *Mol2DataStreamToMol(std::istream *inStream, bool sanitize, bool removeHs,
       nBonds = boost::lexical_cast<unsigned int>(*itemIt);
     }
   } catch (boost::bad_lexical_cast &) {
-    delete res;
     std::ostringstream errout;
     errout << "Cannot convert " << *itemIt << " to unsigned int";
     throw FileParseException(errout.str());
   }
 
   if (nAtoms == 0) {
-    delete res;
     throw FileParseException("molecule has no atoms");
   }
   tempStr = getLine(inStream);  // mol_type - ignore
@@ -901,48 +901,32 @@ RWMol *Mol2DataStreamToMol(std::istream *inStream, bool sanitize, bool removeHs,
   // stop here since we don't support anything else from the MOLECULE block
   INT_VECT idxCorresp(nAtoms, -1);
   inStream->seekg(atomStart, std::ios::beg);
-  try {
-    ParseMol2AtomBlock(inStream, res, nAtoms, idxCorresp);
-  } catch (const FileParseException &e) {
-    delete res;
-    throw e;
-  }
+  ParseMol2AtomBlock(inStream, res.get(), nAtoms, idxCorresp);
   if (nBonds) {
     // stop here since we don't support anything else from the MOLECULE block
     inStream->seekg(bondStart, std::ios::beg);
-    try {
-      ParseMol2BondBlock(inStream, res, nBonds, idxCorresp);
-    } catch (const FileParseException &e) {
-      delete res;
-      throw e;
-    }
+    ParseMol2BondBlock(inStream, res.get(), nBonds, idxCorresp);
   }
 
   if (!chargeStart) {
     bool molFixed;
     if (cleanupSubstructures) {
-      molFixed = cleanUpMol2Substructures(res);
+      molFixed = cleanUpMol2Substructures(res.get());
     } else {
       molFixed = true;
     }
 
     if (!molFixed) {
-      delete res;
       return nullptr;
     }
 
     // mol2 format does not support formal charge information, hence we need to
     // guess it
     // based on default and explicit valences
-    guessFormalCharges(res);
+    guessFormalCharges(res.get());
   } else {
     inStream->seekg(chargeStart, std::ios::beg);
-    try {
-      readFormalChargesFromAttr(inStream, res);
-    } catch (const FileParseException &e) {
-      delete res;
-      throw e;
-    }
+    readFormalChargesFromAttr(inStream, res.get());
   }
 
   // set chirality prior to sanitisation since it happens from 3D and it's not
@@ -972,7 +956,6 @@ RWMol *Mol2DataStreamToMol(std::istream *inStream, bool sanitize, bool removeHs,
       std::string molName;
       res->getProp(common_properties::_Name, molName);
       BOOST_LOG(rdWarningLog) << molName << ": ";
-      delete res;
       throw se;
     }
 
@@ -983,8 +966,10 @@ RWMol *Mol2DataStreamToMol(std::istream *inStream, bool sanitize, bool removeHs,
   return res;
 };
 
-RWMol *Mol2DataStreamToMol(std::istream &inStream, bool sanitize, bool removeHs,
-                           Mol2Type variant, bool cleanupSubstructures) {
+std::unique_ptr<RWMol> Mol2DataStreamToMol(std::istream &inStream,
+                                           bool sanitize, bool removeHs,
+                                           Mol2Type variant,
+                                           bool cleanupSubstructures) {
   RDUNUSED_PARAM(variant);
   return Mol2DataStreamToMol(&inStream, sanitize, removeHs, variant,
                              cleanupSubstructures);
@@ -994,8 +979,10 @@ RWMol *Mol2DataStreamToMol(std::istream &inStream, bool sanitize, bool removeHs,
 //  Read a molecule from a string
 //
 //------------------------------------------------
-RWMol *Mol2BlockToMol(const std::string &molBlock, bool sanitize, bool removeHs,
-                      Mol2Type variant, bool cleanupSubstructures) {
+std::unique_ptr<RWMol> Mol2BlockToMol(const std::string &molBlock,
+                                      bool sanitize, bool removeHs,
+                                      Mol2Type variant,
+                                      bool cleanupSubstructures) {
   RDUNUSED_PARAM(variant);
   std::istringstream inStream(molBlock);
   return Mol2DataStreamToMol(inStream, sanitize, removeHs, variant,
@@ -1007,8 +994,9 @@ RWMol *Mol2BlockToMol(const std::string &molBlock, bool sanitize, bool removeHs,
 //  Read a molecule from a file
 //
 //------------------------------------------------
-RWMol *Mol2FileToMol(const std::string &fName, bool sanitize, bool removeHs,
-                     Mol2Type variant, bool cleanupSubstructures) {
+std::unique_ptr<RWMol> Mol2FileToMol(const std::string &fName, bool sanitize,
+                                     bool removeHs, Mol2Type variant,
+                                     bool cleanupSubstructures) {
   // FIX: this binary mode of opening file is here because of a bug in VC++ 6.0
   // the function "tellg" does not work correctly if we do not open it this way
   //   Jan 2009: Confirmed that this is still the case in visual studio 2008
@@ -1019,7 +1007,7 @@ RWMol *Mol2FileToMol(const std::string &fName, bool sanitize, bool removeHs,
     errout << "Bad input file " << fName;
     throw BadFileException(errout.str());
   }
-  RWMol *res = nullptr;
+  std::unique_ptr<RWMol> res;
   if (!inStream.eof()) {
     res = Mol2DataStreamToMol(inStream, sanitize, removeHs, variant,
                               cleanupSubstructures);

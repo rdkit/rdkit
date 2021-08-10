@@ -1,5 +1,5 @@
 //
-//  Copyright (C) 2010-2019 Greg Landrum and Rational Discovery LLC
+//  Copyright (C) 2010-2021 Greg Landrum and other RDKit contributors
 //
 //   @@ All Rights Reserved @@
 //  This file is part of the RDKit.
@@ -46,15 +46,17 @@ RDKIT_FILEPARSERS_EXPORT std::string getV3000Line(std::istream *inStream,
 
 // nAtoms and nBonds are ignored on input, set on output
 RDKIT_FILEPARSERS_EXPORT bool ParseV3000CTAB(
-    std::istream *inStream, unsigned int &line, RWMol *mol, Conformer *&conf,
+    std::istream *inStream, unsigned int &line, RWMol *mol,
     bool &chiralityPossible, unsigned int &nAtoms, unsigned int &nBonds,
     bool strictParsing = true, bool expectMEND = true);
 
 // nAtoms and nBonds are used
-RDKIT_FILEPARSERS_EXPORT bool ParseV2000CTAB(
-    std::istream *inStream, unsigned int &line, RWMol *mol, Conformer *&conf,
-    bool &chiralityPossible, unsigned int &nAtoms, unsigned int &nBonds,
-    bool strictParsing = true);
+RDKIT_FILEPARSERS_EXPORT bool ParseV2000CTAB(std::istream *inStream,
+                                             unsigned int &line, RWMol *mol,
+                                             bool &chiralityPossible,
+                                             unsigned int &nAtoms,
+                                             unsigned int &nBonds,
+                                             bool strictParsing = true);
 
 //! finishes up the processing (sanitization, etc.) of a molecule read from CTAB
 RDKIT_FILEPARSERS_EXPORT void finishMolProcessing(RWMol *res,

@@ -1,5 +1,5 @@
 //
-//  Copyright (C) 2009-2019 Greg Landrum
+//  Copyright (C) 2009-2021 Greg Landrum and other RDKit contributors
 //
 //   @@ All Rights Reserved @@
 //  This file is part of the RDKit.
@@ -17,7 +17,7 @@
 #include <RDGeneral/BoostEndInclude.h>
 
 #include "MolSupplier.h"
-#include "FileParsers.h"
+#include "FileParsersv2.h"
 #include "FileParserUtils.h"
 
 #include <fstream>
@@ -187,10 +187,10 @@ ROMol *ForwardSDMolSupplier::_next() {
   PRECONDITION(dp_inStream, "no stream");
 
   std::string tempStr;
-  ROMol *res = nullptr;
+  std::unique_ptr<RWMol> res;
   if (dp_inStream->eof()) {
     df_end = true;
-    return res;
+    return res.get();
   }
 
   df_eofHitOnRead = false;
@@ -206,7 +206,7 @@ ROMol *ForwardSDMolSupplier::_next() {
     }
     d_line = line;
     if (res) {
-      this->readMolProps(res);
+      this->readMolProps(res.get());
     } else if (!dp_inStream->eof()) {
       // FIX: report files missing the $$$$ marker
       std::getline(*dp_inStream, tempStr);
@@ -286,7 +286,7 @@ ROMol *ForwardSDMolSupplier::_next() {
     // FIX: we should probably be throwing an exception here
     df_end = true;
   }
-  return res;
+  return res.release();
 }
 
 void ForwardSDMolSupplier::checkForEnd() {

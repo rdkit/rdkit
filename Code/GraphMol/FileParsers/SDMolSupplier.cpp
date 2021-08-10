@@ -1,6 +1,5 @@
-// $Id$
 //
-//  Copyright (C) 2002-2012 Greg Landrum and Rational Discovery LLC
+//  Copyright (C) 2002-2021 Greg Landrum and other RDKit contributors
 //
 //   @@ All Rights Reserved @@
 //  This file is part of the RDKit.
@@ -16,7 +15,7 @@
 
 #include <boost/algorithm/string.hpp>
 #include "MolSupplier.h"
-#include "FileParsers.h"
+#include "FileParsersv2.h"
 
 #include <fstream>
 #include <iostream>

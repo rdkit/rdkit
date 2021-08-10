@@ -1,5 +1,5 @@
 //
-//  Copyright (C) 2018 Greg Landrum
+//  Copyright (C) 2018-2021 Greg Landrum and other RDKit contributors
 //
 //   @@ All Rights Reserved @@
 //  This file is part of the RDKit.
@@ -13,7 +13,7 @@
 #include <GraphMol/RDKitBase.h>
 #include <Geometry/point.h>
 #include <GraphMol/SmilesParse/SmilesParse.h>
-#include <GraphMol/FileParsers/FileParsers.h>
+#include <GraphMol/FileParsers/FileParsersv2.h>
 
 #include <boost/property_tree/ptree.hpp>
 #include <boost/property_tree/xml_parser.hpp>
@@ -74,18 +74,19 @@ void ptreeToMol(RWMol *mol, const pt::ptree &molE) {
 }
 }  // namespace
 
-RWMol *RDKitSVGToMol(std::istream *instream, bool sanitize, bool removeHs) {
+std::unique_ptr<RWMol> RDKitSVGToMol(std::istream *instream, bool sanitize,
+                                     bool removeHs) {
   PRECONDITION(instream, "bad stream");
   pt::ptree tree;
   pt::read_xml(*instream, tree);
-  RWMol *res = nullptr;
+  std::unique_ptr<RWMol> res;
   pt::ptree empty_ptree;
   // const pt::ptree &childE = tree.get_child("svg", empty_ptree);
   const pt::ptree &molsE = tree.get_child("svg.metadata", empty_ptree);
   for (const auto &molE : molsE) {
     if (molE.first == "rdkit:mol") {
-      res = new RWMol();
-      ptreeToMol(res, molE.second);
+      res.reset(new RWMol());
+      ptreeToMol(res.get(), molE.second);
       if (res->getNumAtoms()) {
         if (removeHs) {
           bool implicitOnly = false, updateExplicitCount = false;
@@ -98,7 +99,8 @@ RWMol *RDKitSVGToMol(std::istream *instream, bool sanitize, bool removeHs) {
   }
   return res;
 }
-RWMol *RDKitSVGToMol(const std::string &svg, bool sanitize, bool removeHs) {
+std::unique_ptr<RWMol> RDKitSVGToMol(const std::string &svg, bool sanitize,
+                                     bool removeHs) {
   std::stringstream iss(svg);
   return RDKitSVGToMol(&iss, sanitize, removeHs);
 }

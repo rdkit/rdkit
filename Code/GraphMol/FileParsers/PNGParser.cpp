@@ -20,7 +20,7 @@
 #include <boost/crc.hpp>
 #include <boost/algorithm/string.hpp>
 
-#include "FileParsers.h"
+#include "FileParsersv2.h"
 #ifdef RDK_USE_BOOST_IOSTREAMS
 #include <zlib.h>
 #include <boost/iostreams/filtering_streambuf.hpp>
@@ -272,15 +272,15 @@ std::string addMolToPNGStream(const ROMol &mol, std::istream &iStream,
 
 ROMol *PNGStreamToMol(std::istream &inStream,
                       const SmilesParserParams &params) {
-  ROMol *res = nullptr;
+  std::unique_ptr<RWMol> res;
   auto metadata = PNGStreamToMetadata(inStream);
   bool formatFound = false;
   for (const auto &pr : metadata) {
     if (boost::starts_with(pr.first, PNGData::pklTag)) {
-      res = new ROMol(pr.second);
+      res.reset(new RWMol(pr.second));
       formatFound = true;
     } else if (boost::starts_with(pr.first, PNGData::smilesTag)) {
-      res = SmilesParser::SmilesToMol(pr.second, params).release();
+      res = SmilesParser::SmilesToMol(pr.second, params);
       formatFound = true;
     } else if (boost::starts_with(pr.first, PNGData::molTag)) {
       res = MolBlockToMol(pr.second, params.sanitize, params.removeHs);
@@ -293,7 +293,7 @@ ROMol *PNGStreamToMol(std::istream &inStream,
   if (!formatFound) {
     throw FileParseException("No suitable metadata found.");
   }
-  return res;
+  return res.release();
 }
 
 std::vector<std::unique_ptr<ROMol>> PNGStreamToMols(

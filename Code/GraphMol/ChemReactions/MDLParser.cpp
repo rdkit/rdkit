@@ -208,12 +208,11 @@ void ParseV3000RxnBlock(std::istream &inStream, unsigned int &line,
     RWMol *react;
     unsigned int natoms, nbonds;
     bool chiralityPossible = false;
-    Conformer *conf = nullptr;
     react = new RWMol();
     try {
-      FileParserUtils::ParseV3000CTAB(&inStream, line, react, conf,
-                                      chiralityPossible, natoms, nbonds,
-                                      strictParsing, expectMEND);
+      FileParserUtils::ParseV3000CTAB(&inStream, line, react, chiralityPossible,
+                                      natoms, nbonds, strictParsing,
+                                      expectMEND);
       FileParserUtils::finishMolProcessing(react, chiralityPossible, sanitize,
                                            removeHs);
     } catch (FileParseException &e) {
@@ -244,12 +243,11 @@ void ParseV3000RxnBlock(std::istream &inStream, unsigned int &line,
     RWMol *prod;
     unsigned int natoms, nbonds;
     bool chiralityPossible = false;
-    Conformer *conf = nullptr;
     prod = new RWMol();
     try {
-      FileParserUtils::ParseV3000CTAB(&inStream, line, prod, conf,
-                                      chiralityPossible, natoms, nbonds,
-                                      strictParsing, expectMEND);
+      FileParserUtils::ParseV3000CTAB(&inStream, line, prod, chiralityPossible,
+                                      natoms, nbonds, strictParsing,
+                                      expectMEND);
       FileParserUtils::finishMolProcessing(prod, chiralityPossible, sanitize,
                                            removeHs);
     } catch (FileParseException &e) {
@@ -283,12 +281,10 @@ void ParseV3000RxnBlock(std::istream &inStream, unsigned int &line,
     RWMol *agent;
     unsigned int natoms, nbonds;
     bool chiralityPossible;
-    Conformer *conf = nullptr;
     agent = new RWMol();
     try {
-      FileParserUtils::ParseV3000CTAB(&inStream, line, agent, conf,
-                                      chiralityPossible, natoms, nbonds, true,
-                                      false);
+      FileParserUtils::ParseV3000CTAB(&inStream, line, agent, chiralityPossible,
+                                      natoms, nbonds, true, false);
     } catch (FileParseException &e) {
       std::ostringstream errout;
       errout << "Cannot parse agent " << i << ". The error was:\n\t"

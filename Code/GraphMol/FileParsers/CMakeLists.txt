@@ -62,6 +62,7 @@ rdkit_library(FileParsers
 target_compile_definitions(FileParsers PRIVATE RDKIT_FILEPARSERS_BUILD)
 
 rdkit_headers(FileParsers.h
+              FileParsersv2.h
               FileParserUtils.h
               MolFileStereochem.h
               MolSupplier.h
@@ -102,6 +103,9 @@ rdkit_test(testExtendedStereoParsing testExtendedStereoParsing.cpp
            LINK_LIBRARIES FileParsers )
 
 rdkit_catch_test(fileParsersCatchTest file_parsers_catch.cpp catch_main.cpp 
+           LINK_LIBRARIES FileParsers )
+
+rdkit_catch_test(fileParsersCatchTest2 file_parsers_catch2.cpp catch_main.cpp 
            LINK_LIBRARIES FileParsers )
 
 rdkit_catch_test(testPropertyLists testPropertyLists.cpp catch_main.cpp 

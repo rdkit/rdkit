@@ -1,5 +1,5 @@
 //
-//  Copyright (C) 2013-2014 Greg Landrum and NextMove Software
+//  Copyright (C) 2013-2021 NextMove Software and other RDKit contributors
 //
 //   @@ All Rights Reserved @@
 //  This file is part of the RDKit.
@@ -18,7 +18,7 @@
 #include <RDGeneral/BoostEndInclude.h>
 #include <RDGeneral/BadFileException.h>
 #include <RDGeneral/FileParseException.h>
-#include <GraphMol/FileParsers/FileParsers.h>
+#include <GraphMol/FileParsers/FileParsersv2.h>
 #include <GraphMol/FileParsers/FileParserUtils.h>
 #include <RDGeneral/LocaleSwitcher.h>
 #include "ProximityBonds.h"
@@ -546,9 +546,12 @@ void BasicPDBCleanup(RWMol &mol) {
   }
 }
 
-void parsePdbBlock(RWMol *&mol, const char *str, bool sanitize, bool removeHs,
-                   unsigned int flavor, bool proximityBonding) {
+std::unique_ptr<RWMol> parsePdbBlock(const char *str, bool sanitize,
+                                     bool removeHs, unsigned int flavor,
+                                     bool proximityBonding) {
   PRECONDITION(str, "bad char ptr");
+  RWMol *mol = nullptr;
+  std::unique_ptr<RWMol> res;
   std::map<int, Atom *> amap;
   std::map<Bond *, int> bmap;
   Utils::LocaleSwitcher ls;
@@ -638,57 +641,57 @@ void parsePdbBlock(RWMol *&mol, const char *str, bool sanitize, bool removeHs,
   }
 
   if (!mol) {
-    return;
+    return res;
   }
+  res.reset(mol);
 
   if (proximityBonding) {
-    ConnectTheDots(mol, ctdIGNORE_H_H_CONTACTS);
+    ConnectTheDots(res.get(), ctdIGNORE_H_H_CONTACTS);
   }
   // flavor & 8 doesn't encode double bonds
   if (proximityBonding || flavor & 8) {
-    StandardPDBResidueBondOrders(mol);
+    StandardPDBResidueBondOrders(res.get());
   }
 
-  BasicPDBCleanup(*mol);
+  BasicPDBCleanup(*res);
 
   if (sanitize) {
     if (removeHs) {
-      MolOps::removeHs(*mol, false, false);
+      MolOps::removeHs(*res, false, false);
     } else {
-      MolOps::sanitizeMol(*mol);
+      MolOps::sanitizeMol(*res);
     }
   } else {
     // we need some properties for the chiral setup
-    mol->updatePropertyCache(false);
+    res->updatePropertyCache(false);
   }
 
   /* Set tetrahedral chirality from 3D co-ordinates */
-  MolOps::assignChiralTypesFrom3D(*mol);
-  StandardPDBResidueChirality(mol);
+  MolOps::assignChiralTypesFrom3D(*res);
+  StandardPDBResidueChirality(res.get());
+  return res;
 }
 }  // namespace
 
-RWMol *PDBBlockToMol(const char *str, bool sanitize, bool removeHs,
-                     unsigned int flavor, bool proximityBonding) {
-  RWMol *mol = nullptr;
-  try {
-    parsePdbBlock(mol, str, sanitize, removeHs, flavor, proximityBonding);
-  } catch (...) {
-    delete mol;
-    throw;
-  }
+std::unique_ptr<RWMol> PDBBlockToMol(const char *str, bool sanitize,
+                                     bool removeHs, unsigned int flavor,
+                                     bool proximityBonding) {
+  std::unique_ptr<RWMol> mol;
+  mol = parsePdbBlock(str, sanitize, removeHs, flavor, proximityBonding);
 
   return mol;
 }
 
-RWMol *PDBBlockToMol(const std::string &str, bool sanitize, bool removeHs,
-                     unsigned int flavor, bool proximityBonding) {
+std::unique_ptr<RWMol> PDBBlockToMol(const std::string &str, bool sanitize,
+                                     bool removeHs, unsigned int flavor,
+                                     bool proximityBonding) {
   return PDBBlockToMol(str.c_str(), sanitize, removeHs, flavor,
                        proximityBonding);
 }
 
-RWMol *PDBDataStreamToMol(std::istream *inStream, bool sanitize, bool removeHs,
-                          unsigned int flavor, bool proximityBonding) {
+std::unique_ptr<RWMol> PDBDataStreamToMol(std::istream *inStream, bool sanitize,
+                                          bool removeHs, unsigned int flavor,
+                                          bool proximityBonding) {
   PRECONDITION(inStream, "bad stream");
   std::string buffer;
   while (!inStream->eof() && !inStream->fail()) {
@@ -711,14 +714,16 @@ RWMol *PDBDataStreamToMol(std::istream *inStream, bool sanitize, bool removeHs,
   return PDBBlockToMol(buffer.c_str(), sanitize, removeHs, flavor,
                        proximityBonding);
 }
-RWMol *PDBDataStreamToMol(std::istream &inStream, bool sanitize, bool removeHs,
-                          unsigned int flavor, bool proximityBonding) {
+std::unique_ptr<RWMol> PDBDataStreamToMol(std::istream &inStream, bool sanitize,
+                                          bool removeHs, unsigned int flavor,
+                                          bool proximityBonding) {
   return PDBDataStreamToMol(&inStream, sanitize, removeHs, flavor,
                             proximityBonding);
 }
 
-RWMol *PDBFileToMol(const std::string &fileName, bool sanitize, bool removeHs,
-                    unsigned int flavor, bool proximityBonding) {
+std::unique_ptr<RWMol> PDBFileToMol(const std::string &fileName, bool sanitize,
+                                    bool removeHs, unsigned int flavor,
+                                    bool proximityBonding) {
   std::ifstream ifs(fileName.c_str(), std::ios_base::binary);
   if (!ifs || ifs.bad()) {
     std::ostringstream errout;
