@@ -3338,11 +3338,6 @@ std::unique_ptr<RWMol> MolDataStreamToMol(std::istream *inStream,
   return res;
 }
 
-std::unique_ptr<RWMol> MolDataStreamToMol(std::istream &inStream,
-                                          unsigned int &line, bool sanitize,
-                                          bool removeHs, bool strictParsing) {
-  return MolDataStreamToMol(&inStream, line, sanitize, removeHs, strictParsing);
-}
 //------------------------------------------------
 //
 //  Read a molecule from a string
@@ -3352,7 +3347,7 @@ std::unique_ptr<RWMol> MolBlockToMol(const std::string &molBlock, bool sanitize,
                                      bool removeHs, bool strictParsing) {
   std::istringstream inStream(molBlock);
   unsigned int line = 0;
-  return MolDataStreamToMol(inStream, line, sanitize, removeHs, strictParsing);
+  return MolDataStreamToMol(&inStream, line, sanitize, removeHs, strictParsing);
 }
 
 //------------------------------------------------
@@ -3371,7 +3366,8 @@ std::unique_ptr<RWMol> MolFileToMol(const std::string &fName, bool sanitize,
   std::unique_ptr<RWMol> res;
   if (!inStream.eof()) {
     unsigned int line = 0;
-    res = MolDataStreamToMol(inStream, line, sanitize, removeHs, strictParsing);
+    res =
+        MolDataStreamToMol(&inStream, line, sanitize, removeHs, strictParsing);
   }
   return res;
 }

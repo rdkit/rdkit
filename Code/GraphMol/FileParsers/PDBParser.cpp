@@ -714,12 +714,6 @@ std::unique_ptr<RWMol> PDBDataStreamToMol(std::istream *inStream, bool sanitize,
   return PDBBlockToMol(buffer.c_str(), sanitize, removeHs, flavor,
                        proximityBonding);
 }
-std::unique_ptr<RWMol> PDBDataStreamToMol(std::istream &inStream, bool sanitize,
-                                          bool removeHs, unsigned int flavor,
-                                          bool proximityBonding) {
-  return PDBDataStreamToMol(&inStream, sanitize, removeHs, flavor,
-                            proximityBonding);
-}
 
 std::unique_ptr<RWMol> PDBFileToMol(const std::string &fileName, bool sanitize,
                                     bool removeHs, unsigned int flavor,

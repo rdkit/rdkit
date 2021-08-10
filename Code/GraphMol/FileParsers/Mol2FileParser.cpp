@@ -967,14 +967,6 @@ std::unique_ptr<RWMol> Mol2DataStreamToMol(std::istream *inStream,
   return res;
 };
 
-std::unique_ptr<RWMol> Mol2DataStreamToMol(std::istream &inStream,
-                                           bool sanitize, bool removeHs,
-                                           Mol2Type variant,
-                                           bool cleanupSubstructures) {
-  RDUNUSED_PARAM(variant);
-  return Mol2DataStreamToMol(&inStream, sanitize, removeHs, variant,
-                             cleanupSubstructures);
-};
 //------------------------------------------------
 //
 //  Read a molecule from a string
@@ -986,7 +978,7 @@ std::unique_ptr<RWMol> Mol2BlockToMol(const std::string &molBlock,
                                       bool cleanupSubstructures) {
   RDUNUSED_PARAM(variant);
   std::istringstream inStream(molBlock);
-  return Mol2DataStreamToMol(inStream, sanitize, removeHs, variant,
+  return Mol2DataStreamToMol(&inStream, sanitize, removeHs, variant,
                              cleanupSubstructures);
 }
 
@@ -1010,7 +1002,7 @@ std::unique_ptr<RWMol> Mol2FileToMol(const std::string &fName, bool sanitize,
   }
   std::unique_ptr<RWMol> res;
   if (!inStream.eof()) {
-    res = Mol2DataStreamToMol(inStream, sanitize, removeHs, variant,
+    res = Mol2DataStreamToMol(&inStream, sanitize, removeHs, variant,
                               cleanupSubstructures);
   }
   return res;

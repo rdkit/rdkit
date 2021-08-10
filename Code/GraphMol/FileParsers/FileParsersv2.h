@@ -60,10 +60,6 @@ namespace FileParsers {
 RDKIT_FILEPARSERS_EXPORT std::unique_ptr<RWMol> MolDataStreamToMol(
     std::istream *inStream, unsigned int &line, bool sanitize = true,
     bool removeHs = true, bool strictParsing = true);
-// \overload
-RDKIT_FILEPARSERS_EXPORT std::unique_ptr<RWMol> MolDataStreamToMol(
-    std::istream &inStream, unsigned int &line, bool sanitize = true,
-    bool removeHs = true, bool strictParsing = true);
 // \brief construct a molecule from an MDL mol block
 /*!
  *   \param molBlock - string containing the mol block
@@ -158,10 +154,6 @@ RDKIT_FILEPARSERS_EXPORT std::unique_ptr<RWMol> Mol2FileToMol(
 RDKIT_FILEPARSERS_EXPORT std::unique_ptr<RWMol> Mol2DataStreamToMol(
     std::istream *inStream, bool sanitize = true, bool removeHs = true,
     Mol2Type variant = CORINA, bool cleanupSubstructures = true);
-// \overload
-RDKIT_FILEPARSERS_EXPORT std::unique_ptr<RWMol> Mol2DataStreamToMol(
-    std::istream &inStream, bool sanitize = true, bool removeHs = true,
-    Mol2Type variant = CORINA, bool cleanupSubstructures = true);
 
 // \brief construct a molecule from a Tripos mol2 block
 /*!
@@ -186,9 +178,6 @@ RDKIT_FILEPARSERS_EXPORT std::unique_ptr<RWMol> PDBBlockToMol(
     unsigned int flavor = 0, bool proximityBonding = true);
 RDKIT_FILEPARSERS_EXPORT std::unique_ptr<RWMol> PDBDataStreamToMol(
     std::istream *inStream, bool sanitize = true, bool removeHs = true,
-    unsigned int flavor = 0, bool proximityBonding = true);
-RDKIT_FILEPARSERS_EXPORT std::unique_ptr<RWMol> PDBDataStreamToMol(
-    std::istream &inStream, bool sanitize = true, bool removeHs = true,
     unsigned int flavor = 0, bool proximityBonding = true);
 RDKIT_FILEPARSERS_EXPORT std::unique_ptr<RWMol> PDBFileToMol(
     const std::string &fname, bool sanitize = true, bool removeHs = true,
