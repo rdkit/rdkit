@@ -48,27 +48,33 @@ struct RDKIT_SMILESPARSE_EXPORT SmartsParserParams {
 namespace SmilesParser {
 //! Construct a molecule from a SMILES string
 RDKIT_SMILESPARSE_EXPORT std::unique_ptr<RWMol> SmilesToMol(
-    std::string smi, SmilesParserParams params = SmilesParserParams());
+    const std::string &smi,
+    const SmilesParserParams &params = SmilesParserParams());
 
 //! Construct an atom from a SMILES string
-RDKIT_SMILESPARSE_EXPORT std::unique_ptr<Atom> SmilesToAtom(std::string smi);
+RDKIT_SMILESPARSE_EXPORT std::unique_ptr<Atom> SmilesToAtom(
+    const std::string &smi);
 //! Construct a bond from a SMILES string
-RDKIT_SMILESPARSE_EXPORT std::unique_ptr<Bond> SmilesToBond(std::string smi);
+RDKIT_SMILESPARSE_EXPORT std::unique_ptr<Bond> SmilesToBond(
+    const std::string &smi);
 
 //! Construct a molecule from a SMARTS string
 RDKIT_SMILESPARSE_EXPORT std::unique_ptr<RWMol> SmartsToMol(
-    std::string sma, SmartsParserParams params = SmartsParserParams());
+    const std::string &sma,
+    const SmartsParserParams &params = SmartsParserParams());
 //! Construct an atom from a SMARTS string
-RDKIT_SMILESPARSE_EXPORT std::unique_ptr<Atom> SmartsToAtom(std::string sma);
+RDKIT_SMILESPARSE_EXPORT std::unique_ptr<Atom> SmartsToAtom(
+    const std::string &sma);
 //! Construct a bond from a SMARTS string
-RDKIT_SMILESPARSE_EXPORT std::unique_ptr<Bond> SmartsToBond(std::string sma);
+RDKIT_SMILESPARSE_EXPORT std::unique_ptr<Bond> SmartsToBond(
+    const std::string &sma);
 
 }  // namespace SmilesParser
 
 class RDKIT_SMILESPARSE_EXPORT SmilesParseException : public std::exception {
  public:
   SmilesParseException(const char *msg) : _msg(msg) {}
-  SmilesParseException(const std::string msg) : _msg(msg) {}
+  SmilesParseException(const std::string &msg) : _msg(msg) {}
   const char *what() const noexcept override { return _msg.c_str(); }
   ~SmilesParseException() noexcept override = default;
 

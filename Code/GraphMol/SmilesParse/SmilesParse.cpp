@@ -341,18 +341,18 @@ void preprocessSmiles(const std::string &smiles, const T &params,
 }
 }  // namespace
 
-std::unique_ptr<Atom> SmilesToAtom(std::string smiles) {
+std::unique_ptr<Atom> SmilesToAtom(const std::string &smiles) {
   yysmiles_debug = false;
   return toAtom(smiles, smiles_atom_parse);
 };
 
-std::unique_ptr<Bond> SmilesToBond(std::string smiles) {
+std::unique_ptr<Bond> SmilesToBond(const std::string &smiles) {
   yysmiles_debug = false;
   return toBond(smiles, smiles_bond_parse);
 };
 
-std::unique_ptr<RWMol> SmilesToMol(std::string smiles,
-                                   SmilesParserParams params) {
+std::unique_ptr<RWMol> SmilesToMol(const std::string &smiles,
+                                   const SmilesParserParams &params) {
   // Calling SmilesToMol in a multithreaded context is generally safe *unless*
   // the value of debugParse is different for different threads. The if
   // statement below avoids a TSAN warning in the case where multiple threads
@@ -420,18 +420,18 @@ std::unique_ptr<RWMol> SmilesToMol(std::string smiles,
   return res;
 };
 
-std::unique_ptr<Atom> SmartsToAtom(std::string smiles) {
+std::unique_ptr<Atom> SmartsToAtom(const std::string &smiles) {
   yysmarts_debug = false;
   return toAtom(smiles, smarts_atom_parse);
 };
 
-std::unique_ptr<Bond> SmartsToBond(std::string smiles) {
+std::unique_ptr<Bond> SmartsToBond(const std::string &smiles) {
   yysmarts_debug = false;
   return toBond(smiles, smarts_bond_parse);
 };
 
-std::unique_ptr<RWMol> SmartsToMol(std::string smarts,
-                                   SmartsParserParams params) {
+std::unique_ptr<RWMol> SmartsToMol(const std::string &smarts,
+                                   const SmartsParserParams &params) {
   // Calling SmartsToMol in a multithreaded context is generally safe *unless*
   // the value of debugParse is different for different threads. The if
   // statement below avoids a TSAN warning in the case where multiple threads
