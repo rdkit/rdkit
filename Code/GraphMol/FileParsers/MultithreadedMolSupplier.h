@@ -1,5 +1,5 @@
 //
-//  Copyright (C) 2020 Shrey Aryan
+//  Copyright (C) 2020-2021 Shrey Aryan and other RDKit contributors
 //
 //   @@ All Rights Reserved @@
 //  This file is part of the RDKit.
@@ -11,7 +11,7 @@
 #ifndef MULTITHREADED_MOL_SUPPLIER
 #define MULTITHREADED_MOL_SUPPLIER
 
-#include <GraphMol/SmilesParse/SmilesParse.h>
+#include <GraphMol/SmilesParse/SmilesParsev2.h>
 #include <RDGeneral/BadFileException.h>
 #include <RDGeneral/ConcurrentQueue.h>
 #include <RDGeneral/FileParseException.h>

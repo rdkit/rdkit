@@ -1,6 +1,6 @@
 #ifdef RDK_THREADSAFE_SSS
 //
-//  Copyright (C) 2020 Shrey Aryan
+//  Copyright (C) 2020-2021 Shrey Aryan and other RDKit contributors
 //
 //   @@ All Rights Reserved @@
 //  This file is part of the RDKit.
@@ -162,15 +162,15 @@ ROMol *MultithreadedSmilesMolSupplier::processMoleculeRecord(
   // -----------
   // get the smiles and create a molecule
   // -----------
-  SmilesParserParams params;
+  SmilesParser::SmilesParserParams params;
   params.sanitize = df_sanitize;
   params.allowCXSMILES = false;
   params.parseName = false;
-  res = SmilesToMol(recs[d_smi], params);
+  res = SmilesParser::SmilesToMol(recs[d_smi], params).get();
   if (!res) {
     std::stringstream errout;
     errout << "Cannot create molecule from : '" << recs[d_smi] << "'";
-    throw SmilesParseException(errout.str());
+    throw SmilesParser::SmilesParseException(errout.str());
   }
 
   // -----------

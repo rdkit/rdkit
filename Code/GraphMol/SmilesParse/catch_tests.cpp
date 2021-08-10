@@ -1063,3 +1063,5 @@ TEST_CASE("Github #4233: data groups in CXSMILES neither parsed nor written") {
   }
   SECTION("more") {}
 }
+
+TEST_CASE("smilestoatom") { std::unique_ptr<Atom> atom(SmilesToAtom("C")); }

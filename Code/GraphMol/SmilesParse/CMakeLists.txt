@@ -62,6 +62,7 @@ target_compile_definitions(SmilesParse PRIVATE RDKIT_SMILESPARSE_BUILD)
 rdkit_headers(primes.h
               SmartsWrite.h
               SmilesParse.h
+              SmilesParsev2.h
               SmilesParseOps.h
               SmilesWrite.h DEST GraphMol/SmilesParse)
 
@@ -71,3 +72,4 @@ rdkit_test(cxsmilesTest cxsmiles_test.cpp LINK_LIBRARIES FileParsers SmilesParse
 
 rdkit_test(smaTest1 smatest.cpp LINK_LIBRARIES SmilesParse SubstructMatch  )
 rdkit_catch_test(smiTestCatch ../catch_main.cpp catch_tests.cpp LINK_LIBRARIES FileParsers SmilesParse )
+rdkit_catch_test(smiTestCatchv2 ../catch_main.cpp catch_testsv2.cpp LINK_LIBRARIES FileParsers SmilesParse )

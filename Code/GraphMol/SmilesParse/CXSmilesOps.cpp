@@ -1,5 +1,5 @@
 //
-//  Copyright (C) 2016-2019 Greg Landrum
+//  Copyright (C) 2016-2021 Greg Landrum and other RDKit contributors
 //
 //   @@ All Rights Reserved @@
 //  This file is part of the RDKit.
@@ -16,7 +16,7 @@
 #include <GraphMol/RDKitQueries.h>
 #include <iostream>
 #include "SmilesWrite.h"
-#include "SmilesParse.h"
+#include "SmilesParsev2.h"
 #include "SmilesParseOps.h"
 
 namespace SmilesParseOps {
@@ -86,7 +86,7 @@ std::string read_text_to(Iterator &first, Iterator last, std::string delims) {
         ++next;
       }
       if (next == last || *next != ';') {
-        throw RDKit::SmilesParseException(
+        throw SmilesParser::SmilesParseException(
             "failure parsing CXSMILES extensions: quoted block not terminated "
             "with ';'");
       }
@@ -872,7 +872,8 @@ void parseCXExtensions(RDKit::RWMol &mol, const std::string &extText,
   first = extText.begin();
   bool ok = parser::parse_it(first, extText.end(), mol);
   if (!ok) {
-    throw RDKit::SmilesParseException("failure parsing CXSMILES extensions");
+    throw SmilesParser::SmilesParseException(
+        "failure parsing CXSMILES extensions");
   }
   processCXSmilesLabels(mol);
 }

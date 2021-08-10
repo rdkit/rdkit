@@ -1,6 +1,5 @@
-// $Id$
 //
-//  Copyright (C) 2002-2011 Greg Landrum and Rational Discovery LLC
+//  Copyright (C) 2002-2021 Greg Landrum and other RDKit contributors
 //
 //   @@ All Rights Reserved @@
 //  This file is part of the RDKit.
@@ -14,7 +13,7 @@
 #include <RDGeneral/RDLog.h>
 #include "MolSupplier.h"
 #include "FileParsers.h"
-#include <GraphMol/SmilesParse/SmilesParse.h>
+#include <GraphMol/SmilesParse/SmilesParsev2.h>
 #include <boost/tokenizer.hpp>
 typedef boost::tokenizer<boost::char_separator<char>> tokenizer;
 
@@ -154,15 +153,15 @@ ROMol *SmilesMolSupplier::processLine(std::string inLine) {
     // -----------
     // get the smiles and create a molecule
     // -----------
-    SmilesParserParams params;
+    SmilesParser::SmilesParserParams params;
     params.sanitize = df_sanitize;
     params.allowCXSMILES = false;
     params.parseName = false;
-    res = SmilesToMol(recs[d_smi], params);
+    res = SmilesParser::SmilesToMol(recs[d_smi], params).release();
     if (!res) {
       std::stringstream errout;
       errout << "Cannot create molecule from : '" << recs[d_smi] << "'";
-      throw SmilesParseException(errout.str());
+      throw SmilesParser::SmilesParseException(errout.str());
     }
 
     // -----------
@@ -206,7 +205,7 @@ ROMol *SmilesMolSupplier::processLine(std::string inLine) {
       iprop++;
     }
 
-  } catch (const SmilesParseException &pe) {
+  } catch (const SmilesParser::SmilesParseException &pe) {
     // Couldn't parse the passed in smiles
     // Simply print out a message
     BOOST_LOG(rdErrorLog) << "ERROR: Smiles parse error on line " << d_line

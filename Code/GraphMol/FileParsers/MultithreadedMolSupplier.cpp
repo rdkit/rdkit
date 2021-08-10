@@ -1,6 +1,6 @@
 #ifdef RDK_THREADSAFE_SSS
 //
-//  Copyright (C) 2020 Shrey Aryan
+//  Copyright (C) 2020-2021 Shrey Aryan and other RDKit contributors
 //
 //   @@ All Rights Reserved @@
 //  This file is part of the RDKit.

@@ -1,5 +1,5 @@
 //
-//  Copyright (C) 2020 Greg Landrum
+//  Copyright (C) 2020-2021 Greg Landrum and other RDKit Contributors
 //
 //   @@ All Rights Reserved @@
 //  This file is part of the RDKit.
@@ -271,7 +271,7 @@ std::string addMolToPNGStream(const ROMol &mol, std::istream &iStream,
 };
 
 ROMol *PNGStreamToMol(std::istream &inStream,
-                      const SmilesParserParams &params) {
+                      const SmilesParser::SmilesParserParams &params) {
   ROMol *res = nullptr;
   auto metadata = PNGStreamToMetadata(inStream);
   bool formatFound = false;
@@ -280,7 +280,7 @@ ROMol *PNGStreamToMol(std::istream &inStream,
       res = new ROMol(pr.second);
       formatFound = true;
     } else if (boost::starts_with(pr.first, PNGData::smilesTag)) {
-      res = SmilesToMol(pr.second, params);
+      res = SmilesParser::SmilesToMol(pr.second, params).get();
       formatFound = true;
     } else if (boost::starts_with(pr.first, PNGData::molTag)) {
       res = MolBlockToMol(pr.second, params.sanitize, params.removeHs);
@@ -298,7 +298,7 @@ ROMol *PNGStreamToMol(std::istream &inStream,
 
 std::vector<std::unique_ptr<ROMol>> PNGStreamToMols(
     std::istream &inStream, const std::string &tagToUse,
-    const SmilesParserParams &params) {
+    const SmilesParser::SmilesParserParams &params) {
   std::vector<std::unique_ptr<ROMol>> res;
   auto metadata = PNGStreamToMetadata(inStream);
   for (const auto &pr : metadata) {
@@ -308,7 +308,7 @@ std::vector<std::unique_ptr<ROMol>> PNGStreamToMols(
     if (boost::starts_with(pr.first, PNGData::pklTag)) {
       res.emplace_back(new ROMol(pr.second));
     } else if (boost::starts_with(pr.first, PNGData::smilesTag)) {
-      res.emplace_back(SmilesToMol(pr.second, params));
+      res.emplace_back(SmilesParser::SmilesToMol(pr.second, params));
     } else if (boost::starts_with(pr.first, PNGData::molTag)) {
       res.emplace_back(
           MolBlockToMol(pr.second, params.sanitize, params.removeHs));

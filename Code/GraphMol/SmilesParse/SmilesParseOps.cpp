@@ -1,5 +1,5 @@
 //
-//  Copyright (C) 2001-2020 Greg Landrum and Rational Discovery LLC
+//  Copyright (C) 2001-2021 Greg Landrum and other RDKit contributors
 //
 //   @@ All Rights Reserved @@
 //  This file is part of the RDKit.
@@ -10,7 +10,7 @@
 #include <GraphMol/RDKitBase.h>
 #include <GraphMol/RDKitQueries.h>
 #include <GraphMol/Canon.h>
-#include "SmilesParse.h"
+#include "SmilesParsev2.h"
 #include "SmilesParseOps.h"
 #include <list>
 #include <algorithm>
@@ -67,7 +67,7 @@ void ReportParseError(const char *message, bool throwIt) {
   if (!throwIt) {
     BOOST_LOG(rdErrorLog) << "SMILES Parse Error: " << message << std::endl;
   } else {
-    throw SmilesParseException(message);
+    throw SmilesParser::SmilesParseException(message);
   }
 }
 
