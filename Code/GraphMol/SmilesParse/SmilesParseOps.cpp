@@ -67,7 +67,7 @@ void ReportParseError(const char *message, bool throwIt) {
   if (!throwIt) {
     BOOST_LOG(rdErrorLog) << "SMILES Parse Error: " << message << std::endl;
   } else {
-    throw SmilesParser::SmilesParseException(message);
+    throw SmilesParseException(message);
   }
 }
 

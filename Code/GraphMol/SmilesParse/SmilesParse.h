@@ -14,10 +14,8 @@
 
 namespace RDKit {
 
-using RDKit::SmilesParser::SmilesParseException;
-
 inline RWMol *SmilesToMol(const std::string &smi,
-                          const SmilesParser::SmilesParserParams &params) {
+                          const SmilesParserParams &params) {
   return SmilesParser::SmilesToMol(smi, params).release();
 };
 
@@ -58,7 +56,7 @@ inline Bond *SmilesToBond(const std::string &smi) {
 inline RWMol *SmilesToMol(
     const std::string &smi, int debugParse = 0, bool sanitize = true,
     std::map<std::string, std::string> *replacements = nullptr) {
-  SmilesParser::SmilesParserParams params;
+  SmilesParserParams params;
   params.debugParse = debugParse;
   params.replacements = replacements;
   if (sanitize) {
@@ -71,8 +69,7 @@ inline RWMol *SmilesToMol(
   return SmilesParser::SmilesToMol(smi, params).release();
 };
 
-inline RWMol *SmartsToMol(std::string sma,
-                          SmilesParser::SmartsParserParams ps) {
+inline RWMol *SmartsToMol(std::string sma, SmartsParserParams ps) {
   return SmilesParser::SmartsToMol(sma, ps).release();
 };
 ;
@@ -92,7 +89,7 @@ inline RWMol *SmartsToMol(std::string sma,
 inline RWMol *SmartsToMol(
     const std::string &sma, int debugParse = 0, bool mergeHs = false,
     std::map<std::string, std::string> *replacements = nullptr) {
-  SmilesParser::SmartsParserParams ps;
+  SmartsParserParams ps;
   ps.debugParse = debugParse;
   ps.mergeHs = mergeHs;
   ps.replacements = replacements;
@@ -105,9 +102,6 @@ inline Atom *SmartsToAtom(const std::string &sma) {
 inline Bond *SmartsToBond(const std::string &sma) {
   return SmilesParser::SmartsToBond(sma).release();
 }
-
-using RDKit::SmilesParser::SmartsParserParams;
-using RDKit::SmilesParser::SmilesParserParams;
 
 }  // namespace RDKit
 

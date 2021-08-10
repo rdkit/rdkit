@@ -485,7 +485,7 @@ std::unique_ptr<RDKit::RWMol> operator"" _smiles(const char *text, size_t len) {
   std::string smi(text, len);
   std::unique_ptr<RWMol> res;
   try {
-    res = SmilesParser::SmilesToMol(smi, SmilesParser::SmilesParserParams());
+    res = SmilesParser::SmilesToMol(smi, SmilesParserParams());
   } catch (const RDKit::MolSanitizeException &) {
     res.reset(nullptr);
   }
@@ -495,7 +495,7 @@ std::unique_ptr<RDKit::RWMol> operator"" _smarts(const char *text, size_t len) {
   std::string smi(text, len);
   std::unique_ptr<RWMol> res;
   try {
-    res = SmilesParser::SmartsToMol(smi, SmilesParser::SmartsParserParams());
+    res = SmilesParser::SmartsToMol(smi, SmartsParserParams());
   } catch (const RDKit::MolSanitizeException &) {
     res.reset(nullptr);
   }

@@ -153,7 +153,7 @@ ROMol *SmilesMolSupplier::processLine(std::string inLine) {
     // -----------
     // get the smiles and create a molecule
     // -----------
-    SmilesParser::SmilesParserParams params;
+    SmilesParserParams params;
     params.sanitize = df_sanitize;
     params.allowCXSMILES = false;
     params.parseName = false;
@@ -161,7 +161,7 @@ ROMol *SmilesMolSupplier::processLine(std::string inLine) {
     if (!res) {
       std::stringstream errout;
       errout << "Cannot create molecule from : '" << recs[d_smi] << "'";
-      throw SmilesParser::SmilesParseException(errout.str());
+      throw SmilesParseException(errout.str());
     }
 
     // -----------
@@ -205,7 +205,7 @@ ROMol *SmilesMolSupplier::processLine(std::string inLine) {
       iprop++;
     }
 
-  } catch (const SmilesParser::SmilesParseException &pe) {
+  } catch (const SmilesParseException &pe) {
     // Couldn't parse the passed in smiles
     // Simply print out a message
     BOOST_LOG(rdErrorLog) << "ERROR: Smiles parse error on line " << d_line

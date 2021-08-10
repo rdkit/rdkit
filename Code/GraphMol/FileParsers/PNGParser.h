@@ -105,13 +105,13 @@ The caller is responsible for the returned pointer.
 
  */
 RDKIT_FILEPARSERS_EXPORT ROMol *PNGStreamToMol(
-    std::istream &inStream, const SmilesParser::SmilesParserParams &params =
-                                SmilesParser::SmilesParserParams());
+    std::istream &inStream,
+    const SmilesParserParams &params = SmilesParserParams());
 //! \brief constructs an ROMol from the metadata in a PNG file.
 //! See \c PNGStreamToMol() for more details.
-inline ROMol *PNGFileToMol(const std::string &fname,
-                           const SmilesParser::SmilesParserParams &params =
-                               SmilesParser::SmilesParserParams()) {
+inline ROMol *PNGFileToMol(
+    const std::string &fname,
+    const SmilesParserParams &params = SmilesParserParams()) {
   std::ifstream inStream(fname.c_str(), std::ios::binary);
   if (!inStream || (inStream.bad())) {
     throw BadFileException((boost::format("Bad input file %s") % fname).str());
@@ -120,9 +120,9 @@ inline ROMol *PNGFileToMol(const std::string &fname,
 }
 //! \brief constructs an ROMol from the metadata in a PNG string.
 //! See \c PNGStreamToMol() for more details.
-inline ROMol *PNGStringToMol(const std::string &data,
-                             const SmilesParser::SmilesParserParams &params =
-                                 SmilesParser::SmilesParserParams()) {
+inline ROMol *PNGStringToMol(
+    const std::string &data,
+    const SmilesParserParams &params = SmilesParserParams()) {
   std::stringstream inStream(data);
   return PNGStreamToMol(inStream, params);
 }
@@ -137,14 +137,12 @@ these data are returned.
  */
 RDKIT_FILEPARSERS_EXPORT std::vector<std::unique_ptr<ROMol>> PNGStreamToMols(
     std::istream &inStream, const std::string &tagToUse = PNGData::pklTag,
-    const SmilesParser::SmilesParserParams &params =
-        SmilesParser::SmilesParserParams());
+    const SmilesParserParams &params = SmilesParserParams());
 //! \brief constructs a vector of ROMol from the metadata in a PNG file.
 //! See \c PNGStreamToMols() for more details.
 inline std::vector<std::unique_ptr<ROMol>> PNGFileToMols(
     const std::string &fname, const std::string &tagToUse = PNGData::pklTag,
-    const SmilesParser::SmilesParserParams &params =
-        SmilesParser::SmilesParserParams()) {
+    const SmilesParserParams &params = SmilesParserParams()) {
   std::ifstream inStream(fname.c_str(), std::ios::binary);
   if (!inStream || (inStream.bad())) {
     throw BadFileException((boost::format("Bad input file %s") % fname).str());
@@ -155,8 +153,7 @@ inline std::vector<std::unique_ptr<ROMol>> PNGFileToMols(
 //! See \c PNGStreamToMols() for more details.
 inline std::vector<std::unique_ptr<ROMol>> PNGStringToMols(
     const std::string &data, const std::string &tagToUse = PNGData::pklTag,
-    const SmilesParser::SmilesParserParams &params =
-        SmilesParser::SmilesParserParams()) {
+    const SmilesParserParams &params = SmilesParserParams()) {
   std::stringstream inStream(data);
   return PNGStreamToMols(inStream, tagToUse, params);
 }

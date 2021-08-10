@@ -86,7 +86,7 @@ std::string read_text_to(Iterator &first, Iterator last, std::string delims) {
         ++next;
       }
       if (next == last || *next != ';') {
-        throw SmilesParser::SmilesParseException(
+        throw SmilesParseException(
             "failure parsing CXSMILES extensions: quoted block not terminated "
             "with ';'");
       }
@@ -872,8 +872,7 @@ void parseCXExtensions(RDKit::RWMol &mol, const std::string &extText,
   first = extText.begin();
   bool ok = parser::parse_it(first, extText.end(), mol);
   if (!ok) {
-    throw SmilesParser::SmilesParseException(
-        "failure parsing CXSMILES extensions");
+    throw SmilesParseException("failure parsing CXSMILES extensions");
   }
   processCXSmilesLabels(mol);
 }

@@ -271,7 +271,7 @@ std::string addMolToPNGStream(const ROMol &mol, std::istream &iStream,
 };
 
 ROMol *PNGStreamToMol(std::istream &inStream,
-                      const SmilesParser::SmilesParserParams &params) {
+                      const SmilesParserParams &params) {
   ROMol *res = nullptr;
   auto metadata = PNGStreamToMetadata(inStream);
   bool formatFound = false;
@@ -298,7 +298,7 @@ ROMol *PNGStreamToMol(std::istream &inStream,
 
 std::vector<std::unique_ptr<ROMol>> PNGStreamToMols(
     std::istream &inStream, const std::string &tagToUse,
-    const SmilesParser::SmilesParserParams &params) {
+    const SmilesParserParams &params) {
   std::vector<std::unique_ptr<ROMol>> res;
   auto metadata = PNGStreamToMetadata(inStream);
   for (const auto &pr : metadata) {
