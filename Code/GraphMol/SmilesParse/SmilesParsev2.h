@@ -42,7 +42,7 @@ struct RDKIT_SMILESPARSE_EXPORT SmartsParserParams {
       true; /**< throw an exception if the CXSMILES parsing fails */
   bool parseName = false; /**< parse (and set) the molecule name as well */
   bool mergeHs =
-      true; /**< toggles merging H atoms in the SMARTS into neighboring atoms*/
+      false; /**< toggles merging H atoms in the SMARTS into neighboring atoms*/
 };
 
 namespace SmilesParser {

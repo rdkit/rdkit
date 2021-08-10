@@ -280,7 +280,7 @@ ROMol *PNGStreamToMol(std::istream &inStream,
       res = new ROMol(pr.second);
       formatFound = true;
     } else if (boost::starts_with(pr.first, PNGData::smilesTag)) {
-      res = SmilesParser::SmilesToMol(pr.second, params).get();
+      res = SmilesParser::SmilesToMol(pr.second, params).release();
       formatFound = true;
     } else if (boost::starts_with(pr.first, PNGData::molTag)) {
       res = MolBlockToMol(pr.second, params.sanitize, params.removeHs);

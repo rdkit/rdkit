@@ -166,7 +166,7 @@ ROMol *MultithreadedSmilesMolSupplier::processMoleculeRecord(
   params.sanitize = df_sanitize;
   params.allowCXSMILES = false;
   params.parseName = false;
-  res = SmilesParser::SmilesToMol(recs[d_smi], params).get();
+  res = SmilesParser::SmilesToMol(recs[d_smi], params).release();
   if (!res) {
     std::stringstream errout;
     errout << "Cannot create molecule from : '" << recs[d_smi] << "'";
