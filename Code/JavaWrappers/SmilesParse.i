@@ -34,6 +34,13 @@
 %{
 #include <GraphMol/SmilesParse/SmilesParse.h>
 %}
+%ignore RDKit::SmilesParser::SmilesToMol;
+%ignore RDKit::SmilesParser::SmilesToAtom;
+%ignore RDKit::SmilesParser::SmilesToBond;
+%ignore RDKit::SmilesParser::SmartsToMol;
+%ignore RDKit::SmilesParser::SmartsToAtom;
+%ignore RDKit::SmilesParser::SmartsToBond;
 %ignore SmilesToMol;
 %ignore SmartsToMol;
+%include <GraphMol/SmilesParse/SmilesParsev2.h>
 %include <GraphMol/SmilesParse/SmilesParse.h>

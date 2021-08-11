@@ -46,11 +46,26 @@
 %ignore RDKit::RWMol::addAtom(Atom *atom,bool updateLabel,bool takeOwnership);
 %ignore RDKit::RWMol::addBond(Bond *bond,bool takeOwnership);
 
+// ignore the input methods in the new API
+%ignore RDKit::FileParsers::MolBlockToMol;
+%ignore RDKit::FileParsers::MolDataStreamToMol;
+%ignore RDKit::FileParsers::MolFileToMol;
+%ignore RDKit::FileParsers::TPLDataStreamToMol;
+%ignore RDKit::FileParsers::TPLFileToMol;
+%ignore RDKit::FileParsers::Mol2BlockToMol;
+%ignore RDKit::FileParsers::Mol2DataStreamToMol;
+%ignore RDKit::FileParsers::Mol2FileToMol;
+%ignore RDKit::FileParsers::PDBBlockToMol;
+%ignore RDKit::FileParsers::PDBDataStreamToMol;
+%ignore RDKit::FileParsers::PDBFileToMol;
+%ignore RDKit::FileParsers::RDKitSVGToMol;
+
 %shared_ptr(RDKit::RWMol)
 %include "enums.swg"
 #if swifjava
 %javaconst(1);
 #endif
+%include <GraphMol/FileParsers/FileParsersv2.h>
 %include <GraphMol/FileParsers/FileParsers.h>
 %include <GraphMol/RWMol.h>
 
