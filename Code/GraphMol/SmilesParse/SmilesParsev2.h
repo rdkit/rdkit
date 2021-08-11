@@ -81,8 +81,10 @@ class RDKIT_SMILESPARSE_EXPORT SmilesParseException : public std::exception {
  private:
   std::string _msg;
 };
-std::unique_ptr<RDKit::RWMol> operator"" _smiles(const char *text, size_t len);
-std::unique_ptr<RDKit::RWMol> operator"" _smarts(const char *text, size_t len);
+RDKIT_SMILESPARSE_EXPORT std::unique_ptr<RDKit::RWMol> operator"" _smiles(
+    const char *text, size_t len);
+RDKIT_SMILESPARSE_EXPORT std::unique_ptr<RDKit::RWMol> operator"" _smarts(
+    const char *text, size_t len);
 
 }  // namespace RDKit
 
