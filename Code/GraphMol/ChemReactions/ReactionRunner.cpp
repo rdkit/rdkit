@@ -607,7 +607,16 @@ void translateProductStereoBondDirections(Bond *pBond, const Bond *start,
 
   pBond->setStereoAtoms(pStartAnchorIdx, pEndAnchorIdx);
 
-  if (start->getBondDir() == end->getBondDir()) {
+  bool sameDir = start->getBondDir() == end->getBondDir();
+
+  if (start->getBeginAtom() == pBond->getBeginAtom()) {
+    sameDir = !sameDir;
+  }
+  if (end->getBeginAtom() != pBond->getEndAtom()) {
+    sameDir = !sameDir;
+  }
+
+  if (sameDir) {
     pBond->setStereo(Bond::BondStereo::STEREOTRANS);
   } else {
     pBond->setStereo(Bond::BondStereo::STEREOCIS);
