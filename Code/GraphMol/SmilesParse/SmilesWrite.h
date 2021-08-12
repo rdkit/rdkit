@@ -26,9 +26,9 @@ struct RDKIT_SMILESPARSE_EXPORT SmilesWriteParams {
   bool doKekule = false; /**< kekulize the molecule before generating the SMILES
                             and output single/double bonds. NOTE that the output
                             is not canonical and that this will thrown an
-                            exception of the molecule cannot be kekulized. */
+                            exception if the molecule cannot be kekulized. */
   bool canonical = true; /**< generate canonical SMILES */
-  bool allBondsExplicit = false; /**< include symbols for all bonds*/
+  bool allBondsExplicit = false; /**< include symbols for all bonds */
   bool allHsExplicit = false;    /**< provide hydrogen counts for every atom */
   bool doRandom = false; /**< randomize the output order. The resulting SMILES
                             is not canonical */
