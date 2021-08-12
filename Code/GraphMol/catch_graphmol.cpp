@@ -2122,3 +2122,41 @@ TEST_CASE(
     CHECK(MolToSmarts(*m) == "C-,=O");
   }
 }
+
+TEST_CASE("moves") {
+  SECTION("molecule move") {
+    auto m1 = "CCC"_smiles;
+    m1->setProp("foo", 1);
+    ROMol m2 = std::move(*m1);
+    CHECK(m1->getDict().getData().empty());
+    CHECK(m2.getNumAtoms() == 3);
+    CHECK(m2.getNumBonds() == 2);
+    for (const auto atom : m2.atoms()) {
+      CHECK(&atom->getOwningMol() == &m2);
+      CHECK(&atom->getOwningMol() != m1.get());
+    }
+    for (const auto bond : m2.bonds()) {
+      CHECK(&bond->getOwningMol() == &m2);
+      CHECK(&bond->getOwningMol() != m1.get());
+    }
+  }
+  SECTION("molecule move-assign") {
+    auto m1 = "CCC"_smiles;
+    m1->setProp("foo", 1u);
+    ROMol m2;
+    m2 = std::move(*m1);
+    CHECK(m1->getDict().getData().empty());
+    CHECK(m2.getNumAtoms() == 3);
+    CHECK(m2.getNumBonds() == 2);
+    for (const auto atom : m2.atoms()) {
+      CHECK(&atom->getOwningMol() == &m2);
+      CHECK(&atom->getOwningMol() != m1.get());
+    }
+    for (const auto bond : m2.bonds()) {
+      CHECK(&bond->getOwningMol() == &m2);
+      CHECK(&bond->getOwningMol() != m1.get());
+    }
+    CHECK(m2.hasProp("foo"));
+    CHECK(m2.getProp<unsigned>("foo") == 1u);
+  }
+}

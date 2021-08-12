@@ -1,5 +1,5 @@
 //
-//  Copyright (C) 2018 T5 Informatics GmbH
+//  Copyright (C) 2018-2021 Greg Landrum and other RDKit contributors
 //
 //   @@ All Rights Reserved @@
 //  This file is part of the RDKit.
@@ -48,6 +48,11 @@ class RDKIT_GRAPHMOL_EXPORT StereoGroup {
   // Takes control of atoms if possible.
   StereoGroup(StereoGroupType grouptype, std::vector<Atom*>&& atoms);
   StereoGroup(StereoGroupType grouptype, const std::vector<Atom*>& atoms);
+  StereoGroup(const StereoGroup& other) = default;
+  StereoGroup& operator=(const StereoGroup& other) = default;
+  StereoGroup(StereoGroup&& other) = default;
+  StereoGroup& operator=(StereoGroup&& other) = default;
+
   StereoGroupType getGroupType() const;
   const std::vector<Atom*>& getAtoms() const;
   // Seems odd to have to define these, but otherwise the SWIG wrappers

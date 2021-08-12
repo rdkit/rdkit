@@ -22,8 +22,18 @@ class RDProps {
   RDProps() : d_props() {}
   RDProps(const RDProps &rhs) : d_props(rhs.d_props) {}
   RDProps &operator=(const RDProps &rhs) {
-    if (this == &rhs) return *this;
+    if (this == &rhs) {
+      return *this;
+    }
     d_props = rhs.d_props;
+    return *this;
+  }
+  RDProps(RDProps &&o) noexcept : d_props(std::move(o.d_props)) {}
+  RDProps &operator=(RDProps &&rhs) noexcept {
+    if (this == &rhs) {
+      return *this;
+    }
+    d_props = std::move(rhs.d_props);
     return *this;
   }
   void clear() { d_props.reset(); }
@@ -156,8 +166,8 @@ class RDProps {
   //! update the properties from another
   /*
     \param source    Source to update the properties from
-    \param preserve  Existing If true keep existing data, else override from the
-    source
+    \param preserve  Existing If true keep existing data, else override from
+    the source
   */
   void updateProps(const RDProps &source, bool preserveExisting = false) {
     d_props.update(source.getDict(), preserveExisting);

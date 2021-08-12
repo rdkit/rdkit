@@ -1,5 +1,5 @@
 //
-// Copyright (C) 2003-2020 Greg Landrum and Rational Discovery LLC
+// Copyright (C) 2003-2021 Greg Landrum and other RDKit contributors
 //
 //  @@ All Rights Reserved @@
 //  This file is part of the RDKit.
@@ -58,6 +58,17 @@ class RDKIT_RDGENERAL_EXPORT Dict {
         copy_rdvalue(_data[i].val, other._data[i].val);
       }
     }
+  }
+
+  Dict(Dict &&other) noexcept : _data(std::move(other._data)) {
+    other._data.clear();
+  }
+  Dict &operator=(Dict &&other) noexcept {
+    if (this == &other) {
+      return *this;
+    }
+    _data = std::move(other._data);
+    return *this;
   }
 
   ~Dict() {

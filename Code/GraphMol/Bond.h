@@ -109,6 +109,45 @@ class RDKIT_GRAPHMOL_EXPORT Bond : public RDProps {
   virtual ~Bond();
   Bond &operator=(const Bond &other);
 
+  Bond(Bond &&o) noexcept : RDProps(std::move(o)) {
+    std::cerr << "bond move" << std::endl;
+    df_isAromatic = o.df_isAromatic;
+    df_isConjugated = o.df_isConjugated;
+    d_bondType = o.d_bondType;
+    d_dirTag = o.d_dirTag;
+    d_stereo = o.d_stereo;
+    d_index = o.d_index;
+    d_beginAtomIdx = o.d_beginAtomIdx;
+    d_endAtomIdx = o.d_endAtomIdx;
+    // NOTE: this is somewhat fraught for bonds associated with molecules since
+    // the molecule will still be pointing to the original object
+    dp_mol = o.dp_mol;
+    dp_stereoAtoms = o.dp_stereoAtoms;
+    o.dp_mol = nullptr;
+    o.dp_stereoAtoms = nullptr;
+  }
+  Bond &operator=(Bond &&o) noexcept {
+    if (this == &o) return *this;
+    std::cerr << "bond move assignment" << std::endl;
+    RDProps::operator=(std::move(o));
+    df_isAromatic = o.df_isAromatic;
+    df_isConjugated = o.df_isConjugated;
+    d_bondType = o.d_bondType;
+    d_dirTag = o.d_dirTag;
+    d_stereo = o.d_stereo;
+    d_index = o.d_index;
+    d_beginAtomIdx = o.d_beginAtomIdx;
+    d_endAtomIdx = o.d_endAtomIdx;
+    // NOTE: this is somewhat fraught for bonds associated with molecules since
+    // the molecule will still be pointing to the original object
+    dp_mol = o.dp_mol;
+    delete dp_stereoAtoms;
+    dp_stereoAtoms = o.dp_stereoAtoms;
+    o.dp_mol = nullptr;
+    o.dp_stereoAtoms = nullptr;
+    return *this;
+  }
+
   //! returns a copy
   /*!
     <b>Note:</b> the caller is responsible for <tt>delete</tt>ing

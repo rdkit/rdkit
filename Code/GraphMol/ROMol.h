@@ -292,6 +292,57 @@ class RDKIT_GRAPHMOL_EXPORT ROMol : public RDProps {
   //! construct a molecule from a pickle string
   ROMol(const std::string &binStr, unsigned int propertyFlags);
 
+  ROMol(ROMol &&o) noexcept
+      : RDProps(std::move(o)),
+        d_graph(std::move(o.d_graph)),
+        d_atomBookmarks(std::move(o.d_atomBookmarks)),
+        d_bondBookmarks(std::move(o.d_bondBookmarks)),
+        dp_ringInfo(o.dp_ringInfo),
+        d_confs(std::move(o.d_confs)),
+        d_sgroups(std::move(o.d_sgroups)),
+        d_stereo_groups(std::move(o.d_stereo_groups)),
+        dp_delAtoms(std::move(o.dp_delAtoms)),
+        dp_delBonds(std::move(o.dp_delBonds)),
+        numBonds(o.numBonds) {
+    for (auto atom : atoms()) {
+      atom->setOwningMol(this);
+    }
+    for (auto bond : bonds()) {
+      bond->setOwningMol(this);
+    }
+    o.d_graph.clear();
+    o.dp_ringInfo = nullptr;
+  }
+  ROMol &operator=(ROMol &&o) noexcept {
+    if (this == &o) {
+      return *this;
+    }
+    RDProps::operator=(std::move(o));
+    d_graph = std::move(o.d_graph);
+    d_atomBookmarks = std::move(o.d_atomBookmarks);
+    d_bondBookmarks = std::move(o.d_bondBookmarks);
+    dp_ringInfo = o.dp_ringInfo;
+
+    d_confs = std::move(o.d_confs);
+    d_sgroups = std::move(o.d_sgroups);
+    d_stereo_groups = std::move(o.d_stereo_groups);
+    dp_delAtoms = std::move(o.dp_delAtoms);
+    dp_delBonds = std::move(o.dp_delBonds);
+    numBonds = o.numBonds;
+    for (auto atom : atoms()) {
+      atom->setOwningMol(this);
+    }
+    for (auto bond : bonds()) {
+      bond->setOwningMol(this);
+    }
+    o.d_graph.clear();
+    o.dp_ringInfo = nullptr;
+    return *this;
+  }
+
+  ROMol &operator=(const ROMol &) =
+      delete;  // disable assignment, RWMol's support assignment
+
   virtual ~ROMol() { destroy(); }
 
   //@}
@@ -685,9 +736,6 @@ class RDKIT_GRAPHMOL_EXPORT ROMol : public RDProps {
   friend RDKIT_GRAPHMOL_EXPORT const std::vector<SubstanceGroup>
       &getSubstanceGroups(const ROMol &);
   void clearSubstanceGroups() { d_sgroups.clear(); }
-
-  ROMol &operator=(
-      const ROMol &);  // disable assignment, RWMol's support assignment
 
  protected:
   unsigned int numBonds{0};
