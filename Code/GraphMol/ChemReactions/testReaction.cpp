@@ -7646,6 +7646,8 @@ void testGithub4410() {
   TEST_ASSERT(dblBnd->getBondType() == Bond::DOUBLE);
   TEST_ASSERT(dblBnd->getStereoAtoms() == std::vector<int>({2, 4}));
   TEST_ASSERT(dblBnd->getStereo() == Bond::STEREOTRANS);
+
+  TEST_ASSERT(MolToSmiles(*prods[0][0]) == R"(C/C(Cl)=C(\Cl)Br)");
 }
 
 int main() {
