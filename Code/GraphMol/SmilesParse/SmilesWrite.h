@@ -20,7 +20,7 @@ class Atom;
 class Bond;
 class ROMol;
 
-struct RDKIT_SMILESPARSE_EXPORT SmilesWriteParameters {
+struct RDKIT_SMILESPARSE_EXPORT SmilesWriteParams {
   bool doIsomericSmiles =
       true;              /**< include stereochemistry and isotope information */
   bool doKekule = false; /**< kekulize the molecule before generating the SMILES
@@ -75,7 +75,7 @@ RDKIT_SMILESPARSE_EXPORT std::string GetBondSmiles(
 
 //! \brief returns canonical SMILES for a molecule
 RDKIT_SMILESPARSE_EXPORT std::string MolToSmiles(
-    const ROMol &mol, const SmilesWriteParameters &params);
+    const ROMol &mol, const SmilesWriteParams &params);
 
 //! \brief returns canonical SMILES for a molecule
 /*!
@@ -100,7 +100,7 @@ inline std::string MolToSmiles(const ROMol &mol, bool doIsomericSmiles = true,
                                bool allBondsExplicit = false,
                                bool allHsExplicit = false,
                                bool doRandom = false) {
-  SmilesWriteParameters ps;
+  SmilesWriteParams ps;
   ps.doIsomericSmiles = doIsomericSmiles;
   ps.doKekule = doKekule;
   ps.rootedAtAtom = rootedAtAtom;
@@ -131,7 +131,7 @@ RDKIT_SMILESPARSE_EXPORT std::vector<std::string> MolToRandomSmilesVect(
 
 //! \brief returns canonical SMILES for part of a molecule
 RDKIT_SMILESPARSE_EXPORT std::string MolFragmentToSmiles(
-    const ROMol &mol, const SmilesWriteParameters &params,
+    const ROMol &mol, const SmilesWriteParams &params,
     const std::vector<int> &atomsToUse,
     const std::vector<int> *bondsToUse = nullptr,
     const std::vector<std::string> *atomSymbols = nullptr,
@@ -170,7 +170,7 @@ inline std::string MolFragmentToSmiles(
     bool doIsomericSmiles = true, bool doKekule = false, int rootedAtAtom = -1,
     bool canonical = true, bool allBondsExplicit = false,
     bool allHsExplicit = false) {
-  SmilesWriteParameters ps;
+  SmilesWriteParams ps;
   ps.doIsomericSmiles = doIsomericSmiles;
   ps.doKekule = doKekule;
   ps.rootedAtAtom = rootedAtAtom;
@@ -182,8 +182,8 @@ inline std::string MolFragmentToSmiles(
 }
 
 //! \brief returns canonical CXSMILES for a molecule
-RDKIT_SMILESPARSE_EXPORT std::string MolToCXSmiles(
-    const ROMol &mol, const SmilesWriteParameters &ps);
+RDKIT_SMILESPARSE_EXPORT std::string MolToCXSmiles(const ROMol &mol,
+                                                   const SmilesWriteParams &ps);
 
 //! \brief returns canonical CXSMILES for a molecule
 /*!
@@ -205,7 +205,7 @@ inline std::string MolToCXSmiles(const ROMol &mol, bool doIsomericSmiles = true,
                                  bool allBondsExplicit = false,
                                  bool allHsExplicit = false,
                                  bool doRandom = false) {
-  SmilesWriteParameters ps;
+  SmilesWriteParams ps;
   ps.doIsomericSmiles = doIsomericSmiles;
   ps.doKekule = doKekule;
   ps.rootedAtAtom = rootedAtAtom;
@@ -218,7 +218,7 @@ inline std::string MolToCXSmiles(const ROMol &mol, bool doIsomericSmiles = true,
 
 //! \brief returns canonical CXSMILES for part of a molecule
 RDKIT_SMILESPARSE_EXPORT std::string MolFragmentToCXSmiles(
-    const ROMol &mol, const SmilesWriteParameters &params,
+    const ROMol &mol, const SmilesWriteParams &params,
     const std::vector<int> &atomsToUse,
     const std::vector<int> *bondsToUse = nullptr,
     const std::vector<std::string> *atomSymbols = nullptr,
@@ -255,7 +255,7 @@ inline std::string MolFragmentToCXSmiles(
     bool doIsomericSmiles = true, bool doKekule = false, int rootedAtAtom = -1,
     bool canonical = true, bool allBondsExplicit = false,
     bool allHsExplicit = false) {
-  SmilesWriteParameters ps;
+  SmilesWriteParams ps;
   ps.doIsomericSmiles = doIsomericSmiles;
   ps.doKekule = doKekule;
   ps.rootedAtAtom = rootedAtAtom;

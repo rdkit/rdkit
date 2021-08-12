@@ -291,7 +291,7 @@ std::string GetBondSmiles(const Bond *bond, int atomToLeftIdx, bool doKekule,
 
 std::string FragmentSmilesConstruct(
     ROMol &mol, int atomIdx, std::vector<Canon::AtomColors> &colors,
-    const UINT_VECT &ranks, const SmilesWriteParameters &params,
+    const UINT_VECT &ranks, const SmilesWriteParams &params,
     std::vector<unsigned int> &atomOrdering,
     std::vector<unsigned int> &bondOrdering,
     const boost::dynamic_bitset<> *atomsInPlay = nullptr,
@@ -417,7 +417,7 @@ static bool SortBasedOnFirstElement(
   return a.first < b.first;
 }
 
-std::string MolToSmiles(const ROMol &mol, const SmilesWriteParameters &params) {
+std::string MolToSmiles(const ROMol &mol, const SmilesWriteParams &params) {
   if (!mol.getNumAtoms()) {
     return "";
   }
@@ -603,8 +603,7 @@ std::string MolToSmiles(const ROMol &mol, const SmilesWriteParameters &params) {
   return result;
 }  // end of MolToSmiles()
 
-std::string MolToCXSmiles(const ROMol &mol,
-                          const SmilesWriteParameters &params) {
+std::string MolToCXSmiles(const ROMol &mol, const SmilesWriteParams &params) {
   auto res = MolToSmiles(mol, params);
   if (!res.empty()) {
     auto cxext = SmilesWrite::getCXExtensions(mol);
@@ -635,7 +634,7 @@ std::vector<std::string> MolToRandomSmilesVect(
   return res;
 };
 std::string MolFragmentToSmiles(const ROMol &mol,
-                                const SmilesWriteParameters &params,
+                                const SmilesWriteParams &params,
                                 const std::vector<int> &atomsToUse,
                                 const std::vector<int> *bondsToUse,
                                 const std::vector<std::string> *atomSymbols,
@@ -805,7 +804,7 @@ std::string MolFragmentToSmiles(const ROMol &mol,
 }  // end of MolFragmentToSmiles()
 
 std::string MolFragmentToCXSmiles(const ROMol &mol,
-                                  const SmilesWriteParameters &params,
+                                  const SmilesWriteParams &params,
                                   const std::vector<int> &atomsToUse,
                                   const std::vector<int> *bondsToUse,
                                   const std::vector<std::string> *atomSymbols,
