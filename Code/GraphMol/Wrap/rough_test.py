@@ -6646,6 +6646,13 @@ CAS<~>
     self.assertEqual(m.GetProp('_Name'), "ourname")
     self.assertEqual(m.GetProp("_CXSMILES_Data"), "|$foo;;bar$|")
 
+  def testSmilesWriteParams(self):
+    m = Chem.MolFromSmiles('C[C@H](F)Cl')
+    ps = Chem.SmilesWriteParams()
+    ps.rootedAtAtom = 1
+    self.assertEqual(Chem.MolToSmiles(m, ps), "[C@@H](C)(F)Cl")
+    self.assertEqual(Chem.MolToCXSmiles(m, ps), "[C@@H](C)(F)Cl")
+
 
 if __name__ == '__main__':
   if "RDTESTCASE" in os.environ:
