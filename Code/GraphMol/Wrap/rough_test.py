@@ -6653,6 +6653,16 @@ CAS<~>
     self.assertEqual(Chem.MolToSmiles(m, ps), "[C@@H](C)(F)Cl")
     self.assertEqual(Chem.MolToCXSmiles(m, ps), "[C@@H](C)(F)Cl")
 
+  def testCXSmilesOptions(self):
+    # just checking that the fields parameter gets used.
+    # we've tested the individual values on the C++ side
+    m = Chem.MolFromSmiles("OC1CCC(F)C1 |LN:1:1.3.2.6|")
+    ps = Chem.SmilesWriteParams()
+    ps.rootedAtAtom = 1
+    self.assertEqual(
+      Chem.MolToCXSmiles(m, ps, (Chem.CXSmilesFields.CX_ALL ^ Chem.CXSmilesFields.CX_LINKNODES)),
+      "C1(O)CCC(F)C1")
+
 
 if __name__ == '__main__':
   if "RDTESTCASE" in os.environ:

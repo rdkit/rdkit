@@ -1302,11 +1302,29 @@ BOOST_PYTHON_MODULE(rdmolfiles) {
        python::arg("allHsExplicit") = false),
       docString.c_str());
 
-  python::def("MolToCXSmiles",
-              (std::string(*)(const ROMol &,
-                              const SmilesWriteParams &))RDKit::MolToCXSmiles,
-              (python::arg("mol"), python::arg("params")),
-              "Returns the CXSMILES string for a molecule");
+  python::enum_<RDKit::SmilesWrite::CXSmilesFields>("CXSmilesFields")
+      .value("CX_NONE", RDKit::SmilesWrite::CXSmilesFields::CX_NONE)
+      .value("CX_ATOM_LABELS",
+             RDKit::SmilesWrite::CXSmilesFields::CX_ATOM_LABELS)
+      .value("CX_MOLFILE_VALUES",
+             RDKit::SmilesWrite::CXSmilesFields::CX_MOLFILE_VALUES)
+      .value("CX_COORDS", RDKit::SmilesWrite::CXSmilesFields::CX_COORDS)
+      .value("CX_RADICALS", RDKit::SmilesWrite::CXSmilesFields::CX_RADICALS)
+      .value("CX_ATOM_PROPS", RDKit::SmilesWrite::CXSmilesFields::CX_ATOM_PROPS)
+      .value("CX_LINKNODES", RDKit::SmilesWrite::CXSmilesFields::CX_LINKNODES)
+      .value("CX_ENHANCEDSTEREO",
+             RDKit::SmilesWrite::CXSmilesFields::CX_ENHANCEDSTEREO)
+      .value("CX_SGROUPS", RDKit::SmilesWrite::CXSmilesFields::CX_SGROUPS)
+      .value("CX_POLYMER", RDKit::SmilesWrite::CXSmilesFields::CX_POLYMER)
+      .value("CX_ALL", RDKit::SmilesWrite::CXSmilesFields::CX_ALL);
+
+  python::def(
+      "MolToCXSmiles",
+      (std::string(*)(const ROMol &, const SmilesWriteParams &,
+                      std::uint64_t))RDKit::MolToCXSmiles,
+      (python::arg("mol"), python::arg("params"),
+       python::arg("flags") = RDKit::SmilesWrite::CXSmilesFields::CX_ALL),
+      "Returns the CXSMILES string for a molecule");
 
   docString =
       "Returns the CXSMILES string for a molecule\n\

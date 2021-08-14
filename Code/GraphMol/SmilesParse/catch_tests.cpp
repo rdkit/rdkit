@@ -1315,3 +1315,115 @@ TEST_CASE("smilesBondOutputOrder") {
     CHECK(order == std::vector<unsigned int>{3, 4, 2, 1, 0});
   }
 }
+
+TEST_CASE("Github #4320: Support toggling components of CXSMILES output") {
+  SECTION("sgroups") {
+    auto mol =
+        "*-CNC(CC(-*)C-*)O-* "
+        "|$star_e;;;;;;star_e;;star_e;;star_e$,"
+        "SgD:4:internal data:val::::,SgD:7:atom value:value2::::,"
+        "Sg:n:7::ht,Sg:n:2::ht,Sg:any:5,7,8,4,3,2,1,0,9::ht,"
+        "SgH:4:2.3.0,2:1|"_smiles;
+    SmilesWriteParams ps;
+    {
+      auto cxsmi = MolToCXSmiles(*mol, ps, SmilesWrite::CXSmilesFields::CX_ALL);
+      CHECK(cxsmi ==
+            "*CNC(CC(*)C*)O* "
+            "|$star_e;;;;;;star_e;;star_e;;star_e$,SgD:4:internal "
+            "data:val::::,SgD:7:atom "
+            "value:value2::::,,,,,,Sg:n:7::ht:::,Sg:n:2::ht:::,Sg:any:5,7,8,4,"
+            "3,2,"
+            "1,0,9::ht:::,SgH:2:1,4:0.2.3|");
+      CHECK(std::unique_ptr<ROMol>(SmilesToMol(cxsmi)));
+    }
+    {
+      auto cxsmi =
+          MolToCXSmiles(*mol, ps, SmilesWrite::CXSmilesFields::CX_NONE);
+      CHECK(cxsmi == "*CNC(CC(*)C*)O*");
+      CHECK(std::unique_ptr<ROMol>(SmilesToMol(cxsmi)));
+    }
+    {
+      auto cxsmi =
+          MolToCXSmiles(*mol, ps,
+                        SmilesWrite::CXSmilesFields::CX_ALL ^
+                            SmilesWrite::CXSmilesFields::CX_ATOM_LABELS);
+      CHECK(
+          cxsmi ==
+          "*CNC(CC(*)C*)O* |SgD:4:internal data:val::::,SgD:7:atom "
+          "value:value2::::,,,,,,Sg:n:7::ht:::,Sg:n:2::ht:::,Sg:any:5,7,8,4,3,"
+          "2,1,0,9::ht:::,SgH:2:1,4:0.2.3|");
+      CHECK(std::unique_ptr<ROMol>(SmilesToMol(cxsmi)));
+    }
+    {
+      auto cxsmi = MolToCXSmiles(*mol, ps,
+                                 SmilesWrite::CXSmilesFields::CX_ALL ^
+                                     SmilesWrite::CXSmilesFields::CX_SGROUPS);
+      CHECK(cxsmi ==
+            "*CNC(CC(*)C*)O* "
+            "|$star_e;;;;;;star_e;;star_e;;star_e$,,,Sg:n:7::ht:::,Sg:n:2::ht::"
+            ":,Sg:any:5,7,8,4,3,2,1,0,9::ht:::,SgH:2:0.1|");
+      CHECK(std::unique_ptr<ROMol>(SmilesToMol(cxsmi)));
+    }
+    {
+      auto cxsmi = MolToCXSmiles(*mol, ps,
+                                 SmilesWrite::CXSmilesFields::CX_ALL ^
+                                     SmilesWrite::CXSmilesFields::CX_POLYMER);
+      CHECK(cxsmi ==
+            "*CNC(CC(*)C*)O* "
+            "|$star_e;;;;;;star_e;;star_e;;star_e$,SgD:4:internal "
+            "data:val::::,SgD:7:atom value:value2::::,,,|");
+      CHECK(std::unique_ptr<ROMol>(SmilesToMol(cxsmi)));
+    }
+  }
+  SECTION("coordinates") {
+    auto m = "CC |(0,.75,;0,-.75,)|"_smiles;
+    REQUIRE(m);
+    SmilesWriteParams ps;
+    auto cxsmi = MolToCXSmiles(*m, ps,
+                               SmilesWrite::CXSmilesFields::CX_ALL ^
+                                   SmilesWrite::CXSmilesFields::CX_COORDS);
+    CHECK(cxsmi == "CC");
+    CHECK(std::unique_ptr<ROMol>(SmilesToMol(cxsmi)));
+  }
+  SECTION("enhanced stereo") {
+    auto m = "C[C@H](F)Cl |o1:1|"_smiles;
+    REQUIRE(m);
+    SmilesWriteParams ps;
+    auto cxsmi =
+        MolToCXSmiles(*m, ps,
+                      SmilesWrite::CXSmilesFields::CX_ALL ^
+                          SmilesWrite::CXSmilesFields::CX_ENHANCEDSTEREO);
+    CHECK(cxsmi == "C[C@H](F)Cl");
+    CHECK(std::unique_ptr<ROMol>(SmilesToMol(cxsmi)));
+  }
+  SECTION("link nodes") {
+    auto m = "OC1CCC(F)C1 |LN:1:1.3.2.6|"_smiles;
+    REQUIRE(m);
+    SmilesWriteParams ps;
+    auto cxsmi = MolToCXSmiles(*m, ps,
+                               SmilesWrite::CXSmilesFields::CX_ALL ^
+                                   SmilesWrite::CXSmilesFields::CX_LINKNODES);
+    CHECK(cxsmi == "OC1CCC(F)C1");
+    CHECK(std::unique_ptr<ROMol>(SmilesToMol(cxsmi)));
+  }
+  SECTION("radicals") {
+    auto m = "[O][C][O] |^1:0,2|"_smiles;
+    REQUIRE(m);
+    SmilesWriteParams ps;
+    auto cxsmi = MolToCXSmiles(*m, ps,
+                               SmilesWrite::CXSmilesFields::CX_ALL ^
+                                   SmilesWrite::CXSmilesFields::CX_RADICALS);
+    CHECK(cxsmi == "[O][C][O]");
+    CHECK(std::unique_ptr<ROMol>(SmilesToMol(cxsmi)));
+  }
+  SECTION("values") {
+    auto m = "COCC |$_AV:;bar;;foo$|"_smiles;
+    REQUIRE(m);
+    SmilesWriteParams ps;
+    auto cxsmi =
+        MolToCXSmiles(*m, ps,
+                      SmilesWrite::CXSmilesFields::CX_ALL ^
+                          SmilesWrite::CXSmilesFields::CX_MOLFILE_VALUES);
+    CHECK(cxsmi == "CCOC");
+  }
+}
