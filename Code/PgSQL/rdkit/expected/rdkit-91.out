@@ -496,6 +496,53 @@ M  END', true));
  
 (1 row)
 
+-- mol_to_ctab() - force v3000.
+select mol_to_ctab(mol('CCC'), false, true);
+               mol_to_ctab                
+------------------------------------------
+                                         +
+      RDKit          2D                  +
+                                         +
+   0  0  0  0  0  0  0  0  0  0999 V3000 +
+ M  V30 BEGIN CTAB                       +
+ M  V30 COUNTS 3 2 0 0 0                 +
+ M  V30 BEGIN ATOM                       +
+ M  V30 1 C 0.000000 0.000000 0.000000 0 +
+ M  V30 2 C 1.299038 0.750000 0.000000 0 +
+ M  V30 3 C 2.598076 -0.000000 0.000000 0+
+ M  V30 END ATOM                         +
+ M  V30 BEGIN BOND                       +
+ M  V30 1 1 1 2                          +
+ M  V30 2 1 2 3                          +
+ M  V30 END BOND                         +
+ M  V30 END CTAB                         +
+ M  END                                  +
+ 
+(1 row)
+
+select mol_to_v3kctab(mol('CCC'), false);
+              mol_to_v3kctab              
+------------------------------------------
+                                         +
+      RDKit          2D                  +
+                                         +
+   0  0  0  0  0  0  0  0  0  0999 V3000 +
+ M  V30 BEGIN CTAB                       +
+ M  V30 COUNTS 3 2 0 0 0                 +
+ M  V30 BEGIN ATOM                       +
+ M  V30 1 C 0.000000 0.000000 0.000000 0 +
+ M  V30 2 C 1.299038 0.750000 0.000000 0 +
+ M  V30 3 C 2.598076 -0.000000 0.000000 0+
+ M  V30 END ATOM                         +
+ M  V30 BEGIN BOND                       +
+ M  V30 1 1 1 2                          +
+ M  V30 2 1 2 3                          +
+ M  V30 END BOND                         +
+ M  V30 END CTAB                         +
+ M  END                                  +
+ 
+(1 row)
+
 select all_values_lt(torsion_fp('c1ccccc1C'::mol),2);
  all_values_lt 
 ---------------
@@ -1153,6 +1200,18 @@ SELECT mol_to_cxsmiles(mol_from_smiles('C[C@H](F)[C@H](C)[C@@H](C)Br |a:1,o1:4,5
               mol_to_cxsmiles              
 -------------------------------------------
  C[C@H](F)[C@H](C)[C@@H](C)Br |a:1,o1:4,5|
+(1 row)
+
+SELECT mol_to_cxsmarts(mol_from_smiles('C[C@H](F)[C@H](C)[C@@H](C)Br |a:1,o1:4,5|'));
+                          mol_to_cxsmarts                           
+--------------------------------------------------------------------
+ [#6]-[#6@H](-[#9])-[#6@H](-[#6])-[#6@@H](-[#6])-[#35] |a:1,o1:4,5|
+(1 row)
+
+SELECT mol_to_cxsmarts(mol_from_smarts('C[C@H]([F,Cl,Br])[C@H](C)[C@@H](C)Br |a:1,o1:4,5|'));
+                         mol_to_cxsmarts                          
+------------------------------------------------------------------
+ C[C@&H1](-,:[F,Cl,Br])[C@&H1](-,:C)[C@@&H1](-,:C)Br |a:1,o1:4,5|
 (1 row)
 
 -- CXSmiles from mol_out

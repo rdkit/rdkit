@@ -218,6 +218,7 @@ mol_to_ctab(PG_FUNCTION_ARGS) {
   int     len;
 
   bool createDepictionIfMissing = PG_GETARG_BOOL(1);
+  bool usev3000 = PG_GETARG_BOOL(2);
 
   fcinfo->flinfo->fn_extra = searchMolCache(
                                             fcinfo->flinfo->fn_extra,
@@ -225,7 +226,29 @@ mol_to_ctab(PG_FUNCTION_ARGS) {
                                             PG_GETARG_DATUM(0),
                                             NULL, &mol, NULL);
 
-  str = makeCtabText(mol, &len, createDepictionIfMissing);
+  str = makeCtabText(mol, &len, createDepictionIfMissing, usev3000);
+
+  PG_RETURN_CSTRING( pnstrdup(str, len) );
+}
+
+PGDLLEXPORT Datum           mol_to_v3kctab(PG_FUNCTION_ARGS);
+PG_FUNCTION_INFO_V1(mol_to_v3kctab);
+Datum
+mol_to_v3kctab(PG_FUNCTION_ARGS) {
+  CROMol  mol;
+  char    *str;
+  int     len;
+
+  bool createDepictionIfMissing = PG_GETARG_BOOL(1);
+  bool usev3000 = 1;
+
+  fcinfo->flinfo->fn_extra = searchMolCache(
+                                            fcinfo->flinfo->fn_extra,
+                                            fcinfo->flinfo->fn_mcxt,
+                                            PG_GETARG_DATUM(0),
+                                            NULL, &mol, NULL);
+
+  str = makeCtabText(mol, &len, createDepictionIfMissing, usev3000);
 
   PG_RETURN_CSTRING( pnstrdup(str, len) );
 }
@@ -280,6 +303,24 @@ mol_to_smarts(PG_FUNCTION_ARGS) {
                                             PG_GETARG_DATUM(0),
                                             NULL, &mol, NULL);
   str = makeMolText(mol, &len,true,false);
+
+  PG_RETURN_CSTRING( pnstrdup(str, len) );
+}
+
+PGDLLEXPORT Datum           mol_to_cxsmarts(PG_FUNCTION_ARGS);
+PG_FUNCTION_INFO_V1(mol_to_cxsmarts);
+Datum
+mol_to_cxsmarts(PG_FUNCTION_ARGS) {
+  CROMol  mol;
+  char    *str;
+  int     len;
+
+  fcinfo->flinfo->fn_extra = searchMolCache(
+                                            fcinfo->flinfo->fn_extra,
+                                            fcinfo->flinfo->fn_mcxt,
+                                            PG_GETARG_DATUM(0),
+                                            NULL, &mol, NULL);
+  str = makeMolText(mol, &len,true,true);
 
   PG_RETURN_CSTRING( pnstrdup(str, len) );
 }
