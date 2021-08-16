@@ -1633,7 +1633,7 @@ void appendToCXExtension(const std::string &addition, std::string &base) {
 }
 
 }  // namespace
-std::string getCXExtensions(const ROMol &mol, std::uint64_t flags) {
+std::string getCXExtensions(const ROMol &mol, std::uint32_t flags) {
   std::string res = "|";
   // we will need atom and bond orderings. Get them now:
   const std::vector<unsigned int> &atomOrder =

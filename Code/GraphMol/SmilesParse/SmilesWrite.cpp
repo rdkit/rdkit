@@ -604,7 +604,7 @@ std::string MolToSmiles(const ROMol &mol, const SmilesWriteParams &params) {
 }  // end of MolToSmiles()
 
 std::string MolToCXSmiles(const ROMol &mol, const SmilesWriteParams &params,
-                          std::uint64_t flags) {
+                          std::uint32_t flags) {
   auto res = MolToSmiles(mol, params);
   if (!res.empty()) {
     auto cxext = SmilesWrite::getCXExtensions(mol, flags);
