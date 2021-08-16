@@ -1321,7 +1321,7 @@ BOOST_PYTHON_MODULE(rdmolfiles) {
   python::def(
       "MolToCXSmiles",
       (std::string(*)(const ROMol &, const SmilesWriteParams &,
-                      std::uint64_t))RDKit::MolToCXSmiles,
+                      std::uint32_t))RDKit::MolToCXSmiles,
       (python::arg("mol"), python::arg("params"),
        python::arg("flags") = RDKit::SmilesWrite::CXSmilesFields::CX_ALL),
       "Returns the CXSMILES string for a molecule");

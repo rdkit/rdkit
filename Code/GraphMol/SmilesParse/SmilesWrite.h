@@ -14,6 +14,7 @@
 #include <string>
 #include <vector>
 #include <memory>
+#include <cstdint>
 #include <limits>
 
 namespace RDKit {
@@ -55,7 +56,7 @@ typedef enum {
 //! \brief returns the cxsmiles data for a molecule
 RDKIT_SMILESPARSE_EXPORT std::string getCXExtensions(
     const ROMol &mol,
-    std::uint64_t flags = std::numeric_limits<uint64_t>::max());
+    std::uint32_t flags = std::numeric_limits<uint32_t>::max());
 
 //! \brief returns true if the atom number is in the SMILES organic subset
 RDKIT_SMILESPARSE_EXPORT bool inOrganicSubset(int atomicNumber);
@@ -201,7 +202,7 @@ inline std::string MolFragmentToSmiles(
 //! \brief returns canonical CXSMILES for a molecule
 RDKIT_SMILESPARSE_EXPORT std::string MolToCXSmiles(
     const ROMol &mol, const SmilesWriteParams &ps,
-    std::uint64_t flags = std::numeric_limits<uint64_t>::max());
+    std::uint32_t flags = std::numeric_limits<uint32_t>::max());
 
 //! \brief returns canonical CXSMILES for a molecule
 /*!
