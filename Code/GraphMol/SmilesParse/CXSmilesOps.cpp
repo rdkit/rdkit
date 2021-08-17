@@ -1276,28 +1276,31 @@ std::string get_sgroup_hierarchy_block(const ROMol &mol) {
   }
 
   if (parentPresent) {
-    res << "SgH:";
-
     // now loop over them and add the information
     std::map<unsigned int, std::vector<unsigned int>> accum;
     for (const auto &sg : sgs) {
       unsigned pidx;
-      if (sg.getPropIfPresent("PARENT", pidx)) {
+      if (sg.getPropIfPresent("PARENT", pidx) &&
+          sgroupOrder.find(pidx) != sgroupOrder.end()) {
         unsigned int sgidx = sg.getIndexInMol();
         sg.getPropIfPresent("index", sgidx);
-        accum[sgroupOrder[pidx]].push_back(sgroupOrder[sgidx]);
+        if (sgroupOrder.find(sgidx) != sgroupOrder.end()) {
+          accum[sgroupOrder[pidx]].push_back(sgroupOrder[sgidx]);
+        }
       }
     }
-    for (const auto &pr : accum) {
-      res << pr.first << ":";
-      for (auto v : pr.second) {
-        res << v << ".";
+    if (!accum.empty()) {
+      res << "SgH:";
+      for (const auto &pr : accum) {
+        res << pr.first << ":";
+        for (auto v : pr.second) {
+          res << v << ".";
+        }
+        // remove the extra ".":
+        res.seekp(-1, res.cur);
+        res << ",";
       }
-      // remove the extra ".":
-      res.seekp(-1, res.cur);
-      res << ",";
     }
-
     std::string resStr = res.str();
     while (!resStr.empty() && resStr.back() == ',') {
       resStr.pop_back();
@@ -1630,7 +1633,7 @@ void appendToCXExtension(const std::string &addition, std::string &base) {
 }
 
 }  // namespace
-std::string getCXExtensions(const ROMol &mol) {
+std::string getCXExtensions(const ROMol &mol, std::uint32_t flags) {
   std::string res = "|";
   // we will need atom and bond orderings. Get them now:
   const std::vector<unsigned int> &atomOrder =
@@ -1650,17 +1653,18 @@ std::string getCXExtensions(const ROMol &mol) {
       needValues = true;
     }
   }
-  if (mol.getNumConformers()) {
+  if ((flags & SmilesWrite::CXSmilesFields::CX_COORDS) &&
+      mol.getNumConformers()) {
     res += "(" + get_coords_block(mol, atomOrder) + ")";
   }
-  if (needLabels) {
+  if ((flags & SmilesWrite::CXSmilesFields::CX_ATOM_LABELS) && needLabels) {
     if (res.size() > 1) {
       res += ",";
     }
     res += "$" + get_value_block(mol, atomOrder, common_properties::atomLabel) +
            "$";
   }
-  if (needValues) {
+  if ((flags & SmilesWrite::CXSmilesFields::CX_MOLFILE_VALUES) && needValues) {
     if (res.size() > 1) {
       res += ",";
     }
@@ -1669,7 +1673,7 @@ std::string getCXExtensions(const ROMol &mol) {
            "$";
   }
   auto radblock = get_radical_block(mol, atomOrder);
-  if (radblock.size()) {
+  if ((flags & SmilesWrite::CXSmilesFields::CX_RADICALS) && radblock.size()) {
     if (res.size() > 1) {
       res += ",";
     }
@@ -1679,26 +1683,34 @@ std::string getCXExtensions(const ROMol &mol) {
     }
   }
 
-  const auto atomblock = get_atom_props_block(mol, atomOrder);
-  appendToCXExtension(atomblock, res);
+  if (flags & SmilesWrite::CXSmilesFields::CX_ATOM_PROPS) {
+    const auto atomblock = get_atom_props_block(mol, atomOrder);
+    appendToCXExtension(atomblock, res);
+  }
 
-  const auto linknodeblock = get_linknodes_block(mol, atomOrder);
-  appendToCXExtension(linknodeblock, res);
-
-  const auto stereoblock = get_enhanced_stereo_block(mol, atomOrder);
-  appendToCXExtension(stereoblock, res);
-
-  const auto sgroupdatablock = get_sgroup_data_block(mol, atomOrder);
-  appendToCXExtension(sgroupdatablock, res);
-
-  const auto sgrouppolyblock =
-      get_sgroup_polymer_block(mol, atomOrder, bondOrder);
-  appendToCXExtension(sgrouppolyblock, res);
-
-  const auto sgrouphierarchyblock = get_sgroup_hierarchy_block(mol);
-  appendToCXExtension(sgrouphierarchyblock, res);
+  if (flags & SmilesWrite::CXSmilesFields::CX_LINKNODES) {
+    const auto linknodeblock = get_linknodes_block(mol, atomOrder);
+    appendToCXExtension(linknodeblock, res);
+  }
+  if (flags & SmilesWrite::CXSmilesFields::CX_ENHANCEDSTEREO) {
+    const auto stereoblock = get_enhanced_stereo_block(mol, atomOrder);
+    appendToCXExtension(stereoblock, res);
+  }
+  if (flags & SmilesWrite::CXSmilesFields::CX_SGROUPS) {
+    const auto sgroupdatablock = get_sgroup_data_block(mol, atomOrder);
+    appendToCXExtension(sgroupdatablock, res);
+  }
+  if (flags & SmilesWrite::CXSmilesFields::CX_POLYMER) {
+    const auto sgrouppolyblock =
+        get_sgroup_polymer_block(mol, atomOrder, bondOrder);
+    appendToCXExtension(sgrouppolyblock, res);
+  }
+  if (flags & (SmilesWrite::CXSmilesFields::CX_SGROUPS |
+               SmilesWrite::CXSmilesFields::CX_POLYMER)) {
+    const auto sgrouphierarchyblock = get_sgroup_hierarchy_block(mol);
+    appendToCXExtension(sgrouphierarchyblock, res);
+  }
   mol.clearProp("_cxsmilesOutputIndex");
-
   if (res.size() > 1) {
     res += "|";
   } else {
