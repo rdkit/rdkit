@@ -199,3 +199,37 @@ TEST_CASE("searchOrder") {
   }
 #endif
 }
+
+void setSearchSmallestFirst(SubstructLibrary &ssslib) {
+  const auto holder = ssslib.getMolHolder();
+  std::vector<unsigned int> searchOrder(holder->size());
+  std::iota(searchOrder.begin(), searchOrder.end(), 0);
+  std::stable_sort(searchOrder.begin(), searchOrder.end(),
+                   [holder](unsigned int i1, unsigned int i2) {
+                     return holder->getMol(i1)->getNumAtoms() <
+                            holder->getMol(i2)->getNumAtoms();
+                   });
+  ssslib.setSearchOrder(searchOrder);
+}
+
+TEST_CASE("searchOrderFunctionDemo") {
+  std::vector<std::string> libSmiles = {"CCCOC", "CCCCOCC", "CCOC", "COC",
+                                        "CCCCCOC"};
+  boost::shared_ptr<MolHolder> mholder(new MolHolder());
+  boost::shared_ptr<PatternHolder> fpholder(new PatternHolder());
+
+  SubstructLibrary ssslib(mholder, fpholder);
+
+  for (const auto smi : libSmiles) {
+    std::unique_ptr<RWMol> mol(SmilesToMol(smi));
+    REQUIRE(mol);
+    ssslib.addMol(*mol);
+  }
+  SECTION("basics") {
+    auto qm = "COC"_smiles;
+    setSearchSmallestFirst(ssslib);
+    auto libMatches = ssslib.getMatches(*qm);
+    CHECK(libMatches.size() == 5);
+    CHECK(libMatches == std::vector<unsigned int>{3, 2, 0, 1, 4});
+  }
+}
