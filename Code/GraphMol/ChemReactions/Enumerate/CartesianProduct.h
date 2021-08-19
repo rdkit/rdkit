@@ -38,7 +38,7 @@
 
 namespace RDKit {
 //! This is a class for enumerating reagents using Cartesian Products of
-// reagents.
+/// reagents.
 /*!
   CartesianProductStrategy produces a  standard walk through all possible
   reagent combinations:

@@ -45,7 +45,7 @@ std::map<int, Atom *> getRlabels(const RWMol &mol);
 void clearInputLabels(Atom *atom);
 
 //! Set the rgroup label for the current atom, this also sets the
-//  appropriate  MDL or other label
+/// appropriate  MDL or other label
 bool setLabel(Atom *atom, int label, std::set<int> &labels, int &maxLabel,
               bool relabel, Labelling type);
 
@@ -53,16 +53,16 @@ bool setLabel(Atom *atom, int label, std::set<int> &labels, int &maxLabel,
 bool hasDummy(const RWMol &core);
 
 //! Returns true if the core atom is either an atom with multiple
-// connections or an atom with a single connection that has no user
-// defined rgroup label
+/// connections or an atom with a single connection that has no user
+/// defined rgroup label
 bool isAtomWithMultipleNeighborsOrNotUserRLabel(const Atom &atom);
 
 //! Return true if the atom has a user-defined R group label
 bool isUserRLabel(const Atom &atom);
 
 //! Returns true if the core atom is either a dummy atom with multiple
-// connections or a dummy atom with a single connection that has no user
-// defined rgroup label
+/// connections or a dummy atom with a single connection that has no user
+/// defined rgroup label
 inline bool isAnyAtomWithMultipleNeighborsOrNotUserRLabel(const Atom &atom) {
   if (atom.getAtomicNum()) {
     return false;
@@ -71,19 +71,19 @@ inline bool isAnyAtomWithMultipleNeighborsOrNotUserRLabel(const Atom &atom) {
 }
 
 //! Returns a JSON form
-//  The prefix argument is added to each line in the output
+/// The prefix argument is added to each line in the output
 RDKIT_RGROUPDECOMPOSITION_EXPORT std::string toJSON(
     const RGroupRow &rgr, const std::string &prefix = "");
 //! Returns a JSON form
-//  The prefix argument is added to each line in the output
+/// The prefix argument is added to each line in the output
 RDKIT_RGROUPDECOMPOSITION_EXPORT std::string toJSON(
     const RGroupRows &rgr, const std::string &prefix = "");
 //! Returns a JSON form
-//  The prefix argument is added to each line in the output
+/// The prefix argument is added to each line in the output
 RDKIT_RGROUPDECOMPOSITION_EXPORT std::string toJSON(
     const RGroupColumn &rgr, const std::string &prefix = "");
 //! Returns a JSON form
-//  The prefix argument is added to each line in the output
+/// The prefix argument is added to each line in the output
 RDKIT_RGROUPDECOMPOSITION_EXPORT std::string toJSON(
     const RGroupColumns &rgr, const std::string &prefix = "");
 

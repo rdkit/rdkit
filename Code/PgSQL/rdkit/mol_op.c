@@ -154,8 +154,10 @@ Datum mol_substruct_count(PG_FUNCTION_ARGS) {
   }
 
 MOLDESCR(amw, MolAMW, FLOAT4)
+MOLDESCR(exactmw, MolExactMW, FLOAT4)
 MOLDESCR(logp, MolLogP, FLOAT4)
 MOLDESCR(tpsa, MolTPSA, FLOAT4)
+MOLDESCR(labuteasa, MolLabuteASA, FLOAT4)
 MOLDESCR(hba, MolHBA, INT32)
 MOLDESCR(hbd, MolHBD, INT32)
 MOLDESCR(numatoms, MolNumAtoms, INT32)
@@ -173,6 +175,7 @@ MOLDESCR(numaromaticcarbocycles, MolNumAromaticCarbocycles, INT32)
 MOLDESCR(numaliphaticcarbocycles, MolNumAliphaticCarbocycles, INT32)
 MOLDESCR(numsaturatedcarbocycles, MolNumSaturatedCarbocycles, INT32)
 MOLDESCR(numheterocycles, MolNumHeterocycles, INT32)
+MOLDESCR(numamidebonds, MolNumAmideBonds, INT32)
 
 MOLDESCR(fractioncsp3, MolFractionCSP3, FLOAT4)
 MOLDESCR(chi0n, MolChi0n, FLOAT4)
@@ -188,6 +191,7 @@ MOLDESCR(chi4v, MolChi4v, FLOAT4)
 MOLDESCR(kappa1, MolKappa1, FLOAT4)
 MOLDESCR(kappa2, MolKappa2, FLOAT4)
 MOLDESCR(kappa3, MolKappa3, FLOAT4)
+MOLDESCR(hallkieralpha, MolHallKierAlpha, FLOAT4)
 MOLDESCR(phi, MolPhi, FLOAT4)
 
 MOLDESCR(numspiroatoms, MolNumSpiroAtoms, INT32)

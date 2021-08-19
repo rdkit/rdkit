@@ -20,7 +20,7 @@ namespace ChemicalFeatures {
 
 //------------------------------------------------------
 //! Class for chemical features that do not originate from molecules
-//  e.g. pharmacophores, site-maps etc.
+/// e.g. pharmacophores, site-maps etc.
 class RDKIT_CHEMICALFEATURES_EXPORT FreeChemicalFeature
     : public ChemicalFeature {
  public:

@@ -58,7 +58,7 @@ std::pair<int, double> MMFFOptimizeMolecule(
 }
 
 //! Convenience function for optimizing all of a molecule's conformations using
-// MMFF
+/// MMFF
 /*
   \param mol        the molecule to use
   \param res        vector of (needsMore,energy) pairs

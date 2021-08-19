@@ -39,7 +39,7 @@ Alternatively, you can also send Cookbook revisions and addition requests to the
 
    The Index ID# (e.g., **RDKitCB_##**) is simply a way to track Cookbook entries and image file names. 
    New Cookbook additions are sequentially index numbered, regardless of where they are placed 
-   within the document. As such, for reference, the next Cookbook entry is **RDKitCB_35**.
+   within the document. As such, for reference, the next Cookbook entry is **RDKitCB_38**.
 
 Drawing Molecules (Jupyter)
 *******************************
@@ -238,6 +238,59 @@ Highlight a Substructure in a Molecule
 .. image:: images/RDKitCB_2_im1.png
 
 
+Highlight Molecule Differences
+==================================
+
+| **Author:** Takayuki Serizawa
+| **Original Source:** `<https://gist.github.com/iwatobipen/6d8708d8c77c615cfffbb89409be730d>`_
+| **Index ID#:** RDKitCB_36
+| **Summary:** Highlight molecule differences based on maximum common substructure
+
+.. testcode::
+
+   from rdkit import Chem
+   from rdkit.Chem import Draw
+   from rdkit.Chem.Draw import IPythonConsole
+   from rdkit.Chem import rdFMCS
+   from rdkit.Chem.Draw import rdDepictor
+   rdDepictor.SetPreferCoordGen(True)
+   IPythonConsole.drawOptions.minFontSize=20
+
+.. testcode::
+
+   mol1 = Chem.MolFromSmiles('FC1=CC=C2C(=C1)C=NN2')
+   mol2 = Chem.MolFromSmiles('CCC1=C2NN=CC2=CC(Cl)=C1')
+
+
+.. testcode::
+
+   Draw.MolsToGridImage([mol1, mol2])
+
+.. image:: images/RDKitCB_36_im0.png
+
+.. testcode::
+
+   def view_difference(mol1, mol2):
+       mcs = rdFMCS.FindMCS([mol1,mol2])
+       mcs_mol = Chem.MolFromSmarts(mcs.smartsString)
+       match1 = mol1.GetSubstructMatch(mcs_mol)
+       target_atm1 = []
+       for atom in mol1.GetAtoms():
+           if atom.GetIdx() not in match1:
+               target_atm1.append(atom.GetIdx())
+       match2 = mol2.GetSubstructMatch(mcs_mol)
+       target_atm2 = []
+       for atom in mol2.GetAtoms():    
+           if atom.GetIdx() not in match2:
+               target_atm2.append(atom.GetIdx())
+       return Draw.MolsToGridImage([mol1, mol2],highlightAtomLists=[target_atm1, target_atm2])
+
+.. testcode::
+
+   view_difference(mol1,mol2)
+
+.. image:: images/RDKitCB_36_im1.png
+
 Without Implicit Hydrogens
 ===========================
 
@@ -351,6 +404,101 @@ With Abbreviations
    OMe
    CO2-
    COO-
+
+Using CoordGen Library
+========================
+
+| **Author:** Greg Landrum
+| **Source:** `<https://github.com/rdkit/UGM_2020/blob/master/Notebooks/Landrum_WhatsNew.ipynb>`_
+| **Index ID#:** RDKitCB_37
+| **Summary:** Draw a molecule using CoordGen Library
+
+Some molecules like macrocycles are not represented well using the default RDKit drawing code. As a result,
+it may be preferable to use the CoordGen integration.
+
+.. testcode::
+
+   from rdkit import Chem
+   from rdkit.Chem.Draw import IPythonConsole
+   IPythonConsole.molSize = 350,300
+   from rdkit.Chem import Draw
+
+.. testcode::
+
+   # default drawing
+   mol = Chem.MolFromSmiles("C/C=C/CC(C)C(O)C1C(=O)NC(CC)C(=O)N(C)CC(=O)N(C)C(CC(C)C)C(=O)NC(C(C)C)C(=O)N(C)C(CC(C)C)C(=O)NC(C)C(=O)NC(C)C(=O)N(C)C(CC(C)C)C(=O)N(C)C(CC(C)C)C(=O)N(C)C(C(C)C)C(=O)N1C")
+   mol
+
+.. image:: images/RDKitCB_37_im0.png
+
+.. testcode::
+
+   # with CoordGen
+   from rdkit.Chem import rdCoordGen
+   rdCoordGen.AddCoords(mol)
+   mol
+
+.. image:: images/RDKitCB_37_im1.png
+
+It is also possible to use CoordGen with the MolDraw2D class. Here is one way to do that:
+
+.. testcode::
+
+   from rdkit import Chem
+   from rdkit.Chem import Draw
+   from rdkit.Chem.Draw import rdMolDraw2D
+   from rdkit.Chem import rdDepictor
+   rdDepictor.SetPreferCoordGen(True)
+   from rdkit.Chem.Draw import IPythonConsole
+   from IPython.display import SVG
+
+.. testcode::
+
+   mol = Chem.MolFromSmiles("C/C=C/CC(C)C(O)C1C(=O)NC(CC)C(=O)N(C)CC(=O)N(C)C(CC(C)C)C(=O)NC(C(C)C)C(=O)N(C)C(CC(C)C)C(=O)NC(C)C(=O)NC(C)C(=O)N(C)C(CC(C)C)C(=O)N(C)C(CC(C)C)C(=O)N(C)C(C(C)C)C(=O)N1C")
+   drawer = rdMolDraw2D.MolDraw2DSVG(300,300)
+   drawer.drawOptions().addStereoAnnotation = False
+   drawer.DrawMolecule(mol)
+   drawer.FinishDrawing()
+   SVG(drawer.GetDrawingText())
+
+.. image:: images/RDKitCB_37_im2.svg
+
+On a Plot
+======================
+
+| **Author:** Takayuki Serizawa
+| **Original Source:** `<https://gist.github.com/iwatobipen/1b384d145024663151b3252bf16d2aa8>`_
+| **Index ID#:** RDKitCB_35
+| **Summary:** Draw a molecule on a matplotlib plot.
+
+.. testcode::
+
+   import matplotlib.pyplot as plt
+   import numpy as np
+   from rdkit import Chem
+   from rdkit.Chem.Draw import IPythonConsole
+
+.. testcode::
+
+   x = np.arange(0, 180, 1)
+   y = np.sin(x)
+
+.. testcode::
+
+   mol = Chem.MolFromSmiles('C1CNCCC1C(=O)C')
+   im = Chem.Draw.MolToImage(mol)
+
+.. testcode::
+
+   fig = plt.figure(figsize=(10,5))
+   plt.plot(x, y)
+   plt.ylim(-1, 5)
+   ax = plt.axes([0.6, 0.47, 0.38, 0.38], frameon=True)
+   ax.imshow(im)
+   ax.axis('off')
+   # plt.show() # commented out to avoid creating plot with doctest
+
+.. image:: images/RDKitCB_35_im0.png
 
 Bonds and Bonding
 *******************

@@ -95,7 +95,7 @@ std::pair<int, double> OptimizeMolecule(ForceFields::ForceField &ff,
 }
 
 //! Convenience function for optimizing all of a molecule's conformations using
-// a pre-generated force-field
+/// a pre-generated force-field
 /*
   \param mol        the molecule to use
   \param ff         the force-field

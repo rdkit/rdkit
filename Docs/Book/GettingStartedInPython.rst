@@ -35,6 +35,8 @@ Reading single molecules
   # imported the IPythonConsole code
   from rdkit.Chem.Draw import IPythonConsole
   IPythonConsole.UninstallIPythonRenderer()
+  from rdkit.Chem import rdDepictor
+  rdDepictor.SetPreferCoordGen(False)
 
 The majority of the basic molecular functionality is found in module :py:mod:`rdkit.Chem`:
 

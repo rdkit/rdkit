@@ -37,7 +37,7 @@ typedef INVAR_VECT::const_iterator INVAR_VECT_CI;
 namespace MolOps {
 
 //! return the number of electrons available on an atom to donate for
-// aromaticity
+/// aromaticity
 /*!
    The result is determined using the default valency, number of lone pairs,
    number of bonds and the formal charge. Note that the atom may not donate
@@ -84,7 +84,7 @@ RDKIT_GRAPHMOL_EXPORT unsigned int getMolFrags(
     const ROMol &mol, std::vector<std::vector<int>> &frags);
 
 //! splits a molecule into its component fragments
-//  (disconnected components of the molecular graph)
+/// (disconnected components of the molecular graph)
 /*!
 
   \param mol     the molecule of interest
@@ -186,7 +186,7 @@ RDKIT_GRAPHMOL_EXPORT ROMol *addHs(const ROMol &mol, bool explicitOnly = false,
                                    const UINT_VECT *onlyOnAtoms = nullptr,
                                    bool addResidueInfo = false);
 //! \overload
-// modifies the molecule in place
+/// modifies the molecule in place
 RDKIT_GRAPHMOL_EXPORT void addHs(RWMol &mol, bool explicitOnly = false,
                                  bool addCoords = false,
                                  const UINT_VECT *onlyOnAtoms = nullptr,
@@ -243,7 +243,7 @@ RDKIT_GRAPHMOL_EXPORT ROMol *removeHs(const ROMol &mol,
                                       bool updateExplicitCount = false,
                                       bool sanitize = true);
 //! \overload
-// modifies the molecule in place
+/// modifies the molecule in place
 RDKIT_GRAPHMOL_EXPORT void removeHs(RWMol &mol, bool implicitOnly = false,
                                     bool updateExplicitCount = false,
                                     bool sanitize = true);
@@ -272,11 +272,11 @@ struct RDKIT_GRAPHMOL_EXPORT RemoveHsParameters {
   bool removeHydrides = true; /**< Removing Hydrides */
 };
 //! \overload
-// modifies the molecule in place
+/// modifies the molecule in place
 RDKIT_GRAPHMOL_EXPORT void removeHs(RWMol &mol, const RemoveHsParameters &ps,
                                     bool sanitize = true);
 //! \overload
-// The caller owns the pointer this returns
+/// The caller owns the pointer this returns
 RDKIT_GRAPHMOL_EXPORT ROMol *removeHs(const ROMol &mol,
                                       const RemoveHsParameters &ps,
                                       bool sanitize = true);
@@ -284,7 +284,7 @@ RDKIT_GRAPHMOL_EXPORT ROMol *removeHs(const ROMol &mol,
 //! removes all Hs from a molecule
 RDKIT_GRAPHMOL_EXPORT void removeAllHs(RWMol &mol, bool sanitize = true);
 //! \overload
-// The caller owns the pointer this returns
+/// The caller owns the pointer this returns
 RDKIT_GRAPHMOL_EXPORT ROMol *removeAllHs(const ROMol &mol,
                                          bool sanitize = true);
 
@@ -316,7 +316,7 @@ RDKIT_GRAPHMOL_EXPORT ROMol *removeAllHs(const ROMol &mol,
 RDKIT_GRAPHMOL_EXPORT ROMol *mergeQueryHs(const ROMol &mol,
                                           bool mergeUnmappedOnly = false);
 //! \overload
-// modifies the molecule in place
+/// modifies the molecule in place
 RDKIT_GRAPHMOL_EXPORT void mergeQueryHs(RWMol &mol,
                                         bool mergeUnmappedOnly = false);
 
@@ -413,7 +413,7 @@ RDKIT_GRAPHMOL_EXPORT void parseAdjustQueryParametersFromJSON(
 RDKIT_GRAPHMOL_EXPORT ROMol *adjustQueryProperties(
     const ROMol &mol, const AdjustQueryParameters *params = nullptr);
 //! \overload
-// modifies the molecule in place
+/// modifies the molecule in place
 RDKIT_GRAPHMOL_EXPORT void adjustQueryProperties(
     RWMol &mol, const AdjustQueryParameters *params = nullptr);
 
@@ -438,7 +438,7 @@ RDKIT_GRAPHMOL_EXPORT ROMol *renumberAtoms(
 //@}
 
 //! \name Sanitization
-//@{
+/// {
 
 typedef enum {
   SANITIZE_NONE = 0x0,
@@ -456,7 +456,7 @@ typedef enum {
 } SanitizeFlags;
 
 //! \brief carries out a collection of tasks for cleaning up a molecule and
-// ensuring
+/// ensuring
 //! that it makes "chemical sense"
 /*!
    This functions calls the following in sequence
@@ -573,7 +573,7 @@ RDKIT_GRAPHMOL_EXPORT int setAromaticity(
     int (*func)(RWMol &) = nullptr);
 
 //! Designed to be called by the sanitizer to handle special cases before
-// anything is done.
+/// anything is done.
 /*!
 
     Currently this:
@@ -948,7 +948,7 @@ RDKIT_GRAPHMOL_EXPORT void assignStereochemistry(
     ROMol &mol, bool cleanIt = false, bool force = false,
     bool flagPossibleStereoCenters = false);
 //! Removes all stereochemistry information from atoms (i.e. R/S) and bonds
-//(i.e. Z/E)
+/// i.e. Z/E)
 /*!
 
   \param mol     the molecule of interest

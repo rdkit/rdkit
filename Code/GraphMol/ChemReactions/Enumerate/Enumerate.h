@@ -46,7 +46,7 @@ future releases.
 namespace RDKit {
 
 //! This is a class for providing enumeration options that control
-//   how enumerations are performed.
+///  how enumerations are performed.
 /*!
  Option
    reagentMaxMatchCount [default INT_MAX]
@@ -68,9 +68,9 @@ struct RDKIT_CHEMREACTIONS_EXPORT EnumerationParams {
 };
 
 //!  Helper function, remove reagents that are incompatible
-//    with the reaction.
-//  rxn must be sanitized, initialized and preprocessed.
-//   this happens automatically in EnumerateLibrary
+///   with the reaction.
+/// rxn must be sanitized, initialized and preprocessed.
+///  this happens automatically in EnumerateLibrary
 RDKIT_CHEMREACTIONS_EXPORT EnumerationTypes::BBS removeNonmatchingReagents(
     const ChemicalReaction &rxn, EnumerationTypes::BBS bbs,
     const EnumerationParams &params = EnumerationParams());

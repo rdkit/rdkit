@@ -80,7 +80,7 @@ RDKIT_DEPICTOR_EXPORT unsigned int compute2DCoords(
     int sampleSeed = 0, bool permuteDeg4Nodes = false, bool forceRDKit = false);
 
 //! \brief Compute the 2D coordinates such the interatom distances
-//   mimic those in a distance matrix
+///  mimic those in a distance matrix
 /*!
 
   This function generates 2D coordinates such that the inter-atom
@@ -138,7 +138,7 @@ RDKIT_DEPICTOR_EXPORT unsigned int compute2DCoordsMimicDistMat(
     int sampleSeed = 25, bool permuteDeg4Nodes = true, bool forceRDKit = false);
 
 //! \brief Compute 2D coordinates where a piece of the molecule is
-//   constrained to have the same coordinates as a reference.
+///  constrained to have the same coordinates as a reference.
 /*!
   This function generates a depiction for a molecule where a piece of the
   molecule is constrained to have the same coordinates as a reference.
@@ -179,7 +179,7 @@ RDKIT_DEPICTOR_EXPORT RDKit::MatchVectType generateDepictionMatching2DStructure(
     bool allowOptionalAttachments = false);
 
 //! \brief Compute 2D coordinates where a piece of the molecule is
-//   constrained to have the same coordinates as a reference.
+///  constrained to have the same coordinates as a reference.
 /*!
   This function generates a depiction for a molecule where a piece of the
   molecule is constrained to have the same coordinates as a reference.
@@ -209,7 +209,7 @@ RDKIT_DEPICTOR_EXPORT void generateDepictionMatching2DStructure(
     bool forceRDKit = false);
 
 //! \brief Generate a 2D depiction for a molecule where all or part of
-//   it mimics the coordinates of a 3D reference structure.
+///  it mimics the coordinates of a 3D reference structure.
 /*!
   Generates a depiction for a molecule where a piece of the molecule
   is constrained to have coordinates similar to those of a 3D reference

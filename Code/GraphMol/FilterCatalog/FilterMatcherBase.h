@@ -119,8 +119,8 @@ class RDKIT_FILTERCATALOG_EXPORT FilterMatcherBase
 
   //------------------------------------
   //! Clone - deprecated
-  //  Clones the current FilterMatcherBase into one that
-  //   can be passed around safely.
+  /// Clones the current FilterMatcherBase into one that
+  ///  can be passed around safely.
   virtual boost::shared_ptr<FilterMatcherBase> Clone() const {
     BOOST_LOG(rdWarningLog)
         << "FilterMatcherBase::Clone is deprecated, use copy instead"
@@ -130,8 +130,8 @@ class RDKIT_FILTERCATALOG_EXPORT FilterMatcherBase
 
   //------------------------------------
   //! copy
-  //  copies the current FilterMatcherBase into one that
-  //   can be passed around safely.
+  /// copies the current FilterMatcherBase into one that
+  ///  can be passed around safely.
   virtual boost::shared_ptr<FilterMatcherBase> copy() const = 0;
 
  private:

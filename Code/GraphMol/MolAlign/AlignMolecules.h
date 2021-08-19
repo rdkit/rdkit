@@ -103,8 +103,8 @@ RDKIT_MOLALIGN_EXPORT double alignMol(
     unsigned int maxIters = 50);
 
 //! Returns the optimal RMS for aligning two molecules, taking
-//  symmetry into account. As a side-effect, the probe molecule is
-//  left in the aligned state.
+/// symmetry into account. As a side-effect, the probe molecule is
+/// left in the aligned state.
 /*!
   This function will attempt to align all permutations of matching atom
   orders in both molecules, for some molecules it will lead to 'combinatorial
@@ -158,7 +158,7 @@ RDKIT_MOLALIGN_EXPORT double CalcRMS(
     int maxMatches = 1e6, const RDNumeric::DoubleVector *weights = nullptr);
 
 //! Align the conformations of a molecule using a common set of atoms. If
-// the molecules contains queries, then the queries must also match exactly.
+/// the molecules contains queries, then the queries must also match exactly.
 
 /*!
   \param mol       The molecule of interest.

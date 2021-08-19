@@ -49,7 +49,7 @@ RDKIT_FILEPARSERS_EXPORT void addWavyBondsForStereoAny(
     unsigned addWhenImpossible = StereoBondThresholds::DBL_BOND_NO_STEREO);
 
 //! picks the bonds which should be wedged
-// \returns a map from bond idx -> controlling atom idx
+/// \returns a map from bond idx -> controlling atom idx
 RDKIT_FILEPARSERS_EXPORT INT_MAP_INT pickBondsToWedge(const ROMol &mol);
 RDKIT_FILEPARSERS_EXPORT void ClearSingleBondDirFlags(ROMol &mol);
 RDKIT_FILEPARSERS_EXPORT Bond::BondDir DetermineBondWedgeState(
