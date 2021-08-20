@@ -111,8 +111,7 @@ int countZeros(std::string ta) {
   return nbzero;
 }
 
-bool IsClose2(double a, double b, unsigned int precision) {
-  RDUNUSED_PARAM(precision);
+bool IsClose2(double a, double b, unsigned int) {
   bool isclose = false;
 
   std::string sa, sb;
@@ -150,8 +149,7 @@ bool IsClose2(double a, double b, unsigned int precision) {
   return isclose;
 }
 
-bool IsClose3(double a, double b, unsigned int precision) {
-  RDUNUSED_PARAM(precision);
+bool IsClose3(double a, double b, unsigned int) {
   bool isclose = false;
   std::string sa, sb;
   std::string ta, tb;

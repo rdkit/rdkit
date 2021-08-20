@@ -442,8 +442,7 @@ void basicInitCanonAtom(const ROMol &mol, Canon::canon_atom &atom,
 }
 
 void advancedInitCanonAtom(const ROMol &mol, Canon::canon_atom &atom,
-                           const int &idx) {
-  RDUNUSED_PARAM(idx);
+                           const int &) {
   atom.totalNumHs = atom.atom->getTotalNumHs();
   atom.isRingStereoAtom =
       (atom.atom->getChiralTag() == Atom::CHI_TETRAHEDRAL_CW ||

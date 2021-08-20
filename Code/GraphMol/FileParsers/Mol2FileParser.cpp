@@ -800,8 +800,7 @@ void ParseMol2BondBlock(std::istream *inStream, RWMol *res, unsigned int nBonds,
 //
 //------------------------------------------------
 RWMol *Mol2DataStreamToMol(std::istream *inStream, bool sanitize, bool removeHs,
-                           Mol2Type variant, bool cleanupSubstructures) {
-  RDUNUSED_PARAM(variant);
+                           Mol2Type, bool cleanupSubstructures) {
   PRECONDITION(inStream, "no stream");
   std::string tempStr, lineBeg;
   typedef boost::tokenizer<boost::char_separator<char>> tokenizer;
@@ -985,7 +984,6 @@ RWMol *Mol2DataStreamToMol(std::istream *inStream, bool sanitize, bool removeHs,
 
 RWMol *Mol2DataStreamToMol(std::istream &inStream, bool sanitize, bool removeHs,
                            Mol2Type variant, bool cleanupSubstructures) {
-  RDUNUSED_PARAM(variant);
   return Mol2DataStreamToMol(&inStream, sanitize, removeHs, variant,
                              cleanupSubstructures);
 };
@@ -996,7 +994,6 @@ RWMol *Mol2DataStreamToMol(std::istream &inStream, bool sanitize, bool removeHs,
 //------------------------------------------------
 RWMol *Mol2BlockToMol(const std::string &molBlock, bool sanitize, bool removeHs,
                       Mol2Type variant, bool cleanupSubstructures) {
-  RDUNUSED_PARAM(variant);
   std::istringstream inStream(molBlock);
   return Mol2DataStreamToMol(inStream, sanitize, removeHs, variant,
                              cleanupSubstructures);
@@ -1012,7 +1009,6 @@ RWMol *Mol2FileToMol(const std::string &fName, bool sanitize, bool removeHs,
   // FIX: this binary mode of opening file is here because of a bug in VC++ 6.0
   // the function "tellg" does not work correctly if we do not open it this way
   //   Jan 2009: Confirmed that this is still the case in visual studio 2008
-  RDUNUSED_PARAM(variant);
   std::ifstream inStream(fName.c_str(), std::ios_base::binary);
   if (!inStream || (inStream.bad())) {
     std::ostringstream errout;

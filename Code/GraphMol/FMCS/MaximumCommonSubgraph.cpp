@@ -1141,8 +1141,6 @@ bool MaximumCommonSubgraph::checkIfMatchAndAppend(Seed& seed) {
 #ifdef FAST_SUBSTRUCT_CACHE
   SubstructureCache::HashKey cacheKey;
   SubstructureCache::TIndexEntry* cacheEntry = nullptr;
-  bool cacheEntryIsValid = false;
-  RDUNUSED_PARAM(cacheEntryIsValid);  // unused var
 #endif
 
   bool foundInCache = false;
@@ -1170,7 +1168,6 @@ bool MaximumCommonSubgraph::checkIfMatchAndAppend(Seed& seed) {
 #endif
       cacheEntry =
           HashCache.find(seed, QueryAtomLabels, QueryBondLabels, cacheKey);
-      cacheEntryIsValid = true;
       if (cacheEntry) {  // possibly found. check for hash collision
 #ifdef VERBOSE_STATISTICS_ON
         ++VerboseStatistics.HashKeyFoundInCache;

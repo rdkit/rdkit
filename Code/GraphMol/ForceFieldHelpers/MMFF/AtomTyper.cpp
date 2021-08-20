@@ -2740,9 +2740,8 @@ MMFFMolProperties::getMMFFTorsionType(const ROMol &mol, const unsigned int idx1,
 // tabulated parameters could not be found. The returned
 // pointer to a MMFFBond object must be freed by the caller
 const ForceFields::MMFF::MMFFBond *
-MMFFMolProperties::getMMFFBondStretchEmpiricalRuleParams(const ROMol &mol,
+MMFFMolProperties::getMMFFBondStretchEmpiricalRuleParams(const ROMol &,
                                                          const Bond *bond) {
-  RDUNUSED_PARAM(mol);
   PRECONDITION(this->isValid(), "missing atom types - invalid force-field");
 
   const MMFFBond *mmffBndkParams;
