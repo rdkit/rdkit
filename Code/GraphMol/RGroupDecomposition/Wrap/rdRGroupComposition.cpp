@@ -173,15 +173,8 @@ python::object RGroupDecomp(python::object cores, python::object mols,
 
 struct rgroupdecomp_wrapper {
   static void wrap() {
-    // logic from https://stackoverflow.com/a/13017303
-    boost::python::type_info info =
-        boost::python::type_id<RDKit::MOL_SPTR_VECT>();
-    const boost::python::converter::registration *reg =
-        boost::python::converter::registry::query(info);
-    if (reg == nullptr || (*reg).m_to_python == nullptr) {
-      python::class_<RDKit::MOL_SPTR_VECT>("MOL_SPTR_VECT")
-          .def(python::vector_indexing_suite<RDKit::MOL_SPTR_VECT, true>());
-    }
+    bool noproxy = true;
+    RegisterVectorConverter<RDKit::ROMOL_SPTR>("MOL_SPTR_VECT", noproxy);
 
     std::string docString = "";
     python::enum_<RDKit::RGroupLabels>("RGroupLabels")
