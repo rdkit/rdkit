@@ -127,14 +127,17 @@ void ParseSGroupV2000STYLine(IDX_TO_SGROUP_MAP &sGroupMap, RWMol *mol,
       return;
     }
 
-    unsigned int nbr = ParseSGroupIntField(ok, strictParsing, text, line, pos);
+    unsigned int sequenceId =
+        ParseSGroupIntField(ok, strictParsing, text, line, pos);
     if (!ok) {
       return;
     }
 
     std::string typ = text.substr(pos + 1, 3);
     if (SubstanceGroupChecks::isValidType(typ)) {
-      sGroupMap.emplace(nbr, SubstanceGroup(mol, typ));
+      auto sgroup = SubstanceGroup(mol, typ);
+      sgroup.setProp<unsigned int>("index", sequenceId);
+      sGroupMap.emplace(sequenceId, sgroup);
     } else {
       std::ostringstream errout;
       errout << "S group " << typ << " on line " << line;
