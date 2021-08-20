@@ -48,7 +48,6 @@
 #include <RDGeneral/FileParseException.h>
 #include <GraphMol/ChemReactions/ReactionFingerprints.h>
 #include <GraphMol/ChemReactions/ReactionUtils.h>
-#include <boost/python/suite/indexing/vector_indexing_suite.hpp>
 
 namespace python = boost::python;
 

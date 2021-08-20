@@ -9,7 +9,6 @@
 //
 
 #include <RDBoost/python.h>
-#include <boost/python/suite/indexing/vector_indexing_suite.hpp>
 #include <GraphMol/GraphMol.h>
 #include <RDBoost/Wrap.h>
 
@@ -73,8 +72,6 @@ BOOST_PYTHON_MODULE(rdScaffoldNetwork) {
   python::scope().attr("__doc__") =
       "Module containing functions for creating a Scaffold Network";
 
-  // register the vector_indexing_suite for NetworkEdges
-  // if it hasn't already been done.
   RegisterVectorConverter<ScaffoldNetwork::NetworkEdge>("NetworkEdge_VECT");
 
   iterable_converter().from_python<std::vector<std::string>>();

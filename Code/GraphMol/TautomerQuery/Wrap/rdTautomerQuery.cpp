@@ -10,7 +10,6 @@
 
 #include <RDBoost/Wrap.h>
 #include <RDBoost/python.h>
-#include <boost/python/suite/indexing/vector_indexing_suite.hpp>
 #include <GraphMol/TautomerQuery/TautomerQuery.h>
 #include <GraphMol/Wrap/substructmethods.h>
 
