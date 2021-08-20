@@ -98,7 +98,8 @@ const char *PatternHolderDoc =
     "Holds fingerprints with optional, user-defined number of bits (default: "
     "2048) used for filtering of molecules.";
 const char *TautomerPatternHolderDoc =
-    "Holds tautomeric fingerprints with optional, user-defined number of bits (default: "
+    "Holds tautomeric fingerprints with optional, user-defined number of bits "
+    "(default: "
     "2048) used for filtering of molecules.\n"
     "These fingerprints are designed to be used with TautomerQueries.";
 
@@ -216,33 +217,27 @@ void toStream(const SubstructLibrary &cat, python::object &fileobj) {
   cat.toStream(ost);
 }
 
-  void initFromStream(SubstructLibrary &cat, python::object &fileobj) {
-  streambuf ss(fileobj, 'b'); // python StringIO can't seek, so need binary data
+void initFromStream(SubstructLibrary &cat, python::object &fileobj) {
+  streambuf ss(fileobj,
+               'b');  // python StringIO can't seek, so need binary data
   streambuf::istream is(ss);
   cat.initFromStream(is);
 }
 
-boost::shared_ptr<MolHolderBase> GetMolHolder(SubstructLibrary &sslib)
-{
+boost::shared_ptr<MolHolderBase> GetMolHolder(SubstructLibrary &sslib) {
   // need to convert from a ref to a real shared_ptr
   return sslib.getMolHolder();
 }
 
-boost::shared_ptr<FPHolderBase> GetFpHolder(SubstructLibrary &sslib)
-{
+boost::shared_ptr<FPHolderBase> GetFpHolder(SubstructLibrary &sslib) {
   // need to convert from a ref to a real shared_ptr
   return sslib.getFpHolder();
 }
 
 struct substructlibrary_wrapper {
   static void wrap() {
-    // n.b. there can only be one of these in all wrappings
-    // python::class_<std::vector<unsigned int> >("UIntVect").def(
-    //  python::vector_indexing_suite<std::vector<unsigned int>, true>());
-
     python::class_<MolHolderBase, boost::shared_ptr<MolHolderBase>,
-		   boost::noncopyable>("MolHolderBase", "",
-				       python::no_init)
+                   boost::noncopyable>("MolHolderBase", "", python::no_init)
         .def("__len__", &MolHolderBase::size)
         .def("AddMol", &MolHolderBase::addMol,
              "Adds molecule to the molecule holder")
@@ -250,7 +245,8 @@ struct substructlibrary_wrapper {
              "Returns a particular molecule in the molecule holder\n\n"
              "  ARGUMENTS:\n"
              "    - idx: which molecule to return\n\n"
-             "    - sanitize: if sanitize is False, return the internal molecule state [default True]\n\n"
+             "    - sanitize: if sanitize is False, return the internal "
+             "molecule state [default True]\n\n"
              "  NOTE: molecule indices start at 0\n")
         .def("__len__", &MolHolderBase::size);
 
@@ -313,11 +309,12 @@ struct substructlibrary_wrapper {
         "PatternHolder", PatternHolderDoc, python::init<>())
         .def(python::init<unsigned int>());
 
-    python::class_<TautomerPatternHolder, boost::shared_ptr<TautomerPatternHolder>,
+    python::class_<TautomerPatternHolder,
+                   boost::shared_ptr<TautomerPatternHolder>,
                    python::bases<FPHolderBase>>(
         "TautomerPatternHolder", TautomerPatternHolderDoc, python::init<>())
         .def(python::init<unsigned int>());
-      
+
     python::class_<SubstructLibrary, SubstructLibrary *,
                    const SubstructLibrary *>(
         "SubstructLibrary", SubstructLibraryDoc, python::init<>())
@@ -423,101 +420,100 @@ struct substructlibrary_wrapper {
              "  - startIdx:   index to search from\n"
              "  - endIdx:     index (non-inclusize) to search to\n"
              "  - numThreads: number of threads to use, -1 means all threads\n")
-      // =========================================================================
-      // TautomerQueries
-      .def("GetMatches",
-           (std::vector<unsigned int>(SubstructLibrary::*)(
-               const TautomerQuery &, bool, bool, bool, int, int) const) &
-               SubstructLibrary::getMatches,
-           (python::arg("query"), python::arg("recursionPossible") = true,
-            python::arg("useChirality") = true,
-            python::arg("useQueryQueryMatches") = false,
-            python::arg("numThreads") = -1, python::arg("maxResults") = 1000),
-           "Get the matches for the query.\n\n"
-           " Arguments:\n"
-           "  - query:      tautomer query\n"
-           "  - numThreads: number of threads to use, -1 means all threads\n"
-           "  - maxResults: maximum number of results to return")
+        // =========================================================================
+        // TautomerQueries
+        .def("GetMatches",
+             (std::vector<unsigned int>(SubstructLibrary::*)(
+                 const TautomerQuery &, bool, bool, bool, int, int) const) &
+                 SubstructLibrary::getMatches,
+             (python::arg("query"), python::arg("recursionPossible") = true,
+              python::arg("useChirality") = true,
+              python::arg("useQueryQueryMatches") = false,
+              python::arg("numThreads") = -1, python::arg("maxResults") = 1000),
+             "Get the matches for the query.\n\n"
+             " Arguments:\n"
+             "  - query:      tautomer query\n"
+             "  - numThreads: number of threads to use, -1 means all threads\n"
+             "  - maxResults: maximum number of results to return")
 
-      .def("GetMatches",
-           (std::vector<unsigned int>(SubstructLibrary::*)(
-               const TautomerQuery &, unsigned int, unsigned int, bool, bool, bool,
-               int, int) const) &
-               SubstructLibrary::getMatches,
-           (python::arg("query"), python::arg("startIdx"),
-            python::arg("endIdx"), python::arg("recursionPossible") = true,
-            python::arg("useChirality") = true,
-            python::arg("useQueryQueryMatches") = false,
-            python::arg("numThreads") = -1, python::arg("maxResults") = 1000),
-           "Get the matches for the query.\n\n"
-           " Arguments:\n"
-           "  - query:      tautomer query\n"
-           "  - startIdx:   index to search from\n"
-           "  - endIdx:     index (non-inclusize) to search to\n"
-           "  - numThreads: number of threads to use, -1 means all threads\n"
-           "  - maxResults: maximum number of results to return")
+        .def("GetMatches",
+             (std::vector<unsigned int>(SubstructLibrary::*)(
+                 const TautomerQuery &, unsigned int, unsigned int, bool, bool,
+                 bool, int, int) const) &
+                 SubstructLibrary::getMatches,
+             (python::arg("query"), python::arg("startIdx"),
+              python::arg("endIdx"), python::arg("recursionPossible") = true,
+              python::arg("useChirality") = true,
+              python::arg("useQueryQueryMatches") = false,
+              python::arg("numThreads") = -1, python::arg("maxResults") = 1000),
+             "Get the matches for the query.\n\n"
+             " Arguments:\n"
+             "  - query:      tautomer query\n"
+             "  - startIdx:   index to search from\n"
+             "  - endIdx:     index (non-inclusize) to search to\n"
+             "  - numThreads: number of threads to use, -1 means all threads\n"
+             "  - maxResults: maximum number of results to return")
 
-      .def("CountMatches",
-           (unsigned int (SubstructLibrary::*)(const TautomerQuery &, bool, bool,
-                                               bool, int) const) &
-               SubstructLibrary::countMatches,
-           (python::arg("query"), python::arg("recursionPossible") = true,
-            python::arg("useChirality") = true,
-            python::arg("useQueryQueryMatches") = false,
-            python::arg("numThreads") = -1),
-           "Get the matches for the query.\n\n"
-           " Arguments:\n"
-           "  - query:      tautomer query\n"
-           "  - numThreads: number of threads to use, -1 means all threads\n")
+        .def("CountMatches",
+             (unsigned int (SubstructLibrary::*)(const TautomerQuery &, bool,
+                                                 bool, bool, int) const) &
+                 SubstructLibrary::countMatches,
+             (python::arg("query"), python::arg("recursionPossible") = true,
+              python::arg("useChirality") = true,
+              python::arg("useQueryQueryMatches") = false,
+              python::arg("numThreads") = -1),
+             "Get the matches for the query.\n\n"
+             " Arguments:\n"
+             "  - query:      tautomer query\n"
+             "  - numThreads: number of threads to use, -1 means all threads\n")
 
-      .def("CountMatches",
-           (unsigned int (SubstructLibrary::*)(const TautomerQuery &, unsigned int,
-                                               unsigned int, bool, bool, bool,
-                                               int) const) &
-               SubstructLibrary::countMatches,
-           (python::arg("query"), python::arg("startIdx"),
-            python::arg("endIdx"), python::arg("recursionPossible") = true,
-            python::arg("useChirality") = true,
-            python::arg("useQueryQueryMatches") = false,
-            python::arg("numThreads") = -1),
-           "Get the matches for the query.\n\n"
-           " Arguments:\n"
-           "  - query:      tautomer query\n"
-           "  - startIdx:   index to search from\n"
-           "  - endIdx:     index (non-inclusize) to search to\n"
-           "  - numThreads: number of threads to use, -1 means all threads\n")
+        .def("CountMatches",
+             (unsigned int (SubstructLibrary::*)(const TautomerQuery &,
+                                                 unsigned int, unsigned int,
+                                                 bool, bool, bool, int) const) &
+                 SubstructLibrary::countMatches,
+             (python::arg("query"), python::arg("startIdx"),
+              python::arg("endIdx"), python::arg("recursionPossible") = true,
+              python::arg("useChirality") = true,
+              python::arg("useQueryQueryMatches") = false,
+              python::arg("numThreads") = -1),
+             "Get the matches for the query.\n\n"
+             " Arguments:\n"
+             "  - query:      tautomer query\n"
+             "  - startIdx:   index to search from\n"
+             "  - endIdx:     index (non-inclusize) to search to\n"
+             "  - numThreads: number of threads to use, -1 means all threads\n")
 
-      .def("HasMatch",
-           (bool (SubstructLibrary::*)(const TautomerQuery &, bool, bool, bool, int)
-                const) &
-               SubstructLibrary::hasMatch,
-           (python::arg("query"), python::arg("recursionPossible") = true,
-            python::arg("useChirality") = true,
-            python::arg("useQueryQueryMatches") = false,
-            python::arg("numThreads") = -1),
-           "Get the matches for the query.\n\n"
-           " Arguments:\n"
-           "  - query:      tautomer query\n"
-           "  - numThreads: number of threads to use, -1 means all threads\n")
+        .def("HasMatch",
+             (bool (SubstructLibrary::*)(const TautomerQuery &, bool, bool,
+                                         bool, int) const) &
+                 SubstructLibrary::hasMatch,
+             (python::arg("query"), python::arg("recursionPossible") = true,
+              python::arg("useChirality") = true,
+              python::arg("useQueryQueryMatches") = false,
+              python::arg("numThreads") = -1),
+             "Get the matches for the query.\n\n"
+             " Arguments:\n"
+             "  - query:      tautomer query\n"
+             "  - numThreads: number of threads to use, -1 means all threads\n")
 
-      .def("HasMatch",
-           (bool (SubstructLibrary::*)(const TautomerQuery &, unsigned int,
-                                       unsigned int, bool, bool, bool, int)
-                const) &
-               SubstructLibrary::hasMatch,
-           (python::arg("query"), python::arg("startIdx"),
-            python::arg("endIdx"), python::arg("recursionPossible") = true,
-            python::arg("useChirality") = true,
-            python::arg("useQueryQueryMatches") = false,
-            python::arg("numThreads") = -1),
-           "Get the matches for the query.\n\n"
-           " Arguments:\n"
-           "  - query:      tautomer query\n"
-           "  - startIdx:   index to search from\n"
-           "  - endIdx:     index (non-inclusize) to search to\n"
-           "  - numThreads: number of threads to use, -1 means all threads\n")
+        .def("HasMatch",
+             (bool (SubstructLibrary::*)(const TautomerQuery &, unsigned int,
+                                         unsigned int, bool, bool, bool, int)
+                  const) &
+                 SubstructLibrary::hasMatch,
+             (python::arg("query"), python::arg("startIdx"),
+              python::arg("endIdx"), python::arg("recursionPossible") = true,
+              python::arg("useChirality") = true,
+              python::arg("useQueryQueryMatches") = false,
+              python::arg("numThreads") = -1),
+             "Get the matches for the query.\n\n"
+             " Arguments:\n"
+             "  - query:      tautomer query\n"
+             "  - startIdx:   index to search from\n"
+             "  - endIdx:     index (non-inclusize) to search to\n"
+             "  - numThreads: number of threads to use, -1 means all threads\n")
 
-      
         .def("GetMol", &SubstructLibrary::getMol,
              "Returns a particular molecule in the molecule holder\n\n"
              "  ARGUMENTS:\n"
@@ -569,17 +565,21 @@ struct substructlibrary_wrapper {
                 "(requires boost serialization");
 
     python::def("AddPatterns",
-		(void (*)(SubstructLibrary&, int))&addPatterns,
-		"Add pattern fingerprints to the given library, use numThreads=-1 to use all available cores",
-		(python::arg("sslib"), python::arg("numThreads")=1));
+                (void (*)(SubstructLibrary &, int)) & addPatterns,
+                "Add pattern fingerprints to the given library, use "
+                "numThreads=-1 to use all available cores",
+                (python::arg("sslib"), python::arg("numThreads") = 1));
 
-    python::def("AddPatterns",
-		(void (*)(SubstructLibrary&, boost::shared_ptr<FPHolderBase>, int))&addPatterns,
-		"Add pattern fingerprints to the given library, use numThreads=-1 to use all available cores",
-		(python::arg("sslib"), python::arg("patterns"), python::arg("numThreads")=1));
-
+    python::def(
+        "AddPatterns",
+        (void (*)(SubstructLibrary &, boost::shared_ptr<FPHolderBase>, int)) &
+            addPatterns,
+        "Add pattern fingerprints to the given library, use numThreads=-1 to "
+        "use all available cores",
+        (python::arg("sslib"), python::arg("patterns"),
+         python::arg("numThreads") = 1));
   }
 };
-}
+}  // namespace RDKit
 
 void wrap_substructlibrary() { RDKit::substructlibrary_wrapper::wrap(); }
