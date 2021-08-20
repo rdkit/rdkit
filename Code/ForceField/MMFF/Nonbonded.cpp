@@ -78,10 +78,8 @@ void scaleVdWParams(double &R_star_ij, double &wellDepth,
   }
 }
 
-double calcEleEnergy(unsigned int idx1, unsigned int idx2, double dist,
-                     double chargeTerm, std::uint8_t dielModel, bool is1_4) {
-  RDUNUSED_PARAM(idx1);
-  RDUNUSED_PARAM(idx2);
+double calcEleEnergy(unsigned int, unsigned int, double dist, double chargeTerm,
+                     std::uint8_t dielModel, bool is1_4) {
   double corr_dist = dist + 0.05;
   double const diel = 332.0716;
   double const sc1_4 = 0.75;
@@ -90,7 +88,7 @@ double calcEleEnergy(unsigned int idx1, unsigned int idx2, double dist,
   }
   return (diel * chargeTerm / corr_dist * (is1_4 ? sc1_4 : 1.0));
 }
-}  // end of namespace utils
+}  // namespace Utils
 
 VdWContrib::VdWContrib(ForceField *owner, unsigned int idx1, unsigned int idx2,
                        const MMFFVdWRijstarEps *mmffVdWConstants) {
@@ -150,8 +148,7 @@ void VdWContrib::getGrad(double *pos, double *grad) const {
 }
 
 EleContrib::EleContrib(ForceField *owner, unsigned int idx1, unsigned int idx2,
-                       double chargeTerm, std::uint8_t dielModel,
-                       bool is1_4) {
+                       double chargeTerm, std::uint8_t dielModel, bool is1_4) {
   PRECONDITION(owner, "bad owner");
   URANGE_CHECK(idx1, owner->positions().size());
   URANGE_CHECK(idx2, owner->positions().size());
@@ -196,5 +193,5 @@ void EleContrib::getGrad(double *pos, double *grad) const {
     g2[i] -= dGrad;
   }
 }
-}
-}
+}  // namespace MMFF
+}  // namespace ForceFields

@@ -261,8 +261,7 @@ void readConformer(Conformer *conf, const rj::Value &confVal) {
 }
 
 void readPartialCharges(RWMol *mol, const rj::Value &repVal,
-                        const JSONParseParameters &params) {
-  RDUNUSED_PARAM(params);
+                        const JSONParseParameters &) {
   PRECONDITION(mol, "no molecule");
   PRECONDITION(repVal["name"].GetString() == std::string("partialCharges"),
                "bad charges");
@@ -312,10 +311,9 @@ Query<int, Bond const *, true> *readQuery(Bond const *owner,
 template <class T>
 Query<int, T const *, true> *readBaseQuery(T const *owner,
                                            const rj::Value &repVal,
-                                           const JSONParseParameters &params) {
+                                           const JSONParseParameters &) {
   PRECONDITION(owner, "no query");
   PRECONDITION(repVal.HasMember("tag"), "no tag");
-  RDUNUSED_PARAM(params);
   int tag = repVal["tag"].GetInt();
   if (!repVal.HasMember("descr")) {
     throw FileParseException("Bad Format: missing query description");

@@ -661,21 +661,6 @@ void StructCheckerOptions::parseTautomerData(
 }
 //--------------------------------------------------------------------------
 
-bool loadChargeDataTables(const std::string &path) {
-  // TODO: !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-  RDUNUSED_PARAM(path);
-  /*
-      double Elneg0; // elneg_table[0].value;
-      std::map<unsigned, double> ElnegTable;   // AtomicNumber -> eleng
-      std::vector<inc_entry_t> AtomAcidity;    //atom_acidity_table[]
-      std::vector<inc_entry_t> charge_inc_table;  // std::map AtomicNumber ->
-     ...
-      double Alpha, Beta;
-      std::vector<path_entry_t> alpha_path_table, beta_path_table;
-  */
-  return true;
-}
-
 StructCheckerOptions::StructCheckerOptions()
     : AcidityLimit(0.0),
       RemoveMinorFragments(false),
