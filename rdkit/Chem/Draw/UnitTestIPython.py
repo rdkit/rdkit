@@ -13,7 +13,7 @@ import unittest
 from rdkit import Chem
 from rdkit.Chem import Draw
 try:
-  from rdkit.Chem.Draw import IPythonConsole
+  from rdkit.Chem.Draw import IPythonConsole, rdMolDraw2D
   from IPython.core.display import SVG
 except ImportError:
   IPythonConsole = None
@@ -45,6 +45,18 @@ class TestCase(unittest.TestCase):
     res = Draw.MolsToGridImage((m, m))
     self.assertTrue(isinstance(res, SVG))
 
+  @unittest.skipIf(IPythonConsole is None, 'IPython not available')
+  def testGithub3101(self):
+    m = Chem.MolFromSmiles('CCCC')
+
+    IPythonConsole.ipython_useSVG = True
+    IPythonConsole.drawOptions.addAtomIndices = True
+    res = Draw.MolsToGridImage((m, m))
+    self.assertIn('class="note"', res.data)
+
+    dopts = rdMolDraw2D.MolDrawOptions()
+    res = Draw.MolsToGridImage((m, m), drawOptions=dopts)
+    self.assertNotIn('class="note"', res.data)
 
 if __name__ == '__main__':
   unittest.main()
