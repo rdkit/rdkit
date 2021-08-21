@@ -49,7 +49,7 @@ std::pair<int, double> UFFOptimizeMolecule(
 }
 
 //! Convenience function for optimizing all of a molecule's conformations using
-// UFF
+/// UFF
 /*
   \param mol        the molecule to use
   \param res        vector of (needsMore,energy)

@@ -49,7 +49,7 @@ RDKIT_MOLSTANDARDIZE_EXPORT extern std::vector<ChargeCorrection>
     CHARGE_CORRECTIONS;
 
 //! The reionizer class to fix charges and reionize a molecule such that the
-// strongest acids ionize first.
+/// strongest acids ionize first.
 /*!
 
   <b>Notes:</b>
@@ -65,11 +65,11 @@ class RDKIT_MOLSTANDARDIZE_EXPORT Reionizer {
   Reionizer(const std::vector<std::tuple<std::string, std::string, std::string>>
                 &data);
   //! construct a Reionizer with a particular acidbaseFile and charge
-  // corrections
+  /// corrections
   Reionizer(const std::string acidbaseFile,
             const std::vector<ChargeCorrection> ccs);
   //! construct a Reionizer with a particular acidbaseFile and charge
-  // corrections
+  /// corrections
   Reionizer(std::istream &acidbaseStream,
             const std::vector<ChargeCorrection> ccs);
 

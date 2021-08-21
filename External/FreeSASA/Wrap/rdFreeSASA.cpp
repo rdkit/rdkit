@@ -33,9 +33,6 @@
 #define NPY_NO_DEPRECATED_API NPY_1_7_API_VERSION
 #include <numpy/arrayobject.h>
 #include <boost/python/list.hpp>
-//#include <boost/python/suite/indexing/map_indexing_suite.hpp>
-//#include <boost/python/suite/indexing/vector_indexing_suite.hpp>
-//#include <string>
 #include <cmath>
 
 #include <RDGeneral/Exceptions.h>
@@ -81,7 +78,7 @@ double calcSASAHelper(const RDKit::ROMol &mol, python::object radii,
 
   return FreeSASA::calcSASA(mol, vradii, confIdx, atom, opts);
 }
-}
+}  // namespace
 
 struct freesasa_wrapper {
   static void wrap() {
@@ -109,11 +106,10 @@ struct freesasa_wrapper {
         .def(python::init<FreeSASA::SASAOpts::Algorithm,
                           FreeSASA::SASAOpts::Classifier>())
         .def(python::init<FreeSASA::SASAOpts::Algorithm,
-                          FreeSASA::SASAOpts::Classifier,double>())
+                          FreeSASA::SASAOpts::Classifier, double>())
         .def_readwrite("algorithm", &FreeSASA::SASAOpts::algorithm)
         .def_readwrite("classifier", &FreeSASA::SASAOpts::classifier)
-        .def_readwrite("probeRadius", &FreeSASA::SASAOpts::probeRadius)
-        ;
+        .def_readwrite("probeRadius", &FreeSASA::SASAOpts::probeRadius);
 
     docString =
         "Classify the atoms in the molecule returning their radii if "
@@ -181,7 +177,7 @@ struct freesasa_wrapper {
         "and SASAClassName set to the POLAR class.  (see classifyAtoms)");
   }
 };
-}
+}  // namespace RDKit
 
 BOOST_PYTHON_MODULE(rdFreeSASA) {
   python::scope().attr("__doc__") =

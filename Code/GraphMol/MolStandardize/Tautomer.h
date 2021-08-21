@@ -335,9 +335,9 @@ class RDKIT_MOLSTANDARDIZE_EXPORT TautomerEnumerator {
                            TautomerScoringFunctions::scoreTautomer) const;
 
   //! returns the canonical tautomer from an iterable of possible tautomers
-  // When Iterable is TautomerEnumeratorResult we use the other non-templated
-  // overload for efficiency (TautomerEnumeratorResult already has SMILES so no
-  // need to recompute them)
+  /// When Iterable is TautomerEnumeratorResult we use the other non-templated
+  /// overload for efficiency (TautomerEnumeratorResult already has SMILES so no
+  /// need to recompute them)
   template <class Iterable,
             typename std::enable_if<
                 !std::is_same<Iterable, TautomerEnumeratorResult>::value,

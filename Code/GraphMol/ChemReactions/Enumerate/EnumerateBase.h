@@ -45,7 +45,7 @@
 
 namespace RDKit {
 //! Base class for enumerating chemical reactions from collections of
-//  building blocks and reagents.
+/// building blocks and reagents.
 /*!
   basic usage:
 
@@ -110,31 +110,31 @@ class RDKIT_CHEMREACTIONS_EXPORT EnumerateLibraryBase {
   }
 
   //! get the next set of products (See run_Reactants) for details
-  //  This returns a vector of a vector of molecules.
-  //  Each result vector corresponds for a product template.
-  //  i.e.
-  //    res = library.next();
-  //    res[0] are the results for library.getReaction().getProdcts()[0]
+  /// This returns a vector of a vector of molecules.
+  /// Each result vector corresponds for a product template.
+  /// i.e.
+  ///   res = library.next();
+  ///   res[0] are the results for library.getReaction().getProdcts()[0]
   virtual std::vector<MOL_SPTR_VECT> next() = 0;
 
   //! get the next set of products as smiles
-  //  This returns a vector of a vector strings.
-  //  Each result vector corresponds for a product template.
+  /// This returns a vector of a vector strings.
+  /// Each result vector corresponds for a product template.
   virtual std::vector<std::vector<std::string>> nextSmiles();
 
   //! Get the current position into the reagent vectors
-  //   Use getState/setState to save/restart the enumeration
-  //   from this position.
+  ///  Use getState/setState to save/restart the enumeration
+  ///  from this position.
   const EnumerationTypes::RGROUPS &getPosition() const;
 
   //! Get the current state of the enumerator
-  //   This is the position of the enumerator and the enumerators
-  //   state that can be used to restart enumerating
-  //   from this position.
+  ///  This is the position of the enumerator and the enumerators
+  ///  state that can be used to restart enumerating
+  ///  from this position.
   std::string getState() const;
 
   //! Set the current state of the enumerator
-  //   Restart the enumerator from this position.
+  ///  Restart the enumerator from this position.
   void setState(const std::string &);
 
   //! Reset the enumerator to the beginning

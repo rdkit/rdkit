@@ -186,8 +186,8 @@ class RDKIT_FILTERCATALOG_EXPORT Not : public FilterMatcherBase {
 
   //! Constructs a Noter
   //! true if arg1 is false (note, never returns matches
-  //  from getMatches since a false internal match matches
-  //  nothing!
+  /// from getMatches since a false internal match matches
+  /// nothing!
   Not(const FilterMatcherBase &arg1)
       : FilterMatcherBase("Not"), arg1(arg1.copy()) {}
 

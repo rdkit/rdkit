@@ -55,7 +55,7 @@ accordingly.
   */
   ROMol *disconnect(const ROMol &mol);
   //! overload
-  // modifies the molecule in place
+  /// modifies the molecule in place
   void disconnect(RWMol &mol);
 
  private:

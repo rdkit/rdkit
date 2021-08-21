@@ -116,8 +116,8 @@ struct RDKIT_STRUCTCHECKER_EXPORT PathEntry {
 //-------------
 
 //! Structure Check Options
-//    Holds all the user options for the StructureChecking.
-//    Can be initialized from factory functions, perhaps serialized
+///   Holds all the user options for the StructureChecking.
+///   Can be initialized from factory functions, perhaps serialized
 struct RDKIT_STRUCTCHECKER_EXPORT StructCheckerOptions {
   double AcidityLimit;
   bool RemoveMinorFragments;

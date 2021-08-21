@@ -5,6 +5,12 @@ SELECT mol_amw('c1ccccc1'::mol) mol_amw;
   78.114
 (1 row)
 
+SELECT mol_exactmw('c1ccccc1'::mol) mol_exactmw;
+ mol_exactmw 
+-------------
+      78.047
+(1 row)
+
 SELECT mol_logp('c1ccccc1'::mol) mol_logp;
  mol_logp 
 ----------
@@ -161,6 +167,18 @@ SELECT mol_phi('CC(C)(C)C(C)C'::mol) v;
  1.85185
 (1 row)
 
+SELECT mol_hallkieralpha('CC(O)(C)C(C)C'::mol) v;
+   v   
+-------
+ -0.04
+(1 row)
+
+SELECT mol_numamidebonds('O=C(C)NC'::mol) v;
+ v 
+---
+ 1
+(1 row)
+
 -- Mol formula tests - SQL equivalents of tests in testMolDescriptors.py.
 select mol_formula('[2H]C([3H])O'::mol);
  mol_formula 
@@ -254,6 +272,12 @@ SELECT mol_tpsa('CCO'::mol) val;
   val  
 -------
  20.23
+(1 row)
+
+SELECT mol_labuteasa('CCC'::mol) val;
+   val   
+---------
+ 21.4691
 (1 row)
 
 SELECT mol_numrings('CCC'::mol) val;

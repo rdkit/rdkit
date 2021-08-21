@@ -595,8 +595,10 @@ BOOST_PYTHON_MODULE(rdMolDraw2D) {
 
   rdkit_import_array();
 
-  python::class_<std::map<int, std::string>>("IntStringMap")
-      .def(python::map_indexing_suite<std::map<int, std::string>, true>());
+  if (!is_python_converter_registered<std::map<int, std::string>>()) {
+    python::class_<std::map<int, std::string>>("IntStringMap")
+        .def(python::map_indexing_suite<std::map<int, std::string>, true>());
+  }
 
   std::string docString = "Drawing options";
   python::class_<RDKit::MolDrawOptions, boost::noncopyable>("MolDrawOptions",

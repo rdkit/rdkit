@@ -360,7 +360,7 @@ class RDKIT_MOLDRAW2D_EXPORT MolDraw2D {
   //! clears the contents of the drawing
   virtual void clearDrawing() = 0;
   //! draws a line from \c cds1 to \c cds2 using the current drawing style
-  // in atom coords.
+  /// in atom coords.
   virtual void drawLine(const Point2D &cds1, const Point2D &cds2) = 0;
   //! draw a polygon.  Note that if fillPolys() returns false, it
   //! doesn't close the path.  If you want it to in that case, you
@@ -527,17 +527,17 @@ class RDKIT_MOLDRAW2D_EXPORT MolDraw2D {
   virtual int drawHeight() const { return panel_height_ - legend_height_; }
 
   //! returns the drawing scale (conversion from molecular coords -> drawing
-  // coords)
+  /// coords)
   double scale() const { return scale_; }
   //! calculates the drawing scale (conversion from molecular coords -> drawing
-  // coords)
+  /// coords)
   void calculateScale(int width, int height, const ROMol &mol,
                       const std::vector<int> *highlight_atoms = nullptr,
                       const std::map<int, double> *highlight_radii = nullptr,
                       int confId = -1);
   //! overload
-  // calculate a single scale that will suit all molecules.  For use by
-  // drawMolecules primarily.
+  /// calculate a single scale that will suit all molecules.  For use by
+  /// drawMolecules primarily.
   void calculateScale(int width, int height, const std::vector<ROMol *> &mols,
                       const std::vector<std::vector<int>> *highlight_atoms,
                       const std::vector<std::map<int, double>> *highlight_radii,

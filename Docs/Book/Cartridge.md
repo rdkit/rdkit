@@ -633,9 +633,12 @@ There are additional operators defined in the cartridge, but these are used for 
 -   qmol\_from\_smiles(smiles) : returns a query molecule for a SMILES string, NULL if the molecule construction fails. Explicit Hs in the SMILES are converted into query features on the attached atom.
 -   qmol\_from\_ctab(ctab, bool default false) : returns a query molecule for a CTAB (mol block) string, NULL if the molecule construction fails. Explicit Hs in the SMILES are converted into query features on the attached atom. The optional second argument controls whether or not the molecule's coordinates are saved.
 -   mol\_to\_smiles(mol) : returns the canonical SMILES for a molecule.
+-   mol\_to\_cxsmiles(mol) : returns the CXSMILES for a molecule (*available from 2021\_09 release*).
 -   mol\_to\_smarts(mol) : returns SMARTS string for a molecule.
+-   mol\_to\_cxsmarts(mol) : returns the CXSMARTS for a molecule (*available from 2021\_09 release*).
 -   mol\_to\_pkl(mol) : returns binary string (bytea) for a molecule. (*available from Q3 2012 (2012\_09) release*)
--   mol\_to\_ctab(mol,bool default true) : returns a CTAB (mol block) string for a molecule. The optional second argument controls whether or not 2D coordinates will be generated for molecules that don't have coordinates. (*available from the 2014\_03 release*)
+-   mol\_to\_ctab(mol,bool default true, bool default false) : returns a CTAB (mol block) string for a molecule. The optional second argument controls whether or not 2D coordinates will be generated for molecules that don't have coordinates. The optional third argument (available since the 2021\_09 release) controls whether or not a V3000 ctab should be generated.
+-   mol\_to\_v3kctab(mol,bool default true) : returns a CTAB (mol block) string for a molecule. The optional second argument controls whether or not 2D coordinates will be generated for molecules that don't have coordinates  (*available from 2021\_09 release*).
 -   mol\_to\_svg(mol,string default '',int default 250, int default 200, string default '') : returns an SVG with a drawing of the molecule. The optional parameters are a string to use as the legend, the width of the image, the height of the image, and a JSON with additional rendering parameters. (*available from the 2016\_09 release*)
 -   mol\_to\_json(string) : returns the commonchem JSON for a molecule. (*available from the 2021\_09 release*)
 -   mol\_from\_json(string) : returns a molecule for a commonchem JSON string, NULL if the molecule construction fails. (*available from the 2021\_09 release*)
@@ -650,8 +653,10 @@ There are additional operators defined in the cartridge, but these are used for 
 ##### Descriptors
 
 -   mol\_amw(mol) : returns the AMW for a molecule.
+-   mol\_exactmw(mol) : returns the exact MW for a molecule (*available from 2021\_09 release*).
 -   mol\_logp(mol) : returns the MolLogP for a molecule.
 -   mol\_tpsa(mol) : returns the topological polar surface area for a molecule (*available from Q1 2011 (2011\_03) release*).
+-   mol\_labuteasa(mol) : returns Labute's approximate surface area (ASA) for a molecule (*available from 2021\_09 release*).
 -   mol\_fractioncsp3(mol) : returns the fraction of carbons that are sp3 hybridized (*available from 2013\_03 release*).
 -   mol\_hba(mol) : returns the number of Lipinski H-bond acceptors (i.e. number of Os and Ns) for a molecule.
 -   mol\_hbd(mol) : returns the number of Lipinski H-bond donors (i.e. number of Os and Ns that have at least one H) for a molecule.
@@ -682,6 +687,7 @@ There are additional operators defined in the cartridge, but these are used for 
 -   mol\_chi0n(mol) - mol\_chi4n(mol) : returns the ChiXn value for a molecule for X=0-4 (*available from 2012\_01 release*).
 -   mol\_kappa1(mol) - mol\_kappa3(mol) : returns the kappaX value for a molecule for X=1-3 (*available from 2012\_01 release*).
 -   mol\_phi(mol) : returns the Kier Phi value for a molecule (*available from 2021\_09 release*).
+-   mol\_hallkieralpha(mol) : returns the Hall-Kier alpha value for a molecule (*available from 2021\_09 release*).
 
 ##### MCS
 

@@ -71,7 +71,7 @@ class RDKIT_FILTERCATALOG_EXPORT FilterCatalogParams
 
   //------------------------------------
   //! Adds an existing FilterCatalog specification to be used in the
-  // FilterCatalog
+  /// FilterCatalog
   //
   /*!
     Specifies an existing filter catalog to be used.

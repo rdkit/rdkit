@@ -16,6 +16,7 @@
 #include <iostream>
 #ifdef _MSC_VER
 #define _CRT_SECURE_NO_WARNINGS
+#define NOMINMAX
 #include <Winsock2.h>  // for timeval
 #ifdef _DEBUG          // check memory leaks
 #include <crtdbg.h>

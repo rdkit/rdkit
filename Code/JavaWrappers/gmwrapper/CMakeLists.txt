@@ -53,8 +53,10 @@ FILE(TO_NATIVE_PATH ${CMAKE_CURRENT_SOURCE_DIR}/../*.java COPY_SOURCE)
 FILE(TO_NATIVE_PATH ${CMAKE_CURRENT_SOURCE_DIR}/src/org/RDKit COPY_DEST)
 
 # Setup a few variables for environment-specific things
-if(WIN32)
+if(MSVC)
   ADD_COMPILE_OPTIONS(/W3 /wd4716 /wd4101 /bigobj)
+endif()
+if(WIN32)
   SET(PATH_SEP ";")
   SET(COPY_CMD xcopy ${COPY_SOURCE} ${COPY_DEST} /Y /I)
 else()
@@ -71,7 +73,7 @@ if(CMAKE_SIZEOF_VOID_P EQUAL 4)
   SET(CMAKE_SWIG_FLAGS -package "org.RDKit")
 else()
   if (WIN32)
-    SET(CMAKE_SWIG_FLAGS -package "org.RDKit" "-DSWIGWORDSIZE64" "-DSWIGWIN")
+    SET(CMAKE_SWIG_FLAGS -package "org.RDKit")
   else()
       SET(CMAKE_SWIG_FLAGS -package "org.RDKit" "-DSWIGWORDSIZE64")
   endif()
@@ -141,7 +143,7 @@ ADD_CUSTOM_COMMAND(
 
   OUTPUT ${CMAKE_CURRENT_SOURCE_DIR}/org.RDKitDoc.jar
   ## Run Javadoc against newly created .java files to create docs
-  COMMAND ${JAVADOC_EXE}  ${DOCLINT_FLAGS} -tag notes -tag example -d ${CMAKE_CURRENT_SOURCE_DIR}/doc -sourcepath ${CMAKE_CURRENT_SOURCE_DIR}/src org.RDKit
+  COMMAND ${JAVADOC_EXE} ${DOCLINT_FLAGS} -tag notes -tag example -d ${CMAKE_CURRENT_SOURCE_DIR}/doc -sourcepath ${CMAKE_CURRENT_SOURCE_DIR}/src org.RDKit
     WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
   ## Put the doc files into their own separate archive.
   COMMAND ${JAVA_ARCHIVE} cf
@@ -173,7 +175,7 @@ endif()
 
 ADD_CUSTOM_COMMAND(
   OUTPUT ${CMAKE_JAVA_TEST_OUTDIR}/org/RDKit/WrapperTests.class
-  COMMAND ${JAVA_COMPILE} ${DOCLINT_FLAGS} -d ${CMAKE_JAVA_TEST_OUTDIR} -cp "${CMAKE_CURRENT_SOURCE_DIR}/org.RDKit.jar${PATH_SEP}${JUNIT_JAR}" ${JAVA_TEST_FILES}
+  COMMAND ${JAVA_COMPILE} ${DOCLINT_FLAGS} -d ${CMAKE_JAVA_TEST_OUTDIR} -cp "\"${CMAKE_CURRENT_SOURCE_DIR}/org.RDKit.jar${PATH_SEP}${JUNIT_JAR}\"" ${JAVA_TEST_FILES}
   WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
   DEPENDS GraphMolWrapJar ${CMAKE_CURRENT_SOURCE_DIR}/org.RDKitDoc.jar ${JAVA_TEST_FILES}
 )

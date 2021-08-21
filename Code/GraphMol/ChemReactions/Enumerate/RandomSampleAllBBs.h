@@ -44,7 +44,7 @@ namespace RDKit {
 //!  Randomly sample rgroup indices
 
 //! This is a class for randomly enumerating reagents that ensures all reagents
-//  are sampled.
+/// are sampled.
 /*!
   basic usage:
 
