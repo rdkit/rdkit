@@ -537,5 +537,22 @@ class TestCase(unittest.TestCase):
     self.assertEqual(list(ssl.GetMatches(qm,maxResults=2)),[3,2])
 
 
+  def testSearchOrder2(self):
+    ssl = rdSubstructLibrary.SubstructLibrary()
+    for smi in ("CCCOC", "CCCCOCC", "CCOC", "COC", "CCCCCOC"):
+      ssl.AddMol(Chem.MolFromSmiles(smi))
+    
+    def setSearchSmallestFirst(sslib):
+      searchOrder = list(range(len(sslib)))
+      holder = sslib.GetMolHolder()
+      searchOrder.sort(key=lambda x,holder=holder:holder.GetMol(x).GetNumAtoms())
+      sslib.SetSearchOrder(searchOrder)
+    
+    setSearchSmallestFirst(ssl)
+    qm = Chem.MolFromSmiles('COC')
+    self.assertEqual(list(ssl.GetMatches(qm)),[3, 2, 0, 1, 4])
+
+
+
 if __name__ == '__main__':
   unittest.main()
