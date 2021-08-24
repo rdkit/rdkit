@@ -1,11 +1,43 @@
+# Release_2021.03.5
+(Changes relative to Release_2021.03.4)
+
+## Acknowledgements
+Jason Biggs, Brian Kelley, Lewis J. Martin, Dan Nealschneider, Ricardo
+Rodriguez-Schmidt, David Slochower, Paolo Tosco, Maciej Wójcikowski
+
+## Bug Fixes:
+  - cannot pass drawOptions to MolsToGridImage when using notebook
+ (github #3101 from slochower)
+  - call to AvalonTools::set2DCoords results in an assert violation
+ (github #4330 from jasondbiggs)
+  - MolBlock writer gives non-stereo double bonds "unspecified" parity
+ (github #4345 from d-b-w)
+  - Specified trans stereo being ignored during conformation generation in macrocycles
+ (github #4346 from greglandrum)
+  - Two MinGW build fixes and one MSVC build fix
+ (github #4347 from ptosco)
+  - Fixes RDK_BUILD_THREADSAFE_SSS=OFF build
+ (github #4349 from ptosco)
+  - Three more Windows build fixes
+ (github #4356 from ptosco)
+  - Specified grid spacing for ShapeTanimotoDistance is ignored.
+ (github #4364 from greglandrum)
+  - Need implicit H cleanup after rdMolEnumerator.Enumerate()
+ (github #4381 from greglandrum)
+  - rdMolEnumerator.Enumerate fails on variable attachment points with queries
+ (github #4382 from greglandrum)
+  - RDKit reaction produces wrong double bond stereochemistry
+ (github #4410 from mwojcikowski)
+  - v2000 SGroups do not generate an "index" property
+ (github #4434 from ricrogz)
+
+
 # Release_2021.03.4
 (Changes relative to Release_2021.03.3)
 
 ## Acknowledgements
 Brian Kelley, Rasmus Lundsgaard, Dan Nealschneider, Ricardo Rodriguez-Schmidt,
 Matt Swain, Paolo Tosco, Kazuya Ujihara, Alain Vaucher, 'jungb-basf' 
-
-
 
 ## Bug Fixes:
   - EnumerateStereoisomers fail with STEREOANY bonds from molblock
@@ -36,8 +68,6 @@ Matt Swain, Paolo Tosco, Kazuya Ujihara, Alain Vaucher, 'jungb-basf'
  (github #4281 from ptosco)
   - Unreasonable calculation of implicit valence for atoms with query bonds
  (github #4311 from greglandrum)
-
-
 
 
 # Release_2021.03.3
