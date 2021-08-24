@@ -391,8 +391,7 @@ std::string getAtomLabel(const Atom *atom) {
 
 // ---------------------------------------------------------------
 std::pair<AtomicParamVect, bool> getAtomTypes(const ROMol &mol,
-                                              const std::string &paramData) {
-  RDUNUSED_PARAM(paramData);
+                                              const std::string &) {
   bool foundAll = true;
   ParamCollection *params = ParamCollection::getParams();
 
@@ -591,7 +590,7 @@ bool getUFFInversionParams(const ROMol &mol, unsigned int idx1,
     isBoundToSP2O = (isBoundToSP2O && (at2AtomicNum == 6));
     boost::tuple<double, double, double, double> invCoeffForceCon =
         UFF::Utils::calcInversionCoefficientsAndForceConstant(at2AtomicNum,
-                                                         isBoundToSP2O);
+                                                              isBoundToSP2O);
     uffInversionParams.K = boost::tuples::get<0>(invCoeffForceCon);
   }
   return res;
@@ -611,10 +610,12 @@ bool getUFFVdWParams(const ROMol &mol, unsigned int idx1, unsigned int idx2,
     res = (paramVect[i] ? true : false);
   }
   if (res) {
-    uffVdWParams.x_ij = UFF::Utils::calcNonbondedMinimum(paramVect[0], paramVect[1]);
-    uffVdWParams.D_ij = UFF::Utils::calcNonbondedDepth(paramVect[0], paramVect[1]);
+    uffVdWParams.x_ij =
+        UFF::Utils::calcNonbondedMinimum(paramVect[0], paramVect[1]);
+    uffVdWParams.D_ij =
+        UFF::Utils::calcNonbondedDepth(paramVect[0], paramVect[1]);
   }
   return res;
 }
-}
-}
+}  // namespace UFF
+}  // namespace RDKit

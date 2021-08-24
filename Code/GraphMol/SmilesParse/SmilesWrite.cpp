@@ -38,9 +38,8 @@ bool inOrganicSubset(int atomicNumber) {
   return false;
 }
 
-std::string GetAtomSmiles(const Atom *atom, bool doKekule, const Bond *bondIn,
+std::string GetAtomSmiles(const Atom *atom, bool doKekule, const Bond *,
                           bool allHsExplicit, bool isomericSmiles) {
-  RDUNUSED_PARAM(bondIn);
   PRECONDITION(atom, "bad atom");
   std::string res;
   int fc = atom->getFormalCharge();

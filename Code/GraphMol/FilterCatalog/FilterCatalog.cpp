@@ -65,22 +65,24 @@ void FilterCatalogParams::fillCatalog(FilterCatalog &catalog) const {
     // XXX Fix Me -> these should probably be shared to save memory
     const FilterProperty_t *props = GetFilterProperties(catalogToAdd);
     CHECK_INVARIANT(props, "No filter properties for catalog");
-    
+
     for (unsigned int i = 0; i < entries; ++i) {
       const FilterData_t &data = GetFilterData(catalogToAdd)[i];
       FilterCatalogEntry *entry =
           MakeFilterCatalogEntry(data, propEntries, props);
 
       if (entry) {
-	catalog.addEntry(entry);  // catalog owns entry
+        catalog.addEntry(entry);  // catalog owns entry
       } else {
-	std::string catalog_name = "Unnamed internal catalog";
-	for(unsigned int i=0; i<propEntries; ++i) {
-	  if (std::string("FilterSet") == props[i].key) {
-	    catalog_name = props[i].value;
-	  }
-	}
-	throw ValueErrorException(std::string("Bad entry in built-in filter catalog: ") + catalog_name);
+        std::string catalog_name = "Unnamed internal catalog";
+        for (unsigned int i = 0; i < propEntries; ++i) {
+          if (std::string("FilterSet") == props[i].key) {
+            catalog_name = props[i].value;
+          }
+        }
+        throw ValueErrorException(
+            std::string("Bad entry in built-in filter catalog: ") +
+            catalog_name);
       }
     }
   }
@@ -142,13 +144,11 @@ std::string FilterCatalog::Serialize() const {
 #endif
 }
 
-unsigned int FilterCatalog::addEntry(entryType_t *entry, bool updateFPLength) {
-  RDUNUSED_PARAM(updateFPLength);
+unsigned int FilterCatalog::addEntry(entryType_t *entry, bool) {
   return addEntry(boost::shared_ptr<entryType_t>(entry));
 }
 
-unsigned int FilterCatalog::addEntry(SENTRY entry, bool updateFPLength) {
-  RDUNUSED_PARAM(updateFPLength);
+unsigned int FilterCatalog::addEntry(SENTRY entry, bool) {
   d_entries.push_back(entry);
   return static_cast<unsigned int>(d_entries.size() - 1);
 }
@@ -251,4 +251,4 @@ bool FilterCatalogCanSerialize() {
   return false;
 #endif
 }
-}
+}  // namespace RDKit

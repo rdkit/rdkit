@@ -50,10 +50,7 @@ ScaffoldNetworkParams::ScaffoldNetworkParams(
 
 namespace detail {
 
-void updateMolProps(RWMol &mol, const ScaffoldNetworkParams &params) {
-  RDUNUSED_PARAM(params);
-  MolOps::sanitizeMol(mol);
-}
+void updateMolProps(RWMol &mol) { MolOps::sanitizeMol(mol); }
 
 ROMol *makeScaffoldGeneric(const ROMol &mol, bool doAtoms, bool doBonds) {
   RWMol *res = new RWMol(mol);
@@ -73,9 +70,7 @@ ROMol *makeScaffoldGeneric(const ROMol &mol, bool doAtoms, bool doBonds) {
   }
   return static_cast<ROMol *>(res);
 }
-ROMol *removeAttachmentPoints(const ROMol &mol,
-                              const ScaffoldNetworkParams &params) {
-  RDUNUSED_PARAM(params);
+ROMol *removeAttachmentPoints(const ROMol &mol, const ScaffoldNetworkParams &) {
   RWMol *res = new RWMol(mol);
   res->beginBatchEdit();
   for (const auto atom : res->atoms()) {
@@ -95,8 +90,7 @@ ROMol *removeAttachmentPoints(const ROMol &mol,
   res->commitBatchEdit();
   return static_cast<ROMol *>(res);
 }
-ROMol *pruneMol(const ROMol &mol, const ScaffoldNetworkParams &params) {
-  RDUNUSED_PARAM(params);
+ROMol *pruneMol(const ROMol &mol, const ScaffoldNetworkParams &) {
   ROMol *res = MurckoDecompose(mol);
   res->updatePropertyCache();
   MolOps::fastFindRings(*res);
@@ -154,7 +148,7 @@ std::vector<std::pair<std::string, ROMOL_SPTR>> getMolFragments(
           p[0].reset(removeAttachmentPoints(*p[0], params));
         }
 
-        updateMolProps(*static_cast<RWMol *>(p[0].get()), params);
+        updateMolProps(*static_cast<RWMol *>(p[0].get()));
         auto tsmi0 = MolToSmiles(*p[0]);
         if (std::find(seen.begin(), seen.end(), tsmi0) == seen.end()) {
           stack.push_back(p[0]);
@@ -167,7 +161,7 @@ std::vector<std::pair<std::string, ROMOL_SPTR>> getMolFragments(
             // go ahead and remove attachment points here
             p[1].reset(removeAttachmentPoints(*p[1], params));
           }
-          updateMolProps(*static_cast<RWMol *>(p[1].get()), params);
+          updateMolProps(*static_cast<RWMol *>(p[1].get()));
           auto tsmi1 = MolToSmiles(*p[1]);
           if (std::find(seen.begin(), seen.end(), tsmi1) == seen.end()) {
             stack.push_back(p[1]);

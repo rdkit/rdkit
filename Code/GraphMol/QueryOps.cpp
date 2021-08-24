@@ -984,9 +984,8 @@ Atom *replaceAtomWithQueryAtom(RWMol *mol, Atom *atom) {
 }
 
 void finalizeQueryFromDescription(
-    Queries::Query<int, Atom const *, true> *query, Atom const *owner) {
+    Queries::Query<int, Atom const *, true> *query, Atom const *) {
   std::string descr = query->getDescription();
-  RDUNUSED_PARAM(owner);
 
   if (boost::starts_with(descr, "range_")) {
     descr = descr.substr(6);
@@ -1074,8 +1073,7 @@ void finalizeQueryFromDescription(
 }
 
 void finalizeQueryFromDescription(
-    Queries::Query<int, Bond const *, true> *query, Bond const *owner) {
-  RDUNUSED_PARAM(owner);
+    Queries::Query<int, Bond const *, true> *query, Bond const *) {
   std::string descr = query->getDescription();
   Queries::Query<int, Bond const *, true> *tmpQuery;
   if (descr == "BondRingSize") {

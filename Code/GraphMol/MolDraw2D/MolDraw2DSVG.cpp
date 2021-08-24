@@ -44,9 +44,7 @@ void outputTagClasses(const t_obj *obj, std::ostream &d_os,
 }
 
 template <class t_obj>
-void outputMetaData(const t_obj *obj, std::ostream &d_os,
-                    const std::string &d_activeClass) {
-  RDUNUSED_PARAM(d_activeClass);
+void outputMetaData(const t_obj *obj, std::ostream &d_os) {
   std::string value;
   for (const auto &prop : obj->getPropList()) {
     if (prop.length() < 11 || prop.rfind("_metaData-", 0) != 0) {
@@ -155,10 +153,9 @@ void MolDraw2DSVG::setColour(const DrawColour &col) {
 
 // ****************************************************************************
 void MolDraw2DSVG::drawWavyLine(const Point2D &cds1, const Point2D &cds2,
-                                const DrawColour &col1, const DrawColour &col2,
+                                const DrawColour &col1, const DrawColour &,
                                 unsigned int nSegments, double vertOffset) {
   PRECONDITION(nSegments > 1, "too few segments");
-  RDUNUSED_PARAM(col2);
 
   if (nSegments % 2) {
     ++nSegments;  // we're going to assume an even number of segments
@@ -379,7 +376,7 @@ void MolDraw2DSVG::addMoleculeMetadata(const ROMol &mol, int confId) const {
          << " y=\"" << pos.y << "\""
          << " z=\"" << pos.z << "\"";
 
-    outputMetaData(atom, d_os, d_activeClass);
+    outputMetaData(atom, d_os);
 
     d_os << " />" << std::endl;
   }
@@ -392,7 +389,7 @@ void MolDraw2DSVG::addMoleculeMetadata(const ROMol &mol, int confId) const {
          << SmilesWrite::GetBondSmiles(bond, -1, doKekule, allBondsExplicit)
          << "\"";
 
-    outputMetaData(bond, d_os, d_activeClass);
+    outputMetaData(bond, d_os);
 
     d_os << " />" << std::endl;
   }

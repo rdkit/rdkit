@@ -1064,9 +1064,8 @@ std::string ParseV3000StringPropLabel(std::stringstream &stream) {
 
 void ParseV3000ParseLabel(const std::string &label,
                           std::stringstream &lineStream, STR_VECT &dataFields,
-                          unsigned int line, SubstanceGroup &sgroup,
-                          size_t nSgroups, RWMol *mol, bool strictParsing) {
-  RDUNUSED_PARAM(nSgroups);
+                          unsigned int line, SubstanceGroup &sgroup, size_t,
+                          RWMol *mol, bool strictParsing) {
   // TODO: we could handle these in a more structured way
   try {
     if (label == "XBHEAD" || label == "XBCORR") {

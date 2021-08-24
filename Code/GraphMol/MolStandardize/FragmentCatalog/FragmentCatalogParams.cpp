@@ -80,13 +80,11 @@ std::string FragmentCatalogParams::Serialize() const {
   return ss.str();
 }
 
-void FragmentCatalogParams::initFromStream(std::istream &ss) {
-  RDUNUSED_PARAM(ss);
+void FragmentCatalogParams::initFromStream(std::istream &) {
   UNDER_CONSTRUCTION("not implemented");
 }
 
-void FragmentCatalogParams::initFromString(const std::string &text) {
-  RDUNUSED_PARAM(text);
+void FragmentCatalogParams::initFromString(const std::string &) {
   UNDER_CONSTRUCTION("not implemented");
 }
 

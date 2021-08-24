@@ -754,7 +754,7 @@ void MolPickler::pickleMol(const ROMol *mol, std::ostream &ss,
 #else
     _pickleV1(mol, ss);
 #endif
-  } catch (const std::ios_base::failure &e) {
+  } catch (const std::ios_base::failure &) {
     if (ss.eof()) {
       throw MolPicklerException(
           "Bad pickle format: unexpected End-of-File while writing");
@@ -857,7 +857,7 @@ void MolPickler::molFromPickle(std::istream &ss, ROMol *mol,
       // FIX for issue 220 - probably better to change the pickle format later
       MolOps::assignStereochemistry(*mol, true);
     }
-  } catch (const std::ios_base::failure &e) {
+  } catch (const std::ios_base::failure &) {
     if (ss.eof()) {
       throw MolPicklerException(
           "Bad pickle format: unexpected End-of-File while reading");
@@ -1525,9 +1525,7 @@ Conformer *MolPickler::_conformerFromPickle(std::istream &ss, int version) {
 
 template <typename T>
 Atom *MolPickler::_addAtomFromPickle(std::istream &ss, ROMol *mol,
-                                     RDGeom::Point3D &pos, int version,
-                                     bool directMap) {
-  RDUNUSED_PARAM(directMap);
+                                     RDGeom::Point3D &pos, int version, bool) {
   PRECONDITION(mol, "empty molecule");
   float x, y, z;
   char tmpChar;
@@ -1929,7 +1927,8 @@ void MolPickler::_addRingInfoFromPickle(std::istream &ss, ROMol *mol,
         streamRead(ss, tmpT, version);
         if (directMap) {
           atoms[j] = static_cast<int>(tmpT);
-          if (atoms[j] < 0 || atoms[j] >= mol->getNumAtoms()) {
+          if (atoms[j] < 0 ||
+              static_cast<unsigned int>(atoms[j]) >= mol->getNumAtoms()) {
             throw MolPicklerException("ring-atom index out of range");
           }
         } else {
@@ -1941,7 +1940,8 @@ void MolPickler::_addRingInfoFromPickle(std::istream &ss, ROMol *mol,
           streamRead(ss, tmpT, version);
           if (directMap) {
             bonds[j] = static_cast<int>(tmpT);
-            if (bonds[j] < 0 || bonds[j] >= mol->getNumBonds()) {
+            if (bonds[j] < 0 ||
+                static_cast<unsigned int>(bonds[j]) >= mol->getNumBonds()) {
               throw MolPicklerException("ring-bond index out of range");
             }
 
