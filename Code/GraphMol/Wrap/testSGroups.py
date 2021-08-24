@@ -77,7 +77,7 @@ M  END"""
 
     self.assertEqual(sorted(sgs[0].GetPropNames()), [
       'DATAFIELDS', 'FIELDDISP', 'FIELDINFO', 'FIELDNAME', 'FIELDTYPE', 'ID', 'QUERYOP',
-      'QUERYTYPE', 'TYPE'
+      'QUERYTYPE', 'TYPE', 'index'
     ])
     dd = sgs[0].GetPropsAsDict()
     self.assertTrue("TYPE" in dd)
