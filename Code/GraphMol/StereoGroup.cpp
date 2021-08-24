@@ -25,7 +25,7 @@ void removeGroupsWithAtom(const Atom *atom, std::vector<StereoGroup> &groups) {
 
 void removeGroupsWithAtoms(const std::vector<Atom *> &atoms,
                            std::vector<StereoGroup> &groups) {
-  auto containsAnyAtom = [atoms](const StereoGroup &group) {
+  auto containsAnyAtom = [&atoms](const StereoGroup &group) {
     for (auto atom : atoms) {
       if (std::find(group.getAtoms().cbegin(), group.getAtoms().cend(), atom) !=
           group.getAtoms().cend()) {
