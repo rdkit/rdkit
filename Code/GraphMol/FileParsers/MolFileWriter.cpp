@@ -753,7 +753,7 @@ bool checkNeighbors(const Bond *bond, const Atom *atom) {
         return false;
       } else {
         const auto otherAtom = nbrBond->getOtherAtom(atom);
-        int rank;
+        unsigned int rank;
         if (otherAtom->getPropIfPresent(common_properties::_CIPRank, rank)) {
           if (std::find(nbrRanks.begin(), nbrRanks.end(), rank) !=
               nbrRanks.end()) {
