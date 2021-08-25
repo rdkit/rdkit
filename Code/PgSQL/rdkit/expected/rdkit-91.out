@@ -1257,3 +1257,10 @@ WARNING:  could not create molecule from SMILES 'C1C'
  
 (1 row)
 
+-- casting from mol to qmol
+select mol_from_smiles('C=C')::qmol;
+ mol_from_smiles 
+-----------------
+ [#6]=[#6]
+(1 row)
+

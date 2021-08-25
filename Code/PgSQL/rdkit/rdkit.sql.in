@@ -76,6 +76,7 @@ CREATE TYPE qmol (
         STORAGE = extended
 );
 
+CREATE CAST (mol as qmol) WITHOUT FUNCTION;
 
 -- bfp type
 

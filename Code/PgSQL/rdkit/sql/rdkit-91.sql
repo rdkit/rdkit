@@ -408,3 +408,6 @@ select qmol_from_ctab('a'::cstring,false);
 -- github #3689: bad input to qmol_from_smiles() crashes db
 select qmol_from_smiles('a'::cstring);
 select qmol_from_smiles('C1C'::cstring);
+
+-- casting from mol to qmol
+select mol_from_smiles('C=C')::qmol;
