@@ -209,6 +209,26 @@ qmol_from_smiles(PG_FUNCTION_ARGS) {
   PG_RETURN_MOL_P(res);           
 }
 
+
+PGDLLEXPORT Datum           qmol_from_smarts(PG_FUNCTION_ARGS);
+PG_FUNCTION_INFO_V1(qmol_from_smarts);
+Datum
+qmol_from_smarts(PG_FUNCTION_ARGS) {
+  char    *data = PG_GETARG_CSTRING(0);
+  CROMol  mol;
+  Mol     *res;
+
+  mol = parseMolText(data,true,true,false);
+  if (!mol) {
+    PG_RETURN_NULL();
+  }
+  res = deconstructROMol(mol);
+  freeCROMol(mol);
+
+  PG_RETURN_MOL_P(res);           
+}
+
+
 PGDLLEXPORT Datum           mol_to_ctab(PG_FUNCTION_ARGS);
 PG_FUNCTION_INFO_V1(mol_to_ctab);
 Datum

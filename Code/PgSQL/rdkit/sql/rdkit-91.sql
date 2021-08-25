@@ -17,8 +17,10 @@ SELECT mol_from_smiles('cccccc');
 SELECT is_valid_smiles('c1cccn1');
 SELECT is_valid_smarts('c1ccc[n,c]1');
 SELECT mol_from_smarts('c1ccc[n,c]1');
+SELECT qmol_from_smarts('c1ccc[n,c]1');
 SELECT is_valid_smarts('c1ccc');
 SELECT mol_from_smarts('c1ccc');
+SELECT qmol_from_smarts('c1ccc');
 SELECT mol_to_smiles(mol_from_smiles('c1ccccc1'));
 SELECT mol_to_smarts(mol_from_smiles('c1ccccc1'));
 SELECT mol_to_smarts('c1cccc[n,c]1'::qmol);
@@ -40,11 +42,11 @@ SELECT count(*) FROM pgmol WHERE m @> 'c1cccnc1';
 SELECT count(*) FROM pgmol WHERE 'c1ccccc1' <@ m;
 SELECT count(*) FROM pgmol WHERE 'c1cccnc1' <@ m;
 
-SELECT count(*) FROM pgmol WHERE m @> mol_from_smarts('c1ccccc1');
-SELECT count(*) FROM pgmol WHERE m @> mol_from_smarts('c1cccnc1');
-SELECT count(*) FROM pgmol WHERE m @> mol_from_smarts('c1ccc[n,c]c1');
-SELECT count(*) FROM pgmol WHERE mol_from_smarts('c1ccccc1') <@ m;
-SELECT count(*) FROM pgmol WHERE mol_from_smarts('c1ccc[n,c]c1') <@ m;
+SELECT count(*) FROM pgmol WHERE m @> qmol_from_smarts('c1ccccc1');
+SELECT count(*) FROM pgmol WHERE m @> qmol_from_smarts('c1cccnc1');
+SELECT count(*) FROM pgmol WHERE m @> qmol_from_smarts('c1ccc[n,c]c1');
+SELECT count(*) FROM pgmol WHERE qmol_from_smarts('c1ccccc1') <@ m;
+SELECT count(*) FROM pgmol WHERE qmol_from_smarts('c1ccc[n,c]c1') <@ m;
 
 
 SELECT id, rdkit_fp(m) AS f, maccs_fp(m) as maccsf INTO pgbfp FROM pgmol;
@@ -396,7 +398,7 @@ select 'C1C([2H])C1CCCC'::mol @> mol_adjust_query_properties('C1CC1CC'::mol,'{"a
 SELECT mol_to_smiles(mol_from_smiles('C[C@H](F)[C@H](C)[C@@H](C)Br |a:1,o1:4,5|'));
 SELECT mol_to_cxsmiles(mol_from_smiles('C[C@H](F)[C@H](C)[C@@H](C)Br |a:1,o1:4,5|'));
 SELECT mol_to_cxsmarts(mol_from_smiles('C[C@H](F)[C@H](C)[C@@H](C)Br |a:1,o1:4,5|'));
-SELECT mol_to_cxsmarts(mol_from_smarts('C[C@H]([F,Cl,Br])[C@H](C)[C@@H](C)Br |a:1,o1:4,5|'));
+SELECT mol_to_cxsmarts(qmol_from_smarts('C[C@H]([F,Cl,Br])[C@H](C)[C@@H](C)Br |a:1,o1:4,5|'));
 
 -- CXSmiles from mol_out
 SELECT mol_out(mol_from_smiles('C[C@H](F)[C@H](C)[C@@H](C)Br |a:1,o1:4,5|'));

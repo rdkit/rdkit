@@ -56,6 +56,12 @@ SELECT mol_from_smarts('c1ccc[n,c]1');
  *1cccc1
 (1 row)
 
+SELECT qmol_from_smarts('c1ccc[n,c]1');
+ qmol_from_smarts 
+------------------
+ c1ccc[n,c]1
+(1 row)
+
 SELECT is_valid_smarts('c1ccc');
  is_valid_smarts 
 -----------------
@@ -66,6 +72,13 @@ SELECT mol_from_smarts('c1ccc');
 WARNING:  could not create molecule from SMILES 'c1ccc'
  mol_from_smarts 
 -----------------
+ 
+(1 row)
+
+SELECT qmol_from_smarts('c1ccc');
+WARNING:  could not create molecule from SMILES 'c1ccc'
+ qmol_from_smarts 
+------------------
  
 (1 row)
 
@@ -144,31 +157,31 @@ SELECT count(*) FROM pgmol WHERE 'c1cccnc1' <@ m;
    245
 (1 row)
 
-SELECT count(*) FROM pgmol WHERE m @> mol_from_smarts('c1ccccc1');
+SELECT count(*) FROM pgmol WHERE m @> qmol_from_smarts('c1ccccc1');
  count 
 -------
    901
 (1 row)
 
-SELECT count(*) FROM pgmol WHERE m @> mol_from_smarts('c1cccnc1');
+SELECT count(*) FROM pgmol WHERE m @> qmol_from_smarts('c1cccnc1');
  count 
 -------
    245
 (1 row)
 
-SELECT count(*) FROM pgmol WHERE m @> mol_from_smarts('c1ccc[n,c]c1');
+SELECT count(*) FROM pgmol WHERE m @> qmol_from_smarts('c1ccc[n,c]c1');
  count 
 -------
    939
 (1 row)
 
-SELECT count(*) FROM pgmol WHERE mol_from_smarts('c1ccccc1') <@ m;
+SELECT count(*) FROM pgmol WHERE qmol_from_smarts('c1ccccc1') <@ m;
  count 
 -------
    901
 (1 row)
 
-SELECT count(*) FROM pgmol WHERE mol_from_smarts('c1ccc[n,c]c1') <@ m;
+SELECT count(*) FROM pgmol WHERE qmol_from_smarts('c1ccc[n,c]c1') <@ m;
  count 
 -------
    939
@@ -1208,7 +1221,7 @@ SELECT mol_to_cxsmarts(mol_from_smiles('C[C@H](F)[C@H](C)[C@@H](C)Br |a:1,o1:4,5
  [#6]-[#6@H](-[#9])-[#6@H](-[#6])-[#6@@H](-[#6])-[#35] |a:1,o1:4,5|
 (1 row)
 
-SELECT mol_to_cxsmarts(mol_from_smarts('C[C@H]([F,Cl,Br])[C@H](C)[C@@H](C)Br |a:1,o1:4,5|'));
+SELECT mol_to_cxsmarts(qmol_from_smarts('C[C@H]([F,Cl,Br])[C@H](C)[C@@H](C)Br |a:1,o1:4,5|'));
                          mol_to_cxsmarts                          
 ------------------------------------------------------------------
  C[C@&H1](-,:[F,Cl,Br])[C@&H1](-,:C)[C@@&H1](-,:C)Br |a:1,o1:4,5|
