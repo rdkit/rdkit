@@ -425,6 +425,24 @@ mol_from_json(PG_FUNCTION_ARGS) {
   PG_RETURN_MOL_P(res);           
 }
 
+PGDLLEXPORT Datum           qmol_from_json(PG_FUNCTION_ARGS);
+PG_FUNCTION_INFO_V1(qmol_from_json);
+Datum
+qmol_from_json(PG_FUNCTION_ARGS) {
+  char    *data = PG_GETARG_CSTRING(0);
+  CROMol  mol;
+  Mol     *res;
+
+  mol = parseMolJSON(data, true);
+  if (!mol) {
+    PG_RETURN_NULL();
+  }
+  res = deconstructROMol(mol);
+  freeCROMol(mol);
+
+  PG_RETURN_MOL_P(res);           
+}
+
 
 PGDLLEXPORT Datum           qmol_in(PG_FUNCTION_ARGS);
 PG_FUNCTION_INFO_V1(qmol_in);
