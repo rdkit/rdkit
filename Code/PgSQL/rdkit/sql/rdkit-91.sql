@@ -290,12 +290,8 @@ set rdkit.do_chiral_sss=false;
 set rdkit.do_enhanced_stereo_sss=false;
 
 -- forcing chiral queries
-select 'C[C@@H](O)[C@@H](C)F |&1:1,3,r|'::mol@@>'C[C@@H](O)[C@@H](C)F |o1:1,3,r|'::mol;
-select 'C[C@@H](O)[C@@H](C)F |o1:1,3,r|'::mol@@>'C[C@@H](O)[C@@H](C)F |&1:1,3,r|'::mol;
 select substruct_chiral('C[C@@H](O)[C@@H](C)F |&1:1,3,r|'::mol,'C[C@@H](O)[C@@H](C)F |o1:1,3,r|'::mol);
 select substruct_chiral('C[C@@H](O)[C@@H](C)F |o1:1,3,r|'::mol,'C[C@@H](O)[C@@H](C)F |&1:1,3,r|'::mol);
-select 'C[C@@H](O)[C@@H](C)F |&1:1,3,r|'::mol<@@'C[C@@H](O)[C@@H](C)F |o1:1,3,r|'::mol;
-select 'C[C@@H](O)[C@@H](C)F |o1:1,3,r|'::mol<@@'C[C@@H](O)[C@@H](C)F |&1:1,3,r|'::mol;
 select rsubstruct_chiral('C[C@@H](O)[C@@H](C)F |&1:1,3,r|'::mol,'C[C@@H](O)[C@@H](C)F |o1:1,3,r|'::mol);
 select rsubstruct_chiral('C[C@@H](O)[C@@H](C)F |o1:1,3,r|'::mol,'C[C@@H](O)[C@@H](C)F |&1:1,3,r|'::mol);
 

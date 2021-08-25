@@ -103,5 +103,39 @@ LANGUAGE C STRICT IMMUTABLE;
 DROP CAST IF EXISTS (mol as qmol);
 CREATE CAST (mol as qmol) WITHOUT FUNCTION;
 
+CREATE OR REPLACE FUNCTION substruct_chiral(mol, mol)
+RETURNS bool
+@RDKIT_PARALLEL_SAFE@
+AS 'MODULE_PATHNAME', 'mol_substruct_chiral'
+LANGUAGE C STRICT IMMUTABLE;
 
+CREATE OR REPLACE FUNCTION rsubstruct_chiral(mol, mol)
+RETURNS bool
+@RDKIT_PARALLEL_SAFE@
+AS 'MODULE_PATHNAME', 'mol_rsubstruct_chiral'
+LANGUAGE C STRICT IMMUTABLE;
+
+CREATE OR REPLACE FUNCTION substruct_count_chiral(mol, mol, bool default true)
+RETURNS int
+@RDKIT_PARALLEL_SAFE@
+AS 'MODULE_PATHNAME', 'mol_substruct_count_chiral'
+LANGUAGE C STRICT IMMUTABLE;
+
+CREATE OR REPLACE FUNCTION substruct_count_chiral(mol, qmol, bool default true)
+RETURNS int
+@RDKIT_PARALLEL_SAFE@
+AS 'MODULE_PATHNAME', 'mol_substruct_count_chiral'
+LANGUAGE C STRICT IMMUTABLE;
+
+CREATE OR REPLACE FUNCTION substruct_count_chiral(mol, mol, bool default true)
+RETURNS int
+@RDKIT_PARALLEL_SAFE@
+AS 'MODULE_PATHNAME', 'mol_substruct_count_chiral'
+LANGUAGE C STRICT IMMUTABLE;
+
+CREATE OR REPLACE FUNCTION substruct_count_chiral(mol, qmol, bool default true)
+RETURNS int
+@RDKIT_PARALLEL_SAFE@
+AS 'MODULE_PATHNAME', 'mol_substruct_count_chiral'
+LANGUAGE C STRICT IMMUTABLE;
 
