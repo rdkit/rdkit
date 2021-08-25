@@ -289,10 +289,26 @@ select 'C[C@@H](O)[C@@H](C)F |&1:1,3,r|'::mol@>'C[C@H](O)[C@H](C)F'::mol;
 set rdkit.do_chiral_sss=false;
 set rdkit.do_enhanced_stereo_sss=false;
 
+-- forcing chiral queries
+select 'C[C@@H](O)[C@@H](C)F |&1:1,3,r|'::mol@@>'C[C@@H](O)[C@@H](C)F |o1:1,3,r|'::mol;
+select 'C[C@@H](O)[C@@H](C)F |o1:1,3,r|'::mol@@>'C[C@@H](O)[C@@H](C)F |&1:1,3,r|'::mol;
+select substruct_chiral('C[C@@H](O)[C@@H](C)F |&1:1,3,r|'::mol,'C[C@@H](O)[C@@H](C)F |o1:1,3,r|'::mol);
+select substruct_chiral('C[C@@H](O)[C@@H](C)F |o1:1,3,r|'::mol,'C[C@@H](O)[C@@H](C)F |&1:1,3,r|'::mol);
+select 'C[C@@H](O)[C@@H](C)F |&1:1,3,r|'::mol<@@'C[C@@H](O)[C@@H](C)F |o1:1,3,r|'::mol;
+select 'C[C@@H](O)[C@@H](C)F |o1:1,3,r|'::mol<@@'C[C@@H](O)[C@@H](C)F |&1:1,3,r|'::mol;
+select rsubstruct_chiral('C[C@@H](O)[C@@H](C)F |&1:1,3,r|'::mol,'C[C@@H](O)[C@@H](C)F |o1:1,3,r|'::mol);
+select rsubstruct_chiral('C[C@@H](O)[C@@H](C)F |o1:1,3,r|'::mol,'C[C@@H](O)[C@@H](C)F |&1:1,3,r|'::mol);
+
 
 -- substructure counts
 select substruct_count('c1ccncc1'::mol,'c1ccncc1'::mol);
 select substruct_count('c1ccncc1'::mol,'c1ccncc1'::mol,false);
+select substruct_count('c1ccccc1C[C@@H](O)[C@@H](C)F |&1:1,3,r|'::mol,'c1ccccc1C[C@@H](O)[C@@H](C)F |o1:1,3,r|'::mol);
+select substruct_count('c1ccccc1C[C@@H](O)[C@@H](C)F |o1:1,3,r|'::mol,'c1ccccc1C[C@@H](O)[C@@H](C)F |&1:1,3,r|'::mol);
+select substruct_count_chiral('c1ccccc1C[C@@H](O)[C@@H](C)F |&1:1,3,r|'::mol,'c1ccccc1C[C@@H](O)[C@@H](C)F |o1:1,3,r|'::mol);
+select substruct_count_chiral('c1ccccc1C[C@@H](O)[C@@H](C)F |o1:1,3,r|'::mol,'c1ccccc1C[C@@H](O)[C@@H](C)F |&1:1,3,r|'::mol);
+select substruct_count_chiral('c1ccccc1C[C@@H](O)[C@@H](C)F |&1:1,3,r|'::mol,'c1ccccc1C[C@@H](O)[C@@H](C)F |o1:1,3,r|'::mol,false);
+select substruct_count_chiral('c1ccccc1C[C@@H](O)[C@@H](C)F |o1:1,3,r|'::mol,'c1ccccc1C[C@@H](O)[C@@H](C)F |&1:1,3,r|'::mol,false);
 
 -- special queries
 select 'c1ccc[nH]1'::mol@>mol_from_smiles('c1cccn1[H]') as match;

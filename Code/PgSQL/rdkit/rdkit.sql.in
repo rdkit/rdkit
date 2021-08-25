@@ -991,6 +991,28 @@ RETURNS bool
 @RDKIT_PARALLEL_SAFE@
 AS 'MODULE_PATHNAME', 'mol_substruct'
 LANGUAGE C STRICT IMMUTABLE;
+CREATE OPERATOR @> (
+	LEFTARG = mol,
+	RIGHTARG = mol,
+	PROCEDURE = substruct(mol, mol),
+	COMMUTATOR = '<@',
+	RESTRICT = contsel,
+	JOIN = contjoinsel
+);
+
+CREATE OR REPLACE FUNCTION substruct_chiral(mol, mol)
+RETURNS bool
+@RDKIT_PARALLEL_SAFE@
+AS 'MODULE_PATHNAME', 'mol_substruct_chiral'
+LANGUAGE C STRICT IMMUTABLE;
+CREATE OPERATOR @@> (
+	LEFTARG = mol,
+	RIGHTARG = mol,
+	PROCEDURE = substruct_chiral(mol, mol),
+	COMMUTATOR = '<@@',
+	RESTRICT = contsel,
+	JOIN = contjoinsel
+);
 
 CREATE OR REPLACE FUNCTION substruct_count(mol, mol, bool default true)
 RETURNS int
@@ -1004,14 +1026,18 @@ RETURNS int
 AS 'MODULE_PATHNAME', 'mol_substruct_count'
 LANGUAGE C STRICT IMMUTABLE;
 
-CREATE OPERATOR @> (
-	LEFTARG = mol,
-	RIGHTARG = mol,
-	PROCEDURE = substruct(mol, mol),
-	COMMUTATOR = '<@',
-	RESTRICT = contsel,
-	JOIN = contjoinsel
-);
+CREATE OR REPLACE FUNCTION substruct_count_chiral(mol, mol, bool default true)
+RETURNS int
+@RDKIT_PARALLEL_SAFE@
+AS 'MODULE_PATHNAME', 'mol_substruct_count_chiral'
+LANGUAGE C STRICT IMMUTABLE;
+
+CREATE OR REPLACE FUNCTION substruct_count_chiral(mol, qmol, bool default true)
+RETURNS int
+@RDKIT_PARALLEL_SAFE@
+AS 'MODULE_PATHNAME', 'mol_substruct_count_chiral'
+LANGUAGE C STRICT IMMUTABLE;
+
 
 CREATE OR REPLACE FUNCTION substruct(mol, qmol)
 RETURNS bool
@@ -1027,18 +1053,12 @@ CREATE OPERATOR @> (
 	JOIN = contjoinsel
 );
 
+
 CREATE OR REPLACE FUNCTION rsubstruct(mol, mol)
 RETURNS bool
 @RDKIT_PARALLEL_SAFE@
 AS 'MODULE_PATHNAME', 'mol_rsubstruct'
 LANGUAGE C STRICT IMMUTABLE;
-
-CREATE OR REPLACE FUNCTION rsubstruct(qmol, mol)
-RETURNS bool
-@RDKIT_PARALLEL_SAFE@
-AS 'MODULE_PATHNAME', 'mol_rsubstruct'
-LANGUAGE C STRICT IMMUTABLE;
-
 CREATE OPERATOR <@ (
 	LEFTARG = mol,
 	RIGHTARG = mol,
@@ -1047,6 +1067,27 @@ CREATE OPERATOR <@ (
 	RESTRICT = contsel,
 	JOIN = contjoinsel
 );
+CREATE OR REPLACE FUNCTION rsubstruct_chiral(mol, mol)
+RETURNS bool
+@RDKIT_PARALLEL_SAFE@
+AS 'MODULE_PATHNAME', 'mol_rsubstruct_chiral'
+LANGUAGE C STRICT IMMUTABLE;
+CREATE OPERATOR <@@ (
+	LEFTARG = mol,
+	RIGHTARG = mol,
+	PROCEDURE = rsubstruct_chiral(mol, mol),
+	COMMUTATOR = '@@>',
+	RESTRICT = contsel,
+	JOIN = contjoinsel
+);
+
+
+
+CREATE OR REPLACE FUNCTION rsubstruct(qmol, mol)
+RETURNS bool
+@RDKIT_PARALLEL_SAFE@
+AS 'MODULE_PATHNAME', 'mol_rsubstruct'
+LANGUAGE C STRICT IMMUTABLE;
 CREATE OPERATOR <@ (
 	LEFTARG = qmol,
 	RIGHTARG = mol,
