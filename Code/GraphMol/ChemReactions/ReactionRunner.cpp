@@ -1,5 +1,7 @@
 //
-//  Copyright (c) 2014-2017, Novartis Institutes for BioMedical Research Inc.
+//  Copyright (c) 2014-2021, Novartis Institutes for BioMedical Research Inc.
+//  and other RDKit contributors
+//
 //  All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -150,6 +152,52 @@ class StereoBondEndCap {
 };
 }  // namespace
 
+VectMatchVectType getReactantMatchesToTemplate(const ROMol &reactant,
+                                               const ROMol &reactantTemplate,
+                                               unsigned int maxMatches) {
+  // NOTE that we are *not* uniquifying the results.
+  //   This is because we need multiple matches in reactions. For example,
+  //   The ring-closure coded as:
+  //     [C:1]=[C:2] + [C:3]=[C:4][C:5]=[C:6] ->
+  //     [C:1]1[C:2][C:3][C:4]=[C:5][C:6]1
+  //   should give 4 products here:
+  //     [Cl]C=C + [Br]C=CC=C ->
+  //       [Cl]C1C([Br])C=CCC1
+  //       [Cl]C1CC(Br)C=CC1
+  //       C1C([Br])C=CCC1[Cl]
+  //       C1CC([Br])C=CC1[Cl]
+  //   Yes, in this case there are only 2 unique products, but that's
+  //   a factor of the reactants' symmetry.
+  //
+  //   There's no particularly straightforward way of solving this problem
+  //   of recognizing cases
+  //   where we should give all matches and cases where we shouldn't; it's
+  //   safer to just
+  //   produce everything and let the client deal with uniquifying their
+  //   results.
+  VectMatchVectType res;
+
+  SubstructMatchParameters ssps;
+  ssps.uniquify = false;
+  ssps.maxMatches = maxMatches;
+  auto matchesHere = SubstructMatch(reactant, reactantTemplate, ssps);
+  res.reserve(matchesHere.size());
+  for (const auto &match : matchesHere) {
+    bool keep = true;
+    for (const auto &pr : match) {
+      if (reactant.getAtomWithIdx(pr.second)->hasProp(
+              common_properties::_protected)) {
+        keep = false;
+        break;
+      }
+    }
+    if (keep) {
+      res.push_back(std::move(match));
+    }
+  }
+  return res;
+}
+
 bool getReactantMatches(const MOL_SPTR_VECT &reactants,
                         const ChemicalReaction &rxn,
                         VectVectMatchVectType &matchesByReactant,
@@ -166,51 +214,14 @@ bool getReactantMatches(const MOL_SPTR_VECT &reactants,
   for (auto iter = rxn.beginReactantTemplates();
        iter != rxn.endReactantTemplates(); ++iter, i++) {
     if (matchSingleReactant == MatchAll || matchSingleReactant == i) {
-      // NOTE that we are *not* uniquifying the results.
-      //   This is because we need multiple matches in reactions. For example,
-      //   The ring-closure coded as:
-      //     [C:1]=[C:2] + [C:3]=[C:4][C:5]=[C:6] ->
-      //     [C:1]1[C:2][C:3][C:4]=[C:5][C:6]1
-      //   should give 4 products here:
-      //     [Cl]C=C + [Br]C=CC=C ->
-      //       [Cl]C1C([Br])C=CCC1
-      //       [Cl]C1CC(Br)C=CC1
-      //       C1C([Br])C=CCC1[Cl]
-      //       C1CC([Br])C=CC1[Cl]
-      //   Yes, in this case there are only 2 unique products, but that's
-      //   a factor of the reactants' symmetry.
-      //
-      //   There's no particularly straightforward way of solving this problem
-      //   of recognizing cases
-      //   where we should give all matches and cases where we shouldn't; it's
-      //   safer to just
-      //   produce everything and let the client deal with uniquifying their
-      //   results.
-      SubstructMatchParameters ssps;
-      ssps.uniquify = false;
-      ssps.maxMatches = maxMatches;
-      auto matchesHere = SubstructMatch(*(reactants[i]), *iter->get(), ssps);
-      auto matchCount = matchesHere.size();
-      for (const auto &match : matchesHere) {
-        bool keep = true;
-        for (const auto &pr : match) {
-          if (reactants[i]->getAtomWithIdx(pr.second)->hasProp(
-                  common_properties::_protected)) {
-            keep = false;
-            break;
-          }
-        }
-        if (keep) {
-          matchesByReactant[i].push_back(match);
-        } else {
-          --matchCount;
-        }
-      }
-      if (!matchCount) {
+      auto matches = getReactantMatchesToTemplate(*reactants[i].get(),
+                                                  *iter->get(), maxMatches);
+      if (matches.empty()) {
         // no point continuing if we don't match one of the reactants:
         res = false;
         break;
       }
+      matchesByReactant[i] = std::move(matches);
     }
   }
   return res;
@@ -1472,7 +1483,7 @@ std::vector<MOL_SPTR_VECT> run_Reactant(const ChemicalReaction &rxn,
         "initMatchers() must be called before runReactants()");
   }
 
-  CHECK_INVARIANT(reactant, "bad molecule in reactants");
+  PRECONDITION(reactant, "bad molecule in reactants");
   reactant->clearAllAtomBookmarks();  // we use this as scratch space
   std::vector<MOL_SPTR_VECT> productMols;
 
@@ -1481,8 +1492,8 @@ std::vector<MOL_SPTR_VECT> run_Reactant(const ChemicalReaction &rxn,
     return productMols;
   }
 
-  CHECK_INVARIANT(static_cast<size_t>(reactantIdx) < rxn.getReactants().size(),
-                  "reactantIdx out of bounds");
+  PRECONDITION(static_cast<size_t>(reactantIdx) < rxn.getReactants().size(),
+               "reactantIdx out of bounds");
   // find the matches for each reactant:
   VectVectMatchVectType matchesByReactant;
 
