@@ -638,6 +638,32 @@ TEST_CASE("Github #2891", "[Reaction][chirality][bug]") {
   }
 }
 
+TEST_CASE("reaction literals") {
+  {
+    auto rxn = "[O:1]>>[N:1]"_rxnsmarts;
+    CHECK(rxn != nullptr);
+  }
+  {
+    auto rxn = "[O:1]>>[N:1]"_rxnsmiles;
+    CHECK(rxn != nullptr);
+  }
+  {
+    auto rxn = "CC1>>CC1"_rxnsmarts;
+    CHECK(rxn == nullptr);
+  }
+  {
+    auto rxn = "CC1>>CC1"_rxnsmiles;
+    CHECK(rxn == nullptr);
+  }
+  {
+    auto rxn = "Cc1cc1>>CCC"_rxnsmarts;
+    CHECK(rxn != nullptr);
+  }
+  {
+    auto rxn = "Cc1cc1>>CCC"_rxnsmiles;
+    CHECK(rxn != nullptr);
+  }
+}
 TEST_CASE("one-component reactions") {
   SECTION("removing atoms") {
     auto rxn = "CC[O:1]>>[O:1]"_rxnsmarts;
