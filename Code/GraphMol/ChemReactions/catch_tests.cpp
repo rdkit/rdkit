@@ -1,5 +1,5 @@
 //
-//  Copyright (c) 2018-2020 Greg Landrum
+//  Copyright (c) 2018-2021 Greg Landrum and other RDKit contributors
 //
 //   @@ All Rights Reserved @@
 //  This file is part of the RDKit.
@@ -7,8 +7,6 @@
 //  which is included in the file license.txt, found at the root
 //  of the RDKit source tree.
 ///
-#define CATCH_CONFIG_MAIN  // This tells Catch to provide a main() - only do
-                           // this in one cpp file
 #include "catch.hpp"
 
 #include <GraphMol/RDKitBase.h>
@@ -636,6 +634,28 @@ TEST_CASE("Github #2891", "[Reaction][chirality][bug]") {
       CHECK(ps[0].size() == 1);
       auto tsmi = MolToSmiles(*("C[C@@H](c1ccccc1)SCC"_smiles));
       CHECK(MolToSmiles(*ps[0][0]) == tsmi);
+    }
+  }
+}
+
+TEST_CASE("one-component reactions") {
+  SECTION("removing atoms") {
+    auto rxn = "CC[O:1]>>[O:1]"_rxnsmarts;
+    REQUIRE(rxn);
+    rxn->initReactantMatchers();
+    {
+      auto mol = "CCO"_smiles;
+      REQUIRE(mol);
+      CHECK(rxn->runReactant(*mol));
+      CHECK(mol->getNumAtoms() == 1);
+      CHECK(MolToSmiles(*mol) == "O");
+    }
+    {
+      auto mol = "CCOC"_smiles;
+      REQUIRE(mol);
+      CHECK(rxn->runReactant(*mol));
+      CHECK(mol->getNumAtoms() == 2);
+      CHECK(MolToSmiles(*mol) == "CO");
     }
   }
 }
