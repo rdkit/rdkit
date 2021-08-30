@@ -153,7 +153,7 @@ class StereoBondEndCap {
 }  // namespace
 
 VectMatchVectType getReactantMatchesToTemplate(const ROMol &reactant,
-                                               const ROMol &reactantTemplate,
+                                               const ROMol &templ,
                                                unsigned int maxMatches) {
   // NOTE that we are *not* uniquifying the results.
   //   This is because we need multiple matches in reactions. For example,
@@ -170,17 +170,15 @@ VectMatchVectType getReactantMatchesToTemplate(const ROMol &reactant,
   //   a factor of the reactants' symmetry.
   //
   //   There's no particularly straightforward way of solving this problem
-  //   of recognizing cases
-  //   where we should give all matches and cases where we shouldn't; it's
-  //   safer to just
-  //   produce everything and let the client deal with uniquifying their
-  //   results.
+  //   of recognizing cases where we should give all matches and cases where we
+  //   shouldn't; it's safer to just produce everything and let the caller deal
+  //   with uniquifying their results.
   VectMatchVectType res;
 
   SubstructMatchParameters ssps;
   ssps.uniquify = false;
   ssps.maxMatches = maxMatches;
-  auto matchesHere = SubstructMatch(reactant, reactantTemplate, ssps);
+  auto matchesHere = SubstructMatch(reactant, templ, ssps);
   res.reserve(matchesHere.size());
   for (const auto &match : matchesHere) {
     bool keep = true;
@@ -1422,6 +1420,29 @@ generateOneProductSet(const ChemicalReaction &rxn,
   }
   return res;
 }
+void identifyAtomsInReactantNotProduct(
+    const ROMol &reactant, const ROMol &product, boost::dynamic_bitset<> &atoms,
+    std::map<unsigned int, unsigned int> &reactantProductMap) {
+  std::map<unsigned int, unsigned int> productAtomMap;
+  for (const auto atom : product.atoms()) {
+    if (atom->getAtomMapNum()) {
+      productAtomMap[atom->getAtomMapNum()] = atom->getIdx();
+    }
+  }
+  for (const auto atom : reactant.atoms()) {
+    if (atom->getAtomMapNum()) {
+      if (productAtomMap.find(atom->getAtomMapNum()) != productAtomMap.end()) {
+        reactantProductMap[atom->getAtomMapNum()] = atom->getIdx();
+      } else {
+        atoms.set(atom->getIdx());
+      }
+    } else {
+      // unmapped atoms in the reactants are lost in the products:
+      atoms.set(atom->getIdx());
+    }
+  }
+}
+
 }  // namespace ReactionRunnerUtils
 
 std::vector<MOL_SPTR_VECT> run_Reactants(const ChemicalReaction &rxn,
@@ -1473,6 +1494,48 @@ std::vector<MOL_SPTR_VECT> run_Reactants(const ChemicalReaction &rxn,
 
   return productMols;
 }  // end of ChemicalReaction::runReactants()
+
+// Modifies a single reactant IN PLACE
+bool run_Reactant(const ChemicalReaction &rxn, RWMol &reactant,
+                  unsigned int reactantIdx) {
+  PRECONDITION(static_cast<size_t>(reactantIdx) < rxn.getNumReactantTemplates(),
+               "reactantIdx out of bounds");
+  PRECONDITION(rxn.getNumProductTemplates() <= 1, "only one product supported");
+  const auto reactantTemplate = rxn.getReactants()[reactantIdx];
+  const auto productTemplate = rxn.getProducts()[0];
+  if (!rxn.isInitialized()) {
+    throw ChemicalReactionException(
+        "initMatchers() must be called before runReactants()");
+  }
+  reactant.clearAllAtomBookmarks();  // we use this as scratch space
+  if (!rxn.getNumProductTemplates()) {
+    return false;
+  }
+  auto reactantMatch = ReactionRunnerUtils::getReactantMatchesToTemplate(
+      reactant, *reactantTemplate, 1);
+  if (reactantMatch.empty()) {
+    return false;
+  }
+  // we now have a match for the reactant, so we can work on it
+  // start by removing atoms which are in the reactants, but not in the product
+  boost::dynamic_bitset<> atomsToRemove(reactant.getNumAtoms());
+  std::map<unsigned int, unsigned int> reactantProductMap;
+  ReactionRunnerUtils::identifyAtomsInReactantNotProduct(
+      *reactantTemplate, *productTemplate, atomsToRemove, reactantProductMap);
+  bool res = false;
+  if (atomsToRemove.count()) {
+    res = true;
+  }
+  reactant.beginBatchEdit();
+  for (unsigned int i = 0; i < atomsToRemove.size(); ++i) {
+    if (atomsToRemove[i]) {
+      reactant.removeAtom(i);
+    }
+  }
+  reactant.commitBatchEdit();
+
+  return res;
+}
 
 // Generate the product set based on a SINGLE reactant
 std::vector<MOL_SPTR_VECT> run_Reactant(const ChemicalReaction &rxn,
