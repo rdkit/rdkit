@@ -666,22 +666,50 @@ TEST_CASE("reaction literals") {
 }
 TEST_CASE("one-component reactions") {
   SECTION("removing atoms") {
-    auto rxn = "CC[O:1]>>[O:1]"_rxnsmarts;
+    auto rxn = "CC[N:1]>>[N:1]"_rxnsmarts;
     REQUIRE(rxn);
     rxn->initReactantMatchers();
     {
-      auto mol = "CCO"_smiles;
+      auto mol = "CCN"_smiles;
       REQUIRE(mol);
       CHECK(rxn->runReactant(*mol));
       CHECK(mol->getNumAtoms() == 1);
-      CHECK(MolToSmiles(*mol) == "O");
+      CHECK(MolToSmiles(*mol) == "N");
     }
     {
-      auto mol = "CCOC"_smiles;
+      auto mol = "CCNC"_smiles;
       REQUIRE(mol);
       CHECK(rxn->runReactant(*mol));
       CHECK(mol->getNumAtoms() == 2);
-      CHECK(MolToSmiles(*mol) == "CO");
+      CHECK(MolToSmiles(*mol) == "CN");
+    }
+    {
+      auto mol = "NCC"_smiles;
+      REQUIRE(mol);
+      CHECK(rxn->runReactant(*mol));
+      CHECK(mol->getNumAtoms() == 1);
+      CHECK(MolToSmiles(*mol) == "N");
+    }
+    {
+      auto mol = "CNCC"_smiles;
+      REQUIRE(mol);
+      CHECK(rxn->runReactant(*mol));
+      CHECK(mol->getNumAtoms() == 2);
+      CHECK(MolToSmiles(*mol) == "CN");
+    }
+    {
+      auto mol = "CCCN"_smiles;
+      REQUIRE(mol);
+      CHECK(rxn->runReactant(*mol));
+      CHECK(mol->getNumAtoms() == 1);
+      CHECK(MolToSmiles(*mol) == "N");
+    }
+    {
+      auto mol = "CCCN(C)CO"_smiles;
+      REQUIRE(mol);
+      CHECK(rxn->runReactant(*mol));
+      CHECK(mol->getNumAtoms() == 4);
+      CHECK(MolToSmiles(*mol) == "CNCO");
     }
   }
 }

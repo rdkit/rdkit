@@ -1420,9 +1420,10 @@ generateOneProductSet(const ChemicalReaction &rxn,
   }
   return res;
 }
-void identifyAtomsInReactantNotProduct(
+void identifyAtomsInReactantTemplateNotProductTemplate(
     const ROMol &reactant, const ROMol &product, boost::dynamic_bitset<> &atoms,
-    std::map<unsigned int, unsigned int> &reactantProductMap) {
+    std::map<unsigned int, unsigned int> &reactantProductMap,
+    const MatchVectType &reactantMatch) {
   std::map<unsigned int, unsigned int> productAtomMap;
   for (const auto atom : product.atoms()) {
     if (atom->getAtomMapNum()) {
@@ -1434,13 +1435,43 @@ void identifyAtomsInReactantNotProduct(
       if (productAtomMap.find(atom->getAtomMapNum()) != productAtomMap.end()) {
         reactantProductMap[atom->getAtomMapNum()] = atom->getIdx();
       } else {
-        atoms.set(atom->getIdx());
+        atoms.set(reactantMatch[atom->getIdx()].second);
       }
     } else {
       // unmapped atoms in the reactants are lost in the products:
-      atoms.set(atom->getIdx());
+      atoms.set(reactantMatch[atom->getIdx()].second);
     }
   }
+}
+void traverseToFindAtomsToRemove(const ROMol &reactant, const ROMol &templ,
+                                 boost::dynamic_bitset<> &atoms,
+                                 const MatchVectType &reactantMatch) {
+  // toRemove marks both atoms that need to be removed and those we can traverse
+  // to
+  boost::dynamic_bitset<> toRemove = ~atoms;
+  for (const auto tpl : reactantMatch) {
+    toRemove.reset(tpl.second);
+  }
+  for (const auto tpl : reactantMatch) {
+    std::deque<const Atom *> toConsider;
+    if (templ.getAtomWithIdx(tpl.first)->getAtomMapNum()) {
+      toConsider.push_back(reactant.getAtomWithIdx(tpl.second));
+    }
+
+    while (!toConsider.empty()) {
+      auto atom = toConsider.back();
+      toConsider.pop_back();
+      toRemove.reset(atom->getIdx());
+      for (auto nbri :
+           boost::make_iterator_range(reactant.getAtomNeighbors(atom))) {
+        const auto &nbr = reactant[nbri];
+        if (toRemove[nbr->getIdx()]) {
+          toConsider.push_front(nbr);
+        }
+      }
+    }
+  }
+  atoms |= toRemove;
 }
 
 }  // namespace ReactionRunnerUtils
@@ -1520,20 +1551,24 @@ bool run_Reactant(const ChemicalReaction &rxn, RWMol &reactant,
   // start by removing atoms which are in the reactants, but not in the product
   boost::dynamic_bitset<> atomsToRemove(reactant.getNumAtoms());
   std::map<unsigned int, unsigned int> reactantProductMap;
-  ReactionRunnerUtils::identifyAtomsInReactantNotProduct(
-      *reactantTemplate, *productTemplate, atomsToRemove, reactantProductMap);
+  // finds atoms in the reactantTemplate which aren't in the productTemplate
+  ReactionRunnerUtils::identifyAtomsInReactantTemplateNotProductTemplate(
+      *reactantTemplate, *productTemplate, atomsToRemove, reactantProductMap,
+      reactantMatch[0]);
+  ReactionRunnerUtils::traverseToFindAtomsToRemove(
+      reactant, *reactantTemplate, atomsToRemove, reactantMatch[0]);
+
   bool res = false;
   if (atomsToRemove.count()) {
     res = true;
-  }
-  reactant.beginBatchEdit();
-  for (unsigned int i = 0; i < atomsToRemove.size(); ++i) {
-    if (atomsToRemove[i]) {
-      reactant.removeAtom(i);
+    reactant.beginBatchEdit();
+    for (unsigned int i = 0; i < atomsToRemove.size(); ++i) {
+      if (atomsToRemove[i]) {
+        reactant.removeAtom(i);
+      }
     }
+    reactant.commitBatchEdit();
   }
-  reactant.commitBatchEdit();
-
   return res;
 }
 
