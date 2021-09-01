@@ -96,8 +96,8 @@ struct SBV_wrapper {
         .def("ToBase64", (std::string(*)(SBV &))ToBase64,
              "Converts the vector to a base64 string (the base64 encoded "
              "version of the results of ToString()).\n")
-        .def("ToList", (python::list *(const SBV&)SparseToList,
-			"Return the Bitvector as a python list (faster than list(vect))"))      
+        .def("ToList", (python::list (*)(const SBV&))SparseToList,
+             "Return the Bitvector as a python list (faster than list(vect))")
         .def(python::self & python::self)
         .def(python::self | python::self)
         .def(python::self ^ python::self)
