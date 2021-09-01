@@ -1,9 +1,8 @@
-/* A Bison parser, made by GNU Bison 3.5.1.  */
+/* A Bison parser, made by GNU Bison 3.0.4.  */
 
 /* Bison interface for Yacc-like parsers in C
 
-   Copyright (C) 1984, 1989-1990, 2000-2015, 2018-2020 Free Software Foundation,
-   Inc.
+   Copyright (C) 1984, 1989-1990, 2000-2015 Free Software Foundation, Inc.
 
    This program is free software: you can redistribute it and/or modify
    it under the terms of the GNU General Public License as published by
@@ -31,11 +30,8 @@
    This special exception was added by the Free Software Foundation in
    version 2.2 of Bison.  */
 
-/* Undocumented macros, especially those whose name start with YY_,
-   are private implementation details.  Do not rely on them.  */
-
-#ifndef YY_YYSMILES_SCRATCH_RDKIT_GIT_CODE_GRAPHMOL_SMILESPARSE_SMILES_TAB_HPP_INCLUDED
-# define YY_YYSMILES_SCRATCH_RDKIT_GIT_CODE_GRAPHMOL_SMILESPARSE_SMILES_TAB_HPP_INCLUDED
+#ifndef YY_YYSMILES_C_USERS_GLANDRUM_RDKIT_GIT_CODE_GRAPHMOL_SMILESPARSE_SMILES_TAB_HPP_INCLUDED
+# define YY_YYSMILES_C_USERS_GLANDRUM_RDKIT_GIT_CODE_GRAPHMOL_SMILESPARSE_SMILES_TAB_HPP_INCLUDED
 /* Debug traces.  */
 #ifndef YYDEBUG
 # define YYDEBUG 0
@@ -63,35 +59,35 @@ extern int yysmiles_debug;
     LOOP_CONNECTOR_TOKEN = 269,
     MINUS_TOKEN = 270,
     PLUS_TOKEN = 271,
-    CHIRAL_MARKER_TOKEN = 272,
-    CHI_CLASS_TOKEN = 273,
-    CHI_CLASS_OH_TOKEN = 274,
-    H_TOKEN = 275,
-    AT_TOKEN = 276,
-    PERCENT_TOKEN = 277,
-    COLON_TOKEN = 278,
-    HASH_TOKEN = 279,
-    BOND_TOKEN = 280,
-    ATOM_OPEN_TOKEN = 281,
-    ATOM_CLOSE_TOKEN = 282,
-    EOS_TOKEN = 283
+    H_TOKEN = 272,
+    AT_TOKEN = 273,
+    PERCENT_TOKEN = 274,
+    COLON_TOKEN = 275,
+    HASH_TOKEN = 276,
+    BOND_TOKEN = 277,
+    CHI_CLASS_TOKEN = 278,
+    ATOM_OPEN_TOKEN = 279,
+    ATOM_CLOSE_TOKEN = 280,
+    EOS_TOKEN = 281
   };
 #endif
 
 /* Value type.  */
 #if ! defined YYSTYPE && ! defined YYSTYPE_IS_DECLARED
+
 union YYSTYPE
 {
-#line 82 "smiles.yy"
+#line 82 "smiles.yy" /* yacc.c:1909  */
 
   int                      moli;
   RDKit::Atom * atom;
   RDKit::Bond * bond;
+  RDKit::Atom::ChiralType chiraltype;
   int                      ival;
 
-#line 93 "/scratch/RDKit_git/Code/GraphMol/SmilesParse/smiles.tab.hpp"
-
+#line 89 "C:/Users/glandrum/RDKit_git/Code/GraphMol/SmilesParse/smiles.tab.hpp" /* yacc.c:1909  */
 };
+
 typedef union YYSTYPE YYSTYPE;
 # define YYSTYPE_IS_TRIVIAL 1
 # define YYSTYPE_IS_DECLARED 1
@@ -101,11 +97,11 @@ typedef union YYSTYPE YYSTYPE;
 
 int yysmiles_parse (const char *input, std::vector<RDKit::RWMol *> *molList, RDKit::Atom* &lastAtom, RDKit::Bond* &lastBond, unsigned &numAtomsParsed, unsigned &numBondsParsed, std::list<unsigned int> *branchPoints, void *scanner, int& start_token);
 /* "%code provides" blocks.  */
-#line 77 "smiles.yy"
+#line 77 "smiles.yy" /* yacc.c:1909  */
 
 #define YY_DECL int yylex \
                (YYSTYPE * yylval_param , yyscan_t yyscanner, int& start_token)
 
-#line 110 "/scratch/RDKit_git/Code/GraphMol/SmilesParse/smiles.tab.hpp"
+#line 106 "C:/Users/glandrum/RDKit_git/Code/GraphMol/SmilesParse/smiles.tab.hpp" /* yacc.c:1909  */
 
-#endif /* !YY_YYSMILES_SCRATCH_RDKIT_GIT_CODE_GRAPHMOL_SMILESPARSE_SMILES_TAB_HPP_INCLUDED  */
+#endif /* !YY_YYSMILES_C_USERS_GLANDRUM_RDKIT_GIT_CODE_GRAPHMOL_SMILESPARSE_SMILES_TAB_HPP_INCLUDED  */

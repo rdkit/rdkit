@@ -112,6 +112,15 @@ void testPass() {
     "[#6]",        // feature borrowed from SMARTS
     "[12#6]",
     "C$C",  // quadruple bonds
+    // extended chirality
+    "C[Fe@TH](O)(Cl)F",
+    "C[Fe@TH1](O)(Cl)F",
+    "C[Fe@SQ](O)(Cl)F",
+    "C[Fe@SQ1](O)(Cl)F",
+    "C[Fe@TB](O)(Cl)(Br)F",
+    "C[Fe@TB10](O)(Cl)(Br)F",
+    "C[Fe@OH](O)(Cl)(Br)(N)F",
+    "C[Fe@OH20](O)(Cl)(Br)(N)F",
     "EOS"
   };
   while (smis[i] != "EOS") {

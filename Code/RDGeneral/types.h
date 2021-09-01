@@ -133,6 +133,7 @@ RDKIT_RDGENERAL_EXPORT extern const std::string
     _ringStereochemCand;  // chirality bool COMPUTED
 RDKIT_RDGENERAL_EXPORT extern const std::string
     _ringStereoWarning;  // obsolete ?
+RDKIT_RDGENERAL_EXPORT extern const std::string _chiralPermutation; // int
 
 // Smiles parsing
 RDKIT_RDGENERAL_EXPORT extern const std::string _SmilesStart;  // int
