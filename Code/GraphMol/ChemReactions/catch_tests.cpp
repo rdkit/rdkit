@@ -712,4 +712,34 @@ TEST_CASE("one-component reactions") {
       CHECK(MolToSmiles(*mol) == "CNCO");
     }
   }
+  SECTION("removing atoms 2") {
+    auto rxn = "[C:2][N:1]>>[N:1]"_rxnsmarts;
+    REQUIRE(rxn);
+    rxn->initReactantMatchers();
+    {
+      auto mol = "CCN"_smiles;
+      REQUIRE(mol);
+      CHECK(rxn->runReactant(*mol));
+      CHECK(mol->getNumAtoms() == 1);
+      CHECK(MolToSmiles(*mol) == "N");
+    }
+  }
+  SECTION("unmapped atoms in the product is an error") {
+    {
+      auto rxn = "[N:1]>>[N:1]CC"_rxnsmarts;
+      REQUIRE(rxn);
+      rxn->initReactantMatchers();
+      auto mol = "N"_smiles;
+      REQUIRE(mol);
+      CHECK_THROWS_AS(rxn->runReactant(*mol), ChemicalReactionException);
+    }
+    {
+      auto rxn = "[N:1]>>[N:1][C:2]"_rxnsmarts;
+      REQUIRE(rxn);
+      rxn->initReactantMatchers();
+      auto mol = "N"_smiles;
+      REQUIRE(mol);
+      CHECK_THROWS_AS(rxn->runReactant(*mol), ChemicalReactionException);
+    }
+  }
 }

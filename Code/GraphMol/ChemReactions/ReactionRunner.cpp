@@ -1424,17 +1424,11 @@ void identifyAtomsInReactantTemplateNotProductTemplate(
     const ROMol &reactant, const ROMol &product, boost::dynamic_bitset<> &atoms,
     std::map<unsigned int, unsigned int> &reactantProductMap,
     const MatchVectType &reactantMatch) {
-  std::map<unsigned int, unsigned int> productAtomMap;
-  for (const auto atom : product.atoms()) {
-    if (atom->getAtomMapNum()) {
-      productAtomMap[atom->getAtomMapNum()] = atom->getIdx();
-    }
-  }
   for (const auto atom : reactant.atoms()) {
     if (atom->getAtomMapNum()) {
-      if (productAtomMap.find(atom->getAtomMapNum()) != productAtomMap.end()) {
-        reactantProductMap[atom->getAtomMapNum()] = atom->getIdx();
-      } else {
+      if (reactantProductMap.find(atom->getAtomMapNum()) ==
+          reactantProductMap.end()) {
+        // atom map not present in product
         atoms.set(reactantMatch[atom->getIdx()].second);
       }
     } else {
@@ -1454,7 +1448,7 @@ void traverseToFindAtomsToRemove(const ROMol &reactant, const ROMol &templ,
   }
   for (const auto tpl : reactantMatch) {
     std::deque<const Atom *> toConsider;
-    if (templ.getAtomWithIdx(tpl.first)->getAtomMapNum()) {
+    if (templ.getAtomWithIdx(tpl.first)->getAtomMapNum() && !atoms[tpl.first]) {
       toConsider.push_back(reactant.getAtomWithIdx(tpl.second));
     }
 
@@ -1538,6 +1532,32 @@ bool run_Reactant(const ChemicalReaction &rxn, RWMol &reactant,
     throw ChemicalReactionException(
         "initMatchers() must be called before runReactants()");
   }
+
+  std::map<unsigned int, unsigned int> productAtomMap;
+  for (const auto atom : productTemplate->atoms()) {
+    if (atom->getAtomMapNum()) {
+      productAtomMap[atom->getAtomMapNum()] = atom->getIdx();
+    }
+  }
+  std::map<unsigned int, unsigned int> reactantProductMap;
+  for (const auto atom : reactantTemplate->atoms()) {
+    if (atom->getAtomMapNum()) {
+      if (productAtomMap.find(atom->getAtomMapNum()) != productAtomMap.end()) {
+        reactantProductMap[atom->getAtomMapNum()] = atom->getIdx();
+      }
+    }
+  }
+
+  // we don't support reactions with unmapped or new atoms in the products
+  for (const auto atom : productTemplate->atoms()) {
+    if (!atom->getAtomMapNum() ||
+        productAtomMap.find(atom->getAtomMapNum()) == productAtomMap.end()) {
+      throw ChemicalReactionException(
+          "single component reactions which add atoms in the product "
+          "are not supported");
+    }
+  }
+
   reactant.clearAllAtomBookmarks();  // we use this as scratch space
   if (!rxn.getNumProductTemplates()) {
     return false;
@@ -1550,11 +1570,11 @@ bool run_Reactant(const ChemicalReaction &rxn, RWMol &reactant,
   // we now have a match for the reactant, so we can work on it
   // start by removing atoms which are in the reactants, but not in the product
   boost::dynamic_bitset<> atomsToRemove(reactant.getNumAtoms());
-  std::map<unsigned int, unsigned int> reactantProductMap;
   // finds atoms in the reactantTemplate which aren't in the productTemplate
   ReactionRunnerUtils::identifyAtomsInReactantTemplateNotProductTemplate(
       *reactantTemplate, *productTemplate, atomsToRemove, reactantProductMap,
       reactantMatch[0]);
+  // identify atoms which should be removed from the molecule
   ReactionRunnerUtils::traverseToFindAtomsToRemove(
       reactant, *reactantTemplate, atomsToRemove, reactantMatch[0]);
 
