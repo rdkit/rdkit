@@ -214,12 +214,12 @@ class TestCase(unittest.TestCase):
 
   def test7ToList(self):
     l = [0]*2048
-    nbits =	2048
-    bv = ds.SparseBitVect(nbits)
+    nbits = 2048
+    bv = ds.IntSparseIntVect(nbits)
     for j in range(nbits):
       x = random.randrange(0, nbits)
-      l[x] = 1
-      bv.SetBit(x)
+      l[x] = x
+      bv[x] = x
 
     l2 = list(bv)
     l3 = bv.ToList()

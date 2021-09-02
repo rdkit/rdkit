@@ -341,16 +341,17 @@ class TestCase(unittest.TestCase):
     def test12ToList(self):
         l = [0]*2048
         nbits = 2048
-        bv = DataStructs.ExplicitBitVect(nbits)
-        for j in range(nbits):
-            x = random.randrange(0, nbits)
-            l[x] = 1
-            bv.SetBit(x)
+        for cls in [DataStructs.ExplicitBitVect, DataStructs.SparseBitVect]:
+            bv = cls(nbits)
+            for j in range(nbits):
+                x = random.randrange(0, nbits)
+                l[x] = 1
+                bv.SetBit(x)
 
-        l2 = list(bv)
-        l3 = bv.ToList()
-        self.assertEqual(l, l2)
-        self.assertEqual(l, l3)
+            l2 = list(bv)
+            l3 = bv.ToList()
+            self.assertEqual(l, l2)
+            self.assertEqual(l, l3)
             
 if __name__ == '__main__':
     unittest.main()
