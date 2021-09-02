@@ -81,9 +81,7 @@ uint32_t updateElement(SparseIntVect<uint32_t> &v, unsigned int elem,
   }
   return bit;
 }
-uint32_t updateElement(ExplicitBitVect &v, unsigned int elem,
-                       bool counting = false) {
-  RDUNUSED_PARAM(counting);
+uint32_t updateElement(ExplicitBitVect &v, unsigned int elem, bool) {
   uint32_t bit = elem % v.getNumBits();
   v.setBit(bit);
   return bit;

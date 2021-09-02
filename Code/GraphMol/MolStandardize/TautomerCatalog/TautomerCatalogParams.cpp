@@ -66,13 +66,11 @@ std::string TautomerCatalogParams::Serialize() const {
   return ss.str();
 }
 
-void TautomerCatalogParams::initFromStream(std::istream &ss) {
-  RDUNUSED_PARAM(ss);
+void TautomerCatalogParams::initFromStream(std::istream &) {
   UNDER_CONSTRUCTION("not implemented");
 }
 
-void TautomerCatalogParams::initFromString(const std::string &text) {
-  RDUNUSED_PARAM(text);
+void TautomerCatalogParams::initFromString(const std::string &) {
   UNDER_CONSTRUCTION("not implemented");
 }
 

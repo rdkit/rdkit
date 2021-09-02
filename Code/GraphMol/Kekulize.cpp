@@ -20,11 +20,9 @@ namespace RDKit {
 // Local utility namespace
 namespace {
 
-void backTrack(RWMol &mol, INT_INT_DEQ_MAP &options, int lastOpt,
-               INT_VECT &done, INT_DEQUE &aqueue,
-               boost::dynamic_bitset<> &dBndCands,
+void backTrack(RWMol &mol, INT_INT_DEQ_MAP &, int lastOpt, INT_VECT &done,
+               INT_DEQUE &aqueue, boost::dynamic_bitset<> &dBndCands,
                boost::dynamic_bitset<> &dBndAdds) {
-  RDUNUSED_PARAM(options);
   // so we made a wrong turn at the lastOpt
   // remove on done list that comes after the lastOpt including itself
 

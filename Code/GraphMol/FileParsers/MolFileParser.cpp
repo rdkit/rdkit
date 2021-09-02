@@ -3039,7 +3039,6 @@ bool ParseV2000CTAB(std::istream *inStream, unsigned int &line, RWMol *mol,
                     Conformer *&conf, bool &chiralityPossible,
                     unsigned int &nAtoms, unsigned int &nBonds,
                     bool strictParsing) {
-  RDUNUSED_PARAM(strictParsing);
   conf = new Conformer(nAtoms);
   if (nAtoms == 0) {
     conf->set3D(false);

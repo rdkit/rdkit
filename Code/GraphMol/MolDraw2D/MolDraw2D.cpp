@@ -1952,9 +1952,8 @@ void MolDraw2D::calcLabelEllipse(int atom_idx,
 }
 
 // ****************************************************************************
-StringRect MolDraw2D::calcAnnotationPosition(const ROMol &mol,
+StringRect MolDraw2D::calcAnnotationPosition(const ROMol &,
                                              const std::string &note) {
-  RDUNUSED_PARAM(mol);
   StringRect note_rect;
   if (note.empty()) {
     note_rect.width_ = -1.0;  // so we know it's not valid.
@@ -3040,7 +3039,7 @@ void drawNormalBond(MolDraw2D &d2d, const Bond &bond, bool highlight_bond,
       swap(col1, col2);
       inverted = true;
     }
-    if(d2d.drawOptions().singleColourWedgeBonds) {
+    if (d2d.drawOptions().singleColourWedgeBonds) {
       col1 = d2d.drawOptions().symbolColour;
       col2 = d2d.drawOptions().symbolColour;
     }
@@ -3245,11 +3244,8 @@ void drawQueryBond1(MolDraw2D &d2d, const Bond &bond, bool highlight_bond,
 
 void drawQueryBond(MolDraw2D &d2d, const Bond &bond, bool highlight_bond,
                    const Point2D &at1_cds, const Point2D &at2_cds,
-                   const std::vector<Point2D> &at_cds, const DrawColour &col1,
-                   const DrawColour &col2, double double_bond_offset) {
-  RDUNUSED_PARAM(col1);
-  RDUNUSED_PARAM(col2);
-
+                   const std::vector<Point2D> &at_cds,
+                   double double_bond_offset) {
   PRECONDITION(bond.hasQuery(), "no query");
   const auto qry = bond.getQuery();
   if (!d2d.drawOptions().splitBonds) {
@@ -3393,17 +3389,13 @@ void drawQueryBond(MolDraw2D &d2d, const Bond &bond, bool highlight_bond,
 
 // ****************************************************************************
 void MolDraw2D::drawBond(
-    const ROMol &mol, const Bond *bond, int at1_idx, int at2_idx,
-    const vector<int> *highlight_atoms,
-    const map<int, DrawColour> *highlight_atom_map,
+    const ROMol &, const Bond *bond, int at1_idx, int at2_idx,
+    const vector<int> *, const map<int, DrawColour> *,
     const vector<int> *highlight_bonds,
     const map<int, DrawColour> *highlight_bond_map,
     const std::vector<std::pair<DrawColour, DrawColour>> *bond_colours) {
   PRECONDITION(bond, "no bond");
   PRECONDITION(activeMolIdx_ >= 0, "bad mol idx");
-  RDUNUSED_PARAM(highlight_atoms);
-  RDUNUSED_PARAM(highlight_atom_map);
-  RDUNUSED_PARAM(mol);
 
   if (static_cast<unsigned int>(at1_idx) != bond->getBeginAtomIdx()) {
     std::swap(at1_idx, at2_idx);
@@ -3460,7 +3452,7 @@ void MolDraw2D::drawBond(
     if (bond->getQuery()->getNegation() || descr != "BondOrder") {
       isComplex = true;
       drawQueryBond(*this, *bond, highlight_bond, at1_cds, at2_cds,
-                    at_cds_[activeMolIdx_], col1, col2, double_bond_offset);
+                    at_cds_[activeMolIdx_], double_bond_offset);
     }
   }
 
@@ -4414,9 +4406,7 @@ void MolDraw2D::drawRect(const Point2D &cds1, const Point2D &cds2) {
 
 void MolDraw2D::drawWavyLine(const Point2D &cds1, const Point2D &cds2,
                              const DrawColour &col1, const DrawColour &col2,
-                             unsigned int nSegments, double vertOffset) {
-  RDUNUSED_PARAM(nSegments);
-  RDUNUSED_PARAM(vertOffset);
+                             unsigned int, double) {
   drawLine(cds1, cds2, col1, col2);
 }
 

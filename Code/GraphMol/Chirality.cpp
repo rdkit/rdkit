@@ -379,13 +379,12 @@ Bond::BondDir getOppositeBondDir(Bond::BondDir dir) {
 }
 
 void setBondDirRelativeToAtom(Bond *bond, Atom *atom, Bond::BondDir dir,
-                              bool reverse, boost::dynamic_bitset<> &needsDir) {
+                              bool reverse, boost::dynamic_bitset<> &) {
   PRECONDITION(bond, "bad bond");
   PRECONDITION(atom, "bad atom");
   PRECONDITION(dir == Bond::ENDUPRIGHT || dir == Bond::ENDDOWNRIGHT, "bad dir");
   PRECONDITION(atom == bond->getBeginAtom() || atom == bond->getEndAtom(),
                "atom doesn't belong to bond");
-  RDUNUSED_PARAM(needsDir);
 
   if (bond->getBeginAtom() != atom) {
     reverse = !reverse;
@@ -2334,9 +2333,9 @@ void assignChiralTypesFromMolParity(ROMol &mol, bool replaceExistingTags) {
     INT_LIST nbrBondIdxList;
     std::transform(
         nbrBonds.first, nbrBonds.second, std::back_inserter(nbrBondIdxList),
-        [mol](const ROMol::edge_descriptor &e) { return mol[e]->getIdx(); });
+        [&mol](const ROMol::edge_descriptor &e) { return mol[e]->getIdx(); });
     unsigned int atomIdx = atom->getIdx();
-    nbrBondIdxList.sort([mol, atomIdx](const int ai, const int bi) {
+    nbrBondIdxList.sort([&mol, atomIdx](const int ai, const int bi) {
       return (mol.getBondWithIdx(ai)->getOtherAtomIdx(atomIdx) <
               mol.getBondWithIdx(bi)->getOtherAtomIdx(atomIdx));
     });

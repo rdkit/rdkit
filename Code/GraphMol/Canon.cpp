@@ -346,7 +346,7 @@ void canonicalizeDoubleBond(Bond *dblBond, UINT_VECT &bondVisitOrders,
       atom2Dir = atom1Dir;
     } else if (dblBond->getStereo() == Bond::STEREOZ ||
                dblBond->getStereo() == Bond::STEREOCIS) {
-      atom2Dir = flipBondDir(atom1Dir); 
+      atom2Dir = flipBondDir(atom1Dir);
     }
     CHECK_INVARIANT(atom2Dir != Bond::NONE, "stereo not set");
 
@@ -360,8 +360,7 @@ void canonicalizeDoubleBond(Bond *dblBond, UINT_VECT &bondVisitOrders,
       }
       auto beginIdx = bond->getBeginAtomIdx();
       auto endIdx = bond->getEndAtomIdx();
-      return beginIdx > endIdx && 
-             beginIdx - endIdx > 1 &&
+      return beginIdx > endIdx && beginIdx - endIdx > 1 &&
              bond->hasProp(common_properties::_TraversalRingClosureBond);
     };
 
@@ -382,14 +381,12 @@ void canonicalizeDoubleBond(Bond *dblBond, UINT_VECT &bondVisitOrders,
                       atom2->getIdx()))) == stereoAtoms.end()) {
       isFlipped = true;
       atom2Dir = flipBondDir(atom2Dir);
-    } 
-    
-    if (!isFlipped && 
-          (isClosingRingBond(dblBond) ||
-          (isClosingRingBond(secondFromAtom1) && 
-            !secondFromAtom1->getIsAromatic() && 
-            secondFromAtom1->getBondDir() != Bond::NONE))
-        ) {
+    }
+
+    if (!isFlipped && (isClosingRingBond(dblBond) ||
+                       (isClosingRingBond(secondFromAtom1) &&
+                        !secondFromAtom1->getIsAromatic() &&
+                        secondFromAtom1->getBondDir() != Bond::NONE))) {
       atom2Dir = flipBondDir(atom2Dir);
     }
     // std::cerr<<" 1 set bond 2: "<<firstFromAtom2->getIdx()<<"
@@ -913,8 +910,7 @@ bool canHaveDirection(const Bond *bond) {
 
 void clearBondDirs(ROMol &mol, Bond *refBond, const Atom *fromAtom,
                    UINT_VECT &bondDirCounts, UINT_VECT &atomDirCounts,
-                   const UINT_VECT &bondVisitOrders) {
-  RDUNUSED_PARAM(bondVisitOrders);
+                   const UINT_VECT &) {
   PRECONDITION(bondDirCounts.size() >= mol.getNumBonds(), "bad dirCount size");
   PRECONDITION(refBond, "bad bond");
   PRECONDITION(&refBond->getOwningMol() == &mol, "bad bond");

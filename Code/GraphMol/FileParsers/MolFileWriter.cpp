@@ -1333,7 +1333,6 @@ std::string outputMolToMolBlock(const RWMol &tmol, int confId,
 
 std::string MolToMolBlock(const ROMol &mol, bool includeStereo, int confId,
                           bool kekulize, bool forceV3000) {
-  RDUNUSED_PARAM(includeStereo);
   RDKit::Utils::LocaleSwitcher switcher;
   RWMol trwmol(mol);
   // NOTE: kekulize the molecule before writing it out

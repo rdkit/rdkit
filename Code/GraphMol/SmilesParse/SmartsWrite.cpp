@@ -751,7 +751,6 @@ std::string getNonQueryAtomSmarts(const QueryAtom *qatom) {
 std::string getNonQueryBondSmarts(const QueryBond *qbond, int atomToLeftIdx) {
   PRECONDITION(qbond, "bad bond");
   PRECONDITION(!qbond->hasQuery(), "bond should not have query");
-  RDUNUSED_PARAM(atomToLeftIdx);
   std::string res;
 
   if (qbond->getIsAromatic()) {

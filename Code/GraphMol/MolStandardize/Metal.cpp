@@ -157,7 +157,7 @@ void MetalDisconnector::disconnect(RWMol &mol) {
     }
     std::sort(it->second.boundMetalIndices.begin(),
               it->second.boundMetalIndices.end(),
-              [metalChargeExcess](int a, int b) {
+              [&metalChargeExcess](int a, int b) {
                 return (metalChargeExcess.at(a) < metalChargeExcess.at(b));
               });
     fcAfterCut += loneElectrons;

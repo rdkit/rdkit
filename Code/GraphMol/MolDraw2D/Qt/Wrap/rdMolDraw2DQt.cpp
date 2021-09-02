@@ -13,7 +13,6 @@
 #include <GraphMol/ROMol.h>
 #include <GraphMol/MolDraw2D/MolDraw2D.h>
 
-#include <boost/python/suite/indexing/map_indexing_suite.hpp>
 #include <GraphMol/MolDraw2D/Qt/MolDraw2DQt.h>
 #include <QPainter>
 

@@ -127,14 +127,17 @@ void ParseSGroupV2000STYLine(IDX_TO_SGROUP_MAP &sGroupMap, RWMol *mol,
       return;
     }
 
-    unsigned int nbr = ParseSGroupIntField(ok, strictParsing, text, line, pos);
+    unsigned int sequenceId =
+        ParseSGroupIntField(ok, strictParsing, text, line, pos);
     if (!ok) {
       return;
     }
 
     std::string typ = text.substr(pos + 1, 3);
     if (SubstanceGroupChecks::isValidType(typ)) {
-      sGroupMap.emplace(nbr, SubstanceGroup(mol, typ));
+      auto sgroup = SubstanceGroup(mol, typ);
+      sgroup.setProp<unsigned int>("index", sequenceId);
+      sGroupMap.emplace(sequenceId, sgroup);
     } else {
       std::ostringstream errout;
       errout << "S group " << typ << " on line " << line;
@@ -1061,9 +1064,8 @@ std::string ParseV3000StringPropLabel(std::stringstream &stream) {
 
 void ParseV3000ParseLabel(const std::string &label,
                           std::stringstream &lineStream, STR_VECT &dataFields,
-                          unsigned int line, SubstanceGroup &sgroup,
-                          size_t nSgroups, RWMol *mol, bool strictParsing) {
-  RDUNUSED_PARAM(nSgroups);
+                          unsigned int line, SubstanceGroup &sgroup, size_t,
+                          RWMol *mol, bool strictParsing) {
   // TODO: we could handle these in a more structured way
   try {
     if (label == "XBHEAD" || label == "XBCORR") {

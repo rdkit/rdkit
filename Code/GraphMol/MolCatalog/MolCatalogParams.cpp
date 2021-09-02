@@ -1,6 +1,5 @@
-// $Id$
 //
-//  Copyright (C) 2006 Greg Landrum
+//  Copyright (C) 2006-2021 Greg Landrum and other RDKit contributors
 //
 //
 #include "MolCatalogParams.h"
@@ -16,8 +15,7 @@ MolCatalogParams::MolCatalogParams(const std::string &pickle) {
 
 MolCatalogParams::~MolCatalogParams() {}
 
-void MolCatalogParams::toStream(std::ostream &ss) const {
-  RDUNUSED_PARAM(ss);
+void MolCatalogParams::toStream(std::ostream &) const {
   // at the moment this is a no-op
 }
 std::string MolCatalogParams::Serialize() const {
@@ -31,8 +29,7 @@ void MolCatalogParams::initFromString(const std::string &text) {
   initFromStream(ss);
 }
 
-void MolCatalogParams::initFromStream(std::istream &ss) {
-  RDUNUSED_PARAM(ss);
+void MolCatalogParams::initFromStream(std::istream &) {
   // at the moment this is a no-op
 }
-}
+}  // namespace RDKit

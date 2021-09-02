@@ -269,7 +269,7 @@ bool SubstanceGroupChecks::isValidConnectType(const std::string &type) {
 
 bool SubstanceGroupChecks::isSubstanceGroupIdFree(const ROMol &mol,
                                                   unsigned int id) {
-  auto match_sgroup = [&](const SubstanceGroup &sg) {
+  auto match_sgroup = [id](const SubstanceGroup &sg) {
     unsigned int storedId;
     return sg.getPropIfPresent("ID", storedId) && id == storedId;
   };

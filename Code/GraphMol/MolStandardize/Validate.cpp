@@ -57,9 +57,8 @@ std::vector<ValidationErrorInfo> RDKitValidation::validate(
   return errors;
 }
 
-void NoAtomValidation::run(const ROMol &mol, bool reportAllFailures,
+void NoAtomValidation::run(const ROMol &mol, bool,
                            std::vector<ValidationErrorInfo> &errors) const {
-  RDUNUSED_PARAM(reportAllFailures);
   unsigned int na = mol.getNumAtoms();
 
   if (!na) {
@@ -127,9 +126,8 @@ void FragmentValidation::run(const ROMol &mol, bool reportAllFailures,
   }
 }
 
-void NeutralValidation::run(const ROMol &mol, bool reportAllFailures,
+void NeutralValidation::run(const ROMol &mol, bool,
                             std::vector<ValidationErrorInfo> &errors) const {
-  RDUNUSED_PARAM(reportAllFailures);
   int charge = RDKit::MolOps::getFormalCharge(mol);
   if (charge != 0) {
     std::string charge_str;

@@ -93,6 +93,7 @@ RDKIT_FORCEFIELD_EXPORT double calcVdWEnergy(const double dist,
                                              const double R_star_ij,
                                              const double wellDepth);
 //! calculates and returns the electrostatic MMFF energy
+// FIX: idx1 and idx2 are not used
 RDKIT_FORCEFIELD_EXPORT double calcEleEnergy(unsigned int idx1,
                                              unsigned int idx2, double dist,
                                              double chargeTerm,

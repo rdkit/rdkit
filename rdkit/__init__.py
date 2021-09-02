@@ -1,3 +1,6 @@
+# Need to import rdBase to properly wrap exceptions                                                                                                         #  otherwise they will leak memory 
+from . import rdBase
+
 try:
   from .rdBase import rdkitVersion as __version__
 except ImportError:

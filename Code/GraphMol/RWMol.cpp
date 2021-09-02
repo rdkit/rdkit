@@ -126,9 +126,8 @@ unsigned int RWMol::addAtom(bool updateLabel) {
   return rdcast<unsigned int>(which);
 }
 
-void RWMol::replaceAtom(unsigned int idx, Atom *atom_pin, bool updateLabel,
+void RWMol::replaceAtom(unsigned int idx, Atom *atom_pin, bool,
                         bool preserveProps) {
-  RDUNUSED_PARAM(updateLabel);
   PRECONDITION(atom_pin, "bad atom passed to replaceAtom");
   URANGE_CHECK(idx, getNumAtoms());
   Atom *atom_p = atom_pin->copy();

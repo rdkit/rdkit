@@ -49,11 +49,6 @@ RDGeom::Point3D MolChemicalFeature::getPos(int confId) const {
   // --------------
   // Nope, we have to figure it out on our own:
   RDGeom::Point3D res(0, 0, 0);
-  bool setNeg1 = false;
-  RDUNUSED_PARAM(setNeg1);
-  if (confId == -1) {
-    setNeg1 = true;
-  }
 
   if (d_atoms.size() == 1) {
     res = dp_mol->getConformer(confId).getAtomPos((*d_atoms.begin())->getIdx());
@@ -75,4 +70,4 @@ RDGeom::Point3D MolChemicalFeature::getPos(int confId) const {
 
   return res;
 }
-}
+}  // namespace RDKit

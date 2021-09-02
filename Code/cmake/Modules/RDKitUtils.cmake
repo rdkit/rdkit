@@ -55,13 +55,24 @@ macro(rdkit_library)
       add_library(${RDKLIB_NAME}_static ${RDKLIB_SOURCES})
 
       foreach(linkLib ${RDKLIB_LINK_LIBRARIES})
-        if(${linkLib} MATCHES "^(Boost)|(Thread)|(boost)|^(optimized)|^(debug)|(libz)")
-          set(rdk_static_link_libraries "${rdk_static_link_libraries}${linkLib};")
-        else()
-          set(rdk_static_link_libraries "${rdk_static_link_libraries}${linkLib}_static;")
+        if(TARGET "${linkLib}")
+          get_target_property(linkLib_IMPORTED "${linkLib}" IMPORTED)
+          if (linkLib_IMPORTED)
+            # linkLib is an imported target: use it as-is
+            target_link_libraries(${RDKLIB_NAME}_static PUBLIC "${linkLib}")
+            continue()
+          endif()
+        elseif(EXISTS "${linkLib}")
+          # linkLib is a file, so keep it as-is
+          target_link_libraries(${RDKLIB_NAME}_static PUBLIC "${linkLib}")
+          continue()
         endif()
+
+        # We haven't seen linkLib yet. This probably means it is a target
+        # we will be creating at some point (if not, then we are missing a find_package).
+        # Add the "_static" suffix to link against its static variant
+        target_link_libraries(${RDKLIB_NAME}_static PUBLIC "${linkLib}_static")
       endforeach()
-      target_link_libraries(${RDKLIB_NAME}_static PUBLIC ${rdk_static_link_libraries})
       target_link_libraries(${RDKLIB_NAME}_static PUBLIC rdkit_base)
       if(RDK_INSTALL_DEV_COMPONENT)
         INSTALL(TARGETS ${RDKLIB_NAME}_static EXPORT ${RDKit_EXPORTED_TARGETS}

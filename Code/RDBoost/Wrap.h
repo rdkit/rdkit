@@ -50,6 +50,20 @@ RDKIT_RDBOOST_EXPORT void throw_runtime_error(
     const std::string err);  //!< construct and throw a \c ValueError
 RDKIT_RDBOOST_EXPORT void translate_invariant_error(Invar::Invariant const &e);
 #endif
+
+//! \brief Checks whether there is already a registered Python converter for a
+//!        particular type.
+//! In order to avoid warning about duplicated converters, this should be used
+//! before attempting to register a converter for any general type that might
+//! be used in more than one Python wrapper.
+template <typename T>
+bool is_python_converter_registered() {
+  // logic from https://stackoverflow.com/a/13017303
+  auto info = python::type_id<T>();
+  const auto *reg = python::converter::registry::query(info);
+  return reg != nullptr && reg->m_to_python != nullptr;
+}
+
 //! \brief Registers a templated converter for returning \c vectors of a
 //!        particular type.
 //! This should be used instead of calling \c vector_to_python<T>()
@@ -57,6 +71,9 @@ RDKIT_RDBOOST_EXPORT void translate_invariant_error(Invar::Invariant const &e);
 //!    the specified converter has already been registered.
 template <typename T>
 void RegisterVectorConverter(const char *name, bool noproxy = false) {
+  if (is_python_converter_registered<std::vector<T>>()) {
+    return;
+  }
   if (noproxy) {
     python::class_<std::vector<T>>(name).def(
         python::vector_indexing_suite<std::vector<T>, 1>());
@@ -70,7 +87,6 @@ template <typename T>
 void RegisterVectorConverter(bool noproxy = false) {
   std::string name = "_vect";
   name += typeid(T).name();
-
   RegisterVectorConverter<T>(name.c_str(), noproxy);
 }
 
@@ -81,6 +97,9 @@ void RegisterVectorConverter(bool noproxy = false) {
 //!    the specified converter has already been registered.
 template <typename T>
 void RegisterListConverter(bool noproxy = false) {
+  if (is_python_converter_registered<std::list<T>>()) {
+    return;
+  }
   std::string name = "_list";
   name += typeid(T).name();
 
