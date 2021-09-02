@@ -339,10 +339,10 @@ class TestCase(unittest.TestCase):
             self.assertEqual(tgts,nbrs)
 
     def test12ToList(self):
-        l = [0]*2048
         nbits = 2048
         for cls in [DataStructs.ExplicitBitVect, DataStructs.SparseBitVect]:
             bv = cls(nbits)
+            l = [0]*2048
             for j in range(nbits):
                 x = random.randrange(0, nbits)
                 l[x] = 1
