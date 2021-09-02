@@ -3772,6 +3772,37 @@ M  END)CTAB"_ctab;
     REQUIRE(m2);
     CHECK(getSubstanceGroups(*m2).size() == 5);
   }
+
+  SECTION(
+      "GitHub Issue #4471: SDF SGroups may be missing the final space in the "
+      "\"M V30 \" prefix") {
+    auto m = R"CTAB(bogus mol with unspaced SGroup field
+  Mrv2114 09022123382D          
+
+  0  0  0     0  0            999 V3000
+M  V30 BEGIN CTAB
+M  V30 COUNTS 1 0 1 0 0
+M  V30 BEGIN ATOM
+M  V30 1 C -0.7917 0 0 0
+M  V30 END ATOM
+M  V30 BEGIN SGROUP
+M  V30 1 DAT 0 ATOMS=(1 1) FIELDNAME=Data -
+M  V30 FIELDDISP="    0.0000    0.0000    DRU   ALL  0       0" -
+M  V30 MRV_FIELDDISP=0 -
+M  V30 FIELDDATA=AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA-
+M  V30 AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA-
+M  V30 AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA-
+M  V30 AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA
+M  V30 END SGROUP
+M  V30 END CTAB
+M  END)CTAB"_ctab;
+    REQUIRE(m);
+    CHECK(getSubstanceGroups(*m).size() == 1);
+    auto mb = MolToV3KMolBlock(*m);
+    std::unique_ptr<RWMol> m2(MolBlockToMol(mb));
+    REQUIRE(m2);
+    CHECK(getSubstanceGroups(*m2).size() == 1);
+  }
 }
 
 TEST_CASE("github #4345: non-stereo bonds written with unspecified parity") {
