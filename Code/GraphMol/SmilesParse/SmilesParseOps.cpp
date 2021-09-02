@@ -1,5 +1,5 @@
 //
-//  Copyright (C) 2001-2020 Greg Landrum and Rational Discovery LLC
+//  Copyright (C) 2001-2020 Greg Landrum and other RDKit contributors
 //
 //   @@ All Rights Reserved @@
 //  This file is part of the RDKit.
@@ -360,6 +360,36 @@ void swapBondDirIfNeeded(Bond *bond1, const Bond *bond2) {
   }
 }
 }  // namespace
+
+static const std::map<RDKit::Atom::ChiralType, int> permutationLimits = {
+    {RDKit::Atom::ChiralType::CHI_TETRAHEDRAL, 2},
+    {RDKit::Atom::ChiralType::CHI_ALLENE, 2},
+    {RDKit::Atom::ChiralType::CHI_SQUAREPLANAR, 3},
+    {RDKit::Atom::ChiralType::CHI_OCTAHEDRAL, 30},
+    {RDKit::Atom::ChiralType::CHI_TRIGONALBIPYRAMIDAL, 20}};
+
+void CheckChiralitySpecifications(RDKit::RWMol *mol, bool strict) {
+  PRECONDITION(mol, "no molecule");
+  for (const auto atom : mol->atoms()) {
+    int permutation;
+    if (atom->getChiralTag() > RDKit::Atom::ChiralType::CHI_OTHER &&
+        permutationLimits.find(atom->getChiralTag()) !=
+            permutationLimits.end() &&
+        atom->getPropIfPresent(common_properties::_chiralPermutation,
+                               permutation)) {
+      if (permutation > permutationLimits.at(atom->getChiralTag())) {
+        std::string error =
+            (boost::format("Invalid chiral specification on atom %d") %
+             atom->getIdx())
+                .str();
+        BOOST_LOG(rdWarningLog) << error << std::endl;
+        if (strict) {
+          throw SmilesParseException(error);
+        }
+      }
+    }
+  }
+}
 
 void CloseMolRings(RWMol *mol, bool toleratePartials) {
   //  Here's what we want to do here:

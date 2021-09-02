@@ -31,6 +31,8 @@ RDKIT_SMILESPARSE_EXPORT void AddFragToMol(
 RDKIT_SMILESPARSE_EXPORT RDKit::Bond::BondType GetUnspecifiedBondType(
     const RDKit::RWMol *mol, const RDKit::Atom *atom1,
     const RDKit::Atom *atom2);
+RDKIT_SMILESPARSE_EXPORT void CheckChiralitySpecifications(RDKit::RWMol *mol,
+                                                           bool strict);
 RDKIT_SMILESPARSE_EXPORT void CloseMolRings(RDKit::RWMol *mol,
                                             bool toleratePartials);
 RDKIT_SMILESPARSE_EXPORT void SetUnspecifiedBondTypes(RDKit::RWMol *mol);

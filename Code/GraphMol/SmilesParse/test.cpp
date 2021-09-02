@@ -1,5 +1,5 @@
 //
-//  Copyright (C) 2003-2018 Greg Landrum and  Rational Discovery LLC
+//  Copyright (C) 2003-2021 Greg Landrum and other RDKit contributors
 //
 //   @@ All Rights Reserved @@
 //  This file is part of the RDKit.
@@ -170,7 +170,13 @@ void testFail() {
       "C+0",  // part of sf.net issue 2525792
       "C1CC1",       "[H2H]",    "C1CC1",
       "[HH2]",       "C1CC1",    "[555555555555555555C]",
-      "C1CC1",       "EOS"};
+      "C1CC1",             //
+      "[Fe@TH3]",    "C",  //
+      "[Fe@SQ4]",    "C",  //
+      "[Fe@AL3]",    "C",  //
+      "[Fe@TB21]",   "C",  //
+      "[Fe@OH31]",   "C",  //
+      "EOS"};
 
   // turn off the error log temporarily:
   while (smis[i] != "EOS") {
