@@ -647,6 +647,9 @@ void addBlockToSGroupString(std::string block, std::string &currentLine,
     unsigned int start = 0;
     while (length - start >= 73) {
       os << "M  V30";
+      if (start) {
+        os << ' ';
+      }
       os << block.substr(start, 72);
       start += 72;
       if (start < length) {
