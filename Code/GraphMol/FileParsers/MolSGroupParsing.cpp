@@ -576,11 +576,19 @@ void ParseSGroupV2000SDTLine(IDX_TO_SGROUP_MAP &sGroupMap, RWMol *mol,
     // making the code super complicated
   }
 
-  if (fieldName.size()) {
+  if (!fieldName.empty()) {
     sgroup->setProp("FIELDNAME", fieldName);
+  }
+  if (!fieldType.empty()) {
     sgroup->setProp("FIELDTYPE", fieldType);
+  }
+  if (!fieldInfo.empty()) {
     sgroup->setProp("FIELDINFO", fieldInfo);
+  }
+  if (!queryType.empty()) {
     sgroup->setProp("QUERYTYPE", queryType);
+  }
+  if (!queryOp.empty()) {
     sgroup->setProp("QUERYOP", queryOp);
   }
 }
