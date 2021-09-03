@@ -2767,8 +2767,12 @@ void processSMARTSQ(RWMol &mol, const SubstanceGroup &sg) {
       mol.replaceAtom(oidx, &qAt);
       at = mol.getAtomWithIdx(oidx);
     }
-    QueryAtom::QUERYATOM_QUERY *query =
-        m->getAtomWithIdx(0)->getQuery()->copy();
+    QueryAtom::QUERYATOM_QUERY *query = nullptr;
+    if (m->getNumAtoms() == 1) {
+      query = m->getAtomWithIdx(0)->getQuery()->copy();
+    } else {
+      query = new RecursiveStructureQuery(m.release());
+    }
     at->setQuery(query);
     at->setProp(common_properties::_MolFileAtomQuery, 1);
   }
@@ -2836,7 +2840,8 @@ void processSGroups(RWMol *mol) {
           continue;
         }
       }
-      if (sg.getPropIfPresent("QUERYTYPE", field) && field == "SMARTSQ") {
+      if (sg.getPropIfPresent("QUERYTYPE", field) &&
+          (field == "SMARTSQ" || field == "SQ")) {
         processSMARTSQ(*mol, sg);
         sgsToRemove.push_back(sgIdx);
         continue;

@@ -3707,7 +3707,7 @@ M  V30 END BOND
 M  V30 BEGIN SGROUP
 M  V30 1 DAT 0 ATOMS=(1 2) -
 M  V30 FIELDDISP="    4.8753   -5.1050    DA    ALL  0       0" -
-M  V30 QUERYTYPE=SMARTSQ QUERYOP== FIELDDATA=[#6;R]
+M  V30 QUERYTYPE=SMARTSL QUERYOP== FIELDDATA=[#6;R]
 M  V30 END SGROUP
 M  V30 END CTAB
 M  END)CTAB"_ctab;
@@ -3827,8 +3827,36 @@ TEST_CASE("github #4345: non-stereo bonds written with unspecified parity") {
   }
 }
 
-TEST_CASE("github #4468: encode/decode SMARTS in SGroups") {
-  SECTION("parsing") {
+TEST_CASE(
+    "github #4476: Additional SDT properties not decoded if FIELDNAME is "
+    "empty") {
+  SECTION("basics") {
+    auto m = R"CTAB(query
+  Mrv2102 09032106302D          
+
+  2  1  0  0  0  0            999 V2000
+   -0.4464    2.4334    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    0.2680    2.8459    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+  1  2  1  0  0  0  0
+M  STY  1   1 DAT
+M  SAL   1  1   2
+M  SDT   1                                                     PQ=
+M  SDD   1     0.0000    0.0000    DR    ALL  0       0  
+M  SED   1 [#6;R]
+M  END
+)CTAB"_ctab;
+    REQUIRE(m);
+    REQUIRE(getSubstanceGroups(*m).size() == 1);
+    const auto sg = getSubstanceGroups(*m)[0];
+    CHECK(sg.hasProp("QUERYTYPE"));
+    CHECK(sg.getProp<std::string>("QUERYTYPE") == "PQ");
+    CHECK(sg.hasProp("QUERYOP"));
+    CHECK(sg.getProp<std::string>("QUERYOP") == "=");
+  }
+}
+
+TEST_CASE("github #4468: decode SMARTS in SGroups") {
+  SECTION("parsing v3000") {
     auto m = R"CTAB(query
   Mrv2108 07152116012D          
 
@@ -3849,6 +3877,106 @@ M  V30 QUERYTYPE=SMARTSQ QUERYOP== FIELDDATA=[#6;R]
 M  V30 END SGROUP
 M  V30 END CTAB
 M  END)CTAB"_ctab;
+    REQUIRE(m);
+    REQUIRE(m->getAtomWithIdx(1)->hasQuery());
+    CHECK(SmartsWrite::GetAtomSmarts(
+              static_cast<QueryAtom *>(m->getAtomWithIdx(1))) == "[#6&R]");
+    CHECK(getSubstanceGroups(*m).empty());
+  }
+  SECTION("ensure bad SMARTS don't break things") {
+    auto m = R"CTAB(query
+  Mrv2108 07152116012D          
+
+  0  0  0     0  0            999 V3000
+M  V30 BEGIN CTAB
+M  V30 COUNTS 2 1 1 0 0
+M  V30 BEGIN ATOM
+M  V30 1 C -0.8333 4.5421 0 0
+M  V30 2 C 0.5003 5.3121 0 0
+M  V30 END ATOM
+M  V30 BEGIN BOND
+M  V30 1 1 1 2
+M  V30 END BOND
+M  V30 BEGIN SGROUP
+M  V30 1 DAT 0 ATOMS=(1 2) -
+M  V30 FIELDDISP="    0.0000    0.0000    DR    ALL  0       0" -
+M  V30 QUERYTYPE=SMARTSQ QUERYOP== FIELDDATA=[#6;R
+M  V30 END SGROUP
+M  V30 END CTAB
+M  END)CTAB"_ctab;
+    REQUIRE(m);
+    REQUIRE(!m->getAtomWithIdx(1)->hasQuery());
+    CHECK(getSubstanceGroups(*m).empty());
+  }
+  SECTION("SMARTS with multiple atoms become recursive") {
+    auto m = R"CTAB(query
+  Mrv2108 07152116012D          
+
+  0  0  0     0  0            999 V3000
+M  V30 BEGIN CTAB
+M  V30 COUNTS 2 1 1 0 0
+M  V30 BEGIN ATOM
+M  V30 1 C -0.8333 4.5421 0 0
+M  V30 2 C 0.5003 5.3121 0 0
+M  V30 END ATOM
+M  V30 BEGIN BOND
+M  V30 1 1 1 2
+M  V30 END BOND
+M  V30 BEGIN SGROUP
+M  V30 1 DAT 0 ATOMS=(1 2) -
+M  V30 FIELDDISP="    0.0000    0.0000    DR    ALL  0       0" -
+M  V30 QUERYTYPE=SMARTSQ QUERYOP== FIELDDATA=[#6;R]-[#8]
+M  V30 END SGROUP
+M  V30 END CTAB
+M  END)CTAB"_ctab;
+    REQUIRE(m);
+    REQUIRE(m->getAtomWithIdx(1)->hasQuery());
+    CHECK(SmartsWrite::GetAtomSmarts(static_cast<QueryAtom *>(
+              m->getAtomWithIdx(1))) == "[$([#6&R]-[#8])]");
+    CHECK(getSubstanceGroups(*m).empty());
+  }
+  SECTION("parsing v3000, v2000 compatibility version") {
+    auto m = R"CTAB(query
+  Mrv2108 07152116012D          
+
+  0  0  0     0  0            999 V3000
+M  V30 BEGIN CTAB
+M  V30 COUNTS 2 1 1 0 0
+M  V30 BEGIN ATOM
+M  V30 1 C -0.8333 4.5421 0 0
+M  V30 2 C 0.5003 5.3121 0 0
+M  V30 END ATOM
+M  V30 BEGIN BOND
+M  V30 1 1 1 2
+M  V30 END BOND
+M  V30 BEGIN SGROUP
+M  V30 1 DAT 0 ATOMS=(1 2) -
+M  V30 FIELDDISP="    0.0000    0.0000    DR    ALL  0       0" -
+M  V30 QUERYTYPE=SQ QUERYOP== FIELDDATA=[#6;R]
+M  V30 END SGROUP
+M  V30 END CTAB
+M  END)CTAB"_ctab;
+    REQUIRE(m);
+    REQUIRE(m->getAtomWithIdx(1)->hasQuery());
+    CHECK(SmartsWrite::GetAtomSmarts(
+              static_cast<QueryAtom *>(m->getAtomWithIdx(1))) == "[#6&R]");
+    CHECK(getSubstanceGroups(*m).empty());
+  }
+  SECTION("parsing v2000") {
+    auto m = R"CTAB(query
+  Mrv2102 09032106302D          
+
+  2  1  0  0  0  0            999 V2000
+   -0.4464    2.4334    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    0.2680    2.8459    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+  1  2  1  0  0  0  0
+M  STY  1   1 DAT
+M  SAL   1  1   2
+M  SDT   1                                                     SQ=
+M  SDD   1     0.0000    0.0000    DR    ALL  0       0  
+M  SED   1 [#6;R]
+M  END
+)CTAB"_ctab;
     REQUIRE(m);
     REQUIRE(m->getAtomWithIdx(1)->hasQuery());
     CHECK(SmartsWrite::GetAtomSmarts(
