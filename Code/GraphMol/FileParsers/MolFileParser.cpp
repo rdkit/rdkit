@@ -2694,17 +2694,6 @@ void processMrvCoordinateBond(RWMol &mol, const SubstanceGroup &sg) {
       return;
     }
 
-    // Coordinate bonds are directional, make sure we have the right order
-    if (atoms[0] == coordinate_atom_idx) {
-      std::swap(atoms[0], atoms[1]);
-    }
-    if (atoms[1] != coordinate_atom_idx) {
-      BOOST_LOG(rdWarningLog)
-          << "MRV_COORDINATE_BOND_TYPE SGroup for atom " << coordinate_atom_idx
-          << " does not contain the coordinate atom, ignoring." << std::endl;
-      return;
-    }
-
     auto old_bond = mol.getBondBetweenAtoms(atoms[0], atoms[1]);
     if (old_bond == nullptr) {
       BOOST_LOG(rdWarningLog)
@@ -2713,6 +2702,27 @@ void processMrvCoordinateBond(RWMol &mol, const SubstanceGroup &sg) {
           << coordinate_atom_idx << ", ignoring." << std::endl;
       return;
     }
+
+    // Coordinate bonds are directional, make sure we have the right order
+    if (atoms[0] == coordinate_atom_idx) {
+      std::swap(atoms[0], atoms[1]);
+    }
+
+    // Sometimes we get a bond index instead of an atom. In such case,
+    // check that the bond matching the index is of type UNSPECIFIED,
+    // and then assume the direction is right and the atom at the end
+    // of the bond is the coordinate atom
+    if (atoms[1] != coordinate_atom_idx &&
+        (old_bond->getIdx() != coordinate_atom_idx ||
+         old_bond->getBondType() != Bond::BondType::UNSPECIFIED)) {
+      BOOST_LOG(rdWarningLog)
+          << "MRV_COORDINATE_BOND_TYPE SGroup with value "
+          << coordinate_atom_idx
+          << " does not reference an atom on a query bond, ignoring."
+          << std::endl;
+      return;
+    }
+
     // Make sure the bond points the right way
     old_bond->setBeginAtomIdx(atoms[0]);
     old_bond->setEndAtomIdx(atoms[1]);
