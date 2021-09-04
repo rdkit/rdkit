@@ -62,6 +62,53 @@ M  SDD   2     0.0000    0.0000    DR    ALL  1       6
 M  SED   2 E/Z unknown
 M  END"""
     self.m1 = Chem.MolFromMolBlock(mb)
+    mb3000 = '''
+  Mrv2102 09042105562D          
+
+  0  0  0     0  0            999 V3000
+M  V30 BEGIN CTAB
+M  V30 COUNTS 13 13 2 0 0
+M  V30 BEGIN ATOM
+M  V30 1 C 5.8858 -5.0042 0 0
+M  V30 2 C 8.5487 -5.0035 0 0
+M  V30 3 C 5.8858 -6.5508 0 0
+M  V30 4 C 7.2232 -7.3127 0 0
+M  V30 5 C 7.2198 -2.6945 0 0
+M  V30 6 C 8.5534 -1.9244 0 0
+M  V30 7 C 5.8862 -1.9244 0 0
+M  V30 8 C 7.2198 -4.2345 0 0
+M  V30 9 C 9.8757 -7.31 0 0
+M  V30 10 O 9.8757 -8.85 0 0
+M  V30 11 O 11.2094 -6.5401 0 0
+M  V30 12 C 8.5487 -6.5439 0 0
+M  V30 13 C 4.5525 -2.6945 0 0
+M  V30 END ATOM
+M  V30 BEGIN BOND
+M  V30 1 2 3 4
+M  V30 2 1 1 3
+M  V30 3 1 5 8
+M  V30 4 2 5 7
+M  V30 5 1 5 6
+M  V30 6 2 1 8
+M  V30 7 1 2 8
+M  V30 8 1 9 12
+M  V30 9 2 9 11
+M  V30 10 1 9 10
+M  V30 11 1 4 12
+M  V30 12 2 2 12
+M  V30 13 1 7 13
+M  V30 END BOND
+M  V30 BEGIN SGROUP
+M  V30 1 DAT 0 ATOMS=(1 10) FIELDNAME=pH -
+M  V30 FIELDDISP="    0.0000    0.0000    DR    ALL  1       6" FIELDDATA=4.6
+M  V30 2 DAT 0 ATOMS=(2 5 7) FIELDNAME=Stereo -
+M  V30 FIELDDISP="    0.0000    0.0000    DR    ALL  1       6" -
+M  V30 FIELDDATA="E/Z unknown"
+M  V30 END SGROUP
+M  V30 END CTAB
+M  END
+'''
+    self.m2 = Chem.MolFromMolBlock(mb3000)
 
   def testBasics(self):
     self.assertTrue(self.m1 is not None)
@@ -76,8 +123,8 @@ M  END"""
     self.assertEqual(sgs[0].GetProp("FIELDNAME"), "pH")
 
     self.assertEqual(sorted(sgs[0].GetPropNames()), [
-      'DATAFIELDS', 'FIELDDISP', 'FIELDINFO', 'FIELDNAME', 'FIELDTYPE', 'ID', 'QUERYOP',
-      'QUERYTYPE', 'TYPE', 'index'
+      'DATAFIELDS', 'FIELDDISP', 'FIELDNAME', 'ID', 
+      'TYPE', 'index'
     ])
     dd = sgs[0].GetPropsAsDict()
     self.assertTrue("TYPE" in dd)
@@ -87,6 +134,31 @@ M  END"""
 
     Chem.ClearMolSubstanceGroups(self.m1)
     self.assertEqual(len(Chem.GetMolSubstanceGroups(self.m1)), 0)
+
+  def testBasics3000(self):
+    self.assertTrue(self.m2 is not None)
+    sgs = Chem.GetMolSubstanceGroups(self.m2)
+    self.assertEqual(len(sgs), 2)
+    self.assertTrue(sgs[0].HasProp("TYPE"))
+    self.assertTrue(sgs[1].HasProp("TYPE"))
+    self.assertEqual(sgs[0].GetProp("TYPE"), "DAT")
+    self.assertEqual(sgs[1].GetProp("TYPE"), "DAT")
+
+    self.assertTrue(sgs[0].HasProp("FIELDNAME"))
+    self.assertEqual(sgs[0].GetProp("FIELDNAME"), "pH")
+
+    self.assertEqual(sorted(sgs[0].GetPropNames()), [
+      'DATAFIELDS', 'FIELDDISP', 'FIELDNAME',  
+      'TYPE', 'index'
+    ])
+    dd = sgs[0].GetPropsAsDict()
+    self.assertTrue("TYPE" in dd)
+    self.assertEqual(dd["TYPE"], "DAT")
+    self.assertTrue("FIELDNAME" in dd)
+    self.assertEqual(dd["FIELDNAME"], "pH")
+
+    Chem.ClearMolSubstanceGroups(self.m2)
+    self.assertEqual(len(Chem.GetMolSubstanceGroups(self.m2)), 0)
 
   def testLifetime(self):
     self.assertTrue(self.m1 is not None)
