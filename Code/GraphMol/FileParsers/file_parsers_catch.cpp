@@ -3803,6 +3803,48 @@ M  END)CTAB"_ctab;
     REQUIRE(m2);
     CHECK(getSubstanceGroups(*m2).size() == 1);
   }
+
+  SECTION(
+      "GitHub Issue #4477: Same SDF SGroup lines may be written multiple "
+      "times") {
+    auto m = R"CTAB(
+  Mrv2014 03112117322D
+
+  6  6  0  0  0  0            999 V2000
+   -1.8270   -1.5114    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -2.2764   -0.8194    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -3.1002   -0.8626    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -3.4748   -1.5977    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -3.0255   -2.2896    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -2.2016   -2.2465    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+  1  2  1  0  0  0  0
+  2  3  1  0  0  0  0
+  3  4  1  0  0  0  0
+  4  5  1  0  0  0  0
+  5  6  1  0  0  0  0
+  1  6  1  0  0  0  0
+M  STY  1   1 DAT
+M  SAL   1  6   1   2   3   4   5   6
+M  SDT   1
+M  SDD   1    -2.4921   -3.0466    DA  123456789012345  ALL  1       5
+M  END)CTAB"_ctab;
+    REQUIRE(m);
+    CHECK(getSubstanceGroups(*m).size() == 1);
+    auto mb = MolToV3KMolBlock(*m);
+
+    auto pos = 0;
+    auto count = 0;
+    std::string target{"FIELDDISP"};
+    while (pos < mb.size()) {
+      pos = mb.find(target, pos);
+      if (pos < mb.size()) {
+        pos += target.size();
+        ++count;
+      }
+    }
+
+    CHECK(count == 1);
+  }
 }
 
 TEST_CASE("github #4345: non-stereo bonds written with unspecified parity") {
