@@ -114,20 +114,19 @@ void testPass() {
     "C%(1000)CC.C%(1000)",   // github #2909
     "[C;d2]",                // non-hydrogen degree
     "C$C",                   // quadruple bonds
-
     // extended chirality
     "C[Fe@TH](O)(Cl)F",
     "C[Fe@TH1](O)(Cl)F",
-    "C[Fe@SQ](O)(Cl)F",
-    "C[Fe@SQ1](O)(Cl)F",
+    "C[Fe@SP](O)(Cl)F",
+    "C[Fe@SP1](O)(Cl)F",
     "C[Fe@TB](O)(Cl)(Br)F",
     "C[Fe@TB20](O)(Cl)(Br)F",
     "C[Fe@OH](O)(Cl)(Br)(N)F",
     "C[Fe@OH20](O)(Cl)(Br)(N)F",
     "[@TH]",
     "[@TH1]",
-    "[@SQ]",
-    "[@SQ1]",
+    "[@SP]",
+    "[@SP1]",
     "[@TB]",
     "[@TB10]",
     "[@OH]",

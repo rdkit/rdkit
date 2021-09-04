@@ -115,8 +115,8 @@ void testPass() {
     // extended chirality
     "C[Fe@TH](O)(Cl)F",
     "C[Fe@TH1](O)(Cl)F",
-    "C[Fe@SQ](O)(Cl)F",
-    "C[Fe@SQ1](O)(Cl)F",
+    "C[Fe@SP](O)(Cl)F",
+    "C[Fe@SP1](O)(Cl)F",
     "C[Fe@TB](O)(Cl)(Br)F",
     "C[Fe@TB10](O)(Cl)(Br)F",
     "C[Fe@OH](O)(Cl)(Br)(N)F",
@@ -171,8 +171,9 @@ void testFail() {
       "C1CC1",       "[H2H]",    "C1CC1",
       "[HH2]",       "C1CC1",    "[555555555555555555C]",
       "C1CC1",             //
+      "[Fe@TD]",     "C",  //
       "[Fe@TH3]",    "C",  //
-      "[Fe@SQ4]",    "C",  //
+      "[Fe@SP4]",    "C",  //
       "[Fe@AL3]",    "C",  //
       "[Fe@TB21]",   "C",  //
       "[Fe@OH31]",   "C",  //
