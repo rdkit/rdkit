@@ -2661,11 +2661,13 @@ void ParseV3000BondBlock(std::istream *inStream, unsigned int &line,
     throw FileParseException(errout.str());
   }
 }
-// Not much documentation on this, only
+// The documentation about MRV_COORDINATE_BOND_TYPE in
 // https://docs.chemaxon.com/display/docs/chemaxon-specific-information-in-mdl-mol-files.md
-// According to it, there's just 1 data field, containing just 1 atom index
-// for the coordinate atom. Also, all examples I have seen have one of these
-// groups for each separate coordinate bond.
+// seems to be wrong: it says the only data field in this group contains the
+// index for the coordinate atom. But behavior in Marvin Sketch seems to
+// indicate that it references the bond index instead (see
+// https://github.com/rdkit/rdkit/issues/4473)
+
 void processMrvCoordinateBond(RWMol &mol, const SubstanceGroup &sg) {
   std::vector<std::string> dataFields;
   if (sg.getPropIfPresent("DATAFIELDS", dataFields)) {
@@ -2676,61 +2678,38 @@ void processMrvCoordinateBond(RWMol &mol, const SubstanceGroup &sg) {
       return;
     }
 
-    auto coordinate_atom_idx =
+    auto coordinate_bond_idx =
         FileParserUtils::toUnsigned(dataFields[0], true) - 1;
 
     if (dataFields.size() > 1) {
       BOOST_LOG(rdWarningLog) << "ignoring extra data fields in "
-                                 "MRV_COORDINATE_BOND_TYPE SGroup for atom "
-                              << coordinate_atom_idx << '.' << std::endl;
+                                 "MRV_COORDINATE_BOND_TYPE SGroup for bond "
+                              << coordinate_bond_idx << '.' << std::endl;
     }
 
-    auto atoms = sg.getAtoms();
-    if (atoms.size() != 2) {
-      BOOST_LOG(rdWarningLog)
-          << "ignoring MRV_COORDINATE_BOND_TYPE SGroup for atom "
-          << coordinate_atom_idx << " due to unexpected number of atoms."
-          << std::endl;
-      return;
-    }
-
-    auto old_bond = mol.getBondBetweenAtoms(atoms[0], atoms[1]);
-    if (old_bond == nullptr) {
+    Bond *old_bond = nullptr;
+    try {
+      old_bond = mol.getBondWithIdx(coordinate_bond_idx);
+    } catch (const Invar::Invariant &) {
       BOOST_LOG(rdWarningLog)
           << "molecule does not contain a bond matching the "
-             "MRV_COORDINATE_BOND_TYPE SGroup for atom "
-          << coordinate_atom_idx << ", ignoring." << std::endl;
+             "MRV_COORDINATE_BOND_TYPE SGroup for bond "
+          << coordinate_bond_idx << ", ignoring." << std::endl;
       return;
     }
 
-    // Coordinate bonds are directional, make sure we have the right order
-    if (atoms[0] == coordinate_atom_idx) {
-      std::swap(atoms[0], atoms[1]);
-    }
-
-    // Sometimes we get a bond index instead of an atom. In such case,
-    // check that the bond matching the index is of type UNSPECIFIED,
-    // and then assume the direction is right and the atom at the end
-    // of the bond is the coordinate atom
-    if (atoms[1] != coordinate_atom_idx &&
-        (old_bond->getIdx() != coordinate_atom_idx ||
-         old_bond->getBondType() != Bond::BondType::UNSPECIFIED)) {
+    if (!old_bond || old_bond->getBondType() != Bond::BondType::UNSPECIFIED) {
       BOOST_LOG(rdWarningLog)
           << "MRV_COORDINATE_BOND_TYPE SGroup with value "
-          << coordinate_atom_idx
-          << " does not reference an atom on a query bond, ignoring."
-          << std::endl;
+          << coordinate_bond_idx
+          << " does not reference a query bond, ignoring." << std::endl;
       return;
     }
-
-    // Make sure the bond points the right way
-    old_bond->setBeginAtomIdx(atoms[0]);
-    old_bond->setEndAtomIdx(atoms[1]);
 
     Bond new_bond(Bond::BondType::DATIVE);
     auto preserveProps = true;
     auto keepSGroups = true;
-    mol.replaceBond(old_bond->getIdx(), &new_bond, preserveProps, keepSGroups);
+    mol.replaceBond(coordinate_bond_idx, &new_bond, preserveProps, keepSGroups);
   }
 }
 
