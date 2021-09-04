@@ -3908,6 +3908,56 @@ M  END)CTAB"_ctab;
     REQUIRE(!m->getAtomWithIdx(1)->hasQuery());
     CHECK(getSubstanceGroups(*m).empty());
   }
+  SECTION("empty SMARTS") {
+    auto m = R"CTAB(query
+  Mrv2108 07152116012D          
+
+  0  0  0     0  0            999 V3000
+M  V30 BEGIN CTAB
+M  V30 COUNTS 2 1 1 0 0
+M  V30 BEGIN ATOM
+M  V30 1 C -0.8333 4.5421 0 0
+M  V30 2 C 0.5003 5.3121 0 0
+M  V30 END ATOM
+M  V30 BEGIN BOND
+M  V30 1 1 1 2
+M  V30 END BOND
+M  V30 BEGIN SGROUP
+M  V30 1 DAT 0 ATOMS=(1 2) -
+M  V30 FIELDDISP="    0.0000    0.0000    DR    ALL  0       0" -
+M  V30 QUERYTYPE=SMARTSQ QUERYOP== FIELDDATA=
+M  V30 END SGROUP
+M  V30 END CTAB
+M  END)CTAB"_ctab;
+    REQUIRE(m);
+    REQUIRE(!m->getAtomWithIdx(1)->hasQuery());
+    CHECK(getSubstanceGroups(*m).empty());
+  }
+  SECTION("bad operator") {
+    auto m = R"CTAB(query
+  Mrv2108 07152116012D          
+
+  0  0  0     0  0            999 V3000
+M  V30 BEGIN CTAB
+M  V30 COUNTS 2 1 1 0 0
+M  V30 BEGIN ATOM
+M  V30 1 C -0.8333 4.5421 0 0
+M  V30 2 C 0.5003 5.3121 0 0
+M  V30 END ATOM
+M  V30 BEGIN BOND
+M  V30 1 1 1 2
+M  V30 END BOND
+M  V30 BEGIN SGROUP
+M  V30 1 DAT 0 ATOMS=(1 2) -
+M  V30 FIELDDISP="    0.0000    0.0000    DR    ALL  0       0" -
+M  V30 QUERYTYPE=SMARTSQ QUERYOP=> FIELDDATA=[#6;R]
+M  V30 END SGROUP
+M  V30 END CTAB
+M  END)CTAB"_ctab;
+    REQUIRE(m);
+    REQUIRE(!m->getAtomWithIdx(1)->hasQuery());
+    CHECK(getSubstanceGroups(*m).empty());
+  }
   SECTION("SMARTS with multiple atoms become recursive") {
     auto m = R"CTAB(query
   Mrv2108 07152116012D          
