@@ -2742,7 +2742,7 @@ void processSMARTSQ(RWMol &mol, const SubstanceGroup &sg) {
         << "multiple FIELDDATA values for SMARTSQ. Taking the first."
         << std::endl;
   }
-  std::string sma = dataFields[0];
+  const std::string& sma = dataFields[0];
   if (sma.empty()) {
     BOOST_LOG(rdWarningLog)
         << "Skipping empty SMARTS value for SMARTSQ." << std::endl;
