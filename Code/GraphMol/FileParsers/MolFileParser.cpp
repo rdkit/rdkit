@@ -839,7 +839,7 @@ void ParseMarvinSmartsLine(RWMol *mol, const std::string &text,
   try {
     m = SmartsToMol(sma);
   } catch (...) {
-    // Is this every used?
+    // Is this ever used?
   }
 
   if (m) {
@@ -2743,6 +2743,11 @@ void processSMARTSQ(RWMol &mol, const SubstanceGroup &sg) {
         << std::endl;
   }
   std::string sma = dataFields[0];
+  if (sma.empty()) {
+    BOOST_LOG(rdWarningLog)
+        << "Skipping empty SMARTS value for SMARTSQ." << std::endl;
+    return;
+  }
 
   for (auto aidx : sg.getAtoms()) {
     auto at = mol.getAtomWithIdx(aidx);
@@ -2751,7 +2756,7 @@ void processSMARTSQ(RWMol &mol, const SubstanceGroup &sg) {
     try {
       m.reset(SmartsToMol(sma));
     } catch (...) {
-      // Is this every used?
+      // Is this ever used?
     }
 
     if (!m || !m->getNumAtoms()) {

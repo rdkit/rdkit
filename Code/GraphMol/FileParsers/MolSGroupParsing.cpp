@@ -576,6 +576,7 @@ void ParseSGroupV2000SDTLine(IDX_TO_SGROUP_MAP &sGroupMap, RWMol *mol,
     // making the code super complicated
   }
 
+  // only add entries for the remaining properties if they aren't blank
   if (!fieldName.empty()) {
     sgroup->setProp("FIELDNAME", fieldName);
   }
