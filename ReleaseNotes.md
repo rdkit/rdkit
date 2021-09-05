@@ -1,6 +1,11 @@
 # Release_2021.09.1
 (Changes relative to Release_2021.03.1)
 
+## Backwards incompatible changes
+- `RWMol.replaceAtom()` no longer removes `SubstanceGroups` which reference that atom.
+- The `keepSGroups` argument to `RWMol.replaceBond()` now defaults to true.
+
+
 ## Deprecated code (to be removed in a future release):
 - The `useCountSimulation` keyword argument for
   `rdFingerprintGenerator.GetMorganGenerator` and

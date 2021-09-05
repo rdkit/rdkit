@@ -839,7 +839,7 @@ void ParseMarvinSmartsLine(RWMol *mol, const std::string &text,
   try {
     m = SmartsToMol(sma);
   } catch (...) {
-    // Is this every used?
+    // Is this ever used?
   }
 
   if (m) {
@@ -2713,6 +2713,65 @@ void processMrvCoordinateBond(RWMol &mol, const SubstanceGroup &sg) {
   }
 }
 
+void processSMARTSQ(RWMol &mol, const SubstanceGroup &sg) {
+  std::string field;
+  if (sg.getPropIfPresent("QUERYOP", field) && field != "=") {
+    BOOST_LOG(rdWarningLog) << "unrecognized QUERYOP '" << field
+                            << "' for SMARTSQ. Query ignored." << std::endl;
+    return;
+  }
+  std::vector<std::string> dataFields;
+  if (!sg.getPropIfPresent("DATAFIELDS", dataFields) || dataFields.empty()) {
+    BOOST_LOG(rdWarningLog)
+        << "empty FIELDDATA for SMARTSQ. Query ignored." << std::endl;
+    return;
+  }
+  if (dataFields.size() > 1) {
+    BOOST_LOG(rdWarningLog)
+        << "multiple FIELDDATA values for SMARTSQ. Taking the first."
+        << std::endl;
+  }
+  const std::string& sma = dataFields[0];
+  if (sma.empty()) {
+    BOOST_LOG(rdWarningLog)
+        << "Skipping empty SMARTS value for SMARTSQ." << std::endl;
+    return;
+  }
+
+  for (auto aidx : sg.getAtoms()) {
+    auto at = mol.getAtomWithIdx(aidx);
+
+    std::unique_ptr<RWMol> m;
+    try {
+      m.reset(SmartsToMol(sma));
+    } catch (...) {
+      // Is this ever used?
+    }
+
+    if (!m || !m->getNumAtoms()) {
+      BOOST_LOG(rdWarningLog)
+          << "SMARTS for SMARTSQ '" << sma
+          << "' could not be parsed or has no atoms. Ignoring it." << std::endl;
+      return;
+    }
+
+    if (!at->hasQuery()) {
+      QueryAtom qAt(*at);
+      int oidx = at->getIdx();
+      mol.replaceAtom(oidx, &qAt);
+      at = mol.getAtomWithIdx(oidx);
+    }
+    QueryAtom::QUERYATOM_QUERY *query = nullptr;
+    if (m->getNumAtoms() == 1) {
+      query = m->getAtomWithIdx(0)->getQuery()->copy();
+    } else {
+      query = new RecursiveStructureQuery(m.release());
+    }
+    at->setQuery(query);
+    at->setProp(common_properties::_MolFileAtomQuery, 1);
+  }
+}
+
 void processMrvImplicitH(RWMol &mol, const SubstanceGroup &sg) {
   std::vector<std::string> dataFields;
   if (sg.getPropIfPresent("DATAFIELDS", dataFields)) {
@@ -2761,17 +2820,25 @@ void processSGroups(RWMol *mol) {
   unsigned int sgIdx = 0;
   for (auto &sg : getSubstanceGroups(*mol)) {
     if (sg.getProp<std::string>("TYPE") == "DAT") {
-      std::string fieldn;
-      if (sg.getPropIfPresent("FIELDNAME", fieldn)) {
-        if (fieldn == "MRV_COORDINATE_BOND_TYPE") {
+      std::string field;
+      if (sg.getPropIfPresent("FIELDNAME", field)) {
+        if (field == "MRV_COORDINATE_BOND_TYPE") {
           // V2000 support for coordinate bonds
           processMrvCoordinateBond(*mol, sg);
           sgsToRemove.push_back(sgIdx);
-        } else if (fieldn == "MRV_IMPLICIT_H") {
+          continue;
+        } else if (field == "MRV_IMPLICIT_H") {
           // CXN extension to specify implicit Hs, used for aromatic rings
           processMrvImplicitH(*mol, sg);
           sgsToRemove.push_back(sgIdx);
+          continue;
         }
+      }
+      if (sg.getPropIfPresent("QUERYTYPE", field) &&
+          (field == "SMARTSQ" || field == "SQ")) {
+        processSMARTSQ(*mol, sg);
+        sgsToRemove.push_back(sgIdx);
+        continue;
       }
     }
     ++sgIdx;

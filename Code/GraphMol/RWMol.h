@@ -188,7 +188,7 @@ class RDKIT_GRAPHMOL_EXPORT RWMol : public ROMol {
 
   */
   void replaceBond(unsigned int idx, Bond *bond, bool preserveProps = false,
-                   bool keepSGroups = false);
+                   bool keepSGroups = true);
 
   //@}
 
