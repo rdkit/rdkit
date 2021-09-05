@@ -138,7 +138,6 @@ void RWMol::replaceAtom(unsigned int idx, Atom *atom_pin, bool,
     const bool replaceExistingData = false;
     atom_p->updateProps(*d_graph[vd], replaceExistingData);
   }
-  removeSubstanceGroupsReferencingAtom(*this, idx);
 
   const auto orig_p = d_graph[vd];
   delete orig_p;

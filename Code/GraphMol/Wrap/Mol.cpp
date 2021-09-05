@@ -867,7 +867,7 @@ struct mol_wrapper {
         .def("ReplaceBond", &ReadWriteMol::ReplaceBond,
              (python::arg("index"), python::arg("newBond"),
               python::arg("preserveProps") = false,
-              python::arg("keepSGroups") = false),
+              python::arg("keepSGroups") = true),
              "replaces the specified bond with the provided one.\n"
              "If preserveProps is True preserve keep the existing props unless "
              "explicit set on the new bond. If keepSGroups is False, all"
